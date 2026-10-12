@@ -39,6 +39,23 @@ function flattenedCards(card){
  if(result.some(c=>!c.uid||!c.cardId)||new Set(result.map(c=>c.uid)).size!==result.length)throw new Error('Invalid card UID layout');
  return result;
 }
+// Printed SPECIAL trigger TTG-1-081: select ANY opponent FRONT character;
+// unlike its normal event text, the trigger has no BP threshold.
+export function eligibleTtgSpecialTargets(state,player){
+ if(![0,1].includes(player))return [];
+ return (state.players?.[1-player]?.front||[]).filter(c=>c&&!c.cannotBeChosen&&!c.protectedFromEffects);
+}
+export function resolveTtgSpecialRetire(state,{player,targetUid}={}){
+ if(![0,1].includes(player)||!targetUid)throw new Error('Invalid trigger choice');
+ const chosen=eligibleTtgSpecialTargets(state,player).find(c=>c.uid===targetUid);
+ if(!chosen)throw new Error('SPECIAL trigger needs a legal enemy front character');
+ const result=structuredClone(state),opp=result.players[1-player],index=opp.front.findIndex(c=>c?.uid===targetUid);
+ const pile=flattenedCards(opp.front[index]),previous=new Set((opp.outside||[]).map(c=>c.uid));
+ if(pile.some(c=>previous.has(c.uid)))throw new Error('Duplicate card identity');
+ opp.front[index]=null;
+ opp.outside.push(...pile);
+ return result;
+}
 // TTG-1-081 corrected Q2301: only retire a legal enemy front character, including its entire card pile.
 export function resolveGigaDrillRetire(state,{player,targetUid}){
  if(![0,1].includes(player)||!targetUid)throw new Error('Invalid choice');
