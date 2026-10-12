@@ -1,5 +1,6 @@
 import {UA56BT_VERIFIED} from './gurren-lagann.mjs';
-export const TTG_CARDS=UA56BT_VERIFIED;
+// Action Point illustration cards are not deck-building cards and must not appear in the card pool.
+export const TTG_CARDS=UA56BT_VERIFIED.filter(c=>c.type!=='action_point'&&c.type!=='ap'&&!/TTG-1-AP\d+/i.test(c.id));
 export const TTG_BY_ID=Object.fromEntries(TTG_CARDS.map(c=>[c.id,c]));
 export const emptyTtgDeck=()=>Object.fromEntries(TTG_CARDS.map(c=>[c.id,0]));
 export function normalizeTtgCounts(data){
@@ -19,6 +20,10 @@ export function ttgDeckIssues(counts){
  const total=Object.values(c).reduce((n,x)=>n+x,0);
  const errors=[];
  if(total!==50)errors.push('目前 '+total+'/50 張，正式牌組需要 50 張。');
+ for(const trigger of ['special','color','final']){
+  const count=TTG_CARDS.reduce((n,card)=>n+(card.trigger===trigger?(c[card.id]||0):0),0);
+  if(count>4)errors.push(trigger.toUpperCase()+' Trigger 合計不可超過 4 張（目前 '+count+' 張）。');
+ }
  if(TTG_CARDS.some(x=>c[x.id]&&!x.auto))errors.push('包含尚未實作自動判定的卡片，目前不能開始對戰。');
  return errors;
 }
