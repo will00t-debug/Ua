@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newGame,dispatch,legalActions,cardOf,bp,assertState} from '../dist/engine.mjs';
-import {SAO_BY_ID,SAO_IMPLEMENTED_RULES} from '../dist/sao-cards.mjs';
+import {SAO_BY_ID,SAO_IMPLEMENTED_RULES,SAO_RULE_COVERAGE} from '../dist/sao-cards.mjs';
 function fixture(){
  let s=newGame({seed:7802});s=dispatch(s,{type:'keep'});s=dispatch(s,{type:'keep'});
  for(const pl of s.players){
@@ -68,4 +68,35 @@ test('SAO-2-002 Kirito Raid uses printed same-name base and enters active',()=>{
  assert.equal(g.players[0].front[0].ready,true);
  assert.equal(g.players[0].front[0].stack[0].uid,base.uid);
  assert.equal(g.players[0].ap,2);assertState(g);
+});
+
+test('strict official-text rules are compiled for vanilla, STEP and simple draw/discard profiles',()=>{
+ assert.ok(SAO_RULE_COVERAGE.basicEngineImplemented>=20);
+ assert.equal(SAO_RULE_COVERAGE.basicEngineImplemented+SAO_RULE_COVERAGE.pending,183);
+ assert.deepEqual(SAO_BY_ID['SAO-1-107'].rules.entry,[{op:'drawDiscard',draw:3,discard:1}]);
+ assert.deepEqual(SAO_BY_ID['SAO-2-041'].rules.entry,[{op:'draw',count:1}]);
+ assert.equal(SAO_BY_ID['SAO-1-082'].rules.step,true);
+ assert.deepEqual(SAO_BY_ID['SAO-1-019'].rules,{});
+ assert.equal(SAO_BY_ID['SAO-1-021'].engineImplemented,undefined);
+});
+test('SAO-1-107 official 3 draw 1 discard entry is resolved in common engine',()=>{
+ const {s,put}=fixture(),c=put('SAO-1-107');
+ const deckBefore=s.players[0].deck.length;
+ const play=legalActions(s).find(a=>a.type==='play'&&a.uid===c.uid&&a.line==='energy'&&a.slot===0);
+ assert.ok(play);let g=dispatch(s,play);
+ assert.equal(g.players[0].deck.length,deckBefore-3);
+ assert.equal(g.pending?.effect.kind,'ruleChoice');
+ g=dispatch(g,{type:'choose',ids:[g.pending.choices[0].id]});
+ assert.equal(g.players[0].outside.length,1);
+ assertState(g);
+});
+test('SAO-2-041 official one-card draw entry requires AP and moves one card out of deck',()=>{
+ const {s,put}=fixture(),c=put('SAO-2-041');
+ // White/blue/purple required energy may prevent play; feed correct source in Energy L.
+ const source=put('SAO-2-041','energy',2);source.energyBoostTurn=s.turn;source.energyBoostAmount=12;
+ const before=s.players[0].deck.length;
+ const a=legalActions(s).find(x=>x.type==='play'&&x.uid===c.uid&&x.line==='energy'&&x.slot===0);
+ assert.ok(a);const g=dispatch(s,a);
+ assert.equal(g.players[0].deck.length,before-1);assert.equal(g.players[0].ap,cardOf(c).ap);
+ assertState(g);
 });
