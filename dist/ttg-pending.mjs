@@ -133,28 +133,6 @@ export const TTG_PENDING_CARDS=[
     "reason": "Identity/rarity recorded from public listings; numeric fields and/or exact text require official verification."
   },
   {
-    "id": "TTG-1-064",
-    "number": "UA56BT/TTG-1-064",
-    "title": "gurren-lagann",
-    "name": "ヨーコ",
-    "nameJa": "ヨーコ",
-    "nameZh": "庸子",
-    "color": "red",
-    "rarity": "C",
-    "type": "character",
-    "energy": null,
-    "ap": null,
-    "bp": null,
-    "gen": null,
-    "traits": null,
-    "trigger": null,
-    "effect": "沒有額外印刷角色效果。",
-    "auto": false,
-    "metadataComplete": false,
-    "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-064",
-    "reason": "Identity/rarity recorded from public listings; numeric fields and/or exact text require official verification."
-  },
-  {
     "id": "TTG-1-065",
     "number": "UA56BT/TTG-1-065",
     "title": "gurren-lagann",
