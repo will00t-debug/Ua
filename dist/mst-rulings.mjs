@@ -49,7 +49,7 @@ export function mstRemoveRaidTop(character){
  if(!base||!base.uid)throw new Error('缺少 Raid 底板');
  const top={uid:character.uid,cardId:character.cardId};
  return {
-  exposed:{...base,ready:character.ready,stack:remaining,buffs:[],impactTurn:undefined,protectedUntilSource:undefined,usedTurn:character.usedTurn},
+  exposed:{...base,ready:character.ready,stack:remaining,buffs:[],impactTurn:undefined,protectedUntilSource:undefined,usedTurn:base.usedTurn},
   outside:top,
   entryTriggered:false
  };
