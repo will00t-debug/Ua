@@ -6,10 +6,10 @@ import {normalizeSoloDeck} from './solo-decks.mjs';
 const DB=Object.fromEntries(SOLO_LEVELING_CARDS.map(c=>[c.id,c]));
 export const SOLO_MATCH_SUPPORTED=Object.freeze([
  'SLG-1-041','SLG-1-042','SLG-1-043','SLG-1-045','SLG-1-052','SLG-1-055','SLG-1-056',
- 'SLG-1-062','SLG-1-065','SLG-1-066','SLG-1-069','SLG-1-070','SLG-1-072','SLG-1-074'
+ 'SLG-1-062','SLG-1-065','SLG-1-066','SLG-1-069','SLG-1-072','SLG-1-074'
 ]);
 const SUPPORTED=new Set(SOLO_MATCH_SUPPORTED);
-export const SOLO_TRAINING_PRESET=Object.fromEntries(SOLO_MATCH_SUPPORTED.filter(x=>x!=='SLG-1-070').map((id,i)=>[id,i===12?2:4]));
+export const SOLO_TRAINING_PRESET=Object.fromEntries(SOLO_MATCH_SUPPORTED.map((id,i)=>[id,i===12?2:4]));
 export const SOLO_MATCH_VERSION=1;
 export function soloTrainingDeckIssues(counts){
  let deck;try{deck=normalizeSoloDeck(counts);}catch(e){return [e.message];}
@@ -144,7 +144,7 @@ export function soloTrainingLegalActions(s){
  }
  const p=player(s),actions=[{type:'next'}];
  if(s.phase==='start'){
-  if(p.ap>0&&p.deck.length)actions.push({type:'extraDraw'});
+  if(!s.extraDraw&&p.ap>0&&p.deck.length)actions.push({type:'extraDraw'});
  }else if(s.phase==='move'&&!s.moved){
   for(const c of p.energy.filter(Boolean))if(d(c).type==='character')
    for(let slot=0;slot<4;slot++)if(!p.front[slot])actions.push({type:'move',uid:c.uid,slot});
