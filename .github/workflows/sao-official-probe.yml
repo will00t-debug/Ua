@@ -1,0 +1,34 @@
+name: SAO official catalog probe
+on:
+  push:
+    branches: ['feature/sword-art-online']
+    paths:
+      - '.github/workflows/sao-official-probe.yml'
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Examine public official card detail markup
+        run: |
+          node --input-type=module <<'NODE'
+          const urls=[
+            'https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA15BT%2FSAO-1-002',
+            'https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX08BT%2FSAO-2-002',
+          ];
+          for(const url of urls){
+            const ctl=new AbortController();const t=setTimeout(()=>ctl.abort(),12000);
+            try{
+              const r=await fetch(url,{signal:ctl.signal});
+              const html=await r.text();
+              console.log('STATUS',r.status,'URL',url,'BYTES',html.length);
+              console.log(html.slice(0,6500));
+            }catch(e){console.log('ERROR',e.message)}finally{clearTimeout(t)}
+          }
+          NODE
