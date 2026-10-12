@@ -91,7 +91,12 @@ function hurt(s,defender,amount=1){
   if(!p.life.length){s.status='finished';s.winner=1-defender;break;}
   const c=p.life.shift(),t=d(c).trigger;
   if(t==='get')p.hand.push(c);
-  else {p.outside.push(c);if(t==='draw')draw(s,p);}
+  else if(t==='raid'){
+   p.hand.push(c);
+   if(soloEnergy(s,defender)>=d(c).energy&&field(p).some(base=>d(base).nameJa===d(c).nameJa&&!(base.stack||[]).length)){
+    s.pending={kind:'raidTrigger',p:defender,uid:c.uid};break;
+   }
+  }else {p.outside.push(c);if(t==='draw')draw(s,p);}
   if(t==='active'){
    const choices=field(p).map(x=>x.uid);
    if(choices.length){s.pending={kind:'activeTrigger',p:defender,choices,from:c.uid};break;}
@@ -135,6 +140,15 @@ function choose(s,action){
   if(action.uid!=null&&(!c||!d(c).traits.includes('DFN')||c.uid===q.source))throw Error('target must be another DFN');
   if(c)c.extraTargetAp=1;
   s.pending=null;
+ }else if(q.kind==='raidTrigger'){
+  if(action.uid!=null){
+   const p=s.players[q.p],i=p.hand.findIndex(c=>c.uid===q.uid),c=p.hand[i];
+   const base=field(p).find(x=>x.uid===action.uid);
+   if(i<0||!base||d(base).nameJa!==d(c).nameJa||soloEnergy(s,q.p)<d(c).energy)throw Error('illegal life Raid');
+   p.hand.splice(i,1);p[base.line][base.slot]=null;
+   position(c,q.p,action.line,action.slot);c.stack=[base];c.ready=true;p[action.line][action.slot]=c;
+   s.pending=null;onEnter(s,c);
+  }else s.pending=null;
  }else if(q.kind==='raid058Discard'){
   const p=s.players[q.p];
   if(action.uid!=null){
@@ -202,6 +216,14 @@ export function soloTrainingLegalActions(s){
   if(q.kind==='discard'||q.kind==='mainDiscard')return s.players[q.p].hand.map(c=>({type:'choose',uid:c.uid}));
   if(q.kind==='raid058Discard')return [{type:'choose',uid:null},...s.players[q.p].hand.map(c=>({type:'choose',uid:c.uid}))];
   if(q.kind==='raid058Unfreeze')return [{type:'choose',uid:null},...s.players[q.p].front.filter(c=>c&&(c.skipActive||0)>0).map(c=>({type:'choose',uid:c.uid}))];
+  if(q.kind==='raidTrigger'){
+   const p=s.players[q.p],c=byUid(p.hand,q.uid),actions=[{type:'choose',uid:null}];
+   if(c&&soloEnergy(s,q.p)>=d(c).energy)for(const base of field(p).filter(x=>d(x).nameJa===d(c).nameJa&&!(x.stack||[]).length)){
+    actions.push({type:'choose',uid:base.uid,line:base.line,slot:base.slot});
+    if(base.line==='energy')for(let slot=0;slot<4;slot++)if(!p.front[slot])actions.push({type:'choose',uid:base.uid,line:'front',slot});
+   }
+   return actions;
+  }
   if(q.kind==='soldierTop'){
    const orders=x=>x.length===2?[x,[x[1],x[0]]]:[x];
    const result=[];
@@ -301,6 +323,7 @@ export function assertSoloTrainingMatch(s){
 export function soloTrainingBotAction(s){
  const legal=soloTrainingLegalActions(s);if(!legal.length)throw Error('no legal actions');
  if(s.pending){
+  if(s.pending.kind==='raidTrigger')return legal.find(a=>a.uid!=null)||legal[0];
   if(s.pending.kind==='raid058Discard')return legal.find(a=>a.uid!=null)||legal[0];
   if(s.pending.kind==='raid058Unfreeze')return legal.find(a=>a.uid!=null)||legal[0];
   if(s.pending.kind==='soldierTop'){
