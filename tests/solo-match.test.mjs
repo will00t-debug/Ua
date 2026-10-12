@@ -5,7 +5,7 @@ const advance=(s,target)=>{for(let i=0;i<5&&s.phase!==target;i++)s=soloTrainingD
 test('training deck uses exactly 50 legitimate green cards, and rejects every unsupported SLG effect',()=>{
  assert.deepEqual(soloTrainingDeckIssues(SOLO_TRAINING_PRESET),[]);
  const size=Object.values(SOLO_TRAINING_PRESET).reduce((a,b)=>a+b,0);assert.equal(size,50);
- assert.equal(SOLO_MATCH_SUPPORTED.length,25);
+ assert.equal(SOLO_MATCH_SUPPORTED.length,26);
  assert.match(soloTrainingDeckIssues({'SLG-1-030':12,'SLG-1-047':4}).join(';'),/50/);
  assert.match(soloTrainingDeckIssues({...SOLO_TRAINING_PRESET,'SLG-1-047':1}).join(';'),/未接入/);
 });
@@ -59,4 +59,23 @@ test('AI completes purple Shadow Army matches with conditional REST and top-two 
   assert.equal(s.status,'finished','purple seed '+seed+' stuck at '+steps);
   assertSoloTrainingMatch(s);
  }
+});
+
+test('Shizuku green Raid turns base into stack, consumes one AP and stays UID-conservative',()=>{
+ const decks=[SOLO_TRAINING_PRESET,SOLO_TRAINING_PRESET];
+ let s=newSoloTrainingMatch({decks,seed:270});const p=s.players[0];s.phase='main';p.ap=3;p.maxAp=3;
+ const pluck=(id)=>{for(const area of ['hand','deck','life']){let ix=p[area].findIndex(x=>x.cardId===id);if(ix>=0)return p[area].splice(ix,1)[0];}throw Error('not in deck '+id);};
+ const base=pluck('SLG-1-055');base.owner=0;base.line='front';base.slot=0;base.ready=false;p.front[0]=base;
+ const raid=pluck('SLG-1-058');p.hand.push(raid);
+ for(let i=0;i<4;i++){const c=pluck('SLG-1-045');c.owner=0;c.line='energy';c.slot=i;c.ready=true;p.energy[i]=c;}
+ const possible=soloTrainingLegalActions(s).filter(x=>x.type==='raid'&&x.uid===raid.uid);
+ assert.ok(possible.some(a=>a.target===base.uid&&a.line==='front'&&a.slot===0));
+ const beforeAp=p.ap;
+ s=soloTrainingDispatch(s,possible.find(a=>a.target===base.uid&&a.line==='front'&&a.slot===0));
+ assert.equal(s.players[0].ap,beforeAp-1);
+ assert.equal(s.players[0].front[0].uid,raid.uid);
+ assert.equal(s.players[0].front[0].stack[0].uid,base.uid);
+ assert.equal(s.players[0].front[0].ready,true);
+ assert.equal(soloTrainingLegalActions(s).some(a=>a.type==='raid'&&a.uid===raid.uid),false);
+ assertSoloTrainingMatch(s);
 });
