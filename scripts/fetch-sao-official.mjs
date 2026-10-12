@@ -1,6 +1,6 @@
 import {writeFileSync} from 'node:fs';
 const host='https://www.unionarena-tcg.com';
-const plans=[['UA15BT','SAO-1',100],['EX08BT','SAO-2',74],['UA15ST','SAO-1',125],['UAPR','SAO-1',101,101]];
+const plans=[['UA15BT','SAO-1',100],['EX08BT','SAO-2',74],['UA15ST','SAO-1',125],['UAPR','SAO-1',125],['UAPR','SAO-2',100]];
 const decode=s=>String(s||'').replace(/&(?:amp|lt|gt|quot|nbsp|#39);/g,x=>({'&amp;':'&','&lt;':'<','&gt;':'>','&quot;':'"','&nbsp;':' ','&#39;':"'"})[x]||x);
 const clean=s=>decode(String(s||'').replace(/<br\s*\/?>/gi,'\n').replace(/<img[^>]*alt="([^"]*)"[^>]*>/gi,(_,alt)=>'【'+decode(alt)+'】').replace(/<[^>]+>/g,'')).trim().replace(/\s*\n\s*/g,'\n');
 function section(h,cls){const d=h.match(new RegExp('<dl class="cardDataCol '+cls+'">([\\s\\S]*?)<\\/dl>'));return d?.[1].match(/<dd class="cardDataContents">([\s\S]*?)<\/dd>/)?.[1]||'';}
