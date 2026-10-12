@@ -1,11 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {SOLO_MATCH_SUPPORTED,SOLO_TRAINING_PRESET,soloTrainingDeckIssues,newSoloTrainingMatch,soloTrainingLegalActions,soloTrainingDispatch,soloTrainingBotAction,assertSoloTrainingMatch,simulateSoloTraining,soloEnergy} from '../dist/solo-match.mjs';
+import {SOLO_MATCH_SUPPORTED,SOLO_TRAINING_PRESET,SOLO_SHADOW_TRAINING_PRESET,soloTrainingDeckIssues,newSoloTrainingMatch,soloTrainingLegalActions,soloTrainingDispatch,soloTrainingBotAction,assertSoloTrainingMatch,simulateSoloTraining,soloEnergy} from '../dist/solo-match.mjs';
 const advance=(s,target)=>{for(let i=0;i<5&&s.phase!==target;i++)s=soloTrainingDispatch(s,{type:'next'});return s;};
 test('training deck uses exactly 50 legitimate green cards, and rejects every unsupported SLG effect',()=>{
  assert.deepEqual(soloTrainingDeckIssues(SOLO_TRAINING_PRESET),[]);
  const size=Object.values(SOLO_TRAINING_PRESET).reduce((a,b)=>a+b,0);assert.equal(size,50);
- assert.equal(SOLO_MATCH_SUPPORTED.length,13);
+ assert.equal(SOLO_MATCH_SUPPORTED.length,25);
  assert.match(soloTrainingDeckIssues({'SLG-1-030':12,'SLG-1-047':4}).join(';'),/50/);
  assert.match(soloTrainingDeckIssues({...SOLO_TRAINING_PRESET,'SLG-1-030':1}).join(';'),/未接入/);
 });
@@ -38,4 +38,25 @@ test('every active/supported start-to-end match survives card conservation and l
 test('simulation helper runs independently from BLEACH game engine',()=>{
  const sim=simulateSoloTraining(40,3000);
  assert.equal(sim.finished,true);assert.equal(sim.state.title,'solo-leveling');
+});
+
+test('purple Shadow Army deck is a 50-card legal training preset with 12 Shadow Soldiers',()=>{
+ assert.equal(Object.values(SOLO_SHADOW_TRAINING_PRESET).reduce((a,b)=>a+b,0),50);
+ assert.equal(SOLO_SHADOW_TRAINING_PRESET['SLG-1-030'],12);
+ assert.deepEqual(soloTrainingDeckIssues(SOLO_SHADOW_TRAINING_PRESET),[]);
+ const first=newSoloTrainingMatch({decks:[SOLO_SHADOW_TRAINING_PRESET,SOLO_SHADOW_TRAINING_PRESET],seed:900});
+ assertSoloTrainingMatch(first);
+});
+test('AI completes purple Shadow Army matches with conditional REST and top-two choices without losing cards',()=>{
+ for(const seed of [11,12,13,14,15,16]){
+  let s=newSoloTrainingMatch({decks:[SOLO_SHADOW_TRAINING_PRESET,SOLO_SHADOW_TRAINING_PRESET],seed});
+  let steps=0;
+  while(s.status==='playing'&&steps<3000){
+   const a=soloTrainingBotAction(s);
+   assert.ok(soloTrainingLegalActions(s).some(x=>JSON.stringify(x)===JSON.stringify(a)));
+   s=soloTrainingDispatch(s,a);steps++;
+  }
+  assert.equal(s.status,'finished','purple seed '+seed+' stuck at '+steps);
+  assertSoloTrainingMatch(s);
+ }
 });
