@@ -17,8 +17,8 @@ test('Q2392 viral passes threshold 8 immediately after first front-line generati
  assert.equal(value.frontGenerates,true);
  assert.equal(value.after,10);
  assert.equal(field[0].frontGenerates,undefined,'must not mutate original state');
- const short=resolveViralEnergy([{uid:'v',line:'front',gen:1},{uid:'a',line:'energy',gen:5}], 'v');
- assert.equal(short.after,6);assert.equal(short.frontGenerates,false);
+ const short=resolveViralEnergy([{uid:'v',line:'front',gen:1},{uid:'a',line:'energy',gen:6}], 'v');
+ assert.equal(short.after,7);assert.equal(short.frontGenerates,false);
 });
 test('Q2272 mandatory Simon target is checked before paying an ability cost',()=>{
  assert.equal(canActivateWithMandatoryTarget([]),false);
