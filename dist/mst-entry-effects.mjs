@@ -1,10 +1,12 @@
 // Isolated UA54BT effect-state reducer; not yet registered as a production match plugin.
 // The caller owns action selection, turn timing and state conservation.
+import {UA54BT_VERIFIED} from './mushoku-tensei.mjs';
+const BY_ID=Object.fromEntries(UA54BT_VERIFIED.map(c=>[c.id,c]));
 const clone=s=>structuredClone(s);
 const owner=(s,p)=>s.players[p];
 const draw=(s,p)=>{const top=owner(s,p).deck.shift();if(top)owner(s,p).hand.push(top);return top||null;};
 function choices(s,p,kind,options,metadata={}){s.pendingMst={player:p,kind,options,...metadata};}
-const characters=(s,p)=>[...owner(s,p).front,...owner(s,p).energy].filter(c=>c&&c.cardId&&!c.cardId.endsWith('field'));
+const characters=(s,p)=>[...owner(s,p).front,...owner(s,p).energy].filter(c=>c&&BY_ID[c.cardId]?.type==='character');
 export function mstEnter(source,{player,cardId,uid,generatedEnergy=0}){
  if(source.pendingMst)throw new Error('必須先結算上一效果');
  if(player!==0&&player!==1)throw new Error('不合法的玩家');
