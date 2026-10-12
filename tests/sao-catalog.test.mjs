@@ -13,7 +13,7 @@ test('SAO verified cards have distinct numbers and source URLs',()=>{
  const ids=new Set(SAO_CARDS.map(c=>c.id));
  assert.equal(ids.size,SAO_CARDS.length);
  for(const c of SAO_CARDS){
-  assert.match(c.number,/^(UA15BT\/SAO-1|EX08BT\/SAO-2)-\d{3}$/);
+  assert.match(c.number,/^(UA15BT\/SAO-1|EX08BT\/SAO-2|UAPR\/SAO-1)-\d{3}$/);
   assert.match(c.source,/unionarena-tcg\.com\/jp\/cardlist/);
   assert.equal(c.title,'sword-art-online');
   assert.ok(typeof c.effect==='string'&&c.effect.length>0);
@@ -51,4 +51,15 @@ test('official product coverage is explicit and incomplete records are not marke
  assert.deepEqual(SAO_PRODUCTS.map(x=>x.regularCount),[18,100,74]);
  assert.ok(SAO_CARDS.every(c=>c.auto===false));
  assert.equal(new Set(SAO_CARDS.map(c=>c.identity)).size,SAO_CARDS.length);
+});
+
+test('exclusive official game bonus is separately registered without AP art',()=>{
+ const card=SAO_BY_ID['SAO-1-101'];
+ assert.ok(card);
+ assert.equal(card.number,'UAPR/SAO-1-101');
+ assert.equal(card.ap,1);
+ assert.equal(card.auto,false);
+ assert.match(card.effect,/IMPACT/);
+ assert.equal(SAO_CARDS.filter(c=>c.identity==='SAO-1-101').length,1);
+ assert.ok(SAO_CARDS.every(c=>!/-AP\\d+/i.test(c.number)));
 });
