@@ -1,0 +1,11 @@
+# Local dependencies and cloud deployment metadata
+node_modules/
+.vercel/
+.env
+.env.*
+!.env.example
+.DS_Store
+Thumbs.db
+*.log
+__pycache__/
+.pytest_cache/

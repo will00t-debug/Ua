@@ -1,0 +1,301 @@
+:root {
+  color-scheme: light;
+  --bg: #f2f3f5;
+  --panel: #ffffff;
+  --panel2: #f7f8fa;
+  --line: #dce0e5;
+  --text: #272b31;
+  --muted: #6c7581;
+  --orange: #ae3f48;
+  --orange2: #ae3f48;
+  --purple: #765298;
+  --green: #34795e;
+  --radius: 8px;
+}
+
+body { background: var(--bg); }
+.shell { display: block; }
+.rail {
+  position: static;
+  height: auto;
+  padding: 15px max(22px, calc((100vw - 1200px) / 2));
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 25px;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: #fff;
+}
+.brand img { width: 29px; height: 34px; }
+.brand > span { display: block; }
+.brand b { font-size: 16px; letter-spacing: .4px; }
+.brand small { font-size: 8px; letter-spacing: 1.2px; }
+.nav { display: flex; gap: 5px; width: auto; margin: 0; }
+.nav button { padding: 9px 12px; color: #6a707a; font-size: 12px; border-radius: 4px; }
+.nav button span { display: inline; }
+.nav svg { display: none; }
+.nav button.active { color: var(--orange); background: #f9eff0; box-shadow: none; }
+.nav button:hover { background: #f3f4f6; }
+.main { width: 100%; max-width: 1240px; padding: 20px 25px 30px; margin: 0 auto; }
+.shell-match .main { max-width: 1400px; padding-top: 12px; }
+.topbar { margin-bottom: 20px; }
+.shell-match .topbar { margin-bottom: 8px; }
+.topStatus { color: var(--muted); }
+.statusDot { background: var(--green); }
+.pill { border-color: #e4d0d3; background: #fbf2f3; color: var(--orange); letter-spacing: .2px; }
+.pill.purple { border-color: #ded6e8; background: #f6f2fa; color: var(--purple); }
+.pill.green { border-color: #c8dfd4; background: #f0f7f3; color: var(--green); }
+.btn { background: #fff; border-color: #ccd2da; color: #414954; border-radius: 5px; box-shadow: none; }
+.btn:hover { background: #f6f7f8; filter: none; }
+.btn.primary { background: var(--orange); border-color: var(--orange); color: #fff; }
+.btn.primary:hover { background: #97343e; }
+.btn.outline { color: #626b76; background: transparent; border-color: #ccd2da; }
+.btn.danger { color: #a44d56; background: #fff; border-color: #e2c7cb; }
+button:disabled { opacity: .45; }
+select, input, textarea { background: #fff; color: var(--text); border-color: #ccd3dc; border-radius: 5px; }
+.panel { background: #fff; border-color: var(--line); border-radius: 8px; box-shadow: none; }
+.lobbyIntro { text-align: center; padding: 27px 15px 32px; }
+.lobbyIntro h1 { font-size: 36px; line-height: 1.3; letter-spacing: -.8px; font-weight: 750; }
+.lobbyIntro h1 span { color: var(--orange); }
+.lobbyIntro p { margin-top: 11px; font-size: 13px; color: var(--muted); }
+.lobbyIntro .introMeta { font-size: 11px; margin-top: 10px; letter-spacing: .5px; }
+.resumeMatch { margin-top: 16px; }
+.lobbySetup { max-width: 930px; margin: 0 auto; }
+.lobbyGrid { gap: 16px; grid-template-columns: 1fr 1fr; }
+.sectionTitle h2 { font-size: 16px; }
+.modeCard { background: #fafbfc; border-color: #dce1e8; padding: 15px 13px; border-radius: 5px; }
+.modeCard.selected { background: #fbf4f4; border-color: var(--orange); }
+.modeCard svg { display: none; }
+.modeCard .check { border-color: #bcc4ce; }
+.modeCard.selected .check { box-shadow: inset 0 0 0 3px #fff; }
+.setupRow { margin-top: 17px; }
+.startMatch { display: flex; width: 100%; margin-top: 18px; }
+.deckChoice { grid-template-columns: 64px 1fr; }
+.deckStats { margin-top: 15px; gap: 30px; }
+.deckStats b { font-size: 21px; }
+.note, .subtleButton { color: var(--muted); }
+.pageHeading h1 { font-size: 25px; font-weight: 650; }
+.filter button { color: #647080; background: #fff; border-color: #d4dbe3; }
+.filter button.active { color: var(--orange); background: #fbf0f1; border-color: #d8a9ae; }
+.catalogCard { background: #fff; border-color: #d8dfe7; border-radius: 6px; }
+.catalogCard:hover { border-color: #b9c3d1; transform: none; }
+.poolFilters { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin: -5px 0 20px; }
+.poolFilters label { display: grid; gap: 5px; color: var(--muted); font-size: 11px; min-width: 130px; }
+.poolFilters select { font-size: 12px; min-height: 37px; }
+.poolFilters > span { font-size: 11px; color: var(--muted); padding: 10px 0; margin-left: auto; }
+.autoStatus { display: inline-block; font-size: 9px; padding: 3px 5px; border-radius: 3px; margin-top: 7px; }
+.autoStatus.ready { background: #edf7f1; color: #39705a; }
+.autoStatus.pending { background: #f6f3eb; color: #8b7343; }
+.supportNote { display: grid; gap: 5px; padding: 11px; background: #fbf7ed; border: 1px solid #e8dfc8; border-radius: 5px; font-size: 11px; margin-top: 12px; color: #7e6b43; line-height: 1.7; }
+.supportNote span, .supportNote details { font-size: 10px; }
+.supportNote summary { cursor: pointer; }
+.energyColor.yellow, .colorLabel.yellow { color: #9a7411; }
+.energyColor.blue, .colorLabel.blue { color: #3b78b3; }
+.energyColor.purple, .colorLabel.purple { color: #8461a1; }
+.energyColor.green, .colorLabel.green { color: #39785c; }
+.energyColor.red, .colorLabel.red { color: #a74651; }
+.energyCount { display: flex; gap: 7px; flex-wrap: wrap; }
+@media (max-width: 560px) { .poolFilters label { min-width: 0; flex: 1 1 28%; } .poolFilters select { width: 100%; } .poolFilters > span { width: 100%; padding: 0; } }
+.catalogEffect { font-size: 10px; line-height: 1.5; color: var(--muted); min-height: 45px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin-top: 7px; }
+.deckEditor { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 18px; padding: 17px; border: 1px solid var(--line); background: #fff; border-radius: 7px; margin-bottom: 18px; }
+.deckEditor label { display: grid; gap: 6px; font-size: 11px; color: var(--muted); min-width: 0; }
+.deckEditor input, .deckEditor select { width: 100%; min-width: 0; font-size: 12px; }
+.deckEditorActions { display: flex; gap: 8px; flex-wrap: wrap; }
+.deckSaveStatus { align-self: center; justify-self: end; font-size: 10px; color: var(--muted); }
+.deckContents { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 12px; grid-column: 1 / -1; }
+.deckContents summary { cursor: pointer; color: #617084; font-size: 11px; }
+.deckContentRow { display: flex; gap: 6px; align-items: center; border-bottom: 1px solid #edf0f4; padding: 7px 0; }
+.deckContentCard { min-width: 0; display: flex; align-items: center; text-align: left; gap: 7px; padding: 0; color: var(--text); background: none; flex: 1; }
+.deckContentCard img { width: 23px; border-radius: 2px; flex-shrink: 0; }
+.deckContentCard span { font-size: 9px; }
+.deckContentCard small { display: block; font-size: 8px; color: var(--muted); }
+.deckContentRow > b { font-size: 10px; }
+.deckSummary .deckContentRow .btn { width: auto; margin: 0; min-height: 25px; padding: 4px 7px; }
+.setupRow select { min-width: 0; max-width: 70%; }
+.countPicker { background: #f6f8fa; border-color: #d7dfe8; }
+.countPicker button { color: #47515e; }
+.progressTrack { background: #e9edf2; }
+.valid { color: #34795e; }
+.invalid { color: #b04450; }
+.curve i { background: #dcd0ea; }
+.rulesGrid p, .rulesGrid li, .rulesStep span { color: #505c6a; }
+.rulesStep b { background: #faf3f4; border-color: #e5ccd0; }
+.footer { color: #79818b; padding-top: 16px; margin-top: 24px; }
+.shell-match .footer { margin-top: 12px; }
+
+/* The table takes the full page width. Card information opens on demand. */
+.matchLayout { display: block; }
+.matchHeader { margin-bottom: 9px; }
+.matchHeader h1 { font-size: 16px; font-weight: 600; }
+.arena { background: #fff; border: 1px solid #d5dbe3; border-radius: 6px; overflow: visible; }
+.phaseBar { background: #f8f9fb; border-color: #e2e6ec; color: #8b93a0; padding: 7px; border-radius: 6px 6px 0 0; }
+.phaseBar span { padding: 4px 12px; }
+.phaseBar span.current { color: var(--orange); background: #faf0f1; border-color: #e5c6cb; }
+.playerArea { padding: 10px 20px 8px; }
+.playerArea.opponent { background: #fafbfc; }
+.playerInfo { margin-bottom: 7px; }
+.playerName { font-size: 12px; }
+.playerName small { font-size: 9px; }
+.avatar, .avatar.opponent { background: #fff; border-color: #d7dee6; color: #788495; border-radius: 50%; width: 27px; height: 27px; }
+.playerResources { font-size: 10px; }
+.apDots i { background: #e2e5e9; border-color: #c6cdd6; box-shadow: none; transform: none; width: 12px; height: 15px; }
+.apDots i.available { background: #d97a80; border-color: #ba666d; box-shadow: none; }
+.apDots i.locked { background: #f2f4f6; border-style: dashed; opacity: .5; }
+.lineGroup { grid-template-columns: 65px 1fr 65px; gap: 14px; margin: 7px auto; max-width: 690px; }
+.lineLabel, .lineLabel.front { color: #939ca8; font-size: 9px; letter-spacing: .6px; }
+.slots { grid-template-columns: repeat(4, minmax(0, 72px)); justify-content: center; gap: 14px; width: 100%; max-width: 400px; margin: 0 auto; }
+.slot { background: #f8fafc; border-color: #d4dce7; border-radius: 4px; width: 100%; aspect-ratio: 2 / 2.82; max-height: none; }
+.slot.occupied { border-color: transparent; background: transparent; overflow: visible; }
+.slotFace { position: absolute; inset: 0; display: block; border: 1px solid #aeb9c7; border-radius: 4px; overflow: hidden; background: #fff; isolation: isolate; transition: transform .16s ease; }
+.slot .slotFace .art { z-index: 0; object-fit: contain; }
+.slotFace .slotBp, .slotFace .slotStack { z-index: 1; }
+.slot.rested .slotFace { transform: rotate(90deg) scale(.7092198582); }
+.slot .slotIndex { color: #d0d7e1; font-size: 10px; }
+.slot.selected { border: 2px solid var(--orange); box-shadow: none; }
+.slot.occupied.selected { border-color: transparent; }
+.slot.selected .slotFace { border: 2px solid var(--orange); }
+.slot.destination { background: #faf1f2; border: 1px solid #bd6973; box-shadow: none; }
+.slot.destination:after { content: attr(data-placement); background: #fff9; color: #9b3a46; font-size: 10px; }
+.slot.rested .art { filter: none; }
+.slotName { display: none; }
+.slotBp { font-size: 9px; }
+.slotStack { font-size: 6px; }
+.pile { background: #fff; border-color: #d9e0e8; color: #8a95a4; font-size: 8px; }
+.pile b { color: #5b6879; font-size: 12px; }
+.pile.button:hover { background: #f4f6f9; }
+.lifeCard, .opponent .lifeCard { background: #eef1f5; border-color: #c8d1dc; color: #a0abba; width: 17px; height: 22px; }
+.lifeText { color: #8793a3; }
+.centerLine { height: 24px; border-color: #e1e6ed; background: #f7f8fa; color: #788597; letter-spacing: .4px; }
+.centerLine:before, .centerLine:after { background: #c5ceda; }
+
+/* Every hand card remains in the layout; extra cards wrap, never scroll. */
+.handArea { background: #fff; padding: 12px 18px; border-top-color: #e0e5ec; }
+.handTitle { color: #737f8f; margin-bottom: 9px; }
+.handTitle > span:first-child { color: #465266; font-weight: 600; }
+.hand, .mulliganHand {
+  display: grid;
+  grid-template-columns: repeat(var(--hand-wide, 7), minmax(0, 1fr));
+  align-items: start;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  max-width: calc(var(--hand-wide, 7) * 107px - 7px);
+  margin: 0 auto;
+  overflow: visible;
+  max-height: none;
+  min-height: 0;
+  padding: 3px 0;
+}
+.mulliganHand { padding: 18px; }
+.hand .handCard, .mulliganHand .handCard {
+  width: 100%; min-width: 0; max-width: 100px; justify-self: center;
+  border-radius: 4px; border-color: #bcc6d3; aspect-ratio: 2 / 2.82;
+  transform: none; box-shadow: none;
+}
+.handCard.playable { border-color: #c37d88; }
+.handCard.selected { border: 2px solid var(--orange); transform: none; }
+.handCard.unplayable img { filter: brightness(.88) saturate(.8); }
+.handCard .handName { font-size: 9px; line-height: 1.4; padding: 3px 1px; }
+.handCard .handCost { font-size: 9px; }
+.hiddenHand { color: #8993a0; background: #f7f9fb; grid-column: 1 / -1; min-height: 70px; }
+.selectionBar { background: #faf5f6; border-color: #e6d2d6; border-radius: 5px; padding: 8px 10px; }
+.selectionBar p { color: #85747a; }
+.selectionBar .selectionEffect { color: var(--text); font-size: 12px; line-height: 1.75; }
+.selectionEffect > span { color: var(--muted); font-size: 10px; margin-right: 8px; }
+.selectionBar .selectionHint { color: var(--muted); font-size: 10px; }
+.phaseAction { background: #f8f9fb; border-color: #e0e5ec; border-radius: 0 0 6px 6px; padding: 10px 18px; }
+.phaseAction p { color: #7b8593; }
+.mulliganHeader { border-color: #e0e5ec; padding: 18px; }
+.mulliganHeader h2 { font-size: 18px; font-weight: 600; }
+.resultBanner { background: #fbf5f6; border-bottom: 1px solid #e6d8dc; }
+
+.modalBackdrop { background: #28334266; backdrop-filter: blur(3px); }
+.modal { background: #fff; border-color: #d2dbe6; border-radius: 8px; box-shadow: 0 14px 45px #2631422b; }
+.modal h2 { font-weight: 600; }
+.closeButton { color: #737e8d; border-color: #d6dde6; background: #f6f8fa; border-radius: 4px; }
+.choiceCard { background: #fafbfd; border-color: #d7dee8; color: #4c586a; border-radius: 5px; }
+.choiceCard.selected { border-color: var(--orange); background: #fbf1f3; box-shadow: none; }
+.detailEffect { color: #556174; }
+.statGrid div { border-color: #dce2e9; background: #f8f9fb; }
+.statGrid b { color: #49566a; }
+.publicCards button { background: #f8fafd; border-color: #d8e0ea; }
+.logItem { color: #637084; border-color: #d3dce7; }
+.logItem.turn { color: #a14e58; }
+.logItem.win { color: #34795e; }
+.handoff { background: #f6f8fbf5; }
+#toast { background: #fff; border-color: #c6d0de; color: #485569; box-shadow: 0 4px 18px #34425820; }
+
+@media (max-width: 850px) {
+  .rail { padding: 13px 18px; gap: 14px; }
+  .nav button { padding: 8px 9px; font-size: 11px; }
+  .main, .shell-match .main { padding: 14px 18px 24px; }
+  .hand, .mulliganHand { grid-template-columns: repeat(var(--hand-medium, 7), minmax(0, 1fr)); max-width: calc(var(--hand-medium, 7) * 97px - 7px); }
+  .lineGroup { grid-template-columns: 42px 1fr 50px; gap: 9px; }
+  .slots { gap: 10px; }
+  .hand .handCard, .mulliganHand .handCard { max-width: 90px; }
+}
+@media (max-width: 620px) {
+  .rail { display: flex; flex-direction: column; gap: 9px; padding: 12px 12px 0; }
+  .brand img { width: 24px; height: 28px; }
+  .brand b { font-size: 14px; }
+  .brand small { font-size: 7px; }
+  .nav { width: 100%; justify-content: center; gap: 4px; margin-top: 0; }
+  .nav button { flex: 1; padding: 9px 5px; border-radius: 3px 3px 0 0; }
+  .nav button span { font-size: 11px; }
+  .main, .shell-match .main { padding: 12px 10px 22px; }
+  .topbar { margin-bottom: 12px; }
+  .topStatus { font-size: 8px; }
+  .topStatus .pill { display: none; }
+  .lobbyIntro { padding: 19px 5px 24px; }
+  .lobbyIntro h1 { font-size: 28px; }
+  .lobbyIntro p { font-size: 12px; }
+  .lobbyGrid { grid-template-columns: 1fr; }
+  .panel { padding: 17px; }
+  .modeCard { padding: 15px 12px; }
+  .modeCard b { font-size: 12px; }
+  .modeCard small { font-size: 10px; }
+  .deckChoice { grid-template-columns: 52px 1fr; }
+  .deckThumb { width: 45px; height: 65px; }
+  .deckEditor { grid-template-columns: 1fr; gap: 12px; padding: 14px; }
+  .deckEditorActions .btn { padding: 8px 10px; font-size: 10px; min-height: 36px; }
+  .deckSaveStatus { justify-self: start; }
+  .catalogEffect { font-size: 9px; min-height: 41px; }
+  .matchHeader h1 { font-size: 14px; }
+  .matchHeader { margin-bottom: 8px; }
+  .matchControls .btn { font-size: 10px; }
+  .phaseBar { padding: 6px 2px; gap: 2px; }
+  .phaseBar span { padding: 3px 7px; font-size: 8px; }
+  .playerArea { padding: 8px 9px 5px; }
+  .playerInfo { margin-bottom: 5px; }
+  .playerName { font-size: 10px; }
+  .avatar, .avatar.opponent { width: 22px; height: 22px; }
+  .apDots i { width: 8px; height: 11px; }
+  .lineGroup { grid-template-columns: 23px 1fr 35px; gap: 6px; margin: 5px 0; }
+  .slots { grid-template-columns: repeat(4, minmax(0, 52px)); gap: 6px; max-width: 260px; }
+  .lineLabel, .lineLabel.front { font-size: 7px; letter-spacing: 0; }
+  .slotBp { font-size: 8px; }
+  .pile { font-size: 7px; }
+  .pile b { font-size: 10px; }
+  .lifeCard, .opponent .lifeCard { width: 13px; height: 17px; }
+  .lifeRow { min-height: 18px; }
+  .centerLine { height: 21px; font-size: 8px; }
+  .handArea { padding: 10px 8px; }
+  .hand, .mulliganHand { grid-template-columns: repeat(var(--hand-small, 7), minmax(0, 1fr)); gap: 4px; max-width: calc(var(--hand-small, 7) * 80px - 4px); }
+  .hand .handCard, .mulliganHand .handCard { max-width: 76px; width: 100%; min-width: 0; }
+  .mulliganHand { padding: 14px 9px; }
+  .handCard .handName { font-size: 6px; padding: 2px 0; }
+  .handCard .handCost { font-size: 7px; top: 2px; right: 2px; padding: 0 2px; }
+  .selectionBar { padding: 7px; gap: 6px; }
+  .selectionBar p { font-size: 9px; }
+  .phaseAction { padding: 9px; }
+  .phaseAction .btn { min-width: 112px; }
+  .mulliganHeader { padding: 13px; }
+  .mulliganHeader h2 { font-size: 16px; }
+  .mulliganHeader p { font-size: 10px; }
+  .footer { font-size: 9px; }
+}
+@media (max-width: 380px) {
+  .hand, .mulliganHand { grid-template-columns: repeat(var(--hand-narrow, 5), minmax(0, 1fr)); max-width: calc(var(--hand-narrow, 5) * 80px - 4px); }
+}
