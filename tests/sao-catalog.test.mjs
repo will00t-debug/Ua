@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {TITLES,titleOfCard,validateTitleMembership} from '../dist/title-registry.mjs';
-import {SAO_CARDS,SAO_BY_ID,saoDeckIssues} from '../dist/sao-cards.mjs';
+import {SAO_CARDS,SAO_BY_ID,SAO_PRODUCTS,saoDeckIssues} from '../dist/sao-cards.mjs';
 test('SAO registry is isolated from BLEACH and TTG',()=>{
  const sao=TITLES.find(x=>x.id==='sword-art-online');
  assert.ok(sao);assert.equal(sao.playable,false);
@@ -44,4 +44,11 @@ test('SAO UI exposes its title and separate draft editing',async()=>{
   click({title:'bleach'});
   assert.match(nodes.app.innerHTML,/BLEACH 卡片圖鑑|編輯牌組/);
  }finally{globalThis.setTimeout=old;}
+});
+
+test('official product coverage is explicit and incomplete records are not marked playable',()=>{
+ assert.deepEqual(SAO_PRODUCTS.map(x=>x.id),['UA15ST','UA15BT','EX08BT']);
+ assert.deepEqual(SAO_PRODUCTS.map(x=>x.regularCount),[18,100,74]);
+ assert.ok(SAO_CARDS.every(c=>c.auto===false));
+ assert.equal(new Set(SAO_CARDS.map(c=>c.identity)).size,SAO_CARDS.length);
 });
