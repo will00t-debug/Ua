@@ -2,10 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {mstRemoveRaidTop,mstMoveChoices,mstUseNamedAbility,mstRudeus73CanActivate} from '../dist/mst-rulings.mjs';
 test('Q2148-2151 removes only top Raid and preserves exhausted base, no entry trigger',()=>{
- const base={uid:'b',cardId:'MST-1-001',ready:true,buffs:[{bp:500}]};
- const result=mstRemoveRaidTop({uid:'t',cardId:'MST-1-025',ready:false,stack:[base],buffs:[{bp:3000}],protectedUntilSource:{p:0}});
+ const base={uid:'b',cardId:'MST-1-001',ready:true,usedTurn:2,buffs:[{bp:500}]};
+ const result=mstRemoveRaidTop({uid:'t',cardId:'MST-1-025',ready:false,usedTurn:9,stack:[base],buffs:[{bp:3000}],protectedUntilSource:{p:0}});
  assert.equal(result.exposed.uid,'b');
  assert.equal(result.exposed.ready,false);
+ assert.equal(result.exposed.usedTurn,2,'the removed top ability usage cannot overwrite the base ability usage');
  assert.deepEqual(result.exposed.buffs,[]);
  assert.equal(result.exposed.protectedUntilSource,undefined);
  assert.equal(result.entryTriggered,false);
