@@ -1,5 +1,6 @@
 import {UA56BT_VERIFIED} from './gurren-lagann.mjs';
-export const TTG_CARDS=UA56BT_VERIFIED;
+// Action Point illustration cards are not deck-building cards and must not appear in the card pool.
+export const TTG_CARDS=UA56BT_VERIFIED.filter(c=>c.type!=='action_point'&&c.type!=='ap'&&!/TTG-1-AP\d+/i.test(c.id));
 export const TTG_BY_ID=Object.fromEntries(TTG_CARDS.map(c=>[c.id,c]));
 export const emptyTtgDeck=()=>Object.fromEntries(TTG_CARDS.map(c=>[c.id,0]));
 export function normalizeTtgCounts(data){
