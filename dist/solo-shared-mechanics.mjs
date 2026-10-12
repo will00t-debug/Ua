@@ -60,3 +60,49 @@ export function claimRyuuEntry(s,{player,uid}){
  if(!canTriggerRyuu(s,{player,uid}))return false;
  s.sharedOnce??={};s.sharedOnce[player]??={};s.sharedOnce[player]['ryuu-entry']=s.turn;return true;
 }
+
+/**
+ * FAQ Q2026: the "from outside" Sung Jinwoo recovery is shared once per turn.
+ * Cost must be an actual [Shadow Army] card in the active player's hand.
+ * Changes hand/outside in one transaction after all prerequisites are checked.
+ */
+export function recoverOutsideSung(s,{player,sourceUid,costUid}){
+ if(!belongs(s,player)||s.active!==player||s.phase!=='main'||s.pending)throw Error('wrong phase or controller');
+ const p=s.players[player],i=p.outside.findIndex(c=>c.uid===sourceUid&&c.cardId==='SLG-1-019');
+ const j=p.hand.findIndex(c=>c.uid===costUid&&c.traits?.includes('影之軍團'));
+ if(i<0||j<0||s.sharedOnce?.[player]?.['sung019-recovery']===s.turn)throw Error('invalid Sung recovery');
+ s.sharedOnce??={};s.sharedOnce[player]??={};s.sharedOnce[player]['sung019-recovery']=s.turn;
+ const [cost]=p.hand.splice(j,1);p.outside.push(cost);
+ const [source]=p.outside.splice(p.outside.findIndex(c=>c.uid===sourceUid),1);p.hand.push(source);
+ return s;
+}
+/** FAQ Q2043–Q2046/Q2049–Q2052. Stripping the Raid top is NOT retiring
+ * that top or bringing the next base onto the field. No entry/exit triggers.
+ * The exposed base inherits REST/ACTIVE, never pre-Raid transient buffs.
+ */
+export function stripRaidTop(s,{player,topUid}){
+ if(!belongs(s,player))throw Error('invalid player');
+ const p=s.players[player],i=p.field.findIndex(c=>c.uid===topUid);
+ if(i<0)throw Error('not on field');
+ const top=p.field[i];
+ if(!top.stack?.length)throw Error('not Raid');
+ const [base,...others]=top.stack;
+ const ready=top.ready;
+ delete top.stack;
+ p.outside.push(top);
+ // All buffs on the underlying base from before its previous Raid are gone.
+ const next={...base,stack:others,ready,buffs:[],granted:[]};
+ p.field[i]=next;
+ return next;
+}
+/** FAQ Q2062: selection tax is paid ONLY for a chosen target. */
+export function selectEnemyTarget(s,{controller,targetUid,allowEmpty=false}){
+ if(!belongs(s,controller))throw Error('invalid controller');
+ if(targetUid==null){if(allowEmpty)return null;throw Error('target required');}
+ const enemy=s.players[1-controller].field.find(c=>c.uid===targetUid);
+ if(!enemy)throw Error('illegal target');
+ const cost=enemy.extraTargetAp||0;
+ if(s.players[controller].ap<cost)throw Error('not enough AP to select target');
+ s.players[controller].ap-=cost;
+ return enemy;
+}
