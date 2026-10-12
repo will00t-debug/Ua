@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {attachFacedown,visibleAttached,removeAttached,legalOutsideRaid,resolveOutsideRaid,canTriggerRyuu,claimRyuuEntry} from '../dist/solo-shared-mechanics.mjs';
+import {attachFacedown,visibleAttached,removeAttached,legalOutsideRaid,resolveOutsideRaid,canTriggerRyuu,claimRyuuEntry,recoverOutsideSung,stripRaidTop,selectEnemyTarget} from '../dist/solo-shared-mechanics.mjs';
 const fixture=()=>({turn:8,players:[
  {field:[],deck:[],outside:[],hand:[],removed:[],availableEnergy:4},
  {field:[],deck:[],outside:[],hand:[],removed:[],availableEnergy:4}
@@ -41,4 +41,37 @@ test('FAQ Q2063 all copies Ryuu share entry trigger per player per turn',()=>{
  assert.equal(claimRyuuEntry(s,{player:0,uid:'two'}),false);
  s.turn++;
  assert.equal(claimRyuuEntry(s,{player:0,uid:'two'}),true);
+});
+
+test('FAQ Q2026: only one outside Sung-019 may recover per turn, and cost is shadow-army card',()=>{
+ const s=fixture(),p=s.players[0];s.active=0;s.phase='main';s.turn=9;
+ p.outside.push(card('s1','SLG-1-019'),card('s2','SLG-1-019'));
+ p.hand.push(card('cost','SLG-1-029',{traits:['影之軍團']}),card('other','SLG-1-029',{traits:['影之軍團']}));
+ assert.throws(()=>recoverOutsideSung(s,{player:0,sourceUid:'s1',costUid:'bad'}));
+ recoverOutsideSung(s,{player:0,sourceUid:'s1',costUid:'cost'});
+ assert.equal(p.hand.some(c=>c.uid==='s1'),true);
+ assert.equal(p.outside.some(c=>c.uid==='cost'),true);
+ assert.throws(()=>recoverOutsideSung(s,{player:0,sourceUid:'s2',costUid:'other'}));
+ assert.equal(p.outside.some(c=>c.uid==='s2'),true);
+ s.turn=10;recoverOutsideSung(s,{player:0,sourceUid:'s2',costUid:'other'});
+ assert.equal(p.hand.some(c=>c.uid==='s2'),true);
+});
+test('FAQ Q2043–2046: removing a Raid top preserves base REST but does not revive old buffs or fire leave/entry triggers',()=>{
+ const s=fixture(),p=s.players[0];
+ p.field.push(card('top','SLG-1-047',{ready:false,stack:[card('base','SLG-1-015',{ready:true,buffs:[{bp:3000,turn:1}]})],buffs:[{bp:2000,turn:2}]}));
+ const bottom=stripRaidTop(s,{player:0,topUid:'top'});
+ assert.equal(bottom.uid,'base');assert.equal(bottom.ready,false);
+ assert.deepEqual(bottom.buffs,[]);assert.equal(p.outside[0].uid,'top');
+ assert.equal(p.outside[0].stack,undefined);
+ assert.equal(p.field.length,1);assert.equal(p.outside.length,1);
+ assert.throws(()=>stripRaidTop(s,{player:0,topUid:'base'}),/not Raid/);
+});
+test('FAQ Q2062 target selection AP tax: an unaffordable enemy cannot be selected without changing AP',()=>{
+ const s=fixture(),p=s.players[0];p.ap=0;
+ s.players[1].field.push(card('seema','SLG-1-070',{extraTargetAp:1}),card('free','SLG-1-060'));
+ assert.throws(()=>selectEnemyTarget(s,{controller:0,targetUid:'seema'}),/not enough/);
+ assert.equal(p.ap,0);
+ assert.equal(selectEnemyTarget(s,{controller:0,targetUid:'free'}).uid,'free');
+ p.ap=2;assert.equal(selectEnemyTarget(s,{controller:0,targetUid:'seema'}).uid,'seema');
+ assert.equal(p.ap,1);
 });
