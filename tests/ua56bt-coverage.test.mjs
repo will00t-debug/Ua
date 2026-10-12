@@ -28,7 +28,7 @@ test('audit cannot claim unrecorded card metadata or unsupported automation',()=
  }
  assert.equal(known.size,73);
  assert.deepEqual([...TTG_IMPLEMENTED_HAND_EVENTS].sort(),[...TTG_IMPLEMENTED_EVENT_TRIGGERS].sort(),'normal and life trigger implementations cover matching event set');
- assert.equal(rows.filter(r=>r.automation==='isolated_effect_only').length,6);
+ assert.equal(rows.filter(r=>r.automation==='isolated_effect_only').length,10);
  assert.equal(rows.filter(r=>r.status==='identified_metadata_incomplete').length,8);
  assert.equal(TTG_PENDING_CARDS.length,8);
  for(const c of TTG_PENDING_CARDS){assert.ok(!known.has(c.number));assert.equal(c.energy,null);assert.equal(c.ap,null);assert.equal(c.bp,null);assert.equal(c.gen,null);assert.equal(c.auto,false);}
