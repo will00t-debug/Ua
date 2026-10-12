@@ -86,7 +86,19 @@ export const TTG_PENDING_CARDS=[
     "auto": false,
     "metadataComplete": false,
     "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-057",
-    "reason": "Identity/rarity recorded from public listings; numeric fields and/or exact text require official verification."
+    "reason": "Identity/rarity recorded from public listings; numeric fields and/or exact text require official verification.",
+    "rarityDisputed": true,
+    "rarityVerification": "unverified-retailer-conflict",
+    "rarityEvidence": [
+      {
+        "value": "U",
+        "url": "https://store.shopping.yahoo.co.jp/lead-netstore/ua56bt282608mr057.html"
+      },
+      {
+        "value": "C",
+        "url": "https://www.merucarduniari.jp/product-list/2?page=4"
+      }
+    ]
   },
   {
     "id": "TTG-1-059",
