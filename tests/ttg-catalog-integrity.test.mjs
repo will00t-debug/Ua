@@ -4,8 +4,8 @@ import {UA56BT_VERIFIED} from '../dist/gurren-lagann.mjs';
 import {TTG_CARDS,TTG_BY_ID} from '../dist/ttg-builder.mjs';
 import {TITLES} from '../dist/title-registry.mjs';
 
-test('72 recorded UA56BT effect-card identities have complete typed data, not AP artwork',()=>{
- assert.equal(TTG_CARDS.length,72);
+test('73 recorded UA56BT effect-card identities have complete typed data, not AP artwork',()=>{
+ assert.equal(TTG_CARDS.length,73);
  const seen=new Set();
  for(const c of TTG_CARDS){
   assert.match(c.id,/^TTG-1-\d{3}$/,c.id);
@@ -28,12 +28,12 @@ test('72 recorded UA56BT effect-card identities have complete typed data, not AP
   assert.ok(c.source.startsWith('https://www.unionarena-tcg.com/'),c.number);
   assert.equal(TTG_BY_ID[c.id].id,c.id);
  }
- assert.equal(UA56BT_VERIFIED.length,72);
+ assert.equal(UA56BT_VERIFIED.length,73);
 });
 test('TTG identity registry stays separate from BLEACH card identifiers and AP art',()=>{
  const ttg=TITLES.find(x=>x.id==='gurren-lagann');
  const bleach=TITLES.find(x=>x.id==='bleach');
- assert.equal(ttg.cards.length,72);
+ assert.equal(ttg.cards.length,73);
  assert.equal(ttg.playable,false,'do not unlock unfinished AI gameplay');
  for(const c of ttg.cards)assert.ok(!bleach.cards.some(x=>x.id===c.id),c.id);
  assert.ok(ttg.cards.every(c=>!c.id.includes('-AP')));
