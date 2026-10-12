@@ -313,6 +313,94 @@ const raw=[
   "在場及場外以外的區域，己方場上每有1張影之軍團，需求能源減少1。RAID水篠旬，IMPACT1。能源線中己方攻擊結束後可與前線影之軍團交換位置。登場時ACTIVE己方前線與能源線各最多1張影之軍團，本回合獲狙擊。"
  ],
  [
+  "023",
+  "水篠潤一郎",
+  "水篠 潤一郎",
+  "purple",
+  4,
+  1,
+  4000,
+  1,
+  "U",
+  "active",
+  [],
+  "兩次阻擋：本回合第一次阻擋時ACTIVE。"
+ ],
+ [
+  "024",
+  "道門泰星",
+  "道門 泰星",
+  "purple",
+  1,
+  1,
+  2500,
+  1,
+  "C",
+  null,
+  [],
+  "本角色不會被BP4000以上角色阻擋。退場時由對手選擇其場上最多1個角色，賦予本回合不會被BP4000以上角色阻擋。"
+ ],
+ [
+  "025",
+  "觀月繪里",
+  "観月 絵里",
+  "purple",
+  3,
+  2,
+  2000,
+  2,
+  "C",
+  "active",
+  [],
+  "登場時選一項：抽2張；或抽1張，從場外回收最多1張需求能源3以下且無特徵的角色。"
+ ],
+ [
+  "026",
+  "諸菱賢太",
+  "諸菱 賢太",
+  "purple",
+  1,
+  1,
+  1500,
+  2,
+  "U",
+  null,
+  [],
+  "登場時讓另一己方需求能源1以下角色返回手牌；沒有其他合法角色時則讓自己返回手牌。"
+ ],
+ [
+  "027",
+  "艾恩",
+  "アイアン",
+  "purple",
+  2,
+  1,
+  3000,
+  1,
+  "C",
+  null,
+  [
+   "影之軍團"
+  ],
+  "自己的回合中，每有1張原本BP2500以下且REST的己方影之軍團角色，BP+500；場域不計入。"
+ ],
+ [
+  "028",
+  "伊格利特",
+  "イグリット",
+  "purple",
+  4,
+  2,
+  4000,
+  1,
+  "R",
+  "get",
+  [
+   "影之軍團"
+  ],
+  "以ACTIVE登場。登場時可從手牌或場外派遣最多1張影之兵士，以REST登場。"
+ ],
+ [
   "029",
   "凱賽爾",
   "カイセル",
@@ -327,6 +415,54 @@ const raw=[
    "影之軍團"
   ],
   "己方原本BP2000以下的影之軍團角色攻擊時，可將ACTIVE的自己改為REST並選1項：攻擊者本回合不能被BP4000以上角色阻擋，或不會被敵方效果選取。同名卡每項選擇全場共用每回合一次。"
+ ],
+ [
+  "030",
+  "影之兵士",
+  "影の兵士",
+  "purple",
+  0,
+  1,
+  1500,
+  1,
+  "C",
+  "draw",
+  [
+   "影之軍團"
+  ],
+  "同卡號牌組最多12張。登場時若己方有其他影之軍團，查看牌庫頂2張，可將最多1張影之軍團或水篠旬送場外，其餘按指定順序放回牌庫頂。"
+ ],
+ [
+  "031",
+  "奇巴",
+  "キバ",
+  "purple",
+  3,
+  1,
+  2500,
+  2,
+  "U",
+  "active",
+  [
+   "影之軍團"
+  ],
+  "己方原本BP2000以下影之軍團攻擊時，可REST自己並選一項：攻擊角色本回合BP+1500；或抽1張並棄1張。同名角色每項模式全場共用每回合一次。"
+ ],
+ [
+  "032",
+  "坦克",
+  "タンク",
+  "purple",
+  1,
+  1,
+  2000,
+  1,
+  "U",
+  "active",
+  [
+   "影之軍團"
+  ],
+  "IMPACT無效。"
  ],
  [
   "033",
@@ -359,6 +495,120 @@ const raw=[
   "場域：以ACTIVE登場。主要階段每回合一次可REST並將牌庫頂1張送場外；另一啟動能力須在支付成本前已有至少20張場外卡，可REST並將手牌1張送場外，支付AP使用場外符合能源需求的命之神水，結算後改送除外區。"
  ],
  [
+  "035",
+  "技能：君主之領域",
+  "スキル：君主の領域",
+  "purple",
+  3,
+  1,
+  null,
+  2,
+  "C",
+  "get",
+  [
+   "影之軍團"
+  ],
+  "場域以ACTIVE登場；主要階段REST，己方所有影之軍團本回合BP+500，若己方有5張以上影之軍團，改為BP+1000。"
+ ],
+ [
+  "036",
+  "我想追上那個人",
+  "あの人に追いつきたい",
+  "purple",
+  3,
+  1,
+  null,
+  0,
+  "C",
+  "active",
+  [],
+  "事件：抽3張後將2張手牌送場外。"
+ ],
+ [
+  "037",
+  "命之神水",
+  "命の神水",
+  "purple",
+  4,
+  1,
+  null,
+  0,
+  "C",
+  "draw",
+  [],
+  "事件：可從場外回收最多1張原本BP4000以下的角色，再抽1張。"
+ ],
+ [
+  "038",
+  "站起來",
+  "起きろ",
+  "purple",
+  3,
+  1,
+  null,
+  0,
+  "U",
+  "final",
+  [],
+  "事件：可將最多2張己方AP卡改為ACTIVE。"
+ ],
+ [
+  "039",
+  "影之君主",
+  "影の君主",
+  "purple",
+  5,
+  1,
+  null,
+  0,
+  "U",
+  "special",
+  [],
+  "事件二選一：從場外將最多1張影之軍團角色以ACTIVE登場；或從場外將最多2張需求能源3以下影之軍團角色以REST登場。"
+ ],
+ [
+  "040",
+  "技能：亂刀",
+  "スキル：乱刀",
+  "purple",
+  4,
+  1,
+  null,
+  0,
+  "U",
+  "special",
+  [],
+  "事件：令一個敵方前線BP3000以下角色退場；己方存在水篠旬時改為BP5000以下。"
+ ],
+ [
+  "041",
+  "韓頌伊",
+  "朝比奈 りん",
+  "green",
+  2,
+  1,
+  2500,
+  1,
+  "U",
+  null,
+  [],
+  "處於ACTIVE時額外產生1綠能源。"
+ ],
+ [
+  "042",
+  "馬渕勳",
+  "馬渕 勲",
+  "green",
+  0,
+  1,
+  1000,
+  1,
+  "C",
+  null,
+  [],
+  "主要階段每回合一次REST自己，額外產生1綠能源，主要階段結束時退場。依2026-04-17官方勘誤採正確卡名。"
+ ],
+ [
   "067",
   "加奈",
   "カナ",
@@ -378,7 +628,7 @@ const raw=[
 ];
 export const SOLO_LEVELING_CARDS=raw.map(([suffix,name,nameJa,color,energy,ap,bp,gen,rarity,trigger,traits,effect])=>{
  const id='SLG-1-'+suffix,number='UA51BT/'+id;
- return {id,identity:id,number,name,nameJa,color,energy,ap,bp,gen,type:id==='SLG-1-034'?'field':'character',traits,rarity,trigger,effect,sets:['ua51bt'],title:'solo-leveling',auto:false,source:root+encodeURIComponent(number),image:null,artStatus:'placeholder',auditStatus:'card-data-only'};
+ return {id,identity:id,number,name,nameJa,color,energy,ap,bp,gen,type:['SLG-1-034','SLG-1-035'].includes(id)?'field':['SLG-1-036','SLG-1-037','SLG-1-038','SLG-1-039','SLG-1-040'].includes(id)?'event':'character',traits,rarity,trigger,effect,sets:['ua51bt'],title:'solo-leveling',auto:false,source:root+encodeURIComponent(number),image:null,aliases:id==='SLG-1-019'?['UAPR/SLG-1-019']:id==='SLG-1-022'?['UAPR/SLG-1-022']:id==='SLG-1-030'?['UAPR/SLG-1-030']:[],maxCopies:id==='SLG-1-030'?12:4,artStatus:'placeholder',auditStatus:'card-data-only'};
 });
 export const SOLO_LEVELING_EXPECTED_NORMAL_COUNT=80;
 export const SOLO_LEVELING_MISSING_NUMBERS=Array.from({length:80},(_,i)=>'SLG-1-'+String(i+1).padStart(3,'0')).filter(id=>!SOLO_LEVELING_CARDS.some(c=>c.id===id));
