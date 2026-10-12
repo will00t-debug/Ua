@@ -56,6 +56,7 @@ for(const source of SAO_OFFICIAL_CARDS){
  const translation=known||source.nameJa;
  canonical.set(source.id,{
   ...source,name:translation,
+  raid:source.effectJa.match(/【レイド】〈([^〉]+)〉/)?.[1]||null,
   effect:local?.effect&&local.effect!==local.nameJa?local.effect:source.effectJa,
   translationStatus:known?'translated':'pending',
   sets:[source.set],printings:[{number:source.number,set:source.set,source:source.source,image:source.image}],
@@ -63,6 +64,21 @@ for(const source of SAO_OFFICIAL_CARDS){
  });
 }
 SAO_CARDS.splice(0,SAO_CARDS.length,...[...canonical.values()].sort((a,b)=>a.id.localeCompare(b.id)));
+
+/* Tested declarative abilities. Entries not in this map stay pending.
+   These profiles are run through the common engine in tests; final SAO
+   match enablement is blocked until the remaining catalog is covered. */
+export const SAO_IMPLEMENTED_RULES={
+ 'SAO-1-001':{step:true},
+ 'SAO-1-004':{entry:[{op:'buff',target:'own',other:true,amount:1000,optional:true}]},
+ 'SAO-1-055':{entry:[{op:'drawDiscard',draw:1,discard:1}]},
+ 'SAO-2-034':{attack:[{op:'mill',count:1,optional:true}]}
+};
+for(const c of SAO_CARDS)if(SAO_IMPLEMENTED_RULES[c.id]){
+ c.rules=SAO_IMPLEMENTED_RULES[c.id];
+ c.engineImplemented=true;
+}
+
 export const SAO_COVERAGE={printings:SAO_OFFICIAL_CARDS.length,uniqueCards:SAO_CARDS.length,products:Object.fromEntries(SAO_PRODUCTS.map(p=>[p.id,SAO_OFFICIAL_CARDS.filter(c=>c.set===p.id).length]))};
 export const SAO_BY_ID=Object.fromEntries(SAO_CARDS.map(c=>[c.id,c]));
 export function saoDeckIssues(counts){const entries=Object.entries(counts||{}).filter(([,n])=>n>0);const errors=[];let total=0;for(const [id,n] of entries){if(!SAO_BY_ID[id]||!Number.isInteger(n)||n<0||n>4)errors.push('卡號錯誤或超過 4 張：'+id);total+=n;}if(total!==50)errors.push('需要 50 張，目前 '+total+' 張。');errors.push('SAO 規則與完整卡表尚未完成，目前只能建立草稿，不能對戰。');return errors;}
