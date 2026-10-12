@@ -27,6 +27,8 @@
 - `dist/solo-phase-effects.mjs`：個別卡 BP/能源被動、登場抽棄、手牌支付、看牌庫頂選擇、REST/退場、回合結束及部分不可ACTIVE。
 - `dist/solo-shared-mechanics.mjs`：裏向卡視角隱藏、從場外Raid基本驗證、同名觸發、移除Raid頂卡保留基底狀態、付AP目標。
 - `dist/solo-decks.mjs`：50張牌組驗證、異圖/重印與每卡最大數量，並阻止尚未支援的效果卡開局。
+- `dist/solo-event-rules.mjs`：部分紫／綠事件卡的實際支付AP/需求能源、抽棄牌、AP回復、目標退場、Raid名稱類別與附加能力選擇。尚不包含所有事件、生命Trigger整合或主遊戲操作。
+- `dist/solo-phase-effects.mjs` 同時新增影之兵士查看牌庫頂2張並選擇去向，以及 Q2070 原本 BP／REST 數量排除場域的測試。
 - `tests/solo-*.test.mjs`：上述效果的成功／失敗案例及 UID/區域守恆；**尚不涵蓋全部80張**。
 
 以上均為**分離式結算器**，尚未接入玩家出牌／攻擊／生命Trigger／Raid／UI／AI主流程，不能把單元結算成功當成正式遊戲自動判定。
