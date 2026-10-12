@@ -1,0 +1,93 @@
+{
+  "fetchedAt": "2026-10-12T16:27:20.288Z",
+  "counts": {
+    "UA15BT": 100,
+    "EX08BT": 74,
+    "UA15ST": 18,
+    "UAPR": 1
+  },
+  "unique": 183,
+  "duplicates": [
+    {
+      "id": "SAO-1-036",
+      "prints": [
+        "UA15BT/SAO-1-036",
+        "UA15ST/SAO-1-036"
+      ],
+      "sameStats": true
+    },
+    {
+      "id": "SAO-1-038",
+      "prints": [
+        "UA15BT/SAO-1-038",
+        "UA15ST/SAO-1-038"
+      ],
+      "sameStats": true
+    },
+    {
+      "id": "SAO-1-039",
+      "prints": [
+        "UA15BT/SAO-1-039",
+        "UA15ST/SAO-1-039"
+      ],
+      "sameStats": true
+    },
+    {
+      "id": "SAO-1-042",
+      "prints": [
+        "UA15BT/SAO-1-042",
+        "UA15ST/SAO-1-042"
+      ],
+      "sameStats": true
+    },
+    {
+      "id": "SAO-1-045",
+      "prints": [
+        "UA15BT/SAO-1-045",
+        "UA15ST/SAO-1-045"
+      ],
+      "sameStats": true
+    },
+    {
+      "id": "SAO-1-046",
+      "prints": [
+        "UA15BT/SAO-1-046",
+        "UA15ST/SAO-1-046"
+      ],
+      "sameStats": true
+    },
+    {
+      "id": "SAO-1-047",
+      "prints": [
+        "UA15BT/SAO-1-047",
+        "UA15ST/SAO-1-047"
+      ],
+      "sameStats": true
+    },
+    {
+      "id": "SAO-1-063",
+      "prints": [
+        "UA15BT/SAO-1-063",
+        "UA15ST/SAO-1-063"
+      ],
+      "sameStats": true
+    },
+    {
+      "id": "SAO-1-065",
+      "prints": [
+        "UA15BT/SAO-1-065",
+        "UA15ST/SAO-1-065"
+      ],
+      "sameStats": true
+    },
+    {
+      "id": "SAO-1-101",
+      "prints": [
+        "UA15ST/SAO-1-101",
+        "UAPR/SAO-1-101"
+      ],
+      "sameStats": true
+    }
+  ],
+  "fetchErrors": []
+}
