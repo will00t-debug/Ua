@@ -23,6 +23,9 @@ test('eight partially identified TTG cards are read-only and never constructible
  const {TTG_PENDING_CARDS}=await import('../dist/ttg-pending.mjs');
  const {TTG_BY_ID,normalizeTtgCounts}=await import('../dist/ttg-builder.mjs');
  assert.equal(TTG_PENDING_CARDS.length,8);
+ assert.equal(TTG_PENDING_CARDS.filter(c=>c.rarityDisputed).length,1);
+ assert.equal(TTG_PENDING_CARDS.find(c=>c.id==='TTG-1-057').rarityVerification,'unverified-retailer-conflict');
+ assert.match(app,/稀有度來源不一致/);
  assert.match(app,/TTG_PENDING_CARDS\.filter/);
  assert.match(app,/資料待核對・不可放入牌組/);
  assert.match(app,/能源 —/);
