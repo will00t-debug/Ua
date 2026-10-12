@@ -1,3 +1,4 @@
+import {SAO_OFFICIAL_CARDS} from './sao-official-import.mjs';
 // Sword Art Online: official-source-verified initial catalog. Non-playable until rule implementation.
 export const SAO_CARDS=[
  {id:'SAO-1-004',identity:'SAO-1-004',number:'UA15BT/SAO-1-004',name:'尤吉歐',nameJa:'ユージオ',title:'sword-art-online',set:'UA15BT',color:'yellow',energy:0,ap:1,bp:500,gen:1,type:'character',rarity:'C',trigger:'active',effect:'【登場時】可選擇自己場上其他角色 1 張，本回合 BP +1000。',auto:false,source:'https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA15BT%2FSAO-1-004'},
@@ -29,5 +30,39 @@ const LIMITED_VERIFIED=[
 ];
 SAO_CARDS.push(...LIMITED_VERIFIED);
 
+
+// Official Japanese printed data is authoritative. Keep previously reviewed
+// Traditional Chinese labels as translations only; never override JP statistics.
+const chineseLabels={
+ 'キリト':'桐人','アスナ':'亞絲娜','ユージオ':'尤吉歐','アリス':'愛麗絲',
+ 'シノン':'詩乃','リーファ':'莉法','ユウキ':'有紀','ユイ':'結衣',
+ 'ミト':'米特','エイジ':'艾吉','シリカ':'西莉卡','リズベット':'莉茲貝特',
+ 'クライン':'克萊因','エギル':'艾基爾','サチ':'幸',
+ 'アドミニストレータ':'最高祭司',
+ 'ベルクーリ・シンセシス・ワン':'貝爾庫利・整合騎士一'
+};
+const localTranslations=new Map(SAO_CARDS.map(c=>[c.id,c]));
+const canonical=new Map();
+for(const source of SAO_OFFICIAL_CARDS){
+ const record=canonical.get(source.id);
+ if(record){
+  const comparable=['color','energy','ap','bp','gen','type','effectJa','trigger'];
+  if(comparable.some(k=>record[k]!==source[k]))throw new Error('SAO reprint differs from original: '+source.id+' '+source.number);
+  record.printings.push({number:source.number,set:source.set,source:source.source,image:source.image});
+  if(!record.sets.includes(source.set))record.sets.push(source.set);
+  continue;
+ }
+ const local=localTranslations.get(source.id),known=local?.name&&local.name!==local.nameJa?local.name:chineseLabels[source.nameJa];
+ const translation=known||source.nameJa;
+ canonical.set(source.id,{
+  ...source,name:translation,
+  effect:local?.effect&&local.effect!==local.nameJa?local.effect:source.effectJa,
+  translationStatus:known?'translated':'pending',
+  sets:[source.set],printings:[{number:source.number,set:source.set,source:source.source,image:source.image}],
+  auto:false, // Auto effects must be proven by engine & per-card regression tests.
+ });
+}
+SAO_CARDS.splice(0,SAO_CARDS.length,...[...canonical.values()].sort((a,b)=>a.id.localeCompare(b.id)));
+export const SAO_COVERAGE={printings:SAO_OFFICIAL_CARDS.length,uniqueCards:SAO_CARDS.length,products:Object.fromEntries(SAO_PRODUCTS.map(p=>[p.id,SAO_OFFICIAL_CARDS.filter(c=>c.set===p.id).length]))};
 export const SAO_BY_ID=Object.fromEntries(SAO_CARDS.map(c=>[c.id,c]));
 export function saoDeckIssues(counts){const entries=Object.entries(counts||{}).filter(([,n])=>n>0);const errors=[];let total=0;for(const [id,n] of entries){if(!SAO_BY_ID[id]||!Number.isInteger(n)||n<0||n>4)errors.push('卡號錯誤或超過 4 張：'+id);total+=n;}if(total!==50)errors.push('需要 50 張，目前 '+total+' 張。');errors.push('SAO 規則與完整卡表尚未完成，目前只能建立草稿，不能對戰。');return errors;}
