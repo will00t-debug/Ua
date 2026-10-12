@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {TITLES,titleOfCard,validateTitleMembership} from '../dist/title-registry.mjs';
-import {SAO_CARDS,SAO_BY_ID,SAO_PRODUCTS,saoDeckIssues} from '../dist/sao-cards.mjs';
+import {SAO_CARDS,SAO_BY_ID,SAO_PRODUCTS,SAO_COVERAGE,saoDeckIssues} from '../dist/sao-cards.mjs';
 test('SAO registry is isolated from BLEACH and TTG',()=>{
  const sao=TITLES.find(x=>x.id==='sword-art-online');
  assert.ok(sao);assert.equal(sao.playable,false);
@@ -13,10 +13,10 @@ test('SAO verified cards have distinct numbers and source URLs',()=>{
  const ids=new Set(SAO_CARDS.map(c=>c.id));
  assert.equal(ids.size,SAO_CARDS.length);
  for(const c of SAO_CARDS){
-  assert.match(c.number,/^(UA15BT\/SAO-1|EX08BT\/SAO-2|UAPR\/SAO-1)-\d{3}$/);
+  assert.match(c.number,/^(UA15BT\/SAO-1|EX08BT\/SAO-2|UA15ST\/SAO-1|UAPR\/SAO-1)-\d{3}$/);
   assert.match(c.source,/unionarena-tcg\.com\/jp\/cardlist/);
   assert.equal(c.title,'sword-art-online');
-  assert.ok(typeof c.effect==='string'&&c.effect.length>0);
+  assert.ok(typeof c.effect==='string'&&typeof c.effectJa==='string');
  }
 });
 test('SAO deck draft enforces 4 copies and does not permit simulation',()=>{
@@ -56,10 +56,26 @@ test('official product coverage is explicit and incomplete records are not marke
 test('exclusive official game bonus is separately registered without AP art',()=>{
  const card=SAO_BY_ID['SAO-1-101'];
  assert.ok(card);
- assert.equal(card.number,'UAPR/SAO-1-101');
+ assert.ok(card.printings.some(p=>p.number==='UAPR/SAO-1-101'));
+ assert.ok(card.printings.some(p=>p.number==='UA15ST/SAO-1-101'));
  assert.equal(card.ap,1);
  assert.equal(card.auto,false);
  assert.match(card.effect,/IMPACT/);
  assert.equal(SAO_CARDS.filter(c=>c.identity==='SAO-1-101').length,1);
  assert.ok(SAO_CARDS.every(c=>!/-AP\\d+/i.test(c.number)));
+});
+
+test('official import has exact base product counts and detects unchanged reprints',()=>{
+ assert.equal(SAO_COVERAGE.printings,193);
+ assert.equal(SAO_COVERAGE.uniqueCards,183);
+ assert.deepEqual([SAO_COVERAGE.products.UA15BT,SAO_COVERAGE.products.EX08BT,SAO_COVERAGE.products.UA15ST],[100,74,18]);
+ const seen=new Set();
+ for(const card of SAO_CARDS){
+  assert.ok(!seen.has(card.id));seen.add(card.id);
+  assert.ok(card.printings.some(p=>p.number===card.number));
+  assert.ok(card.image.startsWith('https://www.unionarena-tcg.com/jp/images/cardlist/card/'));
+  assert.equal(card.auto,false);
+ }
+ assert.equal(SAO_BY_ID['SAO-1-036'].printings.length,2);
+ assert.equal(SAO_BY_ID['SAO-1-101'].printings.length,2);
 });
