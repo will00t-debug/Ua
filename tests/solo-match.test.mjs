@@ -7,7 +7,7 @@ test('training deck uses exactly 50 legitimate green cards, and rejects every un
  const size=Object.values(SOLO_TRAINING_PRESET).reduce((a,b)=>a+b,0);assert.equal(size,50);
  assert.equal(SOLO_MATCH_SUPPORTED.length,25);
  assert.match(soloTrainingDeckIssues({'SLG-1-030':12,'SLG-1-047':4}).join(';'),/50/);
- assert.match(soloTrainingDeckIssues({...SOLO_TRAINING_PRESET,'SLG-1-030':1}).join(';'),/未接入/);
+ assert.match(soloTrainingDeckIssues({...SOLO_TRAINING_PRESET,'SLG-1-047':1}).join(';'),/未接入/);
 });
 test('opening both players has 7 hand, 7 life, no duplicate UIDs, first-turn AP 1, source-phase transitions',()=>{
  let s=newSoloTrainingMatch({seed:74});
