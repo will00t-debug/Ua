@@ -5,8 +5,8 @@ import {TTG_CARDS,normalizeTtgCounts,ttgDeckIssues} from '../dist/ttg-builder.mj
 
 test('UA56BT catalogue contains newly verified official character entries',()=>{
  const ids=new Set(TTG_CARDS.map(c=>c.id));
- for(const id of ['TTG-1-001','TTG-1-010','TTG-1-027','TTG-1-029','TTG-1-046','TTG-1-074','TTG-1-081'])assert.ok(ids.has(id),id);
- assert.equal(TTG_CARDS.length,7);
+ for(const id of ['TTG-1-001','TTG-1-009','TTG-1-010','TTG-1-011','TTG-1-015','TTG-1-016','TTG-1-020','TTG-1-027','TTG-1-029','TTG-1-046','TTG-1-056','TTG-1-058','TTG-1-061','TTG-1-074','TTG-1-081'])assert.ok(ids.has(id),id);
+ assert.equal(TTG_CARDS.length,15);
  assert.equal(new Set(TTG_CARDS.map(c=>c.number)).size,TTG_CARDS.length);
 });
 test('Action Point artwork cards are excluded from deck-builder card pool',()=>{
