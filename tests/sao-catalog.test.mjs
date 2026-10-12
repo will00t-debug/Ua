@@ -66,7 +66,7 @@ test('exclusive official game bonus is separately registered without AP art',()=
 });
 
 test('official import has exact base product counts and detects unchanged reprints',()=>{
- assert.equal(SAO_COVERAGE.printings,193);
+ assert.equal(SAO_COVERAGE.printings,202);
  assert.equal(SAO_COVERAGE.uniqueCards,183);
  assert.deepEqual([SAO_COVERAGE.products.UA15BT,SAO_COVERAGE.products.EX08BT,SAO_COVERAGE.products.UA15ST],[100,74,18]);
  const seen=new Set();
@@ -76,6 +76,14 @@ test('official import has exact base product counts and detects unchanged reprin
   assert.ok(card.image.startsWith('https://www.unionarena-tcg.com/jp/images/cardlist/card/'));
   assert.equal(card.auto,false);
  }
- assert.equal(SAO_BY_ID['SAO-1-036'].printings.length,2);
+ assert.equal(SAO_BY_ID['SAO-1-036'].printings.length,3);
  assert.equal(SAO_BY_ID['SAO-1-101'].printings.length,2);
+});
+
+test('UAPR festival, ONE BATTLE CUP and special prints reuse their canonical playable codes',()=>{
+ const printings=SAO_CARDS.flatMap(c=>c.printings);
+ assert.equal(printings.filter(p=>p.set==='UAPR').length,10);
+ assert.ok(SAO_BY_ID['SAO-1-091'].printings.some(p=>p.number==='UAPR/SAO-1-091'));
+ assert.ok(SAO_BY_ID['SAO-2-042'].printings.some(p=>p.number==='UAPR/SAO-2-042'));
+ assert.ok(SAO_BY_ID['SAO-2-052'].printings.some(p=>p.number==='UAPR/SAO-2-052'));
 });
