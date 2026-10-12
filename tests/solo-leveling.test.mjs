@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import {SOLO_LEVELING_CARDS,SOLO_LEVELING_MISSING_NUMBERS} from '../dist/solo-leveling.mjs';
 import {TITLES,titleOfCard,validateTitleMembership} from '../dist/title-registry.mjs';
 test('UA51BT catalog is distinct, traced to official card URLs and never claims unimplemented effects',()=>{
- assert.equal(SOLO_LEVELING_CARDS.length,26);
- assert.equal(SOLO_LEVELING_MISSING_NUMBERS.length,54);
+ assert.equal(SOLO_LEVELING_CARDS.length,43);
+ assert.equal(SOLO_LEVELING_MISSING_NUMBERS.length,37);
  assert.equal(new Set(SOLO_LEVELING_CARDS.map(c=>c.id)).size,SOLO_LEVELING_CARDS.length);
  for(const c of SOLO_LEVELING_CARDS){
   assert.match(c.number,/^UA51BT\/SLG-1-\d{3}$/);
