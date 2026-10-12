@@ -1,0 +1,89 @@
+name: Import BLEACH Arena v9.1.1
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/import-v911.yml']
+permissions:
+  contents: write
+concurrency:
+  group: bleach-v911-initial-import
+  cancel-in-progress: false
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Restore and verify original source files and card images
+        run: |
+          python <<'PY'
+          import concurrent.futures, hashlib, json, pathlib, time, urllib.parse, urllib.request, zipfile
+          root = pathlib.Path.cwd()
+          manifest = json.loads((root / '.github/v911-images.json').read_text())
+          archive = root / '.github/v911-sources.zip'
+          if hashlib.sha256(archive.read_bytes()).hexdigest() != manifest['sourceArchiveSha256']:
+              raise RuntimeError('Source archive hash mismatch')
+          expected = {item['path']: item for item in manifest['files']}
+          def git_hash(data):
+              return hashlib.sha1(b'blob ' + str(len(data)).encode() + b'\0' + data).hexdigest()
+          with zipfile.ZipFile(archive) as source:
+              for name in source.namelist():
+                  path = pathlib.PurePosixPath(name)
+                  if path.is_absolute() or '..' in path.parts or name not in expected:
+                      raise RuntimeError('Unexpected archive path: ' + name)
+                  data = source.read(name)
+                  if git_hash(data) != expected[name]['sha']:
+                      raise RuntimeError('Source hash mismatch: ' + name)
+                  destination = root / name
+                  if destination.exists() and destination.read_bytes() != data:
+                      raise RuntimeError('Existing file differs from ZIP: ' + name)
+                  destination.parent.mkdir(parents=True, exist_ok=True)
+                  destination.write_bytes(data)
+          def restore(item):
+              destination = root / item['path']
+              if destination.exists():
+                  if git_hash(destination.read_bytes()) != item['sha']:
+                      raise RuntimeError('Existing file hash mismatch: ' + item['path'])
+                  return item['path']
+              url = item.get('url')
+              if not url:
+                  raise RuntimeError('Missing source: ' + item['path'])
+              parsed = urllib.parse.urlparse(url)
+              if parsed.scheme != 'https' or parsed.hostname != 'www.unionarena-tcg.com':
+                  raise RuntimeError('Unexpected image host')
+              for attempt in range(3):
+                  try:
+                      request = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+                      with urllib.request.urlopen(request, timeout=35) as response:
+                          data = response.read(item['bytes'] + 1)
+                      if len(data) != item['bytes'] or git_hash(data) != item['sha']:
+                          raise RuntimeError('Official image differs from ZIP: ' + item['path'])
+                      destination.parent.mkdir(parents=True, exist_ok=True)
+                      destination.write_bytes(data)
+                      return item['path']
+                  except Exception:
+                      if attempt == 2:
+                          raise
+                      time.sleep(2 * (attempt + 1))
+          with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
+              for count, path in enumerate(pool.map(restore, manifest['files']), 1):
+                  if count % 25 == 0:
+                      print(f'Verified {count}/{len(expected)} files', flush=True)
+          print(f'All {len(expected)} source and image files match the original ZIP')
+          PY
+      - name: Run Node 22 regression tests
+        run: |
+          npm test
+          test -s dist/index.html
+          test -s dist/app.mjs
+          test -s dist/engine.mjs
+      - name: Commit verified project to main
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add --all
+          git commit -m 'Import complete BLEACH Arena v9.1.1 sources and card assets'
+          git push origin HEAD:main
