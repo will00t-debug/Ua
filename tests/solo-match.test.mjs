@@ -79,3 +79,33 @@ test('Shizuku green Raid turns base into stack, consumes one AP and stays UID-co
  assert.equal(soloTrainingLegalActions(s).some(a=>a.type==='raid'&&a.uid===raid.uid),false);
  assertSoloTrainingMatch(s);
 });
+
+test('life RAID Trigger can choose legal free Raid on own Shizuku base, or add card to hand',()=>{
+ const setup=()=>{
+  let s=newSoloTrainingMatch({decks:[SOLO_TRAINING_PRESET,SOLO_TRAINING_PRESET],seed:789});
+  const take=(p,id)=>{for(const key of ['hand','deck','life']){const i=p[key].findIndex(c=>c.cardId===id);if(i>=0)return p[key].splice(i,1)[0];}throw Error('missing '+id);};
+  const attacker=take(s.players[0],'SLG-1-045');Object.assign(attacker,{owner:0,line:'front',slot:0,ready:true});
+  s.players[0].front[0]=attacker;s.phase='attack';
+  const defender=s.players[1],base=take(defender,'SLG-1-055');
+  Object.assign(base,{owner:1,line:'energy',slot:0,ready:true});defender.energy[0]=base;
+  for(let i=1;i<4;i++){const e=take(defender,'SLG-1-045');Object.assign(e,{owner:1,line:'energy',slot:i,ready:true});defender.energy[i]=e;}
+  const raid=take(defender,'SLG-1-058'),prior=defender.life[0];
+  defender.life[0]=raid;if(prior)defender.deck.push(prior);
+  assertSoloTrainingMatch(s);
+  s=soloTrainingDispatch(s,{type:'attack',uid:attacker.uid});
+  assert.equal(s.pending.kind,'raidTrigger');assert.equal(s.pending.p,1);
+  return {s,raid,base};
+ };
+ const yes=setup();const legal=soloTrainingLegalActions(yes.s),raidChoice=legal.find(a=>a.uid===yes.base.uid&&a.line==='energy');
+ assert.ok(raidChoice);
+ const beforeAp=yes.s.players[1].ap;
+ const after=soloTrainingDispatch(yes.s,raidChoice);
+ assert.equal(after.players[1].ap,beforeAp);
+ assert.equal(after.players[1].energy[0].uid,yes.raid.uid);
+ assert.equal(after.players[1].energy[0].stack[0].uid,yes.base.uid);
+ assert.equal(after.pending,null);assertSoloTrainingMatch(after);
+ const no=setup();
+ const kept=soloTrainingDispatch(no.s,{type:'choose',uid:null});
+ assert.ok(kept.players[1].hand.some(c=>c.uid===no.raid.uid));
+ assert.equal(kept.pending,null);assertSoloTrainingMatch(kept);
+});
