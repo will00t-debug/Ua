@@ -38,11 +38,13 @@ export const TTG_PENDING_CARDS=[
     "gen": null,
     "traits": null,
     "trigger": null,
-    "effect": "己方回合且能源達6以上時，BP+1000。",
+    "effect": "自己回合且己方能源達 6 以上時，此角色 BP+1000。",
     "auto": false,
     "metadataComplete": false,
     "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-006",
-    "reason": "Identity/rarity recorded from public listings; numeric fields and/or exact text require official verification."
+    "reason": "Identity/rarity recorded from public listings; numeric fields and/or exact text require official verification.",
+    "effectVerification": "fan-transcription-not-official-full-metadata",
+    "effectTranscriptionSource": "https://rugiacreation.com/ua/search?Name=TW"
   },
   {
     "id": "TTG-1-049",
@@ -60,11 +62,13 @@ export const TTG_PENDING_CARDS=[
     "gen": null,
     "traits": null,
     "trigger": null,
-    "effect": "登場時將己方場上能源需求1以下的其他角色返回手牌；若沒有返回，將自己返回手牌。",
+    "effect": "登場時，將己方場上另 1 張需求能源 1 以下角色返回手牌；若沒有返回其他角色，將此角色返回手牌。",
     "auto": false,
     "metadataComplete": false,
     "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-049",
-    "reason": "Identity/rarity recorded from public listings; numeric fields and/or exact text require official verification."
+    "reason": "Identity/rarity recorded from public listings; numeric fields and/or exact text require official verification.",
+    "effectVerification": "fan-transcription-not-official-full-metadata",
+    "effectTranscriptionSource": "https://rugiacreation.com/ua/search?Name=TW"
   },
   {
     "id": "TTG-1-057",
@@ -116,11 +120,13 @@ export const TTG_PENDING_CARDS=[
     "gen": null,
     "traits": null,
     "trigger": null,
-    "effect": "與卡米那互斥登場；主要階段 REST 自己，讓己方西蒙或以西蒙為 Raid 底板的角色 BP+1000。",
+    "effect": "己方場上或突襲底板有卡米那時不能登場；此角色在場時卡米那不能登場。主要階段：REST 自己，令己方 1 張西蒙或以西蒙為底板的角色本回合 BP+1000。",
     "auto": false,
     "metadataComplete": false,
     "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-059",
-    "reason": "Identity/rarity recorded from public listings; numeric fields and/or exact text require official verification."
+    "reason": "Identity/rarity recorded from public listings; numeric fields and/or exact text require official verification.",
+    "effectVerification": "fan-transcription-not-official-full-metadata",
+    "effectTranscriptionSource": "https://rugiacreation.com/ua/search?Name=TW"
   },
   {
     "id": "TTG-1-063",
@@ -138,11 +144,13 @@ export const TTG_PENDING_CARDS=[
     "gen": null,
     "traits": null,
     "trigger": null,
-    "effect": null,
+    "effect": "主要階段：REST 自己，本回合產能+1，並獲得「主要階段結束時將此角色退場」。",
     "auto": false,
     "metadataComplete": false,
     "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-063",
-    "reason": "Identity/rarity recorded from public listings; numeric fields and/or exact text require official verification."
+    "reason": "Identity/rarity recorded from public listings; numeric fields and/or exact text require official verification.",
+    "effectVerification": "fan-transcription-not-official-full-metadata",
+    "effectTranscriptionSource": "https://rugiacreation.com/ua/search?Name=TW"
   },
   {
     "id": "TTG-1-065",
@@ -164,7 +172,9 @@ export const TTG_PENDING_CARDS=[
     "auto": false,
     "metadataComplete": false,
     "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-065",
-    "reason": "Identity/rarity recorded from public listings; numeric fields and/or exact text require official verification."
+    "reason": "Identity/rarity recorded from public listings; numeric fields and/or exact text require official verification.",
+    "effectVerification": "fan-transcription-not-official-full-metadata",
+    "effectTranscriptionSource": "https://rugiacreation.com/ua/search?Name=TW"
   },
   {
     "id": "TTG-1-071",
