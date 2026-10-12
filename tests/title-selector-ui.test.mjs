@@ -3,8 +3,9 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {TITLES} from '../dist/title-registry.mjs';
 const app=readFileSync(new URL('../dist/app.mjs',import.meta.url),'utf8');
-test('BLEACH and TTG selectors are present in deck editor',()=>{
- assert.equal(TITLES.length,2);
+test('BLEACH, TTG and SAO selectors are present in deck editor',()=>{
+ assert.equal(TITLES.length,3);
+ assert.ok(TITLES.some(t=>t.id==='sword-art-online'&&!t.playable));
  assert.match(app,/data-title=/);
  assert.match(app,/ui\.title==='gurren-lagann'\)return ttgLibrary\(\)/);
 });
