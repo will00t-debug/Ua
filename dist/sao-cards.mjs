@@ -23,5 +23,11 @@ const EXTRA_VERIFIED=[
  {id:'SAO-2-052',number:'EX08BT/SAO-2-052',name:'米特',nameJa:'ミト',set:'EX08BT',color:'purple',energy:1,ap:1,bp:1500,gen:1,type:'character',rarity:'U',trigger:null,effect:'【起動主要】在前線每回合 1 次，指定敵方 BP 1500 以上的前線角色，本回合 BP -1000。'}
 ].map(c=>({...c,identity:c.id,title:'sword-art-online',auto:false,source:'https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no='+encodeURIComponent(c.number)}));
 SAO_CARDS.push(...EXTRA_VERIFIED);
+// Distinct playable limited-product effect, not an AP or cosmetic parallel.
+const LIMITED_VERIFIED=[
+ {id:'SAO-1-101',identity:'SAO-1-101',number:'UAPR/SAO-1-101',name:'亞絲娜',nameJa:'アスナ',title:'sword-art-online',set:'UAPR',color:'blue',energy:4,ap:1,bp:4000,gen:1,type:'character',rarity:'SR',traits:['艾恩葛朗特'],trigger:'active',effect:'【每回合 1 次】此角色於自己的移動階段以外移動時，此角色在本回合中 BP+1000 且獲得 IMPACT 1。',auto:false,source:'https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UAPR%2FSAO-1-101',origin:'ソードアート・オンライン フラクチュアード デイドリーム プレミアム特装版'}
+];
+SAO_CARDS.push(...LIMITED_VERIFIED);
+
 export const SAO_BY_ID=Object.fromEntries(SAO_CARDS.map(c=>[c.id,c]));
 export function saoDeckIssues(counts){const entries=Object.entries(counts||{}).filter(([,n])=>n>0);const errors=[];let total=0;for(const [id,n] of entries){if(!SAO_BY_ID[id]||!Number.isInteger(n)||n<0||n>4)errors.push('卡號錯誤或超過 4 張：'+id);total+=n;}if(total!==50)errors.push('需要 50 張，目前 '+total+' 張。');errors.push('SAO 規則與完整卡表尚未完成，目前只能建立草稿，不能對戰。');return errors;}
