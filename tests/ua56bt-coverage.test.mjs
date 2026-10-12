@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {UA56BT_VERIFIED} from '../dist/gurren-lagann.mjs';
 import {TTG_PENDING_CARDS} from '../dist/ttg-pending.mjs';
+import {TTG_IMPLEMENTED_HAND_EVENTS} from '../dist/ttg-event-resolver.mjs';
+import {TTG_IMPLEMENTED_EVENT_TRIGGERS} from '../dist/ttg-triggers.mjs';
 
 const lines=readFileSync(new URL('../data/ua56bt-audit.csv',import.meta.url),'utf8').trim().split(/\r?\n/);
 const rows=lines.slice(1).map(line=>{
@@ -20,10 +22,12 @@ test('audit cannot claim unrecorded card metadata or unsupported automation',()=
  assert.equal(known.size,UA56BT_VERIFIED.length);
  for(const row of rows){
   assert.equal(row.status,known.has(row.number)?'recorded_needs_final_verification':'identified_metadata_incomplete',row.number);
-  assert.equal(row.automation,'not_implemented',row.number);
+  assert.equal(row.automation,TTG_IMPLEMENTED_HAND_EVENTS.some(id=>row.number.endsWith('/'+id))?'isolated_effect_only':'not_implemented',row.number);
   assert.ok(row.url.includes(row.number.replace('/','%2F')));
  }
  assert.equal(known.size,73);
+ assert.deepEqual([...TTG_IMPLEMENTED_HAND_EVENTS].sort(),[...TTG_IMPLEMENTED_EVENT_TRIGGERS].sort(),'normal and life trigger implementations cover matching event set');
+ assert.equal(rows.filter(r=>r.automation==='isolated_effect_only').length,6);
  assert.equal(rows.filter(r=>r.status==='identified_metadata_incomplete').length,8);
  assert.equal(TTG_PENDING_CARDS.length,8);
  for(const c of TTG_PENDING_CARDS){assert.ok(!known.has(c.number));assert.equal(c.energy,null);assert.equal(c.ap,null);assert.equal(c.bp,null);assert.equal(c.gen,null);assert.equal(c.auto,false);}
