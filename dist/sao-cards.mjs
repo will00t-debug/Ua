@@ -5,5 +5,22 @@ export const SAO_CARDS=[
  {id:'SAO-1-018',identity:'SAO-1-018',number:'UA15BT/SAO-1-018',name:'尤吉歐・整合騎士三十二',nameJa:'ユージオ・シンセシス・サーティツー',title:'sword-art-online',set:'UA15BT',color:'yellow',energy:4,ap:1,bp:4000,gen:1,type:'character',rarity:'SR',trigger:'raid',raid:'尤吉歐',effect:'也視為「尤吉歐」。Raid〈尤吉歐〉；IMPACT 1、IMPACT 無效。【退場時】可分別選擇前線桐人和愛麗絲最多各 1 張，本回合 BP +1000 且獲得 IMPACT 無效。',auto:false,source:'https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA15BT%2FSAO-1-018'},
  {id:'SAO-1-055',identity:'SAO-1-055',number:'UA15BT/SAO-1-055',name:'結衣',nameJa:'ユイ',title:'sword-art-online',set:'UA15BT',color:'blue',energy:0,ap:1,bp:1500,gen:1,type:'character',rarity:'C',trigger:'draw',effect:'【登場時】抽 1 張牌，再將 1 張手牌送到場外。',auto:false,source:'https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA15BT%2FSAO-1-055'}
 ];
+
+export const SAO_PRODUCTS=[
+ {id:'UA15ST',name:'刀劍神域 起始牌組',regularCount:18,apCount:1,source:'https://www.unionarena-tcg.com/jp/products/decks/sao-1.php'},
+ {id:'UA15BT',name:'刀劍神域 第一彈',regularCount:100,apCount:9,source:'https://www.unionarena-tcg.com/jp/products/boosters/sao-1.php'},
+ {id:'EX08BT',name:'刀劍神域 Vol.2',regularCount:74,apCount:6,source:'https://www.unionarena-tcg.com/jp/products/boosters/ex_sao.php'}
+];
+// Product counts can overlap due to shared print numbers and reprints. Never
+// turn expected numbers into fake card records or count parallel art twice.
+const EXTRA_VERIFIED=[
+ {id:'SAO-1-001',number:'UA15BT/SAO-1-001',name:'桐人',nameJa:'キリト',set:'UA15BT',color:'yellow',energy:0,ap:1,bp:2000,gen:1,type:'character',rarity:'C',trigger:null,effect:'STEP（移動階段可從前線移至能源線）。'},
+ {id:'SAO-2-005',number:'EX08BT/SAO-2-005',name:'謝塔・整合騎士十二',nameJa:'シェータ・シンセシス・トゥエルブ',set:'EX08BT',color:'yellow',energy:2,ap:1,bp:3000,gen:1,type:'character',rarity:'C',trigger:null,effect:'若己方場上有其他 4 張以上［整合騎士］，獲得 IMPACT 1。'},
+ {id:'SAO-2-034',number:'EX08BT/SAO-2-034',name:'艾吉',nameJa:'エイジ',set:'EX08BT',color:'purple',energy:2,ap:1,bp:3000,gen:1,type:'character',rarity:'U',trigger:'active',effect:'【攻擊時】可將牌庫頂最多 1 張送到場外。'},
+ {id:'SAO-2-038',number:'EX08BT/SAO-2-038',name:'西莉卡',nameJa:'シリカ',set:'EX08BT',color:'purple',energy:3,ap:1,bp:3000,gen:2,type:'character',rarity:'C',trigger:null,effect:'【登場時】若本回合已使用［歌］卡，抽 1 張。'},
+ {id:'SAO-2-047',number:'EX08BT/SAO-2-047',name:'桐人',nameJa:'キリト',set:'EX08BT',color:'purple',energy:0,ap:1,bp:2000,gen:1,type:'character',rarity:'C',trigger:'active',effect:'無卡片效果。'},
+ {id:'SAO-2-052',number:'EX08BT/SAO-2-052',name:'米特',nameJa:'ミト',set:'EX08BT',color:'purple',energy:1,ap:1,bp:1500,gen:1,type:'character',rarity:'U',trigger:null,effect:'【起動主要】在前線每回合 1 次，指定敵方 BP 1500 以上的前線角色，本回合 BP -1000。'}
+].map(c=>({...c,identity:c.id,title:'sword-art-online',auto:false,source:'https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no='+encodeURIComponent(c.number)}));
+SAO_CARDS.push(...EXTRA_VERIFIED);
 export const SAO_BY_ID=Object.fromEntries(SAO_CARDS.map(c=>[c.id,c]));
 export function saoDeckIssues(counts){const entries=Object.entries(counts||{}).filter(([,n])=>n>0);const errors=[];let total=0;for(const [id,n] of entries){if(!SAO_BY_ID[id]||!Number.isInteger(n)||n<0||n>4)errors.push('卡號錯誤或超過 4 張：'+id);total+=n;}if(total!==50)errors.push('需要 50 張，目前 '+total+' 張。');errors.push('SAO 規則與完整卡表尚未完成，目前只能建立草稿，不能對戰。');return errors;}
