@@ -1,18 +1,43 @@
 {
-  "fetchedAt": "2026-10-12T16:27:20.288Z",
+  "fetchedAt": "2026-10-12T16:40:06.993Z",
   "counts": {
     "UA15BT": 100,
     "EX08BT": 74,
     "UA15ST": 18,
-    "UAPR": 1
+    "UAPR": 10
   },
   "unique": 183,
   "duplicates": [
     {
+      "id": "SAO-2-041",
+      "prints": [
+        "EX08BT/SAO-2-041",
+        "UAPR/SAO-2-041"
+      ],
+      "sameStats": true
+    },
+    {
+      "id": "SAO-2-042",
+      "prints": [
+        "EX08BT/SAO-2-042",
+        "UAPR/SAO-2-042"
+      ],
+      "sameStats": true
+    },
+    {
+      "id": "SAO-2-052",
+      "prints": [
+        "EX08BT/SAO-2-052",
+        "UAPR/SAO-2-052"
+      ],
+      "sameStats": true
+    },
+    {
       "id": "SAO-1-036",
       "prints": [
         "UA15BT/SAO-1-036",
-        "UA15ST/SAO-1-036"
+        "UA15ST/SAO-1-036",
+        "UAPR/SAO-1-036"
       ],
       "sameStats": true
     },
@@ -29,6 +54,14 @@
       "prints": [
         "UA15BT/SAO-1-039",
         "UA15ST/SAO-1-039"
+      ],
+      "sameStats": true
+    },
+    {
+      "id": "SAO-1-041",
+      "prints": [
+        "UA15BT/SAO-1-041",
+        "UAPR/SAO-1-041"
       ],
       "sameStats": true
     },
@@ -81,10 +114,42 @@
       "sameStats": true
     },
     {
+      "id": "SAO-1-089",
+      "prints": [
+        "UA15BT/SAO-1-089",
+        "UAPR/SAO-1-089"
+      ],
+      "sameStats": true
+    },
+    {
+      "id": "SAO-1-091",
+      "prints": [
+        "UA15BT/SAO-1-091",
+        "UAPR/SAO-1-091"
+      ],
+      "sameStats": true
+    },
+    {
       "id": "SAO-1-101",
       "prints": [
         "UA15ST/SAO-1-101",
         "UAPR/SAO-1-101"
+      ],
+      "sameStats": true
+    },
+    {
+      "id": "SAO-1-103",
+      "prints": [
+        "UA15ST/SAO-1-103",
+        "UAPR/SAO-1-103"
+      ],
+      "sameStats": true
+    },
+    {
+      "id": "SAO-1-104",
+      "prints": [
+        "UA15ST/SAO-1-104",
+        "UAPR/SAO-1-104"
       ],
       "sameStats": true
     }
