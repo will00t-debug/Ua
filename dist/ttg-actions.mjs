@@ -24,7 +24,7 @@ export function gigaDrillEnergyThreshold(board){
 }
 export function eligibleGigaDrillTargets(state,player){
  const our=state.players[player],enemy=state.players[1-player],maxBp=gigaDrillEnergyThreshold(our);
- return enemy.front.filter(c=>c&&Number.isFinite(c.currentBp??c.bp)&&(c.currentBp??c.bp)<=maxBp);
+ return enemy.front.filter(c=>c&&!c.cannotBeChosen&&!c.protectedFromEffects&&Number.isFinite(c.currentBp??c.bp)&&(c.currentBp??c.bp)<=maxBp);
 }
 function flattenedCards(card){
  const result=[];
