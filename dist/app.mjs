@@ -214,7 +214,7 @@ function soloArena(){
  const board=who=>['front','energy'].map(line=>'<div class="panel"><h3>'+(line==='front'?'前線':'能源線')+'</h3><div class="grid" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px">'+who[line].map(c=>'<div class="catalogInfo" style="border:1px solid #7775;padding:8px;min-height:55px;border-radius:7px">'+slot(c)+'</div>').join('')+'</div></div>').join('');
  const actions=soloTrainingLegalActions(state);
  const actionButton=(a,title)=>'<button class="btn small" data-solo-act="'+encodeURIComponent(JSON.stringify(a))+'">'+esc(title)+'</button>';
- const choices=state.pending?'<div class="panel"><b>請選擇：'+esc({discard:'棄一張手牌',entryImpact:'選擇額外獲得 IMPACT 的 DFN 角色',entryProtect:'選擇獲得目標 AP 保護的 DFN',mainDiscard:'選擇棄置的手牌',soldierTop:'影之兵士：選擇牌庫頂卡片送場外及剩餘順序',activeTrigger:'ACTIVE Trigger 目標',block:'阻擋角色（也可不阻擋）'}[state.pending.kind]||'效果結算')+'</b><div class="toolbar">'+(bot?'對手正在選擇…':actions.map(a=>actionButton(a,state.pending.kind==='soldierTop'
+ const choices=state.pending?'<div class="panel"><b>請選擇：'+esc({discard:'棄一張手牌',entryImpact:'選擇額外獲得 IMPACT 的 DFN 角色',entryProtect:'選擇獲得目標 AP 保護的 DFN',mainDiscard:'選擇棄置的手牌',soldierTop:'影之兵士：選擇牌庫頂卡片送場外及剩餘順序',raid058Discard:'向坂雫攻擊能力：可選1張手牌送場外',raid058Unfreeze:'選最多1張跳過ACTIVE的己方前線角色',activeTrigger:'ACTIVE Trigger 目標',block:'阻擋角色（也可不阻擋）'}[state.pending.kind]||'效果結算')+'</b><div class="toolbar">'+(bot?'對手正在選擇…':actions.map(a=>actionButton(a,state.pending.kind==='soldierTop'
  ?(a.outsideUid==null?'不送場外':'送場外：'+label(state.players[actor].deck.find(c=>c.uid===a.outsideUid)))+'；牌庫頂順序：'+a.order.map(uid=>label(state.players[actor].deck.find(c=>c.uid===uid))).join(' → ')
  :(a.uid==null?'不選擇／不阻擋':label([...p.hand,...opp.hand,...p.front,...p.energy,...opp.front,...opp.energy].find(c=>c?.uid===a.uid))))).join(''))+'</div></div>':'';
  const selected=ui.soloSelected;
@@ -226,7 +226,7 @@ function soloArena(){
  +choices
  +(state.status==='playing'&&!state.pending&&!bot?'<div class="panel"><h3>主要操作</h3><div class="toolbar">'+normalActions.map(a=>actionButton(a,a.type==='next'?'下一階段／結束回合':a.type==='extraDraw'?'支付1AP額外抽牌':a.type==='move'?'移動 '+label([...p.energy].find(c=>c?.uid===a.uid))+' → 前線'+(a.slot+1):a.type==='attack'?'攻擊 '+label(p.front.find(c=>c?.uid===a.uid)):'發動 '+label([...p.energy,...p.front].find(c=>c?.uid===a.uid)))).join('')+'</div></div>':'')
  +'<div class="panel"><h3>你的手牌（點選卡片後選擇登場位置）</h3><div class="toolbar">'+p.hand.map(c=>'<button class="btn small '+(selected===c.uid?'primary':'outline')+'" data-solo-card="'+esc(c.uid)+'">'+label(c)+' · 能源'+soloById[c.cardId].energy+' · AP'+soloById[c.cardId].ap+'</button>').join('')+'</div>'
- +(selected?'<p>選擇位置</p><div class="toolbar">'+selectable.map(a=>actionButton(a,a.type==='play'?(a.line==='front'?'前線':'能源線')+(a.slot+1):'其他操作')).join('')+'</div>':'')+'</div>'
+ +(selected?'<p>選擇位置</p><div class="toolbar">'+selectable.map(a=>actionButton(a,a.type==='play'?(a.line==='front'?'前線':'能源線')+(a.slot+1):a.type==='raid'?'Raid → '+(a.line==='front'?'前線':'能源線')+(a.slot+1)+'，底板 '+label([...p.front,...p.energy].find(c=>c?.uid===a.target)):'其他操作')).join('')+'</div>':'')+'</div>'
  +'<details class="panel"><summary>對局紀錄（最近20筆）</summary>'+state.log.slice(-20).map(x=>'<p>'+esc(x.turn+'：'+x.text)+'</p>').join('')+'</details>';
 }
 
