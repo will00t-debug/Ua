@@ -20,6 +20,10 @@ export function ttgDeckIssues(counts){
  const total=Object.values(c).reduce((n,x)=>n+x,0);
  const errors=[];
  if(total!==50)errors.push('目前 '+total+'/50 張，正式牌組需要 50 張。');
+ for(const trigger of ['special','color','final']){
+  const count=TTG_CARDS.reduce((n,card)=>n+(card.trigger===trigger?(c[card.id]||0):0),0);
+  if(count>4)errors.push(trigger.toUpperCase()+' Trigger 合計不可超過 4 張（目前 '+count+' 張）。');
+ }
  if(TTG_CARDS.some(x=>c[x.id]&&!x.auto))errors.push('包含尚未實作自動判定的卡片，目前不能開始對戰。');
  return errors;
 }
