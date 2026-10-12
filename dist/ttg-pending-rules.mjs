@@ -66,7 +66,8 @@ export function resolveTtgYoko065Step(state,{player,uid,toSlot}={}){
  if(!src||src.line!=='front'||src.card.cardId!=='TTG-1-065')throw new Error('Wrong STEP source');
  if(!Number.isInteger(toSlot)||toSlot<0||toSlot>=pl.energy.length||pl.energy[toSlot])throw new Error('STEP needs an empty energy slot');
  const result=copy(state);
+ const moved=result.players[player].front[src.slot];
  result.players[player].front[src.slot]=null;
- result.players[player].energy[toSlot]=src.card;
+ result.players[player].energy[toSlot]=moved;
  return result;
 }
