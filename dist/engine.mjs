@@ -1,8 +1,9 @@
 import {BY_ID, PRESETS, expandDeck, validateDeck,pendingCards} from './cards.mjs?v=9.1.0';
+import {SAO_BY_ID} from './sao-cards.mjs';
 
 export const VERSION=1;
 export const PHASE_NAMES={start:'開始階段',move:'移動階段',main:'主要階段',attack:'攻擊階段',end:'結束階段',mulligan:'起手確認'};
-export const cardOf=c=>BY_ID[c.cardId];
+export const cardOf=c=>BY_ID[c.cardId]||SAO_BY_ID[c.cardId];
 const characters=(s,p)=>[...s.players[p].front,...s.players[p].energy].filter(c=>c&&cardOf(c).type==='character');
 const allField=(s,p)=>[...s.players[p].front,...s.players[p].energy].filter(Boolean);
 export function locate(s,uid){
@@ -952,7 +953,7 @@ export function assertState(s){
  for(let p=0;p<2;p++){
   const pl=s.players[p];if(pl.front.length!==4||pl.energy.length!==4||pl.ap<0||pl.ap>pl.maxAp)throw new Error('區域或 AP 狀態無效');
   const cards=[...pl.deck,...pl.hand,...pl.life,...pl.outside,...pl.removed,...(s.inspecting||[]).filter(x=>x.p===p).map(x=>x.card),...allField(s,p).flatMap(c=>flattenStack(c).flatMap(x=>[x,...(x.under||[])])),...s.revealed.filter(x=>x.p===p).map(x=>x.card),...s.resolving.filter(x=>x.p===p).map(x=>x.card)];
-  if(cards.length!==50||new Set(cards.map(c=>c.uid)).size!==50||cards.some(c=>!BY_ID[c.cardId]))throw new Error(`玩家 ${p} 卡片守恆失敗：${cards.length}`);
+  if(cards.length!==50||new Set(cards.map(c=>c.uid)).size!==50||cards.some(c=>!cardOf(c)))throw new Error(`玩家 ${p} 卡片守恆失敗：${cards.length}`);
   if(pl.front.some(c=>c&&cardOf(c).type!=='character'))throw new Error('前線只能放角色');
  }
  return true;
