@@ -5,12 +5,14 @@ import {soloBp,soloGen,canPlaceSolo,soloEnter,soloChoose,soloUseMain,canUseDemon
 const fixture=()=>({active:0,turn:5,phase:'main',pending:null,players:[0,1].map(()=>({field:[],hand:[],deck:[],outside:[],removed:[],life:[],ap:3}))});
 const add=(s,id,zone='field',owner=0,uid=id)=>{let c={uid,cardId:id,owner,ready:true};s.players[owner][zone].push(c);return c;};
 const card=(id)=>SOLO_LEVELING_CARDS.find(c=>c.id===id);
-test('26 sourced SLG base cards have distinct ids, card types and no unsupported auto status',()=>{
- assert.equal(SOLO_LEVELING_CARDS.length,43);
- assert.equal(new Set(SOLO_LEVELING_CARDS.map(c=>c.id)).size,26);
+test('80 sourced SLG base cards have distinct ids, card types and no unsupported auto status',()=>{
+ assert.equal(SOLO_LEVELING_CARDS.length,80);
+ assert.equal(new Set(SOLO_LEVELING_CARDS.map(c=>c.id)).size,80);
  assert.equal(card('SLG-1-034').type,'field');
  assert.equal(card('SLG-1-035').type,'field');
  assert.equal(card('SLG-1-036').type,'event');
+ assert.equal(card('SLG-1-075').type,'field');
+ assert.equal(card('SLG-1-080').type,'event');
  assert.equal(card('SLG-1-030').maxCopies,12);
  assert.deepEqual(card('SLG-1-030').aliases,['UAPR/SLG-1-030']);
  assert.equal(card('SLG-1-042').nameJa,'馬渕 勲');
