@@ -345,6 +345,20 @@ const raw=[
   "攻擊時，若己方有4張以上原本BP3000以下且REST的影之軍團角色，可將1張手牌送場外讓自己ACTIVE；同名卡每回合合計一次。"
  ],
  [
+  "034",
+  "惡魔城",
+  "悪魔の城",
+  "purple",
+  3,
+  1,
+  0,
+  2,
+  "C",
+  "get",
+  [],
+  "場域：以ACTIVE登場。主要階段每回合一次可REST並將牌庫頂1張送場外；另一啟動能力須在支付成本前已有至少20張場外卡，可REST並將手牌1張送場外，支付AP使用場外符合能源需求的命之神水，結算後改送除外區。"
+ ],
+ [
   "067",
   "加奈",
   "カナ",
@@ -364,7 +378,7 @@ const raw=[
 ];
 export const SOLO_LEVELING_CARDS=raw.map(([suffix,name,nameJa,color,energy,ap,bp,gen,rarity,trigger,traits,effect])=>{
  const id='SLG-1-'+suffix,number='UA51BT/'+id;
- return {id,identity:id,number,name,nameJa,color,energy,ap,bp,gen,type:'character',traits,rarity,trigger,effect,sets:['ua51bt'],title:'solo-leveling',auto:false,source:root+encodeURIComponent(number),image:null,artStatus:'placeholder',auditStatus:'card-data-only'};
+ return {id,identity:id,number,name,nameJa,color,energy,ap,bp,gen,type:id==='SLG-1-034'?'field':'character',traits,rarity,trigger,effect,sets:['ua51bt'],title:'solo-leveling',auto:false,source:root+encodeURIComponent(number),image:null,artStatus:'placeholder',auditStatus:'card-data-only'};
 });
 export const SOLO_LEVELING_EXPECTED_NORMAL_COUNT=80;
 export const SOLO_LEVELING_MISSING_NUMBERS=Array.from({length:80},(_,i)=>'SLG-1-'+String(i+1).padStart(3,'0')).filter(id=>!SOLO_LEVELING_CARDS.some(c=>c.id===id));
