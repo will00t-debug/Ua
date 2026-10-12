@@ -7,10 +7,11 @@ export const SAO_CARDS=[
 ];
 
 export const SAO_PRODUCTS=[
- {id:'UA15ST',name:'刀劍神域 起始牌組',regularCount:18,apCount:1,source:'https://www.unionarena-tcg.com/jp/products/decks/sao-1.php'},
- {id:'UA15BT',name:'刀劍神域 第一彈',regularCount:100,apCount:9,source:'https://www.unionarena-tcg.com/jp/products/boosters/sao-1.php'},
- {id:'EX08BT',name:'刀劍神域 Vol.2',regularCount:74,apCount:6,source:'https://www.unionarena-tcg.com/jp/products/boosters/ex_sao.php'}
+ {id:'UA15ST',name:'刀劍神域 起始牌組',regularCount:18,source:'https://www.unionarena-tcg.com/jp/products/decks/sao-1.php'},
+ {id:'UA15BT',name:'刀劍神域 第一彈',regularCount:100,source:'https://www.unionarena-tcg.com/jp/products/boosters/sao-1.php'},
+ {id:'EX08BT',name:'刀劍神域 Vol.2',regularCount:74,source:'https://www.unionarena-tcg.com/jp/products/boosters/ex_sao.php'}
 ];
+// Scope: standard gameplay card numbers only; AP cards and alternate-art variants are excluded.
 // Product counts can overlap due to shared print numbers and reprints. Never
 // turn expected numbers into fake card records or count parallel art twice.
 const EXTRA_VERIFIED=[
