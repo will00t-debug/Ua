@@ -17,6 +17,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Generate card audit manifest
+        run: |
+          node scripts/generate-card-audit.mjs
+          test -s audit/bleach-card-audit.json
+          test -s audit/bleach-card-audit.csv
       - name: Run all regression tests
         run: npm test
       - name: Check static entry point
