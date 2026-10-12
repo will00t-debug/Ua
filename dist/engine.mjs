@@ -115,7 +115,7 @@ function removeRaidTop(s,uid,{destination='outside'}={}){
  const l=locate(s,uid);if(!l||!isRaided(l.card))return false;
  const top=l.card,base=top.stack[0];
  s.players[l.p][destination].push(plain(top));
- const left=structuredClone(base);left.ready=top.ready;left.enteredTurn=base.enteredTurn;
+ const left=fresh(base.uid,base.cardId);left.ready=top.ready;left.enteredTurn=base.enteredTurn;
  // Q546/Q570: effects applied to a card before it became a Raid base do not reappear
  // when the Raid top card is later removed.
  left.buffs=[];
@@ -494,7 +494,10 @@ function place(s,p,c,line,slot,{raidTarget=null}={}){
   const beneath=fresh(base.card.uid,base.card.cardId);beneath.enteredTurn=base.card.enteredTurn;
   stack=[beneath];s.players[p][base.line][base.slot]=null;}
  if(s.players[p][line][slot])takeField(s,s.players[p][line][slot].uid,'removed');
- const inst=fresh(c.uid,c.cardId);inst.stack=stack;inst.ready=!!raidTarget;inst.deployedByOwnEffect=!!c.deployedByOwnEffect;inst.enteredTurn=s.turn;s.players[p][line][slot]=inst;
+ const inst=fresh(c.uid,c.cardId);inst.stack=stack;
+ // RAID is a new character state: readiness must never be inherited from a REST base.
+ // Apply this before enqueueing entry effects, which may legitimately REST the new top.
+ inst.ready=stack.length>0;inst.deployedByOwnEffect=!!c.deployedByOwnEffect;inst.enteredTurn=s.turn;s.players[p][line][slot]=inst;
  s.players[p].enteredNamesTurn=s.turn;(s.players[p].enteredNames??=[]).push(cardOf(inst).name);
  if(raidTarget&&stack[0]&&cardOf(stack[0]).rules?.onRaided)queueRules(s,p,inst.uid,cardOf(stack[0]).rules.onRaided,true);
  log(s,`${s.players[p].name}${raidTarget?' Raid ': '出場'}${cardOf(c).name}到${line==='front'?'前線':'能源線'}。`,'play');enqueueEntry(s,p,inst);
