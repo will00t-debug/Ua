@@ -310,3 +310,12 @@ select, input, textarea { background: #fff; color: var(--text); border-color: #c
 .slot.raid-base-selected .slotFace { outline: 3px solid #9b3a46; outline-offset: 2px; }
 .slot.raid-position-selected { outline: 3px solid #9b3a46; outline-offset: 2px; }
 @media(max-width:620px) { .raidFlowPanel { padding: 10px; } .raidFlowActions .btn { flex: 1 1 auto; min-height: 44px; } }
+
+/* Show the actual revealed card before selecting its destination. */
+.peekPreview { display:flex; align-items:flex-start; gap:14px; margin:12px 0; padding:12px; background:#fff8f9; border:1px solid #e6d2d6; border-radius:8px; }
+.peekPreview img { display:block; width:118px; max-width:35%; height:auto; aspect-ratio:5/7; object-fit:contain; flex:none; }
+.peekPreview div { min-width:0; text-align:left; overflow-wrap:anywhere; }
+.peekPreview b,.peekPreview small { display:block; }
+.peekPreview small { color:#85747a; margin-top:4px; }
+.peekPreview p { margin-top:10px; line-height:1.7; white-space:pre-wrap; }
+@media(max-width:620px) { .peekPreview { gap:9px; padding:9px; } .peekPreview img { width:90px; } }
