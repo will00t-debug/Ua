@@ -19,3 +19,25 @@ export function mstRoxyEventPlayOptions({hasRoxy,hand,availableEnergy,freeSlots,
   ...raidBases.filter(base=>base.canRaidWith?.includes(c.name)).map(base=>({type:'raid',uid:c.uid,target:base.uid,ready:false}))
  ]);
 }
+
+/** MST-1-031/062: a discount survives non-matching plays until the next qualifying play. */
+export function mstDiscountAp(discount,card){
+ if(!discount)return {ap:card.ap,remaining:null};
+ const eligible=discount.kind==='nextEventLe3'
+  ?card.type==='event'&&card.energy<=3
+  :discount.kind==='nextCharacterGen2'
+   ?card.type==='character'&&card.gen>=2
+   :false;
+ return {ap:eligible?Math.max(0,card.ap-1):card.ap,remaining:eligible?null:discount};
+}
+/** MST-1-026 cannot enter front naturally or move by an opponent effect. */
+export function mstRudeusMovementAllowed({destination,ownEffect=false,fromLine=null}){
+ if(fromLine==null)return destination!=='front';
+ return ownEffect;
+}
+/** MST-1-035 each listed name grants one optional draw if present; maximum 3. */
+export function mstWarriorDrawCount(names,chosen){
+ const allowed=['ルーデウス','エリス','ルイジェルド'];
+ if(!Array.isArray(chosen)||chosen.length>3||new Set(chosen).size!==chosen.length||chosen.some(x=>!allowed.includes(x)||!names.includes(x)))throw new Error('無效的事件選擇');
+ return chosen.length;
+}
