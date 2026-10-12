@@ -6,9 +6,14 @@ const fixture=()=>({active:0,turn:5,phase:'main',pending:null,players:[0,1].map(
 const add=(s,id,zone='field',owner=0,uid=id)=>{let c={uid,cardId:id,owner,ready:true};s.players[owner][zone].push(c);return c;};
 const card=(id)=>SOLO_LEVELING_CARDS.find(c=>c.id===id);
 test('26 sourced SLG base cards have distinct ids, card types and no unsupported auto status',()=>{
- assert.equal(SOLO_LEVELING_CARDS.length,26);
+ assert.equal(SOLO_LEVELING_CARDS.length,43);
  assert.equal(new Set(SOLO_LEVELING_CARDS.map(c=>c.id)).size,26);
  assert.equal(card('SLG-1-034').type,'field');
+ assert.equal(card('SLG-1-035').type,'field');
+ assert.equal(card('SLG-1-036').type,'event');
+ assert.equal(card('SLG-1-030').maxCopies,12);
+ assert.deepEqual(card('SLG-1-030').aliases,['UAPR/SLG-1-030']);
+ assert.equal(card('SLG-1-042').nameJa,'馬渕 勲');
  assert.ok(SOLO_LEVELING_CARDS.every(c=>c.auto===false&&c.artStatus==='placeholder'));
 });
 test('001, 004, 010 passive BP and 003, 006 conditional generated energy',()=>{
