@@ -58,6 +58,23 @@ export function resolveTtgMainEndRetire(state){
  }
  return result;
 }
+// At end of the current turn, remove only BP changes tagged by this module.
+// Other effects with different lifetimes remain intact.
+export function resolveTtgPendingEndTurn(state){
+ if(!Number.isInteger(state?.turn))throw new Error('Turn index required');
+ const result=copy(state);
+ for(const pl of result.players){
+  for(const loc of field(pl)){
+   const c=loc.card,prior=c.buffs||[];
+   const expired=prior.filter(b=>b.until==='endTurn'&&b.turn===state.turn);
+   if(!expired.length)continue;
+   const amount=expired.reduce((n,b)=>n+(b.bp||0),0);
+   if(Number.isFinite(c.currentBp))c.currentBp-=amount;
+   c.buffs=prior.filter(b=>!expired.includes(b));
+  }
+ }
+ return result;
+}
 // TTG-1-065 STEP: legal front -> empty energy-slot movement in own movement
 // phase, without accidentally reactivating a REST character.
 export function resolveTtgYoko065Step(state,{player,uid,toSlot}={}){
