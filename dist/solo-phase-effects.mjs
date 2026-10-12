@@ -13,11 +13,15 @@ export function soloBp(s,c){
  if(s.active!==c.owner)return d.bp+n;
  return d.bp+n+(c.cardId==='SLG-1-001'&&p.outside.length>=5?500:0)
  +(c.cardId==='SLG-1-004'&&(p.discardByOwnEffectTurn===s.turn||p.recoveredByOwnEffectTurn===s.turn)?500:0)
- +(c.cardId==='SLG-1-010'&&p.outside.length>=10?1000:0);
+ +(c.cardId==='SLG-1-010'&&p.outside.length>=10?1000:0)
+ +(c.cardId==='SLG-1-027'?p.field.filter(x=>x.owner===c.owner&&x.ready===false&&db[x.cardId]?.type==='character'&&db[x.cardId]?.traits?.includes('影之軍團')&&db[x.cardId].bp<=2500).length*500:0)
+ +(c.cardId==='SLG-1-062'&&p.field.filter(x=>db[x.cardId]?.traits?.includes('第四次架南島Raid')).length>=5?1500:0)
+ +(c.cardId==='SLG-1-065'&&p.hand.length>=5?1000:0)
+ +(c.cardId==='SLG-1-069'&&p.hand.length>=5?1500:0);
 }
 export function soloGen(s,c){
  const d=db[c.cardId];if(!d)return null;
- return d.gen+(c.cardId==='SLG-1-006'&&c.ready?1:0)
+ return d.gen+((c.cardId==='SLG-1-006'||c.cardId==='SLG-1-041')&&c.ready?1:0)
  +(c.cardId==='SLG-1-003'&&s.players[c.owner].outside.length>=10?1:0)
  +(c.cardId==='SLG-1-013'&&c.boostedTurn===s.turn?1:0);
 }
@@ -93,4 +97,30 @@ export function assertSoloConservation(s,expected){
  for(const p of s.players)for(const zone of ['field','deck','hand','outside','removed','life'])for(const c of p[zone]||[])visit(c);
  if(seen.size!==expected)throw Error('card count changed '+seen.size+'/'+expected);
  return true;
+}
+
+/**
+ * SLG-1-030 Shadow Soldier: inspect top two, optionally send a shadow-army or
+ * Sung Jinwoo to outside, return the rest to the top in explicitly chosen order.
+ * Transaction validates all chosen UIDs before moving anything.
+ */
+export function soldierTopOptions(s,uid){
+ const c=own(s,uid);
+ if(!c||c.cardId!=='SLG-1-030')throw Error('not Shadow Soldier');
+ const p=pl(s);
+ if(!p.field.some(x=>x.uid!==uid&&db[x.cardId]?.traits?.includes('影之軍團')))return {available:false,topUids:[],eligibleUids:[]};
+ const top=p.deck.slice(0,2);
+ return {available:true,topUids:top.map(x=>x.uid),
+  eligibleUids:top.filter(x=>db[x.cardId]?.traits?.includes('影之軍團')||db[x.cardId]?.nameJa==='水篠 旬').map(x=>x.uid)};
+}
+export function resolveSoldierTop(s,uid,{sendOutsideUid=null,remainingTopUids=[]}={}){
+ const opt=soldierTopOptions(s,uid);if(!opt.available)throw Error('missing other shadow army');
+ const top=opt.topUids;
+ if(sendOutsideUid!=null&&!opt.eligibleUids.includes(sendOutsideUid))throw Error('not eligible for outside');
+ const remain=top.filter(x=>x!==sendOutsideUid);
+ if(remainingTopUids.length!==remain.length||new Set(remainingTopUids).size!==remain.length||remainingTopUids.some(x=>!remain.includes(x)))throw Error('illegal top order');
+ const p=pl(s),cards=p.deck.splice(0,top.length),lookup=Object.fromEntries(cards.map(c=>[c.uid,c]));
+ if(sendOutsideUid!=null)p.outside.push(lookup[sendOutsideUid]);
+ p.deck.unshift(...remainingTopUids.map(x=>lookup[x]));
+ return s;
 }
