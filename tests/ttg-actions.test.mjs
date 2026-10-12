@@ -36,6 +36,16 @@ test('Q2301 corrected Giga Drill cannot select energy, friendly or BP over limit
  assert.deepEqual(x.players[1].outside,[{uid:'b',cardId:'B'}]);
  assert.equal(s.players[1].front[1].uid,'b','immutable original');
 });
+test('Q2276 effect-targeting immunity excludes otherwise legal BP targets',()=>{
+ const s=game();
+ s.players[1].front[0]=ch('a','TTG-1-031','超銀河グレンラガン',5000,{cannotBeChosen:true});
+ s.players[1].front[1]=ch('b','TTG-1-001','ヴィラル',2500,{protectedFromEffects:true});
+ s.players[1].front[2]=ch('c','TTG-1-005','キタン',3000);
+ s.players[0].energy[1]=ch('s','TTG-1-010','シモン');
+ assert.deepEqual(eligibleGigaDrillTargets(s,0).map(x=>x.uid),['c']);
+ assert.throws(()=>resolveGigaDrillRetire(s,{player:0,targetUid:'a'}));
+ assert.throws(()=>resolveGigaDrillRetire(s,{player:0,targetUid:'b'}));
+});
 test('Giga Drill recognizes Simon/Kamina Raid bases and retires whole Raid pile without loss',()=>{
  const s=game();
  s.players[0].front[0]=ch('r','TTG-1-073','グレンラガン',4000,{stack:[ch('k','TTG-1-042','カミナ')]});
