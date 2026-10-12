@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {SOLO_LEVELING_CARDS} from '../dist/solo-leveling.mjs';
-import {soloBp,soloGen,canPlaceSolo,soloEnter,soloChoose,soloUseMain,canUseDemonCastleHigh,activateSoloCard,soloRetire,soloEndMain,assertSoloConservation} from '../dist/solo-phase-effects.mjs';
+import {soloBp,soloGen,canPlaceSolo,soloEnter,soloChoose,soloUseMain,canUseDemonCastleHigh,activateSoloCard,soloRetire,soloEndMain,assertSoloConservation,soldierTopOptions,resolveSoldierTop} from '../dist/solo-phase-effects.mjs';
 const fixture=()=>({active:0,turn:5,phase:'main',pending:null,players:[0,1].map(()=>({field:[],hand:[],deck:[],outside:[],removed:[],life:[],ap:3}))});
 const add=(s,id,zone='field',owner=0,uid=id)=>{let c={uid,cardId:id,owner,ready:true};s.players[owner][zone].push(c);return c;};
 const card=(id)=>SOLO_LEVELING_CARDS.find(c=>c.id===id);
@@ -100,4 +100,42 @@ test('FAQ Q2055 next ACTIVE is consumed without actually activating',()=>{
  const c={ready:false,skipActive:1};
  assert.equal(activateSoloCard(c),false);assert.equal(c.ready,false);assert.equal(c.skipActive,0);
  assert.equal(activateSoloCard(c),true);assert.equal(c.ready,true);
+});
+
+test('Q2070: Iron counts original-BP REST shadow characters only, not a field with the same trait',()=>{
+ const s=fixture(),iron=add(s,'SLG-1-027');const soldier=add(s,'SLG-1-030','field',0,'soldier');soldier.ready=false;
+ const field=add(s,'SLG-1-035','field',0,'field');field.ready=false;
+ field.cardId='SLG-1-035';
+ assert.equal(soloBp(s,iron),3500);
+ add(s,'SLG-1-033','field',0,'big').ready=false;
+ assert.equal(soloBp(s,iron),3500);
+ add(s,'SLG-1-031','field',0,'qualifying').ready=false;
+ assert.equal(soloBp(s,iron),4000);
+});
+test('062 fourth-island trait count and 065/069 hand-size conditional BP',()=>{
+ const s=fixture(),a=add(s,'SLG-1-062'),b=add(s,'SLG-1-065'),c=add(s,'SLG-1-069');
+ assert.equal(soloBp(s,a),1500);assert.equal(soloBp(s,b),4000);assert.equal(soloBp(s,c),2500);
+ for(let i=0;i<5;i++)add(s,'SLG-1-005','hand',0,'h'+i);
+ for(let i=0;i<4;i++)add(s,'SLG-1-054','field',0,'raid'+i);
+ assert.equal(soloBp(s,a),3000);assert.equal(soloBp(s,b),5000);assert.equal(soloBp(s,c),4000);
+ assert.equal(soloGen(s,add(s,'SLG-1-041')),2);
+});
+test('030 Shadow Soldier looks at top 2 and requires explicit legal ordering of remaining cards',()=>{
+ const s=fixture(),soldier=add(s,'SLG-1-030');add(s,'SLG-1-029','field',0,'ally');
+ add(s,'SLG-1-015','deck',0,'jinwoo');add(s,'SLG-1-005','deck',0,'nonshadow');add(s,'SLG-1-030','deck',0,'rest');
+ const opts=soldierTopOptions(s,soldier.uid);
+ assert.deepEqual(opts.topUids,['jinwoo','nonshadow']);assert.deepEqual(opts.eligibleUids,['jinwoo']);
+ assert.throws(()=>resolveSoldierTop(s,soldier.uid,{sendOutsideUid:'nonshadow',remainingTopUids:['jinwoo']}),/not eligible/);
+ assert.throws(()=>resolveSoldierTop(s,soldier.uid,{sendOutsideUid:'jinwoo',remainingTopUids:['jinwoo']}),/illegal top order/);
+ assert.equal(s.players[0].deck[0].uid,'jinwoo');
+ resolveSoldierTop(s,soldier.uid,{sendOutsideUid:'jinwoo',remainingTopUids:['nonshadow']});
+ assert.equal(s.players[0].outside[0].uid,'jinwoo');assert.equal(s.players[0].deck[0].uid,'nonshadow');
+ assertSoloConservation(s,5);
+});
+test('030 must have ANOTHER allied shadow army; no effect is offered otherwise',()=>{
+ const s=fixture(),soldier=add(s,'SLG-1-030');
+ add(s,'SLG-1-015','deck',0,'jinwoo');
+ assert.equal(soldierTopOptions(s,soldier.uid).available,false);
+ assert.throws(()=>resolveSoldierTop(s,soldier.uid,{remainingTopUids:['jinwoo']}),/missing other/);
+ assertSoloConservation(s,2);
 });
