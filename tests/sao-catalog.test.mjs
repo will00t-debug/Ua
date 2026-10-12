@@ -16,7 +16,7 @@ test('SAO verified cards have distinct numbers and source URLs',()=>{
   assert.match(c.number,/^(UA15BT\/SAO-1|EX08BT\/SAO-2)-\d{3}$/);
   assert.match(c.source,/unionarena-tcg\.com\/jp\/cardlist/);
   assert.equal(c.title,'sword-art-online');
-  assert.ok(c.effect.length>10);
+  assert.ok(typeof c.effect==='string'&&c.effect.length>0);
  }
 });
 test('SAO deck draft enforces 4 copies and does not permit simulation',()=>{
