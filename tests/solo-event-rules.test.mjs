@@ -47,7 +47,7 @@ test('076 with extra-AP protection: only pay target selection cost if actually c
 });
 test('077 five raid cards vs five distinct printed names lead to different effects',()=>{
  const s=setup();add(s,'SLG-1-077');add(s,'SLG-1-045','field',1,'victim',{line:'front',currentBp:4000});
- for(const [i,id] of ['SLG-1-054','SLG-1-055','SLG-1-056','SLG-1-060','SLG-1-062'].entries())
+ for(const [i,id] of ['SLG-1-054','SLG-1-055','SLG-1-060','SLG-1-061','SLG-1-062'].entries())
   add(s,id,'field',0,'raid'+i);
  beginSoloEvent(s,'SLG-1-077');
  assert.deepEqual(enemyTargetsForSoloEvent(s),['victim']);
@@ -71,4 +71,12 @@ test('unsupported 037 event must never consume AP or hand card',()=>{
  assert.equal(canPlaySoloEvent(s,'SLG-1-037'),false);
  assert.throws(()=>beginSoloEvent(s,'SLG-1-037'),/illegal/);
  assert.equal(s.players[0].ap,before);assert.equal(s.players[0].hand.length,1);
+});
+
+test('077 five trait cards but only four distinct printed names do not grant extra buff',()=>{
+ const s=setup();add(s,'SLG-1-077');add(s,'SLG-1-045','field',1,'target',{line:'front',currentBp:3500});
+ ['SLG-1-054','SLG-1-055','SLG-1-056','SLG-1-060','SLG-1-062'].forEach((id,i)=>add(s,id,'field',0,'member'+i));
+ beginSoloEvent(s,'SLG-1-077');chooseSoloEvent(s,{uid:'target'});
+ assert.equal(s.pending,null);
+ assert.equal(s.players[0].field.every(c=>!c.buffs),true);
 });
