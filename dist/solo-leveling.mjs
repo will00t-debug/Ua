@@ -1,13 +1,370 @@
-// Official Japanese UA51BT examples; never use unverified cards as playable effects.
-// Canonical SLG-1 ids only: alternate art is not a new game card.
+// UA51BT Japanese official cardlist, source URLs on every card.
+// Effects below are paraphrased Traditional Chinese descriptions; NOT an official localization.
+// art is intentionally a placeholder pending valid display rights. Cards stay auto:false until integrated.
+// Rarity and numeric fields come from individual official card pages; parallel arts excluded.
 const root='https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=';
 const raw=[
- ['011','向坂雫','purple',4,1,4000,1,'character','color','從場外經自己的效果加入手牌後，可依條件登場；若由水篠旬效果加入，改為 ACTIVE。場外至少 10 張時，無法被 BP4000 以上角色阻擋。登場時可把牌庫頂最多 1 張放到場外。'],
- ['029','凱賽爾','purple',3,1,2500,2,'character','active','原本 BP2000 以下的己方影之軍團攻擊時，可將 ACTIVE 的自己轉為 REST，二選一賦予攻擊者不能被 BP4000 以上阻擋或不會被敵方效果選取。所有凱賽爾共享各選項每回合限制。'],
- ['033','貝爾','purple',5,1,4000,1,'character',null,'攻擊時己方有 4 張以上原本 BP3000 以下且 REST 的影之軍團角色，可以棄 1 張手牌使自己 ACTIVE；所有貝爾每回合共用一次限制。'],
- ['067','加奈','green',4,1,3000,1,'character','color','登場時，若己方場上有至少 3 張 DFN，抽 1 張、此角色轉為 ACTIVE 並於本回合 BP+1000；同名登場能力每回合共用一次。']
+ [
+  "001",
+  "韓頌伊",
+  "朝比奈 りん",
+  "purple",
+  1,
+  1,
+  2500,
+  1,
+  "C",
+  null,
+  [],
+  "自己的回合中，若場外至少5張卡，此角色BP+500。"
+ ],
+ [
+  "002",
+  "韓頌伊",
+  "朝比奈 りん",
+  "purple",
+  0,
+  1,
+  500,
+  1,
+  "R",
+  "draw",
+  [],
+  "登場時選一項：抽1張後將1張手牌送場外；或在自己的回合讓另一己方角色本回合BP+1000。"
+ ],
+ [
+  "003",
+  "韓頌伊",
+  "朝比奈 りん",
+  "purple",
+  2,
+  1,
+  3000,
+  1,
+  "SR",
+  "active",
+  [],
+  "經自己的效果從場外加入手牌時，可讓己方1個角色本回合BP+1000。場外至少10張時額外產生1紫能源。攻擊時可查看牌庫頂1張並選擇放回或送場外。"
+ ],
+ [
+  "004",
+  "禹鎮澈",
+  "犬飼 晃",
+  "purple",
+  3,
+  1,
+  3500,
+  1,
+  "R",
+  "draw",
+  [],
+  "自己的回合中，若本回合曾以己方效果將手牌送場外或從場外回收手牌，此角色BP+500。登場時抽1張再將1張手牌送場外。"
+ ],
+ [
+  "005",
+  "朴熙臻",
+  "今宮 さつき",
+  "purple",
+  0,
+  1,
+  2000,
+  1,
+  "C",
+  "draw",
+  [],
+  "無印刷角色能力。"
+ ],
+ [
+  "006",
+  "朴熙臻",
+  "今宮 さつき",
+  "purple",
+  2,
+  1,
+  2500,
+  1,
+  "U",
+  null,
+  [],
+  "此角色處於ACTIVE時，額外產生1紫能源。"
+ ],
+ [
+  "007",
+  "艾希",
+  "エシル",
+  "purple",
+  0,
+  1,
+  500,
+  1,
+  "C",
+  "draw",
+  [],
+  "退場時抽1張。"
+ ],
+ [
+  "008",
+  "艾希",
+  "エシル",
+  "purple",
+  1,
+  1,
+  2000,
+  1,
+  "SR",
+  null,
+  [],
+  "經自己效果從場外加入手牌時，抽1張再將1張手牌送場外。登場時查看牌庫頂4張，可公開最多1張水篠旬或惡魔城加入手牌；剩餘卡以自選順序放牌庫底，若加入手牌再棄1張。"
+ ],
+ [
+  "009",
+  "向坂雫",
+  "向坂 雫",
+  "purple",
+  0,
+  1,
+  1500,
+  1,
+  "C",
+  "active",
+  [],
+  "主要階段每回合一次：將1張手牌送場外，令此角色本回合BP+1500。"
+ ],
+ [
+  "010",
+  "向坂雫",
+  "向坂 雫",
+  "purple",
+  3,
+  1,
+  3000,
+  1,
+  "U",
+  "draw",
+  [],
+  "自己的回合中，若場外有10張以上卡，BP+1000。"
+ ],
+ [
+  "011",
+  "向坂雫",
+  "向坂 雫",
+  "purple",
+  4,
+  1,
+  4000,
+  1,
+  "SR",
+  "color",
+  [],
+  "經自己的效果從場外加入手牌時，符合能源可選擇以REST登場；若由水篠旬效果回收則ACTIVE登場。場外至少10張時不會被BP4000以上的角色阻擋。登場時可將牌庫頂最多1張送場外。"
+ ],
+ [
+  "012",
+  "高建熙",
+  "後藤 清臣",
+  "purple",
+  3,
+  1,
+  2500,
+  2,
+  "U",
+  null,
+  [],
+  "登場時，己方場上存在水篠旬即可抽1張。"
+ ],
+ [
+  "013",
+  "成珍雅",
+  "水篠 葵",
+  "purple",
+  0,
+  1,
+  1000,
+  1,
+  "U",
+  null,
+  [],
+  "主要階段每回合一次：REST此角色，本回合額外產生1紫能源；主要階段結束時退場。"
+ ],
+ [
+  "014",
+  "朴京慧",
+  "水篠 聡子",
+  "purple",
+  2,
+  1,
+  1000,
+  1,
+  "C",
+  null,
+  [],
+  "經自己的效果從場外加入手牌時，可REST登場能源線。不能登場或移動至前線。登場時將牌庫頂1張送場外。"
+ ],
+ [
+  "015",
+  "成振宇",
+  "水篠 旬",
+  "purple",
+  0,
+  1,
+  1500,
+  1,
+  "C",
+  "get",
+  [],
+  "無印刷角色能力。"
+ ],
+ [
+  "016",
+  "成振宇",
+  "水篠 旬",
+  "purple",
+  3,
+  1,
+  3000,
+  2,
+  "C",
+  null,
+  [],
+  "IMPACT無效。登場時將牌庫頂2張送場外。"
+ ],
+ [
+  "017",
+  "成振宇",
+  "水篠 旬",
+  "purple",
+  2,
+  1,
+  2000,
+  1,
+  "U",
+  "active",
+  [],
+  "若己方場上沒有任何卡，手牌中需求能源減少紫2。登場時查看牌庫頂1張，選擇放回或送場外。"
+ ],
+ [
+  "018",
+  "成振宇",
+  "水篠 旬",
+  "purple",
+  3,
+  1,
+  2500,
+  2,
+  "U",
+  "color",
+  [],
+  "登場時查看牌庫頂3張，可選最多1張水篠旬或影之軍團加入手牌；剩下按任意順序放牌庫底。若成功加入手牌，再將己方1張手牌送場外。"
+ ],
+ [
+  "019",
+  "成振宇",
+  "水篠 旬",
+  "purple",
+  1,
+  1,
+  1500,
+  1,
+  "R",
+  null,
+  [],
+  "在場外的主要階段能力：將手牌1張影之軍團送場外，回收自己到手牌；水篠旬此能力每回合合計一次。登場時可將手牌1張影之軍團送場外，成功後抽1張。"
+ ],
+ [
+  "020",
+  "成振宇",
+  "水篠 旬",
+  "purple",
+  4,
+  1,
+  4000,
+  1,
+  "R",
+  "raid",
+  [],
+  "RAID水篠旬。登場時抽1張，然後可將1張手牌送場外；如此可從場外選最多1張非水篠旬且BP3000以下角色加入手牌。攻擊時抽1張後棄1張；場外每5張，本回合BP+500。"
+ ],
+ [
+  "021",
+  "成振宇",
+  "水篠 旬",
+  "purple",
+  5,
+  1,
+  4000,
+  1,
+  "SR",
+  "raid",
+  [],
+  "RAID水篠旬。BP達6000以上時獲IMPACT1。攻擊時場外每5張，本回合BP+500。戰鬥獲勝時可回收場外非水篠旬角色，BP上限2000且場外每5張提升500。登場時本回合敵方能阻擋時必須阻擋。"
+ ],
+ [
+  "022",
+  "成振宇",
+  "水篠 旬",
+  "purple",
+  12,
+  1,
+  5000,
+  1,
+  "SR",
+  "raid",
+  [],
+  "在場及場外以外的區域，己方場上每有1張影之軍團，需求能源減少1。RAID水篠旬，IMPACT1。能源線中己方攻擊結束後可與前線影之軍團交換位置。登場時ACTIVE己方前線與能源線各最多1張影之軍團，本回合獲狙擊。"
+ ],
+ [
+  "029",
+  "凱賽爾",
+  "カイセル",
+  "purple",
+  3,
+  1,
+  2500,
+  2,
+  "R",
+  "active",
+  [
+   "影之軍團"
+  ],
+  "己方原本BP2000以下的影之軍團角色攻擊時，可將ACTIVE的自己改為REST並選1項：攻擊者本回合不能被BP4000以上角色阻擋，或不會被敵方效果選取。同名卡每項選擇全場共用每回合一次。"
+ ],
+ [
+  "033",
+  "貝爾",
+  "ベル",
+  "purple",
+  5,
+  1,
+  4000,
+  1,
+  "R",
+  null,
+  [
+   "影之軍團"
+  ],
+  "攻擊時，若己方有4張以上原本BP3000以下且REST的影之軍團角色，可將1張手牌送場外讓自己ACTIVE；同名卡每回合合計一次。"
+ ],
+ [
+  "067",
+  "加奈",
+  "カナ",
+  "green",
+  4,
+  1,
+  3000,
+  1,
+  "R",
+  "color",
+  [
+   "DFN",
+   "第四次架南島Raid"
+  ],
+  "登場時若己方有3張以上DFN，抽1張，將此角色ACTIVE並使本回合BP+1000。同名卡此登場能力每回合共用一次。"
+ ]
 ];
-export const SOLO_LEVELING_CARDS=raw.map(([suffix,name,color,energy,ap,bp,gen,type,trigger,effect])=>{
+export const SOLO_LEVELING_CARDS=raw.map(([suffix,name,nameJa,color,energy,ap,bp,gen,rarity,trigger,traits,effect])=>{
  const id='SLG-1-'+suffix,number='UA51BT/'+id;
- return {id,identity:id,number,name,color,energy,ap,bp,gen,type,trigger,effect,sets:['ua51bt'],title:'solo-leveling',auto:false,source:root+encodeURIComponent(number),image:null};
+ return {id,identity:id,number,name,nameJa,color,energy,ap,bp,gen,type:'character',traits,rarity,trigger,effect,sets:['ua51bt'],title:'solo-leveling',auto:false,source:root+encodeURIComponent(number),image:null,artStatus:'placeholder',auditStatus:'card-data-only'};
 });
+export const SOLO_LEVELING_EXPECTED_NORMAL_COUNT=80;
+export const SOLO_LEVELING_MISSING_NUMBERS=Array.from({length:80},(_,i)=>'SLG-1-'+String(i+1).padStart(3,'0')).filter(id=>!SOLO_LEVELING_CARDS.some(c=>c.id===id));
