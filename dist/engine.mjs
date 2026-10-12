@@ -179,7 +179,14 @@ function raidOptions(s,p,c){
  const opts=[];
  for(const base of characters(s,p).filter(x=>raidBaseMatches(c,x)&&!hasRaidPrinted(x)&&!isRaided(x))){
   const l=locate(s,base.uid);if(cardOf(c).rules?.energyOnly&&l.line!=='energy')continue;opts.push({type:'raid',uid:c.uid,target:base.uid,line:l.line,slot:l.slot});
-  if(l.line==='energy'&&!cardOf(c).rules?.energyOnly)for(let slot=0;slot<4;slot++)opts.push({type:'raid',uid:c.uid,target:base.uid,line:'front',slot});
+  // Official Raid: an Energy L base may remain in Energy L or move to Front L.
+  // A Front L base stays in place; removing an unrelated Front L card is only
+  // necessary when the destination line is already full (official Rules FAQ).
+  if(l.line==='energy'&&!cardOf(c).rules?.energyOnly){
+   const frontFull=s.players[p].front.every(Boolean);
+   for(let slot=0;slot<4;slot++)if(frontFull||!s.players[p].front[slot])
+    opts.push({type:'raid',uid:c.uid,target:base.uid,line:'front',slot});
+  }
  }
  return opts;
 }
