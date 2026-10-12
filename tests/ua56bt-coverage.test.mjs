@@ -6,6 +6,7 @@ import {TTG_PENDING_CARDS} from '../dist/ttg-pending.mjs';
 import {TTG_IMPLEMENTED_HAND_EVENTS} from '../dist/ttg-event-resolver.mjs';
 import {TTG_IMPLEMENTED_EVENT_TRIGGERS} from '../dist/ttg-triggers.mjs';
 
+const PENDING_ISOLATED=new Set(['TTG-1-006','TTG-1-059','TTG-1-063','TTG-1-065']);
 const lines=readFileSync(new URL('../data/ua56bt-audit.csv',import.meta.url),'utf8').trim().split(/\r?\n/);
 const rows=lines.slice(1).map(line=>{
  const [number,status,automation,url]=line.split(',');
@@ -22,7 +23,7 @@ test('audit cannot claim unrecorded card metadata or unsupported automation',()=
  assert.equal(known.size,UA56BT_VERIFIED.length);
  for(const row of rows){
   assert.equal(row.status,known.has(row.number)?'recorded_needs_final_verification':'identified_metadata_incomplete',row.number);
-  assert.equal(row.automation,TTG_IMPLEMENTED_HAND_EVENTS.some(id=>row.number.endsWith('/'+id))?'isolated_effect_only':'not_implemented',row.number);
+  assert.equal(row.automation,(TTG_IMPLEMENTED_HAND_EVENTS.some(id=>row.number.endsWith('/'+id))||PENDING_ISOLATED.has(row.number.slice('UA56BT/'.length)))?'isolated_effect_only':'not_implemented',row.number);
   assert.ok(row.url.includes(row.number.replace('/','%2F')));
  }
  assert.equal(known.size,73);
