@@ -13,7 +13,7 @@ test('SAO verified cards have distinct numbers and source URLs',()=>{
  const ids=new Set(SAO_CARDS.map(c=>c.id));
  assert.equal(ids.size,SAO_CARDS.length);
  for(const c of SAO_CARDS){
-  assert.match(c.number,/^UA15BT\/SAO-1-\d{3}$/);
+  assert.match(c.number,/^(UA15BT\/SAO-1|EX08BT\/SAO-2)-\d{3}$/);
   assert.match(c.source,/unionarena-tcg\.com\/jp\/cardlist/);
   assert.equal(c.title,'sword-art-online');
   assert.ok(c.effect.length>10);
