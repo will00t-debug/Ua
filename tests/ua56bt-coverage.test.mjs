@@ -22,8 +22,8 @@ test('audit cannot claim unrecorded card metadata or unsupported automation',()=
   assert.equal(row.automation,'not_implemented',row.number);
   assert.ok(row.url.includes(row.number.replace('/','%2F')));
  }
- assert.equal(known.size,29);
- assert.equal(rows.filter(r=>r.status==='missing').length,52);
+ assert.equal(known.size,72);
+ assert.equal(rows.filter(r=>r.status==='missing').length,9);
 });
 test('all recorded cards explicitly block automated play until engine verification',()=>{
  for(const c of UA56BT_VERIFIED){
