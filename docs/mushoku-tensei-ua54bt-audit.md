@@ -52,3 +52,10 @@ Scope: 80 numbered ordinary cards, excluding alternate art and AP artworks. Prin
 - Newly added `tests/mst-completeness.test.mjs` asserts 80 unique card names/rarities and exact 68 preliminary / 12 pending split, rather than pretending the full engine is done.
 - GitHub Actions Node 22 regression suite **passed** on commit 76762162 (run https://github.com/will00t-debug/Ua/actions/runs/38278235832), correcting the prior shared-turn key bug. Recheck the latest commit's CI before claiming a current pass.
 - FULL automatic game engine effects **0/80**; independent helper functions still require match state, user-choice flow, trigger timing, AI and end-to-end validation.
+
+## 2026-10-13 incremental state and event modules
+- `dist/mst-entry-effects.mjs` now models copied state and legal selections for MST-1-022 / 051 / 061 / 063 / 069 / 075. Draw, discard, field buffs, deck-top inspection and field retirement have unit tests in `tests/mst-entry-effects.test.mjs`.
+- `dist/mst-event-effects.mjs` models branch selection and actual hand/deck moves for MST-1-035 (up to three named draw branches) and MST-1-080 (draw 2 and optional academy-front energy effect); test in `tests/mst-event-effects.test.mjs`. The temporary front-energy flag still needs integration with `engine.generated()` / `engine.energy()`.
+- Fixed Q2150–Q2151 top-Raid removal to keep the base character's own `usedTurn` value rather than copying the removed top's once-per-turn state.
+- `docs/mst-faq-matrix.md` lists all 25 official FAQ entries individually and explicitly distinguishes isolated-unit tests from complete game engine integration.
+- All these are **isolated reducers only**; they do not handle production engine's turn/stack/AP/AI/hotseat directly. Consequently full gameplay completion is still **0/80**. No flags were enabled and BLEACH `main` remains untouched.
