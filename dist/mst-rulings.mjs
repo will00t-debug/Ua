@@ -70,5 +70,5 @@ export function mstUseNamedAbility(state,{player,name,effect,turn}){
  return {...state,[key]:turn};
 }
 export function mstRudeus73CanActivate({ownEnergy,cardReady,namedUses,player,turn}){
- return ownEnergy>=7&&namedUses[player+':ルーデウス:MST-1-073:main']!==turn;
+ return ownEnergy>=7&&namedUses[player+':ルーデウス:MST-1-073']!==turn;
 }
