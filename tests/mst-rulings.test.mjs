@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mstColorTargets,mstArielSearch,mstRoxyEventPlayOptions} from '../dist/mst-rulings.mjs';
+import {mstColorTargets,mstArielSearch,mstRoxyEventPlayOptions,mstDiscountAp,mstRudeusMovementAllowed,mstWarriorDrawCount} from '../dist/mst-rulings.mjs';
 test('MST-1-040 COLOR targets only opposing front line BP at most 3500',()=>{
  const front=[{uid:'1',owner:1,bp:3500},{uid:'2',owner:1,bp:4000},{uid:'3',owner:0,bp:1000}];
  assert.deepEqual(mstColorTargets(front,0).map(c=>c.uid),['1']);
@@ -19,4 +19,23 @@ test('MST-1-040 event gates by Roxy, AP, energy, names and rests new character',
  assert.deepEqual(mstRoxyEventPlayOptions({...args,hasRoxy:false}),[]);
  const choices=mstRoxyEventPlayOptions({...args,hasRoxy:true});
  assert.equal(choices.length,1);assert.equal(choices[0].uid,'a');assert.equal(choices[0].ready,false);
+});
+
+test('MST-1-031 and 062 discounts persist across nonmatching plays',()=>{
+ const x={kind:'nextEventLe3'},miss={type:'character',energy:1,ap:1};
+ assert.deepEqual(mstDiscountAp(x,miss),{ap:1,remaining:x});
+ assert.deepEqual(mstDiscountAp(x,{type:'event',energy:3,ap:1}),{ap:0,remaining:null});
+ const y={kind:'nextCharacterGen2'};
+ assert.equal(mstDiscountAp(y,{type:'character',gen:1,ap:1}).remaining,y);
+ assert.equal(mstDiscountAp(y,{type:'character',gen:2,ap:1}).ap,0);
+});
+test('MST-1-026 restricts natural front deployment and non-own moves',()=>{
+ assert.equal(mstRudeusMovementAllowed({destination:'front'}),false);
+ assert.equal(mstRudeusMovementAllowed({destination:'energy'}),true);
+ assert.equal(mstRudeusMovementAllowed({destination:'front',fromLine:'energy',ownEffect:false}),false);
+ assert.equal(mstRudeusMovementAllowed({destination:'front',fromLine:'energy',ownEffect:true}),true);
+});
+test('MST-1-035 makes each chosen qualifying name draw exactly once',()=>{
+ assert.equal(mstWarriorDrawCount(['ルーデウス','エリス'],['エリス']),1);
+ assert.throws(()=>mstWarriorDrawCount(['エリス'],['エリス','エリス']),/無效/);
 });
