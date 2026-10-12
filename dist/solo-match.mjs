@@ -7,11 +7,11 @@ const DB=Object.fromEntries(SOLO_LEVELING_CARDS.map(c=>[c.id,c]));
 export const SOLO_MATCH_SUPPORTED=Object.freeze([
  'SLG-1-001','SLG-1-005','SLG-1-006','SLG-1-007','SLG-1-009','SLG-1-010','SLG-1-013','SLG-1-014','SLG-1-015','SLG-1-016','SLG-1-027','SLG-1-030',
  'SLG-1-041','SLG-1-042','SLG-1-043','SLG-1-045','SLG-1-052','SLG-1-055','SLG-1-056',
- 'SLG-1-062','SLG-1-065','SLG-1-066','SLG-1-069','SLG-1-072','SLG-1-074'
+ 'SLG-1-062','SLG-1-065','SLG-1-066','SLG-1-069','SLG-1-072','SLG-1-074','SLG-1-058'
 ]);
 const SUPPORTED=new Set(SOLO_MATCH_SUPPORTED);
 const greenDeckIds=['041','042','043','045','052','055','056','062','065','066','069','072','074'].map(x=>'SLG-1-'+x);
-export const SOLO_TRAINING_PRESET=Object.fromEntries(greenDeckIds.map((id,i)=>[id,i===12?2:4]));
+export const SOLO_TRAINING_PRESET={...Object.fromEntries(greenDeckIds.map((id,i)=>[id,i===12?2:i===5?2:4])),'SLG-1-058':2};
 export const SOLO_SHADOW_TRAINING_PRESET=Object.fromEntries([
  ['SLG-1-030',12],...['001','005','006','007','009','010','013','015','016'].map(x=>['SLG-1-'+x,4]),['SLG-1-027',2]
 ]);
@@ -81,7 +81,8 @@ export function newSoloTrainingMatch({decks=[SOLO_TRAINING_PRESET,SOLO_TRAINING_
 function position(c,p,line,slot){c.owner=p;c.ready=false;c.line=line;c.slot=slot;}
 function retire(s,p,c){
  let arr=s.players[p][c.line],old=arr[c.slot];if(old?.uid!==c.uid)throw Error('retire lost field slot');
- arr[c.slot]=null;s.players[p].outside.push(c);
+ arr[c.slot]=null;
+ const layers=[c,...(c.stack||[])];for(const layer of layers){const {stack,...single}=layer;s.players[p].outside.push(single);}
  if(c.cardId==='SLG-1-007'&&s.players[p].deck.length)draw(s,s.players[p]);
 }
 function hurt(s,defender,amount=1){
@@ -96,6 +97,13 @@ function hurt(s,defender,amount=1){
    if(choices.length){s.pending={kind:'activeTrigger',p:defender,choices,from:c.uid};break;}
   }
  }
+}
+function beginBlock(s){
+ const a=byUid(s.players[s.active].front,s.combat?.attacker);
+ if(!a)throw Error('attacker not on front line');
+ const defenders=s.players[1-s.active].front.filter(x=>x?.ready);
+ if(defenders.length)s.pending={kind:'block',p:1-s.active,choices:defenders.map(x=>x.uid)};
+ else combat(s,null);
 }
 function combat(s,blockUid){
  const a=byUid(s.players[s.active].front,s.combat?.attacker);
@@ -127,6 +135,22 @@ function choose(s,action){
   if(action.uid!=null&&(!c||!d(c).traits.includes('DFN')||c.uid===q.source))throw Error('target must be another DFN');
   if(c)c.extraTargetAp=1;
   s.pending=null;
+ }else if(q.kind==='raid058Discard'){
+  const p=s.players[q.p];
+  if(action.uid!=null){
+   const i=p.hand.findIndex(c=>c.uid===action.uid);if(i<0)throw Error('illegal Raid discard');
+   p.outside.push(p.hand.splice(i,1)[0]);
+   const a=byUid(p.front,q.source);a.raid058Used=s.turn;
+   s.pending={kind:'raid058Unfreeze',p:q.p,source:q.source};
+  }else{s.pending=null;beginBlock(s);}
+ }else if(q.kind==='raid058Unfreeze'){
+  const p=s.players[q.p],a=byUid(p.front,q.source),c=action.uid==null?null:byUid(p.front,action.uid);
+  if(action.uid!=null&&(!c||(c.skipActive||0)===0))throw Error('only a frozen friendly front character can be chosen');
+  for(const char of [c,a].filter(Boolean)){
+   if((char.skipActive||0)>0)char.skipActive--;
+   else char.ready=true;
+  }
+  s.pending=null;beginBlock(s);
  }else if(q.kind==='mainDiscard'){
   const p=s.players[q.p],i=p.hand.findIndex(c=>c.uid===action.uid);
   if(i<0)throw Error('main action must choose a hand card');
@@ -165,6 +189,7 @@ function onEnter(s,c){
   const eligible=top.filter(x=>d(x).traits?.includes('影之軍團')||d(x).nameJa==='水篠 旬');
   if(top.length)s.pending={kind:'soldierTop',p:c.owner,source:c.uid,topUids:top.map(x=>x.uid),eligible:eligible.map(x=>x.uid)};
  }
+ if(c.cardId==='SLG-1-058')c.buffs.push({turn:s.turn,bp:1000});
  if(c.cardId==='SLG-1-043'){draw(s,p);if(p.hand.length)s.pending={kind:'discard',p:c.owner,source:c.uid};}
  if(c.cardId==='SLG-1-072'&&field(p).filter(x=>d(x).traits?.includes('DFN')).length>=3)draw(s,p);
  if(c.cardId==='SLG-1-074')s.pending={kind:'entryImpact',p:c.owner,source:c.uid};
@@ -175,6 +200,8 @@ export function soloTrainingLegalActions(s){
  if(s.pending){
   const q=s.pending;
   if(q.kind==='discard'||q.kind==='mainDiscard')return s.players[q.p].hand.map(c=>({type:'choose',uid:c.uid}));
+  if(q.kind==='raid058Discard')return [{type:'choose',uid:null},...s.players[q.p].hand.map(c=>({type:'choose',uid:c.uid}))];
+  if(q.kind==='raid058Unfreeze')return [{type:'choose',uid:null},...s.players[q.p].front.filter(c=>c&&(c.skipActive||0)>0).map(c=>({type:'choose',uid:c.uid}))];
   if(q.kind==='soldierTop'){
    const orders=x=>x.length===2?[x,[x[1],x[0]]]:[x];
    const result=[];
@@ -200,6 +227,12 @@ export function soloTrainingLegalActions(s){
    const data=d(c);if(!SUPPORTED.has(c.cardId)||p.ap<data.ap||soloEnergy(s)<data.energy)continue;
    for(const line of data.type==='field'||c.cardId==='SLG-1-014'?['energy']:['front','energy']){
     const slots=p[line];for(let slot=0;slot<4;slot++)if(!slots[slot])actions.push({type:'play',uid:c.uid,line,slot});
+   }
+   if(c.cardId==='SLG-1-058'){
+    for(const base of field(p).filter(b=>d(b).nameJa===d(c).nameJa&&!(b.stack||[]).length)){
+     actions.push({type:'raid',uid:c.uid,target:base.uid,line:base.line,slot:base.slot});
+     if(base.line==='energy')for(let slot=0;slot<4;slot++)if(!p.front[slot])actions.push({type:'raid',uid:c.uid,target:base.uid,line:'front',slot});
+    }
    }
   }
   for(const c of field(p)){
@@ -232,16 +265,24 @@ export function soloTrainingDispatch(original,action){
   p.ap-=data.ap;position(c,s.active,action.line,action.slot);
   p[action.line][action.slot]=c;
   onEnter(s,c);
-  }else if(action.type==='ability'){
+  }else if(action.type==='raid'){
+  const i=p.hand.findIndex(c=>c.uid===action.uid),c=p.hand.splice(i,1)[0],base=field(p).find(x=>x.uid===action.target);
+  if(!base||d(base).nameJa!==d(c).nameJa)throw Error('not a Raid base');
+  p.ap-=d(c).ap;p[base.line][base.slot]=null;
+  position(c,s.active,action.line,action.slot);
+  c.stack=[base];
+  c.ready=true;p[action.line][action.slot]=c;
+  onEnter(s,c);
+ }else if(action.type==='ability'){
   const c=own(s,action.uid);
   if(c.cardId==='SLG-1-009')s.pending={kind:'mainDiscard',p:s.active,source:c.uid};
   else {c.ready=false;c.boostTurn=s.turn;c.usedTurn=s.turn;c.retireAtMainEnd=true;}
  }else if(action.type==='attack'){
   const a=byUid(p.front,action.uid);a.ready=false;
-  const blockers=s.players[1-s.active].front.filter(c=>c?.ready&&!((a.grants||[]).some(g=>g.kind==='unblockable')));
   s.combat={attacker:a.uid};
-  if(blockers.length)s.pending={kind:'block',p:1-s.active,choices:blockers.map(c=>c.uid)};
-  else combat(s,null);
+  if(a.cardId==='SLG-1-058'&&a.raid058Used!==s.turn&&p.hand.length)
+   s.pending={kind:'raid058Discard',p:s.active,source:a.uid};
+  else beginBlock(s);
  }
  assertSoloTrainingMatch(s);return s;
 }
@@ -260,6 +301,8 @@ export function assertSoloTrainingMatch(s){
 export function soloTrainingBotAction(s){
  const legal=soloTrainingLegalActions(s);if(!legal.length)throw Error('no legal actions');
  if(s.pending){
+  if(s.pending.kind==='raid058Discard')return legal.find(a=>a.uid!=null)||legal[0];
+  if(s.pending.kind==='raid058Unfreeze')return legal.find(a=>a.uid!=null)||legal[0];
   if(s.pending.kind==='soldierTop'){
    return legal.find(a=>a.outsideUid!=null)||legal[0];
   }
