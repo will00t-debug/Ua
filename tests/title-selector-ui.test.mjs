@@ -3,10 +3,11 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {TITLES} from '../dist/title-registry.mjs';
 const app=readFileSync(new URL('../dist/app.mjs',import.meta.url),'utf8');
-test('BLEACH and TTG selectors are present in deck editor',()=>{
- assert.equal(TITLES.length,2);
+test('BLEACH, TTG and Solo Leveling selectors are present in deck editor',()=>{
+ assert.deepEqual(TITLES.map(t=>t.id),['bleach','gurren-lagann','solo-leveling']);
  assert.match(app,/data-title=/);
  assert.match(app,/ui\.title==='gurren-lagann'\)return ttgLibrary\(\)/);
+ assert.match(app,/ui\.title==='solo-leveling'\)return soloLibrary\(\)/);
 });
 test('TTG deck drafts are isolated from BLEACH drafts and playable Raid',()=>{
  assert.match(app,/ua-ttg-draft-v1/);
