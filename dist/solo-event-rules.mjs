@@ -2,6 +2,7 @@
 // Respects energy/AP payments, mandatory player choices and atomic illegal-action rejection.
 import {SOLO_LEVELING_CARDS} from './solo-leveling.mjs';
 const data=Object.fromEntries(SOLO_LEVELING_CARDS.map(c=>[c.id,c]));
+const supported=new Set(['SLG-1-036','SLG-1-038','SLG-1-040','SLG-1-076','SLG-1-077','SLG-1-078','SLG-1-079','SLG-1-080']);
 const source=s=>s.players[s.active];
 const enemy=s=>s.players[1-s.active];
 const ownChar=(s,name)=>source(s).field.some(c=>data[c.cardId]?.type==='character'&&data[c.cardId]?.nameJa===name);
@@ -13,7 +14,7 @@ const targetBp=c=>(c.currentBp??data[c.cardId]?.bp??c.printedBp);
 const legalEnemyTarget=(s,c,bpLimit)=>!!(c&&(c.line==='front'||c.line==null)&&targetBp(c)!=null&&targetBp(c)<=bpLimit&&source(s).ap>=(c.extraTargetAp||0));
 export function canPlaySoloEvent(s,uid){
  const d=data[source(s).hand.find(c=>c.uid===uid)?.cardId];
- return !!(usable(s)&&d?.type==='event'&&source(s).ap>=d.ap&&source(s).availableEnergy>=d.energy);
+ return !!(usable(s)&&d?.type==='event'&&supported.has(d.id)&&source(s).ap>=d.ap&&source(s).availableEnergy>=d.energy);
 }
 export function beginSoloEvent(s,uid){
  if(!canPlaySoloEvent(s,uid))throw Error('event payment or phase illegal');
@@ -21,7 +22,7 @@ export function beginSoloEvent(s,uid){
  // Defer all choices until after paying the printed card cost. No target is auto-picked.
  p.ap-=d.ap;const [c]=p.hand.splice(i,1);p.outside.push(c);
  const id=d.id;
- if(id==='SLG-1-036'){drawing(s,3);s.pending={type:'discard',left:2,player:s.active,card:c.uid};}
+ if(id==='SLG-1-036'){drawing(s,3);s.pending=p.hand.length?{type:'discard',left:Math.min(2,p.hand.length),player:s.active,card:c.uid}:null;}
  else if(['SLG-1-038','SLG-1-078','SLG-1-079'].includes(id))s.pending={type:'recoverAp',max:2,player:s.active,card:c.uid};
  else if(['SLG-1-040','SLG-1-076','SLG-1-077'].includes(id))s.pending={type:'destroy',player:s.active,card:c.uid};
  else if(id==='SLG-1-080'){drawing(s,1);s.pending={type:'grantAttackDraw',player:s.active,card:c.uid};}
@@ -42,7 +43,7 @@ export function chooseSoloEvent(s,{uid,count}={}){
  const p=source(s);
  if(q.type==='discard'){
   const i=p.hand.findIndex(c=>c.uid===uid);if(i<0)throw Error('illegal discard target');
-  p.outside.push(p.hand.splice(i,1)[0]);q.left--;if(q.left===0)s.pending=null;
+  p.outside.push(p.hand.splice(i,1)[0]);q.left--;if(q.left===0||p.hand.length===0)s.pending=null;
  }else if(q.type==='recoverAp'){
   if(!Number.isInteger(count)||count<0||count>q.max||p.ap+count>p.maxAp)throw Error('invalid AP recovery count');
   p.ap+=count;s.pending=null;
@@ -79,5 +80,5 @@ export function chooseSoloEvent(s,{uid,count}={}){
 export function soloEventPreview(s,uid){
  if(!canPlaySoloEvent(s,uid))return {legal:false};
  const c=source(s).hand.find(c=>c.uid===uid),d=data[c.cardId];
- return {legal:true,cardNumber:d.number,apCost:d.ap,energyRequirement:d.energy,choicesRequired:!['SLG-1-037'].includes(d.id)};
+ return {legal:true,cardNumber:d.number,apCost:d.ap,energyRequirement:d.energy,choicesRequired:true};
 }
