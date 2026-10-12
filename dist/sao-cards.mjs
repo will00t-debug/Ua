@@ -79,6 +79,28 @@ for(const c of SAO_CARDS)if(SAO_IMPLEMENTED_RULES[c.id]){
  c.engineImplemented=true;
 }
 
+const stepText='【ステップ】（自分の移動フェイズにフロントLからエナジーLへ移動できる）';
+for(const c of SAO_CARDS){
+ if(c.engineImplemented)continue;
+ const text=c.effectJa.trim();
+ let rules=null;
+ if(text==='-'&&c.type==='character')rules={};
+ else if(text===stepText)rules={step:true};
+ else if(text==='このカードは〈アリス〉としても扱う。\n'+stepText)rules={alsoName:'アリス',step:true};
+ else{
+  const draw=text.match(/^【登場時】カードを(\d+)枚引く。$/);
+  const drawDiscard=text.match(/^【登場時】カードを(\d+)枚引き、自分の手札を(\d+)枚場外に置く。$/);
+  if(draw)rules={entry:[{op:'draw',count:Number(draw[1])}]};
+  if(drawDiscard)rules={entry:[{op:'drawDiscard',draw:Number(drawDiscard[1]),discard:Number(drawDiscard[2])}]};
+ }
+ if(rules){
+  c.rules=rules;
+  c.engineImplemented=true;
+ }
+}
+export const SAO_RULE_COVERAGE={basicEngineImplemented:SAO_CARDS.filter(c=>c.engineImplemented).length,pending:SAO_CARDS.filter(c=>!c.engineImplemented).length};
+
+
 export const SAO_COVERAGE={printings:SAO_OFFICIAL_CARDS.length,uniqueCards:SAO_CARDS.length,products:Object.fromEntries(SAO_PRODUCTS.map(p=>[p.id,SAO_OFFICIAL_CARDS.filter(c=>c.set===p.id).length]))};
 export const SAO_BY_ID=Object.fromEntries(SAO_CARDS.map(c=>[c.id,c]));
 export function saoDeckIssues(counts){const entries=Object.entries(counts||{}).filter(([,n])=>n>0);const errors=[];let total=0;for(const [id,n] of entries){if(!SAO_BY_ID[id]||!Number.isInteger(n)||n<0||n>4)errors.push('卡號錯誤或超過 4 張：'+id);total+=n;}if(total!==50)errors.push('需要 50 張，目前 '+total+' 張。');errors.push('SAO 規則與完整卡表尚未完成，目前只能建立草稿，不能對戰。');return errors;}
