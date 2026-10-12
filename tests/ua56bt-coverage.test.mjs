@@ -23,9 +23,9 @@ test('audit cannot claim unrecorded card metadata or unsupported automation',()=
   assert.equal(row.automation,'not_implemented',row.number);
   assert.ok(row.url.includes(row.number.replace('/','%2F')));
  }
- assert.equal(known.size,72);
- assert.equal(rows.filter(r=>r.status==='identified_metadata_incomplete').length,9);
- assert.equal(TTG_PENDING_CARDS.length,9);
+ assert.equal(known.size,73);
+ assert.equal(rows.filter(r=>r.status==='identified_metadata_incomplete').length,8);
+ assert.equal(TTG_PENDING_CARDS.length,8);
  for(const c of TTG_PENDING_CARDS){assert.ok(!known.has(c.number));assert.equal(c.energy,null);assert.equal(c.ap,null);assert.equal(c.bp,null);assert.equal(c.gen,null);assert.equal(c.auto,false);}
 });
 test('all recorded cards explicitly block automated play until engine verification',()=>{
