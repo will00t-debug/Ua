@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {ttgKittan006Bp,resolveTtgNia059,resolveTtgButa063,resolveTtgMainEndRetire,resolveTtgYoko065Step} from '../dist/ttg-pending-rules.mjs';
+import {ttgKittan006Bp,resolveTtgNia059,resolveTtgButa063,resolveTtgMainEndRetire,resolveTtgYoko065Step,resolveTtgPendingEndTurn} from '../dist/ttg-pending-rules.mjs';
 import {ttgEnergyTotal} from '../dist/ttg-rules.mjs';
 const p=()=>({front:Array(4).fill(null),energy:Array(4).fill(null),outside:[],hand:[]});
 const state=()=>({active:0,turn:12,phase:'main',players:[p(),p()]});
@@ -54,4 +54,19 @@ test('TTG-1-065 STEP front to empty energy preserves REST and cannot overwrite a
  assert.equal(t.players[0].energy[0].uid,'y');
  assert.equal(t.players[0].energy[0].ready,false);
  assert.equal(s.players[0].front[2].uid,'y');
+});
+
+test('Nia BP+1000 is removed at end of turn without removing unrelated buffs',()=>{
+ const st=state();
+ st.players[0].energy[0]=card('n','TTG-1-059','ニア');
+ st.players[0].front[0]=card('s','TTG-1-009','シモン',1500,{
+  buffs:[{sourceUid:'old',turn:10,bp:500,until:'nextTurn'}],currentBp:2000
+ });
+ const buffed=resolveTtgNia059(st,{player:0,uid:'n',targetUid:'s'});
+ assert.equal(buffed.players[0].front[0].currentBp,3000);
+ assert.equal(buffed.players[0].front[0].buffs.length,2);
+ const ended=resolveTtgPendingEndTurn(buffed);
+ assert.equal(ended.players[0].front[0].currentBp,2000);
+ assert.deepEqual(ended.players[0].front[0].buffs,[{sourceUid:'old',turn:10,bp:500,until:'nextTurn'}]);
+ assert.equal(buffed.players[0].front[0].currentBp,3000,'input state remains immutable');
 });
