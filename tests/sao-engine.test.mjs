@@ -80,7 +80,8 @@ test('strict official-text rules are compiled for vanilla, STEP and simple draw/
  assert.equal(SAO_BY_ID['SAO-1-021'].engineImplemented,undefined);
 });
 test('SAO-1-107 official 3 draw 1 discard entry is resolved in common engine',()=>{
- const {s,put}=fixture(),c=put('SAO-1-107');
+ const {s,put}=fixture(),c=put('SAO-1-107'),source=put('SAO-1-107','energy',2);
+ source.energyBoostTurn=s.turn;source.energyBoostAmount=12;
  const deckBefore=s.players[0].deck.length;
  const play=legalActions(s).find(a=>a.type==='play'&&a.uid===c.uid&&a.line==='energy'&&a.slot===0);
  assert.ok(play);let g=dispatch(s,play);
@@ -97,6 +98,6 @@ test('SAO-2-041 official one-card draw entry requires AP and moves one card out 
  const before=s.players[0].deck.length;
  const a=legalActions(s).find(x=>x.type==='play'&&x.uid===c.uid&&x.line==='energy'&&x.slot===0);
  assert.ok(a);const g=dispatch(s,a);
- assert.equal(g.players[0].deck.length,before-1);assert.equal(g.players[0].ap,cardOf(c).ap);
+ assert.equal(g.players[0].deck.length,before-1);assert.equal(g.players[0].ap,3-cardOf(c).ap);
  assertState(g);
 });
