@@ -299,3 +299,14 @@ select, input, textarea { background: #fff; color: var(--text); border-color: #c
 @media (max-width: 380px) {
   .hand, .mulliganHand { grid-template-columns: repeat(var(--hand-narrow, 5), minmax(0, 1fr)); max-width: calc(var(--hand-narrow, 5) * 80px - 4px); }
 }
+
+
+/* Guided Raid placement: keyboard accessible and touch-friendly. */
+.raidFlowPanel { margin: 12px 0; padding: 14px; border: 1px solid #bd6973; border-radius: 8px; background: #fff8f9; color: #563a40; }
+.raidFlowPanel p { margin: 7px 0; font-size: 12px; line-height: 1.6; }
+.raidFlowActions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.raidFlowActions .btn { min-height: 40px; }
+.slot.destination { outline: 3px solid #d15169; outline-offset: 2px; }
+.slot.raid-base-selected .slotFace { outline: 3px solid #9b3a46; outline-offset: 2px; }
+.slot.raid-position-selected { outline: 3px solid #9b3a46; outline-offset: 2px; }
+@media(max-width:620px) { .raidFlowPanel { padding: 10px; } .raidFlowActions .btn { flex: 1 1 auto; min-height: 44px; } }
