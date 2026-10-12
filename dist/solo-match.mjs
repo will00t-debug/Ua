@@ -146,7 +146,7 @@ function choose(s,action){
  }else if(q.kind==='raid058Unfreeze'){
   const p=s.players[q.p],a=byUid(p.front,q.source),c=action.uid==null?null:byUid(p.front,action.uid);
   if(action.uid!=null&&(!c||(c.skipActive||0)===0))throw Error('only a frozen friendly front character can be chosen');
-  for(const char of [c,a].filter(Boolean)){
+  for(const char of [c,a].filter((x,i,list)=>x&&list.findIndex(y=>y?.uid===x.uid)===i)){
    if((char.skipActive||0)>0)char.skipActive--;
    else char.ready=true;
   }
