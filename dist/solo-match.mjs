@@ -1207,6 +1207,10 @@ export function soloTrainingBotAction(s){
   if(s.pending.kind==='slgMill')return legal[legal.length-1];
   if(s.pending.kind==='slgDiscard'||s.pending.kind==='slg019Recover'||s.pending.kind==='slg044Target'||s.pending.kind==='slg077Target')return legal[0];
   if(s.pending.kind==='slgRecoveredBuff'||s.pending.kind==='slgRecoveredDeploy'||s.pending.kind==='slg019Entry'||s.pending.kind==='slg059Entry'||s.pending.kind==='slg077Buff')return legal.find(a=>a.uid!=null)||legal[0];
+  if(s.pending.kind==='slgEndRaid')return legal.find(a=>a.uid!=null&&a.uid!=='peel')||legal[0];
+  if(s.pending.kind==='slg051Mode')return legal.find(a=>a.mode==='raid'&&s.players[s.pending.p].outside.some(c=>c.cardId==='SLG-1-047'))||legal[0];
+  if(s.pending.kind==='slg051Discard')return legal.find(a=>s.players[s.pending.p].hand.some(c=>c.uid===a.uid&&c.cardId==='SLG-1-047'))||legal[0];
+  if(['slg022Enter','slg051Raid','slg048Deploy','slg061Enter','slg061Active','slg049Destroy','slg020Recover','slg021Win'].includes(s.pending.kind))return legal.find(a=>a.uid!=null)||legal[0];
   if(['slg061Enter','slg064Attack','slg064Destroy','slg051Mode','slg051Recover','slg051Discard','slg051Raid','slg048Deploy','slg049Destroy','slgEndRaid','slg061End','slg061Active','slg020EntryDiscard','slg020Recover','slg021Win','slg022Enter','slg060Swap','slg060Target','slg022Swap'].includes(s.pending.kind))return legal[0];
   if(['slg020AttackDiscard','slg048Under'].includes(s.pending.kind))return legal[0];
   if(s.pending.kind==='entry002Mode')return legal[0];
@@ -1232,6 +1236,12 @@ export function soloTrainingBotAction(s){
   return legal.find(a=>a.uid!=null)||legal[0];
  }
  const p=player(s),plays=legal.filter(a=>a.type==='play');
+ const raids=legal.filter(a=>a.type==='raid');
+ if(s.phase==='main'&&raids.length)return raids[0];
+ const outsideActions=legal.filter(a=>a.type==='abilityOutside');
+ if(s.phase==='main'&&outsideActions.length)return outsideActions[0];
+ const resourceAbilities=legal.filter(a=>a.type==='ability'&&a.mode!=='potion');
+ if(s.phase==='main'&&resourceAbilities.length&&p.ap<=1)return resourceAbilities[0];
  const events=legal.filter(a=>a.type==='playEvent');
  if(s.phase==='main'&&events.length&&(p.ap>=2||!plays.length)){
   // Only previously validated event commands enter this branch.
