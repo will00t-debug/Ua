@@ -319,3 +319,6 @@ select, input, textarea { background: #fff; color: var(--text); border-color: #c
 .peekPreview small { color:#85747a; margin-top:4px; }
 .peekPreview p { margin-top:10px; line-height:1.7; white-space:pre-wrap; }
 @media(max-width:620px) { .peekPreview { gap:9px; padding:9px; } .peekPreview img { width:90px; } }
+
+/* Printed Raid is not an active Raid: distinguish normal deployment clearly. */
+.slotStack.raidInactive{color:#697789;border-color:#b6c0ca;background:#f2f4f7;font-size:7px}
