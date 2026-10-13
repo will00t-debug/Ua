@@ -4,7 +4,7 @@
 import {TTG_BY_ID} from './ttg-builder.mjs';
 const face=p=>[...(p?.front||[]),...(p?.energy||[])].filter(Boolean);
 const name=c=>TTG_BY_ID[c?.cardId]?.nameJa||c?.nameJa||'';
-const contains=c,n=>name(c)===n||(c.stack||[]).some(x=>contains(x,n));
+const contains=(c,n)=>name(c)===n||(c.stack||[]).some(x=>contains(x,n));
 const real=c=>[c.uid,...(c.stack||[]).flatMap(real),...(c.under||[]).flatMap(real)];
 const inventory=p=>[...p.hand,...p.deck,...p.life,...p.outside,...(p.removed||[]),...face(p)].flatMap(real).sort();
 export function legalTtgRedNiaKaminaPlay(s,p,card){
