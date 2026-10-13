@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {ttgKittan006Bp,resolveTtgNia059,resolveTtgButa063,resolveTtgMainEndRetire,resolveTtgYoko065Step,resolveTtgPendingEndTurn} from '../dist/ttg-pending-rules.mjs';
+import {ttgKittan006Bp,resolveTtgNia059,resolveTtgButa063,resolveTtgMainEndRetire,resolveTtgYoko065Step,resolveTtgPendingEndTurn,eligibleTtgViral002Targets,resolveTtgViral002,resolveTtgTemporaryEnergyEndTurn,eligibleTtg049ReturnTargets,resolveTtg049Entry,eligibleTtg071AttackBuffTargets,resolveTtg071FirstAttack} from '../dist/ttg-pending-rules.mjs';
 import {ttgEnergyTotal} from '../dist/ttg-rules.mjs';
 const p=()=>({front:Array(4).fill(null),energy:Array(4).fill(null),outside:[],hand:[]});
 const state=()=>({active:0,turn:12,phase:'main',players:[p(),p()]});
@@ -69,4 +69,65 @@ test('Nia BP+1000 is removed at end of turn without removing unrelated buffs',()
  assert.equal(ended.players[0].front[0].currentBp,2000);
  assert.deepEqual(ended.players[0].front[0].buffs,[{sourceUid:'old',turn:10,bp:500,until:'nextTurn'}]);
  assert.equal(buffed.players[0].front[0].currentBp,3000,'input state remains immutable');
+});
+
+test('TTG-1-002 Viral rests self and different ACTIVE front ally for one temporary energy',()=>{
+ const st=state();
+ st.players[0].energy[0]=card('v','TTG-1-002','ヴィラル',2000);
+ st.players[0].front[0]=card('f','TTG-1-006','キタン',2000);
+ st.players[0].front[1]=card('r','TTG-1-009','シモン',1500,{ready:false});
+ st.players[1].front[0]=card('enemy','TTG-1-006','キタン',2000);
+ assert.deepEqual(eligibleTtgViral002Targets(st,{player:0,uid:'v'}),['f']);
+ for(const targetUid of ['v','r','enemy','bad']){
+  assert.throws(()=>resolveTtgViral002(st,{player:0,uid:'v',targetUid}));
+ }
+ const before=JSON.stringify(st);
+ const activated=resolveTtgViral002(st,{player:0,uid:'v',targetUid:'f'});
+ assert.equal(activated.players[0].energy[0].ready,false);
+ assert.equal(activated.players[0].front[0].ready,false);
+ assert.equal(activated.players[0].energy[0].energyBonus,1);
+ assert.equal(activated.players[0].energy[0].temporaryEnergyUntilTurn,12);
+ assert.equal(JSON.stringify(st),before);
+ assert.throws(()=>resolveTtgViral002(activated,{player:0,uid:'v',targetUid:'f'}));
+ const ended=resolveTtgTemporaryEnergyEndTurn(activated);
+ assert.equal(ended.players[0].energy[0].energyBonus,0);
+ assert.equal(ended.players[0].energy[0].temporaryEnergyUntilTurn,undefined);
+ assert.equal(activated.players[0].energy[0].energyBonus,1);
+});
+test('TTG-1-049 mandatory on-entry other <=1-energy return, or self if no candidate',()=>{
+ const st=state();st.players[0].front[0]=card('duo','TTG-1-049','ギミー＆ダリー');
+ st.players[0].energy[0]=card('small','TTG-1-058','ニア',500,{energy:0});
+ st.players[0].energy[1]=card('costly','TTG-1-056','シモン',4000,{energy:3});
+ st.players[1].energy[0]=card('opponent','TTG-1-001','ヴィラル',2000,{energy:0});
+ assert.deepEqual(eligibleTtg049ReturnTargets(st,{player:0,uid:'duo'}),['small']);
+ assert.throws(()=>resolveTtg049Entry(st,{player:0,uid:'duo'}));
+ assert.throws(()=>resolveTtg049Entry(st,{player:0,uid:'duo',targetUid:'opponent'}));
+ assert.throws(()=>resolveTtg049Entry(st,{player:0,uid:'duo',targetUid:'costly'}));
+ const copied=resolveTtg049Entry(st,{player:0,uid:'duo',targetUid:'small'});
+ assert.equal(copied.players[0].energy[0],null);
+ assert.deepEqual(copied.players[0].hand.map(x=>x.uid),['small']);
+ assert.equal(copied.players[0].front[0].uid,'duo');
+ assert.equal(st.players[0].energy[0].uid,'small');
+ const nothing=state();nothing.players[0].front[0]=card('duo','TTG-1-049','ギミー＆ダリー');
+ const returned=resolveTtg049Entry(nothing,{player:0,uid:'duo'});
+ assert.equal(returned.players[0].front[0],null);
+ assert.deepEqual(returned.players[0].hand.map(x=>x.uid),['duo']);
+});
+test('TTG-1-071 only first character attack can buff an OTHER ally by 2000',()=>{
+ const st=state();st.phase='attack';st.attackingUid='king';st.characterAttacksThisTurn=1;
+ st.players[0].front[0]=card('king','TTG-1-071','キングキタンDX',4000);
+ st.players[0].front[1]=card('ally','TTG-1-048','キタン',3000);
+ st.players[0].energy[1]=card('ally2','TTG-1-009','シモン',1500);
+ st.players[1].front[0]=card('enemy','TTG-1-056','シモン',3000);
+ assert.deepEqual(eligibleTtg071AttackBuffTargets(st,{player:0,uid:'king'}),['ally','ally2']);
+ for(const targetUid of ['king','enemy','bad'])assert.throws(()=>resolveTtg071FirstAttack(st,{player:0,uid:'king',targetUid}));
+ const result=resolveTtg071FirstAttack(st,{player:0,uid:'king',targetUid:'ally'});
+ assert.equal(result.players[0].front[1].currentBp,5000);
+ assert.equal(resolveTtgPendingEndTurn(result).players[0].front[1].currentBp,3000);
+ assert.equal(st.players[0].front[1].currentBp,undefined);
+ const skipped=resolveTtg071FirstAttack(st,{player:0,uid:'king'});
+ assert.equal(skipped.players[0].front[1].currentBp,undefined);
+ st.characterAttacksThisTurn=2;
+ assert.deepEqual(eligibleTtg071AttackBuffTargets(st,{player:0,uid:'king'}),[]);
+ assert.throws(()=>resolveTtg071FirstAttack(st,{player:0,uid:'king',targetUid:'ally'}));
 });
