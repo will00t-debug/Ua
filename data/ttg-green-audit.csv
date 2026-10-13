@@ -23,7 +23,7 @@ TTG-1-021,green,yes,yes,no,no,"STEP and phase-start replacement tested; 021 with
 TTG-1-022,green,yes,yes,no,no,"Website game UI and full cross-card interactions not audited"
 TTG-1-023,green,yes,yes,no,no,"Website game UI and full cross-card interactions not audited"
 TTG-1-024,green,yes,yes,no,no,"Website game UI and full cross-card interactions not audited"
-TTG-1-025,green,yes,no,yes,no,"energy-gated attack/block; REST retirement and Simon generator/AP effect"
+TTG-1-025,green,yes,yes,no,no,"Q2272 own Simon required; normal 6-energy combat/REST sideline now restricted-core tested; UI still pending"
 TTG-1-026,green,yes,yes,no,no,"Website game UI and full cross-card interactions not audited"
 TTG-1-027,green,yes,no,yes,no,"Ark Raid on-entry modes and facedown DAMAGE2 attack"
 TTG-1-028,green,yes,no,yes,no,"Normal Raid, mandatory draw, target attack ban tested; life Raid trigger and 004 order still blocked"
