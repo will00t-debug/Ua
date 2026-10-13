@@ -1,9 +1,9 @@
 {
-  "schema": "ua-ai-v3-training-1",
-  "featureVersion": "ua-v3-f72-1",
+  "schema": "ua-ai-v3-training-2",
+  "featureVersion": "ua-v3-f96-2",
   "neuralNetwork": {
-    "inputs": 72,
-    "hidden": 24,
+    "inputs": 96,
+    "hidden": 32,
     "output": 1
   },
   "training": {
@@ -11,19 +11,19 @@
     "completed": 200,
     "unfinished": 0,
     "failures": 0,
-    "rankingPairs": 58476,
+    "rankingPairs": 4289,
     "epochs": 5,
-    "finalLoss": 0.6591195368406394,
-    "elapsedMs": 484707
+    "finalLoss": 0.5287017818384706,
+    "elapsedMs": 653624
   },
   "evaluation": {
     "games": 72,
-    "wins": 24,
-    "losses": 48,
+    "wins": 30,
+    "losses": 42,
     "unfinished": 0,
     "errors": 0,
-    "moves": 11838,
-    "winRate": 0.3333333333333333,
+    "moves": 15426,
+    "winRate": 0.4166666666666667,
     "byMatchup": {
       "green-kenpachi-unohana__green-kenpachi-unohana": {
         "games": 8,
@@ -34,15 +34,15 @@
       },
       "green-kenpachi-unohana__purple-renji-rukia": {
         "games": 8,
-        "wins": 3,
-        "losses": 5,
+        "wins": 4,
+        "losses": 4,
         "unfinished": 0,
         "errors": 0
       },
       "green-kenpachi-unohana__blue-ichigo-zangetsu": {
         "games": 8,
-        "wins": 2,
-        "losses": 6,
+        "wins": 3,
+        "losses": 5,
         "unfinished": 0,
         "errors": 0
       },
@@ -55,22 +55,22 @@
       },
       "purple-renji-rukia__purple-renji-rukia": {
         "games": 8,
-        "wins": 4,
-        "losses": 4,
+        "wins": 3,
+        "losses": 5,
         "unfinished": 0,
         "errors": 0
       },
       "purple-renji-rukia__blue-ichigo-zangetsu": {
         "games": 8,
-        "wins": 1,
-        "losses": 7,
+        "wins": 3,
+        "losses": 5,
         "unfinished": 0,
         "errors": 0
       },
       "blue-ichigo-zangetsu__green-kenpachi-unohana": {
         "games": 8,
-        "wins": 3,
-        "losses": 5,
+        "wins": 4,
+        "losses": 4,
         "unfinished": 0,
         "errors": 0
       },
@@ -83,14 +83,14 @@
       },
       "blue-ichigo-zangetsu__blue-ichigo-zangetsu": {
         "games": 8,
-        "wins": 2,
-        "losses": 6,
+        "wins": 4,
+        "losses": 4,
         "unfinished": 0,
         "errors": 0
       }
     },
-    "elapsedMs": 141252,
-    "seedBase": 1025000,
+    "elapsedMs": 216410,
+    "seedBase": 1026000,
     "opponent": "hard v2",
     "isHeldOut": true,
     "accepted": false,
@@ -98,5 +98,5 @@
   },
   "candidatePath": "audit/ai-v3-candidate.json",
   "championPromoted": false,
-  "disclaimer": "Outcome-ranked offline self-play, not automatic improvement without held-out evaluation. No hidden information encoded."
+  "disclaimer": "Focused teacher-ranked deployment learning with weak outcome feedback; do not treat final game result as proof an individual move was good. No secret card identities in features."
 }
