@@ -5,8 +5,8 @@ import {SOLO_LEVELING_CARDS} from './solo-leveling.mjs';
 import {normalizeSoloDeck} from './solo-decks.mjs';
 const DB=Object.fromEntries(SOLO_LEVELING_CARDS.map(c=>[c.id,c]));
 export const SOLO_MATCH_SUPPORTED=Object.freeze([
- 'SLG-1-001','SLG-1-002','SLG-1-003','SLG-1-008','SLG-1-011','SLG-1-018','SLG-1-019','SLG-1-004','SLG-1-005','SLG-1-017','SLG-1-012','SLG-1-025','SLG-1-026','SLG-1-006','SLG-1-007','SLG-1-009','SLG-1-010','SLG-1-013','SLG-1-014','SLG-1-015','SLG-1-016','SLG-1-023','SLG-1-024','SLG-1-027','SLG-1-028','SLG-1-034','SLG-1-036','SLG-1-037','SLG-1-038','SLG-1-039','SLG-1-040','SLG-1-029','SLG-1-030','SLG-1-031','SLG-1-032','SLG-1-033','SLG-1-035',
- 'SLG-1-041','SLG-1-042','SLG-1-044','SLG-1-046','SLG-1-059','SLG-1-063','SLG-1-077','SLG-1-050','SLG-1-053','SLG-1-054','SLG-1-068','SLG-1-070','SLG-1-073','SLG-1-043','SLG-1-045','SLG-1-052','SLG-1-055','SLG-1-056',
+ 'SLG-1-001','SLG-1-002','SLG-1-003','SLG-1-008','SLG-1-011','SLG-1-018','SLG-1-019','SLG-1-020','SLG-1-021','SLG-1-022','SLG-1-004','SLG-1-005','SLG-1-017','SLG-1-012','SLG-1-025','SLG-1-026','SLG-1-006','SLG-1-007','SLG-1-009','SLG-1-010','SLG-1-013','SLG-1-014','SLG-1-015','SLG-1-016','SLG-1-023','SLG-1-024','SLG-1-027','SLG-1-028','SLG-1-034','SLG-1-036','SLG-1-037','SLG-1-038','SLG-1-039','SLG-1-040','SLG-1-029','SLG-1-030','SLG-1-031','SLG-1-032','SLG-1-033','SLG-1-035',
+ 'SLG-1-041','SLG-1-042','SLG-1-047','SLG-1-048','SLG-1-049','SLG-1-051','SLG-1-060','SLG-1-061','SLG-1-064','SLG-1-044','SLG-1-046','SLG-1-059','SLG-1-063','SLG-1-077','SLG-1-050','SLG-1-053','SLG-1-054','SLG-1-068','SLG-1-070','SLG-1-073','SLG-1-043','SLG-1-045','SLG-1-052','SLG-1-055','SLG-1-056',
  'SLG-1-062','SLG-1-065','SLG-1-066','SLG-1-069','SLG-1-057','SLG-1-067','SLG-1-071','SLG-1-072','SLG-1-074','SLG-1-075','SLG-1-076','SLG-1-078','SLG-1-079','SLG-1-080','SLG-1-058'
 ]);
 const SUPPORTED=new Set(SOLO_MATCH_SUPPORTED);
@@ -57,6 +57,8 @@ export function soloMatchBp(s,c){
   if(c.cardId==='SLG-1-004'&&(p.discardByOwnEffectTurn===s.turn||p.recoveredByOwnEffectTurn===s.turn))value+=500;
   if(c.cardId==='SLG-1-010'&&p.outside.length>=10)value+=1000;
   if(c.cardId==='SLG-1-059'&&c.mightyThisTurn===s.turn)value+=1000;
+  if(c.cardId==='SLG-1-049')value+=500;
+  if(c.cardId==='SLG-1-020'||c.cardId==='SLG-1-021')value+=500*Math.floor(p.outside.length/5);
   if(c.cardId==='SLG-1-027')value+=500*field(p).filter(x=>!x.ready&&d(x).type==='character'&&d(x).traits?.includes('影之軍團')&&d(x).bp<=2500).length;
   if(c.cardId==='SLG-1-062'&&field(p).filter(x=>d(x).traits?.includes('第四次架南島Raid')).length>=5)value+=1500;
   if(c.cardId==='SLG-1-065'&&p.hand.length>=5)value+=1000;
@@ -65,8 +67,8 @@ export function soloMatchBp(s,c){
  value+=(c.buffs||[]).filter(b=>b.turn===s.turn).reduce((n,b)=>n+b.bp,0);
  return value;
 }
-const impact=(s,c)=>c.cardId==='SLG-1-056'||(c.cardId==='SLG-1-065'&&s.players[c.owner].hand.length>=5)||(c.grants||[]).some(g=>g.kind==='impact'&&g.turn===s.turn);
-const impactImmune=c=>['SLG-1-016','SLG-1-032','SLG-1-052','SLG-1-053'].includes(c.cardId);
+const impact=(s,c)=>c.cardId==='SLG-1-022'||c.cardId==='SLG-1-049'||(c.cardId==='SLG-1-021'&&soloMatchBp(s,c)>=6000)||c.cardId==='SLG-1-056'||(c.cardId==='SLG-1-065'&&s.players[c.owner].hand.length>=5)||(c.grants||[]).some(g=>g.kind==='impact'&&g.turn===s.turn);
+const impactImmune=c=>['SLG-1-060','SLG-1-016','SLG-1-032','SLG-1-052','SLG-1-053'].includes(c.cardId);
 const shizukuOrSung=(c)=>d(c)?.nameJa==='水篠 旬'||d(c)?.nameJa==='向坂 雫';
 const isSung=(c)=>d(c)?.nameJa==='水篠 旬';
 function enqueue(s,q){if(s.pending){s.pendingStack??=[];s.pendingStack.unshift(q);}else s.pending=q;}
@@ -87,6 +89,18 @@ function recoverSolo(s,p,uid,sourceName){
  return c;
 }
 const shadow=(c)=>d(c)?.type==='character'&&d(c)?.traits?.includes('影之軍團');
+const isIsland=c=>d(c)?.traits?.includes('第四次架南島Raid');
+const raidIds=new Set(['SLG-1-020','SLG-1-021','SLG-1-022','SLG-1-047','SLG-1-048','SLG-1-049','SLG-1-058','SLG-1-064']);
+const usableEnergy=(s,p,c)=>c.cardId==='SLG-1-022'?Math.max(0,d(c).energy-field(s.players[p]).filter(shadow).length):d(c).energy;
+function canRaid(s,p,c,base){return base&&d(base).type==='character'&&d(base).nameJa===d(c).nameJa&&raidIds.has(c.cardId)&&soloEnergy(s,p)>=usableEnergy(s,p,c);}
+function raidReplace(s,p,c,base,line,slot,chargeAp=true,raidSource='hand'){
+ if(!canRaid(s,p,c,base)||s.players[p][line][slot]&&s.players[p][line][slot].uid!==base.uid||chargeAp&&s.players[p].ap<d(c).ap)throw Error('illegal Raid base or destination');
+ const owner=s.players[p],origin=raidSource==='outside'?owner.outside:owner.hand,index=origin.findIndex(x=>x.uid===c.uid);
+ if(index<0)throw Error('Raid card not in source zone');
+ origin.splice(index,1);if(chargeAp)owner.ap-=d(c).ap;
+ owner[base.line][base.slot]=null;position(c,p,line,slot);
+ c.stack=[base,...(base.stack||[])];delete base.stack;c.ready=true;owner[line][slot]=c;onEnter(s,c);
+}
 const groupUsed=(s,p,key)=>s.groupUsed?.[p+':'+key]===s.turn;
 const markGroup=(s,p,key)=>{s.groupUsed??={};s.groupUsed[p+':'+key]=s.turn;};
 function readySolo(c){
@@ -760,7 +774,7 @@ export function soloTrainingLegalActions(s){
    for(let slot=0;slot<4;slot++)if(!p.front[slot])actions.push({type:'move',uid:c.uid,slot});
  }else if(s.phase==='main'){
   for(const c of p.hand){
-   const data=d(c);if(!SUPPORTED.has(c.cardId)||p.ap<data.ap||soloEnergy(s)<data.energy)continue;
+   const data=d(c);if(!SUPPORTED.has(c.cardId)||p.ap<data.ap||soloEnergy(s)<usableEnergy(s,s.active,c))continue;
    if(data.type==='event'){
     if(c.cardId==='SLG-1-077'){
      const islands=field(p).filter(x=>d(x).traits?.includes('第四次架南島Raid'));
@@ -773,15 +787,17 @@ export function soloTrainingLegalActions(s){
     }
     actions.push({type:'playEvent',uid:c.uid});continue;
    }
-   for(const line of data.type==='field'||c.cardId==='SLG-1-014'?['energy']:['front','energy']){
-    const slots=p[line];for(let slot=0;slot<4;slot++)if(!slots[slot])actions.push({type:'play',uid:c.uid,line,slot});
-   }
-   if(c.cardId==='SLG-1-058'){
-    for(const base of field(p).filter(b=>d(b).nameJa===d(c).nameJa&&!(b.stack||[]).length)){
+   if(raidIds.has(c.cardId)){
+    for(const base of field(p).filter(x=>canRaid(s,s.active,c,x))){
      actions.push({type:'raid',uid:c.uid,target:base.uid,line:base.line,slot:base.slot});
      if(base.line==='energy')for(let slot=0;slot<4;slot++)if(!p.front[slot])actions.push({type:'raid',uid:c.uid,target:base.uid,line:'front',slot});
     }
+    continue;
    }
+   for(const line of data.type==='field'||c.cardId==='SLG-1-014'?['energy']:['front','energy']){
+    const slots=p[line];for(let slot=0;slot<4;slot++)if(!slots[slot])actions.push({type:'play',uid:c.uid,line,slot});
+   }
+
   }
   if(!groupUsed(s,s.active,'sung019')&&p.hand.some(shadow))
    for(const c of p.outside.filter(c=>c.cardId==='SLG-1-019'))actions.push({type:'abilityOutside',uid:c.uid});
@@ -864,13 +880,8 @@ export function soloTrainingDispatch(original,action){
   p[action.line][action.slot]=c;
   onEnter(s,c);
   }else if(action.type==='raid'){
-  const i=p.hand.findIndex(c=>c.uid===action.uid),c=p.hand.splice(i,1)[0],base=field(p).find(x=>x.uid===action.target);
-  if(!base||d(base).nameJa!==d(c).nameJa)throw Error('not a Raid base');
-  p.ap-=d(c).ap;p[base.line][base.slot]=null;
-  position(c,s.active,action.line,action.slot);
-  c.stack=[base];
-  c.ready=true;p[action.line][action.slot]=c;
-  onEnter(s,c);
+  const c=byUid(p.hand,action.uid),base=field(p).find(x=>x.uid===action.target);
+  raidReplace(s,s.active,c,base,action.line,action.slot);
   }else if(action.type==='ability'){
   const c=own(s,action.uid);
   if(c.cardId==='SLG-1-044'){
