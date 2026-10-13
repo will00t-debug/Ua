@@ -44,13 +44,15 @@ test('038, 078, 079 can restore at most two AP and cannot exceed max AP after pa
 });
 test('040 target selection checks threshold and extra AP after event payment',()=>{
  let s=setup(purple('SLG-1-040'));for(let i=0;i<4;i++)place(s,'SLG-1-030','energy',i);
- const target=place(s,'SLG-1-065','front',0,1); // green enemy would be illegal in a same-purple fixture
- target.cardId='SLG-1-033';target.extraTargetAp=1;
+ const target=place(s,'SLG-1-031','front',0,1);
+ target.extraTargetAp=1;
  s.players[0].ap=1;
  let c=take(s.players[0],'SLG-1-040');s.players[0].hand.push(c);
  assert.equal(soloTrainingLegalActions(s).some(a=>a.type==='playEvent'&&a.uid===c.uid),false);
  s.players[0].ap=2;
- assert.equal(soloTrainingLegalActions(s).some(a=>a.type==='playEvent'&&a.uid===c.uid),false); // BP4000 without Sung
+ assert.equal(soloTrainingLegalActions(s).some(a=>a.type==='playEvent'&&a.uid===c.uid),true);
+ target.cardId='SLG-1-033';
+ assert.equal(soloTrainingLegalActions(s).some(a=>a.type==='playEvent'&&a.uid===c.uid),false); // printed BP4000 without Sung
  assertSoloTrainingMatch(s);
 });
 test('076 selects BP5000 limit when Sung is on field, can choose protected target with extra AP',()=>{
