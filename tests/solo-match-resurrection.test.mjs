@@ -28,7 +28,7 @@ test('Q2038: Castle at 19 outside cannot activate high mode even if discard cost
  assertSoloTrainingMatch(s);
 });
 test('039 one ACTIVE summon from outside is chosen with explicit location and conserves UID',()=>{
- let s=match(with039()),p=s.players[0];for(let i=0;i<4;i++)deploy(s,'SLG-1-030','energy',i);
+ let s=match(with039()),p=s.players[0];deploy(s,'SLG-1-029','energy',0);for(let i=1;i<4;i++)deploy(s,'SLG-1-030','energy',i);
  const target=pluck(p,'SLG-1-029');p.outside.push(target);
  const event=pluck(p,'SLG-1-039');p.hand.push(event);
  const act=soloTrainingLegalActions(s).find(a=>a.type==='playEvent'&&a.uid===event.uid);assert.ok(act);
@@ -42,7 +42,7 @@ test('039 one ACTIVE summon from outside is chosen with explicit location and co
  assertSoloTrainingMatch(s);
 });
 test('039 two REST summon includes per-enter choice queue, no card duplication',()=>{
- let s=match(with039()),p=s.players[0];for(let i=0;i<4;i++)deploy(s,'SLG-1-030','energy',i);
+ let s=match(with039()),p=s.players[0];deploy(s,'SLG-1-029','energy',0);for(let i=1;i<4;i++)deploy(s,'SLG-1-030','energy',i);
  const a=pluck(p,'SLG-1-029'),b=pluck(p,'SLG-1-030');p.outside.push(a,b);
  const event=pluck(p,'SLG-1-039');p.hand.push(event);
  s=soloTrainingDispatch(s,soloTrainingLegalActions(s).find(x=>x.type==='playEvent'&&x.uid===event.uid));
