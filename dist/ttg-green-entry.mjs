@@ -5,7 +5,7 @@ import {TTG_BY_ID} from './ttg-builder.mjs';
 
 export const TTG_GREEN_ENTRY_IDS=Object.freeze([
  'TTG-1-001','TTG-1-009','TTG-1-010','TTG-1-014',
- 'TTG-1-023','TTG-1-026'
+ 'TTG-1-016','TTG-1-017','TTG-1-023','TTG-1-026'
 ]);
 const entrySet=new Set(TTG_GREEN_ENTRY_IDS);
 const ownField=pl=>['front','energy'].flatMap(line=>(pl?.[line]||[]).map((card,slot)=>({card,line,slot}))).filter(x=>x.card);
@@ -54,6 +54,14 @@ export function legalTtgGreenEntryDecisions(state,{player,sourceUid}={}){
    candidateUids:candidates.map(c=>c.uid),canSkip:true,
    mustDiscardOnTake:true}];
  }
+ case 'TTG-1-016':return [{type:'greenEntry',player,sourceUid,mode:'niaDiscardDraw',max:Math.min(2,pl.hand.length,pl.deck.length),candidateUids:pl.hand.map(c=>c.uid)}];
+ case 'TTG-1-017':{
+  const match=c=>named(c,'シモン')||Number.isInteger(printedCost(c))&&printedCost(c)>=8;
+  return [
+   {type:'greenEntry',player,sourceUid,mode:'niaSearch',revealed:top.slice(0,4).map(c=>c.uid),candidateUids:top.slice(0,4).filter(match).map(c=>c.uid),canSkip:true,mustDiscardOnTake:true},
+   {type:'greenEntry',player,sourceUid,mode:'niaOutsideToTop',candidateUids:pl.outside.filter(match).map(c=>c.uid),canSkip:true}
+  ];
+ }
  case 'TTG-1-014':{
   const candidates=ownField(pl).filter(x=>x.card.uid!==sourceUid&&isSafeStandalone(x.card)&&
     Number.isInteger(printedCost(x.card))&&printedCost(x.card)<=1);
@@ -72,7 +80,7 @@ export function legalTtgGreenEntryDecisions(state,{player,sourceUid}={}){
  default:return [];
  }
 }
-export function resolveTtgGreenEntry(state,{player,sourceUid,mode,takeUid=null,discardUid=null,bottomOrderUids=[],returnUid=null}={}){
+export function resolveTtgGreenEntry(state,{player,sourceUid,mode,takeUid=null,discardUid=null,discardUids=[],bottomOrderUids=[],returnUid=null}={}){
  const {pl,id,entry}=context(state,player,sourceUid);
  const options=available(state,player,entry.card);
  const rule=options.find(x=>x.mode===mode);
@@ -99,6 +107,24 @@ export function resolveTtgGreenEntry(state,{player,sourceUid,mode,takeUid=null,d
   if(bottomOrderUids.length!==revealed.length)throw new Error('Bottom order required');
   owner.deck.push(...reorder(revealed,bottomOrderUids));
   if(takeUid)owner.outside.push(from(owner.hand,discardUid));
+ }else if(mode==='niaDiscardDraw'){
+  const ids=discardUids;
+  if(!Array.isArray(ids)||ids.length>2||new Set(ids).size!==ids.length||ids.some(id=>!rule.candidateUids.includes(id))||owner.deck.length<ids.length)throw new Error('Nia discard/draw is optional up to two cards');
+  owner.outside.push(...ids.map(id=>from(owner.hand,id)));
+  owner.hand.push(...owner.deck.splice(0,ids.length));
+ }else if(mode==='niaSearch'){
+  const revealed=owner.deck.splice(0,4);
+  if(takeUid!==null&&!rule.candidateUids.includes(takeUid))throw new Error('Nia searched only Simon or energy>=8');
+  if(takeUid){
+   if(!discardUid||![...owner.hand.map(c=>c.uid),takeUid].includes(discardUid))throw new Error('Nia must discard after taking');
+   owner.hand.push(from(revealed,takeUid));
+  }else if(discardUid)throw new Error('Nia did not search a card');
+  if(bottomOrderUids.length!==revealed.length)throw new Error('Nia bottom order incomplete');
+  owner.deck.push(...reorder(revealed,bottomOrderUids));
+  if(takeUid)owner.outside.push(from(owner.hand,discardUid));
+ }else if(mode==='niaOutsideToTop'){
+  if(discardUid||returnUid||bottomOrderUids.length||takeUid!==null&&!rule.candidateUids.includes(takeUid))throw new Error('Illegal Nia outside recovery');
+  if(takeUid)owner.deck.unshift(from(owner.outside,takeUid));
  }else if(mode==='mandatoryBounce'){
   if(takeUid||discardUid||bottomOrderUids.length)throw new Error('Illegal bounce extras');
   const chosen=rule.selfIfEmpty?sourceUid:returnUid;
