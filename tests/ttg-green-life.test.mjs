@@ -110,7 +110,7 @@ test('last life SPECIAL resolves before defeat, while FINAL can rescue',()=>{
 test('red 071 Raid life always permits hand, and real Raid requires matching Kittan and red4',()=>{
  const s=lifeGame('TTG-1-071');
  const p=beginTtgLifeTrigger(s,{player:1,lifeUid:'life'});
- assert.deepEqual(legalTtgLifeChoices(p).map(x=>x.mode),['raidHand']);
+ assert.deepEqual(legalTtgLifeChoices(p).map(x=>x.mode),['raidHand','decline']);
  const hand=resolveTtgLifeChoice(p,legalTtgLifeChoices(p)[0]);
  assert.ok(hand.players[1].hand.some(x=>x.uid==='life'));
 });
