@@ -13,15 +13,14 @@ test('UA56BT has exactly 81 unique effect card numbers and official rarity distr
   assert.equal(all.filter(c=>c.rarity===rarity).length,expected,rarity);
  assert.ok(all.every(c=>!c.id.includes('-AP')&&c.auto===false));
 });
-test('partial catalogue keeps unavailable numeric data unknown even when effect text was independently checked',()=>{
+test('all previously missing numeric fields are now recorded from card fronts',()=>{
  const verified=new Set(['TTG-1-002','TTG-1-006','TTG-1-049','TTG-1-059','TTG-1-063','TTG-1-065','TTG-1-071']);
- assert.equal(TTG_PENDING_CARDS.length,8);
- for(const c of TTG_PENDING_CARDS){
-  for(const field of ['ap','energy','bp','gen'])assert.equal(c[field],null,c.id);
-  if(verified.has(c.id)){
-   assert.ok(c.effect?.length>12,c.id);
-   assert.equal(c.effectVerification,'fan-transcription-not-official-full-metadata',c.id);
-   assert.ok(c.effectTranscriptionSource.includes('rugiacreation.com'),c.id);
-  }
+ assert.equal(TTG_PENDING_CARDS.length,0);
+ for(const id of verified){
+  const c=UA56BT_VERIFIED.find(card=>card.id===id);
+  assert.ok(c,id);
+  for(const field of ['ap','energy','bp','gen'])assert.ok(Number.isInteger(c[field])&&c[field]>=0,id+' '+field);
+  assert.equal(c.verifiedFrom,'user-uploaded-card-front-pdf-2026-10-13',id);
+  assert.equal(c.auto,false,id);
  }
 });
