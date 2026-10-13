@@ -1,5 +1,14 @@
 # BLEACH Arena v9.1.1 — GitHub / Vercel 專案
 
+## AI v2 預覽（feature/ai-v2）
+
+對戰大廳的電腦練習新增三種難度：簡單（原版策略）、普通（通用局面評分）、困難（限制節點的多步搜尋）。不需要 API Key 或模型訓練，維持瀏覽器本機運算。AI v2 位於 `dist/ai-v2.mjs`，只透過 `legalActions` 和 `dispatch` 使用既有遊戲規則，不更動卡片結算。
+
+AI 依公開盤面、生命數量、己方手牌與能源/AP 評估行動；模擬遇到未知牌堆抽取、牌庫重排或生命揭示時會停止搜尋，避免偷看隱藏資訊。新系列若能使用相同引擎、且有完整自動判定，原則上不需重訓模型；尚未接上對戰引擎的系列，**不會**因為新增 AI 而自動可對戰。
+
+目前是通用策略的第一版，不保證對所有複合效果作出最佳選擇，也沒有宣稱通過特定勝率基準。透過 `npm test` 驗證回歸測試；使用 `npm run benchmark:ai -- --games 12 --difficulty hard` 讓新版和原版以相同 BLEACH 預設牌組交換座位對戰，記錄勝率、未完賽局與動作數。這是可重現的基準測試，不代表跨牌組、跨系列實力或官方裁定驗證。
+
+
 **部署新網站請先閱讀 [MIGRATION_GITHUB_VERCEL.md](MIGRATION_GITHUB_VERCEL.md)**。這份來源包含 v9.1.1 規則修補，`dist/` 是靜態網站根目錄；`npm test` 執行 110 項回歸測試。
 
 以下保留上一版本的開發說明：
@@ -45,3 +54,31 @@ npm test
 - 這是非官方練習專案；卡片與角色版權歸權利人所有，特別裁定仍以 UNION ARENA 官方說明為準。
 
 詳細改動請參閱 `自動判定進度_v9.md`；舊版進度檔留存作為歷史紀錄。
+
+### Private AI tactics trial (2026-10-13)
+
+This integration preserves the Solo Leveling Beta and all three BLEACH fixes from
+`solo-beta-blc-fixes-20261013`, alongside `feature/ai-v2`.
+BLEACH normal/hard now prioritize early energy, resolve visible effect targets before
+scoring, and allocate equal bounded extensions to shortlisted root actions. A
+public-board, three-attack approximation considers the opponent's blocking choices,
+DAMAGE, IMPACT, forced blocking and double blocking. It is not a complete simulation
+of every attack/block chain or unknown life trigger. Complex hidden transitions still
+use heuristic estimates; no claim of perfect hidden-information strategy is made.
+
+Opponent search uses a browser module Worker; on error or after two seconds it falls
+back to legacy AI. Stale results after navigation/state changes are discarded.
+No Android device test has been performed. **SLG retains its separate Beta AI**;
+the BLEACH difficulty selector does not upgrade SLG or other series.
+
+Validation: Node 22.23.3, 349 tests passed. Held-out benchmark (seeds 10000–10003,
+both built-in BLEACH decks, all four deck pairings, both seats/first players):
+45 wins / 19 losses against legacy, no unfinished games. This is a limited preset
+benchmark, not a general skill rating. Container decision latency p95 37.7ms,
+maximum 158.1ms, not measured Android latency. Reproduce with:
+
+```sh
+npm run benchmark:ai -- --games 64 --matrix --seed 10000 --difficulty hard
+```
+
+Raw summary: `audit/ai-tactics-benchmark-20261013.json`.

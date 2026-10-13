@@ -1,0 +1,48 @@
+{
+  "difficulty": "hard",
+  "games": 64,
+  "wins": 45,
+  "losses": 19,
+  "unfinished": 0,
+  "winRateDecided": 70.31,
+  "seedBase": 10000,
+  "matrix": true,
+  "byMatchup": {
+    "0-0": {
+      "wins": 10,
+      "losses": 6,
+      "unfinished": 0
+    },
+    "0-1": {
+      "wins": 9,
+      "losses": 7,
+      "unfinished": 0
+    },
+    "1-0": {
+      "wins": 11,
+      "losses": 5,
+      "unfinished": 0
+    },
+    "1-1": {
+      "wins": 15,
+      "losses": 1,
+      "unfinished": 0
+    }
+  },
+  "decisionMs": {
+    "p50": 0.02781200000026729,
+    "p95": 37.654318000000785,
+    "max": 158.11240199999997
+  },
+  "totalActions": 14826,
+  "durationMs": 59487,
+  "note": "BLEACH preset benchmark only; timings are container CPU, not Android measurements. No general skill rating.",
+  "node": "22.23.3",
+  "command": "npm run benchmark:ai -- --games 64 --matrix --seed 10000 --difficulty hard",
+  "comparedTo": "legacy botAction",
+  "sourceBase": "feature/ai-v2 b17b515 + solo-beta-blc-fixes-20261013 16ba7fc",
+  "regressionTests": {
+    "passed": 349,
+    "failed": 0
+  }
+}
