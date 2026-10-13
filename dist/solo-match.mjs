@@ -120,7 +120,20 @@ function hurt(s,defender,amount=1){
    if(soloEnergy(s,defender)>=d(c).energy&&field(p).some(base=>d(base).nameJa===d(c).nameJa&&!(base.stack||[]).length)){
     s.pending={kind:'raidTrigger',p:defender,uid:c.uid};break;
    }
-  }else {p.outside.push(c);if(t==='draw')draw(s,p);}
+  }else{
+   p.outside.push(c);
+   if(t==='draw')draw(s,p);
+   if(t==='final'&&p.life.length===0&&p.deck.length)p.life.unshift(p.deck.shift());
+   if(t==='color'){
+    const choices=p.hand.filter(x=>d(x).type==='character'&&d(x).color===d(c).color&&d(x).energy<=2&&d(x).ap===1);
+    if(choices.length&&(p.front.some(x=>!x)||p.energy.some(x=>!x)))
+     s.pending={kind:'colorTrigger',p:defender,choices:choices.map(x=>x.uid)};
+   }
+   if(t==='special'){
+    const targets=s.players[1-defender].front.filter(x=>x&&(x.extraTargetAp||0)<=p.ap);
+    if(targets.length)s.pending={kind:'specialTrigger',p:defender,choices:targets.map(x=>x.uid)};
+   }
+  }
   if(t==='active'){
    const choices=field(p).map(x=>x.uid);
    if(choices.length){s.pending={kind:'activeTrigger',p:defender,choices,from:c.uid};break;}
@@ -231,6 +244,16 @@ function choose(s,action){
    p.outside.push(p.hand.splice(i,1)[0]);markGroup(s,q.p,'bel');readySolo(a);
   }
   s.pending=null;continueAttackEffects(s);
+ }else if(q.kind==='colorTrigger'){
+  const p=s.players[q.p],i=p.hand.findIndex(c=>c.uid===action.uid);
+  if(i<0||!q.choices.includes(action.uid)||!['front','energy'].includes(action.line)||p[action.line][action.slot])throw Error('illegal color trigger deployment');
+  const c=p.hand.splice(i,1)[0];position(c,q.p,action.line,action.slot);c.ready=true;p[action.line][action.slot]=c;
+  s.pending=null;onEnter(s,c);
+ }else if(q.kind==='specialTrigger'){
+  const opponent=1-q.p,target=s.players[opponent].front.find(x=>x?.uid===action.uid);
+  if(!target||!q.choices.includes(target.uid)||(target.extraTargetAp||0)>s.players[q.p].ap)throw Error('illegal special trigger target');
+  s.players[q.p].ap-=target.extraTargetAp||0;
+  retire(s,opponent,target);s.pending=null;
  }else if(q.kind==='entryDrawMode'){
   const p=s.players[q.p];
   if(action.mode==='draw2'){draw(s,p,2);s.pending=null;}
@@ -382,7 +405,11 @@ export function soloTrainingLegalActions(s){
    }
    return result;
   }
-  if(q.kind==='activeTrigger')return [{type:'choose',uid:null},...field(s.players[q.p]).map(c=>({type:'choose',uid:c.uid}))];
+  if(q.kind==='colorTrigger'){
+   const p=s.players[q.p];return q.choices.flatMap(uid=>['front','energy'].flatMap(line=>p[line].flatMap((c,slot)=>c?[]:[{type:'choose',uid,line,slot}])));
+  }
+  if(q.kind==='specialTrigger')return q.choices.map(uid=>({type:'choose',uid}));
+  if(q.kind==='activeTrigger')return field(s.players[q.p]).map(c=>({type:'choose',uid:c.uid}));
   if(q.kind==='entryImpact'||q.kind==='entryProtect')return [{type:'choose',uid:null},...field(s.players[q.p]).filter(c=>c.uid!==q.source&&d(c).traits?.includes('DFN')).map(c=>({type:'choose',uid:c.uid}))];
   if(q.kind==='block')return [{type:'choose',uid:null},...q.choices.map(uid=>({type:'choose',uid}))];
   return [];
@@ -493,6 +520,7 @@ export function soloTrainingBotAction(s){
   if(s.pending.kind==='kaiserPick'||s.pending.kind==='kibaPick')return legal.find(a=>a.uid!=null)||legal[0];
   if(s.pending.kind==='kaiserMode'||s.pending.kind==='kibaMode')return legal[0];
   if(s.pending.kind==='belDiscard')return legal.find(a=>a.uid!=null)||legal[0];
+  if(s.pending.kind==='colorTrigger'||s.pending.kind==='specialTrigger')return legal[0];
   if(s.pending.kind==='entryDrawMode')return legal[0];
   if(s.pending.kind==='entryBounce')return legal[0];
   if(s.pending.kind==='entryRecover'||s.pending.kind==='sungRecovery')return legal.find(a=>a.uid!=null)||legal[0];
