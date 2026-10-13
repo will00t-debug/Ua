@@ -9,6 +9,7 @@ import {canDeployTtgCard} from './ttg-actions.mjs';
 import {TTG_GREEN_ENTRY_IDS} from './ttg-green-entry.mjs';
 import {calculateTtgEnergyByColor,withTtgDerivedEnergy} from './ttg-energy-snapshot.mjs';
 import {legalGreenHighLifeRaids,resolveGreenHighLifeRaid} from './ttg-green-high-raid.mjs';
+import {legalRedLifeRaids,resolveRedLifeRaid} from './ttg-red-life-raids.mjs';
 const field=pl=>['front','energy'].flatMap(line=>(pl?.[line]||[]).map((card,slot)=>({card,line,slot}))).filter(x=>x.card);
 const flatten=c=>[{uid:c.uid,cardId:c.cardId},...(c.stack||[]).flatMap(flatten),...(c.under||[]).flatMap(flatten)];
 const idName=c=>TTG_BY_ID[c.cardId]?.nameJa||c.nameJa;
@@ -34,7 +35,11 @@ export function legalTtgLifeChoices(state){
    choices.push({...base,mode:'special',targetUid:c.uid});
  }else if(trigger==='get')choices.push({...base,mode:'get'});
  else if(trigger==='color'){
-  for(const h of pl.hand){
+  if(['TTG-1-045','TTG-1-062'].includes(card.cardId)){
+   for(const enemy of state.players[1-q.player].front.filter(Boolean))
+    if(candidate(enemy)&&(enemy.currentBp??TTG_BY_ID[enemy.cardId]?.bp??Infinity)<=2500)
+     choices.push({...base,mode:'colorRed',targetUid:enemy.uid});
+  }else for(const h of pl.hand){
    const printed=TTG_BY_ID[h.cardId];
    if(!printed||printed.type!=='character'||printed.color!=='green'||printed.ap!==1||
       greenTtgNeedsEnergy(state,q.player,h)>2||!canDeployTtgCard(pl,h))continue;
@@ -45,6 +50,12 @@ export function legalTtgLifeChoices(state){
   // Official RAID Trigger: add revealed card to hand OR, with enough GREEN
   // energy and a legal Raid base, Raid it without consuming AP.
   // Other Raid cards intentionally remain unimplemented.
+  if(['TTG-1-071','TTG-1-072','TTG-1-073','TTG-1-074','TTG-1-076'].includes(card.cardId)){
+   choices.push({...base,mode:'raidHand'});
+   for(const choice of legalRedLifeRaids(state,{player:q.player,cardUid:q.cardUid}))
+    choices.push({...base,mode:'raid',...choice});
+   return choices;
+  }
   if(!['TTG-1-027','TTG-1-028','TTG-1-029','TTG-1-031'].includes(card.cardId))return [];
   choices.push({...base,mode:'raidHand'});
   if(['TTG-1-027','TTG-1-031'].includes(card.cardId)){
@@ -110,6 +121,11 @@ export function resolveTtgLifeChoice(state,action){
  const ownerIndex=owner.outside.findIndex(x=>x.uid===q.cardUid);
  if(action.mode==='raidHand'){
   owner.hand.push(owner.outside.splice(ownerIndex,1)[0]);
+ }else if(action.mode==='raid'&&action.raidKind==='red'){
+  result=resolveRedLifeRaid(result,{player:q.player,cardUid:q.cardUid,sourceUid:action.sourceUid,
+   line:action.line,slot:action.slot});
+  owner=result.players[q.player];
+  if(!owner.life.length&&result.pending)result.pendingLifeOutcome={player:q.player};
  }else if(action.mode==='raid'&&['TTG-1-027','TTG-1-031'].includes(card.cardId)){
   result=resolveGreenHighLifeRaid(result,{player:q.player,cardUid:q.cardUid,sourceUid:action.sourceUid,
    raidKind:action.raidKind,line:action.line,slot:action.slot});
@@ -126,6 +142,11 @@ export function resolveTtgLifeChoice(state,action){
   if(action.line==='front')result.pending={kind:top.cardId==='TTG-1-028'?'ttgGreen028Entry':'ttgGreen029Entry',
    player:q.player,uid:top.uid};
   if(!owner.life.length)result.pendingLifeOutcome={player:q.player};
+ }else if(action.mode==='colorRed'){
+  const opp=result.players[1-q.player],idx=opp.front.findIndex(x=>x?.uid===action.targetUid);
+  if(idx<0)throw new Error('RED COLOR target left enemy front');
+  const flatten=x=>[{uid:x.uid,cardId:x.cardId},...(x.stack||[]).flatMap(flatten),...(x.under||[]).flatMap(flatten)];
+  opp.outside.push(...flatten(opp.front[idx]));opp.front[idx]=null;
  }else if(action.mode==='get'){
   owner.hand.push(owner.outside.splice(ownerIndex,1)[0]);
  }else if(action.mode==='active'){
