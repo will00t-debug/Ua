@@ -15,7 +15,8 @@ function fixture(){
  s.phase='main';
  const p=s.players[0],o=s.players[1],source=take(p,'TTG-1-012');
  source.ready=true;p.front[0]=source;
- const discard=Array.from({length:3},()=>{const c=take(p,'TTG-1-012');p.hand.push(c);return c.uid;});
+ const three=Array.from({length:3},()=>take(p,'TTG-1-012'));
+ const discard=three.map(c=>c.uid);assert.equal(new Set(discard).size,3,'three DISTINCT 012 physical cards');p.hand.push(...three);
  const foe=take(o,'TTG-1-003');foe.ready=true;o.front[0]=foe;
  s.pending={kind:'green012Discard',player:0,uid:source.uid};
  assert.ok(assertTtgCoreState(s));return {s,discard,foe};
