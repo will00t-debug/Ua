@@ -57,6 +57,7 @@ test('012 player chooses mandatory hand discard, then doubles energy once per Si
  let s=match(21),p=s.players[0];s.phase='main';p.turnCount=2;
  p.energy[0]=grab(p,'TTG-1-017');p.energy[1]=grab(p,'TTG-1-017');p.energy[2]=grab(p,'TTG-1-017');
  p.hand.push(grab(p,'TTG-1-012'),grab(p,'TTG-1-005'));
+ p.apCards[1].ready=true; // AP2 Simon requires two currently available physical APs
  s=withTtgDerivedEnergy(s,0);p=s.players[0];
  const play=legalTtgCoreActions(s).find(x=>x.type==='green012Play');
  assert.ok(play);
