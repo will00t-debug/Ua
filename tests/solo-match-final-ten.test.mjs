@@ -272,11 +272,12 @@ test('Q2041/Q2047/Q2053: private attachments under all 047/048/049 Raid faces ar
 });
 test('Q2029: 022 attack-ended swap waits until the defender finishes an ACTIVE life Trigger',()=>{
  let s=fixtures('purple',['SLG-1-022']);
- onField(s,'SLG-1-006','energy',0);
- onField(s,'SLG-1-030','energy',1);
+ onField(s,'SLG-1-029','energy',0);
+ onField(s,'SLG-1-029','energy',1);
  onField(s,'SLG-1-029','energy',2);
  const base=onField(s,'SLG-1-015','energy',3);
  const attacker=onField(s,'SLG-1-030','front',0);
+ onField(s,'SLG-1-030','front',1);
  const target=onField(s,'SLG-1-030','front',0,1,false);
  const card=prepare(s,'SLG-1-022'),ra=legal(s,a=>a.type==='raid'&&a.uid===card.uid&&a.target===base.uid&&a.line==='energy');
  s=dispatch(s,ra);
