@@ -1083,7 +1083,7 @@ export function soloTrainingDispatch(original,action){
     s.phase='attackEnd';
     s.endSources=field(p).flatMap(c=>['SLG-1-047','SLG-1-048','SLG-1-061'].includes(c.cardId)?[{uid:c.uid,type:c.cardId.slice(-3)}]:[]);
     advanceAttackEnd(s);
-
+  }
  }else if(action.type==='extraDraw'){p.ap--;s.extraDraw=true;draw(s,p);}
  else if(action.type==='move'){
   const index=p.energy.findIndex(c=>c?.uid===action.uid);
