@@ -12,8 +12,8 @@ const all=(pl)=>{
  return [...pl.front.filter(Boolean),...pl.energy.filter(Boolean),...pl.hand,...pl.deck,...pl.outside,...pl.life].flatMap(recur).sort();
 };
 const effect=(s,payload)=>resolveTtgGreenEntry(s,{player:0,sourceUid:'src',...payload});
-test('green entry effect registry contains only the eight independently implemented IDs',()=>{
- assert.deepEqual(TTG_GREEN_ENTRY_IDS,['TTG-1-001','TTG-1-009','TTG-1-010','TTG-1-014','TTG-1-016','TTG-1-017','TTG-1-023','TTG-1-026']);
+test('green entry effect registry contains only the ten independently implemented IDs',()=>{
+ assert.deepEqual(TTG_GREEN_ENTRY_IDS,['TTG-1-001','TTG-1-007','TTG-1-009','TTG-1-010','TTG-1-013','TTG-1-014','TTG-1-016','TTG-1-017','TTG-1-023','TTG-1-026']);
  assert.ok(TTG_GREEN_ENTRY_IDS.every(id=>TTG_BY_ID[id]?.color==='green'));
 });
 test('001 Viral may inspect top: keep physical top or move to outside without drawing',()=>{
@@ -147,4 +147,27 @@ test('017 Nia searches top 4 for Simon or cost 8+, or puts outside target on TOP
  assert.equal(returned.players[0].deck[0].uid,'outsideSimon');
  assert.ok(!returned.players[0].outside.some(c=>c.uid==='outsideSimon'));
  assert.deepEqual(all(returned.players[0]),before);
+});
+
+test('007 Gimmy and 013 Darry pay an extra owned AP to REST-revive matching partner',()=>{
+ for(const [from,to] of [['TTG-1-007','TTG-1-013'],['TTG-1-013','TTG-1-007']]){
+  const st=state(from);st.players[0].apCards=[{uid:'ap',ready:true},{uid:'rest',ready:false}];
+  st.players[0].energyProduced={green:2,red:0};
+  st.players[0].outside=[card('partner',to),card('unrelated','TTG-1-005')];
+  const opts=legalTtgGreenEntryDecisions(st,{player:0,sourceUid:'src'});
+  assert.equal(opts[0].mode,'partnerRecover');
+  assert.deepEqual(opts[0].candidateUids,['partner']);
+  assert.deepEqual(opts[0].readyApUids,['ap']);
+  const before=all(st.players[0]),raw=JSON.stringify(st);
+  assert.throws(()=>effect(st,{mode:'partnerRecover',takeUid:'partner',apUid:'rest',line:'energy',slot:0}));
+  assert.throws(()=>effect(st,{mode:'partnerRecover',takeUid:'unrelated',apUid:'ap',line:'energy',slot:0}));
+  const after=effect(st,{mode:'partnerRecover',takeUid:'partner',apUid:'ap',line:'front',slot:2});
+  assert.equal(after.players[0].front[2].uid,'partner');
+  assert.equal(after.players[0].front[2].ready,false,'revival remains REST');
+  assert.equal(after.players[0].apCards[0].ready,false);
+  assert.deepEqual(all(after.players[0]),before);
+  assert.equal(JSON.stringify(st),raw);
+  const skip=effect(st,{mode:'partnerRecover'});
+  assert.deepEqual(skip.players[0].outside.map(x=>x.uid),['partner','unrelated']);
+ }
 });
