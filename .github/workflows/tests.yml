@@ -2,7 +2,7 @@ name: BLEACH Arena Tests
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'fix/ai-tactics-private-20261013']
   pull_request:
     branches: [main]
 
