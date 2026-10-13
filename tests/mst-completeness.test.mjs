@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {UA54BT_VERIFIED} from '../dist/mushoku-tensei.mjs';
+import {UA54BT_OFFICIAL_PRINT} from '../dist/mst-official-print.mjs';
 
 test('all 80 canonical UA54BT regular card names and printed rarities are present',()=>{
  assert.equal(UA54BT_VERIFIED.length,80);
@@ -72,5 +73,22 @@ test('last eight cards match Bandai official energy, AP, BP, generation and trig
   assert.equal(c.auto,false);
   assert.match(c.verifiedBy,/bandai-jp-official/);
   assert.ok(c.effectJa);
+ }
+});
+
+test('all 80 source-audited Japanese effect and trigger texts remain available',()=>{
+ assert.equal(Object.keys(UA54BT_OFFICIAL_PRINT).length,80);
+ for(const card of UA54BT_VERIFIED){
+  const printed=UA54BT_OFFICIAL_PRINT[card.id];
+  assert.ok(printed,card.id);
+  for(const key of ['energy','ap','bp','gen','type','trigger']){
+   assert.equal(card[key],printed[key],card.id+' '+key);
+  }
+  assert.deepEqual(card.traits,printed.traits,card.id+' traits');
+  assert.ok(card.effectJa?.length>0,card.id+' Japanese effect');
+  assert.ok(card.triggerEffectJa?.length>0,card.id+' Japanese trigger');
+  assert.equal(card.verified,true);
+  assert.equal(card.auto,false);
+  assert.match(card.source,/unionarena-tcg\.com\/jp\/cardlist\/detail_iframe\.php/);
  }
 });
