@@ -180,7 +180,7 @@ export function dispatchTtgCoreAction(source,action){
    Object.assign(s,after);
    // UNION ARENA: the current player's own field readies at their turn end,
    // so those characters can block on the opponent's following turn.
-   for(const c of field(pl))c.ready=true;
+   for(const c of field(s.players[p]))c.ready=true;
    s.active=1-p;start(s);
   }
  }else if(action.type==='extraDraw'){
