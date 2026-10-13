@@ -56,9 +56,9 @@ export function chooseNeuralAction(s,{model=CHAMPION_MODEL,minMargin=0.24,diagno
   const score=scoreFeatures(model,encodeAction(s,action,p));
   if(score>bestScore){best=action;bestScore=score;}
  }
- // Relative margin is in the network's own score units; narrow choices
+ // Conservative but less restrictive 0.40 margin, subject to the public-board veto.\n // Relative margin is in the network's own score units; narrow choices
  // defer to tested AI v2. The legal oracle remains authoritative.
- if(best&&bestScore-baselineScore>Math.max(0.65,minMargin)){
+ if(best&&bestScore-baselineScore>Math.max(0.40,minMargin)){
   if(diagnostics)diagnostics.overrides=(diagnostics.overrides||0)+1;
   return best;
  }
