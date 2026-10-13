@@ -228,7 +228,13 @@ function prompt(s,player,title,choices,effect,min=1,max=1,allowedCounts=null){
  if(!choices.length){return false;}
  s.pending={player,title,choices,effect,min,max:Math.min(max,choices.length),allowedCounts};return true;
 }
-function queueRules(s,p,uid,rules,first=false){const events=(rules||[]).map(rule=>({kind:'rule',p,uid,rule}));if(first)s.queue.unshift(...events);else s.queue.push(...events);}
+function queueRules(s,p,uid,rules,first=false){
+ // Official FAQ Q51: normal deployment never activates rules inside the Raid box.
+ // Keep ordinary [On Play]/[Main]/[Attack] rules outside that box available.
+ const source=locate(s,uid)?.card;
+ const events=(rules||[]).filter(rule=>ruleEnabled(s,p,source,rule)).map(rule=>({kind:'rule',p,uid,rule}));
+ if(first)s.queue.unshift(...events);else s.queue.push(...events);
+}
 function ruleTargets(s,p,uid,r,origin){
  origin ||= r.fromTrigger?'trigger':s.resolving?.some(x=>x.card.uid===uid)?'event':'character';
  const own=r.target!=='oppFront'&&r.target!=='opp',pp=own?p:1-p;
@@ -452,7 +458,17 @@ function resolveRule(s,e){
  }
  if(r.op==='peekTop'){
   const owner=r.deckOwner==='opponent'?1-p:p;const cards=s.players[owner].deck.slice(0,r.count);if(!cards.length)return;
-  if(r.millMax){prompt(s,p,`選擇最多 ${r.millMax} 張牌送到場外`,cards.filter(c=>matchFilter(c,r.millFilter)).map(c=>({id:c.uid,label:cardOf(c).name,cardId:c.cardId})),{...e,kind:'peekMill',cards:cards.map(c=>c.uid)},0,r.millMax);}
+  if(r.millMax){
+   const eligible=cards.filter(c=>matchFilter(c,r.millFilter));
+   if(eligible.length){
+    prompt(s,p,`查看牌庫頂 ${cards.length} 張：選擇最多 ${r.millMax} 張符合條件的卡送至場外`,eligible.map(c=>({id:c.uid,label:cardOf(c).name,cardId:c.cardId})),{...e,kind:'peekMill',cards:cards.map(c=>c.uid)},0,r.millMax);
+   }else if(cards.length>1){
+    // Even with no legal card to mill, the owner must see the top cards and choose their order.
+    prompt(s,p,'查看牌庫頂：沒有符合送場外條件的卡，請選擇放回順序',cards.map(c=>({id:c.uid,label:cardOf(c).name,cardId:c.cardId})),{...e,kind:'peekOrder',uids:cards.map(c=>c.uid),chosen:[]});
+   }else{
+    prompt(s,p,'查看牌庫頂：沒有符合送場外條件的卡', [{id:'done',label:'確認，維持原狀'}],{...e,kind:'peekNoMill',cards:cards.map(c=>c.uid)});
+   }
+  }
   else if(r.count===1)prompt(s,p,`查看 ${cardOf(cards[0]).name}，選擇去向`,(r.destinations||[]).filter(d=>d!=='hand'||matchFilter(cards[0],r.handFilter)).map(d=>({id:d,label:d==='top'?'放回牌堆頂':d==='bottom'?'放在牌堆底':d==='hand'?'加入手牌':'送到場外'})),{...e,kind:'peekChoice',cards:cards.map(c=>c.uid)});
   return;
  }
@@ -490,10 +506,15 @@ function applyRuleTarget(s,uid,r,sourcePlayer=null){const l=locate(s,uid);if(!l)
  if(r.op==='destroy')shieldOrRetire(s,uid,sourcePlayer??s.active);
  if(r.op==='bounce'&&!(sourcePlayer!=null&&l.p!==sourcePlayer&&cardOf(l.card).rules?.immuneEnemyBounce))takeField(s,uid,'hand');
 }
-const impactOf=(s,c)=>(c.impactTurn===s.turn||(!silenced(s,c)&&((!!cardOf(c).rules?.impact&&(!cardOf(c).raid||isRaided(c)))||(isRaided(c)&&!!cardOf(c).rules?.raidImpact)))?1:0)+(c.impactBonusTurn===s.turn?(c.impactBonusAmount||0):0)+(c.sniperImpactActive?1:0)+(!silenced(s,c)&&cardOf(c).rules?.passive?.impactIfRemovedZeroNames&&removedZeroNames(s,locate(s,c.uid)?.p)>=cardOf(c).rules.passive.impactIfRemovedZeroNames?1:0);
+// Printed IMPACT remains available on normal-play Raid printed cards (Q51).
+const impactOf=(s,c)=>(c.impactTurn===s.turn||(!silenced(s,c)&&(!!cardOf(c).rules?.impact||!!cardOf(c).rules?.raidImpact))?1:0)+(c.impactBonusTurn===s.turn?(c.impactBonusAmount||0):0)+(c.sniperImpactActive?1:0)+(!silenced(s,c)&&cardOf(c).rules?.passive?.impactIfRemovedZeroNames&&removedZeroNames(s,locate(s,c.uid)?.p)>=cardOf(c).rules.passive.impactIfRemovedZeroNames?1:0);
 function removedZeroNames(s,p){if(p==null)return 0;return new Set(s.players[p].removed.filter(c=>withTrait(c,'零番隊')).map(c=>cardOf(c).name)).size;}
-const damageOf=(s,c)=>c.damageTurn===s.turn||isRaided(c)&&cardOf(c).rules?.raidPassive?.damage===2&&s.active===(locate(s,c.uid)?.p??s.active)&&(s.retireCountTurn===s.turn?s.retireCount||0:0)>=cardOf(c).rules.raidPassive.bpIfOwnRetireCount||isRaided(c)&&cardOf(c).rules?.raidDamageIfOppReduced&&s.players[1-(locate(s,c.uid)?.p??s.active)].front.some(x=>x&&bp(s,x)<cardOf(x).bp)||cardOf(c).rules?.damage===2||cardOf(c).rules?.passive?.damageIfRemovedCount&&s.players[locate(s,c.uid)?.p??s.active].removed.length>=cardOf(c).rules.passive.damageIfRemovedCount||cardOf(c).rules?.passive?.damageIfRemovedZeroNames&&removedZeroNames(s,locate(s,c.uid)?.p)>=cardOf(c).rules.passive.damageIfRemovedZeroNames?2:1;
-function enqueueEntry(s,p,c){const r=cardOf(c).rules;if(r?.entryReady===true||r?.entryReady&&(r.entryReady.line!=='energy'||locate(s,c.uid)?.line==='energy')&&condition(s,p,c.uid,r.entryReady))c.ready=true;if(c.cardId==='034')s.queue.unshift({kind:'drawDiscard',p,count:1});if(c.cardId==='035')s.queue.unshift({kind:'orihime',p,uid:c.uid});if(c.cardId==='105')s.queue.unshift({kind:'renjiDebuff',p});if(c.cardId==='106')s.queue.unshift({kind:'removeDraw',p,count:3,draw:2,optional:true});queueRules(s,p,c.uid,cardOf(c).rules?.entry,true);if(isRaided(c)&&r?.raidHighBase&&cardOf(c.stack[0]).energy>=r.raidHighBase.minEnergy)queueRules(s,p,c.uid,r.raidHighBase.entry,true);}
+export const damageOf=(s,c)=>c.damageTurn===s.turn||isRaided(c)&&cardOf(c).rules?.raidPassive?.damage===2&&s.active===(locate(s,c.uid)?.p??s.active)&&(s.retireCountTurn===s.turn?s.retireCount||0:0)>=cardOf(c).rules.raidPassive.bpIfOwnRetireCount||isRaided(c)&&cardOf(c).rules?.raidDamageIfOppReduced&&s.players[1-(locate(s,c.uid)?.p??s.active)].front.some(x=>x&&bp(s,x)<cardOf(x).bp)||cardOf(c).rules?.damage===2||cardOf(c).rules?.passive?.damageIfRemovedCount&&s.players[locate(s,c.uid)?.p??s.active].removed.length>=cardOf(c).rules.passive.damageIfRemovedCount||cardOf(c).rules?.passive?.damageIfRemovedZeroNames&&removedZeroNames(s,locate(s,c.uid)?.p)>=cardOf(c).rules.passive.damageIfRemovedZeroNames?2:1;
+function enqueueEntry(s,p,c){const r=cardOf(c).rules;if(r?.entryReady===true||r?.entryReady&&(r.entryReady.line!=='energy'||locate(s,c.uid)?.line==='energy')&&condition(s,p,c.uid,r.entryReady))c.ready=true;if(c.cardId==='034')s.queue.unshift({kind:'drawDiscard',p,count:1});if(c.cardId==='035')s.queue.unshift({kind:'orihime',p,uid:c.uid});if(c.cardId==='105')s.queue.unshift({kind:'renjiDebuff',p});if(c.cardId==='106')s.queue.unshift({kind:'removeDraw',p,count:3,draw:2,optional:true});queueRules(s,p,c.uid,cardOf(c).rules?.entry,true);if(isRaided(c)&&r?.raidHighBase&&cardOf(c.stack[0]).energy>=r.raidHighBase.minEnergy){
+  queueRules(s,p,c.uid,r.raidHighBase.entry,true);
+  // Damage (2) is a temporary combat keyword, not immediate life loss at entry.
+  if(c.cardId==='BLC-2-067')log(s,'更木劍八突襲成功：需求能源 4 以上底板，本回合獲得 BP +1000 與 DAMAGE 2（未被阻擋的攻擊造成 2 點傷害）。','effect');
+ }}
 function place(s,p,c,line,slot,{raidTarget=null}={}){
  let stack=[];
  if(raidTarget){const base=locate(s,raidTarget);
@@ -820,8 +841,13 @@ function resolveChoice(s,ids){
   case 'peekChoice':{const owner=e.rule.deckOwner==='opponent'?1-p:p,deck=s.players[owner].deck,card=deck.find(x=>x.uid===e.cards[0]),dest=ids[0];if(!card)break;
    const i=deck.findIndex(c=>c.uid===card.uid);deck.splice(i,1);
    if(dest==='top')deck.unshift(card);else if(dest==='hand')s.players[p].hand.push(card);else if(dest==='bottom')deck.push(card);else if(dest==='outside')s.players[owner].outside.push(plain(card));break;}
+  case 'peekNoMill':break;
   case 'peekMill':{const deck=s.players[p].deck;
-   for(const uid of ids){const i=deck.findIndex(c=>c.uid===uid);if(i>=0)s.players[p].outside.push(plain(deck.splice(i,1)[0]));}
+   for(const uid of ids){const i=deck.findIndex(c=>c.uid===uid);if(i>=0){
+    const moved=deck.splice(i,1)[0];s.players[p].outside.push(plain(moved));
+    // Sideline is public; the looked-at cards that remain in the deck must stay private.
+    log(s,`${s.players[p].name}將${cardOf(moved).name}從牌庫頂送至場外。`,'effect');
+   }}
    const remain=e.cards.filter(uid=>!ids.includes(uid)&&deck.some(c=>c.uid===uid));
    if(remain.length>1)prompt(s,p,'依序選擇要放回牌堆頂的卡',remain.map(uid=>{const c=deck.find(x=>x.uid===uid);return {id:uid,cardId:c.cardId,label:cardOf(c).name};}),{kind:'peekOrder',p,uids:remain,chosen:[]});break;}
   case 'peekOrder':{const order=[...(e.chosen||[]),ids[0]],remain=e.uids.filter(uid=>!order.includes(uid)),deck=s.players[p].deck;
