@@ -216,6 +216,10 @@ function soloArena(){
  const actionButton=(a,title)=>'<button class="btn small" data-solo-act="'+encodeURIComponent(JSON.stringify(a))+'">'+esc(title)+'</button>';
  const ownedUnder=uid=>[...p.front,...p.energy].filter(Boolean).flatMap(c=>inspectSoloAttached(state,{viewer:0,owner:0,hostUid:c.uid})).find(c=>c.uid===uid);
  const chooseText=a=>{
+  if(state.pending?.kind==='shadowSummonCard')return a.uid==null?'結束復活':'復活 '+label(state.players[actor].outside.find(c=>c.uid===a.uid))+' → '+(a.line==='front'?'前線':'能源線')+(a.slot+1);
+  if(state.pending?.kind==='shadowSummonMode')return a.mode==='oneActive'?'最多1張影之軍團 ACTIVE登場':'最多2張需求能源3以下影之軍團 REST登場';
+  if(state.pending?.kind==='castlePotion')return a.uid==null?'不使用場外藥水':'支付1AP使用 '+label(state.players[actor].outside.find(c=>c.uid===a.uid))+'（結算後除外）';
+  if(state.pending?.kind==='castleRecover')return a.uid==null?'不回收角色':'回收 '+label(state.players[actor].outside.find(c=>c.uid===a.uid));
   if(typeof a.count==='number')return '回復 '+a.count+' AP';
   if(typeof a.draw==='boolean')return a.draw?'抽1張':'不抽牌';
   if(state.pending?.kind==='eventRecover'||state.pending?.kind==='entryRecover'||state.pending?.kind==='sungRecovery')
@@ -239,7 +243,7 @@ function soloArena(){
  };
  const choices=state.pending?'<div class="panel"><b>請選擇：'+esc({
   discard:'棄一張手牌',entryImpact:'選擇獲得IMPACT的DFN角色',entryProtect:'選擇受AP保護的DFN',colorTrigger:'COLOR Trigger：選擇合法手牌及登場位置',specialTrigger:'SPECIAL Trigger：選擇敵方角色退場',entryDrawMode:'觀月繪里：選擇抽牌模式',entryRecover:'觀月繪里：選擇符合條件的場外角色',entryBounce:'選擇需返回手牌的己方其他角色',sungRecovery:'觀月繪里：選擇場外水篠旬回收',
-  eventDiscard:'事件：請選擇送場外的手牌',eventRecover:'命之神水：可選一張場外角色回收',eventRestoreAp:'選擇回復的AP數量',eventDestroy:'選擇合法的敵方前線退場角色',eventDance:'舞姬：選擇獲得攻擊時抽牌的向坂雫',marieBuff:'瑪莉：選另一己方角色BP+1000並將瑪莉回手',attackDraw:'攻擊時選擇是否抽牌',ryuuBuff:'リュー：選擇己方角色BP+1000',ryuuAp:'リュー：選擇最多回復2AP',
+  castleCost:'惡魔城：選擇1張手牌支付成本',castlePotion:'惡魔城：選擇可支付AP的場外命之神水',castleRecover:'惡魔城：選擇符合條件的角色回收',shadowSummonMode:'影之君主：選擇復活模式',shadowSummonCard:'影之君主：選擇影之軍團及登場位置',entry002Mode:'朝比奈凜：選擇登場能力',entry002Buff:'朝比奈凜：選其他角色BP+1000',entry002Discard:'朝比奈凜：指定一張手牌送場外',entry004Discard:'犬飼晃：指定一張手牌送場外',peekTop:'查看牌庫頂並選擇去向與順序',eventDiscard:'事件：請選擇送場外的手牌',eventRecover:'命之神水：可選一張場外角色回收',eventRestoreAp:'選擇回復的AP數量',eventDestroy:'選擇合法的敵方前線退場角色',eventDance:'舞姬：選擇獲得攻擊時抽牌的向坂雫',marieBuff:'瑪莉：選另一己方角色BP+1000並將瑪莉回手',attackDraw:'攻擊時選擇是否抽牌',ryuuBuff:'リュー：選擇己方角色BP+1000',ryuuAp:'リュー：選擇最多回復2AP',
   mainDiscard:'選擇支付的手牌',soldierTop:'影之兵士：查看牌庫頂並選擇順序',
   raidTrigger:'生命RAID Trigger：加入手牌或選擇底板',raid058Discard:'向坂雫攻擊：棄牌選擇',
   raid058Unfreeze:'ACTIVE與跳過ACTIVE的選擇',activeTrigger:'ACTIVE Trigger目標',
@@ -256,7 +260,7 @@ function soloArena(){
  +'<div class="supportNote"><b>'+(state.status==='finished'?(state.winner===0?'你獲勝':'電腦獲勝'):'第 '+state.turn+' 回合 · '+phase+' · '+(bot?'電腦處理中':'輪到你操作'))+'</b><span>你：AP '+p.ap+'/'+p.maxAp+' · 能源 '+soloEnergy(state,0)+' · 生命 '+p.life.length+' · 手牌 '+p.hand.length+'；電腦：AP '+opp.ap+' · 生命 '+opp.life.length+' · 手牌 '+opp.hand.length+'</span></div>'
  +'<h3>電腦場上</h3>'+board(opp)+'<h3>你的場上</h3>'+board(p)
  +choices
- +(state.status==='playing'&&!state.pending&&!bot?'<div class="panel"><h3>主要操作</h3><div class="toolbar">'+normalActions.map(a=>actionButton(a,a.type==='next'?'下一階段／結束回合':a.type==='extraDraw'?'支付1AP額外抽牌':a.type==='move'?'移動 '+label([...p.energy].find(c=>c?.uid===a.uid))+' → 前線'+(a.slot+1):a.type==='attack'?'攻擊 '+label(p.front.find(c=>c?.uid===a.uid)) :'發動 '+label([...p.energy,...p.front].find(c=>c?.uid===a.uid))+(a.mode?(' · '+({attach:'放置牌庫頂裏向卡',recover:'棄牌及回收',boost:'影之軍團BP強化'}[a.mode]||a.mode)):''))).join('')+'</div></div>':'')
+ +(state.status==='playing'&&!state.pending&&!bot?'<div class="panel"><h3>主要操作</h3><div class="toolbar">'+normalActions.map(a=>actionButton(a,a.type==='next'?'下一階段／結束回合':a.type==='extraDraw'?'支付1AP額外抽牌':a.type==='move'?'移動 '+label([...p.energy].find(c=>c?.uid===a.uid))+' → 前線'+(a.slot+1):a.type==='attack'?'攻擊 '+label(p.front.find(c=>c?.uid===a.uid)) :'發動 '+label([...p.energy,...p.front].find(c=>c?.uid===a.uid))+(a.mode?(' · '+({attach:'放置牌庫頂裏向卡',recover:'棄牌及回收',mill:'REST並把牌庫頂送場外',potion:'REST並用場外命之神水',boost:'影之軍團BP強化'}[a.mode]||a.mode)):''))).join('')+'</div></div>':'')
  +'<div class="panel"><h3>你的手牌（點選卡片後選擇登場位置）</h3><div class="toolbar">'+p.hand.map(c=>'<button class="btn small '+(selected===c.uid?'primary':'outline')+'" data-solo-card="'+esc(c.uid)+'">'+label(c)+' · 能源'+soloById[c.cardId].energy+' · AP'+soloById[c.cardId].ap+'</button>').join('')+'</div>'
  +(selected?'<p>選擇位置</p><div class="toolbar">'+selectable.map(a=>actionButton(a,a.type==='play'?(a.line==='front'?'前線':'能源線')+(a.slot+1):a.type==='raid'?'Raid → '+(a.line==='front'?'前線':'能源線')+(a.slot+1)+'，底板 '+label([...p.front,...p.energy].find(c=>c?.uid===a.target)):a.type==='playEvent'?'使用事件，支付AP並依序選擇效果':'其他操作')).join('')+'</div>':'')+'</div>'
  +'<details class="panel"><summary>查看我方場下裏向卡（對手無法查看）</summary>'+[...p.front,...p.energy].filter(Boolean).map(c=>({host:c,cards:inspectSoloAttached(state,{viewer:0,owner:0,hostUid:c.uid})})).filter(x=>x.cards.length).map(x=>'<p>'+label(x.host)+'：'+x.cards.map(c=>label(c)).join(' / ')+'</p>').join('')+'</details>'
