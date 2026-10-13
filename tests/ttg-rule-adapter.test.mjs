@@ -110,3 +110,22 @@ test('bounded AI event simulation exercises multiple hand cards deterministicall
  assert.equal(result.state.players[1].front[0],null);
  assert.deepEqual(s.players[0].outside,[]);
 });
+
+test('shared legal action and AI can perform Viral 002 double REST and expire its energy',()=>{
+ const game=state();game.players[0].energy[0]=c('viral','TTG-1-002','ヴィラル',2000);
+ game.players[0].front[0]=c('target','TTG-1-005','キタン',1500);
+ game.players[1].front[0]=c('enemy','TTG-1-042','カミナ',2000);
+ const actions=legalTtgRuleActions(game,0);
+ assert.deepEqual(actions.filter(x=>x.type==='activateViral002').map(x=>x.targetUid),['target']);
+ assert.throws(()=>dispatchTtgRuleAction(game,{type:'activateViral002',player:0,uid:'viral',targetUid:'enemy'}));
+ assert.equal(game.players[0].energy[0].ready,true,'illegal action is not paid');
+ const ai=chooseTtgRuleAiAction(game,0);
+ assert.equal(ai.type,'activateViral002');
+ assert.equal(ai.targetUid,'target');
+ const result=dispatchTtgRuleAction(game,ai);
+ assert.equal(result.players[0].energy[0].ready,false);
+ assert.equal(result.players[0].front[0].ready,false);
+ assert.equal(result.players[0].energy[0].energyBonus,1);
+ assert.ok(!legalTtgRuleActions(result,0).some(x=>x.type==='activateViral002'));
+ assert.equal(resolveTtgTurnEnd(result).players[0].energy[0].energyBonus,0);
+});
