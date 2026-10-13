@@ -220,6 +220,7 @@ function soloArena(){
    return (a.picks.length?'加入手牌：'+a.picks.map(uid=>label(state.players[actor].deck.find(c=>c.uid===uid))).join('、'):'不加入手牌')+'｜其餘放牌庫底：'+a.order.map(uid=>label(state.players[actor].deck.find(c=>c.uid===uid))).join(' → ');
   if(state.pending?.kind==='slgRecoveredDeploy')return a.uid==null?'不登場':'免費登場 → '+(a.line==='front'?'前線':'能源線')+(a.slot+1);
   if(state.pending?.kind==='slgMill')return a.mill?'將牌庫頂放場外':'不放場外';
+  if(state.pending?.kind==='slg044Target')return (a.attach?'附加牌庫頂裏向卡，':'不附加裏向卡，')+'賦予傷害+1 '+label([...p.front,...p.energy].find(c=>c?.uid===a.uid));
   if(state.pending?.kind==='slg077Target')return '退場 '+label([...opp.front,...p.front].find(c=>c?.uid===a.uid));
   if(state.pending?.kind==='slg077Buff')return a.uid==null?'不強化':'BP+1000 '+label([...p.front,...p.energy].find(c=>c?.uid===a.uid));
 
