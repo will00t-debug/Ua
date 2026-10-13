@@ -17,6 +17,7 @@ import {resolveGreenOwnStart} from './ttg-green-main.mjs';
 import {beginTtgRed049Entry,legalTtgRed049Choices,resolveTtgRed049Choice,resolveTtgRed050Entry} from './ttg-red-third-three.mjs';
 import {beginTtgRed051Entry,legalTtgRed051Discards,resolveTtgRed051Discard,beginTtgRed052Entry,legalTtgRed052Discards,resolveTtgRed052Discard,legalTtgRed052Recovers,resolveTtgRed052Recover} from './ttg-red-fourth-three.mjs';
 import {red054BpBonus,red054ImpactNull,beginTtgRed054Entry,legalTtgRed054Choices,resolveTtgRed054Mill,beginTtgRed055Entry,legalTtgRed055Mills,resolveTtgRed055Mill,legalTtgRed055Discards,resolveTtgRed055Discard,legalTtgRed055Recovers,resolveTtgRed055Recover} from './ttg-red-fifth-three.mjs';
+import {legalTtgRedNiaKaminaPlay,beginTtgRed057Or058Entry,legalTtgRed057058Choices,resolveTtgRed057058Choice,ttgRed057ImpactNull,expireTtgRed057GrantedNullAtOwnStart} from './ttg-red-sixth-three.mjs';
 import {ttgRedStarterBpBonus,ttgRedStarterImpactNull,beginTtgRed044Unblocked,legalTtgRed044Search,resolveTtgRed044Search} from './ttg-red-first-three.mjs';
 import {beginTtgLifeTrigger,legalTtgLifeChoices,resolveTtgLifeChoice,finalizeTtgLifeOutcome} from './ttg-green-life.mjs';
 
@@ -28,7 +29,7 @@ export const TTG_CORE_SMOKE_IDS=Object.freeze([
  'TTG-1-019','TTG-1-020','TTG-1-021','TTG-1-022','TTG-1-023','TTG-1-024','TTG-1-025','TTG-1-026','TTG-1-027','TTG-1-028','TTG-1-029','TTG-1-030','TTG-1-031','TTG-1-032','TTG-1-033','TTG-1-034',
  'TTG-1-035','TTG-1-036','TTG-1-037','TTG-1-038','TTG-1-039',
  'TTG-1-040','TTG-1-041',
- 'TTG-1-042','TTG-1-043','TTG-1-044','TTG-1-046','TTG-1-047','TTG-1-048','TTG-1-049','TTG-1-050','TTG-1-051','TTG-1-052','TTG-1-053','TTG-1-054','TTG-1-055',
+ 'TTG-1-042','TTG-1-043','TTG-1-044','TTG-1-046','TTG-1-047','TTG-1-048','TTG-1-049','TTG-1-050','TTG-1-051','TTG-1-052','TTG-1-053','TTG-1-054','TTG-1-055','TTG-1-057','TTG-1-058','TTG-1-059',
  'TTG-1-063','TTG-1-064','TTG-1-065','TTG-1-066'
 ]);
 const allowed=new Set(TTG_CORE_SMOKE_IDS);
@@ -57,6 +58,7 @@ function start(s){
  pl.turnCount++;s.turn++;s.phase='start';s.pending=null;s.extraDrawn=false;
  Object.assign(s,resolveTtgGreen028Start(s,p));
  Object.assign(s,expireGreen031AtOwnStart(s,p));
+ Object.assign(s,expireTtgRed057GrantedNullAtOwnStart(s,p));
  // The hook clones the state: use the NEW authoritative player object for
  // AP refresh, ACTIVE, mandatory draw and buff expiration (not a stale alias).
  pl=s.players[p];
@@ -175,6 +177,7 @@ export function legalTtgCoreActions(s){
  if(s.pending?.kind==='ttgRed055Mill')return legalTtgRed055Mills(s);
  if(s.pending?.kind==='ttgRed055Discard')return legalTtgRed055Discards(s);
  if(s.pending?.kind==='ttgRed055Recover')return legalTtgRed055Recovers(s);
+ if(s.pending?.kind==='ttgRed057058Entry')return legalTtgRed057058Choices(s);
  if(s.pending?.kind==='ttgGreenEntry')return greenEntryChoices(s);
  if(['ttgGreen028Entry','ttgGreen029Entry','green030Sidelined','green012Search','green012Discard','greenHighRaidQueue','green034Sidelined','greenRetireOrder'].includes(s.pending?.kind))
   return legalTtgRuleActions(s,s.pending.player);
@@ -196,7 +199,7 @@ export function legalTtgCoreActions(s){
  if(s.phase==='main'){
   for(const h of pl.hand){
    const d=printed(h);
-   if(d.type!=='character'||['TTG-1-008','TTG-1-012','TTG-1-027','TTG-1-028','TTG-1-029','TTG-1-030','TTG-1-031','TTG-1-032'].includes(h.cardId))continue;
+   if(d.type!=='character'||!legalTtgRedNiaKaminaPlay(s,p,h)||['TTG-1-008','TTG-1-012','TTG-1-027','TTG-1-028','TTG-1-029','TTG-1-030','TTG-1-031','TTG-1-032'].includes(h.cardId))continue;
    if(pl.energyProduced[d.color]<greenTtgNeedsEnergy(s,p,h)||pl.apCards.every(c=>!c.ready))continue;
    for(const line of ['energy','front'])for(let slot=0;slot<4;slot++)if(!pl[line][slot])
     actions.push({type:'play',handUid:h.uid,line,slot});
@@ -268,6 +271,8 @@ export function dispatchTtgCoreAction(source,action){
   Object.assign(s,resolveTtgRed055Discard(s,action));
  }else if(s.pending?.kind==='ttgRed055Recover'){
   Object.assign(s,resolveTtgRed055Recover(s,action));
+ }else if(s.pending?.kind==='ttgRed057058Entry'){
+  Object.assign(s,resolveTtgRed057058Choice(s,action));
  }else if(s.pending?.kind==='ttgRed044Search'){
   const attacker=pl.front.find(c=>c?.uid===s.pending.attackerUid);
   const damage=greenHighRaidCombatValue(s,p,attacker).damage;
@@ -299,7 +304,7 @@ export function dispatchTtgCoreAction(source,action){
    // may suppress IMPACT for this battle, even if retired on losing.
    const won=bp(s,p,attacker)>=bp(s,1-p,defender);
    const impactAmount=Math.max(attacker.greenEventImpact||0,attacker.green008Impact||0,greenHighRaidCombatValue(s,p,attacker).impact);
-   const impactDamage=won&&!greenTtgImpactNull(defender)&&!ttgRedStarterImpactNull(defender)&&!red054ImpactNull(s,1-p,defender)?impactAmount:0;
+   const impactDamage=won&&!greenTtgImpactNull(defender)&&!ttgRedStarterImpactNull(defender)&&!red054ImpactNull(s,1-p,defender)&&!ttgRed057ImpactNull(s,1-p,defender)?impactAmount:0;
    if(won)removeFront(s,1-p,defender.uid);
    // Losing an attack does NOT retire the attacker (official Q34).
    if(impactDamage){
@@ -351,6 +356,7 @@ export function dispatchTtgCoreAction(source,action){
   if(h.cardId==='TTG-1-052')Object.assign(s,beginTtgRed052Entry(s,{player:p,uid:h.uid}));
   if(h.cardId==='TTG-1-054')Object.assign(s,beginTtgRed054Entry(s,{player:p,uid:h.uid}));
   if(h.cardId==='TTG-1-055')Object.assign(s,beginTtgRed055Entry(s,{player:p,uid:h.uid}));
+  if(['TTG-1-057','TTG-1-058'].includes(h.cardId))Object.assign(s,beginTtgRed057Or058Entry(s,{player:p,uid:h.uid}));
  }else if(action.type==='attack'){
   const c=pl.front.find(c=>c?.uid===action.uid);
   if(!c?.ready)throw new Error('Invalid attack');
@@ -394,6 +400,7 @@ export function ttgCoreAiChoice(s){
  if(s.pending?.kind==='ttgRed055Mill')return options[options.length-1];
  if(s.pending?.kind==='ttgRed055Discard')return options.find(x=>x.discardUid)||options[0];
  if(s.pending?.kind==='ttgRed055Recover')return options.find(x=>x.recoverUid)||options[0];
+ if(s.pending?.kind==='ttgRed057058Entry')return options.find(x=>x.targetUid)||options[0];
  if(s.pending?.kind==='ttgRed044Search'){
   return options.find(x=>x.takeUid&&x.discardUid!==x.takeUid)||options.find(x=>x.takeUid)||options[0];
  }
