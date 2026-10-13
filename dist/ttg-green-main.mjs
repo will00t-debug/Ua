@@ -149,3 +149,20 @@ export function resolveGreenOwnStart(s,player){
  }
  return result;
 }
+
+
+// 020 Yoko STEP: optional Front -> empty Energy line transfer in own move phase.
+// Do not reactivate a rested card or silently displace an existing card.
+export function legalGreen020Step(s,{player,uid}={}){
+ if(![0,1].includes(player)||s?.active!==player||s.phase!=='move'||s.pending)return [];
+ const pl=s.players[player],src=pl.front.find(c=>c?.uid===uid&&c.cardId==='TTG-1-020');
+ if(!src)return [];
+ return pl.energy.flatMap((x,slot)=>x?[]:[{type:'ttgGreen020Step',player,uid,slot}]);
+}
+export function resolveGreen020Step(s,{player,uid,slot}={}){
+ if(!legalGreen020Step(s,{player,uid}).some(a=>a.slot===slot))
+  throw new Error('Illegal Yoko STEP movement');
+ const result=structuredClone(s),pl=result.players[player],index=pl.front.findIndex(c=>c?.uid===uid);
+ pl.energy[slot]=pl.front[index];pl.front[index]=null;
+ return result;
+}
