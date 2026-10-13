@@ -4,7 +4,7 @@
 import {TTG_BY_ID} from './ttg-builder.mjs';
 
 export const TTG_GREEN_ENTRY_IDS=Object.freeze([
- 'TTG-1-001','TTG-1-009','TTG-1-010','TTG-1-014',
+ 'TTG-1-001','TTG-1-007','TTG-1-009','TTG-1-010','TTG-1-013','TTG-1-014',
  'TTG-1-016','TTG-1-017','TTG-1-023','TTG-1-026'
 ]);
 const entrySet=new Set(TTG_GREEN_ENTRY_IDS);
@@ -44,6 +44,13 @@ export function legalTtgGreenEntryDecisions(state,{player,sourceUid}={}){
  case 'TTG-1-001':
   return top.length?[{type:'greenEntry',player,sourceUid,mode:'keepTop'},{type:'greenEntry',player,sourceUid,mode:'outsideTop'}]:
    [{type:'greenEntry',player,sourceUid,mode:'emptyDeck'}];
+ case 'TTG-1-007':case 'TTG-1-013':{
+  const partner=id==='TTG-1-007'?'ダリー':'ギミー';
+  const targets=pl.outside.filter(c=>named(c,partner)&&isSafeStandalone(c)&&
+   Number.isInteger(printedCost(c))&&(pl.energyProduced?.green??0)>=printedCost(c));
+  return [{type:'greenEntry',player,sourceUid,mode:'partnerRecover',
+   candidateUids:targets.map(c=>c.uid),readyApUids:(pl.apCards||[]).filter(x=>x.ready).map(x=>x.uid),canSkip:true}];
+ }
  case 'TTG-1-009':
   return top.length||pl.hand.length? [{type:'greenEntry',player,sourceUid,mode:'drawThenDiscard',discardUids:[...pl.hand.map(c=>c.uid),...(top.length?[top[0].uid]:[])]}]:
    [{type:'greenEntry',player,sourceUid,mode:'emptyDeck'}];
@@ -80,7 +87,7 @@ export function legalTtgGreenEntryDecisions(state,{player,sourceUid}={}){
  default:return [];
  }
 }
-export function resolveTtgGreenEntry(state,{player,sourceUid,mode,takeUid=null,discardUid=null,discardUids=[],bottomOrderUids=[],returnUid=null}={}){
+export function resolveTtgGreenEntry(state,{player,sourceUid,mode,takeUid=null,discardUid=null,discardUids=[],bottomOrderUids=[],returnUid=null,apUid=null,line=null,slot=null}={}){
  const {pl,id,entry}=context(state,player,sourceUid);
  const options=available(state,player,entry.card);
  const rule=options.find(x=>x.mode===mode);
@@ -93,6 +100,14 @@ export function resolveTtgGreenEntry(state,{player,sourceUid,mode,takeUid=null,d
  }else if(mode==='outsideTop'){
   if(takeUid||discardUid||returnUid||bottomOrderUids.length)throw new Error('No extra card moves');
   owner.outside.push(owner.deck.shift());
+ }else if(mode==='partnerRecover'){
+  if(discardUid||returnUid||discardUids.length||bottomOrderUids.length)throw new Error('No extra partner-effect costs');
+  if(takeUid!==null){
+   if(!rule.candidateUids.includes(takeUid)||!rule.readyApUids.includes(apUid))throw new Error('Partner needs own ACTIVE physical AP');
+   if(!['front','energy'].includes(line)||!Number.isInteger(slot)||slot<0||slot>3||owner[line][slot])throw new Error('Partner needs empty destination');
+   owner.apCards.find(x=>x.uid===apUid).ready=false;
+   const x=from(owner.outside,takeUid);owner[line][slot]={...x,ready:false,enteredTurn:state.turn};
+  }else if(apUid||line!==null||slot!==null)throw new Error('Skip partner recovery without paying AP');
  }else if(mode==='drawThenDiscard'){
   if(takeUid||returnUid||bottomOrderUids.length||!discardUid||!rule.discardUids.includes(discardUid))throw new Error('Illegal mandatory discard');
   if(owner.deck.length)owner.hand.push(owner.deck.shift());
