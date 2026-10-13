@@ -3,7 +3,7 @@
 // This adapter joins tested hand events, life triggers and a subset of
 // character actions; it is NOT a complete match dispatcher.
 import {legalTtgHandEvents,dispatchTtgHandEvent} from './ttg-event-resolver.mjs';
-import {legalTtgEventTriggerChoices,resolveTtgEventLifeTrigger} from './ttg-triggers.mjs';
+import {legalTtgEventTriggerChoices,resolveTtgEventLifeTrigger,TTG_IMPLEMENTED_EVENT_TRIGGERS} from './ttg-triggers.mjs';
 import {resolveTtgNia059,resolveTtgButa063,resolveTtgYoko065Step,resolveTtgMainEndRetire,resolveTtgPendingEndTurn} from './ttg-pending-rules.mjs';
 
 const owned=(s,p)=>[...(s.players?.[p]?.front||[]),...(s.players?.[p]?.energy||[])].filter(Boolean);
@@ -13,7 +13,7 @@ export function legalTtgRuleActions(state,player){
  if(!playerOk(player)||!state?.players?.[player])return [];
  const pending=state.pendingTtgTrigger;
  if(pending){
-  if(pending.player!==player)return [];
+  if(pending.player!==player||!TTG_IMPLEMENTED_EVENT_TRIGGERS.includes(pending.card?.cardId))return [];
   const offered=legalTtgEventTriggerChoices(state);
   // A life trigger is optional; a player can decline even when targets exist.
   return [...offered.map(x=>({...x,player})),{type:'resolveTtgTrigger',player,decline:true}];
