@@ -154,3 +154,60 @@ test('064 Raid when five island characters present debuffs enemies BP>=1500 and 
  assert.equal(s.players[1].front[0],null);
  assert.equal(s.players[0].front[action.slot].skipActive,1);assertSoloTrainingMatch(s);
 });
+
+test('Q2043-46: 047 can pay two hidden cards to peel its top without a new Raid, preserving REST and base UID',()=>{
+ let s=fixtures('green',['SLG-1-047']);greenPower(s);
+ const base=onField(s,'SLG-1-045','front',0);
+ const r=raid(s,'SLG-1-047',base);s=r.s;
+ const top=s.players[0].front[0];
+ top.ready=false;top.buffs.push({turn:s.turn,bp:1000});
+ top.under.push(...s.players[0].deck.splice(0,2).map(c=>({...c,faceDown:true})));
+ s.phase='attack';s=dispatch(s,{type:'next'});
+ assert.equal(s.pending.kind,'slgEndRaid');
+ const peel=legal(s,a=>a.uid==='peel'&&a.used.length===2);
+ s=dispatch(s,peel);
+ assert.equal(s.players[0].front[0].uid,base.uid);
+ assert.equal(s.players[0].front[0].ready,false);
+ assert.equal(s.players[0].front[0].buffs.length,0);
+ assert.ok(s.players[0].outside.some(c=>c.uid===top.uid));
+ assertSoloTrainingMatch(s);
+});
+test('021 combat win recovers only a legal non-Sung character, not 021 itself',()=>{
+ let s=fixtures('purple',['SLG-1-021']);purplePower(s);
+ const base=onField(s,'SLG-1-015','front',0),recover=drawCard(s.players[0],'SLG-1-030');
+ s.players[0].outside.push(recover);
+ const r=raid(s,'SLG-1-021',base);s=r.s;
+ const blocker=onField(s,'SLG-1-030','front',0,1);
+ s.phase='attack';s=dispatch(s,{type:'attack',uid:r.uid});
+ s=dispatch(s,{type:'choose',uid:blocker.uid});
+ assert.equal(s.pending.kind,'slg021Win');
+ assert.ok(soloTrainingLegalActions(s).some(a=>a.uid===recover.uid));
+ s=dispatch(s,{type:'choose',uid:recover.uid});
+ assert.ok(s.players[0].hand.some(c=>c.uid===recover.uid));
+ assertSoloTrainingMatch(s);
+});
+test('022 sniper can choose an opposing front character rather than deal player damage',()=>{
+ let s=fixtures('purple',['SLG-1-022']);
+ const base=onField(s,'SLG-1-015','front',0);
+ for(let i=1;i<4;i++)onField(s,'SLG-1-030','front',i);
+ for(let i=0;i<4;i++)onField(s,'SLG-1-029','energy',i);
+ const r=raid(s,'SLG-1-022',base);s=r.s;
+ s=dispatch(s,{type:'choose',uid:null});s=dispatch(s,{type:'choose',uid:null});
+ const target=onField(s,'SLG-1-030','front',0,1);
+ const before=s.players[1].life.length;s.phase='attack';
+ const action=legal(s,a=>a.type==='attackTarget'&&a.uid===r.uid&&a.target===target.uid);
+ s=dispatch(s,action);
+ assert.equal(s.players[1].life.length,before);
+ assert.ok(s.players[1].outside.some(c=>c.uid===target.uid));
+ assertSoloTrainingMatch(s);
+});
+test('051 Raid mode is not offered without one additional AP after paying character entry cost',()=>{
+ let s=fixtures('green',['SLG-1-051','SLG-1-047']);greenPower(s);onField(s,'SLG-1-045','front',0);
+ const eri=prepare(s,'SLG-1-051');
+ s.players[0].ap=1;s=dispatch(s,legal(s,a=>a.type==='play'&&a.uid===eri.uid));
+ assert.equal(s.players[0].ap,0);assert.equal(s.pending.kind,'slg051Mode');
+ assert.deepEqual(soloTrainingLegalActions(s),[{type:'choose',mode:'recover'}]);
+ assert.throws(()=>dispatch(s,{type:'choose',mode:'raid'}),/illegal SOLO action/);
+ s=dispatch(s,{type:'choose',mode:'recover'});
+ s=dispatch(s,{type:'choose',uid:null});assertSoloTrainingMatch(s);
+});
