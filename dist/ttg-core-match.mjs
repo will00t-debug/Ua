@@ -19,6 +19,7 @@ import {beginTtgRed051Entry,legalTtgRed051Discards,resolveTtgRed051Discard,begin
 import {red054BpBonus,red054ImpactNull,beginTtgRed054Entry,legalTtgRed054Choices,resolveTtgRed054Mill,beginTtgRed055Entry,legalTtgRed055Mills,resolveTtgRed055Mill,legalTtgRed055Discards,resolveTtgRed055Discard,legalTtgRed055Recovers,resolveTtgRed055Recover} from './ttg-red-fifth-three.mjs';
 import {legalTtgRedNiaKaminaPlay,beginTtgRed057Or058Entry,legalTtgRed057058Choices,resolveTtgRed057058Choice,ttgRed057ImpactNull,expireTtgRed057GrantedNullAtOwnStart} from './ttg-red-sixth-three.mjs';
 import {ttgRedStarterBpBonus,ttgRedStarterImpactNull,beginTtgRed044Unblocked,legalTtgRed044Search,resolveTtgRed044Search} from './ttg-red-first-three.mjs';
+import {red067Entry,red067MayBlock,red068BpBonus,canRed068EnergyAttack,expireRed068AtTurnEnd} from './ttg-red-ninth-three.mjs';
 import {beginTtgLifeTrigger,legalTtgLifeChoices,resolveTtgLifeChoice,finalizeTtgLifeOutcome} from './ttg-green-life.mjs';
 
 // Only IDs with on-entry, passives, attacks and life triggers implemented below
@@ -30,7 +31,7 @@ export const TTG_CORE_SMOKE_IDS=Object.freeze([
  'TTG-1-035','TTG-1-036','TTG-1-037','TTG-1-038','TTG-1-039',
  'TTG-1-040','TTG-1-041',
  'TTG-1-042','TTG-1-043','TTG-1-044','TTG-1-046','TTG-1-047','TTG-1-048','TTG-1-049','TTG-1-050','TTG-1-051','TTG-1-052','TTG-1-053','TTG-1-054','TTG-1-055','TTG-1-057','TTG-1-058','TTG-1-059',
- 'TTG-1-063','TTG-1-064','TTG-1-065','TTG-1-066'
+ 'TTG-1-060','TTG-1-063','TTG-1-064','TTG-1-065','TTG-1-066','TTG-1-067','TTG-1-068'
 ]);
 const allowed=new Set(TTG_CORE_SMOKE_IDS);
 const phases=['start','move','main','attack'];
@@ -114,7 +115,7 @@ export function assertTtgCoreState(s){
  }
  return true;
 }
-const bp=(s,p,c)=>greenTtgCurrentBp(s,p,c)+ttgRedStarterBpBonus(s,p,c)+red054BpBonus(s,p,c);
+const bp=(s,p,c)=>greenTtgCurrentBp(s,p,c)+ttgRedStarterBpBonus(s,p,c)+red054BpBonus(s,p,c)+red068BpBonus(s,p,c);
 // Preserve a stable, user-selectable decision for each legal target; the full
 // reducer validates custom bottom-order permutations if the UI supplies them.
 function greenEntryChoices(s){
@@ -184,7 +185,9 @@ export function legalTtgCoreActions(s){
  if(s.pending?.kind==='greenHighAttackWindow')return legalHighRaidAttackEffects(s,s.pending.player,s.pending.uid);
  if(s.pending?.kind==='block'){
   const opp=s.players[1-p];
-  return [{type:'block',blockUid:null},...opp.front.filter(c=>c?.ready&&greenTtgCanAttackOrBlock(s,1-p,c)).map(c=>({type:'block',blockUid:c.uid}))];
+  const attacker=field(pl).find(c=>c?.uid===s.pending.attackerUid);
+  if(s.pending.sniperTargetUid)return [{type:'block',blockUid:s.pending.sniperTargetUid}];
+  return [{type:'block',blockUid:null},...opp.front.filter(c=>c?.ready&&greenTtgCanAttackOrBlock(s,1-p,c)&&red067MayBlock(s,1-p,attacker,c,bp(s,1-p,c))).map(c=>({type:'block',blockUid:c.uid}))];
  }
  if(s.pending)throw new Error('Unsupported pending core effect cannot be skipped');
  const actions=[];
@@ -200,14 +203,22 @@ export function legalTtgCoreActions(s){
   for(const h of pl.hand){
    const d=printed(h);
    if(d.type!=='character'||!legalTtgRedNiaKaminaPlay(s,p,h)||['TTG-1-008','TTG-1-012','TTG-1-027','TTG-1-028','TTG-1-029','TTG-1-030','TTG-1-031','TTG-1-032'].includes(h.cardId))continue;
-   if(pl.energyProduced[d.color]<greenTtgNeedsEnergy(s,p,h)||pl.apCards.every(c=>!c.ready))continue;
+   if(pl.energyProduced[d.color]<greenTtgNeedsEnergy(s,p,h)||pl.apCards.filter(c=>c.ready).length<d.ap)continue;
    for(const line of ['energy','front'])for(let slot=0;slot<4;slot++)if(!pl[line][slot])
     actions.push({type:'play',handUid:h.uid,line,slot});
   }
   actions.push(...legalTtgRuleActions(s,p));
  }
  if(s.phase==='attack'&&pl.turnCount>1){
-  for(const c of pl.front.filter(c=>c?.ready&&greenTtgCanAttackOrBlock(s,p,c)&&canTtgGreen028Attack(s,p,c)))actions.push({type:'attack',uid:c.uid});
+  if(pl.red068AttackCapTurn!==s.turn||pl.characterAttacksThisTurn<(pl.red068AttackCap||4)){
+   for(const c of pl.front.filter(c=>c?.ready&&greenTtgCanAttackOrBlock(s,p,c)&&canTtgGreen028Attack(s,p,c))) {
+    actions.push({type:'attack',uid:c.uid});
+    if(c.cardId==='TTG-1-067'&&c.red067SniperUntilTurn===s.turn){
+     for(const target of s.players[1-p].front.filter(Boolean))actions.push({type:'attack',uid:c.uid,targetUid:target.uid});
+    }
+   }
+   for(const c of pl.energy.filter(c=>canRed068EnergyAttack(s,p,c)))actions.push({type:'attack',uid:c.uid});
+  }
  }
  if(s.phase==='move')actions.push(...legalTtgRuleActions(s,p));
  return [...actions,{type:'next'}];
@@ -288,12 +299,12 @@ export function dispatchTtgCoreAction(source,action){
    s.pendingBlockAfterRetirement={attackerUid:action.uid};
   }else s.pending={kind:'block',attackerUid:action.uid};
  }else if(s.pending?.kind==='block'){
-  const attacker=pl.front.find(c=>c?.uid===s.pending.attackerUid);
+  const attacker=field(pl).find(c=>c?.uid===s.pending.attackerUid);
   if(!attacker)throw new Error('Attacker disappeared');
   if(action.blockUid){
    const defender=s.players[1-p].front.find(c=>c?.uid===action.blockUid);
-   defender.ready=false;
-   if(defender.doubleBlockUntilOwnStartTurnCount!=null&&
+   if(!s.pending.sniperTargetUid)defender.ready=false;
+   if(!s.pending.sniperTargetUid&&defender.doubleBlockUntilOwnStartTurnCount!=null&&
       s.players[1-p].turnCount<defender.doubleBlockUntilOwnStartTurnCount&&
       defender.doubleBlockUsedTurn!==s.turn){
      // Double Block: first blocking action readies the REST blocker immediately.
@@ -306,6 +317,10 @@ export function dispatchTtgCoreAction(source,action){
    const impactAmount=Math.max(attacker.greenEventImpact||0,attacker.green008Impact||0,greenHighRaidCombatValue(s,p,attacker).impact);
    const impactDamage=won&&!greenTtgImpactNull(defender)&&!ttgRedStarterImpactNull(defender)&&!red054ImpactNull(s,1-p,defender)&&!ttgRed057ImpactNull(s,1-p,defender)?impactAmount:0;
    if(won)removeFront(s,1-p,defender.uid);
+   if(won&&attacker.cardId==='TTG-1-067'&&attacker.red067WinDrawUntilTurn===s.turn){
+    if(pl.deck.length)pl.hand.push(pl.deck.shift());
+    else{s.status='finished';s.winner=1-p;s.endReason='requiredDrawEmpty';}
+   }
    // Losing an attack does NOT retire the attacker (official Q34).
    if(impactDamage){
     s.pending=null;
@@ -330,7 +345,7 @@ export function dispatchTtgCoreAction(source,action){
   }
   else if(s.phase==='attack'){
    const after=resolveTtgTurnEnd(s);
-   Object.assign(s,after);
+   Object.assign(s,expireRed068AtTurnEnd(after,p));
    // UNION ARENA: the current player's own field readies at their turn end,
    // so those characters can block on the opponent's following turn.
    for(const c of field(s.players[p]))c.ready=true;
@@ -346,9 +361,11 @@ export function dispatchTtgCoreAction(source,action){
   pl.front[action.slot]=pl.energy[index];pl.energy[index]=null;
  }else if(action.type==='play'){
   const i=pl.hand.findIndex(c=>c.uid===action.handUid),h=pl.hand[i],d=printed(h);
-  const ap=pl.apCards.find(c=>c.ready);
-  if(!ap||pl[action.line][action.slot])throw new Error('Play destination or AP invalid');
-  ap.ready=false;pl[action.line][action.slot]={...pl.hand.splice(i,1)[0],ready:false,enteredTurn:s.turn};
+  const availableAp=pl.apCards.filter(c=>c.ready);
+  if(availableAp.length<d.ap||pl[action.line][action.slot])throw new Error('Play destination or AP invalid');
+  for(const ap of availableAp.slice(0,d.ap))ap.ready=false;
+  pl[action.line][action.slot]={...pl.hand.splice(i,1)[0],ready:false,enteredTurn:s.turn};
+  if(h.cardId==='TTG-1-067')Object.assign(s,red067Entry(s,{player:p,uid:h.uid}));
   if(TTG_GREEN_ENTRY_IDS.includes(d.id))s.pending={kind:'ttgGreenEntry',player:p,sourceUid:h.uid};
   if(h.cardId==='TTG-1-049')Object.assign(s,beginTtgRed049Entry(s,{player:p,uid:h.uid}));
   if(h.cardId==='TTG-1-050')Object.assign(s,resolveTtgRed050Entry(s,{player:p,uid:h.uid}));
@@ -358,7 +375,7 @@ export function dispatchTtgCoreAction(source,action){
   if(h.cardId==='TTG-1-055')Object.assign(s,beginTtgRed055Entry(s,{player:p,uid:h.uid}));
   if(['TTG-1-057','TTG-1-058'].includes(h.cardId))Object.assign(s,beginTtgRed057Or058Entry(s,{player:p,uid:h.uid}));
  }else if(action.type==='attack'){
-  const c=pl.front.find(c=>c?.uid===action.uid);
+  const c=field(pl).find(c=>c?.uid===action.uid);
   if(!c?.ready)throw new Error('Invalid attack');
   c.ready=false;c.attackTurn=s.turn;
   pl.characterAttacksThisTurn=(pl.attackTurn===s.turn?pl.characterAttacksThisTurn:0)+1;
@@ -370,7 +387,7 @@ export function dispatchTtgCoreAction(source,action){
    if(c.cardId==='TTG-1-048')c.doubleBlockUntilOwnStartTurnCount=pl.turnCount+1;
   }
   s.pending=['TTG-1-027','TTG-1-032'].includes(c.cardId)?
-   {kind:'greenHighAttackWindow',player:p,uid:c.uid}:{kind:'block',attackerUid:c.uid};
+   {kind:'greenHighAttackWindow',player:p,uid:c.uid}:{kind:'block',attackerUid:c.uid,sniperTargetUid:action.targetUid??null};
  }else if(legalTtgRuleActions(s,s.pending?.player??p).some(x=>sameAction(x,action))){
   const owner=s.pending?.player??p;
   const after=dispatchTtgRuleAction(s,{...action,player:owner});Object.assign(s,after);
@@ -427,7 +444,7 @@ export function ttgCoreAiChoice(s){
  if(s.pending?.kind==='block'){
   const att=pl.front.find(c=>c?.uid===s.pending.attackerUid);
   const other=s.players[1-p];
-  const candidates=other.front.filter(x=>x?.ready&&greenTtgCanAttackOrBlock(s,1-p,x)&&bp(s,1-p,x)>=bp(s,p,att));
+  const candidates=other.front.filter(x=>x?.ready&&greenTtgCanAttackOrBlock(s,1-p,x)&&red067MayBlock(s,1-p,att,x,bp(s,1-p,x))&&bp(s,1-p,x)>=bp(s,p,att));
   if(candidates.length)return {type:'block',blockUid:candidates.sort((a,b)=>bp(s,1-p,a)-bp(s,1-p,b))[0].uid};
   return {type:'block',blockUid:null};
  }
