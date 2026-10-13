@@ -104,7 +104,11 @@ test('unblocked attack ACTIVE life trigger readies and buffs own character, not 
  st=withTtgDerivedEnergy(st,0);
  const incoming=dispatchTtgCoreAction(st,{type:'attack',uid:attacker.uid});
  const beforeLife=incoming.players[1].life.length;
- const after=dispatchTtgCoreAction(incoming,{type:'block',blockUid:null});
+ const pending=dispatchTtgCoreAction(incoming,{type:'block',blockUid:null});
+ assert.equal(pending.pendingTtgLife.trigger,'active');
+ assert.ok(legalTtgCoreActions(pending).every(a=>a.type==='ttgLifeChoice'));
+ const active=legalTtgCoreActions(pending).find(a=>a.mode==='active'&&a.targetUid===defendingCharacter.uid);
+ const after=dispatchTtgCoreAction(pending,active);
  assert.equal(after.players[1].life.length,beforeLife-1);
  assert.equal(after.players[1].apCards.filter(x=>x.ready).length,0,'ACTIVE does not recover AP');
  assert.equal(after.players[1].front[0].ready,true,'ACTIVE readies chosen own character');
