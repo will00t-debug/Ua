@@ -1,0 +1,108 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {legalGreen030Raids,resolveGreen030Raid,sidelineGreen030,legalGreen030SidelinedChoices,resolveGreen030Sidelined} from '../dist/ttg-green-030.mjs';
+import {legalTtgRuleActions,dispatchTtgRuleAction,chooseTtgRuleAiAction} from '../dist/ttg-rule-adapter.mjs';
+import {TTG_BY_ID} from '../dist/ttg-builder.mjs';
+import {calculateTtgEnergyByColor,withTtgDerivedEnergy} from '../dist/ttg-energy-snapshot.mjs';
+const c=(uid,id,more={})=>({uid,cardId:id,nameJa:TTG_BY_ID[id].nameJa,ready:true,stack:[],under:[],...more});
+const pl=()=>({front:[null,null,null,null],energy:[null,null,null,null],hand:[],deck:[],life:[],outside:[],removed:[],apCards:[{uid:'ap',ready:true}],energyProduced:{green:0,red:0}});
+const game=()=>{
+ const s={active:0,turn:11,phase:'main',energyMode:'derive',players:[pl(),pl()],log:[],status:'playing'},p=s.players[0];
+ p.front[0]=c('kittan','TTG-1-006',{ready:false});
+ p.hand=[c('top','TTG-1-030')];
+ p.energy[0]=c('a','TTG-1-017');p.energy[1]=c('b','TTG-1-017');p.energy[2]=c('c','TTG-1-017');
+ return withTtgDerivedEnergy(s,0);
+};
+const cards=p=>{
+ const deep=c=>[c.uid,...(c.stack||[]).flatMap(deep),...(c.under||[]).flatMap(deep)];
+ return [...p.hand,...p.deck,...p.life,...p.outside,...p.removed,...p.front.filter(Boolean),...p.energy.filter(Boolean)].flatMap(deep).sort();
+};
+const raid=s=>resolveGreen030Raid(s,{player:0,handUid:'top',baseUid:'kittan',line:'front',slot:0,payApUids:['ap']});
+test('030: correct Kittan Raid/AP, ACTIVE top, physical base, 6-energy conservation',()=>{
+ const s=game(),snapshot=JSON.stringify(s),before=cards(s.players[0]);
+ assert.deepEqual(legalGreen030Raids(s,0).map(x=>[x.line,x.slot]),[['front',0]]);
+ assert.throws(()=>resolveGreen030Raid(s,{player:0,handUid:'top',baseUid:'kittan',line:'front',slot:0,payApUids:['bad']}));
+ const after=raid(s);
+ assert.equal(after.players[0].front[0].uid,'top');
+ assert.equal(after.players[0].front[0].ready,true);
+ assert.equal(after.players[0].front[0].stack[0].uid,'kittan');
+ assert.equal(after.players[0].apCards[0].ready,false);
+ assert.deepEqual(cards(after.players[0]),before);
+ assert.equal(JSON.stringify(s),snapshot);
+});
+test('030: when sidelined, split entire printed two-card Raid to outside, offer return or decline',()=>{
+ const s=raid(game()),before=cards(s.players[0]);
+ const retired=sidelineGreen030(s,{player:0,uid:'top'});
+ assert.equal(retired.players[0].front[0],null);
+ assert.deepEqual(retired.players[0].outside.map(x=>x.uid),['top','kittan']);
+ assert.equal(retired.pending.kind,'green030Sidelined');
+ const options=legalGreen030SidelinedChoices(retired);
+ assert.equal(options.filter(x=>x.mode==='recover').length,5,'3 free front and 2 free energy slots');
+ assert.equal(options.find(x=>x.mode==='recover').ready,true,'6+ energy readies returned Kittan');
+ const pick=options.find(x=>x.mode==='recover'&&x.line==='front'&&x.slot===2);
+ const done=resolveGreen030Sidelined(retired,pick);
+ assert.equal(done.players[0].front[2].uid,'kittan');
+ assert.equal(done.players[0].front[2].ready,true);
+ assert.deepEqual(done.players[0].outside.map(x=>x.uid),['top']);
+ assert.equal(done.pending,null);
+ assert.deepEqual(cards(done.players[0]),before);
+ const declined=resolveGreen030Sidelined(retired,options[0]);
+ assert.deepEqual(declined.players[0].outside.map(x=>x.uid),['top','kittan']);
+ assert.deepEqual(cards(declined.players[0]),before);
+});
+test('030: energy below six returns base in REST, even if base was originally ACTIVE',()=>{
+ const s=raid(game());
+ s.players[0].energy[2]=null;
+ const retired=sidelineGreen030(s,{player:0,uid:'top'});
+ const choice=legalGreen030SidelinedChoices(retired).find(x=>x.mode==='recover'&&x.line==='front');
+ assert.equal(choice.ready,false);
+ const done=resolveGreen030Sidelined(retired,choice);
+ assert.equal(done.players[0].front[choice.slot].ready,false);
+ assert.equal(calculateTtgEnergyByColor(done,0).green,4);
+});
+test('030: no base means no recovery pending; same-card stacked nesting fails closed',()=>{
+ const s=game();s.players[0].front[0]=c('naked','TTG-1-030');
+ const result=sidelineGreen030(s,{player:0,uid:'naked'});
+ assert.equal(result.pending,undefined);
+ assert.deepEqual(result.players[0].outside.map(c=>c.uid),['naked']);
+ const t=raid(game());t.players[0].front[0].stack[0].under=[c('hidden','TTG-1-005',{faceDown:true})];
+ assert.throws(()=>sidelineGreen030(t,{player:0,uid:'top'}),/nested/);
+});
+test('030: only legal physical AP and printed Kittan base, cannot bypass timing',()=>{
+ const s=game(),bad=structuredClone(s);
+ bad.players[0].front[0]=c('viral','TTG-1-002');
+ assert.deepEqual(legalGreen030Raids(bad,0),[]);
+ const broke=structuredClone(s);broke.players[0].energy[1]=null;broke.players[0].energy[2]=null;
+ assert.deepEqual(legalGreen030Raids(broke,0),[]);
+ const noAp=structuredClone(s);noAp.players[0].apCards[0].ready=false;
+ assert.deepEqual(legalGreen030Raids(noAp,0),[]);
+ const other=structuredClone(s);other.active=1;
+ assert.deepEqual(legalGreen030Raids(other,0),[]);
+ const pending=structuredClone(s);pending.pending={kind:'block'};
+ assert.deepEqual(legalGreen030Raids(pending,0),[]);
+});
+test('030: simultaneous 034 site retirement now starts a PLAYER-ORDERED queue',()=>{
+ const s=raid(game());s.players[0].energy[3]=c('site','TTG-1-034');
+ const before=JSON.stringify(s);
+ const retired=sidelineGreen030(s,{player:0,uid:'top'});
+ assert.equal(retired.pending.kind,'greenRetireOrder');
+ assert.deepEqual(retired.pending.remaining,['030','034']);
+ assert.deepEqual(retired.players[0].outside.map(x=>x.uid),['top','kittan']);
+ assert.equal(JSON.stringify(s),before,'caller not mutated');
+});
+test('030 human and AI options both dispatch Raid and defender recovery choices',()=>{
+ const s=game();
+ const offers=legalTtgRuleActions(s,0).filter(x=>x.type==='green030Raid');
+ assert.equal(offers.length,1);
+ const ai=chooseTtgRuleAiAction(s,0);
+ assert.equal(ai.type,'green030Raid');
+ const raidResult=dispatchTtgRuleAction(s,ai);
+ assert.equal(raidResult.players[0].front[0].uid,'top');
+ const retired=sidelineGreen030(raidResult,{player:0,uid:'top'});
+ const opts=legalTtgRuleActions(retired,0);
+ assert.ok(opts.some(x=>x.type==='green030Recover'&&x.mode==='recover'));
+ const rec=chooseTtgRuleAiAction(retired,0);
+ assert.equal(rec.type,'green030Recover');
+ const after=dispatchTtgRuleAction(retired,rec);
+ assert.equal(after.players[0][rec.line][rec.slot].uid,'kittan');
+});
