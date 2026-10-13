@@ -74,7 +74,7 @@ test('SLG-1-044 face-down is owner-only, grants damage+1 and requires active FRO
  const sung=place(s,'SLG-1-045','front',0),aoi=place(s,'SLG-1-044','front',1);
  assert.ok(soloTrainingLegalActions(s).some(a=>a.type==='ability'&&a.uid===aoi.uid));
  s=select(s,{type:'ability',uid:aoi.uid,mode:'attachDamage'});
- assert.equal(s.pending.kind,'slg044Target');s=select(s,{type:'choose',uid:sung.uid});
+ assert.equal(s.pending.kind,'slg044Target');s=select(s,choice(s,x=>x.uid===sung.uid&&x.attach===true));
  const host=s.players[0].front[0];
  assert.equal(host.under.length,1);assert.equal(inspectSoloAttached(s,{viewer:1,owner:0,hostUid:sung.uid})[0].uid,undefined);
  assert.equal(inspectSoloAttached(s,{viewer:0,owner:0,hostUid:sung.uid})[0].uid,host.under[0].uid);
