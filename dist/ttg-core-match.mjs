@@ -205,7 +205,7 @@ function lifeDamage(s,p){
 export function dispatchTtgCoreAction(source,action){
  if(source.status!=='playing')throw new Error('Match finished');
  const s=structuredClone(source),p=s.active,pl=s.players[p];
- if(!legalTtgCoreActions(s).some(x=>sameAction(x,action)))throw new Error('Illegal TTG core action');
+ if(!legalTtgCoreActions(s).some(x=>sameAction(x,action)))throw new Error('Illegal TTG core action '+JSON.stringify({action,phase:s.phase,pending:s.pending,turn:s.turn,legal:legalTtgCoreActions(s).slice(0,12)}));
  if(s.pendingTtgLife){
   Object.assign(s,resolveTtgLifeChoice(s,action));
  }else if(s.pending?.kind==='ttgGreenEntry'){
