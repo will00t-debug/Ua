@@ -45,13 +45,14 @@ export function chooseNeuralAction(s,{model=CHAMPION_MODEL,minMargin=0.24,diagno
   // whose hidden-zone effects or pending resolution cannot be compared.
   // Previously those candidates bypassed the positional safety veto.
   if(board===null||baselineBoard===null||board.pendingKind!==baselineBoard.pendingKind){
-   if(diagnostics)diagnostics.vetoed=(diagnostics.vetoed||0)+1;
+   if(diagnostics){diagnostics.vetoed=(diagnostics.vetoed||0)+1;diagnostics.incomparable=(diagnostics.incomparable||0)+1;}
    continue;
   }
   if(board.score<baselineBoard.score-1.5){
-   if(diagnostics)diagnostics.vetoed=(diagnostics.vetoed||0)+1;
+   if(diagnostics){diagnostics.vetoed=(diagnostics.vetoed||0)+1;diagnostics.positionVeto=(diagnostics.positionVeto||0)+1;}
    continue;
   }
+  if(diagnostics)diagnostics.comparable=(diagnostics.comparable||0)+1;
   const score=scoreFeatures(model,encodeAction(s,action,p));
   if(score>bestScore){best=action;bestScore=score;}
  }
@@ -61,6 +62,7 @@ export function chooseNeuralAction(s,{model=CHAMPION_MODEL,minMargin=0.24,diagno
   if(diagnostics)diagnostics.overrides=(diagnostics.overrides||0)+1;
   return best;
  }
+ if(diagnostics&&best)diagnostics.marginRejected=(diagnostics.marginRejected||0)+1;
  return fallback;
 }
 export function hasTrainedChampion(){return !!CHAMPION_MODEL;}
