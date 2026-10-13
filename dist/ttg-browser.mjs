@@ -35,6 +35,9 @@ export function ttgActionLabel(s,a){
  const primary=a.handUid??a.raidUid??a.cardUid??a.uid??a.sourceUid??a.siteUid;
  let title=key+(primary!=null?' · '+label(s,primary):'');
  if(a.type==='block')title=a.blockUid==null?'不阻擋':'阻擋 · '+label(s,a.blockUid);
+ if(a.type==='playTtgEvent'&&Array.isArray(a.readyApUids))title+=' · 回復'+a.readyApUids.length+' AP';
+ if(a.type==='green012Search')title+=' · '+(a.takeUid?'拿 '+label(s,a.takeUid):'不拿牌')+'，牌庫底順序'+a.bottomOrderUids?.map(uid=>label(s,uid)).join('→');
+ if(a.type==='green012Discard')title+=' · 棄 '+(a.discardUids||[]).map(uid=>label(s,uid)).join('、')+'，回復 AP';
  if(a.type==='attack'&&a.targetUid!=null)title+=' → 狙擊 '+label(s,a.targetUid);
  if(a.targetUid!=null&&a.type!=='attack')title+=' → '+label(s,a.targetUid);
  if(a.baseUid!=null)title+=' · Raid底板 '+label(s,a.baseUid);
@@ -45,11 +48,60 @@ export function ttgActionLabel(s,a){
  if(a.type!=='block'&&a.uid==null&&primary==null&&a.type==='next')return key;
  return title;
 }
+// The core exposes legal *templates* for events/raids. Before displaying
+// player buttons we must choose actual physical AP cards and, where necessary,
+// expand a legal target list. An unfilled template is not an executable click.
+export function ttgExecutableActions(s){
+ const offered=legalTtgCoreActions(s);
+ const ap=s.players?.[s.active]?.apCards||[];
+ const ready=ap.filter(c=>c.ready).map(c=>c.uid);
+ const paid=a=>{
+  if(a.payApUids!==undefined)return a;
+  const cost=Number.isInteger(a.requiredAp)?a.requiredAp:
+   a.type==='green012Play'?2:
+   ['ttgGreenSitePlay','ttgRed077Play'].includes(a.type)?1:null;
+  return cost==null?a:{...a,payApUids:ready.slice(0,cost)};
+ };
+ const combinations=(arr,max,from=0,used=[],result=[[]])=>{
+  for(let i=from;i<arr.length&&used.length<max;i++){
+   const next=[...used,arr[i]];result.push(next);
+   combinations(arr,max,i+1,next,result);
+  }
+  return result;
+ };
+ return offered.flatMap(original=>{
+  const a=paid(original);
+  if(a.type==='playTtgEvent'){
+   // TTG-1-081 requires an opposing-front target; AP-ready hand events do not.
+   if(Array.isArray(a.targetUids)&&a.targetUids.length)
+    return a.targetUids.map(targetUid=>({...a,targetUid}));
+   if(Number.isInteger(a.maxReadyAp)){
+    const exhausted=ap.filter(c=>!c.ready||a.payApUids.includes(c.uid)).map(c=>c.uid);
+    return combinations(exhausted,Math.min(2,a.maxReadyAp)).map(readyApUids=>({...a,readyApUids}));
+   }
+   return [a];
+  }
+  if(a.type==='green012Search'){
+   const takes=[null,...(a.candidates||[])];
+   return takes.flatMap(takeUid=>{
+    const remaining=(a.revealed||[]).filter(uid=>uid!==takeUid);
+    return [{...a,takeUid,bottomOrderUids:remaining},
+     ...(remaining.length>1?[{...a,takeUid,bottomOrderUids:[...remaining].reverse()}]:[])];
+   });
+  }
+  if(a.type==='green012Discard'){
+   const uid=(a.handUids||[])[0];
+   if(!uid)return [{...a,discardUids:[],mode:'readyAP',apUid:ap[0]?.uid,targetUid:null}];
+   return ap.map(card=>({...a,discardUids:[uid],mode:'readyAP',apUid:card.uid,targetUid:null}));
+  }
+  return [a];
+ });
+}
 export function ttgActionKinds(s){
- const by=new Map();for(const a of legalTtgCoreActions(s))by.set(a.type,(by.get(a.type)||0)+1);return [...by].map(([type,count])=>({type,count}));
+ const by=new Map();for(const a of ttgExecutableActions(s))by.set(a.type,(by.get(a.type)||0)+1);return [...by].map(([type,count])=>({type,count}));
 }
 export function ttgFilteredActions(s,{kind='all',cardUid=null,offset=0,limit=100}={}){
- const all=legalTtgCoreActions(s);
+ const all=ttgExecutableActions(s);
  const list=all.filter(a=>(kind==='all'||a.type===kind)&&(!cardUid||a.handUid===cardUid||a.uid===cardUid||a.sourceUid===cardUid||a.raidUid===cardUid||a.cardUid===cardUid||a.targetUid===cardUid||a.baseUid===cardUid||a.type==='next'));
  return {total:list.length,actions:list.slice(offset,offset+limit)};
 }

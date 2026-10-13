@@ -552,11 +552,23 @@ export function ttgCoreAiChoice(s){
     targetUid:greenEvent.targetUid,targetUids:greenEvent.targetUids,
     payApUids:pl.apCards.filter(c=>c.ready).slice(0,greenEvent.requiredAp).map(c=>c.uid)};
    const multiplier=effects.find(x=>x.type==='green040Double');if(multiplier)return multiplier;
-   const event=effects.find(x=>x.type==='playTtgEvent');
+   // TTG-1-081 (Giga Drill Break) is a targeted SPECIAL hand event.
+   // The AI must choose a legal opposing front target, not treat it as an
+   // AP-ready event (036/037/038/078/079); otherwise the rule adapter rejects
+   // an action that core legal actions had already offered.
+   const event=effects.find(x=>x.type==='playTtgEvent'&&x.targetUids?.length)||
+    effects.find(x=>x.type==='playTtgEvent');
    if(event){
     const payApUids=pl.apCards.filter(c=>c.ready).slice(0,event.requiredAp).map(c=>c.uid);
-    const readyApUids=pl.apCards.filter(c=>!c.ready||payApUids.includes(c.uid)).slice(0,2).map(c=>c.uid);
-    return {type:'playTtgEvent',player:p,handUid:event.handUid,payApUids,readyApUids};
+    if(event.targetUids?.length){
+     const target=s.players[1-p].front.filter(c=>c&&event.targetUids.includes(c.uid))
+      .sort((a,b)=>bp(s,1-p,b)-bp(s,1-p,a))[0];
+     if(target)return {type:'playTtgEvent',player:p,handUid:event.handUid,
+      payApUids,targetUid:target.uid};
+    }else{
+     const readyApUids=pl.apCards.filter(c=>!c.ready||payApUids.includes(c.uid)).slice(0,2).map(c=>c.uid);
+     return {type:'playTtgEvent',player:p,handUid:event.handUid,payApUids,readyApUids};
+    }
    }
   }
   return {type:'next'};
