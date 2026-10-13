@@ -370,6 +370,14 @@ function ttgArena(){
  const shown=c=>c?`${esc(TTG_BY_ID[c.cardId]?.nameZh||c.cardId)}<small style='display:block'>${esc(c.cardId)} · ${c.ready?'ACTIVE':'REST'} · ${TTG_BY_ID[c.cardId]?.bp||0} BP${c.stack?.length?' · RAID '+c.stack.length:''}</small>`:'<small>空位置</small>';
  const board=(pl,name)=>`<section class='panel'><h3>${name} · LIFE ${pl.life.length} · 手牌 ${pl.hand.length} · 場外 ${pl.outside.length} · AP ${pl.apCards.filter(x=>x.ready).length}</h3><p class='note'>紅能源 ${pl.energyProduced?.red||0} · 綠能源 ${pl.energyProduced?.green||0}</p>${['front','energy'].map(line=>`<div><b>${line==='front'?'前線':'能源線'}</b><div class='grid' style='display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px'>${pl[line].map(c=>`<div class='catalogInfo' style='border:1px solid #8887;padding:6px;min-height:62px;border-radius:7px'>${shown(c)}</div>`).join('')}</div></div>`).join('')}</section>`;
  const pending=s.pendingTtgLife?'生命觸發選擇':s.pending?.kind?'效果選擇：'+s.pending.kind:'';
+ const publicLife=(s.publicLifeReveals||[]).slice(-5).reverse();
+ const revealedTile=x=>{
+  const card=TTG_BY_ID[x.cardId],name=esc(card?.nameZh||card?.nameJa||x.cardId);
+  const result=x.outcome==='none'?'沒有 Trigger':x.outcome==='pending'?'正在選擇 Trigger':
+   x.outcome==='declined'?'選擇不發動 Trigger':'已發動 '+esc(String(x.mode||x.trigger||''));
+  return `<div class='catalogInfo' style='padding:8px;border:1px solid #8887;border-radius:8px'><b>${name}</b><small style='display:block'>${esc(x.cardId)} · ${x.owner===0?'你的生命區':'AI 生命區'} · ${esc(x.trigger||'無 Trigger')}</small><small>${result}</small></div>`;
+ };
+ const publicLifePanel=publicLife.length?`<section class='panel'><h3>公開生命翻牌（最近 ${publicLife.length} 張）</h3><div class='grid' style='display:flex;flex-wrap:wrap;gap:6px'>${publicLife.map(revealedTile).join('')}</div><small>只顯示已公開的生命卡，不公開未翻開的生命、手牌或私人查看牌庫。</small></section>`:'';
  const available=legalTtgCoreActions(s);
  const types=ttgActionKinds(s);
  const picked=ttgFilteredActions(s,{kind:ui.ttgKind,cardUid:ui.ttgSelected,limit:ui.ttgVisible});
@@ -378,6 +386,7 @@ function ttgArena(){
  const hand=`<div class='grid' style='display:flex;flex-wrap:wrap;gap:7px'>${cards.map(c=>`<button class='btn small ${ui.ttgSelected===c.uid?'primary':'outline'}' data-ttg-select='${esc(c.uid)}'>${shown(c)}</button>`).join('')}</div>`;
  return `<header class='pageHeading'><div><h1>天元突破 · 限定 Beta 自動對戰</h1><p>回合 ${s.turn} · ${phase} · ${s.status==='finished'?'對局結束':'行動方：'+(actor===0?'玩家':'AI')} · ${pending}</p></div><button class='btn outline' data-view='builder'>返回牌組編輯</button></header>
  <div class='supportNote'><b>限定 Beta 判定</b><span>${esc(TTG_BETA_NOTICE)}</span></div>
+ ${publicLifePanel}
  ${s.status==='finished'?`<section class='panel'><h2>對局結束 · ${s.winner===0?'玩家勝利':'AI 勝利'}</h2><p>${esc(s.endReason||'')}</p><button class='btn primary' data-action='ttgBetaStartGreen'>再玩一局</button></section>`:''}
  ${board(s.players[1],'AI 對手')}${board(s.players[0],'你的場地')}
  <section class='panel'><h3>你的手牌（${cards.length} 張）</h3>${hand}</section>
