@@ -23,8 +23,8 @@ Scope: 80 numbered ordinary cards, excluding alternate art and AP artworks. Prin
 
 ## Data and test status
 - 80 card number identities enumerated in `dist/mushoku-tensei.mjs`.
-- 71 entries currently carry preliminary metadata copied from previous work or newly compared with official card pages. **All require final card-by-card verification before certification.**
-- Remaining 9 cards: verified basic names/rarities/color and selected additional fields, but some printed numerical fields remain unverified; explicit pending metadata.
+- 72 entries currently carry preliminary metadata copied from previous work or newly compared with official card pages. **All require final card-by-card verification before certification.**
+- Remaining 8 cards: verified basic names/rarities/color and selected additional fields, but some printed numerical fields remain unverified; explicit pending metadata.
 - No parallel variants or AP illustrations included.
 - Rules prototypes reused from previous branch, kept in isolated `dist/mst-rulings.mjs`; **not connected** to `dist/engine.mjs`.
 - Full effect + AI completion: **0/80**. No false `auto:true`.
@@ -45,11 +45,11 @@ Scope: 80 numbered ordinary cards, excluding alternate art and AP artworks. Prin
 
 ## 2026-10-13 inventory and legality checkpoint
 - All **80 canonical non-AP card numbers have non-placeholder Japanese names**, basic card types, colors, and rarity: SR 12 / R 12 / U 28 / C 28.
-- **71/80** have preliminary card-number metadata including printed energy, AP, BP, generation and effect summary. **9/80** only have partly checked descriptive fields; unknown gameplay values remain `null`.
-- Missing some exact printed numerical fields: **MST-1-010, 011, 015, 019, 023, 044, 061, 064, 078**. Their effects and original Japanese card text still require final official verification.
+- **72/80** have preliminary card-number metadata including printed energy, AP, BP, generation and effect summary. **8/80** only have partly checked descriptive fields; unknown gameplay values remain `null`.
+- Missing some exact printed numerical fields: **MST-1-010, 011, 015, 019, 023, 044, 064, 078**. Their effects and original Japanese card text still require final official verification.
 - **Original Japanese effect text and artwork licenses remain to be verified for the entire expansion.** Currently many newly added descriptions are Chinese summaries, not original Japanese transcriptions.
 - **MST-1-051 Roxy is restricted to one copy per deck effective 2026-10-01**, including any parallel art of the same card number. Official https://www.unionarena-tcg.com/jp/rules/limited.php and https://www.unionarena-tcg.com/tc/rules/limited.php. Isolated `dist/mst-deck-rules.mjs` rejects illegal copies or foreign series, and `tests/mst-deck-rules.test.mjs` covers it. This verifier is not yet wired to the production editor or match startup.
-- Newly added `tests/mst-completeness.test.mjs` asserts 80 unique card names/rarities and exact 71 preliminary / 9 pending split, rather than pretending the full engine is done.
+- Newly added `tests/mst-completeness.test.mjs` asserts 80 unique card names/rarities and exact 72 preliminary / 8 pending split, rather than pretending the full engine is done.
 - GitHub Actions Node 22 regression suite **passed** on commit 76762162 (run https://github.com/will00t-debug/Ua/actions/runs/38278235832), correcting the prior shared-turn key bug. Recheck the latest commit's CI before claiming a current pass.
 - FULL automatic game engine effects **0/80**; independent helper functions still require match state, user-choice flow, trigger timing, AI and end-to-end validation.
 
@@ -64,3 +64,9 @@ Scope: 80 numbered ordinary cards, excluding alternate art and AP artworks. Prin
 - Moved **MST-1-013, MST-1-045, MST-1-079** from the partial-data bucket into the preliminary-stat bucket, filling printed energy, AP cost, BP, generation, effect, Trigger where applicable and a short Japanese text transcription. Evidence: retail card images https://www.merucarduniari.jp/product/17109 , https://www.merucarduniari.jp/product/17141 , https://www.merucarduniari.jp/product/17175 ; final authoritative Japanese wording is still to be checked.
 - Added source-supported snippets to nine partial records: **010,011,015,019,023,044,061,064,078**. Their missing numeric values **remain null**. Third-party translation and product references https://rugiacreation.com/ua/search?Find1=UA54BT&Name=HK and https://www.unionarena-tcg.com/jp/cardlist/.
 - Explicitly no claim of full data completion (80 names/rarities, only **71 preliminary full numeric rows**). `tests/mst-completeness.test.mjs` now verifies the 71/9 split and checks 013/045/079. No official art copied and no `auto` flags changed.
+
+## 2026-10-13 路基亞卡表交叉核對
+- 將路基亞中文卡表列為**非官方翻譯參考**：https://rugiacreation.com/ua/search?Find1=UA54BT&Name=HK ，日文原卡與 Q&A 裁定仍以 BANDAI 官方為準。
+- Rugia 的部分印刷數字用圖示顯示，不能把 HTML 文字中的 `Image` 當成具體 AP、BP 或能源值。異圖及 AP 卡仍然排除。
+- **MST-1-061 七星**：根據路基亞效果與卡片商家列出的能源1／AP1／BP2000及原本初步產能資訊，補齊完整數值欄位，正式自動結算仍未驗證。商家資料：https://www.ebay.com/itm/398082826728；路基亞：https://rugiacreation.com/ua/search?Color1=%E7%B6%A0&Name=HK&Version=MST。
+- **初步完整欄位 72/80**；其餘8張（010、011、015、019、023、044、064、078）仍有數值待核對，不造假。全部卡片 `auto:false`，遊戲引擎實際支援 0/80。
