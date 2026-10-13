@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {SOLO_SHADOW_TRAINING_PRESET,newSoloTrainingMatch,soloTrainingLegalActions,soloTrainingDispatch,soloMatchBp,assertSoloTrainingMatch} from '../dist/solo-match.mjs';
+import {SOLO_SHADOW_TRAINING_PRESET,SOLO_TRAINING_PRESET,newSoloTrainingMatch,soloTrainingLegalActions,soloTrainingDispatch,soloMatchBp,assertSoloTrainingMatch} from '../dist/solo-match.mjs';
 
 // Regression tests derived from official UA51BT FAQs:
 // https://www.unionarena-tcg.com/jp/faq/list.php?series=UA51BT
@@ -46,5 +46,50 @@ test('Q2070-Q2071 printed-BP REST shadow character count excludes BP-less fields
  assert.equal(soloMatchBp(s,iron),3500,'REST soldier with original BP1500 still counts');
  soldier.ready=true;
  assert.equal(soloMatchBp(s,iron),3000,'BP-less field does not count although REST');
+ assertSoloTrainingMatch(s);
+});
+
+test('Q2032/Q2062 explicit enemy-target event rejects immunity and requires AP after the event cost',()=>{
+ const counts={...SOLO_SHADOW_TRAINING_PRESET,'SLG-1-001':0,'SLG-1-040':4};
+ let s=game(counts);s.phase='main';s.players[0].ap=3;s.players[0].maxAp=3;
+ put(s,'SLG-1-035',0,'energy',0);
+ put(s,'SLG-1-029',0,'energy',1);
+ const target=put(s,'SLG-1-030',1,'front',0,false);
+ const event=extract(s.players[0],'SLG-1-040');s.players[0].hand.push(event);
+ target.untargetableTurn=s.turn;
+ assert.equal(soloTrainingLegalActions(s).some(a=>a.type==='playEvent'&&a.uid===event.uid),false);
+ delete target.untargetableTurn;
+ target.extraTargetAp=1;
+ s.players[0].ap=1;
+ assert.equal(soloTrainingLegalActions(s).some(a=>a.type==='playEvent'&&a.uid===event.uid),false,'1AP must pay event, cannot pay extra target cost');
+ s.players[0].ap=2;
+ const play=soloTrainingLegalActions(s).find(a=>a.type==='playEvent'&&a.uid===event.uid);
+ assert.ok(play);
+ s=doAction(s,play);assert.equal(s.players[0].ap,1);
+ assert.equal(s.pending.kind,'eventDestroy');
+ s=doAction(s,{type:'choose',uid:target.uid});
+ assert.equal(s.players[0].ap,0);
+ assert.ok(s.players[1].outside.some(c=>c.uid===target.uid));assertSoloTrainingMatch(s);
+});
+test('Q2056 second Shizuku-057 does not repeat first same-name entry ACTIVE ability in same turn',()=>{
+ const counts={...SOLO_TRAINING_PRESET,'SLG-1-065':0,'SLG-1-057':4};
+ let s=newSoloTrainingMatch({decks:[counts,counts],seed:421,first:0});
+ s.phase='main';s.players[0].ap=3;s.players[0].maxAp=3;
+ put(s,'SLG-1-055',0,'front',0);
+ put(s,'SLG-1-056',0,'front',1);
+ put(s,'SLG-1-066',0,'front',2);
+ put(s,'SLG-1-067',0,'energy',0);
+ put(s,'SLG-1-041',0,'energy',1);
+ put(s,'SLG-1-041',0,'energy',2);
+ const first=extract(s.players[0],'SLG-1-057'),second=extract(s.players[0],'SLG-1-057');
+ s.players[0].hand.push(first,second);
+ const a=soloTrainingLegalActions(s).find(x=>x.type==='play'&&x.uid===first.uid&&x.line==='front');
+ assert.ok(a);s=doAction(s,a);
+ assert.equal(s.players[0].front[a.slot].ready,true);
+ assert.equal(s.groupUsed['0:shizuku057Entry'],s.turn);
+ const b=soloTrainingLegalActions(s).find(x=>x.type==='play'&&x.uid===second.uid&&x.line==='energy');
+ assert.ok(b);s=doAction(s,b);
+ assert.equal(s.players[0].energy[b.slot].ready,false,'Q2056 later copy must not self-activate again');
+ assert.equal(s.players[0].energy[b.slot].freezeSelfOnAttackTurn,undefined);
  assertSoloTrainingMatch(s);
 });
