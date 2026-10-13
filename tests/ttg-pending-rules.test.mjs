@@ -151,7 +151,7 @@ test('TTG-1-049 rejects incomplete candidate energy or a piled RAID return',()=>
  assert.deepEqual(eligibleTtg049ReturnTargets(st,{player:0,uid:'duo'}),['pile']);
  assert.throws(()=>resolveTtg049Entry(st,{player:0,uid:'duo',targetUid:'pile'}),/raid pile/i);
 });
-test('repeated Viral activation after another effect readies cards expires all granted energy',()=>{
+test('official TTG-1-002 turn-once forbids repeated activation after readying and expires granted energy',()=>{
  const st=state();st.players[0].energy[0]=card('v','TTG-1-002','ヴィラル');
  st.players[0].front[0]=card('a','TTG-1-005','キタン');
  const first=resolveTtgViral002(st,{player:0,uid:'v',targetUid:'a'});
@@ -159,8 +159,12 @@ test('repeated Viral activation after another effect readies cards expires all g
  const active=structuredClone(first);
  active.players[0].energy[0].ready=true;
  active.players[0].front[0].ready=true;
- const twice=resolveTtgViral002(active,{player:0,uid:'v',targetUid:'a'});
- assert.equal(twice.players[0].energy[0].energyBonus,2);
- assert.equal(twice.players[0].energy[0].temporaryEnergyBonusCount,2);
- assert.equal(resolveTtgTemporaryEnergyEndTurn(twice).players[0].energy[0].energyBonus,0);
+ // Official print includes ターン1; the previous test incorrectly allowed reuse.
+ assert.throws(()=>resolveTtgViral002(active,{player:0,uid:'v',targetUid:'a'}));
+ assert.equal(active.players[0].energy[0].energyBonus,1);
+ const expired=resolveTtgTemporaryEnergyEndTurn(active);
+ assert.equal(expired.players[0].energy[0].energyBonus,0);
+ expired.turn++;
+ const next=resolveTtgViral002(expired,{player:0,uid:'v',targetUid:'a'});
+ assert.equal(next.players[0].energy[0].energyBonus,1);
 });

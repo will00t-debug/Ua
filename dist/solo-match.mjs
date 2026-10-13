@@ -139,7 +139,7 @@ export function newSoloTrainingMatch({decks=[SOLO_TRAINING_PRESET,SOLO_TRAINING_
  }
  startTurn(s);assertSoloTrainingMatch(s);return s;
 }
-function position(c,p,line,slot){c.owner=p;c.ready=false;c.line=line;c.slot=slot;c.buffs=[];c.grants=[];delete c.extraTargetAp;delete c.untargetableTurn;delete c.grantBlockLimitTurn;}
+function position(c,p,line,slot){delete c.boostTurn;delete c.usedTurn;delete c.retireAtMainEnd;c.owner=p;c.ready=false;c.line=line;c.slot=slot;c.buffs=[];c.grants=[];delete c.extraTargetAp;delete c.untargetableTurn;delete c.grantBlockLimitTurn;}
 function retire(s,p,c){
  let arr=s.players[p][c.line],old=arr[c.slot];if(old?.uid!==c.uid)throw Error('retire lost field slot');
  const printed=d(c);
@@ -185,9 +185,12 @@ function hurt(s,defender,amount=1){
    if(t==='draw')draw(s,p);
    if(t==='final'&&p.life.length===0&&p.deck.length)p.life.unshift(p.deck.shift());
    if(t==='color'){
-    const choices=p.hand.filter(x=>d(x).type==='character'&&d(x).color===d(c).color&&d(x).energy<=2&&d(x).ap===1);
-    if(choices.length&&(p.front.some(x=>!x)||p.energy.some(x=>!x)))
-     s.pending={kind:'colorTrigger',p:defender,choices:choices.map(x=>x.uid)};
+    // Purple COLOR revives from outside into front; green COLOR deploys from hand.
+    const sourceZone=d(c).color==='purple'?'outside':'hand';
+    const lines=sourceZone==='outside'?['front']:['front','energy'];
+    const choices=p[sourceZone].filter(x=>d(x).type==='character'&&d(x).color===d(c).color&&d(x).energy<=2&&d(x).ap===1);
+    if(choices.length&&lines.some(line=>p[line].some(x=>!x)))
+     s.pending={kind:'colorTrigger',p:defender,sourceZone,lines,choices:choices.map(x=>x.uid)};
    }
    if(t==='special'){
     const targets=s.players[1-defender].front.filter(x=>canSelectEnemy(s,defender,x));
@@ -380,9 +383,9 @@ function choose(s,action){
   }
   s.pending=null;continueAttackEffects(s);
  }else if(q.kind==='colorTrigger'){
-  const p=s.players[q.p],i=p.hand.findIndex(c=>c.uid===action.uid);
-  if(i<0||!q.choices.includes(action.uid)||!['front','energy'].includes(action.line)||p[action.line][action.slot])throw Error('illegal color trigger deployment');
-  const c=p.hand.splice(i,1)[0];position(c,q.p,action.line,action.slot);c.ready=true;p[action.line][action.slot]=c;
+  const p=s.players[q.p],source=p[q.sourceZone||'hand'],i=source.findIndex(c=>c.uid===action.uid);
+  if(i<0||!q.choices.includes(action.uid)||!(q.lines||['front','energy']).includes(action.line)||p[action.line][action.slot])throw Error('illegal color trigger deployment');
+  const c=source.splice(i,1)[0];position(c,q.p,action.line,action.slot);c.ready=true;p[action.line][action.slot]=c;
   s.pending=null;onEnter(s,c);
  }else if(q.kind==='specialTrigger'){
   const opponent=1-q.p,target=s.players[opponent].front.find(x=>x?.uid===action.uid);
@@ -1007,7 +1010,7 @@ export function soloTrainingLegalActions(s){
    return result;
   }
   if(q.kind==='colorTrigger'){
-   const p=s.players[q.p];return q.choices.flatMap(uid=>['front','energy'].flatMap(line=>p[line].flatMap((c,slot)=>c?[]:[{type:'choose',uid,line,slot}])));
+   const p=s.players[q.p];return q.choices.flatMap(uid=>(q.lines||['front','energy']).flatMap(line=>p[line].flatMap((c,slot)=>c?[]:[{type:'choose',uid,line,slot}])));
   }
   if(q.kind==='specialTrigger')return q.choices.map(uid=>({type:'choose',uid}));
   if(q.kind==='activeTrigger')return field(s.players[q.p]).map(c=>({type:'choose',uid:c.uid}));

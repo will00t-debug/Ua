@@ -92,13 +92,14 @@ export function resolveTtgYoko065Step(state,{player,uid,toSlot}={}){
 }
 
 
-// TTG-1-002 Viral (fan-transcribed text; final print statistics still unverified):
+// TTG-1-002 official print checked 2026-10-14: REST cost + once per turn.
+// https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT/TTG-1-002
 // REST this source as the activation cost, then REST a separate ACTIVE own FRONT
 // character. Only successful second REST grants +1 green energy for this turn.
 export function eligibleTtgViral002Targets(state,{player,uid}={}){
  if(!validMain(state,player))return [];
  const source=find(state.players[player],uid);
- if(!source||source.card.cardId!=='TTG-1-002'||!source.card.ready)return [];
+ if(!source||source.card.cardId!=='TTG-1-002'||!source.card.ready||source.card.viral002UsedTurn===state.turn)return [];
  return (state.players[player].front||[]).filter(c=>c?.ready&&c.uid!==uid).map(c=>c.uid);
 }
 export function resolveTtgViral002(state,{player,uid,targetUid}={}){
@@ -107,6 +108,7 @@ export function resolveTtgViral002(state,{player,uid,targetUid}={}){
   throw new Error('Viral needs a different ACTIVE own front-line target');
  const result=copy(state),owner=result.players[player],self=find(owner,uid).card,target=find(owner,targetUid).card;
  self.ready=false;
+ self.viral002UsedTurn=state.turn;
  target.ready=false;
  self.energyBonus=(self.energyBonus||0)+1;
  self.temporaryEnergyUntilTurn=state.turn;
