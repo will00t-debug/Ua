@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {SOLO_SHADOW_TRAINING_PRESET,SOLO_TRAINING_PRESET,newSoloTrainingMatch,soloTrainingLegalActions,soloTrainingDispatch,soloEnergy,soloMatchBp,assertSoloTrainingMatch} from '../dist/solo-match.mjs';
+import {SOLO_SHADOW_TRAINING_PRESET,SOLO_TRAINING_PRESET,newSoloTrainingMatch,soloTrainingLegalActions,soloTrainingDispatch,soloEnergy,soloMatchBp,soloTrainingBotAction,assertSoloTrainingMatch} from '../dist/solo-match.mjs';
 
 const fixtures=(color,ids=[])=>{
  const base=color==='purple'?SOLO_SHADOW_TRAINING_PRESET:SOLO_TRAINING_PRESET;
@@ -210,4 +210,29 @@ test('051 Raid mode is not offered without one additional AP after paying charac
  assert.throws(()=>dispatch(s,{type:'choose',mode:'raid'}),/illegal SOLO action/);
  s=dispatch(s,{type:'choose',mode:'recover'});
  s=dispatch(s,{type:'choose',uid:null});assertSoloTrainingMatch(s);
+});
+
+test('AI selects a legal Raid rather than ignoring all final-ten Raid actions',()=>{
+ let s=fixtures('green',['SLG-1-047']);greenPower(s);
+ const base=onField(s,'SLG-1-045','front',0),c=prepare(s,'SLG-1-047');
+ const available=soloTrainingLegalActions(s);
+ assert.ok(available.some(a=>a.type==='raid'&&a.uid===c.uid&&a.target===base.uid));
+ const ai=soloTrainingBotAction(s);
+ assert.equal(ai.type,'raid');assert.equal(ai.uid,c.uid);
+ s=dispatch(s,ai);assert.equal(s.players[0].front[0].uid,c.uid);assertSoloTrainingMatch(s);
+});
+test('AI completes purple advanced Sung and green chained Sung custom-deck games with all 50 card UIDs conserved',()=>{
+ const purple={...SOLO_SHADOW_TRAINING_PRESET,'SLG-1-001':0,'SLG-1-009':0,'SLG-1-020':4,'SLG-1-021':4};
+ const green={...SOLO_TRAINING_PRESET,'SLG-1-062':0,'SLG-1-065':0,'SLG-1-047':4,'SLG-1-048':4};
+ for(const deck of [purple,green])for(const seed of [117,118,119]){
+  let s=newSoloTrainingMatch({decks:[deck,deck],seed,first:0});
+  let steps=0;
+  while(s.status==='playing'&&steps++<3600){
+   const a=soloTrainingBotAction(s);
+   assert.ok(soloTrainingLegalActions(s).some(x=>JSON.stringify(x)===JSON.stringify(a)),'bot action legal');
+   s=dispatch(s,a);
+  }
+  assert.equal(s.status,'finished','seed '+seed+' got stuck at '+steps);
+  assertSoloTrainingMatch(s);
+ }
 });
