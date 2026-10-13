@@ -26,9 +26,15 @@ test('red 042 printed ACTIVE life wakes character and adds 3000 BP, red 043 prin
  const d=fixture();d.players[0].life=[c('draw','TTG-1-043'),c('ordinary','TTG-1-005')];
  d.players[0].deck=[c('top','TTG-1-006')];
  const next=beginTtgLifeTrigger(d,{player:0,lifeUid:'draw'});
- assert.deepEqual(next.players[0].hand.map(x=>x.uid),['top']);
+ assert.deepEqual(next.players[0].hand.map(x=>x.uid),[]);
  assert.deepEqual(next.players[0].outside.map(x=>x.uid),['draw']);
- assert.equal(next.pendingTtgLife,undefined);
+ assert.equal(next.pendingTtgLife?.trigger,'draw');
+ assert.deepEqual(legalTtgLifeChoices(next).map(x=>x.mode),['draw','decline']);
+ const drawn=resolveTtgLifeChoice(next,legalTtgLifeChoices(next)[0]);
+ assert.deepEqual(drawn.players[0].hand.map(x=>x.uid),['top']);
+ const skipped=resolveTtgLifeChoice(next,legalTtgLifeChoices(next)[1]);
+ assert.deepEqual(skipped.players[0].hand,[]);
+ assert.deepEqual(skipped.players[0].deck.map(x=>x.uid),['top']);
  assert.equal(ttgRedStarterImpactNull(c('k','TTG-1-043')),true);
  assert.equal(ttgRedStarterImpactNull(c('other','TTG-1-042')),false);
 });

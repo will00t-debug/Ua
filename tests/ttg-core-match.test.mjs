@@ -174,7 +174,13 @@ test('last life card loss wins only after its trigger resolves',()=>{
  st=withTtgDerivedEnergy(st,0);
  let after=dispatchTtgCoreAction(st,{type:'attack',uid:attacker.uid});
  after=dispatchTtgCoreAction(after,{type:'block',blockUid:null});
- assert.equal(after.status,'playing','FINAL restores a life card, so game cannot end');
+ assert.equal(after.status,'playing','FINAL awaits optional defender resolution (Q99)');
+ assert.equal(after.players[1].life.length,0);
+ assert.equal(after.pendingTtgLife?.trigger,'final');
+ const rescue=legalTtgCoreActions(after).find(a=>a.mode==='final');
+ assert.ok(rescue,'defender must be able to choose FINAL');
+ after=dispatchTtgCoreAction(after,rescue);
+ assert.equal(after.status,'playing','chosen FINAL restores one life');
  assert.equal(after.players[1].life.length,1);
  assert.ok(assertTtgCoreState(after));
  // The second attacker will remove the final life with no FINAL rescue.
