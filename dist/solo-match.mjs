@@ -5,8 +5,8 @@ import {SOLO_LEVELING_CARDS} from './solo-leveling.mjs';
 import {normalizeSoloDeck} from './solo-decks.mjs';
 const DB=Object.fromEntries(SOLO_LEVELING_CARDS.map(c=>[c.id,c]));
 export const SOLO_MATCH_SUPPORTED=Object.freeze([
- 'SLG-1-001','SLG-1-005','SLG-1-006','SLG-1-007','SLG-1-009','SLG-1-010','SLG-1-013','SLG-1-014','SLG-1-015','SLG-1-016','SLG-1-027','SLG-1-029','SLG-1-030','SLG-1-031','SLG-1-032','SLG-1-033','SLG-1-035',
- 'SLG-1-041','SLG-1-042','SLG-1-043','SLG-1-045','SLG-1-052','SLG-1-055','SLG-1-056',
+ 'SLG-1-001','SLG-1-005','SLG-1-012','SLG-1-025','SLG-1-026','SLG-1-006','SLG-1-007','SLG-1-009','SLG-1-010','SLG-1-013','SLG-1-014','SLG-1-015','SLG-1-016','SLG-1-027','SLG-1-029','SLG-1-030','SLG-1-031','SLG-1-032','SLG-1-033','SLG-1-035',
+ 'SLG-1-041','SLG-1-042','SLG-1-050','SLG-1-053','SLG-1-068','SLG-1-043','SLG-1-045','SLG-1-052','SLG-1-055','SLG-1-056',
  'SLG-1-062','SLG-1-065','SLG-1-066','SLG-1-069','SLG-1-067','SLG-1-072','SLG-1-074','SLG-1-075','SLG-1-058'
 ]);
 const SUPPORTED=new Set(SOLO_MATCH_SUPPORTED);
@@ -35,6 +35,14 @@ const d=c=>DB[c.cardId];
 const field=(p)=>[...p.front,...p.energy].filter(Boolean);
 const living=(p)=>p.front.filter(Boolean);
 const own=(s,uid)=>field(player(s)).find(c=>c.uid===uid);
+function returnSoloToHand(s,p,c){
+ const owner=s.players[p],slot=owner[c.line];
+ if(slot?.[c.slot]?.uid!==c.uid)throw Error('not own character in expected slot');
+ slot[c.slot]=null;
+ for(const attached of c.under||[])owner.outside.push({...attached,faceDown:false});
+ if(c.stack?.length){for(const base of c.stack)owner.outside.push({...base,stack:[],under:[]});}
+ const {stack,under,...single}=c;owner.hand.push({...single,stack:[],under:[]});
+}
 const addLog=(s,text)=>{s.log.push({turn:s.turn,text});if(s.log.length>120)s.log.shift();};
 const fresh=(uid,cardId)=>({uid,cardId,ready:false,stack:[],under:[],buffs:[]});
 const draw=(s,p,n=1)=>{for(let i=0;i<n;i++){if(!p.deck.length){s.status='finished';s.winner=1-s.players.indexOf(p);return;}p.hand.push(p.deck.shift());}};
@@ -56,7 +64,7 @@ export function soloMatchBp(s,c){
  return value;
 }
 const impact=(s,c)=>c.cardId==='SLG-1-056'||(c.cardId==='SLG-1-065'&&s.players[c.owner].hand.length>=5)||(c.grants||[]).some(g=>g.kind==='impact'&&g.turn===s.turn);
-const impactImmune=c=>['SLG-1-016','SLG-1-032','SLG-1-052'].includes(c.cardId);
+const impactImmune=c=>['SLG-1-016','SLG-1-032','SLG-1-052','SLG-1-053'].includes(c.cardId);
 const shadow=(c)=>d(c)?.type==='character'&&d(c)?.traits?.includes('影之軍團');
 const groupUsed=(s,p,key)=>s.groupUsed?.[p+':'+key]===s.turn;
 const markGroup=(s,p,key)=>{s.groupUsed??={};s.groupUsed[p+':'+key]=s.turn;};
@@ -223,6 +231,22 @@ function choose(s,action){
    p.outside.push(p.hand.splice(i,1)[0]);markGroup(s,q.p,'bel');readySolo(a);
   }
   s.pending=null;continueAttackEffects(s);
+ }else if(q.kind==='entryDrawMode'){
+  const p=s.players[q.p];
+  if(action.mode==='draw2'){draw(s,p,2);s.pending=null;}
+  else if(action.mode==='drawRecover'){draw(s,p);s.pending={kind:'entryRecover',p:q.p,options:p.outside.filter(x=>d(x)?.type==='character'&&d(x).energy<=3&&d(x).traits.length===0).map(x=>x.uid)};}
+  else throw Error('illegal draw or recovery selection');
+ }else if(q.kind==='entryRecover'||q.kind==='sungRecovery'){
+  if(action.uid!=null){
+   const p=s.players[q.p],i=p.outside.findIndex(c=>c.uid===action.uid);
+   if(i<0||!q.options.includes(action.uid))throw Error('illegal outside recovery');
+   p.hand.push(p.outside.splice(i,1)[0]);
+  }
+  s.pending=null;
+ }else if(q.kind==='entryBounce'){
+  const p=s.players[q.p],c=field(p).find(c=>c.uid===action.uid);
+  if(!c||!q.options.includes(action.uid))throw Error('illegal return target');
+  returnSoloToHand(s,q.p,c);s.pending=null;
  }else if(q.kind==='dailyDiscard'){
   const p=s.players[q.p],i=p.hand.findIndex(c=>c.uid===action.uid);
   if(i<0)throw Error('illegal daily cost');
@@ -313,6 +337,13 @@ function onEnter(s,c){
   markGroup(s,c.owner,'kana');draw(s,p);readySolo(c);c.buffs.push({turn:s.turn,bp:1000});
  }
  if(c.cardId==='SLG-1-058')c.buffs.push({turn:s.turn,bp:1000});
+ if(['SLG-1-012','SLG-1-053'].includes(c.cardId)&&field(p).some(x=>d(x).nameJa==='水篠 旬'))draw(s,p);
+ if(c.cardId==='SLG-1-025')s.pending={kind:'entryDrawMode',p:c.owner};
+ if(['SLG-1-026','SLG-1-068'].includes(c.cardId)){
+  const eligible=field(p).filter(x=>x.uid!==c.uid&&d(x).type==='character'&&d(x).energy<=1).map(x=>x.uid);
+  if(eligible.length)s.pending={kind:'entryBounce',p:c.owner,source:c.uid,options:eligible};
+  else returnSoloToHand(s,c.owner,c);
+ }
  if(c.cardId==='SLG-1-043'){draw(s,p);if(p.hand.length)s.pending={kind:'discard',p:c.owner,source:c.uid};}
  if(c.cardId==='SLG-1-072'&&field(p).filter(x=>d(x).traits?.includes('DFN')).length>=3)draw(s,p);
  if(c.cardId==='SLG-1-074')s.pending={kind:'entryImpact',p:c.owner,source:c.uid};
@@ -327,6 +358,9 @@ export function soloTrainingLegalActions(s){
   if(q.kind==='kaiserPick'||q.kind==='kibaPick')return [{type:'choose',uid:null},...q.options.map(uid=>({type:'choose',uid}))];
   if(q.kind==='kaiserMode')return ['block','untargetable'].filter(mode=>!groupUsed(s,q.p,'kaiser:'+mode)).map(mode=>({type:'choose',mode}));
   if(q.kind==='kibaMode')return ['buff','draw'].filter(mode=>!groupUsed(s,q.p,'kiba:'+mode)).map(mode=>({type:'choose',mode}));
+  if(q.kind==='entryDrawMode')return [{type:'choose',mode:'draw2'},{type:'choose',mode:'drawRecover'}];
+  if(q.kind==='entryRecover'||q.kind==='sungRecovery')return [{type:'choose',uid:null},...q.options.map(uid=>({type:'choose',uid}))];
+  if(q.kind==='entryBounce')return q.options.map(uid=>({type:'choose',uid}));
   if(q.kind==='dailyUnder')return [{type:'choose',uid:null},...q.options.map(uid=>({type:'choose',uid}))];
   if(q.kind==='dailyRecover')return [{type:'choose',uid:null},...q.options.map(uid=>({type:'choose',uid}))];
   if(q.kind==='raid058Discard')return [{type:'choose',uid:null},...s.players[q.p].hand.map(c=>({type:'choose',uid:c.uid}))];
@@ -373,6 +407,7 @@ export function soloTrainingLegalActions(s){
    }
   }
   for(const c of field(p)){
+   if(c.cardId==='SLG-1-050'&&c.ready)actions.push({type:'ability',uid:c.uid,mode:'retireRecover'});
    if(c.cardId==='SLG-1-035'&&c.ready)actions.push({type:'ability',uid:c.uid,mode:'boost'});
    if(c.cardId==='SLG-1-075'&&c.ready){
     if(p.deck.length&&field(p).some(x=>d(x).nameJa==='水篠 旬'))actions.push({type:'ability',uid:c.uid,mode:'attach'});
@@ -417,7 +452,10 @@ export function soloTrainingDispatch(original,action){
   onEnter(s,c);
   }else if(action.type==='ability'){
   const c=own(s,action.uid);
-  if(c.cardId==='SLG-1-035'){
+  if(c.cardId==='SLG-1-050'){
+   c.ready=false;retire(s,s.active,c);
+   s.pending={kind:'sungRecovery',p:s.active,options:p.outside.filter(x=>d(x).type==='character'&&d(x).nameJa==='水篠 旬').map(x=>x.uid)};
+  }else if(c.cardId==='SLG-1-035'){
    c.ready=false;
    const amount=field(p).filter(x=>d(x).traits?.includes('影之軍團')).length>=5?1000:500;
    for(const target of field(p).filter(shadow))target.buffs.push({turn:s.turn,bp:amount});
@@ -455,6 +493,9 @@ export function soloTrainingBotAction(s){
   if(s.pending.kind==='kaiserPick'||s.pending.kind==='kibaPick')return legal.find(a=>a.uid!=null)||legal[0];
   if(s.pending.kind==='kaiserMode'||s.pending.kind==='kibaMode')return legal[0];
   if(s.pending.kind==='belDiscard')return legal.find(a=>a.uid!=null)||legal[0];
+  if(s.pending.kind==='entryDrawMode')return legal[0];
+  if(s.pending.kind==='entryBounce')return legal[0];
+  if(s.pending.kind==='entryRecover'||s.pending.kind==='sungRecovery')return legal.find(a=>a.uid!=null)||legal[0];
   if(s.pending.kind==='dailyUnder'||s.pending.kind==='dailyRecover')return legal.find(a=>a.uid!=null)||legal[0];
   if(s.pending.kind==='raidTrigger')return legal.find(a=>a.uid!=null)||legal[0];
   if(s.pending.kind==='raid058Discard')return legal.find(a=>a.uid!=null)||legal[0];
