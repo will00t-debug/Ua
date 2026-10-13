@@ -5,9 +5,9 @@ import {SOLO_LEVELING_CARDS} from './solo-leveling.mjs';
 import {normalizeSoloDeck} from './solo-decks.mjs';
 const DB=Object.fromEntries(SOLO_LEVELING_CARDS.map(c=>[c.id,c]));
 export const SOLO_MATCH_SUPPORTED=Object.freeze([
- 'SLG-1-001','SLG-1-002','SLG-1-004','SLG-1-005','SLG-1-017','SLG-1-012','SLG-1-025','SLG-1-026','SLG-1-006','SLG-1-007','SLG-1-009','SLG-1-010','SLG-1-013','SLG-1-014','SLG-1-015','SLG-1-016','SLG-1-027','SLG-1-034','SLG-1-036','SLG-1-037','SLG-1-038','SLG-1-039','SLG-1-040','SLG-1-029','SLG-1-030','SLG-1-031','SLG-1-032','SLG-1-033','SLG-1-035',
+ 'SLG-1-001','SLG-1-002','SLG-1-004','SLG-1-005','SLG-1-017','SLG-1-012','SLG-1-025','SLG-1-026','SLG-1-006','SLG-1-007','SLG-1-009','SLG-1-010','SLG-1-013','SLG-1-014','SLG-1-015','SLG-1-016','SLG-1-023','SLG-1-024','SLG-1-027','SLG-1-028','SLG-1-034','SLG-1-036','SLG-1-037','SLG-1-038','SLG-1-039','SLG-1-040','SLG-1-029','SLG-1-030','SLG-1-031','SLG-1-032','SLG-1-033','SLG-1-035',
  'SLG-1-041','SLG-1-042','SLG-1-050','SLG-1-053','SLG-1-054','SLG-1-068','SLG-1-070','SLG-1-073','SLG-1-043','SLG-1-045','SLG-1-052','SLG-1-055','SLG-1-056',
- 'SLG-1-062','SLG-1-065','SLG-1-066','SLG-1-069','SLG-1-067','SLG-1-071','SLG-1-072','SLG-1-074','SLG-1-075','SLG-1-076','SLG-1-078','SLG-1-079','SLG-1-080','SLG-1-058'
+ 'SLG-1-062','SLG-1-065','SLG-1-066','SLG-1-069','SLG-1-057','SLG-1-067','SLG-1-071','SLG-1-072','SLG-1-074','SLG-1-075','SLG-1-076','SLG-1-078','SLG-1-079','SLG-1-080','SLG-1-058'
 ]);
 const SUPPORTED=new Set(SOLO_MATCH_SUPPORTED);
 const greenDeckIds=['041','042','043','045','075','055','056','062','065','066','067','072','074'].map(x=>'SLG-1-'+x);
@@ -112,6 +112,15 @@ function retire(s,p,c){
   }
  }
  const returnOnRetire=printed.traits?.includes('DFN')&&c.grants?.some(x=>x.kind==='returnOnRetire'&&x.turn===s.turn);
+ if(c.cardId==='SLG-1-024'){
+  const other=1-p,choices=field(s.players[other]).filter(x=>d(x).type==='character').map(x=>x.uid);
+  if(choices.length){
+   s.pendingStack??=[];
+   const q={kind:'taiseiGrant',p:other,options:choices};
+   if(s.pending)s.pendingStack.push(q);
+   else s.pending=q;
+  }
+ }
  arr[c.slot]=null;
  const layers=[c,...(c.stack||[])];for(const layer of layers){
   for(const under of layer.under||[])s.players[p].outside.push({...under,faceDown:false});
@@ -191,7 +200,7 @@ function beginBlock(s){
  if(!a)throw Error('attacker not on front line');
  const defenders=s.players[1-s.active].front.filter(x=>x?.ready);
  const attacker=s.combat&&byUid(s.players[s.active].front,s.combat.attacker);
- const legal=defenders.filter(c=>!(attacker?.grantBlockLimitTurn===s.turn&&soloMatchBp(s,c)>=4000));
+ const legal=defenders.filter(c=>!((attacker?.grantBlockLimitTurn===s.turn||attacker?.cardId==='SLG-1-024'||attacker?.unblockableHighTurn===s.turn)&&soloMatchBp(s,c)>=4000));
  if(legal.length)s.pending={kind:'block',p:1-s.active,choices:legal.map(x=>x.uid)};
  else combat(s,null);
 }
@@ -207,6 +216,10 @@ function combat(s,blockUid){
   if(ab>=bb)retire(s,1-s.active,b);
   if(bb>=ab)retire(s,s.active,a);
   if(ab>=bb&&impact(s,a)&&!impactImmune(b))hurt(s,1-s.active);
+  if(b.cardId==='SLG-1-023'&&ab<bb&&b.firstBlockTurn!==s.turn){
+   const survives=byUid(opp.front,b.uid);
+   if(survives){survives.firstBlockTurn=s.turn;readySolo(survives);}
+  }
  }
  s.combat=null;
 }
@@ -307,6 +320,21 @@ function choose(s,action){
   const p=s.players[q.p],i=p.hand.findIndex(c=>c.uid===action.uid);
   if(i<0)throw Error('invalid required hand discard');
   p.outside.push(p.hand.splice(i,1)[0]);p.discardByOwnEffectTurn=s.turn;s.pending=null;
+ }else if(q.kind==='taiseiGrant'){
+  const p=s.players[q.p],target=action.uid==null?null:field(p).find(c=>c.uid===action.uid);
+  if(action.uid!=null&&(!target||!q.options.includes(target.uid)))throw Error('illegal Taisei target');
+  if(target)target.unblockableHighTurn=s.turn;
+  s.pending=null;
+ }else if(q.kind==='igrisDeploy'){
+  const p=s.players[q.p];
+  if(action.uid==null){s.pending=null;}
+  else{
+   const area=['hand','outside'].find(zone=>p[zone].some(c=>c.uid===action.uid&&c.cardId==='SLG-1-030'));
+   if(!area||!['front','energy'].includes(action.line)||!Number.isInteger(action.slot)||action.slot<0||action.slot>3||p[action.line][action.slot])throw Error('illegal Igris summon position');
+   const i=p[area].findIndex(c=>c.uid===action.uid),[soldier]=p[area].splice(i,1);
+   position(soldier,q.p,action.line,action.slot);soldier.ready=false;p[action.line][action.slot]=soldier;
+   s.pending=null;onEnter(s,soldier);
+  }
  }else if(q.kind==='castleCost'){
   const p=s.players[q.p],i=p.hand.findIndex(c=>c.uid===action.uid);
   if(i<0)throw Error('illegal Demon Castle discard');
@@ -498,7 +526,11 @@ function onEnter(s,c){
   const eligible=top.filter(x=>d(x).traits?.includes('影之軍團')||d(x).nameJa==='水篠 旬');
   if(top.length)s.pending={kind:'soldierTop',p:c.owner,source:c.uid,topUids:top.map(x=>x.uid),eligible:eligible.map(x=>x.uid)};
  }
- if(['SLG-1-034','SLG-1-035','SLG-1-073'].includes(c.cardId))c.ready=true;
+ if(['SLG-1-028','SLG-1-034','SLG-1-035','SLG-1-073'].includes(c.cardId))c.ready=true;
+ if(c.cardId==='SLG-1-028'&&[...p.hand,...p.outside].some(x=>x.cardId==='SLG-1-030'))s.pending={kind:'igrisDeploy',p:c.owner};
+ if(c.cardId==='SLG-1-057'&&!groupUsed(s,c.owner,'shizuku057Entry')&&field(p).filter(x=>d(x).traits?.includes('第四次架南島Raid')).length>=5){
+  markGroup(s,c.owner,'shizuku057Entry');readySolo(c);c.freezeSelfOnAttackTurn=s.turn;
+ }
  if(c.cardId==='SLG-1-073'&&!groupUsed(s,c.owner,'ryuuEntry')){
   markGroup(s,c.owner,'ryuuEntry');s.pending={kind:'ryuuBuff',p:c.owner,source:c.uid};
  }
@@ -531,6 +563,11 @@ export function soloTrainingLegalActions(s){
   if(q.kind==='entry002Mode')return [{type:'choose',mode:'drawDiscard'},{type:'choose',mode:'buff'}];
   if(q.kind==='entry002Buff')return [{type:'choose',uid:null},...field(s.players[q.p]).filter(x=>x.uid!==q.source&&d(x).type==='character').map(x=>({type:'choose',uid:x.uid}))];
   if(q.kind==='entry002Discard'||q.kind==='entry004Discard')return s.players[q.p].hand.map(c=>({type:'choose',uid:c.uid}));
+  if(q.kind==='taiseiGrant')return [{type:'choose',uid:null},...q.options.map(uid=>({type:'choose',uid}))];
+  if(q.kind==='igrisDeploy'){
+   const p=s.players[q.p],candidates=[...p.hand,...p.outside].filter(c=>c.cardId==='SLG-1-030');
+   return [{type:'choose',uid:null},...candidates.flatMap(c=>['front','energy'].flatMap(line=>p[line].flatMap((slotCard,slot)=>slotCard?[]:[{type:'choose',uid:c.uid,line,slot}])))];
+  }
   if(q.kind==='castleCost')return s.players[q.p].hand.map(c=>({type:'choose',uid:c.uid}));
   if(q.kind==='castlePotion')return [{type:'choose',uid:null},...s.players[q.p].outside.filter(c=>c.cardId==='SLG-1-037'&&s.players[q.p].ap>=1&&soloEnergy(s,q.p)>=4).map(c=>({type:'choose',uid:c.uid}))];
   if(q.kind==='castleRecover')return [{type:'choose',uid:null},...q.options.map(uid=>({type:'choose',uid}))];
@@ -710,6 +747,7 @@ export function soloTrainingDispatch(original,action){
   else {c.ready=false;c.boostTurn=s.turn;c.usedTurn=s.turn;c.retireAtMainEnd=true;}
  }else if(action.type==='attack'){
   const a=byUid(p.front,action.uid);a.ready=false;
+  if(a.freezeSelfOnAttackTurn===s.turn)a.skipActive=(a.skipActive||0)+1;
   s.combat={attacker:a.uid};
   if(a.cardId==='SLG-1-058'&&a.raid058Used!==s.turn&&p.hand.length)
    s.pending={kind:'raid058Discard',p:s.active,source:a.uid};
@@ -736,6 +774,8 @@ export function soloTrainingBotAction(s){
   if(s.pending.kind==='kaiserMode'||s.pending.kind==='kibaMode')return legal[0];
   if(s.pending.kind==='belDiscard')return legal.find(a=>a.uid!=null)||legal[0];
   if(s.pending.kind==='attackDraw')return legal[legal.length-1];
+  if(s.pending.kind==='igrisDeploy')return legal.find(a=>a.uid!=null)||legal[0];
+  if(s.pending.kind==='taiseiGrant')return legal.find(a=>a.uid!=null)||legal[0];
   if(s.pending.kind==='castleCost'||s.pending.kind==='castlePotion'||s.pending.kind==='castleRecover')
    return legal.find(a=>a.uid!=null)||legal[0];
   if(s.pending.kind==='shadowSummonMode')return legal[0];
