@@ -7,24 +7,24 @@
     "output": 1
   },
   "training": {
-    "requestedGames": 200,
-    "completed": 200,
+    "requestedGames": 700,
+    "completed": 700,
     "unfinished": 0,
     "failures": 0,
-    "rankingPairs": 6990,
+    "rankingPairs": 24048,
     "alternativesPerDecision": 3,
     "epochs": 5,
-    "finalLoss": 0.39710322600952447,
-    "elapsedMs": 543862
+    "finalLoss": 0.34736672237734767,
+    "elapsedMs": 1450338
   },
   "evaluation": {
     "games": 72,
-    "wins": 35,
-    "losses": 37,
+    "wins": 33,
+    "losses": 39,
     "unfinished": 0,
     "errors": 0,
-    "moves": 14264,
-    "winRate": 0.4861111111111111,
+    "moves": 14010,
+    "winRate": 0.4583333333333333,
     "byMatchup": {
       "green-kenpachi-unohana__green-kenpachi-unohana": {
         "games": 8,
@@ -35,15 +35,15 @@
       },
       "green-kenpachi-unohana__purple-renji-rukia": {
         "games": 8,
-        "wins": 3,
-        "losses": 5,
+        "wins": 2,
+        "losses": 6,
         "unfinished": 0,
         "errors": 0
       },
       "green-kenpachi-unohana__blue-ichigo-zangetsu": {
         "games": 8,
-        "wins": 4,
-        "losses": 4,
+        "wins": 3,
+        "losses": 5,
         "unfinished": 0,
         "errors": 0
       },
@@ -56,22 +56,22 @@
       },
       "purple-renji-rukia__purple-renji-rukia": {
         "games": 8,
-        "wins": 4,
-        "losses": 4,
-        "unfinished": 0,
-        "errors": 0
-      },
-      "purple-renji-rukia__blue-ichigo-zangetsu": {
-        "games": 8,
         "wins": 3,
         "losses": 5,
         "unfinished": 0,
         "errors": 0
       },
-      "blue-ichigo-zangetsu__green-kenpachi-unohana": {
+      "purple-renji-rukia__blue-ichigo-zangetsu": {
         "games": 8,
         "wins": 4,
         "losses": 4,
+        "unfinished": 0,
+        "errors": 0
+      },
+      "blue-ichigo-zangetsu__green-kenpachi-unohana": {
+        "games": 8,
+        "wins": 5,
+        "losses": 3,
         "unfinished": 0,
         "errors": 0
       },
@@ -84,13 +84,13 @@
       },
       "blue-ichigo-zangetsu__blue-ichigo-zangetsu": {
         "games": 8,
-        "wins": 4,
-        "losses": 4,
+        "wins": 3,
+        "losses": 5,
         "unfinished": 0,
         "errors": 0
       }
     },
-    "elapsedMs": 186935,
+    "elapsedMs": 191181,
     "seedBase": 1027000,
     "opponent": "hard v2",
     "isHeldOut": true,
