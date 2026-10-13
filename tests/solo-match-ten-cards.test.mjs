@@ -6,6 +6,7 @@ const custom=(color,id)=>{const base=color==='purple'?SOLO_SHADOW_TRAINING_PRESE
  const replace=color==='purple'?'SLG-1-001':'SLG-1-062';return {...base,[replace]:0,[id]:4};
 };
 const make=(color,id)=>{const deck=custom(color,id);const s=newSoloTrainingMatch({decks:[deck,deck],seed:121,first:0});s.phase='main';s.players[0].ap=3;s.players[0].maxAp=3;return s;};
+const withPotion=id=>{const deck={...custom('purple',id),'SLG-1-009':0,'SLG-1-037':4};const s=newSoloTrainingMatch({decks:[deck,deck],seed:121,first:0});s.phase='main';s.players[0].ap=3;s.players[0].maxAp=3;return s;};
 function pull(p,id){for(const z of ['hand','deck','life']){const i=p[z].findIndex(c=>c.cardId===id);if(i>=0)return p[z].splice(i,1)[0];}throw Error('missing in deck '+id);}
 function place(s,id,line,slot,owner=0,ready=true){const c=pull(s.players[owner],id);Object.assign(c,{owner,line,slot,ready});s.players[owner][line][slot]=c;return c;}
 function toHand(s,id){const p=s.players[0],c=pull(p,id);p.hand.push(c);return c;}
@@ -32,7 +33,7 @@ test('SLG-1-008 entry search four and recovered from outside draws then requires
  assert.throws(()=>soloTrainingDispatch(s,{type:'choose',picks:['bad'],order:[]}),/illegal SOLO action/);
  s=select(s,choice(s,x=>x.picks.length===0));assert.equal(s.pending,null);
  assertSoloTrainingMatch(s);
- let t=make('purple','SLG-1-008');energy(t,'purple',4);
+ let t=withPotion('SLG-1-008');energy(t,'purple',4);
  const e=pull(t.players[0],'SLG-1-008');t.players[0].outside.push(e);
  t=event(t,'SLG-1-037');t=select(t,{type:'choose',uid:e.uid});
  assert.equal(t.pending.kind,'slgDiscard');t=select(t,soloTrainingLegalActions(t)[0]);assert.equal(t.pending,null);
@@ -40,7 +41,7 @@ test('SLG-1-008 entry search four and recovered from outside draws then requires
  assertSoloTrainingMatch(t);
 });
 test('SLG-1-011 optional free REST entry after own recovery then mill top, blocker restriction requires 10 outside',()=>{
- let s=make('purple','SLG-1-011');energy(s,'purple',4);
+ let s=withPotion('SLG-1-011');energy(s,'purple',4);
  const card=pull(s.players[0],'SLG-1-011');s.players[0].outside.push(card);
  s=event(s,'SLG-1-037');s=select(s,{type:'choose',uid:card.uid});
  assert.equal(s.pending.kind,'slgRecoveredDeploy');const choiceAction=choice(s,x=>x.uid===card.uid&&x.line==='front');
