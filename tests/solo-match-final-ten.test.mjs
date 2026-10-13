@@ -27,7 +27,8 @@ test('020 can draw then pay a chosen hand card and recover a just-discarded BP30
  let s=fixtures('purple',['SLG-1-020']);purplePower(s);
  const base=onField(s,'SLG-1-015','front',0);
  let r=raid(s,'SLG-1-020',base);s=r.s;assert.equal(s.pending.kind,'slg020EntryDiscard');
- const handCandidate=s.players[0].hand.find(x=>x.cardId==='SLG-1-030');
+ const candidate=drawCard(s.players[0],'SLG-1-030');s.players[0].hand.push(candidate);
+ const handCandidate=s.players[0].hand.find(x=>x.uid===candidate.uid);
  assert.ok(handCandidate);s=dispatch(s,{type:'choose',uid:handCandidate.uid});
  assert.equal(s.pending.kind,'slg020Recover');
  assert.ok(soloTrainingLegalActions(s).some(x=>x.uid===handCandidate.uid));
@@ -110,7 +111,7 @@ test('051 can pay additional AP, discard eligible 047 then Raid that exact card 
  assertSoloTrainingMatch(s);
 });
 test('060 energy line may swap with frozen front at end of friendly character attack (Q2059)',()=>{
- let s=fixtures('green',['SLG-1-060']);greenPower(s);
+ let s=fixtures('green',['SLG-1-060']);
  const machida=onField(s,'SLG-1-060','energy',0);
  const attacker=onField(s,'SLG-1-045','front',0);attacker.skipActive=1;
  s.phase='attack';s=dispatch(s,{type:'attack',uid:attacker.uid});
@@ -122,7 +123,7 @@ test('060 energy line may swap with frozen front at end of friendly character at
 });
 test('061 entry targets a different island ally and end attack may discard to ACTIVE an island ally',()=>{
  let s=fixtures('green',['SLG-1-061']);greenPower(s);
- const ally=onField(s,'SLG-1-055','front',0,false),minobu=prepare(s,'SLG-1-061');
+ const ally=onField(s,'SLG-1-055','front',0,0,false),minobu=prepare(s,'SLG-1-061');
  const act=legal(s,a=>a.type==='play'&&a.uid===minobu.uid);
  s=dispatch(s,act);assert.equal(s.pending.kind,'slg061Enter');
  s=dispatch(s,{type:'choose',uid:ally.uid});
@@ -135,9 +136,9 @@ test('061 entry targets a different island ally and end attack may discard to AC
  assertSoloTrainingMatch(s);
 });
 test('064 Raid when five island characters present debuffs enemies BP>=1500 and attacking can choose destruction and skip next ACTIVE',()=>{
- let s=fixtures('green',['SLG-1-064']);const base=onField(s,'SLG-1-063','front',0);
+ let s=fixtures('green',['SLG-1-064','SLG-1-063']);const base=onField(s,'SLG-1-063','front',0);
  for(let i=1;i<4;i++)onField(s,'SLG-1-055','front',i);
- for(let i=0;i<4;i++)onField(s,'SLG-1-041','energy',i);
+ onField(s,'SLG-1-055','energy',0);for(let i=1;i<4;i++)onField(s,'SLG-1-041','energy',i);
  const enemy=onField(s,'SLG-1-041','front',0,1);
  const raidCard=prepare(s,'SLG-1-064');
  const action=legal(s,a=>a.type==='raid'&&a.uid===raidCard.uid&&a.target===base.uid);
