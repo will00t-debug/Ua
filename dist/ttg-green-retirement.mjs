@@ -40,3 +40,15 @@ export function resolveGreenRetirementChoice(s,action){
  result.pending=left.length?{...q,remaining:left}:null;
  return withTtgDerivedEnergy(result,q.player);
 }
+
+// A sidelined RAID pile loses its in-field pile relationship: put each
+// printed physical card in public OUTSIDE, then optional 034 captures only
+// the one character that was actually sidelined.
+export function flattenSidelinedPile(top){
+ const walk=c=>[
+  {...c,stack:[],under:[],faceDown:false},
+  ...(c.stack||[]).flatMap(walk),
+  ...(c.under||[]).flatMap(walk)
+ ];
+ return walk(top);
+}
