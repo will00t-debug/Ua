@@ -5,9 +5,9 @@ import {SOLO_LEVELING_CARDS} from './solo-leveling.mjs';
 import {normalizeSoloDeck} from './solo-decks.mjs';
 const DB=Object.fromEntries(SOLO_LEVELING_CARDS.map(c=>[c.id,c]));
 export const SOLO_MATCH_SUPPORTED=Object.freeze([
- 'SLG-1-001','SLG-1-005','SLG-1-012','SLG-1-025','SLG-1-026','SLG-1-006','SLG-1-007','SLG-1-009','SLG-1-010','SLG-1-013','SLG-1-014','SLG-1-015','SLG-1-016','SLG-1-027','SLG-1-029','SLG-1-030','SLG-1-031','SLG-1-032','SLG-1-033','SLG-1-035',
+ 'SLG-1-001','SLG-1-005','SLG-1-012','SLG-1-025','SLG-1-026','SLG-1-006','SLG-1-007','SLG-1-009','SLG-1-010','SLG-1-013','SLG-1-014','SLG-1-015','SLG-1-016','SLG-1-027','SLG-1-036','SLG-1-037','SLG-1-038','SLG-1-040','SLG-1-029','SLG-1-030','SLG-1-031','SLG-1-032','SLG-1-033','SLG-1-035',
  'SLG-1-041','SLG-1-042','SLG-1-050','SLG-1-053','SLG-1-068','SLG-1-070','SLG-1-073','SLG-1-043','SLG-1-045','SLG-1-052','SLG-1-055','SLG-1-056',
- 'SLG-1-062','SLG-1-065','SLG-1-066','SLG-1-069','SLG-1-067','SLG-1-072','SLG-1-074','SLG-1-075','SLG-1-058'
+ 'SLG-1-062','SLG-1-065','SLG-1-066','SLG-1-069','SLG-1-067','SLG-1-071','SLG-1-072','SLG-1-074','SLG-1-075','SLG-1-076','SLG-1-078','SLG-1-079','SLG-1-080','SLG-1-058'
 ]);
 const SUPPORTED=new Set(SOLO_MATCH_SUPPORTED);
 const greenDeckIds=['041','042','043','045','075','055','056','062','065','066','067','072','074'].map(x=>'SLG-1-'+x);
@@ -155,6 +155,12 @@ function continueAttackEffects(s){
  const p=s.active,a=byUid(s.players[p].front,s.combat?.attacker);
  if(!a)throw Error('missing attacking character');
  s.combat.windows??={};
+ const grantCount=(a.grants||[]).filter(g=>g.kind==='attackDraw'&&g.turn===s.turn).length;
+ s.combat.windows.attackDrawIndex??=0;
+ if(s.combat.windows.attackDrawIndex<grantCount){
+  s.pending={kind:'attackDraw',p,source:a.uid};
+  s.combat.windows.attackDrawIndex++;return;
+ }
  if(!s.combat.windows.kaiser){
   s.combat.windows.kaiser=true;
   if(shadow(a)&&d(a).bp<=2000){
@@ -279,6 +285,43 @@ function choose(s,action){
   const p=s.players[q.p],max=Math.min(2,p.maxAp-p.ap);
   if(!Number.isInteger(action.count)||action.count<0||action.count>max)throw Error('illegal Ryuu AP activation');
   p.ap+=action.count;s.pending=null;
+ }else if(q.kind==='attackDraw'){
+  const p=s.players[q.p];
+  if(action.draw)draw(s,p);
+  s.pending=null;if(s.status==='playing')continueAttackEffects(s);
+ }else if(q.kind==='eventDiscard'){
+  const p=s.players[q.p],i=p.hand.findIndex(c=>c.uid===action.uid);
+  if(i<0)throw Error('invalid event discard');
+  p.outside.push(p.hand.splice(i,1)[0]);q.left--;
+  if(q.left===0||!p.hand.length)s.pending=null;
+ }else if(q.kind==='eventRecover'){
+  const p=s.players[q.p];
+  if(action.uid!=null){
+   const i=p.outside.findIndex(c=>c.uid===action.uid);
+   if(i<0||!q.options.includes(action.uid))throw Error('illegal event recovery');
+   p.hand.push(p.outside.splice(i,1)[0]);
+  }
+  draw(s,p);s.pending=null;
+ }else if(q.kind==='eventRestoreAp'){
+  const p=s.players[q.p],max=Math.min(2,p.maxAp-p.ap);
+  if(!Number.isInteger(action.count)||action.count<0||action.count>max)throw Error('invalid event AP restore');
+  p.ap+=action.count;s.pending=null;
+ }else if(q.kind==='eventDestroy'){
+  const target=s.players[1-q.p].front.find(x=>x?.uid===action.uid);
+  if(!target||!q.options.includes(target.uid)||(target.extraTargetAp||0)>s.players[q.p].ap)throw Error('illegal event target');
+  s.players[q.p].ap-=target.extraTargetAp||0;
+  retire(s,1-q.p,target);s.pending=null;
+ }else if(q.kind==='eventDance'){
+  const p=s.players[q.p],c=action.uid==null?null:field(p).find(x=>x.uid===action.uid);
+  if(action.uid!=null&&(!c||d(c).nameJa!=='向坂 雫'))throw Error('舞姫 target must be Shizuku');
+  if(c){c.grants??=[];c.grants.push({kind:'attackDraw',turn:s.turn});}
+  s.pending=null;
+ }else if(q.kind==='marieBuff'){
+  const p=s.players[q.p],target=field(p).find(c=>c.uid===action.uid);
+  const marie=field(p).find(c=>c.uid===q.source);
+  if(!target||!marie||target.uid===marie.uid)throw Error('Marie needs other friendly character');
+  target.buffs.push({turn:s.turn,bp:1000});
+  returnSoloToHand(s,q.p,marie);s.pending=null;
  }else if(q.kind==='entryDrawMode'){
   const p=s.players[q.p];
   if(action.mode==='draw2'){draw(s,p,2);s.pending=null;}
@@ -409,6 +452,13 @@ export function soloTrainingLegalActions(s){
   if(q.kind==='kaiserPick'||q.kind==='kibaPick')return [{type:'choose',uid:null},...q.options.map(uid=>({type:'choose',uid}))];
   if(q.kind==='kaiserMode')return ['block','untargetable'].filter(mode=>!groupUsed(s,q.p,'kaiser:'+mode)).map(mode=>({type:'choose',mode}));
   if(q.kind==='kibaMode')return ['buff','draw'].filter(mode=>!groupUsed(s,q.p,'kiba:'+mode)).map(mode=>({type:'choose',mode}));
+  if(q.kind==='attackDraw')return [{type:'choose',draw:false},{type:'choose',draw:true}];
+  if(q.kind==='eventDiscard')return s.players[q.p].hand.map(c=>({type:'choose',uid:c.uid}));
+  if(q.kind==='eventRecover'||q.kind==='eventDance')return [{type:'choose',uid:null},...q.options.map(uid=>({type:'choose',uid}))];
+  if(q.kind==='eventRestoreAp'){
+   const p=s.players[q.p],max=Math.min(2,p.maxAp-p.ap);return Array.from({length:max+1},(_,count)=>({type:'choose',count}));
+  }
+  if(q.kind==='eventDestroy'||q.kind==='marieBuff')return q.options.map(uid=>({type:'choose',uid}));
   if(q.kind==='ryuuBuff')return [{type:'choose',uid:null},...field(s.players[q.p]).map(c=>({type:'choose',uid:c.uid}))];
   if(q.kind==='ryuuAp'){
    const p=s.players[q.p],max=Math.min(2,p.maxAp-p.ap);return Array.from({length:max+1},(_,count)=>({type:'choose',count}));
@@ -455,6 +505,13 @@ export function soloTrainingLegalActions(s){
  }else if(s.phase==='main'){
   for(const c of p.hand){
    const data=d(c);if(!SUPPORTED.has(c.cardId)||p.ap<data.ap||soloEnergy(s)<data.energy)continue;
+   if(data.type==='event'){
+    if(['SLG-1-040','SLG-1-076'].includes(c.cardId)){
+     const limit=field(p).some(x=>d(x).nameJa==='水篠 旬')?5000:3000;
+     if(!s.players[1-s.active].front.some(x=>x&&soloMatchBp(s,x)<=limit&&(x.extraTargetAp||0)<=p.ap-data.ap))continue;
+    }
+    actions.push({type:'playEvent',uid:c.uid});continue;
+   }
    for(const line of data.type==='field'||c.cardId==='SLG-1-014'?['energy']:['front','energy']){
     const slots=p[line];for(let slot=0;slot<4;slot++)if(!slots[slot])actions.push({type:'play',uid:c.uid,line,slot});
    }
@@ -466,6 +523,7 @@ export function soloTrainingLegalActions(s){
    }
   }
   for(const c of field(p)){
+   if(c.cardId==='SLG-1-071'&&c.ready&&c.usedTurn!==s.turn&&field(p).some(x=>x.uid!==c.uid&&d(x).type==='character'))actions.push({type:'ability',uid:c.uid,mode:'marie'});
    if(c.cardId==='SLG-1-050'&&c.ready)actions.push({type:'ability',uid:c.uid,mode:'retireRecover'});
    if(c.cardId==='SLG-1-035'&&c.ready)actions.push({type:'ability',uid:c.uid,mode:'boost'});
    if(c.cardId==='SLG-1-075'&&c.ready){
@@ -504,6 +562,23 @@ export function soloTrainingDispatch(original,action){
  else if(action.type==='move'){
   const index=p.energy.findIndex(c=>c?.uid===action.uid);
   const c=p.energy[index];p.energy[index]=null;p.front[action.slot]=c;c.line='front';c.slot=action.slot;s.moved=true;
+ }else if(action.type==='playEvent'){
+  const i=p.hand.findIndex(c=>c.uid===action.uid),c=p.hand.splice(i,1)[0],data=d(c);
+  p.ap-=data.ap;p.outside.push(c);
+  if(c.cardId==='SLG-1-036'){
+   draw(s,p,3);
+   if(s.status==='playing'&&p.hand.length)s.pending={kind:'eventDiscard',p:s.active,left:Math.min(2,p.hand.length)};
+  }else if(c.cardId==='SLG-1-037'){
+   s.pending={kind:'eventRecover',p:s.active,options:p.outside.filter(x=>d(x).type==='character'&&d(x).bp!==null&&d(x).bp<=4000).map(x=>x.uid)};
+  }else if(['SLG-1-038','SLG-1-078','SLG-1-079'].includes(c.cardId)){
+   s.pending={kind:'eventRestoreAp',p:s.active};
+  }else if(['SLG-1-040','SLG-1-076'].includes(c.cardId)){
+   const limit=field(p).some(x=>d(x).nameJa==='水篠 旬')?5000:3000;
+   s.pending={kind:'eventDestroy',p:s.active,options:s.players[1-s.active].front.filter(x=>x&&soloMatchBp(s,x)<=limit&&(x.extraTargetAp||0)<=p.ap).map(x=>x.uid)};
+  }else if(c.cardId==='SLG-1-080'){
+   draw(s,p);
+   if(s.status==='playing')s.pending={kind:'eventDance',p:s.active,options:field(p).filter(x=>d(x).nameJa==='向坂 雫').map(x=>x.uid)};
+  }
  }else if(action.type==='play'){
   const i=p.hand.findIndex(c=>c.uid===action.uid),c=p.hand.splice(i,1)[0],data=d(c);
   p.ap-=data.ap;position(c,s.active,action.line,action.slot);
@@ -519,7 +594,10 @@ export function soloTrainingDispatch(original,action){
   onEnter(s,c);
   }else if(action.type==='ability'){
   const c=own(s,action.uid);
-  if(c.cardId==='SLG-1-050'){
+  if(c.cardId==='SLG-1-071'){
+   c.ready=false;c.usedTurn=s.turn;
+   s.pending={kind:'marieBuff',p:s.active,source:c.uid,options:field(p).filter(x=>x.uid!==c.uid&&d(x).type==='character').map(x=>x.uid)};
+  }else if(c.cardId==='SLG-1-050'){
    c.ready=false;retire(s,s.active,c);
    s.pending={kind:'sungRecovery',p:s.active,options:p.outside.filter(x=>d(x).type==='character'&&d(x).nameJa==='水篠 旬').map(x=>x.uid)};
   }else if(c.cardId==='SLG-1-035'){
@@ -560,6 +638,10 @@ export function soloTrainingBotAction(s){
   if(s.pending.kind==='kaiserPick'||s.pending.kind==='kibaPick')return legal.find(a=>a.uid!=null)||legal[0];
   if(s.pending.kind==='kaiserMode'||s.pending.kind==='kibaMode')return legal[0];
   if(s.pending.kind==='belDiscard')return legal.find(a=>a.uid!=null)||legal[0];
+  if(s.pending.kind==='attackDraw')return legal[legal.length-1];
+  if(s.pending.kind==='eventRestoreAp')return legal[legal.length-1];
+  if(s.pending.kind==='eventDestroy'||s.pending.kind==='eventDiscard'||s.pending.kind==='marieBuff')return legal[0];
+  if(s.pending.kind==='eventRecover'||s.pending.kind==='eventDance')return legal.find(a=>a.uid!=null)||legal[0];
   if(s.pending.kind==='ryuuAp')return legal[legal.length-1];
   if(s.pending.kind==='ryuuBuff')return legal.find(a=>a.uid!=null)||legal[0];
   if(s.pending.kind==='colorTrigger'||s.pending.kind==='specialTrigger')return legal[0];
