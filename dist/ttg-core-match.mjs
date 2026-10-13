@@ -14,6 +14,7 @@ import {beginGreen034Sidelined} from './ttg-green-fields.mjs';
 import {flattenSidelinedPile} from './ttg-green-retirement.mjs';
 import {legalHighRaidAttackEffects,resolveHighRaidAttackEffect,greenHighRaidCombatValue,expireGreen031AtOwnStart} from './ttg-green-high-raid.mjs';
 import {resolveGreenOwnStart} from './ttg-green-main.mjs';
+import {ttgRedStarterBpBonus,ttgRedStarterImpactNull,beginTtgRed044Unblocked,legalTtgRed044Search,resolveTtgRed044Search} from './ttg-red-first-three.mjs';
 import {beginTtgLifeTrigger,legalTtgLifeChoices,resolveTtgLifeChoice,finalizeTtgLifeOutcome} from './ttg-green-life.mjs';
 
 // Only IDs with on-entry, passives, attacks and life triggers implemented below
@@ -24,7 +25,7 @@ export const TTG_CORE_SMOKE_IDS=Object.freeze([
  'TTG-1-019','TTG-1-020','TTG-1-021','TTG-1-022','TTG-1-023','TTG-1-024','TTG-1-025','TTG-1-026','TTG-1-027','TTG-1-028','TTG-1-029','TTG-1-030','TTG-1-031','TTG-1-032','TTG-1-033','TTG-1-034',
  'TTG-1-035','TTG-1-036','TTG-1-037','TTG-1-038','TTG-1-039',
  'TTG-1-040','TTG-1-041',
- 'TTG-1-042','TTG-1-043','TTG-1-047','TTG-1-048',
+ 'TTG-1-042','TTG-1-043','TTG-1-044','TTG-1-047','TTG-1-048',
  'TTG-1-063','TTG-1-064','TTG-1-065','TTG-1-066'
 ]);
 const allowed=new Set(TTG_CORE_SMOKE_IDS);
@@ -108,7 +109,7 @@ export function assertTtgCoreState(s){
  }
  return true;
 }
-const bp=(s,p,c)=>greenTtgCurrentBp(s,p,c);
+const bp=(s,p,c)=>greenTtgCurrentBp(s,p,c)+ttgRedStarterBpBonus(s,p,c);
 // Preserve a stable, user-selectable decision for each legal target; the full
 // reducer validates custom bottom-order permutations if the UI supplies them.
 function greenEntryChoices(s){
@@ -162,6 +163,7 @@ export function legalTtgCoreActions(s){
  if(s.status!=='playing')return [];
  const p=s.active,pl=s.players[p];
  if(s.pendingTtgLife)return legalTtgLifeChoices(s);
+ if(s.pending?.kind==='ttgRed044Search')return legalTtgRed044Search(s);
  if(s.pending?.kind==='ttgGreenEntry')return greenEntryChoices(s);
  if(['ttgGreen028Entry','ttgGreen029Entry','green030Sidelined','green012Search','green012Discard','greenHighRaidQueue','green034Sidelined','greenRetireOrder'].includes(s.pending?.kind))
   return legalTtgRuleActions(s,s.pending.player);
@@ -239,6 +241,11 @@ export function dispatchTtgCoreAction(source,action){
  if(!legalTtgCoreActions(s).some(x=>sameAction(x,action)))throw new Error('Illegal TTG core action '+JSON.stringify({action,phase:s.phase,pending:s.pending,turn:s.turn,legal:legalTtgCoreActions(s).slice(0,12)}));
  if(s.pendingTtgLife){
   Object.assign(s,resolveTtgLifeChoice(s,action));
+ }else if(s.pending?.kind==='ttgRed044Search'){
+  const attacker=pl.front.find(c=>c?.uid===s.pending.attackerUid);
+  const damage=greenHighRaidCombatValue(s,p,attacker).damage;
+  Object.assign(s,resolveTtgRed044Search(s,action));
+  if(s.status==='playing')queueLifeDamage(s,1-p,damage);
  }else if(s.pending?.kind==='ttgGreenEntry'){
   const after=resolveTtgGreenEntry(s,action);
   Object.assign(s,after);
@@ -265,7 +272,7 @@ export function dispatchTtgCoreAction(source,action){
    // may suppress IMPACT for this battle, even if retired on losing.
    const won=bp(s,p,attacker)>=bp(s,1-p,defender);
    const impactAmount=Math.max(attacker.greenEventImpact||0,attacker.green008Impact||0,greenHighRaidCombatValue(s,p,attacker).impact);
-   const impactDamage=won&&!greenTtgImpactNull(defender)?impactAmount:0;
+   const impactDamage=won&&!greenTtgImpactNull(defender)&&!ttgRedStarterImpactNull(defender)?impactAmount:0;
    if(won)removeFront(s,1-p,defender.uid);
    // Losing an attack does NOT retire the attacker (official Q34).
    if(impactDamage){
@@ -277,7 +284,9 @@ export function dispatchTtgCoreAction(source,action){
    const after=applyGreen008UnblockedDraw(s,p,attacker.uid);
    Object.assign(s,after);
    s.pending=null;
-   if(s.status==='playing')queueLifeDamage(s,1-p,greenHighRaidCombatValue(s,p,attacker).damage);
+   if(s.status==='playing'&&s.players[p].front.some(c=>c?.uid===attacker.uid&&c.cardId==='TTG-1-044')){
+    Object.assign(s,beginTtgRed044Unblocked(s,{player:p,attackerUid:attacker.uid}));
+   }else if(s.status==='playing')queueLifeDamage(s,1-p,greenHighRaidCombatValue(s,p,attacker).damage);
   }
   if(s.pending?.kind==='block')s.pending=null;
  }else if(action.type==='next'){
@@ -344,6 +353,9 @@ export function ttgCoreAiChoice(s){
  const options=legalTtgCoreActions(s);
  if(!options.length)return null;
  const p=s.active,pl=s.players[p];
+ if(s.pending?.kind==='ttgRed044Search'){
+  return options.find(x=>x.takeUid&&x.discardUid!==x.takeUid)||options.find(x=>x.takeUid)||options[0];
+ }
  if(s.pendingTtgLife){
   const options=legalTtgCoreActions(s);
   return options.find(x=>x.mode==='raid'&&x.line==='front')||options.find(x=>x.mode==='raid')||
