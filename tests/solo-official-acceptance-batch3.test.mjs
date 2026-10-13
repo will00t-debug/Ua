@@ -6,7 +6,7 @@ import {SOLO_SHADOW_TRAINING_PRESET,newSoloTrainingMatch,soloTrainingLegalAction
 // https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-008
 // https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-009
 // https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-010
-const deck=id=>({...SOLO_SHADOW_TRAINING_PRESET,'SLG-1-009':id==='009'?4:0,...(id==='009'?{}:{['SLG-1-'+id]:4})});
+const deck=id=>({...SOLO_SHADOW_TRAINING_PRESET,...(id==='008'?{'SLG-1-009':0,'SLG-1-008':4}:{})});
 const game=id=>newSoloTrainingMatch({decks:[deck(id),deck(id)],seed:721,first:0});
 function pull(pl,id){for(const z of ['hand','deck','life']){const idx=pl[z].findIndex(x=>x.cardId===id);if(idx>=0)return pl[z].splice(idx,1)[0];}throw Error('missing card '+id);}
 function choose(s,f){const action=soloTrainingLegalActions(s).find(f);assert.ok(action,'expected action');return soloTrainingDispatch(s,action);}
