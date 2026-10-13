@@ -284,6 +284,8 @@ test('Q2029: 022 attack-ended swap waits until the defender finishes an ACTIVE l
  assert.equal(s.pending.kind,'slg022Enter');
  s=dispatch(s,{type:'choose',uid:null});
  s=dispatch(s,{type:'choose',uid:null});
+ // REST all Kaisel helpers so the test isolates Trigger versus 022 attack-end timing.
+ for(const c of s.players[0].energy.filter(c=>c?.cardId==='SLG-1-029'))c.ready=false;
  s.players[1].life[0].cardId='SLG-1-029'; // first life has official ACTIVE trigger
  s.phase='attack';s=dispatch(s,{type:'attack',uid:attacker.uid});
  assert.equal(s.pending.kind,'activeTrigger','life Trigger must resolve before attack-end effects');
