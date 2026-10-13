@@ -186,6 +186,65 @@ function choose(s,action){
   if(action.uid!=null&&(!c||!d(c).traits.includes('DFN')||c.uid===q.source))throw Error('target must be another DFN');
   if(c)c.extraTargetAp=1;
   s.pending=null;
+ }else if(q.kind==='kaiserPick'||q.kind==='kibaPick'){
+  if(action.uid==null){s.pending=null;continueAttackEffects(s);}
+  else{
+   const p=s.players[q.p],c=field(p).find(x=>x.uid===action.uid);
+   if(!c||!c.ready||!q.options.includes(c.uid))throw Error('illegal helper selection');
+   s.pending={kind:q.kind==='kaiserPick'?'kaiserMode':'kibaMode',p:q.p,source:c.uid};
+  }
+ }else if(q.kind==='kaiserMode'||q.kind==='kibaMode'){
+  const p=s.players[q.p],c=field(p).find(x=>x.uid===q.source),a=byUid(p.front,s.combat?.attacker);
+  const prefix=q.kind==='kaiserMode'?'kaiser':'kiba';
+  const valid=prefix==='kaiser'?['block','untargetable']:['buff','draw'];
+  if(!c||!c.ready||!a||!valid.includes(action.mode)||groupUsed(s,q.p,prefix+':'+action.mode))throw Error('illegal shared effect selection');
+  markGroup(s,q.p,prefix+':'+action.mode);c.ready=false;
+  if(prefix==='kaiser'){
+   if(action.mode==='block')a.grantBlockLimitTurn=s.turn;
+   else a.untargetableTurn=s.turn;
+   s.pending=null;continueAttackEffects(s);
+  }else if(action.mode==='buff'){
+   a.buffs.push({turn:s.turn,bp:1500});
+   s.pending=null;continueAttackEffects(s);
+  }else{
+   draw(s,p);
+   if(s.status!=='playing')s.pending=null;
+   else if(p.hand.length)s.pending={kind:'kibaDiscard',p:q.p};
+   else{s.pending=null;continueAttackEffects(s);}
+  }
+ }else if(q.kind==='kibaDiscard'){
+  const p=s.players[q.p],i=p.hand.findIndex(c=>c.uid===action.uid);
+  if(i<0)throw Error('invalid hand discard');
+  p.outside.push(p.hand.splice(i,1)[0]);s.pending=null;continueAttackEffects(s);
+ }else if(q.kind==='belDiscard'){
+  const p=s.players[q.p],a=byUid(p.front,q.source);
+  if(action.uid!=null){
+   const i=p.hand.findIndex(c=>c.uid===action.uid);if(i<0||!a||a.cardId!=='SLG-1-033')throw Error('illegal Bel discard');
+   p.outside.push(p.hand.splice(i,1)[0]);markGroup(s,q.p,'bel');readySolo(a);
+  }
+  s.pending=null;continueAttackEffects(s);
+ }else if(q.kind==='dailyDiscard'){
+  const p=s.players[q.p],i=p.hand.findIndex(c=>c.uid===action.uid);
+  if(i<0)throw Error('illegal daily cost');
+  p.outside.push(p.hand.splice(i,1)[0]);
+  s.pending={kind:'dailyUnder',p:q.p,options:field(p).flatMap(c=>(c.under||[]).filter(x=>x.faceDown).map(x=>x.uid))};
+ }else if(q.kind==='dailyUnder'){
+  const p=s.players[q.p];
+  if(action.uid==null){s.pending=null;}
+  else{
+   const host=field(p).find(c=>(c.under||[]).some(x=>x.uid===action.uid&&x.faceDown));
+   if(!host||!q.options.includes(action.uid))throw Error('not your own facedown attachment');
+   const i=host.under.findIndex(x=>x.uid===action.uid),[under]=host.under.splice(i,1);
+   p.outside.push({...under,faceDown:false});
+   s.pending={kind:'dailyRecover',p:q.p,options:p.outside.filter(c=>d(c).type==='character'&&d(c).energy===0&&d(c).nameJa==='水篠 旬').map(c=>c.uid)};
+  }
+ }else if(q.kind==='dailyRecover'){
+  if(action.uid!=null){
+   const p=s.players[q.p],i=p.outside.findIndex(c=>c.uid===action.uid);
+   if(i<0||!q.options.includes(action.uid))throw Error('illegal daily recovery');
+   p.hand.push(p.outside.splice(i,1)[0]);
+  }
+  s.pending=null;
  }else if(q.kind==='raidTrigger'){
   if(action.uid!=null){
    const p=s.players[q.p],i=p.hand.findIndex(c=>c.uid===q.uid),c=p.hand[i];
@@ -202,7 +261,7 @@ function choose(s,action){
    p.outside.push(p.hand.splice(i,1)[0]);
    const a=byUid(p.front,q.source);a.raid058Used=s.turn;
    s.pending={kind:'raid058Unfreeze',p:q.p,source:q.source};
-  }else{s.pending=null;beginBlock(s);}
+  }else{s.pending=null;continueAttackEffects(s);}
  }else if(q.kind==='raid058Unfreeze'){
   const p=s.players[q.p],a=byUid(p.front,q.source),c=action.uid==null?null:byUid(p.front,action.uid);
   if(action.uid!=null&&(!c||(c.skipActive||0)===0))throw Error('only a frozen friendly front character can be chosen');
@@ -210,7 +269,7 @@ function choose(s,action){
    if((char.skipActive||0)>0)char.skipActive--;
    else char.ready=true;
   }
-  s.pending=null;beginBlock(s);
+  s.pending=null;continueAttackEffects(s);
  }else if(q.kind==='mainDiscard'){
   const p=s.players[q.p],i=p.hand.findIndex(c=>c.uid===action.uid);
   if(i<0)throw Error('main action must choose a hand card');
