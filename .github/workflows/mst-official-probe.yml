@@ -1,0 +1,20 @@
+name: UA54BT source audit (read-only)
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/mst-official-probe.mjs'
+      - '.github/workflows/mst-official-probe.yml'
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Probe official UA54BT card texts
+        run: node scripts/mst-official-probe.mjs
