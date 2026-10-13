@@ -165,7 +165,7 @@ test('last life card loss wins only after its trigger resolves',()=>{
  st.players[1].outside.push(...st.players[1].life.splice(1));
  // Force a final trigger at the last life point: FINAL should restore one.
  const final=findById(st.players[1],'TTG-1-036');
- const previous=st.players[1].life.shift();st.players[1].deck.push(previous);
+ const previous=st.players[1].life.shift();if(previous)st.players[1].deck.push(previous);
  st.players[1].life.unshift(final);
  st=withTtgDerivedEnergy(st,0);
  let after=dispatchTtgCoreAction(st,{type:'attack',uid:attacker.uid});
