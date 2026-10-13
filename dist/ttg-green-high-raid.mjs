@@ -9,6 +9,9 @@ import {calculateTtgEnergyByColor,withTtgDerivedEnergy} from './ttg-energy-snaps
 import {legalTtgChainRaids,dispatchTtgChainRaid} from './ttg-chain-raid.mjs';
 import {legalGreen033AfterRaid,resolveGreen033AfterRaid,legalGreen034AfterRaid,resolveGreen034AfterRaid} from './ttg-green-fields.mjs';
 import {greenTtgCurrentBp} from './ttg-green-passives.mjs';
+import {sidelineGreen030} from './ttg-green-030.mjs';
+import {beginGreen034Sidelined} from './ttg-green-fields.mjs';
+import {flattenSidelinedPile} from './ttg-green-retirement.mjs';
 const allowed=new Set(['TTG-1-027','TTG-1-031','TTG-1-032']);
 const own=p=>['front','energy'].flatMap(line=>(p?.[line]||[]).map((card,slot)=>({card,line,slot}))).filter(x=>x.card);
 const name=c=>c?.nameJa||TTG_BY_ID[c?.cardId]?.nameJa||'';
@@ -237,10 +240,16 @@ export function resolveHighRaidAttackEffect(state,action={}){
   if(c.cardId==='TTG-1-032'&&targetUid){
    const opponent=r.players[1-p],i=opponent.front.findIndex(x=>x?.uid===targetUid);
    if(i<0)throw new Error('Attack target left Front');
-   opponent.outside.push(opponent.front[i]);opponent.front[i]=null;
+   if(opponent.front[i].cardId==='TTG-1-030'){
+    Object.assign(r,sidelineGreen030({...r,pending:null},{player:1-p,uid:targetUid}));
+   }else{
+    opponent.outside.push(...flattenSidelinedPile(opponent.front[i]));opponent.front[i]=null;
+    if(opponent.energy.some(x=>x?.cardId==='TTG-1-034'&&x.green034UsedTurn!==state.turn))
+     Object.assign(r,beginGreen034Sidelined({...r,pending:null},{player:1-p,retiredUid:targetUid}));
+   }
   }
  }
- if(JSON.stringify(inventory(pl))!==JSON.stringify(original)||
+ if(JSON.stringify(inventory(r.players[p]))!==JSON.stringify(original)||
     JSON.stringify(inventory(r.players[1-p]))!==JSON.stringify(oppOriginal))
     throw new Error('High Raid attack physical UID conservation');
  return r;
