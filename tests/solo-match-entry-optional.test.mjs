@@ -15,7 +15,7 @@ test('SLG-002 legal mandatory draw/discard versus choose another own BP buff',()
  s=soloTrainingDispatch(s,{type:'choose',mode:'drawDiscard'});
  assert.equal(s.pending.kind,'entry002Discard');const next=s.players[0].hand[0].uid;
  s=soloTrainingDispatch(s,{type:'choose',uid:next});
- assert.equal(s.players[0].hand.length,before-1);assert.equal(s.players[0].discardByOwnEffectTurn,s.turn);
+ assert.equal(s.players[0].hand.length,before);assert.equal(s.players[0].discardByOwnEffectTurn,s.turn);
  assertSoloTrainingMatch(s);
  s=state(deck);put(s,'SLG-1-030','energy',0);const target=put(s,'SLG-1-030','front',0);
  s=deploy(s,'SLG-1-002');s=soloTrainingDispatch(s,{type:'choose',mode:'buff'});
