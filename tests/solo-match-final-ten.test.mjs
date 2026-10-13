@@ -1,0 +1,152 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {SOLO_SHADOW_TRAINING_PRESET,SOLO_TRAINING_PRESET,newSoloTrainingMatch,soloTrainingLegalActions,soloTrainingDispatch,soloEnergy,soloMatchBp,assertSoloTrainingMatch} from '../dist/solo-match.mjs';
+
+const fixtures=(color,ids=[])=>{
+ const base=color==='purple'?SOLO_SHADOW_TRAINING_PRESET:SOLO_TRAINING_PRESET;
+ const keys=color==='purple'?['SLG-1-001','SLG-1-009','SLG-1-010']:['SLG-1-062','SLG-1-065','SLG-1-066'];
+ const counts={...base};ids.forEach((id,i)=>{counts[keys[i]]=0;counts[id]=4;});
+ const s=newSoloTrainingMatch({decks:[counts,counts],seed:765,first:0});
+ s.phase='main';s.players[0].ap=3;s.players[0].maxAp=3;return s;
+};
+const drawCard=(p,id)=>{for(const key of ['hand','deck','life']){const i=p[key].findIndex(c=>c.cardId===id);if(i>=0)return p[key].splice(i,1)[0];}throw Error('no card in fixture: '+id);};
+const onField=(s,id,line,slot,owner=0,ready=true)=>{
+ const c=drawCard(s.players[owner],id);Object.assign(c,{owner,line,slot,ready});
+ s.players[owner][line][slot]=c;return c;
+};
+const prepare=(s,id)=>{const c=drawCard(s.players[0],id);s.players[0].hand.push(c);return c;};
+const legal=(s,fn)=>{const a=soloTrainingLegalActions(s).find(fn);assert.ok(a,'legal action missing');return a;};
+const dispatch=(s,a)=>soloTrainingDispatch(s,a);
+const raid=(s,id,base)=>{const c=prepare(s,id);const a=legal(s,x=>x.type==='raid'&&x.uid===c.uid&&x.target===base.uid&&x.line==='front');
+ return {s:dispatch(s,a),uid:c.uid};};
+const purplePower=s=>{
+ for(let i=0;i<4;i++)onField(s,i===0?'SLG-1-006':'SLG-1-030','energy',i);
+};
+const greenPower=s=>{for(let i=0;i<4;i++)onField(s,'SLG-1-041','energy',i);};
+test('020 can draw then pay a chosen hand card and recover a just-discarded BP3000 non-Sung (Q2027)',()=>{
+ let s=fixtures('purple',['SLG-1-020']);purplePower(s);
+ const base=onField(s,'SLG-1-015','front',0);
+ let r=raid(s,'SLG-1-020',base);s=r.s;assert.equal(s.pending.kind,'slg020EntryDiscard');
+ const handCandidate=s.players[0].hand.find(x=>x.cardId==='SLG-1-030');
+ assert.ok(handCandidate);s=dispatch(s,{type:'choose',uid:handCandidate.uid});
+ assert.equal(s.pending.kind,'slg020Recover');
+ assert.ok(soloTrainingLegalActions(s).some(x=>x.uid===handCandidate.uid));
+ s=dispatch(s,{type:'choose',uid:handCandidate.uid});assert.ok(s.players[0].hand.some(x=>x.uid===handCandidate.uid));
+ assertSoloTrainingMatch(s);
+});
+test('021 cannot pass mandatory block if a legal blocker exists (Q2028); 021 conditional impact remains BP-bound',()=>{
+ let s=fixtures('purple',['SLG-1-021']);purplePower(s);const base=onField(s,'SLG-1-015','front',0);
+ const fighter=raid(s,'SLG-1-021',base);s=fighter.s;
+ const defender=onField(s,'SLG-1-030','front',0,1,true);
+ s.phase='attack';s=dispatch(s,{type:'attack',uid:fighter.uid});
+ assert.equal(s.pending.kind,'block');assert.equal(s.pending.mandatory,true);
+ assert.ok(soloTrainingLegalActions(s).every(x=>x.uid!=null));
+ s=dispatch(s,{type:'choose',uid:defender.uid});
+ assertSoloTrainingMatch(s);
+});
+test('022 high-energy Sung Raid receives reduced required energy per shadow, and can choose both lines ACTIVE',()=>{
+ let s=fixtures('purple',['SLG-1-022']);const base=onField(s,'SLG-1-015','front',0);
+ for(let i=1;i<4;i++)onField(s,'SLG-1-030','front',i);
+ for(let i=0;i<4;i++)onField(s,'SLG-1-029','energy',i);
+ const c=prepare(s,'SLG-1-022');assert.ok(soloEnergy(s)>=5);
+ const a=legal(s,x=>x.type==='raid'&&x.uid===c.uid&&x.target===base.uid);
+ s=dispatch(s,a);assert.equal(s.pending.kind,'slg022Enter');
+ assert.equal(s.pending.line,'front');
+ s=dispatch(s,{type:'choose',uid:s.players[0].front[1].uid});
+ assert.equal(s.pending.line,'energy');
+ s=dispatch(s,{type:'choose',uid:s.players[0].energy[0].uid});
+ assert.equal(s.pending,null);assertSoloTrainingMatch(s);
+});
+test('047 end-attack Raid spends exactly two own facedown cards, leaves old base, resets previous buffs (Q2042–2046)',()=>{
+ let s=fixtures('green',['SLG-1-047','SLG-1-048']);greenPower(s);
+ const base=onField(s,'SLG-1-045','front',0);
+ const r=raid(s,'SLG-1-047',base);s=r.s;
+ const host=s.players[0].front[0],next=prepare(s,'SLG-1-048');
+ const attached=s.players[0].deck.splice(0,2).map(x=>({...x,faceDown:true}));host.under.push(...attached);
+ host.buffs.push({turn:s.turn,bp:2000});host.ready=false;
+ s.phase='attack';const before=s.players[0].ap;
+ s=dispatch(s,{type:'next'});assert.equal(s.pending.kind,'slgEndRaid');
+ const change=legal(s,x=>x.uid===next.uid&&x.used?.length===2);
+ s=dispatch(s,change);assert.equal(s.players[0].ap,before);
+ assert.equal(s.players[0].front[0].uid,next.uid);assert.equal(s.players[0].front[0].stack[0].uid,base.uid);
+ assert.equal(s.players[0].front[0].ready,true);
+ assert.equal(s.players[0].front[0].buffs.length,0);
+ assert.ok(attached.every(x=>s.players[0].outside.some(y=>y.uid===x.uid)));
+ if(s.pending?.kind==='slg048Deploy')s=dispatch(s,{type:'choose',uid:null});
+ assertSoloTrainingMatch(s);
+});
+test('048 end attack Raid accepts only green-energy-6 049 and three OWN facedown; cannot act after phase end',()=>{
+ let s=fixtures('green',['SLG-1-048','SLG-1-049']);greenPower(s);
+ const base=onField(s,'SLG-1-045','front',0);
+ const f=raid(s,'SLG-1-048',base);s=f.s;
+ if(s.pending?.kind==='slg048Deploy')s=dispatch(s,{type:'choose',uid:null});
+ const next=prepare(s,'SLG-1-049'),top=s.players[0].front[0];
+ top.under.push(...s.players[0].deck.splice(0,3).map(c=>({...c,faceDown:true})));
+ s.phase='attack';s=dispatch(s,{type:'next'});
+ assert.equal(s.pending.kind,'slgEndRaid');
+ s=dispatch(s,legal(s,x=>x.uid===next.uid));
+ if(s.pending?.kind==='slg049Destroy')s=dispatch(s,{type:'choose',uid:null});
+ assert.equal(s.players[0].front[0].uid,next.uid);assertSoloTrainingMatch(s);
+});
+test('049 grants IMPACT and BP +500; own effect entrance offers opponent target or decline',()=>{
+ let s=fixtures('green',['SLG-1-049']);greenPower(s);const base=onField(s,'SLG-1-045','front',0);
+ const enemy=onField(s,'SLG-1-041','front',0,1);
+ const r=raid(s,'SLG-1-049',base);s=r.s;
+ assert.equal(soloMatchBp(s,s.players[0].front[0]),4500);
+ assert.equal(s.pending.kind,'slg049Destroy');assert.ok(soloTrainingLegalActions(s).some(x=>x.uid===enemy.uid));
+ s=dispatch(s,{type:'choose',uid:enemy.uid});assert.equal(s.players[1].front[0],null);
+ assertSoloTrainingMatch(s);
+});
+test('051 can pay additional AP, discard eligible 047 then Raid that exact card from outside (Q2054)',()=>{
+ let s=fixtures('green',['SLG-1-051','SLG-1-047']);greenPower(s);
+ const base=onField(s,'SLG-1-045','front',0),eri=prepare(s,'SLG-1-051');
+ const enter=legal(s,a=>a.type==='play'&&a.uid===eri.uid);
+ s=dispatch(s,enter);assert.equal(s.pending.kind,'slg051Mode');
+ s=dispatch(s,{type:'choose',mode:'raid'});
+ const top=prepare(s,'SLG-1-047');s=dispatch(s,{type:'choose',uid:top.uid});
+ assert.equal(s.pending.kind,'slg051Raid');
+ s=dispatch(s,legal(s,a=>a.uid===top.uid&&a.target===base.uid&&a.line==='front'));
+ assert.equal(s.players[0].front[0].uid,top.uid);
+ assertSoloTrainingMatch(s);
+});
+test('060 energy line may swap with frozen front at end of friendly character attack (Q2059)',()=>{
+ let s=fixtures('green',['SLG-1-060']);greenPower(s);
+ const machida=onField(s,'SLG-1-060','energy',0);
+ const attacker=onField(s,'SLG-1-045','front',0);attacker.skipActive=1;
+ s.phase='attack';s=dispatch(s,{type:'attack',uid:attacker.uid});
+ assert.equal(s.pending.kind,'slg060Swap');
+ s=dispatch(s,{type:'choose',uid:machida.uid});
+ s=dispatch(s,{type:'choose',uid:attacker.uid});
+ assert.equal(s.players[0].front[0].uid,machida.uid);
+ assert.equal(s.players[0].energy[0].uid,attacker.uid);assertSoloTrainingMatch(s);
+});
+test('061 entry targets a different island ally and end attack may discard to ACTIVE an island ally',()=>{
+ let s=fixtures('green',['SLG-1-061']);greenPower(s);
+ const ally=onField(s,'SLG-1-055','front',0,false),minobu=prepare(s,'SLG-1-061');
+ const act=legal(s,a=>a.type==='play'&&a.uid===minobu.uid);
+ s=dispatch(s,act);assert.equal(s.pending.kind,'slg061Enter');
+ s=dispatch(s,{type:'choose',uid:ally.uid});
+ assert.equal(soloMatchBp(s,s.players[0].front[0]),2500);
+ s.phase='attack';s=dispatch(s,{type:'next'});
+ assert.equal(s.pending.kind,'slg061End');
+ const cost=legal(s,x=>x.uid!=null);s=dispatch(s,cost);
+ assert.equal(s.pending.kind,'slg061Active');
+ s=dispatch(s,{type:'choose',uid:ally.uid});assert.equal(s.players[0].front[0].ready,true);
+ assertSoloTrainingMatch(s);
+});
+test('064 Raid when five island characters present debuffs enemies BP>=1500 and attacking can choose destruction and skip next ACTIVE',()=>{
+ let s=fixtures('green',['SLG-1-064']);const base=onField(s,'SLG-1-063','front',0);
+ for(let i=1;i<4;i++)onField(s,'SLG-1-055','front',i);
+ for(let i=0;i<4;i++)onField(s,'SLG-1-041','energy',i);
+ const enemy=onField(s,'SLG-1-041','front',0,1);
+ const raidCard=prepare(s,'SLG-1-064');
+ const action=legal(s,a=>a.type==='raid'&&a.uid===raidCard.uid&&a.target===base.uid);
+ s=dispatch(s,action);assert.equal(soloMatchBp(s,s.players[1].front[0]),1500);
+ s.phase='attack';s=dispatch(s,{type:'attack',uid:raidCard.uid});
+ assert.equal(s.pending.kind,'slg064Attack');
+ s=dispatch(s,{type:'choose',mode:'destroy'});
+ assert.equal(s.pending.kind,'slg064Destroy');
+ s=dispatch(s,{type:'choose',uid:enemy.uid});
+ assert.equal(s.players[1].front[0],null);
+ assert.equal(s.players[0].front[action.slot].skipActive,1);assertSoloTrainingMatch(s);
+});
