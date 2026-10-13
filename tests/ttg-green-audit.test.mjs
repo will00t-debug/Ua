@@ -24,8 +24,8 @@ test('UA56BT green 001-041 audit never counts isolated reducers as full website 
   assert.equal(row.core==='yes',TTG_CORE_SMOKE_IDS.includes(id));
  }
  assert.equal(rows.filter(r=>r.core==='yes').length,34);
- assert.equal(rows.filter(r=>r.core==='no').length,5);
- assert.equal(rows.filter(r=>r.isolated==='yes'&&r.core==='no').length,7);
+ assert.equal(rows.filter(r=>r.core==='no').length,7);
+ assert.equal(rows.filter(r=>r.isolated==='yes'&&r.core==='no').length,5);
 });
 test('all isolated green on-entry/event IDs have true printed green metadata',()=>{
  assert.equal(TTG_GREEN_ENTRY_IDS.length,10);
