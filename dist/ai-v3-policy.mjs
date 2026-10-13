@@ -7,13 +7,14 @@ import {CHAMPION_MODEL} from './ai-v3-weights.mjs';
 function safeBoardScore(s,action,p,known){
  try{
   const next=dispatch(s,action);
-  if(next.pending)return null;
   for(let i=0;i<2;i++){
    if(next.players[i].deck.length!==s.players[i].deck.length||
       next.players[i].life.length!==s.players[i].life.length||
       next.players[i].hand.length!==s.players[i].hand.length)return null;
   }
-  return evaluatePosition(next,p,known);
+  // A pending public choice does not itself reveal hidden cards. Compare only
+  // equivalent resolution stages; never treat an unresolved effect as finished.
+  return {score:evaluatePosition(next,p,known),pendingKind:next.pending?.effect?.kind||null};
  }catch{return null;}
 }
 export function chooseNeuralAction(s,{model=CHAMPION_MODEL,minMargin=0.24,diagnostics=null}={}){
@@ -40,7 +41,9 @@ export function chooseNeuralAction(s,{model=CHAMPION_MODEL,minMargin=0.24,diagno
  let best=null,bestScore=baselineScore;
  for(const action of legal){
   const board=baselineBoard===null?null:safeBoardScore(s,action,p,known);
-  if(board!==null&&board<baselineBoard-1.5){
+  // Veto only comparable public states; different pending effects must not
+  // be ranked as though their future choices were already resolved.
+  if(board!==null&&baselineBoard!==null&&board.pendingKind===baselineBoard.pendingKind&&board.score<baselineBoard.score-1.5){
    if(diagnostics)diagnostics.vetoed=(diagnostics.vetoed||0)+1;
    continue;
   }
