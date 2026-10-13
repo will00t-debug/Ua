@@ -309,7 +309,7 @@ function soloArena(){
     +'；牌庫頂順序：'+a.order.map(uid=>label(state.players[actor].deck.find(c=>c.uid===uid))).join(' → ');
   }
   if(a.mode)return {block:'攻擊角色不被BP4000以上阻擋',untargetable:'攻擊角色不受敵方效果選取',buff:'攻擊角色本回合BP+1500',draw:'抽1張並棄1張',draw2:'抽2張',drawRecover:'抽1張，再選最多1張符合條件的場外角色回手'}[a.mode]||a.mode;
-  if(state.pending?.kind==='colorTrigger')return label(p.hand.find(c=>c.uid===a.uid))+' → '+(a.line==='front'?'前線':'能源線')+(a.slot+1);
+  if(state.pending?.kind==='colorTrigger')return label(p[state.pending.sourceZone||'hand'].find(c=>c.uid===a.uid))+' → '+(a.line==='front'?'前線':'能源線')+(a.slot+1);
   if(state.pending?.kind==='specialTrigger')return '退場 '+label([...p.front,...opp.front].find(c=>c?.uid===a.uid));
   if(state.pending?.kind==='raidTrigger')return a.uid==null?'將Raid卡加入手牌':'Raid → '+(a.line==='front'?'前線':'能源線')+(a.slot+1)+'（底板 '+label([...p.front,...p.energy,...opp.front,...opp.energy].find(c=>c?.uid===a.uid))+'）';
   if(state.pending?.kind==='dailyUnder')return a.uid==null?'不移除裏向卡':label(ownedUnder(a.uid));
@@ -318,7 +318,7 @@ function soloArena(){
   return label([...p.hand,...opp.hand,...p.front,...p.energy,...opp.front,...opp.energy].find(c=>c?.uid===a.uid));
  };
  const choices=state.pending?'<div class="panel"><b>請選擇：'+esc({
-  discard:'棄一張手牌',entryImpact:'選擇獲得IMPACT的DFN角色',entryProtect:'選擇受AP保護的DFN',colorTrigger:'COLOR Trigger：選擇合法手牌及登場位置',specialTrigger:'SPECIAL Trigger：選擇敵方角色退場',entryDrawMode:'觀月繪里：選擇抽牌模式',entryRecover:'觀月繪里：選擇符合條件的場外角色',entryBounce:'選擇需返回手牌的己方其他角色',sungRecovery:'觀月繪里：選擇場外水篠旬回收',
+  discard:'棄一張手牌',entryImpact:'選擇獲得IMPACT的DFN角色',entryProtect:'選擇受AP保護的DFN',colorTrigger:'COLOR Trigger：選擇合法卡片及登場位置',specialTrigger:'SPECIAL Trigger：選擇敵方角色退場',entryDrawMode:'觀月繪里：選擇抽牌模式',entryRecover:'觀月繪里：選擇符合條件的場外角色',entryBounce:'選擇需返回手牌的己方其他角色',sungRecovery:'觀月繪里：選擇場外水篠旬回收',
   castleCost:'惡魔城：選擇1張手牌支付成本',castlePotion:'惡魔城：選擇可支付AP的場外命之神水',castleRecover:'惡魔城：選擇符合條件的角色回收',shadowSummonMode:'影之君主：選擇復活模式',shadowSummonCard:'影之君主：選擇影之軍團及登場位置',entry002Mode:'朝比奈凜：選擇登場能力',entry002Buff:'朝比奈凜：選其他角色BP+1000',entry002Discard:'朝比奈凜：指定一張手牌送場外',entry004Discard:'犬飼晃：指定一張手牌送場外',peekTop:'查看牌庫頂並選擇去向與順序',eventDiscard:'事件：請選擇送場外的手牌',eventRecover:'命之神水：可選一張場外角色回收',eventRestoreAp:'選擇回復的AP數量',eventDestroy:'選擇合法的敵方前線退場角色',eventDance:'舞姬：選擇獲得攻擊時抽牌的向坂雫',marieBuff:'瑪莉：選另一己方角色BP+1000並將瑪莉回手',attackDraw:'攻擊時選擇是否抽牌',ryuuBuff:'リュー：選擇己方角色BP+1000',ryuuAp:'リュー：選擇最多回復2AP',
   slgSearch:'查看牌庫頂：選卡及其餘順序',slgMill:'可選擇牌庫頂送場外',slgDiscard:'選一張手牌送場外',
   slgRecoveredBuff:'朝比奈凜回收：選BP+1000目標',slgRecoveredDeploy:'向坂雫回收：選擇免費登場位置',slg019Entry:'水篠旬：棄影之軍團抽牌',slg019Recover:'水篠旬：棄影之軍團回收',slg044Target:'水篠葵：選水篠旬附裏向卡',slg059Entry:'白川大虎：可棄牌ACTIVE',slg077Target:'架南島攻略：選敵方退場目標',slg077Buff:'架南島攻略：選BP+1000目標',
