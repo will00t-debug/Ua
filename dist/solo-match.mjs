@@ -383,8 +383,8 @@ function choose(s,action){
   s.pending=null;recoverSolo(s,q.p,q.source,'水篠 旬');
  }else if(q.kind==='slg044Target'){
   const p=s.players[q.p],host=field(p).find(c=>c.uid===action.uid&&isSung(c));
-  if(!host||!p.deck.length)throw Error('illegal face-down host');
-  const top=p.deck.shift();host.under??=[];host.under.push({...top,faceDown:true});
+  if(!host)throw Error('illegal face-down host');
+  if(action.attach){if(!p.deck.length)throw Error('cannot attach from empty deck');const top=p.deck.shift();host.under??=[];host.under.push({...top,faceDown:true});}
   host.grants??=[];host.grants.push({kind:'damagePlus',turn:s.turn});s.pending=null;
  }else if(q.kind==='slg059Entry'){
   const p=s.players[q.p],source=field(p).find(c=>c.uid===q.source);
@@ -690,7 +690,7 @@ export function soloTrainingLegalActions(s){
    return actions;
   }
   if(q.kind==='slg019Entry'||q.kind==='slg059Entry')return [{type:'choose',uid:null},...s.players[q.p].hand.filter(c=>q.kind==='slg059Entry'||shadow(c)).map(c=>({type:'choose',uid:c.uid}))];
-  if(q.kind==='slg044Target')return field(s.players[q.p]).filter(isSung).map(c=>({type:'choose',uid:c.uid}));
+  if(q.kind==='slg044Target'){const p=s.players[q.p];return field(p).filter(isSung).flatMap(c=>[{type:'choose',uid:c.uid,attach:false},...(p.deck.length?[{type:'choose',uid:c.uid,attach:true}]:[])]);}
   if(q.kind==='slg077Target')return q.options.map(uid=>({type:'choose',uid}));
   if(q.kind==='slg077Buff')return [{type:'choose',uid:null},...field(s.players[q.p]).filter(c=>d(c).type==='character').map(c=>({type:'choose',uid:c.uid}))];
   if(q.kind==='entry002Mode')return [{type:'choose',mode:'drawDiscard'},{type:'choose',mode:'buff'}];
@@ -786,7 +786,7 @@ export function soloTrainingLegalActions(s){
   if(!groupUsed(s,s.active,'sung019')&&p.hand.some(shadow))
    for(const c of p.outside.filter(c=>c.cardId==='SLG-1-019'))actions.push({type:'abilityOutside',uid:c.uid});
   for(const c of field(p)){
-   if(c.cardId==='SLG-1-044'&&c.ready&&c.line==='front'&&p.deck.length&&field(p).some(isSung))
+   if(c.cardId==='SLG-1-044'&&c.ready&&c.line==='front'&&field(p).some(isSung))
     actions.push({type:'ability',uid:c.uid,mode:'attachDamage'});
    if(c.cardId==='SLG-1-019'&&c.ready){ /* activation belongs to the outside zone only */ }
    if(c.cardId==='SLG-1-034'&&c.ready){
