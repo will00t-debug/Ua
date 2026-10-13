@@ -309,8 +309,9 @@ function soloArena(){
     +'；牌庫頂順序：'+a.order.map(uid=>label(state.players[actor].deck.find(c=>c.uid===uid))).join(' → ');
   }
   if(a.mode)return {block:'攻擊角色不被BP4000以上阻擋',untargetable:'攻擊角色不受敵方效果選取',buff:'攻擊角色本回合BP+1500',draw:'抽1張並棄1張',draw2:'抽2張',drawRecover:'抽1張，再選最多1張符合條件的場外角色回手'}[a.mode]||a.mode;
-  if(state.pending?.kind==='colorTrigger')return label(p[state.pending.sourceZone||'hand'].find(c=>c.uid===a.uid))+' → '+(a.line==='front'?'前線':'能源線')+(a.slot+1);
-  if(state.pending?.kind==='specialTrigger')return '退場 '+label([...p.front,...opp.front].find(c=>c?.uid===a.uid));
+  if(state.pending?.kind==='colorTrigger')return a.uid==null?'不發動 COLOR 生命觸發':label(p[state.pending.sourceZone||'hand'].find(c=>c.uid===a.uid))+' → '+(a.line==='front'?'前線':'能源線')+(a.slot+1);
+  if(state.pending?.kind==='specialTrigger')return a.uid==null?'不發動 SPECIAL 生命觸發':'退場 '+label([...p.front,...opp.front].find(c=>c?.uid===a.uid));
+  if(state.pending?.kind==='activeTrigger')return a.uid==null?'不發動 ACTIVE 生命觸發':'ACTIVE '+label([...p.front,...p.energy,...opp.front,...opp.energy].find(c=>c?.uid===a.uid))+'，本回合 BP+3000';
   if(state.pending?.kind==='raidTrigger')return a.uid==null?'將Raid卡加入手牌':'Raid → '+(a.line==='front'?'前線':'能源線')+(a.slot+1)+'（底板 '+label([...p.front,...p.energy,...opp.front,...opp.energy].find(c=>c?.uid===a.uid))+'）';
   if(state.pending?.kind==='dailyUnder')return a.uid==null?'不移除裏向卡':label(ownedUnder(a.uid));
   if(state.pending?.kind==='dailyRecover'||state.pending?.kind==='entryRecover'||state.pending?.kind==='sungRecovery')return a.uid==null?'不回收':'回收 '+label(p.outside.find(c=>c.uid===a.uid));

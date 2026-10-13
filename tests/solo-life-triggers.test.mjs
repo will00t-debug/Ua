@@ -28,7 +28,7 @@ test('SPECIAL trigger retires chosen attacker; extra AP target protections canno
  s.players[1].life[0].cardId='SLG-1-076';
  s=soloTrainingDispatch(s,{type:'attack',uid:attacker.uid});
  assert.equal(s.pending.kind,'specialTrigger');
- let [chosen]=soloTrainingLegalActions(s);assert.equal(chosen.uid,attacker.uid);
+ const chosen=soloTrainingLegalActions(s).find(a=>a.uid===attacker.uid);assert.ok(chosen);
  s=soloTrainingDispatch(s,chosen);
  assert.ok(s.players[0].outside.some(c=>c.uid===attacker.uid));assert.equal(s.pending,null);
  assertSoloTrainingMatch(s);
