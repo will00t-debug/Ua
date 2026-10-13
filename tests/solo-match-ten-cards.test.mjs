@@ -130,3 +130,39 @@ test('new cards retain no ability when blocked by illegal cost and AI can play 5
   assert.equal(s.status,'finished');assertSoloTrainingMatch(s);
  }
 });
+
+test('SLG-1-003 recovered by own potion lets controller choose exactly one BP+1000 target',()=>{
+ let s=withPotion('SLG-1-003');energy(s,'purple',4);
+ const friend=place(s,'SLG-1-030','front',0);
+ const rin=pull(s.players[0],'SLG-1-003');s.players[0].outside.push(rin);
+ s=event(s,'SLG-1-037');s=select(s,{type:'choose',uid:rin.uid});
+ assert.equal(s.pending.kind,'slgRecoveredBuff');
+ assert.throws(()=>soloTrainingDispatch(s,{type:'choose',uid:'not-own'}),/illegal SOLO action/);
+ s=select(s,{type:'choose',uid:friend.uid});
+ assert.equal(soloMatchBp(s,s.players[0].front[0]),2500);assertSoloTrainingMatch(s);
+});
+test('SLG-1-011 with ten outside cannot be blocked by current BP4000 or higher',()=>{
+ let s=make('purple','SLG-1-011');energy(s,'purple',4);
+ const shizuku=place(s,'SLG-1-011','front',0);
+ place(s,'SLG-1-033','front',0,1);
+ for(let i=0;i<10;i++)s.players[0].outside.push(s.players[0].deck.shift());
+ s.phase='attack';
+ s=soloTrainingDispatch(s,{type:'attack',uid:shizuku.uid});
+ assert.notEqual(s.pending?.kind,'block');
+ assertSoloTrainingMatch(s);
+});
+test('SLG-1-077 gives extra BP only after five distinct island names, not five copies',()=>{
+ let s=make('green','SLG-1-077');
+ for(let i=0;i<3;i++)place(s,'SLG-1-041','energy',i);
+ const fifth=place(s,'SLG-1-067','energy',3);
+ const names=['SLG-1-055','SLG-1-065','SLG-1-066','SLG-1-072'];
+ const allies=names.map((id,i)=>place(s,id,'front',i));
+ const enemy=place(s,'SLG-1-045','front',0,1);
+ s=event(s,'SLG-1-077');
+ assert.equal(s.pending.kind,'slg077Target');
+ s=select(s,{type:'choose',uid:enemy.uid});
+ assert.equal(s.pending.kind,'slg077Buff');
+ s=select(s,{type:'choose',uid:allies[0].uid});
+ assert.equal(soloMatchBp(s,s.players[0].front[0]),2500);
+ assertSoloTrainingMatch(s);
+});
