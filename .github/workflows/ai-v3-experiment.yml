@@ -1,8 +1,7 @@
-name: AI v3 Third-Round 700-Game Training
+name: AI v3 Fourth-Round 2000-Game Training
 
 on:
-  # Rerun after comparable pending-choice board scoring fix bff2f7ed.
-  # Only workflow edits trigger this 700-game experiment.
+  # Fourth-round larger-scale experiment; workflow edits trigger a run.
   push:
     branches: ['feature/ai-v3-learning']
     paths: ['.github/workflows/ai-v3-experiment.yml']
@@ -12,12 +11,12 @@ on:
         description: 'Training games'
         type: number
         required: false
-        default: 700
+        default: 2000
       eval:
         description: 'Held-out evaluation games'
         type: number
         required: false
-        default: 72
+        default: 300
 
 permissions:
   contents: write
@@ -25,7 +24,7 @@ permissions:
 jobs:
   experiment:
     runs-on: ubuntu-latest
-    timeout-minutes: 105
+    timeout-minutes: 300
     steps:
       - uses: actions/checkout@v4
         with:
@@ -35,16 +34,16 @@ jobs:
           node-version: '22'
       - name: Run neural learning and held-out comparison
         env:
-          TRAIN_GAMES: ${{ inputs.games || '700' }}
-          TEST_GAMES: ${{ inputs.eval || '72' }}
+          TRAIN_GAMES: ${{ inputs.games || '2000' }}
+          TEST_GAMES: ${{ inputs.eval || '300' }}
         run: |
           npm test
-          npm run train:ai -- --games "$TRAIN_GAMES" --eval "$TEST_GAMES" --seed 27000 --epochs 5 --max-actions 650 --promote
+          npm run train:ai -- --games "$TRAIN_GAMES" --eval "$TEST_GAMES" --seed 28000 --epochs 5 --max-actions 650 --promote
       - name: Publish candidate and measurements as artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ai-v3-third-round-700-games
+          name: ai-v3-fourth-round-2000-games
           path: |
             audit/ai-v3-candidate.json
             audit/ai-v3-evaluation.json
@@ -60,6 +59,6 @@ jobs:
             git add dist/ai-v3-weights.mjs
           fi
           if ! git diff --cached --quiet; then
-            git commit -m 'experiment(ai-v3): record third-round 700-game metrics and gated checkpoint'
+            git commit -m 'experiment(ai-v3): record fourth-round 2000-game metrics and gated checkpoint'
             git push origin HEAD:feature/ai-v3-learning
           fi
