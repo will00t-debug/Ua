@@ -69,7 +69,7 @@ export function legalRed062Retrigger(s){
  if(q?.kind!=='ttgRed062Retrigger')return [];
  const b={type:'ttgRed062Retrigger',player:q.player,uid:q.uid};
  const eligible=onField(s.players[q.player]).filter(c=>name(c)==='シモン'&&TTG_BY_ID[c.cardId]?.energy<=3&&
-  ['TTG-1-051','TTG-1-052','TTG-1-054','TTG-1-055','TTG-1-056'].includes(c.cardId));
+  ['TTG-1-009','TTG-1-010','TTG-1-051','TTG-1-052','TTG-1-054','TTG-1-055','TTG-1-056'].includes(c.cardId));
  return [{...b,targetUid:null},...eligible.map(c=>({...b,targetUid:c.uid}))];
 }
 export function resolveRed062Retrigger(s,a={}){
@@ -112,9 +112,17 @@ export function launchRedSimonFollowup(state){
  const r=structuredClone(state),pl=r.players[q.player];
  const source=[...(pl.front||[]),...(pl.energy||[])].find(c=>c?.uid===q.uid);
  if(!source||TTG_BY_ID[source.cardId]?.nameJa!=='シモン')throw new Error('Simon source disappeared');
- if(!['TTG-1-051','TTG-1-052','TTG-1-054','TTG-1-055','TTG-1-056'].includes(source.cardId))
+ if(!['TTG-1-009','TTG-1-010','TTG-1-051','TTG-1-052','TTG-1-053','TTG-1-054','TTG-1-055','TTG-1-056'].includes(source.cardId))
   throw new Error('Simon entry requires a verified execution handler');
  r.pending=null;
+ if(source.cardId==='TTG-1-053'){
+  r.pending=q.kind==='ttgRed061FollowupEntry'?q.resume||null:null;
+  return r;
+ }
+ if(['TTG-1-009','TTG-1-010'].includes(source.cardId)){
+  r.pending={kind:'ttgGreenEntry',player:q.player,sourceUid:q.uid};
+  return r;
+ }
  const next=source.cardId==='TTG-1-051'||source.cardId==='TTG-1-056'?'ttgRed051Discard':
   source.cardId==='TTG-1-052'?'ttgRed052Discard':source.cardId==='TTG-1-054'?'ttgRed054Mill':'ttgRed055Mill';
  r.ttgRedSimonContinuation=q.kind==='ttgRed061FollowupEntry'?(q.resume||null):null;
