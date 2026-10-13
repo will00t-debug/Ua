@@ -244,8 +244,18 @@ function beginBlock(s){
  const defenders=s.players[1-s.active].front.filter(x=>x?.ready);
  const attacker=s.combat&&byUid(s.players[s.active].front,s.combat.attacker);
  const legal=defenders.filter(c=>!((attacker?.grantBlockLimitTurn===s.turn||attacker?.cardId==='SLG-1-024'||attacker?.unblockableHighTurn===s.turn||(attacker?.cardId==='SLG-1-011'&&s.players[s.active].outside.length>=10))&&soloMatchBp(s,c)>=4000));
- if(legal.length)s.pending={kind:'block',p:1-s.active,choices:legal.map(x=>x.uid)};
+ if(legal.length)s.pending={kind:'block',p:1-s.active,choices:legal.map(x=>x.uid),mandatory:a.cardId==='SLG-1-021'&&a.mustBlockTurn===s.turn};
  else combat(s,null);
+}
+function scheduleAttackAfter(s){
+ if(s.pending){s.afterAttackPending=true;return;}
+ s.afterAttackPending=false;
+ const p=s.players[s.active];
+ const machidas=p.energy.filter(c=>c?.cardId==='SLG-1-060');
+ const frozen=p.front.filter(c=>c&&(c.skipActive||0)>0);
+ if(machidas.length&&frozen.length){s.pending={kind:'slg060Swap',p:s.active,options:machidas.map(c=>c.uid)};return;}
+ const monarch=p.energy.find(c=>c?.cardId==='SLG-1-022');
+ if(monarch&&p.front.some(shadow))s.pending={kind:'slg022Swap',p:s.active,source:monarch.uid};
 }
 function combat(s,blockUid){
  const a=byUid(s.players[s.active].front,s.combat?.attacker);
@@ -259,12 +269,16 @@ function combat(s,blockUid){
   if(ab>=bb)retire(s,1-s.active,b);
   if(bb>=ab)retire(s,s.active,a);
   if(ab>=bb&&impact(s,a)&&!impactImmune(b))hurt(s,1-s.active);
+  if(ab>=bb&&byUid(s.players[s.active].front,a.uid)&&a.cardId==='SLG-1-021'){
+   const limit=2000+Math.floor(s.players[s.active].outside.length/5)*500;
+   enqueue(s,{kind:'slg021Win',p:s.active,options:s.players[s.active].outside.filter(c=>d(c).type==='character'&&!isSung(c)&&d(c).bp<=limit).map(c=>c.uid)});
+  }
   if(b.cardId==='SLG-1-023'&&ab<bb&&b.firstBlockTurn!==s.turn){
    const survives=byUid(opp.front,b.uid);
    if(survives){survives.firstBlockTurn=s.turn;readySolo(survives);}
   }
  }
- s.combat=null;
+ s.combat=null;scheduleAttackAfter(s);
 }
 function choose(s,action){
  const q=s.pending;if(!q)throw Error('no choice');
@@ -418,6 +432,46 @@ function choose(s,action){
   if(action.uid!=null&&!target)throw Error('illegal island BP target');
   if(target)target.buffs.push({turn:s.turn,bp:1000});
   s.pending=null;
+ }else if(q.kind==='slg020EntryDiscard'){
+  const p=s.players[q.p];
+  if(action.uid==null){s.pending=null;}
+  else{
+   const i=p.hand.findIndex(c=>c.uid===action.uid);if(i<0)throw Error('illegal 020 discard');
+   p.outside.push(p.hand.splice(i,1)[0]);p.discardByOwnEffectTurn=s.turn;
+   s.pending={kind:'slg020Recover',p:q.p,options:p.outside.filter(c=>d(c).type==='character'&&!isSung(c)&&d(c).bp<=3000).map(c=>c.uid)};
+  }
+ }else if(q.kind==='slg020Recover'||q.kind==='slg021Win'){
+  if(action.uid!=null&&!q.options.includes(action.uid))throw Error('illegal Sung recovery');
+  s.pending=null;
+  if(action.uid!=null)recoverSolo(s,q.p,action.uid,'水篠 旬');
+ }else if(q.kind==='slg020AttackDiscard'||q.kind==='slg048Under'){
+  const p=s.players[q.p],i=p.hand.findIndex(c=>c.uid===action.uid);
+  if(i<0)throw Error('illegal Sung attack hand cost');
+  const [card]=p.hand.splice(i,1);
+  if(q.kind==='slg048Under'){
+   const host=field(p).find(c=>c.uid===q.source);if(!host)throw Error('missing attack Raid host');
+   host.under??=[];host.under.push({...card,faceDown:true});
+  }else p.outside.push(card);
+  s.pending=null;continueAttackEffects(s);
+ }else if(q.kind==='slg022Enter'){
+  const p=s.players[q.p],c=action.uid==null?null:field(p).find(c=>c.uid===action.uid&&shadow(c)&&c.line===q.line);
+  if(action.uid!=null&&!c)throw Error('not own matching shadow-line target');
+  if(c)readySolo(c);
+  if(q.line==='front')s.pending={kind:'slg022Enter',p:q.p,line:'energy'};
+  else s.pending=null;
+ }else if(q.kind==='slg060Swap'){
+  if(action.uid==null){s.pending=null;return;}
+  const p=s.players[q.p],source=p.energy.find(c=>c?.uid===action.uid);
+  if(!source||source.cardId!=='SLG-1-060')throw Error('invalid Machida');
+  s.pending={kind:'slg060Target',p:q.p,source:source.uid};
+ }else if(q.kind==='slg060Target'||q.kind==='slg022Swap'){
+  const p=s.players[q.p],source=p.energy.find(c=>c?.uid===q.source),target=p.front.find(c=>c?.uid===action.uid);
+  if(action.uid===null){s.pending=null;}
+  else{
+   if(!source||!target||(q.kind==='slg060Target'?source.cardId!=='SLG-1-060'||!(target.skipActive>0):source.cardId!=='SLG-1-022'||!shadow(target)))throw Error('illegal swap targets');
+   const a=source.slot,b=target.slot;p.energy[a]=target;p.front[b]=source;
+   source.line='front';source.slot=b;target.line='energy';target.slot=a;s.pending=null;
+  }
  }else if(q.kind==='entry002Mode'){
   const p=s.players[q.p];
   if(action.mode==='drawDiscard'){
@@ -643,6 +697,9 @@ function onEnter(s,c){
  if(c.cardId==='SLG-1-044'){
   draw(s,p);if(p.hand.length)enqueue(s,{kind:'slgDiscard',p:c.owner,source:c.uid});
  }
+ if(c.cardId==='SLG-1-020'){draw(s,p);if(p.hand.length)enqueue(s,{kind:'slg020EntryDiscard',p:c.owner,source:c.uid});}
+ if(c.cardId==='SLG-1-021')c.mustBlockTurn=s.turn;
+ if(c.cardId==='SLG-1-022'){c.grants??=[];c.grants.push({kind:'snipe',turn:s.turn});enqueue(s,{kind:'slg022Enter',p:c.owner,line:'front'});}
  if(c.cardId==='SLG-1-059'&&p.hand.length)enqueue(s,{kind:'slg059Entry',p:c.owner,source:c.uid});
  if(c.cardId==='SLG-1-030'&&field(p).some(x=>x.uid!==c.uid&&d(x).traits?.includes('影之軍團'))){
   const top=p.deck.slice(0,2);
@@ -707,6 +764,13 @@ export function soloTrainingLegalActions(s){
   if(q.kind==='slg044Target'){const p=s.players[q.p];return field(p).filter(isSung).flatMap(c=>[{type:'choose',uid:c.uid,attach:false},...(p.deck.length?[{type:'choose',uid:c.uid,attach:true}]:[])]);}
   if(q.kind==='slg077Target')return q.options.map(uid=>({type:'choose',uid}));
   if(q.kind==='slg077Buff')return [{type:'choose',uid:null},...field(s.players[q.p]).filter(c=>d(c).type==='character').map(c=>({type:'choose',uid:c.uid}))];
+  if(q.kind==='slg020EntryDiscard')return [{type:'choose',uid:null},...s.players[q.p].hand.map(c=>({type:'choose',uid:c.uid}))];
+  if(q.kind==='slg020Recover'||q.kind==='slg021Win')return [{type:'choose',uid:null},...q.options.map(uid=>({type:'choose',uid}))];
+  if(q.kind==='slg020AttackDiscard'||q.kind==='slg048Under')return s.players[q.p].hand.map(c=>({type:'choose',uid:c.uid}));
+  if(q.kind==='slg022Enter')return [{type:'choose',uid:null},...field(s.players[q.p]).filter(c=>shadow(c)&&c.line===q.line).map(c=>({type:'choose',uid:c.uid}))];
+  if(q.kind==='slg060Swap')return [{type:'choose',uid:null},...q.options.map(uid=>({type:'choose',uid}))];
+  if(q.kind==='slg060Target')return [{type:'choose',uid:null},...s.players[q.p].front.filter(c=>c&&(c.skipActive||0)>0).map(c=>({type:'choose',uid:c.uid}))];
+  if(q.kind==='slg022Swap')return [{type:'choose',uid:null},...s.players[q.p].front.filter(shadow).map(c=>({type:'choose',uid:c.uid}))];
   if(q.kind==='entry002Mode')return [{type:'choose',mode:'drawDiscard'},{type:'choose',mode:'buff'}];
   if(q.kind==='entry002Buff')return [{type:'choose',uid:null},...field(s.players[q.p]).filter(x=>x.uid!==q.source&&d(x).type==='character').map(x=>({type:'choose',uid:x.uid}))];
   if(q.kind==='entry002Discard'||q.kind==='entry004Discard')return s.players[q.p].hand.map(c=>({type:'choose',uid:c.uid}));
@@ -763,7 +827,7 @@ export function soloTrainingLegalActions(s){
   if(q.kind==='specialTrigger')return q.choices.map(uid=>({type:'choose',uid}));
   if(q.kind==='activeTrigger')return field(s.players[q.p]).map(c=>({type:'choose',uid:c.uid}));
   if(q.kind==='entryImpact'||q.kind==='entryProtect')return [{type:'choose',uid:null},...field(s.players[q.p]).filter(c=>c.uid!==q.source&&d(c).traits?.includes('DFN')).map(c=>({type:'choose',uid:c.uid}))];
-  if(q.kind==='block')return [{type:'choose',uid:null},...q.choices.map(uid=>({type:'choose',uid}))];
+  if(q.kind==='block')return [...(q.mandatory?[]:[{type:'choose',uid:null}]),...q.choices.map(uid=>({type:'choose',uid}))];
   return [];
  }
  const p=player(s),actions=[{type:'next'}];
@@ -953,6 +1017,8 @@ export function soloTrainingBotAction(s){
   if(s.pending.kind==='slgMill')return legal[legal.length-1];
   if(s.pending.kind==='slgDiscard'||s.pending.kind==='slg019Recover'||s.pending.kind==='slg044Target'||s.pending.kind==='slg077Target')return legal[0];
   if(s.pending.kind==='slgRecoveredBuff'||s.pending.kind==='slgRecoveredDeploy'||s.pending.kind==='slg019Entry'||s.pending.kind==='slg059Entry'||s.pending.kind==='slg077Buff')return legal.find(a=>a.uid!=null)||legal[0];
+  if(['slg020EntryDiscard','slg020Recover','slg021Win','slg022Enter','slg060Swap','slg060Target','slg022Swap'].includes(s.pending.kind))return legal[0];
+  if(['slg020AttackDiscard','slg048Under'].includes(s.pending.kind))return legal[0];
   if(s.pending.kind==='entry002Mode')return legal[0];
   if(s.pending.kind==='entry002Buff')return legal.find(a=>a.uid!=null)||legal[0];
   if(s.pending.kind==='entry002Discard'||s.pending.kind==='entry004Discard')return legal[0];
