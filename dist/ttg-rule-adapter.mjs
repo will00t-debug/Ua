@@ -15,6 +15,7 @@ import {legalGreen008Raids,resolveGreen008Raid,resolveGreen008TurnEnd} from './t
 import {legalGreen030Raids,resolveGreen030Raid,legalGreen030SidelinedChoices,resolveGreen030Sidelined} from './ttg-green-030.mjs';
 import {legalGreen012Plays,resolveGreen012Play,legalGreen012Search,resolveGreen012Search,legalGreen012Discards,resolveGreen012Discard,legalGreen012Double,resolveGreen012Double,resolveGreen012TurnEnd} from './ttg-green-012.mjs';
 import {legalGreenHighRaids,resolveGreenHighRaid,legalGreenHighRaidChoices,resolveGreenHighRaidChoice} from './ttg-green-high-raid.mjs';
+import {legalGreenRetirementChoices,resolveGreenRetirementChoice} from './ttg-green-retirement.mjs';
 import {legalGreenSitePlays,resolveGreenSitePlay,legalGreen033AfterRaid,resolveGreen033AfterRaid,legalGreen034SidelinedChoices,resolveGreen034Sidelined,legalGreen034AfterRaid,resolveGreen034AfterRaid} from './ttg-green-fields.mjs';
 import {legalGreen003,resolveGreen003,legalGreen011,resolveGreen011,legalGreen015,resolveGreen015,legalGreen018,resolveGreen018,legalGreen022,resolveGreen022,resolveGreenMainEnd,resolveGreenTurnEnd,legalGreen020Step,resolveGreen020Step,legalGreen016,resolveGreen016,legalGreen017,resolveGreen017} from './ttg-green-main.mjs';
 import {legalTtgEventTriggerChoices,resolveTtgEventLifeTrigger,TTG_IMPLEMENTED_EVENT_TRIGGERS} from './ttg-triggers.mjs';
@@ -31,6 +32,7 @@ export function legalTtgRuleActions(state,player){
  if(state.pending?.kind==='green030Sidelined')return state.pending.player===player?legalGreen030SidelinedChoices(state):[];
  if(state.pending?.kind==='green034Sidelined')return state.pending.player===player?legalGreen034SidelinedChoices(state):[];
  if(state.pending?.kind==='greenHighRaidQueue')return state.pending.player===player?legalGreenHighRaidChoices(state):[];
+ if(state.pending?.kind==='greenRetireOrder')return state.pending.player===player?legalGreenRetirementChoices(state):[];
  if(state.pending?.kind==='green012Search')return state.pending.player===player?legalGreen012Search(state):[];
  if(state.pending?.kind==='green012Discard')return state.pending.player===player?legalGreen012Discards(state):[];
  const pending=state.pendingTtgTrigger;
@@ -99,6 +101,7 @@ const actionMatches=(legal,action)=>legal.some(a=>a.type===action.type&&
  (a.slot===undefined||a.slot===action.slot)&&
  (a.replaceUid===undefined||a.replaceUid===action.replaceUid)&&
  (a.outsideUid===undefined||a.outsideUid===action.outsideUid)&&
+ (a.retirementEffect===undefined||a.retirementEffect===action.retirementEffect)&&
  (a.targetUids===undefined||
     (Array.isArray(action.targetUids)&&JSON.stringify(a.targetUids)===JSON.stringify(action.targetUids))||
     a.targetUids.includes(action.targetUid)||
@@ -126,6 +129,9 @@ export function dispatchTtgRuleAction(state,action){
  if(action.type==='green012Discard')return withTtgDerivedEnergy(resolveGreen012Discard(state,action),action.player);
  if(action.type==='greenHighRaid')return withTtgDerivedEnergy(resolveGreenHighRaid(state,action),action.player);
  if(action.type==='greenHighEffect')return withTtgDerivedEnergy(resolveGreenHighRaidChoice(state,action),action.player);
+ if(action.type==='green030Recover'||action.type==='green034Capture'){
+  if(state.pending?.kind==='greenRetireOrder')return withTtgDerivedEnergy(resolveGreenRetirementChoice(state,action),action.player);
+ }
  if(action.type==='ttgGreenSitePlay')return withTtgDerivedEnergy(resolveGreenSitePlay(withTtgDerivedEnergy(state,action.player),action),action.player);
  if(action.type==='green034Capture')return withTtgDerivedEnergy(resolveGreen034Sidelined(state,action),action.player);
  if(action.type==='green021Step')return withTtgDerivedEnergy(resolveGreen021Step(state,action),action.player);
@@ -171,6 +177,7 @@ export function chooseTtgRuleAiAction(state,player){
  if(state.pending?.kind==='ttgGreen029Entry')return options.find(x=>x.mode==='restPlay'&&x.line==='front')||options.find(x=>x.mode==='hand')||options[0];
  if(state.pending?.kind==='green030Sidelined')return options.find(x=>x.mode==='recover'&&x.line==='front')||options.find(x=>x.mode==='recover')||options[0];
  if(state.pending?.kind==='green034Sidelined')return options.find(x=>x.siteUid)||options[0];
+ if(state.pending?.kind==='greenRetireOrder')return options.find(x=>x.retirementEffect==='034'&&x.siteUid)||options.find(x=>x.retirementEffect==='030'&&x.mode==='recover')||options[0];
  if(state.pending?.kind==='greenHighRaidQueue')return options.find(x=>x.step==='viral004'&&x.mode==='attach')||options.find(x=>x.step==='site033'&&x.siteUid)||options.find(x=>x.step==='site034'&&x.siteUid)||options[0];
  if(state.pending?.kind==='green012Search'){
   const x=options[0],takeUid=x.candidates[0]||null;
