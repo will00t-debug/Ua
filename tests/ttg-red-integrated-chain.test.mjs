@@ -44,6 +44,7 @@ test('061 has two distinct effects in printed order; active 052 entry must finis
  assert.equal(s.players[0].front[0].ready,true);
  s=dispatchTtgCoreAction(s,legalTtgCoreActions(s).find(x=>x.discardUid===null));
  assert.equal(s.pending,null);
+ s=withTtgDerivedEnergy(withTtgDerivedEnergy(s,0),1);
  assert.ok(assertTtgCoreState(s));
 });
 test('062 picks already-field Simon 051 and resolves same draw/discard via printed retrigger',()=>{
