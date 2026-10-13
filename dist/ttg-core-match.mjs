@@ -312,7 +312,7 @@ export function ttgCoreAiChoice(s){
  if(s.pending?.kind==='block'){
   const att=pl.front.find(c=>c?.uid===s.pending.attackerUid);
   const other=s.players[1-p];
-  const candidates=other.front.filter(x=>x?.ready&&bp(s,1-p,x)>=bp(s,p,att));
+  const candidates=other.front.filter(x=>x?.ready&&greenTtgCanAttackOrBlock(s,1-p,x)&&bp(s,1-p,x)>=bp(s,p,att));
   if(candidates.length)return {type:'block',blockUid:candidates.sort((a,b)=>bp(s,1-p,a)-bp(s,1-p,b))[0].uid};
   return {type:'block',blockUid:null};
  }
