@@ -161,7 +161,16 @@ export function dispatchTtgRuleAction(state,action){
 // eventual match dispatcher and may not be skipped for scheduled retirement.
 export const beginTtgGreenAttackPhase=state=>withTtgDerivedEnergy(beginGreen021AttackPhase(state,state.active),state.active);
 export const resolveTtgMainPhaseEnd=state=>withTtgDerivedEnergy(resolveGreenMainEnd(resolveTtgMainEndRetire(state)),state.active);
-export const resolveTtgTurnEnd=state=>withTtgDerivedEnergy(expireTtgRed050Energy(resolveGreen012TurnEnd(resolveGreen008TurnEnd(resolveGreen025TurnEnd(resolveGreenEventTurnEnd(resolveGreenTurnEnd(resolveTtgTemporaryEnergyEndTurn(resolveTtgPendingEndTurn(state))))))),state)),state.active);
+export const resolveTtgTurnEnd=state=>{
+ const s1=resolveTtgPendingEndTurn(state);
+ const s2=resolveTtgTemporaryEnergyEndTurn(s1);
+ const s3=resolveGreenTurnEnd(s2);
+ const s4=resolveGreenEventTurnEnd(s3);
+ const s5=resolveGreen025TurnEnd(s4);
+ const s6=resolveGreen008TurnEnd(s5);
+ const s7=resolveGreen012TurnEnd(s6);
+ return withTtgDerivedEnergy(expireTtgRed050Energy(s7),state.active);
+}
 
 // Deterministic AI for this implemented subset. It only chooses actions
 // offered by the same legal action generator that a human client must use.
