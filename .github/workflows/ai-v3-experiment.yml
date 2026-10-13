@@ -1,8 +1,8 @@
 name: AI v3 Third-Round 700-Game Training
 
 on:
-  # Workflow edits trigger the third-round 700-game experiment once.
-  # Follow-up code/model commits do not re-trigger it.
+  # Rerun after reward-label fixes and passing regression tests.
+  # Only workflow edits trigger this 700-game experiment.
   push:
     branches: ['feature/ai-v3-learning']
     paths: ['.github/workflows/ai-v3-experiment.yml']
