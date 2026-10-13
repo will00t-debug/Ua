@@ -5,7 +5,7 @@ import {newTtgCoreMatch,validateTtgCoreDeck,legalTtgCoreActions,dispatchTtgCoreA
 import {withTtgDerivedEnergy} from '../dist/ttg-energy-snapshot.mjs';
 const cards=Object.fromEntries([
  ...['004','005','006','009','012','027','028','029','031','032','034'].map(x=>['TTG-1-'+x,4]),
- ['TTG-1-017',2],['TTG-1-033',2],['TTG-1-011',2]
+ ['TTG-1-017',3],['TTG-1-033',1],['TTG-1-011',2]
 ]);
 function grab(pl,id){
  for(const zone of ['deck','hand','life','outside']){
@@ -104,7 +104,7 @@ test('032 direct attack DAMAGE7 resolves all seven LIFE cards and their GET/COLO
 test('032 IMPACT4 deals four LIFE trigger points ONLY when winning character block',()=>{
  let s=match(70),p=s.players[0],op=s.players[1];s.phase='attack';p.turnCount=3;
  p.front[0]={...grab(p,'TTG-1-032'),ready:true,stack:[grab(p,'TTG-1-009')],under:[]};
- op.front[0]={...grab(op,'TTG-1-005'),ready:true};
+ op.front[0]={...grab(op,'TTG-1-006'),ready:true}; // 005 has Impact Null and correctly prevents IMPACT4
  s=withTtgDerivedEnergy(s,0);
  const attacker=s.players[0].front[0].uid,blocker=s.players[1].front[0].uid;
  s=after(s,{type:'attack',uid:attacker});
