@@ -87,3 +87,14 @@
 - UI驗證為實際 app.mjs 的 DOM 模擬載入、選擇與儲存；**未做手機真實瀏覽器／Vercel 預覽驗收**。
 - 本批沒有正式發布或改動 main，沒有提高任何 `auto`／正式完成旗標。
 - 接續優先：修補已發現的 DRAW／COLOR 可放棄與滿線登場移除替換，再補 SLG011旬回收ACTIVE、TTG004同名限次核心對局；新卡文批次從 SLG014、TTG006 接續。001～010等舊卡的未完分支依舊保留。
+
+## 接手續修：2026-10-14 官方通用 FAQ Q99 生命 Trigger 放棄選項（PR #26）
+
+日本官方 [Q99](https://www.unionarena-tcg.com/jp/faq/list.php?type=0)（2025-10-24 更新）明示：生命觸發時，觸發能力可以選擇**不發動**；揭示卡直接放場外。獨立《天元突破》核心原本對 **DRAW／FINAL** 直接自動處理，玩家沒有選擇權，屬於裁定差異。現在改為進入 `pendingTtgLife`，由生命方選擇發動或放棄：
+
+- DRAW：選擇「發動」才會真正從牌庫頂抽 1 張；放棄不得移動該實體。
+- FINAL：在最後 1 點生命受傷後先暫停；發動且牌庫有牌時補 1 生命，放棄則因生命歸零輸局。
+- 原有 GET／ACTIVE／COLOR 等觸發的選擇機制仍保留；UI 新增清楚的繁體中文「發動／不發動」選項。
+- 更新 `tests/ttg-green-life.test.mjs`、`tests/ttg-red-first-three.test.mjs`、`tests/ttg-core-match.test.mjs` 及官方第三批測試，覆蓋分支。
+
+**仍未驗收完成：** SOLO 獨立引擎中的 DRAW／FINAL／GET 在 `hurt()` 仍直接自動處理；需要分批調整並驗證原有 50 張守恆與 Damage2 時序。此 PR 僅修 TTG，不可因此宣稱 161 張全卡完成官方驗收。

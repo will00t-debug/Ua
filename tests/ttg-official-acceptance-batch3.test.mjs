@@ -27,14 +27,16 @@ test('002 main needs two distinct ACTIVE characters; invalid target atomic; ener
  const alone=game();put(alone,'002','front',0);
  assert.equal(legalTtgCoreActions(alone).some(a=>a.type==='activateViral002'),false,'REST cost cannot also pay front target');
 });
-test('002 ACTIVE / 004 GET allow decline; 005 DRAW resolves actual damage (DRAW decline remains unaudited)',()=>{
+test('official Q99: 002 ACTIVE, 004 GET, 005 DRAW all offer defender activation or decline',()=>{
  for(const id of ['002','004','005']){let s=game();s.phase='attack';const attacker=put(s,'006','front',0),p=s.players[1];
   const life=take(p,id);p.deck.push(p.life.shift());p.life.unshift(life);const hand=p.hand.length;
   const target=put(s,'006','energy',0,1,false),top=p.deck[0].uid;s=withTtgDerivedEnergy(s,0);
   s=act(s,a=>a.type==='attack'&&a.uid===attacker.uid);
   if(s.pending?.kind==='block')s=act(s,a=>a.type==='block'&&a.blockUid===null);
-  if(id==='005'){assert.equal(s.players[1].hand.length,hand+1);assert.ok(s.players[1].hand.some(c=>c.uid===top));continue;}
-  assert.ok(s.pendingTtgLife);const declined=act(s,a=>a.mode==='decline');assert.ok(declined.players[1].outside.some(c=>c.uid===life.uid));
+  assert.ok(s.pendingTtgLife);
+  const declined=act(s,a=>a.mode==='decline');
+  assert.ok(declined.players[1].outside.some(c=>c.uid===life.uid));
+  assert.equal(declined.players[1].hand.length,hand,'declining any Trigger cannot draw or add life card');
   s=act(s,a=>a.mode===({ '002':'active','004':'get','005':'draw'}[id])&&(id!=='002'||a.targetUid===target.uid));
   if(id==='002'){assert.equal(s.players[1].energy[0].ready,true);assert.equal(s.players[1].energy[0].currentBp,6000);}
   else {assert.equal(s.players[1].hand.length,hand+1);assert.ok(s.players[1].hand.some(c=>c.uid===(id==='004'?life.uid:top)));}
