@@ -4,8 +4,8 @@ import {TTG_BY_ID} from '../dist/ttg-builder.mjs';
 import {newTtgCoreMatch,validateTtgCoreDeck,legalTtgCoreActions,dispatchTtgCoreAction,runTtgCoreAiMatch,assertTtgCoreState} from '../dist/ttg-core-match.mjs';
 import {withTtgDerivedEnergy} from '../dist/ttg-energy-snapshot.mjs';
 const cards=Object.fromEntries([
- ...['005','006','009','012','017','027','028','029','031','032','033','034'].map(x=>['TTG-1-'+x,4]),
- ['TTG-1-004',2]
+ ...['004','005','006','009','012','027','028','029','031','032','034'].map(x=>['TTG-1-'+x,4]),
+ ['TTG-1-017',2],['TTG-1-033',2],['TTG-1-011',2]
 ]);
 function grab(pl,id){
  for(const zone of ['deck','hand','life','outside']){
