@@ -71,6 +71,8 @@ test('STEP to energy line increases live production but never wakes a rested Yok
 test('unknown card metadata fails closed rather than assuming an energy producer',()=>{
  const s=game();
  s.players[0].energy[0]=card('missing','TTG-1-002',undefined,{gen:undefined});
+ assert.throws(()=>calculateTtgEnergyByColor(s,0),/Unknown TTG energy color/);
+ s.players[0].energy[0].color='green';
  assert.throws(()=>calculateTtgEnergyByColor(s,0),/Unverified energy generator/);
  const external={...s,energyMode:'external'};
  assert.equal(withTtgDerivedEnergy(external,0),external,'external calculator keeps the original state unchanged');
