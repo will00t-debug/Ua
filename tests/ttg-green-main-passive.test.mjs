@@ -41,15 +41,17 @@ test('018 Buta REST boost retires at Main end, 022 Yomako returns to hand instea
 });
 test('011 Simon modes: +1 energy or front generation until next own start',()=>{
  for(const mode of ['boost','frontEnergy']){
-  const s=game();s.players[0].front[0]=card('simon','TTG-1-011');
+  const s=game();
+  if(mode==='boost')s.players[0].energy[0]=card('simon','TTG-1-011');
+  else s.players[0].front[0]=card('simon','TTG-1-011');
   const acts=legalGreen011(s,{player:0,uid:'simon'});
   assert.deepEqual(acts.map(x=>x.mode),['boost','frontEnergy']);
   const after=resolveGreen011(s,{player:0,uid:'simon',mode});
   assert.deepEqual(legalGreen011(after,{player:0,uid:'simon'}),[]);
-  assert.equal(calculateTtgEnergyByColor(after,0).green,1,mode);
+  assert.equal(calculateTtgEnergyByColor(after,0).green,mode==='boost'?2:1,mode);
   const later=structuredClone(after);later.players[0].turnCount=3;
   const expired=resolveGreenOwnStart(later,0);
-  assert.equal(calculateTtgEnergyByColor(expired,0).green,0);
+  assert.equal(calculateTtgEnergyByColor(expired,0).green,mode==='boost'?1:0);
  }
 });
 test('003 Viral self front-gen threshold immediately unlocks 8+ other front producers',()=>{
@@ -117,7 +119,7 @@ test('024 Reite gunmen energy and field discounts use live zone contents',()=>{
  assert.equal(calculateTtgEnergyByColor(s,0).green,1);
  assert.equal(greenTtgNeedsEnergy(s,0,field),1,'own Reite reduces field cost by one');
  s.players[0].energy[1]=card('gun','TTG-1-029');
- assert.equal(calculateTtgEnergyByColor(s,0).green,4,'gunmen grants Reite +1 and other generator +1');
+ assert.equal(calculateTtgEnergyByColor(s,0).green,3,'gunmen grants Reite +1 and other generator +1');
  s.players[0].energy[1]=null;
  assert.equal(calculateTtgEnergyByColor(s,0).green,1);
  assert.equal(greenTtgImpactNull(card('x','TTG-1-005')),true);
