@@ -5,7 +5,7 @@
 import {legalTtgHandEvents,dispatchTtgHandEvent} from './ttg-event-resolver.mjs';
 import {withTtgDerivedEnergy} from './ttg-energy-snapshot.mjs';
 import {legalTtgRaidEntries,dispatchTtgRaidEntry} from './ttg-raid-entry.mjs';
-import {legalGreen003,resolveGreen003,legalGreen011,resolveGreen011,legalGreen015,resolveGreen015,legalGreen018,resolveGreen018,legalGreen022,resolveGreen022,resolveGreenMainEnd,resolveGreenTurnEnd} from './ttg-green-main.mjs';
+import {legalGreen003,resolveGreen003,legalGreen011,resolveGreen011,legalGreen015,resolveGreen015,legalGreen018,resolveGreen018,legalGreen022,resolveGreen022,resolveGreenMainEnd,resolveGreenTurnEnd,legalGreen020Step,resolveGreen020Step} from './ttg-green-main.mjs';
 import {legalTtgEventTriggerChoices,resolveTtgEventLifeTrigger,TTG_IMPLEMENTED_EVENT_TRIGGERS} from './ttg-triggers.mjs';
 import {resolveTtgNia059,resolveTtgButa063,resolveTtgYoko065Step,resolveTtgMainEndRetire,resolveTtgPendingEndTurn,eligibleTtg071AttackBuffTargets,resolveTtg071FirstAttack,eligibleTtgViral002Targets,resolveTtgViral002,resolveTtgTemporaryEnergyEndTurn} from './ttg-pending-rules.mjs';
 
@@ -55,6 +55,7 @@ export function legalTtgRuleActions(state,player){
  }
  if(state.phase==='move'){
   const pl=state.players[player],list=[];
+  for(const c of pl.front||[])if(c?.cardId==='TTG-1-020')list.push(...legalGreen020Step(state,{player,uid:c.uid}));
   for(const c of pl.front||[]){
    if(c?.cardId!=='TTG-1-065')continue;
    for(let slot=0;slot<(pl.energy||[]).length;slot++)
@@ -89,6 +90,7 @@ export function dispatchTtgRuleAction(state,action){
  if(action.type==='ttgGreen015')return withTtgDerivedEnergy(resolveGreen015(state,action),action.player);
  if(action.type==='ttgGreen018')return withTtgDerivedEnergy(resolveGreen018(state,action),action.player);
  if(action.type==='ttgGreen022')return withTtgDerivedEnergy(resolveGreen022(state,action),action.player);
+ if(action.type==='ttgGreen020Step')return withTtgDerivedEnergy(resolveGreen020Step(state,action),action.player);
  if(action.type==='activateNia059')return withTtgDerivedEnergy(resolveTtgNia059(state,action),action.player);
  if(action.type==='activateViral002')return withTtgDerivedEnergy(resolveTtgViral002(state,action),action.player);
  if(action.type==='activateButa063')return withTtgDerivedEnergy(resolveTtgButa063(state,action),action.player);
@@ -149,7 +151,7 @@ export function chooseTtgRuleAiAction(state,player){
     options.find(x=>x.type==='ttgGreen015')||options.find(x=>x.type==='ttgGreen011')||
     options.find(x=>x.type==='ttgGreen018')||options.find(x=>x.type==='ttgGreen022')||
     options.find(x=>x.type==='activateViral002')||options.find(x=>x.type==='activateButa063')||
-    options.find(x=>x.type==='stepYoko065')||null;
+    options.find(x=>x.type==='ttgGreen020Step')||options.find(x=>x.type==='stepYoko065')||null;
 }
 export function simulateTtgRuleAi(state,player,{maxActions=64}={}){
  if(!Number.isInteger(maxActions)||maxActions<0||maxActions>1000)throw new Error('Invalid simulation bound');
