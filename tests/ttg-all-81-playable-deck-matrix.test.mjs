@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {TTG_BY_ID} from '../dist/ttg-builder.mjs';
-import {TTG_GREEN_BETA_PRESET,TTG_RED_BETA_PRESET,ttgBetaDeckIssues} from '../dist/ttg-browser.mjs';
+import {TTG_GREEN_BETA_PRESET,TTG_RED_BETA_PRESET,ttgBetaDeckIssues,ttgExecutableActions} from '../dist/ttg-browser.mjs';
 import {TTG_CORE_SMOKE_IDS,newTtgCoreMatch,legalTtgCoreActions,ttgCoreAiChoice,dispatchTtgCoreAction,assertTtgCoreState} from '../dist/ttg-core-match.mjs';
 // Every TTG card is physically inserted into a valid 50-card deck, not just accepted by a hard-coded ID array.
 // Full AI match is a playability smoke test, NOT per-card printed-effect certification.
@@ -24,6 +24,16 @@ function play(id,deck){
  let s=newTtgCoreMatch({decks:[deck,deck],seed,first:0});
  let count=0,actual081Resolutions=0;
  while(s.status==='playing'&&count<7000){
+  if(count%19===0||s.pending||s.pendingTtgLife){
+   const candidates=ttgExecutableActions(s);
+   const seen=new Set();
+   for(const a of candidates){
+    if(seen.has(a.type))continue;seen.add(a.type);
+    if(seen.size>7)break;
+    try{const clicked=dispatchTtgCoreAction(s,JSON.parse(JSON.stringify(a)));assertTtgCoreState(clicked);}
+    catch(e){throw new Error('Human UI option fails: card='+id+' step='+count+' phase='+s.phase+' pending='+s.pending?.kind+' action='+JSON.stringify(a)+' cause='+e.message,{cause:e});}
+   }
+  }
   const legal=legalTtgCoreActions(s);
   assert.ok(legal.length,id+' has no legal actions at '+count);
   const act=ttgCoreAiChoice(s);
