@@ -69,7 +69,7 @@ test('062 picks already-field Simon 051 and resolves same draw/discard via print
 test('red RAID life from outside: no AP, base, red energy, physical UID and deferred entry',()=>{
  let s=setup(),pl=s.players[1];
  pl.energy[0]={...extract(pl,'TTG-1-066'),ready:true,gen:10};
- const kamina=extract(pl,'TTG-1-042');pl.front[0]={...kamina,ready:true};
+ const kamina=extract(pl,'TTG-1-045');pl.front[0]={...kamina,ready:true};
  const trigger=extract(pl,'TTG-1-072');pl.life.unshift(trigger);
  s.phase='attack';s.active=0;
  const before=pl.apCards.map(x=>x.ready);
