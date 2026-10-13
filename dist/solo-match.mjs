@@ -103,7 +103,7 @@ function position(c,p,line,slot){c.owner=p;c.ready=false;c.line=line;c.slot=slot
 function retire(s,p,c){
  let arr=s.players[p][c.line],old=arr[c.slot];if(old?.uid!==c.uid)throw Error('retire lost field slot');
  const printed=d(c);
- const ryuuIsPresent=s.players[p].front.some(x=>x?.uid!==c.uid&&x.cardId==='SLG-1-073');
+ const ryuuIsPresent=s.players[p].front.some(x=>x&&x.uid!==c.uid&&x.cardId==='SLG-1-073');
  const retiredIsland=printed.traits?.includes('第四次架南島Raid')&&!printed.traits?.includes('DFN');
  if(ryuuIsPresent&&retiredIsland){
   for(const x of field(s.players[p]).filter(x=>d(x).traits?.includes('DFN'))){
