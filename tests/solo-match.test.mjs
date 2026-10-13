@@ -2,12 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {SOLO_MATCH_SUPPORTED,SOLO_TRAINING_PRESET,SOLO_SHADOW_TRAINING_PRESET,soloTrainingDeckIssues,newSoloTrainingMatch,soloTrainingLegalActions,soloTrainingDispatch,soloTrainingBotAction,assertSoloTrainingMatch,simulateSoloTraining,soloEnergy} from '../dist/solo-match.mjs';
 const advance=(s,target)=>{for(let i=0;i<5&&s.phase!==target;i++)s=soloTrainingDispatch(s,{type:'next'});return s;};
-test('training deck uses exactly 50 legitimate green cards, and rejects every unsupported SLG effect',()=>{
+test('training deck uses exactly 50 cards and rejects overweight or invalid SLG deck',()=>{
  assert.deepEqual(soloTrainingDeckIssues(SOLO_TRAINING_PRESET),[]);
  const size=Object.values(SOLO_TRAINING_PRESET).reduce((a,b)=>a+b,0);assert.equal(size,50);
  assert.equal(SOLO_MATCH_SUPPORTED.length,80);
  assert.match(soloTrainingDeckIssues({'SLG-1-030':12,'SLG-1-047':4}).join(';'),/50/);
- assert.match(soloTrainingDeckIssues({...SOLO_TRAINING_PRESET,'SLG-1-047':1}).join(';'),/未接入/);
+ assert.match(soloTrainingDeckIssues({...SOLO_TRAINING_PRESET,'SLG-1-047':1}).join(';'),/51張/);
 });
 test('opening both players has 7 hand, 7 life, no duplicate UIDs, first-turn AP 1, source-phase transitions',()=>{
  let s=newSoloTrainingMatch({seed:74});
