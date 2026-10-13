@@ -6,12 +6,15 @@ import {withTtgDerivedEnergy,calculateTtgEnergyByColor} from './ttg-energy-snaps
 import {legalTtgRuleActions,dispatchTtgRuleAction,resolveTtgMainPhaseEnd,resolveTtgTurnEnd} from './ttg-rule-adapter.mjs';
 import {spendTtgApCards} from './ttg-actions.mjs';
 import {TTG_GREEN_ENTRY_IDS,legalTtgGreenEntryDecisions,resolveTtgGreenEntry} from './ttg-green-entry.mjs';
+import {greenTtgCurrentBp,greenTtgNeedsEnergy} from './ttg-green-passives.mjs';
+import {resolveGreenOwnStart} from './ttg-green-main.mjs';
 
 // Only IDs with on-entry, passives, attacks and life triggers implemented below
 // may enter this core. In particular 071 Raid is tested independently, not here.
 export const TTG_CORE_SMOKE_IDS=Object.freeze([
  'TTG-1-001','TTG-1-002','TTG-1-005','TTG-1-006','TTG-1-009',
- 'TTG-1-010','TTG-1-014','TTG-1-019','TTG-1-023','TTG-1-026',
+ 'TTG-1-010','TTG-1-011','TTG-1-014','TTG-1-015','TTG-1-018',
+ 'TTG-1-019','TTG-1-020','TTG-1-022','TTG-1-023','TTG-1-024','TTG-1-026',
  'TTG-1-036','TTG-1-038',
  'TTG-1-042','TTG-1-043','TTG-1-047','TTG-1-048',
  'TTG-1-063','TTG-1-064','TTG-1-065','TTG-1-066'
@@ -57,6 +60,7 @@ function start(s){
   if(!pl.deck.length){s.status='finished';s.winner=1-p;s.endReason='requiredDrawEmpty';return s;}
   pl.hand.push(pl.deck.shift());
  }
+ Object.assign(s,resolveGreenOwnStart(s,p));
  return refreshEnergy(s,p);
 }
 export function newTtgCoreMatch({decks,seed=1,first=0}={}){
@@ -90,11 +94,7 @@ export function assertTtgCoreState(s){
  }
  return true;
 }
-const bp=(s,p,c)=>{
- let n=(c.currentBp??printed(c).bp);
- if(c.cardId==='TTG-1-006'&&s.active===p&&s.players[p].energyProduced.green>=6)n+=1000;
- return n;
-};
+const bp=(s,p,c)=>greenTtgCurrentBp(s,p,c);
 // Preserve a stable, user-selectable decision for each legal target; the full
 // reducer validates custom bottom-order permutations if the UI supplies them.
 function greenEntryChoices(s){
@@ -147,7 +147,7 @@ export function legalTtgCoreActions(s){
   for(const h of pl.hand){
    const d=printed(h);
    if(d.type!=='character')continue;
-   if(pl.energyProduced[d.color]<d.energy||pl.apCards.every(c=>!c.ready))continue;
+   if(pl.energyProduced[d.color]<greenTtgNeedsEnergy(s,p,h)||pl.apCards.every(c=>!c.ready))continue;
    for(const line of ['energy','front'])for(let slot=0;slot<4;slot++)if(!pl[line][slot])
     actions.push({type:'play',handUid:h.uid,line,slot});
   }
@@ -159,7 +159,7 @@ export function legalTtgCoreActions(s){
  if(s.phase==='move')actions.push(...legalTtgRuleActions(s,p));
  return [...actions,{type:'next'}];
 }
-const sameAction=(a,b)=>a.type===b.type&&['handUid','uid','slot','line','blockUid','targetUid','baseUid','sourceUid','mode','takeUid','discardUid','returnUid'].every(k=>
+const sameAction=(a,b)=>a.type===b.type&&['handUid','uid','slot','line','blockUid','targetUid','baseUid','sourceUid','mode','takeUid','discardUid','returnUid','apUid'].every(k=>
  a[k]===undefined||a[k]===b[k]);
 function removeFront(s,p,uid){
  const pl=s.players[p],i=pl.front.findIndex(c=>c?.uid===uid);
@@ -301,7 +301,11 @@ export function ttgCoreAiChoice(s){
   // Use exactly the same stand-alone event/REST effect validator as human choices.
   const effects=options.filter(x=>!['play','next'].includes(x.type));
   if(effects.length){
-   const candidate=effects.find(x=>x.type==='activateButa063')||effects.find(x=>x.type==='activateViral002');
+   const candidate=effects.find(x=>x.type==='activateButa063')||effects.find(x=>x.type==='activateViral002')||
+    effects.find(x=>x.type==='ttgGreen003Front')||effects.find(x=>x.type==='ttgGreen003Ready')||
+    effects.find(x=>x.type==='ttgGreen015')||effects.find(x=>x.type==='ttgGreen011'&&x.mode==='boost')||
+    effects.find(x=>x.type==='ttgGreen011')||effects.find(x=>x.type==='ttgGreen018')||
+    effects.find(x=>x.type==='ttgGreen022');
    if(candidate)return candidate;
    const event=effects.find(x=>x.type==='playTtgEvent');
    if(event){
