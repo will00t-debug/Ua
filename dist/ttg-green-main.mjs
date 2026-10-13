@@ -31,6 +31,7 @@ export function resolveGreen015(s,{player,uid,apUid}={}){
  pl.hand.push(pl.deck.shift());
  card.energyBonus=(card.energyBonus||0)+1;
  card.ttgGreenEnergyExpiresTurn=s.turn;
+ card.ttgGreenBonusCount=(card.ttgGreenBonusCount||0)+1;
  mark(result,player,uid,'draw');
  return result;
 }
@@ -123,7 +124,8 @@ export function resolveGreenTurnEnd(s){
  const result=structuredClone(s);
  for(const pl of result.players){
   for(const x of own(pl))if(x.card.ttgGreenEnergyExpiresTurn===s.turn){
-   x.card.energyBonus=Math.max(0,(x.card.energyBonus||0)-1);
+   x.card.energyBonus=Math.max(0,(x.card.energyBonus||0)-(x.card.ttgGreenBonusCount||1));
+   delete x.card.ttgGreenBonusCount;
    delete x.card.ttgGreenEnergyExpiresTurn;
   }
   if(pl.frontGenerationExpiresTurn===s.turn){
@@ -165,4 +167,33 @@ export function resolveGreen020Step(s,{player,uid,slot}={}){
  const result=structuredClone(s),pl=result.players[player],index=pl.front.findIndex(c=>c?.uid===uid);
  pl.energy[slot]=pl.front[index];pl.front[index]=null;
  return result;
+}
+
+// 016 Nia: once per NAME in one turn; at 20+ total energy REST and draw 1.
+export function legalGreen016(s,{player,uid}={}){
+ try{const x=stat(s,player,uid,'TTG-1-016'),pl=s.players[player];
+  return x.card.ready&&allEnergy(s,player)>=20&&pl.deck.length>0&&
+   !pl.greenUsedNames?.[s.turn+':ニア:draw20']?[{type:'ttgGreen016',player,uid}]:[];
+ }catch{return [];}
+}
+export function resolveGreen016(s,{player,uid}={}){
+ if(!legalGreen016(s,{player,uid}).length)throw new Error('Illegal Nia 016 20-energy draw');
+ const result=structuredClone(s),pl=result.players[player],c=own(pl).find(x=>x.card.uid===uid).card;
+ c.ready=false;pl.hand.push(pl.deck.shift());
+ pl.greenUsedNames??={};pl.greenUsedNames[s.turn+':ニア:draw20']=true;
+ return result;
+}
+// 017 Nia: at 8+ energy, once this turn, add TWO temporary green energy.
+export function legalGreen017(s,{player,uid}={}){
+ try{stat(s,player,uid,'TTG-1-017');
+  return allEnergy(s,player)>=8&&!used(s,player,uid,'plus2')?[{type:'ttgGreen017',player,uid}]:[];
+ }catch{return [];}
+}
+export function resolveGreen017(s,{player,uid}={}){
+ if(!legalGreen017(s,{player,uid}).length)throw new Error('Illegal Nia 017 +2 energy activation');
+ const result=structuredClone(s),c=own(result.players[player]).find(x=>x.card.uid===uid).card;
+ c.energyBonus=(c.energyBonus||0)+2;
+ c.ttgGreenBonusCount=(c.ttgGreenBonusCount||0)+2;
+ c.ttgGreenEnergyExpiresTurn=s.turn;
+ mark(result,player,uid,'plus2');return result;
 }
