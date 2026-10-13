@@ -73,3 +73,16 @@ test('TTG 012 actual mobile buttons show hand multi-select and both AP/retire mo
   assert.ok(assertTtgCoreState(next));
  }finally{delete globalThis.document;delete globalThis.window;delete globalThis.localStorage;}
 });
+
+test('TTG 012 Q2266 empty hand can legally pay zero discard and ready one AP without stalling UI',async()=>{
+ const {s}=fixture(),p=s.players[0],ap=p.apCards[0].uid;
+ p.deck.push(...p.hand.splice(0));p.apCards[0].ready=false;
+ assert.ok(assertTtgCoreState(s));
+ const action=ttg012ManualChoice(s,{discardUids:[],mode:'readyAP',apUid:ap});
+ const next=dispatchTtgCoreAction(s,action);
+ assert.equal(next.pending,null);assert.equal(next.players[0].apCards[0].ready,true);
+ assert.ok(assertTtgCoreState(next));
+ const file=await import('node:fs');
+ const src=file.readFileSync(new URL('../dist/app.mjs',import.meta.url),'utf8');
+ assert.ok(src.includes("!chosen.length&&s.players[0].hand.length"),'0 cards to discard must not disable confirmation');
+});
