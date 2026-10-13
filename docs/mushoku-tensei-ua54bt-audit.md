@@ -70,3 +70,11 @@ Scope: 80 numbered ordinary cards, excluding alternate art and AP artworks. Prin
 - Rugia 的部分印刷數字用圖示顯示，不能把 HTML 文字中的 `Image` 當成具體 AP、BP 或能源值。異圖及 AP 卡仍然排除。
 - **MST-1-061 七星**：根據路基亞效果與卡片商家列出的能源1／AP1／BP2000及原本初步產能資訊，補齊完整數值欄位，正式自動結算仍未驗證。商家資料：https://www.ebay.com/itm/398082826728；路基亞：https://rugiacreation.com/ua/search?Color1=%E7%B6%A0&Name=HK&Version=MST。
 - **初步完整欄位 72/80**；其餘8張（010、011、015、019、023、044、064、078）仍有數值待核對，不造假。全部卡片 `auto:false`，遊戲引擎實際支援 0/80。
+
+## 2026-10-14 官方 80/80 印刷欄位完整稽核（最新、優先於上方歷史紀錄）
+- 使用日本 BANDAI 官方逐卡頁 `detail_iframe.php?card_no=UA54BT/MST-1-NNN`，於獨立 GitHub Actions 讀取 001～080 共 **80/80** 頁並完成稽核：https://github.com/will00t-debug/Ua/actions/runs/38450040170 （PASS，80/80 官方頁可用、數值可解碼）。
+- 目前 **80/80 初步完整印刷資料**：需求能源、印刷 AP、BP、發生能源、種類、特徵、Trigger、日文效果及生命 Trigger 效果，均已保存在 `dist/mst-official-print.mjs`，並由 `dist/mushoku-tensei.mjs` 明確載入覆寫早期參考資料。之前提及的 72/80 和其餘8張待補，屬於**已過期進度**。
+- 最後八張 010 / 011 / 015 / 019 / 023 / 044 / 064 / 078 已依官方直接補齊，重點 064 原印刷 AP=2、BP4000、發生綠能源2；010 發生藍能源2；019 / 044 發生同色能源2。
+- 已對全部80張的原有數值／Trigger／種類／特徵比對 BANDAI 官方，**0 項發現不一致**（最後8張修復後）。不含官方卡圖檔，維持版權待確認。
+- `tests/mst-completeness.test.mjs` 與 `tests/mst-card-inventory.test.mjs` 更新成 **80/80** 資料檢查；執行測試用 `feature/mst-source-audit` 暫存分支的 GitHub Actions，避免覆蓋其他作品分支。
+- **80/80 此處僅指初步印刷欄位**，不是中文逐字翻譯完整性、每卡 FAQ 結算驗證或可玩程度。主要對戰引擎 **0/80 已完成端到端驗證**；仍需接線、玩家選項、AP/Raid/生命時序、AI 與牌組 UI。
