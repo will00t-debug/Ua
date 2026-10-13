@@ -41,9 +41,14 @@ export function chooseNeuralAction(s,{model=CHAMPION_MODEL,minMargin=0.24,diagno
  let best=null,bestScore=baselineScore;
  for(const action of legal){
   const board=baselineBoard===null?null:safeBoardScore(s,action,p,known);
-  // Veto only comparable public states; different pending effects must not
-  // be ranked as though their future choices were already resolved.
-  if(board!==null&&baselineBoard!==null&&board.pendingKind===baselineBoard.pendingKind&&board.score<baselineBoard.score-1.5){
+  // Never let the network override a teacher action using a candidate
+  // whose hidden-zone effects or pending resolution cannot be compared.
+  // Previously those candidates bypassed the positional safety veto.
+  if(board===null||baselineBoard===null||board.pendingKind!==baselineBoard.pendingKind){
+   if(diagnostics)diagnostics.vetoed=(diagnostics.vetoed||0)+1;
+   continue;
+  }
+  if(board.score<baselineBoard.score-1.5){
    if(diagnostics)diagnostics.vetoed=(diagnostics.vetoed||0)+1;
    continue;
   }
