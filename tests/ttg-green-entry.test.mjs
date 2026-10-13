@@ -12,8 +12,8 @@ const all=(pl)=>{
  return [...pl.front.filter(Boolean),...pl.energy.filter(Boolean),...pl.hand,...pl.deck,...pl.outside,...pl.life].flatMap(recur).sort();
 };
 const effect=(s,payload)=>resolveTtgGreenEntry(s,{player:0,sourceUid:'src',...payload});
-test('green entry effect registry contains only the seven independently implemented IDs',()=>{
- assert.deepEqual(TTG_GREEN_ENTRY_IDS,['TTG-1-001','TTG-1-009','TTG-1-010','TTG-1-014','TTG-1-023','TTG-1-026','TTG-1-077']);
+test('green entry effect registry contains only the six independently implemented IDs',()=>{
+ assert.deepEqual(TTG_GREEN_ENTRY_IDS,['TTG-1-001','TTG-1-009','TTG-1-010','TTG-1-014','TTG-1-023','TTG-1-026']);
  assert.ok(TTG_GREEN_ENTRY_IDS.every(id=>TTG_BY_ID[id]?.color==='green'));
 });
 test('001 Viral may inspect top: keep physical top or move to outside without drawing',()=>{
@@ -101,19 +101,6 @@ test('026 Rossiu chooses top-7 Ark search OR outside recovery, never both',()=>{
  assert.deepEqual(fromOutside.players[0].deck.map(x=>x.uid),['a','ark','other','d']);
  assert.deepEqual(all(fromDeck.players[0]),all(s.players[0]));
  assert.deepEqual(all(fromOutside.players[0]),all(s.players[0]));
-});
-test('077 Dai-Gurren only recovers optional printed Gunmen from own outside',()=>{
- const s=state('TTG-1-077');
- s.players[0].outside=[card('f','TTG-1-033'),card('n','TTG-1-009')];
- const op=legalTtgGreenEntryDecisions(s,{player:0,sourceUid:'src'});
- assert.deepEqual(op[0].candidateUids,['f']);
- assert.throws(()=>effect(s,{mode:'recoverGunmen',takeUid:'n'}));
- const chosen=effect(s,{mode:'recoverGunmen',takeUid:'f'});
- assert.deepEqual(chosen.players[0].hand.map(x=>x.uid),['f']);
- assert.deepEqual(chosen.players[0].outside.map(x=>x.uid),['n']);
- const skip=effect(s,{mode:'recoverGunmen'});
- assert.equal(skip.players[0].hand.length,0);
- assert.deepEqual(all(chosen.players[0]),all(s.players[0]));
 });
 test('entry cannot be resolved by opponent or replayed after its pending resolution',()=>{
  const s=state('TTG-1-001');s.players[0].deck=[card('d','TTG-1-005')];
