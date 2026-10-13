@@ -5,11 +5,14 @@ import {TTG_BY_ID,normalizeTtgCounts} from './ttg-builder.mjs';
 import {withTtgDerivedEnergy,calculateTtgEnergyByColor} from './ttg-energy-snapshot.mjs';
 import {legalTtgRuleActions,dispatchTtgRuleAction,resolveTtgMainPhaseEnd,resolveTtgTurnEnd} from './ttg-rule-adapter.mjs';
 import {spendTtgApCards} from './ttg-actions.mjs';
+import {TTG_GREEN_ENTRY_IDS,legalTtgGreenEntryDecisions,resolveTtgGreenEntry} from './ttg-green-entry.mjs';
 
 // Only IDs with on-entry, passives, attacks and life triggers implemented below
 // may enter this core. In particular 071 Raid is tested independently, not here.
 export const TTG_CORE_SMOKE_IDS=Object.freeze([
- 'TTG-1-002','TTG-1-005','TTG-1-006','TTG-1-019','TTG-1-036','TTG-1-038',
+ 'TTG-1-001','TTG-1-002','TTG-1-005','TTG-1-006','TTG-1-009',
+ 'TTG-1-010','TTG-1-014','TTG-1-019','TTG-1-023','TTG-1-026',
+ 'TTG-1-036','TTG-1-038',
  'TTG-1-042','TTG-1-043','TTG-1-047','TTG-1-048',
  'TTG-1-063','TTG-1-064','TTG-1-065','TTG-1-066'
 ]);
@@ -92,9 +95,40 @@ const bp=(s,p,c)=>{
  if(c.cardId==='TTG-1-006'&&s.active===p&&s.players[p].energyProduced.green>=6)n+=1000;
  return n;
 };
+// Preserve a stable, user-selectable decision for each legal target; the full
+// reducer validates custom bottom-order permutations if the UI supplies them.
+function greenEntryChoices(s){
+ const pending=s.pending,p=pending.player,pl=s.players[p];
+ const decisions=legalTtgGreenEntryDecisions(s,{player:p,sourceUid:pending.sourceUid});
+ const make=(opt,more={})=>({type:'resolveGreenEntry',player:p,sourceUid:pending.sourceUid,
+  mode:opt.mode,...more});
+ const actions=[];
+ for(const opt of decisions){
+  if(['keepTop','outsideTop','emptyDeck'].includes(opt.mode))actions.push(make(opt));
+  else if(opt.mode==='drawThenDiscard')for(const discardUid of opt.discardUids)
+   actions.push(make(opt,{discardUid}));
+  else if(opt.mode==='mandatoryBounce'){
+   if(opt.selfIfEmpty)actions.push(make(opt));
+   else for(const returnUid of opt.candidateUids)actions.push(make(opt,{returnUid}));
+  }else if(opt.mode==='search'||opt.mode==='arkChoice'){
+   for(const takeUid of [null,...opt.candidateUids]){
+    const order=opt.revealed.filter(uid=>uid!==takeUid);
+    if(!takeUid)actions.push(make(opt,{takeUid:null,bottomOrderUids:order}));
+    else if(opt.mustDiscardOnTake){
+     for(const discardUid of [...pl.hand.map(c=>c.uid),takeUid])
+      actions.push(make(opt,{takeUid,discardUid,bottomOrderUids:order}));
+    }else actions.push(make(opt,{takeUid,bottomOrderUids:order}));
+   }
+   if(opt.mode==='arkChoice')for(const takeUid of opt.outsideUids)
+    actions.push(make(opt,{takeUid}));
+  }
+ }
+ return actions;
+}
 export function legalTtgCoreActions(s){
  if(s.status!=='playing')return [];
  const p=s.active,pl=s.players[p];
+ if(s.pending?.kind==='ttgGreenEntry')return greenEntryChoices(s);
  if(s.pending?.kind==='block'){
   const opp=s.players[1-p];
   return [{type:'block',blockUid:null},...opp.front.filter(c=>c?.ready).map(c=>({type:'block',blockUid:c.uid}))];
@@ -125,7 +159,7 @@ export function legalTtgCoreActions(s){
  if(s.phase==='move')actions.push(...legalTtgRuleActions(s,p));
  return [...actions,{type:'next'}];
 }
-const sameAction=(a,b)=>a.type===b.type&&['handUid','uid','slot','line','blockUid','targetUid','baseUid'].every(k=>
+const sameAction=(a,b)=>a.type===b.type&&['handUid','uid','slot','line','blockUid','targetUid','baseUid','sourceUid','mode','takeUid','discardUid','returnUid'].every(k=>
  a[k]===undefined||a[k]===b[k]);
 function removeFront(s,p,uid){
  const pl=s.players[p],i=pl.front.findIndex(c=>c?.uid===uid);
@@ -154,7 +188,10 @@ export function dispatchTtgCoreAction(source,action){
  if(source.status!=='playing')throw new Error('Match finished');
  const s=structuredClone(source),p=s.active,pl=s.players[p];
  if(!legalTtgCoreActions(s).some(x=>sameAction(x,action)))throw new Error('Illegal TTG core action');
- if(s.pending?.kind==='block'){
+ if(s.pending?.kind==='ttgGreenEntry'){
+  const after=resolveTtgGreenEntry(s,action);
+  Object.assign(s,after);
+ }else if(s.pending?.kind==='block'){
   const attacker=pl.front.find(c=>c?.uid===s.pending.attackerUid);
   if(!attacker)throw new Error('Attacker disappeared');
   if(action.blockUid){
@@ -196,6 +233,7 @@ export function dispatchTtgCoreAction(source,action){
   const ap=pl.apCards.find(c=>c.ready);
   if(!ap||pl[action.line][action.slot])throw new Error('Play destination or AP invalid');
   ap.ready=false;pl[action.line][action.slot]={...pl.hand.splice(i,1)[0],ready:false,enteredTurn:s.turn};
+  if(TTG_GREEN_ENTRY_IDS.includes(d.id))s.pending={kind:'ttgGreenEntry',player:p,sourceUid:h.uid};
  }else if(action.type==='attack'){
   const c=pl.front.find(c=>c?.uid===action.uid);
   if(!c?.ready)throw new Error('Invalid attack');
@@ -220,6 +258,11 @@ export function ttgCoreAiChoice(s){
  const options=legalTtgCoreActions(s);
  if(!options.length)return null;
  const p=s.active,pl=s.players[p];
+ if(s.pending?.kind==='ttgGreenEntry'){
+  const decisions=legalTtgCoreActions(s);
+  return decisions.find(x=>x.takeUid&&x.discardUid&&x.takeUid!==x.discardUid)||
+   decisions.find(x=>x.takeUid)||decisions.find(x=>x.mode==='outsideTop')||decisions[0];
+ }
  if(s.pending?.kind==='block'){
   const att=pl.front.find(c=>c?.uid===s.pending.attackerUid);
   const other=s.players[1-p];
