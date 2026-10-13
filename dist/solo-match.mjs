@@ -279,6 +279,12 @@ function advanceAttackEnd(s){
    if(available.length>=amount&&eligible.length){s.pending={kind:'slgEndRaid',p:s.active,source:uid,amount};return;}
   }else if(type==='061'&&p.hand.length){s.pending={kind:'slg061End',p:s.active,source:uid};return;}
  }
+ const leaving=s.active;
+ for(const who of s.players)for(const c of field(who)){
+  if(c.targetProtectionExpiresAfterPlayer===leaving&&s.players[leaving].ownTurns>=c.targetProtectionExpiresTurn){
+   delete c.extraTargetAp;delete c.targetProtectionExpiresAfterPlayer;delete c.targetProtectionExpiresTurn;
+  }
+ }
  s.endSources=null;s.phase='attack';s.active=1-s.active;startTurn(s);
 }
 function scheduleAttackAfter(s){
