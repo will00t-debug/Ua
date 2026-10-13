@@ -175,3 +175,44 @@ test('last life card loss wins only after its trigger resolves',()=>{
  assert.ok(assertTtgCoreState(after));
  // The second attacker will remove the final life with no FINAL rescue.
 });
+
+test('end of active turn readies own field BEFORE the other player can block',()=>{
+ let st=match(44);
+ const actor=findById(st.players[0],'TTG-1-042');
+ st.players[0].front[0]={...actor,ready:false};
+ st.phase='attack';st.players[0].turnCount=2;
+ st=withTtgDerivedEnergy(st,0);
+ const next=dispatchTtgCoreAction(st,{type:'next'});
+ assert.equal(next.active,1);
+ assert.equal(next.phase,'start');
+ assert.equal(next.players[0].front[0].ready,true);
+ assert.equal(st.players[0].front[0].ready,false);
+ assert.ok(assertTtgCoreState(next));
+});
+test('TTG-1-048 first block readies itself, second block rests it (Double Block)',()=>{
+ let st=match(22);
+ const defender=findById(st.players[1],'TTG-1-048');
+ const attacker=findById(st.players[0],'TTG-1-042');
+ const attacker2=findById(st.players[0],'TTG-1-064');
+ st.players[1].turnCount=2;
+ st.players[1].front[0]={...defender,ready:true,
+  doubleBlockUntilOwnStartTurnCount:3,currentBp:TTG_BY_ID[defender.cardId].bp+500,
+  buffs:[{bp:500,turn:1,until:'ownNextStart'}]};
+ st.players[0].front[0]={...attacker,ready:true};
+ st.players[0].front[1]={...attacker2,ready:true};
+ st.players[0].turnCount=2;st.phase='attack';
+ st=withTtgDerivedEnergy(st,0);
+ st=dispatchTtgCoreAction(st,{type:'attack',uid:attacker.uid});
+ st=dispatchTtgCoreAction(st,{type:'block',blockUid:defender.uid});
+ assert.equal(st.players[1].front[0].ready,true,'first block makes defender ACTIVE');
+ assert.equal(st.players[1].front[0].doubleBlockUsedTurn,st.turn);
+ st=dispatchTtgCoreAction(st,{type:'attack',uid:attacker2.uid});
+ st=dispatchTtgCoreAction(st,{type:'block',blockUid:defender.uid});
+ assert.equal(st.players[1].front[0].ready,false,'second block stays REST');
+ assert.ok(assertTtgCoreState(st));
+ st=dispatchTtgCoreAction(st,{type:'next'});
+ assert.equal(st.active,1);
+ assert.equal(st.players[1].turnCount,3);
+ assert.equal(st.players[1].front[0].currentBp,TTG_BY_ID[defender.cardId].bp,'previous attack buff expires at own start');
+ assert.equal(st.players[1].front[0].doubleBlockUntilOwnStartTurnCount,undefined);
+});
