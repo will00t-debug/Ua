@@ -20,8 +20,8 @@ test('core smoke is a named, strict subset and never claims all 81 cards are pla
  assert.ok(TTG_CORE_SMOKE_IDS.length>=13);
  assert.ok(TTG_CORE_SMOKE_IDS.length<81);
  assert.deepEqual(validateTtgCoreDeck(deck()),[]);
- const bad={...deck(),'TTG-1-071':1,'TTG-1-036':0};
- assert.ok(validateTtgCoreDeck(bad).some(x=>x.includes('TTG-1-071')));
+ const bad={...deck(),'TTG-1-056':1,'TTG-1-036':0};
+ assert.ok(validateTtgCoreDeck(bad).some(x=>x.includes('TTG-1-056')));
  assert.throws(()=>newTtgCoreMatch({decks:[bad,deck()]}));
  assert.throws(()=>newTtgCoreMatch({decks:[{},deck()]}));
 });
