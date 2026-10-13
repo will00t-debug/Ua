@@ -106,6 +106,7 @@ export function resolveGreen040Removed(state,{player,uid}={}){
  if(!legalGreen040RemovedActions(state,player).some(x=>x.uid===uid))throw new Error('Illegal removed event double');
  const result=structuredClone(state),pl=result.players[player];
  pl.energyDoublings=(pl.energyDoublings||0)+1;
+ pl.green040DoublingCount=(pl.green040DoublingCount||0)+1;
  pl.greenDoublingsExpireTurn=state.turn;
  pl.usedGreen040RemovedTurn=state.turn;
  return result;
@@ -121,7 +122,8 @@ export function resolveGreenEventTurnEnd(state){
    }
   }
   if(pl.greenDoublingsExpireTurn===state.turn){
-   pl.energyDoublings=0;delete pl.greenDoublingsExpireTurn;
+   pl.energyDoublings=Math.max(0,(pl.energyDoublings||0)-(pl.green040DoublingCount||0));
+   delete pl.green040DoublingCount;delete pl.greenDoublingsExpireTurn;
   }
  }
  return result;
