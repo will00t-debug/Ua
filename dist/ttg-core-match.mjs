@@ -43,9 +43,13 @@ export function validateTtgCoreDeck(counts){
 }
 function refreshEnergy(s,p){return withTtgDerivedEnergy(s,p);}
 function start(s){
- const p=s.active,pl=s.players[p];
+ const p=s.active;
+ let pl=s.players[p];
  pl.turnCount++;s.turn++;s.phase='start';s.pending=null;s.extraDrawn=false;
  Object.assign(s,resolveTtgGreen028Start(s,p));
+ // The hook clones the state: use the NEW authoritative player object for
+ // AP refresh, ACTIVE, mandatory draw and buff expiration (not a stale alias).
+ pl=s.players[p];
  for(const c of field(pl)){
   c.ready=true;c.attackTurn=-1;
   if(c.doubleBlockUntilOwnStartTurnCount!=null&&pl.turnCount>=c.doubleBlockUntilOwnStartTurnCount){
