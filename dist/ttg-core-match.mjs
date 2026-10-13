@@ -14,6 +14,7 @@ import {beginGreen034Sidelined} from './ttg-green-fields.mjs';
 import {flattenSidelinedPile} from './ttg-green-retirement.mjs';
 import {legalHighRaidAttackEffects,resolveHighRaidAttackEffect,greenHighRaidCombatValue,expireGreen031AtOwnStart} from './ttg-green-high-raid.mjs';
 import {resolveGreenOwnStart} from './ttg-green-main.mjs';
+import {beginTtgRed049Entry,legalTtgRed049Choices,resolveTtgRed049Choice,resolveTtgRed050Entry} from './ttg-red-third-three.mjs';
 import {ttgRedStarterBpBonus,ttgRedStarterImpactNull,beginTtgRed044Unblocked,legalTtgRed044Search,resolveTtgRed044Search} from './ttg-red-first-three.mjs';
 import {beginTtgLifeTrigger,legalTtgLifeChoices,resolveTtgLifeChoice,finalizeTtgLifeOutcome} from './ttg-green-life.mjs';
 
@@ -25,7 +26,7 @@ export const TTG_CORE_SMOKE_IDS=Object.freeze([
  'TTG-1-019','TTG-1-020','TTG-1-021','TTG-1-022','TTG-1-023','TTG-1-024','TTG-1-025','TTG-1-026','TTG-1-027','TTG-1-028','TTG-1-029','TTG-1-030','TTG-1-031','TTG-1-032','TTG-1-033','TTG-1-034',
  'TTG-1-035','TTG-1-036','TTG-1-037','TTG-1-038','TTG-1-039',
  'TTG-1-040','TTG-1-041',
- 'TTG-1-042','TTG-1-043','TTG-1-044','TTG-1-046','TTG-1-047','TTG-1-048',
+ 'TTG-1-042','TTG-1-043','TTG-1-044','TTG-1-046','TTG-1-047','TTG-1-048','TTG-1-049','TTG-1-050',
  'TTG-1-063','TTG-1-064','TTG-1-065','TTG-1-066'
 ]);
 const allowed=new Set(TTG_CORE_SMOKE_IDS);
@@ -164,6 +165,7 @@ export function legalTtgCoreActions(s){
  const p=s.active,pl=s.players[p];
  if(s.pendingTtgLife)return legalTtgLifeChoices(s);
  if(s.pending?.kind==='ttgRed044Search')return legalTtgRed044Search(s);
+ if(s.pending?.kind==='ttgRed049Entry')return legalTtgRed049Choices(s);
  if(s.pending?.kind==='ttgGreenEntry')return greenEntryChoices(s);
  if(['ttgGreen028Entry','ttgGreen029Entry','green030Sidelined','green012Search','green012Discard','greenHighRaidQueue','green034Sidelined','greenRetireOrder'].includes(s.pending?.kind))
   return legalTtgRuleActions(s,s.pending.player);
@@ -241,6 +243,8 @@ export function dispatchTtgCoreAction(source,action){
  if(!legalTtgCoreActions(s).some(x=>sameAction(x,action)))throw new Error('Illegal TTG core action '+JSON.stringify({action,phase:s.phase,pending:s.pending,turn:s.turn,legal:legalTtgCoreActions(s).slice(0,12)}));
  if(s.pendingTtgLife){
   Object.assign(s,resolveTtgLifeChoice(s,action));
+ }else if(s.pending?.kind==='ttgRed049Entry'){
+  Object.assign(s,resolveTtgRed049Choice(s,action));
  }else if(s.pending?.kind==='ttgRed044Search'){
   const attacker=pl.front.find(c=>c?.uid===s.pending.attackerUid);
   const damage=greenHighRaidCombatValue(s,p,attacker).damage;
@@ -318,6 +322,8 @@ export function dispatchTtgCoreAction(source,action){
   if(!ap||pl[action.line][action.slot])throw new Error('Play destination or AP invalid');
   ap.ready=false;pl[action.line][action.slot]={...pl.hand.splice(i,1)[0],ready:false,enteredTurn:s.turn};
   if(TTG_GREEN_ENTRY_IDS.includes(d.id))s.pending={kind:'ttgGreenEntry',player:p,sourceUid:h.uid};
+  if(h.cardId==='TTG-1-049')Object.assign(s,beginTtgRed049Entry(s,{player:p,uid:h.uid}));
+  if(h.cardId==='TTG-1-050')Object.assign(s,resolveTtgRed050Entry(s,{player:p,uid:h.uid}));
  }else if(action.type==='attack'){
   const c=pl.front.find(c=>c?.uid===action.uid);
   if(!c?.ready)throw new Error('Invalid attack');
@@ -353,6 +359,7 @@ export function ttgCoreAiChoice(s){
  const options=legalTtgCoreActions(s);
  if(!options.length)return null;
  const p=s.active,pl=s.players[p];
+ if(s.pending?.kind==='ttgRed049Entry')return options[0];
  if(s.pending?.kind==='ttgRed044Search'){
   return options.find(x=>x.takeUid&&x.discardUid!==x.takeUid)||options.find(x=>x.takeUid)||options[0];
  }
@@ -419,7 +426,8 @@ export function ttgCoreAiChoice(s){
     effects.find(x=>x.type==='ttgGreen015')||effects.find(x=>x.type==='ttgGreen011'&&x.mode==='boost')||
     effects.find(x=>x.type==='ttgGreen011')||effects.find(x=>x.type==='ttgGreen018')||
     effects.find(x=>x.type==='ttgGreen022')||
-    effects.find(x=>x.type==='ttgRed046Main'&&x.mode==='both')||effects.find(x=>x.type==='ttgRed046Main');
+    effects.find(x=>x.type==='ttgRed046Main'&&x.mode==='both')||effects.find(x=>x.type==='ttgRed046Main')||
+    effects.find(x=>x.type==='ttgRed050Main'&&x.mode==='energy')||effects.find(x=>x.type==='ttgRed050Main');
    if(candidate)return candidate;
    const normalRaid=['ttgGreen028Raid','ttgGreen029Raid','green030Raid','greenHighRaid'];
    const raidCandidate=effects.find(x=>normalRaid.includes(x.type)&&x.line==='front')||effects.find(x=>normalRaid.includes(x.type));
