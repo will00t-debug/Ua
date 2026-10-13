@@ -25,10 +25,11 @@ test('025 has NO attack or block below 6 energy and gains combat legality immedi
  p.turnCount=2;s.phase='attack';
  s=withTtgDerivedEnergy(s,0);
  assert.ok(!legalTtgCoreActions(s).some(x=>x.type==='attack'&&x.uid===lord.uid),'no attack with energy 0');
- p.energy[0]=take(p,'TTG-1-017');p.energy[1]=take(p,'TTG-1-017');
- p.energy[2]=take(p,'TTG-1-017');
+ const current=s.players[0];
+ current.energy[0]=take(current,'TTG-1-017');current.energy[1]=take(current,'TTG-1-017');
+ current.energy[2]=take(current,'TTG-1-017');
  s=withTtgDerivedEnergy(s,0);
- assert.equal(p.energy.length,4);
+ assert.equal(s.players[0].energy.length,4);
  assert.ok(legalTtgCoreActions(s).some(x=>x.type==='attack'&&x.uid===lord.uid),'energy6 enables attack instantly');
  const next=dispatchTtgCoreAction(s,{type:'attack',uid:lord.uid});
  assert.equal(next.pending.kind,'block');
