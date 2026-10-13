@@ -35,8 +35,8 @@ test('GET 004 adds revealed life card to owner hand or declines to outside',()=>
  assert.deepEqual(no.players[1].outside.map(x=>x.uid),['life']);
  assert.deepEqual(all(r.players[1]),all(s.players[1]));
 });
-test('SPECIAL 001 removes only opponent front, preserving all RAID pile UIDs',()=>{
- const s=lifeGame('TTG-1-001');
+test('SPECIAL 035 removes only opponent front, preserving all RAID pile UIDs',()=>{
+ const s=lifeGame('TTG-1-035');
  s.players[0].front[0]=card('top','TTG-1-029',{stack:[card('base','TTG-1-009')],under:[card('fd','TTG-1-004',{faceDown:true})]});
  s.players[0].energy[0]=card('energy','TTG-1-006');
  const oppBefore=all(s.players[0]);
@@ -49,8 +49,8 @@ test('SPECIAL 001 removes only opponent front, preserving all RAID pile UIDs',()
  assert.deepEqual(r.players[0].outside.map(x=>x.uid),['top','base','fd']);
  assert.deepEqual(all(r.players[0]),oppBefore);
 });
-test('COLOR 014 deploys only green AP1 energy<=2 character into free slot ACTIVE',()=>{
- const s=lifeGame('TTG-1-014');
+test('COLOR 017 deploys only green AP1 energy<=2 character into free slot ACTIVE',()=>{
+ const s=lifeGame('TTG-1-017');
  s.players[1].hand=[card('g','TTG-1-005'),card('high','TTG-1-027'),card('red','TTG-1-042')];
  s.players[1].front[0]=card('occupied','TTG-1-006');
  const original=all(s.players[1]),p=beginTtgLifeTrigger(s,{player:1,lifeUid:'life'});
@@ -66,7 +66,7 @@ test('COLOR 014 deploys only green AP1 energy<=2 character into free slot ACTIVE
  assert.deepEqual(all(r.players[1]),original);
 });
 test('COLOR into green 009 retains mandatory entry choice and waits before victory',()=>{
- const s=game();s.players[1].life=[card('life','TTG-1-014')];
+ const s=game();s.players[1].life=[card('life','TTG-1-017')];
  s.players[1].hand=[card('simon','TTG-1-009')];s.players[1].deck=[card('draw','TTG-1-005')];
  const p=beginTtgLifeTrigger(s,{player:1,lifeUid:'life'});
  const action=legalTtgLifeChoices(p).find(x=>x.mode==='color'&&x.handUid==='simon');
@@ -76,10 +76,10 @@ test('COLOR into green 009 retains mandatory entry choice and waits before victo
  assert.equal(r.status,'playing','must resolve on-entry before game result');
 });
 test('SPECIAL/GET/COLOR triggers are optional even with legal targets',()=>{
- for(const id of ['TTG-1-001','TTG-1-004','TTG-1-014']){
+ for(const id of ['TTG-1-035','TTG-1-004','TTG-1-017']){
   const s=lifeGame(id);
-  if(id==='TTG-1-001')s.players[0].front[0]=card('enemy','TTG-1-005');
-  if(id==='TTG-1-014')s.players[1].hand=[card('candidate','TTG-1-005')];
+  if(id==='TTG-1-035')s.players[0].front[0]=card('enemy','TTG-1-005');
+  if(id==='TTG-1-017')s.players[1].hand=[card('candidate','TTG-1-005')];
   const p=beginTtgLifeTrigger(s,{player:1,lifeUid:'life'});
   const decline=legalTtgLifeChoices(p).find(x=>x.mode==='decline');
   const result=resolveTtgLifeChoice(p,decline);
@@ -88,7 +88,7 @@ test('SPECIAL/GET/COLOR triggers are optional even with legal targets',()=>{
  }
 });
 test('last life SPECIAL resolves before defeat, while FINAL can rescue',()=>{
- const s=game();s.players[1].life=[card('life','TTG-1-001')];
+ const s=game();s.players[1].life=[card('life','TTG-1-035')];
  s.players[0].front[0]=card('target','TTG-1-005');
  const reveal=beginTtgLifeTrigger(s,{player:1,lifeUid:'life'});
  assert.equal(reveal.status,'playing');
@@ -107,4 +107,13 @@ test('Raid triggers are not silently treated as normal automatic life effects',(
  assert.deepEqual(legalTtgLifeChoices(p),[]);
  assert.equal(p.pendingTtgLife.trigger,'raid');
  assert.throws(()=>resolveTtgLifeChoice(p,{player:1,cardUid:'life',mode:'decline'}));
+});
+
+test('001 and 014 have no printed life trigger and go straight to OUTSIDE',()=>{
+ for(const id of ['TTG-1-001','TTG-1-014']){
+  const s=lifeGame(id),r=beginTtgLifeTrigger(s,{player:1,lifeUid:'life'});
+  assert.equal(r.pendingTtgLife,null);
+  assert.deepEqual(r.players[1].outside.map(x=>x.uid),['life']);
+  assert.equal(r.players[1].life.length,1);
+ }
 });
