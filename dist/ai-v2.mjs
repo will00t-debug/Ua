@@ -121,6 +121,35 @@ function scoreAttack(s, a) {
     - (survivors.length ? 1.8 : 0) + (defenders.length === 0 ? 3 : 0);
 }
 
+// Targeted sniper attacks sacrifice a life hit to retire a chosen front-line
+// character (including REST characters). Estimate both options on PUBLIC board
+// information; do not inspect the defender's hidden hand or unrevealed triggers.
+function scoreSnipe(s, action) {
+  const attacker = locate(s, action.uid)?.card;
+  const targetLoc = locate(s, action.target);
+  if (!attacker || !targetLoc || !attacker.ready) return -Infinity;
+  const target = targetLoc.card;
+  if (bp(s, attacker) < bp(s, target)) return -Infinity;
+  // This is an approximation: the rules engine may let some Raid targets
+  // substitute a hand discard for retirement.
+  const shield = cardOf(target)?.rules?.raidHighBase;
+  const shieldPossible = shield?.shield && (target.stack?.length || 0) > 0
+    && cardOf(target.stack[0]).energy >= shield.minEnergy
+    && s.players[targetLoc.p].hand.length > 0;
+  if (shieldPossible) return -Infinity;
+  const simulated = structuredClone(s);
+  const own = locate(simulated, action.uid);
+  const other = locate(simulated, action.target);
+  own.card.ready = false;
+  simulated.players[other.p][other.line][other.slot] = null;
+  // Compare against combatPlan's life-pressure scale, including follow-up
+  // attacks after the target has been retired.
+  const followUp = combatPlan(simulated)?.score || 0;
+  const targetWorth = (1.5 + bp(s, target) / 1100
+    + ((target.stack?.length || 0) ? 1 : 0)) * 0.85;
+  return followUp + targetWorth;
+}
+
 function genericEffectBonus(s, action, after) {
   const p = controller(s);
   const c = action.uid && (s.players[p].hand.find(x => x.uid === action.uid)
@@ -265,6 +294,11 @@ export function chooseAiAction(s, {difficulty = 'normal'} = {}) {
   if (s.phase === 'attack') {
     const plan=combatPlan(s);
     const planned=plan&&all.find(a=>a.type==='attack'&&a.uid===plan.uid);
+    const sniper = all.filter(a=>a.type==='snipe')
+      .map(a=>({a,score:scoreSnipe(s,a)}))
+      .sort((a,b)=>b.score-a.score)[0];
+    // A sniper must beat the best ordinary attack by a real margin.
+    if (sniper && sniper.score > (plan?.score ?? 0) + 0.35) return sniper.a;
     return planned || all.find(a=>a.type==='next') || all[0];
   }
   if (s.phase === 'start') {
