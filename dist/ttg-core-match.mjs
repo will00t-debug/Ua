@@ -6,7 +6,7 @@ import {withTtgDerivedEnergy,calculateTtgEnergyByColor} from './ttg-energy-snaps
 import {legalTtgRuleActions,dispatchTtgRuleAction,resolveTtgMainPhaseEnd,resolveTtgTurnEnd} from './ttg-rule-adapter.mjs';
 import {spendTtgApCards} from './ttg-actions.mjs';
 import {TTG_GREEN_ENTRY_IDS,legalTtgGreenEntryDecisions,resolveTtgGreenEntry} from './ttg-green-entry.mjs';
-import {greenTtgCurrentBp,greenTtgNeedsEnergy} from './ttg-green-passives.mjs';
+import {greenTtgCurrentBp,greenTtgNeedsEnergy,greenTtgImpactNull} from './ttg-green-passives.mjs';
 import {resolveGreenOwnStart} from './ttg-green-main.mjs';
 import {beginTtgLifeTrigger,legalTtgLifeChoices,resolveTtgLifeChoice,finalizeTtgLifeOutcome} from './ttg-green-life.mjs';
 
@@ -16,7 +16,7 @@ export const TTG_CORE_SMOKE_IDS=Object.freeze([
  'TTG-1-001','TTG-1-002','TTG-1-003','TTG-1-005','TTG-1-006','TTG-1-007','TTG-1-009',
  'TTG-1-010','TTG-1-011','TTG-1-013','TTG-1-014','TTG-1-015','TTG-1-016','TTG-1-017','TTG-1-018',
  'TTG-1-019','TTG-1-020','TTG-1-022','TTG-1-023','TTG-1-024','TTG-1-026',
- 'TTG-1-035','TTG-1-036','TTG-1-037','TTG-1-038',
+ 'TTG-1-035','TTG-1-036','TTG-1-037','TTG-1-038','TTG-1-039',
  'TTG-1-040','TTG-1-041',
  'TTG-1-042','TTG-1-043','TTG-1-047','TTG-1-048',
  'TTG-1-063','TTG-1-064','TTG-1-065','TTG-1-066'
@@ -217,9 +217,17 @@ export function dispatchTtgCoreAction(source,action){
      // Double Block: first blocking action readies the REST blocker immediately.
      defender.ready=true;defender.doubleBlockUsedTurn=s.turn;
    }
-   // Official rule Q33: attacker wins a BP tie.
-   if(bp(s,p,attacker)>=bp(s,1-p,defender))removeFront(s,1-p,defender.uid);
+   // Official Q71/Q75/Q77: IMPACT deals 1 life on a WINNING BLOCKED
+   // battle only. Never add it to an unblocked direct attack. The blocker
+   // may suppress IMPACT for this battle, even if retired on losing.
+   const won=bp(s,p,attacker)>=bp(s,1-p,defender);
+   const impactDamage=won&&attacker.greenEventImpact>=1&&!greenTtgImpactNull(defender);
+   if(won)removeFront(s,1-p,defender.uid);
    // Losing an attack does NOT retire the attacker (official Q34).
+   if(impactDamage){
+    s.pending=null; // clear blocker decision before exposing life trigger
+    lifeDamage(s,1-p);
+   }
   }else{s.pending=null;lifeDamage(s,1-p);}
   s.pending=null;
  }else if(action.type==='next'){
