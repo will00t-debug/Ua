@@ -3,7 +3,7 @@ import {normalizeCounts,emptyDeck,parseDeck,formatDeck,readSavedDecks,sameCounts
 import {TITLES} from './title-registry.mjs';
 import {SOLO_LEVELING_CARDS} from './solo-leveling.mjs';
 import {normalizeSoloDeck,soloDeckIssues,SOLO_DRAFT_PRESET} from './solo-decks.mjs';
-import {SOLO_MATCH_SUPPORTED,SOLO_TRAINING_PRESET,SOLO_SHADOW_TRAINING_PRESET,soloTrainingDeckIssues,newSoloTrainingMatch,soloTrainingLegalActions,soloTrainingDispatch,soloTrainingBotAction,assertSoloTrainingMatch,soloEnergy,soloMatchBp} from './solo-match.mjs';
+import {SOLO_MATCH_SUPPORTED,SOLO_TRAINING_PRESET,SOLO_SHADOW_TRAINING_PRESET,soloTrainingDeckIssues,newSoloTrainingMatch,soloTrainingLegalActions,soloTrainingDispatch,soloTrainingBotAction,assertSoloTrainingMatch,soloEnergy,soloMatchBp,inspectSoloAttached} from './solo-match.mjs';
 import {TTG_CARDS,emptyTtgDeck,normalizeTtgCounts,ttgCount,ttgDeckIssues,readTtgSaved} from './ttg-builder.mjs';
 import {newGame,dispatch,legalActions,controller,cardOf,bp,energy,locate,botAction,PHASE_NAMES,assertState} from './engine.mjs?v=9.1.1';
 
@@ -214,9 +214,30 @@ function soloArena(){
  const board=who=>['front','energy'].map(line=>'<div class="panel"><h3>'+(line==='front'?'前線':'能源線')+'</h3><div class="grid" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px">'+who[line].map(c=>'<div class="catalogInfo" style="border:1px solid #7775;padding:8px;min-height:55px;border-radius:7px">'+slot(c)+'</div>').join('')+'</div></div>').join('');
  const actions=soloTrainingLegalActions(state);
  const actionButton=(a,title)=>'<button class="btn small" data-solo-act="'+encodeURIComponent(JSON.stringify(a))+'">'+esc(title)+'</button>';
- const choices=state.pending?'<div class="panel"><b>請選擇：'+esc({discard:'棄一張手牌',entryImpact:'選擇額外獲得 IMPACT 的 DFN 角色',entryProtect:'選擇獲得目標 AP 保護的 DFN',mainDiscard:'選擇棄置的手牌',soldierTop:'影之兵士：選擇牌庫頂卡片送場外及剩餘順序',raidTrigger:'生命 RAID Trigger：可加入手牌或選擇合法底板直接 Raid',raid058Discard:'向坂雫攻擊能力：可選1張手牌送場外',raid058Unfreeze:'選最多1張跳過ACTIVE的己方前線角色',activeTrigger:'ACTIVE Trigger 目標',block:'阻擋角色（也可不阻擋）'}[state.pending.kind]||'效果結算')+'</b><div class="toolbar">'+(bot?'對手正在選擇…':actions.map(a=>actionButton(a,state.pending.kind==='soldierTop'
- ?(a.outsideUid==null?'不送場外':'送場外：'+label(state.players[actor].deck.find(c=>c.uid===a.outsideUid)))+'；牌庫頂順序：'+a.order.map(uid=>label(state.players[actor].deck.find(c=>c.uid===uid))).join(' → ')
- :(a.uid==null?'不選擇／不阻擋':label([...p.hand,...opp.hand,...p.front,...p.energy,...opp.front,...opp.energy].find(c=>c?.uid===a.uid))))).join(''))+'</div></div>':'';
+ const ownedUnder=uid=>[...p.front,...p.energy].filter(Boolean).flatMap(c=>inspectSoloAttached(state,{viewer:0,owner:0,hostUid:c.uid})).find(c=>c.uid===uid);
+ const chooseText=a=>{
+  if(state.pending?.kind==='soldierTop'){
+   return (a.outsideUid==null?'不送場外':'送場外：'+label(state.players[actor].deck.find(c=>c.uid===a.outsideUid)))
+    +'；牌庫頂順序：'+a.order.map(uid=>label(state.players[actor].deck.find(c=>c.uid===uid))).join(' → ');
+  }
+  if(a.mode)return {block:'攻擊角色不被BP4000以上阻擋',untargetable:'攻擊角色不受敵方效果選取',buff:'攻擊角色本回合BP+1500',draw:'抽1張並棄1張'}[a.mode]||a.mode;
+  if(state.pending?.kind==='raidTrigger')return a.uid==null?'將Raid卡加入手牌':'Raid → '+(a.line==='front'?'前線':'能源線')+(a.slot+1)+'（底板 '+label([...p.front,...p.energy,...opp.front,...opp.energy].find(c=>c?.uid===a.uid))+'）';
+  if(state.pending?.kind==='dailyUnder')return a.uid==null?'不移除裏向卡':label(ownedUnder(a.uid));
+  if(state.pending?.kind==='dailyRecover')return a.uid==null?'不回收':'回收 '+label(p.outside.find(c=>c.uid===a.uid));
+  if(a.uid==null)return '不發動／不選擇／不阻擋';
+  return label([...p.hand,...opp.hand,...p.front,...p.energy,...opp.front,...opp.energy].find(c=>c?.uid===a.uid));
+ };
+ const choices=state.pending?'<div class="panel"><b>請選擇：'+esc({
+  discard:'棄一張手牌',entryImpact:'選擇獲得IMPACT的DFN角色',entryProtect:'選擇受AP保護的DFN',
+  mainDiscard:'選擇支付的手牌',soldierTop:'影之兵士：查看牌庫頂並選擇順序',
+  raidTrigger:'生命RAID Trigger：加入手牌或選擇底板',raid058Discard:'向坂雫攻擊：棄牌選擇',
+  raid058Unfreeze:'ACTIVE與跳過ACTIVE的選擇',activeTrigger:'ACTIVE Trigger目標',
+  block:'阻擋角色',kaiserPick:'凱賽爾：可選一張ACTIVE角色REST',kaiserMode:'凱賽爾：選尚未使用模式',
+  kibaPick:'奇巴：可選一張ACTIVE角色REST',kibaMode:'奇巴：選尚未使用模式',
+  kibaDiscard:'奇巴：抽牌後棄一張',belDiscard:'貝爾：可棄手牌後ACTIVE',
+  dailyDiscard:'每日任務：支付棄牌成本',dailyUnder:'每日任務：選己方裏向卡送場外',
+  dailyRecover:'每日任務：選0能源水篠旬回收'
+ }[state.pending.kind]||'效果結算')+'</b><div class="toolbar">'+(bot?'對手正在選擇…':actions.map(a=>actionButton(a,chooseText(a))).join(''))+'</div></div>':'';
  const selected=ui.soloSelected;
  const selectable=actions.filter(a=>a.uid===selected);
  const normalActions=state.pending?[]:actions.filter(a=>a.type==='next'||a.type==='extraDraw'||a.type==='move'||a.type==='attack'||a.type==='ability');
@@ -224,9 +245,10 @@ function soloArena(){
  +'<div class="supportNote"><b>'+(state.status==='finished'?(state.winner===0?'你獲勝':'電腦獲勝'):'第 '+state.turn+' 回合 · '+phase+' · '+(bot?'電腦處理中':'輪到你操作'))+'</b><span>你：AP '+p.ap+'/'+p.maxAp+' · 能源 '+soloEnergy(state,0)+' · 生命 '+p.life.length+' · 手牌 '+p.hand.length+'；電腦：AP '+opp.ap+' · 生命 '+opp.life.length+' · 手牌 '+opp.hand.length+'</span></div>'
  +'<h3>電腦場上</h3>'+board(opp)+'<h3>你的場上</h3>'+board(p)
  +choices
- +(state.status==='playing'&&!state.pending&&!bot?'<div class="panel"><h3>主要操作</h3><div class="toolbar">'+normalActions.map(a=>actionButton(a,a.type==='next'?'下一階段／結束回合':a.type==='extraDraw'?'支付1AP額外抽牌':a.type==='move'?'移動 '+label([...p.energy].find(c=>c?.uid===a.uid))+' → 前線'+(a.slot+1):a.type==='attack'?'攻擊 '+label(p.front.find(c=>c?.uid===a.uid)):'發動 '+label([...p.energy,...p.front].find(c=>c?.uid===a.uid)))).join('')+'</div></div>':'')
+ +(state.status==='playing'&&!state.pending&&!bot?'<div class="panel"><h3>主要操作</h3><div class="toolbar">'+normalActions.map(a=>actionButton(a,a.type==='next'?'下一階段／結束回合':a.type==='extraDraw'?'支付1AP額外抽牌':a.type==='move'?'移動 '+label([...p.energy].find(c=>c?.uid===a.uid))+' → 前線'+(a.slot+1):a.type==='attack'?'攻擊 '+label(p.front.find(c=>c?.uid===a.uid)) :'發動 '+label([...p.energy,...p.front].find(c=>c?.uid===a.uid))+(a.mode?(' · '+({attach:'放置牌庫頂裏向卡',recover:'棄牌及回收',boost:'影之軍團BP強化'}[a.mode]||a.mode)):''))).join('')+'</div></div>':'')
  +'<div class="panel"><h3>你的手牌（點選卡片後選擇登場位置）</h3><div class="toolbar">'+p.hand.map(c=>'<button class="btn small '+(selected===c.uid?'primary':'outline')+'" data-solo-card="'+esc(c.uid)+'">'+label(c)+' · 能源'+soloById[c.cardId].energy+' · AP'+soloById[c.cardId].ap+'</button>').join('')+'</div>'
  +(selected?'<p>選擇位置</p><div class="toolbar">'+selectable.map(a=>actionButton(a,a.type==='play'?(a.line==='front'?'前線':'能源線')+(a.slot+1):a.type==='raid'?'Raid → '+(a.line==='front'?'前線':'能源線')+(a.slot+1)+'，底板 '+label([...p.front,...p.energy].find(c=>c?.uid===a.target)):'其他操作')).join('')+'</div>':'')+'</div>'
+ +'<details class="panel"><summary>查看我方場下裏向卡（對手無法查看）</summary>'+[...p.front,...p.energy].filter(Boolean).map(c=>({host:c,cards:inspectSoloAttached(state,{viewer:0,owner:0,hostUid:c.uid})})).filter(x=>x.cards.length).map(x=>'<p>'+label(x.host)+'：'+x.cards.map(c=>label(c)).join(' / ')+'</p>').join('')+'</details>'
  +'<details class="panel"><summary>對局紀錄（最近20筆）</summary>'+state.log.slice(-20).map(x=>'<p>'+esc(x.turn+'：'+x.text)+'</p>').join('')+'</details>';
 }
 
