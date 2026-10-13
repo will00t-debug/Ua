@@ -62,3 +62,27 @@ test('invalid, stale or non-finite checkpoints cannot load',()=>{
  const next=initModel({seed:4});next.w1[0]=Infinity;
  assert.throws(()=>validateModel(next),/w1/);
 });
+
+test('synergy features respond to a matching public ally without revealing hidden cards',()=>{
+ const state=setup(161),p=controller(state);
+ const actor=state.players[p],card=actor.hand[0];
+ const action={type:'play',uid:card.uid,line:'front',slot:1};
+ const before=encodeAction(state,action,p);
+ const afterState=structuredClone(state);
+ afterState.players[p].front[0]={...structuredClone(card),uid:'visible-ally',ready:true};
+ const after=encodeAction(afterState,action,p);
+ assert.equal(before.length,FEATURE_DIM);
+ assert.notDeepEqual(before.slice(90),after.slice(90),
+  'the new relational signals must notice a same-name public ally');
+});
+test('encoder changes when the own hand gains a card but not when enemy hidden cards change',()=>{
+ const state=setup(212),p=controller(state);
+ const card=state.players[p].hand[0],action={type:'play',uid:card.uid,line:'energy',slot:1};
+ const original=encodeAction(state,action,p);
+ const secretChange=structuredClone(state);
+ secretChange.players[1-p].hand.reverse();
+ assert.deepEqual(encodeAction(secretChange,action,p),original);
+ const ownChange=structuredClone(state);
+ ownChange.players[p].hand[1].cardId=card.cardId;
+ assert.notDeepEqual(encodeAction(ownChange,action,p),original);
+});
