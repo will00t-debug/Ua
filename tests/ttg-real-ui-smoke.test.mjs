@@ -1,0 +1,38 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+test('browser UI can select TTG, start a 50-card Beta match, resolve legal turn steps, and return to Solo editor',async()=>{
+ const storage=new Map();
+ const app={innerHTML:'',onclick:null};
+ const toast={textContent:'',classList:{add(){},remove(){}}};
+ const document={querySelector(sel){return sel==='#app'?app:sel==='#toast'?toast:null;},onkeydown:null};
+ const window={scrollTo(){},open(){throw Error('No external tab expected')}};
+ globalThis.document=document;globalThis.window=window;globalThis.localStorage={getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)};
+ const press=dataset=>{assert.equal(typeof app.onclick,'function');app.onclick({target:{closest:()=>({dataset,disabled:false})}});};
+ try{
+  await import('../dist/app.mjs?ttg-ui-smoke');
+  press({view:'builder'});
+  press({title:'gurren-lagann'});
+  assert.match(app.innerHTML,/81\/81/);
+  assert.match(app.innerHTML,/Beta 自動判定/);
+  assert.match(app.innerHTML,/ttgBetaStartGreen/);
+  press({action:'ttgBetaStartGreen'});
+  assert.match(app.innerHTML,/天元突破 · 限定 Beta 自動對戰/);
+  let saved=JSON.parse(storage.get('ua-ttg-beta-game-v1'));
+  assert.equal(saved.kind,'ttg-core-smoke');
+  assert.equal(saved.players[0].hand.length,7);
+  assert.equal(saved.players[1].life.length,7);
+  assert.equal(saved.phase,'start');
+  press({ttgAct:encodeURIComponent(JSON.stringify({type:'next'}))});
+  saved=JSON.parse(storage.get('ua-ttg-beta-game-v1'));
+  assert.equal(saved.phase,'move');
+  assert.match(app.innerHTML,/移動階段/);
+  press({ttgAct:encodeURIComponent(JSON.stringify({type:'next'}))});
+  saved=JSON.parse(storage.get('ua-ttg-beta-game-v1'));
+  assert.equal(saved.phase,'main');
+  assert.match(app.innerHTML,/主要階段/);
+  press({view:'builder'});
+  press({title:'solo-leveling'});
+  assert.match(app.innerHTML,/80\/80 張已接上獨立 Beta 自動判定/);
+  assert.match(app.innerHTML,/Beta 自動判定已接線/);
+ }finally{delete globalThis.document;delete globalThis.window;delete globalThis.localStorage;}
+});
