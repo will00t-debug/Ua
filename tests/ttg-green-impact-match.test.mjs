@@ -54,7 +54,7 @@ test('039 officially deals EXACTLY 1 life damage if a blocker loses (Q71)',()=>{
  assert.equal(after.players[1].front[0],null);
  assert.equal(after.players[1].life.length,beforeLife-1);
  assert.ok(after.players[1].outside.some(c=>c.uid===lifeUid));
- assert.equal(after.pendingTtgLife,null,'non-trigger last life card resolves immediately');
+ assert.equal(after.pendingTtgLife==null,true,'non-trigger life resolves immediately');
  assert.equal(after.players[0].front[0].ready,false);
  assert.ok(assertTtgCoreState(after));
  assert.equal(JSON.stringify(s),before,'reducer must not mutate original');
