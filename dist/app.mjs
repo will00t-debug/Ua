@@ -216,7 +216,7 @@ function soloArena(){
  const actionButton=(a,title)=>'<button class="btn small" data-solo-act="'+encodeURIComponent(JSON.stringify(a))+'">'+esc(title)+'</button>';
  const ownedUnder=uid=>[...p.front,...p.energy].filter(Boolean).flatMap(c=>inspectSoloAttached(state,{viewer:0,owner:0,hostUid:c.uid})).find(c=>c.uid===uid);
  const chooseText=a=>{
-  if(state.pending?.kind==='slgEndRaid')return a.uid==null?'不進行下一階段Raid':'使用 '+label(p.hand.find(c=>c.uid===a.uid))+'，將 '+a.used.map(uid=>label(ownedUnder(uid))).join('、')+' 送場外，再Raid於原底板';
+  if(state.pending?.kind==='slgEndRaid')return a.uid==null?'不發動連續Raid':a.uid==='peel'?'將 '+a.used.length+' 張己方裏向卡及目前Raid頂卡送場外，保留原底板（不進行新Raid）':'使用 '+label(p.hand.find(c=>c.uid===a.uid))+'，將 '+a.used.map(uid=>label(ownedUnder(uid))).join('、')+' 送場外，再Raid於原底板';
   if(state.pending?.kind==='slg048Deploy'||state.pending?.kind==='slg051Raid')return a.uid==null?'不登場／不Raid':label(state.pending.kind==='slg048Deploy'?p.hand.find(c=>c.uid===a.uid):p.outside.find(c=>c.uid===a.uid))+' → '+(a.line==='front'?'前線':'能源線')+(a.slot+1)+(a.target?'（底板 '+label([...p.front,...p.energy].find(c=>c?.uid===a.target))+'）':'（REST登場）');
   if(state.pending?.kind==='slg051Mode')return a.mode==='recover'?'場外低能源角色回收模式':'支付1AP並棄牌，從場外 Raid';
   if(state.pending?.kind==='slg064Attack')return a.mode==='repeat'?'再結算登場時全體BP下降':'選BP2000以下敵方角色退場';
