@@ -1,3 +1,4 @@
+import {TTG_BY_ID} from './ttg-builder.mjs';
 // Independently verified printed abilities on four UA56BT cards whose remaining
 // numeric catalogue fields still need official confirmation. Not a playable match engine.
 // Input state uses players[0..1].front/energy[4], active, phase, turn, outside.
@@ -130,8 +131,10 @@ export function eligibleTtg049ReturnTargets(state,{player,uid}={}){
  if(![0,1].includes(player))return [];
  const pl=state?.players?.[player],self=find(pl,uid);
  if(!self||self.card.cardId!=='TTG-1-049')return [];
- const ordinary=field(pl).filter(x=>x.card.uid!==uid&&!(x.card.stack||[]).length&&!(x.card.under||[]).length);
- return ordinary.filter(x=>Number.isInteger(x.card.energy)&&x.card.energy<=1).map(x=>x.card.uid);
+ const other=field(pl).filter(x=>x.card.uid!==uid);
+ const cost=c=>c.energy??TTG_BY_ID[c.cardId]?.energy;
+ // A card whose printed cost cannot be established must not be returned automatically.
+ return other.filter(x=>Number.isInteger(cost(x.card))&&cost(x.card)<=1).map(x=>x.card.uid);
 }
 export function resolveTtg049Entry(state,{player,uid,targetUid=null}={}){
  if(![0,1].includes(player)||!state?.players?.[player])throw new Error('Invalid entry owner');
