@@ -38,7 +38,11 @@ function start(s){
  pl.turnCount++;s.turn++;s.phase='start';s.pending=null;s.extraDrawn=false;
  for(const c of field(pl)){
   c.ready=true;c.attackTurn=-1;
-  if(c.buffs?.length)c.buffs=c.buffs.filter(b=>b.until!=='ownNextStart');
+  if(c.buffs?.length){
+   const expired=c.buffs.filter(b=>b.until==='ownNextStart');
+   if(Number.isFinite(c.currentBp))c.currentBp-=expired.reduce((n,b)=>n+(b.bp||0),0);
+   c.buffs=c.buffs.filter(b=>b.until!=='ownNextStart');
+  }
  }
  const max=pl.turnCount>=3?3:(pl.turnCount===1&&p===s.first?1:2);
  for(let i=0;i<pl.apCards.length;i++)pl.apCards[i].ready=i<max;
@@ -128,11 +132,19 @@ function lifeDamage(s,p){
  const pl=s.players[p];
  if(!pl.life.length){s.status='finished';s.winner=1-p;s.endReason='unblockedAttack';return;}
  const c=pl.life.shift(),t=printed(c).trigger;
- if(t==='active'){const ap=pl.apCards.find(x=>!x.ready);if(ap)ap.ready=true;}
+ if(t==='active'){
+  // Official ACTIVE life trigger is a character target +3000 BP, NOT an AP recovery.
+  const choices=field(pl).filter(x=>printed(x).type==='character');
+  const target=choices.sort((a,b)=>Number(a.ready)-Number(b.ready)||printed(b).bp-printed(a).bp)[0];
+  if(target){target.ready=true;target.currentBp=(target.currentBp??printed(target).bp)+3000;
+   target.buffs??=[];target.buffs.push({bp:3000,turn:s.turn,until:'endTurn'});}
+ }
  else if(t==='draw'){if(pl.deck.length)pl.hand.push(pl.deck.shift());}
  else if(t==='final'){if(!pl.life.length&&pl.deck.length)pl.life.push(pl.deck.shift());}
  else if(t!=null)throw new Error('Life trigger '+t+' not implemented in this core');
  pl.outside.push(c);
+ // The official victory condition is checked after finishing the trigger check.
+ if(!pl.life.length){s.status='finished';s.winner=1-p;s.endReason='lifeDepleted';}
 }
 export function dispatchTtgCoreAction(source,action){
  if(source.status!=='playing')throw new Error('Match finished');
@@ -146,7 +158,7 @@ export function dispatchTtgCoreAction(source,action){
    defender.ready=false;
    // Official rule Q33: attacker wins a BP tie.
    if(bp(s,p,attacker)>=bp(s,1-p,defender))removeFront(s,1-p,defender.uid);
-   else removeFront(s,p,attacker.uid);
+   // Losing an attack does NOT retire the attacker (official Q34).
   }else lifeDamage(s,1-p);
   s.pending=null;
  }else if(action.type==='next'){
