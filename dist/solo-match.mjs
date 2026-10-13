@@ -101,6 +101,10 @@ function raidReplace(s,p,c,base,line,slot,chargeAp=true,raidSource='hand'){
  owner[base.line][base.slot]=null;position(c,p,line,slot);
  c.stack=[base,...(base.stack||[])];delete base.stack;c.ready=true;owner[line][slot]=c;onEnter(s,c);
 }
+// Q2032 / Q2062: effects that explicitly choose an opposing character
+// cannot bypass protection or additional AP requirements.
+const canSelectEnemy=(s,choosingPlayer,c,ap=s.players[choosingPlayer].ap)=>
+ !!c&&c.untargetableTurn!==s.turn&&(c.extraTargetAp||0)<=ap;
 const groupUsed=(s,p,key)=>s.groupUsed?.[p+':'+key]===s.turn;
 const markGroup=(s,p,key)=>{s.groupUsed??={};s.groupUsed[p+':'+key]=s.turn;};
 function readySolo(c){
@@ -115,7 +119,7 @@ export function inspectSoloAttached(s,{viewer,owner,hostUid}){
 }
 function startTurn(s){
  const p=player(s);p.ownTurns++;s.turn++;s.phase='start';s.moved=false;s.extraDraw=false;
- for(const c of field(p)){readySolo(c);c.buffs=(c.buffs||[]).filter(b=>b.turn===s.turn);}
+ for(const c of field(p)){readySolo(c);c.buffs=(c.buffs||[]).filter(b=>b.turn===s.turn||(b.expiresOwnTurn!=null&&p.ownTurns<b.expiresOwnTurn));}
  p.maxAp=p.ownTurns>=3?3:(p.ownTurns===1&&s.active===s.first?1:2);p.ap=p.maxAp;
  clearExpired(s);
  if(!(p.ownTurns===1&&s.active===s.first))draw(s,p);
@@ -186,7 +190,7 @@ function hurt(s,defender,amount=1){
      s.pending={kind:'colorTrigger',p:defender,choices:choices.map(x=>x.uid)};
    }
    if(t==='special'){
-    const targets=s.players[1-defender].front.filter(x=>x&&(x.extraTargetAp||0)<=p.ap);
+    const targets=s.players[1-defender].front.filter(x=>canSelectEnemy(s,defender,x));
     if(targets.length)s.pending={kind:'specialTrigger',p:defender,choices:targets.map(x=>x.uid)};
    }
   }
@@ -382,7 +386,7 @@ function choose(s,action){
   s.pending=null;onEnter(s,c);
  }else if(q.kind==='specialTrigger'){
   const opponent=1-q.p,target=s.players[opponent].front.find(x=>x?.uid===action.uid);
-  if(!target||!q.choices.includes(target.uid)||(target.extraTargetAp||0)>s.players[q.p].ap)throw Error('illegal special trigger target');
+  if(!target||!q.choices.includes(target.uid)||!canSelectEnemy(s,q.p,target))throw Error('illegal special trigger target');
   s.players[q.p].ap-=target.extraTargetAp||0;
   retire(s,opponent,target);s.pending=null;
  }else if(q.kind==='ryuuBuff'){
@@ -461,7 +465,7 @@ function choose(s,action){
   }s.pending=null;
  }else if(q.kind==='slg077Target'){
   const p=s.players[q.p],opp=s.players[1-q.p],i=opp.front.findIndex(c=>c?.uid===action.uid);
-  if(i<0||!q.options.includes(action.uid))throw Error('illegal island event target');
+  if(i<0||!q.options.includes(action.uid)||!canSelectEnemy(s,q.p,opp.front[i]))throw Error('illegal island event target');
   const target=opp.front[i];p.ap-=target.extraTargetAp||0;
   retire(s,1-q.p,target);
   const names=new Set(field(p).filter(c=>d(c).traits?.includes('第四次架南島Raid')).map(c=>d(c).nameJa));
@@ -519,13 +523,13 @@ function choose(s,action){
    s.pending=null;apply064Debuff(s,q.p);
    continueAttackEffects(s);
   }else if(action.mode==='destroy'){
-   const opp=s.players[1-q.p],p=s.players[q.p],targets=opp.front.filter(c=>c&&soloMatchBp(s,c)<=2000&&p.ap>=(c.extraTargetAp||0)&&c.untargetableTurn!==s.turn);
+   const opp=s.players[1-q.p],p=s.players[q.p],targets=opp.front.filter(c=>soloMatchBp(s,c)<=2000&&canSelectEnemy(s,q.p,c));
    s.pending={kind:'slg064Destroy',p:q.p,options:targets.map(x=>x.uid)};
    if(!targets.length){s.pending=null;continueAttackEffects(s);}
   }else throw Error('invalid Mogami attack mode');
  }else if(q.kind==='slg064Destroy'){
   const opp=s.players[1-q.p],p=s.players[q.p],target=action.uid==null?null:opp.front.find(c=>c?.uid===action.uid);
-  if(action.uid!=null&&(!target||!q.options.includes(action.uid)))throw Error('invalid Mogami retire target');
+  if(action.uid!=null&&(!target||!q.options.includes(action.uid)||!canSelectEnemy(s,q.p,target)))throw Error('invalid Mogami retire target');
   if(target){p.ap-=target.extraTargetAp||0;retire(s,1-q.p,target);}
   s.pending=null;continueAttackEffects(s);
  }else if(q.kind==='slg051Mode'){
@@ -563,7 +567,7 @@ function choose(s,action){
   if(action.uid==null)s.pending=null;
   else{
    const p=s.players[q.p],target=s.players[1-q.p].front.find(c=>c?.uid===action.uid);
-   if(!target||!(target.extraTargetAp==null||p.ap>=target.extraTargetAp)||target.untargetableTurn===s.turn)throw Error('illegal Raid 049 destroy target');
+   if(!canSelectEnemy(s,q.p,target))throw Error('illegal Raid 049 destroy target');
    p.ap-=target.extraTargetAp||0;s.pending=null;retire(s,1-q.p,target);
   }
  }else if(q.kind==='slg020EntryDiscard'){
@@ -699,7 +703,7 @@ function choose(s,action){
   p.ap+=action.count;s.pending=null;
  }else if(q.kind==='eventDestroy'){
   const target=s.players[1-q.p].front.find(x=>x?.uid===action.uid);
-  if(!target||!q.options.includes(target.uid)||(target.extraTargetAp||0)>s.players[q.p].ap)throw Error('illegal event target');
+  if(!target||!q.options.includes(target.uid)||!canSelectEnemy(s,q.p,target))throw Error('illegal event target');
   s.players[q.p].ap-=target.extraTargetAp||0;
   retire(s,1-q.p,target);s.pending=null;
  }else if(q.kind==='eventDance'){
@@ -943,7 +947,7 @@ export function soloTrainingLegalActions(s){
   }
   if(q.kind==='slg049Destroy'){
    const p=s.players[q.p],front=s.players[1-q.p].front;
-   return [{type:'choose',uid:null},...front.filter(c=>c&&c.untargetableTurn!==s.turn&&p.ap>=(c.extraTargetAp||0)).map(c=>({type:'choose',uid:c.uid}))];
+   return [{type:'choose',uid:null},...front.filter(c=>canSelectEnemy(s,q.p,c)).map(c=>({type:'choose',uid:c.uid}))];
   }
   if(q.kind==='slg020EntryDiscard')return [{type:'choose',uid:null},...s.players[q.p].hand.map(c=>({type:'choose',uid:c.uid}))];
   if(q.kind==='slg020Recover'||q.kind==='slg021Win')return [{type:'choose',uid:null},...q.options.map(uid=>({type:'choose',uid}))];
@@ -1024,11 +1028,11 @@ export function soloTrainingLegalActions(s){
     if(c.cardId==='SLG-1-077'){
      const islands=field(p).filter(x=>d(x).traits?.includes('第四次架南島Raid'));
      const limit=islands.length>=5?5000:2000;
-     if(!s.players[1-s.active].front.some(x=>x&&soloMatchBp(s,x)<=limit&&(x.extraTargetAp||0)<=p.ap-data.ap))continue;
+     if(!s.players[1-s.active].front.some(x=>canSelectEnemy(s,s.active,x,p.ap-data.ap)&&soloMatchBp(s,x)<=limit))continue;
    }
    if(['SLG-1-040','SLG-1-076'].includes(c.cardId)){
      const limit=field(p).some(x=>d(x).nameJa==='水篠 旬')?5000:3000;
-     if(!s.players[1-s.active].front.some(x=>x&&soloMatchBp(s,x)<=limit&&(x.extraTargetAp||0)<=p.ap-data.ap))continue;
+     if(!s.players[1-s.active].front.some(x=>canSelectEnemy(s,s.active,x,p.ap-data.ap)&&soloMatchBp(s,x)<=limit))continue;
     }
     actions.push({type:'playEvent',uid:c.uid});continue;
    }
@@ -1108,11 +1112,11 @@ export function soloTrainingDispatch(original,action){
    s.pending={kind:'eventRestoreAp',p:s.active};
   }else if(['SLG-1-040','SLG-1-076'].includes(c.cardId)){
    const limit=field(p).some(x=>d(x).nameJa==='水篠 旬')?5000:3000;
-   s.pending={kind:'eventDestroy',p:s.active,options:s.players[1-s.active].front.filter(x=>x&&soloMatchBp(s,x)<=limit&&(x.extraTargetAp||0)<=p.ap).map(x=>x.uid)};
+   s.pending={kind:'eventDestroy',p:s.active,options:s.players[1-s.active].front.filter(x=>canSelectEnemy(s,s.active,x)&&soloMatchBp(s,x)<=limit).map(x=>x.uid)};
   }else if(c.cardId==='SLG-1-077'){
     const islands=field(p).filter(x=>d(x).traits?.includes('第四次架南島Raid'));
     const limit=islands.length>=5?5000:2000;
-    s.pending={kind:'slg077Target',p:s.active,options:s.players[1-s.active].front.filter(x=>x&&soloMatchBp(s,x)<=limit&&(x.extraTargetAp||0)<=p.ap).map(x=>x.uid)};
+    s.pending={kind:'slg077Target',p:s.active,options:s.players[1-s.active].front.filter(x=>canSelectEnemy(s,s.active,x)&&soloMatchBp(s,x)<=limit).map(x=>x.uid)};
   }else if(c.cardId==='SLG-1-080'){
    draw(s,p);
    if(s.status==='playing')s.pending={kind:'eventDance',p:s.active,options:field(p).filter(x=>d(x).nameJa==='向坂 雫').map(x=>x.uid)};
