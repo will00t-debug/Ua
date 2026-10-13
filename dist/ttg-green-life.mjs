@@ -1,11 +1,13 @@
 // Printed UNION ARENA standard life triggers for the green TTG subset.
 // The triggered physical card stays in owner's OUTSIDE pending resolution,
 // so it is never counted twice or lost when the player selects a target.
-// Supports DRAW, ACTIVE, GET, SPECIAL, FINAL and green COLOR, NOT Raid triggers.
+// Supports DRAW, ACTIVE, GET, SPECIAL, FINAL, green COLOR, and the
+// verified 028/029 Raid Life trigger. Other higher Raid triggers remain gated.
 import {TTG_BY_ID} from './ttg-builder.mjs';
 import {greenTtgNeedsEnergy} from './ttg-green-passives.mjs';
 import {canDeployTtgCard} from './ttg-actions.mjs';
 import {TTG_GREEN_ENTRY_IDS} from './ttg-green-entry.mjs';
+import {calculateTtgEnergyByColor,withTtgDerivedEnergy} from './ttg-energy-snapshot.mjs';
 const field=pl=>['front','energy'].flatMap(line=>(pl?.[line]||[]).map((card,slot)=>({card,line,slot}))).filter(x=>x.card);
 const flatten=c=>[{uid:c.uid,cardId:c.cardId},...(c.stack||[]).flatMap(flatten),...(c.under||[]).flatMap(flatten)];
 const idName=c=>TTG_BY_ID[c.cardId]?.nameJa||c.nameJa;
@@ -38,7 +40,26 @@ export function legalTtgLifeChoices(state){
    for(const line of ['energy','front'])for(let slot=0;slot<4;slot++)
     if(!pl[line][slot])choices.push({...base,mode:'color',handUid:h.uid,line,slot});
   }
- }else if(trigger==='raid')return [];
+ }else if(trigger==='raid'){
+  // Official RAID Trigger: add revealed card to hand OR, with enough GREEN
+  // energy and a legal Raid base, Raid it without consuming AP.
+  // Other Raid cards intentionally remain unimplemented.
+  if(!['TTG-1-028','TTG-1-029'].includes(card.cardId))return [];
+  choices.push({...base,mode:'raidHand'});
+  const printed=TTG_BY_ID[card.cardId],energy=calculateTtgEnergyByColor(state,q.player);
+  if(energy.green>=printed.energy&&!pl.front.some(c=>c?.cardId==='TTG-1-004')){
+   for(const target of field(pl)){
+    const name=idName(target.card),valid=['シモン','ヴィラル'].includes(name)&&
+     !(target.card.stack||[]).length&&!(target.card.under||[]).length;
+    if(!valid)continue;
+    const positions=[{line:target.line,slot:target.slot}];
+    if(target.line==='energy')for(let slot=0;slot<pl.front.length;slot++)
+     if(!pl.front[slot])positions.push({line:'front',slot});
+    for(const position of positions)choices.push({...base,mode:'raid',baseUid:target.card.uid,...position});
+   }
+  }
+  return choices;
+ }
  else if(!['draw','final'].includes(trigger))throw new Error('Unknown printed life trigger: '+trigger);
  // The trigger is optional (official Q99), including GET, ACTIVE and COLOR.
  return [...choices,{...base,mode:'decline'}];
@@ -64,7 +85,7 @@ export function beginTtgLifeTrigger(state,{player,lifeUid}={}){
  return result;
 }
 export function finalizeTtgLifeOutcome(state,defender){
- if(state.pendingTtgLife||state.pending?.kind==='ttgGreenEntry')return state;
+ if(state.pendingTtgLife||state.pending)return state;
  const result=state;
  if(!result.players[defender].life.length&&result.status!=='finished'){
   result.status='finished';result.winner=1-defender;result.endReason='lifeDepleted';
@@ -76,11 +97,25 @@ export function resolveTtgLifeChoice(state,action){
  if(action?.player!==q.player||action?.cardUid!==q.cardUid)throw new Error('Only defender can resolve their life trigger');
  const choices=legalTtgLifeChoices(state);
  const valid=choices.find(x=>x.mode===action.mode&&x.targetUid===action.targetUid&&
-  x.handUid===action.handUid&&x.line===action.line&&x.slot===action.slot);
+  x.handUid===action.handUid&&x.baseUid===action.baseUid&&x.line===action.line&&x.slot===action.slot);
  if(!valid)throw new Error('Illegal life trigger action or target');
  const result=structuredClone(state),owner=result.players[q.player];
  const ownerIndex=owner.outside.findIndex(x=>x.uid===q.cardUid);
- if(action.mode==='get'){
+ if(action.mode==='raidHand'){
+  owner.hand.push(owner.outside.splice(ownerIndex,1)[0]);
+ }else if(action.mode==='raid'){
+  const source=field(owner).find(x=>x.card.uid===action.baseUid);
+  if(!source||owner[action.line][action.slot]&&
+    !(source.line===action.line&&source.slot===action.slot))throw new Error('Raid life destination changed');
+  const original=source.card,top=owner.outside.splice(ownerIndex,1)[0];
+  owner[source.line][source.slot]=null;
+  owner[action.line][action.slot]={...top,stack:[original],under:[],ready:true,
+   raidedTurn:state.turn,enteredTurn:state.turn};
+  // Raid front Entry effects are offered even if it is the final life card.
+  if(action.line==='front')result.pending={kind:top.cardId==='TTG-1-028'?'ttgGreen028Entry':'ttgGreen029Entry',
+   player:q.player,uid:top.uid};
+  if(!owner.life.length)result.pendingLifeOutcome={player:q.player};
+ }else if(action.mode==='get'){
   owner.hand.push(owner.outside.splice(ownerIndex,1)[0]);
  }else if(action.mode==='active'){
   const loc=field(owner).find(x=>x.card.uid===action.targetUid);
