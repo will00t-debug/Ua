@@ -80,7 +80,7 @@ function coreFixture(id){
 }
 test('028 last-life RAID defers victory through optional enemy-target choice and mandatory draw',()=>{
  const s=coreFixture('TTG-1-028');
- const p=beginTtgLifeTrigger(s,{player:1,lifeUid:'trigger'});
+ const p=beginTtgLifeTrigger(s,{player:1,lifeUid:s.players[1].life[0].uid});
  assert.equal(p.status,'playing');
  const raidAction=legalTtgCoreActions(p).find(x=>x.mode==='raid');
  assert.ok(raidAction);
@@ -98,7 +98,7 @@ test('028 last-life RAID defers victory through optional enemy-target choice and
 });
 test('029 last-life RAID defers victory through REST recovery, not skipping pending on-entry',()=>{
  const s=coreFixture('TTG-1-029');
- const p=beginTtgLifeTrigger(s,{player:1,lifeUid:'trigger'});
+ const p=beginTtgLifeTrigger(s,{player:1,lifeUid:s.players[1].life[0].uid});
  const chosen=legalTtgCoreActions(p).find(x=>x.mode==='raid');
  const entered=dispatchTtgCoreAction(p,chosen);
  assert.equal(entered.status,'playing');
@@ -111,6 +111,6 @@ test('029 last-life RAID defers victory through REST recovery, not skipping pend
 test('028/029 life RAID cannot bypass Q2260 front Viral simultaneous effect ordering',()=>{
  const s=fixture('TTG-1-028');
  s.players[1].front[1]=c('viral','TTG-1-004');
- const p=beginTtgLifeTrigger(s,{player:1,lifeUid:'trigger'});
+ const p=beginTtgLifeTrigger(s,{player:1,lifeUid:s.players[1].life[0].uid});
  assert.deepEqual(legalTtgLifeChoices(p).map(x=>x.mode),['raidHand']);
 });
