@@ -19,6 +19,10 @@ jobs:
           node-version: '22'
       - name: Run all regression tests
         run: npm test
+      - name: Syntax check for browser modules
+        run: |
+          node --check dist/app.mjs
+          node --check dist/ai-v2.mjs
       - name: Check static entry point
         run: |
           test -s dist/index.html
