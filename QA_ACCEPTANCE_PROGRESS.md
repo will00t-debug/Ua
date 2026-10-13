@@ -43,3 +43,13 @@
 **目前累計至少 9 張卡號有本系列逐卡驗收測試紀錄（SLG 001、002、003、004、005、006、007；TTG 001、003），但完整正式驗收依然未達標。** 這些只是每張卡的選定能力與分支，尚不能將其標成「正式全效果驗收完成」。
 
 驗收推進時，應優先補完未覆蓋的能力分支、錯誤成本、生命 Trigger、被封鎖的操作、Raid 連動，以及手機 UI 操作，再依可追溯證據逐卡轉正；不可因累計測試數量或已有 Beta 80／81 卡而無條件翻轉 `auto`／`playable` 欄位。
+
+## 同輪加測：《我獨自升級》008／009／010
+
+新增 `tests/solo-official-acceptance-batch3.test.mjs`，對照三張日本官方卡的個別頁面：
+
+- [SLG-1-008](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-008)：實際登場、查看牌庫頂四張、僅能選合法的〈水篠旬〉、餘牌放牌庫底、拿牌時必須棄一；測試確保卡片實體不重複。
+- [SLG-1-009](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-009)：主階段支付一張實際手牌、BP＋1500；同名該實體一次每回合不得重複啟動（後續仍要驗證其他生命觸發互動）。
+- [SLG-1-010](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-010)：場外 9／10 張門檻，限自己的回合 BP＋1000；不冒稱 DRAW 觸發的所有交互已完整驗證。
+
+**目前累計 12 種有此專案新增的官方逐卡測試情境（Solo 十張 001～010；TTG 001、003），另有既有 FAQ 回歸測試。正式「每卡所有效果完整驗收」仍不能因這些個別情境測過就直接算 12／161。**
