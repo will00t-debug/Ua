@@ -4,6 +4,7 @@ import {TITLES} from './title-registry.mjs';
 import {SAO_CARDS,SAO_BY_ID,saoDeckIssues} from './sao-cards.mjs';
 import {SOLO_LEVELING_CARDS} from './solo-leveling.mjs';
 import {normalizeSoloDeck,soloDeckIssues,SOLO_DRAFT_PRESET} from './solo-decks.mjs';
+import {SOLO_MATCH_SUPPORTED,SOLO_TRAINING_PRESET,SOLO_SHADOW_TRAINING_PRESET,soloTrainingDeckIssues,newSoloTrainingMatch,soloTrainingLegalActions,soloTrainingDispatch,soloTrainingBotAction,assertSoloTrainingMatch,soloEnergy,soloMatchBp,inspectSoloAttached} from './solo-match.mjs';
 import {MST_CARDS,emptyMstDeck,normalizeMstCounts,mstCount,mstDeckIssues,readMstSaved} from './mst-builder.mjs';
 import {TTG_PENDING_CARDS} from './ttg-pending.mjs';
 import {TTG_CARDS,emptyTtgDeck,normalizeTtgCounts,ttgCount,ttgDeckIssues,readTtgSaved} from './ttg-builder.mjs';
@@ -18,6 +19,7 @@ let deck=loadDeck(),game=loadGame();
 let savedDecks=readSavedDecks(safeRead(SAVED_DECKS_KEY));
 const TTG_DRAFT_KEY='ua-ttg-draft-v1',TTG_SAVED_KEY='ua-ttg-saved-v1';
 const SAO_DRAFT_KEY='ua-sao-draft-v1',SAO_SAVED_KEY='ua-sao-saved-v1';
+const SOLO_GAME_KEY='ua-slg-training-v1';
 const SOLO_DRAFT_KEY='ua-slg-draft-v1',SOLO_SAVED_KEY='ua-slg-saved-v1';
 const MST_DRAFT_KEY='ua-mst-draft-v1',MST_SAVED_KEY='ua-mst-saved-v1';
 let saoDeck=safeRead(SAO_DRAFT_KEY)||{},saoSaved=Array.isArray(safeRead(SAO_SAVED_KEY))?safeRead(SAO_SAVED_KEY):[],saoName='刀劍神域自訂牌組';
@@ -29,6 +31,7 @@ function soloNormalize(raw){return normalizeSoloDeck(raw);}
 let soloDeck;try{soloDeck=soloNormalize(safeRead(SOLO_DRAFT_KEY));}catch{soloDeck=soloNormalize({});}
 let soloSaved=[];try{soloSaved=(safeRead(SOLO_SAVED_KEY)||[]).filter(x=>x&&typeof x.name==='string'&&x.counts).map(x=>({...x,counts:soloNormalize(x.counts)}));}catch{soloSaved=[];}
 let soloName='我獨自升級自訂牌組';
+let soloGame=null;try{const value=safeRead(SOLO_GAME_KEY);if(value?.title==='solo-leveling'&&assertSoloTrainingMatch(value))soloGame=value;}catch{soloGame=null;}
 function persistSolo(){save(SOLO_DRAFT_KEY,soloDeck);}
 let mstDeck=loadMstDraft(),mstSaved=readMstSaved(safeRead(MST_SAVED_KEY)),mstName='無職轉生自訂牌組';
 function loadMstDraft(){try{return normalizeMstCounts(safeRead(MST_DRAFT_KEY));}catch{return emptyMstDeck();}}
@@ -36,7 +39,7 @@ function persistMst(){save(MST_DRAFT_KEY,mstDeck);}
 const deckMeta=safeRead(DECK_META_KEY)||{};
 let deckName=typeof deckMeta.name==='string'?deckMeta.name.slice(0,40):(PRESETS.find(p=>sameCounts(p.counts,deck))?.name||'自訂 BLEACH 牌組');
 let selectedDeckId=savedDecks.some(d=>d.id===deckMeta.savedId)?deckMeta.savedId:null;
-const ui={saoSet:'all',title:'bleach',view:'lobby',mode:'solo',first:'0',preset:[0,1].includes(deckMeta.preset)?deckMeta.preset:0,opponentSource:'preset:1',filter:'all',search:'',selected:null,line:'energy',deployment:'normal',sideTab:'card',raidFlow:null,modal:null,choiceIds:[],handoff:false,lastController:null};
+const ui={soloSelected:null,saoSet:'all',title:'bleach',view:'lobby',mode:'solo',first:'0',preset:[0,1].includes(deckMeta.preset)?deckMeta.preset:0,opponentSource:'preset:1',filter:'all',search:'',selected:null,line:'energy',deployment:'normal',sideTab:'card',raidFlow:null,modal:null,choiceIds:[],handoff:false,lastController:null};
 if(deckMeta.opponentSource==='current'||/^preset:[01]$/.test(deckMeta.opponentSource||'')||savedDecks.some(d=>'saved:'+d.id===deckMeta.opponentSource))ui.opponentSource=deckMeta.opponentSource;
 let botTimer=null,toastTimer=null;
 function safeRead(k){try{return JSON.parse(localStorage.getItem(k)||'null');}catch{return null;}}
@@ -95,12 +98,13 @@ function render(){
  clearTimeout(botTimer);
  const modalScroll=$('.modal')?.scrollTop||0;
  ui.contentsOpen=$('.deckContents')?.open??ui.contentsOpen??false;
- const active=ui.view==='arena'?'lobby':ui.view;
- $('#app').innerHTML=`<div class="shell${ui.view==='arena'?' shell-match':''}"><aside class="rail"><button class="brand" data-view="lobby" aria-label="返回對戰大廳"><img src="assets/mark.svg" alt=""><span><b>BLEACH ARENA</b><small>UNION ARENA SIMULATOR</small></span></button><nav class="nav" aria-label="主要導覽">${[['lobby','home','對戰大廳'],['builder','cards','牌組構築'],['library','book','卡片圖鑑'],['rules','shield','操作說明']].map(([v,i,n])=>`<button data-view="${v}" class="${active===v?'active':''}" ${active===v?'aria-current="page"':''}>${icon(i)}<span>${n}</span></button>`).join('')}</nav></aside><main class="main"><header class="topbar"><div class="breadcrumb">UNION ARENA <span> / </span> <b>${{lobby:'對戰大廳',builder:'牌組構築',library:'卡片圖鑑',rules:'操作說明',arena:'對戰練習'}[ui.view]}</b></div><div class="topStatus"><span><i class="statusDot"></i>規則自動結算</span><span class="pill">BLEACH · 日本／亞洲版</span></div></header>${ui.view==='lobby'?lobby():ui.view==='builder'||ui.view==='library'?library():ui.view==='rules'?rules():arena()}${footer()}</main></div>${modalContent()}`;
+ const active=['arena','soloArena'].includes(ui.view)?'lobby':ui.view;
+ $('#app').innerHTML=`<div class="shell${ui.view==='arena'?' shell-match':''}"><aside class="rail"><button class="brand" data-view="lobby" aria-label="返回對戰大廳"><img src="assets/mark.svg" alt=""><span><b>BLEACH ARENA</b><small>UNION ARENA SIMULATOR</small></span></button><nav class="nav" aria-label="主要導覽">${[['lobby','home','對戰大廳'],['builder','cards','牌組構築'],['library','book','卡片圖鑑'],['rules','shield','操作說明']].map(([v,i,n])=>`<button data-view="${v}" class="${active===v?'active':''}" ${active===v?'aria-current="page"':''}>${icon(i)}<span>${n}</span></button>`).join('')}</nav></aside><main class="main"><header class="topbar"><div class="breadcrumb">UNION ARENA <span> / </span> <b>${{lobby:'對戰大廳',builder:'牌組構築',library:'卡片圖鑑',rules:'操作說明',arena:'對戰練習',soloArena:'我獨自升級・試玩'}[ui.view]}</b></div><div class="topStatus"><span><i class="statusDot"></i>規則自動結算</span><span class="pill">BLEACH · 日本／亞洲版</span></div></header>${ui.view==='lobby'?lobby():ui.view==='builder'||ui.view==='library'?library():ui.view==='rules'?rules():ui.view==='soloArena'?soloArena():arena()}${footer()}</main></div>${modalContent()}`;
  bind();
  if($('.modal'))$('.modal').scrollTop=modalScroll;
  const shell=$('.shell');if(shell)shell.inert=!!$('.modalBackdrop');
  if(ui.view==='arena'&&botTurn()&&!ui.handoff&&!ui.modal){botTimer=setTimeout(()=>{const a=botAction(game);if(a)act(a);},game.pending?850:550);}
+ if(ui.view==='soloArena'&&soloGame?.status==='playing'&&(soloGame.pending?.p??soloGame.active)===1){botTimer=setTimeout(()=>soloAct(soloTrainingBotAction(soloGame)),350);}
 }
 function lobby(){
  const currentPreset=PRESETS[ui.preset];const custom=!sameCounts(deck,currentPreset.counts);
@@ -209,7 +213,7 @@ function soloLibrary(){
  return `<header class="pageHeading"><div><h1>我獨自升級 · 牌組構築</h1><p>UA51BT / SLG-1 · 已核對 ${SOLO_LEVELING_CARDS.length} / 80 種一般效果卡</p></div><button class="btn" data-view="lobby">返回大廳</button></header>
  <div class="titlePicker" role="group" aria-label="選擇作品">${TITLES.map(t=>`<button type="button" data-title="${t.id}" aria-pressed="${ui.title===t.id}" class="btn ${ui.title===t.id?'primary':'outline'}">${esc(t.label)} · ${t.cards.length} 種</button>`).join('')}</div>
  <div class="supportNote"><b>我獨自升級尚未開放對戰</b><span>已加入獨立卡表與草稿功能。剩餘 ${80-SOLO_LEVELING_CARDS.length} 種卡片、官方卡圖、FAQ 與自動判定尚需核實；不會把異圖當成不同效果卡，也不會混入 BLEACH、天元突破牌組。</span></div>
- <div class="deckEditor"><label>牌組名稱<input id="soloDeckName" maxlength="40" value="${esc(soloName)}"></label><label>已儲存牌組<select id="soloSavedSelect"><option value="">載入草稿</option>${soloSaved.map((d,i)=>`<option value="${i}">${esc(d.name)}</option>`).join('')}</select></label><div class="deckEditorActions"><button class="btn primary" data-action="soloSave">儲存草稿</button><button class="btn outline" data-action="soloNew">新建草稿</button><button class="btn outline" data-action="soloPreset">載入影之軍團示範草稿</button></div></div>
+ <div class="deckEditor"><label>牌組名稱<input id="soloDeckName" maxlength="40" value="${esc(soloName)}"></label><label>已儲存牌組<select id="soloSavedSelect"><option value="">載入草稿</option>${soloSaved.map((d,i)=>`<option value="${i}">${esc(d.name)}</option>`).join('')}</select></label><div class="deckEditorActions"><button class="btn primary" data-action="soloSave">儲存草稿</button><button class="btn outline" data-action="soloNew">新建草稿</button><button class="btn outline" data-action="soloPreset">載入影之軍團示範草稿</button><button class="btn primary" data-action="soloTrainingStart">綠色限定卡組試玩</button><button class="btn primary" data-action="soloTrainingStartShadow">紫色影之軍團試玩</button></div></div>
  <div class="toolbar"><input id="search" type="search" placeholder="搜尋 SLG 卡號、名稱與效果…" value="${esc(ui.search)}"><div class="filter">${[['all','全部'],['character','角色'],['event','事件'],['field','場域']].map(([v,n])=>`<button data-filter="${v}" class="${ui.filter===v?'active':''}">${n}</button>`).join('')}</div></div>
  <div class="libraryLayout"><div class="cardGrid">${entries.map(c=>`<article class="catalogCard"><button class="catalogArt" data-inspect="${c.id}" aria-label="開啟官方卡片 ${esc(c.number)}"><img src="assets/mark.svg" alt="${esc(c.name)} 佔位圖" loading="lazy"></button><div class="catalogInfo"><strong>${esc(c.name)}</strong><div class="sub">${esc(c.number)} · ${esc(TYPE_NAMES[c.type]||c.type)} · ${esc(COLOR_NAMES[c.color])}</div><span class="autoStatus pending">效果待實作</span><div class="catalogMeta"><span>◆ ${c.energy} 能源</span><span>AP ${c.ap}</span><span>BP ${c.bp??'—'}</span><span>產能 ${c.gen}</span></div><p class="catalogEffect">${esc(c.effect)}</p><div class="countPicker"><button data-solo-count="${c.id}" data-delta="-1" ${!soloDeck[c.id]?'disabled':''}>−</button><b>${soloDeck[c.id]||0}</b><button data-solo-count="${c.id}" data-delta="1" ${soloDeck[c.id]>=c.maxCopies?'disabled':''}>+</button></div></div></article>`).join('')}</div><aside class="panel deckSummary"><h3>我獨自升級牌組</h3><div class="deckTotal">${count} <small>/ 50</small></div><div class="progressTrack"><i style="width:${Math.min(100,count*2)}%"></i></div><p class="note">${esc(soloDeckIssues(soloDeck).join('；'))}。即使湊滿50張，完整自動判定前仍不能開始AI對戰。</p><details class="deckContents"><summary>已選卡片</summary>${SOLO_LEVELING_CARDS.filter(c=>soloDeck[c.id]).map(c=>`<div class="deckContentRow">${esc(c.name)} · ×${soloDeck[c.id]}</div>`).join('')||'<p class="note">尚未選擇卡片</p>'}</details></aside></div>`;
 }
@@ -228,11 +232,107 @@ function saoLibrary(){
  const total=Object.values(saoDeck).reduce((n,x)=>n+x,0),issues=saoDeckIssues(saoDeck);
  return `<div class="titlePicker" role="group" aria-label="選擇作品">${TITLES.map(t=>`<button type="button" data-title="${t.id}" aria-pressed="${ui.title===t.id}" class="btn ${ui.title===t.id?'primary':'outline'}">${esc(t.label)} · ${t.cards.length} 種</button>`).join('')}</div><header class="pageHeading"><div><h1>刀劍神域 · 牌組編輯</h1><p>UA15ST／UA15BT／EX08BT／已確認官方特典 · ${SAO_CARDS.length} 種不重複一般卡號</p></div></header><div class="supportNote"><b>刀劍神域尚未開放對戰</b><span>目前只收錄已核對的卡片；未驗證的卡片不會虛構，也不會混進 BLEACH 或天元突破的牌組。</span></div><div class="deckEditor"><label>牌組名稱<input id="saoDeckName" maxlength="40" value="${esc(saoName)}"></label><label>已儲存牌組<select id="saoSavedSelect"><option value="">選擇草稿</option>${saoSaved.map((d,i)=>`<option value="${i}">${esc(d.name)}</option>`).join('')}</select></label><div class="deckEditorActions"><button class="btn primary" data-action="saoSave">儲存刀劍神域草稿</button><button class="btn outline" data-action="saoNew">新建空白草稿</button></div></div><div class="toolbar"><input id="search" type="search" placeholder="搜尋刀劍神域卡號、名稱、效果…" value="${esc(ui.search)}"><select id="saoSetFilter" aria-label="依產品篩選"><option value="all">全部已收錄卡片</option>${[["UA15ST","起始牌組 UA15ST"],["UA15BT","補充包 UA15BT"],["EX08BT","Vol.2 EX08BT"],["UAPR","UAPR 特典"]].map(([key,label])=>`<option value="${key}" ${ui.saoSet===key?"selected":""}>${label}</option>`).join("")}</select></div><div class="libraryLayout"><div class="cardGrid">${entries.map(c=>`<article class="catalogCard"><button class="catalogArt" data-inspect="${c.id}" aria-label="查看 ${esc(c.number)}"><img src="${esc(c.image||'assets/mark.svg')}" onerror="this.onerror=null;this.src='assets/mark.svg'" alt="${esc(c.nameJa)} 官方卡圖" loading="lazy"></button><div class="catalogInfo"><strong>${esc(c.name)}</strong><div class="sub">${esc(c.nameJa)} · ${esc(c.number)} · ${TYPE_NAMES[c.type]} · ${COLOR_NAMES[c.color]} · ${c.rarity} · 特徵 ${esc(c.traits?.join('、')||'—')} · ${c.trigger?TRIGGER_NAMES[c.trigger]+' Trigger':'無 Trigger'}${c.sets.length>1?` · 再錄於${c.sets.join("、")}`:""}</div><span class="autoStatus pending">${c.engineImplemented?"基礎效果已有測試（對戰仍未開放）":"尚未完成自動判定"}</span><div class="catalogMeta"><span>◆ ${c.energy} 能源</span><span>${c.ap} AP</span><span>${c.bpPrinted||c.bp} BP</span><span>產能 ${c.gen}</span></div><p class="catalogEffect">${esc(c.effect)}</p>${c.effectJa&&c.effectJa!==c.effect?`<details><summary>官方日文原文</summary><p class="catalogEffect">${esc(c.effectJa)}</p></details>`:""}<div class="countPicker"><button data-sao-count="${c.id}" data-delta="-1" ${!saoDeck[c.id]?'disabled':''}>−</button><b>${saoDeck[c.id]||0}</b><button data-sao-count="${c.id}" data-delta="1" ${saoDeck[c.id]>=4?'disabled':''}>+</button></div></div></article>`).join('')}</div><aside class="panel deckSummary"><h3>刀劍神域牌組</h3><div class="deckTotal">${total} <small>/ 50</small></div><div class="progressTrack"><i style="width:${Math.min(100,total*2)}%"></i></div><div class="validation invalid">${issues.map(esc).join('<br>')}</div><p class="note">此牌組目前只能儲存草稿，完整卡表與效果自動判定完成後才會開放對戰。</p></aside></div>`;
 }
+function soloAct(action){
+ try{
+  soloGame=soloTrainingDispatch(soloGame,action);
+  assertSoloTrainingMatch(soloGame);
+  save(SOLO_GAME_KEY,soloGame);
+  ui.soloSelected=null;
+  render();
+ }catch(e){toast('我獨自升級：'+e.message);}
+}
+function soloArena(){
+ if(!soloGame)return '<section class="panel">尚無練習對局。請先到我獨自升級牌組編輯器開局。</section>';
+ const state=soloGame,p=state.players[0],opp=state.players[1],actor=state.pending?.p??state.active,bot=actor===1;
+ const phase={start:'開始階段',move:'移動階段',main:'主要階段',attack:'攻擊階段',attackEnd:'攻擊階段結束效果'}[state.phase]||state.phase;
+ const label=c=>c?esc(soloById[c.cardId]?.nameJa||c.cardId):'空';
+ const slot=c=>c?'<b>'+label(c)+'</b> <small>'+esc(c.cardId)+' · '+(c.ready?'ACTIVE':'REST')+' · BP '+soloMatchBp(state,c)+'</small>':'<small>空格</small>';
+ const board=who=>['front','energy'].map(line=>'<div class="panel"><h3>'+(line==='front'?'前線':'能源線')+'</h3><div class="grid" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px">'+who[line].map(c=>'<div class="catalogInfo" style="border:1px solid #7775;padding:8px;min-height:55px;border-radius:7px">'+slot(c)+'</div>').join('')+'</div></div>').join('');
+ const actions=soloTrainingLegalActions(state);
+ const actionButton=(a,title)=>'<button class="btn small" data-solo-act="'+encodeURIComponent(JSON.stringify(a))+'">'+esc(title)+'</button>';
+ const ownedUnder=uid=>[...p.front,...p.energy].filter(Boolean).flatMap(c=>inspectSoloAttached(state,{viewer:0,owner:0,hostUid:c.uid})).find(c=>c.uid===uid);
+ const chooseText=a=>{
+  if(state.pending?.kind==='slgEndRaid')return a.uid==null?'不發動連續Raid':a.uid==='peel'?'將 '+a.used.length+' 張己方裏向卡及目前Raid頂卡送場外，保留原底板（不進行新Raid）':'使用 '+label(p.hand.find(c=>c.uid===a.uid))+'，將 '+a.used.map(uid=>label(ownedUnder(uid))).join('、')+' 送場外，再Raid於原底板';
+  if(state.pending?.kind==='slg048Deploy'||state.pending?.kind==='slg051Raid')return a.uid==null?'不登場／不Raid':label(state.pending.kind==='slg048Deploy'?p.hand.find(c=>c.uid===a.uid):p.outside.find(c=>c.uid===a.uid))+' → '+(a.line==='front'?'前線':'能源線')+(a.slot+1)+(a.target?'（底板 '+label([...p.front,...p.energy].find(c=>c?.uid===a.target))+'）':'（REST登場）');
+  if(state.pending?.kind==='slg051Mode')return a.mode==='recover'?'場外低能源角色回收模式':'支付1AP並棄牌，從場外 Raid';
+  if(state.pending?.kind==='slg064Attack')return a.mode==='repeat'?'再結算登場時全體BP下降':'選BP2000以下敵方角色退場';
+  if(state.pending?.kind==='slg061End')return a.uid==null?'不發動':'送 '+label(p.hand.find(c=>c?.uid===a.uid))+' 到場外以ACTIVE己方角色';
+  if(state.pending?.kind==='slg022Enter'||state.pending?.kind==='slg061Enter'||state.pending?.kind==='slg061Active')return a.uid==null?'不選擇':'ACTIVE／強化 '+label([...p.front,...p.energy].find(c=>c?.uid===a.uid));
+  if(state.pending?.kind==='slg020EntryDiscard'||state.pending?.kind==='slg020Recover'||state.pending?.kind==='slg021Win'||state.pending?.kind==='slg051Recover')return a.uid==null?'略過':'選 '+label(a.uid&&[...p.hand,...p.outside].find(c=>c.uid===a.uid));
+  if(state.pending?.kind==='slg060Swap')return a.uid==null?'不交換':'選能源線 '+label(p.energy.find(c=>c?.uid===a.uid))+' 交換';
+  if(state.pending?.kind==='slg060Target'||state.pending?.kind==='slg022Swap')return a.uid==null?'不交換':'交換前線 '+label(p.front.find(c=>c?.uid===a.uid));
+  if(state.pending?.kind==='slg049Destroy'||state.pending?.kind==='slg064Destroy')return a.uid==null?'不選擇':'使 '+label(opp.front.find(c=>c?.uid===a.uid))+' 退場';
+
+  if(state.pending?.kind==='slgSearch'&&Array.isArray(a.picks))
+   return (a.picks.length?'加入手牌：'+a.picks.map(uid=>label(state.players[actor].deck.find(c=>c.uid===uid))).join('、'):'不加入手牌')+'｜其餘放牌庫底：'+a.order.map(uid=>label(state.players[actor].deck.find(c=>c.uid===uid))).join(' → ');
+  if(state.pending?.kind==='slgRecoveredDeploy')return a.uid==null?'不登場':'免費登場 → '+(a.line==='front'?'前線':'能源線')+(a.slot+1);
+  if(state.pending?.kind==='slgMill')return a.mill?'將牌庫頂放場外':'不放場外';
+  if(state.pending?.kind==='slg044Target')return (a.attach?'附加牌庫頂裏向卡，':'不附加裏向卡，')+'賦予傷害+1 '+label([...p.front,...p.energy].find(c=>c?.uid===a.uid));
+  if(state.pending?.kind==='slg077Target')return '退場 '+label([...opp.front,...p.front].find(c=>c?.uid===a.uid));
+  if(state.pending?.kind==='slg077Buff')return a.uid==null?'不強化':'BP+1000 '+label([...p.front,...p.energy].find(c=>c?.uid===a.uid));
+
+  if(state.pending?.kind==='shadowSummonCard')return a.uid==null?'結束復活':'復活 '+label(state.players[actor].outside.find(c=>c.uid===a.uid))+' → '+(a.line==='front'?'前線':'能源線')+(a.slot+1);
+  if(state.pending?.kind==='shadowSummonMode')return a.mode==='oneActive'?'最多1張影之軍團 ACTIVE登場':'最多2張需求能源3以下影之軍團 REST登場';
+  if(state.pending?.kind==='castlePotion')return a.uid==null?'不使用場外藥水':'支付1AP使用 '+label(state.players[actor].outside.find(c=>c.uid===a.uid))+'（結算後除外）';
+  if(state.pending?.kind==='castleRecover')return a.uid==null?'不回收角色':'回收 '+label(state.players[actor].outside.find(c=>c.uid===a.uid));
+  if(typeof a.count==='number')return '回復 '+a.count+' AP';
+  if(typeof a.draw==='boolean')return a.draw?'抽1張':'不抽牌';
+  if(state.pending?.kind==='eventRecover'||state.pending?.kind==='entryRecover'||state.pending?.kind==='sungRecovery')
+   return a.uid==null?'不回收':'回收 '+label(state.players[actor].outside.find(c=>c.uid===a.uid));
+  if(state.pending?.kind==='eventDestroy'||state.pending?.kind==='specialTrigger')
+   return '使 '+label([...p.front,...opp.front].find(c=>c?.uid===a.uid))+' 退場';
+  if(state.pending?.kind==='eventDance')return a.uid==null?'不選擇':'賦予攻擊抽牌 '+label([...p.front,...p.energy,...opp.front,...opp.energy].find(c=>c?.uid===a.uid));
+  if(state.pending?.kind==='marieBuff')return 'BP+1000 '+label([...p.front,...p.energy].find(c=>c?.uid===a.uid));
+  if(state.pending?.kind==='soldierTop'){
+   return (a.outsideUid==null?'不送場外':'送場外：'+label(state.players[actor].deck.find(c=>c.uid===a.outsideUid)))
+    +'；牌庫頂順序：'+a.order.map(uid=>label(state.players[actor].deck.find(c=>c.uid===uid))).join(' → ');
+  }
+  if(a.mode)return {block:'攻擊角色不被BP4000以上阻擋',untargetable:'攻擊角色不受敵方效果選取',buff:'攻擊角色本回合BP+1500',draw:'抽1張並棄1張',draw2:'抽2張',drawRecover:'抽1張，再選最多1張符合條件的場外角色回手'}[a.mode]||a.mode;
+  if(state.pending?.kind==='colorTrigger')return label(p.hand.find(c=>c.uid===a.uid))+' → '+(a.line==='front'?'前線':'能源線')+(a.slot+1);
+  if(state.pending?.kind==='specialTrigger')return '退場 '+label([...p.front,...opp.front].find(c=>c?.uid===a.uid));
+  if(state.pending?.kind==='raidTrigger')return a.uid==null?'將Raid卡加入手牌':'Raid → '+(a.line==='front'?'前線':'能源線')+(a.slot+1)+'（底板 '+label([...p.front,...p.energy,...opp.front,...opp.energy].find(c=>c?.uid===a.uid))+'）';
+  if(state.pending?.kind==='dailyUnder')return a.uid==null?'不移除裏向卡':label(ownedUnder(a.uid));
+  if(state.pending?.kind==='dailyRecover'||state.pending?.kind==='entryRecover'||state.pending?.kind==='sungRecovery')return a.uid==null?'不回收':'回收 '+label(p.outside.find(c=>c.uid===a.uid));
+  if(a.uid==null)return '不發動／不選擇／不阻擋';
+  return label([...p.hand,...opp.hand,...p.front,...p.energy,...opp.front,...opp.energy].find(c=>c?.uid===a.uid));
+ };
+ const choices=state.pending?'<div class="panel"><b>請選擇：'+esc({
+  discard:'棄一張手牌',entryImpact:'選擇獲得IMPACT的DFN角色',entryProtect:'選擇受AP保護的DFN',colorTrigger:'COLOR Trigger：選擇合法手牌及登場位置',specialTrigger:'SPECIAL Trigger：選擇敵方角色退場',entryDrawMode:'觀月繪里：選擇抽牌模式',entryRecover:'觀月繪里：選擇符合條件的場外角色',entryBounce:'選擇需返回手牌的己方其他角色',sungRecovery:'觀月繪里：選擇場外水篠旬回收',
+  castleCost:'惡魔城：選擇1張手牌支付成本',castlePotion:'惡魔城：選擇可支付AP的場外命之神水',castleRecover:'惡魔城：選擇符合條件的角色回收',shadowSummonMode:'影之君主：選擇復活模式',shadowSummonCard:'影之君主：選擇影之軍團及登場位置',entry002Mode:'朝比奈凜：選擇登場能力',entry002Buff:'朝比奈凜：選其他角色BP+1000',entry002Discard:'朝比奈凜：指定一張手牌送場外',entry004Discard:'犬飼晃：指定一張手牌送場外',peekTop:'查看牌庫頂並選擇去向與順序',eventDiscard:'事件：請選擇送場外的手牌',eventRecover:'命之神水：可選一張場外角色回收',eventRestoreAp:'選擇回復的AP數量',eventDestroy:'選擇合法的敵方前線退場角色',eventDance:'舞姬：選擇獲得攻擊時抽牌的向坂雫',marieBuff:'瑪莉：選另一己方角色BP+1000並將瑪莉回手',attackDraw:'攻擊時選擇是否抽牌',ryuuBuff:'リュー：選擇己方角色BP+1000',ryuuAp:'リュー：選擇最多回復2AP',
+  slgSearch:'查看牌庫頂：選卡及其餘順序',slgMill:'可選擇牌庫頂送場外',slgDiscard:'選一張手牌送場外',
+  slgRecoveredBuff:'朝比奈凜回收：選BP+1000目標',slgRecoveredDeploy:'向坂雫回收：選擇免費登場位置',slg019Entry:'水篠旬：棄影之軍團抽牌',slg019Recover:'水篠旬：棄影之軍團回收',slg044Target:'水篠葵：選水篠旬附裏向卡',slg059Entry:'白川大虎：可棄牌ACTIVE',slg077Target:'架南島攻略：選敵方退場目標',slg077Buff:'架南島攻略：選BP+1000目標',
+  slgEndRaid:'攻擊階段結束：選擇同系Raid與己方裏向卡成本',slg061End:'美濃部剛：選擇棄牌或不發動',slg061Active:'美濃部剛：選擇架南島角色ACTIVE',slg061Enter:'美濃部剛：選擇其他架南島角色BP+1000',
+  slg020EntryDiscard:'水篠旬020：可以棄手牌，接續場外回收',slg020Recover:'水篠旬020：最多回收一張合法角色',slg020AttackDiscard:'水篠旬020：攻擊時抽牌後棄牌',slg021Win:'水篠旬021：戰鬥勝利回收',slg022Enter:'水篠旬022：選前線／能源線影之軍團ACTIVE',slg022Swap:'水篠旬022：攻擊結束後交換能源線與前線',slg048Under:'水篠旬Raid攻擊：將一張手牌裏向放於角色下方',slg048Deploy:'水篠旬048：選擇綠色低能源角色REST登場',slg049Destroy:'水篠旬049：敵方前線最多一張退場',slg051Mode:'觀月繪里051：選回收或支付AP從場外Raid',slg051Recover:'觀月繪里051：場外低能源角色回收',slg051Discard:'觀月繪里051：棄手牌支付Raid成本',slg051Raid:'觀月繪里051：從場外指定Raid卡與底板',slg060Swap:'町田堂玄：選擇交換能源線角色',slg060Target:'町田堂玄：選擇前線跳過ACTIVE的角色',slg064Attack:'最上真：選攻擊能力',slg064Destroy:'最上真：選低BP敵方角色退場',
+  mainDiscard:'選擇支付的手牌',soldierTop:'影之兵士：查看牌庫頂並選擇順序',
+  raidTrigger:'生命RAID Trigger：加入手牌或選擇底板',raid058Discard:'向坂雫攻擊：棄牌選擇',
+  raid058Unfreeze:'ACTIVE與跳過ACTIVE的選擇',activeTrigger:'ACTIVE Trigger目標',
+  block:'阻擋角色',kaiserPick:'凱賽爾：可選一張ACTIVE角色REST',kaiserMode:'凱賽爾：選尚未使用模式',
+  kibaPick:'奇巴：可選一張ACTIVE角色REST',kibaMode:'奇巴：選尚未使用模式',
+  kibaDiscard:'奇巴：抽牌後棄一張',belDiscard:'貝爾：可棄手牌後ACTIVE',
+  dailyDiscard:'每日任務：支付棄牌成本',dailyUnder:'每日任務：選己方裏向卡送場外',
+  dailyRecover:'每日任務：選0能源水篠旬回收'
+ }[state.pending.kind]||'效果結算')+'</b><div class="toolbar">'+(bot?'對手正在選擇…':actions.map(a=>actionButton(a,chooseText(a))).join(''))+'</div></div>':'';
+ const selected=ui.soloSelected;
+ const selectable=actions.filter(a=>a.uid===selected);
+ const normalActions=state.pending?[]:actions.filter(a=>['next','extraDraw','move','attack','attackTarget','ability','abilityOutside'].includes(a.type));
+ return '<header class="pageHeading"><div><h1>我獨自升級 · 限定卡組試玩 Beta</h1><p>僅 '+SOLO_MATCH_SUPPORTED.length+' 張已接入本試玩引擎的卡。完整80張效果、Raid與所有FAQ尚未完成，請勿當成正式裁定。</p></div><button class="btn" data-view="builder">返回牌組編輯</button></header>'
+ +'<div class="supportNote"><b>'+(state.status==='finished'?(state.winner===0?'你獲勝':'電腦獲勝'):'第 '+state.turn+' 回合 · '+phase+' · '+(bot?'電腦處理中':'輪到你操作'))+'</b><span>你：AP '+p.ap+'/'+p.maxAp+' · 能源 '+soloEnergy(state,0)+' · 生命 '+p.life.length+' · 手牌 '+p.hand.length+'；電腦：AP '+opp.ap+' · 生命 '+opp.life.length+' · 手牌 '+opp.hand.length+'</span></div>'
+ +'<h3>電腦場上</h3>'+board(opp)+'<h3>你的場上</h3>'+board(p)
+ +choices
+ +(state.status==='playing'&&!state.pending&&!bot?'<div class="panel"><h3>主要操作</h3><div class="toolbar">'+normalActions.map(a=>actionButton(a,a.type==='next'?'下一階段／結束回合':a.type==='extraDraw'?'支付1AP額外抽牌':a.type==='move'?'移動 '+label([...p.energy].find(c=>c?.uid===a.uid))+' → 前線'+(a.slot+1):a.type==='attack'?'攻擊 '+label(p.front.find(c=>c?.uid===a.uid)):a.type==='attackTarget'?'狙擊 '+label(opp.front.find(c=>c?.uid===a.target)):a.type==='abilityOutside'?'場外回收：'+label(p.outside.find(c=>c?.uid===a.uid)):'發動 '+label([...p.energy,...p.front].find(c=>c?.uid===a.uid))+(a.mode?(' · '+({attach:'放置牌庫頂裏向卡',recover:'棄牌及回收',mill:'REST並把牌庫頂送場外',potion:'REST並用場外命之神水',boost:'影之軍團BP強化',attachDamage:'選水篠旬，置裏向卡並獲傷害+1'}[a.mode]||a.mode)):''))).join('')+'</div></div>':'')
+ +'<div class="panel"><h3>你的手牌（點選卡片後選擇登場位置）</h3><div class="toolbar">'+p.hand.map(c=>'<button class="btn small '+(selected===c.uid?'primary':'outline')+'" data-solo-card="'+esc(c.uid)+'">'+label(c)+' · 能源'+soloById[c.cardId].energy+' · AP'+soloById[c.cardId].ap+'</button>').join('')+'</div>'
+ +(selected?'<p>選擇位置</p><div class="toolbar">'+selectable.map(a=>actionButton(a,a.type==='play'?(a.line==='front'?'前線':'能源線')+(a.slot+1):a.type==='raid'?'Raid → '+(a.line==='front'?'前線':'能源線')+(a.slot+1)+'，底板 '+label([...p.front,...p.energy].find(c=>c?.uid===a.target)):a.type==='playEvent'?'使用事件，支付AP並依序選擇效果':'其他操作')).join('')+'</div>':'')+'</div>'
+ +'<details class="panel"><summary>查看我方場下裏向卡（對手無法查看）</summary>'+[...p.front,...p.energy].filter(Boolean).map(c=>({host:c,cards:inspectSoloAttached(state,{viewer:0,owner:0,hostUid:c.uid})})).filter(x=>x.cards.length).map(x=>'<p>'+label(x.host)+'：'+x.cards.map(c=>label(c)).join(' / ')+'</p>').join('')+'</details>'
+ +'<details class="panel"><summary>對局紀錄（最近20筆）</summary>'+state.log.slice(-20).map(x=>'<p>'+esc(x.turn+'：'+x.text)+'</p>').join('')+'</details>';
+}
+
 function bind(){
  $('#app').onclick=e=>{
   const el=e.target.closest('button');if(!el||el.disabled)return;
   if(el.dataset.view){chooseView(el.dataset.view);return;}
   if(el.dataset.title){ui.title=el.dataset.title;ui.set='all';ui.color='all';ui.search='';ui.selected=null;render();return;}
+  if(el.dataset.soloCard){ui.soloSelected=ui.soloSelected===el.dataset.soloCard?null:el.dataset.soloCard;render();return;}
+  if(el.dataset.soloAct){if(ui.view==='soloArena'&&(soloGame?.pending?.p??soloGame?.active)===0)soloAct(JSON.parse(decodeURIComponent(el.dataset.soloAct)));return;}
   if(el.dataset.soloCount){const id=el.dataset.soloCount;const c=soloById[id];if(!c)return;soloDeck[id]=Math.max(0,Math.min(c.maxCopies||4,(soloDeck[id]||0)+Number(el.dataset.delta)));persistSolo();render();return;}
   if(el.dataset.mstCount){const id=el.dataset.mstCount;const c=MST_CARDS.find(c=>c.id===id);if(!c||!c.verified)return;mstDeck[id]=Math.max(0,Math.min(4,(mstDeck[id]||0)+Number(el.dataset.delta)));persistMst();render();return;}
   if(el.dataset.saoCount){const id=el.dataset.saoCount;if(!SAO_BY_ID[id])return;saoDeck[id]=Math.max(0,Math.min(4,(saoDeck[id]||0)+Number(el.dataset.delta)));save(SAO_DRAFT_KEY,saoDeck);render();return;}
@@ -252,6 +352,8 @@ function bind(){
   }
   if(el.dataset.raidAction){const a=ui.modal.actions[Number(el.dataset.raidAction)];act(a);return;}
   switch(el.dataset.action){
+   case 'soloTrainingStartShadow':try{soloGame=newSoloTrainingMatch({decks:[SOLO_SHADOW_TRAINING_PRESET,SOLO_SHADOW_TRAINING_PRESET],mode:'solo',seed:Date.now()});save(SOLO_GAME_KEY,soloGame);ui.view='soloArena';ui.soloSelected=null;render();}catch(e){toast(e.message);}break;
+   case 'soloTrainingStart':try{soloGame=newSoloTrainingMatch({decks:[soloTrainingDeckIssues(soloDeck).length?SOLO_TRAINING_PRESET:soloDeck,SOLO_TRAINING_PRESET],mode:'solo',seed:Date.now()});save(SOLO_GAME_KEY,soloGame);ui.view='soloArena';ui.soloSelected=null;render();}catch(e){toast(e.message);}break;
    case 'soloPreset':soloDeck=soloNormalize(SOLO_DRAFT_PRESET);soloName='影之軍團示範牌組（尚不可對戰）';persistSolo();render();break;
    case 'soloNew':soloDeck=soloNormalize({});soloName='我獨自升級自訂牌組';persistSolo();render();break;
    case 'soloSave':soloSaved=[...soloSaved,{name:soloName.trim()||'我獨自升級自訂牌組',counts:soloNormalize(soloDeck)}];save(SOLO_SAVED_KEY,soloSaved);render();toast('已儲存我獨自升級牌組草稿。');break;
