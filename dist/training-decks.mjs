@@ -1,6 +1,7 @@
 // Three PDF-submitted 50-card BLEACH decks for AI sparring.
 // AP Card 查 source codes are metadata only; cards use simulator card identities.
 // Distinct printings/art variants are collapsed to their canonical BLC ID.
+import {resolveCardId} from './cards.mjs';
 export const TRAINING_DECKS = [
   {
     "id": "green-kenpachi-unohana",
@@ -66,5 +67,13 @@ export const TRAINING_DECKS = [
       "BLC-2-049": 4
     }
   }
-].map(d=>Object.freeze({...d,counts:Object.freeze(d.counts)}));
+].map(d=>{
+ const counts={};
+ for(const [identity,n] of Object.entries(d.counts)){
+  const id=resolveCardId(identity);
+  if(!id)throw Error('Unsupported imported training card: '+identity);
+  counts[id]=(counts[id]||0)+n;
+ }
+ return Object.freeze({...d,counts:Object.freeze(counts)});
+});
 export const TRAINING_BY_ID = Object.fromEntries(TRAINING_DECKS.map(d=>[d.id,d]));
