@@ -5,7 +5,7 @@ import {SOLO_SHADOW_TRAINING_PRESET,newSoloTrainingMatch,soloTrainingLegalAction
 // https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-017
 // https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-018
 // https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-019
-const counts={...SOLO_SHADOW_TRAINING_PRESET,'SLG-1-009':0,'SLG-1-017':2,'SLG-1-018':1,'SLG-1-019':1};
+const counts={...SOLO_SHADOW_TRAINING_PRESET,'SLG-1-009':0,'SLG-1-017':1,'SLG-1-018':1,'SLG-1-019':2};
 function match(seed=1719){const s=newSoloTrainingMatch({decks:[counts,counts],seed,first:0});s.phase='main';s.players[0].ap=3;s.players[0].maxAp=3;return s;}
 function pull(p,id){for(const zone of ['hand','deck','life']){const index=p[zone].findIndex(c=>c.cardId==='SLG-1-'+id);if(index>=0)return p[zone].splice(index,1)[0];}throw Error('Missing SLG '+id);}
 function hand(s,id){const c=pull(s.players[0],id);s.players[0].hand.push(c);return c;}
@@ -41,7 +41,7 @@ test('SLG-1-017 blank field fails once an energy-line card exists with only one 
 test('SLG-1-018 look at three, choose up to one Sung or Shadow, bottom remaining in exact order; mandatory hand discard only on take',()=>{
  let s=match(),p=s.players[0],source=hand(s,'018');
  field(s,'006','energy',0);field(s,'006','energy',1); // purple 4 energy
- const eligible=pull(p,'001'),shadow=pull(p,'030'),ineligible=pull(p,'015');
+ const eligible=pull(p,'017'),shadow=pull(p,'030'),ineligible=pull(p,'015');
  p.deck.unshift(ineligible,shadow,eligible);
  s=doAction(s,a=>a.type==='play'&&a.uid===source.uid&&a.line==='front'&&a.slot===0);
  assert.equal(s.pending?.kind,'slgSearch');const q=s.pending;

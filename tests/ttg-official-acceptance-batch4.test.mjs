@@ -20,16 +20,19 @@ function put(s,id,line='front',slot=0,owner=0){
 function legal(s,f){const a=legalTtgCoreActions(s).find(f);assert.ok(a,'expected legal TTG action');return a;}
 function use(s,f){const a=legal(s,f);return dispatchTtgCoreAction(s,a);}
 test('TTG-1-006: 5 -> 6 energy adds +1000 BP on own turn only and updates immediately',()=>{
- let s=game();const p=s.players[0],c=put(s,'006','front',0),gen=put(s,'017','energy',0);
+ let s=game();put(s,'006','front',0);put(s,'017','energy',0);
  s=withTtgDerivedEnergy(s,0);
- gen.energyBonus=(gen.energyBonus||0)+(5-calculateTtgEnergyByColor(s,0).green);
+ const g=s.players[0].energy[0];
+ g.energyBonus=(g.energyBonus||0)+(5-calculateTtgEnergyByColor(s,0).green);
+ s=withTtgDerivedEnergy(s,0);
  assert.equal(calculateTtgEnergyByColor(s,0).green,5);
- assert.equal(greenTtgCurrentBp(s,0,c),3000);
- gen.energyBonus++;
+ assert.equal(greenTtgCurrentBp(s,0,s.players[0].front[0]),3000);
+ s.players[0].energy[0].energyBonus++;
+ s=withTtgDerivedEnergy(s,0);
  assert.equal(calculateTtgEnergyByColor(s,0).green,6);
- assert.equal(greenTtgCurrentBp(s,0,c),4000);
+ assert.equal(greenTtgCurrentBp(s,0,s.players[0].front[0]),4000);
  s.active=1;
- assert.equal(greenTtgCurrentBp(s,0,c),3000);
+ assert.equal(greenTtgCurrentBp(s,0,s.players[0].front[0]),3000);
  assert.ok(assertTtgCoreState(s));
 });
 test('TTG-1-007: +1000 BP requires own Darry on either line, including opponent turn; enemy Darry does not count',()=>{
@@ -43,7 +46,8 @@ test('TTG-1-007: +1000 BP requires own Darry on either line, including opponent 
  s.active=1;
  assert.equal(greenTtgCurrentBp(s,0,g),2500,'007 printed passive has no own-turn condition');
  s.players[0].energy[0]=null;s.players[0].outside.push(d);
- assert.equal(greenTtgCurrentBp(s,0,g),1500);
+ s=withTtgDerivedEnergy(s,0);s=withTtgDerivedEnergy(s,1);
+ assert.equal(greenTtgCurrentBp(s,0,s.players[0].front[0]),1500);
  assert.ok(assertTtgCoreState(s));
 });
 test('TTG-1-007 from hand: optional second real AP plays one matching Darry from own outside REST, without duplicating it',()=>{
