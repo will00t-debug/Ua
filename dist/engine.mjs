@@ -76,7 +76,7 @@ const fresh=(uid,cardId)=>({uid,cardId,ready:false,buffs:[],stack:[],under:[],us
 export function newGame({decks,mode='solo',first=0,seed=Date.now(),names=['你','練習對手']}={}){
  const d=decks||[PRESETS[0].counts,PRESETS[1].counts];
  for(const counts of d){const err=validateDeck(counts);if(err.length)throw new Error(err.join(' '));const pending=pendingCards(counts);if(pending.length)throw new Error(`${pending.length} 種卡片的自動判定尚未完成（${pending[0].name} ${pending[0].identity}）。牌組仍可編輯與儲存；請先使用已支援自動判定的卡片開局。`);}
- const s={version:VERSION,rng:(seed>>>0)||1,seed:seed>>>0,mode,first,active:first,turn:0,status:'mulligan',phase:'mulligan',mulliganPlayer:first,players:[],queue:[],pending:null,combat:null,revealed:[],resolving:[],winner:null,log:[],logSeq:0,extraDrawn:false};
+ const s={version:VERSION,rng:(seed>>>0)||1,seed:seed>>>0,mode,first,active:first,turn:0,status:'mulligan',phase:'mulligan',mulliganPlayer:first,players:[],queue:[],pending:null,combat:null,revealed:[],triggerHistory:[],resolving:[],winner:null,log:[],logSeq:0,extraDrawn:false};
  for(let p=0;p<2;p++){
   const deck=shuffle(s,expandDeck(d[p]).map((id,i)=>fresh(`${p}-${i}`,id)));
   s.players.push({name:names[p],deck,hand:deck.splice(0,7),life:[],front:[null,null,null,null],energy:[null,null,null,null],outside:[],removed:[],ap:0,maxAp:0,turnCount:0,redrawn:false,kept:false});
@@ -542,7 +542,15 @@ function queueEvent(s,p,c){
 function damage(s,p,count=1){
  const reveals=s.players[p].life.splice(0,count);
  log(s,`${s.players[p].name}受到 ${count} 點傷害，翻開 ${reveals.length} 張生命。`,'damage');
- for(const c of reveals)s.revealed.push({p,card:c});
+ for(const c of reveals){
+  s.revealed.push({p,card:c});
+  // Face-up life cards are public, even without a Trigger or when the AI
+  // resolves it immediately. Hidden life/deck/hand cards are not included.
+  const d=cardOf(c);
+  s.triggerHistory ||= [];
+  s.triggerHistory.push({uid:c.uid,player:p,turn:s.turn,cardId:c.cardId,trigger:d.trigger||null,outcome:d.trigger?'pending':'none'});
+  if(s.triggerHistory.length>60)s.triggerHistory.shift();
+ }
  s.queue.push({kind:'triggerOrder',p,uids:reveals.map(c=>c.uid)},{kind:'lifeCheck',p});
 }
 
@@ -869,7 +877,9 @@ function resolveChoice(s,ids){
   }
   case 'triggerChoice':{
    const c=s.revealed.find(x=>x.card.uid===e.uid)?.card,d=cardOf(c),choice=chosen[0];
-   if(choice.id==='skip'){finishReveal(s,p,e.uid);log(s,`${s.players[p].name}不發動 Trigger。`);}
+   const publicTrigger=(s.triggerHistory||[]).findLast(x=>x.uid===e.uid&&x.player===p);
+    if(publicTrigger)publicTrigger.outcome=choice.id==='skip'?'skipped':choice.id==='get'?'get':choice.action?'raid':'activated';
+    if(choice.id==='skip'){finishReveal(s,p,e.uid);log(s,`${s.players[p].name}不發動 Trigger。`);}
    else if(choice.id==='get'||d.trigger==='get'){s.players[p].triggerUsedTurn=s.turn;finishReveal(s,p,e.uid,'hand');log(s,`${d.name}加入手牌。`,'effect');}
    else if(choice.action){s.players[p].triggerUsedTurn=s.turn;finishReveal(s,p,e.uid,null);place(s,p,c,choice.action.line,choice.action.slot,{raidTarget:choice.action.target});}
    else{
