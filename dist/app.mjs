@@ -9,7 +9,7 @@ import {MST_CARDS,emptyMstDeck,normalizeMstCounts,mstCount,mstDeckIssues,readMst
 import {TTG_PENDING_CARDS} from './ttg-pending.mjs';
 import {TTG_CARDS,TTG_BY_ID,emptyTtgDeck,normalizeTtgCounts,ttgCount,ttgDeckIssues,readTtgSaved} from './ttg-builder.mjs';
 import {newTtgCoreMatch,assertTtgCoreState,legalTtgCoreActions,dispatchTtgCoreAction,ttgCoreAiChoice} from './ttg-core-match.mjs';
-import {TTG_BETA_IDS,TTG_BETA_NOTICE,TTG_GREEN_BETA_PRESET,TTG_RED_BETA_PRESET,ttgBetaDeckIssues,ttgChoiceActor,ttgActionLabel,ttgActionKinds,ttgFilteredActions} from './ttg-browser.mjs';
+import {TTG_BETA_IDS,TTG_BETA_NOTICE,TTG_GREEN_BETA_PRESET,TTG_RED_BETA_PRESET,ttgBetaDeckIssues,ttgChoiceActor,ttgActionLabel,ttgActionKinds,ttgFilteredActions,ttg012ManualChoice} from './ttg-browser.mjs';
 import {newGame,dispatch,legalActions,controller,cardOf,bp,energy,damageOf,locate,PHASE_NAMES,assertState} from './engine.mjs?v=9.1.1';
 import {chooseAiAction} from './ai-v2.mjs';
 
@@ -44,7 +44,7 @@ function persistMst(){save(MST_DRAFT_KEY,mstDeck);}
 const deckMeta=safeRead(DECK_META_KEY)||{};
 let deckName=typeof deckMeta.name==='string'?deckMeta.name.slice(0,40):(PRESETS.find(p=>sameCounts(p.counts,deck))?.name||'自訂 BLEACH 牌組');
 let selectedDeckId=savedDecks.some(d=>d.id===deckMeta.savedId)?deckMeta.savedId:null;
-const ui={ttgSelected:null,ttgKind:'all',ttgVisible:90,soloSelected:null,saoSet:'all',title:'bleach',view:'lobby',mode:'solo',aiDifficulty:['easy','normal','hard'].includes(safeRead(AI_KEY))?safeRead(AI_KEY):'normal',first:'0',preset:[0,1].includes(deckMeta.preset)?deckMeta.preset:0,opponentSource:'preset:1',filter:'all',search:'',selected:null,line:'energy',deployment:'normal',sideTab:'card',raidFlow:null,modal:null,choiceIds:[],handoff:false,lastController:null,privatePeekOpen:false};
+const ui={ttgSelected:null,ttgKind:'all',ttgVisible:90,ttg012:{discardUids:[],mode:'readyAP',apUid:null,targetUid:null},soloSelected:null,saoSet:'all',title:'bleach',view:'lobby',mode:'solo',aiDifficulty:['easy','normal','hard'].includes(safeRead(AI_KEY))?safeRead(AI_KEY):'normal',first:'0',preset:[0,1].includes(deckMeta.preset)?deckMeta.preset:0,opponentSource:'preset:1',filter:'all',search:'',selected:null,line:'energy',deployment:'normal',sideTab:'card',raidFlow:null,modal:null,choiceIds:[],handoff:false,lastController:null,privatePeekOpen:false};
 if(deckMeta.opponentSource==='current'||/^preset:[01]$/.test(deckMeta.opponentSource||'')||savedDecks.some(d=>'saved:'+d.id===deckMeta.opponentSource))ui.opponentSource=deckMeta.opponentSource;
 let botTimer=null,toastTimer=null;
 function safeRead(k){try{return JSON.parse(localStorage.getItem(k)||'null');}catch{return null;}}
@@ -353,14 +353,14 @@ function ttgAct(a){
  try{
   const next=dispatchTtgCoreAction(ttgGame,a);
   assertTtgCoreState(next);ttgGame=next;save(TTG_GAME_KEY,ttgGame);
-  ui.ttgSelected=null;ui.ttgKind='all';ui.ttgVisible=90;render();
+  ui.ttgSelected=null;ui.ttgKind='all';ui.ttgVisible=90;ui.ttg012={discardUids:[],mode:'readyAP',apUid:null,targetUid:null};render();
  }catch(e){toast('天元突破 Beta 裁定錯誤：'+e.message);}
 }
 function ttgBetaStart(deck){
  try{
   const errors=ttgBetaDeckIssues(deck);if(errors.length){toast(errors[0]);return;}
   ttgGame=newTtgCoreMatch({decks:[deck,deck],first:0,seed:Date.now()});assertTtgCoreState(ttgGame);
-  save(TTG_GAME_KEY,ttgGame);ui.view='ttgArena';ui.ttgKind='all';ui.ttgSelected=null;ui.ttgVisible=90;render();
+  save(TTG_GAME_KEY,ttgGame);ui.view='ttgArena';ui.ttgKind='all';ui.ttgSelected=null;ui.ttgVisible=90;ui.ttg012={discardUids:[],mode:'readyAP',apUid:null,targetUid:null};render();
  }catch(e){toast('天元突破無法開局：'+e.message);}
 }
 function ttgArena(){
@@ -382,6 +382,16 @@ function ttgArena(){
  const types=ttgActionKinds(s);
  const picked=ttgFilteredActions(s,{kind:ui.ttgKind,cardUid:ui.ttgSelected,limit:ui.ttgVisible});
  const actionButton=a=>`<button class='btn small' data-ttg-act='${encodeURIComponent(JSON.stringify(a))}'>${esc(ttgActionLabel(s,a))}</button>`;
+ const custom012=s.pending?.kind==='green012Discard'&&!bot?(()=>{
+  const selection=ui.ttg012,chosen=selection.discardUids.filter(uid=>s.players[0].hand.some(c=>c.uid===uid));
+  const total=chosen.reduce((n,uid)=>n+(TTG_BY_ID[s.players[0].hand.find(c=>c.uid===uid)?.cardId]?.energy||0),0);
+  const mode=selection.mode;
+  const discardCards=s.players[0].hand.map(c=>`<button class='btn small ${chosen.includes(c.uid)?'primary':'outline'}' data-ttg-012-discard='${esc(c.uid)}'>${chosen.includes(c.uid)?'✓ ':''}${esc(TTG_BY_ID[c.cardId]?.nameZh||c.cardId)}（${esc(c.cardId.slice(-3))} · 能源${TTG_BY_ID[c.cardId]?.energy||0}）</button>`).join('');
+  const apButtons=s.players[0].apCards.map(c=>`<button class='btn small ${(selection.apUid??s.players[0].apCards[0]?.uid)===c.uid?'primary':'outline'}' data-ttg-012-ap='${esc(c.uid)}'>${esc(c.uid)} · ${c.ready?'ACTIVE':'REST'}</button>`).join('');
+  const targets=[null,...s.players[1].front.filter(c=>c&&!c.cannotBeChosen&&!c.protectedFromEffects).map(c=>c.uid)];
+  const targetButtons=targets.map(uid=>`<button class='btn small ${selection.targetUid===uid?'primary':'outline'}' data-ttg-012-target='${uid===null?'':esc(uid)}'>${uid===null?'不選擇退場目標':esc(TTG_BY_ID[s.players[1].front.find(c=>c?.uid===uid)?.cardId]?.nameZh||uid)}</button>`).join('');
+  return `<section class='panel'><h3>西蒙 012 · 手動選擇棄牌</h3><p class='note'>可選擇任意張自己手牌送場外；合計需求能源達 15 才可改為讓敵方前線角色退場。不會替你自動選棄牌。</p><div style='display:flex;flex-wrap:wrap;gap:6px'>${discardCards}</div><p>已選 ${chosen.length} 張，合計需求能源 ${total}</p><div style='display:flex;gap:6px;flex-wrap:wrap'><button class='btn small ${mode==='readyAP'?'primary':'outline'}' data-ttg-012-mode='readyAP'>回復 1 張 AP</button><button class='btn small ${mode==='retire'?'primary':'outline'}' data-ttg-012-mode='retire' ${total<15?'disabled':''}>需求能源 ≥15：使敵方角色退場</button></div><div style='display:flex;gap:6px;flex-wrap:wrap'>${mode==='readyAP'?apButtons:targetButtons}</div><button class='btn primary' data-action='ttg012Submit' ${!chosen.length&&s.players[0].hand.length?'disabled':''}>確認支付棄牌並結算</button></section>`;
+ })():'';
  const cards=s.players[0].hand;
  const hand=`<div class='grid' style='display:flex;flex-wrap:wrap;gap:7px'>${cards.map(c=>`<button class='btn small ${ui.ttgSelected===c.uid?'primary':'outline'}' data-ttg-select='${esc(c.uid)}'>${shown(c)}</button>`).join('')}</div>`;
  return `<header class='pageHeading'><div><h1>天元突破 · 限定 Beta 自動對戰</h1><p>回合 ${s.turn} · ${phase} · ${s.status==='finished'?'對局結束':'行動方：'+(actor===0?'玩家':'AI')} · ${pending}</p></div><button class='btn outline' data-view='builder'>返回牌組編輯</button></header>
@@ -393,7 +403,7 @@ function ttgArena(){
  ${s.status==='playing'?`<section class='panel'><h3>${bot?'AI 正在依合法動作處理…':'選擇合法動作'} · ${available.length} 項</h3>${bot?'<p class=note>輪到 AI，等待自動結算；不顯示電腦的私人手牌及效果選擇。</p>':`
  ${(s.pending||s.pendingTtgLife||s.pendingTtgTrigger)?`<p><button class='btn outline' data-action='ttgResolveAssist'>AI 幫我選擇這次效果</button> <small>會依合法動作結算，可自行選上面的選項。</small></p>`:''}
  <div style='display:flex;flex-wrap:wrap;gap:5px'><button class='btn small ${ui.ttgKind==='all'?'primary':'outline'}' data-ttg-kind='all'>全部</button>${types.map(o=>`<button class='btn small ${ui.ttgKind===o.type?'primary':'outline'}' data-ttg-kind='${esc(o.type)}'>${esc(o.type)} (${o.count})</button>`).join('')}</div>
- <div style='display:flex;flex-wrap:wrap;gap:7px;margin-top:12px'>${picked.actions.map(actionButton).join('')}</div>
+ <div style='display:flex;flex-wrap:wrap;gap:7px;margin-top:12px'>${custom012}${picked.actions.filter(a=>a.type!=='green012Discard').map(actionButton).join('')}</div>
  ${picked.total>picked.actions.length?`<button class='btn' data-action='ttgMore'>顯示更多動作（${picked.actions.length}/${picked.total}）</button>`:''}
  ${ui.ttgSelected?`<button class='btn outline' data-ttg-select=''>清除手牌篩選</button>`:''}`}</section>`:''}
  <section class='panel'><h3>近期對局紀錄</h3><div class='logList'>${(s.log||[]).slice(-18).reverse().map(x=>`<p>${esc(typeof x==='string'?x:JSON.stringify(x))}</p>`).join('')||'<p class=note>尚無紀錄。</p>'}</div></section>`;
@@ -403,6 +413,10 @@ function bind(){
   const el=e.target.closest('button');if(!el||el.disabled)return;
   if(el.dataset.view){chooseView(el.dataset.view);return;}
   if(el.dataset.title){ui.title=el.dataset.title;ui.set='all';ui.color='all';ui.search='';ui.selected=null;render();return;}
+  if(el.dataset.ttg012Discard!==undefined&&ui.view==='ttgArena'&&ttgGame?.pending?.kind==='green012Discard'){const id=el.dataset.ttg012Discard;const current=ui.ttg012.discardUids;ui.ttg012.discardUids=current.includes(id)?current.filter(x=>x!==id):[...current,id];render();return;}
+  if(el.dataset.ttg012Mode&&ui.view==='ttgArena'&&ttgGame?.pending?.kind==='green012Discard'){ui.ttg012.mode=el.dataset.ttg012Mode;render();return;}
+  if(el.dataset.ttg012Ap&&ui.view==='ttgArena'&&ttgGame?.pending?.kind==='green012Discard'){ui.ttg012.apUid=el.dataset.ttg012Ap;render();return;}
+  if(el.dataset.ttg012Target!==undefined&&ui.view==='ttgArena'&&ttgGame?.pending?.kind==='green012Discard'){ui.ttg012.targetUid=el.dataset.ttg012Target||null;render();return;}
   if(el.dataset.ttgAct){if(ui.view==='ttgArena'&&ttgChoiceActor(ttgGame)===0)ttgAct(JSON.parse(decodeURIComponent(el.dataset.ttgAct)));return;}
   if(el.dataset.ttgSelect!==undefined){ui.ttgSelected=ui.ttgSelected===el.dataset.ttgSelect?null:(el.dataset.ttgSelect||null);ui.ttgVisible=90;render();return;}
   if(el.dataset.ttgKind){ui.ttgKind=el.dataset.ttgKind;ui.ttgVisible=90;render();return;}
@@ -439,6 +453,7 @@ function bind(){
    case 'ttgBetaStartGreen':ttgBetaStart(TTG_GREEN_BETA_PRESET);break;
    case 'ttgBetaStartRed':ttgBetaStart(TTG_RED_BETA_PRESET);break;
    case 'ttgBetaStartDeck':ttgBetaStart(ttgDeck);break;
+   case 'ttg012Submit':if(ui.view==='ttgArena'&&ttgGame?.pending?.kind==='green012Discard'&&ttgChoiceActor(ttgGame)===0){try{const choice=ttg012ManualChoice(ttgGame,{discardUids:ui.ttg012.discardUids,mode:ui.ttg012.mode,apUid:ui.ttg012.mode==='readyAP'?(ui.ttg012.apUid??ttgGame.players[0].apCards[0]?.uid):null,targetUid:ui.ttg012.mode==='retire'?ui.ttg012.targetUid:null});ttgAct(choice);}catch(e){toast('西蒙012效果選擇：'+e.message);}}break;
    case 'ttgResolveAssist':if(ui.view==='ttgArena'&&ttgGame?.status==='playing'&&ttgChoiceActor(ttgGame)===0&&(ttgGame.pending||ttgGame.pendingTtgLife||ttgGame.pendingTtgTrigger)){const next=ttgCoreAiChoice(ttgGame);if(next)ttgAct(next);else toast('目前沒有合法的效果選擇。');}break;
    case 'ttgMore':ui.ttgVisible+=90;render();break;
    case 'ttgNew':ttgDeck=emptyTtgDeck();ttgName='天元突破自訂牌組';persistTtg();render();break;
