@@ -13,8 +13,8 @@ import {beginTtgLifeTrigger,legalTtgLifeChoices,resolveTtgLifeChoice,finalizeTtg
 // Only IDs with on-entry, passives, attacks and life triggers implemented below
 // may enter this core. In particular 071 Raid is tested independently, not here.
 export const TTG_CORE_SMOKE_IDS=Object.freeze([
- 'TTG-1-001','TTG-1-002','TTG-1-003','TTG-1-005','TTG-1-006','TTG-1-009',
- 'TTG-1-010','TTG-1-011','TTG-1-014','TTG-1-015','TTG-1-016','TTG-1-017','TTG-1-018',
+ 'TTG-1-001','TTG-1-002','TTG-1-003','TTG-1-005','TTG-1-006','TTG-1-007','TTG-1-009',
+ 'TTG-1-010','TTG-1-011','TTG-1-013','TTG-1-014','TTG-1-015','TTG-1-016','TTG-1-017','TTG-1-018',
  'TTG-1-019','TTG-1-020','TTG-1-022','TTG-1-023','TTG-1-024','TTG-1-026',
  'TTG-1-035','TTG-1-036','TTG-1-037','TTG-1-038',
  'TTG-1-040','TTG-1-041',
@@ -117,6 +117,12 @@ function greenEntryChoices(s){
     for(let j=i+1;j<cards.length;j++)if(opt.max>=2)
      actions.push(make(opt,{discardUids:[cards[i],cards[j]]}));
    }
+  }
+  else if(opt.mode==='partnerRecover'){
+   actions.push(make(opt));
+   for(const takeUid of opt.candidateUids)for(const apUid of opt.readyApUids)
+    for(const line of ['energy','front'])for(let slot=0;slot<4;slot++)if(!pl[line][slot])
+     actions.push(make(opt,{takeUid,apUid,line,slot}));
   }
   else if(opt.mode==='niaOutsideToTop'){
    actions.push(make(opt,{takeUid:null}));
