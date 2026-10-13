@@ -14,5 +14,5 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Probe official cardlist (read only)
-        run: node scripts/mst-official-probe.mjs
+      - name: Run regression suite with full UA54BT printed records
+        run: npm test
