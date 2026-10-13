@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {legalGreen003,resolveGreen003,legalGreen011,resolveGreen011,legalGreen015,resolveGreen015,legalGreen018,resolveGreen018,legalGreen022,resolveGreen022,resolveGreenMainEnd,resolveGreenTurnEnd,resolveGreenOwnStart,legalGreen020Step,resolveGreen020Step} from '../dist/ttg-green-main.mjs';
+import {legalGreen003,resolveGreen003,legalGreen011,resolveGreen011,legalGreen015,resolveGreen015,legalGreen018,resolveGreen018,legalGreen022,resolveGreen022,resolveGreenMainEnd,resolveGreenTurnEnd,resolveGreenOwnStart,legalGreen020Step,resolveGreen020Step,legalGreen016,resolveGreen016,legalGreen017,resolveGreen017} from '../dist/ttg-green-main.mjs';
 import {greenTtgCurrentBp,greenTtgBpBonus,greenTtgNeedsEnergy,greenTtgCanAttackOrBlock,greenTtgImpactNull} from '../dist/ttg-green-passives.mjs';
 import {calculateTtgEnergyByColor} from '../dist/ttg-energy-snapshot.mjs';
 import {TTG_BY_ID} from '../dist/ttg-builder.mjs';
@@ -124,4 +124,30 @@ test('024 Reite gunmen energy and field discounts use live zone contents',()=>{
  assert.equal(calculateTtgEnergyByColor(s,0).green,1);
  assert.equal(greenTtgImpactNull(card('x','TTG-1-005')),true);
  assert.equal(greenTtgImpactNull(card('x','TTG-1-025')),false);
+});
+
+test('016 Nia energy20 REST draws only once per NAME across physical copies',()=>{
+ const s=game();
+ s.players[0].energy[0]=card('n1','TTG-1-016');
+ s.players[0].energy[1]=card('n2','TTG-1-016');
+ s.players[0].energy[2]=card('g','TTG-1-034',{gen:20});
+ assert.equal(legalGreen016(s,{player:0,uid:'n1'}).length,1);
+ const result=resolveGreen016(s,{player:0,uid:'n1'});
+ assert.equal(result.players[0].energy[0].ready,false);
+ assert.deepEqual(result.players[0].hand.map(x=>x.uid),['draw']);
+ assert.deepEqual(legalGreen016(result,{player:0,uid:'n2'}),[]);
+ assert.throws(()=>resolveGreen016(result,{player:0,uid:'n2'}));
+});
+test('017 Nia energy8 gains exactly two temporary green generators and expires',()=>{
+ const s=game();
+ s.players[0].energy[0]=card('nia','TTG-1-017',{gen:2});
+ s.players[0].energy[1]=card('field','TTG-1-034',{gen:6});
+ assert.equal(legalGreen017(s,{player:0,uid:'nia'}).length,1);
+ const active=resolveGreen017(s,{player:0,uid:'nia'});
+ assert.equal(calculateTtgEnergyByColor(active,0).green,10);
+ assert.equal(active.players[0].energy[0].ttgGreenBonusCount,2);
+ assert.deepEqual(legalGreen017(active,{player:0,uid:'nia'}),[]);
+ const expired=resolveGreenTurnEnd(active);
+ assert.equal(calculateTtgEnergyByColor(expired,0).green,8);
+ assert.equal(expired.players[0].energy[0].energyBonus,0);
 });
