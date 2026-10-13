@@ -84,6 +84,11 @@ export function resolveRed076Raid(s,a={}){
  if(pl[a.line][a.slot])throw new Error('076 destination occupied');
  pl[a.line][a.slot]={...top,ready:true,stack:[loc.c],under:[],enteredTurn:s.turn,raidedTurn:s.turn};
  if(pl.red080DiscountUntilTurn===s.turn)delete pl.red080DiscountUntilTurn;
+ r.raidNamesThisTurn=[...(r.raidNamesThisTurn||[]),TTG_BY_ID[top.cardId].nameJa];
+ r.ttgRaidOccurredTurn??={};r.ttgRaidOccurredTurn[a.player]=s.turn;
+ r.raidCountThisTurn=(r.raidCountThisTurn||0)+1;
+ r.raidCountByPlayerTurn??={};
+ const count=r.raidCountByPlayerTurn[a.player];r.raidCountByPlayerTurn[a.player]={turn:s.turn,count:count?.turn===s.turn?count.count+1:1};
  r.pending={kind:'ttgRed076Look',player:a.player,uid:top.uid,
   revealed:pl.deck.slice(0,2).map(c=>c.uid)};
  if(!same(ids(pl),before))throw new Error('076 Raid UID mismatch');
