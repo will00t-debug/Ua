@@ -24,7 +24,7 @@ test('012 draws only with own Sung in field, otherwise no draw',()=>{
  }
 });
 test('053 draws only when Sung is present and is immune to IMPACT',()=>{
- const deck=green('SLG-1-053','SLG-1-052');let s=setup(deck),p=s.players[0];
+ const deck=green('SLG-1-053','SLG-1-062');let s=setup(deck),p=s.players[0];
  for(let i=0;i<3;i++)place(s,'SLG-1-041','energy',i);
  place(s,'SLG-1-045','front',0);
  const oldHand=p.hand.length;s=play(s,'SLG-1-053').s;
@@ -32,7 +32,7 @@ test('053 draws only when Sung is present and is immune to IMPACT',()=>{
  assertSoloTrainingMatch(s);
 });
 test('025 mandatory mode allows draw two OR draw one and optional exact eligible outside target',()=>{
- const deck=purple('SLG-1-025','SLG-1-005');
+ const deck=purple('SLG-1-025','SLG-1-009');
  for(const mode of ['draw2','drawRecover']){
   let s=setup(deck),p=s.players[0];
   for(let i=0;i<3;i++)place(s,'SLG-1-030','energy',i);
@@ -50,7 +50,7 @@ test('025 mandatory mode allows draw two OR draw one and optional exact eligible
  }
 });
 test('026 bounces selected other energy<=1 character; when none exists returns itself',()=>{
- const deck=purple('SLG-1-026','SLG-1-005');
+ const deck=purple('SLG-1-026','SLG-1-010');
  let s=setup(deck);place(s,'SLG-1-031','energy',0);const other=place(s,'SLG-1-030','front',0);
  s=play(s,'SLG-1-026').s;assert.equal(s.pending.kind,'entryBounce');
  assert.ok(soloTrainingLegalActions(s).some(a=>a.uid===other.uid));
@@ -62,13 +62,13 @@ test('026 bounces selected other energy<=1 character; when none exists returns i
  assert.ok(after.players[0].hand.some(x=>x.uid===uid));assertSoloTrainingMatch(after);
 });
 test('068 bounce also rejects opponent selection and returns itself with no legal other low-cost character',()=>{
- const deck=green('SLG-1-068','SLG-1-052');let s=setup(deck);
+ const deck=green('SLG-1-068','SLG-1-069');let s=setup(deck);
  place(s,'SLG-1-041','energy',0);
  let {s:after,uid}=play(s,'SLG-1-068');
  assert.equal(after.pending,null);assert.ok(after.players[0].hand.some(x=>x.uid===uid));assertSoloTrainingMatch(after);
 });
 test('050 retires and optionally recovers only own outside Sung',()=>{
- let s=setup(green('SLG-1-050','SLG-1-052')),p=s.players[0];
+ let s=setup(green('SLG-1-050','SLG-1-065')),p=s.players[0];
  const c=place(s,'SLG-1-050','front',0);
  const sung=take(p,'SLG-1-045');p.outside.push(sung);
  assert.ok(soloTrainingLegalActions(s).some(a=>a.type==='ability'&&a.uid===c.uid));
