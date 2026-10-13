@@ -12,7 +12,7 @@ import {resolveGreenOwnStart} from './ttg-green-main.mjs';
 // Only IDs with on-entry, passives, attacks and life triggers implemented below
 // may enter this core. In particular 071 Raid is tested independently, not here.
 export const TTG_CORE_SMOKE_IDS=Object.freeze([
- 'TTG-1-001','TTG-1-002','TTG-1-005','TTG-1-006','TTG-1-009',
+ 'TTG-1-001','TTG-1-002','TTG-1-003','TTG-1-005','TTG-1-006','TTG-1-009',
  'TTG-1-010','TTG-1-011','TTG-1-014','TTG-1-015','TTG-1-018',
  'TTG-1-019','TTG-1-020','TTG-1-022','TTG-1-023','TTG-1-024','TTG-1-026',
  'TTG-1-036','TTG-1-038',
