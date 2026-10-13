@@ -15,7 +15,7 @@ const rows=SOLO_LEVELING_CARDS.map(c=>({
  verdict:demoSet.has(c.id)?'限定示範對戰支援，尚未完成完整官方判定':'尚未完成自動判定',
  notes:'卡片資料已登錄，完整效果及全FAQ尚未驗證；部分卡只在限定試玩對戰中支援。'
 }));
-if(rows.length!==80||SOLO_LEVELING_MISSING_NUMBERS.length||new Set(rows.map(c=>c.identity)).size!==80||demoSet.size!==54||rows.filter(r=>r.trialEngineIntegration).length!==54)throw Error('UA51BT should have 80 unique base card IDs');
+if(rows.length!==80||SOLO_LEVELING_MISSING_NUMBERS.length||new Set(rows.map(c=>c.identity)).size!==80||demoSet.size!==56||rows.filter(r=>r.trialEngineIntegration).length!==56)throw Error('UA51BT should have 80 unique base card IDs');
 const csvCols=['number','identity','nameJa','rarity','type','color','energy','ap','bp','gen','trigger','traits','allowedCopies','cardDataRecorded','trialEngineIntegration','trialAiMatchSupported','automaticResolutionIntegrated','perCardFullEffectExecuted','officialFaqFullyChecked','verdict','source'];
 const q=x=>'"'+String(Array.isArray(x)?x.join(' / '):x??'').replaceAll('"','""')+'"';
 const csv=[csvCols.join(','),...rows.map(c=>csvCols.map(key=>q(c[key])).join(','))].join('\n')+'\n';
