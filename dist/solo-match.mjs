@@ -6,7 +6,7 @@ import {normalizeSoloDeck} from './solo-decks.mjs';
 const DB=Object.fromEntries(SOLO_LEVELING_CARDS.map(c=>[c.id,c]));
 export const SOLO_MATCH_SUPPORTED=Object.freeze([
  'SLG-1-001','SLG-1-005','SLG-1-012','SLG-1-025','SLG-1-026','SLG-1-006','SLG-1-007','SLG-1-009','SLG-1-010','SLG-1-013','SLG-1-014','SLG-1-015','SLG-1-016','SLG-1-027','SLG-1-029','SLG-1-030','SLG-1-031','SLG-1-032','SLG-1-033','SLG-1-035',
- 'SLG-1-041','SLG-1-042','SLG-1-050','SLG-1-053','SLG-1-068','SLG-1-043','SLG-1-045','SLG-1-052','SLG-1-055','SLG-1-056',
+ 'SLG-1-041','SLG-1-042','SLG-1-050','SLG-1-053','SLG-1-068','SLG-1-070','SLG-1-073','SLG-1-043','SLG-1-045','SLG-1-052','SLG-1-055','SLG-1-056',
  'SLG-1-062','SLG-1-065','SLG-1-066','SLG-1-069','SLG-1-067','SLG-1-072','SLG-1-074','SLG-1-075','SLG-1-058'
 ]);
 const SUPPORTED=new Set(SOLO_MATCH_SUPPORTED);
@@ -205,7 +205,11 @@ function choose(s,action){
  }else if(q.kind==='entryProtect'){
   const p=s.players[q.p],c=field(p).find(x=>x.uid===action.uid);
   if(action.uid!=null&&(!c||!d(c).traits.includes('DFN')||c.uid===q.source))throw Error('target must be another DFN');
-  if(c)c.extraTargetAp=1;
+  if(c){
+   c.extraTargetAp=1;
+   c.targetProtectionExpiresAfterPlayer=1-q.p;
+   c.targetProtectionExpiresTurn=s.players[1-q.p].ownTurns+1;
+  }
   s.pending=null;
  }else if(q.kind==='kaiserPick'||q.kind==='kibaPick'){
   if(action.uid==null){s.pending=null;continueAttackEffects(s);}
@@ -254,6 +258,16 @@ function choose(s,action){
   if(!target||!q.choices.includes(target.uid)||(target.extraTargetAp||0)>s.players[q.p].ap)throw Error('illegal special trigger target');
   s.players[q.p].ap-=target.extraTargetAp||0;
   retire(s,opponent,target);s.pending=null;
+ }else if(q.kind==='ryuuBuff'){
+  const p=s.players[q.p],c=action.uid==null?null:field(p).find(x=>x.uid===action.uid);
+  if(action.uid!=null&&!c)throw Error('illegal Ryuu buff target');
+  if(c)c.buffs.push({turn:s.turn,bp:1000});
+  if(p.hand.length>=7)s.pending={kind:'ryuuAp',p:q.p};
+  else s.pending=null;
+ }else if(q.kind==='ryuuAp'){
+  const p=s.players[q.p],max=Math.min(2,p.maxAp-p.ap);
+  if(!Number.isInteger(action.count)||action.count<0||action.count>max)throw Error('illegal Ryuu AP activation');
+  p.ap+=action.count;s.pending=null;
  }else if(q.kind==='entryDrawMode'){
   const p=s.players[q.p];
   if(action.mode==='draw2'){draw(s,p,2);s.pending=null;}
@@ -355,7 +369,10 @@ function onEnter(s,c){
   const eligible=top.filter(x=>d(x).traits?.includes('影之軍團')||d(x).nameJa==='水篠 旬');
   if(top.length)s.pending={kind:'soldierTop',p:c.owner,source:c.uid,topUids:top.map(x=>x.uid),eligible:eligible.map(x=>x.uid)};
  }
- if(['SLG-1-034','SLG-1-035'].includes(c.cardId))c.ready=true;
+ if(['SLG-1-034','SLG-1-035','SLG-1-073'].includes(c.cardId))c.ready=true;
+ if(c.cardId==='SLG-1-073'&&!groupUsed(s,c.owner,'ryuuEntry')){
+  markGroup(s,c.owner,'ryuuEntry');s.pending={kind:'ryuuBuff',p:c.owner,source:c.uid};
+ }
  if(c.cardId==='SLG-1-067'&&!groupUsed(s,c.owner,'kana')&&field(p).filter(x=>d(x).traits?.includes('DFN')).length>=3){
   markGroup(s,c.owner,'kana');draw(s,p);readySolo(c);c.buffs.push({turn:s.turn,bp:1000});
  }
@@ -381,6 +398,10 @@ export function soloTrainingLegalActions(s){
   if(q.kind==='kaiserPick'||q.kind==='kibaPick')return [{type:'choose',uid:null},...q.options.map(uid=>({type:'choose',uid}))];
   if(q.kind==='kaiserMode')return ['block','untargetable'].filter(mode=>!groupUsed(s,q.p,'kaiser:'+mode)).map(mode=>({type:'choose',mode}));
   if(q.kind==='kibaMode')return ['buff','draw'].filter(mode=>!groupUsed(s,q.p,'kiba:'+mode)).map(mode=>({type:'choose',mode}));
+  if(q.kind==='ryuuBuff')return [{type:'choose',uid:null},...field(s.players[q.p]).map(c=>({type:'choose',uid:c.uid}))];
+  if(q.kind==='ryuuAp'){
+   const p=s.players[q.p],max=Math.min(2,p.maxAp-p.ap);return Array.from({length:max+1},(_,count)=>({type:'choose',count}));
+  }
   if(q.kind==='entryDrawMode')return [{type:'choose',mode:'draw2'},{type:'choose',mode:'drawRecover'}];
   if(q.kind==='entryRecover'||q.kind==='sungRecovery')return [{type:'choose',uid:null},...q.options.map(uid=>({type:'choose',uid}))];
   if(q.kind==='entryBounce')return q.options.map(uid=>({type:'choose',uid}));
@@ -459,7 +480,15 @@ export function soloTrainingDispatch(original,action){
   else if(s.phase==='main'){
    for(const c of [...field(p)])if(c.retireAtMainEnd)retire(s,s.active,c);
    s.phase='attack';
-  }else if(s.phase==='attack'){s.active=1-s.active;startTurn(s);}
+  }else if(s.phase==='attack'){
+    const leaving=s.active;
+    for(const who of s.players)for(const c of field(who)){
+     if(c.targetProtectionExpiresAfterPlayer===leaving&&s.players[leaving].ownTurns>=c.targetProtectionExpiresTurn){
+      delete c.extraTargetAp;delete c.targetProtectionExpiresAfterPlayer;delete c.targetProtectionExpiresTurn;
+     }
+    }
+    s.active=1-s.active;startTurn(s);
+   }
  }else if(action.type==='extraDraw'){p.ap--;s.extraDraw=true;draw(s,p);}
  else if(action.type==='move'){
   const index=p.energy.findIndex(c=>c?.uid===action.uid);
@@ -520,6 +549,8 @@ export function soloTrainingBotAction(s){
   if(s.pending.kind==='kaiserPick'||s.pending.kind==='kibaPick')return legal.find(a=>a.uid!=null)||legal[0];
   if(s.pending.kind==='kaiserMode'||s.pending.kind==='kibaMode')return legal[0];
   if(s.pending.kind==='belDiscard')return legal.find(a=>a.uid!=null)||legal[0];
+  if(s.pending.kind==='ryuuAp')return legal[legal.length-1];
+  if(s.pending.kind==='ryuuBuff')return legal.find(a=>a.uid!=null)||legal[0];
   if(s.pending.kind==='colorTrigger'||s.pending.kind==='specialTrigger')return legal[0];
   if(s.pending.kind==='entryDrawMode')return legal[0];
   if(s.pending.kind==='entryBounce')return legal[0];
