@@ -9,11 +9,11 @@ test('all 80 canonical UA54BT regular card names and printed rarities are presen
  const rarities=UA54BT_VERIFIED.reduce((x,c)=>(x[c.rarity]=(x[c.rarity]||0)+1,x),{});
  assert.deepEqual(rarities,{C:28,U:28,R:12,SR:12});
 });
-test('72 preliminary complete records and 8 partial records are explicitly distinguished',()=>{
+test('all 80 records have preliminary complete printed fields',()=>{
  const complete=UA54BT_VERIFIED.filter(c=>c.verified);
  const incomplete=UA54BT_VERIFIED.filter(c=>!c.verified);
- assert.equal(complete.length,72);
- assert.equal(incomplete.length,8);
+ assert.equal(complete.length,80);
+ assert.equal(incomplete.length,0);
  for(const c of complete){
   for(const field of ['nameJa','color','energy','ap','bp','gen','type','rarity','effect'])assert.notEqual(c[field],null,c.number+' '+field);
   assert.ok(Number.isInteger(c.ap),c.number);
@@ -51,4 +51,26 @@ test('061 source-crosschecked preliminary AP and no printed Trigger, still unpla
  assert.equal(c.auto,false);
  assert.match(c.sourceTranslation,/rugiacreation\.com/);
  assert.match(c.statEvidence,/ebay\.com/);
+});
+
+test('last eight cards match Bandai official energy, AP, BP, generation and triggers',()=>{
+ const official={
+  '010':[3,1,3000,2,'draw'],
+  '011':[4,1,4000,1,null],
+  '015':[2,1,3000,1,'active'],
+  '019':[1,1,1500,2,null],
+  '023':[2,1,3000,1,null],
+  '044':[1,1,1500,2,null],
+  '064':[5,2,4000,2,'active'],
+  '078':[4,1,0,0,'special']
+ };
+ for(const [n,expected] of Object.entries(official)){
+  const c=UA54BT_VERIFIED.find(x=>x.id==='MST-1-'+n);
+  assert.ok(c,'card missing '+n);
+  assert.deepEqual([c.energy,c.ap,c.bp,c.gen,c.trigger],expected,c.number);
+  assert.equal(c.verified,true);
+  assert.equal(c.auto,false);
+  assert.match(c.verifiedBy,/bandai-jp-official/);
+  assert.ok(c.effectJa);
+ }
 });
