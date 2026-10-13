@@ -88,3 +88,90 @@ export function resolveTtgYoko065Step(state,{player,uid,toSlot}={}){
  result.players[player].energy[toSlot]=moved;
  return result;
 }
+
+
+// TTG-1-002 Viral (fan-transcribed text; final print statistics still unverified):
+// REST this source as the activation cost, then REST a separate ACTIVE own FRONT
+// character. Only successful second REST grants +1 green energy for this turn.
+export function eligibleTtgViral002Targets(state,{player,uid}={}){
+ if(!validMain(state,player))return [];
+ const source=find(state.players[player],uid);
+ if(!source||source.card.cardId!=='TTG-1-002'||!source.card.ready)return [];
+ return (state.players[player].front||[]).filter(c=>c?.ready&&c.uid!==uid).map(c=>c.uid);
+}
+export function resolveTtgViral002(state,{player,uid,targetUid}={}){
+ const source=assertSource(state,player,uid,'TTG-1-002');
+ if(!source.card.ready||!eligibleTtgViral002Targets(state,{player,uid}).includes(targetUid))
+  throw new Error('Viral needs a different ACTIVE own front-line target');
+ const result=copy(state),owner=result.players[player],self=find(owner,uid).card,target=find(owner,targetUid).card;
+ self.ready=false;
+ target.ready=false;
+ self.energyBonus=(self.energyBonus||0)+1;
+ self.temporaryEnergyUntilTurn=state.turn;
+ return result;
+}
+// Expire energy bonuses granted by Viral without removing bonuses from other
+// cards or effects (e.g. Buta already retires at main-phase end).
+export function resolveTtgTemporaryEnergyEndTurn(state){
+ if(!Number.isInteger(state?.turn))throw new Error('Turn index required');
+ const result=copy(state);
+ for(const pl of result.players)for(const loc of field(pl)){
+  const c=loc.card;
+  if(c.temporaryEnergyUntilTurn!==state.turn)continue;
+  c.energyBonus=Math.max(0,(c.energyBonus||0)-1);
+  delete c.temporaryEnergyUntilTurn;
+ }
+ return result;
+}
+// TTG-1-049 Gimmy & Darry. The on-entry return is mandatory. If there are
+// no eligible OTHER <=1-energy characters on the owner's field, return SELF.
+// Raid piles are deliberately blocked until the full pile-return rule exists.
+export function eligibleTtg049ReturnTargets(state,{player,uid}={}){
+ if(![0,1].includes(player))return [];
+ const pl=state?.players?.[player],self=find(pl,uid);
+ if(!self||self.card.cardId!=='TTG-1-049')return [];
+ const ordinary=field(pl).filter(x=>x.card.uid!==uid&&!(x.card.stack||[]).length&&!(x.card.under||[]).length);
+ return ordinary.filter(x=>Number.isInteger(x.card.energy)&&x.card.energy<=1).map(x=>x.card.uid);
+}
+export function resolveTtg049Entry(state,{player,uid,targetUid=null}={}){
+ if(![0,1].includes(player)||!state?.players?.[player])throw new Error('Invalid entry owner');
+ const pl=state.players[player],source=find(pl,uid);
+ if(!source||source.card.cardId!=='TTG-1-049')throw new Error('Incorrect entering character');
+ const eligible=eligibleTtg049ReturnTargets(state,{player,uid});
+ if(eligible.length&&(!targetUid||!eligible.includes(targetUid)))throw new Error('Must choose an eligible other character');
+ if(!eligible.length&&targetUid)throw new Error('No return target may be chosen');
+ const selected=targetUid||uid,location=find(pl,selected);
+ if((location.card.stack||[]).length||(location.card.under||[]).length)
+  throw new Error('Returning a raid pile requires full rule support');
+ const result=copy(state),owner=result.players[player],current=find(owner,selected);
+ owner[current.line][current.slot]=null;
+ owner.hand??=[];
+ if(owner.hand.some(c=>c.uid===selected))throw new Error('Card UID duplication');
+ owner.hand.push(current.card);
+ return result;
+}
+// TTG-1-071 King Kittan DX: first allied attack of this turn may choose
+// one OTHER ally to gain +2000 BP until end of turn. Raid and combat are
+// resolved by the eventual full combat engine, not by this helper.
+export function eligibleTtg071AttackBuffTargets(state,{player,uid}={}){
+ if(![0,1].includes(player)||state?.active!==player||state?.phase!=='attack')return [];
+ if(state.attackingUid!==uid||state.characterAttacksThisTurn!==1)return [];
+ const source=find(state.players[player],uid);
+ if(!source||source.line!=='front'||source.card.cardId!=='TTG-1-071')return [];
+ return field(state.players[player]).filter(x=>x.card.uid!==uid).map(x=>x.card.uid);
+}
+export function resolveTtg071FirstAttack(state,{player,uid,targetUid=null}={}){
+ const targets=eligibleTtg071AttackBuffTargets(state,{player,uid});
+ if(![0,1].includes(player)||state?.attackingUid!==uid||state.characterAttacksThisTurn!==1||
+   find(state.players[player],uid)?.card.cardId!=='TTG-1-071')
+  throw new Error('Only the first own attack by King Kittan DX can grant its buff');
+ if(targetUid!=null&&!targets.includes(targetUid))throw new Error('Not a legal other character');
+ const result=copy(state);
+ if(targetUid!=null){
+  const c=find(result.players[player],targetUid).card;
+  c.currentBp=(c.currentBp??c.bp)+2000;
+  c.buffs??=[];
+  c.buffs.push({sourceUid:uid,turn:state.turn,bp:2000,until:'endTurn'});
+ }
+ return result;
+}
