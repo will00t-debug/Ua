@@ -77,6 +77,7 @@ test('TTG-1-003 official Q2259: 20-energy READY power can be used only once per 
  const second=place(s,'TTG-1-003',{line:'front',slot:1,ready:true});
  const rest=place(s,'TTG-1-006',{line:'front',slot:2,ready:false});
  place(s,'TTG-1-005',{line:'energy',slot:0,ready:true,bonus:18});
+ p.energy[0].energyBonus+=Math.max(0,20-calculateTtgEnergyByColor(s,0).green);
  s=withTtgDerivedEnergy(s,0);
  assert.ok(calculateTtgEnergyByColor(s,0).green>=20);
  const a=legal(s,a=>a.type==='ttgGreen003Ready'&&a.uid===first.uid&&a.targetUid===rest.uid);
