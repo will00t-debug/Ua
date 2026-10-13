@@ -27,3 +27,29 @@
 目前 SLG 80 張使用佔位圖，專案並未取得將官方卡圖直接轉載到此網站的權限。網站在每張 SLG 和 TTG 卡片旁提供「官方卡圖及日文效果 ↗」，可前往官方卡表查看真實圖面與原文。請勿以「直接搬運官方卡圖」取代圖片授權流程。
 
 完整早期逐張追蹤：`audit/solo-leveling-card-status.csv`；FAQ 情境：`audit/solo-leveling-official-faq.csv`；天元的限制核心交接：`TTG_REMAINING_22_HANDOFF.md`。
+
+## 第二批：2026-10-14 自動裁定擴大驗收（PR #24）
+
+這輪針對另一批 **5 張獨立卡號、7 個實際結算／非法選擇測試**，新增 `tests/solo-official-acceptance-batch2.test.mjs` 與 `tests/ttg-official-acceptance-batch2.test.mjs`。所有測試均需在 Node 22 的主專案 CI 上綠燈。
+
+| 卡號 | 官方印刷能力／裁定與已實跑測試 | 仍待驗證 |
+|---|---|---|
+| [SLG-1-003](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-003) | 場外 9／10 張能源門檻；REST 不影響額外能源；攻擊看牌頂並合法選擇留頂／送場外、不多產生實體卡 | 從場外回收+1000BP與其他觸發組合的完整整局驗收（已有先前獨立測試） |
+| [SLG-1-004](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-004) | 真實 AP/能源支付、登場抽1棄1、自己回合本次棄牌後 BP+500，對手回合失效 | 實際生命 DRAW 觸發、其他己方回收與失敗情境 |
+| [SLG-1-007](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-007) | 真實 SPECIAL 事件令其退場，持有人僅抽 1 張，不重複抽 | 生命 DRAW、Raid 疊卡退場、空牌庫造成輸局 |
+| [TTG-1-001](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-001) | 正常登場扣 1 AP，查看頂牌時可保留或送場外；兩分支保持 50 張實體及 UID 守恆 | 空牌庫時選項、跨卡連動、真人手機 UI 訪視 |
+| [TTG-1-003](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-003) | 官方 **Q2392**：7→8 立即升能源並賦予前線產能；官方 **Q2259**：同名兩張不得各自啟動20能源 ACTIVE 效果 | 6 以下界線、20能源多重互動／其他臨時能源增減 |
+
+**目前累計至少 9 張卡號有本系列逐卡驗收測試紀錄（SLG 001、002、003、004、005、006、007；TTG 001、003），但完整正式驗收依然未達標。** 這些只是每張卡的選定能力與分支，尚不能將其標成「正式全效果驗收完成」。
+
+驗收推進時，應優先補完未覆蓋的能力分支、錯誤成本、生命 Trigger、被封鎖的操作、Raid 連動，以及手機 UI 操作，再依可追溯證據逐卡轉正；不可因累計測試數量或已有 Beta 80／81 卡而無條件翻轉 `auto`／`playable` 欄位。
+
+## 同輪加測：《我獨自升級》008／009／010
+
+新增 `tests/solo-official-acceptance-batch3.test.mjs`，對照三張日本官方卡的個別頁面：
+
+- [SLG-1-008](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-008)：實際登場、查看牌庫頂四張、僅能選合法的〈水篠旬〉、餘牌放牌庫底、拿牌時必須棄一；測試確保卡片實體不重複。
+- [SLG-1-009](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-009)：主階段支付一張實際手牌、BP＋1500；同名該實體一次每回合不得重複啟動（後續仍要驗證其他生命觸發互動）。
+- [SLG-1-010](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-010)：場外 9／10 張門檻，限自己的回合 BP＋1000；不冒稱 DRAW 觸發的所有交互已完整驗證。
+
+**目前累計 12 種有此專案新增的官方逐卡測試情境（Solo 十張 001～010；TTG 001、003），另有既有 FAQ 回歸測試。正式「每卡所有效果完整驗收」仍不能因這些個別情境測過就直接算 12／161。**
