@@ -9,7 +9,7 @@
 - 已逐項記錄 73/81 種具完整欄位的構築卡資料（尚不可自動對戰），另有 **8 種**已確認卡號／卡名但欠缺完整數值與效果（不可構築）。
 - 已建立獨立天元突破牌組編輯器，另以 `dist/ttg-pending.mjs` 唯讀顯示 8 張部分資料；不能用於 50 張牌組。所有條目標示 auto:false。
 - `dist/ttg-pending-rules.mjs` 已依交叉核對的繁中卡文為 TTG-1-006、059、063、065 增加獨立狀態判定：能源門檻 BP、REST 支付＋本回合 BP、REST 暫時產能並於主要階段結束退場、STEP 橫置保留與空位置驗證；並有 BP 於結束階段清除的回歸測試。未完成的 8 張仍不可加入牌組。
-- `dist/ttg-rules.mjs` 有 Raid 頂卡裏向轉移、能源與妮亞選擇的純規則函式；`dist/ttg-actions.mjs` 已新增妮亞／卡米那互斥、Giga Drill 勘誤退場、AP 卡狀態轉移及同名每回合限制的 reducer。這些均有單元測試，但 **沒有接入完整遊戲 dispatch/AI/UI 效果選擇流程**。
+- `dist/ttg-rules.mjs` 有 Raid 頂卡裏向轉移、能源與妮亞選擇的純規則函式；`dist/ttg-actions.mjs` 已新增妮亞／卡米那互斥、Giga Drill 勘誤退場、AP 卡狀態轉移及同名每回合限制的 reducer。這些均有單元測試，其中已完成的十種效果可經由 `ttg-rule-adapter.mjs` 的獨立動作介面進行合法選擇、結算與測試用 AI 操作；**尚未接入完整遊戲 UI／全卡 match dispatcher**。
 - 官方卡片展示頁網址格式：`https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-NNN`，但不得只憑推算網址就當成資料已驗證。
 - 不把未確認的能源、AP、BP、印刷效果填為推測值。
 - AP 圖卡由 `ttg-builder.mjs` 過濾，不放入構築牌池。
@@ -17,8 +17,8 @@
 ## 待辦
 1. 逐張核對剩餘 8 種未完成資料的官方日文原文、類型、能源、AP、BP、產能、Trigger、Raid／特徵：TTG-1-002、006、049、057、059、063、064、065、071；不可把只有名字／稀有度的條目算為資料完整。
 2. 經授權取得／連結官方卡圖，補上卡圖 fallback；不得自動以錯誤卡號猜圖。
-3. 已新增 `ttg-event-resolver.mjs` 與 `ttg-triggers.mjs`：TTG-1-036/037/038/078/079 事件及 FINAL trigger、TTG-1-081 修正正常效果及其 SPECIAL trigger，包含能源/AP/合法目標驗證。它們仍只是獨立執行 API，未接入 UI/AI。
-4. 將獨立效果 reducer 接入天元突破專屬 match dispatcher，補齊另外所有效果的合法性、成本與結算順序，再做 81 種卡逐張回歸及完整 AI 對局測試。
+3. 已新增 `ttg-rule-adapter.mjs`、`ttg-energy-snapshot.mjs`，把十種既有規則以單一動作介面提供給人類／測試用 AI，共用目標、AP、轉移檢查；`energyMode:'derive'` 下會在 REST、STEP 和產能效果後即時計算紅／綠能源。另已新增 `ttg-event-resolver.mjs` 與 `ttg-triggers.mjs`：TTG-1-036/037/038/078/079 事件及 FINAL trigger、TTG-1-081 修正正常效果及其 SPECIAL trigger，包含能源/AP/合法目標驗證。它們仍只是獨立執行 API，未接入 UI/AI。
+4. 以目前只有局部效果的 adapter 為基礎，接入網站使用的完整天元突破 match dispatcher 與玩家 UI，補齊另外所有效果的合法性、成本與結算順序，再做 81 種卡逐張回歸及完整 AI 對局測試。
 5. 保持官方 Q2301 TTG-1-081 勘誤，只能指定敵方前線角色；不可被對方效果選擇的角色也不能成為其合法目標。
 
 剩餘八種待核對資料位於 `dist/ttg-pending.mjs`，在牌組編輯器可查看但不可加進構築／AI；`TTG-1-064` 已依官方 UAPR 同卡號再版核實數值與 Trigger 並轉入完整欄位卡池。
@@ -28,4 +28,4 @@
 ## 待核對來源注意事項
 - TTG-1-057 ダヤッカ 的稀有度曾有零售網站 U/C 的資料分歧；依現有 73 張已建檔及另外 7 張的稀有度計算，採 U 時總數恰好符合官方 SR12/R12/U28/C29，且多家卡店亦標 U。仍待官方該張卡面直接核實，不據此推測其他數值。
 - 日文及繁中官方卡表的動態卡片頁面可能無法完整讀取；可核對的卡片都應註明其實際來源，不能只因某個卡號的 URL 存在就算完成。
-- 6 張事件及 4 張部分卡資料的 `isolated_effect_only` 表示獨立狀態轉移／Trigger 單元測試，不是網站可以開始 TTG 完整對戰；所有卡維持 `auto:false`。
+- 6 張事件、4 張部分卡資料、3 張 ACTIVE 產能卡（019／033／066）共 13 種 `isolated_effect_only` 表示獨立規則／Trigger 單元測試，不是網站可以開始 TTG 完整對戰；所有卡維持 `auto:false`。
