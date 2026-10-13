@@ -60,14 +60,14 @@ export function legalTtgLifeChoices(state){
    choices.push({...base,mode:'raidHand'});
    for(const choice of legalRedLifeRaids(state,{player:q.player,cardUid:q.cardUid}))
     choices.push({...base,mode:'raid',...choice});
-   return choices;
+   return [...choices,{...base,mode:'decline'}];
   }
-  if(!['TTG-1-027','TTG-1-028','TTG-1-029','TTG-1-031'].includes(card.cardId))return [];
+  if(!['TTG-1-027','TTG-1-028','TTG-1-029','TTG-1-031'].includes(card.cardId))return [{...base,mode:'decline'}];
   choices.push({...base,mode:'raidHand'});
   if(['TTG-1-027','TTG-1-031'].includes(card.cardId)){
    for(const choice of legalGreenHighLifeRaids(state,{player:q.player,cardUid:q.cardUid}))
     choices.push({...base,mode:'raid',...choice});
-   return choices;
+   return [...choices,{...base,mode:'decline'}];
   }
   const printed=TTG_BY_ID[card.cardId],energy=calculateTtgEnergyByColor(state,q.player);
   if(energy.green>=printed.energy&&!pl.front.some(c=>c?.cardId==='TTG-1-004')){
@@ -81,7 +81,7 @@ export function legalTtgLifeChoices(state){
     for(const position of positions)choices.push({...base,mode:'raid',baseUid:target.card.uid,...position});
    }
   }
-  return choices;
+  return [...choices,{...base,mode:'decline'}];
  }
  else if(!['draw','final'].includes(trigger))throw new Error('Unknown printed life trigger: '+trigger);
  // The trigger is optional (official Q99), including GET, ACTIVE and COLOR.
