@@ -3,8 +3,8 @@
 // Card identity is used only for the acting player's hand or public zones.
 import {cardOf,controller,energy,bp,generated,locate} from './engine.mjs';
 
-export const FEATURE_VERSION='ua-v3-f72-1';
-export const FEATURE_DIM=72;
+export const FEATURE_VERSION='ua-v3-f96-2';
+export const FEATURE_DIM=96;
 const PHASES=['mulligan','start','move','main','attack'];
 const ACTIONS=['next','play','raid','move','step','ability','handAbility','attack','snipe','choose','extraDraw','keep','redraw'];
 const cap=(x,scale=1)=>Math.max(-1,Math.min(1,(Number(x)||0)/scale));
@@ -50,6 +50,25 @@ export function encodeAction(s,action,p=controller(s)){
   Number(!!target?.stack?.length),
   Number(action.type==='choose'&&action.ids?.includes('pass')),
   cap(action.ids?.length||0,4)
+ );
+ // Additional rule-aware signals distinguish plays of similarly-costed
+ // characters; all fields are printed card text or public/own state.
+ f.push(
+  ...oneHot(['green','blue','purple','yellow','red'],d?.color),
+  ...oneHot(['draw','get','active','raid','color','special','final'],d?.trigger),
+  cap(own.turnCount,10),cap(other.turnCount,10),
+  cap(energy(s,p,d?.color)-Number(d?.energy||0),8),
+  Number(!!(d?.doubleBlock||d?.rules?.doubleBlock)),
+  Number(!!(d?.impact||d?.rules?.impact||d?.rules?.raidImpact)),
+  Number(!!(d?.rules?.damage===2||d?.rules?.raidDamageIfOppReduced)),
+  Number(!!(d?.rules?.entry||d?.rules?.onPlay)),
+  Number(!!(d?.rules?.abilities)),
+  cap(own.hand.filter(h=>cardOf(h)?.energy===0).length,7),
+  cap(own.hand.filter(h=>cardOf(h)?.energy<=2).length,7),
+  cap(own.front.filter(c=>c?.ready).length,4),
+  cap(other.front.filter(c=>c?.ready).length,4),
+  cap(own.front.filter(c=>!c).length,4),
+  cap(own.energy.filter(c=>!c).length,4)
  );
  // Do not use action IDs, opponent secret card IDs or deck identities as
  // numeric features. Padding remains fixed across versions.
