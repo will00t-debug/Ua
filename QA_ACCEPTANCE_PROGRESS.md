@@ -118,3 +118,16 @@
 - 016：核對紫3、AP1、BP3000、紫2產能、IMPACT 無效與登場時送牌庫頂兩張場外；本批實測兩張移動與卡片守恆，IMPACT 無效仍需有阻擋勝負交互情境。
 
 測試 `tests/solo-official-acceptance-batch5.test.mjs` 包含 4 個獨立情境。即使通過，仍不將這三張卡標成完整官方 100% 驗收。
+
+## 接續第六批（PR #29）：SLG 017～019／TTG 006～008
+
+這輪在實際判定引擎上新增九項子測試，但每張卡的全部跨卡／時序仍未達正式完整驗收。驗收檔案：tests/solo-official-acceptance-batch6.test.mjs（5 項）、tests/ttg-official-acceptance-batch4.test.mjs（4 項）。
+
+- **SLG-1-017**：[官方卡文](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-017)。實際修正空場時紫2減2至0的合法登場判定，仍需 AP1；能源線有牌且只有紫1則不合法。登場查看頂1，保留或送場外兩路徑已測。未完全測試 ACTIVE 複合連鎖。
+- **SLG-1-018**：[官方卡文](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-018)。測定登場看3、可拿1張「水篠旬」或影之軍團、剩餘放底、拿牌需棄1的狀態守恆；刻意使用 001 為非合格目標，而 015 官方也是水篠旬。待測拿牌向對手公開之手機實際 UI。
+- **SLG-1-019**：[官方卡文、Q2026](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-019)。兩張實體同時在場外，也僅一回合共用一次啟動權；支出實際影之軍團手牌並回收，登場可棄1抽1或放棄。更複雜觸發時序尚待驗證。
+- **TTG-1-006**：依既有卡面 PDF 記錄，自己回合能源5／6界線與＋1000 BP、對手回合不增加；日本官方個別頁目前擷取不穩，應保留原始資料再次複核。
+- **TTG-1-007**：[英文官方卡文](https://www.unionarena-tcg.com/en/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-007)。自己場上達莉的＋1000BP（對手達莉不算）；從手牌登場可選擇額外支付 AP1，把場外達莉以 REST 登場，或拒絕，不重複複製實體卡。生命 ACTIVE 更多互動待測。
+- **TTG-1-008**：[日文官方卡文與 Q2263](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-008)。在 50 張實際對局狀態下，先選擇不阻擋，再發生達莉底板的未阻擋抽1，最後輪到防守方的 DRAW 生命觸發選擇。既有 Raid、IMPACT、生命檢查測試一併保留。
+
+本次只增加逐卡證據，不會把原本未完成完整驗收的 auto:false 標記改成 true；需全量 Node22 CI 合格後才能合併。 
