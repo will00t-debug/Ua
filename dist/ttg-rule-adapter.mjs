@@ -6,7 +6,7 @@ import {legalTtgHandEvents,dispatchTtgHandEvent} from './ttg-event-resolver.mjs'
 import {withTtgDerivedEnergy} from './ttg-energy-snapshot.mjs';
 import {legalGreenEventActions,resolveGreenEvent,legalGreen040RemovedActions,resolveGreen040Removed,resolveGreenEventTurnEnd} from './ttg-green-events.mjs';
 import {legalTtgRaidEntries,dispatchTtgRaidEntry} from './ttg-raid-entry.mjs';
-import {legalGreen003,resolveGreen003,legalGreen011,resolveGreen011,legalGreen015,resolveGreen015,legalGreen018,resolveGreen018,legalGreen022,resolveGreen022,resolveGreenMainEnd,resolveGreenTurnEnd,legalGreen020Step,resolveGreen020Step} from './ttg-green-main.mjs';
+import {legalGreen003,resolveGreen003,legalGreen011,resolveGreen011,legalGreen015,resolveGreen015,legalGreen018,resolveGreen018,legalGreen022,resolveGreen022,resolveGreenMainEnd,resolveGreenTurnEnd,legalGreen020Step,resolveGreen020Step,legalGreen016,resolveGreen016,legalGreen017,resolveGreen017} from './ttg-green-main.mjs';
 import {legalTtgEventTriggerChoices,resolveTtgEventLifeTrigger,TTG_IMPLEMENTED_EVENT_TRIGGERS} from './ttg-triggers.mjs';
 import {resolveTtgNia059,resolveTtgButa063,resolveTtgYoko065Step,resolveTtgMainEndRetire,resolveTtgPendingEndTurn,eligibleTtg071AttackBuffTargets,resolveTtg071FirstAttack,eligibleTtgViral002Targets,resolveTtgViral002,resolveTtgTemporaryEnergyEndTurn} from './ttg-pending-rules.mjs';
 
@@ -31,6 +31,8 @@ export function legalTtgRuleActions(state,player){
    if(c.cardId==='TTG-1-003')list.push(...legalGreen003(current,{player,uid:c.uid}));
    if(c.cardId==='TTG-1-011')list.push(...legalGreen011(current,{player,uid:c.uid}));
    if(c.cardId==='TTG-1-015')list.push(...legalGreen015(current,{player,uid:c.uid}));
+   if(c.cardId==='TTG-1-016')list.push(...legalGreen016(current,{player,uid:c.uid}));
+   if(c.cardId==='TTG-1-017')list.push(...legalGreen017(current,{player,uid:c.uid}));
    if(c.cardId==='TTG-1-018')list.push(...legalGreen018(current,{player,uid:c.uid}));
    if(c.cardId==='TTG-1-022')list.push(...legalGreen022(current,{player,uid:c.uid}));
    if(!c.ready)continue;
@@ -93,6 +95,8 @@ export function dispatchTtgRuleAction(state,action){
  if(action.type.startsWith('ttgGreen003'))return withTtgDerivedEnergy(resolveGreen003(withTtgDerivedEnergy(state,action.player),action),action.player);
  if(action.type==='ttgGreen011')return withTtgDerivedEnergy(resolveGreen011(state,action),action.player);
  if(action.type==='ttgGreen015')return withTtgDerivedEnergy(resolveGreen015(state,action),action.player);
+ if(action.type==='ttgGreen016')return withTtgDerivedEnergy(resolveGreen016(state,action),action.player);
+ if(action.type==='ttgGreen017')return withTtgDerivedEnergy(resolveGreen017(state,action),action.player);
  if(action.type==='ttgGreen018')return withTtgDerivedEnergy(resolveGreen018(state,action),action.player);
  if(action.type==='ttgGreen022')return withTtgDerivedEnergy(resolveGreen022(state,action),action.player);
  if(action.type==='ttgGreen020Step')return withTtgDerivedEnergy(resolveGreen020Step(state,action),action.player);
@@ -157,7 +161,8 @@ export function chooseTtgRuleAiAction(state,player){
   return bp(b.targetUid)-bp(a.targetUid);
  })[0];
  return buff||options.find(x=>x.type==='ttgGreen003Front')||options.find(x=>x.type==='ttgGreen003Ready')||
-    options.find(x=>x.type==='ttgGreen015')||options.find(x=>x.type==='ttgGreen011')||
+    options.find(x=>x.type==='ttgGreen015')||options.find(x=>x.type==='ttgGreen016')||
+    options.find(x=>x.type==='ttgGreen017')||options.find(x=>x.type==='ttgGreen011')||
     options.find(x=>x.type==='ttgGreen018')||options.find(x=>x.type==='ttgGreen022')||
     options.find(x=>x.type==='activateViral002')||options.find(x=>x.type==='activateButa063')||
     options.find(x=>x.type==='ttgGreen020Step')||options.find(x=>x.type==='stepYoko065')||null;
