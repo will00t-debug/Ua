@@ -11,25 +11,25 @@
     "completed": 700,
     "unfinished": 0,
     "failures": 0,
-    "rankingPairs": 24048,
+    "rankingPairs": 22220,
     "alternativesPerDecision": 3,
     "epochs": 5,
-    "finalLoss": 0.34736672237734767,
-    "elapsedMs": 1450338
+    "finalLoss": 0.28509428262545944,
+    "elapsedMs": 1451570
   },
   "evaluation": {
     "games": 72,
-    "wins": 33,
-    "losses": 39,
+    "wins": 34,
+    "losses": 38,
     "unfinished": 0,
     "errors": 0,
-    "moves": 14010,
-    "winRate": 0.4583333333333333,
+    "moves": 14004,
+    "winRate": 0.4722222222222222,
     "byMatchup": {
       "green-kenpachi-unohana__green-kenpachi-unohana": {
         "games": 8,
-        "wins": 5,
-        "losses": 3,
+        "wins": 4,
+        "losses": 4,
         "unfinished": 0,
         "errors": 0
       },
@@ -70,8 +70,8 @@
       },
       "blue-ichigo-zangetsu__green-kenpachi-unohana": {
         "games": 8,
-        "wins": 5,
-        "losses": 3,
+        "wins": 4,
+        "losses": 4,
         "unfinished": 0,
         "errors": 0
       },
@@ -84,13 +84,13 @@
       },
       "blue-ichigo-zangetsu__blue-ichigo-zangetsu": {
         "games": 8,
-        "wins": 3,
-        "losses": 5,
+        "wins": 6,
+        "losses": 2,
         "unfinished": 0,
         "errors": 0
       }
     },
-    "elapsedMs": 191181,
+    "elapsedMs": 195032,
     "seedBase": 1027000,
     "opponent": "hard v2",
     "isHeldOut": true,
