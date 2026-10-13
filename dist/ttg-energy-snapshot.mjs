@@ -5,6 +5,7 @@
 import {TTG_BY_ID} from './ttg-builder.mjs';
 
 const bonusWhileActive=new Set(['TTG-1-019','TTG-1-033','TTG-1-066']);
+import {red060ExtraEnergy} from './ttg-red-seventh-three.mjs';
 const colors=['red','green'];
 export function calculateTtgEnergyByColor(state,player){
  if(![0,1].includes(player)||!state?.players?.[player])throw new Error('Invalid TTG player');
@@ -31,7 +32,7 @@ export function calculateTtgEnergyByColor(state,player){
    const reite=c.cardId==='TTG-1-024'&&gunmenPresent?1:0;
    // TTG-1-034 produces +1 for EACH facedown card below the field.
    const facedown=c.cardId==='TTG-1-034'?(c.under||[]).filter(x=>x.faceDown).length:0;
-   energy[color]+=base+added+reite+facedown+(c.ready&&bonusWhileActive.has(c.cardId)?1:0);
+   energy[color]+=base+added+reite+facedown+red060ExtraEnergy(state,player,c)+(c.ready&&bonusWhileActive.has(c.cardId)?1:0);
   }
  }
  const scale=2**doubles;
