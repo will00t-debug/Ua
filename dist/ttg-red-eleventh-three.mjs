@@ -16,7 +16,7 @@ const handCost=(s,p,id)=>s.players[p].red080DiscountUntilTurn===s.turn&&
  ['ラガン','グレン','グレンラガン'].includes(TTG_BY_ID[id]?.nameJa)?0:TTG_BY_ID[id].ap;
 const targetEnergy=s=>null;
 function candidateBase(card,id){
- if(id==='TTG-1-072')return name(card)==='カミナ'&&!card.stack?.length&&!card.under?.length;
+ if(id==='TTG-1-072')return (name(card)==='カミナ'||card.cardId==='TTG-1-070')&&!card.stack?.length&&!card.under?.length;
  if(id==='TTG-1-073'){
   if(['シモン','カミナ'].includes(name(card))&&!card.stack?.length&&!card.under?.length)return true;
   return ['ラガン','グレン'].includes(name(card))&&card.stack?.length===1&&
@@ -25,7 +25,7 @@ function candidateBase(card,id){
  if(id==='TTG-1-074'){
   if(name(card)==='シモン'&&!card.stack?.length&&!card.under?.length)return true;
   return ['ラガン','グレン'].includes(name(card))&&card.stack?.length===1&&
-   name(card.stack[0])==='シモン'&&(card.under||[]).every(c=>c.faceDown);
+   ['シモン','ロシウ'].includes(name(card.stack[0]))&&(card.under||[]).every(c=>c.faceDown);
  }
  return false;
 }
@@ -35,9 +35,11 @@ export function legalRedHighRaids(s,p){
  for(const h of pl.hand.filter(c=>raidIds.has(c.cardId))){
   const id=h.cardId,cost=handCost(s,p,id),d=TTG_BY_ID[id];
   if(energy<d.energy||pl.apCards.filter(c=>c.ready).length<cost)continue;
+  if(id==='TTG-1-072'&&ownsName(pl,'カミナ')===true){ /* Rossiu itself cannot qualify while real Kamina exists */ }
   if(id==='TTG-1-074'&&!ownsName(pl,'ニア'))continue;
   if(id==='TTG-1-073'&&!(ownsName(pl,'シモン')&&ownsName(pl,'カミナ')))continue;
-  for(const source of rows(pl).filter(x=>candidateBase(x.c,id))){
+  for(const source of rows(pl).filter(x=>candidateBase(x.c,id)&&
+    !(id==='TTG-1-072'&&x.c.cardId==='TTG-1-070'&&ownsName(pl,'カミナ')))){
    const spots=[{line:source.line,slot:source.slot}];
    if(source.line==='energy')for(let slot=0;slot<pl.front.length;slot++)if(!pl.front[slot])spots.push({line:'front',slot});
    for(const position of spots)options.push({type:'ttgRedHighRaid',player:p,handUid:h.uid,
@@ -63,6 +65,7 @@ export function resolveRedHighRaid(s,a={}){
  pl[from.line][from.slot]=null;
  if(pl[a.line][a.slot])throw new Error('Raid destination occupied');
  const raid={...h,ready:true,stack:[bottom],under,raidedTurn:s.turn,enteredTurn:s.turn};
+ if(bottom.cardId==='TTG-1-070'&&choice.cardId==='TTG-1-072'&&ownsName(pl,'カミナ'))throw new Error('070 replacement unavailable with Kamina');
  pl[a.line][a.slot]=raid;
  if(pl.red080DiscountUntilTurn===s.turn){delete pl.red080DiscountUntilTurn;pl.red080DiscountConsumedTurn=s.turn;}
  r.raidCountThisTurn=(r.raidCountThisTurn||0)+1;
@@ -88,6 +91,7 @@ export function legalRedRaidQueue(s){
   if(step==='entry072')return [{...b,step,targetUid:null},...s.players[1-q.player].front.filter(c=>c&&
    !c.protectedFromEffects&&!c.cannotBeChosen&&
    (c.currentBp??TTG_BY_ID[c.cardId].bp)<=3000).map(c=>({...b,step,targetUid:c.uid}))];
+  if(step==='entry076')return [{...b,step,targetUid:null}];
   if(step==='entry073')return [{...b,step,targetUid:null},...s.players[1-q.player].front.filter(c=>c&&
    !c.protectedFromEffects&&!c.cannotBeChosen&&(c.currentBp??TTG_BY_ID[c.cardId].bp)<=5000)
    .map(c=>({...b,step,targetUid:c.uid}))];
@@ -114,10 +118,18 @@ export function resolveRedRaidQueue(s,a={}){
    if(target)target.ready=false;
   }
  }
+ if(a.step==='entry076'){
+  const revealed=pl.deck.slice(0,2).map(c=>c.uid);
+  r.pending={kind:'ttgRed076Look',player:q.player,uid:raid.uid,revealed};
+  if(q.steps.length>1)r.ttgRedRaidResume={...q,steps:q.steps.filter(x=>x!==a.step)};
+  if(JSON.stringify(inventory(pl))!==JSON.stringify(before[q.player]))throw new Error('076 RAID top-two UID changed');
+  return r;
+ }
  if(a.step==='entry073'&&a.targetUid){
   const opp=r.players[1-q.player],i=opp.front.findIndex(c=>c?.uid===a.targetUid);
   const card=opp.front[i];opp.front[i]=null;
-  opp.outside.push(...[card,...(card.stack||[]),...(card.under||[])]);
+  const flatten=x=>[{uid:x.uid,cardId:x.cardId},...(x.stack||[]).flatMap(flatten),...(x.under||[]).flatMap(flatten)];
+  opp.outside.push(...flatten(card));
  }
  if(a.step==='entry074'){
   draw();
