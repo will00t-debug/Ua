@@ -12,8 +12,8 @@ const all=(pl)=>{
  return [...pl.front.filter(Boolean),...pl.energy.filter(Boolean),...pl.hand,...pl.deck,...pl.outside,...pl.life].flatMap(recur).sort();
 };
 const effect=(s,payload)=>resolveTtgGreenEntry(s,{player:0,sourceUid:'src',...payload});
-test('green entry effect registry contains only the six independently implemented IDs',()=>{
- assert.deepEqual(TTG_GREEN_ENTRY_IDS,['TTG-1-001','TTG-1-009','TTG-1-010','TTG-1-014','TTG-1-023','TTG-1-026']);
+test('green entry effect registry contains only the eight independently implemented IDs',()=>{
+ assert.deepEqual(TTG_GREEN_ENTRY_IDS,['TTG-1-001','TTG-1-009','TTG-1-010','TTG-1-014','TTG-1-016','TTG-1-017','TTG-1-023','TTG-1-026']);
  assert.ok(TTG_GREEN_ENTRY_IDS.every(id=>TTG_BY_ID[id]?.color==='green'));
 });
 test('001 Viral may inspect top: keep physical top or move to outside without drawing',()=>{
@@ -109,4 +109,42 @@ test('entry cannot be resolved by opponent or replayed after its pending resolut
  assert.equal(first.pending,null);
  // Entry completion is controlled by a pending effect in a match.
  assert.deepEqual(legalTtgGreenEntryDecisions({...first,pending:{kind:'ttgGreenEntry',player:1,sourceUid:'src'}},{player:0,sourceUid:'src'}),[]);
+});
+
+test('016 Nia discards up to two HAND cards and draws exactly same count',()=>{
+ const original=state('TTG-1-016');
+ original.players[0].hand=[card('a','TTG-1-005'),card('b','TTG-1-009'),card('c','TTG-1-006')];
+ original.players[0].deck=[card('draw1','TTG-1-001'),card('draw2','TTG-1-014'),card('third','TTG-1-020')];
+ const before=all(original.players[0]);
+ const choices=legalTtgGreenEntryDecisions(original,{player:0,sourceUid:'src'});
+ assert.equal(choices[0].max,2);
+ assert.throws(()=>effect(original,{mode:'niaDiscardDraw',discardUids:['a','b','c']}));
+ assert.throws(()=>effect(original,{mode:'niaDiscardDraw',discardUids:['a','a']}));
+ const result=effect(original,{mode:'niaDiscardDraw',discardUids:['a','b']});
+ assert.deepEqual(result.players[0].outside.map(c=>c.uid),['a','b']);
+ assert.deepEqual(result.players[0].hand.map(c=>c.uid),['c','draw1','draw2']);
+ assert.deepEqual(result.players[0].deck.map(c=>c.uid),['third']);
+ assert.deepEqual(all(result.players[0]),before);
+ const skip=effect(original,{mode:'niaDiscardDraw',discardUids:[]});
+ assert.deepEqual(skip.players[0].hand.map(c=>c.uid),['a','b','c']);
+});
+test('017 Nia searches top 4 for Simon or cost 8+, or puts outside target on TOP',()=>{
+ const original=state('TTG-1-017');
+ original.players[0].hand=[card('h','TTG-1-005')];
+ original.players[0].deck=[card('not','TTG-1-005'),card('simon','TTG-1-009'),card('cost','TTG-1-040'),card('other','TTG-1-006'),card('tail','TTG-1-020')];
+ original.players[0].outside=[card('outsideSimon','TTG-1-010'),card('outsideOther','TTG-1-005')];
+ const before=all(original.players[0]);
+ const choices=legalTtgGreenEntryDecisions(original,{player:0,sourceUid:'src'});
+ assert.deepEqual(choices.map(x=>x.mode),['niaSearch','niaOutsideToTop']);
+ assert.deepEqual(choices[0].candidateUids,['simon','cost']);
+ assert.deepEqual(choices[1].candidateUids,['outsideSimon']);
+ assert.throws(()=>effect(original,{mode:'niaSearch',takeUid:'not',discardUid:'h',bottomOrderUids:['simon','cost','other']}));
+ const searched=effect(original,{mode:'niaSearch',takeUid:'cost',discardUid:'h',bottomOrderUids:['other','not','simon']});
+ assert.deepEqual(searched.players[0].hand.map(c=>c.uid),['cost']);
+ assert.deepEqual(searched.players[0].deck.map(c=>c.uid),['tail','other','not','simon']);
+ assert.deepEqual(all(searched.players[0]),before);
+ const returned=effect(original,{mode:'niaOutsideToTop',takeUid:'outsideSimon'});
+ assert.equal(returned.players[0].deck[0].uid,'outsideSimon');
+ assert.ok(!returned.players[0].outside.some(c=>c.uid==='outsideSimon'));
+ assert.deepEqual(all(returned.players[0]),before);
 });
