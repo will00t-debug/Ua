@@ -3,8 +3,8 @@
 // Card identity is used only for the acting player's hand or public zones.
 import {cardOf,controller,energy,bp,generated,locate} from './engine.mjs';
 
-export const FEATURE_VERSION='ua-v3-f96-2';
-export const FEATURE_DIM=96;
+export const FEATURE_VERSION='ua-v3-f128-3';
+export const FEATURE_DIM=128;
 const PHASES=['mulligan','start','move','main','attack'];
 const ACTIONS=['next','play','raid','move','step','ability','handAbility','attack','snipe','choose','extraDraw','keep','redraw'];
 const cap=(x,scale=1)=>Math.max(-1,Math.min(1,(Number(x)||0)/scale));
@@ -69,6 +69,54 @@ export function encodeAction(s,action,p=controller(s)){
   cap(other.front.filter(c=>c?.ready).length,4),
   cap(own.front.filter(c=>!c).length,4),
   cap(own.energy.filter(c=>!c).length,4)
+ );
+ // The previous model treated a 0-energy base and a synergistic raid base
+ // as nearly identical. Encode only PUBLIC/OWN relationships and the energy
+ // thresholds unlocked by a legal play; no hidden information is consulted.
+ const ownField=fieldCards(own);
+ const dTraits=(Array.isArray(d?.traits)?d.traits:[d?.traits]).filter(Boolean);
+ const relates=(x)=>x&&(d?.name===x.name||d?.key===x.key&&!!d?.key);
+ const sharesTrait=x=>{
+  const traits=Array.isArray(x?.traits)?x.traits:[x?.traits];
+  return traits.some(v=>v&&v!=='無'&&dTraits.includes(v));
+ };
+ const relatedOnField=ownField.filter(c=>relates(cardOf(c))).length;
+ const sameTraitOnField=ownField.filter(c=>sharesTrait(cardOf(c))).length;
+ const sameNameInHand=own.hand.filter(c=>c.uid!==action.uid&&relates(cardOf(c))).length;
+ const raidKey=String(d?.raid||'').replaceAll(/\s/g,'');
+ const hasRaidBase=!!raidKey&&ownField.some(c=>{
+  const base=cardOf(c);
+  return [base?.key,base?.name,base?.nameJa,base?.rules?.alsoName]
+   .some(v=>String(v||'').replaceAll(/\s/g,'')===raidKey)||
+   !!base?.rules?.wildRaidBase;
+ });
+ const currentEnergy=energy(s,p);
+ const addedEnergy=action.type==='play'&&action.line==='energy'?Number(d?.gen)||0:0;
+ const futureEnergy=currentEnergy+addedEnergy;
+ const handRequirements=own.hand.filter(c=>c.uid!==action.uid&&cardOf(c)?.type==='character')
+  .map(c=>cardOf(c)?.energy||0);
+ const unlocks=handRequirements.filter(e=>e>currentEnergy&&e<=futureEnergy).length;
+ const effect=String(d?.effect||'');
+ f.push(
+  cap(relatedOnField,4),cap(sameTraitOnField,8),cap(sameNameInHand,4),
+  Number(hasRaidBase),Number(!!d?.raid),Number(!!d?.rules?.alsoName),
+  Number(effect.includes('阿散井')||effect.includes('恋次')||effect.includes('戀次')),
+  Number(effect.includes('露琪亞')||effect.includes('ルキア')),
+  Number(effect.includes('一護')||effect.includes('黒崎')),
+  Number(effect.includes('場外')||effect.includes('場外區')),
+  Number(effect.includes('抽')||effect.includes('ドロー')),
+  Number(effect.includes('AP')),Number(effect.includes('BP')),
+  cap(futureEnergy,8),cap(unlocks,5),
+  Number(currentEnergy<2&&futureEnergy>=2),
+  Number(currentEnergy<3&&futureEnergy>=3),
+  Number(currentEnergy<4&&futureEnergy>=4),
+  Number(currentEnergy<5&&futureEnergy>=5),
+  Number(currentEnergy<6&&futureEnergy>=6),
+  cap(handRequirements.filter(e=>e>currentEnergy).length,8),
+  cap(handRequirements.filter(e=>e<=currentEnergy).length,8),
+  Number(own.front.some(c=>c&&relates(cardOf(c)))),
+  Number(own.energy.some(c=>c&&relates(cardOf(c)))),
+  cap(d?.rules?.passive?.bpIfOwnName?.amount,4000)
  );
  // Do not use action IDs, opponent secret card IDs or deck identities as
  // numeric features. Padding remains fixed across versions.
