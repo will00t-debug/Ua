@@ -483,7 +483,7 @@ export function ttgCoreAiChoice(s){
   return choices.find(x=>x.spendUids?.length&&x.targetUid)||choices.find(x=>x.spendUids?.length)||choices[0];
  }
  if(s.pending?.kind==='block'){
-  const att=pl.front.find(c=>c?.uid===s.pending.attackerUid);
+  const att=field(pl).find(c=>c?.uid===s.pending.attackerUid);
   const other=s.players[1-p];
   const candidates=other.front.filter(x=>x?.ready&&greenTtgCanAttackOrBlock(s,1-p,x)&&red067MayBlock(s,1-p,att,x,bp(s,1-p,x))&&bp(s,1-p,x)>=bp(s,p,att));
   if(candidates.length)return {type:'block',blockUid:candidates.sort((a,b)=>bp(s,1-p,a)-bp(s,1-p,b))[0].uid};
