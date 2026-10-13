@@ -1,3 +1,4 @@
+import {UA54BT_OFFICIAL_PRINT} from './mst-official-print.mjs';
 // UA54BT catalogue: 80 numbered effect cards + 12 non-deck AP cards.
 // Unverified fields remain null; these placeholders are not playable nor fabricated.
 export const UA54BT_PRODUCT='https://www.unionarena-tcg.com/jp/products/boosters/mst-1.php';
@@ -89,6 +90,11 @@ const VERIFIED={
  40:{name:'私がついていますから',nameJa:'私がついていますから',color:'blue',energy:2,ap:1,bp:0,gen:0,type:'event',rarity:'C',trigger:'color',effect:'このカードは自分の場に〈ロキシー〉がある場合のみ使用できる。自分の手札から必要エナジーを満たし消費APが1の青の〔〈ルーデウス〉か〈ロキシー〉〕を1枚まで自分の場にレストで登場させるかレイドさせる。カードを1枚引く。自分の場の〈ルーデウス〉を1枚まで選び、別のラインに移動させる。',triggerEffect:'BP3500以下の相手のフロントLのキャラを1枚選び、手札に戻す。'},
  55:{name:'アリエル',nameJa:'アリエル',color:'green',energy:1,ap:1,bp:2000,gen:1,type:'character',traits:['ラノア魔法大学'],rarity:'R',trigger:'draw',effect:'登場時：自分の山札の上から3枚見て、［特徴：ラノア魔法大学］を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。'}
 };
-export const UA54BT_VERIFIED=Array.from({length:80},(_,i)=>{const n=i+1,entry=pending(n);return VERIFIED[n]?{...entry,...VERIFIED[n],verified:true,reason:'印刷欄位已核對；完整判定和卡圖權限待驗證。'}:PARTIAL[n]?{...entry,...PARTIAL[n],verified:false}:entry;});
+export const UA54BT_VERIFIED=Array.from({length:80},(_,i)=>{
+ const n=i+1,entry=pending(n),official=UA54BT_OFFICIAL_PRINT[entry.id];
+ if(!official||!Number.isInteger(official.ap)||!Number.isInteger(official.energy)||!Number.isInteger(official.bp)||!Number.isInteger(official.gen))throw new Error('缺少官方卡片印刷資料：'+entry.id);
+ const prior=VERIFIED[n]||PARTIAL[n]||{};
+ return {...entry,...prior,...official,verified:true,auto:false,verifiedBy:'bandai-jp-official-cardlist',sourceEvidence:'https://github.com/will00t-debug/Ua/actions/runs/38450040170',reason:'日本官方印刷欄位與日文效果已核對；中文細節、卡圖授權及實際對戰自動判定仍待驗證。'};
+});
 
-export const UA54BT_DATA_STATUS={expectedRegularCards:80,parallelArtExcluded:true,apArtExcluded:true,engineReady:0};
+export const UA54BT_DATA_STATUS={expectedRegularCards:80,parallelArtExcluded:true,apArtExcluded:true,engineReady:0,officialPrintAudited:80};
