@@ -487,6 +487,44 @@ function choose(s,action){
   if(action.uid!=null&&!c)throw Error('invalid active island target');
   if(c)readySolo(c);
   s.pending=null;advanceAttackEnd(s);
+ }else if(q.kind==='slg051Mode'){
+  if(action.mode==='recover'){
+   const p=s.players[q.p];s.pending={kind:'slg051Recover',p:q.p,options:p.outside.filter(c=>d(c).type==='character'&&d(c).energy<=2).map(c=>c.uid)};
+  }else if(action.mode==='raid'){
+   const p=s.players[q.p];if(p.ap<1||!p.hand.length)throw Error('not enough AP or hand for Eri Raid');
+   p.ap--;s.pending={kind:'slg051Discard',p:q.p};
+  }else throw Error('unknown Eri mode');
+ }else if(q.kind==='slg051Recover'){
+  if(action.uid!=null&&!q.options.includes(action.uid))throw Error('invalid Eri recovery');
+  s.pending=null;if(action.uid!=null)recoverSolo(s,q.p,action.uid,'観月 絵里');
+ }else if(q.kind==='slg051Discard'){
+  const p=s.players[q.p],i=p.hand.findIndex(c=>c.uid===action.uid);
+  if(i<0)throw Error('invalid Eri cost');
+  const [discarded]=p.hand.splice(i,1);p.outside.push(discarded);
+  s.pending={kind:'slg051Raid',p:q.p};
+ }else if(q.kind==='slg051Raid'){
+  if(action.uid==null){s.pending=null;}
+  else{
+   const p=s.players[q.p],c=p.outside.find(x=>x.uid===action.uid&&x.cardId==='SLG-1-047');
+   const base=field(p).find(x=>x.uid===action.target);
+   if(!c||!base||!canRaid(s,q.p,c,base))throw Error('invalid Eri outside Raid');
+   s.pending=null;raidReplace(s,q.p,c,base,action.line,action.slot,false,'outside');
+  }
+ }else if(q.kind==='slg048Deploy'){
+  if(action.uid==null)s.pending=null;
+  else{
+   const p=s.players[q.p],i=p.hand.findIndex(c=>c.uid===action.uid),c=p.hand[i];
+   if(!c||d(c).color!=='green'||d(c).type!=='character'||d(c).energy>3||d(c).ap!==1||!['front','energy'].includes(action.line)||p[action.line][action.slot])throw Error('invalid 048 deployment');
+   p.hand.splice(i,1);position(c,q.p,action.line,action.slot);p[action.line][action.slot]=c;
+   s.pending=null;onEnter(s,c);
+  }
+ }else if(q.kind==='slg049Destroy'){
+  if(action.uid==null)s.pending=null;
+  else{
+   const p=s.players[q.p],target=s.players[1-q.p].front.find(c=>c?.uid===action.uid);
+   if(!target||!(target.extraTargetAp==null||p.ap>=target.extraTargetAp)||target.untargetableTurn===s.turn)throw Error('illegal Raid 049 destroy target');
+   p.ap-=target.extraTargetAp||0;s.pending=null;retire(s,1-q.p,target);
+  }
  }else if(q.kind==='slg020EntryDiscard'){
   const p=s.players[q.p];
   if(action.uid==null){s.pending=null;}
@@ -755,6 +793,14 @@ function onEnter(s,c){
   draw(s,p);if(p.hand.length)enqueue(s,{kind:'slgDiscard',p:c.owner,source:c.uid});
  }
  if(c.cardId==='SLG-1-020'){draw(s,p);if(p.hand.length)enqueue(s,{kind:'slg020EntryDiscard',p:c.owner,source:c.uid});}
+ if(['SLG-1-047','SLG-1-048'].includes(c.cardId))draw(s,p);
+ if(c.cardId==='SLG-1-048'){
+  enqueue(s,{kind:'slg048Deploy',p:c.owner,source:c.uid});
+  if(s.active===c.owner&&s.status==='playing')draw(s,p);
+ }
+ if(c.cardId==='SLG-1-049'&&s.active===c.owner)
+  enqueue(s,{kind:'slg049Destroy',p:c.owner,source:c.uid});
+ if(c.cardId==='SLG-1-051')enqueue(s,{kind:'slg051Mode',p:c.owner,source:c.uid});
  if(c.cardId==='SLG-1-021')c.mustBlockTurn=s.turn;
  if(c.cardId==='SLG-1-022'){c.grants??=[];c.grants.push({kind:'snipe',turn:s.turn});enqueue(s,{kind:'slg022Enter',p:c.owner,line:'front'});}
  if(c.cardId==='SLG-1-059'&&p.hand.length)enqueue(s,{kind:'slg059Entry',p:c.owner,source:c.uid});
@@ -830,6 +876,25 @@ export function soloTrainingLegalActions(s){
   }
   if(q.kind==='slg061End')return [{type:'choose',uid:null},...s.players[q.p].hand.map(c=>({type:'choose',uid:c.uid}))];
   if(q.kind==='slg061Active')return [{type:'choose',uid:null},...field(s.players[q.p]).filter(isIsland).map(c=>({type:'choose',uid:c.uid}))];
+  if(q.kind==='slg051Mode'){
+   const p=s.players[q.p];
+   return [{type:'choose',mode:'recover'},...(p.ap>0&&p.hand.length?[{type:'choose',mode:'raid'}]:[])];
+  }
+  if(q.kind==='slg051Recover')return [{type:'choose',uid:null},...q.options.map(uid=>({type:'choose',uid}))];
+  if(q.kind==='slg051Discard')return s.players[q.p].hand.map(c=>({type:'choose',uid:c.uid}));
+  if(q.kind==='slg051Raid'){
+   const p=s.players[q.p],candidates=p.outside.filter(c=>c.cardId==='SLG-1-047');
+   return [{type:'choose',uid:null},...candidates.flatMap(c=>field(p).filter(base=>canRaid(s,q.p,c,base)).flatMap(base=>
+    [{type:'choose',uid:c.uid,target:base.uid,line:base.line,slot:base.slot},...(base.line==='energy'?p.front.flatMap((x,slot)=>x?[]:[{type:'choose',uid:c.uid,target:base.uid,line:'front',slot}]):[])]))];
+  }
+  if(q.kind==='slg048Deploy'){
+   const p=s.players[q.p],cards=p.hand.filter(c=>d(c).type==='character'&&d(c).color==='green'&&d(c).energy<=3&&d(c).ap===1);
+   return [{type:'choose',uid:null},...cards.flatMap(c=>['front','energy'].flatMap(line=>p[line].flatMap((x,slot)=>x?[]:[{type:'choose',uid:c.uid,line,slot}])))];
+  }
+  if(q.kind==='slg049Destroy'){
+   const p=s.players[q.p],front=s.players[1-q.p].front;
+   return [{type:'choose',uid:null},...front.filter(c=>c&&c.untargetableTurn!==s.turn&&p.ap>=(c.extraTargetAp||0)).map(c=>({type:'choose',uid:c.uid}))];
+  }
   if(q.kind==='slg020EntryDiscard')return [{type:'choose',uid:null},...s.players[q.p].hand.map(c=>({type:'choose',uid:c.uid}))];
   if(q.kind==='slg020Recover'||q.kind==='slg021Win')return [{type:'choose',uid:null},...q.options.map(uid=>({type:'choose',uid}))];
   if(q.kind==='slg020AttackDiscard'||q.kind==='slg048Under')return s.players[q.p].hand.map(c=>({type:'choose',uid:c.uid}));
@@ -1087,7 +1152,7 @@ export function soloTrainingBotAction(s){
   if(s.pending.kind==='slgMill')return legal[legal.length-1];
   if(s.pending.kind==='slgDiscard'||s.pending.kind==='slg019Recover'||s.pending.kind==='slg044Target'||s.pending.kind==='slg077Target')return legal[0];
   if(s.pending.kind==='slgRecoveredBuff'||s.pending.kind==='slgRecoveredDeploy'||s.pending.kind==='slg019Entry'||s.pending.kind==='slg059Entry'||s.pending.kind==='slg077Buff')return legal.find(a=>a.uid!=null)||legal[0];
-  if(['slgEndRaid','slg061End','slg061Active','slg020EntryDiscard','slg020Recover','slg021Win','slg022Enter','slg060Swap','slg060Target','slg022Swap'].includes(s.pending.kind))return legal[0];
+  if(['slg051Mode','slg051Recover','slg051Discard','slg051Raid','slg048Deploy','slg049Destroy','slgEndRaid','slg061End','slg061Active','slg020EntryDiscard','slg020Recover','slg021Win','slg022Enter','slg060Swap','slg060Target','slg022Swap'].includes(s.pending.kind))return legal[0];
   if(['slg020AttackDiscard','slg048Under'].includes(s.pending.kind))return legal[0];
   if(s.pending.kind==='entry002Mode')return legal[0];
   if(s.pending.kind==='entry002Buff')return legal.find(a=>a.uid!=null)||legal[0];
