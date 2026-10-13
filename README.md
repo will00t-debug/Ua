@@ -82,3 +82,22 @@ npm run benchmark:ai -- --games 64 --matrix --seed 10000 --difficulty hard
 ```
 
 Raw summary: `audit/ai-tactics-benchmark-20261013.json`.
+
+
+### PDF deck sparring fixtures (2026-10-13)
+
+Three user-submitted 50-card BLEACH decks are stored in `dist/training-decks.mjs`:
+- Green Kenpachi/Unohana/Hitsugaya, AP Card 查 code `eb05301f80` (13 card identities).
+- Purple Renji/Rukia/Ichigo, code `eb052afef7` (13 identities).
+- Blue Ichigo/Zangetsu/Grimmjow, code `eb052c890b` (14 identities).
+
+Alternate art/printings count under the canonical BLC identity. The game lobby now lists all three under **實戰 AI 對練牌組** as player or opponent decks; these entries do not change the existing default presets or other series. Every card must pass `validateDeck` and `pendingCards`, and automated tests include all nine ordered matchups.
+
+To reproduce AI sparring on Node.js 22:
+```sh
+npm test
+npm run spar:ai -- --games 36 --difficulty hard --opponent legacy --seed 12000
+npm run spar:ai -- --games 36 --difficulty hard --opponent hard --seed 12000
+```
+The 36-game run covers each ordered matchup four times while rotating first player and AI seat. Use `--games 9 --max-actions 350` for a quick nine-matchup smoke test. Results measure only these decks/seeds and are **not** neural network training. This addition preserves the Work/PR #17 AI branch and does not deploy the production site.
+
