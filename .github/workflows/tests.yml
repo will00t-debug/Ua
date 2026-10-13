@@ -4,7 +4,7 @@ on:
   push:
     branches: [main, 'fix/ai-tactics-private-20261013', 'feature/ai-v3-learning']
   pull_request:
-    branches: [main]
+    branches: [main, 'fix/ai-tactics-private-20261013']
 
 permissions:
   contents: read
