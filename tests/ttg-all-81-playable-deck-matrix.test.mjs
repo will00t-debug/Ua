@@ -22,18 +22,25 @@ function deckFor(id){
 function play(id,deck){
  const seed=5000+Number(id.slice(-3));
  let s=newTtgCoreMatch({decks:[deck,deck],seed,first:0});
- let count=0;
+ let count=0,actual081Resolutions=0;
  while(s.status==='playing'&&count<7000){
   const legal=legalTtgCoreActions(s);
   assert.ok(legal.length,id+' has no legal actions at '+count);
   const act=ttgCoreAiChoice(s);
   assert.ok(act,id+' AI stuck at '+count);
-  try{s=dispatchTtgCoreAction(s,act);}catch(e){throw new Error('TTG '+id+' failed at step '+count+' phase='+s.phase+' player='+s.active+' action='+JSON.stringify(act)+' pending='+JSON.stringify(s.pending)+' cause='+e.message,{cause:e});}
+  const usedCard=s.players[s.active].hand.find(c=>c.uid===act.handUid);
+  if(usedCard?.cardId==='TTG-1-081'){
+   assert.equal(act.type,'playTtgEvent');
+   assert.ok(act.targetUid,'081 Giga Drill requires a selected front target');
+   assert.ok(!act.readyApUids?.length,'081 must not include AP ready selection');
+  }
+  try{s=dispatchTtgCoreAction(s,act);if(usedCard?.cardId==='TTG-1-081')actual081Resolutions++;}catch(e){throw new Error('TTG '+id+' failed at step '+count+' phase='+s.phase+' player='+s.active+' action='+JSON.stringify(act)+' pending='+JSON.stringify(s.pending)+' cause='+e.message,{cause:e});}
   assert.ok(assertTtgCoreState(s),id+' card conservation fails at '+count);
   count++;
  }
  assert.equal(s.status,'finished',id+' cannot finish a full match in '+count+' actions');
  assert.ok([0,1].includes(s.winner),id+' missing winner');
+ if(id==='TTG-1-081')assert.ok(actual081Resolutions>0,'081 target event was never actually executed');
 }
 test('All 81 printed TTG card identities can coexist with 50-card legal decks and finish AI matches',()=>{
  assert.equal(TTG_CORE_SMOKE_IDS.length,81);
