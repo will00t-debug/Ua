@@ -101,12 +101,12 @@ test('last life SPECIAL resolves before defeat, while FINAL can rescue',()=>{
  const rescued=beginTtgLifeTrigger(final,{player:1,lifeUid:'life'});
  assert.equal(rescued.status,'playing');assert.equal(rescued.players[1].life.length,1);
 });
-test('Unimplemented red 071 Raid triggers are not silently treated as normal automatic life effects',()=>{
+test('red 071 Raid life always permits hand, and real Raid requires matching Kittan and red4',()=>{
  const s=lifeGame('TTG-1-071');
  const p=beginTtgLifeTrigger(s,{player:1,lifeUid:'life'});
- assert.deepEqual(legalTtgLifeChoices(p),[]);
- assert.equal(p.pendingTtgLife.trigger,'raid');
- assert.throws(()=>resolveTtgLifeChoice(p,{player:1,cardUid:'life',mode:'decline'}));
+ assert.deepEqual(legalTtgLifeChoices(p).map(x=>x.mode),['raidHand']);
+ const hand=resolveTtgLifeChoice(p,legalTtgLifeChoices(p)[0]);
+ assert.ok(hand.players[1].hand.some(x=>x.uid==='life'));
 });
 
 test('001 and 014 have no printed life trigger and go straight to OUTSIDE',()=>{
