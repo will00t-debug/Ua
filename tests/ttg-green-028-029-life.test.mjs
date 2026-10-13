@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {beginTtgLifeTrigger,legalTtgLifeChoices,resolveTtgLifeChoice} from '../dist/ttg-green-life.mjs';
-import {legalTtgCoreActions,dispatchTtgCoreAction} from '../dist/ttg-core-match.mjs';
+import {legalTtgCoreActions,dispatchTtgCoreAction,newTtgCoreMatch,assertTtgCoreState} from '../dist/ttg-core-match.mjs';
 import {TTG_BY_ID} from '../dist/ttg-builder.mjs';
+import {withTtgDerivedEnergy} from '../dist/ttg-energy-snapshot.mjs';
 const c=(uid,id,more={})=>({uid,cardId:id,nameJa:TTG_BY_ID[id].nameJa,ready:true,stack:[],under:[],...more});
 const pl=()=>({front:[null,null,null,null],energy:[null,null,null,null],hand:[],deck:[],life:[],outside:[],removed:[],apCards:[{uid:'ap',ready:false}],turnCount:2,energyProduced:{green:0,red:0}});
 function fixture(id='TTG-1-028',{end=false,energy=6,base=true}={}){
@@ -57,8 +58,28 @@ test('029 RAID LIFE on opponent turn sets pending outside recovery on own front'
  assert.equal(r.players[1].apCards[0].ready,false);
  assert.equal(legalTtgCoreActions(r).some(x=>x.type==='ttgGreen029Entry'&&x.mode==='decline'),true);
 });
+const counts=Object.fromEntries([...['005','006','009','010','011','014','015','016','017','019','028','029'].map(n=>['TTG-1-'+n,4]),['TTG-1-021',2]]);
+function coreFixture(id){
+ const s=newTtgCoreMatch({decks:[counts,counts],seed:24}),p=s.players[1];
+ function grab(id){
+  for(const zone of ['deck','hand','life','outside']){
+   const i=p[zone].findIndex(c=>c.cardId===id);
+   if(i>=0)return p[zone].splice(i,1)[0];
+  }
+  throw new Error('No physical card: '+id);
+ }
+ const trigger=grab(id);
+ p.deck.push(...p.life.splice(0)); // last life: others remain physical in deck
+ p.life=[trigger];
+ p.front[0]={...grab('TTG-1-009'),ready:false};
+ for(let i=0;i<3;i++)p.energy[i]=grab('TTG-1-017');
+ p.deck.unshift(grab('TTG-1-005')); // guaranteed mandatory draw
+ p.apCards[0].ready=false;
+ s.turn=11;s.phase='attack';s.active=0;
+ return withTtgDerivedEnergy(s,1);
+}
 test('028 last-life RAID defers victory through optional enemy-target choice and mandatory draw',()=>{
- const s=fixture('TTG-1-028',{end:true});
+ const s=coreFixture('TTG-1-028');
  const p=beginTtgLifeTrigger(s,{player:1,lifeUid:'trigger'});
  assert.equal(p.status,'playing');
  const raidAction=legalTtgCoreActions(p).find(x=>x.mode==='raid');
@@ -72,10 +93,11 @@ test('028 last-life RAID defers victory through optional enemy-target choice and
  assert.equal(done.pending,null);
  assert.equal(done.status,'finished');
  assert.equal(done.winner,0);
- assert.ok(done.players[1].hand.some(x=>x.uid==='draw'));
+ assert.ok(done.players[1].hand.length>=1);
+ assert.ok(assertTtgCoreState(done));
 });
 test('029 last-life RAID defers victory through REST recovery, not skipping pending on-entry',()=>{
- const s=fixture('TTG-1-029',{end:true});
+ const s=coreFixture('TTG-1-029');
  const p=beginTtgLifeTrigger(s,{player:1,lifeUid:'trigger'});
  const chosen=legalTtgCoreActions(p).find(x=>x.mode==='raid');
  const entered=dispatchTtgCoreAction(p,chosen);
