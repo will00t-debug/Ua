@@ -15,7 +15,7 @@
     "alternativesPerDecision": 3,
     "epochs": 5,
     "finalLoss": 0.28509428262545944,
-    "elapsedMs": 1451570
+    "elapsedMs": 1460678
   },
   "evaluation": {
     "games": 72,
@@ -90,7 +90,7 @@
         "errors": 0
       }
     },
-    "elapsedMs": 195032,
+    "elapsedMs": 198229,
     "seedBase": 1027000,
     "opponent": "hard v2",
     "isHeldOut": true,
