@@ -93,3 +93,42 @@ test('Q2056 second Shizuku-057 does not repeat first same-name entry ACTIVE abil
  assert.equal(s.players[0].energy[b.slot].freezeSelfOnAttackTurn,undefined);
  assertSoloTrainingMatch(s);
 });
+
+test('Q2025: SLG-1-014 cannot use ordinary move-phase energy-to-front action',()=>{
+ const purple={...SOLO_SHADOW_TRAINING_PRESET,'SLG-1-001':0,'SLG-1-014':4};
+ let s=game(purple);s.phase='move';
+ const satoko=put(s,'SLG-1-014',0,'energy',0);
+ assert.ok(s.players[0].front.some(x=>x===null));
+ assert.equal(soloTrainingLegalActions(s).some(a=>a.type==='move'&&a.uid===satoko.uid),false);
+ assert.throws(()=>doAction(s,{type:'move',uid:satoko.uid,slot:0}),/illegal SOLO action/);
+ assert.equal(s.players[0].energy[0].uid,satoko.uid);assertSoloTrainingMatch(s);
+});
+test('Q2057/Q2059/Q2060: frozen 058/060/064 skip exactly the next ACTIVE, then activate on second official ACTIVE Trigger',()=>{
+ for(const id of ['058','060','064']){
+  const counts=id==='058'?SOLO_TRAINING_PRESET:
+   id==='060'?{...SOLO_TRAINING_PRESET,'SLG-1-065':0,'SLG-1-060':4}:
+   {...SOLO_TRAINING_PRESET,'SLG-1-065':0,'SLG-1-064':4,'SLG-1-066':0,'SLG-1-063':4};
+  let s=game(counts);
+  const first=put(s,'SLG-1-045',0,'front',0);
+  const second=put(s,'SLG-1-041',0,'front',1);
+  let frozen;
+  if(id==='060')frozen=put(s,'SLG-1-060',1,'front',0,false);
+  else{
+   const p=s.players[1],base=extract(p,id==='058'?'SLG-1-055':'SLG-1-063');
+   const top=extract(p,'SLG-1-'+id);
+   Object.assign(top,{owner:1,line:'front',slot:0,ready:false,stack:[base]});
+   p.front[0]=top;frozen=top;
+  }
+  frozen.skipActive=1;
+  for(const attacker of [first,second]){
+   s.players[1].life[0].cardId='SLG-1-043'; // actual green ACTIVE Trigger
+   s=doAction(s,{type:'attack',uid:attacker.uid});
+   assert.equal(s.pending?.kind,'activeTrigger',id+' needs Trigger selection');
+   s=doAction(s,{type:'choose',uid:frozen.uid});
+   const current=s.players[1].front[0];
+   assert.equal(current.skipActive,0);
+   assert.equal(current.ready,attacker.uid===second.uid,id+' skip once then ACTIVE');
+  }
+  assertSoloTrainingMatch(s);
+ }
+});
