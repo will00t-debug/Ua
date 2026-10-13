@@ -81,11 +81,14 @@ test('030: only legal physical AP and printed Kittan base, cannot bypass timing'
  const pending=structuredClone(s);pending.pending={kind:'block'};
  assert.deepEqual(legalGreen030Raids(pending,0),[]);
 });
-test('030: front 034 retirement simultaneous order remains explicitly unsupported',()=>{
+test('030: simultaneous 034 site retirement now starts a PLAYER-ORDERED queue',()=>{
  const s=raid(game());s.players[0].energy[3]=c('site','TTG-1-034');
  const before=JSON.stringify(s);
- assert.throws(()=>sidelineGreen030(s,{player:0,uid:'top'}),/ordering/);
- assert.equal(JSON.stringify(s),before);
+ const retired=sidelineGreen030(s,{player:0,uid:'top'});
+ assert.equal(retired.pending.kind,'greenRetireOrder');
+ assert.deepEqual(retired.pending.remaining,['030','034']);
+ assert.deepEqual(retired.players[0].outside.map(x=>x.uid),['top','kittan']);
+ assert.equal(JSON.stringify(s),before,'caller not mutated');
 });
 test('030 human and AI options both dispatch Raid and defender recovery choices',()=>{
  const s=game();
