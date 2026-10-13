@@ -220,15 +220,17 @@ function soloArena(){
    return (a.outsideUid==null?'不送場外':'送場外：'+label(state.players[actor].deck.find(c=>c.uid===a.outsideUid)))
     +'；牌庫頂順序：'+a.order.map(uid=>label(state.players[actor].deck.find(c=>c.uid===uid))).join(' → ');
   }
-  if(a.mode)return {block:'攻擊角色不被BP4000以上阻擋',untargetable:'攻擊角色不受敵方效果選取',buff:'攻擊角色本回合BP+1500',draw:'抽1張並棄1張'}[a.mode]||a.mode;
+  if(a.mode)return {block:'攻擊角色不被BP4000以上阻擋',untargetable:'攻擊角色不受敵方效果選取',buff:'攻擊角色本回合BP+1500',draw:'抽1張並棄1張',draw2:'抽2張',drawRecover:'抽1張，再選最多1張符合條件的場外角色回手'}[a.mode]||a.mode;
+  if(state.pending?.kind==='colorTrigger')return label(p.hand.find(c=>c.uid===a.uid))+' → '+(a.line==='front'?'前線':'能源線')+(a.slot+1);
+  if(state.pending?.kind==='specialTrigger')return '退場 '+label([...p.front,...opp.front].find(c=>c?.uid===a.uid));
   if(state.pending?.kind==='raidTrigger')return a.uid==null?'將Raid卡加入手牌':'Raid → '+(a.line==='front'?'前線':'能源線')+(a.slot+1)+'（底板 '+label([...p.front,...p.energy,...opp.front,...opp.energy].find(c=>c?.uid===a.uid))+'）';
   if(state.pending?.kind==='dailyUnder')return a.uid==null?'不移除裏向卡':label(ownedUnder(a.uid));
-  if(state.pending?.kind==='dailyRecover')return a.uid==null?'不回收':'回收 '+label(p.outside.find(c=>c.uid===a.uid));
+  if(state.pending?.kind==='dailyRecover'||state.pending?.kind==='entryRecover'||state.pending?.kind==='sungRecovery')return a.uid==null?'不回收':'回收 '+label(p.outside.find(c=>c.uid===a.uid));
   if(a.uid==null)return '不發動／不選擇／不阻擋';
   return label([...p.hand,...opp.hand,...p.front,...p.energy,...opp.front,...opp.energy].find(c=>c?.uid===a.uid));
  };
  const choices=state.pending?'<div class="panel"><b>請選擇：'+esc({
-  discard:'棄一張手牌',entryImpact:'選擇獲得IMPACT的DFN角色',entryProtect:'選擇受AP保護的DFN',
+  discard:'棄一張手牌',entryImpact:'選擇獲得IMPACT的DFN角色',entryProtect:'選擇受AP保護的DFN',colorTrigger:'COLOR Trigger：選擇合法手牌及登場位置',specialTrigger:'SPECIAL Trigger：選擇敵方角色退場',entryDrawMode:'觀月繪里：選擇抽牌模式',entryRecover:'觀月繪里：選擇符合條件的場外角色',entryBounce:'選擇需返回手牌的己方其他角色',sungRecovery:'觀月繪里：選擇場外水篠旬回收',
   mainDiscard:'選擇支付的手牌',soldierTop:'影之兵士：查看牌庫頂並選擇順序',
   raidTrigger:'生命RAID Trigger：加入手牌或選擇底板',raid058Discard:'向坂雫攻擊：棄牌選擇',
   raid058Unfreeze:'ACTIVE與跳過ACTIVE的選擇',activeTrigger:'ACTIVE Trigger目標',
