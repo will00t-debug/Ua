@@ -123,3 +123,16 @@ npm run spar:ai -- --games 36 --difficulty hard --opponent hard --seed 12000
 ```
 The 36-game run covers each ordered matchup four times while rotating first player and AI seat. Use `--games 9 --max-actions 350` for a quick nine-matchup smoke test. Results measure only these decks/seeds and are **not** neural network training. This addition preserves the Work/PR #17 AI branch and does not deploy the production site.
 
+
+### AI v3 第二輪：修正錯誤回饋與探索範圍
+
+首輪 200 場順利完成，但獨立 72 場對照 AI v2 困難的成績只有 **24 勝 48 敗（33.33%）**，因此沒有升級模型。原始報告已封存於 `audit/ai-v3-baseline-20261013.json`。
+
+- 修正「輸掉整局就懲罰當下每個老師建議動作」的錯誤標記方式：保持 AI v2 的指導動作為強範例；只有真正探索其他打法時，才給予低權重的終局勝負回饋。
+- 探索侷限在主要階段可比較的角色部署，不再隨機干擾阻擋、生命 Trigger、狙擊與需要複雜判定的選擇。
+- 特徵從 72 維擴充至 96 維，加入卡片顏色、Trigger、BP／IMPACT／DAMAGE 描述與能源曲線等可公開或己方可見資訊，不使用未知牌堆或敵方手牌身份。
+- 訓練模型只允許在同一部署線上的合法角色出牌間、具足夠信心時覆寫 AI v2；戰鬥與特殊結算仍由經過測試的 AI v2 選擇。
+- 保留原來 55% 的獨立對戰升級門檻，增加鏡像配對的種子多樣性。沒有通過就不發布新權重。
+
+重新對練採用不同的訓練種子，以避免直接重用首輪資料。此版本仍是實驗性神經網路，成績必須由實際 GitHub Actions 報告確認。
+
