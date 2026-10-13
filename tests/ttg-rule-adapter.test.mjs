@@ -1,0 +1,160 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {legalTtgRuleActions,dispatchTtgRuleAction,chooseTtgRuleAiAction,simulateTtgRuleAi,resolveTtgMainPhaseEnd,resolveTtgTurnEnd} from '../dist/ttg-rule-adapter.mjs';
+
+const blank=()=>({front:Array(4).fill(null),energy:Array(4).fill(null),hand:[],deck:[],outside:[],life:[],energyProduced:{red:4,green:4},apCards:[{uid:'AP1',ready:true},{uid:'AP2',ready:false},{uid:'AP3',ready:true}]});
+const state=(phase='main')=>({active:0,turn:4,phase,players:[blank(),blank()],log:[]});
+const c=(uid,cardId,nameJa,bp=2000,other={})=>({uid,cardId,nameJa,bp,gen:1,ready:true,stack:[],under:[],...other});
+test('unified adapter rejects unsupported and opponent actions without modifying state',()=>{
+ const s=state();
+ s.players[0].front[0]=c('unimplemented','TTG-1-046','カミナ');
+ s.players[0].hand.push(c('unknown','TTG-1-080','事件'));
+ const raw=JSON.stringify(s);
+ assert.deepEqual(legalTtgRuleActions(s,0),[]);
+ assert.deepEqual(legalTtgRuleActions(s,1),[]);
+ assert.throws(()=>dispatchTtgRuleAction(s,{type:'activateNia059',player:0,uid:'unimplemented',targetUid:'unimplemented'}));
+ assert.throws(()=>dispatchTtgRuleAction(s,{type:'playTtgEvent',player:1,handUid:'unknown',payApUids:['AP1']}));
+ assert.equal(JSON.stringify(s),raw);
+});
+test('human choices can execute Nia BP/REST and scheduled end-turn expiry through same adapter',()=>{
+ const s=state();s.players[0].energy[0]=c('nia','TTG-1-059','ニア',500);
+ s.players[0].front[1]=c('simon','TTG-1-010','シモン',2000);
+ s.players[0].front[2]=c('op','TTG-1-046','カミナ',2000);
+ const options=legalTtgRuleActions(s,0);
+ assert.deepEqual(options.map(a=>a.targetUid),['simon']);
+ assert.throws(()=>dispatchTtgRuleAction(s,{type:'activateNia059',player:0,uid:'nia',targetUid:'op'}));
+ const next=dispatchTtgRuleAction(s,options[0]);
+ assert.equal(next.players[0].energy[0].ready,false);
+ assert.equal(next.players[0].front[1].currentBp,3000);
+ assert.equal(legalTtgRuleActions(next,0).length,0);
+ const ended=resolveTtgTurnEnd(next);
+ assert.equal(ended.players[0].front[1].currentBp,2000);
+ assert.equal(s.players[0].energy[0].ready,true);
+});
+test('human STEP choice moves Yoko only to empty energy slot preserving state',()=>{
+ const s=state('move');s.players[0].front[0]=c('y','TTG-1-065','ヨーコ',1000,{ready:false});
+ s.players[0].energy[0]=c('occupied','TTG-1-001','ヴィラル',2000);
+ const options=legalTtgRuleActions(s,0);
+ assert.deepEqual(options.map(a=>a.toSlot),[1,2,3]);
+ assert.throws(()=>dispatchTtgRuleAction(s,{type:'stepYoko065',player:0,uid:'y',toSlot:0}));
+ const next=dispatchTtgRuleAction(s,options[0]);
+ assert.equal(next.players[0].front[0],null);
+ assert.equal(next.players[0].energy[1].uid,'y');
+ assert.equal(next.players[0].energy[1].ready,false);
+ assert.deepEqual(legalTtgRuleActions(next,0),[]);
+});
+test('AI and human share legal event payment and corrected Q2301 front-only targeting',()=>{
+ const s=state();s.players[0].hand.push(c('event','TTG-1-081','ギガドリルブレイク'));
+ s.players[1].front[0]=c('weak','TTG-1-042','カミナ',2500);
+ s.players[1].front[1]=c('strong','TTG-1-073','グレンラガン',3000);
+ s.players[1].energy[0]=c('energy','TTG-1-001','ヴィラル',500);
+ const actions=legalTtgRuleActions(s,0);
+ assert.equal(actions.length,1);
+ assert.deepEqual(actions[0].targetUids,['weak','strong']);
+ const ai=chooseTtgRuleAiAction(s,0);
+ assert.equal(ai.targetUid,'strong');
+ assert.equal(ai.payApUids.length,1);
+ const after=dispatchTtgRuleAction(s,ai);
+ assert.equal(after.players[1].front[1],null);
+ assert.equal(after.players[1].energy[0].uid,'energy');
+ assert.equal(after.players[0].outside[0].cardId,'TTG-1-081');
+ assert.equal(chooseTtgRuleAiAction(after,0),null);
+});
+test('AI chooses FINAL AP recovery, and never spends opponent AP',()=>{
+ const s=state();s.players[0].hand.push(c('event','TTG-1-078','俺は俺だ'));
+ const action=chooseTtgRuleAiAction(s,0);
+ assert.equal(action.handUid,'event');
+ assert.ok(action.readyApUids.includes('AP1'));
+ assert.ok(action.readyApUids.includes('AP2'));
+ const out=dispatchTtgRuleAction(s,action);
+ assert.deepEqual(out.players[0].apCards.map(x=>x.ready),[true,true,true]);
+ assert.deepEqual(s.players[0].apCards.map(x=>x.ready),[true,false,true]);
+ assert.equal(out.players[0].outside[0].uid,'event');
+});
+test('SPECIAL trigger AI targets highest BP including above normal event limit',()=>{
+ const s=state('attack');s.pendingTtgTrigger={player:0,card:c('trigger','TTG-1-081','ギガドリルブレイク')};
+ s.players[1].front[0]=c('big','TTG-1-032','天元突破グレンラガン',50000);
+ s.players[1].front[1]=c('small','TTG-1-005','キタン',1000);
+ const ai=chooseTtgRuleAiAction(s,0);assert.equal(ai.targetUid,'big');
+ const after=dispatchTtgRuleAction(s,ai);
+ assert.equal(after.pendingTtgTrigger,null);
+ assert.deepEqual(after.players[1].outside.map(x=>x.uid),['big']);
+ assert.equal(after.players[0].outside[0].uid,'trigger');
+ assert.equal(s.players[1].front[0].uid,'big');
+});
+test('unknown pending trigger blocks all partial actions rather than silently discarding it',()=>{
+ const s=state();s.pendingTtgTrigger={player:0,card:c('unknown','TTG-1-052','シモン')};
+ assert.deepEqual(legalTtgRuleActions(s,0),[]);
+ assert.equal(chooseTtgRuleAiAction(s,0),null);
+ assert.throws(()=>dispatchTtgRuleAction(s,{type:'resolveTtgTrigger',player:0,decline:true}));
+});
+test('Buta temporary energy retires at end of main before AI can use it again',()=>{
+ const s=state();s.players[0].energy[1]=c('b','TTG-1-063','ブータ',1000);
+ const {state:after,actions,truncated}=simulateTtgRuleAi(s,0);
+ assert.equal(actions.length,1);assert.equal(actions[0].type,'activateButa063');
+ assert.equal(truncated,false);
+ assert.equal(after.players[0].energy[1].ready,false);
+ assert.equal(after.players[0].energy[1].energyBonus,1);
+ const ended=resolveTtgMainPhaseEnd(after);
+ assert.equal(ended.players[0].energy[1],null);
+ assert.deepEqual(ended.players[0].outside.map(x=>x.uid),['b']);
+ assert.equal(s.players[0].energy[1].uid,'b');
+});
+test('bounded AI event simulation exercises multiple hand cards deterministically',()=>{
+ const s=state();s.players[0].hand.push(c('final','TTG-1-078','事件'),c('special','TTG-1-081','ギガ'));
+ s.players[1].front[0]=c('target','TTG-1-042','カミナ',2000);
+ const result=simulateTtgRuleAi(s,0);
+ assert.equal(result.actions.length,2);
+ assert.equal(result.truncated,false);
+ assert.deepEqual(result.state.players[0].outside.map(c=>c.uid),['special','final']);
+ assert.equal(result.state.players[1].front[0],null);
+ assert.deepEqual(s.players[0].outside,[]);
+});
+
+test('shared legal action and AI can perform Viral 002 double REST and expire its energy',()=>{
+ const game=state();game.players[0].energy[0]=c('viral','TTG-1-002','ヴィラル',2000);
+ game.players[0].front[0]=c('target','TTG-1-005','キタン',1500);
+ game.players[1].front[0]=c('enemy','TTG-1-042','カミナ',2000);
+ const actions=legalTtgRuleActions(game,0);
+ assert.deepEqual(actions.filter(x=>x.type==='activateViral002').map(x=>x.targetUid),['target']);
+ assert.throws(()=>dispatchTtgRuleAction(game,{type:'activateViral002',player:0,uid:'viral',targetUid:'enemy'}));
+ assert.equal(game.players[0].energy[0].ready,true,'illegal action is not paid');
+ const ai=chooseTtgRuleAiAction(game,0);
+ assert.equal(ai.type,'activateViral002');
+ assert.equal(ai.targetUid,'target');
+ const result=dispatchTtgRuleAction(game,ai);
+ assert.equal(result.players[0].energy[0].ready,false);
+ assert.equal(result.players[0].front[0].ready,false);
+ assert.equal(result.players[0].energy[0].energyBonus,1);
+ assert.ok(!legalTtgRuleActions(result,0).some(x=>x.type==='activateViral002'));
+ assert.equal(resolveTtgTurnEnd(result).players[0].energy[0].energyBonus,0);
+});
+
+test('Kittan DX 071 first attack lets player or AI choose buff target, never the attacker',()=>{
+ const s=state('attack');
+ s.attackingUid='king';s.characterAttacksThisTurn=1;
+ s.players[0].front[0]=c('king','TTG-1-071','キングキタンDX',4000,{ready:false});
+ s.players[0].front[1]=c('ally','TTG-1-048','キタン',3000);
+ s.players[0].energy[1]=c('ally2','TTG-1-009','シモン',2000);
+ const options=legalTtgRuleActions(s,0);
+ assert.deepEqual(options.filter(x=>x.targetUid).map(x=>x.targetUid),['ally','ally2']);
+ assert.ok(options.some(x=>x.targetUid===null),'can decline an optional attack buff');
+ assert.throws(()=>dispatchTtgRuleAction(s,{type:'kittan071AttackBuff',player:0,uid:'king',targetUid:'king'}));
+ const ai=chooseTtgRuleAiAction(s,0);
+ assert.equal(ai.targetUid,'ally','AI prefers higher BP ally');
+ const after=dispatchTtgRuleAction(s,ai);
+ assert.equal(after.players[0].front[1].currentBp,5000);
+ assert.equal(after.players[0].front[0].currentBp,undefined);
+ assert.deepEqual(legalTtgRuleActions(after,0),[],'same attack cannot trigger twice');
+ assert.equal(resolveTtgTurnEnd(after).players[0].front[1].currentBp,3000);
+ assert.equal(s.players[0].front[1].currentBp,undefined);
+});
+test('Kittan DX attack may decline a buff but cannot activate twice in same attack',()=>{
+ const s=state('attack');s.attackingUid='king';s.characterAttacksThisTurn=1;
+ s.players[0].front[0]=c('king','TTG-1-071','キングキタンDX',4000);
+ const choices=legalTtgRuleActions(s,0);
+ assert.deepEqual(choices,[{type:'kittan071AttackBuff',player:0,uid:'king',targetUid:null}]);
+ const after=dispatchTtgRuleAction(s,choices[0]);
+ assert.equal(after.usedTtgAttackTriggers['4:king'],true);
+ assert.deepEqual(legalTtgRuleActions(after,0),[]);
+});
