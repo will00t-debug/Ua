@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Self-play -> outcome-weighted ranking -> held-out mirror-match evaluation.
 // Data is generated entirely by the legal rules engine and is never an LLM.
-// Example: npm run train:ai -- --games 200 --eval 72 --seed 25000
+// Example: npm run train:ai -- --games 700 --eval 72 --seed 27000
 import fs from 'node:fs';
 import path from 'node:path';
 import {performance} from 'node:perf_hooks';
@@ -16,7 +16,7 @@ import {buildTrainingPairs} from './ai-v3-rewards.mjs';
 
 const args=process.argv.slice(2);
 function arg(key,def){const i=args.indexOf('--'+key);return i<0?def:args[i+1]??def;}
-const games=Math.max(2,Math.min(5000,Number(arg('games',200))|0));
+const games=Math.max(2,Math.min(5000,Number(arg('games',700))|0));
 const evalGames=Math.max(4,Math.min(2000,Number(arg('eval',72))|0));
 const maxActions=Math.max(60,Math.min(1500,Number(arg('max-actions',650))|0));
 const epochs=Math.max(1,Math.min(20,Number(arg('epochs',5))|0));
@@ -62,18 +62,30 @@ function playGame(g,seedBase,{model=null,collect=false,explore=0}={}){
    const canCompare=collect&&s.phase==='main'&&!s.pending&&
     teacher.type==='play'&&
     cardOf(s.players[p].hand.find(c=>c.uid===teacher.uid)||{})?.type==='character';
-   const alternatives=canCompare?actions.filter(a=>
-     a.type==='play'&&a.line===teacher.line&&
-     a.uid!==teacher.uid&&
-     cardOf(s.players[p].hand.find(c=>c.uid===a.uid)||{})?.type==='character'):[];
-   const contrast=alternatives.length?alternatives[Math.floor(rng()*alternatives.length)]:null;
-   const explored=!!contrast&&rng()<explore;
-   if(explored)move=contrast;
-   if(contrast){
-    records.push({
-     actor:p,chosen:encodeAction(s,move,p),teacher:encodeAction(s,teacher,p),
-     counter:encodeAction(s,contrast,p),explored
-    });
+   // Deduplicate equivalent empty slots so a single card cannot dominate
+   // the training set merely because three identical slots were available.
+   const seenCards=new Set();
+   const alternatives=canCompare?actions.filter(a=>{
+    if(a.type!=='play'||a.line!==teacher.line||a.uid===teacher.uid||
+       seenCards.has(a.uid)||cardOf(s.players[p].hand.find(c=>c.uid===a.uid)||{})?.type!=='character')return false;
+    seenCards.add(a.uid);return true;
+   }):[];
+   // Rank the teacher against up to three DISTINCT legal cards at the same
+   // decision point; only one alternative is ever played experimentally.
+   const contrasts=[];
+   const pool=alternatives.slice();
+   for(let j=0;j<3&&pool.length;j++)contrasts.push(pool.splice(Math.floor(rng()*pool.length),1)[0]);
+   const explored=contrasts.length>0&&rng()<explore;
+   if(explored)move=contrasts[Math.floor(rng()*contrasts.length)];
+   if(contrasts.length){
+    const teacherFeatures=encodeAction(s,teacher,p);
+    const chosenFeatures=encodeAction(s,move,p);
+    for(const alternative of contrasts){
+     records.push({actor:p,chosen:chosenFeatures,teacher:teacherFeatures,
+      counter:encodeAction(s,alternative,p),
+      // Only one actual exploratory action has game-outcome feedback.
+      explored:explored&&same(alternative,move)});
+    }
    }
    s=dispatch(s,move,p);
    assertState(s);
@@ -140,15 +152,15 @@ const evaluation=evaluate(model);
 const adequate=evaluation.wins+evaluation.losses>=Math.min(32,evalGames)
  &&evaluation.unfinished===0&&evaluation.errors===0
  &&evaluation.winRate>=minWinRate;
-const report={schema:'ua-ai-v3-training-2',featureVersion:FEATURE_VERSION,
+const report={schema:'ua-ai-v3-training-3',featureVersion:FEATURE_VERSION,
  neuralNetwork:{inputs:model.features,hidden:model.hidden,output:1},
  training:{requestedGames:games,completed,unfinished,failures,
-  rankingPairs:rows.length,epochs,finalLoss:loss,elapsedMs:Math.round(now()-started)},
+  rankingPairs:rows.length,alternativesPerDecision:3,epochs,finalLoss:loss,elapsedMs:Math.round(now()-started)},
  evaluation:{...evaluation,seedBase:seed+1_000_000,opponent:'hard v2',
   isHeldOut:true,accepted:adequate,
   acceptanceThreshold:minWinRate},
  candidatePath,championPromoted:promote&&adequate,
- disclaimer:'Focused teacher-ranked deployment learning with weak outcome feedback; do not treat final game result as proof an individual move was good. No secret card identities in features.'};
+ disclaimer:'Teacher-ranked legal character deployments with up to three distinct alternative cards per position; weak outcome feedback on the actually explored choice only. Synergy/energy signals derive solely from public and own known cards.'};
 if(promote&&adequate){
  const output='dist/ai-v3-weights.mjs';
  const versioned=JSON.stringify({...model,approvedAgainst:'hard-v2',
