@@ -57,3 +57,11 @@
 - 官方 Q33／Q34 和規則手冊：ACTIVE Trigger 是轉 ACTIVE 一名己方角色並給 BP+3000，**不是 AP 卡恢復**；勝負在傷害 Trigger 結算結束後、生命數歸零時判定（FINAL 可能先補回生命）。
 - `tests/ttg-core-match.test.mjs` 以多種確定性隨機種子模擬 AI 50 張牌組完整對局；`tests/ttg-chain-raid.test.mjs` 加測 Q2393–Q2395，包含 50 卡守恆。
 - 此模組的牌組安全白名單是 `TTG_CORE_SMOKE_IDS`，**不影響正常牌組編輯器**。沒有把 81 張的 `auto:false` 或作品的 `playable:false` 擅改為 true，尚未提供正式網站的 TTG 玩家 UI。
+
+## 本輪對戰裁定修正：官方 Q33、Q34、Q79、ACTIVE Trigger
+- 對戰測試核心已修正：BP 相同時由攻擊方獲勝並使阻擋角色退場；阻擋者 BP 更高時攻擊方雖敗北，**攻擊角色仍留在前線、REST**。
+- **己方回合結束**即將己方角色／場域改為 ACTIVE 以供對方回合阻擋，不是等到下一次自己的回合開始。
+- `ACTIVE` 生命 Trigger 對合法己方角色使其 ACTIVE 並於當回合 BP+3000，**不能當作 AP 卡回復**；`FINAL` 可於最後一張生命結算時補回生命，之後才決定是否敗北。
+- `TTG-1-048` 的 DOUBLE BLOCK：本回合首次阻擋 REST 後會立即轉 ACTIVE，可再次阻擋；此效果的 BP +500 與 DOUBLE BLOCK 持續至下次己方回合開始，並於到期清除。
+- 多隨機種子的限縮 50 卡雙 AI 對局 smoke 回歸會於整段對局每次狀態轉移檢查 UID 及生命／AP／能源守恆。
+- 官方參考：https://www.unionarena-tcg.com/jp/faq/list.php?type=0 （Q33、Q34、Q79、Q101），及 https://www.unionarena-tcg.com/jp/faq/list.php?category=ゲーム進行&sub_category=アタックフェイズ 。
