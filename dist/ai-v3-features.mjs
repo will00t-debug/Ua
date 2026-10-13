@@ -3,8 +3,8 @@
 // Card identity is used only for the acting player's hand or public zones.
 import {cardOf,controller,energy,bp,generated,locate} from './engine.mjs';
 
-export const FEATURE_VERSION='ua-v3-f64-1';
-export const FEATURE_DIM=64;
+export const FEATURE_VERSION='ua-v3-f72-1';
+export const FEATURE_DIM=72;
 const PHASES=['mulligan','start','move','main','attack'];
 const ACTIONS=['next','play','raid','move','step','ability','handAbility','attack','snipe','choose','extraDraw','keep','redraw'];
 const cap=(x,scale=1)=>Math.max(-1,Math.min(1,(Number(x)||0)/scale));
