@@ -16,7 +16,8 @@ export const TTG_CORE_SMOKE_IDS=Object.freeze([
  'TTG-1-001','TTG-1-002','TTG-1-003','TTG-1-005','TTG-1-006','TTG-1-009',
  'TTG-1-010','TTG-1-011','TTG-1-014','TTG-1-015','TTG-1-018',
  'TTG-1-019','TTG-1-020','TTG-1-022','TTG-1-023','TTG-1-024','TTG-1-026',
- 'TTG-1-036','TTG-1-038',
+ 'TTG-1-035','TTG-1-036','TTG-1-037','TTG-1-038','TTG-1-039',
+ 'TTG-1-040','TTG-1-041',
  'TTG-1-042','TTG-1-043','TTG-1-047','TTG-1-048',
  'TTG-1-063','TTG-1-064','TTG-1-065','TTG-1-066'
 ]);
@@ -24,7 +25,7 @@ const allowed=new Set(TTG_CORE_SMOKE_IDS);
 const phases=['start','move','main','attack'];
 const fresh=(uid,cardId)=>({uid,cardId,nameJa:TTG_BY_ID[cardId].nameJa,ready:false,stack:[],under:[]});
 const field=pl=>[...pl.front,...pl.energy].filter(Boolean);
-const uids=pl=>[...pl.deck,...pl.hand,...pl.life,...pl.outside,...field(pl)].flatMap(function deep(c){return [c.uid,...(c.stack||[]).flatMap(deep),...(c.under||[]).flatMap(deep)]});
+const uids=pl=>[...pl.deck,...pl.hand,...pl.life,...pl.outside,...(pl.removed||[]),...field(pl)].flatMap(function deep(c){return [c.uid,...(c.stack||[]).flatMap(deep),...(c.under||[]).flatMap(deep)]});
 const printed=c=>TTG_BY_ID[c.cardId];
 function xorshift(s){let x=s.seed|0;x^=x<<13;x^=x>>>17;x^=x<<5;s.seed=x>>>0;return s.seed/4294967296;}
 function shuffle(s,cards){for(let i=cards.length-1;i>0;i--){const j=Math.floor(xorshift(s)*(i+1));[cards[i],cards[j]]=[cards[j],cards[i]];}return cards;}
@@ -74,7 +75,7 @@ export function newTtgCoreMatch({decks,seed=1,first=0}={}){
   const names=Object.entries(normalizeTtgCounts(decks[p])).flatMap(([id,n])=>Array(n).fill(id));
   const deck=shuffle(s,names.map((id,i)=>fresh(p+'-'+i,id)));
   s.players[p]={deck,hand:deck.splice(0,7),life:deck.splice(0,7),
-    front:[null,null,null,null],energy:[null,null,null,null],outside:[],
+    front:[null,null,null,null],energy:[null,null,null,null],outside:[],removed:[],
     apCards:[0,1,2].map(i=>({uid:'AP'+p+'-'+i,ready:false})),
     energyProduced:{red:0,green:0},turnCount:0};
  }
@@ -85,7 +86,7 @@ export function assertTtgCoreState(s){
  for(let p=0;p<2;p++){
   const pl=s.players[p],ids=uids(pl);
   if(pl.front.length!==4||pl.energy.length!==4||pl.apCards.length!==3||ids.length!==50||
-     new Set(ids).size!==50||[...pl.deck,...pl.hand,...pl.life,...pl.outside,...field(pl)]
+     new Set(ids).size!==50||[...pl.deck,...pl.hand,...pl.life,...pl.outside,...(pl.removed||[]),...field(pl)]
       .some(c=>!allowed.has(c.cardId)))throw new Error('Core match card conservation failure '+p);
   if(pl.front.some(c=>c&&printed(c).type!=='character'))throw new Error('Front line is not character-only');
   const generated=calculateTtgEnergyByColor(s,p);
@@ -309,6 +310,11 @@ export function ttgCoreAiChoice(s){
     effects.find(x=>x.type==='ttgGreen011')||effects.find(x=>x.type==='ttgGreen018')||
     effects.find(x=>x.type==='ttgGreen022');
    if(candidate)return candidate;
+   const greenEvent=effects.filter(x=>x.type==='playGreenEvent').sort((a,b)=>(b.targetUids?.length||0)-(a.targetUids?.length||0))[0];
+   if(greenEvent)return {type:greenEvent.type,player:p,handUid:greenEvent.handUid,cardId:greenEvent.cardId,
+    targetUid:greenEvent.targetUid,targetUids:greenEvent.targetUids,
+    payApUids:pl.apCards.filter(c=>c.ready).slice(0,greenEvent.requiredAp).map(c=>c.uid)};
+   const multiplier=effects.find(x=>x.type==='green040Double');if(multiplier)return multiplier;
    const event=effects.find(x=>x.type==='playTtgEvent');
    if(event){
     const payApUids=pl.apCards.filter(c=>c.ready).slice(0,event.requiredAp).map(c=>c.uid);
