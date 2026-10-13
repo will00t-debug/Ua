@@ -57,14 +57,15 @@ function playGame(g,seedBase,{model=null,collect=false,explore=0}={}){
    // legality and never uses opponent private hand/deck/life identities.
    const alternatives=actions.filter(a=>!same(a,move));
    const contrast=alternatives.length?alternatives[Math.floor(rng()*alternatives.length)]:null;
+   if(collect&&alternatives.length&&rng()<explore)move=contrast;
    if(collect&&contrast){
     records.push({
      actor:p,chosen:encodeAction(s,move,p),
      teacher:encodeAction(s,teacher,p),
-     counter:encodeAction(s,contrast,p),usedTeacher:same(move,teacher)
+     counter:encodeAction(s,same(move,teacher)?contrast:teacher,p),
+     usedTeacher:same(move,teacher)
     });
    }
-   if(collect&&alternatives.length&&rng()<explore)move=contrast;
    s=dispatch(s,move,p);
    assertState(s);
    moves++;
