@@ -62,7 +62,7 @@ test('026 bounces selected other energy<=1 character; when none exists returns i
  assert.ok(after.players[0].hand.some(x=>x.uid===uid));assertSoloTrainingMatch(after);
 });
 test('068 bounce also rejects opponent selection and returns itself with no legal other low-cost character',()=>{
- const deck=green('SLG-1-068','SLG-1-069');let s=setup(deck);
+ const deck=green('SLG-1-068','SLG-1-066');let s=setup(deck);
  place(s,'SLG-1-041','energy',0);
  let {s:after,uid}=play(s,'SLG-1-068');
  assert.equal(after.pending,null);assert.ok(after.players[0].hand.some(x=>x.uid===uid));assertSoloTrainingMatch(after);
