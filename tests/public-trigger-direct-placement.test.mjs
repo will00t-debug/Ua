@@ -72,18 +72,12 @@ test('DAMAGE 2 face-up life flips both become public before Trigger decisions',(
 });
 
 test('hand card can play by directly clicking any legal board slot and Raid is not auto-started',async()=>{
- const s=seeded();s.phase='main';s.players[0].front[0]=null;
+ const s=seeded();s.phase='main';s.players[0].deck.push(s.players[0].front[0]);s.players[0].front[0]=null;s.players[0].ap=3;s.players[0].maxAp=3;
  const normalA=s.players[0].hand[0],normalB=s.players[0].hand[1],raidCard=s.players[0].hand[2];
  normalA.cardId='039';normalB.cardId='039';raidCard.cardId='104';
  const supply=s.players[0].deck.shift();supply.cardId='102';supply.ready=true;
  supply.energyBoostTurn=s.turn;supply.energyBoostAmount=12;
  s.players[0].energy[3]=supply;
- // Return the attacker to a legal region to maintain the 50-card invariant.
- // The seeded attacker has already been moved out of hand; put it into the deck.
- const misplaced=s.players[0].front[0];
- // s.front[0] is now null, so reconstruct from fixture before using app.
- // Explicitly count and assert conservation once the old attacker is restored.
- // Capture an ordinary spare through the separate seeded() fixture instead.
  const nodes={app:{innerHTML:'',onclick:null},toast:{textContent:'',classList:{add(){},remove(){}}}};
  const stored=new Map([['bleach-arena-game-v1',JSON.stringify(s)]]);
  globalThis.document={querySelector:q=>q==='#app'?nodes.app:q==='#toast'?nodes.toast:null,onkeydown:null};
