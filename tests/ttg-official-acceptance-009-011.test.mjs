@@ -87,21 +87,20 @@ test('TTG-1-011: MAIN once per physical copy grants exactly one of +green or FRO
  assert.equal(legalGreen011(active,{player:0,uid:c.uid}).length,0);
  assert.ok(calculateTtgEnergyByColor(active,0).green>=1,'front Simon 011 produces energy when chosen');
  const expiry=structuredClone(active);expiry.players[0].turnCount++;
- const afterOwnStart=resolveGreenOwnStart(expiry,0);
+ const afterOwnStart=withTtgDerivedEnergy(resolveGreenOwnStart(expiry,0),0);
  assert.equal(!!afterOwnStart.players[0].front[0].frontGenerates,false,'expires at next own turn start');
  const expiryBoost=structuredClone(boosted);expiryBoost.players[0].turnCount++;
- const afterBoost=resolveGreenOwnStart(expiryBoost,0);
+ const afterBoost=withTtgDerivedEnergy(resolveGreenOwnStart(expiryBoost,0),0);
  assert.equal(afterBoost.players[0].energy[0].energyBonus,0);
  assert.ok(assertTtgCoreState(afterBoost));assert.ok(assertTtgCoreState(afterOwnStart));
 });
 test('TTG-1-011: printed 2500BP +1500 only on own turn and at 8 derived energy',()=>{
  let s=game(9013),p=s.players[0],c=stage(s,'TTG-1-011','front',0);
- const generator=stage(s,'TTG-1-005','energy',0);
+ stage(s,'TTG-1-005','energy',0);
  s=withTtgDerivedEnergy(s,0);
- generator.energyBonus=(generator.energyBonus||0)+7;
- // Use actual physical source rather than cached values to construct exactly 8.
+ // Derive the actual temporary bonus from the physical source, not a stale clone.
  const current=calculateTtgEnergyByColor(s,0).green;
- s.players[0].energy[0].energyBonus+=8-current;
+ s.players[0].energy[0].energyBonus=8-current;
  assert.equal(calculateTtgEnergyByColor(s,0).green,8);
  assert.equal(greenTtgCurrentBp(s,0,s.players[0].front[0]),4000);
  s.players[0].energy[0].energyBonus--;
@@ -110,5 +109,6 @@ test('TTG-1-011: printed 2500BP +1500 only on own turn and at 8 derived energy',
  s.players[0].energy[0].energyBonus++;
  s.active=1;
  assert.equal(greenTtgCurrentBp(s,0,s.players[0].front[0]),2500);
+ s=withTtgDerivedEnergy(s,0);
  assert.ok(assertTtgCoreState(s));
 });
