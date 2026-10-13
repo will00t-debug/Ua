@@ -68,7 +68,7 @@ export function legalTtgRuleActions(state,player){
     for(const target of owned(state,player).filter(simon))
      list.push({type:'activateNia059',player,uid:c.uid,targetUid:target.uid});
    }
-   if(c.cardId==='TTG-1-063')
+   if(c.cardId==='TTG-1-063'&&c.ttg063ActivatedTurn!==state.turn)
     list.push({type:'activateButa063',player,uid:c.uid});
   }
   return list;
