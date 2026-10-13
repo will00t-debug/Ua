@@ -38,10 +38,11 @@ export function legalTtgRed044Search(state){
    throw new Error('044 private deck order changed while decision pending');
  const b={type:'ttgRed044Search',player:q.player,attackerUid:q.attackerUid};
  const remain=q.revealed.slice();
- const choices=[{...b,takeUid:null,discardUid:null,bottomOrderUids:remain}];
+ const choices=[{...b,mode:'skip',takeUid:null,discardUid:null,bottomOrderUids:[]},
+  {...b,mode:'search',takeUid:null,discardUid:null,bottomOrderUids:remain}];
  for(const target of revealed.filter(c=>printedName(c)==='グレン')){
   const order=remain.filter(uid=>uid!==target.uid);
-  for(const discard of [...pl.hand,target])choices.push({...b,takeUid:target.uid,
+  for(const discard of [...pl.hand,target])choices.push({...b,mode:'search',takeUid:target.uid,
    discardUid:discard.uid,bottomOrderUids:order});
  }
  return choices;
@@ -50,8 +51,14 @@ export function resolveTtgRed044Search(state,action={}){
  const q=state?.pending,possibilities=legalTtgRed044Search(state);
  if(q?.kind!=='ttgRed044Search'||action.player!==q.player||
   action.attackerUid!==q.attackerUid||
-  !possibilities.some(o=>o.takeUid===action.takeUid&&o.discardUid===action.discardUid))
+  !possibilities.some(o=>o.mode===action.mode&&o.takeUid===action.takeUid&&o.discardUid===action.discardUid))
    throw new Error('Illegal 044 revealed-card choice or mandatory hand discard');
+ if(action.mode==='skip'){
+  const r=structuredClone(state);
+  r.pending=null;
+  r.log??=[];r.log.push({type:'ttgRed044Search',player:q.player,attackerUid:q.attackerUid,skipped:true});
+  return r;
+ }
  const seen=q.revealed,remaining=seen.filter(uid=>uid!==action.takeUid);
  const order=action.bottomOrderUids;
  if(!Array.isArray(order)||order.length!==remaining.length||
