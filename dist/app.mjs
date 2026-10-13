@@ -11,6 +11,7 @@ import {TTG_CARDS,emptyTtgDeck,normalizeTtgCounts,ttgCount,ttgDeckIssues,readTtg
 import {newGame,dispatch,legalActions,controller,cardOf,bp,energy,damageOf,locate,PHASE_NAMES,assertState} from './engine.mjs?v=9.1.1';
 import {chooseAiAction} from './ai-v2.mjs';
 import {requestAiAction,cancelPendingAiActions} from './ai-client.mjs';
+import {TRAINING_DECKS,TRAINING_BY_ID} from './training-decks.mjs';
 
 const $=s=>document.querySelector(s);
 const AI_KEY='ua-ai-difficulty-v1',GAME_KEY='bleach-arena-game-v1',DECK_KEY='bleach-arena-deck-v1',SAVED_DECKS_KEY='bleach-arena-saved-decks-v1',DECK_META_KEY='bleach-arena-deck-meta-v1';
@@ -42,7 +43,7 @@ const deckMeta=safeRead(DECK_META_KEY)||{};
 let deckName=typeof deckMeta.name==='string'?deckMeta.name.slice(0,40):(PRESETS.find(p=>sameCounts(p.counts,deck))?.name||'自訂 BLEACH 牌組');
 let selectedDeckId=savedDecks.some(d=>d.id===deckMeta.savedId)?deckMeta.savedId:null;
 const ui={soloSelected:null,privatePeekOpen:false,saoSet:'all',title:'bleach',view:'lobby',mode:'solo',aiDifficulty:['easy','normal','hard'].includes(safeRead(AI_KEY))?safeRead(AI_KEY):'normal',first:'0',preset:[0,1].includes(deckMeta.preset)?deckMeta.preset:0,opponentSource:'preset:1',filter:'all',search:'',selected:null,line:'energy',deployment:'normal',sideTab:'card',raidFlow:null,modal:null,choiceIds:[],handoff:false,lastController:null};
-if(deckMeta.opponentSource==='current'||/^preset:[01]$/.test(deckMeta.opponentSource||'')||savedDecks.some(d=>'saved:'+d.id===deckMeta.opponentSource))ui.opponentSource=deckMeta.opponentSource;
+if(deckMeta.opponentSource==='current'||/^preset:[01]$/.test(deckMeta.opponentSource||'')||savedDecks.some(d=>'saved:'+d.id===deckMeta.opponentSource)||TRAINING_DECKS.some(d=>'training:'+d.id===deckMeta.opponentSource))ui.opponentSource=deckMeta.opponentSource;
 let botTimer=null,toastTimer=null;
 function safeRead(k){try{return JSON.parse(localStorage.getItem(k)||'null');}catch{return null;}}
 function save(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true;}catch{return false;}}
@@ -52,13 +53,14 @@ function toast(msg){$('#toast').textContent=msg;$('#toast').classList.add('visib
 function total(){return Object.values(deck).reduce((n,x)=>n+x,0);}
 function persistDraft(){save(DECK_KEY,deck);save(DECK_META_KEY,{name:deckName,savedId:selectedDeckId,preset:ui.preset,opponentSource:ui.opponentSource});}
 function resolveDeckSource(source){
+ if(source.startsWith('training:')){const d=TRAINING_BY_ID[source.slice(9)];if(d)return {name:d.name,counts:d.counts};}
  if(source==='current')return {name:deckName||'未命名牌組',counts:deck};
  if(/^preset:[01]$/.test(source))return PRESETS[Number(source.slice(-1))];
  const found=savedDecks.find(d=>'saved:'+d.id===source);if(found)return found;
  throw new Error('找不到這副牌組，請重新選擇。');
 }
 function deckOptions(selected='current'){
- return `<option value="current" ${selected==='current'?'selected':''}>編輯中 · ${esc(deckName||'未命名牌組')}</option><optgroup label="預設牌組">${PRESETS.map((d,i)=>`<option value="preset:${i}" ${selected==='preset:'+i?'selected':''}>${d.name}</option>`).join('')}</optgroup>${savedDecks.length?`<optgroup label="已儲存牌組">${savedDecks.map(d=>`<option value="saved:${esc(d.id)}" ${selected==='saved:'+d.id?'selected':''}>${esc(d.name)}</option>`).join('')}</optgroup>`:''}`;
+ return `<option value="current" ${selected==='current'?'selected':''}>編輯中 · ${esc(deckName||'未命名牌組')}</option><optgroup label="預設牌組">${PRESETS.map((d,i)=>`<option value="preset:${i}" ${selected==='preset:'+i?'selected':''}>${d.name}</option>`).join('')}</optgroup><optgroup label="實戰 AI 對練牌組">${TRAINING_DECKS.map(d=>`<option value="training:${esc(d.id)}" ${selected==='training:'+d.id?'selected':''}>${esc(d.name)}</option>`).join('')}</optgroup>${savedDecks.length?`<optgroup label="已儲存牌組">${savedDecks.map(d=>`<option value="saved:${esc(d.id)}" ${selected==='saved:'+d.id?'selected':''}>${esc(d.name)}</option>`).join('')}</optgroup>`:''}`;
 }
 function loadDeckSource(source){
  if(source==='current')return;
