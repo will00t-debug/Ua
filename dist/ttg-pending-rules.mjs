@@ -109,6 +109,7 @@ export function resolveTtgViral002(state,{player,uid,targetUid}={}){
  target.ready=false;
  self.energyBonus=(self.energyBonus||0)+1;
  self.temporaryEnergyUntilTurn=state.turn;
+ self.temporaryEnergyBonusCount=(self.temporaryEnergyBonusCount||0)+1;
  return result;
 }
 // Expire energy bonuses granted by Viral without removing bonuses from other
@@ -119,8 +120,9 @@ export function resolveTtgTemporaryEnergyEndTurn(state){
  for(const pl of result.players)for(const loc of field(pl)){
   const c=loc.card;
   if(c.temporaryEnergyUntilTurn!==state.turn)continue;
-  c.energyBonus=Math.max(0,(c.energyBonus||0)-1);
+  c.energyBonus=Math.max(0,(c.energyBonus||0)-(c.temporaryEnergyBonusCount||1));
   delete c.temporaryEnergyUntilTurn;
+  delete c.temporaryEnergyBonusCount;
  }
  return result;
 }
@@ -141,6 +143,8 @@ export function resolveTtg049Entry(state,{player,uid,targetUid=null}={}){
  const pl=state.players[player],source=find(pl,uid);
  if(!source||source.card.cardId!=='TTG-1-049')throw new Error('Incorrect entering character');
  const eligible=eligibleTtg049ReturnTargets(state,{player,uid});
+ const unknown=field(pl).some(x=>x.card.uid!==uid&&!Number.isInteger(x.card.energy??TTG_BY_ID[x.card.cardId]?.energy));
+ if(!eligible.length&&unknown)throw new Error('Unverified printed energy blocks a mandatory return');
  if(eligible.length&&(!targetUid||!eligible.includes(targetUid)))throw new Error('Must choose an eligible other character');
  if(!eligible.length&&targetUid)throw new Error('No return target may be chosen');
  const selected=targetUid||uid,location=find(pl,selected);
@@ -159,6 +163,7 @@ export function resolveTtg049Entry(state,{player,uid,targetUid=null}={}){
 export function eligibleTtg071AttackBuffTargets(state,{player,uid}={}){
  if(![0,1].includes(player)||state?.active!==player||state?.phase!=='attack')return [];
  if(state.attackingUid!==uid||state.characterAttacksThisTurn!==1)return [];
+ if(state.usedTtgAttackTriggers?.[state.turn+':'+uid])return [];
  const source=find(state.players[player],uid);
  if(!source||source.line!=='front'||source.card.cardId!=='TTG-1-071')return [];
  return field(state.players[player]).filter(x=>x.card.uid!==uid).map(x=>x.card.uid);
@@ -170,6 +175,8 @@ export function resolveTtg071FirstAttack(state,{player,uid,targetUid=null}={}){
   throw new Error('Only the first own attack by King Kittan DX can grant its buff');
  if(targetUid!=null&&!targets.includes(targetUid))throw new Error('Not a legal other character');
  const result=copy(state);
+ result.usedTtgAttackTriggers??={};
+ result.usedTtgAttackTriggers[state.turn+':'+uid]=true;
  if(targetUid!=null){
   const c=find(result.players[player],targetUid).card;
   c.currentBp=(c.currentBp??c.bp)+2000;
