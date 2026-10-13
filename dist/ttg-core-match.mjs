@@ -3,10 +3,11 @@
 // Standalone from BLEACH engine/app. Intended for reproducible AI smoke tests.
 import {TTG_BY_ID,normalizeTtgCounts} from './ttg-builder.mjs';
 import {withTtgDerivedEnergy,calculateTtgEnergyByColor} from './ttg-energy-snapshot.mjs';
-import {legalTtgRuleActions,dispatchTtgRuleAction,resolveTtgMainPhaseEnd,resolveTtgTurnEnd} from './ttg-rule-adapter.mjs';
+import {legalTtgRuleActions,dispatchTtgRuleAction,resolveTtgMainPhaseEnd,resolveTtgTurnEnd,beginTtgGreenAttackPhase} from './ttg-rule-adapter.mjs';
 import {spendTtgApCards} from './ttg-actions.mjs';
 import {TTG_GREEN_ENTRY_IDS,legalTtgGreenEntryDecisions,resolveTtgGreenEntry} from './ttg-green-entry.mjs';
-import {greenTtgCurrentBp,greenTtgNeedsEnergy,greenTtgImpactNull} from './ttg-green-passives.mjs';
+import {greenTtgCurrentBp,greenTtgNeedsEnergy,greenTtgImpactNull,greenTtgCanAttackOrBlock} from './ttg-green-passives.mjs';
+import {canTtgGreen028Attack,resolveTtgGreen028Start} from './ttg-green-028.mjs';
 import {resolveGreenOwnStart} from './ttg-green-main.mjs';
 import {beginTtgLifeTrigger,legalTtgLifeChoices,resolveTtgLifeChoice,finalizeTtgLifeOutcome} from './ttg-green-life.mjs';
 
@@ -44,6 +45,7 @@ function refreshEnergy(s,p){return withTtgDerivedEnergy(s,p);}
 function start(s){
  const p=s.active,pl=s.players[p];
  pl.turnCount++;s.turn++;s.phase='start';s.pending=null;s.extraDrawn=false;
+ Object.assign(s,resolveTtgGreen028Start(s,p));
  for(const c of field(pl)){
   c.ready=true;c.attackTurn=-1;
   if(c.doubleBlockUntilOwnStartTurnCount!=null&&pl.turnCount>=c.doubleBlockUntilOwnStartTurnCount){
@@ -153,7 +155,7 @@ export function legalTtgCoreActions(s){
  if(s.pending?.kind==='ttgGreenEntry')return greenEntryChoices(s);
  if(s.pending?.kind==='block'){
   const opp=s.players[1-p];
-  return [{type:'block',blockUid:null},...opp.front.filter(c=>c?.ready).map(c=>({type:'block',blockUid:c.uid}))];
+  return [{type:'block',blockUid:null},...opp.front.filter(c=>c?.ready&&greenTtgCanAttackOrBlock(s,1-p,c)).map(c=>({type:'block',blockUid:c.uid}))];
  }
  if(s.pending)throw new Error('Unsupported pending core effect cannot be skipped');
  const actions=[];
@@ -176,7 +178,7 @@ export function legalTtgCoreActions(s){
   actions.push(...legalTtgRuleActions(s,p));
  }
  if(s.phase==='attack'&&pl.turnCount>1){
-  for(const c of pl.front.filter(c=>c?.ready))actions.push({type:'attack',uid:c.uid});
+  for(const c of pl.front.filter(c=>c?.ready&&greenTtgCanAttackOrBlock(s,p,c)&&canTtgGreen028Attack(s,p,c)))actions.push({type:'attack',uid:c.uid});
  }
  if(s.phase==='move')actions.push(...legalTtgRuleActions(s,p));
  return [...actions,{type:'next'}];
@@ -233,7 +235,10 @@ export function dispatchTtgCoreAction(source,action){
  }else if(action.type==='next'){
   if(s.phase==='start')s.phase='move';
   else if(s.phase==='move')s.phase='main';
-  else if(s.phase==='main'){const after=resolveTtgMainPhaseEnd(s);Object.assign(s,after);s.phase='attack';}
+  else if(s.phase==='main'){
+   const after=resolveTtgMainPhaseEnd(s);Object.assign(s,after);s.phase='attack';
+   Object.assign(s,beginTtgGreenAttackPhase(s));
+  }
   else if(s.phase==='attack'){
    const after=resolveTtgTurnEnd(s);
    Object.assign(s,after);
