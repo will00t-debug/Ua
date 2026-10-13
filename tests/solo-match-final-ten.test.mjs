@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {SOLO_SHADOW_TRAINING_PRESET,SOLO_TRAINING_PRESET,newSoloTrainingMatch,soloTrainingLegalActions,soloTrainingDispatch,soloEnergy,soloMatchBp,soloTrainingBotAction,assertSoloTrainingMatch} from '../dist/solo-match.mjs';
+import {SOLO_SHADOW_TRAINING_PRESET,SOLO_TRAINING_PRESET,newSoloTrainingMatch,soloTrainingLegalActions,soloTrainingDispatch,soloEnergy,soloMatchBp,soloTrainingBotAction,inspectSoloAttached,assertSoloTrainingMatch} from '../dist/solo-match.mjs';
 
 const fixtures=(color,ids=[])=>{
  const base=color==='purple'?SOLO_SHADOW_TRAINING_PRESET:SOLO_TRAINING_PRESET;
@@ -235,4 +235,58 @@ test('AI completes purple advanced Sung and green chained Sung custom-deck games
   assert.equal(s.status,'finished','seed '+seed+' got stuck at '+steps);
   assertSoloTrainingMatch(s);
  }
+});
+
+test('Q2049–Q2052: 048 peel-only after attack preserves original base REST and no old buffs/enter-leave triggers',()=>{
+ let s=fixtures('green',['SLG-1-048']);greenPower(s);
+ const base=onField(s,'SLG-1-045','front',0);
+ const r=raid(s,'SLG-1-048',base);s=r.s;
+ if(s.pending?.kind==='slg048Deploy')s=dispatch(s,{type:'choose',uid:null});
+ const host=s.players[0].front[0];host.ready=false;host.buffs.push({turn:s.turn,bp:2000});
+ host.under.push(...s.players[0].deck.splice(0,3).map(c=>({...c,faceDown:true})));
+ s.phase='attack';
+ s=dispatch(s,{type:'next'});
+ assert.equal(s.pending.kind,'slgEndRaid');
+ const peel=legal(s,x=>x.uid==='peel'&&x.used?.length===3);
+ s=dispatch(s,peel);
+ const remains=s.players[0].front[0];
+ assert.equal(remains.uid,base.uid);assert.equal(remains.ready,false);
+ assert.equal(remains.buffs.length,0,'old 048 temporary BP must not stick to the base');
+ assert.ok(s.players[0].outside.some(c=>c.uid===host.uid));
+ assert.notEqual(s.pending?.kind,'slg048Deploy','remaining base must not enter again');
+ assertSoloTrainingMatch(s);
+});
+test('Q2041/Q2047/Q2053: private attachments under all 047/048/049 Raid faces are hidden from opponent',()=>{
+ for(const id of ['SLG-1-047','SLG-1-048','SLG-1-049']){
+  let s=fixtures('green',[id]);greenPower(s);const base=onField(s,'SLG-1-045','front',0);
+  s=raid(s,id,base).s;
+  if(s.pending?.kind==='slg048Deploy'||s.pending?.kind==='slg049Destroy')s=dispatch(s,{type:'choose',uid:null});
+  const host=s.players[0].front[0];
+  const card=s.players[0].deck.shift();host.under.push({...card,faceDown:true});
+  const owner=inspectSoloAttached(s,{viewer:0,owner:0,hostUid:host.uid});
+  const opponent=inspectSoloAttached(s,{viewer:1,owner:0,hostUid:host.uid});
+  assert.equal(owner.at(-1).uid,card.uid,'owner knows actual card ID and UID '+id);
+  assert.deepEqual(opponent.at(-1),{faceDown:true},'opponent learns no ID or UID '+id);
+  assertSoloTrainingMatch(s);
+ }
+});
+test('Q2029: 022 attack-ended swap waits until the defender finishes an ACTIVE life Trigger',()=>{
+ let s=fixtures('purple',['SLG-1-022']);
+ onField(s,'SLG-1-006','energy',0);
+ onField(s,'SLG-1-030','energy',1);
+ onField(s,'SLG-1-029','energy',2);
+ const base=onField(s,'SLG-1-015','energy',3);
+ const attacker=onField(s,'SLG-1-030','front',0);
+ const target=onField(s,'SLG-1-030','front',0,1,false);
+ const card=prepare(s,'SLG-1-022'),ra=legal(s,a=>a.type==='raid'&&a.uid===card.uid&&a.target===base.uid&&a.line==='energy');
+ s=dispatch(s,ra);
+ assert.equal(s.pending.kind,'slg022Enter');
+ s=dispatch(s,{type:'choose',uid:null});
+ s=dispatch(s,{type:'choose',uid:null});
+ s.players[1].life[0].cardId='SLG-1-029'; // first life has official ACTIVE trigger
+ s.phase='attack';s=dispatch(s,{type:'attack',uid:attacker.uid});
+ assert.equal(s.pending.kind,'activeTrigger','life Trigger must resolve before attack-end effects');
+ s=dispatch(s,{type:'choose',uid:target.uid});
+ assert.equal(s.pending.kind,'slg022Swap','swap only offered after Trigger choice');
+ assertSoloTrainingMatch(s);
 });
