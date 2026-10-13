@@ -98,3 +98,13 @@
 - 更新 `tests/ttg-green-life.test.mjs`、`tests/ttg-red-first-three.test.mjs`、`tests/ttg-core-match.test.mjs` 及官方第三批測試，覆蓋分支。
 
 **仍未驗收完成：** SOLO 獨立引擎中的 DRAW／FINAL／GET 在 `hurt()` 仍直接自動處理；需要分批調整並驗證原有 50 張守恆與 Damage2 時序。此 PR 僅修 TTG，不可因此宣稱 161 張全卡完成官方驗收。
+
+## 接手續修：SLG 通用官方 Q99 的生命 Trigger 目標選擇可放棄（PR #27）
+
+根據日本官方 [Q99](https://www.unionarena-tcg.com/jp/faq/list.php?type=0)，生命 Trigger 可以不發動。本站原先在可選目標存在時，SLG 的 COLOR、SPECIAL、ACTIVE 均強制玩家點一個效果選項，與「不發動」權利衝突。
+
+本次在 **COLOR、SPECIAL、ACTIVE** 的選擇視窗加入 `uid:null` 的合法放棄行動，且在獨立判定引擎中不移動目標、不支付 AP、不產生 BP Buff；網站以繁體中文顯示「不發動 XXX 生命觸發」。
+
+測試 `tests/solo-q99-optional-target-triggers.test.mjs` 實際傷害造成 SLG-1-011 COLOR、SLG-1-076 SPECIAL、SLG-1-003 ACTIVE 的待選效果，再分別發動與放棄，確認實體卡守恆及狀態。更新既有 011 測試，保留從場外登場、只在前線放置的官方效果。
+
+**注意：** 其他 SLG 的 DRAW／GET／FINAL／Raid 目前仍需另批完成官方 Q99 的完整「發動或放棄」選擇、效果結算及多重 DAMAGE 時序；不能因此宣稱整個 SLG 卡組正式驗收完畢。
