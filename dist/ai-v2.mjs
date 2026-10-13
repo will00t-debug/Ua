@@ -151,6 +151,31 @@ function moveBias(s, a) {
   return bp(s, c) >= 3000 && (available >= 2 || !affordable) ? 1.7 : -2;
 }
 
+// Preserve early energy development: low-cost generators are usually setup,
+// not frontline attackers. This only ranks legal actions; engine rules stay authoritative.
+function energyDevelopmentBias(s, a) {
+  if (a.type !== 'play') return 0;
+  const p = controller(s), pl = s.players[p];
+  const c = pl.hand.find(x => x.uid === a.uid);
+  const d = c && cardOf(c);
+  if (!d || d.type !== 'character') return 0;
+  const cost = number(d.energy), gen = number(d.gen);
+  if (gen <= 0) return 0;
+  const current = energy(s, p);
+  const handCosts = pl.hand.filter(x => x.uid !== a.uid).map(x => number(cardOf(x)?.energy));
+  const unlocks = handCosts.filter(x => x > current && x <= current + gen).length;
+  const needed = handCosts.some(x => x > current);
+  const early = current < 3;
+  if (a.line === 'energy') {
+    return (early ? 5.5 : current < 5 ? 2.5 : 0) +
+      Math.min(3, unlocks) * 2.1 + (needed ? 1.4 : 0);
+  }
+  if (a.line === 'front' && cost === 0 && early) {
+    return -7.5 - (needed ? 2 : 0);
+  }
+  return 0;
+}
+
 function estimateAction(s, a) {
   if (a.type === 'attack' || a.type === 'snipe') return scoreAttack(s, a);
   const p = controller(s), pl = s.players[p];
@@ -168,7 +193,7 @@ function estimateAction(s, a) {
       - (pl[a.line][a.slot] && pl[a.line][a.slot].uid !== a.target ? 16 : 0);
     if (d.type === 'event') return 1.4;
     const occupied = pl[a.line]?.[a.slot];
-    return (a.line === 'front' ? 2.8 + number(d.bp) / 2000 : 2.1 + number(d.gen))
+    return energyDevelopmentBias(s, a) + (a.line === 'front' ? 2.8 + number(d.bp) / 2000 : 2.1 + number(d.gen))
       - (occupied ? 16 : 0) - (a.line === 'energy' && number(d.bp) >= 4000 ? 2 : 0);
   }
   return 0;
@@ -267,6 +292,7 @@ export function chooseAiAction(s, {difficulty = 'normal'} = {}) {
           + moveBias(s, a) * 0.35;
       if (!secret && level.depth > 1)
         score += 0.8 * searchGain(after, p, known, level.depth - 1, level.beam, budget);
+      if (a.type === 'play') score += energyDevelopmentBias(s, a);
       // Playing an affordable card and retaining AP has situational value, not
       // an absolute "always Raid" priority.
       if (a.type === 'raid') score += 0.35;
