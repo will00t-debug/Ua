@@ -105,6 +105,6 @@
 
 本次在 **COLOR、SPECIAL、ACTIVE** 的選擇視窗加入 `uid:null` 的合法放棄行動，且在獨立判定引擎中不移動目標、不支付 AP、不產生 BP Buff；網站以繁體中文顯示「不發動 XXX 生命觸發」。
 
-測試 `tests/solo-q99-optional-target-triggers.test.mjs` 實際傷害造成 SLG-1-011 COLOR、SLG-1-076 SPECIAL、SLG-1-003 ACTIVE 的待選效果，再分別發動與放棄，確認實體卡守恆及狀態。更新既有 011 測試，保留從場外登場、只在前線放置的官方效果。
+測試 `tests/solo-q99-optional-target-triggers.test.mjs` 實際傷害造成 SLG-1-011 COLOR、SLG-1-040 SPECIAL、SLG-1-003 ACTIVE 的待選效果，再分別發動與放棄，確認實體卡守恆及狀態。更新既有 011 測試，保留從場外登場、只在前線放置的官方效果。
 
 **注意：** 其他 SLG 的 DRAW／GET／FINAL／Raid 目前仍需另批完成官方 Q99 的完整「發動或放棄」選擇、效果結算及多重 DAMAGE 時序；不能因此宣稱整個 SLG 卡組正式驗收完畢。

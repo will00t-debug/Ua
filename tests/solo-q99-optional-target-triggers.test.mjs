@@ -7,7 +7,7 @@ import {SOLO_SHADOW_TRAINING_PRESET,newSoloTrainingMatch,soloTrainingLegalAction
 // A printed life Trigger can be declined regardless of whether legal effect
 // targets exist; this is independent from optional targets within an ability.
 const ids=['001','009','010','029','031'];
-const additions=['011','013','076','003','004'];
+const additions=['011','013','040','003','004'];
 const counts={...SOLO_SHADOW_TRAINING_PRESET};
 for(const id of ids)delete counts['SLG-1-'+id];
 for(const id of additions)counts['SLG-1-'+id]=4;
@@ -46,8 +46,8 @@ test('Q99 SLG-1-011 purple COLOR can decline even when own legal outside target 
  assert.ok(assertSoloTrainingMatch(used));
 });
 
-test('Q99 SLG-1-076 SPECIAL can decline without destroying selected opponent front character',()=>{
- const {s,attacker,lifeUid}=make('076');
+test('Q99 SLG-1-040 SPECIAL can decline without destroying selected opponent front character',()=>{
+ const {s,attacker,lifeUid}=make('040');
  const after=attack(s,attacker.uid);
  assert.equal(after.pending?.kind,'specialTrigger');
  assert.ok(soloTrainingLegalActions(after).some(x=>x.uid===attacker.uid));
