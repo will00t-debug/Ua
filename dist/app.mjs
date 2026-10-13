@@ -9,7 +9,7 @@ import {MST_CARDS,emptyMstDeck,normalizeMstCounts,mstCount,mstDeckIssues,readMst
 import {TTG_PENDING_CARDS} from './ttg-pending.mjs';
 import {TTG_CARDS,TTG_BY_ID,emptyTtgDeck,normalizeTtgCounts,ttgCount,ttgDeckIssues,readTtgSaved} from './ttg-builder.mjs';
 import {newTtgCoreMatch,assertTtgCoreState,legalTtgCoreActions,dispatchTtgCoreAction,ttgCoreAiChoice} from './ttg-core-match.mjs';
-import {TTG_BETA_IDS,TTG_BETA_NOTICE,TTG_GREEN_BETA_PRESET,TTG_RED_BETA_PRESET,ttgBetaDeckIssues,ttgChoiceActor,ttgActionLabel,ttgActionKinds,ttgFilteredActions,ttg012ManualChoice,ttg012SearchChoice,ttgCardByUid} from './ttg-browser.mjs';
+import {TTG_BETA_IDS,TTG_BETA_NOTICE,TTG_GREEN_BETA_PRESET,TTG_RED_BETA_PRESET,ttgBetaDeckIssues,ttgChoiceActor,ttgActionLabel,ttgActionKinds,ttgFilteredActions,ttg012ManualChoice,ttg012SearchChoice,ttgCardByUid,ttgNormalPlacementAction} from './ttg-browser.mjs';
 import {newGame,dispatch,legalActions,controller,cardOf,bp,energy,damageOf,locate,PHASE_NAMES,assertState} from './engine.mjs?v=9.1.1';
 import {chooseAiAction} from './ai-v2.mjs';
 
@@ -368,7 +368,7 @@ function ttgArena(){
  const s=ttgGame,actor=ttgChoiceActor(s),bot=actor===1;
  const phase={start:'開始階段',move:'移動階段',main:'主要階段',attack:'攻擊階段'}[s.phase]||s.phase;
  const shown=c=>c?`${esc(TTG_BY_ID[c.cardId]?.nameZh||c.cardId)}<small style='display:block'>${esc(c.cardId)} · ${c.ready?'ACTIVE':'REST'} · ${TTG_BY_ID[c.cardId]?.bp||0} BP${c.stack?.length?' · RAID '+c.stack.length:''}</small>`:'<small>空位置</small>';
- const board=(pl,name)=>`<section class='panel'><h3>${name} · LIFE ${pl.life.length} · 手牌 ${pl.hand.length} · 場外 ${pl.outside.length} · AP ${pl.apCards.filter(x=>x.ready).length}</h3><p class='note'>紅能源 ${pl.energyProduced?.red||0} · 綠能源 ${pl.energyProduced?.green||0}</p>${['front','energy'].map(line=>`<div><b>${line==='front'?'前線':'能源線'}</b><div class='grid' style='display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px'>${pl[line].map(c=>`<div class='catalogInfo' style='border:1px solid #8887;padding:6px;min-height:62px;border-radius:7px'>${shown(c)}</div>`).join('')}</div></div>`).join('')}</section>`;
+ const board=(pl,name,owner)=>`<section class='panel'><h3>${name} · LIFE ${pl.life.length} · 手牌 ${pl.hand.length} · 場外 ${pl.outside.length} · AP ${pl.apCards.filter(x=>x.ready).length}</h3><p class='note'>紅能源 ${pl.energyProduced?.red||0} · 綠能源 ${pl.energyProduced?.green||0}</p>${['front','energy'].map(line=>`<div><b>${line==='front'?'前線':'能源線'}</b><div class='grid' style='display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px'>${pl[line].map((c,slot)=>`<div class='catalogInfo' style='border:1px solid #8887;padding:6px;min-height:62px;border-radius:7px'>${c?shown(c):(owner===0&&ui.ttgSelected&&ttgNormalPlacementAction(s,ui.ttgSelected,line,slot)?`<button class='btn small primary' data-ttg-place='${line}:${slot}' aria-label='放置到${line==='front'?'前線':'能源線'}位置${slot+1}'>＋ 放到這格</button>`:'<small>空位置</small>')}</div>`).join('')}</div></div>`).join('')}</section>`;
  const pending=s.pendingTtgLife?'生命觸發選擇':s.pending?.kind?'效果選擇：'+s.pending.kind:'';
  const publicLife=(s.publicLifeReveals||[]).slice(-5).reverse();
  const revealedTile=x=>{
@@ -410,8 +410,8 @@ function ttgArena(){
  <div class='supportNote'><b>限定 Beta 判定</b><span>${esc(TTG_BETA_NOTICE)}</span></div>
  ${publicLifePanel}
  ${s.status==='finished'?`<section class='panel'><h2>對局結束 · ${s.winner===0?'玩家勝利':'AI 勝利'}</h2><p>${esc(s.endReason||'')}</p><button class='btn primary' data-action='ttgBetaStartGreen'>再玩一局</button></section>`:''}
- ${board(s.players[1],'AI 對手')}${board(s.players[0],'你的場地')}
- <section class='panel'><h3>你的手牌（${cards.length} 張）</h3>${hand}</section>
+ ${board(s.players[1],'AI 對手',1)}${board(s.players[0],'你的場地',0)}
+ <section class='panel'><h3>你的手牌（${cards.length} 張）</h3><p class='note'>點選一張手牌，再點自己場上亮起的空格普通登場；Raid 或特殊效果可使用下方合法動作列表。</p>${hand}</section>
  ${s.status==='playing'?`<section class='panel'><h3>${bot?'AI 正在依合法動作處理…':'選擇合法動作'} · ${available.length} 項</h3>${bot?'<p class=note>輪到 AI，等待自動結算；不顯示電腦的私人手牌及效果選擇。</p>':`
  ${(s.pending||s.pendingTtgLife||s.pendingTtgTrigger)?`<p><button class='btn outline' data-action='ttgResolveAssist'>AI 幫我選擇這次效果</button> <small>會依合法動作結算，可自行選上面的選項。</small></p>`:''}
  <div style='display:flex;flex-wrap:wrap;gap:5px'><button class='btn small ${ui.ttgKind==='all'?'primary':'outline'}' data-ttg-kind='all'>全部</button>${types.map(o=>`<button class='btn small ${ui.ttgKind===o.type?'primary':'outline'}' data-ttg-kind='${esc(o.type)}'>${esc(o.type)} (${o.count})</button>`).join('')}</div>
@@ -437,6 +437,7 @@ function bind(){
   if(el.dataset.ttg012Mode&&ui.view==='ttgArena'&&ttgGame?.pending?.kind==='green012Discard'){ui.ttg012.mode=el.dataset.ttg012Mode;render();return;}
   if(el.dataset.ttg012Ap&&ui.view==='ttgArena'&&ttgGame?.pending?.kind==='green012Discard'){ui.ttg012.apUid=el.dataset.ttg012Ap;render();return;}
   if(el.dataset.ttg012Target!==undefined&&ui.view==='ttgArena'&&ttgGame?.pending?.kind==='green012Discard'){ui.ttg012.targetUid=el.dataset.ttg012Target||null;render();return;}
+  if(el.dataset.ttgPlace&&ui.view==='ttgArena'&&ttgGame?.status==='playing'&&ttgChoiceActor(ttgGame)===0){const [line,slot]=el.dataset.ttgPlace.split(':');const action=ttgNormalPlacementAction(ttgGame,ui.ttgSelected,line,Number(slot));if(action)ttgAct(action);else toast('這張卡目前無法登場到指定位置。');return;}
   if(el.dataset.ttgAct){if(ui.view==='ttgArena'&&ttgChoiceActor(ttgGame)===0)ttgAct(JSON.parse(decodeURIComponent(el.dataset.ttgAct)));return;}
   if(el.dataset.ttgSelect!==undefined){ui.ttgSelected=ui.ttgSelected===el.dataset.ttgSelect?null:(el.dataset.ttgSelect||null);ui.ttgVisible=90;render();return;}
   if(el.dataset.ttgKind){ui.ttgKind=el.dataset.ttgKind;ui.ttgVisible=90;render();return;}

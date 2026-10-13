@@ -134,6 +134,20 @@ export function ttg012ManualChoice(s,{discardUids=[],mode='readyAP',apUid=null,t
  }else throw new Error('未知的西蒙012效果選項');
  return {type:'green012Discard',player:legal.player,uid:legal.uid,discardUids,mode,apUid,targetUid};
 }
+// Ordinary player deployment can be made by selecting a hand card and
+// tapping its destination slot. Return ONLY a currently legal exact play
+// action; never synthesize AP payments or bypass source-engine checks.
+export function ttgNormalPlacementAction(s,handUid,line,slot){
+ if(!s||s.status!=='playing'||s.pending||s.pendingTtgLife||
+    s.pendingTtgTrigger||s.phase!=='main'||!['front','energy'].includes(line)||
+    !Number.isInteger(slot)||slot<0||slot>3||typeof handUid!=='string')
+  return null;
+ const actor=ttgChoiceActor(s),player=s.players?.[actor];
+ if(actor!==s.active||!player?.hand.some(c=>c.uid===handUid)||
+    player[line]?.[slot]!=null)return null;
+ return legalTtgCoreActions(s).find(a=>a.type==='play'&&a.handUid===handUid&&
+    a.line===line&&a.slot===slot)||null;
+}
 export function ttgActionKinds(s){
  const by=new Map();for(const a of ttgExecutableActions(s))by.set(a.type,(by.get(a.type)||0)+1);return [...by].map(([type,count])=>({type,count}));
 }
