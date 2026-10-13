@@ -10,6 +10,8 @@ import {greenTtgCurrentBp,greenTtgNeedsEnergy,greenTtgImpactNull,greenTtgCanAtta
 import {canTtgGreen028Attack,resolveTtgGreen028Start} from './ttg-green-028.mjs';
 import {applyGreen008UnblockedDraw} from './ttg-green-008.mjs';
 import {sidelineGreen030} from './ttg-green-030.mjs';
+import {beginGreen034Sidelined} from './ttg-green-fields.mjs';
+import {flattenSidelinedPile} from './ttg-green-retirement.mjs';
 import {legalHighRaidAttackEffects,resolveHighRaidAttackEffect,greenHighRaidCombatValue,expireGreen031AtOwnStart} from './ttg-green-high-raid.mjs';
 import {resolveGreenOwnStart} from './ttg-green-main.mjs';
 import {beginTtgLifeTrigger,legalTtgLifeChoices,resolveTtgLifeChoice,finalizeTtgLifeOutcome} from './ttg-green-life.mjs';
@@ -161,7 +163,7 @@ export function legalTtgCoreActions(s){
  const p=s.active,pl=s.players[p];
  if(s.pendingTtgLife)return legalTtgLifeChoices(s);
  if(s.pending?.kind==='ttgGreenEntry')return greenEntryChoices(s);
- if(['ttgGreen028Entry','ttgGreen029Entry','green030Sidelined','green012Search','green012Discard','greenHighRaidQueue'].includes(s.pending?.kind))
+ if(['ttgGreen028Entry','ttgGreen029Entry','green030Sidelined','green012Search','green012Discard','greenHighRaidQueue','green034Sidelined','greenRetireOrder'].includes(s.pending?.kind))
   return legalTtgRuleActions(s,s.pending.player);
  if(s.pending?.kind==='greenHighAttackWindow')return legalHighRaidAttackEffects(s,s.pending.player,s.pending.uid);
  if(s.pending?.kind==='block'){
@@ -202,7 +204,11 @@ function removeFront(s,p,uid){
  if(pl.front[i].cardId==='TTG-1-030'){
   Object.assign(s,sidelineGreen030(s,{player:p,uid}));
  }else{
-  pl.outside.push(pl.front[i]);pl.front[i]=null;
+  const retired=pl.front[i];
+  pl.outside.push(...flattenSidelinedPile(retired));pl.front[i]=null;
+  if(pl.energy.some(x=>x?.cardId==='TTG-1-034'&&x.green034UsedTurn!==s.turn)){
+   Object.assign(s,beginGreen034Sidelined({...s,pending:null},{player:p,retiredUid:uid}));
+  }
  }
 }
 function queueLifeDamage(s,defender,n){
@@ -341,7 +347,7 @@ export function ttgCoreAiChoice(s){
    options.find(x=>x.mode==='color'&&x.line==='front')||
    options.find(x=>x.mode==='color')||options[0];
  }
- if(['ttgGreen028Entry','ttgGreen029Entry','green030Sidelined','green012Search','green012Discard','greenHighRaidQueue'].includes(s.pending?.kind))
+ if(['ttgGreen028Entry','ttgGreen029Entry','green030Sidelined','green012Search','green012Discard','greenHighRaidQueue','green034Sidelined','greenRetireOrder'].includes(s.pending?.kind))
   return chooseTtgRuleAiAction(s,s.pending.player);
  if(s.pending?.kind==='ttgGreenEntry'){
   const decisions=legalTtgCoreActions(s);
