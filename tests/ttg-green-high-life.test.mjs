@@ -71,7 +71,7 @@ test('027/031 Raid Life with insufficient own energy offers only adding card to 
  for(const id of ['TTG-1-027','TTG-1-031']){
   let s=scene({id,energy:false}),p=s.players[1];
   s=beginTtgLifeTrigger(s,{player:1,lifeUid:p.life[0].uid});
-  assert.deepEqual(legalTtgCoreActions(s).map(x=>x.mode),['raidHand']);
+  assert.deepEqual(legalTtgCoreActions(s).map(x=>x.mode),['raidHand','decline']);
   const out=dispatchTtgCoreAction(s,legalTtgCoreActions(s)[0]);
   assert.ok(out.players[1].hand.some(x=>x.cardId===id));
   assert.ok(assertTtgCoreState(out));

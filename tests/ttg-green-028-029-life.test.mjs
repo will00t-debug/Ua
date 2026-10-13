@@ -43,7 +43,7 @@ test('028 RAID LIFE can add to hand or RAID at energy>=4 WITHOUT paying AP',()=>
 test('029 RAID LIFE no legal base/energy still returns revealed trigger to HAND',()=>{
  for(const opts of [{energy:2},{energy:6,base:false}]){
   const s=fixture('TTG-1-029',opts),p=beginTtgLifeTrigger(s,{player:1,lifeUid:'trigger'});
-  assert.deepEqual(legalTtgLifeChoices(p).map(x=>x.mode),['raidHand']);
+  assert.deepEqual(legalTtgLifeChoices(p).map(x=>x.mode),['raidHand','decline']);
   const r=resolveTtgLifeChoice(p,{type:'ttgLifeChoice',player:1,cardUid:'trigger',mode:'raidHand'});
   assert.equal(r.players[1].hand[0].uid,'trigger');
   assert.equal(r.pendingTtgLife,null);
@@ -112,5 +112,5 @@ test('028/029 life RAID cannot bypass Q2260 front Viral simultaneous effect orde
  const s=fixture('TTG-1-028');
  s.players[1].front[1]=c('viral','TTG-1-004');
  const p=beginTtgLifeTrigger(s,{player:1,lifeUid:s.players[1].life[0].uid});
- assert.deepEqual(legalTtgLifeChoices(p).map(x=>x.mode),['raidHand']);
+ assert.deepEqual(legalTtgLifeChoices(p).map(x=>x.mode),['raidHand','decline']);
 });

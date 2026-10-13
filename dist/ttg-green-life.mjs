@@ -60,14 +60,14 @@ export function legalTtgLifeChoices(state){
    choices.push({...base,mode:'raidHand'});
    for(const choice of legalRedLifeRaids(state,{player:q.player,cardUid:q.cardUid}))
     choices.push({...base,mode:'raid',...choice});
-   return choices;
+   return [...choices,{...base,mode:'decline'}];
   }
-  if(!['TTG-1-027','TTG-1-028','TTG-1-029','TTG-1-031'].includes(card.cardId))return [];
+  if(!['TTG-1-027','TTG-1-028','TTG-1-029','TTG-1-031'].includes(card.cardId))return [{...base,mode:'decline'}];
   choices.push({...base,mode:'raidHand'});
   if(['TTG-1-027','TTG-1-031'].includes(card.cardId)){
    for(const choice of legalGreenHighLifeRaids(state,{player:q.player,cardUid:q.cardUid}))
     choices.push({...base,mode:'raid',...choice});
-   return choices;
+   return [...choices,{...base,mode:'decline'}];
   }
   const printed=TTG_BY_ID[card.cardId],energy=calculateTtgEnergyByColor(state,q.player);
   if(energy.green>=printed.energy&&!pl.front.some(c=>c?.cardId==='TTG-1-004')){
@@ -81,7 +81,7 @@ export function legalTtgLifeChoices(state){
     for(const position of positions)choices.push({...base,mode:'raid',baseUid:target.card.uid,...position});
    }
   }
-  return choices;
+  return [...choices,{...base,mode:'decline'}];
  }
  else if(!['draw','final'].includes(trigger))throw new Error('Unknown printed life trigger: '+trigger);
  // The trigger is optional (official Q99), including GET, ACTIVE and COLOR.
@@ -94,6 +94,15 @@ export function beginTtgLifeTrigger(state,{player,lifeUid}={}){
  const result=structuredClone(state),owner=result.players[player],revealed=owner.life.shift(),
   trigger=TTG_BY_ID[revealed.cardId]?.trigger;
  owner.outside.push(revealed);
+ // A card moved from LIFE to OUTSIDE is public on reveal, regardless of
+ // whether it has a printed Trigger. Store ONLY already revealed identity;
+ // hidden life/deck/hand/private deck peeks must never be included.
+ result.publicLifeReveals??=[];
+ result.publicLifeReveals.push({uid:revealed.uid,cardId:revealed.cardId,
+  owner:player,turn:result.turn,trigger:trigger||null,
+  outcome:trigger?'pending':'none'});
+ if(result.publicLifeReveals.length>60)
+  result.publicLifeReveals.splice(0,result.publicLifeReveals.length-60);
  if(!trigger)return finalizeTtgLifeOutcome(result,player);
  // Official Q99: ALL printed life triggers are optional. DRAW/FINAL must wait
  // for defender input instead of resolving automatically at reveal time.
@@ -183,6 +192,11 @@ export function resolveTtgLifeChoice(state,action){
   owner[action.line][action.slot]={...c,ready:true,enteredTurn:state.turn};
  }
  result.pendingTtgLife=null;
+ // Record defender's public resolution (including choosing NOT to activate).
+ // Only update the latest matching still-pending public reveal, so recycling
+ // a card into LIFE and revealing it again cannot overwrite older history.
+ const reveal=result.publicLifeReveals?.findLast(x=>x.uid===q.cardUid&&x.outcome==='pending');
+ if(reveal){reveal.outcome=action.mode==='decline'?'declined':'activated';reveal.mode=action.mode;}
  // Mandatory On Entry from a green character summoned by COLOR is NOT skipped.
  if(action.mode==='color'&&TTG_GREEN_ENTRY_IDS.includes(owner[action.line][action.slot].cardId)){
   result.pending={kind:'ttgGreenEntry',player:q.player,sourceUid:action.handUid};
