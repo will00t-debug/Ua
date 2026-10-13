@@ -82,7 +82,7 @@ test('008 shared human/AI player chooses a printed legal RAID rather than normal
  assert.deepEqual(legalTtgRuleActions(r,0).filter(x=>x.type==='green008Raid'),[]);
 });
 const deck=()=>Object.fromEntries([
- ...['003','005','006','007','009','010','011','014','015','016','017','019'].map(n=>['TTG-1-'+n,4]),
+ ...['005','006','007','009','010','011','013','014','015','016','017','019'].map(n=>['TTG-1-'+n,4]),
  ['TTG-1-008',2]
 ]);
 function take(p,id){
