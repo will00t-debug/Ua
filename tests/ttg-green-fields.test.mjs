@@ -1,0 +1,133 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {legalGreenSitePlays,resolveGreenSitePlay,green034PrintedEnergyNeed,legalGreen033AfterRaid,resolveGreen033AfterRaid,beginGreen034Sidelined,legalGreen034SidelinedChoices,resolveGreen034Sidelined,legalGreen034AfterRaid,resolveGreen034AfterRaid} from '../dist/ttg-green-fields.mjs';
+import {calculateTtgEnergyByColor,withTtgDerivedEnergy} from '../dist/ttg-energy-snapshot.mjs';
+import {legalTtgRuleActions,dispatchTtgRuleAction} from '../dist/ttg-rule-adapter.mjs';
+import {TTG_BY_ID} from '../dist/ttg-builder.mjs';
+const card=(uid,id,extra={})=>({uid,cardId:id,nameJa:TTG_BY_ID[id].nameJa,ready:false,stack:[],under:[],...extra});
+const player=()=>({front:[null,null,null,null],energy:[null,null,null,null],hand:[],deck:[],life:[],outside:[],removed:[],apCards:[{uid:'ap',ready:true}],energyProduced:{green:0,red:0}});
+const state=()=>({active:0,turn:12,phase:'main',players:[player(),player()],log:[],energyMode:'derive',status:'playing'});
+const ids=p=>{
+ const deep=c=>[c.uid,...(c.stack||[]).flatMap(deep),...(c.under||[]).flatMap(deep)];
+ return [...p.hand,...p.deck,...p.life,...p.outside,...p.removed,
+  ...p.front.filter(Boolean),...p.energy.filter(Boolean)].flatMap(deep).sort();
+};
+const raid=(uid,id,baseId='TTG-1-009')=>card(uid,id,{ready:true,stack:[card(uid+'base',baseId)]});
+test('033 site pays 1 physical AP and green2, appears REST, ACTIVE generates +1',()=>{
+ let s=state(),p=s.players[0];
+ p.energy[0]=card('gen','TTG-1-017');p.hand=[card('arch','TTG-1-033')];
+ s=withTtgDerivedEnergy(s,0);
+ const before=ids(s.players[0]);
+ const action=legalGreenSitePlays(s,0).find(x=>x.cardId==='TTG-1-033'&&x.slot===1);
+ assert.ok(action);
+ assert.throws(()=>resolveGreenSitePlay(s,{...action,payApUids:['wrong']}));
+ const out=resolveGreenSitePlay(s,{...action,payApUids:['ap']});
+ assert.equal(out.players[0].energy[1].uid,'arch');
+ assert.equal(out.players[0].energy[1].ready,false);
+ assert.equal(out.players[0].apCards[0].ready,false);
+ assert.equal(calculateTtgEnergyByColor(out,0).green,3);
+ out.players[0].energy[1].ready=true;
+ assert.equal(calculateTtgEnergyByColor(out,0).green,4,'033 extra production only while ACTIVE');
+ assert.deepEqual(ids(out.players[0]),before);
+});
+test('034 no sites discounts green8 to green5, then costs full eight when site already exists',()=>{
+ let s=state(),p=s.players[0];
+ p.hand=[card('galaxy','TTG-1-034')];
+ assert.equal(green034PrintedEnergyNeed(s,0),5);
+ p.energy=[card('a','TTG-1-017'),card('b','TTG-1-017'),card('k','TTG-1-005'),null];
+ assert.equal(calculateTtgEnergyByColor(s,0).green,5);
+ const options=legalGreenSitePlays(s,0);
+ assert.deepEqual(options.filter(x=>x.cardId==='TTG-1-034').map(x=>x.slot),[3]);
+ const before=ids(p),r=resolveGreenSitePlay(s,{...options.find(x=>x.cardId==='TTG-1-034'),payApUids:['ap']});
+ assert.equal(r.players[0].energy[3].uid,'galaxy');
+ assert.equal(r.players[0].energy[3].ready,false);
+ assert.equal(green034PrintedEnergyNeed(r,0),8);
+ assert.deepEqual(ids(r.players[0]),before);
+});
+test('033 Ark-Gurren Q2280 attaches facedown under own 027 and draws exactly two',()=>{
+ const s=state(),p=s.players[0];
+ p.energy[0]=card('arch','TTG-1-033',{ready:true});
+ p.energy[1]=card('arch2','TTG-1-033',{ready:true});
+ p.front[0]=raid('ark','TTG-1-027');
+ p.deck=[card('d1','TTG-1-005'),card('d2','TTG-1-006'),card('d3','TTG-1-014')];
+ const before=ids(p),legal=legalGreen033AfterRaid(s,{player:0,raidUid:'ark'});
+ assert.deepEqual(legal.map(x=>x.siteUid),['arch','arch2',null]);
+ assert.throws(()=>resolveGreen033AfterRaid(s,{player:0,raidUid:'ark',siteUid:'illegal'}));
+ const r=resolveGreen033AfterRaid(s,{player:0,raidUid:'ark',siteUid:'arch'});
+ assert.equal(r.players[0].energy[0],null);
+ assert.equal(r.players[0].front[0].under[0].uid,'arch');
+ assert.equal(r.players[0].front[0].under[0].faceDown,true);
+ assert.deepEqual(r.players[0].hand.map(x=>x.uid),['d1','d2']);
+ assert.equal(r.players[0].deck[0].uid,'d3');
+ assert.deepEqual(ids(r.players[0]),before);
+ assert.deepEqual(legalGreen033AfterRaid(r,{player:0,raidUid:'ark'}),[],'Q2280 same name once despite two physical sites');
+ const declined=resolveGreen033AfterRaid(s,{player:0,raidUid:'ark',siteUid:null});
+ assert.equal(declined.players[0].energy[0].uid,'arch');
+ assert.equal(declined.players[0].green033UsedTurn,undefined);
+});
+test('034 Q2282 capture ONE sidelined own character, facedown under site, energy grows immediately',()=>{
+ const s=state(),p=s.players[0];
+ p.energy[0]=card('field','TTG-1-034',{ready:true});
+ p.outside=[card('retired','TTG-1-005'),card('older','TTG-1-006')];
+ let energy=calculateTtgEnergyByColor(s,0).green;
+ const before=ids(p),pending=beginGreen034Sidelined(s,{player:0,retiredUid:'retired'});
+ const opts=legalGreen034SidelinedChoices(pending);
+ assert.deepEqual(opts.map(x=>x.siteUid),[null,'field']);
+ const done=resolveGreen034Sidelined(pending,opts.find(x=>x.siteUid==='field'));
+ assert.equal(done.players[0].energy[0].under[0].uid,'retired');
+ assert.equal(done.players[0].energy[0].under[0].faceDown,true);
+ assert.ok(!done.players[0].outside.some(x=>x.uid==='retired'));
+ assert.equal(calculateTtgEnergyByColor(done,0).green,energy+1);
+ assert.deepEqual(ids(done.players[0]),before);
+ const noSecondUse=beginGreen034Sidelined(done,{player:0,retiredUid:'older'});
+ assert.equal(noSecondUse.pending,null,'turn1 capture is not offered again this turn');
+ assert.deepEqual(noSecondUse.players[0].outside.map(x=>x.uid),['older']);
+});
+test('034 different physical sites retain independent turn1 capture eligibility',()=>{
+ const s=state(),p=s.players[0];
+ p.energy[0]=card('a','TTG-1-034',{green034UsedTurn:s.turn});
+ p.energy[1]=card('b','TTG-1-034');
+ p.outside=[card('retired','TTG-1-005')];
+ const pending=beginGreen034Sidelined(s,{player:0,retiredUid:'retired'});
+ assert.deepEqual(legalGreen034SidelinedChoices(pending).map(x=>x.siteUid),[null,'b']);
+ const r=resolveGreen034Sidelined(pending,{type:'green034Capture',player:0,retiredUid:'retired',siteUid:'b'});
+ assert.equal(r.players[0].energy[1].under[0].uid,'retired');
+ assert.equal(r.players[0].energy[0].under.length,0);
+});
+test('034 Super Galaxy 031 Raid: return ALL facedown cards into hand then place site facedown under Raid',()=>{
+ const s=state(),p=s.players[0];
+ p.energy[0]=card('galaxy','TTG-1-034',{under:[
+  card('fd1','TTG-1-005',{faceDown:true}),card('fd2','TTG-1-006',{faceDown:true})
+ ]});
+ p.front[0]=raid('super','TTG-1-031');
+ const before=ids(p);
+ assert.deepEqual(legalGreen034AfterRaid(s,{player:0,raidUid:'super'}).map(x=>x.siteUid),['galaxy',null]);
+ const r=resolveGreen034AfterRaid(s,{player:0,raidUid:'super',siteUid:'galaxy'});
+ assert.equal(r.players[0].energy[0],null);
+ assert.deepEqual(r.players[0].hand.map(x=>x.uid),['fd1','fd2']);
+ assert.ok(r.players[0].hand.every(x=>!x.faceDown));
+ assert.equal(r.players[0].front[0].under[0].uid,'galaxy');
+ assert.equal(r.players[0].front[0].under[0].faceDown,true);
+ assert.deepEqual(r.players[0].front[0].under[0].under,[]);
+ assert.deepEqual(ids(r.players[0]),before);
+});
+test('034 transfer decline and non-031 Raid or missing site leave all cards unchanged',()=>{
+ const s=state(),p=s.players[0];
+ p.energy[0]=card('galaxy','TTG-1-034');
+ p.front[0]=raid('other','TTG-1-027');
+ assert.deepEqual(legalGreen034AfterRaid(s,{player:0,raidUid:'other'}),[]);
+ p.front[0]=raid('super','TTG-1-031');
+ const decline=resolveGreen034AfterRaid(s,{player:0,raidUid:'super',siteUid:null});
+ assert.equal(decline.players[0].energy[0].uid,'galaxy');
+ assert.equal(decline.players[0].front[0].under.length,0);
+});
+test('site human/AI rule dispatch uses shared legal actions; no skipping AP',()=>{
+ const s=state();s.players[0].energy[0]=card('gen','TTG-1-017');
+ s.players[0].hand=[card('arch','TTG-1-033')];
+ const opts=legalTtgRuleActions(s,0).filter(x=>x.type==='ttgGreenSitePlay');
+ assert.ok(opts.length);
+ const chosen=opts.find(x=>x.slot===1);
+ assert.throws(()=>dispatchTtgRuleAction(s,{...chosen,payApUids:['wrong']}));
+ const done=dispatchTtgRuleAction(s,{...chosen,payApUids:['ap']});
+ assert.equal(done.players[0].energy[1].uid,'arch');
+});

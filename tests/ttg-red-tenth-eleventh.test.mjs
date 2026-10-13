@@ -1,0 +1,85 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {TTG_BY_ID} from '../dist/ttg-builder.mjs';
+import {legalRed069Main,resolveRed069Main,canRed070ServeAsRaidBase,red071ImpactNull} from '../dist/ttg-red-tenth-three.mjs';
+import {legalRedHighRaids,resolveRedHighRaid,legalRedRaidQueue,resolveRedRaidQueue,redRaidPassive,red073ReplaceLeaving} from '../dist/ttg-red-eleventh-three.mjs';
+const c=(uid,id,extra={})=>({uid,cardId:id,ready:true,stack:[],under:[],...extra});
+const p=()=>({front:[null,null,null,null],energy:[null,null,null,null],deck:[],hand:[],life:[],outside:[],removed:[],
+ apCards:[{uid:'A',ready:true},{uid:'B',ready:true}],energyProduced:{red:10,green:0}});
+const state=()=>({phase:'main',active:0,turn:9,status:'playing',players:[p(),p()]});
+const uidList=pl=>[...pl.front.filter(Boolean),...pl.energy.filter(Boolean),...pl.hand,...pl.deck,...pl.life,...pl.outside,...pl.removed].flatMap(function flat(c){return [c.uid,...(c.stack||[]).flatMap(flat),...(c.under||[]).flatMap(flat)]}).sort();
+test('069 Leeron pays own REST/sideline only with a real Gunmen recovery from outside',()=>{
+ const s=state();s.players[0].front[0]=c('leeron','TTG-1-069');
+ s.players[0].outside=[c('gun','TTG-1-072'),c('other','TTG-1-042')];
+ const initial=uidList(s.players[0]),options=legalRed069Main(s,0);
+ assert.deepEqual(options.map(x=>x.recoverUid),['gun']);
+ const r=resolveRed069Main(s,options[0]);
+ assert.equal(r.players[0].front[0],null);
+ assert.deepEqual(r.players[0].hand.map(x=>x.uid),['gun']);
+ assert.deepEqual(r.players[0].outside.map(x=>x.uid),['other','leeron']);
+ assert.deepEqual(uidList(r.players[0]),initial);
+});
+test('070 can substitute RAID base only with no own Kamina; 071 Impact-null isolated guard',()=>{
+ const s=state(),rossiu=c('ros','TTG-1-070');
+ assert.equal(canRed070ServeAsRaidBase(s,0,rossiu,c('g','TTG-1-072')),true);
+ assert.equal(canRed070ServeAsRaidBase(s,0,rossiu,c('s','TTG-1-056')),false);
+ s.players[0].energy[0]=c('kamina','TTG-1-042');
+ assert.equal(canRed070ServeAsRaidBase(s,0,rossiu,c('g','TTG-1-072')),false);
+ assert.equal(red071ImpactNull(c('dx','TTG-1-071')),true);
+});
+test('072 Kamina RAID spends 1 AP, enters ACTIVE, draw1 then optionally REST enemy <=3000',()=>{
+ const s=state(),pl=s.players[0],enemy=s.players[1];pl.energy[0]=c('generator','TTG-1-066',{gen:10});
+ pl.front[0]=c('kamina','TTG-1-045');
+ pl.hand=[c('gurren','TTG-1-072')];pl.deck=[c('draw','TTG-1-047')];
+ enemy.front[0]=c('victim','TTG-1-064');
+ const original=uidList(pl),opts=legalRedHighRaids(s,0);
+ const a=opts.find(x=>x.handUid==='gurren'&&x.line==='front');
+ assert.ok(a);
+ let r=resolveRedHighRaid(s,{...a,payApUids:['A']});
+ assert.equal(r.players[0].front[0].ready,true);
+ assert.equal(r.players[0].front[0].stack[0].uid,'kamina');
+ assert.equal(r.players[0].apCards[0].ready,false);
+ assert.deepEqual(uidList(r.players[0]),original);
+ // 045 base effect and 072 on-entry are independently selectable in either order.
+ assert.deepEqual(new Set(r.pending.steps),new Set(['entry072','base045']));
+ const e=legalRedRaidQueue(r).find(x=>x.step==='entry072'&&x.targetUid==='victim');
+ r=resolveRedRaidQueue(r,e);
+ assert.equal(r.players[1].front[0].ready,false);
+ assert.equal(r.players[0].hand[0].uid,'draw');
+ const rest=legalRedRaidQueue(r).find(x=>x.step==='base045'&&x.targetUid===null);
+ r=resolveRedRaidQueue(r,rest);
+ assert.equal(r.pending,null);
+ assert.deepEqual(uidList(r.players[0]),original);
+});
+test('073 upgrade Gurren Raid top to facedown preserving Kamina base and Simon requirement',()=>{
+ const s=state(),pl=s.players[0];pl.energy[0]=c('generator','TTG-1-066',{gen:10});
+ pl.front[0]=c('oldTop','TTG-1-072',{stack:[c('kamina','TTG-1-045')],raidedTurn:7});
+ pl.front[1]=c('simon','TTG-1-051');
+ pl.hand=[c('newTop','TTG-1-073')];
+ const before=uidList(pl),o=legalRedHighRaids(s,0).find(x=>x.handUid==='newTop'&&x.sourceUid==='oldTop');
+ assert.ok(o);
+ const next=resolveRedHighRaid(s,{...o,payApUids:['A']});
+ const upgraded=next.players[0].front[0];
+ assert.equal(upgraded.stack[0].uid,'kamina');
+ assert.deepEqual(upgraded.under.map(c=>c.uid),['oldTop']);
+ assert.ok(upgraded.under.every(c=>c.faceDown));
+ assert.deepEqual(uidList(next.players[0]),before);
+ assert.equal(redRaidPassive(next,0,upgraded).impact,1);
+ assert.ok(legalRedRaidQueue(next).some(x=>x.step==='entry073'));
+});
+test('074 Nia condition, active raid, mandatory draw + facedown bonus and <=20 DAMAGE2',()=>{
+ const s=state(),pl=s.players[0];pl.energy[0]=c('generator','TTG-1-066',{gen:10});
+ pl.front[0]=c('old','TTG-1-076',{stack:[c('simon','TTG-1-051')]});
+ pl.front[1]=c('nia','TTG-1-059');
+ pl.hand=[c('top','TTG-1-074')];pl.deck=[c('draw1','TTG-1-042'),c('draw2','TTG-1-043')];
+ const before=uidList(pl);
+ const opt=legalRedHighRaids(s,0).find(x=>x.handUid==='top');
+ assert.ok(opt);
+ let r=resolveRedHighRaid(s,{...opt,payApUids:['A']});
+ const x=legalRedRaidQueue(r).find(x=>x.step==='entry074');
+ r=resolveRedRaidQueue(r,x);
+ assert.equal(r.pending,null);
+ assert.deepEqual(r.players[0].hand.map(x=>x.uid),['draw1','draw2']);
+ assert.equal(redRaidPassive(r,0,r.players[0].front[0]).damage,2);
+ assert.deepEqual(uidList(r.players[0]),before);
+});

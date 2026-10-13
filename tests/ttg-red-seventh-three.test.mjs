@@ -1,0 +1,62 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {TTG_BY_ID} from '../dist/ttg-builder.mjs';
+import {calculateTtgEnergyByColor} from '../dist/ttg-energy-snapshot.mjs';
+import {red060ExtraEnergy,red061Entry,legalRed061Choices,resolveRed061Choice,red062Entry,
+ legalRed062Retrigger,resolveRed062Retrigger,legalRed062Main,resolveRed062Main} from '../dist/ttg-red-seventh-three.mjs';
+const c=(uid,id,extra={})=>({uid,cardId:id,ready:true,stack:[],under:[],...extra});
+const pl=()=>({front:[null,null,null,null],energy:[null,null,null,null],hand:[],deck:[],life:[],
+ outside:[],removed:[],apCards:[{uid:'A',ready:true},{uid:'B',ready:true}],turnCount:2});
+const s=()=>({phase:'main',active:0,turn:3,players:[pl(),pl()],status:'playing'});
+test('060 continuous production updates after moving Simon between Front and Energy, and raid base works',()=>{
+ const t=s(),p=t.players[0];p.energy[0]=c('nia','TTG-1-060');
+ assert.equal(red060ExtraEnergy(t,0,p.energy[0]),0);
+ assert.equal(calculateTtgEnergyByColor(t,0).red,1);
+ p.front[0]=c('sim','TTG-1-051');
+ assert.equal(calculateTtgEnergyByColor(t,0).red,2);
+ p.front[0]=c('raid','TTG-1-076',{stack:[c('sim','TTG-1-051')]});
+ assert.equal(calculateTtgEnergyByColor(t,0).red,2);
+ p.energy[1]=p.front[0];p.front[0]=null;
+ assert.equal(calculateTtgEnergyByColor(t,0).red,2);
+});
+test('061 Q2293/2294 chooses one from two effects, and with <=20 deck resolves recover first then deploy',()=>{
+ const t=s(),p=t.players[0];p.energy[0]=c('nia','TTG-1-061',{enteredTurn:3});
+ p.outside=[c('oldSimon','TTG-1-051')];p.hand=[c('newSimon','TTG-1-052')];
+ p.deck=Array.from({length:20},(_,i)=>c('d'+i,'TTG-1-042'));
+ const original=[...p.hand,...p.outside].map(x=>x.uid);
+ let q=red061Entry(t,{player:0,uid:'nia'});
+ assert.equal(q.pending.remaining,2);
+ assert.deepEqual([...new Set(legalRed061Choices(q).map(x=>x.mode))],['recover']);
+ assert.throws(()=>resolveRed061Choice(q,{type:'ttgRed061Choice',player:0,uid:'nia',mode:'deploy',handUid:'newSimon',line:'front',slot:0}),/illegal/);
+ q=resolveRed061Choice(q,legalRed061Choices(q).find(x=>x.recoverUid==='oldSimon'));
+ assert.equal(q.pending.step,'deploy');
+ assert.deepEqual([...new Set(legalRed061Choices(q).map(x=>x.mode))],['deploy']);
+ q=resolveRed061Choice(q,legalRed061Choices(q).find(x=>x.handUid==='newSimon'&&x.line==='front'));
+ assert.equal(q.players[0].front[0].uid,'newSimon');
+ assert.equal(q.players[0].front[0].ready,true);
+ assert.equal(q.pending.kind,'ttgRed061FollowupEntry');
+ assert.ok(q.players[0].hand.some(c=>c.uid==='oldSimon'));
+ assert.equal(original.length,2);
+ const t2=s();t2.players[0].front[0]=c('nia','TTG-1-061',{enteredTurn:3});
+ t2.players[0].deck=Array.from({length:21},(_,i)=>c('e'+i,'TTG-1-042'));
+ assert.equal(red061Entry(t2,{player:0,uid:'nia'}).pending.remaining,1);
+});
+test('062 reactivates only implemented low-energy Simon entry and REST on deck <=20 grants optional BP and READY',()=>{
+ const t=s(),p=t.players[0];p.front[0]=c('nia','TTG-1-062',{enteredTurn:3});
+ p.front[1]=c('sim','TTG-1-052',{ready:false});
+ p.hand=[c('cost','TTG-1-042')];
+ p.deck=Array.from({length:20},(_,i)=>c('d'+i,'TTG-1-042'));
+ let q=red062Entry(t,{player:0,uid:'nia'});
+ const trigger=legalRed062Retrigger(q).find(x=>x.targetUid==='sim');
+ q=resolveRed062Retrigger(q,trigger);
+ assert.equal(q.pending.kind,'ttgRed062FollowupEntry');
+ const choices=legalRed062Main(t,0);
+ assert.equal(choices.length,2);
+ const picked=choices.find(x=>x.discardUid==='cost');
+ const u=resolveRed062Main(t,picked);
+ assert.equal(u.players[0].front[0].ready,false);
+ assert.equal(u.players[0].front[1].ready,true);
+ assert.equal(u.players[0].front[1].currentBp,4000);
+ assert.deepEqual(u.players[0].outside.map(x=>x.uid),['cost']);
+ assert.equal(legalRed062Main(u,0).length,0);
+});
