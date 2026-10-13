@@ -8,11 +8,13 @@ test('exactly 80 canonical MST regular identities, no AP or alternate-art record
  assert.ok(UA54BT_VERIFIED.every(c=>!c.number.includes('AP')&&!c.number.includes('_p')));
  assert.equal(UA54BT_DATA_STATUS.apArtExcluded,true);
 });
-test('no unverified card can be advertised as fully automatic',()=>{
+test('all preliminary card data are accounted for but no card is marked fully automatic',()=>{
  assert.equal(UA54BT_VERIFIED.filter(c=>c.auto).length,0);
  const pending=UA54BT_VERIFIED.filter(c=>!c.verified);
- assert.ok(pending.length>0);
- for(const c of pending)assert.equal(c.energy,null);
+ assert.equal(pending.length,0);
+ for(const c of UA54BT_VERIFIED){
+  for(const field of ['energy','ap','bp','gen','nameJa','effect'])assert.notEqual(c[field],null,c.number+' '+field);
+ }
 });
 test('confirmed card data preserve printed AP and raid constraints',()=>{
  const eris=UA54BT_VERIFIED.find(c=>c.id==='MST-1-007');
