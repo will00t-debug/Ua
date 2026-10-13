@@ -16,7 +16,7 @@ const findById=(pl,id)=>{
  }
  throw new Error('Cannot find printed '+id);
 };
-test('core smoke is a named, strict subset and never claims all 81 cards are playable',()=>{
+test('all 81 printed cards are admitted to isolated core without claiming browser website automation',()=>{
  assert.ok(TTG_CORE_SMOKE_IDS.length>=13);
  assert.ok(TTG_CORE_SMOKE_IDS.length<81);
  assert.deepEqual(validateTtgCoreDeck(deck()),[]);
