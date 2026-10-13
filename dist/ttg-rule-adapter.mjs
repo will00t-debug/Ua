@@ -3,6 +3,7 @@
 // This adapter joins tested hand events, life triggers and a subset of
 // character actions; it is NOT a complete match dispatcher.
 import {legalTtgHandEvents,dispatchTtgHandEvent} from './ttg-event-resolver.mjs';
+import {withTtgDerivedEnergy} from './ttg-energy-snapshot.mjs';
 import {legalTtgEventTriggerChoices,resolveTtgEventLifeTrigger,TTG_IMPLEMENTED_EVENT_TRIGGERS} from './ttg-triggers.mjs';
 import {resolveTtgNia059,resolveTtgButa063,resolveTtgYoko065Step,resolveTtgMainEndRetire,resolveTtgPendingEndTurn} from './ttg-pending-rules.mjs';
 
@@ -20,7 +21,7 @@ export function legalTtgRuleActions(state,player){
  }
  if(state.active!==player||state.pending)return [];
  if(state.phase==='main'){
-  const list=legalTtgHandEvents(state,player).map(a=>({...a,player}));
+  const list=legalTtgHandEvents(withTtgDerivedEnergy(state,player),player).map(a=>({...a,player}));
   const pl=state.players[player];
   for(const c of owned(state,player)){
    if(!c.ready)continue;
@@ -57,16 +58,16 @@ export function dispatchTtgRuleAction(state,action){
  if(!playerOk(action?.player)||!actionMatches(legalTtgRuleActions(state,action.player),action))
   throw new Error('Illegal or unavailable TTG rule action');
  if(action.type==='resolveTtgTrigger')return resolveTtgEventLifeTrigger(state,action);
- if(action.type==='playTtgEvent')return dispatchTtgHandEvent(state,action);
- if(action.type==='activateNia059')return resolveTtgNia059(state,action);
- if(action.type==='activateButa063')return resolveTtgButa063(state,action);
- if(action.type==='stepYoko065')return resolveTtgYoko065Step(state,action);
+ if(action.type==='playTtgEvent')return withTtgDerivedEnergy(dispatchTtgHandEvent(withTtgDerivedEnergy(state,action.player),action),action.player);
+ if(action.type==='activateNia059')return withTtgDerivedEnergy(resolveTtgNia059(state,action),action.player);
+ if(action.type==='activateButa063')return withTtgDerivedEnergy(resolveTtgButa063(state,action),action.player);
+ if(action.type==='stepYoko065')return withTtgDerivedEnergy(resolveTtgYoko065Step(state,action),action.player);
  throw new Error('Unsupported TTG action');
 }
 // Phase hooks must run at their exact transition; they are exported for the
 // eventual match dispatcher and may not be skipped for scheduled retirement.
-export const resolveTtgMainPhaseEnd=resolveTtgMainEndRetire;
-export const resolveTtgTurnEnd=resolveTtgPendingEndTurn;
+export const resolveTtgMainPhaseEnd=state=>withTtgDerivedEnergy(resolveTtgMainEndRetire(state),state.active);
+export const resolveTtgTurnEnd=state=>withTtgDerivedEnergy(resolveTtgPendingEndTurn(state),state.active);
 
 // Deterministic AI for this implemented subset. It only chooses actions
 // offered by the same legal action generator that a human client must use.
