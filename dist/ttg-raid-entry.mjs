@@ -5,8 +5,10 @@ import {TTG_BY_ID} from './ttg-builder.mjs';
 import {spendTtgApCards} from './ttg-actions.mjs';
 import {canDeployTtgCard} from './ttg-actions.mjs';
 
-export const TTG_FULLY_RESOLVED_RAID_ENTRIES=Object.freeze(['TTG-1-071']);
-const allowed=new Set(TTG_FULLY_RESOLVED_RAID_ENTRIES);
+export const TTG_RAID_ENTRY_CARD_IDS=Object.freeze(['TTG-1-071']);
+// "Entry" means only physical RAID transition; life trigger and all combat effects
+// still require separate official-ruling verification.
+const allowed=new Set(TTG_RAID_ENTRY_CARD_IDS);
 const isPlayer=p=>p===0||p===1;
 const ownField=(pl)=>['front','energy'].flatMap(line=>(pl?.[line]||[]).map((card,slot)=>({card,line,slot}))).filter(x=>x.card);
 const printedName=c=>c?.nameJa??c?.name??TTG_BY_ID[c?.cardId]?.nameJa;
