@@ -37,7 +37,7 @@ test('Q2055-Q2060 skip ACTIVE once, then another ACTIVE attempt succeeds',()=>{
  assertSoloTrainingMatch(s);
 });
 test('Q2070-Q2071 printed-BP REST shadow character count excludes BP-less fields and ignores temporary BP buffs',()=>{
- let s=game(deck({'SLG-1-027':2,'SLG-1-035':2}));
+ let s=game({...SOLO_SHADOW_TRAINING_PRESET,'SLG-1-001':0,'SLG-1-035':4});
  const iron=put(s,'SLG-1-027',0,'front',0);
  const soldier=put(s,'SLG-1-030',0,'front',1,false);
  const realm=put(s,'SLG-1-035',0,'energy',0,false);
