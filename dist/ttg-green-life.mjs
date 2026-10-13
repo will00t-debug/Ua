@@ -64,7 +64,7 @@ export function beginTtgLifeTrigger(state,{player,lifeUid}={}){
  return result;
 }
 export function finalizeTtgLifeOutcome(state,defender){
- if(state.pendingTtgLife)return state;
+ if(state.pendingTtgLife||state.pending?.kind==='ttgGreenEntry')return state;
  const result=state;
  if(!result.players[defender].life.length&&result.status!=='finished'){
   result.status='finished';result.winner=1-defender;result.endReason='lifeDepleted';
