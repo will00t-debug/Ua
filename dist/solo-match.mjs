@@ -5,7 +5,7 @@ import {SOLO_LEVELING_CARDS} from './solo-leveling.mjs';
 import {normalizeSoloDeck} from './solo-decks.mjs';
 const DB=Object.fromEntries(SOLO_LEVELING_CARDS.map(c=>[c.id,c]));
 export const SOLO_MATCH_SUPPORTED=Object.freeze([
- 'SLG-1-001','SLG-1-002','SLG-1-004','SLG-1-005','SLG-1-017','SLG-1-012','SLG-1-025','SLG-1-026','SLG-1-006','SLG-1-007','SLG-1-009','SLG-1-010','SLG-1-013','SLG-1-014','SLG-1-015','SLG-1-016','SLG-1-027','SLG-1-036','SLG-1-037','SLG-1-038','SLG-1-040','SLG-1-029','SLG-1-030','SLG-1-031','SLG-1-032','SLG-1-033','SLG-1-035',
+ 'SLG-1-001','SLG-1-002','SLG-1-004','SLG-1-005','SLG-1-017','SLG-1-012','SLG-1-025','SLG-1-026','SLG-1-006','SLG-1-007','SLG-1-009','SLG-1-010','SLG-1-013','SLG-1-014','SLG-1-015','SLG-1-016','SLG-1-027','SLG-1-034','SLG-1-036','SLG-1-037','SLG-1-038','SLG-1-039','SLG-1-040','SLG-1-029','SLG-1-030','SLG-1-031','SLG-1-032','SLG-1-033','SLG-1-035',
  'SLG-1-041','SLG-1-042','SLG-1-050','SLG-1-053','SLG-1-054','SLG-1-068','SLG-1-070','SLG-1-073','SLG-1-043','SLG-1-045','SLG-1-052','SLG-1-055','SLG-1-056',
  'SLG-1-062','SLG-1-065','SLG-1-066','SLG-1-069','SLG-1-067','SLG-1-071','SLG-1-072','SLG-1-074','SLG-1-075','SLG-1-076','SLG-1-078','SLG-1-079','SLG-1-080','SLG-1-058'
 ]);
@@ -307,6 +307,48 @@ function choose(s,action){
   const p=s.players[q.p],i=p.hand.findIndex(c=>c.uid===action.uid);
   if(i<0)throw Error('invalid required hand discard');
   p.outside.push(p.hand.splice(i,1)[0]);p.discardByOwnEffectTurn=s.turn;s.pending=null;
+ }else if(q.kind==='castleCost'){
+  const p=s.players[q.p],i=p.hand.findIndex(c=>c.uid===action.uid);
+  if(i<0)throw Error('illegal Demon Castle discard');
+  p.outside.push(p.hand.splice(i,1)[0]);
+  s.pending={kind:'castlePotion',p:q.p};
+ }else if(q.kind==='castlePotion'){
+  const p=s.players[q.p];
+  if(action.uid!=null){
+   const i=p.outside.findIndex(c=>c.uid===action.uid&&c.cardId==='SLG-1-037');
+   if(i<0||p.ap<1||soloEnergy(s,q.p)<4)throw Error('illegal Demon Castle potion');
+   p.ap--;p.removed.push(p.outside.splice(i,1)[0]);
+   s.pending={kind:'castleRecover',p:q.p,options:p.outside.filter(c=>d(c).type==='character'&&d(c).bp!=null&&d(c).bp<=4000).map(c=>c.uid)};
+  }else s.pending=null;
+ }else if(q.kind==='castleRecover'){
+  const p=s.players[q.p];
+  if(action.uid!=null){
+   const i=p.outside.findIndex(c=>c.uid===action.uid);
+   if(i<0||!q.options.includes(action.uid))throw Error('illegal Demon Castle recovery');
+   p.hand.push(p.outside.splice(i,1)[0]);
+  }
+  draw(s,p);s.pending=null;
+ }else if(q.kind==='shadowSummonMode'){
+  if(!['oneActive','twoRest'].includes(action.mode))throw Error('illegal shadow resurrection mode');
+  s.pending={kind:'shadowSummonCard',p:q.p,mode:action.mode,left:action.mode==='oneActive'?1:2};
+ }else if(q.kind==='shadowSummonCard'){
+  const p=s.players[q.p];
+  if(action.uid==null){s.pending=null;}
+  else{
+   const index=p.outside.findIndex(c=>c.uid===action.uid&&d(c).type==='character'&&shadow(c)&&
+     (q.mode==='oneActive'||d(c).energy<=3));
+   if(index<0||!['energy','front'].includes(action.line)||!Number.isInteger(action.slot)||action.slot<0||action.slot>3||p[action.line][action.slot])throw Error('illegal shadow resurrection target or position');
+   const [c]=p.outside.splice(index,1);
+   position(c,q.p,action.line,action.slot);
+   c.ready=q.mode==='oneActive';p[action.line][action.slot]=c;
+   const remaining=q.left-1;
+   s.pending=null;onEnter(s,c);
+   if(remaining>0&&s.status==='playing'){
+    const continuation={kind:'shadowSummonCard',p:q.p,mode:q.mode,left:remaining};
+    if(s.pending){s.pendingStack??=[];s.pendingStack.push(continuation);}
+    else s.pending=continuation;
+   }
+  }
  }else if(q.kind==='eventDiscard'){
   const p=s.players[q.p],i=p.hand.findIndex(c=>c.uid===action.uid);
   if(i<0)throw Error('invalid event discard');
@@ -430,6 +472,7 @@ function choose(s,action){
   if(action.uid!=null&&!q.choices.includes(action.uid))throw Error('illegal block');
   s.pending=null;combat(s,action.uid);
  }else throw Error('unknown choice type');
+ if(!s.pending&&s.pendingStack?.length)s.pending=s.pendingStack.pop();
 }
 function onEnter(s,c){
  const p=s.players[c.owner];
@@ -488,6 +531,14 @@ export function soloTrainingLegalActions(s){
   if(q.kind==='entry002Mode')return [{type:'choose',mode:'drawDiscard'},{type:'choose',mode:'buff'}];
   if(q.kind==='entry002Buff')return [{type:'choose',uid:null},...field(s.players[q.p]).filter(x=>x.uid!==q.source&&d(x).type==='character').map(x=>({type:'choose',uid:x.uid}))];
   if(q.kind==='entry002Discard'||q.kind==='entry004Discard')return s.players[q.p].hand.map(c=>({type:'choose',uid:c.uid}));
+  if(q.kind==='castleCost')return s.players[q.p].hand.map(c=>({type:'choose',uid:c.uid}));
+  if(q.kind==='castlePotion')return [{type:'choose',uid:null},...s.players[q.p].outside.filter(c=>c.cardId==='SLG-1-037'&&s.players[q.p].ap>=1&&soloEnergy(s,q.p)>=4).map(c=>({type:'choose',uid:c.uid}))];
+  if(q.kind==='castleRecover')return [{type:'choose',uid:null},...q.options.map(uid=>({type:'choose',uid}))];
+  if(q.kind==='shadowSummonMode')return [{type:'choose',mode:'oneActive'},{type:'choose',mode:'twoRest'}];
+  if(q.kind==='shadowSummonCard'){
+   const p=s.players[q.p],available=p.outside.filter(c=>d(c).type==='character'&&shadow(c)&&(q.mode==='oneActive'||d(c).energy<=3));
+   return [{type:'choose',uid:null},...available.flatMap(c=>['front','energy'].flatMap(line=>p[line].flatMap((v,slot)=>v?[]:[{type:'choose',uid:c.uid,line,slot}])) )];
+  }
   if(q.kind==='eventDiscard')return s.players[q.p].hand.map(c=>({type:'choose',uid:c.uid}));
   if(q.kind==='eventRecover'||q.kind==='eventDance')return [{type:'choose',uid:null},...q.options.map(uid=>({type:'choose',uid}))];
   if(q.kind==='eventRestoreAp'){
@@ -558,6 +609,11 @@ export function soloTrainingLegalActions(s){
    }
   }
   for(const c of field(p)){
+   if(c.cardId==='SLG-1-034'&&c.ready){
+    actions.push({type:'ability',uid:c.uid,mode:'mill'});
+    if(p.outside.length>=20&&p.hand.length&&p.ap>=1&&soloEnergy(s)>=4&&p.outside.some(x=>x.cardId==='SLG-1-037'))
+     actions.push({type:'ability',uid:c.uid,mode:'potion'});
+   }
    if(c.cardId==='SLG-1-071'&&c.ready&&c.usedTurn!==s.turn&&field(p).some(x=>x.uid!==c.uid&&d(x).type==='character'))actions.push({type:'ability',uid:c.uid,mode:'marie'});
    if(c.cardId==='SLG-1-050'&&c.ready)actions.push({type:'ability',uid:c.uid,mode:'retireRecover'});
    if(c.cardId==='SLG-1-035'&&c.ready)actions.push({type:'ability',uid:c.uid,mode:'boost'});
@@ -603,6 +659,8 @@ export function soloTrainingDispatch(original,action){
   if(c.cardId==='SLG-1-036'){
    draw(s,p,3);
    if(s.status==='playing'&&p.hand.length)s.pending={kind:'eventDiscard',p:s.active,left:Math.min(2,p.hand.length)};
+  }else if(c.cardId==='SLG-1-039'){
+   s.pending={kind:'shadowSummonMode',p:s.active};
   }else if(c.cardId==='SLG-1-037'){
    s.pending={kind:'eventRecover',p:s.active,options:p.outside.filter(x=>d(x).type==='character'&&d(x).bp!==null&&d(x).bp<=4000).map(x=>x.uid)};
   }else if(['SLG-1-038','SLG-1-078','SLG-1-079'].includes(c.cardId)){
@@ -635,6 +693,10 @@ export function soloTrainingDispatch(original,action){
   }else if(c.cardId==='SLG-1-050'){
    c.ready=false;retire(s,s.active,c);
    s.pending={kind:'sungRecovery',p:s.active,options:p.outside.filter(x=>d(x).type==='character'&&d(x).nameJa==='水篠 旬').map(x=>x.uid)};
+  }else if(c.cardId==='SLG-1-034'){
+   c.ready=false;
+   if(action.mode==='mill'){if(p.deck.length)p.outside.push(p.deck.shift());}
+   else s.pending={kind:'castleCost',p:s.active};
   }else if(c.cardId==='SLG-1-035'){
    c.ready=false;
    const amount=field(p).filter(x=>d(x).traits?.includes('影之軍團')).length>=5?1000:500;
@@ -674,6 +736,10 @@ export function soloTrainingBotAction(s){
   if(s.pending.kind==='kaiserMode'||s.pending.kind==='kibaMode')return legal[0];
   if(s.pending.kind==='belDiscard')return legal.find(a=>a.uid!=null)||legal[0];
   if(s.pending.kind==='attackDraw')return legal[legal.length-1];
+  if(s.pending.kind==='castleCost'||s.pending.kind==='castlePotion'||s.pending.kind==='castleRecover')
+   return legal.find(a=>a.uid!=null)||legal[0];
+  if(s.pending.kind==='shadowSummonMode')return legal[0];
+  if(s.pending.kind==='shadowSummonCard')return legal.find(a=>a.uid!=null)||legal[0];
   if(s.pending.kind==='eventRestoreAp')return legal[legal.length-1];
   if(s.pending.kind==='eventDestroy'||s.pending.kind==='eventDiscard'||s.pending.kind==='marieBuff')return legal[0];
   if(s.pending.kind==='eventRecover'||s.pending.kind==='eventDance')return legal.find(a=>a.uid!=null)||legal[0];
