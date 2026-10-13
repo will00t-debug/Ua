@@ -131,3 +131,15 @@
 - **TTG-1-008**：[日文官方卡文與 Q2263](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-008)。在 50 張實際對局狀態下，先選擇不阻擋，再發生達莉底板的未阻擋抽1，最後輪到防守方的 DRAW 生命觸發選擇。既有 Raid、IMPACT、生命檢查測試一併保留。
 
 本次只增加逐卡證據，不會把原本未完成完整驗收的 auto:false 標記改成 true；需全量 Node22 CI 合格後才能合併。 
+
+## 2026-10-14：天元突破 009～011 官方逐卡驗收案例（PR #37）
+
+本批針對**日本官方個別卡文**建立可執行的情境測試，不等同完整 81 張效果認證。證據：`tests/ttg-official-acceptance-009-011.test.mjs`（4 個子測試）。
+
+| 卡號 | 已驗證的真實結算／選擇 | 尚待完整驗收 |
+|---|---|---|
+| [TTG-1-009](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-009) | 登場抽1再棄手牌1，含「棄掉剛抽到的同一張實體」分支；非法棄牌必須拒絕；卡片守恆；DRAW Trigger 印刷資料 | 真正生命區 DRAW 與同時其他能力的交互時序 |
+| [TTG-1-010](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-010) | 登場看頂3，只可拿最多1張「大グレン団」特徵；可放棄，拿牌後需棄1；剩餘牌依指定順序放牌庫底；禁止不符特徵卡 | 只有不足3張牌時及跨卡查看牌庫隱私、連續選擇手機操作 |
+| [TTG-1-011](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-011) | 自己回合且總能源8時 BP2500→4000；主階段同一實體每回合一次，二選一為發生綠能源+1或前線也產能源；持續到下一次自己回合開始而非當前回合結束 | 兩張同名卡同場、Raid疊底與跨卡能源暫時倍率的完整官方情境 |
+
+此批測試曾因人工測試局面忘記更新能源快取及使用複製前的角色參照而失敗；已修正**測試前置條件**並保留實體卡片檢查，不是降低引擎驗證強度。仍維持正式全卡 `auto:false` 標記。
