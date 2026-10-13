@@ -10,7 +10,7 @@ function safeBoardScore(s,action,p,known){
   for(let i=0;i<2;i++){
    if(next.players[i].deck.length!==s.players[i].deck.length||
       next.players[i].life.length!==s.players[i].life.length||
-      next.players[i].hand.length!==s.players[i].hand.length)return null;
+      next.players[i].hand.length!==s.players[i].hand.length-(i===p?1:0))return null;
   }
   // A pending public choice does not itself reveal hidden cards. Compare only
   // equivalent resolution stages; never treat an unresolved effect as finished.
