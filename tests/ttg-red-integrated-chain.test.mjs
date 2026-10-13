@@ -4,7 +4,7 @@ import {newTtgCoreMatch,legalTtgCoreActions,dispatchTtgCoreAction,assertTtgCoreS
 import {withTtgDerivedEnergy} from '../dist/ttg-energy-snapshot.mjs';
 import {beginTtgLifeTrigger,legalTtgLifeChoices,resolveTtgLifeChoice} from '../dist/ttg-green-life.mjs';
 import {legalTtgRuleActions,dispatchTtgRuleAction} from '../dist/ttg-rule-adapter.mjs';
-const ids=['042','043','047','046','051','052','056','059','061','062','066','072'];
+const ids=['042','043','045','046','051','052','056','059','061','062','066','072'];
 const deck=()=>Object.fromEntries(ids.map(n=>['TTG-1-'+n,4]).concat([['TTG-1-073',1],['TTG-1-076',1]]));
 const extract=(pl,id)=>{
  for(const zone of ['hand','deck','life','outside']){
