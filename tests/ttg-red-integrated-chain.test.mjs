@@ -85,5 +85,6 @@ test('red RAID life from outside: no AP, base, red energy, physical UID and defe
  assert.ok(target);
  s=dispatchTtgRuleAction(s,target);
  assert.equal(s.pending,null);
+ s=withTtgDerivedEnergy(withTtgDerivedEnergy(s,0),1);
  assert.ok(assertTtgCoreState(s));
 });
