@@ -205,7 +205,7 @@ export const resolveTtgTurnEnd=state=>{
  const s5=resolveGreen025TurnEnd(s4);
  const s6=resolveGreen008TurnEnd(s5);
  const s7=resolveGreen012TurnEnd(s6);
- return withTtgDerivedEnergy(expireTtgRed050Energy(s7),state.active);
+ return withTtgDerivedEnergy(expireRed080AtOwnTurnEnd(expireTtgRed050Energy(s7),state.active),state.active);
 }
 
 // Deterministic AI for this implemented subset. It only chooses actions
