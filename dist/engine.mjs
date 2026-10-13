@@ -452,7 +452,17 @@ function resolveRule(s,e){
  }
  if(r.op==='peekTop'){
   const owner=r.deckOwner==='opponent'?1-p:p;const cards=s.players[owner].deck.slice(0,r.count);if(!cards.length)return;
-  if(r.millMax){prompt(s,p,`選擇最多 ${r.millMax} 張牌送到場外`,cards.filter(c=>matchFilter(c,r.millFilter)).map(c=>({id:c.uid,label:cardOf(c).name,cardId:c.cardId})),{...e,kind:'peekMill',cards:cards.map(c=>c.uid)},0,r.millMax);}
+  if(r.millMax){
+   const eligible=cards.filter(c=>matchFilter(c,r.millFilter));
+   if(eligible.length){
+    prompt(s,p,`查看牌庫頂 ${cards.length} 張：選擇最多 ${r.millMax} 張符合條件的卡送至場外`,eligible.map(c=>({id:c.uid,label:cardOf(c).name,cardId:c.cardId})),{...e,kind:'peekMill',cards:cards.map(c=>c.uid)},0,r.millMax);
+   }else if(cards.length>1){
+    // Even with no legal card to mill, the owner must see the top cards and choose their order.
+    prompt(s,p,'查看牌庫頂：沒有符合送場外條件的卡，請選擇放回順序',cards.map(c=>({id:c.uid,label:cardOf(c).name,cardId:c.cardId})),{...e,kind:'peekOrder',uids:cards.map(c=>c.uid),chosen:[]});
+   }else{
+    prompt(s,p,'查看牌庫頂：沒有符合送場外條件的卡', [{id:'done',label:'確認，維持原狀'}],{...e,kind:'peekNoMill',cards:cards.map(c=>c.uid)});
+   }
+  }
   else if(r.count===1)prompt(s,p,`查看 ${cardOf(cards[0]).name}，選擇去向`,(r.destinations||[]).filter(d=>d!=='hand'||matchFilter(cards[0],r.handFilter)).map(d=>({id:d,label:d==='top'?'放回牌堆頂':d==='bottom'?'放在牌堆底':d==='hand'?'加入手牌':'送到場外'})),{...e,kind:'peekChoice',cards:cards.map(c=>c.uid)});
   return;
  }
@@ -820,8 +830,13 @@ function resolveChoice(s,ids){
   case 'peekChoice':{const owner=e.rule.deckOwner==='opponent'?1-p:p,deck=s.players[owner].deck,card=deck.find(x=>x.uid===e.cards[0]),dest=ids[0];if(!card)break;
    const i=deck.findIndex(c=>c.uid===card.uid);deck.splice(i,1);
    if(dest==='top')deck.unshift(card);else if(dest==='hand')s.players[p].hand.push(card);else if(dest==='bottom')deck.push(card);else if(dest==='outside')s.players[owner].outside.push(plain(card));break;}
+  case 'peekNoMill':break;
   case 'peekMill':{const deck=s.players[p].deck;
-   for(const uid of ids){const i=deck.findIndex(c=>c.uid===uid);if(i>=0)s.players[p].outside.push(plain(deck.splice(i,1)[0]));}
+   for(const uid of ids){const i=deck.findIndex(c=>c.uid===uid);if(i>=0){
+    const moved=deck.splice(i,1)[0];s.players[p].outside.push(plain(moved));
+    // Sideline is public; the looked-at cards that remain in the deck must stay private.
+    log(s,`${s.players[p].name}將${cardOf(moved).name}從牌庫頂送至場外。`,'effect');
+   }}
    const remain=e.cards.filter(uid=>!ids.includes(uid)&&deck.some(c=>c.uid===uid));
    if(remain.length>1)prompt(s,p,'依序選擇要放回牌堆頂的卡',remain.map(uid=>{const c=deck.find(x=>x.uid===uid);return {id:uid,cardId:c.cardId,label:cardOf(c).name};}),{kind:'peekOrder',p,uids:remain,chosen:[]});break;}
   case 'peekOrder':{const order=[...(e.chosen||[]),ids[0]],remain=e.uids.filter(uid=>!order.includes(uid)),deck=s.players[p].deck;
