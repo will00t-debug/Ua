@@ -5,7 +5,7 @@ const advance=(s,target)=>{for(let i=0;i<5&&s.phase!==target;i++)s=soloTrainingD
 test('training deck uses exactly 50 legitimate green cards, and rejects every unsupported SLG effect',()=>{
  assert.deepEqual(soloTrainingDeckIssues(SOLO_TRAINING_PRESET),[]);
  const size=Object.values(SOLO_TRAINING_PRESET).reduce((a,b)=>a+b,0);assert.equal(size,50);
- assert.equal(SOLO_MATCH_SUPPORTED.length,41);
+ assert.equal(SOLO_MATCH_SUPPORTED.length,50);
  assert.match(soloTrainingDeckIssues({'SLG-1-030':12,'SLG-1-047':4}).join(';'),/50/);
  assert.match(soloTrainingDeckIssues({...SOLO_TRAINING_PRESET,'SLG-1-047':1}).join(';'),/未接入/);
 });
