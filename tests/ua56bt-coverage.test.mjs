@@ -6,7 +6,7 @@ import {TTG_PENDING_CARDS} from '../dist/ttg-pending.mjs';
 import {TTG_IMPLEMENTED_HAND_EVENTS} from '../dist/ttg-event-resolver.mjs';
 import {TTG_IMPLEMENTED_EVENT_TRIGGERS} from '../dist/ttg-triggers.mjs';
 
-const PENDING_ISOLATED=new Set(['TTG-1-006','TTG-1-059','TTG-1-063','TTG-1-065']);
+const PENDING_ISOLATED=new Set(['TTG-1-002','TTG-1-006','TTG-1-049','TTG-1-059','TTG-1-063','TTG-1-065','TTG-1-071']);
 const ENERGY_PASSIVES=new Set(['TTG-1-019','TTG-1-033','TTG-1-066']);
 const lines=readFileSync(new URL('../data/ua56bt-audit.csv',import.meta.url),'utf8').trim().split(/\r?\n/);
 const rows=lines.slice(1).map(line=>{
