@@ -221,7 +221,7 @@ export function ttgCoreAiChoice(s){
  if(!options.length)return null;
  const p=s.active,pl=s.players[p];
  if(s.pending?.kind==='block'){
-  const att=pl.front.find(c=>c.uid===s.pending.attackerUid);
+  const att=pl.front.find(c=>c?.uid===s.pending.attackerUid);
   const other=s.players[1-p];
   const candidates=other.front.filter(x=>x?.ready&&bp(s,1-p,x)>=bp(s,p,att));
   if(candidates.length)return {type:'block',blockUid:candidates.sort((a,b)=>bp(s,1-p,a)-bp(s,1-p,b))[0].uid};
