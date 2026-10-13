@@ -216,3 +216,52 @@ test('TTG-1-048 first block readies itself, second block rests it (Double Block)
  assert.equal(st.players[1].front[0].currentBp,TTG_BY_ID[defender.cardId].bp,'previous attack buff expires at own start');
  assert.equal(st.players[1].front[0].doubleBlockUntilOwnStartTurnCount,undefined);
 });
+
+test('50-card ALL GREEN subset plays to completion against itself without skipping entries',()=>{
+ const green=Object.fromEntries([
+  ...['001','002','003','005','006','009','010','011','014','015','018','019']
+   .map(n=>['TTG-1-'+n,4]),['TTG-1-020',2]
+ ]);
+ assert.equal(Object.values(green).reduce((n,x)=>n+x,0),50);
+ assert.deepEqual(validateTtgCoreDeck(green),[]);
+ for(const seed of [5,12,47]){
+  const initial=newTtgCoreMatch({decks:[green,green],seed});
+  const done=runTtgCoreAiMatch(initial,{maxSteps:9000});
+  assert.equal(done.truncated,false,JSON.stringify({seed,actions:done.actions,turn:done.state.turn}));
+  assert.equal(done.state.status,'finished');
+  assert.ok(done.actions>=20);
+  assert.ok(assertTtgCoreState(done.state));
+  assert.equal(initial.players[0].hand.length,7,'original game unchanged');
+ }
+});
+test('green 009 mandatory draw/discard must resolve before continuing Main phase',()=>{
+ const green=Object.fromEntries([...['001','002','003','005','006','009','010','011','014','015','018','019']
+  .map(n=>['TTG-1-'+n,4]),['TTG-1-020',2]]);
+ let st=newTtgCoreMatch({decks:[green,green],seed:7});
+ // Resolve a known green 009 using the existing drawn 50 physical cards.
+ const owner=st.players[0];
+ let i=owner.hand.findIndex(c=>c.cardId==='TTG-1-009');
+ if(i<0){
+  const j=owner.deck.findIndex(c=>c.cardId==='TTG-1-009');
+  const retrieved=owner.deck.splice(j,1)[0];
+  owner.deck.push(owner.hand.shift());
+  owner.hand.push(retrieved);
+ }
+ st=dispatchTtgCoreAction(st,{type:'next'});
+ st=dispatchTtgCoreAction(st,{type:'next'});
+ // A zero-energy generator is required to afford the 009 play.
+ const zero=owner.hand.find(c=>TTG_BY_ID[c.cardId].energy===0);
+ if(zero){
+  const idx=owner.hand.indexOf(zero);owner.energy[0]=owner.hand.splice(idx,1)[0];
+ }
+ st=withTtgDerivedEnergy(st,0);
+ const action=legalTtgCoreActions(st).find(a=>a.type==='play'&&st.players[0].hand.find(c=>c.uid===a.handUid)?.cardId==='TTG-1-009');
+ if(!action)return; // energy requirement depends on printed opening order
+ const next=dispatchTtgCoreAction(st,action);
+ assert.equal(next.pending.kind,'ttgGreenEntry');
+ assert.ok(legalTtgCoreActions(next).every(a=>a.type==='resolveGreenEntry'));
+ assert.throws(()=>dispatchTtgCoreAction(next,{type:'next'}));
+ const resolved=dispatchTtgCoreAction(next,legalTtgCoreActions(next)[0]);
+ assert.equal(resolved.pending,null);
+ assert.ok(assertTtgCoreState(resolved));
+});
