@@ -10,7 +10,7 @@ export function greenTtgBpBonus(state,player,c){
  if(![0,1].includes(player)||!c||!state?.players?.[player])throw new Error('Invalid green BP source');
  const id=c.cardId,pl=state.players[player];
  if(id==='TTG-1-006'&&state.active===player&&
-    calculateTtgEnergyByColor(state,player).green>=6)return 1000;
+    Object.values(calculateTtgEnergyByColor(state,player)).reduce((n,x)=>n+x,0)>=6)return 1000;
  if(id==='TTG-1-011'&&state.active===player&&
     Object.values(calculateTtgEnergyByColor(state,player)).reduce((n,x)=>n+x,0)>=8)return 1500;
  if(id==='TTG-1-007'&&hasName(pl,'ダリー'))return 1000;
@@ -42,5 +42,5 @@ export function greenTtgCanAttackOrBlock(state,player,c){
  return !!c;
 }
 export function greenTtgImpactNull(blocker){
- return ['TTG-1-005','TTG-1-025','TTG-1-030'].includes(blocker?.cardId);
+ return ['TTG-1-005','TTG-1-030'].includes(blocker?.cardId);
 }
