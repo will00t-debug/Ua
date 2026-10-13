@@ -15,7 +15,8 @@ export function ttgRedStarterBpBonus(state,player,card){
  return field(state.players[player]).some(containsSimon)?500:0;
 }
 export function ttgRedStarterImpactNull(card){
- return card?.cardId==='TTG-1-043';
+ return card?.cardId==='TTG-1-043'||
+  (card?.cardId==='TTG-1-048'&&card.doubleBlockUntilOwnStartTurnCount!=null);
 }
 // Q2285: opens only AFTER blocker choice was declined, BEFORE life damage.
 // All seven searched cards remain physically in the deck while a decision is pending.
