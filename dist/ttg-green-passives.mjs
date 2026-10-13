@@ -42,5 +42,5 @@ export function greenTtgCanAttackOrBlock(state,player,c){
  return !!c;
 }
 export function greenTtgImpactNull(blocker){
- return ['TTG-1-005','TTG-1-030'].includes(blocker?.cardId);
+ return ['TTG-1-004','TTG-1-005','TTG-1-030'].includes(blocker?.cardId);
 }
