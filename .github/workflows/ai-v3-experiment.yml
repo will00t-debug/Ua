@@ -35,7 +35,7 @@ jobs:
           node-version: '22'
       - name: Run neural learning and held-out comparison
         env:
-          TRAIN_GAMES: ${{ inputs.games || '200' }}
+          TRAIN_GAMES: ${{ inputs.games || '700' }}
           TEST_GAMES: ${{ inputs.eval || '72' }}
         run: |
           npm test
