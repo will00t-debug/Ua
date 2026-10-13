@@ -47,7 +47,7 @@ test('SLG-1-001 official BP: threshold >=5 outside, only during its owner turn',
 });
 test('SLG-1-002 official entry: draw 1 and discard exactly 1 as chosen',()=>{
  const deck={...SOLO_SHADOW_TRAINING_PRESET,'SLG-1-009':0,'SLG-1-002':4};
- let s=match(deck);s.phase='main';s.players[0].ap=3;
+ let s=match(deck);s.phase='main';s.players[0].maxAp=3;s.players[0].ap=3;
  const c=moveHand(s,'SLG-1-002');
  s=soloTrainingDispatch(s,action(s,a=>a.type==='play'&&a.uid===c.uid&&a.line==='energy'&&a.slot===0));
  assert.equal(s.pending?.kind,'entry002Mode');
@@ -64,7 +64,7 @@ test('SLG-1-002 official entry: draw 1 and discard exactly 1 as chosen',()=>{
 });
 test('SLG-1-002 official entry alternative: another character gets 1000 BP, self excluded',()=>{
  const deck={...SOLO_SHADOW_TRAINING_PRESET,'SLG-1-009':0,'SLG-1-002':4};
- let s=match(deck);s.phase='main';s.players[0].ap=3;
+ let s=match(deck);s.phase='main';s.players[0].maxAp=3;s.players[0].ap=3;
  const target=place(s,'SLG-1-001','front',0,true);
  const card=moveHand(s,'SLG-1-002');
  s=soloTrainingDispatch(s,action(s,a=>a.type==='play'&&a.uid===card.uid&&a.line==='energy'&&a.slot===0));
