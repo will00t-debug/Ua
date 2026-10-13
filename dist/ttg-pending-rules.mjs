@@ -37,9 +37,10 @@ export function resolveTtgNia059(state,{player,uid,targetUid}={}){
 // mandatory retirement at end of the main phase, NOT immediately on REST.
 export function resolveTtgButa063(state,{player,uid}={}){
  const source=assertSource(state,player,uid,'TTG-1-063');
- if(!source.card.ready)throw new Error('Buta must be ACTIVE to pay REST');
+ if(!source.card.ready||source.card.ttg063ActivatedTurn===state.turn)throw new Error('Buta must be ACTIVE and not used this turn');
  const result=copy(state),c=find(result.players[player],uid).card;
  c.ready=false;
+ c.ttg063ActivatedTurn=state.turn;
  c.energyBonus=(c.energyBonus||0)+1;
  c.retireAtMainEndTurn=state.turn;
  return result;
