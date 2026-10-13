@@ -293,3 +293,27 @@ test('Q2029: 022 attack-ended swap waits until the defender finishes an ACTIVE l
  assert.equal(s.pending.kind,'slg022Swap','swap only offered after Trigger choice');
  assertSoloTrainingMatch(s);
 });
+
+test('Q2046/Q2052 removing 048 top reveals 047 Raid base WITHOUT re-firing 047 enter-draw or old 048 retreat trigger',()=>{
+ let s=fixtures('green',['SLG-1-047','SLG-1-048']);greenPower(s);
+ const base=onField(s,'SLG-1-045','front',0);
+ s=raid(s,'SLG-1-047',base).s; // 047 enters here, valid draw exactly once
+ const first=s.players[0].front[0];
+ const next=prepare(s,'SLG-1-048');
+ const secondRaid=legal(s,a=>a.type==='raid'&&a.uid===next.uid&&a.target===first.uid&&a.line==='front');
+ s=dispatch(s,secondRaid);
+ if(s.pending?.kind==='slg048Deploy')s=dispatch(s,{type:'choose',uid:null});
+ const second=s.players[0].front[0];second.ready=false;
+ second.under.push(...s.players[0].deck.splice(0,3).map(c=>({...c,faceDown:true})));
+ const deckBefore=s.players[0].deck.length,handBefore=s.players[0].hand.length;
+ s.phase='attack';s=dispatch(s,{type:'next'});
+ assert.equal(s.pending.kind,'slgEndRaid');
+ const action=legal(s,x=>x.uid==='peel'&&x.used?.length===3);
+ s=dispatch(s,action);
+ assert.equal(s.players[0].front[0].uid,first.uid,'old 047 must stay as face-up base');
+ assert.equal(s.players[0].front[0].ready,false,'REST is inherited from 048');
+ assert.equal(s.players[0].deck.length,deckBefore,'base must not re-trigger 047 enter draw');
+ assert.equal(s.players[0].hand.length,handBefore,'no extra draw or discard');
+ assert.ok(s.players[0].outside.some(c=>c.uid===second.uid),'048 goes to outside without a retirement trigger');
+ assertSoloTrainingMatch(s);
+});
