@@ -98,3 +98,20 @@ test('normal play shows inactive Raid-box indicator, rather than an active Raid 
  assert.match(ui,/RAID 未啟動/);
  assert.match(ui,/普通登場：Raid 框內能力無效/);
 });
+
+test('EX15BT/BLC-4-033 Yoruichi Raid-box entry only works after real Raid',()=>{
+ let s=fixture();energyFor(s,'BLC-4-033');
+ const base=card(s,0,'BLC-4-031');base.ready=false;s.players[0].front[0]=base;
+ const other=card(s,0,'BLC-4-030');other.ready=false;s.players[0].front[1]=other;
+ const top=card(s,0,'BLC-4-033');s.players[0].hand.push(top);
+ const a=legalActions(s).find(a=>a.type==='raid'&&a.uid===top.uid&&a.target===base.uid&&a.line==='front'&&a.slot===0);
+ assert.ok(a,'expected valid Yoruichi Raid');
+ s=dispatch(s,a);
+ assert.equal(s.players[0].front[0].stack.length,1);
+ assert.equal(s.players[0].front[0].ready,true);
+ assert.equal(s.pending?.effect.kind,'ruleChoice');
+ assert.ok(s.pending.choices.some(x=>x.id===other.uid));
+ s=dispatch(s,{type:'choose',ids:[other.uid]});
+ assert.equal(s.players[0].front[1].ready,true,'Raid-only ACTIVE entry should resolve');
+ assertState(s);
+});
