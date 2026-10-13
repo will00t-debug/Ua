@@ -1,5 +1,27 @@
 # BLEACH Arena v9.1.1 — GitHub / Vercel 專案
 
+## AI v3：神經網路自我對戰實驗（獨立分支）
+
+新的 `feature/ai-v3-learning` 分支以 Work 的 `fix/ai-tactics-private-20261013` 為基礎，不會覆蓋 BLEACH 卡片修補或《我獨自升級》Beta。這次新增**可訓練的微型神經網路**（72 維觀測／24 個 ReLU 隱藏單元／1 個動作分數），使用純 JavaScript 實作，無需 API Key；遊戲規則和合法動作仍由既有引擎控制。
+
+- `dist/ai-v3-features.mjs`：輸入只使用行動者自己的手牌、雙方公開場上資訊和隱藏區域張數；不查看敵方手牌或雙方未翻開的牌庫／生命內容。
+- `dist/ai-v3-network.mjs`：可透過成對動作偏好更新權重的真正神經網路，不只是更改固定權重。
+- `scripts/train-ai-v3.mjs`：自我對戰產生示範與勝負訊號、訓練候選模型、用不同隨機種子對抗 AI v2 困難對手，合格才可以加上 `--promote` 產生網站使用的模型。
+- `dist/ai-v3-policy.mjs`：神經網路選合法動作，採保守覆寫；**若 `dist/ai-v3-weights.mjs` 尚無通過評測的模型，一律沿用困難 AI**。
+- 網站電腦練習新增「神經網路（實驗）」選項；模型推論於背景 Worker 執行。這不是線上玩一局就改權重：訓練需要在外部運算環境執行，且必須先通過保留測試集。
+
+範例（Node 22）：
+
+```sh
+npm test
+npm run train:ai -- --games 200 --eval 72 --epochs 5 --seed 25000
+# 查看 audit/ai-v3-evaluation.json，評估結果通過後才可升級
+npm run train:ai -- --games 200 --eval 72 --epochs 5 --seed 25000 --promote
+```
+
+訓練資料採用你提供的三副 BLEACH 牌組，卡表中的完整編號會映射成引擎使用的卡片 ID（例如 `BLC-1-039` → `039`）。驗收門檻為保留測試的完成場次、無規則錯誤、至少 55% 對 AI v2 困難勝率；此門檻是工程實驗而非真正實力排名保證。測試結果不應在未確認前宣稱神經網路變強。正式網站不會因為這個分支更新。
+
+
 ## AI v2 預覽（feature/ai-v2）
 
 對戰大廳的電腦練習新增三種難度：簡單（原版策略）、普通（通用局面評分）、困難（限制節點的多步搜尋）。不需要 API Key 或模型訓練，維持瀏覽器本機運算。AI v2 位於 `dist/ai-v2.mjs`，只透過 `legalActions` 和 `dispatch` 使用既有遊戲規則，不更動卡片結算。
