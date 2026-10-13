@@ -69,7 +69,7 @@ export function legalRed062Retrigger(s){
  if(q?.kind!=='ttgRed062Retrigger')return [];
  const b={type:'ttgRed062Retrigger',player:q.player,uid:q.uid};
  const eligible=onField(s.players[q.player]).filter(c=>name(c)==='シモン'&&TTG_BY_ID[c.cardId]?.energy<=3&&
-  ['TTG-1-051','TTG-1-052','TTG-1-054','TTG-1-055'].includes(c.cardId));
+  ['TTG-1-051','TTG-1-052','TTG-1-054','TTG-1-055','TTG-1-056'].includes(c.cardId));
  return [{...b,targetUid:null},...eligible.map(c=>({...b,targetUid:c.uid}))];
 }
 export function resolveRed062Retrigger(s,a={}){
@@ -99,4 +99,36 @@ export function resolveRed062Main(s,a={}){
   const i=p.hand.findIndex(c=>c.uid===a.discardUid);p.outside.push(p.hand.splice(i,1)[0]);target.ready=true;
  }
  confirm(before,inventory(p));return r;
+}
+
+// The Simon entry is an effect chain, not a second character deployment.
+// Continuation preserves a 061's remaining selection after the summoned
+// Simon's mandatory/optional entry finishes. 062 retriggers a printed entry
+// with no new physical card, no AP cost, and no `enteredTurn` rewrite.
+export function launchRedSimonFollowup(state){
+ const q=state?.pending;
+ if(!['ttgRed061FollowupEntry','ttgRed062FollowupEntry'].includes(q?.kind))
+  throw new Error('No red Simon effect to resume');
+ const r=structuredClone(state),pl=r.players[q.player];
+ const source=[...(pl.front||[]),...(pl.energy||[])].find(c=>c?.uid===q.uid);
+ if(!source||TTG_BY_ID[source.cardId]?.nameJa!=='シモン')throw new Error('Simon source disappeared');
+ if(!['TTG-1-051','TTG-1-052','TTG-1-054','TTG-1-055','TTG-1-056'].includes(source.cardId))
+  throw new Error('Simon entry requires a verified execution handler');
+ r.pending=null;
+ const next=source.cardId==='TTG-1-051'||source.cardId==='TTG-1-056'?'ttgRed051Discard':
+  source.cardId==='TTG-1-052'?'ttgRed052Discard':source.cardId==='TTG-1-054'?'ttgRed054Mill':'ttgRed055Mill';
+ r.ttgRedSimonContinuation=q.kind==='ttgRed061FollowupEntry'?(q.resume||null):null;
+ if(next==='ttgRed051Discard'){
+  if(!pl.deck.length){r.status='finished';r.winner=1-q.player;r.endReason='requiredDrawEmpty';return r;}
+  pl.hand.push(pl.deck.shift());
+ }
+ r.pending={kind:next,player:q.player,uid:q.uid};
+ return r;
+}
+export function finishRedSimonFollowup(state){
+ if(state.pending||state.pendingTtgLife||!state.ttgRedSimonContinuation)return state;
+ const r=structuredClone(state);
+ r.pending=r.ttgRedSimonContinuation;
+ delete r.ttgRedSimonContinuation;
+ return r;
 }
