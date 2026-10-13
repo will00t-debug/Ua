@@ -108,3 +108,13 @@
 測試 `tests/solo-q99-optional-target-triggers.test.mjs` 實際傷害造成 SLG-1-011 COLOR、SLG-1-040 SPECIAL、SLG-1-003 ACTIVE 的待選效果，再分別發動與放棄，確認實體卡守恆及狀態。更新既有 011 測試，保留從場外登場、只在前線放置的官方效果。
 
 **注意：** 其他 SLG 的 DRAW／GET／FINAL／Raid 目前仍需另批完成官方 Q99 的完整「發動或放棄」選擇、效果結算及多重 DAMAGE 時序；不能因此宣稱整個 SLG 卡組正式驗收完畢。
+
+## 接手第五批：SLG-1-014／015／016 印刷效果（PR #28）
+
+參考日本官方個別卡表及 Q2025（[SLG-1-014](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-014)、[015](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-015)、[016](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-016)）。
+
+- 014：修正從場外經自己效果回手後，缺少「可免費以 REST 登場能源線」的選項；不檢查牌面能源及 AP、不允許前線；正常登場及免費登場都觸發牌庫頂一張送場外；可以選擇不登場。Q2025 禁止移動到前線。新增實體牌組守恆測試。
+- 015：再次核對 0 能源、AP1、BP1500、紫1產能、無角色內文能力與 GET Trigger 資料；GET 可放棄的 Q99 路徑仍**未完成驗收**。
+- 016：核對紫3、AP1、BP3000、紫2產能、IMPACT 無效與登場時送牌庫頂兩張場外；本批實測兩張移動與卡片守恆，IMPACT 無效仍需有阻擋勝負交互情境。
+
+測試 `tests/solo-official-acceptance-batch5.test.mjs` 包含 4 個獨立情境。即使通過，仍不將這三張卡標成完整官方 100% 驗收。
