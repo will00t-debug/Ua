@@ -39,7 +39,7 @@ function persistMst(){save(MST_DRAFT_KEY,mstDeck);}
 const deckMeta=safeRead(DECK_META_KEY)||{};
 let deckName=typeof deckMeta.name==='string'?deckMeta.name.slice(0,40):(PRESETS.find(p=>sameCounts(p.counts,deck))?.name||'自訂 BLEACH 牌組');
 let selectedDeckId=savedDecks.some(d=>d.id===deckMeta.savedId)?deckMeta.savedId:null;
-const ui={soloSelected:null,saoSet:'all',title:'bleach',view:'lobby',mode:'solo',first:'0',preset:[0,1].includes(deckMeta.preset)?deckMeta.preset:0,opponentSource:'preset:1',filter:'all',search:'',selected:null,line:'energy',deployment:'normal',sideTab:'card',raidFlow:null,modal:null,choiceIds:[],handoff:false,lastController:null};
+const ui={soloSelected:null,saoSet:'all',title:'bleach',view:'lobby',mode:'solo',first:'0',preset:[0,1].includes(deckMeta.preset)?deckMeta.preset:0,opponentSource:'preset:1',filter:'all',search:'',selected:null,line:'energy',deployment:'normal',sideTab:'card',raidFlow:null,modal:null,choiceIds:[],handoff:false,lastController:null,privatePeekOpen:false};
 if(deckMeta.opponentSource==='current'||/^preset:[01]$/.test(deckMeta.opponentSource||'')||savedDecks.some(d=>'saved:'+d.id===deckMeta.opponentSource))ui.opponentSource=deckMeta.opponentSource;
 let botTimer=null,toastTimer=null;
 function safeRead(k){try{return JSON.parse(localStorage.getItem(k)||'null');}catch{return null;}}
@@ -77,15 +77,15 @@ function handStyle(count){return `--hand-wide:${Math.max(1,Math.min(count,10))};
 function gameActor(){return game?controller(game):0;}
 function botTurn(){return game?.mode==='solo'&&gameActor()===1&&game.status!=='finished';}
 function humanTurn(){return !botTurn()&&!ui.handoff;}
-function chooseView(view){ui.view=view;ui.modal=null;ui.selected=null;ui.raidFlow=null;if(view==='arena'&&game?.mode==='hotseat'){ui.handoff=true;ui.lastController=gameActor();}render();window.scrollTo({top:0,behavior:'instant'});}
+function chooseView(view){ui.view=view;ui.modal=null;ui.selected=null;ui.raidFlow=null;ui.privatePeekOpen=false;if(view==='arena'&&game?.mode==='hotseat'){ui.handoff=true;ui.lastController=gameActor();}render();window.scrollTo({top:0,behavior:'instant'});}
 function startGame(){
  const errors=validateDeck(deck);if(errors.length){toast(errors[0]);chooseView('builder');return;}
  const first=ui.first==='random'?Math.floor(Math.random()*2):Number(ui.first);
  try{const opponent=resolveDeckSource(ui.opponentSource);game=newGame({decks:[deck,opponent.counts],mode:ui.mode,first,names:ui.mode==='solo'?['你','練習對手']:['玩家一','玩家二']});game.deckNames=[deckName,opponent.name];}catch(e){toast(e.message);return;}
- ui.view='arena';ui.selected=null;ui.raidFlow=null;ui.modal=null;ui.choiceIds=[];ui.handoff=game.mode==='hotseat';ui.lastController=controller(game);save(GAME_KEY,game);render();window.scrollTo({top:0,behavior:'instant'});
+ ui.view='arena';ui.selected=null;ui.raidFlow=null;ui.modal=null;ui.choiceIds=[];ui.privatePeekOpen=false;ui.handoff=game.mode==='hotseat';ui.lastController=controller(game);save(GAME_KEY,game);render();window.scrollTo({top:0,behavior:'instant'});
 }
 function act(a){
- try{const before=controller(game);game=dispatch(game,a);assertState(game);save(GAME_KEY,game);ui.choiceIds=[];ui.selected=null;ui.modal=null;
+ try{const before=controller(game);game=dispatch(game,a);assertState(game);save(GAME_KEY,game);ui.choiceIds=[];ui.selected=null;ui.modal=null;ui.privatePeekOpen=false;
   if(game.mode==='hotseat'&&game.status!=='finished'&&controller(game)!==before)ui.handoff=true;
   ui.lastController=controller(game);render();
  }catch(e){toast(e.message);}
@@ -175,11 +175,26 @@ function pendingModal(){
  const q=game.pending;const allowed=q.allowedCounts?q.allowedCounts.includes(ui.choiceIds.length):ui.choiceIds.length>=q.min&&ui.choiceIds.length<=q.max;
  const peek=q.effect?.kind==='peekChoice'&&q.effect.cards?.length===1?game.players[q.effect.rule?.deckOwner==='opponent'?1-q.player:q.player].deck.find(c=>c.uid===q.effect.cards[0]):null;
  const revealed=peek?cardOf(peek):null;
- const peekPreview=revealed?`<div class="peekPreview" aria-label="查看牌庫頂卡片"><img src="${revealed.onlineImage||revealed.image}" onerror="this.onerror=null;this.src='${revealed.image}'" alt="${esc(revealed.name)}卡圖"><div><b>${esc(revealed.name)}</b><small>${esc(revealed.identity)} · ◆ ${revealed.energy} · ${revealed.bp||0} BP</small><p>${esc(revealed.effect)}</p></div></div>`:'';
- return `<div class="modalBackdrop" role="presentation"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="pendingTitle"><span class="eyebrow">${game.players[q.player].name} · EFFECT RESOLUTION</span><h2 id="pendingTitle" style="margin-top:8px">${q.title}</h2><p>${botTurn()?'練習對手正在選擇…':q.max>1?`選擇 ${q.allowedCounts?.includes(0)?'0 或 ':''}${q.max} 張卡片，再確認結算。`:q.min===0?'可選擇一個目標，或不選擇任何目標。':'選擇一個操作，再確認結算。'}</p>${peekPreview}<div class="choiceGrid">${q.choices.map(c=>`<button class="choiceCard ${ui.choiceIds.includes(c.id)?'selected':''}" data-choice="${esc(c.id)}" ${botTurn()?'disabled':''} aria-pressed="${ui.choiceIds.includes(c.id)}">${c.cardId?`<img src="${BY_ID[c.cardId].onlineImage||BY_ID[c.cardId].image}" onerror="this.onerror=null;this.src='${BY_ID[c.cardId].image}'" alt="${BY_ID[c.cardId].name}">`:''}<span>${esc(c.label)}</span>${c.cardId||c.where?`<small>${c.cardId||''}${c.where?' · '+(c.where==='front'?'前線':'能源線'):''}</small>`:''}</button>`).join('')}</div><div class="modalActions"><span>已選 ${ui.choiceIds.length}${q.max>1?' / '+q.max:''}</span>${q.min===0?`<button class="btn" data-action="skipChoice" ${botTurn()?'disabled':''}>${q.max>1?'不除外':'不選擇'}</button>`:''}<button class="btn primary" data-action="confirmChoice" ${!allowed||botTurn()?'disabled':''}>確認結算 →</button></div></section></div>`;
+ const privatelyInspected=['peekMill','peekOrder','peekNoMill'].includes(q.effect?.kind);
+ const peekIds=privatelyInspected?(q.effect.kind==='peekOrder'?q.effect.uids:q.effect.cards):[];
+ const lookedAt=peekIds.map(uid=>game.players[q.player].deck.find(c=>c.uid===uid)).filter(Boolean).map(cardOf);
+ const art=c=>`<div class="peekPreview" aria-label="操作者私下查看牌庫頂卡片"><img src="${c.onlineImage||c.image}" onerror="this.onerror=null;this.src='${c.image}'" alt="${esc(c.name)}卡圖"><div><b>${esc(c.name)}</b><small>${esc(c.identity)} · ◆ ${c.energy} · ${c.bp||0} BP</small><p>${esc(c.effect)}</p></div></div>`;
+ const peekPreview=[...(revealed?[revealed]:[]),...lookedAt].map(art).join('');
+ const privateNote=privatelyInspected?'<p class="note">此為私人查看，不向對手展示牌庫頂。只有實際送到場外的卡片才會成為公開資訊。</p>':'';
+ return `<div class="modalBackdrop" role="presentation"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="pendingTitle"><span class="eyebrow">${game.players[q.player].name} · EFFECT RESOLUTION</span><h2 id="pendingTitle" style="margin-top:8px">${q.title}</h2><p>${botTurn()?'練習對手正在選擇…':q.max>1?`選擇 ${q.allowedCounts?.includes(0)?'0 或 ':''}${q.max} 張卡片，再確認結算。`:q.min===0?'可選擇一個目標，或不選擇任何目標。':'選擇一個操作，再確認結算。'}</p>${privateNote}${peekPreview}<div class="choiceGrid">${q.choices.map(c=>`<button class="choiceCard ${ui.choiceIds.includes(c.id)?'selected':''}" data-choice="${esc(c.id)}" ${botTurn()?'disabled':''} aria-pressed="${ui.choiceIds.includes(c.id)}">${c.cardId?`<img src="${BY_ID[c.cardId].onlineImage||BY_ID[c.cardId].image}" onerror="this.onerror=null;this.src='${BY_ID[c.cardId].image}'" alt="${BY_ID[c.cardId].name}">`:''}<span>${esc(c.label)}</span>${c.cardId||c.where?`<small>${c.cardId||''}${c.where?' · '+(c.where==='front'?'前線':'能源線'):''}</small>`:''}</button>`).join('')}</div><div class="modalActions"><span>已選 ${ui.choiceIds.length}${q.max>1?' / '+q.max:''}</span>${q.min===0?`<button class="btn" data-action="skipChoice" ${botTurn()?'disabled':''}>${q.max>1?'不除外':'不選擇'}</button>`:''}<button class="btn primary" data-action="confirmChoice" ${!allowed||botTurn()?'disabled':''}>確認結算 →</button></div></section></div>`;
+}
+function privatePeekCurtain(){
+ const name=esc(game.players[game.pending.player].name);
+ return `<div class="modalBackdrop" role="presentation"><section class="modal" role="dialog" aria-modal="true"><h2>私人查看牌庫頂</h2><p>此效果沒有要求公開查看的卡片。請把裝置交給${name}，確保對手看不到畫面後，再由操作者點擊查看。</p><div class="modalActions"><button class="btn primary" data-action="showPrivatePeek">${name}：私密查看</button></div></section></div>`;
 }
 function modalContent(){
- if(game?.pending&&ui.view==='arena'&&!ui.handoff&&!ui.modal)return pendingModal();
+
+ if(game?.pending&&ui.view==='arena'&&!ui.handoff&&!ui.modal){
+  // Never render the AI's private effect choices to the human while it is thinking.
+  if(botTurn())return '';
+  if(game.mode==='hotseat'&&['peekMill','peekOrder','peekNoMill'].includes(game.pending.effect?.kind)&&!ui.privatePeekOpen)return privatePeekCurtain();
+  return pendingModal();
+ }
  const m=ui.modal;if(!m)return '';
  let title='',body='',actions='';
  if(m.type==='inspect'){const c=BY_ID[m.id];title=c.name;body=`<div class="inspectFlex"><img src="${catalogVariant(c).onlineImage||catalogVariant(c).image}" onerror="this.onerror=null;this.src='${catalogVariant(c).image}'" alt="${c.name}"><div>${detail(c).replace(/<img class="detailImage"[^>]+>/,'')}</div></div>`;}
@@ -371,7 +386,8 @@ function bind(){
    case 'deckCode':ui.modal={type:'deckCode'};render();break;
    case 'copyDeck':{const t=$('#deckCode');if(navigator.clipboard?.writeText)navigator.clipboard.writeText(t.value).then(()=>toast('牌組清單已複製。')).catch(()=>{t.select();toast('已選取清單，可以手動複製。');});else{t.select();toast('已選取清單，可以手動複製。');}break;}
    case 'importDeck':{try{const parsed=parseDeck($('#deckCode').value);deck=parsed.counts;if(parsed.name)deckName=parsed.name;selectedDeckId=null;persistDraft();ui.modal=null;ui.view='builder';render();toast('牌組已匯入，可以命名儲存。');}catch(e){toast(e.message||'清單格式不正確。');}break;}
-   case 'handoff':ui.handoff=false;render();break;
+   case 'handoff':ui.handoff=false;ui.privatePeekOpen=false;render();break;
+   case 'showPrivatePeek':if(game?.mode==='hotseat'&&game.pending&&humanTurn()){ui.privatePeekOpen=true;render();}break;
    case 'normalDeployment':cancelRaid();break;
    case 'raid':beginRaid();break;
    case 'cancelRaid':cancelRaid();break;
