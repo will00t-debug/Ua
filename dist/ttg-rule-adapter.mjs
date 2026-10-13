@@ -6,7 +6,7 @@ import {legalTtgHandEvents,dispatchTtgHandEvent} from './ttg-event-resolver.mjs'
 import {withTtgDerivedEnergy} from './ttg-energy-snapshot.mjs';
 import {legalTtgRaidEntries,dispatchTtgRaidEntry} from './ttg-raid-entry.mjs';
 import {legalTtgEventTriggerChoices,resolveTtgEventLifeTrigger,TTG_IMPLEMENTED_EVENT_TRIGGERS} from './ttg-triggers.mjs';
-import {resolveTtgNia059,resolveTtgButa063,resolveTtgYoko065Step,resolveTtgMainEndRetire,resolveTtgPendingEndTurn,eligibleTtgViral002Targets,resolveTtgViral002,resolveTtgTemporaryEnergyEndTurn} from './ttg-pending-rules.mjs';
+import {resolveTtgNia059,resolveTtgButa063,resolveTtgYoko065Step,resolveTtgMainEndRetire,resolveTtgPendingEndTurn,eligibleTtg071AttackBuffTargets,resolveTtg071FirstAttack,eligibleTtgViral002Targets,resolveTtgViral002,resolveTtgTemporaryEnergyEndTurn} from './ttg-pending-rules.mjs';
 
 const owned=(s,p)=>[...(s.players?.[p]?.front||[]),...(s.players?.[p]?.energy||[])].filter(Boolean);
 const simon=c=>!!c&&(c.nameJa==='シモン'||c.name==='シモン'||(c.stack||[]).some(simon));
@@ -39,6 +39,13 @@ export function legalTtgRuleActions(state,player){
     list.push({type:'activateButa063',player,uid:c.uid});
   }
   return list;
+ }
+ if(state.phase==='attack'&&state.attackingUid){
+  const options=eligibleTtg071AttackBuffTargets(state,{player,uid:state.attackingUid});
+  if(options.length)return [...options.map(targetUid=>({type:'kittan071AttackBuff',player,uid:state.attackingUid,targetUid})),{type:'kittan071AttackBuff',player,uid:state.attackingUid,targetUid:null}];
+  if(state.players[player].front?.some(x=>x?.uid===state.attackingUid&&x.cardId==='TTG-1-071')&&
+    state.characterAttacksThisTurn===1&&!state.usedTtgAttackTriggers?.[state.turn+':'+state.attackingUid])
+    return [{type:'kittan071AttackBuff',player,uid:state.attackingUid,targetUid:null}];
  }
  if(state.phase==='move'){
   const pl=state.players[player],list=[];
@@ -73,6 +80,7 @@ export function dispatchTtgRuleAction(state,action){
  if(action.type==='activateViral002')return withTtgDerivedEnergy(resolveTtgViral002(state,action),action.player);
  if(action.type==='activateButa063')return withTtgDerivedEnergy(resolveTtgButa063(state,action),action.player);
  if(action.type==='stepYoko065')return withTtgDerivedEnergy(resolveTtgYoko065Step(state,action),action.player);
+ if(action.type==='kittan071AttackBuff')return withTtgDerivedEnergy(resolveTtg071FirstAttack(state,action),action.player);
  throw new Error('Unsupported TTG action');
 }
 // Phase hooks must run at their exact transition; they are exported for the
@@ -100,6 +108,10 @@ export function chooseTtgRuleAiAction(state,player){
   const payApUids=state.players[player].apCards.filter(x=>x.ready).slice(0,raid.requiredAp).map(x=>x.uid);
   return {type:raid.type,player,handUid:raid.handUid,baseUid:raid.baseUid,line:raid.line,slot:raid.slot,payApUids};
  }
+ const attackingBuff=options.filter(x=>x.type==='kittan071AttackBuff'&&x.targetUid)
+  .sort((a,b)=>{const c=owned(state,player);const bp=uid=>c.find(x=>x.uid===uid)?.currentBp??c.find(x=>x.uid===uid)?.bp??0;
+   return bp(b.targetUid)-bp(a.targetUid);})[0]||options.find(x=>x.type==='kittan071AttackBuff');
+ if(attackingBuff)return attackingBuff;
  const event=options.find(x=>x.type==='playTtgEvent'&&x.targetUids?.length)||
     options.find(x=>x.type==='playTtgEvent');
  if(event){
