@@ -129,3 +129,32 @@ test('shared legal action and AI can perform Viral 002 double REST and expire it
  assert.ok(!legalTtgRuleActions(result,0).some(x=>x.type==='activateViral002'));
  assert.equal(resolveTtgTurnEnd(result).players[0].energy[0].energyBonus,0);
 });
+
+test('Kittan DX 071 first attack lets player or AI choose buff target, never the attacker',()=>{
+ const s=state('attack');
+ s.attackingUid='king';s.characterAttacksThisTurn=1;
+ s.players[0].front[0]=c('king','TTG-1-071','キングキタンDX',4000,{ready:false});
+ s.players[0].front[1]=c('ally','TTG-1-048','キタン',3000);
+ s.players[0].energy[1]=c('ally2','TTG-1-009','シモン',2000);
+ const options=legalTtgRuleActions(s,0);
+ assert.deepEqual(options.filter(x=>x.targetUid).map(x=>x.targetUid),['ally','ally2']);
+ assert.ok(options.some(x=>x.targetUid===null),'can decline an optional attack buff');
+ assert.throws(()=>dispatchTtgRuleAction(s,{type:'kittan071AttackBuff',player:0,uid:'king',targetUid:'king'}));
+ const ai=chooseTtgRuleAiAction(s,0);
+ assert.equal(ai.targetUid,'ally','AI prefers higher BP ally');
+ const after=dispatchTtgRuleAction(s,ai);
+ assert.equal(after.players[0].front[1].currentBp,5000);
+ assert.equal(after.players[0].front[0].currentBp,undefined);
+ assert.deepEqual(legalTtgRuleActions(after,0),[],'same attack cannot trigger twice');
+ assert.equal(resolveTtgTurnEnd(after).players[0].front[1].currentBp,3000);
+ assert.equal(s.players[0].front[1].currentBp,undefined);
+});
+test('Kittan DX attack may decline a buff but cannot activate twice in same attack',()=>{
+ const s=state('attack');s.attackingUid='king';s.characterAttacksThisTurn=1;
+ s.players[0].front[0]=c('king','TTG-1-071','キングキタンDX',4000);
+ const choices=legalTtgRuleActions(s,0);
+ assert.deepEqual(choices,[{type:'kittan071AttackBuff',player:0,uid:'king',targetUid:null}]);
+ const after=dispatchTtgRuleAction(s,choices[0]);
+ assert.equal(after.usedTtgAttackTriggers['4:king'],true);
+ assert.deepEqual(legalTtgRuleActions(after,0),[]);
+});
