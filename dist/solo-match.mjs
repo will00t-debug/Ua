@@ -236,7 +236,7 @@ function beginBlock(s){
 function combat(s,blockUid){
  const a=byUid(s.players[s.active].front,s.combat?.attacker);
  if(!a)throw Error('attack card absent');
- if(blockUid==null)hurt(s,1-s.active);
+ if(blockUid==null)hurt(s,1-s.active,1+(a.grants||[]).filter(x=>x.kind==='damagePlus'&&x.turn===s.turn).length);
  else{
   const opp=s.players[1-s.active],b=byUid(opp.front,blockUid);
   if(!b||!b.ready)throw Error('illegal block');
@@ -762,7 +762,12 @@ export function soloTrainingLegalActions(s){
   for(const c of p.hand){
    const data=d(c);if(!SUPPORTED.has(c.cardId)||p.ap<data.ap||soloEnergy(s)<data.energy)continue;
    if(data.type==='event'){
-    if(['SLG-1-040','SLG-1-076'].includes(c.cardId)){
+    if(c.cardId==='SLG-1-077'){
+     const islands=field(p).filter(x=>d(x).traits?.includes('第四次架南島Raid'));
+     const limit=islands.length>=5?5000:2000;
+     if(!s.players[1-s.active].front.some(x=>x&&soloMatchBp(s,x)<=limit&&(x.extraTargetAp||0)<=p.ap-data.ap))continue;
+   }
+   if(['SLG-1-040','SLG-1-076'].includes(c.cardId)){
      const limit=field(p).some(x=>d(x).nameJa==='水篠 旬')?5000:3000;
      if(!s.players[1-s.active].front.some(x=>x&&soloMatchBp(s,x)<=limit&&(x.extraTargetAp||0)<=p.ap-data.ap))continue;
     }
@@ -778,7 +783,12 @@ export function soloTrainingLegalActions(s){
     }
    }
   }
+  if(!groupUsed(s,s.active,'sung019')&&p.hand.some(shadow))
+   for(const c of p.outside.filter(c=>c.cardId==='SLG-1-019'))actions.push({type:'abilityOutside',uid:c.uid});
   for(const c of field(p)){
+   if(c.cardId='SLG-1-044'&&c.ready&&c.line==='front'&&p.deck.length&&field(p).some(isSung))
+    actions.push({type:'ability',uid:c.uid,mode:'attachDamage'});
+   if(c.cardId==='SLG-1-019'&&c.ready){ /* activation belongs to the outside zone only */ }
    if(c.cardId==='SLG-1-034'&&c.ready){
     actions.push({type:'ability',uid:c.uid,mode:'mill'});
     if(p.outside.length>=20&&p.hand.length&&p.ap>=1&&soloEnergy(s)>=4&&p.outside.some(x=>x.cardId==='SLG-1-037'))
@@ -838,10 +848,16 @@ export function soloTrainingDispatch(original,action){
   }else if(['SLG-1-040','SLG-1-076'].includes(c.cardId)){
    const limit=field(p).some(x=>d(x).nameJa==='水篠 旬')?5000:3000;
    s.pending={kind:'eventDestroy',p:s.active,options:s.players[1-s.active].front.filter(x=>x&&soloMatchBp(s,x)<=limit&&(x.extraTargetAp||0)<=p.ap).map(x=>x.uid)};
+  }else if(c.cardId==='SLG-1-077'){
+    const islands=field(p).filter(x=>d(x).traits?.includes('第四次架南島Raid'));
+    const limit=islands.length>=5?5000:2000;
+    s.pending={kind:'slg077Target',p:s.active,options:s.players[1-s.active].front.filter(x=>x&&soloMatchBp(s,x)<=limit&&(x.extraTargetAp||0)<=p.ap).map(x=>x.uid)};
   }else if(c.cardId==='SLG-1-080'){
    draw(s,p);
    if(s.status==='playing')s.pending={kind:'eventDance',p:s.active,options:field(p).filter(x=>d(x).nameJa==='向坂 雫').map(x=>x.uid)};
   }
+ }else if(action.type==='abilityOutside'){
+   s.pending={kind:'slg019Recover',p:s.active,source:action.uid};
  }else if(action.type==='play'){
   const i=p.hand.findIndex(c=>c.uid===action.uid),c=p.hand.splice(i,1)[0],data=d(c);
   p.ap-=data.ap;position(c,s.active,action.line,action.slot);
@@ -857,7 +873,10 @@ export function soloTrainingDispatch(original,action){
   onEnter(s,c);
   }else if(action.type==='ability'){
   const c=own(s,action.uid);
-  if(c.cardId==='SLG-1-071'){
+  if(c.cardId==='SLG-1-044'){
+    if(c.line!=='front'||!c.ready||!p.deck.length)throw Error('Aoi must be active in front');
+    c.ready=false;s.pending={kind:'slg044Target',p:s.active,source:c.uid};
+  }else if(c.cardId==='SLG-1-071'){
    c.ready=false;c.usedTurn=s.turn;
    s.pending={kind:'marieBuff',p:s.active,source:c.uid,options:field(p).filter(x=>x.uid!==c.uid&&d(x).type==='character').map(x=>x.uid)};
   }else if(c.cardId==='SLG-1-050'){
@@ -919,6 +938,10 @@ export function soloTrainingBotAction(s){
   if(s.pending.kind==='ryuuAp')return legal[legal.length-1];
   if(s.pending.kind==='ryuuBuff')return legal.find(a=>a.uid!=null)||legal[0];
   if(s.pending.kind==='colorTrigger'||s.pending.kind==='specialTrigger')return legal[0];
+  if(s.pending.kind==='slgSearch')return legal.find(a=>a.picks?.length)||legal[0];
+  if(s.pending.kind==='slgMill')return legal[legal.length-1];
+  if(s.pending.kind==='slgDiscard'||s.pending.kind==='slg019Recover'||s.pending.kind==='slg044Target'||s.pending.kind==='slg077Target')return legal[0];
+  if(s.pending.kind==='slgRecoveredBuff'||s.pending.kind==='slgRecoveredDeploy'||s.pending.kind==='slg019Entry'||s.pending.kind==='slg059Entry'||s.pending.kind==='slg077Buff')return legal.find(a=>a.uid!=null)||legal[0];
   if(s.pending.kind==='entry002Mode')return legal[0];
   if(s.pending.kind==='entry002Buff')return legal.find(a=>a.uid!=null)||legal[0];
   if(s.pending.kind==='entry002Discard'||s.pending.kind==='entry004Discard')return legal[0];
