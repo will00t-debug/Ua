@@ -1,0 +1,262 @@
+// Experimental full-turn simulator for a STRICTLY restricted subset of TTG cards.
+// It never treats the entire UA56BT catalogue as fully automated.
+// Standalone from BLEACH engine/app. Intended for reproducible AI smoke tests.
+import {TTG_BY_ID,normalizeTtgCounts} from './ttg-builder.mjs';
+import {withTtgDerivedEnergy,calculateTtgEnergyByColor} from './ttg-energy-snapshot.mjs';
+import {legalTtgRuleActions,dispatchTtgRuleAction,resolveTtgMainPhaseEnd,resolveTtgTurnEnd} from './ttg-rule-adapter.mjs';
+import {spendTtgApCards} from './ttg-actions.mjs';
+
+// Only IDs with on-entry, passives, attacks and life triggers implemented below
+// may enter this core. In particular 071 Raid is tested independently, not here.
+export const TTG_CORE_SMOKE_IDS=Object.freeze([
+ 'TTG-1-002','TTG-1-005','TTG-1-006','TTG-1-019','TTG-1-036','TTG-1-038',
+ 'TTG-1-042','TTG-1-043','TTG-1-047','TTG-1-048',
+ 'TTG-1-063','TTG-1-064','TTG-1-065','TTG-1-066'
+]);
+const allowed=new Set(TTG_CORE_SMOKE_IDS);
+const phases=['start','move','main','attack'];
+const fresh=(uid,cardId)=>({uid,cardId,nameJa:TTG_BY_ID[cardId].nameJa,ready:false,stack:[],under:[]});
+const field=pl=>[...pl.front,...pl.energy].filter(Boolean);
+const uids=pl=>[...pl.deck,...pl.hand,...pl.life,...pl.outside,...field(pl)].flatMap(function deep(c){return [c.uid,...(c.stack||[]).flatMap(deep),...(c.under||[]).flatMap(deep)]});
+const printed=c=>TTG_BY_ID[c.cardId];
+function xorshift(s){let x=s.seed|0;x^=x<<13;x^=x>>>17;x^=x<<5;s.seed=x>>>0;return s.seed/4294967296;}
+function shuffle(s,cards){for(let i=cards.length-1;i>0;i--){const j=Math.floor(xorshift(s)*(i+1));[cards[i],cards[j]]=[cards[j],cards[i]];}return cards;}
+export function validateTtgCoreDeck(counts){
+ let c;try{c=normalizeTtgCounts(counts);}catch(e){return [e.message];}
+ const out=[];
+ if(Object.values(c).reduce((n,x)=>n+x,0)!==50)out.push('A TTG core deck must contain exactly 50 cards');
+ for(const [id,n] of Object.entries(c))if(n&&!allowed.has(id))out.push(id+' card effect is not implemented in the core smoke engine');
+ for(const trigger of ['special','color','final']){
+  const n=Object.entries(c).reduce((sum,[id,count])=>sum+(TTG_BY_ID[id].trigger===trigger?count:0),0);
+  if(n>4)out.push('Exceeds four '+trigger+' triggers');
+ }
+ return out;
+}
+function refreshEnergy(s,p){return withTtgDerivedEnergy(s,p);}
+function start(s){
+ const p=s.active,pl=s.players[p];
+ pl.turnCount++;s.turn++;s.phase='start';s.pending=null;s.extraDrawn=false;
+ for(const c of field(pl)){
+  c.ready=true;c.attackTurn=-1;
+  if(c.buffs?.length)c.buffs=c.buffs.filter(b=>b.until!=='ownNextStart');
+ }
+ const max=pl.turnCount>=3?3:(pl.turnCount===1&&p===s.first?1:2);
+ for(let i=0;i<pl.apCards.length;i++)pl.apCards[i].ready=i<max;
+ if(!(pl.turnCount===1&&p===s.first)){
+  if(!pl.deck.length){s.status='finished';s.winner=1-p;s.endReason='requiredDrawEmpty';return s;}
+  pl.hand.push(pl.deck.shift());
+ }
+ return refreshEnergy(s,p);
+}
+export function newTtgCoreMatch({decks,seed=1,first=0}={}){
+ if(!Array.isArray(decks)||decks.length!==2||![0,1].includes(first))throw new Error('Two valid decks and starting player required');
+ const problems=decks.flatMap((d,p)=>validateTtgCoreDeck(d).map(x=>'player '+p+': '+x));
+ if(problems.length)throw new Error(problems.join('; '));
+ const s={kind:'ttg-core-smoke',seed:(seed>>>0)||1,first,active:first,turn:0,
+  phase:'start',status:'playing',winner:null,players:[],log:[],energyMode:'derive',pending:null};
+ for(let p=0;p<2;p++){
+  const names=Object.entries(normalizeTtgCounts(decks[p])).flatMap(([id,n])=>Array(n).fill(id));
+  const deck=shuffle(s,names.map((id,i)=>fresh(p+'-'+i,id)));
+  s.players[p]={deck,hand:deck.splice(0,7),life:deck.splice(0,7),
+    front:[null,null,null,null],energy:[null,null,null,null],outside:[],
+    apCards:[0,1,2].map(i=>({uid:'AP'+p+'-'+i,ready:false})),
+    energyProduced:{red:0,green:0},turnCount:0};
+ }
+ return start(s);
+}
+export function assertTtgCoreState(s){
+ if(s?.kind!=='ttg-core-smoke'||s.players?.length!==2)throw new Error('Not a TTG core match');
+ for(let p=0;p<2;p++){
+  const pl=s.players[p],ids=uids(pl);
+  if(pl.front.length!==4||pl.energy.length!==4||pl.apCards.length!==3||ids.length!==50||
+     new Set(ids).size!==50||[...pl.deck,...pl.hand,...pl.life,...pl.outside,...field(pl)]
+      .some(c=>!allowed.has(c.cardId)))throw new Error('Core match card conservation failure '+p);
+  if(pl.front.some(c=>c&&printed(c).type!=='character'))throw new Error('Front line is not character-only');
+  const generated=calculateTtgEnergyByColor(s,p);
+  if(p===s.active&&s.status==='playing'&&
+     (generated.red!==pl.energyProduced.red||generated.green!==pl.energyProduced.green))
+   throw new Error('Energy cache inconsistent with physical cards');
+ }
+ return true;
+}
+const bp=(s,p,c)=>{
+ let n=(c.currentBp??printed(c).bp);
+ if(c.cardId==='TTG-1-006'&&s.active===p&&s.players[p].energyProduced.green>=6)n+=1000;
+ return n;
+};
+export function legalTtgCoreActions(s){
+ if(s.status!=='playing')return [];
+ const p=s.active,pl=s.players[p];
+ if(s.pending?.kind==='block'){
+  const opp=s.players[1-p];
+  return [{type:'block',blockUid:null},...opp.front.filter(c=>c?.ready).map(c=>({type:'block',blockUid:c.uid}))];
+ }
+ if(s.pending)throw new Error('Unsupported pending core effect cannot be skipped');
+ const actions=[];
+ if(s.phase==='start'){
+  if(!s.extraDrawn&&pl.hand.length<3&&pl.deck.length&&pl.apCards.some(c=>c.ready))actions.push({type:'extraDraw',apUid:pl.apCards.find(c=>c.ready).uid});
+  return [...actions,{type:'next'}];
+ }
+ if(s.phase==='move'){
+  for(const c of pl.energy.filter(Boolean))for(let slot=0;slot<4;slot++)if(!pl.front[slot])
+   actions.push({type:'move',uid:c.uid,slot});
+ }
+ if(s.phase==='main'){
+  for(const h of pl.hand){
+   const d=printed(h);
+   if(d.type!=='character')continue;
+   if(pl.energyProduced[d.color]<d.energy||pl.apCards.every(c=>!c.ready))continue;
+   for(const line of ['energy','front'])for(let slot=0;slot<4;slot++)if(!pl[line][slot])
+    actions.push({type:'play',handUid:h.uid,line,slot});
+  }
+  actions.push(...legalTtgRuleActions(s,p));
+ }
+ if(s.phase==='attack'&&pl.turnCount>1){
+  for(const c of pl.front.filter(c=>c?.ready))actions.push({type:'attack',uid:c.uid});
+ }
+ if(s.phase==='move')actions.push(...legalTtgRuleActions(s,p));
+ return [...actions,{type:'next'}];
+}
+const sameAction=(a,b)=>a.type===b.type&&['handUid','uid','slot','line','blockUid','targetUid','baseUid'].every(k=>
+ a[k]===undefined||a[k]===b[k]);
+function removeFront(s,p,uid){
+ const pl=s.players[p],i=pl.front.findIndex(c=>c?.uid===uid);
+ if(i<0)throw new Error('Missing battle card');
+ pl.outside.push(pl.front[i]);pl.front[i]=null;
+}
+function lifeDamage(s,p){
+ const pl=s.players[p];
+ if(!pl.life.length){s.status='finished';s.winner=1-p;s.endReason='unblockedAttack';return;}
+ const c=pl.life.shift(),t=printed(c).trigger;
+ if(t==='active'){const ap=pl.apCards.find(x=>!x.ready);if(ap)ap.ready=true;}
+ else if(t==='draw'){if(pl.deck.length)pl.hand.push(pl.deck.shift());}
+ else if(t==='final'){if(!pl.life.length&&pl.deck.length)pl.life.push(pl.deck.shift());}
+ else if(t!=null)throw new Error('Life trigger '+t+' not implemented in this core');
+ pl.outside.push(c);
+}
+export function dispatchTtgCoreAction(source,action){
+ if(source.status!=='playing')throw new Error('Match finished');
+ const s=structuredClone(source),p=s.active,pl=s.players[p];
+ if(!legalTtgCoreActions(s).some(x=>sameAction(x,action)))throw new Error('Illegal TTG core action');
+ if(s.pending?.kind==='block'){
+  const attacker=pl.front.find(c=>c?.uid===s.pending.attackerUid);
+  if(!attacker)throw new Error('Attacker disappeared');
+  if(action.blockUid){
+   const defender=s.players[1-p].front.find(c=>c?.uid===action.blockUid);
+   defender.ready=false;
+   // Official rule Q33: attacker wins a BP tie.
+   if(bp(s,p,attacker)>=bp(s,1-p,defender))removeFront(s,1-p,defender.uid);
+   else removeFront(s,p,attacker.uid);
+  }else lifeDamage(s,1-p);
+  s.pending=null;
+ }else if(action.type==='next'){
+  if(s.phase==='start')s.phase='move';
+  else if(s.phase==='move')s.phase='main';
+  else if(s.phase==='main'){const after=resolveTtgMainPhaseEnd(s);Object.assign(s,after);s.phase='attack';}
+  else if(s.phase==='attack'){
+   const after=resolveTtgTurnEnd(s);
+   Object.assign(s,after);s.active=1-p;start(s);
+  }
+ }else if(action.type==='extraDraw'){
+  const ap=pl.apCards.find(c=>c.uid===action.apUid);
+  if(!ap?.ready||!pl.deck.length)throw new Error('Extra draw cannot pay AP');
+  ap.ready=false;pl.hand.push(pl.deck.shift());s.extraDrawn=true;
+ }else if(action.type==='move'){
+  const index=pl.energy.findIndex(c=>c?.uid===action.uid);
+  if(index<0||pl.front[action.slot])throw new Error('Illegal front movement');
+  pl.front[action.slot]=pl.energy[index];pl.energy[index]=null;
+ }else if(action.type==='play'){
+  const i=pl.hand.findIndex(c=>c.uid===action.handUid),h=pl.hand[i],d=printed(h);
+  const ap=pl.apCards.find(c=>c.ready);
+  if(!ap||pl[action.line][action.slot])throw new Error('Play destination or AP invalid');
+  ap.ready=false;pl[action.line][action.slot]={...pl.hand.splice(i,1)[0],ready:false,enteredTurn:s.turn};
+ }else if(action.type==='attack'){
+  const c=pl.front.find(c=>c?.uid===action.uid);
+  if(!c?.ready)throw new Error('Invalid attack');
+  c.ready=false;c.attackTurn=s.turn;
+  pl.characterAttacksThisTurn=(pl.attackTurn===s.turn?pl.characterAttacksThisTurn:0)+1;
+  pl.attackTurn=s.turn;
+  if(pl.characterAttacksThisTurn===1&&['TTG-1-047','TTG-1-048'].includes(c.cardId)){
+   const amount=c.cardId==='TTG-1-047'?1500:500;
+   c.currentBp=(c.currentBp??printed(c).bp)+amount;
+   c.buffs??=[];c.buffs.push({bp:amount,turn:s.turn,until:c.cardId==='TTG-1-047'?'endTurn':'ownNextStart'});
+  }
+  s.pending={kind:'block',attackerUid:c.uid};
+ }else if(legalTtgRuleActions(s,p).some(x=>sameAction(x,action))){
+  const after=dispatchTtgRuleAction(s,{...action,player:p});Object.assign(s,after);
+ }else throw new Error('Unsupported core action');
+ if(s.status==='playing')Object.assign(s,refreshEnergy(s,s.active));
+ assertTtgCoreState(s);
+ return s;
+}
+export function ttgCoreAiChoice(s){
+ const options=legalTtgCoreActions(s);
+ if(!options.length)return null;
+ const p=s.active,pl=s.players[p];
+ if(s.pending?.kind==='block'){
+  const att=pl.front.find(c=>c.uid===s.pending.attackerUid);
+  const other=s.players[1-p];
+  const candidates=other.front.filter(x=>x?.ready&&bp(s,1-p,x)>=bp(s,p,att));
+  if(candidates.length)return {type:'block',blockUid:candidates.sort((a,b)=>bp(s,1-p,a)-bp(s,1-p,b))[0].uid};
+  return {type:'block',blockUid:null};
+ }
+ if(s.phase==='move'){
+  if(pl.turnCount>1&&pl.front.filter(Boolean).length<2){
+   const moves=options.filter(x=>x.type==='move').sort((a,b)=>{
+    const da=printed(pl.energy.find(c=>c?.uid===a.uid));
+    const db=printed(pl.energy.find(c=>c?.uid===b.uid));
+    return (db.bp||0)-(da.bp||0);
+   });
+   const current=pl.energyProduced.red+pl.energyProduced.green;
+   const candidate=moves.find(x=>{
+    const c=pl.energy.find(c=>c?.uid===x.uid);
+    return current-(printed(c).gen||0)>=2&&printed(c).bp>=2000;
+   });
+   if(candidate)return candidate;
+  }
+  return {type:'next'};
+ }
+ if(s.phase==='main'){
+  const plays=options.filter(x=>x.type==='play');
+  if(plays.length){
+   const onEnergy=plays.filter(x=>x.line==='energy');
+   const onFront=plays.filter(x=>x.line==='front');
+   const total=pl.energyProduced.green+pl.energyProduced.red;
+   if(total<4&&onEnergy.length)return onEnergy.sort((a,b)=>
+     printed(pl.hand.find(c=>c.uid===a.handUid)).energy-printed(pl.hand.find(c=>c.uid===b.handUid)).energy)[0];
+   if(pl.front.filter(Boolean).length<3&&onFront.length)return onFront.sort((a,b)=>
+     printed(pl.hand.find(c=>c.uid===b.handUid)).bp-printed(pl.hand.find(c=>c.uid===a.handUid)).bp)[0];
+   if(onEnergy.length)return onEnergy[0];
+  }
+  // Use exactly the same stand-alone event/REST effect validator as human choices.
+  const effects=options.filter(x=>!['play','next'].includes(x.type));
+  if(effects.length){
+   const candidate=effects.find(x=>x.type==='activateButa063')||effects.find(x=>x.type==='activateViral002');
+   if(candidate)return candidate;
+   const event=effects.find(x=>x.type==='playTtgEvent');
+   if(event){
+    const payApUids=pl.apCards.filter(c=>c.ready).slice(0,event.requiredAp).map(c=>c.uid);
+    const readyApUids=pl.apCards.filter(c=>!c.ready||payApUids.includes(c.uid)).slice(0,2).map(c=>c.uid);
+    return {type:'playTtgEvent',player:p,handUid:event.handUid,payApUids,readyApUids};
+   }
+  }
+  return {type:'next'};
+ }
+ if(s.phase==='attack'){
+  const actions=options.filter(x=>x.type==='attack');
+  return actions[0]||{type:'next'};
+ }
+ return options.find(x=>x.type==='next')||options[0];
+}
+export function runTtgCoreAiMatch(startState,{maxSteps=6000}={}){
+ if(!Number.isInteger(maxSteps)||maxSteps<1||maxSteps>100000)throw new Error('Invalid simulation step budget');
+ let state=structuredClone(startState),actions=0;
+ assertTtgCoreState(state);
+ while(state.status==='playing'&&actions<maxSteps){
+  const a=ttgCoreAiChoice(state);
+  if(!a)throw new Error('AI stuck with no legal actions');
+  state=dispatchTtgCoreAction(state,a);
+  actions++;
+ }
+ return {state,actions,truncated:state.status==='playing'};
+}
