@@ -93,10 +93,11 @@ test('SLG-1-059 entry can pay hand for ACTIVE BP+1000; attack picks up to two is
  s=play(s,'SLG-1-059');assert.equal(s.pending.kind,'slg059Entry');const id=choice(s,x=>x.uid!=null);
  s=select(s,id);assert.equal(s.pending,null);
  const fighter=fieldOwn(s,'SLG-1-059');assert.equal(fighter.ready,true);assert.equal(soloMatchBp(s,fighter),5000);
- fighter.line='front';p.energy[fighter.slot]=null;fighter.slot=0;p.front[0]=fighter;s.phase='attack';
+ fighter.line='front';p.energy[fighter.slot]=null;fighter.slot=0;p.front[0]=fighter;
+ const island=pull(p,'SLG-1-055');p.deck.unshift(island);s.phase='attack';
  s=soloTrainingDispatch(s,{type:'attack',uid:fighter.uid});assert.equal(s.pending.kind,'slgSearch');
  assert.ok(soloTrainingLegalActions(s).some(a=>a.picks.length===0));
- const pick=soloTrainingLegalActions(s).find(a=>a.picks.length>0);
+ const pick=soloTrainingLegalActions(s).find(a=>a.picks.includes(island.uid));
  if(pick){s=select(s,pick);assert.equal(s.players[0].front[0].skipActive,1);}
  else s=select(s,soloTrainingLegalActions(s)[0]);
  assertSoloTrainingMatch(s);
