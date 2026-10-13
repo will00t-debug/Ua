@@ -72,6 +72,7 @@ export function resolveGreenHighRaid(state,action={}){
  }
  const pl=result.players[player],raider=find(result,player,handUid)?.card;
  if(!raider)throw new Error('RAID physically missing after transition');
+ if(raider.cardId==='TTG-1-032')raider.protectedFromEffects=true;
  const effects=[];
  if(triggered004)effects.push('viral004');
  if(choice.cardId==='TTG-1-027'){effects.push('entry027');if(pl.energy.some(c=>c?.cardId==='TTG-1-033'&&pl.green033UsedTurn!==state.turn))effects.push('site033');}
@@ -243,4 +244,54 @@ export function resolveHighRaidAttackEffect(state,action={}){
     JSON.stringify(inventory(r.players[1-p]))!==JSON.stringify(oppOriginal))
     throw new Error('High Raid attack physical UID conservation');
  return r;
+}
+
+// Raid trigger (027/031) from LIFE: opponent-turn, no AP expenditure.
+// This calls the SAME ordered on-entry resolver as a normal/chain Raid.
+export function legalGreenHighLifeRaids(s,{player,cardUid}={}){
+ if(![0,1].includes(player)||!s.pendingTtgLife||s.pendingTtgLife.player!==player||
+   s.pendingTtgLife.cardUid!==cardUid)return [];
+ const pl=s.players[player],card=pl.outside.find(x=>x.uid===cardUid);
+ if(!card||!['TTG-1-027','TTG-1-031'].includes(card.cardId))return [];
+ if(calculateTtgEnergyByColor(s,player).green<TTG_BY_ID[card.cardId].energy)return [];
+ const result=[],expected=card.cardId==='TTG-1-027'?'グレンラガン':'アークグレンラガン';
+ for(const source of own(pl)){
+  const normal=base(source.card);
+  const chain=name(source.card)===expected&&source.card.stack?.length===1&&
+   base(source.card.stack[0])&&(source.card.under||[]).every(x=>x.faceDown);
+  if(!normal&&!chain)continue;
+  const choices=[{line:source.line,slot:source.slot}];
+  if(source.line==='energy')for(let slot=0;slot<4;slot++)if(!pl.front[slot])choices.push({line:'front',slot});
+  for(const loc of choices)result.push({sourceUid:source.card.uid,raidKind:chain?'chain':'base',...loc});
+ }
+ return result;
+}
+export function resolveGreenHighLifeRaid(state,{player,cardUid,sourceUid,raidKind,line,slot}={}){
+ const choices=legalGreenHighLifeRaids(state,{player,cardUid});
+ if(!choices.some(x=>x.sourceUid===sourceUid&&x.line===line&&x.slot===slot&&x.raidKind===raidKind))
+  throw new Error('Illegal free 027/031 life Raid or insufficient energy');
+ const before=inventory(state.players[player]),wasFrontViral=state.players[player].front.some(c=>c?.cardId==='TTG-1-004')&&
+  state.players[player].green004UsedTurn!==state.turn;
+ const r=structuredClone(state),pl=r.players[player],i=pl.outside.findIndex(x=>x.uid===cardUid),old=find(r,player,sourceUid);
+ if(i<0||!old)throw new Error('Life Raid physical card missing');
+ const top=pl.outside.splice(i,1)[0],prior=old.card;
+ pl[old.line][old.slot]=null;
+ if(pl[line][slot])throw new Error('Life Raid destination occupied');
+ const baseCard=raidKind==='chain'?prior.stack[0]:prior;
+ const underneath=raidKind==='chain'?[...(prior.under||[]),{uid:prior.uid,cardId:prior.cardId,faceDown:true}]:[];
+ pl[line][slot]={...top,stack:[baseCard],under:underneath,ready:true,raidedTurn:state.turn,enteredTurn:state.turn};
+ const steps=[];
+ if(wasFrontViral)steps.push('viral004');
+ if(top.cardId==='TTG-1-027'){
+  steps.push('entry027');
+  if(pl.energy.some(c=>c?.cardId==='TTG-1-033'&&pl.green033UsedTurn!==state.turn))steps.push('site033');
+ }else{
+  steps.push('entry031');
+  if(pl.energy.some(c=>c?.cardId==='TTG-1-034'))steps.push('site034');
+ }
+ r.pending={kind:'greenHighRaidQueue',player,raidUid:top.uid,remaining:steps};
+ r.pendingTtgLife=null;
+ if(!pl.life.length)r.pendingLifeOutcome={player};
+ if(JSON.stringify(inventory(pl))!==JSON.stringify(before))throw new Error('Life Raid UID conservation');
+ return withTtgDerivedEnergy(r,player);
 }
