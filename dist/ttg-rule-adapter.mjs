@@ -1,3 +1,4 @@
+import {TTG_BY_ID} from './ttg-builder.mjs';
 // UA56BT single rule-action interface for standalone TTG match states.
 // No BLEACH engine or browser changes. Unimplemented cards remain blocked.
 // This adapter joins tested hand events, life triggers and a subset of
