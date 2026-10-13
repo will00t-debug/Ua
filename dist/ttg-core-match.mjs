@@ -8,6 +8,7 @@ import {spendTtgApCards} from './ttg-actions.mjs';
 import {TTG_GREEN_ENTRY_IDS,legalTtgGreenEntryDecisions,resolveTtgGreenEntry} from './ttg-green-entry.mjs';
 import {greenTtgCurrentBp,greenTtgNeedsEnergy} from './ttg-green-passives.mjs';
 import {resolveGreenOwnStart} from './ttg-green-main.mjs';
+import {beginTtgLifeTrigger,legalTtgLifeChoices,resolveTtgLifeChoice,finalizeTtgLifeOutcome} from './ttg-green-life.mjs';
 
 // Only IDs with on-entry, passives, attacks and life triggers implemented below
 // may enter this core. In particular 071 Raid is tested independently, not here.
@@ -128,6 +129,7 @@ function greenEntryChoices(s){
 export function legalTtgCoreActions(s){
  if(s.status!=='playing')return [];
  const p=s.active,pl=s.players[p];
+ if(s.pendingTtgLife)return legalTtgLifeChoices(s);
  if(s.pending?.kind==='ttgGreenEntry')return greenEntryChoices(s);
  if(s.pending?.kind==='block'){
   const opp=s.players[1-p];
@@ -159,7 +161,7 @@ export function legalTtgCoreActions(s){
  if(s.phase==='move')actions.push(...legalTtgRuleActions(s,p));
  return [...actions,{type:'next'}];
 }
-const sameAction=(a,b)=>a.type===b.type&&['handUid','uid','slot','line','blockUid','targetUid','baseUid','sourceUid','mode','takeUid','discardUid','returnUid','apUid'].every(k=>
+const sameAction=(a,b)=>a.type===b.type&&['handUid','uid','slot','line','blockUid','targetUid','baseUid','sourceUid','mode','takeUid','discardUid','returnUid','apUid','cardUid'].every(k=>
  a[k]===undefined||a[k]===b[k]);
 function removeFront(s,p,uid){
  const pl=s.players[p],i=pl.front.findIndex(c=>c?.uid===uid);
@@ -168,29 +170,21 @@ function removeFront(s,p,uid){
 }
 function lifeDamage(s,p){
  const pl=s.players[p];
- if(!pl.life.length){s.status='finished';s.winner=1-p;s.endReason='unblockedAttack';return;}
- const c=pl.life.shift(),t=printed(c).trigger;
- if(t==='active'){
-  // Official ACTIVE life trigger is a character target +3000 BP, NOT an AP recovery.
-  const choices=field(pl).filter(x=>printed(x).type==='character');
-  const target=choices.sort((a,b)=>Number(a.ready)-Number(b.ready)||printed(b).bp-printed(a).bp)[0];
-  if(target){target.ready=true;target.currentBp=(target.currentBp??printed(target).bp)+3000;
-   target.buffs??=[];target.buffs.push({bp:3000,turn:s.turn,until:'endTurn'});}
+ if(!pl.life.length){
+  s.status='finished';s.winner=1-p;s.endReason='unblockedAttack';return;
  }
- else if(t==='draw'){if(pl.deck.length)pl.hand.push(pl.deck.shift());}
- else if(t==='final'){if(!pl.life.length&&pl.deck.length)pl.life.push(pl.deck.shift());}
- else if(t!=null)throw new Error('Life trigger '+t+' not implemented in this core');
- pl.outside.push(c);
- // The official victory condition is checked after finishing the trigger check.
- if(!pl.life.length){s.status='finished';s.winner=1-p;s.endReason='lifeDepleted';}
+ Object.assign(s,beginTtgLifeTrigger(s,{player:p,lifeUid:pl.life[0].uid}));
 }
 export function dispatchTtgCoreAction(source,action){
  if(source.status!=='playing')throw new Error('Match finished');
  const s=structuredClone(source),p=s.active,pl=s.players[p];
  if(!legalTtgCoreActions(s).some(x=>sameAction(x,action)))throw new Error('Illegal TTG core action');
- if(s.pending?.kind==='ttgGreenEntry'){
+ if(s.pendingTtgLife){
+  Object.assign(s,resolveTtgLifeChoice(s,action));
+ }else if(s.pending?.kind==='ttgGreenEntry'){
   const after=resolveTtgGreenEntry(s,action);
   Object.assign(s,after);
+  finalizeTtgLifeOutcome(s,p);
  }else if(s.pending?.kind==='block'){
   const attacker=pl.front.find(c=>c?.uid===s.pending.attackerUid);
   if(!attacker)throw new Error('Attacker disappeared');
@@ -206,7 +200,7 @@ export function dispatchTtgCoreAction(source,action){
    // Official rule Q33: attacker wins a BP tie.
    if(bp(s,p,attacker)>=bp(s,1-p,defender))removeFront(s,1-p,defender.uid);
    // Losing an attack does NOT retire the attacker (official Q34).
-  }else lifeDamage(s,1-p);
+  }else{s.pending=null;lifeDamage(s,1-p);}
   s.pending=null;
  }else if(action.type==='next'){
   if(s.phase==='start')s.phase='move';
@@ -258,6 +252,14 @@ export function ttgCoreAiChoice(s){
  const options=legalTtgCoreActions(s);
  if(!options.length)return null;
  const p=s.active,pl=s.players[p];
+ if(s.pendingTtgLife){
+  const options=legalTtgCoreActions(s);
+  return options.find(x=>x.mode==='special'&&x.targetUid)||
+   options.find(x=>x.mode==='get')||
+   options.find(x=>x.mode==='active'&&x.targetUid)||
+   options.find(x=>x.mode==='color'&&x.line==='front')||
+   options.find(x=>x.mode==='color')||options[0];
+ }
  if(s.pending?.kind==='ttgGreenEntry'){
   const decisions=legalTtgCoreActions(s);
   return decisions.find(x=>x.takeUid&&x.discardUid&&x.takeUid!==x.discardUid)||
