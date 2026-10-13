@@ -38,6 +38,10 @@ function start(s){
  pl.turnCount++;s.turn++;s.phase='start';s.pending=null;s.extraDrawn=false;
  for(const c of field(pl)){
   c.ready=true;c.attackTurn=-1;
+  if(c.doubleBlockUntilOwnStartTurnCount!=null&&pl.turnCount>=c.doubleBlockUntilOwnStartTurnCount){
+   delete c.doubleBlockUntilOwnStartTurnCount;
+   delete c.doubleBlockUsedTurn;
+  }
   if(c.buffs?.length){
    const expired=c.buffs.filter(b=>b.until==='ownNextStart');
    if(Number.isFinite(c.currentBp))c.currentBp-=expired.reduce((n,b)=>n+(b.bp||0),0);
@@ -156,6 +160,12 @@ export function dispatchTtgCoreAction(source,action){
   if(action.blockUid){
    const defender=s.players[1-p].front.find(c=>c?.uid===action.blockUid);
    defender.ready=false;
+   if(defender.doubleBlockUntilOwnStartTurnCount!=null&&
+      s.players[1-p].turnCount<defender.doubleBlockUntilOwnStartTurnCount&&
+      defender.doubleBlockUsedTurn!==s.turn){
+     // Double Block: first blocking action readies the REST blocker immediately.
+     defender.ready=true;defender.doubleBlockUsedTurn=s.turn;
+   }
    // Official rule Q33: attacker wins a BP tie.
    if(bp(s,p,attacker)>=bp(s,1-p,defender))removeFront(s,1-p,defender.uid);
    // Losing an attack does NOT retire the attacker (official Q34).
@@ -167,7 +177,11 @@ export function dispatchTtgCoreAction(source,action){
   else if(s.phase==='main'){const after=resolveTtgMainPhaseEnd(s);Object.assign(s,after);s.phase='attack';}
   else if(s.phase==='attack'){
    const after=resolveTtgTurnEnd(s);
-   Object.assign(s,after);s.active=1-p;start(s);
+   Object.assign(s,after);
+   // UNION ARENA: the current player's own field readies at their turn end,
+   // so those characters can block on the opponent's following turn.
+   for(const c of field(pl))c.ready=true;
+   s.active=1-p;start(s);
   }
  }else if(action.type==='extraDraw'){
   const ap=pl.apCards.find(c=>c.uid===action.apUid);
@@ -192,6 +206,7 @@ export function dispatchTtgCoreAction(source,action){
    const amount=c.cardId==='TTG-1-047'?1500:500;
    c.currentBp=(c.currentBp??printed(c).bp)+amount;
    c.buffs??=[];c.buffs.push({bp:amount,turn:s.turn,until:c.cardId==='TTG-1-047'?'endTurn':'ownNextStart'});
+   if(c.cardId==='TTG-1-048')c.doubleBlockUntilOwnStartTurnCount=pl.turnCount+1;
   }
   s.pending={kind:'block',attackerUid:c.uid};
  }else if(legalTtgRuleActions(s,p).some(x=>sameAction(x,action))){
