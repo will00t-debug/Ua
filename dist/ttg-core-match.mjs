@@ -3,12 +3,13 @@
 // Standalone from BLEACH engine/app. Intended for reproducible AI smoke tests.
 import {TTG_BY_ID,normalizeTtgCounts} from './ttg-builder.mjs';
 import {withTtgDerivedEnergy,calculateTtgEnergyByColor} from './ttg-energy-snapshot.mjs';
-import {legalTtgRuleActions,dispatchTtgRuleAction,resolveTtgMainPhaseEnd,resolveTtgTurnEnd,beginTtgGreenAttackPhase} from './ttg-rule-adapter.mjs';
+import {legalTtgRuleActions,dispatchTtgRuleAction,resolveTtgMainPhaseEnd,resolveTtgTurnEnd,beginTtgGreenAttackPhase,chooseTtgRuleAiAction} from './ttg-rule-adapter.mjs';
 import {spendTtgApCards} from './ttg-actions.mjs';
 import {TTG_GREEN_ENTRY_IDS,legalTtgGreenEntryDecisions,resolveTtgGreenEntry} from './ttg-green-entry.mjs';
 import {greenTtgCurrentBp,greenTtgNeedsEnergy,greenTtgImpactNull,greenTtgCanAttackOrBlock} from './ttg-green-passives.mjs';
 import {canTtgGreen028Attack,resolveTtgGreen028Start} from './ttg-green-028.mjs';
 import {applyGreen008UnblockedDraw} from './ttg-green-008.mjs';
+import {sidelineGreen030} from './ttg-green-030.mjs';
 import {resolveGreenOwnStart} from './ttg-green-main.mjs';
 import {beginTtgLifeTrigger,legalTtgLifeChoices,resolveTtgLifeChoice,finalizeTtgLifeOutcome} from './ttg-green-life.mjs';
 
@@ -17,7 +18,7 @@ import {beginTtgLifeTrigger,legalTtgLifeChoices,resolveTtgLifeChoice,finalizeTtg
 export const TTG_CORE_SMOKE_IDS=Object.freeze([
  'TTG-1-001','TTG-1-002','TTG-1-003','TTG-1-005','TTG-1-006','TTG-1-007','TTG-1-008','TTG-1-009',
  'TTG-1-010','TTG-1-011','TTG-1-013','TTG-1-014','TTG-1-015','TTG-1-016','TTG-1-017','TTG-1-018',
- 'TTG-1-019','TTG-1-020','TTG-1-021','TTG-1-022','TTG-1-023','TTG-1-024','TTG-1-025','TTG-1-026',
+ 'TTG-1-019','TTG-1-020','TTG-1-021','TTG-1-022','TTG-1-023','TTG-1-024','TTG-1-025','TTG-1-026','TTG-1-028','TTG-1-029','TTG-1-030',
  'TTG-1-035','TTG-1-036','TTG-1-037','TTG-1-038','TTG-1-039',
  'TTG-1-040','TTG-1-041',
  'TTG-1-042','TTG-1-043','TTG-1-047','TTG-1-048',
@@ -158,6 +159,8 @@ export function legalTtgCoreActions(s){
  const p=s.active,pl=s.players[p];
  if(s.pendingTtgLife)return legalTtgLifeChoices(s);
  if(s.pending?.kind==='ttgGreenEntry')return greenEntryChoices(s);
+ if(['ttgGreen028Entry','ttgGreen029Entry','green030Sidelined'].includes(s.pending?.kind))
+  return legalTtgRuleActions(s,s.pending.player);
  if(s.pending?.kind==='block'){
   const opp=s.players[1-p];
   return [{type:'block',blockUid:null},...opp.front.filter(c=>c?.ready&&greenTtgCanAttackOrBlock(s,1-p,c)).map(c=>({type:'block',blockUid:c.uid}))];
@@ -175,7 +178,7 @@ export function legalTtgCoreActions(s){
  if(s.phase==='main'){
   for(const h of pl.hand){
    const d=printed(h);
-   if(d.type!=='character'||h.cardId==='TTG-1-008')continue;
+   if(d.type!=='character'||['TTG-1-008','TTG-1-028','TTG-1-029','TTG-1-030'].includes(h.cardId))continue;
    if(pl.energyProduced[d.color]<greenTtgNeedsEnergy(s,p,h)||pl.apCards.every(c=>!c.ready))continue;
    for(const line of ['energy','front'])for(let slot=0;slot<4;slot++)if(!pl[line][slot])
     actions.push({type:'play',handUid:h.uid,line,slot});
@@ -188,12 +191,16 @@ export function legalTtgCoreActions(s){
  if(s.phase==='move')actions.push(...legalTtgRuleActions(s,p));
  return [...actions,{type:'next'}];
 }
-const sameAction=(a,b)=>a.type===b.type&&['handUid','uid','slot','line','blockUid','targetUid','baseUid','sourceUid','mode','takeUid','discardUid','returnUid','apUid','cardUid'].every(k=>
+const sameAction=(a,b)=>a.type===b.type&&['handUid','uid','slot','line','blockUid','targetUid','baseUid','sourceUid','mode','takeUid','discardUid','returnUid','apUid','cardUid','ready','outsideUid'].every(k=>
  a[k]===undefined||a[k]===b[k]);
 function removeFront(s,p,uid){
  const pl=s.players[p],i=pl.front.findIndex(c=>c?.uid===uid);
  if(i<0)throw new Error('Missing battle card');
- pl.outside.push(pl.front[i]);pl.front[i]=null;
+ if(pl.front[i].cardId==='TTG-1-030'){
+  Object.assign(s,sidelineGreen030(s,{player:p,uid}));
+ }else{
+  pl.outside.push(pl.front[i]);pl.front[i]=null;
+ }
 }
 function lifeDamage(s,p){
  const pl=s.players[p];
@@ -242,7 +249,7 @@ export function dispatchTtgCoreAction(source,action){
    s.pending=null;
    if(s.status==='playing')lifeDamage(s,1-p);
   }
-  s.pending=null;
+  if(s.pending?.kind==='block')s.pending=null;
  }else if(action.type==='next'){
   if(s.phase==='start')s.phase='move';
   else if(s.phase==='move')s.phase='main';
@@ -285,9 +292,14 @@ export function dispatchTtgCoreAction(source,action){
    if(c.cardId==='TTG-1-048')c.doubleBlockUntilOwnStartTurnCount=pl.turnCount+1;
   }
   s.pending={kind:'block',attackerUid:c.uid};
- }else if(legalTtgRuleActions(s,p).some(x=>sameAction(x,action))){
-  const after=dispatchTtgRuleAction(s,{...action,player:p});Object.assign(s,after);
+ }else if(legalTtgRuleActions(s,s.pending?.player??p).some(x=>sameAction(x,action))){
+  const owner=s.pending?.player??p;
+  const after=dispatchTtgRuleAction(s,{...action,player:owner});Object.assign(s,after);
  }else throw new Error('Unsupported core action');
+ if(s.status==='playing'&&s.pendingLifeOutcome&&!s.pending&&!s.pendingTtgLife){
+  finalizeTtgLifeOutcome(s,s.pendingLifeOutcome.player);
+  delete s.pendingLifeOutcome;
+ }
  if(s.status==='playing')Object.assign(s,refreshEnergy(s,s.active));
  assertTtgCoreState(s);
  return s;
@@ -298,12 +310,15 @@ export function ttgCoreAiChoice(s){
  const p=s.active,pl=s.players[p];
  if(s.pendingTtgLife){
   const options=legalTtgCoreActions(s);
-  return options.find(x=>x.mode==='special'&&x.targetUid)||
+  return options.find(x=>x.mode==='raid'&&x.line==='front')||options.find(x=>x.mode==='raid')||
+   options.find(x=>x.mode==='raidHand')||options.find(x=>x.mode==='special'&&x.targetUid)||
    options.find(x=>x.mode==='get')||
    options.find(x=>x.mode==='active'&&x.targetUid)||
    options.find(x=>x.mode==='color'&&x.line==='front')||
    options.find(x=>x.mode==='color')||options[0];
  }
+ if(['ttgGreen028Entry','ttgGreen029Entry','green030Sidelined'].includes(s.pending?.kind))
+  return chooseTtgRuleAiAction(s,s.pending.player);
  if(s.pending?.kind==='ttgGreenEntry'){
   const decisions=legalTtgCoreActions(s);
   return decisions.find(x=>x.takeUid&&x.discardUid&&x.takeUid!==x.discardUid)||
@@ -353,6 +368,9 @@ export function ttgCoreAiChoice(s){
     effects.find(x=>x.type==='ttgGreen011')||effects.find(x=>x.type==='ttgGreen018')||
     effects.find(x=>x.type==='ttgGreen022');
    if(candidate)return candidate;
+   const normalRaid=['ttgGreen028Raid','ttgGreen029Raid','green030Raid'];
+   const raidCandidate=effects.find(x=>normalRaid.includes(x.type)&&x.line==='front')||effects.find(x=>normalRaid.includes(x.type));
+   if(raidCandidate)return {...raidCandidate,payApUids:pl.apCards.filter(x=>x.ready).slice(0,raidCandidate.requiredAp).map(x=>x.uid)};
    const raid008=effects.find(x=>x.type==='green008Raid'&&x.line==='front')||effects.find(x=>x.type==='green008Raid');
    if(raid008)return {...raid008,payApUids:pl.apCards.filter(x=>x.ready).slice(0,raid008.requiredAp).map(x=>x.uid)};
    const greenEvent=effects.filter(x=>x.type==='playGreenEvent').sort((a,b)=>(b.targetUids?.length||0)-(a.targetUids?.length||0))[0];
