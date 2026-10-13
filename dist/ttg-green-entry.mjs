@@ -5,7 +5,7 @@ import {TTG_BY_ID} from './ttg-builder.mjs';
 
 export const TTG_GREEN_ENTRY_IDS=Object.freeze([
  'TTG-1-001','TTG-1-009','TTG-1-010','TTG-1-014',
- 'TTG-1-023','TTG-1-026','TTG-1-077'
+ 'TTG-1-023','TTG-1-026'
 ]);
 const entrySet=new Set(TTG_GREEN_ENTRY_IDS);
 const ownField=pl=>['front','energy'].flatMap(line=>(pl?.[line]||[]).map((card,slot)=>({card,line,slot}))).filter(x=>x.card);
@@ -69,10 +69,6 @@ export function legalTtgGreenEntryDecisions(state,{player,sourceUid}={}){
    revealed:top.slice(0,7).map(c=>c.uid),candidateUids:candidates.map(c=>c.uid),
    outsideUids:outside.map(c=>c.uid),canSkip:true}];
  }
- case 'TTG-1-077':{
-  return [{type:'greenEntry',player,sourceUid,mode:'recoverGunmen',
-   candidateUids:pl.outside.filter(gunmen).map(c=>c.uid),canSkip:true}];
- }
  default:return [];
  }
 }
@@ -127,10 +123,6 @@ export function resolveTtgGreenEntry(state,{player,sourceUid,mode,takeUid=null,d
    if(bottomOrderUids.length!==revealed.length)throw new Error('Bottom order required');
    owner.deck.push(...reorder(revealed,bottomOrderUids));
   }
- }else if(mode==='recoverGunmen'){
-  if(discardUid||returnUid||bottomOrderUids.length||takeUid!==null&&!rule.candidateUids.includes(takeUid))
-   throw new Error('Only own outside GUNMEN may be recovered');
-  if(takeUid)owner.hand.push(from(owner.outside,takeUid));
  }
  if(!objectHasUniqueUids(owner))throw new Error('Green entry caused UID duplication');
  if(result.pending?.kind==='ttgGreenEntry')result.pending=null;
