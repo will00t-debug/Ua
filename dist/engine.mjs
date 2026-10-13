@@ -877,7 +877,7 @@ function resolveChoice(s,ids){
   }
   case 'triggerChoice':{
    const c=s.revealed.find(x=>x.card.uid===e.uid)?.card,d=cardOf(c),choice=chosen[0];
-   const publicTrigger=(s.triggerHistory||[]).find(x=>x.uid===e.uid&&x.player===p);
+   const publicTrigger=(s.triggerHistory||[]).findLast(x=>x.uid===e.uid&&x.player===p);
     if(publicTrigger)publicTrigger.outcome=choice.id==='skip'?'skipped':choice.id==='get'?'get':choice.action?'raid':'activated';
     if(choice.id==='skip'){finishReveal(s,p,e.uid);log(s,`${s.players[p].name}不發動 Trigger。`);}
    else if(choice.id==='get'||d.trigger==='get'){s.players[p].triggerUsedTurn=s.turn;finishReveal(s,p,e.uid,'hand');log(s,`${d.name}加入手牌。`,'effect');}
