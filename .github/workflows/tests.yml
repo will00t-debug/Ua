@@ -2,7 +2,7 @@ name: BLEACH Arena Tests
 
 on:
   push:
-    branches: [main, 'fix/ai-tactics-private-20261013']
+    branches: [main, 'fix/ai-tactics-private-20261013', 'feature/ai-v3-learning']
   pull_request:
     branches: [main]
 
@@ -21,10 +21,17 @@ jobs:
         run: npm test
       - name: Smoke-test the three PDF decks against each other
         run: npm run spar:ai -- --games 9 --difficulty normal --opponent normal --seed 12000 --max-actions 350
+      - name: AI v3 neural learning smoke test
+        run: npm run train:ai -- --games 4 --eval 4 --epochs 1 --max-actions 220 --seed 123456 --report /tmp/ai-v3-smoke.json --candidate /tmp/ai-v3-smoke-model.json
       - name: Syntax check for browser modules
         run: |
           node --check dist/app.mjs
           node --check dist/ai-v2.mjs
+          node --check dist/ai-v3-features.mjs
+          node --check dist/ai-v3-network.mjs
+          node --check dist/ai-v3-policy.mjs
+          node --check dist/ai-worker.mjs
+          node --check scripts/train-ai-v3.mjs
           node --check dist/training-decks.mjs
           node --check scripts/benchmark-training-decks.mjs
       - name: Check static entry point
