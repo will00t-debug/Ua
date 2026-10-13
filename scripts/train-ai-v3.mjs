@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {performance} from 'node:perf_hooks';
 import {TRAINING_DECKS} from '../dist/training-decks.mjs';
-import {newGame,dispatch,legalActions,controller,assertState} from '../dist/engine.mjs';
+import {newGame,dispatch,legalActions,controller,assertState,cardOf} from '../dist/engine.mjs';
 import {chooseAiAction} from '../dist/ai-v2.mjs';
 import {chooseNeuralAction} from '../dist/ai-v3-policy.mjs';
 import {encodeAction,FEATURE_VERSION} from '../dist/ai-v3-features.mjs';
@@ -53,17 +53,23 @@ function playGame(g,seedBase,{model=null,collect=false,explore=0}={}){
     move=chooseNeuralAction(s,{model});
     if(!actions.some(a=>same(a,move)))throw Error('network returned an illegal action');
    }
-   // Exploration supplies counterfactual comparisons. It does not circumvent
-   // legality and never uses opponent private hand/deck/life identities.
-   const alternatives=actions.filter(a=>!same(a,move));
+   // Focus exploration on comparable character deployments. Blindly sampling
+   // combat, blocking, event choices and pending effects destabilized the
+   // baseline and generated contradictory outcome rewards.
+   const canCompare=collect&&s.phase==='main'&&!s.pending&&
+    teacher.type==='play'&&
+    cardOf(s.players[p].hand.find(c=>c.uid===teacher.uid)||{})?.type==='character';
+   const alternatives=canCompare?actions.filter(a=>
+     a.type==='play'&&a.line===teacher.line&&
+     a.uid!==teacher.uid&&
+     cardOf(s.players[p].hand.find(c=>c.uid===a.uid)||{})?.type==='character'):[];
    const contrast=alternatives.length?alternatives[Math.floor(rng()*alternatives.length)]:null;
-   if(collect&&alternatives.length&&rng()<explore)move=contrast;
-   if(collect&&contrast){
+   const explored=!!contrast&&rng()<explore;
+   if(explored)move=contrast;
+   if(contrast){
     records.push({
-     actor:p,chosen:encodeAction(s,move,p),
-     teacher:encodeAction(s,teacher,p),
-     counter:encodeAction(s,same(move,teacher)?contrast:teacher,p),
-     usedTeacher:same(move,teacher)
+     actor:p,chosen:encodeAction(s,move,p),teacher:encodeAction(s,teacher,p),
+     counter:encodeAction(s,contrast,p),explored
     });
    }
    s=dispatch(s,move,p);
@@ -75,12 +81,20 @@ function playGame(g,seedBase,{model=null,collect=false,explore=0}={}){
  const samples=[];
  if(collect&&completed){
   for(const r of records){
-   // Behavioral cloning anchors the model to the stronger v2 policy.
+   // Always teach the action selected by tested hard AI v2. The old trainer
+   // incorrectly reversed this preference on losing games, including when
+   // the agent simply followed the teacher itself.
    samples.push({yes:r.teacher,no:r.counter,weight:1});
-   // Actual outcome reward is applied separately. A model's winning action
-   // is preferable to its alternative; for a losing move the sign is reversed.
-   if(r.actor===s.winner)samples.push({yes:r.chosen,no:r.counter,weight:0.45});
-   else samples.push({yes:r.counter,no:r.chosen,weight:0.24});
+   // Outcome feedback is weak and ONLY applies to an actually explored
+   // alternative. Winning a game does not prove every move was good.
+   // Negative examples reinforce the teacher; a winning exploratory
+   // choice only gently challenges it. Never punish a teacher move
+   // merely because that game's final result was a loss.
+   if(r.explored){
+    if(r.actor===s.winner)
+     samples.push({yes:r.chosen,no:r.teacher,weight:0.12});
+    else samples.push({yes:r.teacher,no:r.chosen,weight:0.24});
+   }
   }
  }
  return {completed,winner:completed?s.winner:null,error:failed,moves,
@@ -120,12 +134,12 @@ function evaluate(model){
   byMatchup:stats,elapsedMs:Math.round(now()-start)};
 }
 console.log('AI v3 neural training: '+games+' self-play games, '+evalGames+' separate held-out games');
-const model=initModel({seed:seed^0x5fae124});
+const model=initModel({seed:seed^0x5fae124,hidden:32});
 let completed=0,unfinished=0,failures=0,rows=[];
 const started=now();
 for(let i=0;i<games;i++){
  // Starting with strong v2 policy + legal exploration reduces cold-start risk.
- const g=playGame(i,seed,{collect:true,explore:0.12});
+ const g=playGame(i,seed,{collect:true,explore:0.10});
  if(g.error){failures++;console.log('TRAIN error '+i+': '+g.error.slice(0,200));}
  else if(!g.completed)unfinished++;
  else {completed++;rows.push(...g.samples);}
@@ -141,7 +155,7 @@ const evaluation=evaluate(model);
 const adequate=evaluation.wins+evaluation.losses>=Math.min(32,evalGames)
  &&evaluation.unfinished===0&&evaluation.errors===0
  &&evaluation.winRate>=minWinRate;
-const report={schema:'ua-ai-v3-training-1',featureVersion:FEATURE_VERSION,
+const report={schema:'ua-ai-v3-training-2',featureVersion:FEATURE_VERSION,
  neuralNetwork:{inputs:model.features,hidden:model.hidden,output:1},
  training:{requestedGames:games,completed,unfinished,failures,
   rankingPairs:rows.length,epochs,finalLoss:loss,elapsedMs:Math.round(now()-started)},
@@ -149,7 +163,7 @@ const report={schema:'ua-ai-v3-training-1',featureVersion:FEATURE_VERSION,
   isHeldOut:true,accepted:adequate,
   acceptanceThreshold:minWinRate},
  candidatePath,championPromoted:promote&&adequate,
- disclaimer:'Outcome-ranked offline self-play, not automatic improvement without held-out evaluation. No hidden information encoded.'};
+ disclaimer:'Focused teacher-ranked deployment learning with weak outcome feedback; do not treat final game result as proof an individual move was good. No secret card identities in features.'};
 if(promote&&adequate){
  const output='dist/ai-v3-weights.mjs';
  const versioned=JSON.stringify({...model,approvedAgainst:'hard-v2',
