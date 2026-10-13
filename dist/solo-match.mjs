@@ -786,7 +786,7 @@ export function soloTrainingLegalActions(s){
   if(!groupUsed(s,s.active,'sung019')&&p.hand.some(shadow))
    for(const c of p.outside.filter(c=>c.cardId==='SLG-1-019'))actions.push({type:'abilityOutside',uid:c.uid});
   for(const c of field(p)){
-   if(c.cardId='SLG-1-044'&&c.ready&&c.line==='front'&&p.deck.length&&field(p).some(isSung))
+   if(c.cardId==='SLG-1-044'&&c.ready&&c.line==='front'&&p.deck.length&&field(p).some(isSung))
     actions.push({type:'ability',uid:c.uid,mode:'attachDamage'});
    if(c.cardId==='SLG-1-019'&&c.ready){ /* activation belongs to the outside zone only */ }
    if(c.cardId==='SLG-1-034'&&c.ready){
