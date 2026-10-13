@@ -245,7 +245,9 @@ export function dispatchTtgCoreAction(source,action){
   finalizeTtgLifeOutcome(s,p);
  }else if(s.pending?.kind==='greenHighAttackWindow'){
   Object.assign(s,resolveHighRaidAttackEffect(s,{...action,player:p}));
-  s.pending={kind:'block',attackerUid:action.uid};
+  if(['greenRetireOrder','green030Sidelined','green034Sidelined'].includes(s.pending?.kind)){
+   s.pendingBlockAfterRetirement={attackerUid:action.uid};
+  }else s.pending={kind:'block',attackerUid:action.uid};
  }else if(s.pending?.kind==='block'){
   const attacker=pl.front.find(c=>c?.uid===s.pending.attackerUid);
   if(!attacker)throw new Error('Attacker disappeared');
@@ -325,6 +327,10 @@ export function dispatchTtgCoreAction(source,action){
   const owner=s.pending?.player??p;
   const after=dispatchTtgRuleAction(s,{...action,player:owner});Object.assign(s,after);
  }else throw new Error('Unsupported core action');
+ if(s.status==='playing'&&!s.pending&&!s.pendingTtgLife&&s.pendingBlockAfterRetirement){
+  s.pending={kind:'block',attackerUid:s.pendingBlockAfterRetirement.attackerUid};
+  delete s.pendingBlockAfterRetirement;
+ }
  if(s.status==='playing'&&!s.pending&&!s.pendingTtgLife&&s.pendingDamage)advanceQueuedDamage(s);
  if(s.status==='playing'&&s.pendingLifeOutcome&&!s.pending&&!s.pendingTtgLife&&!s.pendingDamage){
   finalizeTtgLifeOutcome(s,s.pendingLifeOutcome.player);
