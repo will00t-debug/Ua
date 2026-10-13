@@ -28,13 +28,32 @@
 - `dist/ttg-rule-adapter.mjs` 目前能把其中部分角色能力與 6 種事件卡、生命 Trigger 以統一 API 提供玩家動作合法性／測試用 AI 選擇；`dist/ttg-energy-snapshot.mjs` 在 opt-in 狀態下重算不同顏色的產能。
 - 002、006、049、059、063、065、071、019、033、066 與 6 張事件卡共 **16 種 `isolated_effect_only`**；本標籤只代表局部邏輯經測試，**不是對戰可用**。
 - `TTG-1-081` 的正常效果遵照官方 Q2301 勘誤：僅選敵方前線角色；SPECIAL Trigger 則是獨立處理，沒有正常使用效果的 BP 上限。
-- `TTG-1-071` 的真正 Raid 登場／Raid Trigger、057 登場給 IMPACT 無效、全部 81 卡其他能力、完整 Raid 底板重建、全部生命 Trigger、選目標 UI 與整場 AI 對局仍未完全接線及驗證。
+- `TTG-1-071` 已具備從手牌 Raid 登場、選底板／位置、支付 AP 及首次攻擊 BP 的獨立可執行操作；其生命 RAID Trigger 尚未完整實作。057 登場給 IMPACT 無效、其餘 81 卡未驗證能力、高階 Raid 登場後的全部效果、全部生命 Trigger 和玩家對戰 UI 仍未完成。
 - **所有 81 張仍是 `auto:false`，作品 `playable:false`**。不得因卡池現在 81/81，就開放完整自動對戰。
 
 ## 待辦
 
 1. 將官方完整印刷效果與特殊 Raid／Trigger 逐卡接入天元突破專屬 match dispatcher、UI 與 AI。
 2. 檢查每張卡的成本、同名每回合限制、強制／任選目標、卡片守恆及裏向資訊。
-3. 新增完整 81 卡效果對局測試和 AI 完整 50 張牌組對局，確認 BLEACH 與其餘作品測試不受影響。
+3. 以現有 14 種安全子集的 50 張雙 AI 完整對局測試為起點，逐步增加其他印刷效果直到覆蓋 81 種卡片；每步確認 BLEACH 與其餘作品測試不受影響。
 4. 在確認卡圖可合法使用後替換佔位圖，不直接使用不具授權來源的卡圖。
 5. 維持 PR #7 進行審查；**不合併 main、不直接發布網站**。
+
+## 本次開發：獨立 Raid 與雙人 AI 對戰測試核心（2026-10-13）
+
+### 單張 Raid 已接入共用合法動作入口
+- `dist/ttg-raid-entry.mjs`：`TTG-1-071 キングキタンDX` 從手牌以己方〈キタン〉為底板 Raid，核實紅能源 4／AP 1、實體 AP REST、選擇原位置或能源線轉至空前線位置、頂卡 ACTIVE、底板保持完整 UID 與原 REST。禁止對手底板、錯誤卡名、重複 UID、佔用位置和跳過成本。
+- `dist/ttg-rule-adapter.mjs` 將這張 Raid 作為合法玩家／測試 AI 選擇項目。攻擊階段 `TTG-1-071` 首次攻擊可以選其他己方角色 BP+2000 或略過，且同一事件不能重複選。
+- 尚不代表此卡的全部生命 Raid Trigger 和 Impact Null 已能在正式對戰引擎運作，且整體作品仍鎖定不可正式開局。
+
+### 高階特殊 Raid 疊卡（Q2393–Q2395）
+- `dist/ttg-chain-raid.mjs` 已能測試 `027 → 031 → 032`：將前一張 Raid 頂卡按原順序移至原底板的裏向卡群尾端，保留實體 UID、底板與 REST；最終 `032` 僅能在超銀河 Raid 本回合**沒有**突襲時使用，且不得與其他場上同卡共存。
+- 支援玩家指定舊 Raid、位置、實體 AP 支付；所有 50 張物理卡必須守恆，對手不可檢視裏向身份。
+- **效果未接完時會建立 `pending.kind='ttgUnimplementedRaidEntry'` 阻止後續遊戲操作**，不能跳過登場效果假裝完整自動判定。此功能目前是獨立實驗規則，**尚未接到網站可玩 UI**。
+
+### 限定作品的全流程 AI Smoke（不是 81 張全自動）
+- `dist/ttg-core-match.mjs` 提供 14 種已實作簡單效果的實驗子集，強制驗證每副 50 張、最多每卡號四張及 SPECIAL／COLOR／FINAL 各不超過四張。任何其他尚未完整支援卡號**拒絕開局**。
+- 真正執行雙人起手 7、生命 7、3 張額外 AP、回合開始及 AP 刷新、移動／登場／攻擊／阻擋、BP 相同時攻擊方獲勝、攻擊方失敗但角色仍留場、DRAW／ACTIVE／FINAL 生命 Trigger，以及由測試 AI 連續走完對局。
+- 官方 Q33／Q34 和規則手冊：ACTIVE Trigger 是轉 ACTIVE 一名己方角色並給 BP+3000，**不是 AP 卡恢復**；勝負在傷害 Trigger 結算結束後、生命數歸零時判定（FINAL 可能先補回生命）。
+- `tests/ttg-core-match.test.mjs` 以多種確定性隨機種子模擬 AI 50 張牌組完整對局；`tests/ttg-chain-raid.test.mjs` 加測 Q2393–Q2395，包含 50 卡守恆。
+- 此模組的牌組安全白名單是 `TTG_CORE_SMOKE_IDS`，**不影響正常牌組編輯器**。沒有把 81 張的 `auto:false` 或作品的 `playable:false` 擅改為 true，尚未提供正式網站的 TTG 玩家 UI。
