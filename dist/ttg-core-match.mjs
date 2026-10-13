@@ -25,6 +25,7 @@ import {red075ImpactNull,expireRed075OwnStart} from './ttg-red-twelfth-three.mjs
 import {red061Entry,red062Entry,launchRedSimonFollowup,finishRedSimonFollowup} from './ttg-red-seventh-three.mjs';
 import {redRaidPassive} from './ttg-red-eleventh-three.mjs';
 import {red056CanAttack} from './ttg-red-fifth-three.mjs';
+import {beginRed073Leaving} from './ttg-red-073-leaving.mjs';
 import {beginTtgLifeTrigger,legalTtgLifeChoices,resolveTtgLifeChoice,finalizeTtgLifeOutcome} from './ttg-green-life.mjs';
 
 // Only IDs with on-entry, passives, attacks and life triggers implemented below
@@ -186,7 +187,7 @@ export function legalTtgCoreActions(s){
  if(s.pending?.kind==='ttgRed055Discard')return legalTtgRed055Discards(s);
  if(s.pending?.kind==='ttgRed055Recover')return legalTtgRed055Recovers(s);
  if(s.pending?.kind==='ttgRed057058Entry')return legalTtgRed057058Choices(s);
- if(['ttgRed056AfterAttack','ttgRed077Recover','ttgRed061','ttgRed062Retrigger','ttgRedRaidQueue','ttgRed076Look','ttgRed076Discard'].includes(s.pending?.kind))
+ if(['ttgRed073Leaving','ttgRed056AfterAttack','ttgRed077Recover','ttgRed061','ttgRed062Retrigger','ttgRedRaidQueue','ttgRed076Look','ttgRed076Discard'].includes(s.pending?.kind))
   return legalTtgRuleActions(s,s.pending.player);
  if(s.pending?.kind==='ttgGreenEntry')return greenEntryChoices(s);
  if(['ttgGreen028Entry','ttgGreen029Entry','green030Sidelined','green012Search','green012Discard','greenHighRaidQueue','green034Sidelined','greenRetireOrder'].includes(s.pending?.kind))
@@ -237,7 +238,10 @@ const sameAction=(a,b)=>a.type===b.type&&['handUid','uid','slot','line','blockUi
 function removeFront(s,p,uid){
  const pl=s.players[p],i=pl.front.findIndex(c=>c?.uid===uid);
  if(i<0)throw new Error('Missing battle card');
- if(pl.front[i].cardId==='TTG-1-030'){
+ if(pl.front[i].cardId==='TTG-1-073'&&(pl.front[i].under||[]).some(c=>c.faceDown)&&
+  bp(s,p,pl.front[i])>=500){
+  Object.assign(s,beginRed073Leaving({...s,pending:null},{player:p,uid}));
+ }else if(pl.front[i].cardId==='TTG-1-030'){
   Object.assign(s,sidelineGreen030(s,{player:p,uid}));
  }else{
   const retired=pl.front[i];
@@ -332,8 +336,8 @@ export function dispatchTtgCoreAction(source,action){
    }
    // Losing an attack does NOT retire the attacker (official Q34).
    if(impactDamage){
-    s.pending=null;
-    queueLifeDamage(s,1-p,impactDamage);
+    if(s.pending?.kind==='ttgRed073Leaving')s.ttg073ImpactAfterReplacement={defender:1-p,amount:impactDamage};
+    else{s.pending=null;queueLifeDamage(s,1-p,impactDamage);}
    }
   }else{
    // Official 008 Darry base: draw on a NOT BLOCKED attack before checking life.
@@ -423,6 +427,10 @@ export function dispatchTtgCoreAction(source,action){
   s.pending={kind:'block',attackerUid:s.pendingBlockAfterRetirement.attackerUid};
   delete s.pendingBlockAfterRetirement;
  }
+ if(s.status==='playing'&&!s.pending&&!s.pendingTtgLife&&s.ttg073ImpactAfterReplacement){
+  const impact=s.ttg073ImpactAfterReplacement;delete s.ttg073ImpactAfterReplacement;
+  queueLifeDamage(s,impact.defender,impact.amount);
+ }
  if(s.status==='playing'&&!s.pending&&!s.pendingTtgLife&&s.pendingDamage)advanceQueuedDamage(s);
  if(s.status==='playing'&&s.pendingLifeOutcome&&!s.pending&&!s.pendingTtgLife&&!s.pendingDamage){
   finalizeTtgLifeOutcome(s,s.pendingLifeOutcome.player);
@@ -448,7 +456,7 @@ export function ttgCoreAiChoice(s){
  if(s.pending?.kind==='ttgRed055Discard')return options.find(x=>x.discardUid)||options[0];
  if(s.pending?.kind==='ttgRed055Recover')return options.find(x=>x.recoverUid)||options[0];
  if(s.pending?.kind==='ttgRed057058Entry')return options.find(x=>x.targetUid)||options[0];
- if(['ttgRed056AfterAttack','ttgRed061','ttgRed062Retrigger','ttgRedRaidQueue','ttgRed076Look','ttgRed076Discard'].includes(s.pending?.kind))
+ if(['ttgRed073Leaving','ttgRed056AfterAttack','ttgRed061','ttgRed062Retrigger','ttgRedRaidQueue','ttgRed076Look','ttgRed076Discard'].includes(s.pending?.kind))
   return chooseTtgRuleAiAction(s,s.pending.player);
  if(s.pending?.kind==='ttgRed077Recover')return options.find(x=>x.recoverUid)||options[0];
  if(s.pending?.kind==='ttgRed044Search'){
