@@ -8,13 +8,14 @@ import {spendTtgApCards} from './ttg-actions.mjs';
 import {TTG_GREEN_ENTRY_IDS,legalTtgGreenEntryDecisions,resolveTtgGreenEntry} from './ttg-green-entry.mjs';
 import {greenTtgCurrentBp,greenTtgNeedsEnergy,greenTtgImpactNull,greenTtgCanAttackOrBlock} from './ttg-green-passives.mjs';
 import {canTtgGreen028Attack,resolveTtgGreen028Start} from './ttg-green-028.mjs';
+import {applyGreen008UnblockedDraw} from './ttg-green-008.mjs';
 import {resolveGreenOwnStart} from './ttg-green-main.mjs';
 import {beginTtgLifeTrigger,legalTtgLifeChoices,resolveTtgLifeChoice,finalizeTtgLifeOutcome} from './ttg-green-life.mjs';
 
 // Only IDs with on-entry, passives, attacks and life triggers implemented below
 // may enter this core. In particular 071 Raid is tested independently, not here.
 export const TTG_CORE_SMOKE_IDS=Object.freeze([
- 'TTG-1-001','TTG-1-002','TTG-1-003','TTG-1-005','TTG-1-006','TTG-1-007','TTG-1-009',
+ 'TTG-1-001','TTG-1-002','TTG-1-003','TTG-1-005','TTG-1-006','TTG-1-007','TTG-1-008','TTG-1-009',
  'TTG-1-010','TTG-1-011','TTG-1-013','TTG-1-014','TTG-1-015','TTG-1-016','TTG-1-017','TTG-1-018',
  'TTG-1-019','TTG-1-020','TTG-1-021','TTG-1-022','TTG-1-023','TTG-1-024','TTG-1-026',
  'TTG-1-035','TTG-1-036','TTG-1-037','TTG-1-038','TTG-1-039',
@@ -174,7 +175,7 @@ export function legalTtgCoreActions(s){
  if(s.phase==='main'){
   for(const h of pl.hand){
    const d=printed(h);
-   if(d.type!=='character')continue;
+   if(d.type!=='character'||h.cardId==='TTG-1-008')continue;
    if(pl.energyProduced[d.color]<greenTtgNeedsEnergy(s,p,h)||pl.apCards.every(c=>!c.ready))continue;
    for(const line of ['energy','front'])for(let slot=0;slot<4;slot++)if(!pl[line][slot])
     actions.push({type:'play',handUid:h.uid,line,slot});
@@ -227,14 +228,20 @@ export function dispatchTtgCoreAction(source,action){
    // battle only. Never add it to an unblocked direct attack. The blocker
    // may suppress IMPACT for this battle, even if retired on losing.
    const won=bp(s,p,attacker)>=bp(s,1-p,defender);
-   const impactDamage=won&&attacker.greenEventImpact>=1&&!greenTtgImpactNull(defender);
+   const impactDamage=won&&(attacker.greenEventImpact>=1||attacker.green008Impact>=1)&&!greenTtgImpactNull(defender);
    if(won)removeFront(s,1-p,defender.uid);
    // Losing an attack does NOT retire the attacker (official Q34).
    if(impactDamage){
     s.pending=null; // clear blocker decision before exposing life trigger
     lifeDamage(s,1-p);
    }
-  }else{s.pending=null;lifeDamage(s,1-p);}
+  }else{
+   // Official 008 Darry base: draw on a NOT BLOCKED attack before checking life.
+   const after=applyGreen008UnblockedDraw(s,p,attacker.uid);
+   Object.assign(s,after);
+   s.pending=null;
+   if(s.status==='playing')lifeDamage(s,1-p);
+  }
   s.pending=null;
  }else if(action.type==='next'){
   if(s.phase==='start')s.phase='move';
@@ -346,6 +353,8 @@ export function ttgCoreAiChoice(s){
     effects.find(x=>x.type==='ttgGreen011')||effects.find(x=>x.type==='ttgGreen018')||
     effects.find(x=>x.type==='ttgGreen022');
    if(candidate)return candidate;
+   const raid008=effects.find(x=>x.type==='green008Raid'&&x.line==='front')||effects.find(x=>x.type==='green008Raid');
+   if(raid008)return {...raid008,payApUids:pl.apCards.filter(x=>x.ready).slice(0,raid008.requiredAp).map(x=>x.uid)};
    const greenEvent=effects.filter(x=>x.type==='playGreenEvent').sort((a,b)=>(b.targetUids?.length||0)-(a.targetUids?.length||0))[0];
    if(greenEvent)return {type:greenEvent.type,player:p,handUid:greenEvent.handUid,cardId:greenEvent.cardId,
     targetUid:greenEvent.targetUid,targetUids:greenEvent.targetUids,
