@@ -70,7 +70,7 @@ test('FAQ Q51: normal EX07BT/BLC-2-067 Kenpachi never gains high-base Raid buff'
 });
 test('FAQ Q51: normal EX07BT/BLC-2-019 Ichigo keeps its out-of-box on-play debuff',()=>{
  let s=fixture();
- const target=card(s,1,'BLC-1-080');target.ready=true;
+ const target=card(s,1,'BLC-2-019');target.ready=true;
  s.players[1].front[0]=target;
  energyFor(s,'BLC-2-019');
  const c=card(s,0,'BLC-2-019');s.players[0].hand.push(c);
