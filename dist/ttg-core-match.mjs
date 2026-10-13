@@ -16,6 +16,7 @@ import {legalHighRaidAttackEffects,resolveHighRaidAttackEffect,greenHighRaidComb
 import {resolveGreenOwnStart} from './ttg-green-main.mjs';
 import {beginTtgRed049Entry,legalTtgRed049Choices,resolveTtgRed049Choice,resolveTtgRed050Entry} from './ttg-red-third-three.mjs';
 import {beginTtgRed051Entry,legalTtgRed051Discards,resolveTtgRed051Discard,beginTtgRed052Entry,legalTtgRed052Discards,resolveTtgRed052Discard,legalTtgRed052Recovers,resolveTtgRed052Recover} from './ttg-red-fourth-three.mjs';
+import {red054BpBonus,red054ImpactNull,beginTtgRed054Entry,legalTtgRed054Choices,resolveTtgRed054Mill,beginTtgRed055Entry,legalTtgRed055Mills,resolveTtgRed055Mill,legalTtgRed055Discards,resolveTtgRed055Discard,legalTtgRed055Recovers,resolveTtgRed055Recover} from './ttg-red-fifth-three.mjs';
 import {ttgRedStarterBpBonus,ttgRedStarterImpactNull,beginTtgRed044Unblocked,legalTtgRed044Search,resolveTtgRed044Search} from './ttg-red-first-three.mjs';
 import {beginTtgLifeTrigger,legalTtgLifeChoices,resolveTtgLifeChoice,finalizeTtgLifeOutcome} from './ttg-green-life.mjs';
 
@@ -27,7 +28,7 @@ export const TTG_CORE_SMOKE_IDS=Object.freeze([
  'TTG-1-019','TTG-1-020','TTG-1-021','TTG-1-022','TTG-1-023','TTG-1-024','TTG-1-025','TTG-1-026','TTG-1-027','TTG-1-028','TTG-1-029','TTG-1-030','TTG-1-031','TTG-1-032','TTG-1-033','TTG-1-034',
  'TTG-1-035','TTG-1-036','TTG-1-037','TTG-1-038','TTG-1-039',
  'TTG-1-040','TTG-1-041',
- 'TTG-1-042','TTG-1-043','TTG-1-044','TTG-1-046','TTG-1-047','TTG-1-048','TTG-1-049','TTG-1-050','TTG-1-051','TTG-1-052','TTG-1-053',
+ 'TTG-1-042','TTG-1-043','TTG-1-044','TTG-1-046','TTG-1-047','TTG-1-048','TTG-1-049','TTG-1-050','TTG-1-051','TTG-1-052','TTG-1-053','TTG-1-054','TTG-1-055',
  'TTG-1-063','TTG-1-064','TTG-1-065','TTG-1-066'
 ]);
 const allowed=new Set(TTG_CORE_SMOKE_IDS);
@@ -111,7 +112,7 @@ export function assertTtgCoreState(s){
  }
  return true;
 }
-const bp=(s,p,c)=>greenTtgCurrentBp(s,p,c)+ttgRedStarterBpBonus(s,p,c);
+const bp=(s,p,c)=>greenTtgCurrentBp(s,p,c)+ttgRedStarterBpBonus(s,p,c)+red054BpBonus(s,p,c);
 // Preserve a stable, user-selectable decision for each legal target; the full
 // reducer validates custom bottom-order permutations if the UI supplies them.
 function greenEntryChoices(s){
@@ -170,6 +171,10 @@ export function legalTtgCoreActions(s){
  if(s.pending?.kind==='ttgRed051Discard')return legalTtgRed051Discards(s);
  if(s.pending?.kind==='ttgRed052Discard')return legalTtgRed052Discards(s);
  if(s.pending?.kind==='ttgRed052Recover')return legalTtgRed052Recovers(s);
+ if(s.pending?.kind==='ttgRed054Mill')return legalTtgRed054Choices(s);
+ if(s.pending?.kind==='ttgRed055Mill')return legalTtgRed055Mills(s);
+ if(s.pending?.kind==='ttgRed055Discard')return legalTtgRed055Discards(s);
+ if(s.pending?.kind==='ttgRed055Recover')return legalTtgRed055Recovers(s);
  if(s.pending?.kind==='ttgGreenEntry')return greenEntryChoices(s);
  if(['ttgGreen028Entry','ttgGreen029Entry','green030Sidelined','green012Search','green012Discard','greenHighRaidQueue','green034Sidelined','greenRetireOrder'].includes(s.pending?.kind))
   return legalTtgRuleActions(s,s.pending.player);
@@ -255,6 +260,14 @@ export function dispatchTtgCoreAction(source,action){
   Object.assign(s,resolveTtgRed052Discard(s,action));
  }else if(s.pending?.kind==='ttgRed052Recover'){
   Object.assign(s,resolveTtgRed052Recover(s,action));
+ }else if(s.pending?.kind==='ttgRed054Mill'){
+  Object.assign(s,resolveTtgRed054Mill(s,action));
+ }else if(s.pending?.kind==='ttgRed055Mill'){
+  Object.assign(s,resolveTtgRed055Mill(s,action));
+ }else if(s.pending?.kind==='ttgRed055Discard'){
+  Object.assign(s,resolveTtgRed055Discard(s,action));
+ }else if(s.pending?.kind==='ttgRed055Recover'){
+  Object.assign(s,resolveTtgRed055Recover(s,action));
  }else if(s.pending?.kind==='ttgRed044Search'){
   const attacker=pl.front.find(c=>c?.uid===s.pending.attackerUid);
   const damage=greenHighRaidCombatValue(s,p,attacker).damage;
@@ -286,7 +299,7 @@ export function dispatchTtgCoreAction(source,action){
    // may suppress IMPACT for this battle, even if retired on losing.
    const won=bp(s,p,attacker)>=bp(s,1-p,defender);
    const impactAmount=Math.max(attacker.greenEventImpact||0,attacker.green008Impact||0,greenHighRaidCombatValue(s,p,attacker).impact);
-   const impactDamage=won&&!greenTtgImpactNull(defender)&&!ttgRedStarterImpactNull(defender)?impactAmount:0;
+   const impactDamage=won&&!greenTtgImpactNull(defender)&&!ttgRedStarterImpactNull(defender)&&!red054ImpactNull(s,1-p,defender)?impactAmount:0;
    if(won)removeFront(s,1-p,defender.uid);
    // Losing an attack does NOT retire the attacker (official Q34).
    if(impactDamage){
@@ -336,6 +349,8 @@ export function dispatchTtgCoreAction(source,action){
   if(h.cardId==='TTG-1-050')Object.assign(s,resolveTtgRed050Entry(s,{player:p,uid:h.uid}));
   if(h.cardId==='TTG-1-051')Object.assign(s,beginTtgRed051Entry(s,{player:p,uid:h.uid}));
   if(h.cardId==='TTG-1-052')Object.assign(s,beginTtgRed052Entry(s,{player:p,uid:h.uid}));
+  if(h.cardId==='TTG-1-054')Object.assign(s,beginTtgRed054Entry(s,{player:p,uid:h.uid}));
+  if(h.cardId==='TTG-1-055')Object.assign(s,beginTtgRed055Entry(s,{player:p,uid:h.uid}));
  }else if(action.type==='attack'){
   const c=pl.front.find(c=>c?.uid===action.uid);
   if(!c?.ready)throw new Error('Invalid attack');
@@ -375,6 +390,10 @@ export function ttgCoreAiChoice(s){
  if(s.pending?.kind==='ttgRed051Discard')return options[0];
  if(s.pending?.kind==='ttgRed052Discard')return options.find(x=>x.discardUid)||options[0];
  if(s.pending?.kind==='ttgRed052Recover')return options.find(x=>x.recoverUid)||options[0];
+ if(s.pending?.kind==='ttgRed054Mill')return options.find(x=>x.mill)||options[0];
+ if(s.pending?.kind==='ttgRed055Mill')return options[options.length-1];
+ if(s.pending?.kind==='ttgRed055Discard')return options.find(x=>x.discardUid)||options[0];
+ if(s.pending?.kind==='ttgRed055Recover')return options.find(x=>x.recoverUid)||options[0];
  if(s.pending?.kind==='ttgRed044Search'){
   return options.find(x=>x.takeUid&&x.discardUid!==x.takeUid)||options.find(x=>x.takeUid)||options[0];
  }
