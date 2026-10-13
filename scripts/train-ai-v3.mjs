@@ -30,6 +30,7 @@ const now=()=>performance.now();
 let randState=(seed>>>0)||1;
 function rng(){randState^=randState<<13;randState^=randState>>>17;randState^=randState<<5;return (randState>>>0)/4294967296;}
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+const diagnostics={calls:0,eligible:0,hiddenBoundary:0,vetoed:0,overrides:0};
 function prepared(g,seedBase) {
  const [left,right]=pairs[g%pairs.length];
  // Four rotations: first and learning seat are independent.
@@ -53,7 +54,7 @@ function playGame(g,seedBase,{model=null,collect=false,explore=0}={}){
    if(!teacher||!actions.some(a=>same(a,teacher)))throw Error('baseline returned an illegal action');
    let move=teacher;
    if(model&&p===info.learningSeat){
-    move=chooseNeuralAction(s,{model});
+    move=chooseNeuralAction(s,{model,diagnostics});
     if(!actions.some(a=>same(a,move)))throw Error('network returned an illegal action');
    }
    // Focus exploration on comparable character deployments. Blindly sampling
@@ -149,6 +150,8 @@ validateModel(model);
 fs.mkdirSync(path.dirname(candidatePath),{recursive:true});
 fs.writeFileSync(candidatePath,JSON.stringify(model));
 const evaluation=evaluate(model);
+const policyDiagnostics={...diagnostics,eligibilityRate:diagnostics.calls?diagnostics.eligible/diagnostics.calls:0,overrideRate:diagnostics.calls?diagnostics.overrides/diagnostics.calls:0,overridePerEligible:diagnostics.eligible?diagnostics.overrides/diagnostics.eligible:0};
+console.log('POLICY_DIAGNOSTICS='+JSON.stringify(policyDiagnostics));
 const adequate=completed===games&&failures===0&&unfinished===0
  &&evaluation.wins+evaluation.losses===evalGames
  &&evaluation.unfinished===0&&evaluation.errors===0
@@ -160,7 +163,7 @@ const report={schema:'ua-ai-v3-training-3',featureVersion:FEATURE_VERSION,
  evaluation:{...evaluation,seedBase:seed+1_000_000,opponent:'hard v2',
   isHeldOut:true,accepted:adequate,
   acceptanceThreshold:minWinRate},
- candidatePath,championPromoted:promote&&adequate,
+ policyDiagnostics,candidatePath,championPromoted:promote&&adequate,
  disclaimer:'Teacher-ranked legal character deployments with up to three distinct alternative cards per position; weak outcome feedback on the actually explored choice only. Synergy/energy signals derive solely from public and own known cards.'};
 if(promote&&adequate){
  const output='dist/ai-v3-weights.mjs';
