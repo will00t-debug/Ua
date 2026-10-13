@@ -25,7 +25,13 @@ export function calculateTtgEnergyByColor(state,player){
    if(!Number.isFinite(base)||base<0||!Number.isInteger(base))throw new Error('Unverified energy generator');
    const added=c.energyBonus??0;
    if(!Number.isInteger(added)||added<0)throw new Error('Invalid temporary energy gain');
-   energy[color]+=base+added+(c.ready&&bonusWhileActive.has(c.cardId)?1:0);
+   // TTG-1-024 Reite gains +1 while an owned GUNMEN card is present.
+   const gunmenPresent=[...(pl.front||[]),...(pl.energy||[])].filter(Boolean)
+     .some(other=>(TTG_BY_ID[other.cardId]?.traits||[]).some(t=>String(t).includes('ガンメン')));
+   const reite=c.cardId==='TTG-1-024'&&gunmenPresent?1:0;
+   // TTG-1-034 produces +1 for EACH facedown card below the field.
+   const facedown=c.cardId==='TTG-1-034'?(c.under||[]).filter(x=>x.faceDown).length:0;
+   energy[color]+=base+added+reite+facedown+(c.ready&&bonusWhileActive.has(c.cardId)?1:0);
   }
  }
  const scale=2**doubles;
