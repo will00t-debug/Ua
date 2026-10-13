@@ -101,8 +101,8 @@ test('last life SPECIAL resolves before defeat, while FINAL can rescue',()=>{
  const rescued=beginTtgLifeTrigger(final,{player:1,lifeUid:'life'});
  assert.equal(rescued.status,'playing');assert.equal(rescued.players[1].life.length,1);
 });
-test('Raid triggers are not silently treated as normal automatic life effects',()=>{
- const s=lifeGame('TTG-1-027');
+test('Unimplemented red 071 Raid triggers are not silently treated as normal automatic life effects',()=>{
+ const s=lifeGame('TTG-1-071');
  const p=beginTtgLifeTrigger(s,{player:1,lifeUid:'life'});
  assert.deepEqual(legalTtgLifeChoices(p),[]);
  assert.equal(p.pendingTtgLife.trigger,'raid');
