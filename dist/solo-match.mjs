@@ -99,7 +99,7 @@ export function newSoloTrainingMatch({decks=[SOLO_TRAINING_PRESET,SOLO_TRAINING_
  }
  startTurn(s);assertSoloTrainingMatch(s);return s;
 }
-function position(c,p,line,slot){c.owner=p;c.ready=false;c.line=line;c.slot=slot;}
+function position(c,p,line,slot){c.owner=p;c.ready=false;c.line=line;c.slot=slot;c.buffs=[];c.grants=[];delete c.extraTargetAp;delete c.untargetableTurn;delete c.grantBlockLimitTurn;}
 function retire(s,p,c){
  let arr=s.players[p][c.line],old=arr[c.slot];if(old?.uid!==c.uid)throw Error('retire lost field slot');
  const printed=d(c);
@@ -665,6 +665,11 @@ export function soloTrainingBotAction(s){
   return legal.find(a=>a.uid!=null)||legal[0];
  }
  const p=player(s),plays=legal.filter(a=>a.type==='play');
+ const events=legal.filter(a=>a.type==='playEvent');
+ if(s.phase==='main'&&events.length&&(p.ap>=2||!plays.length)){
+  // Only previously validated event commands enter this branch.
+  return events[0];
+ }
  if(s.phase==='main'&&plays.length){
   const needEnergy=soloEnergy(s)<4;
   const choices=plays.filter(a=>a.line===(needEnergy?'energy':'front'));
