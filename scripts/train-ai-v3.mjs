@@ -149,7 +149,8 @@ validateModel(model);
 fs.mkdirSync(path.dirname(candidatePath),{recursive:true});
 fs.writeFileSync(candidatePath,JSON.stringify(model));
 const evaluation=evaluate(model);
-const adequate=evaluation.wins+evaluation.losses>=Math.min(32,evalGames)
+const adequate=completed===games&&failures===0&&unfinished===0
+ &&evaluation.wins+evaluation.losses===evalGames
  &&evaluation.unfinished===0&&evaluation.errors===0
  &&evaluation.winRate>=minWinRate;
 const report={schema:'ua-ai-v3-training-3',featureVersion:FEATURE_VERSION,
