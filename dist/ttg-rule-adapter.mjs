@@ -10,6 +10,7 @@ import {legalGreen025Actions,resolveGreen025,resolveGreen025TurnEnd} from './ttg
 import {legalTtgGreen028Raids,dispatchTtgGreen028Raid,legalTtgGreen028EntryChoices,resolveTtgGreen028Entry} from './ttg-green-028.mjs';
 import {legalGreen021Step,resolveGreen021Step,beginGreen021AttackPhase,legalGreen021AttackStartChoices,resolveGreen021AttackStart} from './ttg-green-021.mjs';
 import {legalTtgGreen029Raids,dispatchTtgGreen029Raid,legalTtgGreen029EntryChoices,resolveTtgGreen029Entry} from './ttg-green-029.mjs';
+import {legalGreen008Raids,resolveGreen008Raid,resolveGreen008TurnEnd} from './ttg-green-008.mjs';
 import {legalGreen003,resolveGreen003,legalGreen011,resolveGreen011,legalGreen015,resolveGreen015,legalGreen018,resolveGreen018,legalGreen022,resolveGreen022,resolveGreenMainEnd,resolveGreenTurnEnd,legalGreen020Step,resolveGreen020Step,legalGreen016,resolveGreen016,legalGreen017,resolveGreen017} from './ttg-green-main.mjs';
 import {legalTtgEventTriggerChoices,resolveTtgEventLifeTrigger,TTG_IMPLEMENTED_EVENT_TRIGGERS} from './ttg-triggers.mjs';
 import {resolveTtgNia059,resolveTtgButa063,resolveTtgYoko065Step,resolveTtgMainEndRetire,resolveTtgPendingEndTurn,eligibleTtg071AttackBuffTargets,resolveTtg071FirstAttack,eligibleTtgViral002Targets,resolveTtgViral002,resolveTtgTemporaryEnergyEndTurn} from './ttg-pending-rules.mjs';
@@ -32,7 +33,7 @@ export function legalTtgRuleActions(state,player){
  if(state.active!==player||state.pending)return [];
  if(state.phase==='main'){
   const current=withTtgDerivedEnergy(state,player);
-  const list=[...legalTtgHandEvents(current,player).map(a=>({...a,player})),...legalTtgRaidEntries(current,player),...legalGreenEventActions(current,player),...legalGreen040RemovedActions(current,player),...legalGreen025Actions(current,player),...legalTtgGreen028Raids(current,player),...legalTtgGreen029Raids(current,player)];
+  const list=[...legalTtgHandEvents(current,player).map(a=>({...a,player})),...legalTtgRaidEntries(current,player),...legalGreenEventActions(current,player),...legalGreen040RemovedActions(current,player),...legalGreen025Actions(current,player),...legalTtgGreen028Raids(current,player),...legalTtgGreen029Raids(current,player),...legalGreen008Raids(current,player)];
   const pl=state.players[player];
   for(const c of owned(state,player)){
    if(c.cardId==='TTG-1-003')list.push(...legalGreen003(current,{player,uid:c.uid}));
@@ -106,6 +107,7 @@ export function dispatchTtgRuleAction(state,action){
  if(action.type==='ttgGreen028Entry')return withTtgDerivedEnergy(resolveTtgGreen028Entry(state,action),action.player);
  if(action.type==='ttgGreen029Raid')return withTtgDerivedEnergy(dispatchTtgGreen029Raid(withTtgDerivedEnergy(state,action.player),action),action.player);
  if(action.type==='ttgGreen029Entry')return withTtgDerivedEnergy(resolveTtgGreen029Entry(state,action),action.player);
+ if(action.type==='green008Raid')return withTtgDerivedEnergy(resolveGreen008Raid(withTtgDerivedEnergy(state,action.player),action),action.player);
  if(action.type==='green021Step')return withTtgDerivedEnergy(resolveGreen021Step(state,action),action.player);
  if(action.type==='green021PhaseStart')return withTtgDerivedEnergy(resolveGreen021AttackStart(state,action),action.player);
  if(action.type==='raidTtg')return withTtgDerivedEnergy(dispatchTtgRaidEntry(withTtgDerivedEnergy(state,action.player),action),action.player);
@@ -128,7 +130,7 @@ export function dispatchTtgRuleAction(state,action){
 // eventual match dispatcher and may not be skipped for scheduled retirement.
 export const beginTtgGreenAttackPhase=state=>withTtgDerivedEnergy(beginGreen021AttackPhase(state,state.active),state.active);
 export const resolveTtgMainPhaseEnd=state=>withTtgDerivedEnergy(resolveGreenMainEnd(resolveTtgMainEndRetire(state)),state.active);
-export const resolveTtgTurnEnd=state=>withTtgDerivedEnergy(resolveGreen025TurnEnd(resolveGreenEventTurnEnd(resolveGreenTurnEnd(resolveTtgTemporaryEnergyEndTurn(resolveTtgPendingEndTurn(state))))),state.active);
+export const resolveTtgTurnEnd=state=>withTtgDerivedEnergy(resolveGreen008TurnEnd(resolveGreen025TurnEnd(resolveGreenEventTurnEnd(resolveGreenTurnEnd(resolveTtgTemporaryEnergyEndTurn(resolveTtgPendingEndTurn(state)))))),state.active);
 
 // Deterministic AI for this implemented subset. It only chooses actions
 // offered by the same legal action generator that a human client must use.
@@ -148,6 +150,8 @@ export function chooseTtgRuleAiAction(state,player){
  if(state.pending?.kind==='ttgGreen028Entry')return options.find(x=>x.targetUid)||options[0];
  if(state.pending?.kind==='ttgGreen029Entry')return options.find(x=>x.mode==='restPlay'&&x.line==='front')||options.find(x=>x.mode==='hand')||options[0];
  if(state.pending?.kind==='ttgGreen021PhaseStart')return options.find(x=>x.mode==='move'&&x.replaceUid==null)||options.find(x=>x.mode==='move')||options[0];
+ const green008=options.find(x=>x.type==='green008Raid'&&x.line==='front')||options.find(x=>x.type==='green008Raid');
+ if(green008)return {...green008,payApUids:state.players[player].apCards.filter(x=>x.ready).slice(0,1).map(x=>x.uid)};
  const green029=options.find(x=>x.type==='ttgGreen029Raid'&&x.line==='front')||options.find(x=>x.type==='ttgGreen029Raid');
  if(green029)return {...green029,payApUids:state.players[player].apCards.filter(x=>x.ready).slice(0,green029.requiredAp).map(x=>x.uid)};
  const green028=options.find(x=>x.type==='ttgGreen028Raid'&&x.line==='front')||options.find(x=>x.type==='ttgGreen028Raid');
