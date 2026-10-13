@@ -9,11 +9,11 @@ test('all 80 canonical UA54BT regular card names and printed rarities are presen
  const rarities=UA54BT_VERIFIED.reduce((x,c)=>(x[c.rarity]=(x[c.rarity]||0)+1,x),{});
  assert.deepEqual(rarities,{C:28,U:28,R:12,SR:12});
 });
-test('71 preliminary complete records and 9 partial records are explicitly distinguished',()=>{
+test('72 preliminary complete records and 8 partial records are explicitly distinguished',()=>{
  const complete=UA54BT_VERIFIED.filter(c=>c.verified);
  const incomplete=UA54BT_VERIFIED.filter(c=>!c.verified);
- assert.equal(complete.length,71);
- assert.equal(incomplete.length,9);
+ assert.equal(complete.length,72);
+ assert.equal(incomplete.length,8);
  for(const c of complete){
   for(const field of ['nameJa','color','energy','ap','bp','gen','type','rarity','effect'])assert.notEqual(c[field],null,c.number+' '+field);
   assert.ok(Number.isInteger(c.ap),c.number);
@@ -38,4 +38,17 @@ test('013 045 079 preserve printed AP costs and 079 FINAL trigger',()=>{
   assert.equal(byId[id].auto,false);
   assert.ok(byId[id].effectJa);
  }
+});
+
+test('061 source-crosschecked preliminary AP and no printed Trigger, still unplayable',()=>{
+ const c=UA54BT_VERIFIED.find(c=>c.id==='MST-1-061');
+ assert.equal(c.energy,1);
+ assert.equal(c.ap,1);
+ assert.equal(c.bp,2000);
+ assert.equal(c.gen,1);
+ assert.equal(c.trigger,null);
+ assert.equal(c.verified,true);
+ assert.equal(c.auto,false);
+ assert.match(c.sourceTranslation,/rugiacreation\.com/);
+ assert.match(c.statEvidence,/ebay\.com/);
 });
