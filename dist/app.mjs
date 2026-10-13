@@ -382,6 +382,7 @@ function ttgArena(){
  ${board(s.players[1],'AI 對手')}${board(s.players[0],'你的場地')}
  <section class='panel'><h3>你的手牌（${cards.length} 張）</h3>${hand}</section>
  ${s.status==='playing'?`<section class='panel'><h3>${bot?'AI 正在依合法動作處理…':'選擇合法動作'} · ${available.length} 項</h3>${bot?'<p class=note>輪到 AI，等待自動結算；不顯示電腦的私人手牌及效果選擇。</p>':`
+ ${(s.pending||s.pendingTtgLife||s.pendingTtgTrigger)?`<p><button class='btn outline' data-action='ttgResolveAssist'>AI 幫我選擇這次效果</button> <small>會依合法動作結算，可自行選上面的選項。</small></p>`:''}
  <div style='display:flex;flex-wrap:wrap;gap:5px'><button class='btn small ${ui.ttgKind==='all'?'primary':'outline'}' data-ttg-kind='all'>全部</button>${types.map(o=>`<button class='btn small ${ui.ttgKind===o.type?'primary':'outline'}' data-ttg-kind='${esc(o.type)}'>${esc(o.type)} (${o.count})</button>`).join('')}</div>
  <div style='display:flex;flex-wrap:wrap;gap:7px;margin-top:12px'>${picked.actions.map(actionButton).join('')}</div>
  ${picked.total>picked.actions.length?`<button class='btn' data-action='ttgMore'>顯示更多動作（${picked.actions.length}/${picked.total}）</button>`:''}
@@ -429,6 +430,7 @@ function bind(){
    case 'ttgBetaStartGreen':ttgBetaStart(TTG_GREEN_BETA_PRESET);break;
    case 'ttgBetaStartRed':ttgBetaStart(TTG_RED_BETA_PRESET);break;
    case 'ttgBetaStartDeck':ttgBetaStart(ttgDeck);break;
+   case 'ttgResolveAssist':if(ui.view==='ttgArena'&&ttgGame?.status==='playing'&&ttgChoiceActor(ttgGame)===0&&(ttgGame.pending||ttgGame.pendingTtgLife||ttgGame.pendingTtgTrigger)){const next=ttgCoreAiChoice(ttgGame);if(next)ttgAct(next);else toast('目前沒有合法的效果選擇。');}break;
    case 'ttgMore':ui.ttgVisible+=90;render();break;
    case 'ttgNew':ttgDeck=emptyTtgDeck();ttgName='天元突破自訂牌組';persistTtg();render();break;
    case 'ttgSave':{const name=ttgName.trim()||'天元突破自訂牌組';ttgSaved=[...ttgSaved,{id:'ttg-'+Date.now()+'-'+Math.random().toString(36).slice(2),name,counts:normalizeTtgCounts(ttgDeck)}];save(TTG_SAVED_KEY,ttgSaved);render();toast('已儲存天元突破牌組草稿。');break;}
