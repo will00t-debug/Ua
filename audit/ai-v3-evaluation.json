@@ -11,101 +11,101 @@
     "completed": 2000,
     "unfinished": 0,
     "failures": 0,
-    "rankingPairs": 64544,
+    "rankingPairs": 66009,
     "alternativesPerDecision": 3,
     "epochs": 5,
-    "finalLoss": 0.2560902028295137,
-    "elapsedMs": 3310482
+    "finalLoss": 0.24399170378152812,
+    "elapsedMs": 3345611
   },
   "evaluation": {
     "games": 300,
-    "wins": 138,
-    "losses": 162,
+    "wins": 146,
+    "losses": 154,
     "unfinished": 0,
     "errors": 0,
-    "moves": 64752,
-    "winRate": 0.46,
+    "moves": 61374,
+    "winRate": 0.4866666666666667,
     "byMatchup": {
       "green-kenpachi-unohana__green-kenpachi-unohana": {
+        "games": 34,
+        "wins": 16,
+        "losses": 18,
+        "unfinished": 0,
+        "errors": 0
+      },
+      "green-kenpachi-unohana__purple-renji-rukia": {
         "games": 34,
         "wins": 17,
         "losses": 17,
         "unfinished": 0,
         "errors": 0
       },
-      "green-kenpachi-unohana__purple-renji-rukia": {
-        "games": 34,
-        "wins": 18,
-        "losses": 16,
-        "unfinished": 0,
-        "errors": 0
-      },
       "green-kenpachi-unohana__blue-ichigo-zangetsu": {
         "games": 34,
-        "wins": 15,
-        "losses": 19,
+        "wins": 16,
+        "losses": 18,
         "unfinished": 0,
         "errors": 0
       },
       "purple-renji-rukia__green-kenpachi-unohana": {
         "games": 33,
-        "wins": 15,
-        "losses": 18,
+        "wins": 16,
+        "losses": 17,
         "unfinished": 0,
         "errors": 0
       },
       "purple-renji-rukia__purple-renji-rukia": {
         "games": 33,
-        "wins": 15,
-        "losses": 18,
+        "wins": 16,
+        "losses": 17,
         "unfinished": 0,
         "errors": 0
       },
       "purple-renji-rukia__blue-ichigo-zangetsu": {
         "games": 33,
-        "wins": 12,
-        "losses": 21,
+        "wins": 16,
+        "losses": 17,
         "unfinished": 0,
         "errors": 0
       },
       "blue-ichigo-zangetsu__green-kenpachi-unohana": {
         "games": 33,
-        "wins": 17,
-        "losses": 16,
+        "wins": 16,
+        "losses": 17,
         "unfinished": 0,
         "errors": 0
       },
       "blue-ichigo-zangetsu__purple-renji-rukia": {
         "games": 33,
-        "wins": 17,
-        "losses": 16,
+        "wins": 16,
+        "losses": 17,
         "unfinished": 0,
         "errors": 0
       },
       "blue-ichigo-zangetsu__blue-ichigo-zangetsu": {
         "games": 33,
-        "wins": 12,
-        "losses": 21,
+        "wins": 17,
+        "losses": 16,
         "unfinished": 0,
         "errors": 0
       }
     },
-    "elapsedMs": 689620,
-    "seedBase": 1028000,
+    "elapsedMs": 627412,
+    "seedBase": 1029000,
     "opponent": "hard v2",
     "isHeldOut": true,
     "accepted": false,
     "acceptanceThreshold": 0.55
   },
   "policyDiagnostics": {
-    "calls": 32276,
-    "eligible": 4035,
-    "hiddenBoundary": 4035,
-    "vetoed": 0,
-    "overrides": 211,
-    "eligibilityRate": 0.12501549138678894,
-    "overrideRate": 0.006537365224934936,
-    "overridePerEligible": 0.052292441140024785
+    "calls": 30634,
+    "eligible": 3829,
+    "hiddenBoundary": 1041,
+    "vetoed": 29504,
+    "overrides": 27,
+    "eligibilityRate": 0.12499183913298949,
+    "overrideRate": 0.0008813736371352092,
+    "overridePerEligible": 0.00705144946461217
   },
   "candidatePath": "audit/ai-v3-candidate.json",
   "championPromoted": false,
