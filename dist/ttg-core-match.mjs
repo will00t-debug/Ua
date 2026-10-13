@@ -25,7 +25,7 @@ export const TTG_CORE_SMOKE_IDS=Object.freeze([
  'TTG-1-019','TTG-1-020','TTG-1-021','TTG-1-022','TTG-1-023','TTG-1-024','TTG-1-025','TTG-1-026','TTG-1-027','TTG-1-028','TTG-1-029','TTG-1-030','TTG-1-031','TTG-1-032','TTG-1-033','TTG-1-034',
  'TTG-1-035','TTG-1-036','TTG-1-037','TTG-1-038','TTG-1-039',
  'TTG-1-040','TTG-1-041',
- 'TTG-1-042','TTG-1-043','TTG-1-044','TTG-1-047','TTG-1-048',
+ 'TTG-1-042','TTG-1-043','TTG-1-044','TTG-1-046','TTG-1-047','TTG-1-048',
  'TTG-1-063','TTG-1-064','TTG-1-065','TTG-1-066'
 ]);
 const allowed=new Set(TTG_CORE_SMOKE_IDS);
@@ -418,7 +418,8 @@ export function ttgCoreAiChoice(s){
     effects.find(x=>x.type==='ttgGreen003Front')||effects.find(x=>x.type==='ttgGreen003Ready')||
     effects.find(x=>x.type==='ttgGreen015')||effects.find(x=>x.type==='ttgGreen011'&&x.mode==='boost')||
     effects.find(x=>x.type==='ttgGreen011')||effects.find(x=>x.type==='ttgGreen018')||
-    effects.find(x=>x.type==='ttgGreen022');
+    effects.find(x=>x.type==='ttgGreen022')||
+    effects.find(x=>x.type==='ttgRed046Main'&&x.mode==='both')||effects.find(x=>x.type==='ttgRed046Main');
    if(candidate)return candidate;
    const normalRaid=['ttgGreen028Raid','ttgGreen029Raid','green030Raid','greenHighRaid'];
    const raidCandidate=effects.find(x=>normalRaid.includes(x.type)&&x.line==='front')||effects.find(x=>normalRaid.includes(x.type));
