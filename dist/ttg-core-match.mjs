@@ -62,6 +62,7 @@ function start(s){
  const p=s.active;
  let pl=s.players[p];
  pl.turnCount++;s.turn++;s.phase='start';s.pending=null;s.extraDrawn=false;
+ s.raidNamesThisTurn=[];s.raidCountThisTurn=0;
  Object.assign(s,resolveTtgGreen028Start(s,p));
  Object.assign(s,expireGreen031AtOwnStart(s,p));
  Object.assign(s,expireTtgRed057GrantedNullAtOwnStart(s,p));
