@@ -2,7 +2,7 @@ name: BLEACH Arena Tests
 
 on:
   push:
-    branches: [main]
+    branches: [main, 'fix/ai-tactics-private-20261013']
   pull_request:
     branches: [main]
 
@@ -19,6 +19,14 @@ jobs:
           node-version: '22'
       - name: Run all regression tests
         run: npm test
+      - name: Smoke-test the three PDF decks against each other
+        run: npm run spar:ai -- --games 9 --difficulty normal --opponent normal --seed 12000 --max-actions 350
+      - name: Syntax check for browser modules
+        run: |
+          node --check dist/app.mjs
+          node --check dist/ai-v2.mjs
+          node --check dist/training-decks.mjs
+          node --check scripts/benchmark-training-decks.mjs
       - name: Check static entry point
         run: |
           test -s dist/index.html

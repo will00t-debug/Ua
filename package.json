@@ -2,5 +2,9 @@
   "name": "bleach-union-arena",
   "private": true,
   "type": "module",
-  "scripts": {"test": "node --test tests/*.test.mjs"}
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "benchmark:ai": "node scripts/benchmark-ai.mjs",
+    "spar:ai": "node scripts/benchmark-training-decks.mjs"
+  }
 }
