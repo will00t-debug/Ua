@@ -7,7 +7,7 @@ import {calculateTtgEnergyByColor} from './ttg-energy-snapshot.mjs';
 import {spendTtgApCards} from './ttg-actions.mjs';
 const rows=p=>[...(p.front||[]),...(p.energy||[])].filter(Boolean);
 const name=c=>TTG_BY_ID[c?.cardId]?.nameJa||c?.nameJa;
-const has=c,n=>name(c)===n||(c.stack||[]).some(x=>has(x,n));
+const has=(c,n)=>name(c)===n||(c.stack||[]).some(x=>has(x,n));
 const deep=c=>[c.uid,...(c.stack||[]).flatMap(deep),...(c.under||[]).flatMap(deep)];
 const inventory=p=>[...p.deck,...p.hand,...p.life,...p.outside,...(p.removed||[]),...rows(p)].flatMap(deep).sort();
 const wanted=new Set(['ラガン','グレン','グレンラガン']);
