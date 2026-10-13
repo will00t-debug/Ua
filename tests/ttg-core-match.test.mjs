@@ -21,7 +21,7 @@ test('all 81 printed cards are admitted to isolated core without claiming browse
  assert.equal(TTG_CORE_SMOKE_IDS.length,81);
  assert.deepEqual(validateTtgCoreDeck(deck()),[]);
  const bad={...deck(),'TTG-1-999':1,'TTG-1-036':0};
- assert.ok(validateTtgCoreDeck(bad).some(x=>x.includes('TTG-1-045')));
+ assert.ok(validateTtgCoreDeck(bad).some(x=>x.includes('TTG-1-999')));
  assert.throws(()=>newTtgCoreMatch({decks:[bad,deck()]}));
  assert.throws(()=>newTtgCoreMatch({decks:[{},deck()]}));
 });
