@@ -100,6 +100,20 @@ export function ttgExecutableActions(s){
 // TTG-1-012: a player's Q2266 discard choice is a true multi-card
 // selection, potentially unlocking the 15+ total printed-cost retirement
 // alternative. Construct the exact action from the core legal template.
+// Simon 012: the player (not a preset or AI) selects zero/one eligible top
+// card and an arbitrary exact ordering of every remaining physical UID.
+export function ttg012SearchChoice(s,{takeUid=null,bottomOrderUids=[]}={}){
+ const legal=legalTtgCoreActions(s).find(x=>x.type==='green012Search');
+ if(!legal)throw new Error('目前沒有西蒙012的牌頂搜尋效果待結算');
+ if(takeUid!==null&&!legal.candidates.includes(takeUid))
+  throw new Error('僅可選擇合法的妮亞或需求能源8以上的角色');
+ if(!Array.isArray(bottomOrderUids))throw new Error('請依序指定所有剩餘牌庫底卡片');
+ const remaining=legal.revealed.filter(uid=>uid!==takeUid);
+ if(bottomOrderUids.length!==remaining.length||new Set(bottomOrderUids).size!==bottomOrderUids.length||
+  bottomOrderUids.some(uid=>!remaining.includes(uid)))
+  throw new Error('牌庫底順序須包含所有剩餘的不同實體卡，不能增減或重複');
+ return {type:'green012Search',player:legal.player,uid:legal.uid,takeUid,bottomOrderUids};
+}
 export function ttg012ManualChoice(s,{discardUids=[],mode='readyAP',apUid=null,targetUid=null}={}){
  const legal=legalTtgCoreActions(s).find(x=>x.type==='green012Discard');
  if(!legal)throw new Error('目前沒有西蒙012的棄牌效果待結算');
