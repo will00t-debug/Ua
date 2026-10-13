@@ -10,7 +10,7 @@ import {TTG_PENDING_CARDS} from './ttg-pending.mjs';
 import {TTG_CARDS,emptyTtgDeck,normalizeTtgCounts,ttgCount,ttgDeckIssues,readTtgSaved} from './ttg-builder.mjs';
 import {newGame,dispatch,legalActions,controller,cardOf,bp,energy,damageOf,locate,PHASE_NAMES,assertState} from './engine.mjs?v=9.1.1';
 import {chooseAiAction} from './ai-v2.mjs';
-import {requestAiAction} from './ai-client.mjs';
+import {requestAiAction,cancelPendingAiActions} from './ai-client.mjs';
 
 const $=s=>document.querySelector(s);
 const AI_KEY='ua-ai-difficulty-v1',GAME_KEY='bleach-arena-game-v1',DECK_KEY='bleach-arena-deck-v1',SAVED_DECKS_KEY='bleach-arena-saved-decks-v1',DECK_META_KEY='bleach-arena-deck-meta-v1';
@@ -98,6 +98,7 @@ function supportNote(counts){const pending=pendingCards(counts);return pending.l
 function footer(){return `<footer class="footer"><span>UNION ARENA · BLEACH 千年血戰篇</span><span>非官方練習模擬器 · 第一～三彈／卡冊／書卡／高級預組</span></footer>`;}
 function render(){
  clearTimeout(botTimer);
+ cancelPendingAiActions();
  const modalScroll=$('.modal')?.scrollTop||0;
  ui.contentsOpen=$('.deckContents')?.open??ui.contentsOpen??false;
  const active=['arena','soloArena'].includes(ui.view)?'lobby':ui.view;
