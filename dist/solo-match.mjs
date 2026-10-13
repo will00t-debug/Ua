@@ -64,7 +64,7 @@ export function soloMatchBp(s,c){
   if(c.cardId==='SLG-1-065'&&p.hand.length>=5)value+=1000;
   if(c.cardId==='SLG-1-069'&&p.hand.length>=5)value+=1500;
  }
- value+=(c.buffs||[]).filter(b=>b.turn===s.turn).reduce((n,b)=>n+b.bp,0);
+ value+=(c.buffs||[]).filter(b=>b.turn===s.turn||(b.expiresOwnTurn!=null&&s.players[c.owner].ownTurns<b.expiresOwnTurn)).reduce((n,b)=>n+b.bp,0);
  return value;
 }
 const impact=(s,c)=>c.cardId==='SLG-1-022'||c.cardId==='SLG-1-049'||(c.cardId==='SLG-1-021'&&soloMatchBp(s,c)>=6000)||c.cardId==='SLG-1-056'||(c.cardId==='SLG-1-065'&&s.players[c.owner].hand.length>=5)||(c.grants||[]).some(g=>g.kind==='impact'&&g.turn===s.turn);
@@ -117,6 +117,7 @@ function startTurn(s){
  const p=player(s);p.ownTurns++;s.turn++;s.phase='start';s.moved=false;s.extraDraw=false;
  for(const c of field(p)){readySolo(c);c.buffs=(c.buffs||[]).filter(b=>b.turn===s.turn);}
  p.maxAp=p.ownTurns>=3?3:(p.ownTurns===1&&s.active===s.first?1:2);p.ap=p.maxAp;
+ clearExpired(s);
  if(!(p.ownTurns===1&&s.active===s.first))draw(s,p);
  addLog(s,p.name+'開始第'+p.ownTurns+'回合，AP '+p.ap);
 }
@@ -246,6 +247,25 @@ function beginBlock(s){
  const legal=defenders.filter(c=>!((attacker?.grantBlockLimitTurn===s.turn||attacker?.cardId==='SLG-1-024'||attacker?.unblockableHighTurn===s.turn||(attacker?.cardId==='SLG-1-011'&&s.players[s.active].outside.length>=10))&&soloMatchBp(s,c)>=4000));
  if(legal.length)s.pending={kind:'block',p:1-s.active,choices:legal.map(x=>x.uid),mandatory:a.cardId==='SLG-1-021'&&a.mustBlockTurn===s.turn};
  else combat(s,null);
+}
+function clearExpired(s){
+ const p=player(s);
+ for(const c of field(p))c.buffs=(c.buffs||[]).filter(b=>b.expiresOwnTurn==null||p.ownTurns<b.expiresOwnTurn);
+}
+function advanceAttackEnd(s){
+ if(s.pending)return;
+ const p=s.players[s.active];
+ while(s.endSources?.length){
+  const {uid,type}=s.endSources.shift(),c=field(p).find(x=>x.uid===uid);
+  if(!c)continue;
+  if((type==='047'||type==='048')&&c.stack?.length){
+   const amount=type==='047'?2:3;
+   const available=field(p).flatMap(x=>(x.under||[]).filter(q=>q.faceDown).map(q=>q.uid));
+   const eligible=p.hand.filter(x=>x.cardId===(type==='047'?'SLG-1-048':'SLG-1-049'));
+   if(available.length>=amount&&eligible.length){s.pending={kind:'slgEndRaid',p:s.active,source:uid,amount};return;}
+  }else if(type==='061'&&p.hand.length){s.pending={kind:'slg061End',p:s.active,source:uid};return;}
+ }
+ s.endSources=null;s.phase='attack';s.active=1-s.active;startTurn(s);
 }
 function scheduleAttackAfter(s){
  if(s.pending){s.afterAttackPending=true;return;}
@@ -432,6 +452,41 @@ function choose(s,action){
   if(action.uid!=null&&!target)throw Error('illegal island BP target');
   if(target)target.buffs.push({turn:s.turn,bp:1000});
   s.pending=null;
+ }else if(q.kind==='slgEndRaid'){
+  const p=s.players[q.p],host=field(p).find(c=>c.uid===q.source);
+  if(!host)throw Error('Raid top missing before chained replacement');
+  if(action.uid==null){s.pending=null;advanceAttackEnd(s);}
+  else{
+   const card=p.hand.find(c=>c.uid===action.uid),expected=host.cardId==='SLG-1-047'?'SLG-1-048':'SLG-1-049';
+   if(!card||card.cardId!==expected||!Array.isArray(action.used)||action.used.length!==q.amount||new Set(action.used).size!==q.amount)throw Error('illegal chain Raid');
+   const owned=field(p).flatMap(c=>(c.under||[]).filter(x=>x.faceDown).map(x=>x.uid));
+   if(action.used.some(uid=>!owned.includes(uid)))throw Error('cannot pay another player facedown cards');
+   for(const uid of action.used){
+    const container=field(p).find(c=>(c.under||[]).some(x=>x.uid===uid));
+    const i=container.under.findIndex(x=>x.uid===uid),[under]=container.under.splice(i,1);p.outside.push({...under,faceDown:false});
+   }
+   const base=host.stack?.[0];if(!base)throw Error('no raid base');
+   const deeper=host.stack.slice(1),{line,slot,ready}=host;
+   base.stack=deeper;base.line=line;base.slot=slot;base.owner=q.p;base.ready=ready;
+   base.under=[...(base.under||[]),...(host.under||[])];host.under=[];host.stack=[];
+   p[line][slot]=base;p.outside.push(host);
+   const i=p.hand.findIndex(x=>x.uid===card.uid);p.hand.splice(i,1);
+   position(card,q.p,line,slot);card.stack=[base,...deeper];delete base.stack;card.ready=true;p[line][slot]=card;
+   s.pending=null;onEnter(s,card);
+   if(!s.pending)advanceAttackEnd(s);
+  }
+ }else if(q.kind==='slg061End'){
+  const p=s.players[q.p];
+  if(action.uid==null){s.pending=null;advanceAttackEnd(s);}
+  else{
+   const i=p.hand.findIndex(c=>c.uid===action.uid);if(i<0)throw Error('invalid endphase discard');
+   p.outside.push(p.hand.splice(i,1)[0]);s.pending={kind:'slg061Active',p:q.p};
+  }
+ }else if(q.kind==='slg061Active'){
+  const p=s.players[q.p],c=action.uid==null?null:field(p).find(c=>c.uid===action.uid&&isIsland(c));
+  if(action.uid!=null&&!c)throw Error('invalid active island target');
+  if(c)readySolo(c);
+  s.pending=null;advanceAttackEnd(s);
  }else if(q.kind==='slg020EntryDiscard'){
   const p=s.players[q.p];
   if(action.uid==null){s.pending=null;}
@@ -668,6 +723,8 @@ function choose(s,action){
   s.pending=null;combat(s,action.uid);
  }else throw Error('unknown choice type');
  if(!s.pending&&s.pendingStack?.length)s.pending=s.pendingStack.pop();
+ if(!s.pending&&s.afterAttackPending)scheduleAttackAfter(s);
+ if(!s.pending&&s.phase==='attackEnd')advanceAttackEnd(s);
 }
 function onEnter(s,c){
  const p=s.players[c.owner];
@@ -764,6 +821,15 @@ export function soloTrainingLegalActions(s){
   if(q.kind==='slg044Target'){const p=s.players[q.p];return field(p).filter(isSung).flatMap(c=>[{type:'choose',uid:c.uid,attach:false},...(p.deck.length?[{type:'choose',uid:c.uid,attach:true}]:[])]);}
   if(q.kind==='slg077Target')return q.options.map(uid=>({type:'choose',uid}));
   if(q.kind==='slg077Buff')return [{type:'choose',uid:null},...field(s.players[q.p]).filter(c=>d(c).type==='character').map(c=>({type:'choose',uid:c.uid}))];
+  if(q.kind==='slgEndRaid'){
+   const p=s.players[q.p],source=field(p).find(c=>c.uid===q.source),expected=source?.cardId==='SLG-1-047'?'SLG-1-048':'SLG-1-049';
+   const cards=p.hand.filter(c=>c.cardId===expected);
+   const attached=field(p).flatMap(c=>(c.under||[]).filter(x=>x.faceDown).map(x=>x.uid));
+   const combinations=(arr,n,i=0,taken=[])=>n===0?[taken]:arr.flatMap((x,j)=>j<i?[]:combinations(arr,n-1,j+1,[...taken,x]));
+   return [{type:'choose',uid:null},...cards.flatMap(c=>combinations(attached,q.amount).map(used=>({type:'choose',uid:c.uid,used})))];
+  }
+  if(q.kind==='slg061End')return [{type:'choose',uid:null},...s.players[q.p].hand.map(c=>({type:'choose',uid:c.uid}))];
+  if(q.kind==='slg061Active')return [{type:'choose',uid:null},...field(s.players[q.p]).filter(isIsland).map(c=>({type:'choose',uid:c.uid}))];
   if(q.kind==='slg020EntryDiscard')return [{type:'choose',uid:null},...s.players[q.p].hand.map(c=>({type:'choose',uid:c.uid}))];
   if(q.kind==='slg020Recover'||q.kind==='slg021Win')return [{type:'choose',uid:null},...q.options.map(uid=>({type:'choose',uid}))];
   if(q.kind==='slg020AttackDiscard'||q.kind==='slg048Under')return s.players[q.p].hand.map(c=>({type:'choose',uid:c.uid}));
@@ -901,6 +967,10 @@ export function soloTrainingDispatch(original,action){
    for(const c of [...field(p)])if(c.retireAtMainEnd)retire(s,s.active,c);
    s.phase='attack';
   }else if(s.phase==='attack'){
+    s.phase='attackEnd';
+    s.endSources=field(p).flatMap(c=>['SLG-1-047','SLG-1-048','SLG-1-061'].includes(c.cardId)?[{uid:c.uid,type:c.cardId.slice(-3)}]:[]);
+    advanceAttackEnd(s);
+  }else if(s.phase==='UNREACHABLE'){
     const leaving=s.active;
     for(const who of s.players)for(const c of field(who)){
      if(c.targetProtectionExpiresAfterPlayer===leaving&&s.players[leaving].ownTurns>=c.targetProtectionExpiresTurn){
@@ -1017,7 +1087,7 @@ export function soloTrainingBotAction(s){
   if(s.pending.kind==='slgMill')return legal[legal.length-1];
   if(s.pending.kind==='slgDiscard'||s.pending.kind==='slg019Recover'||s.pending.kind==='slg044Target'||s.pending.kind==='slg077Target')return legal[0];
   if(s.pending.kind==='slgRecoveredBuff'||s.pending.kind==='slgRecoveredDeploy'||s.pending.kind==='slg019Entry'||s.pending.kind==='slg059Entry'||s.pending.kind==='slg077Buff')return legal.find(a=>a.uid!=null)||legal[0];
-  if(['slg020EntryDiscard','slg020Recover','slg021Win','slg022Enter','slg060Swap','slg060Target','slg022Swap'].includes(s.pending.kind))return legal[0];
+  if(['slgEndRaid','slg061End','slg061Active','slg020EntryDiscard','slg020Recover','slg021Win','slg022Enter','slg060Swap','slg060Target','slg022Swap'].includes(s.pending.kind))return legal[0];
   if(['slg020AttackDiscard','slg048Under'].includes(s.pending.kind))return legal[0];
   if(s.pending.kind==='entry002Mode')return legal[0];
   if(s.pending.kind==='entry002Buff')return legal.find(a=>a.uid!=null)||legal[0];
