@@ -14,6 +14,7 @@ const play=(s,id)=>{const p=s.players[0],c=take(p,id);p.hand.push(c);
 };
 test('036 draws three and requires exactly two independent chosen hand discards',()=>{
  let s=setup(purple('SLG-1-036'));for(let i=0;i<3;i++)place(s,'SLG-1-030','energy',i);
+ const event=take(s.players[0],'SLG-1-036');s.players[0].hand.push(event);
  const origHand=s.players[0].hand.length;s=play(s,'SLG-1-036');
  assert.equal(s.pending.kind,'eventDiscard');assert.equal(s.pending.left,2);
  assert.equal(s.players[0].hand.length,origHand+2);
