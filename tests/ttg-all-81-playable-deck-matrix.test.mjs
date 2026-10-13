@@ -28,7 +28,7 @@ function play(id,deck){
   assert.ok(legal.length,id+' has no legal actions at '+count);
   const act=ttgCoreAiChoice(s);
   assert.ok(act,id+' AI stuck at '+count);
-  s=dispatchTtgCoreAction(s,act);
+  try{s=dispatchTtgCoreAction(s,act);}catch(e){throw new Error('TTG '+id+' failed at step '+count+' phase='+s.phase+' player='+s.active+' action='+JSON.stringify(act)+' pending='+JSON.stringify(s.pending)+' cause='+e.message,{cause:e});}
   assert.ok(assertTtgCoreState(s),id+' card conservation fails at '+count);
   count++;
  }
