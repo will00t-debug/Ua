@@ -137,8 +137,11 @@ test('061 entry targets a different island ally and end attack may discard to AC
 });
 test('064 Raid when five island characters present debuffs enemies BP>=1500 and attacking can choose destruction and skip next ACTIVE',()=>{
  let s=fixtures('green',['SLG-1-064','SLG-1-063']);const base=onField(s,'SLG-1-063','front',0);
- for(let i=1;i<4;i++)onField(s,'SLG-1-055','front',i);
- onField(s,'SLG-1-055','energy',0);for(let i=1;i<4;i++)onField(s,'SLG-1-041','energy',i);
+ onField(s,'SLG-1-055','front',1);
+ onField(s,'SLG-1-056','front',2);
+ onField(s,'SLG-1-066','front',3);
+ onField(s,'SLG-1-067','energy',0);
+ for(let i=1;i<4;i++)onField(s,'SLG-1-041','energy',i);
  const enemy=onField(s,'SLG-1-041','front',0,1);
  const raidCard=prepare(s,'SLG-1-064');
  const action=legal(s,a=>a.type==='raid'&&a.uid===raidCard.uid&&a.target===base.uid);
