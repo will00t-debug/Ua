@@ -14,13 +14,17 @@ export const TTG_PENDING_CARDS=[
     "ap": null,
     "bp": null,
     "gen": null,
-    "traits": null,
-    "trigger": null,
-    "effect": null,
+    "traits": [
+      "大グレン団"
+    ],
+    "trigger": "active",
+    "effect": "【主要起動】REST 自己，並將己方前線 1 名 ACTIVE 角色 REST。成功 REST 該角色時，本回合此角色產能+1。",
     "auto": false,
     "metadataComplete": false,
     "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-002",
-    "reason": "Identity/rarity recorded from public listings; numeric fields and/or exact text require official verification."
+    "reason": "Identity/rarity recorded from public listings; numeric fields and/or exact text require official verification.",
+    "effectVerification": "fan-transcription-not-official-full-metadata",
+    "effectTranscriptionSource": "https://rugiacreation.com/ua/search?Name=TW"
   },
   {
     "id": "TTG-1-006",
@@ -190,12 +194,17 @@ export const TTG_PENDING_CARDS=[
     "ap": null,
     "bp": null,
     "gen": null,
-    "traits": null,
-    "trigger": null,
-    "effect": null,
+    "traits": [
+      "大グレン団",
+      "ガンメン"
+    ],
+    "trigger": "raid",
+    "effect": "【Raid】〈キタン〉，以 ACTIVE 狀態突襲並可移到前線。IMPACT 無效。【攻擊時】若是己方角色本回合第一次攻擊，選擇至多 1 名己方其他角色，本回合 BP+2000。",
     "auto": false,
     "metadataComplete": false,
     "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-071",
-    "reason": "Identity/rarity recorded from public listings; numeric fields and/or exact text require official verification."
+    "reason": "Identity/rarity recorded from public listings; numeric fields and/or exact text require official verification.",
+    "effectVerification": "fan-transcription-not-official-full-metadata",
+    "effectTranscriptionSource": "https://rugiacreation.com/ua/search?Name=TW"
   }
 ];
