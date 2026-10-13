@@ -1,7 +1,7 @@
 name: AI v3 Third-Round 700-Game Training
 
 on:
-  # Rerun after reward-label fixes and passing regression tests.
+  # Rerun after adding safe one-ply neural board evaluation.
   # Only workflow edits trigger this 700-game experiment.
   push:
     branches: ['feature/ai-v3-learning']
