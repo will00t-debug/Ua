@@ -35,7 +35,7 @@ export const TTG_CORE_SMOKE_IDS=Object.freeze([
  'TTG-1-019','TTG-1-020','TTG-1-021','TTG-1-022','TTG-1-023','TTG-1-024','TTG-1-025','TTG-1-026','TTG-1-027','TTG-1-028','TTG-1-029','TTG-1-030','TTG-1-031','TTG-1-032','TTG-1-033','TTG-1-034',
  'TTG-1-035','TTG-1-036','TTG-1-037','TTG-1-038','TTG-1-039',
  'TTG-1-040','TTG-1-041',
- 'TTG-1-042','TTG-1-043','TTG-1-044','TTG-1-046','TTG-1-047','TTG-1-048','TTG-1-049','TTG-1-050','TTG-1-051','TTG-1-052','TTG-1-053','TTG-1-054','TTG-1-055','TTG-1-057','TTG-1-058','TTG-1-059',
+ 'TTG-1-042','TTG-1-043','TTG-1-044','TTG-1-046','TTG-1-047','TTG-1-048','TTG-1-049','TTG-1-050','TTG-1-051','TTG-1-052','TTG-1-053','TTG-1-054','TTG-1-055','TTG-1-056','TTG-1-057','TTG-1-058','TTG-1-059',
  'TTG-1-060','TTG-1-061','TTG-1-062','TTG-1-063','TTG-1-064','TTG-1-065','TTG-1-066','TTG-1-067','TTG-1-068','TTG-1-069','TTG-1-070','TTG-1-071','TTG-1-072','TTG-1-073','TTG-1-074','TTG-1-075','TTG-1-076','TTG-1-077','TTG-1-078','TTG-1-079','TTG-1-080','TTG-1-081'
 ]);
 const allowed=new Set(TTG_CORE_SMOKE_IDS);
@@ -185,7 +185,7 @@ export function legalTtgCoreActions(s){
  if(s.pending?.kind==='ttgRed055Discard')return legalTtgRed055Discards(s);
  if(s.pending?.kind==='ttgRed055Recover')return legalTtgRed055Recovers(s);
  if(s.pending?.kind==='ttgRed057058Entry')return legalTtgRed057058Choices(s);
- if(['ttgRed077Recover','ttgRed061','ttgRed062Retrigger','ttgRedRaidQueue','ttgRed076Look','ttgRed076Discard'].includes(s.pending?.kind))
+ if(['ttgRed056AfterAttack','ttgRed077Recover','ttgRed061','ttgRed062Retrigger','ttgRedRaidQueue','ttgRed076Look','ttgRed076Discard'].includes(s.pending?.kind))
   return legalTtgRuleActions(s,s.pending.player);
  if(s.pending?.kind==='ttgGreenEntry')return greenEntryChoices(s);
  if(['ttgGreen028Entry','ttgGreen029Entry','green030Sidelined','green012Search','green012Discard','greenHighRaidQueue','green034Sidelined','greenRetireOrder'].includes(s.pending?.kind))
@@ -294,7 +294,7 @@ export function dispatchTtgCoreAction(source,action){
   Object.assign(s,resolveTtgRed057058Choice(s,action));
  }else if(s.pending?.kind==='ttgRed044Search'){
   const attacker=pl.front.find(c=>c?.uid===s.pending.attackerUid);
-  const damage=greenHighRaidCombatValue(s,p,attacker).damage;
+  const damage=Math.max(greenHighRaidCombatValue(s,p,attacker).damage,redRaidPassive(s,p,attacker).damage);
   Object.assign(s,resolveTtgRed044Search(s,action));
   if(s.status==='playing')queueLifeDamage(s,1-p,damage);
  }else if(s.pending?.kind==='ttgGreenEntry'){
@@ -341,9 +341,10 @@ export function dispatchTtgCoreAction(source,action){
    s.pending=null;
    if(s.status==='playing'&&s.players[p].front.some(c=>c?.uid===attacker.uid&&c.cardId==='TTG-1-044')){
     Object.assign(s,beginTtgRed044Unblocked(s,{player:p,attackerUid:attacker.uid}));
-   }else if(s.status==='playing')queueLifeDamage(s,1-p,greenHighRaidCombatValue(s,p,attacker).damage);
+   }else if(s.status==='playing')queueLifeDamage(s,1-p,Math.max(greenHighRaidCombatValue(s,p,attacker).damage,redRaidPassive(s,p,attacker).damage));
   }
   if(s.pending?.kind==='block')s.pending=null;
+  if(attacker.cardId==='TTG-1-056'&&s.status==='playing')s.ttg056AfterAttackWait={player:p,uid:attacker.uid};
  }else if(action.type==='next'){
   if(s.phase==='start')s.phase='move';
   else if(s.phase==='move')s.phase='main';
@@ -426,6 +427,9 @@ export function dispatchTtgCoreAction(source,action){
   finalizeTtgLifeOutcome(s,s.pendingLifeOutcome.player);
   delete s.pendingLifeOutcome;
  }
+ if(s.status==='playing'&&!s.pending&&!s.pendingTtgLife&&!s.pendingDamage&&s.ttg056AfterAttackWait){
+  s.pending={kind:'ttgRed056AfterAttack',...s.ttg056AfterAttackWait};delete s.ttg056AfterAttackWait;
+ }
  if(s.status==='playing')Object.assign(s,refreshEnergy(s,s.active));
  assertTtgCoreState(s);
  return s;
@@ -443,7 +447,7 @@ export function ttgCoreAiChoice(s){
  if(s.pending?.kind==='ttgRed055Discard')return options.find(x=>x.discardUid)||options[0];
  if(s.pending?.kind==='ttgRed055Recover')return options.find(x=>x.recoverUid)||options[0];
  if(s.pending?.kind==='ttgRed057058Entry')return options.find(x=>x.targetUid)||options[0];
- if(['ttgRed061','ttgRed062Retrigger','ttgRedRaidQueue','ttgRed076Look','ttgRed076Discard'].includes(s.pending?.kind))
+ if(['ttgRed056AfterAttack','ttgRed061','ttgRed062Retrigger','ttgRedRaidQueue','ttgRed076Look','ttgRed076Discard'].includes(s.pending?.kind))
   return chooseTtgRuleAiAction(s,s.pending.player);
  if(s.pending?.kind==='ttgRed077Recover')return options.find(x=>x.recoverUid)||options[0];
  if(s.pending?.kind==='ttgRed044Search'){
