@@ -83,3 +83,26 @@
 2. 039 IMPACT 同時傷害／生命 Trigger 順序、其他攻擊特殊能力與 COLOR／GET／RAID Trigger 跨卡連鎖。
 3. 實際玩家畫面底板及效果目標／牌庫底順序／額外 AP 選擇 UI，能在正式天元突破場次使用，並執行全 41 張逐卡實戰及完整 AI 牌組測試。
 4. 維持所有天元突破一般卡 `auto:false`、作品 `playable:false`，直到整套對戰可正式運作；**勿合併 main，也勿部署正式站**。
+
+---
+
+## 2026-10-13 補完「較簡單的五張」：028／029／030／033／034（本節為最新進度）
+
+> 前面保留開發歷程中的「27/41」與「14 張待補」是舊快照。**目前綠色共 41 張，34 張列入限制測試核心，7 張仍未進入：004、012、027、031、032、033、034。** 34 張並不表示 34 張已在正式網站完整自動判定。所有一般卡仍維持 `auto:false` 與作品 `playable:false`，不發布／不合併。
+
+五張本次的狀態：
+- **028 グレンラガン**：原有一般突襲西蒙／維拉爾、實體 AP、ACTIVE、抽牌、指定敵前線暫時不得攻擊，補上生命 **RAID Trigger**「拿回手牌／符合能源要求時無 AP 突襲」，實際進入限制 50 張雙 AI 對戰，結算生命觸發待選項（`ttg-green-life.mjs` 與 `ttg-core-match.mjs`）。
+- **029 グレンラガン**：原有一般突襲＋場外綠色大紅蓮團需求能源 3 以下／AP1 回手，能源 6 以上可 REST 登場；同樣補齊生命 **RAID Trigger** 的合法底板選擇、無 AP 突襲及後續待選結算，限制對局已接入。
+- **030 スペースキングキタン**：新增 `ttg-green-030.mjs`，實體 Kittan 突襲／AP1／ACTIVE、原有 IMPACT 無效與退場後將突襲底板選擇回場，實際按最新能源是否達 6 決定 REST／ACTIVE，為需選目標的待結算操作。已納入限制核心正常突襲、戰鬥退場與 AI 選項。
+- **033 アークグレン**：新增 `ttg-green-fields.mjs` 正常場域 AP 與休息／活動時產能、方舟紅蓮螺巖 027 突襲後，選擇同名場域裏向放至角色下並抽兩張（官方 **Q2280**：一回合總共一次，不是每張一次）。效果已可在獨立狀態 reducer 測試。**仍未**接上 027 的完整自動突襲登場順序。
+- **034 超銀河ダイグレン**：同一場域模組，無己方場域時手牌需求能源 8→5、裏向卡產能即時增加、自己角色退場後一張裏向置底（該張場域每回合一次），以及 031 超銀河突襲時底下卡片回手、場域本身裏向移至其下。實體 UID 與裏向資訊已作獨立測試。**仍未**接上 031 完整突襲登場與 030／034 退場時同時觸發的效果排序。
+
+驗證：`tests/ttg-green-030.test.mjs`、`ttg-green-fields.test.mjs`、`ttg-green-028-029-life.test.mjs`、`ttg-green-five-batch-ai.test.mjs` 已加入。在限制核心的兩副各 50 張 AI 多種種子模擬，涵蓋 028／029／030、無效目標不可付 AP、RAID Life 最後生命需先結算 On Entry、退場底板、移除／場外區守恆；後兩張場域的高階 Raid 互動維持獨立封閉測試，尚不可用於正式網站。**GitHub Actions npm test：403/403 通過，0 失敗**（CI run 38362686323）。
+
+官方卡面：
+- 030 https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-030
+- 033 https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-033
+- 034 https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-034
+- Q2280／Q2282 https://www.unionarena-tcg.com/jp/faq/list.php?category=カード個別&sub_category=天元突破グレンラガン
+
+剩餘七張中 033／034 **有獨立判定，不屬於「沒有寫」**；但在 027／031 等高階 Raid、生命 Trigger、同時觸發與玩家畫面完全串通前，不可宣告 41/41 自動判定成功。
