@@ -20,6 +20,7 @@ import {red054BpBonus,red054ImpactNull,beginTtgRed054Entry,legalTtgRed054Choices
 import {legalTtgRedNiaKaminaPlay,beginTtgRed057Or058Entry,legalTtgRed057058Choices,resolveTtgRed057058Choice,ttgRed057ImpactNull,expireTtgRed057GrantedNullAtOwnStart} from './ttg-red-sixth-three.mjs';
 import {ttgRedStarterBpBonus,ttgRedStarterImpactNull,beginTtgRed044Unblocked,legalTtgRed044Search,resolveTtgRed044Search} from './ttg-red-first-three.mjs';
 import {red067Entry,red067MayBlock,red068BpBonus,canRed068EnergyAttack,expireRed068AtTurnEnd} from './ttg-red-ninth-three.mjs';
+import {red071ImpactNull} from './ttg-red-tenth-three.mjs';
 import {beginTtgLifeTrigger,legalTtgLifeChoices,resolveTtgLifeChoice,finalizeTtgLifeOutcome} from './ttg-green-life.mjs';
 
 // Only IDs with on-entry, passives, attacks and life triggers implemented below
@@ -31,7 +32,7 @@ export const TTG_CORE_SMOKE_IDS=Object.freeze([
  'TTG-1-035','TTG-1-036','TTG-1-037','TTG-1-038','TTG-1-039',
  'TTG-1-040','TTG-1-041',
  'TTG-1-042','TTG-1-043','TTG-1-044','TTG-1-046','TTG-1-047','TTG-1-048','TTG-1-049','TTG-1-050','TTG-1-051','TTG-1-052','TTG-1-053','TTG-1-054','TTG-1-055','TTG-1-057','TTG-1-058','TTG-1-059',
- 'TTG-1-060','TTG-1-063','TTG-1-064','TTG-1-065','TTG-1-066','TTG-1-067','TTG-1-068'
+ 'TTG-1-060','TTG-1-063','TTG-1-064','TTG-1-065','TTG-1-066','TTG-1-067','TTG-1-068','TTG-1-069','TTG-1-070'
 ]);
 const allowed=new Set(TTG_CORE_SMOKE_IDS);
 const phases=['start','move','main','attack'];
@@ -315,7 +316,7 @@ export function dispatchTtgCoreAction(source,action){
    // may suppress IMPACT for this battle, even if retired on losing.
    const won=bp(s,p,attacker)>=bp(s,1-p,defender);
    const impactAmount=Math.max(attacker.greenEventImpact||0,attacker.green008Impact||0,greenHighRaidCombatValue(s,p,attacker).impact);
-   const impactDamage=won&&!greenTtgImpactNull(defender)&&!ttgRedStarterImpactNull(defender)&&!red054ImpactNull(s,1-p,defender)&&!ttgRed057ImpactNull(s,1-p,defender)?impactAmount:0;
+   const impactDamage=won&&!greenTtgImpactNull(defender)&&!ttgRedStarterImpactNull(defender)&&!red054ImpactNull(s,1-p,defender)&&!ttgRed057ImpactNull(s,1-p,defender)&&!red071ImpactNull(defender)?impactAmount:0;
    if(won)removeFront(s,1-p,defender.uid);
    if(won&&attacker.cardId==='TTG-1-067'&&attacker.red067WinDrawUntilTurn===s.turn){
     if(pl.deck.length)pl.hand.push(pl.deck.shift());
@@ -486,7 +487,7 @@ export function ttgCoreAiChoice(s){
     effects.find(x=>x.type==='ttgGreen022')||
     effects.find(x=>x.type==='ttgRed046Main'&&x.mode==='both')||effects.find(x=>x.type==='ttgRed046Main')||
     effects.find(x=>x.type==='ttgRed050Main'&&x.mode==='energy')||effects.find(x=>x.type==='ttgRed050Main')||
-    effects.find(x=>x.type==='ttgRed053Main');
+    effects.find(x=>x.type==='ttgRed053Main')||effects.find(x=>x.type==='ttgRed069Main');
    if(candidate)return candidate;
    const normalRaid=['ttgGreen028Raid','ttgGreen029Raid','green030Raid','greenHighRaid'];
    const raidCandidate=effects.find(x=>normalRaid.includes(x.type)&&x.line==='front')||effects.find(x=>normalRaid.includes(x.type));
