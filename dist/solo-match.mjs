@@ -173,7 +173,7 @@ function hurt(s,defender,amount=1){
   if(t==='get')p.hand.push(c);
   else if(t==='raid'){
    p.hand.push(c);
-   if(soloEnergy(s,defender)>=d(c).energy&&field(p).some(base=>d(base).nameJa===d(c).nameJa&&!(base.stack||[]).length)){
+   if(soloEnergy(s,defender)>=usableEnergy(s,defender,c)&&field(p).some(base=>d(base).nameJa===d(c).nameJa)){
     s.pending={kind:'raidTrigger',p:defender,uid:c.uid};break;
    }
   }else{
@@ -275,8 +275,7 @@ function advanceAttackEnd(s){
   if((type==='047'||type==='048')&&c.stack?.length){
    const amount=type==='047'?2:3;
    const available=field(p).flatMap(x=>(x.under||[]).filter(q=>q.faceDown).map(q=>q.uid));
-   const eligible=p.hand.filter(x=>x.cardId===(type==='047'?'SLG-1-048':'SLG-1-049'));
-   if(available.length>=amount&&eligible.length){s.pending={kind:'slgEndRaid',p:s.active,source:uid,amount};return;}
+   if(available.length>=amount){s.pending={kind:'slgEndRaid',p:s.active,source:uid,amount};return;}
   }else if(type==='061'&&p.hand.length){s.pending={kind:'slg061End',p:s.active,source:uid};return;}
  }
  const leaving=s.active;
@@ -478,7 +477,7 @@ function choose(s,action){
   if(action.uid==null){s.pending=null;advanceAttackEnd(s);}
   else{
    const card=p.hand.find(c=>c.uid===action.uid),expected=host.cardId==='SLG-1-047'?'SLG-1-048':'SLG-1-049';
-   if(!card||card.cardId!==expected||!Array.isArray(action.used)||action.used.length!==q.amount||new Set(action.used).size!==q.amount)throw Error('illegal chain Raid');
+   if(action.uid!=='peel'&&(!card||card.cardId!==expected)||!Array.isArray(action.used)||action.used.length!==q.amount||new Set(action.used).size!==q.amount)throw Error('illegal chain Raid');
    const owned=field(p).flatMap(c=>(c.under||[]).filter(x=>x.faceDown).map(x=>x.uid));
    if(action.used.some(uid=>!owned.includes(uid)))throw Error('cannot pay another player facedown cards');
    for(const uid of action.used){
@@ -490,9 +489,12 @@ function choose(s,action){
    base.stack=deeper;base.line=line;base.slot=slot;base.owner=q.p;base.ready=ready;
    base.under=[...(base.under||[]),...(host.under||[])];host.under=[];host.stack=[];
    p[line][slot]=base;p.outside.push(host);
-   const i=p.hand.findIndex(x=>x.uid===card.uid);p.hand.splice(i,1);
-   position(card,q.p,line,slot);card.stack=[base,...deeper];delete base.stack;card.ready=true;p[line][slot]=card;
-   s.pending=null;onEnter(s,card);
+   s.pending=null;
+   if(action.uid!=='peel'){
+    const i=p.hand.findIndex(x=>x.uid===card.uid);p.hand.splice(i,1);
+    position(card,q.p,line,slot);card.stack=[base,...deeper];delete base.stack;card.ready=true;p[line][slot]=card;
+    onEnter(s,card);
+   }
    if(!s.pending)advanceAttackEnd(s);
   }
  }else if(q.kind==='slg061End'){
@@ -751,10 +753,8 @@ function choose(s,action){
   if(action.uid!=null){
    const p=s.players[q.p],i=p.hand.findIndex(c=>c.uid===q.uid),c=p.hand[i];
    const base=field(p).find(x=>x.uid===action.uid);
-   if(i<0||!base||d(base).nameJa!==d(c).nameJa||soloEnergy(s,q.p)<d(c).energy)throw Error('illegal life Raid');
-   p.hand.splice(i,1);p[base.line][base.slot]=null;
-   position(c,q.p,action.line,action.slot);c.stack=[base];c.ready=true;p[action.line][action.slot]=c;
-   s.pending=null;onEnter(s,c);
+   if(i<0||!canRaid(s,q.p,c,base))throw Error('illegal life Raid');
+   s.pending=null;raidReplace(s,q.p,c,base,action.line,action.slot,false);
   }else s.pending=null;
  }else if(q.kind==='raid058Discard'){
   const p=s.players[q.p];
@@ -919,7 +919,7 @@ export function soloTrainingLegalActions(s){
    const cards=p.hand.filter(c=>c.cardId===expected);
    const attached=field(p).flatMap(c=>(c.under||[]).filter(x=>x.faceDown).map(x=>x.uid));
    const combinations=(arr,n,i=0,taken=[])=>n===0?[taken]:arr.flatMap((x,j)=>j<i?[]:combinations(arr,n-1,j+1,[...taken,x]));
-   return [{type:'choose',uid:null},...cards.flatMap(c=>combinations(attached,q.amount).map(used=>({type:'choose',uid:c.uid,used})))];
+   return [{type:'choose',uid:null},...combinations(attached,q.amount).map(used=>({type:'choose',uid:'peel',used})),...cards.flatMap(c=>combinations(attached,q.amount).map(used=>({type:'choose',uid:c.uid,used})))];
   }
   if(q.kind==='slg061End')return [{type:'choose',uid:null},...s.players[q.p].hand.map(c=>({type:'choose',uid:c.uid}))];
   if(q.kind==='slg061Active')return [{type:'choose',uid:null},...field(s.players[q.p]).filter(isIsland).map(c=>({type:'choose',uid:c.uid}))];
@@ -987,7 +987,7 @@ export function soloTrainingLegalActions(s){
   if(q.kind==='raid058Unfreeze')return [{type:'choose',uid:null},...s.players[q.p].front.filter(c=>c&&(c.skipActive||0)>0).map(c=>({type:'choose',uid:c.uid}))];
   if(q.kind==='raidTrigger'){
    const p=s.players[q.p],c=byUid(p.hand,q.uid),actions=[{type:'choose',uid:null}];
-   if(c&&soloEnergy(s,q.p)>=d(c).energy)for(const base of field(p).filter(x=>d(x).nameJa===d(c).nameJa&&!(x.stack||[]).length)){
+   if(c&&soloEnergy(s,q.p)>=usableEnergy(s,q.p,c))for(const base of field(p).filter(x=>canRaid(s,q.p,c,x))){
     actions.push({type:'choose',uid:base.uid,line:base.line,slot:base.slot});
     if(base.line==='energy')for(let slot=0;slot<4;slot++)if(!p.front[slot])actions.push({type:'choose',uid:base.uid,line:'front',slot});
    }
