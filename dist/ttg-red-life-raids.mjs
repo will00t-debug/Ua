@@ -61,6 +61,8 @@ export function resolveRedLifeRaid(s,{player,cardUid,sourceUid,line,slot}={}){
  // 045 base only triggers on your OWN turn, not opponent attack/life.
  if(s.active===player&&base.cardId==='TTG-1-045')steps.push('base045');
  r.pending=steps.length?{kind:'ttgRedRaidQueue',player,raidUid:top.uid,steps}:null;
+ r.raidNamesThisTurn=[...(r.raidNamesThisTurn||[]),TTG_BY_ID[top.cardId].nameJa];
+ r.ttgRaidOccurredTurn??={};r.ttgRaidOccurredTurn[player]=s.turn;
  r.raidCountThisTurn=(r.raidCountThisTurn||0)+1;
  r.raidCountByPlayerTurn??={};
  const count=r.raidCountByPlayerTurn[player];
