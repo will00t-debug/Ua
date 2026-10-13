@@ -61,26 +61,29 @@ export function expireRed075OwnStart(s,p){
 export function legalRed076Raids(s,p){
  if(!ownMain(s,p))return [];
  const pl=s.players[p],ap=pl.apCards.filter(c=>c.ready);
- if(calculateTtgEnergyByColor(s,p).red<2||!ap.length)return [];
+ const needed=pl.red080DiscountUntilTurn===s.turn?0:1;
+ if(calculateTtgEnergyByColor(s,p).red<2||ap.length<needed)return [];
  return pl.hand.filter(c=>c.cardId==='TTG-1-076').flatMap(h=>
   rows(pl).filter(x=>name(x.c)==='シモン'&&!x.c.stack?.length&&!x.c.under?.length).flatMap(x=>{
    const pos=[{line:x.line,slot:x.slot}];
    if(x.line==='energy')for(let slot=0;slot<4;slot++)if(!pl.front[slot])pos.push({line:'front',slot});
    return pos.map(a=>({type:'ttgRed076Raid',player:p,handUid:h.uid,baseUid:x.c.uid,
-    line:a.line,slot:a.slot,requiredAp:1}));
+    line:a.line,slot:a.slot,requiredAp:needed}));
   }));
 }
 export function resolveRed076Raid(s,a={}){
- if(!legalRed076Raids(s,a.player).some(x=>x.type===a.type&&x.handUid===a.handUid&&x.baseUid===a.baseUid&&
-  x.line===a.line&&x.slot===a.slot)||!Array.isArray(a.payApUids)||a.payApUids.length!==1)
+ const choice=legalRed076Raids(s,a.player).find(x=>x.type===a.type&&x.handUid===a.handUid&&x.baseUid===a.baseUid&&
+  x.line===a.line&&x.slot===a.slot);
+ if(!choice||!Array.isArray(a.payApUids)||a.payApUids.length!==choice.requiredAp)
   throw new Error('076 requires proper Simon Raid and 1 paid AP');
  const before=ids(s.players[a.player]);
- const r=spendTtgApCards(s,{player:a.player,apUids:a.payApUids,count:1}),pl=r.players[a.player];
+ const r=spendTtgApCards(s,{player:a.player,apUids:a.payApUids,count:choice.requiredAp}),pl=r.players[a.player];
  const loc=rows(pl).find(x=>x.c.uid===a.baseUid),idx=pl.hand.findIndex(c=>c.uid===a.handUid);
  if(!loc||idx<0)throw new Error('076 raid source left field');
  const top=pl.hand.splice(idx,1)[0];pl[loc.line][loc.slot]=null;
  if(pl[a.line][a.slot])throw new Error('076 destination occupied');
  pl[a.line][a.slot]={...top,ready:true,stack:[loc.c],under:[],enteredTurn:s.turn,raidedTurn:s.turn};
+ if(pl.red080DiscountUntilTurn===s.turn)delete pl.red080DiscountUntilTurn;
  r.pending={kind:'ttgRed076Look',player:a.player,uid:top.uid,
   revealed:pl.deck.slice(0,2).map(c=>c.uid)};
  if(!same(ids(pl),before))throw new Error('076 Raid UID mismatch');
