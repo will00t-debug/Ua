@@ -5,8 +5,8 @@ import {SOLO_LEVELING_CARDS} from './solo-leveling.mjs';
 import {normalizeSoloDeck} from './solo-decks.mjs';
 const DB=Object.fromEntries(SOLO_LEVELING_CARDS.map(c=>[c.id,c]));
 export const SOLO_MATCH_SUPPORTED=Object.freeze([
- 'SLG-1-001','SLG-1-005','SLG-1-012','SLG-1-025','SLG-1-026','SLG-1-006','SLG-1-007','SLG-1-009','SLG-1-010','SLG-1-013','SLG-1-014','SLG-1-015','SLG-1-016','SLG-1-027','SLG-1-036','SLG-1-037','SLG-1-038','SLG-1-040','SLG-1-029','SLG-1-030','SLG-1-031','SLG-1-032','SLG-1-033','SLG-1-035',
- 'SLG-1-041','SLG-1-042','SLG-1-050','SLG-1-053','SLG-1-068','SLG-1-070','SLG-1-073','SLG-1-043','SLG-1-045','SLG-1-052','SLG-1-055','SLG-1-056',
+ 'SLG-1-001','SLG-1-002','SLG-1-004','SLG-1-005','SLG-1-017','SLG-1-012','SLG-1-025','SLG-1-026','SLG-1-006','SLG-1-007','SLG-1-009','SLG-1-010','SLG-1-013','SLG-1-014','SLG-1-015','SLG-1-016','SLG-1-027','SLG-1-036','SLG-1-037','SLG-1-038','SLG-1-040','SLG-1-029','SLG-1-030','SLG-1-031','SLG-1-032','SLG-1-033','SLG-1-035',
+ 'SLG-1-041','SLG-1-042','SLG-1-050','SLG-1-053','SLG-1-054','SLG-1-068','SLG-1-070','SLG-1-073','SLG-1-043','SLG-1-045','SLG-1-052','SLG-1-055','SLG-1-056',
  'SLG-1-062','SLG-1-065','SLG-1-066','SLG-1-069','SLG-1-067','SLG-1-071','SLG-1-072','SLG-1-074','SLG-1-075','SLG-1-076','SLG-1-078','SLG-1-079','SLG-1-080','SLG-1-058'
 ]);
 const SUPPORTED=new Set(SOLO_MATCH_SUPPORTED);
@@ -54,6 +54,7 @@ export function soloMatchBp(s,c){
  if(c.owner===s.active){
   const p=s.players[c.owner];
   if(c.cardId==='SLG-1-001'&&p.outside.length>=5)value+=500;
+  if(c.cardId==='SLG-1-004'&&(p.discardByOwnEffectTurn===s.turn||p.recoveredByOwnEffectTurn===s.turn))value+=500;
   if(c.cardId==='SLG-1-010'&&p.outside.length>=10)value+=1000;
   if(c.cardId==='SLG-1-027')value+=500*field(p).filter(x=>!x.ready&&d(x).type==='character'&&d(x).traits?.includes('影之軍團')&&d(x).bp<=2500).length;
   if(c.cardId==='SLG-1-062'&&field(p).filter(x=>d(x).traits?.includes('第四次架南島Raid')).length>=5)value+=1500;
@@ -289,6 +290,23 @@ function choose(s,action){
   const p=s.players[q.p];
   if(action.draw)draw(s,p);
   s.pending=null;if(s.status==='playing')continueAttackEffects(s);
+ }else if(q.kind==='entry002Mode'){
+  const p=s.players[q.p];
+  if(action.mode==='drawDiscard'){
+   draw(s,p);
+   s.pending=p.hand.length?{kind:'entry002Discard',p:q.p}:null;
+  }else if(action.mode==='buff'){
+   s.pending={kind:'entry002Buff',p:q.p,source:q.source};
+  }else throw Error('invalid 002 choice mode');
+ }else if(q.kind==='entry002Buff'){
+  const p=s.players[q.p],c=field(p).find(x=>x.uid===action.uid&&x.uid!==q.source&&d(x).type==='character');
+  if(action.uid!=null&&!c)throw Error('buff must target another own character');
+  if(c)c.buffs.push({turn:s.turn,bp:1000});
+  s.pending=null;
+ }else if(q.kind==='entry002Discard'||q.kind==='entry004Discard'){
+  const p=s.players[q.p],i=p.hand.findIndex(c=>c.uid===action.uid);
+  if(i<0)throw Error('invalid required hand discard');
+  p.outside.push(p.hand.splice(i,1)[0]);p.discardByOwnEffectTurn=s.turn;s.pending=null;
  }else if(q.kind==='eventDiscard'){
   const p=s.players[q.p],i=p.hand.findIndex(c=>c.uid===action.uid);
   if(i<0)throw Error('invalid event discard');
@@ -392,7 +410,7 @@ function choose(s,action){
   const c=field(p).find(x=>x.uid===q.source);
   if(!c)throw Error('ability source gone');
   c.buffs.push({turn:s.turn,bp:1500});c.usedTurn=s.turn;s.pending=null;
- }else if(q.kind==='soldierTop'){
+ }else if(q.kind==='soldierTop'||q.kind==='peekTop'){
   const p=s.players[q.p],top=p.deck.slice(0,q.topUids.length);
   if(top.map(c=>c.uid).join()!==q.topUids.join())throw Error('deck changed during selection');
   const selected=action.outsideUid;
@@ -417,6 +435,20 @@ function onEnter(s,c){
  const p=s.players[c.owner];
  if(c.cardId==='SLG-1-014'||c.cardId==='SLG-1-016'){
   const n=c.cardId==='SLG-1-014'?1:2;for(let i=0;i<n&&p.deck.length;i++)p.outside.push(p.deck.shift());
+ }
+ if(c.cardId==='SLG-1-002')s.pending={kind:'entry002Mode',p:c.owner,source:c.uid};
+ if(c.cardId==='SLG-1-004'){
+  draw(s,p);
+  s.pending=p.hand.length?{kind:'entry004Discard',p:c.owner,source:c.uid}:null;
+ }
+ if(c.cardId==='SLG-1-017'&&p.deck.length){
+  const top=p.deck.slice(0,1);
+  s.pending={kind:'peekTop',p:c.owner,source:c.uid,topUids:top.map(x=>x.uid),eligible:top.map(x=>x.uid)};
+ }
+ if(c.cardId==='SLG-1-054'&&p.deck.length){
+  const top=p.deck.slice(0,2);
+  s.pending={kind:'peekTop',p:c.owner,source:c.uid,topUids:top.map(x=>x.uid),
+   eligible:top.filter(x=>d(x).traits?.includes('第四次架南島Raid')).map(x=>x.uid)};
  }
  if(c.cardId==='SLG-1-030'&&field(p).some(x=>x.uid!==c.uid&&d(x).traits?.includes('影之軍團'))){
   const top=p.deck.slice(0,2);
@@ -453,6 +485,9 @@ export function soloTrainingLegalActions(s){
   if(q.kind==='kaiserMode')return ['block','untargetable'].filter(mode=>!groupUsed(s,q.p,'kaiser:'+mode)).map(mode=>({type:'choose',mode}));
   if(q.kind==='kibaMode')return ['buff','draw'].filter(mode=>!groupUsed(s,q.p,'kiba:'+mode)).map(mode=>({type:'choose',mode}));
   if(q.kind==='attackDraw')return [{type:'choose',draw:false},{type:'choose',draw:true}];
+  if(q.kind==='entry002Mode')return [{type:'choose',mode:'drawDiscard'},{type:'choose',mode:'buff'}];
+  if(q.kind==='entry002Buff')return [{type:'choose',uid:null},...field(s.players[q.p]).filter(x=>x.uid!==q.source&&d(x).type==='character').map(x=>({type:'choose',uid:x.uid}))];
+  if(q.kind==='entry002Discard'||q.kind==='entry004Discard')return s.players[q.p].hand.map(c=>({type:'choose',uid:c.uid}));
   if(q.kind==='eventDiscard')return s.players[q.p].hand.map(c=>({type:'choose',uid:c.uid}));
   if(q.kind==='eventRecover'||q.kind==='eventDance')return [{type:'choose',uid:null},...q.options.map(uid=>({type:'choose',uid}))];
   if(q.kind==='eventRestoreAp'){
@@ -478,7 +513,7 @@ export function soloTrainingLegalActions(s){
    }
    return actions;
   }
-  if(q.kind==='soldierTop'){
+  if(q.kind==='soldierTop'||q.kind==='peekTop'){
    const orders=x=>x.length===2?[x,[x[1],x[0]]]:[x];
    const result=[];
    for(const outsideUid of [null,...q.eligible]){
@@ -645,6 +680,9 @@ export function soloTrainingBotAction(s){
   if(s.pending.kind==='ryuuAp')return legal[legal.length-1];
   if(s.pending.kind==='ryuuBuff')return legal.find(a=>a.uid!=null)||legal[0];
   if(s.pending.kind==='colorTrigger'||s.pending.kind==='specialTrigger')return legal[0];
+  if(s.pending.kind==='entry002Mode')return legal[0];
+  if(s.pending.kind==='entry002Buff')return legal.find(a=>a.uid!=null)||legal[0];
+  if(s.pending.kind==='entry002Discard'||s.pending.kind==='entry004Discard')return legal[0];
   if(s.pending.kind==='entryDrawMode')return legal[0];
   if(s.pending.kind==='entryBounce')return legal[0];
   if(s.pending.kind==='entryRecover'||s.pending.kind==='sungRecovery')return legal.find(a=>a.uid!=null)||legal[0];
@@ -652,7 +690,7 @@ export function soloTrainingBotAction(s){
   if(s.pending.kind==='raidTrigger')return legal.find(a=>a.uid!=null)||legal[0];
   if(s.pending.kind==='raid058Discard')return legal.find(a=>a.uid!=null)||legal[0];
   if(s.pending.kind==='raid058Unfreeze')return legal.find(a=>a.uid!=null)||legal[0];
-  if(s.pending.kind==='soldierTop'){
+  if(s.pending.kind==='soldierTop'||s.pending.kind==='peekTop'){
    return legal.find(a=>a.outsideUid!=null)||legal[0];
   }
   if(s.pending.kind==='block'){
