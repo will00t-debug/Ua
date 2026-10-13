@@ -14,7 +14,7 @@ import {beginTtgLifeTrigger,legalTtgLifeChoices,resolveTtgLifeChoice,finalizeTtg
 // may enter this core. In particular 071 Raid is tested independently, not here.
 export const TTG_CORE_SMOKE_IDS=Object.freeze([
  'TTG-1-001','TTG-1-002','TTG-1-003','TTG-1-005','TTG-1-006','TTG-1-009',
- 'TTG-1-010','TTG-1-011','TTG-1-014','TTG-1-015','TTG-1-018',
+ 'TTG-1-010','TTG-1-011','TTG-1-014','TTG-1-015','TTG-1-016','TTG-1-017','TTG-1-018',
  'TTG-1-019','TTG-1-020','TTG-1-022','TTG-1-023','TTG-1-024','TTG-1-026',
  'TTG-1-035','TTG-1-036','TTG-1-037','TTG-1-038','TTG-1-039',
  'TTG-1-040','TTG-1-041',
@@ -109,10 +109,23 @@ function greenEntryChoices(s){
   if(['keepTop','outsideTop','emptyDeck'].includes(opt.mode))actions.push(make(opt));
   else if(opt.mode==='drawThenDiscard')for(const discardUid of opt.discardUids)
    actions.push(make(opt,{discardUid}));
+  else if(opt.mode==='niaDiscardDraw'){
+   const cards=opt.candidateUids;
+   actions.push(make(opt,{discardUids:[]}));
+   for(let i=0;i<cards.length;i++){
+    if(opt.max>=1)actions.push(make(opt,{discardUids:[cards[i]]}));
+    for(let j=i+1;j<cards.length;j++)if(opt.max>=2)
+     actions.push(make(opt,{discardUids:[cards[i],cards[j]]}));
+   }
+  }
+  else if(opt.mode==='niaOutsideToTop'){
+   actions.push(make(opt,{takeUid:null}));
+   for(const takeUid of opt.candidateUids)actions.push(make(opt,{takeUid}));
+  }
   else if(opt.mode==='mandatoryBounce'){
    if(opt.selfIfEmpty)actions.push(make(opt));
    else for(const returnUid of opt.candidateUids)actions.push(make(opt,{returnUid}));
-  }else if(opt.mode==='search'||opt.mode==='arkChoice'){
+  }else if(opt.mode==='search'||opt.mode==='arkChoice'||opt.mode==='niaSearch'){
    for(const takeUid of [null,...opt.candidateUids]){
     const order=opt.revealed.filter(uid=>uid!==takeUid);
     if(!takeUid)actions.push(make(opt,{takeUid:null,bottomOrderUids:order}));
