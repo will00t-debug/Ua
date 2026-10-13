@@ -323,6 +323,78 @@ function choose(s,action){
   const p=s.players[q.p];
   if(action.draw)draw(s,p);
   s.pending=null;if(s.status==='playing')continueAttackEffects(s);
+ }else if(q.kind==='slgSearch'){
+  const p=s.players[q.p],top=p.deck.slice(0,q.topUids.length);
+  if(top.map(c=>c.uid).join(',')!==q.topUids.join(','))throw Error('top deck changed during search');
+  const picks=action.picks;
+  if(!Array.isArray(picks)||picks.length>q.maxPicks||new Set(picks).size!==picks.length||picks.some(uid=>!q.eligible.includes(uid)))throw Error('illegal top-deck pick');
+  const leftovers=q.topUids.filter(uid=>!picks.includes(uid));
+  if(!Array.isArray(action.order)||action.order.length!==leftovers.length||new Set(action.order).size!==leftovers.length||action.order.some(uid=>!leftovers.includes(uid)))throw Error('illegal bottom-deck order');
+  const held=p.deck.splice(0,q.topUids.length),lookup=Object.fromEntries(held.map(c=>[c.uid,c]));
+  p.hand.push(...picks.map(uid=>lookup[uid]));
+  p.deck.push(...action.order.map(uid=>lookup[uid]));
+  if(q.source&&['SLG-1-059'].includes(field(p).find(c=>c.uid===q.source)?.cardId||'')&&picks.length){
+   const source=field(p).find(c=>c.uid===q.source);source.skipActive=(source.skipActive||0)+1;
+  }
+  s.pending=null;
+  if(picks.length&&q.after==='discard')s.pending={kind:'slgDiscard',p:q.p,source:q.source};
+  else if(q.after==='attack')continueAttackEffects(s);
+ }else if(q.kind==='slgMill'){
+  const p=s.players[q.p];
+  if(action.mill&&p.deck.length)p.outside.push(p.deck.shift());
+  s.pending=null;
+ }else if(q.kind==='slgDiscard'){
+  const p=s.players[q.p],idx=p.hand.findIndex(c=>c.uid===action.uid);
+  if(idx<0)throw Error('not your hand card to discard');
+  p.outside.push(p.hand.splice(idx,1)[0]);p.discardByOwnEffectTurn=s.turn;s.pending=null;
+  if(q.after==='attack')continueAttackEffects(s);
+ }else if(q.kind==='slgRecoveredBuff'){
+  const p=s.players[q.p],target=action.uid==null?null:field(p).find(c=>c.uid===action.uid&&d(c).type==='character');
+  if(action.uid!=null&&!target)throw Error('illegal recovered Rin BP target');
+  if(target)target.buffs.push({turn:s.turn,bp:1000});s.pending=null;
+ }else if(q.kind==='slgRecoveredDeploy'){
+  const p=s.players[q.p],i=p.hand.findIndex(c=>c.uid===q.uid&&c.cardId==='SLG-1-011');
+  if(action.uid===null){s.pending=null;}
+  else{
+   if(i<0||soloEnergy(s,q.p)<4||!['front','energy'].includes(action.line)||p[action.line][action.slot])throw Error('illegal Shizuku recovery deployment');
+   const [c]=p.hand.splice(i,1);position(c,q.p,action.line,action.slot);c.ready=q.active;p[action.line][action.slot]=c;
+   s.pending=null;onEnter(s,c);
+  }
+ }else if(q.kind==='slg019Entry'){
+  const p=s.players[q.p];
+  if(action.uid!=null){
+   const i=p.hand.findIndex(c=>c.uid===action.uid&&shadow(c));if(i<0)throw Error('must discard Shadow Army');
+   p.outside.push(p.hand.splice(i,1)[0]);draw(s,p);
+  }
+  s.pending=null;
+ }else if(q.kind==='slg019Recover'){
+  const p=s.players[q.p],i=p.hand.findIndex(c=>c.uid===action.uid&&shadow(c));
+  if(i<0||groupUsed(s,q.p,'sung019'))throw Error('illegal shared Sung recovery cost');
+  p.outside.push(p.hand.splice(i,1)[0]);markGroup(s,q.p,'sung019');
+  s.pending=null;recoverSolo(s,q.p,q.source,'水篠 旬');
+ }else if(q.kind==='slg044Target'){
+  const p=s.players[q.p],host=field(p).find(c=>c.uid===action.uid&&isSung(c));
+  if(!host||!p.deck.length)throw Error('illegal face-down host');
+  const top=p.deck.shift();host.under??=[];host.under.push({...top,faceDown:true});
+  host.grants??=[];host.grants.push({kind:'damagePlus',turn:s.turn});s.pending=null;
+ }else if(q.kind==='slg059Entry'){
+  const p=s.players[q.p],source=field(p).find(c=>c.uid===q.source);
+  if(action.uid!=null){
+   const i=p.hand.findIndex(c=>c.uid===action.uid);if(i<0||!source)throw Error('illegal 059 entry discard');
+   p.outside.push(p.hand.splice(i,1)[0]);readySolo(source);source.mightyThisTurn=s.turn;
+  }s.pending=null;
+ }else if(q.kind==='slg077Target'){
+  const p=s.players[q.p],opp=s.players[1-q.p],i=opp.front.findIndex(c=>c?.uid===action.uid);
+  if(i<0||!q.options.includes(action.uid))throw Error('illegal island event target');
+  const target=opp.front[i];p.ap-=target.extraTargetAp||0;
+  retire(s,1-q.p,target);
+  const names=new Set(field(p).filter(c=>d(c).traits?.includes('第四次架南島Raid')).map(c=>d(c).nameJa));
+  s.pending=names.size>=5?{kind:'slg077Buff',p:q.p}:null;
+ }else if(q.kind==='slg077Buff'){
+  const p=s.players[q.p],target=action.uid==null?null:field(p).find(c=>c.uid===action.uid&&d(c).type==='character');
+  if(action.uid!=null&&!target)throw Error('illegal island BP target');
+  if(target)target.buffs.push({turn:s.turn,bp:1000});
+  s.pending=null;
  }else if(q.kind==='entry002Mode'){
   const p=s.players[q.p];
   if(action.mode==='drawDiscard'){
@@ -580,6 +652,30 @@ export function soloTrainingLegalActions(s){
   if(q.kind==='kaiserMode')return ['block','untargetable'].filter(mode=>!groupUsed(s,q.p,'kaiser:'+mode)).map(mode=>({type:'choose',mode}));
   if(q.kind==='kibaMode')return ['buff','draw'].filter(mode=>!groupUsed(s,q.p,'kiba:'+mode)).map(mode=>({type:'choose',mode}));
   if(q.kind==='attackDraw')return [{type:'choose',draw:false},{type:'choose',draw:true}];
+  if(q.kind==='slgSearch'){
+   const p=s.players[q.p],results=[];
+   const perm=a=>a.length<2?[a]:a.flatMap((x,i)=>perm(a.filter((_,j)=>j!==i)).map(rest=>[x,...rest]));
+   const pickSubsets=[[]];
+   const visit=(from,selected)=>{if(selected.length>=q.maxPicks)return;for(let i=from;i<q.eligible.length;i++){const subset=[...selected,q.eligible[i]];pickSubsets.push(subset);visit(i+1,subset);}};
+   visit(0,[]);
+   for(const picks of pickSubsets){const remaining=q.topUids.filter(uid=>!picks.includes(uid));
+    for(const order of perm(remaining))results.push({type:'choose',picks,order});
+   }
+   return results;
+  }
+  if(q.kind==='slgMill')return [{type:'choose',mill:false},{type:'choose',mill:true}];
+  if(q.kind==='slgDiscard'||q.kind==='slg019Recover')return s.players[q.p].hand.filter(c=>q.kind==='slgDiscard'||shadow(c)).map(c=>({type:'choose',uid:c.uid}));
+  if(q.kind==='slgRecoveredBuff')return [{type:'choose',uid:null},...field(s.players[q.p]).filter(c=>d(c).type==='character').map(c=>({type:'choose',uid:c.uid}))];
+  if(q.kind==='slgRecoveredDeploy'){
+   const p=s.players[q.p],actions=[{type:'choose',uid:null}];
+   if(p.hand.some(c=>c.uid===q.uid)&&soloEnergy(s,q.p)>=4)
+    for(const line of ['front','energy'])for(let slot=0;slot<4;slot++)if(!p[line][slot])actions.push({type:'choose',uid:q.uid,line,slot});
+   return actions;
+  }
+  if(q.kind==='slg019Entry'||q.kind==='slg059Entry')return [{type:'choose',uid:null},...s.players[q.p].hand.filter(c=>q.kind==='slg059Entry'||shadow(c)).map(c=>({type:'choose',uid:c.uid}))];
+  if(q.kind==='slg044Target')return field(s.players[q.p]).filter(isSung).map(c=>({type:'choose',uid:c.uid}));
+  if(q.kind==='slg077Target')return q.options.map(uid=>({type:'choose',uid}));
+  if(q.kind==='slg077Buff')return [{type:'choose',uid:null},...field(s.players[q.p]).filter(c=>d(c).type==='character').map(c=>({type:'choose',uid:c.uid}))];
   if(q.kind==='entry002Mode')return [{type:'choose',mode:'drawDiscard'},{type:'choose',mode:'buff'}];
   if(q.kind==='entry002Buff')return [{type:'choose',uid:null},...field(s.players[q.p]).filter(x=>x.uid!==q.source&&d(x).type==='character').map(x=>({type:'choose',uid:x.uid}))];
   if(q.kind==='entry002Discard'||q.kind==='entry004Discard')return s.players[q.p].hand.map(c=>({type:'choose',uid:c.uid}));
