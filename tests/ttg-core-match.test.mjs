@@ -16,12 +16,12 @@ const findById=(pl,id)=>{
  }
  throw new Error('Cannot find printed '+id);
 };
-test('core smoke is a named, strict subset and never claims all 81 cards are playable',()=>{
+test('all 81 printed cards are admitted to isolated core without claiming browser website automation',()=>{
  assert.ok(TTG_CORE_SMOKE_IDS.length>=13);
- assert.ok(TTG_CORE_SMOKE_IDS.length<81);
+ assert.equal(TTG_CORE_SMOKE_IDS.length,81);
  assert.deepEqual(validateTtgCoreDeck(deck()),[]);
- const bad={...deck(),'TTG-1-071':1,'TTG-1-036':0};
- assert.ok(validateTtgCoreDeck(bad).some(x=>x.includes('TTG-1-071')));
+ const bad={...deck(),'TTG-1-999':1,'TTG-1-036':0};
+ assert.ok(validateTtgCoreDeck(bad).some(x=>x.includes('TTG-1-999')));
  assert.throws(()=>newTtgCoreMatch({decks:[bad,deck()]}));
  assert.throws(()=>newTtgCoreMatch({decks:[{},deck()]}));
 });

@@ -3,6 +3,8 @@
 const niaRedIds=new Set(['TTG-1-058','TTG-1-059','TTG-1-060','TTG-1-061','TTG-1-062']);
 const kaminaIds=new Set(['TTG-1-042','TTG-1-043','TTG-1-044','TTG-1-045','TTG-1-046']);
 const lanes=board=>[...(board?.front||[]),...(board?.energy||[])].filter(Boolean);
+import {TTG_BY_ID} from './ttg-builder.mjs';
+import {beginRed073Leaving} from './ttg-red-073-leaving.mjs';
 function publicRaidStack(card){
  if(!card)return [];
  return [card,...(card.stack||[]).flatMap(publicRaidStack)];
@@ -24,7 +26,7 @@ export function gigaDrillEnergyThreshold(board){
 }
 export function eligibleGigaDrillTargets(state,player){
  const our=state.players[player],enemy=state.players[1-player],maxBp=gigaDrillEnergyThreshold(our);
- return enemy.front.filter(c=>c&&!c.cannotBeChosen&&!c.protectedFromEffects&&Number.isFinite(c.currentBp??c.bp)&&(c.currentBp??c.bp)<=maxBp);
+ return enemy.front.filter(c=>c&&!c.cannotBeChosen&&!c.protectedFromEffects&&Number.isFinite(c.currentBp??c.bp??TTG_BY_ID[c.cardId]?.bp)&&(c.currentBp??c.bp??TTG_BY_ID[c.cardId]?.bp)<=maxBp);
 }
 function flattenedCards(card){
  const result=[];
@@ -50,6 +52,9 @@ export function resolveTtgSpecialRetire(state,{player,targetUid}={}){
  const chosen=eligibleTtgSpecialTargets(state,player).find(c=>c.uid===targetUid);
  if(!chosen)throw new Error('SPECIAL trigger needs a legal enemy front character');
  const result=structuredClone(state),opp=result.players[1-player],index=opp.front.findIndex(c=>c?.uid===targetUid);
+ if(opp.front[index].cardId==='TTG-1-073'&&(opp.front[index].under||[]).some(c=>c.faceDown)&&
+  (opp.front[index].currentBp??TTG_BY_ID['TTG-1-073'].bp)>=500)
+  return beginRed073Leaving({...result,pending:null},{player:1-player,uid:targetUid});
  const pile=flattenedCards(opp.front[index]),previous=new Set((opp.outside||[]).map(c=>c.uid));
  if(pile.some(c=>previous.has(c.uid)))throw new Error('Duplicate card identity');
  opp.front[index]=null;
@@ -64,6 +69,9 @@ export function resolveGigaDrillRetire(state,{player,targetUid}){
  if(!chosen)throw new Error('Not a legal front-line retirement target');
  const result=structuredClone(state),opp=result.players[1-player];
  const index=opp.front.findIndex(c=>c?.uid===targetUid);
+ if(opp.front[index].cardId==='TTG-1-073'&&(opp.front[index].under||[]).some(c=>c.faceDown)&&
+  (opp.front[index].currentBp??TTG_BY_ID['TTG-1-073'].bp)>=500)
+  return beginRed073Leaving({...result,pending:null},{player:1-player,uid:targetUid});
  const pile=flattenedCards(opp.front[index]);
  const currentUids=new Set((opp.outside||[]).map(x=>x.uid));
  if(pile.some(x=>currentUids.has(x.uid)))throw new Error('Duplicate card identity');

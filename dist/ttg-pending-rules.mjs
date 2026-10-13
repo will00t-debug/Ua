@@ -18,7 +18,7 @@ function assertSource(state,player,uid,id){
 export function ttgKittan006Bp(card,{ownerTurn=false,energy}={}){
  if(card?.cardId!=='TTG-1-006')throw new Error('Not Kittan 006');
  if(!Number.isFinite(energy)||energy<0)throw new Error('Live energy required');
- return (card.currentBp??card.bp)+(ownerTurn&&energy>=6?1000:0);
+ return (card.currentBp??card.bp??TTG_BY_ID[card.cardId]?.bp)+(ownerTurn&&energy>=6?1000:0);
 }
 // TTG-1-059: Main, REST this Nia to give 1000 BP to an own Simon or Simon Raid.
 export function resolveTtgNia059(state,{player,uid,targetUid}={}){
@@ -28,7 +28,7 @@ export function resolveTtgNia059(state,{player,uid,targetUid}={}){
  if(!target||!isSimon(target.card))throw new Error('Target must be an own Simon or Simon RAID');
  const result=copy(state),src=find(result.players[player],uid),dst=find(result.players[player],targetUid);
  src.card.ready=false;
- dst.card.currentBp=(dst.card.currentBp??dst.card.bp)+1000;
+ dst.card.currentBp=(dst.card.currentBp??dst.card.bp??TTG_BY_ID[dst.card.cardId]?.bp)+1000;
  dst.card.buffs??=[];
  dst.card.buffs.push({sourceUid:uid,turn:state.turn,bp:1000,until:'endTurn'});
  return result;
@@ -37,9 +37,10 @@ export function resolveTtgNia059(state,{player,uid,targetUid}={}){
 // mandatory retirement at end of the main phase, NOT immediately on REST.
 export function resolveTtgButa063(state,{player,uid}={}){
  const source=assertSource(state,player,uid,'TTG-1-063');
- if(!source.card.ready)throw new Error('Buta must be ACTIVE to pay REST');
+ if(!source.card.ready||source.card.ttg063ActivatedTurn===state.turn)throw new Error('Buta must be ACTIVE and not used this turn');
  const result=copy(state),c=find(result.players[player],uid).card;
  c.ready=false;
+ c.ttg063ActivatedTurn=state.turn;
  c.energyBonus=(c.energyBonus||0)+1;
  c.retireAtMainEndTurn=state.turn;
  return result;

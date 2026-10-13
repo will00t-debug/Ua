@@ -74,6 +74,8 @@ export function dispatchTtgRaidEntry(state,{player,handUid,baseUid,line,slot,pay
  const after=[...ownField(pl).flatMap(x=>physicalIds(x.card)),...pl.hand.flatMap(physicalIds)];
  if(before.length!==after.length||new Set(before).size!==new Set(after).size||
     before.some(uid=>!after.includes(uid)))throw new Error('Physical card conservation failure');
+ paid.raidNamesThisTurn=[...(paid.raidNamesThisTurn||[]),TTG_BY_ID[handCard.cardId].nameJa];
+ paid.ttgRaidOccurredTurn??={};paid.ttgRaidOccurredTurn[player]=state.turn;
  paid.raidCountThisTurn=(paid.raidCountThisTurn||0)+1;
  paid.log??=[];
  paid.log.push({type:'ttgRaidEntered',player,uid:raid.uid,cardId:raid.cardId,
