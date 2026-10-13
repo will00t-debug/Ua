@@ -89,7 +89,7 @@ test('cannot upgrade with copied UID, unexpected non-facedown extras, or another
 });
 test('all 50 card identities conserved after three chained special RAID upgrades',()=>{
  let s=start();
- for(let i=0;i<45;i++)s.players[0].deck.push(card('d'+i,i%2?'TTG-1-042':'TTG-1-005'));
+ for(let i=0;i<43;i++)s.players[0].deck.push(card('d'+i,i%2?'TTG-1-042':'TTG-1-005'));
  s.players[0].hand.push(card('h45','TTG-1-019'),card('h46','TTG-1-064'));
  assert.equal(all(s.players[0]).length,50);
  const initial=all(s.players[0]);
