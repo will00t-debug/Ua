@@ -1,8 +1,8 @@
 {
-  "schema": "ua-ai-v3-training-2",
-  "featureVersion": "ua-v3-f96-2",
+  "schema": "ua-ai-v3-training-3",
+  "featureVersion": "ua-v3-f128-3",
   "neuralNetwork": {
-    "inputs": 96,
+    "inputs": 128,
     "hidden": 32,
     "output": 1
   },
@@ -11,52 +11,53 @@
     "completed": 200,
     "unfinished": 0,
     "failures": 0,
-    "rankingPairs": 4289,
+    "rankingPairs": 6990,
+    "alternativesPerDecision": 3,
     "epochs": 5,
-    "finalLoss": 0.5287017818384706,
-    "elapsedMs": 653624
+    "finalLoss": 0.39710322600952447,
+    "elapsedMs": 543862
   },
   "evaluation": {
     "games": 72,
-    "wins": 30,
-    "losses": 42,
+    "wins": 35,
+    "losses": 37,
     "unfinished": 0,
     "errors": 0,
-    "moves": 15426,
-    "winRate": 0.4166666666666667,
+    "moves": 14264,
+    "winRate": 0.4861111111111111,
     "byMatchup": {
       "green-kenpachi-unohana__green-kenpachi-unohana": {
+        "games": 8,
+        "wins": 5,
+        "losses": 3,
+        "unfinished": 0,
+        "errors": 0
+      },
+      "green-kenpachi-unohana__purple-renji-rukia": {
         "games": 8,
         "wins": 3,
         "losses": 5,
         "unfinished": 0,
         "errors": 0
       },
-      "green-kenpachi-unohana__purple-renji-rukia": {
+      "green-kenpachi-unohana__blue-ichigo-zangetsu": {
         "games": 8,
         "wins": 4,
         "losses": 4,
         "unfinished": 0,
         "errors": 0
       },
-      "green-kenpachi-unohana__blue-ichigo-zangetsu": {
-        "games": 8,
-        "wins": 3,
-        "losses": 5,
-        "unfinished": 0,
-        "errors": 0
-      },
       "purple-renji-rukia__green-kenpachi-unohana": {
         "games": 8,
-        "wins": 3,
-        "losses": 5,
+        "wins": 4,
+        "losses": 4,
         "unfinished": 0,
         "errors": 0
       },
       "purple-renji-rukia__purple-renji-rukia": {
         "games": 8,
-        "wins": 3,
-        "losses": 5,
+        "wins": 4,
+        "losses": 4,
         "unfinished": 0,
         "errors": 0
       },
@@ -76,8 +77,8 @@
       },
       "blue-ichigo-zangetsu__purple-renji-rukia": {
         "games": 8,
-        "wins": 3,
-        "losses": 5,
+        "wins": 4,
+        "losses": 4,
         "unfinished": 0,
         "errors": 0
       },
@@ -89,8 +90,8 @@
         "errors": 0
       }
     },
-    "elapsedMs": 216410,
-    "seedBase": 1026000,
+    "elapsedMs": 186935,
+    "seedBase": 1027000,
     "opponent": "hard v2",
     "isHeldOut": true,
     "accepted": false,
@@ -98,5 +99,5 @@
   },
   "candidatePath": "audit/ai-v3-candidate.json",
   "championPromoted": false,
-  "disclaimer": "Focused teacher-ranked deployment learning with weak outcome feedback; do not treat final game result as proof an individual move was good. No secret card identities in features."
+  "disclaimer": "Teacher-ranked legal character deployments with up to three distinct alternative cards per position; weak outcome feedback on the actually explored choice only. Synergy/energy signals derive solely from public and own known cards."
 }
