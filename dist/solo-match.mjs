@@ -96,7 +96,14 @@ function recoverSolo(s,p,uid,sourceName){
 const shadow=(c)=>d(c)?.type==='character'&&d(c)?.traits?.includes('影之軍團');
 const isIsland=c=>d(c)?.traits?.includes('第四次架南島Raid');
 const raidIds=new Set(['SLG-1-020','SLG-1-021','SLG-1-022','SLG-1-047','SLG-1-048','SLG-1-049','SLG-1-058','SLG-1-064']);
-const usableEnergy=(s,p,c)=>c.cardId==='SLG-1-022'?Math.max(0,d(c).energy-field(s.players[p]).filter(shadow).length):d(c).energy;
+const usableEnergy=(s,p,c)=>{
+ const printed=d(c).energy;
+ // Official SLG-1-017: its hand-play energy cost is reduced by 2 only if
+ // its controller has NO cards on either own field line (not just FRONT).
+ if(c.cardId==='SLG-1-017'&&!field(s.players[p]).length)return Math.max(0,printed-2);
+ if(c.cardId==='SLG-1-022')return Math.max(0,printed-field(s.players[p]).filter(shadow).length);
+ return printed;
+};
 function canRaid(s,p,c,base){return base&&d(base).type==='character'&&d(base).nameJa===d(c).nameJa&&raidIds.has(c.cardId)&&soloEnergy(s,p)>=usableEnergy(s,p,c);}
 function raidReplace(s,p,c,base,line,slot,chargeAp=true,raidSource='hand'){
  if(!canRaid(s,p,c,base)||s.players[p][line][slot]&&s.players[p][line][slot].uid!==base.uid||chargeAp&&s.players[p].ap<d(c).ap)throw Error('illegal Raid base or destination');
