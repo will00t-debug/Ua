@@ -45,9 +45,9 @@ export function sidelineGreen030(s,{player,uid}={}){
    s.pending&&s.pending.kind!=='block')throw new Error('Retirement timing blocked');
  const pl=s.players[player],pos=field(pl).find(x=>x.card.uid===uid&&x.card.cardId==='TTG-1-030');
  if(!pos)throw new Error('030 was not in play');
- // If a 034 field is also on the board, both retirement triggers are optional
- // and their order must be offered in a single queue; fail closed for now.
- if(field(pl).some(x=>x.card.cardId==='TTG-1-034'))throw new Error('030 + 034 retirement ordering not yet resolved');
+ // A simultaneous 034 site capture is resolved through a freely selectable
+ // queue; neither ability may be skipped merely because the other triggered.
+ const site034=pl.energy.some(c=>c?.cardId==='TTG-1-034'&&c.green034UsedTurn!==s.turn);
  const top=pos.card;
  if((top.stack||[]).some(x=>x.stack?.length||x.under?.length)||top.under?.length)
   throw new Error('Unsupported nested 030 retirement pile');
@@ -56,7 +56,9 @@ export function sidelineGreen030(s,{player,uid}={}){
  owner[loc.line][loc.slot]=null;
  owner.outside.push({...retiring,stack:[],under:[]},...(retiring.stack||[]));
  const bases=(retiring.stack||[]).filter(validBase).map(x=>x.uid);
- if(bases.length)result.pending={kind:'green030Sidelined',player,sourceUid:uid,baseUids:bases};
+ if(site034)result.pending={kind:'greenRetireOrder',player,retiredUid:uid,sourceUid:uid,
+  baseUids:bases,remaining:[...(bases.length?['030']:[]),'034']};
+ else if(bases.length)result.pending={kind:'green030Sidelined',player,sourceUid:uid,baseUids:bases};
  if(JSON.stringify(all(owner))!==JSON.stringify(before))throw new Error('030 retirement UID conservation');
  return withTtgDerivedEnergy(result,player);
 }
