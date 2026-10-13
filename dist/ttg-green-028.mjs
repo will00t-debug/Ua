@@ -5,7 +5,7 @@
 // of silently losing a player-triggered optional ability.
 import {TTG_BY_ID} from './ttg-builder.mjs';
 import {spendTtgApCards} from './ttg-actions.mjs';
-import {withTtgDerivedEnergy} from './ttg-energy-snapshot.mjs';
+import {withTtgDerivedEnergy,calculateTtgEnergyByColor} from './ttg-energy-snapshot.mjs';
 
 const plField=pl=>['front','energy'].flatMap(line=>(pl?.[line]||[]).map((card,slot)=>({card,line,slot}))).filter(x=>x.card);
 const nameOf=c=>c?.nameJa??TTG_BY_ID[c?.cardId]?.nameJa;
@@ -18,7 +18,7 @@ export function legalTtgGreen028Raids(state,player){
    state.pending||state.pendingTtgLife||state.pendingTtgTrigger)return [];
  const pl=state.players?.[player],printed=TTG_BY_ID['TTG-1-028'];
  if(!pl?.hand||!Array.isArray(pl.apCards)||!pl.front||!pl.energy||
-   pl.energyProduced?.green<printed.energy||pl.apCards.filter(a=>a.ready).length<printed.ap)return [];
+   calculateTtgEnergyByColor(state,player).green<printed.energy||pl.apCards.filter(a=>a.ready).length<printed.ap)return [];
  // Without the simultaneous ability resolver a front-line 004 may not be skipped.
  if(pl.front.some(x=>x?.cardId==='TTG-1-004'))return [];
  const actions=[];
