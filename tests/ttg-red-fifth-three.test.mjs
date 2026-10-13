@@ -73,7 +73,7 @@ test('056 Q2291: attack requires Nia and deck <=20; after-attack unresolved Raid
  assert.equal(actions.every(x=>x.requiresFullRaidResolver),true);
  s.raidNamesThisTurn=['ラガン'];
  assert.deepEqual(legalRed056AfterAttackRaids(s,0,'sim').map(x=>x.handUid),['gurrenLagann']);
- assert.equal(TTG_CORE_SMOKE_IDS.includes('TTG-1-056'),false);
+ assert.equal(TTG_CORE_SMOKE_IDS.includes('TTG-1-056'),true);
 });
 test('054/055 entered restricted smoke pool, Q2291 056 cannot be claimed fully automated',()=>{
  for(const n of ['054','055'])assert.ok(TTG_CORE_SMOKE_IDS.includes('TTG-1-'+n));
