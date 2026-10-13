@@ -35,6 +35,11 @@ export function legalTtgLifeChoices(state){
   for(const c of (state.players[1-q.player].front||[]).filter(c=>c&&candidate(c)))
    choices.push({...base,mode:'special',targetUid:c.uid});
  }else if(trigger==='get')choices.push({...base,mode:'get'});
+ else if(trigger==='draw'){
+  if(pl.deck.length)choices.push({...base,mode:'draw'});
+ }else if(trigger==='final'){
+  if(pl.life.length===0&&pl.deck.length)choices.push({...base,mode:'final'});
+ }
  else if(trigger==='color'){
   if(['TTG-1-045','TTG-1-062'].includes(card.cardId)){
    for(const enemy of state.players[1-q.player].front.filter(Boolean))
@@ -90,15 +95,9 @@ export function beginTtgLifeTrigger(state,{player,lifeUid}={}){
   trigger=TTG_BY_ID[revealed.cardId]?.trigger;
  owner.outside.push(revealed);
  if(!trigger)return finalizeTtgLifeOutcome(result,player);
- if(trigger==='draw'){
-  if(owner.deck.length)owner.hand.push(owner.deck.shift());
-  return finalizeTtgLifeOutcome(result,player);
- }
- if(trigger==='final'){
-  if(!owner.life.length&&owner.deck.length)owner.life.push(owner.deck.shift());
-  return finalizeTtgLifeOutcome(result,player);
- }
- if(!['active','special','get','color','raid'].includes(trigger))throw new Error('Unsupported printed trigger');
+ // Official Q99: ALL printed life triggers are optional. DRAW/FINAL must wait
+ // for defender input instead of resolving automatically at reveal time.
+ if(!['draw','final','active','special','get','color','raid'].includes(trigger))throw new Error('Unsupported printed trigger');
  result.pendingTtgLife={player,cardUid:revealed.uid,trigger};
  return result;
 }
@@ -153,6 +152,12 @@ export function resolveTtgLifeChoice(state,action){
   else{opp.outside.push(...flatten(opp.front[idx]));opp.front[idx]=null;}
  }else if(action.mode==='get'){
   owner.hand.push(owner.outside.splice(ownerIndex,1)[0]);
+ }else if(action.mode==='draw'){
+  if(!owner.deck.length)throw new Error('DRAW life trigger requires a deck card');
+  owner.hand.push(owner.deck.shift());
+ }else if(action.mode==='final'){
+  if(owner.life.length||!owner.deck.length)throw new Error('FINAL only restores the last life with a deck card');
+  owner.life.unshift(owner.deck.shift());
  }else if(action.mode==='active'){
   const loc=field(owner).find(x=>x.card.uid===action.targetUid);
   if(!loc)throw new Error('ACTIVE target left play');
