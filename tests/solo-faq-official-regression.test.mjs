@@ -132,3 +132,29 @@ test('Q2057/Q2059/Q2060: frozen 058/060/064 skip exactly the next ACTIVE, then a
   assertSoloTrainingMatch(s);
  }
 });
+
+test('Q2025: purple 022 real attack-end position swap cannot use energy-line Satoko 014 as source',()=>{
+ const counts={...SOLO_SHADOW_TRAINING_PRESET,'SLG-1-001':0,'SLG-1-014':4,'SLG-1-009':0,'SLG-1-022':4};
+ let s=game(counts);s.phase='main';s.players[0].ap=3;s.players[0].maxAp=3;
+ const satoko=put(s,'SLG-1-014',0,'energy',0);
+ const k1=put(s,'SLG-1-029',0,'energy',1);
+ const k2=put(s,'SLG-1-029',0,'energy',2);
+ const base=put(s,'SLG-1-015',0,'energy',3);
+ const fighters=Array.from({length:4},(_,i)=>put(s,'SLG-1-030',0,'front',i));
+ const raidCard=extract(s.players[0],'SLG-1-022');s.players[0].hand.push(raidCard);
+ const r=soloTrainingLegalActions(s).find(a=>a.type==='raid'&&a.uid===raidCard.uid&&a.target===base.uid&&a.line==='energy');
+ assert.ok(r,'022 reduces required energy using six actual Shadow Army characters');
+ s=doAction(s,r);assert.equal(s.pending.kind,'slg022Enter');
+ s=doAction(s,{type:'choose',uid:null});
+ s=doAction(s,{type:'choose',uid:null});
+ // Kaisel is REST, preventing its separate optional attack trigger from obscuring Q2025.
+ s.players[0].energy[1].ready=false;s.players[0].energy[2].ready=false;
+ s.players[1].life[0].cardId='SLG-1-014'; // no life Trigger, isolate swap selection
+ s.phase='attack';s=doAction(s,{type:'attack',uid:fighters[0].uid});
+ assert.equal(s.pending.kind,'slg022Swap');
+ assert.equal(s.pending.source,raidCard.uid);
+ assert.equal(soloTrainingLegalActions(s).some(a=>a.uid===satoko.uid),false,'014 must not be selectable as energy->front swap');
+ assert.throws(()=>doAction(s,{type:'choose',uid:satoko.uid}),/illegal SOLO action/);
+ assert.equal(s.players[0].energy[0].uid,satoko.uid);
+ assertSoloTrainingMatch(s);
+});
