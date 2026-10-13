@@ -832,7 +832,7 @@ function onEnter(s,c){
   draw(s,p);if(p.hand.length)enqueue(s,{kind:'slgDiscard',p:c.owner,source:c.uid});
  }
  if(c.cardId==='SLG-1-020'){draw(s,p);if(p.hand.length)enqueue(s,{kind:'slg020EntryDiscard',p:c.owner,source:c.uid});}
- if(['SLG-1-047','SLG-1-048'].includes(c.cardId))draw(s,p);
+ if(c.cardId==='SLG-1-047')draw(s,p);
  if(c.cardId==='SLG-1-048'){
   enqueue(s,{kind:'slg048Deploy',p:c.owner,source:c.uid});
   if(s.active===c.owner&&s.status==='playing')draw(s,p);
@@ -1083,15 +1083,7 @@ export function soloTrainingDispatch(original,action){
     s.phase='attackEnd';
     s.endSources=field(p).flatMap(c=>['SLG-1-047','SLG-1-048','SLG-1-061'].includes(c.cardId)?[{uid:c.uid,type:c.cardId.slice(-3)}]:[]);
     advanceAttackEnd(s);
-  }else if(s.phase==='UNREACHABLE'){
-    const leaving=s.active;
-    for(const who of s.players)for(const c of field(who)){
-     if(c.targetProtectionExpiresAfterPlayer===leaving&&s.players[leaving].ownTurns>=c.targetProtectionExpiresTurn){
-      delete c.extraTargetAp;delete c.targetProtectionExpiresAfterPlayer;delete c.targetProtectionExpiresTurn;
-     }
-    }
-    s.active=1-s.active;startTurn(s);
-   }
+
  }else if(action.type==='extraDraw'){p.ap--;s.extraDraw=true;draw(s,p);}
  else if(action.type==='move'){
   const index=p.energy.findIndex(c=>c?.uid===action.uid);
