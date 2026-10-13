@@ -38,6 +38,7 @@ test('061 Q2293/2294 chooses one from two effects, and with <=20 deck resolves r
  assert.ok(q.players[0].hand.some(c=>c.uid==='oldSimon'));
  assert.equal(original.length,2);
  const t2=s();t2.players[0].front[0]=c('nia','TTG-1-061',{enteredTurn:3});
+ t2.players[0].deck=Array.from({length:21},(_,i)=>c('e'+i,'TTG-1-042'));
  assert.equal(red061Entry(t2,{player:0,uid:'nia'}).pending.remaining,1);
 });
 test('062 reactivates only implemented low-energy Simon entry and REST on deck <=20 grants optional BP and READY',()=>{
