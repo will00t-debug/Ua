@@ -127,7 +127,40 @@ test('TTG-1-071 only first character attack can buff an OTHER ally by 2000',()=>
  assert.equal(st.players[0].front[1].currentBp,undefined);
  const skipped=resolveTtg071FirstAttack(st,{player:0,uid:'king'});
  assert.equal(skipped.players[0].front[1].currentBp,undefined);
+ assert.deepEqual(eligibleTtg071AttackBuffTargets(result,{player:0,uid:'king'}),[]);
+ assert.throws(()=>resolveTtg071FirstAttack(result,{player:0,uid:'king',targetUid:'ally'}));
  st.characterAttacksThisTurn=2;
  assert.deepEqual(eligibleTtg071AttackBuffTargets(st,{player:0,uid:'king'}),[]);
  assert.throws(()=>resolveTtg071FirstAttack(st,{player:0,uid:'king',targetUid:'ally'}));
+});
+
+test('TTG-1-049 resolves using printed card energy when physical card lacks cost',()=>{
+ const st=state();st.players[0].front[0]=card('duo','TTG-1-049','ギミー＆ダリー');
+ // Printed UA56BT/TTG-1-058 has 0 red energy requirement.
+ st.players[0].energy[0]=card('nia','TTG-1-058','ニア',500);
+ assert.deepEqual(eligibleTtg049ReturnTargets(st,{player:0,uid:'duo'}),['nia']);
+ const next=resolveTtg049Entry(st,{player:0,uid:'duo',targetUid:'nia'});
+ assert.deepEqual(next.players[0].hand.map(c=>c.uid),['nia']);
+});
+test('TTG-1-049 rejects incomplete candidate energy or a piled RAID return',()=>{
+ const st=state();st.players[0].front[0]=card('duo','TTG-1-049','ギミー＆ダリー');
+ st.players[0].energy[0]=card('unknown','TTG-1-002','ヴィラル');
+ assert.deepEqual(eligibleTtg049ReturnTargets(st,{player:0,uid:'duo'}),[]);
+ assert.throws(()=>resolveTtg049Entry(st,{player:0,uid:'duo'}),/Unverified printed energy/);
+ st.players[0].energy[0]=card('pile','TTG-1-058','ニア',500,{stack:[card('base','TTG-1-052','シモン')]});
+ assert.deepEqual(eligibleTtg049ReturnTargets(st,{player:0,uid:'duo'}),['pile']);
+ assert.throws(()=>resolveTtg049Entry(st,{player:0,uid:'duo',targetUid:'pile'}),/raid pile/i);
+});
+test('repeated Viral activation after another effect readies cards expires all granted energy',()=>{
+ const st=state();st.players[0].energy[0]=card('v','TTG-1-002','ヴィラル');
+ st.players[0].front[0]=card('a','TTG-1-005','キタン');
+ const first=resolveTtgViral002(st,{player:0,uid:'v',targetUid:'a'});
+ // Another independent effect can ready both physical cards in the same turn.
+ const active=structuredClone(first);
+ active.players[0].energy[0].ready=true;
+ active.players[0].front[0].ready=true;
+ const twice=resolveTtgViral002(active,{player:0,uid:'v',targetUid:'a'});
+ assert.equal(twice.players[0].energy[0].energyBonus,2);
+ assert.equal(twice.players[0].energy[0].temporaryEnergyBonusCount,2);
+ assert.equal(resolveTtgTemporaryEnergyEndTurn(twice).players[0].energy[0].energyBonus,0);
 });
