@@ -1,7 +1,7 @@
 name: AI v3 Third-Round 700-Game Training
 
 on:
-  # Rerun with AI v3 decision-intervention diagnostics and safe board evaluation.
+  # Rerun after comparable pending-choice board scoring fix bff2f7ed.
   # Only workflow edits trigger this 700-game experiment.
   push:
     branches: ['feature/ai-v3-learning']
