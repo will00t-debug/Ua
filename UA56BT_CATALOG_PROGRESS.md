@@ -65,3 +65,21 @@
 - `TTG-1-048` 的 DOUBLE BLOCK：本回合首次阻擋 REST 後會立即轉 ACTIVE，可再次阻擋；此效果的 BP +500 與 DOUBLE BLOCK 持續至下次己方回合開始，並於到期清除。
 - 多隨機種子的限縮 50 卡雙 AI 對局 smoke 回歸會於整段對局每次狀態轉移檢查 UID 及生命／AP／能源守恆。
 - 官方參考：https://www.unionarena-tcg.com/jp/faq/list.php?type=0 （Q33、Q34、Q79、Q101），及 https://www.unionarena-tcg.com/jp/faq/list.php?category=ゲーム進行&sub_category=アタックフェイズ 。
+
+
+## 綠色卡自動判定專項進度（2026-10-13）
+
+**官方綠色一般卡共 41 張（TTG-1-001～041）。這是階段性開發，不是 41/41 完整自動判定。**
+
+- **27/41** 種已進入 `dist/ttg-core-match.mjs` 的嚴格白名單，僅能在**獨立限制卡池**中進行多回合 50 張、全綠雙 AI Smoke；沒有接上正式網站的 TTG 交戰 UI，也沒有驗證所有跨卡連鎖裁定。
+- 另外 **14/41** 尚未納入上述可對局白名單：`004、008、012、021、025、027、028、029、030、031、032、033、034、039`。其中 027／031／032 已有物理高階 Raid 疊卡狀態處理但登場效果尚未完成；033／034 已有部分綠色產能判定；039 已有正常事件 BP／IMPACT 獨立 reducer，但 **IMPACT 加傷害的同時翻生命順序尚未接完，所以刻意不開放完整對局**。其餘未列為自動完成。
+- **完整逐卡核查 CSV**：`data/ttg-green-audit.csv`（41 列，每張對照卡池白名單、獨立效果、網站狀態與待補功能），`tests/ttg-green-audit.test.mjs` 保證所有 41 張維持 `auto:false` 直到真正可玩。
+- 本次新模組：`ttg-green-entry.mjs`（001／007／009／010／013／014／016／017／023／026 的選擇式登場、查頂、搜尋／排序、抽棄、回手、支付額外 AP 從場外 REST 登場）；`ttg-green-main.mjs`（003／011／015／016／017／018／020／022 能源門檻、REST、AP 支付、STEP、臨時產能與到期清除）；`ttg-green-passives.mjs`（006／011 BP 能源條件、007＋013 組合 BP、020 需要能源折扣、024 顏面額外產能等）；`ttg-green-life.mjs`（ACTIVE／GET／SPECIAL／green COLOR 的真正合法目標選擇，翻生命卡與登場後必須繼續解決能力）；`ttg-green-events.mjs`（035 除外、039 BP＋IMPACT、040 抽兩張與除外區加倍、041 多不同卡名的 BP 群體效果）。
+- 這些功能已接入實驗 `ttg-rule-adapter.mjs` 及白名單 AI 核心；使用同一套合法操作規則，不合法目標不支付成本。`tests/ttg-green-entry.test.mjs`、`ttg-green-main-passive.test.mjs`、`ttg-green-life.test.mjs`、`ttg-green-events.test.mjs`、`ttg-green-ai-match.test.mjs` 加入效力、退場、守恆與多種隨機種子全綠 50 張 AI 對局驗證。
+- 經官方逐卡來源核對，`TTG-1-001` 及 `TTG-1-014` **無生命 Trigger**，絕不誤設為 SPECIAL 或 COLOR；獨立 Trigger 回歸改用真正有該 Trigger 的 035／017。官方 Q101（ACTIVE 目標）、Q100（綠 COLOR 上場限制）、Q2283（兩次倍增等於 4 倍）、Q2284（041 選 3 張各 BP+3000）、Q2393–Q2395（高階 Raid 類型）各有特定函式／測試或者仍在未完成矩陣中清楚標示。
+
+### 尚需完成才能將「綠色 41/41」宣告成功
+1. 上述 14 張的完整角色／場域／事件／Raid 觸發與多層底板（不是只做移牌），尤其 027／031／032 的登場效果結算順序。
+2. 039 IMPACT 同時傷害／生命 Trigger 順序、其他攻擊特殊能力與 COLOR／GET／RAID Trigger 跨卡連鎖。
+3. 實際玩家畫面底板及效果目標／牌庫底順序／額外 AP 選擇 UI，能在正式天元突破場次使用，並執行全 41 張逐卡實戰及完整 AI 牌組測試。
+4. 維持所有天元突破一般卡 `auto:false`、作品 `playable:false`，直到整套對戰可正式運作；**勿合併 main，也勿部署正式站**。
