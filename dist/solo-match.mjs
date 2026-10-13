@@ -185,6 +185,15 @@ function continueAttackEffects(s){
  const p=s.active,a=byUid(s.players[p].front,s.combat?.attacker);
  if(!a)throw Error('missing attacking character');
  s.combat.windows??={};
+ if(!s.combat.windows.cardAttack){
+  s.combat.windows.cardAttack=true;
+  if(a.cardId==='SLG-1-003'&&s.players[p].deck.length){
+   const top=s.players[p].deck.slice(0,1);s.pending={kind:'peekTop',p,source:a.uid,topUids:top.map(x=>x.uid),eligible:top.map(x=>x.uid),afterAttack:true};return;
+  }
+  if(a.cardId==='SLG-1-059'){
+   searchStart(s,p,a.uid,4,2,x=>d(x).traits?.includes('第四次架南島Raid'),'attack');if(s.pending)return;
+  }
+ }
  const grantCount=(a.grants||[]).filter(g=>g.kind==='attackDraw'&&g.turn===s.turn).length;
  s.combat.windows.attackDrawIndex??=0;
  if(s.combat.windows.attackDrawIndex<grantCount){
@@ -445,9 +454,9 @@ function choose(s,action){
   if(action.uid!=null){
    const i=p.outside.findIndex(c=>c.uid===action.uid);
    if(i<0||!q.options.includes(action.uid))throw Error('illegal Demon Castle recovery');
-   p.hand.push(p.outside.splice(i,1)[0]);
-  }
-  draw(s,p);s.pending=null;
+   s.pending=null;recoverSolo(s,q.p,action.uid,'悪魔の城');
+  }else s.pending=null;
+  draw(s,p);
  }else if(q.kind==='shadowSummonMode'){
   if(!['oneActive','twoRest'].includes(action.mode))throw Error('illegal shadow resurrection mode');
   s.pending={kind:'shadowSummonCard',p:q.p,mode:action.mode,left:action.mode==='oneActive'?1:2};
@@ -479,9 +488,9 @@ function choose(s,action){
   if(action.uid!=null){
    const i=p.outside.findIndex(c=>c.uid===action.uid);
    if(i<0||!q.options.includes(action.uid))throw Error('illegal event recovery');
-   p.hand.push(p.outside.splice(i,1)[0]);
-  }
-  draw(s,p);s.pending=null;
+   s.pending=null;recoverSolo(s,q.p,action.uid,'命の神水');
+  }else s.pending=null;
+  draw(s,p);
  }else if(q.kind==='eventRestoreAp'){
   const p=s.players[q.p],max=Math.min(2,p.maxAp-p.ap);
   if(!Number.isInteger(action.count)||action.count<0||action.count>max)throw Error('invalid event AP restore');
@@ -511,9 +520,8 @@ function choose(s,action){
   if(action.uid!=null){
    const p=s.players[q.p],i=p.outside.findIndex(c=>c.uid===action.uid);
    if(i<0||!q.options.includes(action.uid))throw Error('illegal outside recovery');
-   p.hand.push(p.outside.splice(i,1)[0]);
-  }
-  s.pending=null;
+   s.pending=null;recoverSolo(s,q.p,action.uid,'観月 絵里');
+  }else s.pending=null;
  }else if(q.kind==='entryBounce'){
   const p=s.players[q.p],c=field(p).find(c=>c.uid===action.uid);
   if(!c||!q.options.includes(action.uid))throw Error('illegal return target');
@@ -537,9 +545,8 @@ function choose(s,action){
   if(action.uid!=null){
    const p=s.players[q.p],i=p.outside.findIndex(c=>c.uid===action.uid);
    if(i<0||!q.options.includes(action.uid))throw Error('illegal daily recovery');
-   p.hand.push(p.outside.splice(i,1)[0]);
-  }
-  s.pending=null;
+   s.pending=null;recoverSolo(s,q.p,action.uid,'デイリークエスト');
+  }else s.pending=null;
  }else if(q.kind==='raidTrigger'){
   if(action.uid!=null){
    const p=s.players[q.p],i=p.hand.findIndex(c=>c.uid===q.uid),c=p.hand[i];
@@ -582,7 +589,7 @@ function choose(s,action){
   const cards=p.deck.splice(0,q.topUids.length),lookup=Object.fromEntries(cards.map(c=>[c.uid,c]));
   if(selected!=null)p.outside.push(lookup[selected]);
   p.deck.unshift(...action.order.map(uid=>lookup[uid]));
-  s.pending=null;
+  s.pending=null;if(q.afterAttack)continueAttackEffects(s);
  }else if(q.kind==='activeTrigger'){
   const p=s.players[q.p],c=field(p).find(x=>x.uid===action.uid);
   if(action.uid!=null&&!c)throw Error('illegal trigger target');
@@ -613,6 +620,16 @@ function onEnter(s,c){
   s.pending={kind:'peekTop',p:c.owner,source:c.uid,topUids:top.map(x=>x.uid),
    eligible:top.filter(x=>d(x).traits?.includes('第四次架南島Raid')).map(x=>x.uid)};
  }
+ if(c.cardId==='SLG-1-008')searchStart(s,c.owner,c.uid,4,1,x=>isSung(x)||d(x).nameJa==='悪魔の城','discard');
+ if(c.cardId==='SLG-1-018')searchStart(s,c.owner,c.uid,3,1,x=>isSung(x)||shadow(x),'discard');
+ if(c.cardId==='SLG-1-046')searchStart(s,c.owner,c.uid,4,1,x=>isSung(x)||d(x).nameJa==='デイリークエスト','discard');
+ if(c.cardId==='SLG-1-063')searchStart(s,c.owner,c.uid,3,1,x=>d(x).traits?.includes('第四次架南島Raid'),'discard');
+ if(c.cardId==='SLG-1-011'&&p.deck.length)enqueue(s,{kind:'slgMill',p:c.owner,source:c.uid});
+ if(c.cardId==='SLG-1-019'&&p.hand.some(shadow))enqueue(s,{kind:'slg019Entry',p:c.owner,source:c.uid});
+ if(c.cardId==='SLG-1-044'){
+  draw(s,p);if(p.hand.length)enqueue(s,{kind:'slgDiscard',p:c.owner,source:c.uid});
+ }
+ if(c.cardId==='SLG-1-059'&&p.hand.length)enqueue(s,{kind:'slg059Entry',p:c.owner,source:c.uid});
  if(c.cardId==='SLG-1-030'&&field(p).some(x=>x.uid!==c.uid&&d(x).traits?.includes('影之軍團'))){
   const top=p.deck.slice(0,2);
   const eligible=top.filter(x=>d(x).traits?.includes('影之軍團')||d(x).nameJa==='水篠 旬');
