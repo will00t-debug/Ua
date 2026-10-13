@@ -66,3 +66,18 @@ test('generic planning uses game state, not card number conditions', () => {
       || [...s.players[controller(s)].front, ...s.players[controller(s)].energy].find(c => c?.uid === a.uid)));
   }
 });
+
+test('hard planning in Main is invariant to hidden deck ordering', () => {
+  let s = opening(24);
+  s = dispatch(s, {type: 'next'});
+  s = dispatch(s, {type: 'next'});
+  assert.equal(s.phase, 'main');
+  const reordered = structuredClone(s);
+  for (const pl of reordered.players) {
+    pl.deck.reverse();
+    pl.life.reverse();
+  }
+  assert.equal(evaluatePosition(s, controller(s)), evaluatePosition(reordered, controller(s)));
+  assert.deepEqual(chooseAiAction(s, {difficulty: 'hard'}),
+    chooseAiAction(reordered, {difficulty: 'hard'}));
+});
