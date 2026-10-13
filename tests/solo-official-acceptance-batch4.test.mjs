@@ -28,7 +28,8 @@ test('011 COLOR uses outside only, front only, no AP/energy cost',()=>{
  const ap=p.ap;s=act(s,a=>a.type==='attack'&&a.uid===attacker.uid);
  assert.equal(s.pending?.kind,'colorTrigger');
  const options=soloTrainingLegalActions(s);assert.ok(options.length);
- assert.ok(options.every(a=>a.uid===target.uid&&a.line==='front'));
+ assert.ok(options.some(a=>a.uid===null),'official Q99 decline is allowed');
+ assert.ok(options.filter(a=>a.uid!==null).every(a=>a.uid===target.uid&&a.line==='front'));
  assert.throws(()=>soloTrainingDispatch(s,{type:'choose',uid:wrongZone.uid,line:'front',slot:0}),/illegal/);
  s=act(s,a=>a.uid===target.uid&&a.slot===0);
  assert.equal(s.players[1].front[0].ready,true);assert.equal(s.players[1].ap,ap);

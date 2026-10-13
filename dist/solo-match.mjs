@@ -383,15 +383,21 @@ function choose(s,action){
   }
   s.pending=null;continueAttackEffects(s);
  }else if(q.kind==='colorTrigger'){
+  if(action.uid===null){s.pending=null;}
+  else{
   const p=s.players[q.p],source=p[q.sourceZone||'hand'],i=source.findIndex(c=>c.uid===action.uid);
   if(i<0||!q.choices.includes(action.uid)||!(q.lines||['front','energy']).includes(action.line)||p[action.line][action.slot])throw Error('illegal color trigger deployment');
   const c=source.splice(i,1)[0];position(c,q.p,action.line,action.slot);c.ready=true;p[action.line][action.slot]=c;
   s.pending=null;onEnter(s,c);
+  }
  }else if(q.kind==='specialTrigger'){
+  if(action.uid===null){s.pending=null;}
+  else{
   const opponent=1-q.p,target=s.players[opponent].front.find(x=>x?.uid===action.uid);
   if(!target||!q.choices.includes(target.uid)||!canSelectEnemy(s,q.p,target))throw Error('illegal special trigger target');
   s.players[q.p].ap-=target.extraTargetAp||0;
   retire(s,opponent,target);s.pending=null;
+  }
  }else if(q.kind==='ryuuBuff'){
   const p=s.players[q.p],c=action.uid==null?null:field(p).find(x=>x.uid===action.uid);
   if(action.uid!=null&&!c)throw Error('illegal Ryuu buff target');
@@ -1010,10 +1016,10 @@ export function soloTrainingLegalActions(s){
    return result;
   }
   if(q.kind==='colorTrigger'){
-   const p=s.players[q.p];return q.choices.flatMap(uid=>(q.lines||['front','energy']).flatMap(line=>p[line].flatMap((c,slot)=>c?[]:[{type:'choose',uid,line,slot}])));
+   const p=s.players[q.p];return [{type:'choose',uid:null},...q.choices.flatMap(uid=>(q.lines||['front','energy']).flatMap(line=>p[line].flatMap((c,slot)=>c?[]:[{type:'choose',uid,line,slot}])) )];
   }
-  if(q.kind==='specialTrigger')return q.choices.map(uid=>({type:'choose',uid}));
-  if(q.kind==='activeTrigger')return field(s.players[q.p]).map(c=>({type:'choose',uid:c.uid}));
+  if(q.kind==='specialTrigger')return [{type:'choose',uid:null},...q.choices.map(uid=>({type:'choose',uid}))];
+  if(q.kind==='activeTrigger')return [{type:'choose',uid:null},...field(s.players[q.p]).map(c=>({type:'choose',uid:c.uid}))];
   if(q.kind==='entryImpact'||q.kind==='entryProtect')return [{type:'choose',uid:null},...field(s.players[q.p]).filter(c=>c.uid!==q.source&&d(c).traits?.includes('DFN')).map(c=>({type:'choose',uid:c.uid}))];
   if(q.kind==='block')return [...(q.mandatory?[]:[{type:'choose',uid:null}]),...q.choices.map(uid=>({type:'choose',uid}))];
   return [];
