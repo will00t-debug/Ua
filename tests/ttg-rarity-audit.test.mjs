@@ -14,7 +14,7 @@ test('UA56BT has exactly 81 unique effect card numbers and official rarity distr
  assert.ok(all.every(c=>!c.id.includes('-AP')&&c.auto===false));
 });
 test('partial catalogue keeps unavailable numeric data unknown even when effect text was independently checked',()=>{
- const verified=new Set(['TTG-1-006','TTG-1-049','TTG-1-059','TTG-1-063','TTG-1-065']);
+ const verified=new Set(['TTG-1-002','TTG-1-006','TTG-1-049','TTG-1-059','TTG-1-063','TTG-1-065','TTG-1-071']);
  assert.equal(TTG_PENDING_CARDS.length,8);
  for(const c of TTG_PENDING_CARDS){
   for(const field of ['ap','energy','bp','gen'])assert.equal(c[field],null,c.id);
