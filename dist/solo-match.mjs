@@ -46,7 +46,7 @@ function returnSoloToHand(s,p,c){
 const addLog=(s,text)=>{s.log.push({turn:s.turn,text});if(s.log.length>120)s.log.shift();};
 const fresh=(uid,cardId)=>({uid,cardId,ready:false,stack:[],under:[],buffs:[]});
 const draw=(s,p,n=1)=>{for(let i=0;i<n;i++){if(!p.deck.length){s.status='finished';s.winner=1-s.players.indexOf(p);return;}p.hand.push(p.deck.shift());}};
-const produced=(s,c)=>d(c).gen+((c.ready&&['SLG-1-006','SLG-1-041'].includes(c.cardId))||c.boostTurn===s.turn?1:0)+(c.cardId==='SLG-1-003'&&s.players[c.owner].outside.length>=10?1:0);
+const produced=(s,c)=>{const data=d(c);if(!data)throw Error('Energy card ID not registered: '+String(c.cardId)+' uid='+String(c.uid));return data.gen+((c.ready&&['SLG-1-006','SLG-1-041'].includes(c.cardId))||c.boostTurn===s.turn?1:0)+(c.cardId==='SLG-1-003'&&s.players[c.owner]?.outside.length>=10?1:0);};
 export function soloEnergy(s,p=s.active){return s.players[p].energy.reduce((n,c)=>n+(c?produced(s,c):0),0);}
 export function soloMatchBp(s,c){
  if(!c)return 0;
