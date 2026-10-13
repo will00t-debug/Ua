@@ -92,11 +92,13 @@ test('official BP tie is won by attacker (Q33), no unblocked life damage',()=>{
  assert.equal(after.players[1].outside.at(-1).uid,defender.uid);
  assert.ok(assertTtgCoreState(after));
 });
-test('unblocked attack can resolve ACTIVE life trigger into a physical AP state',()=>{
+test('unblocked attack ACTIVE life trigger readies and buffs own character, not AP',()=>{
  let st=match(11);
  const attacker=findById(st.players[0],'TTG-1-042');
  const lifeActive=findById(st.players[1],'TTG-1-042');
  const replaced=st.players[1].life[0];st.players[1].deck.push(replaced);st.players[1].life[0]=lifeActive;
+ const defendingCharacter=findById(st.players[1],'TTG-1-005');
+ st.players[1].front[0]={...defendingCharacter,ready:false};
  st.players[0].front[0]={...attacker,ready:true};
  st.players[0].turnCount=2;st.phase='attack';st.players[1].apCards.forEach(x=>x.ready=false);
  st=withTtgDerivedEnergy(st,0);
@@ -104,7 +106,9 @@ test('unblocked attack can resolve ACTIVE life trigger into a physical AP state'
  const beforeLife=incoming.players[1].life.length;
  const after=dispatchTtgCoreAction(incoming,{type:'block',blockUid:null});
  assert.equal(after.players[1].life.length,beforeLife-1);
- assert.equal(after.players[1].apCards.filter(x=>x.ready).length,1);
+ assert.equal(after.players[1].apCards.filter(x=>x.ready).length,0,'ACTIVE does not recover AP');
+ assert.equal(after.players[1].front[0].ready,true,'ACTIVE readies chosen own character');
+ assert.equal(after.players[1].front[0].currentBp,TTG_BY_ID['TTG-1-005'].bp+3000);
  assert.equal(after.players[1].outside.at(-1).uid,lifeActive.uid);
  assert.ok(assertTtgCoreState(after));
 });
@@ -134,4 +138,40 @@ test('deterministic 50-card subset AI games make progress and preserve cards eve
   assert.ok(assertTtgCoreState(result.state));
   assert.equal(s.players[0].life.length,7,'original match state must remain immutable');
  }
+});
+
+test('higher-BP blocker wins but attacker stays on field REST (official Q34)',()=>{
+ let st=match(15);
+ const attackingCard=findById(st.players[0],'TTG-1-064');
+ const blockingCard=findById(st.players[1],'TTG-1-006');
+ st.players[0].front[0]={...attackingCard,ready:true};
+ st.players[1].front[0]={...blockingCard,ready:true};
+ st.players[0].turnCount=2;st.phase='attack';
+ st=withTtgDerivedEnergy(st,0);
+ let after=dispatchTtgCoreAction(st,{type:'attack',uid:attackingCard.uid});
+ const life=after.players[1].life.length;
+ after=dispatchTtgCoreAction(after,{type:'block',blockUid:blockingCard.uid});
+ assert.equal(after.players[0].front[0].uid,attackingCard.uid,'attacker is not retired');
+ assert.equal(after.players[0].front[0].ready,false);
+ assert.equal(after.players[1].front[0].uid,blockingCard.uid);
+ assert.equal(after.players[1].life.length,life);
+ assert.ok(assertTtgCoreState(after));
+});
+test('last life card loss wins only after its trigger resolves',()=>{
+ let st=match(14);
+ const attacker=findById(st.players[0],'TTG-1-042');
+ st.players[0].front[0]={...attacker,ready:true};
+ st.players[0].turnCount=2;st.phase='attack';
+ st.players[1].outside.push(...st.players[1].life.splice(1));
+ // Force a final trigger at the last life point: FINAL should restore one.
+ const final=findById(st.players[1],'TTG-1-036');
+ const previous=st.players[1].life.shift();st.players[1].deck.push(previous);
+ st.players[1].life.unshift(final);
+ st=withTtgDerivedEnergy(st,0);
+ let after=dispatchTtgCoreAction(st,{type:'attack',uid:attacker.uid});
+ after=dispatchTtgCoreAction(after,{type:'block',blockUid:null});
+ assert.equal(after.status,'playing','FINAL restores a life card, so game cannot end');
+ assert.equal(after.players[1].life.length,1);
+ assert.ok(assertTtgCoreState(after));
+ // The second attacker will remove the final life with no FINAL rescue.
 });
