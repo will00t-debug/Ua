@@ -12,6 +12,7 @@ import {chooseNeuralAction} from '../dist/ai-v3-policy.mjs';
 import {encodeAction,FEATURE_VERSION} from '../dist/ai-v3-features.mjs';
 import {initModel,trainPair,validateModel} from '../dist/ai-v3-network.mjs';
 import {CHAMPION_MODEL} from '../dist/ai-v3-weights.mjs';
+import {buildTrainingPairs} from './ai-v3-rewards.mjs';
 
 const args=process.argv.slice(2);
 function arg(key,def){const i=args.indexOf('--'+key);return i<0?def:args[i+1]??def;}
@@ -34,7 +35,9 @@ function prepared(g,seedBase) {
  // Four rotations: first and learning seat are independent.
  const block=Math.floor(g/pairs.length);
  const first=block%2,learningSeat=Math.floor(block/2)%2;
- const shuffledSeed=seedBase+Math.floor(block/4);
+ // Each matchup uses its own held-out seed, with four mirrored seat/first
+ // rotations sharing that seed. Avoid measuring all nine pairs with one shuffle.
+ const shuffledSeed=seedBase+Math.floor(block/4)*pairs.length+(g%pairs.length);
  return {left:left.id,right:right.id,first,learningSeat,seed:shuffledSeed,
   state:newGame({decks:[left.counts,right.counts],mode:'solo',first,seed:shuffledSeed})};
 }
@@ -78,25 +81,7 @@ function playGame(g,seedBase,{model=null,collect=false,explore=0}={}){
   }catch(e){failed=String(e?.stack||e);break;}
  }
  const completed=!failed&&s.status==='finished';
- const samples=[];
- if(collect&&completed){
-  for(const r of records){
-   // Always teach the action selected by tested hard AI v2. The old trainer
-   // incorrectly reversed this preference on losing games, including when
-   // the agent simply followed the teacher itself.
-   samples.push({yes:r.teacher,no:r.counter,weight:1});
-   // Outcome feedback is weak and ONLY applies to an actually explored
-   // alternative. Winning a game does not prove every move was good.
-   // Negative examples reinforce the teacher; a winning exploratory
-   // choice only gently challenges it. Never punish a teacher move
-   // merely because that game's final result was a loss.
-   if(r.explored){
-    if(r.actor===s.winner)
-     samples.push({yes:r.chosen,no:r.teacher,weight:0.12});
-    else samples.push({yes:r.teacher,no:r.chosen,weight:0.24});
-   }
-  }
- }
+ const samples=collect&&completed?buildTrainingPairs(records,s.winner):[];
  return {completed,winner:completed?s.winner:null,error:failed,moves,
   samples,matchup:info.left+'__'+info.right,first:info.first,
   learningSeat:info.learningSeat,seed:info.seed};
