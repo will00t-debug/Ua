@@ -4,6 +4,7 @@
 // character actions; it is NOT a complete match dispatcher.
 import {legalTtgHandEvents,dispatchTtgHandEvent} from './ttg-event-resolver.mjs';
 import {withTtgDerivedEnergy} from './ttg-energy-snapshot.mjs';
+import {legalTtgRaidEntries,dispatchTtgRaidEntry} from './ttg-raid-entry.mjs';
 import {legalTtgEventTriggerChoices,resolveTtgEventLifeTrigger,TTG_IMPLEMENTED_EVENT_TRIGGERS} from './ttg-triggers.mjs';
 import {resolveTtgNia059,resolveTtgButa063,resolveTtgYoko065Step,resolveTtgMainEndRetire,resolveTtgPendingEndTurn,eligibleTtgViral002Targets,resolveTtgViral002,resolveTtgTemporaryEnergyEndTurn} from './ttg-pending-rules.mjs';
 
@@ -21,7 +22,8 @@ export function legalTtgRuleActions(state,player){
  }
  if(state.active!==player||state.pending)return [];
  if(state.phase==='main'){
-  const list=legalTtgHandEvents(withTtgDerivedEnergy(state,player),player).map(a=>({...a,player}));
+  const current=withTtgDerivedEnergy(state,player);
+  const list=[...legalTtgHandEvents(current,player).map(a=>({...a,player})),...legalTtgRaidEntries(current,player)];
   const pl=state.players[player];
   for(const c of owned(state,player)){
    if(!c.ready)continue;
@@ -54,6 +56,9 @@ const actionMatches=(legal,action)=>legal.some(a=>a.type===action.type&&
  (a.targetUid===undefined||a.targetUid===action.targetUid)&&
  (a.toSlot===undefined||a.toSlot===action.toSlot)&&
  (a.handUid===undefined||a.handUid===action.handUid)&&
+ (a.baseUid===undefined||a.baseUid===action.baseUid)&&
+ (a.line===undefined||a.line===action.line)&&
+ (a.slot===undefined||a.slot===action.slot)&&
  (a.targetUids===undefined||a.targetUids.includes(action.targetUid)||
     (a.maxReadyAp!==undefined&&action.targetUid==null))&&
  (a.decline===undefined||a.decline===action.decline)
@@ -63,6 +68,7 @@ export function dispatchTtgRuleAction(state,action){
   throw new Error('Illegal or unavailable TTG rule action');
  if(action.type==='resolveTtgTrigger')return resolveTtgEventLifeTrigger(state,action);
  if(action.type==='playTtgEvent')return withTtgDerivedEnergy(dispatchTtgHandEvent(withTtgDerivedEnergy(state,action.player),action),action.player);
+ if(action.type==='raidTtg')return withTtgDerivedEnergy(dispatchTtgRaidEntry(withTtgDerivedEnergy(state,action.player),action),action.player);
  if(action.type==='activateNia059')return withTtgDerivedEnergy(resolveTtgNia059(state,action),action.player);
  if(action.type==='activateViral002')return withTtgDerivedEnergy(resolveTtgViral002(state,action),action.player);
  if(action.type==='activateButa063')return withTtgDerivedEnergy(resolveTtgButa063(state,action),action.player);
@@ -88,6 +94,11 @@ export function chooseTtgRuleAiAction(state,player){
        state.players[1-player].front.find(c=>c?.uid===b.targetUid)?.bp||0)-
       (state.players[1-player].front.find(c=>c?.uid===a.targetUid)?.currentBp||
        state.players[1-player].front.find(c=>c?.uid===a.targetUid)?.bp||0))[0];
+ }
+ const raid=options.find(x=>x.type==='raidTtg'&&x.line==='front')||options.find(x=>x.type==='raidTtg');
+ if(raid){
+  const payApUids=state.players[player].apCards.filter(x=>x.ready).slice(0,raid.requiredAp).map(x=>x.uid);
+  return {type:raid.type,player,handUid:raid.handUid,baseUid:raid.baseUid,line:raid.line,slot:raid.slot,payApUids};
  }
  const event=options.find(x=>x.type==='playTtgEvent'&&x.targetUids?.length)||
     options.find(x=>x.type==='playTtgEvent');
