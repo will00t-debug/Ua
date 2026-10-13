@@ -8,6 +8,7 @@ import {greenTtgNeedsEnergy} from './ttg-green-passives.mjs';
 import {canDeployTtgCard} from './ttg-actions.mjs';
 import {TTG_GREEN_ENTRY_IDS} from './ttg-green-entry.mjs';
 import {calculateTtgEnergyByColor,withTtgDerivedEnergy} from './ttg-energy-snapshot.mjs';
+import {legalGreenHighLifeRaids,resolveGreenHighLifeRaid} from './ttg-green-high-raid.mjs';
 const field=pl=>['front','energy'].flatMap(line=>(pl?.[line]||[]).map((card,slot)=>({card,line,slot}))).filter(x=>x.card);
 const flatten=c=>[{uid:c.uid,cardId:c.cardId},...(c.stack||[]).flatMap(flatten),...(c.under||[]).flatMap(flatten)];
 const idName=c=>TTG_BY_ID[c.cardId]?.nameJa||c.nameJa;
@@ -44,8 +45,13 @@ export function legalTtgLifeChoices(state){
   // Official RAID Trigger: add revealed card to hand OR, with enough GREEN
   // energy and a legal Raid base, Raid it without consuming AP.
   // Other Raid cards intentionally remain unimplemented.
-  if(!['TTG-1-028','TTG-1-029'].includes(card.cardId))return [];
+  if(!['TTG-1-027','TTG-1-028','TTG-1-029','TTG-1-031'].includes(card.cardId))return [];
   choices.push({...base,mode:'raidHand'});
+  if(['TTG-1-027','TTG-1-031'].includes(card.cardId)){
+   for(const choice of legalGreenHighLifeRaids(state,{player:q.player,cardUid:q.cardUid}))
+    choices.push({...base,mode:'raid',...choice});
+   return choices;
+  }
   const printed=TTG_BY_ID[card.cardId],energy=calculateTtgEnergyByColor(state,q.player);
   if(energy.green>=printed.energy&&!pl.front.some(c=>c?.cardId==='TTG-1-004')){
    for(const target of field(pl)){
@@ -97,12 +103,17 @@ export function resolveTtgLifeChoice(state,action){
  if(action?.player!==q.player||action?.cardUid!==q.cardUid)throw new Error('Only defender can resolve their life trigger');
  const choices=legalTtgLifeChoices(state);
  const valid=choices.find(x=>x.mode===action.mode&&x.targetUid===action.targetUid&&
-  x.handUid===action.handUid&&x.baseUid===action.baseUid&&x.line===action.line&&x.slot===action.slot);
+  x.handUid===action.handUid&&x.baseUid===action.baseUid&&x.sourceUid===action.sourceUid&&
+  x.raidKind===action.raidKind&&x.line===action.line&&x.slot===action.slot);
  if(!valid)throw new Error('Illegal life trigger action or target');
- const result=structuredClone(state),owner=result.players[q.player];
+ let result=structuredClone(state);let owner=result.players[q.player];
  const ownerIndex=owner.outside.findIndex(x=>x.uid===q.cardUid);
  if(action.mode==='raidHand'){
   owner.hand.push(owner.outside.splice(ownerIndex,1)[0]);
+ }else if(action.mode==='raid'&&['TTG-1-027','TTG-1-031'].includes(card.cardId)){
+  result=resolveGreenHighLifeRaid(result,{player:q.player,cardUid:q.cardUid,sourceUid:action.sourceUid,
+   raidKind:action.raidKind,line:action.line,slot:action.slot});
+  owner=result.players[q.player];
  }else if(action.mode==='raid'){
   const source=field(owner).find(x=>x.card.uid===action.baseUid);
   if(!source||owner[action.line][action.slot]&&
