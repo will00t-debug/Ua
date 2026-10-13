@@ -63,3 +63,20 @@ test('reordering hand candidates does not starve a good play of search budget',(
  const reordered=structuredClone(s);reordered.players[0].hand.reverse();
  assert.deepEqual(chooseAiAction(s,{difficulty:'hard'}),chooseAiAction(reordered,{difficulty:'hard'}));
 });
+
+test('sniper can target a valuable REST unit instead of making a low-impact direct attack',()=>{
+  const s=board(),sniper=card('101',{sniperTurn:s.turn,buffs:[{turn:s.turn,bp:3000}]}),
+    target=card('104',{ready:false,buffs:[{turn:s.turn,bp:1000}]});
+  s.phase='attack';s.players[0].front[0]=sniper;s.players[1].front[0]=target;setLife(s,1,7);
+  const picked=chooseAiAction(s,{difficulty:'hard'});
+  assert.deepEqual(picked,{type:'snipe',uid:sniper.uid,target:target.uid});
+  assert.ok(legalActions(s).some(a=>JSON.stringify(a)===JSON.stringify(picked)));
+});
+test('sniper does not give up an unblocked lethal direct attack',()=>{
+  const s=board(),sniper=card('101',{sniperTurn:s.turn,buffs:[{turn:s.turn,bp:3000}]}),
+    target=card('104',{ready:false,buffs:[{turn:s.turn,bp:1000}]});
+  s.phase='attack';s.players[0].front[0]=sniper;s.players[1].front[0]=target;setLife(s,1,1);
+  const picked=chooseAiAction(s,{difficulty:'hard'});
+  assert.equal(picked.type,'attack');
+  assert.equal(picked.uid,sniper.uid);
+});
