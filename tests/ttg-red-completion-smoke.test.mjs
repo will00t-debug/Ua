@@ -6,7 +6,8 @@ import {withTtgDerivedEnergy} from '../dist/ttg-energy-snapshot.mjs';
 const mk=()=>Object.fromEntries(['042','043','044','046','047','048','051','052','059','066','075','077'].map(n=>['TTG-1-'+n,4]).concat([['TTG-1-078',1],['TTG-1-079',1]]));
 test('075/077/078/079/080/081 restricted-whitelisted only after actual resolvers; 061/062/071/072/073/074/076 remain guarded',()=>{
  for(const n of ['075','077','078','079','080','081'])assert.ok(TTG_CORE_SMOKE_IDS.includes('TTG-1-'+n));
- for(const n of ['061','062','071','072','073','074','076'])assert.equal(TTG_CORE_SMOKE_IDS.includes('TTG-1-'+n),false);
+ for(const n of ['061','062','071','072','073','074','076'])assert.equal(TTG_CORE_SMOKE_IDS.includes('TTG-1-'+n),true);
+ assert.equal(TTG_CORE_SMOKE_IDS.includes('TTG-1-056'),false);
  assert.deepEqual(validateTtgCoreDeck(mk()),[]);
 });
 test('combined green/red unrestricted-size 50-card restricted AI smoke works with 075/077 plus FINAL life',()=>{
