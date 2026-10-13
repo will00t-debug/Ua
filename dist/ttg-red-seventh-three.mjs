@@ -3,7 +3,7 @@
 import {TTG_BY_ID} from './ttg-builder.mjs';
 const onField=p=>[...(p.front||[]),...(p.energy||[])].filter(Boolean);
 const name=c=>TTG_BY_ID[c?.cardId]?.nameJa||c?.nameJa;
-const asSimon=c=>name(c)==='シモン'||(c.stack||[]).some(asSimon);
+const asSimon=c=>!!c&&(name(c)==='シモン'||(c.stack||[]).some(asSimon));
 const own=(s,p)=>[0,1].includes(p)&&!!s?.players?.[p];
 const deep=c=>[c.uid,...(c.stack||[]).flatMap(deep),...(c.under||[]).flatMap(deep)];
 const inventory=p=>[...p.hand,...p.deck,...p.life,...p.outside,...(p.removed||[]),...onField(p)].flatMap(deep).sort();
