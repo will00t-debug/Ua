@@ -41,7 +41,7 @@ test('SLG-1-017 blank field fails once an energy-line card exists with only one 
 test('SLG-1-018 look at three, choose up to one Sung or Shadow, bottom remaining in exact order; mandatory hand discard only on take',()=>{
  let s=match(),p=s.players[0],source=hand(s,'018');
  field(s,'006','energy',0);field(s,'006','energy',1); // purple 4 energy
- const eligible=pull(p,'017'),shadow=pull(p,'030'),ineligible=pull(p,'015');
+ const eligible=pull(p,'017'),shadow=pull(p,'030'),ineligible=pull(p,'001');
  p.deck.unshift(ineligible,shadow,eligible);
  s=doAction(s,a=>a.type==='play'&&a.uid===source.uid&&a.line==='front'&&a.slot===0);
  assert.equal(s.pending?.kind,'slgSearch');const q=s.pending;
