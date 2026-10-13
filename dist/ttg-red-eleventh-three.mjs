@@ -68,6 +68,8 @@ export function resolveRedHighRaid(s,a={}){
  if(bottom.cardId==='TTG-1-070'&&choice.cardId==='TTG-1-072'&&ownsName(pl,'カミナ'))throw new Error('070 replacement unavailable with Kamina');
  pl[a.line][a.slot]=raid;
  if(pl.red080DiscountUntilTurn===s.turn){delete pl.red080DiscountUntilTurn;pl.red080DiscountConsumedTurn=s.turn;}
+ r.raidNamesThisTurn=[...(r.raidNamesThisTurn||[]),TTG_BY_ID[h.cardId].nameJa];
+ r.ttgRaidOccurredTurn??={};r.ttgRaidOccurredTurn[a.player]=s.turn;
  r.raidCountThisTurn=(r.raidCountThisTurn||0)+1;
  r.raidCountByPlayerTurn??={};
  const previous=r.raidCountByPlayerTurn[a.player];
