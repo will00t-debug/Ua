@@ -97,6 +97,29 @@ export function ttgExecutableActions(s){
   return [a];
  });
 }
+// TTG-1-012: a player's Q2266 discard choice is a true multi-card
+// selection, potentially unlocking the 15+ total printed-cost retirement
+// alternative. Construct the exact action from the core legal template.
+export function ttg012ManualChoice(s,{discardUids=[],mode='readyAP',apUid=null,targetUid=null}={}){
+ const legal=legalTtgCoreActions(s).find(x=>x.type==='green012Discard');
+ if(!legal)throw new Error('目前沒有西蒙012的棄牌效果待結算');
+ if(!Array.isArray(discardUids)||new Set(discardUids).size!==discardUids.length)
+  throw new Error('不能重複選擇同一張棄牌');
+ const hand=s.players[legal.player].hand;
+ if(discardUids.some(uid=>!legal.handUids.includes(uid)))throw new Error('只能棄掉合法的自己手牌');
+ if(legal.handUids.length&&discardUids.length===0)throw new Error('手牌存在時必須至少棄一張');
+ const total=discardUids.reduce((n,uid)=>n+(TTG_BY_ID[hand.find(c=>c.uid===uid)?.cardId]?.energy||0),0);
+ if(mode==='readyAP'){
+  if(targetUid!==null||!s.players[legal.player].apCards.some(c=>c.uid===apUid))
+   throw new Error('請指定自己一張 AP 卡回復');
+ }else if(mode==='retire'){
+  if(total<15)throw new Error('選擇退場效果時，棄牌需求能源合計須至少 15');
+  if(apUid!==null)throw new Error('退場效果不能同時回復 AP');
+  if(targetUid!==null&&!s.players[1-legal.player].front.some(c=>c?.uid===targetUid&&!c.cannotBeChosen&&!c.protectedFromEffects))
+   throw new Error('只能選擇未受效果保護的對手前線角色');
+ }else throw new Error('未知的西蒙012效果選項');
+ return {type:'green012Discard',player:legal.player,uid:legal.uid,discardUids,mode,apUid,targetUid};
+}
 export function ttgActionKinds(s){
  const by=new Map();for(const a of ttgExecutableActions(s))by.set(a.type,(by.get(a.type)||0)+1);return [...by].map(([type,count])=>({type,count}));
 }
