@@ -79,7 +79,9 @@ test('034 Q2282 capture ONE sidelined own character, facedown under site, energy
  assert.ok(!done.players[0].outside.some(x=>x.uid==='retired'));
  assert.equal(calculateTtgEnergyByColor(done,0).green,energy+1);
  assert.deepEqual(ids(done.players[0]),before);
- assert.throws(()=>beginGreen034Sidelined(done,{player:0,retiredUid:'older'}));
+ const noSecondUse=beginGreen034Sidelined(done,{player:0,retiredUid:'older'});
+ assert.equal(noSecondUse.pending,null,'turn1 capture is not offered again this turn');
+ assert.deepEqual(noSecondUse.players[0].outside.map(x=>x.uid),['older']);
 });
 test('034 different physical sites retain independent turn1 capture eligibility',()=>{
  const s=state(),p=s.players[0];
