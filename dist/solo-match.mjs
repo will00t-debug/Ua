@@ -102,10 +102,21 @@ export function newSoloTrainingMatch({decks=[SOLO_TRAINING_PRESET,SOLO_TRAINING_
 function position(c,p,line,slot){c.owner=p;c.ready=false;c.line=line;c.slot=slot;}
 function retire(s,p,c){
  let arr=s.players[p][c.line],old=arr[c.slot];if(old?.uid!==c.uid)throw Error('retire lost field slot');
+ const printed=d(c);
+ const ryuuIsPresent=s.players[p].front.some(x=>x?.uid!==c.uid&&x.cardId==='SLG-1-073');
+ const retiredIsland=printed.traits?.includes('第四次架南島Raid')&&!printed.traits?.includes('DFN');
+ if(ryuuIsPresent&&retiredIsland){
+  for(const x of field(s.players[p]).filter(x=>d(x).traits?.includes('DFN'))){
+   x.grants??=[];x.grants.push({kind:'returnOnRetire',turn:s.turn});
+  }
+ }
+ const returnOnRetire=printed.traits?.includes('DFN')&&c.grants?.some(x=>x.kind==='returnOnRetire'&&x.turn===s.turn);
  arr[c.slot]=null;
  const layers=[c,...(c.stack||[])];for(const layer of layers){
   for(const under of layer.under||[])s.players[p].outside.push({...under,faceDown:false});
-  const {stack,under,...single}=layer;s.players[p].outside.push({...single,under:[]});
+  const {stack,under,...single}=layer;
+  if(returnOnRetire&&layer.uid===c.uid)s.players[p].hand.push({...single,buffs:[],grants:[],under:[]});
+  else s.players[p].outside.push({...single,under:[]});
  }
  if(c.cardId==='SLG-1-007'&&s.players[p].deck.length)draw(s,s.players[p]);
 }
