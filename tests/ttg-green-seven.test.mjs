@@ -12,7 +12,8 @@ const ids=p=>{
  const visit=c=>[c.uid,...(c.stack||[]).flatMap(visit),...(c.under||[]).flatMap(visit)];
  return [...p.front.filter(Boolean),...p.energy.filter(Boolean),...p.hand,...p.deck,...p.life,...p.outside,...p.removed].flatMap(visit).sort();
 };
-const high=(s,cardId)=>{const x=legalGreenHighRaids(s,0).find(x=>x.cardId===cardId);
+const high=(s,cardId)=>{const options=legalGreenHighRaids(s,0).filter(x=>x.cardId===cardId);
+ const x=options.find(x=>x.raidKind==='chain')||options[0];
  assert.ok(x,cardId+' must have a legal Raid option');
  return resolveGreenHighRaid(s,{...x,payApUids:['AP0']});
 };
