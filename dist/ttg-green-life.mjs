@@ -10,6 +10,7 @@ import {TTG_GREEN_ENTRY_IDS} from './ttg-green-entry.mjs';
 import {calculateTtgEnergyByColor,withTtgDerivedEnergy} from './ttg-energy-snapshot.mjs';
 import {legalGreenHighLifeRaids,resolveGreenHighLifeRaid} from './ttg-green-high-raid.mjs';
 import {legalRedLifeRaids,resolveRedLifeRaid} from './ttg-red-life-raids.mjs';
+import {beginRed073Leaving} from './ttg-red-073-leaving.mjs';
 const field=pl=>['front','energy'].flatMap(line=>(pl?.[line]||[]).map((card,slot)=>({card,line,slot}))).filter(x=>x.card);
 const flatten=c=>[{uid:c.uid,cardId:c.cardId},...(c.stack||[]).flatMap(flatten),...(c.under||[]).flatMap(flatten)];
 const idName=c=>TTG_BY_ID[c.cardId]?.nameJa||c.nameJa;
@@ -146,7 +147,10 @@ export function resolveTtgLifeChoice(state,action){
   const opp=result.players[1-q.player],idx=opp.front.findIndex(x=>x?.uid===action.targetUid);
   if(idx<0)throw new Error('RED COLOR target left enemy front');
   const flatten=x=>[{uid:x.uid,cardId:x.cardId},...(x.stack||[]).flatMap(flatten),...(x.under||[]).flatMap(flatten)];
-  opp.outside.push(...flatten(opp.front[idx]));opp.front[idx]=null;
+  if(opp.front[idx].cardId==='TTG-1-073'&&(opp.front[idx].under||[]).some(c=>c.faceDown)&&
+   (opp.front[idx].currentBp??TTG_BY_ID['TTG-1-073'].bp)>=500)
+   result=beginRed073Leaving({...result,pending:null},{player:1-q.player,uid:action.targetUid});
+  else{opp.outside.push(...flatten(opp.front[idx]));opp.front[idx]=null;}
  }else if(action.mode==='get'){
   owner.hand.push(owner.outside.splice(ownerIndex,1)[0]);
  }else if(action.mode==='active'){
@@ -158,10 +162,15 @@ export function resolveTtgLifeChoice(state,action){
  }else if(action.mode==='special'){
   const opp=result.players[1-q.player],i=opp.front.findIndex(c=>c?.uid===action.targetUid);
   if(i<0)throw new Error('SPECIAL front target left play');
-  const pile=flatten(opp.front[i]);opp.front[i]=null;
-  const previous=new Set(opp.outside.map(x=>x.uid));
-  if(pile.some(x=>previous.has(x.uid)))throw new Error('SPECIAL would duplicate a physical card');
-  opp.outside.push(...pile);
+  if(opp.front[i].cardId==='TTG-1-073'&&(opp.front[i].under||[]).some(c=>c.faceDown)&&
+   (opp.front[i].currentBp??TTG_BY_ID['TTG-1-073'].bp)>=500)
+   result=beginRed073Leaving({...result,pending:null},{player:1-q.player,uid:action.targetUid});
+  else{
+   const pile=flatten(opp.front[i]);opp.front[i]=null;
+   const previous=new Set(opp.outside.map(x=>x.uid));
+   if(pile.some(x=>previous.has(x.uid)))throw new Error('SPECIAL would duplicate a physical card');
+   opp.outside.push(...pile);
+  }
  }else if(action.mode==='color'){
   const i=owner.hand.findIndex(x=>x.uid===action.handUid);
   if(i<0||owner[action.line][action.slot])throw new Error('COLOR source or destination changed');
@@ -173,6 +182,7 @@ export function resolveTtgLifeChoice(state,action){
  if(action.mode==='color'&&TTG_GREEN_ENTRY_IDS.includes(owner[action.line][action.slot].cardId)){
   result.pending={kind:'ttgGreenEntry',player:q.player,sourceUid:action.handUid};
  }
+ if(result.pending&&!result.players[q.player].life.length)result.pendingLifeOutcome={player:q.player};
  result.log??=[];result.log.push({type:'ttgLifeResolved',player:q.player,trigger:q.trigger,mode:action.mode});
  return finalizeTtgLifeOutcome(result,q.player);
 }
