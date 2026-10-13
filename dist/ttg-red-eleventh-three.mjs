@@ -5,6 +5,7 @@
 import {TTG_BY_ID} from './ttg-builder.mjs';
 import {spendTtgApCards} from './ttg-actions.mjs';
 import {calculateTtgEnergyByColor} from './ttg-energy-snapshot.mjs';
+import {beginRed073Leaving} from './ttg-red-073-leaving.mjs';
 const raidIds=new Set(['TTG-1-072','TTG-1-073','TTG-1-074']);
 const rows=p=>['front','energy'].flatMap(line=>(p?.[line]||[]).map((c,slot)=>({c,line,slot})).filter(x=>x.c));
 const name=c=>TTG_BY_ID[c?.cardId]?.nameJa||c?.nameJa||'';
@@ -129,7 +130,15 @@ export function resolveRedRaidQueue(s,a={}){
  }
  if(a.step==='entry073'&&a.targetUid){
   const opp=r.players[1-q.player],i=opp.front.findIndex(c=>c?.uid===a.targetUid);
-  const card=opp.front[i];opp.front[i]=null;
+  const card=opp.front[i];
+  if(card?.cardId==='TTG-1-073'&&(card.under||[]).some(x=>x.faceDown)&&
+   (card.currentBp??TTG_BY_ID[card.cardId].bp)>=500){
+   const next=q.steps.filter(x=>x!==a.step);
+   const leaving=beginRed073Leaving({...r,pending:null},{player:1-q.player,uid:card.uid});
+   if(next.length)leaving.ttgRedRaidResume={...q,steps:next};
+   return leaving;
+  }
+  opp.front[i]=null;
   const flatten=x=>[{uid:x.uid,cardId:x.cardId},...(x.stack||[]).flatMap(flatten),...(x.under||[]).flatMap(flatten)];
   opp.outside.push(...flatten(card));
  }
