@@ -23,7 +23,10 @@ for(const n of nums){
   const response=await fetch(url,{signal:AbortSignal.timeout(13000),headers:{'User-Agent':'Mozilla/5.0 (compatible; UA54BT-card-data-audit/1.0)'}});
   const html=await response.text(),text=strip(html);
   const i=text.indexOf(card),slice=text.slice(Math.max(0,i-140),Math.max(0,i-140)+2600);
-  console.log('CARD_AUDIT '+JSON.stringify({card,http:response.status,url,found:i!==-1,text:slice,bytes:html.length}));
+  const altMatches=[...html.matchAll(/<img\\b[^>]*alt\\s*=\\s*[\"']([^\"']+)[\"'][^>]*>/gi)].map(x=>x[1]);
+  const markers=['必要','発生','トリガー','効果'];
+  const around=Object.fromEntries(markers.map(m=>{const p=html.indexOf(m);return [m,p<0?null:html.slice(Math.max(0,p-200),p+600)];}));
+  console.log('CARD_AUDIT '+JSON.stringify({card,http:response.status,url,found:i!==-1,text:slice,bytes:html.length,altMatches,around}));
   if(response.ok&&i!==-1)good++;
  }catch(e){console.log('CARD_AUDIT '+JSON.stringify({card,url,error:String(e)}));}
 }
