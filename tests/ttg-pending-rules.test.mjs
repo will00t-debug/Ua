@@ -144,7 +144,7 @@ test('TTG-1-049 resolves using printed card energy when physical card lacks cost
 });
 test('TTG-1-049 rejects incomplete candidate energy or a piled RAID return',()=>{
  const st=state();st.players[0].front[0]=card('duo','TTG-1-049','ギミー＆ダリー');
- st.players[0].energy[0]=card('unknown','TTG-1-002','ヴィラル');
+ st.players[0].energy[0]=card('unknown','TTG-1-999','未收錄');
  assert.deepEqual(eligibleTtg049ReturnTargets(st,{player:0,uid:'duo'}),[]);
  assert.throws(()=>resolveTtg049Entry(st,{player:0,uid:'duo'}),/Unverified printed energy/);
  st.players[0].energy[0]=card('pile','TTG-1-058','ニア',500,{stack:[card('base','TTG-1-052','シモン')]});
