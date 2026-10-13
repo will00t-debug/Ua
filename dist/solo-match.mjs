@@ -86,6 +86,11 @@ function recoverSolo(s,p,uid,sourceName){
  if(c.cardId==='SLG-1-008'){draw(s,owner);if(owner.hand.length)enqueue(s,{kind:'slgDiscard',p,source:c.uid});}
  if(c.cardId==='SLG-1-011'&&soloEnergy(s,p)>=d(c).energy&&owner.front.concat(owner.energy).some(x=>!x))
   enqueue(s,{kind:'slgRecoveredDeploy',p,uid:c.uid,active:isSung({cardId:sourceName})||sourceName==='水篠 旬'});
+ // SLG-1-014: on recovery by OWN effect, she may immediately enter only
+ // the energy line REST, without paying AP or meeting printed energy.
+ // Official UA51BT/SLG-1-014 and Q2025 prohibit all front-line movement.
+ if(c.cardId==='SLG-1-014'&&owner.energy.some(slot=>!slot))
+  enqueue(s,{kind:'slgRecoveredDeploy',p,uid:c.uid,active:false});
  return c;
 }
 const shadow=(c)=>d(c)?.type==='character'&&d(c)?.traits?.includes('影之軍團');
@@ -442,11 +447,12 @@ function choose(s,action){
   if(action.uid!=null&&!target)throw Error('illegal recovered Rin BP target');
   if(target)target.buffs.push({turn:s.turn,bp:1000});s.pending=null;
  }else if(q.kind==='slgRecoveredDeploy'){
-  const p=s.players[q.p],i=p.hand.findIndex(c=>c.uid===q.uid&&c.cardId==='SLG-1-011');
+  const p=s.players[q.p],i=p.hand.findIndex(c=>c.uid===q.uid&&['SLG-1-011','SLG-1-014'].includes(c.cardId));
   if(action.uid===null){s.pending=null;}
   else{
-   if(i<0||soloEnergy(s,q.p)<4||!['front','energy'].includes(action.line)||p[action.line][action.slot])throw Error('illegal Shizuku recovery deployment');
-   const [c]=p.hand.splice(i,1);position(c,q.p,action.line,action.slot);c.ready=q.active;p[action.line][action.slot]=c;
+   const recovered=p.hand[i],satoko=recovered?.cardId==='SLG-1-014';
+   if(i<0||(!satoko&&soloEnergy(s,q.p)<4)||!(satoko?action.line==='energy':['front','energy'].includes(action.line))||p[action.line]?.[action.slot])throw Error('illegal recovered character deployment');
+   const [c]=p.hand.splice(i,1);position(c,q.p,action.line,action.slot);c.ready=satoko?false:q.active;p[action.line][action.slot]=c;
    s.pending=null;onEnter(s,c);
   }
  }else if(q.kind==='slg019Entry'){
@@ -918,9 +924,10 @@ export function soloTrainingLegalActions(s){
   if(q.kind==='slgDiscard'||q.kind==='slg019Recover')return s.players[q.p].hand.filter(c=>q.kind==='slgDiscard'||shadow(c)).map(c=>({type:'choose',uid:c.uid}));
   if(q.kind==='slgRecoveredBuff')return [{type:'choose',uid:null},...field(s.players[q.p]).filter(c=>d(c).type==='character').map(c=>({type:'choose',uid:c.uid}))];
   if(q.kind==='slgRecoveredDeploy'){
-   const p=s.players[q.p],actions=[{type:'choose',uid:null}];
-   if(p.hand.some(c=>c.uid===q.uid)&&soloEnergy(s,q.p)>=4)
-    for(const line of ['front','energy'])for(let slot=0;slot<4;slot++)if(!p[line][slot])actions.push({type:'choose',uid:q.uid,line,slot});
+   const p=s.players[q.p],actions=[{type:'choose',uid:null}],card=p.hand.find(c=>c.uid===q.uid);
+   if(card&&(card.cardId==='SLG-1-014'||soloEnergy(s,q.p)>=4))
+    for(const line of (card.cardId==='SLG-1-014'?['energy']:['front','energy']))
+     for(let slot=0;slot<4;slot++)if(!p[line][slot])actions.push({type:'choose',uid:q.uid,line,slot});
    return actions;
   }
   if(q.kind==='slg019Entry'||q.kind==='slg059Entry')return [{type:'choose',uid:null},...s.players[q.p].hand.filter(c=>q.kind==='slg059Entry'||shadow(c)).map(c=>({type:'choose',uid:c.uid}))];
