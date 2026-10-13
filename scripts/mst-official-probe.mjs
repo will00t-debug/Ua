@@ -28,7 +28,9 @@ for(const n of ids){
   if(!response.ok||!html.includes(number))throw new Error('http '+response.status+' or wrong card');
   const need=altOf(block(html,'needEnergyData'));
   const genAlt=altOf(block(html,'generatedEnergyData'));
-  const gen=genAlt===null?(tagText(block(html,'generatedEnergyData')||'')==='-'?0:null):(genAlt.match(/[青緑赤黄紫]/g)||[]).length;
+  const genBlock=block(html,'generatedEnergyData')||'';
+  const genInner=genBlock.match(/<dd[^>]*>([\s\S]*?)<\/dd>/)?.[1]??'';
+  const gen=genAlt===null?(tagText(genInner)==='-'?0:null):(genAlt.match(/[青緑赤黄紫]/g)||[]).length;
   const bpMatch=html.match(/<dt[^>]*>BP<\/dt>\s*<dd[^>]*>([\s\S]*?)<\/dd>/i);
   const bpRaw=bpMatch?tagText(bpMatch[1]):null;
   const bp=bpRaw==='-'?0:(bpRaw?numOf(bpRaw):null);
@@ -38,10 +40,13 @@ for(const n of ids){
   const match=trig.match(/ico_(draw|active|get|final|color|special|raid)_trigger/);
   const trigger=match?.[1]||null;
   const body=tagText(block(html,'effectData')||'').replace(/^効果\s*/,'').slice(0,1200);
+  const triggerEffectJa=tagText(trig).replace(/^トリガー\s*/,'').slice(0,500);
   const pageText=tagText(html);
   const traitMatch=pageText.match(/特徴\s*\n?\s*([^\n]+?)\s*発生\s*エナジー/);
   const trait=traitMatch?.[1]?.trim()||null;
-  const row={id:'MST-1-'+String(n).padStart(3,'0'),energy,ap,bp,gen,trigger,trait,effectJa:body,url};
+  const typeName=pageText.match(/カード\s*種類\s*(キャラクター|フィールド|イベント)/)?.[1]||null;
+  const type=({'キャラクター':'character','フィールド':'field','イベント':'event'})[typeName]||null;
+  const row={id:'MST-1-'+String(n).padStart(3,'0'),energy,ap,bp,gen,type,trigger,trait,effectJa:body,triggerEffectJa,url};
   console.log('CARD_AUDIT80 '+JSON.stringify(row));
   if(Number.isInteger(ap)&&Number.isInteger(energy)&&Number.isInteger(bp)&&Number.isInteger(gen))good++;
  }catch(e){console.log('CARD_AUDIT80 '+JSON.stringify({id:'MST-1-'+String(n).padStart(3,'0'),error:String(e),url}));}
