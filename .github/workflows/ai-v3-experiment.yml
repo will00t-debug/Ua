@@ -1,7 +1,7 @@
-name: AI v3 200-Game Training Experiment
+name: AI v3 Corrected 200-Game Training Experiment
 
 on:
-  # Creating this workflow on the experiment branch starts ONE 200-game trial.
+  # Changing this workflow triggers ONE corrected second-round 200-game trial.
   # Follow-up code/model commits do not re-trigger it.
   push:
     branches: ['feature/ai-v3-learning']
@@ -39,12 +39,12 @@ jobs:
           TEST_GAMES: ${{ inputs.eval || '72' }}
         run: |
           npm test
-          npm run train:ai -- --games "$TRAIN_GAMES" --eval "$TEST_GAMES" --seed 25000 --epochs 5 --max-actions 650 --promote
+          npm run train:ai -- --games "$TRAIN_GAMES" --eval "$TEST_GAMES" --seed 26000 --epochs 5 --max-actions 650 --promote
       - name: Publish candidate and measurements as artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ai-v3-selfplay-results
+          name: ai-v3-second-round-selfplay-results
           path: |
             audit/ai-v3-candidate.json
             audit/ai-v3-evaluation.json
@@ -60,6 +60,6 @@ jobs:
             git add dist/ai-v3-weights.mjs
           fi
           if ! git diff --cached --quiet; then
-            git commit -m 'experiment(ai-v3): record 200 self-play games and gated checkpoint'
+            git commit -m 'experiment(ai-v3): record second-round 200 games and gated checkpoint'
             git push origin HEAD:feature/ai-v3-learning
           fi
