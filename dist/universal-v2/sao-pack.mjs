@@ -329,6 +329,167 @@ const PRINTED_PINS=Object.freeze({
       "ALO"
     ],
     "effectJa": "【登場時】カードを1枚引き、自分の手札を1枚場外に置く。"
+  },
+  "SAO-1-026": {
+    "kind": "impactNull",
+    "nameJa": "リーファ（地神テラリア）",
+    "color": "yellow",
+    "energy": 0,
+    "ap": 1,
+    "bp": 2000,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "traits": [
+      "女神"
+    ],
+    "effectJa": "【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、【インパクト】を失う）"
+  },
+  "SAO-1-027": {
+    "kind": "impactNull",
+    "nameJa": "リーファ（地神テラリア）",
+    "color": "yellow",
+    "energy": 3,
+    "ap": 1,
+    "bp": 3500,
+    "gen": 1,
+    "type": "character",
+    "trigger": "active",
+    "traits": [
+      "女神"
+    ],
+    "effectJa": "【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、【インパクト】を失う）"
+  },
+  "SAO-1-074": {
+    "kind": "impactNull",
+    "nameJa": "シノン",
+    "color": "green",
+    "energy": 1,
+    "ap": 1,
+    "bp": 2500,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "traits": [
+      "ALO"
+    ],
+    "effectJa": "【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、【インパクト】を失う）"
+  },
+  "SAO-2-026": {
+    "kind": "impactNull",
+    "nameJa": "シノン",
+    "color": "purple",
+    "energy": 0,
+    "ap": 1,
+    "bp": 2000,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "traits": [],
+    "effectJa": "【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、【インパクト】を失う）"
+  },
+  "SAO-2-045": {
+    "kind": "impactNull",
+    "nameJa": "エギル",
+    "color": "purple",
+    "energy": 4,
+    "ap": 1,
+    "bp": 4000,
+    "gen": 1,
+    "type": "character",
+    "trigger": "active",
+    "traits": [
+      "プログレッシブ"
+    ],
+    "effectJa": "【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、【インパクト】を失う）"
+  },
+  "SAO-1-006": {
+    "kind": "onPlayBounce",
+    "nameJa": "ロニエ・アラベル",
+    "color": "yellow",
+    "energy": 1,
+    "ap": 1,
+    "bp": 1500,
+    "gen": 3,
+    "type": "character",
+    "trigger": null,
+    "traits": [],
+    "effectJa": "【登場時】必要エナジーが1以下の自分の場の他のキャラを1枚手札に戻す。戻せない場合、このキャラを手札に戻す。"
+  },
+  "SAO-1-046": {
+    "kind": "onPlayBounce",
+    "nameJa": "ユイ",
+    "color": "blue",
+    "energy": 1,
+    "ap": 1,
+    "bp": 1500,
+    "gen": 3,
+    "type": "character",
+    "trigger": null,
+    "traits": [
+      "アインクラッド"
+    ],
+    "effectJa": "【登場時】必要エナジーが1以下の自分の場の他のキャラを1枚手札に戻す。戻せない場合、このキャラを手札に戻す。"
+  },
+  "SAO-1-095": {
+    "kind": "onPlayBounce",
+    "nameJa": "闇風",
+    "color": "green",
+    "energy": 1,
+    "ap": 1,
+    "bp": 1500,
+    "gen": 3,
+    "type": "character",
+    "trigger": null,
+    "traits": [
+      "GGO"
+    ],
+    "effectJa": "【登場時】必要エナジーが1以下の自分の場の他のキャラを1枚手札に戻す。戻せない場合、このキャラを手札に戻す。"
+  },
+  "SAO-2-046": {
+    "kind": "onPlayBounce",
+    "nameJa": "キバオウ",
+    "color": "purple",
+    "energy": 1,
+    "ap": 1,
+    "bp": 1500,
+    "gen": 3,
+    "type": "character",
+    "trigger": null,
+    "traits": [
+      "プログレッシブ"
+    ],
+    "effectJa": "【登場時】必要エナジーが1以下の自分の場の他のキャラを1枚手札に戻す。戻せない場合、このキャラを手札に戻す。"
+  },
+  "SAO-2-040": {
+    "kind": "onPlayPeekTop",
+    "nameJa": "アスナ",
+    "color": "purple",
+    "energy": 1,
+    "ap": 1,
+    "bp": 2000,
+    "gen": 1,
+    "type": "character",
+    "trigger": "active",
+    "traits": [
+      "プログレッシブ"
+    ],
+    "effectJa": "【登場時】自分の山札の上から1枚見る。そのカードを自分の山札の上か場外に置く。"
+  },
+  "SAO-1-042": {
+    "kind": "onPlayRestEnemy3000",
+    "nameJa": "クライン",
+    "color": "blue",
+    "energy": 2,
+    "ap": 1,
+    "bp": 2000,
+    "gen": 1,
+    "type": "character",
+    "trigger": "active",
+    "traits": [
+      "アインクラッド"
+    ],
+    "effectJa": "【登場時】BP3000以下の相手のフロントLのキャラを1枚まで選び、レストにする。"
   }
 });
 export const SAO_V2_PILOT_IDS=Object.freeze(Object.keys(PRINTED_PINS).sort());
@@ -360,10 +521,17 @@ export function verifiedSaoV2Cards(){
    card.templateEffects={onPlay:[{template:'draw',count:1}]};
   if(pin.kind==='onPlayDrawDiscard')
    card.templateEffects={onPlay:[{template:'drawDiscardOne'}]};
+  if(pin.kind==='impactNull')card.impactNull=true;
+  if(pin.kind==='onPlayBounce')
+   card.templateEffects={onPlay:[{template:'bounceOwnOtherUnderEnergy',energy:1}]};
+  if(pin.kind==='onPlayPeekTop')
+   card.templateEffects={onPlay:[{template:'peekTopOne'}]};
+  if(pin.kind==='onPlayRestEnemy3000')
+   card.templateEffects={onPlay:[{template:'restEnemyUnderBp',bp:3000,optional:true}]};
   return card;
  });
 }
 export function saoV2Pack(){
- return createUniversalPack({id:'sword-art-online',version:'v2-d-sao-pilot-1',
+ return createUniversalPack({id:'sword-art-online',version:'v2-d-sao-pilot-2',
   cards:verifiedSaoV2Cards()});
 }
