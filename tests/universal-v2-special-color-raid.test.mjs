@@ -372,7 +372,7 @@ test('Q2286 foundation: an original Raid-base onRaided trigger fires AGAIN when 
    effects:{onRaided:[{op:'buffOwnTrait',trait:'TestTrait',bp:1000,optional:true}]}};
   if(c.id==='F01')return {...c,effects:{onPlay:[],onRaid:[]}};
   if(c.id==='F08')return {...c,raidName:'Hero',raidFromRaid:['Hero Raid'],
-   name:'Chain Hero',energy:4,implementation:'dsl',effects:{onPlay:[]}};
+   name:'Chain Hero',energy:4,traits:['TestTrait'],implementation:'dsl',effects:{onPlay:[]}};
   return c;
  });
  const chain=createUniversalPack({id:'second-trigger',cards:special});
