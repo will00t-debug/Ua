@@ -99,6 +99,16 @@ function continueEffectQueue(pack,s){
    const choices=s.players[1-owner].front.filter(c=>c&&bp(pack,s,c)<=job.bp).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-rest-bp',player:owner,
     sourceUid:job.sourceUid,choices,limit:job.bp,optional:true};
+  }else if(job.op==='buffOwnTrait'){
+   const choices=field(pl).filter(c=>card(pack,c).traits.includes(job.trait)).map(c=>c.uid);
+   if(choices.length)s.pending={kind:'effect-buff-trait',player:owner,sourceUid:job.sourceUid,
+    choices,trait:job.trait,bp:job.bp};
+  }else if(job.op==='drawIfRaidUnderFacedown'){
+   const raid=field(pl).find(c=>c.uid===job.raidUid);
+   if(!raid)throw Error('Raid-base follow-up missing the Raid target');
+   const under=c=>(c.under||[]).some(x=>x.faceDown===true||under(x))||
+    (c.stack||[]).some(x=>x.faceDown===true||under(x));
+   if(under(raid))draw(s,owner,1);
   }else if(job.op==='enemyBpDown'){
    const targetUids=s.players[1-owner].front.filter(Boolean).map(c=>c.uid);
    if(targetUids.length)s.pending={kind:'effect-target',player:owner,sourceUid:job.sourceUid,
@@ -106,9 +116,12 @@ function continueEffectQueue(pack,s){
   }else throw Error('Unimplemented effect op');
  }
 }
+function programJobs(pack,physical,timing,owner,raidUid){
+ return (card(pack,physical).effects[timing]||[])
+  .map(e=>({...e,owner,sourceUid:physical.uid,...(raidUid?{raidUid}:{})}));
+}
 function applyEffects(pack,s,cardOnField,timing,owner){
- const program=card(pack,cardOnField).effects[timing]||[];
- s.effectQueue.push(...program.map(e=>({...e,owner,sourceUid:cardOnField.uid})));
+ s.effectQueue.push(...programJobs(pack,cardOnField,timing,owner));
  continueEffectQueue(pack,s);
 }
 function validRaidBase(pack,base,top){
@@ -127,8 +140,16 @@ function performRaid(pack,s,p,cardOnTop,baseUid,line,slot,replaceUid){
  pl[base.line][base.slot]=null;
  cardOnTop.stack=[base.c];cardOnTop.ready=true;
  pl[line][slot]=cardOnTop;
- applyEffects(pack,s,cardOnTop,'onPlay',p);
- applyEffects(pack,s,cardOnTop,'onRaid',p);
+ const baseJobs=s.active===p?programJobs(pack,base.c,'onRaided',p,cardOnTop.uid):[];
+ const entryJobs=programJobs(pack,cardOnTop,'onPlay',p);
+ const raidJobs=programJobs(pack,cardOnTop,'onRaid',p);
+ if(baseJobs.length&&entryJobs.length)
+  s.pending={kind:'raid-effect-order',player:p,baseUid:base.c.uid,
+   raidUid:cardOnTop.uid,baseJobs,entryJobs,raidJobs};
+ else{
+  s.effectQueue.unshift(...baseJobs,...entryJobs,...raidJobs);
+  continueEffectQueue(pack,s);
+ }
 }
 function location(s,p,uid){
  for(const line of ['front','energy']){
