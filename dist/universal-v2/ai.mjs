@@ -1,6 +1,6 @@
 // Cross-title Universal v2 AI baseline. Uses only the native legal-action
 // list; no work-specific card-ID shortcuts and no mutation of match state.
-import {legalUniversalActions,universalActor,universalBp,universalEnergy} from './engine.mjs';
+import {legalUniversalActions,universalBp,universalEnergy} from './engine.mjs';
 export const UNIVERSAL_AI_LEVELS=Object.freeze(['easy','normal','hard']);
 const packsOf=pack=>Array.isArray(pack)?pack:[pack,pack];
 const option=(list,type)=>list.find(x=>x.type===type);
@@ -33,7 +33,6 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   return legal.find(a=>a.mode==='final'||a.mode==='draw'||a.mode==='get')||legal[0];
  if(s.pending?.kind==='block')return chooseBlock(pack,s,legal,difficulty);
  if(s.pending?.kind==='effect-target'){
-  const targetPack=packsOf(pack)[1-s.pending.player];
   const choices=legal.map(a=>({
    a,character:s.players[1-s.pending.player].front.find(c=>c?.uid===a.uid)
   }));
@@ -44,7 +43,6 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   });
   // Exact legal action; the printed title's supported effect determines
   // candidate targets, never AI text parsing.
-  void targetPack;
   return choices[0]?.a||legal[0];
  }
  const next=option(legal,'next')||legal[0];
