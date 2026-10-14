@@ -84,7 +84,7 @@ function cardFace(physical,side,{showStats=true,interactive=false,ready=null,sel
  }
  return box;
 }
-function zoneSlots(view,side,line,heading){
+function zoneSlots(view,side,line,heading,legal){
  const ph=el('div',{class:'stage'});
  const label=el('div',{class:'line-heading'},el('strong',{text:heading}),
   el('span',{text:'4 個位置'}));
@@ -92,8 +92,7 @@ function zoneSlots(view,side,line,heading){
  for(let i=0;i<4;i++){
   const card=view.players[side][line][i];
   const ownTurn=side===0&&uiActor(app.state)===0&&!app.busy;
-  const clickable=!!card&&ownTurn&&legalUniversalActions(app.packs,app.state)
-   .some(a=>a.uid===card.uid||a.baseUid===card.uid);
+  const clickable=!!card&&ownTurn&&legal.some(a=>a.uid===card.uid||a.baseUid===card.uid);
   const selected=!!card&&card.uid===app.selectedUid;
   const slot=el('div',{class:'slot'+(!card?' empty':'')+
    (clickable?' actionable':'')+(selected?' highlight':'')});
@@ -118,15 +117,15 @@ function stats(view,side){
   el('span',{},'能源 ',el('strong',{text:p.energyTotal})),
   el('span',{text:colors}));
 }
-function sideBoard(view,side){
+function sideBoard(view,side,legal){
  const panel=el('div',{class:'panel battle'});
  const you=side===0;
  panel.append(el('div',{class:'headline'},
   el('h2',{text:(you?'你':'電腦')+'｜'+fmtTitle(app.packs[side].id)}),
   el('span',{class:'tag',text:(app.state.active===side?'現在的回合':'等待回合')})),
  stats(view,side));
- panel.append(zoneSlots(view,side,'front','前線 FRONT'),
-  zoneSlots(view,side,'energy','能源線 ENERGY'));
+ panel.append(zoneSlots(view,side,'front','前線 FRONT',legal),
+  zoneSlots(view,side,'energy','能源線 ENERGY',legal));
  if(!you){
   panel.append(el('div',{class:'decksummary'},
    el('span',{text:'手牌為隱藏資訊，不公開卡名及牌庫順序。'}),
@@ -152,8 +151,8 @@ function actionButton(a,legal){
  return btn(text,()=>applyAction(a),a.type==='next'?'quiet':
   a.uid===app.selectedUid?'recommended':'');
 }
-function choices(){
- const s=app.state,legal=legalUniversalActions(app.packs,s),actor=uiActor(s);
+function choices(legal){
+ const s=app.state,actor=uiActor(s);
  const side=el('div',{class:'sidebar'});
  const control=el('div',{class:'panel'});
  const current=el('div',{class:'headline'},
@@ -196,10 +195,9 @@ function choices(){
   ...app.history.slice(0,28).map(x=>el('li',{text:x}))));
  side.append(log);return side;
 }
-function pendingDialog(){
+function pendingDialog(legal){
  const s=app.state;
  if(!s?.pending||uiActor(s)!==0||app.busy)return null;
- const legal=legalUniversalActions(app.packs,s);
  const privateChoices=universalPrivateChoices(app.packs,s,0);
  const cardNameByUid=new Map((privateChoices?.options||[])
   .filter(x=>x.action.uid!==null&&x.card).map(x=>[x.action.uid,x.card.name]));
@@ -237,6 +235,7 @@ function render(){
   return;
  }
  const s=app.state,v=universalPublicView(app.packs,s,0);
+ const legal=legalUniversalActions(app.packs,s);
  const panel=el('div',{class:'panel'});
  panel.append(el('div',{class:'headline'},
   el('h2',{text:'第 '+s.turn+' 回合 · '+(phases[s.phase]||s.phase)}),
@@ -248,11 +247,11 @@ function render(){
  if(s.status==='finished')target.append(finishMessage());
  const board=el('div',{class:'board'});
  const left=el('div',{class:'battle'});
- left.append(sideBoard(v,1),
+ left.append(sideBoard(v,1,legal),
   el('div',{class:'combat-info panel',text:'↑ 電腦前線／能源線　·　↓ 你的前線／能源線。點選卡片後，在操作面板選擇合法行動。'}),
-  sideBoard(v,0));
- board.append(left,choices());target.append(board);
- const prompt=pendingDialog();if(prompt)target.append(prompt);
+  sideBoard(v,0,legal));
+ board.append(left,choices(legal));target.append(board);
+ const prompt=pendingDialog(legal);if(prompt)target.append(prompt);
 }
 function applyAction(a){
  if(!app.state||app.busy||uiActor(app.state)!==0)return;
