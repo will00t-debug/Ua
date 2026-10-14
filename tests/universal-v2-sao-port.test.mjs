@@ -109,8 +109,8 @@ test('SAO 006 mandatory own low-energy bounce chooses physical card; cannot targ
 });
 test('SAO 042 optional BP<=3000 enemy REST respects target legality and may be skipped',()=>{
  let s=fresh(),p=s.players[0],unit=take(s,0,'SAO-1-042'),
-  producer=take(s,0,'SAO-1-016'),low=take(s,1,'SAO-1-001');
- p.hand.push(unit);p.energy[0]=producer;
+  producer=take(s,0,'SAO-1-035'),blueTwo=take(s,0,'SAO-1-055'),low=take(s,1,'SAO-1-001');
+ p.hand.push(unit);p.energy[0]=producer;p.energy[1]=blueTwo;
  low.ready=true;s.players[1].front[0]=low;
  s=toMain(s);
  s=dispatchUniversalAction(pack,s,action(s,a=>a.type==='play'&&a.uid===unit.uid&&a.line==='front'&&a.slot===0));
