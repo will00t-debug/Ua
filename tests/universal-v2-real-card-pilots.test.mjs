@@ -410,7 +410,7 @@ test('real BLEACH Getsugatensho 064 main effect requires BP<=3000 unless own Ich
  assert.equal(normal.players[1].front[0].uid,notEnough.target.uid);
  const withBonus=prepare(true);
  const awaiting=dispatchUniversalAction(packs,withBonus.s,withBonus.effect,{actor:0});
- assert.equal(awaiting.pending?.kind,'effect-retire-bp');
+ assert.equal(awaiting.pending?.kind,'effect-retire-bp',JSON.stringify({ownFront:awaiting.players[0].front.map(c=>c&&({cardId:c.cardId,name:packs[0].cards[c.cardId]?.name})),enemyBp:universalBp(packs,awaiting,awaiting.players[1].front[0]),event:packs[0].cards['BLC-1-064'],queue:awaiting.effectQueue}));
  assert.equal(awaiting.pending.player,0);
  assert.equal(awaiting.pending.limit,5000);
  const valid=legalUniversalActions(packs,awaiting);
