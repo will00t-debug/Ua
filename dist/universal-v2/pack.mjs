@@ -6,7 +6,8 @@ export const V2_PHASES=Object.freeze(['start','move','main','attack']);
 export const V2_CARD_TYPES=Object.freeze(['character','event','field']);
 export const V2_TRIGGERS=Object.freeze(['draw','get','final','active','special','color','raid']);
 export const V2_EFFECT_TIMINGS=Object.freeze(['onPlay','onRaid','onAttack','onRaided']);
-export const V2_EFFECT_OPS=Object.freeze(['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','retireOppFrontUnderBp','restOppFrontUnderBp','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','discardToDraw','searchDeckMany','discardGate','searchDeckWhere','inspectTopArrange','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn']);
+export const V2_EFFECT_OPS=Object.freeze(['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','retireOppFrontUnderBp','restOppFrontUnderBp','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','discardToDraw','searchDeckMany','discardGate','searchDeckWhere','inspectTopArrange','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
+ 'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideColorUnderEnergy']);
 const integer=(v,low=0)=>Number.isInteger(v)&&v>=low;
 const own=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
 function verifyProgram(program,path){
@@ -55,6 +56,7 @@ function verifyProgram(program,path){
     e.then.some(x=>!['draw','millTop','peekTopOne','searchDeckOne',
      'searchDeckMany','searchDeckWhere','inspectTopArrange','recoverOutsideOne',
      'enemyBpDown','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
+     'recoverOutsideColorUnderEnergy',
      'restOppFrontUnderBp'].includes(x?.op)))
     throw Error(path+'['+i+'] invalid gated payment');
    verifyProgram(e.then,path+'['+i+'].then');
@@ -66,6 +68,19 @@ function verifyProgram(program,path){
   if(e.op==='retireOppFrontAllUnderBp'&&(
    !integer(e.bp,1)||e.bp>50000||Object.keys(e).some(k=>!['op','bp'].includes(k))
   ))throw Error(path+'['+i+'] invalid simultaneous retirement threshold');
+  if(e.op==='buffSelfIfFirstAttack'&&(
+   !integer(e.bp,1)||e.bp>5000||Object.keys(e).some(k=>!['op','bp'].includes(k))
+  ))throw Error(path+'['+i+'] invalid first-attack buff');
+  if(e.op==='bounceOwnOtherUnderEnergy'&&(
+   !integer(e.energy)||e.energy<0||e.energy>30||
+   Object.keys(e).some(k=>!['op','energy'].includes(k))
+  ))throw Error(path+'['+i+'] invalid own bounce');
+  if(e.op==='recoverOutsideColorUnderEnergy'&&(
+   typeof e.color!=='string'||!e.color.trim()||
+   !integer(e.energy)||e.energy<0||e.energy>30||
+   typeof e.optional!=='boolean'||
+   Object.keys(e).some(k=>!['op','color','energy','optional'].includes(k))
+  ))throw Error(path+'['+i+'] invalid color+energy recovery');
   if(e.op==='enemyFrontAllBpDown'&&(
    !integer(e.bp,1)||e.bp>5000||Object.keys(e).some(k=>!['op','bp'].includes(k))
   ))throw Error(path+'['+i+'] invalid simultaneous BP reduction');
@@ -187,6 +202,12 @@ function normalize(card,packId){
   if(Object.prototype.hasOwnProperty.call(authored,timing))
    throw Error(card.id+' cannot mix raw and templated effects at '+timing);
  const effects={...authored,...compiled};
+ // Only an actual character entering play can use the automatic bounce.
+ // This is not a generic removal action for events/attack effects.
+ for(const [timing,ops] of Object.entries(effects))
+  for(const op of ops)if(op.op==='bounceOwnOtherUnderEnergy'&&
+   (card.type!=='character'||timing!=='onPlay'))
+   throw Error(card.id+' self-bounce is only valid on character onPlay');
  if(implemented==='vanilla'&&(Object.keys(effects).length||card.effectText||
   card.activeExtraEnergy||card.impactNull))
   throw Error(card.id+' claims vanilla despite printed/declared effects');
