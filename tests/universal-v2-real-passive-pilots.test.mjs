@@ -11,6 +11,10 @@ import {
 // BLEACH uses a true 50-card deck. TTG remains only a 50-card TEST FIXTURE
 // with two explicitly named synthetic card IDs; never label it official.
 const bleach=verifiedBleachPurplePilotDeck();
+// The public baseline real deck intentionally excludes 037; this variant
+// substitutes one registered real copy without changing the 50-card total.
+const bleachWithUrahara={...bleach.counts,'BLC-1-034':3,'BLC-1-037':1};
+assert.deepEqual(validateUniversalDeck(bleach.pack,bleachWithUrahara),[]);
 const officialRed=verifiedPilotCards('gurren-lagann').filter(c=>c.color==='red');
 const filler=Array.from({length:2},(_,i)=>({
  id:'TEST-ONLY-TTG-ENERGY-'+i,name:'TEST-ONLY energy '+i,type:'character',
@@ -31,7 +35,7 @@ function take(s,p,id){
 }
 test('same audited ACTIVE +1 energy passive works in BLEACH purple and TTG red, and stops on REST',()=>{
  const packs=[bleach.pack,ttg];
- const s=newUniversalMatch(packs,{decks:[bleach.counts,redCounts],seed:525,first:0});
+ const s=newUniversalMatch(packs,{decks:[bleachWithUrahara,redCounts],seed:525,first:0});
  const purple=take(s,0,'BLC-1-037'),red=take(s,1,'TTG-1-066');
  s.players[0].energy[0]=purple;s.players[1].energy[0]=red;
  purple.ready=true;red.ready=true;
