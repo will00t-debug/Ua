@@ -147,8 +147,14 @@ function moveBias(s, a) {
   const c = loc.card;
   const available = energy(s, controller(s)) - generated(s, c);
   const ownHand = s.players[controller(s)].hand;
-  const affordable = ownHand.some(h => cardOf(h).energy <= available && cardOf(h).energy > 0);
-  return bp(s, c) >= 3000 && (available >= 2 || !affordable) ? 1.7 : -2;
+  const futureCosts = ownHand.map(h => number(cardOf(h)?.energy)).filter(n => n > 0);
+  const stranded = futureCosts.filter(n => n > available && n <= energy(s, controller(s)));
+  // Never move the generator that enables a playable high-cost card.
+  // The attack value of a small character must not destroy the energy curve.
+  if (stranded.length) return -20 - stranded.length * 3;
+  if (available < 2 && futureCosts.some(n => n > available)) return -16;
+  const affordable = futureCosts.some(n => n <= available);
+  return bp(s, c) >= 3000 && (available >= 3 || !affordable && available >= 2) ? 1.7 : -5;
 }
 
 // Preserve early energy development: low-cost generators are usually setup,
@@ -293,6 +299,7 @@ export function chooseAiAction(s, {difficulty = 'normal'} = {}) {
       if (!secret && level.depth > 1)
         score += 0.8 * searchGain(after, p, known, level.depth - 1, level.beam, budget);
       if (a.type === 'play') score += energyDevelopmentBias(s, a);
+      if (a.type === 'move') score += moveBias(s, a) * 2.5;
       // Playing an affordable card and retaining AP has situational value, not
       // an absolute "always Raid" priority.
       if (a.type === 'raid') score += 0.35;
