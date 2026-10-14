@@ -7,18 +7,25 @@ import {
  universalBp,universalEnergyByColor,assertUniversalMatch,universalPublicView
 } from '../dist/universal-v2/engine.mjs';
 
-// The pilot now has 5 BLEACH and 5 TTG profiles, NOT a complete 50-card
+// These real-card pilots remain incomplete; test-only filler is never an official 50-card V2 deck.
 // real deck. Filler is strictly TEST-ONLY, never exported from the pilot.
 function withSyntheticFiller(title,{color}={}){
  const real=verifiedPilotCards(title).filter(c=>!color||c.color===color);
  const actualColor=color||real[0].color;
- const synthetic=Array.from({length:13-real.length},(_,i)=>({
+ const synthetic=Array.from({length:16-real.length},(_,i)=>({
   id:'TEST-ONLY-'+title+'-'+actualColor+'-'+i,
   name:'Test fixture '+i,color:actualColor,type:'character',
   energy:i%3,ap:1,bp:1500+(i%4)*500,gen:1,implementation:'vanilla'
  }));
  const cards=[...real,...synthetic];
- const deck=Object.fromEntries(cards.map((c,i)=>[c.id,i===cards.length-1?2:4]));
+ const deck=Object.fromEntries(cards.map(c=>[c.id,0]));
+ // No more than four FINAL triggers across all distinct card IDs (official Q7).
+ for(const c of cards.filter(c=>c.trigger==='final'))deck[c.id]=1;
+ let remaining=50-Object.values(deck).reduce((a,b)=>a+b,0);
+ for(const c of cards.filter(c=>c.trigger!=='final')){
+  const copies=Math.min(4,remaining);deck[c.id]=copies;remaining-=copies;
+ }
+ assert.equal(remaining,0,'test fixture has enough non-FINAL filler');
  const pack=createUniversalPack({id:title,cards,version:'synthetic-mixed-test-only'});
  assert.deepEqual(validateUniversalDeck(pack,deck),[]);
  return {pack,deck,realIds:real.map(c=>c.id)};
@@ -75,11 +82,11 @@ function testEntry(other,owner,id){
  return result;
 }
 test('official-record pilot cards have explicitly pinned printed energy/AP/BP/trigger and no implicit support',()=>{
- assert.deepEqual(REAL_V2_PILOT_IDS.bleach,['BLC-1-034','BLC-1-039','BLC-1-102','BLC-1-103','BLC-1-107']);
- assert.deepEqual(REAL_V2_PILOT_IDS['gurren-lagann'],['TTG-1-009','TTG-1-051','TTG-1-042','TTG-1-064','TTG-1-065']);
+ assert.deepEqual(REAL_V2_PILOT_IDS.bleach,['BLC-1-034','BLC-1-039','BLC-1-066','BLC-1-102','BLC-1-103','BLC-1-107']);
+ assert.deepEqual(REAL_V2_PILOT_IDS['gurren-lagann'],['TTG-1-009','TTG-1-036','TTG-1-037','TTG-1-038','TTG-1-051','TTG-1-042','TTG-1-064','TTG-1-065','TTG-1-078','TTG-1-079']);
  const b=verifiedPilotPack('bleach'),t=verifiedPilotPack('gurren-lagann');
- assert.equal(Object.keys(b.cards).length,5);
- assert.equal(Object.keys(t.cards).length,5);
+ assert.equal(Object.keys(b.cards).length,6);
+ assert.equal(Object.keys(t.cards).length,10);
  assert.ok(validateUniversalDeck(b,bleach.deck).length>0,'V2 real-only deck is not ready');
  assert.ok(validateUniversalDeck(t,green.deck).length>0);
  for(const id of REAL_V2_PILOT_IDS.bleach)assert.ok(portVerifiedPilotCard('bleach',id));
