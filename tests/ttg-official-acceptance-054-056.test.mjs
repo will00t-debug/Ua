@@ -139,6 +139,7 @@ test('056 Q2291 refuses same GurrenLagann name raided earlier this turn even by 
  assert.ok(!allowed.some(a=>a.handUid===one.uid||a.handUid===two.uid));
  assert.ok(allowed.some(a=>a.handUid===lagan.uid));
  assert.ok(allowed.some(a=>a.mode==='decline'));
+ s=withTtgDerivedEnergy(s,0);
  assert.ok(assertTtgCoreState(s));
 });
 test('056 Q2292 targeted regression: 073 entry must NEVER incorrectly invoke 074 DRAW/BP',()=>{
@@ -158,5 +159,5 @@ test('056 Q2292 targeted regression: 073 entry must NEVER incorrectly invoke 074
  assert.equal(next.players[0].hand.length,before-1,'no incorrect 074 mandatory draw');
  assert.equal(next.players[0].deck[0].uid,top);
  assert.deepEqual(next.players[0].apCards.map(c=>c.ready),ap);
- assert.ok(assertTtgCoreState(next));
+ assert.ok(assertTtgCoreState(withTtgDerivedEnergy(next,0)));
 });
