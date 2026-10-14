@@ -523,3 +523,46 @@ test('nested COLOR life trigger into protected full front line preserves its ori
  assert.ok(protectedGame.players[0].outside.some(c=>c.uid===under.uid));
  assert.equal(assertUniversalMatch(packs,protectedGame),true);
 });
+
+test('protected Raided card in a FULL ENERGY line resolves leave replacement before AP payment and new energy placement',()=>{
+ const {packs,s,main,under,newcomer}=protectedFullLineFixture(921);
+ const generator=s.players[0].energy[0];
+ s.players[0].energy[0]=main;s.players[0].front[0]=generator;
+ const grab=id=>{
+  for(const zone of ['hand','deck','life','outside']){
+   const a=s.players[0][zone],i=a.findIndex(c=>c.cardId===id);
+   if(i>=0)return a.splice(i,1)[0];
+  }
+  throw Error('No physical fixture card '+id);
+ };
+ s.players[0].energy[1]=grab('F03');
+ s.players[0].energy[2]=grab('F04');
+ s.players[0].energy[3]=grab('F05');
+ assert.equal(assertUniversalMatch(packs,s),true);
+ const entry=legalUniversalActions(packs,s).find(a=>
+  a.type==='play'&&a.uid===newcomer.uid&&a.line==='energy'&&a.slot===0);
+ assert.ok(entry,'normal energy-line deployment may replace protected occupant when all four slots are occupied');
+ assert.equal(entry.replaceUid,main.uid);
+ const ap=s.players[0].apCards.filter(x=>x.ready).length;
+ const stalled=dispatchUniversalAction(packs,s,entry,{actor:0});
+ assert.equal(stalled.pending?.kind,'leave-replacement');
+ assert.equal(stalled.players[0].apCards.filter(x=>x.ready).length,ap);
+ assert.deepEqual(legalUniversalActions(packs,stalled),[
+  {type:'chooseLeaveReplacement',mode:'protect'},
+  {type:'chooseLeaveReplacement',mode:'leave'}
+ ]);
+ const protectedEnergy=dispatchUniversalAction(packs,stalled,
+  {type:'chooseLeaveReplacement',mode:'protect'},{actor:0});
+ assert.equal(protectedEnergy.players[0].energy[0].uid,main.uid);
+ assert.ok(protectedEnergy.players[0].outside.some(x=>x.uid===under.uid));
+ assert.ok(protectedEnergy.players[0].hand.some(x=>x.uid===newcomer.uid));
+ assert.equal(protectedEnergy.players[0].apCards.filter(x=>x.ready).length,ap);
+ assert.equal(assertUniversalMatch(packs,protectedEnergy),true);
+ const accepted=dispatchUniversalAction(packs,stalled,
+  {type:'chooseLeaveReplacement',mode:'leave'},{actor:0});
+ assert.equal(accepted.players[0].energy[0].uid,newcomer.uid);
+ assert.ok(accepted.players[0].removed.some(x=>x.uid===main.uid));
+ assert.ok(accepted.players[0].removed.some(x=>x.uid===under.uid));
+ assert.equal(accepted.players[0].apCards.filter(x=>x.ready).length,ap-1);
+ assert.equal(assertUniversalMatch(packs,accepted),true);
+});
