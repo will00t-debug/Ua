@@ -110,7 +110,7 @@ test('TTG-1-049 must return ITSELF when no eligible other low-energy character e
 
 test('TTG-1-052 discard then optional red energy<=2 recovery; payment card itself can return',()=>{
  let s=fresh(520);
- const generator=take(s,0,'TTG-1-046'),source=take(s,0,'TTG-1-052');
+ const generator=take(s,0,'TTG-1-049'),source=take(s,0,'TTG-1-052');
  s.players[0].energy[0]=generator;generator.ready=true;s.players[0].hand.push(source);
  const payment=take(s,0,'TTG-1-042'),blue=take(s,1,'BLC-1-034'),
  high=take(s,0,'TTG-1-073');
