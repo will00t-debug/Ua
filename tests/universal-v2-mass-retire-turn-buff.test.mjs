@@ -29,6 +29,12 @@ function pack(id,defender=false){
   cards[10]={...cards[10],implementation:'dsl',templateEffects:{onPlay:[
    {template:'buffOwnTraitAllTurn',trait:'Ally',bp:1000}
   ]}};
+  cards[12]={...cards[12],implementation:'dsl',templateEffects:{onPlay:[
+   {template:'payDiscardThen',optional:true,then:[
+    {template:'retireEnemyFrontAllUnderBp',bp:3500},{template:'draw',count:1}
+   ]},
+   {template:'draw',count:1}
+  ]}};
  }else{
   cards[8]={...cards[8],raidName:'Unit 0',implementation:'dsl',effects:{onPlay:[]},
    conditionalUnderFaceDown:{bp:1000,impact:1,leaveReplacementMinBp:500}};
@@ -182,4 +188,37 @@ test('mass effect authoring is bounded and rejects invalid parameters or hidden 
  assert.throws(()=>createUniversalPack({id:'invalid-raid-base',cards:[
   {...basic,templateEffects:{onRaided:[{template:'enemyFrontAllBpDown',bp:1000}]}}
  ]}),/unsupported Raid-base timing effect/);
+});
+
+test('paid retire-all gate does not execute on declined payment; on payment it pauses for Raid replacement before both draws',()=>{
+ const f=prepare('S12'),protectedTop=raid(f.s,0,2);
+ const target=take(f.s,1,'S03');f.s.players[1].front[1]=target;
+ const beforeDeck=f.s.players[0].deck.length,match=structuredClone(f.s);
+ const q=play(f);
+ assert.equal(q.pending.kind,'effect-discard-gate');
+ assert.equal(q.pending.player,0);
+ const skipped=dispatchUniversalAction(packs,q,
+  {type:'chooseDiscardGate',uid:null},{actor:0});
+ assert.equal(skipped.pending,null);
+ assert.equal(skipped.players[1].front[0]?.uid,protectedTop.uid);
+ assert.equal(skipped.players[1].front[1]?.uid,target.uid);
+ assert.equal(skipped.players[0].deck.length,beforeDeck-1,
+  'unconditional draw still runs, paid retirement and paid draw never run');
+ assert.equal(assertUniversalMatch(packs,skipped),true);
+ const paidAction=legalUniversalActions(packs,q).find(a=>a.uid!==null);
+ assert.ok(paidAction);
+ let s=dispatchUniversalAction(packs,q,paidAction,{actor:0});
+ assert.equal(s.pending.kind,'leave-replacement');
+ assert.equal(s.pending.player,1);
+ assert.equal(s.players[0].deck.length,beforeDeck,
+  'both paid and unconditional draws await the protected leave decision');
+ const protection=legalUniversalActions(packs,s).find(a=>a.mode==='protect');
+ s=dispatchUniversalAction(packs,s,protection,{actor:1});
+ assert.equal(s.pending,null);
+ assert.equal(s.players[1].front[0]?.uid,protectedTop.uid);
+ assert.equal(s.players[1].front[1],null);
+ assert.equal(s.players[0].deck.length,beforeDeck-2);
+ assert.ok(s.players[0].outside.some(c=>c.uid===paidAction.uid));
+ assert.equal(assertUniversalMatch(packs,s),true);
+ assert.deepEqual(f.s,match);
 });
