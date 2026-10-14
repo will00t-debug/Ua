@@ -163,6 +163,12 @@ function continueEffectQueue(pack,s){
    const under=c=>(c.under||[]).some(x=>x.faceDown===true||under(x))||
     (c.stack||[]).some(x=>x.faceDown===true||under(x));
    if(under(raid))draw(s,owner,1);
+  }else if(job.op==='openBlock'){
+   // Internal attack-window continuation, never a user-authored card DSL op.
+   // Blocking begins only AFTER all attack-time choices and queued effects.
+   const attacking=pl.front.find(c=>c?.uid===job.sourceUid);
+   if(!attacking)throw Error('Attack source left the front line before blocking');
+   s.pending={kind:'block',player:1-owner,attackerUid:job.sourceUid};
   }else if(job.op==='enemyBpDown'){
    const targetUids=s.players[1-owner].front.filter(Boolean).map(c=>c.uid);
    if(targetUids.length)s.pending={kind:'effect-target',player:owner,sourceUid:job.sourceUid,
@@ -738,8 +744,12 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
    const attacker=pl.front.find(c=>c?.uid===action.uid);
    if(!attacker)throw Error('Attacker missing');
    attacker.ready=false;
-   applyEffects(pack,s,attacker,'onAttack',p);
-   s.pending={kind:'block',player:1-p,attackerUid:attacker.uid};
+   // Queue the blocker decision after the attack triggers. A targeted
+   // onAttack effect may suspend resolution for its controller's choice;
+   // assigning block here would overwrite that pending choice.
+   s.effectQueue.push(...programJobs(pack,attacker,'onAttack',p),
+    {op:'openBlock',owner:p,sourceUid:attacker.uid});
+   continueEffectQueue(pack,s);
    break;
   }
   default:throw Error('Unsupported universal action');
@@ -771,7 +781,7 @@ export function assertUniversalMatch(pack,s){
  if(!Array.isArray(s.movedUids)||new Set(s.movedUids).size!==s.movedUids.length)
   throw Error('Invalid movement accounting');
  if(!Array.isArray(s.effectQueue)||s.effectQueue.some(e=>!playerIndex(e.owner)||
-   !['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','retireOppFrontUnderBp','restOppFrontUnderBp','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown'].includes(e.op)))
+   !['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','retireOppFrontUnderBp','restOppFrontUnderBp','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','openBlock'].includes(e.op)))
   throw Error('Invalid queued effects');
  for(let p=0;p<2;p++){
   const pl=s.players[p],uids=new Set(),items=[];
