@@ -1,0 +1,40 @@
+name: AI v4 production teacher baseline
+on:
+  workflow_dispatch:
+    inputs:
+      games:
+        description: Number of demonstration games
+        required: false
+        default: '4'
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: de4434c298379b3e232fa539b0936c14b995e1ec
+          path: production
+      - uses: actions/checkout@v4
+        with:
+          ref: feature/ai-v4-ppo
+          path: v4
+      - name: Inject isolated AI v4 adapters into pinned production checkout
+        run: |
+          cp v4/dist/ai-v4-environment.mjs production/dist/
+          cp v4/dist/ai-v4-ppo.mjs production/dist/
+          cp v4/scripts/ai-v4-teacher-eval.mjs production/scripts/
+          cp v4/tests/ai-v4-ppo.test.mjs production/tests/
+      - name: Verify PPO primitives
+        working-directory: production
+        run: node --test tests/ai-v4-ppo.test.mjs
+      - name: Evaluate production hard teacher and export demonstrations
+        working-directory: production
+        env:
+          AI_V4_BASELINE_SHA: de4434c298379b3e232fa539b0936c14b995e1ec
+          AI_V4_GAMES: ${{ inputs.games || '4' }}
+          AI_V4_DATASET_PATH: ai-v4-teacher.jsonl
+        run: node scripts/ai-v4-teacher-eval.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ai-v4-teacher-demonstrations
+          path: production/ai-v4-teacher.jsonl
