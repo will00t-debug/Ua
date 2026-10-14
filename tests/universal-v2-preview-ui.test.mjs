@@ -70,3 +70,21 @@ test('card labels use the correct player title pack, even with identical printed
  assert.equal(uiActionLabel({type:'chooseOwnBounce',uid:self.uid},{pack:packs,state:s}),
   '將 '+mine.pack.cards[self.cardId].name+' 返回手牌');
 });
+
+test('mobile board shares one prevalidated legal set per render and freezes selected AI difficulty',()=>{
+ const script=source('../dist/universal-v2-preview.mjs');
+ const slots=script.split('function zoneSlots(')[1]?.split('function stats(')[0];
+ assert.ok(slots);
+ assert.ok(!slots.includes('legalUniversalActions('),
+  'mobile board must not re-validate the full 50-card deck per visible slot');
+ assert.match(script,/const legal=legalUniversalActions\(app.packs,s\);/);
+ assert.match(script,/sideBoard\(v,1,legal\)/);
+ assert.match(script,/sideBoard\(v,0,legal\)/);
+ assert.match(script,/choices\(legal\)/);
+ assert.match(script,/pendingDialog\(legal\)/);
+ assert.match(script,/app.aiDifficulty=\$\('ai-level'\).value/);
+ assert.match(script,/difficulty:app.aiDifficulty/);
+ assert.match(script,/publicPreviewActionLabel\(app.packs,previous,app.state,choice,1\)/);
+ assert.match(script,/window.confirm\('除錯重播檔包含/);
+ assert.match(script,/app.undo.replay/);
+});
