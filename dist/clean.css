@@ -322,3 +322,27 @@ select, input, textarea { background: #fff; color: var(--text); border-color: #c
 
 /* Printed Raid is not an active Raid: distinguish normal deployment clearly. */
 .slotStack.raidInactive{color:#697789;border-color:#b6c0ca;background:#f2f4f7;font-size:7px}
+
+.publicTriggerPanel{margin:10px 0;padding:12px;border:1px solid #c6cfd8;border-radius:10px;background:#f6f8fa;color:#263342}
+.publicTriggerPanel>header{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.publicTriggerPanel>header>b{font-size:13px}
+.publicTriggerCards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,225px),1fr));gap:8px}
+.publicTriggerCard{display:flex;align-items:flex-start;gap:9px;padding:8px;border:1px solid #cbd4de;border-radius:8px;background:#fff;min-width:0}
+.publicTriggerCard>img{width:56px;aspect-ratio:5/7;object-fit:contain;border-radius:4px;flex:none}
+.publicTriggerDetails{display:flex;flex-direction:column;align-items:flex-start;gap:3px;min-width:0;overflow-wrap:anywhere;font-size:12px}
+.publicTriggerDetails>small{font-size:10px;color:#596c7c}
+.publicTriggerDetails>b{font-size:13px}
+.publicTriggerDetails>b>span{font-weight:400;font-size:10px;color:#607080}
+.publicTriggerDetails>strong{font-size:11px;color:#a64921}
+.publicTriggerDetails>p{margin:3px 0 0;color:#475569;font-size:11px}
+.currentPublicTrigger{padding:9px;margin:8px 0;border:1px solid #dbab86;border-radius:8px;background:#fff8f1}
+.currentPublicTrigger h3{font-size:13px;margin:0 0 7px}
+.currentPublicTrigger .publicTriggerCard>img{width:90px}
+.publicTriggerHistory{display:grid;gap:10px;max-height:65vh;overflow-y:auto}
+.publicTriggerHistory .publicTriggerCard>img{width:78px}
+@media(max-width:480px){
+ .publicTriggerPanel{padding:9px;margin:8px 0}
+ .publicTriggerCards{grid-template-columns:1fr}
+ .publicTriggerCard>img{width:52px}
+ .currentPublicTrigger .publicTriggerCard>img{width:75px}
+}

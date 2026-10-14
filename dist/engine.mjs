@@ -547,7 +547,15 @@ function queueEvent(s,p,c){
 function damage(s,p,count=1){
  const reveals=s.players[p].life.splice(0,count);
  log(s,`${s.players[p].name}受到 ${count} 點傷害，翻開 ${reveals.length} 張生命。`,'damage');
- for(const c of reveals)s.revealed.push({p,card:c});
+ for(const c of reveals){
+  s.revealed.push({p,card:c});
+  // Face-up life cards are public, even without a Trigger or when the AI
+  // resolves it immediately. Hidden life/deck/hand cards are not included.
+  const d=cardOf(c);
+  s.triggerHistory ||= [];
+  s.triggerHistory.push({uid:c.uid,player:p,turn:s.turn,cardId:c.cardId,trigger:d.trigger||null,outcome:d.trigger?'pending':'none'});
+  if(s.triggerHistory.length>60)s.triggerHistory.shift();
+ }
  s.queue.push({kind:'triggerOrder',p,uids:reveals.map(c=>c.uid)},{kind:'lifeCheck',p});
 }
 
@@ -874,6 +882,11 @@ function resolveChoice(s,ids){
   }
   case 'triggerChoice':{
    const c=s.revealed.find(x=>x.card.uid===e.uid)?.card,d=cardOf(c),choice=chosen[0];
+   s.triggerHistory ||= [];
+   let publicTrigger=s.triggerHistory.findLast(x=>x.uid===e.uid&&x.player===p&&x.outcome==='pending');
+   // Resume older saves that were paused on an already-public life card.
+   if(!publicTrigger){publicTrigger={uid:e.uid,player:p,turn:s.turn,cardId:c.cardId,trigger:d.trigger||null};s.triggerHistory.push(publicTrigger);if(s.triggerHistory.length>60)s.triggerHistory.shift();}
+   publicTrigger.outcome=choice.id==='skip'?'skipped':choice.id==='get'||d.trigger==='get'?'get':choice.action?'raid':'activated';
    if(choice.id==='skip'){finishReveal(s,p,e.uid);log(s,`${s.players[p].name}不發動 Trigger。`);}
    else if(choice.id==='get'||d.trigger==='get'){s.players[p].triggerUsedTurn=s.turn;finishReveal(s,p,e.uid,'hand');log(s,`${d.name}加入手牌。`,'effect');}
    else if(choice.action){s.players[p].triggerUsedTurn=s.turn;finishReveal(s,p,e.uid,null);place(s,p,c,choice.action.line,choice.action.slot,{raidTarget:choice.action.target});}

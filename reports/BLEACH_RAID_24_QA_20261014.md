@@ -75,3 +75,12 @@
 - 仍需補齊生命 RAID Trigger、所有跨卡／戰鬥替代連鎖及手機操作驗收，不宣稱劍八或全 24 張 FAQ 已完整完成。PR #49 保持 Draft，不合併、不發布。
 
 - 本輪 Node 24 本機 `npm test`：**792/792 pass，0 fail**；Node 22 CI 由本次 PR 更新觸發。
+
+## 生命 Trigger 沒有顯示：整合公開翻牌介面
+
+- 原因：BLEACH 的 `modalContent` 為保護 AI 私人選擇而隱藏 AI 的效果視窗，但主畫面沒有獨立的公開生命翻牌區。翻牌與效果結算完成後只留下文字紀錄。
+- 沿用 PR #31 / `feature/direct-placement-trigger-display` 已有的公開翻牌程式，僅整合 Trigger 功能到 PR #49，不覆蓋此前狛村／劍八修正，也未納入無關的登場操作差異。
+- 受傷瞬間記錄每張公開生命卡（包含無 Trigger 與 DAMAGE 2 同時翻牌），主畫面保留最近 3 張的卡圖、卡號、Trigger 效果及等待／不發動／已發動／加入手牌／Raid 結果；可查看最近 60 次翻牌。
+- 人類 Trigger 選擇視窗另顯示來源卡。AI 私人查看牌庫選項仍不渲染；只以已公開翻牌歷史及 `revealed` 來源顯示。補上舊存檔正停在 Trigger 選擇時的顯示與結算後歷史保存。
+- `tests/public-trigger-display.test.mjs` 8 項包含真實 `dispatch` 與載入實際 `app.mjs`、AI 定時決策、翻牌紀錄按鈕、舊存檔選擇按鈕、GET、重複翻開同卡、雙傷害與私人資訊不外洩。全套本機 Node24 **800/800 pass，0 fail**；語法檢查通過。
+- 曾嘗試 Playwright 手機尺寸視覺檢查，但此環境沒有 Chromium 可執行檔，因此本輪 UI 驗證是可執行 DOM 測試，未宣稱手機實機／截圖驗收。正式網站仍未部署。
