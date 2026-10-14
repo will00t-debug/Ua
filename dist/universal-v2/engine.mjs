@@ -207,7 +207,7 @@ function vacate(s,p,line,slot,destination='outside'){
  if(!['outside','removed'].includes(destination))throw Error('Invalid destination');
  s.players[p][line][slot]=null;
  const expand=c=>[c,...(c.stack||[]).flatMap(expand),...(c.under||[]).flatMap(expand)];
- s.players[p][destination].push(...expand(top).map(c=>({...c,stack:[],under:[],buffs:[],ready:false})));
+ s.players[p][destination].push(...expand(top).map(c=>({...c,stack:[],under:[],buffs:[],ready:false,faceDown:false})));
 }
 function retire(pack,s,p,line,slot,{postImpact=false}={}){
  const c=s.players[p][line][slot];
@@ -748,6 +748,16 @@ export function assertUniversalMatch(pack,s){
 }
 // Safe, title-agnostic view model for common UI: no opponent hand IDs, hidden
 // life identities or private deck order are ever exported to the viewer.
+// Q2298: a player can inspect their own facedown under-cards, but an
+// opponent receives only a facedown marker, never card IDs or physical UID.
+function layerView(cardOnBase,owner,viewer){
+ if(cardOnBase.faceDown===true&&owner!==viewer)return {faceDown:true};
+ return {
+  uid:cardOnBase.uid,cardId:cardOnBase.cardId,faceDown:cardOnBase.faceDown===true,
+  stack:(cardOnBase.stack||[]).map(x=>layerView(x,owner,viewer)),
+  under:(cardOnBase.under||[]).map(x=>layerView(x,owner,viewer))
+ };
+}
 export function universalPublicView(pack,s,viewer=0){
  assertUniversalMatch(pack,s);
  if(!playerIndex(viewer))throw Error('Invalid viewer');
@@ -758,8 +768,8 @@ export function universalPublicView(pack,s,viewer=0){
   players:s.players.map((pl,p)=>({
    title:s.packIds[p],lifeCount:pl.life.length,deckCount:pl.deck.length,handCount:pl.hand.length,
    hand:p===viewer?pl.hand.map(c=>({uid:c.uid,cardId:c.cardId})):null,
-   front:pl.front.map(c=>c?{uid:c.uid,cardId:c.cardId,ready:c.ready,bp:bp(pack,s,c),raidDepth:c.stack?.length||0}:null),
-   energy:pl.energy.map(c=>c?{uid:c.uid,cardId:c.cardId,ready:c.ready,produces:card(pack,c).gen}:null),
+   front:pl.front.map(c=>c?{uid:c.uid,cardId:c.cardId,ready:c.ready,bp:bp(pack,s,c),raidDepth:c.stack?.length||0,raidLayers:(c.stack||[]).map(layer=>layerView(layer,p,viewer))}:null),
+   energy:pl.energy.map(c=>c?{uid:c.uid,cardId:c.cardId,ready:c.ready,produces:card(pack,c).gen,raidLayers:(c.stack||[]).map(layer=>layerView(layer,p,viewer))}:null),
    apReady:pl.apCards.filter(c=>c.ready).length,apTotal:pl.apCards.filter(c=>c.inPlay).length,energyTotal:calcEnergy(pack,s,p),energyByColor:{...universalEnergyByColor(pack,s,p)},
    outside:pl.outside.map(c=>({uid:c.uid,cardId:c.cardId}))
   }))
