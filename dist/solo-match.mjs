@@ -181,38 +181,38 @@ function retire(s,p,c){
  }
  if(c.cardId==='SLG-1-007'&&s.players[p].deck.length)draw(s,s.players[p]);
 }
+// Official general FAQ Q99: life triggers may always be declined.
+// Keep each revealed physical card in outside until its controller chooses;
+// do not draw, put in hand, or restore FINAL life before that decision.
 function hurt(s,defender,amount=1){
  const p=s.players[defender];
  for(let i=0;i<amount&&s.status==='playing';i++){
   if(!p.life.length){s.status='finished';s.winner=1-defender;break;}
   const c=p.life.shift(),t=d(c).trigger;
-  if(t==='get')p.hand.push(c);
-  else if(t==='raid'){
-   p.hand.push(c);
-   if(soloEnergy(s,defender)>=usableEnergy(s,defender,c)&&field(p).some(base=>d(base).nameJa===d(c).nameJa)){
-    s.pending={kind:'raidTrigger',p:defender,uid:c.uid};break;
-   }
-  }else{
-   p.outside.push(c);
-   if(t==='draw')draw(s,p);
-   if(t==='final'&&p.life.length===0&&p.deck.length)p.life.unshift(p.deck.shift());
-   if(t==='color'){
-    // Purple COLOR revives from outside into front; green COLOR deploys from hand.
-    const sourceZone=d(c).color==='purple'?'outside':'hand';
-    const lines=sourceZone==='outside'?['front']:['front','energy'];
-    const choices=p[sourceZone].filter(x=>d(x).type==='character'&&d(x).color===d(c).color&&d(x).energy<=2&&d(x).ap===1);
-    if(choices.length&&lines.some(line=>p[line].some(x=>!x)))
-     s.pending={kind:'colorTrigger',p:defender,sourceZone,lines,choices:choices.map(x=>x.uid)};
-   }
-   if(t==='special'){
-    const targets=s.players[1-defender].front.filter(x=>canSelectEnemy(s,defender,x));
-    if(targets.length)s.pending={kind:'specialTrigger',p:defender,choices:targets.map(x=>x.uid)};
-   }
-  }
-  if(t==='active'){
+  p.outside.push(c);
+  if(['get','draw','raid'].includes(t)||(t==='final'&&p.life.length===0)){
+   s.pending={kind:'soloOptionalLife',p:defender,cardUid:c.uid,trigger:t};
+  }else if(t==='color'){
+   // Purple COLOR revives from outside into front; green COLOR deploys from hand.
+   const sourceZone=d(c).color==='purple'?'outside':'hand';
+   const lines=sourceZone==='outside'?['front']:['front','energy'];
+   const choices=p[sourceZone].filter(x=>d(x).type==='character'&&d(x).color===d(c).color&&d(x).energy<=2&&d(x).ap===1);
+   if(choices.length&&lines.some(line=>p[line].some(x=>!x)))
+    s.pending={kind:'colorTrigger',p:defender,sourceZone,lines,choices:choices.map(x=>x.uid)};
+  }else if(t==='special'){
+   const targets=s.players[1-defender].front.filter(x=>canSelectEnemy(s,defender,x));
+   if(targets.length)s.pending={kind:'specialTrigger',p:defender,choices:targets.map(x=>x.uid)};
+  }else if(t==='active'){
    const choices=field(p).map(x=>x.uid);
-   if(choices.length){s.pending={kind:'activeTrigger',p:defender,choices,from:c.uid};break;}
+   if(choices.length)s.pending={kind:'activeTrigger',p:defender,choices,from:c.uid};
   }
+  if(s.pending){
+   if(amount-i-1>0)s.pendingLifeDamage={p:defender,remaining:amount-i-1};
+   break;
+  }
+ }
+ if(!s.pending&&!s.pendingLifeDamage&&s.status==='playing'&&!p.life.length){
+  s.status='finished';s.winner=1-defender;
  }
 }
 function continueAttackEffects(s){
@@ -340,7 +340,26 @@ function combat(s,blockUid){
 }
 function choose(s,action){
  const q=s.pending;if(!q)throw Error('no choice');
- if(q.kind==='discard'){
+ if(q.kind==='soloOptionalLife'){
+  const p=s.players[q.p],i=p.outside.findIndex(c=>c.uid===q.cardUid);
+  if(i<0)throw Error('revealed life card missing');
+  if(action.mode==='skip'){s.pending=null;}
+  else if(q.trigger==='get'&&action.mode==='get'){
+   p.hand.push(p.outside.splice(i,1)[0]);s.pending=null;
+  }else if(q.trigger==='raid'&&action.mode==='get'){
+   p.hand.push(p.outside.splice(i,1)[0]);s.pending=null;
+  }else if(q.trigger==='raid'&&action.mode==='raid'){
+   const c=p.outside[i];
+   if(soloEnergy(s,q.p)<usableEnergy(s,q.p,c)||!field(p).some(base=>canRaid(s,q.p,c,base)))
+    throw Error('cannot activate illegal Raid life trigger');
+   p.hand.push(p.outside.splice(i,1)[0]);s.pending={kind:'raidTrigger',p:q.p,uid:c.uid};
+  }else if(q.trigger==='draw'&&action.mode==='draw'){
+   s.pending=null;draw(s,p);
+  }else if(q.trigger==='final'&&action.mode==='final'){
+   s.pending=null;
+   if(!p.life.length&&p.deck.length)p.life.unshift(p.deck.shift());
+  }else throw Error('illegal life trigger activation');
+ }else  if(q.kind==='discard'){
   const p=s.players[q.p],i=p.hand.findIndex(c=>c.uid===action.uid);
   if(i<0)throw Error('hand discard must be chosen');
   p.outside.push(p.hand.splice(i,1)[0]);s.pending=null;
@@ -826,7 +845,16 @@ function choose(s,action){
   s.pending=null;combat(s,action.uid);
  }else throw Error('unknown choice type');
  if(!s.pending&&s.pendingStack?.length)s.pending=s.pendingStack.pop();
- if(!s.pending&&s.afterAttackPending)scheduleAttackAfter(s);
+ if(!s.pending&&s.pendingLifeDamage&&s.status==='playing'){
+  const {p,remaining}=s.pendingLifeDamage;s.pendingLifeDamage=null;
+  if(remaining>0)hurt(s,p,remaining);
+ }
+ if(!s.pending&&s.status==='playing'&&s.phase==='attack'&&!s.pendingLifeDamage){
+  // A player at zero life loses only after the final life trigger has resolved.
+  const defender=s.players.findIndex(p=>p.life.length===0);
+  if(defender>=0){s.status='finished';s.winner=1-defender;}
+ }
+ if(!s.pending&&s.afterAttackPending&&s.status==='playing')scheduleAttackAfter(s);
  if(!s.pending&&s.phase==='attackEnd')advanceAttackEnd(s);
 }
 function apply064Debuff(s,p){
@@ -1028,6 +1056,18 @@ export function soloTrainingLegalActions(s){
     for(const order of orders(remaining))result.push({type:'choose',outsideUid,order});
    }
    return result;
+  }
+  if(q.kind==='soloOptionalLife'){
+   const p=s.players[q.p],actions=[{type:'choose',mode:'skip'}];
+   if(q.trigger==='get'||q.trigger==='raid')actions.push({type:'choose',mode:'get'});
+   if(q.trigger==='draw')actions.push({type:'choose',mode:'draw'});
+   if(q.trigger==='final'&&p.deck.length)actions.push({type:'choose',mode:'final'});
+   if(q.trigger==='raid'){
+    const c=p.outside.find(c=>c.uid===q.cardUid);
+    if(c&&soloEnergy(s,q.p)>=usableEnergy(s,q.p,c)&&field(p).some(base=>canRaid(s,q.p,c,base)))
+     actions.push({type:'choose',mode:'raid'});
+   }
+   return actions;
   }
   if(q.kind==='colorTrigger'){
    const p=s.players[q.p];return [{type:'choose',uid:null},...q.choices.flatMap(uid=>(q.lines||['front','energy']).flatMap(line=>p[line].flatMap((c,slot)=>c?[]:[{type:'choose',uid,line,slot}])) )];
@@ -1247,6 +1287,7 @@ export function soloTrainingBotAction(s){
   if(s.pending.kind==='entryBounce')return legal[0];
   if(s.pending.kind==='entryRecover'||s.pending.kind==='sungRecovery')return legal.find(a=>a.uid!=null)||legal[0];
   if(s.pending.kind==='dailyUnder'||s.pending.kind==='dailyRecover')return legal.find(a=>a.uid!=null)||legal[0];
+  if(s.pending.kind==='soloOptionalLife')return legal.find(a=>a.mode==='final'||a.mode==='draw'||a.mode==='get'||a.mode==='raid')||legal[0];
   if(s.pending.kind==='raidTrigger')return legal.find(a=>a.uid!=null)||legal[0];
   if(s.pending.kind==='raid058Discard')return legal.find(a=>a.uid!=null)||legal[0];
   if(s.pending.kind==='raid058Unfreeze')return legal.find(a=>a.uid!=null)||legal[0];
