@@ -170,7 +170,7 @@ const LEGACY_RAID_BOX = {
  'BLC-2-034':{entry:true},
  'BLC-2-038':{entry:true,ability:true},
  'BLC-2-057':{entry:true},
- 'BLC-2-065':{entry:true},
+ 'BLC-2-065':{entry:true,impactNull:true,immuneEnemyRest:true,immuneEnemyBounce:true,startTurnRaidTop:true},
 };
 for(const [id,inside] of Object.entries(LEGACY_RAID_BOX)){
  if(!EXTRA_RULES[id]?.raid)throw new Error('Legacy Raid-box profile missing: '+id);

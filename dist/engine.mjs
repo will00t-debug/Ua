@@ -25,6 +25,8 @@ const raidBaseMatches=(raid,base)=>{const want=String(cardOf(raid).raid||'').rep
 const ruleEnabled=(s,p,c,r)=>!r?.raidOnly||isRaided(c);
 const protectedByEffect=(s,c,origin='character')=>!!(c?.protectedUntilSource&&s.players[c.protectedUntilSource.p].turnCount<c.protectedUntilSource.turnCount&&!(c.protectedUntilSource.scope==='characterTrigger'&&origin==='event'));
 const silenced=(s,c)=>!!(c?.silencedUntilSource&&s.players[c.silencedUntilSource.p].turnCount<c.silencedUntilSource.turnCount);
+// Printed continuous abilities obey both text loss and their printed Raid box.
+const printedRuleActive=(s,c,key)=>!!cardOf(c)?.rules?.[key]&&!silenced(s,c)&&raidBoxEnabled(c,key);
 
 const remainingBuff=(s,c)=>(c.buffs||[]).filter(b=>b.turn===s.turn || b.untilTurn!=null&&s.players[locate(s,c.uid)?.p??s.active].turnCount<=b.untilTurn).reduce((n,b)=>n+(b.bp||0),0);
 function passiveBp(s,c){const r=silenced(s,c)?{}:cardOf(c).rules?.passive||{};
@@ -149,7 +151,7 @@ function finishBlockedWin(s,p,attackerUid,blockerUid){
   s.groupUsed||={};const group=`${p}:${atkRules.raidWinReadyGroup}`;
   if(s.groupUsed[group]!==s.turn){s.groupUsed[group]=s.turn;activate(s,a.card);}
  }
- const nullImpact=!silenced(s,b.card)&&cardOf(b.card).rules?.impactNull,banish=atkRules?.battleRemove&&s.active===p;
+ const nullImpact=printedRuleActive(s,b.card,'impactNull'),banish=atkRules?.battleRemove&&s.active===p;
  takeField(s,blockerUid,banish?'removed':'outside');
  if(impactOf(s,a.card)&&!nullImpact){const n=impactOf(s,a.card);log(s,`IMPACT ${n}：穿透阻擋，造成 ${n} 點生命傷害。`,'effect');s.queue.push({kind:'impactDamage',p:1-p,count:n});}
  if(a.card.winDrawTurn===s.turn)s.queue.push({kind:'draw',p,count:1});
@@ -161,7 +163,7 @@ function readyOwnField(s,p){for(const c of allField(s,p))activate(s,c);}
 function beginTurn(s){
  const pl=s.players[s.active];pl.turnCount++;s.turn++;s.phase='start';s.extraDrawn=false;pl.turnEvents=[];pl.enteredNames=[];const due=(s.delayed||[]).filter(x=>x.duePlayer===s.active&&x.dueTurnCount<=pl.turnCount);s.delayed=(s.delayed||[]).filter(x=>!due.includes(x));s.queue.unshift(...due.map(x=>({...x,kind:'soiFonResolve'})));
  for(const c of [...allField(s,s.active)])if(cardOf(c).rules?.retireAtOwnStart)takeField(s,c.uid);
- for(const c of [...allField(s,s.active)])if(isRaided(c)&&cardOf(c).rules?.startTurnRaidTop)removeRaidTop(s,c.uid);
+ for(const c of [...allField(s,s.active)])if(isRaided(c)&&printedRuleActive(s,c,'startTurnRaidTop'))removeRaidTop(s,c.uid);
 
  for(const c of allField(s,s.active)){c.buffs=(c.buffs||[]).filter(b=>b.untilTurn==null||pl.turnCount<b.untilTurn);}
  readyOwnField(s,s.active);
@@ -500,14 +502,14 @@ function resolveRule(s,e){
 }
 function applyRuleTarget(s,uid,r,sourcePlayer=null){const l=locate(s,uid);if(!l)return;
  if(r.op==='buff')addBuff(s,uid,r.amountIfName&&r.amountIfName.names.some(n=>matchingName(l.card,n))?r.amountIfName.amount:r.amount,r.duration);
- const cannotRest=sourcePlayer!=null&&l.p!==sourcePlayer&&cardOf(l.card).rules?.immuneEnemyRest;
+ const cannotRest=sourcePlayer!=null&&l.p!==sourcePlayer&&printedRuleActive(s,l.card,'immuneEnemyRest');
  if(r.op==='rest'&&!cannotRest)l.card.ready=false;
  if(r.op==='freeze'){if(!cannotRest)l.card.ready=false;l.card.skipActive=(l.card.skipActive||0)+1;}
  if(r.op==='activate')activate(s,l.card);
  if(r.op==='keyword')l.card[r.key+'Turn']=s.turn;
  if(r.op==='addImpact'){l.card.impactBonusTurn=s.turn;l.card.impactBonusAmount=(l.card.impactBonusAmount||0)+(r.count||1);}
  if(r.op==='destroy')shieldOrRetire(s,uid,sourcePlayer??s.active);
- if(r.op==='bounce'&&!(sourcePlayer!=null&&l.p!==sourcePlayer&&cardOf(l.card).rules?.immuneEnemyBounce))takeField(s,uid,'hand');
+ if(r.op==='bounce'&&!(sourcePlayer!=null&&l.p!==sourcePlayer&&printedRuleActive(s,l.card,'immuneEnemyBounce')))takeField(s,uid,'hand');
 }
 // A printed IMPACT outside the Raid box is always available; raidImpact is Raid-only (Q51).
 const impactOf=(s,c)=>(c.impactTurn===s.turn||(!silenced(s,c)&&(!!cardOf(c).rules?.impact||isRaided(c)&&!!cardOf(c).rules?.raidImpact))?1:0)+(c.impactBonusTurn===s.turn?(c.impactBonusAmount||0):0)+(c.sniperImpactActive?1:0)+(!silenced(s,c)&&cardOf(c).rules?.passive?.impactIfRemovedZeroNames&&removedZeroNames(s,locate(s,c.uid)?.p)>=cardOf(c).rules.passive.impactIfRemovedZeroNames?1:0);
@@ -699,11 +701,11 @@ function resolveChoice(s,ids){
   }
   case 'raidMillDebuff':if(ids.length)addBuff(s,ids[0],e.amount);break;
   case 'frostRaid':{
-   if(ids.length){const l=locate(s,ids[0]);if(l&&!cardOf(l.card).rules?.immuneEnemyRest){l.card.ready=false;l.card.freezeUntilAttackOwner=l.p;}
-    if(allField(s,p).filter(c=>c.uid!==e.uid&&withTrait(c,'護廷十三隊')).length>=6)for(const c of s.players[1-p].energy.filter(Boolean)){if(cardOf(c).rules?.immuneEnemyRest)continue;c.ready=false;c.freezeUntilAttackOwner=1-p;}
+   if(ids.length){const l=locate(s,ids[0]);if(l){if(!printedRuleActive(s,l.card,'immuneEnemyRest'))l.card.ready=false;l.card.freezeUntilAttackOwner=l.p;}
+    if(allField(s,p).filter(c=>c.uid!==e.uid&&withTrait(c,'護廷十三隊')).length>=6)for(const c of s.players[1-p].energy.filter(Boolean)){if(!printedRuleActive(s,c,'immuneEnemyRest'))c.ready=false;c.freezeUntilAttackOwner=1-p;}
    }break;
   }
-  case 'rukiaRestLock':if(ids.length){const l=locate(s,ids[0]);if(l&&!cardOf(l.card).rules?.immuneEnemyRest){l.card.ready=false;if(e.lock)l.card.lockedBy=e.uid;}}break;
+  case 'rukiaRestLock':if(ids.length){const l=locate(s,ids[0]);if(l){if(!printedRuleActive(s,l.card,'immuneEnemyRest'))l.card.ready=false;if(e.lock)l.card.lockedBy=e.uid;}}break;
   case 'raidMoveTribe':{
    if(ids.length){const l=locate(s,ids[0]);if(l){prompt(s,p,'選擇要移到的前線位置',Array.from({length:4},(_,n)=>({id:String(n),label:`前線 ${n+1}${s.players[p].front[n]?'（換位）':''}`})),{...e,kind:'raidMoveTribeSlot',selectedUid:ids[0]});}}break;
   }
@@ -904,7 +906,7 @@ function resolveChoice(s,ids){
        s.groupUsed||={};const group=`${p}:${atkRules.raidWinReadyGroup}`;
        if(s.groupUsed[group]!==s.turn){s.groupUsed[group]=s.turn;activate(s,attack.card);}
       }
-      const nullImpact=!silenced(s,block.card)&&cardOf(block.card).rules?.impactNull;
+      const nullImpact=printedRuleActive(s,block.card,'impactNull');
       if(impactOf(s,attack.card)&&!nullImpact){const n=impactOf(s,attack.card);log(s,`IMPACT ${n}：穿透阻擋，造成 ${n} 點生命傷害。`,'effect');s.queue.push({kind:'impactDamage',p:1-p,count:n});}
       if(attack.card.winDrawTurn===s.turn)s.queue.push({kind:'draw',p,count:1});
      }

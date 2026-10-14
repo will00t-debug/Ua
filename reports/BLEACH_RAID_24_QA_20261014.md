@@ -33,7 +33,7 @@
 | EX07BT | BLC-2-034 | 朽木露琪亞 | ✅ | ✅ | 尚需效果逐項驗收 |
 | EX07BT | BLC-2-038 | 涅繭利 | ✅ | ✅ | 尚需效果逐項驗收 |
 | EX07BT | BLC-2-057 | 修多羅千手丸 | ✅ | ✅ | 尚需效果逐項驗收 |
-| EX07BT | BLC-2-065 | 狛村左陣 | ✅ | ✅ | 尚需效果逐項驗收 |
+| EX07BT | BLC-2-065 | 狛村左陣 | ✅ | ✅ | 追加框內防護、失去印刷能力、橫置／回手／IMPACT 實際結算；尚非全 FAQ 驗收 |
 | EX07BT | BLC-2-067 | 更木劍八 | ✅ | ✅ | 需求能源4以上底板才得 DAMAGE 2 |
 | EX15BT | BLC-4-012 | 雨葛蘭 | ✅ | ✅ | 尚需效果逐項驗收 |
 | EX15BT | BLC-4-033 | 四楓院夜一 | ✅ | ✅ | Raid 狀態下的 ACTIVE 登場 |
@@ -56,3 +56,12 @@
 - 結果 **741 tests, 741 pass, 0 fail**。
 - 工作分支：`fix/bleach-raid-box-real-20261014` / PR #49。
 - **未合併 main，未部署正式網站。**
+
+## 接續「錯誤修改」：狛村常駐能力漏判修正
+
+- 再讀官方 EX07BT/BLC-2-065 卡表及卡圖，確認 IMPACT 無效、敵方橫置／回手抗性也位於 Raid 框內。原 48 個基本登場案例沒有實際攻擊或施加這些效果，因而未抓到漏判。
+- 以共用 `printedRuleActive` 判斷這些常駐能力，普通登場及失去印刷能力時不啟用；真正 Raid 仍保留。回合開始自動送走頂卡的印刷能力亦受效果喪失限制。
+- 官方 [EX15BT/BLC-4-057 Q2330](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX15BT/BLC-4-057)：失去原有效果會令 Raid 框能力失效，物理 Raid 堆疊仍保留。
+- 狛村 Q1052 指明「不能被橫置」不免除後續不能 ACTIVE 的效果。修正冬獅郎 085、露琪亞 034 遇到抗橫置目標時整段跳過 ACTIVE 限制的問題；二者的卡文分別見 [085/Q569](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA08BT/BLC-1-085)、[034](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX07BT/BLC-2-034)。這是依卡文與 Q1052 做的跨卡判定，並非有獨立 FAQ 指名此配對。
+- `tests/raid-komamura-passives.test.mjs`：16 個新案例，透過合法登場/事件/攻擊指令驗證普通登場、真 Raid、失去印刷效果、回手時底板場外處理、生命實際減少、ACTIVE 限制與下一回合頂卡保留，均檢查 50 張實體卡 UID 守恆。牌面身分與部分中途狀態為受控 fixture，非手機實機對戰。
+- 本機 Node 24 全套回歸 **782/782 通過，0 fail**（舊段落的 741 是前一筆 CI 紀錄，不能視為本次基準總數）；Node 22 GitHub CI 另行確認。維持 PR #49 Draft，不合併或部署。
