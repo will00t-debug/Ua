@@ -101,6 +101,20 @@ const registry=Object.freeze({
   args:{trait:named,bp:positiveBp},
   build:v=>[{op:'buffOwnTraitAllTurn',trait:v.trait,bp:v.bp}]
  },
+ // Triggered only by the controller's FIRST declared character attack.
+ buffSelfIfFirstAttack:{
+  args:{bp:positiveBp},build:v=>[{op:'buffSelfIfFirstAttack',bp:v.bp}]
+ },
+ // Mandatory onPlay: choose another own field character with printed energy
+ // <= max, or return this source to hand when there are no other valid cards.
+ bounceOwnOtherUnderEnergy:{
+  args:{energy:v=>integer(v,0,30)},build:v=>[{op:'bounceOwnOtherUnderEnergy',energy:v.energy}]
+ },
+ recoverOutsideColorUnderEnergy:{
+  args:{color:named,energy:v=>integer(v,0,30),optional:yesNo},
+  build:v=>[{op:'recoverOutsideColorUnderEnergy',color:v.color,
+    energy:v.energy,optional:v.optional}]
+ },
  // Atomic payment gate: NONE of the nested effects run unless an owned
  // hand card was discarded. Nested templates are intentionally restricted
  // and validated again by the ordinary Pack DSL verifier.
@@ -122,7 +136,8 @@ const registry=Object.freeze({
   check:v=>v.then.every(x=>x&&[
    'draw','millTop','peekTopOne','searchDeckOne','searchDeckMany',
    'searchDeckWhere','inspectTopArrange','recoverOutsideOne','enemyBpDown',
-   'enemyFrontAllBpDown','retireEnemyFrontAllUnderBp','buffOwnTraitAllTurn','restEnemyUnderBp'
+   'enemyFrontAllBpDown','retireEnemyFrontAllUnderBp','buffOwnTraitAllTurn',
+   'recoverOutsideColorUnderEnergy','restEnemyUnderBp'
   ].includes(x.template)),
   build:v=>[{op:'discardGate',optional:v.optional,
    then:v.then.flatMap((spec,i)=>expandOne(spec,'payDiscardThen.then['+i+']'))}]
