@@ -80,6 +80,14 @@ export function resolveTtgRed044Search(state,action={}){
   throw new Error('044 search changed physical card identity conservation');
  r.pending=null;
  r.log??=[];
+ if(action.takeUid!==null){
+  // Printed 044 search REVEALS only the chosen Gurren to opponent.
+  // Never disclose the other six privately inspected UIDs or their order.
+  const chosen=[...pl.hand,...pl.outside].find(c=>c.uid===action.takeUid);
+  if(!chosen||printedName(chosen)!=='グレン')throw new Error('044 searched public reveal is invalid');
+  r.log.push({type:'ttgPublicSearchReveal',player:q.player,
+   sourceUid:q.attackerUid,uid:action.takeUid,cardId:chosen.cardId});
+ }
  r.log.push({type:'ttgRed044Search',player:q.player,attackerUid:q.attackerUid,
   took:action.takeUid!=null});
  return r;
