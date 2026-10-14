@@ -3,7 +3,7 @@
 // Japanese/translated prose and no optimistic `auto:true` for unported cards.
 export const V2_PHASES=Object.freeze(['start','move','main','attack']);
 export const V2_CARD_TYPES=Object.freeze(['character','event','field']);
-export const V2_TRIGGERS=Object.freeze(['draw','get','final']);
+export const V2_TRIGGERS=Object.freeze(['draw','get','final','active']);
 export const V2_EFFECT_TIMINGS=Object.freeze(['onPlay','onRaid','onAttack']);
 export const V2_EFFECT_OPS=Object.freeze(['draw','millTop','buffSelf','enemyBpDown','drawDiscard']);
 const integer=(v,low=0)=>Number.isInteger(v)&&v>=low;
