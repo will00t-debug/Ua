@@ -62,7 +62,7 @@ function normalize(card,packId){
    .map(([k,v])=>[k,Object.freeze(v.map(e=>Object.freeze({...e})))])))
  });
 }
-export function createUniversalPack({id,cards,version='0.1.0',restrictColors=true}={}){
+export function createUniversalPack({id,cards,version='0.1.0',restrictColors=false}={}){
  if(typeof id!=='string'||!id.trim()||!Array.isArray(cards)||!cards.length)
   throw Error('A title ID and explicit cards are required');
  if(typeof version!=='string'||!version.trim())throw Error('Pack version required');
@@ -76,15 +76,15 @@ export function validateUniversalDeck(pack,counts){
  if(pack?.kind!=='ua-v2-pack')return ['Universal v2 pack required'];
  if(!counts||typeof counts!=='object'||Array.isArray(counts))return ['Invalid deck format'];
  const errors=[];let total=0;const colors=new Set();
- const triggerLimits={final:0};
+ const triggerLimits={final:0,color:0,special:0};
  for(const [id,num] of Object.entries(counts)){
   if(!own(pack.cards,id)){errors.push('Unregistered/unsupported card: '+id);continue;}
   if(!integer(num)||num>4){errors.push(id+' exceeds 0–4 copies');continue;}
   total+=num;
-  if(num){const c=pack.cards[id];colors.add(c.color);if(c.trigger==='final')triggerLimits.final+=num;}
+  if(num){const c=pack.cards[id];colors.add(c.color);if(Object.prototype.hasOwnProperty.call(triggerLimits,c.trigger))triggerLimits[c.trigger]+=num;}
  }
  if(total!==50)errors.push('Deck must have exactly 50 cards (found '+total+')');
  if(pack.restrictColors&&colors.size>1)errors.push('Deck colors must match');
- if(triggerLimits.final>4)errors.push('FINAL Trigger limit exceeded');
+ for(const [type,n] of Object.entries(triggerLimits))if(n>4)errors.push(type.toUpperCase()+' Trigger limit exceeded');
  return errors;
 }
