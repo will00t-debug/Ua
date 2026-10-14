@@ -178,3 +178,16 @@
 - **029 紅蓮螺巖**：正常 Raid 後僅前線觸發；場外符合需求能源≤3、AP1、綠色大紅蓮團可回手；若 Raid 結算後己方能源仍≥6，可改為自己選空前線/能源格 REST 登場。這次連動回收 026 羅修，**該次 REST 登場會觸發自己的登場二選一待決狀態**，並串接上一批 026 的場外 Ark 回手分支，確認對局不卡住。生命 Raid Trigger、混合其他相同時點能力及手機真機尚需更大測試。
 
 維持 Beta `auto:false`，以上僅個別能力與少量跨卡測試，不是整張卡最終 100% 官方驗收。下一批 030～032 還需更複雜多 Raid 與效果保護時序。
+
+
+## 2026-10-14：TTG-1-030～032 官方高階 Raid 續驗（草稿）
+
+資料來源：[030 Space King Kittan](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-030)、[031 Super Galaxy Gurren Lagann / Q2274–Q2277 / Q2394](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-031)、[032 Tengen Toppa Gurren Lagann / Q2278–Q2279 / Q2395](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-032)。
+
+新增 `tests/ttg-official-acceptance-030-032.test.mjs` 五項真實 50 卡核心驗收情境：
+
+- **030**：Raid 在基坦上支付實體 AP、進場 ACTIVE；正確退場時頂卡與底板不消失也不重複，自己選擇從場外回收底板到空場；結算時己方能源 4 時 REST、6 時 ACTIVE；能拒絕回收。仍需確認與 034 同時被退場的自由排序與真實戰鬥 IMPACT 無效判定。
+- **031**：在 20+ 能源的真實 Raid 入場時指定恢復 AP、BP+5000、對手效果無法選取直到下次己方回合開始（Q2274–2276），50+ 能源時另外必抽 2 實體卡。仍需測兩個同名 031 同一回合入場、受其他效果離場及再次進場的跨卡多次判定。
+- **032**：官方 Q2395 僅可 Raid 本回合**未** Raid 過的超銀河紅蓮螺巖，且能源滿 100、AP 1；玩家可選擇其他己方前線任意枚數裏向置於自身下，不公開裏向卡身份；自己回合獲 Impact4 和 Damage7，仍須於後續對手回合確認這些加成取消且永久效果保護保留。仍需多重 Damage 生命觸發排隊、投射對象保護及真實手機選擇介面。
+
+測試應由 Node 22 Actions 完整跑完並回報數字；目前 Beta 正式旗標不更動。不合併主分支也不部署。下一批優先為 TTG-1-033～035 場域與特殊退場／隱私。
