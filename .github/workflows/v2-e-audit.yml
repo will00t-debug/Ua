@@ -53,5 +53,6 @@ jobs:
             audit/v2-full-catalog-summary.json
             audit/v2-e-match-replays/
             audit/v2-port-snapshots.json
+            audit/v2-branch-proposals.csv
           if-no-files-found: warn
           retention-days: 14
