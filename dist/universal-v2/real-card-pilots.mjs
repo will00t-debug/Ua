@@ -50,8 +50,8 @@ const printed=Object.freeze({
    raidFromRaid:['ラガン','グレン'],
    conditionalUnderFaceDown:{bp:1000,impact:1,leaveReplacementMinBp:500},
    effects:{onPlay:[{op:'retireOppFrontIfFacedown',bp:5000,optional:true}]},
-   matchText:'己方場上或 Raid 底板中同時有〈西蒙〉與〈卡米那〉才能突襲',
-   matchTexts:['「ラガン」或「グレン」','裏向','BP+1000','IMPACT 1','BP5000','500 以上']},
+   matchText:'己方場上或 Raid 底板需同時有西蒙與卡米那才可 Raid',
+   matchTexts:['已 Raid 的螺巖／紅蓮頂卡','裏向','BP+1000','IMPACT 1','BP5000','BP500 以上']},
   {id:'TTG-1-078',energy:3,ap:1,bp:0,gen:0,color:'red',trigger:'final',type:'event',implementation:'dsl',effects:{onPlay:[{op:'recoverAp',count:2}]},matchText:'選擇最多2張自己的 AP 卡'},
   {id:'TTG-1-079',energy:3,ap:1,bp:0,gen:0,color:'red',trigger:'final',type:'event',implementation:'dsl',effects:{onPlay:[{op:'recoverAp',count:2}]},matchText:'選擇最多2張自己的 AP 卡'}
  ])
