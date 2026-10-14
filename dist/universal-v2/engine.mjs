@@ -5,7 +5,23 @@ import {validateUniversalDeck} from './pack.mjs';
 export const UNIVERSAL_V2_VERSION='ua-v2.0';
 const playerIndex=n=>n===0||n===1;
 const field=p=>[...p.front,...p.energy].filter(Boolean);
-const card=(pack,c)=>pack.cards[c?.cardId];
+// A match accepts one legacy pack or a pair of independently registered packs.
+// Card ownership is determined by the physical UID, never by card ID alone:
+// different titles may print identical local card identifiers.
+function playerPacks(pack){
+ const result=Array.isArray(pack)?pack:[pack,pack];
+ if(result.length!==2||result.some(p=>p?.kind!=='ua-v2-pack'))
+  throw Error('Expected one valid pack or a pair of registered title packs');
+ return result;
+}
+const card=(pack,c)=>{
+ const n=/^([01])-\d+$/.exec(c?.uid||'');
+ if(!n)throw Error('Card owner cannot be determined from physical UID');
+ const printed=playerPacks(pack)[Number(n[1])].cards[c.cardId];
+ if(!printed)throw Error('Card not registered in physical owner title');
+ return printed;
+};
+const titleOf=(pack,owner)=>playerPacks(pack)[owner].id;
 const random=s=>{let x=s.rng|0;x^=x<<13;x^=x>>>17;x^=x<<5;s.rng=x>>>0;return s.rng/4294967296;};
 function shuffle(s,list){
  for(let i=list.length-1;i>0;i--){const j=Math.floor(random(s)*(i+1));[list[i],list[j]]=[list[j],list[i]];}
@@ -70,7 +86,7 @@ function damage(pack,s,defender){
  if(!pl.life.length){s.status='finished';s.winner=1-defender;s.endReason='unblocked-attack';return;}
  const c=pl.life.shift();pl.outside.push(c);
  const trig=card(pack,c).trigger;
- s.publicReveals.push({owner:defender,cardId:c.cardId,uid:c.uid,trigger:trig||null,turn:s.turn});
+ s.publicReveals.push({owner:defender,title:titleOf(pack,defender),cardId:c.cardId,uid:c.uid,trigger:trig||null,turn:s.turn});
  if(s.publicReveals.length>12)s.publicReveals.shift();
  if(['get','draw'].includes(trig)||(trig==='final'&&!pl.life.length)){
   s.pending={kind:'life-trigger',player:defender,uid:c.uid,trigger:trig};
@@ -113,13 +129,16 @@ function resolveChoice(s,a,pack){
  throw Error('Unsupported pending decision');
 }
 export function newUniversalMatch(pack,{decks,seed=1,first=0}={}){
- if(pack?.kind!=='ua-v2-pack'||!Array.isArray(decks)||decks.length!==2||!playerIndex(first))
-  throw Error('Universal v2 requires an explicit pack and two decks');
+ const packs=playerPacks(pack);
+ if(!Array.isArray(decks)||decks.length!==2||!playerIndex(first))
+  throw Error('Universal v2 requires one or two title packs and two decks');
  for(const [i,d] of decks.entries()){
-  const issues=validateUniversalDeck(pack,d);
+  const issues=validateUniversalDeck(packs[i],d);
   if(issues.length)throw Error('Player '+i+': '+issues.join('; '));
  }
- const s={version:UNIVERSAL_V2_VERSION,title:pack.id,packVersion:pack.version,
+ const isSame=packs[0].id===packs[1].id&&packs[0].version===packs[1].version;
+ const s={version:UNIVERSAL_V2_VERSION,title:isSame?packs[0].id:'cross-title',packVersion:isSame?packs[0].version:null,
+  packIds:packs.map(p=>p.id),packVersions:packs.map(p=>p.version),
   rng:(seed>>>0)||1,first,active:first,turn:0,phase:'start',status:'playing',
   winner:null,endReason:null,pending:null,extraDrawn:false,moved:false,
   publicReveals:[],players:[]
@@ -257,8 +276,14 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
  return s;
 }
 export function assertUniversalMatch(pack,s){
- if(pack?.kind!=='ua-v2-pack'||s?.version!==UNIVERSAL_V2_VERSION||s.title!==pack.id||
-   s.packVersion!==pack.version||s.players?.length!==2||!playerIndex(s.active)||
+ const packs=playerPacks(pack),isSame=packs[0].id===packs[1].id&&packs[0].version===packs[1].version;
+ if(s?.version!==UNIVERSAL_V2_VERSION||
+   s.title!==(isSame?packs[0].id:'cross-title')||
+   s.packVersion!==(isSame?packs[0].version:null)||
+   !Array.isArray(s.packIds)||!Array.isArray(s.packVersions)||
+   packs.some((p,i)=>s.packIds[i]!==p.id||s.packVersions[i]!==p.version)||
+   s.packIds.length!==2||s.packVersions.length!==2||
+   s.players?.length!==2||!playerIndex(s.active)||
    !['playing','finished'].includes(s.status))throw Error('Incorrect pack/version or match state');
  if(s.pending&&(!playerIndex(s.pending.player)||!['block','life-trigger'].includes(s.pending.kind)))
   throw Error('Invalid pending controller');
@@ -269,7 +294,7 @@ export function assertUniversalMatch(pack,s){
   function visit(c){
    if(!c)return;
    if(typeof c.uid!=='string'||uids.has(c.uid)||!c.uid.startsWith(p+'-')||
-     !pack.cards[c.cardId])throw Error('Card conservation / wrong title / duplicated UID');
+     !packs[p].cards[c.cardId])throw Error('Card conservation / wrong title / duplicated UID');
    uids.add(c.uid);items.push(c);
    for(const q of c.stack||[])visit(q);
    for(const q of c.under||[])visit(q);
@@ -289,12 +314,12 @@ export function assertUniversalMatch(pack,s){
 export function universalPublicView(pack,s,viewer=0){
  assertUniversalMatch(pack,s);
  if(!playerIndex(viewer))throw Error('Invalid viewer');
- return {title:s.title,status:s.status,winner:s.winner,phase:s.phase,turn:s.turn,
+ return {title:s.title,playerTitles:[...s.packIds],status:s.status,winner:s.winner,phase:s.phase,turn:s.turn,
   active:s.active,actor:actor(s),
   pending:s.pending?{kind:s.pending.kind,player:s.pending.player}:null,
   publicReveals:s.publicReveals.map(x=>({...x})),
   players:s.players.map((pl,p)=>({
-   lifeCount:pl.life.length,deckCount:pl.deck.length,handCount:pl.hand.length,
+   title:s.packIds[p],lifeCount:pl.life.length,deckCount:pl.deck.length,handCount:pl.hand.length,
    hand:p===viewer?pl.hand.map(c=>({uid:c.uid,cardId:c.cardId})):null,
    front:pl.front.map(c=>c?{uid:c.uid,cardId:c.cardId,ready:c.ready,bp:bp(pack,s,c),raidDepth:c.stack?.length||0}:null),
    energy:pl.energy.map(c=>c?{uid:c.uid,cardId:c.cardId,ready:c.ready,produces:card(pack,c).gen}:null),
