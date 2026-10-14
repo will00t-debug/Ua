@@ -8,8 +8,8 @@ import {SOLO_MATCH_SUPPORTED,SOLO_TRAINING_PRESET,SOLO_SHADOW_TRAINING_PRESET,so
 import {MST_CARDS,emptyMstDeck,normalizeMstCounts,mstCount,mstDeckIssues,readMstSaved} from './mst-builder.mjs';
 import {TTG_PENDING_CARDS} from './ttg-pending.mjs';
 import {TTG_CARDS,TTG_BY_ID,emptyTtgDeck,normalizeTtgCounts,ttgCount,ttgDeckIssues,readTtgSaved} from './ttg-builder.mjs';
-import {newTtgCoreMatch,assertTtgCoreState,legalTtgCoreActions,dispatchTtgCoreAction,ttgCoreAiChoice} from './ttg-core-match.mjs';
-import {TTG_BETA_IDS,TTG_BETA_NOTICE,TTG_GREEN_BETA_PRESET,TTG_RED_BETA_PRESET,ttgBetaDeckIssues,ttgChoiceActor,ttgActionLabel,ttgActionKinds,ttgFilteredActions,ttg012ManualChoice,ttg012SearchChoice,ttgCardByUid,ttgNormalPlacementAction} from './ttg-browser.mjs';
+import {newTtgCoreMatch,assertTtgCoreState,legalTtgCoreActions,dispatchTtgCoreAction,ttgCoreAiChoice,TTG_PRINTED_RAID_IDS} from './ttg-core-match.mjs';
+import {TTG_BETA_IDS,TTG_BETA_NOTICE,TTG_GREEN_BETA_PRESET,TTG_RED_BETA_PRESET,ttgBetaDeckIssues,ttgChoiceActor,ttgActionLabel,ttgActionKinds,ttgFilteredActions,ttg012ManualChoice,ttg012SearchChoice,ttgCardByUid,ttgNormalPlacementAction,ttgRaidDecisions} from './ttg-browser.mjs';
 import {newGame,dispatch,legalActions,controller,cardOf,bp,energy,damageOf,locate,PHASE_NAMES,assertState} from './engine.mjs?v=9.1.1';
 import {chooseAiAction} from './ai-v2.mjs';
 
@@ -436,13 +436,23 @@ function ttgArena(){
   return `<section class='panel'><h3>西蒙 012 · 查看牌庫頂與牌庫底排序</h3><p class='note'>查看牌庫頂 ${rule.revealed.length} 張，可拿最多一張合法的妮亞或需求能源8以上角色。其餘卡依畫面由上到下放到牌庫底，使用箭頭調整順序。</p><div style='display:flex;gap:6px;flex-wrap:wrap'>${options}</div><h4>依序放到牌庫底</h4>${rows}<button class='btn primary' data-action='ttg012SearchSubmit'>確認拿牌與牌庫底順序</button></section>`;
  })():'';
  const cards=s.players[0].hand;
+ const chosenCard=cards.find(c=>c.uid===ui.ttgSelected);
+ const isRaidCard=!!chosenCard&&TTG_PRINTED_RAID_IDS.includes(chosenCard.cardId);
+ const raidChoices=isRaidCard&&!bot&&s.status==='playing'?ttgRaidDecisions(s,chosenCard.uid):[];
+ const raidPanel=isRaidCard?`<section class='panel' aria-label='天元突破合法突襲選項' style='margin-top:12px;border:1px solid #8887'>
+  <h3>突襲 Raid · ${esc(TTG_BY_ID[chosenCard.cardId]?.nameZh||chosenCard.cardId)}</h3>
+  ${raidChoices.length?`<p class='note'>下方是判定引擎確認合法的突襲：每個選項都標示底板、登場位置及實際支付的 AP。按下才會支付與結算；點場上空格則是普通登場。</p>
+   <div style='display:flex;flex-wrap:wrap;gap:7px;max-height:270px;overflow:auto' aria-label='可執行突襲動作'>
+   ${raidChoices.map(a=>`<button class='btn small primary' data-ttg-act='${encodeURIComponent(JSON.stringify(a))}'>${esc(ttgActionLabel(s,a))}</button>`).join('')}</div>`:
+   `<p class='note'>目前沒有合法突襲動作。請確認正在自己的主要階段、有足夠顏色能源與 ACTIVE AP、有符合卡文的合法底板，並且突襲位置合法；部分升階突襲另有特殊條件。若普通登場合法，仍可點亮空格登場。</p>`}
+ </section>`:'';
  const hand=`<div class='grid' style='display:flex;flex-wrap:wrap;gap:7px'>${cards.map(c=>`<button class='btn small ${ui.ttgSelected===c.uid?'primary':'outline'}' data-ttg-select='${esc(c.uid)}'>${shown(c)}</button>`).join('')}</div>`;
  return `<header class='pageHeading'><div><h1>天元突破 · 限定 Beta 自動對戰</h1><p>回合 ${s.turn} · ${phase} · ${s.status==='finished'?'對局結束':'行動方：'+(actor===0?'玩家':'AI')} · ${pending}</p></div><button class='btn outline' data-view='builder'>返回牌組編輯</button></header>
  <div class='supportNote'><b>限定 Beta 判定</b><span>${esc(TTG_BETA_NOTICE)}</span></div>
  ${publicLifePanel}
  ${s.status==='finished'?`<section class='panel'><h2>對局結束 · ${s.winner===0?'玩家勝利':'AI 勝利'}</h2><p>${esc(s.endReason||'')}</p><button class='btn primary' data-action='ttgBetaStartGreen'>再玩一局</button></section>`:''}
  ${board(s.players[1],'AI 對手',1)}${board(s.players[0],'你的場地',0)}
- <section class='panel'><h3>你的手牌（${cards.length} 張）</h3><p class='note'>點選一張手牌，再點自己場上亮起的空格普通登場；Raid 或特殊效果可使用下方合法動作列表。</p>${hand}</section>
+ <section class='panel'><h3>你的手牌（${cards.length} 張）</h3><p class='note'>點選一張手牌。亮起的空格只會普通登場；想要突襲，請使用下方「突襲 Raid」選項，選好底板、位置及 AP。</p>${hand}${raidPanel}</section>
  ${s.status==='playing'?`<section class='panel'><h3>${bot?'AI 正在依合法動作處理…':'選擇合法動作'} · ${available.length} 項</h3>${bot?'<p class=note>輪到 AI，等待自動結算；不顯示電腦的私人手牌及效果選擇。</p>':`
  ${(s.pending||s.pendingTtgLife||s.pendingTtgTrigger)?`<p><button class='btn outline' data-action='ttgResolveAssist'>AI 幫我選擇這次效果</button> <small>會依合法動作結算，可自行選上面的選項。</small></p>`:''}
  <div style='display:flex;flex-wrap:wrap;gap:5px'><button class='btn small ${ui.ttgKind==='all'?'primary':'outline'}' data-ttg-kind='all'>全部</button>${types.map(o=>`<button class='btn small ${ui.ttgKind===o.type?'primary':'outline'}' data-ttg-kind='${esc(o.type)}'>${esc(o.type)} (${o.count})</button>`).join('')}</div>
