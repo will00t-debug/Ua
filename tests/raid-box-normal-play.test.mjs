@@ -148,10 +148,17 @@ const LEGACY_RAID_CARDS=[
  'BLC-1-047','BLC-1-050','BLC-1-053','BLC-1-070','BLC-1-085',
  'BLC-1-093','BLC-2-019','BLC-2-034','BLC-2-038','BLC-2-057','BLC-2-065'
 ];
-test('all 23 catalog Raid cards have explicit rules; the 16 older Raid cards mark text-box boundaries',()=>{
+test('all 24 BLEACH Raid-printed cards are inventoried: 23 booster profiles + starter 104',()=>{
  const all=CARDS.filter(c=>c.type==='character'&&c.raid);
- assert.equal(all.length,23,'Catalog Raid size changed: expand this regression inventory');
+ assert.equal(all.length,24,'Raid catalogue size changed: expand this regression inventory');
+ assert.ok(all.some(c=>c.id==='104'&&c.number==='UA08ST/BLC-1-104'),'Starter Ichigo Raid omitted');
  for(const profile of all){
+  if(profile.id==='104'){
+   // UA08ST Ichigo runs through the legacy starter engine, not EXTRA_RULES.
+   // Only the Raid deployment readiness is tested here; the printed main
+   // ability requires its own card-image boundary acceptance.
+   continue;
+  }
   assert.ok(profile.rules,'Raid card missing rule profile: '+profile.id);
   if(LEGACY_RAID_CARDS.includes(profile.id)){
    assert.ok(profile.rules.raidBox&&Object.values(profile.rules.raidBox).some(Boolean),
@@ -228,4 +235,11 @@ test('EX07BT/BLC-2-067, EX15BT/033 and /050 special Raid effects disabled in nor
   if(id==='BLC-2-067')assert.equal(bp(s,c),4000);
   assert.equal(c.stack.length,0);assertState(s);
  }
+});
+
+test('UA08ST/BLC-1-104 starter Ichigo normal play remains REST with no Raid base',()=>{
+ const {s,c}=normal('104');
+ assert.equal(s.players[0].front[0].stack.length,0);
+ assert.equal(s.players[0].front[0].ready,false);
+ assertState(s);
 });
