@@ -74,6 +74,34 @@ function protectedLeave(pack,s,c){
  const profile=card(pack,c).conditionalUnderFaceDown;
  return !!profile&&hasFacedownUnder(c)&&bp(pack,s,c)>=profile.leaveReplacementMinBp;
 }
+// Facedown cards can survive several Raid generations. If more than one is
+// beneath a character, the owner selects the physical UID to sacrifice.
+function facedownChoices(top){
+ const found=[];
+ const walk=c=>{
+  for(const x of c.under||[]){
+   if(x.faceDown===true)found.push(x.uid);
+   walk(x);
+  }
+  for(const x of c.stack||[])walk(x);
+ };
+ walk(top);
+ return found;
+}
+function detachFacedown(top,uid){
+ const walk=c=>{
+  for(let i=0;i<(c.under||[]).length;i++){
+   const x=c.under[i];
+   if(x.uid===uid&&x.faceDown===true)return c.under.splice(i,1)[0];
+   const nested=walk(x);if(nested)return nested;
+  }
+  for(const x of c.stack||[]){
+   const nested=walk(x);if(nested)return nested;
+  }
+  return null;
+ };
+ return walk(top);
+}
 function startTurn(pack,s){
  const p=s.active,pl=s.players[p];
  pl.ownTurns++;s.turn++;s.phase='start';s.extraDrawn=false;s.moved=false;s.movedUids=[];s.pending=null;
@@ -293,11 +321,14 @@ function resolveChoice(s,a,pack){
   const loc=location(s,q.player,q.uid);
   if(!loc||loc.line!==q.line||loc.slot!==q.slot)throw Error('Leaving character moved');
   if(a.mode==='protect'){
-   const under=loc.c.stack?.[0]?.under||[],index=under.findIndex(v=>v.faceDown===true);
-   if(index<0||!protectedLeave(pack,s,loc.c))throw Error('No eligible facedown replacement');
-   const consumed=under.splice(index,1)[0];
-   consumed.faceDown=false;consumed.ready=false;consumed.stack=[];consumed.under=[];consumed.buffs=[];
-   p.outside.push(consumed);
+   const choices=facedownChoices(loc.c);
+   if(!choices.length||!protectedLeave(pack,s,loc.c))throw Error('No eligible facedown replacement');
+   const selection=choices.length===1?choices[0]:a.uid;
+   if(!choices.includes(selection))throw Error('Must select an owned facedown replacement');
+   const consumed=detachFacedown(loc.c,selection);
+   if(!consumed)throw Error('Facedown card no longer available');
+   const expand=c=>[c,...(c.stack||[]).flatMap(expand),...(c.under||[]).flatMap(expand)];
+   p.outside.push(...expand(consumed).map(c=>({...c,faceDown:false,ready:false,stack:[],under:[],buffs:[]})));
   }else if(a.mode==='leave')vacate(s,q.player,q.line,q.slot,q.destination);
   else throw Error('Invalid leave replacement option');
   s.pending=null;
@@ -491,10 +522,15 @@ function legalPending(pack,s){
   {type:'chooseBlock',uid:null},
   ...p.front.filter(c=>c?.ready).map(c=>({type:'chooseBlock',uid:c.uid}))
  ];
- if(q.kind==='leave-replacement')return [
-   {type:'chooseLeaveReplacement',mode:'protect'},
-   {type:'chooseLeaveReplacement',mode:'leave'}
-  ];
+ if(q.kind==='leave-replacement'){
+   const loc=location(s,q.player,q.uid);
+   const choices=loc?facedownChoices(loc.c):[];
+   return [
+    ...(choices.length===1?[{type:'chooseLeaveReplacement',mode:'protect'}]:
+     choices.map(uid=>({type:'chooseLeaveReplacement',mode:'protect',uid}))),
+    {type:'chooseLeaveReplacement',mode:'leave'}
+   ];
+  }
  if(q.kind==='private-top-choice')return [
    {type:'chooseTopCard',mode:'top'},{type:'chooseTopCard',mode:'outside'}
   ];
