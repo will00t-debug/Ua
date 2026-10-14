@@ -21,7 +21,7 @@ test('template registry is finite, audited and rejects unknown behaviors instead
   'retireEnemyIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown',
   'searchDeckOne','recoverOutsideOne','discardToDraw',
   'searchDeckMany','enemyFrontAllBpDown','retireEnemyFrontAllUnderBp',
-  'buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
+  'buffOwnTraitAllTurn','buffOwnField','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
   'recoverOutsideColorUnderEnergy','searchDeckWhere','inspectTopArrange','payDiscardThen'
  ]);
  assert.throws(()=>checked(character({
@@ -100,7 +100,7 @@ test('templates cannot silently override raw ops, authorize vanilla effects or b
   'legacy directly authored DSL continues to work unchanged');
 });
 
-test('all twenty-five supported templates compile to the established and extended V2 runtime DSL ops in deterministic order',()=>{
+test('all twenty-six supported templates compile to the established and extended V2 runtime DSL ops in deterministic order',()=>{
  const examples=[
   [{template:'searchDeckWhere',filters:[
    {field:'name',value:'Scout'},{field:'trait',value:'Scout'}],
@@ -114,6 +114,10 @@ test('all twenty-five supported templates compile to the established and extende
   [{template:'retireEnemyFrontAllUnderBp',bp:3500},{op:'retireOppFrontAllUnderBp',bp:3500}],
   [{template:'buffOwnTraitAllTurn',trait:'Scout',bp:1000},
    {op:'buffOwnTraitAllTurn',trait:'Scout',bp:1000}],
+  [{template:'buffOwnField',filter:{field:'trait',value:'Scout'},
+    bp:1000,optional:true,excludeSelf:true},
+    {op:'buffOwnField',filter:{field:'trait',value:'Scout'},
+     bp:1000,optional:true,excludeSelf:true}],
   [{template:'buffSelfIfFirstAttack',bp:1500},{op:'buffSelfIfFirstAttack',bp:1500}],
   [{template:'bounceOwnOtherUnderEnergy',energy:1},{op:'bounceOwnOtherUnderEnergy',energy:1}],
   [{template:'recoverOutsideColorUnderEnergy',color:'red',energy:2,optional:true},
