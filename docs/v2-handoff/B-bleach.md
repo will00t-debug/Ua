@@ -78,6 +78,26 @@
 
 相關官方問題集：[日本官方 UNION ARENA BLEACH 個別卡 FAQ](https://www.unionarena-tcg.com/jp/faq/list.php?category=%E3%82%AB%E3%83%BC%E3%83%89%E5%80%8B%E5%88%A5&sub_category=BLEACH+%E5%8D%83%E5%B9%B4%E8%A1%80%E6%88%A6%E7%AF%87)。已知 Q556：BLC-1-036 即使牌庫只剩 1 張，也要盡可能將實際有的牌送場外；不得假裝抽滿 2 張或直接跳過。Q557–Q562 涉及場外／除外成本與「若如此做」成立條件，須逐卡根據官方原文與 FAQ 再驗證，不得直接用舊引擎作答案。
 
+### 2026-10-15 07:00 後：五個容易誤套用的核心缺口（已加 fail-closed 測試）
+
+本組來自日本官方印刷卡文，不以舊引擎推論；測試檔為 `tests/universal-v2-bleach-core-gaps.test.mjs`。**均未納入 71 張獨立卡包**，避免將近似模板誤當完整能力。
+
+| 卡號及官方卡文 | 缺少的精確能力 | 最小可解鎖回歸測試 |
+|---|---|---|
+| [BLC-1-009](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA08BT/BLC-1-009) IMPACT (1) | 一般角色戰鬥勝利後 IMPACT 傷害，目前核心 `impactOnBattleWin` 僅處理裏向底卡條件，不接受一般印刷 IMPACT | 攻擊 3000 BP、阻擋 2000 BP 造成額外 1 傷；遇 IMPACT 無效不造成額外傷 |
+| [BLC-1-074](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA08BT/BLC-1-074) DAMAGE (2) | 直接攻擊造成 2 點生命傷害，需逐張處理生命 Trigger；現有無一般 DAMAGE 2 | 直接攻擊兩張有 GET/DRAW 的生命，逐張結算、不重複/遺失 UID |
+| [BLC-2-007](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX07BT/BLC-2-007) BP≥1000 全體降 500 | 現有 `enemyFrontAllBpDown` 會影響所有前線，**缺計算當下 BP≥1000 的集合門檻** | 對方 BP 500/1000/1500，只有後兩者降 500；不因第一張變動重算 |
+| [BLC-2-055](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX07BT/BLC-2-055) 私密看頂 1 張放頂或底 | `peekTopOne` 目前可選 **TOP／OUTSIDE**，而官卡要 **TOP／BOTTOM**；不得送場外 | A 在頂、B 在第二；選底後 B 在頂 A 在底，場外不變且不洩漏 |
+| [BLC-2-063](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX07BT/BLC-2-063) 每回合 2 次攻擊 | 首次攻擊立刻 ACTIVE，**每張實體限兩次，不是無限重置**；需和攻擊時點/強制選擇相容 | 同 UID 可攻擊第 2 次、第 3 次被拒；另同號實體各自獨立 |
+
+額外核對：[官方 UA08BT 個別 Q&A](https://www.unionarena-tcg.com/jp/faq/list.php?series=UA08BT) 與 [EX15BT 個別 Q&A](https://www.unionarena-tcg.com/jp/faq/list.php?series=EX15BT)。若核心新增這五類能力，必須先補逐卡正式時序及負向測試，才能從未移植改標完成。
+
+### 最新實際 CI 證據（不可把上游失敗算本線通過）
+
+- BLEACH 分支自身 HEAD 前一次完整檢查：[Actions run 38653215958](https://github.com/will00t-debug/Ua/actions/runs/38653215958)：專屬 12／12，全庫 **1020／1020**，成功。
+- CI runner 暫存合入 PR #70 最新基底後，BLEACH 專屬 **22／22** 通過，整合全庫 **1040／1042**；僅 2 個限次 gate 測試失敗。PR #70 自己 [Actions run 38612690292](https://github.com/will00t-debug/Ua/actions/runs/38612690292) 也有相同兩項失敗；不在此分支修改共用核心、也不將整合宣稱全綠。
+- 五個核心缺口防誤移植測試是後續新增測試；其完整 CI 結論以最新 Actions HEAD 為準，不借用上個提交的 1020 次作新提交證據。
+
 ## 專屬測試與整合限制
 
 - `tests/universal-v2-bleach-port.test.mjs`：新增卡清單、真卡 50 張 deck 驗證、STEP 合法／非法、成本／合法回手／無合法目標時自回、放棄與 UID 違規拒絕、生命 Trigger 宣告與資料保密、UID 守恆。
