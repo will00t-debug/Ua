@@ -93,10 +93,12 @@ test('life RAID Trigger can choose legal free Raid on own Shizuku base, or add c
   defender.life[0]=raid;if(prior)defender.deck.push(prior);
   assertSoloTrainingMatch(s);
   s=soloTrainingDispatch(s,{type:'attack',uid:attacker.uid});
-  assert.equal(s.pending.kind,'raidTrigger');assert.equal(s.pending.p,1);
+  assert.equal(s.pending.kind,'soloOptionalLife');assert.equal(s.pending.p,1);
   return {s,raid,base};
  };
- const yes=setup();const legal=soloTrainingLegalActions(yes.s),raidChoice=legal.find(a=>a.uid===yes.base.uid&&a.line==='energy');
+ const yes=setup();yes.s=soloTrainingDispatch(yes.s,{type:'choose',mode:'raid'});
+ assert.equal(yes.s.pending.kind,'raidTrigger');
+ const legal=soloTrainingLegalActions(yes.s),raidChoice=legal.find(a=>a.uid===yes.base.uid&&a.line==='energy');
  assert.ok(raidChoice);
  const beforeAp=yes.s.players[1].ap;
  const after=soloTrainingDispatch(yes.s,raidChoice);
@@ -105,7 +107,7 @@ test('life RAID Trigger can choose legal free Raid on own Shizuku base, or add c
  assert.equal(after.players[1].energy[0].stack[0].uid,yes.base.uid);
  assert.equal(after.pending,null);assertSoloTrainingMatch(after);
  const no=setup();
- const kept=soloTrainingDispatch(no.s,{type:'choose',uid:null});
+ const kept=soloTrainingDispatch(no.s,{type:'choose',mode:'get'});
  assert.ok(kept.players[1].hand.some(c=>c.uid===no.raid.uid));
  assert.equal(kept.pending,null);assertSoloTrainingMatch(kept);
 });
