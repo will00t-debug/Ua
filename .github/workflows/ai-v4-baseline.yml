@@ -1,5 +1,13 @@
 name: AI v4 production teacher baseline
 on:
+  push:
+    branches:
+      - feature/ai-v4-ppo
+    paths:
+      - 'dist/ai-v4-*'
+      - 'scripts/ai-v4-*'
+      - 'tests/ai-v4-*'
+      - '.github/workflows/ai-v4-baseline.yml'
   workflow_dispatch:
     inputs:
       games:
