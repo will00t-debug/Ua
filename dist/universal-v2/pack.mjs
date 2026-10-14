@@ -49,6 +49,12 @@ function normalize(card,packId){
   throw Error(card.id+' invalid printed characteristics');
  if(card.trigger!=null&&!V2_TRIGGERS.includes(card.trigger))
   throw Error(card.id+' trigger not yet supported by universal v2 (fail closed)');
+ if(card.raidFromRaid!==undefined&&(
+  !card.raidName||card.type!=='character'||
+  !Array.isArray(card.raidFromRaid)||!card.raidFromRaid.length||
+  card.raidFromRaid.some(n=>typeof n!=='string'||!n.trim())||
+  new Set(card.raidFromRaid).size!==card.raidFromRaid.length
+ ))throw Error(card.id+' invalid explicitly permitted re-Raid names');
  if(card.raidName!=null&&(card.type!=='character'||typeof card.raidName!=='string'||!card.raidName.trim()))
   throw Error(card.id+' invalid Raid target');
  // A trigger is not inferred from its icon alone when printed handling varies.
@@ -118,6 +124,7 @@ function normalize(card,packId){
   type:card.type,energy:card.energy,ap:card.ap,bp:card.bp,gen:card.gen,
   traits:Object.freeze([...(card.traits||[])]),
   trigger:card.trigger||null,raidName:card.raidName||null,
+  raidFromRaid:Object.freeze([...(card.raidFromRaid||[])]),
   triggerEffect:triggerEffect?Object.freeze({...triggerEffect}):null,
   mainAbility:mainAbility?Object.freeze({...mainAbility}):null,
   step:card.step===true,ownTurnBp:card.ownTurnBp||0,implementation:implemented,
