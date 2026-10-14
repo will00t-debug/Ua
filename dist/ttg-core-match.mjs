@@ -151,6 +151,12 @@ function greenEntryChoices(s){
     for(const line of ['energy','front'])for(let slot=0;slot<4;slot++)if(!pl[line][slot])
      actions.push(make(opt,{takeUid,apUid,line,slot}));
   }
+  else if(opt.mode==='arkOutside'){
+   // Separate official alternative: choose ZERO or one own outside Ark.
+   // Do not generate a deck search action or leak the first seven card UIDs.
+   actions.push(make(opt,{takeUid:null}));
+   for(const takeUid of opt.candidateUids)actions.push(make(opt,{takeUid}));
+  }
   else if(opt.mode==='niaOutsideToTop'){
    actions.push(make(opt,{takeUid:null}));
    for(const takeUid of opt.candidateUids)actions.push(make(opt,{takeUid}));

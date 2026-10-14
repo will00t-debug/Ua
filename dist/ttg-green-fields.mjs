@@ -25,7 +25,12 @@ export function legalGreenSitePlays(s,player){
  const pl=s.players[player],options=[];
  for(const h of pl.hand||[]){
   if(!['TTG-1-033','TTG-1-034'].includes(h.cardId))continue;
-  const cost=h.cardId==='TTG-1-034'?green034PrintedEnergyNeed(s,player):TTG_BY_ID[h.cardId].energy;
+  // TTG-1-024 Reite: EACH own Reite on field reduces the required
+  // GREEN energy of FIELD cards in hand by one (minimum zero).
+  // Apply after 034's special 5/8 printed conditional requirement.
+  const printed=h.cardId==='TTG-1-034'?green034PrintedEnergyNeed(s,player):TTG_BY_ID[h.cardId].energy;
+  const reductions=field(pl).filter(x=>x.card.cardId==='TTG-1-024').length;
+  const cost=Math.max(0,printed-reductions);
   if(total(s,player)<cost||pl.apCards.filter(x=>x.ready).length<1)continue;
   for(let slot=0;slot<pl.energy.length;slot++)if(!pl.energy[slot])
    options.push({type:'ttgGreenSitePlay',player,handUid:h.uid,cardId:h.cardId,slot,requiredAp:1});
