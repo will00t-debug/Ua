@@ -244,3 +244,20 @@
 - [047 キタン](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-047)：本回合己方角色的第一場**實際攻擊**才 +1500 BP，第二次不同實體角色攻擊不得取得加成；生命 DRAW 可以發動或放棄，放棄不改動牌庫。
 
 新增 `tests/ttg-official-acceptance-045-047.test.mjs` 六個真實完整 50 張合法牌組核心情境，需等 GitHub Actions Node22 全量回歸完成。仍待 045 與高階 073 Raid 替代離場、生命 COLOR 全互動以及 046 多名 Raid 競合與真人手機對局。**上述測試不代表 045～047 完整官方逐卡證書，更不代表 81 張全部認證完成**。下批從 **048～050** 繼續。
+
+
+## 2026-10-14：TTG-1-048～050 官方逐卡驗收續接（PR 等待 CI）
+
+承接 `audit/ttg045-047-official-20261014` 測試分支，**不動 main、Vercel 或其他聊天室的修改**。日本官方卡文：
+[048 基坦](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-048)，
+[049 吉米＆達莉](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-049)，
+[050 琪優＆琪儂＆琪雅露](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-050)。
+049 的日文官方 iframe 在此輪查詢不可用，使用已在既有專案卡表／獨立單元測試記錄的卡文，不將網頁存取失敗視為外部再次核對完成。
+
+新增 `tests/ttg-official-acceptance-048-050.test.mjs` 七項真實合法 50 張兩人遊戲與生命觸發測試：
+
+- **048**：本回合自己的第一個攻擊才獲 BP＋500、IMPACT 無效與雙重阻擋，持續到下次自己的回合開始。透過真正跨回合、敵方連續兩次攻擊和同一張 048 第一次阻擋轉 ACTIVE、第二次阻擋 REST 驗證；第二個攻擊的 048 不得取得該能力；印刷 ACTIVE Trigger 可選或放棄。
+- **049**：手牌登場支付 AP 後立刻強制啟動選擇，只能返回己方場上印刷需求能源 1 以下的**其他**角色；沒有時強制將 049 本身回手；無法略過待決選擇，不補回已付 AP，守住所有 50 實體卡 UID。
+- **050**：手牌登場時自己場上／Raid 底板有〈キタン〉就強制抽一張，無條件發動不需要玩家誤點；各三項互不相同的主階段能力分別測：(1) 丟一張手牌將自己 ACTIVE；(2) REST 自己讓自身暫時額外產生紅1；(3) 丟一張手牌使自己 BP＋1000。每個實體限每回合使用一次，各自支付成本，回合末解除暫時能源與 BP。驗證底板基坦也符合條件。
+
+剩餘：048 多重 IMPACT、DOUBLE BLOCK 與其他替代效果交互；049 在複雜 RAID 卡回手的同時時序；050 進場強制抽牌的空牌庫敗北、角色被移走後效果時序，以及手機真人雙方資訊驗收。**本批僅上述分支，不能宣稱全 81 張已完全自動判定。** 下一批將接續 051～053。
