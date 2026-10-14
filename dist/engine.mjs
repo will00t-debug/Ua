@@ -131,14 +131,14 @@ function removeRaidTop(s,uid,{destination='outside'}={}){
  return true;
 }
 function canShieldRaid(s,uid,fromPlayer){
- const l=locate(s,uid);if(!l||!isRaided(l.card)||fromPlayer===l.p||!s.players[l.p].hand.length)return false;
+ const l=locate(s,uid);if(!l||!isRaided(l.card)||silenced(s,l.card)||fromPlayer===l.p||!s.players[l.p].hand.length)return false;
  const r=cardOf(l.card).rules?.raidHighBase;
  return !!(r?.shield&&cardOf(l.card.stack[0]).energy>=r.minEnergy);
 }
 function shieldOrRetire(s,uid,fromPlayer,{after='effect',attackerUid=null,dest='outside'}={}){
  const l=locate(s,uid);if(!l)return false;
  if(canShieldRaid(s,uid,fromPlayer)){
-  const p=l.p;prompt(s,p,'更木劍八：棄 1 張手牌並移除 Raid 頂卡，代替退場？',
+  const p=l.p;prompt(s,p,'更木劍八：棄 1 張手牌並移除 Raid 頂卡，代替離場？',
    [{id:'decline',label:'不使用替代退場'},...s.players[p].hand.map(c=>({id:c.uid,cardId:c.cardId,label:`棄 ${cardOf(c).name} 以保護`}))],
    {kind:'raidShield',p,uid,after,attackerUid,dest});return true;
  }
@@ -157,7 +157,7 @@ function finishBlockedWin(s,p,attackerUid,blockerUid){
  if(a.card.winDrawTurn===s.turn)s.queue.push({kind:'draw',p,count:1});
 }
 function stateCheck(s){for(let p=0;p<2;p++)for(const c of characters(s,p))if(bp(s,c)<=0)takeField(s,c.uid);}
-function addBuff(s,uid,amount,duration){const l=locate(s,uid);if(l){if(amount<0&&(cardOf(l.card).rules?.immuneDebuff||isRaided(l.card)&&cardOf(l.card).rules?.raidImmuneDebuff))return;l.card.buffs.push(duration==='nextTurn'?{untilTurn:s.players[l.p].turnCount+1,bp:amount}:{turn:s.turn,bp:amount});log(s,`${cardOf(l.card).name}本回合 BP ${amount>=0?'+':''}${amount}。`,'effect');}}
+function addBuff(s,uid,amount,duration){const l=locate(s,uid);if(l){if(amount<0&&!silenced(s,l.card)&&(cardOf(l.card).rules?.immuneDebuff||isRaided(l.card)&&cardOf(l.card).rules?.raidImmuneDebuff))return;l.card.buffs.push(duration==='nextTurn'?{untilTurn:s.players[l.p].turnCount+1,bp:amount}:{turn:s.turn,bp:amount});log(s,`${cardOf(l.card).name}本回合 BP ${amount>=0?'+':''}${amount}。`,'effect');}}
 function activate(s,c){if(c.lockedBy&&locate(s,c.lockedBy)?.line==='front')return;if(c.freezeUntilAttackOwner!=null)return;if(c.skipActive>0){c.skipActive--;log(s,`${cardOf(c).name}跳過這次 ACTIVE。`,'effect');return;}c.ready=true;}
 function readyOwnField(s,p){for(const c of allField(s,p))activate(s,c);}
 function beginTurn(s){
@@ -509,7 +509,7 @@ function applyRuleTarget(s,uid,r,sourcePlayer=null){const l=locate(s,uid);if(!l)
  if(r.op==='keyword')l.card[r.key+'Turn']=s.turn;
  if(r.op==='addImpact'){l.card.impactBonusTurn=s.turn;l.card.impactBonusAmount=(l.card.impactBonusAmount||0)+(r.count||1);}
  if(r.op==='destroy')shieldOrRetire(s,uid,sourcePlayer??s.active);
- if(r.op==='bounce'&&!(sourcePlayer!=null&&l.p!==sourcePlayer&&printedRuleActive(s,l.card,'immuneEnemyBounce')))takeField(s,uid,'hand');
+ if(r.op==='bounce'&&!(sourcePlayer!=null&&l.p!==sourcePlayer&&printedRuleActive(s,l.card,'immuneEnemyBounce')))shieldOrRetire(s,uid,sourcePlayer??l.p,{dest:'hand'});
 }
 // A printed IMPACT outside the Raid box is always available; raidImpact is Raid-only (Q51).
 const impactOf=(s,c)=>(c.impactTurn===s.turn||(!silenced(s,c)&&(!!cardOf(c).rules?.impact||isRaided(c)&&!!cardOf(c).rules?.raidImpact))?1:0)+(c.impactBonusTurn===s.turn?(c.impactBonusAmount||0):0)+(c.sniperImpactActive?1:0)+(!silenced(s,c)&&cardOf(c).rules?.passive?.impactIfRemovedZeroNames&&removedZeroNames(s,locate(s,c.uid)?.p)>=cardOf(c).rules.passive.impactIfRemovedZeroNames?1:0);
@@ -688,7 +688,7 @@ function resolveChoice(s,ids){
   case 'raidShield':{
    if(ids[0]!=='decline'){
     moveDiscard(s,p,ids[0]);removeRaidTop(s,e.uid);
-    log(s,'更木劍八使用手牌支付替代退場，Raid 底卡留在場上。','effect');
+    log(s,'更木劍八使用手牌支付替代離場，Raid 底卡留在場上。','effect');
    }else if(e.after==='combat')finishBlockedWin(s,1-p,e.attackerUid,e.uid);
    else takeField(s,e.uid,e.dest);
    if(e.after==='combat')s.queue.push({kind:'endCombat',p:1-p},{kind:'postCombat',p:1-p,uid:e.attackerUid});

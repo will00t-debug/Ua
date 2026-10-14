@@ -34,7 +34,7 @@
 | EX07BT | BLC-2-038 | 涅繭利 | ✅ | ✅ | 尚需效果逐項驗收 |
 | EX07BT | BLC-2-057 | 修多羅千手丸 | ✅ | ✅ | 尚需效果逐項驗收 |
 | EX07BT | BLC-2-065 | 狛村左陣 | ✅ | ✅ | 追加框內防護、失去印刷能力、橫置／回手／IMPACT 實際結算；尚非全 FAQ 驗收 |
-| EX07BT | BLC-2-067 | 更木劍八 | ✅ | ✅ | 需求能源4以上底板才得 DAMAGE 2 |
+| EX07BT | BLC-2-067 | 更木劍八 | ✅ | ✅ | 高費底板 DAMAGE 2、回手替代、印刷效果喪失；尚非全 FAQ 驗收 |
 | EX15BT | BLC-4-012 | 雨葛蘭 | ✅ | ✅ | 尚需效果逐項驗收 |
 | EX15BT | BLC-4-033 | 四楓院夜一 | ✅ | ✅ | Raid 狀態下的 ACTIVE 登場 |
 | EX15BT | BLC-4-050 | 阿散井戀次 | ✅ | ✅ | Raid 限定起動能力 |
@@ -65,3 +65,13 @@
 - 狛村 Q1052 指明「不能被橫置」不免除後續不能 ACTIVE 的效果。修正冬獅郎 085、露琪亞 034 遇到抗橫置目標時整段跳過 ACTIVE 限制的問題；二者的卡文分別見 [085/Q569](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA08BT/BLC-1-085)、[034](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX07BT/BLC-2-034)。這是依卡文與 Q1052 做的跨卡判定，並非有獨立 FAQ 指名此配對。
 - `tests/raid-komamura-passives.test.mjs`：16 個新案例，透過合法登場/事件/攻擊指令驗證普通登場、真 Raid、失去印刷效果、回手時底板場外處理、生命實際減少、ACTIVE 限制與下一回合頂卡保留，均檢查 50 張實體卡 UID 守恆。牌面身分與部分中途狀態為受控 fixture，非手機實機對戰。
 - 本機 Node 24 全套回歸 **782/782 通過，0 fail**（舊段落的 741 是前一筆 CI 紀錄，不能視為本次基準總數）；Node 22 GitHub CI 另行確認。維持 PR #49 Draft，不合併或部署。
+
+## 接續：劍八離場替代與失去印刷效果
+
+- 上一輪 `f6a2345` 的 Node 22 [GitHub CI 38507358775](https://github.com/will00t-debug/Ua/actions/runs/38507358775) 已確認成功。
+- 再核對官方 [EX07BT/BLC-2-067](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX07BT/BLC-2-067)：能源 4 以上底板的替代能力涵蓋「因敵方效果或戰鬥離場」，不只退場。既有引擎的回手路徑漏掉選擇；現已接入同一個支付手牌／去 Raid 頂卡流程，拒絕時按原回手目的地結算。
+- 官方 [EX15BT/BLC-4-057 Q2330/Q2332](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX15BT/BLC-4-057)：消除印刷效果後，劍八不能繼續抗降 BP 或使用離場替代；已結算的本回合 +1000 BP／DAMAGE 2 保留。
+- `tests/kenpachi-leave-replacement.test.mjs` 新增 10 個案例：回手替代接受／拒絕、非法支付不改狀態、ACTIVE／REST 繼承、普通登場／低費底板／無手牌封鎖替代、真實使用 057 後再降 BP／退場、已給予增益保留。均從 50 張牌組建立實體卡並檢查 UID 守恆，敵方能源供應與特定狀態使用受控 fixture。
+- 仍需補齊生命 RAID Trigger、所有跨卡／戰鬥替代連鎖及手機操作驗收，不宣稱劍八或全 24 張 FAQ 已完整完成。PR #49 保持 Draft，不合併、不發布。
+
+- 本輪 Node 24 本機 `npm test`：**792/792 pass，0 fail**；Node 22 CI 由本次 PR 更新觸發。
