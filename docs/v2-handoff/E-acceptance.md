@@ -48,7 +48,7 @@
 | V2 基底 SHA | `ad04bef572303e8af1084ae1fb5cb431af9e7a11` |
 | Node 規範 | 22.x，詳 `AGENTS.md` |
 | 此 GitHub connector 靜態讀取 | 已完成，非測試執行 |
-| Node 執行實際結果 | **not_run**（容器無法連線 GitHub clone；待 GitHub Actions 或可執行的 checkout） |
+| Node 執行實際結果 | **已於 GitHub Actions Node v22.23.3 執行**；詳下節固定 SHA 與 CI URL |
 | 真機操作結果 | **not_run** |
 | main merge / production deployment | **未執行，且禁止此工作線進行** |
 
@@ -59,3 +59,56 @@
 - **06:40 前**：提交可重現的 blockers 和 go/no-go，附每項測試 commit、Node 版和命令。
 
 > 此文件只存證；不要求主控覆蓋任何資料修改。
+
+## 02:00 初步固定驗收結果（執行證據，不混入後續 branch HEAD）
+
+V2 固定來源仍為 `ad04bef572303e8af1084ae1fb5cb431af9e7a11`，本驗收器實際執行 SHA：
+`3d10c19ce9262ecef005579341c4efd645f41195`；
+Node `v22.23.3`；GitHub Actions：
+https://github.com/will00t-debug/Ua/actions/runs/38610288617
+
+| 驗收命令 | 實際結果 |
+|---|---|
+| `node --test tests/v2-independent-audit.test.mjs` | 4 / 4 pass |
+| `node scripts/v2-audit-catalog.mjs` | 產生 5 系列逐卡 CSV 與 JSON；基底共 700 種一般卡 |
+| `node scripts/v2-audit-match.mjs` | 4 / 4 all-real full games finished, all `endReason=life-zero`, `assertUniversalMatch` 通過 |
+| `npm test` | 997 / 997 pass（全專案回歸，不是卡片完成率） |
+
+種子及步數：747 → 122 步（TTG vs BLEACH、winner 1），
+20261015 → 225 步（TTG vs BLEACH、winner 0），
+20261016 → 228 步（BLEACH vs TTG、winner 1），
+20261017 → 185 步（BLEACH vs TTG、winner 1）。
+每場完整動作、牌組計數、牌數不變式、終局與命令儲存在 CI artifact。
+
+**初版資料欄位注意**：最初的資料完整性守門對沒有印刷 BP 的 SLG 事件／場地卡 12 張誤標為缺 BP。此為驗收器的欄位分類問題，非卡片資訊缺漏。已在驗收器 commit `fb2909cc050850b9d494175ebb9944eacd414563` 針對非角色的 BP=null 改標 N/A；正式表採其後重產結果。其餘被標出的基底資料缺口為：BLEACH `BLC-4-082`, `BLC-4-083` 缺正式來源欄位；MST 12 張（010、011、013、015、019、023、044、045、061、064、078、079）仍有原來源卡片數值／驗證缺口。D 線新增的官方抄錄另算分支來源，未整合前不回填此固定基底統計。
+
+### 分支候選版驗收：固定 SHA 各自測試，不可當成 PR #70 已整合
+
+腳本：`node scripts/v2-audit-port-snapshots.mjs`。
+Node v22.23.3，run：
+https://github.com/will00t-debug/Ua/actions/runs/38610928612
+
+| 系列工作線 | 固定檢查 commit | 可建立 V2 Pack | 專屬測試 |
+|---|---|---|---|
+| [V2-B] BLEACH | `6f873f1997a71bfeb0eb96c0e2bada2f7be6daac` | PASS，36 張（含原 Pilot 15） | 5 / 6 pass |
+| [V2-C] TTG/SLG | `d80443365806dae0df89fc2fb03110604e706024` | PASS，TTG 23 張、SLG 16 張 | 此快照未新增專屬測試檔，not_run |
+| [V2-D] SAO/MST | `1b74ba59bff89ae5ddcb4021103fe55a6789ee03` | PASS，SAO 22 張、MST 22 張 | 8 / 11 pass |
+
+任何分支結果都僅為候選；各個 HEAD 會變動，未擅自視為整合成功。
+
+#### 重現問題交付
+
+- **E-B-001（測試情境缺陷）**：B `tests/universal-v2-bleach-port.test.mjs:98` 的「沒有其他可彈回低費角色」情境，在能源線放入 `BLC-2-023`（印刷能源需求 1），其實符合 `BLC-2-020` 的退回條件。預期 `pending=null`，實際出現 `effect-bounce-own` 且列出一個合法 UID。固定 B commit 下 `node --test tests/universal-v2-bleach-port.test.mjs` → 5 pass、1 fail。優先修改測試布置，不應直接改共用引擎。
+- **E-D-001（測試 API 錯用 × 2）**：D 的 `tests/universal-v2-sao-port.test.mjs:50` 與 `tests/universal-v2-mst-port.test.mjs:50` 呼叫 `assert.match(...,'Unregistered')`，第二參數不是 RegExp，Node 22 報 `ERR_INVALID_ARG_TYPE`。改用 `/Unregistered/` 並重跑。
+- **E-D-002（測試預期需核對）**：D `tests/universal-v2-mst-port.test.mjs:127`，`MST-1-034` 一次回復 AP 後預期仍有第二個 `effect-recover-ap` pending，實際已結束。測試僅提供一張可 REST 的 AP，應先確認是否還有第二合法目標才視為核心缺陷。
+- **E-C-001（證據缺漏）**：C 固定快照可以建立 TTG/SLG V2 Packs，但沒有新增單卡專屬測試；須補非法選擇、支付、生命及跨作品可終局證據。
+
+所有上述項目都有精確 commit、測試檔／行數、Node 版與命令。沒有修改 B/C/D 的核心或卡包。
+
+### 需與主控交接的整合條件
+
+1. 各系列新 Pack 應由主控在 **同一固定整合 SHA** 註冊到共用選牌與預覽入口後，才重新計入「整合可玩」。
+2. 任何候選 Pack 只建立成功，不代表完整印刷能力、Raid/Trigger 及 FAQ 皆通過。
+3. 無真機瀏覽器執行環境，手機觸控與窄螢幕實測仍 **not_run**。
+4. 在 05:30 鎖定新的整合 SHA 重做完整測試；06:30～06:40 針對該 SHA 交付 P0/P1 阻塞與 go/no-go，不延用此 02:00 快照宣稱新版本已通過。
+
