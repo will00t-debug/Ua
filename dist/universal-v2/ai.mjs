@@ -34,6 +34,7 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='effect-recover-ap')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='raid-effect-order')return legal.find(a=>a.mode==='entryFirst')||legal[0];
  if(s.pending?.kind==='effect-buff-trait')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='main-two-buff')return legal[0];
  if(s.pending?.kind==='effect-rest-bp')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='block')return chooseBlock(pack,s,legal,difficulty);
  if(s.pending?.kind==='effect-target'){
@@ -99,6 +100,10 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   return energyPlays[0];
  }
  if(difficulty==='hard'&&raids.length)return raids[0];
+ const activate=legal.find(a=>a.type==='activate'&&a.mode==='readyAndBuff')||
+  legal.find(a=>a.type==='activate'&&a.mode==='buff')||
+  legal.find(a=>a.type==='activate'&&a.mode==='ready');
+ if(activate&&difficulty!=='easy')return activate;
  if(frontPlays.length){
   frontPlays.sort((a,b)=> (cardFor(pack,s,b)?.bp||0)-(cardFor(pack,s,a)?.bp||0));
   return frontPlays[0];
