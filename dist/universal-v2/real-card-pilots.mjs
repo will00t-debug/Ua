@@ -66,7 +66,7 @@ export function portVerifiedPilotCard(title,id){
  return {
   id, name:c.nameJa||c.name,color:spec.color,type:spec.type,
   energy:spec.energy,ap:spec.ap,bp:spec.bp,gen:spec.gen,
-  trigger:spec.trigger,implementation:spec.implementation,traits:c.traits||[],
+  trigger:spec.trigger,implementation:spec.implementation,traits:Array.isArray(c.traits)?c.traits:typeof c.traits==='string'&&c.traits.trim()?[c.traits]:[],
   step:spec.step===true,raidName:spec.raidName,ownTurnBp:spec.ownTurnBp,
   triggerEffect:spec.triggerEffect,effects:spec.effects
  };
