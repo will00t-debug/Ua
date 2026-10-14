@@ -131,6 +131,34 @@ test('normal play of a Raid card NEVER fires Raid-only effect; real Raid stacks 
  assert.equal(assertUniversalMatch(pack,r),true);
 });
 
+test('a true Raid executes printed on-entry AND Raid-only ability; normal play cannot enable Raid box',()=>{
+ const composed=createUniversalPack({id:'raid-on-entry-composition',cards:base.map(c=>c.id==='P01'
+  ?{...c,effects:{onPlay:[{op:'draw',count:1}],onRaid:[{op:'draw',count:1}]}}:c)});
+ const setup=()=>{
+  let s=newUniversalMatch(composed,{decks:[deck,deck],seed:57,first:0});
+  const baseCard=take(s,0,'P00'),gen=take(s,0,'P00'),top=toHand(s,0,'P01');
+  s.players[0].front[0]=baseCard;s.players[0].energy[0]=gen;
+  s=dispatchUniversalAction(composed,s,{type:'next'});
+  s=dispatchUniversalAction(composed,s,{type:'next'});
+  return {s,baseCard,top};
+ };
+ const ordinary=setup(),initialOrdinaryDeck=ordinary.s.players[0].deck.length;
+ const normalAction=legalUniversalActions(composed,ordinary.s).find(a=>
+  a.type==='play'&&a.uid===ordinary.top.uid&&a.line==='energy'&&a.slot===1);
+ assert.ok(normalAction);
+ const regular=dispatchUniversalAction(composed,ordinary.s,normalAction);
+ assert.equal(regular.players[0].deck.length,initialOrdinaryDeck-1);
+ assert.equal(regular.players[0].energy[1].stack.length,0);
+ const realRaid=setup(),initialRaidDeck=realRaid.s.players[0].deck.length;
+ const raidAction=legalUniversalActions(composed,realRaid.s).find(a=>
+  a.type==='raid'&&a.uid===realRaid.top.uid&&a.baseUid===realRaid.baseCard.uid&&a.slot===0);
+ assert.ok(raidAction);
+ const raided=dispatchUniversalAction(composed,realRaid.s,raidAction);
+ assert.equal(raided.players[0].deck.length,initialRaidDeck-2);
+ assert.equal(raided.players[0].front[0].stack[0].uid,realRaid.baseCard.uid);
+ assert.equal(assertUniversalMatch(composed,raided),true);
+});
+
 test('events draw, go outside, pay AP and preserve cards; movement never teleports illegal cards',()=>{
  let s=fresh(53),pl=s.players[0];
  pl.energy[0]=take(s,0,'P00');
