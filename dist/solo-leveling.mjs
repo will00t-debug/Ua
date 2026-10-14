@@ -1,6 +1,8 @@
 // UA51BT Japanese official cardlist, source URLs on every card.
 // Effects below are paraphrased Traditional Chinese descriptions; NOT an official localization.
-// art is intentionally a placeholder pending valid display rights. Cards stay auto:false until integrated.
+// Illustrations are linked remotely from Rugiacreation (never copied into the repo).
+// Official per-card ruling certification remains separate; cards stay auto:false.
+import {soloArtSource} from './solo-art.mjs';
 // Rarity and numeric fields come from individual official card pages; parallel arts excluded.
 const root='https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=';
 const raw=[
@@ -1195,7 +1197,7 @@ const raw=[
 ];
 export const SOLO_LEVELING_CARDS=raw.map(([suffix,name,nameJa,color,energy,ap,bp,gen,rarity,trigger,traits,effect])=>{
  const id='SLG-1-'+suffix,number='UA51BT/'+id;
- return {id,identity:id,number,name,nameJa,color,energy,ap,bp,gen,type:['SLG-1-034','SLG-1-035','SLG-1-075'].includes(id)?'field':['SLG-1-036','SLG-1-037','SLG-1-038','SLG-1-039','SLG-1-040','SLG-1-076','SLG-1-077','SLG-1-078','SLG-1-079','SLG-1-080'].includes(id)?'event':'character',traits,rarity,trigger,effect,sets:['ua51bt'],title:'solo-leveling',auto:false,source:root+encodeURIComponent(number),image:null,aliases:id==='SLG-1-019'?['UAPR/SLG-1-019']:id==='SLG-1-022'?['UAPR/SLG-1-022']:id==='SLG-1-030'?['UAPR/SLG-1-030']:[],maxCopies:id==='SLG-1-030'?12:4,artStatus:'placeholder',auditStatus:'card-data-only'};
+ return {id,identity:id,number,name,nameJa,color,energy,ap,bp,gen,type:['SLG-1-034','SLG-1-035','SLG-1-075'].includes(id)?'field':['SLG-1-036','SLG-1-037','SLG-1-038','SLG-1-039','SLG-1-040','SLG-1-076','SLG-1-077','SLG-1-078','SLG-1-079','SLG-1-080'].includes(id)?'event':'character',traits,rarity,trigger,effect,sets:['ua51bt'],title:'solo-leveling',auto:false,source:root+encodeURIComponent(number),image:soloArtSource(id),aliases:id==='SLG-1-019'?['UAPR/SLG-1-019']:id==='SLG-1-022'?['UAPR/SLG-1-022']:id==='SLG-1-030'?['UAPR/SLG-1-030']:[],maxCopies:id==='SLG-1-030'?12:4,artStatus:'rugia-external',auditStatus:'card-data-only'};
 });
 export const SOLO_LEVELING_EXPECTED_NORMAL_COUNT=80;
 export const SOLO_LEVELING_MISSING_NUMBERS=Array.from({length:80},(_,i)=>'SLG-1-'+String(i+1).padStart(3,'0')).filter(id=>!SOLO_LEVELING_CARDS.some(c=>c.id===id));
