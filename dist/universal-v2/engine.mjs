@@ -36,6 +36,15 @@ function draw(s,p,count=1){
 }
 // Each card requires its OWN printed energy color. A mixed-color deck may be
 // legal, but three green icons do not pay a purple energy-3 requirement.
+function hasFacedownUnder(c){
+ const inspect=x=>(x.under||[]).some(v=>v.faceDown===true||inspect(v))||
+  (x.stack||[]).some(v=>v.faceDown===true||inspect(v));
+ return !!c&&inspect(c);
+}
+function raidNamePresent(pack,s,owner,name){
+ const inspect=c=>card(pack,c).name===name||(c.stack||[]).some(inspect);
+ return field(s.players[owner]).some(inspect);
+}
 export function universalEnergyByColor(pack,s,p){
  const counts=Object.create(null);
  for(const c of s.players[p].energy){
@@ -53,6 +62,7 @@ function bp(pack,s,c){
  const printed=card(pack,c);
  const owner=Number(String(c.uid).split('-')[0]);
  return (printed?.bp||0)+(s.active===owner?(printed.ownTurnBp||0):0)+
+  (hasFacedownUnder(c)?(printed.conditionalUnderFaceDown?.bp||0):0)+
   (c.buffs||[]).filter(b=>b.untilTurn===s.turn).reduce((n,b)=>n+b.bp,0);
 }
 export const universalBp=bp;
@@ -125,22 +135,20 @@ function applyEffects(pack,s,cardOnField,timing,owner){
  s.effectQueue.push(...programJobs(pack,cardOnField,timing,owner));
  continueEffectQueue(pack,s);
 }
-function validRaidBase(pack,base,top){
- if(!base||!top.raidName)return false;
- const b=card(pack,base);
+function validRaidBase(pack,s,owner,base,top){
+ if(!base||!top.raidName||
+  !top.raidRequiresNames.every(n=>raidNamePresent(pack,s,owner,n)))return false;
+ const b=card(pack,base),names=top.raidBaseNames;
  if(base.stack?.length){
-  // An already-Raided top may be used ONLY if this exact printed name is
-  // explicitly allowed, and its original non-Raid base still matches.
   const bottom=base.stack[0];
-  return top.raidFromRaid.includes(b.name)&&
-   card(pack,bottom).name===top.raidName&&
+  return top.raidFromRaid.includes(b.name)&&names.includes(card(pack,bottom).name)&&
    !card(pack,bottom).raidName;
  }
- return b.name===top.raidName&&!b.raidName;
+ return names.includes(b.name)&&!b.raidName;
 }
 function performRaid(pack,s,p,cardOnTop,baseUid,line,slot,replaceUid){
  const pl=s.players[p],base=location(s,p,baseUid),top=card(pack,cardOnTop);
- if(!base||!validRaidBase(pack,base.c,top))throw Error('Illegal Raid base');
+ if(!base||!validRaidBase(pack,s,p,base.c,top))throw Error('Illegal Raid base');
  if(line!=='front'&&line!=='energy')throw Error('Illegal Raid destination');
  if(base.line==='front'&&(line!=='front'||slot!==base.slot))
   throw Error('Cannot move a front-line Raid base');
@@ -480,7 +488,7 @@ function legalPending(pack,s){
    if(d.energy<=(universalEnergyByColor(pack,s,q.player)[d.color]||0)){
     for(const line of ['front','energy'])for(let slot=0;slot<4;slot++){
      const base=p[line][slot];
-     if(!validRaidBase(pack,base,d))continue;
+     if(!validRaidBase(pack,s,q.player,base,d))continue;
      if(line==='front')out.push({type:'chooseTrigger',mode:'raid',baseUid:base.uid,line:'front',slot});
      else{
       out.push({type:'chooseTrigger',mode:'raid',baseUid:base.uid,line:'energy',slot});
@@ -537,7 +545,7 @@ export function legalUniversalActions(pack,s){
    if(d.raidName){
     for(const line of ['energy','front'])for(let slot=0;slot<4;slot++){
      const base=pl[line][slot];
-     if(!validRaidBase(pack,base,d))continue;
+     if(!validRaidBase(pack,s,p,base,d))continue;
      // A front-line base is already in its destination and cannot be
      // teleported to another occupied slot as a side effect of Raid.
      const dests=line==='front'?[{slot}]:legalDestinations(pl,'front');
