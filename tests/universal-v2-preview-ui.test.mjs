@@ -27,7 +27,9 @@ test('V2 standalone preview is never injected into existing production index and
 });
 test('UI presenter only allows actions copied from real per-turn legal options',()=>{
  const s=fresh(),legal=legalUniversalActions(packs,s);
- assert.deepEqual(legal,[{type:'next'}]);
+ assert.ok(legal.some(x=>x.type==='next'));
+ assert.ok(legal.every(x=>['next','extraDraw'].includes(x.type)),
+  'start phase may allow AP-paid extra draw besides next');
  assert.ok(isExactLegal({type:'next'},legal));
  assert.ok(!isExactLegal({type:'attack',uid:'0-99'},legal));
  assert.ok(!isExactLegal({type:'next',uid:'hidden'},legal));
