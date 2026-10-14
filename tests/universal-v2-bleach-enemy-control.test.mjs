@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {CARDS} from '../dist/cards.mjs';
 import {createBleachV2Pack} from '../dist/universal-v2/bleach-pack.mjs';
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
@@ -172,4 +173,16 @@ test('BLC-1-049 printed COLOR life trigger deploys own purple cost <=2 AP1 from 
  assert.equal(result.players[0].apCards.filter(x=>x.ready).length,readyAp);
  assert.ok(result.players[0].outside.some(x=>x.uid===life.uid));
  assert.equal(assertUniversalMatch(packs,result),true);
+});
+
+test('BLC-1-030 remains blocked: mandatory enemy REST cannot reuse optional restEnemyUnderBp',()=>{
+ const raw=CARDS.find(c=>c.identity==='BLC-1-030');
+ assert.equal(raw?.type,'event');
+ assert.equal(raw?.effect,'選 1 個敵方前線角色，將其轉為 REST。');
+ assert.equal(pack.cards['BLC-1-030'],undefined);
+ const attempted={...counts};
+ delete attempted['BLC-1-013'];
+ attempted['BLC-1-030']=4;
+ assert.notDeepEqual(validateUniversalDeck(pack,attempted),[],
+  'BLC-1-030 may not offer skip when target exists');
 });
