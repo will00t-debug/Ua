@@ -86,6 +86,12 @@ function continueEffectQueue(pack,s){
   }else if(job.op==='drawDiscard'){
    draw(s,owner,job.count);
    if(pl.hand.length)s.pending={kind:'effect-discard',player:owner,sourceUid:job.sourceUid};
+  }else if(job.op==='retireOppFrontUnderBp'){
+   const ownName=job.bonusName.replace(/\\s+/g,'');
+   const hasBonus=field(pl).some(c=>card(pack,c).name.replace(/\\s+/g,'')===ownName);
+   const limit=hasBonus?job.bonusBp:job.bp;
+   const choices=s.players[1-owner].front.filter(c=>c&&bp(pack,s,c)<=limit).map(c=>c.uid);
+   if(choices.length)s.pending={kind:'effect-retire-bp',player:owner,sourceUid:job.sourceUid,choices,limit};
   }else if(job.op==='enemyBpDown'){
    const targetUids=s.players[1-owner].front.filter(Boolean).map(c=>c.uid);
    if(targetUids.length)s.pending={kind:'effect-target',player:owner,sourceUid:job.sourceUid,
@@ -204,6 +210,13 @@ function resolveChoice(s,a,pack){
   continueEffectQueue(pack,s);
   return;
  }
+ if(q.kind==='effect-retire-bp'){
+  const opponent=1-q.player,slot=s.players[opponent].front.findIndex(c=>c?.uid===a.uid);
+  if(slot<0||!q.choices.includes(a.uid)||bp(pack,s,s.players[opponent].front[slot])>q.limit)
+   throw Error('Illegal BP-threshold retirement target');
+  retire(s,opponent,'front',slot);
+  s.pending=null;continueEffectQueue(pack,s);return;
+ }
  if(q.kind==='effect-target'){
   if(a.uid===null&&q.optional===true){
    s.pending=null;continueEffectQueue(pack,s);return;
@@ -306,6 +319,7 @@ function legalPending(pack,s){
   ];
  if(q.kind==='end-hand-limit')return p.hand.map(c=>({type:'chooseHandLimit',uid:c.uid}));
  if(q.kind==='effect-discard')return p.hand.map(c=>({type:'chooseDiscard',uid:c.uid}));
+ if(q.kind==='effect-retire-bp')return q.choices.map(uid=>({type:'chooseRetireBp',uid}));
  if(q.kind==='effect-target')return [
    ...(q.optional?[{type:'chooseTarget',uid:null}]:[]),
    ...q.choices.map(uid=>({type:'chooseTarget',uid}))
@@ -459,12 +473,12 @@ export function assertUniversalMatch(pack,s){
    !Array.isArray(s.initialCounts)||s.initialCounts.length!==2||
    s.players?.length!==2||!playerIndex(s.active)||
    !['playing','finished'].includes(s.status))throw Error('Incorrect pack/version or match state');
- if(s.pending&&(!playerIndex(s.pending.player)||!['block','life-trigger','effect-target','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice'].includes(s.pending.kind)))
+ if(s.pending&&(!playerIndex(s.pending.player)||!['block','life-trigger','effect-target','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','effect-retire-bp'].includes(s.pending.kind)))
   throw Error('Invalid pending controller');
  if(!Array.isArray(s.movedUids)||new Set(s.movedUids).size!==s.movedUids.length)
   throw Error('Invalid movement accounting');
  if(!Array.isArray(s.effectQueue)||s.effectQueue.some(e=>!playerIndex(e.owner)||
-   !['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne'].includes(e.op)))
+   !['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','retireOppFrontUnderBp'].includes(e.op)))
   throw Error('Invalid queued effects');
  for(let p=0;p<2;p++){
   const pl=s.players[p],uids=new Set(),items=[];
