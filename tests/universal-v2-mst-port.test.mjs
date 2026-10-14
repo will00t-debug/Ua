@@ -124,10 +124,19 @@ test('MST 034 pays event AP before recovering; can decline remaining AP recovery
  const ready=action(s,a=>a.type==='chooseApRecovery'&&a.uid!==null);
  s=dispatchUniversalAction(pack,s,ready);
  assert.ok(s.players[0].apCards.some(c=>c.uid===ready.uid&&c.ready));
- assert.equal(s.pending?.kind,'effect-recover-ap');
- s=dispatchUniversalAction(pack,s,{type:'chooseApRecovery',uid:null});
- assert.equal(s.pending,null);
+ assert.equal(s.pending,null,'only one AP is in play on turn one, so recovery ends');
  assert.equal(assertUniversalMatch(pack,s),true);
+ // A separate legal branch permits declining the recovery entirely.
+ let declined=fresh(deckWith('MST-1-034')),event=take(declined,0,'MST-1-034');
+ declined.players[0].hand.push(event);
+ for(let n=0;n<3;n++)declined.players[0].energy[n]=take(declined,0,'MST-1-001');
+ declined=toMain(declined);
+ declined=dispatchUniversalAction(pack,declined,action(declined,a=>a.type==='event'&&a.uid===event.uid));
+ assert.equal(declined.pending?.kind,'effect-recover-ap');
+ declined=dispatchUniversalAction(pack,declined,{type:'chooseApRecovery',uid:null});
+ assert.equal(declined.pending,null);
+ assert.equal(declined.players[0].apCards.filter(c=>c.ready).length,0);
+ assert.equal(assertUniversalMatch(pack,declined),true);
 });
 test('MST 069 private peek allows top or outside without any exposed opponent hand',()=>{
  let s=fresh(deckWith('MST-1-069')),c=take(s,0,'MST-1-069');
