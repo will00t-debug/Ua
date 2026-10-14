@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {PRESETS} from '../dist/cards.mjs';
+import {PRESETS,BY_ID,CARDS} from '../dist/cards.mjs';
 import {newGame,dispatch,legalActions,bp,assertState} from '../dist/engine.mjs';
 function fixture(ids=[]){
  const counts={...PRESETS[0].counts};
@@ -16,21 +16,30 @@ function fixture(ids=[]){
 }
 function take(s,id,p=0){const a=s.players[p].deck,i=a.findIndex(c=>c.cardId===id);assert.ok(i>=0,`${id} not in deck`);return a.splice(i,1)[0];}
 function put(s,id,line='front',slot=0,p=0,ready=true){const c=take(s,id,p);c.ready=ready;s.players[p][line][slot]=c;return c;}
+function putRaid(s,id,line='front',slot=0,p=0){
+ const top=put(s,id,line,slot,p);
+ const baseProfile=CARDS.find(d=>d.name===BY_ID[id]?.name&&!d.raid&&d.type==='character');
+ assert.ok(baseProfile,'Missing non-Raid base for '+id);
+ const base=take(s,'039',p);
+ base.cardId=baseProfile.id;base.ready=false;
+ top.stack=[base];top.ready=true;
+ return top;
+}
 function hand(s,id,p=0){const c=take(s,id,p);s.players[p].hand.push(c);return c;}
 function choose(s,...ids){assert.ok(s.pending,`Expected choice (${ids})`);const next=dispatch(s,{type:'choose',ids});assertState(next);return next;}
 function boost(s,id='102',slot=0){const c=put(s,id,'energy',slot);c.energyBoostTurn=s.turn;c.energyBoostAmount=16;return c;}
 function ability(s,c){const a=legalActions(s).find(a=>a.type==='ability'&&a.uid===c.uid);assert.ok(a,'no legal ability');return dispatch(s,a);}
 
 test('FAQ Q560: remove all three outside cards, but no following effect when four are required',()=>{
- let s=fixture(['BLC-1-047']);boost(s);const r=hand(s,'BLC-1-047');
+ let s=fixture(['BLC-1-047']);boost(s);const base=put(s,'046','front',0);const r=hand(s,'BLC-1-047');
  const outside=[take(s,'039'),take(s,'034'),take(s,'035')];s.players[0].outside.push(...outside);
- s=dispatch(s,{type:'play',uid:r.uid,line:'front',slot:0});assert.equal(s.pending?.effect.kind,'removeOutside');
+ s=dispatch(s,{type:'raid',uid:r.uid,target:base.uid,line:'front',slot:0});assert.equal(s.pending?.effect.kind,'removeOutside');
  assert.equal(s.pending.choices.length,3);s=choose(s,...outside.map(c=>c.uid));
  assert.equal(s.players[0].removed.length,3);assert.equal(s.players[0].outside.length,0);assert.equal(s.pending,null);assertState(s);
 });
 
 test('FAQ Q562: allow activated Byakuya with insufficient outside, consume two, do not grant IMPACT',()=>{
- let s=fixture(['BLC-1-050']);const by=put(s,'BLC-1-050');
+ let s=fixture(['BLC-1-050']);const by=putRaid(s,'BLC-1-050');
  const outside=[take(s,'039'),take(s,'034')];s.players[0].outside.push(...outside);
  s=ability(s,by);assert.equal(s.pending?.effect.kind,'removeOutside');s=choose(s,...outside.map(c=>c.uid));
  assert.equal(s.players[0].removed.length,2);assert.notEqual(s.players[0].front[0].impactTurn,s.turn);assertState(s);
@@ -45,7 +54,7 @@ test('FAQ Q568: Kenpachi BLC-1-081 cannot be exchanged front-to-energy by anothe
 });
 
 test('FAQ Q1033/Q1046: discarded event draws AFTER Ichigo finishes his main ability, regardless of required energy',()=>{
- let s=fixture(['BLC-2-019','BLC-2-047']);const ich=put(s,'BLC-2-019'),evt=hand(s,'BLC-2-047');
+ let s=fixture(['BLC-2-019','BLC-2-047']);const ich=putRaid(s,'BLC-2-019'),evt=hand(s,'BLC-2-047');
  s=ability(s,ich);assert.equal(s.pending?.effect.kind,'discardHand');s=choose(s,evt.uid);
  assert.equal(s.players[0].hand.length,2);assert.equal(bp(s,s.players[0].front[0]),5000);assert.equal(s.players[0].front[0].attackDrawTurn,s.turn);
  const log=s.log.map(x=>x.message);const buff=log.findIndex(x=>x.includes('BP +1000'));const draws=log.map((x,i)=>x.includes('抽 1 張牌')?i:-1).filter(x=>x>=0);
@@ -53,13 +62,13 @@ test('FAQ Q1033/Q1046: discarded event draws AFTER Ichigo finishes his main abil
 });
 
 test('FAQ Q1045: discarded Getsuga Jujisho can put a card on deck bottom and give double attack, no energy check',()=>{
- let s=fixture(['BLC-2-019','BLC-2-046']);const ich=put(s,'BLC-2-019'),evt=hand(s,'BLC-2-046'),pay=hand(s,'034');
+ let s=fixture(['BLC-2-019','BLC-2-046']);const ich=putRaid(s,'BLC-2-019'),evt=hand(s,'BLC-2-046'),pay=hand(s,'034');
  s=ability(s,ich);s=choose(s,evt.uid);assert.equal(s.pending?.effect.kind,'blueCrossDiscard');
  s=choose(s,pay.uid);assert.equal(s.players[0].deck.at(-1).uid,pay.uid);assert.equal(s.players[0].front[0].doubleAttackTurn,s.turn);assertState(s);
 });
 
 test('FAQ Q2315: Liluka storing discarded Zangetsu does not cancel the delayed draw',()=>{
- let s=fixture(['BLC-2-019','BLC-2-047','BLC-4-034']);const ich=put(s,'BLC-2-019'),lilu=put(s,'BLC-4-034','energy',0),evt=hand(s,'BLC-2-047');
+ let s=fixture(['BLC-2-019','BLC-2-047','BLC-4-034']);const ich=putRaid(s,'BLC-2-019'),lilu=put(s,'BLC-4-034','energy',0),evt=hand(s,'BLC-2-047');
  s=ability(s,ich);s=choose(s,evt.uid);assert.equal(s.pending?.effect.kind,'lilukaStore');s=choose(s,lilu.uid);
  assert.equal(s.players[0].hand.length,2);assert.equal(s.players[0].energy[0].under[0].uid,evt.uid);assertState(s);
 });
