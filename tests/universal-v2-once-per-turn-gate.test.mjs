@@ -38,6 +38,11 @@ function ready(){
  const generator=take(s,0,'K00');s.players[0].energy[0]=generator;
  for(let i=0;i<2;i++)s=dispatchUniversalAction(packs,s,{type:'next'});
  const p=s.players[0];p.apCards.forEach(c=>{c.inPlay=true;c.ready=true});
+ // Preload all tested physical sources BEFORE counting remaining deck.
+ // Otherwise a copy taken from the deck for a fixture "play" would be
+ // incorrectly counted as a triggered draw.
+ for(const id of ['K01','K01','K01','K02','K02'])
+  p.hand.push(take(s,0,id));
  assert.equal(s.phase,'main');return s;
 }
 function play(s,id,slot){
