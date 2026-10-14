@@ -87,6 +87,12 @@ test('Damage 2 processes the next life only after the previous trigger choice',(
  next=choose(next,'skip');
  assert.equal(next.pendingLifeDamage,null);
  assert.equal(next.players[1].life.length,0);
+ // The second life may also reveal a Trigger: resolve or decline it before losing.
+ while(next.pending){
+  const opts=soloTrainingLegalActions(next);
+  const last=opts.find(a=>a.mode==='skip'||a.uid===null)||opts[0];
+  next=soloTrainingDispatch(next,last);
+ }
  assert.equal(next.status,'finished');assert.equal(next.winner,0);
  assert.ok(assertSoloTrainingMatch(next));
 });
