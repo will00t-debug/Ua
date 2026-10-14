@@ -242,7 +242,7 @@ test('invalid nested operations, recursive cost gates and non-raid base timing f
    {template:'payDiscardThen',optional:true,then:[
     {template:'searchDeckMany',filter,count:2,optional:true,shuffle:true}
    ]}
-  ]}
+  ]}}
  ]});
  const gate=pack.cards.BAD.effects.onPlay[0];
  assert.equal(Object.isFrozen(gate.then),true);
