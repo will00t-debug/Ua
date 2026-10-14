@@ -11,6 +11,9 @@ const ttgDeck=Object.fromEntries(['001','005','009','014','019','042','043','047
 ttgDeck['TTG-1-036']=2;
 const slgDeck=Object.fromEntries(['005','006','015','016','026','032','041','043','045','052','066','068'].map(n=>['SLG-1-'+n,4]));
 slgDeck['SLG-1-038']=2;
+// SPECIAL event fixture replaces a normal 4-copy card, never exceeds printed limit.
+slgDeck['SLG-1-032']=0;
+slgDeck['SLG-1-040']=4;
 const fresh=(first=1)=>newUniversalMatch(packs,{decks:[ttgDeck,slgDeck],seed:51,first});
 function take(s,player,id){
  for(const zone of ['hand','deck','life','outside']){
@@ -38,8 +41,8 @@ test('TTG 81 and SLG 80 normal official card IDs are unique and contiguous, excl
  }
 });
 test('SLG 16 printed effect profiles do not equate to full 80-card migration and retain life trigger separately',()=>{
- assert.equal(SLG_V2_VERIFIED_IDS.length,16);
- assert.equal(Object.keys(slg.cards).length,16);
+ assert.equal(SLG_V2_VERIFIED_IDS.length,18);
+ assert.equal(Object.keys(slg.cards).length,18);
  assert.deepEqual(validateUniversalDeck(slg,slgDeck),[]);
  assert.equal(slg.cards['SLG-1-005'].implementation,'vanilla');
  assert.equal(slg.cards['SLG-1-005'].trigger,'draw');
@@ -48,6 +51,11 @@ test('SLG 16 printed effect profiles do not equate to full 80-card migration and
  assert.equal(slg.cards['SLG-1-032'].trigger,'active');
  assert.equal(slg.cards['SLG-1-038'].effects.onPlay[0].op,'recoverAp');
  assert.equal(slg.cards['SLG-1-038'].trigger,'final');
+ for(const id of ['SLG-1-040','SLG-1-076']){
+  assert.equal(slg.cards[id].trigger,'special');
+  assert.equal(slg.cards[id].triggerEffect.op,'retireOppFront');
+  assert.equal(slg.cards[id].effects.onPlay[0].bonusBp,5000);
+ }
  assert.ok(!slg.cards['SLG-1-019']&&!slg.cards['SLG-1-047'],'shared name once and re-Raid unsupported; never enable flags');
 });
 test('SLG-1-043 onPlay draw/discard targets own hand only, requires real AP and conserves UID',()=>{
@@ -110,4 +118,48 @@ test('SLG-1-038 FINAL optional life trigger resolves as separate handler, replen
  assert.equal(s.players[1].life.length,1);
  assert.equal(s.players[1].deck.length,deckBefore-1);
  assert.equal(assertUniversalMatch(packs,s),true);
+});
+
+test('SLG-040 paid event: no Jinwoo only BP3000, printed Jinwoo present raises limit to BP5000; illegal UID rejected',()=>{
+ const setup=withJinwoo=>{
+  let s=fresh(),enemy=take(s,0,'TTG-1-043'),source=take(s,1,'SLG-1-040');
+  enemy.ready=true;enemy.buffs=[{bp:1000,untilTurn:s.turn}];s.players[0].front[0]=enemy;
+  for(let i=0;i<4;i++){
+   const c=take(s,1,withJinwoo&&i===0?'SLG-1-015':'SLG-1-005');
+   c.ready=true;s.players[1].energy[i]=c;
+  }
+  s.players[1].hand.push(source);s=advance(s,'main');
+  const action=legalUniversalActions(packs,s).find(a=>a.type==='event'&&a.uid===source.uid);
+  assert.ok(action,'purple energy and AP must permit paid event');
+  return {s:dispatchUniversalAction(packs,s,action),enemy};
+ };
+ const without=setup(false);
+ assert.equal(without.s.pending,null,'boosted enemy 4000 is NOT under base 3000');
+ assert.equal(without.s.players[0].front[0].uid,without.enemy.uid);
+ assert.equal(assertUniversalMatch(packs,without.s),true);
+ const withName=setup(true);
+ assert.equal(withName.s.pending?.kind,'effect-retire-bp');
+ assert.deepEqual(legalUniversalActions(packs,withName.s),[{type:'chooseRetireBp',uid:withName.enemy.uid}]);
+ assert.throws(()=>dispatchUniversalAction(packs,withName.s,{type:'chooseRetireBp',uid:'0-fake'}),/not currently legal/);
+ const done=dispatchUniversalAction(packs,withName.s,{type:'chooseRetireBp',uid:withName.enemy.uid});
+ assert.equal(done.players[0].front[0],null);
+ assert.ok(done.players[0].outside.some(c=>c.uid===withName.enemy.uid));
+ assert.equal(assertUniversalMatch(packs,done),true);
+});
+test('SLG-040 SPECIAL life trigger is OPTIONAL, independent of its printed BP-limited event text',()=>{
+ let s=fresh(0),attack=take(s,0,'TTG-1-042'),flip=take(s,1,'SLG-1-040');
+ attack.ready=true;s.players[0].front[0]=attack;
+ const old=s.players[1].life.shift();s.players[1].deck.push(old);s.players[1].life.unshift(flip);
+ s=advance(s,'attack');
+ s=dispatchUniversalAction(packs,s,{type:'attack',uid:attack.uid},{actor:0});
+ s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:null},{actor:1});
+ assert.equal(s.pending?.kind,'life-trigger');assert.equal(s.pending?.trigger,'special');
+ const opts=legalUniversalActions(packs,s);
+ assert.ok(opts.some(a=>a.mode==='skip'));
+ assert.ok(opts.some(a=>a.mode==='special'&&a.uid===attack.uid));
+ const rejected=dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'skip'},{actor:1});
+ assert.ok(rejected.players[0].front[0]?.uid===attack.uid);
+ const done=dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'special',uid:attack.uid},{actor:1});
+ assert.equal(done.players[0].front[0],null);
+ assert.equal(assertUniversalMatch(packs,done),true);
 });
