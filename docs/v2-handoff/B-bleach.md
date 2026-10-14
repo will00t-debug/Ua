@@ -94,9 +94,11 @@
 
 ### 最新實際 CI 證據（不可把上游失敗算本線通過）
 
-- BLEACH 分支自身 HEAD 前一次完整檢查：[Actions run 38653215958](https://github.com/will00t-debug/Ua/actions/runs/38653215958)：專屬 12／12，全庫 **1020／1020**，成功。
-- CI runner 暫存合入 PR #70 最新基底後，BLEACH 專屬 **22／22** 通過，整合全庫 **1040／1042**；僅 2 個限次 gate 測試失敗。PR #70 自己 [Actions run 38612690292](https://github.com/will00t-debug/Ua/actions/runs/38612690292) 也有相同兩項失敗；不在此分支修改共用核心、也不將整合宣稱全綠。
-- 五個核心缺口防誤移植測試是後續新增測試；其完整 CI 結論以最新 Actions HEAD 為準，不借用上個提交的 1020 次作新提交證據。
+- 已實際驗證含五個官方核心缺口拒絕測試的 [Actions run 38656678995](https://github.com/will00t-debug/Ua/actions/runs/38656678995)（commit `e6412cf9`）：BLEACH 既有首批 **12／12** 全過；完整 `npm test` **1023／1023** 通過（新增 3 個 core-gap tests）；Node 22 syntax 通過。
+- 同 run 的 CI runner 暫存合入 PR #70 最新基底後，BLEACH 既有專屬 **22／22** 通過，整合全庫 **1043／1045**；僅 2 個限次 gate 測試失敗。PR #70 自己 [Actions run 38612690292](https://github.com/will00t-debug/Ua/actions/runs/38612690292) 也有相同兩項失敗；**整合仍是阻塞**，不在本分支修改 core。
+- 後續已將五套 BLEACH 測試明列在獨立 CI 工作步驟，並擴充逐卡盤點為 **23 欄／276 行**：核心缺口、測試證據、是否已接入 PR #70（15 張舊 Pilot 與 56 張獨立新增卡分開）。**最新 HEAD 的 CI 結論仍需對應最新 run 查核，不能把先前成功算作本次 HEAD 通過。**
+
+最新逐卡欄位說明：`B-bleach-inventory.csv` 後三欄明確表示「核心能力需求／缺口」、「現有可追溯測試證據」、「是否接入 PR70 整合版」；`未移植` 行即使有防錯測試，也只表示確保拒絕非法移植，**不當成卡片能力驗收通過**。
 
 ## 專屬測試與整合限制
 
