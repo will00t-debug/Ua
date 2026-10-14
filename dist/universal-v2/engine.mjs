@@ -264,6 +264,21 @@ function resolveChoice(s,a,pack){
   continueEffectQueue(pack,s);
   return;
  }
+ if(q.kind==='raid-effect-order'){
+  const ordered=a.mode==='baseFirst'?
+   [...q.baseJobs,...q.entryJobs,...q.raidJobs]:
+   [...q.entryJobs,...q.baseJobs,...q.raidJobs];
+  s.pending=null;s.effectQueue.unshift(...ordered);
+  continueEffectQueue(pack,s);return;
+ }
+ if(q.kind==='effect-buff-trait'){
+  if(a.uid===null){s.pending=null;continueEffectQueue(pack,s);return;}
+  const target=field(p).find(c=>c.uid===a.uid);
+  if(!target||!q.choices.includes(a.uid)||!card(pack,target).traits.includes(q.trait))
+   throw Error('Illegal own-trait buff target');
+  target.buffs.push({bp:q.bp,untilTurn:s.turn});
+  s.pending=null;continueEffectQueue(pack,s);return;
+ }
  if(q.kind==='effect-rest-bp'){
   if(a.uid===null){s.pending=null;continueEffectQueue(pack,s);return;}
   const foe=1-q.player,target=s.players[foe].front.find(c=>c?.uid===a.uid);
@@ -314,6 +329,14 @@ function resolveChoice(s,a,pack){
    const foe=1-q.player,slot=s.players[foe].front.findIndex(c=>c?.uid===a.uid);
    if(slot<0)throw Error('SPECIAL target no longer on enemy front line');
    retire(s,foe,'front',slot);
+  }
+  else if(a.mode==='colorRetire'&&q.trigger==='color'){
+   const slot=s.players[1-q.player].front.findIndex(c=>c?.uid===a.uid);
+   const profile=card(pack,p.outside[i]).triggerEffect;
+   if(profile.op!=='retireOppFrontUnderBp'||slot<0||
+    bp(pack,s,s.players[1-q.player].front[slot])>profile.bp)
+    throw Error('Illegal COLOR retirement target');
+   retire(s,1-q.player,'front',slot);
   }
   else if(a.mode==='color'&&q.trigger==='color'){
    const profile=card(pack,p.outside[i]).triggerEffect;
@@ -384,6 +407,12 @@ function legalPending(pack,s){
   ];
  if(q.kind==='end-hand-limit')return p.hand.map(c=>({type:'chooseHandLimit',uid:c.uid}));
  if(q.kind==='effect-discard')return p.hand.map(c=>({type:'chooseDiscard',uid:c.uid}));
+ if(q.kind==='raid-effect-order')return [
+   {type:'chooseRaidOrder',mode:'baseFirst'},{type:'chooseRaidOrder',mode:'entryFirst'}
+  ];
+ if(q.kind==='effect-buff-trait')return [
+   {type:'chooseTraitBuff',uid:null},...q.choices.map(uid=>({type:'chooseTraitBuff',uid}))
+  ];
  if(q.kind==='effect-rest-bp')return [
    {type:'chooseRestBp',uid:null},...q.choices.map(uid=>({type:'chooseRestBp',uid}))
   ];
@@ -401,7 +430,10 @@ function legalPending(pack,s){
     .map(c=>({type:'chooseTrigger',mode:'special',uid:c.uid})));
   if(q.trigger==='color'){
    const profile=card(pack,p.outside.find(c=>c.uid===q.uid)).triggerEffect;
-   for(const c of p.hand){
+   if(profile.op==='retireOppFrontUnderBp')
+    out.push(...s.players[1-q.player].front.filter(c=>c&&bp(pack,s,c)<=profile.bp)
+     .map(c=>({type:'chooseTrigger',mode:'colorRetire',uid:c.uid})));
+   else for(const c of p.hand){
     const d=card(pack,c);
     if(d.type!=='character'||d.color!==profile.color||d.energy>profile.maxEnergy||d.ap!==profile.ap)continue;
     for(const line of ['front','energy'])
@@ -549,12 +581,12 @@ export function assertUniversalMatch(pack,s){
    !Array.isArray(s.initialCounts)||s.initialCounts.length!==2||
    s.players?.length!==2||!playerIndex(s.active)||
    !['playing','finished'].includes(s.status))throw Error('Incorrect pack/version or match state');
- if(s.pending&&(!playerIndex(s.pending.player)||!['block','life-trigger','effect-target','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','effect-retire-bp','effect-rest-bp'].includes(s.pending.kind)))
+ if(s.pending&&(!playerIndex(s.pending.player)||!['block','life-trigger','effect-target','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','effect-retire-bp','effect-rest-bp','raid-effect-order','effect-buff-trait'].includes(s.pending.kind)))
   throw Error('Invalid pending controller');
  if(!Array.isArray(s.movedUids)||new Set(s.movedUids).size!==s.movedUids.length)
   throw Error('Invalid movement accounting');
  if(!Array.isArray(s.effectQueue)||s.effectQueue.some(e=>!playerIndex(e.owner)||
-   !['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','retireOppFrontUnderBp','restOppFrontUnderBp'].includes(e.op)))
+   !['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','retireOppFrontUnderBp','restOppFrontUnderBp','buffOwnTrait','drawIfRaidUnderFacedown'].includes(e.op)))
   throw Error('Invalid queued effects');
  for(let p=0;p<2;p++){
   const pl=s.players[p],uids=new Set(),items=[];
