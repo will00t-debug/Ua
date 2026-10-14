@@ -55,7 +55,7 @@ function bp(pack,s,c){
 export const universalBp=bp;
 function startTurn(pack,s){
  const p=s.active,pl=s.players[p];
- pl.ownTurns++;s.turn++;s.phase='start';s.extraDrawn=false;s.moved=false;s.pending=null;
+ pl.ownTurns++;s.turn++;s.phase='start';s.extraDrawn=false;s.moved=false;s.movedUids=[];s.pending=null;
  const max=pl.ownTurns>=3?3:(pl.ownTurns===1&&p===s.first?1:2);
  for(let i=0;i<pl.apCards.length;i++)pl.apCards[i].ready=i<max;
  for(const c of field(pl)){c.ready=true;c.buffs=(c.buffs||[]).filter(b=>b.untilTurn>=s.turn);}
@@ -123,6 +123,14 @@ function finishPending(s){
   s.status='finished';s.winner=1-defeated;s.endReason='life-zero';
  }
 }
+function advanceAfterEnd(pack,s,owner){
+ const pl=s.players[owner];
+ // End phase: REST cards return ACTIVE before opponent's turn.
+ for(const c of field(pl))c.ready=true;
+ if(pl.hand.length>8){s.pending={kind:'end-hand-limit',player:owner};return;}
+ s.active=1-owner;
+ startTurn(pack,s);
+}
 function resolveChoice(s,a,pack){
  const q=s.pending,p=s.players[q.player];
  if(q.kind==='block'){
@@ -136,6 +144,14 @@ function resolveChoice(s,a,pack){
    if(bp(pack,s,attacker)>=bp(pack,s,blocker))retire(s,q.player,'front',slot);
   }
   if(s.pending===q)s.pending=null;
+  return;
+ }
+ if(q.kind==='end-hand-limit'){
+  const i=p.hand.findIndex(c=>c.uid===a.uid);
+  if(i<0)throw Error('End phase must remove an owned hand card');
+  p.removed.push(p.hand.splice(i,1)[0]);
+  s.pending=null;
+  advanceAfterEnd(pack,s,q.player);
   return;
  }
  if(q.kind==='effect-discard'){
@@ -188,7 +204,7 @@ export function newUniversalMatch(pack,{decks,seed=1,first=0}={}){
  const s={version:UNIVERSAL_V2_VERSION,title:isSame?packs[0].id:'cross-title',packVersion:isSame?packs[0].version:null,
   packIds:packs.map(p=>p.id),packVersions:packs.map(p=>p.version),
   rng:(seed>>>0)||1,first,active:first,turn:0,phase:'start',status:'playing',
-  winner:null,endReason:null,pending:null,extraDrawn:false,moved:false,
+  winner:null,endReason:null,pending:null,extraDrawn:false,moved:false,movedUids:[],
   publicReveals:[],effectQueue:[],players:[]
  };
  for(let p=0;p<2;p++){
@@ -210,6 +226,7 @@ function legalPending(pack,s){
   {type:'chooseBlock',uid:null},
   ...p.front.filter(c=>c?.ready).map(c=>({type:'chooseBlock',uid:c.uid}))
  ];
+ if(q.kind==='end-hand-limit')return p.hand.map(c=>({type:'chooseHandLimit',uid:c.uid}));
  if(q.kind==='effect-discard')return p.hand.map(c=>({type:'chooseDiscard',uid:c.uid}));
  if(q.kind==='effect-target')return q.choices.map(uid=>({type:'chooseTarget',uid}));
  if(q.kind==='life-trigger'){
@@ -231,11 +248,11 @@ export function legalUniversalActions(pack,s){
  if(s.phase==='start'){
   if(!s.extraDrawn&&pl.apCards.some(c=>c.ready)&&pl.deck.length)out.push({type:'extraDraw'});
  }
- if(s.phase==='move'&&!s.moved){
+ if(s.phase==='move'){
   const frontEmpty=pl.front.flatMap((c,slot)=>c?[]:[slot]);
   const energyEmpty=pl.energy.flatMap((c,slot)=>c?[]:[slot]);
-  for(const c of pl.energy.filter(Boolean))for(const slot of frontEmpty)out.push({type:'move',uid:c.uid,slot});
-  for(const c of pl.front.filter(c=>c&&card(pack,c).step))for(const slot of energyEmpty)
+  for(const c of pl.energy.filter(c=>c&&!s.movedUids.includes(c.uid)&&card(pack,c).type==='character'))for(const slot of frontEmpty)out.push({type:'move',uid:c.uid,slot});
+  for(const c of pl.front.filter(c=>c&&!s.movedUids.includes(c.uid)&&card(pack,c).step))for(const slot of energyEmpty)
    out.push({type:'step',uid:c.uid,slot});
  }
  if(s.phase==='main'){
@@ -282,17 +299,17 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
    if(s.phase==='start')s.phase='move';
    else if(s.phase==='move')s.phase='main';
    else if(s.phase==='main')s.phase='attack';
-   else if(s.phase==='attack'){s.active=1-p;startTurn(pack,s);}
+   else if(s.phase==='attack')advanceAfterEnd(pack,s,p);
    break;
   case 'move':{
    const l=location(s,p,action.uid);
    if(!l||l.line!=='energy'||pl.front[action.slot])throw Error('Invalid move');
-   pl.energy[l.slot]=null;pl.front[action.slot]=l.c;s.moved=true;break;
+   pl.energy[l.slot]=null;pl.front[action.slot]=l.c;s.moved=true;s.movedUids.push(l.c.uid);break;
   }
   case 'step':{
    const l=location(s,p,action.uid);
    if(!l||l.line!=='front'||pl.energy[action.slot])throw Error('Invalid STEP');
-   pl.front[l.slot]=null;pl.energy[action.slot]=l.c;s.moved=true;break;
+   pl.front[l.slot]=null;pl.energy[action.slot]=l.c;s.moved=true;s.movedUids.push(l.c.uid);break;
   }
   case 'play':case 'event':case 'raid':{
    const index=pl.hand.findIndex(c=>c.uid===action.uid);
@@ -338,8 +355,10 @@ export function assertUniversalMatch(pack,s){
    s.packIds.length!==2||s.packVersions.length!==2||
    s.players?.length!==2||!playerIndex(s.active)||
    !['playing','finished'].includes(s.status))throw Error('Incorrect pack/version or match state');
- if(s.pending&&(!playerIndex(s.pending.player)||!['block','life-trigger','effect-target','effect-discard'].includes(s.pending.kind)))
+ if(s.pending&&(!playerIndex(s.pending.player)||!['block','life-trigger','effect-target','effect-discard','end-hand-limit'].includes(s.pending.kind)))
   throw Error('Invalid pending controller');
+ if(!Array.isArray(s.movedUids)||new Set(s.movedUids).size!==s.movedUids.length)
+  throw Error('Invalid movement accounting');
  if(!Array.isArray(s.effectQueue)||s.effectQueue.some(e=>!playerIndex(e.owner)||
    !['draw','millTop','buffSelf','enemyBpDown','drawDiscard'].includes(e.op)))
   throw Error('Invalid queued effects');
