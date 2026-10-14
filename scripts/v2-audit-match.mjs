@@ -54,7 +54,7 @@ for(const job of jobs){
      const view=universalPublicView(packs,state,p);
      if(view.players[1-p].hand!==null)throw Error('Opponent hand disclosed at '+n);
      const hidden=state.players[1-p].hand.map(c=>c.uid);
-     if(hidden.some(uid=>JSON.stringify(view).includes(uid)))
+     if(hidden.some(uid=>JSON.stringify(view).includes(JSON.stringify(uid))))
       throw Error('Opponent private UID disclosed at '+n);
     }
     if(state===before)throw Error('Reducer did not advance at '+n);
