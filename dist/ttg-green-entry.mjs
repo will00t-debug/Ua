@@ -168,6 +168,15 @@ export function resolveTtgGreenEntry(state,{player,sourceUid,mode,takeUid=null,d
  if(!objectHasUniqueUids(owner))throw new Error('Green entry caused UID duplication');
  if(result.pending?.kind==='ttgGreenEntry')result.pending=null;
  result.log??=[];
- result.log.push({type:'ttgGreenEntryResolved',player,cardId:id,sourceUid,mode,takeUid,discardUid,returnUid});
+ // The Japanese print for Leeron 023 explicitly says to REVEAL the selected
+ // Gunmen. Publish only that selected card's identity, never the other four
+ // private looked-at cards or the unchosen bottom order.
+ if(id==='TTG-1-023'&&mode==='search'&&takeUid){
+  const chosen=owner.hand.find(c=>c.uid===takeUid)||owner.outside.find(c=>c.uid===takeUid);
+  if(!chosen||!gunmen(chosen))throw new Error('023 public reveal must be a printed Gunmen');
+  result.log.push({type:'ttgPublicSearchReveal',player,sourceUid,uid:takeUid,cardId:chosen.cardId});
+ }
+ result.log.push({type:'ttgGreenEntryResolved',player,cardId:id,sourceUid,mode,
+  takeUid:id==='TTG-1-023'?null:takeUid,discardUid:id==='TTG-1-023'?null:discardUid,returnUid});
  return result;
 }
