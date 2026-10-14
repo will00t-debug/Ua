@@ -143,3 +143,14 @@
 | [TTG-1-011](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-011) | 自己回合且總能源8時 BP2500→4000；主階段同一實體每回合一次，二選一為發生綠能源+1或前線也產能源；持續到下一次自己回合開始而非當前回合結束 | 兩張同名卡同場、Raid疊底與跨卡能源暫時倍率的完整官方情境 |
 
 此批測試曾因人工測試局面忘記更新能源快取及使用複製前的角色參照而失敗；已修正**測試前置條件**並保留實體卡片檢查，不是降低引擎驗證強度。仍維持正式全卡 `auto:false` 標記。
+
+
+## 2026-10-14：TTG-1-015～017 日本官方印刷效果續驗（等待 PR CI）
+
+新增 `tests/ttg-official-acceptance-015-017.test.mjs` 四項核心情境。獨立 branch，不更新 main、不部署；本記錄只代表列明分支測過的效果，不是整張卡的全交互完整驗收。
+
+- [015 妮亞](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-015)：兩張不同實體各自使用一次主階段能力、可指定支付不同 AP、各抽實體一張，產能＋綠各自到回合末解除；同一實體當回合禁止重複。
+- [016 妮亞](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-016)：能源19／20分界、REST 實際成本及抽一張實體牌；**官方 Q2268** 兩張同名也只能共同發動一次。既有其他回歸含登場棄最多2張抽同量，但高階生命 ACTIVE 時序尚待全驗。
+- [017 妮亞](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-017)：登場二選一：看頂4最多拿合法西蒙、棄1和牌庫底實體順序；或把場外西蒙放到牌庫頂；主階段達8能源後＋綠2直到回合末。同時保留 50 張 UID 守恆。
+
+尚缺：實際手機介面逐操作檢查、017 COLOR 生命觸發及其他角色登場連鎖、016 與其他 20 能源能力的疊加與空牌庫、進階 Raid 交互。本批不調整 81 張 Beta 的 `auto:false` 旗標，請先看 GitHub Actions Node22 結果，再開始 018～020。
