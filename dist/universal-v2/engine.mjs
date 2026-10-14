@@ -647,6 +647,21 @@ function resolveChoice(s,a,pack){
     throw Error('Illegal COLOR retirement target');
    retire(pack,s,1-q.player,'front',slot);
   }
+  else if(a.mode==='colorOutside'&&q.trigger==='color'){
+   const profile=card(pack,p.outside[i]).triggerEffect;
+   if(profile.op!=='deployOutsideCharacter'||a.line!=='front'||profile.frontOnly!==true)
+    throw Error('COLOR source must explicitly allow outside-to-front play');
+   const index=p.outside.findIndex(c=>c.uid===a.uid);
+   if(index<0)throw Error('COLOR outside target is not in own outside');
+   const chosen=p.outside[index],d=card(pack,chosen);
+   if(d.type!=='character'||d.color!==profile.color||
+     d.energy>profile.maxEnergy||d.ap!==profile.ap)
+    throw Error('Outside COLOR target does not meet printed requirements');
+   commitDestination(s,q.player,'front',a.slot,a.replaceUid);
+   p.outside.splice(index,1);chosen.ready=true;p.front[a.slot]=chosen;
+   // COLOR life deployment spends no AP but does trigger onPlay.
+   applyEffects(pack,s,chosen,'onPlay',q.player);
+  }
   else if(a.mode==='color'&&q.trigger==='color'){
    const profile=card(pack,p.outside[i]).triggerEffect;
    const handIndex=p.hand.findIndex(c=>c.uid===a.uid);
@@ -787,7 +802,14 @@ function legalPending(pack,s){
    if(profile.op==='retireOppFrontUnderBp')
     out.push(...s.players[1-q.player].front.filter(c=>c&&bp(pack,s,c)<=profile.bp)
      .map(c=>({type:'chooseTrigger',mode:'colorRetire',uid:c.uid})));
-   else for(const c of p.hand){
+   else if(profile.op==='deployOutsideCharacter'){
+    for(const c of p.outside){
+     const d=card(pack,c);
+     if(d.type!=='character'||d.color!==profile.color||d.energy>profile.maxEnergy||d.ap!==profile.ap)continue;
+     for(const choice of legalDestinations(p,'front'))
+      out.push({type:'chooseTrigger',mode:'colorOutside',uid:c.uid,line:'front',...choice});
+    }
+   }else for(const c of p.hand){
     const d=card(pack,c);
     if(d.type!=='character'||d.color!==profile.color||d.energy>profile.maxEnergy||d.ap!==profile.ap)continue;
     for(const line of ['front','energy'])
