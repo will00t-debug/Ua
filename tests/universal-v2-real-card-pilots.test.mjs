@@ -20,11 +20,15 @@ function withSyntheticFiller(title,{color}={}){
  }));
  const cards=[...real,...synthetic];
  const deck=Object.fromEntries(cards.map(c=>[c.id,0]));
- // No more than four FINAL triggers across all distinct card IDs (official Q7).
- for(const c of cards.filter(c=>c.trigger==='final'))deck[c.id]=1;
+ // No more than four FINAL cards overall (official Q7). Test-only decks
+ // must not starve late-ordered actual pilot cards after the allowlist grows.
+ // Give every non-FINAL printed fixture at least three real physical copies.
+ for(const c of cards)deck[c.id]=c.trigger==='final'?1:3;
  let remaining=50-Object.values(deck).reduce((a,b)=>a+b,0);
- for(const c of cards.filter(c=>c.trigger!=='final')){
-  const copies=Math.min(4,remaining);deck[c.id]=copies;remaining-=copies;
+ if(remaining<0)throw Error('Test fixture requested too many mandatory copies');
+ for(const c of cards.filter(c=>c.trigger!=='final'&&deck[c.id]<4)){
+  if(!remaining)break;
+  deck[c.id]++;remaining--;
  }
  assert.equal(remaining,0,'test fixture has enough non-FINAL filler');
  const pack=createUniversalPack({id:title,cards,version:'synthetic-mixed-test-only'});
