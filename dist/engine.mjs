@@ -14,6 +14,9 @@ const traitsOf=c=>{const t=cardOf(c).traits||[];return (Array.isArray(t)?t:[t]).
 const withTrait=(c,trait)=>!!c&&traitsOf(c).some(t=>String(t).includes(trait));
 const ownHas=(s,p,name)=>allField(s,p).some(c=>matchingName(c,name));
 const isRaided=c=>(c?.stack?.length||0)>0;
+// Q51: test physical Raid state, not whether the card prints a Raid keyword.
+// Legacy card profiles explicitly declare which effect blocks lie inside Raid.
+const raidBoxEnabled=(c,kind)=>!cardOf(c)?.rules?.raidBox?.[kind]||isRaided(c);
 const mayMoveToEnergy=c=>!!c&&!cardOf(c)?.rules?.cannotMoveToEnergy;
 const hasRaidPrinted=c=>!!cardOf(c)?.raid || /^(?:Raid[〈《 ]|突襲[〈《])/.test(cardOf(c)?.effect||'');
 const raidBaseMatches=(raid,base)=>{const want=String(cardOf(raid).raid||'').replaceAll(/\s/g,'');const d=cardOf(base);
@@ -212,7 +215,7 @@ export function legalActions(s){
    const cr=cardOf(c).rules||{},abs=silenced(s,c)?[]:cr.abilities||[cr.ability].filter(Boolean);
    for(let j=0;j<abs.length;j++){
     const a=abs[j],used=cr.abilities?c.usedAbilities?.[j]:c.usedTurn;
-    if(a&&ruleEnabled(s,p,c,a)&&(!a.groupOnce||s.groupUsed?.[`${p}:${a.groupOnce}`]!==s.turn)&&(!a.once||used!==s.turn)&&(!a.front||locate(s,c.uid).line==='front')&&(!a.energy||locate(s,c.uid).line==='energy')&&(!a.requiresTwoActiveFront||s.players[p].front.filter(x=>x?.ready).length>=2)&&(!a.rest||c.ready)&&(!a.when||condition(s,p,c.uid,a.when))&&(!a.ap||pl.ap>=a.ap)&&(!a.discard||pl.hand.length>=a.discard)&&(!a.discardFilter||pl.hand.some(x=>matchFilter(x,a.discardFilter))))acts.push(cr.abilities?{type:'ability',uid:c.uid,abilityIndex:j}:{type:'ability',uid:c.uid});
+    if(a&&raidBoxEnabled(c,'ability')&&ruleEnabled(s,p,c,a)&&(!a.groupOnce||s.groupUsed?.[`${p}:${a.groupOnce}`]!==s.turn)&&(!a.once||used!==s.turn)&&(!a.front||locate(s,c.uid).line==='front')&&(!a.energy||locate(s,c.uid).line==='energy')&&(!a.requiresTwoActiveFront||s.players[p].front.filter(x=>x?.ready).length>=2)&&(!a.rest||c.ready)&&(!a.when||condition(s,p,c.uid,a.when))&&(!a.ap||pl.ap>=a.ap)&&(!a.discard||pl.hand.length>=a.discard)&&(!a.discardFilter||pl.hand.some(x=>matchFilter(x,a.discardFilter))))acts.push(cr.abilities?{type:'ability',uid:c.uid,abilityIndex:j}:{type:'ability',uid:c.uid});
    }
    if(c.usedTurn===s.turn)continue;
    if(c.cardId==='104'||c.cardId==='046'&&locate(s,c.uid).line==='front'||(c.cardId==='042'||c.cardId==='108')&&c.ready)acts.push({type:'ability',uid:c.uid});
@@ -506,11 +509,11 @@ function applyRuleTarget(s,uid,r,sourcePlayer=null){const l=locate(s,uid);if(!l)
  if(r.op==='destroy')shieldOrRetire(s,uid,sourcePlayer??s.active);
  if(r.op==='bounce'&&!(sourcePlayer!=null&&l.p!==sourcePlayer&&cardOf(l.card).rules?.immuneEnemyBounce))takeField(s,uid,'hand');
 }
-// Printed IMPACT remains available on normal-play Raid printed cards (Q51).
-const impactOf=(s,c)=>(c.impactTurn===s.turn||(!silenced(s,c)&&(!!cardOf(c).rules?.impact||!!cardOf(c).rules?.raidImpact))?1:0)+(c.impactBonusTurn===s.turn?(c.impactBonusAmount||0):0)+(c.sniperImpactActive?1:0)+(!silenced(s,c)&&cardOf(c).rules?.passive?.impactIfRemovedZeroNames&&removedZeroNames(s,locate(s,c.uid)?.p)>=cardOf(c).rules.passive.impactIfRemovedZeroNames?1:0);
+// A printed IMPACT outside the Raid box is always available; raidImpact is Raid-only (Q51).
+const impactOf=(s,c)=>(c.impactTurn===s.turn||(!silenced(s,c)&&(!!cardOf(c).rules?.impact||isRaided(c)&&!!cardOf(c).rules?.raidImpact))?1:0)+(c.impactBonusTurn===s.turn?(c.impactBonusAmount||0):0)+(c.sniperImpactActive?1:0)+(!silenced(s,c)&&cardOf(c).rules?.passive?.impactIfRemovedZeroNames&&removedZeroNames(s,locate(s,c.uid)?.p)>=cardOf(c).rules.passive.impactIfRemovedZeroNames?1:0);
 function removedZeroNames(s,p){if(p==null)return 0;return new Set(s.players[p].removed.filter(c=>withTrait(c,'零番隊')).map(c=>cardOf(c).name)).size;}
 export const damageOf=(s,c)=>c.damageTurn===s.turn||isRaided(c)&&cardOf(c).rules?.raidPassive?.damage===2&&s.active===(locate(s,c.uid)?.p??s.active)&&(s.retireCountTurn===s.turn?s.retireCount||0:0)>=cardOf(c).rules.raidPassive.bpIfOwnRetireCount||isRaided(c)&&cardOf(c).rules?.raidDamageIfOppReduced&&s.players[1-(locate(s,c.uid)?.p??s.active)].front.some(x=>x&&bp(s,x)<cardOf(x).bp)||cardOf(c).rules?.damage===2||cardOf(c).rules?.passive?.damageIfRemovedCount&&s.players[locate(s,c.uid)?.p??s.active].removed.length>=cardOf(c).rules.passive.damageIfRemovedCount||cardOf(c).rules?.passive?.damageIfRemovedZeroNames&&removedZeroNames(s,locate(s,c.uid)?.p)>=cardOf(c).rules.passive.damageIfRemovedZeroNames?2:1;
-function enqueueEntry(s,p,c){const r=cardOf(c).rules;if(r?.entryReady===true||r?.entryReady&&(r.entryReady.line!=='energy'||locate(s,c.uid)?.line==='energy')&&condition(s,p,c.uid,r.entryReady))c.ready=true;if(c.cardId==='034')s.queue.unshift({kind:'drawDiscard',p,count:1});if(c.cardId==='035')s.queue.unshift({kind:'orihime',p,uid:c.uid});if(c.cardId==='105')s.queue.unshift({kind:'renjiDebuff',p});if(c.cardId==='106')s.queue.unshift({kind:'removeDraw',p,count:3,draw:2,optional:true});queueRules(s,p,c.uid,cardOf(c).rules?.entry,true);if(isRaided(c)&&r?.raidHighBase&&cardOf(c.stack[0]).energy>=r.raidHighBase.minEnergy){
+function enqueueEntry(s,p,c){const r=cardOf(c).rules;if(r?.entryReady===true||r?.entryReady&&(r.entryReady.line!=='energy'||locate(s,c.uid)?.line==='energy')&&condition(s,p,c.uid,r.entryReady))c.ready=true;if(c.cardId==='034')s.queue.unshift({kind:'drawDiscard',p,count:1});if(c.cardId==='035')s.queue.unshift({kind:'orihime',p,uid:c.uid});if(c.cardId==='105')s.queue.unshift({kind:'renjiDebuff',p});if(c.cardId==='106')s.queue.unshift({kind:'removeDraw',p,count:3,draw:2,optional:true});if(raidBoxEnabled(c,'entry'))queueRules(s,p,c.uid,cardOf(c).rules?.entry,true);if(isRaided(c)&&r?.raidHighBase&&cardOf(c.stack[0]).energy>=r.raidHighBase.minEnergy){
   queueRules(s,p,c.uid,r.raidHighBase.entry,true);
   // Damage (2) is a temporary combat keyword, not immediate life loss at entry.
   if(c.cardId==='BLC-2-067')log(s,'更木劍八突襲成功：需求能源 4 以上底板，本回合獲得 BP +1000 與 DAMAGE 2（未被阻擋的攻擊造成 2 點傷害）。','effect');
@@ -952,20 +955,20 @@ export function dispatch(source,action,actor=controller(source)){
   }
   case 'attack':{
    const l=locate(s,action.uid);if(l.card.sniperTurn===s.turn&&l.card.attackTurn!==s.turn)l.card.sniperImpactActive=true;l.card.ready=false;if(l.card.cardId==='103')addBuff(s,l.card.uid,1000);if((!silenced(s,l.card)&&cardOf(l.card).rules?.doubleAttack||l.card.doubleAttackTurn===s.turn)&&l.card.attackTurn!==s.turn){l.card.ready=true;}l.card.attackTurn=s.turn;
-   s.combat={attacker:l.card.uid,blocker:null};log(s,`${pl.name}以${cardOf(l.card).name}宣告攻擊。`,'attack');queueRules(s,p,l.card.uid,cardOf(l.card).rules?.attack);if(l.card.attackDrawTurn===s.turn)s.queue.push({kind:'rule',p,uid:l.card.uid,rule:{op:'draw',count:1,optional:true}});s.queue.push({kind:'block',p,uid:l.card.uid});pump(s);break;
+   s.combat={attacker:l.card.uid,blocker:null};log(s,`${pl.name}以${cardOf(l.card).name}宣告攻擊。`,'attack');if(raidBoxEnabled(l.card,'attack'))queueRules(s,p,l.card.uid,cardOf(l.card).rules?.attack);if(l.card.attackDrawTurn===s.turn)s.queue.push({kind:'rule',p,uid:l.card.uid,rule:{op:'draw',count:1,optional:true}});s.queue.push({kind:'block',p,uid:l.card.uid});pump(s);break;
   }
   case 'snipe':{
    const l=locate(s,action.uid);l.card.ready=false;l.card.sniperImpactActive=true;l.card.attackTurn=s.turn;
    s.combat={attacker:l.card.uid,blocker:action.target,sniper:true};
    log(s,`${pl.name}以${cardOf(l.card).name}狙擊敵方前線角色。`,'attack');
-   queueRules(s,p,l.card.uid,cardOf(l.card).rules?.attack);
+   if(raidBoxEnabled(l.card,'attack'))queueRules(s,p,l.card.uid,cardOf(l.card).rules?.attack);
    s.queue.push({kind:'snipeBattle',p,uid:l.card.uid,target:action.target});pump(s);break;
   }
   case 'next':{
    if(s.phase==='start')s.phase='move';else if(s.phase==='move')s.phase='main';
    else if(s.phase==='main'){for(const c of [...allField(s,p)])if(c.sacrificeTurn===s.turn)takeField(s,c.uid);s.phase='attack';for(const c of [...pl.energy])if(c?.frontOnAttackTurn===s.turn){const free=pl.front.findIndex(x=>!x);if(free>=0){const l=locate(s,c.uid);if(l){pl.energy[l.slot]=null;pl.front[free]=c;}}}}
    else if(s.phase==='attack'){
-    s.phase='end';for(const c of pl.front.filter(Boolean))queueRules(s,p,c.uid,cardOf(c).rules?.attackPhaseEnd);
+    s.phase='end';for(const c of pl.front.filter(Boolean))if(raidBoxEnabled(c,'attackPhaseEnd'))queueRules(s,p,c.uid,cardOf(c).rules?.attackPhaseEnd);
     s.queue.push({kind:'endTurn',p});pump(s);
    }
    stateCheck(s);break;
