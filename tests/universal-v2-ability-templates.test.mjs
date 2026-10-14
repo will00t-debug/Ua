@@ -20,7 +20,7 @@ test('template registry is finite, audited and rejects unknown behaviors instead
   'enemyBpDown','retireEnemyUnderBp','restEnemyUnderBp',
   'retireEnemyIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown',
   'searchDeckOne','recoverOutsideOne','discardToDraw',
-  'searchDeckMany','payDiscardThen'
+  'searchDeckMany','searchDeckWhere','inspectTopArrange','payDiscardThen'
  ]);
  assert.throws(()=>checked(character({
   implementation:'dsl',templateEffects:{onPlay:[{template:'drawEnemyDeck',count:1}]}
@@ -98,8 +98,16 @@ test('templates cannot silently override raw ops, authorize vanilla effects or b
   'legacy directly authored DSL continues to work unchanged');
 });
 
-test('all seventeen supported templates compile to the established and extended V2 runtime DSL ops in deterministic order',()=>{
+test('all nineteen supported templates compile to the established and extended V2 runtime DSL ops in deterministic order',()=>{
  const examples=[
+  [{template:'searchDeckWhere',filters:[
+   {field:'name',value:'Scout'},{field:'trait',value:'Scout'}],
+   logic:'any',count:3,optional:true,shuffle:true},
+   {op:'searchDeckWhere',filters:[
+    {field:'name',value:'Scout'},{field:'trait',value:'Scout'}],
+    logic:'any',count:3,optional:true,shuffle:true}],
+  [{template:'inspectTopArrange',count:3,toOutside:true,rest:'bottom'},
+   {op:'inspectTopArrange',count:3,toOutside:true,rest:'bottom'}],
   [{template:'draw',count:2},{op:'draw',count:2}],
   [{template:'millTop',count:3},{op:'millTop',count:3}],
   [{template:'drawDiscardOne'},{op:'drawDiscard',count:1}],
