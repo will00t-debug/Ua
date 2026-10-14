@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {SOLO_LEVELING_CARDS,SOLO_LEVELING_MISSING_NUMBERS} from '../dist/solo-leveling.mjs';
 import {TTG_CARDS} from '../dist/ttg-builder.mjs';
+import {registeredV2TitlePack,listRegisteredV2Titles} from '../dist/universal-v2/title-packs/registry.mjs';
 import {createSlgV2Pack,SLG_V2_VERIFIED_IDS} from '../dist/universal-v2/slg-pack.mjs';
 import {createTtgV2Pack} from '../dist/universal-v2/ttg-pack.mjs';
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
@@ -162,4 +163,20 @@ test('SLG-040 SPECIAL life trigger is OPTIONAL, independent of its printed BP-li
  const done=dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'special',uid:attack.uid},{actor:1});
  assert.equal(done.players[0].front[0],null);
  assert.equal(assertUniversalMatch(packs,done),true);
+});
+
+test('18 SLG profiles compile through the title-scoped V2 registry without legacy fallback',()=>{
+ const row=listRegisteredV2Titles().find(x=>x.title==='solo-leveling');
+ assert.equal(row.baselinePilots,0);
+ assert.equal(row.newlyContributed,18);
+ assert.equal(row.totalV2Cards,18);
+ const registered=registeredV2TitlePack('solo-leveling');
+ assert.ok(registered&&registered.kind==='ua-v2-pack');
+ assert.equal(Object.keys(registered.cards).length,18);
+ for(const id of SLG_V2_VERIFIED_IDS){
+  assert.ok(registered.cards[id]);
+  assert.equal(registered.cards[id].trigger,slg.cards[id].trigger);
+  assert.deepEqual(registered.cards[id].effects,slg.cards[id].effects);
+ }
+ assert.ok(!registered.cards['SLG-1-047'],'not-yet ported green chained Raid must fail closed');
 });
