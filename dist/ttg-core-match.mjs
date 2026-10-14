@@ -190,7 +190,7 @@ export function legalTtgCoreActions(s){
  if(['ttgRed073Leaving','ttgRed056AfterAttack','ttgRed077Recover','ttgRed061','ttgRed062Retrigger','ttgRedRaidQueue','ttgRed076Look','ttgRed076Discard'].includes(s.pending?.kind))
   return legalTtgRuleActions(s,s.pending.player);
  if(s.pending?.kind==='ttgGreenEntry')return greenEntryChoices(s);
- if(['ttgGreen028Entry','ttgGreen029Entry','green030Sidelined','green012Search','green012Discard','greenHighRaidQueue','green034Sidelined','greenRetireOrder'].includes(s.pending?.kind))
+ if(['ttgGreen021PhaseStart','ttgGreen028Entry','ttgGreen029Entry','green030Sidelined','green012Search','green012Discard','greenHighRaidQueue','green034Sidelined','greenRetireOrder'].includes(s.pending?.kind))
   return legalTtgRuleActions(s,s.pending.player);
  if(s.pending?.kind==='greenHighAttackWindow')return legalHighRaidAttackEffects(s,s.pending.player,s.pending.uid);
  if(s.pending?.kind==='block'){
@@ -471,8 +471,9 @@ export function ttgCoreAiChoice(s){
    options.find(x=>x.mode==='color'&&x.line==='front')||
    options.find(x=>x.mode==='colorRed'&&x.targetUid)||options.find(x=>x.mode==='color')||options[0];
  }
- if(['ttgGreen028Entry','ttgGreen029Entry','green030Sidelined','green012Search','green012Discard','greenHighRaidQueue','green034Sidelined','greenRetireOrder'].includes(s.pending?.kind))
+ if(['ttgGreen021PhaseStart','ttgGreen028Entry','ttgGreen029Entry','green030Sidelined','green012Search','green012Discard','greenHighRaidQueue','green034Sidelined','greenRetireOrder'].includes(s.pending?.kind))
   return chooseTtgRuleAiAction(s,s.pending.player);
+ if(s.pending?.kind==='ttgGreen021PhaseStart')return chooseTtgRuleAiAction(s,s.pending.player);
  if(s.pending?.kind==='ttgGreenEntry'){
   const decisions=legalTtgCoreActions(s);
   return decisions.find(x=>x.takeUid&&x.discardUid&&x.takeUid!==x.discardUid)||

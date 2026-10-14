@@ -143,3 +143,16 @@
 | [TTG-1-011](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-011) | 自己回合且總能源8時 BP2500→4000；主階段同一實體每回合一次，二選一為發生綠能源+1或前線也產能源；持續到下一次自己回合開始而非當前回合結束 | 兩張同名卡同場、Raid疊底與跨卡能源暫時倍率的完整官方情境 |
 
 此批測試曾因人工測試局面忘記更新能源快取及使用複製前的角色參照而失敗；已修正**測試前置條件**並保留實體卡片檢查，不是降低引擎驗證強度。仍維持正式全卡 `auto:false` 標記。
+
+
+## 2026-10-14：TTG-1-021～023 官方逐卡續驗、023 手機選牌補強（草稿）
+
+在獨立分支 `audit/ttg021-023-official-ui-20261014` 新增 `tests/ttg-official-acceptance-021-023.test.mjs`（7 個實體核心／UI 情境），沿用既有 81/81 Beta 核心，不翻 `auto:false` 或部署正式網站。
+
+| 卡號 | 印刷條件與本輪驗證 | 仍待完成 |
+|---|---|---|
+| [TTG-1-021](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-021) | 官方 Q2269 前線滿 4 格時，先自行選一張前線角色移至 **REMOVED** 才從能源線移動；不能任意放場外。Q2270 兩張庸子共用同名每回合一次效果；Q2271 只有自己看得見己方底下裏向卡，且須有底下裏向卡的紅蓮螺巖角色才可在攻擊階段開始時移動並本回合 BP＋1000。補上使用真實核心 `next` 進入攻擊階段的情境。 | 完整異圖/更複雜 RAID 下方的時序；真人裝置的視覺驗證 |
+| [TTG-1-022](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-022) | 陽子老師仍具〈庸子〉名稱，主階段 REST 使產能+綠1，重複啟動拒絕；主階段結束回**手牌**而非場外，與 018 的退場處理分離，同 UID 守恆；生命 DRAW 為既有可選 Trigger 路徑。 | 作其他〈庸子〉檢查時的跨卡別名條件；DRAW 及複合結算／極端回手重新登場情境 |
+| [TTG-1-023](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-023) | 從牌庫頂最多查看 5 張，只能公開選取 `ガンメン`，可放棄；拿取時必棄一張自己手牌（可選剛拿的實體卡）；未拿牌不棄；剩餘任意 UID 順序送牌庫底。本輪新增**手機真人操作介面**：私下選牌、手牌棄置、上/下排序、確認送出；既有核心驗證非法 UID。只在真正拿卡時以 `ttgPublicSearchReveal` 紀錄**選中**卡的公開卡號，保護未選牌和私下查看順序。 | 實體手機瀏覽器 vs AI 驗證、多人模式私密資訊展示的最終檢查 |
+
+本批不合併 `main`、不發佈正式網站。GitHub Actions Node 22 測試通過後才可考慮合併；禁止將 Beta AI 整局通過視為所有 81 張卡的官方逐卡 100% 完整驗收。下一批為 **024～026**。
