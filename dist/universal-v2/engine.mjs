@@ -1100,12 +1100,15 @@ export function universalPrivateChoices(pack,s,viewer){
  if(!playerIndex(viewer))throw Error('Invalid private choice viewer');
  const q=s.pending;
  if(!q||q.player!==viewer||
-  !['effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-order','effect-recover-outside','effect-discard-cost','effect-discard-gate'].includes(q.kind))
+  !['effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-order','effect-recover-outside','effect-bounce-own','effect-discard-cost','effect-discard-gate'].includes(q.kind))
   return null;
  const zone=['effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-order'].includes(q.kind)?'deck':
-  q.kind==='effect-recover-outside'?'outside':'hand';
+  q.kind==='effect-recover-outside'?'outside':
+  q.kind==='effect-bounce-own'?'field':'hand';
  return {kind:q.kind,player:viewer,options:legalPending(pack,s).map(action=>{
-  const physical=action.uid===null?null:s.players[viewer][zone].find(c=>c.uid===action.uid);
+  const physical=action.uid===null?null:
+   (zone==='field'?field(s.players[viewer]):s.players[viewer][zone])
+    .find(c=>c.uid===action.uid);
   return {action:{...action},card:physical?
    {cardId:physical.cardId,name:card(pack,physical).name,color:card(pack,physical).color}:null};
  })};
