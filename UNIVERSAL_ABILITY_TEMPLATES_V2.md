@@ -1,10 +1,10 @@
-# UNION ARENA V2 — 可重複使用的能力模板（第一至第四批）
+# UNION ARENA V2 — 可重複使用的能力模板（第一至第五批）
 
 **狀態：實驗版 / PR #70 / 不取代正式站。** 模板將每張卡片明確宣告的印刷效果轉譯為已存在的 V2 DSL 指令，**不**根據日文文字自動猜測能力，也**不**把尚未驗收的卡片標為可用。
 
 ## 檔案與資料流
 
-- `dist/universal-v2/ability-templates.mjs`：受控的 19 種命名模板、嚴格參數契約，以及 `expandAbilityTemplates`。
+- `dist/universal-v2/ability-templates.mjs`：受控的 22 種命名模板、嚴格參數契約，以及 `expandAbilityTemplates`。
 - `dist/universal-v2/pack.mjs`：在 `createUniversalPack` 中編譯 `templateEffects`，沿用 `verifyProgram` 及現有時點限制；輸出仍是舊格式 `effects`，引擎 / AI 不需要知道卡片是否由模板寫成。
 - `dist/universal-v2/engine.mjs`：繼續執行低階 DSL 的結算、合法選擇、AP、Raid、生命 Trigger 與卡片守恆，不因套模板跳過裁定。
 - `dist/universal-v2/real-card-pilots.mjs`：目前有 **16 個已驗證卡片的效果設定** 改用模板；Pilot 白名單仍為 **BLEACH 8／天元突破 15 = 23 張**，沒有新增可用真卡。
@@ -33,6 +33,9 @@
 | `searchDeckWhere` | 用 2–3 條件組合搜尋己方整副牌庫，取至多 5 張、完成才洗牌 | `filters`、`logic:'all'|'any'`、`count`、`optional`、`shuffle:true` | `searchDeckWhere` |
 | `inspectTopArrange` | 私下查看牌頂 2–4 張，可選至多一張送場外，逐張指定其餘卡片放回牌頂或牌底的順序 | `count`、`toOutside`、`rest:'top'|'bottom'` | `inspectTopArrange` |
 | `payDiscardThen` | 先支付棄牌成本，成功後才按順序執行隸屬於這次支付的多段效果 | `optional`、`then`（1–6 個允許的子模板） | `discardGate` |
+| `enemyFrontAllBpDown` | 對敵方當前前線全體同時套用本回合 -BP；之後逐一處理 BP ≤ 0 退場 | `bp`（1–5000） | `enemyFrontAllBpDown` |
+| `retireEnemyFrontAllUnderBp` | 對敵方前線所有 BP ≤ 門檻的角色同時判定退場，依序處理保護／替代效果 | `bp`（1–50000） | `retireOppFrontAllUnderBp` |
+| `buffOwnTraitAllTurn` | 給自己場上**目前**有指定特徵的全部角色本回合 +BP | `trait`、`bp`（1–5000） | `buffOwnTraitAllTurn` |
 
 以上模板名稱是為了維護程式方便，並非任何實體卡都具有相同文字或適用條件；參數必須由官方卡文逐卡驗證。某些能力只能出現在特定時點，`pack.mjs` 會拒絕不合法組合。
 
@@ -93,6 +96,16 @@ templateEffects: {
 
 測試：`tests/universal-v2-compound-top-inspection.test.mjs`。涵蓋 ALL/ANY、跨作品同編號但不同卡文、隱私與非法 UID、選單張送場外、重新排序至牌頂／牌底、後續抽牌時點、付費後接續兩種選擇以及巢狀參數不可更改。**目前官方 V2 Pilot 仍只有 23 張。**
 
+### 第五批：同時多目標退場、替代退場與回合暫時 BP
+
+`enemyFrontAllBpDown` **先對所有敵方前線角色一起套用 BP 減少**，再以當時符合 BP ≤ 0 的實體 UID 清單，依前線槽位順序執行必要的退場。若某張卡需要替代離場，會暫停批次、由其持有者選擇，再繼續處理其他已記錄目標；不會提前執行下一個抽牌／攻擊效果。這是**指定範圍的狀態式退場**，不是已支援所有「同時發動」和雙方互相觸發的官方一般裁定。
+
+`retireEnemyFrontAllUnderBp` 對效果開始結算時 BP 在指定門檻內的敵方前線角色，**一次決定完整目標清單**，不會因為先處理某張的保護選擇而重新挑選其他角色。若目標具有受限的 Raid 裏向底卡替代離場效果，玩家能逐次選擇保護或讓其離場，全部處理結束後才繼續待決效果佇列。現在的 `retireBatchOne` 僅是**引擎內部工作**，不允許卡包直接填寫成卡片印刷效果。
+
+`buffOwnTraitAllTurn` 給當下已在前線／能源區且符合指定特徵的己方角色一個**到本回合結束為止**的 BP 加成；未來新登場的角色不追溯取得加成，到對方回合自然失效。**它不是常駐能力光環**，也不會因為持有原效果的角色離場而重新判定。因此官卡若寫的是「只要此角色在場上，其他角色 +BP」或「本遊戲中永遠 +BP」，不可用此模板代替，須另實作來源綁定的持續能力與連鎖狀態檢查。
+
+這三種均已在 `tests/universal-v2-mass-retire-turn-buff.test.mjs` 的**合成跨作品 50 張牌組**驗證：全體降 BP、兩張 Raid 保護依序選擇與普通角色退場、原目標快照、高 BP 角色不受影響、回合切換清除 BP、無合法目標、非法參數、資料守恆與原始狀態不可變。**V2 真實卡 Pilot 沒有增加，仍只有 BLEACH 8／天元突破 15，共 23 張；官方逐卡 FAQ 驗收仍是獨立任務。**
+
 ### 寫入新作品的方式
 
 ```js
@@ -133,6 +146,6 @@ const card = {
 
 ## 尚未納入模板的能力（不得宣告完成）
 
-`mainAbility`（例如 TTG-1-046 的兩種選擇與同名限次）、Raid 底板合法名稱、特殊 `conditionalUnderFaceDown`、COLOR/SPECIAL/RAID 生命 Trigger 印刷差異目前仍使用嚴格明列的能力設定，不會被上面的 19 種模板自動判定。其他多目標、同時退場、交換、持續免疫、攻防時點、其他系列專屬例外仍待開發。
+`mainAbility`（例如 TTG-1-046 的兩種選擇與同名限次）、Raid 底板合法名稱、特殊 `conditionalUnderFaceDown`、COLOR/SPECIAL/RAID 生命 Trigger 印刷差異目前仍使用嚴格明列的能力設定，不會被上面的 22 種模板自動判定。其他多目標、同時退場、交換、持續免疫、攻防時點、其他系列專屬例外仍待開發。
 
 **本批是可重複能力的編譯基礎，不是「700 張都能玩」或「23 張都已完成全部官方裁定」。**
