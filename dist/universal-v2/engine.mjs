@@ -65,11 +65,11 @@ function retire(s,p,line,slot){
  const expand=c=>[c,...(c.stack||[]).flatMap(expand),...(c.under||[]).flatMap(expand)];
  s.players[p].outside.push(...expand(top).map(c=>({...c,stack:[],under:[],buffs:[],ready:false})));
 }
-function damage(s,defender){
+function damage(pack,s,defender){
  const pl=s.players[defender];
  if(!pl.life.length){s.status='finished';s.winner=1-defender;s.endReason='unblocked-attack';return;}
  const c=pl.life.shift();pl.outside.push(c);
- const trig=s.packTriggerIndex[c.cardId];
+ const trig=card(pack,c).trigger;
  s.publicReveals.push({owner:defender,cardId:c.cardId,uid:c.uid,trigger:trig||null,turn:s.turn});
  if(s.publicReveals.length>12)s.publicReveals.shift();
  if(['get','draw'].includes(trig)||(trig==='final'&&!pl.life.length)){
@@ -89,7 +89,7 @@ function resolveChoice(s,a,pack){
  if(q.kind==='block'){
   const attacker=s.players[s.active].front.find(c=>c?.uid===q.attackerUid);
   if(!attacker)throw Error('Attacker no longer exists');
-  if(a.uid===null)damage(s,q.player);
+  if(a.uid===null)damage(pack,s,q.player);
   else{
    const slot=p.front.findIndex(c=>c?.uid===a.uid);
    if(slot<0||!p.front[slot].ready)throw Error('Illegal blocker');
@@ -122,9 +122,7 @@ export function newUniversalMatch(pack,{decks,seed=1,first=0}={}){
  const s={version:UNIVERSAL_V2_VERSION,title:pack.id,packVersion:pack.version,
   rng:(seed>>>0)||1,first,active:first,turn:0,phase:'start',status:'playing',
   winner:null,endReason:null,pending:null,extraDrawn:false,moved:false,
-  publicReveals:[],players:[],
-  // Immutable public printed Trigger inventory, not hidden card locations.
-  packTriggerIndex:Object.fromEntries(Object.values(pack.cards).map(c=>[c.id,c.trigger]))
+  publicReveals:[],players:[]
  };
  for(let p=0;p<2;p++){
   const ids=Object.entries(decks[p]).flatMap(([id,count])=>Array(count).fill(id));
