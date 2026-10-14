@@ -750,6 +750,20 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
   "trigger": "special",
   "type": "event",
   "effect": "使 1 個敵方前線 BP 3000 以下角色退場；己方場上有〈朽木露琪亞〉時，BP 上限改為 5000。"
+ },
+ {
+  "id": "BLC-1-049",
+  "kind": "enemyBpDown500Color",
+  "number": "UA08BT/BLC-1-049",
+  "name": "朽木 白哉",
+  "color": "purple",
+  "energy": 3,
+  "ap": 1,
+  "bp": 3000,
+  "gen": 2,
+  "trigger": "color",
+  "type": "character",
+  "effect": "登場：可使最多 1 個敵方前線角色本回合 BP −500。"
  }
 ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
@@ -782,7 +796,8 @@ function checkedAddon(p){
   restEnemy3500:{onPlay:[{template:'restEnemyUnderBp',bp:3500,optional:true}]},
   retireBonusYamamoto:{onPlay:[{template:'retireEnemyUnderBp',bp:3000,bonusName:'山本元柳斎重國',bonusBp:5000}]},
   retireBonusRukia:{onPlay:[{template:'retireEnemyUnderBp',bp:3000,bonusName:'朽木ルキア',bonusBp:5000}]},
-  enemyBpDown1000:{onPlay:[{template:'enemyBpDown',bp:1000,optional:true}]}
+  enemyBpDown1000:{onPlay:[{template:'enemyBpDown',bp:1000,optional:true}]},
+  enemyBpDown500Color:{onPlay:[{template:'enemyBpDown',bp:500,optional:true}]}
  };
 // EX15BT/BLC-4-014 prints yellow+ and ACTIVE adds one yellow. The imported legacy gen=2
  // encoded the ACTIVE total; V2 needs the printed REST base (1) plus an ACTIVE +1.
@@ -801,6 +816,7 @@ function checkedAddon(p){
   ...(p.kind==='activeEnergy'?{activeExtraEnergy:1}:{}),
   ...(p.kind==='impactNull'?{impactNull:true}:{}),
   ...(p.kind.startsWith('retireBonus')?{triggerEffect:{op:'retireOppFront'}}:{}),
+  ...(p.kind==='enemyBpDown500Color'?{triggerEffect:{op:'deployOutsideCharacter',color:'purple',maxEnergy:2,ap:1,frontOnly:true}}:{}),
   ...(!special?{templateEffects:abilities[p.kind]}:{effects:{}})
  };
 }
