@@ -19,7 +19,7 @@ jobs:
         with:
           node-version: '22'
       - name: Dedicated BLEACH V2 tests
-        run: node --test tests/universal-v2-bleach-port.test.mjs
+        run: node --test tests/universal-v2-bleach-port.test.mjs tests/universal-v2-bleach-green-match.test.mjs tests/universal-v2-bleach-enemy-control.test.mjs tests/universal-v2-bleach-top-inspect.test.mjs tests/universal-v2-bleach-core-gaps.test.mjs tests/universal-v2-bleach-core-gaps.test.mjs
       - name: All repository regression tests
         run: npm test
       - name: Syntax of isolated BLEACH module
