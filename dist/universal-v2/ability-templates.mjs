@@ -122,6 +122,20 @@ const registry=Object.freeze({
   build:v=>[{op:'recoverOutsideColorUnderEnergy',color:v.color,
     energy:v.energy,optional:v.optional}]
  },
+ // True printed per-turn limits, not a blanket source "used" flag.
+ // If optional, accepting the use is a legal controller decision. Declining
+ // does not consume the counter. A "name" limit is shared among same-name
+ // physical cards owned by this player for the current turn.
+ oncePerTurnThen:{
+  args:{scope:v=>v==='card'||v==='name',optional:yesNo,
+   then:v=>Array.isArray(v)&&v.length>=1&&v.length<=6},
+  check:v=>v.then.every(x=>x&&[
+   'draw','millTop','peekTopOne','enemyBpDown','restEnemyUnderBp',
+   'buffOwnField','searchDeckOne','recoverOutsideOne','buffSelf'
+  ].includes(x.template)),
+  build:v=>[{op:'oncePerTurnGate',scope:v.scope,optional:v.optional,
+   then:v.then.flatMap((spec,i)=>expandOne(spec,'oncePerTurnThen.then['+i+']'))}]
+ },
  // Atomic payment gate: NONE of the nested effects run unless an owned
  // hand card was discarded. Nested templates are intentionally restricted
  // and validated again by the ordinary Pack DSL verifier.
