@@ -25,8 +25,8 @@ jobs:
                 const idx=html.indexOf(n);
                 console.log('MATCH',n,idx,idx>=0?html.slice(Math.max(0,idx-200),idx+550).replace(/\s+/g,' ').slice(0,720):'');
               }
-              const matches=[...html.matchAll(/.{0,180}(?:cardlist\\/small|TTG-1-001.{0,90}\\.jpg|TTG-1-032.{0,90}\\.jpg).{0,150}/ig)].slice(0,12);
-              console.log('IMAGE_MATCHES',JSON.stringify(matches.map(m=>m[0])));
+              const matches=html.split(/\\n/).filter(row=>row.includes('cardlist/small')||row.includes('TTG-1-001')||row.includes('TTG-1-032')).slice(0,8);
+              console.log('IMAGE_MATCHES',JSON.stringify(matches.map(row=>row.slice(0,800))));
             }catch(e){console.log('SOURCE_ERROR',url,String(e));}
           }
           for(const path of ['UA56BT_TTG-1-001.jpg','UA56BT_TTG-1-001_1.jpg','UA56BT_TTG-1-032.jpg','UA56BT_TTG-1-032_1.jpg','UA56BT_TTG-1-032_2.jpg']){
