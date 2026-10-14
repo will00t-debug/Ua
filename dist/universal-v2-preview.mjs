@@ -5,7 +5,6 @@ import {verifiedBleachPurplePilotDeck,verifiedTtgRedPilotDeck} from './universal
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  universalPublicView,universalPrivateChoices,assertUniversalMatch} from './universal-v2/engine.mjs';
 import {chooseUniversalAiAction} from './universal-v2/ai.mjs';
-import {TTG_BY_ID} from './ttg-builder.mjs';
 import {ttgArtSource,ttgArtErrorFallback} from './ttg-art.mjs';
 import {CARDS} from './cards.mjs?v=9.1.0';
 import {V2_PHASE_LABELS,V2_TITLE_LABELS,V2_PENDING_LABELS,
@@ -41,11 +40,10 @@ const el=(tag,props={},...contents)=>{
 const $=id=>document.getElementById(id);
 const app={state:null,packs:null,selectedUid:null,
  selectedSide:null,history:[],busy:false,aiTimer:null,error:'',
- undo:null,replay:null,sequence:0,allActions:false, maxAuto:4500,autoMoves:0};
+ undo:null,replay:null,aiDifficulty:'normal',sequence:0,allActions:false, maxAuto:4500,autoMoves:0};
 const phases=V2_PHASE_LABELS;
 const btn=(label,fn,cls='')=>el('button',{type:'button',class:cls,text:label,onClick:fn});
 const fmtTitle=(id)=>V2_TITLE_LABELS[id]||id;
-const uidOwner=uid=>Number(String(uid).split('-')[0]);
 const cardDef=(side,id)=>app.packs?.[side]?.cards[id]||null;
 function imgUrl(side,id){
  if(app.packs?.[side]?.id==='gurren-lagann')return ttgArtSource(id);
@@ -287,7 +285,7 @@ function driveAi(){
    while(app.state.status==='playing'&&uiActor(app.state)===1&&n++<35){
     if(++app.autoMoves>limit)throw Error('電腦操作已達安全上限，停止自動操作避免死循環。');
     const choice=chooseUniversalAiAction(app.packs,app.state,
-     {difficulty:$('ai-level').value});
+     {difficulty:app.aiDifficulty});
     if(!choice||!isExactLegal(choice,legalUniversalActions(app.packs,app.state)))
      throw Error('AI 未回傳合法操作：'+String(choice?.type||'null'));
     const previous=app.state;
@@ -324,6 +322,7 @@ function startGame(){
   app.state=newUniversalMatch(app.packs,{decks:[mine.counts,foe.counts],seed,first});
   assertUniversalMatch(app.packs,app.state);
   app.error='';app.selectedUid=null;app.undo=null;app.allActions=false;
+  app.aiDifficulty=$('ai-level').value;
   app.history=['新對局：'+fmtTitle(myTitle)+' vs '+fmtTitle(foeTitle)+
    '｜先手 '+(first===0?'你':'電腦')+'｜種子 '+seed];
   app.replay=makeUniversalPreviewReplay(app.packs,{
