@@ -1,0 +1,38 @@
+name: V2-D SAO and MST isolated QA
+
+on:
+  pull_request:
+    branches:
+      - feature/universal-rules-v2-foundation-20261014
+    paths:
+      - 'dist/universal-v2/sao-pack.mjs'
+      - 'dist/universal-v2/mst-pack.mjs'
+      - 'dist/universal-v2/sources/**'
+      - 'tests/universal-v2-sao*.test.mjs'
+      - 'tests/universal-v2-mst*.test.mjs'
+      - 'docs/v2-handoff/D-sao-mst.md'
+      - '.github/workflows/v2-d-sao-mst.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  isolated-port-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax validation
+        run: |
+          node --check dist/universal-v2/sao-pack.mjs
+          node --check dist/universal-v2/mst-pack.mjs
+          node --check dist/universal-v2/sources/mst-catalog.mjs
+          node --check dist/universal-v2/sources/mst-official-print.mjs
+      - name: SAO and MST V2 dedicated tests
+        run: |
+          node --test tests/universal-v2-sao-port.test.mjs tests/universal-v2-mst-port.test.mjs tests/universal-v2-sao-mst-cross-title.test.mjs
+      - name: Full Node.js regression suite
+        run: npm test
