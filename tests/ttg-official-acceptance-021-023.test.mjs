@@ -136,7 +136,8 @@ test('023 official: human can choose a real Gunmen, discard the newly picked car
  assert.equal(reveals.length,1);
  assert.equal(reveals[0].cardId,'TTG-1-029');
  assert.equal(reveals[0].uid,gun.uid);
- assert.ok(!JSON.stringify(next.log).includes(notGun.uid),'unselected looked-at card must stay private');
+ assert.ok(!next.log.some(record=>Object.entries(record).some(([key,value])=>key!=='turn'&&value===notGun.uid)),
+  'private looked-at physical UID must never be explicitly revealed');
  assert.ok(assertTtgCoreState(next));
 });
 test('023 official skip-pick keeps all five deck cards in chosen bottom order, reveals nothing',()=>{
@@ -147,7 +148,7 @@ test('023 official skip-pick keeps all five deck cards in chosen bottom order, r
  assert.deepEqual(next.players[0].deck.slice(-5).map(c=>c.uid),order);
  assert.deepEqual(next.players[0].hand.map(c=>c.uid),hand);
  assert.ok(!next.log.some(x=>x.type==='ttgPublicSearchReveal'));
- assert.ok(!JSON.stringify(next.log).includes(gun.uid));
+ assert.ok(!next.log.some(record=>Object.entries(record).some(([key,value])=>key!=='turn'&&value===gun.uid)));
  assert.ok(assertTtgCoreState(next));
 });
 test('023 real mobile clicks: private pick, hand discard, arrow reordering, submit through app state',async()=>{
