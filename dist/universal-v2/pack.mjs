@@ -5,7 +5,7 @@ export const V2_PHASES=Object.freeze(['start','move','main','attack']);
 export const V2_CARD_TYPES=Object.freeze(['character','event','field']);
 export const V2_TRIGGERS=Object.freeze(['draw','get','final','active','special','color','raid']);
 export const V2_EFFECT_TIMINGS=Object.freeze(['onPlay','onRaid','onAttack']);
-export const V2_EFFECT_OPS=Object.freeze(['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne']);
+export const V2_EFFECT_OPS=Object.freeze(['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','retireOppFrontUnderBp']);
 const integer=(v,low=0)=>Number.isInteger(v)&&v>=low;
 const own=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
 function verifyProgram(program,path){
@@ -16,6 +16,11 @@ function verifyProgram(program,path){
   if(e.op==='draw'||e.op==='millTop'||e.op==='drawDiscard'){
    if(!integer(e.count,1)||e.count>10)throw Error(path+'['+i+'] invalid count');
   }
+  if(e.op==='retireOppFrontUnderBp'&&(
+   !integer(e.bp,1)||e.bp>50000||typeof e.bonusName!=='string'||
+   !e.bonusName.trim()||!integer(e.bonusBp,e.bp)||e.bonusBp>50000||
+   Object.keys(e).some(k=>!['op','bp','bonusName','bonusBp'].includes(k))
+  ))throw Error(path+'['+i+'] unsupported printed BP retirement profile');
   if(e.op==='peekTopOne'&&Object.keys(e).some(key=>key!=='op'))throw Error(path+'['+i+'] unsupported private peek options');
   if(e.op==='recoverAp'&&(!integer(e.count,1)||e.count>3))throw Error(path+'['+i+'] invalid AP recovery count');
   if(e.op==='drawDiscard'&&e.count!==1)throw Error(path+'['+i+'] drawDiscard currently supports exactly 1 card');
