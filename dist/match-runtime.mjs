@@ -1,7 +1,8 @@
 // Shared match orchestration for officially playable BLEACH and isolated Beta series.
 // Dispatch always uses the title's existing, tested rules core; it never tries to
 // interpret a TTG/SLG card using BLEACH-specific effects or card identities.
-import {newGame,legalActions,dispatch,assertState,controller,botAction} from './engine.mjs?v=9.1.1';
+import {newGame,legalActions,dispatch,assertState,controller} from './engine.mjs?v=9.1.1';
+import {chooseAiAction} from './ai-v2.mjs';
 import {validateDeck,pendingCards} from './cards.mjs?v=9.1.0';
 import {newTtgCoreMatch,validateTtgCoreDeck,dispatchTtgCoreAction,assertTtgCoreState,ttgCoreAiChoice,legalTtgCoreActions} from './ttg-core-match.mjs';
 import {ttgExecutableActions,ttgChoiceActor} from './ttg-browser.mjs';
@@ -12,7 +13,7 @@ const runtimes=Object.freeze({
  bleach:Object.freeze({
   title:'bleach',corePlayable:true,beta:false,
   newMatch:newGame,deckIssues:deckIssuesForBleach,assert:assertState,
-  legalActions,dispatch,actor:controller,botAction,
+  legalActions,dispatch,actor:controller,botAction:(state,{difficulty='normal'}={})=>chooseAiAction(state,{difficulty}),
  }),
  'gurren-lagann':Object.freeze({
   title:'gurren-lagann',corePlayable:false,beta:true,
@@ -69,9 +70,9 @@ export function dispatchMatchAction(title,state,action,{actor}={}){
  verifiedRuntime(title,next);
  return next;
 }
-export function chooseMatchBotAction(title,state){
+export function chooseMatchBotAction(title,state,options={}){
  const runtime=verifiedRuntime(title,state);
- return runtime.botAction(state);
+ return runtime.botAction(state,options);
 }
 // Beta support and official acceptance are separate facts. Do not use the
 // catalogue's formal playable:auto flags to misreport an isolated Beta core.
