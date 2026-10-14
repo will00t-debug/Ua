@@ -56,6 +56,13 @@
 
 [EX15BT/BLC-4-014 官方卡頁](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX15BT/BLC-4-014) 顯示能源欄為黃色「＋」，處於 ACTIVE 時追加黃色產能。原始專案資料把 `gen=2` 作為有效總產能；本獨立 Pack 經明確審核以 `gen=1`、`activeExtraEnergy=1` 解讀，避免 ACTIVE 時雙重計數成 3。額外測試驗證 ACTIVE 產 2、REST 產 1，並保留倉庫原值的差異檢查。
 
+## 2026-10-15 截止後補充：未可移植的相似模板／最新整合證據
+
+1. **BLC-2-055（EX07BT）**：已收錄日文原卡源網址，但目前 V2 `peekTopOne` 的合法選擇僅是 `top / outside`；此卡印刷要求 `top / bottom`。**需要新增不公開牌頂資訊的 `bottom` 選擇與狀態搬移**，而非錯誤地把牌底換成場外。最小情境：牌頂 1 張、選擇牌底、原牌庫第二張成為新牌頂、原 UID 在牌庫尾端、可選 top 時位置完全不變；非法 `outside` 必拒絕；對手視圖不可看到牌名／UID。
+2. **BLC-4-013（EX15BT）**：要求看牌頂 2 張、**任意張**依任意順序放牌頂，其餘送場外；目前 `inspectTopArrange` 的 `toOutside:true` 只能選 **最多一張**。最小情境：兩張全留牌頂、送一張、送兩張三種都要成立；兩張留牌頂時序可反轉；送兩張後不能殘留 pending，也不能憑空增減實體 UID。兩張卡目前維持未移植，專屬 `universal-v2-bleach-top-inspect.test.mjs` 已建立 fail-closed 阻擋測試。
+3. **BLC-4-065、BLC-4-068**：日本官方 [Q2335、Q2336](https://www.unionarena-tcg.com/jp/faq/list.php?series=EX15BT) 明定即使有**兩張同卡在場**，同一回合也只能由其中一張使用指定主要啟動能力；並非每張 UID 各可發動一次。需要按印刷效果／同卡限制做合法判定，切勿拿共用「同名、不同實體各別限次」當固定裁定。最小情境：兩張同號卡在場，第一張使用後第二張不得再發動；首張拒絕可選能力後是否消耗使用次數依官方成本與時點處理。此兩張維持未移植。
+4. **整合阻塞屬最新 PR #70 上游**：獨立分支 [CI #38652613976](https://github.com/will00t-debug/Ua/actions/runs/38652613976) 在獨立核心環境 **12/12 BLEACH 主測試、1017/1017 全庫回歸通過**；CI runner 中乾淨暫存 merge 最新 PR #70 時，**21/21 BLEACH 專測通過、1037/1039 整庫通過**。僅失敗 `universal-v2-once-per-turn-gate.test.mjs` 的兩種限次情境，PR #70 自身的 [上游 run](https://github.com/will00t-debug/Ua/actions/runs/38612690292) 亦失敗相同兩項。因此**目前不能聲稱最新整合版本全綠**；本工作線不修改共享核心、不跳過這兩項測試，應由主線修正後再重跑整合 CI。
+
 ## 共用 V2 核心待辦（僅提需求，不在 BLEACH 分支修改）
 
 | 受影響卡號示例 | 必要能力／預期裁定 | 最小專屬測試 |
