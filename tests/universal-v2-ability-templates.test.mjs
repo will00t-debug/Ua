@@ -19,7 +19,8 @@ test('template registry is finite, audited and rejects unknown behaviors instead
   'draw','millTop','drawDiscardOne','peekTopOne','recoverAp','buffSelf',
   'enemyBpDown','retireEnemyUnderBp','restEnemyUnderBp',
   'retireEnemyIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown',
-  'searchDeckOne','recoverOutsideOne','discardToDraw'
+  'searchDeckOne','recoverOutsideOne','discardToDraw',
+  'searchDeckMany','payDiscardThen'
  ]);
  assert.throws(()=>checked(character({
   implementation:'dsl',templateEffects:{onPlay:[{template:'drawEnemyDeck',count:1}]}
@@ -97,7 +98,7 @@ test('templates cannot silently override raw ops, authorize vanilla effects or b
   'legacy directly authored DSL continues to work unchanged');
 });
 
-test('all fifteen supported templates compile to the established and extended V2 runtime DSL ops in deterministic order',()=>{
+test('all seventeen supported templates compile to the established and extended V2 runtime DSL ops in deterministic order',()=>{
  const examples=[
   [{template:'draw',count:2},{op:'draw',count:2}],
   [{template:'millTop',count:3},{op:'millTop',count:3}],
@@ -117,7 +118,17 @@ test('all fifteen supported templates compile to the established and extended V2
    {op:'searchDeckOne',filter:{field:'trait',value:'Scout'},optional:true,shuffle:true}],
   [{template:'recoverOutsideOne',filter:{field:'name',value:'Scout'},optional:false},
    {op:'recoverOutsideOne',filter:{field:'name',value:'Scout'},optional:false}],
-  [{template:'discardToDraw',count:2,optional:true},{op:'discardToDraw',count:2,optional:true}]
+  [{template:'discardToDraw',count:2,optional:true},{op:'discardToDraw',count:2,optional:true}],
+  [{template:'searchDeckMany',filter:{field:'trait',value:'Scout'},
+    count:3,optional:true,shuffle:true},
+   {op:'searchDeckMany',filter:{field:'trait',value:'Scout'},
+    count:3,optional:true,shuffle:true}],
+  [{template:'payDiscardThen',optional:true,then:[
+   {template:'draw',count:1},
+   {template:'enemyBpDown',bp:2000,optional:true}
+  ]},{op:'discardGate',optional:true,then:[
+   {op:'draw',count:1},{op:'enemyBpDown',bp:2000,optional:true}
+  ]}]
  ];
  for(const [input,expected] of examples)
   assert.deepEqual(expandAbilityTemplates({onPlay:[input]}).onPlay,[expected]);
