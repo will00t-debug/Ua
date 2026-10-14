@@ -22,6 +22,14 @@ const printed=Object.freeze({
   {id:'TTG-1-036',energy:3,ap:1,bp:0,gen:0,color:'green',trigger:'final',type:'event',implementation:'dsl',effects:{onPlay:[{op:'recoverAp',count:2}]},matchText:'選擇最多2張自己的 AP 卡'},
   {id:'TTG-1-037',energy:3,ap:1,bp:0,gen:0,color:'green',trigger:'final',type:'event',implementation:'dsl',effects:{onPlay:[{op:'recoverAp',count:2}]},matchText:'選擇最多2張自己的 AP 卡'},
   {id:'TTG-1-038',energy:3,ap:1,bp:0,gen:0,color:'green',trigger:'final',type:'event',implementation:'dsl',effects:{onPlay:[{op:'recoverAp',count:2}]},matchText:'選擇最多2張自己的 AP 卡'},
+  {id:'TTG-1-045',energy:1,ap:1,bp:2000,gen:1,color:'red',trigger:'color',
+   type:'character',implementation:'dsl',
+   triggerEffect:{op:'retireOppFrontUnderBp',bp:2500},
+   effects:{onRaided:[
+    {op:'buffOwnTrait',trait:'大グレン団',bp:1000,optional:true},
+    {op:'drawIfRaidUnderFacedown'}
+   ]},matchText:'己方回合本卡成為 Raid 底板時',
+   matchTexts:['大紅蓮團角色至多1張 BP+1000','裏向卡','可自選與 Raid 登場效果的結算順序']},
   {id:'TTG-1-051',energy:0,ap:1,bp:1500,gen:1,color:'red',trigger:'draw',type:'character',implementation:'dsl',effects:{onPlay:[{op:'drawDiscard',count:1}]},matchText:'抽1張'},
   {id:'TTG-1-042',energy:0,ap:1,bp:2000,gen:1,color:'red',trigger:'active',type:'character',implementation:'vanilla',effects:{},matchText:'沒有額外印刷角色效果'},
   {id:'TTG-1-064',energy:0,ap:1,bp:2000,gen:1,color:'red',trigger:'draw',type:'character',implementation:'vanilla',effects:{},matchText:'無額外印刷角色效果'},
@@ -58,7 +66,7 @@ export function portVerifiedPilotCard(title,id){
  return {
   id, name:c.nameJa||c.name,color:spec.color,type:spec.type,
   energy:spec.energy,ap:spec.ap,bp:spec.bp,gen:spec.gen,
-  trigger:spec.trigger,implementation:spec.implementation,
+  trigger:spec.trigger,implementation:spec.implementation,traits:c.traits||[],
   step:spec.step===true,raidName:spec.raidName,ownTurnBp:spec.ownTurnBp,
   triggerEffect:spec.triggerEffect,effects:spec.effects
  };
