@@ -50,7 +50,8 @@ export function universalEnergyByColor(pack,s,p){
  for(const c of s.players[p].energy){
   if(!c)continue;
   const d=card(pack,c);
-  counts[d.color]=(counts[d.color]||0)+(d.gen||0);
+  counts[d.color]=(counts[d.color]||0)+(d.gen||0)+
+   (c.ready?(d.activeExtraEnergy||0):0);
  }
  return counts;
 }
@@ -400,7 +401,8 @@ function resolveChoice(s,a,pack){
   if(slot<0||!p.front[slot].ready)throw Error('Illegal blocker');
   const blocker=p.front[slot];blocker.ready=false;
   if(bp(pack,s,attacker)>=bp(pack,s,blocker)){
-   const impact=impactOnBattleWin(pack,s,attacker)>0;
+   const impact=impactOnBattleWin(pack,s,attacker)>0&&
+    !card(pack,blocker).impactNull;
    const replacement=retire(pack,s,q.player,'front',slot,{postImpact:impact});
    if(impact&&!replacement)damage(pack,s,q.player);
   }
