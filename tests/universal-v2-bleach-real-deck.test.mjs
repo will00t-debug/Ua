@@ -28,9 +28,9 @@ function startTo(s,phase){
  return s;
 }
 
-test('official BLEACH pilot has fourteen distinct allowed identities and exact 50-card PURPLE deck with no invented filler',()=>{
+test('official BLEACH pilot has fifteen distinct allowed identities and exact 50-card PURPLE deck with no invented filler',()=>{
  const expect=[
-  'BLC-1-034','BLC-1-036','BLC-1-039','BLC-1-040',
+  'BLC-1-034','BLC-1-036','BLC-1-037','BLC-1-039','BLC-1-040',
   'BLC-1-064','BLC-1-066','BLC-1-045','BLC-1-048',
   'BLC-1-052','BLC-1-057','BLC-1-102','BLC-1-103',
   'BLC-1-105','BLC-1-107'
@@ -41,7 +41,7 @@ test('official BLEACH pilot has fourteen distinct allowed identities and exact 5
  assert.ok(Object.entries(counts).every(([id,n])=>
   pack.cards[id]&&pack.cards[id].color==='purple'&&n>=1&&n<=4&&!id.includes('TEST')));
  assert.equal(counts['BLC-1-066'],2,'exactly two total FINAL cards');
- assert.equal(Object.keys(pack.cards).length,14);
+ assert.equal(Object.keys(pack.cards).length,15);
  const s=fresh();
  assert.equal(s.players[0].life.length,7);
  assert.equal(s.players[1].life.length,7);
