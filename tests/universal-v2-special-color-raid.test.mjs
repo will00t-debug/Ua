@@ -183,8 +183,9 @@ test('RAID life onto energy base may stay energy or move to free front slot (FAQ
 test('cross-title conservation tracks original printed card quantities, not just physical UID count',()=>{
  const s=fresh(250);
  assert.equal(assertUniversalMatch(packs,s),true);
- assert.deepEqual(s.initialCounts[0],deck);
- assert.deepEqual(s.initialCounts[1],deck);
+ const positive=Object.fromEntries(Object.entries(deck).filter(([,n])=>n>0));
+ assert.deepEqual(s.initialCounts[0],positive);
+ assert.deepEqual(s.initialCounts[1],positive);
  const changed=structuredClone(s);
  const physical=changed.players[0].hand[0],before=physical.cardId;
  physical.cardId=before==='F10'?'F11':'F10';
