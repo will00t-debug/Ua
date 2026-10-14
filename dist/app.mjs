@@ -592,6 +592,5 @@ function bind(){
  };
 }
 const ttgArtRoot=$('#app');
-ttgArtRoot?.addEventListener?.('error',event=>ttgArtErrorFallback(event.target),true);
-ttgArtRoot?.addEventListener?.('error',event=>soloArtErrorFallback(event.target),true);
+ttgArtRoot?.addEventListener?.('error',event=>{ttgArtErrorFallback(event.target);soloArtErrorFallback(event.target);},true);
 render();
