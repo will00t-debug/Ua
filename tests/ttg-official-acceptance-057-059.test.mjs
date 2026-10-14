@@ -94,7 +94,7 @@ test('045 Kamina cannot enter with Nia in RAID base (symmetric with Nia restrict
 });
 test('059 activation REST cost applies +1000 BP to own Simon; no repeat while resting',()=>{
  let s=match(5901),p=s.players[0];
- const simon=stage(s,'TTG-1-051','front',0),gen=stage(s,'TTG-1-042','energy',0);
+ const simon=stage(s,'TTG-1-051','front',0),gen=stage(s,'TTG-1-051','energy',0); // Nia cannot legally enter with Kamina 042.
  const nia=take(p,'TTG-1-059');p.hand.push(nia);
  s=withTtgDerivedEnergy(s,0);
  s=dispatchTtgCoreAction(s,offered(s,a=>a.type==='play'&&a.handUid===nia.uid&&a.line==='front'&&a.slot===1));
