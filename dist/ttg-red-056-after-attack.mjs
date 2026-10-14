@@ -46,8 +46,13 @@ export function resolveRed056End(s,a={}){
  const seen=r.raidCountByPlayerTurn[q.player];
  r.raidCountByPlayerTurn[q.player]={turn:s.turn,count:seen?.turn===s.turn?seen.count+1:1};
  r.ttgRaidOccurredTurn??={};r.ttgRaidOccurredTurn[q.player]=s.turn;
- const step=top.cardId==='TTG-1-076'?'entry076':'entry074';
- r.pending={kind:'ttgRedRaidQueue',player:q.player,raidUid:top.uid,steps:[step]};
+ // Resolve the entry text printed ON THE CHOSEN Raid, never another Raid.
+ // 073's entry requires a face-down card below it; a fresh 056->073 pile
+ // has no such card and must not accidentally execute 074's DRAW/BP effects.
+ const steps=top.cardId==='TTG-1-076'?['entry076']:
+  top.cardId==='TTG-1-074'?['entry074']:
+  top.cardId==='TTG-1-073'&&raid.under?.some(c=>c.faceDown)?['entry073']:[];
+ r.pending=steps.length?{kind:'ttgRedRaidQueue',player:q.player,raidUid:top.uid,steps}:null;
  if(JSON.stringify(inventory(p))!==JSON.stringify(before))throw new Error('056 RAID lost physical cards');
  return r;
 }
