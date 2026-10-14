@@ -84,10 +84,10 @@ function testEntry(other,owner,id){
 }
 test('official-record pilot cards have explicitly pinned printed energy/AP/BP/trigger and no implicit support',()=>{
  assert.deepEqual(REAL_V2_PILOT_IDS.bleach,['BLC-1-034','BLC-1-039','BLC-1-064','BLC-1-066','BLC-1-102','BLC-1-103','BLC-1-105','BLC-1-107']);
- assert.deepEqual(REAL_V2_PILOT_IDS['gurren-lagann'],['TTG-1-001','TTG-1-009','TTG-1-036','TTG-1-037','TTG-1-038','TTG-1-045','TTG-1-046','TTG-1-051','TTG-1-042','TTG-1-064','TTG-1-065','TTG-1-072','TTG-1-078','TTG-1-079']);
+ assert.deepEqual(REAL_V2_PILOT_IDS['gurren-lagann'],['TTG-1-001','TTG-1-009','TTG-1-036','TTG-1-037','TTG-1-038','TTG-1-045','TTG-1-046','TTG-1-051','TTG-1-042','TTG-1-064','TTG-1-065','TTG-1-072','TTG-1-073','TTG-1-078','TTG-1-079']);
  const b=verifiedPilotPack('bleach'),t=verifiedPilotPack('gurren-lagann');
  assert.equal(Object.keys(b.cards).length,8);
- assert.equal(Object.keys(t.cards).length,14);
+ assert.equal(Object.keys(t.cards).length,15);
  assert.ok(validateUniversalDeck(b,bleach.deck).length>0,'V2 real-only deck is not ready');
  assert.ok(validateUniversalDeck(t,green.deck).length>0);
  for(const id of REAL_V2_PILOT_IDS.bleach)assert.ok(portVerifiedPilotCard('bleach',id));
@@ -792,4 +792,116 @@ test('046 normal GET life trigger puts the revealed card in hand; not an onRaide
  assert.ok(taken.players[1].hand.some(c=>c.uid===flipped.uid));
  assert.equal(taken.raidedThisTurn[1],false);
  assert.equal(assertUniversalMatch(packs,taken),true);
+});
+
+function real073Chain(seed=970,{withSimon=true,performChain=true}={}){
+ const packs=[bleach.pack,red.pack];let s=fresh(red,seed);
+ const kamina=take(s,1,'TTG-1-042');
+ s.players[1].front[0]=kamina;
+ const resources=['TTG-1-045','TTG-1-064','TTG-1-065','TTG-1-051'];
+ for(const [i,id] of resources.entries())s.players[1].energy[i]=take(s,1,id);
+ if(!withSimon){
+  const simon=s.players[1].energy[3];
+  s.players[1].energy[3]=take(s,1,'TTG-1-045');
+  s.players[1].outside.push(simon);
+ }
+ const first=take(s,1,'TTG-1-072'),second=take(s,1,'TTG-1-073');
+ s.players[1].hand.push(first,second);
+ const low=take(s,0,'BLC-1-039'),high=take(s,0,'BLC-1-105');
+ low.ready=true;high.ready=true;
+ s.players[0].front[0]=low;s.players[0].front[1]=high;
+ for(let i=0;i<4;i++)s=dispatchUniversalAction(packs,s,{type:'next'});
+ s=advanceToMain(packs,s);
+ assert.equal(s.active,1);
+ const firstRaid=legalUniversalActions(packs,s).find(a=>a.type==='raid'&&a.uid===first.uid&&a.baseUid===kamina.uid);
+ assert.ok(firstRaid);
+ s=dispatchUniversalAction(packs,s,firstRaid,{actor:1});
+ assert.equal(s.pending?.kind,'effect-rest-bp');
+ s=dispatchUniversalAction(packs,s,{type:'chooseRestBp',uid:null},{actor:1});
+ assert.equal(s.pending,null);
+ assert.equal(s.players[1].front[0].uid,first.uid);
+ assert.equal(universalEnergyByColor(packs,s,1).red,4);
+ if(performChain){
+  const chain=legalUniversalActions(packs,s).find(a=>a.type==='raid'&&a.uid===second.uid&&a.baseUid===first.uid);
+  if(withSimon)assert.ok(chain,'TTG073 must chain only if Kamina+Simon are on field or Raid bases');
+  else assert.equal(chain,undefined,'TTG073 must fail absent printed Simon prerequisite');
+  if(chain)s=dispatchUniversalAction(packs,s,chain,{actor:1});
+ }
+ return {packs,s,kamina,first,second,low,high};
+}
+test('real TTG073 cannot Raid without BOTH named Simon and Kamina (even with valid prior Gurren base)',()=>{
+ const {packs,s,second,first}=real073Chain(975,{withSimon:false});
+ assert.ok(!legalUniversalActions(packs,s).some(a=>a.type==='raid'&&a.uid===second.uid&&a.baseUid===first.uid));
+ assert.throws(()=>dispatchUniversalAction(packs,s,{type:'raid',uid:second.uid,baseUid:first.uid,slot:0},{actor:1}),/not currently legal/);
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
+test('real TTG073 chains on TTG072 preserving Kamina, old Gurren face-down, conditional 5000 BP + optional retirement',()=>{
+ const {packs,s,first,second,kamina,low,high}=real073Chain(976);
+ assert.equal(s.players[1].front[0].uid,second.uid);
+ assert.equal(s.players[1].front[0].stack[0].uid,kamina.uid);
+ assert.equal(s.players[1].front[0].stack[0].under[0].uid,first.uid);
+ assert.equal(s.players[1].front[0].stack[0].under[0].faceDown,true);
+ assert.equal(s.pending?.kind,'effect-retire-bp');
+ assert.deepEqual(legalUniversalActions(packs,s).map(a=>a.uid),[null,low.uid,high.uid]);
+ assert.equal(universalBp(packs,s,s.players[1].front[0]),5000,'BP4000+1000 only while facedown under');
+ const source=structuredClone(s);
+ const skipped=dispatchUniversalAction(packs,s,{type:'chooseRetireBp',uid:null},{actor:1});
+ assert.equal(skipped.players[0].front[1].uid,high.uid);
+ const retired=dispatchUniversalAction(packs,s,{type:'chooseRetireBp',uid:high.uid},{actor:1});
+ assert.equal(retired.players[0].front[1],null);
+ assert.ok(retired.players[0].outside.some(c=>c.uid===high.uid));
+ assert.equal(retired.pending,null);
+ assert.ok(!JSON.stringify(universalPublicView(packs,retired,0)).includes(first.uid));
+ assert.equal(assertUniversalMatch(packs,retired),true);
+ assert.deepEqual(s,source);
+});
+test('real TTG073 IMPACT(1) deals extra life only after winning a blocked battle, never just for direct attack',()=>{
+ const {packs,s,second,low}=real073Chain(977);
+ let battle=dispatchUniversalAction(packs,s,{type:'chooseRetireBp',uid:null},{actor:1});
+ const defender=battle.players[0],lifeCard=take(battle,0,'BLC-1-107');
+ defender.deck.push(defender.life.shift());defender.life.unshift(lifeCard);
+ const before=defender.life.length;
+ battle=dispatchUniversalAction(packs,battle,{type:'next'});
+ assert.equal(battle.phase,'attack');
+ battle=dispatchUniversalAction(packs,battle,{type:'attack',uid:second.uid},{actor:1});
+ assert.equal(battle.pending?.kind,'block');
+ const won=dispatchUniversalAction(packs,battle,{type:'chooseBlock',uid:low.uid},{actor:0});
+ assert.equal(won.players[0].front[0],null);
+ assert.equal(won.players[0].life.length,before-1,'IMPACT must follow defeated blocker and hit life');
+ assert.equal(won.publicReveals.at(-1).cardId,'BLC-1-107');
+ assert.equal(assertUniversalMatch(packs,won),true);
+});
+test('real TTG073 BP500+ optional facedown replacement preserves the Raided character, using an actual beneath-card',()=>{
+ const {packs,s,second,first}=real073Chain(978);
+ let before=dispatchUniversalAction(packs,s,{type:'chooseRetireBp',uid:null},{actor:1});
+ // Pass the rest of the current turn and set up a higher BP opposing attacker.
+ before=dispatchUniversalAction(packs,before,{type:'next'});
+ before=dispatchUniversalAction(packs,before,{type:'next'});
+ assert.equal(before.active,0);before=advanceToMain(packs,before);
+ const enemy=before.players[0].front[1];
+ assert.ok(enemy);
+ enemy.buffs.push({bp:3000,untilTurn:before.turn});
+ enemy.ready=true;
+ before=dispatchUniversalAction(packs,before,{type:'next'});
+ before=dispatchUniversalAction(packs,before,{type:'attack',uid:enemy.uid},{actor:0});
+ const choice=legalUniversalActions(packs,before).find(a=>a.type==='chooseBlock'&&a.uid===second.uid);
+ assert.ok(choice);
+ const pending=dispatchUniversalAction(packs,before,choice,{actor:1});
+ assert.equal(pending.pending?.kind,'leave-replacement');
+ assert.equal(pending.pending.player,1);
+ assert.deepEqual(legalUniversalActions(packs,pending),[
+  {type:'chooseLeaveReplacement',mode:'protect'},
+  {type:'chooseLeaveReplacement',mode:'leave'}
+ ]);
+ const protectedGame=dispatchUniversalAction(packs,pending,{type:'chooseLeaveReplacement',mode:'protect'},{actor:1});
+ assert.equal(protectedGame.players[1].front[0].uid,second.uid);
+ assert.ok(protectedGame.players[1].outside.some(c=>c.uid===first.uid));
+ assert.equal(protectedGame.players[1].front[0].stack[0].under.length,0);
+ assert.equal(universalBp(packs,protectedGame,protectedGame.players[1].front[0]),4000);
+ assert.equal(assertUniversalMatch(packs,protectedGame),true);
+ const left=dispatchUniversalAction(packs,pending,{type:'chooseLeaveReplacement',mode:'leave'},{actor:1});
+ assert.equal(left.players[1].front[0],null);
+ assert.ok(left.players[1].outside.some(c=>c.uid===second.uid));
+ assert.ok(left.players[1].outside.some(c=>c.uid===first.uid));
+ assert.equal(assertUniversalMatch(packs,left),true);
 });
