@@ -200,3 +200,12 @@
 新增 `tests/ttg-official-acceptance-033-035.test.mjs`：四個 50 張實體卡核心場景，包含 033 同名每回合使用一次且成為 027 Raid 下方裏向卡並抽 2 張、己方可查看／對手不能查看底下身份；034 自己角色退場時捕獲場外卡裏向放場域下、產能+1 與同回合不得第二次；035 正常事件根據己方西蒙門檻 BP3000/5000 選對手前線，將完整 Raid 疊卡移到 **REMOVED** 而非 OUTSIDE，生命 SPECIAL Trigger 則依 Q99 可以放棄、或將對方 Raid 疊卡送到 **OUTSIDE** 而不是 REMOVED。
 
 後續仍待完成：033 同一回合多重高階 Raid 選擇順序、034 031 Raid 轉移所有裏向卡、035 對手特殊離場替代效果與手機真機操作、完整生命 Trigger 複合時序。此批只驗收列明分支，**不翻全卡 auto 旗標、不直接修改 main、不部署正式網站**。本批需由 Node 22 GitHub Actions 全回歸確認，之後從 **TTG-1-036～038** 接續。
+
+
+## 2026-10-14：TTG-1-036～038 三張 AP 回復事件／FINAL Trigger 續驗
+
+日本官方個別卡表：[036](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-036)、[037](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-037)、[038](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-038)。三張都是綠3、AP1 事件、自己的 AP 卡最多2張轉 ACTIVE、生命 FINAL。
+
+新增 `tests/ttg-official-acceptance-036-038.test.mjs`：在完整50張且 FINAL ≤4 的合法牌組，分別測三張從手牌支付**玩家指定的實體 AP**，之後最多 ACTIVE 自選2張（可包含剛支付的AP，也可包含其餘REST AP，不可擅自操作對手AP）；不選回復仍須確實支付該AP；非法 AP、重複指定、不屬於自己的 AP 均拒絕且原狀態不修改。另對三張各測**最後1點生命**的真正 FINAL 待選，可發動拿牌庫頂一張恢復1 LIFE、或依通用官方 Q99 放棄導致生命歸零落敗，公開生命 Trigger 結果、守住50張 UID。
+
+這仍是列出的效果分支與時序驗證，不是全81張正式效力認證。待 Node22 GitHub Actions 及手機UI實機確認，勿修改 main / Vercel，後續依序 **039～041**。
