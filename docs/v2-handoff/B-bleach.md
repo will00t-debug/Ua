@@ -60,8 +60,9 @@
 
 1. **BLC-2-055（EX07BT）**：已收錄日文原卡源網址，但目前 V2 `peekTopOne` 的合法選擇僅是 `top / outside`；此卡印刷要求 `top / bottom`。**需要新增不公開牌頂資訊的 `bottom` 選擇與狀態搬移**，而非錯誤地把牌底換成場外。最小情境：牌頂 1 張、選擇牌底、原牌庫第二張成為新牌頂、原 UID 在牌庫尾端、可選 top 時位置完全不變；非法 `outside` 必拒絕；對手視圖不可看到牌名／UID。
 2. **BLC-4-013（EX15BT）**：要求看牌頂 2 張、**任意張**依任意順序放牌頂，其餘送場外；目前 `inspectTopArrange` 的 `toOutside:true` 只能選 **最多一張**。最小情境：兩張全留牌頂、送一張、送兩張三種都要成立；兩張留牌頂時序可反轉；送兩張後不能殘留 pending，也不能憑空增減實體 UID。兩張卡目前維持未移植，專屬 `universal-v2-bleach-top-inspect.test.mjs` 已建立 fail-closed 阻擋測試。
-3. **BLC-4-065、BLC-4-068**：日本官方 [Q2335、Q2336](https://www.unionarena-tcg.com/jp/faq/list.php?series=EX15BT) 明定即使有**兩張同卡在場**，同一回合也只能由其中一張使用指定主要啟動能力；並非每張 UID 各可發動一次。需要按印刷效果／同卡限制做合法判定，切勿拿共用「同名、不同實體各別限次」當固定裁定。最小情境：兩張同號卡在場，第一張使用後第二張不得再發動；首張拒絕可選能力後是否消耗使用次數依官方成本與時點處理。此兩張維持未移植。
-4. **整合阻塞屬最新 PR #70 上游**：獨立分支 [CI #38652613976](https://github.com/will00t-debug/Ua/actions/runs/38652613976) 在獨立核心環境 **12/12 BLEACH 主測試、1017/1017 全庫回歸通過**；CI runner 中乾淨暫存 merge 最新 PR #70 時，**21/21 BLEACH 專測通過、1037/1039 整庫通過**。僅失敗 `universal-v2-once-per-turn-gate.test.mjs` 的兩種限次情境，PR #70 自身的 [上游 run](https://github.com/will00t-debug/Ua/actions/runs/38612690292) 亦失敗相同兩項。因此**目前不能聲稱最新整合版本全綠**；本工作線不修改共享核心、不跳過這兩項測試，應由主線修正後再重跑整合 CI。
+3. **BLC-1-030（UA08BT）**：卡庫轉錄「選 1 個敵方前線角色，將其轉為 REST」，有合法對手時**必須選一張**，但現有 V2 `restEnemyUnderBp` 模板把決策固定成 `optional:true`，會錯誤給予放棄鍵，不能沿用。此卡仍未移植；新專屬測試確認 V2 pack 拒絕該身份。核心最小測試：敵前線有 ACTIVE 角色時必須選其 UID、不可選 `null` 或手牌 UID；前線無可選目標時遵循正式事件使用合法性；AP 不足拒絕、所有 UID 守恆。官文／FAQ 仍需最後核對。
+4. **BLC-4-065、BLC-4-068**：日本官方 [Q2335、Q2336](https://www.unionarena-tcg.com/jp/faq/list.php?series=EX15BT) 明定即使有**兩張同卡在場**，同一回合也只能由其中一張使用指定主要啟動能力；並非每張 UID 各可發動一次。需要按印刷效果／同卡限制做合法判定，切勿拿共用「同名、不同實體各別限次」當固定裁定。最小情境：兩張同號卡在場，第一張使用後第二張不得再發動；首張拒絕可選能力後是否消耗使用次數依官方成本與時點處理。此兩張維持未移植。
+5. **整合阻塞屬最新 PR #70 上游**：獨立分支 [CI #38652613976](https://github.com/will00t-debug/Ua/actions/runs/38652613976) 在獨立核心環境 **12/12 BLEACH 主測試、1017/1017 全庫回歸通過**；CI runner 中乾淨暫存 merge 最新 PR #70 時，**21/21 BLEACH 專測通過、1037/1039 整庫通過**。僅失敗 `universal-v2-once-per-turn-gate.test.mjs` 的兩種限次情境，PR #70 自身的 [上游 run](https://github.com/will00t-debug/Ua/actions/runs/38612690292) 亦失敗相同兩項。因此**目前不能聲稱最新整合版本全綠**；本工作線不修改共享核心、不跳過這兩項測試，應由主線修正後再重跑整合 CI。
 
 ## 共用 V2 核心待辦（僅提需求，不在 BLEACH 分支修改）
 
