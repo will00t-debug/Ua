@@ -308,7 +308,7 @@ export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.i
 
 function checkedAddon(p){
  const c=CARDS.find(x=>x.identity===p.id);
- if(!c || c.identity!==p.id || c.number!==p.number ||
+ if(!c || c.identity!==p.id || ![c.number,...(c.aliases||[])].includes(p.number) ||
     !c.source?.includes('unionarena-tcg.com/jp/cardlist/') ||
     c.nameJa!==p.name || c.color!==p.color ||
     c.energy!==p.energy || c.ap!==p.ap || c.bp!==p.bp || c.gen!==p.gen ||
