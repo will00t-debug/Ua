@@ -16,7 +16,7 @@ test('title selector opens SLG isolated match; UI actions route to the SOLO engi
   assert.match(app.innerHTML,/我獨自升級 · 牌組構築/);
   assert.match(app.innerHTML,/SLG-1-080/);
   click({action:'soloTrainingStartShadow'});
-  assert.match(app.innerHTML,/限定卡組試玩 Beta/);
+  assert.match(app.innerHTML,/我獨自升級 · Beta 自動對戰/);
   const saved=JSON.parse(data.get('ua-slg-training-v1'));
   assert.equal(saved.title,'solo-leveling');
   assert.equal(saved.players[0].hand.length,7);
