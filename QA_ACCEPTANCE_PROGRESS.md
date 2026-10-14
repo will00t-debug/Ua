@@ -323,3 +323,20 @@
 - **062 妮亞**：真實手牌登場選己方印刷需求≤3西蒙再次發動登場能力；不重新登場或重扣 AP。牌庫≤20 主階段 REST 自己選己方西蒙 BP+1000；可選擇棄1真實手牌來使其 ACTIVE，不棄不 ACTIVE。生命 COLOR 可以公開選擇發動或放棄。
 
 現仍需真機雙方對局、060 與動態紅色能源支線、061 在多個特殊 RAID 底板和跨 052/055 連鎖、062 顏色觸發全部敵方選擇分支做擴充。**CI 通過僅代表測過的路徑，不是全卡最終官方驗收**。下一批 063～065。
+
+
+## 2026-10-14：TTG-1-063～065 官方紅色布塔／庸子逐卡驗收（等待 CI）
+
+基於 `audit/ttg060-062-official-20261014` 堆疊，無 main 合併及 Vercel 部署。官方個別卡文：
+[063 布塔](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-063)、
+[064 庸子](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-064)、
+[065 庸子](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-065)。
+原站 063/065 本輪獨立開啟失敗；以既有專案從使用者官方卡面 PDF 轉錄的印刷效果補回歸，待以後重查；064 已有 UAPR 同卡號補充來源。
+
+新增 `tests/ttg-official-acceptance-063-065.test.mjs` 六組真正50張兩人卡片遊戲回歸：
+
+- 063 0費紅布塔：主階段自身 REST 本回合紅產能+1，哪怕再 ACTIVE 同回合仍限1次；直到**主階段結束**才真正移到 OUTSIDE 並立即停止生產（不是能力發動瞬間消失），在前線不會憑空變成能源線產能。
+- 064 0費紅庸子：正常登場仍須支付1實體AP且在能源線產生紅1；生命 DRAW 可由玩家選擇發動或放棄，卡號公開但不洩漏手牌中沒要求公開的卡。
+- 065 1費紅庸子：STEP 僅在己方移動階段將前線角色移至**空**能源線格子、玩家自行選位置，REST不會因此 ACTIVE；不能違規移到已佔據格子、別人回合、MAIN等時點，且不能立即再用第二次STEP。
+
+這些情境仍需真機手機互動、觸發/攻擊等跨卡連動和嚴格的每張官方 FAQ 驗收。不改 `auto:false` Beta 旗標。接續 066～068。
