@@ -24,7 +24,7 @@ function to(s,phase){for(let i=0;i<4&&s.phase!==phase;i++)s=dispatchUniversalAct
 
 test('64+ official BLEACH cards include real mandatory BP-limited REST and 2 SPECIAL retirement programs',()=>{
  assert.deepEqual(validateUniversalDeck(pack,counts),[]);
- assert.equal(Object.keys(pack.cards).length,68);
+ assert.equal(Object.keys(pack.cards).length,69);
  assert.deepEqual(pack.cards['BLC-1-013'].effects.onPlay,[{op:'restOppFrontUnderBp',bp:3500,optional:true}]);
  for(const [id,name] of [['BLC-1-099','山本元柳斎重國'],['BLC-2-048','朽木ルキア']]){
   assert.equal(pack.cards[id].trigger,'special');
@@ -118,4 +118,58 @@ test('BLC-2-048 SPECIAL life trigger can retire a BP4000 foe without event energ
  const skip=dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'skip'},{actor:0});
  assert.equal(skip.players[1].front[1]?.uid,high.uid);
  assert.equal(assertUniversalMatch(packs,skip),true);
+});
+
+
+test('BLC-1-049 official onPlay optional BP -500 cannot hit illegal UID; COLOR is explicit outside deployment',()=>{
+ const c=pack.cards['BLC-1-049'];
+ assert.deepEqual(c.effects.onPlay,[{op:'enemyBpDown',bp:500,optional:true}]);
+ assert.deepEqual(c.triggerEffect,{op:'deployOutsideCharacter',color:'purple',maxEnergy:2,ap:1,frontOnly:true});
+ const copy={...counts};delete copy['BLC-1-013'];copy['BLC-1-049']=4;
+ assert.deepEqual(validateUniversalDeck(pack,copy),[]);
+ let s=newUniversalMatch(packs,{decks:[copy,copy],first:0,seed:14904});
+ const p=s.players[0],foe=s.players[1];
+ const entry=take(s,0,'BLC-1-049'),target=take(s,1,'BLC-1-105');
+ const g1=take(s,0,'BLC-1-039'),g2=take(s,0,'BLC-1-039'),g3=take(s,0,'BLC-1-039');
+ p.energy[0]=g1;p.energy[1]=g2;p.energy[2]=g3;
+ p.hand.push(entry);foe.front[0]=target;
+ s=to(s,'main');
+ const play=legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===entry.uid&&a.line==='front'&&a.slot===0);
+ assert.ok(play);
+ const waiting=dispatchUniversalAction(packs,s,play,{actor:0});
+ const opts=legalUniversalActions(packs,waiting);
+ assert.ok(opts.some(x=>x.type==='chooseTarget'&&x.uid===target.uid));
+ assert.ok(opts.some(x=>x.type==='chooseTarget'&&x.uid===null));
+ assert.throws(()=>dispatchUniversalAction(packs,waiting,{type:'chooseTarget',uid:entry.uid},{actor:0}),/not currently legal/);
+ const yes=dispatchUniversalAction(packs,waiting,opts.find(x=>x.uid===target.uid),{actor:0});
+ assert.equal(yes.players[1].front[0].buffs.at(-1).bp,-500);
+ assert.equal(assertUniversalMatch(packs,yes),true);
+ const skipped=dispatchUniversalAction(packs,waiting,opts.find(x=>x.uid===null),{actor:0});
+ assert.equal(skipped.players[1].front[0].buffs?.length||0,0);
+ assert.equal(assertUniversalMatch(packs,skipped),true);
+});
+
+test('BLC-1-049 printed COLOR life trigger deploys own purple cost <=2 AP1 from outside ACTIVE with no AP cost',()=>{
+ const copy={...counts};delete copy['BLC-1-013'];copy['BLC-1-049']=4;
+ let s=newUniversalMatch(packs,{decks:[copy,copy],first:1,seed:14905});
+ const p=s.players[0],attacker=take(s,1,'BLC-1-039');
+ attacker.ready=true;s.players[1].front[0]=attacker;
+ const life=take(s,0,'BLC-1-049'),old=p.life.shift();
+ p.deck.push(old);p.life.unshift(life);
+ const target=take(s,0,'BLC-1-039');p.outside.push(target);
+ s=to(s,'attack');
+ s=dispatchUniversalAction(packs,s,{type:'attack',uid:attacker.uid},{actor:1});
+ s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:null},{actor:0});
+ assert.equal(s.pending?.kind,'life-trigger');
+ assert.equal(s.pending?.trigger,'color');
+ const opts=legalUniversalActions(packs,s);
+ const choice=opts.find(a=>a.type==='chooseTrigger'&&a.mode==='colorOutside'&&a.uid===target.uid&&a.slot===0);
+ assert.ok(choice);
+ const readyAp=p.apCards.filter(x=>x.ready).length;
+ const result=dispatchUniversalAction(packs,s,choice,{actor:0});
+ assert.equal(result.players[0].front[0]?.uid,target.uid);
+ assert.equal(result.players[0].front[0]?.ready,true);
+ assert.equal(result.players[0].apCards.filter(x=>x.ready).length,readyAp);
+ assert.ok(result.players[0].outside.some(x=>x.uid===life.uid));
+ assert.equal(assertUniversalMatch(packs,result),true);
 });
