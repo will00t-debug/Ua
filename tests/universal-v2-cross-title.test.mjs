@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createUniversalPack,validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
+import {UNIVERSAL_AI_LEVELS,chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
 import {
  newUniversalMatch,legalUniversalActions,dispatchUniversalAction,universalActor,
  universalBp,universalEnergy,assertUniversalMatch,universalPublicView
@@ -252,4 +253,47 @@ test('seeded cross-title complete-turn simulations preserve 50 physical cards on
  }
  assert.ok(visitedTurns>35);
  assert.ok(publicReveals>0,'combat should reveal life cards');
+});
+
+test('cross-title shared AI chooses native legal actions at all difficulty levels without mutating state',()=>{
+ assert.deepEqual(UNIVERSAL_AI_LEVELS,['easy','normal','hard']);
+ let total=0,controllers=new Set(),attacks=0;
+ for(const difficulty of UNIVERSAL_AI_LEVELS)for(let seed=1;seed<=10;seed++){
+  let s=fresh(seed*9,seed%2);
+  for(let i=0;i<120&&s.status==='playing';i++){
+   const actor=universalActor(s);
+   controllers.add(actor);
+   const previous=structuredClone(s),choices=legalUniversalActions(packs,s);
+   const action=chooseUniversalAiAction(packs,s,{difficulty});
+   assert.ok(action,'AI may not stall in a playable state');
+   assert.ok(choices.some(x=>JSON.stringify(x)===JSON.stringify(action)),
+    'AI cannot manufacture an illegal action');
+   if(action.type==='attack')attacks++;
+   const next=dispatchUniversalAction(packs,s,action,{actor});
+   assert.equal(assertUniversalMatch(packs,next),true);
+   assert.deepEqual(s,previous,'AI/dispatch preserve original state');
+   s=next;total++;
+  }
+  assert.ok(s.turn>=2,'AI must advance through shared turn phases');
+ }
+ assert.deepEqual([...controllers].sort(),[0,1]);
+ assert.ok(total>1000,'run substantial seeded simulation on two owner-scoped title packs');
+ assert.ok(attacks>0,'opposing title AI cards actually attack each other');
+ assert.throws(()=>chooseUniversalAiAction(packs,fresh(),{difficulty:'ultra'}),/Unknown universal AI difficulty/);
+});
+
+test('hard universal AI prioritizes an owner-local energy producer over premature front deployment',()=>{
+ for(const first of [0,1]){
+  let s=fresh(891+first,first);
+  const energyCard=toHand(s,first,'X00');
+  s=steps(s,'next','next');
+  const hard=chooseUniversalAiAction(packs,s,{difficulty:'hard'});
+  assert.equal(hard.type,'play');
+  assert.equal(hard.line,'energy');
+  assert.equal(hard.uid,energyCard.uid);
+  assert.equal(universalEnergy(packs,s,first),0);
+  const next=dispatchUniversalAction(packs,s,hard,{actor:first});
+  assert.equal(universalEnergy(packs,next,first),4);
+  assert.equal(assertUniversalMatch(packs,next),true);
+ }
 });
