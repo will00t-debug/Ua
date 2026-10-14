@@ -1,4 +1,5 @@
 // UNION ARENA Universal Rules v2 (experimental; NOT used by Production matches).
+import {expandAbilityTemplates} from './ability-templates.mjs';
 // Data schema and *explicit* ability coverage. No automatic inference from
 // Japanese/translated prose and no optimistic `auto:true` for unported cards.
 export const V2_PHASES=Object.freeze(['start','move','main','attack']);
@@ -118,7 +119,14 @@ function normalize(card,packId){
   throw Error(card.id+' must explicitly declare vanilla or dsl (unported effects are not playable)');
  // The profile author must explicitly mark vanilla; we do not read text and
  // guess that unknown passive/Raid/keywords can safely be ignored.
- const effects=card.effects||{};
+ const authored=card.effects??{};
+ if(!authored||typeof authored!=='object'||Array.isArray(authored))
+  throw Error(card.id+' effects must be a timing-to-program map');
+ const compiled=expandAbilityTemplates(card.templateEffects,card.id+'.templateEffects');
+ for(const timing of Object.keys(compiled))
+  if(Object.prototype.hasOwnProperty.call(authored,timing))
+   throw Error(card.id+' cannot mix raw and templated effects at '+timing);
+ const effects={...authored,...compiled};
  if(implemented==='vanilla'&&(Object.keys(effects).length||card.effectText))
   throw Error(card.id+' claims vanilla despite printed/declared effects');
  if(implemented==='dsl'&&!Object.keys(effects).length&&!mainAbility)
