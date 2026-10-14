@@ -96,7 +96,7 @@ test('printed mandatory bounce chooses another cost 1 or lower; illegal UID and 
 });
 
 test('mandatory bounce returns itself when no legal other low-energy character exists',()=>{
- let s=fresh(),p=s.players[0],generator=take(s,0,'BLC-1-102'),
+ let s=fresh(),p=s.players[0],generator=take(s,0,'BLC-2-023'),
  arrival=take(s,0,'BLC-2-020');
  p.energy[0]=generator;p.hand.push(arrival);
  s=reach(s,'main');
