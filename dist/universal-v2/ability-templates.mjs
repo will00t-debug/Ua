@@ -90,6 +90,11 @@ const registry=Object.freeze({
  enemyFrontAllBpDown:{
   args:{bp:positiveBp},build:v=>[{op:'enemyFrontAllBpDown',bp:v.bp}]
  },
+ // Snapshot every eligible opposing front-line character at resolution time;
+ // resolve replacement choices one by one without retargeting later victims.
+ retireEnemyFrontAllUnderBp:{
+  args:{bp:threshold},build:v=>[{op:'retireOppFrontAllUnderBp',bp:v.bp}]
+ },
  // Temporary boost for all qualifying current field units. Buffs expire
  // with the existing turn counter; units entering later do not inherit it.
  buffOwnTraitAllTurn:{
@@ -117,7 +122,7 @@ const registry=Object.freeze({
   check:v=>v.then.every(x=>x&&[
    'draw','millTop','peekTopOne','searchDeckOne','searchDeckMany',
    'searchDeckWhere','inspectTopArrange','recoverOutsideOne','enemyBpDown',
-   'enemyFrontAllBpDown','buffOwnTraitAllTurn','restEnemyUnderBp'
+   'enemyFrontAllBpDown','retireEnemyFrontAllUnderBp','buffOwnTraitAllTurn','restEnemyUnderBp'
   ].includes(x.template)),
   build:v=>[{op:'discardGate',optional:v.optional,
    then:v.then.flatMap((spec,i)=>expandOne(spec,'payDiscardThen.then['+i+']'))}]
