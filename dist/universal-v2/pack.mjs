@@ -187,9 +187,11 @@ function normalize(card,packId){
   if(Object.prototype.hasOwnProperty.call(authored,timing))
    throw Error(card.id+' cannot mix raw and templated effects at '+timing);
  const effects={...authored,...compiled};
- if(implemented==='vanilla'&&(Object.keys(effects).length||card.effectText))
+ if(implemented==='vanilla'&&(Object.keys(effects).length||card.effectText||
+  card.activeExtraEnergy||card.impactNull))
   throw Error(card.id+' claims vanilla despite printed/declared effects');
- if(implemented==='dsl'&&!Object.keys(effects).length&&!mainAbility)
+ if(implemented==='dsl'&&!Object.keys(effects).length&&!mainAbility&&
+  !card.activeExtraEnergy&&!card.impactNull)
   throw Error(card.id+' declares dsl without effects');
  for(const [name,program] of Object.entries(effects)){
   if(!V2_EFFECT_TIMINGS.includes(name))throw Error(card.id+' timing '+name+' unsupported');
