@@ -680,6 +680,34 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
   "trigger": null,
   "type": "character",
   "effect": "登場：可使最多 1 個敵方前線角色本回合 BP −1000。"
+ },
+ {
+  "id": "BLC-4-061",
+  "kind": "plainAlt",
+  "number": "EX15BT/BLC-4-061",
+  "name": "猿柿 ひよ里",
+  "color": "green",
+  "energy": 0,
+  "ap": 1,
+  "bp": 2000,
+  "gen": 1,
+  "trigger": "draw",
+  "type": "character",
+  "effect": "無一般效果。"
+ },
+ {
+  "id": "BLC-1-097",
+  "kind": "traitBuffAllDraw",
+  "number": "UA08BT/BLC-1-097",
+  "name": "隊首羽織",
+  "color": "green",
+  "energy": 3,
+  "ap": 1,
+  "bp": 0,
+  "gen": 0,
+  "trigger": "active",
+  "type": "event",
+  "effect": "所有己方場上具有「護廷十三隊」特徵的卡，本回合 BP +1000。抽 1 張。"
  }
 ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
@@ -695,6 +723,8 @@ function checkedAddon(p){
   throw Error('BLEACH printed card changed; official recheck required: '+p.id);
  if(p.kind==='plain' && c.effect!=='無固有效果。')
   throw Error('Not a vanilla BLEACH card: '+p.id);
+ if(p.kind==='plainAlt' && c.effect!=='無一般效果。')
+  throw Error('Not a vanilla BLEACH card: '+p.id);
  if(p.kind==='step' && !/^Step：/.test(c.effect))
   throw Error('Not a STEP-only BLEACH card: '+p.id);
  if(p.kind==='bounce' && !/(登場|登場時)/.test(c.effect))
@@ -706,17 +736,18 @@ function checkedAddon(p){
   drawDiscardAttack:{onAttack:[{template:'drawDiscardOne'}]},
   buffAttack1000:{onAttack:[{template:'buffSelf',bp:1000}]},
   recoverAp2:{onPlay:[{template:'recoverAp',count:2}]},
+  traitBuffAllDraw:{onPlay:[{template:'buffOwnTraitAllTurn',trait:'護廷十三隊',bp:1000},{template:'draw',count:1}]},
   enemyBpDown1000:{onPlay:[{template:'enemyBpDown',bp:1000,optional:true}]}
  };
  const isPassive=p.kind==='activeEnergy'||p.kind==='impactNull';
- const special=p.kind==='plain'||p.kind==='step'||isPassive;
+ const special=p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
   id:p.id,name:c.nameJa,color:c.color,type:c.type,energy:c.energy,ap:c.ap,
   bp:c.bp,gen:c.gen,trigger:c.trigger??null,
   traits:Array.isArray(c.traits)?c.traits:(c.traits&&c.traits!=='無'?[c.traits]:[]),
-  implementation:p.kind==='plain'||p.kind==='step'?'vanilla':'dsl',
+  implementation:p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'?'vanilla':'dsl',
   ...(p.kind==='step'?{step:true}:{}),
   ...(p.kind==='activeEnergy'?{activeExtraEnergy:1}:{}),
   ...(p.kind==='impactNull'?{impactNull:true}:{}),
