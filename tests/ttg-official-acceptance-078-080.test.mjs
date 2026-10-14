@@ -14,7 +14,7 @@ function start(seed){const s=newTtgCoreMatch({decks:[deck,deck],seed,first:0});s
 function take(p,id){for(const z of ['hand','deck','life','outside']){const i=p[z].findIndex(c=>c.cardId===id);if(i!==-1)return p[z].splice(i,1)[0]}throw Error('Missing '+id)}
 function place(s,id,line='energy',slot=0){const c=take(s.players[0],id);c.ready=true;s.players[0][line][slot]=c;return c}
 for(const id of ['078','079'])test(id+' official event: paid AP may be among two readied, enemy AP illegal',()=>{
- let s=start(7800+Number(id)),p=s.players[0];const power=place(s,'TTG-1-042');power.energyBonus=3;
+ let s=start(7800+Number(id)),p=s.players[0];const power=place(s,'TTG-1-064');power.energyBonus=3;
  const event=take(p,'TTG-1-'+id);p.hand.push(event);s=withTtgDerivedEnergy(s,0);
  const ap=s.players[0].apCards[0].uid,enemy=s.players[1].apCards[0].uid;
  assert.ok(legalTtgHandEvents(s,0).some(x=>x.handUid===event.uid));
@@ -26,7 +26,7 @@ for(const id of ['078','079'])test(id+' official event: paid AP may be among two
  assert.ok(assertTtgCoreState(s));
 });
 test('080 requires own Kamina, pays an AP, recovers only a Lagann/Gurren/Gurren Lagann',()=>{
- let s=start(8001),p=s.players[0];const power=place(s,'TTG-1-042');power.energyBonus=3;
+ let s=start(8001),p=s.players[0];const power=place(s,'TTG-1-064');power.energyBonus=3;
  const event=take(p,'TTG-1-080');p.hand.push(event);
  const recover=take(p,'TTG-1-076');p.outside.push(recover);
  const invalid=take(p,'TTG-1-043');p.outside.push(invalid);
@@ -45,7 +45,7 @@ test('080 requires own Kamina, pays an AP, recovers only a Lagann/Gurren/Gurren 
  assert.ok(assertTtgCoreState(s));
 });
 test('080 discount remains for next eligible hand Raid, not for unrelated Simon',()=>{
- let s=start(8002),p=s.players[0];const power=place(s,'TTG-1-042');power.energyBonus=3;
+ let s=start(8002),p=s.players[0];const power=place(s,'TTG-1-064');power.energyBonus=3;
  place(s,'TTG-1-045','front',1);const simon=place(s,'TTG-1-051','front',0);
  const event=take(p,'TTG-1-080');p.hand.push(event);
  const lagann=take(p,'TTG-1-076');p.outside.push(lagann);
