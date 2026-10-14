@@ -28,7 +28,7 @@ jobs:
               const matches=html.split(/\\n/).filter(row=>row.includes('cardlist/small')||row.includes('TTG-1-001')||row.includes('TTG-1-032')).slice(0,8);
               console.log('IMAGE_MATCHES',JSON.stringify(matches.map(row=>row.slice(0,800))));
               if(url.includes('Version=TTG')){
-                const ids=new Set([...html.matchAll(/data-src=['"]cardlist\\/small\\/UA56BT_TTG-1-(\\d{3})\\.jpg/g)].map(m=>m[1]));
+                const ids=new Set(html.split("data-src='cardlist/small/UA56BT_TTG-1-").slice(1).map(x=>x.slice(0,3)).filter(x=>/^[0-9]{3}$/.test(x)));
                 const missing=Array.from({length:81},(_,i)=>String(i+1).padStart(3,'0')).filter(n=>!ids.has(n));
                 console.log('STANDARD_ARTWORK_COVERAGE',ids.size,'MISSING',missing.join(',')||'none');
               }
