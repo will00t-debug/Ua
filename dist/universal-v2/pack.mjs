@@ -176,7 +176,9 @@ function normalize(card,packId){
   mainAbility:mainAbility?Object.freeze({...mainAbility}):null,
   step:card.step===true,ownTurnBp:card.ownTurnBp||0,implementation:implemented,
   effects:Object.freeze(Object.fromEntries(Object.entries(effects)
-   .map(([k,v])=>[k,Object.freeze(v.map(e=>Object.freeze({...e})))])))
+   .map(([k,v])=>[k,Object.freeze(v.map(e=>Object.freeze({
+    ...e,...(e.filter?{filter:Object.freeze({...e.filter})}:{})
+   })))])))
  });
 }
 export function createUniversalPack({id,cards,version='0.1.0',restrictColors=false}={}){
