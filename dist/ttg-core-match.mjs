@@ -226,7 +226,10 @@ export function legalTtgCoreActions(s){
   actions.push(...legalTtgRuleActions(s,p));
  }
  if(s.phase==='attack'&&pl.turnCount>1){
-  if(pl.red068AttackCapTurn!==s.turn||pl.characterAttacksThisTurn<(pl.red068AttackCap||4)){
+  // No attack yet means ZERO attacks, not undefined < 4 (=false).
+  // Previous-turn counts must not prevent this turn's energy-line attack.
+  const attacksThisTurn=pl.attackTurn===s.turn?(pl.characterAttacksThisTurn||0):0;
+  if(pl.red068AttackCapTurn!==s.turn||attacksThisTurn<(pl.red068AttackCap||4)){
    for(const c of pl.front.filter(c=>c?.ready&&greenTtgCanAttackOrBlock(s,p,c)&&canTtgGreen028Attack(s,p,c)&&red056CanAttack(s,p,c))) {
     actions.push({type:'attack',uid:c.uid});
     if(c.cardId==='TTG-1-067'&&c.red067SniperUntilTurn===s.turn){

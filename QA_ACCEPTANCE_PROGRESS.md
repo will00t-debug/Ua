@@ -340,3 +340,18 @@
 - 065 1費紅庸子：STEP 僅在己方移動階段將前線角色移至**空**能源線格子、玩家自行選位置，REST不會因此 ACTIVE；不能違規移到已佔據格子、別人回合、MAIN等時點，且不能立即再用第二次STEP。
 
 這些情境仍需真機手機互動、觸發/攻擊等跨卡連動和嚴格的每張官方 FAQ 驗收。不改 `auto:false` Beta 旗標。接續 066～068。
+
+
+## 2026-10-14：TTG-1-066～068 紅色庸子實際攻擊／狙擊驗收（等待 Node22 CI）
+
+獨立堆疊於 `audit/ttg063-065-official-20261014`，暫不合併 main 或部署正式站。日本官方個別卡文與 Q2295～Q2297：
+[066](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-066)、
+[067](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-067)、
+[068](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-068)。
+
+新增 `tests/ttg-official-acceptance-066-068.test.mjs` 七組完整50張卡池的核心與受控階段驗收案例：
+
+- **066**：能源線 ACTIVE 額外產紅1合計2、REST 僅印刷紅1、再次 ACTIVE 即時恢復；一般前線不產能，有額外前線產能條件時又可產2，不隨意固定加值。
+- **067**：從手牌需求紅4、AP2 真實登場成 ACTIVE；攻擊時 BP4000以上防守角色不得阻擋、低BP角色可阻擋，獲勝時必抽一張真實卡；本回合有狙擊權利，可明確指定對方前線，過了登場該回合不可繼續狙擊；生命 ACTIVE Trigger 可以選或放棄。
+- **068**：能源線自選一張手牌放置場外支付條件，當回合 ENERGY 也能攻擊，且所有庸子068同名共用每回合一次的發動次數；可攻擊次數以4為上限，不允許額外偷偷發動第5次；己方本回合 Raid 角色次數×1000BP 在己方回合增益、敵方回合／往回合不生效；生命 DRAW 可選或放棄。
+- 法定 AP／實體卡 UID／牌組上限均以核心校驗。這是上述路徑的回歸檢查，不代表卡片所有不同時點均已官方最終驗收。需後續驗證對局狙擊覆蓋與多重傷害生命觸發、真實手機選擇介面。下一批 069～071。
