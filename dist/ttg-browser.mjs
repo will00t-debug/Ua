@@ -35,7 +35,14 @@ export function ttgActionLabel(s,a){
  const primary=a.handUid??a.raidUid??a.cardUid??a.uid??a.sourceUid??a.siteUid;
  let title=key+(primary!=null?' · '+label(s,primary):'');
  if(a.type==='block')title=a.blockUid==null?'不阻擋':'阻擋 · '+label(s,a.blockUid);
- if(a.type==='playTtgEvent'&&Array.isArray(a.readyApUids))title+=' · 回復'+a.readyApUids.length+' AP';
+ if(Array.isArray(a.payApUids)&&a.payApUids.length){
+  const cards=s.players?.[s.active]?.apCards||[];
+  title+=' · 支付 '+a.payApUids.map(uid=>'AP'+(cards.findIndex(c=>c.uid===uid)+1)).join('＋');
+ }
+ if(a.type==='playTtgEvent'&&Array.isArray(a.readyApUids)){
+  const cards=s.players?.[s.active]?.apCards||[];
+  title+=' · 回復 '+(a.readyApUids.length?a.readyApUids.map(uid=>'AP'+(cards.findIndex(c=>c.uid===uid)+1)).join('＋'):'0張AP');
+ }
  if(a.type==='green012Search')title+=' · '+(a.takeUid?'拿 '+label(s,a.takeUid):'不拿牌')+'，牌庫底順序'+a.bottomOrderUids?.map(uid=>label(s,uid)).join('→');
  if(a.type==='green012Discard')title+=' · 棄 '+(a.discardUids||[]).map(uid=>label(s,uid)).join('、')+'，回復 AP';
  if(a.type==='attack'&&a.targetUid!=null)title+=' → 狙擊 '+label(s,a.targetUid);
@@ -55,13 +62,6 @@ export function ttgExecutableActions(s){
  const offered=legalTtgCoreActions(s);
  const ap=s.players?.[s.active]?.apCards||[];
  const ready=ap.filter(c=>c.ready).map(c=>c.uid);
- const paid=a=>{
-  if(a.payApUids!==undefined)return a;
-  const cost=Number.isInteger(a.requiredAp)?a.requiredAp:
-   a.type==='green012Play'?2:
-   ['ttgGreenSitePlay','ttgRed077Play'].includes(a.type)?1:null;
-  return cost==null?a:{...a,payApUids:ready.slice(0,cost)};
- };
  const combinations=(arr,max,from=0,used=[],result=[[]])=>{
   for(let i=from;i<arr.length&&used.length<max;i++){
    const next=[...used,arr[i]];result.push(next);
@@ -69,8 +69,20 @@ export function ttgExecutableActions(s){
   }
   return result;
  };
- return offered.flatMap(original=>{
-  const a=paid(original);
+ // Payment must be a player decision when multiple ACTIVE AP cards are
+ // available. The previous UI silently spent the FIRST ready AP card even
+ // though its identity affects which REST AP can be readied by hand events.
+ const paymentOptions=a=>{
+  if(a.payApUids!==undefined)return [a];
+  const cost=Number.isInteger(a.requiredAp)?a.requiredAp:
+   a.type==='green012Play'?2:
+   ['ttgGreenSitePlay','ttgRed077Play'].includes(a.type)?1:null;
+  if(cost===null)return [a];
+  if(!Number.isInteger(cost)||cost<0||cost>ready.length)return [];
+  return combinations(ready,cost).filter(ids=>ids.length===cost)
+   .map(payApUids=>({...a,payApUids}));
+ };
+ return offered.flatMap(original=>paymentOptions(original).flatMap(a=>{
   if(a.type==='playTtgEvent'){
    // TTG-1-081 requires an opposing-front target; AP-ready hand events do not.
    if(Array.isArray(a.targetUids)&&a.targetUids.length)
@@ -95,7 +107,7 @@ export function ttgExecutableActions(s){
    return ap.map(card=>({...a,discardUids:[uid],mode:'readyAP',apUid:card.uid,targetUid:null}));
   }
   return [a];
- });
+ }));
 }
 // TTG-1-012: a player's Q2266 discard choice is a true multi-card
 // selection, potentially unlocking the 15+ total printed-cost retirement
