@@ -54,6 +54,20 @@ const printed=Object.freeze({
     trait:'大グレン団',bp:1000},
    effects:{},matchText:'本回合己方有過突襲時',
    matchTexts:['最多選兩種能力','使自身 ACTIVE','BP+1000','同名 ACTIVE 選項每回合一次']},
+  {id:'TTG-1-047',energy:0,ap:1,bp:1500,gen:1,color:'red',trigger:'draw',
+   type:'character',implementation:'dsl',templateEffects:{onAttack:[
+    {template:'buffSelfIfFirstAttack',bp:1500}
+   ]},matchText:'第一次角色攻擊'},
+  {id:'TTG-1-049',energy:1,ap:1,bp:1500,gen:2,color:'red',trigger:null,
+   type:'character',implementation:'dsl',templateEffects:{onPlay:[
+    {template:'bounceOwnOtherUnderEnergy',energy:1}
+   ]},matchText:'需求能源 1 以下的其他角色'},
+  {id:'TTG-1-052',energy:2,ap:1,bp:3000,gen:1,color:'red',trigger:'active',
+   type:'character',implementation:'dsl',templateEffects:{onPlay:[
+    {template:'payDiscardThen',optional:true,then:[
+     {template:'recoverOutsideColorUnderEnergy',color:'red',energy:2,optional:true}
+    ]}
+   ]},matchText:'需求能源2以下的紅色卡片'},
   {id:'TTG-1-051',energy:0,ap:1,bp:1500,gen:1,color:'red',trigger:'draw',type:'character',implementation:'dsl',templateEffects:{onPlay:[{template:'drawDiscardOne'}]},matchText:'抽1張'},
   {id:'TTG-1-042',energy:0,ap:1,bp:2000,gen:1,color:'red',trigger:'active',type:'character',implementation:'vanilla',effects:{},matchText:'沒有額外印刷角色效果'},
   {id:'TTG-1-043',energy:2,ap:1,bp:3000,gen:1,color:'red',trigger:'draw',type:'character',
