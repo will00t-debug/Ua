@@ -7,8 +7,8 @@
 從 `dist/expansion-cards.mjs`、`dist/cards.mjs` 和 `dist/advanced-cards.mjs` 按 `identity` 合併去重，排除異圖／AP，**共 276 種 BLEACH 一般卡**：BLC-1 109 種、BLC-2 73 種、BLC-3 11 種、BLC-4 83 種。獨立逐卡能力欄位盤點詳見 [B-bleach-inventory.csv](./B-bleach-inventory.csv)（276 行：角色能力、主動、被動、Raid、生命 Trigger、卡文、卡號與逐項狀態）。沒有做過官方核對的卡明確標示未驗收，不能把資料庫自動支援旗標當成認證。
 
 - **基線 V2 已有 BLEACH Pilot：15 張**（僅 Pilot，未全面通過個別官方 FAQ）。
-- **本 BLEACH 分支新增：48 張**，全部在獨立 `dist/universal-v2/bleach-pack.mjs`，從現有 `verifiedPilotCards('bleach')` 安全疊加；不改原 Pilot／共用核心。
-- **目前可載入 V2 BLEACH 測試卡包：63 張（15 + 48）**，**未移植 213 張**。
+- **本 BLEACH 分支新增：50 張**，全部在獨立 `dist/universal-v2/bleach-pack.mjs`，從現有 `verifiedPilotCards('bleach')` 安全疊加；不改原 Pilot／共用核心。
+- **目前可載入 V2 BLEACH 測試卡包：65 張（15 + 50）**，**未移植 211 張**。
 - 此卡包沒有自動註冊到正式站或共用預覽 UI；由個別測試 import，不得將「本分支包含」混同「Production 可玩」。
 
 ## 新增能力類型
@@ -23,7 +23,7 @@
 
 官方卡文範例：[BLC-1-002（無角色能力／ACTIVE）](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA08BT%2FBLC-1-002)、[BLC-2-023（無角色能力／DRAW）](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX07BT%2FBLC-2-023)、[BLC-4-062（STEP／ACTIVE）](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX15BT%2FBLC-4-062)、[BLC-1-035（登場回手）](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA08BT%2FBLC-1-035)。
 
-## 第二批 27 張已使用 V2 正式運作路徑的簡單效果
+## 第二批 29 張已使用 V2 正式運作路徑的簡單效果
 
 | 類別 | 張數 | 卡號 | 實際能力 |
 |---|---:|---|---|
@@ -35,6 +35,8 @@
 | 攻擊 BP+1000 | 1 | BLC-1-090 | 自身本回合加成而非永久修改印刷 BP |
 | 恢復最多兩張 AP | 8 | BLC-1-029、BLC-1-100、BLC-2-049、BLC-4-019、BLC-4-020、BLC-4-045、BLC-4-059、BLC-4-080 | FINAL 事件：正常使用恢復 AP；生命 FINAL 只有生命為零時適用 |
 | 登場敵前線降 BP1000 | 1 | BLC-2-053 | 可不選，非法目標拒絕，BP 暫時下降 |
+| 無額外角色效果 | 1 | BLC-4-061 | 官方效果欄為「-」，仍保留 DRAW 生命 Trigger |
+| 全體特徵 BP 強化並抽牌 | 1 | BLC-1-097 | 本回合己方護廷十三隊角色全體 BP+1000，再抽1張；ACTIVE Trigger 獨立 |
 
 以上每張同樣在獨立 `bleach-pack.mjs` 的 printed profile allowlist，來源保留官卡詳頁，卡文／數值異動會停止編譯。官方頁面代表例：[BLC-2-029 ACTIVE 追加能源](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX07BT%2FBLC-2-029)、[BLC-1-094 場域登場抽牌](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA08BT%2FBLC-1-094)、[BLC-2-008 登場抽棄](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX07BT%2FBLC-2-008)、[BLC-1-029 FINAL](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA08BT%2FBLC-1-029)。跨卡時序與 FAQ 仍待更完整驗證。
 
@@ -56,18 +58,19 @@
 
 - `tests/universal-v2-bleach-port.test.mjs`：新增卡清單、真卡 50 張 deck 驗證、STEP 合法／非法、成本／合法回手／無合法目標時自回、放棄與 UID 違規拒絕、生命 Trigger 宣告與資料保密、UID 守恆。
 - 原有 `tests/universal-v2-bleach-real-deck.test.mjs` 仍用原 Pilot，不修改其結果；驗收兩者分開。
-- **CI 追蹤：已建立獨立 GitHub Actions 流程 `.github/workflows/v2-bleach-port.yml`，執行 Node 22 專屬測試與全庫 npm test；最新結論以 Actions run 為準，未經實際成功前不可宣告全過**。測試修正和執行紀錄須回填此欄與 PR。
+- **新增第二副合法 50 張全真 BLEACH 綠色測試牌**：`tests/universal-v2-bleach-green-match.test.mjs`，12 種普通綠卡各四張+兩張綠色 FINAL（含 field、STEP、IMPACT 無效、抽棄、護廷十三隊群體強化），執行全綠 AI 完整鏡像對局。
+- **CI 已實測：GitHub Actions run [38611833944](https://github.com/will00t-debug/Ua/actions/runs/38611833944)（commit `b7683946`）：BLEACH 專屬 11／11 全過，全庫 `npm test` 1007／1007 全過，獨立模組 Node 22 syntax 通過。該 run 包含新綠色 50 張實體卡 AI 完局測試 3 項；其後文件提交需再確認 HEAD CI。**
 - **嚴格未更動** `engine.mjs`、`pack.mjs`、`ability-templates.mjs`、共用入口、AI、`real-card-pilots.mjs`。
 - 02:00 前產出實際 276 卡盤點；04:30 前首批可整合 commit；05:30 後以修錯與交接為主。保留 Draft。
 
-## 剩餘 213 張完整身份卡號
+## 剩餘 211 張完整身份卡號
 
-**BLC-1 (71)**：BLC-1-003、BLC-1-004、BLC-1-005、BLC-1-006、BLC-1-007、BLC-1-009、BLC-1-011、BLC-1-013、BLC-1-014、BLC-1-015、BLC-1-016、BLC-1-019、BLC-1-020、BLC-1-022、BLC-1-023、BLC-1-024、BLC-1-025、BLC-1-026、BLC-1-027、BLC-1-028、BLC-1-030、BLC-1-031、BLC-1-032、BLC-1-033、BLC-1-038、BLC-1-041、BLC-1-042、BLC-1-044、BLC-1-046、BLC-1-047、BLC-1-049、BLC-1-050、BLC-1-051、BLC-1-053、BLC-1-054、BLC-1-055、BLC-1-056、BLC-1-058、BLC-1-059、BLC-1-060、BLC-1-061、BLC-1-062、BLC-1-063、BLC-1-065、BLC-1-069、BLC-1-070、BLC-1-073、BLC-1-074、BLC-1-076、BLC-1-077、BLC-1-078、BLC-1-079、BLC-1-080、BLC-1-081、BLC-1-084、BLC-1-085、BLC-1-087、BLC-1-088、BLC-1-091、BLC-1-092、BLC-1-093、BLC-1-095、BLC-1-096、BLC-1-097、BLC-1-098、BLC-1-099、BLC-1-101、BLC-1-104、BLC-1-106、BLC-1-108、BLC-1-109
+**BLC-1 (70)**：BLC-1-003、BLC-1-004、BLC-1-005、BLC-1-006、BLC-1-007、BLC-1-009、BLC-1-011、BLC-1-013、BLC-1-014、BLC-1-015、BLC-1-016、BLC-1-019、BLC-1-020、BLC-1-022、BLC-1-023、BLC-1-024、BLC-1-025、BLC-1-026、BLC-1-027、BLC-1-028、BLC-1-030、BLC-1-031、BLC-1-032、BLC-1-033、BLC-1-038、BLC-1-041、BLC-1-042、BLC-1-044、BLC-1-046、BLC-1-047、BLC-1-049、BLC-1-050、BLC-1-051、BLC-1-053、BLC-1-054、BLC-1-055、BLC-1-056、BLC-1-058、BLC-1-059、BLC-1-060、BLC-1-061、BLC-1-062、BLC-1-063、BLC-1-065、BLC-1-069、BLC-1-070、BLC-1-073、BLC-1-074、BLC-1-076、BLC-1-077、BLC-1-078、BLC-1-079、BLC-1-080、BLC-1-081、BLC-1-084、BLC-1-085、BLC-1-087、BLC-1-088、BLC-1-091、BLC-1-092、BLC-1-093、BLC-1-095、BLC-1-096、BLC-1-098、BLC-1-099、BLC-1-101、BLC-1-104、BLC-1-106、BLC-1-108、BLC-1-109
 
 **BLC-2 (58)**：BLC-2-001、BLC-2-002、BLC-2-003、BLC-2-004、BLC-2-005、BLC-2-006、BLC-2-007、BLC-2-009、BLC-2-010、BLC-2-011、BLC-2-012、BLC-2-013、BLC-2-014、BLC-2-015、BLC-2-017、BLC-2-018、BLC-2-019、BLC-2-021、BLC-2-022、BLC-2-024、BLC-2-026、BLC-2-027、BLC-2-028、BLC-2-030、BLC-2-032、BLC-2-033、BLC-2-034、BLC-2-035、BLC-2-037、BLC-2-038、BLC-2-039、BLC-2-040、BLC-2-041、BLC-2-042、BLC-2-043、BLC-2-044、BLC-2-045、BLC-2-046、BLC-2-047、BLC-2-048、BLC-2-050、BLC-2-051、BLC-2-054、BLC-2-055、BLC-2-057、BLC-2-058、BLC-2-060、BLC-2-061、BLC-2-062、BLC-2-063、BLC-2-064、BLC-2-065、BLC-2-067、BLC-2-068、BLC-2-069、BLC-2-070、BLC-2-072、BLC-2-073
 
 **BLC-3 (11)**：BLC-3-001、BLC-3-002、BLC-3-003、BLC-3-004、BLC-3-005、BLC-3-006、BLC-3-007、BLC-3-008、BLC-3-009、BLC-3-010、BLC-3-011
 
-**BLC-4 (73)**：BLC-4-001、BLC-4-002、BLC-4-003、BLC-4-004、BLC-4-005、BLC-4-006、BLC-4-007、BLC-4-008、BLC-4-009、BLC-4-010、BLC-4-011、BLC-4-012、BLC-4-013、BLC-4-015、BLC-4-016、BLC-4-017、BLC-4-018、BLC-4-021、BLC-4-022、BLC-4-023、BLC-4-024、BLC-4-025、BLC-4-027、BLC-4-028、BLC-4-029、BLC-4-030、BLC-4-031、BLC-4-032、BLC-4-033、BLC-4-034、BLC-4-036、BLC-4-037、BLC-4-038、BLC-4-039、BLC-4-041、BLC-4-042、BLC-4-043、BLC-4-044、BLC-4-046、BLC-4-047、BLC-4-048、BLC-4-049、BLC-4-050、BLC-4-051、BLC-4-052、BLC-4-053、BLC-4-054、BLC-4-055、BLC-4-056、BLC-4-057、BLC-4-058、BLC-4-060、BLC-4-061、BLC-4-063、BLC-4-064、BLC-4-065、BLC-4-066、BLC-4-067、BLC-4-068、BLC-4-069、BLC-4-070、BLC-4-071、BLC-4-072、BLC-4-073、BLC-4-074、BLC-4-075、BLC-4-076、BLC-4-077、BLC-4-078、BLC-4-079、BLC-4-081、BLC-4-082、BLC-4-083
+**BLC-4 (72)**：BLC-4-001、BLC-4-002、BLC-4-003、BLC-4-004、BLC-4-005、BLC-4-006、BLC-4-007、BLC-4-008、BLC-4-009、BLC-4-010、BLC-4-011、BLC-4-012、BLC-4-013、BLC-4-015、BLC-4-016、BLC-4-017、BLC-4-018、BLC-4-021、BLC-4-022、BLC-4-023、BLC-4-024、BLC-4-025、BLC-4-027、BLC-4-028、BLC-4-029、BLC-4-030、BLC-4-031、BLC-4-032、BLC-4-033、BLC-4-034、BLC-4-036、BLC-4-037、BLC-4-038、BLC-4-039、BLC-4-041、BLC-4-042、BLC-4-043、BLC-4-044、BLC-4-046、BLC-4-047、BLC-4-048、BLC-4-049、BLC-4-050、BLC-4-051、BLC-4-052、BLC-4-053、BLC-4-054、BLC-4-055、BLC-4-056、BLC-4-057、BLC-4-058、BLC-4-060、BLC-4-063、BLC-4-064、BLC-4-065、BLC-4-066、BLC-4-067、BLC-4-068、BLC-4-069、BLC-4-070、BLC-4-071、BLC-4-072、BLC-4-073、BLC-4-074、BLC-4-075、BLC-4-076、BLC-4-077、BLC-4-078、BLC-4-079、BLC-4-081、BLC-4-082、BLC-4-083
 
 **未移植者不在 `createBleachV2Pack()` 白名單內，V2 拒絕其組牌／對戰要求；不會用未實作能力冒充完成。**
