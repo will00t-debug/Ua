@@ -83,10 +83,10 @@ function testEntry(other,owner,id){
 }
 test('official-record pilot cards have explicitly pinned printed energy/AP/BP/trigger and no implicit support',()=>{
  assert.deepEqual(REAL_V2_PILOT_IDS.bleach,['BLC-1-034','BLC-1-039','BLC-1-064','BLC-1-066','BLC-1-102','BLC-1-103','BLC-1-105','BLC-1-107']);
- assert.deepEqual(REAL_V2_PILOT_IDS['gurren-lagann'],['TTG-1-001','TTG-1-009','TTG-1-036','TTG-1-037','TTG-1-038','TTG-1-051','TTG-1-042','TTG-1-064','TTG-1-065','TTG-1-078','TTG-1-079']);
+ assert.deepEqual(REAL_V2_PILOT_IDS['gurren-lagann'],['TTG-1-001','TTG-1-009','TTG-1-036','TTG-1-037','TTG-1-038','TTG-1-051','TTG-1-042','TTG-1-064','TTG-1-065','TTG-1-072','TTG-1-078','TTG-1-079']);
  const b=verifiedPilotPack('bleach'),t=verifiedPilotPack('gurren-lagann');
  assert.equal(Object.keys(b.cards).length,8);
- assert.equal(Object.keys(t.cards).length,11);
+ assert.equal(Object.keys(t.cards).length,12);
  assert.ok(validateUniversalDeck(b,bleach.deck).length>0,'V2 real-only deck is not ready');
  assert.ok(validateUniversalDeck(t,green.deck).length>0);
  for(const id of REAL_V2_PILOT_IDS.bleach)assert.ok(portVerifiedPilotCard('bleach',id));
@@ -444,4 +444,93 @@ test('real BLEACH Getsugatensho 064 SPECIAL life trigger ignores main effect BP 
  assert.equal(fired.players[1].front[0],null);
  assert.ok(fired.players[1].outside.some(c=>c.uid===attacker.uid));
  assert.equal(assertUniversalMatch(packs,fired),true);
+});
+
+test('real TTG Gurren 072: Raid Kamina, onPlay draw then optional REST only BP<=3000, own-turn +500',()=>{
+ const packs=[bleach.pack,red.pack];let state=fresh(red,550);
+ const takeHere=(owner,id)=>{
+  const p=state.players[owner];
+  for(const line of ['hand','deck','life','outside']){
+   const index=p[line].findIndex(c=>c.cardId===id);
+   if(index!==-1)return p[line].splice(index,1)[0];
+  }
+  throw Error('missing fixture '+owner+' '+id);
+ };
+ const kamina=takeHere(1,'TTG-1-042'),generator=takeHere(1,'TTG-1-042'),
+  second=takeHere(1,'TTG-1-064'),third=takeHere(1,'TTG-1-065');
+ state.players[1].front[0]=kamina;
+ state.players[1].energy[0]=generator;
+ state.players[1].energy[1]=second;
+ state.players[1].energy[2]=third;
+ const low=takeHere(0,'BLC-1-039'),high=takeHere(0,'BLC-1-105');
+ low.ready=true;high.ready=true;
+ state.players[0].front[0]=low;state.players[0].front[1]=high;
+ const top=takeHere(1,'TTG-1-072');state.players[1].hand.push(top);
+ // Player zero passes; the first player whose own turn it is earns the bonus.
+ for(let i=0;i<4;i++)state=dispatchUniversalAction(packs,state,{type:'next'});
+ assert.equal(state.active,1);
+ state=advanceToMain(packs,state);
+ assert.equal(universalEnergyByColor(packs,state,1).red,3);
+ const raid=legalUniversalActions(packs,state).find(a=>a.type==='raid'&&a.uid===top.uid&&a.baseUid===kamina.uid&&a.slot===0);
+ assert.ok(raid,'real Kamina can be its Raid base');
+ const apBefore=state.players[1].apCards.filter(x=>x.ready).length;
+ const deckBefore=state.players[1].deck.length;
+ const next=dispatchUniversalAction(packs,state,raid,{actor:1});
+ assert.equal(next.players[1].apCards.filter(x=>x.ready).length,apBefore-1);
+ assert.equal(next.players[1].front[0].uid,top.uid);
+ assert.equal(next.players[1].front[0].stack[0].uid,kamina.uid);
+ assert.equal(universalBp(packs,next,next.players[1].front[0]),4000,'active turn gains +500');
+ assert.equal(next.players[1].deck.length,deckBefore-1,'onPlay draw happens before choosing REST target');
+ assert.equal(next.pending?.kind,'effect-rest-bp');
+ assert.deepEqual(legalUniversalActions(packs,next),[
+  {type:'chooseRestBp',uid:null},{type:'chooseRestBp',uid:low.uid}
+ ]);
+ assert.throws(()=>dispatchUniversalAction(packs,next,{type:'chooseRestBp',uid:high.uid},{actor:1}),/not currently legal/);
+ const ignored=dispatchUniversalAction(packs,next,{type:'chooseRestBp',uid:null},{actor:1});
+ assert.equal(ignored.players[0].front[0].ready,true,'optional REST may be skipped');
+ const rested=dispatchUniversalAction(packs,next,{type:'chooseRestBp',uid:low.uid},{actor:1});
+ assert.equal(rested.players[0].front[0].ready,false);
+ assert.equal(rested.players[0].front[1].ready,true);
+ assert.equal(rested.pending,null);
+ assert.equal(assertUniversalMatch(packs,rested),true);
+ let offTurn=rested;
+ for(let i=0;i<2;i++)offTurn=dispatchUniversalAction(packs,offTurn,{type:'next'});
+ assert.equal(offTurn.active,0);
+ assert.equal(universalBp(packs,offTurn,offTurn.players[1].front[0]),3500,
+  '500 BP own-turn printed bonus expires when opponent turn starts');
+});
+
+test('real TTG Gurren 072 RAID life on opponent turn does not gain own-turn BP, but keeps REST choice',()=>{
+ const packs=[bleach.pack,red.pack];let s=fresh(red,551);
+ const takeHere=(owner,id)=>{
+  for(const line of ['hand','deck','life','outside']){
+   const a=s.players[owner][line],i=a.findIndex(c=>c.cardId===id);
+   if(i!==-1)return a.splice(i,1)[0];
+  }
+  throw Error('missing fixture');
+ };
+ const attacker=takeHere(0,'BLC-1-039');attacker.ready=true;s.players[0].front[0]=attacker;
+ const top=takeHere(1,'TTG-1-072'),old=s.players[1].life.shift();
+ s.players[1].deck.push(old);s.players[1].life.unshift(top);
+ const base=takeHere(1,'TTG-1-042');s.players[1].front[0]=base;
+ for(const id of ['TTG-1-042','TTG-1-064','TTG-1-065']){
+  const index=s.players[1].energy.findIndex(c=>!c);
+  s.players[1].energy[index]=takeHere(1,id);
+ }
+ s=advanceToMain(packs,s);
+ s=dispatchUniversalAction(packs,s,{type:'next'});
+ s=dispatchUniversalAction(packs,s,{type:'attack',uid:attacker.uid},{actor:0});
+ s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:null},{actor:1});
+ const raid=legalUniversalActions(packs,s).find(a=>a.mode==='raid'&&a.baseUid===base.uid);
+ assert.ok(raid,'RAID trigger legal with red energy 3 and Kamina base');
+ const result=dispatchUniversalAction(packs,s,raid,{actor:1});
+ assert.equal(result.pending?.kind,'effect-rest-bp');
+ assert.equal(universalBp(packs,result,result.players[1].front[0]),3500,'no +500 during opposing turn');
+ assert.equal(result.pending.player,1,'rest target belongs to RAID controller');
+ const choice=legalUniversalActions(packs,result).find(a=>a.uid===attacker.uid);
+ assert.ok(choice);
+ const settled=dispatchUniversalAction(packs,result,choice,{actor:1});
+ assert.equal(settled.players[0].front[0].ready,false);
+ assert.equal(settled.pending,null);
+ assert.equal(assertUniversalMatch(packs,settled),true);
 });
