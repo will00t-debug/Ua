@@ -126,6 +126,31 @@ export function ttg012SearchChoice(s,{takeUid=null,bottomOrderUids=[]}={}){
   throw new Error('牌庫底順序須包含所有剩餘的不同實體卡，不能增減或重複');
  return {type:'green012Search',player:legal.player,uid:legal.uid,takeUid,bottomOrderUids};
 }
+// TTG-1-023: a genuine private look of up to five deck cards. The selected
+// Gunmen alone is publicly revealed. The other looked-at cards remain private
+// and can be arranged in ANY bottom order by their owner.
+export function ttg023SearchChoice(s,{takeUid=null,discardUid=null,bottomOrderUids=[]}={}){
+ const q=s?.pending;
+ if(q?.kind!=='ttgGreenEntry'||q.player!==0)throw new Error('目前沒有我方利龍023的搜尋待結算');
+ const source=['front','energy'].flatMap(line=>s.players[0][line]||[]).find(c=>c?.uid===q.sourceUid);
+ if(source?.cardId!=='TTG-1-023')throw new Error('這不是利龍023的搜尋');
+ const legal=legalTtgCoreActions(s).find(a=>a.type==='resolveGreenEntry'&&a.mode==='search');
+ if(!legal)throw new Error('沒有合法的牌庫搜尋');
+ const top=s.players[0].deck.slice(0,5);
+ const candidateUids=top.filter(c=>(TTG_BY_ID[c.cardId]?.traits||[]).some(t=>String(t).includes('ガンメン'))).map(c=>c.uid);
+ if(takeUid!==null&&!candidateUids.includes(takeUid))throw new Error('只能公開選擇具有ガンメン特徵的卡');
+ const remaining=top.filter(c=>c.uid!==takeUid).map(c=>c.uid);
+ if(!Array.isArray(bottomOrderUids)||bottomOrderUids.length!==remaining.length||
+    new Set(bottomOrderUids).size!==bottomOrderUids.length||
+    remaining.some(uid=>!bottomOrderUids.includes(uid)))
+  throw new Error('牌庫底順序必須恰好包含每一張未拿取的牌');
+ const hands=s.players[0].hand.map(c=>c.uid);
+ if(takeUid===null&&discardUid!==null)throw new Error('沒有拿牌時不可丟棄手牌');
+ if(takeUid!==null&&![...hands,takeUid].includes(discardUid))
+  throw new Error('拿牌後必須選擇一張手牌放置場外，也可以選剛拿到的卡');
+ return {type:'resolveGreenEntry',player:0,sourceUid:q.sourceUid,mode:'search',
+  takeUid,discardUid,bottomOrderUids};
+}
 export function ttg012ManualChoice(s,{discardUids=[],mode='readyAP',apUid=null,targetUid=null}={}){
  const legal=legalTtgCoreActions(s).find(x=>x.type==='green012Discard');
  if(!legal)throw new Error('目前沒有西蒙012的棄牌效果待結算');
