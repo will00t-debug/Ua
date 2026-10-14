@@ -113,7 +113,7 @@ function render(){
  bind();
  if($('.modal'))$('.modal').scrollTop=modalScroll;
  const shell=$('.shell');if(shell)shell.inert=!!$('.modalBackdrop');
- if(ui.view==='arena'&&botTurn()&&!ui.handoff&&!ui.modal){botTimer=setTimeout(()=>{const a=chooseAiAction(game,{difficulty:ui.aiDifficulty});if(a)act(a);},game.pending?850:550);}
+ if(ui.view==='arena'&&botTurn()&&!ui.handoff&&!ui.modal){botTimer=setTimeout(()=>{const a=chooseMatchBotAction('bleach',game,{difficulty:ui.aiDifficulty});if(a)act(a);},game.pending?850:550);}
  if(ui.view==='soloArena'&&soloGame?.status==='playing'&&matchChoiceActor('solo-leveling',soloGame)===1){botTimer=setTimeout(()=>soloAct(chooseMatchBotAction('solo-leveling',soloGame)),350);}
  if(ui.view==='ttgArena'&&ttgGame?.status==='playing'&&matchChoiceActor('gurren-lagann',ttgGame)===1){botTimer=setTimeout(()=>{try{const a=chooseMatchBotAction('gurren-lagann',ttgGame);if(a)ttgAct(a);else toast('天元突破 AI 尚無合法動作，請記錄此局面。');}catch(e){toast('天元突破 AI：'+e.message);}},450);}
 }
