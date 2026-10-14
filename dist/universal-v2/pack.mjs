@@ -7,7 +7,7 @@ export const V2_CARD_TYPES=Object.freeze(['character','event','field']);
 export const V2_TRIGGERS=Object.freeze(['draw','get','final','active','special','color','raid']);
 export const V2_EFFECT_TIMINGS=Object.freeze(['onPlay','onRaid','onAttack','onRaided']);
 export const V2_EFFECT_OPS=Object.freeze(['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','retireOppFrontUnderBp','restOppFrontUnderBp','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','discardToDraw','searchDeckMany','discardGate','searchDeckWhere','inspectTopArrange','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
- 'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideColorUnderEnergy']);
+ 'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideColorUnderEnergy','buffOwnField']);
 const integer=(v,low=0)=>Number.isInteger(v)&&v>=low;
 const own=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
 function verifyProgram(program,path){
@@ -56,7 +56,7 @@ function verifyProgram(program,path){
     e.then.some(x=>!['draw','millTop','peekTopOne','searchDeckOne',
      'searchDeckMany','searchDeckWhere','inspectTopArrange','recoverOutsideOne',
      'enemyBpDown','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
-     'recoverOutsideColorUnderEnergy',
+     'recoverOutsideColorUnderEnergy','buffOwnField',
      'restOppFrontUnderBp'].includes(x?.op)))
     throw Error(path+'['+i+'] invalid gated payment');
    verifyProgram(e.then,path+'['+i+'].then');
@@ -89,6 +89,17 @@ function verifyProgram(program,path){
    !integer(e.bp,1)||e.bp>5000||
    Object.keys(e).some(k=>!['op','trait','bp'].includes(k))
   ))throw Error(path+'['+i+'] invalid all-trait temporary BP');
+  if(e.op==='buffOwnField'){
+   const f=e.filter;
+   if(!f||typeof f!=='object'||Array.isArray(f)||Object.keys(f).length!==2||
+    !['name','trait','color','type'].includes(f.field)||
+    typeof f.value!=='string'||!f.value.trim()||
+    (f.field==='type'&&!V2_CARD_TYPES.includes(f.value))||
+    !integer(e.bp,1)||e.bp>5000||
+    typeof e.optional!=='boolean'||typeof e.excludeSelf!=='boolean'||
+    Object.keys(e).some(k=>!['op','filter','bp','optional','excludeSelf'].includes(k)))
+    throw Error(path+'['+i+'] invalid own-field BP choice');
+  }
   if(e.op==='buffOwnTrait'&&(
    typeof e.trait!=='string'||!e.trait.trim()||
    !integer(e.bp,1)||e.bp>5000||e.optional!==true||
