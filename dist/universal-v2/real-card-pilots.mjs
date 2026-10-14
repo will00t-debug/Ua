@@ -12,6 +12,7 @@ const printed=Object.freeze({
   {id:'BLC-1-066',energy:3,ap:1,bp:0,gen:0,color:'purple',trigger:'final',type:'event',implementation:'dsl',effects:{onPlay:[{op:'recoverAp',count:2}]},matchText:'回復最多 2 AP'},
   {id:'BLC-1-102',energy:3,ap:1,bp:3000,gen:2,color:'purple',trigger:'active',type:'character',implementation:'vanilla',effects:{},matchText:'產生 2 紫能源'},
   {id:'BLC-1-103',energy:3,ap:1,bp:3000,gen:2,color:'purple',trigger:null,type:'character',implementation:'dsl',effects:{onAttack:[{op:'buffSelf',bp:1000}]},matchText:'攻擊時'},
+  {id:'BLC-1-105',energy:5,ap:2,bp:4000,gen:1,color:'purple',trigger:'active',type:'character',implementation:'dsl',effects:{onPlay:[{op:'enemyBpDown',bp:3000,optional:true}]},matchText:'BP −3000'},
   {id:'BLC-1-107',energy:0,ap:1,bp:2000,gen:1,color:'purple',trigger:null,type:'character',implementation:'vanilla',effects:{}},
  ]),
  'gurren-lagann':Object.freeze([
