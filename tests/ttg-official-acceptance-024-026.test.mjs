@@ -61,7 +61,7 @@ test('024: multiple Reites reduce 034 conditional printed need, removal removes 
  // With a field on our board the printed 034 requirement changes from 5 to 8 before reductions.
  const boardSite=take(s.players[0],'TTG-1-033');
  s.players[0].energy[1]=boardSite;boardSite.ready=false;
- generator.energyBonus=4;
+ generator.energyBonus=3;
  s=withTtgDerivedEnergy(s,0);
  assert.equal(energy(s),7);
  assert.equal(legalGreenSitePlays(s,0).some(x=>x.handUid===field.uid),true,'8 printed - 1 Reite = 7');
