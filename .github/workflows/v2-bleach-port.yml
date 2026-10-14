@@ -24,3 +24,24 @@ jobs:
         run: npm test
       - name: Syntax of isolated BLEACH module
         run: node --check dist/universal-v2/bleach-pack.mjs
+
+  latest-v2-integration:
+    name: Simulated integration with current PR70 V2 HEAD
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: bleach-port
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Merge latest V2 HEAD in throwaway runner only (NO PUSH)
+        run: |
+          git fetch origin feature/universal-rules-v2-foundation-20261014
+          git -c user.name='V2-B CI' -c user.email='ci@example.invalid' merge --no-ff --no-commit origin/feature/universal-rules-v2-foundation-20261014
+      - name: Real BLEACH tests on latest integrated core
+        run: node --test tests/universal-v2-bleach-port.test.mjs tests/universal-v2-bleach-green-match.test.mjs tests/universal-v2-bleach-enemy-control.test.mjs
+      - name: Full regression suite on latest integrated core
+        run: npm test
