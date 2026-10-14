@@ -111,7 +111,7 @@ function damage(pack,s,defender){
  const trig=card(pack,c).trigger;
  s.publicReveals.push({owner:defender,title:titleOf(pack,defender),cardId:c.cardId,uid:c.uid,trigger:trig||null,turn:s.turn});
  if(s.publicReveals.length>12)s.publicReveals.shift();
- if(['get','draw'].includes(trig)||(trig==='final'&&!pl.life.length)){
+ if(['get','draw','active'].includes(trig)||(trig==='final'&&!pl.life.length)){
   s.pending={kind:'life-trigger',player:defender,uid:c.uid,trigger:trig};
  }else if(!pl.life.length){
   s.status='finished';s.winner=1-defender;s.endReason='life-zero';
@@ -160,6 +160,14 @@ function resolveChoice(s,a,pack){
   if(i<0)throw Error('Revealed life card not found');
   if(a.mode==='get'&&q.trigger==='get')p.hand.push(p.outside.splice(i,1)[0]);
   else if(a.mode==='draw'&&q.trigger==='draw')draw(s,q.player);
+  else if(a.mode==='active'&&q.trigger==='active'){
+   const target=field(p).find(c=>c.uid===a.uid);
+   if(!target||card(pack,target).type!=='character')throw Error('Illegal ACTIVE trigger target');
+   // Official FAQ Q101 permits targeting a character already ACTIVE.
+   target.ready=true;
+   target.buffs??=[];
+   target.buffs.push({bp:3000,untilTurn:s.turn});
+  }
   else if(a.mode==='final'&&q.trigger==='final'&&!p.life.length&&p.deck.length)p.life.unshift(p.deck.shift());
   else if(a.mode!=='skip')throw Error('Illegal trigger option');
   s.pending=null;
@@ -206,6 +214,8 @@ function legalPending(pack,s){
  if(q.kind==='effect-target')return q.choices.map(uid=>({type:'chooseTarget',uid}));
  if(q.kind==='life-trigger'){
   const out=[{type:'chooseTrigger',mode:'skip'}];
+  if(q.trigger==='active')out.push(...field(p).filter(c=>card(pack,c).type==='character')
+   .map(c=>({type:'chooseTrigger',mode:'active',uid:c.uid})));
   if(q.trigger==='get')out.push({type:'chooseTrigger',mode:'get'});
   if(q.trigger==='draw'&&p.deck.length)out.push({type:'chooseTrigger',mode:'draw'});
   if(q.trigger==='final'&&!p.life.length&&p.deck.length)out.push({type:'chooseTrigger',mode:'final'});
