@@ -535,9 +535,9 @@ test('protected Raided card in a FULL ENERGY line resolves leave replacement bef
   }
   throw Error('No physical fixture card '+id);
  };
- s.players[0].energy[1]=grab('F03');
+ s.players[0].energy[1]=grab('F01');
  s.players[0].energy[2]=grab('F04');
- s.players[0].energy[3]=grab('F05');
+ s.players[0].energy[3]=grab('F06');
  assert.equal(assertUniversalMatch(packs,s),true);
  const entry=legalUniversalActions(packs,s).find(a=>
   a.type==='play'&&a.uid===newcomer.uid&&a.line==='energy'&&a.slot===0);
