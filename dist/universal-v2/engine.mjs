@@ -207,6 +207,30 @@ function continueEffectQueue(pack,s){
    const choices=field(pl).filter(c=>card(pack,c).traits.includes(job.trait)).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-buff-trait',player:owner,sourceUid:job.sourceUid,
     choices,trait:job.trait,bp:job.bp};
+  }else if(job.op==='enemyFrontAllBpDown'){
+   const foe=1-owner,targets=s.players[foe].front.filter(Boolean);
+   // All modifiers land in the SAME effect step, before any of the
+   // simultaneous state-based 0-BP retirements or replacement choices.
+   for(const c of targets){
+    c.buffs??=[];c.buffs.push({bp:-job.bp,untilTurn:s.turn});
+   }
+   const lethal=targets.filter(c=>bp(pack,s,c)<=0);
+   // Internal jobs retain the original snapshot of physical UIDs; they do
+   // NOT pick a fresh target between protected leave decisions.
+   s.effectQueue.unshift(...lethal.map(c=>({
+    op:'retireBatchOne',owner,targetPlayer:foe,uid:c.uid
+   })));
+  }else if(job.op==='retireBatchOne'){
+   // This is an internal state-based consequence, never a printable DSL op.
+   const slot=s.players[job.targetPlayer].front.findIndex(c=>c?.uid===job.uid);
+   if(slot>=0&&bp(pack,s,s.players[job.targetPlayer].front[slot])<=0)
+    retire(pack,s,job.targetPlayer,'front',slot);
+  }else if(job.op==='buffOwnTraitAllTurn'){
+   // A snapshot of current qualifying field units. Later entrants do not
+   // inherit this temporary, printed action effect.
+   for(const c of field(pl))if(card(pack,c).traits.includes(job.trait)){
+    c.buffs??=[];c.buffs.push({bp:job.bp,untilTurn:s.turn});
+   }
   }else if(job.op==='drawIfRaidUnderFacedown'){
    const raid=field(pl).find(c=>c.uid===job.raidUid);
    if(!raid)throw Error('Raid-base follow-up missing the Raid target');
@@ -957,7 +981,8 @@ export function assertUniversalMatch(pack,s){
  if(!Array.isArray(s.movedUids)||new Set(s.movedUids).size!==s.movedUids.length)
   throw Error('Invalid movement accounting');
  if(!Array.isArray(s.effectQueue)||s.effectQueue.some(e=>!playerIndex(e.owner)||
-   !['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','retireOppFrontUnderBp','restOppFrontUnderBp','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','recoverOutsideOne','discardToDraw','discardGate','openBlock'].includes(e.op)))
+   !['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','retireOppFrontUnderBp','restOppFrontUnderBp','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','recoverOutsideOne','discardToDraw',
+    'discardGate','enemyFrontAllBpDown','buffOwnTraitAllTurn','retireBatchOne','openBlock'].includes(e.op)))
   throw Error('Invalid queued effects');
  for(let p=0;p<2;p++){
   const pl=s.players[p],uids=new Set(),items=[];
