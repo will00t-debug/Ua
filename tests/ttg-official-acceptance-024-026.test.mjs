@@ -183,3 +183,17 @@ test('026 mobile UI: outside branch initially never shows seven private cards; e
   assert.ok(assertTtgCoreState(next));
  }finally{delete globalThis.document;delete globalThis.window;delete globalThis.localStorage;}
 });
+
+test('026: outside alternative with NO Ark is still executable and never inspects deck',()=>{
+ let s=game(2604),source=put(s,'TTG-1-026','front',0);
+ s.pending={kind:'ttgGreenEntry',player:0,sourceUid:source.uid};
+ s=withTtgDerivedEnergy(s,0);
+ const deckBefore=s.players[0].deck.map(c=>c.uid);
+ const outsideChoices=legalTtgCoreActions(s).filter(a=>a.mode==='arkOutside');
+ assert.equal(outsideChoices.length,1);
+ assert.equal(outsideChoices[0].takeUid,null);
+ const result=dispatchTtgCoreAction(s,outsideChoices[0]);
+ assert.deepEqual(result.players[0].deck.map(c=>c.uid),deckBefore);
+ assert.equal(result.log.some(x=>x.type==='ttgPublicSearchReveal'),false);
+ assert.ok(assertTtgCoreState(result));
+});
