@@ -75,6 +75,25 @@ const registry=Object.freeze({
  discardToDraw:{
   args:{count:v=>integer(v,1,10),optional:yesNo},
   build:v=>[{op:'discardToDraw',count:v.count,optional:v.optional}]
+ },
+ // "Up to N" search, one private choice at a time, one mandatory shuffle
+ // after the LAST choice. Only the controller's physical deck is searched.
+ searchDeckMany:{
+  args:{filter,count:v=>integer(v,1,5),optional:yesNo,shuffle:requiredTrue},
+  build:v=>[{op:'searchDeckMany',filter:{...v.filter},count:v.count,
+   optional:v.optional,shuffle:true}]
+ },
+ // Atomic payment gate: NONE of the nested effects run unless an owned
+ // hand card was discarded. Nested templates are intentionally restricted
+ // and validated again by the ordinary Pack DSL verifier.
+ payDiscardThen:{
+  args:{optional:yesNo,then:v=>Array.isArray(v)&&v.length>=1&&v.length<=6},
+  check:v=>v.then.every(x=>x&&[
+   'draw','millTop','peekTopOne','searchDeckOne','searchDeckMany',
+   'recoverOutsideOne','enemyBpDown','restEnemyUnderBp'
+  ].includes(x.template)),
+  build:v=>[{op:'discardGate',optional:v.optional,
+   then:v.then.flatMap((spec,i)=>expandOne(spec,'payDiscardThen.then['+i+']'))}]
  }
 });
 export const V2_ABILITY_TEMPLATE_IDS=Object.freeze(Object.keys(registry));
