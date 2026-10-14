@@ -62,3 +62,34 @@ GitHub Actions Node.js 22 [run #38610752632](https://github.com/will00t-debug/Ua
 證據：2026-10-15 最新 SLG 040/076 各有日本官方卡文，事件結算皆為根據己方水篠旬存在與否選 BP3000 或 5000；生命 SPECIAL 別於事件，直接按共用 Trigger 可選退場。SLG-1-016 官方抽兩張以下確認為**強制送牌庫頂兩張到場外**且 IMPACT 無效。所有記錄均在兩個 QA ledger 中分開編碼。
 
 **交接守則**：僅保留本分支 Draft PR，讓主控審查各 card 來源和測試；禁止將無註冊、空效果、虛構支援旗標或舊引擎轉發列作已移植。除本批之外 TTG 仍有 58、SLG 仍有 62 未移植，且沒有全部 FAQ 蓋章。
+
+---
+
+## V2-C 逾時補交與再次推送（台灣時間 2026-10-15 07:02 後）
+
+這份補交**不是 07:00 截止前完成證明**。PR #72 的 base 仍指向 PR #70 的 `feature/universal-rules-v2-foundation-20261014`。先前已確認主控 HEAD `25eeac5084917534193fd9feaeae31672f902e78`，本輪重新成功取得寫入權限。本工作線只寫 `tests/universal-v2-ttg-port.test.mjs`、`tests/universal-v2-slg-port.test.mjs`、本 handoff；共用核心、模板、入口和共用測試沒有變更。沒有合併 main 或部署正式站。
+
+### 已重新核對的逐卡結果
+
+- TTG：正式一般卡 **81/81**，Body `existing_v2_pilot=20`、`v2_batch1=3`、`not_ported=58`，合計 **23/81 已在 V2 登錄，58 尚未移植**。生命 Trigger 欄位：`not_applicable=22`、`not_registered=42`、`existing_pilot_life_requires_card_qa=16`、`shared_v2_life_handler_requires_card_qa=1`。
+- SLG：正式一般卡 **80/80**，Body `v2_batch1=16`、`v2_batch2=2`、`not_ported=62`，合計 **18/80 已在 V2 登錄，62 尚未移植**。生命 Trigger 欄位：`not_applicable=21`、`not_registered=46`、`shared_v2_life_handler_requires_card_qa=13`。
+- 上述 Life 標記的「共用 handler」不等於該卡全效果／全生命情境的官方正式驗收。來源 CSV 仍各有 81 / 80 列；一張卡的 Body 與 Life 必須分開驗。
+
+**TTG 尚未移植 58 個卡號（共用前綴 TTG-1-）：** 002, 003, 004, 006, 007, 008, 010, 011, 012, 013, 015, 016, 017, 018, 020, 021, 022, 023, 024, 025, 026, 027, 028, 029, 030, 031, 032, 033, 034, 035, 039, 040, 041, 044, 048, 050, 053, 054, 055, 056, 057, 058, 059, 060, 061, 062, 063, 067, 068, 069, 070, 071, 074, 075, 076, 077, 080, 081
+
+**SLG 尚未移植 62 個卡號（共用前綴 SLG-1-）：** 001, 002, 003, 004, 007, 008, 009, 010, 011, 012, 013, 014, 017, 018, 019, 020, 021, 022, 023, 024, 025, 027, 028, 029, 030, 031, 033, 034, 035, 036, 037, 039, 042, 044, 046, 047, 048, 049, 050, 051, 053, 054, 056, 057, 058, 059, 060, 061, 062, 063, 064, 065, 067, 069, 070, 071, 072, 073, 074, 075, 077, 080
+
+### 本次提交的 V2-C 專屬測試
+
+- `5377a4124e0c25b40a351ba1d8db8abf03ca057c`：SLG-068 有其他合法低費角色時必須回手其他己方角色；排除高費、敵方、能源線不合法目標及放棄；SLG-043 實際 ACTIVE 生命翻開後可放棄或 ACTIVE 己方角色 +3000 BP；SLG-015 GET 生命翻開後可放棄或將實際 UID 加入手牌。
+- `c658fe9751bcd5c406b9a26353007be33a7ac414`：TTG-005 DRAW 生命翻開後可放棄或從己方真牌庫抽一張；檢查未重複取得生命卡、UID 守恆。
+- 官方卡文交叉核對：TTG-005 https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-005；SLG-068 https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-068。
+- 更新前最後已完成的 CI 為 https://github.com/will00t-debug/Ua/actions/runs/38612938372 ：**17/17 V2-C 專項通過，全套 1027/1032 通過、5 失敗**；新測試已觸發 GitHub Actions，**必須另查新 HEAD run，不能把本行當作最新結論**。
+
+### 主控共用阻塞與最小重現
+
+已在 PR #70 新增 `[V2-CORE-REQ]` 留言（issue comment id `6180417085`）：
+1. `tests/universal-v2-title-pack-contract.test.mjs` 3 項固定舊值：真正已註冊的 15 / 23 / 18 / 0 / 0 不應被舊 15 / 20 / 0 / 0 / 0 擋下；預期由 registry 動態計數、驗證 baseline + contribution。最小重現：PR #72 HEAD `node --test tests/universal-v2-title-pack-contract.test.mjs`。
+2. `tests/universal-v2-once-per-turn-gate.test.mjs` 2 項牌庫長度：預期 33 / 32，實際 32 / 31；須確認 fixture 取出的實體 UID 和 deck 初始張數，不能只改斷言讓無守恆 bug 過關。最小重現：PR #72 HEAD `node --test tests/universal-v2-once-per-turn-gate.test.mjs`。
+
+更高階 TTG 多層 Raid/裏向底板/能源 8 與 20 門檻/080 延遲折扣，以及 SLG 場外回收後登場/同名全場次數/延遲退場，尚需主控通用引擎能力；未移植卡嚴格關閉，不得翻旗標冒充支援。本輪 C 工作只新增已能用同一引擎解決的真卡 QA，**沒有擴大 V2 卡號數或宣布完整官方驗收**。
