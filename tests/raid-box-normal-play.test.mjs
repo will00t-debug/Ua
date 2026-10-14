@@ -68,21 +68,19 @@ test('FAQ Q51: normal EX07BT/BLC-2-067 Kenpachi never gains high-base Raid buff'
  assert.equal(s.players[1].life.length,4);
  assertState(s);
 });
-test('FAQ Q51: normal EX07BT/BLC-2-019 Ichigo keeps its out-of-box on-play debuff',()=>{
+test('FAQ Q51: normal EX07BT/BLC-2-019 Ichigo does not execute on-play Raid-box debuff',()=>{
  let s=fixture();
- const target=card(s,1,'BLC-2-019');target.ready=true;
- s.players[1].front[0]=target;
+ const target=card(s,1,'BLC-2-019');target.ready=true;s.players[1].front[0]=target;
  energyFor(s,'BLC-2-019');
  const c=card(s,0,'BLC-2-019');s.players[0].hand.push(c);
  const act=legalActions(s).find(a=>a.type==='play'&&a.uid===c.uid&&a.line==='front'&&a.slot===0);
  s=dispatch(s,act);
- assert.equal(s.pending?.effect.kind,'ruleChoice','out-of-Raid-box entry remains active');
- assert.ok(s.pending.choices.some(x=>x.id===target.uid));
- s=dispatch(s,{type:'choose',ids:[target.uid]});
- assert.equal(bp(s,s.players[1].front[0]),2500);
+ assert.equal(s.pending,null,'Raid-box entry must not activate without underlying card');
+ assert.equal(bp(s,s.players[1].front[0]),4000);
+ assert.ok(!legalActions(s).some(a=>a.type==='ability'&&a.uid===c.uid),'boxed main ability cannot be used');
  assertState(s);
 });
-test('FAQ Q51: normal UA08BT/BLC-1-004 As Nodt keeps printed IMPACT 1 outside Raid box',()=>{
+test('FAQ Q51: normal UA08BT/BLC-1-004 As Nodt does not get Raid-box IMPACT',()=>{
  let {s,c}=normal('BLC-1-004');
  const defender=card(s,1,'BLC-1-002');defender.ready=true;
  s.players[1].front[0]=defender;life(s);
@@ -90,7 +88,35 @@ test('FAQ Q51: normal UA08BT/BLC-1-004 As Nodt keeps printed IMPACT 1 outside Ra
  s=dispatch(s,{type:'attack',uid:c.uid});
  assert.equal(s.pending?.effect.kind,'block');
  s=dispatch(s,{type:'choose',ids:[defender.uid]});
- assert.equal(s.players[1].life.length,4,'outside-box printed IMPACT still applies without Raid');
+ assert.equal(s.players[1].life.length,5,'Raid-box IMPACT must not apply without Raid');
+ assertState(s);
+});
+test('screenshot regression: normally played BLC-1-053 Rukia neither draws 3 nor discards 2',()=>{
+ const {s,c}=normal('BLC-1-053');
+ assert.equal(s.players[0].hand.length,0,'boxed entry must not draw cards on normal deployment');
+ assert.equal(s.pending,null,'boxed draw-discard must not prompt after normal deployment');
+ assert.ok(!legalActions(s).some(a=>a.type==='ability'&&a.uid===c.uid),'boxed discard-to-BP+500 is not legal');
+ assertState(s);
+});
+test('screenshot regression: normally played BLC-1-047 Renji keeps outside-box AP main ability',()=>{
+ const {s,c}=normal('BLC-1-047');
+ assert.equal(s.pending,null,'boxed entry must not offer to remove 4 outside cards');
+ assert.ok(legalActions(s).some(a=>a.type==='ability'&&a.uid===c.uid),'above-Raid-box pay-1-AP DAMAGE 2 remains playable');
+ assertState(s);
+});
+test('BLC-1-053 real Raid correctly enables its boxed draw-three discard-two entry',()=>{
+ let s=fixture();energyFor(s,'BLC-1-053');
+ const target=CARDS.find(x=>x.name===BY_ID['BLC-1-053'].name&&!x.raid);
+ assert.ok(target,'need real Rukia non-Raid base');
+ const base=card(s,0,target.id);s.players[0].front[0]=base;
+ const top=card(s,0,'BLC-1-053');s.players[0].hand.push(top);
+ const a=legalActions(s).find(a=>a.type==='raid'&&a.uid===top.uid&&a.target===base.uid&&a.line==='front'&&a.slot===0);
+ assert.ok(a,'Rukia Raid action available');
+ s=dispatch(s,a);
+ assert.equal(s.players[0].front[0].stack[0].uid,base.uid);
+ assert.equal(s.players[0].front[0].ready,true);
+ assert.equal(s.players[0].hand.length,3,'boxed entry draws three on genuine Raid');
+ assert.equal(s.pending?.effect.kind,'ruleChoice','boxed two-card discard selection must trigger');
  assertState(s);
 });
 test('normal play shows inactive Raid-box indicator, rather than an active Raid overlay',()=>{
@@ -113,5 +139,107 @@ test('EX15BT/BLC-4-033 Yoruichi Raid-box entry only works after real Raid',()=>{
  assert.ok(s.pending.choices.some(x=>x.id===other.uid));
  s=dispatch(s,{type:'choose',ids:[other.uid]});
  assert.equal(s.players[0].front[1].ready,true,'Raid-only ACTIVE entry should resolve');
+ assertState(s);
+});
+
+
+const LEGACY_RAID_CARDS=[
+ 'BLC-1-004','BLC-1-014','BLC-1-020','BLC-1-024','BLC-1-041',
+ 'BLC-1-047','BLC-1-050','BLC-1-053','BLC-1-070','BLC-1-085',
+ 'BLC-1-093','BLC-2-019','BLC-2-034','BLC-2-038','BLC-2-057','BLC-2-065'
+];
+test('all 24 BLEACH Raid-printed cards are inventoried: 23 booster profiles + starter 104',()=>{
+ const all=CARDS.filter(c=>c.type==='character'&&c.raid);
+ assert.equal(all.length,24,'Raid catalogue size changed: expand this regression inventory');
+ assert.ok(all.some(c=>c.id==='104'&&c.number==='UA08ST/BLC-1-104'),'Starter Ichigo Raid omitted');
+ for(const profile of all){
+  if(profile.id==='104'){
+   // UA08ST Ichigo runs through the legacy starter engine, not EXTRA_RULES.
+   // Only the Raid deployment readiness is tested here; the printed main
+   // ability requires its own card-image boundary acceptance.
+   continue;
+  }
+  assert.ok(profile.rules,'Raid card missing rule profile: '+profile.id);
+  if(LEGACY_RAID_CARDS.includes(profile.id)){
+   assert.ok(profile.rules.raidBox&&Object.values(profile.rules.raidBox).some(Boolean),
+    'missing legacy Raid-box boundary: '+profile.id);
+  }else{
+   assert.ok(['BLC-2-067','BLC-4-012','BLC-4-033','BLC-4-050','BLC-4-053','BLC-4-069','BLC-4-075'].includes(profile.id),
+    'New Raid card lacks classification: '+profile.id);
+  }
+ }
+});
+for(const id of LEGACY_RAID_CARDS){
+ test('FAQ Q51 normal '+id+' has no Raid-only on-entry prompt, readiness or main ability',()=>{
+  const {s,c}=normal(id);
+  const box=BY_ID[id].rules.raidBox;
+  assert.equal(s.pending,null,'normal deployment unexpectedly resolved Raid-box entry: '+id);
+  assert.equal(s.players[0].front[0].ready,false);
+  if(box.ability)
+   assert.ok(!legalActions(s).some(a=>a.type==='ability'&&a.uid===c.uid),
+    'normal deployment offered boxed ability: '+id);
+  assertState(s);
+ });
+}
+test('EX15BT/BLC-4-012: normal Jugram retains non-box entry; Raid tax and retirement passive stay disabled',()=>{
+ let s=fixture();
+ const source=card(s,0,'BLC-1-002');s.players[0].energy[0]=source;
+ source.ready=true;source.energyBoostTurn=s.turn;source.energyBoostAmount=12;
+ const jugram=card(s,0,'BLC-4-012');
+ s.players[0].hand.push(jugram);
+ const a=legalActions(s).find(x=>x.type==='play'&&x.uid===jugram.uid&&x.line==='front'&&x.slot===0);
+ assert.ok(a);
+ s=dispatch(s,a);
+ assert.equal(s.players[0].front[0].stack.length,0);
+ assert.equal(s.players[0].front[0].ready,false);
+ assertState(s);
+});
+test('EX15BT/BLC-4-053: Byakuya normal entry is OUTSIDE Raid box and must still debuff enemy',()=>{
+ let s=fixture();energyFor(s,'BLC-4-053');
+ const opponent=card(s,1,'BLC-2-019');s.players[1].front[0]=opponent;
+ const top=card(s,0,'BLC-4-053');s.players[0].hand.push(top);
+ const a=legalActions(s).find(x=>x.type==='play'&&x.uid===top.uid&&x.line==='front'&&x.slot===0);
+ assert.ok(a);s=dispatch(s,a);
+ assert.equal(s.players[0].front[0].stack.length,0);
+ assert.equal(s.pending?.effect.kind,'ruleChoice');
+ assert.ok(s.pending.choices.some(x=>x.id===opponent.uid));
+ s=dispatch(s,{type:'choose',ids:[opponent.uid]});
+ assert.equal(bp(s,s.players[1].front[0]),3000);
+ assertState(s);
+});
+test('EX15BT/BLC-4-069: normal Kyoraku activates non-box conditional AP discount',()=>{
+ const {s,c}=normal('BLC-4-069');
+ assert.ok(s.players[0].nextApDiscount?.turn===s.turn,
+  'normal entry should provide discounted next Haten Kyokotsu card');
+ assert.equal(s.players[0].front[0].stack.length,0);
+ assertState(s);
+});
+test('EX15BT/BLC-4-075: normal Ukitake may use OUTSIDE Raid-box draw and entry-turn ability but not extra Raid energy',()=>{
+ let s=fixture();energyFor(s,'BLC-4-075');
+ const before=s.players[0].hand.length;
+ const top=card(s,0,'BLC-4-075');s.players[0].hand.push(top);
+ const a=legalActions(s).find(x=>x.type==='play'&&x.uid===top.uid&&x.line==='energy'&&x.slot===1);
+ assert.ok(a,'Ukitake normal deployment is only allowed on energy line');
+ s=dispatch(s,a);
+ assert.equal(s.players[0].hand.length,before+1,'normal Ukitake should draw one');
+ assert.equal(s.players[0].energy[1].stack.length,0);
+ assert.ok(legalActions(s).some(a=>a.type==='ability'&&a.uid===top.uid),
+  'main ability outside Raid box available on entering turn');
+ assertState(s);
+});
+test('EX07BT/BLC-2-067, EX15BT/033 and /050 special Raid effects disabled in normal deployment',()=>{
+ for(const id of ['BLC-2-067','BLC-4-033','BLC-4-050']){
+  const {s,c}=normal(id);
+  if(id==='BLC-4-050')
+   assert.ok(!legalActions(s).some(a=>a.type==='ability'&&a.uid===c.uid));
+  if(id==='BLC-2-067')assert.equal(bp(s,c),4000);
+  assert.equal(c.stack.length,0);assertState(s);
+ }
+});
+
+test('UA08ST/BLC-1-104 starter Ichigo normal play remains REST with no Raid base',()=>{
+ const {s,c}=normal('104');
+ assert.equal(s.players[0].front[0].stack.length,0);
+ assert.equal(s.players[0].front[0].ready,false);
  assertState(s);
 });

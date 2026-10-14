@@ -14,6 +14,9 @@ const traitsOf=c=>{const t=cardOf(c).traits||[];return (Array.isArray(t)?t:[t]).
 const withTrait=(c,trait)=>!!c&&traitsOf(c).some(t=>String(t).includes(trait));
 const ownHas=(s,p,name)=>allField(s,p).some(c=>matchingName(c,name));
 const isRaided=c=>(c?.stack?.length||0)>0;
+// Q51: test physical Raid state, not whether the card prints a Raid keyword.
+// Legacy card profiles explicitly declare which effect blocks lie inside Raid.
+const raidBoxEnabled=(c,kind)=>!cardOf(c)?.rules?.raidBox?.[kind]||isRaided(c);
 const mayMoveToEnergy=c=>!!c&&!cardOf(c)?.rules?.cannotMoveToEnergy;
 const hasRaidPrinted=c=>!!cardOf(c)?.raid || /^(?:Raid[〈《 ]|突襲[〈《])/.test(cardOf(c)?.effect||'');
 const raidBaseMatches=(raid,base)=>{const want=String(cardOf(raid).raid||'').replaceAll(/\s/g,'');const d=cardOf(base);
@@ -22,6 +25,8 @@ const raidBaseMatches=(raid,base)=>{const want=String(cardOf(raid).raid||'').rep
 const ruleEnabled=(s,p,c,r)=>!r?.raidOnly||isRaided(c);
 const protectedByEffect=(s,c,origin='character')=>!!(c?.protectedUntilSource&&s.players[c.protectedUntilSource.p].turnCount<c.protectedUntilSource.turnCount&&!(c.protectedUntilSource.scope==='characterTrigger'&&origin==='event'));
 const silenced=(s,c)=>!!(c?.silencedUntilSource&&s.players[c.silencedUntilSource.p].turnCount<c.silencedUntilSource.turnCount);
+// Printed continuous abilities obey both text loss and their printed Raid box.
+const printedRuleActive=(s,c,key)=>!!cardOf(c)?.rules?.[key]&&!silenced(s,c)&&raidBoxEnabled(c,key);
 
 const remainingBuff=(s,c)=>(c.buffs||[]).filter(b=>b.turn===s.turn || b.untilTurn!=null&&s.players[locate(s,c.uid)?.p??s.active].turnCount<=b.untilTurn).reduce((n,b)=>n+(b.bp||0),0);
 function passiveBp(s,c){const r=silenced(s,c)?{}:cardOf(c).rules?.passive||{};
@@ -126,14 +131,14 @@ function removeRaidTop(s,uid,{destination='outside'}={}){
  return true;
 }
 function canShieldRaid(s,uid,fromPlayer){
- const l=locate(s,uid);if(!l||!isRaided(l.card)||fromPlayer===l.p||!s.players[l.p].hand.length)return false;
+ const l=locate(s,uid);if(!l||!isRaided(l.card)||silenced(s,l.card)||fromPlayer===l.p||!s.players[l.p].hand.length)return false;
  const r=cardOf(l.card).rules?.raidHighBase;
  return !!(r?.shield&&cardOf(l.card.stack[0]).energy>=r.minEnergy);
 }
 function shieldOrRetire(s,uid,fromPlayer,{after='effect',attackerUid=null,dest='outside'}={}){
  const l=locate(s,uid);if(!l)return false;
  if(canShieldRaid(s,uid,fromPlayer)){
-  const p=l.p;prompt(s,p,'更木劍八：棄 1 張手牌並移除 Raid 頂卡，代替退場？',
+  const p=l.p;prompt(s,p,'更木劍八：棄 1 張手牌並移除 Raid 頂卡，代替離場？',
    [{id:'decline',label:'不使用替代退場'},...s.players[p].hand.map(c=>({id:c.uid,cardId:c.cardId,label:`棄 ${cardOf(c).name} 以保護`}))],
    {kind:'raidShield',p,uid,after,attackerUid,dest});return true;
  }
@@ -146,19 +151,19 @@ function finishBlockedWin(s,p,attackerUid,blockerUid){
   s.groupUsed||={};const group=`${p}:${atkRules.raidWinReadyGroup}`;
   if(s.groupUsed[group]!==s.turn){s.groupUsed[group]=s.turn;activate(s,a.card);}
  }
- const nullImpact=!silenced(s,b.card)&&cardOf(b.card).rules?.impactNull,banish=atkRules?.battleRemove&&s.active===p;
+ const nullImpact=printedRuleActive(s,b.card,'impactNull'),banish=atkRules?.battleRemove&&s.active===p;
  takeField(s,blockerUid,banish?'removed':'outside');
  if(impactOf(s,a.card)&&!nullImpact){const n=impactOf(s,a.card);log(s,`IMPACT ${n}：穿透阻擋，造成 ${n} 點生命傷害。`,'effect');s.queue.push({kind:'impactDamage',p:1-p,count:n});}
  if(a.card.winDrawTurn===s.turn)s.queue.push({kind:'draw',p,count:1});
 }
 function stateCheck(s){for(let p=0;p<2;p++)for(const c of characters(s,p))if(bp(s,c)<=0)takeField(s,c.uid);}
-function addBuff(s,uid,amount,duration){const l=locate(s,uid);if(l){if(amount<0&&(cardOf(l.card).rules?.immuneDebuff||isRaided(l.card)&&cardOf(l.card).rules?.raidImmuneDebuff))return;l.card.buffs.push(duration==='nextTurn'?{untilTurn:s.players[l.p].turnCount+1,bp:amount}:{turn:s.turn,bp:amount});log(s,`${cardOf(l.card).name}本回合 BP ${amount>=0?'+':''}${amount}。`,'effect');}}
+function addBuff(s,uid,amount,duration){const l=locate(s,uid);if(l){if(amount<0&&!silenced(s,l.card)&&(cardOf(l.card).rules?.immuneDebuff||isRaided(l.card)&&cardOf(l.card).rules?.raidImmuneDebuff))return;l.card.buffs.push(duration==='nextTurn'?{untilTurn:s.players[l.p].turnCount+1,bp:amount}:{turn:s.turn,bp:amount});log(s,`${cardOf(l.card).name}本回合 BP ${amount>=0?'+':''}${amount}。`,'effect');}}
 function activate(s,c){if(c.lockedBy&&locate(s,c.lockedBy)?.line==='front')return;if(c.freezeUntilAttackOwner!=null)return;if(c.skipActive>0){c.skipActive--;log(s,`${cardOf(c).name}跳過這次 ACTIVE。`,'effect');return;}c.ready=true;}
 function readyOwnField(s,p){for(const c of allField(s,p))activate(s,c);}
 function beginTurn(s){
  const pl=s.players[s.active];pl.turnCount++;s.turn++;s.phase='start';s.extraDrawn=false;pl.turnEvents=[];pl.enteredNames=[];const due=(s.delayed||[]).filter(x=>x.duePlayer===s.active&&x.dueTurnCount<=pl.turnCount);s.delayed=(s.delayed||[]).filter(x=>!due.includes(x));s.queue.unshift(...due.map(x=>({...x,kind:'soiFonResolve'})));
  for(const c of [...allField(s,s.active)])if(cardOf(c).rules?.retireAtOwnStart)takeField(s,c.uid);
- for(const c of [...allField(s,s.active)])if(isRaided(c)&&cardOf(c).rules?.startTurnRaidTop)removeRaidTop(s,c.uid);
+ for(const c of [...allField(s,s.active)])if(isRaided(c)&&printedRuleActive(s,c,'startTurnRaidTop'))removeRaidTop(s,c.uid);
 
  for(const c of allField(s,s.active)){c.buffs=(c.buffs||[]).filter(b=>b.untilTurn==null||pl.turnCount<b.untilTurn);}
  readyOwnField(s,s.active);
@@ -212,10 +217,10 @@ export function legalActions(s){
    const cr=cardOf(c).rules||{},abs=silenced(s,c)?[]:cr.abilities||[cr.ability].filter(Boolean);
    for(let j=0;j<abs.length;j++){
     const a=abs[j],used=cr.abilities?c.usedAbilities?.[j]:c.usedTurn;
-    if(a&&ruleEnabled(s,p,c,a)&&(!a.groupOnce||s.groupUsed?.[`${p}:${a.groupOnce}`]!==s.turn)&&(!a.once||used!==s.turn)&&(!a.front||locate(s,c.uid).line==='front')&&(!a.energy||locate(s,c.uid).line==='energy')&&(!a.requiresTwoActiveFront||s.players[p].front.filter(x=>x?.ready).length>=2)&&(!a.rest||c.ready)&&(!a.when||condition(s,p,c.uid,a.when))&&(!a.ap||pl.ap>=a.ap)&&(!a.discard||pl.hand.length>=a.discard)&&(!a.discardFilter||pl.hand.some(x=>matchFilter(x,a.discardFilter))))acts.push(cr.abilities?{type:'ability',uid:c.uid,abilityIndex:j}:{type:'ability',uid:c.uid});
+    if(a&&raidBoxEnabled(c,'ability')&&ruleEnabled(s,p,c,a)&&(!a.groupOnce||s.groupUsed?.[`${p}:${a.groupOnce}`]!==s.turn)&&(!a.once||used!==s.turn)&&(!a.front||locate(s,c.uid).line==='front')&&(!a.energy||locate(s,c.uid).line==='energy')&&(!a.requiresTwoActiveFront||s.players[p].front.filter(x=>x?.ready).length>=2)&&(!a.rest||c.ready)&&(!a.when||condition(s,p,c.uid,a.when))&&(!a.ap||pl.ap>=a.ap)&&(!a.discard||pl.hand.length>=a.discard)&&(!a.discardFilter||pl.hand.some(x=>matchFilter(x,a.discardFilter))))acts.push(cr.abilities?{type:'ability',uid:c.uid,abilityIndex:j}:{type:'ability',uid:c.uid});
    }
    if(c.usedTurn===s.turn)continue;
-   if(c.cardId==='104'||c.cardId==='046'&&locate(s,c.uid).line==='front'||(c.cardId==='042'||c.cardId==='108')&&c.ready)acts.push({type:'ability',uid:c.uid});
+   if(c.cardId==='104'&&isRaided(c)&&!silenced(s,c)||c.cardId==='046'&&locate(s,c.uid).line==='front'||(c.cardId==='042'||c.cardId==='108')&&c.ready)acts.push({type:'ability',uid:c.uid});
   }
   acts.push({type:'next'});
  }
@@ -497,20 +502,20 @@ function resolveRule(s,e){
 }
 function applyRuleTarget(s,uid,r,sourcePlayer=null){const l=locate(s,uid);if(!l)return;
  if(r.op==='buff')addBuff(s,uid,r.amountIfName&&r.amountIfName.names.some(n=>matchingName(l.card,n))?r.amountIfName.amount:r.amount,r.duration);
- const cannotRest=sourcePlayer!=null&&l.p!==sourcePlayer&&cardOf(l.card).rules?.immuneEnemyRest;
+ const cannotRest=sourcePlayer!=null&&l.p!==sourcePlayer&&printedRuleActive(s,l.card,'immuneEnemyRest');
  if(r.op==='rest'&&!cannotRest)l.card.ready=false;
  if(r.op==='freeze'){if(!cannotRest)l.card.ready=false;l.card.skipActive=(l.card.skipActive||0)+1;}
  if(r.op==='activate')activate(s,l.card);
  if(r.op==='keyword')l.card[r.key+'Turn']=s.turn;
  if(r.op==='addImpact'){l.card.impactBonusTurn=s.turn;l.card.impactBonusAmount=(l.card.impactBonusAmount||0)+(r.count||1);}
  if(r.op==='destroy')shieldOrRetire(s,uid,sourcePlayer??s.active);
- if(r.op==='bounce'&&!(sourcePlayer!=null&&l.p!==sourcePlayer&&cardOf(l.card).rules?.immuneEnemyBounce))takeField(s,uid,'hand');
+ if(r.op==='bounce'&&!(sourcePlayer!=null&&l.p!==sourcePlayer&&printedRuleActive(s,l.card,'immuneEnemyBounce')))shieldOrRetire(s,uid,sourcePlayer??l.p,{dest:'hand'});
 }
-// Printed IMPACT remains available on normal-play Raid printed cards (Q51).
-const impactOf=(s,c)=>(c.impactTurn===s.turn||(!silenced(s,c)&&(!!cardOf(c).rules?.impact||!!cardOf(c).rules?.raidImpact))?1:0)+(c.impactBonusTurn===s.turn?(c.impactBonusAmount||0):0)+(c.sniperImpactActive?1:0)+(!silenced(s,c)&&cardOf(c).rules?.passive?.impactIfRemovedZeroNames&&removedZeroNames(s,locate(s,c.uid)?.p)>=cardOf(c).rules.passive.impactIfRemovedZeroNames?1:0);
+// A printed IMPACT outside the Raid box is always available; raidImpact is Raid-only (Q51).
+const impactOf=(s,c)=>(c.impactTurn===s.turn||(!silenced(s,c)&&(!!cardOf(c).rules?.impact||isRaided(c)&&!!cardOf(c).rules?.raidImpact))?1:0)+(c.impactBonusTurn===s.turn?(c.impactBonusAmount||0):0)+(c.sniperImpactActive?1:0)+(!silenced(s,c)&&cardOf(c).rules?.passive?.impactIfRemovedZeroNames&&removedZeroNames(s,locate(s,c.uid)?.p)>=cardOf(c).rules.passive.impactIfRemovedZeroNames?1:0);
 function removedZeroNames(s,p){if(p==null)return 0;return new Set(s.players[p].removed.filter(c=>withTrait(c,'零番隊')).map(c=>cardOf(c).name)).size;}
-export const damageOf=(s,c)=>c.damageTurn===s.turn||isRaided(c)&&cardOf(c).rules?.raidPassive?.damage===2&&s.active===(locate(s,c.uid)?.p??s.active)&&(s.retireCountTurn===s.turn?s.retireCount||0:0)>=cardOf(c).rules.raidPassive.bpIfOwnRetireCount||isRaided(c)&&cardOf(c).rules?.raidDamageIfOppReduced&&s.players[1-(locate(s,c.uid)?.p??s.active)].front.some(x=>x&&bp(s,x)<cardOf(x).bp)||cardOf(c).rules?.damage===2||cardOf(c).rules?.passive?.damageIfRemovedCount&&s.players[locate(s,c.uid)?.p??s.active].removed.length>=cardOf(c).rules.passive.damageIfRemovedCount||cardOf(c).rules?.passive?.damageIfRemovedZeroNames&&removedZeroNames(s,locate(s,c.uid)?.p)>=cardOf(c).rules.passive.damageIfRemovedZeroNames?2:1;
-function enqueueEntry(s,p,c){const r=cardOf(c).rules;if(r?.entryReady===true||r?.entryReady&&(r.entryReady.line!=='energy'||locate(s,c.uid)?.line==='energy')&&condition(s,p,c.uid,r.entryReady))c.ready=true;if(c.cardId==='034')s.queue.unshift({kind:'drawDiscard',p,count:1});if(c.cardId==='035')s.queue.unshift({kind:'orihime',p,uid:c.uid});if(c.cardId==='105')s.queue.unshift({kind:'renjiDebuff',p});if(c.cardId==='106')s.queue.unshift({kind:'removeDraw',p,count:3,draw:2,optional:true});queueRules(s,p,c.uid,cardOf(c).rules?.entry,true);if(isRaided(c)&&r?.raidHighBase&&cardOf(c.stack[0]).energy>=r.raidHighBase.minEnergy){
+export const damageOf=(s,c)=>c.damageTurn===s.turn||isRaided(c)&&cardOf(c).rules?.raidPassive?.damage===2&&s.active===(locate(s,c.uid)?.p??s.active)&&(s.retireCountTurn===s.turn?s.retireCount||0:0)>=cardOf(c).rules.raidPassive.bpIfOwnRetireCount||isRaided(c)&&!silenced(s,c)&&cardOf(c).rules?.raidDamageIfOppReduced&&s.active===(locate(s,c.uid)?.p??s.active)&&s.players[1-(locate(s,c.uid)?.p??s.active)].front.filter(x=>x&&bp(s,x)<cardOf(x).bp).length>=3||cardOf(c).rules?.damage===2||cardOf(c).rules?.passive?.damageIfRemovedCount&&s.players[locate(s,c.uid)?.p??s.active].removed.length>=cardOf(c).rules.passive.damageIfRemovedCount||cardOf(c).rules?.passive?.damageIfRemovedZeroNames&&removedZeroNames(s,locate(s,c.uid)?.p)>=cardOf(c).rules.passive.damageIfRemovedZeroNames?2:1;
+function enqueueEntry(s,p,c){const r=cardOf(c).rules;if(r?.entryReady===true||r?.entryReady&&(r.entryReady.line!=='energy'||locate(s,c.uid)?.line==='energy')&&condition(s,p,c.uid,r.entryReady))c.ready=true;if(c.cardId==='034')s.queue.unshift({kind:'drawDiscard',p,count:1});if(c.cardId==='035')s.queue.unshift({kind:'orihime',p,uid:c.uid});if(c.cardId==='105')s.queue.unshift({kind:'renjiDebuff',p});if(c.cardId==='106')s.queue.unshift({kind:'removeDraw',p,count:3,draw:2,optional:true});if(raidBoxEnabled(c,'entry'))queueRules(s,p,c.uid,cardOf(c).rules?.entry,true);if(isRaided(c)&&r?.raidHighBase&&cardOf(c.stack[0]).energy>=r.raidHighBase.minEnergy){
   queueRules(s,p,c.uid,r.raidHighBase.entry,true);
   // Damage (2) is a temporary combat keyword, not immediate life loss at entry.
   if(c.cardId==='BLC-2-067')log(s,'更木劍八突襲成功：需求能源 4 以上底板，本回合獲得 BP +1000 與 DAMAGE 2（未被阻擋的攻擊造成 2 點傷害）。','effect');
@@ -542,7 +547,15 @@ function queueEvent(s,p,c){
 function damage(s,p,count=1){
  const reveals=s.players[p].life.splice(0,count);
  log(s,`${s.players[p].name}受到 ${count} 點傷害，翻開 ${reveals.length} 張生命。`,'damage');
- for(const c of reveals)s.revealed.push({p,card:c});
+ for(const c of reveals){
+  s.revealed.push({p,card:c});
+  // Face-up life cards are public, even without a Trigger or when the AI
+  // resolves it immediately. Hidden life/deck/hand cards are not included.
+  const d=cardOf(c);
+  s.triggerHistory ||= [];
+  s.triggerHistory.push({uid:c.uid,player:p,turn:s.turn,cardId:c.cardId,trigger:d.trigger||null,outcome:d.trigger?'pending':'none'});
+  if(s.triggerHistory.length>60)s.triggerHistory.shift();
+ }
  s.queue.push({kind:'triggerOrder',p,uids:reveals.map(c=>c.uid)},{kind:'lifeCheck',p});
 }
 
@@ -683,7 +696,7 @@ function resolveChoice(s,ids){
   case 'raidShield':{
    if(ids[0]!=='decline'){
     moveDiscard(s,p,ids[0]);removeRaidTop(s,e.uid);
-    log(s,'更木劍八使用手牌支付替代退場，Raid 底卡留在場上。','effect');
+    log(s,'更木劍八使用手牌支付替代離場，Raid 底卡留在場上。','effect');
    }else if(e.after==='combat')finishBlockedWin(s,1-p,e.attackerUid,e.uid);
    else takeField(s,e.uid,e.dest);
    if(e.after==='combat')s.queue.push({kind:'endCombat',p:1-p},{kind:'postCombat',p:1-p,uid:e.attackerUid});
@@ -696,11 +709,11 @@ function resolveChoice(s,ids){
   }
   case 'raidMillDebuff':if(ids.length)addBuff(s,ids[0],e.amount);break;
   case 'frostRaid':{
-   if(ids.length){const l=locate(s,ids[0]);if(l&&!cardOf(l.card).rules?.immuneEnemyRest){l.card.ready=false;l.card.freezeUntilAttackOwner=l.p;}
-    if(allField(s,p).filter(c=>c.uid!==e.uid&&withTrait(c,'護廷十三隊')).length>=6)for(const c of s.players[1-p].energy.filter(Boolean)){if(cardOf(c).rules?.immuneEnemyRest)continue;c.ready=false;c.freezeUntilAttackOwner=1-p;}
+   if(ids.length){const l=locate(s,ids[0]);if(l){if(!printedRuleActive(s,l.card,'immuneEnemyRest'))l.card.ready=false;l.card.freezeUntilAttackOwner=l.p;}
+    if(allField(s,p).filter(c=>c.uid!==e.uid&&withTrait(c,'護廷十三隊')).length>=6)for(const c of s.players[1-p].energy.filter(Boolean)){if(!printedRuleActive(s,c,'immuneEnemyRest'))c.ready=false;c.freezeUntilAttackOwner=1-p;}
    }break;
   }
-  case 'rukiaRestLock':if(ids.length){const l=locate(s,ids[0]);if(l&&!cardOf(l.card).rules?.immuneEnemyRest){l.card.ready=false;if(e.lock)l.card.lockedBy=e.uid;}}break;
+  case 'rukiaRestLock':if(ids.length){const l=locate(s,ids[0]);if(l){if(!printedRuleActive(s,l.card,'immuneEnemyRest'))l.card.ready=false;if(e.lock)l.card.lockedBy=e.uid;}}break;
   case 'raidMoveTribe':{
    if(ids.length){const l=locate(s,ids[0]);if(l){prompt(s,p,'選擇要移到的前線位置',Array.from({length:4},(_,n)=>({id:String(n),label:`前線 ${n+1}${s.players[p].front[n]?'（換位）':''}`})),{...e,kind:'raidMoveTribeSlot',selectedUid:ids[0]});}}break;
   }
@@ -869,6 +882,11 @@ function resolveChoice(s,ids){
   }
   case 'triggerChoice':{
    const c=s.revealed.find(x=>x.card.uid===e.uid)?.card,d=cardOf(c),choice=chosen[0];
+   s.triggerHistory ||= [];
+   let publicTrigger=s.triggerHistory.findLast(x=>x.uid===e.uid&&x.player===p&&x.outcome==='pending');
+   // Resume older saves that were paused on an already-public life card.
+   if(!publicTrigger){publicTrigger={uid:e.uid,player:p,turn:s.turn,cardId:c.cardId,trigger:d.trigger||null};s.triggerHistory.push(publicTrigger);if(s.triggerHistory.length>60)s.triggerHistory.shift();}
+   publicTrigger.outcome=choice.id==='skip'?'skipped':choice.id==='get'||d.trigger==='get'?'get':choice.action?'raid':'activated';
    if(choice.id==='skip'){finishReveal(s,p,e.uid);log(s,`${s.players[p].name}不發動 Trigger。`);}
    else if(choice.id==='get'||d.trigger==='get'){s.players[p].triggerUsedTurn=s.turn;finishReveal(s,p,e.uid,'hand');log(s,`${d.name}加入手牌。`,'effect');}
    else if(choice.action){s.players[p].triggerUsedTurn=s.turn;finishReveal(s,p,e.uid,null);place(s,p,c,choice.action.line,choice.action.slot,{raidTarget:choice.action.target});}
@@ -901,7 +919,7 @@ function resolveChoice(s,ids){
        s.groupUsed||={};const group=`${p}:${atkRules.raidWinReadyGroup}`;
        if(s.groupUsed[group]!==s.turn){s.groupUsed[group]=s.turn;activate(s,attack.card);}
       }
-      const nullImpact=!silenced(s,block.card)&&cardOf(block.card).rules?.impactNull;
+      const nullImpact=printedRuleActive(s,block.card,'impactNull');
       if(impactOf(s,attack.card)&&!nullImpact){const n=impactOf(s,attack.card);log(s,`IMPACT ${n}：穿透阻擋，造成 ${n} 點生命傷害。`,'effect');s.queue.push({kind:'impactDamage',p:1-p,count:n});}
       if(attack.card.winDrawTurn===s.turn)s.queue.push({kind:'draw',p,count:1});
      }
@@ -945,27 +963,27 @@ export function dispatch(source,action,actor=controller(source)){
    const l=locate(s,action.uid),c=l.card;const defs=cardOf(c).rules||{},a=defs.abilities?defs.abilities[action.abilityIndex]:defs.ability;if(defs.abilities){c.usedAbilities||={};c.usedAbilities[action.abilityIndex]=s.turn;}else c.usedTurn=s.turn;if(a?.groupOnce){s.groupUsed ||= {};s.groupUsed[`${p}:${a.groupOnce}`]=s.turn;}log(s,`${pl.name}發動${cardOf(c).name}的能力。`,'effect');
    if(c.cardId==='042'){c.ready=false;c.energyBoostTurn=s.turn;c.sacrificeTurn=s.turn;}
    if(c.cardId==='046')s.queue.push({kind:'renjiMill',p,uid:c.uid});
-   if(c.cardId==='104')s.queue.push({kind:'removeDraw',p,count:4,draw:1,optional:false,impactUid:c.uid});
+   if(c.cardId==='104'&&isRaided(c)&&!silenced(s,c))s.queue.push({kind:'removeDraw',p,count:4,draw:1,optional:false,impactUid:c.uid});
    if(c.cardId==='108'){c.ready=false;takeField(s,c.uid);s.queue.push({kind:'drawDiscard',p,count:2});}
    if(a&&!silenced(s,c)&&ruleEnabled(s,p,c,a)){if(a.rest)c.ready=false;if(a.ap){pl.ap-=a.ap;if(cardOf(c).color==='purple')pl.purpleApPaidTurn=s.turn;}if(a.sacrifice)takeField(s,c.uid);if(a.discardFilter)s.queue.push({kind:'rule',p,uid:c.uid,rule:{op:'discardHand',count:1,filter:a.discardFilter,then:a.effects}});else if(a.discard)s.queue.push({kind:'rule',p,uid:c.uid,rule:{op:'discard',count:a.discard,then:a.effects}});else queueRules(s,p,c.uid,a.effects);}
    pump(s);break;
   }
   case 'attack':{
    const l=locate(s,action.uid);if(l.card.sniperTurn===s.turn&&l.card.attackTurn!==s.turn)l.card.sniperImpactActive=true;l.card.ready=false;if(l.card.cardId==='103')addBuff(s,l.card.uid,1000);if((!silenced(s,l.card)&&cardOf(l.card).rules?.doubleAttack||l.card.doubleAttackTurn===s.turn)&&l.card.attackTurn!==s.turn){l.card.ready=true;}l.card.attackTurn=s.turn;
-   s.combat={attacker:l.card.uid,blocker:null};log(s,`${pl.name}以${cardOf(l.card).name}宣告攻擊。`,'attack');queueRules(s,p,l.card.uid,cardOf(l.card).rules?.attack);if(l.card.attackDrawTurn===s.turn)s.queue.push({kind:'rule',p,uid:l.card.uid,rule:{op:'draw',count:1,optional:true}});s.queue.push({kind:'block',p,uid:l.card.uid});pump(s);break;
+   s.combat={attacker:l.card.uid,blocker:null};log(s,`${pl.name}以${cardOf(l.card).name}宣告攻擊。`,'attack');if(raidBoxEnabled(l.card,'attack'))queueRules(s,p,l.card.uid,cardOf(l.card).rules?.attack);if(l.card.attackDrawTurn===s.turn)s.queue.push({kind:'rule',p,uid:l.card.uid,rule:{op:'draw',count:1,optional:true}});s.queue.push({kind:'block',p,uid:l.card.uid});pump(s);break;
   }
   case 'snipe':{
    const l=locate(s,action.uid);l.card.ready=false;l.card.sniperImpactActive=true;l.card.attackTurn=s.turn;
    s.combat={attacker:l.card.uid,blocker:action.target,sniper:true};
    log(s,`${pl.name}以${cardOf(l.card).name}狙擊敵方前線角色。`,'attack');
-   queueRules(s,p,l.card.uid,cardOf(l.card).rules?.attack);
+   if(raidBoxEnabled(l.card,'attack'))queueRules(s,p,l.card.uid,cardOf(l.card).rules?.attack);
    s.queue.push({kind:'snipeBattle',p,uid:l.card.uid,target:action.target});pump(s);break;
   }
   case 'next':{
    if(s.phase==='start')s.phase='move';else if(s.phase==='move')s.phase='main';
    else if(s.phase==='main'){for(const c of [...allField(s,p)])if(c.sacrificeTurn===s.turn)takeField(s,c.uid);s.phase='attack';for(const c of [...pl.energy])if(c?.frontOnAttackTurn===s.turn){const free=pl.front.findIndex(x=>!x);if(free>=0){const l=locate(s,c.uid);if(l){pl.energy[l.slot]=null;pl.front[free]=c;}}}}
    else if(s.phase==='attack'){
-    s.phase='end';for(const c of pl.front.filter(Boolean))queueRules(s,p,c.uid,cardOf(c).rules?.attackPhaseEnd);
+    s.phase='end';for(const c of pl.front.filter(Boolean))if(raidBoxEnabled(c,'attackPhaseEnd'))queueRules(s,p,c.uid,cardOf(c).rules?.attackPhaseEnd);
     s.queue.push({kind:'endTurn',p});pump(s);
    }
    stateCheck(s);break;

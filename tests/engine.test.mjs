@@ -12,6 +12,12 @@ function fixture(){
 }
 function take(s,p,id){const pl=s.players[p],i=pl.deck.findIndex(c=>c.cardId===id);assert.notEqual(i,-1,`need ${id}`);return pl.deck.splice(i,1)[0];}
 function put(s,p,id,line,slot,{ready=true}={}){const c=take(s,p,id);c.ready=ready;s.players[p][line][slot]=c;return c;}
+function putRaided(s,p,id,line,slot,baseId='103'){
+ const base=put(s,p,baseId,line,slot);
+ const top=take(s,p,id);top.stack=[base];top.ready=true;
+ s.players[p][line][slot]=top;
+ return top;
+}
 function hand(s,p,id){const c=take(s,p,id);s.players[p].hand.push(c);return c;}
 function grave(s,p,ids){for(const id of ids)s.players[p].outside.push(take(s,p,id));}
 function life(s,p,ids){for(const id of ids)s.players[p].life.push(take(s,p,id));}
@@ -85,10 +91,10 @@ test('Renji mills before optional +500; BP debuff removes zero BP characters',()
  let x=fixture();power(x);const enemy=put(x,1,'101','front',0),r=hand(x,0,'105');x=dispatch(x,{type:'play',uid:r.uid,line:'front',slot:0});x=choose(x,[enemy.uid]);assert.equal(x.players[1].front[0],null);assert.equal(x.players[0].ap,1);assertState(x);
 });
 test('Ichigo ability with 3 outside removes all 3 without drawing or Impact (FAQ574)',()=>{
- let s=fixture();const ichigo=put(s,0,'104','front',0);grave(s,0,['034','039','107']);s=dispatch(s,{type:'ability',uid:ichigo.uid});s=choose(s,s.pending.choices.map(c=>c.id));assert.equal(s.players[0].outside.length,0);assert.equal(s.players[0].removed.length,3);assert.equal(s.players[0].hand.length,0);assert.notEqual(s.players[0].front[0].impactTurn,s.turn);assertState(s);
+ let s=fixture();const ichigo=putRaided(s,0,'104','front',0);grave(s,0,['034','039','107']);s=dispatch(s,{type:'ability',uid:ichigo.uid});s=choose(s,s.pending.choices.map(c=>c.id));assert.equal(s.players[0].outside.length,0);assert.equal(s.players[0].removed.length,3);assert.equal(s.players[0].hand.length,0);assert.notEqual(s.players[0].front[0].impactTurn,s.turn);assertState(s);
 });
 test('Ichigo ability with 4 grants exactly one card and Impact; cannot reuse this turn',()=>{
- let s=fixture();const c=put(s,0,'104','front',0);grave(s,0,['034','039','107','062']);s=dispatch(s,{type:'ability',uid:c.uid});s=choose(s,s.pending.choices.slice(0,4).map(c=>c.id));assert.equal(s.players[0].hand.length,1);assert.equal(s.players[0].front[0].impactTurn,s.turn);assert.ok(!legalActions(s).some(a=>a.type==='ability'&&a.uid===c.uid));assertState(s);
+ let s=fixture();const c=putRaided(s,0,'104','front',0);grave(s,0,['034','039','107','062']);s=dispatch(s,{type:'ability',uid:c.uid});s=choose(s,s.pending.choices.slice(0,4).map(c=>c.id));assert.equal(s.players[0].hand.length,1);assert.equal(s.players[0].front[0].impactTurn,s.turn);assert.ok(!legalActions(s).some(a=>a.type==='ability'&&a.uid===c.uid));assertState(s);
 });
 test('Rukia optional partial removal cannot draw, while full removal draws two (FAQ575)',()=>{
  for(const n of [2,3]){let s=fixture();power(s);grave(s,0,['034','039','107'].slice(0,n));const c=hand(s,0,'106');s=dispatch(s,{type:'play',uid:c.uid,line:'front',slot:0});s=choose(s,s.pending.choices.map(c=>c.id));assert.equal(s.players[0].hand.length,n===3?2:0);assert.equal(s.players[0].removed.length,n);assertState(s);}

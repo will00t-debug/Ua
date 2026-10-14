@@ -146,3 +146,33 @@ export const EXTRA_RULES = {
  'BLC-4-074': {ability:{once:true,rest:true,effects:[{op:'energyBoost',amount:1,retire:true}]}},
  'BLC-2-069': {entry:[{op:'discard',count:1,optional:true,when:{ownOtherTrait:{trait:'護廷十三隊',count:6}},then:[{op:'recoverOutside',filter:{names:['日番谷冬獅郎']},optional:true}]}]},
 };
+
+
+// Verified legacy BLC Raid text-box boundaries (official UA08BT/EX07BT images).
+// These entries occur INSIDE the printed Raid boundary and must only work when
+// an actual underlying Raid base exists. Text ABOVE that boundary stays usable.
+// In particular, BLC-1-047's main ability is above its Raid box, whereas
+// BLC-1-053's entry AND main ability are both inside the Raid box.
+// Do not infer these boundaries from keyword names or printed Raid alone.
+const LEGACY_RAID_BOX = {
+ 'BLC-1-004':{ability:true},
+ 'BLC-1-014':{entry:true},
+ 'BLC-1-020':{entry:true,attackPhaseEnd:true},
+ 'BLC-1-024':{entry:true},
+ 'BLC-1-041':{entry:true},
+ 'BLC-1-047':{entry:true},
+ 'BLC-1-050':{entry:true,ability:true,attack:true},
+ 'BLC-1-053':{entry:true,ability:true},
+ 'BLC-1-070':{entry:true},
+ 'BLC-1-085':{entry:true},
+ 'BLC-1-093':{entry:true,attack:true},
+ 'BLC-2-019':{entry:true,ability:true},
+ 'BLC-2-034':{entry:true},
+ 'BLC-2-038':{entry:true,ability:true},
+ 'BLC-2-057':{entry:true},
+ 'BLC-2-065':{entry:true,impactNull:true,immuneEnemyRest:true,immuneEnemyBounce:true,startTurnRaidTop:true},
+};
+for(const [id,inside] of Object.entries(LEGACY_RAID_BOX)){
+ if(!EXTRA_RULES[id]?.raid)throw new Error('Legacy Raid-box profile missing: '+id);
+ EXTRA_RULES[id].raidBox=inside;
+}
