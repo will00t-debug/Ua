@@ -44,6 +44,14 @@ const printed=Object.freeze({
    implementation:'dsl',raidName:'カミナ',ownTurnBp:500,
    effects:{onPlay:[{op:'draw',count:1},{op:'restOppFrontUnderBp',bp:3000,optional:true}]},
    matchText:'BP+500',matchTexts:['Raid 卡米那','登場抽1張','BP3000 以下']},
+  {id:'TTG-1-073',energy:4,ap:1,bp:4000,gen:1,color:'red',trigger:'raid',
+   type:'character',implementation:'dsl',raidName:'シモン',
+   raidBaseNames:['シモン','カミナ'],raidRequiresNames:['シモン','カミナ'],
+   raidFromRaid:['ラガン','グレン'],
+   conditionalUnderFaceDown:{bp:1000,impact:1,leaveReplacementMinBp:500},
+   effects:{onPlay:[{op:'retireOppFrontIfFacedown',bp:5000,optional:true}]},
+   matchText:'己方場上或 Raid 底板中同時有〈西蒙〉與〈卡米那〉才能突襲',
+   matchTexts:['「ラガン」或「グレン」','裏向','BP+1000','IMPACT 1','BP5000','500 以上']},
   {id:'TTG-1-078',energy:3,ap:1,bp:0,gen:0,color:'red',trigger:'final',type:'event',implementation:'dsl',effects:{onPlay:[{op:'recoverAp',count:2}]},matchText:'選擇最多2張自己的 AP 卡'},
   {id:'TTG-1-079',energy:3,ap:1,bp:0,gen:0,color:'red',trigger:'final',type:'event',implementation:'dsl',effects:{onPlay:[{op:'recoverAp',count:2}]},matchText:'選擇最多2張自己的 AP 卡'}
  ])
@@ -74,6 +82,8 @@ export function portVerifiedPilotCard(title,id){
   energy:spec.energy,ap:spec.ap,bp:spec.bp,gen:spec.gen,
   trigger:spec.trigger,implementation:spec.implementation,traits:Array.isArray(c.traits)?c.traits:typeof c.traits==='string'&&c.traits.trim()?[c.traits]:[],
   step:spec.step===true,raidName:spec.raidName,ownTurnBp:spec.ownTurnBp,
+  raidBaseNames:spec.raidBaseNames,raidRequiresNames:spec.raidRequiresNames,
+  raidFromRaid:spec.raidFromRaid,conditionalUnderFaceDown:spec.conditionalUnderFaceDown,
   triggerEffect:spec.triggerEffect,mainAbility:spec.mainAbility,effects:spec.effects
  };
 }
