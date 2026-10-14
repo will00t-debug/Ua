@@ -9,12 +9,16 @@ const printed=Object.freeze({
  bleach:Object.freeze([
   {id:'BLC-1-034',energy:0,ap:1,bp:1500,gen:1,color:'purple',trigger:'draw',type:'character',implementation:'dsl',effects:{onPlay:[{op:'drawDiscard',count:1}]},matchText:'抽 1 張'},
   {id:'BLC-1-039',energy:0,ap:1,bp:1500,gen:1,color:'purple',trigger:'get',type:'character',implementation:'vanilla',effects:{}},
+  {id:'BLC-1-102',energy:3,ap:1,bp:3000,gen:2,color:'purple',trigger:'active',type:'character',implementation:'vanilla',effects:{},matchText:'產生 2 紫能源'},
   {id:'BLC-1-103',energy:3,ap:1,bp:3000,gen:2,color:'purple',trigger:null,type:'character',implementation:'dsl',effects:{onAttack:[{op:'buffSelf',bp:1000}]},matchText:'攻擊時'},
   {id:'BLC-1-107',energy:0,ap:1,bp:2000,gen:1,color:'purple',trigger:null,type:'character',implementation:'vanilla',effects:{}},
  ]),
  'gurren-lagann':Object.freeze([
   {id:'TTG-1-009',energy:0,ap:1,bp:1500,gen:1,color:'green',trigger:'draw',type:'character',implementation:'dsl',effects:{onPlay:[{op:'drawDiscard',count:1}]},matchText:'抽1張'},
-  {id:'TTG-1-051',energy:0,ap:1,bp:1500,gen:1,color:'red',trigger:'draw',type:'character',implementation:'dsl',effects:{onPlay:[{op:'drawDiscard',count:1}]},matchText:'抽1張'}
+  {id:'TTG-1-051',energy:0,ap:1,bp:1500,gen:1,color:'red',trigger:'draw',type:'character',implementation:'dsl',effects:{onPlay:[{op:'drawDiscard',count:1}]},matchText:'抽1張'},
+  {id:'TTG-1-042',energy:0,ap:1,bp:2000,gen:1,color:'red',trigger:'active',type:'character',implementation:'vanilla',effects:{},matchText:'沒有額外印刷角色效果'},
+  {id:'TTG-1-064',energy:0,ap:1,bp:2000,gen:1,color:'red',trigger:'draw',type:'character',implementation:'vanilla',effects:{},matchText:'無額外印刷角色效果'},
+  {id:'TTG-1-065',energy:1,ap:1,bp:2500,gen:1,color:'red',trigger:null,type:'character',implementation:'vanilla',effects:{},step:true,matchText:'STEP'}
  ])
 });
 function source(title,id){
@@ -40,7 +44,7 @@ export function portVerifiedPilotCard(title,id){
   id, name:c.nameJa||c.name,color:spec.color,type:spec.type,
   energy:spec.energy,ap:spec.ap,bp:spec.bp,gen:spec.gen,
   trigger:spec.trigger,implementation:spec.implementation,
-  effects:spec.effects
+  step:spec.step===true,effects:spec.effects
  };
 }
 export function verifiedPilotCards(title){
