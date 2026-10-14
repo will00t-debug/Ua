@@ -1,6 +1,6 @@
 // Cross-title Universal v2 AI baseline. Uses only the native legal-action
 // list; no work-specific card-ID shortcuts and no mutation of match state.
-import {legalUniversalActions,universalBp,universalEnergy} from './engine.mjs';
+import {legalUniversalActions,universalBp,universalEnergy,universalEnergyByColor} from './engine.mjs';
 export const UNIVERSAL_AI_LEVELS=Object.freeze(['easy','normal','hard']);
 const packsOf=pack=>Array.isArray(pack)?pack:[pack,pack];
 const option=(list,type)=>list.find(x=>x.type===type);
@@ -30,7 +30,7 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  const legal=legalUniversalActions(pack,s);
  if(!legal.length)return null;
  if(s.pending?.kind==='life-trigger')
-  return legal.find(a=>a.mode==='final'||a.mode==='draw'||a.mode==='get')||legal[0];
+  return legal.find(a=>a.mode==='final'||a.mode==='draw'||a.mode==='get'||a.mode==='active')||legal[0];
  if(s.pending?.kind==='block')return chooseBlock(pack,s,legal,difficulty);
  if(s.pending?.kind==='effect-target'){
   const choices=legal.map(a=>({
@@ -71,11 +71,24 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  }
  if(s.phase!=='main')return next;
  const energy=universalEnergy(pack,s,s.active),target=energyTarget(pack,s,difficulty);
+ const byColor=universalEnergyByColor(pack,s,s.active);
+ const hand=s.players[s.active].hand;
+ const catalog=packsOf(pack)[s.active].cards;
  const energyPlays=legal.filter(a=>a.type==='play'&&a.line==='energy'&&cardFor(pack,s,a)?.gen>0);
  const frontPlays=legal.filter(a=>a.type==='play'&&a.line==='front');
  const events=legal.filter(a=>a.type==='event');
  const raids=legal.filter(a=>a.type==='raid');
  if(difficulty==='easy')return frontPlays[0]||energyPlays[0]||events[0]||raids[0]||next;
+ // A multi-color deck cannot pay for a purple card with accumulated green
+ // symbols. Hard/normal AI should build the colors its own hand needs.
+ const missingColors=new Set(hand.map(c=>catalog[c.cardId])
+  .filter(c=>c&&c.energy>(byColor[c.color]||0)).map(c=>c.color));
+ const neededEnergy=energyPlays.filter(a=>missingColors.has(cardFor(pack,s,a)?.color));
+ if(neededEnergy.length){
+  neededEnergy.sort((a,b)=>
+   (cardFor(pack,s,b)?.gen||0)-(cardFor(pack,s,a)?.gen||0));
+  return neededEnergy[0];
+ }
  if(energy<target&&energyPlays.length){
   energyPlays.sort((a,b)=>
    (cardFor(pack,s,b)?.gen||0)-(cardFor(pack,s,a)?.gen||0));
