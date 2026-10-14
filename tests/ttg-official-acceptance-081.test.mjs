@@ -75,3 +75,31 @@ test('081 SPECIAL life trigger has NO BP threshold and can be declined per Q99',
  assert.ok(activated.players[0].outside.some(x=>x.uid===life.uid));
  assert.ok(assertTtgCoreState(activated));
 });
+
+test('081 normal event rejects energy-line-only targets without paying AP or moving cards',()=>{
+ let {s,event}=prepare(8105);
+ const energyOnly=stage(s,1,'TTG-1-043','energy',0);
+ assert.equal(eligibleGigaDrillTargets(s,0).length,0);
+ const choices=legalTtgCoreActions(s).filter(x=>x.type==='playTtgEvent'&&x.handUid===event.uid);
+ assert.equal(choices.length,0);
+ const apBefore=s.players[0].apCards.map(x=>x.ready);
+ const outsideBefore=s.players[0].outside.length;
+ assert.throws(()=>dispatchTtgCoreAction(s,{type:'playTtgEvent',player:0,handUid:event.uid,targetUid:energyOnly.uid,payApUids:[s.players[0].apCards[0].uid]}));
+ assert.deepEqual(s.players[0].apCards.map(x=>x.ready),apBefore);
+ assert.equal(s.players[0].outside.length,outsideBefore);
+ assert.ok(s.players[0].hand.some(x=>x.uid===event.uid));
+ assert.ok(assertTtgCoreState(s));
+});
+test('081 SPECIAL cannot select protected enemy even when its BP meets the threshold',()=>{
+ let s=game(8106);
+ const protectedTarget=stage(s,1,'TTG-1-043','front',0);
+ protectedTarget.protectedFromEffects=true;
+ const life=take(s.players[0],'TTG-1-081');
+ s.pendingTtgTrigger={player:0,card:life};
+ assert.deepEqual(legalTtgEventTriggerChoices(s),[]);
+ assert.throws(()=>resolveTtgEventLifeTrigger(s,{player:0,targetUid:protectedTarget.uid}));
+ const resolved=resolveTtgEventLifeTrigger(s,{player:0,decline:true});
+ assert.ok(resolved.players[0].outside.some(x=>x.uid===life.uid));
+ assert.equal(resolved.players[1].front[0].uid,protectedTarget.uid);
+ assert.ok(assertTtgCoreState(resolved));
+});
