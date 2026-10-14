@@ -905,3 +905,56 @@ test('real TTG073 BP500+ optional facedown replacement preserves the Raided char
  assert.ok(left.players[1].outside.some(c=>c.uid===first.uid));
  assert.equal(assertUniversalMatch(packs,left),true);
 });
+
+test('real TTG073 direct Raid on Simon without facedown underlying gains NO conditional +1000, retirement or IMPACT',()=>{
+ const packs=[bleach.pack,red.pack];let s=fresh(red,982);
+ const simon=take(s,1,'TTG-1-051'),kamina=take(s,1,'TTG-1-042');
+ s.players[1].front[0]=simon;s.players[1].energy[0]=kamina;
+ for(const [slot,id] of ['TTG-1-045','TTG-1-064','TTG-1-065'].entries())
+  s.players[1].energy[slot+1]=take(s,1,id);
+ const second=take(s,1,'TTG-1-073'),blocker=take(s,0,'BLC-1-039');
+ blocker.ready=true;s.players[0].front[0]=blocker;s.players[1].hand.push(second);
+ for(let i=0;i<4;i++)s=dispatchUniversalAction(packs,s,{type:'next'});
+ s=advanceToMain(packs,s);
+ const raid=legalUniversalActions(packs,s).find(a=>a.type==='raid'&&a.uid===second.uid&&a.baseUid===simon.uid);
+ assert.ok(raid,'Simon is a printed alternative base while Kamina is in energy');
+ s=dispatchUniversalAction(packs,s,raid,{actor:1});
+ assert.equal(s.pending,null,'no facedown under means conditional onPlay retirement does not trigger');
+ assert.equal(universalBp(packs,s,s.players[1].front[0]),4000);
+ assert.equal(s.players[1].front[0].stack[0].uid,simon.uid);
+ assert.equal(s.players[1].front[0].stack[0].under.length,0);
+ const lifeBefore=s.players[0].life.length;
+ s=dispatchUniversalAction(packs,s,{type:'next'});
+ s=dispatchUniversalAction(packs,s,{type:'attack',uid:second.uid},{actor:1});
+ s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:blocker.uid},{actor:0});
+ assert.equal(s.players[0].front[0],null);
+ assert.equal(s.players[0].life.length,lifeBefore,'without facedown there is no IMPACT');
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
+test('official Q2298 underlying facedown card identity is inspectable by owner but hidden from opposing-title viewer',()=>{
+ const {packs,s,first,kamina}=real073Chain(983);
+ const opponent=universalPublicView(packs,s,0);
+ const owner=universalPublicView(packs,s,1);
+ assert.equal(opponent.players[1].front[0].raidLayers[0].uid,kamina.uid);
+ const protectedPublic=opponent.players[1].front[0].raidLayers[0].under[0];
+ assert.deepEqual(protectedPublic,{faceDown:true});
+ const ownPrivate=owner.players[1].front[0].raidLayers[0].under[0];
+ assert.equal(ownPrivate.uid,first.uid);
+ assert.equal(ownPrivate.cardId,'TTG-1-072');
+ assert.equal(ownPrivate.faceDown,true);
+ assert.ok(!JSON.stringify(opponent).includes(first.uid));
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
+test('strict V2 rejects missing or inconsistent double Raid base and conditional under-card metadata',()=>{
+ const known=portVerifiedPilotCard('gurren-lagann','TTG-1-073');
+ assert.deepEqual(known.raidBaseNames,['シモン','カミナ']);
+ assert.deepEqual(known.raidRequiresNames,['シモン','カミナ']);
+ assert.deepEqual(known.raidFromRaid,['ラガン','グレン']);
+ assert.deepEqual(known.conditionalUnderFaceDown,{bp:1000,impact:1,leaveReplacementMinBp:500});
+ const bad={...known,raidBaseNames:['カミナ','カミナ']};
+ assert.throws(()=>createUniversalPack({id:'bad-raid',cards:[bad]}),/invalid alternative Raid bases/);
+ const missing={...known,raidRequiresNames:['シモン',null]};
+ assert.throws(()=>createUniversalPack({id:'bad-requirement',cards:[missing]}),/invalid named Raid prerequisite/);
+ const malformed={...known,conditionalUnderFaceDown:{bp:1000,impact:2,leaveReplacementMinBp:500}};
+ assert.throws(()=>createUniversalPack({id:'bad-impact',cards:[malformed]}),/unsupported facedown under-card profile/);
+});
