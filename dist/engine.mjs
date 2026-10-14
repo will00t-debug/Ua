@@ -218,7 +218,7 @@ export function legalActions(s){
     if(a&&raidBoxEnabled(c,'ability')&&ruleEnabled(s,p,c,a)&&(!a.groupOnce||s.groupUsed?.[`${p}:${a.groupOnce}`]!==s.turn)&&(!a.once||used!==s.turn)&&(!a.front||locate(s,c.uid).line==='front')&&(!a.energy||locate(s,c.uid).line==='energy')&&(!a.requiresTwoActiveFront||s.players[p].front.filter(x=>x?.ready).length>=2)&&(!a.rest||c.ready)&&(!a.when||condition(s,p,c.uid,a.when))&&(!a.ap||pl.ap>=a.ap)&&(!a.discard||pl.hand.length>=a.discard)&&(!a.discardFilter||pl.hand.some(x=>matchFilter(x,a.discardFilter))))acts.push(cr.abilities?{type:'ability',uid:c.uid,abilityIndex:j}:{type:'ability',uid:c.uid});
    }
    if(c.usedTurn===s.turn)continue;
-   if(c.cardId==='104'&&isRaided(c)||c.cardId==='046'&&locate(s,c.uid).line==='front'||(c.cardId==='042'||c.cardId==='108')&&c.ready)acts.push({type:'ability',uid:c.uid});
+   if(c.cardId==='104'&&isRaided(c)&&!silenced(s,c)||c.cardId==='046'&&locate(s,c.uid).line==='front'||(c.cardId==='042'||c.cardId==='108')&&c.ready)acts.push({type:'ability',uid:c.uid});
   }
   acts.push({type:'next'});
  }
@@ -948,7 +948,7 @@ export function dispatch(source,action,actor=controller(source)){
    const l=locate(s,action.uid),c=l.card;const defs=cardOf(c).rules||{},a=defs.abilities?defs.abilities[action.abilityIndex]:defs.ability;if(defs.abilities){c.usedAbilities||={};c.usedAbilities[action.abilityIndex]=s.turn;}else c.usedTurn=s.turn;if(a?.groupOnce){s.groupUsed ||= {};s.groupUsed[`${p}:${a.groupOnce}`]=s.turn;}log(s,`${pl.name}發動${cardOf(c).name}的能力。`,'effect');
    if(c.cardId==='042'){c.ready=false;c.energyBoostTurn=s.turn;c.sacrificeTurn=s.turn;}
    if(c.cardId==='046')s.queue.push({kind:'renjiMill',p,uid:c.uid});
-   if(c.cardId==='104'&&isRaided(c))s.queue.push({kind:'removeDraw',p,count:4,draw:1,optional:false,impactUid:c.uid});
+   if(c.cardId==='104'&&isRaided(c)&&!silenced(s,c))s.queue.push({kind:'removeDraw',p,count:4,draw:1,optional:false,impactUid:c.uid});
    if(c.cardId==='108'){c.ready=false;takeField(s,c.uid);s.queue.push({kind:'drawDiscard',p,count:2});}
    if(a&&!silenced(s,c)&&ruleEnabled(s,p,c,a)){if(a.rest)c.ready=false;if(a.ap){pl.ap-=a.ap;if(cardOf(c).color==='purple')pl.purpleApPaidTurn=s.turn;}if(a.sacrifice)takeField(s,c.uid);if(a.discardFilter)s.queue.push({kind:'rule',p,uid:c.uid,rule:{op:'discardHand',count:1,filter:a.discardFilter,then:a.effects}});else if(a.discard)s.queue.push({kind:'rule',p,uid:c.uid,rule:{op:'discard',count:a.discard,then:a.effects}});else queueRules(s,p,c.uid,a.effects);}
    pump(s);break;
