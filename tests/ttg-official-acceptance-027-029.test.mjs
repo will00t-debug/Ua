@@ -50,7 +50,8 @@ test('027 official Q2393: upgrade an actual already-Raid 029, preserving Simon b
  assert.equal(s.players[0].front[0].stack[0].uid,base.uid);
  assert.deepEqual(s.players[0].front[0].under.map(c=>c.uid),[under.uid,prev.uid]);
  assert.ok(s.players[0].front[0].under.every(c=>c.faceDown));
- assert.deepEqual(s.players[0].apCards.map(a=>a.ready),[false,before[1]]);
+ assert.equal(s.players[0].apCards[0].ready,false,'selected AP was physically paid');
+ assert.equal(s.players[0].apCards[1].ready,before[1],'unselected AP stays unchanged');
  const entry=action(s,a=>a.step==='entry027'&&a.targetUid==null&&a.apUid==null);
  s=dispatchTtgCoreAction(s,entry);
  assert.equal(s.pending,null);
