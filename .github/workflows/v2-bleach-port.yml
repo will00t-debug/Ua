@@ -37,10 +37,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Merge latest V2 HEAD in throwaway runner only (NO PUSH)
+      - name: Make clean temporary merge commit in CI runner only (NO PUSH)
         run: |
           git fetch origin feature/universal-rules-v2-foundation-20261014
-          git -c user.name='V2-B CI' -c user.email='ci@example.invalid' merge --no-ff --no-commit origin/feature/universal-rules-v2-foundation-20261014
+          git -c user.name='V2-B CI' -c user.email='ci@example.invalid' merge --no-ff -m 'Temporary CI-only merge of latest V2; NEVER PUSH' origin/feature/universal-rules-v2-foundation-20261014
+          test -z "$(git status --porcelain)"
       - name: Real BLEACH tests on latest integrated core
         run: node --test tests/universal-v2-bleach-port.test.mjs tests/universal-v2-bleach-green-match.test.mjs tests/universal-v2-bleach-enemy-control.test.mjs
       - name: Full regression suite on latest integrated core
