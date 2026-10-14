@@ -83,10 +83,10 @@ function testEntry(other,owner,id){
 }
 test('official-record pilot cards have explicitly pinned printed energy/AP/BP/trigger and no implicit support',()=>{
  assert.deepEqual(REAL_V2_PILOT_IDS.bleach,['BLC-1-034','BLC-1-039','BLC-1-066','BLC-1-102','BLC-1-103','BLC-1-107']);
- assert.deepEqual(REAL_V2_PILOT_IDS['gurren-lagann'],['TTG-1-009','TTG-1-036','TTG-1-037','TTG-1-038','TTG-1-051','TTG-1-042','TTG-1-064','TTG-1-065','TTG-1-078','TTG-1-079']);
+ assert.deepEqual(REAL_V2_PILOT_IDS['gurren-lagann'],['TTG-1-001','TTG-1-009','TTG-1-036','TTG-1-037','TTG-1-038','TTG-1-051','TTG-1-042','TTG-1-064','TTG-1-065','TTG-1-078','TTG-1-079']);
  const b=verifiedPilotPack('bleach'),t=verifiedPilotPack('gurren-lagann');
  assert.equal(Object.keys(b.cards).length,6);
- assert.equal(Object.keys(t.cards).length,10);
+ assert.equal(Object.keys(t.cards).length,11);
  assert.ok(validateUniversalDeck(b,bleach.deck).length>0,'V2 real-only deck is not ready');
  assert.ok(validateUniversalDeck(t,green.deck).length>0);
  for(const id of REAL_V2_PILOT_IDS.bleach)assert.ok(portVerifiedPilotCard('bleach',id));
@@ -311,4 +311,36 @@ test('FINAL on an actual red TTG event restores last life even when its main eff
  assert.equal(declined.status,'finished');
  assert.equal(declined.winner,0);
  assert.equal(assertUniversalMatch(packs,activated),true);
+});
+
+test('real TTG Viral 001 peeks only own top card: keep top or move to outside, no opponent leak',()=>{
+ const packs=[bleach.pack,green.pack];let s=fresh(green,355);
+ for(let i=0;i<4;i++)s=dispatchUniversalAction(packs,s,{type:'next'});
+ s=advanceToMain(packs,s);
+ const viral=take(s,1,'TTG-1-001');s.players[1].hand.push(viral);
+ const top=s.players[1].deck[0].uid;
+ const original=structuredClone(s);
+ const action=legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===viral.uid&&a.line==='front'&&a.slot===0);
+ assert.ok(action);
+ const pending=dispatchUniversalAction(packs,s,action,{actor:1});
+ assert.equal(pending.pending?.kind,'private-top-choice');
+ assert.equal(pending.pending.player,1);
+ assert.equal(pending.players[1].deck[0].uid,top);
+ const visibleToOpponent=universalPublicView(packs,pending,0);
+ assert.equal(visibleToOpponent.pending.kind,'private-top-choice');
+ assert.ok(!JSON.stringify(visibleToOpponent).includes(top),'private top card UID hidden from opponent');
+ const choices=legalUniversalActions(packs,pending);
+ assert.deepEqual(choices.map(a=>a.mode),['top','outside']);
+ assert.throws(()=>dispatchUniversalAction(packs,pending,{type:'chooseTopCard',mode:'hand'},{actor:1}),/not currently legal/);
+ assert.throws(()=>dispatchUniversalAction(packs,pending,choices[0],{actor:0}),/Wrong player/);
+ const kept=dispatchUniversalAction(packs,pending,choices[0],{actor:1});
+ assert.equal(kept.players[1].deck[0].uid,top);
+ assert.equal(kept.pending,null);
+ const sidelined=dispatchUniversalAction(packs,pending,choices[1],{actor:1});
+ assert.ok(sidelined.players[1].outside.some(c=>c.uid===top));
+ assert.equal(sidelined.players[1].deck.length,kept.players[1].deck.length-1);
+ assert.equal(sidelined.publicReveals.length,0,'deck look is not a public life reveal');
+ assert.deepEqual(s,original,'normal play must not mutate source before dispatch');
+ assert.equal(assertUniversalMatch(packs,kept),true);
+ assert.equal(assertUniversalMatch(packs,sidelined),true);
 });
