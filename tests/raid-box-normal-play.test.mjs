@@ -141,3 +141,91 @@ test('EX15BT/BLC-4-033 Yoruichi Raid-box entry only works after real Raid',()=>{
  assert.equal(s.players[0].front[1].ready,true,'Raid-only ACTIVE entry should resolve');
  assertState(s);
 });
+
+
+const LEGACY_RAID_CARDS=[
+ 'BLC-1-004','BLC-1-014','BLC-1-020','BLC-1-024','BLC-1-041',
+ 'BLC-1-047','BLC-1-050','BLC-1-053','BLC-1-070','BLC-1-085',
+ 'BLC-1-093','BLC-2-019','BLC-2-034','BLC-2-038','BLC-2-057','BLC-2-065'
+];
+test('all 23 catalog Raid cards have explicit rules; the 16 older Raid cards mark text-box boundaries',()=>{
+ const all=CARDS.filter(c=>c.type==='character'&&c.raid);
+ assert.equal(all.length,23,'Catalog Raid size changed: expand this regression inventory');
+ for(const profile of all){
+  assert.ok(profile.rules,'Raid card missing rule profile: '+profile.id);
+  if(LEGACY_RAID_CARDS.includes(profile.id)){
+   assert.ok(profile.rules.raidBox&&Object.values(profile.rules.raidBox).some(Boolean),
+    'missing legacy Raid-box boundary: '+profile.id);
+  }else{
+   assert.ok(['BLC-2-067','BLC-4-012','BLC-4-033','BLC-4-050','BLC-4-053','BLC-4-069','BLC-4-075'].includes(profile.id),
+    'New Raid card lacks classification: '+profile.id);
+  }
+ }
+});
+for(const id of LEGACY_RAID_CARDS){
+ test('FAQ Q51 normal '+id+' has no Raid-only on-entry prompt, readiness or main ability',()=>{
+  const {s,c}=normal(id);
+  const box=BY_ID[id].rules.raidBox;
+  assert.equal(s.pending,null,'normal deployment unexpectedly resolved Raid-box entry: '+id);
+  assert.equal(s.players[0].front[0].ready,false);
+  if(box.ability)
+   assert.ok(!legalActions(s).some(a=>a.type==='ability'&&a.uid===c.uid),
+    'normal deployment offered boxed ability: '+id);
+  assertState(s);
+ });
+}
+test('EX15BT/BLC-4-012: normal Jugram retains non-box entry; Raid tax and retirement passive stay disabled',()=>{
+ let s=fixture();
+ const source=card(s,0,'BLC-1-002');s.players[0].energy[0]=source;
+ source.ready=true;source.energyBoostTurn=s.turn;source.energyBoostAmount=12;
+ const jugram=card(s,0,'BLC-4-012');
+ s.players[0].hand.push(jugram);
+ const a=legalActions(s).find(x=>x.type==='play'&&x.uid===jugram.uid&&x.line==='front'&&x.slot===0);
+ assert.ok(a);
+ s=dispatch(s,a);
+ assert.equal(s.players[0].front[0].stack.length,0);
+ assert.equal(s.players[0].front[0].ready,false);
+ assertState(s);
+});
+test('EX15BT/BLC-4-053: Byakuya normal entry is OUTSIDE Raid box and must still debuff enemy',()=>{
+ let s=fixture();energyFor(s,'BLC-4-053');
+ const opponent=card(s,1,'BLC-2-019');s.players[1].front[0]=opponent;
+ const top=card(s,0,'BLC-4-053');s.players[0].hand.push(top);
+ const a=legalActions(s).find(x=>x.type==='play'&&x.uid===top.uid&&x.line==='front'&&x.slot===0);
+ assert.ok(a);s=dispatch(s,a);
+ assert.equal(s.players[0].front[0].stack.length,0);
+ assert.equal(s.pending?.effect.kind,'ruleChoice');
+ assert.ok(s.pending.choices.some(x=>x.id===opponent.uid));
+ s=dispatch(s,{type:'choose',ids:[opponent.uid]});
+ assert.equal(bp(s,s.players[1].front[0]),3000);
+ assertState(s);
+});
+test('EX15BT/BLC-4-069: normal Kyoraku activates non-box conditional AP discount',()=>{
+ const {s,c}=normal('BLC-4-069');
+ assert.ok(s.players[0].nextApDiscount?.turn===s.turn,
+  'normal entry should provide discounted next Haten Kyokotsu card');
+ assert.equal(s.players[0].front[0].stack.length,0);
+ assertState(s);
+});
+test('EX15BT/BLC-4-075: normal Ukitake may use OUTSIDE Raid-box draw and entry-turn ability but not extra Raid energy',()=>{
+ let s=fixture();energyFor(s,'BLC-4-075');
+ const before=s.players[0].hand.length;
+ const top=card(s,0,'BLC-4-075');s.players[0].hand.push(top);
+ const a=legalActions(s).find(x=>x.type==='play'&&x.uid===top.uid&&x.line==='energy'&&x.slot===1);
+ assert.ok(a,'Ukitake normal deployment is only allowed on energy line');
+ s=dispatch(s,a);
+ assert.equal(s.players[0].hand.length,before+1,'normal Ukitake should draw one');
+ assert.equal(s.players[0].energy[1].stack.length,0);
+ assert.ok(legalActions(s).some(a=>a.type==='ability'&&a.uid===top.uid),
+  'main ability outside Raid box available on entering turn');
+ assertState(s);
+});
+test('EX07BT/BLC-2-067, EX15BT/033 and /050 special Raid effects disabled in normal deployment',()=>{
+ for(const id of ['BLC-2-067','BLC-4-033','BLC-4-050']){
+  const {s,c}=normal(id);
+  if(id==='BLC-4-050')
+   assert.ok(!legalActions(s).some(a=>a.type==='ability'&&a.uid===c.uid));
+  if(id==='BLC-2-067')assert.equal(bp(s,c),4000);
+  assert.equal(c.stack.length,0);assertState(s);
+ }
+});
