@@ -116,7 +116,7 @@ test('BLC-1-053 real Raid correctly enables its boxed draw-three discard-two ent
  assert.equal(s.players[0].front[0].stack[0].uid,base.uid);
  assert.equal(s.players[0].front[0].ready,true);
  assert.equal(s.players[0].hand.length,3,'boxed entry draws three on genuine Raid');
- assert.equal(s.pending?.effect.kind,'discardHand','boxed two-card discard must trigger');
+ assert.equal(s.pending?.effect.kind,'ruleChoice','boxed two-card discard selection must trigger');
  assertState(s);
 });
 test('normal play shows inactive Raid-box indicator, rather than an active Raid overlay',()=>{
