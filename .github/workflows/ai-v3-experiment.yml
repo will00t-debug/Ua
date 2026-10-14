@@ -1,7 +1,7 @@
-name: AI v3 Sixth-Round 2000-Game Training
+name: AI v3 Dual-Baseline 2000-Game Training
 
 on:
-  # Sixth-round larger-scale experiment; workflow edits trigger a run.
+  # Dual-baseline experiment; workflow edits trigger a run.
   push:
     branches: ['feature/ai-v3-learning']
     paths: ['.github/workflows/ai-v3-experiment.yml']
@@ -38,12 +38,12 @@ jobs:
           TEST_GAMES: ${{ inputs.eval || '300' }}
         run: |
           npm test
-          npm run train:ai -- --games "$TRAIN_GAMES" --eval "$TEST_GAMES" --seed 30000 --epochs 5 --max-actions 650 --promote
+          npm run train:ai -- --games "$TRAIN_GAMES" --eval "$TEST_GAMES" --seed 31000 --epochs 5 --max-actions 650 --promote
       - name: Publish candidate and measurements as artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ai-v3-sixth-round-2000-games
+          name: ai-v3-dual-baseline-2000-games
           path: |
             audit/ai-v3-candidate.json
             audit/ai-v3-evaluation.json
@@ -59,6 +59,6 @@ jobs:
             git add dist/ai-v3-weights.mjs
           fi
           if ! git diff --cached --quiet; then
-            git commit -m 'experiment(ai-v3): record sixth-round 2000-game metrics and gated checkpoint'
+            git commit -m 'experiment(ai-v3): record dual-baseline 2000-game metrics and gated checkpoint'
             git push origin HEAD:feature/ai-v3-learning
           fi
