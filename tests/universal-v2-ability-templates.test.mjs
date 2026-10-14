@@ -18,7 +18,8 @@ test('template registry is finite, audited and rejects unknown behaviors instead
  assert.deepEqual(V2_ABILITY_TEMPLATE_IDS,[
   'draw','millTop','drawDiscardOne','peekTopOne','recoverAp','buffSelf',
   'enemyBpDown','retireEnemyUnderBp','restEnemyUnderBp',
-  'retireEnemyIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown'
+  'retireEnemyIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown',
+  'searchDeckOne','recoverOutsideOne','discardToDraw'
  ]);
  assert.throws(()=>checked(character({
   implementation:'dsl',templateEffects:{onPlay:[{template:'drawEnemyDeck',count:1}]}
@@ -96,7 +97,7 @@ test('templates cannot silently override raw ops, authorize vanilla effects or b
   'legacy directly authored DSL continues to work unchanged');
 });
 
-test('all twelve supported templates compile to exactly the established runtime DSL ops in deterministic order',()=>{
+test('all fifteen supported templates compile to the established and extended V2 runtime DSL ops in deterministic order',()=>{
  const examples=[
   [{template:'draw',count:2},{op:'draw',count:2}],
   [{template:'millTop',count:3},{op:'millTop',count:3}],
@@ -111,7 +112,12 @@ test('all twelve supported templates compile to exactly the established runtime 
   [{template:'retireEnemyIfFacedown',bp:5000,optional:true},{op:'retireOppFrontIfFacedown',bp:5000,optional:true}],
   [{template:'buffOwnTrait',trait:'大グレン団',bp:1000,optional:true},
    {op:'buffOwnTrait',trait:'大グレン団',bp:1000,optional:true}],
-  [{template:'drawIfRaidUnderFacedown'},{op:'drawIfRaidUnderFacedown'}]
+  [{template:'drawIfRaidUnderFacedown'},{op:'drawIfRaidUnderFacedown'}],
+  [{template:'searchDeckOne',filter:{field:'trait',value:'Scout'},optional:true,shuffle:true},
+   {op:'searchDeckOne',filter:{field:'trait',value:'Scout'},optional:true,shuffle:true}],
+  [{template:'recoverOutsideOne',filter:{field:'name',value:'Scout'},optional:false},
+   {op:'recoverOutsideOne',filter:{field:'name',value:'Scout'},optional:false}],
+  [{template:'discardToDraw',count:2,optional:true},{op:'discardToDraw',count:2,optional:true}]
  ];
  for(const [input,expected] of examples)
   assert.deepEqual(expandAbilityTemplates({onPlay:[input]}).onPlay,[expected]);
