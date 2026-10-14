@@ -9,7 +9,7 @@ import {MST_CARDS,emptyMstDeck,normalizeMstCounts,mstCount,mstDeckIssues,readMst
 import {TTG_PENDING_CARDS} from './ttg-pending.mjs';
 import {TTG_CARDS,TTG_BY_ID,emptyTtgDeck,normalizeTtgCounts,ttgCount,ttgDeckIssues,readTtgSaved} from './ttg-builder.mjs';
 import {newTtgCoreMatch,assertTtgCoreState,legalTtgCoreActions,dispatchTtgCoreAction,ttgCoreAiChoice} from './ttg-core-match.mjs';
-import {TTG_BETA_IDS,TTG_BETA_NOTICE,TTG_GREEN_BETA_PRESET,TTG_RED_BETA_PRESET,ttgBetaDeckIssues,ttgChoiceActor,ttgActionLabel,ttgActionKinds,ttgFilteredActions,ttg012ManualChoice,ttg012SearchChoice,ttg023SearchChoice,ttg026SearchChoice,ttgCardByUid,ttgNormalPlacementAction} from './ttg-browser.mjs';
+import {TTG_BETA_IDS,TTG_BETA_NOTICE,TTG_GREEN_BETA_PRESET,TTG_RED_BETA_PRESET,ttgBetaDeckIssues,ttgChoiceActor,ttgActionLabel,ttgActionKinds,ttgFilteredActions,ttg012ManualChoice,ttg012SearchChoice,ttg023SearchChoice,ttg026SearchChoice,ttg044SearchChoice,ttgCardByUid,ttgNormalPlacementAction} from './ttg-browser.mjs';
 import {newGame,dispatch,legalActions,controller,cardOf,bp,energy,damageOf,locate,PHASE_NAMES,assertState} from './engine.mjs?v=9.1.1';
 import {chooseAiAction} from './ai-v2.mjs';
 
@@ -44,7 +44,7 @@ function persistMst(){save(MST_DRAFT_KEY,mstDeck);}
 const deckMeta=safeRead(DECK_META_KEY)||{};
 let deckName=typeof deckMeta.name==='string'?deckMeta.name.slice(0,40):(PRESETS.find(p=>sameCounts(p.counts,deck))?.name||'自訂 BLEACH 牌組');
 let selectedDeckId=savedDecks.some(d=>d.id===deckMeta.savedId)?deckMeta.savedId:null;
-const ui={ttgSelected:null,ttgKind:'all',ttgVisible:90,ttg012:{discardUids:[],mode:'readyAP',apUid:null,targetUid:null},ttg012Search:{takeUid:null,orderUids:[]},ttg023Search:{takeUid:null,discardUid:null,orderUids:[]},ttg026Search:{mode:null,takeUid:null,orderUids:[]},soloSelected:null,saoSet:'all',title:'bleach',view:'lobby',mode:'solo',aiDifficulty:['easy','normal','hard'].includes(safeRead(AI_KEY))?safeRead(AI_KEY):'normal',first:'0',preset:[0,1].includes(deckMeta.preset)?deckMeta.preset:0,opponentSource:'preset:1',filter:'all',search:'',selected:null,line:'energy',deployment:'normal',sideTab:'card',raidFlow:null,modal:null,choiceIds:[],handoff:false,lastController:null,privatePeekOpen:false};
+const ui={ttgSelected:null,ttgKind:'all',ttgVisible:90,ttg012:{discardUids:[],mode:'readyAP',apUid:null,targetUid:null},ttg012Search:{takeUid:null,orderUids:[]},ttg023Search:{takeUid:null,discardUid:null,orderUids:[]},ttg026Search:{mode:null,takeUid:null,orderUids:[]},ttg044Search:{mode:null,takeUid:null,discardUid:null,orderUids:[]},soloSelected:null,saoSet:'all',title:'bleach',view:'lobby',mode:'solo',aiDifficulty:['easy','normal','hard'].includes(safeRead(AI_KEY))?safeRead(AI_KEY):'normal',first:'0',preset:[0,1].includes(deckMeta.preset)?deckMeta.preset:0,opponentSource:'preset:1',filter:'all',search:'',selected:null,line:'energy',deployment:'normal',sideTab:'card',raidFlow:null,modal:null,choiceIds:[],handoff:false,lastController:null,privatePeekOpen:false};
 if(deckMeta.opponentSource==='current'||/^preset:[01]$/.test(deckMeta.opponentSource||'')||savedDecks.some(d=>'saved:'+d.id===deckMeta.opponentSource))ui.opponentSource=deckMeta.opponentSource;
 let botTimer=null,toastTimer=null;
 function safeRead(k){try{return JSON.parse(localStorage.getItem(k)||'null');}catch{return null;}}
@@ -353,14 +353,14 @@ function ttgAct(a){
  try{
   const next=dispatchTtgCoreAction(ttgGame,a);
   assertTtgCoreState(next);ttgGame=next;save(TTG_GAME_KEY,ttgGame);
-  ui.ttgSelected=null;ui.ttgKind='all';ui.ttgVisible=90;ui.ttg012={discardUids:[],mode:'readyAP',apUid:null,targetUid:null};ui.ttg012Search={takeUid:null,orderUids:[]};ui.ttg023Search={takeUid:null,discardUid:null,orderUids:[]};ui.ttg026Search={mode:null,takeUid:null,orderUids:[]};render();
+  ui.ttgSelected=null;ui.ttgKind='all';ui.ttgVisible=90;ui.ttg012={discardUids:[],mode:'readyAP',apUid:null,targetUid:null};ui.ttg012Search={takeUid:null,orderUids:[]};ui.ttg023Search={takeUid:null,discardUid:null,orderUids:[]};ui.ttg026Search={mode:null,takeUid:null,orderUids:[]};ui.ttg044Search={mode:null,takeUid:null,discardUid:null,orderUids:[]};render();
  }catch(e){toast('天元突破 Beta 裁定錯誤：'+e.message);}
 }
 function ttgBetaStart(deck){
  try{
   const errors=ttgBetaDeckIssues(deck);if(errors.length){toast(errors[0]);return;}
   ttgGame=newTtgCoreMatch({decks:[deck,deck],first:0,seed:Date.now()});assertTtgCoreState(ttgGame);
-  save(TTG_GAME_KEY,ttgGame);ui.view='ttgArena';ui.ttgKind='all';ui.ttgSelected=null;ui.ttgVisible=90;ui.ttg012={discardUids:[],mode:'readyAP',apUid:null,targetUid:null};ui.ttg012Search={takeUid:null,orderUids:[]};ui.ttg023Search={takeUid:null,discardUid:null,orderUids:[]};ui.ttg026Search={mode:null,takeUid:null,orderUids:[]};render();
+  save(TTG_GAME_KEY,ttgGame);ui.view='ttgArena';ui.ttgKind='all';ui.ttgSelected=null;ui.ttgVisible=90;ui.ttg012={discardUids:[],mode:'readyAP',apUid:null,targetUid:null};ui.ttg012Search={takeUid:null,orderUids:[]};ui.ttg023Search={takeUid:null,discardUid:null,orderUids:[]};ui.ttg026Search={mode:null,takeUid:null,orderUids:[]};ui.ttg044Search={mode:null,takeUid:null,discardUid:null,orderUids:[]};render();
  }catch(e){toast('天元突破無法開局：'+e.message);}
 }
 function ttgArena(){
@@ -432,6 +432,20 @@ function ttgArena(){
   const rows=order.map((uid,i)=>`<div style='display:flex;gap:5px;align-items:center;padding:4px 0'><b>${i+1}.</b><span style='flex:1'>${esc(name(uid))}</span><button class='btn small outline' data-ttg-026-up='${esc(uid)}' ${i===0?'disabled':''}>↑</button><button class='btn small outline' data-ttg-026-down='${esc(uid)}' ${i===order.length-1?'disabled':''}>↓</button></div>`).join('');
   return `<section class='panel'><h3>羅修 026 · 選擇查看牌庫頂 ${cards.length} 張</h3><p class='note'>只有走「查看牌庫」分支才可觀看以下七張；可公開最多一張「アークグレン」，其餘任意順序放牌庫底。若要改選不看牌庫、從場外回收，請使用下方的「羅修026：不查看牌庫」選項。</p><div style='display:flex;gap:6px;flex-wrap:wrap'>${takes}</div><h4>依序放在牌庫底</h4>${rows}<button class='btn primary' data-action='ttg026SearchSubmit'>確認羅修搜尋牌庫與排序</button></section>`;
  })():'';
+ const custom044Search=s.pending?.kind==='ttgRed044Search'&&!bot?(()=>{
+  if(ui.ttg044Search.mode!=='search')return `<section class='panel'><h3>卡米那044 · Q2285 未阻擋攻擊</h3><p class='note'>對手已確定不阻擋。你可以完全不發動，或自行選擇查看牌庫頂七張；選擇前不公開任何私人牌庫內容。</p><button class='btn small outline' data-ttg-044-mode='skip'>不發動搜尋</button> <button class='btn small primary' data-ttg-044-mode='search'>選擇查看牌庫頂七張</button></section>`;
+  const seven=s.players[0].deck.slice(0,s.pending.revealed.length),selection=ui.ttg044Search;
+  const permitted=seven.filter(c=>TTG_BY_ID[c.cardId]?.nameJa==='グレン').map(c=>c.uid);
+  const taken=permitted.includes(selection.takeUid)?selection.takeUid:null;
+  const remaining=seven.map(c=>c.uid).filter(uid=>uid!==taken),saved=selection.orderUids;
+  const order=saved.length===remaining.length&&remaining.every(uid=>saved.includes(uid))?saved:remaining;
+  const name=uid=>{const c=ttgCardByUid(s,uid);return c?`${TTG_BY_ID[c.cardId]?.nameZh||c.cardId}（${c.cardId.slice(-3)}）`:uid;};
+  const pick=[null,...permitted].map(uid=>`<button class='btn small ${taken===uid?'primary':'outline'}' data-ttg-044-take='${uid===null?'':esc(uid)}'>${uid===null?'不拿牌':'公開拿 '+esc(name(uid))}</button>`).join('');
+  const discardCandidates=taken?[...s.players[0].hand.map(c=>c.uid),taken]:[];
+  const discard=discardCandidates.map(uid=>`<button class='btn small ${selection.discardUid===uid?'primary':'outline'}' data-ttg-044-discard='${esc(uid)}'>${selection.discardUid===uid?'✓ ':''}送場外：${esc(name(uid))}</button>`).join('');
+  const rows=order.map((uid,i)=>`<div style='display:flex;gap:5px;align-items:center;padding:4px 0'><b>${i+1}.</b><span style='flex:1'>${esc(name(uid))}</span><button class='btn small outline' data-ttg-044-up='${esc(uid)}' ${i===0?'disabled':''}>↑</button><button class='btn small outline' data-ttg-044-down='${esc(uid)}' ${i===order.length-1?'disabled':''}>↓</button></div>`).join('');
+  return `<section class='panel'><h3>卡米那044 · 私人查看牌庫頂 ${seven.length} 張</h3><p class='note'>最多公開選1張「グレン」加入手牌；有拿牌就必須選一張手牌送場外（可以是剛拿到的）。其餘依你的排列放入牌庫底，未拿的卡不向對手公開。</p><div style='display:flex;gap:6px;flex-wrap:wrap'>${pick}</div>${taken?`<h4>選擇一張手牌送場外</h4><div style='display:flex;gap:6px;flex-wrap:wrap'>${discard}</div>`:''}<h4>牌庫底順序</h4>${rows}<button class='btn primary' data-action='ttg044SearchSubmit' ${taken&&!discardCandidates.includes(selection.discardUid)?'disabled':''}>確認搜尋並接續傷害結算</button></section>`;
+ })():'';
  const cards=s.players[0].hand;
  const hand=`<div class='grid' style='display:flex;flex-wrap:wrap;gap:7px'>${cards.map(c=>`<button class='btn small ${ui.ttgSelected===c.uid?'primary':'outline'}' data-ttg-select='${esc(c.uid)}'>${shown(c)}</button>`).join('')}</div>`;
  return `<header class='pageHeading'><div><h1>天元突破 · 限定 Beta 自動對戰</h1><p>回合 ${s.turn} · ${phase} · ${s.status==='finished'?'對局結束':'行動方：'+(actor===0?'玩家':'AI')} · ${pending}</p></div><button class='btn outline' data-view='builder'>返回牌組編輯</button></header>
@@ -443,7 +457,7 @@ function ttgArena(){
  ${s.status==='playing'?`<section class='panel'><h3>${bot?'AI 正在依合法動作處理…':'選擇合法動作'} · ${available.length} 項</h3>${bot?'<p class=note>輪到 AI，等待自動結算；不顯示電腦的私人手牌及效果選擇。</p>':`
  ${(s.pending||s.pendingTtgLife||s.pendingTtgTrigger)?`<p><button class='btn outline' data-action='ttgResolveAssist'>AI 幫我選擇這次效果</button> <small>會依合法動作結算，可自行選上面的選項。</small></p>`:''}
  <div style='display:flex;flex-wrap:wrap;gap:5px'><button class='btn small ${ui.ttgKind==='all'?'primary':'outline'}' data-ttg-kind='all'>全部</button>${types.map(o=>`<button class='btn small ${ui.ttgKind===o.type?'primary':'outline'}' data-ttg-kind='${esc(o.type)}'>${esc(o.type)} (${o.count})</button>`).join('')}</div>
- <div style='display:flex;flex-wrap:wrap;gap:7px;margin-top:12px'>${custom012Search}${custom023Search}${custom026Search}${custom012}${picked.actions.filter(a=>!['green012Discard','green012Search'].includes(a.type)&&!(custom023Search&&a.type==='resolveGreenEntry'&&a.mode==='search')&&!(custom026Search&&a.type==='resolveGreenEntry'&&a.mode==='arkChoice')).map(actionButton).join('')}</div>
+ <div style='display:flex;flex-wrap:wrap;gap:7px;margin-top:12px'>${custom012Search}${custom023Search}${custom026Search}${custom044Search}${custom012}${picked.actions.filter(a=>!['green012Discard','green012Search'].includes(a.type)&&!(custom023Search&&a.type==='resolveGreenEntry'&&a.mode==='search')&&!(custom026Search&&a.type==='resolveGreenEntry'&&a.mode==='arkChoice')&&!(custom044Search&&a.type==='ttgRed044Search')).map(actionButton).join('')}</div>
  ${picked.total>picked.actions.length?`<button class='btn' data-action='ttgMore'>顯示更多動作（${picked.actions.length}/${picked.total}）</button>`:''}
  ${ui.ttgSelected?`<button class='btn outline' data-ttg-select=''>清除手牌篩選</button>`:''}`}</section>`:''}
  <section class='panel'><h3>近期對局紀錄</h3><div class='logList'>${(s.log||[]).slice(-18).reverse().map(x=>`<p>${esc(typeof x==='string'?x:JSON.stringify(x))}</p>`).join('')||'<p class=note>尚無紀錄。</p>'}</div></section>`;
@@ -453,6 +467,22 @@ function bind(){
   const el=e.target.closest('button');if(!el||el.disabled)return;
   if(el.dataset.view){chooseView(el.dataset.view);return;}
   if(el.dataset.title){ui.title=el.dataset.title;ui.set='all';ui.color='all';ui.search='';ui.selected=null;render();return;}
+  if(el.dataset.ttg044Mode!==undefined&&ui.view==='ttgArena'&&ttgGame?.pending?.kind==='ttgRed044Search'){
+  if(el.dataset.ttg044Mode==='skip'){try{ttgAct(ttg044SearchChoice(ttgGame,{mode:'skip'}));}catch(e){toast('卡米那044：'+e.message);}return;}
+  if(el.dataset.ttg044Mode==='search'){ui.ttg044Search.mode='search';ui.ttg044Search.takeUid=null;ui.ttg044Search.discardUid=null;ui.ttg044Search.orderUids=[];render();return;}
+ }
+ if(el.dataset.ttg044Take!==undefined&&ui.view==='ttgArena'&&ttgGame?.pending?.kind==='ttgRed044Search'){
+  ui.ttg044Search.takeUid=el.dataset.ttg044Take||null;ui.ttg044Search.discardUid=null;ui.ttg044Search.orderUids=[];render();return;
+ }
+ if(el.dataset.ttg044Discard!==undefined&&ui.view==='ttgArena'&&ttgGame?.pending?.kind==='ttgRed044Search'){
+  ui.ttg044Search.discardUid=el.dataset.ttg044Discard;render();return;
+ }
+ if((el.dataset.ttg044Up!==undefined||el.dataset.ttg044Down!==undefined)&&ui.view==='ttgArena'&&ttgGame?.pending?.kind==='ttgRed044Search'){
+  const remain=ttgGame.players[0].deck.slice(0,ttgGame.pending.revealed.length).map(c=>c.uid).filter(uid=>uid!==ui.ttg044Search.takeUid),saved=ui.ttg044Search.orderUids;
+  const order=saved.length===remain.length&&remain.every(uid=>saved.includes(uid))?[...saved]:[...remain];
+  const up=el.dataset.ttg044Up!==undefined,uid=up?el.dataset.ttg044Up:el.dataset.ttg044Down,i=order.indexOf(uid),j=i+(up?-1:1);
+  if(i>=0&&j>=0&&j<order.length){[order[i],order[j]]=[order[j],order[i]];ui.ttg044Search.orderUids=order;}render();return;
+ }
   if(el.dataset.ttg026Mode==='deck'&&ui.view==='ttgArena'&&ttgGame?.pending?.kind==='ttgGreenEntry'){ui.ttg026Search.mode='deck';render();return;}
   if(el.dataset.ttg026Take!==undefined&&ui.view==='ttgArena'&&ttgGame?.pending?.kind==='ttgGreenEntry'){
   ui.ttg026Search.takeUid=el.dataset.ttg026Take||null;ui.ttg026Search.orderUids=[];render();return;
@@ -520,6 +550,7 @@ function bind(){
    case 'ttgBetaStartGreen':ttgBetaStart(TTG_GREEN_BETA_PRESET);break;
    case 'ttgBetaStartRed':ttgBetaStart(TTG_RED_BETA_PRESET);break;
    case 'ttgBetaStartDeck':ttgBetaStart(ttgDeck);break;
+   case 'ttg044SearchSubmit':if(ui.view==='ttgArena'&&ttgGame?.pending?.kind==='ttgRed044Search'&&ttgChoiceActor(ttgGame)===0){try{const top=ttgGame.players[0].deck.slice(0,ttgGame.pending.revealed.length).map(c=>c.uid),taken=ui.ttg044Search.takeUid,remain=top.filter(uid=>uid!==taken),saved=ui.ttg044Search.orderUids,order=saved.length===remain.length&&remain.every(uid=>saved.includes(uid))?saved:remain;ttgAct(ttg044SearchChoice(ttgGame,{mode:'search',takeUid:taken,discardUid:ui.ttg044Search.discardUid,bottomOrderUids:order}));}catch(e){toast('卡米那044搜尋：'+e.message);}}break;
    case 'ttg026SearchSubmit':if(ui.view==='ttgArena'&&ttgGame?.pending?.kind==='ttgGreenEntry'&&ttgChoiceActor(ttgGame)===0){try{const top=ttgGame.players[0].deck.slice(0,7).map(c=>c.uid),chosen=ui.ttg026Search.takeUid,rest=top.filter(uid=>uid!==chosen),saved=ui.ttg026Search.orderUids,order=saved.length===rest.length&&rest.every(uid=>saved.includes(uid))?saved:rest;ttgAct(ttg026SearchChoice(ttgGame,{takeUid:chosen,bottomOrderUids:order}));}catch(e){toast('羅修026搜尋：'+e.message);}}break;
    case 'ttg023SearchSubmit':if(ui.view==='ttgArena'&&ttgGame?.pending?.kind==='ttgGreenEntry'&&ttgChoiceActor(ttgGame)===0){try{const top=ttgGame.players[0].deck.slice(0,5).map(c=>c.uid),chosen=ui.ttg023Search.takeUid,rest=top.filter(uid=>uid!==chosen),saved=ui.ttg023Search.orderUids,order=saved.length===rest.length&&rest.every(uid=>saved.includes(uid))?saved:rest;ttgAct(ttg023SearchChoice(ttgGame,{takeUid:chosen,discardUid:ui.ttg023Search.discardUid,bottomOrderUids:order}));}catch(e){toast('利龍023搜尋：'+e.message);}}break;
    case 'ttg012SearchSubmit':if(ui.view==='ttgArena'&&ttgGame?.pending?.kind==='green012Search'&&ttgChoiceActor(ttgGame)===0){try{const rule=legalTtgCoreActions(ttgGame).find(a=>a.type==='green012Search'),rest=rule.revealed.filter(uid=>uid!==ui.ttg012Search.takeUid),saved=ui.ttg012Search.orderUids,order=saved.length===rest.length&&rest.every(uid=>saved.includes(uid))?saved:rest;ttgAct(ttg012SearchChoice(ttgGame,{takeUid:ui.ttg012Search.takeUid,bottomOrderUids:order}));}catch(e){toast('西蒙012搜尋選擇：'+e.message);}}break;
