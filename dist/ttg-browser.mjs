@@ -1,7 +1,7 @@
 // Browser-facing adapter for the independently-tested TTG experimental match core.
 // Deliberately does not mark official cards auto:true or the title officially playable.
 import {TTG_BY_ID} from './ttg-builder.mjs';
-import {validateTtgCoreDeck,legalTtgCoreActions,TTG_CORE_SMOKE_IDS} from './ttg-core-match.mjs';
+import {validateTtgCoreDeck,legalTtgCoreActions,legalTtgRaidChoices,isTtgRaidAction,TTG_CORE_SMOKE_IDS} from './ttg-core-match.mjs';
 export const TTG_BETA_IDS=TTG_CORE_SMOKE_IDS;
 export const TTG_GREEN_BETA_PRESET=Object.freeze(Object.fromEntries([...['003','005','006','009','010','011','014','015','016','017','018','019'].map(n=>['TTG-1-'+n,4]),['TTG-1-035',2]]));
 export const TTG_RED_BETA_PRESET=Object.freeze(Object.fromEntries([...['042','043','044','046','047','048','051','052','059','066','075','077'].map(n=>['TTG-1-'+n,4]),['TTG-1-078',1],['TTG-1-079',1]]));
@@ -22,7 +22,7 @@ export function ttgCardByUid(s,uid){
 }
 const label=(s,uid)=>{const c=ttgCardByUid(s,uid);return c?(TTG_BY_ID[c.cardId]?.nameZh||TTG_BY_ID[c.cardId]?.nameJa||c.cardId)+'（'+c.cardId.slice(-3)+'）':String(uid??'—');};
 export function ttgActionLabel(s,a){
- const names={next:'進入下一階段／結束回合',extraDraw:'額外抽牌',play:'普通登場',move:'移動角色',attack:'宣告攻擊',block:'選擇阻擋',resolveGreenEntry:'結算綠色登場效果'};
+ const names={next:'進入下一階段／結束回合',extraDraw:'額外抽牌',play:'普通登場',move:'移動角色',attack:'宣告攻擊',block:'選擇阻擋',resolveGreenEntry:'結算綠色登場效果',raidTtg:'突襲',green008Raid:'突襲',greenHighRaid:'突襲',ttgGreen028Raid:'突襲',ttgGreen029Raid:'突襲',green030Raid:'突襲',ttgRedHighRaid:'突襲',ttgRed076Raid:'突襲'};
  if(a.type==='ttgLifeChoice'){
   const options={decline:'不發動生命 Trigger',draw:'發動 DRAW：抽 1 張',final:'發動 FINAL：恢復 1 點生命',get:'發動 GET：將觸發卡加入手牌',active:'發動 ACTIVE：選擇角色',special:'發動 SPECIAL：使敵方角色退場',color:'發動 COLOR：登場角色',colorRed:'發動紅色 COLOR：選擇對手角色',raid:'發動 Raid 生命 Trigger',raidHand:'將 Raid 觸發卡加入手牌'};
   let result=options[a.mode]||('生命觸發：'+String(a.mode));
@@ -47,7 +47,9 @@ export function ttgActionLabel(s,a){
  if(a.type==='green012Discard')title+=' · 棄 '+(a.discardUids||[]).map(uid=>label(s,uid)).join('、')+'，回復 AP';
  if(a.type==='attack'&&a.targetUid!=null)title+=' → 狙擊 '+label(s,a.targetUid);
  if(a.targetUid!=null&&a.type!=='attack')title+=' → '+label(s,a.targetUid);
- if(a.baseUid!=null)title+=' · Raid底板 '+label(s,a.baseUid);
+ if(a.baseUid!=null&&isTtgRaidAction(a))title+=' · 底板 '+label(s,a.baseUid);
+ if(a.sourceUid!=null&&isTtgRaidAction(a))title+=' · 底板 '+label(s,a.sourceUid);
+ if(a.raidKind==='chain')title+=' · 升階突襲';
  if(a.line!=null&&Number.isInteger(a.slot))title+=' → '+(a.line==='front'?'前線':'能源線')+(a.slot+1);
  else if(Number.isInteger(a.slot))title+=' → 位置'+(a.slot+1);
  if(a.mode!=null)title+=' · '+String(a.mode);
@@ -159,6 +161,12 @@ export function ttgNormalPlacementAction(s,handUid,line,slot){
     player[line]?.[slot]!=null)return null;
  return legalTtgCoreActions(s).find(a=>a.type==='play'&&a.handUid===handUid&&
     a.line===line&&a.slot===slot)||null;
+}
+// Return executable, physically payable Raid choices. Every option originates
+// from the authoritative engine legality check; do not fabricate AP or bases.
+export function ttgRaidDecisions(s,handUid){
+ if(typeof handUid!=='string'||!legalTtgRaidChoices(s,handUid).length)return [];
+ return ttgExecutableActions(s).filter(a=>isTtgRaidAction(a)&&a.handUid===handUid);
 }
 export function ttgActionKinds(s){
  const by=new Map();for(const a of ttgExecutableActions(s))by.set(a.type,(by.get(a.type)||0)+1);return [...by].map(([type,count])=>({type,count}));

@@ -173,6 +173,29 @@ function greenEntryChoices(s){
  }
  return actions;
 }
+// First-class RAID action classification across the independent TTG rule modules.
+// A printed Raid icon alone never grants permission: legalTtgCoreActions is the
+// authoritative validator for energy, AP, legal base, timing and placement.
+export const TTG_PRINTED_RAID_IDS=Object.freeze([
+ 'TTG-1-008','TTG-1-027','TTG-1-028','TTG-1-029','TTG-1-030',
+ 'TTG-1-031','TTG-1-032','TTG-1-071','TTG-1-072','TTG-1-073',
+ 'TTG-1-074','TTG-1-076'
+]);
+export const TTG_RAID_ACTION_TYPES=Object.freeze([
+ 'green008Raid','greenHighRaid','ttgGreen028Raid','ttgGreen029Raid',
+ 'green030Raid','raidTtg','ttgRedHighRaid','ttgRed076Raid'
+]);
+const ttgRaidTypes=new Set(TTG_RAID_ACTION_TYPES);
+export const isTtgRaidAction=a=>!!a&&ttgRaidTypes.has(a.type);
+export function legalTtgRaidChoices(s,handUid=null){
+ if(s?.status!=='playing'||s.phase!=='main'||s.pending||
+    s.pendingTtgLife||s.pendingTtgTrigger)return [];
+ const owner=s.players?.[s.active];
+ if(!owner?.hand||handUid!=null&&!owner.hand.some(c=>c.uid===handUid))return [];
+ return legalTtgCoreActions(s).filter(a=>isTtgRaidAction(a)&&
+  (handUid==null||a.handUid===handUid));
+}
+
 export function legalTtgCoreActions(s){
  if(s.status!=='playing')return [];
  const p=s.active,pl=s.players[p];
