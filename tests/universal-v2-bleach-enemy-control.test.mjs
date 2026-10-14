@@ -12,7 +12,7 @@ const counts={
  'BLC-2-008':4,'BLC-1-071':4,'BLC-1-075':4,'BLC-1-072':4,
  'BLC-1-100':2
 };
-const fresh=()=>newUniversalMatch(packs,{decks:[counts,counts],first:0,seed:2801});
+const fresh=(first=0)=>newUniversalMatch(packs,{decks:[counts,counts],first,seed:2801});
 function take(s,p,id){
  for(const zone of ['hand','deck','life','outside']){
   const z=s.players[p][zone],i=z.findIndex(c=>c.cardId===id);
@@ -82,4 +82,40 @@ test('BLC-2-048 bonus Rukia enables legal 4000-BP retirement; no Rukia means no 
  assert.equal(base.pending,null);
  assert.equal(base.players[1].front[0]?.uid,high.uid);
  assert.equal(assertUniversalMatch(packs,base),true);
+});
+
+test('BLC-2-048 SPECIAL life trigger can retire a BP4000 foe without event energy/AP cost',()=>{
+ let s=fresh(1);
+ const attacker=take(s,1,'BLC-1-039'),high=take(s,1,'BLC-1-105');
+ attacker.ready=true;high.ready=true;
+ s.players[1].front[0]=attacker;s.players[1].front[1]=high;
+ const trigger=take(s,0,'BLC-2-048');
+ const displaced=s.players[0].life.shift();
+ s.players[0].deck.push(displaced);
+ s.players[0].life.unshift(trigger);
+ s=to(s,'attack');
+ s=dispatchUniversalAction(packs,s,{type:'attack',uid:attacker.uid},{actor:1});
+ s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:null},{actor:0});
+ assert.equal(s.pending?.kind,'life-trigger');
+ assert.equal(s.pending?.trigger,'special');
+ const legal=legalUniversalActions(packs,s);
+ assert.ok(legal.some(a=>a.type==='chooseTrigger'&&a.mode==='special'&&a.uid===high.uid),
+  'SPECIAL ignores normal event BP<=3000 requirement');
+ assert.ok(legal.some(a=>a.type==='chooseTrigger'&&a.mode==='skip'),
+  'life trigger can be declined');
+ const before=structuredClone(s);
+ assert.throws(()=>dispatchUniversalAction(packs,s,
+  {type:'chooseTrigger',mode:'special',uid:'forged'},{actor:0}),/not currently legal/);
+ assert.deepEqual(s,before);
+ const apBefore=s.players[0].apCards.filter(x=>x.ready).length;
+ const after=dispatchUniversalAction(packs,s,
+  {type:'chooseTrigger',mode:'special',uid:high.uid},{actor:0});
+ assert.equal(after.players[1].front[1],null);
+ assert.ok(after.players[1].outside.some(x=>x.uid===high.uid));
+ assert.equal(after.players[0].apCards.filter(x=>x.ready).length,apBefore);
+ assert.ok(after.players[0].outside.some(x=>x.uid===trigger.uid));
+ assert.equal(assertUniversalMatch(packs,after),true);
+ const skip=dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'skip'},{actor:0});
+ assert.equal(skip.players[1].front[1]?.uid,high.uid);
+ assert.equal(assertUniversalMatch(packs,skip),true);
 });
