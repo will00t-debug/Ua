@@ -272,8 +272,9 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
  if(!options.some(a=>same(a,action)))throw Error('Action not currently legal');
  const s=clone(source),p=actor(s),pl=s.players[p];
  if(s.pending){
-  if(['block','effect-target','effect-discard'].includes(s.pending.kind))resolveChoice(s,{uid:action.uid},pack);
-  else resolveChoice(s,{mode:action.mode},pack);
+  // Pass the entire pre-validated action: some life triggers choose both a
+  // mode and an owned field UID (e.g. ACTIVE); stripping the UID corrupts it.
+  resolveChoice(s,action,pack);
  }else switch(action.type){
   case 'extraDraw':
    spendAp(pl,1);draw(s,p);s.extraDrawn=true;break;
