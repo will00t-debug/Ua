@@ -324,7 +324,7 @@ test('Q2396 generic chain Raid is opt-in, moves the old Raid top facedown under 
  assert.ok(firstRaid);
  s=dispatchUniversalAction(chainPacks,s,firstRaid,{actor:1});
  assert.equal(s.players[1].front[0].uid,first.uid);
- const chainActions=legalUniversalActions(chainPacks,s).filter(a=>a.type==='raid'&&a.uid===last.uid);
+ const chainActions=legalUniversalActions(chainPacks,s).filter(a=>a.type==='raid'&&a.uid===last.uid&&a.baseUid===first.uid);
  assert.deepEqual(chainActions.map(a=>a.baseUid),[first.uid]);
  const second=dispatchUniversalAction(chainPacks,s,chainActions[0],{actor:1});
  assert.equal(second.players[1].front[0].uid,last.uid);
@@ -361,9 +361,9 @@ test('unprinted re-Raid destinations fail closed; only named prior Raid top is v
  s.players[1].front[0]=take1('F00');
  const first=take1('F01'),last=take1('F08');s.players[1].hand.push(first,last);
  for(let i=0;i<6;i++)s=dispatchUniversalAction([packA,newPack],s,{type:'next'});
- const firstAction=legalUniversalActions([packA,newPack],s).find(a=>a.type==='raid'&&a.uid===first.uid);
+ const firstAction=legalUniversalActions([packA,newPack],s).find(a=>a.type==='raid'&&a.uid===first.uid&&a.baseUid===s.players[1].front[0]?.uid);
  s=dispatchUniversalAction([packA,newPack],s,firstAction,{actor:1});
- assert.ok(!legalUniversalActions([packA,newPack],s).some(a=>a.type==='raid'&&a.uid===last.uid));
+ assert.ok(!legalUniversalActions([packA,newPack],s).some(a=>a.type==='raid'&&a.uid===last.uid&&a.baseUid===first.uid));
  assert.equal(assertUniversalMatch([packA,newPack],s),true);
 });
 test('Q2286 foundation: an original Raid-base onRaided trigger fires AGAIN when an allowed chained Raid replaces the top',()=>{
@@ -389,12 +389,12 @@ test('Q2286 foundation: an original Raid-base onRaided trigger fires AGAIN when 
  s.players[1].front[0]=baseCard;s.players[1].energy[0]=generator;
  s.players[1].hand.push(one,two);
  for(let i=0;i<6;i++)s=dispatchUniversalAction(packs,s,{type:'next'});
- const first=legalUniversalActions(packs,s).find(a=>a.type==='raid'&&a.uid===one.uid);
+ const first=legalUniversalActions(packs,s).find(a=>a.type==='raid'&&a.uid===one.uid&&a.baseUid===baseCard.uid);
  s=dispatchUniversalAction(packs,s,first,{actor:1});
  assert.equal(s.pending?.kind,'effect-buff-trait','base trigger fires on first Raid');
  s=dispatchUniversalAction(packs,s,{type:'chooseTraitBuff',uid:null},{actor:1});
  assert.equal(s.pending,null);
- const chainAction=legalUniversalActions(packs,s).find(a=>a.type==='raid'&&a.uid===two.uid);
+ const chainAction=legalUniversalActions(packs,s).find(a=>a.type==='raid'&&a.uid===two.uid&&a.baseUid===one.uid);
  assert.ok(chainAction);
  s=dispatchUniversalAction(packs,s,chainAction,{actor:1});
  assert.equal(s.pending?.kind,'effect-buff-trait','original base re-triggers beneath facedown former top');
