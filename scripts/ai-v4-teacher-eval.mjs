@@ -2,9 +2,9 @@
 import {newGame,dispatch,controller,legalActions} from '../dist/engine.mjs';
 import {chooseAiAction} from '../dist/ai-v2.mjs';
 import {decisionSample} from '../dist/ai-v4-environment.mjs';
-const games=Number(process.env.AI_V4_GAMES||4);
+const games=Number(process.env.AI_V4_GAMES||100);
 const samples=[];
-const stats={games:0,decisions:0,illegal:0,finished:0,wins:[0,0],truncated:0};
+const stats={games:0,decisions:0,illegal:0,unrepresented:0,finished:0,wins:[0,0],truncated:0};
 for(let game=0;game<games;game++){
  let s=newGame({mode:'solo',first:game%2,seed:240000+game});
  for(let step=0;step<700&&s.status!=='finished';step++){
@@ -13,7 +13,15 @@ for(let game=0;game<games;game++){
   if(!action)break;
   const batch=decisionSample(s,p);
   const index=batch.actions.findIndex(a=>JSON.stringify(a)===JSON.stringify(action));
-  if(index<0){stats.illegal++;throw Error('Teacher chose action outside legalActions: '+JSON.stringify(action));}
+  if(index<0){
+   // Engine's candidate enumerator omits some valid multi-select/optional choices.
+   // Check actual legality through dispatch; never label an invalid action as legal.
+   let next;
+   try{next=dispatch(s,action);}catch(error){stats.illegal++;throw Error('Teacher illegal action: '+JSON.stringify(action)+' '+error.message);}
+   stats.unrepresented++;
+   s=next;
+   continue;
+  }
   samples.push({observation:batch.observation,actions:batch.actions,mask:batch.mask,actionIndex:index});
   stats.decisions++;
   s=dispatch(s,action);
