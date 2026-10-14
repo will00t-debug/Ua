@@ -191,3 +191,12 @@
 - **032**：官方 Q2395 僅可 Raid 本回合**未** Raid 過的超銀河紅蓮螺巖，且能源滿 100、AP 1；玩家可選擇其他己方前線任意枚數裏向置於自身下，不公開裏向卡身份；自己回合獲 Impact4 和 Damage7，仍須於後續對手回合確認這些加成取消且永久效果保護保留。仍需多重 Damage 生命觸發排隊、投射對象保護及真實手機選擇介面。
 
 測試應由 Node 22 Actions 完整跑完並回報數字；目前 Beta 正式旗標不更動。不合併主分支也不部署。下一批優先為 TTG-1-033～035 場域與特殊退場／隱私。
+
+
+## 2026-10-14：TTG-1-033～035 官方卡文、場域／生命特殊效果續驗（草稿）
+
+來源：[033 官方 Q2280／Q2281](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-033)、[034 官方 Q2282](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-034)、[035 官方印刷效果](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-035)。
+
+新增 `tests/ttg-official-acceptance-033-035.test.mjs`：四個 50 張實體卡核心場景，包含 033 同名每回合使用一次且成為 027 Raid 下方裏向卡並抽 2 張、己方可查看／對手不能查看底下身份；034 自己角色退場時捕獲場外卡裏向放場域下、產能+1 與同回合不得第二次；035 正常事件根據己方西蒙門檻 BP3000/5000 選對手前線，將完整 Raid 疊卡移到 **REMOVED** 而非 OUTSIDE，生命 SPECIAL Trigger 則依 Q99 可以放棄、或將對方 Raid 疊卡送到 **OUTSIDE** 而不是 REMOVED。
+
+後續仍待完成：033 同一回合多重高階 Raid 選擇順序、034 031 Raid 轉移所有裏向卡、035 對手特殊離場替代效果與手機真機操作、完整生命 Trigger 複合時序。此批只驗收列明分支，**不翻全卡 auto 旗標、不直接修改 main、不部署正式網站**。本批需由 Node 22 GitHub Actions 全回歸確認，之後從 **TTG-1-036～038** 接續。
