@@ -26,7 +26,7 @@ test('069 cannot activate without outside Gunmen, using REST source, or select n
  const wrong=take(p,'TTG-1-045');p.outside.push(wrong);
  s=withTtgDerivedEnergy(s,0);
  assert.ok(!legalTtgCoreActions(s).some(x=>x.type==='ttgRed069Main'));
- const real=take(p,'TTG-1-071');p.outside.push(real);
+ const real=take(s.players[0],'TTG-1-071');s.players[0].outside.push(real);
  s=withTtgDerivedEnergy(s,0);
  assert.ok(legalTtgCoreActions(s).some(x=>x.type==='ttgRed069Main'&&x.recoverUid===real.uid));
  const snapshot=JSON.stringify(s);
@@ -48,6 +48,7 @@ test('070: can substitute Raid base only when no own Kamina anywhere in field, i
  raid.stack=[base];
  assert.equal(canRed070ServeAsRaidBase(s,0,rossiu,gurren),false);
  assert.equal(canRed070ServeAsRaidBase(s,1,rossiu,gurren),true,'enemy Kamina does not affect own condition');
+ s=withTtgDerivedEnergy(s,0);
  assert.ok(assertTtgCoreState(s));
 });
 test('070: printed DRAW life trigger is optional and does not reveal any non-trigger card',()=>{
@@ -81,9 +82,11 @@ test('071 first actual attack grants selected OTHER ally +2000 and invalid same-
  s.phase='attack';s=withTtgDerivedEnergy(s,0);
  s=dispatchTtgCoreAction(s,offered(s,x=>x.type==='attack'&&x.uid===king.uid));
  const options=legalTtgCoreActions(s);
+ assert.equal(s.pending?.kind,'ttgRed071Attack');
  assert.ok(options.some(x=>x.type==='kittan071AttackBuff'&&x.targetUid===ally.uid));
  assert.ok(!options.some(x=>x.type==='kittan071AttackBuff'&&x.targetUid===king.uid));
  s=dispatchTtgCoreAction(s,offered(s,x=>x.type==='kittan071AttackBuff'&&x.targetUid===ally.uid));
  assert.equal(s.players[0].front[1].currentBp,TTG_BY_ID['TTG-1-045'].bp+2000);
+ assert.equal(s.pending?.kind,'block','opponent blocking window begins only after choice');
  assert.ok(assertTtgCoreState(s));
 });
