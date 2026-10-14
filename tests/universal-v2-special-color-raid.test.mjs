@@ -297,3 +297,110 @@ test('RAID-life nested onPlay selection persists, then onRaid resolves in printe
  assert.equal(resumed.players[1].front[0].stack[0].uid,baseCard.uid);
  assert.equal(assertUniversalMatch(ownPacks,resumed),true);
 });
+
+test('Q2396 generic chain Raid is opt-in, moves the old Raid top facedown under original base with exact UID conservation',()=>{
+ const newCards=base.map(c=>c.id==='F08'?{
+  ...c,name:'Chain Hero',energy:4,raidName:'Hero',
+  raidFromRaid:['Hero Raid'],trigger:'raid',
+  implementation:'dsl',effects:{onPlay:[{op:'draw',count:1}]}
+ }:c);
+ const chainPack=createUniversalPack({id:'chain-fixture',cards:newCards});
+ const chainPacks=[packA,chainPack],chainDeck={...deck,F08:1,F15:1};
+ assert.deepEqual(validateUniversalDeck(chainPack,chainDeck),[]);
+ let s=newUniversalMatch(chainPacks,{decks:[deck,chainDeck],seed:811,first:0});
+ const saved=(id)=>{
+  for(const zone of ['hand','deck','life','outside']){
+   const arr=s.players[1][zone],idx=arr.findIndex(c=>c.cardId===id);
+   if(idx!==-1)return arr.splice(idx,1)[0];
+  }
+  throw Error('Missing chain fixture '+id);
+ };
+ const producer=saved('F00'),originalBase=saved('F00'),first=saved('F01'),last=saved('F08');
+ s.players[1].energy[0]=producer;s.players[1].front[0]=originalBase;
+ s.players[1].hand.push(first,last);
+ for(let i=0;i<6;i++)s=dispatchUniversalAction(chainPacks,s,{type:'next'});
+ assert.equal(s.active,1);assert.equal(s.phase,'main');
+ const firstRaid=legalUniversalActions(chainPacks,s).find(a=>a.type==='raid'&&a.uid===first.uid&&a.baseUid===originalBase.uid);
+ assert.ok(firstRaid);
+ s=dispatchUniversalAction(chainPacks,s,firstRaid,{actor:1});
+ assert.equal(s.players[1].front[0].uid,first.uid);
+ const chainActions=legalUniversalActions(chainPacks,s).filter(a=>a.type==='raid'&&a.uid===last.uid);
+ assert.deepEqual(chainActions.map(a=>a.baseUid),[first.uid]);
+ const second=dispatchUniversalAction(chainPacks,s,chainActions[0],{actor:1});
+ assert.equal(second.players[1].front[0].uid,last.uid);
+ assert.equal(second.players[1].front[0].stack[0].uid,originalBase.uid);
+ const oldTop=second.players[1].front[0].stack[0].under[0];
+ assert.equal(oldTop.uid,first.uid);
+ assert.equal(oldTop.faceDown,true);
+ assert.equal(oldTop.stack.length,0,'same base is not recursively duplicated');
+ assert.equal(second.players[1].outside.some(c=>c.uid===oldTop.uid),false);
+ assert.ok(!JSON.stringify(universalPublicView(chainPacks,second,0)).includes(oldTop.uid),
+  'the previous Raid top is now hidden from opponent');
+ assert.equal(assertUniversalMatch(chainPacks,second),true);
+ assert.equal(assertUniversalMatch(chainPacks,s),true,'original previous Raid state remains intact');
+});
+test('unprinted re-Raid destinations fail closed; only named prior Raid top is valid',()=>{
+ const invalid={...base[8],implementation:'dsl',effects:{onPlay:[{op:'draw',count:1}]},
+  raidFromRaid:['Hero Raid']};
+ assert.throws(()=>createUniversalPack({id:'not-registered',cards:[invalid]}),/invalid explicitly permitted re-Raid/);
+ const repeat={...base[8],raidName:'Hero',raidFromRaid:['Hero Raid','Hero Raid']};
+ assert.throws(()=>createUniversalPack({id:'duplicate',cards:[repeat]}),/invalid explicitly permitted re-Raid/);
+ const cards=base.map(c=>c.id==='F08'?{...c,raidName:'Hero',
+  name:'Cannot chain',implementation:'dsl',
+  effects:{onPlay:[{op:'draw',count:1}]}}:c);
+ const newPack=createUniversalPack({id:'no-chain-permission',cards});
+ const newDeck={...deck,F08:1,F15:1};
+ let s=newUniversalMatch([packA,newPack],{decks:[deck,newDeck],seed:833,first:0});
+ const take1=id=>{
+  for(const zone of ['hand','deck','life','outside']){
+   const a=s.players[1][zone],index=a.findIndex(c=>c.cardId===id);
+   if(index>=0)return a.splice(index,1)[0];
+  }
+ };
+ s.players[1].energy[0]=take1('F00');
+ s.players[1].front[0]=take1('F00');
+ const first=take1('F01'),last=take1('F08');s.players[1].hand.push(first,last);
+ for(let i=0;i<6;i++)s=dispatchUniversalAction([packA,newPack],s,{type:'next'});
+ const firstAction=legalUniversalActions([packA,newPack],s).find(a=>a.type==='raid'&&a.uid===first.uid);
+ s=dispatchUniversalAction([packA,newPack],s,firstAction,{actor:1});
+ assert.ok(!legalUniversalActions([packA,newPack],s).some(a=>a.type==='raid'&&a.uid===last.uid));
+ assert.equal(assertUniversalMatch([packA,newPack],s),true);
+});
+test('Q2286 foundation: an original Raid-base onRaided trigger fires AGAIN when an allowed chained Raid replaces the top',()=>{
+ const special=base.map(c=>{
+  if(c.id==='F00')return {...c,traits:['TestTrait'],implementation:'dsl',
+   effects:{onRaided:[{op:'buffOwnTrait',trait:'TestTrait',bp:1000,optional:true}]}};
+  if(c.id==='F01')return {...c,effects:{onPlay:[],onRaid:[]}};
+  if(c.id==='F08')return {...c,raidName:'Hero',raidFromRaid:['Hero Raid'],
+   name:'Chain Hero',energy:4,implementation:'dsl',effects:{onPlay:[]}};
+  return c;
+ });
+ const chain=createUniversalPack({id:'second-trigger',cards:special});
+ const decks=[deck,{...deck,F08:1,F15:1}],packs=[packA,chain];
+ let s=newUniversalMatch(packs,{decks,seed:845,first:0});
+ const take1=id=>{
+  for(const zone of ['hand','deck','life','outside']){
+   const arr=s.players[1][zone],idx=arr.findIndex(c=>c.cardId===id);
+   if(idx!==-1)return arr.splice(idx,1)[0];
+  }
+  throw Error('not found');
+ };
+ const baseCard=take1('F00'),generator=take1('F00'),one=take1('F01'),two=take1('F08');
+ s.players[1].front[0]=baseCard;s.players[1].energy[0]=generator;
+ s.players[1].hand.push(one,two);
+ for(let i=0;i<6;i++)s=dispatchUniversalAction(packs,s,{type:'next'});
+ const first=legalUniversalActions(packs,s).find(a=>a.type==='raid'&&a.uid===one.uid);
+ s=dispatchUniversalAction(packs,s,first,{actor:1});
+ assert.equal(s.pending?.kind,'effect-buff-trait','base trigger fires on first Raid');
+ s=dispatchUniversalAction(packs,s,{type:'chooseTraitBuff',uid:null},{actor:1});
+ assert.equal(s.pending,null);
+ const chainAction=legalUniversalActions(packs,s).find(a=>a.type==='raid'&&a.uid===two.uid);
+ assert.ok(chainAction);
+ s=dispatchUniversalAction(packs,s,chainAction,{actor:1});
+ assert.equal(s.pending?.kind,'effect-buff-trait','original base re-triggers beneath facedown former top');
+ assert.equal(s.pending.sourceUid,baseCard.uid);
+ const done=dispatchUniversalAction(packs,s,{type:'chooseTraitBuff',uid:two.uid},{actor:1});
+ assert.equal(universalBp(packs,done,done.players[1].front[0]),3000);
+ assert.equal(done.players[1].front[0].stack[0].under[0].uid,one.uid);
+ assert.equal(assertUniversalMatch(packs,done),true);
+});
