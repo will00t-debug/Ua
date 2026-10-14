@@ -70,6 +70,26 @@ function choosePending(s) {
   const q = s.pending, p = controller(s), pl = s.players[p];
   const e = q?.effect || {};
   if (!q?.choices?.length) return {type: 'choose', ids: []};
+  // Optional line-swaps must be evaluated through BOTH target and destination.
+  // The old fallback always chose the first character and first slot, frequently
+  // moving an important frontliner backwards or banishing an occupied slot.
+  if (['moveAcrossPick', 'moveAcrossSlot', 'aizenFrontSlot'].includes(e.kind))
+    return chooseRelocation(s);
+  if (e.kind === 'aizenRestTwo') {
+    // Rest the least valuable attackers/blockers when bringing Aizen forward.
+    const ordered = [...q.choices].sort((a, b) => {
+      const cost = choice => {
+        const c = locate(s, choice.id)?.card;
+        if (!c) return Infinity;
+        const d = cardOf(c);
+        return bp(s, c) / 1000 + (d?.raid ? 2 : 0)
+          + (d?.impact || c.impactTurn === s.turn ? 2 : 0)
+          + (c.damageTurn === s.turn ? 2 : 0);
+      };
+      return cost(a) - cost(b);
+    });
+    return {type: 'choose', ids: ordered.slice(0, q.max).map(c => c.id)};
+  }
   if (e.kind === 'block') {
     const attacking = locate(s, e.uid);
     if (!attacking) return {type: 'choose', ids: ['pass']};
@@ -103,6 +123,68 @@ function choosePending(s) {
     return {type: 'choose', ids: ordered.slice(0, q.max).map(x => x.id)};
   }
   return legacyBotAction(s);
+}
+
+// Simulate the public board transition of a placement, never reading hidden
+// opponent cards or giving credit for identities revealed during simulation.
+function relocationGain(before, after, p, movedUid) {
+  const known = new Set(before.players[p].hand.map(c => c.uid));
+  let gain = evaluatePosition(after, p, known) - evaluatePosition(before, p, known);
+  const oldEnergy = energy(before, p), newEnergy = energy(after, p);
+  if (newEnergy < oldEnergy) {
+    const goal = plannedEnergy(before, p).target;
+    // Do not strand future turns just to get an extra attacker this turn.
+    gain -= Math.max(0, Math.min(oldEnergy, goal) - newEnergy) * 6;
+    const lostPlays = before.players[p].hand.filter(c => {
+      const d = cardOf(c);
+      return d?.type === 'character' && d.energy <= oldEnergy && d.energy > newEnergy;
+    }).length;
+    gain -= lostPlays * 7;
+  }
+  // Occupied destinations remove a real card from the game; this is never a
+  // free swap. Treat it as a major loss, especially on a Raid stack.
+  const banished = after.players[p].removed.length - before.players[p].removed.length;
+  if (banished > 0) gain -= banished * 22;
+  const from = locate(before, movedUid), to = locate(after, movedUid);
+  if (from?.line === 'front' && to?.line === 'energy') {
+    gain -= 2 + (from.card.ready ? 1 : 0)
+      + (cardOf(from.card)?.raid ? 2 : 0);
+  }
+  return gain;
+}
+
+// Aizen and similar on-play effects are optional. Explore every legal
+// source/destination pair before choosing; skip if all moves are harmful.
+// This also prevents choosing slot 1 by default and banishing a key ally.
+function chooseRelocation(s) {
+  const q = s.pending, p = controller(s), kind = q.effect.kind;
+  if (kind === 'moveAcrossPick') {
+    let best = null;
+    for (const choice of q.choices) {
+      try {
+        const selected = dispatch(s, {type: 'choose', ids: [choice.id]});
+        if (selected.pending?.effect.kind !== 'moveAcrossSlot') continue;
+        for (const slot of selected.pending.choices) {
+          const after = dispatch(selected, {type: 'choose', ids: [slot.id]});
+          const gain = relocationGain(s, after, p, choice.id);
+          if (!best || gain > best.gain)
+            best = {id: choice.id, gain};
+        }
+      } catch { /* Ignore an invalid simulated outcome, not the real game. */ }
+    }
+    if (!best || (q.min === 0 && best.gain <= 0.8))
+      return {type: 'choose', ids: q.min === 0 ? [] : [best?.id || q.choices[0].id]};
+    return {type: 'choose', ids: [best.id]};
+  }
+  let best = null;
+  for (const slot of q.choices) {
+    try {
+      const after = dispatch(s, {type: 'choose', ids: [slot.id]});
+      const gain = relocationGain(s, after, p, q.effect.uid);
+      if (!best || gain > best.gain) best = {id: slot.id, gain};
+    } catch { /* Keep the actual choice legal. */ }
+  }
+  return {type: 'choose', ids: [best?.id || q.choices[0].id]};
 }
 
 function scoreAttack(s, a) {
