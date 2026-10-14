@@ -235,12 +235,11 @@ test('seeded cross-title complete-turn simulations preserve 50 physical cards on
    }else if(s.phase==='attack')a=chooseType('attack')||chooseType('next');
    else a=chooseType('next');
    assert.ok(a,'AI must always select native legal action');
-   const snapshot=structuredClone(s);
+   const original=s,snapshot=structuredClone(s);
    const previousActor=universalActor(s);
    s=dispatchUniversalAction(packs,s,a,{actor:previousActor});
    assert.equal(assertUniversalMatch(packs,s),true);
-   assert.deepEqual(snapshot.players[0].hand, snapshot.players[0].hand,
-    'the immutable source snapshot remains intact');
+   assert.deepEqual(original,snapshot,'reducer must not mutate its input');
    assert.deepEqual(s.packIds,[alpha.id,beta.id]);
    assert.equal(s.players[0].apCards.length,3);
    assert.equal(s.players[1].apCards.length,3);
