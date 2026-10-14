@@ -6,7 +6,7 @@ export const V2_PHASES=Object.freeze(['start','move','main','attack']);
 export const V2_CARD_TYPES=Object.freeze(['character','event','field']);
 export const V2_TRIGGERS=Object.freeze(['draw','get','final','active','special','color','raid']);
 export const V2_EFFECT_TIMINGS=Object.freeze(['onPlay','onRaid','onAttack','onRaided']);
-export const V2_EFFECT_OPS=Object.freeze(['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','retireOppFrontUnderBp','restOppFrontUnderBp','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','discardToDraw','searchDeckMany','discardGate','searchDeckWhere','inspectTopArrange']);
+export const V2_EFFECT_OPS=Object.freeze(['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','retireOppFrontUnderBp','restOppFrontUnderBp','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','discardToDraw','searchDeckMany','discardGate','searchDeckWhere','inspectTopArrange','enemyFrontAllBpDown','buffOwnTraitAllTurn']);
 const integer=(v,low=0)=>Number.isInteger(v)&&v>=low;
 const own=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
 function verifyProgram(program,path){
@@ -54,7 +54,8 @@ function verifyProgram(program,path){
     Object.keys(e).some(k=>!['op','optional','then'].includes(k))||
     e.then.some(x=>!['draw','millTop','peekTopOne','searchDeckOne',
      'searchDeckMany','searchDeckWhere','inspectTopArrange','recoverOutsideOne',
-     'enemyBpDown','restOppFrontUnderBp'].includes(x?.op)))
+     'enemyBpDown','enemyFrontAllBpDown','buffOwnTraitAllTurn',
+     'restOppFrontUnderBp'].includes(x?.op)))
     throw Error(path+'['+i+'] invalid gated payment');
    verifyProgram(e.then,path+'['+i+'].then');
   }
@@ -62,6 +63,14 @@ function verifyProgram(program,path){
    !integer(e.count,1)||e.count>10||typeof e.optional!=='boolean'||
    Object.keys(e).some(k=>!['op','count','optional'].includes(k))
   ))throw Error(path+'['+i+'] invalid discard cost/draw');
+  if(e.op==='enemyFrontAllBpDown'&&(
+   !integer(e.bp,1)||e.bp>5000||Object.keys(e).some(k=>!['op','bp'].includes(k))
+  ))throw Error(path+'['+i+'] invalid simultaneous BP reduction');
+  if(e.op==='buffOwnTraitAllTurn'&&(
+   typeof e.trait!=='string'||!e.trait.trim()||
+   !integer(e.bp,1)||e.bp>5000||
+   Object.keys(e).some(k=>!['op','trait','bp'].includes(k))
+  ))throw Error(path+'['+i+'] invalid all-trait temporary BP');
   if(e.op==='buffOwnTrait'&&(
    typeof e.trait!=='string'||!e.trait.trim()||
    !integer(e.bp,1)||e.bp>5000||e.optional!==true||
