@@ -16,7 +16,7 @@ test('80 sourced SLG base cards have distinct ids, card types and no unsupported
  assert.equal(card('SLG-1-030').maxCopies,12);
  assert.deepEqual(card('SLG-1-030').aliases,['UAPR/SLG-1-030']);
  assert.equal(card('SLG-1-042').nameJa,'馬渕 勲');
- assert.ok(SOLO_LEVELING_CARDS.every(c=>c.auto===false&&c.artStatus==='placeholder'));
+ assert.ok(SOLO_LEVELING_CARDS.every(c=>c.auto===false&&c.artStatus==='rugia-external'));
 });
 test('001, 004, 010 passive BP and 003, 006 conditional generated energy',()=>{
  const s=fixture();const a=add(s,'SLG-1-001'),b=add(s,'SLG-1-004'),c=add(s,'SLG-1-010'),d=add(s,'SLG-1-003'),e=add(s,'SLG-1-006');
