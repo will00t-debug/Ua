@@ -190,8 +190,8 @@ test('inside paid gate: boolean deck search waits for payment; top-order window 
  }
  assert.equal(s.pending,null);
  assert.ok(s.players[0].outside.some(c=>c.uid===paidAction.uid));
- assert.equal(s.players[0].deck.length,before-2-1,
-  'one search, one queued draw and cost paid from hand; inspect returns its cards');
+ assert.equal(s.players[0].deck.length,before-2,
+  'one searched card and one queued draw leave deck; paid cost comes from hand');
  assert.equal(assertUniversalMatch(packs,s),true);
  assert.deepEqual(q,old);
 });
