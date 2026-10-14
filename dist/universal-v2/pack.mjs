@@ -7,7 +7,7 @@ export const V2_CARD_TYPES=Object.freeze(['character','event','field']);
 export const V2_TRIGGERS=Object.freeze(['draw','get','final','active','special','color','raid']);
 export const V2_EFFECT_TIMINGS=Object.freeze(['onPlay','onRaid','onAttack','onRaided']);
 export const V2_EFFECT_OPS=Object.freeze(['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','retireOppFrontUnderBp','restOppFrontUnderBp','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','discardToDraw','searchDeckMany','discardGate','searchDeckWhere','inspectTopArrange','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
- 'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideColorUnderEnergy','buffOwnField']);
+ 'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideColorUnderEnergy','buffOwnField','oncePerTurnGate']);
 const integer=(v,low=0)=>Number.isInteger(v)&&v>=low;
 const own=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
 function verifyProgram(program,path){
@@ -59,6 +59,16 @@ function verifyProgram(program,path){
      'recoverOutsideColorUnderEnergy','buffOwnField',
      'restOppFrontUnderBp'].includes(x?.op)))
     throw Error(path+'['+i+'] invalid gated payment');
+   verifyProgram(e.then,path+'['+i+'].then');
+  }
+  if(e.op==='oncePerTurnGate'){
+   if(!['card','name'].includes(e.scope)||typeof e.optional!=='boolean'||
+    !Array.isArray(e.then)||e.then.length<1||e.then.length>6||
+    Object.keys(e).some(k=>!['op','scope','optional','then'].includes(k))||
+    e.then.some(x=>!['draw','millTop','peekTopOne','enemyBpDown',
+     'restOppFrontUnderBp','buffOwnField','searchDeckOne',
+     'recoverOutsideOne','buffSelf'].includes(x?.op)))
+    throw Error(path+'['+i+'] invalid once-per-turn gate');
    verifyProgram(e.then,path+'['+i+'].then');
   }
   if(e.op==='discardToDraw'&&(
