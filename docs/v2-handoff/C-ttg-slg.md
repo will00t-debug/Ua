@@ -48,3 +48,17 @@
 ## 本輪可重現的 CI
 
 GitHub Actions Node.js 22 [run #38610752632](https://github.com/will00t-debug/Ua/actions/runs/38610752632) 在 V2-C 初始 23/81 + 16/80 的 commit `075c6d6925db79cc98156f4580b81922f5ffa8ad`：**專項 9/9、全專案 1002/1002 通過，0 失敗**。後續加入 SLG 040/076 的提交必須以新 run 為準，不能沿用這個舊成果。官方卡文直接比對 [SLG-1-040](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-040) 與 [SLG-1-076](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-076)。
+
+## 2026-10-15 最新主線動態契約整合（V2-C 必讀）
+
+主控自 PR #70 新增正式系列專屬契約：
+- `dist/universal-v2/title-packs/ttg.mjs`：TTG 額外 **3** 張，`sourceRecord / definition / evidence` 明確列印、來源、卡文片段、測試檔與回顧註記；由共用 registry 在原有 20 張 TTG Pilot 後追加，絕不重覆 Pilot。
+- `dist/universal-v2/title-packs/slg.mjs`：SLG 新增 **18** 張，同樣經正式通用 contract 編譯，不呼叫舊 SLG 對局 reducer。事件「無印刷 BP」在原 source 為 `null`，在 V2 事件 profile 為 `0`，該作品側適配器有一行**僅限非角色**明確正規化，保留原始官方來源與 review note，並向主控提出正式契約修正需求。
+- `dist/universal-v2/{ttg-pack,slg-pack}.mjs` 是各系列不依賴 registry 的測試與實作 helper，不取代共享 `engine.mjs`、`pack.mjs` 或 `registry.mjs`。
+- 專屬測試現在亦檢查**正式 registry** 的 `baselinePilots/newlyContributed/totalV2Cards`、兩作品跨包真卡對戰、角色 UID 守恆、非法目標與 SPECIAL 生命 Trigger 可選，以及完整卡號索引。
+
+**尚未由主控解除的共用阻塞**：`tests/universal-v2-title-pack-contract.test.mjs` 使用固定 0 張 SLG、20 張 TTG、總 35 Pilot 的舊斷言；一旦按主控契約實際登錄新卡即失敗，並非錯誤忽略卡牌能力。已在 PR #70 留下 [V2-CORE-REQ] 附重現與預期修法，V2-C 不會擅自修改該共用測試。部分 V2 主線進行中的一次/回合與模板測試短暫不一致亦須由主控解決；不會把**舊 commit 的綠燈**當作新的完整測試結果。
+
+證據：2026-10-15 最新 SLG 040/076 各有日本官方卡文，事件結算皆為根據己方水篠旬存在與否選 BP3000 或 5000；生命 SPECIAL 別於事件，直接按共用 Trigger 可選退場。SLG-1-016 官方抽兩張以下確認為**強制送牌庫頂兩張到場外**且 IMPACT 無效。所有記錄均在兩個 QA ledger 中分開編碼。
+
+**交接守則**：僅保留本分支 Draft PR，讓主控審查各 card 來源和測試；禁止將無註冊、空效果、虛構支援旗標或舊引擎轉發列作已移植。除本批之外 TTG 仍有 58、SLG 仍有 62 未移植，且沒有全部 FAQ 蓋章。
