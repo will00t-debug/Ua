@@ -6,7 +6,7 @@ export const V2_PHASES=Object.freeze(['start','move','main','attack']);
 export const V2_CARD_TYPES=Object.freeze(['character','event','field']);
 export const V2_TRIGGERS=Object.freeze(['draw','get','final','active','special','color','raid']);
 export const V2_EFFECT_TIMINGS=Object.freeze(['onPlay','onRaid','onAttack','onRaided']);
-export const V2_EFFECT_OPS=Object.freeze(['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','retireOppFrontUnderBp','restOppFrontUnderBp','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','discardToDraw','searchDeckMany','discardGate']);
+export const V2_EFFECT_OPS=Object.freeze(['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','retireOppFrontUnderBp','restOppFrontUnderBp','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','discardToDraw','searchDeckMany','discardGate','searchDeckWhere','inspectTopArrange']);
 const integer=(v,low=0)=>Number.isInteger(v)&&v>=low;
 const own=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
 function verifyProgram(program,path){
@@ -31,13 +31,30 @@ function verifyProgram(program,path){
        ...(e.op==='searchDeckMany'?['count']:[])].includes(k)))
     throw Error(path+'['+i+'] invalid searched-card filter/options');
   }
+  if(e.op==='searchDeckWhere'){
+   if(!Array.isArray(e.filters)||e.filters.length<2||e.filters.length>3||
+    e.filters.some(f=>!f||typeof f!=='object'||Array.isArray(f)||
+     Object.keys(f).length!==2||!['name','trait','color','type'].includes(f.field)||
+     typeof f.value!=='string'||!f.value.trim()||
+     (f.field==='type'&&!V2_CARD_TYPES.includes(f.value)))||
+    new Set(e.filters.map(f=>f.field+':'+f.value)).size!==e.filters.length||
+    !['all','any'].includes(e.logic)||!integer(e.count,1)||e.count>5||
+    typeof e.optional!=='boolean'||e.shuffle!==true||
+    Object.keys(e).some(k=>!['op','filters','logic','count','optional','shuffle'].includes(k)))
+    throw Error(path+'['+i+'] invalid compound deck search');
+  }
+  if(e.op==='inspectTopArrange'&&(
+   !integer(e.count,2)||e.count>4||typeof e.toOutside!=='boolean'||
+   !['top','bottom'].includes(e.rest)||
+   Object.keys(e).some(k=>!['op','count','toOutside','rest'].includes(k))
+  ))throw Error(path+'['+i+'] invalid top inspect/arrange');
   if(e.op==='discardGate'){
    if(typeof e.optional!=='boolean'||!Array.isArray(e.then)||
     !e.then.length||e.then.length>6||
     Object.keys(e).some(k=>!['op','optional','then'].includes(k))||
     e.then.some(x=>!['draw','millTop','peekTopOne','searchDeckOne',
-     'searchDeckMany','recoverOutsideOne','enemyBpDown',
-     'restOppFrontUnderBp'].includes(x?.op)))
+     'searchDeckMany','searchDeckWhere','inspectTopArrange','recoverOutsideOne',
+     'enemyBpDown','restOppFrontUnderBp'].includes(x?.op)))
     throw Error(path+'['+i+'] invalid gated payment');
    verifyProgram(e.then,path+'['+i+'].then');
   }
@@ -191,8 +208,10 @@ function normalize(card,packId){
   effects:Object.freeze(Object.fromEntries(Object.entries(effects)
    .map(([k,v])=>[k,Object.freeze(v.map(e=>Object.freeze({
     ...e,...(e.filter?{filter:Object.freeze({...e.filter})}:{}),
+    ...(e.filters?{filters:Object.freeze(e.filters.map(f=>Object.freeze({...f})))}:{}),
     ...(e.then?{then:Object.freeze(e.then.map(child=>Object.freeze({
-      ...child,...(child.filter?{filter:Object.freeze({...child.filter})}:{})
+      ...child,...(child.filter?{filter:Object.freeze({...child.filter})}:{}),
+      ...(child.filters?{filters:Object.freeze(child.filters.map(f=>Object.freeze({...f})))}:{})
     })))}:{})
    })))])))
  });
