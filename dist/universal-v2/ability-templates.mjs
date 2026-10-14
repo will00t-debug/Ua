@@ -101,6 +101,13 @@ const registry=Object.freeze({
   args:{trait:named,bp:positiveBp},
   build:v=>[{op:'buffOwnTraitAllTurn',trait:v.trait,bp:v.bp}]
  },
+ // OnPlay/OnAttack etc: select one own FIELD character matching a printed
+ // name, trait or color. Explicit optionality and excludeSelf are mandatory.
+ buffOwnField:{
+  args:{filter,bp:positiveBp,optional:yesNo,excludeSelf:yesNo},
+  build:v=>[{op:'buffOwnField',filter:{...v.filter},bp:v.bp,
+   optional:v.optional,excludeSelf:v.excludeSelf}]
+ },
  // Triggered only by the controller's FIRST declared character attack.
  buffSelfIfFirstAttack:{
   args:{bp:positiveBp},build:v=>[{op:'buffSelfIfFirstAttack',bp:v.bp}]
@@ -137,7 +144,7 @@ const registry=Object.freeze({
    'draw','millTop','peekTopOne','searchDeckOne','searchDeckMany',
    'searchDeckWhere','inspectTopArrange','recoverOutsideOne','enemyBpDown',
    'enemyFrontAllBpDown','retireEnemyFrontAllUnderBp','buffOwnTraitAllTurn',
-   'recoverOutsideColorUnderEnergy','restEnemyUnderBp'
+   'recoverOutsideColorUnderEnergy','buffOwnField','restEnemyUnderBp'
   ].includes(x.template)),
   build:v=>[{op:'discardGate',optional:v.optional,
    then:v.then.flatMap((spec,i)=>expandOne(spec,'payDiscardThen.then['+i+']'))}]
