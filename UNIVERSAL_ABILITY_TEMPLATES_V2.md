@@ -1,10 +1,10 @@
-# UNION ARENA V2 — 可重複使用的能力模板（第一、二、三批）
+# UNION ARENA V2 — 可重複使用的能力模板（第一至第四批）
 
 **狀態：實驗版 / PR #70 / 不取代正式站。** 模板將每張卡片明確宣告的印刷效果轉譯為已存在的 V2 DSL 指令，**不**根據日文文字自動猜測能力，也**不**把尚未驗收的卡片標為可用。
 
 ## 檔案與資料流
 
-- `dist/universal-v2/ability-templates.mjs`：受控的 17 種命名模板、嚴格參數契約，以及 `expandAbilityTemplates`。
+- `dist/universal-v2/ability-templates.mjs`：受控的 19 種命名模板、嚴格參數契約，以及 `expandAbilityTemplates`。
 - `dist/universal-v2/pack.mjs`：在 `createUniversalPack` 中編譯 `templateEffects`，沿用 `verifyProgram` 及現有時點限制；輸出仍是舊格式 `effects`，引擎 / AI 不需要知道卡片是否由模板寫成。
 - `dist/universal-v2/engine.mjs`：繼續執行低階 DSL 的結算、合法選擇、AP、Raid、生命 Trigger 與卡片守恆，不因套模板跳過裁定。
 - `dist/universal-v2/real-card-pilots.mjs`：目前有 **16 個已驗證卡片的效果設定** 改用模板；Pilot 白名單仍為 **BLEACH 8／天元突破 15 = 23 張**，沒有新增可用真卡。
@@ -30,6 +30,8 @@
 | `recoverOutsideOne` | 從自己的場外選至多 1 張符合條件的卡加入手牌 | `filter:{field,value}`、`optional` | `recoverOutsideOne` |
 | `discardToDraw` | 從自己的手牌支付棄 1 張的成本，成功才抽指定張數 | `count`（1–10）、`optional` | `discardToDraw` |
 | `searchDeckMany` | 從自己的牌庫連續選最多指定張數符合條件的卡，結束時洗牌一次 | `filter`、`count`（1–5）、`optional`、`shuffle:true` | `searchDeckMany` |
+| `searchDeckWhere` | 用 2–3 條件組合搜尋己方整副牌庫，取至多 5 張、完成才洗牌 | `filters`、`logic:'all'|'any'`、`count`、`optional`、`shuffle:true` | `searchDeckWhere` |
+| `inspectTopArrange` | 私下查看牌頂 2–4 張，可選至多一張送場外，逐張指定其餘卡片放回牌頂或牌底的順序 | `count`、`toOutside`、`rest:'top'|'bottom'` | `inspectTopArrange` |
 | `payDiscardThen` | 先支付棄牌成本，成功後才按順序執行隸屬於這次支付的多段效果 | `optional`、`then`（1–6 個允許的子模板） | `discardGate` |
 
 以上模板名稱是為了維護程式方便，並非任何實體卡都具有相同文字或適用條件；參數必須由官方卡文逐卡驗證。某些能力只能出現在特定時點，`pack.mjs` 會拒絕不合法組合。
@@ -47,7 +49,7 @@
 
 ### 第三批：一次搜尋多張與支付後才執行多段效果
 
-`searchDeckMany` 將每次選卡保留為獨立的 **private pending**：選取一張後由引擎更新可選的實體 UID，防止重複選同一張；直到達到 `count`、沒有合法候選或（`optional:true`）玩家主動放棄才**洗牌一次**，然後繼續下個效果。可選條件仍只有 `name/trait/color/type` 的單一條件，不支援任意混合布林條件、看牌頂指定數張、放回牌庫底或顯示／展示。
+`searchDeckMany` 將每次選卡保留為獨立的 **private pending**：選取一張後由引擎更新可選的實體 UID，防止重複選同一張；直到達到 `count`、沒有合法候選或（`optional:true`）玩家主動放棄才**洗牌一次**，然後繼續下個效果。可選條件仍只有 `name/trait/color/type` 的單一條件，新增第四批的 `searchDeckWhere` 可做有限的 ALL/ANY 複合條件，`inspectTopArrange` 可查看牌頂至多 4 張並決定去向／順序；更複雜的條件或展示功能仍須另行驗收。
 
 `payDiscardThen` 範例（**非真卡卡文**）：
 
@@ -66,9 +68,30 @@ templateEffects:{
 
 棄掉自己**一張手牌**後，才會按順序抽 1、搜尋選牌、指定敵前線 BP 降低。中途的搜尋／目標 pending 結束後才執行下一個已支付效果；拒絕棄牌則**整個 then 都不執行**。支付後的效果在同時點的其他效果前執行，避免被外部 `draw` 等操作插隊。若沒有手牌能支付，整組 then 不會被啟動。
 
-目前 `then` 最多 6 個子模板且禁止巢狀支付；可用子模板僅為 `draw`、`millTop`、`peekTopOne`、`searchDeckOne`、`searchDeckMany`、`recoverOutsideOne`、`enemyBpDown`、`restEnemyUnderBp`。不能隨意套用到 Raid 底板 `onRaided`，不能用於任意種類成本（例如 REST 本體／AP 支出／送角色退場）或推論官方特殊支付規則。低階 DSL、子項驗證和卡種／觸發時點依舊保留嚴格限制。
+目前 `then` 最多 6 個子模板且禁止巢狀支付；可用子模板僅為 `draw`、`millTop`、`peekTopOne`、`searchDeckOne`、`searchDeckMany`、`searchDeckWhere`、`inspectTopArrange`、`recoverOutsideOne`、`enemyBpDown`、`restEnemyUnderBp`。不能隨意套用到 Raid 底板 `onRaided`，不能用於任意種類成本（例如 REST 本體／AP 支出／送角色退場）或推論官方特殊支付規則。低階 DSL、子項驗證和卡種／觸發時點依舊保留嚴格限制。
 
 對應新增 `tests/universal-v2-paid-chain-multi-search.test.mjs`：包括搜尋三張、提早放棄、無符合目標、未支付與已支付、串接私人選擇與跨作品目標、攻擊前成本選擇與阻擋次序，以及非法巢狀能力／隱藏資料／實體 UID 守恆。**所有第三批新能力只使用合成測試卡，真實卡白名單仍 23 張。**
+
+### 第四批：多條件搜尋與牌庫頂部排序
+
+`searchDeckWhere` 允許 **2–3 個明確條件**，`logic:'all'` 要求全部符合、`logic:'any'` 則任一符合。每個條件只能是 `name`、`trait`、`color` 或 `type`，不得重複相同條件或混入未審核屬性。可選 1–5 張符合條件的己方實體卡加入手牌，無論選完、提早結束或沒有合法候選都**在結束時洗一次牌**。對方同卡號不會錯讀成己方卡名或特徵。
+
+`inspectTopArrange` 只查看**己方牌庫頂前 2–4 張**（若不足則實際有幾張看幾張），結算**不洗牌**。由控制者決定是否將其中一張送場外（`toOutside:true`）；若 `toOutside:false`，則不可選擇送場外。接著按玩家點選的順序，將其餘原先看到的卡片放回**牌頂**或**牌底**；排列中間所有卡片保留原順序。未完成排列前，其他抽牌與攻擊處理都會等待。透過 `universalPrivateChoices` 僅向效果控制者回報卡名與合法選擇；對手只知道某玩家正在做選擇，無法看到尚未公開的 UID。
+
+```js
+templateEffects: {
+  onPlay: [
+    {template:'searchDeckWhere',
+     filters:[{field:'color',value:'green'},{field:'trait',value:'Scout'}],
+     logic:'all',count:2,optional:true,shuffle:true},
+    {template:'inspectTopArrange',count:3,toOutside:true,rest:'bottom'}
+  ]
+}
+```
+
+此處是虛構能力示例，**不代表官方卡片原文**。印刷效果如果要求從查看的牌中「加入手牌」、最多送兩張場外、分別放牌庫頂與底、指定展示、讓對手查看、搜尋後不洗牌，或加入其他成本／條件，仍需新增對應模板與 FAQ 測試，不可硬套。新能力可作為 `payDiscardThen` 的受限子效果，但目前仍只在合成測試牌組驗證。
+
+測試：`tests/universal-v2-compound-top-inspection.test.mjs`。涵蓋 ALL/ANY、跨作品同編號但不同卡文、隱私與非法 UID、選單張送場外、重新排序至牌頂／牌底、後續抽牌時點、付費後接續兩種選擇以及巢狀參數不可更改。**目前官方 V2 Pilot 仍只有 23 張。**
 
 ### 寫入新作品的方式
 
@@ -110,6 +133,6 @@ const card = {
 
 ## 尚未納入模板的能力（不得宣告完成）
 
-`mainAbility`（例如 TTG-1-046 的兩種選擇與同名限次）、Raid 底板合法名稱、特殊 `conditionalUnderFaceDown`、COLOR/SPECIAL/RAID 生命 Trigger 印刷差異目前仍使用嚴格明列的能力設定，不會被上面的 17 種模板自動判定。其他多目標、同時退場、交換、持續免疫、攻防時點、其他系列專屬例外仍待開發。
+`mainAbility`（例如 TTG-1-046 的兩種選擇與同名限次）、Raid 底板合法名稱、特殊 `conditionalUnderFaceDown`、COLOR/SPECIAL/RAID 生命 Trigger 印刷差異目前仍使用嚴格明列的能力設定，不會被上面的 19 種模板自動判定。其他多目標、同時退場、交換、持續免疫、攻防時點、其他系列專屬例外仍待開發。
 
 **本批是可重複能力的編譯基礎，不是「700 張都能玩」或「23 張都已完成全部官方裁定」。**
