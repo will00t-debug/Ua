@@ -84,10 +84,10 @@ function testEntry(other,owner,id){
 }
 test('official-record pilot cards have explicitly pinned printed energy/AP/BP/trigger and no implicit support',()=>{
  assert.deepEqual(REAL_V2_PILOT_IDS.bleach,['BLC-1-034','BLC-1-039','BLC-1-064','BLC-1-066','BLC-1-102','BLC-1-103','BLC-1-105','BLC-1-107']);
- assert.deepEqual(REAL_V2_PILOT_IDS['gurren-lagann'],['TTG-1-001','TTG-1-009','TTG-1-036','TTG-1-037','TTG-1-038','TTG-1-045','TTG-1-051','TTG-1-042','TTG-1-064','TTG-1-065','TTG-1-072','TTG-1-078','TTG-1-079']);
+ assert.deepEqual(REAL_V2_PILOT_IDS['gurren-lagann'],['TTG-1-001','TTG-1-009','TTG-1-036','TTG-1-037','TTG-1-038','TTG-1-045','TTG-1-046','TTG-1-051','TTG-1-042','TTG-1-064','TTG-1-065','TTG-1-072','TTG-1-078','TTG-1-079']);
  const b=verifiedPilotPack('bleach'),t=verifiedPilotPack('gurren-lagann');
  assert.equal(Object.keys(b.cards).length,8);
- assert.equal(Object.keys(t.cards).length,13);
+ assert.equal(Object.keys(t.cards).length,14);
  assert.ok(validateUniversalDeck(b,bleach.deck).length>0,'V2 real-only deck is not ready');
  assert.ok(validateUniversalDeck(t,green.deck).length>0);
  for(const id of REAL_V2_PILOT_IDS.bleach)assert.ok(portVerifiedPilotCard('bleach',id));
@@ -672,4 +672,124 @@ test('Kamina 045 onRaided effects never trigger from RAID life on the opponent t
  assert.equal(after.pending,null);
  assert.equal(universalBp(packs,after,after.players[1].front[0]),3500);
  assert.equal(assertUniversalMatch(packs,after),true);
+});
+
+function kamina046Match(seed=700,{copies=2,raid=true}={}){
+ const packs=[bleach.pack,red.pack];let s=fresh(red,seed);
+ const p=s.players[1],back=take(s,1,'TTG-1-042');
+ p.front[0]=back;
+ const kamina=[];
+ for(let i=0;i<copies;i++){
+  const c=take(s,1,'TTG-1-046');
+  p.front[1+i]=c;kamina.push(c);
+ }
+ for(const [slot,id] of ['TTG-1-042','TTG-1-064','TTG-1-065'].entries())
+  p.energy[slot]=take(s,1,id);
+ const top=take(s,1,'TTG-1-072');
+ p.hand.push(top);
+ for(let i=0;i<4;i++)s=dispatchUniversalAction(packs,s,{type:'next'});
+ assert.equal(s.active,1);
+ s=advanceToMain(packs,s);
+ // Record real REST state after START refresh; the first option must restore
+ // the real field instance rather than arbitrarily giving a second card ACTIVE.
+ for(const c of kamina)s.players[1].front.find(x=>x?.uid===c.uid).ready=false;
+ assert.ok(!legalUniversalActions(packs,s).some(a=>a.type==='activate'),
+  'an unfulfilled own-turn Raid prerequisite blocks all active main effects');
+ if(raid){
+  const choice=legalUniversalActions(packs,s).find(a=>a.type==='raid'&&a.uid===top.uid&&a.baseUid===back.uid);
+  assert.ok(choice,'printed Kamina 042 is a legal Raid base');
+  s=dispatchUniversalAction(packs,s,choice,{actor:1});
+  assert.equal(s.pending,null);
+  assert.equal(s.raidedThisTurn[1],true);
+ }
+ return {packs,s,kamina,top};
+}
+test('real TTG Kamina 046: Q2288 two DIFFERENT modes, Q2289 printed READY before target BP+1000',()=>{
+ const {packs,s,kamina,top}=kamina046Match(700);
+ const before=structuredClone(s),c=kamina[0];
+ const legal=legalUniversalActions(packs,s).filter(a=>a.type==='activate'&&a.uid===c.uid);
+ assert.deepEqual(legal.map(a=>a.mode),['ready','readyAndBuff','buff']);
+ const readyAndBuff=legal.find(a=>a.mode==='readyAndBuff');
+ const choice=dispatchUniversalAction(packs,s,readyAndBuff,{actor:1});
+ assert.equal(choice.pending?.kind,'main-two-buff');
+ assert.equal(choice.players[1].front[1].ready,true,'first printed READY mode is completed before choosing a BP target');
+ assert.deepEqual(choice.mainReadyOnceByName[1],['カミナ']);
+ assert.deepEqual(choice.mainAbilityUsedUids,[c.uid]);
+ assert.equal(choice.players[1].front[0].uid,top.uid);
+ assert.equal(universalBp(packs,choice,choice.players[1].front[0]),4000);
+ const targets=legalUniversalActions(packs,choice);
+ assert.ok(targets.some(a=>a.uid===top.uid));
+ assert.ok(!targets.some(a=>a.uid===s.players[0].hand[0].uid));
+ assert.throws(()=>dispatchUniversalAction(packs,choice,{type:'chooseMainBuff',uid:s.players[0].hand[0].uid},{actor:1}),/not currently legal/);
+ const applied=dispatchUniversalAction(packs,choice,{type:'chooseMainBuff',uid:top.uid},{actor:1});
+ assert.equal(applied.pending,null);
+ assert.equal(universalBp(packs,applied,applied.players[1].front[0]),5000);
+ assert.ok(!legalUniversalActions(packs,applied).some(a=>a.type==='activate'&&a.uid===c.uid),
+  'same physical card cannot activate twice this turn');
+ assert.equal(assertUniversalMatch(packs,applied),true);
+ assert.deepEqual(s,before);
+});
+test('Q2290 READY selection is shared by printed NAME across multiple 046 copies, BP option remains usable',()=>{
+ const {packs,s,kamina,top}=kamina046Match(706);
+ const [first,second]=kamina;
+ const restored=dispatchUniversalAction(packs,s,{type:'activate',uid:first.uid,mode:'ready'},{actor:1});
+ assert.equal(restored.players[1].front[1].ready,true);
+ const allowed=legalUniversalActions(packs,restored).filter(a=>a.type==='activate'&&a.uid===second.uid);
+ assert.deepEqual(allowed,[{type:'activate',uid:second.uid,mode:'buff'}]);
+ assert.throws(()=>dispatchUniversalAction(packs,restored,
+  {type:'activate',uid:second.uid,mode:'readyAndBuff'},{actor:1}),/not currently legal/);
+ const secondUsed=dispatchUniversalAction(packs,restored,allowed[0],{actor:1});
+ assert.equal(secondUsed.players[1].front[2].ready,false,'buff-only mode does not silently ACTIVE another copy');
+ const target=legalUniversalActions(packs,secondUsed).find(a=>a.uid===top.uid);
+ assert.ok(target);
+ const result=dispatchUniversalAction(packs,secondUsed,target,{actor:1});
+ assert.equal(universalBp(packs,result,result.players[1].front[0]),5000);
+ assert.equal(result.mainReadyOnceByName[1].length,1);
+ assert.equal(result.mainAbilityUsedUids.length,2);
+ assert.ok(!legalUniversalActions(packs,result).some(a=>a.type==='activate'&&kamina.some(c=>c.uid===a.uid)));
+ assert.equal(assertUniversalMatch(packs,result),true);
+});
+test('046 BP option has NO per-name restriction, and does not consume the READY option across copies',()=>{
+ const {packs,s,kamina,top}=kamina046Match(709);
+ const buff=dispatchUniversalAction(packs,s,{type:'activate',uid:kamina[0].uid,mode:'buff'},{actor:1});
+ assert.deepEqual(buff.mainReadyOnceByName[1],[]);
+ const applied=dispatchUniversalAction(packs,buff,{type:'chooseMainBuff',uid:top.uid},{actor:1});
+ assert.equal(universalBp(packs,applied,applied.players[1].front[0]),5000);
+ const more=legalUniversalActions(packs,applied);
+ assert.ok(more.some(a=>a.type==='activate'&&a.uid===kamina[1].uid&&a.mode==='readyAndBuff'));
+ const ready=dispatchUniversalAction(packs,applied,{type:'activate',uid:kamina[1].uid,mode:'readyAndBuff'},{actor:1});
+ assert.equal(ready.players[1].front[2].ready,true);
+ const result=dispatchUniversalAction(packs,ready,{type:'chooseMainBuff',uid:top.uid},{actor:1});
+ assert.equal(universalBp(packs,result,result.players[1].front[0]),6000);
+ assert.equal(assertUniversalMatch(packs,result),true);
+});
+test('046 needs same-controller Raid THIS turn; opponent cannot borrow another title Raid, reset between turns',()=>{
+ const {packs,s,kamina,top}=kamina046Match(720,{raid:false});
+ assert.equal(s.raidedThisTurn[1],false);
+ assert.ok(!legalUniversalActions(packs,s).some(a=>a.type==='activate'));
+ assert.throws(()=>dispatchUniversalAction(packs,s,{type:'activate',uid:kamina[0].uid,mode:'buff'},{actor:1}),/not currently legal/);
+ let raided=dispatchUniversalAction(packs,s,
+  legalUniversalActions(packs,s).find(a=>a.type==='raid'&&a.uid===top.uid),{actor:1});
+ assert.ok(legalUniversalActions(packs,raided).some(a=>a.type==='activate'));
+ for(let i=0;i<6;i++)raided=dispatchUniversalAction(packs,raided,{type:'next'});
+ assert.equal(raided.active,1);
+ assert.equal(raided.phase,'start');
+ assert.deepEqual(raided.raidedThisTurn,[false,false]);
+ assert.deepEqual(raided.mainReadyOnceByName,[[],[]]);
+ assert.deepEqual(raided.mainAbilityUsedUids,[]);
+});
+test('046 normal GET life trigger puts the revealed card in hand; not an onRaided or main activation',()=>{
+ const packs=[bleach.pack,red.pack];let s=fresh(red,728);
+ const attacker=take(s,0,'BLC-1-039');attacker.ready=true;s.players[0].front[0]=attacker;
+ const flipped=take(s,1,'TTG-1-046');
+ s.players[1].deck.push(s.players[1].life.shift());
+ s.players[1].life.unshift(flipped);
+ s=advanceToMain(packs,s);s=dispatchUniversalAction(packs,s,{type:'next'});
+ s=dispatchUniversalAction(packs,s,{type:'attack',uid:attacker.uid},{actor:0});
+ s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:null},{actor:1});
+ assert.equal(s.pending?.trigger,'get');
+ const taken=dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'get'},{actor:1});
+ assert.ok(taken.players[1].hand.some(c=>c.uid===flipped.uid));
+ assert.equal(taken.raidedThisTurn[1],false);
+ assert.equal(assertUniversalMatch(packs,taken),true);
 });
