@@ -112,3 +112,77 @@ https://github.com/will00t-debug/Ua/actions/runs/38610928612
 3. 無真機瀏覽器執行環境，手機觸控與窄螢幕實測仍 **not_run**。
 4. 在 05:30 鎖定新的整合 SHA 重做完整測試；06:30～06:40 針對該 SHA 交付 P0/P1 阻塞與 go/no-go，不延用此 02:00 快照宣稱新版本已通過。
 
+
+## 02:05 第二輪 [V2-B/C/D] Draft PR 快照：第一輪失敗已排除
+
+**此段為新的獨立 SHA 快照，不覆寫上方第一輪的失敗歷史。**
+已核對 Draft PR #73（B）、#72（C）、#74（D）的實際程式及其
+`docs/v2-handoff/B-bleach.md`、`C-ttg-slg.md`、`D-sao-mst.md`。
+測試入口：
+`node scripts/v2-audit-port-snapshots.mjs --round2`，
+CI https://github.com/will00t-debug/Ua/actions/runs/38611893908 ，Node `v22.23.3`；
+驗收器 SHA `6434b4fc7c4ef13f859ac1fb0ea4745eafad6f22`。
+
+| Draft PR | 固定分支 SHA | 實際 Pack 卡數（含 Pilot） | 專屬 Node 22 測試 |
+|---|---|---:|---:|
+| [V2-B] #73 | `5431cbb6ac422b7356fd688cc7f3a4d4756c4b39` | BLEACH **65** | **11/11 pass** |
+| [V2-C] #72 | `341cd595d0291af5b5363ef9d08d41184ee29b87` | TTG **23**、SLG **18** | **11/11 pass** |
+| [V2-D] #74 | `9d88fad89f2942c7c3905bce68c1ca3f92cba140` | SAO **33**、MST **22** | **15/15 pass** |
+
+總共 **161 張分支候選卡**，跨各分支不得與基準 35 張重複累加；
+排除底版 35 張已存在 Pilot，純新增候選為 126 張。此數字不是整合可玩／逐卡驗收完成率。
+所有 161 張在 `audit/v2-branch-proposals-r2.csv` 逐卡記錄固定 SHA 與是否整合（**false**）；
+各分支 raw pack probe、專測指令／結果位於 `audit/v2-port-snapshots-r2.json`。
+
+- 第一輪 **E-B-001、E-D-001、E-D-002** 在新 SHA 的專測均無重現；
+  **狀態：歷史固定 SHA 可重現、第二輪固定 SHA 測試通過**。
+  不可用第二輪綠燈塗銷原始重播，也不能反過來把舊錯誤當成目前阻塞。
+- **E-B-002 文件精度待同步**：在 B 固定 SHA，實際 `createBleachV2Pack()`
+  有 **65** 種，但 `docs/v2-handoff/B-bleach.md` 當時仍寫 **63**；
+  新增卡 `BLC-4-061`、`BLC-1-097` 未在那份 63 張總結同步反映。
+  以實際 Pack 與精確 SHA 結果為準，請 B 工作線更新交接與逐卡表。
+- **E-INTEGRATION-001（交付阻塞）**：PR #70 指定的初步 V2 基準只註冊
+  35 張 Pilot，未包含三條分支獨立模組與共用預覽入口選牌；
+  所有分支 Pack 在被主控合併到**同一個固定整合 SHA**、再次測試成功前，
+  不得填為整合可玩。
+- **E-QA-001（證據限制）**：37/37 專屬子測試只代表各分支當前聚焦情境，
+  不等於 161 種卡逐張全部時機／FAQ／生命 Trigger 完整驗收。
+
+### 四階段基底正式數字（非分支候選）
+
+執行 `node scripts/v2-audit-catalog.mjs`，
+CI https://github.com/will00t-debug/Ua/actions/runs/38611225934 ，
+SHA `fb2909cc050850b9d494175ebb9944eacd414563`，Node `v22.23.3`：
+
+| 系列 | 建檔 | 必要資料欄位齊全 | 此基底 V2 註冊 | 完整能力驗收 | 已證實整合全卡可玩 |
+|---|---:|---:|---:|---:|---:|
+| BLEACH | 276 | 274 | 15 | 0 | 0 |
+| TTG | 81 | 81 | 20 | 0 | 0 |
+| SLG | 80 | 80 | 0 | 0 | 0 |
+| MST | 80 | 68 | 0 | 0 | 0 |
+| SAO | 183 | 183 | 0 | 0 | 0 |
+| **總計** | **700** | **686** | **35** | **0** | **0** |
+
+`已證實整合全卡可玩` 是逐卡嚴格判準，不等於「現有 TTG/BLEACH 真卡牌組四場可完局」；
+後者確有驗收紀錄，但原有 35 張的所有官方效果尚未逐張驗全。
+
+### 不變式／時序測試交叉對照
+
+以下均屬 `npm test`（同一 Node22 固定基底 CI 997/997 pass）的**已執行測例**，
+覆蓋核心類型，不等於對 700 卡逐張完驗：
+
+| 驗收主題 | 程式證據與示範案例 |
+|---|---|
+| 非法動作不得改狀態 | `tests/v2-independent-audit.test.mjs`（非法 UID rollback）；`tests/universal-v2-core.test.mjs`（嚴格合法性） |
+| AP／能源支付與順序 | `tests/universal-v2-core.test.mjs`（AP/energy/placement）；`tests/universal-v2-paid-chain-multi-search.test.mjs`（discard gate / target→search→draw） |
+| 可選放棄、Q99 | `tests/universal-v2-core.test.mjs`（GET / DRAW 可選與 FINAL）；`tests/universal-v2-search-recovery-cost.test.mjs`（optional shuffle/recovery） |
+| 滿場替換 / AP 不先扣 | `tests/universal-v2-special-color-raid.test.mjs`（full front / protected full energy replacement） |
+| Raid / Raid life / chain | `tests/universal-v2-special-color-raid.test.mjs`（Q2396/Q2286）；`tests/universal-v2-raid-protection-attack-queue.test.mjs` |
+| Life Trigger 與 nested 決策 | `tests/universal-v2-special-color-raid.test.mjs`（SPECIAL/COLOR/RAID nested）；`tests/universal-v2-bleach-real-deck.test.mjs` |
+| 回合交接、手牌上限、STEP | `tests/universal-v2-core.test.mjs`；`tests/universal-v2-cross-title.test.mjs` |
+| 實體卡守恆 | `tests/universal-v2-cross-title.test.mjs`；全真卡多 seed 完局腳本各步 `assertUniversalMatch` |
+| 隱藏資訊 | `tests/universal-v2-preview-ui.test.mjs`（僅 DOM/呈現層單測）；`tests/v2-independent-audit.test.mjs`；多 seed public view 檢查 |
+
+**尚未實測**：真人實體 Android/iOS 觸控、手機縮放、私人預覽真實瀏覽器操作；
+DOM 模擬已跑不取代實機。截止交付不得標 pass。
+
