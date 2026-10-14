@@ -71,6 +71,10 @@ test('last facedown protection that removes the +1000 BP must recheck lethal BP 
  assert.ok(previouslyQueued.includes('draw'));
  assert.ok(previouslyQueued.includes('openBlock'));
  const snapshot=structuredClone(s);
+ assert.equal(chooseUniversalAiAction(packs,s,{difficulty:'hard'}).mode,'leave',
+  'hard AI must not consume a protection resource if BP will drop to zero');
+ assert.equal(chooseUniversalAiAction(packs,s,{difficulty:'normal'}).mode,'leave');
+ assert.deepEqual(s,snapshot,'AI rollout may not mutate the real match');
  const beforeDeck=s.players[0].deck.length;
  assert.deepEqual(legalUniversalActions(packs,s),[
   {type:'chooseLeaveReplacement',mode:'protect'},
@@ -114,6 +118,7 @@ test('multi-layer Raid protection selects exact hidden UID and retains a positiv
   {type:'chooseLeaveReplacement',mode:'protect',uid:'0-999'},{actor:1}),/not currently legal/);
  const selected=actions.find(a=>a.uid===hidden[0].uid);
  const ai=chooseUniversalAiAction(packs,s,{difficulty:'hard'});
+ assert.equal(ai.mode,'protect','hard AI should preserve a Raid while a second facedown layer remains');
  assert.ok(actions.some(a=>JSON.stringify(a)===JSON.stringify(ai)));
  const preserved=dispatchUniversalAction(packs,s,selected,{actor:1});
  assert.equal(preserved.players[1].front[0].uid,defender.uid);
