@@ -137,7 +137,7 @@ test('029 -> 026 chained REST-play: 6+ energy from surviving line, then 026 rece
 test('027 RAID LIFE may be declined under Q99 or moved to hand without falsely paying AP',()=>{
  let s=game(2703),p=s.players[0];
  const raid=take(p,'TTG-1-027');
- p.life.unshift(raid);
+ const old=p.life.shift();p.deck.push(old);p.life.unshift(raid);
  s=withTtgDerivedEnergy(s,0);
  s=beginTtgLifeTrigger(s,{player:0,lifeUid:raid.uid});
  assert.equal(s.pendingTtgLife?.trigger,'raid');
