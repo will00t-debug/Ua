@@ -53,20 +53,29 @@ function startTurn(pack,s){
   draw(s,p);
  }
 }
-function applyEffects(pack,s,cardOnField,timing,owner){
- const program=card(pack,cardOnField).effects[timing]||[];
- for(const effect of program){
-  if(effect.op==='draw')draw(s,owner,effect.count);
-  else if(effect.op==='millTop'){
-   for(let i=0;i<effect.count&&s.players[owner].deck.length;i++)
-    s.players[owner].outside.push(s.players[owner].deck.shift());
-  }else if(effect.op==='buffSelf'){
-   // Buff from a source on the battlefield, not an event in the outside.
-   if(!field(s.players[owner]).some(c=>c.uid===cardOnField.uid))
-    throw Error('buffSelf source must be on field');
-   cardOnField.buffs.push({bp:effect.bp,untilTurn:s.turn});
+// Queue printed effects so each pending cross-title target is chosen before
+// remaining steps resolve. Native card packs remain responsible for their own text.
+function continueEffectQueue(pack,s){
+ while(!s.pending&&s.status==='playing'&&s.effectQueue.length){
+  const job=s.effectQueue.shift(),owner=job.owner,pl=s.players[owner];
+  if(job.op==='draw')draw(s,owner,job.count);
+  else if(job.op==='millTop'){
+   for(let i=0;i<job.count&&pl.deck.length;i++)pl.outside.push(pl.deck.shift());
+  }else if(job.op==='buffSelf'){
+   const source=field(pl).find(c=>c.uid===job.sourceUid);
+   if(!source)throw Error('buffSelf source must be on field');
+   source.buffs.push({bp:job.bp,untilTurn:s.turn});
+  }else if(job.op==='enemyBpDown'){
+   const targetUids=s.players[1-owner].front.filter(Boolean).map(c=>c.uid);
+   if(targetUids.length)s.pending={kind:'effect-target',player:owner,sourceUid:job.sourceUid,
+    bp:job.bp,choices:targetUids};
   }else throw Error('Unimplemented effect op');
  }
+}
+function applyEffects(pack,s,cardOnField,timing,owner){
+ const program=card(pack,cardOnField).effects[timing]||[];
+ s.effectQueue.push(...program.map(e=>({...e,owner,sourceUid:cardOnField.uid})));
+ continueEffectQueue(pack,s);
 }
 function location(s,p,uid){
  for(const line of ['front','energy']){
@@ -115,6 +124,15 @@ function resolveChoice(s,a,pack){
   if(s.pending===q)s.pending=null;
   return;
  }
+ if(q.kind==='effect-target'){
+  const target=s.players[1-q.player].front.find(c=>c?.uid===a.uid);
+  if(!target||!q.choices.includes(a.uid))throw Error('Illegal cross-title effect target');
+  target.buffs??=[];
+  target.buffs.push({bp:-q.bp,untilTurn:s.turn});
+  s.pending=null;
+  continueEffectQueue(pack,s);
+  return;
+ }
  if(q.kind==='life-trigger'){
   const i=p.outside.findIndex(c=>c.uid===q.uid);
   if(i<0)throw Error('Revealed life card not found');
@@ -141,7 +159,7 @@ export function newUniversalMatch(pack,{decks,seed=1,first=0}={}){
   packIds:packs.map(p=>p.id),packVersions:packs.map(p=>p.version),
   rng:(seed>>>0)||1,first,active:first,turn:0,phase:'start',status:'playing',
   winner:null,endReason:null,pending:null,extraDrawn:false,moved:false,
-  publicReveals:[],players:[]
+  publicReveals:[],effectQueue:[],players:[]
  };
  for(let p=0;p<2;p++){
   const ids=Object.entries(decks[p]).flatMap(([id,count])=>Array(count).fill(id));
@@ -162,6 +180,7 @@ function legalPending(pack,s){
   {type:'chooseBlock',uid:null},
   ...p.front.filter(c=>c?.ready).map(c=>({type:'chooseBlock',uid:c.uid}))
  ];
+ if(q.kind==='effect-target')return q.choices.map(uid=>({type:'chooseTarget',uid}));
  if(q.kind==='life-trigger'){
   const out=[{type:'chooseTrigger',mode:'skip'}];
   if(q.trigger==='get')out.push({type:'chooseTrigger',mode:'get'});
@@ -220,7 +239,7 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
  if(!options.some(a=>same(a,action)))throw Error('Action not currently legal');
  const s=clone(source),p=actor(s),pl=s.players[p];
  if(s.pending){
-  if(s.pending.kind==='block')resolveChoice(s,{uid:action.uid},pack);
+  if(['block','effect-target'].includes(s.pending.kind))resolveChoice(s,{uid:action.uid},pack);
   else resolveChoice(s,{mode:action.mode},pack);
  }else switch(action.type){
   case 'extraDraw':
@@ -285,8 +304,11 @@ export function assertUniversalMatch(pack,s){
    s.packIds.length!==2||s.packVersions.length!==2||
    s.players?.length!==2||!playerIndex(s.active)||
    !['playing','finished'].includes(s.status))throw Error('Incorrect pack/version or match state');
- if(s.pending&&(!playerIndex(s.pending.player)||!['block','life-trigger'].includes(s.pending.kind)))
+ if(s.pending&&(!playerIndex(s.pending.player)||!['block','life-trigger','effect-target'].includes(s.pending.kind)))
   throw Error('Invalid pending controller');
+ if(!Array.isArray(s.effectQueue)||s.effectQueue.some(e=>!playerIndex(e.owner)||
+   !['draw','millTop','buffSelf','enemyBpDown'].includes(e.op)))
+  throw Error('Invalid queued effects');
  for(let p=0;p<2;p++){
   const pl=s.players[p],uids=new Set(),items=[];
   if(pl.front?.length!==4||pl.energy?.length!==4||pl.apCards?.length!==3||
