@@ -13,7 +13,11 @@ test('browser UI can select TTG, start a 50-card Beta match, resolve legal turn 
   press({view:'builder'});
   press({title:'gurren-lagann'});
   assert.match(app.innerHTML,/81\/81/);
-  assert.match(app.innerHTML,/Beta 自動判定/);
+  assert.match(app.innerHTML,/Beta 自動判定已接入/);
+  assert.match(app.innerHTML,/官方驗收中/);
+  assert.match(app.innerHTML,/正式共用引擎尚未接入/);
+  assert.equal((app.innerHTML.match(/class="autoStatus ready"/g)||[]).length,81,'every card must show the real isolated Beta auto-ruling state');
+  assert.doesNotMatch(app.innerHTML,/此卡尚未接入自動判定/);
   assert.match(app.innerHTML,/ttgBetaStartGreen/);
   press({action:'ttgBetaStartGreen'});
   assert.match(app.innerHTML,/天元突破 · 限定 Beta 自動對戰/);
