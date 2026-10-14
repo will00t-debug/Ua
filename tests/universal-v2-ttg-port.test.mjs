@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {createTtgV2Pack,TTG_V2_ADDITION_IDS} from '../dist/universal-v2/ttg-pack.mjs';
 import {createSlgV2Pack} from '../dist/universal-v2/slg-pack.mjs';
 import {verifiedPilotPack} from '../dist/universal-v2/real-card-pilots.mjs';
+import {registeredV2TitlePack,listRegisteredV2Titles} from '../dist/universal-v2/title-packs/registry.mjs';
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,universalEnergyByColor,assertUniversalMatch} from '../dist/universal-v2/engine.mjs';
 const ttg=createTtgV2Pack(),slg=createSlgV2Pack(),packs=[ttg,slg];
@@ -61,4 +62,17 @@ test('TTG-1-019 ACTIVE generates an extra GREEN energy only until REST, retainin
  assert.equal(universalEnergyByColor(packs,s,0).green,2);
  c.ready=false;assert.equal(universalEnergyByColor(packs,s,0).green,1);
  assert.equal(assertUniversalMatch(packs,s),true);
+});
+
+test('TTG contribution is consumable by latest shared V2 title registry and is disjoint from original pilots',()=>{
+ const row=listRegisteredV2Titles().find(x=>x.title==='gurren-lagann');
+ assert.equal(row.baselinePilots,20);
+ assert.equal(row.newlyContributed,3);
+ assert.equal(row.totalV2Cards,23);
+ const registered=registeredV2TitlePack('gurren-lagann');
+ assert.equal(Object.keys(registered.cards).length,23);
+ for(const id of TTG_V2_ADDITION_IDS){
+  assert.deepEqual(registered.cards[id].effects,ttg.cards[id].effects);
+  assert.equal(registered.cards[id].trigger,ttg.cards[id].trigger);
+ }
 });
