@@ -87,8 +87,8 @@ function continueEffectQueue(pack,s){
    draw(s,owner,job.count);
    if(pl.hand.length)s.pending={kind:'effect-discard',player:owner,sourceUid:job.sourceUid};
   }else if(job.op==='retireOppFrontUnderBp'){
-   const ownName=job.bonusName.replace(/\\s+/g,'');
-   const hasBonus=field(pl).some(c=>card(pack,c).name.replace(/\\s+/g,'')===ownName);
+   const ownName=job.bonusName.replace(/\s+/g,'');
+   const hasBonus=field(pl).some(c=>card(pack,c).name.replace(/\s+/g,'')===ownName);
    const limit=hasBonus?job.bonusBp:job.bp;
    const choices=s.players[1-owner].front.filter(c=>c&&bp(pack,s,c)<=limit).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-retire-bp',player:owner,sourceUid:job.sourceUid,choices,limit};
