@@ -65,6 +65,9 @@ function continueEffectQueue(pack,s){
    const source=field(pl).find(c=>c.uid===job.sourceUid);
    if(!source)throw Error('buffSelf source must be on field');
    source.buffs.push({bp:job.bp,untilTurn:s.turn});
+  }else if(job.op==='drawDiscard'){
+   draw(s,owner,job.count);
+   if(pl.hand.length)s.pending={kind:'effect-discard',player:owner,sourceUid:job.sourceUid};
   }else if(job.op==='enemyBpDown'){
    const targetUids=s.players[1-owner].front.filter(Boolean).map(c=>c.uid);
    if(targetUids.length)s.pending={kind:'effect-target',player:owner,sourceUid:job.sourceUid,
@@ -124,6 +127,14 @@ function resolveChoice(s,a,pack){
   if(s.pending===q)s.pending=null;
   return;
  }
+ if(q.kind==='effect-discard'){
+  const index=p.hand.findIndex(c=>c.uid===a.uid);
+  if(index<0)throw Error('Discard requires an owned hand card');
+  p.outside.push(p.hand.splice(index,1)[0]);
+  s.pending=null;
+  continueEffectQueue(pack,s);
+  return;
+ }
  if(q.kind==='effect-target'){
   const target=s.players[1-q.player].front.find(c=>c?.uid===a.uid);
   if(!target||!q.choices.includes(a.uid))throw Error('Illegal cross-title effect target');
@@ -180,6 +191,7 @@ function legalPending(pack,s){
   {type:'chooseBlock',uid:null},
   ...p.front.filter(c=>c?.ready).map(c=>({type:'chooseBlock',uid:c.uid}))
  ];
+ if(q.kind==='effect-discard')return p.hand.map(c=>({type:'chooseDiscard',uid:c.uid}));
  if(q.kind==='effect-target')return q.choices.map(uid=>({type:'chooseTarget',uid}));
  if(q.kind==='life-trigger'){
   const out=[{type:'chooseTrigger',mode:'skip'}];
@@ -239,7 +251,7 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
  if(!options.some(a=>same(a,action)))throw Error('Action not currently legal');
  const s=clone(source),p=actor(s),pl=s.players[p];
  if(s.pending){
-  if(['block','effect-target'].includes(s.pending.kind))resolveChoice(s,{uid:action.uid},pack);
+  if(['block','effect-target','effect-discard'].includes(s.pending.kind))resolveChoice(s,{uid:action.uid},pack);
   else resolveChoice(s,{mode:action.mode},pack);
  }else switch(action.type){
   case 'extraDraw':
@@ -304,10 +316,10 @@ export function assertUniversalMatch(pack,s){
    s.packIds.length!==2||s.packVersions.length!==2||
    s.players?.length!==2||!playerIndex(s.active)||
    !['playing','finished'].includes(s.status))throw Error('Incorrect pack/version or match state');
- if(s.pending&&(!playerIndex(s.pending.player)||!['block','life-trigger','effect-target'].includes(s.pending.kind)))
+ if(s.pending&&(!playerIndex(s.pending.player)||!['block','life-trigger','effect-target','effect-discard'].includes(s.pending.kind)))
   throw Error('Invalid pending controller');
  if(!Array.isArray(s.effectQueue)||s.effectQueue.some(e=>!playerIndex(e.owner)||
-   !['draw','millTop','buffSelf','enemyBpDown'].includes(e.op)))
+   !['draw','millTop','buffSelf','enemyBpDown','drawDiscard'].includes(e.op)))
   throw Error('Invalid queued effects');
  for(let p=0;p<2;p++){
   const pl=s.players[p],uids=new Set(),items=[];
