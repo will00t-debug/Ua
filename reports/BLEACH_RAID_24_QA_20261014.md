@@ -79,8 +79,17 @@
 ## 生命 Trigger 沒有顯示：整合公開翻牌介面
 
 - 原因：BLEACH 的 `modalContent` 為保護 AI 私人選擇而隱藏 AI 的效果視窗，但主畫面沒有獨立的公開生命翻牌區。翻牌與效果結算完成後只留下文字紀錄。
-- 沿用 PR #31 / `feature/direct-placement-trigger-display` 已有的公開翻牌程式，僅整合 Trigger 功能到 PR #49，不覆蓋此前狛村／劍八修正，也未納入無關的登場操作差異。
+- 沿用 PR #31 / `feature/direct-placement-trigger-display` 已有的公開翻牌程式，先整合 Trigger 功能到 PR #49，不覆蓋此前狛村／劍八修正；後續已另外檢查並整合直接點格子登場。
 - 受傷瞬間記錄每張公開生命卡（包含無 Trigger 與 DAMAGE 2 同時翻牌），主畫面保留最近 3 張的卡圖、卡號、Trigger 效果及等待／不發動／已發動／加入手牌／Raid 結果；可查看最近 60 次翻牌。
 - 人類 Trigger 選擇視窗另顯示來源卡。AI 私人查看牌庫選項仍不渲染；只以已公開翻牌歷史及 `revealed` 來源顯示。補上舊存檔正停在 Trigger 選擇時的顯示與結算後歷史保存。
 - `tests/public-trigger-display.test.mjs` 8 項包含真實 `dispatch` 與載入實際 `app.mjs`、AI 定時決策、翻牌紀錄按鈕、舊存檔選擇按鈕、GET、重複翻開同卡、雙傷害與私人資訊不外洩。全套本機 Node24 **800/800 pass，0 fail**；語法檢查通過。
 - 曾嘗試 Playwright 手機尺寸視覺檢查，但此環境沒有 Chromium 可執行檔，因此本輪 UI 驗證是可執行 DOM 測試，未宣稱手機實機／截圖驗收。正式網站仍未部署。
+
+## 接續：普通登場直接點格子 + 突襲需明確啟動（2026-10-14）
+
+- 延續 PR #31 中獨立驗證過的直接登場互動：選擇手牌後，前線與能源線任何合法空格都能直接點擊登場；一般登場仍為 REST，合法動作／支付成本均交由引擎驗證。
+- Raid 卡被選中時**不會自動開始 Raid**。普通點格子一律普通登場；若要 Raid，須先按「突襲」再選合法底板、位置並確認。無底板的普通登場仍不能啟用 Raid 框內效果（本 PR 先前的規則修正）。
+- 選牌欄移除普通登場多餘的前線／能源線切換，移動階段仍可直接點合法格子；消除未選任何 Raid 時空格也被誤標示 `raid-base-selected` 的 CSS 狀態錯誤。
+- 更新 `tests/raid-placement.test.mjs` 六個導引 Raid 用例，新增 `tests/direct-placement-ui.test.mjs` 實際 app DOM/存檔/前線與能源線出牌／明確 Raid／AP／高亮回歸。生命 Trigger 原有 `tests/public-trigger-display.test.mjs` 維持，不覆寫隱私保護。
+- 初次 CI 38508895446 為 **800/801 通過**，唯一失敗是新測試沿用 PR #31 舊視窗標題；現已修正測試字串並補空格高亮防漏回歸。最後一版 CI 結果須查詢，不可將 800/801 誤寫為全部通過。
+- 仍維持 PR #49 Draft，不合併 main、不部署。手機實機視覺驗收及 24 張 Raid 全 FAQ 逐卡驗收尚未完成。
