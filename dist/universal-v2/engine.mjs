@@ -89,7 +89,7 @@ function continueEffectQueue(pack,s){
   }else if(job.op==='enemyBpDown'){
    const targetUids=s.players[1-owner].front.filter(Boolean).map(c=>c.uid);
    if(targetUids.length)s.pending={kind:'effect-target',player:owner,sourceUid:job.sourceUid,
-    bp:job.bp,choices:targetUids};
+    bp:job.bp,optional:job.optional===true,choices:targetUids};
   }else throw Error('Unimplemented effect op');
  }
 }
@@ -185,10 +185,16 @@ function resolveChoice(s,a,pack){
   return;
  }
  if(q.kind==='effect-target'){
-  const target=s.players[1-q.player].front.find(c=>c?.uid===a.uid);
-  if(!target||!q.choices.includes(a.uid))throw Error('Illegal cross-title effect target');
+  if(a.uid===null&&q.optional===true){
+   s.pending=null;continueEffectQueue(pack,s);return;
+  }
+  const foe=1-q.player,slot=s.players[foe].front.findIndex(c=>c?.uid===a.uid);
+  if(slot<0||!q.choices.includes(a.uid))throw Error('Illegal cross-title effect target');
+  const target=s.players[foe].front[slot];
   target.buffs??=[];
   target.buffs.push({bp:-q.bp,untilTurn:s.turn});
+  // Official state-based rule: characters at 0 BP or below are sidelined.
+  if(bp(pack,s,target)<=0)retire(s,foe,'front',slot);
   s.pending=null;
   continueEffectQueue(pack,s);
   return;
@@ -257,7 +263,10 @@ function legalPending(pack,s){
   ];
  if(q.kind==='end-hand-limit')return p.hand.map(c=>({type:'chooseHandLimit',uid:c.uid}));
  if(q.kind==='effect-discard')return p.hand.map(c=>({type:'chooseDiscard',uid:c.uid}));
- if(q.kind==='effect-target')return q.choices.map(uid=>({type:'chooseTarget',uid}));
+ if(q.kind==='effect-target')return [
+   ...(q.optional?[{type:'chooseTarget',uid:null}]:[]),
+   ...q.choices.map(uid=>({type:'chooseTarget',uid}))
+  ];
  if(q.kind==='life-trigger'){
   const out=[{type:'chooseTrigger',mode:'skip'}];
   if(q.trigger==='active')out.push(...field(p).filter(c=>card(pack,c).type==='character')
