@@ -411,8 +411,9 @@ function protectedFullLineFixture(seed=900){
   conditionalUnderFaceDown:{bp:1000,impact:1,leaveReplacementMinBp:500}
  }:c);
  const custom=createUniversalPack({id:'full-line-protect',cards:modified});
- const packs=[custom,packB];
- let s=newUniversalMatch(packs,{decks:[deck,deck],seed,first:0});
+ const packs=[custom,packB],customDeck={...deck,F08:1,F15:deck.F15-1};
+ assert.deepEqual(validateUniversalDeck(custom,customDeck),[]);
+ let s=newUniversalMatch(packs,{decks:[customDeck,deck],seed,first:0});
  const take0=id=>{
   for(const zone of ['hand','deck','life','outside']){
    const a=s.players[0][zone],i=a.findIndex(c=>c.cardId===id);
