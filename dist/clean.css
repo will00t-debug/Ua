@@ -396,3 +396,25 @@ select, input, textarea { background: #fff; color: var(--text); border-color: #c
  .soloHandCard small { font-size:8px; }
  .soloLifeRevealBody>.soloRemoteArt { width:82px; }
 }
+
+/* Unified Beta match status for TTG / Solo, without changing series card layouts. */
+.betaMatchHeader { margin-bottom:10px; }
+.betaMatchToolbar { display:flex; flex-wrap:wrap; align-items:center; gap:10px 20px; margin:8px 0 14px; }
+.betaMatchStats { flex:1 1 280px; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+.betaMatchStats>div { border:1px solid #8885; border-radius:8px; padding:8px 10px; min-width:0; display:grid; gap:4px; }
+.betaMatchStats b { font-size:13px; }
+.betaMatchStats small { font-size:11px; color:var(--muted); line-height:1.35; }
+.betaAiSetting { display:flex; flex-direction:column; gap:6px; font-size:12px; min-width:164px; }
+.betaAiSetting select { min-height:40px; border:1px solid #88909b; border-radius:7px; padding:7px; color:inherit; background:var(--panel,#262626); max-width:100%; }
+.betaMatchNote { flex-basis:100%; color:var(--muted); font-size:11px; line-height:1.45; }
+.betaDifficultyBuilder { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin:12px 0; }
+.betaDifficultyBuilder .betaAiSetting { flex-direction:row; align-items:center; flex-wrap:wrap; }
+@media (max-width:580px){
+ .betaMatchToolbar { gap:9px; padding:10px; }
+ .betaMatchStats { flex-basis:100%; gap:6px; }
+ .betaMatchStats>div { padding:7px; }
+ .betaMatchStats b { font-size:12px; }
+ .betaMatchStats small { font-size:9px; }
+ .betaAiSetting { width:100%; }
+ .betaAiSetting select { width:100%; }
+}
