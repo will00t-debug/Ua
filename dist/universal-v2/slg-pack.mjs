@@ -279,7 +279,59 @@ const authored=[
         }
       ]
     }
+  },
+{
+  "id": "SLG-1-040",
+  "name": "スキル：乱刀",
+  "color": "purple",
+  "energy": 4,
+  "ap": 1,
+  "bp": 0,
+  "gen": 0,
+  "trigger": "special",
+  "type": "event",
+  "textAnchor": "事件：令一個敵方前",
+  "implementation": "dsl",
+  "triggerEffect": {
+    "op": "retireOppFront"
+  },
+  "templateEffects": {
+    "onPlay": [
+      {
+        "template": "retireEnemyUnderBp",
+        "bp": 3000,
+        "bonusName": "水篠 旬",
+        "bonusBp": 5000
+      }
+    ]
   }
+},
+{
+  "id": "SLG-1-076",
+  "name": "俺はな、絶えずレベルアップしてんだよ",
+  "color": "green",
+  "energy": 4,
+  "ap": 1,
+  "bp": 0,
+  "gen": 0,
+  "trigger": "special",
+  "type": "event",
+  "textAnchor": "事件：令1張敵方前",
+  "implementation": "dsl",
+  "triggerEffect": {
+    "op": "retireOppFront"
+  },
+  "templateEffects": {
+    "onPlay": [
+      {
+        "template": "retireEnemyUnderBp",
+        "bp": 3000,
+        "bonusName": "水篠 旬",
+        "bonusBp": 5000
+      }
+    ]
+  }
+}
 ];
 export const SLG_V2_VERIFIED_IDS=Object.freeze(authored.map(c=>c.id));
 export function verifiedSlgV2Cards(){
