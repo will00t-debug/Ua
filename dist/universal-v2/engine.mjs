@@ -57,7 +57,7 @@ function startTurn(pack,s){
  const p=s.active,pl=s.players[p];
  pl.ownTurns++;s.turn++;s.phase='start';s.extraDrawn=false;s.moved=false;s.movedUids=[];s.pending=null;
  const max=pl.ownTurns>=3?3:(pl.ownTurns===1&&p===s.first?1:2);
- for(let i=0;i<pl.apCards.length;i++)pl.apCards[i].ready=i<max;
+ for(let i=0;i<pl.apCards.length;i++){pl.apCards[i].inPlay=i<max;pl.apCards[i].ready=i<max;}
  for(const c of field(pl)){c.ready=true;c.buffs=(c.buffs||[]).filter(b=>b.untilTurn>=s.turn);}
  if(!(pl.ownTurns===1&&p===s.first)){
   if(!pl.deck.length){s.status='finished';s.winner=1-p;s.endReason='required-draw-empty';return;}
@@ -77,7 +77,7 @@ function continueEffectQueue(pack,s){
    if(!source)throw Error('buffSelf source must be on field');
    source.buffs.push({bp:job.bp,untilTurn:s.turn});
   }else if(job.op==='recoverAp'){
-   if(pl.apCards.some(c=>!c.ready))
+   if(pl.apCards.some(c=>c.inPlay&&!c.ready))
     s.pending={kind:'effect-recover-ap',player:owner,sourceUid:job.sourceUid,remaining:job.count};
   }else if(job.op==='drawDiscard'){
    draw(s,owner,job.count);
@@ -151,10 +151,10 @@ function resolveChoice(s,a,pack){
  }
  if(q.kind==='effect-recover-ap'){
   if(a.uid===null){s.pending=null;continueEffectQueue(pack,s);return;}
-  const ap=p.apCards.find(c=>c.uid===a.uid&&!c.ready);
+  const ap=p.apCards.find(c=>c.uid===a.uid&&c.inPlay&&!c.ready);
   if(!ap)throw Error('AP recovery must target a REST AP card owned by controller');
   ap.ready=true;q.remaining--;
-  if(q.remaining<=0||!p.apCards.some(c=>!c.ready)){
+  if(q.remaining<=0||!p.apCards.some(c=>c.inPlay&&!c.ready)){
    s.pending=null;continueEffectQueue(pack,s);
   }
   return;
@@ -226,7 +226,7 @@ export function newUniversalMatch(pack,{decks,seed=1,first=0}={}){
   s.players.push({
    deck:pile,hand:pile.splice(0,7),life:pile.splice(0,7),
    front:[null,null,null,null],energy:[null,null,null,null],
-   outside:[],removed:[],apCards:[0,1,2].map(i=>({uid:'AP'+p+'-'+i,ready:false})),ownTurns:0
+   outside:[],removed:[],apCards:[0,1,2].map(i=>({uid:'AP'+p+'-'+i,ready:false,inPlay:false})),ownTurns:0
   });
  }
  startTurn(pack,s);
@@ -241,7 +241,7 @@ function legalPending(pack,s){
  ];
  if(q.kind==='effect-recover-ap')return [
    {type:'chooseApRecovery',uid:null},
-   ...p.apCards.filter(c=>!c.ready).map(c=>({type:'chooseApRecovery',uid:c.uid}))
+   ...p.apCards.filter(c=>c.inPlay&&!c.ready).map(c=>({type:'chooseApRecovery',uid:c.uid}))
   ];
  if(q.kind==='end-hand-limit')return p.hand.map(c=>({type:'chooseHandLimit',uid:c.uid}));
  if(q.kind==='effect-discard')return p.hand.map(c=>({type:'chooseDiscard',uid:c.uid}));
@@ -382,7 +382,7 @@ export function assertUniversalMatch(pack,s){
  for(let p=0;p<2;p++){
   const pl=s.players[p],uids=new Set(),items=[];
   if(pl.front?.length!==4||pl.energy?.length!==4||pl.apCards?.length!==3||
-    pl.apCards.some(c=>typeof c.ready!=='boolean'))throw Error('Invalid zones or AP cards');
+    pl.apCards.some(c=>typeof c.ready!=='boolean'||typeof c.inPlay!=='boolean'||(c.ready&&!c.inPlay)))throw Error('Invalid zones or AP cards');
   function visit(c){
    if(!c)return;
    if(typeof c.uid!=='string'||uids.has(c.uid)||!c.uid.startsWith(p+'-')||
@@ -415,7 +415,7 @@ export function universalPublicView(pack,s,viewer=0){
    hand:p===viewer?pl.hand.map(c=>({uid:c.uid,cardId:c.cardId})):null,
    front:pl.front.map(c=>c?{uid:c.uid,cardId:c.cardId,ready:c.ready,bp:bp(pack,s,c),raidDepth:c.stack?.length||0}:null),
    energy:pl.energy.map(c=>c?{uid:c.uid,cardId:c.cardId,ready:c.ready,produces:card(pack,c).gen}:null),
-   apReady:pl.apCards.filter(c=>c.ready).length,energyTotal:calcEnergy(pack,s,p),energyByColor:{...universalEnergyByColor(pack,s,p)},
+   apReady:pl.apCards.filter(c=>c.ready).length,apTotal:pl.apCards.filter(c=>c.inPlay).length,energyTotal:calcEnergy(pack,s,p),energyByColor:{...universalEnergyByColor(pack,s,p)},
    outside:pl.outside.map(c=>({uid:c.uid,cardId:c.cardId}))
   }))
  };
