@@ -21,7 +21,8 @@ test('template registry is finite, audited and rejects unknown behaviors instead
   'retireEnemyIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown',
   'searchDeckOne','recoverOutsideOne','discardToDraw',
   'searchDeckMany','enemyFrontAllBpDown','retireEnemyFrontAllUnderBp',
-  'buffOwnTraitAllTurn','searchDeckWhere','inspectTopArrange','payDiscardThen'
+  'buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
+  'recoverOutsideColorUnderEnergy','searchDeckWhere','inspectTopArrange','payDiscardThen'
  ]);
  assert.throws(()=>checked(character({
   implementation:'dsl',templateEffects:{onPlay:[{template:'drawEnemyDeck',count:1}]}
@@ -99,7 +100,7 @@ test('templates cannot silently override raw ops, authorize vanilla effects or b
   'legacy directly authored DSL continues to work unchanged');
 });
 
-test('all twenty-two supported templates compile to the established and extended V2 runtime DSL ops in deterministic order',()=>{
+test('all twenty-five supported templates compile to the established and extended V2 runtime DSL ops in deterministic order',()=>{
  const examples=[
   [{template:'searchDeckWhere',filters:[
    {field:'name',value:'Scout'},{field:'trait',value:'Scout'}],
@@ -113,6 +114,10 @@ test('all twenty-two supported templates compile to the established and extended
   [{template:'retireEnemyFrontAllUnderBp',bp:3500},{op:'retireOppFrontAllUnderBp',bp:3500}],
   [{template:'buffOwnTraitAllTurn',trait:'Scout',bp:1000},
    {op:'buffOwnTraitAllTurn',trait:'Scout',bp:1000}],
+  [{template:'buffSelfIfFirstAttack',bp:1500},{op:'buffSelfIfFirstAttack',bp:1500}],
+  [{template:'bounceOwnOtherUnderEnergy',energy:1},{op:'bounceOwnOtherUnderEnergy',energy:1}],
+  [{template:'recoverOutsideColorUnderEnergy',color:'red',energy:2,optional:true},
+   {op:'recoverOutsideColorUnderEnergy',color:'red',energy:2,optional:true}],
   [{template:'draw',count:2},{op:'draw',count:2}],
   [{template:'millTop',count:3},{op:'millTop',count:3}],
   [{template:'drawDiscardOne'},{op:'drawDiscard',count:1}],
@@ -170,6 +175,11 @@ test('both real pilot titles compile expanded explicitly verified template effec
    {op:'buffOwnTrait',trait:'大グレン団',bp:1000,optional:true},
    {op:'drawIfRaidUnderFacedown'}
   ]},
+  'TTG-1-047':{onAttack:[{op:'buffSelfIfFirstAttack',bp:1500}]},
+  'TTG-1-049':{onPlay:[{op:'bounceOwnOtherUnderEnergy',energy:1}]},
+  'TTG-1-052':{onPlay:[{op:'discardGate',optional:true,then:[
+   {op:'recoverOutsideColorUnderEnergy',color:'red',energy:2,optional:true}
+  ]}]},
   'TTG-1-051':{onPlay:[{op:'drawDiscard',count:1}]},
   'TTG-1-072':{onPlay:[{op:'draw',count:1},{op:'restOppFrontUnderBp',bp:3000,optional:true}]},
   'TTG-1-073':{onPlay:[{op:'retireOppFrontIfFacedown',bp:5000,optional:true}]},
@@ -188,7 +198,7 @@ test('both real pilot titles compile expanded explicitly verified template effec
    assert.ok(Object.isFrozen(entry.effects),id+' compiled effects are frozen');
   }
  }
- assert.equal(Object.keys(expected).length,19);
+ assert.equal(Object.keys(expected).length,22);
 });
 
 function dualFixture(){
