@@ -36,6 +36,20 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='effect-buff-trait')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='main-two-buff')return legal[0];
  if(s.pending?.kind==='effect-rest-bp')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-retire-bp'){
+  // A printed "up to one" retirement presents SKIP first; normal/hard AI
+  // should choose an eligible enemy unless there is none.
+  const targets=legal.filter(a=>a.uid!==null);
+  targets.sort((a,b)=>{
+   const foe=s.players[1-s.pending.player].front;
+   const aa=foe.find(c=>c?.uid===a.uid),bb=foe.find(c=>c?.uid===b.uid);
+   return universalBp(pack,s,bb)-universalBp(pack,s,aa);
+  });
+  return difficulty==='easy'?legal[0]:targets[0]||legal[0];
+ }
+ if(s.pending?.kind==='leave-replacement')
+  return difficulty==='easy'?legal.find(a=>a.mode==='leave')||legal[0]:
+   legal.find(a=>a.mode==='protect')||legal[0];
  if(s.pending?.kind==='block')return chooseBlock(pack,s,legal,difficulty);
  if(s.pending?.kind==='effect-target'){
   const choices=legal.filter(a=>a.uid!==null).map(a=>({
