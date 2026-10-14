@@ -220,3 +220,16 @@
 - **041**：綠5／AP1，只能選己方大紅蓮團角色、相同印刷名稱不得同時選兩張；3張不同角色則**每張均 BP+3000**（官方 Q2284），並測 ACTIVE 生命觸發合法選取與放棄。
 
 不改正式網站、不合併 main、不翻 `auto:false`。待 Node22 全量 CI、手機真機與其他跨卡時間點驗證；下一批可接續 **TTG-1-042～044**，開始紅色卡牌逐卡驗收。
+
+
+## 2026-10-14：TTG-1-042～044 官方紅色入門三張／未阻擋 Q2285 選牌（草稿）
+
+來源：[042 日本官方](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-042)、[043 日本官方](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-043)、[044 官方英語印刷](https://www.unionarena-tcg.com/en/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-044)、[官方 Q2285](https://www.unionarena-tcg.com/jp/faq/list.php?category=%E3%82%AB%E3%83%BC%E3%83%89%E5%80%8B%E5%88%A5&sub_category=%E5%A4%A9%E5%85%83%E7%AA%81%E7%A0%B4%E3%82%B0%E3%83%AC%E3%83%B3%E3%83%A9%E3%82%AC%E3%83%B3)。
+
+新增 `tests/ttg-official-acceptance-042-044.test.mjs`：50張真正對局核心場景＋DOM手機模擬按鈕。
+
+- **042 卡米那**：0紅能源、AP1、BP2000、在能源線產生1紅；真正支付AP後登場，紅色產能即時更新；印刷生命 ACTIVE 依通用裁定處理。
+- **043 卡米那**：紅2 AP1，BP3000，IMPACT 無效在與 027 進行的真實阻擋戰鬥中防止額外生命傷害。生命 DRAW 可以抽真實一張卡或選擇放棄，不能無提示自動抽。
+- **044 卡米那**：紅3 AP1，己方有場上或己方 Raid 底板西蒙，自己的回合 BP+500；Q2285 **先完成阻擋者選擇，再於傷害前開啟是否發動**。可完全放棄而不查看／變更牌庫；若選看頂7張，可只公開最多一張印刷〈グレン〉加入手牌；若拿牌要選一張手牌（允許剛拿者）送場外，剩餘任意順序放牌庫底。改善 `dist/ttg-red-first-three.mjs`：公開 log 只記錄真正拿到的〈グレン〉，其餘卡與私人排序不外洩。加入 `dist/ttg-browser.mjs` 與 `dist/app.mjs` 手機專用操作：先選擇要不要發動，之後才能看到牌庫頂與調整上下順序，確認後才結算後續生命傷害。
+
+保留後續缺口：043 IMPACT 無效與多重DAMAGE、044 多名同時未阻擋攻擊、牌頂不足7／空牌庫與其他防守 Trigger 鏈、真實手機與雙人熱座資訊驗證。**本次不是三張卡所有官方例外最終認證；不翻 auto 旗標、不寫入 main、不部署。** 後續從 **TTG-1-045～047** 接續。
