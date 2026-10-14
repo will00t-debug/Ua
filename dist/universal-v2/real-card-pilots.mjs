@@ -29,7 +29,7 @@ const printed=Object.freeze({
   {id:'TTG-1-072',energy:3,ap:1,bp:3500,gen:1,color:'red',trigger:'raid',type:'character',
    implementation:'dsl',raidName:'カミナ',ownTurnBp:500,
    effects:{onPlay:[{op:'draw',count:1},{op:'restOppFrontUnderBp',bp:3000,optional:true}]},
-   matchText:'BP+500'},
+   matchText:'BP+500',matchTexts:['Raid 卡米那','登場抽1張','BP3000 以下']},
   {id:'TTG-1-078',energy:3,ap:1,bp:0,gen:0,color:'red',trigger:'final',type:'event',implementation:'dsl',effects:{onPlay:[{op:'recoverAp',count:2}]},matchText:'選擇最多2張自己的 AP 卡'},
   {id:'TTG-1-079',energy:3,ap:1,bp:0,gen:0,color:'red',trigger:'final',type:'event',implementation:'dsl',effects:{onPlay:[{op:'recoverAp',count:2}]},matchText:'選擇最多2張自己的 AP 卡'}
  ])
@@ -53,6 +53,8 @@ export function portVerifiedPilotCard(title,id){
    throw Error('Official printed '+key+' changed for '+id+'; reverify migration');
  if(spec.matchText&&!String(c.effect||'').includes(spec.matchText))
   throw Error('Printed ability changed for '+id+'; reverify migration');
+ for(const part of spec.matchTexts||[])if(!String(c.effect||'').includes(part))
+  throw Error('Printed ability detail changed for '+id+': '+part);
  return {
   id, name:c.nameJa||c.name,color:spec.color,type:spec.type,
   energy:spec.energy,ap:spec.ap,bp:spec.bp,gen:spec.gen,
