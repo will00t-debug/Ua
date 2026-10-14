@@ -47,7 +47,7 @@ test('MST source preserves exactly 001–080 Japanese printed regular IDs, and 2
  assert.equal(Object.keys(pack.cards).length,22);
  assert.ok(!pack.cards['MST-1-051'],'2026-10-01 deck-limit 1 not yet expressible in V2 deck validator');
  assert.ok(!pack.cards['MST-1-068'],'two-mode conditional Raid is unported');
- assert.match(validateUniversalDeck(pack,{...deck,'MST-1-051':1}).join(),'Unregistered');
+ assert.match(validateUniversalDeck(pack,{...deck,'MST-1-051':1}).join(),/Unregistered/);
  for(const id of MST_V2_PILOT_IDS){
   const original=UA54BT_OFFICIAL_PRINT[id],card=pack.cards[id];
   for(const field of ['energy','ap','bp','gen','type','trigger'])
