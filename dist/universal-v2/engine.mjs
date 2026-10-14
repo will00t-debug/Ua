@@ -102,6 +102,16 @@ function detachFacedown(top,uid){
  };
  return walk(top);
 }
+// Shared named/trait/color/type selector, always resolved with the physical
+// card owner's own title pack. Never use the other player's printed ID table.
+function matchesFilter(pack,physical,filter){
+ const printed=card(pack,physical);
+ if(filter.field==='trait')return printed.traits.includes(filter.value);
+ return printed[filter.field]===filter.value;
+}
+function filteredChoices(pack,cards,filter){
+ return cards.filter(c=>matchesFilter(pack,c,filter)).map(c=>c.uid);
+}
 function startTurn(pack,s){
  const p=s.active,pl=s.players[p];
  pl.ownTurns++;s.turn++;s.phase='start';s.extraDrawn=false;s.moved=false;s.movedUids=[];s.pending=null;
@@ -133,6 +143,18 @@ function continueEffectQueue(pack,s){
   }else if(job.op==='recoverAp'){
    if(pl.apCards.some(c=>c.inPlay&&!c.ready))
     s.pending={kind:'effect-recover-ap',player:owner,sourceUid:job.sourceUid,remaining:job.count};
+  }else if(job.op==='searchDeckOne'){
+   const matches=filteredChoices(pack,pl.deck,job.filter);
+   if(matches.length)s.pending={kind:'effect-search-deck',player:owner,
+    sourceUid:job.sourceUid,filter:job.filter,choices:matches,optional:job.optional};
+   else shuffle(s,pl.deck); // mandatory shuffle even when nothing matches
+  }else if(job.op==='recoverOutsideOne'){
+   const matches=filteredChoices(pack,pl.outside,job.filter);
+   if(matches.length)s.pending={kind:'effect-recover-outside',player:owner,
+    sourceUid:job.sourceUid,filter:job.filter,choices:matches,optional:job.optional};
+  }else if(job.op==='discardToDraw'){
+   if(pl.hand.length)s.pending={kind:'effect-discard-cost',player:owner,
+    sourceUid:job.sourceUid,count:job.count,optional:job.optional};
   }else if(job.op==='drawDiscard'){
    draw(s,owner,job.count);
    if(pl.hand.length)s.pending={kind:'effect-discard',player:owner,sourceUid:job.sourceUid};
@@ -384,6 +406,34 @@ function resolveChoice(s,a,pack){
   advanceAfterEnd(pack,s,q.player);
   return;
  }
+ if(q.kind==='effect-search-deck'){
+  if(a.uid!==null){
+   const index=p.deck.findIndex(c=>c.uid===a.uid);
+   if(index<0||!q.choices.includes(a.uid)||!matchesFilter(pack,p.deck[index],q.filter))
+    throw Error('Deck search needs an eligible owned physical card');
+   p.hand.push(p.deck.splice(index,1)[0]);
+  }else if(!q.optional)throw Error('Mandatory deck search cannot be declined');
+  shuffle(s,p.deck);
+  s.pending=null;continueEffectQueue(pack,s);return;
+ }
+ if(q.kind==='effect-recover-outside'){
+  if(a.uid!==null){
+   const index=p.outside.findIndex(c=>c.uid===a.uid);
+   if(index<0||!q.choices.includes(a.uid)||!matchesFilter(pack,p.outside[index],q.filter))
+    throw Error('Outside recovery needs an eligible owned physical card');
+   p.hand.push(p.outside.splice(index,1)[0]);
+  }else if(!q.optional)throw Error('Mandatory outside recovery cannot be declined');
+  s.pending=null;continueEffectQueue(pack,s);return;
+ }
+ if(q.kind==='effect-discard-cost'){
+  if(a.uid!==null){
+   const index=p.hand.findIndex(c=>c.uid===a.uid);
+   if(index<0)throw Error('Discard payment needs an owned hand card');
+   p.outside.push(p.hand.splice(index,1)[0]);
+   draw(s,q.player,q.count);
+  }else if(!q.optional)throw Error('Mandatory cost cannot be declined');
+  s.pending=null;continueEffectQueue(pack,s);return;
+ }
  if(q.kind==='effect-discard'){
   const index=p.hand.findIndex(c=>c.uid===a.uid);
   if(index<0)throw Error('Discard requires an owned hand card');
@@ -555,6 +605,20 @@ function legalPending(pack,s){
   ];
  if(q.kind==='end-hand-limit')return p.hand.map(c=>({type:'chooseHandLimit',uid:c.uid}));
  if(q.kind==='effect-discard')return p.hand.map(c=>({type:'chooseDiscard',uid:c.uid}));
+ if(q.kind==='effect-search-deck')return [
+  ...(q.optional?[{type:'chooseDeckSearch',uid:null}]:[]),
+  ...p.deck.filter(c=>q.choices.includes(c.uid)&&matchesFilter(pack,c,q.filter))
+   .map(c=>({type:'chooseDeckSearch',uid:c.uid}))
+ ];
+ if(q.kind==='effect-recover-outside')return [
+  ...(q.optional?[{type:'chooseOutsideRecovery',uid:null}]:[]),
+  ...p.outside.filter(c=>q.choices.includes(c.uid)&&matchesFilter(pack,c,q.filter))
+   .map(c=>({type:'chooseOutsideRecovery',uid:c.uid}))
+ ];
+ if(q.kind==='effect-discard-cost')return [
+  ...(q.optional?[{type:'chooseDiscardCost',uid:null}]:[]),
+  ...p.hand.map(c=>({type:'chooseDiscardCost',uid:c.uid}))
+ ];
  if(q.kind==='raid-effect-order')return [
    {type:'chooseRaidOrder',mode:'baseFirst'},{type:'chooseRaidOrder',mode:'entryFirst'}
   ];
@@ -778,7 +842,7 @@ export function assertUniversalMatch(pack,s){
    !Array.isArray(s.initialCounts)||s.initialCounts.length!==2||
    s.players?.length!==2||!playerIndex(s.active)||
    !['playing','finished'].includes(s.status))throw Error('Incorrect pack/version or match state');
- if(s.pending&&(!playerIndex(s.pending.player)||!['block','life-trigger','effect-target','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','effect-retire-bp','effect-rest-bp','raid-effect-order','effect-buff-trait','main-two-buff','leave-replacement'].includes(s.pending.kind)))
+ if(s.pending&&(!playerIndex(s.pending.player)||!['block','life-trigger','effect-target','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','effect-retire-bp','effect-rest-bp','raid-effect-order','effect-buff-trait','main-two-buff','leave-replacement','effect-search-deck','effect-recover-outside','effect-discard-cost'].includes(s.pending.kind)))
   throw Error('Invalid pending controller');
  if(!Array.isArray(s.raidedThisTurn)||s.raidedThisTurn.length!==2||
    s.raidedThisTurn.some(x=>typeof x!=='boolean')||
@@ -790,7 +854,7 @@ export function assertUniversalMatch(pack,s){
  if(!Array.isArray(s.movedUids)||new Set(s.movedUids).size!==s.movedUids.length)
   throw Error('Invalid movement accounting');
  if(!Array.isArray(s.effectQueue)||s.effectQueue.some(e=>!playerIndex(e.owner)||
-   !['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','retireOppFrontUnderBp','restOppFrontUnderBp','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','openBlock'].includes(e.op)))
+   !['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','retireOppFrontUnderBp','restOppFrontUnderBp','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','discardToDraw','openBlock'].includes(e.op)))
   throw Error('Invalid queued effects');
  for(let p=0;p<2;p++){
   const pl=s.players[p],uids=new Set(),items=[];
