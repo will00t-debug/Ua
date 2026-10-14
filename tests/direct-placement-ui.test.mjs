@@ -34,6 +34,7 @@ test('hand card can play by directly clicking any legal board slot and Raid is n
   await import('../dist/app.mjs?direct-place-life-trigger-test');
   const click=dataset=>nodes.app.onclick({target:{closest(){return {dataset,disabled:false};}}});
   click({view:'arena'});
+  assert.doesNotMatch(nodes.app.innerHTML,/class="slot[^\"]*raid-base-selected/,'empty slots must not look like selected Raid bases');
   assert.match(nodes.app.innerHTML,/生命區翻牌 · 公開資訊/);
   assert.match(nodes.app.innerHTML,/石田雨龍/);
   assert.match(nodes.app.innerHTML,/DRAW Trigger/);
