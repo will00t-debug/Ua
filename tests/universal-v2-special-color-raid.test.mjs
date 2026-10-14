@@ -404,3 +404,76 @@ test('Q2286 foundation: an original Raid-base onRaided trigger fires AGAIN when 
  assert.equal(done.players[1].front[0].stack[0].under[0].uid,one.uid);
  assert.equal(assertUniversalMatch(packs,done),true);
 });
+
+function protectedFullLineFixture(seed=900){
+ const modified=base.map(c=>c.id==='F08'?{
+  ...c,raidName:'Hero',implementation:'dsl',effects:{onPlay:[]},
+  conditionalUnderFaceDown:{bp:1000,impact:1,leaveReplacementMinBp:500}
+ }:c);
+ const custom=createUniversalPack({id:'full-line-protect',cards:modified});
+ const packs=[custom,packB];
+ let s=newUniversalMatch(packs,{decks:[deck,deck],seed,first:0});
+ const take0=id=>{
+  for(const zone of ['hand','deck','life','outside']){
+   const a=s.players[0][zone],i=a.findIndex(c=>c.cardId===id);
+   if(i!==-1)return a.splice(i,1)[0];
+  }
+  throw Error('missing full-line source '+id);
+ };
+ const main=take0('F08'),baseCard=take0('F00'),under=take0('F01');
+ under.faceDown=true;baseCard.under.push(under);main.stack=[baseCard];
+ s.players[0].front[0]=main;
+ for(let slot=1;slot<4;slot++)s.players[0].front[slot]=take0('F'+String(slot+9).padStart(2,'0'));
+ s.players[0].energy[0]=take0('F00');
+ const newcomer=take0('F02');s.players[0].hand.push(newcomer);
+ for(let i=0;i<2;i++)s=dispatchUniversalAction(packs,s,{type:'next'});
+ assert.equal(s.phase,'main');
+ assert.equal(assertUniversalMatch(packs,s),true);
+ return {packs,s,main,baseCard,under,newcomer};
+}
+test('full-line protected Raided target: explicit removal choice resumes original paid deployment AFTER removal',()=>{
+ const {packs,s,main,baseCard,under,newcomer}=protectedFullLineFixture();
+ const options=legalUniversalActions(packs,s);
+ const attempted=options.find(a=>a.type==='play'&&a.uid===newcomer.uid&&a.line==='front'&&a.slot===0);
+ assert.ok(attempted);
+ assert.equal(attempted.replaceUid,main.uid);
+ const original=structuredClone(s),ap=s.players[0].apCards.filter(a=>a.ready).length;
+ const stalled=dispatchUniversalAction(packs,s,attempted,{actor:0});
+ assert.equal(stalled.pending?.kind,'leave-replacement');
+ assert.equal(stalled.pending.player,0);
+ assert.equal(stalled.players[0].apCards.filter(a=>a.ready).length,ap,'AP not spent before leave choice');
+ assert.deepEqual(legalUniversalActions(packs,stalled),[
+  {type:'chooseLeaveReplacement',mode:'protect'},
+  {type:'chooseLeaveReplacement',mode:'leave'}
+ ]);
+ const applied=dispatchUniversalAction(packs,stalled,{type:'chooseLeaveReplacement',mode:'leave'},{actor:0});
+ assert.equal(applied.pending,null);
+ assert.equal(applied.players[0].front[0].uid,newcomer.uid);
+ assert.equal(applied.players[0].apCards.filter(a=>a.ready).length,ap-1);
+ assert.ok(applied.players[0].removed.some(c=>c.uid===main.uid));
+ assert.ok(applied.players[0].removed.some(c=>c.uid===baseCard.uid));
+ assert.ok(applied.players[0].removed.some(c=>c.uid===under.uid&&c.faceDown===false));
+ assert.equal(assertUniversalMatch(packs,applied),true);
+ assert.deepEqual(s,original);
+});
+test('full-line protected Raided target: choosing protection consumes facedown card and cancels deployment without AP',()=>{
+ const {packs,s,main,under,newcomer}=protectedFullLineFixture(901);
+ const attempted=legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===newcomer.uid&&a.slot===0&&a.line==='front');
+ const held=dispatchUniversalAction(packs,s,attempted,{actor:0});
+ const ap=held.players[0].apCards.filter(a=>a.ready).length;
+ const kept=dispatchUniversalAction(packs,held,{type:'chooseLeaveReplacement',mode:'protect'},{actor:0});
+ assert.equal(kept.pending,null);
+ assert.equal(kept.players[0].front[0].uid,main.uid);
+ assert.ok(kept.players[0].outside.some(c=>c.uid===under.uid));
+ assert.equal(kept.players[0].front[0].stack[0].under.length,0);
+ assert.equal(kept.players[0].apCards.filter(a=>a.ready).length,ap);
+ assert.ok(kept.players[0].hand.some(c=>c.uid===newcomer.uid));
+ assert.equal(universalBp(packs,kept,kept.players[0].front[0]),2000);
+ assert.equal(assertUniversalMatch(packs,kept),true);
+ const retry=legalUniversalActions(packs,kept).find(a=>a.type==='play'&&a.uid===newcomer.uid&&a.line==='front'&&a.slot===0);
+ assert.equal(retry.replaceUid,main.uid,'now the same occupant can be removed without facedown replacement');
+ const redone=dispatchUniversalAction(packs,kept,retry,{actor:0});
+ assert.equal(redone.players[0].front[0].uid,newcomer.uid);
+ assert.equal(redone.pending,null);
+ assert.equal(assertUniversalMatch(packs,redone),true);
+});
