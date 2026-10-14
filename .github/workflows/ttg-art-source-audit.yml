@@ -27,6 +27,11 @@ jobs:
               }
               const matches=html.split(/\\n/).filter(row=>row.includes('cardlist/small')||row.includes('TTG-1-001')||row.includes('TTG-1-032')).slice(0,8);
               console.log('IMAGE_MATCHES',JSON.stringify(matches.map(row=>row.slice(0,800))));
+              if(url.includes('Version=TTG')){
+                const ids=new Set([...html.matchAll(/data-src=['"]cardlist\\/small\\/UA56BT_TTG-1-(\\d{3})\\.jpg/g)].map(m=>m[1]));
+                const missing=Array.from({length:81},(_,i)=>String(i+1).padStart(3,'0')).filter(n=>!ids.has(n));
+                console.log('STANDARD_ARTWORK_COVERAGE',ids.size,'MISSING',missing.join(',')||'none');
+              }
             }catch(e){console.log('SOURCE_ERROR',url,String(e));}
           }
           for(const path of ['UA56BT_TTG-1-001.jpg','UA56BT_TTG-1-001_1.jpg','UA56BT_TTG-1-032.jpg','UA56BT_TTG-1-032_1.jpg','UA56BT_TTG-1-032_2.jpg']){
