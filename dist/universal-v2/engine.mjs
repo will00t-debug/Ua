@@ -106,6 +106,13 @@ function continueEffectQueue(pack,s){
    const limit=hasBonus?job.bonusBp:job.bp;
    const choices=s.players[1-owner].front.filter(c=>c&&bp(pack,s,c)<=limit).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-retire-bp',player:owner,sourceUid:job.sourceUid,choices,limit};
+  }else if(job.op==='retireOppFrontIfFacedown'){
+   const source=field(pl).find(c=>c.uid===job.sourceUid);
+   if(source&&hasFacedownUnder(source)){
+    const choices=s.players[1-owner].front.filter(c=>c&&bp(pack,s,c)<=job.bp).map(c=>c.uid);
+    if(choices.length)s.pending={kind:'effect-retire-bp',player:owner,
+     sourceUid:job.sourceUid,choices,limit:job.bp,optional:true};
+   }
   }else if(job.op==='restOppFrontUnderBp'){
    const choices=s.players[1-owner].front.filter(c=>c&&bp(pack,s,c)<=job.bp).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-rest-bp',player:owner,
@@ -325,6 +332,7 @@ function resolveChoice(s,a,pack){
   s.pending=null;continueEffectQueue(pack,s);return;
  }
  if(q.kind==='effect-retire-bp'){
+  if(a.uid===null&&q.optional){s.pending=null;continueEffectQueue(pack,s);return;}
   const opponent=1-q.player,slot=s.players[opponent].front.findIndex(c=>c?.uid===a.uid);
   if(slot<0||!q.choices.includes(a.uid)||bp(pack,s,s.players[opponent].front[slot])>q.limit)
    throw Error('Illegal BP-threshold retirement target');
@@ -457,7 +465,10 @@ function legalPending(pack,s){
  if(q.kind==='effect-rest-bp')return [
    {type:'chooseRestBp',uid:null},...q.choices.map(uid=>({type:'chooseRestBp',uid}))
   ];
- if(q.kind==='effect-retire-bp')return q.choices.map(uid=>({type:'chooseRetireBp',uid}));
+ if(q.kind==='effect-retire-bp')return [
+   ...(q.optional?[{type:'chooseRetireBp',uid:null}]:[]),
+   ...q.choices.map(uid=>({type:'chooseRetireBp',uid}))
+  ];
  if(q.kind==='effect-target')return [
    ...(q.optional?[{type:'chooseTarget',uid:null}]:[]),
    ...q.choices.map(uid=>({type:'chooseTarget',uid}))
@@ -663,7 +674,7 @@ export function assertUniversalMatch(pack,s){
  if(!Array.isArray(s.movedUids)||new Set(s.movedUids).size!==s.movedUids.length)
   throw Error('Invalid movement accounting');
  if(!Array.isArray(s.effectQueue)||s.effectQueue.some(e=>!playerIndex(e.owner)||
-   !['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','retireOppFrontUnderBp','restOppFrontUnderBp','buffOwnTrait','drawIfRaidUnderFacedown'].includes(e.op)))
+   !['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','retireOppFrontUnderBp','restOppFrontUnderBp','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown'].includes(e.op)))
   throw Error('Invalid queued effects');
  for(let p=0;p<2;p++){
   const pl=s.players[p],uids=new Set(),items=[];
