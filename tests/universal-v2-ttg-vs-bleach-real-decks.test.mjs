@@ -191,3 +191,24 @@ test('ALL-REAL cross-title TTG RED vs BLEACH PURPLE can finish a deterministic c
  assert.equal(assertUniversalMatch(packs,s),true);
  assert.ok(['life-zero','required-draw-empty','unblocked-attack'].includes(s.endReason));
 });
+
+test('both real titles finish cross-title games for alternate first player and mixed normal/hard AI without losing physical cards',()=>{
+ const scenarios=[
+  {seed:205,first:1,p0:'hard',p1:'normal'},
+  {seed:911,first:0,p0:'normal',p1:'hard'}
+ ];
+ for(const scenario of scenarios){
+  let state=fresh(scenario.seed,scenario.first),step=0;
+  for(;step<3500&&state.status==='playing';step++){
+   const player=state.pending?.player??state.active;
+   const difficulty=player===0?scenario.p0:scenario.p1;
+   const action=chooseUniversalAiAction(packs,state,{difficulty});
+   assert.ok(action,'No move: '+JSON.stringify({scenario,step,pending:state.pending}));
+   state=dispatchUniversalAction(packs,state,action);
+   if(step%30===0)assert.equal(assertUniversalMatch(packs,state),true);
+  }
+  assert.equal(state.status,'finished',JSON.stringify({scenario,step}));
+  assert.ok(step>20,'a game must progress past early setup');
+  assert.equal(assertUniversalMatch(packs,state),true);
+ }
+});
