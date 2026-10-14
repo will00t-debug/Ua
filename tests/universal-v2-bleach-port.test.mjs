@@ -41,8 +41,9 @@ test('53 official standalone BLEACH profiles extend rather than replace 15 exist
  for(const p of BLEACH_V2_ADDON_PROFILES){
   const c=pack.cards[p.id],old=CARDS.find(x=>x.identity===p.id);
   assert.ok(c&&old&&old.source.includes('unionarena-tcg.com'));
-  for(const field of ['energy','ap','bp','gen','color','trigger','type'])
+  for(const field of ['energy','ap','bp','color','trigger','type'])
    assert.equal(c[field],p[field],p.id+' '+field);
+  assert.equal(c.gen,p.id==='BLC-4-014'?1:p.gen,p.id+' printed base energy');
   assert.ok(!Object.hasOwn(c,'auto'));
   assert.equal(c.title,'bleach');
   assert.equal(c.step,p.kind==='step');
@@ -230,4 +231,22 @@ test('BLC-1-002 ACTIVE life trigger selects own legal character and rejects enem
  assert.equal(after.players[0].energy[0]?.buffs.at(-1)?.bp,3000);
  assert.ok(after.players[0].outside.some(c=>c.uid===life.uid));
  assert.equal(assertUniversalMatch(packs,after),true);
+});
+
+test('BLC-4-014 legacy gen=2 import is normalized to official yellow+ base and ACTIVE bonus',()=>{
+ const name='BLC-4-014',p=pack.cards[name];
+ assert.equal(BLEACH_V2_ADDON_PROFILES.find(x=>x.id===name).gen,2,
+  'raw repository is known to encode active total in gen');
+ assert.equal(p.gen,1,'printed base is one yellow');
+ assert.equal(p.activeExtraEnergy,1,'ACTIVE adds exactly one yellow');
+ const deck={...counts};
+ deck['BLC-1-017']=0;deck[name]=4;delete deck['BLC-1-017'];
+ assert.deepEqual(validateUniversalDeck(pack,deck),[]);
+ let s=newUniversalMatch(packs,{decks:[deck,deck],seed:14014,first:0});
+ const gen=take(s,0,name);
+ gen.ready=true;s.players[0].energy[0]=gen;
+ assert.equal(universalEnergyByColor(packs,s,0).yellow,2);
+ gen.ready=false;
+ assert.equal(universalEnergyByColor(packs,s,0).yellow,1);
+ assert.equal(assertUniversalMatch(packs,s),true);
 });
