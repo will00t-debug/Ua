@@ -47,7 +47,7 @@ test('SAO official dedup identity and product scopes stay unchanged, AP/parallel
    assert.equal(data[field],source[field],id+' mismatch '+field);
  }
  assert.equal(verifiedSaoV2Cards().length,22);
- assert.match(validateUniversalDeck(pack,{...deck,'SAO-2-063':1}).join(),'Unregistered');
+ assert.match(validateUniversalDeck(pack,{...deck,'SAO-2-063':1}).join(),/Unregistered/);
 });
 test('SAO 50 physical-card deck, actual AP spending and entry draw/discard are V2 transitions',()=>{
  let s=fresh(),p=s.players[0],card=take(s,0,'SAO-1-055');
