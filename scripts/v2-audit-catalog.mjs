@@ -46,8 +46,12 @@ const cols=[
 ];
 const missingFields=c=>{
  const absent=[];
- for(const k of ['name','type','color','energy','ap','bp','gen'])
+ for(const k of ['name','type','color','energy','ap','bp','gen']){
+  // Events/fields have no printed BP in the official table; null means N/A,
+  // not that the card's source data is absent. V2 pack must adapt it to BP 0.
+  if(k==='bp'&&c.bp==null&&['event','field'].includes(c.type))continue;
   if(c[k]===undefined||c[k]===null||c[k]==='')absent.push(k);
+ }
  if(!String(c.source||'').includes('/cardlist/'))absent.push('official_card_source');
  if(!String(c.effectJa??c.effect??'').trim())absent.push('printed_effect_text');
  if(c.verified===false||Array.isArray(c.unverifiedFields)&&c.unverifiedFields.length)
