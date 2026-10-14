@@ -7,8 +7,8 @@
 - `dist/universal-v2/ability-templates.mjs`：受控的 22 種命名模板、嚴格參數契約，以及 `expandAbilityTemplates`。
 - `dist/universal-v2/pack.mjs`：在 `createUniversalPack` 中編譯 `templateEffects`，沿用 `verifyProgram` 及現有時點限制；輸出仍是舊格式 `effects`，引擎 / AI 不需要知道卡片是否由模板寫成。
 - `dist/universal-v2/engine.mjs`：繼續執行低階 DSL 的結算、合法選擇、AP、Raid、生命 Trigger 與卡片守恆，不因套模板跳過裁定。
-- `dist/universal-v2/real-card-pilots.mjs`：目前有 **16 個已驗證卡片的效果設定** 改用模板；Pilot 白名單仍為 **BLEACH 8／天元突破 15 = 23 張**，沒有新增可用真卡。
-- `tests/universal-v2-ability-templates.test.mjs`：所有模板輸出、非法參數、規則時點、16 個現有 Pilot 低階 DSL 完全一致，以及跨作品實際結算。
+- `dist/universal-v2/real-card-pilots.mjs`：目前有 **19 個真卡效果設定** 改用模板；Pilot 白名單已擴充為 **BLEACH 15／天元突破 17 = 32 張**（不等於每張都完成官方 FAQ 驗收）。
+- `tests/universal-v2-ability-templates.test.mjs`：所有模板輸出、非法參數、規則時點、19 個現有 Pilot 模板的低階 DSL 一致性，以及跨作品實際結算。
 
 ## 第一批可重用模板
 
@@ -73,7 +73,7 @@ templateEffects:{
 
 目前 `then` 最多 6 個子模板且禁止巢狀支付；可用子模板僅為 `draw`、`millTop`、`peekTopOne`、`searchDeckOne`、`searchDeckMany`、`searchDeckWhere`、`inspectTopArrange`、`recoverOutsideOne`、`enemyBpDown`、`restEnemyUnderBp`。不能隨意套用到 Raid 底板 `onRaided`，不能用於任意種類成本（例如 REST 本體／AP 支出／送角色退場）或推論官方特殊支付規則。低階 DSL、子項驗證和卡種／觸發時點依舊保留嚴格限制。
 
-對應新增 `tests/universal-v2-paid-chain-multi-search.test.mjs`：包括搜尋三張、提早放棄、無符合目標、未支付與已支付、串接私人選擇與跨作品目標、攻擊前成本選擇與阻擋次序，以及非法巢狀能力／隱藏資料／實體 UID 守恆。**所有第三批新能力只使用合成測試卡，真實卡白名單仍 23 張。**
+對應新增 `tests/universal-v2-paid-chain-multi-search.test.mjs`：包括搜尋三張、提早放棄、無符合目標、未支付與已支付、串接私人選擇與跨作品目標、攻擊前成本選擇與阻擋次序，以及非法巢狀能力／隱藏資料／實體 UID 守恆。**所有第三批新能力只使用合成測試卡，當批真實卡白名單仍為 23 張；後續真卡移植已增至 32 張。**
 
 ### 第四批：多條件搜尋與牌庫頂部排序
 
@@ -94,7 +94,7 @@ templateEffects: {
 
 此處是虛構能力示例，**不代表官方卡片原文**。印刷效果如果要求從查看的牌中「加入手牌」、最多送兩張場外、分別放牌庫頂與底、指定展示、讓對手查看、搜尋後不洗牌，或加入其他成本／條件，仍需新增對應模板與 FAQ 測試，不可硬套。新能力可作為 `payDiscardThen` 的受限子效果，但目前仍只在合成測試牌組驗證。
 
-測試：`tests/universal-v2-compound-top-inspection.test.mjs`。涵蓋 ALL/ANY、跨作品同編號但不同卡文、隱私與非法 UID、選單張送場外、重新排序至牌頂／牌底、後續抽牌時點、付費後接續兩種選擇以及巢狀參數不可更改。**目前官方 V2 Pilot 仍只有 23 張。**
+測試：`tests/universal-v2-compound-top-inspection.test.mjs`。涵蓋 ALL/ANY、跨作品同編號但不同卡文、隱私與非法 UID、選單張送場外、重新排序至牌頂／牌底、後續抽牌時點、付費後接續兩種選擇以及巢狀參數不可更改。**此批當時 V2 Pilot 為 23 張；後續真卡移植已增至 32 張。**
 
 ### 第五批：同時多目標退場、替代退場與回合暫時 BP
 
@@ -104,7 +104,7 @@ templateEffects: {
 
 `buffOwnTraitAllTurn` 給當下已在前線／能源區且符合指定特徵的己方角色一個**到本回合結束為止**的 BP 加成；未來新登場的角色不追溯取得加成，到對方回合自然失效。**它不是常駐能力光環**，也不會因為持有原效果的角色離場而重新判定。因此官卡若寫的是「只要此角色在場上，其他角色 +BP」或「本遊戲中永遠 +BP」，不可用此模板代替，須另實作來源綁定的持續能力與連鎖狀態檢查。
 
-這三種均已在 `tests/universal-v2-mass-retire-turn-buff.test.mjs` 的**合成跨作品 50 張牌組**驗證：全體降 BP、兩張 Raid 保護依序選擇與普通角色退場、原目標快照、高 BP 角色不受影響、回合切換清除 BP、無合法目標、非法參數、資料守恆與原始狀態不可變。**V2 真實卡 Pilot 沒有增加，仍只有 BLEACH 8／天元突破 15，共 23 張；官方逐卡 FAQ 驗收仍是獨立任務。**
+這三種均已在 `tests/universal-v2-mass-retire-turn-buff.test.mjs` 的**合成跨作品 50 張牌組**驗證：全體降 BP、兩張 Raid 保護依序選擇與普通角色退場、原目標快照、高 BP 角色不受影響、回合切換清除 BP、無合法目標、非法參數、資料守恆與原始狀態不可變。**第五批當時沒有增加真卡 Pilot；下一輪移植後已達 BLEACH 15／天元突破 17，共 32 張。官方逐卡 FAQ 驗收仍是獨立任務。**
 
 ### 寫入新作品的方式
 
@@ -136,6 +136,12 @@ const card = {
 
 同一張卡可在不同時點混用 `effects`（舊式 DSL）和 `templateEffects`，但**同一時點不可同時宣告兩者**，避免效果順序不確定。未登錄模板、非法參數、偷偷漏寫 `optional`、不合法時點、或 `vanilla` 聲稱有模板效果，都會直接拒絕建 Pack。符合契約的模板仍必須通過原本的 DSL 驗證。
 
+## 第六批真卡移植：首副全真 BLEACH 50 張
+
+另外完成 [`UNIVERSAL_V2_REAL_50_MILESTONE.md`](./UNIVERSAL_V2_REAL_50_MILESTONE.md)，以已建的 22 種共用模板與少數明確被動能力，把 BLEACH 的 036、037、040、045、048、052、057 及天元突破的 043、066 加入 V2。**BLEACH 紫色已可組成第一副沒有 TEST-ONLY 補卡的合法 50 張測試牌組**，並由 `tests/universal-v2-bleach-real-deck.test.mjs` 跑完全真卡 AI 鏡像對局。天元紅色仍未補到可用全真 50 張，故不能宣稱兩作品已可全真卡跨作品對戰。
+
+這批新增 `activeExtraEnergy` 與 `impactNull` 都是顯式校對、能跨作品共用的印刷被動設定，**不會把「ACTIVE 產能 +1」誤當成常駐產能 +1，也不會在非戰鬥情境錯誤取消 IMPACT**。上述系統測試與真實卡號增量不等於全部官方 FAQ 驗收。
+
 ## 每張卡新增或移植前必須逐項核對
 
 1. 官方印刷卡號、版本、卡名與英文／日文文字；異名與再版按官方來源處理。
@@ -148,4 +154,4 @@ const card = {
 
 `mainAbility`（例如 TTG-1-046 的兩種選擇與同名限次）、Raid 底板合法名稱、特殊 `conditionalUnderFaceDown`、COLOR/SPECIAL/RAID 生命 Trigger 印刷差異目前仍使用嚴格明列的能力設定，不會被上面的 22 種模板自動判定。其他多目標、同時退場、交換、持續免疫、攻防時點、其他系列專屬例外仍待開發。
 
-**本批是可重複能力的編譯基礎，不是「700 張都能玩」或「23 張都已完成全部官方裁定」。**
+**本批是可重複能力的編譯基礎，不是「700 張都能玩」或「32 張都已完成全部官方裁定」。**
