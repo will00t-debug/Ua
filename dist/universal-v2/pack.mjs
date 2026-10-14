@@ -6,7 +6,6 @@ export const V2_CARD_TYPES=Object.freeze(['character','event','field']);
 export const V2_TRIGGERS=Object.freeze(['draw','get','final']);
 export const V2_EFFECT_TIMINGS=Object.freeze(['onPlay','onRaid','onAttack']);
 export const V2_EFFECT_OPS=Object.freeze(['draw','millTop','buffSelf']);
-const set=new Set;
 const integer=(v,low=0)=>Number.isInteger(v)&&v>=low;
 const own=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
 function verifyProgram(program,path){
@@ -45,6 +44,10 @@ function normalize(card,packId){
  for(const [name,program] of Object.entries(effects)){
   if(!V2_EFFECT_TIMINGS.includes(name))throw Error(card.id+' timing '+name+' unsupported');
   verifyProgram(program,card.id+'.'+name);
+  if(name==='onRaid'&&!card.raidName)throw Error(card.id+' has Raid-only effects but no Raid target');
+  if(name==='onAttack'&&card.type!=='character')throw Error(card.id+' noncharacter cannot attack');
+  if(card.type==='event'&&program.some(e=>e.op==='buffSelf'))
+   throw Error(card.id+' event cannot buff itself on field');
  }
  if(card.raidName&&card.type!=='character')throw Error('Raid must be a character');
  return Object.freeze({
