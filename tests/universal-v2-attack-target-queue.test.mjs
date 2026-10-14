@@ -88,7 +88,8 @@ test('onAttack target choice resolves before opponent gets blocking priority',()
  assert.equal(view.pending.kind,'block');
  const defended=dispatchUniversalAction(packs,picked,
   {type:'chooseBlock',uid:foes[1].uid},{actor:1});
- assert.equal(defended.players[1].life.length,7);
+ assert.equal(defended.players[1].life.length,s.players[1].life.length,
+  'blocking does not deal life damage regardless of fixture life placement');
  assert.equal(assertUniversalMatch(packs,defended),true);
 });
 
@@ -104,7 +105,8 @@ test('declining optional attack-time target still draws before defender blocks',
   'skip cannot accidentally retire a character');
  const unblocked=dispatchUniversalAction(packs,skipped,
   {type:'chooseBlock',uid:null},{actor:1});
- assert.equal(unblocked.players[1].life.length,6);
+ assert.equal(unblocked.players[1].life.length,s.players[1].life.length-1,
+  'an unblocked attack deals exactly one life, relative to initial fixture state');
  assert.equal(assertUniversalMatch(packs,unblocked),true);
 });
 
