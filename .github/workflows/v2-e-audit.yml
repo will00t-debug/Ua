@@ -40,6 +40,9 @@ jobs:
       - name: Review B/C/D source commits separately (no moving-branch aggregation)
         if: always()
         run: node scripts/v2-audit-port-snapshots.mjs
+      - name: Review newly published B/C/D Draft PR pinned commits independently
+        if: always()
+        run: node scripts/v2-audit-port-snapshots.mjs --round2
       - name: Full repository regression (not a card completion metric)
         if: always()
         run: npm test
@@ -54,5 +57,7 @@ jobs:
             audit/v2-e-match-replays/
             audit/v2-port-snapshots.json
             audit/v2-branch-proposals.csv
+            audit/v2-port-snapshots-r2.json
+            audit/v2-branch-proposals-r2.csv
           if-no-files-found: warn
           retention-days: 14
