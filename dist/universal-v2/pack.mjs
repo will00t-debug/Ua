@@ -20,6 +20,7 @@ function verifyProgram(program,path){
   if(e.op==='recoverAp'&&(!integer(e.count,1)||e.count>3))throw Error(path+'['+i+'] invalid AP recovery count');
   if(e.op==='drawDiscard'&&e.count!==1)throw Error(path+'['+i+'] drawDiscard currently supports exactly 1 card');
   if(['buffSelf','enemyBpDown'].includes(e.op)&&(!integer(e.bp,1)||e.bp>5000))throw Error(path+'['+i+'] invalid temporary BP');
+  if(e.op==='enemyBpDown'&&e.optional!==undefined&&typeof e.optional!=='boolean')throw Error(path+'['+i+'] invalid optional targeting flag');
  }
 }
 function normalize(card,packId){
