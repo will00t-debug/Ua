@@ -89,7 +89,7 @@ test('missing printed text, official source, QA tests, AP/alternate and printed 
  for(const edit of cases){
   const candidate=modified(fixture);edit(candidate);
   assert.throws(()=>compileV2TitleContribution({...contribution,entries:[candidate]}),
-   /missing|changed|verified|rejected|invalid|requires|not verified|AP card|printed|without effects|unknown/i,
+   /missing|changed|verified|rejected|invalid|requires|not verified|AP card|printed|without effects|unknown|must document/i,
    JSON.stringify(candidate));
  }
  const copy=modified(fixture);
