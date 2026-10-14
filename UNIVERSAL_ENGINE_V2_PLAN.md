@@ -1,0 +1,60 @@
+# UNION ARENA 通用判定引擎 v2 架構（第一階段）
+
+**狀態：實驗版，尚未取代正式網站的 BLEACH / TTG / SLG 判定。**
+目前 Production 使用 `dist/match-runtime.mjs` 轉接三個舊引擎；通用 v2 是另一套新核心，沒有自動接管任何真實牌組。
+
+## 為什麼必須重做核心
+
+目前 BLEACH、天元突破、我獨自升級分別實作 50 張實體卡守恆、AP 支出、雙線場地、Raid、打擊、生命 Trigger、回合推進。作品越多，越容易因修正 A 作品忘記 B 作品而產生不一致；若直接替換所有舊引擎則會損壞已修正的官方例外裁定。
+
+## 目標結構
+
+```text
+UI / AI / Deck Manager
+          │
+Universal Match API  ── existing match-runtime compatibility layer
+          │
+   Universal Core v2
+   ├── pack.mjs       卡片資料契約、獨立作品、明確能力支援、牌組驗證
+   ├── engine.mjs     牌庫／手牌／生命／前線／能源線／AP／回合／Raid／攻擊
+   │                  指令合法性、實體 UID 不重複、公開資訊模型
+   └── migration.mjs  舊卡表移植缺口清冊（不自行宣稱完整）
+          │
+ Title packs / DSL actions / title-specific effect hooks (後續階段)
+   ├── bleach/
+   ├── gurren-lagann/
+   ├── solo-leveling/
+   ├── sword-art-online/
+   └── mushoku-tensei/
+```
+
+## v2 第一批實際可執行能力
+
+1. 用完整 50 張牌初始化，7 張起手牌及 7 張生命，固定 RNG 種子，獨立卡片 UID。
+2. 四格前線與四格能源線、AP 卡片、回合初 ACTIVE、第一回合抽牌規則、階段與合法行動。
+3. 普通登場、移動、STEP、事件使用、真實 Raid 疊底板、攻擊與阻擋（不假借 Raid 效果）。
+4. 特定宣告式能力：`onPlay`、`onRaid`、`onAttack`，操作 `draw`、`millTop`、`buffSelf`。
+5. 生命 GET／DRAW／FINAL 的可發動／放棄選擇（日本官方通用 FAQ Q99）；最後生命的 FINAL 在判負前決議。
+6. 抵擋非法行動、守恆／重複卡 UID 檢查、依玩家身分隱藏手牌與生命的公用 UI 快照。
+
+**刻意禁止：** COLOR／SPECIAL／RAID／ACTIVE 等尚未通用化的生命 Trigger、複雜被動效果、滿格替換、衍生視為名稱、特別時間窗、連鎖支付與官方特殊事件，直到有完整合法行動與裁定測試。
+
+## 新增作品的固定作業
+
+- **卡表**：官方卡號、名稱、顏色、能源、AP、BP、產能、Trigger、Raid 對象、原文效果及來源網址。
+- **Pack**：每張卡明確宣告 `vanilla` 或已實作的 `dsl`，不以卡文自動猜裁定；未知能力不得開局。
+- **驗收**：普通／Raid 登場、非法選擇、費用、生命 Trigger、狀態持續時點、互動矩陣、實體卡守恆、同名限次等。
+- **接入**：使用 feature flag 選擇新舊引擎，比對相同合法行動與結果；新核心連續測試穩定才逐系列切換正式使用。
+- **部署**：每系列通過 Node 22 全量回歸、真實手機畫面與實際牌組 AI 對戰，再由 PR 更新 main。
+
+## 接續里程碑
+
+| 階段 | 工作 | 上線規則 |
+|---|---|---|
+| 1（本 PR） | 可執行底層、卡牌契約、合法行動、守恆、Trigger 及安全視圖 | 不切換 Production |
+| 2 | 能力事件佇列、可選成本、公開／私密查看、複合目標、印刷效果 DSL 擴充 | 獨立測試站 |
+| 3 | BLEACH 的少數普通卡逐張移植，舊／新結果差異測試 | 僅測試分支可選 |
+| 4 | 天元突破、我獨自升級特殊效果模組遷移及 FAQ QA | 逐系列灰度切換 |
+| 5 | 刀劍神域、無職轉生及新作品卡表／能力擴充、統一 AI | 每張合法的卡才加入正式可對戰清單 |
+
+**不能以卡片數、測試總數、或 Beta 對局打完，宣稱全部卡片官方驗收完成。** 尤其 80 張 SLG、81 張 TTG 已接 Beta 核心不代表 v2 有 161 張卡的全部效果。
