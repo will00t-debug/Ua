@@ -1,0 +1,26 @@
+name: V2 BLEACH Port Checks
+
+on:
+  push:
+    branches:
+      - feature/v2-bleach-port-20261015
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bleach-port:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Dedicated BLEACH V2 tests
+        run: node --test tests/universal-v2-bleach-port.test.mjs
+      - name: All repository regression tests
+        run: npm test
+      - name: Syntax of isolated BLEACH module
+        run: node --check dist/universal-v2/bleach-pack.mjs
