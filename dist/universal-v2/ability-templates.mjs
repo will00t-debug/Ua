@@ -9,6 +9,11 @@ const threshold=v=>integer(v,1,50000);
 const named=v=>typeof v==='string'&&v.trim().length>0;
 const requiredTrue=v=>v===true;
 const yesNo=v=>typeof v==='boolean';
+const filter=v=>!!v&&typeof v==='object'&&!Array.isArray(v)&&
+ Object.keys(v).length===2&&
+ ['name','trait','color','type'].includes(v.field)&&
+ typeof v.value==='string'&&v.value.trim().length>0&&
+ (v.field!=='type'||['character','event','field'].includes(v.value));
 
 // Keys and required validators are explicit, preventing misspelled printed
 // conditions from silently falling back to mandatory/optional defaults.
@@ -54,6 +59,22 @@ const registry=Object.freeze({
  },
  drawIfRaidUnderFacedown:{
   args:{},build:()=>[{op:'drawIfRaidUnderFacedown'}]
+ },
+ // Explicitly search the OWN deck, select at most one printed match, and
+ // always shuffle afterward (including a skipped/empty search).
+ searchDeckOne:{
+  args:{filter,optional:yesNo,shuffle:requiredTrue},
+  build:v=>[{op:'searchDeckOne',filter:{...v.filter},optional:v.optional,shuffle:true}]
+ },
+ // Recovery is from the controller's PUBLIC outside zone, not removal/life.
+ recoverOutsideOne:{
+  args:{filter,optional:yesNo},
+  build:v=>[{op:'recoverOutsideOne',filter:{...v.filter},optional:v.optional}]
+ },
+ // An atomic, optional discard-one cost THEN draw; declining never draws.
+ discardToDraw:{
+  args:{count:v=>integer(v,1,10),optional:yesNo},
+  build:v=>[{op:'discardToDraw',count:v.count,optional:v.optional}]
  }
 });
 export const V2_ABILITY_TEMPLATE_IDS=Object.freeze(Object.keys(registry));
