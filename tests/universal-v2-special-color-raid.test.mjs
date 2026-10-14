@@ -179,3 +179,18 @@ test('RAID life onto energy base may stay energy or move to free front slot (FAQ
  assert.equal(b.players[1].front[0].uid,revealed.uid);
  assert.equal(assertUniversalMatch(packs,a),true);assert.equal(assertUniversalMatch(packs,b),true);
 });
+
+test('cross-title conservation tracks original printed card quantities, not just physical UID count',()=>{
+ const s=fresh(250);
+ assert.equal(assertUniversalMatch(packs,s),true);
+ assert.deepEqual(s.initialCounts[0],deck);
+ assert.deepEqual(s.initialCounts[1],deck);
+ const changed=structuredClone(s);
+ const physical=changed.players[0].hand[0],before=physical.cardId;
+ physical.cardId=before==='F10'?'F11':'F10';
+ assert.throws(()=>assertUniversalMatch(packs,changed),/Printed card ID conservation/);
+ assert.equal(assertUniversalMatch(packs,s),true,'original source stays valid');
+ const forged=structuredClone(s);
+ forged.initialCounts[1].F10=8;
+ assert.throws(()=>assertUniversalMatch(packs,forged),/Invalid original deck signature/);
+});
