@@ -76,3 +76,19 @@ test('TTG contribution is consumable by latest shared V2 title registry and is d
   assert.equal(registered.cards[id].trigger,ttg.cards[id].trigger);
  }
 });
+
+test('TTG-014 has NO optional cancel: without another eligible own character it returns itself, conserving UID',()=>{
+ let state=fresh(),source=take(state,0,'TTG-1-014');
+ state.players[0].hand.push(source);
+ // A green energy source only with printed energy above one cannot be bounced.
+ const energy=take(state,0,'TTG-1-019');
+ energy.ready=true;state.players[0].energy[0]=energy;
+ state=main(state);
+ const play=legalUniversalActions(packs,state).find(a=>a.type==='play'&&a.uid===source.uid&&a.line==='front');
+ assert.ok(play);
+ const s=dispatchUniversalAction(packs,state,play);
+ assert.equal(s.pending,null,'mandatory self-bounce resolves automatically with zero eligible other targets');
+ assert.ok(s.players[0].hand.some(c=>c.uid===source.uid));
+ assert.equal(s.players[0].front.filter(Boolean).length,0);
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
