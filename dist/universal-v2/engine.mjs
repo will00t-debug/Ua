@@ -277,15 +277,32 @@ function resolveChoice(s,a,pack){
  if(q.kind==='block'){
   const attacker=s.players[s.active].front.find(c=>c?.uid===q.attackerUid);
   if(!attacker)throw Error('Attacker no longer exists');
-  if(a.uid===null)damage(pack,s,q.player);
-  else{
-   const slot=p.front.findIndex(c=>c?.uid===a.uid);
-   if(slot<0||!p.front[slot].ready)throw Error('Illegal blocker');
-   const blocker=p.front[slot];blocker.ready=false;
-   if(bp(pack,s,attacker)>=bp(pack,s,blocker))retire(pack,s,q.player,'front',slot);
+  s.pending=null;
+  if(a.uid===null){damage(pack,s,q.player);return;}
+  const slot=p.front.findIndex(c=>c?.uid===a.uid);
+  if(slot<0||!p.front[slot].ready)throw Error('Illegal blocker');
+  const blocker=p.front[slot];blocker.ready=false;
+  if(bp(pack,s,attacker)>=bp(pack,s,blocker)){
+   const impact=impactOnBattleWin(pack,s,attacker)>0;
+   const replacement=retire(pack,s,q.player,'front',slot,{postImpact:impact});
+   if(impact&&!replacement)damage(pack,s,q.player);
   }
-  if(s.pending===q)s.pending=null;
   return;
+ }
+ if(q.kind==='leave-replacement'){
+  const loc=location(s,q.player,q.uid);
+  if(!loc||loc.line!==q.line||loc.slot!==q.slot)throw Error('Leaving character moved');
+  if(a.mode==='protect'){
+   const under=loc.c.stack?.[0]?.under||[],index=under.findIndex(v=>v.faceDown===true);
+   if(index<0||!protectedLeave(pack,s,loc.c))throw Error('No eligible facedown replacement');
+   const consumed=under.splice(index,1)[0];
+   consumed.faceDown=false;consumed.ready=false;consumed.stack=[];consumed.under=[];consumed.buffs=[];
+   p.outside.push(consumed);
+  }else if(a.mode==='leave')vacate(s,q.player,q.line,q.slot,q.destination);
+  else throw Error('Invalid leave replacement option');
+  s.pending=null;
+  if(q.postImpact)damage(pack,s,q.player);
+  continueEffectQueue(pack,s);finishPending(s);return;
  }
  if(q.kind==='private-top-choice'){
   if(a.mode==='outside'&&p.deck.length)p.outside.push(p.deck.shift());
@@ -354,8 +371,9 @@ function resolveChoice(s,a,pack){
   const opponent=1-q.player,slot=s.players[opponent].front.findIndex(c=>c?.uid===a.uid);
   if(slot<0||!q.choices.includes(a.uid)||bp(pack,s,s.players[opponent].front[slot])>q.limit)
    throw Error('Illegal BP-threshold retirement target');
+  s.pending=null;
   retire(pack,s,opponent,'front',slot);
-  s.pending=null;continueEffectQueue(pack,s);return;
+  continueEffectQueue(pack,s);return;
  }
  if(q.kind==='effect-target'){
   if(a.uid===null&&q.optional===true){
@@ -367,8 +385,8 @@ function resolveChoice(s,a,pack){
   target.buffs??=[];
   target.buffs.push({bp:-q.bp,untilTurn:s.turn});
   // Official state-based rule: characters at 0 BP or below are sidelined.
-  if(bp(pack,s,target)<=0)retire(pack,s,foe,'front',slot);
   s.pending=null;
+  if(bp(pack,s,target)<=0)retire(pack,s,foe,'front',slot);
   continueEffectQueue(pack,s);
   return;
  }
@@ -462,6 +480,10 @@ function legalPending(pack,s){
   {type:'chooseBlock',uid:null},
   ...p.front.filter(c=>c?.ready).map(c=>({type:'chooseBlock',uid:c.uid}))
  ];
+ if(q.kind==='leave-replacement')return [
+   {type:'chooseLeaveReplacement',mode:'protect'},
+   {type:'chooseLeaveReplacement',mode:'leave'}
+  ];
  if(q.kind==='private-top-choice')return [
    {type:'chooseTopCard',mode:'top'},{type:'chooseTopCard',mode:'outside'}
   ];
@@ -680,7 +702,7 @@ export function assertUniversalMatch(pack,s){
    !Array.isArray(s.initialCounts)||s.initialCounts.length!==2||
    s.players?.length!==2||!playerIndex(s.active)||
    !['playing','finished'].includes(s.status))throw Error('Incorrect pack/version or match state');
- if(s.pending&&(!playerIndex(s.pending.player)||!['block','life-trigger','effect-target','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','effect-retire-bp','effect-rest-bp','raid-effect-order','effect-buff-trait','main-two-buff'].includes(s.pending.kind)))
+ if(s.pending&&(!playerIndex(s.pending.player)||!['block','life-trigger','effect-target','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','effect-retire-bp','effect-rest-bp','raid-effect-order','effect-buff-trait','main-two-buff','leave-replacement'].includes(s.pending.kind)))
   throw Error('Invalid pending controller');
  if(!Array.isArray(s.raidedThisTurn)||s.raidedThisTurn.length!==2||
    s.raidedThisTurn.some(x=>typeof x!=='boolean')||
