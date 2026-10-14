@@ -31,11 +31,11 @@ function reach(s,phase){
  assert.equal(s.phase,phase);
  return s;
 }
-test('48 official standalone BLEACH profiles extend rather than replace 15 existing pilots',()=>{
+test('50 official standalone BLEACH profiles extend rather than replace 15 existing pilots',()=>{
  assert.equal(REAL_V2_PILOT_IDS.bleach.length,15);
- assert.equal(BLEACH_V2_NEW_IDS.length,48);
- assert.equal(new Set(BLEACH_V2_NEW_IDS).size,48);
- assert.equal(Object.keys(pack.cards).length,63);
+ assert.equal(BLEACH_V2_NEW_IDS.length,50);
+ assert.equal(new Set(BLEACH_V2_NEW_IDS).size,50);
+ assert.equal(Object.keys(pack.cards).length,65);
  assert.ok(REAL_V2_PILOT_IDS.bleach.every(id=>pack.cards[id]));
  assert.deepEqual(validateUniversalDeck(pack,counts),[]);
  for(const p of BLEACH_V2_ADDON_PROFILES){
@@ -54,7 +54,10 @@ test('48 official standalone BLEACH profiles extend rather than replace 15 exist
   if(p.kind==='recoverAp2')assert.deepEqual(c.effects.onPlay,[{op:'recoverAp',count:2}]);
   if(p.kind==='impactNull')assert.equal(c.impactNull,true);
   if(p.kind==='activeEnergy')assert.equal(c.activeExtraEnergy,1);
-  if(['plain','step'].includes(p.kind))assert.deepEqual(c.effects,{});
+  if(['plain','plainAlt','step'].includes(p.kind))assert.deepEqual(c.effects,{});
+  if(p.kind==='traitBuffAllDraw')assert.deepEqual(c.effects.onPlay,[
+   {op:'buffOwnTraitAllTurn',trait:'護廷十三隊',bp:1000},{op:'draw',count:1}
+  ]);
   assert.equal(p.kind==='plain',p.effect==='無固有效果。');
  }
 });
