@@ -65,8 +65,9 @@ test('new triggers fail closed without an explicit supported profile and retain 
  assert.throws(()=>createUniversalPack({id:'bad',cards:[{...base[1],raidName:null}]}),/RAID trigger requires/);
  assert.throws(()=>createUniversalPack({id:'bad',cards:[{...base[2],triggerEffect:{op:'retireOppFront'}}]}),/unexpected trigger/);
  assert.deepEqual(validateUniversalDeck(packA,deck),[]);
- const tooMany={...deck,F03:4,F08:0,F15:0};
- assert.match(validateUniversalDeck(packA,tooMany).join(' '),/SPECIAL Trigger limit exceeded/);
+ const doubleSpecial=createUniversalPack({id:'two-special-cards',cards:[...base,{...base[12],id:'SPECIAL2',trigger:'special',triggerEffect:{op:'retireOppFront'}}]});
+ const tooMany={...deck,F03:4,SPECIAL2:1,F10:2,F15:1};
+ assert.match(validateUniversalDeck(doubleSpecial,tooMany).join(' '),/SPECIAL Trigger limit exceeded/);
 });
 test('SPECIAL life optionally retires opposing-title front character, or can be declined',()=>{
  let s=fresh(),attacker=take(s,0,'F10');attacker.ready=true;
