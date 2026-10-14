@@ -98,6 +98,26 @@ function applyEffects(pack,s,cardOnField,timing,owner){
  s.effectQueue.push(...program.map(e=>({...e,owner,sourceUid:cardOnField.uid})));
  continueEffectQueue(pack,s);
 }
+function validRaidBase(pack,base,top){
+ return !!base&&!!top.raidName&&card(pack,base).name===top.raidName&&
+  !card(pack,base).raidName&&!(base.stack?.length);
+}
+function performRaid(pack,s,p,cardOnTop,baseUid,line,slot){
+ const pl=s.players[p],base=location(s,p,baseUid),top=card(pack,cardOnTop);
+ if(!base||!validRaidBase(pack,base.c,top))throw Error('Illegal Raid base');
+ if(line!=='front'&&line!=='energy')throw Error('Illegal Raid destination');
+ if(base.line==='front'&&(line!=='front'||slot!==base.slot))
+  throw Error('Cannot move a front-line Raid base');
+ if(line==='energy'&&(base.line!=='energy'||slot!==base.slot))
+  throw Error('Raid can only stay in base energy slot');
+ if(pl[line][slot]&&!(line===base.line&&slot===base.slot))
+  throw Error('Raid destination occupied');
+ pl[base.line][base.slot]=null;
+ cardOnTop.stack=[base.c];cardOnTop.ready=true;
+ pl[line][slot]=cardOnTop;
+ applyEffects(pack,s,cardOnTop,'onPlay',p);
+ applyEffects(pack,s,cardOnTop,'onRaid',p);
+}
 function location(s,p,uid){
  for(const line of ['front','energy']){
   const slot=s.players[p][line].findIndex(c=>c?.uid===uid);
@@ -118,7 +138,7 @@ function damage(pack,s,defender){
  const trig=card(pack,c).trigger;
  s.publicReveals.push({owner:defender,title:titleOf(pack,defender),cardId:c.cardId,uid:c.uid,trigger:trig||null,turn:s.turn});
  if(s.publicReveals.length>12)s.publicReveals.shift();
- if(['get','draw','active'].includes(trig)||(trig==='final'&&!pl.life.length)){
+ if(['get','draw','active','special','color','raid'].includes(trig)||(trig==='final'&&!pl.life.length)){
   s.pending={kind:'life-trigger',player:defender,uid:c.uid,trigger:trig};
  }else if(!pl.life.length){
   s.status='finished';s.winner=1-defender;s.endReason='life-zero';
@@ -212,9 +232,31 @@ function resolveChoice(s,a,pack){
    target.buffs??=[];
    target.buffs.push({bp:3000,untilTurn:s.turn});
   }
+  else if(a.mode==='special'&&q.trigger==='special'){
+   const foe=1-q.player,slot=s.players[foe].front.findIndex(c=>c?.uid===a.uid);
+   if(slot<0)throw Error('SPECIAL target no longer on enemy front line');
+   retire(s,foe,'front',slot);
+  }
+  else if(a.mode==='color'&&q.trigger==='color'){
+   const profile=card(pack,p.outside[i]).triggerEffect;
+   const handIndex=p.hand.findIndex(c=>c.uid===a.uid);
+   if(handIndex<0)throw Error('COLOR requires a hand character');
+   const picked=p.hand[handIndex],d=card(pack,picked);
+   if(d.type!=='character'||d.color!==profile.color||d.energy>profile.maxEnergy||d.ap!==profile.ap||
+    !['front','energy'].includes(a.line)||p[a.line][a.slot])throw Error('Illegal COLOR deployment');
+   p.hand.splice(handIndex,1);picked.ready=true;p[a.line][a.slot]=picked;
+   // This is ordinary playing through a trigger, NOT a Raid: no AP is spent.
+   applyEffects(pack,s,picked,'onPlay',q.player);
+  }
+  else if(a.mode==='raid'&&q.trigger==='raid'){
+   const revealed=p.outside.splice(i,1)[0];
+   performRaid(pack,s,q.player,revealed,a.baseUid,a.line,a.slot);
+  }
+  else if(a.mode==='get'&&q.trigger==='raid')p.hand.push(p.outside.splice(i,1)[0]);
   else if(a.mode==='final'&&q.trigger==='final'&&!p.life.length&&p.deck.length)p.life.unshift(p.deck.shift());
   else if(a.mode!=='skip')throw Error('Illegal trigger option');
   s.pending=null;
+  continueEffectQueue(pack,s);
   finishPending(s);
   return;
  }
@@ -271,6 +313,35 @@ function legalPending(pack,s){
   const out=[{type:'chooseTrigger',mode:'skip'}];
   if(q.trigger==='active')out.push(...field(p).filter(c=>card(pack,c).type==='character')
    .map(c=>({type:'chooseTrigger',mode:'active',uid:c.uid})));
+  if(q.trigger==='special')
+   out.push(...s.players[1-q.player].front.filter(Boolean)
+    .map(c=>({type:'chooseTrigger',mode:'special',uid:c.uid})));
+  if(q.trigger==='color'){
+   const profile=card(pack,p.outside.find(c=>c.uid===q.uid)).triggerEffect;
+   for(const c of p.hand){
+    const d=card(pack,c);
+    if(d.type!=='character'||d.color!==profile.color||d.energy>profile.maxEnergy||d.ap!==profile.ap)continue;
+    for(const line of ['front','energy'])
+     for(let slot=0;slot<4;slot++)if(!p[line][slot])
+      out.push({type:'chooseTrigger',mode:'color',uid:c.uid,line,slot});
+   }
+  }
+  if(q.trigger==='raid'){
+   const revealed=p.outside.find(c=>c.uid===q.uid),d=card(pack,revealed);
+   out.push({type:'chooseTrigger',mode:'get'});
+   if(d.energy<=(universalEnergyByColor(pack,s,q.player)[d.color]||0)){
+    for(const line of ['front','energy'])for(let slot=0;slot<4;slot++){
+     const base=p[line][slot];
+     if(!validRaidBase(pack,base,d))continue;
+     if(line==='front')out.push({type:'chooseTrigger',mode:'raid',baseUid:base.uid,line:'front',slot});
+     else{
+      out.push({type:'chooseTrigger',mode:'raid',baseUid:base.uid,line:'energy',slot});
+      for(let dest=0;dest<4;dest++)if(!p.front[dest])
+       out.push({type:'chooseTrigger',mode:'raid',baseUid:base.uid,line:'front',slot:dest});
+     }
+    }
+   }
+  }
   if(q.trigger==='get')out.push({type:'chooseTrigger',mode:'get'});
   if(q.trigger==='draw'&&p.deck.length)out.push({type:'chooseTrigger',mode:'draw'});
   if(q.trigger==='final'&&!p.life.length&&p.deck.length)out.push({type:'chooseTrigger',mode:'final'});
@@ -306,7 +377,7 @@ export function legalUniversalActions(pack,s){
    if(d.raidName){
     for(const line of ['energy','front'])for(let slot=0;slot<4;slot++){
      const base=pl[line][slot];
-     if(!base||card(pack,base).name!==d.raidName)continue;
+     if(!validRaidBase(pack,base,d))continue;
      for(let dest=0;dest<4;dest++)if(!pl.front[dest]||(line==='front'&&slot===dest))
       out.push({type:'raid',uid:c.uid,baseUid:base.uid,slot:dest});
     }
@@ -356,14 +427,7 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
    spendAp(pl,d.ap);pl.hand.splice(index,1);
    if(action.type==='event'){pl.outside.push(current);applyEffects(pack,s,current,'onPlay',p);}
    else if(action.type==='raid'){
-    const base=location(s,p,action.baseUid);
-    if(!base||card(pack,base.c).name!==d.raidName)throw Error('Illegal Raid base');
-    pl[base.line][base.slot]=null;
-    current.stack=[base.c];current.ready=true;pl.front[action.slot]=current;
-    // A Raid is also an entry: ordinary on-entry abilities must still resolve.
-    // Raid-only abilities must never resolve on normal non-Raid deployment.
-    applyEffects(pack,s,current,'onPlay',p);
-    applyEffects(pack,s,current,'onRaid',p);
+    performRaid(pack,s,p,current,action.baseUid,'front',action.slot);
    }else{
     current.ready=false;pl[action.line][action.slot]=current;
     applyEffects(pack,s,current,'onPlay',p);
