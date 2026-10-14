@@ -11,20 +11,20 @@
     "completed": 2000,
     "unfinished": 0,
     "failures": 0,
-    "rankingPairs": 66009,
+    "rankingPairs": 68357,
     "alternativesPerDecision": 3,
     "epochs": 5,
-    "finalLoss": 0.24399170378152812,
-    "elapsedMs": 3345611
+    "finalLoss": 0.2427253505759539,
+    "elapsedMs": 4798955
   },
   "evaluation": {
     "games": 300,
-    "wins": 146,
-    "losses": 154,
+    "wins": 148,
+    "losses": 152,
     "unfinished": 0,
     "errors": 0,
-    "moves": 61374,
-    "winRate": 0.4866666666666667,
+    "moves": 63092,
+    "winRate": 0.49333333333333335,
     "byMatchup": {
       "green-kenpachi-unohana__green-kenpachi-unohana": {
         "games": 34,
@@ -35,15 +35,15 @@
       },
       "green-kenpachi-unohana__purple-renji-rukia": {
         "games": 34,
-        "wins": 17,
-        "losses": 17,
+        "wins": 16,
+        "losses": 18,
         "unfinished": 0,
         "errors": 0
       },
       "green-kenpachi-unohana__blue-ichigo-zangetsu": {
         "games": 34,
-        "wins": 16,
-        "losses": 18,
+        "wins": 17,
+        "losses": 17,
         "unfinished": 0,
         "errors": 0
       },
@@ -56,8 +56,8 @@
       },
       "purple-renji-rukia__purple-renji-rukia": {
         "games": 33,
-        "wins": 16,
-        "losses": 17,
+        "wins": 17,
+        "losses": 16,
         "unfinished": 0,
         "errors": 0
       },
@@ -70,8 +70,8 @@
       },
       "blue-ichigo-zangetsu__green-kenpachi-unohana": {
         "games": 33,
-        "wins": 16,
-        "losses": 17,
+        "wins": 18,
+        "losses": 15,
         "unfinished": 0,
         "errors": 0
       },
@@ -84,28 +84,32 @@
       },
       "blue-ichigo-zangetsu__blue-ichigo-zangetsu": {
         "games": 33,
-        "wins": 17,
-        "losses": 16,
+        "wins": 16,
+        "losses": 17,
         "unfinished": 0,
         "errors": 0
       }
     },
-    "elapsedMs": 627412,
-    "seedBase": 1029000,
+    "elapsedMs": 919946,
+    "seedBase": 1030000,
     "opponent": "hard v2",
     "isHeldOut": true,
     "accepted": false,
     "acceptanceThreshold": 0.55
   },
   "policyDiagnostics": {
-    "calls": 30634,
-    "eligible": 3829,
-    "hiddenBoundary": 1041,
-    "vetoed": 29504,
-    "overrides": 27,
-    "eligibilityRate": 0.12499183913298949,
-    "overrideRate": 0.0008813736371352092,
-    "overridePerEligible": 0.00705144946461217
+    "calls": 31493,
+    "eligible": 3956,
+    "hiddenBoundary": 1046,
+    "vetoed": 31078,
+    "overrides": 33,
+    "comparable": 10050,
+    "positionVeto": 8045,
+    "incomparable": 23033,
+    "marginRejected": 4,
+    "eligibilityRate": 0.12561521607976375,
+    "overrideRate": 0.001047851903597625,
+    "overridePerEligible": 0.008341759352881698
   },
   "candidatePath": "audit/ai-v3-candidate.json",
   "championPromoted": false,
