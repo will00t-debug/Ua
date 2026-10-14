@@ -6,7 +6,7 @@ export const V2_PHASES=Object.freeze(['start','move','main','attack']);
 export const V2_CARD_TYPES=Object.freeze(['character','event','field']);
 export const V2_TRIGGERS=Object.freeze(['draw','get','final','active','special','color','raid']);
 export const V2_EFFECT_TIMINGS=Object.freeze(['onPlay','onRaid','onAttack','onRaided']);
-export const V2_EFFECT_OPS=Object.freeze(['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','retireOppFrontUnderBp','restOppFrontUnderBp','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown']);
+export const V2_EFFECT_OPS=Object.freeze(['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','retireOppFrontUnderBp','restOppFrontUnderBp','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','discardToDraw']);
 const integer=(v,low=0)=>Number.isInteger(v)&&v>=low;
 const own=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
 function verifyProgram(program,path){
@@ -17,6 +17,21 @@ function verifyProgram(program,path){
   if(e.op==='draw'||e.op==='millTop'||e.op==='drawDiscard'){
    if(!integer(e.count,1)||e.count>10)throw Error(path+'['+i+'] invalid count');
   }
+  if(['searchDeckOne','recoverOutsideOne'].includes(e.op)){
+   const f=e.filter;
+   if(!f||typeof f!=='object'||Array.isArray(f)||
+     Object.keys(f).length!==2||!['name','trait','color','type'].includes(f.field)||
+     typeof f.value!=='string'||!f.value.trim()||
+     (f.field==='type'&&!V2_CARD_TYPES.includes(f.value))||
+     typeof e.optional!=='boolean'||
+     (e.op==='searchDeckOne'&&e.shuffle!==true)||
+     Object.keys(e).some(k=>!['op','filter','optional',...(e.op==='searchDeckOne'?['shuffle']:[])].includes(k)))
+    throw Error(path+'['+i+'] invalid searched-card filter/options');
+  }
+  if(e.op==='discardToDraw'&&(
+   !integer(e.count,1)||e.count>10||typeof e.optional!=='boolean'||
+   Object.keys(e).some(k=>!['op','count','optional'].includes(k))
+  ))throw Error(path+'['+i+'] invalid discard cost/draw');
   if(e.op==='buffOwnTrait'&&(
    typeof e.trait!=='string'||!e.trait.trim()||
    !integer(e.bp,1)||e.bp>5000||e.optional!==true||
