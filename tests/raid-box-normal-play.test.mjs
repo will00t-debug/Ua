@@ -68,21 +68,19 @@ test('FAQ Q51: normal EX07BT/BLC-2-067 Kenpachi never gains high-base Raid buff'
  assert.equal(s.players[1].life.length,4);
  assertState(s);
 });
-test('FAQ Q51: normal EX07BT/BLC-2-019 Ichigo keeps its out-of-box on-play debuff',()=>{
+test('FAQ Q51: normal EX07BT/BLC-2-019 Ichigo does not execute on-play Raid-box debuff',()=>{
  let s=fixture();
- const target=card(s,1,'BLC-2-019');target.ready=true;
- s.players[1].front[0]=target;
+ const target=card(s,1,'BLC-2-019');target.ready=true;s.players[1].front[0]=target;
  energyFor(s,'BLC-2-019');
  const c=card(s,0,'BLC-2-019');s.players[0].hand.push(c);
  const act=legalActions(s).find(a=>a.type==='play'&&a.uid===c.uid&&a.line==='front'&&a.slot===0);
  s=dispatch(s,act);
- assert.equal(s.pending?.effect.kind,'ruleChoice','out-of-Raid-box entry remains active');
- assert.ok(s.pending.choices.some(x=>x.id===target.uid));
- s=dispatch(s,{type:'choose',ids:[target.uid]});
- assert.equal(bp(s,s.players[1].front[0]),2500);
+ assert.equal(s.pending,null,'Raid-box entry must not activate without underlying card');
+ assert.equal(bp(s,s.players[1].front[0]),4000);
+ assert.ok(!legalActions(s).some(a=>a.type==='ability'&&a.uid===c.uid),'boxed main ability cannot be used');
  assertState(s);
 });
-test('FAQ Q51: normal UA08BT/BLC-1-004 As Nodt keeps printed IMPACT 1 outside Raid box',()=>{
+test('FAQ Q51: normal UA08BT/BLC-1-004 As Nodt does not get Raid-box IMPACT',()=>{
  let {s,c}=normal('BLC-1-004');
  const defender=card(s,1,'BLC-1-002');defender.ready=true;
  s.players[1].front[0]=defender;life(s);
@@ -90,7 +88,35 @@ test('FAQ Q51: normal UA08BT/BLC-1-004 As Nodt keeps printed IMPACT 1 outside Ra
  s=dispatch(s,{type:'attack',uid:c.uid});
  assert.equal(s.pending?.effect.kind,'block');
  s=dispatch(s,{type:'choose',ids:[defender.uid]});
- assert.equal(s.players[1].life.length,4,'outside-box printed IMPACT still applies without Raid');
+ assert.equal(s.players[1].life.length,5,'Raid-box IMPACT must not apply without Raid');
+ assertState(s);
+});
+test('screenshot regression: normally played BLC-1-053 Rukia neither draws 3 nor discards 2',()=>{
+ const {s,c}=normal('BLC-1-053');
+ assert.equal(s.players[0].hand.length,0,'boxed entry must not draw cards on normal deployment');
+ assert.equal(s.pending,null,'boxed draw-discard must not prompt after normal deployment');
+ assert.ok(!legalActions(s).some(a=>a.type==='ability'&&a.uid===c.uid),'boxed discard-to-BP+500 is not legal');
+ assertState(s);
+});
+test('screenshot regression: normally played BLC-1-047 Renji keeps outside-box AP main ability',()=>{
+ const {s,c}=normal('BLC-1-047');
+ assert.equal(s.pending,null,'boxed entry must not offer to remove 4 outside cards');
+ assert.ok(legalActions(s).some(a=>a.type==='ability'&&a.uid===c.uid),'above-Raid-box pay-1-AP DAMAGE 2 remains playable');
+ assertState(s);
+});
+test('BLC-1-053 real Raid correctly enables its boxed draw-three discard-two entry',()=>{
+ let s=fixture();energyFor(s,'BLC-1-053');
+ const target=CARDS.find(x=>x.name===BY_ID['BLC-1-053'].name&&!x.raid);
+ assert.ok(target,'need real Rukia non-Raid base');
+ const base=card(s,0,target.id);s.players[0].front[0]=base;
+ const top=card(s,0,'BLC-1-053');s.players[0].hand.push(top);
+ const a=legalActions(s).find(a=>a.type==='raid'&&a.uid===top.uid&&a.target===base.uid&&a.line==='front'&&a.slot===0);
+ assert.ok(a,'Rukia Raid action available');
+ s=dispatch(s,a);
+ assert.equal(s.players[0].front[0].stack[0].uid,base.uid);
+ assert.equal(s.players[0].front[0].ready,true);
+ assert.equal(s.players[0].hand.length,3,'boxed entry draws three on genuine Raid');
+ assert.equal(s.pending?.effect.kind,'discardHand','boxed two-card discard must trigger');
  assertState(s);
 });
 test('normal play shows inactive Raid-box indicator, rather than an active Raid overlay',()=>{
