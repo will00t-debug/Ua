@@ -42,6 +42,13 @@ export function legalTtgRuleActions(state,player){
  if(state.pending?.kind==='ttgRed073Leaving')return state.pending.player===player?legalRed073Leaving(state):[];
  if(state.pending?.kind==='ttgRed056AfterAttack')return state.pending.player===player?legalRed056End(state):[];
  if(state.pending?.kind==='ttgRedRaidQueue')return state.pending.player===player?legalRedRaidQueue(state):[];
+ if(state.pending?.kind==='ttgRed071Attack'){
+  if(state.pending.player!==player)return [];
+  const uid=state.pending.uid;
+  const opts=eligibleTtg071AttackBuffTargets(state,{player,uid});
+  return [{type:'kittan071AttackBuff',player,uid,targetUid:null},
+   ...opts.map(targetUid=>({type:'kittan071AttackBuff',player,uid,targetUid}))];
+ }
  if(state.pending?.kind==='ttgRed076Look')return state.pending.player===player?legalRed076Look(state):[];
  if(state.pending?.kind==='ttgRed076Discard')return state.pending.player===player?legalRed076Discard(state):[];
  if(state.pending?.kind==='ttgRed077Recover')return state.pending.player===player?legalRed077Recover(state):[];
