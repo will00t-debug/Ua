@@ -556,7 +556,7 @@ function bind(){
    case 'showLog':ui.modal={type:'log'};render();break;
    case 'newMatch':ui.modal={type:'newMatch'};render();break;
    case 'hint':{
-    const a=chooseAiAction(game,{difficulty:ui.aiDifficulty});if(!a)break;
+    const a=chooseMatchBotAction('bleach',game,{difficulty:ui.aiDifficulty});if(!a)break;
     if(a.type==='choose'){ui.choiceIds=a.ids;render();toast('已標記建議選擇，你可以更改後再確認。');}
     else if(a.uid){const f=locate(game,a.uid),p=gameActor();ui.selected={uid:a.uid,p,source:f?'field':'hand'};ui.line=a.line||'front';ui.deployment=a.type==='raid'?'raid':'normal';render();toast(a.type==='raid'?'可以 Raid，點選 Raid 後選擇基底。':a.type==='ability'?'建議發動這張卡片的能力。':a.type==='attack'?'建議以這個角色攻擊。':'建議使用這張手牌，選擇放置位置。');}
     else toast(a.type==='extraDraw'?'可以花 1 AP 額外抽牌。':a.type==='keep'?'這副起手可以保留。':a.type==='redraw'?'缺少低需求角色，建議完整重抽。':'目前可以進入下一個階段。');break;
