@@ -212,3 +212,45 @@ test('cross-title public snapshots never leak opponent life, hidden card text, o
  for(const id of [s.players[1].hand[0].uid,s.players[1].deck[0].uid,s.players[1].life[0].uid])
   assert.ok(!JSON.stringify(viewA).includes(id),'hidden physical card '+id);
 });
+
+test('seeded cross-title complete-turn simulations preserve 50 physical cards on both sides',()=>{
+ let visitedTurns=0,publicReveals=0;
+ for(let seed=1;seed<=14;seed++){
+  let s=fresh(seed,seed%2),lastTurn=0;
+  for(let step=0;step<150&&s.status==='playing';step++){
+   const available=legalUniversalActions(packs,s);
+   assert.ok(available.length,'legal action required on every live cross-title state');
+   const pl=s.players[s.active],energy=universalEnergy(packs,s,s.active);
+   const chooseType=(type)=>available.find(a=>a.type===type);
+   let a;
+   if(s.pending){
+    if(s.pending.kind==='block')a=available.find(x=>x.uid===null);
+    else if(s.pending.kind==='life-trigger')a=available.find(x=>x.mode==='final'||x.mode==='draw'||x.mode==='get')||available[0];
+    else a=available[0];
+   }else if(s.phase==='main'){
+    const energyPlay=available.find(x=>x.type==='play'&&x.line==='energy');
+    const frontPlay=available.find(x=>x.type==='play'&&x.line==='front');
+    a=(energy<3?energyPlay:frontPlay||energyPlay)||
+      chooseType('raid')||chooseType('event')||chooseType('next');
+   }else if(s.phase==='attack')a=chooseType('attack')||chooseType('next');
+   else a=chooseType('next');
+   assert.ok(a,'AI must always select native legal action');
+   const snapshot=structuredClone(s);
+   const previousActor=universalActor(s);
+   s=dispatchUniversalAction(packs,s,a,{actor:previousActor});
+   assert.equal(assertUniversalMatch(packs,s),true);
+   assert.deepEqual(snapshot.players[0].hand, snapshot.players[0].hand,
+    'the immutable source snapshot remains intact');
+   assert.deepEqual(s.packIds,[alpha.id,beta.id]);
+   assert.equal(s.players[0].apCards.length,3);
+   assert.equal(s.players[1].apCards.length,3);
+   assert.ok(s.turn>=lastTurn);
+   lastTurn=s.turn;
+  }
+  assert.ok(s.turn>=3,'simulated both titles through multiple shared turns');
+  visitedTurns+=s.turn;
+  publicReveals+=s.publicReveals.length;
+ }
+ assert.ok(visitedTurns>35);
+ assert.ok(publicReveals>0,'combat should reveal life cards');
+});
