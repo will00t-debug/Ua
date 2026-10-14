@@ -195,3 +195,104 @@ test('cross-title conservation tracks original printed card quantities, not just
  forged.initialCounts[1].F10=8;
  assert.throws(()=>assertUniversalMatch(packs,forged),/Invalid original deck signature/);
 });
+
+test('main play onto completely full front line requires choosing exact own card to REMOVE',()=>{
+ let s=fresh(270);
+ const beforeUids=[];
+ for(let i=0;i<4;i++){const c=take(s,0,'F'+String(10+i));s.players[0].front[i]=c;beforeUids.push(c.uid);}
+ const producer=take(s,0,'F00');s.players[0].energy[0]=producer;
+ const newCard=take(s,0,'F02');s.players[0].hand.push(newCard);
+ s=dispatchUniversalAction(packs,s,{type:'next'});
+ s=dispatchUniversalAction(packs,s,{type:'next'});
+ const all=legalUniversalActions(packs,s);
+ const choices=all.filter(a=>a.type==='play'&&a.uid===newCard.uid&&a.line==='front');
+ assert.equal(choices.length,4);
+ assert.deepEqual(choices.map(a=>a.replaceUid),beforeUids);
+ assert.ok(!choices.some(a=>a.replaceUid===undefined));
+ assert.throws(()=>dispatchUniversalAction(packs,s,{type:'play',uid:newCard.uid,line:'front',slot:1},{actor:0}),/not currently legal/);
+ const orig=structuredClone(s),a=choices[1],after=dispatchUniversalAction(packs,s,a,{actor:0});
+ assert.equal(after.players[0].front[1].uid,newCard.uid);
+ assert.equal(after.players[0].front[1].ready,false);
+ assert.ok(after.players[0].removed.some(c=>c.uid===beforeUids[1]));
+ assert.ok(!after.players[0].outside.some(c=>c.uid===beforeUids[1]));
+ assert.equal(after.players[0].front[0].uid,beforeUids[0]);
+ assert.equal(after.players[0].front[2].uid,beforeUids[2]);
+ assert.equal(assertUniversalMatch(packs,after),true);
+ assert.deepEqual(s,orig);
+});
+test('partial line may fill empty slot without removal, but cannot overwrite occupied slot',()=>{
+ let s=fresh(271),occupied=take(s,0,'F10');s.players[0].front[0]=occupied;
+ const handCard=take(s,0,'F02');s.players[0].hand.push(handCard);
+ s=dispatchUniversalAction(packs,s,{type:'next'});
+ s=dispatchUniversalAction(packs,s,{type:'next'});
+ assert.ok(!legalUniversalActions(packs,s).some(a=>a.type==='play'&&a.uid===handCard.uid&&a.line==='front'&&a.slot===0));
+ assert.ok(legalUniversalActions(packs,s).some(a=>a.type==='play'&&a.uid===handCard.uid&&a.line==='front'&&a.slot===1&&a.replaceUid===undefined));
+});
+test('COLOR trigger on full opposing-title front must REMOVE chosen character before ACTIVE arrival',()=>{
+ let s=fresh(279),attacker=take(s,0,'F10');attacker.ready=true;s.players[0].front[0]=attacker;
+ reveal(s,1,'F04');
+ for(let i=0;i<4;i++)s.players[1].front[i]=take(s,1,'F'+String(10+i));
+ const hand=take(s,1,'F02');s.players[1].hand.push(hand);
+ s=hitWith(s,attacker);
+ const options=legalUniversalActions(packs,s).filter(a=>a.mode==='color'&&a.uid===hand.uid&&a.line==='front');
+ assert.equal(options.length,4);
+ const old=s.players[1].front[2].uid,option=options.find(a=>a.slot===2);
+ assert.equal(option.replaceUid,old);
+ const after=dispatchUniversalAction(packs,s,option,{actor:1});
+ assert.equal(after.players[1].front[2].uid,hand.uid);
+ assert.equal(after.players[1].front[2].ready,true);
+ assert.ok(after.players[1].removed.some(c=>c.uid===old));
+ assert.equal(assertUniversalMatch(packs,after),true);
+});
+test('RAID life when front is full: energy-base to front explicitly removes occupied card and preserves Raid stack',()=>{
+ let s=fresh(286),attacker=take(s,0,'F10');attacker.ready=true;s.players[0].front[0]=attacker;
+ const top=reveal(s,1,'F01'),source=take(s,1,'F00');
+ s.players[1].energy[0]=source;
+ for(let i=0;i<4;i++)s.players[1].front[i]=take(s,1,'F'+String(10+i));
+ s=hitWith(s,attacker);
+ const choices=legalUniversalActions(packs,s).filter(a=>a.mode==='raid'&&a.baseUid===source.uid&&a.line==='front');
+ assert.equal(choices.length,4);
+ assert.ok(choices.every(a=>a.replaceUid));
+ const old=s.players[1].front[0].uid;
+ const raided=dispatchUniversalAction(packs,s,choices.find(a=>a.slot===0),{actor:1});
+ assert.equal(raided.players[1].front[0].uid,top.uid);
+ assert.equal(raided.players[1].front[0].stack[0].uid,source.uid);
+ assert.equal(raided.players[1].energy[0],null);
+ assert.ok(raided.players[1].removed.some(c=>c.uid===old));
+ assert.equal(assertUniversalMatch(packs,raided),true);
+});
+test('RAID-life nested onPlay selection persists, then onRaid resolves in printed timing order',()=>{
+ const nestedCards=base.map(c=>c.id==='F01'?{...c,effects:{
+  onPlay:[{op:'drawDiscard',count:1}],onRaid:[{op:'draw',count:1}]
+ }}:c);
+ const opp=createUniversalPack({id:'fictional-nested-raid',cards:nestedCards});
+ const ownPacks=[packA,opp];
+ let s=newUniversalMatch(ownPacks,{decks:[deck,deck],seed:314,first:0});
+ const takeFor=(p,id)=>{
+  for(const zone of ['hand','deck','life','outside']){
+   const arr=s.players[p][zone],idx=arr.findIndex(c=>c.cardId===id);
+   if(idx>=0)return arr.splice(idx,1)[0];
+  }
+  throw Error('missing fixture');
+ };
+ const attacker=takeFor(0,'F10');attacker.ready=true;s.players[0].front[0]=attacker;
+ const baseCard=takeFor(1,'F00');s.players[1].front[0]=baseCard;s.players[1].energy[0]=takeFor(1,'F00');
+ const top=takeFor(1,'F01');s.players[1].deck.push(s.players[1].life.shift());s.players[1].life.unshift(top);
+ for(let i=0;i<3;i++)s=dispatchUniversalAction(ownPacks,s,{type:'next'});
+ s=dispatchUniversalAction(ownPacks,s,{type:'attack',uid:attacker.uid},{actor:0});
+ s=dispatchUniversalAction(ownPacks,s,{type:'chooseBlock',uid:null},{actor:1});
+ const before=s.players[1].deck.length;
+ const raid=legalUniversalActions(ownPacks,s).find(a=>a.mode==='raid'&&a.baseUid===baseCard.uid);
+ assert.ok(raid);
+ const pending=dispatchUniversalAction(ownPacks,s,raid,{actor:1});
+ assert.equal(pending.pending?.kind,'effect-discard','onPlay must prompt after raid life resolves');
+ assert.equal(pending.pending.player,1);
+ assert.equal(pending.players[1].deck.length,before-1,'onPlay draw one happened first');
+ const discarded=legalUniversalActions(ownPacks,pending).find(a=>a.type==='chooseDiscard');
+ assert.ok(discarded);
+ const resumed=dispatchUniversalAction(ownPacks,pending,discarded,{actor:1});
+ assert.equal(resumed.pending,null);
+ assert.equal(resumed.players[1].deck.length,before-2,'onRaid draw resolves AFTER the discard choice');
+ assert.equal(resumed.players[1].front[0].stack[0].uid,baseCard.uid);
+ assert.equal(assertUniversalMatch(ownPacks,resumed),true);
+});
