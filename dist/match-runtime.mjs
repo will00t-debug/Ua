@@ -6,6 +6,7 @@ import {chooseAiAction} from './ai-v2.mjs';
 import {validateDeck,pendingCards} from './cards.mjs?v=9.1.0';
 import {newTtgCoreMatch,validateTtgCoreDeck,dispatchTtgCoreAction,assertTtgCoreState,ttgCoreAiChoice,legalTtgCoreActions} from './ttg-core-match.mjs';
 import {ttgExecutableActions,ttgChoiceActor} from './ttg-browser.mjs';
+import {chooseBetaAiAction} from './beta-ai-policy.mjs';
 import {newSoloTrainingMatch,soloTrainingDeckIssues,soloTrainingLegalActions,soloTrainingDispatch,assertSoloTrainingMatch,soloTrainingBotAction} from './solo-match.mjs';
 
 const deckIssuesForBleach=counts=>[...validateDeck(counts),...pendingCards(counts).map(c=>'自動判定尚未完成：'+c.id)];
@@ -21,14 +22,14 @@ const runtimes=Object.freeze({
   assert:assertTtgCoreState,legalActions:ttgExecutableActions,
   // Engine rule templates are used ONLY by specialized, explicitly verified UX.
   ruleTemplates:legalTtgCoreActions,
-  dispatch:dispatchTtgCoreAction,actor:ttgChoiceActor,botAction:ttgCoreAiChoice,
+  dispatch:dispatchTtgCoreAction,actor:ttgChoiceActor,botAction:(state,options)=>chooseBetaAiAction('gurren-lagann',state,options),
  }),
  'solo-leveling':Object.freeze({
   title:'solo-leveling',corePlayable:false,beta:true,
   newMatch:newSoloTrainingMatch,deckIssues:soloTrainingDeckIssues,
   assert:assertSoloTrainingMatch,legalActions:soloTrainingLegalActions,
   dispatch:soloTrainingDispatch,actor:s=>s.pending?.p??s.active,
-  botAction:soloTrainingBotAction,
+  botAction:(state,options)=>chooseBetaAiAction('solo-leveling',state,options),
  })
 });
 export const MATCH_RUNTIME_TITLES=Object.freeze(Object.keys(runtimes));

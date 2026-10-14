@@ -20,7 +20,7 @@ test('browser UI can select TTG, start a 50-card Beta match, resolve legal turn 
   assert.doesNotMatch(app.innerHTML,/此卡尚未接入自動判定/);
   assert.match(app.innerHTML,/ttgBetaStartGreen/);
   press({action:'ttgBetaStartGreen'});
-  assert.match(app.innerHTML,/天元突破 · 限定 Beta 自動對戰/);
+  assert.match(app.innerHTML,/天元突破 · Beta 自動對戰/);
   let saved=JSON.parse(storage.get('ua-ttg-beta-game-v1'));
   assert.equal(saved.kind,'ttg-core-smoke');
   assert.equal(saved.players[0].hand.length,7);
