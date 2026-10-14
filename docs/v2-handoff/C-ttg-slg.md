@@ -93,3 +93,10 @@ GitHub Actions Node.js 22 [run #38610752632](https://github.com/will00t-debug/Ua
 2. `tests/universal-v2-once-per-turn-gate.test.mjs` 2 項牌庫長度：預期 33 / 32，實際 32 / 31；須確認 fixture 取出的實體 UID 和 deck 初始張數，不能只改斷言讓無守恆 bug 過關。最小重現：PR #72 HEAD `node --test tests/universal-v2-once-per-turn-gate.test.mjs`。
 
 更高階 TTG 多層 Raid/裏向底板/能源 8 與 20 門檻/080 延遲折扣，以及 SLG 場外回收後登場/同名全場次數/延遲退場，尚需主控通用引擎能力；未移植卡嚴格關閉，不得翻旗標冒充支援。本輪 C 工作只新增已能用同一引擎解決的真卡 QA，**沒有擴大 V2 卡號數或宣布完整官方驗收**。
+
+### 本次已完成的 Node 22 CI 結論（更新前最近一次 HEAD）
+
+[Actions run #38651981244](https://github.com/will00t-debug/Ua/actions/runs/38651981244)、commit `d747a08bb89e86291274dee3032f9c5f3cd740c6` 已實際結束：
+- **V2-C 專項 21/21 通過、0 失敗**（原 17 項，加上 SLG-068、043、015 與 TTG-005 四項）。
+- **全專案 1031/1036 通過、5 失敗**；剩餘 5 項依然是 `universal-v2-once-per-turn-gate.test.mjs` 兩項及 `universal-v2-title-pack-contract.test.mjs` 三項，皆已回報 PR #70。不是全套綠燈。
+- 本次僅為 handoff 文字補上以上已驗證結果，寫入後將產生新的 GitHub Actions run；以**新的 HEAD** CI 為最後準據。沒有移植更多卡號、沒有覆蓋主控共用檔、沒有部署與 merge。
