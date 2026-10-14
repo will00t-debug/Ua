@@ -108,7 +108,7 @@ function validRaidBase(pack,base,top){
  return !!base&&!!top.raidName&&card(pack,base).name===top.raidName&&
   !card(pack,base).raidName&&!(base.stack?.length);
 }
-function performRaid(pack,s,p,cardOnTop,baseUid,line,slot){
+function performRaid(pack,s,p,cardOnTop,baseUid,line,slot,replaceUid){
  const pl=s.players[p],base=location(s,p,baseUid),top=card(pack,cardOnTop);
  if(!base||!validRaidBase(pack,base.c,top))throw Error('Illegal Raid base');
  if(line!=='front'&&line!=='energy')throw Error('Illegal Raid destination');
@@ -116,8 +116,7 @@ function performRaid(pack,s,p,cardOnTop,baseUid,line,slot){
   throw Error('Cannot move a front-line Raid base');
  if(line==='energy'&&(base.line!=='energy'||slot!==base.slot))
   throw Error('Raid can only stay in base energy slot');
- if(pl[line][slot]&&!(line===base.line&&slot===base.slot))
-  throw Error('Raid destination occupied');
+ commitDestination(s,p,line,slot,replaceUid,base);
  pl[base.line][base.slot]=null;
  cardOnTop.stack=[base.c];cardOnTop.ready=true;
  pl[line][slot]=cardOnTop;
@@ -131,11 +130,38 @@ function location(s,p,uid){
  }
  return null;
 }
-function retire(s,p,line,slot){
- const top=s.players[p][line][slot];if(!top)throw Error('No character to retire');
+function vacate(s,p,line,slot,destination='outside'){
+ const top=s.players[p][line][slot];if(!top)throw Error('Empty field slot');
+ if(!['outside','removed'].includes(destination))throw Error('Invalid destination');
  s.players[p][line][slot]=null;
  const expand=c=>[c,...(c.stack||[]).flatMap(expand),...(c.under||[]).flatMap(expand)];
- s.players[p].outside.push(...expand(top).map(c=>({...c,stack:[],under:[],buffs:[],ready:false})));
+ s.players[p][destination].push(...expand(top).map(c=>({...c,stack:[],under:[],buffs:[],ready:false})));
+}
+function retire(s,p,line,slot){vacate(s,p,line,slot,'outside');}
+// Full lines are allowed, but replacement is a mandatory explicit choice.
+// The displaced card (and any Raid layers) goes to REMOVAL, not sideline.
+function legalDestinations(pl,line,source=null){
+ const out=[],slots=pl[line],full=slots.every(Boolean);
+ for(let slot=0;slot<slots.length;slot++){
+  const occupied=slots[slot];
+  if(source&&source.line===line&&source.slot===slot){
+   out.push({slot});continue;
+  }
+  if(!occupied)out.push({slot});
+  else if(full)out.push({slot,replaceUid:occupied.uid});
+ }
+ return out;
+}
+function commitDestination(s,p,line,slot,replaceUid,source=null){
+ const occupant=s.players[p][line][slot];
+ if(source&&source.line===line&&source.slot===slot)return;
+ if(!occupant){
+  if(replaceUid!==undefined)throw Error('No card needs replacement');
+  return;
+ }
+ if(replaceUid!==occupant.uid||!s.players[p][line].every(Boolean))
+  throw Error('Full line replacement must designate exact existing card');
+ vacate(s,p,line,slot,'removed');
 }
 function damage(pack,s,defender){
  const pl=s.players[defender];
@@ -233,6 +259,9 @@ function resolveChoice(s,a,pack){
   return;
  }
  if(q.kind==='life-trigger'){
+  // Clear only the original life choice. A COLOR/RAID onPlay can create a NEW
+  // pending decision; never wipe that nested decision after resolving it.
+  s.pending=null;
   const i=p.outside.findIndex(c=>c.uid===q.uid);
   if(i<0)throw Error('Revealed life card not found');
   if(a.mode==='get'&&q.trigger==='get')p.hand.push(p.outside.splice(i,1)[0]);
@@ -256,19 +285,19 @@ function resolveChoice(s,a,pack){
    if(handIndex<0)throw Error('COLOR requires a hand character');
    const picked=p.hand[handIndex],d=card(pack,picked);
    if(d.type!=='character'||d.color!==profile.color||d.energy>profile.maxEnergy||d.ap!==profile.ap||
-    !['front','energy'].includes(a.line)||p[a.line][a.slot])throw Error('Illegal COLOR deployment');
+    !['front','energy'].includes(a.line))throw Error('Illegal COLOR deployment');
+   commitDestination(s,q.player,a.line,a.slot,a.replaceUid);
    p.hand.splice(handIndex,1);picked.ready=true;p[a.line][a.slot]=picked;
    // This is ordinary playing through a trigger, NOT a Raid: no AP is spent.
    applyEffects(pack,s,picked,'onPlay',q.player);
   }
   else if(a.mode==='raid'&&q.trigger==='raid'){
    const revealed=p.outside.splice(i,1)[0];
-   performRaid(pack,s,q.player,revealed,a.baseUid,a.line,a.slot);
+   performRaid(pack,s,q.player,revealed,a.baseUid,a.line,a.slot,a.replaceUid);
   }
   else if(a.mode==='get'&&q.trigger==='raid')p.hand.push(p.outside.splice(i,1)[0]);
   else if(a.mode==='final'&&q.trigger==='final'&&!p.life.length&&p.deck.length)p.life.unshift(p.deck.shift());
   else if(a.mode!=='skip')throw Error('Illegal trigger option');
-  s.pending=null;
   continueEffectQueue(pack,s);
   finishPending(s);
   return;
@@ -337,8 +366,8 @@ function legalPending(pack,s){
     const d=card(pack,c);
     if(d.type!=='character'||d.color!==profile.color||d.energy>profile.maxEnergy||d.ap!==profile.ap)continue;
     for(const line of ['front','energy'])
-     for(let slot=0;slot<4;slot++)if(!p[line][slot])
-      out.push({type:'chooseTrigger',mode:'color',uid:c.uid,line,slot});
+     for(const choice of legalDestinations(p,line))
+      out.push({type:'chooseTrigger',mode:'color',uid:c.uid,line,...choice});
    }
   }
   if(q.trigger==='raid'){
@@ -351,8 +380,8 @@ function legalPending(pack,s){
      if(line==='front')out.push({type:'chooseTrigger',mode:'raid',baseUid:base.uid,line:'front',slot});
      else{
       out.push({type:'chooseTrigger',mode:'raid',baseUid:base.uid,line:'energy',slot});
-      for(let dest=0;dest<4;dest++)if(!p.front[dest])
-       out.push({type:'chooseTrigger',mode:'raid',baseUid:base.uid,line:'front',slot:dest});
+      for(const choice of legalDestinations(p,'front'))
+       out.push({type:'chooseTrigger',mode:'raid',baseUid:base.uid,line:'front',...choice});
      }
     }
    }
@@ -386,15 +415,17 @@ export function legalUniversalActions(pack,s){
    const d=card(pack,c);
    if(d.energy>(produced[d.color]||0)||d.ap>ap)continue;
    if(d.type==='event')out.push({type:'event',uid:c.uid});
-   else for(const line of ['energy','front'])for(let slot=0;slot<4;slot++)
-    if(!pl[line][slot]&&(line!=='front'||d.type==='character'))
-     out.push({type:'play',uid:c.uid,line,slot});
+   else for(const line of ['energy','front']){
+    if(line==='front'&&d.type!=='character')continue;
+    for(const choice of legalDestinations(pl,line))
+     out.push({type:'play',uid:c.uid,line,...choice});
+   }
    if(d.raidName){
     for(const line of ['energy','front'])for(let slot=0;slot<4;slot++){
      const base=pl[line][slot];
      if(!validRaidBase(pack,base,d))continue;
-     for(let dest=0;dest<4;dest++)if(!pl.front[dest]||(line==='front'&&slot===dest))
-      out.push({type:'raid',uid:c.uid,baseUid:base.uid,slot:dest});
+     for(const choice of legalDestinations(pl,'front',{line,slot}))
+      out.push({type:'raid',uid:c.uid,baseUid:base.uid,...choice});
     }
    }
   }
@@ -442,8 +473,9 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
    spendAp(pl,d.ap);pl.hand.splice(index,1);
    if(action.type==='event'){pl.outside.push(current);applyEffects(pack,s,current,'onPlay',p);}
    else if(action.type==='raid'){
-    performRaid(pack,s,p,current,action.baseUid,'front',action.slot);
+    performRaid(pack,s,p,current,action.baseUid,'front',action.slot,action.replaceUid);
    }else{
+    commitDestination(s,p,action.line,action.slot,action.replaceUid);
     current.ready=false;pl[action.line][action.slot]=current;
     applyEffects(pack,s,current,'onPlay',p);
    }
@@ -459,6 +491,7 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
   }
   default:throw Error('Unsupported universal action');
  }
+ finishPending(s);
  assertUniversalMatch(pack,s);
  return s;
 }
