@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {CARDS} from '../dist/cards.mjs';
 import {createBleachV2Pack} from '../dist/universal-v2/bleach-pack.mjs';
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
@@ -79,4 +80,22 @@ test('BLC-4-067 may decline outside and reorder all three TOP cards without a sh
  assert.deepEqual(state.players[0].deck.slice(0,3).map(x=>x.uid),[...uids].reverse());
  assert.equal(state.players[0].deck.length,n);
  assert.equal(assertUniversalMatch(packs,state),true);
+});
+
+test('BLC-2-055 is intentionally NOT ported: printed top-or-bottom is not top-or-outside',()=>{
+ const original=CARDS.find(c=>c.identity==='BLC-2-055');
+ assert.ok(original);
+ assert.match(original.effect,/牌堆頂或牌堆底/);
+ assert.equal(pack.cards['BLC-2-055'],undefined);
+ const attempted={...deck};delete attempted['BLC-4-009'];attempted['BLC-2-055']=4;
+ assert.notDeepEqual(validateUniversalDeck(pack,attempted),[],
+  'fail-closed: cannot replace a missing bottom-deck action with peekTopOne');
+});
+test('BLC-4-013 is intentionally NOT ported: multiple optional outside cards cannot use at-most-one template',()=>{
+ const original=CARDS.find(c=>c.identity==='BLC-4-013');
+ assert.ok(original);
+ assert.match(original.effect,/任意張/);
+ assert.equal(pack.cards['BLC-4-013'],undefined);
+ const attempted={...deck};delete attempted['BLC-4-009'];attempted['BLC-4-013']=4;
+ assert.notDeepEqual(validateUniversalDeck(pack,attempted),[]);
 });
