@@ -97,7 +97,7 @@ export function uiActionLabel(action,{pack,state}={}){
    return action.uid===null?'結束搜尋':'將 '+name()+' 加入手牌';
   case 'chooseInspectedOutside':return action.uid===null?'不送任何牌到場外':'將 '+name()+' 送場外';
   case 'chooseTopOrder':return '依序放回：'+name();
-  case 'chooseMainBuff':case 'chooseTraitBuff':case 'chooseRestBp':
+  case 'chooseOwnBuff':case 'chooseMainBuff':case 'chooseTraitBuff':case 'chooseRestBp':
   case 'chooseRetireBp':case 'chooseTarget':
    return action.uid===null?'不指定／完成':'指定 '+name();
   default:return '執行 '+action.type;
