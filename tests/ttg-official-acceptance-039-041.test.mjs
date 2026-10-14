@@ -129,7 +129,6 @@ test('039 and 041 ACTIVE life triggers can be DECLINED or choose own character f
   character.ready=false;
   const life=take(p,id),prior=p.life.shift();p.deck.push(prior);p.life.unshift(life);
   s=withTtgDerivedEnergy(s,0);
-  const {beginTtgLifeTrigger}= {beginTtgLifeTrigger};
   const pending=beginTtgLifeTrigger(s,{player:0,lifeUid:life.uid});
   const options=legalTtgCoreActions(pending);
   assert.ok(options.some(x=>x.mode==='decline'));
