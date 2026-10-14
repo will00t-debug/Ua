@@ -14,7 +14,8 @@ const slgDeck=Object.fromEntries(['005','006','015','016','026','032','041','043
 slgDeck['SLG-1-038']=2;
 // SPECIAL event fixture replaces a normal 4-copy card, never exceeds printed limit.
 slgDeck['SLG-1-032']=0;
-slgDeck['SLG-1-040']=4;
+slgDeck['SLG-1-040']=2;
+slgDeck['SLG-1-076']=2; // two official SPECIAL numbers, total SPECIAL physical cards = 4
 const fresh=(first=1)=>newUniversalMatch(packs,{decks:[ttgDeck,slgDeck],seed:51,first});
 function take(s,player,id){
  for(const zone of ['hand','deck','life','outside']){
@@ -179,4 +180,47 @@ test('18 SLG profiles compile through the title-scoped V2 registry without legac
   assert.deepEqual(registered.cards[id].effects,slg.cards[id].effects);
  }
  assert.ok(!registered.cards['SLG-1-047'],'not-yet ported green chained Raid must fail closed');
+});
+
+test('SLG-026 bounces itself if no other own printed-energy <=1 unit is present',()=>{
+ let s=fresh(),source=take(s,1,'SLG-1-026');
+ const costly=take(s,1,'SLG-1-016');costly.ready=true;s.players[1].energy[0]=costly;
+ s.players[1].hand.push(source);s=advance(s,'main');
+ const play=legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===source.uid&&a.line==='front');
+ assert.ok(play);
+ const after=dispatchUniversalAction(packs,s,play);
+ assert.equal(after.pending,null);
+ assert.ok(after.players[1].hand.some(c=>c.uid===source.uid));
+ assert.equal(after.players[1].front.filter(Boolean).length,0);
+ assert.equal(assertUniversalMatch(packs,after),true);
+});
+test('SLG-076 green SPECIAL event has real energy/AP cost and no false bonus without Jinwoo',()=>{
+ let s=fresh(),source=take(s,1,'SLG-1-076'),target=take(s,0,'TTG-1-043');
+ target.ready=true;target.buffs=[{bp:1000,untilTurn:s.turn}];s.players[0].front[0]=target;
+ for(let i=0;i<4;i++){
+  const x=take(s,1,'SLG-1-041');x.ready=true;s.players[1].energy[i]=x;
+ }
+ s.players[1].hand.push(source);s=advance(s,'main');
+ const before=s.players[1].apCards.filter(c=>c.inPlay&&c.ready).length;
+ const event=legalUniversalActions(packs,s).find(a=>a.type==='event'&&a.uid===source.uid);
+ assert.ok(event,'4 green energy is required for this event');
+ const resolved=dispatchUniversalAction(packs,s,event);
+ assert.equal(resolved.pending,null,'4000BP cannot be targeted without Jinwoo');
+ assert.equal(resolved.players[1].apCards.filter(c=>c.inPlay&&c.ready).length,before-1);
+ assert.equal(resolved.players[0].front[0].uid,target.uid);
+ assert.ok(resolved.players[1].outside.some(c=>c.uid===source.uid));
+ assert.equal(assertUniversalMatch(packs,resolved),true);
+});
+test('SLG-076 SPECIAL Life Trigger can retire opposing front unit regardless of normal event BP threshold',()=>{
+ let s=fresh(0),attacker=take(s,0,'TTG-1-042'),flip=take(s,1,'SLG-1-076');
+ attacker.ready=true;s.players[0].front[0]=attacker;
+ let old=s.players[1].life.shift();s.players[1].deck.push(old);s.players[1].life.unshift(flip);
+ s=advance(s,'attack');
+ s=dispatchUniversalAction(packs,s,{type:'attack',uid:attacker.uid},{actor:0});
+ s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:null},{actor:1});
+ assert.equal(s.pending?.trigger,'special');
+ assert.ok(legalUniversalActions(packs,s).some(a=>a.mode==='special'&&a.uid===attacker.uid));
+ s=dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'special',uid:attacker.uid},{actor:1});
+ assert.equal(s.players[0].front[0],null);
+ assert.equal(assertUniversalMatch(packs,s),true);
 });
