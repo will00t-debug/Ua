@@ -62,7 +62,7 @@ function hit(s,uid){
 test('universal v2 validates strict card contracts, 50-card decks, colors and unsupported effects',()=>{
  assert.deepEqual(validateUniversalDeck(pack,deck),[]);
  assert.throws(()=>createUniversalPack({id:'x',cards:[{...base[0],effectText:'A special unexplained ability'}]}),/claims vanilla/);
- assert.throws(()=>createUniversalPack({id:'x',cards:[{...base[0],trigger:'color'}]}),/not yet supported/);
+ assert.throws(()=>createUniversalPack({id:'x',cards:[{...base[0],trigger:'color'}]}),/COLOR requires/);
  assert.throws(()=>createUniversalPack({id:'x',cards:[{...base[0],implementation:'dsl',effects:{onPlay:[{op:'teleport'}]}}]}),/unsupported/);
  assert.throws(()=>createUniversalPack({id:'x',cards:[base[0],base[0]]}),/Duplicate/);
  assert.match(validateUniversalDeck(pack,{...deck,P14:1}).join(),/Unregistered/);
