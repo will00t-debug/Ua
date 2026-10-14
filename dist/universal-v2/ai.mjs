@@ -26,7 +26,7 @@ function chooseBlock(pack,s,actions,difficulty){
  const damage=universalBp(pack,s,attacker);
  const healthy=actions.filter(a=>a.uid!==null).map(a=>({
   a,card:s.players[s.pending.player].front.find(c=>c?.uid===a.uid)
- })).filter(x=>x.card&&universalBp(pack,s,x.card)>=damage);
+ })).filter(x=>x.card&&universalBp(pack,s,x.card)>damage);
  healthy.sort((a,b)=>universalBp(pack,s,a.card)-universalBp(pack,s,b.card));
  return healthy[0]?.a||
   (difficulty==='hard'&&s.players[s.pending.player].life.length<=1?
