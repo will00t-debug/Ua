@@ -275,7 +275,8 @@ export function newUniversalMatch(pack,{decks,seed=1,first=0}={}){
   packIds:packs.map(p=>p.id),packVersions:packs.map(p=>p.version),
   rng:(seed>>>0)||1,first,active:first,turn:0,phase:'start',status:'playing',
   winner:null,endReason:null,pending:null,extraDrawn:false,moved:false,movedUids:[],
-  publicReveals:[],effectQueue:[],players:[]
+  publicReveals:[],effectQueue:[],players:[],
+  initialCounts:decks.map(d=>Object.fromEntries(Object.entries(d).filter(([,n])=>n>0)))
  };
  for(let p=0;p<2;p++){
   const ids=Object.entries(decks[p]).flatMap(([id,count])=>Array(count).fill(id));
@@ -455,6 +456,7 @@ export function assertUniversalMatch(pack,s){
    !Array.isArray(s.packIds)||!Array.isArray(s.packVersions)||
    packs.some((p,i)=>s.packIds[i]!==p.id||s.packVersions[i]!==p.version)||
    s.packIds.length!==2||s.packVersions.length!==2||
+   !Array.isArray(s.initialCounts)||s.initialCounts.length!==2||
    s.players?.length!==2||!playerIndex(s.active)||
    !['playing','finished'].includes(s.status))throw Error('Incorrect pack/version or match state');
  if(s.pending&&(!playerIndex(s.pending.player)||!['block','life-trigger','effect-target','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice'].includes(s.pending.kind)))
@@ -479,6 +481,14 @@ export function assertUniversalMatch(pack,s){
   for(const zone of ['deck','hand','life','outside','removed'])for(const c of pl[zone]||[])visit(c);
   for(const c of field(pl))visit(c);
   if(items.length!==50)throw Error('Card conservation violated ('+items.length+'/50)');
+  const counts=Object.create(null);
+  for(const c of items)counts[c.cardId]=(counts[c.cardId]||0)+1;
+  const expected=s.initialCounts[p];
+  if(validateUniversalDeck(packs[p],expected).length)
+   throw Error('Invalid original deck signature for player '+p);
+  for(const id of new Set([...Object.keys(counts),...Object.keys(expected)]))
+   if((counts[id]||0)!==(expected[id]||0))
+    throw Error('Printed card ID conservation violated for player '+p+' ('+id+')');
   if(pl.front.some(c=>c&&card(pack,c).type!=='character'))
    throw Error('Front line must contain only characters');
   if(pl.energy.some(c=>c&&card(pack,c).type==='event'))
