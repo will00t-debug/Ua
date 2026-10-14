@@ -26,6 +26,10 @@ const printed=Object.freeze({
   {id:'TTG-1-042',energy:0,ap:1,bp:2000,gen:1,color:'red',trigger:'active',type:'character',implementation:'vanilla',effects:{},matchText:'沒有額外印刷角色效果'},
   {id:'TTG-1-064',energy:0,ap:1,bp:2000,gen:1,color:'red',trigger:'draw',type:'character',implementation:'vanilla',effects:{},matchText:'無額外印刷角色效果'},
   {id:'TTG-1-065',energy:1,ap:1,bp:2500,gen:1,color:'red',trigger:null,type:'character',implementation:'vanilla',effects:{},step:true,matchText:'STEP'},
+  {id:'TTG-1-072',energy:3,ap:1,bp:3500,gen:1,color:'red',trigger:'raid',type:'character',
+   implementation:'dsl',raidName:'カミナ',ownTurnBp:500,
+   effects:{onPlay:[{op:'draw',count:1},{op:'restOppFrontUnderBp',bp:3000,optional:true}]},
+   matchText:'BP+500'},
   {id:'TTG-1-078',energy:3,ap:1,bp:0,gen:0,color:'red',trigger:'final',type:'event',implementation:'dsl',effects:{onPlay:[{op:'recoverAp',count:2}]},matchText:'選擇最多2張自己的 AP 卡'},
   {id:'TTG-1-079',energy:3,ap:1,bp:0,gen:0,color:'red',trigger:'final',type:'event',implementation:'dsl',effects:{onPlay:[{op:'recoverAp',count:2}]},matchText:'選擇最多2張自己的 AP 卡'}
  ])
@@ -53,7 +57,8 @@ export function portVerifiedPilotCard(title,id){
   id, name:c.nameJa||c.name,color:spec.color,type:spec.type,
   energy:spec.energy,ap:spec.ap,bp:spec.bp,gen:spec.gen,
   trigger:spec.trigger,implementation:spec.implementation,
-  step:spec.step===true,triggerEffect:spec.triggerEffect,effects:spec.effects
+  step:spec.step===true,raidName:spec.raidName,ownTurnBp:spec.ownTurnBp,
+  triggerEffect:spec.triggerEffect,effects:spec.effects
  };
 }
 export function verifiedPilotCards(title){
