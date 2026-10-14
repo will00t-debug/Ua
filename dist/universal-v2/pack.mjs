@@ -6,7 +6,7 @@ export const V2_PHASES=Object.freeze(['start','move','main','attack']);
 export const V2_CARD_TYPES=Object.freeze(['character','event','field']);
 export const V2_TRIGGERS=Object.freeze(['draw','get','final','active','special','color','raid']);
 export const V2_EFFECT_TIMINGS=Object.freeze(['onPlay','onRaid','onAttack','onRaided']);
-export const V2_EFFECT_OPS=Object.freeze(['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','retireOppFrontUnderBp','restOppFrontUnderBp','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','discardToDraw']);
+export const V2_EFFECT_OPS=Object.freeze(['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','retireOppFrontUnderBp','restOppFrontUnderBp','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','discardToDraw','searchDeckMany','discardGate']);
 const integer=(v,low=0)=>Number.isInteger(v)&&v>=low;
 const own=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
 function verifyProgram(program,path){
@@ -17,16 +17,29 @@ function verifyProgram(program,path){
   if(e.op==='draw'||e.op==='millTop'||e.op==='drawDiscard'){
    if(!integer(e.count,1)||e.count>10)throw Error(path+'['+i+'] invalid count');
   }
-  if(['searchDeckOne','recoverOutsideOne'].includes(e.op)){
+  if(['searchDeckOne','searchDeckMany','recoverOutsideOne'].includes(e.op)){
    const f=e.filter;
    if(!f||typeof f!=='object'||Array.isArray(f)||
      Object.keys(f).length!==2||!['name','trait','color','type'].includes(f.field)||
      typeof f.value!=='string'||!f.value.trim()||
      (f.field==='type'&&!V2_CARD_TYPES.includes(f.value))||
      typeof e.optional!=='boolean'||
-     (e.op==='searchDeckOne'&&e.shuffle!==true)||
-     Object.keys(e).some(k=>!['op','filter','optional',...(e.op==='searchDeckOne'?['shuffle']:[])].includes(k)))
+     (['searchDeckOne','searchDeckMany'].includes(e.op)&&e.shuffle!==true)||
+     (e.op==='searchDeckMany'&&(!integer(e.count,1)||e.count>5))||
+     Object.keys(e).some(k=>!['op','filter','optional',
+       ...(['searchDeckOne','searchDeckMany'].includes(e.op)?['shuffle']:[]),
+       ...(e.op==='searchDeckMany'?['count']:[])].includes(k)))
     throw Error(path+'['+i+'] invalid searched-card filter/options');
+  }
+  if(e.op==='discardGate'){
+   if(typeof e.optional!=='boolean'||!Array.isArray(e.then)||
+    !e.then.length||e.then.length>6||
+    Object.keys(e).some(k=>!['op','optional','then'].includes(k))||
+    e.then.some(x=>!['draw','millTop','peekTopOne','searchDeckOne',
+     'searchDeckMany','recoverOutsideOne','enemyBpDown',
+     'restOppFrontUnderBp'].includes(x?.op)))
+    throw Error(path+'['+i+'] invalid gated payment');
+   verifyProgram(e.then,path+'['+i+'].then');
   }
   if(e.op==='discardToDraw'&&(
    !integer(e.count,1)||e.count>10||typeof e.optional!=='boolean'||
@@ -177,7 +190,10 @@ function normalize(card,packId){
   step:card.step===true,ownTurnBp:card.ownTurnBp||0,implementation:implemented,
   effects:Object.freeze(Object.fromEntries(Object.entries(effects)
    .map(([k,v])=>[k,Object.freeze(v.map(e=>Object.freeze({
-    ...e,...(e.filter?{filter:Object.freeze({...e.filter})}:{})
+    ...e,...(e.filter?{filter:Object.freeze({...e.filter})}:{}),
+    ...(e.then?{then:Object.freeze(e.then.map(child=>Object.freeze({
+      ...child,...(child.filter?{filter:Object.freeze({...child.filter})}:{})
+    })))}:{})
    })))])))
  });
 }
