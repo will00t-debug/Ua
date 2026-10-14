@@ -47,7 +47,12 @@ for(const job of snapshot){
     test_count:/^# tests (\d+)$/m,pass:/^# pass (\d+)$/m,fail:/^# fail (\d+)$/m
    }))row[key]=Number(t.stdout?.match(regex)?.[1]||0);
    row.test_output=(t.stdout||'').split('\n').filter(x=>/^not ok |\bError:|^# tests |^# pass |^# fail /.test(x)).slice(-35);
-   if(t.status!==0)row.test_error=(t.stderr||'').slice(-8000);
+   if(t.status!==0){
+    row.test_error=(t.stderr||'').slice(-8000);
+    row.failure_context=(t.stdout||'').split('\n').flatMap((line,i,arr)=>
+     /^not ok \d+/.test(line)?[arr.slice(i,i+36).join('\n')]:[]).slice(0,12);
+    console.error('SNAPSHOT TEST FAILURE '+job.title+' '+job.sha+'\n'+row.failure_context.join('\n---\n'));
+   }
   }else row.tests='not_present_on_snapshot';
  }catch(e){row.error=String(e?.message||e);}
  finally{
