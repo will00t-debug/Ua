@@ -11,7 +11,9 @@ export function legalTtgRedNiaKaminaPlay(s,p,card){
  if(![0,1].includes(p)||!s.players?.[p]||!card)return false;
  const n=name(card),pl=s.players[p];
  if(n==='ニア'&&face(pl).some(x=>contains(x,'カミナ')))return false;
- if(n==='カミナ'&&face(pl).some(x=>name(x)==='ニア'))return false;
+ // Nia in a RAID base also counts as being on field for the opposing
+ // Kamina play prohibition, exactly like Kamina in a RAID base blocks Nia.
+ if(n==='カミナ'&&face(pl).some(x=>contains(x,'ニア')))return false;
  return true;
 }
 const entry=(s,p,uid,id)=>[0,1].includes(p)&&s.active===p&&s.phase==='main'&&!s.pending&&
