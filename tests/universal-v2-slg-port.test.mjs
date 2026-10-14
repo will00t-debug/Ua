@@ -6,7 +6,7 @@ import {registeredV2TitlePack,listRegisteredV2Titles} from '../dist/universal-v2
 import {createSlgV2Pack,SLG_V2_VERIFIED_IDS} from '../dist/universal-v2/slg-pack.mjs';
 import {createTtgV2Pack} from '../dist/universal-v2/ttg-pack.mjs';
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
-import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,universalEnergyByColor,assertUniversalMatch} from '../dist/universal-v2/engine.mjs';
+import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,universalEnergyByColor,universalBp,assertUniversalMatch} from '../dist/universal-v2/engine.mjs';
 const slg=createSlgV2Pack(),ttg=createTtgV2Pack(),packs=[ttg,slg];
 const ttgDeck=Object.fromEntries(['001','005','009','014','019','042','043','047','049','051','064','065'].map(n=>['TTG-1-'+n,4]));
 ttgDeck['TTG-1-036']=2;
@@ -42,7 +42,7 @@ test('TTG 81 and SLG 80 normal official card IDs are unique and contiguous, excl
   assert.ok(cards.every(c=>c.type!=='ap'&&c.type!=='action_point'&&!c.id.includes('-AP')));
  }
 });
-test('SLG 16 printed effect profiles do not equate to full 80-card migration and retain life trigger separately',()=>{
+test('SLG 18 printed effect profiles do not equate to full 80-card migration and retain life trigger separately',()=>{
  assert.equal(SLG_V2_VERIFIED_IDS.length,18);
  assert.equal(Object.keys(slg.cards).length,18);
  assert.deepEqual(validateUniversalDeck(slg,slgDeck),[]);
@@ -223,4 +223,64 @@ test('SLG-076 SPECIAL Life Trigger can retire opposing front unit regardless of 
  s=dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'special',uid:attacker.uid},{actor:1});
  assert.equal(s.players[0].front[0],null);
  assert.equal(assertUniversalMatch(packs,s),true);
+});
+
+test('SLG-1-068 mandatory onPlay bounce only offers another eligible printed-energy <=1 own UID',()=>{
+ let state=fresh(),src=take(state,1,'SLG-1-068');
+ const ownLow=take(state,1,'SLG-1-005'),ownHigh=take(state,1,'SLG-1-016');
+ const green=take(state,1,'SLG-1-041'),enemy=take(state,0,'TTG-1-005');
+ green.ready=true;state.players[1].energy[0]=green;
+ state.players[1].front[0]=ownLow;state.players[1].front[1]=ownHigh;
+ state.players[0].front[0]=enemy;state.players[1].hand.push(src);
+ state=advance(state,'main');
+ const play=legalUniversalActions(packs,state).find(a=>a.type==='play'&&a.uid===src.uid&&a.line==='front');
+ assert.ok(play,'real green energy/AP lets 068 enter a free front slot');
+ state=dispatchUniversalAction(packs,state,play);
+ assert.equal(state.pending?.kind,'effect-bounce-own');
+ assert.deepEqual(legalUniversalActions(packs,state),[{type:'chooseOwnBounce',uid:ownLow.uid}]);
+ for(const uid of [ownHigh.uid,green.uid,enemy.uid,null]){
+  assert.throws(()=>dispatchUniversalAction(packs,state,{type:'chooseOwnBounce',uid}),/not currently legal/);
+ }
+ state=dispatchUniversalAction(packs,state,{type:'chooseOwnBounce',uid:ownLow.uid});
+ assert.ok(state.players[1].hand.some(c=>c.uid===ownLow.uid));
+ assert.ok(state.players[1].front.some(c=>c?.uid===src.uid));
+ assert.ok(state.players[1].front.some(c=>c?.uid===ownHigh.uid));
+ assert.equal(assertUniversalMatch(packs,state),true);
+});
+test('SLG-1-043 ACTIVE life trigger is optional, affects only own character and adds exactly +3000 BP',()=>{
+ let s=fresh(0),a=take(s,0,'TTG-1-042'),flip=take(s,1,'SLG-1-043');
+ const target=take(s,1,'SLG-1-005');
+ a.ready=true;target.ready=false;s.players[0].front[0]=a;s.players[1].front[0]=target;
+ const old=s.players[1].life.shift();s.players[1].deck.push(old);s.players[1].life.unshift(flip);
+ s=advance(s,'attack');
+ s=dispatchUniversalAction(packs,s,{type:'attack',uid:a.uid},{actor:0});
+ s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:null},{actor:1});
+ assert.equal(s.pending?.kind,'life-trigger');assert.equal(s.pending.trigger,'active');
+ const available=legalUniversalActions(packs,s);
+ assert.ok(available.some(c=>c.mode==='skip'));
+ assert.ok(available.some(c=>c.mode==='active'&&c.uid===target.uid));
+ assert.ok(!available.some(c=>c.uid===a.uid));
+ assert.throws(()=>dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'active',uid:a.uid},{actor:1}),/not currently legal/);
+ const skipped=dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'skip'},{actor:1});
+ assert.equal(skipped.players[1].front[0].ready,false);
+ const selected=dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'active',uid:target.uid},{actor:1});
+ assert.equal(selected.players[1].front[0].ready,true);
+ assert.equal(universalBp(packs,selected,selected.players[1].front[0]),5000);
+ assert.equal(assertUniversalMatch(packs,selected),true);
+});
+test('SLG-1-015 GET life adds exact revealed physical card to hand; skip retains outside',()=>{
+ let s=fresh(0),attacker=take(s,0,'TTG-1-042'),flip=take(s,1,'SLG-1-015');
+ attacker.ready=true;s.players[0].front[0]=attacker;
+ const old=s.players[1].life.shift();s.players[1].deck.push(old);s.players[1].life.unshift(flip);
+ s=advance(s,'attack');s=dispatchUniversalAction(packs,s,{type:'attack',uid:attacker.uid},{actor:0});
+ s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:null},{actor:1});
+ assert.equal(s.pending?.trigger,'get');
+ const modes=legalUniversalActions(packs,s).map(a=>a.mode);
+ assert.ok(modes.includes('skip')&&modes.includes('get'));
+ const declined=dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'skip'},{actor:1});
+ assert.ok(declined.players[1].outside.some(c=>c.uid===flip.uid));
+ const accepted=dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'get'},{actor:1});
+ assert.ok(accepted.players[1].hand.some(c=>c.uid===flip.uid));
+ assert.ok(!accepted.players[1].outside.some(c=>c.uid===flip.uid));
+ assert.equal(assertUniversalMatch(packs,accepted),true);
 });
