@@ -32,6 +32,19 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='life-trigger')
   return legal.find(a=>['final','raid','special','colorRetire','color','active','draw','get'].includes(a.mode))||legal[0];
  if(s.pending?.kind==='effect-recover-ap')return legal.find(a=>a.uid!==null)||legal[0];
+ if(['effect-search-deck','effect-recover-outside'].includes(s.pending?.kind))
+  return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-discard-cost'){
+  // An optional cost may be declined; tougher bots pay with a lower-value
+  // hand card, using only the actor's own registered title pack.
+  if(difficulty==='easy')return legal.find(a=>a.uid===null)||legal[0];
+  const own= packsOf(pack)[s.pending.player].cards;
+  const options=legal.filter(a=>a.uid!==null).map(a=>({
+   action:a,printed:own[s.players[s.pending.player].hand.find(c=>c.uid===a.uid)?.cardId]
+  }));
+  options.sort((a,b)=>(a.printed?.energy||0)-(b.printed?.energy||0));
+  return options[0]?.action||legal[0];
+ }
  if(s.pending?.kind==='raid-effect-order')return legal.find(a=>a.mode==='entryFirst')||legal[0];
  if(s.pending?.kind==='effect-buff-trait')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='main-two-buff')return legal[0];
