@@ -85,6 +85,17 @@ const registry=Object.freeze({
   build:v=>[{op:'searchDeckMany',filter:{...v.filter},count:v.count,
    optional:v.optional,shuffle:true}]
  },
+ // Target all current opponent front-line characters in one batch. Every BP
+ // change lands before state-based retirement queues any leave replacement.
+ enemyFrontAllBpDown:{
+  args:{bp:positiveBp},build:v=>[{op:'enemyFrontAllBpDown',bp:v.bp}]
+ },
+ // Temporary boost for all qualifying current field units. Buffs expire
+ // with the existing turn counter; units entering later do not inherit it.
+ buffOwnTraitAllTurn:{
+  args:{trait:named,bp:positiveBp},
+  build:v=>[{op:'buffOwnTraitAllTurn',trait:v.trait,bp:v.bp}]
+ },
  // Atomic payment gate: NONE of the nested effects run unless an owned
  // hand card was discarded. Nested templates are intentionally restricted
  // and validated again by the ordinary Pack DSL verifier.
@@ -105,7 +116,8 @@ const registry=Object.freeze({
   args:{optional:yesNo,then:v=>Array.isArray(v)&&v.length>=1&&v.length<=6},
   check:v=>v.then.every(x=>x&&[
    'draw','millTop','peekTopOne','searchDeckOne','searchDeckMany',
-   'searchDeckWhere','inspectTopArrange','recoverOutsideOne','enemyBpDown','restEnemyUnderBp'
+   'searchDeckWhere','inspectTopArrange','recoverOutsideOne','enemyBpDown',
+   'enemyFrontAllBpDown','buffOwnTraitAllTurn','restEnemyUnderBp'
   ].includes(x.template)),
   build:v=>[{op:'discardGate',optional:v.optional,
    then:v.then.flatMap((spec,i)=>expandOne(spec,'payDiscardThen.then['+i+']'))}]
