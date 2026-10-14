@@ -57,6 +57,7 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   return options[0]?.action||legal[0];
  }
  if(s.pending?.kind==='raid-effect-order')return legal.find(a=>a.mode==='entryFirst')||legal[0];
+ if(s.pending?.kind==='effect-buff-own')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-buff-trait')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='main-two-buff')return legal[0];
  if(s.pending?.kind==='effect-rest-bp')return legal.find(a=>a.uid!==null)||legal[0];
