@@ -114,6 +114,7 @@ test('044 +500BP is live only on own turn when own Simon is on field or Raid bas
  const top=stage(s,'TTG-1-027','front',1),base=take(owner,'TTG-1-042'); // Kamina is not Simon.
  top.stack=[base];
  assert.equal(ttgRedStarterBpBonus(s,0,owner.front[0]),0);
+ owner.outside.push(base); // Displacing the prior Raid base may never destroy a physical UID.
  owner.front[1].stack=[simon];owner.outside.splice(owner.outside.findIndex(c=>c.uid===simon.uid),1);
  assert.equal(ttgRedStarterBpBonus(s,0,owner.front[0]),500);
  s.active=1;assert.equal(ttgRedStarterBpBonus(s,0,owner.front[0]),0);
