@@ -37,6 +37,9 @@ jobs:
         run: node scripts/v2-audit-catalog.mjs
       - name: Multi-seed real-deck cross-title battles and deterministic replays
         run: node scripts/v2-audit-match.mjs
+      - name: Review B/C/D source commits separately (no moving-branch aggregation)
+        if: always()
+        run: node scripts/v2-audit-port-snapshots.mjs
       - name: Full repository regression (not a card completion metric)
         if: always()
         run: npm test
@@ -49,5 +52,6 @@ jobs:
             audit/v2-full-catalog.csv
             audit/v2-full-catalog-summary.json
             audit/v2-e-match-replays/
+            audit/v2-port-snapshots.json
           if-no-files-found: warn
           retention-days: 14
