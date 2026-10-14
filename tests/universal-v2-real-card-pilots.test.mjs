@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createUniversalPack,validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
+import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
 import {portVerifiedPilotCard,REAL_V2_PILOT_IDS,verifiedPilotCards,verifiedPilotPack} from '../dist/universal-v2/real-card-pilots.mjs';
 import {
  newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
@@ -485,6 +486,7 @@ test('real TTG Gurren 072: Raid Kamina, onPlay draw then optional REST only BP<=
  assert.deepEqual(legalUniversalActions(packs,next),[
   {type:'chooseRestBp',uid:null},{type:'chooseRestBp',uid:low.uid}
  ]);
+ assert.deepEqual(chooseUniversalAiAction(packs,next,{difficulty:'hard'}),{type:'chooseRestBp',uid:low.uid});
  assert.throws(()=>dispatchUniversalAction(packs,next,{type:'chooseRestBp',uid:high.uid},{actor:1}),/not currently legal/);
  const ignored=dispatchUniversalAction(packs,next,{type:'chooseRestBp',uid:null},{actor:1});
  assert.equal(ignored.players[0].front[0].ready,true,'optional REST may be skipped');
