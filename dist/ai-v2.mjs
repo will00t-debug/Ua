@@ -143,17 +143,28 @@ function genericEffectBonus(s, action, after) {
 // Future draws are unknown, so this is a target, not a prediction.
 function plannedEnergy(s, p, excludingUid = null) {
   const pl = s.players[p], current = energy(s, p);
-  const costs = pl.hand.filter(c => c.uid !== excludingUid)
+  // The AI knows its own deck construction, but never examines deck order
+  // or uses individual future draws to select an action.
+  const ownCards = [...pl.deck, ...pl.hand, ...pl.front, ...pl.energy,
+    ...pl.outside, ...pl.removed].filter(Boolean);
+  const deckCosts = ownCards.map(c => cardOf(c))
+    .filter(d => d?.type === 'character')
+    .map(d => number(d.energy)).filter(n => n > 0 && n <= 8)
+    .sort((a, b) => a - b);
+  const handCosts = pl.hand.filter(c => c.uid !== excludingUid)
     .map(c => number(cardOf(c)?.energy)).filter(n => n > 0 && n <= 8)
     .sort((a, b) => a - b);
-  if (!costs.length) return {target: Math.min(current, 3), urgency: 0};
-  // Prioritize the next affordable step, then one subsequent power spike.
-  const next = costs.find(n => n > current);
-  const higher = costs.filter(n => n > current);
-  const target = next == null ? current : Math.min(6, higher[Math.min(1, higher.length - 1)]);
-  return {target, urgency: higher.length};
+  if (!deckCosts.length) return {target: current, urgency: 0};
+  // Common upper-end characters define the practical curve; rare finishers
+  // should not force an otherwise low-curve deck to hoard energy forever.
+  const commonHigh = deckCosts[Math.floor((deckCosts.length - 1) * 0.85)];
+  const deckMax = deckCosts[deckCosts.length - 1];
+  const strategic = Math.min(8, commonHigh);
+  const pending = handCosts.filter(n => n > current);
+  const next = pending[0];
+  const target = Math.max(strategic, next || 0);
+  return {target, urgency: pending.length, deckMax, strategic};
 }
-
 function moveBias(s, a) {
   if (a.type !== 'move' && a.type !== 'step') return 0;
   const loc = locate(s, a.uid);
@@ -164,7 +175,7 @@ function moveBias(s, a) {
   const ownHand = s.players[controller(s)].hand;
   const futureCosts = ownHand.map(h => number(cardOf(h)?.energy)).filter(n => n > 0);
   const plan = plannedEnergy(s, controller(s));
-  if (available < plan.target && plan.urgency) return -22 - (plan.target - available) * 3;
+  if (available < plan.target) return -22 - (plan.target - available) * 3;
   const stranded = futureCosts.filter(n => n > available && n <= energy(s, controller(s)));
   // Never move the generator that enables a playable high-cost card.
   // The attack value of a small character must not destroy the energy curve.
