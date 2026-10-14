@@ -9,7 +9,7 @@ import {beginTtgLifeTrigger} from '../dist/ttg-green-life.mjs';
 // 064 Yoko has no printed character effect and optional DRAW LIFE.
 // 065 Yoko STEP is front -> EMPTY energy slot in own MOVE phase only.
 const counts=Object.fromEntries([
- ...['042','043','045','046','047','051','053','054','059','062','063','064'].map(n=>['TTG-1-'+n,4]),
+ ...['042','043','045','065','047','051','053','054','059','062','063','064'].map(n=>['TTG-1-'+n,4]),
  ['TTG-1-036',1],['TTG-1-038',1]
 ]);
 const game=seed=>{const s=newTtgCoreMatch({decks:[counts,counts],seed,first:0});s.phase='main';s.players[0].turnCount=2;s.players[0].apCards[1].ready=true;return s;};
