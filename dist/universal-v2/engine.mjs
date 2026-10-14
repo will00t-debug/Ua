@@ -50,7 +50,10 @@ function calcEnergy(pack,s,p){
 }
 export const universalEnergy=calcEnergy;
 function bp(pack,s,c){
- return (card(pack,c)?.bp||0)+(c.buffs||[]).filter(b=>b.untilTurn===s.turn).reduce((n,b)=>n+b.bp,0);
+ const printed=card(pack,c);
+ const owner=Number(String(c.uid).split('-')[0]);
+ return (printed?.bp||0)+(s.active===owner?(printed.ownTurnBp||0):0)+
+  (c.buffs||[]).filter(b=>b.untilTurn===s.turn).reduce((n,b)=>n+b.bp,0);
 }
 export const universalBp=bp;
 function startTurn(pack,s){
@@ -92,6 +95,10 @@ function continueEffectQueue(pack,s){
    const limit=hasBonus?job.bonusBp:job.bp;
    const choices=s.players[1-owner].front.filter(c=>c&&bp(pack,s,c)<=limit).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-retire-bp',player:owner,sourceUid:job.sourceUid,choices,limit};
+  }else if(job.op==='restOppFrontUnderBp'){
+   const choices=s.players[1-owner].front.filter(c=>c&&bp(pack,s,c)<=job.bp).map(c=>c.uid);
+   if(choices.length)s.pending={kind:'effect-rest-bp',player:owner,
+    sourceUid:job.sourceUid,choices,limit:job.bp,optional:true};
   }else if(job.op==='enemyBpDown'){
    const targetUids=s.players[1-owner].front.filter(Boolean).map(c=>c.uid);
    if(targetUids.length)s.pending={kind:'effect-target',player:owner,sourceUid:job.sourceUid,
@@ -236,6 +243,14 @@ function resolveChoice(s,a,pack){
   continueEffectQueue(pack,s);
   return;
  }
+ if(q.kind==='effect-rest-bp'){
+  if(a.uid===null){s.pending=null;continueEffectQueue(pack,s);return;}
+  const foe=1-q.player,target=s.players[foe].front.find(c=>c?.uid===a.uid);
+  if(!target||!q.choices.includes(a.uid)||bp(pack,s,target)>q.limit)
+   throw Error('Illegal opponent REST target');
+  target.ready=false;
+  s.pending=null;continueEffectQueue(pack,s);return;
+ }
  if(q.kind==='effect-retire-bp'){
   const opponent=1-q.player,slot=s.players[opponent].front.findIndex(c=>c?.uid===a.uid);
   if(slot<0||!q.choices.includes(a.uid)||bp(pack,s,s.players[opponent].front[slot])>q.limit)
@@ -348,6 +363,9 @@ function legalPending(pack,s){
   ];
  if(q.kind==='end-hand-limit')return p.hand.map(c=>({type:'chooseHandLimit',uid:c.uid}));
  if(q.kind==='effect-discard')return p.hand.map(c=>({type:'chooseDiscard',uid:c.uid}));
+ if(q.kind==='effect-rest-bp')return [
+   {type:'chooseRestBp',uid:null},...q.choices.map(uid=>({type:'chooseRestBp',uid}))
+  ];
  if(q.kind==='effect-retire-bp')return q.choices.map(uid=>({type:'chooseRetireBp',uid}));
  if(q.kind==='effect-target')return [
    ...(q.optional?[{type:'chooseTarget',uid:null}]:[]),
@@ -510,12 +528,12 @@ export function assertUniversalMatch(pack,s){
    !Array.isArray(s.initialCounts)||s.initialCounts.length!==2||
    s.players?.length!==2||!playerIndex(s.active)||
    !['playing','finished'].includes(s.status))throw Error('Incorrect pack/version or match state');
- if(s.pending&&(!playerIndex(s.pending.player)||!['block','life-trigger','effect-target','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','effect-retire-bp'].includes(s.pending.kind)))
+ if(s.pending&&(!playerIndex(s.pending.player)||!['block','life-trigger','effect-target','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','effect-retire-bp','effect-rest-bp'].includes(s.pending.kind)))
   throw Error('Invalid pending controller');
  if(!Array.isArray(s.movedUids)||new Set(s.movedUids).size!==s.movedUids.length)
   throw Error('Invalid movement accounting');
  if(!Array.isArray(s.effectQueue)||s.effectQueue.some(e=>!playerIndex(e.owner)||
-   !['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','retireOppFrontUnderBp'].includes(e.op)))
+   !['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','retireOppFrontUnderBp','restOppFrontUnderBp'].includes(e.op)))
   throw Error('Invalid queued effects');
  for(let p=0;p<2;p++){
   const pl=s.players[p],uids=new Set(),items=[];
