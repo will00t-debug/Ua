@@ -6,6 +6,7 @@ import {newUniversalMatch,dispatchUniversalAction,legalUniversalActions,
 import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
 
 const deck=verifiedBleachPurplePilotDeck(),packs=[deck.pack,deck.pack];
+const testCounts={...deck.counts,'BLC-1-034':3,'BLC-1-105':1};
 function take(s,p,id){
  for(const zone of ['hand','deck','life','outside']){
   const z=s.players[p][zone],i=z.findIndex(c=>c.cardId===id);
@@ -14,7 +15,7 @@ function take(s,p,id){
  throw Error('missing '+id);
 }
 function attacked({withStrong=false,oneLife=false}={}){
- let s=newUniversalMatch(packs,{decks:[deck.counts,deck.counts],first:0,seed:8971});
+ let s=newUniversalMatch(packs,{decks:[testCounts,testCounts],first:0,seed:8971});
  const attack=take(s,0,'BLC-1-052'),equal=take(s,1,'BLC-1-052');
  attack.ready=true;equal.ready=true;
  s.players[0].front[0]=attack;s.players[1].front[0]=equal;
