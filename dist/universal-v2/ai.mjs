@@ -1,6 +1,6 @@
 // Cross-title Universal v2 AI baseline. Uses only the native legal-action
 // list; no work-specific card-ID shortcuts and no mutation of match state.
-import {legalUniversalActions,universalBp,universalEnergy,universalEnergyByColor} from './engine.mjs';
+import {legalUniversalActions,dispatchUniversalAction,universalBp,universalEnergy,universalEnergyByColor} from './engine.mjs';
 export const UNIVERSAL_AI_LEVELS=Object.freeze(['easy','normal','hard']);
 const packsOf=pack=>Array.isArray(pack)?pack:[pack,pack];
 const option=(list,type)=>list.find(x=>x.type===type);
@@ -47,9 +47,21 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   });
   return difficulty==='easy'?legal[0]:targets[0]||legal[0];
  }
- if(s.pending?.kind==='leave-replacement')
-  return difficulty==='easy'?legal.find(a=>a.mode==='leave')||legal[0]:
-   legal.find(a=>a.mode==='protect')||legal[0];
+ if(s.pending?.kind==='leave-replacement'){
+  const leave=legal.find(a=>a.mode==='leave')||legal[0];
+  if(difficulty==='easy')return leave;
+  // A facedown layer may provide the ONLY +BP keeping a Raid alive.
+  // Never waste that layer if the post-payment state-based BP check still
+  // sends the protected top to outside. Simulate using the pure reducer so
+  // chained layers, nested pending actions and game-zone invariants agree.
+  for(const choice of legal.filter(a=>a.mode==='protect')){
+   const after=dispatchUniversalAction(pack,s,choice,{actor:s.pending.player});
+   const field=[...after.players[s.pending.player].front,
+    ...after.players[s.pending.player].energy];
+   if(field.some(c=>c?.uid===s.pending.uid))return choice;
+  }
+  return leave;
+ }
  if(s.pending?.kind==='block')return chooseBlock(pack,s,legal,difficulty);
  if(s.pending?.kind==='effect-target'){
   const choices=legal.filter(a=>a.uid!==null).map(a=>({
