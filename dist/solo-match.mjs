@@ -189,6 +189,8 @@ function hurt(s,defender,amount=1){
  for(let i=0;i<amount&&s.status==='playing';i++){
   if(!p.life.length){s.status='finished';s.winner=1-defender;break;}
   const c=p.life.shift(),t=d(c).trigger;
+  // Publicly revealed information only: never expose a hidden life card or deck order.
+  s.revealedLife={owner:defender,cardId:c.cardId,trigger:t||null,turn:s.turn};
   p.outside.push(c);
   if(['get','draw','raid'].includes(t)||(t==='final'&&p.life.length===0)){
    s.pending={kind:'soloOptionalLife',p:defender,cardUid:c.uid,trigger:t};
