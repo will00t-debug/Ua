@@ -66,6 +66,14 @@ function bp(pack,s,c){
   (c.buffs||[]).filter(b=>b.untilTurn===s.turn).reduce((n,b)=>n+b.bp,0);
 }
 export const universalBp=bp;
+function impactOnBattleWin(pack,s,c){
+ const d=card(pack,c);
+ return hasFacedownUnder(c)?(d.conditionalUnderFaceDown?.impact||0):0;
+}
+function protectedLeave(pack,s,c){
+ const profile=card(pack,c).conditionalUnderFaceDown;
+ return !!profile&&hasFacedownUnder(c)&&bp(pack,s,c)>=profile.leaveReplacementMinBp;
+}
 function startTurn(pack,s){
  const p=s.active,pl=s.players[p];
  pl.ownTurns++;s.turn++;s.phase='start';s.extraDrawn=false;s.moved=false;s.movedUids=[];s.pending=null;
@@ -201,7 +209,17 @@ function vacate(s,p,line,slot,destination='outside'){
  const expand=c=>[c,...(c.stack||[]).flatMap(expand),...(c.under||[]).flatMap(expand)];
  s.players[p][destination].push(...expand(top).map(c=>({...c,stack:[],under:[],buffs:[],ready:false})));
 }
-function retire(s,p,line,slot){vacate(s,p,line,slot,'outside');}
+function retire(pack,s,p,line,slot,{postImpact=false}={}){
+ const c=s.players[p][line][slot];
+ if(!c)throw Error('Cannot retire empty field');
+ if(protectedLeave(pack,s,c)){
+  s.pending={kind:'leave-replacement',player:p,uid:c.uid,line,slot,
+   postImpact,destination:'outside'};
+  return true;
+ }
+ vacate(s,p,line,slot,'outside');
+ return false;
+}
 // Full lines are allowed, but replacement is a mandatory explicit choice.
 // The displaced card (and any Raid layers) goes to REMOVAL, not sideline.
 function legalDestinations(pl,line,source=null){
@@ -264,7 +282,7 @@ function resolveChoice(s,a,pack){
    const slot=p.front.findIndex(c=>c?.uid===a.uid);
    if(slot<0||!p.front[slot].ready)throw Error('Illegal blocker');
    const blocker=p.front[slot];blocker.ready=false;
-   if(bp(pack,s,attacker)>=bp(pack,s,blocker))retire(s,q.player,'front',slot);
+   if(bp(pack,s,attacker)>=bp(pack,s,blocker))retire(pack,s,q.player,'front',slot);
   }
   if(s.pending===q)s.pending=null;
   return;
@@ -336,7 +354,7 @@ function resolveChoice(s,a,pack){
   const opponent=1-q.player,slot=s.players[opponent].front.findIndex(c=>c?.uid===a.uid);
   if(slot<0||!q.choices.includes(a.uid)||bp(pack,s,s.players[opponent].front[slot])>q.limit)
    throw Error('Illegal BP-threshold retirement target');
-  retire(s,opponent,'front',slot);
+  retire(pack,s,opponent,'front',slot);
   s.pending=null;continueEffectQueue(pack,s);return;
  }
  if(q.kind==='effect-target'){
@@ -349,7 +367,7 @@ function resolveChoice(s,a,pack){
   target.buffs??=[];
   target.buffs.push({bp:-q.bp,untilTurn:s.turn});
   // Official state-based rule: characters at 0 BP or below are sidelined.
-  if(bp(pack,s,target)<=0)retire(s,foe,'front',slot);
+  if(bp(pack,s,target)<=0)retire(pack,s,foe,'front',slot);
   s.pending=null;
   continueEffectQueue(pack,s);
   return;
@@ -373,7 +391,7 @@ function resolveChoice(s,a,pack){
   else if(a.mode==='special'&&q.trigger==='special'){
    const foe=1-q.player,slot=s.players[foe].front.findIndex(c=>c?.uid===a.uid);
    if(slot<0)throw Error('SPECIAL target no longer on enemy front line');
-   retire(s,foe,'front',slot);
+   retire(pack,s,foe,'front',slot);
   }
   else if(a.mode==='colorRetire'&&q.trigger==='color'){
    const slot=s.players[1-q.player].front.findIndex(c=>c?.uid===a.uid);
@@ -381,7 +399,7 @@ function resolveChoice(s,a,pack){
    if(profile.op!=='retireOppFrontUnderBp'||slot<0||
     bp(pack,s,s.players[1-q.player].front[slot])>profile.bp)
     throw Error('Illegal COLOR retirement target');
-   retire(s,1-q.player,'front',slot);
+   retire(pack,s,1-q.player,'front',slot);
   }
   else if(a.mode==='color'&&q.trigger==='color'){
    const profile=card(pack,p.outside[i]).triggerEffect;
