@@ -14,6 +14,8 @@ const filter=v=>!!v&&typeof v==='object'&&!Array.isArray(v)&&
  ['name','trait','color','type'].includes(v.field)&&
  typeof v.value==='string'&&v.value.trim().length>0&&
  (v.field!=='type'||['character','event','field'].includes(v.value));
+const filters=v=>Array.isArray(v)&&v.length>=2&&v.length<=3&&
+ v.every(filter)&&new Set(v.map(c=>c.field+':'+c.value)).size===v.length;
 
 // Keys and required validators are explicit, preventing misspelled printed
 // conditions from silently falling back to mandatory/optional defaults.
@@ -86,11 +88,24 @@ const registry=Object.freeze({
  // Atomic payment gate: NONE of the nested effects run unless an owned
  // hand card was discarded. Nested templates are intentionally restricted
  // and validated again by the ordinary Pack DSL verifier.
+ searchDeckWhere:{
+  args:{filters,logic:v=>v==='all'||v==='any',
+   count:v=>integer(v,1,5),optional:yesNo,shuffle:requiredTrue},
+  build:v=>[{op:'searchDeckWhere',filters:v.filters.map(x=>({...x})),logic:v.logic,
+   count:v.count,optional:v.optional,shuffle:true}]
+ },
+ // Look only at the top 2-4 actual cards. Choose at most one to send outside,
+ // then explicitly order the remainder onto deck top or bottom. No shuffle.
+ inspectTopArrange:{
+  args:{count:v=>integer(v,2,4),toOutside:yesNo,
+   rest:v=>v==='top'||v==='bottom'},
+  build:v=>[{op:'inspectTopArrange',count:v.count,toOutside:v.toOutside,rest:v.rest}]
+ },
  payDiscardThen:{
   args:{optional:yesNo,then:v=>Array.isArray(v)&&v.length>=1&&v.length<=6},
   check:v=>v.then.every(x=>x&&[
    'draw','millTop','peekTopOne','searchDeckOne','searchDeckMany',
-   'recoverOutsideOne','enemyBpDown','restEnemyUnderBp'
+   'searchDeckWhere','inspectTopArrange','recoverOutsideOne','enemyBpDown','restEnemyUnderBp'
   ].includes(x.template)),
   build:v=>[{op:'discardGate',optional:v.optional,
    then:v.then.flatMap((spec,i)=>expandOne(spec,'payDiscardThen.then['+i+']'))}]
