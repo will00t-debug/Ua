@@ -32,6 +32,7 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='life-trigger')
   return legal.find(a=>['final','raid','special','color','active','draw','get'].includes(a.mode))||legal[0];
  if(s.pending?.kind==='effect-recover-ap')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-rest-bp')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='block')return chooseBlock(pack,s,legal,difficulty);
  if(s.pending?.kind==='effect-target'){
   const choices=legal.filter(a=>a.uid!==null).map(a=>({
