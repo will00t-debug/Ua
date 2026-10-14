@@ -223,3 +223,92 @@ test('real TTG Yoko 065 STEP moves from front to energy in own movement phase on
   'movement is simultaneous, this STEP card cannot move twice');
  assert.equal(assertUniversalMatch(packs,next),true);
 });
+
+function playApEvent(other,owner,eventId,seed){
+ const packs=[bleach.pack,other.pack];let s=fresh(other,seed);
+ if(owner===1){
+  for(let i=0;i<4;i++)s=dispatchUniversalAction(packs,s,{type:'next'});
+  // Real second-player first-turn EXTRA DRAW consumes one of two available APs.
+  s=dispatchUniversalAction(packs,s,{type:'extraDraw'});
+ }
+ const p=s.players[owner],color=owner===0?'purple':other===green?'green':'red';
+ const generatorIds=owner===0?['BLC-1-102','BLC-1-039']:color==='green'?
+  ['TTG-1-009','TTG-1-009','TTG-1-009']:
+  ['TTG-1-042','TTG-1-064','TTG-1-065'];
+ generatorIds.forEach((id,index)=>{p.energy[index]=take(s,owner,id);});
+ const event=take(s,owner,eventId);p.hand.push(event);
+ s=advanceToMain(packs,s);
+ const actions=legalUniversalActions(packs,s);
+ const use=actions.find(x=>x.type==='event'&&x.uid===event.uid);
+ assert.ok(use,eventId+' should be payable with correct title-color energy');
+ const before=structuredClone(s),effect=dispatchUniversalAction(packs,s,use,{actor:owner});
+ assert.equal(effect.pending?.kind,'effect-recover-ap');
+ assert.equal(effect.pending.player,owner);
+ assert.ok(effect.players[owner].outside.some(c=>c.uid===event.uid));
+ assert.deepEqual(before.players[owner].hand, s.players[owner].hand);
+ return {packs,owner,before,event,effect};
+}
+test('real BLEACH Bankai 066 spends its only first-turn AP, cannot recover AP not yet in play',()=>{
+ const {packs,owner,effect}=playApEvent(green,0,'BLC-1-066',250);
+ assert.equal(effect.players[0].apCards.filter(a=>a.inPlay).length,1);
+ const legal=legalUniversalActions(packs,effect);
+ assert.equal(legal.length,2,'skip or restore the one AP actually in play');
+ const inactiveFuture=effect.players[0].apCards.filter(a=>!a.inPlay).map(a=>a.uid);
+ assert.ok(!legal.some(a=>inactiveFuture.includes(a.uid)));
+ const skip=dispatchUniversalAction(packs,effect,{type:'chooseApRecovery',uid:null},{actor:owner});
+ assert.equal(skip.players[0].apCards.filter(a=>a.ready).length,0);
+ const recover=dispatchUniversalAction(packs,effect,legal.find(a=>a.uid!==null),{actor:owner});
+ assert.equal(recover.players[0].apCards.filter(a=>a.ready).length,1);
+ assert.equal(recover.pending,null);
+ assert.equal(assertUniversalMatch(packs,recover),true);
+ assert.equal(assertUniversalMatch(packs,skip),true);
+});
+test('official green/red TTG FINAL events all use one shared 0-to-2 AP selection resolver',()=>{
+ for(const [other,id,seed] of [
+  [green,'TTG-1-036',262],[green,'TTG-1-037',263],[green,'TTG-1-038',264],
+  [red,'TTG-1-078',265],[red,'TTG-1-079',266]
+ ]){
+  const {packs,effect}=playApEvent(other,1,id,seed);
+  const ready=effect.players[1].apCards.filter(a=>a.ready);
+  assert.equal(ready.length,0,'extra draw plus event used both AP');
+  let legal=legalUniversalActions(packs,effect);
+  assert.equal(legal.length,3,'skip or restore either of two APs');
+  const first=legal.find(a=>a.uid!==null);
+  let state=dispatchUniversalAction(packs,effect,first,{actor:1});
+  assert.equal(state.pending.kind,'effect-recover-ap');
+  assert.equal(state.players[1].apCards.filter(a=>a.ready).length,1);
+  legal=legalUniversalActions(packs,state);
+  assert.ok(!legal.some(a=>a.uid===first.uid),'the same AP cannot be recovered twice');
+  const choose=legal.find(a=>a.uid!==null);
+  state=dispatchUniversalAction(packs,state,choose,{actor:1});
+  assert.equal(state.players[1].apCards.filter(a=>a.ready).length,2);
+  assert.equal(state.pending,null);
+  assert.equal(assertUniversalMatch(packs,state),true);
+  const declined=dispatchUniversalAction(packs,effect,{type:'chooseApRecovery',uid:null},{actor:1});
+  assert.equal(declined.players[1].apCards.filter(a=>a.ready).length,0,id);
+  assert.equal(assertUniversalMatch(packs,declined),true);
+ }
+});
+test('FINAL on an actual red TTG event restores last life even when its main effect is AP recovery',()=>{
+ const packs=[bleach.pack,red.pack];let s=fresh(red,300);
+ const attacker=take(s,0,'BLC-1-039');
+ attacker.ready=true;s.players[0].front[0]=attacker;
+ const last=take(s,1,'TTG-1-078'),p=s.players[1];
+ p.outside.push(...p.life.splice(0));p.life.unshift(last);
+ s=advanceToMain(packs,s);
+ s=dispatchUniversalAction(packs,s,{type:'next'});
+ s=dispatchUniversalAction(packs,s,{type:'attack',uid:attacker.uid},{actor:0});
+ s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:null},{actor:1});
+ assert.equal(s.pending?.kind,'life-trigger');
+ assert.equal(s.pending.trigger,'final');
+ assert.equal(s.status,'playing');
+ assert.equal(s.publicReveals.at(-1).cardId,'TTG-1-078');
+ const activated=dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'final'},{actor:1});
+ assert.equal(activated.status,'playing');
+ assert.equal(activated.players[1].life.length,1);
+ assert.equal(activated.players[1].outside.some(c=>c.uid===last.uid),true);
+ const declined=dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'skip'},{actor:1});
+ assert.equal(declined.status,'finished');
+ assert.equal(declined.winner,0);
+ assert.equal(assertUniversalMatch(packs,activated),true);
+});
