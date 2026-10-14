@@ -12,7 +12,7 @@ import {greenTtgNeedsEnergy,greenTtgCanAttackOrBlock} from '../dist/ttg-green-pa
 // 026 https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-026
 const counts={...TTG_GREEN_BETA_PRESET,'TTG-1-003':0,'TTG-1-010':0,'TTG-1-014':0,
  'TTG-1-015':0,'TTG-1-018':0,'TTG-1-035':0,
- 'TTG-1-024':4,'TTG-1-025':4,'TTG-1-026':4,'TTG-1-033':4,'TTG-1-034':2,'TTG-1-029':4};
+ 'TTG-1-017':2,'TTG-1-021':4,'TTG-1-024':4,'TTG-1-025':4,'TTG-1-026':4,'TTG-1-033':2,'TTG-1-034':2,'TTG-1-029':4};
 const game=seed=>{
  const s=newTtgCoreMatch({decks:[counts,counts],seed,first:0});
  s.phase='main';s.players[0].turnCount=2;s.players[0].apCards[1].ready=true;
