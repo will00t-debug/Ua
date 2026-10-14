@@ -8,7 +8,7 @@ import {
 } from '../dist/universal-v2/engine.mjs';
 
 // Synthetic cross-title fixtures, not official ported card text.
-// Attack window: BP -2500, optional retire, draw, then opponent blocking.
+// Attack window: BP -2500, a second threshold retirement, draw, then opponent blocking.
 // Protected Raid's facedown under-card is also the source of +1000 BP.
 const base=Array.from({length:13},(_,i)=>({
  id:'R'+String(i).padStart(2,'0'),name:'Unit '+i,color:'green',
@@ -18,7 +18,7 @@ const base=Array.from({length:13},(_,i)=>({
 const attackerCards=base.map(c=>c.id==='R10'?{
  ...c,implementation:'dsl',effects:{onAttack:[
   {op:'enemyBpDown',bp:2500},
-  {op:'retireOppFrontIfFacedown',bp:5000,optional:true},
+  {op:'retireOppFrontUnderBp',bp:5000,bonusName:'Not Present',bonusBp:5000},
   {op:'draw',count:1}
  ]}
 }:c);
@@ -57,11 +57,11 @@ function arrange({layers=1}={}){
  s=dispatchUniversalAction(packs,s,{type:'chooseTarget',uid:defender.uid},{actor:0});
  assert.equal(universalBp(packs,s,s.players[1].front[0]),500);
  assert.equal(s.pending.kind,'effect-retire-bp',
-  'follow-up optional retirement must run before blocking');
+  'follow-up threshold retirement must run before blocking');
  s=dispatchUniversalAction(packs,s,{type:'chooseRetireBp',uid:defender.uid},{actor:0});
  assert.equal(s.pending.kind,'leave-replacement');
  assert.equal(s.pending.player,1);
- assert.equal(s.players[0].hand.length+s.players[0].deck.length>0,true);
+ assert.ok(s.players[0].hand.length+s.players[0].deck.length>0);
  return {s,defender,originalBase,hidden};
 }
 
