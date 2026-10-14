@@ -74,6 +74,16 @@ function normalize(card,packId){
   if(!card.raidName||card.type!=='character'||triggerEffect!=null)
    throw Error(card.id+' RAID trigger requires explicitly registered Raid character');
  }else if(triggerEffect!=null)throw Error(card.id+' unexpected trigger effect definition');
+ // Main-action selectors must be fully explicit: unknown card text is not
+ // assumed to behave like the Kamina choose-up-to-two ability.
+ const mainAbility=card.mainAbility??null;
+ if(mainAbility!==null&&(
+  card.type!=='character'||mainAbility.op!=='chooseTwoAfterOwnRaid'||
+  mainAbility.frontOnly!==true||mainAbility.readyOncePerName!==true||
+  typeof mainAbility.trait!=='string'||!mainAbility.trait.trim()||
+  !integer(mainAbility.bp,1)||mainAbility.bp>5000||
+  Object.keys(mainAbility).some(k=>!['op','frontOnly','readyOncePerName','trait','bp'].includes(k))
+ ))throw Error(card.id+' unsupported main action ability');
  const implemented=card.implementation;
  if(!['vanilla','dsl'].includes(implemented))
   throw Error(card.id+' must explicitly declare vanilla or dsl (unported effects are not playable)');
@@ -82,7 +92,7 @@ function normalize(card,packId){
  const effects=card.effects||{};
  if(implemented==='vanilla'&&(Object.keys(effects).length||card.effectText))
   throw Error(card.id+' claims vanilla despite printed/declared effects');
- if(implemented==='dsl'&&!Object.keys(effects).length)
+ if(implemented==='dsl'&&!Object.keys(effects).length&&!mainAbility)
   throw Error(card.id+' declares dsl without effects');
  for(const [name,program] of Object.entries(effects)){
   if(!V2_EFFECT_TIMINGS.includes(name))throw Error(card.id+' timing '+name+' unsupported');
@@ -109,6 +119,7 @@ function normalize(card,packId){
   traits:Object.freeze([...(card.traits||[])]),
   trigger:card.trigger||null,raidName:card.raidName||null,
   triggerEffect:triggerEffect?Object.freeze({...triggerEffect}):null,
+  mainAbility:mainAbility?Object.freeze({...mainAbility}):null,
   step:card.step===true,ownTurnBp:card.ownTurnBp||0,implementation:implemented,
   effects:Object.freeze(Object.fromEntries(Object.entries(effects)
    .map(([k,v])=>[k,Object.freeze(v.map(e=>Object.freeze({...e})))])))
