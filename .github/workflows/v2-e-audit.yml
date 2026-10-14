@@ -21,6 +21,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -29,11 +30,15 @@ jobs:
           git rev-parse HEAD
           node --version
           npm --version
+          git diff --exit-code ad04bef572303e8af1084ae1fb5cb431af9e7a11 -- dist/
       - name: Generate per-card catalog and run E invariants
         run: node --test tests/v2-independent-audit.test.mjs
+      - name: Print generated catalog counts from this immutable checkout
+        run: node scripts/v2-audit-catalog.mjs
       - name: Multi-seed real-deck cross-title battles and deterministic replays
         run: node scripts/v2-audit-match.mjs
       - name: Full repository regression (not a card completion metric)
+        if: always()
         run: npm test
       - name: Preserve snapshots and replay evidence
         if: always()
