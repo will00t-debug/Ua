@@ -116,6 +116,10 @@ test('Raid-printed card without an eligible base shows why Raid is unavailable a
  assert.ok(slot>=0);
  s.players[0].energy[slot]=null;
  s.players[0].deck.push(base);
+ // Ensure the card remains payable without the Ichigo base: this tests
+ // Raid eligibility, not an unrelated energy shortfall.
+ s.players[0].energy[0].energyBoostTurn=s.turn;
+ s.players[0].energy[0].energyBoostAmount=10;
  assertState(s);
  await harness(s,'raid-no-eligible-base',({app,click,current})=>{
   click({hand:raid.uid});
