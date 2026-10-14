@@ -13,6 +13,7 @@ import {TTG_ART_CREDIT,TTG_RUGIA_CARD_SEARCH,ttgArtErrorFallback} from './ttg-ar
 import {newTtgCoreMatch,assertTtgCoreState,legalTtgCoreActions,dispatchTtgCoreAction,ttgCoreAiChoice} from './ttg-core-match.mjs';
 import {TTG_BETA_IDS,TTG_BETA_NOTICE,TTG_GREEN_BETA_PRESET,TTG_RED_BETA_PRESET,ttgBetaDeckIssues,ttgChoiceActor,ttgActionLabel,ttgActionKinds,ttgFilteredActions,ttg012ManualChoice,ttg012SearchChoice,ttgCardByUid,ttgNormalPlacementAction} from './ttg-browser.mjs';
 import {newGame,dispatch,legalActions,controller,cardOf,bp,energy,damageOf,locate,PHASE_NAMES,assertState} from './engine.mjs?v=9.1.1';
+import {startMatchForTitle,dispatchMatchAction,matchLegalActions,matchChoiceActor,chooseMatchBotAction} from './match-runtime.mjs';
 import {chooseAiAction} from './ai-v2.mjs';
 
 const $=s=>document.querySelector(s);
@@ -83,18 +84,18 @@ function saveCurrentDeck(copy=false){
  savedDecks=next;selectedDeckId=id;deckName=name;persistDraft();render();toast(copy?'已另存一副新牌組。':'已儲存 '+name+'。');
 }
 function handStyle(count){return `--hand-wide:${Math.max(1,Math.min(count,10))};--hand-medium:${Math.max(1,Math.min(count,8))};--hand-small:${Math.max(1,Math.min(count,7))};--hand-narrow:${Math.max(1,Math.min(count,5))}`;}
-function gameActor(){return game?controller(game):0;}
+function gameActor(){return game?matchChoiceActor('bleach',game):0;}
 function botTurn(){return game?.mode==='solo'&&gameActor()===1&&game.status!=='finished';}
 function humanTurn(){return !botTurn()&&!ui.handoff;}
 function chooseView(view){ui.view=view;ui.modal=null;ui.selected=null;ui.raidFlow=null;ui.privatePeekOpen=false;if(view==='arena'&&game?.mode==='hotseat'){ui.handoff=true;ui.lastController=gameActor();}render();window.scrollTo({top:0,behavior:'instant'});}
 function startGame(){
  const errors=validateDeck(deck);if(errors.length){toast(errors[0]);chooseView('builder');return;}
  const first=ui.first==='random'?Math.floor(Math.random()*2):Number(ui.first);
- try{const opponent=resolveDeckSource(ui.opponentSource);game=newGame({decks:[deck,opponent.counts],mode:ui.mode,first,names:ui.mode==='solo'?['你','練習對手']:['玩家一','玩家二']});game.deckNames=[deckName,opponent.name];}catch(e){toast(e.message);return;}
+ try{const opponent=resolveDeckSource(ui.opponentSource);game=startMatchForTitle('bleach',{decks:[deck,opponent.counts],mode:ui.mode,first,names:ui.mode==='solo'?['你','練習對手']:['玩家一','玩家二']});game.deckNames=[deckName,opponent.name];}catch(e){toast(e.message);return;}
  ui.view='arena';ui.selected=null;ui.raidFlow=null;ui.modal=null;ui.choiceIds=[];ui.privatePeekOpen=false;ui.handoff=game.mode==='hotseat';ui.lastController=controller(game);save(GAME_KEY,game);render();window.scrollTo({top:0,behavior:'instant'});
 }
 function act(a){
- try{const before=controller(game);game=dispatch(game,a);assertState(game);save(GAME_KEY,game);ui.choiceIds=[];ui.selected=null;ui.modal=null;ui.privatePeekOpen=false;
+ try{const before=matchChoiceActor('bleach',game);game=dispatchMatchAction('bleach',game,a);assertState(game);save(GAME_KEY,game);ui.choiceIds=[];ui.selected=null;ui.modal=null;ui.privatePeekOpen=false;
   if(game.mode==='hotseat'&&game.status!=='finished'&&controller(game)!==before)ui.handoff=true;
   ui.lastController=controller(game);render();
  }catch(e){toast(e.message);}
@@ -112,9 +113,9 @@ function render(){
  bind();
  if($('.modal'))$('.modal').scrollTop=modalScroll;
  const shell=$('.shell');if(shell)shell.inert=!!$('.modalBackdrop');
- if(ui.view==='arena'&&botTurn()&&!ui.handoff&&!ui.modal){botTimer=setTimeout(()=>{const a=chooseAiAction(game,{difficulty:ui.aiDifficulty});if(a)act(a);},game.pending?850:550);}
- if(ui.view==='soloArena'&&soloGame?.status==='playing'&&(soloGame.pending?.p??soloGame.active)===1){botTimer=setTimeout(()=>soloAct(soloTrainingBotAction(soloGame)),350);}
- if(ui.view==='ttgArena'&&ttgGame?.status==='playing'&&ttgChoiceActor(ttgGame)===1){botTimer=setTimeout(()=>{try{const a=ttgCoreAiChoice(ttgGame);if(a)ttgAct(a);else toast('天元突破 AI 尚無合法動作，請記錄此局面。');}catch(e){toast('天元突破 AI：'+e.message);}},450);}
+ if(ui.view==='arena'&&botTurn()&&!ui.handoff&&!ui.modal){botTimer=setTimeout(()=>{const a=chooseMatchBotAction('bleach',game,{difficulty:ui.aiDifficulty});if(a)act(a);},game.pending?850:550);}
+ if(ui.view==='soloArena'&&soloGame?.status==='playing'&&matchChoiceActor('solo-leveling',soloGame)===1){botTimer=setTimeout(()=>soloAct(chooseMatchBotAction('solo-leveling',soloGame)),350);}
+ if(ui.view==='ttgArena'&&ttgGame?.status==='playing'&&matchChoiceActor('gurren-lagann',ttgGame)===1){botTimer=setTimeout(()=>{try{const a=chooseMatchBotAction('gurren-lagann',ttgGame);if(a)ttgAct(a);else toast('天元突破 AI 尚無合法動作，請記錄此局面。');}catch(e){toast('天元突破 AI：'+e.message);}},450);}
 }
 function lobby(){
  const currentPreset=PRESETS[ui.preset];const custom=!sameCounts(deck,currentPreset.counts);
@@ -258,7 +259,7 @@ function ttgLibrary(){
  const issues=ttgBetaDeckIssues(ttgDeck),count=ttgCount(ttgDeck);
  return `<header class="pageHeading"><div><h1>天元突破 · 牌組構築</h1><p>UA56BT · ${TTG_CARDS.length}/81 種可編輯 · ${TTG_PENDING_CARDS.length} 種資料待核對</p></div><button class="btn" data-view="lobby">返回大廳</button></header>
  <div class="titlePicker" role="group" aria-label="選擇作品">${TITLES.map(t=>`<button type="button" data-title="${t.id}" aria-pressed="${ui.title===t.id}" class="btn ${ui.title===t.id?'primary':'outline'}">${esc(t.label)} · ${t.cards.length} 種</button>`).join('')}</div>
- <div class="supportNote"><b>天元突破 81/81 張已開放獨立 Beta 自動判定對戰</b><span>綠色、紅色或自訂的合法 50 張牌組均可透過下方按鈕與 AI 對戰；卡片效果交由天元突破獨立判定核心處理。正式共用引擎尚未接入，官方逐卡效果／FAQ 的全部情境仍在驗收中。</span><span>${esc(TTG_ART_CREDIT)} · <a href="${esc(TTG_RUGIA_CARD_SEARCH)}" target="_blank" rel="noopener noreferrer">查看路基亞卡表 ↗</a>。圖片由路基亞外部讀取，載入失敗時顯示佔位圖。</span></div>
+ <div class="supportNote"><b>天元突破 81/81 張已接入共用對戰入口（Beta）</b><span>綠色、紅色或自訂的合法 50 張牌組均可透過下方按鈕與 AI 對戰；卡片效果交由天元突破獨立判定核心處理。現在透過共用對戰入口操作，專屬效果仍由天元突破 Beta 核心結算；官方逐卡效果／FAQ 仍待全面驗收。</span><span>${esc(TTG_ART_CREDIT)} · <a href="${esc(TTG_RUGIA_CARD_SEARCH)}" target="_blank" rel="noopener noreferrer">查看路基亞卡表 ↗</a>。圖片由路基亞外部讀取，載入失敗時顯示佔位圖。</span></div>
  <div class="deckEditor"><label>天元突破牌組名稱<input id="ttgDeckName" maxlength="40" value="${esc(ttgName)}"></label><label>已儲存的天元突破牌組<select id="ttgSavedSelect"><option value="">選擇要載入的草稿</option>${ttgSaved.map((d,i)=>`<option value="${i}">${esc(d.name)}</option>`).join('')}</select></label><div class="deckEditorActions"><button class="btn primary" data-action="ttgSave">儲存天元突破草稿</button><button class="btn outline" data-action="ttgNew">新建空白草稿</button><button class="btn primary" data-action="ttgBetaStartGreen">綠色 50 張 Beta AI 對戰</button><button class="btn primary" data-action="ttgBetaStartRed">紅色 50 張 Beta AI 對戰</button><button class="btn" data-action="ttgBetaStartDeck" ${ttgBetaDeckIssues(ttgDeck).length?'disabled':''}>使用目前 50 張牌組 Beta 對戰</button></div><span class="deckSaveStatus">已儲存 ${ttgSaved.length} 副天元突破草稿</span></div>
  <div class="toolbar"><input id="search" type="search" placeholder="搜尋天元突破卡號、名稱或效果…" value="${esc(ui.search)}"><div class="filter">${[['all','全部'],['character','角色'],['event','事件'],['field','場域']].map(([v,n])=>`<button data-filter="${v}" class="${ui.filter===v?'active':''}">${n}</button>`).join('')}</div></div>
  <div class="libraryLayout"><div class="cardGrid">${entries.map(c=>`<article class="catalogCard"><button class="catalogArt" data-inspect="${c.id}" aria-label="查看官方卡片 ${esc(c.number)}">${ttgArtImg(c)}</button><div class="catalogInfo"><strong>${esc(c.nameZh||c.name)}</strong><div class="sub">${esc(c.nameJa||c.name)} · ${esc(c.number)} · ${TYPE_NAMES[c.type]} · ${COLOR_NAMES[c.color]}</div><span class="autoStatus ${TTG_BETA_IDS.includes(c.id)?'ready':'pending'}">${TTG_BETA_IDS.includes(c.id)?'✓ Beta 自動判定已接入 · 官方驗收中':'此卡尚未接入自動判定'}</span><div class="catalogMeta"><span>◆ ${c.energy} 能源</span><span>AP ${c.ap}</span><span>${c.bp||'—'} BP</span><span>產能 ${c.gen}</span></div><p class="catalogEffect">${esc(c.effect)}</p><a class="subtleButton" href="${esc(c.source)}" target="_blank" rel="noopener noreferrer" aria-label="在官方網站查看${esc(c.number)}卡圖及原文">官方卡圖及日文效果 ↗</a><div class="countPicker"><button data-ttg-count="${c.id}" data-delta="-1" ${!ttgDeck[c.id]?'disabled':''}>−</button><b>${ttgDeck[c.id]||0}</b><button data-ttg-count="${c.id}" data-delta="1" ${ttgDeck[c.id]>=4?'disabled':''}>+</button></div></div></article>`).join('')}${pending.map(c=>`<article class="catalogCard"><a class="catalogArt" href="${esc(c.source)}" target="_blank" rel="noopener" aria-label="查看官方卡號 ${esc(c.number)}"><img src="assets/mark.svg" alt="${esc(c.nameZh)} 佔位圖" loading="lazy"></a><div class="catalogInfo"><strong>${esc(c.nameZh)}</strong><div class="sub">${esc(c.nameJa)} · ${esc(c.number)} · ${esc(c.rarity)} · ${COLOR_NAMES[c.color]}</div><span class="autoStatus pending">資料待核對・不可放入牌組${c.rarityDisputed?"（稀有度來源不一致）":""}</span><div class="catalogMeta"><span>能源 —</span><span>AP —</span><span>BP —</span><span>產能 —</span></div><p class="catalogEffect">${esc(c.effect||'尚未取得可核實的完整效果')}</p></div></article>`).join('')}</div><aside class="panel deckSummary"><h3>天元突破牌組概覽</h3><div class="deckTotal">${count} <small>/ 50</small></div><div class="progressTrack"><i style="width:${Math.min(100,count*2)}%"></i></div><div class="validation ${issues.length?'invalid':'valid'}">${issues.length?issues.map(esc).join('<br>'):'✓ 50 張 Beta 牌組合法，可進行試玩。'}</div><p class="note">✓ 81 張已接入獨立 Beta 自動判定與 AI 對戰；卡面「auto:false」僅表示未完成正式共用引擎與逐卡官方規則驗收，不影響下方 Beta 試玩。${ttgBetaDeckIssues(ttgDeck).length?'目前牌組無法試玩：'+esc(ttgBetaDeckIssues(ttgDeck).join('；')):'這副牌組可進入 Beta 測試。'}</p><details class="deckContents"><summary>已選卡片</summary>${TTG_CARDS.filter(c=>ttgDeck[c.id]).map(c=>`<div class="deckContentRow">${esc(c.name)} · ×${ttgDeck[c.id]}</div>`).join('')||'<p class="note">尚未選擇卡片</p>'}</details></aside></div>`;
@@ -268,7 +269,7 @@ function soloLibrary(){
  const count=Object.values(soloDeck).reduce((a,b)=>a+b,0);
  return `<header class="pageHeading"><div><h1>我獨自升級 · 牌組構築</h1><p>UA51BT / SLG-1 · 已核對 ${SOLO_LEVELING_CARDS.length} / 80 種一般效果卡</p></div><button class="btn" data-view="lobby">返回大廳</button></header>
  <div class="titlePicker" role="group" aria-label="選擇作品">${TITLES.map(t=>`<button type="button" data-title="${t.id}" aria-pressed="${ui.title===t.id}" class="btn ${ui.title===t.id?'primary':'outline'}">${esc(t.label)} · ${t.cards.length} 種</button>`).join('')}</div>
- <div class="supportNote"><b>我獨自升級尚未開放對戰（正式共用引擎）</b><span>80/80 張已接上獨立 Beta 自動判定與 AI 試玩；可用自己的合法50張單色牌組進入獨立 Beta 對戰。部分跨卡時序及官方FAQ仍在逐卡驗收中，不能將 Beta 測試當成正式全效果認證。</span><span>${esc(SOLO_ART_CREDIT)} · <a href="${esc(SOLO_RUGIA_SEARCH)}" target="_blank" rel="noopener noreferrer">查看路基亞《我獨自升級》卡表 ↗</a>。圖片由第三方載入，若載入失敗會顯示佔位圖。</span></div>
+ <div class="supportNote"><b>我獨自升級 80/80 張已接入共用對戰入口（Beta）</b><span>80/80 張已接上共用對戰入口與獨立 Beta 判定核心；可用自己的合法50張單色牌組進行 AI 對戰。部分跨卡時序及官方FAQ仍在逐卡驗收中，不能將 Beta 測試當成正式全效果認證。</span><span>${esc(SOLO_ART_CREDIT)} · <a href="${esc(SOLO_RUGIA_SEARCH)}" target="_blank" rel="noopener noreferrer">查看路基亞《我獨自升級》卡表 ↗</a>。圖片由第三方載入，若載入失敗會顯示佔位圖。</span></div>
  <div class="deckEditor"><label>牌組名稱<input id="soloDeckName" maxlength="40" value="${esc(soloName)}"></label><label>已儲存牌組<select id="soloSavedSelect"><option value="">載入草稿</option>${soloSaved.map((d,i)=>`<option value="${i}">${esc(d.name)}</option>`).join('')}</select></label><div class="deckEditorActions"><button class="btn primary" data-action="soloSave">儲存草稿</button><button class="btn outline" data-action="soloNew">新建草稿</button><button class="btn outline" data-action="soloPreset">載入影之軍團示範草稿</button><button class="btn primary" data-action="soloTrainingStart">綠色限定卡組試玩</button><button class="btn primary" data-action="soloTrainingStartShadow">紫色影之軍團試玩</button><button class="btn" data-action="soloTrainingStartCustom" ${soloTrainingDeckIssues(soloDeck).length?"disabled":""}>使用目前50張牌組 Beta AI 對戰</button></div></div>
  <div class="toolbar"><input id="search" type="search" placeholder="搜尋 SLG 卡號、名稱與效果…" value="${esc(ui.search)}"><div class="filter">${[['all','全部'],['character','角色'],['event','事件'],['field','場域']].map(([v,n])=>`<button data-filter="${v}" class="${ui.filter===v?'active':''}">${n}</button>`).join('')}</div></div>
  <div class="libraryLayout"><div class="cardGrid">${entries.map(c=>`<article class="catalogCard"><button class="catalogArt" data-inspect="${c.id}" aria-label="開啟官方卡片 ${esc(c.number)}">${soloArtImg(c)}</button><div class="catalogInfo"><strong>${esc(c.name)}</strong><div class="sub">${esc(c.number)} · ${esc(TYPE_NAMES[c.type]||c.type)} · ${esc(COLOR_NAMES[c.color])}</div><span class="autoStatus ${SOLO_MATCH_SUPPORTED.includes(c.id)?"ready":"pending"}">${SOLO_MATCH_SUPPORTED.includes(c.id)?"✓ Beta 自動判定已接入 · 官方驗收中":"尚未接入自動判定"}</span><div class="catalogMeta"><span>◆ ${c.energy} 能源</span><span>AP ${c.ap}</span><span>BP ${c.bp??'—'}</span><span>產能 ${c.gen}</span></div><p class="catalogEffect">${esc(c.effect)}</p><a class="subtleButton" href="${esc(c.source)}" target="_blank" rel="noopener noreferrer" aria-label="在官方網站查看${esc(c.number)}卡圖及原文">官方卡圖及日文效果 ↗</a><div class="countPicker"><button data-solo-count="${c.id}" data-delta="-1" ${!soloDeck[c.id]?'disabled':''}>−</button><b>${soloDeck[c.id]||0}</b><button data-solo-count="${c.id}" data-delta="1" ${soloDeck[c.id]>=c.maxCopies?'disabled':''}>+</button></div></div></article>`).join('')}</div><aside class="panel deckSummary"><h3>我獨自升級牌組</h3><div class="deckTotal">${count} <small>/ 50</small></div><div class="progressTrack"><i style="width:${Math.min(100,count*2)}%"></i></div><p class="note">${esc(soloDeckIssues(soloDeck).join('；'))}。${soloTrainingDeckIssues(soloDeck).length?'自訂牌組 Beta 條件：'+esc(soloTrainingDeckIssues(soloDeck).join('；')):'這副牌組已符合 Beta AI 試玩條件。'}（完整官方跨卡驗證仍未完成）</p><details class="deckContents"><summary>已選卡片</summary>${SOLO_LEVELING_CARDS.filter(c=>soloDeck[c.id]).map(c=>`<div class="deckContentRow">${esc(c.name)} · ×${soloDeck[c.id]}</div>`).join('')||'<p class="note">尚未選擇卡片</p>'}</details></aside></div>`;
@@ -290,7 +291,7 @@ function saoLibrary(){
 }
 function soloAct(action){
  try{
-  soloGame=soloTrainingDispatch(soloGame,action);
+  soloGame=dispatchMatchAction('solo-leveling',soloGame,action);
   assertSoloTrainingMatch(soloGame);
   save(SOLO_GAME_KEY,soloGame);
   ui.soloSelected=null;
@@ -304,7 +305,7 @@ function soloArena(){
  const label=c=>c?esc(soloById[c.cardId]?.nameJa||c.cardId):'空';
  const slot=c=>c?'<div class="soloCardFace">'+soloArtImg(soloById[c.cardId])+'<b>'+label(c)+'</b><small>'+esc(c.cardId)+' · '+(c.ready?'ACTIVE':'REST')+' · BP '+soloMatchBp(state,c)+'</small></div>':'<small>空格</small>';
  const board=who=>['front','energy'].map(line=>'<div class="panel"><h3>'+(line==='front'?'前線':'能源線')+'</h3><div class="grid" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px">'+who[line].map(c=>'<div class="catalogInfo soloBoardCell" style="border:1px solid #7775;padding:8px;min-height:55px;border-radius:7px">'+slot(c)+'</div>').join('')+'</div></div>').join('');
- const actions=soloTrainingLegalActions(state);
+ const actions=matchLegalActions('solo-leveling',state);
  const revealed=state.revealedLife;
  const publicLife=revealed&&soloById[revealed.cardId]?'<section class="panel soloLifeReveal"><h3>最近公開的生命卡</h3><div class="soloLifeRevealBody">'+soloArtImg(soloById[revealed.cardId])+'<div><b>'+esc(soloById[revealed.cardId].name)+'</b><small>'+esc(revealed.cardId)+' · '+(revealed.owner===0?'你的生命區':'電腦生命區')+' · '+esc(revealed.trigger||'無 Trigger')+'</small><p>只有已公開翻出的生命卡會顯示；未翻開的生命與電腦手牌不會顯示。</p></div></div></section>':'';
  const actionButton=(a,title)=>'<button class="btn small" data-solo-act="'+encodeURIComponent(JSON.stringify(a))+'">'+esc(title)+'</button>';
@@ -397,7 +398,7 @@ function soloArena(){
 function ttgAct(a){
  if(!ttgGame||ttgGame.status!=='playing')return;
  try{
-  const next=dispatchTtgCoreAction(ttgGame,a);
+  const next=dispatchMatchAction('gurren-lagann',ttgGame,a);
   assertTtgCoreState(next);ttgGame=next;save(TTG_GAME_KEY,ttgGame);
   ui.ttgSelected=null;ui.ttgKind='all';ui.ttgVisible=90;ui.ttg012={discardUids:[],mode:'readyAP',apUid:null,targetUid:null};ui.ttg012Search={takeUid:null,orderUids:[]};render();
  }catch(e){toast('天元突破 Beta 裁定錯誤：'+e.message);}
@@ -405,13 +406,13 @@ function ttgAct(a){
 function ttgBetaStart(deck){
  try{
   const errors=ttgBetaDeckIssues(deck);if(errors.length){toast(errors[0]);return;}
-  ttgGame=newTtgCoreMatch({decks:[deck,deck],first:0,seed:Date.now()});assertTtgCoreState(ttgGame);
+  ttgGame=startMatchForTitle('gurren-lagann',{decks:[deck,deck],first:0,seed:Date.now()});assertTtgCoreState(ttgGame);
   save(TTG_GAME_KEY,ttgGame);ui.view='ttgArena';ui.ttgKind='all';ui.ttgSelected=null;ui.ttgVisible=90;ui.ttg012={discardUids:[],mode:'readyAP',apUid:null,targetUid:null};ui.ttg012Search={takeUid:null,orderUids:[]};render();
  }catch(e){toast('天元突破無法開局：'+e.message);}
 }
 function ttgArena(){
  if(!ttgGame)return `<section class='panel'>目前沒有天元突破 Beta 對局。請先到牌組編輯頁開局。</section>`;
- const s=ttgGame,actor=ttgChoiceActor(s),bot=actor===1;
+ const s=ttgGame,actor=matchChoiceActor('gurren-lagann',s),bot=actor===1;
  const phase={start:'開始階段',move:'移動階段',main:'主要階段',attack:'攻擊階段'}[s.phase]||s.phase;
  const shown=c=>c?`<div class='ttgCardFace'>${ttgArtImg(TTG_BY_ID[c.cardId])}<span>${esc(TTG_BY_ID[c.cardId]?.nameZh||c.cardId)}</span><small>${esc(c.cardId)} · ${c.ready?'ACTIVE':'REST'} · ${TTG_BY_ID[c.cardId]?.bp||0} BP${c.stack?.length?' · RAID '+c.stack.length:''}</small></div>`:'<small>空位置</small>';
  const board=(pl,name,owner)=>`<section class='panel'><h3>${name} · LIFE ${pl.life.length} · 手牌 ${pl.hand.length} · 場外 ${pl.outside.length} · AP ${pl.apCards.filter(x=>x.ready).length}</h3><p class='note'>紅能源 ${pl.energyProduced?.red||0} · 綠能源 ${pl.energyProduced?.green||0}</p>${['front','energy'].map(line=>`<div><b>${line==='front'?'前線':'能源線'}</b><div class='grid' style='display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px'>${pl[line].map((c,slot)=>`<div class='catalogInfo ttgBoardCell' style='border:1px solid #8887;padding:6px;min-height:62px;border-radius:7px'>${c?shown(c):(owner===0&&ui.ttgSelected&&ttgNormalPlacementAction(s,ui.ttgSelected,line,slot)?`<button class='btn small primary' data-ttg-place='${line}:${slot}' aria-label='放置到${line==='front'?'前線':'能源線'}位置${slot+1}'>＋ 放到這格</button>`:'<small>空位置</small>')}</div>`).join('')}</div></div>`).join('')}</section>`;
@@ -424,7 +425,7 @@ function ttgArena(){
   return `<div class='catalogInfo ttgPublicLifeCard' style='padding:8px;border:1px solid #8887;border-radius:8px'>${ttgArtImg(card)}<b>${name}</b><small style='display:block'>${esc(x.cardId)} · ${x.owner===0?'你的生命區':'AI 生命區'} · ${esc(x.trigger||'無 Trigger')}</small><small>${result}</small></div>`;
  };
  const publicLifePanel=publicLife.length?`<section class='panel'><h3>公開生命翻牌（最近 ${publicLife.length} 張）</h3><div class='grid' style='display:flex;flex-wrap:wrap;gap:6px'>${publicLife.map(revealedTile).join('')}</div><small>只顯示已公開的生命卡，不公開未翻開的生命、手牌或私人查看牌庫。</small></section>`:'';
- const available=legalTtgCoreActions(s);
+ const available=matchLegalActions('gurren-lagann',s,{templates:true});
  const types=ttgActionKinds(s);
  const picked=ttgFilteredActions(s,{kind:ui.ttgKind,cardUid:ui.ttgSelected,limit:ui.ttgVisible});
  const actionButton=a=>`<button class='btn small' data-ttg-act='${encodeURIComponent(JSON.stringify(a))}'>${esc(ttgActionLabel(s,a))}</button>`;
@@ -439,7 +440,7 @@ function ttgArena(){
   return `<section class='panel'><h3>西蒙 012 · 手動選擇棄牌</h3><p class='note'>可選擇任意張自己手牌送場外；合計需求能源達 15 才可改為讓敵方前線角色退場。不會替你自動選棄牌。</p><div style='display:flex;flex-wrap:wrap;gap:6px'>${discardCards}</div><p>已選 ${chosen.length} 張，合計需求能源 ${total}</p><div style='display:flex;gap:6px;flex-wrap:wrap'><button class='btn small ${mode==='readyAP'?'primary':'outline'}' data-ttg-012-mode='readyAP'>回復 1 張 AP</button><button class='btn small ${mode==='retire'?'primary':'outline'}' data-ttg-012-mode='retire' ${total<15?'disabled':''}>需求能源 ≥15：使敵方角色退場</button></div><div style='display:flex;gap:6px;flex-wrap:wrap'>${mode==='readyAP'?apButtons:targetButtons}</div><button class='btn primary' data-action='ttg012Submit' ${!chosen.length&&s.players[0].hand.length?'disabled':''}>確認支付棄牌並結算</button></section>`;
  })():'';
  const custom012Search=s.pending?.kind==='green012Search'&&!bot?(()=>{
-  const rule=legalTtgCoreActions(s).find(a=>a.type==='green012Search');
+  const rule=matchLegalActions('gurren-lagann',s,{templates:true}).find(a=>a.type==='green012Search');
   if(!rule)return '';
   const picked=ui.ttg012Search.takeUid;
   const remain=rule.revealed.filter(uid=>uid!==picked);
@@ -473,7 +474,7 @@ function bind(){
   if(el.dataset.title){ui.title=el.dataset.title;ui.set='all';ui.color='all';ui.search='';ui.selected=null;render();return;}
   if(el.dataset.ttg012Take!==undefined&&ui.view==='ttgArena'&&ttgGame?.pending?.kind==='green012Search'){ui.ttg012Search.takeUid=el.dataset.ttg012Take||null;ui.ttg012Search.orderUids=[];render();return;}
   if((el.dataset.ttg012Up!==undefined||el.dataset.ttg012Down!==undefined)&&ui.view==='ttgArena'&&ttgGame?.pending?.kind==='green012Search'){
-   const rule=legalTtgCoreActions(ttgGame).find(a=>a.type==='green012Search');
+   const rule=matchLegalActions('gurren-lagann',ttgGame,{templates:true}).find(a=>a.type==='green012Search');
    const remain=rule.revealed.filter(uid=>uid!==ui.ttg012Search.takeUid),saved=ui.ttg012Search.orderUids;
    const order=saved.length===remain.length&&remain.every(uid=>saved.includes(uid))?[...saved]:[...remain];
    const up=el.dataset.ttg012Up!==undefined,uid=up?el.dataset.ttg012Up:el.dataset.ttg012Down,i=order.indexOf(uid),j=i+(up?-1:1);
@@ -508,9 +509,9 @@ function bind(){
   }
   if(el.dataset.raidAction){const a=ui.modal.actions[Number(el.dataset.raidAction)];act(a);return;}
   switch(el.dataset.action){
-   case 'soloTrainingStartShadow':try{soloGame=newSoloTrainingMatch({decks:[SOLO_SHADOW_TRAINING_PRESET,SOLO_SHADOW_TRAINING_PRESET],mode:'solo',seed:Date.now()});save(SOLO_GAME_KEY,soloGame);ui.view='soloArena';ui.soloSelected=null;render();}catch(e){toast(e.message);}break;
-   case 'soloTrainingStartCustom':try{const issues=soloTrainingDeckIssues(soloDeck);if(issues.length){toast(issues[0]);break;}soloGame=newSoloTrainingMatch({decks:[soloDeck,soloDeck],mode:'solo',seed:Date.now()});save(SOLO_GAME_KEY,soloGame);ui.view='soloArena';ui.soloSelected=null;render();}catch(e){toast(e.message);}break;
-   case 'soloTrainingStart':try{soloGame=newSoloTrainingMatch({decks:[SOLO_TRAINING_PRESET,SOLO_TRAINING_PRESET],mode:'solo',seed:Date.now()});save(SOLO_GAME_KEY,soloGame);ui.view='soloArena';ui.soloSelected=null;render();}catch(e){toast(e.message);}break;
+   case 'soloTrainingStartShadow':try{soloGame=startMatchForTitle('solo-leveling',{decks:[SOLO_SHADOW_TRAINING_PRESET,SOLO_SHADOW_TRAINING_PRESET],mode:'solo',seed:Date.now()});save(SOLO_GAME_KEY,soloGame);ui.view='soloArena';ui.soloSelected=null;render();}catch(e){toast(e.message);}break;
+   case 'soloTrainingStartCustom':try{const issues=soloTrainingDeckIssues(soloDeck);if(issues.length){toast(issues[0]);break;}soloGame=startMatchForTitle('solo-leveling',{decks:[soloDeck,soloDeck],mode:'solo',seed:Date.now()});save(SOLO_GAME_KEY,soloGame);ui.view='soloArena';ui.soloSelected=null;render();}catch(e){toast(e.message);}break;
+   case 'soloTrainingStart':try{soloGame=startMatchForTitle('solo-leveling',{decks:[SOLO_TRAINING_PRESET,SOLO_TRAINING_PRESET],mode:'solo',seed:Date.now()});save(SOLO_GAME_KEY,soloGame);ui.view='soloArena';ui.soloSelected=null;render();}catch(e){toast(e.message);}break;
    case 'soloPreset':soloDeck=soloNormalize(SOLO_DRAFT_PRESET);soloName='影之軍團示範牌組（尚不可對戰）';persistSolo();render();break;
    case 'soloNew':soloDeck=soloNormalize({});soloName='我獨自升級自訂牌組';persistSolo();render();break;
    case 'soloSave':soloSaved=[...soloSaved,{name:soloName.trim()||'我獨自升級自訂牌組',counts:soloNormalize(soloDeck)}];save(SOLO_SAVED_KEY,soloSaved);render();toast('已儲存我獨自升級牌組草稿。');break;
@@ -521,7 +522,7 @@ function bind(){
    case 'ttgBetaStartGreen':ttgBetaStart(TTG_GREEN_BETA_PRESET);break;
    case 'ttgBetaStartRed':ttgBetaStart(TTG_RED_BETA_PRESET);break;
    case 'ttgBetaStartDeck':ttgBetaStart(ttgDeck);break;
-   case 'ttg012SearchSubmit':if(ui.view==='ttgArena'&&ttgGame?.pending?.kind==='green012Search'&&ttgChoiceActor(ttgGame)===0){try{const rule=legalTtgCoreActions(ttgGame).find(a=>a.type==='green012Search'),rest=rule.revealed.filter(uid=>uid!==ui.ttg012Search.takeUid),saved=ui.ttg012Search.orderUids,order=saved.length===rest.length&&rest.every(uid=>saved.includes(uid))?saved:rest;ttgAct(ttg012SearchChoice(ttgGame,{takeUid:ui.ttg012Search.takeUid,bottomOrderUids:order}));}catch(e){toast('西蒙012搜尋選擇：'+e.message);}}break;
+   case 'ttg012SearchSubmit':if(ui.view==='ttgArena'&&ttgGame?.pending?.kind==='green012Search'&&ttgChoiceActor(ttgGame)===0){try{const rule=matchLegalActions('gurren-lagann',ttgGame,{templates:true}).find(a=>a.type==='green012Search'),rest=rule.revealed.filter(uid=>uid!==ui.ttg012Search.takeUid),saved=ui.ttg012Search.orderUids,order=saved.length===rest.length&&rest.every(uid=>saved.includes(uid))?saved:rest;ttgAct(ttg012SearchChoice(ttgGame,{takeUid:ui.ttg012Search.takeUid,bottomOrderUids:order}));}catch(e){toast('西蒙012搜尋選擇：'+e.message);}}break;
    case 'ttg012Submit':if(ui.view==='ttgArena'&&ttgGame?.pending?.kind==='green012Discard'&&ttgChoiceActor(ttgGame)===0){try{const choice=ttg012ManualChoice(ttgGame,{discardUids:ui.ttg012.discardUids,mode:ui.ttg012.mode,apUid:ui.ttg012.mode==='readyAP'?(ui.ttg012.apUid??ttgGame.players[0].apCards[0]?.uid):null,targetUid:ui.ttg012.mode==='retire'?ui.ttg012.targetUid:null});ttgAct(choice);}catch(e){toast('西蒙012效果選擇：'+e.message);}}break;
    case 'ttgResolveAssist':if(ui.view==='ttgArena'&&ttgGame?.status==='playing'&&ttgChoiceActor(ttgGame)===0&&(ttgGame.pending||ttgGame.pendingTtgLife||ttgGame.pendingTtgTrigger)){const next=ttgCoreAiChoice(ttgGame);if(next)ttgAct(next);else toast('目前沒有合法的效果選擇。');}break;
    case 'ttgMore':ui.ttgVisible+=90;render();break;
@@ -555,7 +556,7 @@ function bind(){
    case 'showLog':ui.modal={type:'log'};render();break;
    case 'newMatch':ui.modal={type:'newMatch'};render();break;
    case 'hint':{
-    const a=chooseAiAction(game,{difficulty:ui.aiDifficulty});if(!a)break;
+    const a=chooseMatchBotAction('bleach',game,{difficulty:ui.aiDifficulty});if(!a)break;
     if(a.type==='choose'){ui.choiceIds=a.ids;render();toast('已標記建議選擇，你可以更改後再確認。');}
     else if(a.uid){const f=locate(game,a.uid),p=gameActor();ui.selected={uid:a.uid,p,source:f?'field':'hand'};ui.line=a.line||'front';ui.deployment=a.type==='raid'?'raid':'normal';render();toast(a.type==='raid'?'可以 Raid，點選 Raid 後選擇基底。':a.type==='ability'?'建議發動這張卡片的能力。':a.type==='attack'?'建議以這個角色攻擊。':'建議使用這張手牌，選擇放置位置。');}
     else toast(a.type==='extraDraw'?'可以花 1 AP 額外抽牌。':a.type==='keep'?'這副起手可以保留。':a.type==='redraw'?'缺少低需求角色，建議完整重抽。':'目前可以進入下一個階段。');break;

@@ -23,7 +23,7 @@ test('four new editors and source-link inspection exist while BLEACH Raid is pre
  assert.match(app,/data-title=/);
  for(const route of ['ttgLibrary','saoLibrary','soloLibrary','mstLibrary'])assert.match(app,new RegExp('return '+route+'\\(\\)'));
  for(const k of ['ua-ttg-draft-v1','ua-sao-draft-v1','ua-slg-draft-v1','ua-mst-draft-v1'])assert.ok(app.includes(k));
- for(const marker of ['天元突破 81/81 張已開放獨立 Beta 自動判定對戰','刀劍神域尚未開放對戰','我獨自升級尚未開放對戰','無職轉生尚未開放對戰'])assert.ok(app.includes(marker));
+ for(const marker of ['天元突破 81/81 張已接入共用對戰入口（Beta）','刀劍神域尚未開放對戰','我獨自升級 80/80 張已接入共用對戰入口（Beta）','無職轉生尚未開放對戰'])assert.ok(app.includes(marker));
  assert.match(app,/raidFlow/);
  assert.match(app,/window\.open\(c\.source/);
 });
