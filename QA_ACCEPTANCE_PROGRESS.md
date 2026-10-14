@@ -209,3 +209,14 @@
 新增 `tests/ttg-official-acceptance-036-038.test.mjs`：在完整50張且 FINAL ≤4 的合法牌組，分別測三張從手牌支付**玩家指定的實體 AP**，之後最多 ACTIVE 自選2張（可包含剛支付的AP，也可包含其餘REST AP，不可擅自操作對手AP）；不選回復仍須確實支付該AP；非法 AP、重複指定、不屬於自己的 AP 均拒絕且原狀態不修改。另對三張各測**最後1點生命**的真正 FINAL 待選，可發動拿牌庫頂一張恢復1 LIFE、或依通用官方 Q99 放棄導致生命歸零落敗，公開生命 Trigger 結果、守住50張 UID。
 
 這仍是列出的效果分支與時序驗證，不是全81張正式效力認證。待 Node22 GitHub Actions 及手機UI實機確認，勿修改 main / Vercel，後續依序 **039～041**。
+
+
+## 2026-10-14：TTG-1-039～041 日本官方事件與裁定續驗（獨立草稿）
+
+來源：[039 ラガンインパクト](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-039)、[040 Q2283](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-040)、[041 Q2284](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-041)。新增 `tests/ttg-official-acceptance-039-041.test.mjs` 六項50卡核心回歸情境：
+
+- **039**：綠6／AP1事件必須選自己場上具有「ラガン」片語的角色或〈シモン〉，不能指定敵方或其他不符角色；本回合追加自己的場上角色當下最大 BP 數值和 IMPACT 1，結束後歸零。生命 ACTIVE 可以選己方角色恢復 ACTIVE、BP+3000 或依 Q99 放棄。
+- **040**：綠8／AP1，手牌同名每回合只能使用一次，抽2張、自己前線也產生能源；本張事件放置 REMOVED 並可在自己主階段且8+能源時發動同回合一次倍增。**官方 Q2283**：已得到一份 ×2 能源狀態時追加倍增為 **×4** 而不是 ×3；其後新加的能源也乘四，並應於當回合解除本張新增的倍數。額外「非使用卡片送 REMOVED 時改送場外」仍待觸發完整驗證。
+- **041**：綠5／AP1，只能選己方大紅蓮團角色、相同印刷名稱不得同時選兩張；3張不同角色則**每張均 BP+3000**（官方 Q2284），並測 ACTIVE 生命觸發合法選取與放棄。
+
+不改正式網站、不合併 main、不翻 `auto:false`。待 Node22 全量 CI、手機真機與其他跨卡時間點驗證；下一批可接續 **TTG-1-042～044**，開始紅色卡牌逐卡驗收。
