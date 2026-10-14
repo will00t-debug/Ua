@@ -301,6 +301,17 @@ function resolveChoice(s,a,pack){
   }else if(a.mode==='leave')vacate(s,q.player,q.line,q.slot,q.destination);
   else throw Error('Invalid leave replacement option');
   s.pending=null;
+  if(q.originalAction&&a.mode==='leave'){
+   // The mandatory full-line removal happens BEFORE the original action.
+   // Resume the same paid play/movement/life Raid, now with a free slot.
+   // Nested life triggers retain their original pending owner and card UID.
+   s.pending=q.previousPending||null;
+   const resumed={...q.originalAction};delete resumed.replaceUid;
+   Object.assign(s,dispatchUniversalAction(pack,s,resumed,{actor:q.player}));
+   return;
+  }
+  // Choosing protection prevents the original line vacancy; the pending
+  // deployment is cancelled WITHOUT paying AP and can be attempted anew.
   if(q.postImpact)damage(pack,s,q.player);
   continueEffectQueue(pack,s);finishPending(s);return;
  }
@@ -619,6 +630,16 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
  if(requested!==undefined&&requested!==actor(source))throw Error('Wrong player turn');
  if(!options.some(a=>same(a,action)))throw Error('Action not currently legal');
  const s=clone(source),p=actor(s),pl=s.players[p];
+ if(action.replaceUid){
+  const candidate=s.players[p][action.line]?.[action.slot];
+  if(candidate?.uid===action.replaceUid&&protectedLeave(pack,s,candidate)){
+   s.pending={kind:'leave-replacement',player:p,uid:candidate.uid,
+    line:action.line,slot:action.slot,destination:'removed',
+    postImpact:false,originalAction:{...action},previousPending:s.pending||null};
+   assertUniversalMatch(pack,s);
+   return s;
+  }
+ }
  if(s.pending){
   // Pass the entire pre-validated action: some life triggers choose both a
   // mode and an owned field UID (e.g. ACTIVE); stripping the UID corrupts it.
