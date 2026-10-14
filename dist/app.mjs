@@ -44,7 +44,7 @@ function persistMst(){save(MST_DRAFT_KEY,mstDeck);}
 const deckMeta=safeRead(DECK_META_KEY)||{};
 let deckName=typeof deckMeta.name==='string'?deckMeta.name.slice(0,40):(PRESETS.find(p=>sameCounts(p.counts,deck))?.name||'自訂 BLEACH 牌組');
 let selectedDeckId=savedDecks.some(d=>d.id===deckMeta.savedId)?deckMeta.savedId:null;
-const ui={ttgSelected:null,ttgKind:'all',ttgVisible:90,ttg012:{discardUids:[],mode:'readyAP',apUid:null,targetUid:null},ttg012Search:{takeUid:null,orderUids:[]},ttg023Search:{takeUid:null,discardUid:null,orderUids:[]},ttg026Search:{takeUid:null,orderUids:[]},soloSelected:null,saoSet:'all',title:'bleach',view:'lobby',mode:'solo',aiDifficulty:['easy','normal','hard'].includes(safeRead(AI_KEY))?safeRead(AI_KEY):'normal',first:'0',preset:[0,1].includes(deckMeta.preset)?deckMeta.preset:0,opponentSource:'preset:1',filter:'all',search:'',selected:null,line:'energy',deployment:'normal',sideTab:'card',raidFlow:null,modal:null,choiceIds:[],handoff:false,lastController:null,privatePeekOpen:false};
+const ui={ttgSelected:null,ttgKind:'all',ttgVisible:90,ttg012:{discardUids:[],mode:'readyAP',apUid:null,targetUid:null},ttg012Search:{takeUid:null,orderUids:[]},ttg023Search:{takeUid:null,discardUid:null,orderUids:[]},ttg026Search:{mode:null,takeUid:null,orderUids:[]},soloSelected:null,saoSet:'all',title:'bleach',view:'lobby',mode:'solo',aiDifficulty:['easy','normal','hard'].includes(safeRead(AI_KEY))?safeRead(AI_KEY):'normal',first:'0',preset:[0,1].includes(deckMeta.preset)?deckMeta.preset:0,opponentSource:'preset:1',filter:'all',search:'',selected:null,line:'energy',deployment:'normal',sideTab:'card',raidFlow:null,modal:null,choiceIds:[],handoff:false,lastController:null,privatePeekOpen:false};
 if(deckMeta.opponentSource==='current'||/^preset:[01]$/.test(deckMeta.opponentSource||'')||savedDecks.some(d=>'saved:'+d.id===deckMeta.opponentSource))ui.opponentSource=deckMeta.opponentSource;
 let botTimer=null,toastTimer=null;
 function safeRead(k){try{return JSON.parse(localStorage.getItem(k)||'null');}catch{return null;}}
@@ -353,14 +353,14 @@ function ttgAct(a){
  try{
   const next=dispatchTtgCoreAction(ttgGame,a);
   assertTtgCoreState(next);ttgGame=next;save(TTG_GAME_KEY,ttgGame);
-  ui.ttgSelected=null;ui.ttgKind='all';ui.ttgVisible=90;ui.ttg012={discardUids:[],mode:'readyAP',apUid:null,targetUid:null};ui.ttg012Search={takeUid:null,orderUids:[]};ui.ttg023Search={takeUid:null,discardUid:null,orderUids:[]};ui.ttg026Search={takeUid:null,orderUids:[]};render();
+  ui.ttgSelected=null;ui.ttgKind='all';ui.ttgVisible=90;ui.ttg012={discardUids:[],mode:'readyAP',apUid:null,targetUid:null};ui.ttg012Search={takeUid:null,orderUids:[]};ui.ttg023Search={takeUid:null,discardUid:null,orderUids:[]};ui.ttg026Search={mode:null,takeUid:null,orderUids:[]};render();
  }catch(e){toast('天元突破 Beta 裁定錯誤：'+e.message);}
 }
 function ttgBetaStart(deck){
  try{
   const errors=ttgBetaDeckIssues(deck);if(errors.length){toast(errors[0]);return;}
   ttgGame=newTtgCoreMatch({decks:[deck,deck],first:0,seed:Date.now()});assertTtgCoreState(ttgGame);
-  save(TTG_GAME_KEY,ttgGame);ui.view='ttgArena';ui.ttgKind='all';ui.ttgSelected=null;ui.ttgVisible=90;ui.ttg012={discardUids:[],mode:'readyAP',apUid:null,targetUid:null};ui.ttg012Search={takeUid:null,orderUids:[]};ui.ttg023Search={takeUid:null,discardUid:null,orderUids:[]};ui.ttg026Search={takeUid:null,orderUids:[]};render();
+  save(TTG_GAME_KEY,ttgGame);ui.view='ttgArena';ui.ttgKind='all';ui.ttgSelected=null;ui.ttgVisible=90;ui.ttg012={discardUids:[],mode:'readyAP',apUid:null,targetUid:null};ui.ttg012Search={takeUid:null,orderUids:[]};ui.ttg023Search={takeUid:null,discardUid:null,orderUids:[]};ui.ttg026Search={mode:null,takeUid:null,orderUids:[]};render();
  }catch(e){toast('天元突破無法開局：'+e.message);}
 }
 function ttgArena(){
@@ -421,6 +421,7 @@ function ttgArena(){
  const isRossiu=s.pending?.kind==='ttgGreenEntry'&&!bot&&
   [...s.players[0].front,...s.players[0].energy].some(c=>c?.uid===s.pending.sourceUid&&c.cardId==='TTG-1-026');
  const custom026Search=isRossiu?(()=>{
+  if(ui.ttg026Search.mode!=='deck')return `<section class='panel'><h3>羅修 026 · 先選擇效果分支</h3><p class='note'>若要查看牌庫頂 7 張，請先按下這裡；若選擇場外回收或放棄，請使用下方「不查看牌庫」的選項。尚未選擇查看之前，不會公開牌庫頂資訊。</p><button class='btn primary' data-ttg-026-mode='deck'>選擇查看牌庫頂 7 張</button></section>`;
   const cards=s.players[0].deck.slice(0,7),sel=ui.ttg026Search;
   const eligible=cards.filter(c=>TTG_BY_ID[c.cardId]?.nameJa==='アークグレン').map(c=>c.uid);
   const picked=eligible.includes(sel.takeUid)?sel.takeUid:null;
@@ -452,6 +453,7 @@ function bind(){
   const el=e.target.closest('button');if(!el||el.disabled)return;
   if(el.dataset.view){chooseView(el.dataset.view);return;}
   if(el.dataset.title){ui.title=el.dataset.title;ui.set='all';ui.color='all';ui.search='';ui.selected=null;render();return;}
+  if(el.dataset.ttg026Mode==='deck'&&ui.view==='ttgArena'&&ttgGame?.pending?.kind==='ttgGreenEntry'){ui.ttg026Search.mode='deck';render();return;}
   if(el.dataset.ttg026Take!==undefined&&ui.view==='ttgArena'&&ttgGame?.pending?.kind==='ttgGreenEntry'){
   ui.ttg026Search.takeUid=el.dataset.ttg026Take||null;ui.ttg026Search.orderUids=[];render();return;
  }
