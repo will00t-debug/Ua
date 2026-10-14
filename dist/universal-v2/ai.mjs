@@ -32,9 +32,9 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='life-trigger')
   return legal.find(a=>['final','raid','special','colorRetire','color','active','draw','get'].includes(a.mode))||legal[0];
  if(s.pending?.kind==='effect-recover-ap')return legal.find(a=>a.uid!==null)||legal[0];
- if(['effect-search-deck','effect-recover-outside'].includes(s.pending?.kind))
+ if(['effect-search-deck','effect-search-deck-multi','effect-recover-outside'].includes(s.pending?.kind))
   return legal.find(a=>a.uid!==null)||legal[0];
- if(s.pending?.kind==='effect-discard-cost'){
+ if(['effect-discard-cost','effect-discard-gate'].includes(s.pending?.kind)){
   // An optional cost may be declined; tougher bots pay with a lower-value
   // hand card, using only the actor's own registered title pack.
   if(difficulty==='easy')return legal.find(a=>a.uid===null)||legal[0];
