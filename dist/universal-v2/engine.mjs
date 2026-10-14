@@ -59,6 +59,7 @@ export const universalBp=bp;
 function startTurn(pack,s){
  const p=s.active,pl=s.players[p];
  pl.ownTurns++;s.turn++;s.phase='start';s.extraDrawn=false;s.moved=false;s.movedUids=[];s.pending=null;
+ s.raidedThisTurn=[false,false];s.mainAbilityUsedUids=[];s.mainReadyOnceByName=[[],[]];
  const max=pl.ownTurns>=3?3:(pl.ownTurns===1&&p===s.first?1:2);
  for(let i=0;i<pl.apCards.length;i++){pl.apCards[i].inPlay=i<max;pl.apCards[i].ready=i<max;}
  for(const c of field(pl)){c.ready=true;c.buffs=(c.buffs||[]).filter(b=>b.untilTurn>=s.turn);}
@@ -140,6 +141,7 @@ function performRaid(pack,s,p,cardOnTop,baseUid,line,slot,replaceUid){
  pl[base.line][base.slot]=null;
  cardOnTop.stack=[base.c];cardOnTop.ready=true;
  pl[line][slot]=cardOnTop;
+ s.raidedThisTurn[p]=true;
  const baseJobs=s.active===p?programJobs(pack,base.c,'onRaided',p,cardOnTop.uid):[];
  const entryJobs=programJobs(pack,cardOnTop,'onPlay',p);
  const raidJobs=programJobs(pack,cardOnTop,'onRaid',p);
@@ -271,6 +273,14 @@ function resolveChoice(s,a,pack){
   s.pending=null;s.effectQueue.unshift(...ordered);
   continueEffectQueue(pack,s);return;
  }
+ if(q.kind==='main-two-buff'){
+  const target=field(p).find(c=>c.uid===a.uid);
+  if(!target||!card(pack,target).traits.includes(q.trait))
+   throw Error('Invalid main-phase trait BP target');
+  target.buffs??=[];
+  target.buffs.push({bp:q.bp,untilTurn:s.turn});
+  s.pending=null;continueEffectQueue(pack,s);return;
+ }
  if(q.kind==='effect-buff-trait'){
   if(a.uid===null){s.pending=null;continueEffectQueue(pack,s);return;}
   const target=field(p).find(c=>c.uid===a.uid);
@@ -377,6 +387,7 @@ export function newUniversalMatch(pack,{decks,seed=1,first=0}={}){
   rng:(seed>>>0)||1,first,active:first,turn:0,phase:'start',status:'playing',
   winner:null,endReason:null,pending:null,extraDrawn:false,moved:false,movedUids:[],
   publicReveals:[],effectQueue:[],players:[],
+  raidedThisTurn:[false,false],mainAbilityUsedUids:[],mainReadyOnceByName:[[],[]],
   initialCounts:decks.map(d=>Object.fromEntries(Object.entries(d).filter(([,n])=>n>0)))
  };
  for(let p=0;p<2;p++){
@@ -410,6 +421,9 @@ function legalPending(pack,s){
  if(q.kind==='raid-effect-order')return [
    {type:'chooseRaidOrder',mode:'baseFirst'},{type:'chooseRaidOrder',mode:'entryFirst'}
   ];
+ if(q.kind==='main-two-buff')
+  return field(p).filter(c=>card(pack,c).traits.includes(q.trait))
+   .map(c=>({type:'chooseMainBuff',uid:c.uid}));
  if(q.kind==='effect-buff-trait')return [
    {type:'chooseTraitBuff',uid:null},...q.choices.map(uid=>({type:'chooseTraitBuff',uid}))
   ];
@@ -479,6 +493,17 @@ export function legalUniversalActions(pack,s){
    for(const choice of legalDestinations(pl,'energy'))out.push({type:'step',uid:c.uid,...choice});
  }
  if(s.phase==='main'){
+  for(const c of pl.front.filter(Boolean)){
+   const d=card(pack,c),ability=d.mainAbility;
+   if(!ability||!s.raidedThisTurn[p]||s.mainAbilityUsedUids.includes(c.uid))continue;
+   const readyAvailable=!s.mainReadyOnceByName[p].includes(d.name);
+   const buffAvailable=field(pl).some(x=>card(pack,x).traits.includes(ability.trait));
+   if(readyAvailable){
+    out.push({type:'activate',uid:c.uid,mode:'ready'});
+    if(buffAvailable)out.push({type:'activate',uid:c.uid,mode:'readyAndBuff'});
+   }
+   if(buffAvailable)out.push({type:'activate',uid:c.uid,mode:'buff'});
+  }
   const ap=pl.apCards.filter(c=>c.ready).length;
   const produced=universalEnergyByColor(pack,s,p);
   for(const c of pl.hand){
@@ -529,6 +554,24 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
    else if(s.phase==='main')s.phase='attack';
    else if(s.phase==='attack')advanceAfterEnd(pack,s,p);
    break;
+  case 'activate':{
+   const selected=pl.front.find(c=>c?.uid===action.uid);
+   if(!selected||!card(pack,selected).mainAbility)throw Error('Main ability source missing');
+   const d=card(pack,selected),ability=d.mainAbility;
+   if(!s.raidedThisTurn[p]||s.mainAbilityUsedUids.includes(selected.uid))
+    throw Error('Main ability already used or missing own Raid');
+   s.mainAbilityUsedUids.push(selected.uid);
+   if(action.mode==='ready'||action.mode==='readyAndBuff'){
+    if(s.mainReadyOnceByName[p].includes(d.name))
+     throw Error('Per-name ready already used this turn');
+    s.mainReadyOnceByName[p].push(d.name);
+    selected.ready=true; // Q2289: READY occurs before any BP target selection.
+   }
+   if(action.mode==='buff'||action.mode==='readyAndBuff')
+    s.pending={kind:'main-two-buff',player:p,sourceUid:selected.uid,
+     trait:ability.trait,bp:ability.bp};
+   break;
+  }
   case 'move':{
    const l=location(s,p,action.uid);
    if(!l||l.line!=='energy')throw Error('Invalid move');
@@ -581,8 +624,15 @@ export function assertUniversalMatch(pack,s){
    !Array.isArray(s.initialCounts)||s.initialCounts.length!==2||
    s.players?.length!==2||!playerIndex(s.active)||
    !['playing','finished'].includes(s.status))throw Error('Incorrect pack/version or match state');
- if(s.pending&&(!playerIndex(s.pending.player)||!['block','life-trigger','effect-target','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','effect-retire-bp','effect-rest-bp','raid-effect-order','effect-buff-trait'].includes(s.pending.kind)))
+ if(s.pending&&(!playerIndex(s.pending.player)||!['block','life-trigger','effect-target','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','effect-retire-bp','effect-rest-bp','raid-effect-order','effect-buff-trait','main-two-buff'].includes(s.pending.kind)))
   throw Error('Invalid pending controller');
+ if(!Array.isArray(s.raidedThisTurn)||s.raidedThisTurn.length!==2||
+   s.raidedThisTurn.some(x=>typeof x!=='boolean')||
+   !Array.isArray(s.mainAbilityUsedUids)||
+   new Set(s.mainAbilityUsedUids).size!==s.mainAbilityUsedUids.length||
+   !Array.isArray(s.mainReadyOnceByName)||s.mainReadyOnceByName.length!==2||
+   s.mainReadyOnceByName.some(x=>!Array.isArray(x)||new Set(x).size!==x.length))
+  throw Error('Invalid once-per-turn ability accounting');
  if(!Array.isArray(s.movedUids)||new Set(s.movedUids).size!==s.movedUids.length)
   throw Error('Invalid movement accounting');
  if(!Array.isArray(s.effectQueue)||s.effectQueue.some(e=>!playerIndex(e.owner)||
