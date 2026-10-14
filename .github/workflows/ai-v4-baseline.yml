@@ -13,7 +13,7 @@ on:
       games:
         description: Number of demonstration games
         required: false
-        default: '4'
+        default: '100'
 jobs:
   baseline:
     runs-on: ubuntu-latest
@@ -39,7 +39,7 @@ jobs:
         working-directory: production
         env:
           AI_V4_BASELINE_SHA: de4434c298379b3e232fa539b0936c14b995e1ec
-          AI_V4_GAMES: ${{ inputs.games || '4' }}
+          AI_V4_GAMES: ${{ inputs.games || '100' }}
           AI_V4_DATASET_PATH: ai-v4-teacher.jsonl
         run: node scripts/ai-v4-teacher-eval.mjs
       - uses: actions/upload-artifact@v4
