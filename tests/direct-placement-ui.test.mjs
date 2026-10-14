@@ -39,7 +39,7 @@ test('hand card can play by directly clicking any legal board slot and Raid is n
   assert.match(nodes.app.innerHTML,/DRAW Trigger/);
   assert.match(nodes.app.innerHTML,/已發動/);
   click({action:'triggerHistory'});
-  assert.match(nodes.app.innerHTML,/本局公開生命翻牌紀錄/);
+  assert.match(nodes.app.innerHTML,/公開生命翻牌紀錄（最近 60 次）/);
   assert.match(nodes.app.innerHTML,/石田雨龍/);
   click({action:'closeModal'});
   click({hand:normalA.uid});
