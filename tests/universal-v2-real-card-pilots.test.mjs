@@ -958,3 +958,48 @@ test('strict V2 rejects missing or inconsistent double Raid base and conditional
  const malformed={...known,conditionalUnderFaceDown:{bp:1000,impact:2,leaveReplacementMinBp:500}};
  assert.throws(()=>createUniversalPack({id:'bad-impact',cards:[malformed]}),/unsupported facedown under-card profile/);
 });
+
+test('real TTG073 RAID life on opposing turn chains existing Gurren and preserves its optional onPlay target prompt',()=>{
+ const packs=[bleach.pack,red.pack];let s=fresh(red,994);
+ const attacker=take(s,0,'BLC-1-039');attacker.ready=true;s.players[0].front[0]=attacker;
+ const base=take(s,1,'TTG-1-042');s.players[1].front[0]=base;
+ for(const [slot,id] of ['TTG-1-051','TTG-1-045','TTG-1-064','TTG-1-065'].entries())
+  s.players[1].energy[slot]=take(s,1,id);
+ const gurren=take(s,1,'TTG-1-072');s.players[1].hand.push(gurren);
+ const revealed=take(s,1,'TTG-1-073');
+ s.players[1].deck.push(s.players[1].life.shift());s.players[1].life.unshift(revealed);
+ for(let i=0;i<4;i++)s=dispatchUniversalAction(packs,s,{type:'next'});
+ s=advanceToMain(packs,s);
+ const raid=legalUniversalActions(packs,s).find(a=>a.type==='raid'&&a.uid===gurren.uid&&a.baseUid===base.uid);
+ assert.ok(raid);
+ s=dispatchUniversalAction(packs,s,raid,{actor:1});
+ assert.equal(s.pending?.kind,'effect-rest-bp');
+ s=dispatchUniversalAction(packs,s,{type:'chooseRestBp',uid:null},{actor:1});
+ s=dispatchUniversalAction(packs,s,{type:'next'});
+ s=dispatchUniversalAction(packs,s,{type:'next'});
+ assert.equal(s.active,0);
+ s=advanceToMain(packs,s);
+ s=dispatchUniversalAction(packs,s,{type:'next'});
+ s=dispatchUniversalAction(packs,s,{type:'attack',uid:attacker.uid},{actor:0});
+ s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:null},{actor:1});
+ assert.equal(s.pending?.trigger,'raid');
+ const possible=legalUniversalActions(packs,s);
+ assert.ok(possible.some(a=>a.mode==='skip'));
+ assert.ok(possible.some(a=>a.mode==='get'));
+ const chain=possible.find(a=>a.mode==='raid'&&a.baseUid===gurren.uid);
+ assert.ok(chain);
+ const liferaid=dispatchUniversalAction(packs,s,chain,{actor:1});
+ assert.equal(liferaid.pending?.kind,'effect-retire-bp','onPlay choice must survive parent life trigger');
+ assert.equal(liferaid.pending.player,1);
+ assert.equal(liferaid.players[1].front[0].uid,revealed.uid);
+ assert.equal(liferaid.players[1].front[0].stack[0].under[0].uid,gurren.uid);
+ assert.equal(universalBp(packs,liferaid,liferaid.players[1].front[0]),5000);
+ assert.equal(universalBp(packs,liferaid,liferaid.players[1].front[0]),5000);
+ const choice=legalUniversalActions(packs,liferaid).find(a=>a.uid===attacker.uid);
+ assert.ok(choice);
+ const fired=dispatchUniversalAction(packs,liferaid,choice,{actor:1});
+ assert.equal(fired.players[0].front[0],null);
+ assert.ok(fired.players[0].outside.some(c=>c.uid===attacker.uid));
+ assert.equal(fired.pending,null);
+ assert.equal(assertUniversalMatch(packs,fired),true);
+});
