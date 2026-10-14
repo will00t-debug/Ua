@@ -220,10 +220,19 @@ function continueEffectQueue(pack,s){
    s.effectQueue.unshift(...lethal.map(c=>({
     op:'retireBatchOne',owner,targetPlayer:foe,uid:c.uid
    })));
+  }else if(job.op==='retireOppFrontAllUnderBp'){
+   // The target set is evaluated ONCE, at the original effect resolution.
+   // Protected Raid replacement choices cannot introduce fresh victims.
+   const foe=1-owner;
+   const targets=s.players[foe].front.filter(c=>c&&bp(pack,s,c)<=job.bp);
+   s.effectQueue.unshift(...targets.map(c=>({
+    op:'retireBatchOne',owner,targetPlayer:foe,uid:c.uid,mode:'threshold'
+   })));
   }else if(job.op==='retireBatchOne'){
-   // This is an internal state-based consequence, never a printable DSL op.
+   // Internal state-based consequence, never a user-authored card DSL op.
    const slot=s.players[job.targetPlayer].front.findIndex(c=>c?.uid===job.uid);
-   if(slot>=0&&bp(pack,s,s.players[job.targetPlayer].front[slot])<=0)
+   if(slot>=0&&(job.mode==='threshold'||
+    bp(pack,s,s.players[job.targetPlayer].front[slot])<=0))
     retire(pack,s,job.targetPlayer,'front',slot);
   }else if(job.op==='buffOwnTraitAllTurn'){
    // A snapshot of current qualifying field units. Later entrants do not
@@ -982,7 +991,8 @@ export function assertUniversalMatch(pack,s){
   throw Error('Invalid movement accounting');
  if(!Array.isArray(s.effectQueue)||s.effectQueue.some(e=>!playerIndex(e.owner)||
    !['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','retireOppFrontUnderBp','restOppFrontUnderBp','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','recoverOutsideOne','discardToDraw',
-    'discardGate','enemyFrontAllBpDown','buffOwnTraitAllTurn','retireBatchOne','openBlock'].includes(e.op)))
+    'discardGate','enemyFrontAllBpDown','retireOppFrontAllUnderBp',
+    'buffOwnTraitAllTurn','retireBatchOne','openBlock'].includes(e.op)))
   throw Error('Invalid queued effects');
  for(let p=0;p<2;p++){
   const pl=s.players[p],uids=new Set(),items=[];
