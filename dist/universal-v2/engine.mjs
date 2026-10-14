@@ -402,11 +402,10 @@ export function legalUniversalActions(pack,s){
   if(!s.extraDrawn&&pl.apCards.some(c=>c.ready)&&pl.deck.length)out.push({type:'extraDraw'});
  }
  if(s.phase==='move'){
-  const frontEmpty=pl.front.flatMap((c,slot)=>c?[]:[slot]);
-  const energyEmpty=pl.energy.flatMap((c,slot)=>c?[]:[slot]);
-  for(const c of pl.energy.filter(c=>c&&!s.movedUids.includes(c.uid)&&card(pack,c).type==='character'))for(const slot of frontEmpty)out.push({type:'move',uid:c.uid,slot});
-  for(const c of pl.front.filter(c=>c&&!s.movedUids.includes(c.uid)&&card(pack,c).step))for(const slot of energyEmpty)
-   out.push({type:'step',uid:c.uid,slot});
+  for(const c of pl.energy.filter(c=>c&&!s.movedUids.includes(c.uid)&&card(pack,c).type==='character'))
+   for(const choice of legalDestinations(pl,'front'))out.push({type:'move',uid:c.uid,...choice});
+  for(const c of pl.front.filter(c=>c&&!s.movedUids.includes(c.uid)&&card(pack,c).step))
+   for(const choice of legalDestinations(pl,'energy'))out.push({type:'step',uid:c.uid,...choice});
  }
  if(s.phase==='main'){
   const ap=pl.apCards.filter(c=>c.ready).length;
@@ -424,7 +423,10 @@ export function legalUniversalActions(pack,s){
     for(const line of ['energy','front'])for(let slot=0;slot<4;slot++){
      const base=pl[line][slot];
      if(!validRaidBase(pack,base,d))continue;
-     for(const choice of legalDestinations(pl,'front',{line,slot}))
+     // A front-line base is already in its destination and cannot be
+     // teleported to another occupied slot as a side effect of Raid.
+     const dests=line==='front'?[{slot}]:legalDestinations(pl,'front');
+     for(const choice of dests)
       out.push({type:'raid',uid:c.uid,baseUid:base.uid,...choice});
     }
    }
@@ -458,12 +460,14 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
    break;
   case 'move':{
    const l=location(s,p,action.uid);
-   if(!l||l.line!=='energy'||pl.front[action.slot])throw Error('Invalid move');
+   if(!l||l.line!=='energy')throw Error('Invalid move');
+   commitDestination(s,p,'front',action.slot,action.replaceUid);
    pl.energy[l.slot]=null;pl.front[action.slot]=l.c;s.moved=true;s.movedUids.push(l.c.uid);break;
   }
   case 'step':{
    const l=location(s,p,action.uid);
-   if(!l||l.line!=='front'||pl.energy[action.slot])throw Error('Invalid STEP');
+   if(!l||l.line!=='front')throw Error('Invalid STEP');
+   commitDestination(s,p,'energy',action.slot,action.replaceUid);
    pl.front[l.slot]=null;pl.energy[action.slot]=l.c;s.moved=true;s.movedUids.push(l.c.uid);break;
   }
   case 'play':case 'event':case 'raid':{
