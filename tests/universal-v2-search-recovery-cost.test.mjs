@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {createUniversalPack} from '../dist/universal-v2/pack.mjs';
 import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
- assertUniversalMatch,universalActor,universalPublicView} from '../dist/universal-v2/engine.mjs';
+ assertUniversalMatch,universalActor,universalPublicView,universalPrivateChoices} from '../dist/universal-v2/engine.mjs';
 
 const ids=Array.from({length:13},(_,i)=>'Q'+String(i).padStart(2,'0'));
 const counts=Object.fromEntries(ids.slice(0,12).map(id=>[id,4]));
@@ -92,6 +92,13 @@ test('mandatory private deck search selects only own printed-trait physical card
  const attackerSideView=universalPublicView(packs,q,1);
  const text=JSON.stringify(attackerSideView);
  assert.deepEqual(attackerSideView.pending,{kind:'effect-search-deck',player:0});
+ assert.equal(universalPrivateChoices(packs,q,1),null,'opponent cannot access search candidates');
+ const privateView=universalPrivateChoices(packs,q,0);
+ assert.equal(privateView.kind,'effect-search-deck');
+ assert.ok(privateView.options.every(x=>x.card?.cardId==='Q02'));
+ assert.ok(privateView.options.every(x=>x.card?.name==='Scout Alpha'));
+ assert.deepEqual(privateView.options.map(x=>x.action),choices);
+ assert.throws(()=>universalPrivateChoices(packs,q,2),/Invalid private choice viewer/);
  assert.equal(attackerSideView.players[0].hand,null);
  assert.ok(!text.includes(choices[0].uid),
   'private search candidate UID must not appear in opponent public view');
@@ -145,6 +152,10 @@ test('outside recovery is optional, limited to owned matching outside cards, and
   {type:'chooseOutsideRecovery',uid:null},
   {type:'chooseOutsideRecovery',uid:eligible.uid}
  ]);
+ assert.equal(universalPrivateChoices(packs,q,1),null);
+ const options=universalPrivateChoices(packs,q,0).options;
+ assert.equal(options[0].card,null);
+ assert.deepEqual(options[1].card,{cardId:'Q02',name:'Scout Alpha',color:'green'});
  assert.throws(()=>dispatchUniversalAction(packs,q,
   {type:'chooseOutsideRecovery',uid:enemy.uid},{actor:0}),/not currently legal/);
  assert.throws(()=>dispatchUniversalAction(packs,q,
@@ -180,6 +191,8 @@ test('discard-one cost pays before drawing two cards and optional skip does not 
  const beforeHand=q.players[0].hand.length;
  const beforeDeck=q.players[0].deck.length;
  assert.ok(legal(q).some(a=>a.uid===null));
+ assert.equal(universalPrivateChoices(packs,q,1),null);
+ assert.ok(universalPrivateChoices(packs,q,0).options.some(x=>x.card?.cardId));
  const snapshot=structuredClone(q);
  const pass=dispatchUniversalAction(packs,q,{type:'chooseDiscardCost',uid:null},{actor:0});
  assert.equal(pass.pending,null);
@@ -239,4 +252,20 @@ test('strict schema rejects covert filters, unknown source zones and unsafe cost
   {op:'recoverOutsideOne',filter:{field:'name',value:'Unit 1'},optional:true,extra:1}
  ]}};
  assert.throws(()=>createUniversalPack({id:'raw-must-validate',cards:[raw]}),/invalid searched-card filter/);
+});
+
+test('printed filter objects are deeply frozen, including when supplied as mutable template input',()=>{
+ const filter={field:'name',value:'Scout Alpha'};
+ const author=ids.map((id,i)=>({
+  id,name:'Unit '+i,type:'character',energy:0,ap:1,bp:1000,gen:1,color:'green',
+  implementation:i===0?'dsl':'vanilla',
+  ...(i===0?{templateEffects:{onPlay:[
+   {template:'searchDeckOne',filter,shuffle:true,optional:false}
+  ]}}:{})
+ }));
+ const pack=createUniversalPack({id:'immutable-filter',cards:author});
+ assert.equal(Object.isFrozen(pack.cards.Q00.effects.onPlay[0].filter),true);
+ filter.value='Malicious Changed Target';
+ assert.equal(pack.cards.Q00.effects.onPlay[0].filter.value,'Scout Alpha');
+ assert.throws(()=>{pack.cards.Q00.effects.onPlay[0].filter.value='Tampered';},TypeError);
 });
