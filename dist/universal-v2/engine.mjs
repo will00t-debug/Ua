@@ -233,6 +233,9 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
     if(!base||card(pack,base.c).name!==d.raidName)throw Error('Illegal Raid base');
     pl[base.line][base.slot]=null;
     current.stack=[base.c];current.ready=true;pl.front[action.slot]=current;
+    // A Raid is also an entry: ordinary on-entry abilities must still resolve.
+    // Raid-only abilities must never resolve on normal non-Raid deployment.
+    applyEffects(pack,s,current,'onPlay',p);
     applyEffects(pack,s,current,'onRaid',p);
    }else{
     current.ready=false;pl[action.line][action.slot]=current;
