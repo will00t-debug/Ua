@@ -79,7 +79,7 @@
 - 專屬測試：`tests/universal-v2-sao-port.test.mjs`（合法 AP、手牌棄牌、STEP、UID）、`tests/universal-v2-mst-port.test.mjs`（onPlay/onAttack、AP 恢復／放棄、合法回手／非法選擇、私密牌頂、STEP、能源）、`tests/universal-v2-sao-mst-cross-title.test.mjs`（兩份各 50 張真卡身份、跨作品攻擊、生命 GET、UID 守恆與對手公開視圖）。
 - 目前 SAO 33 種、MST 22 種 Pilot 各可構成 **測試用的一組 50 張卡號組合**（不是賽事強度驗證，也未宣稱可玩完整整局；不是 183 或 80 張全移植）；正式站入口、卡包共用註冊請由 V2 主控另行決定。
 - 當前初始提交：MST 來源 `06506735`／`7cb8953e`，MST Pack `6ac6a5c4`，SAO 專屬測試 `578e2d7d`，MST 測試 `3d0fe675`（後修 `fcbfdb7b`），跨作品 `1b74ba59`；SAO Pack 的 GitHub 提交由當前分支檢視即可。提交 SHA 並非測試證據。
-- **CI 狀態**：第一批 44 種 Pilot 的 [Node 22 CI 第三次執行](https://github.com/will00t-debug/Ua/actions/runs/38610933577) **11/11 專測、1018/1018 全量回歸通過**。SAO 第二批新增 11 種後，對應測試仍需最新一次綠燈證明；原 `.github/workflows/tests.yml` 只對 `main` push／PR 執行，必須額外對 V2 base 設定測試；本分支新增的 V2-D 專用工作流程會在 Draft PR #74 更新後重新跑專測及全量；需以最新 head SHA 的完整綠燈為準。
+- **CI 狀態**：第一批 44 種 Pilot 的 [Node 22 CI 第三次執行](https://github.com/will00t-debug/Ua/actions/runs/38610933577) **11/11 專測、1018/1018 全量回歸通過**。SAO 第二批新增後的 [第六輪 CI](https://github.com/will00t-debug/Ua/actions/runs/38611519532) **15/15 系列專測通過，但共用全量 1021/1022 通過、1 失敗**：V2 base 新增 `oncePerTurnThen` 模板、共用 `tests/universal-v2-ability-templates.test.mjs:17` 的精確預期陣列未同步；不是本 PR 新增卡包的錯誤。已以 [主控 PR #70 留言](https://github.com/will00t-debug/Ua/pull/70#issuecomment-6174942574) 交接，**絕不在 V2-D 分支修改共用引擎或共用測試掩蓋失敗**。原 `.github/workflows/tests.yml` 只對 `main` push／PR 執行，必須額外對 V2 base 設定測試；本分支 `.github/workflows/v2-d-sao-mst.yml` 分為兩個獨立顯示的 Job：系列專測 green 與共用回歸（若上游未修仍 red）；主控應按最新 merge SHA 重跑，不把上游紅燈稱成通過。
 - 禁止修改／已保留：`dist/universal-v2/engine.mjs`、`pack.mjs`、`ability-templates.mjs`、`real-card-pilots.mjs`、共用入口及原有 SAO/MST 檔案。不得假借 flags、忽略任何剩餘印刷效果或部署 Production。
 
 ## 下一輪工作與分工
