@@ -478,3 +478,48 @@ test('full-line protected Raided target: choosing protection consumes facedown c
  assert.equal(redone.pending,null);
  assert.equal(assertUniversalMatch(packs,redone),true);
 });
+
+test('nested COLOR life trigger into protected full front line preserves its original pending decision before and after removal',()=>{
+ const {packs,s:initial,main,under,newcomer}=protectedFullLineFixture(906);
+ let s=initial;
+ function grab(player,id){
+  for(const zone of ['hand','deck','life','outside']){
+   const cards=s.players[player][zone],i=cards.findIndex(c=>c.cardId===id);
+   if(i>=0)return cards.splice(i,1)[0];
+  }
+  throw Error('Missing nested trigger fixture '+player+' '+id);
+ }
+ const attacker=grab(1,'F10');
+ attacker.ready=true;s.players[1].front[0]=attacker;
+ const color=grab(0,'F04'),life=s.players[0].life;
+ s.players[0].deck.push(life.shift());life.unshift(color);
+ for(let i=0;i<5;i++)s=dispatchUniversalAction(packs,s,{type:'next'});
+ assert.equal(s.active,1);assert.equal(s.phase,'attack');
+ s=dispatchUniversalAction(packs,s,{type:'attack',uid:attacker.uid},{actor:1});
+ s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:null},{actor:0});
+ assert.equal(s.pending?.kind,'life-trigger');
+ assert.equal(s.pending?.trigger,'color');
+ const choice=legalUniversalActions(packs,s).find(a=>
+  a.mode==='color'&&a.uid===newcomer.uid&&a.line==='front'&&a.slot===0);
+ assert.ok(choice,'full-line COLOR is legal with explicitly selected replacement');
+ assert.equal(choice.replaceUid,main.uid);
+ const nested=dispatchUniversalAction(packs,s,choice,{actor:0});
+ assert.equal(nested.pending?.kind,'leave-replacement');
+ assert.equal(nested.pending.previousPending?.kind,'life-trigger');
+ assert.equal(nested.pending.previousPending?.uid,color.uid);
+ const beforeDraw=nested.players[0].deck.length;
+ const accepted=dispatchUniversalAction(packs,nested,{type:'chooseLeaveReplacement',mode:'leave'},{actor:0});
+ assert.equal(accepted.pending,null,'parent life pending restored then fully resolved');
+ assert.equal(accepted.players[0].front[0].uid,newcomer.uid);
+ assert.equal(accepted.players[0].front[0].ready,true);
+ assert.equal(accepted.players[0].deck.length,beforeDraw-1,'free COLOR onPlay draw executes after replacement');
+ assert.ok(accepted.players[0].removed.some(c=>c.uid===main.uid));
+ assert.ok(accepted.players[0].removed.some(c=>c.uid===under.uid));
+ assert.equal(assertUniversalMatch(packs,accepted),true);
+ const protectedGame=dispatchUniversalAction(packs,nested,{type:'chooseLeaveReplacement',mode:'protect'},{actor:0});
+ assert.equal(protectedGame.pending,null);
+ assert.equal(protectedGame.players[0].front[0].uid,main.uid);
+ assert.ok(protectedGame.players[0].hand.some(c=>c.uid===newcomer.uid));
+ assert.ok(protectedGame.players[0].outside.some(c=>c.uid===under.uid));
+ assert.equal(assertUniversalMatch(packs,protectedGame),true);
+});
