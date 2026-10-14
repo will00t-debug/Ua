@@ -141,6 +141,32 @@ export function ttg012SearchChoice(s,{takeUid=null,bottomOrderUids=[]}={}){
 // TTG-1-023: a genuine private look of up to five deck cards. The selected
 // Gunmen alone is publicly revealed. The other looked-at cards remain private
 // and can be arranged in ANY bottom order by their owner.
+// TTG-1-044 official Q2285: ONLY after the opposing blocker has declined,
+// choose to SKIP the trigger entirely or privately view exactly seven cards.
+// The picked Gurren must be revealed; every other card stays private.
+export function ttg044SearchChoice(s,{mode='skip',takeUid=null,discardUid=null,bottomOrderUids=[]}={}){
+ const q=s?.pending;
+ if(q?.kind!=='ttgRed044Search'||q.player!==0)throw new Error('目前沒有我方卡米那044的未阻擋搜尋');
+ if(mode==='skip'){
+  if(takeUid!==null||discardUid!==null||bottomOrderUids.length)throw new Error('不發動搜尋不能查看或搬動牌庫');
+  return {type:'ttgRed044Search',player:0,attackerUid:q.attackerUid,mode:'skip',
+   takeUid:null,discardUid:null,bottomOrderUids:[]};
+ }
+ if(mode!=='search')throw new Error('未知卡米那044搜尋選擇');
+ const seven=s.players[0].deck.slice(0,q.revealed.length);
+ if(seven.map(c=>c.uid).join('|')!==q.revealed.join('|'))throw new Error('查看牌庫後內容已被更動');
+ const valid=seven.filter(c=>TTG_BY_ID[c.cardId]?.nameJa==='グレン').map(c=>c.uid);
+ if(takeUid!==null&&!valid.includes(takeUid))throw new Error('只能公開選擇一張グレン');
+ const remaining=seven.filter(c=>c.uid!==takeUid).map(c=>c.uid);
+ if(!Array.isArray(bottomOrderUids)||bottomOrderUids.length!==remaining.length||
+   new Set(bottomOrderUids).size!==remaining.length||remaining.some(uid=>!bottomOrderUids.includes(uid)))
+  throw new Error('剩餘牌庫底順序不完整或重複');
+ const eligible=[...s.players[0].hand.map(c=>c.uid),...(takeUid?[takeUid]:[])];
+ if(takeUid===null&&discardUid!==null)throw new Error('沒有拿牌不能棄牌');
+ if(takeUid!==null&&!eligible.includes(discardUid))throw new Error('拿牌後必須選一張手牌放場外');
+ return {type:'ttgRed044Search',player:0,attackerUid:q.attackerUid,mode:'search',
+  takeUid,discardUid,bottomOrderUids};
+}
 // TTG-1-026: the FIRST printed option privately looks at up to seven cards,
 // revealing ONLY a picked Ark. The outside-recovery option uses a separate
 // non-peeking legal action (mode arkOutside).
