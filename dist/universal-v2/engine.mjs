@@ -76,6 +76,10 @@ function continueEffectQueue(pack,s){
    const source=field(pl).find(c=>c.uid===job.sourceUid);
    if(!source)throw Error('buffSelf source must be on field');
    source.buffs.push({bp:job.bp,untilTurn:s.turn});
+  }else if(job.op==='peekTopOne'){
+   // Only the effect controller can inspect this private top card. Do not
+   // include its UID/cardId in pending UI or public snapshots.
+   if(pl.deck.length)s.pending={kind:'private-top-choice',player:owner,sourceUid:job.sourceUid};
   }else if(job.op==='recoverAp'){
    if(pl.apCards.some(c=>c.inPlay&&!c.ready))
     s.pending={kind:'effect-recover-ap',player:owner,sourceUid:job.sourceUid,remaining:job.count};
@@ -147,6 +151,11 @@ function resolveChoice(s,a,pack){
    if(bp(pack,s,attacker)>=bp(pack,s,blocker))retire(s,q.player,'front',slot);
   }
   if(s.pending===q)s.pending=null;
+  return;
+ }
+ if(q.kind==='private-top-choice'){
+  if(a.mode==='outside'&&p.deck.length)p.outside.push(p.deck.shift());
+  s.pending=null;continueEffectQueue(pack,s);
   return;
  }
  if(q.kind==='effect-recover-ap'){
@@ -239,6 +248,9 @@ function legalPending(pack,s){
   {type:'chooseBlock',uid:null},
   ...p.front.filter(c=>c?.ready).map(c=>({type:'chooseBlock',uid:c.uid}))
  ];
+ if(q.kind==='private-top-choice')return [
+   {type:'chooseTopCard',mode:'top'},{type:'chooseTopCard',mode:'outside'}
+  ];
  if(q.kind==='effect-recover-ap')return [
    {type:'chooseApRecovery',uid:null},
    ...p.apCards.filter(c=>c.inPlay&&!c.ready).map(c=>({type:'chooseApRecovery',uid:c.uid}))
@@ -372,12 +384,12 @@ export function assertUniversalMatch(pack,s){
    s.packIds.length!==2||s.packVersions.length!==2||
    s.players?.length!==2||!playerIndex(s.active)||
    !['playing','finished'].includes(s.status))throw Error('Incorrect pack/version or match state');
- if(s.pending&&(!playerIndex(s.pending.player)||!['block','life-trigger','effect-target','effect-discard','end-hand-limit','effect-recover-ap'].includes(s.pending.kind)))
+ if(s.pending&&(!playerIndex(s.pending.player)||!['block','life-trigger','effect-target','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice'].includes(s.pending.kind)))
   throw Error('Invalid pending controller');
  if(!Array.isArray(s.movedUids)||new Set(s.movedUids).size!==s.movedUids.length)
   throw Error('Invalid movement accounting');
  if(!Array.isArray(s.effectQueue)||s.effectQueue.some(e=>!playerIndex(e.owner)||
-   !['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp'].includes(e.op)))
+   !['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne'].includes(e.op)))
   throw Error('Invalid queued effects');
  for(let p=0;p<2;p++){
   const pl=s.players[p],uids=new Set(),items=[];
