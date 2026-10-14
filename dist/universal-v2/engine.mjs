@@ -112,6 +112,14 @@ function matchesFilter(pack,physical,filter){
 function filteredChoices(pack,cards,filter){
  return cards.filter(c=>matchesFilter(pack,c,filter)).map(c=>c.uid);
 }
+function matchesSearch(pack,physical,query){
+ if(!query.filters)return matchesFilter(pack,physical,query.filter);
+ const result=query.filters.map(f=>matchesFilter(pack,physical,f));
+ return query.logic==='all'?result.every(Boolean):result.some(Boolean);
+}
+function searchChoices(pack,cards,query){
+ return cards.filter(c=>matchesSearch(pack,c,query)).map(c=>c.uid);
+}
 function startTurn(pack,s){
  const p=s.active,pl=s.players[p];
  pl.ownTurns++;s.turn++;s.phase='start';s.extraDrawn=false;s.moved=false;s.movedUids=[];s.pending=null;
@@ -154,6 +162,17 @@ function continueEffectQueue(pack,s){
     sourceUid:job.sourceUid,filter:job.filter,choices,
     remaining:job.count,optional:job.optional};
    else shuffle(s,pl.deck);
+  }else if(job.op==='searchDeckWhere'){
+   const choices=searchChoices(pack,pl.deck,job);
+   if(choices.length)s.pending={kind:'effect-search-deck-multi',player:owner,
+    sourceUid:job.sourceUid,filters:job.filters,logic:job.logic,choices,
+    remaining:job.count,optional:job.optional};
+   else shuffle(s,pl.deck);
+  }else if(job.op==='inspectTopArrange'){
+   const uids=pl.deck.slice(0,job.count).map(c=>c.uid);
+   if(uids.length)s.pending={kind:job.toOutside?'effect-top-inspect':'effect-top-order',
+    player:owner,sourceUid:job.sourceUid,uids,rest:job.rest,
+    ...(job.toOutside?{}:{order:[]})};
   }else if(job.op==='recoverOutsideOne'){
    const matches=filteredChoices(pack,pl.outside,job.filter);
    if(matches.length)s.pending={kind:'effect-recover-outside',player:owner,
@@ -428,15 +447,48 @@ function resolveChoice(s,a,pack){
  if(q.kind==='effect-search-deck-multi'){
   if(a.uid!==null){
    const index=p.deck.findIndex(c=>c.uid===a.uid);
-   if(index<0||!q.choices.includes(a.uid)||!matchesFilter(pack,p.deck[index],q.filter))
+   if(index<0||!q.choices.includes(a.uid)||!matchesSearch(pack,p.deck[index],q))
     throw Error('Multi search needs a matching owned physical card');
    p.hand.push(p.deck.splice(index,1)[0]);
    q.remaining--;
   }else if(!q.optional)throw Error('Mandatory multi-search cannot be declined');
-  const choices=filteredChoices(pack,p.deck,q.filter);
+  const choices=searchChoices(pack,p.deck,q);
   if(a.uid===null||q.remaining<=0||!choices.length){
    shuffle(s,p.deck);s.pending=null;continueEffectQueue(pack,s);
   }else q.choices=choices;
+  return;
+ }
+ if(q.kind==='effect-top-inspect'){
+  if(a.uid!==null){
+   if(!q.uids.includes(a.uid))throw Error('Cannot send uninspected card outside');
+   const index=p.deck.findIndex(c=>c.uid===a.uid);
+   if(index<0||index>=q.uids.length)throw Error('Inspected card left deck window');
+   p.outside.push(p.deck.splice(index,1)[0]);
+  }
+  const remaining=q.uids.filter(uid=>uid!==a.uid);
+  if(remaining.length)s.pending={kind:'effect-top-order',player:q.player,
+   sourceUid:q.sourceUid,uids:remaining,order:[],rest:q.rest};
+  else{s.pending=null;continueEffectQueue(pack,s);}
+  return;
+ }
+ if(q.kind==='effect-top-order'){
+  if(!q.uids.includes(a.uid)||q.order.includes(a.uid))
+   throw Error('Top arrangement must pick one remaining inspected card');
+  q.order.push(a.uid);
+  if(q.order.length===q.uids.length){
+   // The inspected cards have not moved while decisions were pending.
+   // Reorder exactly this top window, keeping every uninspected deck card
+   // untouched and without exposing the identities to the opponent.
+   const window=p.deck.splice(0,q.uids.length);
+   if(new Set(window.map(c=>c.uid)).size!==q.uids.length||
+    window.some(c=>!q.uids.includes(c.uid)))
+    throw Error('Inspected deck window was changed');
+   const byUid=new Map(window.map(c=>[c.uid,c]));
+   const ordered=q.order.map(uid=>byUid.get(uid));
+   if(q.rest==='top')p.deck.unshift(...ordered);
+   else p.deck.push(...ordered);
+   s.pending=null;continueEffectQueue(pack,s);
+  }
   return;
  }
  if(q.kind==='effect-recover-outside'){
@@ -648,9 +700,15 @@ function legalPending(pack,s){
  ];
  if(q.kind==='effect-search-deck-multi')return [
   ...(q.optional?[{type:'chooseDeckSearchMulti',uid:null}]:[]),
-  ...p.deck.filter(c=>q.choices.includes(c.uid)&&matchesFilter(pack,c,q.filter))
+  ...p.deck.filter(c=>q.choices.includes(c.uid)&&matchesSearch(pack,c,q))
    .map(c=>({type:'chooseDeckSearchMulti',uid:c.uid}))
  ];
+ if(q.kind==='effect-top-inspect')return [
+  {type:'chooseInspectedOutside',uid:null},
+  ...q.uids.map(uid=>({type:'chooseInspectedOutside',uid}))
+ ];
+ if(q.kind==='effect-top-order')return q.uids
+  .filter(uid=>!q.order.includes(uid)).map(uid=>({type:'chooseTopOrder',uid}));
  if(q.kind==='effect-recover-outside')return [
   ...(q.optional?[{type:'chooseOutsideRecovery',uid:null}]:[]),
   ...p.outside.filter(c=>q.choices.includes(c.uid)&&matchesFilter(pack,c,q.filter))
@@ -887,7 +945,7 @@ export function assertUniversalMatch(pack,s){
    !Array.isArray(s.initialCounts)||s.initialCounts.length!==2||
    s.players?.length!==2||!playerIndex(s.active)||
    !['playing','finished'].includes(s.status))throw Error('Incorrect pack/version or match state');
- if(s.pending&&(!playerIndex(s.pending.player)||!['block','life-trigger','effect-target','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','effect-retire-bp','effect-rest-bp','raid-effect-order','effect-buff-trait','main-two-buff','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-recover-outside','effect-discard-cost','effect-discard-gate'].includes(s.pending.kind)))
+ if(s.pending&&(!playerIndex(s.pending.player)||!['block','life-trigger','effect-target','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','effect-retire-bp','effect-rest-bp','raid-effect-order','effect-buff-trait','main-two-buff','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-order','effect-recover-outside','effect-discard-cost','effect-discard-gate'].includes(s.pending.kind)))
   throw Error('Invalid pending controller');
  if(!Array.isArray(s.raidedThisTurn)||s.raidedThisTurn.length!==2||
    s.raidedThisTurn.some(x=>typeof x!=='boolean')||
@@ -899,7 +957,7 @@ export function assertUniversalMatch(pack,s){
  if(!Array.isArray(s.movedUids)||new Set(s.movedUids).size!==s.movedUids.length)
   throw Error('Invalid movement accounting');
  if(!Array.isArray(s.effectQueue)||s.effectQueue.some(e=>!playerIndex(e.owner)||
-   !['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','retireOppFrontUnderBp','restOppFrontUnderBp','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','recoverOutsideOne','discardToDraw','discardGate','openBlock'].includes(e.op)))
+   !['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','retireOppFrontUnderBp','restOppFrontUnderBp','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','recoverOutsideOne','discardToDraw','discardGate','openBlock'].includes(e.op)))
   throw Error('Invalid queued effects');
  for(let p=0;p<2;p++){
   const pl=s.players[p],uids=new Set(),items=[];
@@ -940,9 +998,9 @@ export function universalPrivateChoices(pack,s,viewer){
  if(!playerIndex(viewer))throw Error('Invalid private choice viewer');
  const q=s.pending;
  if(!q||q.player!==viewer||
-  !['effect-search-deck','effect-search-deck-multi','effect-recover-outside','effect-discard-cost','effect-discard-gate'].includes(q.kind))
+  !['effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-order','effect-recover-outside','effect-discard-cost','effect-discard-gate'].includes(q.kind))
   return null;
- const zone=['effect-search-deck','effect-search-deck-multi'].includes(q.kind)?'deck':
+ const zone=['effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-order'].includes(q.kind)?'deck':
   q.kind==='effect-recover-outside'?'outside':'hand';
  return {kind:q.kind,player:viewer,options:legalPending(pack,s).map(action=>{
   const physical=action.uid===null?null:s.players[viewer][zone].find(c=>c.uid===action.uid);
