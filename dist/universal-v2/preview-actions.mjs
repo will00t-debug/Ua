@@ -15,6 +15,8 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-search-deck':'搜尋牌庫', 'effect-search-deck-multi':'依序搜尋牌庫',
  'effect-top-inspect':'查看牌庫頂','effect-top-order':'排列牌庫頂',
  'effect-bounce-own':'選擇返回手牌的己方角色',
+ 'effect-buff-own':'選擇己方角色增加本回合 BP',
+ 'effect-once-choice':'是否發動本回合一次能力',
  'effect-recover-outside':'從場外回收','effect-retire-bp':'選擇敵方退場',
  'effect-rest-bp':'選擇敵方 REST','effect-buff-trait':'選擇己方 BP 加成',
  'main-two-buff':'主要能力選擇 BP 對象',
@@ -81,6 +83,8 @@ export function uiActionLabel(action,{pack,state}={}){
    if(action.mode==='active')return '使 '+name()+' ACTIVE';
    if(action.mode==='special')return '使 '+name()+' 退場';
    return '生命觸發：'+action.mode;
+  case 'chooseOnceEffect':
+   return action.mode==='activate'?'使用每回合一次能力':'暫不使用（不消耗限次）';
   case 'chooseLeaveReplacement':
    return action.mode==='leave'?'讓角色退場':'消耗裏向底卡保護角色'+(action.uid?'（'+name()+'）':'');
   case 'chooseTopCard':return action.mode==='top'?'保留在牌庫頂':'送至場外';
@@ -96,7 +100,7 @@ export function uiActionLabel(action,{pack,state}={}){
    return action.uid===null?'結束搜尋':'將 '+name()+' 加入手牌';
   case 'chooseInspectedOutside':return action.uid===null?'不送任何牌到場外':'將 '+name()+' 送場外';
   case 'chooseTopOrder':return '依序放回：'+name();
-  case 'chooseMainBuff':case 'chooseTraitBuff':case 'chooseRestBp':
+  case 'chooseOwnBuff':case 'chooseMainBuff':case 'chooseTraitBuff':case 'chooseRestBp':
   case 'chooseRetireBp':case 'chooseTarget':
    return action.uid===null?'不指定／完成':'指定 '+name();
   default:return '執行 '+action.type;

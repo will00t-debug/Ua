@@ -129,6 +129,7 @@ function startTurn(pack,s){
  const p=s.active,pl=s.players[p];
  pl.ownTurns++;s.turn++;s.phase='start';s.extraDrawn=false;s.moved=false;s.movedUids=[];s.pending=null;s.attacksThisTurn=0;
  s.raidedThisTurn=[false,false];s.mainAbilityUsedUids=[];s.mainReadyOnceByName=[[],[]];
+ s.onceEffectUses=[[],[]];
  const max=pl.ownTurns>=3?3:(pl.ownTurns===1&&p===s.first?1:2);
  for(let i=0;i<pl.apCards.length;i++){pl.apCards[i].inPlay=i<max;pl.apCards[i].ready=i<max;}
  for(const c of field(pl)){c.ready=true;c.buffs=(c.buffs||[]).filter(b=>b.untilTurn>=s.turn);}
@@ -185,6 +186,17 @@ function continueEffectQueue(pack,s){
   }else if(job.op==='discardToDraw'){
    if(pl.hand.length)s.pending={kind:'effect-discard-cost',player:owner,
     sourceUid:job.sourceUid,count:job.count,optional:job.optional};
+  }else if(job.op==='oncePerTurnGate'){
+   const key=job.scope==='name'?'name:'+job.sourceName:'uid:'+job.sourceUid;
+   if(!s.onceEffectUses[owner].includes(key)){
+    if(job.optional)s.pending={kind:'effect-once-choice',player:owner,
+     key,sourceUid:job.sourceUid,sourceName:job.sourceName,then:job.then};
+    else{
+     s.onceEffectUses[owner].push(key);
+     s.effectQueue.unshift(...job.then.map(e=>({...e,owner,
+      sourceUid:job.sourceUid,sourceName:job.sourceName})));
+    }
+   }
   }else if(job.op==='discardGate'){
    if(pl.hand.length)s.pending={kind:'effect-discard-gate',player:owner,
     sourceUid:job.sourceUid,optional:job.optional,then:job.then};
@@ -224,6 +236,13 @@ function continueEffectQueue(pack,s){
    const choices=s.players[1-owner].front.filter(c=>c&&bp(pack,s,c)<=job.bp).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-rest-bp',player:owner,
     sourceUid:job.sourceUid,choices,limit:job.bp,optional:true};
+  }else if(job.op==='buffOwnField'){
+   const choices=field(pl).filter(c=>card(pack,c).type==='character'&&
+    (!job.excludeSelf||c.uid!==job.sourceUid)&&
+    matchesFilter(pack,c,job.filter)).map(c=>c.uid);
+   if(choices.length)s.pending={kind:'effect-buff-own',player:owner,
+    sourceUid:job.sourceUid,choices,filter:job.filter,
+    bp:job.bp,optional:job.optional,excludeSelf:job.excludeSelf};
   }else if(job.op==='buffOwnTrait'){
    const choices=field(pl).filter(c=>card(pack,c).traits.includes(job.trait)).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-buff-trait',player:owner,sourceUid:job.sourceUid,
@@ -282,7 +301,8 @@ function continueEffectQueue(pack,s){
 }
 function programJobs(pack,physical,timing,owner,raidUid){
  return (card(pack,physical).effects[timing]||[])
-  .map(e=>({...e,owner,sourceUid:physical.uid,...(raidUid?{raidUid}:{})}));
+  .map(e=>({...e,owner,sourceUid:physical.uid,
+   sourceName:card(pack,physical).name,...(raidUid?{raidUid}:{})}));
 }
 function applyEffects(pack,s,cardOnField,timing,owner){
  s.effectQueue.push(...programJobs(pack,cardOnField,timing,owner));
@@ -619,6 +639,29 @@ function resolveChoice(s,a,pack){
   target.buffs.push({bp:q.bp,untilTurn:s.turn});
   s.pending=null;continueEffectQueue(pack,s);return;
  }
+ if(q.kind==='effect-once-choice'){
+  if(a.mode==='activate'){
+   if(s.onceEffectUses[q.player].includes(q.key))
+    throw Error('Once-per-turn gate already used');
+   s.onceEffectUses[q.player].push(q.key);
+   s.effectQueue.unshift(...q.then.map(e=>({...e,owner:q.player,
+    sourceUid:q.sourceUid,sourceName:q.sourceName})));
+  }else if(a.mode!=='skip')throw Error('Unknown once-per-turn decision');
+  s.pending=null;continueEffectQueue(pack,s);return;
+ }
+ if(q.kind==='effect-buff-own'){
+  if(a.uid===null){
+   if(!q.optional)throw Error('Mandatory buff cannot be skipped');
+   s.pending=null;continueEffectQueue(pack,s);return;
+  }
+  const target=field(p).find(c=>c.uid===a.uid);
+  if(!target||!q.choices.includes(a.uid)||
+   (target.uid===q.sourceUid&&q.excludeSelf)||
+   card(pack,target).type!=='character'||!matchesFilter(pack,target,q.filter))
+   throw Error('Illegal own field BP target');
+  target.buffs??=[];target.buffs.push({bp:q.bp,untilTurn:s.turn});
+  s.pending=null;continueEffectQueue(pack,s);return;
+ }
  if(q.kind==='effect-buff-trait'){
   if(a.uid===null){s.pending=null;continueEffectQueue(pack,s);return;}
   const target=field(p).find(c=>c.uid===a.uid);
@@ -743,6 +786,7 @@ export function newUniversalMatch(pack,{decks,seed=1,first=0}={}){
   winner:null,endReason:null,pending:null,extraDrawn:false,moved:false,movedUids:[],attacksThisTurn:0,
   publicReveals:[],effectQueue:[],players:[],
   raidedThisTurn:[false,false],mainAbilityUsedUids:[],mainReadyOnceByName:[[],[]],
+  onceEffectUses:[[],[]],
   initialCounts:decks.map(d=>Object.fromEntries(Object.entries(d).filter(([,n])=>n>0)))
  };
  for(let p=0;p<2;p++){
@@ -818,6 +862,13 @@ function legalPending(pack,s){
  if(q.kind==='main-two-buff')
   return field(p).filter(c=>card(pack,c).traits.includes(q.trait))
    .map(c=>({type:'chooseMainBuff',uid:c.uid}));
+ if(q.kind==='effect-once-choice')return [
+  {type:'chooseOnceEffect',mode:'skip'},{type:'chooseOnceEffect',mode:'activate'}
+ ];
+ if(q.kind==='effect-buff-own')return [
+  ...(q.optional?[{type:'chooseOwnBuff',uid:null}]:[]),
+  ...q.choices.map(uid=>({type:'chooseOwnBuff',uid}))
+ ];
  if(q.kind==='effect-buff-trait')return [
    {type:'chooseTraitBuff',uid:null},...q.choices.map(uid=>({type:'chooseTraitBuff',uid}))
   ];
@@ -1042,7 +1093,7 @@ export function assertUniversalMatch(pack,s){
    !Array.isArray(s.initialCounts)||s.initialCounts.length!==2||
    s.players?.length!==2||!playerIndex(s.active)||
    !['playing','finished'].includes(s.status))throw Error('Incorrect pack/version or match state');
- if(s.pending&&(!playerIndex(s.pending.player)||!['block','life-trigger','effect-target','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','effect-retire-bp','effect-rest-bp','raid-effect-order','effect-buff-trait','main-two-buff','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-order','effect-recover-outside','effect-bounce-own','effect-discard-cost','effect-discard-gate'].includes(s.pending.kind)))
+ if(s.pending&&(!playerIndex(s.pending.player)||!['block','life-trigger','effect-target','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','effect-retire-bp','effect-rest-bp','raid-effect-order','effect-buff-trait','effect-buff-own','effect-once-choice','main-two-buff','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-order','effect-recover-outside','effect-bounce-own','effect-discard-cost','effect-discard-gate'].includes(s.pending.kind)))
   throw Error('Invalid pending controller');
  if(!Array.isArray(s.raidedThisTurn)||s.raidedThisTurn.length!==2||
    s.raidedThisTurn.some(x=>typeof x!=='boolean')||
@@ -1051,6 +1102,10 @@ export function assertUniversalMatch(pack,s){
    !Array.isArray(s.mainReadyOnceByName)||s.mainReadyOnceByName.length!==2||
    s.mainReadyOnceByName.some(x=>!Array.isArray(x)||new Set(x).size!==x.length))
   throw Error('Invalid once-per-turn ability accounting');
+ if(!Array.isArray(s.onceEffectUses)||s.onceEffectUses.length!==2||
+  s.onceEffectUses.some(x=>!Array.isArray(x)||
+   x.some(v=>typeof v!=='string')||new Set(x).size!==x.length))
+  throw Error('Invalid generic once-per-turn accounting');
  if(!Array.isArray(s.movedUids)||new Set(s.movedUids).size!==s.movedUids.length)
   throw Error('Invalid movement accounting');
  if(!Number.isInteger(s.attacksThisTurn)||s.attacksThisTurn<0||s.attacksThisTurn>50)
@@ -1059,7 +1114,7 @@ export function assertUniversalMatch(pack,s){
    !['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','retireOppFrontUnderBp','restOppFrontUnderBp','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','recoverOutsideOne','discardToDraw',
     'discardGate','enemyFrontAllBpDown','retireOppFrontAllUnderBp',
     'buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
-    'recoverOutsideColorUnderEnergy','retireBatchOne','openBlock'].includes(e.op)))
+    'recoverOutsideColorUnderEnergy','buffOwnField','oncePerTurnGate','retireBatchOne','openBlock'].includes(e.op)))
   throw Error('Invalid queued effects');
  for(let p=0;p<2;p++){
   const pl=s.players[p],uids=new Set(),items=[];

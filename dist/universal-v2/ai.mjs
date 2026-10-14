@@ -26,7 +26,7 @@ function chooseBlock(pack,s,actions,difficulty){
  const damage=universalBp(pack,s,attacker);
  const healthy=actions.filter(a=>a.uid!==null).map(a=>({
   a,card:s.players[s.pending.player].front.find(c=>c?.uid===a.uid)
- })).filter(x=>x.card&&universalBp(pack,s,x.card)>=damage);
+ })).filter(x=>x.card&&universalBp(pack,s,x.card)>damage);
  healthy.sort((a,b)=>universalBp(pack,s,a.card)-universalBp(pack,s,b.card));
  return healthy[0]?.a||
   (difficulty==='hard'&&s.players[s.pending.player].life.length<=1?
@@ -57,6 +57,10 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   return options[0]?.action||legal[0];
  }
  if(s.pending?.kind==='raid-effect-order')return legal.find(a=>a.mode==='entryFirst')||legal[0];
+ if(s.pending?.kind==='effect-once-choice')
+  return difficulty==='easy'?legal.find(a=>a.mode==='skip')||legal[0]:
+   legal.find(a=>a.mode==='activate')||legal[0];
+ if(s.pending?.kind==='effect-buff-own')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-buff-trait')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='main-two-buff')return legal[0];
  if(s.pending?.kind==='effect-rest-bp')return legal.find(a=>a.uid!==null)||legal[0];
