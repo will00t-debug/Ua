@@ -11,7 +11,7 @@ const ttgDeck=Object.fromEntries(['001','005','009','014','019','042','043','047
 ttgDeck['TTG-1-036']=2;
 const slgDeck=Object.fromEntries(['005','006','015','016','026','032','041','043','045','052','066','068'].map(n=>['SLG-1-'+n,4]));
 slgDeck['SLG-1-038']=2;
-const fresh=()=>newUniversalMatch(packs,{decks:[ttgDeck,slgDeck],seed:56,first:0});
+const fresh=(first=0)=>newUniversalMatch(packs,{decks:[ttgDeck,slgDeck],seed:56,first});
 function take(s,player,id){
  for(const zone of ['hand','deck','life','outside']){
   const cards=s.players[player][zone],index=cards.findIndex(c=>c.cardId===id);
@@ -91,4 +91,29 @@ test('TTG-014 has NO optional cancel: without another eligible own character it 
  assert.ok(s.players[0].hand.some(c=>c.uid===source.uid));
  assert.equal(s.players[0].front.filter(Boolean).length,0);
  assert.equal(assertUniversalMatch(packs,s),true);
+});
+
+test('TTG-1-005 DRAW life can be declined, or draws exactly one owned top-deck physical card',()=>{
+ let s=fresh(1),attacker=take(s,1,'SLG-1-005'),flip=take(s,0,'TTG-1-005');
+ attacker.ready=true;s.players[1].front[0]=attacker;
+ const old=s.players[0].life.shift();s.players[0].deck.push(old);s.players[0].life.unshift(flip);
+ while(s.phase!=='attack'){
+  const next=legalUniversalActions(packs,s).find(a=>a.type==='next');
+  assert.ok(next);s=dispatchUniversalAction(packs,s,next);
+ }
+ s=dispatchUniversalAction(packs,s,{type:'attack',uid:attacker.uid},{actor:1});
+ s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:null},{actor:0});
+ assert.equal(s.pending?.kind,'life-trigger');assert.equal(s.pending.trigger,'draw');
+ const actions=legalUniversalActions(packs,s);
+ assert.ok(actions.some(a=>a.mode==='skip')&&actions.some(a=>a.mode==='draw'));
+ const originalDeck=s.players[0].deck.length,originalHand=s.players[0].hand.length;
+ const declined=dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'skip'},{actor:0});
+ assert.equal(declined.players[0].deck.length,originalDeck);
+ assert.equal(declined.players[0].hand.length,originalHand);
+ assert.ok(declined.players[0].outside.some(c=>c.uid===flip.uid));
+ const resolved=dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'draw'},{actor:0});
+ assert.equal(resolved.players[0].deck.length,originalDeck-1);
+ assert.equal(resolved.players[0].hand.length,originalHand+1);
+ assert.ok(resolved.players[0].outside.some(c=>c.uid===flip.uid));
+ assert.equal(assertUniversalMatch(packs,resolved),true);
 });
