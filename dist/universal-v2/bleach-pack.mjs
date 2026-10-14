@@ -784,13 +784,17 @@ function checkedAddon(p){
   retireBonusRukia:{onPlay:[{template:'retireEnemyUnderBp',bp:3000,bonusName:'朽木ルキア',bonusBp:5000}]},
   enemyBpDown1000:{onPlay:[{template:'enemyBpDown',bp:1000,optional:true}]}
  };
+// EX15BT/BLC-4-014 prints yellow+ and ACTIVE adds one yellow. The imported legacy gen=2
+ // encoded the ACTIVE total; V2 needs the printed REST base (1) plus an ACTIVE +1.
+ // Keep p.gen=2 only as a legacy-source fingerprint, never as V2 base energy.
+ const v2BaseGen=p.id==='BLC-4-014'?1:c.gen;
  const isPassive=p.kind==='activeEnergy'||p.kind==='impactNull';
  const special=p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
   id:p.id,name:c.nameJa,color:c.color,type:c.type,energy:c.energy,ap:c.ap,
-  bp:c.bp,gen:c.gen,trigger:c.trigger??null,
+  bp:c.bp,gen:v2BaseGen,trigger:c.trigger??null,
   traits:Array.isArray(c.traits)?c.traits:(c.traits&&c.traits!=='無'?[c.traits]:[]),
   implementation:p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'?'vanilla':'dsl',
   ...(p.kind==='step'?{step:true}:{}),
