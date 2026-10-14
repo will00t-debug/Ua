@@ -24,7 +24,7 @@ test('81 recorded UA56BT effect-card identities have complete typed data, not AP
   assert.ok(Array.isArray(c.traits),c.number);
   assert.ok(typeof c.effect==='string'&&c.effect.length>0,c.number);
   assert.equal(c.auto,false,c.number);
-  assert.equal(c.image,'assets/mark.svg',c.number+' placeholder source');
+  assert.equal(c.image,`https://rugiacreation.com/ua/cardlist/small/UA56BT_${c.id}.jpg?v=20261013`,c.number+' external regular artwork');
   assert.ok(c.source.startsWith('https://www.unionarena-tcg.com/'),c.number);
   assert.equal(TTG_BY_ID[c.id].id,c.id);
  }
