@@ -15,7 +15,7 @@ import {beginTtgLifeTrigger} from '../dist/ttg-green-life.mjs';
 // https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-035
 const counts=Object.fromEntries([
  ...['004','005','006','009','012','027','029','030','031','032','034'].map(n=>['TTG-1-'+n,4]),
- ['TTG-1-017',2],['TTG-1-033',2],['TTG-1-011',2],['TTG-1-034',3],['TTG-1-035',1]
+ ['TTG-1-017',2],['TTG-1-033',2],['TTG-1-011',3],['TTG-1-032',3],['TTG-1-034',3],['TTG-1-035',1]
 ]);
 function game(seed){
  const s=newTtgCoreMatch({decks:[counts,counts],seed,first:0});s.phase='main';
