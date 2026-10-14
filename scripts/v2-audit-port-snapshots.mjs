@@ -59,6 +59,27 @@ for(const job of snapshot){
 fs.rmSync(temp,{recursive:true,force:true});
 fs.mkdirSync(path.join(root,'audit'),{recursive:true});
 fs.writeFileSync(path.join(root,'audit/v2-port-snapshots.json'),JSON.stringify(result,null,2)+'\n');
+// Snapshot-only candidate rows are NOT merged into V2 foundation coverage.
+const candidate=[];
+for(const s of result.snapshots){
+ if(s.probe!=='pass')continue;
+ try{
+  const o=JSON.parse(s.probe_output);
+  const listed=o.cardIds;
+  if(!Array.isArray(listed))continue;
+  const batches=Array.isArray(listed[0])?
+   o.titles.map((title,i)=>[title,listed[i]]):[[o.title,listed]];
+  for(const [title,ids] of batches)for(const id of ids)
+   candidate.push({title,id,branch:s.branch,snapshot_commit:s.commit,
+    pack_probe_passed:true,snapshot_test_status:s.tests,
+    integrated_into_source_v2:false,fully_accepted:false});
+ }catch(e){s.candidateParseError=String(e);}
+}
+const candidateCols=['title','id','branch','snapshot_commit','pack_probe_passed',
+ 'snapshot_test_status','integrated_into_source_v2','fully_accepted'];
+fs.writeFileSync(path.join(root,'audit/v2-branch-proposals.csv'),
+ candidateCols.join(',')+'\n'+candidate.map(r=>candidateCols.map(k=>String(r[k])).join(',')).join('\n')+'\n');
+result.candidate_count=candidate.length;
 console.log(JSON.stringify(result.snapshots.map(({title,commit,checkout,probe,tests,test_count,pass,fail})=>({
  title,commit,checkout,probe,tests,test_count,pass,fail
 })),null,2));
