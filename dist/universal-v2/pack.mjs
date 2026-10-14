@@ -3,7 +3,7 @@
 // Japanese/translated prose and no optimistic `auto:true` for unported cards.
 export const V2_PHASES=Object.freeze(['start','move','main','attack']);
 export const V2_CARD_TYPES=Object.freeze(['character','event','field']);
-export const V2_TRIGGERS=Object.freeze(['draw','get','final','active']);
+export const V2_TRIGGERS=Object.freeze(['draw','get','final','active','special','color','raid']);
 export const V2_EFFECT_TIMINGS=Object.freeze(['onPlay','onRaid','onAttack']);
 export const V2_EFFECT_OPS=Object.freeze(['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne']);
 const integer=(v,low=0)=>Number.isInteger(v)&&v>=low;
@@ -35,6 +35,23 @@ function normalize(card,packId){
   throw Error(card.id+' trigger not yet supported by universal v2 (fail closed)');
  if(card.raidName!=null&&(card.type!=='character'||typeof card.raidName!=='string'||!card.raidName.trim()))
   throw Error(card.id+' invalid Raid target');
+ // A trigger is not inferred from its icon alone when printed handling varies.
+ // Only these explicit profiles have full runtime handlers in this milestone.
+ const triggerEffect=card.triggerEffect??null;
+ if(card.trigger==='special'){
+  if(!triggerEffect||triggerEffect.op!=='retireOppFront'||Object.keys(triggerEffect).some(k=>k!=='op'))
+   throw Error(card.id+' SPECIAL requires explicit supported target profile');
+ }else if(card.trigger==='color'){
+  if(!triggerEffect||triggerEffect.op!=='deployHandCharacter'||
+    typeof triggerEffect.color!=='string'||!triggerEffect.color.trim()||
+    !integer(triggerEffect.maxEnergy)||triggerEffect.maxEnergy>30||
+    !integer(triggerEffect.ap,1)||triggerEffect.ap>3||
+    Object.keys(triggerEffect).some(k=>!['op','color','maxEnergy','ap'].includes(k)))
+   throw Error(card.id+' COLOR requires supported printed deployment profile');
+ }else if(card.trigger==='raid'){
+  if(!card.raidName||card.type!=='character'||triggerEffect!=null)
+   throw Error(card.id+' RAID trigger requires explicitly registered Raid character');
+ }else if(triggerEffect!=null)throw Error(card.id+' unexpected trigger effect definition');
  const implemented=card.implementation;
  if(!['vanilla','dsl'].includes(implemented))
   throw Error(card.id+' must explicitly declare vanilla or dsl (unported effects are not playable)');
@@ -60,6 +77,7 @@ function normalize(card,packId){
   id:card.id,title:packId,name:card.name,color:card.color,
   type:card.type,energy:card.energy,ap:card.ap,bp:card.bp,gen:card.gen,
   trigger:card.trigger||null,raidName:card.raidName||null,
+  triggerEffect:triggerEffect?Object.freeze({...triggerEffect}):null,
   step:card.step===true,implementation:implemented,
   effects:Object.freeze(Object.fromEntries(Object.entries(effects)
    .map(([k,v])=>[k,Object.freeze(v.map(e=>Object.freeze({...e})))])))
