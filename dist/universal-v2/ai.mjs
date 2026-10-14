@@ -7,9 +7,16 @@ const option=(list,type)=>list.find(x=>x.type===type);
 const played=(state,action)=>state.players[state.active].hand.find(c=>c.uid===action.uid);
 const cardFor=(pack,state,action)=>packsOf(pack)[state.active].cards[played(state,action)?.cardId];
 function energyTarget(pack,state,difficulty){
+ if(difficulty!=='hard')return 2;
  const player=state.players[state.active],catalog=packsOf(pack)[state.active].cards;
- const maximum=Math.max(2,...player.hand.map(c=>catalog[c.cardId]?.energy||0));
- return difficulty==='hard'?Math.max(3,Math.min(6,maximum)):2;
+ // Hard AI knows its own 50-card registered deck. Planning only from cards
+ // CURRENTLY in hand makes it stop energy growth before expensive draws.
+ const peakInHand=Math.max(0,...player.hand.map(c=>catalog[c.cardId]?.energy||0));
+ const original=state.initialCounts?.[state.active]||{};
+ const deckPeak=Math.max(0,...Object.entries(original)
+  .filter(([,count])=>count>0)
+  .map(([id])=>catalog[id]?.energy||0));
+ return Math.max(3,Math.min(6,Math.max(peakInHand,deckPeak)));
 }
 function chooseBlock(pack,s,actions,difficulty){
  const no=actions.find(a=>a.uid===null)||actions[0];
@@ -102,7 +109,8 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   return legal.find(a=>{
    if(a.type!=='move')return false;
    const c=pl.energy.find(c=>c?.uid===a.uid),d=catalog[c?.cardId];
-   return d&&d.bp>=3000&&energy-d.gen>=target;
+   return d&&d.bp>=3000&&
+    energy-(d.gen||0)-(c.ready?(d.activeExtraEnergy||0):0)>=target;
   })||next;
  }
  if(s.phase==='attack'){
