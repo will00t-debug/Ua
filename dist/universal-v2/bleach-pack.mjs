@@ -708,6 +708,48 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
   "trigger": "active",
   "type": "event",
   "effect": "所有己方場上具有「護廷十三隊」特徵的卡，本回合 BP +1000。抽 1 張。"
+ },
+ {
+  "id": "BLC-1-013",
+  "kind": "restEnemy3500",
+  "number": "UA08BT/BLC-1-013",
+  "name": "バンビエッタ・バスターバイン",
+  "color": "yellow",
+  "energy": 2,
+  "ap": 1,
+  "bp": 2000,
+  "gen": 1,
+  "trigger": "draw",
+  "type": "character",
+  "effect": "登場：可選最多 1 個敵方前線 BP 3500 以下角色，將其轉為 REST。"
+ },
+ {
+  "id": "BLC-1-099",
+  "kind": "retireBonusYamamoto",
+  "number": "UA08BT/BLC-1-099",
+  "name": "天地灰尽",
+  "color": "green",
+  "energy": 4,
+  "ap": 1,
+  "bp": 0,
+  "gen": 0,
+  "trigger": "special",
+  "type": "event",
+  "effect": "使 1 個敵方前線 BP 3000 以下角色退場；己方場上有〈山本元柳齋重國〉時，BP 上限改為 5000。"
+ },
+ {
+  "id": "BLC-2-048",
+  "kind": "retireBonusRukia",
+  "number": "EX07BT/BLC-2-048",
+  "name": "白霞罸",
+  "color": "blue",
+  "energy": 4,
+  "ap": 1,
+  "bp": 0,
+  "gen": 0,
+  "trigger": "special",
+  "type": "event",
+  "effect": "使 1 個敵方前線 BP 3000 以下角色退場；己方場上有〈朽木露琪亞〉時，BP 上限改為 5000。"
  }
 ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
@@ -737,6 +779,9 @@ function checkedAddon(p){
   buffAttack1000:{onAttack:[{template:'buffSelf',bp:1000}]},
   recoverAp2:{onPlay:[{template:'recoverAp',count:2}]},
   traitBuffAllDraw:{onPlay:[{template:'buffOwnTraitAllTurn',trait:'護廷十三隊',bp:1000},{template:'draw',count:1}]},
+  restEnemy3500:{onPlay:[{template:'restEnemyUnderBp',bp:3500,optional:true}]},
+  retireBonusYamamoto:{onPlay:[{template:'retireEnemyUnderBp',bp:3000,bonusName:'山本元柳斎重國',bonusBp:5000}]},
+  retireBonusRukia:{onPlay:[{template:'retireEnemyUnderBp',bp:3000,bonusName:'朽木ルキア',bonusBp:5000}]},
   enemyBpDown1000:{onPlay:[{template:'enemyBpDown',bp:1000,optional:true}]}
  };
  const isPassive=p.kind==='activeEnergy'||p.kind==='impactNull';
@@ -751,6 +796,7 @@ function checkedAddon(p){
   ...(p.kind==='step'?{step:true}:{}),
   ...(p.kind==='activeEnergy'?{activeExtraEnergy:1}:{}),
   ...(p.kind==='impactNull'?{impactNull:true}:{}),
+  ...(p.kind.startsWith('retireBonus')?{triggerEffect:{op:'retireOppFront'}}:{}),
   ...(!special?{templateEffects:abilities[p.kind]}:{effects:{}})
  };
 }
