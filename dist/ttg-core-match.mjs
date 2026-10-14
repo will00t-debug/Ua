@@ -198,6 +198,7 @@ export function legalTtgCoreActions(s){
  if(s.pending?.kind==='ttgGreenEntry')return greenEntryChoices(s);
  if(['ttgGreen021PhaseStart','ttgGreen028Entry','ttgGreen029Entry','green030Sidelined','green012Search','green012Discard','greenHighRaidQueue','green034Sidelined','greenRetireOrder'].includes(s.pending?.kind))
   return legalTtgRuleActions(s,s.pending.player);
+ if(s.pending?.kind==='ttgRed071Attack')return legalTtgRuleActions(s,s.pending.player);
  if(s.pending?.kind==='greenHighAttackWindow')return legalHighRaidAttackEffects(s,s.pending.player,s.pending.uid);
  if(s.pending?.kind==='block'){
   const opp=s.players[1-p];
@@ -419,11 +420,19 @@ export function dispatchTtgCoreAction(source,action){
    c.buffs??=[];c.buffs.push({bp:amount,turn:s.turn,until:c.cardId==='TTG-1-047'?'endTurn':'ownNextStart'});
    if(c.cardId==='TTG-1-048')c.doubleBlockUntilOwnStartTurnCount=pl.turnCount+1;
   }
-  s.pending=['TTG-1-027','TTG-1-032'].includes(c.cardId)?
+  s.pending=c.cardId==='TTG-1-071'&&pl.characterAttacksThisTurn===1?
+   {kind:'ttgRed071Attack',player:p,uid:c.uid}:
+   ['TTG-1-027','TTG-1-032'].includes(c.cardId)?
    {kind:'greenHighAttackWindow',player:p,uid:c.uid}:{kind:'block',attackerUid:c.uid,sniperTargetUid:action.targetUid??null};
+  if(s.pending.kind==='ttgRed071Attack'){
+   s.attackingUid=c.uid;s.characterAttacksThisTurn=pl.characterAttacksThisTurn;
+  }
  }else if(legalTtgRuleActions(s,s.pending?.player??p).some(x=>sameAction(x,action))){
   const owner=s.pending?.player??p;
+  const was071=s.pending?.kind==='ttgRed071Attack';
+  const attackerUid=was071?s.pending.uid:null;
   const after=dispatchTtgRuleAction(s,{...action,player:owner});Object.assign(s,after);
+  if(was071){s.pending={kind:'block',attackerUid,sniperTargetUid:null};delete s.attackingUid;delete s.characterAttacksThisTurn;}
  }else throw new Error('Unsupported core action');
  if(s.status==='playing'&&['ttgRed061FollowupEntry','ttgRed062FollowupEntry'].includes(s.pending?.kind))
   Object.assign(s,launchRedSimonFollowup(s));

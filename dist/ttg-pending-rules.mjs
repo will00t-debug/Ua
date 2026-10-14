@@ -182,7 +182,7 @@ export function resolveTtg071FirstAttack(state,{player,uid,targetUid=null}={}){
  result.usedTtgAttackTriggers[state.turn+':'+uid]=true;
  if(targetUid!=null){
   const c=find(result.players[player],targetUid).card;
-  c.currentBp=(c.currentBp??c.bp)+2000;
+  c.currentBp=(c.currentBp??TTG_BY_ID[c.cardId]?.bp??c.bp??0)+2000;
   c.buffs??=[];
   c.buffs.push({sourceUid:uid,turn:state.turn,bp:2000,until:'endTurn'});
  }
