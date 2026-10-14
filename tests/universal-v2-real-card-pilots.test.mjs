@@ -7,7 +7,7 @@ import {
  universalBp,assertUniversalMatch,universalPublicView
 } from '../dist/universal-v2/engine.mjs';
 
-// The real pilot has 4 BLEACH and 2 TTG profiles, NOT a complete 50-card
+// The pilot now has 5 BLEACH and 5 TTG profiles, NOT a complete 50-card
 // real deck. Filler is strictly TEST-ONLY, never exported from the pilot.
 function withSyntheticFiller(title,{color}={}){
  const real=verifiedPilotCards(title).filter(c=>!color||c.color===color);
@@ -75,11 +75,11 @@ function testEntry(other,owner,id){
  return result;
 }
 test('official-record pilot cards have explicitly pinned printed energy/AP/BP/trigger and no implicit support',()=>{
- assert.deepEqual(REAL_V2_PILOT_IDS.bleach,['BLC-1-034','BLC-1-039','BLC-1-103','BLC-1-107']);
- assert.deepEqual(REAL_V2_PILOT_IDS['gurren-lagann'],['TTG-1-009','TTG-1-051']);
+ assert.deepEqual(REAL_V2_PILOT_IDS.bleach,['BLC-1-034','BLC-1-039','BLC-1-102','BLC-1-103','BLC-1-107']);
+ assert.deepEqual(REAL_V2_PILOT_IDS['gurren-lagann'],['TTG-1-009','TTG-1-051','TTG-1-042','TTG-1-064','TTG-1-065']);
  const b=verifiedPilotPack('bleach'),t=verifiedPilotPack('gurren-lagann');
- assert.equal(Object.keys(b.cards).length,4);
- assert.equal(Object.keys(t.cards).length,2);
+ assert.equal(Object.keys(b.cards).length,5);
+ assert.equal(Object.keys(t.cards).length,5);
  assert.ok(validateUniversalDeck(b,bleach.deck).length>0,'V2 real-only deck is not ready');
  assert.ok(validateUniversalDeck(t,green.deck).length>0);
  for(const id of REAL_V2_PILOT_IDS.bleach)assert.ok(portVerifiedPilotCard('bleach',id));
