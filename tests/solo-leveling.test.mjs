@@ -11,7 +11,8 @@ test('UA51BT catalog is distinct, traced to official card URLs and never claims 
   assert.equal(c.title,'solo-leveling');
   assert.equal(c.auto,false);
   assert.ok(['C','U','R','SR'].includes(c.rarity));
-  assert.equal(c.artStatus,'placeholder');
+  assert.equal(c.artStatus,'rugia-external');
+  assert.equal(c.image,`https://rugiacreation.com/ua/cardlist/small/UA51BT_${c.id}.jpg?v=20261013`);
   assert.ok(Array.isArray(c.traits));
   assert.match(c.source,/unionarena-tcg.com\/jp\/cardlist\/detail_iframe/);
   assert.ok(c.energy>=0&&c.ap>0&&c.bp>=0&&c.gen>=0);
