@@ -227,3 +227,41 @@ test('compound and inspect templates strictly reject invalid clauses, counts, mo
  authored[0].value='Tampered';
  assert.equal(clauses[0].value,'green');
 });
+
+test('top inspection handles exhausted decks and a one-card window without illegal choices',()=>{
+ for(const left of [0,1]){
+  const f=prepare('N04');
+  const pl=f.s.players[0];
+  while(pl.deck.length>left)pl.outside.push(pl.deck.pop());
+  assert.equal(assertUniversalMatch(packs,f.s),true);
+  const suspended=play(f);
+  if(left===0){
+   assert.equal(suspended.pending,null);
+   assert.equal(suspended.players[0].deck.length,0);
+   assert.equal(assertUniversalMatch(packs,suspended),true);
+  }else{
+   assert.equal(suspended.pending.kind,'effect-top-inspect');
+   const uid=suspended.players[0].deck[0].uid;
+   assert.deepEqual(actions(suspended),[
+    {type:'chooseInspectedOutside',uid:null},
+    {type:'chooseInspectedOutside',uid}
+   ]);
+   const kept=dispatchUniversalAction(packs,suspended,
+    {type:'chooseInspectedOutside',uid:null},{actor:0});
+   assert.equal(kept.pending.kind,'effect-top-order');
+   const reordered=dispatchUniversalAction(packs,kept,
+    {type:'chooseTopOrder',uid},{actor:0});
+   assert.equal(reordered.pending,null);
+   assert.equal(reordered.players[0].deck.length,0);
+   assert.ok(reordered.players[0].hand.some(c=>c.uid===uid),
+    'trailing draw collects the only inspected top card after arranging');
+   const sent=dispatchUniversalAction(packs,suspended,
+    {type:'chooseInspectedOutside',uid},{actor:0});
+   assert.equal(sent.pending,null);
+   assert.equal(sent.players[0].deck.length,0);
+   assert.ok(sent.players[0].outside.some(c=>c.uid===uid));
+   assert.equal(assertUniversalMatch(packs,reordered),true);
+   assert.equal(assertUniversalMatch(packs,sent),true);
+  }
+ }
+});
