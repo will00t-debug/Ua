@@ -15,6 +15,7 @@ const printed=Object.freeze({
   {id:'BLC-1-107',energy:0,ap:1,bp:2000,gen:1,color:'purple',trigger:null,type:'character',implementation:'vanilla',effects:{}},
  ]),
  'gurren-lagann':Object.freeze([
+  {id:'TTG-1-001',energy:0,ap:1,bp:2000,gen:1,color:'green',trigger:null,type:'character',implementation:'dsl',effects:{onPlay:[{op:'peekTopOne'}]},matchText:'山札の上から1枚見て'},
   {id:'TTG-1-009',energy:0,ap:1,bp:1500,gen:1,color:'green',trigger:'draw',type:'character',implementation:'dsl',effects:{onPlay:[{op:'drawDiscard',count:1}]},matchText:'抽1張'},
   {id:'TTG-1-036',energy:3,ap:1,bp:0,gen:0,color:'green',trigger:'final',type:'event',implementation:'dsl',effects:{onPlay:[{op:'recoverAp',count:2}]},matchText:'選擇最多2張自己的 AP 卡'},
   {id:'TTG-1-037',energy:3,ap:1,bp:0,gen:0,color:'green',trigger:'final',type:'event',implementation:'dsl',effects:{onPlay:[{op:'recoverAp',count:2}]},matchText:'選擇最多2張自己的 AP 卡'},
