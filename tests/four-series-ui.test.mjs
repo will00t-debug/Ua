@@ -22,7 +22,8 @@ test('all four non-playable series have usable isolated draft editors and BLEACH
   for(const [title,label,key,id,storage] of examples){
    click({title});
    assert.ok(app.innerHTML.includes(label),title);
-   assert.match(app.innerHTML,/尚未開放對戰/);
+   if(title==='gurren-lagann')assert.match(app.innerHTML,/已開放獨立 Beta 自動判定對戰/);
+   else assert.match(app.innerHTML,/尚未開放對戰/);
    click({[key]:id,delta:'1'});
    assert.equal(JSON.parse(stored.get(storage))[id],1,title+' independent draft');
   }
