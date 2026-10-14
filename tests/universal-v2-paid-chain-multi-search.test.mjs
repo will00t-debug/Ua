@@ -41,6 +41,10 @@ function title(id,withScout){
    {template:'enemyBpDown',bp:2500,optional:false}
   ]}
  ]}};
+ cards[7]={...cards[7],implementation:'dsl',templateEffects:{onPlay:[
+  {template:'searchDeckMany',filter:scoutFilter,count:5,optional:false,shuffle:true},
+  {template:'draw',count:1}
+ ]}};
  return createUniversalPack({id,cards,version:'multisearch-gate-1'});
 }
 const packs=[title('green-scouts',true),title('green-other',false)];
@@ -250,4 +254,42 @@ test('invalid nested operations, recursive cost gates and non-raid base timing f
  filter.value='Tampered';
  assert.equal(gate.then[0].filter.value,'Scout Alpha');
  assert.throws(()=>{gate.then[0].filter.value='Tampered';},TypeError);
+});
+
+test('mandatory up-to-five search with only four matching cards completes automatically after fourth selection',()=>{
+ const f=fixture('M07'),q=play(f),before=q.players[0].deck.length;
+ assert.equal(q.pending.kind,'effect-search-deck-multi');
+ assert.equal(q.pending.remaining,5);
+ assert.equal(legal(q).some(a=>a.uid===null),false);
+ let current=q;
+ const selected=new Set();
+ for(let i=0;i<4;i++){
+  const option=legal(current).find(a=>a.uid!==null);
+  assert.ok(option);
+  selected.add(option.uid);
+  current=dispatchUniversalAction(packs,current,option,{actor:0});
+  if(i<3)assert.equal(current.pending.kind,'effect-search-deck-multi');
+ }
+ assert.equal(selected.size,4);
+ assert.equal(current.pending,null,'no fifth eligible card: mandatory search must finish');
+ assert.equal(current.players[0].deck.length,before-5,
+  'four matching physical cards plus one queued draw');
+ assert.equal(assertUniversalMatch(packs,current),true);
+});
+
+test('unpayable mandatory or optional discard gate never schedules paid benefits',()=>{
+ const f=fixture('M03'),pl=f.s.players[0];
+ const nonSource=pl.hand.filter(c=>c.uid!==f.effect.uid);
+ pl.hand=pl.hand.filter(c=>c.uid===f.effect.uid);
+ pl.deck.push(...nonSource);
+ const target=take(f.s,1,'M08');f.s.players[1].front[0]=target;
+ assert.equal(assertUniversalMatch(packs,f.s),true);
+ const before=pl.deck.length;
+ const done=play(f);
+ assert.equal(done.pending,null,'no remaining hand card means no valid payment');
+ assert.equal(done.players[0].deck.length,before-1,
+  'only unrelated trailing draw resolves');
+ assert.equal(done.players[0].hand.length,1);
+ assert.equal(done.players[1].front[0]?.uid,target.uid);
+ assert.equal(assertUniversalMatch(packs,done),true);
 });
