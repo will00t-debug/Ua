@@ -39,7 +39,7 @@ export function uiCardLabel(pack,state,uid){
  const locate=(entry)=>{
   if(!entry)return null;
   if(entry.uid===uid)return entry;
-  for(const layer of [...entry.stack||[],...entry.under||[]]){
+  for(const layer of [...(entry.stack||[]),...(entry.under||[])]){
    const hit=locate(layer);if(hit)return hit;
   }
   return null;
