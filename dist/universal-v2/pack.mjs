@@ -5,7 +5,7 @@ export const V2_PHASES=Object.freeze(['start','move','main','attack']);
 export const V2_CARD_TYPES=Object.freeze(['character','event','field']);
 export const V2_TRIGGERS=Object.freeze(['draw','get','final','active','special','color','raid']);
 export const V2_EFFECT_TIMINGS=Object.freeze(['onPlay','onRaid','onAttack']);
-export const V2_EFFECT_OPS=Object.freeze(['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','retireOppFrontUnderBp']);
+export const V2_EFFECT_OPS=Object.freeze(['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','retireOppFrontUnderBp','restOppFrontUnderBp']);
 const integer=(v,low=0)=>Number.isInteger(v)&&v>=low;
 const own=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
 function verifyProgram(program,path){
@@ -16,6 +16,10 @@ function verifyProgram(program,path){
   if(e.op==='draw'||e.op==='millTop'||e.op==='drawDiscard'){
    if(!integer(e.count,1)||e.count>10)throw Error(path+'['+i+'] invalid count');
   }
+  if(e.op==='restOppFrontUnderBp'&&(
+   !integer(e.bp,1)||e.bp>50000||e.optional!==true||
+   Object.keys(e).some(k=>!['op','bp','optional'].includes(k))
+  ))throw Error(path+'['+i+'] invalid optional opponent REST effect');
   if(e.op==='retireOppFrontUnderBp'&&(
    !integer(e.bp,1)||e.bp>50000||typeof e.bonusName!=='string'||
    !e.bonusName.trim()||!integer(e.bonusBp,e.bp)||e.bonusBp>50000||
@@ -78,12 +82,15 @@ function normalize(card,packId){
    throw Error(card.id+' attack-time targeted effects need a future timing window');
  }
  if(card.raidName&&card.type!=='character')throw Error('Raid must be a character');
+ if(card.ownTurnBp!==undefined&&
+  (card.type!=='character'||!integer(card.ownTurnBp,1)||card.ownTurnBp>5000))
+  throw Error(card.id+' invalid own-turn BP modifier');
  return Object.freeze({
   id:card.id,title:packId,name:card.name,color:card.color,
   type:card.type,energy:card.energy,ap:card.ap,bp:card.bp,gen:card.gen,
   trigger:card.trigger||null,raidName:card.raidName||null,
   triggerEffect:triggerEffect?Object.freeze({...triggerEffect}):null,
-  step:card.step===true,implementation:implemented,
+  step:card.step===true,ownTurnBp:card.ownTurnBp||0,implementation:implemented,
   effects:Object.freeze(Object.fromEntries(Object.entries(effects)
    .map(([k,v])=>[k,Object.freeze(v.map(e=>Object.freeze({...e})))])))
  });
