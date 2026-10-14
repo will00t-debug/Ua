@@ -222,6 +222,7 @@ test('main play onto completely full front line requires choosing exact own card
 });
 test('partial line may fill empty slot without removal, but cannot overwrite occupied slot',()=>{
  let s=fresh(271),occupied=take(s,0,'F10');s.players[0].front[0]=occupied;
+ s.players[0].energy[0]=take(s,0,'F00');
  const handCard=take(s,0,'F02');s.players[0].hand.push(handCard);
  s=dispatchUniversalAction(packs,s,{type:'next'});
  s=dispatchUniversalAction(packs,s,{type:'next'});
