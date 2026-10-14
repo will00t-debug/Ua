@@ -42,6 +42,14 @@
 
 以上每張同樣在獨立 `bleach-pack.mjs` 的 printed profile allowlist，來源保留官卡詳頁，卡文／數值異動會停止編譯。官方頁面代表例：[BLC-2-029 ACTIVE 追加能源](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX07BT%2FBLC-2-029)、[BLC-1-094 場域登場抽牌](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA08BT%2FBLC-1-094)、[BLC-2-008 登場抽棄](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX07BT%2FBLC-2-008)、[BLC-1-029 FINAL](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA08BT%2FBLC-1-029)。跨卡時序與 FAQ 仍待更完整驗證。
 
+## 2026-10-15 07:04 (台灣) 後的修錯驗收／官方卡文校正
+
+- **BLC-4-014 友哈巴赫**：日本官方印刷發生能源圖示為「黃+」，文字為「此角色處於 ACTIVE 時，額外產生 1 黃能源」。舊庫 `gen:2` 表示 ACTIVE 合計量，但在 V2 `activeExtraEnergy:1` 若同時設 `gen:2` 就會算成 3。本 BLEACH Pack 只在產生 V2 卡時明確將其 `gen:1,activeExtraEnergy:1`（ACTIVE = 2、REST = 1），仍使用舊版 `gen:2` 作來源變更指紋以防默默漂移。已補專測。官方頁面：[EX15BT/BLC-4-014](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX15BT%2FBLC-4-014)。**沒有修改共用卡庫／引擎**。
+- **本分支單獨 CI 綠燈**：[Actions 38613289558](https://github.com/will00t-debug/Ua/actions/runs/38613289558) `9d913333`，專屬 12/12、`npm test` **1011/1011**、語法通過。包含一副 50 張綠色官方實體卡完整 AI 鏡像戰局與 UID 守恆。
+- **與最新 PR #70 暫存合併：BLEACH 專測 18/18 過，但全庫仍有共用核心阻塞**（[整合 run 38613289558](https://github.com/will00t-debug/Ua/actions/runs/38613289558)）：2 個 `tests/universal-v2-once-per-turn-gate.test.mjs` 範例「放棄不應耗掉同名限次」「每張實體 UID 限次應分開計數」失敗。已確認它們**在 PR #70 本身的 [Actions 38612690292](https://github.com/will00t-debug/Ua/actions/runs/38612690292) 也失敗**，不是此 BLEACH PR 新增；本分支**不可改共用 engine.mjs**。第三個 audit 失敗是最初暫存合併使用 `--no-commit` 造成工作目錄髒污，不是業務邏輯；已改在**無 push 的 Runner** 裡 commit 暫存合併後再測，需再看最新 CI 才能確定第三個消除。
+- 新版官方補充：2026-09-11 官方公告對 [EX15BT/BLC-4-056](https://www.unionarena-tcg.com/jp/news/171.php) 印刷效果勘誤；2026-10-09 官方 [Q2399](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX15BT%2FBLC-4-050) 說明露琪亞效果召喚戀次的 AP 支付時點。這兩張**仍在 208 張未移植清單中**，未官文重新校正前不得據舊資料移植。
+- 原截止時間 **2026-10-15 07:00（台灣）已到**；此後只做本線測試修正、交接更新與對最新共用核心的隔離整合檢查，不承諾剩餘 208 張已完成。
+
 ## 共用 V2 核心待辦（僅提需求，不在 BLEACH 分支修改）
 
 | 受影響卡號示例 | 必要能力／預期裁定 | 最小專屬測試 |
