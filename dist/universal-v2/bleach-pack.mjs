@@ -764,6 +764,34 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
   "trigger": "color",
   "type": "character",
   "effect": "登場：可使最多 1 個敵方前線角色本回合 BP −500。"
+ },
+ {
+  "id": "BLC-4-009",
+  "kind": "inspectTop2",
+  "number": "EX15BT/BLC-4-009",
+  "name": "バンビエッタ・バスターバイン",
+  "color": "yellow",
+  "energy": 0,
+  "ap": 1,
+  "bp": 1000,
+  "gen": 1,
+  "trigger": "draw",
+  "type": "character",
+  "effect": "登場時：查看牌庫頂2張，最多將1張送至場外，其餘依任意順序放回牌庫頂。"
+ },
+ {
+  "id": "BLC-4-067",
+  "kind": "inspectTop3",
+  "number": "EX15BT/BLC-4-067",
+  "name": "京楽 春水",
+  "color": "green",
+  "energy": 1,
+  "ap": 1,
+  "bp": 1500,
+  "gen": 1,
+  "trigger": "draw",
+  "type": "character",
+  "effect": "登場時：查看牌庫頂3張，最多將1張送至場外，其餘依任意順序放回牌庫頂。"
  }
 ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
@@ -797,7 +825,9 @@ function checkedAddon(p){
   retireBonusYamamoto:{onPlay:[{template:'retireEnemyUnderBp',bp:3000,bonusName:'山本元柳斎重國',bonusBp:5000}]},
   retireBonusRukia:{onPlay:[{template:'retireEnemyUnderBp',bp:3000,bonusName:'朽木ルキア',bonusBp:5000}]},
   enemyBpDown1000:{onPlay:[{template:'enemyBpDown',bp:1000,optional:true}]},
-  enemyBpDown500Color:{onPlay:[{template:'enemyBpDown',bp:500,optional:true}]}
+  enemyBpDown500Color:{onPlay:[{template:'enemyBpDown',bp:500,optional:true}]},
+  inspectTop2:{onPlay:[{template:'inspectTopArrange',count:2,toOutside:true,rest:'top'}]},
+  inspectTop3:{onPlay:[{template:'inspectTopArrange',count:3,toOutside:true,rest:'top'}]}
  };
 // EX15BT/BLC-4-014 prints yellow+ and ACTIVE adds one yellow. The imported legacy gen=2
  // encoded the ACTIVE total; V2 needs the printed REST base (1) plus an ACTIVE +1.
