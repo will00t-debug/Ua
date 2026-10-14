@@ -84,15 +84,15 @@ function testEntry(other,owner,id){
 }
 test('official-record pilot cards have explicitly pinned printed energy/AP/BP/trigger and no implicit support',()=>{
  assert.deepEqual(REAL_V2_PILOT_IDS.bleach,[
-  'BLC-1-034','BLC-1-036','BLC-1-039','BLC-1-040',
+  'BLC-1-034','BLC-1-036','BLC-1-037','BLC-1-039','BLC-1-040',
   'BLC-1-064','BLC-1-066','BLC-1-045','BLC-1-048',
   'BLC-1-052','BLC-1-057','BLC-1-102','BLC-1-103',
   'BLC-1-105','BLC-1-107'
  ]);
- assert.deepEqual(REAL_V2_PILOT_IDS['gurren-lagann'],['TTG-1-001','TTG-1-009','TTG-1-036','TTG-1-037','TTG-1-038','TTG-1-045','TTG-1-046','TTG-1-051','TTG-1-042','TTG-1-064','TTG-1-065','TTG-1-072','TTG-1-073','TTG-1-078','TTG-1-079']);
+ assert.deepEqual(REAL_V2_PILOT_IDS['gurren-lagann'],['TTG-1-001','TTG-1-009','TTG-1-036','TTG-1-037','TTG-1-038','TTG-1-045','TTG-1-046','TTG-1-051','TTG-1-042','TTG-1-043','TTG-1-066','TTG-1-064','TTG-1-065','TTG-1-072','TTG-1-073','TTG-1-078','TTG-1-079']);
  const b=verifiedPilotPack('bleach'),t=verifiedPilotPack('gurren-lagann');
- assert.equal(Object.keys(b.cards).length,14);
- assert.equal(Object.keys(t.cards).length,15);
+ assert.equal(Object.keys(b.cards).length,15);
+ assert.equal(Object.keys(t.cards).length,17);
  assert.ok(validateUniversalDeck(b,bleach.deck).length>0,'V2 real-only deck is not ready');
  assert.ok(validateUniversalDeck(t,green.deck).length>0);
  for(const id of REAL_V2_PILOT_IDS.bleach)assert.ok(portVerifiedPilotCard('bleach',id));
