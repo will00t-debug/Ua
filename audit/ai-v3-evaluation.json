@@ -1,0 +1,195 @@
+{
+  "schema": "ua-ai-v3-training-3",
+  "featureVersion": "ua-v3-f128-3",
+  "neuralNetwork": {
+    "inputs": 128,
+    "hidden": 32,
+    "output": 1
+  },
+  "training": {
+    "requestedGames": 2000,
+    "completed": 2000,
+    "unfinished": 0,
+    "failures": 0,
+    "rankingPairs": 67573,
+    "alternativesPerDecision": 3,
+    "epochs": 5,
+    "finalLoss": 0.25348714256683735,
+    "elapsedMs": 3730635
+  },
+  "evaluation": {
+    "games": 300,
+    "wins": 149,
+    "losses": 151,
+    "unfinished": 0,
+    "errors": 0,
+    "moves": 62084,
+    "winRate": 0.49666666666666665,
+    "byMatchup": {
+      "green-kenpachi-unohana__green-kenpachi-unohana": {
+        "games": 34,
+        "wins": 18,
+        "losses": 16,
+        "unfinished": 0,
+        "errors": 0
+      },
+      "green-kenpachi-unohana__purple-renji-rukia": {
+        "games": 34,
+        "wins": 17,
+        "losses": 17,
+        "unfinished": 0,
+        "errors": 0
+      },
+      "green-kenpachi-unohana__blue-ichigo-zangetsu": {
+        "games": 34,
+        "wins": 15,
+        "losses": 19,
+        "unfinished": 0,
+        "errors": 0
+      },
+      "purple-renji-rukia__green-kenpachi-unohana": {
+        "games": 33,
+        "wins": 17,
+        "losses": 16,
+        "unfinished": 0,
+        "errors": 0
+      },
+      "purple-renji-rukia__purple-renji-rukia": {
+        "games": 33,
+        "wins": 17,
+        "losses": 16,
+        "unfinished": 0,
+        "errors": 0
+      },
+      "purple-renji-rukia__blue-ichigo-zangetsu": {
+        "games": 33,
+        "wins": 16,
+        "losses": 17,
+        "unfinished": 0,
+        "errors": 0
+      },
+      "blue-ichigo-zangetsu__green-kenpachi-unohana": {
+        "games": 33,
+        "wins": 16,
+        "losses": 17,
+        "unfinished": 0,
+        "errors": 0
+      },
+      "blue-ichigo-zangetsu__purple-renji-rukia": {
+        "games": 33,
+        "wins": 16,
+        "losses": 17,
+        "unfinished": 0,
+        "errors": 0
+      },
+      "blue-ichigo-zangetsu__blue-ichigo-zangetsu": {
+        "games": 33,
+        "wins": 17,
+        "losses": 16,
+        "unfinished": 0,
+        "errors": 0
+      }
+    },
+    "elapsedMs": 659424,
+    "seedBase": 1031000,
+    "opponent": "hard v2",
+    "isHeldOut": true,
+    "accepted": false,
+    "acceptanceThreshold": 0.55
+  },
+  "energyEvaluation": {
+    "games": 300,
+    "wins": 162,
+    "losses": 60,
+    "unfinished": 0,
+    "errors": 78,
+    "moves": 46652,
+    "winRate": 0.7297297297297297,
+    "byMatchup": {
+      "green-kenpachi-unohana__green-kenpachi-unohana": {
+        "games": 34,
+        "wins": 11,
+        "losses": 0,
+        "unfinished": 0,
+        "errors": 23
+      },
+      "green-kenpachi-unohana__purple-renji-rukia": {
+        "games": 34,
+        "wins": 19,
+        "losses": 5,
+        "unfinished": 0,
+        "errors": 10
+      },
+      "green-kenpachi-unohana__blue-ichigo-zangetsu": {
+        "games": 34,
+        "wins": 13,
+        "losses": 3,
+        "unfinished": 0,
+        "errors": 18
+      },
+      "purple-renji-rukia__green-kenpachi-unohana": {
+        "games": 33,
+        "wins": 22,
+        "losses": 3,
+        "unfinished": 0,
+        "errors": 8
+      },
+      "purple-renji-rukia__purple-renji-rukia": {
+        "games": 33,
+        "wins": 22,
+        "losses": 11,
+        "unfinished": 0,
+        "errors": 0
+      },
+      "purple-renji-rukia__blue-ichigo-zangetsu": {
+        "games": 33,
+        "wins": 23,
+        "losses": 10,
+        "unfinished": 0,
+        "errors": 0
+      },
+      "blue-ichigo-zangetsu__green-kenpachi-unohana": {
+        "games": 33,
+        "wins": 11,
+        "losses": 3,
+        "unfinished": 0,
+        "errors": 19
+      },
+      "blue-ichigo-zangetsu__purple-renji-rukia": {
+        "games": 33,
+        "wins": 24,
+        "losses": 9,
+        "unfinished": 0,
+        "errors": 0
+      },
+      "blue-ichigo-zangetsu__blue-ichigo-zangetsu": {
+        "games": 33,
+        "wins": 17,
+        "losses": 16,
+        "unfinished": 0,
+        "errors": 0
+      }
+    },
+    "elapsedMs": 324018,
+    "seedBase": 1031000,
+    "opponent": "hard v2 deck-energy planning",
+    "isHeldOut": true
+  },
+  "policyDiagnostics": {
+    "calls": 54335,
+    "eligible": 6881,
+    "hiddenBoundary": 1758,
+    "vetoed": 52500,
+    "overrides": 68,
+    "comparable": 19012,
+    "incomparable": 39259,
+    "positionVeto": 13241,
+    "marginRejected": 1,
+    "eligibilityRate": 0.12664028710775743,
+    "overrideRate": 0.0012514953529032852,
+    "overridePerEligible": 0.009882284551664003
+  },
+  "candidatePath": "audit/ai-v3-candidate.json",
+  "championPromoted": false,
+  "disclaimer": "Teacher-ranked legal character deployments with up to three distinct alternative cards per position; weak outcome feedback on the actually explored choice only. Synergy/energy signals derive solely from public and own known cards."
+}

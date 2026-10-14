@@ -1,5 +1,27 @@
 # BLEACH Arena v9.1.1 — GitHub / Vercel 專案
 
+## AI v3：神經網路自我對戰實驗（獨立分支）
+
+新的 `feature/ai-v3-learning` 分支以 Work 的 `fix/ai-tactics-private-20261013` 為基礎，不會覆蓋 BLEACH 卡片修補或《我獨自升級》Beta。這次新增**可訓練的微型神經網路**（72 維觀測／24 個 ReLU 隱藏單元／1 個動作分數），使用純 JavaScript 實作，無需 API Key；遊戲規則和合法動作仍由既有引擎控制。
+
+- `dist/ai-v3-features.mjs`：輸入只使用行動者自己的手牌、雙方公開場上資訊和隱藏區域張數；不查看敵方手牌或雙方未翻開的牌庫／生命內容。
+- `dist/ai-v3-network.mjs`：可透過成對動作偏好更新權重的真正神經網路，不只是更改固定權重。
+- `scripts/train-ai-v3.mjs`：自我對戰產生示範與勝負訊號、訓練候選模型、用不同隨機種子對抗 AI v2 困難對手，合格才可以加上 `--promote` 產生網站使用的模型。
+- `dist/ai-v3-policy.mjs`：神經網路選合法動作，採保守覆寫；**若 `dist/ai-v3-weights.mjs` 尚無通過評測的模型，一律沿用困難 AI**。
+- 網站電腦練習新增「神經網路（實驗）」選項；模型推論於背景 Worker 執行。這不是線上玩一局就改權重：訓練需要在外部運算環境執行，且必須先通過保留測試集。
+
+範例（Node 22）：
+
+```sh
+npm test
+npm run train:ai -- --games 200 --eval 72 --epochs 5 --seed 25000
+# 查看 audit/ai-v3-evaluation.json，評估結果通過後才可升級
+npm run train:ai -- --games 200 --eval 72 --epochs 5 --seed 25000 --promote
+```
+
+訓練資料採用你提供的三副 BLEACH 牌組，卡表中的完整編號會映射成引擎使用的卡片 ID（例如 `BLC-1-039` → `039`）。驗收門檻為保留測試的完成場次、無規則錯誤、至少 55% 對 AI v2 困難勝率；此門檻是工程實驗而非真正實力排名保證。測試結果不應在未確認前宣稱神經網路變強。正式網站不會因為這個分支更新。
+
+
 ## AI v2 預覽（feature/ai-v2）
 
 對戰大廳的電腦練習新增三種難度：簡單（原版策略）、普通（通用局面評分）、困難（限制節點的多步搜尋）。不需要 API Key 或模型訓練，維持瀏覽器本機運算。AI v2 位於 `dist/ai-v2.mjs`，只透過 `legalActions` 和 `dispatch` 使用既有遊戲規則，不更動卡片結算。
@@ -100,4 +122,31 @@ npm run spar:ai -- --games 36 --difficulty hard --opponent legacy --seed 12000
 npm run spar:ai -- --games 36 --difficulty hard --opponent hard --seed 12000
 ```
 The 36-game run covers each ordered matchup four times while rotating first player and AI seat. Use `--games 9 --max-actions 350` for a quick nine-matchup smoke test. Results measure only these decks/seeds and are **not** neural network training. This addition preserves the Work/PR #17 AI branch and does not deploy the production site.
+
+
+### AI v3 第二輪：修正錯誤回饋與探索範圍
+
+首輪 200 場順利完成，但獨立 72 場對照 AI v2 困難的成績只有 **24 勝 48 敗（33.33%）**，因此沒有升級模型。原始報告已封存於 `audit/ai-v3-baseline-20261013.json`。
+
+- 修正「輸掉整局就懲罰當下每個老師建議動作」的錯誤標記方式：保持 AI v2 的指導動作為強範例；只有真正探索其他打法時，才給予低權重的終局勝負回饋。
+- 探索侷限在主要階段可比較的角色部署，不再隨機干擾阻擋、生命 Trigger、狙擊與需要複雜判定的選擇。
+- 特徵從 72 維擴充至 96 維，加入卡片顏色、Trigger、BP／IMPACT／DAMAGE 描述與能源曲線等可公開或己方可見資訊，不使用未知牌堆或敵方手牌身份。
+- 訓練模型只允許在同一部署線上的合法角色出牌間、具足夠信心時覆寫 AI v2；戰鬥與特殊結算仍由經過測試的 AI v2 選擇。
+- 保留原來 55% 的獨立對戰升級門檻，增加鏡像配對的種子多樣性。沒有通過就不發布新權重。
+
+重新對練採用不同的訓練種子，以避免直接重用首輪資料。此版本仍是實驗性神經網路，成績必須由實際 GitHub Actions 報告確認。
+
+
+### AI v3 第三輪：700 場對練與強化角色協同
+
+第二輪 200 場訓練完成，72 場獨立評測為 30 勝、42 敗（**41.67%**），未達 55% 升級門檻；原始報告封存於 `audit/ai-v3-baseline-round2-20261013.json`。
+
+本輪將訓練規模擴大為 **700 場**，並保留 **72 場**未參與訓練的獨立評測，使用不同的訓練及評測種子（27000／1027000）。為了讓學習不只增加重複對戰次數：
+- 模型特徵從 96 維升為 128 維，加入己方公開場上的同名／特徵協同、突襲基底、牌面效果提示、能源門檻及己方手牌中即將可以使用的角色數量。
+- 每個適合學習的合法角色部署決策，最多與三張**不同的合法角色卡**比較，減少空槽位置造成的重複樣本。
+- 對未實際探索的替代動作仍採用 AI v2 困難策略作為示範；僅對真正探索過的替代動作加入低權重的勝負回饋。
+- **700 場訓練與 72 場獨立評測必須全數完成，且無例外錯誤、獨立勝率達 55%**，模型才具備升級資格；否則保留原本 AI v2。
+- 部署到正式網站及合併到 main 需另行確認，這個分支仍僅供測試。
+
+執行範例：`npm run train:ai -- --games 700 --eval 72 --epochs 5 --seed 27000 --promote`。
 

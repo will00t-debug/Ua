@@ -1,4 +1,5 @@
 import {chooseAiAction} from './ai-v2.mjs';
+import {chooseNeuralAction} from './ai-v3-policy.mjs';
 let worker=null,sequence=0;
 const waiting=new Map();
 
@@ -32,7 +33,7 @@ export function cancelPendingAiActions(){
 // old opponent, but voluntary cancellation never plays an old action.
 export function requestAiAction(state,{difficulty='normal'}={}){
  if(typeof Worker==='undefined'||difficulty==='easy')
-  return Promise.resolve(chooseAiAction(state,{difficulty}));
+  return Promise.resolve(difficulty==='learning'?chooseNeuralAction(state):chooseAiAction(state,{difficulty}));
  try{
   if(!worker){
    worker=new Worker(new URL('./ai-worker.mjs',import.meta.url),{type:'module'});

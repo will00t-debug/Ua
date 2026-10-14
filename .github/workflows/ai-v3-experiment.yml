@@ -1,0 +1,64 @@
+name: AI v3 Dual-Baseline 2000-Game Training
+
+on:
+  # Dual-baseline experiment; workflow edits trigger a run.
+  push:
+    branches: ['feature/ai-v3-learning']
+    paths: ['.github/workflows/ai-v3-experiment.yml']
+  workflow_dispatch:
+    inputs:
+      games:
+        description: 'Training games'
+        type: number
+        required: false
+        default: 2000
+      eval:
+        description: 'Held-out evaluation games'
+        type: number
+        required: false
+        default: 300
+
+permissions:
+  contents: write
+
+jobs:
+  experiment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run neural learning and held-out comparison
+        env:
+          TRAIN_GAMES: ${{ inputs.games || '2000' }}
+          TEST_GAMES: ${{ inputs.eval || '300' }}
+        run: |
+          npm test
+          npm run train:ai -- --games "$TRAIN_GAMES" --eval "$TEST_GAMES" --seed 31000 --epochs 5 --max-actions 650 --promote
+      - name: Publish candidate and measurements as artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-v3-dual-baseline-2000-games
+          path: |
+            audit/ai-v3-candidate.json
+            audit/ai-v3-evaluation.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Save verified results in experiment branch only
+        if: success()
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add audit/ai-v3-evaluation.json
+          if grep -q '"championPromoted": true' audit/ai-v3-evaluation.json; then
+            git add dist/ai-v3-weights.mjs
+          fi
+          if ! git diff --cached --quiet; then
+            git commit -m 'experiment(ai-v3): record dual-baseline 2000-game metrics and gated checkpoint'
+            git push origin HEAD:feature/ai-v3-learning
+          fi

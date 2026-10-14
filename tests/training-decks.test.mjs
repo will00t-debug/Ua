@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {CARDS, BY_ID, validateDeck, pendingCards, deckColors} from '../dist/cards.mjs';
+import {CARDS, BY_ID, resolveCardId, validateDeck, pendingCards, deckColors} from '../dist/cards.mjs';
 import {TRAINING_DECKS} from '../dist/training-decks.mjs';
 import {newGame, dispatch, legalActions, controller, assertState} from '../dist/engine.mjs';
 import {chooseAiAction} from '../dist/ai-v2.mjs';
@@ -17,7 +17,7 @@ test('all three submitted PDF decks contain exactly 50 unique, canonical and leg
     for(const [id,count] of Object.entries(d.counts)){
       assert.ok(BY_ID[id],id+' not present in supported BLEACH collection');
       assert.ok(count>=1&&count<=4);
-      assert.equal(BY_ID[id].identity,id);
+      assert.equal(resolveCardId(BY_ID[id].identity),id);
     }
     assert.ok(!used.has(d.sourceCode));
     used.add(d.sourceCode);
