@@ -224,6 +224,13 @@ function continueEffectQueue(pack,s){
    const choices=s.players[1-owner].front.filter(c=>c&&bp(pack,s,c)<=job.bp).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-rest-bp',player:owner,
     sourceUid:job.sourceUid,choices,limit:job.bp,optional:true};
+  }else if(job.op==='buffOwnField'){
+   const choices=field(pl).filter(c=>card(pack,c).type==='character'&&
+    (!job.excludeSelf||c.uid!==job.sourceUid)&&
+    matchesFilter(pack,c,job.filter)).map(c=>c.uid);
+   if(choices.length)s.pending={kind:'effect-buff-own',player:owner,
+    sourceUid:job.sourceUid,choices,filter:job.filter,
+    bp:job.bp,optional:job.optional,excludeSelf:job.excludeSelf};
   }else if(job.op==='buffOwnTrait'){
    const choices=field(pl).filter(c=>card(pack,c).traits.includes(job.trait)).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-buff-trait',player:owner,sourceUid:job.sourceUid,
@@ -619,6 +626,19 @@ function resolveChoice(s,a,pack){
   target.buffs.push({bp:q.bp,untilTurn:s.turn});
   s.pending=null;continueEffectQueue(pack,s);return;
  }
+ if(q.kind==='effect-buff-own'){
+  if(a.uid===null){
+   if(!q.optional)throw Error('Mandatory buff cannot be skipped');
+   s.pending=null;continueEffectQueue(pack,s);return;
+  }
+  const target=field(p).find(c=>c.uid===a.uid);
+  if(!target||!q.choices.includes(a.uid)||
+   (target.uid===q.sourceUid&&q.excludeSelf)||
+   card(pack,target).type!=='character'||!matchesFilter(pack,target,q.filter))
+   throw Error('Illegal own field BP target');
+  target.buffs??=[];target.buffs.push({bp:q.bp,untilTurn:s.turn});
+  s.pending=null;continueEffectQueue(pack,s);return;
+ }
  if(q.kind==='effect-buff-trait'){
   if(a.uid===null){s.pending=null;continueEffectQueue(pack,s);return;}
   const target=field(p).find(c=>c.uid===a.uid);
@@ -818,6 +838,10 @@ function legalPending(pack,s){
  if(q.kind==='main-two-buff')
   return field(p).filter(c=>card(pack,c).traits.includes(q.trait))
    .map(c=>({type:'chooseMainBuff',uid:c.uid}));
+ if(q.kind==='effect-buff-own')return [
+  ...(q.optional?[{type:'chooseOwnBuff',uid:null}]:[]),
+  ...q.choices.map(uid=>({type:'chooseOwnBuff',uid}))
+ ];
  if(q.kind==='effect-buff-trait')return [
    {type:'chooseTraitBuff',uid:null},...q.choices.map(uid=>({type:'chooseTraitBuff',uid}))
   ];
@@ -1042,7 +1066,7 @@ export function assertUniversalMatch(pack,s){
    !Array.isArray(s.initialCounts)||s.initialCounts.length!==2||
    s.players?.length!==2||!playerIndex(s.active)||
    !['playing','finished'].includes(s.status))throw Error('Incorrect pack/version or match state');
- if(s.pending&&(!playerIndex(s.pending.player)||!['block','life-trigger','effect-target','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','effect-retire-bp','effect-rest-bp','raid-effect-order','effect-buff-trait','main-two-buff','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-order','effect-recover-outside','effect-bounce-own','effect-discard-cost','effect-discard-gate'].includes(s.pending.kind)))
+ if(s.pending&&(!playerIndex(s.pending.player)||!['block','life-trigger','effect-target','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','effect-retire-bp','effect-rest-bp','raid-effect-order','effect-buff-trait','effect-buff-own','main-two-buff','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-order','effect-recover-outside','effect-bounce-own','effect-discard-cost','effect-discard-gate'].includes(s.pending.kind)))
   throw Error('Invalid pending controller');
  if(!Array.isArray(s.raidedThisTurn)||s.raidedThisTurn.length!==2||
    s.raidedThisTurn.some(x=>typeof x!=='boolean')||
@@ -1059,7 +1083,7 @@ export function assertUniversalMatch(pack,s){
    !['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','retireOppFrontUnderBp','restOppFrontUnderBp','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','recoverOutsideOne','discardToDraw',
     'discardGate','enemyFrontAllBpDown','retireOppFrontAllUnderBp',
     'buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
-    'recoverOutsideColorUnderEnergy','retireBatchOne','openBlock'].includes(e.op)))
+    'recoverOutsideColorUnderEnergy','buffOwnField','retireBatchOne','openBlock'].includes(e.op)))
   throw Error('Invalid queued effects');
  for(let p=0;p<2;p++){
   const pl=s.players[p],uids=new Set(),items=[];
