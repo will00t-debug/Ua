@@ -210,10 +210,12 @@ test('reused template effects really execute in opposite title packs, with legal
  assert.equal(assertUniversalMatch(packs,finished),true);
  const view=universalPublicView(packs,finished,1);
  assert.equal(view.players[0].hand,null,'opposite-title opponent still cannot inspect hidden hand');
- const other=dualFixture();let second=other.s;
- second.active=1;second.first=1;second.turn=0;second.players[0].ownTurns=0;
- // Avoid mutating the turn header to play second title: initialize that title first.
- const mirror=newUniversalMatch(packs,{decks:[Object.fromEntries(Array.from({length:12},(_,i)=>['Z'+String(i).padStart(2,'0'),4]).concat([['Z12',2]])),Object.fromEntries(Array.from({length:12},(_,i)=>['Z'+String(i).padStart(2,'0'),4]).concat([['Z12',2]]))],seed:803,first:1});
+ // For the other title, start the match with that player's natural first turn.
+ const counts=Object.fromEntries(Array.from({length:12},(_,i)=>[
+  'Z'+String(i).padStart(2,'0'),4
+ ]));
+ counts.Z12=2;
+ const mirror=newUniversalMatch(packs,{decks:[counts,counts],seed:803,first:1});
  const power=extract(mirror,1,'Z00'),onPlay=extract(mirror,1,'Z02');
  mirror.players[1].energy[0]=power;mirror.players[1].hand.push(onPlay);
  let state=dispatchUniversalAction(packs,mirror,{type:'next'});
