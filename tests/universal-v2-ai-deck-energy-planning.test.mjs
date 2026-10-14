@@ -36,9 +36,8 @@ test('hard AI plans around registered 50-card max expense, not just low-cost cur
   const i=p.hand.findIndex(x=>pack.cards[x.cardId].energy>2);
   p.outside.push(p.hand.splice(i,1)[0]);
  }
- for(const id of ['P02','P02','P04'])p.energy.push(pull(s,0,id));
- // Energy zones are fixed four slots, never append.
- p.energy.splice(0,4,...p.energy.slice(-4));
+ const producers=['P02','P02','P04'].map(id=>pull(s,0,id));
+ p.energy.splice(0,4,...producers,null);
  const frontCard=pull(s,0,'P03'),energyCard=pull(s,0,'P01');
  p.hand.push(frontCard,energyCard);
  s=dispatchUniversalAction(packs,s,{type:'next'});
