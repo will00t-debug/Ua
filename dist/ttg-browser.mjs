@@ -22,6 +22,12 @@ export function ttgCardByUid(s,uid){
 }
 const label=(s,uid)=>{const c=ttgCardByUid(s,uid);return c?(TTG_BY_ID[c.cardId]?.nameZh||TTG_BY_ID[c.cardId]?.nameJa||c.cardId)+'（'+c.cardId.slice(-3)+'）':String(uid??'—');};
 export function ttgActionLabel(s,a){
+ if(a.type==='green021PhaseStart'){
+  if(a.mode==='decline')return '不發動庸子021的攻擊階段移動';
+  return '庸子021：'+label(s,a.uid)+' → 前線'+(a.slot+1)+
+   (a.replaceUid?' · 先將 '+label(s,a.replaceUid)+' 放置移除區':'')+
+   ' · 本回合 BP+1000';
+ }
  const names={next:'進入下一階段／結束回合',extraDraw:'額外抽牌',play:'普通登場',move:'移動角色',attack:'宣告攻擊',block:'選擇阻擋',resolveGreenEntry:'結算綠色登場效果'};
  if(a.type==='ttgLifeChoice'){
   const options={decline:'不發動生命 Trigger',draw:'發動 DRAW：抽 1 張',final:'發動 FINAL：恢復 1 點生命',get:'發動 GET：將觸發卡加入手牌',active:'發動 ACTIVE：選擇角色',special:'發動 SPECIAL：使敵方角色退場',color:'發動 COLOR：登場角色',colorRed:'發動紅色 COLOR：選擇對手角色',raid:'發動 Raid 生命 Trigger',raidHand:'將 Raid 觸發卡加入手牌'};
