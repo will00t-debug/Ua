@@ -84,10 +84,10 @@ function testEntry(other,owner,id){
 }
 test('official-record pilot cards have explicitly pinned printed energy/AP/BP/trigger and no implicit support',()=>{
  assert.deepEqual(REAL_V2_PILOT_IDS.bleach,['BLC-1-034','BLC-1-039','BLC-1-064','BLC-1-066','BLC-1-102','BLC-1-103','BLC-1-105','BLC-1-107']);
- assert.deepEqual(REAL_V2_PILOT_IDS['gurren-lagann'],['TTG-1-001','TTG-1-009','TTG-1-036','TTG-1-037','TTG-1-038','TTG-1-051','TTG-1-042','TTG-1-064','TTG-1-065','TTG-1-072','TTG-1-078','TTG-1-079']);
+ assert.deepEqual(REAL_V2_PILOT_IDS['gurren-lagann'],['TTG-1-001','TTG-1-009','TTG-1-036','TTG-1-037','TTG-1-038','TTG-1-051','TTG-1-042','TTG-1-045','TTG-1-064','TTG-1-065','TTG-1-072','TTG-1-078','TTG-1-079']);
  const b=verifiedPilotPack('bleach'),t=verifiedPilotPack('gurren-lagann');
  assert.equal(Object.keys(b.cards).length,8);
- assert.equal(Object.keys(t.cards).length,12);
+ assert.equal(Object.keys(t.cards).length,13);
  assert.ok(validateUniversalDeck(b,bleach.deck).length>0,'V2 real-only deck is not ready');
  assert.ok(validateUniversalDeck(t,green.deck).length>0);
  for(const id of REAL_V2_PILOT_IDS.bleach)assert.ok(portVerifiedPilotCard('bleach',id));
@@ -535,4 +535,141 @@ test('real TTG Gurren 072 RAID life on opponent turn does not gain own-turn BP, 
  assert.equal(settled.players[0].front[0].ready,false);
  assert.equal(settled.pending,null);
  assert.equal(assertUniversalMatch(packs,settled),true);
+});
+
+test('real TTG Kamina 045 COLOR trigger retires only an enemy front character BP<=2500, independently of its Raid-base ability',()=>{
+ const packs=[bleach.pack,red.pack];let s=fresh(red,601),attacker=take(s,0,'BLC-1-039');
+ attacker.ready=true;s.players[0].front[0]=attacker;
+ const low=take(s,0,'BLC-1-107'),high=take(s,0,'BLC-1-103');
+ s.players[0].front[1]=low;s.players[0].front[2]=high;
+ const flipped=take(s,1,'TTG-1-045'),life=s.players[1].life;
+ s.players[1].deck.push(life.shift());life.unshift(flipped);
+ s=advanceToMain(packs,s);
+ s=dispatchUniversalAction(packs,s,{type:'next'});
+ s=dispatchUniversalAction(packs,s,{type:'attack',uid:attacker.uid},{actor:0});
+ s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:null},{actor:1});
+ assert.equal(s.pending?.kind,'life-trigger');
+ assert.equal(s.pending?.trigger,'color');
+ const opts=legalUniversalActions(packs,s);
+ assert.ok(opts.some(a=>a.mode==='skip'));
+ assert.deepEqual(opts.filter(a=>a.mode==='colorRetire').map(a=>a.uid),[attacker.uid,low.uid]);
+ assert.ok(!opts.some(a=>a.uid===high.uid),'3000 BP character must not be eligible');
+ assert.throws(()=>dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'colorRetire',uid:high.uid},{actor:1}),/not currently legal/);
+ const skipped=dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'skip'},{actor:1});
+ assert.equal(skipped.players[0].front[1].uid,low.uid);
+ const retired=dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'colorRetire',uid:low.uid},{actor:1});
+ assert.equal(retired.players[0].front[1],null);
+ assert.ok(retired.players[0].outside.some(c=>c.uid===low.uid));
+ assert.ok(retired.players[1].outside.some(c=>c.uid===flipped.uid));
+ assert.equal(assertUniversalMatch(packs,retired),true);
+ assert.equal(chooseUniversalAiAction(packs,s,{difficulty:'hard'}).mode,'colorRetire');
+});
+function raidKaminaFixture(seed=602,{faceDown=false}={}){
+ const packs=[bleach.pack,red.pack];let s=fresh(red,seed);
+ const base=take(s,1,'TTG-1-045'),redA=take(s,1,'TTG-1-042'),
+  redB=take(s,1,'TTG-1-064'),redC=take(s,1,'TTG-1-065');
+ s.players[1].front[0]=base;
+ s.players[1].energy[0]=redA;s.players[1].energy[1]=redB;s.players[1].energy[2]=redC;
+ let hidden=null;
+ if(faceDown){
+  hidden=s.players[1].deck.shift();hidden.faceDown=true;
+  base.under.push(hidden);
+ }
+ const low=take(s,0,'BLC-1-039'),high=take(s,0,'BLC-1-105');
+ low.ready=true;high.ready=true;
+ s.players[0].front[0]=low;s.players[0].front[1]=high;
+ const top=take(s,1,'TTG-1-072');s.players[1].hand.push(top);
+ for(let i=0;i<4;i++)s=dispatchUniversalAction(packs,s,{type:'next'});
+ s=advanceToMain(packs,s);
+ assert.equal(s.active,1);
+ const raid=legalUniversalActions(packs,s).find(a=>a.type==='raid'&&a.uid===top.uid&&a.baseUid===base.uid&&a.slot===0);
+ assert.ok(raid,'Kamima 045 is a legal base for TTG Gurren 072');
+ const deckBefore=s.players[1].deck.length;
+ return {packs,s,raid,top,base,low,high,hidden,deckBefore};
+}
+test('Kamina 045 as Raid base lets controller choose base-first; only own printed trait characters get BP+1000',()=>{
+ const {packs,s,raid,top,base,low,high,deckBefore}=raidKaminaFixture(602);
+ const original=structuredClone(s);
+ const begun=dispatchUniversalAction(packs,s,raid,{actor:1});
+ assert.equal(begun.pending?.kind,'raid-effect-order');
+ assert.equal(begun.pending.player,1);
+ assert.deepEqual(legalUniversalActions(packs,begun),[
+  {type:'chooseRaidOrder',mode:'baseFirst'},{type:'chooseRaidOrder',mode:'entryFirst'}
+ ]);
+ assert.deepEqual(chooseUniversalAiAction(packs,begun,{difficulty:'hard'}),
+  {type:'chooseRaidOrder',mode:'entryFirst'});
+ const first=dispatchUniversalAction(packs,begun,{type:'chooseRaidOrder',mode:'baseFirst'},{actor:1});
+ assert.equal(first.pending?.kind,'effect-buff-trait');
+ assert.equal(first.players[1].deck.length,deckBefore,'top entry draw must wait for base effect');
+ const choices=legalUniversalActions(packs,first);
+ assert.ok(choices.some(a=>a.uid===null),'buff at most one may skip');
+ assert.ok(choices.some(a=>a.uid===top.uid),'the new Raid has the 大グレン団 trait');
+ assert.ok(!choices.some(a=>a.uid===low.uid||a.uid===high.uid),
+  'enemy BLEACH characters cannot be chosen');
+ assert.throws(()=>dispatchUniversalAction(packs,first,{type:'chooseTraitBuff',uid:low.uid},{actor:1}),/not currently legal/);
+ const boosted=dispatchUniversalAction(packs,first,{type:'chooseTraitBuff',uid:top.uid},{actor:1});
+ assert.equal(universalBp(packs,boosted,boosted.players[1].front[0]),5000,
+  'Raid 3500 + own turn 500 + base buff 1000');
+ assert.equal(boosted.players[1].deck.length,deckBefore-1,'after base ability top onPlay draws one');
+ assert.equal(boosted.pending?.kind,'effect-rest-bp');
+ const afterRest=dispatchUniversalAction(packs,boosted,{type:'chooseRestBp',uid:low.uid},{actor:1});
+ assert.equal(afterRest.players[0].front[0].ready,false);
+ assert.equal(afterRest.players[1].front[0].stack[0].uid,base.uid);
+ assert.equal(assertUniversalMatch(packs,afterRest),true);
+ assert.deepEqual(s,original);
+});
+test('Kamina 045 as Raid base supports entry-first and optional skip of printed base buff',()=>{
+ const {packs,s,raid,top,low,deckBefore}=raidKaminaFixture(605);
+ const begun=dispatchUniversalAction(packs,s,raid,{actor:1});
+ const entry=dispatchUniversalAction(packs,begun,{type:'chooseRaidOrder',mode:'entryFirst'},{actor:1});
+ assert.equal(entry.pending?.kind,'effect-rest-bp','onPlay draw then REST choice must occur before base buff');
+ assert.equal(entry.players[1].deck.length,deckBefore-1);
+ const skipRest=dispatchUniversalAction(packs,entry,{type:'chooseRestBp',uid:null},{actor:1});
+ assert.equal(skipRest.pending?.kind,'effect-buff-trait');
+ const skipBuff=dispatchUniversalAction(packs,skipRest,{type:'chooseTraitBuff',uid:null},{actor:1});
+ assert.equal(skipBuff.pending,null);
+ assert.equal(universalBp(packs,skipBuff,skipBuff.players[1].front[0]),4000);
+ assert.equal(skipBuff.players[0].front[0].uid,low.uid);
+ assert.equal(skipBuff.players[0].front[0].ready,true);
+ assert.equal(assertUniversalMatch(packs,skipBuff),true);
+});
+test('Kamina 045 conditional Raid-base draw occurs only when a physical facedown card is under the Raider',()=>{
+ const {packs,s,raid,top,hidden,deckBefore}=raidKaminaFixture(609,{faceDown:true});
+ const begun=dispatchUniversalAction(packs,s,raid,{actor:1});
+ assert.ok(hidden.faceDown);
+ const first=dispatchUniversalAction(packs,begun,{type:'chooseRaidOrder',mode:'baseFirst'},{actor:1});
+ assert.equal(first.pending?.kind,'effect-buff-trait');
+ const afterBuff=dispatchUniversalAction(packs,first,{type:'chooseTraitBuff',uid:null},{actor:1});
+ assert.equal(afterBuff.pending?.kind,'effect-rest-bp');
+ assert.equal(afterBuff.players[1].deck.length,deckBefore-2,
+  'face-down under base draws 1, then Gurren onPlay draws 1');
+ assert.equal(afterBuff.players[1].front[0].stack[0].under[0].uid,hidden.uid);
+ assert.equal(universalPublicView(packs,afterBuff,0).players[1].front[0].raidDepth,1);
+ assert.ok(!JSON.stringify(universalPublicView(packs,afterBuff,0)).includes(hidden.uid),
+  'opponent public model must hide underlying facedown identity');
+ const stopped=dispatchUniversalAction(packs,afterBuff,{type:'chooseRestBp',uid:null},{actor:1});
+ assert.equal(assertUniversalMatch(packs,stopped),true);
+});
+test('Kamina 045 onRaided effects never trigger from RAID life on the opponent turn',()=>{
+ const packs=[bleach.pack,red.pack];let s=fresh(red,620);
+ const attacker=take(s,0,'BLC-1-039');attacker.ready=true;s.players[0].front[0]=attacker;
+ const base=take(s,1,'TTG-1-045'),g1=take(s,1,'TTG-1-042'),
+  g2=take(s,1,'TTG-1-064'),g3=take(s,1,'TTG-1-065');
+ s.players[1].front[0]=base;
+ s.players[1].energy[0]=g1;s.players[1].energy[1]=g2;s.players[1].energy[2]=g3;
+ const top=take(s,1,'TTG-1-072'),life=s.players[1].life;
+ s.players[1].deck.push(life.shift());life.unshift(top);
+ s=advanceToMain(packs,s);
+ s=dispatchUniversalAction(packs,s,{type:'next'});
+ s=dispatchUniversalAction(packs,s,{type:'attack',uid:attacker.uid},{actor:0});
+ s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:null},{actor:1});
+ const raid=legalUniversalActions(packs,s).find(a=>a.mode==='raid'&&a.baseUid===base.uid);
+ assert.ok(raid);
+ const raided=dispatchUniversalAction(packs,s,raid,{actor:1});
+ assert.equal(raided.pending?.kind,'effect-rest-bp',
+  'defender Raid must skip own-turn-only Kamina base effect');
+ const after=dispatchUniversalAction(packs,raided,{type:'chooseRestBp',uid:null},{actor:1});
+ assert.equal(after.pending,null);
+ assert.equal(universalBp(packs,after,after.players[1].front[0]),3500);
+ assert.equal(assertUniversalMatch(packs,after),true);
 });
