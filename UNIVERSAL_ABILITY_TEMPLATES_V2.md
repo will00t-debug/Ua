@@ -1,13 +1,13 @@
-# UNION ARENA V2 — 可重複使用的能力模板（第一至第五批）
+# UNION ARENA V2 — 可重複使用的能力模板（第一至第六批）
 
 **狀態：實驗版 / PR #70 / 不取代正式站。** 模板將每張卡片明確宣告的印刷效果轉譯為已存在的 V2 DSL 指令，**不**根據日文文字自動猜測能力，也**不**把尚未驗收的卡片標為可用。
 
 ## 檔案與資料流
 
-- `dist/universal-v2/ability-templates.mjs`：受控的 22 種命名模板、嚴格參數契約，以及 `expandAbilityTemplates`。
+- `dist/universal-v2/ability-templates.mjs`：受控的 25 種命名模板、嚴格參數契約，以及 `expandAbilityTemplates`。
 - `dist/universal-v2/pack.mjs`：在 `createUniversalPack` 中編譯 `templateEffects`，沿用 `verifyProgram` 及現有時點限制；輸出仍是舊格式 `effects`，引擎 / AI 不需要知道卡片是否由模板寫成。
 - `dist/universal-v2/engine.mjs`：繼續執行低階 DSL 的結算、合法選擇、AP、Raid、生命 Trigger 與卡片守恆，不因套模板跳過裁定。
-- `dist/universal-v2/real-card-pilots.mjs`：目前有 **19 個真卡效果設定** 改用模板；Pilot 白名單已擴充為 **BLEACH 15／天元突破 17 = 32 張**（不等於每張都完成官方 FAQ 驗收）。
+- `dist/universal-v2/real-card-pilots.mjs`：目前有 **22 個真卡效果設定** 改用模板；Pilot 白名單已擴充為 **BLEACH 15／天元突破 20 = 35 張**（不等於每張都完成官方 FAQ 驗收）。
 - `tests/universal-v2-ability-templates.test.mjs`：所有模板輸出、非法參數、規則時點、19 個現有 Pilot 模板的低階 DSL 一致性，以及跨作品實際結算。
 
 ## 第一批可重用模板
@@ -36,6 +36,9 @@
 | `enemyFrontAllBpDown` | 對敵方當前前線全體同時套用本回合 -BP；之後逐一處理 BP ≤ 0 退場 | `bp`（1–5000） | `enemyFrontAllBpDown` |
 | `retireEnemyFrontAllUnderBp` | 對敵方前線所有 BP ≤ 門檻的角色同時判定退場，依序處理保護／替代效果 | `bp`（1–50000） | `retireOppFrontAllUnderBp` |
 | `buffOwnTraitAllTurn` | 給自己場上**目前**有指定特徵的全部角色本回合 +BP | `trait`、`bp`（1–5000） | `buffOwnTraitAllTurn` |
+| `buffSelfIfFirstAttack` | 如果是本回合己方角色的首次攻擊，自身本回合 +BP | `bp`（1–5000） | `buffSelfIfFirstAttack` |
+| `bounceOwnOtherUnderEnergy` | 登場時返回己方其他低能源角色至手牌；若沒有合法其他目標則返回自身 | `energy`（0–30） | `bounceOwnOtherUnderEnergy` |
+| `recoverOutsideColorUnderEnergy` | 依卡片顏色與印刷需求能源上限，從自己的公開場外回收至多 1 張 | `color`、`energy`、`optional` | `recoverOutsideColorUnderEnergy` |
 
 以上模板名稱是為了維護程式方便，並非任何實體卡都具有相同文字或適用條件；參數必須由官方卡文逐卡驗證。某些能力只能出現在特定時點，`pack.mjs` 會拒絕不合法組合。
 
@@ -136,6 +139,10 @@ const card = {
 
 同一張卡可在不同時點混用 `effects`（舊式 DSL）和 `templateEffects`，但**同一時點不可同時宣告兩者**，避免效果順序不確定。未登錄模板、非法參數、偷偷漏寫 `optional`、不合法時點、或 `vanilla` 聲稱有模板效果，都會直接拒絕建 Pack。符合契約的模板仍必須通過原本的 DSL 驗證。
 
+## 第七批：天元紅色 50 張與跨作品真卡對局
+
+已移植 TTG-1-047、049、052，增加首次攻擊計數、按官方 Q62 的 Raid 頂卡回手（底板送場外）與支付棄牌成本後按顏色／需求能源從場外回收；現有 `payDiscardThen` 可直接包裝該回收能力，未付費不能白拿。新增 `verifiedTtgRedPilotDeck()`，由 13 種真實紅色卡號組成 50 張，不含 `TEST-ONLY`，並在 `tests/universal-v2-ttg-vs-bleach-real-decks.test.mjs` 測試 TTG 50 張對 BLEACH 紫色 50 張的完整跨作品 AI 對局。完整來源與限制見 [`UNIVERSAL_V2_REAL_50_MILESTONE.md`](./UNIVERSAL_V2_REAL_50_MILESTONE.md)。正式網站仍未切換；全卡 FAQ 逐卡驗收仍未完成。
+
 ## 第六批真卡移植：首副全真 BLEACH 50 張
 
 另外完成 [`UNIVERSAL_V2_REAL_50_MILESTONE.md`](./UNIVERSAL_V2_REAL_50_MILESTONE.md)，以已建的 22 種共用模板與少數明確被動能力，把 BLEACH 的 036、037、040、045、048、052、057 及天元突破的 043、066 加入 V2。**BLEACH 紫色已可組成第一副沒有 TEST-ONLY 補卡的合法 50 張測試牌組**，並由 `tests/universal-v2-bleach-real-deck.test.mjs` 跑完全真卡 AI 鏡像對局。天元紅色仍未補到可用全真 50 張，故不能宣稱兩作品已可全真卡跨作品對戰。
@@ -152,6 +159,6 @@ const card = {
 
 ## 尚未納入模板的能力（不得宣告完成）
 
-`mainAbility`（例如 TTG-1-046 的兩種選擇與同名限次）、Raid 底板合法名稱、特殊 `conditionalUnderFaceDown`、COLOR/SPECIAL/RAID 生命 Trigger 印刷差異目前仍使用嚴格明列的能力設定，不會被上面的 22 種模板自動判定。其他多目標、同時退場、交換、持續免疫、攻防時點、其他系列專屬例外仍待開發。
+`mainAbility`（例如 TTG-1-046 的兩種選擇與同名限次）、Raid 底板合法名稱、特殊 `conditionalUnderFaceDown`、COLOR/SPECIAL/RAID 生命 Trigger 印刷差異目前仍使用嚴格明列的能力設定，不會被上面的 25 種模板自動判定。其他多目標、同時退場、交換、持續免疫、攻防時點、其他系列專屬例外仍待開發。
 
 **本批是可重複能力的編譯基礎，不是「700 張都能玩」或「32 張都已完成全部官方裁定」。**
