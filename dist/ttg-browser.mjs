@@ -22,6 +22,12 @@ export function ttgCardByUid(s,uid){
 }
 const label=(s,uid)=>{const c=ttgCardByUid(s,uid);return c?(TTG_BY_ID[c.cardId]?.nameZh||TTG_BY_ID[c.cardId]?.nameJa||c.cardId)+'（'+c.cardId.slice(-3)+'）':String(uid??'—');};
 export function ttgActionLabel(s,a){
+ if(a.type==='resolveGreenEntry'&&a.mode==='arkOutside'){
+  return a.takeUid===null?'羅修026：不查看牌庫，場外不回收':'羅修026：不查看牌庫，從場外拿 '+label(s,a.takeUid);
+ }
+ if(a.type==='resolveGreenEntry'&&a.mode==='arkChoice'){
+  return '羅修026：私人查看牌庫頂7張'+(a.takeUid?'，公開拿 '+label(s,a.takeUid):'，不拿牌');
+ }
  if(a.type==='green021PhaseStart'){
   if(a.mode==='decline')return '不發動庸子021的攻擊階段移動';
   return '庸子021：'+label(s,a.uid)+' → 前線'+(a.slot+1)+
@@ -135,6 +141,26 @@ export function ttg012SearchChoice(s,{takeUid=null,bottomOrderUids=[]}={}){
 // TTG-1-023: a genuine private look of up to five deck cards. The selected
 // Gunmen alone is publicly revealed. The other looked-at cards remain private
 // and can be arranged in ANY bottom order by their owner.
+// TTG-1-026: the FIRST printed option privately looks at up to seven cards,
+// revealing ONLY a picked Ark. The outside-recovery option uses a separate
+// non-peeking legal action (mode arkOutside).
+export function ttg026SearchChoice(s,{takeUid=null,bottomOrderUids=[]}={}){
+ const q=s?.pending;
+ if(q?.kind!=='ttgGreenEntry'||q.player!==0)throw new Error('目前沒有我方羅修026的搜尋待結算');
+ const source=['front','energy'].flatMap(line=>s.players[0][line]||[]).find(c=>c?.uid===q.sourceUid);
+ if(source?.cardId!=='TTG-1-026')throw new Error('不是羅修026的搜尋');
+ const offered=legalTtgCoreActions(s).find(a=>a.type==='resolveGreenEntry'&&a.mode==='arkChoice');
+ if(!offered)throw new Error('找不到羅修026的合法搜尋');
+ const top=s.players[0].deck.slice(0,7);
+ const eligible=top.filter(c=>TTG_BY_ID[c.cardId]?.nameJa==='アークグレン').map(c=>c.uid);
+ if(takeUid!==null&&!eligible.includes(takeUid))throw new Error('只能選擇並公開アークグレン');
+ const rest=top.filter(c=>c.uid!==takeUid).map(c=>c.uid);
+ if(!Array.isArray(bottomOrderUids)||bottomOrderUids.length!==rest.length||
+    new Set(bottomOrderUids).size!==rest.length||rest.some(uid=>!bottomOrderUids.includes(uid)))
+  throw new Error('必須完整排列未拿取的每張卡至牌庫底');
+ return {type:'resolveGreenEntry',player:0,sourceUid:q.sourceUid,
+  mode:'arkChoice',takeUid,bottomOrderUids};
+}
 export function ttg023SearchChoice(s,{takeUid=null,discardUid=null,bottomOrderUids=[]}={}){
  const q=s?.pending;
  if(q?.kind!=='ttgGreenEntry'||q.player!==0)throw new Error('目前沒有我方利龍023的搜尋待結算');
