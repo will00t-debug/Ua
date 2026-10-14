@@ -15,7 +15,7 @@ test('075: own Nia and Gunmen count allow distinct modes only; one activation ea
  let s=setup(7501);
  const c=stage(s,'TTG-1-075','front',0);
  stage(s,'TTG-1-059','energy',0);
- stage(s,'TTG-1-077','energy',1);
+ stage(s,'TTG-1-076','energy',1);
  let actions=legalRed075(s,0).filter(x=>x.uid===c.uid);
  assert.ok(actions.some(x=>x.effects.length===2&&x.effects.includes('impactNull')&&x.effects.includes('doubleBlock')));
  assert.ok(!actions.some(x=>new Set(x.effects).size!==x.effects.length));
@@ -37,7 +37,7 @@ test('075: opponent Nia does not qualify and duplicate mode is illegal',()=>{
 test('077: paid field entry recovers only own outside Gunmen, or may decline',()=>{
  let s=setup(7701),p=s.players[0];
  const gen=stage(s,'TTG-1-042','energy',0);gen.energyBonus=4;
- const target=take(p,'TTG-1-075');p.outside.push(target);
+ const target=take(p,'TTG-1-076');p.outside.push(target);
  const other=take(p,'TTG-1-043');p.outside.push(other);
  const field=take(p,'TTG-1-077');p.hand.push(field);
  s=withTtgDerivedEnergy(s,0);
