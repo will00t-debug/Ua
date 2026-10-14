@@ -6,13 +6,13 @@ import {BLEACH_V2_NEW_IDS,BLEACH_V2_ADDON_PROFILES,
 import {REAL_V2_PILOT_IDS} from '../dist/universal-v2/real-card-pilots.mjs';
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,
- dispatchUniversalAction,assertUniversalMatch,universalPublicView
+ dispatchUniversalAction,assertUniversalMatch,universalPublicView,universalEnergyByColor
 } from '../dist/universal-v2/engine.mjs';
 
 const pack=createBleachV2Pack(),packs=[pack,pack];
 const twelve=['BLC-1-001','BLC-1-002','BLC-1-012','BLC-1-017',
- 'BLC-1-035','BLC-1-068','BLC-1-089','BLC-2-020','BLC-2-023',
- 'BLC-4-062','BLC-1-102','BLC-1-039'];
+ 'BLC-1-035','BLC-1-068','BLC-1-089','BLC-2-020','BLC-2-029',
+ 'BLC-4-062','BLC-1-102','BLC-2-008'];
 const counts={...Object.fromEntries(twelve.map(id=>[id,4])),'BLC-1-034':2};
 const fresh=(first=0,seed=12015)=>newUniversalMatch(packs,{decks:[counts,counts],first,seed});
 function take(s,p,id){
@@ -31,11 +31,11 @@ function reach(s,phase){
  assert.equal(s.phase,phase);
  return s;
 }
-test('21 official standalone BLEACH profiles extend rather than replace 15 existing pilots',()=>{
+test('48 official standalone BLEACH profiles extend rather than replace 15 existing pilots',()=>{
  assert.equal(REAL_V2_PILOT_IDS.bleach.length,15);
- assert.equal(BLEACH_V2_NEW_IDS.length,21);
- assert.equal(new Set(BLEACH_V2_NEW_IDS).size,21);
- assert.equal(Object.keys(pack.cards).length,36);
+ assert.equal(BLEACH_V2_NEW_IDS.length,48);
+ assert.equal(new Set(BLEACH_V2_NEW_IDS).size,48);
+ assert.equal(Object.keys(pack.cards).length,63);
  assert.ok(REAL_V2_PILOT_IDS.bleach.every(id=>pack.cards[id]));
  assert.deepEqual(validateUniversalDeck(pack,counts),[]);
  for(const p of BLEACH_V2_ADDON_PROFILES){
@@ -48,7 +48,13 @@ test('21 official standalone BLEACH profiles extend rather than replace 15 exist
   assert.equal(c.step,p.kind==='step');
   if(p.kind==='bounce')
    assert.deepEqual(c.effects.onPlay,[{op:'bounceOwnOtherUnderEnergy',energy:1}]);
-  else assert.deepEqual(c.effects,{});
+  if(p.kind==='drawPlay')assert.deepEqual(c.effects.onPlay,[{op:'draw',count:1}]);
+  if(p.kind==='drawDiscardPlay')assert.deepEqual(c.effects.onPlay,[{op:'drawDiscard',count:1}]);
+  if(p.kind==='drawDiscardAttack')assert.deepEqual(c.effects.onAttack,[{op:'drawDiscard',count:1}]);
+  if(p.kind==='recoverAp2')assert.deepEqual(c.effects.onPlay,[{op:'recoverAp',count:2}]);
+  if(p.kind==='impactNull')assert.equal(c.impactNull,true);
+  if(p.kind==='activeEnergy')assert.equal(c.activeExtraEnergy,1);
+  if(['plain','step'].includes(p.kind))assert.deepEqual(c.effects,{});
   assert.equal(p.kind==='plain',p.effect==='無固有效果。');
  }
 });
@@ -96,7 +102,7 @@ test('printed mandatory bounce chooses another cost 1 or lower; illegal UID and 
 });
 
 test('mandatory bounce returns itself when no legal other low-energy character exists',()=>{
- let s=fresh(),p=s.players[0],generator=take(s,0,'BLC-2-023'),
+ let s=fresh(),p=s.players[0],generator=take(s,0,'BLC-2-029'),
  arrival=take(s,0,'BLC-2-020');
  p.energy[0]=generator;p.hand.push(arrival);
  s=reach(s,'main');
@@ -135,4 +141,38 @@ test('GET/DRAW/ACTIVE triggers retain printed type; public state redacts opposin
   const opponentView=universalPublicView(packs,s,1);
   assert.ok(!JSON.stringify(opponentView).includes(s.players[0].hand[0]?.uid||'UNLIKELY-UID'));
  }
+});
+
+
+test('official draw-then-discard onPlay queues mandatory discard and refuses illegal skip',()=>{
+ let s=fresh(0,812),p=s.players[0],actor=take(s,0,'BLC-2-008');
+ p.hand.push(actor);
+ s=reach(s,'main');
+ const play=legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===actor.uid&&a.line==='front'&&a.slot===0);
+ assert.ok(play);
+ const before=structuredClone(s),initialDeck=s.players[0].deck.length;
+ const pending=dispatchUniversalAction(packs,s,play,{actor:0});
+ assert.equal(pending.players[0].deck.length,initialDeck-1);
+ assert.equal(pending.pending?.kind,'effect-discard');
+ const actions=legalUniversalActions(packs,pending);
+ assert.ok(actions.some(a=>a.type==='chooseDiscard'));
+ assert.ok(!actions.some(a=>a.type==='next'));
+ assert.throws(()=>dispatchUniversalAction(packs,pending,{type:'chooseDiscard',uid:null},{actor:0}),/not currently legal/);
+ assert.deepEqual(s,before);
+ const selected=actions.find(a=>a.type==='chooseDiscard');
+ const resolved=dispatchUniversalAction(packs,pending,selected,{actor:0});
+ assert.equal(resolved.pending,null);
+ assert.ok(resolved.players[0].outside.some(c=>c.uid===selected.uid));
+ assert.equal(assertUniversalMatch(packs,resolved),true);
+});
+
+test('ACTIVE-only bonus energy does not produce bonus while REST',()=>{
+ let s=fresh(0,333),p=s.players[0],producer=take(s,0,'BLC-2-029');
+ p.energy[0]=producer;producer.ready=true;
+ const active=universalEnergyByColor(packs,s,0);
+ assert.equal(active.blue,2,'base blue + 1 only while active');
+ producer.ready=false;
+ const rested=universalEnergyByColor(packs,s,0);
+ assert.equal(rested.blue||0,0,'REST should not produce energy');
+ assert.equal(assertUniversalMatch(packs,s),true)
 });
