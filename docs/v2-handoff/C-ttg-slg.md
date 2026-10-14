@@ -5,9 +5,9 @@
 ## 真正基準與範圍
 
 - TTG-1：001～081 **81 張**一般卡；SLG-1：001～080 **80 張**一般卡。獨立作品卡表已收錄完整號碼，排除異圖/AP；原有 Beta 測試不等於 V2 實作。
-- 原 V2 TTG Pilot **20 張**，SLG Pilot **0 張**。本輪 TTG +3（005、014、019），合計 **23/81**；SLG +16（005、006、015、016、026、032、038、041、043、045、052、055、066、068、078、079），合計 **16/80**。
+- 原 V2 TTG Pilot **20 張**，SLG Pilot **0 張**。本輪 TTG +3（005、014、019），合計 **23/81**；SLG +18（005、006、015、016、026、032、038、040、041、043、045、052、055、066、068、076、078、079），合計 **18/80**。
 - 新封包：`dist/universal-v2/ttg-pack.mjs` 與 `dist/universal-v2/slg-pack.mjs`，都呼叫 **同一個** `createUniversalPack` 與共用引擎，不碰作品舊 reducer。印刷值與卡文錨點不相符即中止載入；無效/未移植能力不得冒充完成。
-- 卡內文與 Life Trigger 分開列於 `audit/v2-c-ttg-status.csv`、`audit/v2-c-slg-status.csv`；單張即使 body 確認，生命觸發時點仍需個別測試。兩款卡包沒有假填充卡片，未移植剩 TTG **58**、SLG **64**。
+- 卡內文與 Life Trigger 分開列於 `audit/v2-c-ttg-status.csv`、`audit/v2-c-slg-status.csv`；單張即使 body 確認，生命觸發時點仍需個別測試。兩款卡包沒有假填充卡片，未移植剩 TTG **58**、SLG **62**。
 
 ## 已移植批次
 
@@ -23,6 +23,7 @@
 | SLG | 032/052 | IMPACT 無效，生命 ACTIVE |
 | SLG | 043 | 登場抽 1 張、再將 1 張手牌送場外，生命 ACTIVE |
 | SLG | 038/078/079 | 事件 AP 最多回復 2，生命 FINAL 分別由 V2 trigger handler 解決 |
+| SLG | 040/076 | 事件 BP3000 以下敵前線退場，己場有〈水篠 旬〉則門檻 BP5000；與內文無關的 SPECIAL 生命可選退場 |
 
 ## 主控共用核心需求：能力／卡號／時序／最小重現
 
@@ -40,6 +41,10 @@
 
 ## 不能宣稱完成
 
-剩餘 TTG 58、SLG 64 尚未移植，尤其 COLOR、RAID、EVENT、同名限制、延遲效果、裏向及有成本的多段連鎖。已移植卡仍需更多真人 UI、全部 Life Trigger、非法支付、目標可選放棄、隱藏資訊和跨作品回歸；不能透過舊作品引擎或簡化成空效果通過。官方卡文 https://www.unionarena-tcg.com/jp/cardlist/ ，FAQ https://www.unionarena-tcg.com/jp/faq/ 。
+剩餘 TTG 58、SLG 62 尚未移植，尤其 COLOR、RAID、EVENT、同名限制、延遲效果、裏向及有成本的多段連鎖。已移植卡仍需更多真人 UI、全部 Life Trigger、非法支付、目標可選放棄、隱藏資訊和跨作品回歸；不能透過舊作品引擎或簡化成空效果通過。官方卡文 https://www.unionarena-tcg.com/jp/cardlist/ ，FAQ https://www.unionarena-tcg.com/jp/faq/ 。
 
 運行測試（Node22）：`npm test`，新增 `tests/universal-v2-ttg-port.test.mjs`、`tests/universal-v2-slg-port.test.mjs`；以 GitHub 當前工作分支 check 狀態為準，不宣稱未確認測試通過。
+
+## 本輪可重現的 CI
+
+GitHub Actions Node.js 22 [run #38610752632](https://github.com/will00t-debug/Ua/actions/runs/38610752632) 在 V2-C 初始 23/81 + 16/80 的 commit `075c6d6925db79cc98156f4580b81922f5ffa8ad`：**專項 9/9、全專案 1002/1002 通過，0 失敗**。後續加入 SLG 040/076 的提交必須以新 run 為準，不能沿用這個舊成果。官方卡文直接比對 [SLG-1-040](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-040) 與 [SLG-1-076](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-076)。
