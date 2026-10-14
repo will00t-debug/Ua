@@ -78,6 +78,8 @@ test('021 Q2269: full FRONT forces explicit choice of removed character, never s
  const before=s.players[0].outside.length;
  const picked=choices.find(x=>x.uid===yoko.uid&&x.replaceUid===b.uid);
  assert.ok(picked);
+ assert.match(ttgActionLabel(s,picked),/先將.*移除區/);
+ assert.match(ttgActionLabel(s,choices[0]),/前線/);
  s=dispatchTtgCoreAction(s,picked);
  assert.equal(s.players[0].front[2].uid,yoko.uid);
  assert.ok(s.players[0].removed.some(x=>x.uid===b.uid));
