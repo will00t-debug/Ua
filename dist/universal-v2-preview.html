@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+ <meta charset="utf-8">
+ <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+ <meta name="theme-color" content="#0a1019">
+ <meta name="robots" content="noindex,nofollow,noarchive">
+ <meta name="description" content="實驗版 UNION ARENA V2：BLEACH 和天元突破兩副全真 50 張跨作品 AI 測試對戰，僅供私人預覽驗證。">
+ <link rel="icon" href="assets/mark.svg" type="image/svg+xml">
+ <link rel="stylesheet" href="universal-v2-preview.css">
+ <title>UNION ARENA V2｜跨作品私人測試</title>
+</head>
+<body>
+ <div class="shell">
+  <header class="topbar">
+   <div class="identity">
+    <div class="logo">UA</div>
+    <div><div class="eyebrow">EXPERIMENTAL · V2 PREVIEW</div><h1>UNION ARENA 跨作品實戰測試</h1></div>
+   </div>
+   <div class="status"><span class="tag">獨立測試頁</span><span class="tag">真卡 50 vs 50</span>
+   <span class="tag">正式網站不受影響</span></div>
+  </header>
+  <section class="panel setup" aria-label="測試對局設定">
+   <div class="headline"><h2>建立新對局</h2><span class="small">25 種能力模板 · 已移植 35 張真卡 Pilot</span></div>
+   <div class="setup-grid">
+    <div class="field"><label for="my-title">你的作品</label>
+     <select id="my-title"><option value="gurren-lagann">天元突破｜紅色</option>
+     <option value="bleach">BLEACH｜紫色</option></select>
+    </div>
+    <div class="field"><label for="ai-title">電腦作品</label>
+     <select id="ai-title"><option value="bleach">BLEACH｜紫色</option>
+     <option value="gurren-lagann">天元突破｜紅色</option></select>
+    </div>
+    <div class="field"><label for="ai-level">AI 難度</label>
+     <select id="ai-level"><option value="easy">簡單</option>
+     <option value="normal" selected>普通</option><option value="hard">困難</option></select>
+    </div>
+    <div class="field"><label for="first-player">先手玩家</label>
+     <select id="first-player"><option value="human">你先手</option>
+     <option value="ai">電腦先手</option></select>
+    </div>
+    <div class="field"><label for="match-seed">牌序種子（可重現）</label>
+     <input id="match-seed" type="number" min="1" max="999999999" step="1" inputmode="numeric" value="20261015">
+    </div>
+   </div>
+   <div class="setup-actions"><button id="start-game" type="button" class="primary">開始新對局</button>
+   <span id="restart-notice" class="small" aria-live="polite"></span></div>
+   <p class="note">這是只讀取自己已授權 GitHub 專案資料的 V2 獨立測試介面。與電腦對打，不會儲存個人資料到伺服器。僅有 BLEACH 紫色與天元突破紅色部分官方卡片已移植；這不是全部卡牌均通過官方 FAQ 驗收的正式版本。預覽連結受到 Vercel 專案的登入權限控制。</p>
+  </section>
+  <main id="match-view" aria-live="off"></main>
+  <footer class="foot">
+   <span>UNOFFICIAL FAN TEST · 日版 UNION ARENA 卡牌版權屬其權利人</span>
+   <span>卡圖以原站外部來源載入，若顯示失敗會使用暫代圖。<a href="/" title="返回正式網站">返回既有版本</a></span>
+  </footer>
+ </div>
+ <script type="module" src="universal-v2-preview.mjs"></script>
+</body>
+</html>
