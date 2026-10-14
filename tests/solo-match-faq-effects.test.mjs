@@ -8,6 +8,10 @@ const place=(s,id,line,slot,owner=0,ready=true)=>{
 };
 const take=(s,a)=>soloTrainingDispatch(s,a);
 const select=(s,uid)=>take(s,{type:'choose',uid});
+// Complete an optional life Trigger before issuing the next attack in the same turn.
+const resolveLife=s=>{while(s.pending&&['soloOptionalLife','raidTrigger','colorTrigger','specialTrigger','activeTrigger'].includes(s.pending.kind)){
+ const legal=soloTrainingLegalActions(s);const action=legal.find(a=>a.mode==='skip'||a.uid===null)||legal[0];s=take(s,action);
+}return s;};
 test('Q2031–Q2033 Kaiser shared per mode and original printed BP; REST before block choice',()=>{
  let s=make(),p=s.players[0],one=place(s,'SLG-1-030','front',0),two=place(s,'SLG-1-030','front',1);
  const k1=place(s,'SLG-1-029','energy',0),k2=place(s,'SLG-1-029','energy',1);
@@ -17,7 +21,7 @@ test('Q2031–Q2033 Kaiser shared per mode and original printed BP; REST before 
  s=take(s,{type:'choose',mode:'block'});
  assert.equal(s.players[0].energy[0].ready,false);
  assert.equal(s.groupUsed['0:kaiser:block'],s.turn);
- assertSoloTrainingMatch(s);
+ assertSoloTrainingMatch(s);s=resolveLife(s);
  // Another shadow attacker; second Kaiser cannot choose already used mode.
  s=take(s,{type:'attack',uid:two.uid});assert.equal(s.pending.kind,'kaiserPick');
  s=select(s,k2.uid);assert.deepEqual(soloTrainingLegalActions(s),[{type:'choose',mode:'untargetable'}]);
@@ -31,7 +35,7 @@ test('Q2034/2035 Kiba chooses draw and discard or BP; all same-name cards share 
  // Kaiser is not present: Kiba is offered immediately
  assert.equal(s.pending.kind,'kibaPick');s=select(s,k1.uid);
  s=take(s,{type:'choose',mode:'buff'});assert.equal(s.players[0].front[0].buffs[0].bp,1500);
- assert.equal(s.groupUsed['0:kiba:buff'],s.turn);assertSoloTrainingMatch(s);
+ assert.equal(s.groupUsed['0:kiba:buff'],s.turn);assertSoloTrainingMatch(s);s=resolveLife(s);
  // Other copy can only choose draw mode this turn
  s.players[0].front[0].ready=true;
  s=take(s,{type:'attack',uid:a.uid});s=select(s,k2.uid);
@@ -48,7 +52,7 @@ test('Q2037/Q2071 Bel needs 4 REST original BP <=3000 shadow CHARACTERS and shar
  s=select(s,s.players[0].hand[0].uid);
  assert.equal(s.players[0].hand.length,oldHand-1);
  assert.equal(s.players[0].front[0].ready,true);
- assert.equal(s.groupUsed['0:bel'],s.turn);assertSoloTrainingMatch(s);
+ assert.equal(s.groupUsed['0:bel'],s.turn);assertSoloTrainingMatch(s);s=resolveLife(s);
  s=take(s,{type:'attack',uid:bel.uid});
  assert.notEqual(s.pending?.kind,'belDiscard');assertSoloTrainingMatch(s);
 });
