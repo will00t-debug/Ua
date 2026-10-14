@@ -28,6 +28,19 @@ Universal Match API  ── existing match-runtime compatibility layer
    └── mushoku-tensei/
 ```
 
+## 跨作品對戰基礎（已在本 PR 的實驗核心實作）
+
+V2 提供 `newUniversalMatch([player0Pack, player1Pack], {decks:[...,...]})`，對局狀態記錄兩位玩家各自的 `packIds` 與 `packVersions`。即使卡號完全相同，實體卡 UID 仍綁定玩家，使用該玩家的作品資料；能源、BP、Raid 底板和生命 Trigger 都不能讀取另一個作品的同卡號資料。
+
+- 雙方可持不同作品的合法 50 張牌組，**不能在一副牌組內混合作品**；基本攻擊／阻擋跨作品有效。
+- Raid 僅能疊自己的合法底板，不能疊對手卡；Raid 的 `onPlay` 與 `onRaid` 時點仍分開。
+- 生命 GET／DRAW／FINAL 根據受傷玩家自己的卡包結算，可發動或不發動。
+- 宣告式 `enemyBpDown` 能選對手前線角色，透過待選事件佇列暫停其他效果，玩家選完目標後再繼續（這是第一個跨作品指定能力示例）。
+- 公用視圖回報雙方作品標籤、各自公開場地與已翻開生命卡，**不包含對手手牌、未公開生命與牌庫順序**。
+- 以 `tests/universal-v2-cross-title.test.mjs` 的兩組虛構卡包做雙向驗證，重複卡號、目標、AP、Raid、Trigger、守恆與隱藏資訊均需通過。
+
+目前此功能**只供測試使用**：BLEACH／TTG／SLG 真實卡片效果尚未完整轉換為 V2 Pack，不能宣稱既有作品現在就能跨作品實戰，也沒有跨作品混合牌組或線上雙人配對功能。
+
 ## v2 第一批實際可執行能力
 
 1. 用完整 50 張牌初始化，7 張起手牌及 7 張生命，固定 RNG 種子，獨立卡片 UID。
@@ -52,7 +65,7 @@ Universal Match API  ── existing match-runtime compatibility layer
 | 階段 | 工作 | 上線規則 |
 |---|---|---|
 | 1（本 PR） | 可執行底層、卡牌契約、合法行動、守恆、Trigger 及安全視圖 | 不切換 Production |
-| 2 | 能力事件佇列、可選成本、公開／私密查看、複合目標、印刷效果 DSL 擴充 | 獨立測試站 |
+| 2 | 擴充已實作的跨作品效果事件佇列、可選成本、公開／私密查看、複合目標與 DSL | 獨立測試站 |
 | 3 | BLEACH 的少數普通卡逐張移植，舊／新結果差異測試 | 僅測試分支可選 |
 | 4 | 天元突破、我獨自升級特殊效果模組遷移及 FAQ QA | 逐系列灰度切換 |
 | 5 | 刀劍神域、無職轉生及新作品卡表／能力擴充、統一 AI | 每張合法的卡才加入正式可對戰清單 |
