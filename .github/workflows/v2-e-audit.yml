@@ -1,0 +1,48 @@
+name: V2-E Independent Acceptance
+on:
+  pull_request:
+    branches:
+      - feature/universal-rules-v2-foundation-20261014
+    paths:
+      - 'docs/v2-handoff/E-acceptance.md'
+      - 'scripts/v2-audit-*.mjs'
+      - 'tests/v2-independent-audit.test.mjs'
+      - '.github/workflows/v2-e-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Record exact audit SHA and Node
+        run: |
+          git rev-parse HEAD
+          node --version
+          npm --version
+      - name: Generate per-card catalog and run E invariants
+        run: node --test tests/v2-independent-audit.test.mjs
+      - name: Multi-seed real-deck cross-title battles and deterministic replays
+        run: node scripts/v2-audit-match.mjs
+      - name: Full repository regression (not a card completion metric)
+        run: npm test
+      - name: Preserve snapshots and replay evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v2-e-acceptance-evidence
+          path: |
+            audit/v2-full-catalog.csv
+            audit/v2-full-catalog-summary.json
+            audit/v2-e-match-replays/
+          if-no-files-found: warn
+          retention-days: 14
