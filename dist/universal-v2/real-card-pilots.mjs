@@ -67,7 +67,7 @@ const printed=Object.freeze({
     {template:'payDiscardThen',optional:true,then:[
      {template:'recoverOutsideColorUnderEnergy',color:'red',energy:2,optional:true}
     ]}
-   ]},matchText:'必要エナジーが2以下の赤のカード'},
+   ]},matchText:'場外需求能源2以下紅色卡'},
   {id:'TTG-1-051',energy:0,ap:1,bp:1500,gen:1,color:'red',trigger:'draw',type:'character',implementation:'dsl',templateEffects:{onPlay:[{template:'drawDiscardOne'}]},matchText:'抽1張'},
   {id:'TTG-1-042',energy:0,ap:1,bp:2000,gen:1,color:'red',trigger:'active',type:'character',implementation:'vanilla',effects:{},matchText:'沒有額外印刷角色效果'},
   {id:'TTG-1-043',energy:2,ap:1,bp:3000,gen:1,color:'red',trigger:'draw',type:'character',
@@ -92,21 +92,9 @@ const printed=Object.freeze({
   {id:'TTG-1-079',energy:3,ap:1,bp:0,gen:0,color:'red',trigger:'final',type:'event',implementation:'dsl',templateEffects:{onPlay:[{template:'recoverAp',count:2}]},matchText:'選擇最多2張自己的 AP 卡'}
  ])
 });
-// V2-only sourced pilot overlay. TTG-1-052 is absent from the existing
-// production 81-entry catalogue despite being a real printed UA56BT card.
-// Never push an 82nd row into the legacy catalogue just to make V2 tests work.
-const TTG_V2_OFFICIAL_OVERLAY=Object.freeze({
- 'TTG-1-052':Object.freeze({
-  id:'TTG-1-052',identity:'TTG-1-052',number:'UA56BT/TTG-1-052',
-  name:'シモン',nameJa:'シモン',color:'red',energy:2,ap:1,bp:3000,gen:1,
-  type:'character',traits:['大グレン団'],trigger:'active',
-  effect:'【登場時】自分の手札を1枚場外に置いてもよい。そうした場合、自分の場外から必要エナジーが2以下の赤のカードを1枚まで手札に加える。',
-  source:'https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-052'
- })
-});
 function source(title,id){
  if(title==='bleach')return CARDS.find(c=>c.identity===id);
- if(title==='gurren-lagann')return TTG_BY_ID[id]||TTG_V2_OFFICIAL_OVERLAY[id];
+ if(title==='gurren-lagann')return TTG_BY_ID[id];
  throw Error('Unknown pilot title');
 }
 export const REAL_V2_PILOT_IDS=Object.freeze(Object.fromEntries(
