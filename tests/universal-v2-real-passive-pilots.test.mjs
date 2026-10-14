@@ -1,30 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createUniversalPack,validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
-import {verifiedPilotCards} from '../dist/universal-v2/real-card-pilots.mjs';
-import {verifiedBleachPurplePilotDeck} from '../dist/universal-v2/verified-real-decks.mjs';
+import {verifiedBleachPurplePilotDeck,verifiedTtgRedPilotDeck} from '../dist/universal-v2/verified-real-decks.mjs';
 import {
  newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  universalEnergyByColor,universalBp,assertUniversalMatch
 } from '../dist/universal-v2/engine.mjs';
 
-// BLEACH uses a true 50-card deck. TTG remains only a 50-card TEST FIXTURE
-// with two explicitly named synthetic card IDs; never label it official.
-const bleach=verifiedBleachPurplePilotDeck();
-// The public baseline real deck intentionally excludes 037; this variant
-// substitutes one registered real copy without changing the 50-card total.
+// Both sides now use printed and allowed REAL 50-card pilot decks.
+const bleach=verifiedBleachPurplePilotDeck(),realTtg=verifiedTtgRedPilotDeck();
 const bleachWithUrahara={...bleach.counts,'BLC-1-034':3,'BLC-1-037':1};
 assert.deepEqual(validateUniversalDeck(bleach.pack,bleachWithUrahara),[]);
-const officialRed=verifiedPilotCards('gurren-lagann').filter(c=>c.color==='red');
-const filler=Array.from({length:2},(_,i)=>({
- id:'TEST-ONLY-TTG-ENERGY-'+i,name:'TEST-ONLY energy '+i,type:'character',
- color:'red',energy:0,ap:1,bp:1000,gen:1,implementation:'vanilla'
-}));
-const ttg=createUniversalPack({id:'gurren-lagann',version:'passive-pilot-fixture',
- cards:[...officialRed,...filler]});
-const redCounts=Object.fromEntries(officialRed.map(c=>[c.id,c.trigger==='final'?1:4]));
-for(const c of filler)redCounts[c.id]=4;
-assert.equal(Object.values(redCounts).reduce((a,b)=>a+b,0),50);
+const ttg=realTtg.pack,redCounts=realTtg.counts;
 assert.deepEqual(validateUniversalDeck(ttg,redCounts),[]);
 function take(s,p,id){
  for(const zone of ['hand','deck','life','outside']){
