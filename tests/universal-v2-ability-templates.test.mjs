@@ -151,9 +151,12 @@ test('all twenty-two supported templates compile to the established and extended
  assert.deepEqual(list,[{op:'draw',count:1},{op:'restOppFrontUnderBp',bp:3000,optional:true}]);
 });
 
-test('both real pilot titles compile all sixteen existing templated profiles into the exact former DSL programs',()=>{
+test('both real pilot titles compile expanded explicitly verified template effects into engine DSL',()=>{
  const expected={
   'BLC-1-034':{onPlay:[{op:'drawDiscard',count:1}]},
+  'BLC-1-036':{onPlay:[{op:'millTop',count:2}]},
+  'BLC-1-040':{onPlay:[{op:'peekTopOne'}]},
+  'BLC-1-052':{onAttack:[{op:'drawDiscard',count:1}]},
   'BLC-1-064':{onPlay:[{op:'retireOppFrontUnderBp',bp:3000,bonusName:'黒崎一護',bonusBp:5000}]},
   'BLC-1-066':{onPlay:[{op:'recoverAp',count:2}]},
   'BLC-1-103':{onAttack:[{op:'buffSelf',bp:1000}]},
@@ -185,7 +188,7 @@ test('both real pilot titles compile all sixteen existing templated profiles int
    assert.ok(Object.isFrozen(entry.effects),id+' compiled effects are frozen');
   }
  }
- assert.equal(Object.keys(expected).length,16);
+ assert.equal(Object.keys(expected).length,19);
 });
 
 function dualFixture(){
