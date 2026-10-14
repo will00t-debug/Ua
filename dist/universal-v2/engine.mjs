@@ -886,6 +886,25 @@ export function assertUniversalMatch(pack,s){
  }
  return true;
 }
+// Trusted local UI accessor. Only the CURRENT decision owner can inspect
+// candidate identities in private deck-search/discard choices. Its action
+// payload must be submitted unchanged (do not add display metadata to it).
+// This does not replace network authorization in a future multiplayer server.
+export function universalPrivateChoices(pack,s,viewer){
+ assertUniversalMatch(pack,s);
+ if(!playerIndex(viewer))throw Error('Invalid private choice viewer');
+ const q=s.pending;
+ if(!q||q.player!==viewer||
+  !['effect-search-deck','effect-recover-outside','effect-discard-cost'].includes(q.kind))
+  return null;
+ const zone=q.kind==='effect-search-deck'?'deck':
+  q.kind==='effect-recover-outside'?'outside':'hand';
+ return {kind:q.kind,player:viewer,options:legalPending(pack,s).map(action=>{
+  const physical=action.uid===null?null:s.players[viewer][zone].find(c=>c.uid===action.uid);
+  return {action:{...action},card:physical?
+   {cardId:physical.cardId,name:card(pack,physical).name,color:card(pack,physical).color}:null};
+ })};
+}
 // Safe, title-agnostic view model for common UI: no opponent hand IDs, hidden
 // life identities or private deck order are ever exported to the viewer.
 // Q2298: a player can inspect their own facedown under-cards, but an
