@@ -80,9 +80,15 @@ export function legalTtgGreenEntryDecisions(state,{player,sourceUid}={}){
  case 'TTG-1-026':{
   const candidates=top.slice(0,7).filter(ark);
   const outside=pl.outside.filter(ark);
-  return [{type:'greenEntry',player,sourceUid,mode:'arkChoice',
-   revealed:top.slice(0,7).map(c=>c.uid),candidateUids:candidates.map(c=>c.uid),
-   outsideUids:outside.map(c=>c.uid),canSkip:true}];
+  return [
+   {type:'greenEntry',player,sourceUid,mode:'arkChoice',
+    revealed:top.slice(0,7).map(c=>c.uid),candidateUids:candidates.map(c=>c.uid),
+    outsideUids:outside.map(c=>c.uid),canSkip:true},
+   // Official second branch can recover ZERO or one Ark from outside.
+   // It does not permit viewing, revealing, or reordering any deck cards.
+   {type:'greenEntry',player,sourceUid,mode:'arkOutside',
+    candidateUids:outside.map(c=>c.uid),canSkip:true}
+  ];
  }
  default:return [];
  }
@@ -148,6 +154,12 @@ export function resolveTtgGreenEntry(state,{player,sourceUid,mode,takeUid=null,d
   if(!target||!isSafeStandalone(target.card))throw new Error('Unimplemented RAID pile return');
   owner[target.line][target.slot]=null;
   owner.hand.push(target.card);
+ }else if(mode==='arkOutside'){
+  if(discardUid||returnUid||apUid||line!==null||slot!==null||bottomOrderUids.length)
+   throw new Error('Outside Ark branch may not inspect or reorder deck');
+  if(takeUid!==null&&!rule.candidateUids.includes(takeUid))
+   throw new Error('Only own outside Ark-Gurren may be recovered');
+  if(takeUid!==null)owner.hand.push(from(owner.outside,takeUid));
  }else if(mode==='arkChoice'){
   if(discardUid||returnUid)throw new Error('No discard or bounce on Ark selection');
   if(takeUid===null){
@@ -168,6 +180,13 @@ export function resolveTtgGreenEntry(state,{player,sourceUid,mode,takeUid=null,d
  if(!objectHasUniqueUids(owner))throw new Error('Green entry caused UID duplication');
  if(result.pending?.kind==='ttgGreenEntry')result.pending=null;
  result.log??=[];
+ // For Rossiu 026, ONLY the selected Ark from the seven-card search is
+ // publicly revealed. All other looked-at cards remain private.
+ if(id==='TTG-1-026'&&mode==='arkChoice'&&takeUid&&rule.candidateUids.includes(takeUid)){
+  const chosen=owner.hand.find(c=>c.uid===takeUid);
+  if(!chosen||!ark(chosen))throw new Error('026 public reveal requires Ark-Gurren');
+  result.log.push({type:'ttgPublicSearchReveal',player,sourceUid,uid:takeUid,cardId:chosen.cardId});
+ }
  // The Japanese print for Leeron 023 explicitly says to REVEAL the selected
  // Gunmen. Publish only that selected card's identity, never the other four
  // private looked-at cards or the unchosen bottom order.
