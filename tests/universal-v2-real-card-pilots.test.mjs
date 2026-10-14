@@ -1002,3 +1002,87 @@ test('real TTG073 RAID life on opposing turn chains existing Gurren and preserve
  assert.equal(fired.pending,null);
  assert.equal(assertUniversalMatch(packs,fired),true);
 });
+
+test('hard V2 AI activates TTG073 optional BP5000 retirement rather than declining while enemy is eligible',()=>{
+ const {packs,s,low,high}=real073Chain(1007);
+ assert.equal(s.pending?.kind,'effect-retire-bp');
+ const legal=legalUniversalActions(packs,s);
+ assert.equal(legal[0].uid,null,'the effect remains optional');
+ const ai=chooseUniversalAiAction(packs,s,{difficulty:'hard'});
+ assert.equal(ai.type,'chooseRetireBp');
+ assert.equal(ai.uid,high.uid,'strongest eligible BLEACH defender is preferred');
+ const acted=dispatchUniversalAction(packs,s,ai,{actor:1});
+ assert.equal(acted.players[0].front[1],null);
+ assert.equal(acted.players[0].front[0].uid,low.uid);
+ assert.equal(assertUniversalMatch(packs,acted),true);
+});
+test('TTG073 multi-facedown leave substitute lets owner choose precise UID without disclosing hidden cards',()=>{
+ const {packs,s:initial,second,first,high}=real073Chain(1008);
+ let s=dispatchUniversalAction(packs,initial,{type:'chooseRetireBp',uid:null},{actor:1});
+ const extra=take(s,1,'TTG-1-064');
+ extra.faceDown=true;
+ s.players[1].front[0].stack[0].under.push(extra);
+ assert.equal(assertUniversalMatch(packs,s),true);
+ s=dispatchUniversalAction(packs,s,{type:'next'});
+ s=dispatchUniversalAction(packs,s,{type:'next'});
+ assert.equal(s.active,0);
+ s=advanceToMain(packs,s);
+ const attacker=s.players[0].front.find(c=>c?.uid===high.uid);
+ attacker.buffs.push({bp:3000,untilTurn:s.turn});
+ attacker.ready=true;
+ s=dispatchUniversalAction(packs,s,{type:'next'});
+ s=dispatchUniversalAction(packs,s,{type:'attack',uid:attacker.uid},{actor:0});
+ s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:second.uid},{actor:1});
+ assert.equal(s.pending?.kind,'leave-replacement');
+ const options=legalUniversalActions(packs,s);
+ assert.deepEqual(options,[
+  {type:'chooseLeaveReplacement',mode:'protect',uid:first.uid},
+  {type:'chooseLeaveReplacement',mode:'protect',uid:extra.uid},
+  {type:'chooseLeaveReplacement',mode:'leave'}
+ ]);
+ assert.ok(!JSON.stringify(universalPublicView(packs,s,0)).includes(extra.uid));
+ assert.throws(()=>dispatchUniversalAction(packs,s,
+  {type:'chooseLeaveReplacement',mode:'protect'},{actor:1}),/not currently legal/);
+ const before=structuredClone(s);
+ const chosen=dispatchUniversalAction(packs,s,options[1],{actor:1});
+ assert.equal(chosen.players[1].front[0].uid,second.uid);
+ assert.equal(chosen.players[1].front[0].stack[0].under.length,1);
+ assert.equal(chosen.players[1].front[0].stack[0].under[0].uid,first.uid);
+ assert.ok(chosen.players[1].outside.some(c=>c.uid===extra.uid));
+ assert.equal(universalBp(packs,chosen,chosen.players[1].front[0]),5000);
+ assert.equal(assertUniversalMatch(packs,chosen),true);
+ assert.deepEqual(s,before,'no mutation of prior pending match');
+ const ai=chooseUniversalAiAction(packs,s,{difficulty:'hard'});
+ assert.deepEqual(ai,options[0],'hard AI can resolve a multi-choice replacement without a fabricated action');
+ const declined=dispatchUniversalAction(packs,s,options[2],{actor:1});
+ assert.equal(declined.players[1].front[0],null);
+ assert.ok(declined.players[1].outside.some(c=>c.uid===first.uid));
+ assert.ok(declined.players[1].outside.some(c=>c.uid===extra.uid));
+ assert.equal(assertUniversalMatch(packs,declined),true);
+});
+test('facdown substitute with an attached nested undercard sidelines all nested UID objects without loss',()=>{
+ const {packs,s:initial,second,high}=real073Chain(1010);
+ let s=dispatchUniversalAction(packs,initial,{type:'chooseRetireBp',uid:null},{actor:1});
+ const nested=take(s,1,'TTG-1-064');
+ nested.faceDown=true;
+ const child=take(s,1,'TTG-1-065');
+ nested.under=[child];
+ s.players[1].front[0].stack[0].under.push(nested);
+ assert.equal(assertUniversalMatch(packs,s),true);
+ s=dispatchUniversalAction(packs,s,{type:'next'});
+ s=dispatchUniversalAction(packs,s,{type:'next'});
+ s=advanceToMain(packs,s);
+ const attacker=s.players[0].front.find(c=>c?.uid===high.uid);
+ attacker.buffs.push({bp:3000,untilTurn:s.turn});
+ attacker.ready=true;
+ s=dispatchUniversalAction(packs,s,{type:'next'});
+ s=dispatchUniversalAction(packs,s,{type:'attack',uid:attacker.uid},{actor:0});
+ s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:second.uid},{actor:1});
+ assert.equal(s.pending.kind,'leave-replacement');
+ const chosen=legalUniversalActions(packs,s).find(a=>a.uid===nested.uid);
+ assert.ok(chosen);
+ const result=dispatchUniversalAction(packs,s,chosen,{actor:1});
+ assert.ok(result.players[1].outside.some(c=>c.uid===nested.uid));
+ assert.ok(result.players[1].outside.some(c=>c.uid===child.uid));
+ assert.equal(assertUniversalMatch(packs,result),true);
+});
