@@ -35,8 +35,8 @@ test('SAO official dedup identity and product scopes stay unchanged, AP/parallel
  assert.equal(new Set(SAO_OFFICIAL_CARDS.map(c=>c.id)).size,183);
  for(const [set,count] of Object.entries({UA15BT:100,EX08BT:74,UA15ST:18,UAPR:10}))
   assert.equal(SAO_OFFICIAL_CARDS.filter(c=>c.set===set).length,count);
- assert.equal(SAO_V2_PILOT_IDS.length,22);
- assert.equal(Object.keys(pack.cards).length,22);
+ assert.equal(SAO_V2_PILOT_IDS.length,33);
+ assert.equal(Object.keys(pack.cards).length,33);
  assert.ok(!pack.cards['SAO-2-063'],'conditional STEP + onPlay is NOT a basic vanilla');
  assert.ok(!pack.cards['SAO-1-107'],'draw 3 then discard 1 is NOT drawDiscardOne');
  for(const id of SAO_V2_PILOT_IDS){
@@ -46,7 +46,7 @@ test('SAO official dedup identity and product scopes stay unchanged, AP/parallel
   for(const field of ['color','energy','ap','bp','gen','type','trigger'])
    assert.equal(data[field],source[field],id+' mismatch '+field);
  }
- assert.equal(verifiedSaoV2Cards().length,22);
+ assert.equal(verifiedSaoV2Cards().length,33);
  assert.match(validateUniversalDeck(pack,{...deck,'SAO-2-063':1}).join(),/Unregistered/);
 });
 test('SAO 50 physical-card deck, actual AP spending and entry draw/discard are V2 transitions',()=>{
@@ -78,4 +78,70 @@ test('SAO printed STEP is a legal once-per-movement action, never a free extra m
  assert.equal(after.players[0].front[0],null);
  assert.ok(!legalUniversalActions(pack,after).some(a=>a.uid===unit.uid&&a.type==='move'));
  assert.equal(assertUniversalMatch(pack,after),true);
+});
+
+test('SAO pure-impact-null card is registered only with the precise passive ability',()=>{
+ for(const id of ['SAO-1-026','SAO-1-027','SAO-1-074','SAO-2-026','SAO-2-045']){
+  assert.equal(pack.cards[id].impactNull,true);
+  assert.equal(pack.cards[id].implementation,'dsl');
+  assert.equal(pack.cards[id].effects.onPlay,undefined);
+ }
+ assert.equal(pack.cards['SAO-1-001'].impactNull,false);
+});
+test('SAO 006 mandatory own low-energy bounce chooses physical card; cannot target enemy or high-energy own unit',()=>{
+ let s=fresh(),p=s.players[0];
+ const unit=take(s,0,'SAO-1-006'),low=take(s,0,'SAO-1-001'),producer=take(s,0,'SAO-1-016'),
+  enemy=take(s,1,'SAO-1-001');
+ p.hand.push(unit);p.front[0]=low;p.energy[0]=producer;
+ s.players[1].front[0]=enemy;
+ s=toMain(s);
+ s=dispatchUniversalAction(pack,s,action(s,a=>a.type==='play'&&a.uid===unit.uid&&a.line==='front'&&a.slot===1));
+ assert.equal(s.pending?.kind,'effect-bounce-own');
+ const options=legalUniversalActions(pack,s);
+ assert.ok(options.some(a=>a.uid===low.uid&&a.type==='chooseOwnBounce'));
+ assert.ok(!options.some(a=>a.uid===enemy.uid));
+ assert.ok(!options.some(a=>a.uid===producer.uid));
+ assert.throws(()=>dispatchUniversalAction(pack,s,{type:'chooseOwnBounce',uid:enemy.uid}),/not currently legal/);
+ const resolved=dispatchUniversalAction(pack,s,{type:'chooseOwnBounce',uid:low.uid});
+ assert.ok(resolved.players[0].hand.some(c=>c.uid===low.uid));
+ assert.equal(resolved.players[0].front[0],null);
+ assert.equal(assertUniversalMatch(pack,resolved),true);
+});
+test('SAO 042 optional BP<=3000 enemy REST respects target legality and may be skipped',()=>{
+ let s=fresh(),p=s.players[0],unit=take(s,0,'SAO-1-042'),
+  producer=take(s,0,'SAO-1-016'),low=take(s,1,'SAO-1-001');
+ p.hand.push(unit);p.energy[0]=producer;
+ low.ready=true;s.players[1].front[0]=low;
+ s=toMain(s);
+ s=dispatchUniversalAction(pack,s,action(s,a=>a.type==='play'&&a.uid===unit.uid&&a.line==='front'&&a.slot===0));
+ assert.equal(s.pending?.kind,'effect-rest-bp');
+ const options=legalUniversalActions(pack,s);
+ assert.ok(options.some(a=>a.type==='chooseRestBp'&&a.uid===null));
+ assert.ok(options.some(a=>a.type==='chooseRestBp'&&a.uid===low.uid));
+ const skip=dispatchUniversalAction(pack,s,{type:'chooseRestBp',uid:null});
+ assert.equal(skip.players[1].front[0].ready,true);
+ const used=dispatchUniversalAction(pack,s,{type:'chooseRestBp',uid:low.uid});
+ assert.equal(used.players[1].front[0].ready,false);
+ assert.equal(assertUniversalMatch(pack,used),true);
+ assert.equal(assertUniversalMatch(pack,skip),true);
+});
+test('SAO 2-040 private on-entry top peek chooses no shuffle or actual outside movement',()=>{
+ const copy={...deck};
+ copy['SAO-1-001']-=2;copy['SAO-2-040']=1;copy['SAO-2-035']=1;
+ assert.deepEqual(validateUniversalDeck(pack,copy),[]);
+ let s=newUniversalMatch(pack,{decks:[copy,copy],seed:7474,first:0});
+ const unit=take(s,0,'SAO-2-040'),producer=take(s,0,'SAO-2-035');
+ s.players[0].hand.push(unit);s.players[0].energy[0]=producer;
+ s=toMain(s);
+ const before=s.players[0].deck.length,first=s.players[0].deck[0].uid;
+ s=dispatchUniversalAction(pack,s,action(s,a=>a.type==='play'&&a.uid===unit.uid&&a.line==='front'&&a.slot===0));
+ assert.equal(s.pending?.kind,'private-top-choice');
+ const stay=dispatchUniversalAction(pack,s,{type:'chooseTopCard',mode:'top'});
+ assert.equal(stay.players[0].deck.length,before);
+ assert.equal(stay.players[0].deck[0].uid,first);
+ const outside=dispatchUniversalAction(pack,s,{type:'chooseTopCard',mode:'outside'});
+ assert.equal(outside.players[0].deck.length,before-1);
+ assert.ok(outside.players[0].outside.some(c=>c.uid===first));
+ assert.equal(assertUniversalMatch(pack,stay),true);
+ assert.equal(assertUniversalMatch(pack,outside),true);
 });
