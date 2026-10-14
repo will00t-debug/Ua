@@ -37,6 +37,6 @@ test('browser UI can select TTG, start a 50-card Beta match, resolve legal turn 
   press({view:'builder'});
   press({title:'solo-leveling'});
   assert.match(app.innerHTML,/80\/80 張已接上獨立 Beta 自動判定/);
-  assert.match(app.innerHTML,/Beta 自動判定已接線/);
+  assert.match(app.innerHTML,/Beta 自動判定已接入/);
  }finally{delete globalThis.document;delete globalThis.window;delete globalThis.localStorage;}
 });
