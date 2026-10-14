@@ -4,7 +4,7 @@ import {createUniversalPack,validateUniversalDeck} from '../dist/universal-v2/pa
 import {portVerifiedPilotCard,REAL_V2_PILOT_IDS,verifiedPilotCards,verifiedPilotPack} from '../dist/universal-v2/real-card-pilots.mjs';
 import {
  newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
- universalBp,assertUniversalMatch,universalPublicView
+ universalBp,universalEnergyByColor,assertUniversalMatch,universalPublicView
 } from '../dist/universal-v2/engine.mjs';
 
 // The pilot now has 5 BLEACH and 5 TTG profiles, NOT a complete 50-card
@@ -136,4 +136,83 @@ test('real BLEACH Ichigo 039 GET trigger is resolved through the TTG-opponent sh
  const resolved=dispatchUniversalAction(packs,state,action,{actor:0});
  assert.ok(resolved.players[0].hand.some(c=>c.uid===revealed.uid));
  assert.equal(assertUniversalMatch(packs,resolved),true);
+});
+
+test('real red TTG Kamina 042 ACTIVE trigger may be declined or target an already REST own character',()=>{
+ const packs=[bleach.pack,red.pack];let s=fresh(red,229);
+ const attacker=take(s,0,'BLC-1-039');attacker.ready=true;s.players[0].front[0]=attacker;
+ const defender=take(s,1,'TTG-1-065');defender.ready=false;s.players[1].front[0]=defender;
+ const flip=take(s,1,'TTG-1-042'),previous=s.players[1].life.shift();
+ s.players[1].deck.push(previous);s.players[1].life.unshift(flip);
+ s=advanceToMain(packs,s);
+ s=dispatchUniversalAction(packs,s,{type:'next'});
+ s=dispatchUniversalAction(packs,s,{type:'attack',uid:attacker.uid},{actor:0});
+ s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:null},{actor:1});
+ assert.equal(s.pending?.kind,'life-trigger');assert.equal(s.pending.trigger,'active');
+ assert.equal(s.publicReveals.at(-1).title,'gurren-lagann');
+ const available=legalUniversalActions(packs,s);
+ assert.ok(available.some(a=>a.mode==='skip'));
+ assert.ok(available.some(a=>a.mode==='active'&&a.uid===defender.uid));
+ assert.ok(!available.some(a=>a.uid===attacker.uid));
+ const rejected=dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'skip'},{actor:1});
+ assert.equal(rejected.players[1].front[0].ready,false);
+ const resolved=dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'active',uid:defender.uid},{actor:1});
+ assert.equal(resolved.players[1].front[0].ready,true);
+ assert.equal(universalBp(packs,resolved,resolved.players[1].front[0]),5500);
+ assert.equal(assertUniversalMatch(packs,resolved),true);
+});
+test('real red TTG Yoko 064 DRAW trigger uses separate optional draw path',()=>{
+ const packs=[bleach.pack,red.pack];let s=fresh(red,239);
+ const attacker=take(s,0,'BLC-1-039');attacker.ready=true;s.players[0].front[0]=attacker;
+ const flip=take(s,1,'TTG-1-064'),previous=s.players[1].life.shift();
+ s.players[1].deck.push(previous);s.players[1].life.unshift(flip);
+ s=advanceToMain(packs,s);
+ s=dispatchUniversalAction(packs,s,{type:'next'});
+ s=dispatchUniversalAction(packs,s,{type:'attack',uid:attacker.uid},{actor:0});
+ s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:null},{actor:1});
+ assert.equal(s.pending?.trigger,'draw');
+ const before=s.players[1].hand.length;
+ const yes=dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'draw'},{actor:1});
+ const no=dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'skip'},{actor:1});
+ assert.equal(yes.players[1].hand.length,before+1);
+ assert.equal(no.players[1].hand.length,before);
+ assert.equal(assertUniversalMatch(packs,yes),true);
+ assert.equal(assertUniversalMatch(packs,no),true);
+});
+test('real BLEACH Urahara 102 generates two PURPLE, never funds RED cards; its ACTIVE trigger targets own BLEACH',()=>{
+ const packs=[bleach.pack,red.pack];let s=fresh(red,241);
+ const resource=take(s,0,'BLC-1-102');s.players[0].energy[0]=resource;
+ const target=take(s,0,'BLC-1-039');target.ready=false;s.players[0].front[0]=target;
+ const flip=take(s,0,'BLC-1-102'),old=s.players[0].life.shift();
+ s.players[0].deck.push(old);s.players[0].life.unshift(flip);
+ const attacker=take(s,1,'TTG-1-051');attacker.ready=true;s.players[1].front[0]=attacker;
+ assert.equal(universalEnergyByColor(packs,s,0).purple,2);
+ assert.equal(universalEnergyByColor(packs,s,0).red,undefined);
+ for(let i=0;i<4;i++)s=dispatchUniversalAction(packs,s,{type:'next'});
+ s=advanceToMain(packs,s);
+ s=dispatchUniversalAction(packs,s,{type:'next'});
+ s=dispatchUniversalAction(packs,s,{type:'attack',uid:attacker.uid},{actor:1});
+ s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:null},{actor:0});
+ assert.equal(s.pending?.trigger,'active');
+ const result=dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'active',uid:target.uid},{actor:0});
+ assert.equal(universalBp(packs,result,result.players[0].front[0]),4500);
+ assert.equal(result.players[0].front[0].ready,true);
+ assert.equal(assertUniversalMatch(packs,result),true);
+});
+test('real TTG Yoko 065 STEP moves from front to energy in own movement phase only',()=>{
+ const packs=[bleach.pack,red.pack];let s=fresh(red,256);
+ for(let i=0;i<4;i++)s=dispatchUniversalAction(packs,s,{type:'next'});
+ const stepper=take(s,1,'TTG-1-065');s.players[1].front[0]=stepper;
+ assert.equal(verifiedPilotPack('gurren-lagann').cards['TTG-1-065'].step,true);
+ assert.equal(s.phase,'start');
+ s=dispatchUniversalAction(packs,s,{type:'next'});
+ assert.equal(s.phase,'move');
+ const action=legalUniversalActions(packs,s).find(x=>x.type==='step'&&x.uid===stepper.uid&&x.slot===0);
+ assert.ok(action);
+ const next=dispatchUniversalAction(packs,s,action,{actor:1});
+ assert.equal(next.players[1].front[0],null);
+ assert.equal(next.players[1].energy[0].uid,stepper.uid);
+ assert.ok(!legalUniversalActions(packs,next).some(x=>x.type==='move'&&x.uid===stepper.uid),
+  'movement is simultaneous, this STEP card cannot move twice');
+ assert.equal(assertUniversalMatch(packs,next),true);
 });
