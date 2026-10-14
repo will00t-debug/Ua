@@ -131,7 +131,10 @@ test('TTG-1-052 discard then optional red energy<=2 recovery; payment card itsel
  assert.ok(legal(paid).some(x=>x.uid===payment.uid));
  assert.ok(!legal(paid).some(x=>x.uid===blue.uid||x.uid===high.uid));
  assert.equal(universalPrivateChoices(packs,paid,1),null);
- assert.ok(!JSON.stringify(universalPublicView(packs,paid,1)).includes(payment.uid));
+ assert.deepEqual(universalPublicView(packs,paid,1).pending,
+  {kind:'effect-recover-outside',player:0});
+ // The discarded payment is ALREADY face up in public outside. Its UID
+ // may be visible: only private hand/deck candidate UIDs must stay hidden.
  const recovered=dispatchUniversalAction(packs,paid,
   {type:'chooseOutsideRecovery',uid:payment.uid},{actor:0});
  assert.equal(recovered.pending,null);
