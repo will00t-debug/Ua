@@ -83,6 +83,8 @@ export function uiActionLabel(action,{pack,state}={}){
    if(action.mode==='active')return '使 '+name()+' ACTIVE';
    if(action.mode==='special')return '使 '+name()+' 退場';
    return '生命觸發：'+action.mode;
+  case 'chooseOnceEffect':
+   return action.mode==='activate'?'使用每回合一次能力':'暫不使用（不消耗限次）';
   case 'chooseLeaveReplacement':
    return action.mode==='leave'?'讓角色退場':'消耗裏向底卡保護角色'+(action.uid?'（'+name()+'）':'');
   case 'chooseTopCard':return action.mode==='top'?'保留在牌庫頂':'送至場外';
