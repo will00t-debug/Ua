@@ -87,3 +87,34 @@ test('hand above eight in end phase requires controller choices into REMOVED, no
  assert.equal(s.phase,'start');
  assert.equal(assertUniversalMatch(pack,s),true);
 });
+
+test('full front line permits movement only with explicit target sent to REMOVAL',()=>{
+ let s=fresh(),moving=take(s,'R02');s.players[0].energy[0]=moving;
+ for(let i=0;i<4;i++)s.players[0].front[i]=take(s,'R'+String(i+3).padStart(2,'0'));
+ s=dispatchUniversalAction(pack,s,{type:'next'});
+ const legal=legalUniversalActions(pack,s).filter(a=>a.type==='move'&&a.uid===moving.uid);
+ assert.equal(legal.length,4);
+ const replaced=s.players[0].front[2].uid,a=legal.find(a=>a.slot===2);
+ assert.equal(a.replaceUid,replaced);
+ assert.throws(()=>dispatchUniversalAction(pack,s,{type:'move',uid:moving.uid,slot:2}),/not currently legal/);
+ const after=dispatchUniversalAction(pack,s,a);
+ assert.equal(after.players[0].front[2].uid,moving.uid);
+ assert.equal(after.players[0].energy[0],null);
+ assert.ok(after.players[0].removed.some(c=>c.uid===replaced));
+ assert.ok(!after.players[0].outside.some(c=>c.uid===replaced));
+ assert.equal(assertUniversalMatch(pack,after),true);
+});
+test('full energy line allows STEP only after a selected energy card is REMOVED',()=>{
+ let s=fresh(),moving=take(s,'R00');s.players[0].front[0]=moving;
+ for(let i=0;i<4;i++)s.players[0].energy[i]=take(s,'R'+String(i+3).padStart(2,'0'));
+ s=dispatchUniversalAction(pack,s,{type:'next'});
+ const legal=legalUniversalActions(pack,s).filter(a=>a.type==='step'&&a.uid===moving.uid);
+ assert.equal(legal.length,4);
+ const replaced=s.players[0].energy[1].uid,action=legal.find(a=>a.slot===1);
+ assert.equal(action.replaceUid,replaced);
+ const after=dispatchUniversalAction(pack,s,action);
+ assert.equal(after.players[0].front[0],null);
+ assert.equal(after.players[0].energy[1].uid,moving.uid);
+ assert.ok(after.players[0].removed.some(c=>c.uid===replaced));
+ assert.equal(assertUniversalMatch(pack,after),true);
+});
