@@ -994,7 +994,6 @@ test('real TTG073 RAID life on opposing turn chains existing Gurren and preserve
  assert.equal(liferaid.players[1].front[0].uid,revealed.uid);
  assert.equal(liferaid.players[1].front[0].stack[0].under[0].uid,gurren.uid);
  assert.equal(universalBp(packs,liferaid,liferaid.players[1].front[0]),5000);
- assert.equal(universalBp(packs,liferaid,liferaid.players[1].front[0]),5000);
  const choice=legalUniversalActions(packs,liferaid).find(a=>a.uid===attacker.uid);
  assert.ok(choice);
  const fired=dispatchUniversalAction(packs,liferaid,choice,{actor:1});
