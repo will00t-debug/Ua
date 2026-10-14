@@ -57,7 +57,7 @@ test('official end phase turns REST field cards ACTIVE before opponent turn',()=
 });
 test('hand above eight in end phase requires controller choices into REMOVED, not sideline',()=>{
  let s=fresh();
- s.players[0].hand.push(take(s,'R00'),take(s,'R01'),take(s,'R02'));
+ s.players[0].hand.push(...s.players[0].deck.splice(0,3));
  const initialHand=s.players[0].hand.map(c=>c.uid);
  assert.equal(initialHand.length,10);
  for(let n=0;n<3;n++)s=choose(s,x=>x.type==='next');
