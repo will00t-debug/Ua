@@ -10,6 +10,8 @@ import {ttgArtSource,ttgArtErrorFallback} from './ttg-art.mjs';
 import {CARDS} from './cards.mjs?v=9.1.0';
 import {V2_PHASE_LABELS,V2_TITLE_LABELS,V2_PENDING_LABELS,
  uiActor,isExactLegal,uiCardLabel,uiActionLabel,visibleActionsForCard} from './universal-v2/preview-actions.mjs';
+import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalReplay,
+ publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
 
 const decks=Object.freeze({
  bleach:verifiedBleachPurplePilotDeck(),
@@ -39,7 +41,7 @@ const el=(tag,props={},...contents)=>{
 const $=id=>document.getElementById(id);
 const app={state:null,packs:null,selectedUid:null,
  selectedSide:null,history:[],busy:false,aiTimer:null,error:'',
- undo:null,sequence:0,allActions:false, maxAuto:4500,autoMoves:0};
+ undo:null,replay:null,sequence:0,allActions:false, maxAuto:4500,autoMoves:0};
 const phases=V2_PHASE_LABELS;
 const btn=(label,fn,cls='')=>el('button',{type:'button',class:cls,text:label,onClick:fn});
 const fmtTitle=(id)=>V2_TITLE_LABELS[id]||id;
@@ -54,7 +56,7 @@ function alertText(message){
  app.error=message;render();
 }
 function pushHistory(text){
- app.history.unshift(text);if(app.history.length>28)app.history.pop();
+ app.history.unshift(text); // Retain the full human-readable trace for bug reports.
 }
 function cardFace(physical,side,{showStats=true,interactive=false,ready=null,selected=false}={}){
  const data=cardDef(side,physical.cardId),color=data?.color||'';
@@ -186,13 +188,14 @@ function choices(){
  tools.append(el('h3',{text:'對局工具'}),el('div',{class:'inline-actions'},
   btn('重新開始',()=>startGame(), 'quiet'),
   btn('復原操作',()=>undoMove(),'quiet'),
-  btn('下載對局記錄',downloadHistory,'quiet')));
+  btn('下載對局記錄',downloadHistory,'quiet'),
+  btn('下載除錯重播 JSON',downloadReplay,'quiet')));
  if(app.busy)tools.append(el('p',{id:'loading',text:'電腦正在結算與思考…'}));
- tools.append(el('p',{class:'note',text:'此為本機端雙作品規則測試，沒有網路真人對戰與伺服器帳號系統。'}));
+ tools.append(el('p',{class:'note',text:'本機端測試；公開紀錄不顯示電腦隱藏選牌。除錯重播檔包含雙方完整選牌步驟，請勿公開分享。'}));
  side.append(tools);
  const log=el('div',{class:'panel'});
  log.append(el('h3',{text:'對局紀錄'}),el('ol',{class:'history'},
-  ...app.history.map(x=>el('li',{text:x}))));
+  ...app.history.slice(0,28).map(x=>el('li',{text:x}))));
  side.append(log);return side;
 }
 function pendingDialog(){
@@ -258,17 +261,18 @@ function applyAction(a){
  try{
   const legal=legalUniversalActions(app.packs,app.state);
   if(!isExactLegal(a,legal))throw Error('操作已非目前的合法動作，請重新選擇。');
-  app.undo={state:app.state,history:app.history.slice()};
+  app.undo={state:app.state,history:app.history.slice(),replay:app.replay};
   const previous=app.state;
   app.state=dispatchUniversalAction(app.packs,app.state,a,{actor:0});
   assertUniversalMatch(app.packs,app.state);
-  pushHistory('你：'+uiActionLabel(a,{pack:app.packs,state:previous}));
+  app.replay=appendUniversalReplay(app.replay,a,0);
+  pushHistory(publicPreviewActionLabel(app.packs,previous,app.state,a,0));
   app.selectedUid=null;app.error='';app.allActions=false;render();driveAi();
  }catch(e){alertText(e?.message||String(e));}
 }
 function undoMove(){
  if(!app.undo||app.busy)return;
- app.state=app.undo.state;app.history=app.undo.history;
+ app.state=app.undo.state;app.history=app.undo.history;app.replay=app.undo.replay;
  app.undo=null;app.error='';app.selectedUid=null;render();
  if(uiActor(app.state)===1)driveAi();
 }
@@ -286,14 +290,16 @@ function driveAi(){
      {difficulty:$('ai-level').value});
     if(!choice||!isExactLegal(choice,legalUniversalActions(app.packs,app.state)))
      throw Error('AI 未回傳合法操作：'+String(choice?.type||'null'));
+    const previous=app.state;
     app.state=dispatchUniversalAction(app.packs,app.state,choice,{actor:1});
+    app.replay=appendUniversalReplay(app.replay,choice,1);
+    pushHistory(publicPreviewActionLabel(app.packs,previous,app.state,choice,1));
     if(app.autoMoves%20===0)assertUniversalMatch(app.packs,app.state);
    }
    if(app.state.status==='playing'&&uiActor(app.state)===1){
     app.aiTimer=setTimeout(chunk,0);
    }else{
     app.busy=false;app.aiTimer=null;app.error='';
-    pushHistory('電腦已處理 '+app.autoMoves+' 步（'+$('ai-level').value+'）');
     render();
    }
   }catch(e){app.busy=false;app.aiTimer=null;alertText(e?.message||String(e));}
@@ -320,16 +326,29 @@ function startGame(){
   app.error='';app.selectedUid=null;app.undo=null;app.allActions=false;
   app.history=['新對局：'+fmtTitle(myTitle)+' vs '+fmtTitle(foeTitle)+
    '｜先手 '+(first===0?'你':'電腦')+'｜種子 '+seed];
+  app.replay=makeUniversalPreviewReplay(app.packs,{
+   decks:[mine.counts,foe.counts],seed,first});
   render();driveAi();
  }catch(e){alertText(e?.message||String(e));}
 }
-function downloadHistory(){
- if(!app.state)return;
- const lines=[...app.history].reverse().join('\n');
- const url=URL.createObjectURL(new Blob([lines+'\n'],{type:'text/plain;charset=utf-8'}));
- const a=document.createElement('a');a.href=url;a.download='ua-v2-preview-match.txt';
+function downloadBlob(content,type,filename){
+ const url=URL.createObjectURL(new Blob([content],{type}));
+ const a=document.createElement('a');a.href=url;a.download=filename;
  document.body.append(a);a.click();a.remove();
  setTimeout(()=>URL.revokeObjectURL(url),3000);
+}
+function downloadHistory(){
+ if(!app.state)return;
+ downloadBlob(publicPreviewTranscript({
+  header:'UNION ARENA V2 Preview · '+app.packs.map(p=>p.id).join(' vs '),
+  lines:[...app.history].reverse()
+ }), 'text/plain;charset=utf-8','ua-v2-preview-public-log.txt');
+}
+function downloadReplay(){
+ if(!app.replay)return;
+ if(!window.confirm('除錯重播檔包含雙方完整操作、私密選牌與牌序。僅應交給信任的除錯人員。確定要下載嗎？'))return;
+ downloadBlob(JSON.stringify(app.replay,null,2)+'\n',
+  'application/json;charset=utf-8','ua-v2-preview-debug-replay.json');
 }
 for(const id of ['my-title','ai-title','ai-level','first-player','match-seed']){
  $(id).addEventListener('change',()=>{
