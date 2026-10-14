@@ -30,6 +30,12 @@ const printed=Object.freeze({
     {op:'drawIfRaidUnderFacedown'}
    ]},matchText:'己方回合本卡成為 Raid 底板時',
    matchTexts:['大紅蓮團角色至多1張 BP+1000','裏向卡','可自選與 Raid 登場效果的結算順序']},
+  {id:'TTG-1-046',energy:4,ap:1,bp:4000,gen:1,color:'red',trigger:'get',
+   type:'character',implementation:'dsl',
+   mainAbility:{op:'chooseTwoAfterOwnRaid',frontOnly:true,readyOncePerName:true,
+    trait:'大グレン団',bp:1000},
+   effects:{},matchText:'本回合己方有過突襲時',
+   matchTexts:['最多選兩種能力','使自身 ACTIVE','BP+1000','同名 ACTIVE 選項每回合一次']},
   {id:'TTG-1-051',energy:0,ap:1,bp:1500,gen:1,color:'red',trigger:'draw',type:'character',implementation:'dsl',effects:{onPlay:[{op:'drawDiscard',count:1}]},matchText:'抽1張'},
   {id:'TTG-1-042',energy:0,ap:1,bp:2000,gen:1,color:'red',trigger:'active',type:'character',implementation:'vanilla',effects:{},matchText:'沒有額外印刷角色效果'},
   {id:'TTG-1-064',energy:0,ap:1,bp:2000,gen:1,color:'red',trigger:'draw',type:'character',implementation:'vanilla',effects:{},matchText:'無額外印刷角色效果'},
@@ -68,7 +74,7 @@ export function portVerifiedPilotCard(title,id){
   energy:spec.energy,ap:spec.ap,bp:spec.bp,gen:spec.gen,
   trigger:spec.trigger,implementation:spec.implementation,traits:Array.isArray(c.traits)?c.traits:typeof c.traits==='string'&&c.traits.trim()?[c.traits]:[],
   step:spec.step===true,raidName:spec.raidName,ownTurnBp:spec.ownTurnBp,
-  triggerEffect:spec.triggerEffect,effects:spec.effects
+  triggerEffect:spec.triggerEffect,mainAbility:spec.mainAbility,effects:spec.effects
  };
 }
 export function verifiedPilotCards(title){
