@@ -52,6 +52,10 @@ V2 提供 `newUniversalMatch([player0Pack, player1Pack], {decks:[...,...]})`，�
 
 **目前已有基礎驗證：** SPECIAL（指定敵方前線退場）、COLOR（明確印刷條件的手牌角色免費 ACTIVE 登場）、RAID（可加入手牌或免 AP Raid、仍需足夠能源且底板合法）。**仍刻意禁止**未知 COLOR 印刷效果、複雜被動／替換例外、衍生視為名稱、特殊時點、連鎖支付與尚未實作的官方事件。
 
+## 共用能力模板第一批（V2 Pilot，未上線）
+
+已新增 [`UNIVERSAL_ABILITY_TEMPLATES_V2.md`](./UNIVERSAL_ABILITY_TEMPLATES_V2.md)：以 `templateEffects` 表達 12 種受控可重複能力，編譯時轉為原有 V2 DSL 並接受原有的合法時點／卡種檢查。現在 **16 個既有真卡效果設定** 已轉換為模板，保留相同底層結算，沒有新增 Pilot 白名單，也沒有解除任何系列的正式版限制。未支援印刷能力仍 fail-closed，不得僅以模板數或測試數宣稱全卡驗收完成。
+
 ## 真實卡片移植 Pilot（進行中，不能使用真實完整牌組）
 
 `dist/universal-v2/real-card-pilots.mjs` 使用明確白名單，逐卡鎖定既有官方來源卡號、印刷 BP、能源、AP、產能、Trigger 與卡文特徵；卡文不匹配就拒絕移植。**這仍然是實驗版逐卡測試，不會修改正式卡表的 `auto` 狀態，也不能對未白名單卡片自動猜效果。**
