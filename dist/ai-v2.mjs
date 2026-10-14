@@ -139,6 +139,21 @@ function genericEffectBonus(s, action, after) {
   return bonus;
 }
 
+// Plan a short energy curve from the acting player's own visible hand.
+// Future draws are unknown, so this is a target, not a prediction.
+function plannedEnergy(s, p, excludingUid = null) {
+  const pl = s.players[p], current = energy(s, p);
+  const costs = pl.hand.filter(c => c.uid !== excludingUid)
+    .map(c => number(cardOf(c)?.energy)).filter(n => n > 0 && n <= 8)
+    .sort((a, b) => a - b);
+  if (!costs.length) return {target: Math.min(current, 3), urgency: 0};
+  // Prioritize the next affordable step, then one subsequent power spike.
+  const next = costs.find(n => n > current);
+  const higher = costs.filter(n => n > current);
+  const target = next == null ? current : Math.min(6, higher[Math.min(1, higher.length - 1)]);
+  return {target, urgency: higher.length};
+}
+
 function moveBias(s, a) {
   if (a.type !== 'move' && a.type !== 'step') return 0;
   const loc = locate(s, a.uid);
@@ -148,6 +163,8 @@ function moveBias(s, a) {
   const available = energy(s, controller(s)) - generated(s, c);
   const ownHand = s.players[controller(s)].hand;
   const futureCosts = ownHand.map(h => number(cardOf(h)?.energy)).filter(n => n > 0);
+  const plan = plannedEnergy(s, controller(s));
+  if (available < plan.target && plan.urgency) return -22 - (plan.target - available) * 3;
   const stranded = futureCosts.filter(n => n > available && n <= energy(s, controller(s)));
   // Never move the generator that enables a playable high-cost card.
   // The attack value of a small character must not destroy the energy curve.
@@ -172,11 +189,13 @@ function energyDevelopmentBias(s, a) {
   const unlocks = handCosts.filter(x => x > current && x <= current + gen).length;
   const needed = handCosts.some(x => x > current);
   const early = current < 3;
+  const plan = plannedEnergy(s, p, a.uid);
   if (a.line === 'energy') {
-    return (early ? 5.5 : current < 5 ? 2.5 : 0) +
+    return (early ? 5.5 : current < plan.target ? 4.5 : current < 5 ? 1 : 0) +
+      (current < plan.target ? Math.min(gen, plan.target - current) * 2.5 : 0) +
       Math.min(3, unlocks) * 2.1 + (needed ? 1.4 : 0);
   }
-  if (a.line === 'front' && cost === 0 && early) {
+  if (a.line === 'front' && cost === 0 && (early || current < plan.target)) {
     return -7.5 - (needed ? 2 : 0);
   }
   return 0;
