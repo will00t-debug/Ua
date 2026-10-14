@@ -47,6 +47,9 @@ test('FINAL trigger replenishes empty life from top deck, and never creates a ne
  p.life=p.life.slice(0,1);
  const previousDeck=p.deck.length;
  s=soloTrainingDispatch(s,{type:'attack',uid:attacker.uid});
+ assert.equal(s.pending?.kind,'soloOptionalLife');
+ assert.ok(soloTrainingLegalActions(s).some(a=>a.mode==='final'));
+ s=soloTrainingDispatch(s,{type:'choose',mode:'final'});
  assert.equal(s.players[1].life.length,1);assert.equal(s.players[1].deck.length,previousDeck-1);
  assertSoloTrainingMatch(s);
 });
