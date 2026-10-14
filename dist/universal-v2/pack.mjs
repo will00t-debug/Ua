@@ -208,6 +208,14 @@ function normalize(card,packId){
  if(card.ownTurnBp!==undefined&&
   (card.type!=='character'||!integer(card.ownTurnBp,1)||card.ownTurnBp>5000))
   throw Error(card.id+' invalid own-turn BP modifier');
+ // Explicit audited passive profiles, not inferred from translated text.
+ if(card.activeExtraEnergy!==undefined&&(
+  card.type!=='character'||!integer(card.activeExtraEnergy,1)||
+  card.activeExtraEnergy>3))
+  throw Error(card.id+' invalid ACTIVE extra energy profile');
+ if(card.impactNull!==undefined&&(
+  card.type!=='character'||card.impactNull!==true))
+  throw Error(card.id+' invalid IMPACT nullification profile');
  return Object.freeze({
   id:card.id,title:packId,name:card.name,color:card.color,
   type:card.type,energy:card.energy,ap:card.ap,bp:card.bp,gen:card.gen,
@@ -219,7 +227,9 @@ function normalize(card,packId){
   conditionalUnderFaceDown:underProfile?Object.freeze({...underProfile}):null,
   triggerEffect:triggerEffect?Object.freeze({...triggerEffect}):null,
   mainAbility:mainAbility?Object.freeze({...mainAbility}):null,
-  step:card.step===true,ownTurnBp:card.ownTurnBp||0,implementation:implemented,
+  step:card.step===true,ownTurnBp:card.ownTurnBp||0,
+  activeExtraEnergy:card.activeExtraEnergy||0,impactNull:card.impactNull===true,
+  implementation:implemented,
   effects:Object.freeze(Object.fromEntries(Object.entries(effects)
    .map(([k,v])=>[k,Object.freeze(v.map(e=>Object.freeze({
     ...e,...(e.filter?{filter:Object.freeze({...e.filter})}:{}),
