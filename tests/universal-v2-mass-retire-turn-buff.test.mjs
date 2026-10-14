@@ -135,9 +135,9 @@ test('temporary all-trait buff affects only current own-field matching units and
  f.s.players[0].front[1]=allyFront;f.s.players[0].front[2]=neutral;
  f.s.players[0].energy[1]=allyEnergy;
  const result=play(f);
- assert.equal(universalBp(packs,result,allyFront),3000);
- assert.equal(universalBp(packs,result,neutral),2000);
- assert.equal(universalBp(packs,result,allyEnergy),3000);
+ assert.equal(universalBp(packs,result,result.players[0].front[1]),3000);
+ assert.equal(universalBp(packs,result,result.players[0].front[2]),2000);
+ assert.equal(universalBp(packs,result,result.players[0].energy[1]),3000);
  assert.equal(result.players[0].front[0]?.uid,f.source.uid);
  const later=take(result,0,'S01');
  result.players[0].front[3]=later;
