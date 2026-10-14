@@ -82,10 +82,10 @@ function testEntry(other,owner,id){
  return result;
 }
 test('official-record pilot cards have explicitly pinned printed energy/AP/BP/trigger and no implicit support',()=>{
- assert.deepEqual(REAL_V2_PILOT_IDS.bleach,['BLC-1-034','BLC-1-039','BLC-1-066','BLC-1-102','BLC-1-103','BLC-1-107']);
+ assert.deepEqual(REAL_V2_PILOT_IDS.bleach,['BLC-1-034','BLC-1-039','BLC-1-066','BLC-1-102','BLC-1-103','BLC-1-105','BLC-1-107']);
  assert.deepEqual(REAL_V2_PILOT_IDS['gurren-lagann'],['TTG-1-001','TTG-1-009','TTG-1-036','TTG-1-037','TTG-1-038','TTG-1-051','TTG-1-042','TTG-1-064','TTG-1-065','TTG-1-078','TTG-1-079']);
  const b=verifiedPilotPack('bleach'),t=verifiedPilotPack('gurren-lagann');
- assert.equal(Object.keys(b.cards).length,6);
+ assert.equal(Object.keys(b.cards).length,7);
  assert.equal(Object.keys(t.cards).length,11);
  assert.ok(validateUniversalDeck(b,bleach.deck).length>0,'V2 real-only deck is not ready');
  assert.ok(validateUniversalDeck(t,green.deck).length>0);
@@ -343,4 +343,45 @@ test('real TTG Viral 001 peeks only own top card: keep top or move to outside, n
  assert.deepEqual(s,original,'normal play must not mutate source before dispatch');
  assert.equal(assertUniversalMatch(packs,kept),true);
  assert.equal(assertUniversalMatch(packs,sidelined),true);
+});
+
+test('real BLEACH Renji 105 optional -3000 BP can skip or sideline a TTG target at zero BP',()=>{
+ const packs=[bleach.pack,green.pack];let s=fresh(green,399);
+ // Advance both first turns so BLEACH has a legitimate two AP second turn.
+ for(let i=0;i<8;i++)s=dispatchUniversalAction(packs,s,{type:'next'});
+ assert.equal(s.active,0);
+ assert.equal(s.players[0].apCards.filter(c=>c.inPlay&&c.ready).length,2);
+ const pl=s.players[0],foe=s.players[1];
+ pl.energy[0]=take(s,0,'BLC-1-102');
+ pl.energy[1]=take(s,0,'BLC-1-102');
+ pl.energy[2]=take(s,0,'BLC-1-039');
+ assert.equal(universalEnergyByColor(packs,s,0).purple,5);
+ const renji=take(s,0,'BLC-1-105');pl.hand.push(renji);
+ const first=take(s,1,'TTG-1-001'),second=take(s,1,'TTG-1-009');
+ foe.front[0]=first;foe.front[1]=second;
+ s=advanceToMain(packs,s);
+ const actions=legalUniversalActions(packs,s);
+ const played=actions.find(a=>a.type==='play'&&a.uid===renji.uid&&a.line==='front'&&a.slot===0);
+ assert.ok(played);
+ const state=dispatchUniversalAction(packs,s,played,{actor:0});
+ assert.equal(state.players[0].apCards.filter(c=>c.ready).length,0,'real 2 AP cost paid');
+ assert.equal(state.pending?.kind,'effect-target');
+ assert.equal(state.pending?.optional,true);
+ assert.equal(state.pending.player,0);
+ const available=legalUniversalActions(packs,state);
+ assert.ok(available.some(a=>a.type==='chooseTarget'&&a.uid===null),'optional ability may be declined');
+ assert.ok(available.some(a=>a.uid===first.uid));
+ assert.ok(available.some(a=>a.uid===second.uid));
+ assert.ok(!available.some(a=>a.uid===renji.uid),'cannot choose our own card');
+ assert.throws(()=>dispatchUniversalAction(packs,state,{type:'chooseTarget',uid:renji.uid},{actor:0}),/not currently legal/);
+ const skipped=dispatchUniversalAction(packs,state,{type:'chooseTarget',uid:null},{actor:0});
+ assert.equal(skipped.players[1].front[0].uid,first.uid);
+ const resolved=dispatchUniversalAction(packs,state,{type:'chooseTarget',uid:first.uid},{actor:0});
+ assert.equal(resolved.players[1].front[0],null,'0 or less BP goes to sideline immediately');
+ assert.ok(resolved.players[1].outside.some(c=>c.uid===first.uid));
+ assert.equal(resolved.players[1].front[1].uid,second.uid);
+ assert.equal(resolved.players[0].front[0].uid,renji.uid);
+ assert.equal(state.players[1].front[0].uid,first.uid,'input pure');
+ assert.equal(assertUniversalMatch(packs,skipped),true);
+ assert.equal(assertUniversalMatch(packs,resolved),true);
 });
