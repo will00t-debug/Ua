@@ -34,5 +34,13 @@ jobs:
       - name: SAO and MST V2 dedicated tests
         run: |
           node --test tests/universal-v2-sao-port.test.mjs tests/universal-v2-mst-port.test.mjs tests/universal-v2-sao-mst-cross-title.test.mjs
-      - name: Full Node.js regression suite
+
+  core-shared-regression:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Full Node.js regression suite (no ignored upstream failures)
         run: npm test
