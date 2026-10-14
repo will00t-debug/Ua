@@ -34,8 +34,19 @@ export const universalActor=actor;
 function draw(s,p,count=1){
  for(let i=0;i<count&&s.players[p].deck.length;i++)s.players[p].hand.push(s.players[p].deck.shift());
 }
+// Each card requires its OWN printed energy color. A mixed-color deck may be
+// legal, but three green icons do not pay a purple energy-3 requirement.
+export function universalEnergyByColor(pack,s,p){
+ const counts=Object.create(null);
+ for(const c of s.players[p].energy){
+  if(!c)continue;
+  const d=card(pack,c);
+  counts[d.color]=(counts[d.color]||0)+(d.gen||0);
+ }
+ return counts;
+}
 function calcEnergy(pack,s,p){
- return s.players[p].energy.reduce((sum,c)=>sum+(c?(card(pack,c)?.gen||0):0),0);
+ return Object.values(universalEnergyByColor(pack,s,p)).reduce((n,c)=>n+c,0);
 }
 export const universalEnergy=calcEnergy;
 function bp(pack,s,c){
@@ -219,10 +230,10 @@ export function legalUniversalActions(pack,s){
  }
  if(s.phase==='main'){
   const ap=pl.apCards.filter(c=>c.ready).length;
-  const total=calcEnergy(pack,s,p);
+  const produced=universalEnergyByColor(pack,s,p);
   for(const c of pl.hand){
    const d=card(pack,c);
-   if(d.energy>total||d.ap>ap)continue;
+   if(d.energy>(produced[d.color]||0)||d.ap>ap)continue;
    if(d.type==='event')out.push({type:'event',uid:c.uid});
    else for(const line of ['energy','front'])for(let slot=0;slot<4;slot++)
     if(!pl[line][slot]&&(line!=='front'||d.type==='character'))
@@ -357,7 +368,7 @@ export function universalPublicView(pack,s,viewer=0){
    hand:p===viewer?pl.hand.map(c=>({uid:c.uid,cardId:c.cardId})):null,
    front:pl.front.map(c=>c?{uid:c.uid,cardId:c.cardId,ready:c.ready,bp:bp(pack,s,c),raidDepth:c.stack?.length||0}:null),
    energy:pl.energy.map(c=>c?{uid:c.uid,cardId:c.cardId,ready:c.ready,produces:card(pack,c).gen}:null),
-   apReady:pl.apCards.filter(c=>c.ready).length,energyTotal:calcEnergy(pack,s,p),
+   apReady:pl.apCards.filter(c=>c.ready).length,energyTotal:calcEnergy(pack,s,p),energyByColor:{...universalEnergyByColor(pack,s,p)},
    outside:pl.outside.map(c=>({uid:c.uid,cardId:c.cardId}))
   }))
  };
