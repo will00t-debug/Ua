@@ -30,7 +30,7 @@ async function harness(s,tag,run){
 test('rested Front Raid base is selected before position and confirmation; Raid readies and can attack',async()=>{
  const {s,base,raid}=fixture();
  await harness(s,'guided-front',({app,click,current,slot})=>{
-  click({hand:raid.uid});click({action:'raid'});
+  click({hand:raid.uid});
   assert.match(app.innerHTML,/1 \/ 3 選擇底板/);
   assert.ok(slot('front',0).includes('data-placement="底板"'));
   assert.equal(current().players[0].ap,3);
@@ -54,7 +54,7 @@ test('rested Front Raid base is selected before position and confirmation; Raid 
 test('Energy Raid base must be selected before a legal Front destination',async()=>{
  const {s,base,raid}=fixture({energyBase:true});
  await harness(s,'guided-energy',({app,click,current,slot})=>{
-  click({hand:raid.uid});click({action:'raid'});
+  click({hand:raid.uid});
   assert.ok(slot('energy',1).includes('data-placement="底板"'));
   assert.ok(!slot('front',0).includes('data-placement="突襲"'));
   click({slot:'0|front|0'});assert.match(app.innerHTML,/1 \/ 3 選擇底板/);
@@ -69,7 +69,7 @@ test('Energy Raid base must be selected before a legal Front destination',async(
 test('two legal bases remain distinct and cannot be auto-selected',async()=>{
  const {s,base,raid}=fixture({energyBase:true,twoBases:true}),other=s.players[0].energy[2];
  await harness(s,'guided-choose',({app,click,current,slot})=>{
-  click({hand:raid.uid});click({action:'raid'});assert.ok(slot('energy',1).includes('data-placement="底板"'));assert.ok(slot('energy',2).includes('data-placement="底板"'));
+  click({hand:raid.uid});assert.ok(slot('energy',1).includes('data-placement="底板"'));assert.ok(slot('energy',2).includes('data-placement="底板"'));
   click({slot:'0|energy|2'});click({slot:'0|front|0'});assert.equal(current().players[0].ap,3);
   click({action:'raidConfirm'});
   const g=current();assert.equal(g.players[0].front[0].stack[0].uid,other.uid);
@@ -79,7 +79,7 @@ test('two legal bases remain distinct and cannot be auto-selected',async()=>{
 test('back, restart and cancel restore choices without mutating game',async()=>{
  const {s,base,raid}=fixture({energyBase:true});
  await harness(s,'guided-navigation',({app,click,current,slot})=>{
-  click({hand:raid.uid});click({action:'raid'});click({slot:'0|energy|1'});click({slot:'0|front|0'});
+  click({hand:raid.uid});click({slot:'0|energy|1'});click({slot:'0|front|0'});
   click({action:'raidBack'});assert.match(app.innerHTML,/2 \/ 3 選擇位置/);
   click({action:'raidBack'});assert.match(app.innerHTML,/1 \/ 3 選擇底板/);
   click({slot:'0|energy|1'});click({action:'raidRestart'});assert.match(app.innerHTML,/1 \/ 3 選擇底板/);
@@ -89,10 +89,10 @@ test('back, restart and cancel restore choices without mutating game',async()=>{
   assert.equal(current().players[0].ap,3);assertState(current());
  });
 });
-test('normal deployment is default, remains REST and keeps Raid base',async()=>{
+test('eligible Raid offers normal deployment override: REST and original base preserved',async()=>{
  const {s,base,raid}=fixture({energyBase:true});
- await harness(s,'guided-normal',({click,current})=>{
-  click({hand:raid.uid});click({slot:'0|front|0'});
+ await harness(s,'guided-normal',({app,click,current})=>{
+  click({hand:raid.uid});assert.match(app.innerHTML,/1 \/ 3 選擇底板/);click({action:'normalDeployment'});click({slot:'0|front|0'});
   const g=current(),c=g.players[0].front[0];
   assert.equal(c.uid,raid.uid);assert.equal(c.ready,false);assert.equal(c.stack.length,0);
   assert.equal(g.players[0].energy[1].uid,base.uid);assertState(g);
@@ -101,10 +101,36 @@ test('normal deployment is default, remains REST and keeps Raid base',async()=>{
 test('illegal placement and non-owner spaces do not commit a Raid',async()=>{
  const {s,raid}=fixture({energyBase:true});
  await harness(s,'guided-illegal',({app,click,current})=>{
-  click({hand:raid.uid});click({action:'raid'});click({slot:'1|front|0'});click({slot:'0|energy|1'});
+  click({hand:raid.uid});click({slot:'1|front|0'});click({slot:'0|energy|1'});
   click({slot:'1|front|0'});assert.match(app.innerHTML,/2 \/ 3 選擇位置/);
   click({slot:'0|front|0'});assert.match(app.innerHTML,/3 \/ 3 確認突襲/);
   assert.equal(current().players[0].ap,3);
   assert.equal(current().players[0].hand.length,1);
+ });
+});
+
+
+test('Raid-printed card without an eligible base shows why Raid is unavailable and can still play normally',async()=>{
+ const {s,base,raid}=fixture({energyBase:true});
+ const slot=s.players[0].energy.findIndex(c=>c?.uid===base.uid);
+ assert.ok(slot>=0);
+ s.players[0].energy[slot]=null;
+ s.players[0].deck.push(base);
+ // Ensure the card remains payable without the Ichigo base: this tests
+ // Raid eligibility, not an unrelated energy shortfall.
+ s.players[0].energy[0].energyBoostTurn=s.turn;
+ s.players[0].energy[0].energyBoostAmount=10;
+ assertState(s);
+ await harness(s,'raid-no-eligible-base',({app,click,current})=>{
+  click({hand:raid.uid});
+  assert.doesNotMatch(app.innerHTML,/突襲流程 ·/);
+  assert.match(app.innerHTML,/目前無法突襲：需要主要階段/);
+  assert.match(app.innerHTML,/普通登場：請直接點選場上高亮/);
+  click({slot:'0|front|0'});
+  const g=current();
+  assert.equal(g.players[0].front[0].uid,raid.uid);
+  assert.equal(g.players[0].front[0].stack.length,0);
+  assert.equal(g.players[0].front[0].ready,false);
+  assertState(g);
  });
 });

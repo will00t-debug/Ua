@@ -56,9 +56,12 @@ test('hand card can play by directly clicking any legal board slot and Raid is n
   state=JSON.parse(stored.get('bleach-arena-game-v1'));
   assert.equal(state.players[0].energy[0].uid,normalB.uid);
   click({hand:raidCard.uid});
-  assert.doesNotMatch(nodes.app.innerHTML,/raidFlowPanel/);
-  assert.match(nodes.app.innerHTML,/data-action="raid"/);
+  assert.match(nodes.app.innerHTML,/data-action="normalDeployment"/);
+  assert.match(nodes.app.innerHTML,/1 \/ 3 選擇底板/);
   assertState(state);
+  click({action:'normalDeployment'});
+  assert.doesNotMatch(nodes.app.innerHTML,/突襲流程 ·/);
+  assert.match(nodes.app.innerHTML,/data-action="raid"/);
   click({action:'raid'});
   assert.match(nodes.app.innerHTML,/1 \/ 3 選擇底板/);
   assert.equal(JSON.parse(stored.get('bleach-arena-game-v1')).players[0].ap,state.players[0].ap);
