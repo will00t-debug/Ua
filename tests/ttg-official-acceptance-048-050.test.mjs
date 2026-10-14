@@ -38,6 +38,8 @@ function withRed(s,n=4,slot=0){
 }
 test('048 real first attack +500 persists against opponent, two blocks wake first and REST second',()=>{
  let s=game(4801);
+ // Restriction engine allows actual attacks only after the player's first turn.
+ s.players[1].turnCount=2;
  const kittan=put(s,'TTG-1-048','front',0),strong=put(s,'TTG-1-046','front',0,1);
  const attack1=put(s,'TTG-1-047','front',1,1),attack2=put(s,'TTG-1-042','front',2,1);
  s.phase='attack';s=withTtgDerivedEnergy(s,0);
@@ -94,8 +96,10 @@ test('049 actual hand play: mandatory other printed 0/1-energy character chosen 
 test('049 actual hand play MUST self-bounce when no other character with printed energy <=1',()=>{
  let s=game(4902),p=s.players[0];
  put(s,'TTG-1-046','front',1);
+ // A generator whose own printed cost is 4 cannot be bounced by 049.
+ put(s,'TTG-1-046','energy',0);
  const h=take(p,'TTG-1-049');p.hand.push(h);
- s=withRed(s,3,0);
+ s=withTtgDerivedEnergy(s,0);
  s=dispatchTtgCoreAction(s,choose(s,x=>x.type==='play'&&x.handUid===h.uid&&x.line==='front'&&x.slot===0));
  const opts=legalTtgCoreActions(s);
  assert.equal(opts.length,1);
