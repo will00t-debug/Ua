@@ -20,9 +20,6 @@ const decks=Object.freeze({
 });
 const bleachArt=new Map(CARDS.map(c=>[c.identity,c.image||null]));
 const v2Entries=listRegisteredV2Titles();
-$('v2-coverage').textContent=
- V2_ABILITY_TEMPLATE_IDS.length+' 種能力模板 · 已移植 '+
- v2Entries.reduce((sum,item)=>sum+item.totalV2Cards,0)+' 張真卡 Pilot';
 const el=(tag,props={},...contents)=>{
  const n=document.createElement(tag);
  for(const [key,value] of Object.entries(props)){
@@ -44,6 +41,9 @@ const el=(tag,props={},...contents)=>{
  return n;
 };
 const $=id=>document.getElementById(id);
+$('v2-coverage').textContent=
+ V2_ABILITY_TEMPLATE_IDS.length+' 種能力模板 · 已移植 '+
+ v2Entries.reduce((sum,item)=>sum+item.totalV2Cards,0)+' 張真卡 Pilot';
 const app={state:null,packs:null,selectedUid:null,
  selectedSide:null,history:[],busy:false,aiTimer:null,error:'',
  undo:null,replay:null,aiDifficulty:'normal',sequence:0,allActions:false, maxAuto:4500,autoMoves:0};
