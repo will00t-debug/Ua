@@ -7,6 +7,8 @@ import {execFileSync,spawnSync} from 'node:child_process';
 const root=path.resolve(import.meta.dirname,'..');
 const auditCommit=execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim();
 const base='ad04bef572303e8af1084ae1fb5cb431af9e7a11';
+const round2=process.argv.includes('--round2');
+const suffix=round2?'-r2':'';
 const snapshot=[
  {title:'V2-B BLEACH',branch:'feature/v2-bleach-port-20261015',
   sha:'6f873f1997a71bfeb0eb96c0e2bada2f7be6daac',
@@ -21,8 +23,14 @@ const snapshot=[
   tests:['tests/universal-v2-sao-port.test.mjs','tests/universal-v2-mst-port.test.mjs','tests/universal-v2-sao-mst-cross-title.test.mjs'],
   probe:"import {saoV2Pack} from './dist/universal-v2/sao-pack.mjs';import {mstV2Pack} from './dist/universal-v2/mst-pack.mjs';const p=saoV2Pack(),q=mstV2Pack();console.log(JSON.stringify({titles:[p.id,q.id],counts:[Object.keys(p.cards).length,Object.keys(q.cards).length],cardIds:[Object.keys(p.cards),Object.keys(q.cards)]}));"}
 ];
+if(round2){
+ snapshot[0].sha='5431cbb6ac422b7356fd688cc7f3a4d4756c4b39';
+ snapshot[1].sha='341cd595d0291af5b5363ef9d08d41184ee29b87';
+ snapshot[1].tests=['tests/universal-v2-ttg-port.test.mjs','tests/universal-v2-slg-port.test.mjs'];
+ snapshot[2].sha='9d88fad89f2942c7c3905bce68c1ca3f92cba140';
+}
 const temp=fs.mkdtempSync(path.join(os.tmpdir(),'v2-e-snap-'));
-const result={audit_commit:auditCommit,base,command:'node scripts/v2-audit-port-snapshots.mjs',
+const result={audit_commit:auditCommit,base,command:round2?'node scripts/v2-audit-port-snapshots.mjs --round2':'node scripts/v2-audit-port-snapshots.mjs',
  node:process.version,method:'isolated exact-SHA git worktrees; no merged totals',
  snapshots:[]};
 for(const job of snapshot){
@@ -63,7 +71,7 @@ for(const job of snapshot){
 }
 fs.rmSync(temp,{recursive:true,force:true});
 fs.mkdirSync(path.join(root,'audit'),{recursive:true});
-fs.writeFileSync(path.join(root,'audit/v2-port-snapshots.json'),JSON.stringify(result,null,2)+'\n');
+fs.writeFileSync(path.join(root,'audit/v2-port-snapshots'+suffix+'.json'),JSON.stringify(result,null,2)+'\n');
 // Snapshot-only candidate rows are NOT merged into V2 foundation coverage.
 const candidate=[];
 for(const s of result.snapshots){
@@ -82,7 +90,7 @@ for(const s of result.snapshots){
 }
 const candidateCols=['title','id','branch','snapshot_commit','pack_probe_passed',
  'snapshot_test_status','integrated_into_source_v2','fully_accepted'];
-fs.writeFileSync(path.join(root,'audit/v2-branch-proposals.csv'),
+fs.writeFileSync(path.join(root,'audit/v2-branch-proposals'+suffix+'.csv'),
  candidateCols.join(',')+'\n'+candidate.map(r=>candidateCols.map(k=>String(r[k])).join(',')).join('\n')+'\n');
 result.candidate_count=candidate.length;
 console.log(JSON.stringify(result.snapshots.map(({title,commit,checkout,probe,tests,test_count,pass,fail})=>({
