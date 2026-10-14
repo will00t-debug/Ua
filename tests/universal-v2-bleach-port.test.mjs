@@ -10,9 +10,9 @@ import {newUniversalMatch,legalUniversalActions,
 } from '../dist/universal-v2/engine.mjs';
 
 const pack=createBleachV2Pack(),packs=[pack,pack];
-const twelve=['BLC-1-001','BLC-1-002','BLC-1-012','BLC-1-017',
- 'BLC-1-035','BLC-1-068','BLC-1-089','BLC-2-020','BLC-2-029',
- 'BLC-4-062','BLC-1-102','BLC-2-008'];
+const twelve=['BLC-1-001','BLC-1-002','BLC-1-012','BLC-1-039',
+ 'BLC-1-035','BLC-2-008','BLC-1-089','BLC-2-020','BLC-2-029',
+ 'BLC-4-062','BLC-1-102','BLC-1-017'];
 const counts={...Object.fromEntries(twelve.map(id=>[id,4])),'BLC-1-034':2};
 const fresh=(first=0,seed=12015)=>newUniversalMatch(packs,{decks:[counts,counts],first,seed});
 function take(s,p,id){
@@ -173,6 +173,58 @@ test('ACTIVE-only bonus energy does not produce bonus while REST',()=>{
  assert.equal(active.blue,2,'base blue + 1 only while active');
  producer.ready=false;
  const rested=universalEnergyByColor(packs,s,0);
- assert.equal(rested.blue||0,0,'REST should not produce energy');
+ assert.equal(rested.blue,1,'REST retains printed base energy, not ACTIVE bonus');
  assert.equal(assertUniversalMatch(packs,s),true)
+});
+
+
+function strikeLife(id){
+ let s=fresh(1,10101),attacker=take(s,1,'BLC-1-039'),life=take(s,0,id);
+ attacker.ready=true;s.players[1].front[0]=attacker;
+ const old=s.players[0].life.shift();
+ s.players[0].deck.push(old);
+ s.players[0].life.unshift(life);
+ s=reach(s,'attack');
+ s=dispatchUniversalAction(packs,s,{type:'attack',uid:attacker.uid},{actor:1});
+ s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:null},{actor:0});
+ assert.equal(s.pending?.kind,'life-trigger');
+ return {s,life};
+}
+
+test('BLC-1-039 printed GET life trigger can be taken into hand, not duplicated',()=>{
+ const {s,life}=strikeLife('BLC-1-039');
+ const preCount=s.players[0].hand.length;
+ const get=legalUniversalActions(packs,s).find(a=>a.type==='chooseTrigger'&&a.mode==='get');
+ assert.ok(get);
+ const after=dispatchUniversalAction(packs,s,get,{actor:0});
+ assert.ok(after.players[0].hand.some(c=>c.uid===life.uid));
+ assert.equal(after.players[0].hand.length,preCount+1);
+ assert.ok(!after.players[0].outside.some(c=>c.uid===life.uid));
+ assert.equal(assertUniversalMatch(packs,after),true);
+});
+
+test('BLC-2-008 printed DRAW trigger is separate from onPlay draw-discard',()=>{
+ const {s,life}=strikeLife('BLC-2-008'),d=s.players[0].deck.length;
+ const draw=legalUniversalActions(packs,s).find(a=>a.type==='chooseTrigger'&&a.mode==='draw');
+ assert.ok(draw);
+ const after=dispatchUniversalAction(packs,s,draw,{actor:0});
+ assert.equal(after.players[0].deck.length,d-1);
+ assert.ok(after.players[0].outside.some(c=>c.uid===life.uid));
+ assert.equal(after.pending,null);
+ assert.equal(assertUniversalMatch(packs,after),true);
+});
+
+test('BLC-1-002 ACTIVE life trigger selects own legal character and rejects enemy UID',()=>{
+ const {s,life}=strikeLife('BLC-1-002');
+ const target=take(s,0,'BLC-1-012');target.ready=false;s.players[0].energy[0]=target;
+ const foe=s.players[1].front[0];
+ assert.throws(()=>dispatchUniversalAction(packs,s,
+  {type:'chooseTrigger',mode:'active',uid:foe.uid},{actor:0}),/not currently legal/);
+ const ready=legalUniversalActions(packs,s).find(a=>a.mode==='active'&&a.uid===target.uid);
+ assert.ok(ready);
+ const after=dispatchUniversalAction(packs,s,ready,{actor:0});
+ assert.equal(after.players[0].energy[0]?.ready,true);
+ assert.equal(after.players[0].energy[0]?.buffs.at(-1)?.bp,3000);
+ assert.ok(after.players[0].outside.some(c=>c.uid===life.uid));
+ assert.equal(assertUniversalMatch(packs,after),true);
 });
