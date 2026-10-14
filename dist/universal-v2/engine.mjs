@@ -126,8 +126,17 @@ function applyEffects(pack,s,cardOnField,timing,owner){
  continueEffectQueue(pack,s);
 }
 function validRaidBase(pack,base,top){
- return !!base&&!!top.raidName&&card(pack,base).name===top.raidName&&
-  !card(pack,base).raidName&&!(base.stack?.length);
+ if(!base||!top.raidName)return false;
+ const b=card(pack,base);
+ if(base.stack?.length){
+  // An already-Raided top may be used ONLY if this exact printed name is
+  // explicitly allowed, and its original non-Raid base still matches.
+  const bottom=base.stack[0];
+  return top.raidFromRaid.includes(b.name)&&
+   card(pack,bottom).name===top.raidName&&
+   !card(pack,bottom).raidName;
+ }
+ return b.name===top.raidName&&!b.raidName;
 }
 function performRaid(pack,s,p,cardOnTop,baseUid,line,slot,replaceUid){
  const pl=s.players[p],base=location(s,p,baseUid),top=card(pack,cardOnTop);
@@ -139,14 +148,24 @@ function performRaid(pack,s,p,cardOnTop,baseUid,line,slot,replaceUid){
   throw Error('Raid can only stay in base energy slot');
  commitDestination(s,p,line,slot,replaceUid,base);
  pl[base.line][base.slot]=null;
- cardOnTop.stack=[base.c];cardOnTop.ready=true;
+ let effectiveBase=base.c;
+ if(base.c.stack?.length){
+  // Move the existing Raid top facedown BELOW the same original base,
+  // without copying any physical card or exposing its identity.
+  effectiveBase=base.c.stack[0];
+  base.c.stack=[];
+  base.c.faceDown=true;
+  effectiveBase.under??=[];
+  effectiveBase.under.push(base.c);
+ }
+ cardOnTop.stack=[effectiveBase];cardOnTop.ready=true;
  pl[line][slot]=cardOnTop;
  s.raidedThisTurn[p]=true;
- const baseJobs=s.active===p?programJobs(pack,base.c,'onRaided',p,cardOnTop.uid):[];
+ const baseJobs=s.active===p?programJobs(pack,effectiveBase,'onRaided',p,cardOnTop.uid):[];
  const entryJobs=programJobs(pack,cardOnTop,'onPlay',p);
  const raidJobs=programJobs(pack,cardOnTop,'onRaid',p);
  if(baseJobs.length&&entryJobs.length)
-  s.pending={kind:'raid-effect-order',player:p,baseUid:base.c.uid,
+  s.pending={kind:'raid-effect-order',player:p,baseUid:effectiveBase.uid,
    raidUid:cardOnTop.uid,baseJobs,entryJobs,raidJobs};
  else{
   s.effectQueue.unshift(...baseJobs,...entryJobs,...raidJobs);
