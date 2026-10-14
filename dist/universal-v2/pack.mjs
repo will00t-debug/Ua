@@ -135,8 +135,6 @@ function normalize(card,packId){
   if(name==='onAttack'&&card.type!=='character')throw Error(card.id+' noncharacter cannot attack');
   if(card.type==='event'&&program.some(e=>e.op==='buffSelf'))
    throw Error(card.id+' event cannot buff itself on field');
-  if(name==='onAttack'&&program.some(e=>e.op==='enemyBpDown'))
-   throw Error(card.id+' attack-time targeted effects need a future timing window');
  }
  if(card.raidName&&card.type!=='character')throw Error('Raid must be a character');
  if(card.ownTurnBp!==undefined&&
