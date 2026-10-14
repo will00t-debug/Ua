@@ -5,7 +5,7 @@ export const V2_PHASES=Object.freeze(['start','move','main','attack']);
 export const V2_CARD_TYPES=Object.freeze(['character','event','field']);
 export const V2_TRIGGERS=Object.freeze(['draw','get','final','active','special','color','raid']);
 export const V2_EFFECT_TIMINGS=Object.freeze(['onPlay','onRaid','onAttack','onRaided']);
-export const V2_EFFECT_OPS=Object.freeze(['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','retireOppFrontUnderBp','restOppFrontUnderBp','buffOwnTrait','drawIfRaidUnderFacedown']);
+export const V2_EFFECT_OPS=Object.freeze(['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','retireOppFrontUnderBp','restOppFrontUnderBp','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown']);
 const integer=(v,low=0)=>Number.isInteger(v)&&v>=low;
 const own=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
 function verifyProgram(program,path){
@@ -23,6 +23,10 @@ function verifyProgram(program,path){
   ))throw Error(path+'['+i+'] invalid optional trait BP boost');
   if(e.op==='drawIfRaidUnderFacedown'&&Object.keys(e).some(k=>k!=='op'))
    throw Error(path+'['+i+'] unsupported conditional Raid draw options');
+  if(e.op==='retireOppFrontIfFacedown'&&(
+   !integer(e.bp,1)||e.bp>50000||e.optional!==true||
+   Object.keys(e).some(k=>!['op','bp','optional'].includes(k))
+  ))throw Error(path+'['+i+'] invalid facedown retirement effect');
   if(e.op==='restOppFrontUnderBp'&&(
    !integer(e.bp,1)||e.bp>50000||e.optional!==true||
    Object.keys(e).some(k=>!['op','bp','optional'].includes(k))
@@ -49,6 +53,25 @@ function normalize(card,packId){
   throw Error(card.id+' invalid printed characteristics');
  if(card.trigger!=null&&!V2_TRIGGERS.includes(card.trigger))
   throw Error(card.id+' trigger not yet supported by universal v2 (fail closed)');
+ if(card.raidBaseNames!==undefined&&(
+  !card.raidName||!Array.isArray(card.raidBaseNames)||card.raidBaseNames.length<2||
+  !card.raidBaseNames.includes(card.raidName)||
+  card.raidBaseNames.some(x=>typeof x!=='string'||!x.trim())||
+  new Set(card.raidBaseNames).size!==card.raidBaseNames.length
+ ))throw Error(card.id+' invalid alternative Raid bases');
+ if(card.raidRequiresNames!==undefined&&(
+  !card.raidName||!Array.isArray(card.raidRequiresNames)||!card.raidRequiresNames.length||
+  card.raidRequiresNames.some(x=>typeof x!=='string'||!x.trim())||
+  new Set(card.raidRequiresNames).size!==card.raidRequiresNames.length
+ ))throw Error(card.id+' invalid named Raid prerequisite');
+ const underProfile=card.conditionalUnderFaceDown??null;
+ if(underProfile!==null&&(
+  card.type!=='character'||!card.raidName||
+  !integer(underProfile.bp,1)||underProfile.bp>5000||
+  underProfile.impact!==1||
+  !integer(underProfile.leaveReplacementMinBp,1)||underProfile.leaveReplacementMinBp>5000||
+  Object.keys(underProfile).some(k=>!['bp','impact','leaveReplacementMinBp'].includes(k))
+ ))throw Error(card.id+' unsupported facedown under-card profile');
  if(card.raidFromRaid!==undefined&&(
   !card.raidName||card.type!=='character'||
   !Array.isArray(card.raidFromRaid)||!card.raidFromRaid.length||
@@ -125,6 +148,9 @@ function normalize(card,packId){
   traits:Object.freeze([...(card.traits||[])]),
   trigger:card.trigger||null,raidName:card.raidName||null,
   raidFromRaid:Object.freeze([...(card.raidFromRaid||[])]),
+  raidBaseNames:Object.freeze([...(card.raidBaseNames||[card.raidName].filter(Boolean))]),
+  raidRequiresNames:Object.freeze([...(card.raidRequiresNames||[])]),
+  conditionalUnderFaceDown:underProfile?Object.freeze({...underProfile}):null,
   triggerEffect:triggerEffect?Object.freeze({...triggerEffect}):null,
   mainAbility:mainAbility?Object.freeze({...mainAbility}):null,
   step:card.step===true,ownTurnBp:card.ownTurnBp||0,implementation:implemented,
