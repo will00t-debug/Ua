@@ -8,6 +8,7 @@ import {performance} from 'node:perf_hooks';
 import {TRAINING_DECKS} from '../dist/training-decks.mjs';
 import {newGame,dispatch,legalActions,controller,assertState,cardOf} from '../dist/engine.mjs';
 import {chooseAiAction} from '../dist/ai-v2.mjs';
+import {chooseAiAction as chooseEnergyAiAction} from '../dist/ai-v2-energy-planning.mjs';
 import {chooseNeuralAction} from '../dist/ai-v3-policy.mjs';
 import {encodeAction,FEATURE_VERSION} from '../dist/ai-v3-features.mjs';
 import {initModel,trainPair,validateModel} from '../dist/ai-v3-network.mjs';
@@ -42,14 +43,14 @@ function prepared(g,seedBase) {
  return {left:left.id,right:right.id,first,learningSeat,seed:shuffledSeed,
   state:newGame({decks:[left.counts,right.counts],mode:'solo',first,seed:shuffledSeed})};
 }
-function playGame(g,seedBase,{model=null,collect=false,explore=0}={}){
+function playGame(g,seedBase,{model=null,collect=false,explore=0,opponent='fixed'}={}){
  const info=prepared(g,seedBase);
  let s=info.state,moves=0,failed=null;
  const records=[];
  while(s.status!=='finished'&&moves<maxActions){
   try{
    const p=controller(s);
-   const teacher=chooseAiAction(s,{difficulty:'hard'});
+   const teacher=(opponent==='energy' ? chooseEnergyAiAction : chooseAiAction)(s,{difficulty:'hard'});
    const actions=legalActions(s);
    if(!teacher||!actions.some(a=>same(a,teacher)))throw Error('baseline returned an illegal action');
    let move=teacher;
@@ -113,12 +114,12 @@ function train(model,pairs){
  }
  return last;
 }
-function evaluate(model){
+function evaluate(model,opponent='fixed'){
  const stats=Object.fromEntries(pairs.map(([a,b])=>[a.id+'__'+b.id,{games:0,wins:0,losses:0,unfinished:0,errors:0}]));
  let wins=0,losses=0,unfinished=0,errors=0,moves=0;
  const start=now();
  for(let i=0;i<evalGames;i++){
-  const g=playGame(i,seed+1_000_000,{model,collect:false});
+  const g=playGame(i,seed+1_000_000,{model,collect:false,opponent});
   moves+=g.moves;const entry=stats[g.matchup];entry.games++;
   if(g.error){errors++;entry.errors++;console.log('EVAL error '+i+': '+g.error.slice(0,200));}
   else if(!g.completed){unfinished++;entry.unfinished++;}
@@ -149,12 +150,15 @@ const loss=train(model,rows);
 validateModel(model);
 fs.mkdirSync(path.dirname(candidatePath),{recursive:true});
 fs.writeFileSync(candidatePath,JSON.stringify(model));
-const evaluation=evaluate(model);
+const evaluation=evaluate(model,'fixed');
+// Same held-out seeds, seats and deck pairs against the upgraded challenger.
+const energyEvaluation=evaluate(model,'energy');
 const policyDiagnostics={...diagnostics,eligibilityRate:diagnostics.calls?diagnostics.eligible/diagnostics.calls:0,overrideRate:diagnostics.calls?diagnostics.overrides/diagnostics.calls:0,overridePerEligible:diagnostics.eligible?diagnostics.overrides/diagnostics.eligible:0};
 console.log('POLICY_DIAGNOSTICS='+JSON.stringify(policyDiagnostics));
 const adequate=completed===games&&failures===0&&unfinished===0
  &&evaluation.wins+evaluation.losses===evalGames
  &&evaluation.unfinished===0&&evaluation.errors===0
+ &&energyEvaluation.unfinished===0&&energyEvaluation.errors===0
  &&evaluation.winRate>=minWinRate;
 const report={schema:'ua-ai-v3-training-3',featureVersion:FEATURE_VERSION,
  neuralNetwork:{inputs:model.features,hidden:model.hidden,output:1},
@@ -163,6 +167,7 @@ const report={schema:'ua-ai-v3-training-3',featureVersion:FEATURE_VERSION,
  evaluation:{...evaluation,seedBase:seed+1_000_000,opponent:'hard v2',
   isHeldOut:true,accepted:adequate,
   acceptanceThreshold:minWinRate},
+ energyEvaluation:{...energyEvaluation,seedBase:seed+1_000_000,opponent:'hard v2 deck-energy planning',isHeldOut:true},
  policyDiagnostics,candidatePath,championPromoted:promote&&adequate,
  disclaimer:'Teacher-ranked legal character deployments with up to three distinct alternative cards per position; weak outcome feedback on the actually explored choice only. Synergy/energy signals derive solely from public and own known cards.'};
 if(promote&&adequate){
@@ -177,5 +182,5 @@ if(promote&&adequate){
 }
 fs.mkdirSync(path.dirname(reportPath),{recursive:true});
 fs.writeFileSync(reportPath,JSON.stringify(report,null,2)+'\n');
-console.log('FINAL_REPORT='+JSON.stringify({training:report.training,evaluation:{...evaluation,byMatchup:undefined},accepted:adequate,promoted:report.championPromoted}));
+console.log('FINAL_REPORT='+JSON.stringify({training:report.training,evaluation:{...evaluation,byMatchup:undefined},energyEvaluation:{...energyEvaluation,byMatchup:undefined},accepted:adequate,promoted:report.championPromoted}));
 if(failures||evaluation.errors)process.exitCode=1;
