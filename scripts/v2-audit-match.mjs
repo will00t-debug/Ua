@@ -53,9 +53,13 @@ for(const job of jobs){
     for(let p=0;p<2;p++){
      const view=universalPublicView(packs,state,p);
      if(view.players[1-p].hand!==null)throw Error('Opponent hand disclosed at '+n);
+     // Public historical reveal logs can retain a previously revealed UID
+     // even if that card later returns to hand. Only a CURRENT live-view
+     // disclosure is a violation; never suppress front/energy/outside leaks.
      const hidden=state.players[1-p].hand.map(c=>c.uid);
-     if(hidden.some(uid=>JSON.stringify(view).includes(JSON.stringify(uid))))
-      throw Error('Opponent private UID disclosed at '+n);
+     const currentView={...view,publicReveals:[]};
+     if(hidden.some(uid=>JSON.stringify(currentView).includes(JSON.stringify(uid))))
+      throw Error('Opponent CURRENT private UID disclosed at '+n);
     }
     if(state===before)throw Error('Reducer did not advance at '+n);
    }
