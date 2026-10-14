@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {newTtgCoreMatch,assertTtgCoreState,dispatchTtgCoreAction,
  legalTtgRaidChoices,isTtgRaidAction,TTG_RAID_ACTION_TYPES,TTG_PRINTED_RAID_IDS}
  from '../dist/ttg-core-match.mjs';
-import {TTG_RED_BETA_PRESET,ttgRaidDecisions,ttgActionLabel} from '../dist/ttg-browser.mjs';
+import {TTG_RED_BETA_PRESET,TTG_GREEN_BETA_PRESET,ttgRaidDecisions,ttgActionLabel} from '../dist/ttg-browser.mjs';
 import {withTtgDerivedEnergy} from '../dist/ttg-energy-snapshot.mjs';
 
 const counts=()=>{
@@ -107,4 +107,39 @@ test('TTG match UI offers executable Raid button and resolves a paid Raid throug
   globalThis.localStorage=saved.localStorage;globalThis.setTimeout=saved.setTimeout;
   globalThis.clearTimeout=saved.clearTimeout;
  }
+});
+
+test('green 028 Raid receives the same executable UI choices, AP and drawn-entry sequence',()=>{
+ const deck={...TTG_GREEN_BETA_PRESET};
+ delete deck['TTG-1-019'];deck['TTG-1-028']=4;
+ let s=newTtgCoreMatch({decks:[deck,deck],seed:2828,first:0});
+ const p=s.players[0];
+ const take=id=>{
+  for(const zone of ['deck','hand','life']){
+   const idx=p[zone].findIndex(c=>c.cardId==='TTG-1-'+id);
+   if(idx>=0)return p[zone].splice(idx,1)[0];
+  }
+  throw new Error('Missing green '+id);
+ };
+ p.front[0]=take('009');
+ p.energy[0]=take('017');p.energy[1]=take('017');
+ const top=take('028');p.hand.push(top);
+ p.apCards.forEach((c,i)=>c.ready=i<2);
+ s.turn=7;s.phase='main';s.pending=null;
+ s=withTtgDerivedEnergy(s,0);
+ assert.ok(s.players[0].energyProduced.green>=4);
+ assertTtgCoreState(s);
+ const choices=ttgRaidDecisions(s,top.uid);
+ assert.ok(choices.length>0);
+ assert.ok(choices.every(c=>c.type==='ttgGreen028Raid'));
+ const target=choices.find(c=>c.line==='front'&&c.slot===0);
+ assert.ok(target);
+ assert.match(ttgActionLabel(s,target),/^突襲/);
+ assert.match(ttgActionLabel(s,target),/底板/);
+ const next=dispatchTtgCoreAction(s,target);
+ assert.equal(next.players[0].front[0]?.uid,top.uid);
+ assert.equal(next.players[0].front[0]?.stack[0]?.uid,target.baseUid);
+ assert.equal(next.players[0].apCards.filter(c=>c.ready).length,1);
+ assert.equal(next.pending?.kind,'ttgGreen028Entry','on-Raid draw/choice must not be skipped');
+ assertTtgCoreState(next);
 });
