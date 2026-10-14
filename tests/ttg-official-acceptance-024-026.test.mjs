@@ -147,3 +147,39 @@ test('026: top seven search finds only Ark-Gurren, selected result is publicly r
  assert.equal(resolved.log.some(x=>Object.values(x).includes(non.uid)),false);
  assert.ok(assertTtgCoreState(resolved));
 });
+
+test('026 mobile UI: outside branch initially never shows seven private cards; explicit search enables arbitrary ordering',async()=>{
+ let s=game(2603),p=s.players[0],source=put(s,'TTG-1-026','energy',0);
+ const ark=take(p,'TTG-1-033'),other=take(p,'TTG-1-005');
+ p.deck.unshift(other,ark);
+ s.pending={kind:'ttgGreenEntry',player:0,sourceUid:source.uid};
+ s=withTtgDerivedEnergy(s,0);
+ const originals=s.players[0].deck.slice(0,7).map(c=>c.uid),otherUid=other.uid;
+ const storage=new Map([['ua-ttg-beta-game-v1',JSON.stringify(s)]]);
+ const app={innerHTML:'',onclick:null},toast={textContent:'',classList:{add(){},remove(){}}};
+ const document={querySelector:selector=>selector==='#app'?app:selector==='#toast'?toast:null,onkeydown:null};
+ const window={scrollTo(){},open(){throw Error('Unexpected public navigation')}};
+ globalThis.document=document;globalThis.window=window;
+ globalThis.localStorage={getItem:k=>storage.get(k)||null,setItem:(k,v)=>storage.set(k,v)};
+ const click=dataset=>{assert.equal(typeof app.onclick,'function');app.onclick({target:{closest:()=>({dataset,disabled:false})}});};
+ try{
+  await import('../dist/app.mjs?ttg026-official-ui-20261014');
+  click({view:'ttgArena'});
+  assert.match(app.innerHTML,/先選擇效果分支/);
+  assert.match(app.innerHTML,/不查看牌庫/);
+  assert.ok(!app.innerHTML.includes('data-ttg-026-take'), 'must choose search branch before exposing top seven');
+  click({ttg026Mode:'deck'});
+  assert.match(app.innerHTML,/data-ttg-026-take/);
+  click({ttg026Take:ark.uid});
+  const rest=originals.filter(uid=>uid!==ark.uid);
+  click({ttg026Down:rest[0]});
+  click({action:'ttg026SearchSubmit'});
+  const next=JSON.parse(storage.get('ua-ttg-beta-game-v1'));
+  const expected=[...rest];[expected[0],expected[1]]=[expected[1],expected[0]];
+  assert.deepEqual(next.players[0].deck.slice(-expected.length).map(c=>c.uid),expected);
+  assert.equal(next.pending,null);
+  assert.equal(next.log.filter(x=>x.type==='ttgPublicSearchReveal').length,1);
+  assert.equal(next.log.some(record=>Object.values(record).includes(otherUid)),false);
+  assert.ok(assertTtgCoreState(next));
+ }finally{delete globalThis.document;delete globalThis.window;delete globalThis.localStorage;}
+});
