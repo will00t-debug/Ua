@@ -82,10 +82,10 @@ function testEntry(other,owner,id){
  return result;
 }
 test('official-record pilot cards have explicitly pinned printed energy/AP/BP/trigger and no implicit support',()=>{
- assert.deepEqual(REAL_V2_PILOT_IDS.bleach,['BLC-1-034','BLC-1-039','BLC-1-066','BLC-1-102','BLC-1-103','BLC-1-105','BLC-1-107']);
+ assert.deepEqual(REAL_V2_PILOT_IDS.bleach,['BLC-1-034','BLC-1-039','BLC-1-064','BLC-1-066','BLC-1-102','BLC-1-103','BLC-1-105','BLC-1-107']);
  assert.deepEqual(REAL_V2_PILOT_IDS['gurren-lagann'],['TTG-1-001','TTG-1-009','TTG-1-036','TTG-1-037','TTG-1-038','TTG-1-051','TTG-1-042','TTG-1-064','TTG-1-065','TTG-1-078','TTG-1-079']);
  const b=verifiedPilotPack('bleach'),t=verifiedPilotPack('gurren-lagann');
- assert.equal(Object.keys(b.cards).length,7);
+ assert.equal(Object.keys(b.cards).length,8);
  assert.equal(Object.keys(t.cards).length,11);
  assert.ok(validateUniversalDeck(b,bleach.deck).length>0,'V2 real-only deck is not ready');
  assert.ok(validateUniversalDeck(t,green.deck).length>0);
@@ -384,4 +384,64 @@ test('real BLEACH Renji 105 optional -3000 BP can skip or sideline a TTG target 
  assert.equal(state.players[1].front[0].uid,first.uid,'input pure');
  assert.equal(assertUniversalMatch(packs,skipped),true);
  assert.equal(assertUniversalMatch(packs,resolved),true);
+});
+
+test('real BLEACH Getsugatensho 064 main effect requires BP<=3000 unless own Ichigo, then <=5000',()=>{
+ const packs=[bleach.pack,green.pack];
+ const prepare=withIchigo=>{
+  let s=fresh(green,486);
+  for(let i=0;i<8;i++)s=dispatchUniversalAction(packs,s,{type:'next'});
+  assert.equal(s.active,0);
+  const p=s.players[0],enemy=s.players[1];
+  p.energy[0]=take(s,0,'BLC-1-102');p.energy[1]=take(s,0,'BLC-1-102');
+  const card=take(s,0,'BLC-1-064');p.hand.push(card);
+  const target=take(s,1,'TTG-1-001');enemy.front[0]=target;
+  target.buffs=[{bp:2000,untilTurn:s.turn}]; // BP4000
+  if(withIchigo)p.front[0]=take(s,0,'BLC-1-103');
+  s=advanceToMain(packs,s);
+  assert.equal(universalBp(packs,s,s.players[1].front[0]),4000);
+  const effect=legalUniversalActions(packs,s).find(x=>x.type==='event'&&x.uid===card.uid);
+  assert.ok(effect,'energy-4 purple event playable with 2x purple double-generator');
+  return {s,target,effect};
+ };
+ const notEnough=prepare(false);
+ const normal=dispatchUniversalAction(packs,notEnough.s,notEnough.effect,{actor:0});
+ assert.equal(normal.pending,null,'BP4000 cannot be selected without Ichigo');
+ assert.equal(normal.players[1].front[0].uid,notEnough.target.uid);
+ const withBonus=prepare(true);
+ const awaiting=dispatchUniversalAction(packs,withBonus.s,withBonus.effect,{actor:0});
+ assert.equal(awaiting.pending?.kind,'effect-retire-bp');
+ assert.equal(awaiting.pending.player,0);
+ assert.equal(awaiting.pending.limit,5000);
+ const valid=legalUniversalActions(packs,awaiting);
+ assert.deepEqual(valid,[{type:'chooseRetireBp',uid:withBonus.target.uid}]);
+ assert.throws(()=>dispatchUniversalAction(packs,awaiting,{type:'chooseRetireBp',uid:awaiting.players[0].front[0].uid},{actor:0}),/not currently legal/);
+ const retired=dispatchUniversalAction(packs,awaiting,valid[0],{actor:0});
+ assert.equal(retired.players[1].front[0],null);
+ assert.ok(retired.players[1].outside.some(c=>c.uid===withBonus.target.uid));
+ assert.equal(assertUniversalMatch(packs,retired),true);
+});
+test('real BLEACH Getsugatensho 064 SPECIAL life trigger ignores main effect BP limit and optional to use',()=>{
+ const packs=[bleach.pack,red.pack];let s=fresh(red,499),p=s.players[0];
+ const flipped=take(s,0,'BLC-1-064'),old=p.life.shift();
+ p.deck.push(old);p.life.unshift(flipped);
+ const attacker=take(s,1,'TTG-1-051');attacker.ready=true;
+ attacker.buffs=[{bp:6000,untilTurn:5}];
+ s.players[1].front[0]=attacker;
+ for(let i=0;i<4;i++)s=dispatchUniversalAction(packs,s,{type:'next'});
+ s=advanceToMain(packs,s);
+ s=dispatchUniversalAction(packs,s,{type:'next'});
+ s=dispatchUniversalAction(packs,s,{type:'attack',uid:attacker.uid},{actor:1});
+ s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:null},{actor:0});
+ assert.equal(s.pending?.trigger,'special');
+ const available=legalUniversalActions(packs,s);
+ assert.ok(available.some(a=>a.mode==='skip'));
+ const target=available.find(a=>a.mode==='special'&&a.uid===attacker.uid);
+ assert.ok(target,'SPECIAL may target enemy over BP 5000');
+ const skipped=dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'skip'},{actor:0});
+ assert.equal(skipped.players[1].front[0].uid,attacker.uid);
+ const fired=dispatchUniversalAction(packs,s,target,{actor:0});
+ assert.equal(fired.players[1].front[0],null);
+ assert.ok(fired.players[1].outside.some(c=>c.uid===attacker.uid));
+ assert.equal(assertUniversalMatch(packs,fired),true);
 });
