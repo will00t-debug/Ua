@@ -25,7 +25,7 @@ test('last eight original printed cards have exact source-inspected fields',()=>
    ['UA56BT/'+id,name,nameZh,color,energy,ap,bp,gen,rarity,trigger,traits],id);
   assert.equal(c.type,'character',id);
   assert.equal(c.verifiedFrom,'user-uploaded-card-front-pdf-2026-10-13');
-  assert.equal(c.image,'assets/mark.svg','legal placeholder until art rights confirmed');
+  assert.equal(c.image,`https://rugiacreation.com/ua/cardlist/small/UA56BT_${id}.jpg?v=20261013`,'external ordinary-card art (no copies in repo)');
   assert.ok(c.effect?.length>15,id+' must contain full printed ability summary');
   assert.equal(c.auto,false,'printed card data alone must not unlock automated play');
  }
