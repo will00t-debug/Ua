@@ -349,6 +349,15 @@ function resolveChoice(s,a,pack){
   }
   // Choosing protection prevents the original line vacancy; the pending
   // deployment is cancelled WITHOUT paying AP and can be attempted anew.
+  // A conditional +BP may itself come from the sacrificed facedown card.
+  // After removing the final layer, re-evaluate state-based BP immediately:
+  // a character at 0 or below must still retire before queued effects or
+  // blocking can resume. This is NOT a second paid play or replacement.
+  if(a.mode==='protect'){
+   const survivor=location(s,q.player,q.uid);
+   if(survivor&&bp(pack,s,survivor.c)<=0)
+    retire(pack,s,q.player,survivor.line,survivor.slot);
+  }
   if(q.postImpact)damage(pack,s,q.player);
   continueEffectQueue(pack,s);finishPending(s);return;
  }
