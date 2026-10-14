@@ -41,7 +41,7 @@ export function makeUniversalPreviewReplay(packs,{decks,seed,first}){
  const initialCounts=decks.map(c=>Object.fromEntries(Object.entries(c)));
  return {
   format:'ua-universal-v2-preview',version:UNIVERSAL_PREVIEW_REPLAY_VERSION,
-  playerTitles:packs.map(p=>p.id),seed,first,initialCounts,actions:[]
+  playerTitles:packs.map(p=>p.id),packVersions:packs.map(p=>p.version),seed,first,initialCounts,actions:[]
  };
 }
 export function appendUniversalReplay(replay,action,player){
@@ -57,6 +57,8 @@ export function replayUniversalPreview(packs,tape,{maxActions=15000}={}){
   !Array.isArray(packs)||packs.length!==2||
   !Array.isArray(tape.playerTitles)||tape.playerTitles.length!==2||
   packs.some((p,i)=>p.id!==tape.playerTitles[i])||
+  !Array.isArray(tape.packVersions)||tape.packVersions.length!==2||
+  packs.some((p,i)=>p.version!==tape.packVersions[i])||
   !Array.isArray(tape.initialCounts)||tape.initialCounts.length!==2||
   !Array.isArray(tape.actions)||tape.actions.length>maxActions||
   !Number.isSafeInteger(tape.seed)||tape.seed<1||tape.seed>999999999||
