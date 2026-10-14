@@ -10,12 +10,12 @@ import {newSoloTrainingMatch,soloTrainingDeckIssues,soloTrainingLegalActions,sol
 const deckIssuesForBleach=counts=>[...validateDeck(counts),...pendingCards(counts).map(c=>'自動判定尚未完成：'+c.id)];
 const runtimes=Object.freeze({
  bleach:Object.freeze({
-  title:'bleach',certified:true,beta:true,
+  title:'bleach',corePlayable:true,beta:false,
   newMatch:newGame,deckIssues:deckIssuesForBleach,assert:assertState,
   legalActions,dispatch,actor:controller,botAction,
  }),
  'gurren-lagann':Object.freeze({
-  title:'gurren-lagann',certified:false,beta:true,
+  title:'gurren-lagann',corePlayable:false,beta:true,
   newMatch:newTtgCoreMatch,deckIssues:validateTtgCoreDeck,
   assert:assertTtgCoreState,legalActions:ttgExecutableActions,
   // Engine rule templates are used ONLY by specialized, explicitly verified UX.
@@ -23,7 +23,7 @@ const runtimes=Object.freeze({
   dispatch:dispatchTtgCoreAction,actor:ttgChoiceActor,botAction:ttgCoreAiChoice,
  }),
  'solo-leveling':Object.freeze({
-  title:'solo-leveling',certified:false,beta:true,
+  title:'solo-leveling',corePlayable:false,beta:true,
   newMatch:newSoloTrainingMatch,deckIssues:soloTrainingDeckIssues,
   assert:assertSoloTrainingMatch,legalActions:soloTrainingLegalActions,
   dispatch:soloTrainingDispatch,actor:s=>s.pending?.p??s.active,
@@ -77,7 +77,7 @@ export function chooseMatchBotAction(title,state){
 // catalogue's formal playable:auto flags to misreport an isolated Beta core.
 export function matchSupport(title){
  const runtime=runtimes[title];
- return runtime?{title,beta:runtime.beta,officiallyCertified:runtime.certified}:{
-  title,beta:false,officiallyCertified:false
+ return runtime?{title,beta:runtime.beta,corePlayable:runtime.corePlayable,allCardsVerified:false}:{
+  title,beta:false,corePlayable:false,allCardsVerified:false
  };
 }
