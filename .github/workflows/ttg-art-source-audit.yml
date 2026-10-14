@@ -1,0 +1,39 @@
+name: TTG image source audit
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Check RUGIA external card image structure (read-only)
+        run: |
+          node --input-type=module <<'NODE'
+          const urls=[
+            'https://rugiacreation.com/ua/search?Name=HK&Version=TTG',
+            'https://rugiacreation.com/ua/search?Find1=TTG-1-001&Name=HK',
+          ];
+          for(const url of urls){
+            try{
+              const res=await fetch(url,{headers:{'User-Agent':'Mozilla/5.0 (compatible; UA-card-source-check/1.0)'} ,signal:AbortSignal.timeout(18000)});
+              const html=await res.text(); 
+              console.log('SOURCE',url,'STATUS',res.status,'LEN',html.length);
+              for(const n of ['TTG-1-001','TTG-1-032','TTG-1-081']){
+                const idx=html.indexOf(n);
+                console.log('MATCH',n,idx,idx>=0?html.slice(Math.max(0,idx-200),idx+550).replace(/\s+/g,' ').slice(0,720):'');
+              }
+              const matches=[...html.matchAll(/.{0,180}(?:cardlist\\/small|TTG-1-001.{0,90}\\.jpg|TTG-1-032.{0,90}\\.jpg).{0,150}/ig)].slice(0,12);
+              console.log('IMAGE_MATCHES',JSON.stringify(matches.map(m=>m[0])));
+            }catch(e){console.log('SOURCE_ERROR',url,String(e));}
+          }
+          for(const path of ['UA56BT_TTG-1-001.jpg','UA56BT_TTG-1-001_1.jpg','UA56BT_TTG-1-032.jpg','UA56BT_TTG-1-032_1.jpg','UA56BT_TTG-1-032_2.jpg']){
+            const url='https://rugiacreation.com/ua/cardlist/small/'+path+'?v=20261013';
+            try{
+              const r=await fetch(url,{method:'GET',headers:{Range:'bytes=0-50'},signal:AbortSignal.timeout(9000)});
+              console.log('IMAGE_CHECK',path,r.status,r.headers.get('content-type'),r.headers.get('content-length'));r.body?.cancel();
+            }catch(e){console.log('IMAGE_ERROR',path,String(e));}
+          }
+          NODE
