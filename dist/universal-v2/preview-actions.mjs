@@ -16,6 +16,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-top-inspect':'查看牌庫頂','effect-top-order':'排列牌庫頂',
  'effect-bounce-own':'選擇返回手牌的己方角色',
  'effect-buff-own':'選擇己方角色增加本回合 BP',
+ 'effect-once-choice':'是否發動本回合一次能力',
  'effect-recover-outside':'從場外回收','effect-retire-bp':'選擇敵方退場',
  'effect-rest-bp':'選擇敵方 REST','effect-buff-trait':'選擇己方 BP 加成',
  'main-two-buff':'主要能力選擇 BP 對象',
