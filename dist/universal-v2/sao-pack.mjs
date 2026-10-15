@@ -490,6 +490,92 @@ const PRINTED_PINS=Object.freeze({
       "アインクラッド"
     ],
     "effectJa": "【登場時】BP3000以下の相手のフロントLのキャラを1枚まで選び、レストにする。"
+  },
+  "SAO-1-004": {
+    "kind": "onPlayBuffOwnOther1000",
+    "nameJa": "ユージオ",
+    "color": "yellow",
+    "energy": 0,
+    "ap": 1,
+    "bp": 500,
+    "gen": 1,
+    "type": "character",
+    "trigger": "active",
+    "traits": [],
+    "effectJa": "【登場時】自分の場の他のキャラを1枚まで選び、このターン中、BP+1000。"
+  },
+  "SAO-1-047": {
+    "kind": "onPlayBuffOwnOther1000",
+    "nameJa": "リズベット",
+    "color": "blue",
+    "energy": 0,
+    "ap": 1,
+    "bp": 1000,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "traits": [
+      "アインクラッド"
+    ],
+    "effectJa": "【登場時】自分の場の他のキャラを1枚まで選び、このターン中、BP+1000。"
+  },
+  "SAO-1-094": {
+    "kind": "onPlayBuffOwnOther1000",
+    "nameJa": "銃士X",
+    "color": "green",
+    "energy": 0,
+    "ap": 1,
+    "bp": 500,
+    "gen": 1,
+    "type": "character",
+    "trigger": "active",
+    "traits": [
+      "GGO"
+    ],
+    "effectJa": "【登場時】自分の場の他のキャラを1枚まで選び、このターン中、BP+1000。"
+  },
+  "SAO-2-015": {
+    "kind": "onPlayBuffOwnOther1000",
+    "nameJa": "キリト",
+    "color": "blue",
+    "energy": 2,
+    "ap": 1,
+    "bp": 2500,
+    "gen": 1,
+    "type": "character",
+    "trigger": "active",
+    "traits": [
+      "アインクラッド"
+    ],
+    "effectJa": "【登場時】自分の場の他のキャラを1枚まで選び、このターン中、BP+1000。"
+  },
+  "SAO-2-027": {
+    "kind": "onPlayBuffOwnOther1000",
+    "nameJa": "ユイ",
+    "color": "purple",
+    "energy": 0,
+    "ap": 1,
+    "bp": 500,
+    "gen": 1,
+    "type": "character",
+    "trigger": "draw",
+    "traits": [],
+    "effectJa": "【登場時】自分の場の他のキャラを1枚まで選び、このターン中、BP+1000。"
+  },
+  "SAO-2-067": {
+    "kind": "onPlayBuffOwnOther500",
+    "nameJa": "フレイヤ",
+    "color": "green",
+    "energy": 0,
+    "ap": 1,
+    "bp": 1500,
+    "gen": 1,
+    "type": "character",
+    "trigger": "active",
+    "traits": [
+      "ALO"
+    ],
+    "effectJa": "【登場時】自分の場の他のキャラを1枚まで選び、このターン中、BP+500。"
   }
 });
 export const SAO_V2_PILOT_IDS=Object.freeze(Object.keys(PRINTED_PINS).sort());
@@ -529,11 +615,16 @@ export function verifiedSaoV2Cards(){
    card.templateEffects={onPlay:[{template:'peekTopOne'}]};
   if(pin.kind==='onPlayRestEnemy3000')
    card.templateEffects={onPlay:[{template:'restEnemyUnderBp',bp:3000,optional:true}]};
+  if(pin.kind==='onPlayBuffOwnOther1000'||pin.kind==='onPlayBuffOwnOther500')
+   card.templateEffects={onPlay:[{template:'buffOwnField',
+    filter:{field:'type',value:'character'},
+    bp:pin.kind==='onPlayBuffOwnOther500'?500:1000,
+    optional:true,excludeSelf:true}]};
   return card;
  });
 }
 export function saoV2Pack(){
- return createUniversalPack({id:'sword-art-online',version:'v2-d-sao-pilot-2',
+ return createUniversalPack({id:'sword-art-online',version:'v2-d-sao-pilot-3',
   cards:verifiedSaoV2Cards()});
 }
 
