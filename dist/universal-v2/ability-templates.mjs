@@ -139,6 +139,7 @@ const registry=Object.freeze({
    then:v=>Array.isArray(v)&&v.length>=1&&v.length<=6},
   check:v=>v.then.every(x=>x&&[
    'draw','millTop','peekTopOne','enemyBpDown','restEnemyUnderBp',
+   'restEnemyFrontOne',
    'buffOwnField','searchDeckOne','recoverOutsideOne','buffSelf'
   ].includes(x.template)),
   build:v=>[{op:'oncePerTurnGate',scope:v.scope,optional:v.optional,
