@@ -26,11 +26,11 @@ function main(s){
  }
  return s;
 }
-test('TTG additive pack preserves all 20 original V2 pilots; 3 supported additions and real 50-card mixed-title deck',()=>{
+test('TTG additive pack preserves all 20 original V2 pilots; 4 supported additions and real 50-card mixed-title deck',()=>{
  const old=verifiedPilotPack('gurren-lagann');
- assert.deepEqual(TTG_V2_ADDITION_IDS,['TTG-1-005','TTG-1-014','TTG-1-019']);
+ assert.deepEqual(TTG_V2_ADDITION_IDS,['TTG-1-005','TTG-1-014','TTG-1-019','TTG-1-077']);
  assert.equal(Object.keys(old.cards).length,20);
- assert.equal(Object.keys(ttg.cards).length,23);
+ assert.equal(Object.keys(ttg.cards).length,24);
  for(const [id,c] of Object.entries(old.cards))assert.deepEqual(ttg.cards[id].effects,c.effects);
  assert.deepEqual(validateUniversalDeck(ttg,ttgDeck),[]);
  assert.deepEqual(validateUniversalDeck(slg,slgDeck),[]);
@@ -67,10 +67,10 @@ test('TTG-1-019 ACTIVE generates an extra GREEN energy only until REST, retainin
 test('TTG contribution is consumable by latest shared V2 title registry and is disjoint from original pilots',()=>{
  const row=listRegisteredV2Titles().find(x=>x.title==='gurren-lagann');
  assert.equal(row.baselinePilots,20);
- assert.equal(row.newlyContributed,3);
- assert.equal(row.totalV2Cards,23);
+ assert.equal(row.newlyContributed,4);
+ assert.equal(row.totalV2Cards,24);
  const registered=registeredV2TitlePack('gurren-lagann');
- assert.equal(Object.keys(registered.cards).length,23);
+ assert.equal(Object.keys(registered.cards).length,24);
  for(const id of TTG_V2_ADDITION_IDS){
   assert.deepEqual(registered.cards[id].effects,ttg.cards[id].effects);
   assert.equal(registered.cards[id].trigger,ttg.cards[id].trigger);
@@ -118,17 +118,17 @@ test('TTG-1-005 DRAW life can be declined, or draws exactly one owned top-deck p
  assert.equal(assertUniversalMatch(packs,resolved),true);
 });
 
-test('Registry shares exactly the 20 original TTG pilot IDs plus THREE new, no duplicated physical card ID',()=>{
+test('Registry shares exactly the 20 original TTG pilot IDs plus FOUR new, no duplicated physical card ID',()=>{
  const pilot=Object.keys(verifiedPilotPack('gurren-lagann').cards);
  const ids=Object.keys(registeredV2TitlePack('gurren-lagann').cards);
  const additions=new Set(TTG_V2_ADDITION_IDS);
  assert.equal(pilot.length,20);
- assert.equal(additions.size,3);
+ assert.equal(additions.size,4);
  assert.deepEqual(ids.filter(id=>!pilot.includes(id)).sort(),[...additions].sort());
  assert.ok(pilot.every(id=>!additions.has(id)));
- assert.equal(new Set(ids).size,23);
- assert.deepEqual(listRegisteredV2Titles().map(x=>x.totalV2Cards).slice(0,3),[78,23,18],
-  'live C contribution counts, not legacy 15/20/0 locked expectations');
+ assert.equal(new Set(ids).size,24);
+ assert.deepEqual(listRegisteredV2Titles().slice(1,3).map(x=>x.totalV2Cards),[24,18],
+  'C title contribution counts stay exact independent of BLEACH A integration');
  assert.equal(Object.keys(registeredV2TitlePack('solo-leveling').cards).length,18);
 });
 
@@ -178,10 +178,106 @@ test('Real title registry decks play cross-title turns on ONE V2 engine without 
  assert.equal(s.players[1].ownTurns,1);
 });
 
-test('TTG-077 remains fail-closed: own-outside [ガンメン] recovery cannot silently miss composite traits',()=>{
+test('TTG-077 is registered with a source-locked exact Gunmen feature; other unported TTG IDs remain excluded',()=>{
  const pack=registeredV2TitlePack('gurren-lagann');
- assert.equal(pack.cards['TTG-1-077'],undefined);
- const invalid={...ttgDeck,'TTG-1-001':3,'TTG-1-077':1};
+ assert.ok(pack.cards['TTG-1-077']);
+ assert.equal(pack.cards['TTG-1-077'].type,'field');
+ assert.deepEqual(pack.cards['TTG-1-077'].traits,['大グレン団','ガンメン']);
+ assert.deepEqual(pack.cards['TTG-1-077'].effects.onPlay,[{
+  op:'recoverOutsideOne',filter:{field:'trait',value:'ガンメン'},optional:true
+ }]);
+ const invalid={...ttgDeck,'TTG-1-001':3,'TTG-1-081':1};
  assert.equal(Object.values(invalid).reduce((n,k)=>n+k,0),50);
- assert.match(validateUniversalDeck(pack,invalid).join(';'),/Unregistered\/unsupported card: TTG-1-077/);
+ assert.match(validateUniversalDeck(pack,invalid).join(';'),/Unregistered\/unsupported card: TTG-1-081/);
+});
+
+test('TTG-1-077 official onPlay recovers 0..1 Gunmen ONLY from own outside (red4, AP1, no life trigger)',()=>{
+ const deck={...ttgDeck,'TTG-1-001':0,'TTG-1-077':4};
+ assert.deepEqual(validateUniversalDeck(ttg,deck),[]);
+ let state=newUniversalMatch(packs,{decks:[deck,slgDeck],first:0,seed:77});
+ const source=take(state,0,'TTG-1-077'),other=take(state,0,'TTG-1-077');
+ const ineligible=take(state,0,'TTG-1-009'),enemy=take(state,1,'SLG-1-005');
+ // Own outside is the ONLY legal recovery zone. Do not use deck/hand or opponent.
+ state.players[0].outside.push(other,ineligible);state.players[1].outside.push(enemy);
+ for(let i=0;i<2;i++){
+  const red=take(state,0,'TTG-1-049');red.ready=true;state.players[0].energy[i]=red;
+ }
+ state.players[0].hand.push(source);state=main(state);
+ assert.equal(universalEnergyByColor(packs,state,0).red,4);
+ const beforeAP=state.players[0].apCards.filter(c=>c.inPlay&&c.ready).length;
+ const play=legalUniversalActions(packs,state).find(a=>a.type==='play'&&a.uid===source.uid&&a.line==='energy');
+ assert.ok(play);
+ state=dispatchUniversalAction(packs,state,play);
+ assert.equal(state.pending?.kind,'effect-recover-outside');
+ assert.equal(state.players[0].apCards.filter(c=>c.inPlay&&c.ready).length,beforeAP-1);
+ assert.deepEqual(legalUniversalActions(packs,state),[
+  {type:'chooseOutsideRecovery',uid:null},
+  {type:'chooseOutsideRecovery',uid:other.uid}
+ ]);
+ for(const uid of [ineligible.uid,enemy.uid,source.uid,'0-forged'])
+  assert.throws(()=>dispatchUniversalAction(packs,state,{type:'chooseOutsideRecovery',uid}),/not currently legal/);
+ const skip=dispatchUniversalAction(packs,state,{type:'chooseOutsideRecovery',uid:null});
+ assert.ok(skip.players[0].outside.some(c=>c.uid===other.uid));
+ assert.equal(assertUniversalMatch(packs,skip),true);
+ const handBefore=state.players[0].hand.length;
+ const pick=dispatchUniversalAction(packs,state,{type:'chooseOutsideRecovery',uid:other.uid});
+ assert.ok(pick.players[0].hand.some(c=>c.uid===other.uid));
+ assert.equal(pick.players[0].hand.length,handBefore+1);
+ assert.ok(!pick.players[0].outside.some(c=>c.uid===other.uid));
+ assert.ok(pick.players[0].outside.some(c=>c.uid===ineligible.uid));
+ assert.ok(pick.players[1].outside.some(c=>c.uid===enemy.uid));
+ assert.equal(pick.pending,null);
+ assert.equal(ttg.cards['TTG-1-077'].trigger,null);
+ assert.equal(assertUniversalMatch(packs,pick),true);
+});
+
+test('TTG-077 official Gunmen trait recovers a DIFFERENT printed pilot TTG-072 from own outside, not merely another TTG-077 copy',()=>{
+ const deck={...ttgDeck,'TTG-1-001':0,'TTG-1-072':2,'TTG-1-077':2};
+ assert.deepEqual(validateUniversalDeck(ttg,deck),[]);
+ let state=newUniversalMatch(packs,{decks:[deck,slgDeck],first:0,seed:77072});
+ const source=take(state,0,'TTG-1-077'),gunmen=take(state,0,'TTG-1-072');
+ const excluded=take(state,0,'TTG-1-009');
+ state.players[0].outside.push(gunmen,excluded);
+ for(let i=0;i<2;i++){const red=take(state,0,'TTG-1-049');red.ready=true;state.players[0].energy[i]=red;}
+ state.players[0].hand.push(source);
+ state=main(state);
+ const action=legalUniversalActions(packs,state).find(a=>a.type==='play'&&a.uid===source.uid&&a.line==='energy');
+ assert.ok(action);
+ state=dispatchUniversalAction(packs,state,action);
+ assert.deepEqual(legalUniversalActions(packs,state),[
+  {type:'chooseOutsideRecovery',uid:null},
+  {type:'chooseOutsideRecovery',uid:gunmen.uid}
+ ]);
+ state=dispatchUniversalAction(packs,state,{type:'chooseOutsideRecovery',uid:gunmen.uid});
+ assert.ok(state.players[0].hand.some(c=>c.uid===gunmen.uid));
+ assert.ok(state.players[0].outside.some(c=>c.uid===excluded.uid));
+ assert.equal(assertUniversalMatch(packs,state),true);
+});
+
+test('TTG-077 no qualifying OWN outside Gunmen: optional recovery does not create a mandatory phantom choice',()=>{
+ const deck={...ttgDeck,'TTG-1-001':0,'TTG-1-077':4};
+ let state=newUniversalMatch(packs,{decks:[deck,slgDeck],first:0,seed:7077});
+ const source=take(state,0,'TTG-1-077'),notGunmen=take(state,0,'TTG-1-009');
+ state.players[0].outside.push(notGunmen);
+ for(let i=0;i<2;i++){const red=take(state,0,'TTG-1-049');red.ready=true;state.players[0].energy[i]=red;}
+ state.players[0].hand.push(source);state=main(state);
+ const beforeOutside=state.players[0].outside.length;
+ const beforeHand=state.players[0].hand.length;
+ const play=legalUniversalActions(packs,state).find(a=>a.type==='play'&&a.uid===source.uid&&a.line==='energy');
+ assert.ok(play);
+ const after=dispatchUniversalAction(packs,state,play);
+ assert.equal(after.pending,null);
+ assert.equal(after.players[0].outside.length,beforeOutside);
+ assert.equal(after.players[0].hand.length,beforeHand-1);
+ assert.equal(after.players[0].energy.filter(Boolean).length,3);
+ assert.equal(assertUniversalMatch(packs,after),true);
+});
+
+test('TTG-010/023 source top-N trait search and ordered bottom + conditional discard are not faked by generic full-deck shuffle search',()=>{
+ const pack=registeredV2TitlePack('gurren-lagann');
+ for(const id of ['TTG-1-010','TTG-1-023']){
+  assert.equal(pack.cards[id],undefined,id+' requires private top-N legal trait and bottom-order effect');
+  const illegal={...ttgDeck,'TTG-1-001':3,[id]:1};
+  assert.match(validateUniversalDeck(pack,illegal).join(';'),/Unregistered\/unsupported card:/);
+ }
 });
