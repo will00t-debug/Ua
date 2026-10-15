@@ -255,7 +255,7 @@ test('formal registry BLC-1-049 onPlay BP reduction chooses legal foe or decline
   x.line==='front'&&x.slot===0);
  assert.ok(play,'three purple energy can legally summon BLC-1-049');
  const waiting=dispatchUniversalAction(packs,s,play,{actor:0});
- assert.equal(waiting.pending?.kind,'effect-enemy-bp');
+ assert.equal(waiting.pending?.kind,'effect-target');
  const options=legalUniversalActions(packs,waiting);
  const selected=options.find(x=>x.type==='chooseTarget'&&x.uid===target.uid);
  assert.ok(selected);
