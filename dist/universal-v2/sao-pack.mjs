@@ -576,6 +576,36 @@ const PRINTED_PINS=Object.freeze({
       "ALO"
     ],
     "effectJa": "【登場時】自分の場の他のキャラを1枚まで選び、このターン中、BP+500。"
+  },
+  "SAO-1-107": {
+    "kind": "onPlayDrawThreeDiscardOne",
+    "nameJa": "リズベット",
+    "color": "blue",
+    "energy": 3,
+    "ap": 2,
+    "bp": 2000,
+    "gen": 3,
+    "type": "character",
+    "trigger": "draw",
+    "traits": [
+      "アインクラッド"
+    ],
+    "effectJa": "【登場時】カードを3枚引き、自分の手札を1枚場外に置く。"
+  },
+  "SAO-2-072": {
+    "kind": "onPlayPeekTopOrBottom",
+    "nameJa": "シノン",
+    "color": "green",
+    "energy": 1,
+    "ap": 1,
+    "bp": 2000,
+    "gen": 1,
+    "type": "character",
+    "trigger": "draw",
+    "traits": [
+      "GGO"
+    ],
+    "effectJa": "【登場時】自分の山札の上から1枚見る。そのカードを自分の山札の上か下に置く。"
   }
 });
 export const SAO_V2_PILOT_IDS=Object.freeze(Object.keys(PRINTED_PINS).sort());
@@ -608,6 +638,10 @@ export function verifiedSaoV2Cards(){
    card.templateEffects={onPlay:[{template:'draw',count:1}]};
   if(pin.kind==='onPlayDrawDiscard')
    card.templateEffects={onPlay:[{template:'drawDiscardOne'}]};
+  if(pin.kind==='onPlayDrawThreeDiscardOne')
+   card.effects={onPlay:[{op:'drawDiscard',count:3}]};
+  if(pin.kind==='onPlayPeekTopOrBottom')
+   card.templateEffects={onPlay:[{template:'peekTopOrBottom'}]};
   if(pin.kind==='impactNull')card.impactNull=true;
   if(pin.kind==='onPlayBounce')
    card.templateEffects={onPlay:[{template:'bounceOwnOtherUnderEnergy',energy:1}]};
@@ -624,7 +658,7 @@ export function verifiedSaoV2Cards(){
  });
 }
 export function saoV2Pack(){
- return createUniversalPack({id:'sword-art-online',version:'v2-d-sao-pilot-3',
+ return createUniversalPack({id:'sword-art-online',version:'v2-d-sao-pilot-4',
   cards:verifiedSaoV2Cards()});
 }
 
