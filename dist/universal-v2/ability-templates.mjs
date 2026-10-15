@@ -32,6 +32,9 @@ const registry=Object.freeze({
  peekTopOne:{
   args:{},build:()=>[{op:'peekTopOne'}]
  },
+ peekTopOrBottom:{
+  args:{},build:()=>[{op:'peekTopOrBottom'}]
+ },
  recoverAp:{
   args:{count:v=>integer(v,1,3)},build:v=>[{op:'recoverAp',count:v.count}]
  },

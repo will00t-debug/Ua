@@ -154,7 +154,9 @@ function continueEffectQueue(pack,s){
    // Only the effect controller can inspect this private top card. Do not
    // include its UID/cardId in pending UI or public snapshots.
    if(pl.deck.length)s.pending={kind:'private-top-choice',player:owner,sourceUid:job.sourceUid};
-  }else if(job.op==='recoverAp'){
+  }else if(job.op==='peekTopOrBottom'){
+    if(pl.deck.length)s.pending={kind:'private-top-place',player:owner,sourceUid:job.sourceUid};
+   }else if(job.op==='recoverAp'){
    if(pl.apCards.some(c=>c.inPlay&&!c.ready))
     s.pending={kind:'effect-recover-ap',player:owner,sourceUid:job.sourceUid,remaining:job.count};
   }else if(job.op==='searchDeckOne'){
@@ -505,6 +507,11 @@ function resolveChoice(s,a,pack){
   s.pending=null;continueEffectQueue(pack,s);
   return;
  }
+ if(q.kind==='private-top-place'){
+  if(a.mode==='bottom'&&p.deck.length)p.deck.push(p.deck.shift());
+  else if(a.mode!=='top'&&a.mode!=='bottom')throw Error('Illegal deck destination');
+  s.pending=null;continueEffectQueue(pack,s);return;
+ }
  if(q.kind==='effect-recover-ap'){
   if(a.uid===null){s.pending=null;continueEffectQueue(pack,s);return;}
   const ap=p.apCards.find(c=>c.uid===a.uid&&c.inPlay&&!c.ready);
@@ -828,6 +835,9 @@ function legalPending(pack,s){
  if(q.kind==='private-top-choice')return [
    {type:'chooseTopCard',mode:'top'},{type:'chooseTopCard',mode:'outside'}
   ];
+ if(q.kind==='private-top-place')return [
+  {type:'chooseTopCard',mode:'top'},{type:'chooseTopCard',mode:'bottom'}
+ ];
  if(q.kind==='effect-recover-ap')return [
    {type:'chooseApRecovery',uid:null},
    ...p.apCards.filter(c=>c.inPlay&&!c.ready).map(c=>({type:'chooseApRecovery',uid:c.uid}))
@@ -1120,7 +1130,7 @@ export function assertUniversalMatch(pack,s){
    !Array.isArray(s.initialCounts)||s.initialCounts.length!==2||
    s.players?.length!==2||!playerIndex(s.active)||
    !['playing','finished'].includes(s.status))throw Error('Incorrect pack/version or match state');
- if(s.pending&&(!playerIndex(s.pending.player)||!['block','life-trigger','effect-target','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','effect-retire-bp','effect-rest-bp','raid-effect-order','effect-buff-trait','effect-buff-own','effect-once-choice','main-two-buff','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-order','effect-recover-outside','effect-bounce-own','effect-discard-cost','effect-discard-gate'].includes(s.pending.kind)))
+ if(s.pending&&(!playerIndex(s.pending.player)||!['block','life-trigger','effect-target','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-rest-bp','raid-effect-order','effect-buff-trait','effect-buff-own','effect-once-choice','main-two-buff','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-order','effect-recover-outside','effect-bounce-own','effect-discard-cost','effect-discard-gate'].includes(s.pending.kind)))
   throw Error('Invalid pending controller');
  if(!Array.isArray(s.raidedThisTurn)||s.raidedThisTurn.length!==2||
    s.raidedThisTurn.some(x=>typeof x!=='boolean')||
@@ -1138,7 +1148,7 @@ export function assertUniversalMatch(pack,s){
  if(!Number.isInteger(s.attacksThisTurn)||s.attacksThisTurn<0||s.attacksThisTurn>50)
   throw Error('Invalid attack count');
  if(!Array.isArray(s.effectQueue)||s.effectQueue.some(e=>!playerIndex(e.owner)||
-   !['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','retireOppFrontUnderBp','restOppFrontUnderBp','restOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','recoverOutsideOne','discardToDraw',
+   !['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','restOppFrontUnderBp','restOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','recoverOutsideOne','discardToDraw',
     'discardGate','enemyFrontAllBpDown','retireOppFrontAllUnderBp',
     'buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
     'recoverOutsideColorUnderEnergy','buffOwnField','oncePerTurnGate','retireBatchOne','openBlock'].includes(e.op)))
@@ -1181,6 +1191,13 @@ export function universalPrivateChoices(pack,s,viewer){
  assertUniversalMatch(pack,s);
  if(!playerIndex(viewer))throw Error('Invalid private choice viewer');
  const q=s.pending;
+ if(q?.kind==='private-top-place'&&q.player===viewer){
+  const top=s.players[viewer].deck[0];
+  return {kind:q.kind,player:viewer,options:legalPending(pack,s).map(action=>({
+   action:{...action},card:top?
+    {cardId:top.cardId,name:card(pack,top).name,color:card(pack,top).color}:null
+  }))};
+ }
  if(!q||q.player!==viewer||
   !['effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-order','effect-recover-outside','effect-bounce-own','effect-discard-cost','effect-discard-gate'].includes(q.kind))
   return null;
