@@ -639,7 +639,7 @@ export function verifiedSaoV2Cards(){
   if(pin.kind==='onPlayDrawDiscard')
    card.templateEffects={onPlay:[{template:'drawDiscardOne'}]};
   if(pin.kind==='onPlayDrawThreeDiscardOne')
-   card.effects={onPlay:[{op:'drawDiscard',count:3}]};
+   card.templateEffects={onPlay:[{template:'draw',count:2},{template:'drawDiscardOne'}]};
   if(pin.kind==='onPlayPeekTopOrBottom')
    card.templateEffects={onPlay:[{template:'peekTopOrBottom'}]};
   if(pin.kind==='impactNull')card.impactNull=true;
