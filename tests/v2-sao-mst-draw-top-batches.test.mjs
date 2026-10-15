@@ -36,7 +36,7 @@ test('SAO-1-107 exact official AP2 blue 3 draw three, discard exactly ONE; no hi
  const id='SAO-1-107',print=SAO_OFFICIAL_CARDS.find(x=>x.id===id);
  assert.equal(print.effectJa,'【登場時】カードを3枚引き、自分の手札を1枚場外に置く。');
  assert.equal(print.ap,2);assert.equal(print.trigger,'draw');
- assert.deepEqual(pack.cards[id].effects.onPlay,[{op:'drawDiscard',count:3}]);
+ assert.deepEqual(pack.cards[id].effects.onPlay,[{op:'draw',count:2},{op:'drawDiscard',count:1}]);
  const {s,a}=fixture(id,{energyId:'SAO-1-102',ap:2});
  const before=s.players[0].deck.length,prevHand=s.players[0].hand.length;
  const q=dispatchUniversalAction([pack,pack],s,a);
