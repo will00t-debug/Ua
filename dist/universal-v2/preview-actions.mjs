@@ -11,7 +11,7 @@ export const V2_TITLE_LABELS=Object.freeze({
 });
 export const V2_PENDING_LABELS=Object.freeze({
  block:'選擇是否阻擋', 'life-trigger':'生命觸發',
- 'leave-replacement':'角色離場保護','private-top-choice':'查看牌庫頂',
+ 'leave-replacement':'角色離場保護','private-top-choice':'查看牌庫頂','private-top-place':'選擇牌頂或牌底',
  'effect-recover-ap':'恢復 AP','end-hand-limit':'手牌上限',
  'effect-discard':'選擇棄牌','effect-discard-cost':'支付棄牌成本',
  'effect-discard-gate':'是否支付棄牌成本',
@@ -90,7 +90,7 @@ export function uiActionLabel(action,{pack,state}={}){
    return action.mode==='activate'?'使用每回合一次能力':'暫不使用（不消耗限次）';
   case 'chooseLeaveReplacement':
    return action.mode==='leave'?'讓角色退場':'消耗裏向底卡保護角色'+(action.uid?'（'+name()+'）':'');
-  case 'chooseTopCard':return action.mode==='top'?'保留在牌庫頂':'送至場外';
+  case 'chooseTopCard':return action.mode==='top'?'保留在牌庫頂':action.mode==='bottom'?'放回牌庫底':'送至場外';
   case 'chooseRaidOrder':return action.mode==='baseFirst'?'先結算突襲底板效果':'先結算突襲登場效果';
   case 'chooseApRecovery':return action.uid===null?'完成恢復 AP':'恢復 AP 卡';
   case 'chooseDiscardGate':return action.uid===null?'不支付成本':'棄 '+name()+' 支付成本';
