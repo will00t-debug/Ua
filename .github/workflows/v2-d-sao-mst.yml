@@ -8,6 +8,10 @@ on:
       - 'dist/universal-v2/sao-pack.mjs'
       - 'dist/universal-v2/mst-pack.mjs'
       - 'dist/universal-v2/sources/**'
+      - 'dist/universal-v2/title-packs/sao.mjs'
+      - 'dist/universal-v2/title-packs/mst.mjs'
+      - 'dist/universal-v2/sao-mst-real-decks.mjs'
+      - 'tests/v2-sao-mst-*.test.mjs'
       - 'tests/universal-v2-sao*.test.mjs'
       - 'tests/universal-v2-mst*.test.mjs'
       - 'docs/v2-handoff/D-sao-mst.md'
@@ -31,9 +35,13 @@ jobs:
           node --check dist/universal-v2/mst-pack.mjs
           node --check dist/universal-v2/sources/mst-catalog.mjs
           node --check dist/universal-v2/sources/mst-official-print.mjs
+          node --check dist/universal-v2/sources/mst-inventory.mjs
+          node --check dist/universal-v2/title-packs/sao.mjs
+          node --check dist/universal-v2/title-packs/mst.mjs
+          node --check dist/universal-v2/sao-mst-real-decks.mjs
       - name: SAO and MST V2 dedicated tests
         run: |
-          node --test tests/universal-v2-sao-port.test.mjs tests/universal-v2-mst-port.test.mjs tests/universal-v2-sao-mst-cross-title.test.mjs
+          node --test tests/universal-v2-sao-port.test.mjs tests/universal-v2-mst-port.test.mjs tests/universal-v2-sao-mst-cross-title.test.mjs tests/v2-sao-mst-registry-real-decks.test.mjs
 
   core-shared-regression:
     runs-on: ubuntu-latest
