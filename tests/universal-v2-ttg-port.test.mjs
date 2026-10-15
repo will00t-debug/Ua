@@ -230,3 +230,26 @@ test('TTG-1-077 official onPlay recovers 0..1 Gunmen ONLY from own outside (red4
  assert.equal(ttg.cards['TTG-1-077'].trigger,null);
  assert.equal(assertUniversalMatch(packs,pick),true);
 });
+
+test('TTG-077 official Gunmen trait recovers a DIFFERENT printed pilot TTG-072 from own outside, not merely another TTG-077 copy',()=>{
+ const deck={...ttgDeck,'TTG-1-001':0,'TTG-1-072':2,'TTG-1-077':2};
+ assert.deepEqual(validateUniversalDeck(ttg,deck),[]);
+ let state=newUniversalMatch(packs,{decks:[deck,slgDeck],first:0,seed:77072});
+ const source=take(state,0,'TTG-1-077'),gunmen=take(state,0,'TTG-1-072');
+ const excluded=take(state,0,'TTG-1-009');
+ state.players[0].outside.push(gunmen,excluded);
+ for(let i=0;i<2;i++){const red=take(state,0,'TTG-1-049');red.ready=true;state.players[0].energy[i]=red;}
+ state.players[0].hand.push(source);
+ state=main(state);
+ const action=legalUniversalActions(packs,state).find(a=>a.type==='play'&&a.uid===source.uid&&a.line==='energy');
+ assert.ok(action);
+ state=dispatchUniversalAction(packs,state,action);
+ assert.deepEqual(legalUniversalActions(packs,state),[
+  {type:'chooseOutsideRecovery',uid:null},
+  {type:'chooseOutsideRecovery',uid:gunmen.uid}
+ ]);
+ state=dispatchUniversalAction(packs,state,{type:'chooseOutsideRecovery',uid:gunmen.uid});
+ assert.ok(state.players[0].hand.some(c=>c.uid===gunmen.uid));
+ assert.ok(state.players[0].outside.some(c=>c.uid===excluded.uid));
+ assert.equal(assertUniversalMatch(packs,state),true);
+});
