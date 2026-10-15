@@ -793,6 +793,13 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
   "type": "character",
   "effect": "登場時：查看牌庫頂3張，最多將1張送至場外，其餘依任意順序放回牌庫頂。"
  }
+ ,{
+  "id":"BLC-1-030","kind":"restEnemyFrontOne",
+  "number":"UA08BT/BLC-1-030","name":"The Jail",
+  "color":"yellow","energy":2,"ap":1,"bp":0,"gen":0,
+  "trigger":"active","type":"event",
+  "effect":"選 1 個敵方前線角色，將其轉為 REST。"
+ }
 ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -822,6 +829,7 @@ export function checkedBleachAddonDefinition(p){
   recoverAp2:{onPlay:[{template:'recoverAp',count:2}]},
   traitBuffAllDraw:{onPlay:[{template:'buffOwnTraitAllTurn',trait:'護廷十三隊',bp:1000},{template:'draw',count:1}]},
   restEnemy3500:{onPlay:[{template:'restEnemyUnderBp',bp:3500,optional:true}]},
+  restEnemyFrontOne:{onPlay:[{template:'restEnemyFrontOne',optional:false}]},
   retireBonusYamamoto:{onPlay:[{template:'retireEnemyUnderBp',bp:3000,bonusName:'山本元柳斎重國',bonusBp:5000}]},
   retireBonusRukia:{onPlay:[{template:'retireEnemyUnderBp',bp:3000,bonusName:'朽木ルキア',bonusBp:5000}]},
   enemyBpDown1000:{onPlay:[{template:'enemyBpDown',bp:1000,optional:true}]},
