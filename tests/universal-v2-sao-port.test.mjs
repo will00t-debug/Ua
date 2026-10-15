@@ -8,7 +8,13 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,assertUn
 
 const pack=saoV2Pack();
 function deck50(){
- const ids=SAO_V2_PILOT_IDS.slice(0,13);
+ // Stable explicit official fixture; expanding V2 cards must never silently
+ // remove a scenario's required physical card (e.g. SAO-1-055).
+ const ids=[
+  'SAO-1-001','SAO-1-016','SAO-1-019','SAO-1-023','SAO-1-035',
+  'SAO-1-039','SAO-1-042','SAO-1-046','SAO-1-054','SAO-1-055',
+  'SAO-1-058','SAO-1-061','SAO-1-082'
+ ];
  const counts=Object.fromEntries(ids.map(id=>[id,4]));
  counts[ids.at(-1)]=2;
  assert.deepEqual(validateUniversalDeck(pack,counts),[]);
