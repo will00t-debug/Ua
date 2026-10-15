@@ -320,3 +320,20 @@ test('V2-C card-by-card evidence CSV remains complete, disjoint and explicitly P
  inspect('ttg',TTG_CARDS,registeredV2TitlePack('gurren-lagann'),20);
  inspect('slg',SOLO_LEVELING_CARDS,registeredV2TitlePack('solo-leveling'),0);
 });
+
+test('SLG-068 eligible low-cost ENERGY-line target is bounceable; no fake play from outside',()=>{
+ let state=fresh(),source=take(state,1,'SLG-1-068');
+ const low=take(state,1,'SLG-1-045'),green=take(state,1,'SLG-1-041');
+ low.ready=true;green.ready=true;state.players[1].energy[0]=low;state.players[1].energy[1]=green;
+ state.players[1].hand.push(source);state=advance(state,'main');
+ assert.ok(!legalUniversalActions(packs,state).some(a=>a.type==='play'&&a.uid===low.uid));
+ const play=legalUniversalActions(packs,state).find(a=>a.type==='play'&&a.uid===source.uid&&a.line==='front');
+ assert.ok(play);
+ const next=dispatchUniversalAction(packs,state,play);
+ assert.equal(next.pending?.kind,'effect-bounce-own');
+ assert.deepEqual(legalUniversalActions(packs,next),[{type:'chooseOwnBounce',uid:low.uid}]);
+ const done=dispatchUniversalAction(packs,next,{type:'chooseOwnBounce',uid:low.uid});
+ assert.equal(done.players[1].energy[0],null);
+ assert.ok(done.players[1].hand.some(c=>c.uid===low.uid));
+ assert.equal(assertUniversalMatch(packs,done),true);
+});
