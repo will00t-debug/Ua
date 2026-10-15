@@ -36,7 +36,8 @@ function ready(optional=false,target=true){
  if(target){enemy=take(s,1,'U03');enemy.ready=true;s.players[1].front[1]=enemy;}
  for(let i=0;i<2;i++)s=dispatchUniversalAction(packs,s,{type:'next'});
  const action=legalUniversalActions(packs,s).find(a=>a.type==='event'&&a.uid===source.uid);
- assert.ok(action);
+ assert.equal(Boolean(action),Boolean(optional||target),
+  'Q1119 mandatory EVENT cannot be used without an eligible target');
  const beforeDeck=s.players[0].deck.length;
  const beforeAp=s.players[0].apCards.filter(x=>x.inPlay&&x.ready).length;
  return {packs,s,source,enemy,action,beforeDeck,beforeAp};
@@ -74,11 +75,33 @@ test('optional uncapped REST allows decline but still finishes printed draw',()=
  assert.equal(after.players[0].deck.length,x.beforeDeck-1);
  assert.equal(assertUniversalMatch(x.packs,after),true);
 });
-test('uncapped REST with no opponent front has no phantom target and runs next operation',()=>{
- const x=ready(false,false),next=dispatchUniversalAction(x.packs,x.s,x.action);
- assert.equal(next.pending,null);
- assert.equal(next.players[0].deck.length,x.beforeDeck-1);
- assert.equal(assertUniversalMatch(x.packs,next),true);
+test('Q1119: an event with a mandatory choose-one REST cannot be used with empty enemy FRONT',()=>{
+ const x=ready(false,false),old=structuredClone(x.s);
+ assert.equal(x.action,undefined);
+ assert.throws(()=>dispatchUniversalAction(x.packs,x.s,
+  {type:'event',uid:x.source.uid},{actor:0}),/Action not currently legal/);
+ assert.deepEqual(x.s,old,'illegal event must not spend AP, draw, or leave hand');
+ assert.equal(assertUniversalMatch(x.packs,x.s),true);
+});
+test('Q1119: an optional uncapped REST event can choose zero targets and continue drawing',()=>{
+ const x=ready(true,false),after=dispatchUniversalAction(x.packs,x.s,x.action);
+ assert.equal(after.pending,null);
+ assert.equal(after.players[0].deck.length,x.beforeDeck-1);
+ assert.ok(after.players[0].outside.some(c=>c.uid===x.source.uid));
+ assert.equal(assertUniversalMatch(x.packs,after),true);
+});
+test('Q91: mandatory uncapped REST can choose an already-rested opposing character',()=>{
+ const x=ready(false,true);
+ x.s.players[1].front[1].ready=false;
+ const q=dispatchUniversalAction(x.packs,x.s,x.action);
+ assert.deepEqual(legalUniversalActions(x.packs,q),[
+  {type:'chooseRestBp',uid:x.enemy.uid}
+ ]);
+ const after=dispatchUniversalAction(x.packs,q,
+  {type:'chooseRestBp',uid:x.enemy.uid});
+ assert.equal(after.players[1].front[1].ready,false);
+ assert.equal(after.players[0].deck.length,x.beforeDeck-1);
+ assert.equal(assertUniversalMatch(x.packs,after),true);
 });
 test('strict compilation forbids hidden BP limits, missing optional choice, unknown target selectors',()=>{
  const base={id:'U1',name:'Test',color:'yellow',type:'event',energy:0,
