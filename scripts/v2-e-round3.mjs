@@ -78,13 +78,20 @@ try{
  const aIds=report.tests['a-manifest'].data?.ids||{};
  const branchMap=[
   ['B','bleach',report.tests['b-candidate']?.data?.ids||[]],
-  ['C','gurren-lagann',report.tests['c-candidate']?.data?.ids?.[0]||[]]
+  ['C','gurren-lagann',report.tests['c-candidate']?.data?.ids?.[0]||[]],
+  ['D','sword-art-online',report.tests['d-candidate']?.data?.ids?.[0]||[]],
+  ['D','mushoku-tensei',report.tests['d-candidate']?.data?.ids?.[1]||[]]
  ];
  report.pendingNewCards=branchMap.map(([line,title,cards])=>{
   const integrated=new Set(aIds[title]||[]);
   return {branch:line,title,unmerged:cards.filter(id=>!integrated.has(id)),
    removedRelativeToA:[...integrated].filter(id=>!cards.includes(id))};
  });
+ const missing=report.pendingNewCards.filter(x=>x.removedRelativeToA.length);
+ if(missing.length)err('P0-CANDIDATE-LOST-A-CARDS','Branch candidate unexpectedly loses core identities: '+JSON.stringify(missing));
+ const allUnmerged=report.pendingNewCards.flatMap(x=>x.unmerged.map(id=>x.title+'/'+id));
+ report.pendingNewTotal=allUnmerged.length;
+ if(new Set(allUnmerged).size!==allUnmerged.length)err('P0-DUP-UNMERGED','Duplicate branch candidate title/id');
  const bCase=run('b-023-branch-only-test',dirs.B,
   ['--test','tests/universal-v2-bleach-own-buff.test.mjs'],90000);
  const cCase=run('c-077-branch-only-test',dirs.C,
