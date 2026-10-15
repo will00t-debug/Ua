@@ -217,3 +217,56 @@ test('SAO four colors FINAL event recover up to two AP: printed AP payment, decl
   same(accepted);same(declined);
  }
 });
+
+test('SAO-1-075 and SAO-1-089 retain BOTH STEP movement and exact top-deck onPlay behavior',()=>{
+ for(const id of ['SAO-1-075','SAO-1-089']){
+  const source=SAO_OFFICIAL_CARDS.find(x=>x.id===id),definition=pack.cards[id];
+  assert.equal(source.effectJa.startsWith('【ステップ】'),true);
+  assert.equal(source.effectJa.includes('【登場時】'),true);
+  assert.equal(source.trigger,null);
+  assert.equal(definition.implementation,'dsl','STEP alone cannot suppress onPlay');
+  assert.equal(definition.step,true);
+  assert.deepEqual(definition.effects.onPlay,id==='SAO-1-075'?
+   [{op:'inspectTopAnyOutside',count:2,rest:'top'}]:[{op:'peekTopOrBottom'}]);
+  const counts={...SAO_V2_REAL_DECK_COUNTS};
+  counts['SAO-1-035']-=2;counts[id]=1;counts['SAO-1-095']=1;
+  assert.deepEqual(validateUniversalDeck(pack,counts),[]);
+  const packs=[pack,pack];
+  let s=newUniversalMatch(packs,{decks:[counts,counts],seed:75089,first:0});
+  const character=physical(s,0,id),generator=physical(s,0,'SAO-1-095');
+  s.players[0].energy[0]=generator;s.players[0].hand.push(character);
+  for(let n=0;n<2;n++)s=dispatchUniversalAction(packs,s,{type:'next'});
+  const play=legalUniversalActions(packs,s).find(x=>x.type==='play'&&
+   x.uid===character.uid&&x.line==='front'&&x.slot===0);
+  assert.ok(play,'green 3 generator should fund full printed card');
+  let q=dispatchUniversalAction(packs,s,play);
+  const deckBefore=q.players[0].deck.map(x=>x.uid),outside=q.players[0].outside.length;
+  if(id==='SAO-1-075'){
+   assert.equal(q.pending?.kind,'effect-top-inspect-many');
+   q=dispatchUniversalAction(packs,q,{type:'chooseInspectedOutside',uid:null});
+   assert.equal(q.pending?.kind,'effect-top-order');
+   q=dispatchUniversalAction(packs,q,{type:'chooseTopOrder',uid:deckBefore[1]});
+   q=dispatchUniversalAction(packs,q,{type:'chooseTopOrder',uid:deckBefore[0]});
+   assert.deepEqual(q.players[0].deck.map(x=>x.uid),
+    [deckBefore[1],deckBefore[0],...deckBefore.slice(2)]);
+  }else{
+   assert.equal(q.pending?.kind,'private-top-place');
+   q=dispatchUniversalAction(packs,q,{type:'chooseTopCard',mode:'bottom'});
+   assert.deepEqual(q.players[0].deck.map(x=>x.uid),[...deckBefore.slice(1),deckBefore[0]]);
+  }
+  assert.equal(q.players[0].outside.length,outside);
+  assert.equal(q.players[0].front[0].uid,character.uid);
+  assert.equal(assertUniversalMatch(packs,q),true);
+  // STEP is a separate movement-phase ability; test independently of onPlay.
+  let move=newUniversalMatch(packs,{decks:[counts,counts],seed:75090,first:0});
+  const moving=physical(move,0,id);
+  move.players[0].front[0]=moving;
+  move=dispatchUniversalAction(packs,move,{type:'next'});
+  const step=legalUniversalActions(packs,move).find(x=>x.type==='step'&&x.uid===moving.uid);
+  assert.ok(step,'STEP must remain live with a separate onPlay program');
+  move=dispatchUniversalAction(packs,move,step);
+  assert.ok(move.players[0].energy.some(x=>x?.uid===moving.uid));
+  assert.equal(move.players[0].front[0],null);
+  assert.equal(assertUniversalMatch(packs,move),true);
+ }
+});
