@@ -41,8 +41,22 @@ function ready(){
  // Preload all tested physical sources BEFORE counting remaining deck.
  // Otherwise a copy taken from the deck for a fixture "play" would be
  // incorrectly counted as a triggered draw.
- for(const id of ['K01','K01','K01','K02','K02'])
-  p.hand.push(take(s,0,id));
+ // Source fixtures must be distinct physical UIDs. Calling take() on
+ // the hand merely removes/re-adds its FIRST matching card, and silently
+ // leaves later copies in the deck. Preload to an exact per-ID hand count.
+ for(const [id,needed] of [['K01',3],['K02',2]]){
+  while(p.hand.filter(c=>c.cardId===id).length<needed){
+   let source=null;
+   for(const zone of ['deck','life','outside']){
+    const index=p[zone].findIndex(c=>c.cardId===id);
+    if(index>=0){source=p[zone].splice(index,1)[0];break;}
+   }
+   if(!source)throw Error('Fixture missing distinct copy '+id);
+   p.hand.push(source);
+  }
+ }
+ assert.equal(new Set(p.hand.map(c=>c.uid)).size,p.hand.length);
+ assert.equal(assertUniversalMatch(packs,s),true);
  assert.equal(s.phase,'main');return s;
 }
 function play(s,id,slot){
