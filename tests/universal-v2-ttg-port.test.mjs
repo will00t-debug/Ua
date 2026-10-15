@@ -177,3 +177,11 @@ test('Real title registry decks play cross-title turns on ONE V2 engine without 
  assert.equal(s.players[0].ownTurns,2);
  assert.equal(s.players[1].ownTurns,1);
 });
+
+test('TTG-077 remains fail-closed: own-outside [ガンメン] recovery cannot silently miss composite traits',()=>{
+ const pack=registeredV2TitlePack('gurren-lagann');
+ assert.equal(pack.cards['TTG-1-077'],undefined);
+ const invalid={...ttgDeck,'TTG-1-001':3,'TTG-1-077':1};
+ assert.equal(Object.values(invalid).reduce((n,k)=>n+k,0),50);
+ assert.match(validateUniversalDeck(pack,invalid).join(';'),/Unregistered\/unsupported card: TTG-1-077/);
+});
