@@ -112,7 +112,8 @@ test('fail-closed contract rejects source drift, fake vanilla, unknown code and 
  assert.throws(()=>compileV2TitleContribution({title:'bleach',version:'duplicate',
   entries:[base,base]}),/duplicate contribution ID/);
  assert.ok(validateUniversalDeck(registered,{'BLC-2-055':50})
-  .some(x=>x.includes('Unregistered/unsupported card')));
+  .some(x=>x.includes('exceeds 0–4 copies')),
+  'registered printed card is legal, but 50 copies violates exact copy cap');
  assert.deepEqual(registered.cards['BLC-2-055'].effects.onPlay,[{op:'peekTopOrBottom'}]);
  assert.deepEqual(registered.cards['BLC-4-013'].effects.onPlay,[{op:'inspectTopAnyOutside',count:2,rest:'top'}]);
 });
