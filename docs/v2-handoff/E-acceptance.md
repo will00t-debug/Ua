@@ -240,3 +240,12 @@ PR #70 私人預覽 HTML 當前只有 BLEACH 與 TTG 的兩個固定 50 張選�
 - **P1 介面**：未實測真手機；完整五作品選牌→組牌→效果操作→終局的網站端到端未測。
 
 **NO-GO：不可交付五作品私人測試網站。** 可展示 A 既有兩系列部分 Pilot 網頁與 60 場 scratch 診斷，但不可冒稱完整整合。此驗收僅修改 E 自己的 audit-tests、scripts、E-acceptance.md 與 CI；不改任何共用核心、系列卡包，不合併 main、不部署正式站。
+
+### 第二輪最終補充：Node 22、完整候選指紋與真正 Chromium 手機版面終局
+
+- **固定驗收器 commit**：`dbc335164dca60b35179e412394973206c41bd96`；此 commit 實際 Node `v22.23.3` CI：https://github.com/will00t-debug/Ua/actions/runs/38673107165 ，工作流程 `V2-E Round 2 Pinned Verification`。該 workflow 自己成功，**不表示被驗收的 A 原始 npm test 全綠**；原始 A 仍 **1013/1015**，相同 A 核心的新 E 獨立測試 **6/6**。
+- **防動態計數掩飾錯誤**：167 張候選的固定「title/id」排序集合 SHA-256 = `6f186ebea0b0369b898b0aa27df30dfc99c6fa97ced1338c52961dca76eaeb66`。腳本有明文不變的 expected hash，同一組 B/C/D SHA 重算 actual 完全相符；若將來缺卡、取代卡、重複 title/ID 或偷加新卡，即使 167 總數不變，digest 也會阻止當作本快照通過。精確 manifest 在 `audit/v2-e-round2/candidates.csv`。
+- **真實桌面 Chrome 手機視窗尺寸模擬：已測並完成一場**。同一 A 固定 SHA 用 CI runner 的 `google-chrome` CDP 啟動 390×844 / DPR3 viewport、touch emulation，檢查無 document 水平超界（bodyWidth=390）、BLEACH vs TTG 選擇及 seed 20261015 開局、24 次 next、16 次真 UI pending 選擇、終局畫面顯示，共計 **41 個控制器循環**，`finished=true`、`error=''`、JavaScript exceptions 為空，保留實際瀏覽器 screenshot 與 `browser-report.json`。**它是桌面 Chrome 手機尺寸/觸控模擬，非實體 Android/iPhone 真機**。也只測 PR70 現有兩作品／固定牌組，非五作品、非自由組牌 UI 完成。
+- **scratch 五作品**仍是 10 配對×2 先手×3 seeds（747/20261015/20261016）= **60/60 finished**，全部實際 action＋終局 JSON 在 artifact `scratch-matches/`；未將候選寫進 PR #70。
+
+**本輪結論維持五作品私人測試版 NO-GO**。但 BLEACH/TTG 舊預覽在這一個 desktop-Chromium 390px 路徑已能從作品選擇→開局→多次 pending 選擇→終局；真手機 still not_run。後續 A 提交五作品整合 SHA 才能依新 SHA 重跑五作品 Registry、同版 60 場及五作品瀏覽器 E2E，不可沿用本次任何跨 SHA 數據。全程沒有更動共用引擎、系列 Pack、main 或 production。
