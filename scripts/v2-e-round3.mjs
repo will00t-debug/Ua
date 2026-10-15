@@ -73,6 +73,24 @@ try{
  "import {createTtgV2Pack} from './dist/universal-v2/ttg-pack.mjs';import {createSlgV2Pack} from './dist/universal-v2/slg-pack.mjs';const t=createTtgV2Pack(),s=createSlgV2Pack();console.log(JSON.stringify({titles:[t.id,s.id],ids:[Object.keys(t.cards).sort(),Object.keys(s.cards).sort()]}))");
  probe('d-candidate',dirs.D,
  "import {saoV2Pack} from './dist/universal-v2/sao-pack.mjs';import {mstV2Pack} from './dist/universal-v2/mst-pack.mjs';const t=saoV2Pack(),s=mstV2Pack();console.log(JSON.stringify({titles:[t.id,s.id],ids:[Object.keys(t.cards).sort(),Object.keys(s.cards).sort()]}))");
+
+ // Branch-only current batches, do NOT pretend they are in integrated A.
+ const aIds=report.tests['a-manifest'].data?.ids||{};
+ const branchMap=[
+  ['B','bleach',report.tests['b-candidate']?.data?.ids||[]],
+  ['C','gurren-lagann',report.tests['c-candidate']?.data?.ids?.[0]||[]]
+ ];
+ report.pendingNewCards=branchMap.map(([line,title,cards])=>{
+  const integrated=new Set(aIds[title]||[]);
+  return {branch:line,title,unmerged:cards.filter(id=>!integrated.has(id)),
+   removedRelativeToA:[...integrated].filter(id=>!cards.includes(id))};
+ });
+ const bCase=run('b-023-branch-only-test',dirs.B,
+  ['--test','tests/universal-v2-bleach-own-buff.test.mjs'],90000);
+ const cCase=run('c-077-branch-only-test',dirs.C,
+  ['--test','tests/universal-v2-ttg-port.test.mjs'],90000);
+ if(bCase.exitCode)err('P1-B-PROPOSED', 'BLC-4-023 branch-only own-buff/life test failed');
+ if(cCase.exitCode)err('P1-C-PROPOSED', 'TTG-1-077 branch-only outside recovery test failed');
  // Browser probes: actual desktop Chromium with 390px touch emulation.
  // Captures screenshot & report. Explicitly NOT a physical mobile device.
  fs.copyFileSync(path.join(root,'audit-tests/v2-e-round3-browser.mjs'),
@@ -107,6 +125,8 @@ finally{
   c:report.tests['c-candidate']?.data?.ids?.map(x=>x.length),
   d:report.tests['d-candidate']?.data?.ids?.map(x=>x.length),
   browser:report.tests['a-chromium-five-title']?.data?.status,
+  pendingNewCards:report.pendingNewCards,
+  proposedTests:{B:report.tests['b-023-branch-only-test']?.pass+'/'+report.tests['b-023-branch-only-test']?.tests,C:report.tests['c-077-branch-only-test']?.pass+'/'+report.tests['c-077-branch-only-test']?.tests},
   blockers:report.blockers,uncertainties:report.uncertainties},null,2));
  if(report.blockers.some(x=>x.id.startsWith('P0')))process.exitCode=1;
 }
