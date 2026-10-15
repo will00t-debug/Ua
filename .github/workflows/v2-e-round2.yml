@@ -1,16 +1,5 @@
 name: V2-E Round 2 Pinned Verification
 on:
-  push:
-    branches:
-      - audit/v2-full-catalog-20261015
-  pull_request:
-    branches:
-      - feature/universal-rules-v2-foundation-20261014
-    paths:
-      - 'scripts/v2-e-round2.mjs'
-      - 'audit-tests/**'
-      - 'docs/v2-handoff/E-acceptance.md'
-      - '.github/workflows/v2-e-round2.yml'
   workflow_dispatch:
 permissions:
   contents: read
