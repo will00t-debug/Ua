@@ -794,6 +794,18 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
   "effect": "登場時：查看牌庫頂3張，最多將1張送至場外，其餘依任意順序放回牌庫頂。"
  }
  ,{
+  "id":"BLC-1-059","kind":"buffOtherOwn1000",
+  "number":"UA08BT/BLC-1-059","name":"曳舟 桐生",
+  "color":"purple","energy":2,"ap":1,"bp":3000,"gen":1,
+  "trigger":null,"type":"character",
+  "effect":"登場：可使最多 1 個其他己方場上角色本回合 BP +1000。"
+ },{
+  "id":"BLC-1-077","kind":"buffOtherOwn1000",
+  "number":"UA08BT/BLC-1-077","name":"虎徹 勇音",
+  "color":"green","energy":0,"ap":1,"bp":1000,"gen":1,
+  "trigger":null,"type":"character",
+  "effect":"登場：可使最多 1 個其他己方場上角色本回合 BP +1000。"
+ } ,{
   "id":"BLC-3-006","kind":"inspectTop3",
   "number":"UA04NC/BLC-3-006","name":"朽木 白哉",
   "color":"purple","energy":1,"ap":1,"bp":2000,"gen":1,
@@ -836,6 +848,7 @@ export function checkedBleachAddonDefinition(p){
   bounce:{onPlay:[{template:'bounceOwnOtherUnderEnergy',energy:1}]},
   drawPlay:{onPlay:[{template:'draw',count:1}]},
   drawPlayColorHand:{onPlay:[{template:'draw',count:1}]} ,
+  buffOtherOwn1000:{onPlay:[{template:'buffOwnField',filter:{field:'type',value:'character'},bp:1000,optional:true,excludeSelf:true}]},
   drawDiscardPlay:{onPlay:[{template:'drawDiscardOne'}]},
   drawDiscardAttack:{onAttack:[{template:'drawDiscardOne'}]},
   buffAttack1000:{onAttack:[{template:'buffSelf',bp:1000}]},
