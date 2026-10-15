@@ -19,7 +19,7 @@ import {SAO_V2_REAL_DECK_COUNTS,MST_V2_REAL_DECK_COUNTS,
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
- assertUniversalMatch,universalPublicView} from '../dist/universal-v2/engine.mjs';
+ assertUniversalMatch,universalPublicView,universalBp} from '../dist/universal-v2/engine.mjs';
 
 const stableIds=x=>Object.keys(x.cards).sort();
 const mod=e=>structuredClone(e);
@@ -155,4 +155,84 @@ test('registry drives actual SAO vs MST 50-card physical-card match; no syntheti
  assert.ok(steps>30,'must play through opening and real actions');
  assert.equal(state.status,'finished','V2 cross-series game failed to finish at '+steps);
  assert.equal(assertUniversalMatch(packs,state),true);
+});
+
+function removeReal(s,p,id){
+ for(const zone of ['hand','deck','life','outside']){
+  const items=s.players[p][zone],at=items.findIndex(c=>c.cardId===id);
+  if(at>=0)return items.splice(at,1)[0];
+ }
+ throw Error('Missing official fixture '+p+'/'+id);
+}
+const pick=(packs,s,tester)=>{
+ const a=legalUniversalActions(packs,s).find(tester);
+ assert.ok(a,'Expected legal registered action in '+s.phase+' / '+s.pending?.kind);
+ return a;
+};
+const enterMain=(packs,s)=>{
+ for(let n=0;n<2;n++)s=dispatchUniversalAction(packs,s,{type:'next'});
+ assert.equal(s.phase,'main');return s;
+};
+test('new SAO 004/047/094/2-015/027/067 and MST 061 use exact own-other optional BP template',()=>{
+ const sao=registeredV2TitlePack('sword-art-online');
+ for(const id of ['SAO-1-004','SAO-1-047','SAO-1-094','SAO-2-015','SAO-2-027','SAO-2-067']){
+  const effect=sao.cards[id]?.effects?.onPlay?.[0];
+  assert.ok(effect,id+' missing effect');
+  assert.equal(effect.op,'buffOwnField');
+  assert.equal(effect.optional,true);
+  assert.equal(effect.excludeSelf,true);
+  assert.deepEqual(effect.filter,{field:'type',value:'character'});
+  assert.equal(effect.bp,id==='SAO-2-067'?500:1000);
+ }
+ const mst=registeredV2TitlePack('mushoku-tensei');
+ assert.equal(mst.cards['MST-1-061'].effects.onPlay[0].op,'buffOwnField');
+ assert.equal(mst.cards['MST-1-061'].effects.onPlay[0].bp,1000);
+});
+test('real SAO 004 own-other BP choice blocks enemy/self and allows true skip',()=>{
+ const a=verifiedSaoV2RealDeck(),b=verifiedMstV2RealDeck();
+ const packs=[a.pack,b.pack],counts={...a.counts};
+ counts['SAO-1-001']--;counts['SAO-1-004']=1;
+ assert.deepEqual(validateUniversalDeck(a.pack,counts),[]);
+ let s=newUniversalMatch(packs,{decks:[counts,b.counts],seed:404,first:0});
+ const card=removeReal(s,0,'SAO-1-004'),friend=removeReal(s,0,'SAO-1-035');
+ const enemy=removeReal(s,1,'MST-1-050');
+ s.players[0].hand.push(card);
+ s.players[0].front[0]=friend;
+ s.players[1].front[0]=enemy;
+ s=enterMain(packs,s);
+ s=dispatchUniversalAction(packs,s,pick(packs,s,a=>a.type==='play'&&a.uid===card.uid&&a.line==='front'&&a.slot===1));
+ assert.equal(s.pending?.kind,'effect-buff-own');
+ const opts=legalUniversalActions(packs,s);
+ assert.ok(opts.some(a=>a.type==='chooseOwnBuff'&&a.uid===friend.uid));
+ assert.ok(opts.some(a=>a.type==='chooseOwnBuff'&&a.uid===null));
+ assert.ok(!opts.some(a=>a.uid===card.uid||a.uid===enemy.uid));
+ assert.throws(()=>dispatchUniversalAction(packs,s,{type:'chooseOwnBuff',uid:enemy.uid}),/not currently legal/);
+ const initial=universalBp(packs,s,friend);
+ const skipped=dispatchUniversalAction(packs,s,{type:'chooseOwnBuff',uid:null});
+ const boosted=dispatchUniversalAction(packs,s,{type:'chooseOwnBuff',uid:friend.uid});
+ assert.equal(universalBp(packs,boosted,boosted.players[0].front[0]),initial+1000);
+ assert.equal(universalBp(packs,skipped,skipped.players[0].front[0]),initial);
+ assert.equal(assertUniversalMatch(packs,boosted),true);
+ assert.equal(assertUniversalMatch(packs,skipped),true);
+});
+test('real MST 061 green-cost BP support does not target self and uses actual energy',()=>{
+ const a=verifiedMstV2RealDeck(),b=verifiedSaoV2RealDeck(),packs=[a.pack,b.pack];
+ const counts={...a.counts};counts['MST-1-050']--;counts['MST-1-061']=1;
+ assert.deepEqual(validateUniversalDeck(a.pack,counts),[]);
+ let s=newUniversalMatch(packs,{decks:[counts,b.counts],seed:161,first:0});
+ const buff=removeReal(s,0,'MST-1-061'),energy=removeReal(s,0,'MST-1-050'),
+  ally=removeReal(s,0,'MST-1-070');
+ s.players[0].hand.push(buff);
+ s.players[0].energy[0]=energy;s.players[0].front[0]=ally;
+ s=enterMain(packs,s);
+ s=dispatchUniversalAction(packs,s,pick(packs,s,x=>x.type==='play'&&x.uid===buff.uid&&x.line==='front'&&x.slot===1));
+ assert.equal(s.pending?.kind,'effect-buff-own');
+ const opts=legalUniversalActions(packs,s);
+ assert.ok(opts.some(x=>x.uid===ally.uid));
+ assert.ok(!opts.some(x=>x.uid===buff.uid));
+ const base=universalBp(packs,s,ally);
+ s=dispatchUniversalAction(packs,s,{type:'chooseOwnBuff',uid:ally.uid});
+ assert.equal(universalBp(packs,s,s.players[0].front[0]),base+1000);
+ assert.equal(s.players[0].apCards.filter(c=>c.ready).length,0);
+ assert.equal(assertUniversalMatch(packs,s),true);
 });
