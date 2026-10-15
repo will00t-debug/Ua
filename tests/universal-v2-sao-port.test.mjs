@@ -35,8 +35,8 @@ test('SAO official dedup identity and product scopes stay unchanged, AP/parallel
  assert.equal(new Set(SAO_OFFICIAL_CARDS.map(c=>c.id)).size,183);
  for(const [set,count] of Object.entries({UA15BT:100,EX08BT:74,UA15ST:18,UAPR:10}))
   assert.equal(SAO_OFFICIAL_CARDS.filter(c=>c.set===set).length,count);
- assert.equal(SAO_V2_PILOT_IDS.length,33);
- assert.equal(Object.keys(pack.cards).length,33);
+ assert.equal(SAO_V2_PILOT_IDS.length,39);
+ assert.equal(Object.keys(pack.cards).length,39);
  assert.ok(!pack.cards['SAO-2-063'],'conditional STEP + onPlay is NOT a basic vanilla');
  assert.ok(!pack.cards['SAO-1-107'],'draw 3 then discard 1 is NOT drawDiscardOne');
  for(const id of SAO_V2_PILOT_IDS){
@@ -46,7 +46,7 @@ test('SAO official dedup identity and product scopes stay unchanged, AP/parallel
   for(const field of ['color','energy','ap','bp','gen','type','trigger'])
    assert.equal(data[field],source[field],id+' mismatch '+field);
  }
- assert.equal(verifiedSaoV2Cards().length,33);
+ assert.equal(verifiedSaoV2Cards().length,39);
  assert.match(validateUniversalDeck(pack,{...deck,'SAO-2-063':1}).join(),/Unregistered/);
 });
 test('SAO 50 physical-card deck, actual AP spending and entry draw/discard are V2 transitions',()=>{
