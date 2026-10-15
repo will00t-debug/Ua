@@ -84,7 +84,8 @@ test('every integrated card is exactly the same compiled definition as independe
   const entry=contribution.entries[index];
   assert.equal(entry.id,p.id);
   assert.equal(entry.sourceRecord.effect,p.effect);
-  assert.equal(entry.sourceRecord.number,p.number);
+  assert.ok([entry.sourceRecord.number,...(entry.sourceRecord.aliases||[])].includes(p.number),
+   p.id+' official alias matches original source');
   assert.ok(entry.evidence.printedTextFragments.every(x=>entry.sourceRecord.effect.includes(x)));
   assert.ok(entry.evidence.testFiles.includes('tests/universal-v2-bleach-registry.test.mjs'));
   assert.equal(entry.evidence.verifiedNoExtraEffects===true,
@@ -108,9 +109,8 @@ test('fail-closed contract rejects source drift, fake vanilla, unknown code and 
  assert.throws(invalid(x=>x.evidence.verifiedNoExtraEffects=false),/vanilla requires/);
  assert.throws(()=>compileV2TitleContribution({title:'bleach',version:'duplicate',
   entries:[base,base]}),/duplicate contribution ID/);
- assert.throws(()=>validateUniversalDeck(registered,{'BLC-2-055':50})
-  .length===0?(()=>{throw Error('unsupported admitted')})():(()=>{throw Error('unsupported rejected')})(),
-  /unsupported rejected/);
+ assert.ok(validateUniversalDeck(registered,{'BLC-2-055':50})
+  .some(x=>x.includes('Unregistered/unsupported card')));
  assert.ok(!registered.cards['BLC-2-055'],'TOP/BOTTOM core gap is not silently mapped to OUTSIDE');
 });
 
