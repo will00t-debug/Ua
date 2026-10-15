@@ -516,6 +516,7 @@ export function verifiedSaoV2Cards(){
    energy:pin.energy,ap:pin.ap,bp:pin.bp,gen:pin.gen,
    traits:[...pin.traits],trigger:pin.trigger,
    implementation:pin.kind==='vanilla'||pin.kind==='step'?'vanilla':'dsl'};
+  if(card.implementation==='vanilla')card.effects={};
   if(pin.kind==='step')card.step=true;
   if(pin.kind==='onPlayDraw')
    card.templateEffects={onPlay:[{template:'draw',count:1}]};
@@ -534,4 +535,41 @@ export function verifiedSaoV2Cards(){
 export function saoV2Pack(){
  return createUniversalPack({id:'sword-art-online',version:'v2-d-sao-pilot-2',
   cards:verifiedSaoV2Cards()});
+}
+
+/**
+ * Shared AUTHORITATIVE definition/evidence per allowlisted ID.
+ * Both the standalone pack and the formal title contribution originate in
+ * verifiedSaoV2Cards; there is no second list of independently ported cards.
+ */
+export function verifiedSaoV2Entries(){
+ const originals=sourceCards();
+ const definitions=verifiedSaoV2Cards();
+ return definitions.map(def=>{
+  const source=originals.get(def.id);
+  const pin=PRINTED_PINS[def.id];
+  if(!source||!pin||!source.effectJa)throw Error(def.id+' missing Japanese evidence');
+  if(def.implementation==='vanilla'&&
+    !(pin.effectJa==='-'||
+      (pin.kind==='step'&&
+       pin.effectJa==='【ステップ】（自分の移動フェイズにフロントLからエナジーLへ移動できる）')))
+   throw Error(def.id+' cannot claim vanilla with unhandled printed effects');
+  return Object.freeze({
+   id:def.id,
+   sourceRecord:Object.freeze({...source,effect:source.effectJa}),
+   definition:Object.freeze(def),
+   evidence:Object.freeze({
+    printedTextFragments:Object.freeze([source.effectJa]),
+    reviewNote:'BANDAI JP original '+source.number+
+     '; reviewed strict V2-D profile '+pin.kind+
+     '; pilot logic and generic Trigger only, not complete official FAQ acceptance. '+
+     source.source,
+    testFiles:Object.freeze([
+     'tests/universal-v2-sao-port.test.mjs',
+     'tests/universal-v2-sao-mst-cross-title.test.mjs'
+    ]),
+    ...(def.implementation==='vanilla'?{verifiedNoExtraEffects:true}:{})
+   })
+  });
+ });
 }
