@@ -49,7 +49,7 @@ test('two actual printed other-character buffs have exact source fingerprints, n
  assert.deepEqual(validateUniversalDeck(pack,green),[]);
  assert.deepEqual(validateUniversalDeck(pack,blue),[]);
  assert.equal(Object.keys(pack.cards).length,78);
- assert.equal(Object.keys(standalone.cards).length,78);
+ assert.equal(Object.keys(standalone.cards).length,79);
  assert.equal(contribution.entries.length,63);
  for(const [id,color,energy,bp] of [
   ['BLC-1-059','purple',2,3000],['BLC-1-077','green',0,1000],
