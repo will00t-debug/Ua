@@ -4,6 +4,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
+import {createHash} from 'node:crypto';
 import {execFileSync,spawnSync} from 'node:child_process';
 const root=path.resolve(import.meta.dirname,'..');
 const output=path.join(root,'audit','v2-e-round2');fs.mkdirSync(output,{recursive:true});
@@ -119,6 +120,16 @@ try{
   });
  }
  const unique=new Set(manifest.map(r=>r.title+'/'+r.id));
+ // Frozen SHA-256 digest of all 167 title-qualified identity keys, checked
+ // against exact B/C/D source commits. Never accept arbitrary changed IDs
+ // merely because a dynamic card count happens to be unchanged.
+ const expectedCandidateFingerprint='6f186ebea0b0369b898b0aa27df30dfc99c6fa97ced1338c52961dca76eaeb66';
+ const actualCandidateFingerprint=createHash('sha256').update(
+  [...unique].sort().join('\n')+'\n').digest('hex');
+ source.results.candidateFingerprint={expected:expectedCandidateFingerprint,
+  actual:actualCandidateFingerprint,match:actualCandidateFingerprint===expectedCandidateFingerprint};
+ if(actualCandidateFingerprint!==expectedCandidateFingerprint)
+  recordFailure('E-PINNED-CARD-ID-DRIFT','Expected exact 167 card identities changed at fixed source SHA');
  if(unique.size!==manifest.length)recordFailure('E-CROSS-BRANCH-DUP','Duplicate title-qualified candidate IDs');
  const csv=['title,id,workstream,source_commit,registered_PR70']
   .concat(manifest.map(x=>[x.title,x.id,x.source,x.commit,x.in_pr70].join(','))).join('\n')+'\n';
