@@ -1,5 +1,50 @@
 # V2-D｜刀劍神域 SAO／無職轉生 MST 移植交接
 
+
+## 第三輪增量批次（2026-10-15；本節取代下方 39／23 等舊快照）
+
+**主控穩定基準**：PR #70 `75468867b7ec4f5cdd78661e5b98f400494fb94d`，在該 SHA 的 `npm test` 與五作品 60 局矩陣均 CI 綠燈。此基準用雙親 merge `e6549d06291d5789791b80ab22518f0d4f3868b0` 安全同步到 PR #74；比較 A/D 樹時所有 D 主權檔 SHA 完全一致、保留既有 39／23 和真卡牌組，沒有改 shared 核心或任何其他系列。已閱讀 `AGENTS.md`、最新 `docs/v2-handoff/A-core.md`，最後 A-core 除早期「暫停擴卡」歷史還有新增 `peekTopOrBottom`、`inspectTopAnyOutside` 與正式 B 整合，故本輪按實際程式的模板擴卡。
+
+| 來源狀態（去 AP／異圖） | SAO | MST | 總計 |
+|---|---:|---:|---:|
+| 確認一般卡 metadata | 183 | 80 | 263 |
+| 已有 V2 實際 source-pinned 定義且正式 title contribution | **49** | **24** | **73** |
+| 本輪相對 39／23 新增 | **10** | **1** | **11** |
+| 有官方記錄但仍未移植 | **134** | **56** | **190** |
+| 全面逐卡 FAQ 終驗 | 0 | 0 | 0 |
+
+在同一 A 穩定核心下，五作品舊固定計數 **181／700**；若 A 接收並固定授權此 11 張，實際 registry **192／700**、未移植 **508／700**。D 不修改 A-owned `tests/fixtures/v2-integrated-id-manifest.mjs`、`tests/universal-v2-title-pack-contract.test.mjs`、registry、inventory、入口或共用核心；全套 CI 中這些固定值仍是歷史 39／23，必須由 A 與逐卡白名單核對後更新，不是任意動態放行。
+
+### 已提交的四批新增卡（全部保留原既有 62 Pilot）
+
+| 批次 | 新卡號、系列 | 官方全文主效果；共用核心實際能力 | 本批新增數 | 生命 Trigger／成本 |
+|---|---|---|---:|---|
+| **3** | **SAO-1-107**、**SAO-2-072** | 107 登場先抽3後必棄1：`draw(2)` + `drawDiscardOne` 順序結算；072 私密牌頂1張，只能置**頂／底** `peekTopOrBottom` | SAO +2 | 107 藍能源3、AP **2**、DRAW；072 綠能源1、AP1、DRAW |
+| **4** | **SAO-2-017**、**SAO-2-030**；**MST-1-010** | SAO 二張全部可選送場外 **0／1／2**，其餘依任意順序返頂（`inspectTopAnyOutside(2,top)`）；MST 頂3張**全數**依任意順序返頂、不得丟場外（`inspectTopArrange(3,false,top)`） | SAO +2、MST +1 | 017 藍1／AP1、ACTIVE；030 紫2／AP1、無；010 藍3／AP1、DRAW |
+| **5** | **SAO-1-032**、**SAO-1-063**、**SAO-1-098**、**SAO-2-057** | 四色真正事件卡「AP卡最多2張 ACTIVE」`recoverAp(2)`，可以放棄後續 AP；事件先付 AP 再進場外 | SAO +4 | 依序黃／藍／綠／紫，能源皆3，AP1，均 **FINAL** |
+| **6** | **SAO-1-075**、**SAO-1-089** | 雙能力 **STEP +** 完整登場效果；075 同批4牌頂2任選0～2張置場外、其餘排序頂；089 私密牌頂1置頂/底。Step 在移動階段可獨立移動，不能只實作 STEP 漏掉登場效果 | SAO +2 | 075 綠3／AP1／無 Trigger；089 綠2／AP1／無 Trigger |
+
+**來源 fail-closed**：`dist/sao-official-import.mjs` 的每一張日版 `effectJa` 和能源/AP/BP/產能/顏色/Trigger/traits 都與個別 `PRINTED_PINS` 完整比較；MST `sources/mst-official-print.mjs` + `mst-inventory.mjs` 同樣逐欄鎖定。資料與正式 title contribution 仍由同一份各系列 `verified*V2Cards/Entries` 建立，沒有雙白名單。生命 DRAW/ACTIVE/FINAL 依共用 V2 life-trigger engine，事件 FINAL 不可混入普通主效果時機；未宣稱官方全 FAQ 完成。
+
+**可執行正反例測試**：`tests/v2-sao-mst-draw-top-batches.test.mjs`，搭配原有 `tests/universal-v2-{sao,mst}-port.test.mjs`、`tests/v2-sao-mst-registry-real-decks.test.mjs`、`tests/universal-v2-sao-mst-cross-title.test.mjs`。使用正式 `requireRegisteredV2TitlePack` 與合法 50 張全真卡，檢查 AP2/色費、抽3後才棄1、0/1/2牌頂送場外、頂/底選擇、三張重新排序、0～2張 AP 恢復與放棄、特殊 STEP 移動、公開／私密視角、非法 UID 被拒、實體卡不遺失，並保留真卡 AI 跨作品終局。新增卡號後把 MST 專測固定為確切 13 個官卡 ID，避免新卡排序把原 STEP 047 測試實體卡擠掉；沒有放寬合法組牌條件。
+
+**已實際確認的 CI**：本輪 [GitHub Actions run #38704097198](https://github.com/will00t-debug/Ua/actions/runs/38704097198) 在 SAO49/MST24 的**雙 STEP**批次後，D 專測 **30／30 PASS**，全套 **1,147／1,149 PASS，2 FAIL**，只因 A 共用固定清冊仍鎖 SAO39/MST23（`tests/universal-v2-title-pack-contract.test.mjs` 內精確卡號 manifest／總數斷言）。這不等於新卡效果失敗；A 應以此文件固定 ID 清冊補 11 IDs 後在同一最終 SHA 再跑全量、60 局，不能刪除測試或改成動態未知清冊。新增「未實作核心」精確拒絕測試的**後續提交**另以其相應 Actions run 為準，不得把前一 SHA 的 pass 當作最新提交已驗收。
+
+### 下一波盤點：核對完整卡文後仍不可正式移植（交 A 的精確核心需求）
+
+| 官方卡號（暫 blocked） | 印刷能力／真正缺口 | 可執行驗收情境（A 實作後，D 再正式授權卡） |
+|---|---|---|
+| **SAO-1-031** | 頂 **5** 張選〈キリト〉/〈アリス〉/〈ユージオ〉**最多 2** 進手，其餘任意順序**置底**，DRAW 生命 | 0／1／2 筆合法命中、3 筆時最多取 2；不得取其他名字；非法選擇／短牌庫、私密與 UID；不能誤用全牌庫 searchDeckMany |
+| **SAO-2-023**、**MST-1-043** | SAO 頂3找 ALO、MST 頂5找**綠色場地**，最多1進手；剩餘置底，**只有進手才強制棄手1** | 無命中→0棄；有命中→可選一張後必棄1（可棄剛取卡），不得棄他人手牌；明確目標、重排、隱藏與 conservation |
+| **SAO-2-066** | 頂2至多1張**綠色 ALO**置場外，其他任意順序返**頂** | 0／1 放棄、不能選黃或非ALO、不能選2；現有 `inspectTopAnyOutside` 容許2及不合格目標，不可套用 |
+| **MST-1-028** | 頂2從〈ルーデウス〉或〈ロキシー〉或「能源≤2 事件」至多選1加手；其餘**直接場外**，有取才棄手1 | 三種 OR 目標、取得後棄卡、無目標、全部場外、短牌庫與實體 UID 守恆 |
+| **SAO-2-062** | 事件先**抽2、棄2**，己場〈ユナ〉存在再恢復至多1 AP | 一定抽完2後才依序選棄2；中途不得額外抽牌；禁假用兩次 `drawDiscardOne`；無〈ユナ〉不可回 AP。實際 A `pack.mjs` 只接受 `drawDiscard.count===1` |
+| **SAO-2-018**、**SAO-1-081**、**MST-1-068** | 退場觸發／開始回合強制退場與延後效應／特殊 Raid 別名 + conditional IMPACT + 多分歧上場 | A 應提供統一 onLeave/onTurnStart、特殊 Raid 等時序與公私資訊／支付正反例；**不**在 D 另造相容但不守規則的引擎 |
+| **MST-1-051** | 主效果原可用抽1棄1，但**官方限1**；共用 `validateUniversalDeck` 目前沒有 per-ID `deckLimit` | A 正式加入 per-ID 上限後測 1 張成功、2 張拒絕、異圖計同 ID；此前不得只標 effect 便視可玩 |
+
+共用缺口及來源連結、實際 CI 失敗已交 [PR #70 留言 #6187607123](https://github.com/will00t-debug/Ua/pull/70#issuecomment-6187607123)。D 新增 `tests/v2-sao-mst-draw-top-batches.test.mjs` 的來源鎖定負向情境可執行，防止被誤當已移植；**未來新增能力後必須再加真正狀態變化的正反例**。目前手機預覽可用與 registry 有卡仍是兩回事，整合入口及 shared manifest 主權在 A；不改 main、不部署正式站。
+
+
 ## 第二輪最新交付（2026-10-15；本節優先於下方歷史清冊）
 
 **共用基準：** 已把 PR #70 / `25eeac5084917534193fd9feaeae31672f902e78` 合入 D 分支，雙親同步 commit `383e1e2abf753a79ae7c4586b2b5396a44a26bec`，保留所有 D 來源與既有測試，**沒有直接改 A 的 engine/pack/templates/registry/preview**。當時 PR #70 樹內 **沒有 `docs/v2-handoff/A-core.md`**；使用實際 `V2_WORKSTREAM_HANDOFF.md` + `title-packs/contract.mjs` 作為明確契約。
