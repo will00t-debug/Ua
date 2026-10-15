@@ -1,6 +1,6 @@
 # V2-D｜刀劍神域 SAO／無職轉生 MST 移植交接
 
-## 第二輪最新交付（2026-10-15 10:45 台灣時間；本節優先於下方歷史清冊）
+## 第二輪最新交付（2026-10-15；本節優先於下方歷史清冊）
 
 **共用基準：** 已把 PR #70 / `25eeac5084917534193fd9feaeae31672f902e78` 合入 D 分支，雙親同步 commit `383e1e2abf753a79ae7c4586b2b5396a44a26bec`，保留所有 D 來源與既有測試，**沒有直接改 A 的 engine/pack/templates/registry/preview**。當時 PR #70 樹內 **沒有 `docs/v2-handoff/A-core.md`**；使用實際 `V2_WORKSTREAM_HANDOFF.md` + `title-packs/contract.mjs` 作為明確契約。
 
@@ -33,7 +33,7 @@
 
 - 首批同步後系列專測 **21/21 綠燈**、真卡 registry 對局已走完整一場；擴增 `buffOwnField` 到 39/23 後，請以本 PR 最新 Node22 `isolated-port-regression` Job 與檔案版本的數字作為本輪實際證據。
 - A-core 原先 **模板清單先後順序**一項在同步核心後已不再出錯；**兩項 once-per-turn**（跳過同名限次、不同 UID 限次）仍 fail；且 shared `tests/universal-v2-title-pack-contract.test.mjs` 尚硬碼 0/0 contribution，現因 39/23 合法整合而另失敗兩項。**這四項是主控檔案與共用測試責任，D 保留失敗並已交 A，不修改 core／global test／preview**。
-- 必須由 A 更正 shared count assertions、inventory 和 once-per-turn，再將最新 A 核心再次整合回 D 做全套回歸。不能僅改斷言掩蓋卡片缺漏，也不能拿系列局部測試代替全面 FAQ 驗收。
+- **最新完成的 PR head `fade68f5` Actions [#38672776485](https://github.com/will00t-debug/Ua/actions/runs/38672776485)：D 專測 24/24、0 failed；全量共 1,039 項，1,035 pass、4 failed**。四個失敗為 once-per-turn 測試 887／888，以及共用 title-pack contract/inventory 測試 996／1000。模板順序失敗確認已消失。兩份各 50 張的正式 registry 真卡牌組與一次完整跨作品 AI 終局均包含在綠燈專測內。\n- **once-per-turn 二項新診斷**：共享測試 `ready()` 用 `p.hand.push(take(s,0,id))` 想預載同 ID 三張／兩張，但 `take()` 先從 hand 找牌，可能只重複搬動同一 UID，導致 `play()` 才移走 deck 實體牌、干擾抽牌差額斷言；不應直接稱為核心限次實作錯誤。已在 [A 主控留言附可重現原因及修法](https://github.com/will00t-debug/Ua/pull/70#issuecomment-6183252997)，須由 A 正確準備真實多 UID 手牌後重跑。\n- 必須由 A 更正 shared count assertions、inventory 和 once-per-turn，再將最新 A 核心再次整合回 D 做全套回歸。不能僅改斷言掩蓋卡片缺漏，也不能拿系列局部測試代替全面 FAQ 驗收。
 
 ### 第一輪紀錄以下仍保留（歷史快照，不作最新結論）
 
