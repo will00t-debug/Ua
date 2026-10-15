@@ -1,4 +1,20 @@
-# [V2-B] BLEACH 現行批次移植交接 — 2026-10-15（最新記錄）
+# [V2-B] 2026-10-15 14:47 同步衝突後的最新交接（先讀此段）
+
+**本 B 分支：79/276（15 Pilot +64 貢獻），剩197；A 整合 PR #70 已收前6張：78/276（15+63），剩198；雙方完整官方逐卡 FAQ 終驗仍記 0。** A 最新整合 [commit a39a72ee955c](https://github.com/will00t-debug/Ua/commit/a39a72ee955c952eaa22ce647cafec475f682952) 以來源鎖定方式從 B 的 `a0e0373cee1e` 匯入6張（BLC-3-006、BLC-3-009、BLC-1-059、BLC-1-077、BLC-2-055、BLC-4-013）；之後 A [75468867b7ec](https://github.com/will00t-debug/Ua/commit/75468867b7ec4f5cdd78661e5b98f400494fb94d) 修掉 055／013 過期負向測試並鎖定真卡。**勿再以 A=72、B=78 充當現況**，下方過往段落均為時間戳歷史。A 最新 HEAD 確認為 `75468867b7ec4f5cdd78661e5b98f400494fb94d`（撰寫當下）。
+
+## 第四批（本次新增加 1 張、尚未進 A）
+
+- [EX15BT/BLC-4-023 浦原喜助](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX15BT%2FBLC-4-023)：藍色能源需求0、AP1、BP500、產能藍1；**登場時可選最多1個其他己方角色本回合 BP+1000，生命 DRAW 抽1張**。與前一批 059／077 共用精確 `buffOwnField(filter:type:character,excludeSelf:true,optional:true,bp:1000)`，但生命 Trigger 不可套用前兩張的「無 Trigger」。已新增真藍色 50 張牌組的選目標／不能選自己敵卡／選不使用／BP時限／AP+UID 與真生命揭開 DRAW 抽牌、來源場外且不重複 UID 測試，位於 `tests/universal-v2-bleach-own-buff.test.mjs`。
+- 新卡程式 [`61113fdf`](https://github.com/will00t-debug/Ua/commit/61113fdf6cda5c3943c2270219d31ebcba4caeb3) 和正式貢獻 [`4b34d6ed`](https://github.com/will00t-debug/Ua/commit/4b34d6ed622cfdc6e3b04f738f84fb0f3fdb1047)，真藍色正反例測試 [`d960954a`](https://github.com/will00t-debug/Ua/commit/d960954ac2cf68221a54332636e73e99652ce86e)；更新 276×29 CSV [`082bc593`](https://github.com/will00t-debug/Ua/commit/082bc5938050462cd5c045c39df1d46fe8a1d326)。
+- [B 版 CI run 38694436047](https://github.com/will00t-debug/Ua/actions/runs/38694436047)：**B 單獨正式 registry BLEACH 測試 58/58 通過（含新卡真效果）**。**同步 A 步驟明確失敗**：`CONFLICT (content)` 於 `dist/universal-v2/bleach-pack.mjs`、`title-packs/bleach.mjs` 等與 A 同時編輯的檔案；三項新 BLEACH 測試是 `CONFLICT (add/add)`，不應把 B 整份舊檔案覆蓋 A 已移植的版本。此為 A 先接入6張、B 此後新增1張的整合衝突，不是新卡程式引擎效果回歸。此衝突不在 B 強制解決，也不改 main。
+- **交給 A：**僅按來源編號和效果「新增」`BLC-4-023` 及對應測試，進一步鎖定 BLEACH `63→64` 新貢獻、註冊 `78→79`、五作品合計 `181→182`、剩餘卡 `519→518`；保留 A 本身剛修復的 `BLC-2-055`／`BLC-4-013` 強制源證據和全部共用測試。合併前必須逐檔比對 A 新增與 B 的最後1張差異，切勿把兩條分支整份互相覆蓋。
+- 第四批仍僅 PR #73 **Draft**，PR #70 尚未註冊 BLC-4-023；正式站 Production 未更新。全部官方 FAQ 終驗 = 0。非主線、非預設 V2 預覽卡組數量不得混淆。
+
+---
+
+## 歷史：第三批6張已移植時的 78/276（2026-10-15 14:38，現已被 A 接入）
+
+# [歷史交接] BLEACH 六張追加卡 — 2026-10-15 14:38
 
 > **本段才是現況；下方 74/276、72/276、71/276 與「BLC-1-030 未移植」均是歷史快照。** PR #73 保留 Draft，base PR #70。只修改 BLEACH 專屬卡包／貢獻／測試／台帳，不改 main 或正式站。
 
