@@ -235,7 +235,7 @@ function continueEffectQueue(pack,s){
   }else if(job.op==='restOppFrontUnderBp'){
    const choices=s.players[1-owner].front.filter(c=>c&&bp(pack,s,c)<=job.bp).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-rest-bp',player:owner,
-    sourceUid:job.sourceUid,choices,limit:job.bp,optional:true};
+    sourceUid:job.sourceUid,choices,limit:job.bp,optional:job.optional};
   }else if(job.op==='buffOwnField'){
    const choices=field(pl).filter(c=>card(pack,c).type==='character'&&
     (!job.excludeSelf||c.uid!==job.sourceUid)&&
@@ -671,7 +671,10 @@ function resolveChoice(s,a,pack){
   s.pending=null;continueEffectQueue(pack,s);return;
  }
  if(q.kind==='effect-rest-bp'){
-  if(a.uid===null){s.pending=null;continueEffectQueue(pack,s);return;}
+  if(a.uid===null){
+   if(!q.optional)throw Error('Mandatory opponent REST cannot be declined');
+   s.pending=null;continueEffectQueue(pack,s);return;
+  }
   const foe=1-q.player,target=s.players[foe].front.find(c=>c?.uid===a.uid);
   if(!target||!q.choices.includes(a.uid)||bp(pack,s,target)>q.limit)
    throw Error('Illegal opponent REST target');
@@ -873,7 +876,8 @@ function legalPending(pack,s){
    {type:'chooseTraitBuff',uid:null},...q.choices.map(uid=>({type:'chooseTraitBuff',uid}))
   ];
  if(q.kind==='effect-rest-bp')return [
-   {type:'chooseRestBp',uid:null},...q.choices.map(uid=>({type:'chooseRestBp',uid}))
+   ...(q.optional?[{type:'chooseRestBp',uid:null}]:[]),
+   ...q.choices.map(uid=>({type:'chooseRestBp',uid}))
   ];
  if(q.kind==='effect-retire-bp')return [
    ...(q.optional?[{type:'chooseRetireBp',uid:null}]:[]),
