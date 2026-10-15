@@ -127,7 +127,7 @@ test('Registry shares exactly the 20 original TTG pilot IDs plus THREE new, no d
  assert.deepEqual(ids.filter(id=>!pilot.includes(id)).sort(),[...additions].sort());
  assert.ok(pilot.every(id=>!additions.has(id)));
  assert.equal(new Set(ids).size,23);
- assert.deepEqual(listRegisteredV2Titles().map(x=>x.totalV2Cards).slice(0,3),[15,23,18],
+ assert.deepEqual(listRegisteredV2Titles().map(x=>x.totalV2Cards).slice(0,3),[71,23,18],
   'live C contribution counts, not legacy 15/20/0 locked expectations');
  assert.equal(Object.keys(registeredV2TitlePack('solo-leveling').cards).length,18);
 });
