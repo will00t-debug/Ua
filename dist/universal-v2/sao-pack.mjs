@@ -606,6 +606,34 @@ const PRINTED_PINS=Object.freeze({
       "GGO"
     ],
     "effectJa": "【登場時】自分の山札の上から1枚見る。そのカードを自分の山札の上か下に置く。"
+  },
+  "SAO-2-017": {
+    "kind": "onPlayInspectTwoAnyOutside",
+    "nameJa": "シリカ",
+    "color": "blue",
+    "energy": 1,
+    "ap": 1,
+    "bp": 1500,
+    "gen": 1,
+    "type": "character",
+    "trigger": "active",
+    "traits": [
+      "アインクラッド"
+    ],
+    "effectJa": "【登場時】自分の山札の上から2枚見る。その中から望む枚数を望む順で自分の山札の上に置き、残りを場外に置く。"
+  },
+  "SAO-2-030": {
+    "kind": "onPlayInspectTwoAnyOutside",
+    "nameJa": "ユナ",
+    "color": "purple",
+    "energy": 2,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "traits": [],
+    "effectJa": "【登場時】自分の山札の上から2枚見る。その中から望む枚数を望む順で自分の山札の上に置き、残りを場外に置く。"
   }
 });
 export const SAO_V2_PILOT_IDS=Object.freeze(Object.keys(PRINTED_PINS).sort());
@@ -642,6 +670,8 @@ export function verifiedSaoV2Cards(){
    card.templateEffects={onPlay:[{template:'draw',count:2},{template:'drawDiscardOne'}]};
   if(pin.kind==='onPlayPeekTopOrBottom')
    card.templateEffects={onPlay:[{template:'peekTopOrBottom'}]};
+  if(pin.kind==='onPlayInspectTwoAnyOutside')
+   card.templateEffects={onPlay:[{template:'inspectTopAnyOutside',count:2,rest:'top'}]};
   if(pin.kind==='impactNull')card.impactNull=true;
   if(pin.kind==='onPlayBounce')
    card.templateEffects={onPlay:[{template:'bounceOwnOtherUnderEnergy',energy:1}]};
@@ -658,7 +688,7 @@ export function verifiedSaoV2Cards(){
  });
 }
 export function saoV2Pack(){
- return createUniversalPack({id:'sword-art-online',version:'v2-d-sao-pilot-4',
+ return createUniversalPack({id:'sword-art-online',version:'v2-d-sao-pilot-5',
   cards:verifiedSaoV2Cards()});
 }
 
