@@ -28,7 +28,8 @@ jobs:
             tests/universal-v2-bleach-core-gaps.test.mjs \
             tests/universal-v2-bleach-registry.test.mjs \
             tests/universal-v2-bleach-nc-batch.test.mjs \
-            tests/universal-v2-bleach-own-buff.test.mjs
+            tests/universal-v2-bleach-own-buff.test.mjs \
+            tests/universal-v2-bleach-new-top.test.mjs
       - name: BLEACH syntax and source-only contribution structure
         run: |
           node --check dist/universal-v2/bleach-pack.mjs
@@ -60,7 +61,8 @@ jobs:
             tests/universal-v2-bleach-core-gaps.test.mjs \
             tests/universal-v2-bleach-registry.test.mjs \
             tests/universal-v2-bleach-nc-batch.test.mjs \
-            tests/universal-v2-bleach-own-buff.test.mjs
+            tests/universal-v2-bleach-own-buff.test.mjs \
+            tests/universal-v2-bleach-new-top.test.mjs
       - name: General V2 mechanics used by BLEACH, without known upstream hardcoded count failures
         run: |
           node --test tests/universal-v2-core.test.mjs \
