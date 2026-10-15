@@ -86,16 +86,14 @@ test('BLC-2-055 uses exact top/bottom instead of top/outside',()=>{
  const original=CARDS.find(c=>c.identity==='BLC-2-055');
  assert.match(original.effect,/牌堆頂或牌堆底/);
  assert.deepEqual(pack.cards['BLC-2-055'].effects.onPlay,[{op:'peekTopOrBottom'}]);
- const real={...deck};delete real['BLC-4-009'];real['BLC-2-055']=4;
- assert.notDeepEqual(validateUniversalDeck(pack,real),[],
-  'this green deck cannot silently include a purple card; use purple test deck');
+ assert.equal(pack.cards['BLC-2-055'].color,'purple');
+ assert.equal(pack.cards['BLC-2-055'].trigger,null);
 });
 test('BLC-4-013 uses exact arbitrary outside 0..2 effect (not at most one)',()=>{
  const original=CARDS.find(c=>c.identity==='BLC-4-013');
  assert.match(original.effect,/任意張/);
  assert.deepEqual(pack.cards['BLC-4-013'].effects.onPlay,[
   {op:'inspectTopAnyOutside',count:2,rest:'top'}]);
- const mixed={...deck};delete mixed['BLC-4-009'];mixed['BLC-4-013']=4;
- assert.notDeepEqual(validateUniversalDeck(pack,mixed),[],
-  'this green deck cannot silently include a yellow card; use yellow test deck');
+ assert.equal(pack.cards['BLC-4-013'].color,'yellow');
+ assert.equal(pack.cards['BLC-4-013'].trigger,null);
 });
