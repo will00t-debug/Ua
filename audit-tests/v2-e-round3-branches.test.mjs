@@ -111,7 +111,7 @@ test('BLC-4-013 cross-title secrecy and forged uninspected UID rejected without 
  assert.equal(enemyView.players[0].deckCount,q.players[0].deck.length);
  for(const uid of seen)assert.ok(!JSON.stringify(enemyView).includes(uid));
  q=dispatchUniversalAction(packs,q,{type:'chooseInspectedOutside',uid:seen[0]},{actor:0});
- assert.ok(q.players[0].outside.some(x=>x.uid===seen[0]));
+ assert.ok(q.pending?.selected?.includes(seen[0]),'selected UID stays in pending until atomic completion');
  const unchanged=structuredClone(q);
  assert.throws(()=>dispatchUniversalAction(packs,q,{type:'chooseInspectedOutside',uid:seen[0]},{actor:0}),/not currently legal/);
  assert.deepEqual(q,unchanged);
@@ -119,6 +119,7 @@ test('BLC-4-013 cross-title secrecy and forged uninspected UID rejected without 
  assert.equal(q.pending?.kind,'effect-top-order');
  q=dispatchUniversalAction(packs,q,{type:'chooseTopOrder',uid:seen[1]},{actor:0});
  assert.equal(q.pending,null);
+ assert.ok(q.players[0].outside.some(x=>x.uid===seen[0]),'outside becomes public on completed private choice');
  assert.equal(q.players[0].apCards.filter(x=>x.ready).length,ap,'private choices must not spend extra AP');
  assert.equal(assertUniversalMatch(packs,q),true);
 });
