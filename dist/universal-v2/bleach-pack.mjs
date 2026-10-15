@@ -796,7 +796,7 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
-function checkedAddon(p){
+export function checkedBleachAddonDefinition(p){
  const c=CARDS.find(x=>x.identity===p.id);
  if(!c || c.identity!==p.id || ![c.number,...(c.aliases||[])].includes(p.number) ||
     !c.source?.includes('unionarena-tcg.com/jp/cardlist/') ||
@@ -852,7 +852,7 @@ function checkedAddon(p){
 }
 export function bleachV2PortedCards(){
  const inherited=verifiedPilotCards('bleach');
- const added=BLEACH_V2_ADDON_PROFILES.map(checkedAddon);
+ const added=BLEACH_V2_ADDON_PROFILES.map(checkedBleachAddonDefinition);
  const ids=[...inherited,...added].map(x=>x.id);
  if(new Set(ids).size!==ids.length)throw Error('Overlapping BLEACH V2 pilot/addon IDs');
  return [...inherited,...added];
