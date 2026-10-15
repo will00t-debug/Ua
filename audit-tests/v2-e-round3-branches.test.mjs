@@ -90,9 +90,10 @@ test('BLC-2-055 bottom/top alternate private outcomes indistinguishable to oppon
 test('BLC-4-013 cross-title secrecy and forged uninspected UID rejected without changing AP or physical cards',()=>{
  const d=presets['bleach-green'],foe=presets['mushoku-tensei'],packs=[d.pack,foe.pack];
  const counts={...d.counts};delete counts['BLC-1-067'];counts['BLC-4-013']=4;
+ delete counts['BLC-1-068'];counts['BLC-1-002']=4;
  assert.deepEqual(validateUniversalDeck(d.pack,counts),[]);
  let s=newUniversalMatch(packs,{decks:[counts,foe.counts],seed:401366,first:0});
- const card=take(s,0,'BLC-4-013'),generator=take(s,0,'BLC-1-071');
+ const card=take(s,0,'BLC-4-013'),generator=take(s,0,'BLC-1-002');
  generator.ready=true;s.players[0].energy[0]=generator;s.players[0].hand.push(card);
  s=phase(s,packs,'main');
  const play=legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===card.uid&&a.slot===0&&a.line==='front');
@@ -153,7 +154,9 @@ test('SLG-1-040 SPECIAL life: cross-title attacker, target and optional decline;
 });
 test('public-only AI action transcript cannot surface hidden card via private top or discard UID',()=>{
  const mine=presets['bleach-purple'],foe=presets['mushoku-tensei'],packs=[mine.pack,foe.pack];
- let s=newUniversalMatch(packs,{decks:[mine.counts,foe.counts],seed:568006,first:0});
+ const counts={...mine.counts};delete counts['BLC-1-039'];counts['BLC-2-055']=4;
+ assert.deepEqual(validateUniversalDeck(mine.pack,counts),[]);
+ let s=newUniversalMatch(packs,{decks:[counts,foe.counts],seed:568006,first:0});
  const source=take(s,0,'BLC-2-055');
  s.players[0].hand.push(source);s=phase(s,packs,'main');
  const act=legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===source.uid&&a.slot===0&&a.line==='front');
@@ -170,7 +173,7 @@ test('public-only AI action transcript cannot surface hidden card via private to
  const label=publicPreviewActionLabel(packs,q,q,{type:'chooseTopCard',mode:'bottom'},1);
  assert.ok(!label.includes(hidden));
  assert.ok(!label.includes(q.players[0].deck[0].cardId));
- const tape=makeUniversalPreviewReplay(packs,{decks:[mine.counts,foe.counts],seed:568006,first:0});
+ const tape=makeUniversalPreviewReplay(packs,{decks:[counts,foe.counts],seed:568006,first:0});
  const honest=appendUniversalReplay(tape,{type:'next'},0);
  assert.equal(replayUniversalPreview(packs,honest).phase,'move');
  const forged=appendUniversalReplay(tape,{type:'chooseTopCard',mode:'bottom'},0);
