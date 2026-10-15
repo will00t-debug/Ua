@@ -818,6 +818,12 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
   "trigger":"color","type":"character",
   "effect":"【登場時】抽 1 張牌。"
  } ,{
+  "id":"BLC-4-023","kind":"buffOtherOwn1000",
+  "number":"EX15BT/BLC-4-023","name":"浦原 喜助",
+  "color":"blue","energy":0,"ap":1,"bp":500,"gen":1,
+  "trigger":"draw","type":"character",
+  "effect":"登場時：最多選自己場上另1個角色，本回合BP+1000。"
+ } ,{
   "id":"BLC-2-055","kind":"peekTopOrBottom",
   "number":"EX07BT/BLC-2-055","name":"麒麟寺 天示郎",
   "color":"purple","energy":0,"ap":1,"bp":2000,"gen":1,
