@@ -13,7 +13,7 @@ const pins=Object.freeze({
  A:'75468867b7ec4f5cdd78661e5b98f400494fb94d',
  B:'2a502f01ec1e29a98c44e45e12f4aaa5a9753222',
  C:'979eed8530721fae53c63201e033a5297464c853',
- D:'a22aae190df206c5bd4f0d39ade190e1d8a71b42'
+ D:'efa367fc99c4afdd4dd9edfeddae1a736afb5333'
 });
 const report={name:'V2-E third-round 181-current pin',pins,
  auditCommit:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),
@@ -89,6 +89,9 @@ try{
   ['--test','tests/universal-v2-bleach-own-buff.test.mjs'],90000);
  const cCase=run('c-077-branch-only-test',dirs.C,
   ['--test','tests/universal-v2-ttg-port.test.mjs'],90000);
+ const dCase=run('d-current-final-branch-only-test',dirs.D,
+  ['--test','tests/v2-sao-mst-draw-top-batches.test.mjs'],90000);
+ if(dCase.exitCode)err('P1-D-PROPOSED', 'D recent FINAL/AP focused batch did not pass in isolated D SHA');
  if(bCase.exitCode)err('P1-B-PROPOSED', 'BLC-4-023 branch-only own-buff/life test failed');
  if(cCase.exitCode)err('P1-C-PROPOSED', 'TTG-1-077 branch-only outside recovery test failed');
  // Browser probes: actual desktop Chromium with 390px touch emulation.
@@ -126,7 +129,7 @@ finally{
   d:report.tests['d-candidate']?.data?.ids?.map(x=>x.length),
   browser:report.tests['a-chromium-five-title']?.data?.status,
   pendingNewCards:report.pendingNewCards,
-  proposedTests:{B:report.tests['b-023-branch-only-test']?.pass+'/'+report.tests['b-023-branch-only-test']?.tests,C:report.tests['c-077-branch-only-test']?.pass+'/'+report.tests['c-077-branch-only-test']?.tests},
+  proposedTests:{B:report.tests['b-023-branch-only-test']?.pass+'/'+report.tests['b-023-branch-only-test']?.tests,C:report.tests['c-077-branch-only-test']?.pass+'/'+report.tests['c-077-branch-only-test']?.tests,D:report.tests['d-current-final-branch-only-test']?.pass+'/'+report.tests['d-current-final-branch-only-test']?.tests},
   blockers:report.blockers,uncertainties:report.uncertainties},null,2));
  if(report.blockers.some(x=>x.id.startsWith('P0')))process.exitCode=1;
 }
