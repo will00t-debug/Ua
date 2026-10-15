@@ -25,10 +25,10 @@ const stableIds=x=>Object.keys(x.cards).sort();
 const mod=e=>structuredClone(e);
 const auditedStatKeys=['energy','ap','bp','gen','type','color','trigger'];
 
-test('the 33 SAO and 22 MST formal contributions meet strict sourceRecord/definition/evidence contract',()=>{
+test('the 39 SAO and 23 MST formal contributions meet strict sourceRecord/definition/evidence contract',()=>{
  for(const [title,contribution,expected,ids,entries] of [
-  ['sword-art-online',saoContribution,33,SAO_V2_PILOT_IDS,verifiedSaoV2Entries],
-  ['mushoku-tensei',mstContribution,22,MST_V2_PILOT_IDS,verifiedMstV2Entries]
+  ['sword-art-online',saoContribution,39,SAO_V2_PILOT_IDS,verifiedSaoV2Entries],
+  ['mushoku-tensei',mstContribution,23,MST_V2_PILOT_IDS,verifiedMstV2Entries]
  ]){
   assert.equal(contribution.title,title);
   assert.equal(contribution.entries.length,expected);
@@ -56,8 +56,8 @@ test('the 33 SAO and 22 MST formal contributions meet strict sourceRecord/defini
   assert.deepEqual(entries().map(e=>e.id),contribution.entries.map(e=>e.id));
  }
  const listed=listRegisteredV2Titles();
- assert.equal(listed.find(x=>x.title==='sword-art-online').newlyContributed,33);
- assert.equal(listed.find(x=>x.title==='mushoku-tensei').newlyContributed,22);
+ assert.equal(listed.find(x=>x.title==='sword-art-online').newlyContributed,39);
+ assert.equal(listed.find(x=>x.title==='mushoku-tensei').newlyContributed,23);
  assert.ok(listed.find(x=>x.title==='sword-art-online').previewReady);
  assert.ok(listed.find(x=>x.title==='mushoku-tensei').previewReady);
 });
@@ -83,14 +83,14 @@ test('formal contract rejects stale source card, altered stats, missing text, fo
   assert.throws(()=>compileV2TitleContribution({...c,entries:[first,first]}),/duplicate/);
  }
 });
-test('SAO official 202 printings deduplicate to 183 IDs; unsupported 150 are NOT imported as ready',()=>{
+test('SAO official 202 printings deduplicate to 183 IDs; unsupported 144 are NOT imported as ready',()=>{
  assert.equal(SAO_OFFICIAL_CARDS.length,202);
  assert.equal(new Set(SAO_OFFICIAL_CARDS.map(c=>c.id)).size,183);
- assert.equal(SAO_V2_PILOT_IDS.length,33);
+ assert.equal(SAO_V2_PILOT_IDS.length,39);
  for(const id of SAO_V2_PILOT_IDS)
   assert.ok(SAO_OFFICIAL_CARDS.find(r=>r.id===id),'SAO source '+id);
  const registry=registeredV2TitlePack('sword-art-online');
- assert.equal(Object.keys(registry.cards).length,33);
+ assert.equal(Object.keys(registry.cards).length,39);
  for(const id of ['SAO-2-063','SAO-1-107','SAO-2-055'])
   assert.equal(registry.cards[id],undefined,'not yet full-effect V2 '+id);
 });
