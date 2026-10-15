@@ -1,5 +1,8 @@
 name: V2-E Round 2 Pinned Verification
 on:
+  push:
+    branches:
+      - audit/v2-full-catalog-20261015
   pull_request:
     branches:
       - feature/universal-rules-v2-foundation-20261014
