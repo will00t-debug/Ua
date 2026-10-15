@@ -1,9 +1,8 @@
-// [V2-D] sword-art-online workstream-owned module.
-// Only this file and its corresponding title-scoped tests should be edited by
-// the title worker. Do not modify real-card-pilots.mjs or another title file.
-// Empty means ZERO newly playable/approved cards, not legacy auto support.
+// [V2-D] Formal Sword Art Online V2 contribution; source and definitions are
+// the SAME strictly pinned objects used by ../sao-pack.mjs, not another list.
+import {verifiedSaoV2Entries} from '../sao-pack.mjs';
 export default Object.freeze({
  title:'sword-art-online',
- version:'unported-20261015',
- entries:Object.freeze([])
+ version:'sao-official-v2-d-20261015',
+ entries:Object.freeze(verifiedSaoV2Entries())
 });
