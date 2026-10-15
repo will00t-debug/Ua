@@ -338,3 +338,5 @@ A 的 181 組 identity 在固定 SHA 逐一由 `registeredV2TitlePack()` 與 `te
 新增的 D `SAO-1-075`／`SAO-1-089` **STEP + 看頂牌複合效果**不可只測 STEP 忽略登場私密選擇；`SAO-1-003`、`SAO-1-052`、`SAO-1-073`、`SAO-2-048` 等 D 之後新增的來源身分需 A 整合前按印刷效果與生命 Trigger 追加完整獨立正反例；此四卡未能從上一個 D 5/5 特定 test 推論全部能力已驗收。D full repo CI 曾因共用卡號固定 manifest 仍指 SAO39/MST23 而發生兩個 contract/inventory 測試失敗（在 D 獨立分支，**不是 A 穩定版回歸失敗**），應由 A 在**納入新卡的同一整合 SHA**逐號更新測試 manifest，絕不能直接改動態期望以求綠燈。
 
 新 E runner 改 pin 上述 B/C/D 最新 commit，指令 `node scripts/v2-e-round3.mjs`；本節後續如有新 D PR head 再變化，請固定該 SHA 另成新一輪，不要將此 198/17 偷換成即時 HEAD。**本次沒有修改共用引擎、其他系列卡包、main 或正式站**。正式 700 張全部官文完整終驗仍 0；私人六預設受控 smoke 可條件 GO，但全卡完成/真人手機/自由組牌為 NO-GO 或 not_run。
+
+**第三輪追補固定 CI**：[run #38705271793](https://github.com/will00t-debug/Ua/actions/runs/38705271793)，E 腳本提交 `f250d71b4d7f6fb27f13f506249dda1f3f81c1ec`，Node `v22.23.3`，固定 A/B/C/D 如本節列；**A 新反例 7/7、B 分支 6/6、C 分支 13/13、D 新增批次 source QA 8/8、desktop Chromium 真 UI PASS**，E runner P0 blockers `[]`。D 的 `b2b10f2f` 有更多負向來源守門檢查，因此前節 D 5/5 和 7/7 屬早一輪已固定舊版，不能冒充本版獨立 D 終驗卡數。D 獨立分支自己的 full suite 仍曾有 2 個動態 manifest/identity snapshot mismatch（A-owned 共用 assertions 不同步），不是已經修復的 A 穩定 1143/1143，也不代表 A 能在未更新身份 manifest 下直接接 17 張。
