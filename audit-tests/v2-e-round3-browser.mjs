@@ -39,10 +39,11 @@ try{
  chrome=spawn(executable,['--headless=new','--no-sandbox','--disable-gpu',
   '--disable-dev-shm-usage','--no-first-run','--no-default-browser-check',
   '--remote-debugging-port=0','--remote-allow-origins=*','--user-data-dir='+profile,'about:blank'],
- {stdio:'ignore'});
+ {stdio:['ignore','ignore','pipe']});
+ let chromeErrors='';chrome.stderr?.on('data',chunk=>{chromeErrors+=String(chunk).slice(0,1500)});
  const activePort=path.join(profile,'DevToolsActivePort');
- for(let n=0;n<70&&!fs.existsSync(activePort);n++)await delay(100);
- if(!fs.existsSync(activePort))throw Error('Chrome CDP did not start');
+ for(let n=0;n<170&&!fs.existsSync(activePort)&&chrome.exitCode===null;n++)await delay(100);
+ if(!fs.existsSync(activePort))throw Error('Chrome CDP did not start; exit='+chrome.exitCode+' stderr='+chromeErrors.slice(-2800));
  const debugPort=Number(fs.readFileSync(activePort,'utf8').split('\n')[0]);
  const targets=await (await fetch('http://127.0.0.1:'+debugPort+'/json/list')).json();
  const target=targets.find(t=>t.type==='page');if(!target)throw Error('CDP page target missing');
