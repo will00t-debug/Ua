@@ -180,3 +180,40 @@ test('public-only AI action transcript cannot surface hidden card via private to
  const forged=appendUniversalReplay(tape,{type:'chooseTopCard',mode:'bottom'},0);
  assert.throws(()=>replayUniversalPreview(packs,forged),/not currently legal/);
 });
+
+test('BLC-1-030 printed mandatory REST cost is rejected pre-AP without opponent, accepts already-REST MST foe (Q1119/Q91)',()=>{
+ const d=presets['bleach-green'],foe=presets['mushoku-tensei'],packs=[d.pack,foe.pack];
+ const counts={...d.counts};
+ for(const id of ['BLC-1-067','BLC-1-068','BLC-1-071'])delete counts[id];
+ for(const id of ['BLC-1-030','BLC-1-002','BLC-1-012'])counts[id]=4;
+ assert.deepEqual(validateUniversalDeck(d.pack,counts),[]);
+ let s=newUniversalMatch(packs,{decks:[counts,foe.counts],seed:300319,first:0});
+ const jail=take(s,0,'BLC-1-030'),gen1=take(s,0,'BLC-1-002'),gen2=take(s,0,'BLC-1-012');
+ gen1.ready=true;gen2.ready=true;s.players[0].energy[0]=gen1;s.players[0].energy[1]=gen2;s.players[0].hand.push(jail);
+ s=phase(s,packs,'main');
+ const before=structuredClone(s),ap=s.players[0].apCards.filter(x=>x.ready).length;
+ const forbidden={type:'event',uid:jail.uid};
+ assert.ok(!legalUniversalActions(packs,s).some(a=>a.type==='event'&&a.uid===jail.uid));
+ assert.throws(()=>dispatchUniversalAction(packs,s,forbidden,{actor:0}),/not currently legal/);
+ assert.deepEqual(s,before);
+ const enemy=take(s,1,'MST-1-001');enemy.ready=false;s.players[1].front[0]=enemy;
+ assert.equal(assertUniversalMatch(packs,s),true);
+ const action=legalUniversalActions(packs,s).find(a=>a.type==='event'&&a.uid===jail.uid);
+ assert.ok(action,'Q91 already REST enemy is still mandatory legal target');
+ const waiting=dispatchUniversalAction(packs,s,action,{actor:0});
+ assert.equal(waiting.pending?.kind,'effect-rest-bp');
+ assert.equal(waiting.players[0].apCards.filter(x=>x.ready).length,ap-1);
+ assert.ok(waiting.players[0].outside.some(c=>c.uid===jail.uid));
+ assert.deepEqual(legalUniversalActions(packs,waiting),[{type:'chooseRestBp',uid:enemy.uid}]);
+ const snapshot=structuredClone(waiting);
+ assert.throws(()=>dispatchUniversalAction(packs,waiting,{type:'chooseRestBp',uid:null},{actor:0}),/not currently legal/);
+ assert.deepEqual(waiting,snapshot);
+ const done=dispatchUniversalAction(packs,waiting,{type:'chooseRestBp',uid:enemy.uid},{actor:0});
+ assert.equal(done.players[1].front[0].ready,false);
+ assert.equal(done.pending,null);
+ assert.equal(assertUniversalMatch(packs,done),true);
+});
+test('unmerged BLC-4-023 and TTG-1-077 remain fail-closed in stable integrated Registry',()=>{
+ assert.equal(registeredV2TitlePack('bleach').cards['BLC-4-023'],undefined);
+ assert.equal(registeredV2TitlePack('gurren-lagann').cards['TTG-1-077'],undefined);
+});
