@@ -53,6 +53,12 @@ const registry=Object.freeze({
   args:{bp:threshold,optional:yesNo},
   build:v=>[{op:'restOppFrontUnderBp',bp:v.bp,optional:v.optional}]
  },
+ // Printed text with NO BP cap (e.g. UA08BT/BLC-1-030). Never approximate
+ // an unbounded target with a giant numeric cap: temporary BP may exceed it.
+ restEnemyFrontOne:{
+  args:{optional:yesNo},
+  build:v=>[{op:'restOppFrontOne',optional:v.optional}]
+ },
  retireEnemyIfFacedown:{
   args:{bp:threshold,optional:requiredTrue},
   build:v=>[{op:'retireOppFrontIfFacedown',bp:v.bp,optional:true}]
@@ -160,7 +166,7 @@ const registry=Object.freeze({
    'draw','millTop','peekTopOne','searchDeckOne','searchDeckMany',
    'searchDeckWhere','inspectTopArrange','recoverOutsideOne','enemyBpDown',
    'enemyFrontAllBpDown','retireEnemyFrontAllUnderBp','buffOwnTraitAllTurn',
-   'recoverOutsideColorUnderEnergy','buffOwnField','restEnemyUnderBp'
+   'recoverOutsideColorUnderEnergy','buffOwnField','restEnemyUnderBp','restEnemyFrontOne'
   ].includes(x.template)),
   build:v=>[{op:'discardGate',optional:v.optional,
    then:v.then.flatMap((spec,i)=>expandOne(spec,'payDiscardThen.then['+i+']'))}]
