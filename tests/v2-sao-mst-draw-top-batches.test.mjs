@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {SAO_OFFICIAL_CARDS} from '../dist/sao-official-import.mjs';
+import {UA54BT_OFFICIAL_PRINT} from '../dist/universal-v2/sources/mst-official-print.mjs';
+import {MST_V2_REAL_DECK_COUNTS} from '../dist/universal-v2/sao-mst-real-decks.mjs';
 import {requireRegisteredV2TitlePack} from '../dist/universal-v2/title-packs/registry.mjs';
 import {SAO_V2_REAL_DECK_COUNTS} from '../dist/universal-v2/sao-mst-real-decks.mjs';
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
@@ -74,4 +76,96 @@ test('SAO-2-072 peek top or BOTTOM is private, never discards the top',()=>{
  assert.deepEqual(bottom.players[0].deck.map(c=>c.uid),[...before.slice(1),before[0]]);
  assert.equal(bottom.players[0].outside.length,outside);
  same(bottom);same(top);
+});
+
+test('SAO-2-017 and 2-030 top-2 discard ANY 0/1/2, reorder survivors, preserve secrecy and printed triggers',()=>{
+ for(const id of ['SAO-2-017','SAO-2-030']){
+  const printed=SAO_OFFICIAL_CARDS.find(c=>c.id===id);
+  assert.equal(printed.effectJa,
+   '【登場時】自分の山札の上から2枚見る。その中から望む枚数を望む順で自分の山札の上に置き、残りを場外に置く。');
+  assert.equal(printed.trigger,id==='SAO-2-017'?'active':null);
+  assert.deepEqual(pack.cards[id].effects.onPlay,
+   [{op:'inspectTopAnyOutside',count:2,rest:'top'}]);
+  const counts={...SAO_V2_REAL_DECK_COUNTS};
+  counts['SAO-1-035']-=3;counts[id]=1;counts['SAO-2-035']=2;
+  assert.deepEqual(validateUniversalDeck(pack,counts),[]);
+  let s=newUniversalMatch([pack,pack],{decks:[counts,counts],seed:240100,first:0});
+  const source=physical(s,0,id);
+  s.players[0].hand.push(source);
+  for(const [i,c] of (id==='SAO-2-030'?
+    [physical(s,0,'SAO-2-035'),physical(s,0,'SAO-2-035')]:
+    [physical(s,0,'SAO-1-035')]).entries())
+   s.players[0].energy[i]=c;
+  s=dispatchUniversalAction([pack,pack],s,{type:'next'});
+  s=dispatchUniversalAction([pack,pack],s,{type:'next'});
+  const play=legalUniversalActions([pack,pack],s).find(a=>
+   a.type==='play'&&a.uid===source.uid&&a.line==='front'&&a.slot===0);
+  assert.ok(play,id+' legally payable');
+  const start=dispatchUniversalAction([pack,pack],s,play);
+  assert.equal(start.pending?.kind,'effect-top-inspect-many');
+  const before=start.players[0].deck.map(c=>c.uid),window=before.slice(0,2),
+   outside=start.players[0].outside.length;
+  assert.equal(window.length,2);
+  assert.equal(universalPrivateChoices([pack,pack],start,1),null);
+  assert.ok(!JSON.stringify(universalPublicView([pack,pack],start,1)).includes(window[0]));
+  assert.throws(()=>dispatchUniversalAction([pack,pack],start,
+   {type:'chooseInspectedOutside',uid:'forged'}),/not currently legal/);
+  // 0 cards outside: deliberately reverse BOTH cards.
+  let q=dispatchUniversalAction([pack,pack],start,{type:'chooseInspectedOutside',uid:null});
+  assert.equal(q.pending?.kind,'effect-top-order');
+  assert.equal(legalUniversalActions([pack,pack],q).length,2);
+  q=dispatchUniversalAction([pack,pack],q,{type:'chooseTopOrder',uid:window[1]});
+  assert.equal(q.pending?.kind,'effect-top-order');
+  assert.throws(()=>dispatchUniversalAction([pack,pack],q,
+   {type:'chooseTopOrder',uid:window[1]}),/not currently legal/);
+  q=dispatchUniversalAction([pack,pack],q,{type:'chooseTopOrder',uid:window[0]});
+  assert.deepEqual(q.players[0].deck.map(c=>c.uid),[window[1],window[0],...before.slice(2)]);
+  assert.equal(q.players[0].outside.length,outside);same(q);
+  // 1 card outside, one survivor; only a remaining legal UID may be ordered.
+  let one=dispatchUniversalAction([pack,pack],start,{type:'chooseInspectedOutside',uid:window[0]});
+  assert.equal(one.pending?.kind,'effect-top-inspect-many');
+  one=dispatchUniversalAction([pack,pack],one,{type:'chooseInspectedOutside',uid:null});
+  assert.equal(one.pending?.kind,'effect-top-order');
+  one=dispatchUniversalAction([pack,pack],one,{type:'chooseTopOrder',uid:window[1]});
+  assert.deepEqual(one.players[0].deck.map(c=>c.uid),before.slice(1));
+  assert.ok(one.players[0].outside.some(c=>c.uid===window[0]));same(one);
+  // 2 cards outside: no ordered survivors, no duplication.
+  let two=dispatchUniversalAction([pack,pack],start,{type:'chooseInspectedOutside',uid:window[0]});
+  two=dispatchUniversalAction([pack,pack],two,{type:'chooseInspectedOutside',uid:window[1]});
+  assert.equal(two.pending,null);
+  assert.deepEqual(two.players[0].deck.map(c=>c.uid),before.slice(2));
+  assert.equal(two.players[0].outside.length,outside+2);same(two);
+ }
+});
+test('MST-1-010 blue 3 energy: inspect 3, reorder all on TOP, never optional outside',()=>{
+ const id='MST-1-010',official=UA54BT_OFFICIAL_PRINT[id];
+ assert.equal(official.effectJa,'〖登場時〗 自分の山札の上から3枚見て、望む順で山札の上に置く。');
+ assert.equal(official.energy,3);assert.equal(official.trigger,'draw');
+ const mst=requireRegisteredV2TitlePack('mushoku-tensei'),packs=[mst,mst];
+ assert.deepEqual(mst.cards[id].effects.onPlay,
+  [{op:'inspectTopArrange',count:3,toOutside:false,rest:'top'}]);
+ const counts={...MST_V2_REAL_DECK_COUNTS};
+ counts['MST-1-050']--;counts[id]=1;
+ assert.deepEqual(validateUniversalDeck(mst,counts),[]);
+ let s=newUniversalMatch(packs,{decks:[counts,counts],seed:10010,first:0});
+ const unit=physical(s,0,id),blue2=physical(s,0,'MST-1-019'),
+  blue1=physical(s,0,'MST-1-001');
+ s.players[0].hand.push(unit);s.players[0].energy[0]=blue2;s.players[0].energy[1]=blue1;
+ s=dispatchUniversalAction(packs,s,{type:'next'});
+ s=dispatchUniversalAction(packs,s,{type:'next'});
+ const play=legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===unit.uid&&a.line==='front'&&a.slot===0);
+ assert.ok(play,'paid MST-1-010 must have three original blue energy');
+ let q=dispatchUniversalAction(packs,s,play);
+ assert.equal(q.pending?.kind,'effect-top-order');
+ const before=q.players[0].deck.map(c=>c.uid),uids=before.slice(0,3),outside=q.players[0].outside.length;
+ assert.equal(uids.length,3);
+ assert.equal(universalPrivateChoices(packs,q,1),null);
+ assert.deepEqual(legalUniversalActions(packs,q).map(x=>x.uid).sort(),uids.slice().sort());
+ assert.ok(!legalUniversalActions(packs,q).some(x=>x.type==='chooseInspectedOutside'));
+ assert.throws(()=>dispatchUniversalAction(packs,q,
+  {type:'chooseTopOrder',uid:'other-uid'}),/not currently legal/);
+ for(const uid of uids.slice().reverse())q=dispatchUniversalAction(packs,q,{type:'chooseTopOrder',uid});
+ assert.deepEqual(q.players[0].deck.map(c=>c.uid),[...uids].reverse().concat(before.slice(3)));
+ assert.equal(q.players[0].outside.length,outside);
+ assert.equal(q.pending,null);assert.equal(assertUniversalMatch(packs,q),true);
 });
