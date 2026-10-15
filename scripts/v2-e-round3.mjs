@@ -13,7 +13,7 @@ const pins=Object.freeze({
  A:'75468867b7ec4f5cdd78661e5b98f400494fb94d',
  B:'2a502f01ec1e29a98c44e45e12f4aaa5a9753222',
  C:'29ddd3ffdc5379584923539a8323ee7ec09d6add',
- D:'c2a7fbf8d404b28d23cc453830a70350b4502312'
+ D:'b2b10f2f0ecd4ce41c04d863b2476da1ae302667'
 });
 const report={name:'V2-E third-round 181-current pin',pins,
  auditCommit:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),
