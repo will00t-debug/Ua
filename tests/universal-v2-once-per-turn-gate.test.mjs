@@ -104,7 +104,18 @@ test('once-per-turn accounting resets when the turn passes to the other player',
  let s=ready();
  s=play(s,'K02',0);
  assert.equal(s.onceEffectUses[0].length,1);
- for(let i=0;i<2;i++)s=dispatchUniversalAction(packs,s,{type:'next'});
+ // Fixture preloads several distinct real hand UIDs, so hand > 8 at
+ // end phase. Finish the actual mandatory end-hand-limit choices before
+ // asserting next-turn reset. The engine must not silently discard them.
+ let steps=0;
+ while(s.active===0&&steps++<16){
+  const legal=legalUniversalActions(packs,s);
+  const a=s.pending?.kind==='end-hand-limit'?
+   legal.find(x=>x.type==='chooseHandLimit'):
+   legal.find(x=>x.type==='next');
+  assert.ok(a,'No legal action to finish source-player turn');
+  s=dispatchUniversalAction(packs,s,a,{actor:0});
+ }
  assert.equal(s.active,1);
  assert.deepEqual(s.onceEffectUses,[[],[]]);
  assert.equal(assertUniversalMatch(packs,s),true);
