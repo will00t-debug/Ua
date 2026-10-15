@@ -40,9 +40,9 @@ const play=(s,uid)=>legalUniversalActions(packs,s).find(a=>
 test('two actual printed other-character buffs have exact source fingerprints, no hidden trigger',()=>{
  assert.deepEqual(validateUniversalDeck(pack,purple),[]);
  assert.deepEqual(validateUniversalDeck(pack,green),[]);
- assert.equal(Object.keys(pack.cards).length,76);
- assert.equal(Object.keys(standalone.cards).length,76);
- assert.equal(contribution.entries.length,61);
+ assert.equal(Object.keys(pack.cards).length,78);
+ assert.equal(Object.keys(standalone.cards).length,78);
+ assert.equal(contribution.entries.length,63);
  for(const [id,color,energy,bp] of [
   ['BLC-1-059','purple',2,3000],['BLC-1-077','green',0,1000]
  ]){
