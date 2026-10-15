@@ -1,6 +1,6 @@
 // V2-D MST: curated official-text-locked pilots; no implicit engine compatibility.
 // Source copies are isolated under ./sources, not merged into Production records.
-import {UA54BT_VERIFIED} from './sources/mst-catalog.mjs';
+import {MST_V2_OFFICIAL_CATALOGUE} from './sources/mst-inventory.mjs';
 import {createUniversalPack} from './pack.mjs';
 
 const PRINTED_PINS=Object.freeze({
@@ -301,7 +301,7 @@ const PRINTED_PINS=Object.freeze({
 });
 export const MST_V2_PILOT_IDS=Object.freeze(Object.keys(PRINTED_PINS).sort());
 export function verifiedMstV2Cards(){
- const printed=new Map(UA54BT_VERIFIED.map(c=>[c.id,c]));
+ const printed=new Map(MST_V2_OFFICIAL_CATALOGUE.map(c=>[c.id,c]));
  return MST_V2_PILOT_IDS.map(id=>{
   const pin=PRINTED_PINS[id],source=printed.get(id);
   if(!source||source.verified!==true||!source.effectJa||
@@ -311,6 +311,7 @@ export function verifiedMstV2Cards(){
    energy:pin.energy,ap:pin.ap,bp:pin.bp,gen:pin.gen,
    traits:[...pin.traits],trigger:pin.trigger,
    implementation:['vanilla','step'].includes(pin.kind)?'vanilla':'dsl'};
+  if(card.implementation==='vanilla')card.effects={};
   if(pin.kind==='step')card.step=true;
   if(pin.kind==='onPlayDraw')card.templateEffects={onPlay:[{template:'draw',count:1}]};
   if(pin.kind==='onPlayDrawDiscard')card.templateEffects={onPlay:[{template:'drawDiscardOne'}]};
@@ -328,4 +329,38 @@ export function verifiedMstV2Cards(){
 export function mstV2Pack(){
  return createUniversalPack({id:'mushoku-tensei',version:'v2-d-mst-pilot-1',
   cards:verifiedMstV2Cards()});
+}
+
+/** Same official records and V2 definitions supply standalone pack and registry. */
+export function verifiedMstV2Entries(){
+ const printed=new Map(MST_V2_OFFICIAL_CATALOGUE.map(c=>[c.id,c]));
+ return verifiedMstV2Cards().map(def=>{
+  const source=printed.get(def.id),pin=PRINTED_PINS[def.id];
+  if(!source||!pin||!source.effectJa)
+   throw Error(def.id+' missing Japanese official evidence');
+  if(def.implementation==='vanilla'&&
+   !(pin.effectJa==='-'||
+     (pin.kind==='step'&&pin.effectJa===
+      '〖ステップ〗 （自分の移動フェイズにフロントLからエナジーLへ移動できる）')))
+   throw Error(def.id+' cannot claim vanilla with unhandled printed effects');
+  return Object.freeze({
+   id:def.id,
+   // MST source has official Ja effect plus older Chinese/legacy effect;
+   // adapter normalizes "effect" to full audited JP print for contract QA.
+   sourceRecord:source,
+   definition:Object.freeze(def),
+   evidence:Object.freeze({
+    printedTextFragments:Object.freeze([source.effectJa]),
+    reviewNote:'BANDAI JP UA54BT '+source.number+
+     '; audited V2-D profile '+pin.kind+
+     '; pilot behavior and generic Trigger only, NOT complete FAQ acceptance. '+
+     source.source,
+    testFiles:Object.freeze([
+     'tests/universal-v2-mst-port.test.mjs',
+     'tests/universal-v2-sao-mst-cross-title.test.mjs'
+    ]),
+    ...(def.implementation==='vanilla'?{verifiedNoExtraEffects:true}:{})
+   })
+  });
+ });
 }
