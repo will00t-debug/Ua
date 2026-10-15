@@ -59,7 +59,7 @@ test('BLC-1-013 onPlay optional REST cannot target BP 4000 foe; skip and legal R
  assert.equal(assertUniversalMatch(packs,skip),true);
 });
 
-test('BLC-2-048 bonus Rukia enables legal 4000-BP retirement; no Rukia means no free removal',()=>{
+test('BLC-2-048 bonus Rukia enables legal 4000-BP retirement with exact target UID',()=>{
  let s=fresh(),p=s.players[0],foe=s.players[1];
  const a=take(s,0,'BLC-2-029'),b=take(s,0,'BLC-2-020'),
   rukia=take(s,0,'BLC-2-031'),spell=take(s,0,'BLC-2-048'),
@@ -76,13 +76,10 @@ test('BLC-2-048 bonus Rukia enables legal 4000-BP retirement; no Rukia means no 
  assert.equal(buffed.players[1].front[0],null);
  assert.ok(buffed.players[1].outside.some(x=>x.uid===high.uid));
  assert.equal(assertUniversalMatch(packs,buffed),true);
- // Without Rukia, above 3000 BP has no eligible retirement target.
- const noRukia=structuredClone(s);
- noRukia.players[0].front[0]=null;noRukia.players[0].outside.push(rukia);
- const base=dispatchUniversalAction(packs,noRukia,option,{actor:0});
- assert.equal(base.pending,null);
- assert.equal(base.players[1].front[0]?.uid,high.uid);
- assert.equal(assertUniversalMatch(packs,base),true);
+ // Official Q1119 forbids using this mandatory-target EVENT at all when
+ // no BP<=3000/5000 target exists. The old no-Rukia no-op assertion was
+ // removed: paying AP then fizzing is NOT a legal alternative. The separate
+ // skipped Q1119 regression below is an A-owned pre-play legality blocker.
 });
 
 test('BLC-2-048 SPECIAL life trigger can retire a BP4000 foe without event energy/AP cost',()=>{
@@ -185,4 +182,26 @@ test('BLC-1-030 remains blocked: mandatory enemy REST cannot reuse optional rest
  attempted['BLC-1-030']=4;
  assert.notDeepEqual(validateUniversalDeck(pack,attempted),[],
   'BLC-1-030 may not offer skip when target exists');
+});
+
+test.skip('Official Q1119: BLC-2-048 cannot pay AP if opponent has no BP-valid front target (A event gate pending)',()=>{
+ for(const tooStrong of [false,true]){
+  let s=fresh(),p=s.players[0];
+  const a=take(s,0,'BLC-2-029'),b=take(s,0,'BLC-2-020'),
+   spell=take(s,0,'BLC-2-048');
+  a.ready=true;b.ready=true;p.energy[0]=a;p.energy[1]=b;
+  p.hand.push(spell);
+  if(tooStrong){
+   const high=take(s,1,'BLC-1-105');high.ready=true;
+   s.players[1].front[0]=high; // BP4000, no owned Rukia: must not qualify.
+  }
+  s=to(s,'main');
+  assert.ok(!legalUniversalActions(packs,s).some(x=>x.type==='event'&&x.uid===spell.uid),
+   'Q1119: mandatory targetless event cannot be offered as a legal action');
+  const before=structuredClone(s);
+  assert.throws(()=>dispatchUniversalAction(packs,s,{type:'event',uid:spell.uid},{actor:0}),
+   /not currently legal/);
+  assert.deepEqual(s,before,'forbidden event cannot expend AP or move a physical UID');
+  assert.equal(assertUniversalMatch(packs,s),true);
+ }
 });
