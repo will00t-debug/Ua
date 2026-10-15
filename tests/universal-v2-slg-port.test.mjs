@@ -345,3 +345,17 @@ test('SLG-014 free deployment from own outside remains blocked until optional EN
  assert.equal(Object.values(invalid).reduce((n,k)=>n+k,0),50);
  assert.match(validateUniversalDeck(pack,invalid).join(';'),/Unregistered\/unsupported card: SLG-1-014/);
 });
+
+test('SLG-036 ordered draw-three/discard-two and SLG-037 printed-BP-limited own-outside recovery stay unsupported until exact shared contracts exist',()=>{
+ const pack=registeredV2TitlePack('solo-leveling');
+ for(const id of ['SLG-1-036','SLG-1-037']){
+  assert.equal(pack.cards[id],undefined,'never claim a partial common op satisfies '+id);
+  const illegal={...slgDeck,'SLG-1-005':3,[id]:1};
+  assert.match(validateUniversalDeck(pack,illegal).join(';'),/Unregistered\/unsupported card:/);
+ }
+ // These Life icons DO NOT grant playability if the printed event Body is not
+ // executable; 036 ACTIVE and 037 DRAW remain outside the registered pack.
+ const printed=Object.fromEntries(SOLO_LEVELING_CARDS.map(c=>[c.id,c]));
+ assert.equal(printed['SLG-1-036'].trigger,'active');
+ assert.equal(printed['SLG-1-037'].trigger,'draw');
+});
