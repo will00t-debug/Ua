@@ -32,6 +32,9 @@ const registry=Object.freeze({
  peekTopOne:{
   args:{},build:()=>[{op:'peekTopOne'}]
  },
+ peekTopOrBottom:{
+  args:{},build:()=>[{op:'peekTopOrBottom'}]
+ },
  recoverAp:{
   args:{count:v=>integer(v,1,3)},build:v=>[{op:'recoverAp',count:v.count}]
  },
@@ -160,6 +163,11 @@ const registry=Object.freeze({
   args:{count:v=>integer(v,2,4),toOutside:yesNo,
    rest:v=>v==='top'||v==='bottom'},
   build:v=>[{op:'inspectTopArrange',count:v.count,toOutside:v.toOutside,rest:v.rest}]
+ },
+ // Choose 0..N cards outside, then order every remaining inspected card.
+ inspectTopAnyOutside:{
+  args:{count:v=>integer(v,2,4),rest:v=>v==='top'||v==='bottom'},
+  build:v=>[{op:'inspectTopAnyOutside',count:v.count,rest:v.rest}]
  },
  payDiscardThen:{
   args:{optional:yesNo,then:v=>Array.isArray(v)&&v.length>=1&&v.length<=6},

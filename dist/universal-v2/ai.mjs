@@ -44,6 +44,8 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='effect-top-inspect')
   return difficulty==='easy'?legal.find(a=>a.uid===null)||legal[0]:
    legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='private-top-place')return legal[0];
+ if(s.pending?.kind==='effect-top-inspect-many')return legal.find(x=>x.uid===null)||legal[0];
  if(s.pending?.kind==='effect-top-order')return legal[0];
  if(['effect-discard-cost','effect-discard-gate'].includes(s.pending?.kind)){
   // An optional cost may be declined; tougher bots pay with a lower-value

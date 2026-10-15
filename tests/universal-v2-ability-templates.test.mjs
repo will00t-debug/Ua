@@ -16,13 +16,13 @@ const checked=card=>createUniversalPack({id:'template-validation-fixture',cards:
 
 test('template registry is finite, audited and rejects unknown behaviors instead of guessing from prose',()=>{
  assert.deepEqual(V2_ABILITY_TEMPLATE_IDS,[
-  'draw','millTop','drawDiscardOne','peekTopOne','recoverAp','buffSelf',
+  'draw','millTop','drawDiscardOne','peekTopOne','peekTopOrBottom','recoverAp','buffSelf',
   'enemyBpDown','retireEnemyUnderBp','restEnemyUnderBp','restEnemyFrontOne',
   'retireEnemyIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown',
   'searchDeckOne','recoverOutsideOne','discardToDraw',
   'searchDeckMany','enemyFrontAllBpDown','retireEnemyFrontAllUnderBp',
   'buffOwnTraitAllTurn','buffOwnField','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
-  'recoverOutsideColorUnderEnergy','oncePerTurnThen','searchDeckWhere','inspectTopArrange','payDiscardThen'
+  'recoverOutsideColorUnderEnergy','oncePerTurnThen','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','payDiscardThen'
  ]);
  assert.throws(()=>checked(character({
   implementation:'dsl',templateEffects:{onPlay:[{template:'drawEnemyDeck',count:1}]}
