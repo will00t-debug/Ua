@@ -101,6 +101,13 @@ const registry=Object.freeze({
   args:{trait:named,bp:positiveBp},
   build:v=>[{op:'buffOwnTraitAllTurn',trait:v.trait,bp:v.bp}]
  },
+ // OnPlay/OnAttack etc: select one own FIELD character matching a printed
+ // name, trait or color. Explicit optionality and excludeSelf are mandatory.
+ buffOwnField:{
+  args:{filter,bp:positiveBp,optional:yesNo,excludeSelf:yesNo},
+  build:v=>[{op:'buffOwnField',filter:{...v.filter},bp:v.bp,
+   optional:v.optional,excludeSelf:v.excludeSelf}]
+ },
  // Triggered only by the controller's FIRST declared character attack.
  buffSelfIfFirstAttack:{
   args:{bp:positiveBp},build:v=>[{op:'buffSelfIfFirstAttack',bp:v.bp}]
@@ -114,6 +121,20 @@ const registry=Object.freeze({
   args:{color:named,energy:v=>integer(v,0,30),optional:yesNo},
   build:v=>[{op:'recoverOutsideColorUnderEnergy',color:v.color,
     energy:v.energy,optional:v.optional}]
+ },
+ // True printed per-turn limits, not a blanket source "used" flag.
+ // If optional, accepting the use is a legal controller decision. Declining
+ // does not consume the counter. A "name" limit is shared among same-name
+ // physical cards owned by this player for the current turn.
+ oncePerTurnThen:{
+  args:{scope:v=>v==='card'||v==='name',optional:yesNo,
+   then:v=>Array.isArray(v)&&v.length>=1&&v.length<=6},
+  check:v=>v.then.every(x=>x&&[
+   'draw','millTop','peekTopOne','enemyBpDown','restEnemyUnderBp',
+   'buffOwnField','searchDeckOne','recoverOutsideOne','buffSelf'
+  ].includes(x.template)),
+  build:v=>[{op:'oncePerTurnGate',scope:v.scope,optional:v.optional,
+   then:v.then.flatMap((spec,i)=>expandOne(spec,'oncePerTurnThen.then['+i+']'))}]
  },
  // Atomic payment gate: NONE of the nested effects run unless an owned
  // hand card was discarded. Nested templates are intentionally restricted
@@ -137,7 +158,7 @@ const registry=Object.freeze({
    'draw','millTop','peekTopOne','searchDeckOne','searchDeckMany',
    'searchDeckWhere','inspectTopArrange','recoverOutsideOne','enemyBpDown',
    'enemyFrontAllBpDown','retireEnemyFrontAllUnderBp','buffOwnTraitAllTurn',
-   'recoverOutsideColorUnderEnergy','restEnemyUnderBp'
+   'recoverOutsideColorUnderEnergy','buffOwnField','restEnemyUnderBp'
   ].includes(x.template)),
   build:v=>[{op:'discardGate',optional:v.optional,
    then:v.then.flatMap((spec,i)=>expandOne(spec,'payDiscardThen.then['+i+']'))}]

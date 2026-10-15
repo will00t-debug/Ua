@@ -1,7 +1,7 @@
 // Experimental all-real BLEACH purple deck for V2 engine smoke tests.
 // Every card ID below is a separately allowlisted official BLEACH card.
 // This is NOT a tournament deck recommendation or full FAQ certification.
-import {verifiedPilotPack} from './real-card-pilots.mjs';
+import {requireRegisteredV2TitlePack} from './title-packs/registry.mjs';
 import {validateUniversalDeck} from './pack.mjs';
 
 // 12 official non-FINAL IDs x 4 = 48, plus 2 official FINAL = 50.
@@ -13,7 +13,7 @@ export const BLEACH_PURPLE_V2_PILOT_COUNTS=Object.freeze({
  'BLC-1-066':2
 });
 export function verifiedBleachPurplePilotDeck(){
- const pack=verifiedPilotPack('bleach');
+ const pack=requireRegisteredV2TitlePack('bleach');
  const counts={...BLEACH_PURPLE_V2_PILOT_COUNTS};
  const problems=validateUniversalDeck(pack,counts);
  if(problems.length)throw Error('BLEACH real-only V2 pilot deck invalid: '+problems.join('; '));
@@ -33,7 +33,7 @@ export const TTG_RED_V2_PILOT_COUNTS=Object.freeze({
  'TTG-1-073':2
 });
 export function verifiedTtgRedPilotDeck(){
- const pack=verifiedPilotPack('gurren-lagann');
+ const pack=requireRegisteredV2TitlePack('gurren-lagann');
  const counts={...TTG_RED_V2_PILOT_COUNTS};
  const problems=validateUniversalDeck(pack,counts);
  if(problems.length)throw Error('TTG real-only V2 red deck invalid: '+problems.join('; '));
