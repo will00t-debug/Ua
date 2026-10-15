@@ -253,3 +253,31 @@ test('TTG-077 official Gunmen trait recovers a DIFFERENT printed pilot TTG-072 f
  assert.ok(state.players[0].outside.some(c=>c.uid===excluded.uid));
  assert.equal(assertUniversalMatch(packs,state),true);
 });
+
+test('TTG-077 no qualifying OWN outside Gunmen: optional recovery does not create a mandatory phantom choice',()=>{
+ const deck={...ttgDeck,'TTG-1-001':0,'TTG-1-077':4};
+ let state=newUniversalMatch(packs,{decks:[deck,slgDeck],first:0,seed:7077});
+ const source=take(state,0,'TTG-1-077'),notGunmen=take(state,0,'TTG-1-009');
+ state.players[0].outside.push(notGunmen);
+ for(let i=0;i<2;i++){const red=take(state,0,'TTG-1-049');red.ready=true;state.players[0].energy[i]=red;}
+ state.players[0].hand.push(source);state=main(state);
+ const beforeOutside=state.players[0].outside.length;
+ const beforeHand=state.players[0].hand.length;
+ const play=legalUniversalActions(packs,state).find(a=>a.type==='play'&&a.uid===source.uid&&a.line==='energy');
+ assert.ok(play);
+ const after=dispatchUniversalAction(packs,state,play);
+ assert.equal(after.pending,null);
+ assert.equal(after.players[0].outside.length,beforeOutside);
+ assert.equal(after.players[0].hand.length,beforeHand-1);
+ assert.equal(after.players[0].energy.filter(Boolean).length,3);
+ assert.equal(assertUniversalMatch(packs,after),true);
+});
+
+test('TTG-010/023 source top-N trait search and ordered bottom + conditional discard are not faked by generic full-deck shuffle search',()=>{
+ const pack=registeredV2TitlePack('gurren-lagann');
+ for(const id of ['TTG-1-010','TTG-1-023']){
+  assert.equal(pack.cards[id],undefined,id+' requires private top-N legal trait and bottom-order effect');
+  const illegal={...ttgDeck,'TTG-1-001':3,[id]:1};
+  assert.match(validateUniversalDeck(pack,illegal).join(';'),/Unregistered\/unsupported card:/);
+ }
+});
