@@ -57,7 +57,16 @@ try{
  // OLD shared tests are retained verbatim: preserve exactly what failed.
  source.results.A_original=call(dirs.A,['--test','tests/universal-v2-once-per-turn-gate.test.mjs'],
   'a-original-once');
- source.results.A_full=call(dirs.A,['--test','tests'], 'a-full-regression',300000);
+ {
+  const t=spawnSync('npm',['test'],{cwd:dirs.A,encoding:'utf8',timeout:300000,maxBuffer:CAP});
+  const transcript=(t.stdout||'')+'\n'+(t.stderr||'');
+  fs.writeFileSync(path.join(output,'a-full-regression.log'),transcript);
+  const pick=k=>Number(transcript.match(new RegExp('^# '+k+' (\\d+)','m'))?.[1]||0);
+  source.results.A_full={command:'npm test',exitCode:t.status,node:process.version,
+   tests:pick('tests'),pass:pick('pass'),fail:pick('fail'),
+   failureNames:transcript.split('\n').filter(line=>/^not ok \d+/.test(line)).slice(0,25),
+   outputLog:'audit/v2-e-round2/a-full-regression.log'};
+ }
  // Independent fixed-fixture tests copy from audit source into A's detached worktree.
  for(const name of ['v2-e-once-fixture-independent.test.mjs','v2-e-contract-regression.test.mjs'])
   fs.copyFileSync(path.join(root,'audit-tests',name),path.join(dirs.A,'tests',name));
