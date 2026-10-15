@@ -17,7 +17,12 @@ export function verifiedTtgV2Additions(){
    const observed=key==='name'?(c.nameJa||c.name):(c[key]??null);
    if(observed!==(spec[key]??null))throw Error('TTG printed '+key+' changed: '+spec.id);
   }
-  // Older UA56BT entries print traits as separate tokens; TTG-077 uses\n  // one official slash-composite field. Normalize ONLY this proved card\n  // to the same V2 trait keys; sourceRecord remains untouched.\n  if(spec.id==='TTG-1-077'&&JSON.stringify(c.traits)!=='["大グレン団／ガンメン"]')\n   throw Error('TTG-077 official Gunmen traits changed; re-review required');\n  return {...spec,traits:spec.id==='TTG-1-077'?['大グレン団','ガンメン']:(c.traits||[])};
+  // Older UA56BT entries print traits as separate tokens; TTG-077 uses
+  // one official slash-composite field. Normalize ONLY this proved card
+  // to the same V2 trait keys; sourceRecord remains untouched.
+  if(spec.id==='TTG-1-077'&&JSON.stringify(c.traits)!=='["大グレン団／ガンメン"]')
+   throw Error('TTG-077 official Gunmen traits changed; re-review required');
+  return {...spec,traits:spec.id==='TTG-1-077'?['大グレン団','ガンメン']:(c.traits||[])};
  });
 }
 export function createTtgV2Pack(){return createUniversalPack({id:'gurren-lagann',version:'v2-c-20261015',cards:[...verifiedPilotCards('gurren-lagann'),...verifiedTtgV2Additions()]});}
