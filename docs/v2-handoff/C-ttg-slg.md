@@ -1,5 +1,19 @@
 # [V2-C] 天元突破 TTG-1 ＋ 我獨自升級 SLG-1 交接
 
+## 2026-10-15 16:04 後：V2-C 停工保全與 PR70 穩定核心同步（本段優先）
+
+本輪**暫停新增卡、沒有新增任何卡號**；僅保存 C 已完成成果，接入 A 最新**已由同 SHA 雙 CI 驗證**的穩定核心，並更新交接。不得改動 PR #70 branch、main 或部署正式站。
+
+- **同步來源**：PR #70 `75468867b7ec4f5cdd78661e5b98f400494fb94d`。A [全套 Node22 1143/1143 PASS](https://github.com/will00t-debug/Ua/actions/runs/38694133956) 和[五作品 60/60 finished](https://github.com/will00t-debug/Ua/actions/runs/38694131961) 均為此同一 SHA；A-core.md 早期舉例的 `3f634857` 已非最新。以此來源的共用 engine/pack/ability-templates/registry/共用測試作為本次合流基線，**沒有編輯共用檔案內容**。
+- **C 原始保全 HEAD**：`979eed8530721fae53c63201e033a5297464c853`，最新 C Node22 [#38694472100](https://github.com/will00t-debug/Ua/actions/runs/38694472100) 為**系列專測 32/32 PASS**、**全套 1146/1148 PASS、2 FAIL**。兩項都是主控共用 `tests/universal-v2-title-pack-contract.test.mjs` 的固定 TTG23 卡號清冊斷言。A 在 PR #70 已有 C 的既有 TTG3、SLG18，**但尚未登錄 C 新驗收 TTG-1-077**；這不是 C 資料遺失或通用核心必然失效。
+- **精確目前計數**：PR #70 TTG 20 Pilot + 3 新 = **23/81**（缺58），SLG **18/80**（缺62）；本 PR #72 保存第四張 `TTG-1-077`，故 C 為 **TTG24/81**（缺57）、**SLG18/80**。A 其餘四作品數據以 A 當前官方鎖定清冊為準，不能沿用過去 175 總數快照；同步 A 的 B 新增6後其 PR70 合計 181／700、C 預計 182／700（差異僅 +TTG-077）。
+- **A 與 C 專有檔實際內容差異，共 7 個檔**：`dist/universal-v2/ttg-pack.mjs`（TTG-077 自己場外可選回收 + 斜線複合特徵僅該卡印刷來源驗證後局部轉換）、`dist/universal-v2/title-packs/ttg.mjs`（第4張來源／證據／版本）、`tests/universal-v2-ttg-port.test.mjs`（TTG24 正反例、非法來源／可跳過、另 TTG010/023 fail-closed）、`tests/universal-v2-slg-port.test.mjs`（正確 PR70/PR72 歸屬與 SLG036/037 fail-closed）、`audit/v2-c-ttg-status.csv`（TTG-077 v2_batch3 並且原三張改標已在 A）、`audit/v2-c-slg-status.csv`（18 張改標 `pr70_integrated_contribution`）、`docs/v2-handoff/C-ttg-slg.md`（獨立最新交接及證據）。C 另有3個獨立檔 `dist/universal-v2/slg-pack.mjs`、`dist/universal-v2/title-packs/slg.mjs`、`.github/workflows/v2-c-ttg-slg-tests.yml` 和 A 目前完全相同，保留而不重寫。
+- **TTG-077 正反例及阻塞**：官方 `UA56BT/TTG-1-077` 赤4/AP1 場域，登場時由**自己的場外**選「ガンメン」特徵卡最多1張回手，0張可跳過；無生命 Trigger。C 只以來源精確校驗把 `大グレン団／ガンメン` 轉換為這張卡的 V2 特徵條件，不改官方 sourceRecord，也不把檢索牌庫、對手場外或強制回收視為合法。反例已在 C 專測覆蓋，C 仍須保留全部 UID 守恆。
+- **A 下一步**：在自己主線按**精確卡號**更新註冊清冊 `TTG-1-005,014,019,077`、TTG24、缺57與整體可用卡總量；兩個 `title-pack-contract` 來源鎖定測試必須由 A 改，C 不能越權改它們。既有 [PR70 具體交接留言](https://github.com/will00t-debug/Ua/pull/70#issuecomment-6186220563) 可直接接續，不要反覆跑已知必失敗的全整合。
+- **仍未移植的另四候選** TTG-010/023（指定牌庫頂 N 張選取、剩牌任意排序置底、符合條件後棄牌）與 SLG-036/037（抽3棄2 的逐張成本與依原本 BP 限定的己方場外回收）維持 fail-closed，不能錯用一般全牌庫檢索等不等價模板。完整 Body／Life 分欄在兩份 CSV。
+- 本次同步以 A 的已通過快照作底，僅 overlay C 擁有的卡包、兩份 CSV、兩份專測及 C handoff；保留 C 原 commit 於新整合提交的父系。此操作不在 A 分支提交、不動共用核心、不修改正式站。系列專測只需針對**新 C 整合 commit**驗一次；已知的兩個來源鎖定共用失敗由 A 處理，不反覆空跑。
+
+
 ## 最新結果優先（2026-10-15 台灣／本段覆蓋下方歷史快照）
 
 - **PR #70 A HEAD** `75468867b7ec4f5cdd78661e5b98f400494fb94d` 在 Node22 [Actions #38694133956](https://github.com/will00t-debug/Ua/actions/runs/38694133956) 為 **1143/1143 PASS**；該版另有 60 局矩陣成功。**C 已同步此基線**，安全雙親 merge `3738f56b7e14496e5232271157e2a6c42969e4fb`，C 專有檔與 TTG077 真卡保留。
