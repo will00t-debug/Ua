@@ -55,25 +55,25 @@ function lifeHit(id){
  assert.equal(s.pending?.kind,'life-trigger');
  return {s,victim};
 }
-test('registry adds exact 59 official BLEACH IDs to 15 Pilots, never duplicates or ghosts',()=>{
+test('registry adds exact 61 official BLEACH IDs to 15 Pilots, never duplicates or ghosts',()=>{
  assert.equal(V2_TITLE_CONTRIBUTIONS.bleach,contribution);
  assert.equal(REAL_V2_PILOT_IDS.bleach.length,15);
- assert.equal(contribution.entries.length,59);
+ assert.equal(contribution.entries.length,61);
  assert.deepEqual(sorted(contribution.entries.map(x=>x.id)),sorted(BLEACH_V2_NEW_IDS));
- assert.equal(new Set(contribution.entries.map(x=>x.id)).size,59);
+ assert.equal(new Set(contribution.entries.map(x=>x.id)).size,61);
  assert.ok(!BLEACH_V2_NEW_IDS.some(id=>REAL_V2_PILOT_IDS.bleach.includes(id)));
  assert.deepEqual(sorted(Object.keys(registered.cards)),
   sorted([...REAL_V2_PILOT_IDS.bleach,...BLEACH_V2_NEW_IDS]));
- assert.equal(Object.keys(registered.cards).length,74);
- assert.equal(Object.keys(standalone.cards).length,74);
+ assert.equal(Object.keys(registered.cards).length,76);
+ assert.equal(Object.keys(standalone.cards).length,76);
  const info=listRegisteredV2Titles().find(x=>x.title==='bleach');
  assert.equal(info.baselinePilots,15);
- assert.equal(info.newlyContributed,59);
- assert.equal(info.totalV2Cards,74);
+ assert.equal(info.newlyContributed,61);
+ assert.equal(info.totalV2Cards,76);
  const inventory=v2InventoryForTitle('bleach');
  assert.equal(inventory.total,276);
- assert.equal(inventory.pilotImplemented,74);
- assert.equal(inventory.blocked,202);
+ assert.equal(inventory.pilotImplemented,76);
+ assert.equal(inventory.blocked,200);
  assert.deepEqual(inventory.pilotIds,sorted(Object.keys(registered.cards)));
 });
 
