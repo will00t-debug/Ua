@@ -1,56 +1,53 @@
-# [V2-A] 共用核心與五作品整合交接（2026-10-15，台灣）
+# [V2-A] 共用核心與五作品整合交接 — BLC-1-030 回歸修復穩定版
 
-此檔為主控在 **PR #70 / `feature/universal-rules-v2-foundation-20261014`** 的**目前完成成果**，不是早期 06:30 快照。核對開發規範：AGENTS.md；不碰 main、不部署正式網站。每次驗證請釘住新的 HEAD，禁止混加不同時間的卡數或借用舊版 CI。
+**台灣時間 2026-10-15；整合主線 PR #70（Draft）**  
+**給 V2-B 同步的最後雙 CI 綠燈程式基準：`3f6348578b7e3e32a6cd12c66475e8228db0b690`**（`3f634857`）。  
+**最新文件快照另有純文件提交** `bb14e5d74000c7a9284944315afdf52ee4be5b4e`（525 張清冊及 B 逐卡 CSV）；後續本文件再追加一筆純文件提交。請以每次 GitHub 最新 HEAD／工作樹及實際 CI SHA 為準，不可把文書 SHA 的 CI 宣稱成已執行。
 
-## 当前主控 HEAD
-`92874513dde0231a6a9e317296013b8a7e48bf9a`
+## 最新阻塞診斷與修復（停止擴卡；未重做五作品）
 
-### GitHub 受控整合記錄
-- [V2-E] 舊一輪 audit-only 工具曾以 pinned-source tree 保留於主控（舊文內 35 Pilot 為**歷史快照**，不可用作現值）。
-- [V2-B] PR #73／來源 `166ec22edc393ed7fd47e6928eb27ec77907d8b9` → 主控受控整合 `6354ff965056ebc5c9f2b86e981b43a366b08ed1`；只採 BLEACH 工人檔與專測。
-- [V2-C] PR #72／來源 `a8ed77eb795f3578fbd79af44d9652cabfa62326` → `a0bbba2b5a025d130582d7280726b536859b25f9`；只採 TTG、SLG 專屬檔及各自 QA。
-- [V2-D] PR #74／來源 `a22aae190df206c5bd4f0d39ade190e1d8a71b42` → `ebfdadc8a22c4943795a09c5b47953c3e8f23018`；只採 SAO/MST 專屬檔、MST 完整官方原文複製、全真卡牌組及 QA。
-- 各來源 PR 仍保留 Draft；**不是將 PR #71～#74 合併 main**，也沒有 force push。主控之後的新核心補丁沒有回寫各工人的獨立分支。
+**問題根源經實際 GitHub Actions log 定位，不是推測：**
 
-## 單一 V2 registry 最新卡數（不含異圖/AP）
+1. `a44159c1e41cf147f9ae43668001620b9e7b9364` 將 BLC-1-030 加入 `bleach-pack.mjs`，BLEACH 獨立 addon 56 → 57；`title-packs/bleach.mjs` 仍強制 `entries.length===56`。因此 `Error: BLEACH V2 contribution cardinality or ID drift` 在 registry 載入階段拋出，使完整 `test` 和矩陣多數測試未進入真對局。當時 `test` **1023/1040、17 失敗**；矩陣未執行 60 局。
+2. 來源 fingerprint `checkedBleachAddonDefinition()` 要求官方卡庫身份、商品編號、名稱、顏色、能量、AP、BP、產能、事件類別、效果全文完全相符。新加入的 BLC-1-030 通過此條件；**不是卡面資料錯誤**。但舊的獨立拒絕測試仍斷言「BLC-1-030 未移植」，以及其他清冊僅允許 56／總 71／已移植 174；這些已不符合**明確來源鎖定的新增卡號**，不是應將斷言改為任意動態數字。
+3. `9a782b5b06bd1769c30c0b4e84ac643b3f7989c5` 修復真實核心漏網：依官方 **Q1119**，強制「選 1 張」的事件在敵方前線**沒有合法目標時不能使用**，不得付 AP 或送事件至場外；自動合法操作產生器應預先拒絕。沒有任意 BP 上限，仍須透過 pending 選擇合法對手 UID。該版已保留 57 addon／72 BLEACH，完整 test **1112/1117、5 失敗**，矩陣則因固定 174 舊數字拒跑。
+4. 最終程式修復 `3f6348578b7e3e32a6cd12c66475e8228db0b690`：修正多檔**來源鎖定清冊測試**與矩陣精確數字為 175，重新驗證 57 新卡／15 舊 Pilot／72 BLEACH；`tests/universal-v2-unbounded-rest.test.mjs` 新增實際 Q1119 無敵方目標不得用事件、可選事件無目標可使用、官方 **Q91** 已 REST 的角色仍可被選並 REST。保留原來 BP 9000 仍合法必選、不允許 null、支付 AP、UID 守恆與延後佇列驗證。
+5. 隨後文件專用提交 `bb14e5d...`：更新 `docs/v2-handoff/B-bleach-inventory.csv` 單張 030 的 29 欄驗收狀態；新快照 `docs/V2_UNPORTED_IDS_525.md` 排除已入 V2 的 030；舊 `526` 快照留存且標示歷史。**沒有變更實際效果或增加另一張卡。**
 
-| 作品 | 官方一般卡 | 舊 Pilot | 本次新貢獻 | 正式 V2 registry | 未移植 | 全效果 FAQ 終驗 |
+## 嚴格分層卡表基準（去除異圖/AP）
+
+| 作品 | 官方普通卡 | 舊 Pilot | V2 新貢獻 | V2 已登入 | V2 未移植 | 全部官方效果/FAQ 終驗 |
 |---|---:|---:|---:|---:|---:|---:|
-| BLEACH | 276 | 15 | 56 | **71** | 205 | 0 |
-| TTG | 81 | 20 | 3 | **23** | 58 | 0 |
-| SLG | 80 | 0 | 18 | **18** | 62 | 0 |
-| SAO | 183 | 0 | 39 | **39** | 144 | 0 |
-| MST | 80 | 0 | 23 | **23** | 57 | 0 |
-| **總計** | **700** | **35** | **139** | **174** | **526** | **0** |
+| BLEACH | 276 | 15 | 57 | **72** | **204** | **0（不冒稱終驗）** |
+| 天元突破 TTG | 81 | 20 | 3 | **23** | **58** | 0 |
+| 我獨自升級 SLG | 80 | 0 | 18 | **18** | **62** | 0 |
+| 刀劍神域 SAO | 183 | 0 | 39 | **39** | **144** | 0 |
+| 無職轉生 MST | 80 | 0 | 23 | **23** | **57** | 0 |
+| **總計** | **700** | **35** | **140** | **175** | **525** | **0** |
 
-- 除了原兩組 Pilot 全真卡牌組，新私人預覽現在可選擇 **BLEACH 紫／綠、TTG 紅、SLG、SAO、MST** 共六組 50 張真卡 V2 牌組，雙方可自由搭配。同一 reducer，不轉呼叫舊作品引擎。
-- 完整剩餘 **526 張真實卡號**：[`docs/V2_UNPORTED_IDS_526.md`](../V2_UNPORTED_IDS_526.md)，亦可在當前 commit 執行 `node scripts/v2-unported-report.mjs` 重新比對。
-- MST 完整 80 張官方日文印刷元資料改由 `dist/universal-v2/sources/mst-inventory.mjs` 讀取；**不修改**舊主線含 12 個占位的 `dist/mushoku-tensei.mjs`。
-- 各來源記錄 `sourceRecord/definition/evidence` 經 `contract.mjs` 比較數值、印刷卡號、文本錨點、測試路徑、DSL/vanilla proof；`tests/fixtures/v2-integrated-id-manifest.mjs` 維持**明確的 139 個新增卡號清冊**，不是動態計數讓缺卡蒙混過關。
+卡號鎖定來源：`tests/fixtures/v2-integrated-id-manifest.mjs` 的 BLEACH 精確 57 新卡號 + 15 Pilot；`dist/universal-v2/title-packs/bleach.mjs` 契約拒絕來源／數值／重複錯誤，**不能用動態計數迴避漏卡測試**。其餘 TTG/SLG/SAO/MST 不變。已註冊 Pilot 數不是 700 張完整可玩進度，也不是每張官方 FAQ 逐例通過。
 
-## 修復後的核心驗證（主控 V2 HEAD）
+## 同一程式 SHA 的實際測試結果（Node 22）
 
-1. Once-per-turn 測試原來從 **hand** 重複抽到同一張 UID，未真的預載第二／第三實體卡。現在測試準備依卡號和 UID 確保 3 張 K01／2 張 K02 不重複；真實牌庫張數與 `initialCounts` 守恆，拒絕不消耗名義限次，真正使用會消耗，回合末若手牌超過 8 張**必須依法處理** `chooseHandLimit` 才會輪替。引擎限次行為未用修改斷言掩蓋。
-2. AI 阻擋 BP 相等時會被擊敗，正常／困難 AI 現在用嚴格 BP 大於判斷存活；新增同值、較高值、瀕死三個回歸。
-3. 通用 `buffOwnField` 指定自己場上合法角色、可排除自身並作本回合 BP 修正；實際成本可由 `payDiscardThen` 閘門暫停接續，目標合法性、對手 UID 隱私與原子支付均有 QA。
-4. `oncePerTurnThen` 以實體 UID 或同名共享記帳，真正付出發動決定才消耗限次；禁止巢狀無審核 gate。
-5. `restEnemyUnderBp` 已可指定 `optional:false` 強制選擇／`optional:true` 可放棄，待選期間不得先抽後續卡；有目標時禁止 null 選項，無合法目標不產生虛構對象。
+- **全套回歸 `test`：1119/1119 PASS、0 FAIL**，`3f634857`，GitHub Actions [38678776548](https://github.com/will00t-debug/Ua/actions/runs/38678776548)。
+- **五作品完整 50 張真卡 AI 矩陣：60/60 finished、0 失敗**，**同一 `3f634857`**，GitHub Actions [38678772958](https://github.com/will00t-debug/Ua/actions/runs/38678772958)；[保存的 JSON Artifact](https://github.com/will00t-debug/Ua/actions/runs/38678772958/artifacts/11947446978)。
+- 矩陣為 10 組不同作品配對 × 2 個先手 × 3 固定牌序 seed；每步走同一 V2 reducer 的合法 action，檢查不同實體卡片 UID 與已註冊 50 張真卡。**60 局成功不等於 175 張完整 FAQ 通關，也不等於其餘 525 張有能力**。
+- 前一版最後雙 CI 不一致：`a44159c` [test 38677164665](https://github.com/will00t-debug/Ua/actions/runs/38677164665) 17 fail、[matrix 38677160136](https://github.com/will00t-debug/Ua/actions/runs/38677160136) 在載入期中止。修復版測試反例已分開證明是 registry 阻塞、舊清冊和真正事件合法性差異。
 
-### 真正執行的 Node 22 GitHub Actions 證據
-- 五作共用 Node `npm test`：**1112／1112 passed, 0 failed**，commit `89216b4506d82083728809343afaf6e900fdd818`，<https://github.com/will00t-debug/Ua/actions/runs/38676003862>。
-- 五作品實際整合跨作品真卡全局矩陣：**60／60 完整對局**（10 作品兩兩配對 × 2 種先手 × 3 種固定 seed），每步驗證合法 AI 操作、週期 UID 守恆與真實勝負；CI `#38676228357`，<https://github.com/will00t-debug/Ua/actions/runs/38676228357>，commit `92874513dde0231a6a9e317296013b8a7e48bf9a`。結果已於 GitHub Actions Artifact `v2-integrated-five-title-matrix` 保留 JSON。**60 局不等於逐卡 700 張全效果/FAQ 驗收。**
-- 上述成功是**各自固定 SHA** 的結果；本交接文件更新後會再由 CI 驗證最新 SHA。不把工人 branch 的歷史失敗或歷史測試數當成當前結果。
+## 030 日本官方來源及使用合法性
 
-## 尚未解鎖的 P0（按可受益卡數優先）
+- 官方 [UA08BT/BLC-1-030 The Jail](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA08BT%2FBLC-1-030)：黃 2、AP 1、事件，印刷效果「相手のフロントLのキャラを1枚選び、レストにする。」；無 BP 上限、強制選**一**張、不可 `uid:null`。
+- [日本官方 Q1119](https://www.unionarena-tcg.com/jp/faq/list.php?number=1119)：事件若必須「選 1 張」而**無合法目標，不可以使用**（無須也不可先消耗 AP）；「最多 1 張」可選 0 張則不適用相同限制。
+- [日本官方 Q91](https://www.unionarena-tcg.com/jp/faq/list.php?number=91)：已 REST 的角色仍可被指定 REST；不用為使其狀態再變化而剔除。生命 ACTIVE trigger 依共同 V2 引擎為指定己方角色 ACTIVE 並本回合 BP+3000，和事件一般效果分流。
+- Test 覆蓋 `tests/universal-v2-unbounded-rest.test.mjs`、`tests/universal-v2-bleach-enemy-control.test.mjs`、`tests/universal-v2-bleach-registry.test.mjs`；後續 B 應按實際官文擴增逐例，尚不能宣稱 BLC-1-030 所有 FAQ 終驗。
 
-1. **精確一般成本與指定支付**：可指定 AP 卡／可選擇多張手牌及場外→移除真實成本、連鎖支付後效應／事件合法空目標條件。
-2. **Raid 與連鎖離場**：多層 Raid、底板重建及已存在牌序／NAME 適配、合法移動/替換與後續佇列（TTG 027/031/032/061/062/073/074 等）。
-3. **常駐來源綁定效果**：按印刷狀態動態 BP/能源與免疫，不等同一回合拍照 Buff；技能歸屬與同名限制（BLC-4-065/068）。
-4. **觸發與延遲效果**：場外加入手牌引發的來源判定與免費 REST 能源線登場（SLG-1-014／Q2025）、攻擊結束後與回合結束後退場、真生命 Trigger 各種替代時序。
-5. **牌頂處理、複合目標與序列**：多張依任意排列置頂/底、可送多張場外（BLC-4-013）、任意敵方前線強制 REST（BLC-1-030，日官沒有 BP 門檻，不能把 BP 3000 模板硬套）、各作品特徵含複合別名的篩選。
+## B／C／D／E 如何安全同步
 
-## 下輪 B/C/D/E 交接建議
-- B/C/D 先 `git fetch` 主控分支並核對本檔與最新 registry／ABI 後，在**自己的分支**移植更多真卡；只改自己原本主權的 title-pack/獨立 pack 和專測，勿越權修改核心、總清冊或共用 HTML。
-- 遇到尚無精確通用能力的印刷卡，在 PR #70 留 `[V2-CORE-REQ]` + 官方網址、FAQ、合法動作與反例，不要用近似 DSL 假裝。
-- E 應從**此整合 HEAD**重新跑同一 SHA 的全部測試及 60 局矩陣，更新可玩預覽的真實瀏覽器步驟；E 原 `docs/v2-handoff/E-acceptance.md` 對 35 卡／未整合等敘述是**歷史**，不能當成現在 NO-GO 的定論。
-- 手機瀏覽器真機、遠端 Vercel 私人 preview 通用互動與 700 張每張完整效果仍**未全面驗收**；現階段只稱「五作品少部分實卡可玩版」，不以通過率推導全部卡進度。
+1. 在自己的分支 `git fetch origin feature/universal-rules-v2-foundation-20261014`，核對 GitHub 上 `docs/v2-handoff/A-core.md` 及最新 PR #70 HEAD；若需逐個核心修正，來源碼為已證實雙 CI 綠燈的 `3f634857`。
+2. B：**不要再把 BLC-1-030 列在「尚未移植」阻塞卡**；B 原有 56 張貢獻不重複，A 在同一 `bleach-pack.mjs` 新增第 57 張；來源表增至 BLEACH 72／204。B 若更新自己的 PR #73，需受控 merge／cherry-pick，保留既有獨立改動，不覆蓋其他作品主權檔，且重新在同步後的 HEAD 跑 CI。
+3. C、D：沒有修改 TTG/SLG/SAO/MST 定義及對應資料；不可把 A 的重新計數當作新增了你們的卡。E：從**同一固定 HEAD**重跑清冊、完整 V2 回歸及 60 局，官方全效果驗收仍保留 0 直到有逐卡正反例。
+4. **限制不變**：V2 Draft，不合併 `main`、不部署正式站；私人預覽仍用已指定的真卡 50 張 deck，030 不是目前預設 deck 的成員。預覽可用與 registry 已載是不同指標。
+
+## 下階段 P0（本輪凍結擴卡）
+
+本輪專注修最新回歸，不啟動下一批新卡。之後才處理通用非 AP 支付、持續效果、Raid 多層與時序、生命 Trigger、延遲觸發；遇到核心缺口請在 PR #70 提交精確卡號、日文印刷和反例，而不是沿用不同作品舊引擎或把 unsupported 卡標成通過。
