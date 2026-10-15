@@ -1,4 +1,45 @@
-# [V2-B] BLEACH 通用引擎 V2 全卡移植交接
+# [V2-B] BLEACH V2 官方卡移植最新交接（2026-10-15 14:24 台灣）
+
+> **最新狀態優先於下方過往交接記錄。** 分支 PR #73 `feature/v2-bleach-port-20261015`，整合主線 PR #70 `feature/universal-rules-v2-foundation-20261014`。保留 Draft、不修改 main、不部署正式站。本次新卡**只進 PR #73**，A 尚須更新共用固定卡號清冊與入口；主線 PR #70 仍為 72 張 BLEACH。
+
+## 2026-10-15 新增批次：UA04NC 牌頂檢視／登場抽牌與完整生命 Trigger
+
+| 工作項 | 本 B 分支正式 registry | 已進 PR #70 | 不含 AP/異圖總數 |
+|---|---:|---:|---:|
+| 既有 BLEACH Pilot | 15 | 15 | 276 |
+| 本次之前正式 contribution | 57（包含 BLC-1-030） | 57 | — |
+| **本次新增** | **+2：BLC-3-006、BLC-3-009** | **+0（待 A 審查）** | — |
+| **合計 V2 已移植** | **74/276** | **72/276** | **276** |
+| 尚未移植 | **202** | **204** | — |
+| 全部官方 FAQ 完整終驗 | **0** | **0** | — |
+
+**BLC-1-030 已實作，絕不可再列未移植：** A 核心已用 `restEnemyFrontOne(optional:false)` 正確執行不限 BP 的強制 REST，官方 Q91 已 REST 也可合法選；Q1119 無可選敵前線時不可使用事件、不付 AP；生命 ACTIVE 與 UID 守恆均經測試。舊文檔「030未支援」**只屬修復前歷史，非目前現況**。A-core 最新交接：[A-core.md](https://github.com/will00t-debug/Ua/blob/feature/universal-rules-v2-foundation-20261014/docs/v2-handoff/A-core.md)。
+
+### 兩張新卡的日本官方原卡與完整能力
+
+1. [**UA04NC/BLC-3-006 朽木白哉**](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA04NC%2FBLC-3-006)：紫，需求能源 1，AP 1，BP 2000，產能紫1，護廷十三隊；**登場時私密查看牌頂3張，最多1張送場外，其餘按自己決定的順序放回牌頂**。生命 ACTIVE 可指定己方場上1個角色改為 ACTIVE、本回合 BP+3000。V2 使用既有 `inspectTopArrange(count:3,toOutside:true,rest:'top')`；不得公開 UID／允許非法 UID／強迫一定送場外。正式紫色50張牌組測無送場外重新排序、送1張、非法 UID、對手私密性與 UID 守恆；ACTIVE 真生命翻牌負例亦測。
+2. [**UA04NC/BLC-3-009 日番谷冬獅郎**](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA04NC%2FBLC-3-009)：綠，需求能源 3，AP 1，BP 2000，產能綠2，護廷十三隊；**登場時抽1張**，生命 **COLOR 從自己的手牌**讓需求能源≤2／AP1 的綠色角色 ACTIVE 登場，可在前線或能源線。V2 明確設定 `triggerEffect: {op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1}`；不可冒充原 BLEACH 紫色的從場外部署 COLOR。正式綠色50張牌組驗抽1、手牌目標/非法對手 UID、零 AP 支付、ACTIVE 登場與 UID 守恆。
+
+兩張都使用 `checkedBleachAddonDefinition()` 與 `title-packs/bleach.mjs` 共用唯一官方數值、原文 fingerprint 與卡號；`sourceRecord/definition/evidence` 完整，原 15 Pilot 無重複註冊；逐卡 CSV 仍是 **276 行、29 欄**。上述是**可運作的 V2 card profile**，不是宣稱已走完官方所有 FAQ 終驗。
+
+### 程式與回歸證據（依實際 SHA）
+
+- 依賴 A 已確認雙 CI 綠燈的核心 `3f6348578b7e3e32a6cd12c66475e8228db0b690`（[1119/1119](https://github.com/will00t-debug/Ua/actions/runs/38678776548)、[60/60 局](https://github.com/will00t-debug/Ua/actions/runs/38678772958)），已同步 A 交接版 HEAD `45ea2e3bc0db`。本次**沒有修改共用 engine／pack／ability-templates／入口**。
+- 本批新卡實作 commit `1132f1cbb1046fc44bcc730d10a1c956b0d10a8c`；title contribution `14b16e51d5720ac8b98c8bb892f0889c38e2af3b`；真卡六項測試 commit `232750181f63ab094b2999df09174acf55b8ff7e`；測試準備和 UID 守恆修正 `c74b1496a5ae59d77bc40d5c11d630ac5253c9d6`；後續卡號與 CI 接線 commit 以 HEAD 為準。
+- [B 分支 CI run **38692103562**](https://github.com/will00t-debug/Ua/actions/runs/38692103562)：BLEACH 正式 registry / 專屬真效果 **47/47 通過**，與 A 核心同步後 **47/47 通過**，共用相關機制 **56/56 通過**。
+- 同一 CI 的完整 `npm test` 為 **1123/1127，4 失敗**，**全是共用舊固定卡號/計數測試**：`universal-v2-bleach-real-deck.test.mjs` 原期望 BLEACH 72（現在74）；`universal-v2-title-pack-contract.test.mjs` 兩項仍鎖72/175；`universal-v2-ttg-port.test.mjs` 原固定 BLEACH 72。**不是本批兩張效果測試失敗**。待 A 更新嚴格 source-pinned fixture 精確加 `BLC-3-006/009`、預期五作品合計 175→177、未移植總數 525→523，不能改成動態計數／跳過全部測試。
+- PR #70 上游尚未整合本批兩張，本分支不能把 `74` 說成已在 PR #70 主線或 Production 可玩；共有 **202 張仍未完整移植**，其中 `BLC-2-055` 牌頂/底、`BLC-1-074` DAMAGE2、`BLC-2-063` 兩次攻擊、`BLC-4-013` 任意張牌頂/場外等仍欠精確核心，不使用近似模板。
+
+### 下一批可行性審視（缺核心時不冒充）
+
+- `BLC-1-005`：主要階段 REST 自己**作成本**，再強制 REST 敵前線。A 已有 `restEnemyFrontOne` 但只在現有 `onPlay/onAttack` 時點可用，`pack.mjs` 的 `mainAbility` 僅支援指定 `chooseTwoAfterOwnRaid`；還缺可付自身 REST 成本的啟動主要動作。**仍未移植**；需要前線角色已 REST 不可再付成本、零合法敵人不得支付、成功後雙方各1 UID 轉 REST，非法／敵方 UID 拒絕。
+- `BLC-3-009` 的 COLOR 手上選擇已是本次成功的新移植；下一批應優先搜尋同樣已存在完整 `deployHandCharacter` 或 `inspectTopArrange` 而**無額外被動／副能力**者。只要任一項印刷效果／時點／成本缺失即維持未移植，不為衝數填空。
+
+---
+
+## 2026-10-15 13:27 及更早的歷史交接封存（**以下 72/204、71/205、56 addon 及「030 未移植」均為舊快照，不能當現況**）
+
+# [歷史工作記錄] BLEACH V2 交接（2026-10-15 13:27 及更早）
 
 > **2026-10-15 13:27（台灣）續作狀態核對**：PR #73 HEAD `e3446cd33dc082d6fbcf73aba6be4f6626451c16` 已安全合入 PR #70 HEAD `45ea2e3bc0db8a0b1cb75be50d346469439fe1cb`，compare 為 ahead、behind=0；不需重複 merge。正式 registry 目前 **BLEACH 72/276＝原 Pilot 15＋獨立新增 57（含 BLC-1-030）**，尚未移植 204，完整官方 FAQ 終驗仍為 0。最新 B CI [38682459477](https://github.com/will00t-debug/Ua/actions/runs/38682459477) 結論 success；A-core 指定雙 CI 綠燈核心基準 `3f634857`：全套 1119/1119、真卡 60/60 局，見 [A-core.md](./A-core.md)。**下方歷史 71/205、56 addon 和「BLC-1-030 未移植」為舊快照，不是本次最新現況**。逐卡實際狀態以 29 欄 CSV、正式註冊清單及最新 A-core 為準；生產環境未部署。這次只更新交接，沒有新增卡片或修改共用核心。
 
@@ -137,7 +178,7 @@
 - **嚴格未更動** `engine.mjs`、`pack.mjs`、`ability-templates.mjs`、共用入口、AI、`real-card-pilots.mjs`。
 - 02:00 前產出實際 276 卡盤點；04:30 前首批可整合 commit；05:30 後以修錯與交接為主。保留 Draft。
 
-## 剩餘 205 張完整身份卡號
+## 歷史未移植 205 張快照（2026-10-15 早期；已包含現已移植 030、006、009，禁止作現況）
 
 **BLC-1 (67)**：BLC-1-003、BLC-1-004、BLC-1-005、BLC-1-006、BLC-1-007、BLC-1-009、BLC-1-011、BLC-1-014、BLC-1-015、BLC-1-016、BLC-1-019、BLC-1-020、BLC-1-022、BLC-1-023、BLC-1-024、BLC-1-025、BLC-1-026、BLC-1-027、BLC-1-028、BLC-1-030、BLC-1-031、BLC-1-032、BLC-1-033、BLC-1-038、BLC-1-041、BLC-1-042、BLC-1-044、BLC-1-046、BLC-1-047、BLC-1-050、BLC-1-051、BLC-1-053、BLC-1-054、BLC-1-055、BLC-1-056、BLC-1-058、BLC-1-059、BLC-1-060、BLC-1-061、BLC-1-062、BLC-1-063、BLC-1-065、BLC-1-069、BLC-1-070、BLC-1-073、BLC-1-074、BLC-1-076、BLC-1-077、BLC-1-078、BLC-1-079、BLC-1-080、BLC-1-081、BLC-1-084、BLC-1-085、BLC-1-087、BLC-1-088、BLC-1-091、BLC-1-092、BLC-1-093、BLC-1-095、BLC-1-096、BLC-1-098、BLC-1-101、BLC-1-104、BLC-1-106、BLC-1-108、BLC-1-109
 
