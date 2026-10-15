@@ -686,6 +686,36 @@ const PRINTED_PINS=Object.freeze({
     "trigger": "final",
     "traits": [],
     "effectJa": "自分のAPカードを2枚まで選び、アクティブにする。"
+  },
+  "SAO-1-075": {
+    "kind": "stepInspectTwoAnyOutside",
+    "nameJa": "シリカ",
+    "color": "green",
+    "energy": 3,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 3,
+    "type": "character",
+    "trigger": null,
+    "traits": [
+      "ALO"
+    ],
+    "effectJa": "【ステップ】（自分の移動フェイズにフロントLからエナジーLへ移動できる）\n【登場時】自分の山札の上から2枚見る。その中から望む枚数を望む順で自分の山札の上に置き、残りを場外に置く。"
+  },
+  "SAO-1-089": {
+    "kind": "stepPeekTopOrBottom",
+    "nameJa": "シノン",
+    "color": "green",
+    "energy": 2,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "traits": [
+      "GGO"
+    ],
+    "effectJa": "【ステップ】（自分の移動フェイズにフロントLからエナジーLへ移動できる）\n【登場時】自分の山札の上から1枚見る。そのカードを自分の山札の上か下に置く。"
   }
 });
 export const SAO_V2_PILOT_IDS=Object.freeze(Object.keys(PRINTED_PINS).sort());
@@ -726,6 +756,14 @@ export function verifiedSaoV2Cards(){
    card.templateEffects={onPlay:[{template:'inspectTopAnyOutside',count:2,rest:'top'}]};
   if(pin.kind==='recoverApTwo')
    card.templateEffects={onPlay:[{template:'recoverAp',count:2}]};
+  if(pin.kind==='stepInspectTwoAnyOutside'){
+   card.step=true;
+   card.templateEffects={onPlay:[{template:'inspectTopAnyOutside',count:2,rest:'top'}]};
+  }
+  if(pin.kind==='stepPeekTopOrBottom'){
+   card.step=true;
+   card.templateEffects={onPlay:[{template:'peekTopOrBottom'}]};
+  }
   if(pin.kind==='impactNull')card.impactNull=true;
   if(pin.kind==='onPlayBounce')
    card.templateEffects={onPlay:[{template:'bounceOwnOtherUnderEnergy',energy:1}]};
@@ -742,7 +780,7 @@ export function verifiedSaoV2Cards(){
  });
 }
 export function saoV2Pack(){
- return createUniversalPack({id:'sword-art-online',version:'v2-d-sao-pilot-6',
+ return createUniversalPack({id:'sword-art-online',version:'v2-d-sao-pilot-7',
   cards:verifiedSaoV2Cards()});
 }
 
