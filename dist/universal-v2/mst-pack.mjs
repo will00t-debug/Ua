@@ -297,6 +297,21 @@ const PRINTED_PINS=Object.freeze({
     "traits": [],
     "trigger": "final",
     "effectJa": "自分のAPカードを2枚まで選び、アクティブにする。"
+  },
+  "MST-1-061": {
+    "kind": "onPlayBuffOwnOther1000",
+    "nameJa": "ナナホシ",
+    "color": "green",
+    "energy": 1,
+    "ap": 1,
+    "bp": 2000,
+    "gen": 1,
+    "type": "character",
+    "traits": [
+      "ラノア魔法大学"
+    ],
+    "trigger": null,
+    "effectJa": "〖登場時〗 自分の場の他のキャラを1枚まで選び、このターン中、BP+1000。"
   }
 });
 export const MST_V2_PILOT_IDS=Object.freeze(Object.keys(PRINTED_PINS).sort());
@@ -323,11 +338,14 @@ export function verifiedMstV2Cards(){
    card.templateEffects={onPlay:[{template:'bounceOwnOtherUnderEnergy',energy:1}]};
   if(pin.kind==='recoverApTwo')
    card.templateEffects={onPlay:[{template:'recoverAp',count:2}]};
+  if(pin.kind==='onPlayBuffOwnOther1000')
+   card.templateEffects={onPlay:[{template:'buffOwnField',
+    filter:{field:'type',value:'character'},bp:1000,optional:true,excludeSelf:true}]};
   return card;
  });
 }
 export function mstV2Pack(){
- return createUniversalPack({id:'mushoku-tensei',version:'v2-d-mst-pilot-1',
+ return createUniversalPack({id:'mushoku-tensei',version:'v2-d-mst-pilot-2',
   cards:verifiedMstV2Cards()});
 }
 
