@@ -1,5 +1,18 @@
 # V2-D｜刀劍神域 SAO／無職轉生 MST 移植交接
 
+## 第七批已提交（2026-10-15；目前卡數以本節優先）
+
+已在第三輪四批 `SAO49／MST24` 上**再新增 4 張確定由 A 現有 shared V2 能力完整處理的官卡**，並非重新計算測試項或重複登錄：
+
+- **SAO-1-003**（UA15BT、黃色能源2/AP1/BP2500、產能2、無 Trigger）、**SAO-1-052**（UA15BT、藍能源2/AP1/BP2500、產能2、無 Trigger）、**SAO-1-073**（UA15BT、綠能源2/AP1/BP2500、產能2、無 Trigger）、**SAO-2-048**（EX08BT、紫能源2/AP1/BP2500、產能2、無 Trigger）。共同完整日文效果為：「このキャラがアクティブの場合、このキャラの発生エナジー+【對應卡色】。」四張分別鎖定官文、卡號、特色、顏色、能源/AP/BP、產能及 Trigger。
+- 共用 V2 現有 `activeExtraEnergy:1` 正確處理：己方**能源線 ACTIVE 時產 3**、REST 時產 2；移到 FRONT 時產 0；其他玩家不能借用己方能源。無別的主動時點、Raid 或條件，**不需要新核心**。這些已在 `tests/v2-sao-mst-draw-top-batches.test.mjs` 用四張真卡各自建立合法 50 張來源牌組、比較 `universalEnergyByColor`、禁止偷借能源並核對實體 UID。
+- **目前 SAO 53／183（新增 +14）、MST 24／80（新增 +1）；D 兩作品合計 77／263，尚未移植 SAO130 + MST56 = 186 張**。五作品若 A 自已核准本次所有新增 15 張的固定 ID 清冊後，原 A 181 張基線→**196／700**，待移植 504；嚴格每卡全 FAQ 終驗依然不得當成通過。
+- 已提交 `dist/universal-v2/sao-pack.mjs`、D 專屬 SAO／registry 精確計數測試、實際 ACTIVE/REST/FRONT 正反例；沒有碰 A shared 的 `tests/fixtures/v2-integrated-id-manifest.mjs`、`tests/universal-v2-title-pack-contract.test.mjs`，故此兩項舊固定數字失敗**應由 A 把本輪全部 15 卡號逐一新增**，不可動態推算放行未知 ID。
+- [D 第七批 Actions run #38704919948](https://github.com/will00t-debug/Ua/actions/runs/38704919948) 在提交 `57ab3bd3` 上 **系列專測 32／32 PASS**；完整全量結果依同 SHA CI 為準，不能只憑系列綠燈宣稱全套通過。本輪前一批 [#38704570670](https://github.com/will00t-debug/Ua/actions/runs/38704570670) 是 31／31 系列綠燈、1148／1150 全量，兩項固定清冊未更新。最新 core 仍為 A 雙 CI 綠燈 `75468867`，D 的安全 merge 為 `e6549d0`。
+- 精確新卡號 **SAO-1-003、SAO-1-032、SAO-1-063、SAO-1-073、SAO-1-075、SAO-1-089、SAO-1-098、SAO-1-107、SAO-1-052、SAO-2-017、SAO-2-030、SAO-2-048、SAO-2-057、SAO-2-072；MST-1-010**。其他既有 SAO39/MST23 不重做，未列在以上者沒有在此輪增加認可。
+- 缺共用檢索／選擇／離場／Raid／限制牌上限的詳細阻塞與正反例均在下方表及 [PR #70 留言 #6187607123](https://github.com/will00t-debug/Ua/pull/70#issuecomment-6187607123)。不編造額外模板、不把無法完整表達者當作已完成、只在 Draft PR #74，不合併 main、不部署正式站。
+
+
 
 ## 第三輪增量批次（2026-10-15；本節取代下方 39／23 等舊快照）
 
