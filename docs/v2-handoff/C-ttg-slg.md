@@ -1,5 +1,14 @@
 # [V2-C] 天元突破 TTG-1 ＋ 我獨自升級 SLG-1 交接
 
+## 最新結果優先（2026-10-15 台灣／本段覆蓋下方歷史快照）
+
+- **PR #70 A HEAD** `75468867b7ec4f5cdd78661e5b98f400494fb94d` 在 Node22 [Actions #38694133956](https://github.com/will00t-debug/Ua/actions/runs/38694133956) 為 **1143/1143 PASS**；該版另有 60 局矩陣成功。**C 已同步此基線**，安全雙親 merge `3738f56b7e14496e5232271157e2a6c42969e4fb`，C 專有檔與 TTG077 真卡保留。
+- **PR #72 工作線實際新卡數**：TTG **24/81**（20 舊 Pilot + 原 C3 已整合 PR70 + **新 TTG-1-077 僅在 PR72**；尚缺57）；SLG **18/80**（原18 已在 PR70；尚缺62）。A 新納 BLEACH 六張後，PR70 共 **181/700**；PR72 另加 TTG077，合計 **182/700**、未移植 **518**。這不是 182 張完整 FAQ 終驗。
+- **此基準實測**：[C Actions #38694277210](https://github.com/will00t-debug/Ua/actions/runs/38694277210)，專測 **32/32 PASS**；全套 **1146/1148 PASS，2 FAIL**，皆 `tests/universal-v2-title-pack-contract.test.mjs` 未將 TTG-1-077 加進來源鎖定 manifest，屬 A 共用清冊歸屬。已在 [PR70 留言 #6186220563](https://github.com/will00t-debug/Ua/pull/70#issuecomment-6186220563) 交出固定新增身份及正確總數，C 不越權修改。下方舊 23/81、175/700、5 fail 等僅歷史，不得當最新結論。
+- 最新真卡 **TTG-1-077** 官方赤4／AP1／場域、登場 `own outside` 任意 0–1 張 `ガンメン` 特徵回手、Life none，源複合特徵嚴格驗證後僅單卡拆詞；正例 TTG072 和 TTG077、反例非法敵區／手牌／其他特徵／無目標、AP 與 UID 守恆已覆蓋。
+- 下一張**尚未**移植：TTG010/023 的頂3／頂5 按特徵檢索、剩餘底部排序及成功後才棄1；SLG036 的**抽3後強制棄2**、SLG037 的**印刷 BP≤4000 自己場外回收後抽1（Q2039）**。缺等價共用處置，不用錯誤模板或空效果假填，已記錄來源和最小情境。TTG081/SLG014 的 Raid 底板／來源線條件亦未完成。
+
+
 日期：2026-10-15（台灣）；整合 base：`feature/universal-rules-v2-foundation-20261014`（PR #70）。此工作只在 `feature/v2-ttg-slg-port-20261015`，不得合併 main、部署 Production 或覆寫共用核心。
 
 ## 真正基準與範圍
