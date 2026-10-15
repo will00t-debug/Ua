@@ -117,3 +117,63 @@ test('TTG-1-005 DRAW life can be declined, or draws exactly one owned top-deck p
  assert.ok(resolved.players[0].outside.some(c=>c.uid===flip.uid));
  assert.equal(assertUniversalMatch(packs,resolved),true);
 });
+
+test('Registry shares exactly the 20 original TTG pilot IDs plus THREE new, no duplicated physical card ID',()=>{
+ const pilot=Object.keys(verifiedPilotPack('gurren-lagann').cards);
+ const ids=Object.keys(registeredV2TitlePack('gurren-lagann').cards);
+ const additions=new Set(TTG_V2_ADDITION_IDS);
+ assert.equal(pilot.length,20);
+ assert.equal(additions.size,3);
+ assert.deepEqual(ids.filter(id=>!pilot.includes(id)).sort(),[...additions].sort());
+ assert.ok(pilot.every(id=>!additions.has(id)));
+ assert.equal(new Set(ids).size,23);
+ assert.deepEqual(listRegisteredV2Titles().map(x=>x.totalV2Cards).slice(0,3),[15,23,18],
+  'live C contribution counts, not legacy 15/20/0 locked expectations');
+ assert.equal(Object.keys(registeredV2TitlePack('solo-leveling').cards).length,18);
+});
+
+test('Real title registry decks play cross-title turns on ONE V2 engine without losing a physical UID',()=>{
+ const rp=[registeredV2TitlePack('gurren-lagann'),registeredV2TitlePack('solo-leveling')];
+ assert.deepEqual(validateUniversalDeck(rp[0],ttgDeck),[]);
+ assert.deepEqual(validateUniversalDeck(rp[1],slgDeck),[]);
+ let s=newUniversalMatch(rp,{decks:[ttgDeck,slgDeck],seed:188,first:0});
+ const identity=(state,i)=>{
+  const p=state.players[i],cards=[...p.deck,...p.hand,...p.life,...p.outside,...p.removed,
+   ...p.front.filter(Boolean),...p.energy.filter(Boolean)];
+  return cards.map(c=>c.uid).sort();
+ };
+ const before=[identity(s,0),identity(s,1)];
+ assert.deepEqual(s.packIds,['gurren-lagann','solo-leveling']);
+ assert.equal(s.packVersions[0],rp[0].version);
+ assert.equal(s.packVersions[1],rp[1].version);
+ // No test-only fallback: these must be the real C registered packs.
+ assert.equal(rp[0].cards['TTG-1-014'].effects.onPlay[0].op,'bounceOwnOtherUnderEnergy');
+ assert.equal(rp[1].cards['SLG-1-068'].effects.onPlay[0].op,'bounceOwnOtherUnderEnergy');
+ for(let turn=0;turn<2;turn++){
+  const actor=s.active;
+  while(s.phase!=='main'){
+   const next=legalUniversalActions(rp,s).find(a=>a.type==='next');
+   assert.ok(next);s=dispatchUniversalAction(rp,s,next);
+  }
+  const event=legalUniversalActions(rp,s).find(a=>a.type==='play'&&rp[actor].cards[
+   s.players[actor].hand.find(c=>c.uid===a.uid)?.cardId]?.energy===0);
+  if(event){
+   s=dispatchUniversalAction(rp,s,event);
+   // All printed onPlay choices need explicit resolution before end turn.
+   while(s.pending){
+    const choice=legalUniversalActions(rp,s)[0];
+    assert.ok(choice);s=dispatchUniversalAction(rp,s,choice);
+   }
+  }
+  while(s.active===actor&&s.status==='playing'){
+   const next=legalUniversalActions(rp,s).find(a=>a.type==='next');
+   assert.ok(next);s=dispatchUniversalAction(rp,s,next);
+  }
+  assert.equal(assertUniversalMatch(rp,s),true);
+  assert.deepEqual(identity(s,0),before[0]);
+  assert.deepEqual(identity(s,1),before[1]);
+ }
+ assert.equal(s.active,0);
+ assert.equal(s.players[0].ownTurns,2);
+ assert.equal(s.players[1].ownTurns,1);
+});
