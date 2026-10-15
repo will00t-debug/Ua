@@ -186,3 +186,57 @@ SHA `fb2909cc050850b9d494175ebb9944eacd414563`，Node `v22.23.3`：
 **尚未實測**：真人實體 Android/iOS 觸控、手機縮放、私人預覽真實瀏覽器操作；
 DOM 模擬已跑不取代實機。截止交付不得標 pass。
 
+
+---
+## [V2-E] 2026-10-15 第二輪獨立驗收（重新固定 SHA；此段為現行檢查結果）
+
+不得沿用 06:30 舊快照判定。此回合 Node v22.23.3 的 GitHub Actions： https://github.com/will00t-debug/Ua/actions/runs/38672351840 。執行指令：node scripts/v2-e-round2.mjs （在四份 exact-SHA detach worktrees 執行；核心原版單獨執行 npm test；所有 runner output/replay 在 CI artifact audit/v2-e-round2/）。
+
+| PR / 範圍 | 固定 SHA |
+|---|---|
+| #70 主控 A | 25eeac5084917534193fd9feaeae31672f902e78 |
+| #73 BLEACH B | dfdf1996706b61ef5f8c307bd786f7b8260abd8c |
+| #72 TTG/SLG C | bfb79970effd6095862dd837333da9cb58a8e977 |
+| #74 SAO/MST D | 3a119bf73bbfb103e850d779923212c9dcdcf162 |
+| #71 驗收測試 | 20656f90139868495991a27bd6b791d28d1c6312（該次已通過的第二輪測試原始 SHA） |
+
+### 原核心限次失敗：測試準備器錯誤，不應修改 engine 來掩蓋
+
+- 固定 A 的 npm test：**1013/1015 pass**，原 test/universal-v2-once-per-turn-gate.test.mjs **2/4 pass**。這兩項 failure 仍阻塞 CI 綠燈；不可只修改斷言。
+- 另以相同 A engine、獨立測試 audit-tests/v2-e-once-fixture-independent.test.mjs + audit-tests/v2-e-contract-regression.test.mjs：**6/6 pass**；驗證預留不同 UID 的實體卡才從現有手牌支付登場、初始化牌庫張數、選擇 skip 不記同名限次、activate 恰好抽一、第三張同名不再抽，且不同 UID 各觸發、非法模式不改源狀態、assertUniversalMatch 守恆。
+- 原測試 ready() 內 take() 搜尋 hand→deck→life→outside，緊接 hand.push；這個 preload 可能反覆取回同一手牌 UID。後續 play() 又 take()，有時需要從 deck 補入卡以致 deck.length 改變，但該次不是效果抽牌。新測試反例已證明：不計入 deck 假移除，放棄效果不抽牌。修正準備器需在手牌實際保留不同 UID，play 必須用已預留在手牌的同張實體。
+
+### A Registry 與 B/C/D 候選（同一 SHA 內統計，不能混加成整合）
+
+| 系列 | 已建檔 | A Registry 已移植 | B/C/D 建構的候選 Pack 獨特 ID（含 Pilot） | 嚴格逐能力 FAQ/Trigger 全部驗收 |
+|---|---:|---:|---:|---:|
+| BLEACH | 276 | 15 | 71 | 0 |
+| 天元 TTG | 81 | 20 | 23 | 0 |
+| 獨自升級 SLG | 80 | 0 | 18 | 0 |
+| 刀劍 SAO | 183 | 0 | 33 | 0 |
+| 無職 MST | 80 | 0 | 22 | 0 |
+| **合計** | **700** | **35** | **167** | **0** |
+
+候選 167 按作品+卡號去重無重複，其中 A 已有 BLEACH 15 + TTG 20；實際**新增而尚未進 A Registry 為 132**。A 的五個 title-packs/{bleach,ttg,slg,sao,mst}.mjs contribution.entries 在固定 SHA 全空。不得宣稱 167 張已進 PR70 或五作品 UI。
+
+D 的 dist/universal-v2/sources/mst-official-print.mjs、mst-catalog.mjs 按 D 固定 SHA 執行證實 **80/80 官方日文印刷來源完整，資料 incomplete=[]**；A 的舊 dist/mushoku-tensei.mjs 尚有 12 張 placeholder 是**來源未整合造成版本差異**，不能再宣稱 D 現行 MST 缺 12 張。D V2 Pack 真正移植 22 張，官方資料 80 不等於 V2 效果全能用。
+
+### 專屬測試與 5×5 雙向對局
+
+B 專測 15/15、C 21/21、D 15/15 pass；各在自己 SHA 下 Node 22 跑。scratch worktree 使用 A 共用引擎配合 B/C/D 固定檔案**暫存**組合，完成不同作品兩兩 10 組 × 2 種先手 × seed 747/20261015/20261016，共 **60/60 個 finished 終局**。每場只使用 50 張同作品真實卡、每卡號 <=4、各種限制 Trigger <=4，記錄每個合法 action、seed、endReason、UID 守恆及 public hand 遮蔽；未終局不能算成功，完整 60 份 JSON 在 CI artifact 的 scratch-matches。依日本官方 FAQ Q8 混色同作品牌組合法，但不代表這些是競技牌組。**暫存結果不得替代 PR #70 真正整合全局。**
+
+### 契約稽核和 UI 限制
+
+新增 contracts 負面測試：缺卡號、duplicate、source domain 異常、印刷成本/Trigger 漂移、未實作 DSL 均拒絕；惟錯誤的官方樣式 URL（指向另一卡）和根本不存在的 tests/ 路徑，目前僅看字串格式就能通過，vanilla 的已驗證宣稱可自述。這是 P1：應在契約驗收附不可變 ID manifest 與真實來源/測試檔及完整效果比對，禁止單靠動態總數／verifiedNoExtraEffects 當作證據。
+
+PR #70 私人預覽 HTML 當前只有 BLEACH 與 TTG 的兩個固定 50 張選項，沒有五作品選牌及自由組牌入口；existing preview-ui tests 只屬 Node DOM/靜態規則級測試。真正 Android/iOS 裝置操作仍 not_run，Chromium 手機尺寸模擬須分開標示。
+
+### P0 / P1 與交付判定
+
+- **P0 A once 原測試仍紅**：屬可重現 fixture 測試布置問題；主控要修 distinct UID fixture，不應改 engine 或抹去原斷言。
+- **P0 五作品尚未整合**：132 新增候選尚未進 PR70 固定 Registry，預覽仍兩作品；未取得 A 新交付整合 commit。
+- **P0 所有能力驗收缺證**：全部 700 卡的主動/被動、Raid、生命 Trigger、可選、時序與 FAQ 不能從局數推出完成。
+- **P1 契約**：自稱的官方網址與 QA 測試檔沒有實際 verify。
+- **P1 介面**：未實測真手機；完整五作品選牌→組牌→效果操作→終局的網站端到端未測。
+
+**NO-GO：不可交付五作品私人測試網站。** 可展示 A 既有兩系列部分 Pilot 網頁與 60 場 scratch 診斷，但不可冒稱完整整合。此驗收僅修改 E 自己的 audit-tests、scripts、E-acceptance.md 與 CI；不改任何共用核心、系列卡包，不合併 main、不部署正式站。
