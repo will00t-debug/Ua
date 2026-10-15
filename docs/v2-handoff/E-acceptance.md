@@ -249,3 +249,71 @@ PR #70 私人預覽 HTML 當前只有 BLEACH 與 TTG 的兩個固定 50 張選�
 - **scratch 五作品**仍是 10 配對×2 先手×3 seeds（747/20261015/20261016）= **60/60 finished**，全部實際 action＋終局 JSON 在 artifact `scratch-matches/`；未將候選寫進 PR #70。
 
 **本輪結論維持五作品私人測試版 NO-GO**。但 BLEACH/TTG 舊預覽在這一個 desktop-Chromium 390px 路徑已能從作品選擇→開局→多次 pending 選擇→終局；真手機 still not_run。後續 A 提交五作品整合 SHA 才能依新 SHA 重跑五作品 Registry、同版 60 場及五作品瀏覽器 E2E，不可沿用本次任何跨 SHA 數據。全程沒有更動共用引擎、系列 Pack、main 或 production。
+
+---
+## 第三輪最新實測：固定 PR #70 `75468867`／五作品已整合 181（2026-10-15 台灣）
+
+> **本節取代上方「僅 35/167」「整合 175」「核心 once 限次回歸紅燈」「五作品不可選」等歷史敘述作為目前判定。** 以上舊報告保留追溯，切勿再引用為現況。本節以固定完整 SHA 實測，不將候選分支計入主線。
+
+### 來源釘選、執行版與獨立證據
+
+| 範圍 | 精確提交 |
+|---|---|
+| A 主控 PR #70：整合可測基準 | `75468867b7ec4f5cdd78661e5b98f400494fb94d` |
+| B PR #73：隔離候選快照 | `2a502f01ec1e29a98c44e45e12f4aaa5a9753222` |
+| C PR #72：隔離候選快照 | `979eed8530721fae53c63201e033a5297464c853` |
+| D PR #74：隔離候選快照 | `efa367fc99c4afdd4dd9edfeddae1a736afb5333` |
+
+1. **A 固定相同 SHA 正式 Node v22.23.3 回歸 1143/1143 全過**：[run #38694133956](https://github.com/will00t-debug/Ua/actions/runs/38694133956)，執行 `npm test`。同 SHA 60/60 五系列合法各 50 張真卡跨作品完整 AI 終局：[run #38694131961](https://github.com/will00t-debug/Ua/actions/runs/38694131961)，`node scripts/v2-integrated-match-matrix.mjs`；兩者為 A 已完成證據，**E 此輪沒有無變更重跑同樣 60 局**。
+2. **第三輪 E 新增獨立反例**：`node scripts/v2-e-round3.mjs`，在 A/B/C/D 各自 `git worktree add --detach <SHA>` 上執行；Node `v22.23.3`，從 E 的 `audit-tests/v2-e-round3-branches.test.mjs` 複製全新獨立測試至固定 A 執行 `node --test tests/v2-e-round3-branches.test.mjs`，**7/7 通過**；有 JSON、log、全部卡號清冊及 Chromium 截圖。完整 GitHub Actions run（相同 A / B / C / D SHAs）[第三輪 E CI #38703740095](https://github.com/will00t-debug/Ua/actions/runs/38703740095)，該批 E runner commit `f6467409bf0927da4048411c268988212a34e974`。
+3. E runner **只新增針對性驗收，不重複舊 60 局**。早期幾次 E 紅燈屬自家測試布置：卡片未加入牌組／黃色產能不足、私密牌頂原子 pending 尚未結束就誤認已移至場外，以及 Chromium 臨時 profile 清理競態。已保留 log、精確修正 E fixture；在 #38703740095 皆為 7/7 綠、browser pass。沒有更動共用引擎。
+
+### 嚴格分層：實際來源、Registry 與專屬候選
+
+| 作品 | 已建檔一般卡 | **A 目前整合/移植** | 同期 B/C/D 獨立已移植（含 A 卡） | **未整合新增候選卡數** | 全印刷能力/FAQ/Trigger 正式完成認證 |
+|---|---:|---:|---:|---:|---:|
+| BLEACH | 276 | **78** | **79** | 1 | 0 |
+| 天元 TTG | 81 | **23** | **24** | 1 | 0 |
+| 我獨自升級 SLG | 80 | **18** | **18** | 0 | 0 |
+| 刀劍 SAO | 183 | **39** | **47** | 8 | 0 |
+| 無職 MST | 80 | **23** | **24** | 1 | 0 |
+| **總計** | **700** | **181** | **192** | **11** | **0** |
+
+A 的 181 組 identity 在固定 SHA 逐一由 `registeredV2TitlePack()` 與 `tests/fixtures/v2-integrated-id-manifest.mjs` 鎖定，source inventory **700**、未移植 **519**。當前已進 A 的 6 張 BLEACH：`BLC-1-059`、`BLC-1-077`、`BLC-2-055`、`BLC-3-006`、`BLC-3-009`、`BLC-4-013`，不能還當成 B-only；A 原 Pilot 35 已包含於 181。**移植與已整合不等於全部能力驗收**。私人預覽共 6 組官方 50 張可選預設牌組，但沒有經 E 證明的自由組牌編輯器。
+
+正式 A 尚未整合的精確 **11 張（各獨立 SHA 實際 Pack ID 與 A Registry 差集）**：
+
+- **責任線 B／PR #73（1）：** `BLC-4-023`。官方藍色0費普通角色，登場可選其他己方角色 BP+1000；Life DRAW，雙能力必須分別測。B 固定 SHA 的 `node --test tests/universal-v2-bleach-own-buff.test.mjs` **6/6 通過**，僅 B candidate，未經 A 新整合 commit QA。
+- **責任線 C／PR #72（1）：** `TTG-1-077`。登場從 own outside 最多回收1個ガンメン特徵真 UID，可不選，實際 AP/紅能源與非法跨區目標；C 固定 SHA 的 `node --test tests/universal-v2-ttg-port.test.mjs` **13/13 通過**，包含其他 TTG 先前測例。尚未進 A。
+- **責任線 D／PR #74 SAO（8）：** `SAO-1-032`、`SAO-1-063`、`SAO-1-098`、`SAO-1-107`、`SAO-2-017`、`SAO-2-030`、`SAO-2-057`、`SAO-2-072`。
+- **責任線 D／PR #74 MST（1）：** `MST-1-010`。在 D 固定 SHA 跑 `node --test tests/v2-sao-mst-draw-top-batches.test.mjs` **5/5 通過**：SAO-1-107 抽3棄1 且 AP2、SAO-2-017/030 私密看頂兩張任意送場外、SAO-2-072 頂/底、MST-1-010 私密看頂三張任意排序，及四張 SAO FINAL 恢復 AP 的支付/可放棄/UID。該測試涵蓋所列九張的典型分支，但不代表九張全部 FAQ / Life 正反例全部終驗。
+
+候選共 **192 個同作品-卡號唯一 identity**（A 已整合181 + B/C/D 新11）；每行精確候選與未整合差集，請查看第三輪 CI artifact 中 `a-manifest.log`、`b-candidate.log`、`c-candidate.log`、`d-candidate.log`、`report.json`。A 上游如新增一批，必須重新固定**整合 SHA**跑 E 第三輪反例及新增卡真實 Registry / Life 判定，不可將 B/C/D 隔離測試直接算主線成功。
+
+### 新增 7 個真正不同的測試分支（不是固定 seed 鏡像）
+
+| 實際官方卡或流程 | 透過獨立 oracle 檢查的輸入 / 預期與拒絕條件 | 結果 |
+|---|---|---|
+| BLEACH `BLC-2-055` | 印刷 TOP 保留原牌庫 UID 順序、BOTTOM 輪轉至最底；不能 OUTSIDE、不能由錯誤玩家選；兩種結果都不得揭露對手私密 UID | PASS |
+| BLEACH `BLC-4-013` × MST | 私密頂2任意送外，**選完才原子結算**；不允許使用對手 UID / 非查看範圍 UID / 連續重複 UID；AP 不二次支付、完成後場外/UID 守恆 | PASS |
+| SLG `SLG-1-040` × BLEACH | 生命 SPECIAL 可放棄、不得虛構 enemy target、指定真角色可直接退場且不扣玩家 AP；牌物理 UID 守恆 | PASS |
+| BLEACH `BLC-1-030` × MST | 官方 Q1119 必選1，無敵前線合法目標時連支付事件/AP 都不准；依 Q91 已 REST 的敵方仍可合法指定，選 null 必拒 | PASS |
+| 各系列 Registry | 700 來源、181 身份、固定 manifest 新六卡及其當前已整合狀態，不能動態靠總數掩蓋身份取代 | PASS |
+| 公開視圖／Debug Replay | 只有己方能看私密牌頂；公開 AI 文字不得洩露 private UID；偽造 replay 行為 fail-closed | PASS |
+| 未整合的身份 | A 固定 SHA 必須拒絕 `BLC-4-023` 和 `TTG-1-077`，不可從其他工作分支偷算到整合 | PASS |
+
+本輪增量 E 真正執行的獨立測試 **7/7**；另外 B **6/6**、C **13/13**、D **5/5** 分支局部證據；測試總數並不等於卡號完整驗收數。未另完整驗完其餘 181 張的每個條件、Raid、生命 Trigger、付費、任意選擇及 FAQ，嚴格完整認證仍記0。
+
+### 真正 Chromium UI 六牌組與同版新 seed 開局至終局（非真人手機）
+
+- E 在 **同一 A 固定 SHA** 使用 Node22 CI runner 啟動 `google-chrome --headless=new` 及 DevTools CDP、**390×844 / DPR3 / touch emulation**，由真實 UI 的 `<select>` 操作六個官方 50 張預設（BLEACH 紫、綠，TTG 紅、SLG、SAO、MST）各自按「開始新對局」並確認顯示可操作手牌；另測一次 AI 先手。
+- 使用**非前次矩陣的 seed `314159`** 由玩家 `solo-leveling` vs AI `sword-art-online`：經真 UI 执行操作 **84 controller cycles**（其中能源線普通登場 **11** 次、`pending` 選擇 **13** 次、階段 next **24** 次、查看全部合法操作 **35** 次）、最終 UI `finished=true`，沒有 JS exceptions／error，也沒有水平 overflow（viewport=bodyWidth=390）；`browser/browser-report.json`、`chromium-mobile-390.png` 與 log 在 CI artifact。
+- 此為**桌面 Chrome 模擬手機尺寸**，**不是 Android/iOS 真人裝置實測**，也不是在 Vercel 私人網址登入後的真機實測。六副**預設牌組**可選不表示自訂建構完整50張 UI 可用；沒有部署正式站。
+
+### 交付與下一輪 Gate
+
+**目前對「指定 181 張 Registry + 六個現有預設牌組的受控 V2 私人測試」可有條件 GO：** A 的相同 SHA 1143/1143 與 60/60 完局證據都綠，E 的新增7/7、B/C/D 分支隔離試與 Chromium 五作品六預設新seed UI 終局也通過。但此條件僅指本地/私人測試來源具備可用的實作片段；**尚未驗證私人部署網址可供手機真人登入開啟**。
+
+**對「全700普通卡統一引擎均有完全印刷能力 / FAQ 與跨作品實戰」明確 NO-GO**：519 種仍未移植、全181張完整印刷分支尚無逐卡結案、11 種新候選沒有被 A 接入；實機手機、真人互動、自由自訂牌組與所有特殊時序尚未驗收。P0（全卡目標）是缺口 519 與尚待 A 收11卡和真實新 SHA CI；P1 是完整 FAQ、私人部署端點與真機 UI、source-provenance 守門加強。**本次獨立反例沒有在被測 A 固定 SHA 發現可重現的 engine P0 錯誤；最初 E false-red 由 E fixture/Chrome 臨時目錄清理錯誤造成，均已修復，不交錯歸咎 A。**
+
+依需求只提交 E 自己的測試、CI、紀錄，不改 `dist/universal-v2/engine.mjs`、B/C/D 定義／核心、main 或 Production；A 後續若新增任何 core/registry SHA，E 重新鎖定而不是沿用本批綠燈。
