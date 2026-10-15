@@ -1,5 +1,43 @@
 # V2-D｜刀劍神域 SAO／無職轉生 MST 移植交接
 
+## 第二輪最新交付（2026-10-15 10:45 台灣時間；本節優先於下方歷史清冊）
+
+**共用基準：** 已把 PR #70 / `25eeac5084917534193fd9feaeae31672f902e78` 合入 D 分支，雙親同步 commit `383e1e2abf753a79ae7c4586b2b5396a44a26bec`，保留所有 D 來源與既有測試，**沒有直接改 A 的 engine/pack/templates/registry/preview**。當時 PR #70 樹內 **沒有 `docs/v2-handoff/A-core.md`**；使用實際 `V2_WORKSTREAM_HANDOFF.md` + `title-packs/contract.mjs` 作為明確契約。
+
+| 作品 | 經核對的既有印刷身分 | 已移植 V2（definition） | 已正式接到 registry（contribution） | 逐卡完整官方 FAQ 驗收 | 預覽 UI 實際可選 |
+|---|---:|---:|---:|---:|---|
+| SAO（UA15BT／EX08BT／UA15ST／已查證 UAPR） | 183（202 筆商品印刷記錄去重） | **39** | **39** | **0（全面驗收未交付）** | **否**：主控 UI 入口仍只有 BLEACH／TTG 的預設 deck |
+| MST（UA54BT/MST-1-001～080） | 80（80 日文原文與印刷參數已提供） | **23** | **23** | **0（全面驗收未交付）** | **否**：主控 UI 入口仍只有 BLEACH／TTG 的預設 deck |
+
+**當前尚未移植**：SAO 144、MST 57。其餘不在精確白名單的來源資料不能藉著 `auto:true` 或 metadata-only 變成可玩。已註冊僅代表 pilot 效果 profile 經嚴格審核、可被共用 V2 engine 使用，**不是所有 FAQ 完整驗收**。`listRegisteredV2Titles().previewReady` 只表示 registry 有卡；**不表示 UI 已有可選牌組**。請 A 於共用 preview 入口接入以下兩份真卡 deck 後再讓使用者從網頁選取。
+
+### 同一份定義的正式契約
+
+- `dist/universal-v2/sao-pack.mjs` 與 `mst-pack.mjs` 各自輸出 `verified*V2Cards()` 與 `verified*V2Entries()`；`title-packs/sao.mjs`／`mst.mjs` **直接匯入同一份 sourceRecord／definition／evidence**，只維護一份已核對印刷白名單。正式 registry 與獨立 pack 的 **每個 canonical card 結構深度相同**，有可執行 regression 確認。
+- `sourceRecord` 全部官方 JP cardlist URL；`evidence` 具官方原文、能力屬性與專測檔位置；vanilla 僅有真正「-」主效果或完全的 STEP 印刷效果，並額外提供 `verifiedNoExtraEffects`。缺卡、印刷數值不符、虛構效果、假來源、重複 ID 均於編譯階段拒絕。
+- 後續新增 7 種由 A 已提供的 `buffOwnField` 模板**完整**表達的 optional 自家「其他角色」登場 BP 加成：**SAO-1-004／047／094、SAO-2-015／027／067（6）與 MST-1-061（1）**。測試包括實際支付綠／黃能源、選擇其他自家角色、放棄、對方卡與自身非法、BP 與 UID 守恆。
+
+### MST 完整來源與舊主線差異
+
+- **真實完整來源**：`dist/universal-v2/sources/{mst-catalog,mst-official-print,mst-inventory}.mjs`；`MST_V2_OFFICIAL_CATALOGUE` 覆蓋 **80/80**，保留官方日文 `effectJa` 與供共享 inventory 的 `effect`、印刷能源／AP／BP／產能／Trigger、完整官方卡號與出處。用途是「資料盤點」，**80 張 metadataReady 不等於 80 張 V2**。
+- **舊主線 `dist/mushoku-tensei.mjs` 未覆寫**，包含 68 個 `VERIFIED` 物件及 12 個部分 `PARTIAL` 物件，但不是與完整來源同步的 80/80 日本印刷資料。A 可在自己的 `title-packs/inventory.mjs` 把 MST source 改指向 `MST_V2_OFFICIAL_CATALOGUE`；已於 [PR #70 主控交接](https://github.com/will00t-debug/Ua/pull/70#issuecomment-6183112033)，**D 沒有擅動 shared inventory**。
+- **當前官方卡片限制：MST-1-051（ロキシー）2026-10-01 起每組上限 1 張**，已從 [日本官方最新制限卡公告](https://www.unionarena-tcg.com/jp/rules/limited.php) 及 [官方卡頁](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA54BT%2FMST-1-051) 重新查核，不靠舊稱述；來源適配器明確攜帶 `deckLimit:1`，**051 主效果未移植，不在可玩 pack／測試 deck**。共享 validator 若未來要加入此卡需 A 正式支援 limit enforcement，不能只依現有每張上限 4 的全域驗證器。
+
+### 真卡牌組與實際 registry → engine
+
+- `dist/universal-v2/sao-mst-real-decks.mjs`：`verifiedSaoV2RealDeck()`／`verifiedMstV2RealDeck()` 分別從**正式** `requireRegisteredV2TitlePack` 取得 pack，經 `validateUniversalDeck` 核對**各 50 張**、相同系列、每卡 ≤4、特別 Trigger 限額、官方 MST 限卡、無異圖／AP／`TEST-ONLY` 補牌。官方共通 [Q5、Q7、Q8](https://www.unionarena-tcg.com/jp/faq/list.php?type=0)：同作品、特別 Trigger 各類 ≤4、**混色可合法組牌**；因早期 Pilot 不足以湊滿單色 50，這兩副是**實卡雙色的合法測試牌組**，非競賽推薦。
+- `tests/v2-sao-mst-registry-real-decks.test.mjs`：核對 source→definition→正式 Pack 合約、80 張 MST 資料與舊佔位差異、兩組 50 張 deck、跨作品 SAO vs MST 真卡 AI **完整終局**（分牌／支付／合法選擇／實體守恆）。另保留 SAO／MST 各自專測與 trigger、STEP、放棄等既有真卡測試。
+- **預覽界線**：`dist/universal-v2-preview.mjs` 共用入口目前只 `import verifiedBleachPurplePilotDeck, verifiedTtgRedPilotDeck`，所以「registry/engine 真卡對局已跑通」**不等於**「手機預覽已可選 SAO/MST」。已交 [A 的 PR #70](https://github.com/will00t-debug/Ua/pull/70#issuecomment-6183174573)。
+
+### 回歸與阻塞（以最新 Actions 為準）
+
+- 首批同步後系列專測 **21/21 綠燈**、真卡 registry 對局已走完整一場；擴增 `buffOwnField` 到 39/23 後，請以本 PR 最新 Node22 `isolated-port-regression` Job 與檔案版本的數字作為本輪實際證據。
+- A-core 原先 **模板清單先後順序**一項在同步核心後已不再出錯；**兩項 once-per-turn**（跳過同名限次、不同 UID 限次）仍 fail；且 shared `tests/universal-v2-title-pack-contract.test.mjs` 尚硬碼 0/0 contribution，現因 39/23 合法整合而另失敗兩項。**這四項是主控檔案與共用測試責任，D 保留失敗並已交 A，不修改 core／global test／preview**。
+- 必須由 A 更正 shared count assertions、inventory 和 once-per-turn，再將最新 A 核心再次整合回 D 做全套回歸。不能僅改斷言掩蓋卡片缺漏，也不能拿系列局部測試代替全面 FAQ 驗收。
+
+### 第一輪紀錄以下仍保留（歷史快照，不作最新結論）
+
+
 > 責任分支：`feature/v2-sao-mst-port-20261015`；整合目標：[V2 PR #70](https://github.com/will00t-debug/Ua/pull/70) `feature/universal-rules-v2-foundation-20261014`。2026-10-15 02:00 前初步盤點及首兩批獨立實作。**本文件為即時可讀取的 GitHub 缺口清單，未代表全部卡片已驗收或站點可玩。** 不合併 main、不部署正式站。
 
 ## 來源、產品及實際卡號盤點
