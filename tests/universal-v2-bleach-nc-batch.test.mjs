@@ -84,7 +84,7 @@ test('NC batch is exactly two Japanese UA04NC IDs with correct original trigger 
 
 test('BLC-3-006 onPlay privately inspects three, refuses invalid UID, can reorder top without losing cards',()=>{
  let s=fresh(purple),source=take(s,0,'BLC-3-006'),
-  producer=take(s,0,'BLC-1-037');
+  producer=take(s,0,'BLC-1-102');
  s.players[0].energy[0]=producer;producer.ready=true;
  s.players[0].hand.push(source);
  s=phase(s,'main');
@@ -113,7 +113,7 @@ test('BLC-3-006 onPlay privately inspects three, refuses invalid UID, can reorde
 
 test('BLC-3-006 may move exactly one inspected UID outside and retains other two in chosen order',()=>{
  let s=fresh(purple,0,33066),source=take(s,0,'BLC-3-006'),
-  producer=take(s,0,'BLC-1-037');
+  producer=take(s,0,'BLC-1-102');
  s.players[0].energy[0]=producer;s.players[0].hand.push(source);
  s=phase(s,'main');
  const play=legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===source.uid);
@@ -173,6 +173,7 @@ test('BLC-3-009 COLOR life deploys only eligible GREEN AP1 <=2 character from HA
  const low=take(s,0,'BLC-1-071'),high=take(s,0,'BLC-1-097'),
   foe=take(s,1,'BLC-1-071');
  s.players[0].hand.push(low,high);
+ s.players[1].front[1]=foe; // Preserve actual opponent UID for illegal-target test.
  const actions=legalUniversalActions(packs,s);
  const color=actions.find(a=>a.type==='chooseTrigger'&&a.mode==='color'&&
   a.uid===low.uid&&a.line==='front'&&a.slot===0);
