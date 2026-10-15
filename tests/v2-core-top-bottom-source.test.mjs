@@ -2,8 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {CARDS} from '../dist/cards.mjs';
 import {createUniversalPack} from '../dist/universal-v2/pack.mjs';
+import {registeredV2TitlePack} from '../dist/universal-v2/title-packs/registry.mjs';
 import {newUniversalMatch,dispatchUniversalAction,legalUniversalActions,
  universalPrivateChoices,universalPublicView,assertUniversalMatch} from '../dist/universal-v2/engine.mjs';
+const registered=registeredV2TitlePack('bleach').cards['BLC-2-055'];
+assert.ok(registered,'B must register official printed BLC-2-055, not just test-only fixture');
+assert.deepEqual(registered.effects.onPlay,[{op:'peekTopOrBottom'}]);
 const original=CARDS.find(c=>c.identity==='BLC-2-055');
 assert.ok(original);assert.match(original.effect,/牌堆頂或牌堆底/);
 const cards=[{id:'BLC-2-055',name:original.nameJa||original.name,type:'character',

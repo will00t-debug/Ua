@@ -78,3 +78,8 @@
 ## 新批次正式整合 B 的六張原卡號（此段狀態優於上文舊快照）
 
 由 PR #73 固定來源 `a0e0373cee1ed5ca9b126d110036737f602c0ca2` 帶入六張身份：**BLC-1-059、BLC-1-077、BLC-2-055、BLC-3-006、BLC-3-009、BLC-4-013**。BLEACH 本線 addon 從 57 → 63（既有 57 張完全保留）；加上 15 原 Pilot，共 **78／276 已註冊，198 未移植**；TTG23／SLG18／SAO39／MST23 保持不變，五作品共 **181／700，519 未移植**。獨立 `tests/fixtures/v2-integrated-id-manifest.mjs` 按六張固定卡號擴充，沒有以動態來源統計取代檢查；共同核心新增的 `peekTopOrBottom` 和 `inspectTopAnyOutside` 由 B 的印刷卡片 BLC-2-055 和 BLC-4-013 正式落地。所有工作只在 Draft PR #70，不碰 main/Production。不宣稱 181 張已完成每張 FAQ 終驗（嚴格仍 0）；交付穩定 SHA 以本輪雙 CI 同一 HEAD 結果核對。
+
+
+### B 正式整合後的舊拒絕測試修正（不可假裝卡片仍未移植）
+
+BLC-4-013 原本在 A 核心正反例測試中要求 **尚未註冊**（B 工作線未交付前的保護）。在 B 的 63 卡來源白名單由 PR #73 正式整合後，此拒絕條件不再正確；現已改為**明確要求 BLC-4-013 出現在正式 registry、完整 DSL 嚴格等於 `inspectTopAnyOutside(count:2,rest:top)`、官方紫/黃色及能源資料與核心測試一致**。BLC-2-055 同樣由測試固定核對 `peekTopOrBottom`，不是刪掉防錯或動態放行未知卡。另將兩張來源正反例與固定 ID manifest 加入五作品 60 局矩陣的 CI 路徑觸發，確保後續卡包登錄數變動時同一 SHA 同時跑全套與矩陣。最新可同步版本以本輪兩個 GitHub Actions 實際綠燈的 HEAD 為準，早期 `45ea2e3`／`3f634857` 已是歷史。
