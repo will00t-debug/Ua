@@ -73,6 +73,15 @@ try{
  source.results.A_independent=call(dirs.A,['--test',
   'tests/v2-e-once-fixture-independent.test.mjs',
   'tests/v2-e-contract-regression.test.mjs'],'a-independent',90000);
+ // Actual Chromium desktop browser at 390px touch-emulation. NOT a physical phone.
+ fs.copyFileSync(path.join(root,'audit-tests/v2-e-browser-smoke.mjs'),
+  path.join(dirs.A,'tests/v2-e-browser-smoke.mjs'));
+ source.results.A_browser=call(dirs.A,['tests/v2-e-browser-smoke.mjs'],'a-browser-cdp',105000);
+ const chromeDir=path.join(dirs.A,'audit/v2-e-browser');
+ if(fs.existsSync(chromeDir)){
+  fs.cpSync(chromeDir,path.join(output,'browser'),{recursive:true});
+  source.results.A_browser.result=JSON.parse(fs.readFileSync(path.join(chromeDir,'browser-report.json'),'utf8'));
+ }else recordFailure('E-BROWSER-NOTRUN','Browser report not produced');
  source.results.A_D_MST_base=probe(dirs.A,
   "import {UA54BT_VERIFIED} from './dist/mushoku-tensei.mjs';console.log(JSON.stringify({count:UA54BT_VERIFIED.length,incomplete:UA54BT_VERIFIED.filter(c=>!c.verified).map(c=>c.id)}))",
   'a-mst-legacy');
