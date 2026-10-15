@@ -295,7 +295,7 @@ test('V2-C card-by-card evidence CSV remains complete, disjoint and explicitly P
   const ids=new Set(),pilots=[],added=[],blocked=[],registeredIds=new Set(Object.keys(registered.cards));
   for(const row of rows.slice(1)){
    const m=row.match(/^"([A-Z]+-1-\d{3})","(?:[^"]|"")*","([^"]+)","([^"]+)","([^"]+)"/);
-   const scope=row.match(/,"(pr70_baseline_pilot|pr72_only_pending_pr70_integration|not_implemented_any_branch)","([^"]*)"$/);
+   const scope=row.match(/,"(pr70_baseline_pilot|pr70_integrated_contribution|pr72_only_pending_pr70_integration|not_implemented_any_branch)","([^"]*)"$/);
    assert.ok(m&&scope,'invalid independent evidence row: '+row);
    const [,id,body,trigger,life]=m;
    assert.ok(!ids.has(id),'duplicate ledger ID '+id);ids.add(id);
@@ -303,7 +303,7 @@ test('V2-C card-by-card evidence CSV remains complete, disjoint and explicitly P
    if(body==='existing_v2_pilot'){
     assert.equal(scope[1],'pr70_baseline_pilot');pilots.push(id);
    }else if(body.startsWith('v2_batch')){
-    assert.equal(scope[1],'pr72_only_pending_pr70_integration');added.push(id);
+    assert.equal(scope[1],id==='TTG-1-077'?'pr72_only_pending_pr70_integration':'pr70_integrated_contribution');added.push(id);
    }else{
     assert.equal(body,'not_ported');assert.equal(scope[1],'not_implemented_any_branch');
     assert.equal(life,trigger==='none'?'not_applicable':'not_registered');
