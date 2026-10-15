@@ -38,7 +38,7 @@ try{
  profile=fs.mkdtempSync(path.join(os.tmpdir(),'v2-e-cdp-'));
  chrome=spawn(executable,['--headless=new','--no-sandbox','--disable-gpu',
   '--disable-dev-shm-usage','--no-first-run','--no-default-browser-check',
-  '--remote-debugging-port=0','--user-data-dir='+profile,'about:blank'],
+  '--remote-debugging-port=0','--remote-allow-origins=*','--user-data-dir='+profile,'about:blank'],
  {stdio:'ignore'});
  const activePort=path.join(profile,'DevToolsActivePort');
  for(let n=0;n<70&&!fs.existsSync(activePort);n++)await delay(100);
