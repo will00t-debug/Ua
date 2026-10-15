@@ -60,7 +60,8 @@ function verifyProgram(program,path){
     !e.then.length||e.then.length>6||
     Object.keys(e).some(k=>!['op','optional','then'].includes(k))||
     e.then.some(x=>!['draw','millTop','peekTopOne','searchDeckOne',
-     'searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','recoverOutsideOne',
+     'searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside',
+      'peekTopOrBottom','recoverOutsideOne',
      'enemyBpDown','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
      'recoverOutsideColorUnderEnergy','buffOwnField',
      'restOppFrontUnderBp','restOppFrontOne'].includes(x?.op)))
