@@ -1,4 +1,5 @@
 import test from 'node:test';
+import {readFileSync} from 'node:fs';
 import assert from 'node:assert/strict';
 import {SOLO_LEVELING_CARDS,SOLO_LEVELING_MISSING_NUMBERS} from '../dist/solo-leveling.mjs';
 import {TTG_CARDS} from '../dist/ttg-builder.mjs';
@@ -283,4 +284,39 @@ test('SLG-1-015 GET life adds exact revealed physical card to hand; skip retains
  assert.ok(accepted.players[1].hand.some(c=>c.uid===flip.uid));
  assert.ok(!accepted.players[1].outside.some(c=>c.uid===flip.uid));
  assert.equal(assertUniversalMatch(packs,accepted),true);
+});
+
+test('V2-C card-by-card evidence CSV remains complete, disjoint and explicitly PR72-only until A integrates',()=>{
+ const inspect=(title,catalogue,registered,baseline)=>{
+  const rows=readFileSync(new URL('../audit/v2-c-'+title+'-status.csv',import.meta.url),'utf8')
+   .trimEnd().split('\n');
+  assert.ok(rows[0].includes('integration_scope_v2_c'));
+  assert.ok(rows[0].includes('life_trigger_v2_port'));
+  const ids=new Set(),pilots=[],added=[],blocked=[],registeredIds=new Set(Object.keys(registered.cards));
+  for(const row of rows.slice(1)){
+   const m=row.match(/^"([A-Z]+-1-\d{3})","(?:[^"]|"")*","([^"]+)","([^"]+)","([^"]+)"/);
+   const scope=row.match(/,"(pr70_baseline_pilot|pr72_only_pending_pr70_integration|not_implemented_any_branch)","([^"]*)"$/);
+   assert.ok(m&&scope,'invalid independent evidence row: '+row);
+   const [,id,body,trigger,life]=m;
+   assert.ok(!ids.has(id),'duplicate ledger ID '+id);ids.add(id);
+   assert.ok(['none','draw','get','active','final','special','raid','color'].includes(trigger));
+   if(body==='existing_v2_pilot'){
+    assert.equal(scope[1],'pr70_baseline_pilot');pilots.push(id);
+   }else if(body.startsWith('v2_batch')){
+    assert.equal(scope[1],'pr72_only_pending_pr70_integration');added.push(id);
+   }else{
+    assert.equal(body,'not_ported');assert.equal(scope[1],'not_implemented_any_branch');
+    assert.equal(life,trigger==='none'?'not_applicable':'not_registered');
+    blocked.push(id);
+   }
+  }
+  assert.deepEqual([...ids].sort(),catalogue.map(c=>c.id).sort());
+  assert.deepEqual([...pilots,...added].sort(),[...registeredIds].sort());
+  assert.equal(pilots.length,baseline);
+  assert.equal(added.length,registeredIds.size-baseline);
+  assert.equal(blocked.length,catalogue.length-registeredIds.size);
+  assert.ok(blocked.every(id=>!registeredIds.has(id)));
+ };
+ inspect('ttg',TTG_CARDS,registeredV2TitlePack('gurren-lagann'),20);
+ inspect('slg',SOLO_LEVELING_CARDS,registeredV2TitlePack('solo-leveling'),0);
 });
