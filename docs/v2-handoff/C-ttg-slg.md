@@ -202,3 +202,13 @@ Actions 已完成 [#38672053993](https://github.com/will00t-debug/Ua/actions/run
 5. **SLG-1-014**：Q2025 由 own outside 效果回手後可選 REST 免費登場到**能源線且不得前線**；現有無完整帶來源資訊的能源線限定引擎，仍未移植。
 
 以上只列已確認精確卡號／核心需求；**沒有因此新增 SLG 可玩卡**。後續 A 真正提供等價能力時，每張須新增 paid-cost、來源區、optional、Life 正反例和真實 Node22 CI 才能入 registry。
+
+### 接續批次：可移植能力保守篩選與額外反例（2026-10-15）
+
+- 已追加 TTG077 **沒有任何合法己方場外ガンメン目標時**的實戰測試：可合法支付赤4及1AP登場場域、**無強制選擇 pending**，不會把不合印刷特徵的 outside 卡加入手牌，UID 保持守恆。原有正例另可從 own outside 回收 TTG072 真 Gunmen Pilot。此輪專測總計 **32 項**。
+- TTG-1-010（頂3檢索「大グレン団」）及 TTG-1-023（頂5檢索「ガンメン」）：已核日本官方印刷、費用、剩餘底牌順序與加入手牌後條件棄1；測試特別拒絕以「搜全 deck 並 shuffle」冒充。兩卡仍未註冊。
+- SLG-1-036（紫3事件：抽3**後**強制棄2；Life ACTIVE）及 SLG-1-037（紫4事件：own outside 印刷 BP≤4000 至多1張回手，**然後**抽1；Life DRAW）：已核官方 Q2039 的印刷 BP，而不是目前加成 BP。測試維持不能以不等價共用 DSL 加入牌組。兩卡仍未註冊。
+- C-owned tests：`tests/universal-v2-ttg-port.test.mjs`、`tests/universal-v2-slg-port.test.mjs`；CSV 四列的 `verification_notes` 已記載官方費用、Body/Life、來源區、條件與缺失模板。此批次新增**測試與逐卡證據，但無新增正式可玩卡**，不可將 TTG010/023 或 SLG036/037 算入已移植。
+- 獨立 CI [Actions #38693449757](https://github.com/will00t-debug/Ua/actions/runs/38693449757) on `42954f77f5884bde0c81ba0675e7f51d4237c48b`：**V2-C 32/32 PASS**；**Node22 全套 1128/1131 PASS、3 FAIL**。其中共用 `tests/universal-v2-ability-templates.test.mjs` 的 nested after discard 1 項為 A 新模板回歸；`tests/universal-v2-title-pack-contract.test.mjs` 2 項仍固定 TTG23 而這線新卡 TTG24。C 不越權更改三項共用測試，已在 PR70 留重現。
+- 共用 A-core 已多次安全合流：`7c3b9b45`、`2231fc0a`、`32256122`、`126f2ec3` 均為包含 A 最新已交付核心為另一 parent 的 merge commit，並以 A upstream 樹＋C 專屬檔案 overlay 保留他線成果。之後 A 新修改 `pack.mjs`，仍須從最新 HEAD 核對後再同步。每次只保留 C 擁有的 title contribution、獨立 pack、CSV、測試與本交接。
+- **截至本批實際 TTG 24/81（剩57），SLG 18/80（剩62）**；尚無下一張可由當前共通能力完全實作的印刷效果。待 A 交付相符的 top-N trait/底部排序+條件棄牌、draw3-discard2 原子程序、original BP-filtered outside recovery 後，分別立即解鎖上述 TTG2/SLG2，不可預先標註完成。
