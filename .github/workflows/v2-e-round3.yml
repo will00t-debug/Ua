@@ -1,0 +1,34 @@
+name: V2-E Third Round Independent Branch Acceptance
+on:
+  push:
+    branches:
+      - audit/v2-full-catalog-20261015
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  exact-sha-branch-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Print pinned source and Node
+        run: |
+          git rev-parse HEAD
+          node --version
+          node --check scripts/v2-e-round3.mjs
+      - name: Only new official-card counterexamples and real five-title browser
+        run: node scripts/v2-e-round3.mjs
+      - name: Preserve exact identities, negative assertions, UI screenshot and blockers
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v2-e-third-round-evidence
+          path: audit/v2-e-round3/
+          retention-days: 30
+          if-no-files-found: error
