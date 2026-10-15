@@ -27,8 +27,18 @@ function prepared(){
  s=dispatchUniversalAction(packs,s,{type:'next'});
  const p=s.players[0];
  p.apCards.forEach(c=>{c.inPlay=true;c.ready=true;});
- const fixtureIds=['K01','K01','K01','K02','K02'];
- for(const id of fixtureIds)p.hand.push(extract(s,0,id));
+ // Reserve DISTINCT physical UIDs: a generic hand-first take+push helper
+ // can repeatedly "preload" the same single hand card; count by identity.
+ for(const [id,required] of [['K01',3],['K02',2]]){
+  while(p.hand.filter(c=>c.cardId===id).length<required){
+   const zone=['deck','life','outside'].find(z=>p[z].some(c=>c.cardId===id));
+   if(!zone)throw Error('No unreserved physical copy '+id);
+   const at=p[zone].findIndex(c=>c.cardId===id);
+   p.hand.push(p[zone].splice(at,1)[0]);
+  }
+  assert.equal(new Set(p.hand.filter(c=>c.cardId===id).map(c=>c.uid)).size,
+   p.hand.filter(c=>c.cardId===id).length);
+ }
  assert.equal(s.phase,'main');
  assert.equal(assertUniversalMatch(packs,s),true);
  return s;
@@ -82,7 +92,10 @@ test('[V2-E] two independent physical UID-gated abilities each draw once; no hid
 test('[V2-E] original helper artificially consumes from deck when it ignores preloaded copies',()=>{
  let s=prepared();const deck=s.players[0].deck.length;
  const inHand=s.players[0].hand.filter(c=>c.cardId==='K01').map(c=>c.uid);
- const fromDeck=extract(s,0,'K01');
+ const source=s.players[0].deck;
+ const idx=source.findIndex(c=>c.cardId==='K01');
+ assert.ok(idx>=0,'At least one extra physical K01 remains in deck');
+ const fromDeck=source.splice(idx,1)[0];
  assert.ok(!inHand.includes(fromDeck.uid),'source was taken from DECK, not preloaded hand');
  s.players[0].hand.push(fromDeck);
  assert.equal(s.players[0].deck.length,deck-1,'fixture setup alone changes deck length');
