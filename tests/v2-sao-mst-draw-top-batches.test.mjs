@@ -169,3 +169,51 @@ test('MST-1-010 blue 3 energy: inspect 3, reorder all on TOP, never optional out
  assert.equal(q.players[0].outside.length,outside);
  assert.equal(q.pending,null);assert.equal(assertUniversalMatch(packs,q),true);
 });
+
+test('SAO four colors FINAL event recover up to two AP: printed AP payment, decline, UID and legal trigger profile',()=>{
+ for(const [id,generator] of [
+  ['SAO-1-032','SAO-1-019'], // yellow
+  ['SAO-1-063','SAO-1-035'], // blue
+  ['SAO-1-098','SAO-1-068'], // green
+  ['SAO-2-057','SAO-2-035'] // purple
+ ]){
+  const official=SAO_OFFICIAL_CARDS.find(x=>x.id===id),def=pack.cards[id];
+  assert.equal(official.effectJa,'自分のAPカードを2枚まで選び、アクティブにする。');
+  assert.equal(official.type,'event');assert.equal(official.trigger,'final');
+  assert.equal(official.energy,3);assert.equal(official.ap,1);
+  assert.deepEqual(def.effects.onPlay,[{op:'recoverAp',count:2}]);
+  const counts={...SAO_V2_REAL_DECK_COUNTS};
+  if(counts[generator]){
+   counts['SAO-1-054']--;counts[id]=1;
+  }else{
+   counts['SAO-1-054']-=2;counts['SAO-1-035']-=2;
+   counts[generator]=3;counts[id]=1;
+  }
+  assert.deepEqual(validateUniversalDeck(pack,counts),[],id);
+  let s=newUniversalMatch([pack,pack],{decks:[counts,counts],seed:208057,first:0});
+  const ev=physical(s,0,id);s.players[0].hand.push(ev);
+  for(let n=0;n<3;n++)s.players[0].energy[n]=physical(s,0,generator);
+  for(let n=0;n<2;n++)s=dispatchUniversalAction([pack,pack],s,{type:'next'});
+  const beforeOutside=s.players[0].outside.length;
+  const action=legalUniversalActions([pack,pack],s).find(a=>a.type==='event'&&a.uid===ev.uid);
+  assert.ok(action,'printed '+id+' must have legally payable correct-color generator');
+  const pending=dispatchUniversalAction([pack,pack],s,action);
+  assert.equal(pending.pending?.kind,'effect-recover-ap');
+  assert.ok(pending.players[0].outside.some(x=>x.uid===ev.uid));
+  assert.equal(pending.players[0].outside.length,beforeOutside+1);
+  assert.equal(pending.players[0].apCards.filter(x=>x.ready).length,0);
+  const options=legalUniversalActions([pack,pack],pending);
+  assert.ok(options.some(x=>x.type==='chooseApRecovery'&&x.uid===null));
+  assert.ok(options.some(x=>x.type==='chooseApRecovery'&&x.uid!==null));
+  assert.throws(()=>dispatchUniversalAction([pack,pack],pending,
+   {type:'chooseApRecovery',uid:'fake-AP'}),/not currently legal/);
+  const declined=dispatchUniversalAction([pack,pack],pending,{type:'chooseApRecovery',uid:null});
+  assert.equal(declined.pending,null);
+  assert.equal(declined.players[0].apCards.filter(x=>x.ready).length,0);
+  const recover=options.find(x=>x.type==='chooseApRecovery'&&x.uid!==null);
+  const accepted=dispatchUniversalAction([pack,pack],pending,recover);
+  assert.equal(accepted.players[0].apCards.filter(x=>x.ready).length,1);
+  assert.equal(accepted.pending,null,'cannot recover unused AP objects');
+  same(accepted);same(declined);
+ }
+});
