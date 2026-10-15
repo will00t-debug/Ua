@@ -10,7 +10,13 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,assertUn
 
 const pack=mstV2Pack();
 function deck50(){
- const ids=MST_V2_PILOT_IDS.filter(id=>pack.cards[id].trigger!=='final').slice(0,13);
+ // Source-pinned physical fixture: newly ported IDs MUST NOT eject the
+ // original STEP 047 / energy 029 / discard 022 / peek 069 test subjects.
+ const ids=[
+  'MST-1-001','MST-1-002','MST-1-010','MST-1-012','MST-1-017',
+  'MST-1-018','MST-1-019','MST-1-020','MST-1-022','MST-1-027',
+  'MST-1-029','MST-1-047','MST-1-069'
+ ];
  const counts=Object.fromEntries(ids.map(id=>[id,4]));counts[ids.at(-1)]=2;
  assert.deepEqual(validateUniversalDeck(pack,counts),[]);
  return counts;
