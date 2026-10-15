@@ -1,3 +1,16 @@
+# 🔒 2026-10-15 Cursor 接手凍結交接｜V2-E（最新狀態，歷史章節見下）
+
+**立即停止新增開發與自動擴卡。** 本次只保存、commit、push E 所有既有獨立驗收成果與交接說明。交接專頁：[`docs/v2-handoff/E-cursor-handoff.md`](./E-cursor-handoff.md)。**WIP = 不可宣稱全卡完成；NO-GO = 700 張全部官文效果尚未驗收。**
+
+- **本工作線**：`audit/v2-full-catalog-20261015`，Draft [PR #71](https://github.com/will00t-debug/Ua/pull/71)，基底 PR #70 分支 `feature/universal-rules-v2-foundation-20261014`；**交接前 E 最新已推送並 CI 全綠 commit** `0b8581f771151e68c89da1560459d921409764bf`。此段交接文的新 commit **以 [PR #71 HEAD](https://github.com/will00t-debug/Ua/pull/71) 為準**，避免把更新文件之前的 SHA 誤稱最終 HEAD。
+- **凍結上游 exact SHA**：A PR #70 `75468867b7ec4f5cdd78661e5b98f400494fb94d`（已整合 181/700）；B PR #73 `2a502f01ec1e29a98c44e45e12f4aaa5a9753222`；C PR #72 `29ddd3ffdc5379584923539a8323ee7ec09d6add`；D PR #74 `b2b10f2f0ecd4ce41c04d863b2476da1ae302667`。各 PR 後續如變動，必須重新固定 SHA，不能沿用這批結果。
+- **已完成且可重現**：A Node22 `npm test` **1143/1143**（[run 38694133956](https://github.com/will00t-debug/Ua/actions/runs/38694133956)）、同 A SHA 五作品 50 張真卡 **60/60 完整對局**（[run 38694131961](https://github.com/will00t-debug/Ua/actions/runs/38694131961)）；E **7/7** 新獨立反例、B **6/6**、C **13/13**、D **8/8** 焦點測試及真 Chromium 390px 六預設／新 seed `314159` UI 終局（[run 38705499481](https://github.com/will00t-debug/Ua/actions/runs/38705499481)，E tested SHA `0b8581f7…`，`blockers=[]`）。此輪**沒有新增程式效果與卡牌、沒有重跑無變更的 60 場**。
+- **WIP／尚未完成**：B/C/D 合計 **198 種已移植候選**，其中 **17 種尚未 A 整合**（見交接專頁精確 ID）；A 尚未移植 **519** 種；已整合 181 也**沒有**完成逐卡全能力／生命 Trigger／FAQ／跨作品組合的正式終驗（嚴格完整認證仍 0）；實體 Android/iPhone、私人 Vercel 網址登入、自由自訂 50 卡與所有 Raid/滿場/隱藏資訊交互**未全驗收**。
+- **目前阻塞**：PR #71 當前 GitHub `mergeable=false`（尚未合併，Cursor 需檢查來源差異、不要直接覆寫）；D 獨立分支全量測試有 **2 項固定 manifest / inventory 對新數量不符**，不等於 A 穩定核心失敗。全部 17 張候選須由 A 正式合入後固定新 SHA 補測，不得逕改測試動態數字。
+- **操作限制**：只在 E 分支保存本文件與 Cursor 交接資料；**沒有修改**共用核心、B/C/D 卡包、`main` 或 Production，也沒有嘗試 merge。交接完成立即停止，不再擴充內容。
+
+---
+
 # [V2-E] 獨立全卡驗收交接 — 固定快照 2026-10-15
 
 > 工作線：`audit/v2-full-catalog-20261015`（不修改共用核心／卡包／正式站）
