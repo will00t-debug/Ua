@@ -44,7 +44,7 @@ test('SAO official dedup identity and product scopes stay unchanged, AP/parallel
  assert.equal(SAO_V2_PILOT_IDS.length,41);
  assert.equal(Object.keys(pack.cards).length,41);
  assert.ok(!pack.cards['SAO-2-063'],'conditional STEP + onPlay is NOT a basic vanilla');
- assert.deepEqual(pack.cards['SAO-1-107'].effects.onPlay,[{op:'drawDiscard',count:3}]);
+ assert.deepEqual(pack.cards['SAO-1-107'].effects.onPlay,[{op:'draw',count:2},{op:'drawDiscard',count:1}]);
  for(const id of SAO_V2_PILOT_IDS){
   const source=SAO_OFFICIAL_CARDS.find(c=>c.id===id);
   assert.ok(source&&source.source.includes('unionarena-tcg.com'));
