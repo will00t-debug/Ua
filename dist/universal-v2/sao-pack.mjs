@@ -634,6 +634,58 @@ const PRINTED_PINS=Object.freeze({
     "trigger": null,
     "traits": [],
     "effectJa": "【登場時】自分の山札の上から2枚見る。その中から望む枚数を望む順で自分の山札の上に置き、残りを場外に置く。"
+  },
+  "SAO-1-032": {
+    "kind": "recoverApTwo",
+    "nameJa": "手作りのパイ",
+    "color": "yellow",
+    "energy": 3,
+    "ap": 1,
+    "bp": 0,
+    "gen": 0,
+    "type": "event",
+    "trigger": "final",
+    "traits": [],
+    "effectJa": "自分のAPカードを2枚まで選び、アクティブにする。"
+  },
+  "SAO-1-063": {
+    "kind": "recoverApTwo",
+    "nameJa": "アスナのサンドイッチ",
+    "color": "blue",
+    "energy": 3,
+    "ap": 1,
+    "bp": 0,
+    "gen": 0,
+    "type": "event",
+    "trigger": "final",
+    "traits": [],
+    "effectJa": "自分のAPカードを2枚まで選び、アクティブにする。"
+  },
+  "SAO-1-098": {
+    "kind": "recoverApTwo",
+    "nameJa": "バーベキュー",
+    "color": "green",
+    "energy": 3,
+    "ap": 1,
+    "bp": 0,
+    "gen": 0,
+    "type": "event",
+    "trigger": "final",
+    "traits": [],
+    "effectJa": "自分のAPカードを2枚まで選び、アクティブにする。"
+  },
+  "SAO-2-057": {
+    "kind": "recoverApTwo",
+    "nameJa": "お風呂",
+    "color": "purple",
+    "energy": 3,
+    "ap": 1,
+    "bp": 0,
+    "gen": 0,
+    "type": "event",
+    "trigger": "final",
+    "traits": [],
+    "effectJa": "自分のAPカードを2枚まで選び、アクティブにする。"
   }
 });
 export const SAO_V2_PILOT_IDS=Object.freeze(Object.keys(PRINTED_PINS).sort());
@@ -672,6 +724,8 @@ export function verifiedSaoV2Cards(){
    card.templateEffects={onPlay:[{template:'peekTopOrBottom'}]};
   if(pin.kind==='onPlayInspectTwoAnyOutside')
    card.templateEffects={onPlay:[{template:'inspectTopAnyOutside',count:2,rest:'top'}]};
+  if(pin.kind==='recoverApTwo')
+   card.templateEffects={onPlay:[{template:'recoverAp',count:2}]};
   if(pin.kind==='impactNull')card.impactNull=true;
   if(pin.kind==='onPlayBounce')
    card.templateEffects={onPlay:[{template:'bounceOwnOtherUnderEnergy',energy:1}]};
@@ -688,7 +742,7 @@ export function verifiedSaoV2Cards(){
  });
 }
 export function saoV2Pack(){
- return createUniversalPack({id:'sword-art-online',version:'v2-d-sao-pilot-5',
+ return createUniversalPack({id:'sword-art-online',version:'v2-d-sao-pilot-6',
   cards:verifiedSaoV2Cards()});
 }
 
