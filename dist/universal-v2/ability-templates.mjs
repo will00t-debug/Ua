@@ -48,8 +48,16 @@ const registry=Object.freeze({
   build:v=>[{op:'retireOppFrontUnderBp',bp:v.bp,bonusName:v.bonusName,bonusBp:v.bonusBp}]
  },
  restEnemyUnderBp:{
-  args:{bp:threshold,optional:requiredTrue},
-  build:v=>[{op:'restOppFrontUnderBp',bp:v.bp,optional:true}]
+  // Some official cards mandate the target when present; do not invent a
+  // "skip" decision by reusing the originally optional variant.
+  args:{bp:threshold,optional:yesNo},
+  build:v=>[{op:'restOppFrontUnderBp',bp:v.bp,optional:v.optional}]
+ },
+ // Printed text with NO BP cap (e.g. UA08BT/BLC-1-030). Never approximate
+ // an unbounded target with a giant numeric cap: temporary BP may exceed it.
+ restEnemyFrontOne:{
+  args:{optional:yesNo},
+  build:v=>[{op:'restOppFrontOne',optional:v.optional}]
  },
  retireEnemyIfFacedown:{
   args:{bp:threshold,optional:requiredTrue},
@@ -131,6 +139,7 @@ const registry=Object.freeze({
    then:v=>Array.isArray(v)&&v.length>=1&&v.length<=6},
   check:v=>v.then.every(x=>x&&[
    'draw','millTop','peekTopOne','enemyBpDown','restEnemyUnderBp',
+   'restEnemyFrontOne',
    'buffOwnField','searchDeckOne','recoverOutsideOne','buffSelf'
   ].includes(x.template)),
   build:v=>[{op:'oncePerTurnGate',scope:v.scope,optional:v.optional,
@@ -158,7 +167,7 @@ const registry=Object.freeze({
    'draw','millTop','peekTopOne','searchDeckOne','searchDeckMany',
    'searchDeckWhere','inspectTopArrange','recoverOutsideOne','enemyBpDown',
    'enemyFrontAllBpDown','retireEnemyFrontAllUnderBp','buffOwnTraitAllTurn',
-   'recoverOutsideColorUnderEnergy','buffOwnField','restEnemyUnderBp'
+   'recoverOutsideColorUnderEnergy','buffOwnField','restEnemyUnderBp','restEnemyFrontOne'
   ].includes(x.template)),
   build:v=>[{op:'discardGate',optional:v.optional,
    then:v.then.flatMap((spec,i)=>expandOne(spec,'payDiscardThen.then['+i+']'))}]

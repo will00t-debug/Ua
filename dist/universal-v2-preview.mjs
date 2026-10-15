@@ -1,7 +1,7 @@
 // Experimental manual UNION ARENA V2 browser preview.
 // This entrypoint is intentionally NOT linked from the production index.html.
 // All game transitions pass through legalUniversalActions/dispatchUniversalAction.
-import {verifiedBleachPurplePilotDeck,verifiedTtgRedPilotDeck} from './universal-v2/verified-real-decks.mjs';
+import {createAllV2PreviewRealDecks} from './universal-v2/preview-real-decks.mjs';
 import {V2_ABILITY_TEMPLATE_IDS} from './universal-v2/ability-templates.mjs';
 import {listRegisteredV2Titles} from './universal-v2/title-packs/registry.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
@@ -9,16 +9,21 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
 import {chooseUniversalAiAction} from './universal-v2/ai.mjs';
 import {ttgArtSource,ttgArtErrorFallback} from './ttg-art.mjs';
 import {CARDS} from './cards.mjs?v=9.1.0';
+import {SOLO_LEVELING_CARDS} from './solo-leveling.mjs';
+import {SAO_CARDS} from './sao-cards.mjs';
+import {MST_V2_OFFICIAL_CATALOGUE} from './universal-v2/sources/mst-inventory.mjs';
 import {V2_PHASE_LABELS,V2_TITLE_LABELS,V2_PENDING_LABELS,
  uiActor,isExactLegal,uiCardLabel,uiActionLabel,visibleActionsForCard} from './universal-v2/preview-actions.mjs';
 import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalReplay,
  publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
 
-const decks=Object.freeze({
- bleach:verifiedBleachPurplePilotDeck(),
- 'gurren-lagann':verifiedTtgRedPilotDeck()
+const decks=createAllV2PreviewRealDecks();
+const allArt=Object.freeze({
+ bleach:new Map(CARDS.map(c=>[c.identity,c.image||null])),
+ 'solo-leveling':new Map(SOLO_LEVELING_CARDS.map(c=>[c.id,c.image||null])),
+ 'sword-art-online':new Map(SAO_CARDS.map(c=>[c.id,c.image||null])),
+ 'mushoku-tensei':new Map(MST_V2_OFFICIAL_CATALOGUE.map(c=>[c.id,c.image||null]))
 });
-const bleachArt=new Map(CARDS.map(c=>[c.identity,c.image||null]));
 const v2Entries=listRegisteredV2Titles();
 const el=(tag,props={},...contents)=>{
  const n=document.createElement(tag);
@@ -52,8 +57,11 @@ const btn=(label,fn,cls='')=>el('button',{type:'button',class:cls,text:label,onC
 const fmtTitle=(id)=>V2_TITLE_LABELS[id]||id;
 const cardDef=(side,id)=>app.packs?.[side]?.cards[id]||null;
 function imgUrl(side,id){
- if(app.packs?.[side]?.id==='gurren-lagann')return ttgArtSource(id);
- const source=bleachArt.get(id);
+ const title=app.packs?.[side]?.id;
+ if(title==='gurren-lagann')return ttgArtSource(id);
+ const source=allArt[title]?.get(id);
+ // The card image is presentation-only. Missing art never relaxes V2 rules
+ // or links a legacy reducer into this preview.
  return typeof source==='string'&&source.trim()?source:'assets/mark.svg';
 }
 function alertText(message){

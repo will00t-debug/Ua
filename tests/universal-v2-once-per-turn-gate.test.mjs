@@ -41,8 +41,22 @@ function ready(){
  // Preload all tested physical sources BEFORE counting remaining deck.
  // Otherwise a copy taken from the deck for a fixture "play" would be
  // incorrectly counted as a triggered draw.
- for(const id of ['K01','K01','K01','K02','K02'])
-  p.hand.push(take(s,0,id));
+ // Source fixtures must be distinct physical UIDs. Calling take() on
+ // the hand merely removes/re-adds its FIRST matching card, and silently
+ // leaves later copies in the deck. Preload to an exact per-ID hand count.
+ for(const [id,needed] of [['K01',3],['K02',2]]){
+  while(p.hand.filter(c=>c.cardId===id).length<needed){
+   let source=null;
+   for(const zone of ['deck','life','outside']){
+    const index=p[zone].findIndex(c=>c.cardId===id);
+    if(index>=0){source=p[zone].splice(index,1)[0];break;}
+   }
+   if(!source)throw Error('Fixture missing distinct copy '+id);
+   p.hand.push(source);
+  }
+ }
+ assert.equal(new Set(p.hand.map(c=>c.uid)).size,p.hand.length);
+ assert.equal(assertUniversalMatch(packs,s),true);
  assert.equal(s.phase,'main');return s;
 }
 function play(s,id,slot){
@@ -90,7 +104,18 @@ test('once-per-turn accounting resets when the turn passes to the other player',
  let s=ready();
  s=play(s,'K02',0);
  assert.equal(s.onceEffectUses[0].length,1);
- for(let i=0;i<2;i++)s=dispatchUniversalAction(packs,s,{type:'next'});
+ // Fixture preloads several distinct real hand UIDs, so hand > 8 at
+ // end phase. Finish the actual mandatory end-hand-limit choices before
+ // asserting next-turn reset. The engine must not silently discard them.
+ let steps=0;
+ while(s.active===0&&steps++<16){
+  const legal=legalUniversalActions(packs,s);
+  const a=s.pending?.kind==='end-hand-limit'?
+   legal.find(x=>x.type==='chooseHandLimit'):
+   legal.find(x=>x.type==='next');
+  assert.ok(a,'No legal action to finish source-player turn');
+  s=dispatchUniversalAction(packs,s,a,{actor:0});
+ }
  assert.equal(s.active,1);
  assert.deepEqual(s.onceEffectUses,[[],[]]);
  assert.equal(assertUniversalMatch(packs,s),true);

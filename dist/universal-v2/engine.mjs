@@ -232,10 +232,14 @@ function continueEffectQueue(pack,s){
     if(choices.length)s.pending={kind:'effect-retire-bp',player:owner,
      sourceUid:job.sourceUid,choices,limit:job.bp,optional:true};
    }
+  }else if(job.op==='restOppFrontOne'){
+   const choices=s.players[1-owner].front.filter(Boolean).map(c=>c.uid);
+   if(choices.length)s.pending={kind:'effect-rest-bp',player:owner,
+    sourceUid:job.sourceUid,choices,limit:null,optional:job.optional};
   }else if(job.op==='restOppFrontUnderBp'){
    const choices=s.players[1-owner].front.filter(c=>c&&bp(pack,s,c)<=job.bp).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-rest-bp',player:owner,
-    sourceUid:job.sourceUid,choices,limit:job.bp,optional:true};
+    sourceUid:job.sourceUid,choices,limit:job.bp,optional:job.optional};
   }else if(job.op==='buffOwnField'){
    const choices=field(pl).filter(c=>card(pack,c).type==='character'&&
     (!job.excludeSelf||c.uid!==job.sourceUid)&&
@@ -671,9 +675,13 @@ function resolveChoice(s,a,pack){
   s.pending=null;continueEffectQueue(pack,s);return;
  }
  if(q.kind==='effect-rest-bp'){
-  if(a.uid===null){s.pending=null;continueEffectQueue(pack,s);return;}
+  if(a.uid===null){
+   if(!q.optional)throw Error('Mandatory opponent REST cannot be declined');
+   s.pending=null;continueEffectQueue(pack,s);return;
+  }
   const foe=1-q.player,target=s.players[foe].front.find(c=>c?.uid===a.uid);
-  if(!target||!q.choices.includes(a.uid)||bp(pack,s,target)>q.limit)
+  if(!target||!q.choices.includes(a.uid)||
+   (q.limit!==null&&bp(pack,s,target)>q.limit))
    throw Error('Illegal opponent REST target');
   target.ready=false;
   s.pending=null;continueEffectQueue(pack,s);return;
@@ -873,7 +881,8 @@ function legalPending(pack,s){
    {type:'chooseTraitBuff',uid:null},...q.choices.map(uid=>({type:'chooseTraitBuff',uid}))
   ];
  if(q.kind==='effect-rest-bp')return [
-   {type:'chooseRestBp',uid:null},...q.choices.map(uid=>({type:'chooseRestBp',uid}))
+   ...(q.optional?[{type:'chooseRestBp',uid:null}]:[]),
+   ...q.choices.map(uid=>({type:'chooseRestBp',uid}))
   ];
  if(q.kind==='effect-retire-bp')return [
    ...(q.optional?[{type:'chooseRetireBp',uid:null}]:[]),
@@ -933,6 +942,21 @@ function legalPending(pack,s){
  }
  throw Error('No handler for pending decision '+q.kind);
 }
+// UNION ARENA official Q1119 (2024-09-06): an event requiring "choose
+// one" cannot be played at all unless ALL mandatory choices exist.
+// This check is performed BEFORE spending AP or moving the event outside.
+// Optional "up to one" choices remain playable with zero targets.
+function eventMandatoryTargetsAvailable(pack,s,owner,d){
+ const enemy=s.players[1-owner];
+ return (d.effects?.onPlay||[]).every(job=>{
+  if(job.optional!==false)return true;
+  if(job.op==='restOppFrontOne')
+   return enemy.front.some(Boolean);
+  if(job.op==='restOppFrontUnderBp')
+   return enemy.front.some(c=>c&&bp(pack,s,c)<=job.bp);
+  return true;
+ });
+}
 export function legalUniversalActions(pack,s){
  assertUniversalMatch(pack,s);
  if(s.status!=='playing')return [];
@@ -964,7 +988,10 @@ export function legalUniversalActions(pack,s){
   for(const c of pl.hand){
    const d=card(pack,c);
    if(d.energy>(produced[d.color]||0)||d.ap>ap)continue;
-   if(d.type==='event')out.push({type:'event',uid:c.uid});
+   if(d.type==='event'){
+    if(eventMandatoryTargetsAvailable(pack,s,p,d))
+     out.push({type:'event',uid:c.uid});
+   }
    else for(const line of ['energy','front']){
     if(line==='front'&&d.type!=='character')continue;
     for(const choice of legalDestinations(pl,line))
@@ -1111,7 +1138,7 @@ export function assertUniversalMatch(pack,s){
  if(!Number.isInteger(s.attacksThisTurn)||s.attacksThisTurn<0||s.attacksThisTurn>50)
   throw Error('Invalid attack count');
  if(!Array.isArray(s.effectQueue)||s.effectQueue.some(e=>!playerIndex(e.owner)||
-   !['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','retireOppFrontUnderBp','restOppFrontUnderBp','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','recoverOutsideOne','discardToDraw',
+   !['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','retireOppFrontUnderBp','restOppFrontUnderBp','restOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','recoverOutsideOne','discardToDraw',
     'discardGate','enemyFrontAllBpDown','retireOppFrontAllUnderBp',
     'buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
     'recoverOutsideColorUnderEnergy','buffOwnField','oncePerTurnGate','retireBatchOne','openBlock'].includes(e.op)))

@@ -5,7 +5,7 @@
  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
  <meta name="theme-color" content="#0a1019">
  <meta name="robots" content="noindex,nofollow,noarchive">
- <meta name="description" content="實驗版 UNION ARENA V2：BLEACH 和天元突破兩副全真 50 張跨作品 AI 測試對戰，僅供私人預覽驗證。">
+ <meta name="description" content="實驗版 UNION ARENA V2：五作品六組已移植官方真卡 50 張牌組跨作品 AI 對戰，僅供私人預覽驗證。">
  <link rel="icon" href="assets/mark.svg" type="image/svg+xml">
  <link rel="stylesheet" href="universal-v2-preview.css">
  <title>UNION ARENA V2｜跨作品私人測試</title>
@@ -24,12 +24,20 @@
    <div class="headline"><h2>建立新對局</h2><span id="v2-coverage" class="small">正在讀取 V2 卡包覆蓋率…</span></div>
    <div class="setup-grid">
     <div class="field"><label for="my-title">你的作品</label>
-     <select id="my-title"><option value="gurren-lagann">天元突破｜紅色</option>
-     <option value="bleach">BLEACH｜紫色</option></select>
+     <select id="my-title"><option value="gurren-lagann-red">天元突破｜紅色</option>
+     <option value="bleach-purple">BLEACH｜紫色</option>
+     <option value="bleach-green">BLEACH｜綠色</option>
+     <option value="solo-leveling">我獨自升級｜已驗證卡牌組</option>
+     <option value="sword-art-online">刀劍神域｜已驗證卡牌組</option>
+     <option value="mushoku-tensei">無職轉生｜已驗證卡牌組</option></select>
     </div>
     <div class="field"><label for="ai-title">電腦作品</label>
-     <select id="ai-title"><option value="bleach">BLEACH｜紫色</option>
-     <option value="gurren-lagann">天元突破｜紅色</option></select>
+     <select id="ai-title"><option value="bleach-purple">BLEACH｜紫色</option>
+     <option value="gurren-lagann-red">天元突破｜紅色</option>
+     <option value="bleach-green">BLEACH｜綠色</option>
+     <option value="solo-leveling">我獨自升級｜已驗證卡牌組</option>
+     <option value="sword-art-online">刀劍神域｜已驗證卡牌組</option>
+     <option value="mushoku-tensei">無職轉生｜已驗證卡牌組</option></select>
     </div>
     <div class="field"><label for="ai-level">AI 難度</label>
      <select id="ai-level"><option value="easy">簡單</option>
@@ -45,7 +53,7 @@
    </div>
    <div class="setup-actions"><button id="start-game" type="button" class="primary">開始新對局</button>
    <span id="restart-notice" class="small" aria-live="polite"></span></div>
-   <p class="note">這是只讀取自己已授權 GitHub 專案資料的 V2 獨立測試介面。與電腦對打，不會儲存個人資料到伺服器。僅有 BLEACH 紫色與天元突破紅色部分官方卡片已移植；這不是全部卡牌均通過官方 FAQ 驗收的正式版本。預覽連結受到 Vercel 專案的登入權限控制。</p>
+   <p class="note">這是只讀取自己已授權 GitHub 專案資料的 V2 獨立測試介面。與電腦對打，不會儲存個人資料到伺服器。目前提供 BLEACH 紫／綠、天元紅、我獨自升級、刀劍神域與無職轉生等六套 50 張全真卡測試牌組，但每個系列仍有尚未移植的卡號，並未完成全卡官方 FAQ 驗收。預覽連結受到 Vercel 專案的登入權限控制。</p>
   </section>
   <main id="match-view" aria-live="off"></main>
   <footer class="foot">
