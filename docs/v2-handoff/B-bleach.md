@@ -1,3 +1,51 @@
+# [V2-B] Cursor 接手凍結交接 — 2026-10-15（優先閱讀）
+
+> **本線已停止新增開發。以下是最新交接；原檔其餘 71／72／74／78／205 張等文字為歷史快照，不能當現況。僅更新本交接文件，不修改 main／引擎／共用入口，不部署、不覆寫其他分支。WIP 明列於下。**
+
+## 已保存成果與真實 HEAD
+
+- 專案 `will00t-debug/Ua`；工作分支 `feature/v2-bleach-port-20261015`；[Draft PR #73](https://github.com/will00t-debug/Ua/pull/73)，以 [Draft PR #70](https://github.com/will00t-debug/Ua/pull/70) 為整合基底，兩 PR 均未合併 main。
+- **本次文件提交以前，BLEACH 最新已推送 HEAD：`2a502f01ec1e29a98c44e45e12f4aaa5a9753222`**。最後一張新卡 `BLC-4-023` 的代碼提交：`61113fdf6cda5c3943c2270219d31ebcba4caeb3`、正式貢獻 `4b34d6ed622cfdc6e3b04f738f84fb0f3fdb1047`；正反例測試 `d960954ac2cf68221a54332636e73e99652ce86e`；台帳更新 `082bc5938050462cd5c045c39df1d46fe8a1d326`。
+- **本次查核的 PR #70 最新 HEAD：`3a760228de5da29590d09021a29a7f7a425e70a6`**，其最新提交為 Cursor 用的 A 交接文件；最後雙 CI 成功**程式** SHA 為 `75468867b7ec4f5cdd78661e5b98f400494fb94d`。已讀最新 [A-core.md](https://github.com/will00t-debug/Ua/blob/feature/universal-rules-v2-foundation-20261014/docs/v2-handoff/A-core.md)，以其最上方凍結交接為準。
+- 本文件 push 後，文件 commit 自身的 SHA 需至 [PR #73 commits](https://github.com/will00t-debug/Ua/commits/feature/v2-bleach-port-20261015) 或在 checkout 執行 `git rev-parse HEAD` 查詢；同一 Git commit 無法在自己的內容裡穩定寫入自身 SHA。上列 `2a502f01ec1e29a98c44e45e12f4aaa5a9753222` 是交接前最後既存 HEAD。
+- 本次沒有本機 Git checkout；檢查 `/mnt/data` 及 `/home/oai/share` 沒有 `.git`，`git status` 在當前工作目錄回覆 `fatal: not a git repository (or any of the parent directories): .git`。歷次改動都由 GitHub 連接器**直接形成遠端 commit**，本次工作沒有可辨識的本地未提交修改；**不能保證其他 Work/Cursor 環境沒有自己的未提交檔**。交接文件成功推送後無需 patch，因成果可在 PR #73 下載。
+
+## 已完成、未完成、可用與驗收界線
+
+| 範圍 | BLEACH 普通卡 | 既有 Pilot | 額外定義 | 本線實驗 V2 registry | 尚未移植 | 全部官方 FAQ 終驗 |
+|---|---:|---:|---:|---:|---:|---:|
+| **本 B 分支 PR #73** | 276 | 15 | **64** | **79** | **197** | **0** |
+| **主控 A PR #70** | 276 | 15 | **63** | **78** | **198** | **0** |
+
+- **已完成：** `dist/universal-v2/bleach-pack.mjs` 為官方來源、印刷屬性及實際能力的共用定義；`dist/universal-v2/title-packs/bleach.mjs` 從相同 `checkedBleachAddonDefinition()` 建立 `sourceRecord`／`definition`／`evidence` 並進正式 registry；不重覆15 Pilot。逐卡盤點 `docs/v2-handoff/B-bleach-inventory.csv` 實際 **276 行×29 欄**，具分支／PR70／FAQ／預覽分層。已測真卡50張 deck、AI對局、正式 registry、效果、Trigger、私密選擇及 UID 守恆。
+- **已驗 BLC-4-014 正規化：**舊資料 `gen=2` 為 ACTIVE 合計，V2 `gen=1, activeExtraEnergy=1`，ACTIVE=2／REST=1；嚴格保存來源指紋、相關測試。
+- **WIP 未整合唯一新增卡：`EX15BT/BLC-4-023` 藍浦原喜助**（登場最多1個**其他**己角色 BP+1000，本回合；可略過，生命 DRAW），代碼及真卡測試已在 B 的 `4b34d6ed`／`d960954a`；**A 仍無此卡**。A 已接收過往六張 `BLC-1-059`、`BLC-1-077`、`BLC-2-055`、`BLC-3-006`、`BLC-3-009`、`BLC-4-013`，及更早 `BLC-1-030`，禁止重複註冊。
+- **尚未完成：** 剩餘197張仍未完整 V2 移植；79張並非全數官方逐卡FAQ終驗，**終驗0**。新卡 `BLC-4-023` 不在 A 的固定真卡預設預覽牌組；本分支 registry 能載不代表 Production 或手機實測。不可聲稱目前可以在正式站玩79張。
+
+## 已實際跑過的測試及失敗原因（不重跑已知錯）
+
+- [PR #73 Actions **38694764164**](https://github.com/will00t-debug/Ua/actions/runs/38694764164)，HEAD `2a502f01ec1e29a98c44e45e12f4aaa5a9753222`，Node22：**九套 BLEACH 專測 58/58 PASS**，`node --check` BLEACH 兩模組 PASS；**全庫 `npm test` 1139/1144，5 FAIL**，最新 CI 為 **failure**。
+- 五個全庫失敗：`universal-v2-bleach-real-deck.test.mjs` 把舊 72 當預期而實際79；`universal-v2-title-pack-contract.test.mjs` 精確來源 manifest 和盤點各一項仍不符；`universal-v2-ttg-registry.test.mjs` 共用/TTG 的固定 Pilot+3 比對不符；`v2-core-top-any-outside-source.test.mjs` 仍斷言 `BLC-4-013` 未註冊，實際已註冊。最後一項為過期的未註冊斷言，**不是證實牌頂效果錯誤**；其餘須逐一以 A 的來源鎖定快照校正，不可任意換動態數字。
+- 同一 run 的「CI runner 暫存 `git merge` 最新 A，不推送」**在同步步驟失敗**，未跑到合併後專測。失敗是如下 **10 個檔案明確 merge conflicts**：
+  - content：`dist/universal-v2/bleach-pack.mjs`、`dist/universal-v2/title-packs/bleach.mjs`、`docs/v2-handoff/B-bleach.md`、`tests/universal-v2-bleach-enemy-control.test.mjs`、`tests/universal-v2-bleach-port.test.mjs`、`tests/universal-v2-bleach-registry.test.mjs`、`tests/universal-v2-bleach-top-inspect.test.mjs`。
+  - add/add：`tests/universal-v2-bleach-nc-batch.test.mjs`、`tests/universal-v2-bleach-new-top.test.mjs`、`tests/universal-v2-bleach-own-buff.test.mjs`。
+- 主控 A 的 **同一個成功程式 SHA `75468867`**：全庫 CI [38694133956](https://github.com/will00t-debug/Ua/actions/runs/38694133956) **success**，五作品矩陣 [38694131961](https://github.com/will00t-debug/Ua/actions/runs/38694131961) **success**。這是 **A 自身**的可驗證基準，不能當 B 合併後已綠燈。本次僅讀既有 CI 日誌，未重新跑失敗的測試。
+
+## Cursor 接續時的限制／核心缺口
+
+- **先保住 A 的63張 + 已修復主控，再精確帶入 B 新增的第64張 `BLC-4-023`**（及正反例／來源），鎖定 B=79、A 接入後=79、五作品總數由181→182、缺卡由519→518；合入前先處理上述10個衝突，**不可把 B 的整檔蓋過 A 核心或其他作品檔**。請改用新 Cursor 工作分支／PR 方式，不 force push，不合併 main／不部署。
+- 其他尚未移植的代表與阻塞：`BLC-1-009`（一般 IMPACT1）、`BLC-1-074`（DAMAGE2）、`BLC-2-007`（BP≥1000門檻全體減BP）、`BLC-2-063`（同一實體兩次攻擊）、`BLC-4-065`／`BLC-4-068`（官方同卡限次Q2335/2336）、`BLC-4-050`（Q2399支付時點）及 `BLC-4-056`（官方勘誤）。`BLC-1-030`、`BLC-2-055`、`BLC-4-013` **已移植**，下方過往 fail-closed 清單不可再當現況。
+- **交接已完成後本輪不再開發**；所有未完成狀態一律 WIP，等 Cursor 接手自行核對當時遠端 HEAD、修上述衝突及重做整合驗證。
+
+## 本 B 分支目前仍缺 197 個原始普通卡號（由本次 276 行來源 CSV 扣除精確 64 個新增＋15 Pilot；不是舊205清單）
+
+- **BLC-1（64 張）**：BLC-1-003、BLC-1-004、BLC-1-005、BLC-1-006、BLC-1-007、BLC-1-009、BLC-1-011、BLC-1-014、BLC-1-015、BLC-1-016、BLC-1-019、BLC-1-020、BLC-1-022、BLC-1-023、BLC-1-024、BLC-1-025、BLC-1-026、BLC-1-027、BLC-1-028、BLC-1-031、BLC-1-032、BLC-1-033、BLC-1-038、BLC-1-041、BLC-1-042、BLC-1-044、BLC-1-046、BLC-1-047、BLC-1-050、BLC-1-051、BLC-1-053、BLC-1-054、BLC-1-055、BLC-1-056、BLC-1-058、BLC-1-060、BLC-1-061、BLC-1-062、BLC-1-063、BLC-1-065、BLC-1-069、BLC-1-070、BLC-1-073、BLC-1-074、BLC-1-076、BLC-1-078、BLC-1-079、BLC-1-080、BLC-1-081、BLC-1-084、BLC-1-085、BLC-1-087、BLC-1-088、BLC-1-091、BLC-1-092、BLC-1-093、BLC-1-095、BLC-1-096、BLC-1-098、BLC-1-101、BLC-1-104、BLC-1-106、BLC-1-108、BLC-1-109
+- **BLC-2（56 張）**：BLC-2-001、BLC-2-002、BLC-2-003、BLC-2-004、BLC-2-005、BLC-2-006、BLC-2-007、BLC-2-009、BLC-2-010、BLC-2-011、BLC-2-012、BLC-2-013、BLC-2-014、BLC-2-015、BLC-2-017、BLC-2-018、BLC-2-019、BLC-2-021、BLC-2-022、BLC-2-024、BLC-2-026、BLC-2-027、BLC-2-028、BLC-2-030、BLC-2-032、BLC-2-033、BLC-2-034、BLC-2-035、BLC-2-037、BLC-2-038、BLC-2-039、BLC-2-040、BLC-2-041、BLC-2-042、BLC-2-043、BLC-2-044、BLC-2-045、BLC-2-046、BLC-2-047、BLC-2-050、BLC-2-051、BLC-2-054、BLC-2-057、BLC-2-058、BLC-2-060、BLC-2-061、BLC-2-062、BLC-2-063、BLC-2-064、BLC-2-065、BLC-2-067、BLC-2-068、BLC-2-069、BLC-2-070、BLC-2-072、BLC-2-073
+- **BLC-3（9 張）**：BLC-3-001、BLC-3-002、BLC-3-003、BLC-3-004、BLC-3-005、BLC-3-007、BLC-3-008、BLC-3-010、BLC-3-011
+- **BLC-4（68 張）**：BLC-4-001、BLC-4-002、BLC-4-003、BLC-4-004、BLC-4-005、BLC-4-006、BLC-4-007、BLC-4-008、BLC-4-010、BLC-4-011、BLC-4-012、BLC-4-015、BLC-4-016、BLC-4-017、BLC-4-018、BLC-4-021、BLC-4-022、BLC-4-024、BLC-4-025、BLC-4-027、BLC-4-028、BLC-4-029、BLC-4-030、BLC-4-031、BLC-4-032、BLC-4-033、BLC-4-034、BLC-4-036、BLC-4-037、BLC-4-038、BLC-4-039、BLC-4-041、BLC-4-042、BLC-4-043、BLC-4-044、BLC-4-046、BLC-4-047、BLC-4-048、BLC-4-049、BLC-4-050、BLC-4-051、BLC-4-052、BLC-4-053、BLC-4-054、BLC-4-055、BLC-4-056、BLC-4-057、BLC-4-058、BLC-4-060、BLC-4-063、BLC-4-064、BLC-4-065、BLC-4-066、BLC-4-068、BLC-4-069、BLC-4-070、BLC-4-071、BLC-4-072、BLC-4-073、BLC-4-074、BLC-4-075、BLC-4-076、BLC-4-077、BLC-4-078、BLC-4-079、BLC-4-081、BLC-4-082、BLC-4-083
+
+---
+
 # [V2-B] 2026-10-15 14:47 同步衝突後的最新交接（先讀此段）
 
 **本 B 分支：79/276（15 Pilot +64 貢獻），剩197；A 整合 PR #70 已收前6張：78/276（15+63），剩198；雙方完整官方逐卡 FAQ 終驗仍記 0。** A 最新整合 [commit a39a72ee955c](https://github.com/will00t-debug/Ua/commit/a39a72ee955c952eaa22ce647cafec475f682952) 以來源鎖定方式從 B 的 `a0e0373cee1e` 匯入6張（BLC-3-006、BLC-3-009、BLC-1-059、BLC-1-077、BLC-2-055、BLC-4-013）；之後 A [75468867b7ec](https://github.com/will00t-debug/Ua/commit/75468867b7ec4f5cdd78661e5b98f400494fb94d) 修掉 055／013 過期負向測試並鎖定真卡。**勿再以 A=72、B=78 充當現況**，下方過往段落均為時間戳歷史。A 最新 HEAD 確認為 `75468867b7ec4f5cdd78661e5b98f400494fb94d`（撰寫當下）。
