@@ -1,0 +1,39 @@
+name: V2 Integrated Five-Title Matrix
+on:
+  push:
+    branches:
+      - feature/universal-rules-v2-foundation-20261014
+    paths:
+      - 'dist/universal-v2/**'
+      # A-side printed-card source tests and pinned identity manifest must
+      # also run the 60-match regression when a new B card becomes legal.
+      - 'tests/v2-core-top-*.test.mjs'
+      - 'tests/fixtures/v2-integrated-id-manifest.mjs'
+      - 'scripts/v2-integrated-match-matrix.mjs'
+      - '.github/workflows/v2-integrated-matrix.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  five-title-legal-matches:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pin tested Git HEAD and Node
+        run: |
+          git rev-parse HEAD
+          node --version
+      - name: Check all 5 real title pairs (10 pairs x 2 first x 3 seeds)
+        run: node scripts/v2-integrated-match-matrix.mjs
+      - name: Save outcomes, UID and opponent-private evidence metadata
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v2-integrated-five-title-matrix
+          path: audit/v2-integrated-match-matrix.json
+          if-no-files-found: warn
+          retention-days: 30

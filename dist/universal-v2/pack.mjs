@@ -6,7 +6,7 @@ export const V2_PHASES=Object.freeze(['start','move','main','attack']);
 export const V2_CARD_TYPES=Object.freeze(['character','event','field']);
 export const V2_TRIGGERS=Object.freeze(['draw','get','final','active','special','color','raid']);
 export const V2_EFFECT_TIMINGS=Object.freeze(['onPlay','onRaid','onAttack','onRaided']);
-export const V2_EFFECT_OPS=Object.freeze(['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','retireOppFrontUnderBp','restOppFrontUnderBp','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','discardToDraw','searchDeckMany','discardGate','searchDeckWhere','inspectTopArrange','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
+export const V2_EFFECT_OPS=Object.freeze(['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','restOppFrontUnderBp','restOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','discardToDraw','searchDeckMany','discardGate','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
  'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideColorUnderEnergy','buffOwnField','oncePerTurnGate']);
 const integer=(v,low=0)=>Number.isInteger(v)&&v>=low;
 const own=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
@@ -44,6 +44,12 @@ function verifyProgram(program,path){
     Object.keys(e).some(k=>!['op','filters','logic','count','optional','shuffle'].includes(k)))
     throw Error(path+'['+i+'] invalid compound deck search');
   }
+  if(e.op==='peekTopOrBottom'&&Object.keys(e).some(k=>k!=='op'))
+   throw Error(path+'['+i+'] invalid top-or-bottom');
+  if(e.op==='inspectTopAnyOutside'&&(
+   !integer(e.count,2)||e.count>4||!['top','bottom'].includes(e.rest)||
+   Object.keys(e).some(k=>!['op','count','rest'].includes(k))
+  ))throw Error(path+'['+i+'] invalid arbitrary top-outside choice');
   if(e.op==='inspectTopArrange'&&(
    !integer(e.count,2)||e.count>4||typeof e.toOutside!=='boolean'||
    !['top','bottom'].includes(e.rest)||
@@ -54,10 +60,11 @@ function verifyProgram(program,path){
     !e.then.length||e.then.length>6||
     Object.keys(e).some(k=>!['op','optional','then'].includes(k))||
     e.then.some(x=>!['draw','millTop','peekTopOne','searchDeckOne',
-     'searchDeckMany','searchDeckWhere','inspectTopArrange','recoverOutsideOne',
+     'searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside',
+      'peekTopOrBottom','recoverOutsideOne',
      'enemyBpDown','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
      'recoverOutsideColorUnderEnergy','buffOwnField',
-     'restOppFrontUnderBp'].includes(x?.op)))
+     'restOppFrontUnderBp','restOppFrontOne'].includes(x?.op)))
     throw Error(path+'['+i+'] invalid gated payment');
    verifyProgram(e.then,path+'['+i+'].then');
   }
@@ -66,7 +73,7 @@ function verifyProgram(program,path){
     !Array.isArray(e.then)||e.then.length<1||e.then.length>6||
     Object.keys(e).some(k=>!['op','scope','optional','then'].includes(k))||
     e.then.some(x=>!['draw','millTop','peekTopOne','enemyBpDown',
-     'restOppFrontUnderBp','buffOwnField','searchDeckOne',
+     'restOppFrontUnderBp','restOppFrontOne','buffOwnField','searchDeckOne',
      'recoverOutsideOne','buffSelf'].includes(x?.op)))
     throw Error(path+'['+i+'] invalid once-per-turn gate');
    verifyProgram(e.then,path+'['+i+'].then');
@@ -121,10 +128,14 @@ function verifyProgram(program,path){
    !integer(e.bp,1)||e.bp>50000||e.optional!==true||
    Object.keys(e).some(k=>!['op','bp','optional'].includes(k))
   ))throw Error(path+'['+i+'] invalid facedown retirement effect');
+  if(e.op==='restOppFrontOne'&&(
+   typeof e.optional!=='boolean'||
+   Object.keys(e).some(k=>!['op','optional'].includes(k))
+  ))throw Error(path+'['+i+'] invalid uncapped opponent REST target');
   if(e.op==='restOppFrontUnderBp'&&(
-   !integer(e.bp,1)||e.bp>50000||e.optional!==true||
+   !integer(e.bp,1)||e.bp>50000||typeof e.optional!=='boolean'||
    Object.keys(e).some(k=>!['op','bp','optional'].includes(k))
-  ))throw Error(path+'['+i+'] invalid optional opponent REST effect');
+  ))throw Error(path+'['+i+'] invalid opponent REST optionality/profile');
   if(e.op==='retireOppFrontUnderBp'&&(
    !integer(e.bp,1)||e.bp>50000||typeof e.bonusName!=='string'||
    !e.bonusName.trim()||!integer(e.bonusBp,e.bp)||e.bonusBp>50000||

@@ -41,7 +41,13 @@ test('official BLEACH pilot has fifteen distinct allowed identities and exact 50
  assert.ok(Object.entries(counts).every(([id,n])=>
   pack.cards[id]&&pack.cards[id].color==='purple'&&n>=1&&n<=4&&!id.includes('TEST')));
  assert.equal(counts['BLC-1-066'],2,'exactly two total FINAL cards');
- assert.equal(Object.keys(pack.cards).length,15);
+ const original=verifiedPilotPack('bleach');
+ assert.deepEqual(Object.keys(original.cards),expect,
+  'the original fifteen individually reviewed pilots cannot be deleted or renamed');
+ assert.ok(expect.every(id=>pack.cards[id]?.id===id),
+  'the expanded registered pack must retain every original Pilot card');
+ assert.equal(Object.keys(pack.cards).length,78,
+  '15 baseline + exact 63 individually pinned BLEACH additions');
  const s=fresh();
  assert.equal(s.players[0].life.length,7);
  assert.equal(s.players[1].life.length,7);

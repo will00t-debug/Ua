@@ -16,13 +16,13 @@ const checked=card=>createUniversalPack({id:'template-validation-fixture',cards:
 
 test('template registry is finite, audited and rejects unknown behaviors instead of guessing from prose',()=>{
  assert.deepEqual(V2_ABILITY_TEMPLATE_IDS,[
-  'draw','millTop','drawDiscardOne','peekTopOne','recoverAp','buffSelf',
-  'enemyBpDown','retireEnemyUnderBp','restEnemyUnderBp',
+  'draw','millTop','drawDiscardOne','peekTopOne','peekTopOrBottom','recoverAp','buffSelf',
+  'enemyBpDown','retireEnemyUnderBp','restEnemyUnderBp','restEnemyFrontOne',
   'retireEnemyIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown',
   'searchDeckOne','recoverOutsideOne','discardToDraw',
   'searchDeckMany','enemyFrontAllBpDown','retireEnemyFrontAllUnderBp',
   'buffOwnTraitAllTurn','buffOwnField','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
-  'recoverOutsideColorUnderEnergy','oncePerTurnThen','searchDeckWhere','inspectTopArrange','payDiscardThen'
+  'recoverOutsideColorUnderEnergy','oncePerTurnThen','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','payDiscardThen'
  ]);
  assert.throws(()=>checked(character({
   implementation:'dsl',templateEffects:{onPlay:[{template:'drawEnemyDeck',count:1}]}
@@ -54,7 +54,8 @@ test('template parameters encode printed optionality, trait, threshold and name 
  const invalid=[
   {template:'enemyBpDown',bp:3000},
   {template:'enemyBpDown',bp:3000,optional:'yes'},
-  {template:'restEnemyUnderBp',bp:3000,optional:false},
+  {template:'restEnemyUnderBp',bp:3000},
+  {template:'restEnemyUnderBp',bp:3000,optional:'false'},
   {template:'retireEnemyIfFacedown',bp:5000,optional:false},
   {template:'buffOwnTrait',trait:'',bp:1000,optional:true},
   {template:'buffOwnTrait',trait:'Trait',bp:6000,optional:true},
@@ -73,6 +74,13 @@ test('template parameters encode printed optionality, trait, threshold and name 
   onPlay:[{op:'draw',count:1},{op:'enemyBpDown',bp:1000,optional:false}],
   onAttack:[{op:'buffSelf',bp:1000}]
  });
+ assert.deepEqual(expandAbilityTemplates({onPlay:[
+  {template:'restEnemyUnderBp',bp:3000,optional:false},
+  {template:'restEnemyUnderBp',bp:3000,optional:true}
+ ]}).onPlay,[
+  {op:'restOppFrontUnderBp',bp:3000,optional:false},
+  {op:'restOppFrontUnderBp',bp:3000,optional:true}
+ ],'explicit mandatory versus optional REST profiles remain distinct');
 });
 
 test('templates cannot silently override raw ops, authorize vanilla effects or bypass legality restrictions',()=>{
@@ -100,7 +108,7 @@ test('templates cannot silently override raw ops, authorize vanilla effects or b
   'legacy directly authored DSL continues to work unchanged');
 });
 
-test('all twenty-seven supported templates compile to the established and extended V2 runtime DSL ops in deterministic order',()=>{
+test('all twenty-eight supported templates compile to the established and extended V2 runtime DSL ops in deterministic order',()=>{
  const examples=[
   [{template:'searchDeckWhere',filters:[
    {field:'name',value:'Scout'},{field:'trait',value:'Scout'}],
@@ -135,6 +143,7 @@ test('all twenty-seven supported templates compile to the established and extend
   [{template:'retireEnemyUnderBp',bp:3000,bonusName:'黒崎一護',bonusBp:5000},
    {op:'retireOppFrontUnderBp',bp:3000,bonusName:'黒崎一護',bonusBp:5000}],
   [{template:'restEnemyUnderBp',bp:3000,optional:true},{op:'restOppFrontUnderBp',bp:3000,optional:true}],
+  [{template:'restEnemyFrontOne',optional:false},{op:'restOppFrontOne',optional:false}],
   [{template:'retireEnemyIfFacedown',bp:5000,optional:true},{op:'retireOppFrontIfFacedown',bp:5000,optional:true}],
   [{template:'buffOwnTrait',trait:'大グレン団',bp:1000,optional:true},
    {op:'buffOwnTrait',trait:'大グレン団',bp:1000,optional:true}],
@@ -279,4 +288,20 @@ test('reused template effects really execute in opposite title packs, with legal
  const resolved=dispatchUniversalAction(packs,state,chosen,{actor:1});
  assert.ok(resolved.players[1].outside.some(c=>c.uid===chosen.uid));
  assert.equal(assertUniversalMatch(packs,resolved),true);
+});
+
+test('top/bottom and arbitrary outside abilities remain valid nested after a real discard cost',()=>{
+ const actions=expandAbilityTemplates({onPlay:[{template:'payDiscardThen',optional:true,then:[
+  {template:'peekTopOrBottom'},
+  {template:'inspectTopAnyOutside',count:2,rest:'top'}
+ ]}]});
+ assert.deepEqual(actions.onPlay,[{op:'discardGate',optional:true,then:[
+  {op:'peekTopOrBottom'},{op:'inspectTopAnyOutside',count:2,rest:'top'}
+ ]}]);
+ const p=checked(character({implementation:'dsl',templateEffects:{onPlay:[
+  {template:'payDiscardThen',optional:true,then:[
+   {template:'peekTopOrBottom'},{template:'inspectTopAnyOutside',count:2,rest:'top'}
+  ]}
+ ]}}));
+ assert.deepEqual(p.cards.T00.effects.onPlay,actions.onPlay);
 });

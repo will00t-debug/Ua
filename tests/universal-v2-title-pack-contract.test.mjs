@@ -11,6 +11,8 @@ import {v2AllTitleInventory,formatV2UnportedIds,V2_EXPECTED_UNIQUE_CARD_COUNTS}
 import {verifiedBleachPurplePilotDeck,verifiedTtgRedPilotDeck}
  from '../dist/universal-v2/verified-real-decks.mjs';
 import {newUniversalMatch,assertUniversalMatch} from '../dist/universal-v2/engine.mjs';
+import {REAL_V2_PILOT_IDS} from '../dist/universal-v2/real-card-pilots.mjs';
+import {EXPECTED_V2_ADDED_CARD_IDS} from './fixtures/v2-integrated-id-manifest.mjs';
 
 const contractTitle='solo-leveling';
 const fixture={
@@ -34,20 +36,33 @@ const fixture={
 const contribution={title:contractTitle,version:'test-1',entries:[fixture]};
 const modified=(fn)=>JSON.parse(JSON.stringify(fn));
 
-test('all five independent titles are statically registered and no unported pack is playable',()=>{
+test('all five independent titles register exactly the source-pinned official card IDs and retain baseline pilots',()=>{
  assert.deepEqual(V2_TITLE_IDS,
   ['bleach','gurren-lagann','solo-leveling','sword-art-online','mushoku-tensei']);
  assert.equal(Object.keys(V2_TITLE_CONTRIBUTIONS).length,5);
  const list=listRegisteredV2Titles();
- assert.deepEqual(list.map(x=>x.totalV2Cards),[15,20,0,0,0]);
- assert.deepEqual(list.map(x=>x.newlyContributed),[0,0,0,0,0]);
- for(const id of V2_TITLE_IDS.slice(2)){
-  assert.equal(registeredV2TitlePack(id),null);
-  assert.throws(()=>requireRegisteredV2TitlePack(id),/no verified V2 playable cards/);
+ assert.deepEqual(list.map(x=>x.totalV2Cards),[78,23,18,39,23]);
+ assert.deepEqual(list.map(x=>x.baselinePilots),[15,20,0,0,0]);
+ assert.deepEqual(list.map(x=>x.newlyContributed),[63,3,18,39,23]);
+ for(const title of V2_TITLE_IDS){
+  const added=EXPECTED_V2_ADDED_CARD_IDS[title];
+  const contribution=V2_TITLE_CONTRIBUTIONS[title];
+  assert.deepEqual(contribution.entries.map(e=>e.id).sort(),added,
+   title+' actual reviewed contribution IDs must match independent exact manifest');
+  const pack=requireRegisteredV2TitlePack(title),ids=Object.keys(pack.cards);
+  const pilots=REAL_V2_PILOT_IDS[title]||[];
+  assert.deepEqual(ids.slice().sort(),[...pilots,...added].sort(),
+   title+' registry must contain exactly Pilot + contribution IDs');
+  assert.equal(new Set(ids).size,ids.length,'no duplicate physical card identity');
+  for(const c of contribution.entries){
+   assert.equal(c.definition.id,c.id);
+   assert.ok(c.sourceRecord.source?.includes('/jp/cardlist/'));
+   assert.ok(c.evidence.testFiles.length>0);
+   assert.ok(pack.cards[c.id]?.implementation);
+  }
  }
- assert.equal(Object.keys(registeredV2TitlePack('bleach').cards).length,15);
- assert.equal(Object.keys(registeredV2TitlePack('gurren-lagann').cards).length,20);
  assert.throws(()=>registeredV2TitlePack('unknown-work'),/Unknown/);
+ assert.throws(()=>requireRegisteredV2TitlePack('unknown-work'),/Unknown/);
 });
 
 test('existing 50-card real-title matches still work when routed through modular registry',()=>{
@@ -68,8 +83,11 @@ test('per-title contribution compiles TEST-ONLY authored DSL through existing st
  assert.equal(pack.cards['TEST-SLG-001'].effects.onPlay[0].op,'draw');
  assert.equal(pack.cards['TEST-SLG-001'].implementation,'dsl');
  assert.match(pack.version,/test-1/);
- assert.equal(registeredV2TitlePack(contractTitle),null,
-  'synthetic test contract NEVER mutates registered title modules');
+ const existing=registeredV2TitlePack(contractTitle);
+ assert.deepEqual(Object.keys(existing.cards).sort(),
+  EXPECTED_V2_ADDED_CARD_IDS[contractTitle],
+  'synthetic test contract NEVER mutates the registered real-title IDs');
+ assert.equal(existing.cards['TEST-SLG-001'],undefined);
 });
 
 test('missing printed text, official source, QA tests, AP/alternate and printed numeric drift are rejected',()=>{
@@ -100,21 +118,27 @@ test('missing printed text, official source, QA tests, AP/alternate and printed 
   /conflicts with an existing Pilot/);
 });
 
-test('inventory is derived from all five original catalogues, NOT legacy auto flags or tests pass count',()=>{
+test('inventory is derived from all five official catalogues and exact registered V2 IDs, not passing tests',()=>{
  const result=v2AllTitleInventory(),{series,totals}=result;
  assert.deepEqual(series.map(x=>x.title),V2_TITLE_IDS);
  assert.deepEqual(series.map(x=>x.total),Object.values(V2_EXPECTED_UNIQUE_CARD_COUNTS));
- assert.deepEqual(series.map(x=>x.pilotImplemented),[15,20,0,0,0]);
- assert.deepEqual(series.map(x=>x.blocked),[261,61,80,183,80]);
+ assert.deepEqual(series.map(x=>x.pilotImplemented),[78,23,18,39,23]);
+ assert.deepEqual(series.map(x=>x.blocked),[198,58,62,144,57]);
  assert.equal(totals.total,700);
- assert.equal(totals.pilotImplemented,35);
- assert.equal(totals.blocked,665);
+ assert.equal(totals.pilotImplemented,181);
+ assert.equal(totals.blocked,519);
  assert.equal(totals.fullyAccepted,0);
  assert.equal(totals.total-totals.pilotImplemented,totals.blocked);
  for(const record of series){
   assert.equal(record.unportedIds.length,record.blocked);
   assert.ok(record.unportedIds.every(id=>!record.pilotIds.includes(id)));
   assert.ok(record.metadataReady<=record.total);
+  const titlePack=registeredV2TitlePack(record.title);
+  assert.deepEqual(record.pilotIds,Object.keys(titlePack.cards).sort(),
+   'inventory must exactly reflect installed pack, never permit unknown flag-based support');
+  assert.deepEqual(record.pilotIds,
+   [...(REAL_V2_PILOT_IDS[record.title]||[]),
+    ...EXPECTED_V2_ADDED_CARD_IDS[record.title]].sort());
  }
  const text=formatV2UnportedIds();
  for(const seriesEntry of series){
