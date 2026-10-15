@@ -7,7 +7,7 @@ import {requireRegisteredV2TitlePack} from '../dist/universal-v2/title-packs/reg
 import {SAO_V2_REAL_DECK_COUNTS} from '../dist/universal-v2/sao-mst-real-decks.mjs';
 import {validateUniversalDeck,createUniversalPack,V2_EFFECT_TIMINGS} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
- assertUniversalMatch,universalPrivateChoices,universalPublicView}
+ assertUniversalMatch,universalPrivateChoices,universalPublicView,universalEnergyByColor}
  from '../dist/universal-v2/engine.mjs';
 
 const pack=requireRegisteredV2TitlePack('sword-art-online');
@@ -300,4 +300,43 @@ test('blocked next-wave cards are source-locked, NOT wrongly registered with par
   energy:0,ap:1,bp:1000,gen:1,implementation:'dsl',
   effects:{onPlay:[{op:'drawDiscard',count:2}]}
  }]}),/drawDiscard currently supports exactly 1 card/);
+});
+
+test('four official SAO ACTIVE generators contribute +1 energy only while ACTIVE in own energy line',()=>{
+ const examples=[
+  ['SAO-1-003','yellow','黄'],
+  ['SAO-1-052','blue','青'],
+  ['SAO-1-073','green','緑'],
+  ['SAO-2-048','purple','紫']
+ ];
+ for(const [id,color,ja] of examples){
+  const printed=SAO_OFFICIAL_CARDS.find(c=>c.id===id),def=pack.cards[id];
+  assert.equal(printed.effectJa,
+   'このキャラがアクティブの場合、このキャラの発生エナジー+【'+ja+'】。');
+  assert.equal(printed.color,color);
+  assert.equal(printed.trigger,null);
+  assert.equal(printed.energy,2);assert.equal(printed.ap,1);
+  assert.equal(printed.gen,2);assert.equal(def.activeExtraEnergy,1);
+  assert.deepEqual(def.effects,{},'pure continuous energy has no fake onPlay');
+  const counts={...SAO_V2_REAL_DECK_COUNTS};
+  counts['SAO-1-035']--;counts[id]=1;
+  assert.deepEqual(validateUniversalDeck(pack,counts),[]);
+  let s=newUniversalMatch([pack,pack],{decks:[counts,counts],seed:125503,first:0});
+  const generator=physical(s,0,id);
+  generator.ready=true;s.players[0].energy[0]=generator;
+  const ready=universalEnergyByColor([pack,pack],s,0);
+  assert.equal(ready[color],3,id+' active produces 2+1');
+  assert.equal((universalEnergyByColor([pack,pack],s,1)[color]||0),0,
+   'enemy cannot borrow active card energy');
+  assert.equal(assertUniversalMatch([pack,pack],s),true);
+  generator.ready=false;
+  const rested=universalEnergyByColor([pack,pack],s,0);
+  assert.equal(rested[color],2,id+' resting loses bonus only');
+  assert.equal(assertUniversalMatch([pack,pack],s),true);
+  generator.ready=true;
+  s.players[0].energy[0]=null;s.players[0].front[0]=generator;
+  assert.equal(universalEnergyByColor([pack,pack],s,0)[color]||0,0,
+   id+' front-line unit cannot generate energy');
+  assert.equal(assertUniversalMatch([pack,pack],s),true);
+ }
 });
