@@ -1,4 +1,38 @@
-# [V2-B] BLEACH V2 官方卡移植最新交接（2026-10-15 14:24 台灣）
+# [V2-B] BLEACH 現行批次移植交接 — 2026-10-15（最新記錄）
+
+> **本段才是現況；下方 74/276、72/276、71/276 與「BLC-1-030 未移植」均是歷史快照。** PR #73 保留 Draft，base PR #70。只修改 BLEACH 專屬卡包／貢獻／測試／台帳，不改 main 或正式站。
+
+## 精確身分／來源與主線差異
+
+| 範圍 | 新增真卡 | 可由該正式 V2 registry 使用 | 尚未移植 | 完整官方 FAQ 終驗 |
+|---|---:|---:|---:|---:|
+| PR #70 主線（截至本段撰寫） | 原 Pilot 15＋新貢獻57 | **72/276** | **204** | 0 |
+| **PR #73 BLEACH 分支** | 原 Pilot 15＋新貢獻 **63** | **78/276** | **198** | 0 |
+| **本輪三個能力批次** | **+6：BLC-3-006、BLC-3-009、BLC-1-059、BLC-1-077、BLC-2-055、BLC-4-013** | B 比 A +6 | B 比 A −6 | 0 |
+
+**BLC-1-030 已由 A 修復並整合，算在主線及本線 72 張基線中**，不是 198 張未移植的一部分；強制敵前線 REST／無目標不得支付 AP／Q91 REST 可再次指定／Q1119 已測。此處「已移植」＝嚴格 source fingerprint + 可執行 V2 definition + 測試；不等於每張所有 FAQ 終驗完成。正式站 Production 未更新，本線 6 張亦未加入 A 六副預設 V2 牌組。
+
+## 分批新增／共用 A 核心依賴與實際行為測試
+
+- **批次 1：UA04NC/BLC-3-006（紫白哉）、BLC-3-009（綠日番谷）**：006 的登場私密查看 3 張、最多 1 張送場外、剩餘任意順序置頂，生命 ACTIVE；009 登場抽 1，生命 COLOR **從手牌**讓符合需求能源≤2、AP1 的綠角色免費 ACTIVE 登場（並非從場外）。依賴 A 既有 `inspectTopArrange`、`draw`、`deployHandCharacter`；單卡對應 [日本官方 UA04NC/BLC-3-006](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA04NC%2FBLC-3-006)、[UA04NC/BLC-3-009](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA04NC%2FBLC-3-009)。`tests/universal-v2-bleach-nc-batch.test.mjs` 驗證選擇、非法 UID、牌頂私密、AP、實體守恆、真生命 Trigger。
+- **批次 2：UA08BT/BLC-1-059 曳舟桐生（紫）、BLC-1-077 虎徹勇音（綠）**：登場可以選**最多1個其他己方場上的角色** BP+1000 到本回合結束；`buffOwnField({field:'type',value:'character'},excludeSelf:true,optional:true,bp:1000)`。依賴 A 既有 `buffOwnField`。官方 [059](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA08BT%2FBLC-1-059)、[077](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA08BT%2FBLC-1-077)。`tests/universal-v2-bleach-own-buff.test.mjs` 用真紫／綠 50 張牌組測己方其他角色前/能源線、禁選自身／敵人、放棄、零其他目標、AP/UID，兩張皆沒有印刷生命 Trigger。
+- **批次 3（A 本輪全新核心）：EX07BT/BLC-2-055 麒麟寺天示郎（紫）、EX15BT/BLC-4-013 友哈巴赫（黃）**：055 的登場看頂1張，私密決定放**牌頂或牌底**，不能錯套 TOP/OUTSIDE；依賴 A commit `616b1458` 引入 `peekTopOrBottom`。013 的登場查看頂2張，可自選 **0、1、2 張**送場外，其餘自由順序置頂，非舊模板最多1張；依賴 A `5b8dc6b`、`098ee8e`、`2607320`、`5bf7df2` 新的 `inspectTopAnyOutside`、pending/AI。官方 [055](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX07BT%2FBLC-2-055)、[013](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX15BT%2FBLC-4-013)。兩者皆無生命 Trigger。新的 `tests/universal-v2-bleach-new-top.test.mjs` 在正式 registry 及真 50 張紫／黃牌組驗合法 TOP/BOTTOM、0/1/2 場外、重複與非法 UID、牌庫只剩一張/零張、不可洩漏對手、牌庫順序與全實體 UID 守恆。
+
+## 提交與測試證據（不跨版本冒領）
+
+- 本輪已安全同步 A 新能力核心 commit `1f7aa4222c82631512919208640fdf681cf53d82`，B 雙親 merge `1d1779ce7a96c01f6147bb237f518d7ea96d0219`。同步前精確對比 **9 個 A 共用修改檔與本線 11 個 BLEACH 修改檔零重疊**，因此無覆蓋並保留 B 全部測試／CSV；主線 A 後續可能持續更新，最新 HEAD 請另核對。
+- 核心先前已綠燈基線 `3f634857` 的 [1119/1119 全庫](https://github.com/will00t-debug/Ua/actions/runs/38678776548)、[60/60 真卡矩陣](https://github.com/will00t-debug/Ua/actions/runs/38678772958) **只屬當時原基線，不是本批新增 6 張的全庫綠燈**。
+- 批次1最初 commit `1132f1c`、`14b16e5`、`2327501`、`c74b149`；[CI 38692103562](https://github.com/will00t-debug/Ua/actions/runs/38692103562) **BLEACH 47/47、同步後 47/47、共用機制 56/56**。批次2實作 `dfa0b54`、`ff9cf1b`、`25a16de`；其對應 CI [38692737115](https://github.com/will00t-debug/Ua/actions/runs/38692737115) 以官方 Actions 的完成狀態為準。
+- 批次3真卡 profile `3fc02ca1cb5aea6273b947d0bbe13169b9893797`、正式貢獻 `087cb2e0501eb967495c83654f8ee8221e5ad82d`、真卡測試 `07ae7fdaa8a80521f9ef92ed750c3313c711a668`；測試與現有卡號集同步由後續 BLEACH 專屬 commits 完成。最新有 **56 項 BLEACH 專測**，以對應 CI 確實結論為準（不得拿早期 47/47 充當現在）。
+- 上一批合入新卡後 `npm test` 有 **4 項舊共用固定計數斷言**（預期 BLEACH 72 而本分支先後 74/76/78）；此輪 A 剛新增的 `tests/v2-core-top-any-outside-source.test.mjs` 亦暫時 assert **BLC-4-013 尚未註冊**，但現已由 B 正式移植，A 需要刪除這個過時的負向斷言／改為官方真卡正向驗證。**不在 B 改 A 共用測試或替換固定清冊為動態數字。**
+- A 要將 BLEACH 固定的 `57` 新增身份擴為**精確原 57 + 本次 6 卡號＝63**；V2 總已註冊 **175→181**；全部未移植 **525→519**。需審查 source ID manifest、各系列固定陣列，全部仍能抓錯卡/重複/來源不符；不只放寬期待數字。PR #73 本身的 BLEACH 專測固定精確數為 **15 Pilot + 63 貢獻 =78**。
+- 最新 [B-bleach-inventory.csv](./B-bleach-inventory.csv) **276 行×29 欄**逐卡分列 B 已編譯、主線已整合、官文/FAQ、私測/預覽及真實效果證據。完整 FAQ 終驗仍記 0，不用通過率灌數字。
+
+---
+
+## 2026-10-15 前次 74/276 狀態與歷史交接（以下所有舊計數均非現況）
+
+# [歷史交接] BLEACH V2 官方卡移植（2026-10-15 批次 1）
 
 > **最新狀態優先於下方過往交接記錄。** 分支 PR #73 `feature/v2-bleach-port-20261015`，整合主線 PR #70 `feature/universal-rules-v2-foundation-20261014`。保留 Draft、不修改 main、不部署正式站。本次新卡**只進 PR #73**，A 尚須更新共用固定卡號清冊與入口；主線 PR #70 仍為 72 張 BLEACH。
 
