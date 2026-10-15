@@ -155,3 +155,12 @@ GitHub Actions Node.js 22 [run #38610752632](https://github.com/will00t-debug/Ua
 - `44c6bbee07daf16320b0b16d981c03893b835f8e` + `8449e7e08e7e13c3adfc6f014363f912cc7c5113` — fail-closed 官方未支援卡不能加入合法 V2 牌組。
 
 Actions 已完成 [#38672053993](https://github.com/will00t-debug/Ua/actions/runs/38672053993)，在 `70956313e529eac12dbd1a17c635f166ddc31370` 上專測 **24/24 PASS**、全套 **1034/1039 PASS、5 FAIL**。後續上傳新測試及 handoff 會自動引發後續 CI；**以最後 HEAD Actions 為準，不要把本段當成最終 HEAD 綠燈**。
+
+### 第二輪 27 項系列專測與整套 CI 完成結果
+
+第二輪核驗 [GitHub Actions #38672334245](https://github.com/will00t-debug/Ua/actions/runs/38672334245) 對應 **`f87f277d83b036a7002ce0ae3667d2568a1def78`**，Node.js 22：
+
+- **27/27 V2-C 專屬測試通過**，0 失敗。
+- **1037/1042 全套測試通過**，5 失敗（`tests/universal-v2-once-per-turn-gate.test.mjs` 2 項；`tests/universal-v2-title-pack-contract.test.mjs` 3 項）。
+- 無任何新增 TTG/SLG V2 卡號，仍 **23/81、18/80**。本段為純文件補錄；新文件 commit 會觸發另一個 Actions run，若有差異應以新 run 為準。
+- PR #70 仍是 `25eeac5084917534193fd9feaeae31672f902e78`，未收到 A 修復的新 HEAD；目前不是「同步修好的共同核心」，而是同一 PR70 base 上 C 實際驗收。無主線合併或正式部署。
