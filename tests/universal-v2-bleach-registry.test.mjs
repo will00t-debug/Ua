@@ -15,6 +15,8 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  assertUniversalMatch,universalEnergyByColor}
  from '../dist/universal-v2/engine.mjs';
 
+import {BLEACH_PURPLE_V2_PILOT_COUNTS} from '../dist/universal-v2/verified-real-decks.mjs';
+
 const registered=registeredV2TitlePack('bleach');
 const standalone=createBleachV2Pack();
 const packs=[registered,registered];
@@ -53,25 +55,25 @@ function lifeHit(id){
  assert.equal(s.pending?.kind,'life-trigger');
  return {s,victim};
 }
-test('registry adds exact 57 official BLEACH IDs to 15 Pilots, never duplicates or ghosts',()=>{
+test('registry adds exact 63 official BLEACH IDs to 15 Pilots, never duplicates or ghosts',()=>{
  assert.equal(V2_TITLE_CONTRIBUTIONS.bleach,contribution);
  assert.equal(REAL_V2_PILOT_IDS.bleach.length,15);
- assert.equal(contribution.entries.length,57);
+ assert.equal(contribution.entries.length,63);
  assert.deepEqual(sorted(contribution.entries.map(x=>x.id)),sorted(BLEACH_V2_NEW_IDS));
- assert.equal(new Set(contribution.entries.map(x=>x.id)).size,57);
+ assert.equal(new Set(contribution.entries.map(x=>x.id)).size,63);
  assert.ok(!BLEACH_V2_NEW_IDS.some(id=>REAL_V2_PILOT_IDS.bleach.includes(id)));
  assert.deepEqual(sorted(Object.keys(registered.cards)),
   sorted([...REAL_V2_PILOT_IDS.bleach,...BLEACH_V2_NEW_IDS]));
- assert.equal(Object.keys(registered.cards).length,72);
- assert.equal(Object.keys(standalone.cards).length,72);
+ assert.equal(Object.keys(registered.cards).length,78);
+ assert.equal(Object.keys(standalone.cards).length,78);
  const info=listRegisteredV2Titles().find(x=>x.title==='bleach');
  assert.equal(info.baselinePilots,15);
- assert.equal(info.newlyContributed,57);
- assert.equal(info.totalV2Cards,72);
+ assert.equal(info.newlyContributed,63);
+ assert.equal(info.totalV2Cards,78);
  const inventory=v2InventoryForTitle('bleach');
  assert.equal(inventory.total,276);
- assert.equal(inventory.pilotImplemented,72);
- assert.equal(inventory.blocked,204);
+ assert.equal(inventory.pilotImplemented,78);
+ assert.equal(inventory.blocked,198);
  assert.deepEqual(inventory.pilotIds,sorted(Object.keys(registered.cards)));
 });
 
@@ -110,8 +112,10 @@ test('fail-closed contract rejects source drift, fake vanilla, unknown code and 
  assert.throws(()=>compileV2TitleContribution({title:'bleach',version:'duplicate',
   entries:[base,base]}),/duplicate contribution ID/);
  assert.ok(validateUniversalDeck(registered,{'BLC-2-055':50})
-  .some(x=>x.includes('Unregistered/unsupported card')));
- assert.ok(!registered.cards['BLC-2-055'],'TOP/BOTTOM core gap is not silently mapped to OUTSIDE');
+  .some(x=>x.includes('exceeds 0–4 copies')),
+  'registered printed card is legal, but 50 copies violates exact copy cap');
+ assert.deepEqual(registered.cards['BLC-2-055'].effects.onPlay,[{op:'peekTopOrBottom'}]);
+ assert.deepEqual(registered.cards['BLC-4-013'].effects.onPlay,[{op:'inspectTopAnyOutside',count:2,rest:'top'}]);
 });
 
 test('BLC-4-014 normalizes original ACTIVE total 2 to REST 1, ACTIVE 2 with same physical UID',()=>{
@@ -195,4 +199,79 @@ test('ACTIVE life on real BLC-1-086 may ready own REST source, never enemy UID',
  assert.equal(done.players[0].energy[0].ready,true);
  assert.ok(done.players[0].outside.some(c=>c.uid===victim.uid));
  assert.equal(assertUniversalMatch(packs,done),true);
+});
+
+// Retained verified V2-B positive real-effect and COLOR life-trigger regressions.
+test('COLOR life on BLC-1-049 in formal registry deploys eligible OWN outside character for zero AP',()=>{
+ const purple={...BLEACH_PURPLE_V2_PILOT_COUNTS,'BLC-1-049':4};
+ delete purple['BLC-1-040']; // Replace the old COLOR copies: printed cap stays four.
+ assert.deepEqual(validateUniversalDeck(registered,purple),[]);
+ assert.equal(Object.values(purple).reduce((n,x)=>n+x,0),50);
+ let s=newUniversalMatch(packs,{decks:[purple,purple],first:1,seed:14949});
+ const revealed=take(s,0,'BLC-1-049'),eligible=take(s,0,'BLC-1-039'),
+  attack=take(s,1,'BLC-1-039'),enemy=take(s,1,'BLC-1-034');
+ s.players[0].deck.push(s.players[0].life.shift());
+ s.players[0].life.unshift(revealed);
+ s.players[0].outside.push(eligible);
+ s.players[1].outside.push(enemy);
+ s.players[1].front[0]=attack;attack.ready=true;
+ s=phase(s,'attack');
+ s=dispatchUniversalAction(packs,s,{type:'attack',uid:attack.uid},{actor:1});
+ s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:null},{actor:0});
+ assert.equal(s.pending?.kind,'life-trigger');
+ assert.equal(s.pending?.trigger,'color');
+ const options=legalUniversalActions(packs,s);
+ const deploy=options.find(x=>x.type==='chooseTrigger'&&x.mode==='colorOutside'&&
+  x.uid===eligible.uid&&x.slot===0);
+ assert.ok(deploy,'printed COLOR target in OWN outside can join active front');
+ assert.ok(options.some(x=>x.type==='chooseTrigger'&&x.mode==='skip'));
+ assert.ok(!options.some(x=>x.uid===enemy.uid),'opponent outside is not selectable');
+ assert.throws(()=>dispatchUniversalAction(packs,s,{...deploy,uid:enemy.uid},{actor:0}),
+  /not currently legal/);
+ const before=structuredClone(s);
+ const apBefore=s.players[0].apCards.filter(c=>c.ready).length;
+ const done=dispatchUniversalAction(packs,s,deploy,{actor:0});
+ assert.deepEqual(s,before,'life Trigger must not mutate its source match');
+ assert.equal(done.players[0].front[0]?.uid,eligible.uid);
+ assert.equal(done.players[0].front[0]?.ready,true);
+ assert.ok(!done.players[0].outside.some(c=>c.uid===eligible.uid));
+ assert.ok(done.players[0].outside.some(c=>c.uid===revealed.uid));
+ assert.equal(done.players[0].apCards.filter(c=>c.ready).length,apBefore);
+ assert.equal(assertUniversalMatch(packs,done),true);
+ const skip=dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'skip'},{actor:0});
+ assert.equal(skip.players[0].front[0],null);
+ assert.ok(skip.players[0].outside.some(c=>c.uid===revealed.uid));
+ assert.equal(assertUniversalMatch(packs,skip),true);
+});
+
+test('formal registry BLC-1-049 onPlay BP reduction chooses legal foe or declines; no fake UID',()=>{
+ const purple={...BLEACH_PURPLE_V2_PILOT_COUNTS,'BLC-1-049':4};
+ delete purple['BLC-1-040'];
+ let s=newUniversalMatch(packs,{decks:[purple,purple],first:0,seed:14905});
+ const target=take(s,1,'BLC-1-039'),spell=take(s,0,'BLC-1-049'),
+  energy2=take(s,0,'BLC-1-102'),energy1=take(s,0,'BLC-1-039');
+ energy2.ready=true;energy1.ready=true;
+ s.players[0].energy[0]=energy2;s.players[0].energy[1]=energy1;
+ s.players[0].hand.push(spell);
+ target.ready=true;s.players[1].front[0]=target;
+ s=phase(s,'main');
+ const play=legalUniversalActions(packs,s).find(x=>x.type==='play'&&x.uid===spell.uid&&
+  x.line==='front'&&x.slot===0);
+ assert.ok(play,'three purple energy can legally summon BLC-1-049');
+ const waiting=dispatchUniversalAction(packs,s,play,{actor:0});
+ assert.equal(waiting.pending?.kind,'effect-target');
+ const options=legalUniversalActions(packs,waiting);
+ const selected=options.find(x=>x.type==='chooseTarget'&&x.uid===target.uid);
+ assert.ok(selected);
+ assert.ok(options.some(x=>x.type==='chooseTarget'&&x.uid===null));
+ assert.throws(()=>dispatchUniversalAction(packs,waiting,{...selected,uid:'FORGED-UID'},{actor:0}),
+  /not currently legal/);
+ const settled=dispatchUniversalAction(packs,waiting,selected,{actor:0});
+ assert.equal(settled.pending,null);
+ assert.ok(settled.players[1].front[0].buffs.some(x=>x.bp===-500));
+ assert.equal(assertUniversalMatch(packs,settled),true);
+ const declined=dispatchUniversalAction(packs,waiting,
+  options.find(x=>x.type==='chooseTarget'&&x.uid===null),{actor:0});
+ assert.ok(!(declined.players[1].front[0].buffs||[]).some(x=>x.bp===-500));
+ assert.equal(assertUniversalMatch(packs,declined),true);
 });
