@@ -576,6 +576,204 @@ const PRINTED_PINS=Object.freeze({
       "ALO"
     ],
     "effectJa": "【登場時】自分の場の他のキャラを1枚まで選び、このターン中、BP+500。"
+  },
+  "SAO-1-107": {
+    "kind": "onPlayDrawThreeDiscardOne",
+    "nameJa": "リズベット",
+    "color": "blue",
+    "energy": 3,
+    "ap": 2,
+    "bp": 2000,
+    "gen": 3,
+    "type": "character",
+    "trigger": "draw",
+    "traits": [
+      "アインクラッド"
+    ],
+    "effectJa": "【登場時】カードを3枚引き、自分の手札を1枚場外に置く。"
+  },
+  "SAO-2-072": {
+    "kind": "onPlayPeekTopOrBottom",
+    "nameJa": "シノン",
+    "color": "green",
+    "energy": 1,
+    "ap": 1,
+    "bp": 2000,
+    "gen": 1,
+    "type": "character",
+    "trigger": "draw",
+    "traits": [
+      "GGO"
+    ],
+    "effectJa": "【登場時】自分の山札の上から1枚見る。そのカードを自分の山札の上か下に置く。"
+  },
+  "SAO-2-017": {
+    "kind": "onPlayInspectTwoAnyOutside",
+    "nameJa": "シリカ",
+    "color": "blue",
+    "energy": 1,
+    "ap": 1,
+    "bp": 1500,
+    "gen": 1,
+    "type": "character",
+    "trigger": "active",
+    "traits": [
+      "アインクラッド"
+    ],
+    "effectJa": "【登場時】自分の山札の上から2枚見る。その中から望む枚数を望む順で自分の山札の上に置き、残りを場外に置く。"
+  },
+  "SAO-2-030": {
+    "kind": "onPlayInspectTwoAnyOutside",
+    "nameJa": "ユナ",
+    "color": "purple",
+    "energy": 2,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "traits": [],
+    "effectJa": "【登場時】自分の山札の上から2枚見る。その中から望む枚数を望む順で自分の山札の上に置き、残りを場外に置く。"
+  },
+  "SAO-1-032": {
+    "kind": "recoverApTwo",
+    "nameJa": "手作りのパイ",
+    "color": "yellow",
+    "energy": 3,
+    "ap": 1,
+    "bp": 0,
+    "gen": 0,
+    "type": "event",
+    "trigger": "final",
+    "traits": [],
+    "effectJa": "自分のAPカードを2枚まで選び、アクティブにする。"
+  },
+  "SAO-1-063": {
+    "kind": "recoverApTwo",
+    "nameJa": "アスナのサンドイッチ",
+    "color": "blue",
+    "energy": 3,
+    "ap": 1,
+    "bp": 0,
+    "gen": 0,
+    "type": "event",
+    "trigger": "final",
+    "traits": [],
+    "effectJa": "自分のAPカードを2枚まで選び、アクティブにする。"
+  },
+  "SAO-1-098": {
+    "kind": "recoverApTwo",
+    "nameJa": "バーベキュー",
+    "color": "green",
+    "energy": 3,
+    "ap": 1,
+    "bp": 0,
+    "gen": 0,
+    "type": "event",
+    "trigger": "final",
+    "traits": [],
+    "effectJa": "自分のAPカードを2枚まで選び、アクティブにする。"
+  },
+  "SAO-2-057": {
+    "kind": "recoverApTwo",
+    "nameJa": "お風呂",
+    "color": "purple",
+    "energy": 3,
+    "ap": 1,
+    "bp": 0,
+    "gen": 0,
+    "type": "event",
+    "trigger": "final",
+    "traits": [],
+    "effectJa": "自分のAPカードを2枚まで選び、アクティブにする。"
+  },
+  "SAO-1-075": {
+    "kind": "stepInspectTwoAnyOutside",
+    "nameJa": "シリカ",
+    "color": "green",
+    "energy": 3,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 3,
+    "type": "character",
+    "trigger": null,
+    "traits": [
+      "ALO"
+    ],
+    "effectJa": "【ステップ】（自分の移動フェイズにフロントLからエナジーLへ移動できる）\n【登場時】自分の山札の上から2枚見る。その中から望む枚数を望む順で自分の山札の上に置き、残りを場外に置く。"
+  },
+  "SAO-1-089": {
+    "kind": "stepPeekTopOrBottom",
+    "nameJa": "シノン",
+    "color": "green",
+    "energy": 2,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "traits": [
+      "GGO"
+    ],
+    "effectJa": "【ステップ】（自分の移動フェイズにフロントLからエナジーLへ移動できる）\n【登場時】自分の山札の上から1枚見る。そのカードを自分の山札の上か下に置く。"
+  },
+  "SAO-1-003": {
+    "kind": "activeExtraEnergy",
+    "nameJa": "ティーゼ・シュトリーネン",
+    "color": "yellow",
+    "energy": 2,
+    "ap": 1,
+    "bp": 2500,
+    "gen": 2,
+    "type": "character",
+    "trigger": null,
+    "traits": [],
+    "effectJa": "このキャラがアクティブの場合、このキャラの発生エナジー+【黄】。"
+  },
+  "SAO-1-052": {
+    "kind": "activeExtraEnergy",
+    "nameJa": "キリト",
+    "color": "blue",
+    "energy": 2,
+    "ap": 1,
+    "bp": 2500,
+    "gen": 2,
+    "type": "character",
+    "trigger": null,
+    "traits": [
+      "ALO"
+    ],
+    "effectJa": "このキャラがアクティブの場合、このキャラの発生エナジー+【青】。"
+  },
+  "SAO-1-073": {
+    "kind": "activeExtraEnergy",
+    "nameJa": "シウネー",
+    "color": "green",
+    "energy": 2,
+    "ap": 1,
+    "bp": 2500,
+    "gen": 2,
+    "type": "character",
+    "trigger": null,
+    "traits": [
+      "ALO"
+    ],
+    "effectJa": "このキャラがアクティブの場合、このキャラの発生エナジー+【緑】。"
+  },
+  "SAO-2-048": {
+    "kind": "activeExtraEnergy",
+    "nameJa": "キリト",
+    "color": "purple",
+    "energy": 2,
+    "ap": 1,
+    "bp": 2500,
+    "gen": 2,
+    "type": "character",
+    "trigger": null,
+    "traits": [
+      "プログレッシブ"
+    ],
+    "effectJa": "このキャラがアクティブの場合、このキャラの発生エナジー+【紫】。"
   }
 });
 export const SAO_V2_PILOT_IDS=Object.freeze(Object.keys(PRINTED_PINS).sort());
@@ -608,6 +806,23 @@ export function verifiedSaoV2Cards(){
    card.templateEffects={onPlay:[{template:'draw',count:1}]};
   if(pin.kind==='onPlayDrawDiscard')
    card.templateEffects={onPlay:[{template:'drawDiscardOne'}]};
+  if(pin.kind==='onPlayDrawThreeDiscardOne')
+   card.templateEffects={onPlay:[{template:'draw',count:2},{template:'drawDiscardOne'}]};
+  if(pin.kind==='onPlayPeekTopOrBottom')
+   card.templateEffects={onPlay:[{template:'peekTopOrBottom'}]};
+  if(pin.kind==='onPlayInspectTwoAnyOutside')
+   card.templateEffects={onPlay:[{template:'inspectTopAnyOutside',count:2,rest:'top'}]};
+  if(pin.kind==='recoverApTwo')
+   card.templateEffects={onPlay:[{template:'recoverAp',count:2}]};
+  if(pin.kind==='stepInspectTwoAnyOutside'){
+   card.step=true;
+   card.templateEffects={onPlay:[{template:'inspectTopAnyOutside',count:2,rest:'top'}]};
+  }
+  if(pin.kind==='stepPeekTopOrBottom'){
+   card.step=true;
+   card.templateEffects={onPlay:[{template:'peekTopOrBottom'}]};
+  }
+  if(pin.kind==='activeExtraEnergy')card.activeExtraEnergy=1;
   if(pin.kind==='impactNull')card.impactNull=true;
   if(pin.kind==='onPlayBounce')
    card.templateEffects={onPlay:[{template:'bounceOwnOtherUnderEnergy',energy:1}]};
@@ -624,7 +839,7 @@ export function verifiedSaoV2Cards(){
  });
 }
 export function saoV2Pack(){
- return createUniversalPack({id:'sword-art-online',version:'v2-d-sao-pilot-3',
+ return createUniversalPack({id:'sword-art-online',version:'v2-d-sao-pilot-8',
   cards:verifiedSaoV2Cards()});
 }
 

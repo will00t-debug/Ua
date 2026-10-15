@@ -41,7 +41,7 @@ jobs:
           node --check dist/universal-v2/sao-mst-real-decks.mjs
       - name: SAO and MST V2 dedicated tests
         run: |
-          node --test tests/universal-v2-sao-port.test.mjs tests/universal-v2-mst-port.test.mjs tests/universal-v2-sao-mst-cross-title.test.mjs tests/v2-sao-mst-registry-real-decks.test.mjs
+          node --test tests/universal-v2-sao-port.test.mjs tests/universal-v2-mst-port.test.mjs tests/universal-v2-sao-mst-cross-title.test.mjs tests/v2-sao-mst-registry-real-decks.test.mjs tests/v2-sao-mst-draw-top-batches.test.mjs
 
   core-shared-regression:
     runs-on: ubuntu-latest

@@ -1,5 +1,128 @@
 # V2-D｜刀劍神域 SAO／無職轉生 MST 移植交接
 
+## Cursor 接手凍結交接（2026-10-15，**此節為最新狀態；以下其他節為歷史快照**）
+
+> **WIP / STOP DEVELOPMENT：使用者已改由 Cursor 接手；自此只保留、交接及標註未完成。沒有新的卡片實作、共用引擎修改、main 合併或正式部署。**
+>
+> 專案 `will00t-debug/Ua`；**D 所屬分支** `feature/v2-sao-mst-port-20261015`；**Draft PR** [#74](https://github.com/will00t-debug/Ua/pull/74)，**整合主線** PR [#70](https://github.com/will00t-debug/Ua/pull/70) `feature/universal-rules-v2-foundation-20261014`。
+>
+> **交接前遠端 HEAD / 已推送程式與文件快照 SHA：`b2b10f2f0ecd4ce41c04d863b2476da1ae302667`**。本交接節本身將產生**另一個遠端交接 commit**；Cursor 請以 `git fetch origin && git rev-parse origin/feature/v2-sao-mst-port-20261015` 取得**包含本節的最新 SHA**，或直接查 PR #74 的 Head commit，不應把此「交接前 SHA」誤作交接後 HEAD。實際 GitHub 更新使用 contents API 建立 commit 直接寫入遠端分支，等同已 push。沒有本助手未提交的本機工作樹，但無法從遠端檢查使用者／Cursor 自己電腦上是否另有未提交修改。
+
+### 1. 已完成且在 D 分支保留
+
+- **SAO 53/183、MST 24/80，共 77/263** 完整來源鎖定的 V2 卡定義，**兩套正式 `title-packs/{sao,mst}.mjs`** 共用 `sao-pack.mjs`／`mst-pack.mjs` 的單一 `sourceRecord/definition/evidence` 來源；這是已登錄 pilot，不是宣稱 77 張所有 FAQ 最終驗收。
+- 原 39 張 SAO / 23 張 MST 一張未重做；本輪新增 **SAO 14 / MST 1**，合計 **15** 張官方卡號：`SAO-1-003`, `SAO-1-032`, `SAO-1-052`, `SAO-1-063`, `SAO-1-073`, `SAO-1-075`, `SAO-1-089`, `SAO-1-098`, `SAO-1-107`, `SAO-2-017`, `SAO-2-030`, `SAO-2-048`, `SAO-2-057`, `SAO-2-072`, `MST-1-010`。
+- **完整 MST 80 張日本印刷 metadata** 在 `dist/universal-v2/sources/{mst-catalog,mst-official-print,mst-inventory}.mjs`；不覆蓋 `dist/mushoku-tensei.mjs` 舊主線佔位卡庫。SAO 確認的 183 獨立一般 ID 取自 `dist/sao-official-import.mjs`（202 件商品印刷紀錄去重）；未掃到的其他宣傳卡不保證存在／完整。
+- `dist/universal-v2/sao-mst-real-decks.mjs` 提供雙方各 **50 張合法真卡牌組**；既有 `tests/v2-sao-mst-registry-real-decks.test.mjs` 透過正式 registry 實測整局 SAO 對 MST 的 AI 對局與實體 UID 守恆。新效果測試在 `tests/v2-sao-mst-draw-top-batches.test.mjs`：抽3再棄1、牌頂置頂／底、牌頂2任意送場外0/1/2、牌頂3全數重排、STEP＋登場複合效果、四色 FINAL 恢復 AP 及四色 ACTIVE 額外能源。未實作卡仍由專測保護拒絕載入。
+
+### 2. 最後**實際跑過**的測試（Node.js 22 GitHub Actions；非本機口頭推測）
+
+- **最終交接前 HEAD `b2b10f2` 的 [Actions #38705079518](https://github.com/will00t-debug/Ua/actions/runs/38705079518)：`isolated-port-regression` 32/32 PASS，`core-shared-regression` `npm test` 1,149/1,151 PASS，**2 FAIL**；整體 workflow 為 **FAIL**，禁止聲稱全綠。**同一 SHA** 上量測。
+- 兩失敗均來自 **A 主權** `tests/universal-v2-title-pack-contract.test.mjs:39`（五作品正式卡號／既有 pilots）及 `:121`（正式清冊 inventory）。測試固定預期 `[78,23,18,39,23]`，D 當前實際為 `[78,23,18,53,24]`。受控 manifest `tests/fixtures/v2-integrated-id-manifest.mjs` 仍是舊 SAO39／MST23 清單；**需由 A 對照下方精確 15 張逐卡更新固定清冊及其他相關快照，再完整跑 npm test／矩陣**。不得刪除斷言或改成從實際 registry 動態推算預期值以假裝通過。
+- A 穩定基準 `75468867b7ec4f5cdd78661e5b98f400494fb94d` 曾在 [#38694131961](https://github.com/will00t-debug/Ua/actions/runs/38694131961) 與 [#38694133956](https://github.com/will00t-debug/Ua/actions/runs/38694133956) 雙綠燈；D 以保留雙親的 merge commit `e6549d06291d5789791b80ab22518f0d4f3868b0` 安全同步且未覆蓋其他作品。**這不代表 D 最新 commit 全綠或最新 60 局矩陣已重跑**。
+- 交接文件提交後 CI 若自動觸發，屬於**新 commit 的新 run**；以 GitHub Actions 顯示的 commit／job 結果為準，不能沿用舊 run 冒稱新 run。
+
+### 3. 仍未完成與明確 WIP 阻塞（**不得當已移植**）
+
+**第一優先：A 主控整合 15 張新增真卡；卡號及對應 commits：**
+
+| 批次及已存在於遠端的程式 commit | 本批正式 D 貢獻 ID | 需 A 處理 |
+|---|---|---|
+| 3 `99fb7161`；核心 count1 相容修正 `0a4ab300` | `SAO-1-107`, `SAO-2-072` | shared 固定 ID 清冊與當前總數 |
+| 4 `9f8dba77`、`1230a997` | `SAO-2-017`, `SAO-2-030`, `MST-1-010` | 同上；抽看牌頂完整模板由 A 核心提供 |
+| 5 `3ecc9700` | `SAO-1-032`, `SAO-1-063`, `SAO-1-098`, `SAO-2-057` | FINAL 事件的 shared registry／清冊 |
+| 6 `ce75b9c0` | `SAO-1-075`, `SAO-1-089` | STEP 與 onPlay 兩項均須保留 |
+| 7 `b6235b4b` | `SAO-1-003`, `SAO-1-052`, `SAO-1-073`, `SAO-2-048` | ACTIVE 額外能源真卡的受控清冊 |
+| 測試及補完 `57ab3bd3`；負向阻塞驗收 `184689fc`；前次文件快照 `b2b10f2` | D 專測已 32/32 | A 需將 shared fixture 更新，再跑全套與 60 局；不改 D 的可追溯官文 |
+
+**尚缺共享能力／不可冒充完成的代表卡（需正式日本卡文及 FAQ 逐例覆核）：**
+`SAO-1-031`（牌頂5選最多2不同名字置底）、`SAO-2-023`／`MST-1-043`（頂 N 搜尋、選到才棄手）、`SAO-2-066`（頂2僅能棄至多1張符合綠色 ALO）、`MST-1-028`（異質條件選牌到手並棄牌、剩餘場外）、`SAO-2-062`（先抽2再棄2＋條件 AP）、`SAO-2-018`（離場時檢索）、`SAO-1-081`（回合開始退場／離場額外能力）、`MST-1-068`（別名、特殊 Raid、條件 IMPACT）、`MST-1-051`（須依官方限制每組最多1張，shared deck validator 目前未保證該 per-ID 限制）。另多層 Raid、能力消除、持續效果與生命觸發時序仍需 A 統一補核心。
+[PR #70 需求交接 #6187607123](https://github.com/will00t-debug/Ua/pull/70#issuecomment-6187607123) 有逐卡正反例與來源；[新增四張能源 #6187746107](https://github.com/will00t-debug/Ua/pull/70#issuecomment-6187746107) 補充末批固定 ID。
+
+**WIP：未移植確切清單（已有官方來源記錄，但沒有 D source-pinned V2 definition）**：
+
+- **SAO 未移植 130 張**：SAO-1-002、SAO-1-005、SAO-1-007、SAO-1-008、SAO-1-009、SAO-1-010、SAO-1-011、SAO-1-012、SAO-1-013、SAO-1-014、SAO-1-015、SAO-1-017、SAO-1-018、SAO-1-020、SAO-1-021、SAO-1-022、SAO-1-024、SAO-1-025、SAO-1-028、SAO-1-029、SAO-1-030、SAO-1-031、SAO-1-033、SAO-1-034、SAO-1-036、SAO-1-037、SAO-1-038、SAO-1-040、SAO-1-041、SAO-1-043、SAO-1-044、SAO-1-045、SAO-1-048、SAO-1-049、SAO-1-050、SAO-1-051、SAO-1-053、SAO-1-056、SAO-1-057、SAO-1-059、SAO-1-060、SAO-1-062、SAO-1-064、SAO-1-065、SAO-1-066、SAO-1-067、SAO-1-070、SAO-1-071、SAO-1-072、SAO-1-076、SAO-1-077、SAO-1-079、SAO-1-080、SAO-1-081、SAO-1-083、SAO-1-085、SAO-1-086、SAO-1-087、SAO-1-090、SAO-1-091、SAO-1-092、SAO-1-093、SAO-1-096、SAO-1-097、SAO-1-099、SAO-1-100、SAO-1-101、SAO-1-103、SAO-1-104、SAO-1-105、SAO-1-108、SAO-1-109、SAO-2-001、SAO-2-002、SAO-2-003、SAO-2-004、SAO-2-005、SAO-2-006、SAO-2-007、SAO-2-008、SAO-2-009、SAO-2-010、SAO-2-011、SAO-2-012、SAO-2-013、SAO-2-014、SAO-2-016、SAO-2-018、SAO-2-019、SAO-2-020、SAO-2-021、SAO-2-022、SAO-2-023、SAO-2-024、SAO-2-025、SAO-2-029、SAO-2-031、SAO-2-032、SAO-2-033、SAO-2-034、SAO-2-036、SAO-2-037、SAO-2-038、SAO-2-039、SAO-2-042、SAO-2-043、SAO-2-044、SAO-2-049、SAO-2-050、SAO-2-051、SAO-2-052、SAO-2-053、SAO-2-054、SAO-2-055、SAO-2-056、SAO-2-058、SAO-2-059、SAO-2-060、SAO-2-061、SAO-2-062、SAO-2-063、SAO-2-064、SAO-2-065、SAO-2-066、SAO-2-068、SAO-2-069、SAO-2-070、SAO-2-071、SAO-2-073、SAO-2-074。
+- **MST 未移植 56 張**：MST-1-003、MST-1-004、MST-1-005、MST-1-006、MST-1-007、MST-1-008、MST-1-009、MST-1-011、MST-1-013、MST-1-014、MST-1-016、MST-1-021、MST-1-023、MST-1-024、MST-1-025、MST-1-026、MST-1-028、MST-1-030、MST-1-031、MST-1-032、MST-1-033、MST-1-035、MST-1-036、MST-1-038、MST-1-039、MST-1-040、MST-1-041、MST-1-042、MST-1-043、MST-1-045、MST-1-046、MST-1-048、MST-1-049、MST-1-051、MST-1-052、MST-1-053、MST-1-054、MST-1-055、MST-1-056、MST-1-057、MST-1-058、MST-1-059、MST-1-060、MST-1-062、MST-1-063、MST-1-064、MST-1-065、MST-1-066、MST-1-067、MST-1-068、MST-1-073、MST-1-074、MST-1-075、MST-1-076、MST-1-078、MST-1-080。
+
+**尚未完成的驗收**：上述 186 張未移植；77 張已移植卡的全面 FAQ 逐卡終驗仍 **0 張**（現有的是卡型與代表操作自動化測試，不等於官方全例完成）；A 共用 ID 清冊未整合；shared 全套 CI 尚未全綠；手機 preview 與正式站的使用者可選／部署行為本 D 工作線未驗證。**停止開發後不繼續補齊**。
+
+### 4. Cursor 續接指令與安全界線
+
+```bash
+git clone https://github.com/will00t-debug/Ua.git
+cd Ua
+git fetch origin
+git switch --track origin/feature/v2-sao-mst-port-20261015
+git rev-parse HEAD       # 此值為包含交接 commit 的實際最新 SHA
+git status --short       # 若 Cursor 本機已有工作樹，先保存未提交修改再切分支
+node --version           # CI 使用 Node 22
+node --test tests/universal-v2-sao-port.test.mjs tests/universal-v2-mst-port.test.mjs tests/universal-v2-sao-mst-cross-title.test.mjs tests/v2-sao-mst-registry-real-decks.test.mjs tests/v2-sao-mst-draw-top-batches.test.mjs
+npm test
+```
+
+若 clone 已有分支，改用 `git fetch origin` 後從現有分支核對 `git rev-parse HEAD`、`git status`，**不要對已有未提交修改直接切換或 hard reset**。D 基線在 PR #74，A 共用核心基線 PR #70。Cursor 要從 **D 專屬分支繼續**；不要直接改 main、部署 Production、force-push 或覆蓋其他分支。GitHub 遠端原 PR 已包含成果，**不需要下載 patch 作補救**；可在 PR 的 Files changed 查看完整差異。
+
+---
+
+
+## 第七批已提交（2026-10-15；目前卡數以本節優先）
+
+已在第三輪四批 `SAO49／MST24` 上**再新增 4 張確定由 A 現有 shared V2 能力完整處理的官卡**，並非重新計算測試項或重複登錄：
+
+- **SAO-1-003**（UA15BT、黃色能源2/AP1/BP2500、產能2、無 Trigger）、**SAO-1-052**（UA15BT、藍能源2/AP1/BP2500、產能2、無 Trigger）、**SAO-1-073**（UA15BT、綠能源2/AP1/BP2500、產能2、無 Trigger）、**SAO-2-048**（EX08BT、紫能源2/AP1/BP2500、產能2、無 Trigger）。共同完整日文效果為：「このキャラがアクティブの場合、このキャラの発生エナジー+【對應卡色】。」四張分別鎖定官文、卡號、特色、顏色、能源/AP/BP、產能及 Trigger。
+- 共用 V2 現有 `activeExtraEnergy:1` 正確處理：己方**能源線 ACTIVE 時產 3**、REST 時產 2；移到 FRONT 時產 0；其他玩家不能借用己方能源。無別的主動時點、Raid 或條件，**不需要新核心**。這些已在 `tests/v2-sao-mst-draw-top-batches.test.mjs` 用四張真卡各自建立合法 50 張來源牌組、比較 `universalEnergyByColor`、禁止偷借能源並核對實體 UID。
+- **目前 SAO 53／183（新增 +14）、MST 24／80（新增 +1）；D 兩作品合計 77／263，尚未移植 SAO130 + MST56 = 186 張**。五作品若 A 自已核准本次所有新增 15 張的固定 ID 清冊後，原 A 181 張基線→**196／700**，待移植 504；嚴格每卡全 FAQ 終驗依然不得當成通過。
+- 已提交 `dist/universal-v2/sao-pack.mjs`、D 專屬 SAO／registry 精確計數測試、實際 ACTIVE/REST/FRONT 正反例；沒有碰 A shared 的 `tests/fixtures/v2-integrated-id-manifest.mjs`、`tests/universal-v2-title-pack-contract.test.mjs`，故此兩項舊固定數字失敗**應由 A 把本輪全部 15 卡號逐一新增**，不可動態推算放行未知 ID。
+- [D 第七批 Actions run #38704919948](https://github.com/will00t-debug/Ua/actions/runs/38704919948) 在提交 `57ab3bd3` 上 **系列專測 32／32 PASS**；完整全量結果依同 SHA CI 為準，不能只憑系列綠燈宣稱全套通過。本輪前一批 [#38704570670](https://github.com/will00t-debug/Ua/actions/runs/38704570670) 是 31／31 系列綠燈、1148／1150 全量，兩項固定清冊未更新。最新 core 仍為 A 雙 CI 綠燈 `75468867`，D 的安全 merge 為 `e6549d0`。
+- 精確新卡號 **SAO-1-003、SAO-1-032、SAO-1-063、SAO-1-073、SAO-1-075、SAO-1-089、SAO-1-098、SAO-1-107、SAO-1-052、SAO-2-017、SAO-2-030、SAO-2-048、SAO-2-057、SAO-2-072；MST-1-010**。其他既有 SAO39/MST23 不重做，未列在以上者沒有在此輪增加認可。
+- 缺共用檢索／選擇／離場／Raid／限制牌上限的詳細阻塞與正反例均在下方表及 [PR #70 留言 #6187607123](https://github.com/will00t-debug/Ua/pull/70#issuecomment-6187607123)。不編造額外模板、不把無法完整表達者當作已完成、只在 Draft PR #74，不合併 main、不部署正式站。
+
+
+
+## 第三輪增量批次（2026-10-15；本節取代下方 39／23 等舊快照）
+
+**主控穩定基準**：PR #70 `75468867b7ec4f5cdd78661e5b98f400494fb94d`，在該 SHA 的 `npm test` 與五作品 60 局矩陣均 CI 綠燈。此基準用雙親 merge `e6549d06291d5789791b80ab22518f0d4f3868b0` 安全同步到 PR #74；比較 A/D 樹時所有 D 主權檔 SHA 完全一致、保留既有 39／23 和真卡牌組，沒有改 shared 核心或任何其他系列。已閱讀 `AGENTS.md`、最新 `docs/v2-handoff/A-core.md`，最後 A-core 除早期「暫停擴卡」歷史還有新增 `peekTopOrBottom`、`inspectTopAnyOutside` 與正式 B 整合，故本輪按實際程式的模板擴卡。
+
+| 來源狀態（去 AP／異圖） | SAO | MST | 總計 |
+|---|---:|---:|---:|
+| 確認一般卡 metadata | 183 | 80 | 263 |
+| 已有 V2 實際 source-pinned 定義且正式 title contribution | **49** | **24** | **73** |
+| 本輪相對 39／23 新增 | **10** | **1** | **11** |
+| 有官方記錄但仍未移植 | **134** | **56** | **190** |
+| 全面逐卡 FAQ 終驗 | 0 | 0 | 0 |
+
+在同一 A 穩定核心下，五作品舊固定計數 **181／700**；若 A 接收並固定授權此 11 張，實際 registry **192／700**、未移植 **508／700**。D 不修改 A-owned `tests/fixtures/v2-integrated-id-manifest.mjs`、`tests/universal-v2-title-pack-contract.test.mjs`、registry、inventory、入口或共用核心；全套 CI 中這些固定值仍是歷史 39／23，必須由 A 與逐卡白名單核對後更新，不是任意動態放行。
+
+### 已提交的四批新增卡（全部保留原既有 62 Pilot）
+
+| 批次 | 新卡號、系列 | 官方全文主效果；共用核心實際能力 | 本批新增數 | 生命 Trigger／成本 |
+|---|---|---|---:|---|
+| **3** | **SAO-1-107**、**SAO-2-072** | 107 登場先抽3後必棄1：`draw(2)` + `drawDiscardOne` 順序結算；072 私密牌頂1張，只能置**頂／底** `peekTopOrBottom` | SAO +2 | 107 藍能源3、AP **2**、DRAW；072 綠能源1、AP1、DRAW |
+| **4** | **SAO-2-017**、**SAO-2-030**；**MST-1-010** | SAO 二張全部可選送場外 **0／1／2**，其餘依任意順序返頂（`inspectTopAnyOutside(2,top)`）；MST 頂3張**全數**依任意順序返頂、不得丟場外（`inspectTopArrange(3,false,top)`） | SAO +2、MST +1 | 017 藍1／AP1、ACTIVE；030 紫2／AP1、無；010 藍3／AP1、DRAW |
+| **5** | **SAO-1-032**、**SAO-1-063**、**SAO-1-098**、**SAO-2-057** | 四色真正事件卡「AP卡最多2張 ACTIVE」`recoverAp(2)`，可以放棄後續 AP；事件先付 AP 再進場外 | SAO +4 | 依序黃／藍／綠／紫，能源皆3，AP1，均 **FINAL** |
+| **6** | **SAO-1-075**、**SAO-1-089** | 雙能力 **STEP +** 完整登場效果；075 同批4牌頂2任選0～2張置場外、其餘排序頂；089 私密牌頂1置頂/底。Step 在移動階段可獨立移動，不能只實作 STEP 漏掉登場效果 | SAO +2 | 075 綠3／AP1／無 Trigger；089 綠2／AP1／無 Trigger |
+
+**來源 fail-closed**：`dist/sao-official-import.mjs` 的每一張日版 `effectJa` 和能源/AP/BP/產能/顏色/Trigger/traits 都與個別 `PRINTED_PINS` 完整比較；MST `sources/mst-official-print.mjs` + `mst-inventory.mjs` 同樣逐欄鎖定。資料與正式 title contribution 仍由同一份各系列 `verified*V2Cards/Entries` 建立，沒有雙白名單。生命 DRAW/ACTIVE/FINAL 依共用 V2 life-trigger engine，事件 FINAL 不可混入普通主效果時機；未宣稱官方全 FAQ 完成。
+
+**可執行正反例測試**：`tests/v2-sao-mst-draw-top-batches.test.mjs`，搭配原有 `tests/universal-v2-{sao,mst}-port.test.mjs`、`tests/v2-sao-mst-registry-real-decks.test.mjs`、`tests/universal-v2-sao-mst-cross-title.test.mjs`。使用正式 `requireRegisteredV2TitlePack` 與合法 50 張全真卡，檢查 AP2/色費、抽3後才棄1、0/1/2牌頂送場外、頂/底選擇、三張重新排序、0～2張 AP 恢復與放棄、特殊 STEP 移動、公開／私密視角、非法 UID 被拒、實體卡不遺失，並保留真卡 AI 跨作品終局。新增卡號後把 MST 專測固定為確切 13 個官卡 ID，避免新卡排序把原 STEP 047 測試實體卡擠掉；沒有放寬合法組牌條件。
+
+**已實際確認的 CI**：本輪 [GitHub Actions run #38704097198](https://github.com/will00t-debug/Ua/actions/runs/38704097198) 在 SAO49/MST24 的**雙 STEP**批次後，D 專測 **30／30 PASS**，全套 **1,147／1,149 PASS，2 FAIL**，只因 A 共用固定清冊仍鎖 SAO39/MST23（`tests/universal-v2-title-pack-contract.test.mjs` 內精確卡號 manifest／總數斷言）。這不等於新卡效果失敗；A 應以此文件固定 ID 清冊補 11 IDs 後在同一最終 SHA 再跑全量、60 局，不能刪除測試或改成動態未知清冊。新增「未實作核心」精確拒絕測試的**後續提交**另以其相應 Actions run 為準，不得把前一 SHA 的 pass 當作最新提交已驗收。
+
+### 下一波盤點：核對完整卡文後仍不可正式移植（交 A 的精確核心需求）
+
+| 官方卡號（暫 blocked） | 印刷能力／真正缺口 | 可執行驗收情境（A 實作後，D 再正式授權卡） |
+|---|---|---|
+| **SAO-1-031** | 頂 **5** 張選〈キリト〉/〈アリス〉/〈ユージオ〉**最多 2** 進手，其餘任意順序**置底**，DRAW 生命 | 0／1／2 筆合法命中、3 筆時最多取 2；不得取其他名字；非法選擇／短牌庫、私密與 UID；不能誤用全牌庫 searchDeckMany |
+| **SAO-2-023**、**MST-1-043** | SAO 頂3找 ALO、MST 頂5找**綠色場地**，最多1進手；剩餘置底，**只有進手才強制棄手1** | 無命中→0棄；有命中→可選一張後必棄1（可棄剛取卡），不得棄他人手牌；明確目標、重排、隱藏與 conservation |
+| **SAO-2-066** | 頂2至多1張**綠色 ALO**置場外，其他任意順序返**頂** | 0／1 放棄、不能選黃或非ALO、不能選2；現有 `inspectTopAnyOutside` 容許2及不合格目標，不可套用 |
+| **MST-1-028** | 頂2從〈ルーデウス〉或〈ロキシー〉或「能源≤2 事件」至多選1加手；其餘**直接場外**，有取才棄手1 | 三種 OR 目標、取得後棄卡、無目標、全部場外、短牌庫與實體 UID 守恆 |
+| **SAO-2-062** | 事件先**抽2、棄2**，己場〈ユナ〉存在再恢復至多1 AP | 一定抽完2後才依序選棄2；中途不得額外抽牌；禁假用兩次 `drawDiscardOne`；無〈ユナ〉不可回 AP。實際 A `pack.mjs` 只接受 `drawDiscard.count===1` |
+| **SAO-2-018**、**SAO-1-081**、**MST-1-068** | 退場觸發／開始回合強制退場與延後效應／特殊 Raid 別名 + conditional IMPACT + 多分歧上場 | A 應提供統一 onLeave/onTurnStart、特殊 Raid 等時序與公私資訊／支付正反例；**不**在 D 另造相容但不守規則的引擎 |
+| **MST-1-051** | 主效果原可用抽1棄1，但**官方限1**；共用 `validateUniversalDeck` 目前沒有 per-ID `deckLimit` | A 正式加入 per-ID 上限後測 1 張成功、2 張拒絕、異圖計同 ID；此前不得只標 effect 便視可玩 |
+
+共用缺口及來源連結、實際 CI 失敗已交 [PR #70 留言 #6187607123](https://github.com/will00t-debug/Ua/pull/70#issuecomment-6187607123)。D 新增 `tests/v2-sao-mst-draw-top-batches.test.mjs` 的來源鎖定負向情境可執行，防止被誤當已移植；**未來新增能力後必須再加真正狀態變化的正反例**。目前手機預覽可用與 registry 有卡仍是兩回事，整合入口及 shared manifest 主權在 A；不改 main、不部署正式站。
+
+
 ## 第二輪最新交付（2026-10-15；本節優先於下方歷史清冊）
 
 **共用基準：** 已把 PR #70 / `25eeac5084917534193fd9feaeae31672f902e78` 合入 D 分支，雙親同步 commit `383e1e2abf753a79ae7c4586b2b5396a44a26bec`，保留所有 D 來源與既有測試，**沒有直接改 A 的 engine/pack/templates/registry/preview**。當時 PR #70 樹內 **沒有 `docs/v2-handoff/A-core.md`**；使用實際 `V2_WORKSTREAM_HANDOFF.md` + `title-packs/contract.mjs` 作為明確契約。
