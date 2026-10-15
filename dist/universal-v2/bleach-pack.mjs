@@ -818,6 +818,18 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
   "trigger":"color","type":"character",
   "effect":"【登場時】抽 1 張牌。"
  } ,{
+  "id":"BLC-2-055","kind":"peekTopOrBottom",
+  "number":"EX07BT/BLC-2-055","name":"麒麟寺 天示郎",
+  "color":"purple","energy":0,"ap":1,"bp":2000,"gen":1,
+  "trigger":null,"type":"character",
+  "effect":"登場：查看己方牌堆頂 1 張，將其放至牌堆頂或牌堆底。"
+ },{
+  "id":"BLC-4-013","kind":"inspectTopAnyOutside2",
+  "number":"EX15BT/BLC-4-013","name":"ユーハバッハ",
+  "color":"yellow","energy":1,"ap":1,"bp":2000,"gen":1,
+  "trigger":null,"type":"character",
+  "effect":"登場時：查看牌庫頂2張，將任意張依任意順序放回牌庫頂，其餘送至場外。"
+ } ,{
   "id":"BLC-1-030","kind":"restEnemyFrontOne",
   "number":"UA08BT/BLC-1-030","name":"The Jail",
   "color":"yellow","energy":2,"ap":1,"bp":0,"gen":0,
@@ -861,7 +873,9 @@ export function checkedBleachAddonDefinition(p){
   enemyBpDown1000:{onPlay:[{template:'enemyBpDown',bp:1000,optional:true}]},
   enemyBpDown500Color:{onPlay:[{template:'enemyBpDown',bp:500,optional:true}]},
   inspectTop2:{onPlay:[{template:'inspectTopArrange',count:2,toOutside:true,rest:'top'}]},
-  inspectTop3:{onPlay:[{template:'inspectTopArrange',count:3,toOutside:true,rest:'top'}]}
+  inspectTop3:{onPlay:[{template:'inspectTopArrange',count:3,toOutside:true,rest:'top'}]},
+  peekTopOrBottom:{onPlay:[{template:'peekTopOrBottom'}]},
+  inspectTopAnyOutside2:{onPlay:[{template:'inspectTopAnyOutside',count:2,rest:'top'}]}
  };
 // EX15BT/BLC-4-014 prints yellow+ and ACTIVE adds one yellow. The imported legacy gen=2
  // encoded the ACTIVE total; V2 needs the printed REST base (1) plus an ACTIVE +1.
