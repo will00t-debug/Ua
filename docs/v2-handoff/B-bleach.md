@@ -1,5 +1,7 @@
 # [V2-B] BLEACH 通用引擎 V2 全卡移植交接
 
+> **2026-10-15 13:27（台灣）續作狀態核對**：PR #73 HEAD `e3446cd33dc082d6fbcf73aba6be4f6626451c16` 已安全合入 PR #70 HEAD `45ea2e3bc0db8a0b1cb75be50d346469439fe1cb`，compare 為 ahead、behind=0；不需重複 merge。正式 registry 目前 **BLEACH 72/276＝原 Pilot 15＋獨立新增 57（含 BLC-1-030）**，尚未移植 204，完整官方 FAQ 終驗仍為 0。最新 B CI [38682459477](https://github.com/will00t-debug/Ua/actions/runs/38682459477) 結論 success；A-core 指定雙 CI 綠燈核心基準 `3f634857`：全套 1119/1119、真卡 60/60 局，見 [A-core.md](./A-core.md)。**下方歷史 71/205、56 addon 和「BLC-1-030 未移植」為舊快照，不是本次最新現況**。逐卡實際狀態以 29 欄 CSV、正式註冊清單及最新 A-core 為準；生產環境未部署。這次只更新交接，沒有新增卡片或修改共用核心。
+
 ## 2026-10-15 12:34 安全同步至主控已修復版（最新狀態優先）
 
 - 本次以 PR #70 核心 `45ea2e3bc0db` 建構受控同步，保留 PR #73 原 Git 歷史和原本 BLC-1-049 真實生命 COLOR 與登場降 BP 正向測試；由主控程式 `3f634857` 的 [1119/1119 回歸](https://github.com/will00t-debug/Ua/actions/runs/38678776548)、[60/60 真卡矩陣](https://github.com/will00t-debug/Ua/actions/runs/38678772958) 提供已確認的共同基線，本次新 commit 請另外查其新 CI。
