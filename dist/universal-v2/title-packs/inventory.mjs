@@ -5,7 +5,10 @@ import {CARDS} from '../../cards.mjs';
 import {TTG_CARDS} from '../../ttg-builder.mjs';
 import {SOLO_LEVELING_CARDS} from '../../solo-leveling.mjs';
 import {SAO_CARDS} from '../../sao-cards.mjs';
-import {UA54BT_VERIFIED} from '../../mushoku-tensei.mjs';
+// D's full Japanese official-print inventory is separate from the 12
+// placeholders in the legacy MST catalogue. Do not overwrite Production.
+import {MST_V2_OFFICIAL_CATALOGUE}
+ from '../sources/mst-inventory.mjs';
 import {V2_TITLE_IDS} from './contract.mjs';
 import {registeredV2TitlePack} from './registry.mjs';
 
@@ -13,7 +16,7 @@ export const V2_SOURCE_CATALOGUES=Object.freeze({
  bleach:CARDS,'gurren-lagann':TTG_CARDS,
  'solo-leveling':SOLO_LEVELING_CARDS,
  'sword-art-online':SAO_CARDS,
- 'mushoku-tensei':UA54BT_VERIFIED
+ 'mushoku-tensei':MST_V2_OFFICIAL_CATALOGUE
 });
 export const V2_EXPECTED_UNIQUE_CARD_COUNTS=Object.freeze({
  bleach:276,'gurren-lagann':81,'solo-leveling':80,

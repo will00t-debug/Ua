@@ -54,7 +54,8 @@ test('template parameters encode printed optionality, trait, threshold and name 
  const invalid=[
   {template:'enemyBpDown',bp:3000},
   {template:'enemyBpDown',bp:3000,optional:'yes'},
-  {template:'restEnemyUnderBp',bp:3000,optional:false},
+  {template:'restEnemyUnderBp',bp:3000},
+  {template:'restEnemyUnderBp',bp:3000,optional:'false'},
   {template:'retireEnemyIfFacedown',bp:5000,optional:false},
   {template:'buffOwnTrait',trait:'',bp:1000,optional:true},
   {template:'buffOwnTrait',trait:'Trait',bp:6000,optional:true},
@@ -73,6 +74,13 @@ test('template parameters encode printed optionality, trait, threshold and name 
   onPlay:[{op:'draw',count:1},{op:'enemyBpDown',bp:1000,optional:false}],
   onAttack:[{op:'buffSelf',bp:1000}]
  });
+ assert.deepEqual(expandAbilityTemplates({onPlay:[
+  {template:'restEnemyUnderBp',bp:3000,optional:false},
+  {template:'restEnemyUnderBp',bp:3000,optional:true}
+ ]}).onPlay,[
+  {op:'restOppFrontUnderBp',bp:3000,optional:false},
+  {op:'restOppFrontUnderBp',bp:3000,optional:true}
+ ],'explicit mandatory versus optional REST profiles remain distinct');
 });
 
 test('templates cannot silently override raw ops, authorize vanilla effects or bypass legality restrictions',()=>{

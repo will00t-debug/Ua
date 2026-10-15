@@ -122,9 +122,9 @@ function verifyProgram(program,path){
    Object.keys(e).some(k=>!['op','bp','optional'].includes(k))
   ))throw Error(path+'['+i+'] invalid facedown retirement effect');
   if(e.op==='restOppFrontUnderBp'&&(
-   !integer(e.bp,1)||e.bp>50000||e.optional!==true||
+   !integer(e.bp,1)||e.bp>50000||typeof e.optional!=='boolean'||
    Object.keys(e).some(k=>!['op','bp','optional'].includes(k))
-  ))throw Error(path+'['+i+'] invalid optional opponent REST effect');
+  ))throw Error(path+'['+i+'] invalid opponent REST optionality/profile');
   if(e.op==='retireOppFrontUnderBp'&&(
    !integer(e.bp,1)||e.bp>50000||typeof e.bonusName!=='string'||
    !e.bonusName.trim()||!integer(e.bonusBp,e.bp)||e.bonusBp>50000||
