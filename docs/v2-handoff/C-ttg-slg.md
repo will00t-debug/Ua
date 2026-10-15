@@ -1,5 +1,83 @@
 # [V2-C] 天元突破 TTG-1 ＋ 我獨自升級 SLG-1 交接
 
+## CURSOR 接手專用最終交接 — 2026-10-15 19:21（台灣時間；本節優先於下方歷史內容）
+
+> **STOP / HANDOFF ONLY / WIP**：使用者已要求 ChatGPT 停止新增開發。本節只保存交接，沒有新增卡牌、改動任何引擎或共享測試、合併 main、部署正式站或改寫 PR #70。未完成卡牌一律 `not_ported` / **WIP**，嚴禁以空效果、auto flag 或舊 reducer 冒充 V2。
+>
+> **Cursor 真正工作起點**：`git fetch origin` 後切到 `feature/v2-ttg-slg-port-20261015`、執行 `git rev-parse HEAD`，以 **PR #72 當前 HEAD** 作最後交接提交 SHA；**本次交接前最後一次程式碼／核心整合 SHA** 為 `29ddd3ffdc5379584923539a8323ee7ec09d6add`。本節的文件提交會得到更新的 SHA，因此切勿把 `29ddd3ffdc5379584923539a8323ee7ec09d6add` 誤認為最後的「文件交接」commit。可於 [PR #72](https://github.com/will00t-debug/Ua/pull/72) 與本輪最終 GitHub PR 留言核對完整新 SHA。
+
+### Git 範圍、分支及可靠基線
+
+| 類別 | 實際分支 / commit / 說明 |
+|---|---|
+| C 唯一寫入分支 | `feature/v2-ttg-slg-port-20261015` ([Draft PR #72](https://github.com/will00t-debug/Ua/pull/72)) |
+| C 交接前最新 HEAD（程式碼與核心合流） | `29ddd3ffdc5379584923539a8323ee7ec09d6add`，雙親保留 C 前一輪 `979eed8530721fae53c63201e033a5297464c853` 與 A 修復核心 `75468867b7ec4f5cdd78661e5b98f400494fb94d` |
+| A 主控／共同核心 | `feature/universal-rules-v2-foundation-20261014` ([Draft PR #70](https://github.com/will00t-debug/Ua/pull/70))，檢查時 HEAD `75468867b7ec4f5cdd78661e5b98f400494fb94d`；`docs/v2-handoff/A-core.md` 可讀，但早期歷史 SHA 非當前 HEAD |
+| main／Production | **完全未修改／未合併／未部署**，請維持 Draft；不要從 C 修改 A 的核心檔 |
+
+**保存狀態**：截至本次核對，所有可由 GitHub 確認的 C 修改已在 `29ddd3ffdc5379584923539a8323ee7ec09d6add` 所屬 PR #72 分支提交及推送；此次僅需推送本 handoff 文件。GitHub 只能檢查遠端受版本管理的內容，無法替 Cursor 保證使用者電腦上的本地未提交變更；Cursor 接手應先執行 `git status --short` 及 `git log --oneline -n 8`，不要直接覆寫本地修改。
+
+### 已完成的成果（不是 WIP 卡）
+
+- 已在 PR #72 真實 V2 registry 接入 **TTG 24/81**：原 Pilot 20 + 已納入 A 的 C 三張 `TTG-1-005`、`TTG-1-014`、`TTG-1-019` + **僅 PR #72** 的新增 `TTG-1-077`；剩 **57** 張未移植。
+- 已在 PR #70／#72 接入 **SLG 18/80**：`SLG-1-005, SLG-1-006, SLG-1-015, SLG-1-016, SLG-1-026, SLG-1-032, SLG-1-038, SLG-1-040, SLG-1-041, SLG-1-043, SLG-1-045, SLG-1-052, SLG-1-055, SLG-1-066, SLG-1-068, SLG-1-076, SLG-1-078, SLG-1-079`；本輪 SLG 沒新增真卡，剩 **62** 張未移植。
+- `TTG-1-077` 已提交共用 V2 DSL 的 `recoverOutsideOne`：官方 UA56BT 綠／紅（以卡表印刷欄位為準）的**紅色**、需求能源4、AP1 場域，onPlay 從**己方場外**選至多一張具有「ガンメン」特徵的卡回手（可選0），生命 Trigger 無；非己方場外、錯誤特徵、非法選擇必須拒絕。以該卡已驗證原始斜線複合特徵作 V2 局部正規化，sourceRecord 保留原始來源。來源 [UA56BT/TTG-1-077](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-077)。
+- 現有 C 專屬測試覆蓋 registry card-ID 精確集合／20 Pilot 不重複、50 張合法雙系列牌組、共同 V2 引擎回合交接、生命 DRAW/GET/ACTIVE/SPECIAL、回手與回收合法 UID、場外選擇與 AP／實體守恆；**不等於全部官方 FAQ 終驗**。TTG/SLG 的 Body 與 Life 狀態分開記錄。
+- C 現有提交內容及所有前輪歷史可從 PR #72 Git log 回溯；重要最近提交有 `29ddd3ffdc5379584923539a8323ee7ec09d6add`（安全與 A core 合流）、`979eed8530721fae53c63201e033a5297464c853`（TTG077、C 測試與卡號稽核保全）、`3738f56b7e14496e5232271157e2a6c42969e4fb`（早前共同核心雙親整合）。
+
+### 實際執行過的測試、精確 SHA 與結果
+
+| 分支／commit | 真正跑過的測試 | 結果與證據 |
+|---|---|---|
+| A：`75468867b7ec4f5cdd78661e5b98f400494fb94d` | Node22 `npm test` | **1143/1143 PASS、0 FAIL**；[Actions #38694133956](https://github.com/will00t-debug/Ua/actions/runs/38694133956) |
+| A：相同 `75468867b7ec4f5cdd78661e5b98f400494fb94d` | 五作品真實50張牌組矩陣 | **60/60 finished、0 fail**；[Actions #38694131961](https://github.com/will00t-debug/Ua/actions/runs/38694131961) |
+| C：`29ddd3ffdc5379584923539a8323ee7ec09d6add` | Node22 C-only 專測 | **32/32 PASS、0 FAIL**；[Actions #38703884418](https://github.com/will00t-debug/Ua/actions/runs/38703884418) |
+| C：相同 `29ddd3ffdc5379584923539a8323ee7ec09d6add` | Node22 `npm test` | **1146/1148 PASS、2 FAIL**（僅 A 擁有的 `tests/universal-v2-title-pack-contract.test.mjs`：固定來源卡號清冊、inventory 卡數未含 TTG077）；同一 [Actions #38703884418](https://github.com/will00t-debug/Ua/actions/runs/38703884418) |
+
+**不要把 A 的 1143/1143 與 60/60 誤認成 C 含 TTG077 已全綠，也不要把 2 項共用失敗當成 C 的新效果測試失敗。** 交接文件自身新 commit 如引發 CI，要檢查該 SHA 對應的 run，不能提前宣稱通過；本輪沒有額外手動反覆重跑已知共用失敗。
+
+### 尚未被 A 合入的確切變更（WIP integration，不是遺失）
+
+截至最後核對，從 A HEAD `75468867b7ec4f5cdd78661e5b98f400494fb94d` 比到 C HEAD `29ddd3ffdc5379584923539a8323ee7ec09d6add` 的**實際 blob 差異精確是七個 C 專屬檔案**：
+
+1. `dist/universal-v2/ttg-pack.mjs`：**TTG-1-077** 四號 C addon 的完整 DSL 與特殊複合特徵來源指紋。
+2. `dist/universal-v2/title-packs/ttg.mjs`：第四張 `TTG-1-077` 官方卡面證據、review note 與貢獻版本。
+3. `tests/universal-v2-ttg-port.test.mjs`：TTG24、077 正反例、TTG010/023 WIP fail-closed。
+4. `tests/universal-v2-slg-port.test.mjs`：精確 PR70/PR72 所有權及 SLG036/037 WIP fail-closed。
+5. `audit/v2-c-ttg-status.csv`：原20 Pilot／已在 A 的3張／PR72 專有077／57 WIP 分類。
+6. `audit/v2-c-slg-status.csv`：已在 A 的18張／62 WIP 與生命 Trigger 分類。
+7. `docs/v2-handoff/C-ttg-slg.md`：所有近期整合與 Cursor 接手資訊。
+
+其餘 C 擁有的 `dist/universal-v2/slg-pack.mjs`、`dist/universal-v2/title-packs/slg.mjs`、`.github/workflows/v2-c-ttg-slg-tests.yml` 在 A／C 的 blob 完全相同。**只有 TTG-1-077 是已在 C 實作但尚未由 A 固定卡號清冊整合的新卡**；另外四張僅為需求分析，沒有完成。
+
+### 目前阻塞與明確 WIP（切勿假標 completed）
+
+- **BLOCKED / 交 A**：`tests/universal-v2-title-pack-contract.test.mjs` 兩項固定斷言尚以 TTG23 為上限。應由 A 維護 `tests/fixtures/v2-integrated-id-manifest.mjs`、共用 contract／inventory，按**明確 TTG C 新四張 `005,014,019,077`**驗證 TTG **24/81**／缺57；若 A 其他作品無變動，五系列註冊 **182/700**／未註冊518。**不能放寬成只要數字吻合就通過，也不能由 C 直接修改共用測試。** 已交 A [PR70 留言 #6186220563](https://github.com/will00t-debug/Ua/pull/70#issuecomment-6186220563)；C [PR72 保全留言 #6187589071](https://github.com/will00t-debug/Ua/pull/72#issuecomment-6187589071)。
+- **WIP / TTG**：`TTG-1-010`／`TTG-1-023` 是牌庫**頂3／頂5**依印刷特徵選取、剩餘依序放底、成功取牌後才棄1，不能用全牌庫 search/shuffle 冒充；`TTG-1-081` 還有己場或 Raid 底板西蒙**或**卡米那的 BP 條件；其他多層 Raid／能源門檻／延遲／生命特例依下方既有交接。
+- **WIP / SLG**：`SLG-1-036` 必須先抽3再強制棄2（Life ACTIVE）；`SLG-1-037` 必須從己方 outside 按**印刷 BP≤4000** 選至多1角色回手再抽1（Life DRAW，官方 Q2039）；`SLG-1-014` own outside 回手後僅可選 REST 免費登場**能源線**（Q2025），不得進前線。未完成同名共用限次／鏈式 Raid 等留原文交接查閱。
+- **TTG 全部尚未移植 57 個卡號（統一前綴 `TTG-1-`）**：`002, 003, 004, 006, 007, 008, 010, 011, 012, 013, 015, 016, 017, 018, 020, 021, 022, 023, 024, 025, 026, 027, 028, 029, 030, 031, 032, 033, 034, 035, 039, 040, 041, 044, 048, 050, 053, 054, 055, 056, 057, 058, 059, 060, 061, 062, 063, 067, 068, 069, 070, 071, 074, 075, 076, 080, 081`。
+- **SLG 全部尚未移植 62 個卡號（統一前綴 `SLG-1-`）**：`001, 002, 003, 004, 007, 008, 009, 010, 011, 012, 013, 014, 017, 018, 019, 020, 021, 022, 023, 024, 025, 027, 028, 029, 030, 031, 033, 034, 035, 036, 037, 039, 042, 044, 046, 047, 048, 049, 050, 051, 053, 054, 056, 057, 058, 059, 060, 061, 062, 063, 064, 065, 067, 069, 070, 071, 072, 073, 074, 075, 077, 080`。
+- 以上全部仍以兩份 C-owned CSV 的 `body_v2_port`、`life_trigger_v2_port`、`integration_scope_v2_c` 為逐卡真相，任何 Body 或 Life 局部 handler **不等於**這張卡完成全效果驗收。
+
+### Cursor 接手指引（僅供後續人類／Cursor 使用；ChatGPT 本輪不再操作）
+
+```bash
+git clone https://github.com/will00t-debug/Ua.git
+cd Ua
+git fetch origin
+git switch --track origin/feature/v2-ttg-slg-port-20261015
+git status --short
+git log --oneline --decorate -n 10
+node --version  # 專案 CI 為 Node.js 22
+node --test tests/universal-v2-ttg-port.test.mjs tests/universal-v2-slg-port.test.mjs
+# 需要完整測試才執行 npm test；A 固定清冊尚未納入 TTG077 前，已知會有上述2項失敗。
+```
+
+**安全範圍**：C 只改本作品專屬 pack／title contribution／tests／CSV／handoff。任何共用 engine、registry、模板、source-pinned manifest 或共用契約測試請交 A；使用者已決定切換 Cursor，ChatGPT 本輪交接完成後停止，沒有後台持續開發或部署。
+
+---
+
+
 ## 2026-10-15 16:04 後：V2-C 停工保全與 PR70 穩定核心同步（本段優先）
 
 本輪**暫停新增卡、沒有新增任何卡號**；僅保存 C 已完成成果，接入 A 最新**已由同 SHA 雙 CI 驗證**的穩定核心，並更新交接。不得改動 PR #70 branch、main 或部署正式站。
