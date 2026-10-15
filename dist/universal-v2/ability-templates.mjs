@@ -164,6 +164,11 @@ const registry=Object.freeze({
    rest:v=>v==='top'||v==='bottom'},
   build:v=>[{op:'inspectTopArrange',count:v.count,toOutside:v.toOutside,rest:v.rest}]
  },
+ // Choose 0..N cards outside, then order every remaining inspected card.
+ inspectTopAnyOutside:{
+  args:{count:v=>integer(v,2,4),rest:v=>v==='top'||v==='bottom'},
+  build:v=>[{op:'inspectTopAnyOutside',count:v.count,rest:v.rest}]
+ },
  payDiscardThen:{
   args:{optional:yesNo,then:v=>Array.isArray(v)&&v.length>=1&&v.length<=6},
   check:v=>v.then.every(x=>x&&[
