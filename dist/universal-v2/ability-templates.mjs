@@ -48,8 +48,10 @@ const registry=Object.freeze({
   build:v=>[{op:'retireOppFrontUnderBp',bp:v.bp,bonusName:v.bonusName,bonusBp:v.bonusBp}]
  },
  restEnemyUnderBp:{
-  args:{bp:threshold,optional:requiredTrue},
-  build:v=>[{op:'restOppFrontUnderBp',bp:v.bp,optional:true}]
+  // Some official cards mandate the target when present; do not invent a
+  // "skip" decision by reusing the originally optional variant.
+  args:{bp:threshold,optional:yesNo},
+  build:v=>[{op:'restOppFrontUnderBp',bp:v.bp,optional:v.optional}]
  },
  retireEnemyIfFacedown:{
   args:{bp:threshold,optional:requiredTrue},
