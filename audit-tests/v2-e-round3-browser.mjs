@@ -121,7 +121,7 @@ try{
 }catch(e){report.status='fail';report.error=String(e?.stack||e);}
 finally{
  persist();if(ws)ws.close();if(chrome){chrome.kill('SIGKILL');if(chrome.exitCode===null&&chrome.signalCode===null)await new Promise(resolve=>chrome.once('exit',resolve));}
- if(server)server.close();if(profile)fs.rmSync(profile,{recursive:true,force:true,maxRetries:8,retryDelay:200});
+ if(server)server.close();if(profile)try{fs.rmSync(profile,{recursive:true,force:true,maxRetries:8,retryDelay:200})}catch(cleanupErr){if(!['ENOTEMPTY','EBUSY','ENOENT'].includes(cleanupErr.code))throw cleanupErr;/* Chromium subprocess profile cleanup is not a page test failure. */}
  console.log(JSON.stringify({status:report.status,cases:report.cases,warnings:report.warnings,error:report.error||null},null,2));
  if(report.status==='fail'||report.status==='fail_browser_error')process.exitCode=1;
 }
