@@ -1,3 +1,76 @@
+# [V2-A / Cursor] 核心主控最終交接 — 停止新增開發（2026-10-15 台灣時間 19:21 後）
+
+> **請優先讀本段**；下面各節保留歷次研發紀錄，包含已過期的 175／525、初次提交與正在開發的描述。這一輪明確轉交 Cursor，**不再繼續新增功能，不合併 main、不部署正式站、不覆寫其他人的分支**。
+>
+> **本輪本身僅提交此交接文件，沒有變更任何程式、測試、卡片資料、預覽入口或正式網站。** 自身交接文件的最後 Commit SHA 在 GitHub 完成 push 後，請以 PR #70 最新 HEAD／此檔案 commit 歷史為準（Commit 不能在自身內容中可靠地自我引用）。
+
+## A. 分支與可重現固定版本
+
+- Repository：[will00t-debug/Ua](https://github.com/will00t-debug/Ua)，Draft [PR #70](https://github.com/will00t-debug/Ua/pull/70)。
+- **本線唯一工作分支**：`feature/universal-rules-v2-foundation-20261014`；目標 base 為 `main`；PR #70 保持 **OPEN / Draft**。
+- **最後可驗證雙 CI 綠燈程式 HEAD（本次僅文件前）**：`75468867b7ec4f5cdd78661e5b98f400494fb94d`（短碼 `75468867`）；上一核心合入 B 六卡 `a39a72ee955c952eaa22ce647cafec475f682952`，修過時的固定拒絕測試及矩陣觸發 `75468867b7ec4f5cdd78661e5b98f400494fb94d`。未完成的系列線不能冒充已合進此 Commit。
+- 先前 BLC-1-030 穩定雙 CI 基準：`3f6348578b7e3e32a6cd12c66475e8228db0b690`，之後已累積正式 BLEACH 六卡整合與新牌頂效果，不得拿 3f634857 當本輪最新程式。
+- 本工具環境 `pwd=/`，`git rev-parse --is-inside-work-tree` 回傳 `fatal: not a git repository (or any of the parent directories): .git`；`/mnt/data` 無本地 Git checkout。因此**沒有本地工作樹可執行 `git status` 或發現／保存本地 uncommitted 檔**；已核實本線成果存在 GitHub Commit 上。本次交接是 GitHub API 對上述分支直接建立文件 commit 並 push，並非聲稱執行了本地 git add/commit/push。
+- 同步／重新下載：`git fetch origin feature/universal-rules-v2-foundation-20261014`；`git switch -c cursor/v2-handoff origin/feature/universal-rules-v2-foundation-20261014`。後續 Cursor 請自行新建工作分支；不要 force push 或覆寫其他線的 PR。
+
+## B. 主控程式已完成並已保存
+
+- 真正共用的 `dist/universal-v2/{engine.mjs,pack.mjs,ability-templates.mjs,ai.mjs}`；合法動作、AP／能源成本、Raid、生命 Trigger、佇列、私密選牌、跨作品 50 張 UID／印刷卡號守恆，**仍有邊界裁定待個別 FAQ 驗收**。
+- 五作品用獨立 `dist/universal-v2/title-packs/{bleach,ttg,slg,sao,mst}.mjs` 交付，再由 `registry.mjs` 註冊；每張需完整日版來源／數值／能力程式及測試。沒有落地的卡不能翻 flag、不能借舊引擎冒充。參考 `V2_WORKSTREAM_HANDOFF.md`。
+- BLEACH 的 BLC-1-030 強制不限 BP REST、無合法敵前線不可使用事件（官方 Q1119）、已 REST 可再指定（Q91）均已修，**不是待修 bug**。新牌頂 `peekTopOrBottom` 和 `inspectTopAnyOutside` 已實作；BLC-2-055、BLC-4-013 已正式整合，見下方原始測試紀錄。
+- 私人 V2 預覽、BLEACH／TTG 真卡試牌、五作品矩陣／審計和回放除錯均保留。**最近程式 HEAD 未再次部署 Preview，也未做真實 Android/iOS 瀏覽器完整點擊驗收**；不要把 Node.js AI 完局稱為手機真機完成。正式站不動。
+
+## C. 精確卡數：已整合 != 完全終驗
+
+| 作品 | 去異圖/AP 普通卡 | 主線 V2 已註冊 | 未移植／阻塞 | 全部日本官方 FAQ 完整終驗 |
+|---|---:|---:|---:|---:|
+| BLEACH | 276 | **78** | **198** | **0（未提出逐卡完整終驗證據）** |
+| 天元突破 TTG | 81 | **23** | **58** | 0 |
+| 我獨自升級 SLG | 80 | **18** | **62** | 0 |
+| 刀劍神域 SAO | 183 | **39** | **144** | 0 |
+| 無職轉生 MST | 80 | **23** | **57** | 0 |
+| **總計** | **700** | **181** | **519** | **0（嚴格口徑）** |
+
+- 前 35 張屬原 Pilot，其餘新貢獻 BLEACH **63**、TTG **3**、SLG **18**、SAO **39**、MST **23**，合併 181，不重複計數。
+- 固定來源與清冊：`tests/fixtures/v2-integrated-id-manifest.mjs`、`docs/v2-handoff/B-bleach-inventory.csv`、`scripts/v2-unported-report.mjs`。舊 `docs/V2_UNPORTED_IDS_525.md` 是 **175 張時期的歷史快照**，不能當 181 張版的剩餘清冊。需要在 Cursor 固定 HEAD 重新產生完整 519 個號碼，不要從不同 HEAD 混數。
+- 已有全真 50 張多作品測試 deck 可完局，不代表 181 張都在同一預覽介面可任意選牌，也不代表全部官方條文逐卡完成。
+
+## D. 確實已跑過的測試：同一來源碼 SHA
+
+**所有下列雙 CI 均在程式 HEAD `75468867b7ec4f5cdd78661e5b98f400494fb94d`，不是本次純文件 commit 的測試：**
+
+1. `npm test`（Node 22；GitHub Actions [38694133956](https://github.com/will00t-debug/Ua/actions/runs/38694133956)）：**1143/1143 PASS、0 FAIL**；Browser syntax／static entry 也執行成功。
+2. `five-title-legal-matches`（[38694131961](https://github.com/will00t-debug/Ua/actions/runs/38694131961)）：**60/60 全局完整對戰 finished，0 failures**，有 [同次產物](https://github.com/will00t-debug/Ua/actions/runs/38694131961/artifacts/11953377211)。五作品不同配對與先手／固定 seed，統一共用 V2 reducer。
+3. 倒數第二個整合 commit `a39a72ee...`：矩陣 [38693943245](https://github.com/will00t-debug/Ua/actions/runs/38693943245) PASS，但全套 [38693948117](https://github.com/will00t-debug/Ua/actions/runs/38693948117) FAIL（已整合新 B 卡後過時的固定拒絕測試）；最終程式 commit `75468867` **已消除此回歸**。不可把中間紅燈當最新現況。
+4. 本次交接**沒有本地 Node 環境 checkout，也沒有重新啟動手動測試或部署**；上述為已實際完成 GitHub Actions 原始日誌，非推測。
+
+## E. 各子工作線最新 HEAD：未整合 WIP 逐卡列出
+
+以下均為本次交接時相對於 `75468867b7ec4f5cdd78661e5b98f400494fb94d` 的 **PR 分支候選差異，不包含在主線 181 張**，不得在交接階段擅自 merge/cherry-pick，不可稱已完成終驗：
+
+- **[V2-B] PR #73**，`feature/v2-bleach-port-20261015` @ `2a502f01ec1e29a98c44e45e12f4aaa5a9753222`：較主線多 `BLC-4-023` **1 張（WIP／待來源與 QA 複核）**；B 分支與主線分岔（compare `diverged`），原有 78 張主線 BLEACH 已保留；不能直接覆蓋主線 `bleach-pack.mjs`。
+- **[V2-C] PR #72**，`feature/v2-ttg-slg-port-20261015` @ `29ddd3ffdc5379584923539a8323ee7ec09d6add`：較主線多 `TTG-1-077` **1 張（WIP／待 QA）**；原本 23 TTG、18 SLG 主線均保留。
+- **[V2-D] PR #74**，`feature/v2-sao-mst-port-20261015` @ `b2b10f2f0ecd4ce41c04d863b2476da1ae302667`：較主線新增 **SAO 14 張** `SAO-1-107`、`SAO-2-072`、`SAO-2-017`、`SAO-2-030`、`SAO-1-032`、`SAO-1-063`、`SAO-1-098`、`SAO-2-057`、`SAO-1-075`、`SAO-1-089`、`SAO-1-003`、`SAO-1-052`、`SAO-1-073`、`SAO-2-048`；另新增 `MST-1-010` **1 張**。合計 **15 張 WIP／待來源與完整測試再驗**；尚未整合到主線 39 SAO／23 MST。
+- **[V2-E] PR #71**，`audit/v2-full-catalog-20261015` @ `0b8581f771151e68c89da1560459d921409764bf`：獨立驗收文件／測試更新仍在 E 分支；compare `diverged`，不能不經核對直接用其舊統計覆蓋 181 張主線。
+- 總計另有 **17 張已看到獨立候選身份**（BLEACH 1、TTG 1、SAO 14、MST 1），**未列入 181**；仍有 **519 張主線未移植**（包含上述候選）。這只是差分辨識，**未執行這些最新分支各自 HEAD 的完整回歸、也未對每張完整 FAQ 作獨立終驗**。如要整合，請先比較來源 Pack 中完整印刷 pin、固定 manifest、系列專測，再以新整合 Commit 跑全套與 60 局；不要以本段候選卡數直接加上主線數稱作已成功。
+
+## F. Cursor 下一個明確安全操作（本輪不替 Cursor 執行）
+
+1. 從 GitHub 抓 PR #70 **最新 HEAD**（比照本輪文件 commit／程式 SHA），以此開 Cursor **自己的新分支**，確認 `git status` 與分支現況。
+2. 先重跑 `npm test`、`node scripts/v2-unported-report.mjs` 和 `node scripts/v2-integrated-match-matrix.mjs`，留存 **同一 SHA** 日誌／矩陣產物。不要再重做已完成 030、055、013 的核心能力。
+3. 分別檢查 #73/#72/#74 的 **17 張候選** 及 E 線獨立驗收材料，受控移植到 Cursor 自己的分支；任何 source/fingerprint、合法成本或 QA 不能通過者仍標 `WIP`，不要拉高正式 V2 已移植數。
+4. 首要剩餘核心缺口：印刷專屬啟動成本／self-REST 成本、限制卡的特殊組牌數（例如 `MST-1-051` 的一張限制）、條件持續效果、跨層 Raid／特殊 Attack、生命 Trigger 特殊時序和延遲效果。例子 `BLC-1-005` 需付自身 REST 並阻止空目標支付；不能轉呼叫舊引擎或忽略效果。
+5. **不合併 `main`、不部署正式站**；私人 Preview 保留但本輪未發佈新版本。任何未驗證之效果保持未完成。
+
+## G. 本輪工具／資料安全聲明
+
+- 讀取工具：GitHub `get_pr_info`／`fetch_file`／`fetch_workflow_run_jobs`／`fetch_workflow_job_logs`／`compare_commits`，已核對 HEAD、原始 CI 結果與外線差分。
+- 本地 `git rev-parse` 的原始錯誤：`fatal: not a git repository (or any of the parent directories): .git`，故本輪不是在可寫本地 repo `git commit`；**實際保存方式是 GitHub 直接提交文件並由連接器推送 branch**，會在下一則結果核對 commit SHA。
+- 兩次批量讀取腳本曾報 `SyntaxError: Invalid regular expression flags` 與 `Code Mode exceeded the maximum number of tool calls.`，已縮小批次繼續取得相同來源資料；**沒有因此回退、寫入或 force push 任何程式**。
+- 本文僅交接，所有正在提議的新增程式均標 WIP，無開發／部署中的背景程序。
+
+---
+
 # [V2-A] 共用核心與五作品整合交接 — BLC-1-030 回歸修復穩定版
 
 **台灣時間 2026-10-15；整合主線 PR #70（Draft）**  
