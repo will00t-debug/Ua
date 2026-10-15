@@ -1,0 +1,324 @@
+// UNION ARENA Universal Rules v2 (experimental; NOT used by Production matches).
+import {expandAbilityTemplates} from './ability-templates.mjs';
+// Data schema and *explicit* ability coverage. No automatic inference from
+// Japanese/translated prose and no optimistic `auto:true` for unported cards.
+export const V2_PHASES=Object.freeze(['start','move','main','attack']);
+export const V2_CARD_TYPES=Object.freeze(['character','event','field']);
+export const V2_TRIGGERS=Object.freeze(['draw','get','final','active','special','color','raid']);
+export const V2_EFFECT_TIMINGS=Object.freeze(['onPlay','onRaid','onAttack','onRaided']);
+export const V2_EFFECT_OPS=Object.freeze(['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','restOppFrontUnderBp','restOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','discardToDraw','searchDeckMany','discardGate','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
+ 'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideColorUnderEnergy','buffOwnField','oncePerTurnGate']);
+const integer=(v,low=0)=>Number.isInteger(v)&&v>=low;
+const own=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
+function verifyProgram(program,path){
+ if(!Array.isArray(program))throw Error(path+' must be an array');
+ for(const [i,e] of program.entries()){
+  if(!e||typeof e!=='object'||Array.isArray(e)||!V2_EFFECT_OPS.includes(e.op))
+   throw Error(path+'['+i+'] effect op unsupported');
+  if(e.op==='draw'||e.op==='millTop'||e.op==='drawDiscard'){
+   if(!integer(e.count,1)||e.count>10)throw Error(path+'['+i+'] invalid count');
+  }
+  if(['searchDeckOne','searchDeckMany','recoverOutsideOne'].includes(e.op)){
+   const f=e.filter;
+   if(!f||typeof f!=='object'||Array.isArray(f)||
+     Object.keys(f).length!==2||!['name','trait','color','type'].includes(f.field)||
+     typeof f.value!=='string'||!f.value.trim()||
+     (f.field==='type'&&!V2_CARD_TYPES.includes(f.value))||
+     typeof e.optional!=='boolean'||
+     (['searchDeckOne','searchDeckMany'].includes(e.op)&&e.shuffle!==true)||
+     (e.op==='searchDeckMany'&&(!integer(e.count,1)||e.count>5))||
+     Object.keys(e).some(k=>!['op','filter','optional',
+       ...(['searchDeckOne','searchDeckMany'].includes(e.op)?['shuffle']:[]),
+       ...(e.op==='searchDeckMany'?['count']:[])].includes(k)))
+    throw Error(path+'['+i+'] invalid searched-card filter/options');
+  }
+  if(e.op==='searchDeckWhere'){
+   if(!Array.isArray(e.filters)||e.filters.length<2||e.filters.length>3||
+    e.filters.some(f=>!f||typeof f!=='object'||Array.isArray(f)||
+     Object.keys(f).length!==2||!['name','trait','color','type'].includes(f.field)||
+     typeof f.value!=='string'||!f.value.trim()||
+     (f.field==='type'&&!V2_CARD_TYPES.includes(f.value)))||
+    new Set(e.filters.map(f=>f.field+':'+f.value)).size!==e.filters.length||
+    !['all','any'].includes(e.logic)||!integer(e.count,1)||e.count>5||
+    typeof e.optional!=='boolean'||e.shuffle!==true||
+    Object.keys(e).some(k=>!['op','filters','logic','count','optional','shuffle'].includes(k)))
+    throw Error(path+'['+i+'] invalid compound deck search');
+  }
+  if(e.op==='peekTopOrBottom'&&Object.keys(e).some(k=>k!=='op'))
+   throw Error(path+'['+i+'] invalid top-or-bottom');
+  if(e.op==='inspectTopAnyOutside'&&(
+   !integer(e.count,2)||e.count>4||!['top','bottom'].includes(e.rest)||
+   Object.keys(e).some(k=>!['op','count','rest'].includes(k))
+  ))throw Error(path+'['+i+'] invalid arbitrary top-outside choice');
+  if(e.op==='inspectTopArrange'&&(
+   !integer(e.count,2)||e.count>4||typeof e.toOutside!=='boolean'||
+   !['top','bottom'].includes(e.rest)||
+   Object.keys(e).some(k=>!['op','count','toOutside','rest'].includes(k))
+  ))throw Error(path+'['+i+'] invalid top inspect/arrange');
+  if(e.op==='discardGate'){
+   if(typeof e.optional!=='boolean'||!Array.isArray(e.then)||
+    !e.then.length||e.then.length>6||
+    Object.keys(e).some(k=>!['op','optional','then'].includes(k))||
+    e.then.some(x=>!['draw','millTop','peekTopOne','searchDeckOne',
+     'searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside',
+      'peekTopOrBottom','recoverOutsideOne',
+     'enemyBpDown','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
+     'recoverOutsideColorUnderEnergy','buffOwnField',
+     'restOppFrontUnderBp','restOppFrontOne'].includes(x?.op)))
+    throw Error(path+'['+i+'] invalid gated payment');
+   verifyProgram(e.then,path+'['+i+'].then');
+  }
+  if(e.op==='oncePerTurnGate'){
+   if(!['card','name'].includes(e.scope)||typeof e.optional!=='boolean'||
+    !Array.isArray(e.then)||e.then.length<1||e.then.length>6||
+    Object.keys(e).some(k=>!['op','scope','optional','then'].includes(k))||
+    e.then.some(x=>!['draw','millTop','peekTopOne','enemyBpDown',
+     'restOppFrontUnderBp','restOppFrontOne','buffOwnField','searchDeckOne',
+     'recoverOutsideOne','buffSelf'].includes(x?.op)))
+    throw Error(path+'['+i+'] invalid once-per-turn gate');
+   verifyProgram(e.then,path+'['+i+'].then');
+  }
+  if(e.op==='discardToDraw'&&(
+   !integer(e.count,1)||e.count>10||typeof e.optional!=='boolean'||
+   Object.keys(e).some(k=>!['op','count','optional'].includes(k))
+  ))throw Error(path+'['+i+'] invalid discard cost/draw');
+  if(e.op==='retireOppFrontAllUnderBp'&&(
+   !integer(e.bp,1)||e.bp>50000||Object.keys(e).some(k=>!['op','bp'].includes(k))
+  ))throw Error(path+'['+i+'] invalid simultaneous retirement threshold');
+  if(e.op==='buffSelfIfFirstAttack'&&(
+   !integer(e.bp,1)||e.bp>5000||Object.keys(e).some(k=>!['op','bp'].includes(k))
+  ))throw Error(path+'['+i+'] invalid first-attack buff');
+  if(e.op==='bounceOwnOtherUnderEnergy'&&(
+   !integer(e.energy)||e.energy<0||e.energy>30||
+   Object.keys(e).some(k=>!['op','energy'].includes(k))
+  ))throw Error(path+'['+i+'] invalid own bounce');
+  if(e.op==='recoverOutsideColorUnderEnergy'&&(
+   typeof e.color!=='string'||!e.color.trim()||
+   !integer(e.energy)||e.energy<0||e.energy>30||
+   typeof e.optional!=='boolean'||
+   Object.keys(e).some(k=>!['op','color','energy','optional'].includes(k))
+  ))throw Error(path+'['+i+'] invalid color+energy recovery');
+  if(e.op==='enemyFrontAllBpDown'&&(
+   !integer(e.bp,1)||e.bp>5000||Object.keys(e).some(k=>!['op','bp'].includes(k))
+  ))throw Error(path+'['+i+'] invalid simultaneous BP reduction');
+  if(e.op==='buffOwnTraitAllTurn'&&(
+   typeof e.trait!=='string'||!e.trait.trim()||
+   !integer(e.bp,1)||e.bp>5000||
+   Object.keys(e).some(k=>!['op','trait','bp'].includes(k))
+  ))throw Error(path+'['+i+'] invalid all-trait temporary BP');
+  if(e.op==='buffOwnField'){
+   const f=e.filter;
+   if(!f||typeof f!=='object'||Array.isArray(f)||Object.keys(f).length!==2||
+    !['name','trait','color','type'].includes(f.field)||
+    typeof f.value!=='string'||!f.value.trim()||
+    (f.field==='type'&&!V2_CARD_TYPES.includes(f.value))||
+    !integer(e.bp,1)||e.bp>5000||
+    typeof e.optional!=='boolean'||typeof e.excludeSelf!=='boolean'||
+    Object.keys(e).some(k=>!['op','filter','bp','optional','excludeSelf'].includes(k)))
+    throw Error(path+'['+i+'] invalid own-field BP choice');
+  }
+  if(e.op==='buffOwnTrait'&&(
+   typeof e.trait!=='string'||!e.trait.trim()||
+   !integer(e.bp,1)||e.bp>5000||e.optional!==true||
+   Object.keys(e).some(k=>!['op','trait','bp','optional'].includes(k))
+  ))throw Error(path+'['+i+'] invalid optional trait BP boost');
+  if(e.op==='drawIfRaidUnderFacedown'&&Object.keys(e).some(k=>k!=='op'))
+   throw Error(path+'['+i+'] unsupported conditional Raid draw options');
+  if(e.op==='retireOppFrontIfFacedown'&&(
+   !integer(e.bp,1)||e.bp>50000||e.optional!==true||
+   Object.keys(e).some(k=>!['op','bp','optional'].includes(k))
+  ))throw Error(path+'['+i+'] invalid facedown retirement effect');
+  if(e.op==='restOppFrontOne'&&(
+   typeof e.optional!=='boolean'||
+   Object.keys(e).some(k=>!['op','optional'].includes(k))
+  ))throw Error(path+'['+i+'] invalid uncapped opponent REST target');
+  if(e.op==='restOppFrontUnderBp'&&(
+   !integer(e.bp,1)||e.bp>50000||typeof e.optional!=='boolean'||
+   Object.keys(e).some(k=>!['op','bp','optional'].includes(k))
+  ))throw Error(path+'['+i+'] invalid opponent REST optionality/profile');
+  if(e.op==='retireOppFrontUnderBp'&&(
+   !integer(e.bp,1)||e.bp>50000||typeof e.bonusName!=='string'||
+   !e.bonusName.trim()||!integer(e.bonusBp,e.bp)||e.bonusBp>50000||
+   Object.keys(e).some(k=>!['op','bp','bonusName','bonusBp'].includes(k))
+  ))throw Error(path+'['+i+'] unsupported printed BP retirement profile');
+  if(e.op==='peekTopOne'&&Object.keys(e).some(key=>key!=='op'))throw Error(path+'['+i+'] unsupported private peek options');
+  if(e.op==='recoverAp'&&(!integer(e.count,1)||e.count>3))throw Error(path+'['+i+'] invalid AP recovery count');
+  if(e.op==='drawDiscard'&&e.count!==1)throw Error(path+'['+i+'] drawDiscard currently supports exactly 1 card');
+  if(['buffSelf','enemyBpDown'].includes(e.op)&&(!integer(e.bp,1)||e.bp>5000))throw Error(path+'['+i+'] invalid temporary BP');
+  if(e.op==='enemyBpDown'&&e.optional!==undefined&&typeof e.optional!=='boolean')throw Error(path+'['+i+'] invalid optional targeting flag');
+ }
+}
+function normalize(card,packId){
+ if(!card||typeof card!=='object'||Array.isArray(card)||typeof card.id!=='string'||!card.id.trim())
+  throw Error('Invalid card identifier');
+ if(!V2_CARD_TYPES.includes(card.type))throw Error(card.id+' unsupported type');
+ if(!integer(card.energy)||card.energy>30||!integer(card.ap,1)||card.ap>3||
+   !integer(card.bp)||!integer(card.gen)||card.gen>10||
+   typeof card.color!=='string'||!card.color.trim()||typeof card.name!=='string'||!card.name.trim())
+  throw Error(card.id+' invalid printed characteristics');
+ if(card.trigger!=null&&!V2_TRIGGERS.includes(card.trigger))
+  throw Error(card.id+' trigger not yet supported by universal v2 (fail closed)');
+ if(card.raidBaseNames!==undefined&&(
+  !card.raidName||!Array.isArray(card.raidBaseNames)||card.raidBaseNames.length<2||
+  !card.raidBaseNames.includes(card.raidName)||
+  card.raidBaseNames.some(x=>typeof x!=='string'||!x.trim())||
+  new Set(card.raidBaseNames).size!==card.raidBaseNames.length
+ ))throw Error(card.id+' invalid alternative Raid bases');
+ if(card.raidRequiresNames!==undefined&&(
+  !card.raidName||!Array.isArray(card.raidRequiresNames)||!card.raidRequiresNames.length||
+  card.raidRequiresNames.some(x=>typeof x!=='string'||!x.trim())||
+  new Set(card.raidRequiresNames).size!==card.raidRequiresNames.length
+ ))throw Error(card.id+' invalid named Raid prerequisite');
+ const underProfile=card.conditionalUnderFaceDown??null;
+ if(underProfile!==null&&(
+  card.type!=='character'||!card.raidName||
+  !integer(underProfile.bp,1)||underProfile.bp>5000||
+  underProfile.impact!==1||
+  !integer(underProfile.leaveReplacementMinBp,1)||underProfile.leaveReplacementMinBp>5000||
+  Object.keys(underProfile).some(k=>!['bp','impact','leaveReplacementMinBp'].includes(k))
+ ))throw Error(card.id+' unsupported facedown under-card profile');
+ if(card.raidFromRaid!==undefined&&(
+  !card.raidName||card.type!=='character'||
+  !Array.isArray(card.raidFromRaid)||!card.raidFromRaid.length||
+  card.raidFromRaid.some(n=>typeof n!=='string'||!n.trim())||
+  new Set(card.raidFromRaid).size!==card.raidFromRaid.length
+ ))throw Error(card.id+' invalid explicitly permitted re-Raid names');
+ if(card.raidName!=null&&(card.type!=='character'||typeof card.raidName!=='string'||!card.raidName.trim()))
+  throw Error(card.id+' invalid Raid target');
+ // A trigger is not inferred from its icon alone when printed handling varies.
+ // Only these explicit profiles have full runtime handlers in this milestone.
+ const triggerEffect=card.triggerEffect??null;
+ if(card.traits!==undefined&&(!Array.isArray(card.traits)||
+  card.traits.some(v=>typeof v!=='string'||!v.trim())))
+  throw Error(card.id+' invalid printed traits');
+ if(card.trigger==='special'){
+  if(!triggerEffect||triggerEffect.op!=='retireOppFront'||Object.keys(triggerEffect).some(k=>k!=='op'))
+   throw Error(card.id+' SPECIAL requires explicit supported target profile');
+ }else if(card.trigger==='color'){
+  const retired=triggerEffect?.op==='retireOppFrontUnderBp'&&
+   integer(triggerEffect.bp,1)&&triggerEffect.bp<=50000&&
+   Object.keys(triggerEffect).every(k=>['op','bp'].includes(k));
+  const deploy=(from)=>triggerEffect?.op===from&&
+   typeof triggerEffect.color==='string'&&!!triggerEffect.color.trim()&&
+   integer(triggerEffect.maxEnergy)&&triggerEffect.maxEnergy<=30&&
+   integer(triggerEffect.ap,1)&&triggerEffect.ap<=3&&
+   (from==='deployOutsideCharacter'?triggerEffect.frontOnly===true:true)&&
+   Object.keys(triggerEffect).every(k=>['op','color','maxEnergy','ap',
+    ...(from==='deployOutsideCharacter'?['frontOnly']:[])].includes(k));
+  if(!retired&&!deploy('deployHandCharacter')&&!deploy('deployOutsideCharacter'))
+   throw Error(card.id+' COLOR requires supported printed deployment/retirement profile');
+ }else if(card.trigger==='raid'){
+  if(!card.raidName||card.type!=='character'||triggerEffect!=null)
+   throw Error(card.id+' RAID trigger requires explicitly registered Raid character');
+ }else if(triggerEffect!=null)throw Error(card.id+' unexpected trigger effect definition');
+ // Main-action selectors must be fully explicit: unknown card text is not
+ // assumed to behave like the Kamina choose-up-to-two ability.
+ const mainAbility=card.mainAbility??null;
+ if(mainAbility!==null&&(
+  card.type!=='character'||mainAbility.op!=='chooseTwoAfterOwnRaid'||
+  mainAbility.frontOnly!==true||mainAbility.readyOncePerName!==true||
+  typeof mainAbility.trait!=='string'||!mainAbility.trait.trim()||
+  !integer(mainAbility.bp,1)||mainAbility.bp>5000||
+  Object.keys(mainAbility).some(k=>!['op','frontOnly','readyOncePerName','trait','bp'].includes(k))
+ ))throw Error(card.id+' unsupported main action ability');
+ const implemented=card.implementation;
+ if(!['vanilla','dsl'].includes(implemented))
+  throw Error(card.id+' must explicitly declare vanilla or dsl (unported effects are not playable)');
+ // The profile author must explicitly mark vanilla; we do not read text and
+ // guess that unknown passive/Raid/keywords can safely be ignored.
+ const authored=card.effects??{};
+ if(!authored||typeof authored!=='object'||Array.isArray(authored))
+  throw Error(card.id+' effects must be a timing-to-program map');
+ const compiled=expandAbilityTemplates(card.templateEffects,card.id+'.templateEffects');
+ for(const timing of Object.keys(compiled))
+  if(Object.prototype.hasOwnProperty.call(authored,timing))
+   throw Error(card.id+' cannot mix raw and templated effects at '+timing);
+ const effects={...authored,...compiled};
+ // Only an actual character entering play can use the automatic bounce.
+ // This is not a generic removal action for events/attack effects.
+ for(const [timing,ops] of Object.entries(effects))
+  for(const op of ops)if(op.op==='bounceOwnOtherUnderEnergy'&&
+   (card.type!=='character'||timing!=='onPlay'))
+   throw Error(card.id+' self-bounce is only valid on character onPlay');
+ if(implemented==='vanilla'&&(Object.keys(effects).length||card.effectText||
+  card.activeExtraEnergy||card.impactNull))
+  throw Error(card.id+' claims vanilla despite printed/declared effects');
+ if(implemented==='dsl'&&!Object.keys(effects).length&&!mainAbility&&
+  !card.activeExtraEnergy&&!card.impactNull)
+  throw Error(card.id+' declares dsl without effects');
+ for(const [name,program] of Object.entries(effects)){
+  if(!V2_EFFECT_TIMINGS.includes(name))throw Error(card.id+' timing '+name+' unsupported');
+  verifyProgram(program,card.id+'.'+name);
+  if(name==='onRaid'&&!card.raidName)throw Error(card.id+' has Raid-only effects but no Raid target');
+  if(name==='onRaided'&&card.type!=='character')throw Error(card.id+' Raid-base trigger must be a character');
+  if(name!=='onRaided'&&program.some(e=>['buffOwnTrait','drawIfRaidUnderFacedown'].includes(e.op)))
+   throw Error(card.id+' Raid-base effects require onRaided timing');
+  if(name==='onRaided'&&program.some(e=>!['buffOwnTrait','drawIfRaidUnderFacedown'].includes(e.op)))
+   throw Error(card.id+' unsupported Raid-base timing effect');
+  if(name==='onAttack'&&card.type!=='character')throw Error(card.id+' noncharacter cannot attack');
+  if(card.type==='event'&&program.some(e=>e.op==='buffSelf'))
+   throw Error(card.id+' event cannot buff itself on field');
+ }
+ if(card.raidName&&card.type!=='character')throw Error('Raid must be a character');
+ if(card.ownTurnBp!==undefined&&
+  (card.type!=='character'||!integer(card.ownTurnBp,1)||card.ownTurnBp>5000))
+  throw Error(card.id+' invalid own-turn BP modifier');
+ // Explicit audited passive profiles, not inferred from translated text.
+ if(card.activeExtraEnergy!==undefined&&(
+  card.type!=='character'||!integer(card.activeExtraEnergy,1)||
+  card.activeExtraEnergy>3))
+  throw Error(card.id+' invalid ACTIVE extra energy profile');
+ if(card.impactNull!==undefined&&(
+  card.type!=='character'||card.impactNull!==true))
+  throw Error(card.id+' invalid IMPACT nullification profile');
+ return Object.freeze({
+  id:card.id,title:packId,name:card.name,color:card.color,
+  type:card.type,energy:card.energy,ap:card.ap,bp:card.bp,gen:card.gen,
+  traits:Object.freeze([...(card.traits||[])]),
+  trigger:card.trigger||null,raidName:card.raidName||null,
+  raidFromRaid:Object.freeze([...(card.raidFromRaid||[])]),
+  raidBaseNames:Object.freeze([...(card.raidBaseNames||[card.raidName].filter(Boolean))]),
+  raidRequiresNames:Object.freeze([...(card.raidRequiresNames||[])]),
+  conditionalUnderFaceDown:underProfile?Object.freeze({...underProfile}):null,
+  triggerEffect:triggerEffect?Object.freeze({...triggerEffect}):null,
+  mainAbility:mainAbility?Object.freeze({...mainAbility}):null,
+  step:card.step===true,ownTurnBp:card.ownTurnBp||0,
+  activeExtraEnergy:card.activeExtraEnergy||0,impactNull:card.impactNull===true,
+  implementation:implemented,
+  effects:Object.freeze(Object.fromEntries(Object.entries(effects)
+   .map(([k,v])=>[k,Object.freeze(v.map(e=>Object.freeze({
+    ...e,...(e.filter?{filter:Object.freeze({...e.filter})}:{}),
+    ...(e.filters?{filters:Object.freeze(e.filters.map(f=>Object.freeze({...f})))}:{}),
+    ...(e.then?{then:Object.freeze(e.then.map(child=>Object.freeze({
+      ...child,...(child.filter?{filter:Object.freeze({...child.filter})}:{}),
+      ...(child.filters?{filters:Object.freeze(child.filters.map(f=>Object.freeze({...f})))}:{})
+    })))}:{})
+   })))])))
+ });
+}
+export function createUniversalPack({id,cards,version='0.1.0',restrictColors=false}={}){
+ if(typeof id!=='string'||!id.trim()||!Array.isArray(cards)||!cards.length)
+  throw Error('A title ID and explicit cards are required');
+ if(typeof version!=='string'||!version.trim())throw Error('Pack version required');
+ const normalized=cards.map(c=>normalize(c,id));
+ const identifiers=normalized.map(c=>c.id);
+ if(new Set(identifiers).size!==identifiers.length)throw Error('Duplicate card ID in '+id);
+ return Object.freeze({kind:'ua-v2-pack',id,version,restrictColors:!!restrictColors,
+  cards:Object.freeze(Object.fromEntries(normalized.map(c=>[c.id,c])))});
+}
+export function validateUniversalDeck(pack,counts){
+ if(pack?.kind!=='ua-v2-pack')return ['Universal v2 pack required'];
+ if(!counts||typeof counts!=='object'||Array.isArray(counts))return ['Invalid deck format'];
+ const errors=[];let total=0;const colors=new Set();
+ const triggerLimits={final:0,color:0,special:0};
+ for(const [id,num] of Object.entries(counts)){
+  if(!own(pack.cards,id)){errors.push('Unregistered/unsupported card: '+id);continue;}
+  if(!integer(num)||num>4){errors.push(id+' exceeds 0–4 copies');continue;}
+  total+=num;
+  if(num){const c=pack.cards[id];colors.add(c.color);if(Object.prototype.hasOwnProperty.call(triggerLimits,c.trigger))triggerLimits[c.trigger]+=num;}
+ }
+ if(total!==50)errors.push('Deck must have exactly 50 cards (found '+total+')');
+ if(pack.restrictColors&&colors.size>1)errors.push('Deck colors must match');
+ for(const [type,n] of Object.entries(triggerLimits))if(n>4)errors.push(type.toUpperCase()+' Trigger limit exceeded');
+ return errors;
+}

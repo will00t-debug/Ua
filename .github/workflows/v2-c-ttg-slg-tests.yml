@@ -1,0 +1,26 @@
+name: V2-C TTG and SLG port validation
+on:
+  push:
+    branches:
+      - feature/v2-ttg-slg-port-20261015
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax check both V2-C pack files and tests
+        run: |
+          node --check dist/universal-v2/ttg-pack.mjs
+          node --check dist/universal-v2/slg-pack.mjs
+          node --check tests/universal-v2-ttg-port.test.mjs
+          node --check tests/universal-v2-slg-port.test.mjs
+      - name: Run V2-C focused card migration regressions
+        run: node --test tests/universal-v2-ttg-port.test.mjs tests/universal-v2-slg-port.test.mjs
+      - name: Run full existing regression suite
+        run: npm test

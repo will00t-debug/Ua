@@ -1,0 +1,63 @@
+name: V2-E Independent Acceptance
+on:
+  pull_request:
+    branches:
+      - feature/universal-rules-v2-foundation-20261014
+    paths:
+      - 'docs/v2-handoff/E-acceptance.md'
+      - 'scripts/v2-audit-*.mjs'
+      - 'tests/v2-independent-audit.test.mjs'
+      - '.github/workflows/v2-e-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Record exact audit SHA and Node
+        run: |
+          git rev-parse HEAD
+          node --version
+          npm --version
+          git diff --exit-code ad04bef572303e8af1084ae1fb5cb431af9e7a11 -- dist/
+      - name: Generate per-card catalog and run E invariants
+        run: node --test tests/v2-independent-audit.test.mjs
+      - name: Print generated catalog counts from this immutable checkout
+        run: node scripts/v2-audit-catalog.mjs
+      - name: Multi-seed real-deck cross-title battles and deterministic replays
+        run: node scripts/v2-audit-match.mjs
+      - name: Review B/C/D source commits separately (no moving-branch aggregation)
+        if: always()
+        run: node scripts/v2-audit-port-snapshots.mjs
+      - name: Review newly published B/C/D Draft PR pinned commits independently
+        if: always()
+        run: node scripts/v2-audit-port-snapshots.mjs --round2
+      - name: Full repository regression (not a card completion metric)
+        if: always()
+        run: npm test
+      - name: Preserve snapshots and replay evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v2-e-acceptance-evidence
+          path: |
+            audit/v2-full-catalog.csv
+            audit/v2-full-catalog-summary.json
+            audit/v2-e-match-replays/
+            audit/v2-port-snapshots.json
+            audit/v2-branch-proposals.csv
+            audit/v2-port-snapshots-r2.json
+            audit/v2-branch-proposals-r2.csv
+          if-no-files-found: warn
+          retention-days: 14
