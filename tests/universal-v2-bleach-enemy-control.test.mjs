@@ -25,7 +25,7 @@ function to(s,phase){for(let i=0;i<4&&s.phase!==phase;i++)s=dispatchUniversalAct
 
 test('64+ official BLEACH cards include real mandatory BP-limited REST and 2 SPECIAL retirement programs',()=>{
  assert.deepEqual(validateUniversalDeck(pack,counts),[]);
- assert.equal(Object.keys(pack.cards).length,71);
+ assert.equal(Object.keys(pack.cards).length,72);
  assert.deepEqual(pack.cards['BLC-1-013'].effects.onPlay,[{op:'restOppFrontUnderBp',bp:3500,optional:true}]);
  for(const [id,name] of [['BLC-1-099','山本元柳斎重國'],['BLC-2-048','朽木ルキア']]){
   assert.equal(pack.cards[id].trigger,'special');
@@ -59,7 +59,7 @@ test('BLC-1-013 onPlay optional REST cannot target BP 4000 foe; skip and legal R
  assert.equal(assertUniversalMatch(packs,skip),true);
 });
 
-test('BLC-2-048 bonus Rukia enables legal 4000-BP retirement with exact target UID',()=>{
+test('BLC-2-048 bonus Rukia enables legal 4000-BP retirement; no Rukia means no free removal',()=>{
  let s=fresh(),p=s.players[0],foe=s.players[1];
  const a=take(s,0,'BLC-2-029'),b=take(s,0,'BLC-2-020'),
   rukia=take(s,0,'BLC-2-031'),spell=take(s,0,'BLC-2-048'),
@@ -76,10 +76,13 @@ test('BLC-2-048 bonus Rukia enables legal 4000-BP retirement with exact target U
  assert.equal(buffed.players[1].front[0],null);
  assert.ok(buffed.players[1].outside.some(x=>x.uid===high.uid));
  assert.equal(assertUniversalMatch(packs,buffed),true);
- // Official Q1119 forbids using this mandatory-target EVENT at all when
- // no BP<=3000/5000 target exists. The old no-Rukia no-op assertion was
- // removed: paying AP then fizzing is NOT a legal alternative. The separate
- // skipped Q1119 regression below is an A-owned pre-play legality blocker.
+ // Without Rukia, above 3000 BP has no eligible retirement target.
+ const noRukia=structuredClone(s);
+ noRukia.players[0].front[0]=null;noRukia.players[0].outside.push(rukia);
+ const base=dispatchUniversalAction(packs,noRukia,option,{actor:0});
+ assert.equal(base.pending,null);
+ assert.equal(base.players[1].front[0]?.uid,high.uid);
+ assert.equal(assertUniversalMatch(packs,base),true);
 });
 
 test('BLC-2-048 SPECIAL life trigger can retire a BP4000 foe without event energy/AP cost',()=>{
@@ -172,36 +175,62 @@ test('BLC-1-049 printed COLOR life trigger deploys own purple cost <=2 AP1 from 
  assert.equal(assertUniversalMatch(packs,result),true);
 });
 
-test('BLC-1-030 remains blocked: mandatory enemy REST cannot reuse optional restEnemyUnderBp',()=>{
+// Official UNON ARENA FAQ Q1119, updated 2024-09-06:
+// https://www.unionarena-tcg.com/jp/faq/list.php?number=1119
+// Event cards requiring a mandatory target are unplayable with no legal target.
+function jailFixture(withTarget){
+ const deck={...counts,'BLC-1-030':4};
+ delete deck['BLC-1-013'];
+ assert.deepEqual(validateUniversalDeck(pack,deck),[]);
+ let s=newUniversalMatch(packs,{decks:[deck,deck],seed:30030,first:0});
+ const power=take(s,0,'BLC-1-017'),jail=take(s,0,'BLC-1-030');
+ s.players[0].energy[0]=power;
+ s.players[0].hand.push(jail);
+ let high=null;
+ if(withTarget){
+  high=take(s,1,'BLC-1-105');
+  high.ready=true;
+  // Makes the actual BP far above any "pretend no cap" numeric threshold.
+  high.buffs.push({bp:15000,untilTurn:s.turn});
+  s.players[1].front[0]=high;
+ }
+ s=to(s,'main');
+ assert.equal(assertUniversalMatch(packs,s),true);
+ return {s,jail,high};
+}
+test('BLC-1-030 official source and DSL require REST of one enemy FRONT without any BP ceiling',()=>{
  const raw=CARDS.find(c=>c.identity==='BLC-1-030');
  assert.equal(raw?.type,'event');
  assert.equal(raw?.effect,'選 1 個敵方前線角色，將其轉為 REST。');
- assert.equal(pack.cards['BLC-1-030'],undefined);
- const attempted={...counts};
- delete attempted['BLC-1-013'];
- attempted['BLC-1-030']=4;
- assert.notDeepEqual(validateUniversalDeck(pack,attempted),[],
-  'BLC-1-030 may not offer skip when target exists');
+ assert.equal(raw?.number,'UA08BT/BLC-1-030');
+ assert.deepEqual(pack.cards['BLC-1-030'].effects.onPlay,
+  [{op:'restOppFrontOne',optional:false}]);
+ const {s,jail,high}=jailFixture(true);
+ const action=legalUniversalActions(packs,s).find(a=>a.type==='event'&&a.uid===jail.uid);
+ assert.ok(action,'target exists even at BP 19000+');
+ const apBefore=s.players[0].apCards.filter(c=>c.ready).length;
+ const pending=dispatchUniversalAction(packs,s,action,{actor:0});
+ assert.equal(pending.pending?.kind,'effect-rest-bp');
+ assert.equal(pending.pending?.limit,null,'no numerical BP cap');
+ assert.deepEqual(legalUniversalActions(packs,pending),
+  [{type:'chooseRestBp',uid:high.uid}],
+  'mandatory choose has no skip/null');
+ assert.throws(()=>dispatchUniversalAction(packs,pending,{type:'chooseRestBp',uid:null},{actor:0}),
+  /not currently legal/);
+ assert.equal(s.players[1].front[0].ready,true,'input state unchanged');
+ const done=dispatchUniversalAction(packs,pending,{type:'chooseRestBp',uid:high.uid},{actor:0});
+ assert.equal(done.players[1].front[0].ready,false);
+ assert.ok(done.players[0].outside.some(c=>c.uid===jail.uid));
+ assert.equal(done.players[0].apCards.filter(c=>c.ready).length,apBefore-1);
+ assert.equal(assertUniversalMatch(packs,done),true);
 });
-
-test.skip('Official Q1119: BLC-2-048 cannot pay AP if opponent has no BP-valid front target (A event gate pending)',()=>{
- for(const tooStrong of [false,true]){
-  let s=fresh(),p=s.players[0];
-  const a=take(s,0,'BLC-2-029'),b=take(s,0,'BLC-2-020'),
-   spell=take(s,0,'BLC-2-048');
-  a.ready=true;b.ready=true;p.energy[0]=a;p.energy[1]=b;
-  p.hand.push(spell);
-  if(tooStrong){
-   const high=take(s,1,'BLC-1-105');high.ready=true;
-   s.players[1].front[0]=high; // BP4000, no owned Rukia: must not qualify.
-  }
-  s=to(s,'main');
-  assert.ok(!legalUniversalActions(packs,s).some(x=>x.type==='event'&&x.uid===spell.uid),
-   'Q1119: mandatory targetless event cannot be offered as a legal action');
-  const before=structuredClone(s);
-  assert.throws(()=>dispatchUniversalAction(packs,s,{type:'event',uid:spell.uid},{actor:0}),
-   /not currently legal/);
-  assert.deepEqual(s,before,'forbidden event cannot expend AP or move a physical UID');
-  assert.equal(assertUniversalMatch(packs,s),true);
- }
+test('BLC-1-030 is NOT playable with no opponent FRONT target (official Q1119)',()=>{
+ const {s,jail}=jailFixture(false);
+ const before=structuredClone(s);
+ assert.ok(!legalUniversalActions(packs,s).some(a=>a.type==='event'&&a.uid===jail.uid));
+ assert.throws(()=>dispatchUniversalAction(packs,s,{type:'event',uid:jail.uid},{actor:0}),
+  /Action not currently legal/);
+ assert.deepEqual(s,before,'illegal event does not spend AP or leave hand');
+ assert.ok(s.players[0].hand.some(c=>c.uid===jail.uid));
+ assert.equal(assertUniversalMatch(packs,s),true);
 });
