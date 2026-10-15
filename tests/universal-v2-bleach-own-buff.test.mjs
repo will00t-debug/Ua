@@ -21,6 +21,13 @@ const green={
  'BLC-1-090':4,'BLC-1-094':4,'BLC-1-097':4,'BLC-4-061':4,
  'BLC-1-100':2
 };
+const blue={
+ ...Object.fromEntries([
+  'BLC-2-023','BLC-2-025','BLC-2-031','BLC-2-036',
+  'BLC-2-020','BLC-2-029','BLC-4-035','BLC-2-016',
+  'BLC-4-026','BLC-4-040','BLC-2-048','BLC-4-023'
+ ].map(id=>[id,4])),'BLC-2-049':2
+};
 const fresh=(counts,seed=15977)=>newUniversalMatch(packs,{decks:[counts,counts],seed,first:0});
 function take(s,p,id){
  for(const zone of ['hand','deck','life','outside']){
@@ -40,11 +47,13 @@ const play=(s,uid)=>legalUniversalActions(packs,s).find(a=>
 test('two actual printed other-character buffs have exact source fingerprints, no hidden trigger',()=>{
  assert.deepEqual(validateUniversalDeck(pack,purple),[]);
  assert.deepEqual(validateUniversalDeck(pack,green),[]);
+ assert.deepEqual(validateUniversalDeck(pack,blue),[]);
  assert.equal(Object.keys(pack.cards).length,78);
  assert.equal(Object.keys(standalone.cards).length,78);
  assert.equal(contribution.entries.length,63);
  for(const [id,color,energy,bp] of [
-  ['BLC-1-059','purple',2,3000],['BLC-1-077','green',0,1000]
+  ['BLC-1-059','purple',2,3000],['BLC-1-077','green',0,1000],
+  ['BLC-4-023','blue',0,500]
  ]){
   const p=BLEACH_V2_ADDON_PROFILES.find(x=>x.id===id),
    source=CARDS.find(x=>x.identity===id),
@@ -54,9 +63,9 @@ test('two actual printed other-character buffs have exact source fingerprints, n
   assert.equal(source.energy,energy);
   assert.equal(source.bp,bp);
   assert.equal(source.effect,p.effect);
-  assert.equal(source.trigger,null);
-  assert.equal(registered.trigger,null);
-  assert.equal(entry.sourceRecord.number,'UA08BT/'+id);
+  assert.equal(source.trigger,id==='BLC-4-023'?'draw':null);
+  assert.equal(registered.trigger,id==='BLC-4-023'?'draw':null);
+  assert.equal(entry.sourceRecord.number,(id==='BLC-4-023'?'EX15BT/':'UA08BT/')+id);
   assert.deepEqual(registered.effects.onPlay,[{
    op:'buffOwnField',filter:{field:'type',value:'character'},
    bp:1000,optional:true,excludeSelf:true
@@ -129,5 +138,50 @@ test('BLC-1-077 onPlay without another own character skips optional effect and k
  assert.equal(q.pending,null);
  assert.equal(q.players[0].front[0].uid,source.uid);
  assert.ok(!(q.players[0].front[0].buffs||[]).length);
+ assert.equal(assertUniversalMatch(packs,q),true);
+});
+
+test('EX15BT/BLC-4-023 onPlay targets only another own BLUE character, optional discard-free BP+1000',()=>{
+ let s=fresh(blue,423),source=take(s,0,'BLC-4-023'),
+  target=take(s,0,'BLC-2-025'),enemy=take(s,1,'BLC-2-025');
+ s.players[0].energy[0]=target;
+ s.players[1].front[0]=enemy;
+ s.players[0].hand.push(source);
+ s=main(s);
+ const action=play(s,source.uid);
+ assert.ok(action);
+ let q=dispatchUniversalAction(packs,s,action,{actor:0});
+ assert.equal(q.pending?.kind,'effect-buff-own');
+ const legal=legalUniversalActions(packs,q);
+ assert.ok(legal.some(a=>a.uid===target.uid));
+ assert.ok(legal.some(a=>a.uid===null));
+ assert.ok(!legal.some(a=>a.uid===source.uid||a.uid===enemy.uid));
+ assert.throws(()=>dispatchUniversalAction(packs,q,
+  {type:'chooseOwnBuff',uid:source.uid},{actor:0}),/not currently legal/);
+ q=dispatchUniversalAction(packs,q,{type:'chooseOwnBuff',uid:target.uid},{actor:0});
+ assert.equal(q.players[0].energy[0].buffs.at(-1).bp,1000);
+ assert.equal(q.players[0].energy[0].buffs.at(-1).untilTurn,q.turn);
+ assert.equal(q.pending,null);
+ assert.equal(assertUniversalMatch(packs,q),true);
+});
+test('BLC-4-023 DRAW printed life trigger draws exactly once, source moves outside, no extra character buff',()=>{
+ let s=fresh(blue,4231),source=take(s,1,'BLC-4-023'),
+  attacker=take(s,0,'BLC-2-025');
+ attacker.ready=true;s.players[0].front[0]=attacker;
+ s.players[1].deck.push(s.players[1].life.shift());
+ s.players[1].life.unshift(source);
+ for(let n=0;n<5&&s.phase!=='attack';n++)s=dispatchUniversalAction(packs,s,{type:'next'});
+ assert.equal(s.phase,'attack');
+ s=dispatchUniversalAction(packs,s,{type:'attack',uid:attacker.uid},{actor:0});
+ s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:null},{actor:1});
+ assert.equal(s.pending?.kind,'life-trigger');
+ assert.equal(s.pending.trigger,'draw');
+ const actions=legalUniversalActions(packs,s);
+ assert.ok(actions.some(x=>x.mode==='draw'));
+ const deckSize=s.players[1].deck.length;
+ const q=dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'draw'},{actor:1});
+ assert.equal(q.players[1].deck.length,deckSize-1);
+ assert.ok(q.players[1].outside.some(c=>c.uid===source.uid));
+ assert.equal(q.pending,null);
  assert.equal(assertUniversalMatch(packs,q),true);
 });
