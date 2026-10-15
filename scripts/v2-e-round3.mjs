@@ -12,8 +12,8 @@ fs.mkdirSync(out,{recursive:true});
 const pins=Object.freeze({
  A:'75468867b7ec4f5cdd78661e5b98f400494fb94d',
  B:'2a502f01ec1e29a98c44e45e12f4aaa5a9753222',
- C:'979eed8530721fae53c63201e033a5297464c853',
- D:'efa367fc99c4afdd4dd9edfeddae1a736afb5333'
+ C:'29ddd3ffdc5379584923539a8323ee7ec09d6add',
+ D:'c2a7fbf8d404b28d23cc453830a70350b4502312'
 });
 const report={name:'V2-E third-round 181-current pin',pins,
  auditCommit:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),
