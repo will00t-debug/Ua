@@ -716,6 +716,64 @@ const PRINTED_PINS=Object.freeze({
       "GGO"
     ],
     "effectJa": "【ステップ】（自分の移動フェイズにフロントLからエナジーLへ移動できる）\n【登場時】自分の山札の上から1枚見る。そのカードを自分の山札の上か下に置く。"
+  },
+  "SAO-1-003": {
+    "kind": "activeExtraEnergy",
+    "nameJa": "ティーゼ・シュトリーネン",
+    "color": "yellow",
+    "energy": 2,
+    "ap": 1,
+    "bp": 2500,
+    "gen": 2,
+    "type": "character",
+    "trigger": null,
+    "traits": [],
+    "effectJa": "このキャラがアクティブの場合、このキャラの発生エナジー+【黄】。"
+  },
+  "SAO-1-052": {
+    "kind": "activeExtraEnergy",
+    "nameJa": "キリト",
+    "color": "blue",
+    "energy": 2,
+    "ap": 1,
+    "bp": 2500,
+    "gen": 2,
+    "type": "character",
+    "trigger": null,
+    "traits": [
+      "ALO"
+    ],
+    "effectJa": "このキャラがアクティブの場合、このキャラの発生エナジー+【青】。"
+  },
+  "SAO-1-073": {
+    "kind": "activeExtraEnergy",
+    "nameJa": "シウネー",
+    "color": "green",
+    "energy": 2,
+    "ap": 1,
+    "bp": 2500,
+    "gen": 2,
+    "type": "character",
+    "trigger": null,
+    "traits": [
+      "ALO"
+    ],
+    "effectJa": "このキャラがアクティブの場合、このキャラの発生エナジー+【緑】。"
+  },
+  "SAO-2-048": {
+    "kind": "activeExtraEnergy",
+    "nameJa": "キリト",
+    "color": "purple",
+    "energy": 2,
+    "ap": 1,
+    "bp": 2500,
+    "gen": 2,
+    "type": "character",
+    "trigger": null,
+    "traits": [
+      "プログレッシブ"
+    ],
+    "effectJa": "このキャラがアクティブの場合、このキャラの発生エナジー+【紫】。"
   }
 });
 export const SAO_V2_PILOT_IDS=Object.freeze(Object.keys(PRINTED_PINS).sort());
@@ -764,6 +822,7 @@ export function verifiedSaoV2Cards(){
    card.step=true;
    card.templateEffects={onPlay:[{template:'peekTopOrBottom'}]};
   }
+  if(pin.kind==='activeExtraEnergy')card.activeExtraEnergy=1;
   if(pin.kind==='impactNull')card.impactNull=true;
   if(pin.kind==='onPlayBounce')
    card.templateEffects={onPlay:[{template:'bounceOwnOtherUnderEnergy',energy:1}]};
@@ -780,7 +839,7 @@ export function verifiedSaoV2Cards(){
  });
 }
 export function saoV2Pack(){
- return createUniversalPack({id:'sword-art-online',version:'v2-d-sao-pilot-7',
+ return createUniversalPack({id:'sword-art-online',version:'v2-d-sao-pilot-8',
   cards:verifiedSaoV2Cards()});
 }
 
