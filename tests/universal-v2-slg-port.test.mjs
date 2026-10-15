@@ -337,3 +337,11 @@ test('SLG-068 eligible low-cost ENERGY-line target is bounceable; no fake play f
  assert.ok(done.players[1].hand.some(c=>c.uid===low.uid));
  assert.equal(assertUniversalMatch(packs,done),true);
 });
+
+test('SLG-014 free deployment from own outside remains blocked until optional ENERGY-only REST entry is implemented',()=>{
+ const pack=registeredV2TitlePack('solo-leveling');
+ assert.equal(pack.cards['SLG-1-014'],undefined);
+ const invalid={...slgDeck,'SLG-1-005':3,'SLG-1-014':1};
+ assert.equal(Object.values(invalid).reduce((n,k)=>n+k,0),50);
+ assert.match(validateUniversalDeck(pack,invalid).join(';'),/Unregistered\/unsupported card: SLG-1-014/);
+});
