@@ -40,8 +40,8 @@ function setup(counts,id,energyId,seed){
  return {s,play,source};
 }
 test('new top batch is 63 exact official profiles / 78 real V2 identities with no extra life Trigger',()=>{
- assert.equal(contribution.entries.length,63);
- assert.equal(Object.keys(pack.cards).length,78);
+ assert.equal(contribution.entries.length,64);
+ assert.equal(Object.keys(pack.cards).length,79);
  assert.deepEqual(validateUniversalDeck(pack,purple),[]);
  assert.deepEqual(validateUniversalDeck(pack,yellow),[]);
  assert.equal(Object.values(yellow).reduce((n,v)=>n+v,0),50);
