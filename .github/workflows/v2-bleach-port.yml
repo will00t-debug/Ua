@@ -67,8 +67,8 @@ jobs:
             tests/universal-v2-compound-top-inspection.test.mjs
 
   full-repository-regression:
-    name: Manual entire npm test after A fixes upstream gate and stale count assertions
-    if: github.event_name == 'workflow_dispatch'
+    name: All repository regression tests on synchronized PR70 core
+    needs: bleach-registry
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
