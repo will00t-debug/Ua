@@ -120,8 +120,8 @@ try{
  if(!final.finished)report.warnings.push('Browser UI did not demonstrate a finished match in 650 assisted clicks; NOT full end-to-end acceptance');
 }catch(e){report.status='fail';report.error=String(e?.stack||e);}
 finally{
- persist();if(ws)ws.close();if(chrome)chrome.kill('SIGKILL');
- if(server)server.close();if(profile)fs.rmSync(profile,{recursive:true,force:true});
+ persist();if(ws)ws.close();if(chrome){chrome.kill('SIGKILL');if(chrome.exitCode===null&&chrome.signalCode===null)await new Promise(resolve=>chrome.once('exit',resolve));}
+ if(server)server.close();if(profile)fs.rmSync(profile,{recursive:true,force:true,maxRetries:8,retryDelay:200});
  console.log(JSON.stringify({status:report.status,cases:report.cases,warnings:report.warnings,error:report.error||null},null,2));
  if(report.status==='fail'||report.status==='fail_browser_error')process.exitCode=1;
 }
