@@ -5,7 +5,7 @@ import {UA54BT_OFFICIAL_PRINT} from '../dist/universal-v2/sources/mst-official-p
 import {MST_V2_REAL_DECK_COUNTS} from '../dist/universal-v2/sao-mst-real-decks.mjs';
 import {requireRegisteredV2TitlePack} from '../dist/universal-v2/title-packs/registry.mjs';
 import {SAO_V2_REAL_DECK_COUNTS} from '../dist/universal-v2/sao-mst-real-decks.mjs';
-import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
+import {validateUniversalDeck,createUniversalPack,V2_EFFECT_TIMINGS} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  assertUniversalMatch,universalPrivateChoices,universalPublicView}
  from '../dist/universal-v2/engine.mjs';
@@ -269,4 +269,35 @@ test('SAO-1-075 and SAO-1-089 retain BOTH STEP movement and exact top-deck onPla
   assert.equal(move.players[0].front[0],null);
   assert.equal(assertUniversalMatch(packs,move),true);
  }
+});
+
+test('blocked next-wave cards are source-locked, NOT wrongly registered with partial search or unsupported leave/Raid',()=>{
+ const mst=requireRegisteredV2TitlePack('mushoku-tensei');
+ const pending=[
+  ['SAO-1-031',/上から5枚見る.*2枚まで公開/,pack],
+  ['SAO-2-023',/上から3枚見る.*手札に加えた場合/,pack],
+  ['SAO-2-066',/上から2枚見る.*緑の.*1枚まで場外/,pack],
+  ['SAO-2-062',/2枚引き.*2枚場外/,pack],
+  ['SAO-2-018',/【退場時】.*上から5枚見る/,pack],
+  ['SAO-1-081',/自分のターン開始時.*退場/,pack],
+  ['MST-1-028',/山札の上から2枚.*残りを場外/,mst],
+  ['MST-1-043',/山札の上から5枚.*緑のフィールド/,mst],
+  ['MST-1-068',/〖レイド〗.*〈シルフィエット〉/,mst],
+  ['MST-1-051',/カードを1枚引き.*手札を1枚場外/,mst]
+ ];
+ for(const [id,text,targetPack] of pending){
+  const record=id.startsWith('SAO')?
+   SAO_OFFICIAL_CARDS.find(c=>c.id===id):UA54BT_OFFICIAL_PRINT[id];
+  assert.ok(record?.effectJa,id+' needs an actual official source');
+  assert.match(record.effectJa,text,id+' checked Japanese condition or timing changed');
+  assert.equal(targetPack.cards[id],undefined,
+   id+' has not passed full profile+legal choice verification; never treat as playable');
+ }
+ assert.ok(!V2_EFFECT_TIMINGS.includes('onLeave'),
+  'leave-time source must not be falsely translated to onPlay');
+ assert.throws(()=>createUniversalPack({id:'TEST-ONLY-strict',cards:[{
+  id:'TEST-ONLY-X',name:'Synthetic',color:'blue',type:'character',
+  energy:0,ap:1,bp:1000,gen:1,implementation:'dsl',
+  effects:{onPlay:[{op:'drawDiscard',count:2}]}
+ }]}),/drawDiscard currently supports exactly 1 card/);
 });
