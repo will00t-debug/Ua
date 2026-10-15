@@ -17,7 +17,8 @@ const testForKind=Object.freeze({
  retireBonusRukia:'tests/universal-v2-bleach-enemy-control.test.mjs',
  traitBuffAllDraw:'tests/universal-v2-bleach-green-match.test.mjs',
  inspectTop2:'tests/universal-v2-bleach-top-inspect.test.mjs',
- inspectTop3:'tests/universal-v2-bleach-top-inspect.test.mjs'
+ inspectTop3:'tests/universal-v2-bleach-top-inspect.test.mjs',
+ restEnemyFrontOne:'tests/universal-v2-bleach-enemy-control.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -49,7 +50,7 @@ function contributedEntry(profile){
  });
 }
 const entries=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(contributedEntry));
-if(entries.length!==56||BLEACH_V2_NEW_IDS.length!==entries.length||
+if(entries.length!==57||BLEACH_V2_NEW_IDS.length!==entries.length||
  new Set(entries.map(x=>x.id)).size!==entries.length)
  throw Error('BLEACH V2 contribution cardinality or ID drift');
 export default Object.freeze({

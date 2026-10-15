@@ -942,6 +942,21 @@ function legalPending(pack,s){
  }
  throw Error('No handler for pending decision '+q.kind);
 }
+// UNION ARENA official Q1119 (2024-09-06): an event requiring "choose
+// one" cannot be played at all unless ALL mandatory choices exist.
+// This check is performed BEFORE spending AP or moving the event outside.
+// Optional "up to one" choices remain playable with zero targets.
+function eventMandatoryTargetsAvailable(pack,s,owner,d){
+ const enemy=s.players[1-owner];
+ return (d.effects?.onPlay||[]).every(job=>{
+  if(job.optional!==false)return true;
+  if(job.op==='restOppFrontOne')
+   return enemy.front.some(Boolean);
+  if(job.op==='restOppFrontUnderBp')
+   return enemy.front.some(c=>c&&bp(pack,s,c)<=job.bp);
+  return true;
+ });
+}
 export function legalUniversalActions(pack,s){
  assertUniversalMatch(pack,s);
  if(s.status!=='playing')return [];
@@ -973,7 +988,10 @@ export function legalUniversalActions(pack,s){
   for(const c of pl.hand){
    const d=card(pack,c);
    if(d.energy>(produced[d.color]||0)||d.ap>ap)continue;
-   if(d.type==='event')out.push({type:'event',uid:c.uid});
+   if(d.type==='event'){
+    if(eventMandatoryTargetsAvailable(pack,s,p,d))
+     out.push({type:'event',uid:c.uid});
+   }
    else for(const line of ['energy','front']){
     if(line==='front'&&d.type!=='character')continue;
     for(const choice of legalDestinations(pl,line))
