@@ -69,3 +69,7 @@
 - 請 **V2-B（PR #73）** 於自己的分支登錄 **BLC-2-055、BLC-4-013**，在 `checkedBleachAddonDefinition()` 加入日文印刷指紋、對應 `templateEffects`、真卡正反例、Life Trigger 與全卡正式 registry；**固定 B 清冊**需從 57 → 59 個新貢獻、BLEACH 72 → 74、未移植 204 → 202、整體 175 → 177、未移植 525 → 523（且僅當 B 的兩張都經完整驗證後）。未收到 PR #73 對這兩卡的提交前，不得提前更新任何註冊數。
 - 下一候選 **SAO-1-107**「抽 3 棄 1」必須保留逐次私密棄牌和牌庫不足／隊列合法性；其後 Impact/Damage 及特殊成本仍需排除多能力混用，**不是目前已完成**。
 - 既有 `peekTopOne`「頂／場外」與 `inspectTopArrange`「最多一張送場外」完全保留；不能把三種不同原文視為相同效果。**穩定 commit／全套及 60 局測試結果**以最後一次雙 CI 同 SHA 綠燈補錄，未全綠前請 B 勿直接同步。
+
+
+### 本批共用組合契約補充（與本次 CI SHA 同檢驗）
+`payDiscardThen` 現可在實際支付一張手牌後排入 `peekTopOrBottom` 及 `inspectTopAnyOutside`；不支付時兩項都不能偷偷執行。這不是宣稱新增任何另一張正式印刷卡。源卡 BLC-2-055 與 BLC-4-013 正式接入仍由 B 線和固定 ID 清冊核對；A 提交與 PR #73 交接留言已送出。

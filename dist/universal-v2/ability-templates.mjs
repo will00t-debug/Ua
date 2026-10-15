@@ -173,7 +173,8 @@ const registry=Object.freeze({
   args:{optional:yesNo,then:v=>Array.isArray(v)&&v.length>=1&&v.length<=6},
   check:v=>v.then.every(x=>x&&[
    'draw','millTop','peekTopOne','searchDeckOne','searchDeckMany',
-   'searchDeckWhere','inspectTopArrange','recoverOutsideOne','enemyBpDown',
+   'searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','peekTopOrBottom',
+   'recoverOutsideOne','enemyBpDown',
    'enemyFrontAllBpDown','retireEnemyFrontAllUnderBp','buffOwnTraitAllTurn',
    'recoverOutsideColorUnderEnergy','buffOwnField','restEnemyUnderBp','restEnemyFrontOne'
   ].includes(x.template)),

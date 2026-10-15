@@ -289,3 +289,19 @@ test('reused template effects really execute in opposite title packs, with legal
  assert.ok(resolved.players[1].outside.some(c=>c.uid===chosen.uid));
  assert.equal(assertUniversalMatch(packs,resolved),true);
 });
+
+test('top/bottom and arbitrary outside abilities remain valid nested after a real discard cost',()=>{
+ const actions=expandAbilityTemplates({onPlay:[{template:'payDiscardThen',optional:true,then:[
+  {template:'peekTopOrBottom'},
+  {template:'inspectTopAnyOutside',count:2,rest:'top'}
+ ]}]});
+ assert.deepEqual(actions.onPlay,[{op:'discardGate',optional:true,then:[
+  {op:'peekTopOrBottom'},{op:'inspectTopAnyOutside',count:2,rest:'top'}
+ ]}]);
+ const p=checked(character({implementation:'dsl',templateEffects:{onPlay:[
+  {template:'payDiscardThen',optional:true,then:[
+   {template:'peekTopOrBottom'},{template:'inspectTopAnyOutside',count:2,rest:'top'}
+  ]}
+ ]}}));
+ assert.deepEqual(p.cards.T00.effects.onPlay,actions.onPlay);
+});
