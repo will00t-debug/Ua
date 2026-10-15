@@ -4,7 +4,10 @@ export const V2_PHASE_LABELS=Object.freeze({
  start:'開始／額外抽牌',move:'移動階段',main:'主要階段',attack:'攻擊階段'
 });
 export const V2_TITLE_LABELS=Object.freeze({
- bleach:'BLEACH', 'gurren-lagann':'天元突破'
+ bleach:'BLEACH', 'gurren-lagann':'天元突破',
+ 'solo-leveling':'我獨自升級',
+ 'sword-art-online':'刀劍神域',
+ 'mushoku-tensei':'無職轉生'
 });
 export const V2_PENDING_LABELS=Object.freeze({
  block:'選擇是否阻擋', 'life-trigger':'生命觸發',
