@@ -36,8 +36,11 @@ function setup(){
  return {s,action};
 }
 test('BLC-4-013 source-anchored: zero/one/two discarded; arbitrary survivor ordering; no UID loss',()=>{
- assert.equal(registeredV2TitlePack('bleach').cards['BLC-4-013'],undefined,
-  'B core test must NOT silently register workstream B card');
+ const registered=registeredV2TitlePack('bleach').cards['BLC-4-013'];
+ assert.ok(registered,'B must independently register source-locked BLC-4-013 before integration');
+ assert.deepEqual(registered.effects.onPlay,[{op:'inspectTopAnyOutside',count:2,rest:'top'}]);
+ assert.equal(registered.energy,1);
+ assert.equal(registered.color,'yellow');
  for(const numberOutside of [0,1,2]){
   const {s,action}=setup(),old=structuredClone(s);
   let q=dispatchUniversalAction(packs,s,action,{actor:0});

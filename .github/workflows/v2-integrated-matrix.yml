@@ -5,6 +5,10 @@ on:
       - feature/universal-rules-v2-foundation-20261014
     paths:
       - 'dist/universal-v2/**'
+      # A-side printed-card source tests and pinned identity manifest must
+      # also run the 60-match regression when a new B card becomes legal.
+      - 'tests/v2-core-top-*.test.mjs'
+      - 'tests/fixtures/v2-integrated-id-manifest.mjs'
       - 'scripts/v2-integrated-match-matrix.mjs'
       - '.github/workflows/v2-integrated-matrix.yml'
   workflow_dispatch:
