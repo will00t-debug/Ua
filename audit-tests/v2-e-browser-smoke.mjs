@@ -82,8 +82,8 @@ try{
  snap=await evalJs("({started:!!document.querySelector('.board'),title:document.querySelector('.topbar h1')?.textContent,gameText:document.querySelector('#match-view')?.textContent.slice(0,250),error:document.querySelector('.alerts')?.textContent||''})");
  report.cases.push({name:'select titles, start 50-card match',result:snap});
  if(!snap.started||snap.error)throw Error('Preview failed to start a real browser match '+snap.error);
- for(let n=0;n<150;n++){
-  const action=await evalJs("(()=>{const text=document.querySelector('#match-view')?.textContent||'';const done=/你獲勝了|電腦獲勝了/.test(text);if(done)return {done:true};const buttons=[...document.querySelectorAll('#match-view button')].filter(x=>!x.disabled);const next=buttons.find(x=>x.textContent.includes('前進下一階段'));if(next){next.click();return {done:false,action:'next'}};const skip=buttons.find(x=>/不使用|略過|跳過|放棄/.test(x.textContent));if(skip){skip.click();return {done:false,action:'skip'}};const first=buttons.find(x=>x.textContent.includes('查看全部合法操作'));if(first){first.click();return {done:false,action:'expand'}};return {done:false,action:'waiting',label:buttons.slice(0,6).map(x=>x.textContent.slice(0,50))}})()");
+ for(let n=0;n<360;n++){
+  const action=await evalJs("(()=>{const text=document.querySelector('#match-view')?.textContent||'';const done=/你獲勝了|電腦獲勝了/.test(text);if(done)return {done:true};const buttons=[...document.querySelectorAll('#match-view button')].filter(x=>!x.disabled);const overlay=document.querySelector('.overlay .action-list');if(overlay){const modal=[...overlay.querySelectorAll('button')].filter(x=>!x.disabled);const choice=modal.find(x=>/不使用|略過|跳過|放棄/.test(x.textContent))||modal[0];if(choice){choice.click();return {done:false,action:'pending-choice',label:choice.textContent.slice(0,50)}}}const next=buttons.find(x=>x.textContent.includes('前進下一階段'));if(next){next.click();return {done:false,action:'next'}};const skip=buttons.find(x=>/不使用|略過|跳過|放棄/.test(x.textContent));if(skip){skip.click();return {done:false,action:'skip'}};const first=buttons.find(x=>x.textContent.includes('查看全部合法操作'));if(first){first.click();return {done:false,action:'expand'}};return {done:false,action:'waiting',label:buttons.slice(0,6).map(x=>x.textContent.slice(0,50))}})()");
   report.actions.push(action);
   if(action.done){report.cases.push({name:'terminal result displayed via browser',pass:true,steps:n});break;}
   await delay(action.action==='waiting'?150:35);
@@ -95,7 +95,7 @@ try{
  report.jsExceptions=events.slice(0,12);
  report.status='pass_browser_smoke';
  if(final.error)report.status='fail_browser_error';
- if(!final.finished)report.warnings.push('Browser UI did not demonstrate a finished match in 150 assisted clicks; NOT full end-to-end acceptance');
+ if(!final.finished)report.warnings.push('Browser UI did not demonstrate a finished match in 360 assisted clicks; NOT full end-to-end acceptance');
 }catch(e){report.status='fail';report.error=String(e?.stack||e);}
 finally{
  persist();if(ws)ws.close();if(chrome)chrome.kill('SIGKILL');
