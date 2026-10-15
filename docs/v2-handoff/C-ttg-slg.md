@@ -100,3 +100,58 @@ GitHub Actions Node.js 22 [run #38610752632](https://github.com/will00t-debug/Ua
 - **V2-C 專項 21/21 通過、0 失敗**（原 17 項，加上 SLG-068、043、015 與 TTG-005 四項）。
 - **全專案 1031/1036 通過、5 失敗**；剩餘 5 項依然是 `universal-v2-once-per-turn-gate.test.mjs` 兩項及 `universal-v2-title-pack-contract.test.mjs` 三項，皆已回報 PR #70。不是全套綠燈。
 - 本次僅為 handoff 文字補上以上已驗證結果，寫入後將產生新的 GitHub Actions run；以**新的 HEAD** CI 為最後準據。沒有移植更多卡號、沒有覆蓋主控共用檔、沒有部署與 merge。
+
+---
+
+## V2-C 第二輪整合與共同介面驗收（台灣時間 2026-10-15 10:33 以後）
+
+### 親自重新核對的 A-core/PR70 基線
+
+- 讀取 `AGENTS.md`、`dist/universal-v2/{engine,pack,ability-templates}.mjs`、`title-packs/{contract,registry,ttg,slg}.mjs`、`tests/universal-v2-{title-pack-contract,once-per-turn-gate}.test.mjs`。
+- PR #70 HEAD **`25eeac5084917534193fd9feaeae31672f902e78`**，PR #72 第二輪啟動 HEAD **`bfb79970effd6095862dd837333da9cb58a8e977`**；PR #70 沒有包含後續共用五項測試修復提交，**本次無新的 A-core 變更可安全 merge**。若 A 交付新 HEAD 必須重新讀取，不能以此快照冒充合流。
+- PR #70 HEAD 的遞迴 Git tree 與 `docs/v2-handoff` 列表中**沒有 `A-core.md`**（查 `docs/v2-handoff/A-core.md` 為 404），已請 A 提供正確位置／交接。切勿杜撰文件。
+- 只更動 C 擁有的測試、CSV、handoff；`title-packs/ttg.mjs`、`slg.mjs`、各自的 helper 原樣保留、逐卡官方證據不倒退。**沒有觸碰共用 engine、pack、ability-templates、registry、共用測試、入口、real-card-pilots.mjs。**
+
+### 正式 Registry 與 PR70／PR72 分流
+
+- PR #70 **基線 Pilot**：TTG-1-`001,009,036,037,038,042,043,045,046,047,049,051,052,064,065,066,072,073,078,079`（精確 20 張），SLG 零張。
+- 只有 PR #72 工作分支已提供的正式 title contribution：**TTG-1-`005,014,019`（3 張，與上述 20 張交集為空）**；SLG-1-`005,006,015,016,026,032,038,040,041,043,045,052,055,066,068,076,078,079`（18 張）。
+- 在 PR #72 此 HEAD 的 `registeredV2TitlePack` 可讀：BLEACH 15、TTG **23/81**、SLG **18/80**、SAO 0、MST 0；兩系列用同一 V2 reducer 開合法 50 張牌組，並測試兩回合交接、兩位玩家的實體 UID 絕不增減或跨所有權。
+- 本輪新增 `tests/universal-v2-ttg-port.test.mjs` 明確驗證 `registry TTG = 20 Pilot ∪ 3 C，card IDs 不重複`，並經 registry 真卡 50 張 `validateUniversalDeck` 開 TTG vs SLG 進行兩個回合和 UID 守恆；不調用任何舊作品對戰引擎。
+- 本輪新增 `tests/universal-v2-slg-port.test.mjs` 對兩套 CSV 的逐卡一一集合、Body/Life 分欄、確切集合差集與整合歸屬作嚴格比對。**若漏卡、重複卡、未移植卻被註冊，測試必須失敗**，不接受只看動態總數的假綠燈。
+- `audit/v2-c-{ttg,slg}-status.csv` 新增 `integration_scope_v2_c`：`pr70_baseline_pilot`（原 20）、`pr72_only_pending_pr70_integration`（TTG3/SLG18）、`not_implemented_any_branch`（TTG58/SLG62）。另新增 `tested_scenario_scope_not_full_qa` 逐卡記錄實際測試範圍。前述只表示在 **PR #72 分支**的 registry 可用；**PR #70 尚未合入 C 新卡**，不可誤認已主線整合或已通過所有官方 FAQ。
+- **卡數不變**：TTG **23/81 V2、58 未移植**；SLG **18/80 V2、62 未移植**。Body／Life 測試通過只是具體場景，不是全部官方效果驗收。
+
+### 回手、回收、免費登場的來源／合法選擇：不可統一套規則
+
+| 卡號 | 已確認實際規則與來源區 | C 端執行／阻塞 |
+|---|---|---|
+| TTG-1-014、SLG-1-026/068 | 登場必須回手**自己的場上**另一張需求能源 ≤1 角色（前線或能源線）；沒有其他合法角色則自回手；**不得跳過**，不得選對手或不符合印刷需求的角色 | 已實作並測試；本輪加測 SLG-068 可回手己方能源線的合法實體 UID |
+| TTG-1-077 | 官方 **登場時從自己場外**選至多 1 張具有「ガンメン」特徵的卡加入手牌。不得從手牌／牌庫／敵方場外取卡，且可選 0 張 | **尚未移植**：共用 `matchesFilter` 用 `printed.traits.includes(filter.value)` 對原卡表的 `'大グレン団／ガンメン'` 複合特徵無法正確命中；不能拿過寬 type 篩選冒充。新測試確認不合法卡組不能進 V2，已回報 A |
+| SLG-1-014（官方 Q2025） | **由自己的效果從自己的場外加到手牌**才可選擇以 REST **免費登場到能源線**；不得登場／移動至前線 | **尚未移植**：缺「場外回收觸發＋能源線限定＋REST」的合法連動；新測試確認未註冊時不可入牌組 |
+| SLG-1-020（Q2027） | 棄牌付款後，**剛放進自己場外的卡**符合 BP／名字／類型時也能回收到手；非隨意從牌庫選卡 | 尚未移植：需原子化棄牌、來源 outside 計算和合規 filter |
+| SLG-1-039 | 事件二選一：**由自己的場外**將指定影之軍團免費登場，模式 A 最多 1 張 ACTIVE、模式 B 最多 2 張需求能源 ≤3 REST；不應一律只限能源線 | 尚未移植：缺 mode 與進場線／選擇條件 |
+| SLG-1-011（Q2025 同系列但不同效果） | 回收至手時若條件滿足可 REST 登場；**若由「水篠 旬」效果回收才可 ACTIVE 登場**，不能對所有回收來源一視同仁 | 尚未移植：缺來源追蹤與可選進場 |
+
+官方來源：[TTG-1-077](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-077)、[SLG-1-014](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-014)、[SLG Q2025–Q2027](https://www.unionarena-tcg.com/jp/faq/list.php?series=UA51BT)。若底層能力不足，該卡嚴格 fail-closed，不得設空 effect 或僅打勾。
+
+### 三項舊註冊斷言＋兩項 once-per-turn，共用阻塞交 A
+
+已新留言 [PR #70 #issuecomment-6183129347](https://github.com/will00t-debug/Ua/pull/70#issuecomment-6183129347)：
+1. `title-pack-contract.test.mjs` ~37：舊 `[15,20,0,0,0]` 不接受本分支真實 `[15,23,18,0,0]`，正確 `newlyContributed=[0,3,18,0,0]`。
+2. 同檔 ~63：測 synthetic TEST-ONLY 合約「不污染正式 registry」不能以 `registeredV2TitlePack('solo-leveling')===null` 作守恆證據，應比對正式 SLG 18 卡前後卡號和版本不變。
+3. 同檔 ~103：固定 35 cards/665 blocked 不適用已註冊 56；目前全套總 700，**登錄 56、未移植 644**（blocked 261/58/62/183/80）。正式來源總卡數不應動態漂移，必須嚴格對全卡 ID 集合。
+4. `once-per-turn-gate.test.mjs` ~73/~84：牌庫 `32!==33`、`31!==32`；fixture/UID 實體取牌前後須核對，不能只降低預期值掩蓋守恆問題。
+
+**主控再修復後的整合驗收**：等 PR #70 真有新 HEAD，先檢查更動不覆蓋 C 的 registry 貢獻，再同步 commit，重新跑 `node --test tests/universal-v2-{ttg,slg}-port.test.mjs` 及 Node22 `npm test`；沒有新 HEAD 時不能稱「五失敗已消失」。
+
+### 本輪新增驗收 commit 與 CI
+
+- `a92d6a4d78880b007738cffaae029ced55b696c9` — 正式 registry 集合與雙作品同一 V2 引擎兩回合 UID 守恆。
+- `a47d0812f3e1a60b1241e871a16a2d0b465c307f` + `3df097dc5c45e2de4088f3e46ca2362a77e86843` — TTG/SLG CSV 逐卡分 branch/base 歸屬、測試範圍。
+- `70956313e529eac12dbd1a17c635f166ddc31370` — 不靠動態總數掩蓋漏卡／重複卡的逐卡 CSV 整合集合測試。
+- `cb38b5c36e7ee4a9d901f941fa11b522ce212647` — SLG-068 能源線合法回手 UID。
+- `3f9c3c7f3e5737800c253e9f32e1b92dd14b54b2` + `97403750196a6129615a8847f272865b4640606f` — 官方 TTG077、SLG014 來源線與核心阻塞，沒有假移植。
+- `44c6bbee07daf16320b0b16d981c03893b835f8e` + `8449e7e08e7e13c3adfc6f014363f912cc7c5113` — fail-closed 官方未支援卡不能加入合法 V2 牌組。
+
+Actions 已完成 [#38672053993](https://github.com/will00t-debug/Ua/actions/runs/38672053993)，在 `70956313e529eac12dbd1a17c635f166ddc31370` 上專測 **24/24 PASS**、全套 **1034/1039 PASS、5 FAIL**。後續上傳新測試及 handoff 會自動引發後續 CI；**以最後 HEAD Actions 為準，不要把本段當成最終 HEAD 綠燈**。
