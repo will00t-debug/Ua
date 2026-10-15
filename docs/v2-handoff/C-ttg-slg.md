@@ -212,3 +212,10 @@ Actions 已完成 [#38672053993](https://github.com/will00t-debug/Ua/actions/run
 - 獨立 CI [Actions #38693449757](https://github.com/will00t-debug/Ua/actions/runs/38693449757) on `42954f77f5884bde0c81ba0675e7f51d4237c48b`：**V2-C 32/32 PASS**；**Node22 全套 1128/1131 PASS、3 FAIL**。其中共用 `tests/universal-v2-ability-templates.test.mjs` 的 nested after discard 1 項為 A 新模板回歸；`tests/universal-v2-title-pack-contract.test.mjs` 2 項仍固定 TTG23 而這線新卡 TTG24。C 不越權更改三項共用測試，已在 PR70 留重現。
 - 共用 A-core 已多次安全合流：`7c3b9b45`、`2231fc0a`、`32256122`、`126f2ec3` 均為包含 A 最新已交付核心為另一 parent 的 merge commit，並以 A upstream 樹＋C 專屬檔案 overlay 保留他線成果。之後 A 新修改 `pack.mjs`，仍須從最新 HEAD 核對後再同步。每次只保留 C 擁有的 title contribution、獨立 pack、CSV、測試與本交接。
 - **截至本批實際 TTG 24/81（剩57），SLG 18/80（剩62）**；尚無下一張可由當前共通能力完全實作的印刷效果。待 A 交付相符的 top-N trait/底部排序+條件棄牌、draw3-discard2 原子程序、original BP-filtered outside recovery 後，分別立即解鎖上述 TTG2/SLG2，不可預先標註完成。
+
+### 最新核心 pack 整合與 32/32 實測（Node22）
+
+- 最新已同步的 A 共用核心 SHA：`b02b1aa1c0f9ecd497c32b0df68bf4da1122bfa7`；C 雙親 merge `aa35cd4c1f37f8a2deee47f7d8acff0b030c0964`，整合後的 C 專屬檔案均保留。
+- 此 **同一 C HEAD** 真實 [GitHub Actions #38693740496](https://github.com/will00t-debug/Ua/actions/runs/38693740496) 已完成：**C 專測 32/32 通過**；**Node22 全套 1129/1131 通過、2 項失敗**。A 新模板 nested after discard 共用測試已恢復通過，不再列阻塞。
+- 唯一剩餘兩項失敗都出自 **`tests/universal-v2-title-pack-contract.test.mjs`** 的固定來源卡號／卡數測試：A 清冊仍為 TTG23，但 C 真實已註冊 TTG24，新增 `TTG-1-077` 已通過 source-evidence compiler 與實戰正反例。主控需要把清冊 TTG 新貢獻改**精確集合**四張 `005,014,019,077`、已登錄24／未移植57、全作品合計已登錄176／未移植524；**絕不改成放任任意數目的弱斷言**。
+- 此文件是最後測試結果補錄，本段再提交後若 GitHub 自動觸發 CI，須以新提交對應 run 核對。V2-C 對 SLG-036/037、TTG-010/023 仍 fail-closed，不因 Life 類型已有 handler 便視作完整 Body 能力。無 main merge 或正式部署。
