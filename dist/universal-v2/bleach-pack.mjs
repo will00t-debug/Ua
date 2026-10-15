@@ -794,6 +794,18 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
   "effect": "登場時：查看牌庫頂3張，最多將1張送至場外，其餘依任意順序放回牌庫頂。"
  }
  ,{
+  "id":"BLC-3-006","kind":"inspectTop3",
+  "number":"UA04NC/BLC-3-006","name":"朽木 白哉",
+  "color":"purple","energy":1,"ap":1,"bp":2000,"gen":1,
+  "trigger":"active","type":"character",
+  "effect":"【登場時】查看自己牌庫上方 3 張牌。可以從中將最多 1 張放到場外，將剩餘卡片依任意順序放回牌庫頂。"
+ },{
+  "id":"BLC-3-009","kind":"drawPlayColorHand",
+  "number":"UA04NC/BLC-3-009","name":"日番谷 冬獅郎",
+  "color":"green","energy":3,"ap":1,"bp":2000,"gen":2,
+  "trigger":"color","type":"character",
+  "effect":"【登場時】抽 1 張牌。"
+ } ,{
   "id":"BLC-1-030","kind":"restEnemyFrontOne",
   "number":"UA08BT/BLC-1-030","name":"The Jail",
   "color":"yellow","energy":2,"ap":1,"bp":0,"gen":0,
@@ -823,6 +835,7 @@ export function checkedBleachAddonDefinition(p){
  const abilities={
   bounce:{onPlay:[{template:'bounceOwnOtherUnderEnergy',energy:1}]},
   drawPlay:{onPlay:[{template:'draw',count:1}]},
+  drawPlayColorHand:{onPlay:[{template:'draw',count:1}]} ,
   drawDiscardPlay:{onPlay:[{template:'drawDiscardOne'}]},
   drawDiscardAttack:{onAttack:[{template:'drawDiscardOne'}]},
   buffAttack1000:{onAttack:[{template:'buffSelf',bp:1000}]},
@@ -855,6 +868,7 @@ export function checkedBleachAddonDefinition(p){
   ...(p.kind==='impactNull'?{impactNull:true}:{}),
   ...(p.kind.startsWith('retireBonus')?{triggerEffect:{op:'retireOppFront'}}:{}),
   ...(p.kind==='enemyBpDown500Color'?{triggerEffect:{op:'deployOutsideCharacter',color:'purple',maxEnergy:2,ap:1,frontOnly:true}}:{}),
+  ...(p.kind==='drawPlayColorHand'?{triggerEffect:{op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1}}:{}),
   ...(!special?{templateEffects:abilities[p.kind]}:{effects:{}})
  };
 }
