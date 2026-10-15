@@ -58,3 +58,14 @@
 **解除上一輪停止擴卡的暫行凍結。** 保留原 175 張已註冊／525 張待移植的精確卡號鎖定；上一輪 BLC-1-030 及 Q1119 修復不重做。依 B/C/D 未移植卡文，能在單一能力修正後完整移植的保守候選：**牌頂去向 2 張**（BLC-2-055 頂／底、BLC-4-013 頂部2張任意數量送場外）、**抽 N 棄 M 至少 1 張**（SAO-1-107）；IMPACT/DAMAGE、成本與同名限次混有其他條件，不能將字串命中當已解鎖卡數。
 
 本批共用核心 `peekTopOrBottom`：提供 **私密看牌庫頂 1 張後置頂或底**，與舊 `peekTopOne` 的「頂或場外」嚴格區分；牌庫空時不建立 pending。代表卡 EX07BT/BLC-2-055 麒麟寺天示郎已用來源對照的 V2 測試卡包驗證正反例。B 線唯一主責 `bleach-pack.mjs`／`title-packs/bleach.mjs`，請以 `templateEffects:{onPlay:[{template:'peekTopOrBottom'}]}` 移植該真卡，更新來源指紋及**固定**清冊與反例後提交 PR #73；A 不越權修改系列定義，故此提交本身**沒有新增正式註冊卡號**。下一項 BLC-4-013 須新增任意多張送場外再排列牌頂，不能假用既有最多一張的模板。下一筆待填入同 SHA CI 結果／B 可同步 commit。
+
+
+### 2026-10-15 牌頂處置第二項：完整共用核心交付（B 專屬註冊仍待交付）
+
+- 本輪已**解除擴卡凍結**，在 A 核心實作並測試兩項不同能力：
+  1. `peekTopOrBottom`：EX07BT/BLC-2-055 麒麟寺天示郎所需之「私密看牌頂一張後置頂或底」。已新增 `tests/v2-core-top-bottom-source.test.mjs`：選頂／底、拒絕 outside、空牌庫、對手隱藏、實體 UID 守恆。共用接口 `{template:'peekTopOrBottom'}`。
+  2. `inspectTopAnyOutside`：EX15BT/BLC-4-013 友哈巴赫所需之「看牌庫頂兩張，任意 0～2 張送場外，其餘可依指定順序置頂」。`tests/v2-core-top-any-outside-source.test.mjs` 覆蓋送出 0、1、2 張、完整倒序、私密資訊、無法重複選同 UID、短牌庫、非法數值及 UID 守恆；可一般化 count 2～4 與 rest top/bottom。共用接口 `{template:'inspectTopAnyOutside',count:2,rest:'top'}`。
+- **現有固定 175 張已註冊身份及 525 張未移植清冊不變**：這兩份是真實印刷卡號作為核心來源錨點的獨立能力測試包，不代表 B 已提交完整來源指紋及正式 V2 作品註冊。A 不改 B 的 `bleach-pack.mjs`、`title-packs/bleach.mjs`、系列專測／清冊。
+- 請 **V2-B（PR #73）** 於自己的分支登錄 **BLC-2-055、BLC-4-013**，在 `checkedBleachAddonDefinition()` 加入日文印刷指紋、對應 `templateEffects`、真卡正反例、Life Trigger 與全卡正式 registry；**固定 B 清冊**需從 57 → 59 個新貢獻、BLEACH 72 → 74、未移植 204 → 202、整體 175 → 177、未移植 525 → 523（且僅當 B 的兩張都經完整驗證後）。未收到 PR #73 對這兩卡的提交前，不得提前更新任何註冊數。
+- 下一候選 **SAO-1-107**「抽 3 棄 1」必須保留逐次私密棄牌和牌庫不足／隊列合法性；其後 Impact/Damage 及特殊成本仍需排除多能力混用，**不是目前已完成**。
+- 既有 `peekTopOne`「頂／場外」與 `inspectTopArrange`「最多一張送場外」完全保留；不能把三種不同原文視為相同效果。**穩定 commit／全套及 60 局測試結果**以最後一次雙 CI 同 SHA 綠燈補錄，未全綠前請 B 勿直接同步。
