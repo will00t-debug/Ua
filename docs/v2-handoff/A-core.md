@@ -73,3 +73,8 @@
 
 ### 本批共用組合契約補充（與本次 CI SHA 同檢驗）
 `payDiscardThen` 現可在實際支付一張手牌後排入 `peekTopOrBottom` 及 `inspectTopAnyOutside`；不支付時兩項都不能偷偷執行。這不是宣稱新增任何另一張正式印刷卡。源卡 BLC-2-055 與 BLC-4-013 正式接入仍由 B 線和固定 ID 清冊核對；A 提交與 PR #73 交接留言已送出。
+
+
+## 新批次正式整合 B 的六張原卡號（此段狀態優於上文舊快照）
+
+由 PR #73 固定來源 `a0e0373cee1ed5ca9b126d110036737f602c0ca2` 帶入六張身份：**BLC-1-059、BLC-1-077、BLC-2-055、BLC-3-006、BLC-3-009、BLC-4-013**。BLEACH 本線 addon 從 57 → 63（既有 57 張完全保留）；加上 15 原 Pilot，共 **78／276 已註冊，198 未移植**；TTG23／SLG18／SAO39／MST23 保持不變，五作品共 **181／700，519 未移植**。獨立 `tests/fixtures/v2-integrated-id-manifest.mjs` 按六張固定卡號擴充，沒有以動態來源統計取代檢查；共同核心新增的 `peekTopOrBottom` 和 `inspectTopAnyOutside` 由 B 的印刷卡片 BLC-2-055 和 BLC-4-013 正式落地。所有工作只在 Draft PR #70，不碰 main/Production。不宣稱 181 張已完成每張 FAQ 終驗（嚴格仍 0）；交付穩定 SHA 以本輪雙 CI 同一 HEAD 結果核對。

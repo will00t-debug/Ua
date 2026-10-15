@@ -31,13 +31,6 @@ export const BLEACH_CORE_GAP_SCENARIOS=Object.freeze([
   fixture:'Foe front BP 500/1000/1500 -> debuff only 1000 and 1500, no retarget'
  },
  {
-  id:'BLC-2-055',
-  number:'EX07BT/BLC-2-055',
-  exactEffect:'登場：查看己方牌堆頂 1 張，將其放至牌堆頂或牌堆底。',
-  missing:'Controller-private peek top 1 and place TOP or BOTTOM, never OUTSIDE',
-  fixture:'Deck top UID A, next UID B: bottom choice -> top B, bottom A, outside unchanged; illegal skip rejected'
- },
- {
   id:'BLC-2-063',
   number:'EX07BT/BLC-2-063',
   exactEffect:'每回合首次攻擊時，此角色立即轉為 ACTIVE，因此可攻擊 2 次。',
@@ -45,10 +38,10 @@ export const BLEACH_CORE_GAP_SCENARIOS=Object.freeze([
   fixture:'UID attacks twice (once after 1st ready), other physical UID separately eligible'
  }
 ]);
-test('five official BLEACH core blockers are tracked and not misrepresented as V2 playable',()=>{
+test('four official BLEACH core blockers are tracked and not misrepresented as V2 playable',()=>{
  const pack=createBleachV2Pack();
  const set=new Set(BLEACH_V2_NEW_IDS);
- assert.equal(BLEACH_CORE_GAP_SCENARIOS.length,5);
+ assert.equal(BLEACH_CORE_GAP_SCENARIOS.length,4);
  for(const gap of BLEACH_CORE_GAP_SCENARIOS){
   const printed=CARDS.find(c=>c.identity===gap.id);
   assert.ok(printed,gap.id);
@@ -60,12 +53,12 @@ test('five official BLEACH core blockers are tracked and not misrepresented as V
   assert.ok(gap.missing.length>=30&&gap.fixture.length>=30);
  }
 });
-test('available top-one choice is TOP/OUTSIDE, not TOP/BOTTOM, so cannot implement BLC-2-055',()=>{
- assert.ok(V2_ABILITY_TEMPLATE_IDS.includes('peekTopOne'));
- const program=expandAbilityTemplates({onPlay:[{template:'peekTopOne'}]});
- assert.deepEqual(program,{onPlay:[{op:'peekTopOne'}]});
- // The official BLC-2-055 BOTTOM ability must NOT be replaced by OUTSIDE.
- assert.ok(BLEACH_CORE_GAP_SCENARIOS.find(x=>x.id==='BLC-2-055').missing.includes('BOTTOM'));
+test('A unlocked exact top-or-bottom; BLC-2-055 is now registered without OUTSIDE approximation',()=>{
+ assert.ok(V2_ABILITY_TEMPLATE_IDS.includes('peekTopOrBottom'));
+ assert.deepEqual(expandAbilityTemplates({onPlay:[{template:'peekTopOrBottom'}]}),
+  {onPlay:[{op:'peekTopOrBottom'}]});
+ assert.deepEqual(createBleachV2Pack().cards['BLC-2-055'].effects.onPlay,[{op:'peekTopOrBottom'}]);
+ assert.ok(!BLEACH_CORE_GAP_SCENARIOS.some(x=>x.id==='BLC-2-055'));
 });
 test('batch opponent BP down has no printed minimum-BP threshold and cannot stand in for BLC-2-007',()=>{
  const effect=expandAbilityTemplates({onPlay:[{template:'enemyFrontAllBpDown',bp:500}]});

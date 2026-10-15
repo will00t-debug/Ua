@@ -18,7 +18,11 @@ const testForKind=Object.freeze({
  traitBuffAllDraw:'tests/universal-v2-bleach-green-match.test.mjs',
  inspectTop2:'tests/universal-v2-bleach-top-inspect.test.mjs',
  inspectTop3:'tests/universal-v2-bleach-top-inspect.test.mjs',
- restEnemyFrontOne:'tests/universal-v2-bleach-enemy-control.test.mjs'
+ restEnemyFrontOne:'tests/universal-v2-bleach-enemy-control.test.mjs',
+ drawPlayColorHand:'tests/universal-v2-bleach-nc-batch.test.mjs',
+ buffOtherOwn1000:'tests/universal-v2-bleach-own-buff.test.mjs',
+ peekTopOrBottom:'tests/universal-v2-bleach-new-top.test.mjs',
+ inspectTopAnyOutside2:'tests/universal-v2-bleach-new-top.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -43,6 +47,9 @@ function contributedEntry(profile){
      '; fingerprint matched source text and printed stats. V2 program/trigger tests exist; NOT per-card complete FAQ acceptance.',
    testFiles:Object.freeze([
     'tests/universal-v2-bleach-registry.test.mjs',
+    ...(profile.id.startsWith('BLC-3-')?['tests/universal-v2-bleach-nc-batch.test.mjs']:[]),
+    ...(['BLC-1-059','BLC-1-077'].includes(profile.id)?['tests/universal-v2-bleach-own-buff.test.mjs']:[]),
+    ...(['BLC-2-055','BLC-4-013'].includes(profile.id)?['tests/universal-v2-bleach-new-top.test.mjs']:[]),
     testForKind[profile.kind]||'tests/universal-v2-bleach-port.test.mjs'
    ]),
    ...(vanilla?{verifiedNoExtraEffects:true}:{})
@@ -50,7 +57,7 @@ function contributedEntry(profile){
  });
 }
 const entries=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(contributedEntry));
-if(entries.length!==57||BLEACH_V2_NEW_IDS.length!==entries.length||
+if(entries.length!==63||BLEACH_V2_NEW_IDS.length!==entries.length||
  new Set(entries.map(x=>x.id)).size!==entries.length)
  throw Error('BLEACH V2 contribution cardinality or ID drift');
 export default Object.freeze({
