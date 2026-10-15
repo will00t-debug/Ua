@@ -164,3 +164,41 @@ Actions 已完成 [#38672053993](https://github.com/will00t-debug/Ua/actions/run
 - **1037/1042 全套測試通過**，5 失敗（`tests/universal-v2-once-per-turn-gate.test.mjs` 2 項；`tests/universal-v2-title-pack-contract.test.mjs` 3 項）。
 - 無任何新增 TTG/SLG V2 卡號，仍 **23/81、18/80**。本段為純文件補錄；新文件 commit 會觸發另一個 Actions run，若有差異應以新 run 為準。
 - PR #70 仍是 `25eeac5084917534193fd9feaeae31672f902e78`，未收到 A 修復的新 HEAD；目前不是「同步修好的共同核心」，而是同一 PR70 base 上 C 實際驗收。無主線合併或正式部署。
+
+---
+
+## V2-C 恢復批次移植：TTG-1-077（2026-10-15 台灣）
+
+### 修復基線與分支安全合流
+
+- 已重新讀取 PR #70 `docs/v2-handoff/A-core.md`、`AGENTS.md` 和兩系列獨立卡包，沒有重做 20 TTG Pilot／原 3 TTG C／18 SLG C。PR #70 已在 `3f6348578b7e3e32a6cd12c66475e8228db0b690` 實際 Node22 **1119/1119 PASS**、60/60 五作品矩陣成功，修掉以前五項共同回歸。該雙綠燈不是本次新增 TTG077 後的結果。
+- 第一個安全雙親合流 `7c3b9b45b218b138021b9657245e641e51d1e6d6`：A `45ea2e3bc0db8a0b1cb75be50d346469439fe1cb` + C `a8ed77eb795f3578fbd79af44d9652cabfa62326`，保留 C TTG QA 修訂，不改任何共用檔。
+- 第二個安全雙親合流 `2231fc0a552036f03dbfe0cd88b24b3e9f66505e`：A `26073201c84472be9893e66ff3f9ae15bc4f9cf8` + C `c0785f247a170aa5dfb2f09fcdbf7428095388f3`，保留 C title packs、兩 CSV 與獨立測試。A 後來又前進至 `1f7aa4222c82631512919208640fdf681cf53d82`，**尚未再合流**；若同步以最新 A SHA 為準，不宣稱舊版就是最新。
+- 核心只沿用 A commits（共用 `engine.mjs`、`pack.mjs`、`ability-templates.mjs`、共用測試和入口未經 C 直接修改）；正式 V2 registry 仍共用一份，作品舊引擎沒有參與。禁止改 main 或部署。
+
+### 第一批實際新增：TTG-1-077 ダイグレン
+
+- 官方日本卡文：https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-077 。**必要赤4、消費AP1、Field、產紅2、無生命 Trigger**；`【登場時】自分の場外から［特徴：ガンメン］を1枚まで手札に加える。`
+- Body：以 `recoverOutsideOne` 共用 DSL 實際選擇**自己 outside** 的 0 或 1 張印刷 `ガンメン` 特徵卡加入**自己 hand**。選 0 合法；不得選對手 outside、己方 deck、己方 hand 或沒有該特徵的卡。當沒有目標時不得無端多取得卡、不得跳過 AP 支付。Life：**none / not_applicable**。
+- 原始官方資料 `TTG-1-077` 的 trait 為單一源字串 `大グレン団／ガンメン`；其他既有 TTG Pilot 特徵已分成 `大グレン団` / `ガンメン`。**僅本張新增 profile** 有嚴格來源字串 fingerprint，將已證實斜線複合特徵轉為兩個供共用 DSL 選擇的 trait token。原始 `sourceRecord` 保持不動、出現未審來源就中止註冊。這不等於修改共用比對演算法。
+- 正反例：`tests/universal-v2-ttg-port.test.mjs` 在 TTG 50 張合法牌組中用兩張 TTG-049 提供紅4、真實 AP 支付，TTG077 出牌後可選 0 或 1 張自己 outside TTG077，同時拒絕敵方和非特徵 UID；另確認能正確回收**另一卡號**、原 Pilot `TTG-1-072`（印刷ガンメン），精確核對 hand/outside/AP/UID 守恆；`TTG-1-081` 未實作且仍無法放入合法牌組。
+- 相關 commits：`022af72761cf8ee2faada721b73b3ebfe55d1d59` TTG source profile、`ab54e24cbcd8b7f89b36e2352b86a366d3d6ec26` title contribution、`aae05f6bd43a6034cd7cf4ea1a36dec1a14c81c0` 初始正反例，`cb53155eea450ed5c3459281a6855f10945aa708` 與 `1ad95c702e97671ef040f556dfe17e67e972f4d5` 特徵規範修正，`b56e58a239d0c6582ced6bf8ed23621faa8fd714` 過期拒絕斷言換真卡斷言，`c0785f247a170aa5dfb2f09fcdbf7428095388f3` 回收異卡號的反例。
+- 逐卡表 `audit/v2-c-ttg-status.csv` 已把 077 改為 `v2_batch3`，生命 `none/not_applicable`，整合歸屬 `pr72_only_pending_pr70_integration`。原 TTG C 005/014/019 及 SLG 18 張已由 PR70 正式納入，CSV 改為 `pr70_integrated_contribution`。原 TTG Pilot20 為 `pr70_baseline_pilot`。不可將 PR72-only 077 假稱 PR70 已合入。
+- **實際數目**：TTG **24/81 V2**（原20 Pilot + 原C3已A整合 + 新C1），未移植 **57**；SLG **18/80 V2**（全部18已A整合），未移植 **62**。跨五作品若其他系列無變動：已登錄 **176/700**、仍未移植 **524**。官方所有效果／FAQ 終驗仍不得冒稱完成。
+
+### 新增卡後 Node22 實際回歸與 A 合作
+
+- [Actions #38692724861](https://github.com/will00t-debug/Ua/actions/runs/38692724861) 在 TTG077 正反例完整提交：**C 專測29/29 PASS**，全套 **1119/1121 PASS**，僅共用 title-pack contract 的 2 項固定清冊失敗，因 A 來源鎖定 TTG 仍為23而本線已是24。
+- [Actions #38692840488](https://github.com/will00t-debug/Ua/actions/runs/38692840488) A 新模板核心合流 `2231fc0a`：**C 專測29/29 PASS**，全套 **1121/1124 PASS、3 FAIL**；新增第 3 項是 A 新加入共用模板 `inspectTopAnyOutside` 後，共用模板 ID 清冊斷言尚未同步。未修改共享測試掩蓋。
+- PR #70 主控留言 [#6185968345](https://github.com/will00t-debug/Ua/pull/70#issuecomment-6185968345) 提供 TTG-077 實際卡號、正確固定卡數、逐卡源和三組可批次解鎖的能力；[#6186025296](https://github.com/will00t-debug/Ua/pull/70#issuecomment-6186025296) 提供 A 模板清冊與 TTG 靜態清冊三項阻塞的實際 Node22 日誌。需由 A 調整清冊：TTG **24/81**、C addon 4、未移植57、全五作品176／未移植524，增加固定 **TTG-1-077** ID，不可單純改成動態數量吞缺卡。
+- 本文提交後若再觸發新的 Actions，必須以**新 HEAD** 結果重核，不能沿用上面舊 commit 證據。
+
+### 下一批已逐卡檢查，但仍需共用能力（保持 fail-closed，不記完成）
+
+1. **SLG-1-036**：[官方印刷](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-036) 紫3/AP1 event，**先抽3，再從手牌選2張必須送 own outside**；Life ACTIVE。共用 `drawDiscardOne` 僅一抽一棄，不能串兩次冒充；請 A 提供抽 N→棄 M、在抽牌後才可見合法 discard UID、不可兩次選相同 UID 的共通 pending。
+2. **TTG-1-010、TTG-1-023**：[官方 010](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-010)、[官方 023](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-023)：自己 deck **頂3／頂5** 只從特徵大グレン団／ガンメン最多選一張公開加入手牌，其餘按自己順序放 deck **底**，有加入時再棄一張。不是全牌庫 search + shuffle，也不是對任意 top card 送 outside；現有 `inspectTopAnyOutside` 不等價。
+3. **SLG-1-037**：[官方印刷與 Q2039](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-037)：紫4/AP1 event，從己方 outside 選**印刷 BP≤4000** character 至多一張回手，然後抽一張；Life DRAW。必須檢查**印刷 BP** 而非暫時 buff；現有 outside filter 只有 name/trait/color/type，不能以任意角色替代。
+4. **TTG-1-081**：SPECIAL 生命與事件體效果分開；印刷加成條件為己方場或 Raid 底板有西蒙**或**卡米那，不能只檢查場上單名而錯給 BP5000；仍未移植。
+5. **SLG-1-014**：Q2025 由 own outside 效果回手後可選 REST 免費登場到**能源線且不得前線**；現有無完整帶來源資訊的能源線限定引擎，仍未移植。
+
+以上只列已確認精確卡號／核心需求；**沒有因此新增 SLG 可玩卡**。後續 A 真正提供等價能力時，每張須新增 paid-cost、來源區、optional、Life 正反例和真實 Node22 CI 才能入 registry。
