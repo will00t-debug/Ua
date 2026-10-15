@@ -13,7 +13,7 @@ function deck50(){
  const ids=[
   'SAO-1-001','SAO-1-016','SAO-1-019','SAO-1-023','SAO-1-035',
   'SAO-1-039','SAO-1-042','SAO-1-046','SAO-1-054','SAO-1-055',
-  'SAO-1-058','SAO-1-061','SAO-1-082'
+  'SAO-1-058','SAO-1-061','SAO-1-006'
  ];
  const counts=Object.fromEntries(ids.map(id=>[id,4]));
  counts[ids.at(-1)]=2;
