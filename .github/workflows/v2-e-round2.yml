@@ -1,0 +1,42 @@
+name: V2-E Round 2 Pinned Verification
+on:
+  pull_request:
+    branches:
+      - feature/universal-rules-v2-foundation-20261014
+    paths:
+      - 'scripts/v2-e-round2.mjs'
+      - 'audit-tests/**'
+      - 'docs/v2-handoff/E-acceptance.md'
+      - '.github/workflows/v2-e-round2.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  pinned-second-round:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Identify audit head and Node version
+        run: |
+          git rev-parse HEAD
+          node --version
+          npm --version
+      - name: Syntax check V2-E execution script
+        run: node --check scripts/v2-e-round2.mjs
+      - name: Check pinned A/B/C/D, standalone regressions and scratch pairwise
+        run: node scripts/v2-e-round2.mjs
+      - name: Archive tests, actual card IDs, replay cases and blockers
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v2-e-round2-exact-sha-evidence
+          path: audit/v2-e-round2/
+          if-no-files-found: error
+          retention-days: 30
