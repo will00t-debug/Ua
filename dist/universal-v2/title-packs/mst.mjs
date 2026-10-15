@@ -1,9 +1,8 @@
-// [V2-D] mushoku-tensei workstream-owned module.
-// Only this file and its corresponding title-scoped tests should be edited by
-// the title worker. Do not modify real-card-pilots.mjs or another title file.
-// Empty means ZERO newly playable/approved cards, not legacy auto support.
+// [V2-D] Formal Mushoku Tensei V2 contribution from the complete audited
+// Japanese source adapter. Unsupported official cards remain unregistered.
+import {verifiedMstV2Entries} from '../mst-pack.mjs';
 export default Object.freeze({
  title:'mushoku-tensei',
- version:'unported-20261015',
- entries:Object.freeze([])
+ version:'mst-official-v2-d-20261015',
+ entries:Object.freeze(verifiedMstV2Entries())
 });
