@@ -20,10 +20,10 @@ const slgDeck=Object.fromEntries(['004','005','006','008','009','015','016','018
 slgDeck['SLG-1-037']=2;
 assert.deepEqual(validateUniversalDeck(sao,saoDeck),[]);
 assert.deepEqual(validateUniversalDeck(slg,slgDeck),[]);
-function fixture(seed=2021,reverse=false){
+function fixture(seed=2021,reverse=false,firstOverride=null){
  const packs=reverse?[slg,sao]:[sao,slg],p=reverse?1:0;
  const decks=reverse?[slgDeck,saoDeck]:[saoDeck,slgDeck];
- return {packs,p,s:newUniversalMatch(packs,{decks,first:p,seed})};
+ return {packs,p,s:newUniversalMatch(packs,{decks,first:firstOverride===null?p:firstOverride,seed})};
 }
 function take(s,p,id){
  for(const zone of ['hand','deck','life','outside']){
@@ -158,7 +158,7 @@ test('SAO temporary +1500 disappears on next turn and once-use is rearmed, no di
  assert.equal(assertUniversalMatch(packs,s),true);
 });
 test('SAO ACTIVE life remains independently correct vs SLG attacker, without paying MAIN discard',()=>{
- const {packs,p,s:input}=fixture(21022,true); // SLG p0 attacks SAO p1.
+ const {packs,p,s:input}=fixture(21022,true,0); // SLG p0 attacks SAO p1.
  let s=input;
  const life=take(s,1,'SAO-2-021'),attacker=take(s,0,'SLG-1-005'),
   defender=take(s,1,'SAO-1-001');
