@@ -5,7 +5,7 @@ import {expandAbilityTemplates} from './ability-templates.mjs';
 export const V2_PHASES=Object.freeze(['start','move','main','attack']);
 export const V2_CARD_TYPES=Object.freeze(['character','event','field']);
 export const V2_TRIGGERS=Object.freeze(['draw','get','final','active','special','color','raid']);
-export const V2_EFFECT_TIMINGS=Object.freeze(['onPlay','onRaid','onAttack','onRaided']);
+export const V2_EFFECT_TIMINGS=Object.freeze(['onPlay','onRaid','onAttack','onRaided','onRetire']);
 export const V2_EFFECT_OPS=Object.freeze(['draw','drawIfOwnName','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','restOppFrontUnderBp','restOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw','searchDeckMany','discardGate','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
  'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideColorUnderEnergy','buffOwnField','oncePerTurnGate','chooseOne']);
 const integer=(v,low=0)=>Number.isInteger(v)&&v>=low;
@@ -324,6 +324,11 @@ function normalize(card,packId){
   mainAbility.frontOnly===true&&
   Object.keys(mainAbility).length===2&&
   Object.keys(mainAbility).every(k=>['op','frontOnly'].includes(k));
+ const mainEnergyRetire=mainAbility?.op==='restSelfGainEnergyRetireEndMain'&&
+  mainAbility.energyOnly===true&&mainAbility.oncePerTurn===true&&
+  integer(mainAbility.extraEnergy,1)&&mainAbility.extraEnergy<=3&&
+  Object.keys(mainAbility).length===4&&
+  Object.keys(mainAbility).every(k=>['op','energyOnly','oncePerTurn','extraEnergy'].includes(k));
  const mainRestProgram=mainAbility?.op==='restSelfThen'&&
   mainAbility.frontOnly===true&&
   Object.keys(mainAbility).length===3&&
@@ -333,7 +338,7 @@ function normalize(card,packId){
   Object.keys(mainAbility.then[0]).every(k=>['op','count'].includes(k));
  if(mainRestProgram)verifyProgram(mainAbility.then,card.id+'.mainAbility.then');
  if(mainAbility!==null&&
-  (card.type!=='character'||!(mainRaid||mainSelfRest||mainRestProgram)))
+  (card.type!=='character'||!(mainRaid||mainSelfRest||mainRestProgram||mainEnergyRetire)))
   throw Error(card.id+' unsupported main action ability');
  const passiveBonuses=validatePassiveBonuses(card);
  const implemented=card.implementation;
@@ -370,6 +375,9 @@ function normalize(card,packId){
    throw Error(card.id+' Raid-base effects require onRaided timing');
   if(name==='onRaided'&&program.some(e=>!['buffOwnTrait','drawIfRaidUnderFacedown'].includes(e.op)))
    throw Error(card.id+' unsupported Raid-base timing effect');
+  if(name==='onRetire'&&
+   (card.type!=='character'||program.some(e=>!['draw','millTop'].includes(e.op))))
+   throw Error(card.id+' unsupported onRetire ability program');
   if(name==='onAttack'&&card.type!=='character')throw Error(card.id+' noncharacter cannot attack');
   if(card.type==='event'&&program.some(e=>e.op==='buffSelf'))
    throw Error(card.id+' event cannot buff itself on field');

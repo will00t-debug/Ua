@@ -4,6 +4,20 @@ import {createUniversalPack} from './pack.mjs';
 const catalog=Object.fromEntries(SOLO_LEVELING_CARDS.map(c=>[c.id,c]));
 const authored=[
   {
+    "id":"SLG-1-007","name":"エシル","color":"purple",
+    "energy":0,"ap":1,"bp":500,"gen":1,"trigger":"draw",
+    "type":"character","textAnchor":"退場時抽1張",
+    "implementation":"dsl","effects":{"onRetire":[{"op":"draw","count":1}]}
+  },
+  {
+    "id":"SLG-1-013","name":"水篠 葵","color":"purple",
+    "energy":0,"ap":1,"bp":1000,"gen":1,"trigger":null,
+    "type":"character","textAnchor":"主要階段每回合一次：REST此角色",
+    "implementation":"dsl","effects":{},
+    "mainAbility":{"op":"restSelfGainEnergyRetireEndMain",
+      "energyOnly":true,"oncePerTurn":true,"extraEnergy":1}
+  },
+  {
     "id":"SLG-1-002","name":"朝比奈 りん","color":"purple",
     "energy":0,"ap":1,"bp":500,"gen":1,"trigger":"draw",
     "type":"character","textAnchor":"登場時選一項：抽1張後將1張手牌送場外",

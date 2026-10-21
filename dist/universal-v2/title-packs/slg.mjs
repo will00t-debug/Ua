@@ -3,6 +3,8 @@ import {SOLO_LEVELING_CARDS} from '../../solo-leveling.mjs';
 import {verifiedSlgV2Cards} from '../slg-pack.mjs';
 const records=Object.fromEntries(SOLO_LEVELING_CARDS.map(c=>[c.id,c]));
 const proof=Object.freeze({
+ '007':['退場時抽1張','Official Japanese UA51BT/SLG-1-007 エシル purple0 AP1 BP500 gen1; onRetire DRAW1; DRAW Life separately.'],
+ '013':['主要階段每回合一次：REST此角色','Official Japanese UA51BT/SLG-1-013 水篠 葵 purple0 AP1 BP1000 gen1; ENERGY line MAIN REST once per turn, +1 energy this turn, retire source at MAIN end; no Life trigger.'],
  '002':['登場時選一項：抽1張後將1張手牌送場外','UA51BT/SLG-1-002 printed: purple0/AP1/BP500/gen1, DRAW life; onPlay choose exactly ONE: draw1 then mandatory discard1; OR own turn select up to one OTHER own field character for current-turn BP+1000. Official Japanese source https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-002. Not full FAQ certified.'],
  '001':['自己的回合中，若場外至少5張卡','Official UA51BT/SLG-1-001: own turn and own outside >=5 yields persistent BP+500; no life trigger.'],
  '010':['自己的回合中，若場外有10張以上','Official UA51BT/SLG-1-010: own turn and own outside >=10 yields persistent BP+1000; separate DRAW life trigger.'],
@@ -46,6 +48,7 @@ export default Object.freeze({
     reviewNote:review[1]+'；日文公式卡文來源 '+record.source+
      '；原始 source BP = '+String(record.bp),
     testFiles:['tests/universal-v2-slg-port.test.mjs',
+     ...(def.id==='SLG-1-007'||def.id==='SLG-1-013'?['tests/v2-retire-delayed-slg.test.mjs']:[]),
      ...(def.id==='SLG-1-002'?['tests/v2-choice-mode-slg002.test.mjs']:[]),
      ...(def.id==='SLG-1-012'?['tests/v2-slg-012-own-name.test.mjs']:[]),
      ...(def.id==='SLG-1-018'?['tests/v2-slg-018-compound-top.test.mjs']:[]),

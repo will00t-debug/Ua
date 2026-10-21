@@ -127,7 +127,7 @@ test('Registry shares exactly the 20 original TTG pilot IDs plus FOUR new, no du
  assert.deepEqual(ids.filter(id=>!pilot.includes(id)).sort(),[...additions].sort());
  assert.ok(pilot.every(id=>!additions.has(id)));
  assert.equal(new Set(ids).size,27);
- assert.deepEqual(listRegisteredV2Titles().slice(1,3).map(x=>x.totalV2Cards),[27,25],
+ assert.deepEqual(listRegisteredV2Titles().slice(1,3).map(x=>x.totalV2Cards),[27,27],
   'C title contribution counts stay exact independent of BLEACH A integration');
  assert.equal(Object.keys(registeredV2TitlePack('solo-leveling').cards).length,25);
 });

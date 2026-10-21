@@ -54,13 +54,15 @@ export function universalCardEnergy(pack,s,p,c){
  const d=card(pack,c),profile=d.conditionalTraitEnergy;
  const pIndex=p;
  const activeBonus=c.ready?(d.activeExtraEnergy||0):0;
+ const timedBonus=(c.buffs||[]).filter(b=>b.untilTurn===s.turn)
+  .reduce((n,b)=>n+(b.energy||0),0);
  const passiveBonus=d.passiveBonuses.reduce((n,p)=>n+(p.extraEnergy&&
   matchesV2LiveCondition(s,pIndex,c.uid,p.condition,x=>card(pack,x),()=>0)?
   p.extraEnergy:0),0);
  const distinctBonus=profile&&(!profile.requiresActive||c.ready)&&
   matchesOwnDistinctTraits(s,p,c.uid,profile,x=>card(pack,x))?
   profile.extraEnergy:0;
- return d.gen+activeBonus+distinctBonus+passiveBonus;
+ return d.gen+activeBonus+distinctBonus+passiveBonus+timedBonus;
 }
 export function universalEnergyByColor(pack,s,p){
  const counts=Object.create(null);
@@ -345,7 +347,12 @@ function continueEffectQueue(pack,s){
    s.effectQueue.unshift(...targets.map(c=>({
     op:'retireBatchOne',owner,targetPlayer:foe,uid:c.uid,mode:'threshold'
    })));
-  }else if(job.op==='retireBatchOne'){
+  }else if(job.op==='retireAtMainEnd'){
+    // Only this physical field incarnation may satisfy a delayed retirement.
+    const pos=location(s,owner,job.sourceUid);
+    if(pos&&pos.c.fieldEntryStamp===job.fieldEntryStamp)
+     retire(pack,s,owner,pos.line,pos.slot);
+   }else if(job.op==='retireBatchOne'){
    // Internal state-based consequence, never a user-authored card DSL op.
    const slot=s.players[job.targetPlayer].front.findIndex(c=>c?.uid===job.uid);
    if(slot>=0&&(job.mode==='threshold'||
@@ -444,7 +451,7 @@ function bounceToHand(s,p,uid){
  // All bases and facedown undercards move to OWN outside (not hand/remove).
  const below=c=>[...(c.stack||[]).flatMap(x=>[x,...below(x)]),
   ...(c.under||[]).flatMap(x=>[x,...below(x)])];
- const reset=c=>({...c,stack:[],under:[],buffs:[],ready:false,faceDown:false});
+ const reset=c=>({...c,stack:[],under:[],buffs:[],ready:false,faceDown:false,fieldEntryStamp:null});
  pl.outside.push(...below(top).map(reset));pl.hand.push(reset(top));
 }
 function vacate(s,p,line,slot,destination='outside'){
@@ -452,7 +459,17 @@ function vacate(s,p,line,slot,destination='outside'){
  if(!['outside','removed'].includes(destination))throw Error('Invalid destination');
  s.players[p][line][slot]=null;
  const expand=c=>[c,...(c.stack||[]).flatMap(expand),...(c.under||[]).flatMap(expand)];
- s.players[p][destination].push(...expand(top).map(c=>({...c,stack:[],under:[],buffs:[],ready:false,faceDown:false})));
+ s.players[p][destination].push(...expand(top).map(c=>({...c,stack:[],under:[],buffs:[],ready:false,faceDown:false,fieldEntryStamp:null})));
+}
+function queueRetirement(pack,s,p,c,line){
+ // Capture the source before moving to outside. Only GENUINE retirement
+ // queues onRetire; bounce, removed area and stripping a Raid top do not.
+ const jobs=programJobs(pack,c,'onRetire',p).map(job=>({
+  ...job,retiredSource:{uid:c.uid,cardId:c.cardId,line,ready:c.ready,
+   bp:bp(pack,s,c),fieldEntryStamp:c.fieldEntryStamp??null}
+ }));
+ // With simultaneous retirement: finish physical moves before queued triggers.
+ s.effectQueue.push(...jobs);
 }
 function retire(pack,s,p,line,slot,{postImpact=false}={}){
  const c=s.players[p][line][slot];
@@ -462,6 +479,7 @@ function retire(pack,s,p,line,slot,{postImpact=false}={}){
    postImpact,destination:'outside'};
   return true;
  }
+ queueRetirement(pack,s,p,c,line);
  vacate(s,p,line,slot,'outside');
  return false;
 }
@@ -533,6 +551,7 @@ function resolveChoice(s,a,pack){
    const replacement=retire(pack,s,q.player,'front',slot,{postImpact:impact});
    if(impact&&!replacement)damage(pack,s,q.player);
   }
+  if(!s.pending)continueEffectQueue(pack,s);
   return;
  }
  if(q.kind==='leave-replacement'){
@@ -547,7 +566,10 @@ function resolveChoice(s,a,pack){
    if(!consumed)throw Error('Facedown card no longer available');
    const expand=c=>[c,...(c.stack||[]).flatMap(expand),...(c.under||[]).flatMap(expand)];
    p.outside.push(...expand(consumed).map(c=>({...c,faceDown:false,ready:false,stack:[],under:[],buffs:[]})));
-  }else if(a.mode==='leave')vacate(s,q.player,q.line,q.slot,q.destination);
+  }else if(a.mode==='leave'){
+    if(q.destination==='outside')queueRetirement(pack,s,q.player,loc.c,q.line);
+    vacate(s,q.player,q.line,q.slot,q.destination);
+   }
   else throw Error('Invalid leave replacement option');
   s.pending=null;
   if(q.originalAction&&a.mode==='leave'){
@@ -924,7 +946,7 @@ export function newUniversalMatch(pack,{decks,seed=1,first=0}={}){
   packIds:packs.map(p=>p.id),packVersions:packs.map(p=>p.version),
   rng:(seed>>>0)||1,first,active:first,turn:0,phase:'start',status:'playing',
   winner:null,endReason:null,pending:null,extraDrawn:false,moved:false,movedUids:[],attacksThisTurn:0,
-  publicReveals:[],effectQueue:[],players:[],
+  publicReveals:[],effectQueue:[],delayedEffects:[],nextFieldEntryStamp:1,players:[],
   raidedThisTurn:[false,false],mainAbilityUsedUids:[],mainReadyOnceByName:[[],[]],
   onceEffectUses:[[],[]],
   initialCounts:decks.map(d=>Object.fromEntries(Object.entries(d).filter(([,n])=>n>0)))
@@ -1120,6 +1142,12 @@ export function legalUniversalActions(pack,s){
    for(const choice of legalDestinations(pl,'energy'))out.push({type:'step',uid:c.uid,...choice});
  }
  if(s.phase==='main'){
+  for(const c of pl.energy.filter(Boolean)){
+   const ability=card(pack,c).mainAbility;
+   if(ability?.op==='restSelfGainEnergyRetireEndMain'&&
+    c.ready&&!s.mainAbilityUsedUids.includes(c.uid))
+    out.push({type:'activate',uid:c.uid,mode:'selfRestEnergyRetire'});
+  }
   for(const c of pl.front.filter(Boolean)){
    const d=card(pack,c),ability=d.mainAbility;
    if(!ability)continue;
@@ -1206,13 +1234,37 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
   case 'next':
    if(s.phase==='start')s.phase='move';
    else if(s.phase==='move')s.phase='main';
-   else if(s.phase==='main')s.phase='attack';
+   else if(s.phase==='main'){
+     s.phase='attack';
+     const due=s.delayedEffects.filter(x=>x.turn===s.turn&&x.owner===p);
+     s.delayedEffects=s.delayedEffects.filter(x=>!(x.turn===s.turn&&x.owner===p));
+     s.effectQueue.push(...due.map(x=>({
+      op:'retireAtMainEnd',owner:x.owner,sourceUid:x.sourceUid,
+      fieldEntryStamp:x.fieldEntryStamp
+     })));
+     continueEffectQueue(pack,s);
+    }
    else if(s.phase==='attack')advanceAfterEnd(pack,s,p);
    break;
   case 'activate':{
-   const selected=pl.front.find(c=>c?.uid===action.uid);
+   const selected=field(pl).find(c=>c.uid===action.uid);
    if(!selected||!card(pack,selected).mainAbility)throw Error('Main ability source missing');
    const d=card(pack,selected),ability=d.mainAbility;
+   if(ability.op==='restSelfGainEnergyRetireEndMain'){
+    if(action.mode!=='selfRestEnergyRetire'||
+     !pl.energy.some(c=>c?.uid===selected.uid)||!selected.ready||
+     s.mainAbilityUsedUids.includes(selected.uid))
+     throw Error('Delayed energy requires READY own energy-line source, once per turn');
+    if(!Number.isInteger(selected.fieldEntryStamp)||selected.fieldEntryStamp<1)
+     selected.fieldEntryStamp=s.nextFieldEntryStamp++;
+    selected.ready=false;
+    s.mainAbilityUsedUids.push(selected.uid);
+    selected.buffs??=[];
+    selected.buffs.push({energy:ability.extraEnergy,untilTurn:s.turn});
+    s.delayedEffects.push({op:'retireAtMainEnd',owner:p,sourceUid:selected.uid,
+     fieldEntryStamp:selected.fieldEntryStamp,turn:s.turn});
+    break;
+   }
    if(ability.op==='restSelfThen'){
     if(action.mode!=='selfRestThen'||!selected.ready)
      throw Error('REST main action requires READY front character');
@@ -1322,11 +1374,17 @@ export function assertUniversalMatch(pack,s){
   throw Error('Invalid movement accounting');
  if(!Number.isInteger(s.attacksThisTurn)||s.attacksThisTurn<0||s.attacksThisTurn>50)
   throw Error('Invalid attack count');
+ if(!Number.isInteger(s.nextFieldEntryStamp)||s.nextFieldEntryStamp<1||
+   !Array.isArray(s.delayedEffects)||s.delayedEffects.some(x=>
+    x?.op!=='retireAtMainEnd'||!playerIndex(x.owner)||
+    typeof x.sourceUid!=='string'||!Number.isInteger(x.turn)||
+    !Number.isInteger(x.fieldEntryStamp)||x.fieldEntryStamp<1))
+  throw Error('Invalid delayed effect instances');
  if(!Array.isArray(s.effectQueue)||s.effectQueue.some(e=>!playerIndex(e.owner)||
    !['draw','drawIfOwnName','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','restOppFrontUnderBp','restOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
     'discardGate','enemyFrontAllBpDown','retireOppFrontAllUnderBp',
     'buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
-    'recoverOutsideColorUnderEnergy','buffOwnField','oncePerTurnGate','retireBatchOne','openBlock'].includes(e.op)))
+    'recoverOutsideColorUnderEnergy','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','openBlock'].includes(e.op)))
   throw Error('Invalid queued effects');
  for(let p=0;p<2;p++){
   const pl=s.players[p],uids=new Set(),items=[];
