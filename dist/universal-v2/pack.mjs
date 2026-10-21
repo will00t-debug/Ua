@@ -390,11 +390,11 @@ function normalize(card,packId){
    throw Error(card.id+' self-bounce is only valid on character onPlay');
  if(implemented==='vanilla'&&(Object.keys(effects).length||card.effectText||
   mainAbility||card.activeExtraEnergy||card.conditionalTraitEnergy||passiveBonuses||card.impactNull||
-  ownOutsideRecovery||card.frontForbidden))
+  ownOutsideRecovery||card.frontForbidden||card.ownTurnBp||card.opponentTurnBp))
   throw Error(card.id+' claims vanilla despite printed/declared effects');
  if(implemented==='dsl'&&!Object.keys(effects).length&&!mainAbility&&
   !card.activeExtraEnergy&&!card.conditionalTraitEnergy&&!passiveBonuses&&!card.impactNull&&
-  !ownOutsideRecovery&&!card.frontForbidden)
+  !ownOutsideRecovery&&!card.frontForbidden&&!card.ownTurnBp&&!card.opponentTurnBp)
   throw Error(card.id+' declares dsl without effects');
  for(const [name,program] of Object.entries(effects)){
   if(!V2_EFFECT_TIMINGS.includes(name))throw Error(card.id+' timing '+name+' unsupported');
