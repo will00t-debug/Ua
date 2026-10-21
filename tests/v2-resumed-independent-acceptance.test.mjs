@@ -47,12 +47,12 @@ function playFixture(id,deckKey,genId,seed){
  return {s,packs,source,play};
 }
 test('new stable registry exact 202 IDs across five independently approved official title packs',()=>{
- const expected=[80,26,20,53,24],registered=listRegisteredV2Titles();
+ const expected=[80,27,20,53,24],registered=listRegisteredV2Titles();
  assert.deepEqual(registered.map(t=>t.totalV2Cards),expected);
  const inventory=v2AllTitleInventory();
  assert.equal(inventory.totals.total,700);
- assert.equal(inventory.totals.pilotImplemented,203);
- assert.equal(inventory.totals.blocked,497);
+ assert.equal(inventory.totals.pilotImplemented,204);
+ assert.equal(inventory.totals.blocked,496);
  for(let i=0;i<titleIds.length;i++){
   const title=titleIds[i],pack=registeredV2TitlePack(title),ids=Object.keys(pack.cards).sort();
   assert.equal(ids.length,expected[i]);

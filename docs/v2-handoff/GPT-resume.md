@@ -29,11 +29,11 @@ Other old handoff inventories remain historical snapshots.
 | Title | Integrated | Unported | Catalogue |
 |---|---:|---:|---:|
 | BLEACH | 80 | 196 | 276 |
-| TTG | 26 | 55 | 81 |
+| TTG | 27 | 54 | 81 |
 | SLG | 20 | 60 | 80 |
 | SAO | 53 | 130 | 183 |
 | MST | 24 | 56 | 80 |
-| Total | 203 | 497 | 700 |
+| Total | 204 | 496 | 700 |
 
 These are source-pinned registered effects with scenario tests, not a claim that
 every official FAQ interaction is certified. No mobile manual QA or deployment
@@ -128,3 +128,12 @@ was performed in this integration batch.
 - GitHub Actions `V2 Resumed Integration` run **39537305232** (Node.js 22) **success**: `npm test` **1188/1188 passed**, no failures; `node scripts/v2-integrated-match-matrix.mjs` **60/60 seeded five-title games finished**, no failures; `node scripts/v2-unported-report.mjs` **success**. Other series isolated run `39537307341` checked separately.
 - V2 source-driven integrated roster: **203/700**, unported **497**. Breakdown **BLEACH 80/276, TTG 26/81, SLG 20/80, SAO 53/183, MST 24/80**. Explicitly no full per-card FAQ certification yet (0; Q2039 addressed for one particular printed-BP behavior only), no local mobile manual QA, no main merge or production deployment.
 - Next priorities: group by *shared* missing primitives in `node scripts/v2-unported-report.mjs`; continue source-verified small batches with independent manifests and tested timing/UID/hidden-information details.
+
+## Batch 5 — TTG-1-053 shared self-REST + exact top mill, 2026-10-21
+
+- Official https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-053: red0/AP1/BP1500/red1, ACTIVE Life. Printed MAIN action requires own REST, then top own deck card to outside. No per-turn limit or extra AP printed.
+- Shared V2 `mainAbility:{op:'restSelfThen',frontOnly:true,then:[{op:'millTop',count:1}]}` with strict, finite validated then program, not old title engine. Existing V2 self-REST enemy target and Raid main profiles remain intact.
+- Existing TTG-1-001 `private-top-choice` metadata supplied to owner via `universalPrivateChoices` (previously only `private-top-place` exposed the inspected card). Opponent public view is unchanged and must not receive card identity or physical UID.
+- Test `tests/v2-ttg-053-rest-mill.test.mjs` independently pins official printed data, MAIN READY/FRONT and no additional AP, one physical top card outside, UID conservation, actor/forged target rejection, optional re-READY when some other effect does so, and controller-only private top display.
+- Independent literal manifest and provenance list updated. Integrated **204/700** (BLEACH 80, TTG 27, SLG 20, SAO 53, MST 24), 496 unported; **0** official per-card full FAQ audits.
+- CI and commit verification are pending at this point; earlier green runs are unrelated to batch 5.
