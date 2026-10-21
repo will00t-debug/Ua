@@ -60,6 +60,8 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   return options[0]?.action||legal[0];
  }
  if(s.pending?.kind==='raid-effect-order')return legal.find(a=>a.mode==='entryFirst')||legal[0];
+ if(s.pending?.kind==='effect-choice-mode')
+  return legal.find(a=>a.type==='chooseEffectMode'&&a.mode!=='skip')||legal[0];
  if(s.pending?.kind==='effect-once-choice')
   return difficulty==='easy'?legal.find(a=>a.mode==='skip')||legal[0]:
    legal.find(a=>a.mode==='activate')||legal[0];

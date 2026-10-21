@@ -7,7 +7,7 @@ export const V2_CARD_TYPES=Object.freeze(['character','event','field']);
 export const V2_TRIGGERS=Object.freeze(['draw','get','final','active','special','color','raid']);
 export const V2_EFFECT_TIMINGS=Object.freeze(['onPlay','onRaid','onAttack','onRaided']);
 export const V2_EFFECT_OPS=Object.freeze(['draw','drawIfOwnName','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','restOppFrontUnderBp','restOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw','searchDeckMany','discardGate','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
- 'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideColorUnderEnergy','buffOwnField','oncePerTurnGate']);
+ 'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideColorUnderEnergy','buffOwnField','oncePerTurnGate','chooseOne']);
 const integer=(v,low=0)=>Number.isInteger(v)&&v>=low;
 const own=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
 function verifyProgram(program,path){
@@ -78,6 +78,41 @@ function verifyProgram(program,path){
     Object.keys(e).every(k=>['op','count','filters','logic'].includes(k));
    if(!integer(e.count,1)||e.count>5||!(single||compound))
     throw Error(path+'['+i+'] invalid top-N filtered bottom/discard profile');
+  }
+  if(e.op==='chooseOne'){
+   if(typeof e.optional!=='boolean'||!Array.isArray(e.options)||
+    e.options.length!==2||Object.keys(e).length!==3||
+    Object.keys(e).some(k=>!['op','optional','options'].includes(k)))
+    throw Error(path+'['+i+'] invalid choose-one options');
+   const seen=new Set();
+   for(const o of e.options){
+    if(!o||typeof o!=='object'||Array.isArray(o)||
+     typeof o.id!=='string'||!(/^[a-zA-Z][a-zA-Z0-9]{0,32}$/).test(o.id)||
+     seen.has(o.id)||typeof o.label!=='string'||!o.label.trim()||
+     o.label.length>64||!['any','own','opponent'].includes(o.turn)||
+     !Array.isArray(o.then)||o.then.length<1||o.then.length>3||
+     Object.keys(o).length!==4||
+     Object.keys(o).some(k=>!['id','label','turn','then'].includes(k))||
+     o.then.some(x=>!['draw','drawDiscard','buffOwnField',
+      'recoverOutsideOne','buffSelf'].includes(x?.op)))
+     throw Error(path+'['+i+'] invalid choose-one option');
+    seen.add(o.id);
+    // Reuse established nested effect verification AND reject stray fields
+    // for draw/discard/boost primitives at the new nested trust boundary.
+    for(const x of o.then){
+     if((x.op==='draw'||x.op==='drawDiscard')&&
+      Object.keys(x).some(k=>!['op','count',
+       ...(x.op==='drawDiscard'?['discardCount']:[])].includes(k)))
+      throw Error(path+'['+i+'] unknown branched draw field');
+     if(x.op==='drawDiscard'&&x.discardCount!==undefined&&
+      (!integer(x.discardCount,1)||x.discardCount>10))
+      throw Error(path+'['+i+'] invalid branched discard count');
+     if(x.op==='buffSelf'&&
+      (!integer(x.bp,1)||x.bp>5000||Object.keys(x).some(k=>!['op','bp'].includes(k))))
+      throw Error(path+'['+i+'] invalid branched self BP');
+    }
+    verifyProgram(o.then,path+'['+i+'].options.'+o.id+'.then');
+   }
   }
   if(e.op==='discardGate'){
    if(typeof e.optional!=='boolean'||!Array.isArray(e.then)||
@@ -391,6 +426,11 @@ function normalize(card,packId){
    .map(([k,v])=>[k,Object.freeze(v.map(e=>Object.freeze({
     ...e,...(e.filter?{filter:Object.freeze({...e.filter})}:{}),
     ...(e.filters?{filters:Object.freeze(e.filters.map(f=>Object.freeze({...f})))}:{}),
+    ...(e.options?{options:Object.freeze(e.options.map(o=>Object.freeze({
+     ...o,then:Object.freeze(o.then.map(child=>Object.freeze({
+      ...child,...(child.filter?{filter:Object.freeze({...child.filter})}:{})
+     })))
+    })))}:{}) ,
     ...(e.then?{then:Object.freeze(e.then.map(child=>Object.freeze({
       ...child,...(child.filter?{filter:Object.freeze({...child.filter})}:{}),
       ...(child.filters?{filters:Object.freeze(child.filters.map(f=>Object.freeze({...f})))}:{})

@@ -165,7 +165,25 @@ function startTurn(pack,s){
 function continueEffectQueue(pack,s){
  while(!s.pending&&s.status==='playing'&&s.effectQueue.length){
   const job=s.effectQueue.shift(),owner=job.owner,pl=s.players[owner];
-  if(job.op==='draw')draw(s,owner,job.count);
+  if(job.op==='chooseOne'){
+   // Select before executing any branch; zero-target optional modes remain selectable.
+   const available=job.options.filter(o=>(
+    o.turn==='any'||o.turn==='own'&&s.active===owner||
+    o.turn==='opponent'&&s.active!==owner
+   )&&o.then.every(child=>{
+    if(child.op==='buffOwnField'&&!child.optional)
+     return field(pl).some(c=>card(pack,c).type==='character'&&
+      (!child.excludeSelf||c.uid!==job.sourceUid)&&matchesFilter(pack,c,child.filter));
+    if(child.op==='recoverOutsideOne'&&!child.optional)
+     return pl.outside.some(c=>matchesFilter(pack,c,child.filter));
+    return true;
+   }));
+   if(available.length||job.optional)
+    s.pending={kind:'effect-choice-mode',player:owner,sourceUid:job.sourceUid,
+     sourceName:job.sourceName,options:available,optional:job.optional};
+   else throw Error('No legally selectable mandatory printed mode');
+  }
+  else if(job.op==='draw')draw(s,owner,job.count);
   else if(job.op==='drawIfOwnName'){
    // Evaluate after the character actually entered OWN front/energy field.
    // Never count hand, deck, opponent field, or hidden Raid under-cards.
@@ -747,6 +765,16 @@ function resolveChoice(s,a,pack){
   target.buffs.push({bp:q.bp,untilTurn:s.turn});
   s.pending=null;continueEffectQueue(pack,s);return;
  }
+ if(q.kind==='effect-choice-mode'){
+  const selected=q.options.find(o=>o.id===a.mode);
+  if(!selected){
+   if(!(a.mode==='skip'&&q.optional))throw Error('Invalid printed effect mode');
+  }else{
+   s.effectQueue.unshift(...selected.then.map(e=>({...e,owner:q.player,
+    sourceUid:q.sourceUid,sourceName:q.sourceName})));
+  }
+  s.pending=null;continueEffectQueue(pack,s);return;
+ }
  if(q.kind==='effect-once-choice'){
   if(a.mode==='activate'){
    if(s.onceEffectUses[q.player].includes(q.key))
@@ -986,6 +1014,10 @@ function legalPending(pack,s){
  if(q.kind==='main-two-buff')
   return field(p).filter(c=>card(pack,c).traits.includes(q.trait))
    .map(c=>({type:'chooseMainBuff',uid:c.uid}));
+ if(q.kind==='effect-choice-mode')return [
+  ...(q.optional?[{type:'chooseEffectMode',mode:'skip'}]:[]),
+  ...q.options.map(o=>({type:'chooseEffectMode',mode:o.id}))
+ ];
  if(q.kind==='effect-once-choice')return [
   {type:'chooseOnceEffect',mode:'skip'},{type:'chooseOnceEffect',mode:'activate'}
  ];
@@ -1273,7 +1305,7 @@ export function assertUniversalMatch(pack,s){
    !Array.isArray(s.initialCounts)||s.initialCounts.length!==2||
    s.players?.length!==2||!playerIndex(s.active)||
    !['playing','finished'].includes(s.status))throw Error('Incorrect pack/version or match state');
- if(s.pending&&(!playerIndex(s.pending.player)||!['block','life-trigger','effect-target','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-rest-bp','raid-effect-order','effect-buff-trait','effect-buff-own','effect-once-choice','main-two-buff','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-order','effect-recover-outside','effect-bounce-own','effect-discard-cost','effect-discard-gate'].includes(s.pending.kind)))
+ if(s.pending&&(!playerIndex(s.pending.player)||!['block','life-trigger','effect-target','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-rest-bp','raid-effect-order','effect-buff-trait','effect-buff-own','effect-once-choice','main-two-buff','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-order','effect-recover-outside','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-choice-mode'].includes(s.pending.kind)))
   throw Error('Invalid pending controller');
  if(!Array.isArray(s.raidedThisTurn)||s.raidedThisTurn.length!==2||
    s.raidedThisTurn.some(x=>typeof x!=='boolean')||

@@ -21,6 +21,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-bounce-own':'選擇返回手牌的己方角色',
  'effect-buff-own':'選擇己方角色增加本回合 BP',
  'effect-once-choice':'是否發動本回合一次能力',
+ 'effect-choice-mode':'選擇一項效果',
  'effect-recover-outside':'從場外回收','effect-retire-bp':'選擇敵方退場',
  'effect-rest-bp':'選擇敵方 REST','effect-buff-trait':'選擇己方 BP 加成',
  'main-two-buff':'主要能力選擇 BP 對象',
@@ -89,6 +90,9 @@ export function uiActionLabel(action,{pack,state}={}){
    if(action.mode==='active')return '使 '+name()+' ACTIVE';
    if(action.mode==='special')return '使 '+name()+' 退場';
    return '生命觸發：'+action.mode;
+  case 'chooseEffectMode':
+   return action.mode==='skip'?'不選任何效果':
+    '選擇效果：'+(state?.pending?.options?.find(o=>o.id===action.mode)?.label||action.mode);
   case 'chooseOnceEffect':
    return action.mode==='activate'?'使用每回合一次能力':'暫不使用（不消耗限次）';
   case 'chooseLeaveReplacement':

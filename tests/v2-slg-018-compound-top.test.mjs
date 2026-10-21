@@ -59,7 +59,7 @@ test('018 literal official source and exact V2 OR search and separately declared
  assert.deepEqual(slg.cards['SLG-1-018'].triggerEffect,{
   op:'deployOutsideCharacter',color:'purple',maxEnergy:2,ap:1,frontOnly:true
  });
- assert.equal(Object.keys(slg.cards).length,24);
+ assert.equal(Object.keys(slg.cards).length,25);
  assert.deepEqual(validateUniversalDeck(slg,counts),[]);
 });
 test('018 OR lets controller select a NAME or a TRAIT, never unrelated inspected card',()=>{
