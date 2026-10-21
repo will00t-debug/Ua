@@ -425,3 +425,30 @@ This section records the last fully evaluated **code commit** `d16ffce0`. A docu
 1. 若要正式加入 `MST-1-054`，先找出並源鎖正式可玩的 MST FIELD 牌及足夠的綠4、RAID 牌組，在真實完整 50 卡條件下驗證全部觸發／取得／互動，並同步所有獨立卡號與 unported 斷言；禁止用 `MST-COMPONENT-FIELD` 冒充正式 port。
 2. 細查取得的額外能力和「原本」能力的延遲觸發 Q2220/Q2228 對照，以及有多個角色同時進入 ATTACK end 的 phaseOrder 對過期順序的互動。來源離場、同名再登場、Raid 頂層替換及 suppress/onRetire 的基礎回歸現已覆蓋。
 3. UI/真機仍是獨立驗收缺口。保持 Draft PR，不碰 main / prod。
+
+## 2026-10-22｜第四輪：官方 MST-075 FIELD ＋ MST-054 RAID 正式移植；新增可用的真實預設牌組
+
+**分支與安全範圍**：從 `d4b26f675950fb1cb43209c2a97334d0f0b81dbc` 接續；工作分支 `codex/v2-resume-20261021`，整合 PR #75 保持 Draft。**不合併 main，不部署正式 Vercel，不 force push。**
+
+### 官方來源、真卡精確實作
+1. **MST-1-075《迷宮都市ラパン》**：[BANDAI 日本官方卡表](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA54BT%2FMST-1-075)。印刷綠色 Field / energy 0 / AP 1 / 產能 1 / GET：登場時**抽 1、手牌 1 到場外**（`onPlay:drawDiscardOne`），**真退場**時抽 1（`onRetire:draw 1`）。本輪正式 `PRINTED_PINS` 鎖 `MST_V2_OFFICIAL_CATALOGUE` 原文／數值／官方連結，經 title contract 合法登錄，不是以前的 `MST-COMPONENT-FIELD` 假卡。
+2. **MST-1-054《ロキシー》**：[BANDAI 日本官方卡表](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA54BT%2FMST-1-054)，官方 Q2158、Q2159、Q2160、Q2220、Q2228。印刷綠 4 / AP1 / BP4000 / 產能1 / RAID〈ロキシー〉 / RAID trigger；登場時若**自己的場外有真正 FIELD**，敵方 FRONT 最多 1 角色 REST，失去原本印刷能力且不能 ACTIVE 直到下次對手 ATTACK end。使用上輪已完成通用 `restSilenceOppFrontIfOwnOutsideField`，不寫任何 MST 專屬 reducer，不會把原本印刷效果和外加的 buff 混淆。
+3. **真退場及滿場 REMOVAL 區分**：`pack.mjs` 允許 Field card 的明確 `onRetire` 畫出 `draw/millTop` program；`engine.mjs` 通用新增經完整選項驗證的 `retireOwnFieldOne`（最多 1、可選擇不退場、只有己方 ENERGY 的**場域卡**，保留物理 UID 與退場隊列），可由未來具有該效果的印刷卡採用。測試專用事件 `TEST-RETIRE-FIELD-EVENT` 用它來測 MST-075 的退場抽牌／拒選／原效果失效；**這個事件不在正式登錄或任何可用真實牌組中**。滿場正常替換將原卡送 REMOVED 而非退休，不觸發 `onRetire`。
+4. 原本 `tests/v2-mst-054-source-pinned-component.test.mjs` 已移除合成場域卡，改為 source-pinned 的兩張**正式已登錄**卡證據。
+
+### 合法官方 50 張與預覽實際可選
+- 新增 `dist/universal-v2/sao-mst-real-decks.mjs` 中 `MST_V2_ROXY_FIELD_REAL_DECK_COUNTS` 與 `verifiedMstV2RoxyFieldDeck()`，全部卡號限官方 MST UA54BT、每卡最多 4；**MST-1-051 自 2026-10-01 僅允許 1 張**，牌組配置確實為 1 張，總 50。使用已登錄 `MST-1-050` 作 RAID 底卡、`MST-1-051` 產能 2、`MST-1-075` 真場域、`MST-1-054` 上層。
+- `dist/universal-v2/preview-real-decks.mjs` 增加**第七套** `mushoku-tensei-roxy-field`；`dist/universal-v2-preview.html` 人類／AI 兩個選單都已加入。原先六套全部保留。頁面是**private/noindex preview**，不是正式 production 部署。
+- `tests/v2-mst-054-075-real-deck.test.mjs`：以真實 MST50 × SAO50，從合法 P0 第二回合 AP 2 出發：先支付 AP1 登場 MST075 → 真正抽 1、棄**另一張 MST075**至己方場外 → 支付另 1 AP 用真 `MST050` 進行 MST054 RAID（綠4足夠）→ 選 SAO014 對方前線；測驗 REST、原本 opponent-turn BP 加成失效、UID、疊層、公眾資訊與 Normal/Hard AI 合法選項。也驗證無場外 Field 條件時不觸發和 controller 自願不選。
+- `tests/v2-mst-075-retire-trigger.test.mjs`：含測試專用、**從不加入真牌組**的效果來源，以實際 MST075 測試「真退場抽 1」，來源已失原能力時不抽，拒絕退場不抽，滿 ENERGY 以新卡**移除**原 Field 不可誤抽；虛構 UID 無合法選項。
+
+### 實際批次與 CI
+- `996f12e928a60773ce9e32add5f8f1e3b9aad1cf`：通用 Field retirement 的 onRetire / optional own FIELD choice 可編譯且安全操作。
+- `513239512f24658d9268e7d59473f0ca92edb824`：MST-054/075 正式印刷卡面落地、真實牌組測試、退休測試及全五作品計數同步；該 SHA 的兩套 CI 已通過。
+- `4d4f68894e122e9458053f9ba344653dff3a4bdf`：預設牌組 canonical export 與預覽增加第七套；首次 CI 僅舊預覽測試仍要求六套而失敗，未放寬牌組或勝負檢驗。
+- **最新已驗證程式／預覽 SHA `d075dcc6b10ee6c6efea544ae3fcd04ed05dd988`**：雙方預覽 HTML 新選項、七套預覽驗收。完整 Node 22 [V2 Resumed Integration #39695493230](https://github.com/will00t-debug/Ua/actions/runs/39695493230) **SUCCESS，1449/1449、0 fail**；原本 60 場 [five-title matrix](https://github.com/will00t-debug/Ua/actions/runs/39695493230) **60/60、0 fail**，unported 報告執行完成。獨立 [SAO/MST QA #39695496325](https://github.com/will00t-debug/Ua/actions/runs/39695496325) **SUCCESS，core 1449/1449、isolated 24/24**。
+- 目前正式登錄：**BLEACH 86/276、TTG 30/81、SLG 34/80、SAO 62/183、MST 35/80**；合計 **247/700 已登錄，453 未移植**（本輪真卡 +2，沒有將虛構 Field/Event 算入）。
+- Docs commit 須於提交後另等遠端 CI，不可混用程式／預覽 SHA 的成功結果。
+
+### 尚未聲稱通過的關卡
+完整官方 FAQ 多卡同時交互／視覺 UI 與手機手動驗收仍未完成；官方個別印刷規則和指定回歸通過不等於所有 Q&A 全面認證。本輪測試專用 `retireOwnFieldOne` source 不是官方可玩卡。後續優先把真 FIELD 發生 retirement 的官方 MST 卡能力（例如 MST-053／MST-074）以完整原文驗證後再移植；不要擅自把測試用 fake event 混入 V2。

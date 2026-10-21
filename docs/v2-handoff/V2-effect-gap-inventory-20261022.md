@@ -613,3 +613,22 @@
 - 程式＋測試 HEAD `22bfbdfbe3af453d755ff35402c08c799d703fd5`：[Node 22 整合 CI #39692749399](https://github.com/will00t-debug/Ua/actions/runs/39692749399) **1442/1442，60/60，0 失敗**；[獨立 CI #39692757463](https://github.com/will00t-debug/Ua/actions/runs/39692757463) 全數成功。
 - 真實 V2 正式登錄卡維持 **245/700**、未移植 **455**，分作品 **BLEACH86、TTG30、SLG34、SAO62、MST33**。沒有為這項通用引擎增加虛假「已移植」卡數。
 - 後續優先補正式 MST FIELD 來源和可用牌組，再做 MST-1-054 的完整正式 port；複數邊界觸發排序、外部授予新能力的跨回合留存、完整 FAQ 和手機/瀏覽器 UI 實機測試仍需另外驗收。
+
+## 2026-10-22｜第四輪實際登錄增量：MST-1-054、MST-1-075
+
+**本輪兩張由元件／未移植，進入嚴格 V2 title registry 登錄**：`MST-1-054`（綠4 RAID 洛琪希＋場外 Field 條件 REST／原印刷能力失效／至下次敵 ATTACK end 不能 ACTIVE）以及 `MST-1-075`（綠0 FIELD 迷宮都市ラパン，登場抽棄／真退場抽 1／GET）。官方卡表 `UA54BT/MST-1-054` 與 `UA54BT/MST-1-075` 完整精確來源由 `dist/universal-v2/mst-pack.mjs` 獨立 `PRINTED_PINS` 逐項驗證。
+
+| 系列 | 本輪後 V2 已登錄 | 未移植 |
+|---|---:|---:|
+| BLEACH | 86/276 | 190 |
+| TTG | 30/81 | 51 |
+| SLG | 34/80 | 46 |
+| SAO | 62/183 | 121 |
+| MST | **35/80** | **45** |
+| **總計** | **247/700** | **453** |
+
+**正式 V2 新牌組**：`MST_V2_ROXY_FIELD_REAL_DECK_COUNTS` 全官方 50 張，MST-051 僅一張符合 2026-10-01 官方限制，經 `validateUniversalDeck`；於 private `universal-v2-preview.html` 的雙方選單出現第七個 `mushoku-tensei-roxy-field`。預設與旧六套並存，60 場基準五系列矩陣保持原來同一組不可變對戰條件。
+
+**驗證檔**：`tests/v2-mst-054-source-pinned-component.test.mjs` 現已改成正式兩卡來源鎖定、沒有假 FIELD；`tests/v2-mst-054-075-real-deck.test.mjs` 真正付費 FIELD onPlay、丟一張**實卡** FIELD 至 outside、同回合真 RAID、對 SAO014 目標 REST/沉默、合法可略選、正常 AI；`tests/v2-mst-075-retire-trigger.test.mjs` test-only effect source 測真退休和滿場移除／失效原能力的差異。只有**正式** MST054、MST075 新登錄，`TEST-RETIRE-FIELD-EVENT` 僅驗收工具，絕不包含於正式系列／真牌組／對戰矩陣。
+
+**最新已通過的程式 SHA** `d075dcc6b10ee6c6efea544ae3fcd04ed05dd988`：[Node22 CI 1449/1449、五系列 60/60](https://github.com/will00t-debug/Ua/actions/runs/39695493230)；[SAO/MST isolated QA 24/24](https://github.com/will00t-debug/Ua/actions/runs/39695496325)。無 main 合併、無正式站部署、無手動手機 UI／全 FAQ 覆蓋認證。後續可依正式 MST-053 等其它場域退場來源擴通用能力。
