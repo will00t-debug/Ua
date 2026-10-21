@@ -299,7 +299,7 @@ test('blocked next-wave cards are source-locked, NOT wrongly registered with par
   id:'TEST-ONLY-X',name:'Synthetic',color:'blue',type:'character',
   energy:0,ap:1,bp:1000,gen:1,implementation:'dsl',
   effects:{onPlay:[{op:'drawDiscard',count:2}]}
- }]}),/drawDiscard currently supports exactly 1 card/);
+ }]}),/invalid mandatory draw\/discard profile/);
 });
 
 test('four official SAO ACTIVE generators contribute +1 energy only while ACTIVE in own energy line',()=>{

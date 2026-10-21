@@ -46,7 +46,7 @@ test('SLG-036 event blocked before payment if insufficient purple energy or read
  const {s,event}=setup();
  for(const which of ['energy','ap']){
   const q=structuredClone(s);
-  if(which==='energy')q.players[1].energy[0]=null;
+  if(which==='energy'){q.players[1].hand.push(q.players[1].energy[0]);q.players[1].energy[0]=null;}
   else for(const card of q.players[1].apCards)card.ready=false;
   assert.ok(!legalUniversalActions(packs,q).some(a=>a.type==='event'&&a.uid===event.uid));
   assert.throws(()=>dispatchUniversalAction(packs,q,event),/not currently legal/);
@@ -90,6 +90,6 @@ test('SLG-036 pending hand UIDs stay secret from opponent public view',()=>{
  const view=universalPublicView(packs,pending,0);
  assert.equal(view.players[1].hand,null);
  for(const card of pending.players[1].hand)
-  assert.ok(!JSON.stringify(view).includes(card.uid),'private UID leaked');
+  assert.ok(!JSON.stringify(view).includes(JSON.stringify(card.uid)),'private UID leaked');
  assert.equal(assertUniversalMatch(packs,pending),true);
 });

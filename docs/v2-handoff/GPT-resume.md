@@ -70,3 +70,8 @@ was performed in this integration batch.
 - Remote CI must be checked for this batch commit: historical 1165/1165 and 60/60 are previous commit counts.
 - Local clone DNS blocked (`Could not resolve host: github.com`); no mobile QA or card-specific FAQ audit yet.
 - Next: BLC-1-005 self-REST costs, TTG-1-010/023 top-N filter and order.
+
+### Batch 1 CI corrections
+- Follow-up independent SLG proof gate: `8d5ca3455ce32742e96c7903cd85c3c57fed69e0`.
+- Initial GitHub Actions for this commit: 1169 tests, 1162 passed, 7 failed, matrix therefore skipped. Follow-up addresses exact manifest expectations, SLG CSV provenance, and two defective test fixtures without dropping checks.
+- New CI execution result is required before claiming pass. Historical `npm test` success is not evidence for this batch.
