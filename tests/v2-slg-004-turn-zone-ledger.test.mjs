@@ -42,7 +42,7 @@ test('official UA51BT/SLG-1-004 has full standalone onPlay and live own-turn bon
   ['purple',3,1,3500,1,'draw']);
  assert.deepEqual(d.effects.onPlay,[{op:'drawDiscard',count:1}]);
  assert.deepEqual(d.passiveBonuses,[{condition:{kind:'ownEffectHandOutsideOrRecovery',turn:'own'},bp:500}]);
- assert.equal(Object.keys(pack.cards).length,33);
+ assert.equal(Object.keys(pack.cards).length,34);
 });
 test('own onPlay DRAW alone does not buff: only actual paid hand-to-outside sets factual history',()=>{
  const {s:pre,source,action}=deployedFixture();

@@ -25,7 +25,7 @@ test('official SLG-1-042 errata-aware original source and all native MAIN effect
  assert.deepEqual(card.mainAbility,slg.cards['SLG-1-013'].mainAbility);
  assert.deepEqual(card.effects,{});
  assert.equal(SLG_V2_VERIFIED_IDS.filter(id=>id===ID).length,1);
- assert.equal(Object.keys(slg.cards).length,33);
+ assert.equal(Object.keys(slg.cards).length,34);
  assert.deepEqual(validateUniversalDeck(slg,deck),[]);
 });
 for(const owner of [0,1]){

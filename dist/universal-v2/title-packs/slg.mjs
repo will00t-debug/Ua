@@ -3,6 +3,8 @@ import {SOLO_LEVELING_CARDS} from '../../solo-leveling.mjs';
 import {verifiedSlgV2Cards} from '../slg-pack.mjs';
 const records=Object.fromEntries(SOLO_LEVELING_CARDS.map(c=>[c.id,c]));
 const proof=Object.freeze({
+ '053':['Impact無效。登場時若場上有己方水篠旬，抽1張。','Original Japanese UA51BT/SLG-1-053 諸菱 賢太 GREEN3/AP1/BP2000/gen2 DRAW Life separately: IMPACT nullification plus onPlay draw exactly 1 only when OWN field has 〈水篠 旬〉 in front or energy line. Both printed clauses share existing native impactNull and drawIfOwnName V2 predicates, no separate reducer. Official https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-053; not fully FAQ certified.'],
+
  '042':['主要階段每回合一次REST自己，額外產生1綠能源，主要階段結束時退場。','Official UA51BT/SLG-1-042 2026-04-17 errata-aware source: 馬渕 勲 GREEN0/AP1/BP1000/gen1 no life; rest OWN READY ENERGY source MAIN once per turn, current-turn GREEN+1, mandatory source retirement at MAIN end. Reuses native delayed-retire V2 primitive from SLG-1-013, TTG-1-063, BLEACH-1-069; old Japanese source name corrected in original official errata. No full FAQ certification.'],
 
  '004':['自己的回合中，若本回合曾以己方效果將手牌送場外或從場外回收手牌','Official Japanese UA51BT/SLG-1-004 犬飼 晃 purple3/AP1/BP3500/gen1 DRAW life. OnPlay mandatory draw ONE then put ONE own HAND card into OUTSIDE. Live own-turn BP+500 only if since current turn start one OWN effect physically moved own HAND to OUTSIDE or own OUTSIDE to HAND (source independent; no stale count, no opponent effect). Exact source https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-004; no comprehensive FAQ certification.'],
@@ -65,7 +67,8 @@ export default Object.freeze({
      ...(def.id==='SLG-1-012'?['tests/v2-slg-012-own-name.test.mjs']:[]),
      ...(def.id==='SLG-1-018'?['tests/v2-slg-018-compound-top.test.mjs']:[]),
      ...(def.id==='SLG-1-037'?['tests/v2-slg-037-original-bp.test.mjs']:[]),
-     ...(def.id==='SLG-1-042'?['tests/v2-slg-042-shared-energy.test.mjs']:[])],
+     ...(def.id==='SLG-1-042'?['tests/v2-slg-042-shared-energy.test.mjs']:[]),
+     ...(def.id==='SLG-1-053'?['tests/v2-slg-053-own-name-impact-null.test.mjs']:[])],
     ...(def.implementation==='vanilla'?{verifiedNoExtraEffects:true}:{})}
   });
  }))

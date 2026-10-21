@@ -3,6 +3,12 @@ import {SOLO_LEVELING_CARDS} from '../solo-leveling.mjs';
 import {createUniversalPack} from './pack.mjs';
 const catalog=Object.fromEntries(SOLO_LEVELING_CARDS.map(c=>[c.id,c]));
 const authored=[
+  {"id":"SLG-1-053","name":"諸菱 賢太","color":"green","energy":3,
+   "ap":1,"bp":2000,"gen":2,"trigger":"draw","type":"character",
+   "textAnchor":"Impact無效。登場時若場上有己方水篠旬，抽1張。",
+   "implementation":"dsl","impactNull":true,
+   "effects":{"onPlay":[{"op":"drawIfOwnName","name":"水篠 旬","count":1}]}},
+
   {"id":"SLG-1-042","name":"馬渕 勲","color":"green","energy":0,
    "ap":1,"bp":1000,"gen":1,"trigger":null,"type":"character",
    "textAnchor":"主要階段每回合一次REST自己，額外產生1綠能源，主要階段結束時退場。",

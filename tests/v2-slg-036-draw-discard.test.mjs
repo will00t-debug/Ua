@@ -38,7 +38,7 @@ test('SLG-036 official exact text, printed costs, life icon and accepted V2 impl
  assert.equal(slg.cards['SLG-1-036'].ap,1);
  assert.equal(slg.cards['SLG-1-036'].trigger,'active');
  assert.deepEqual(slg.cards['SLG-1-036'].effects.onPlay,[{op:'drawDiscard',count:3,discardCount:2}]);
- assert.equal(Object.keys(slg.cards).length,33);
+ assert.equal(Object.keys(slg.cards).length,34);
  assert.deepEqual(validateUniversalDeck(slg,sd),[]);
  assert.deepEqual(slg.cards['SLG-1-037'].effects.onPlay,[
   {op:'recoverOutsidePrintedBp',bp:4000,optional:true},{op:'draw',count:1}

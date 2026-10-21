@@ -65,7 +65,7 @@ test('EX08BT SAO-2-021 full Japanese print matches existing SLG-009 common MAIN 
  assert.deepEqual(a.mainAbility,{op:'discardHandBuffSelf',oncePerTurn:true,discardCount:1,bp:1500});
  assert.deepEqual(a.effects,{});
  assert.equal(Object.keys(sao.cards).length,56);
- assert.equal(Object.keys(slg.cards).length,33);
+ assert.equal(Object.keys(slg.cards).length,34);
 });
 test('SAO FIRST vs SLG: REST KIRITO may activate, exact own hand card pays before BP and once-used locks',()=>{
  const {packs,p,unit,s:before}=entered('front');
