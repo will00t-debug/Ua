@@ -54,3 +54,23 @@ for(const owner of [0,1])test('MST057 FRONT production pays another real GREEN4 
  assert.equal(assertUniversalMatch(packs,s),true);
  assert.equal(assertUniversalMatch(packs,removed),true);
 });
+for(const owner of [0,1])for(const hasFrontProducer of [false,true])test('MST063 draw threshold includes live FRONT production='+hasFrontProducer+', seat '+owner,()=>{
+ let {packs,s}=setup(owner);
+ for(let i=0;i<2;i++)put(s,owner,'MST-1-050','energy',i);
+ for(let i=2;i<4;i++)put(s,owner,'MST-1-029','energy',i);
+ if(hasFrontProducer)put(s,owner,'MST-1-057','front',0).ready=false;
+ const source=take(s,owner,'MST-1-063');s.players[owner].hand.push(source);
+ const beforeDeck=s.players[owner].deck.length,beforeHand=s.players[owner].hand.length;
+ const top=s.players[owner].deck[0].uid;
+ const a=legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===source.uid&&a.line==='front'&&a.slot===1);
+ assert.ok(a);
+ s=dispatchUniversalAction(packs,s,a,{actor:owner});
+ assert.equal(s.players[owner].deck.length,beforeDeck-(hasFrontProducer?1:0));
+ assert.equal(s.players[owner].hand.length,beforeHand-1+(hasFrontProducer?1:0));
+ assert.equal(s.players[owner].hand.some(c=>c.uid===top),hasFrontProducer);
+ assert.equal(universalEnergyByColor(packs,s,owner).green,hasFrontProducer?3:2);
+ assert.equal(universalEnergyByColor(packs,s,owner).blue,4);
+ assert.equal(universalEnergyByColor(packs,s,1-owner).green||0,0);
+ assert.equal(universalPublicView(packs,s,1-owner).players[owner].hand,null);
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
