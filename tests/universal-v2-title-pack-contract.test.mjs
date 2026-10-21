@@ -125,7 +125,7 @@ test('inventory is derived from all five official catalogues and exact registere
  assert.deepEqual(series.map(x=>x.pilotImplemented),[85,30,34,61,30]);
  assert.deepEqual(series.map(x=>x.blocked),[191,51,46,122,50]);
  assert.equal(totals.total,700);
- assert.equal(totals.pilotImplemented,239);
+ assert.equal(totals.pilotImplemented,240);
  assert.equal(totals.blocked,460);
  assert.equal(totals.fullyAccepted,0);
  assert.equal(totals.total-totals.pilotImplemented,totals.blocked);
