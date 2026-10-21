@@ -4,6 +4,32 @@ import {SAO_OFFICIAL_CARDS} from '../sao-official-import.mjs';
 import {createUniversalPack} from './pack.mjs';
 
 const PRINTED_PINS=Object.freeze({
+  "SAO-2-016": {
+    "kind": "onRetireDrawOne",
+    "nameJa": "クラディール",
+    "color": "blue",
+    "energy": 0,
+    "ap": 1,
+    "bp": 1000,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "traits": ["アインクラッド"],
+    "effectJa": "【退場時】カードを1枚引く。"
+  },
+  "SAO-1-105": {
+    "kind": "onRetireDrawOne",
+    "nameJa": "サチ",
+    "color": "blue",
+    "energy": 1,
+    "ap": 1,
+    "bp": 2000,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "traits": ["アインクラッド"],
+    "effectJa": "【退場時】カードを1枚引く。"
+  },
   "SAO-1-019": {
     "kind": "vanilla",
     "nameJa": "アスナ（創世神ステイシア）",
@@ -815,6 +841,8 @@ export function verifiedSaoV2Cards(){
    implementation:pin.kind==='vanilla'||pin.kind==='step'?'vanilla':'dsl'};
   if(card.implementation==='vanilla')card.effects={};
   if(pin.kind==='step')card.step=true;
+  if(pin.kind==='onRetireDrawOne')
+   card.effects={onRetire:[{op:'draw',count:1}]};
   if(pin.kind==='onPlayDraw')
    card.templateEffects={onPlay:[{template:'draw',count:1}]};
   if(pin.kind==='onPlayDrawDiscard')
@@ -888,6 +916,7 @@ export function verifiedSaoV2Entries(){
     testFiles:Object.freeze([
      'tests/universal-v2-sao-port.test.mjs',
      ...(def.id==='SAO-2-021'?['tests/v2-sao-021-shared-main-cost.test.mjs']:[]),
+     ...(pin.kind==='onRetireDrawOne'?['tests/v2-sao-retire-draw-shared.test.mjs']:[]),
      'tests/universal-v2-sao-mst-cross-title.test.mjs'
     ]),
     ...(def.implementation==='vanilla'?{verifiedNoExtraEffects:true}:{})
