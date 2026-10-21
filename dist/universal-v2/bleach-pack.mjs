@@ -870,6 +870,14 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
   "color":"blue","energy":0,"ap":1,"bp":1000,"gen":1,
   "trigger":null,"type":"character","effect":"退場：抽 1 張。"
  }
+
+ ,{
+  "id":"BLC-1-042","kind":"restEnergyRetire",
+  "number":"UA08ST/BLC-1-042","name":"茶渡 泰虎",
+  "color":"purple","energy":0,"ap":1,"bp":1000,"gen":1,
+  "trigger":null,"type":"character",
+  "effect":"主要階段・每回合 1 次：REST 自己，本回合多產生 1 紫能源；主要階段結束時退場。"
+ }
 ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
