@@ -3,6 +3,13 @@ import {SOLO_LEVELING_CARDS} from '../solo-leveling.mjs';
 import {createUniversalPack} from './pack.mjs';
 const catalog=Object.fromEntries(SOLO_LEVELING_CARDS.map(c=>[c.id,c]));
 const authored=[
+  {"id":"SLG-1-042","name":"馬渕 勲","color":"green","energy":0,
+   "ap":1,"bp":1000,"gen":1,"trigger":null,"type":"character",
+   "textAnchor":"主要階段每回合一次REST自己，額外產生1綠能源，主要階段結束時退場。",
+   "implementation":"dsl","effects":{},
+   "mainAbility":{"op":"restSelfGainEnergyRetireEndMain",
+     "energyOnly":true,"oncePerTurn":true,"extraEnergy":1}},
+
   {
     "id":"SLG-1-004","name":"犬飼 晃","color":"purple",
     "energy":3,"ap":1,"bp":3500,"gen":1,"trigger":"draw",
