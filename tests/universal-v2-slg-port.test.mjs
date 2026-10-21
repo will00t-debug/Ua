@@ -303,7 +303,7 @@ test('V2-C card-by-card evidence CSV remains complete, disjoint and tracks the r
    if(body==='existing_v2_pilot'){
     assert.equal(scope[1],'pr70_baseline_pilot');pilots.push(id);
    }else if(body.startsWith('v2_batch')){
-    assert.equal(scope[1],(['TTG-1-077','TTG-1-010','TTG-1-023','SLG-1-036','SLG-1-037'].includes(id))?'codex_integrated_contribution':'pr70_integrated_contribution');added.push(id);
+    assert.equal(scope[1],(['TTG-1-077','TTG-1-010','TTG-1-023','TTG-1-053','SLG-1-036','SLG-1-037'].includes(id))?'codex_integrated_contribution':'pr70_integrated_contribution');added.push(id);
    }else{
     assert.equal(body,'not_ported');assert.equal(scope[1],'not_implemented_any_branch');
     assert.equal(life,trigger==='none'?'not_applicable':'not_registered');
