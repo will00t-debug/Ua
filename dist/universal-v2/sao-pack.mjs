@@ -4,6 +4,20 @@ import {SAO_OFFICIAL_CARDS} from '../sao-official-import.mjs';
 import {createUniversalPack} from './pack.mjs';
 
 const PRINTED_PINS=Object.freeze({
+  "SAO-1-057": {
+    "kind": "ownTurnHandFiveBp",
+    "nameJa": "ユージーン",
+    "color": "blue",
+    "energy": 3,
+    "ap": 1,
+    "bp": 3500,
+    "gen": 1,
+    "type": "character",
+    "trigger": "active",
+    "traits": ["ALO"],
+    "effectJa": "【自分のターン中】自分の手札が5枚以上の場合、このキャラはBP+500。"
+  },
+
   "SAO-1-014": {
     "kind": "opponentTurnBp1000",
     "nameJa": "エルドリエ・シンセシス・サーティワン",
@@ -873,6 +887,10 @@ export function verifiedSaoV2Cards(){
    card.opponentTurnBp=1000;
    card.effects={}; // Explicit DSL profile: persistent native modifier, no onPlay job
   }
+  if(pin.kind==='ownTurnHandFiveBp'){
+   card.effects={};
+   card.passiveBonuses=[{condition:{kind:'ownHandCountAtLeast',turn:'own',min:5},bp:500}];
+  }
   if(pin.kind==='ownTurnSilicaFieldBp')
    card.passiveBonuses=[{condition:{kind:'ownNameExists',turn:'own',
     zone:'field',excludeSelf:true,name:'シリカ'},bp:2000}];
@@ -953,6 +971,7 @@ export function verifiedSaoV2Entries(){
      ...(def.id==='SAO-2-021'?['tests/v2-sao-021-shared-main-cost.test.mjs']:[]),
      ...(pin.kind==='onRetireDrawOne'?['tests/v2-sao-retire-draw-shared.test.mjs']:[]),
      ...(pin.kind==='opponentTurnBp1000'?['tests/v2-sao-014-opponent-bp.test.mjs']:[]),
+     ...(pin.kind==='ownTurnHandFiveBp'?['tests/v2-sao-057-hand-count-bp.test.mjs']:[]),
      ...(pin.kind==='ownTurnSilicaFieldBp'?['tests/v2-sao-019-own-silica-bp.test.mjs']:[]),
      'tests/universal-v2-sao-mst-cross-title.test.mjs'
     ]),

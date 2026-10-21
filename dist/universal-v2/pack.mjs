@@ -234,13 +234,13 @@ function validatePassiveBonuses(card){
   const q=p.condition;
   if(!q||typeof q!=='object'||Array.isArray(q)||
    !['own','opponent','any'].includes(q.turn)||
-   !['outsideCount','ownNameExists','ownFieldHasAllNames','ownTraitCount','ownEnergyAtLeast','ownEffectHandOutsideOrRecovery'].includes(q.kind))
+   !['outsideCount','ownNameExists','ownFieldHasAllNames','ownTraitCount','ownEnergyAtLeast','ownHandCountAtLeast','ownEffectHandOutsideOrRecovery'].includes(q.kind))
    throw Error(card.id+' invalid passive condition');
   // Effect-zone movement is a no-extra-argument same-turn predicate;
   // reject opponent/any variants until a concrete printed card needs them.
   if(q.kind==='ownEffectHandOutsideOrRecovery'&&q.turn!=='own')
    throw Error(card.id+' invalid effect-zone own-turn condition');
-  const count=['outsideCount','ownTraitCount','ownEnergyAtLeast'].includes(q.kind);
+  const count=['outsideCount','ownTraitCount','ownEnergyAtLeast','ownHandCountAtLeast'].includes(q.kind);
   const field=['ownNameExists','ownFieldHasAllNames','ownTraitCount'].includes(q.kind);
   if((count&&(!integer(q.min,1)||q.min>200))||
    (field&&(!['field','front','energy'].includes(q.zone)||
