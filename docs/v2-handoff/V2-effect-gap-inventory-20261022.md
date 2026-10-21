@@ -602,3 +602,14 @@
 **程式驗收證據**：最新程式 HEAD `46b66c40cd876cc03c788a509a461f5308090709`；Node.js 22 [整合 CI #39643776535](https://github.com/will00t-debug/Ua/actions/runs/39643776535) **1433/1433 通過、0 失敗，60/60 五作品對戰、0 失敗**；[SAO/MST 獨立 CI #39643785791](https://github.com/will00t-debug/Ua/actions/runs/39643785791) 亦 SUCCESS（24/24 獨立測試）。官方資料核對不取代手機／瀏覽器 UI 實際驗收。
 
 **接下來**：優先核對含持續能力失效及非一般 ACTIVE 回復的卡文（候選 MST-1-054），以真卡需求驅動狀態消耗、Raid 替換、來源離場與效果隊列順序的共用實作，並保持卡牌已登錄與完整 FAQ 已驗收的區分。
+
+## 2026-10-22｜第三輪通用「失去原本效果」缺口與精確時序修正
+
+狀態：**共用 V2 引擎已實作且有遠端 CI；官方 MST-1-054 僅部分元件驗收，尚未正式加入 V2 roster**。來源：[UA54BT/MST-1-054 日文卡面及 Q2158、Q2159、Q2160、Q2220、Q2228](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA54BT%2FMST-1-054_p2)。
+
+- 已補 `originalEffectsDisabled` 的 UID + field incarnation 狀態、期限、場上離場消失／Raid 頂層換卡消失；不清除後加的 buffs、不解除已形成的 Raid 疊層；印刷被動 BP、產能、關鍵字、MAIN/STEP、ATTACK/退場/階段能力受統一限制。
+- 已補 `restSilenceOppFrontIfOwnOutsideField`：條件為控制者場外真實 FIELD，選擇敵方 FRONT 角色至多一張；REST／不能 ACTIVE／失去原效果，期限至 **下一個對手 ATTACK end**。到期不能在該階段末 ACTIVE 回復之前刪除。
+- 已補真正來源鎖定元件測試 `tests/v2-mst-054-source-pinned-component.test.mjs`：官方 MST 洛琪希與正式 SAO 角色跨作品 Raid 案例；測試所需的 FIELD 是**合成 fixture**，沒有當成已移植牌。另 `tests/v2-silence-original-mst-054-components.test.mjs` 涵蓋未滿條件、拒選、BP passive、獲得的 buff、退場抽牌取消、Raid 改頂層與重新入場時狀態解除、封閉式模板拒錯。
+- 程式＋測試 HEAD `22bfbdfbe3af453d755ff35402c08c799d703fd5`：[Node 22 整合 CI #39692749399](https://github.com/will00t-debug/Ua/actions/runs/39692749399) **1442/1442，60/60，0 失敗**；[獨立 CI #39692757463](https://github.com/will00t-debug/Ua/actions/runs/39692757463) 全數成功。
+- 真實 V2 正式登錄卡維持 **245/700**、未移植 **455**，分作品 **BLEACH86、TTG30、SLG34、SAO62、MST33**。沒有為這項通用引擎增加虛假「已移植」卡數。
+- 後續優先補正式 MST FIELD 來源和可用牌組，再做 MST-1-054 的完整正式 port；複數邊界觸發排序、外部授予新能力的跨回合留存、完整 FAQ 和手機/瀏覽器 UI 實機測試仍需另外驗收。

@@ -396,3 +396,32 @@ This section records the last fully evaluated **code commit** `d16ffce0`. A docu
 ### 不得擴張的驗收宣稱／下輪重點
 本輪「完整印刷卡面邏輯 V2 登錄」是程式邏輯與已確認個別 Q536/Q754 的等級，**不是**兩張卡所有可能互動的「完整官方 FAQ 全情境驗收」。實際手機／圖形瀏覽器 UI 互動未測；只驗證公開牌面資訊、合法選項來源及 Normal/Hard AI。
 下一輪優先以官方卡文逐張核對其他延遲能力失效／跨回合持續（如 MST-1-054），補齊來源離場、回手再登場、Raid 上層更換與多來源同時觸發的整合測試。先擴充通用 DSL／事件隊列，不因部分效果就把其他真卡列入完成。
+
+## 2026-10-22｜第三輪：MST-1-054 驅動的共用原能力失效／攻擊階段末持續狀態
+
+### 範圍與來源
+- 接續 `69c8352ed188512e1698b2e3745d3a675d8df60c`；工作分支 `codex/v2-resume-20261021`，整合 Draft PR #75。不合併 main、不部署生產 Vercel、不使用 force push。
+- 本輪官方來源是 [UA54BT/MST-1-054 洛琪希的 JP 印刷卡文及 Q2158、Q2159、Q2160、Q2220、Q2228](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA54BT%2FMST-1-054_p2)。
+- 目標為**通用 V2 引擎功能**和官方**元件**測試；`MST-1-054` **未加入正式作品 registry**，不可把測試輔助牌或未認證交互算成新增實卡。全五作品仍 **245/700，未移植 455**（BLEACH86、TTG30、SLG34、SAO62、MST33）。
+
+### 通用功能已完成
+1. `continuous-states.mjs` 新增 `originalEffectsDisabled` 物理場上 UID、場上進入編號（`fieldEntryStamp`）綁定狀態；和現有 `cannotActive` 一樣具有可列印的到期 `{player,phase,edge}`。不以名字/卡號推導，不依賴來源持續留場；目標離場/換 Raid 頂層/重新登場即排除舊實體化身，對手公開可見限制，對隱藏牌資訊沒有新暴露。
+2. 新的封閉式共用 DSL `restSilenceOppFrontIfOwnOutsideField` 和模板同名。只有控制者場外 **真正 FIELD 實體** 才可在效果結算時選敵方 FRONT 最多一角色，轉 REST 並附加「下次對手 ATTACK phase end 前不可 ACTIVE」及「失去所有**原本印刷效果**」。不選擇亦合法；使用既有 `effect-rest-bp` pending 與 Normal/Hard AI/legal selector。
+3. 動態分離 printed-vs-granted：封印印刷被動 BP／產能加成、前線產能資格、印刷 IMPACT/留場條件、STEP、MAIN、攻擊／階段／真退場觸發與被 Raid 時觸發（`onRaided`）；**不清除已獲得的 buff 或其他來源給予的效果**，卡片本身 BP/原本 gen 與 Raid 疊層仍存在，尚未排定的印刷能力不會發動。帶來源效果已實際觸發並排入隊列者不因來源後續失效而回溯取消。
+4. **重要修正**：`advanceAfterEnd` 的 ATTACK phase end ACTIVE refresh **先進行封鎖中的那一次 ACTIVE 嘗試，再刪除到期狀態**；`next(attack)` 不得提早刪除。原先順序造成在指定結束邊界提前 ACTIVE，和卡文期限不符。前階段動作及 hand-limit continuation 仍用既有單一隊列。
+
+### 真正跑過的測試與 commit
+- `0232c0edbc90088034b3c5357a2a10e0c03d55ef`：嚴格 DSL/schema/status。
+- `5d917141ee721f88e66ffae85199e0980d5fa54b`：核心 originalEffectsDisabled 對共用判定入口的套用。
+- `d137cbecc460e2221638fb2e65ccf1c9c0119962`：共用狀態七組測試（包含原本的官方 Q2220、Q2228 保護）；`a68a7dddec549a3100c392a949d0cadae0365d71` 修正測試 stale reference（immutable dispatch 後須取最新物件）。
+- `9958f8c528167a57db7fa85bd72c86d81ab69833`：修正 ATTACK-end refresh 的精確時序（真實回歸修正）。
+- `22bfbdfbe3af453d755ff35402c08c799d703fd5`：`tests/v2-mst-054-source-pinned-component.test.mjs` 使用 `MST_V2_OFFICIAL_BY_ID` 精確官方文字/數值/RAID trigger，真正的 MST 洛琪希 RAID 基底與真正 SAO-1-014 對戰。**僅為元件測試**：因正式 V2 MST FIELD 尚未移植，特別使用明確命名 `MST-COMPONENT-FIELD` 的合成場域卡來測條件，沒有加入正式 deck/registry。
+- 已完成 [GitHub Actions V2 Resumed Integration #39692749399](https://github.com/will00t-debug/Ua/actions/runs/39692749399) **SUCCESS**：Node 22 `npm test` **1442/1442、0 失敗**，60/60 五作品 legal match 矩陣零失敗，unported report 完成。
+- [SAO/MST isolated #39692757463](https://github.com/will00t-debug/Ua/actions/runs/39692757463) **SUCCESS**：核心完整測試及 24/24 isolated subset 都通過。
+- 保留數據和安全界限：243→245 已是上一輪的變更，此輪 **新增正式已移植卡數 0**。沒有本機 clone 成功的證據，因此 CI 數字只來自 GitHub Actions 日誌。沒有手機或圖形 UI 手動實機驗收，也未做完整官方 FAQ 所有特殊交互。
+- 這一份交接文件提交後會觸發自身 CI；不能將上述程式 HEAD 的已通過狀態直接宣稱為文件 HEAD 自己的 CI。
+
+### 接續目標
+1. 若要正式加入 `MST-1-054`，先找出並源鎖正式可玩的 MST FIELD 牌及足夠的綠4、RAID 牌組，在真實完整 50 卡條件下驗證全部觸發／取得／互動，並同步所有獨立卡號與 unported 斷言；禁止用 `MST-COMPONENT-FIELD` 冒充正式 port。
+2. 細查取得的額外能力和「原本」能力的延遲觸發 Q2220/Q2228 對照，以及有多個角色同時進入 ATTACK end 的 phaseOrder 對過期順序的互動。來源離場、同名再登場、Raid 頂層替換及 suppress/onRetire 的基礎回歸現已覆蓋。
+3. UI/真機仍是獨立驗收缺口。保持 Draft PR，不碰 main / prod。
