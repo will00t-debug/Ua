@@ -403,11 +403,11 @@ function normalize(card,packId){
    throw Error(card.id+' self-bounce is only valid on character onPlay');
  if(implemented==='vanilla'&&(Object.keys(effects).length||card.effectText||
   mainAbility||card.activeExtraEnergy||card.conditionalTraitEnergy||passiveBonuses||card.impactNull||
-  ownOutsideRecovery||card.frontForbidden||card.ownTurnBp||card.opponentTurnBp))
+  card.frontGeneratesEnergy||ownOutsideRecovery||card.frontForbidden||card.ownTurnBp||card.opponentTurnBp))
   throw Error(card.id+' claims vanilla despite printed/declared effects');
  if(implemented==='dsl'&&!Object.keys(effects).length&&!mainAbility&&
   !card.activeExtraEnergy&&!card.conditionalTraitEnergy&&!passiveBonuses&&!card.impactNull&&
-  !ownOutsideRecovery&&!card.frontForbidden&&!card.ownTurnBp&&!card.opponentTurnBp)
+  !card.frontGeneratesEnergy&&!ownOutsideRecovery&&!card.frontForbidden&&!card.ownTurnBp&&!card.opponentTurnBp)
   throw Error(card.id+' declares dsl without effects');
  for(const [name,program] of Object.entries(effects)){
   if(!V2_EFFECT_TIMINGS.includes(name))throw Error(card.id+' timing '+name+' unsupported');
@@ -462,6 +462,9 @@ function normalize(card,packId){
   card.type!=='character'||!integer(card.activeExtraEnergy,1)||
   card.activeExtraEnergy>3))
   throw Error(card.id+' invalid ACTIVE extra energy profile');
+ if(card.frontGeneratesEnergy!==undefined&&
+  (card.type!=='character'||card.frontGeneratesEnergy!==true))
+  throw Error(card.id+' invalid front-line energy profile');
  if(card.impactNull!==undefined&&(
   card.type!=='character'||card.impactNull!==true))
   throw Error(card.id+' invalid IMPACT nullification profile');
@@ -485,6 +488,7 @@ function normalize(card,packId){
   step:card.step===true,ownTurnBp:card.ownTurnBp||0,
   opponentTurnBp:card.opponentTurnBp||0,
   activeExtraEnergy:card.activeExtraEnergy||0,
+  frontGeneratesEnergy:card.frontGeneratesEnergy===true,
   conditionalTraitEnergy:conditionalTraitEnergy?Object.freeze({...conditionalTraitEnergy}):null,
   passiveBonuses:passiveBonuses||Object.freeze([]),
   impactNull:card.impactNull===true,

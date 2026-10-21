@@ -46,12 +46,15 @@ function raidNamePresent(pack,s,owner,name){
  const inspect=c=>card(pack,c).name===name||(c.stack||[]).some(inspect);
  return field(s.players[owner]).some(inspect);
 }
-// The card itself only PRODUCES energy in its owner's ENERGY line.
- // Derive bonuses from the CURRENT board on every query. Never mutate gen
- // or persist a modifier across moves, Raid, retirement or READY/REST.
+// Normally only own ENERGY-line cards produce energy. Source-pinned
+// frontGeneratesEnergy characters also produce from their own FRONT line.
+// Use physical live zones, not a cached production or hand-card flag.
 export function universalCardEnergy(pack,s,p,c){
- if(!s.players[p].energy.some(x=>x?.uid===c?.uid))return 0;
+ const inEnergy=s.players[p].energy.some(x=>x&&x.uid===c?.uid);
+ const inFront=s.players[p].front.some(x=>x&&x.uid===c?.uid);
+ if(!inEnergy&&!inFront)return 0;
  const d=card(pack,c),profile=d.conditionalTraitEnergy;
+ if(!inEnergy&&!d.frontGeneratesEnergy)return 0;
  const pIndex=p;
  const activeBonus=c.ready?(d.activeExtraEnergy||0):0;
  const timedBonus=(c.buffs||[]).filter(b=>b.untilTurn===s.turn)
@@ -66,7 +69,9 @@ export function universalCardEnergy(pack,s,p,c){
 }
 export function universalEnergyByColor(pack,s,p){
  const counts=Object.create(null);
- for(const c of s.players[p].energy){
+ const producers=[...s.players[p].energy,
+  ...s.players[p].front.filter(c=>c&&card(pack,c).frontGeneratesEnergy)];
+ for(const c of producers){
   if(!c)continue;
   const d=card(pack,c);
   counts[d.color]=(counts[d.color]||0)+universalCardEnergy(pack,s,p,c);

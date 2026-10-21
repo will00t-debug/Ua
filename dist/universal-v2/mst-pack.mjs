@@ -83,6 +83,19 @@ const PRINTED_PINS=Object.freeze({
     "trigger": "draw",
     "effectJa": "〖登場時〗 自分の山札の上から3枚見て、［特徴：ラノア魔法大学］を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。"
   },
+  "MST-1-057": {
+    "kind": "frontGeneratesEnergy",
+    "nameJa": "クリフ",
+    "color": "green",
+    "energy": 4,
+    "ap": 1,
+    "bp": 3500,
+    "gen": 1,
+    "type": "character",
+    "traits": ["ラノア魔法大学"],
+    "trigger": "draw",
+    "effectJa": "このキャラはフロントLでもエナジーを発生させる。"
+  },
   "MST-1-063": {
     "kind": "onPlayDrawIfOwnEnergyAtLeast",
     "nameJa": "ノルン",
@@ -473,6 +486,7 @@ export function verifiedMstV2Cards(){
   if(pin.kind==='onAttackDrawDiscard')card.templateEffects={onAttack:[{template:'drawDiscardOne'}]};
   if(pin.kind==='impactNull')card.impactNull=true;
   if(pin.kind==='activeExtraEnergy')card.activeExtraEnergy=1;
+  if(pin.kind==='frontGeneratesEnergy')card.frontGeneratesEnergy=true;
   if(pin.kind==='peekTopOne')card.templateEffects={onPlay:[{template:'peekTopOne'}]};
   if(pin.kind==='bounceOtherEnergyOne')
    card.templateEffects={onPlay:[{template:'bounceOwnOtherUnderEnergy',energy:1}]};
@@ -522,6 +536,7 @@ export function verifiedMstV2Entries(){
       ...(pin.kind==='onRetireDrawOne'?['tests/v2-mst-013-on-retire.test.mjs']:[]),
      ...(pin.kind==='onPlayDrawIfOwnEnergyAtLeast'?['tests/v2-mst-063-energy-draw.test.mjs']:[]),
      ...(pin.kind==='onPlayTop3OwnTraitBottomDiscard'?['tests/v2-mst-055-cross-title-top.test.mjs']:[]),
+     ...(pin.kind==='frontGeneratesEnergy'?['tests/v2-mst-057-front-energy.test.mjs']:[]),
      ...(pin.kind==='onPlayDrawDiscardLimited'?['tests/v2-mst-051-limited-draw-discard.test.mjs']:[]),
      ...(['restSelfEnergyRetireEndMain','ownTurnRoxyFieldBp'].includes(pin.kind)?['tests/v2-mst-016-024-shared.test.mjs']:[])
     ]),
