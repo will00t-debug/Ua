@@ -70,6 +70,19 @@ const PRINTED_PINS=Object.freeze({
     "trigger": null,
     "effectJa": "〖起動メイン〗 〖レストにする〗 〖ターン1〗 このキャラはこのターン中、発生エナジー+ 〖青〗 と「メインフェイズ終了時、このキャラを退場させる。」を得る。"
   },
+  "MST-1-055": {
+    "kind": "onPlayTop3OwnTraitBottomDiscard",
+    "nameJa": "アリエル",
+    "color": "green",
+    "energy": 1,
+    "ap": 1,
+    "bp": 2000,
+    "gen": 1,
+    "type": "character",
+    "traits": ["ラノア魔法大学"],
+    "trigger": "draw",
+    "effectJa": "〖登場時〗 自分の山札の上から3枚見て、［特徴：ラノア魔法大学］を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。"
+  },
   "MST-1-063": {
     "kind": "onPlayDrawIfOwnEnergyAtLeast",
     "nameJa": "ノルン",
@@ -446,6 +459,9 @@ export function verifiedMstV2Cards(){
   if(pin.kind==='ownFieldAllNamesBp')
    card.passiveBonuses=[{condition:{kind:'ownFieldHasAllNames',turn:'any',
     zone:'field',excludeSelf:false,names:['ルーデウス','ルイジェルド']},bp:1000}];
+  if(pin.kind==='onPlayTop3OwnTraitBottomDiscard')
+   card.templateEffects={onPlay:[{template:'searchTopOneBottomDiscard',count:3,
+    filter:{field:'trait',value:'ラノア魔法大学'}}]};
   if(pin.kind==='onPlayDrawIfOwnEnergyAtLeast')
    card.templateEffects={onPlay:[{template:'drawIfOwnEnergyAtLeast',energy:7,count:1}]};
   if(pin.kind==='onPlayDraw')card.templateEffects={onPlay:[{template:'draw',count:1}]};
@@ -505,6 +521,7 @@ export function verifiedMstV2Entries(){
      ...(pin.kind==='ownFieldAllNamesBp'?['tests/v2-mst-003-own-names.test.mjs']:[]),
       ...(pin.kind==='onRetireDrawOne'?['tests/v2-mst-013-on-retire.test.mjs']:[]),
      ...(pin.kind==='onPlayDrawIfOwnEnergyAtLeast'?['tests/v2-mst-063-energy-draw.test.mjs']:[]),
+     ...(pin.kind==='onPlayTop3OwnTraitBottomDiscard'?['tests/v2-mst-055-cross-title-top.test.mjs']:[]),
      ...(pin.kind==='onPlayDrawDiscardLimited'?['tests/v2-mst-051-limited-draw-discard.test.mjs']:[]),
      ...(['restSelfEnergyRetireEndMain','ownTurnRoxyFieldBp'].includes(pin.kind)?['tests/v2-mst-016-024-shared.test.mjs']:[])
     ]),
