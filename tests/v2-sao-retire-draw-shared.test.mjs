@@ -53,7 +53,7 @@ test('both original SAO printed cards are native mandatory onRetire draw, not Li
   assert.equal(def.implementation,'dsl');
   assert.ok(SAO_V2_PILOT_IDS.includes(id));
  }
- assert.equal(Object.keys(sao.cards).length,57);
+ assert.equal(Object.keys(sao.cards).length,58);
  assert.deepEqual(validateUniversalDeck(sao,saoDeck),[]);
  assert.deepEqual(validateUniversalDeck(ttg,ttgDeck),[]);
 });

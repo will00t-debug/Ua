@@ -4,6 +4,20 @@ import {SAO_OFFICIAL_CARDS} from '../sao-official-import.mjs';
 import {createUniversalPack} from './pack.mjs';
 
 const PRINTED_PINS=Object.freeze({
+  "SAO-1-014": {
+    "kind": "opponentTurnBp1000",
+    "nameJa": "エルドリエ・シンセシス・サーティワン",
+    "color": "yellow",
+    "energy": 2,
+    "ap": 1,
+    "bp": 2500,
+    "gen": 1,
+    "type": "character",
+    "trigger": "draw",
+    "traits": ["整合騎士"],
+    "effectJa": "【相手のターン中】このキャラはBP+1000。"
+  },
+
   "SAO-2-019": {
     "kind": "ownTurnSilicaFieldBp",
     "nameJa": "ピナ",
@@ -855,6 +869,7 @@ export function verifiedSaoV2Cards(){
    implementation:pin.kind==='vanilla'||pin.kind==='step'?'vanilla':'dsl'};
   if(card.implementation==='vanilla')card.effects={};
   if(pin.kind==='step')card.step=true;
+  if(pin.kind==='opponentTurnBp1000')card.opponentTurnBp=1000;
   if(pin.kind==='ownTurnSilicaFieldBp')
    card.passiveBonuses=[{condition:{kind:'ownNameExists',turn:'own',
     zone:'field',excludeSelf:true,name:'シリカ'},bp:2000}];
@@ -934,6 +949,7 @@ export function verifiedSaoV2Entries(){
      'tests/universal-v2-sao-port.test.mjs',
      ...(def.id==='SAO-2-021'?['tests/v2-sao-021-shared-main-cost.test.mjs']:[]),
      ...(pin.kind==='onRetireDrawOne'?['tests/v2-sao-retire-draw-shared.test.mjs']:[]),
+     ...(pin.kind==='opponentTurnBp1000'?['tests/v2-sao-014-opponent-bp.test.mjs']:[]),
      ...(pin.kind==='ownTurnSilicaFieldBp'?['tests/v2-sao-019-own-silica-bp.test.mjs']:[]),
      'tests/universal-v2-sao-mst-cross-title.test.mjs'
     ]),

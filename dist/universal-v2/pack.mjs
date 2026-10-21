@@ -428,6 +428,9 @@ function normalize(card,packId){
  if(card.ownTurnBp!==undefined&&
   (card.type!=='character'||!integer(card.ownTurnBp,1)||card.ownTurnBp>5000))
   throw Error(card.id+' invalid own-turn BP modifier');
+ if(card.opponentTurnBp!==undefined&&
+  (card.type!=='character'||!integer(card.opponentTurnBp,1)||card.opponentTurnBp>5000))
+  throw Error(card.id+' invalid opponent-turn BP modifier');
  // Dedicated passive energy profile; calculation area and own-card inclusion
  // must be explicit. The predicate is intentionally separated from the bonus.
  const conditionalTraitEnergy=card.conditionalTraitEnergy??null;
@@ -473,6 +476,7 @@ function normalize(card,packId){
   ownOutsideRecovery:ownOutsideRecovery?Object.freeze({...ownOutsideRecovery}):null,
   frontForbidden:card.frontForbidden===true,
   step:card.step===true,ownTurnBp:card.ownTurnBp||0,
+  opponentTurnBp:card.opponentTurnBp||0,
   activeExtraEnergy:card.activeExtraEnergy||0,
   conditionalTraitEnergy:conditionalTraitEnergy?Object.freeze({...conditionalTraitEnergy}):null,
   passiveBonuses:passiveBonuses||Object.freeze([]),

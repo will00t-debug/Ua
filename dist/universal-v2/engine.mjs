@@ -80,7 +80,7 @@ export const universalEnergy=calcEnergy;
 function bp(pack,s,c){
  const printed=card(pack,c);
  const owner=Number(String(c.uid).split('-')[0]);
- return (printed?.bp||0)+(s.active===owner?(printed.ownTurnBp||0):0)+
+ return (printed?.bp||0)+(s.active===owner?(printed.ownTurnBp||0):(printed.opponentTurnBp||0))+
   printed.passiveBonuses.reduce((n,p)=>n+(p.bp&&
    matchesV2LiveCondition(s,owner,c.uid,p.condition,x=>card(pack,x),
     ()=>calcEnergy(pack,s,owner))?p.bp:0),0)+
