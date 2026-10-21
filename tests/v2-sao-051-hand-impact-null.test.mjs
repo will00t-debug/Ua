@@ -118,7 +118,7 @@ test('strict schema rejects impactNull: false or non-boolean and forged conditio
  const make=c=>createUniversalPack({id:'composite-qa',cards:[c]});
  assert.equal(make(base).cards[base.id].impactNull,true);
  for(const impact of [false,'true',1,null])
-  assert.throws(()=>make({...base,impactNull:impact}),/invalid impact/);
+  assert.throws(()=>make({...base,impactNull:impact}),/invalid IMPACT/);
  for(const cond of [{kind:'ownHandCountAtLeast',turn:'own',min:0},
   {kind:'ownHandCountAtLeast',turn:'foe',min:5},
   {kind:'ownHandCountAtLeast',turn:'own',min:5,zone:'front'}])
