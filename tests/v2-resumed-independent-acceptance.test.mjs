@@ -46,13 +46,13 @@ function playFixture(id,deckKey,genId,seed){
  assert.ok(play,'actual legal play available for '+id);
  return {s,packs,source,play};
 }
-test('new stable registry exact 200 IDs across five independently approved official title packs',()=>{
- const expected=[80,24,19,53,24],registered=listRegisteredV2Titles();
+test('new stable registry exact 202 IDs across five independently approved official title packs',()=>{
+ const expected=[80,26,19,53,24],registered=listRegisteredV2Titles();
  assert.deepEqual(registered.map(t=>t.totalV2Cards),expected);
  const inventory=v2AllTitleInventory();
  assert.equal(inventory.totals.total,700);
- assert.equal(inventory.totals.pilotImplemented,200);
- assert.equal(inventory.totals.blocked,500);
+ assert.equal(inventory.totals.pilotImplemented,202);
+ assert.equal(inventory.totals.blocked,498);
  for(let i=0;i<titleIds.length;i++){
   const title=titleIds[i],pack=registeredV2TitlePack(title),ids=Object.keys(pack.cards).sort();
   assert.equal(ids.length,expected[i]);
@@ -221,5 +221,6 @@ test('new handoff cards are registered while unsupported successors remain fail-
  assert.ok(registeredV2TitlePack('gurren-lagann').cards['TTG-1-077']);
  assert.deepEqual(registeredV2TitlePack('bleach').cards['BLC-1-005'].mainAbility,
   {op:'restSelfThenRestOppFrontOne',frontOnly:true});
- assert.equal(registeredV2TitlePack('gurren-lagann').cards['TTG-1-010'],undefined);
+ assert.ok(registeredV2TitlePack('gurren-lagann').cards['TTG-1-010']);
+ assert.ok(registeredV2TitlePack('gurren-lagann').cards['TTG-1-023']);
 });

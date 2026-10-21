@@ -16,7 +16,8 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-discard':'選擇棄牌','effect-discard-cost':'支付棄牌成本',
  'effect-discard-gate':'是否支付棄牌成本',
  'effect-search-deck':'搜尋牌庫', 'effect-search-deck-multi':'依序搜尋牌庫',
- 'effect-top-inspect':'查看牌庫頂','effect-top-inspect-many':'任意張卡送場外','effect-top-order':'排列牌庫頂',
+ 'effect-top-inspect':'查看牌庫頂','effect-top-inspect-many':'任意張卡送場外',
+ 'effect-top-filter-choice':'查看牌頂，選擇符合特徵的角色／卡','effect-top-order':'排列牌庫頂或底',
  'effect-bounce-own':'選擇返回手牌的己方角色',
  'effect-buff-own':'選擇己方角色增加本回合 BP',
  'effect-once-choice':'是否發動本回合一次能力',
@@ -103,6 +104,7 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseDeckSearch':case 'chooseDeckSearchMulti':
    return action.uid===null?'結束搜尋':'將 '+name()+' 加入手牌';
   case 'chooseInspectedOutside':return action.uid===null?'完成選擇並排列剩餘牌':'將 '+name()+' 送場外';
+  case 'chooseTopFiltered':return action.uid===null?'不加入手牌，將其餘卡排列至底部':'加入手牌：'+name();
   case 'chooseTopOrder':return '依序放回：'+name();
   case 'chooseOwnBuff':case 'chooseMainBuff':case 'chooseTraitBuff':case 'chooseRestBp':
   case 'chooseRetireBp':case 'chooseTarget':

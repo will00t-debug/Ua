@@ -6,7 +6,7 @@ export const V2_PHASES=Object.freeze(['start','move','main','attack']);
 export const V2_CARD_TYPES=Object.freeze(['character','event','field']);
 export const V2_TRIGGERS=Object.freeze(['draw','get','final','active','special','color','raid']);
 export const V2_EFFECT_TIMINGS=Object.freeze(['onPlay','onRaid','onAttack','onRaided']);
-export const V2_EFFECT_OPS=Object.freeze(['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','restOppFrontUnderBp','restOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','discardToDraw','searchDeckMany','discardGate','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
+export const V2_EFFECT_OPS=Object.freeze(['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','restOppFrontUnderBp','restOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','discardToDraw','searchDeckMany','discardGate','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
  'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideColorUnderEnergy','buffOwnField','oncePerTurnGate']);
 const integer=(v,low=0)=>Number.isInteger(v)&&v>=low;
 const own=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
@@ -55,6 +55,17 @@ function verifyProgram(program,path){
    !['top','bottom'].includes(e.rest)||
    Object.keys(e).some(k=>!['op','count','toOutside','rest'].includes(k))
   ))throw Error(path+'['+i+'] invalid top inspect/arrange');
+  if(e.op==='searchTopOneBottomDiscard'){
+   const f=e.filter;
+   if(!integer(e.count,1)||e.count>5||
+    !f||typeof f!=='object'||Array.isArray(f)||
+    Object.keys(f).length!==2||
+    !['name','trait','color','type'].includes(f.field)||
+    typeof f.value!=='string'||!f.value.trim()||
+    (f.field==='type'&&!V2_CARD_TYPES.includes(f.value))||
+    Object.keys(e).some(k=>!['op','count','filter'].includes(k)))
+    throw Error(path+'['+i+'] invalid top-N filtered bottom/discard profile');
+  }
   if(e.op==='discardGate'){
    if(typeof e.optional!=='boolean'||!Array.isArray(e.then)||
     !e.then.length||e.then.length>6||

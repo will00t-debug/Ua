@@ -107,7 +107,7 @@ function detachFacedown(top,uid){
 // card owner's own title pack. Never use the other player's printed ID table.
 function matchesFilter(pack,physical,filter){
  const printed=card(pack,physical);
- if(filter.field==='trait')return printed.traits.includes(filter.value);
+ if(filter.field==='trait')return printed.traits.some(v=>v.split(/[／/]/).map(x=>x.trim()).includes(filter.value));
  return printed[filter.field]===filter.value;
 }
 function filteredChoices(pack,cards,filter){
@@ -185,6 +185,16 @@ function continueEffectQueue(pack,s){
     const uids=pl.deck.slice(0,job.count).map(c=>c.uid);
     if(uids.length)s.pending={kind:'effect-top-inspect-many',player:owner,
      sourceUid:job.sourceUid,uids,selected:[],rest:job.rest};
+   }else if(job.op==='searchTopOneBottomDiscard'){
+    const inspected=pl.deck.slice(0,job.count),uids=inspected.map(c=>c.uid);
+    if(uids.length){
+     const choices=filteredChoices(pack,inspected,job.filter);
+     // No matching trait still requires independently chosen BOTTOM ordering.
+     s.pending=choices.length?{kind:'effect-top-filter-choice',player:owner,
+      sourceUid:job.sourceUid,uids,choices,filter:job.filter}:
+      {kind:'effect-top-order',player:owner,sourceUid:job.sourceUid,
+       uids,order:[],rest:'bottom'};
+    }
    }else if(job.op==='recoverOutsideOne'){
    const matches=filteredChoices(pack,pl.outside,job.filter);
    if(matches.length)s.pending={kind:'effect-recover-outside',player:owner,
@@ -559,6 +569,27 @@ function resolveChoice(s,a,pack){
   }else q.choices=choices;
   return;
  }
+ if(q.kind==='effect-top-filter-choice'){
+  const window=p.deck.slice(0,q.uids.length);
+  if(window.length!==q.uids.length||window.some((c,i)=>c.uid!==q.uids[i]))
+   throw Error('Filtered top deck window changed during private selection');
+  if(a.uid!==null){
+   const chosen=window.find(c=>c.uid===a.uid);
+   if(!chosen||!q.choices.includes(a.uid)||!matchesFilter(pack,chosen,q.filter))
+    throw Error('Filtered top search needs a legal inspected physical card');
+   const i=p.deck.findIndex(c=>c.uid===a.uid);
+   if(i<0||i>=q.uids.length)throw Error('Selected physical UID outside top window');
+   p.hand.push(p.deck.splice(i,1)[0]);
+  }
+  const remaining=q.uids.filter(uid=>uid!==a.uid);
+  if(remaining.length)s.pending={kind:'effect-top-order',player:q.player,
+   sourceUid:q.sourceUid,uids:remaining,order:[],rest:'bottom',
+   ...(a.uid!==null?{discardAfter:true}:{})};
+  else if(a.uid!==null)s.pending={kind:'effect-discard',player:q.player,
+   sourceUid:q.sourceUid};
+  else{s.pending=null;continueEffectQueue(pack,s);}
+  return;
+ }
  if(q.kind==='effect-top-inspect-many'){
   if(a.uid!==null){
    if(!q.uids.includes(a.uid)||q.selected.includes(a.uid))
@@ -607,7 +638,10 @@ function resolveChoice(s,a,pack){
    const ordered=q.order.map(uid=>byUid.get(uid));
    if(q.rest==='top')p.deck.unshift(...ordered);
    else p.deck.push(...ordered);
-   s.pending=null;continueEffectQueue(pack,s);
+   if(q.discardAfter){
+    if(!p.hand.length)throw Error('Mandatory contingent discard has no hand card');
+    s.pending={kind:'effect-discard',player:q.player,sourceUid:q.sourceUid};
+   }else{s.pending=null;continueEffectQueue(pack,s);}
   }
   return;
  }
@@ -878,6 +912,10 @@ function legalPending(pack,s){
   ...(q.optional?[{type:'chooseDeckSearchMulti',uid:null}]:[]),
   ...p.deck.filter(c=>q.choices.includes(c.uid)&&matchesSearch(pack,c,q))
    .map(c=>({type:'chooseDeckSearchMulti',uid:c.uid}))
+ ];
+ if(q.kind==='effect-top-filter-choice')return [
+  {type:'chooseTopFiltered',uid:null},
+  ...q.choices.map(uid=>({type:'chooseTopFiltered',uid}))
  ];
  if(q.kind==='effect-top-inspect-many')return [
   {type:'chooseInspectedOutside',uid:null},
@@ -1182,7 +1220,7 @@ export function assertUniversalMatch(pack,s){
    !Array.isArray(s.initialCounts)||s.initialCounts.length!==2||
    s.players?.length!==2||!playerIndex(s.active)||
    !['playing','finished'].includes(s.status))throw Error('Incorrect pack/version or match state');
- if(s.pending&&(!playerIndex(s.pending.player)||!['block','life-trigger','effect-target','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-rest-bp','raid-effect-order','effect-buff-trait','effect-buff-own','effect-once-choice','main-two-buff','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-order','effect-recover-outside','effect-bounce-own','effect-discard-cost','effect-discard-gate'].includes(s.pending.kind)))
+ if(s.pending&&(!playerIndex(s.pending.player)||!['block','life-trigger','effect-target','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-rest-bp','raid-effect-order','effect-buff-trait','effect-buff-own','effect-once-choice','main-two-buff','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-order','effect-recover-outside','effect-bounce-own','effect-discard-cost','effect-discard-gate'].includes(s.pending.kind)))
   throw Error('Invalid pending controller');
  if(!Array.isArray(s.raidedThisTurn)||s.raidedThisTurn.length!==2||
    s.raidedThisTurn.some(x=>typeof x!=='boolean')||
@@ -1200,7 +1238,7 @@ export function assertUniversalMatch(pack,s){
  if(!Number.isInteger(s.attacksThisTurn)||s.attacksThisTurn<0||s.attacksThisTurn>50)
   throw Error('Invalid attack count');
  if(!Array.isArray(s.effectQueue)||s.effectQueue.some(e=>!playerIndex(e.owner)||
-   !['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','restOppFrontUnderBp','restOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','recoverOutsideOne','discardToDraw',
+   !['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','restOppFrontUnderBp','restOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','recoverOutsideOne','discardToDraw',
     'discardGate','enemyFrontAllBpDown','retireOppFrontAllUnderBp',
     'buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
     'recoverOutsideColorUnderEnergy','buffOwnField','oncePerTurnGate','retireBatchOne','openBlock'].includes(e.op)))
@@ -1251,9 +1289,9 @@ export function universalPrivateChoices(pack,s,viewer){
   }))};
  }
  if(!q||q.player!==viewer||
-  !['effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-order','effect-recover-outside','effect-bounce-own','effect-discard-cost','effect-discard-gate'].includes(q.kind))
+  !['effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-order','effect-recover-outside','effect-bounce-own','effect-discard-cost','effect-discard-gate'].includes(q.kind))
   return null;
- const zone=['effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-order'].includes(q.kind)?'deck':
+ const zone=['effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-order'].includes(q.kind)?'deck':
   q.kind==='effect-recover-outside'?'outside':
   q.kind==='effect-bounce-own'?'field':'hand';
  return {kind:q.kind,player:viewer,options:legalPending(pack,s).map(action=>{

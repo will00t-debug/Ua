@@ -29,11 +29,11 @@ Other old handoff inventories remain historical snapshots.
 | Title | Integrated | Unported | Catalogue |
 |---|---:|---:|---:|
 | BLEACH | 80 | 196 | 276 |
-| TTG | 24 | 57 | 81 |
+| TTG | 26 | 55 | 81 |
 | SLG | 19 | 61 | 80 |
 | SAO | 53 | 130 | 183 |
 | MST | 24 | 56 | 80 |
-| Total | 200 | 500 | 700 |
+| Total | 202 | 498 | 700 |
 
 These are source-pinned registered effects with scenario tests, not a claim that
 every official FAQ interaction is certified. No mobile manual QA or deployment
@@ -91,3 +91,17 @@ was performed in this integration batch.
 - Source fingerprint `dist/expansion-cards.mjs` / checked BLEACH addon, independent formal title contribution and explicit manifest; negative tests for illegal source, target, cost/actor and foreign UID; tests `tests/v2-blc-005-self-rest.test.mjs`.
 - Catalogued 700, V2 implemented/integrated 200 (BLEACH 80, TTG 24, SLG 19, SAO 53, MST 24), unported 500. FAQ full-audit certification remains 0. Printed page has no card-specific Q&A entry; general activation REST rules apply, but further interaction FAQ reviews remain open.
 - CI result/commit SHA: see subsequent verification milestone in this file; do not treat former green run as a new batch result.
+
+### Batch 2 validated milestone — BLC-1-005
+
+- GitHub branch commits: `2c9ba0053f1f4fef5cc12d6f80bdb925eee70e9a` (shared self-REST implementation and new exact test); `2c883978dea00bc116f23433087883e47f04c647` (retain strict BLEACH inventory tests with 80 source-pinned identities).
+- CI `V2 Resumed Integration` run 39535129609 succeeded under Node 22: `npm test` **1176/1176 passed**; integrated five-title seeded matrix **60/60 completed**; `v2-unported-report` succeeded, **200 registered / 500 unported**.
+- These pass counts certify tested code paths, not a full per-card official FAQ acceptance. Main / production untouched.
+
+## Batch 3 — TTG-1-010 / TTG-1-023 (2026-10-21)
+
+- Japanese official: https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-010 (green1/AP1, DRAW Life, private top three, 大グレン団); https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-023 (green2/AP1, no Life trigger, private top five, ガンメン). Each reveals up to ONE matching printed-trait card into hand, orders all remaining inspected cards to the bottom of deck WITHOUT shuffling, and ONLY IF a card was added must discard exactly one OWN hand UID AFTER ordering.
+- Added strictly typed shared `searchTopOneBottomDiscard` template, controller-only `effect-top-filter-choice` and existing `effect-top-order` / `effect-discard` transitions, opponent-hidden private inspected UIDs and lossless card movement. Compound printed trait `大グレン団／ガンメン` matches its constituent printed trait without mutating other source records.
+- Explicitly re-audited, registered and source-fingerprinted only 010 and 023. Independent ID manifest extended by two manually, not generated from tested registry. See `tests/v2-ttg-top-filtered.test.mjs` for success, decline, no valid top match, invalid/foreign UID, independent bottom order, contingent discard, AP and UID conservation.
+- Catalogued 700, V2 implemented/integrated 202 (BLEACH 80, TTG 26, SLG 19, SAO 53, MST 24), unported 498. **Full FAQ per-card certification remains 0** pending independent ruling coverage.
+- CI of THIS batch is to be independently verified before claim of success.

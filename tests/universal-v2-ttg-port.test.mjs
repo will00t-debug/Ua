@@ -26,11 +26,11 @@ function main(s){
  }
  return s;
 }
-test('TTG additive pack preserves all 20 original V2 pilots; 4 supported additions and real 50-card mixed-title deck',()=>{
+test('TTG additive pack preserves all 20 original V2 pilots; 6 supported additions and real 50-card mixed-title deck',()=>{
  const old=verifiedPilotPack('gurren-lagann');
- assert.deepEqual(TTG_V2_ADDITION_IDS,['TTG-1-005','TTG-1-014','TTG-1-019','TTG-1-077']);
+ assert.deepEqual(TTG_V2_ADDITION_IDS,['TTG-1-005','TTG-1-014','TTG-1-019','TTG-1-010','TTG-1-023','TTG-1-077']);
  assert.equal(Object.keys(old.cards).length,20);
- assert.equal(Object.keys(ttg.cards).length,24);
+ assert.equal(Object.keys(ttg.cards).length,26);
  for(const [id,c] of Object.entries(old.cards))assert.deepEqual(ttg.cards[id].effects,c.effects);
  assert.deepEqual(validateUniversalDeck(ttg,ttgDeck),[]);
  assert.deepEqual(validateUniversalDeck(slg,slgDeck),[]);
@@ -67,10 +67,10 @@ test('TTG-1-019 ACTIVE generates an extra GREEN energy only until REST, retainin
 test('TTG contribution is consumable by latest shared V2 title registry and is disjoint from original pilots',()=>{
  const row=listRegisteredV2Titles().find(x=>x.title==='gurren-lagann');
  assert.equal(row.baselinePilots,20);
- assert.equal(row.newlyContributed,4);
- assert.equal(row.totalV2Cards,24);
+ assert.equal(row.newlyContributed,6);
+ assert.equal(row.totalV2Cards,26);
  const registered=registeredV2TitlePack('gurren-lagann');
- assert.equal(Object.keys(registered.cards).length,24);
+ assert.equal(Object.keys(registered.cards).length,26);
  for(const id of TTG_V2_ADDITION_IDS){
   assert.deepEqual(registered.cards[id].effects,ttg.cards[id].effects);
   assert.equal(registered.cards[id].trigger,ttg.cards[id].trigger);
@@ -123,11 +123,11 @@ test('Registry shares exactly the 20 original TTG pilot IDs plus FOUR new, no du
  const ids=Object.keys(registeredV2TitlePack('gurren-lagann').cards);
  const additions=new Set(TTG_V2_ADDITION_IDS);
  assert.equal(pilot.length,20);
- assert.equal(additions.size,4);
+ assert.equal(additions.size,6);
  assert.deepEqual(ids.filter(id=>!pilot.includes(id)).sort(),[...additions].sort());
  assert.ok(pilot.every(id=>!additions.has(id)));
- assert.equal(new Set(ids).size,24);
- assert.deepEqual(listRegisteredV2Titles().slice(1,3).map(x=>x.totalV2Cards),[24,19],
+ assert.equal(new Set(ids).size,26);
+ assert.deepEqual(listRegisteredV2Titles().slice(1,3).map(x=>x.totalV2Cards),[26,19],
   'C title contribution counts stay exact independent of BLEACH A integration');
  assert.equal(Object.keys(registeredV2TitlePack('solo-leveling').cards).length,19);
 });
@@ -273,11 +273,12 @@ test('TTG-077 no qualifying OWN outside Gunmen: optional recovery does not creat
  assert.equal(assertUniversalMatch(packs,after),true);
 });
 
-test('TTG-010/023 source top-N trait search and ordered bottom + conditional discard are not faked by generic full-deck shuffle search',()=>{
+test('TTG-010/023 are exact limited TOP N and conditional-discard V2 programs (not full-deck searches)',()=>{
  const pack=registeredV2TitlePack('gurren-lagann');
- for(const id of ['TTG-1-010','TTG-1-023']){
-  assert.equal(pack.cards[id],undefined,id+' requires private top-N legal trait and bottom-order effect');
-  const illegal={...ttgDeck,'TTG-1-001':3,[id]:1};
-  assert.match(validateUniversalDeck(pack,illegal).join(';'),/Unregistered\/unsupported card:/);
- }
+ for(const [id,count,trait] of [['TTG-1-010',3,'大グレン団'],['TTG-1-023',5,'ガンメン']])
+  assert.deepEqual(pack.cards[id].effects.onPlay,[{
+   op:'searchTopOneBottomDiscard',count,filter:{field:'trait',value:trait}
+  }]);
+ assert.equal(pack.cards['TTG-1-010'].trigger,'draw');
+ assert.equal(pack.cards['TTG-1-023'].trigger,null);
 });

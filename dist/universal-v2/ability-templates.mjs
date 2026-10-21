@@ -174,6 +174,14 @@ const registry=Object.freeze({
   args:{count:v=>integer(v,2,4),rest:v=>v==='top'||v==='bottom'},
   build:v=>[{op:'inspectTopAnyOutside',count:v.count,rest:v.rest}]
  },
+ // Select up to one qualifying physical UID from exactly the top N cards.
+ // Controller orders all remaining inspected cards onto DECK BOTTOM, with no
+ // shuffle; only after a successful hand addition must exactly one card be
+ // discarded from hand (the chosen card itself remains a legal discard).
+ searchTopOneBottomDiscard:{
+  args:{count:v=>integer(v,1,5),filter},
+  build:v=>[{op:'searchTopOneBottomDiscard',count:v.count,filter:{...v.filter}}]
+ },
  payDiscardThen:{
   args:{optional:yesNo,then:v=>Array.isArray(v)&&v.length>=1&&v.length<=6},
   check:v=>v.then.every(x=>x&&[
