@@ -147,6 +147,8 @@ function matchesOutsideRecovery(pack,c,q){
  const d=card(pack,c);
  if(q.printedBpLimit!==undefined)
   return d.type==='character'&&d.bp<=q.printedBpLimit;
+ if(q.traitlessEnergyLimit!==undefined)
+  return d.type==='character'&&d.traits.length===0&&d.energy<=q.traitlessEnergyLimit;
  return d.color===q.color&&d.energy<=q.energy;
 }
 function startTurn(pack,s){
@@ -178,6 +180,9 @@ function continueEffectQueue(pack,s){
       (!child.excludeSelf||c.uid!==job.sourceUid)&&matchesFilter(pack,c,child.filter));
     if(child.op==='recoverOutsideOne'&&!child.optional)
      return pl.outside.some(c=>matchesFilter(pack,c,child.filter));
+    if(child.op==='recoverOutsideTraitlessUnderEnergy'&&!child.optional)
+     return pl.outside.some(c=>matchesOutsideRecovery(pack,c,
+      {traitlessEnergyLimit:child.energy}));
     return true;
    }));
    if(available.length||job.optional)
@@ -256,6 +261,12 @@ function continueEffectQueue(pack,s){
     {printedBpLimit:job.bp})).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-recover-outside',player:owner,
     sourceUid:job.sourceUid,printedBpLimit:job.bp,
+    choices,optional:job.optional};
+  }else if(job.op==='recoverOutsideTraitlessUnderEnergy'){
+   const choices=pl.outside.filter(c=>matchesOutsideRecovery(pack,c,
+    {traitlessEnergyLimit:job.energy})).map(c=>c.uid);
+   if(choices.length)s.pending={kind:'effect-recover-outside',player:owner,
+    sourceUid:job.sourceUid,traitlessEnergyLimit:job.energy,
     choices,optional:job.optional};
   }else if(job.op==='discardToDraw'){
    if(pl.hand.length)s.pending={kind:'effect-discard-cost',player:owner,

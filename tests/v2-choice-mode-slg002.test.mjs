@@ -51,8 +51,8 @@ test('SLG-1-002 Japanese source exact characteristics, both branch effects and D
  assert.deepEqual(profile.options[0].then,[{op:'drawDiscard',count:1}]);
  assert.deepEqual(profile.options[1].then,[{op:'buffOwnField',
   filter:{field:'type',value:'character'},bp:1000,optional:true,excludeSelf:true}]);
- assert.equal(pack.cards['SLG-1-025'],undefined,
-  'other candidate has ACTIVE BP+3000 life profile not yet fully represented');
+ assert.equal(pack.cards['SLG-1-025']?.trigger,'active',
+  'other choice-mode candidate is now independently source-verified');
  assert.ok(Object.isFrozen(profile.options[0].then),'nested branches cannot be mutated');
 });
 test('choose draw/discard: AP charged once, draw occurs BEFORE mandatory UID discard, never BP buff',()=>{

@@ -18,6 +18,19 @@ const authored=[
       "energyOnly":true,"oncePerTurn":true,"extraEnergy":1}
   },
   {
+    "id":"SLG-1-025","name":"観月 絵里","color":"purple",
+    "energy":3,"ap":2,"bp":2000,"gen":2,"trigger":"active",
+    "type":"character","textAnchor":"登場時選一項：抽2張",
+    "implementation":"dsl",
+    "effects":{"onPlay":[{"op":"chooseOne","optional":false,"options":[
+      {"id":"drawTwo","label":"抽兩張牌","turn":"any",
+       "then":[{"op":"draw","count":2}]},
+      {"id":"drawRecover","label":"抽一張，再回收最多一張能源3以下無特徵角色",
+       "turn":"any","then":[{"op":"draw","count":1},
+        {"op":"recoverOutsideTraitlessUnderEnergy","energy":3,"optional":true}]}
+    ]}]}
+  },
+  {
     "id":"SLG-1-002","name":"朝比奈 りん","color":"purple",
     "energy":0,"ap":1,"bp":500,"gen":1,"trigger":"draw",
     "type":"character","textAnchor":"登場時選一項：抽1張後將1張手牌送場外",
