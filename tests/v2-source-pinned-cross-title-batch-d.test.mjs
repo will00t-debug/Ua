@@ -17,7 +17,7 @@ const blc={id:'BLC-1-006',name:'キルゲ・オピー',type:'character',color:'y
  energy:4,ap:2,bp:4000,gen:1,trigger:'get',implementation:'dsl',
  templateEffects:{onAttack:[{template:'skipNextActiveOppRest',optional:true}]}};
 const sao={id:'SAO-1-034',name:'ラディアント・ライト',type:'event',color:'yellow',
- energy:3,ap:1,bp:0,gen:0,trigger:'special',implementation:'dsl',
+ energy:3,ap:1,bp:0,gen:0,trigger:'special',triggerEffect:{op:'retireOppFront'},implementation:'dsl',
  templateEffects:{onPlay:[{template:'restEnemyUnderBpSkipNextActive',bp:5000,optional:false}]}};
 function sample(prefix,first){
  return [first,...Array.from({length:12},(_,i)=>({id:prefix+String(i).padStart(2,'0'),
