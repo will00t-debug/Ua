@@ -184,6 +184,19 @@ const PRINTED_PINS=Object.freeze({
     ],
     "effectJa": "-"
   },
+  "SAO-2-021": {
+    "kind": "mainDiscardSelfBuff",
+    "nameJa": "キリト",
+    "color": "blue",
+    "energy": 0,
+    "ap": 1,
+    "bp": 1500,
+    "gen": 1,
+    "type": "character",
+    "trigger": "active",
+    "traits": ["ALO"],
+    "effectJa": "【起動メイン】【手札を1枚場外に置く】 【ターン1】このキャラはこのターン中、BP+1500。"
+  },
   "SAO-2-028": {
     "kind": "vanilla",
     "nameJa": "ユナ",
@@ -822,6 +835,8 @@ export function verifiedSaoV2Cards(){
    card.step=true;
    card.templateEffects={onPlay:[{template:'peekTopOrBottom'}]};
   }
+  if(pin.kind==='mainDiscardSelfBuff')
+   card.mainAbility={op:'discardHandBuffSelf',oncePerTurn:true,discardCount:1,bp:1500};
   if(pin.kind==='activeExtraEnergy')card.activeExtraEnergy=1;
   if(pin.kind==='impactNull')card.impactNull=true;
   if(pin.kind==='onPlayBounce')
@@ -872,6 +887,7 @@ export function verifiedSaoV2Entries(){
      source.source,
     testFiles:Object.freeze([
      'tests/universal-v2-sao-port.test.mjs',
+     ...(def.id==='SAO-2-021'?['tests/v2-sao-021-shared-main-cost.test.mjs']:[]),
      'tests/universal-v2-sao-mst-cross-title.test.mjs'
     ]),
     ...(def.implementation==='vanilla'?{verifiedNoExtraEffects:true}:{})
