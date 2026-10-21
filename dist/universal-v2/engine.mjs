@@ -5,7 +5,7 @@ import {validateUniversalDeck} from './pack.mjs';
 import {matchesOwnDistinctTraits,matchesV2LiveCondition} from './field-conditions.mjs';
 import {refreshFieldActive,expireContinuousStates,pruneContinuousStates,
  fieldRestrictions,validateContinuousStates,grantContinuousState,
- attemptFieldActive} from './continuous-states.mjs';
+ attemptFieldActive,originalEffectsDisabled} from './continuous-states.mjs';
 export const UNIVERSAL_V2_VERSION='ua-v2.0';
 const playerIndex=n=>n===0||n===1;
 const field=p=>[...p.front,...p.energy].filter(Boolean);
@@ -65,15 +65,16 @@ export function universalCardEnergy(pack,s,p,c){
  // Resolve READY, printed identity and buffs from the current state's UID.
  c=live;
  const d=card(pack,c),profile=d.conditionalTraitEnergy;
- if(!inEnergy&&!d.frontGeneratesEnergy)return 0;
+ const suppressed=originalEffectsDisabled(s,c);
+ if(!inEnergy&&(!d.frontGeneratesEnergy||suppressed))return 0;
  const pIndex=p;
- const activeBonus=c.ready?(d.activeExtraEnergy||0):0;
+ const activeBonus=!suppressed&&c.ready?(d.activeExtraEnergy||0):0;
  const timedBonus=(c.buffs||[]).filter(b=>b.untilTurn===s.turn)
   .reduce((n,b)=>n+(b.energy||0),0);
- const passiveBonus=d.passiveBonuses.reduce((n,p)=>n+(p.extraEnergy&&
+ const passiveBonus=(suppressed?[]:d.passiveBonuses).reduce((n,p)=>n+(p.extraEnergy&&
   matchesV2LiveCondition(s,pIndex,c.uid,p.condition,x=>card(pack,x),()=>0)?
   p.extraEnergy:0),0);
- const distinctBonus=profile&&(!profile.requiresActive||c.ready)&&
+ const distinctBonus=!suppressed&&profile&&(!profile.requiresActive||c.ready)&&
   matchesOwnDistinctTraits(s,p,c.uid,profile,x=>card(pack,x))?
   profile.extraEnergy:0;
  return d.gen+activeBonus+distinctBonus+passiveBonus+timedBonus;
@@ -81,7 +82,7 @@ export function universalCardEnergy(pack,s,p,c){
 export function universalEnergyByColor(pack,s,p){
  const counts=Object.create(null);
  const producers=[...s.players[p].energy,
-  ...s.players[p].front.filter(c=>c&&card(pack,c).frontGeneratesEnergy)];
+  ...s.players[p].front.filter(c=>c&&card(pack,c).frontGeneratesEnergy&&!originalEffectsDisabled(s,c))];
  for(const c of producers){
   if(!c)continue;
   const d=card(pack,c);
@@ -94,23 +95,23 @@ function calcEnergy(pack,s,p){
 }
 export const universalEnergy=calcEnergy;
 function bp(pack,s,c){
- const printed=card(pack,c);
+ const printed=card(pack,c),suppressed=originalEffectsDisabled(s,c);
  const owner=Number(String(c.uid).split('-')[0]);
- return (printed?.bp||0)+(s.active===owner?(printed.ownTurnBp||0):(printed.opponentTurnBp||0))+
-  printed.passiveBonuses.reduce((n,p)=>n+(p.bp&&
+ return (printed?.bp||0)+(suppressed?0:s.active===owner?(printed.ownTurnBp||0):(printed.opponentTurnBp||0))+
+  (suppressed?[]:printed.passiveBonuses).reduce((n,p)=>n+(p.bp&&
    matchesV2LiveCondition(s,owner,c.uid,p.condition,x=>card(pack,x),
     ()=>calcEnergy(pack,s,owner))?p.bp:0),0)+
-  (hasFacedownUnder(c)?(printed.conditionalUnderFaceDown?.bp||0):0)+
+  (!suppressed&&hasFacedownUnder(c)?(printed.conditionalUnderFaceDown?.bp||0):0)+
   (c.buffs||[]).filter(b=>b.untilTurn===s.turn).reduce((n,b)=>n+b.bp,0);
 }
 export const universalBp=bp;
 function impactOnBattleWin(pack,s,c){
  const d=card(pack,c);
- return hasFacedownUnder(c)?(d.conditionalUnderFaceDown?.impact||0):0;
+ return !originalEffectsDisabled(s,c)&&hasFacedownUnder(c)?(d.conditionalUnderFaceDown?.impact||0):0;
 }
 function protectedLeave(pack,s,c){
  const profile=card(pack,c).conditionalUnderFaceDown;
- return !!profile&&hasFacedownUnder(c)&&bp(pack,s,c)>=profile.leaveReplacementMinBp;
+ return !originalEffectsDisabled(s,c)&&!!profile&&hasFacedownUnder(c)&&bp(pack,s,c)>=profile.leaveReplacementMinBp;
 }
 // Facedown cards can survive several Raid generations. If more than one is
 // beneath a character, the owner selects the physical UID to sacrifice.
@@ -180,7 +181,7 @@ function markOwnEffectZoneMove(s,owner,from,to){
 function queuePhaseBoundary(pack,s,phase,edge,turnPlayer){
  for(const owner of [turnPlayer,1-turnPlayer]){
   const entries=[],units=[...s.players[owner].front,...s.players[owner].energy].filter(Boolean);
-  for(const c of units)for(const [i,q] of card(pack,c).phaseEffects.entries()){
+  for(const c of units)for(const [i,q] of (originalEffectsDisabled(s,c)?[]:card(pack,c).phaseEffects).entries()){
    if(q.phase!==phase||q.edge!==edge||(q.turn==='own')!==(owner===turnPlayer))continue;
    entries.push({key:c.uid+':'+i,sourceUid:c.uid,
     jobs:q.then.map(op=>({...op,owner,sourceUid:c.uid,sourceName:card(pack,c).name}))});
@@ -383,6 +384,13 @@ function continueEffectQueue(pack,s){
      choices:targets.map(c=>c.uid),optional:job.optional,
      ...(!retireNow?{skipNextActive:true}:{})};
    }
+  }else if(job.op==='restSilenceOppFrontIfOwnOutsideField'){
+   if(pl.outside.some(c=>card(pack,c).type==='field')){
+    const choices=s.players[1-owner].front.filter(Boolean).map(c=>c.uid);
+    if(choices.length)s.pending={kind:'effect-rest-bp',player:owner,
+     sourceUid:job.sourceUid,choices,limit:null,optional:true,
+     silenceUntil:{player:1-owner,phase:'attack',edge:'end'}};
+   }
   }else if(job.op==='skipNextActiveOppRest'){
    const choices=field(s.players[1-owner]).filter(c=>!c.ready).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-rest-bp',player:owner,
@@ -466,13 +474,14 @@ function continueEffectQueue(pack,s){
   }else throw Error('Unimplemented effect op');
  }
 }
-function programJobs(pack,physical,timing,owner,raidUid){
- return (card(pack,physical).effects[timing]||[])
+function programJobs(pack,s,physical,timing,owner,raidUid){
+ // Q2220: printed leave triggers are lost before true retirement.
+ return (originalEffectsDisabled(s,physical)?[]:card(pack,physical).effects[timing]||[])
   .map(e=>({...e,owner,sourceUid:physical.uid,
    sourceName:card(pack,physical).name,...(raidUid?{raidUid}:{})}));
 }
 function applyEffects(pack,s,cardOnField,timing,owner){
- s.effectQueue.push(...programJobs(pack,cardOnField,timing,owner));
+ s.effectQueue.push(...programJobs(pack,s,cardOnField,timing,owner));
  continueEffectQueue(pack,s);
 }
 function validRaidBase(pack,s,owner,base,top){
@@ -488,6 +497,7 @@ function validRaidBase(pack,s,owner,base,top){
 }
 function performRaid(pack,s,p,cardOnTop,baseUid,line,slot,replaceUid){
  const pl=s.players[p],base=location(s,p,baseUid),top=card(pack,cardOnTop);
+ const baseOriginalSilenced=base?originalEffectsDisabled(s,base.c):false;
  if(!base||!validRaidBase(pack,s,p,base.c,top))throw Error('Illegal Raid base');
  if(line!=='front'&&line!=='energy')throw Error('Illegal Raid destination');
  if(line==='front'&&(top.frontForbidden||card(pack,base.c).frontForbidden))
@@ -512,9 +522,9 @@ function performRaid(pack,s,p,cardOnTop,baseUid,line,slot,replaceUid){
  cardOnTop.fieldEntryStamp=s.nextFieldEntryStamp++;
  pl[line][slot]=cardOnTop;
  s.raidedThisTurn[p]=true;
- const baseJobs=s.active===p?programJobs(pack,effectiveBase,'onRaided',p,cardOnTop.uid):[];
- const entryJobs=programJobs(pack,cardOnTop,'onPlay',p);
- const raidJobs=programJobs(pack,cardOnTop,'onRaid',p);
+ const baseJobs=s.active===p&&!baseOriginalSilenced?programJobs(pack,s,effectiveBase,'onRaided',p,cardOnTop.uid):[];
+ const entryJobs=programJobs(pack,s,cardOnTop,'onPlay',p);
+ const raidJobs=programJobs(pack,s,cardOnTop,'onRaid',p);
  if(baseJobs.length&&entryJobs.length)
   s.pending={kind:'raid-effect-order',player:p,baseUid:effectiveBase.uid,
    raidUid:cardOnTop.uid,baseJobs,entryJobs,raidJobs};
@@ -550,7 +560,7 @@ function vacate(s,p,line,slot,destination='outside'){
 function queueRetirement(pack,s,p,c,line){
  // Capture the source before moving to outside. Only GENUINE retirement
  // queues onRetire; bounce, removed area and stripping a Raid top do not.
- const jobs=programJobs(pack,c,'onRetire',p).map(job=>({
+ const jobs=programJobs(pack,s,c,'onRetire',p).map(job=>({
   ...job,retiredSource:{uid:c.uid,cardId:c.cardId,line,ready:c.ready,
    bp:bp(pack,s,c),fieldEntryStamp:c.fieldEntryStamp??null}
  }));
@@ -840,7 +850,7 @@ function resolveChoice(s,a,pack){
    // Recovered card's OWN mandatory print resolves before the recovering
    // source's remaining jobs. UID ownership and the source zone were
    // checked above. No trigger on GET Life, searchDeck, draw or bounce.
-   const onRecover=programJobs(pack,recovered,'onOutsideRecover',q.player);
+   const onRecover=programJobs(pack,s,recovered,'onOutsideRecover',q.player);
    if(onRecover.length)s.effectQueue.unshift(...onRecover);
    // Only an OWN outside card recovered to its OWN hand via a printed
    // own effect is eligible. This interrupts the existing ordered queue.
@@ -864,7 +874,7 @@ function resolveChoice(s,a,pack){
   p.energy[a.slot]=entrant;
   s.pending=null;
   // This is entry via an effect, so onPlay executes with no additional AP.
-  s.effectQueue.unshift(...programJobs(pack,entrant,'onPlay',q.player));
+  s.effectQueue.unshift(...programJobs(pack,s,entrant,'onPlay',q.player));
   continueEffectQueue(pack,s);return;
  }
  if(q.kind==='effect-discard-cost'){
@@ -982,6 +992,11 @@ function resolveChoice(s,a,pack){
    (q.limit!==null&&bp(pack,s,target)>q.limit)||(q.onlyRest&&target.ready))
    throw Error('Illegal opponent REST target');
   if(q.restTarget!==false)target.ready=false;
+  if(q.silenceUntil){
+   for(const kind of ['cannotActive','originalEffectsDisabled'])
+    grantContinuousState(s,{kind,controller:q.player,sourceUid:q.sourceUid,
+     targetUid:target.uid,until:q.silenceUntil});
+  }
   if(q.skipNextActive)grantContinuousState(s,{kind:'skipNextActive',
    controller:q.player,sourceUid:q.sourceUid,targetUid:target.uid});
   s.pending=null;continueEffectQueue(pack,s);return;
@@ -1304,26 +1319,26 @@ export function legalUniversalActions(pack,s){
   for(const c of pl.energy.filter(c=>c&&!s.movedUids.includes(c.uid)&&
   card(pack,c).type==='character'&&!card(pack,c).frontForbidden))
    for(const choice of legalDestinations(pl,'front'))out.push({type:'move',uid:c.uid,...choice});
-  for(const c of pl.front.filter(c=>c&&!s.movedUids.includes(c.uid)&&card(pack,c).step))
+  for(const c of pl.front.filter(c=>c&&!s.movedUids.includes(c.uid)&&card(pack,c).step&&!originalEffectsDisabled(s,c)))
    for(const choice of legalDestinations(pl,'energy'))out.push({type:'step',uid:c.uid,...choice});
  }
  if(s.phase==='main'){
   // A discard-cost MAIN ability can be activated from either field line,
   // regardless of source REST state; it does NOT require spending AP.
   for(const c of field(pl)){
-   const ability=card(pack,c).mainAbility;
+   const ability=originalEffectsDisabled(s,c)?null:card(pack,c).mainAbility;
    if(ability?.op==='discardHandBuffSelf'&&pl.hand.length>0&&
     !s.mainAbilityUsedUids.includes(c.uid))
     out.push({type:'activate',uid:c.uid,mode:'discardSelfBuff'});
   }
   for(const c of pl.energy.filter(Boolean)){
-   const ability=card(pack,c).mainAbility;
+   const ability=originalEffectsDisabled(s,c)?null:card(pack,c).mainAbility;
    if(ability?.op==='restSelfGainEnergyRetireEndMain'&&
     c.ready&&!s.mainAbilityUsedUids.includes(c.uid))
     out.push({type:'activate',uid:c.uid,mode:'selfRestEnergyRetire'});
   }
   for(const c of pl.front.filter(Boolean)){
-   const d=card(pack,c),ability=d.mainAbility;
+   const d=card(pack,c),ability=originalEffectsDisabled(s,c)?null:d.mainAbility;
    if(!ability)continue;
    if(ability.op==='restSelfThen'){
     // A READY own FRONT source pays its actual REST cost before any effect.
@@ -1438,7 +1453,7 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
    break;
   case 'activate':{
    const selected=field(pl).find(c=>c.uid===action.uid);
-   if(!selected||!card(pack,selected).mainAbility)throw Error('Main ability source missing');
+   if(!selected||originalEffectsDisabled(s,selected)||!card(pack,selected).mainAbility)throw Error('Main ability source missing');
    const d=card(pack,selected),ability=d.mainAbility;
    if(ability.op==='discardHandBuffSelf'){
     if(action.mode!=='discardSelfBuff'||!pl.hand.length||
@@ -1535,7 +1550,7 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
    // Queue the blocker decision after the attack triggers. A targeted
    // onAttack effect may suspend resolution for its controller's choice;
    // assigning block here would overwrite that pending choice.
-   s.effectQueue.push(...programJobs(pack,attacker,'onAttack',p),
+   s.effectQueue.push(...programJobs(pack,s,attacker,'onAttack',p),
     {op:'openBlock',owner:p,sourceUid:attacker.uid});
    continueEffectQueue(pack,s);
    break;
@@ -1592,7 +1607,7 @@ export function assertUniversalMatch(pack,s){
    !['draw','drawIfOwnName','drawIfOwnEnergyAtLeast','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','restOppFrontUnderBp','restOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
     'discardGate','enemyFrontAllBpDown','retireOppFrontAllUnderBp',
     'buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
-    'recoverOutsideColorUnderEnergy','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','openBlock','skipNextActiveOppRest','restOrRetireOppFrontByLife','phaseOrder','advanceAfterAttack'].includes(e.op)))
+    'recoverOutsideColorUnderEnergy','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','openBlock','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','phaseOrder','advanceAfterAttack'].includes(e.op)))
   throw Error('Invalid queued effects');
  for(let p=0;p<2;p++){
   const pl=s.players[p],uids=new Set(),items=[];
@@ -1678,7 +1693,7 @@ export function universalPublicView(pack,s,viewer=0){
    front:pl.front.map(c=>c?{uid:c.uid,cardId:c.cardId,ready:c.ready,bp:bp(pack,s,c),
     // Front-line energy is public only for a source-verified printed producer.
     // Read the current physical UID; never expose private hand/deck identities.
-    ...(card(pack,c).frontGeneratesEnergy?{produces:universalCardEnergy(pack,s,p,c)}:{}),
+    ...(card(pack,c).frontGeneratesEnergy&&!originalEffectsDisabled(s,c)?{produces:universalCardEnergy(pack,s,p,c)}:{}),
     restrictions:fieldRestrictions(s,p,c),raidDepth:c.stack?.length||0,raidLayers:(c.stack||[]).map(layer=>layerView(layer,p,viewer))}:null),
    energy:pl.energy.map(c=>c?{uid:c.uid,cardId:c.cardId,ready:c.ready,
     baseProduces:card(pack,c).gen,produces:universalCardEnergy(pack,s,p,c),
