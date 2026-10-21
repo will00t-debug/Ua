@@ -22,8 +22,8 @@ const roster=['bleach-green','gurren-lagann-red','solo-leveling',
 const seeds=[747,20261015,20261016];
 const results=[],errors=[];
 const coverage=listRegisteredV2Titles();
-if(coverage.map(x=>x.totalV2Cards).join(',')!=='80,27,28,53,24')
- throw Error('Integrated V2 candidate drifted from pinned 212 printed IDs');
+if(coverage.map(x=>x.totalV2Cards).join(',')!=='80,27,29,53,24')
+ throw Error('Integrated V2 candidate drifted from pinned 213 printed IDs');
 for(const key of roster){
  const {pack,counts}=presets[key];
  if(validateUniversalDeck(pack,counts).length||
@@ -63,7 +63,7 @@ for(let i=0;i<roster.length;i++)for(let j=i+1;j<roster.length;j++){
   results.push(entry);
  }
 }
-const summary={candidate:'V2 five-title 212-card source-pinned integrated matrix',
+const summary={candidate:'V2 five-title 213-card source-pinned integrated matrix',
  seedValues:seeds,matchCount:results.length,passed:results.filter(x=>x.pass).length,
  failed:errors.length,titles:coverage.map(x=>({title:x.title,ported:x.totalV2Cards})),
  disclaimer:'Only selected real 50-card decks, NOT full printed-FAQ acceptance',
