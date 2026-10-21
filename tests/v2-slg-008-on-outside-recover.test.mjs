@@ -84,8 +84,9 @@ test('real SLG-037 recovers SLG-008: self mandatory draw then discard BEFORE sou
  assert.throws(()=>dispatchUniversalAction(packs,s,{type:'chooseOutsideRecovery',uid:enemy.uid}),/not currently legal/);
  assert.throws(()=>dispatchUniversalAction(packs,s,options[1],{actor:1}),/Wrong player/);
  s=dispatchUniversalAction(packs,s,options[1],{actor:0});
- assert.deepEqual(clone.players[0].deck.map(c=>c.uid),
-  s.players[0].deck.map(c=>c.uid).slice(1),'exactly one onRecover draw before discard choice');
+ assert.deepEqual(s.players[0].deck.map(c=>c.uid),
+  clone.players[0].deck.map(c=>c.uid).slice(1),
+  'exactly one onRecover draw before discard choice');
  assert.equal(s.pending?.kind,'effect-discard');
  assert.equal(s.pending?.sourceUid,recovered.uid,'trigger belongs to recovered physical source');
  assert.ok(s.effectQueue.some(job=>job.op==='draw'),'recovering source next effect still waits');

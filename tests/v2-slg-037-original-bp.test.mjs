@@ -40,7 +40,7 @@ test('037 official event matches literal catalog, separate DRAW life, Q2039 prin
  assert.deepEqual(v2.effects.onPlay,[
   {op:'recoverOutsidePrintedBp',bp:4000,optional:true},{op:'draw',count:1}
  ]);
- assert.equal(Object.keys(slg.cards).length,29);
+ assert.equal(Object.keys(slg.cards).length,30);
  assert.deepEqual(validateUniversalDeck(slg,slgDeck),[]);
 });
 test('037 optional own-outside character recovery precedes unconditional draw and pays one event AP',()=>{
