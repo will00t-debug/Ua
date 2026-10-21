@@ -83,14 +83,14 @@ test('formal contract rejects stale source card, altered stats, missing text, fo
   assert.throws(()=>compileV2TitleContribution({...c,entries:[first,first]}),/duplicate/);
  }
 });
-test('SAO official 202 printings deduplicate to 183 IDs; unsupported 129 are NOT imported as ready',()=>{
+test('SAO official 202 printings deduplicate to 183 IDs; unsupported 127 are NOT imported as ready',()=>{
  assert.equal(SAO_OFFICIAL_CARDS.length,202);
  assert.equal(new Set(SAO_OFFICIAL_CARDS.map(c=>c.id)).size,183);
  assert.equal(SAO_V2_PILOT_IDS.length,56);
  for(const id of SAO_V2_PILOT_IDS)
   assert.ok(SAO_OFFICIAL_CARDS.find(r=>r.id===id),'SAO source '+id);
  const registry=registeredV2TitlePack('sword-art-online');
- assert.equal(Object.keys(registry.cards).length,54);
+ assert.equal(Object.keys(registry.cards).length,56);
  for(const id of ['SAO-2-063','SAO-2-055','SAO-2-044'])
   assert.equal(registry.cards[id],undefined,'not yet full-effect V2 '+id);
 });
