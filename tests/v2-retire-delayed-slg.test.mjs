@@ -160,3 +160,77 @@ test('AI action for 013 is from legal list; synthetic onRetire/mill verification
    energyOnly:true,oncePerTurn:false,extraEnergy:1}}]}),/unsupported main action/);
  assert.ok(c.uid);
 });
+
+function syntheticRetirePack({protect=false}={}){
+ const raw=Array.from({length:13},(_,i)=>({
+  id:'T'+i,name:'T'+i,color:'purple',energy:0,ap:1,bp:1000,gen:1,
+  type:'character',implementation:'vanilla',effects:{}
+ }));
+ raw[0]={...raw[0],implementation:'dsl',effects:{onRetire:[{op:'draw',count:1}]},
+  ...(protect?{raidName:'T0',conditionalUnderFaceDown:{
+   bp:1000,impact:1,leaveReplacementMinBp:1000}}:{})};
+ raw[1]={...raw[1],implementation:'dsl',effects:{onRetire:[{op:'millTop',count:1}]}};
+ raw[2]={...raw[2],type:'event',bp:0,gen:0,implementation:'dsl',
+  effects:{onPlay:[{op:'retireOppFrontAllUnderBp',bp:2000}]}};
+ const p=createUniversalPack({id:'synthetic-retire-qa',cards:raw});
+ const deck=Object.fromEntries(raw.map((x,i)=>[x.id,i===12?2:4]));
+ return {p,deck};
+}
+function syntheticPull(s,owner,id){
+ for(const zone of ['hand','deck','life','outside']){
+  const a=s.players[owner][zone],idx=a.findIndex(c=>c.cardId===id);
+  if(idx>=0)return a.splice(idx,1)[0];
+ }
+ throw Error('Synthetic UID missing '+id);
+}
+test('simultaneous retirement snapshots BOTH physical victims; draw/mill follow stable front order',()=>{
+ const {p,deck}=syntheticRetirePack(),pair=[p,p];
+ let s=newUniversalMatch(pair,{decks:[deck,deck],seed:884,first:0});
+ const first=syntheticPull(s,1,'T0'),second=syntheticPull(s,1,'T1');
+ for(const [i,c] of [first,second].entries()){c.ready=true;s.players[1].front[i]=c;}
+ const event=syntheticPull(s,0,'T2');s.players[0].hand.push(event);
+ s=phase(s,'main',pair);
+ const handBefore=s.players[1].hand.length,deckBefore=s.players[1].deck.length;
+ const top=s.players[1].deck.slice(0,2).map(c=>c.uid);
+ const playEvent=legalUniversalActions(pair,s).find(a=>a.type==='event'&&a.uid===event.uid);
+ assert.ok(playEvent);
+ s=dispatchUniversalAction(pair,s,playEvent);
+ assert.equal(s.pending,null);
+ assert.ok(s.players[1].outside.some(c=>c.uid===first.uid));
+ assert.ok(s.players[1].outside.some(c=>c.uid===second.uid));
+ assert.ok(s.players[1].hand.some(c=>c.uid===top[0]),
+  'left victim DRAW resolves before right victim mill');
+ assert.ok(s.players[1].outside.some(c=>c.uid===top[1]),
+  'right victim mills next card, rather than drawing it');
+ assert.equal(s.players[1].hand.length,handBefore+1);
+ assert.equal(s.players[1].deck.length,deckBefore-2);
+ assert.equal(assertUniversalMatch(pair,s),true);
+});
+test('protected retirement never fires onRetire; choosing genuine leave DOES fire from pre-exit source',()=>{
+ const {p,deck}=syntheticRetirePack({protect:true}),pair=[p,p];
+ const setup=()=>{
+  let s=newUniversalMatch(pair,{decks:[deck,deck],seed:917,first:0});
+  const source=syntheticPull(s,1,'T0'),under=syntheticPull(s,1,'T4');
+  under.faceDown=true;source.under=[under];source.ready=true;s.players[1].front[0]=source;
+  const event=syntheticPull(s,0,'T2');s.players[0].hand.push(event);
+  s=phase(s,'main',pair);
+  const action=legalUniversalActions(pair,s).find(a=>a.type==='event'&&a.uid===event.uid);
+  assert.ok(action);
+  s=dispatchUniversalAction(pair,s,action);
+  assert.equal(s.pending?.kind,'leave-replacement');
+  return {s,source,under};
+ };
+ let {s,source,under}=setup();
+ const before=s.players[1].deck.length;
+ s=dispatchUniversalAction(pair,s,{type:'chooseLeaveReplacement',mode:'protect'});
+ assert.equal(s.players[1].front[0]?.uid,source.uid);
+ assert.ok(s.players[1].outside.some(c=>c.uid===under.uid));
+ assert.equal(s.players[1].deck.length,before,'protection does not draw');
+ assert.equal(assertUniversalMatch(pair,s),true);
+ ({s,source}=setup());
+ const beforeHand=s.players[1].hand.length;
+ s=dispatchUniversalAction(pair,s,{type:'chooseLeaveReplacement',mode:'leave'});
+ assert.ok(s.players[1].outside.some(c=>c.uid===source.uid));
+ assert.equal(s.players[1].hand.length,beforeHand+1,'actual retirement queues printed draw');
+ assert.equal(assertUniversalMatch(pair,s),true);
+});
