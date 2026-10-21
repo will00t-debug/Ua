@@ -282,10 +282,10 @@ function normalize(card,packId){
    (card.type!=='character'||timing!=='onPlay'))
    throw Error(card.id+' self-bounce is only valid on character onPlay');
  if(implemented==='vanilla'&&(Object.keys(effects).length||card.effectText||
-  card.activeExtraEnergy||card.impactNull))
+  card.activeExtraEnergy||card.conditionalTraitEnergy||card.impactNull))
   throw Error(card.id+' claims vanilla despite printed/declared effects');
  if(implemented==='dsl'&&!Object.keys(effects).length&&!mainAbility&&
-  !card.activeExtraEnergy&&!card.impactNull)
+  !card.activeExtraEnergy&&!card.conditionalTraitEnergy&&!card.impactNull)
   throw Error(card.id+' declares dsl without effects');
  for(const [name,program] of Object.entries(effects)){
   if(!V2_EFFECT_TIMINGS.includes(name))throw Error(card.id+' timing '+name+' unsupported');
@@ -304,6 +304,25 @@ function normalize(card,packId){
  if(card.ownTurnBp!==undefined&&
   (card.type!=='character'||!integer(card.ownTurnBp,1)||card.ownTurnBp>5000))
   throw Error(card.id+' invalid own-turn BP modifier');
+ // Dedicated passive energy profile; calculation area and own-card inclusion
+ // must be explicit. The predicate is intentionally separated from the bonus.
+ const conditionalTraitEnergy=card.conditionalTraitEnergy??null;
+ if(conditionalTraitEnergy!==null&&(
+   card.type==='event'||typeof conditionalTraitEnergy!=='object'||
+   Array.isArray(conditionalTraitEnergy)||
+   !['field','front','energy'].includes(conditionalTraitEnergy.zone)||
+   !['character','card'].includes(conditionalTraitEnergy.subject)||
+   !integer(conditionalTraitEnergy.minimumDistinctTraits,1)||
+   conditionalTraitEnergy.minimumDistinctTraits>8||
+   !integer(conditionalTraitEnergy.extraEnergy,1)||
+   conditionalTraitEnergy.extraEnergy>3||
+   typeof conditionalTraitEnergy.excludeSelf!=='boolean'||
+   typeof conditionalTraitEnergy.requiresActive!=='boolean'||
+   Object.keys(conditionalTraitEnergy).length!==6||
+   Object.keys(conditionalTraitEnergy).some(k=>![
+    'zone','subject','minimumDistinctTraits','extraEnergy',
+    'excludeSelf','requiresActive'].includes(k))
+ ))throw Error(card.id+' invalid conditional trait energy profile');
  // Explicit audited passive profiles, not inferred from translated text.
  if(card.activeExtraEnergy!==undefined&&(
   card.type!=='character'||!integer(card.activeExtraEnergy,1)||
@@ -324,7 +343,9 @@ function normalize(card,packId){
   triggerEffect:triggerEffect?Object.freeze({...triggerEffect}):null,
   mainAbility:mainAbility?Object.freeze({...mainAbility}):null,
   step:card.step===true,ownTurnBp:card.ownTurnBp||0,
-  activeExtraEnergy:card.activeExtraEnergy||0,impactNull:card.impactNull===true,
+  activeExtraEnergy:card.activeExtraEnergy||0,
+  conditionalTraitEnergy:conditionalTraitEnergy?Object.freeze({...conditionalTraitEnergy}):null,
+  impactNull:card.impactNull===true,
   implementation:implemented,
   effects:Object.freeze(Object.fromEntries(Object.entries(effects)
    .map(([k,v])=>[k,Object.freeze(v.map(e=>Object.freeze({

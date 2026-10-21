@@ -2,6 +2,7 @@
 // Pure physical-card reducer: common UA zones/AP/phases/limited effects/Raid
 // and official Q99 optional GET/DRAW/FINAL. Unsupported keywords FAIL CLOSED.
 import {validateUniversalDeck} from './pack.mjs';
+import {matchesOwnDistinctTraits} from './field-conditions.mjs';
 export const UNIVERSAL_V2_VERSION='ua-v2.0';
 const playerIndex=n=>n===0||n===1;
 const field=p=>[...p.front,...p.energy].filter(Boolean);
@@ -45,13 +46,24 @@ function raidNamePresent(pack,s,owner,name){
  const inspect=c=>card(pack,c).name===name||(c.stack||[]).some(inspect);
  return field(s.players[owner]).some(inspect);
 }
+// The card itself only PRODUCES energy in its owner's ENERGY line.
+ // Derive bonuses from the CURRENT board on every query. Never mutate gen
+ // or persist a modifier across moves, Raid, retirement or READY/REST.
+export function universalCardEnergy(pack,s,p,c){
+ if(!s.players[p].energy.some(x=>x?.uid===c?.uid))return 0;
+ const d=card(pack,c),profile=d.conditionalTraitEnergy;
+ const activeBonus=c.ready?(d.activeExtraEnergy||0):0;
+ const distinctBonus=profile&&(!profile.requiresActive||c.ready)&&
+  matchesOwnDistinctTraits(s,p,c.uid,profile,x=>card(pack,x))?
+  profile.extraEnergy:0;
+ return d.gen+activeBonus+distinctBonus;
+}
 export function universalEnergyByColor(pack,s,p){
  const counts=Object.create(null);
  for(const c of s.players[p].energy){
   if(!c)continue;
   const d=card(pack,c);
-  counts[d.color]=(counts[d.color]||0)+(d.gen||0)+
-   (c.ready?(d.activeExtraEnergy||0):0);
+  counts[d.color]=(counts[d.color]||0)+universalCardEnergy(pack,s,p,c);
  }
  return counts;
 }
@@ -1359,7 +1371,9 @@ export function universalPublicView(pack,s,viewer=0){
    title:s.packIds[p],lifeCount:pl.life.length,deckCount:pl.deck.length,handCount:pl.hand.length,
    hand:p===viewer?pl.hand.map(c=>({uid:c.uid,cardId:c.cardId})):null,
    front:pl.front.map(c=>c?{uid:c.uid,cardId:c.cardId,ready:c.ready,bp:bp(pack,s,c),raidDepth:c.stack?.length||0,raidLayers:(c.stack||[]).map(layer=>layerView(layer,p,viewer))}:null),
-   energy:pl.energy.map(c=>c?{uid:c.uid,cardId:c.cardId,ready:c.ready,produces:card(pack,c).gen,raidLayers:(c.stack||[]).map(layer=>layerView(layer,p,viewer))}:null),
+   energy:pl.energy.map(c=>c?{uid:c.uid,cardId:c.cardId,ready:c.ready,
+    baseProduces:card(pack,c).gen,produces:universalCardEnergy(pack,s,p,c),
+    raidLayers:(c.stack||[]).map(layer=>layerView(layer,p,viewer))}:null),
    apReady:pl.apCards.filter(c=>c.ready).length,apTotal:pl.apCards.filter(c=>c.inPlay).length,energyTotal:calcEnergy(pack,s,p),energyByColor:{...universalEnergyByColor(pack,s,p)},
    outside:pl.outside.map(c=>({uid:c.uid,cardId:c.cardId}))
   }))

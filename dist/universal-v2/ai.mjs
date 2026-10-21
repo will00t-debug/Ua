@@ -1,6 +1,6 @@
 // Cross-title Universal v2 AI baseline. Uses only the native legal-action
 // list; no work-specific card-ID shortcuts and no mutation of match state.
-import {legalUniversalActions,dispatchUniversalAction,universalBp,universalEnergy,universalEnergyByColor} from './engine.mjs';
+import {legalUniversalActions,dispatchUniversalAction,universalBp,universalEnergy,universalEnergyByColor,universalCardEnergy} from './engine.mjs';
 export const UNIVERSAL_AI_LEVELS=Object.freeze(['easy','normal','hard']);
 const packsOf=pack=>Array.isArray(pack)?pack:[pack,pack];
 const option=(list,type)=>list.find(x=>x.type===type);
@@ -117,7 +117,7 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
    if(a.type!=='move')return false;
    const c=pl.energy.find(c=>c?.uid===a.uid),d=catalog[c?.cardId];
    return d&&d.bp>=3000&&
-    energy-(d.gen||0)-(c.ready?(d.activeExtraEnergy||0):0)>=target;
+    energy-universalCardEnergy(pack,s,s.active,c)>=target;
   })||next;
  }
  if(s.phase==='attack'){
