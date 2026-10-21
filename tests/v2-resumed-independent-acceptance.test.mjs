@@ -46,13 +46,13 @@ function playFixture(id,deckKey,genId,seed){
  assert.ok(play,'actual legal play available for '+id);
  return {s,packs,source,play};
 }
-test('new stable registry exact 238 IDs across five independently approved official title packs',()=>{
- const expected=[85,30,34,60,29],registered=listRegisteredV2Titles();
+test('new stable registry exact 239 IDs across five independently approved official title packs',()=>{
+ const expected=[85,30,34,61,29],registered=listRegisteredV2Titles();
  assert.deepEqual(registered.map(t=>t.totalV2Cards),expected);
  const inventory=v2AllTitleInventory();
  assert.equal(inventory.totals.total,700);
- assert.equal(inventory.totals.pilotImplemented,238);
- assert.equal(inventory.totals.blocked,462);
+ assert.equal(inventory.totals.pilotImplemented,239);
+ assert.equal(inventory.totals.blocked,461);
  for(let i=0;i<titleIds.length;i++){
   const title=titleIds[i],pack=registeredV2TitlePack(title),ids=Object.keys(pack.cards).sort();
   assert.equal(ids.length,expected[i]);

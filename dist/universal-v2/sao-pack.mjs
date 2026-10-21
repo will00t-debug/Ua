@@ -4,6 +4,20 @@ import {SAO_OFFICIAL_CARDS} from '../sao-official-import.mjs';
 import {createUniversalPack} from './pack.mjs';
 
 const PRINTED_PINS=Object.freeze({
+  "SAO-1-051": {
+    "kind": "impactNullOwnTurnHandFiveBp1000",
+    "nameJa": "キリト",
+    "color": "blue",
+    "energy": 1,
+    "ap": 1,
+    "bp": 2000,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "traits": ["ALO"],
+    "effectJa": "【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、【インパクト】を失う）\n【自分のターン中】自分の手札が5枚以上の場合、このキャラはBP+1000。"
+  },
+
   "SAO-1-020": {
     "kind": "ownLifeAtMostFourBp500",
     "nameJa": "アスナ（創世神ステイシア）",
@@ -901,6 +915,11 @@ export function verifiedSaoV2Cards(){
    card.opponentTurnBp=1000;
    card.effects={}; // Explicit DSL profile: persistent native modifier, no onPlay job
   }
+  if(pin.kind==='impactNullOwnTurnHandFiveBp1000'){
+   card.effects={};
+   card.impactNull=true;
+   card.passiveBonuses=[{condition:{kind:'ownHandCountAtLeast',turn:'own',min:5},bp:1000}];
+  }
   if(pin.kind==='ownLifeAtMostFourBp500'){
    card.effects={};
    card.passiveBonuses=[{condition:{kind:'ownLifeAtMost',turn:'any',max:4},bp:500}];
@@ -991,6 +1010,7 @@ export function verifiedSaoV2Entries(){
      ...(pin.kind==='opponentTurnBp1000'?['tests/v2-sao-014-opponent-bp.test.mjs']:[]),
      ...(pin.kind==='ownTurnHandFiveBp'?['tests/v2-sao-057-hand-count-bp.test.mjs']:[]),
      ...(pin.kind==='ownLifeAtMostFourBp500'?['tests/v2-sao-020-life-threshold-bp.test.mjs']:[]),
+     ...(pin.kind==='impactNullOwnTurnHandFiveBp1000'?['tests/v2-sao-051-hand-impact-null.test.mjs']:[]),
      ...(pin.kind==='ownTurnSilicaFieldBp'?['tests/v2-sao-019-own-silica-bp.test.mjs']:[]),
      'tests/universal-v2-sao-mst-cross-title.test.mjs'
     ]),

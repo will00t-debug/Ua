@@ -33,7 +33,7 @@ test('SAO2019 full EX08BT original Japanese and live OWN-name passive matches sh
  assert.equal(p.effects.onPlay,undefined);
  assert.equal(p.impactNull,false);
  assert.ok(SAO_V2_PILOT_IDS.includes(ID));
- assert.equal(Object.keys(sao.cards).length,60);
+ assert.equal(Object.keys(sao.cards).length,61);
  assert.deepEqual(verifiedSaoV2Cards().find(c=>c.id===ID).passiveBonuses,p.passiveBonuses);
  assert.deepEqual(saoV2Pack().cards[ID],p);
  assert.deepEqual(validateUniversalDeck(sao,deck),[]);
