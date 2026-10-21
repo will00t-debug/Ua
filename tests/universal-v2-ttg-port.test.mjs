@@ -70,7 +70,7 @@ test('TTG contribution is consumable by latest shared V2 title registry and is d
  assert.equal(row.newlyContributed,9);
  assert.equal(row.totalV2Cards,29);
  const registered=registeredV2TitlePack('gurren-lagann');
- assert.equal(Object.keys(registered.cards).length,28);
+ assert.equal(Object.keys(registered.cards).length,29);
  for(const id of TTG_V2_ADDITION_IDS){
   assert.deepEqual(registered.cards[id].effects,ttg.cards[id].effects);
   assert.equal(registered.cards[id].trigger,ttg.cards[id].trigger);
@@ -118,7 +118,7 @@ test('TTG-1-005 DRAW life can be declined, or draws exactly one owned top-deck p
  assert.equal(assertUniversalMatch(packs,resolved),true);
 });
 
-test('Registry shares exactly the 20 original TTG pilot IDs plus FOUR new, no duplicated physical card ID',()=>{
+test('Registry shares exactly the 20 original TTG pilot IDs plus NINE new, no duplicated physical card ID',()=>{
  const pilot=Object.keys(verifiedPilotPack('gurren-lagann').cards);
  const ids=Object.keys(registeredV2TitlePack('gurren-lagann').cards);
  const additions=new Set(TTG_V2_ADDITION_IDS);
