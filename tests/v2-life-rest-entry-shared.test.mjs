@@ -51,8 +51,8 @@ test('shared LIFE-gate: 5/7 life chooses REST + one skip, normal/hard cannot ref
   assert.equal(assertUniversalMatch(packs,s),true);
  }
 });
-test('shared LIFE-gate: 4/0 life retires, does not create stale ACTIVE skip',()=>{
- for(const life of [4,0]){
+test('shared LIFE-gate: 4/1 life retires, does not create stale ACTIVE skip',()=>{
+ for(const life of [4,1]){
   let {s,target,payable}=eventAtMain(life);assert.ok(payable);
   s=dispatchUniversalAction(packs,s,payable);
   assert.equal(s.pending.kind,'effect-retire-bp');
