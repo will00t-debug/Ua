@@ -455,7 +455,11 @@ function normalize(card,packId){
  if(card.impactNull!==undefined&&(
   card.type!=='character'||card.impactNull!==true))
   throw Error(card.id+' invalid IMPACT nullification profile');
+ const maxCopies=card.maxCopies===undefined?4:card.maxCopies;
+ if(!integer(maxCopies,1)||maxCopies>4)
+  throw Error(card.id+' invalid deck copy cap');
  return Object.freeze({
+  maxCopies,
   id:card.id,title:packId,name:card.name,color:card.color,
   type:card.type,energy:card.energy,ap:card.ap,bp:card.bp,gen:card.gen,
   traits:Object.freeze([...(card.traits||[])]),
@@ -508,6 +512,7 @@ export function validateUniversalDeck(pack,counts){
  for(const [id,num] of Object.entries(counts)){
   if(!own(pack.cards,id)){errors.push('Unregistered/unsupported card: '+id);continue;}
   if(!integer(num)||num>4){errors.push(id+' exceeds 0–4 copies');continue;}
+  if(num>pack.cards[id].maxCopies){errors.push(id+' exceeds 0–'+pack.cards[id].maxCopies+' copies');continue;}
   total+=num;
   if(num){const c=pack.cards[id];colors.add(c.color);if(Object.prototype.hasOwnProperty.call(triggerLimits,c.trigger))triggerLimits[c.trigger]+=num;}
  }

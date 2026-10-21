@@ -25,10 +25,10 @@ const stableIds=x=>Object.keys(x.cards).sort();
 const mod=e=>structuredClone(e);
 const auditedStatKeys=['energy','ap','bp','gen','type','color','trigger'];
 
-test('the 56 SAO and 28 MST formal contributions meet strict sourceRecord/definition/evidence contract',()=>{
+test('the 56 SAO and 29 MST formal contributions meet strict sourceRecord/definition/evidence contract',()=>{
  for(const [title,contribution,expected,ids,entries] of [
   ['sword-art-online',saoContribution,56,SAO_V2_PILOT_IDS,verifiedSaoV2Entries],
-  ['mushoku-tensei',mstContribution,28,MST_V2_PILOT_IDS,verifiedMstV2Entries]
+  ['mushoku-tensei',mstContribution,29,MST_V2_PILOT_IDS,verifiedMstV2Entries]
  ]){
   assert.equal(contribution.title,title);
   assert.equal(contribution.entries.length,expected);
@@ -57,7 +57,7 @@ test('the 56 SAO and 28 MST formal contributions meet strict sourceRecord/defini
  }
  const listed=listRegisteredV2Titles();
  assert.equal(listed.find(x=>x.title==='sword-art-online').newlyContributed,56);
- assert.equal(listed.find(x=>x.title==='mushoku-tensei').newlyContributed,28);
+ assert.equal(listed.find(x=>x.title==='mushoku-tensei').newlyContributed,29);
  assert.ok(listed.find(x=>x.title==='sword-art-online').previewReady);
  assert.ok(listed.find(x=>x.title==='mushoku-tensei').previewReady);
 });
@@ -112,8 +112,8 @@ test('MST all 80 official Japanese records are available separately from old pla
  }
  assert.equal(MST_V2_OFFICIAL_LIMITS['MST-1-051'].maxCopies,1);
  assert.equal(MST_V2_OFFICIAL_LIMITS['MST-1-051'].effectiveFrom,'2026-10-01');
- assert.equal(registeredV2TitlePack('mushoku-tensei').cards['MST-1-051'],undefined,
-  'restricted 051 has unported main effect and stays blocked');
+ assert.equal(registeredV2TitlePack('mushoku-tensei').cards['MST-1-051'].maxCopies,1,
+  'official 051 restricted limit must survive registry');
 });
 test('both 50-card decks are truly registered, one title each, validated without fake or AP fillers',()=>{
  const pairs=[[verifiedSaoV2RealDeck(),SAO_V2_REAL_DECK_COUNTS,'SAO-'],
@@ -132,8 +132,9 @@ test('both 50-card decks are truly registered, one title each, validated without
   for(const [id,cap] of Object.entries(MST_V2_OFFICIAL_LIMITS))
    assert.ok((counts[id]||0)<=cap.maxCopies);
  }
- const invalid={...MST_V2_REAL_DECK_COUNTS,'MST-1-051':1};
- assert.match(validateUniversalDeck(verifiedMstV2RealDeck().pack,invalid).join(';'),/Unregistered/);
+ const invalid={...MST_V2_REAL_DECK_COUNTS,'MST-1-051':2};
+ invalid[Object.keys(MST_V2_REAL_DECK_COUNTS)[0]]-=2;
+ assert.match(validateUniversalDeck(verifiedMstV2RealDeck().pack,invalid).join(';'),/0–1 copies/);
 });
 test('registry drives actual SAO vs MST 50-card physical-card match; no synthetic cards across turns',()=>{
  const a=verifiedSaoV2RealDeck(),b=verifiedMstV2RealDeck();

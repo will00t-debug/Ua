@@ -4,6 +4,20 @@ import {MST_V2_OFFICIAL_CATALOGUE} from './sources/mst-inventory.mjs';
 import {createUniversalPack} from './pack.mjs';
 
 const PRINTED_PINS=Object.freeze({
+  "MST-1-051": {
+    "kind": "onPlayDrawDiscardLimited",
+    "nameJa": "ロキシー",
+    "color": "green",
+    "energy": 3,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 2,
+    "type": "character",
+    "traits": [],
+    "trigger": "draw",
+    "deckLimit": 1,
+    "effectJa": "〖登場時〗 カードを1枚引き、自分の手札を1枚場外に置く。"
+  },
   "MST-1-003": {
     "kind": "ownFieldAllNamesBp",
     "nameJa": "エリス",
@@ -408,6 +422,10 @@ export function verifiedMstV2Cards(){
     zone:'field',excludeSelf:false,names:['ルーデウス','ルイジェルド']},bp:1000}];
   if(pin.kind==='onPlayDraw')card.templateEffects={onPlay:[{template:'draw',count:1}]};
   if(pin.kind==='onPlayDrawDiscard')card.templateEffects={onPlay:[{template:'drawDiscardOne'}]};
+  if(pin.kind==='onPlayDrawDiscardLimited'){
+   card.templateEffects={onPlay:[{template:'drawDiscardOne'}]};
+   card.maxCopies=pin.deckLimit;
+  }
   if(pin.kind==='onAttackDrawDiscard')card.templateEffects={onAttack:[{template:'drawDiscardOne'}]};
   if(pin.kind==='impactNull')card.impactNull=true;
   if(pin.kind==='activeExtraEnergy')card.activeExtraEnergy=1;
@@ -458,6 +476,7 @@ export function verifiedMstV2Entries(){
      'tests/universal-v2-sao-mst-cross-title.test.mjs',
      ...(pin.kind==='ownFieldAllNamesBp'?['tests/v2-mst-003-own-names.test.mjs']:[]),
       ...(pin.kind==='onRetireDrawOne'?['tests/v2-mst-013-on-retire.test.mjs']:[]),
+     ...(pin.kind==='onPlayDrawDiscardLimited'?['tests/v2-mst-051-limited-draw-discard.test.mjs']:[]),
      ...(['restSelfBlueEnergyRetireEndMain','ownTurnRoxyFieldBp'].includes(pin.kind)?['tests/v2-mst-016-024-shared.test.mjs']:[])
     ]),
     ...(def.implementation==='vanilla'?{verifiedNoExtraEffects:true}:{})

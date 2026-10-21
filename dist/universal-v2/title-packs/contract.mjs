@@ -37,6 +37,8 @@ function verifiedSourceEntry(title,entry){
   throw Error(title+'/'+id+' must document reviewer note and regression test path');
  for(const key of fields)if((record[key]??null)!==(def[key]??null))
   throw Error(title+'/'+id+' printed '+key+' changed; re-audit before integration');
+ if((record.deckLimit??4)!==(def.maxCopies??4))
+  throw Error(title+'/'+id+' official deck copy cap changed; re-audit before integration');
  if(!validText(def.name)||!['dsl','vanilla'].includes(def.implementation))
   throw Error(title+'/'+id+' has no explicitly authored V2 program/profile');
  // A vanilla classification must be proven separately. Merely setting
