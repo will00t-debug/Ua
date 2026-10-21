@@ -1,0 +1,27 @@
+name: V2 TTG-053 integration candidate
+on:
+  push:
+    branches: [codex/v2-pr75-integration-ttg053-20261021]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Complete Node test suite
+        run: npm test
+      - name: Five-title integrated 60 matches
+        run: node scripts/v2-integrated-match-matrix.mjs
+      - name: Independent unported card report
+        run: node scripts/v2-unported-report.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: v2-ttg053-merged-match-evidence
+          path: audit/v2-integrated-match-matrix.json

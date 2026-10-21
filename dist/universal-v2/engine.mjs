@@ -1072,6 +1072,11 @@ export function legalUniversalActions(pack,s){
   for(const c of pl.front.filter(Boolean)){
    const d=card(pack,c),ability=d.mainAbility;
    if(!ability)continue;
+   if(ability.op==='restSelfThen'){
+    // A READY own FRONT source pays its actual REST cost before any effect.
+    if(c.ready)out.push({type:'activate',uid:c.uid,mode:'selfRestThen'});
+    continue;
+   }
    if(ability.op==='restSelfThenRestOppFrontOne'){
     // This ability has a self-REST cost, NOT AP or per-turn flag. A READY
     // front-line character and at least one opponent front character are
@@ -1157,6 +1162,16 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
    const selected=pl.front.find(c=>c?.uid===action.uid);
    if(!selected||!card(pack,selected).mainAbility)throw Error('Main ability source missing');
    const d=card(pack,selected),ability=d.mainAbility;
+   if(ability.op==='restSelfThen'){
+    if(action.mode!=='selfRestThen'||!selected.ready)
+     throw Error('REST main action requires READY front character');
+    selected.ready=false;
+    // Use only the existing common queue; title adapters never execute effects.
+    s.effectQueue.push(...ability.then.map(e=>({...e,owner:p,
+     sourceUid:selected.uid,sourceName:d.name})));
+    continueEffectQueue(pack,s);
+    break;
+   }
    if(ability.op==='restSelfThenRestOppFrontOne'){
     const targets=s.players[1-p].front.filter(Boolean).map(c=>c.uid);
     if(action.mode!=='selfRestEnemy'||!selected.ready||!targets.length)
@@ -1300,7 +1315,7 @@ export function universalPrivateChoices(pack,s,viewer){
  assertUniversalMatch(pack,s);
  if(!playerIndex(viewer))throw Error('Invalid private choice viewer');
  const q=s.pending;
- if(q?.kind==='private-top-place'&&q.player===viewer){
+ if((q?.kind==='private-top-place'||q?.kind==='private-top-choice')&&q.player===viewer){
   const top=s.players[viewer].deck[0];
   return {kind:q.kind,player:viewer,options:legalPending(pack,s).map(action=>({
    action:{...action},card:top?
