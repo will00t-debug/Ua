@@ -43,9 +43,9 @@ test('TTG 81 and SLG 80 normal official card IDs are unique and contiguous, excl
   assert.ok(cards.every(c=>c.type!=='ap'&&c.type!=='action_point'&&!c.id.includes('-AP')));
  }
 });
-test('SLG 19 printed effect profiles do not equate to full 80-card migration and retain life trigger separately',()=>{
- assert.equal(SLG_V2_VERIFIED_IDS.length,19);
- assert.equal(Object.keys(slg.cards).length,19);
+test('SLG 20 printed effect profiles do not equate to full 80-card migration and retain life trigger separately',()=>{
+ assert.equal(SLG_V2_VERIFIED_IDS.length,20);
+ assert.equal(Object.keys(slg.cards).length,20);
  assert.deepEqual(validateUniversalDeck(slg,slgDeck),[]);
  assert.equal(slg.cards['SLG-1-005'].implementation,'vanilla');
  assert.equal(slg.cards['SLG-1-005'].trigger,'draw');
@@ -167,14 +167,14 @@ test('SLG-040 SPECIAL life trigger is OPTIONAL, independent of its printed BP-li
  assert.equal(assertUniversalMatch(packs,done),true);
 });
 
-test('19 SLG profiles compile through the title-scoped V2 registry without legacy fallback',()=>{
+test('20 SLG profiles compile through the title-scoped V2 registry without legacy fallback',()=>{
  const row=listRegisteredV2Titles().find(x=>x.title==='solo-leveling');
  assert.equal(row.baselinePilots,0);
- assert.equal(row.newlyContributed,19);
- assert.equal(row.totalV2Cards,19);
+ assert.equal(row.newlyContributed,20);
+ assert.equal(row.totalV2Cards,20);
  const registered=registeredV2TitlePack('solo-leveling');
  assert.ok(registered&&registered.kind==='ua-v2-pack');
- assert.equal(Object.keys(registered.cards).length,19);
+ assert.equal(Object.keys(registered.cards).length,20);
  for(const id of SLG_V2_VERIFIED_IDS){
   assert.ok(registered.cards[id]);
   assert.equal(registered.cards[id].trigger,slg.cards[id].trigger);
@@ -346,16 +346,14 @@ test('SLG-014 free deployment from own outside remains blocked until optional EN
  assert.match(validateUniversalDeck(pack,invalid).join(';'),/Unregistered\/unsupported card: SLG-1-014/);
 });
 
-test('SLG-036 ordered draw-three/discard-two now executes; SLG-037 recovery still blocked',()=>{
+test('SLG-036 and 037 have distinct complete event-body programs and separate Life icons',()=>{
  const pack=registeredV2TitlePack('solo-leveling');
  assert.deepEqual(pack.cards['SLG-1-036'].effects.onPlay,[{op:'drawDiscard',count:3,discardCount:2}]);
- for(const id of ['SLG-1-037']){
-  assert.equal(pack.cards[id],undefined,'never claim a partial common op satisfies '+id);
-  const illegal={...slgDeck,'SLG-1-005':3,[id]:1};
-  assert.match(validateUniversalDeck(pack,illegal).join(';'),/Unregistered\/unsupported card:/);
- }
- // The life icon alone is not event-body coverage: 036 now executes; 037 stays blocked.
+ assert.deepEqual(pack.cards['SLG-1-037'].effects.onPlay,[
+  {op:'recoverOutsidePrintedBp',bp:4000,optional:true},{op:'draw',count:1}
+ ]);
  const printed=Object.fromEntries(SOLO_LEVELING_CARDS.map(c=>[c.id,c]));
  assert.equal(printed['SLG-1-036'].trigger,'active');
  assert.equal(printed['SLG-1-037'].trigger,'draw');
+ assert.equal(pack.cards['SLG-1-037'].trigger,'draw');
 });

@@ -123,7 +123,10 @@ function searchChoices(pack,cards,query){
 }
 function matchesOutsideRecovery(pack,c,q){
  if(q.filter)return matchesFilter(pack,c,q.filter);
- const d=card(pack,c);return d.color===q.color&&d.energy<=q.energy;
+ const d=card(pack,c);
+ if(q.printedBpLimit!==undefined)
+  return d.type==='character'&&d.bp<=q.printedBpLimit;
+ return d.color===q.color&&d.energy<=q.energy;
 }
 function startTurn(pack,s){
  const p=s.active,pl=s.players[p];
@@ -199,6 +202,12 @@ function continueEffectQueue(pack,s){
    const matches=filteredChoices(pack,pl.outside,job.filter);
    if(matches.length)s.pending={kind:'effect-recover-outside',player:owner,
     sourceUid:job.sourceUid,filter:job.filter,choices:matches,optional:job.optional};
+  }else if(job.op==='recoverOutsidePrintedBp'){
+   const choices=pl.outside.filter(c=>matchesOutsideRecovery(pack,c,
+    {printedBpLimit:job.bp})).map(c=>c.uid);
+   if(choices.length)s.pending={kind:'effect-recover-outside',player:owner,
+    sourceUid:job.sourceUid,printedBpLimit:job.bp,
+    choices,optional:job.optional};
   }else if(job.op==='discardToDraw'){
    if(pl.hand.length)s.pending={kind:'effect-discard-cost',player:owner,
     sourceUid:job.sourceUid,count:job.count,optional:job.optional};
@@ -1238,7 +1247,7 @@ export function assertUniversalMatch(pack,s){
  if(!Number.isInteger(s.attacksThisTurn)||s.attacksThisTurn<0||s.attacksThisTurn>50)
   throw Error('Invalid attack count');
  if(!Array.isArray(s.effectQueue)||s.effectQueue.some(e=>!playerIndex(e.owner)||
-   !['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','restOppFrontUnderBp','restOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','recoverOutsideOne','discardToDraw',
+   !['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','restOppFrontUnderBp','restOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
     'discardGate','enemyFrontAllBpDown','retireOppFrontAllUnderBp',
     'buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
     'recoverOutsideColorUnderEnergy','buffOwnField','oncePerTurnGate','retireBatchOne','openBlock'].includes(e.op)))

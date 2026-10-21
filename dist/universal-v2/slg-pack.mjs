@@ -121,6 +121,25 @@ const authored=[
     }
   },
   {
+    "id": "SLG-1-037",
+    "name": "命の神水",
+    "color": "purple",
+    "energy": 4,
+    "ap": 1,
+    "bp": 0,
+    "gen": 0,
+    "trigger": "draw",
+    "type": "event",
+    "textAnchor": "原本BP4000以下的角色",
+    "implementation": "dsl",
+    "templateEffects": {
+      "onPlay": [
+        {"template": "recoverOutsidePrintedBp", "bp": 4000, "optional": true},
+        {"template": "draw", "count": 1}
+      ]
+    }
+  },
+  {
     "id": "SLG-1-038",
     "name": "起きろ",
     "color": "purple",

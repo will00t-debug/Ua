@@ -89,6 +89,11 @@ const registry=Object.freeze({
   args:{filter,optional:yesNo},
   build:v=>[{op:'recoverOutsideOne',filter:{...v.filter},optional:v.optional}]
  },
+ // Explicit printed original BP, never temporary buffs / source energy.
+ recoverOutsidePrintedBp:{
+  args:{bp:v=>integer(v,1,50000),optional:yesNo},
+  build:v=>[{op:'recoverOutsidePrintedBp',bp:v.bp,optional:v.optional}]
+ },
  // An atomic, optional discard-one cost THEN draw; declining never draws.
  discardToDraw:{
   args:{count:v=>integer(v,1,10),optional:yesNo},

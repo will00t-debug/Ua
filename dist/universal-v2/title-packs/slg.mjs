@@ -10,6 +10,7 @@ const proof=Object.freeze({
  '026':['登場時讓另一己方','強制回手其他己方低費角色，否則自身回手'],
  '032':['IMPACT無效','純 IMPACT 無效，ACTIVE Life'],
  '036':['抽3張後將2張手牌送場外','官方 UA51BT/SLG-1-036：抽三張，然後強制送兩張己方手牌場外；ACTIVE Life 獨立處理'],
+ '037':['原本BP4000以下的角色','UA51BT/SLG-1-037 optional own-outside printed character BP<=4000, then unconditional draw one. Official Q2039 (2026-04-17): original BP is bottom-left PRINTED number; no buffs. Life DRAW is separate.'],
  '038':['最多2張己方AP','事件至多回復二 AP，Life FINAL 與事件分流'],
  '040':['BP3000以下','紫事件有水篠旬才把退場 BP3000 改為 BP5000；Life SPECIAL 無條件'],
  '041':['ACTIVE','只有 ACTIVE 時綠額外能源一'],
@@ -39,7 +40,8 @@ export default Object.freeze({
    evidence:{printedTextFragments:[review[0]],
     reviewNote:review[1]+'；日文公式卡文來源 '+record.source+
      '；原始 source BP = '+String(record.bp),
-    testFiles:['tests/universal-v2-slg-port.test.mjs'],
+    testFiles:['tests/universal-v2-slg-port.test.mjs',
+     ...(def.id==='SLG-1-037'?['tests/v2-slg-037-original-bp.test.mjs']:[])],
     ...(def.implementation==='vanilla'?{verifiedNoExtraEffects:true}:{})}
   });
  }))
