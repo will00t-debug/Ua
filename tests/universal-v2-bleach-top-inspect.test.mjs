@@ -30,7 +30,7 @@ function play(s,uid){
 }
 test('EX15BT printed BLC-4-009/067 exactly match top 2/3 inspect templates and retain DRAW trigger',()=>{
  assert.deepEqual(validateUniversalDeck(pack,deck),[]);
- assert.equal(Object.keys(pack.cards).length,79);
+ assert.equal(Object.keys(pack.cards).length,80);
  for(const [id,count] of [['BLC-4-009',2],['BLC-4-067',3]]){
   assert.deepEqual(pack.cards[id].effects.onPlay,[{op:'inspectTopArrange',count,toOutside:true,rest:'top'}]);
   assert.equal(pack.cards[id].trigger,'draw');

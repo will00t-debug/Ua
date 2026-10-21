@@ -97,7 +97,10 @@ test('every integrated card is exactly the same compiled definition as independe
 });
 
 test('fail-closed contract rejects source drift, fake vanilla, unknown code and duplicate Pilot IDs',()=>{
- const base=contribution.entries[0];
+ // This rejection suite intentionally uses an explicitly verified VANILLA
+ // profile, not whichever entry happens to be first in the growing registry.
+ const base=contribution.entries.find(x=>x.evidence.verifiedNoExtraEffects===true);
+ assert.ok(base,'test requires source-pinned vanilla negative-control fixture');
  function invalid(change){
   const candidate=structuredClone(base);
   change(candidate);
