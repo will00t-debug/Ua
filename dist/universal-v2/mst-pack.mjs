@@ -43,6 +43,19 @@ const PRINTED_PINS=Object.freeze({
     "trigger": "active",
     "effectJa": "-"
   },
+  "MST-1-013": {
+    "kind": "onRetireDrawOne",
+    "nameJa": "シルフィエット",
+    "color": "blue",
+    "energy": 1,
+    "ap": 1,
+    "bp": 2000,
+    "gen": 1,
+    "type": "character",
+    "traits": [],
+    "trigger": null,
+    "effectJa": "〖退場時〗 カードを1枚引く。"
+  },
   "MST-1-020": {
     "kind": "vanilla",
     "nameJa": "ルイジェルド",
@@ -354,6 +367,8 @@ export function verifiedMstV2Cards(){
    implementation:['vanilla','step'].includes(pin.kind)?'vanilla':'dsl'};
   if(card.implementation==='vanilla')card.effects={};
   if(pin.kind==='step')card.step=true;
+  if(pin.kind==='onRetireDrawOne')
+   card.effects={onRetire:[{op:'draw',count:1}]};
   if(pin.kind==='ownFieldAllNamesBp')
    card.passiveBonuses=[{condition:{kind:'ownFieldHasAllNames',turn:'any',
     zone:'field',excludeSelf:false,names:['ルーデウス','ルイジェルド']},bp:1000}];
@@ -407,7 +422,8 @@ export function verifiedMstV2Entries(){
     testFiles:Object.freeze([
      'tests/universal-v2-mst-port.test.mjs',
      'tests/universal-v2-sao-mst-cross-title.test.mjs',
-     ...(pin.kind==='ownFieldAllNamesBp'?['tests/v2-mst-003-own-names.test.mjs']:[])
+     ...(pin.kind==='ownFieldAllNamesBp'?['tests/v2-mst-003-own-names.test.mjs']:[]),
+     ...(pin.kind==='onRetireDrawOne'?['tests/v2-mst-013-on-retire.test.mjs']:[])
     ]),
     ...(def.implementation==='vanilla'?{verifiedNoExtraEffects:true}:{})
    })
