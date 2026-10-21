@@ -143,8 +143,11 @@ test('MST024 cannot take named ally from opponent field, own hand, outside or un
  const packs=[mst,mst],s=newUniversalMatch(packs,{decks:[mstDeck,mstDeck],first:0,seed:2425});
  const r=place(s,0,'MST-1-024','front',0);
  place(s,1,'MST-1-027','front',0);
- const hand=take(s,0,'MST-1-027');s.players[0].hand.push(hand);
- const out=take(s,0,'MST-1-027');s.players[0].outside.push(out);
+ const hand=take(s,0,'MST-1-027');
+ const out=take(s,0,'MST-1-027');
+ assert.notEqual(hand.uid,out.uid);
+ s.players[0].hand.push(hand);
+ s.players[0].outside.push(out);
  assert.equal(universalBp(packs,s,r),2000);
  const q=structuredClone(s);
  const roxy=q.players[0].hand.splice(q.players[0].hand.findIndex(c=>c.uid===hand.uid),1)[0];
