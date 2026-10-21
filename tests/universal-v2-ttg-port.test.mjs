@@ -127,9 +127,9 @@ test('Registry shares exactly the 20 original TTG pilot IDs plus FOUR new, no du
  assert.deepEqual(ids.filter(id=>!pilot.includes(id)).sort(),[...additions].sort());
  assert.ok(pilot.every(id=>!additions.has(id)));
  assert.equal(new Set(ids).size,27);
- assert.deepEqual(listRegisteredV2Titles().slice(1,3).map(x=>x.totalV2Cards),[27,30],
+ assert.deepEqual(listRegisteredV2Titles().slice(1,3).map(x=>x.totalV2Cards),[27,31],
   'C title contribution counts stay exact independent of BLEACH A integration');
- assert.equal(Object.keys(registeredV2TitlePack('solo-leveling').cards).length,30);
+ assert.equal(Object.keys(registeredV2TitlePack('solo-leveling').cards).length,31);
 });
 
 test('Real title registry decks play cross-title turns on ONE V2 engine without losing a physical UID',()=>{
