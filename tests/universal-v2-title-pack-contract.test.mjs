@@ -41,9 +41,9 @@ test('all five independent titles register exactly the source-pinned official ca
   ['bleach','gurren-lagann','solo-leveling','sword-art-online','mushoku-tensei']);
  assert.equal(Object.keys(V2_TITLE_CONTRIBUTIONS).length,5);
  const list=listRegisteredV2Titles();
- assert.deepEqual(list.map(x=>x.totalV2Cards),[85,30,34,61,30]);
+ assert.deepEqual(list.map(x=>x.totalV2Cards),[85,30,34,61,31]);
  assert.deepEqual(list.map(x=>x.baselinePilots),[15,20,0,0,0]);
- assert.deepEqual(list.map(x=>x.newlyContributed),[70,10,34,61,30]);
+ assert.deepEqual(list.map(x=>x.newlyContributed),[70,10,34,61,31]);
  for(const title of V2_TITLE_IDS){
   const added=EXPECTED_V2_ADDED_CARD_IDS[title];
   const contribution=V2_TITLE_CONTRIBUTIONS[title];
@@ -122,11 +122,11 @@ test('inventory is derived from all five official catalogues and exact registere
  const result=v2AllTitleInventory(),{series,totals}=result;
  assert.deepEqual(series.map(x=>x.title),V2_TITLE_IDS);
  assert.deepEqual(series.map(x=>x.total),Object.values(V2_EXPECTED_UNIQUE_CARD_COUNTS));
- assert.deepEqual(series.map(x=>x.pilotImplemented),[85,30,34,61,30]);
- assert.deepEqual(series.map(x=>x.blocked),[191,51,46,122,50]);
+ assert.deepEqual(series.map(x=>x.pilotImplemented),[85,30,34,61,31]);
+ assert.deepEqual(series.map(x=>x.blocked),[191,51,46,122,49]);
  assert.equal(totals.total,700);
- assert.equal(totals.pilotImplemented,240);
- assert.equal(totals.blocked,460);
+ assert.equal(totals.pilotImplemented,241);
+ assert.equal(totals.blocked,459);
  assert.equal(totals.fullyAccepted,0);
  assert.equal(totals.total-totals.pilotImplemented,totals.blocked);
  for(const record of series){
