@@ -4,6 +4,18 @@ import {MST_V2_OFFICIAL_CATALOGUE} from './sources/mst-inventory.mjs';
 import {createUniversalPack} from './pack.mjs';
 
 const PRINTED_PINS=Object.freeze({
+  "MST-1-054": {
+    "kind":"onPlayRestSilenceOpponentIfFieldOutside",
+    "nameJa":"ロキシー","color":"green","energy":4,"ap":1,
+    "bp":4000,"gen":1,"type":"character","traits":[],"trigger":"raid",
+    "effectJa":"〖レイド〗 〈ロキシー〉アクティブにし、フロントLに移動できる\n 〖登場時〗 自分の場外にフィールドカードがある場合、相手のフロントLのキャラを1枚まで選び、レストにする。それは次の相手のアタックフェイズ終了時まで、元々の効果を全て失い、アクティブにならない。"
+  },
+  "MST-1-075": {
+    "kind":"fieldOnPlayDrawDiscardOnRetireDraw",
+    "nameJa":"迷宮都市ラパン","color":"green","energy":0,"ap":1,
+    "bp":0,"gen":1,"type":"field","traits":[],"trigger":"get",
+    "effectJa":"〖登場時〗 カードを1枚引き、自分の手札を1枚場外に置く。\n 〖退場時〗 カードを1枚引く。"
+  },
   "MST-1-051": {
     "kind": "onPlayDrawDiscardLimited",
     "nameJa": "ロキシー",
@@ -459,6 +471,15 @@ export function verifiedMstV2Cards(){
    implementation:['vanilla','step'].includes(pin.kind)?'vanilla':'dsl'};
   if(card.implementation==='vanilla')card.effects={};
   if(pin.kind==='step')card.step=true;
+  if(pin.kind==='onPlayRestSilenceOpponentIfFieldOutside'){
+   card.raidName=pin.nameJa;
+   card.templateEffects={onPlay:[{template:'restSilenceOppFrontIfOwnOutsideField',
+    optional:true}]};
+  }
+  if(pin.kind==='fieldOnPlayDrawDiscardOnRetireDraw'){
+   card.templateEffects={onPlay:[{template:'drawDiscardOne'}]};
+   card.effects={onRetire:[{op:'draw',count:1}]};
+  }
   if(pin.kind==='restSelfEnergyRetireEndMain'){
    card.effects={};
    card.mainAbility={op:'restSelfGainEnergyRetireEndMain',
@@ -501,7 +522,7 @@ export function verifiedMstV2Cards(){
  });
 }
 export function mstV2Pack(){
- return createUniversalPack({id:'mushoku-tensei',version:'v2-d-mst-pilot-3',
+ return createUniversalPack({id:'mushoku-tensei',version:'v2-d-mst-pilot-4',
   cards:verifiedMstV2Cards()});
 }
 
@@ -537,6 +558,10 @@ export function verifiedMstV2Entries(){
      ...(pin.kind==='onPlayDrawIfOwnEnergyAtLeast'?['tests/v2-mst-063-energy-draw.test.mjs']:[]),
      ...(pin.kind==='onPlayTop3OwnTraitBottomDiscard'?['tests/v2-mst-055-cross-title-top.test.mjs']:[]),
      ...(pin.kind==='frontGeneratesEnergy'?['tests/v2-mst-057-front-energy.test.mjs']:[]),
+      ...(['onPlayRestSilenceOpponentIfFieldOutside','fieldOnPlayDrawDiscardOnRetireDraw'].includes(pin.kind)?
+       ['tests/v2-mst-054-075-real-deck.test.mjs']:[]),
+      ...(pin.kind==='fieldOnPlayDrawDiscardOnRetireDraw'?
+       ['tests/v2-mst-075-retire-trigger.test.mjs']:[]),
      ...(pin.kind==='onPlayDrawDiscardLimited'?['tests/v2-mst-051-limited-draw-discard.test.mjs']:[]),
      ...(['restSelfEnergyRetireEndMain','ownTurnRoxyFieldBp'].includes(pin.kind)?['tests/v2-mst-016-024-shared.test.mjs']:[])
     ]),
