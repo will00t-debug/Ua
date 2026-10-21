@@ -105,6 +105,22 @@ const authored=[
     "effects": {}
   },
   {
+    "id": "SLG-1-036",
+    "name": "あの人に追いつきたい",
+    "color": "purple",
+    "energy": 3,
+    "ap": 1,
+    "bp": 0,
+    "gen": 0,
+    "trigger": "active",
+    "type": "event",
+    "textAnchor": "抽3張後將2張手牌送場外",
+    "implementation": "dsl",
+    "templateEffects": {
+      "onPlay": [{"template": "drawDiscardMany", "drawCount": 3, "discardCount": 2}]
+    }
+  },
+  {
     "id": "SLG-1-038",
     "name": "起きろ",
     "color": "purple",

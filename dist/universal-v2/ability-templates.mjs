@@ -29,6 +29,11 @@ const registry=Object.freeze({
  drawDiscardOne:{
   args:{},build:()=>[{op:'drawDiscard',count:1}]
  },
+ // Draw first, then require sequential physical-UID hand discards.
+ drawDiscardMany:{
+  args:{drawCount:v=>integer(v,1,10),discardCount:v=>integer(v,1,10)},
+  build:v=>[{op:'drawDiscard',count:v.drawCount,discardCount:v.discardCount}]
+ },
  peekTopOne:{
   args:{},build:()=>[{op:'peekTopOne'}]
  },

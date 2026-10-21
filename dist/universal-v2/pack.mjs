@@ -143,7 +143,11 @@ function verifyProgram(program,path){
   ))throw Error(path+'['+i+'] unsupported printed BP retirement profile');
   if(e.op==='peekTopOne'&&Object.keys(e).some(key=>key!=='op'))throw Error(path+'['+i+'] unsupported private peek options');
   if(e.op==='recoverAp'&&(!integer(e.count,1)||e.count>3))throw Error(path+'['+i+'] invalid AP recovery count');
-  if(e.op==='drawDiscard'&&e.count!==1)throw Error(path+'['+i+'] drawDiscard currently supports exactly 1 card');
+  if(e.op==='drawDiscard'&&(
+   (e.discardCount===undefined&&e.count!==1)||
+   (e.discardCount!==undefined&&(!integer(e.discardCount,1)||e.discardCount>10))||
+   Object.keys(e).some(k=>!['op','count','discardCount'].includes(k))
+  ))throw Error(path+'['+i+'] invalid mandatory draw/discard profile');
   if(['buffSelf','enemyBpDown'].includes(e.op)&&(!integer(e.bp,1)||e.bp>5000))throw Error(path+'['+i+'] invalid temporary BP');
   if(e.op==='enemyBpDown'&&e.optional!==undefined&&typeof e.optional!=='boolean')throw Error(path+'['+i+'] invalid optional targeting flag');
  }

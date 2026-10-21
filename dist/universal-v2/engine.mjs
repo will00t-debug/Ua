@@ -224,7 +224,8 @@ function continueEffectQueue(pack,s){
    else bounceToHand(s,owner,job.sourceUid);
   }else if(job.op==='drawDiscard'){
    draw(s,owner,job.count);
-   if(pl.hand.length)s.pending={kind:'effect-discard',player:owner,sourceUid:job.sourceUid};
+   if(pl.hand.length)s.pending={kind:'effect-discard',player:owner,sourceUid:job.sourceUid,
+     ...(job.discardCount>1?{remaining:Math.min(job.discardCount,pl.hand.length)}:{})};
   }else if(job.op==='retireOppFrontUnderBp'){
    const ownName=job.bonusName.replace(/\s+/g,'');
    const hasBonus=field(pl).some(c=>card(pack,c).name.replace(/\s+/g,'')===ownName);
@@ -654,8 +655,9 @@ function resolveChoice(s,a,pack){
   const index=p.hand.findIndex(c=>c.uid===a.uid);
   if(index<0)throw Error('Discard requires an owned hand card');
   p.outside.push(p.hand.splice(index,1)[0]);
-  s.pending=null;
-  continueEffectQueue(pack,s);
+  const remaining=(q.remaining??1)-1;
+  if(remaining>0&&p.hand.length)q.remaining=remaining;
+  else{s.pending=null;continueEffectQueue(pack,s);}
   return;
  }
  if(q.kind==='raid-effect-order'){
