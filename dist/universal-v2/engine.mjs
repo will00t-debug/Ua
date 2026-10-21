@@ -50,9 +50,13 @@ function raidNamePresent(pack,s,owner,name){
 // frontGeneratesEnergy characters also produce from their own FRONT line.
 // Use physical live zones, not a cached production or hand-card flag.
 export function universalCardEnergy(pack,s,p,c){
- const inEnergy=s.players[p].energy.some(x=>x&&x.uid===c?.uid);
- const inFront=s.players[p].front.some(x=>x&&x.uid===c?.uid);
- if(!inEnergy&&!inFront)return 0;
+ const energyCard=s.players[p].energy.find(x=>x&&x.uid===c?.uid);
+ const live=energyCard||s.players[p].front.find(x=>x&&x.uid===c?.uid);
+ if(!live)return 0;
+ const inEnergy=!!energyCard;
+ // Callers may retain a physical-card reference across immutable dispatches.
+ // Resolve READY, printed identity and buffs from the current state's UID.
+ c=live;
  const d=card(pack,c),profile=d.conditionalTraitEnergy;
  if(!inEnergy&&!d.frontGeneratesEnergy)return 0;
  const pIndex=p;
@@ -210,7 +214,7 @@ function continueEffectQueue(pack,s){
   else if(job.op==='draw')draw(s,owner,job.count);
   else if(job.op==='drawIfOwnEnergyAtLeast'){
    // Printed generated-energy threshold is checked at resolution, after the
-   // source actually enters the field. Count only this owner's real ENERGY L.
+   // source actually enters the field, including own explicit FRONT producers.
    if(calcEnergy(pack,s,owner)>=job.energy)draw(s,owner,job.count);
   }
   else if(job.op==='drawIfOwnName'){
