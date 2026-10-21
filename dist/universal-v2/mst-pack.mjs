@@ -4,6 +4,19 @@ import {MST_V2_OFFICIAL_CATALOGUE} from './sources/mst-inventory.mjs';
 import {createUniversalPack} from './pack.mjs';
 
 const PRINTED_PINS=Object.freeze({
+  "MST-1-003": {
+    "kind": "ownFieldAllNamesBp",
+    "nameJa": "エリス",
+    "color": "blue",
+    "energy": 1,
+    "ap": 1,
+    "bp": 2000,
+    "gen": 1,
+    "type": "character",
+    "traits": [],
+    "trigger": "draw",
+    "effectJa": "自分の場に〈ルーデウス〉と〈ルイジェルド〉がある場合、このキャラはBP+1000。"
+  },
   "MST-1-001": {
     "kind": "vanilla",
     "nameJa": "エリス",
@@ -341,6 +354,9 @@ export function verifiedMstV2Cards(){
    implementation:['vanilla','step'].includes(pin.kind)?'vanilla':'dsl'};
   if(card.implementation==='vanilla')card.effects={};
   if(pin.kind==='step')card.step=true;
+  if(pin.kind==='ownFieldAllNamesBp')
+   card.passiveBonuses=[{condition:{kind:'ownFieldHasAllNames',turn:'any',
+    zone:'field',excludeSelf:false,names:['ルーデウス','ルイジェルド']},bp:1000}];
   if(pin.kind==='onPlayDraw')card.templateEffects={onPlay:[{template:'draw',count:1}]};
   if(pin.kind==='onPlayDrawDiscard')card.templateEffects={onPlay:[{template:'drawDiscardOne'}]};
   if(pin.kind==='onAttackDrawDiscard')card.templateEffects={onAttack:[{template:'drawDiscardOne'}]};
@@ -390,7 +406,8 @@ export function verifiedMstV2Entries(){
      source.source,
     testFiles:Object.freeze([
      'tests/universal-v2-mst-port.test.mjs',
-     'tests/universal-v2-sao-mst-cross-title.test.mjs'
+     'tests/universal-v2-sao-mst-cross-title.test.mjs',
+     ...(pin.kind==='ownFieldAllNamesBp'?['tests/v2-mst-003-own-names.test.mjs']:[])
     ]),
     ...(def.implementation==='vanilla'?{verifiedNoExtraEffects:true}:{})
    })
