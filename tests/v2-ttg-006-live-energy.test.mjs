@@ -61,7 +61,7 @@ test('TTG-006 exactly pins source-owned front-PDF print and existing reusable li
  assert.deepEqual(compiled.effects,{});
  assert.equal(ttg.cards['TTG-1-006'].implementation,'dsl');
  assert.ok(TTG_V2_ADDITION_IDS.includes('TTG-1-006'));
- assert.equal(Object.keys(ttg.cards).length,29);
+ assert.equal(Object.keys(ttg.cards).length,30);
  assert.deepEqual(validateUniversalDeck(ttg,ttgDeck),[]);
  assert.deepEqual(validateUniversalDeck(sao,saoDeck),[]);
 });

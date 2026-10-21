@@ -57,7 +57,7 @@ test('independent official cards and restricted top filter profiles compile, nev
   assert.equal(v2.trigger,trigger);
   assert.equal(v2.type,'character');
  }
- assert.equal(Object.keys(pack.cards).length,29);
+ assert.equal(Object.keys(pack.cards).length,30);
  assert.deepEqual(validateUniversalDeck(pack,counts),[]);
 });
 test('023 filters exact TOP5 for ガンメン, then orders other four to BOTTOM before conditional discard',()=>{
