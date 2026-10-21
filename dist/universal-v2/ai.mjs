@@ -40,7 +40,7 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   return legal.find(a=>['final','raid','special','colorRetire','color','active','draw','get'].includes(a.mode))||legal[0];
  if(s.pending?.kind==='effect-recover-ap')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='recovered-self-entry')return difficulty==='easy'?legal[0]:
-  legal.find(a=>a.mode==='enter')||legal[0];
+  legal.find(a=>a.mode==='enter'&&!a.replaceUid)||legal[0];
  if(['effect-search-deck','effect-search-deck-multi','effect-recover-outside'].includes(s.pending?.kind))
   return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-top-inspect')

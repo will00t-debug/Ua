@@ -65,7 +65,7 @@ test('optional controller-only free REST ENERGY entry after exact own-outside re
  assert.equal(enemy.players[0].hand,null);
  for(const bad of [
   {type:'chooseRecoveredEntry',mode:'enter',line:'front',slot:0},
-  {type:'chooseRecoveredEntry',mode:'enter',line:'energy',slot:3}
+  {type:'chooseRecoveredEntry',mode:'enter',line:'energy',slot:0}
  ])assert.throws(()=>dispatchUniversalAction(packs,s,bad),/not currently legal/);
  assert.throws(()=>dispatchUniversalAction(packs,s,options[1],{actor:1}),/Wrong player/);
  const skipped=dispatchUniversalAction(packs,s,options[0]);
