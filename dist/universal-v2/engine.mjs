@@ -820,6 +820,19 @@ function resolveChoice(s,a,pack){
   s.pending=null;s.effectQueue.unshift(...ordered);
   continueEffectQueue(pack,s);return;
  }
+ if(q.kind==='main-discard-buff'){
+  const index=p.hand.findIndex(c=>c.uid===a.uid);
+  const source=field(p).find(c=>c.uid===q.sourceUid);
+  if(index<0||!source||card(pack,source).mainAbility?.op!=='discardHandBuffSelf'||
+   s.mainAbilityUsedUids.includes(source.uid)||!q.choices.includes(a.uid))
+   throw Error('Main discard BP must pay one OWN hand card for a current OWN source');
+  // Payment precedes the temporary BP. No AP, REST or once-use consumed
+  // until an exact physical own-hand discard has actually been submitted.
+  p.outside.push(p.hand.splice(index,1)[0]);
+  source.buffs??=[];source.buffs.push({bp:q.bp,untilTurn:s.turn});
+  s.mainAbilityUsedUids.push(source.uid);
+  s.pending=null;continueEffectQueue(pack,s);return;
+ }
  if(q.kind==='main-two-buff'){
   const target=field(p).find(c=>c.uid===a.uid);
   if(!target||!card(pack,target).traits.includes(q.trait))
@@ -1081,6 +1094,10 @@ function legalPending(pack,s){
  if(q.kind==='raid-effect-order')return [
    {type:'chooseRaidOrder',mode:'baseFirst'},{type:'chooseRaidOrder',mode:'entryFirst'}
   ];
+ if(q.kind==='main-discard-buff')
+  return p.hand.filter(c=>q.choices.includes(c.uid)).map(c=>({
+   type:'chooseMainDiscard',uid:c.uid
+  }));
  if(q.kind==='main-two-buff')
   return field(p).filter(c=>card(pack,c).traits.includes(q.trait))
    .map(c=>({type:'chooseMainBuff',uid:c.uid}));
@@ -1193,6 +1210,14 @@ export function legalUniversalActions(pack,s){
    for(const choice of legalDestinations(pl,'energy'))out.push({type:'step',uid:c.uid,...choice});
  }
  if(s.phase==='main'){
+  // A discard-cost MAIN ability can be activated from either field line,
+  // regardless of source REST state; it does NOT require spending AP.
+  for(const c of field(pl)){
+   const ability=card(pack,c).mainAbility;
+   if(ability?.op==='discardHandBuffSelf'&&pl.hand.length>0&&
+    !s.mainAbilityUsedUids.includes(c.uid))
+    out.push({type:'activate',uid:c.uid,mode:'discardSelfBuff'});
+  }
   for(const c of pl.energy.filter(Boolean)){
    const ability=card(pack,c).mainAbility;
    if(ability?.op==='restSelfGainEnergyRetireEndMain'&&
@@ -1302,6 +1327,14 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
    const selected=field(pl).find(c=>c.uid===action.uid);
    if(!selected||!card(pack,selected).mainAbility)throw Error('Main ability source missing');
    const d=card(pack,selected),ability=d.mainAbility;
+   if(ability.op==='discardHandBuffSelf'){
+    if(action.mode!=='discardSelfBuff'||!pl.hand.length||
+     s.mainAbilityUsedUids.includes(selected.uid))
+     throw Error('Discard MAIN requires one owned hand payment and unused source');
+    s.pending={kind:'main-discard-buff',player:p,sourceUid:selected.uid,
+     bp:ability.bp,choices:pl.hand.map(c=>c.uid)};
+    break;
+   }
    if(ability.op==='restSelfGainEnergyRetireEndMain'){
     if(action.mode!=='selfRestEnergyRetire'||
      !pl.energy.some(c=>c?.uid===selected.uid)||!selected.ready||
@@ -1409,7 +1442,7 @@ export function assertUniversalMatch(pack,s){
    !Array.isArray(s.initialCounts)||s.initialCounts.length!==2||
    s.players?.length!==2||!playerIndex(s.active)||
    !['playing','finished'].includes(s.status))throw Error('Incorrect pack/version or match state');
- if(s.pending&&(!playerIndex(s.pending.player)||!['block','life-trigger','effect-target','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-rest-bp','raid-effect-order','effect-buff-trait','effect-buff-own','effect-once-choice','main-two-buff','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-order','effect-recover-outside','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-choice-mode','recovered-self-entry'].includes(s.pending.kind)))
+ if(s.pending&&(!playerIndex(s.pending.player)||!['block','life-trigger','effect-target','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-rest-bp','raid-effect-order','effect-buff-trait','effect-buff-own','effect-once-choice','main-two-buff','main-discard-buff','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-order','effect-recover-outside','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-choice-mode','recovered-self-entry'].includes(s.pending.kind)))
   throw Error('Invalid pending controller');
  if(!Array.isArray(s.raidedThisTurn)||s.raidedThisTurn.length!==2||
    s.raidedThisTurn.some(x=>typeof x!=='boolean')||

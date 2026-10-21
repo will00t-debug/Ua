@@ -74,6 +74,14 @@ const authored=[
     "passiveBonuses":[{"condition":{"kind":"outsideCount","turn":"own","min":5},"bp":500}]
   },
   {
+    "id":"SLG-1-009","name":"向坂 雫","color":"purple",
+    "energy":0,"ap":1,"bp":1500,"gen":1,"trigger":"active",
+    "type":"character","textAnchor":"主要階段每回合一次：將1張手牌送場外",
+    "implementation":"dsl","effects":{},
+    "mainAbility":{"op":"discardHandBuffSelf","oncePerTurn":true,
+      "discardCount":1,"bp":1500}
+  },
+  {
     "id":"SLG-1-010","name":"向坂 雫","color":"purple",
     "energy":3,"ap":1,"bp":3000,"gen":1,"trigger":"draw",
     "type":"character","textAnchor":"自己的回合中，若場外有10張以上",

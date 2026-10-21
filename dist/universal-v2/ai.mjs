@@ -69,6 +69,14 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
    legal.find(a=>a.mode==='activate')||legal[0];
  if(s.pending?.kind==='effect-buff-own')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-buff-trait')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='main-discard-buff'){
+  // The payment is mandatory once activated. Choose a low-cost OWN hand
+  // card, not a forged or opponent target; all candidates are exact legal.
+  const catalog=packsOf(pack)[s.pending.player].cards;
+  const hand=s.players[s.pending.player].hand;
+  return [...legal].sort((a,b)=>(catalog[hand.find(c=>c.uid===a.uid)?.cardId]?.energy||0)-
+   (catalog[hand.find(c=>c.uid===b.uid)?.cardId]?.energy||0))[0];
+ }
  if(s.pending?.kind==='main-two-buff')return legal[0];
  if(s.pending?.kind==='effect-rest-bp')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-retire-bp'){
@@ -167,7 +175,9 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   legal.find(a=>a.type==='activate'&&a.mode==='ready')||
   legal.find(a=>a.type==='activate'&&a.mode==='selfRestEnemy')||
   legal.find(a=>a.type==='activate'&&a.mode==='selfRestThen')||
-  legal.find(a=>a.type==='activate'&&a.mode==='selfRestEnergyRetire');
+  legal.find(a=>a.type==='activate'&&a.mode==='selfRestEnergyRetire')||
+  (difficulty==='hard'&&s.players[s.active].hand.length>1?
+   legal.find(a=>a.type==='activate'&&a.mode==='discardSelfBuff'):null);
  if(activate&&difficulty!=='easy')return activate;
  if(frontPlays.length){
   frontPlays.sort((a,b)=> (cardFor(pack,s,b)?.bp||0)-(cardFor(pack,s,a)?.bp||0));

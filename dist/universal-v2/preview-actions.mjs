@@ -26,6 +26,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-recover-outside':'從場外回收','effect-retire-bp':'選擇敵方退場',
  'effect-rest-bp':'選擇敵方 REST','effect-buff-trait':'選擇己方 BP 加成',
  'main-two-buff':'主要能力選擇 BP 對象',
+ 'main-discard-buff':'支付一張手牌，讓自身 BP 增加',
  'effect-target':'指定角色','raid-effect-order':'突襲能力結算順序'
 });
 export function isExactLegal(action,legal){
@@ -75,7 +76,9 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'move':return '移至前線 '+(action.slot+1);
   case 'step':return 'STEP 移至能源線 '+(action.slot+1);
   case 'attack':return '宣告攻擊：'+name();
-  case 'activate':return action.mode==='selfRestEnergyRetire'?
+  case 'activate':return action.mode==='discardSelfBuff'?
+    '起動主要：棄一張手牌，本回合自身 BP＋1500（每回合一次）':
+    action.mode==='selfRestEnergyRetire'?
     '起動主要：REST 自身，產能＋1，主要階段結束退場':
     action.mode==='selfRestThen'?'主要能力：REST 自身，執行效果':
     action.mode==='selfRestEnemy'?'主要能力：REST 自身，指定敵方前線角色':
@@ -107,6 +110,7 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseDiscardCost':return action.uid===null?'不支付成本':'棄 '+name()+' 支付成本';
   case 'chooseHandLimit':return '超過上限，移除 '+name();
   case 'chooseDiscard':return '棄 '+name();
+  case 'chooseMainDiscard':return '支付起動成本：將 '+name()+' 送至場外';
   case 'chooseOutsideRecovery':return action.uid===null?'不回收／完成':'回收 '+name()+' 至手牌';
   case 'chooseRecoveredEntry':return action.mode==='skip'?'保留在手牌':
    '回收後免費 REST 登場至能源線 '+(action.slot+1);
