@@ -552,3 +552,29 @@
 - 部分無印刷主效果的卡可能只有名稱別名／STEP／生命 Trigger；一樣需要逐卡核對完整資訊。
 - 現有全部 243 張 V2 登錄卡仍不等於完成獨立逐卡 FAQ 驗收，不能將未移植率直接當作錯誤率。
 - 本文件只新增盤點報告，不改遊戲引擎、不改 main、不部署 Production。
+
+## 2026-10-22｜第一輪共用機制驗證補充（不改原始盤點快照）
+
+本節是開發狀態更新，不重算上方以 `729048b` 為準的來源分類或把「命中張數」當作可直接移植數量；以下是最新已通過 CI 的**實際登錄數**（程式版本 `d16ffce0`）：
+
+| 作品 | V2 已登錄 | 尚未移植 |
+|---|---:|---:|
+| BLEACH | 85 | 191 |
+| TTG | 30 | 51 |
+| SLG | 34 | 46 |
+| SAO | 61 | 122 |
+| MST | 33 | 47 |
+| **合計** | **243** | **457** |
+
+### 效果分類之實作狀態（嚴格區隔）
+- **已有且通過回歸的共用引擎能力：** 以實體 UID + `fieldEntryStamp` 綁定一次性「跳過下一次 ACTIVE」；指定階段邊界持續限制；來源離場清理（設定來源綁定時）；REST 後延遲 ACTIVE；攻擊及跨玩家階段開始／結束的資料驅動 `phaseEffects` 與同控制者效果排序／既有隊列暫停；使用原合法選擇產生器供 Normal/Hard AI。
+- **已登錄真卡數：** 本輪新增 **0**；官方卡面各分支必須全數處理方可計入。
+- **已做官方來源局部測試、尚未移植：** `BLC-1-006` 以 ATTACK 對敵方 REST 角色跳過 ACTIVE（另需入場判定）；`SAO-1-034` 以自身 LIFE >4 進行 BP<=5000 的 REST+跳過 ACTIVE（另需 LIFE <=4 改退場）。兩者經官方網頁核對，但測試夾帶的卡牌資料是**效果組件專用**，不可視為正式登入卡。
+  - BLEACH 官方：https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA08BT%2FBLC-1-006；FAQ Q536。
+  - SAO 官方：https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA15BT%2FSAO-1-034；FAQ Q754。
+- **未驗證：** 完整官方 FAQ逐卡驗收、手機與瀏覽器實際操作、完整的 REST 禁令和能力失效堆疊、延遲效果被 Raid 替換或多層連鎖的所有組合。
+
+### CI 證據
+`d16ffce0`：GitHub Actions V2 Resumed Integration [#39640216179](https://github.com/will00t-debug/Ua/actions/runs/39640216179) **SUCCESS**；Node 22 `npm test` **1425 通過／0 失敗**，五作品 `v2-integrated-match-matrix` **60/60／0 失敗**，`v2-unported-report` 完成；SAO/MST isolated [#39640224303](https://github.com/will00t-debug/Ua/actions/runs/39640224303) 亦 SUCCESS。Batch B、D 首次 CI 有明確失敗紀錄，已修正並重新測試，詳見 `GPT-resume.md` 最新章節。
+
+**下輪最高優先順序：** 通用條件式「REST＋延遲 ACTIVE 或改為退場」與新角色依場上 REST 條件 ACTIVE 入場的可配置行為，作為真正完整移植 `SAO-1-034`／`BLC-1-006` 的最後缺口；再考慮 MST 延遲無效化能力。避免建立第二套觸發器，所有能力都應使用 V2 共用規則、官方原文及實體 UID 驗證。
