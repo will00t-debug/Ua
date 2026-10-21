@@ -49,7 +49,7 @@ test('official full SAO-1-051 Japanese two-clause print and combined native shar
  assert.deepEqual(card.passiveBonuses[0].condition,sao.cards['SAO-1-057'].passiveBonuses[0].condition);
  assert.equal(card.implementation,'dsl');
  assert.equal(SAO_V2_PILOT_IDS.filter(id=>id===ID).length,1);
- assert.equal(Object.keys(sao.cards).length,61);
+ assert.equal(Object.keys(sao.cards).length,62);
  assert.deepEqual(verifiedSaoV2Cards().find(c=>c.id===ID).passiveBonuses,card.passiveBonuses);
  assert.deepEqual(saoV2Pack().cards[ID],card);
  assert.deepEqual(validateUniversalDeck(sao,saoDeck),[]);

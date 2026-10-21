@@ -50,7 +50,7 @@ test('official SAO-1-020 original Japanese exact printed trigger, numbers and ge
  assert.deepEqual(c.effects,{});
  assert.equal(c.implementation,'dsl');
  assert.ok(SAO_V2_PILOT_IDS.includes(ID));
- assert.equal(Object.keys(sao.cards).length,61);
+ assert.equal(Object.keys(sao.cards).length,62);
  assert.deepEqual(verifiedSaoV2Cards().find(x=>x.id===ID).passiveBonuses,c.passiveBonuses);
  assert.deepEqual(saoV2Pack().cards[ID],c);
  assert.deepEqual(validateUniversalDeck(sao,saoDeck),[]);
