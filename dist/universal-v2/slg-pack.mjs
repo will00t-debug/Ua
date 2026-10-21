@@ -4,6 +4,16 @@ import {createUniversalPack} from './pack.mjs';
 const catalog=Object.fromEntries(SOLO_LEVELING_CARDS.map(c=>[c.id,c]));
 const authored=[
   {
+    "id":"SLG-1-004","name":"犬飼 晃","color":"purple",
+    "energy":3,"ap":1,"bp":3500,"gen":1,"trigger":"draw",
+    "type":"character",
+    "textAnchor":"自己的回合中，若本回合曾以己方效果將手牌送場外或從場外回收手牌",
+    "implementation":"dsl",
+    "effects":{"onPlay":[{"op":"drawDiscard","count":1}]},
+    "passiveBonuses":[{"condition":{"kind":"ownEffectHandOutsideOrRecovery",
+      "turn":"own"},"bp":500}]
+  },
+  {
     "id":"SLG-1-007","name":"エシル","color":"purple",
     "energy":0,"ap":1,"bp":500,"gen":1,"trigger":"draw",
     "type":"character","textAnchor":"退場時抽1張",

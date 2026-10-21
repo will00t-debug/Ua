@@ -32,6 +32,12 @@ export function matchesOwnDistinctTraits(s,owner,sourceUid,profile,printed){
 export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energy){
  if(condition.turn==='own'&&s.active!==owner)return false;
  if(condition.turn==='opponent'&&s.active===owner)return false;
+ if(condition.kind==='ownEffectHandOutsideOrRecovery'){
+  // Same-turn factual records, never inferred from deck/hand counts or
+  // the printed contents of any card. Own turn check is enforced above.
+  const moves=s.turnEffectZoneMoves?.[owner];
+  return moves?.handToOutside===true||moves?.outsideToHand===true;
+ }
  if(condition.kind==='outsideCount')
   return s.players[owner].outside.length>=condition.min;
  if(condition.kind==='ownEnergyAtLeast')

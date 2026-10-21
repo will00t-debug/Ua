@@ -3,6 +3,7 @@ import {SOLO_LEVELING_CARDS} from '../../solo-leveling.mjs';
 import {verifiedSlgV2Cards} from '../slg-pack.mjs';
 const records=Object.fromEntries(SOLO_LEVELING_CARDS.map(c=>[c.id,c]));
 const proof=Object.freeze({
+ '004':['自己的回合中，若本回合曾以己方效果將手牌送場外或從場外回收手牌','Official Japanese UA51BT/SLG-1-004 犬飼 晃 purple3/AP1/BP3500/gen1 DRAW life. OnPlay mandatory draw ONE then put ONE own HAND card into OUTSIDE. Live own-turn BP+500 only if since current turn start one OWN effect physically moved own HAND to OUTSIDE or own OUTSIDE to HAND (source independent; no stale count, no opponent effect). Exact source https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-004; no comprehensive FAQ certification.'],
  '007':['退場時抽1張','Official Japanese UA51BT/SLG-1-007 エシル purple0 AP1 BP500 gen1; onRetire DRAW1; DRAW Life separately.'],
  '008':['經自己效果從場外加入手牌時','Official UA51BT/SLG-1-008 エシル purple1/AP1/BP2000/gen1 NO Life: self OWN-OUTSIDE-to-hand by OWN effect triggers mandatory draw1 then discard1. OnPlay inspect TOP4, choose 0..1 by exact JP NAME 水篠 旬 OR 悪魔の城 (both name filters, NOT traits), put the rest in chosen order on BOTTOM, discard1 only after actual addition. Source https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-008; full FAQ QA not claimed.'],
  '014':['經自己的效果從場外加入手牌時','Official UA51BT/SLG-1-014 水篠 聡子 purple2/AP1/BP1000/gen1: OWN outside recovered to own hand by own effect may REST enter ENERGY for free; cannot enter or move to FRONT even with a swap, FAQ Q2025 2026-04-17; onPlay mandatory TOP1 mill. Not full FAQ certified.'],
@@ -58,6 +59,7 @@ export default Object.freeze({
      ...(def.id==='SLG-1-014'?['tests/v2-slg-014-recover-entry.test.mjs']:[]),
      ...(def.id==='SLG-1-008'?['tests/v2-slg-008-on-outside-recover.test.mjs']:[]),
      ...(def.id==='SLG-1-009'?['tests/v2-slg-009-discard-main.test.mjs']:[]),
+     ...(def.id==='SLG-1-004'?['tests/v2-slg-004-turn-zone-ledger.test.mjs']:[]),
      ...(def.id==='SLG-1-012'?['tests/v2-slg-012-own-name.test.mjs']:[]),
      ...(def.id==='SLG-1-018'?['tests/v2-slg-018-compound-top.test.mjs']:[]),
      ...(def.id==='SLG-1-037'?['tests/v2-slg-037-original-bp.test.mjs']:[])],

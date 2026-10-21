@@ -151,11 +151,23 @@ function matchesOutsideRecovery(pack,c,q){
   return d.type==='character'&&d.traits.length===0&&d.energy<=q.traitlessEnergyLimit;
  return d.color===q.color&&d.energy<=q.energy;
 }
+// Track only actual own-effect zone changes, NEVER ordinary drawn cards,
+// outside mill, opponent effects, GET life, or simulated unpaid choices.
+function markOwnEffectZoneMove(s,owner,from,to){
+ if(!playerIndex(owner))throw Error('Invalid effect-zone owner');
+ const entry=s.turnEffectZoneMoves[owner];
+ if(from==='hand'&&to==='outside')entry.handToOutside=true;
+ else if(from==='outside'&&to==='hand')entry.outsideToHand=true;
+ else throw Error('Unsupported effect-zone movement');
+}
 function startTurn(pack,s){
  const p=s.active,pl=s.players[p];
  pl.ownTurns++;s.turn++;s.phase='start';s.extraDrawn=false;s.moved=false;s.movedUids=[];s.pending=null;s.attacksThisTurn=0;
  s.raidedThisTurn=[false,false];s.mainAbilityUsedUids=[];s.mainReadyOnceByName=[[],[]];
  s.onceEffectUses=[[],[]];
+ // A NEW turn resets both players' previous turn-scoped movement history.
+ s.turnEffectZoneMoves=[{handToOutside:false,outsideToHand:false},
+  {handToOutside:false,outsideToHand:false}];
  const max=pl.ownTurns>=3?3:(pl.ownTurns===1&&p===s.first?1:2);
  for(let i=0;i<pl.apCards.length;i++){pl.apCards[i].inPlay=i<max;pl.apCards[i].ready=i<max;}
  for(const c of field(pl)){c.ready=true;c.buffs=(c.buffs||[]).filter(b=>b.untilTurn>=s.turn);}
@@ -752,6 +764,7 @@ function resolveChoice(s,a,pack){
     throw Error('Outside recovery needs an eligible owned physical card');
    const recovered=p.outside.splice(index,1)[0];
    p.hand.push(recovered);
+   markOwnEffectZoneMove(s,q.player,'outside','hand');
    // Recovered card's OWN mandatory print resolves before the recovering
    // source's remaining jobs. UID ownership and the source zone were
    // checked above. No trigger on GET Life, searchDeck, draw or bounce.
@@ -787,6 +800,7 @@ function resolveChoice(s,a,pack){
    const index=p.hand.findIndex(c=>c.uid===a.uid);
    if(index<0)throw Error('Discard payment needs an owned hand card');
    p.outside.push(p.hand.splice(index,1)[0]);
+  markOwnEffectZoneMove(s,q.player,'hand','outside');
    draw(s,q.player,q.count);
   }else if(!q.optional)throw Error('Mandatory cost cannot be declined');
   s.pending=null;continueEffectQueue(pack,s);return;
@@ -796,6 +810,7 @@ function resolveChoice(s,a,pack){
    const index=p.hand.findIndex(c=>c.uid===a.uid);
    if(index<0)throw Error('Gate payment must discard owned hand card');
    p.outside.push(p.hand.splice(index,1)[0]);
+  markOwnEffectZoneMove(s,q.player,'hand','outside');
    // Place paid effects immediately in front of later unrelated effects.
    // Pending nested choices suspend this queue without losing the remaining
    // effects. Declining payment never schedules any of the gated effects.
@@ -808,6 +823,7 @@ function resolveChoice(s,a,pack){
   const index=p.hand.findIndex(c=>c.uid===a.uid);
   if(index<0)throw Error('Discard requires an owned hand card');
   p.outside.push(p.hand.splice(index,1)[0]);
+  markOwnEffectZoneMove(s,q.player,'hand','outside');
   const remaining=(q.remaining??1)-1;
   if(remaining>0&&p.hand.length)q.remaining=remaining;
   else{s.pending=null;continueEffectQueue(pack,s);}
@@ -829,6 +845,7 @@ function resolveChoice(s,a,pack){
   // Payment precedes the temporary BP. No AP, REST or once-use consumed
   // until an exact physical own-hand discard has actually been submitted.
   p.outside.push(p.hand.splice(index,1)[0]);
+  markOwnEffectZoneMove(s,q.player,'hand','outside');
   source.buffs??=[];source.buffs.push({bp:q.bp,untilTurn:s.turn});
   s.mainAbilityUsedUids.push(source.uid);
   s.pending=null;continueEffectQueue(pack,s);return;
@@ -1004,6 +1021,8 @@ export function newUniversalMatch(pack,{decks,seed=1,first=0}={}){
   publicReveals:[],effectQueue:[],delayedEffects:[],nextFieldEntryStamp:1,players:[],
   raidedThisTurn:[false,false],mainAbilityUsedUids:[],mainReadyOnceByName:[[],[]],
   onceEffectUses:[[],[]],
+  turnEffectZoneMoves:[{handToOutside:false,outsideToHand:false},
+   {handToOutside:false,outsideToHand:false}],
   initialCounts:decks.map(d=>Object.fromEntries(Object.entries(d).filter(([,n])=>n>0)))
  };
  for(let p=0;p<2;p++){
@@ -1451,6 +1470,11 @@ export function assertUniversalMatch(pack,s){
    !Array.isArray(s.mainReadyOnceByName)||s.mainReadyOnceByName.length!==2||
    s.mainReadyOnceByName.some(x=>!Array.isArray(x)||new Set(x).size!==x.length))
   throw Error('Invalid once-per-turn ability accounting');
+ if(!Array.isArray(s.turnEffectZoneMoves)||s.turnEffectZoneMoves.length!==2||
+  s.turnEffectZoneMoves.some(x=>!x||typeof x!=='object'||
+   Object.keys(x).length!==2||typeof x.handToOutside!=='boolean'||
+   typeof x.outsideToHand!=='boolean'))
+  throw Error('Invalid own-effect movement ledger');
  if(!Array.isArray(s.onceEffectUses)||s.onceEffectUses.length!==2||
   s.onceEffectUses.some(x=>!Array.isArray(x)||
    x.some(v=>typeof v!=='string')||new Set(x).size!==x.length))
