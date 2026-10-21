@@ -18,6 +18,7 @@ test('template registry is finite, audited and rejects unknown behaviors instead
  assert.deepEqual(V2_ABILITY_TEMPLATE_IDS,[
   'draw','drawIfOwnEnergyAtLeast','drawIfOwnName','millTop','drawDiscardOne','drawDiscardMany','peekTopOne','peekTopOrBottom','recoverAp','buffSelf',
   'enemyBpDown','retireEnemyUnderBp','restEnemyUnderBp','restEnemyFrontOne',
+   'restEnemyFrontSkipNextActive','restEnemyUnderBpSkipNextActive','skipNextActiveOppRest',
   'retireEnemyIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown',
   'searchDeckOne','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
   'searchDeckMany','enemyFrontAllBpDown','retireEnemyFrontAllUnderBp',

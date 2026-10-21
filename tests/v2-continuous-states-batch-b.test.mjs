@@ -22,7 +22,7 @@ function take(s,p,id){
  }
  throw Error('No UID for '+id);
 }
-function setup(id,targetId='T05',line='front',ready=true){
+function setup(id,targetId='T05',line='front',ready=true,requirePayable=true){
  let s=newUniversalMatch(packs,{decks:[deck,deck],seed:324,first:0});
  s.players[0].energy[0]=take(s,0,'T00');
  const evt=take(s,0,id);s.players[0].hand.push(evt);
@@ -30,6 +30,7 @@ function setup(id,targetId='T05',line='front',ready=true){
  s=dispatchUniversalAction(packs,s,{type:'next'});
  s=dispatchUniversalAction(packs,s,{type:'next'});
  const play=legalUniversalActions(packs,s).find(a=>a.type==='event'&&a.uid===evt.uid);
+ if(!requirePayable)return {evt,target,s,play};
  assert.ok(play,'event is payable with physical AP/energy');
  return {evt,target,s:dispatchUniversalAction(packs,s,play)};
 }
@@ -62,10 +63,13 @@ test('Batch B: already REST on either field line; optional skip never invents pa
  assert.equal(after.continuousStates.length,0);
 });
 test('Batch B: printed-BP limit rejects ineligible high BP',()=>{
- const {s,target}=setup('T03','T04');
- assert.equal(target.cardId,'T04');assert.equal(s.pending,null);
+ const {s,target,evt,play}=setup('T03','T04','front',true,false);
+ assert.equal(target.cardId,'T04');
+ assert.equal(play,undefined,'mandatory event with no eligible target must be illegal to play');
+ assert.ok(!legalUniversalActions(packs,s).some(a=>a.type==='event'&&a.uid===evt.uid));
+ assert.equal(s.pending,null);
  assert.equal(s.continuousStates.length,0);
- assert.throws(()=>dispatchUniversalAction(packs,s,{type:'chooseRestBp',uid:target.uid}),
+ assert.throws(()=>dispatchUniversalAction(packs,s,{type:'event',uid:evt.uid}),
   /not currently legal/);
 });
 test('Batch B: malformed new DSL fails closed rather than gaining automatic support',()=>{
