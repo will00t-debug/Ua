@@ -12,9 +12,10 @@ import {listRegisteredV2Titles} from '../dist/universal-v2/title-packs/registry.
 const source=p=>readFileSync(fileURLToPath(new URL(p,import.meta.url)),'utf8');
 const all=createAllV2PreviewRealDecks(),ids=[
  'bleach-purple','bleach-green','gurren-lagann-red',
- 'solo-leveling','sword-art-online','mushoku-tensei'
+ 'solo-leveling','sword-art-online','mushoku-tensei',
+ 'mushoku-tensei-roxy-field'
 ];
-test('private UI exposes six exact 50-card genuine decks for all FIVE independently registered titles',()=>{
+test('private UI exposes seven exact 50-card genuine decks for all FIVE independently registered titles',()=>{
  assert.deepEqual(Object.keys(all),ids);
  const officialTitles=new Set(listRegisteredV2Titles().map(x=>x.title));
  assert.equal(officialTitles.size,5);
