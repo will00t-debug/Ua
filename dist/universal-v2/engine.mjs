@@ -172,6 +172,18 @@ function markOwnEffectZoneMove(s,owner,from,to){
  else if(from==='outside'&&to==='hand')entry.outsideToHand=true;
  else throw Error('Unsupported effect-zone movement');
 }
+// Snapshot explicit phase programs and serialize them on the existing queue.
+function queuePhaseBoundary(pack,s,phase,edge,turnPlayer){
+ for(const owner of [turnPlayer,1-turnPlayer]){
+  const entries=[],units=[...s.players[owner].front,...s.players[owner].energy].filter(Boolean);
+  for(const c of units)for(const [i,q] of card(pack,c).phaseEffects.entries()){
+   if(q.phase!==phase||q.edge!==edge||(q.turn==='own')!==(owner===turnPlayer))continue;
+   entries.push({key:c.uid+':'+i,sourceUid:c.uid,
+    jobs:q.then.map(op=>({...op,owner,sourceUid:c.uid,sourceName:card(pack,c).name}))});
+  }
+  if(entries.length)s.effectQueue.push({op:'phaseOrder',owner,entries});
+ }
+}
 function startTurn(pack,s){
  const p=s.active,pl=s.players[p];
  pl.ownTurns++;s.turn++;s.phase='start';s.extraDrawn=false;s.moved=false;s.movedUids=[];s.pending=null;s.attacksThisTurn=0;
@@ -190,13 +202,19 @@ function startTurn(pack,s){
   if(!pl.deck.length){s.status='finished';s.winner=1-p;s.endReason='required-draw-empty';return;}
   draw(s,p);
  }
+ queuePhaseBoundary(pack,s,'start','start',p);
+ continueEffectQueue(pack,s);
 }
 // Queue printed effects so each pending cross-title target is chosen before
 // remaining steps resolve. Native card packs remain responsible for their own text.
 function continueEffectQueue(pack,s){
  while(!s.pending&&s.status==='playing'&&s.effectQueue.length){
   const job=s.effectQueue.shift(),owner=job.owner,pl=s.players[owner];
-  if(job.op==='chooseOne'){
+  if(job.op==='phaseOrder'){
+   if(job.entries.length===1)s.effectQueue.unshift(...job.entries[0].jobs);
+   else if(job.entries.length>1)s.pending={kind:'phase-order',player:owner,entries:job.entries};
+  }else if(job.op==='advanceAfterAttack')advanceAfterEnd(pack,s,owner);
+  else if(job.op==='chooseOne'){
    // Select before executing any branch; zero-target optional modes remain selectable.
    const available=job.options.filter(o=>(
     o.turn==='any'||o.turn==='own'&&s.active===owner||
@@ -593,6 +611,14 @@ function advanceAfterEnd(pack,s,owner){
 }
 function resolveChoice(s,a,pack){
  const q=s.pending,p=s.players[q.player];
+ if(q.kind==='phase-order'){
+  const selected=q.entries.find(x=>x.key===a.key);
+  if(!selected)throw Error('Invalid phase-trigger-order choice');
+  const rest=q.entries.filter(x=>x.key!==a.key);
+  s.pending=null;s.effectQueue.unshift(...selected.jobs,
+   ...(rest.length?[{op:'phaseOrder',owner:q.player,entries:rest}]:[]));
+  continueEffectQueue(pack,s);return;
+ }
  if(q.kind==='block'){
   const attacker=s.players[s.active].front.find(c=>c?.uid===q.attackerUid);
   if(!attacker)throw Error('Attacker no longer exists');
@@ -1077,6 +1103,7 @@ export function newUniversalMatch(pack,{decks,seed=1,first=0}={}){
 }
 function legalPending(pack,s){
  const q=s.pending,p=s.players[q.player];
+ if(q.kind==='phase-order')return q.entries.map(x=>({type:'choosePhaseOrder',key:x.key}));
  if(q.kind==='block')return [
   {type:'chooseBlock',uid:null},
   ...p.front.filter(c=>c?.ready).map(c=>({type:'chooseBlock',uid:c.uid}))
@@ -1366,13 +1393,18 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
    spendAp(pl,1);draw(s,p);s.extraDrawn=true;break;
   case 'next':
    if(s.phase==='start'){
-    expireContinuousStates(s,{player:p,phase:'start',edge:'end'});s.phase='move';
+    expireContinuousStates(s,{player:p,phase:'start',edge:'end'});
+    queuePhaseBoundary(pack,s,'start','end',p);
+    s.phase='move';queuePhaseBoundary(pack,s,'move','start',p);
    }
    else if(s.phase==='move'){
-    expireContinuousStates(s,{player:p,phase:'move',edge:'end'});s.phase='main';
+    expireContinuousStates(s,{player:p,phase:'move',edge:'end'});
+    queuePhaseBoundary(pack,s,'move','end',p);
+    s.phase='main';queuePhaseBoundary(pack,s,'main','start',p);
    }
    else if(s.phase==='main'){
      expireContinuousStates(s,{player:p,phase:'main',edge:'end'});
+     queuePhaseBoundary(pack,s,'main','end',p);
      s.phase='attack';
      const due=s.delayedEffects.filter(x=>x.turn===s.turn&&x.owner===p);
      s.delayedEffects=s.delayedEffects.filter(x=>!(x.turn===s.turn&&x.owner===p));
@@ -1380,9 +1412,14 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
       op:'retireAtMainEnd',owner:x.owner,sourceUid:x.sourceUid,
       fieldEntryStamp:x.fieldEntryStamp
      })));
-     continueEffectQueue(pack,s);
+     queuePhaseBoundary(pack,s,'attack','start',p);
     }
-   else if(s.phase==='attack')advanceAfterEnd(pack,s,p);
+   else if(s.phase==='attack'){
+    expireContinuousStates(s,{player:p,phase:'attack',edge:'end'});
+    queuePhaseBoundary(pack,s,'attack','end',p);
+    s.effectQueue.push({op:'advanceAfterAttack',owner:p});
+   }
+   continueEffectQueue(pack,s);
    break;
   case 'activate':{
    const selected=field(pl).find(c=>c.uid===action.uid);
@@ -1505,7 +1542,7 @@ export function assertUniversalMatch(pack,s){
    !Array.isArray(s.initialCounts)||s.initialCounts.length!==2||
    s.players?.length!==2||!playerIndex(s.active)||
    !['playing','finished'].includes(s.status))throw Error('Incorrect pack/version or match state');
- if(s.pending&&(!playerIndex(s.pending.player)||!['block','life-trigger','effect-target','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-rest-bp','raid-effect-order','effect-buff-trait','effect-buff-own','effect-once-choice','main-two-buff','main-discard-buff','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-order','effect-recover-outside','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-choice-mode','recovered-self-entry'].includes(s.pending.kind)))
+ if(s.pending&&(!playerIndex(s.pending.player)||!['phase-order','block','life-trigger','effect-target','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-rest-bp','raid-effect-order','effect-buff-trait','effect-buff-own','effect-once-choice','main-two-buff','main-discard-buff','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-order','effect-recover-outside','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-choice-mode','recovered-self-entry'].includes(s.pending.kind)))
   throw Error('Invalid pending controller');
  if(!Array.isArray(s.raidedThisTurn)||s.raidedThisTurn.length!==2||
    s.raidedThisTurn.some(x=>typeof x!=='boolean')||
@@ -1539,7 +1576,7 @@ export function assertUniversalMatch(pack,s){
    !['draw','drawIfOwnName','drawIfOwnEnergyAtLeast','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','restOppFrontUnderBp','restOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
     'discardGate','enemyFrontAllBpDown','retireOppFrontAllUnderBp',
     'buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
-    'recoverOutsideColorUnderEnergy','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','openBlock','skipNextActiveOppRest'].includes(e.op)))
+    'recoverOutsideColorUnderEnergy','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','openBlock','skipNextActiveOppRest','phaseOrder','advanceAfterAttack'].includes(e.op)))
   throw Error('Invalid queued effects');
  for(let p=0;p<2;p++){
   const pl=s.players[p],uids=new Set(),items=[];

@@ -400,6 +400,19 @@ function normalize(card,packId){
   if(Object.prototype.hasOwnProperty.call(authored,timing))
    throw Error(card.id+' cannot mix raw and templated effects at '+timing);
  const effects={...authored,...compiled};
+  // Exact, printed phase-boundary programs; only field cards may own them.
+  const phaseEffects=card.phaseEffects??[];
+  if(!Array.isArray(phaseEffects)||phaseEffects.length>4||
+   (phaseEffects.length>0&&card.type==='event')||
+   phaseEffects.some(x=>!x||typeof x!=='object'||Array.isArray(x)||
+    !['start','move','main','attack'].includes(x.phase)||
+    !['start','end'].includes(x.edge)||!['own','opponent'].includes(x.turn)||
+    Object.keys(x).some(k=>!['phase','edge','turn','then'].includes(k))||
+    !Array.isArray(x.then)||x.then.length<1||x.then.length>6)||
+   new Set(phaseEffects.map(x=>x.turn+':'+x.phase+':'+x.edge)).size!==phaseEffects.length)
+   throw Error(card.id+' invalid phase-boundary effect profile');
+  for(const [i,x] of phaseEffects.entries())
+   verifyProgram(x.then,card.id+'.phaseEffects['+i+']');
  // Only an actual character entering play can use the automatic bounce.
  // This is not a generic removal action for events/attack effects.
  for(const [timing,ops] of Object.entries(effects))
@@ -407,10 +420,10 @@ function normalize(card,packId){
    (card.type!=='character'||timing!=='onPlay'))
    throw Error(card.id+' self-bounce is only valid on character onPlay');
  if(implemented==='vanilla'&&(Object.keys(effects).length||card.effectText||
-  mainAbility||card.activeExtraEnergy||card.conditionalTraitEnergy||passiveBonuses||card.impactNull||
+  mainAbility||phaseEffects.length||card.activeExtraEnergy||card.conditionalTraitEnergy||passiveBonuses||card.impactNull||
   card.frontGeneratesEnergy||ownOutsideRecovery||card.frontForbidden||card.ownTurnBp||card.opponentTurnBp))
   throw Error(card.id+' claims vanilla despite printed/declared effects');
- if(implemented==='dsl'&&!Object.keys(effects).length&&!mainAbility&&
+ if(implemented==='dsl'&&!Object.keys(effects).length&&!phaseEffects.length&&!mainAbility&&
   !card.activeExtraEnergy&&!card.conditionalTraitEnergy&&!passiveBonuses&&!card.impactNull&&
   !card.frontGeneratesEnergy&&!ownOutsideRecovery&&!card.frontForbidden&&!card.ownTurnBp&&!card.opponentTurnBp)
   throw Error(card.id+' declares dsl without effects');
@@ -489,6 +502,8 @@ function normalize(card,packId){
   triggerEffect:triggerEffect?Object.freeze({...triggerEffect}):null,
   mainAbility:mainAbility?Object.freeze({...mainAbility}):null,
   ownOutsideRecovery:ownOutsideRecovery?Object.freeze({...ownOutsideRecovery}):null,
+   phaseEffects:Object.freeze(phaseEffects.map(x=>Object.freeze({...x,
+    then:Object.freeze(x.then.map(op=>Object.freeze({...op})))}))),
   frontForbidden:card.frontForbidden===true,
   step:card.step===true,ownTurnBp:card.ownTurnBp||0,
   opponentTurnBp:card.opponentTurnBp||0,
