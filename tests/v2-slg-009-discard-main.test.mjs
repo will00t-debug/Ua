@@ -42,7 +42,7 @@ test('official UA51BT/SLG-1-009 printed character / ACTIVE Life and generic stri
   ['purple',0,1,1500,1,'active','character']);
  assert.deepEqual(d.effects,{});
  assert.deepEqual(d.mainAbility,{op:'discardHandBuffSelf',oncePerTurn:true,discardCount:1,bp:1500});
- assert.equal(Object.keys(pack.cards).length,32);
+ assert.equal(Object.keys(pack.cards).length,33);
 });
 test('REST own FRONT character can activate without further AP, selecting an OWN hand UID before BP',()=>{
  let {s,unit}=entered();
