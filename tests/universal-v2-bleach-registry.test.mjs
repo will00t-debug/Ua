@@ -73,7 +73,7 @@ test('registry adds exact 71 official BLEACH IDs to 15 Pilots, never duplicates 
  const inventory=v2InventoryForTitle('bleach');
  assert.equal(inventory.total,276);
  assert.equal(inventory.pilotImplemented,86);
- assert.equal(inventory.blocked,191);
+ assert.equal(inventory.blocked,190);
  assert.deepEqual(inventory.pilotIds,sorted(Object.keys(registered.cards)));
 });
 

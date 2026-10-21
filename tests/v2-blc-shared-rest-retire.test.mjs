@@ -60,8 +60,8 @@ function phase(packs,s,wanted){
  assert.equal(s.phase,wanted);return s;
 }
 test('four BLEACH printed original sources are strictly fingerprint-pinned; no fake Life effect',()=>{
- assert.equal(Object.keys(bleach.cards).length,85);
- assert.equal(BLEACH_V2_ADDON_PROFILES.length,70);
+ assert.equal(Object.keys(bleach.cards).length,86);
+ assert.equal(BLEACH_V2_ADDON_PROFILES.length,71);
  assert.deepEqual(Object.keys(bleach.cards).sort(),Object.keys(createBleachV2Pack().cards).sort());
  for(const [id,color,number,name,effect] of [...energyIds,retirement]){
   const source=CARDS.find(x=>x.identity===id),pin=BLEACH_V2_ADDON_PROFILES.find(x=>x.id===id);
