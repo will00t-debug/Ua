@@ -1590,7 +1590,11 @@ export function universalPublicView(pack,s,viewer=0){
   players:s.players.map((pl,p)=>({
    title:s.packIds[p],lifeCount:pl.life.length,deckCount:pl.deck.length,handCount:pl.hand.length,
    hand:p===viewer?pl.hand.map(c=>({uid:c.uid,cardId:c.cardId})):null,
-   front:pl.front.map(c=>c?{uid:c.uid,cardId:c.cardId,ready:c.ready,bp:bp(pack,s,c),raidDepth:c.stack?.length||0,raidLayers:(c.stack||[]).map(layer=>layerView(layer,p,viewer))}:null),
+   front:pl.front.map(c=>c?{uid:c.uid,cardId:c.cardId,ready:c.ready,bp:bp(pack,s,c),
+    // Front-line energy is public only for a source-verified printed producer.
+    // Read the current physical UID; never expose private hand/deck identities.
+    ...(card(pack,c).frontGeneratesEnergy?{produces:universalCardEnergy(pack,s,p,c)}:{}),
+    raidDepth:c.stack?.length||0,raidLayers:(c.stack||[]).map(layer=>layerView(layer,p,viewer))}:null),
    energy:pl.energy.map(c=>c?{uid:c.uid,cardId:c.cardId,ready:c.ready,
     baseProduces:card(pack,c).gen,produces:universalCardEnergy(pack,s,p,c),
     raidLayers:(c.stack||[]).map(layer=>layerView(layer,p,viewer))}:null),

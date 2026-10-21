@@ -113,6 +113,9 @@ function zoneSlots(view,side,line,heading,legal){
   if(card){
    slot.append(cardFace(card,side,{ready:card.ready,interactive:clickable||side===0,
     selected}));
+   // Read only the sanitized public view. Includes verified FRONT producers.
+   if(Number.isInteger(card.produces))slot.append(
+    el('div',{class:'small',text:'產能 '+card.produces}));
    if((card.raidDepth||card.raidLayers?.length))slot.append(
     el('div',{class:'small',text:'Raid 層數 '+(card.raidDepth||card.raidLayers.length)}));
   }else slot.textContent=String(i+1)+' · 空';
