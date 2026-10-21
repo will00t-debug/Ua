@@ -50,7 +50,7 @@ test('TTG-053 independent official printed stats, main REST→top outside and AC
  assert.deepEqual(card.effects,{});
  assert.equal(card.trigger,'active');
  assert.deepEqual(validateUniversalDeck(ttg,d),[]);
- assert.equal(Object.keys(ttg.cards).length,28);
+ assert.equal(Object.keys(ttg.cards).length,29);
 });
 test('TTG-053 own REST cost fires once when READY, mills OWN single top card and pays NO AP',()=>{
  const {s,source,act}=setup();
