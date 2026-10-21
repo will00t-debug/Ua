@@ -142,8 +142,12 @@ test('explicit FRONT-only, ENERGY-only, include self and ACTIVE gate can differ 
  assert.equal(universalCardEnergy(packs,s,0,a),0,'front role never generates energy just because condition passes');
  const b=put(s,0,'C11','energy',0);
  assert.equal(universalCardEnergy(packs,s,0,b),2,'ENERGY card C11 Solo + own ENERGY Guild = 2; self included');
- s.players[0].energy[1]=null;s.players[0].outside.push(s.players[0].energy.find(x=>x?.cardId==='C1')??{});
- // Remove any no-longer-matching Guild only if the energy slot existed.
+ for(const i of [1,2]){
+  const removed=s.players[0].energy[i];
+  s.players[0].energy[i]=null;
+  s.players[0].outside.push(removed);
+ }
+ assert.equal(universalCardEnergy(packs,s,0,b),1,'no other ENERGY trait: self alone below N=2');
  assert.equal(assertUniversalMatch(packs,s),true);
 });
 test('each color stays isolated; ACTIVE +1 and conditional energy both display current, not printed',()=>{
