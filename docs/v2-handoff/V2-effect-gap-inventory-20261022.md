@@ -578,3 +578,27 @@
 `d16ffce0`：GitHub Actions V2 Resumed Integration [#39640216179](https://github.com/will00t-debug/Ua/actions/runs/39640216179) **SUCCESS**；Node 22 `npm test` **1425 通過／0 失敗**，五作品 `v2-integrated-match-matrix` **60/60／0 失敗**，`v2-unported-report` 完成；SAO/MST isolated [#39640224303](https://github.com/will00t-debug/Ua/actions/runs/39640224303) 亦 SUCCESS。Batch B、D 首次 CI 有明確失敗紀錄，已修正並重新測試，詳見 `GPT-resume.md` 最新章節。
 
 **下輪最高優先順序：** 通用條件式「REST＋延遲 ACTIVE 或改為退場」與新角色依場上 REST 條件 ACTIVE 入場的可配置行為，作為真正完整移植 `SAO-1-034`／`BLC-1-006` 的最後缺口；再考慮 MST 延遲無效化能力。避免建立第二套觸發器，所有能力都應使用 V2 共用規則、官方原文及實體 UID 驗證。
+
+## 2026-10-22｜第二輪新增已正式登錄卡及缺口更新
+
+本附錄更新 V2 的**動態登錄狀態**，不修改前文以 `729048b` 盤點的固定資料與啟發式文字分類，亦不將「分類命中」自動換算成已完成卡數。
+
+| 作品 | 本輪後正式 V2 已登錄 | 未移植 |
+|---|---:|---:|
+| BLEACH | 86 | 190 |
+| TTG | 30 | 51 |
+| SLG | 34 | 46 |
+| SAO | 62 | 121 |
+| MST | 33 | 47 |
+| **合計** | **245 / 700** | **455** |
+
+**新增通用能力：**
+- LIVE LIFE 門檻決定同一個 BP 合法目標的 REST＋下一次 ACTIVE 跳過，或退場分支：`restOrRetireOppFrontByLife`（模板 `restOrRetireEnemyFrontByOwnLife`）。
+- 任一敵方角色處於 REST 時，指定角色以 ACTIVE 正常登場：`enterActiveIfOpponentRest`。
+兩者於 V2 共用程式／合法動作處理，不依賴任何作品專屬 reducer；未通過完整原文驗證的作品不可自動啟用。
+
+**新增兩張正式 V2 卡**：`SAO-1-034`（官方 UA15BT，LIFE 5+/4- 分支、SPECIAL）與 `BLC-1-006`（官方 UA08BT，條件 ACTIVE 登場、ATTACK REST 跳過、GET）。可在 `tests/v2-sao-034-official.test.mjs`、`tests/v2-blc-006-official.test.mjs` 找到使用真正作品牌組的測試及來源指紋。各自已核對個別 FAQ Q754／Q536；沒有完成所有可能對戰情境的 FAQ 全驗收。
+
+**程式驗收證據**：最新程式 HEAD `46b66c40cd876cc03c788a509a461f5308090709`；Node.js 22 [整合 CI #39643776535](https://github.com/will00t-debug/Ua/actions/runs/39643776535) **1433/1433 通過、0 失敗，60/60 五作品對戰、0 失敗**；[SAO/MST 獨立 CI #39643785791](https://github.com/will00t-debug/Ua/actions/runs/39643785791) 亦 SUCCESS（24/24 獨立測試）。官方資料核對不取代手機／瀏覽器 UI 實際驗收。
+
+**接下來**：優先核對含持續能力失效及非一般 ACTIVE 回復的卡文（候選 MST-1-054），以真卡需求驅動狀態消耗、Raid 替換、來源離場與效果隊列順序的共用實作，並保持卡牌已登錄與完整 FAQ 已驗收的區分。

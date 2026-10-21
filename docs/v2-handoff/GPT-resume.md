@@ -369,3 +369,30 @@ TTG-1-006 uses existing generic live `ownEnergyAtLeast` own-turn BP condition; s
 
 ### Final-doc commit note
 This section records the last fully evaluated **code commit** `d16ffce0`. A documentation-only commit updating handoffs is made afterward and must not be presented as independently verified until its own CI finishes.
+
+## 2026-10-22｜第二輪實際開發：LIFE 分支與條件式 ACTIVE 登場（PR #75）
+
+**工作分支**：`codex/v2-resume-20261021`。接續上一輪通過 CI 的 HEAD `7a128f068f0ac62791fae4424aa8eb02b42aad5b`。本輪程式驗收 HEAD：`46b66c40cd876cc03c788a509a461f5308090709`。只更新 PR #75，沒有合併 main、force push 或部署 Vercel 正式站。
+
+### 已完成且已驗證的新共用機制
+1. `restOrRetireOppFrontByLife`：卡牌資料設定 BP 上限、己方 LIFE 門檻與 optionality；效果實際執行時決定是既有 `effect-rest-bp`（並施加 UID 綁定的一次性 ACTIVE 跳過）或既有 `effect-retire-bp`（含既有 leave-replacement / Raid 保護路徑）。費用與強制事件的合法目標預檢仍由 V2 核心執行，不引入作品或卡號判定分支。模板名：`restOrRetireEnemyFrontByOwnLife`。
+2. `enterActiveIfOpponentRest`：正式 V2 character schema 的布林旗標，只接受顯式 true；普通場上登場時以敵方目前可見的任一 REST 角色決定 ACTIVE/REST。不可從印刷文字自動推斷；場上角色實體 UID、`fieldEntryStamp`、AP／能源均沿用原本共用路徑。
+
+### 此輪新增「完整印刷卡面邏輯 V2 登錄」
+- `SAO-1-034`（ラディアント・ライト，UA15BT/SAO-1-034）：來源 `dist/sao-official-import.mjs` 與 [日本官方卡面](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA15BT%2FSAO-1-034)。黃3／AP1 Event，BP 5000 以下敵方 FRONT 必選。己方 LIFE 5+ REST 並跳過下一次 ACTIVE，LIFE <=4 改退場；SPECIAL Life trigger 明確配置。實際正式 SAO × BLEACH 50 卡場景：`tests/v2-sao-034-official.test.mjs`。官方個別 FAQ Q754 已核對。
+- `BLC-1-006`（キルゲ・オピー，UA08BT/BLC-1-006）：`dist/expansion-cards.mjs` 統合的官方來源映射與 [日本官方卡面](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA08BT%2FBLC-1-006)。黃4／AP2 Character，有敵方任一 REST 角色則 ACTIVE 登場；攻擊時可以指定敵方場上 REST 角色（含 ENERGY 線），令下一次 ACTIVE 失敗；GET trigger 保留。真正第二個己方回合 AP2/能源4、跨 SAO 牌組、攻擊和對手起始 refresh 測試：`tests/v2-blc-006-official.test.mjs`。官方個別 FAQ Q536 已核對。
+- **登錄數**：BLEACH **86/276**（未移植 190）；TTG **30/81**（51）；SLG **34/80**（46）；SAO **62/183**（121）；MST **33/80**（47）。合計 **245/700 已登錄，455 未移植**。比上一輪 +2 / -2。獨立 ID manifest 與所有來源鎖定驗收清單已同步；歷史盤點快照保留。
+
+### Commit / CI 實據
+- `0287f376abb1de4c6828448519a42f2997ae6997`：通用 schema、效果 op、LIFE 判斷與條件登場程式。
+- `bdaa1c30e5f3fd833549997cf8b1457f47a57388`：獨立共用機制測試；初次測試嘗試在 LIFE=0 的已終局對局繼續下動作而失敗，`f38c78d89014c34952e6456dc33e18d7221a8934` 改為有效 LIFE=1/4 場景並回歸通過（沒有改引擎合法性）。
+- `c8e36f3a3a2da4e73512399dd948e30c1496707e`：SAO 真卡正式登錄和實牌測試，`d13de773d650f0eb2a8f890e369aed2fa9d44bc0` 更新 SAO 舊計數測試。
+- `cd969cbd695b9b7106b35bb5c03604f14b402bfb`：BLEACH 真卡登錄、實牌測試與五作品整合矩陣的獨立精確卡數更新（保留 60 場與 5500 步結算判斷），`46b66c40cd876cc03c788a509a461f5308090709` 更新其餘 BLEACH 歷史計數斷言。
+- 本輪最後程式驗證：[V2 Resumed Integration run #39643776535](https://github.com/will00t-debug/Ua/actions/runs/39643776535) **SUCCESS**：GitHub Actions Node.js 22，`npm test` **1433/1433，失敗 0**；`node scripts/v2-integrated-match-matrix.mjs` **60/60、零失敗**；`node scripts/v2-unported-report.mjs` 執行成功、回報最新 245/455。
+- [SAO/MST isolated run #39643785791](https://github.com/will00t-debug/Ua/actions/runs/39643785791) **SUCCESS**：核心 1433/1433，獨立移植 24/24。
+- 本機 `git ls-remote` 因 `Could not resolve host: github.com` 失敗，因此沒有宣稱本機 Node 22 已跑測試；上述數字全取自真正遠端 CI 日誌。
+- 本文件更新 commit 會晚於 `46b66c4`，它自己的 CI 要另查，不能混充上述已驗證程式 commit 的結果。
+
+### 不得擴張的驗收宣稱／下輪重點
+本輪「完整印刷卡面邏輯 V2 登錄」是程式邏輯與已確認個別 Q536/Q754 的等級，**不是**兩張卡所有可能互動的「完整官方 FAQ 全情境驗收」。實際手機／圖形瀏覽器 UI 互動未測；只驗證公開牌面資訊、合法選項來源及 Normal/Hard AI。
+下一輪優先以官方卡文逐張核對其他延遲能力失效／跨回合持續（如 MST-1-054），補齊來源離場、回手再登場、Raid 上層更換與多來源同時觸發的整合測試。先擴充通用 DSL／事件隊列，不因部分效果就把其他真卡列入完成。
