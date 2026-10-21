@@ -71,7 +71,7 @@ test('008 Japanese official source fingerprint, BOTH independent text timings an
  assert.deepEqual(c.effects.onOutsideRecover,[{op:'drawDiscard',count:1}]);
  assert.deepEqual(c.effects.onPlay,[{op:'searchTopOneBottomDiscard',count:4,
   filters:[{field:'name',value:'水篠 旬'},{field:'name',value:'悪魔の城'}],logic:'any'}]);
- assert.equal(Object.keys(slg.cards).length,31);
+ assert.equal(Object.keys(slg.cards).length,32);
  assert.deepEqual(validateUniversalDeck(slg,deck),[]);
 });
 test('real SLG-037 recovers SLG-008: self mandatory draw then discard BEFORE source trailing draw',()=>{

@@ -51,7 +51,7 @@ test('official SLG-014 card source, Q2025 FRONT ban, onPlay mill and own-outside
   ['purple',2,1,1000,1,null,true]);
  assert.deepEqual(c.ownOutsideRecovery,{op:'restSelfToEnergy',optional:true,rest:true});
  assert.deepEqual(c.effects.onPlay,[{op:'millTop',count:1}]);
- assert.equal(Object.keys(pack.cards).length,31);
+ assert.equal(Object.keys(pack.cards).length,32);
 });
 test('optional controller-only free REST ENERGY entry after exact own-outside recovery',()=>{
  const {s,c}=recover(),options=legalUniversalActions(packs,s);
