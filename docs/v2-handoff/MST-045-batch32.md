@@ -6,3 +6,7 @@
 - New independent source pin and exact card manifest entry; same-title/SLG cross-title green-vs-blue bonus isolation, P0/P1 actor and UID ownership, physical REST/AP cost, pending retirement one-shot, legality, opponent privacy and conservation tests in `tests/v2-mst-045-green-delayed-energy.test.mjs`.
 - Candidate inventory: original pilot totals BLEACH 85, TTG 30, SLG 34, SAO 61, MST 30 = 240 across packs (includes earlier pilot cards), while unique source-contributed counts/700 must be obtained from fresh unported report. Registration + scenarios are not full Japanese FAQ certification.
 - Check THIS commit's GitHub Actions `V2 Resumed Integration`, five-title matrix and unported report before claiming acceptance. Branch PR #75 Draft only; no main merge, production deploy or manual phone QA.
+
+## Initial CI correction
+
+Commit 878ae9f0 independent MST dedicated action passed, but complete suite reported exactly three stale external expectation counts: MST all-card 29→30, MST blocked 51→50, all-title blocked 461→460. Corrected strict tests without removing assertions or changing engine logic; verify the fresh commit's CI separately.

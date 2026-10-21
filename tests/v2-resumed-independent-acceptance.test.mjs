@@ -52,7 +52,7 @@ test('new stable registry exact 240 IDs across five independently approved offic
  const inventory=v2AllTitleInventory();
  assert.equal(inventory.totals.total,700);
  assert.equal(inventory.totals.pilotImplemented,240);
- assert.equal(inventory.totals.blocked,461);
+ assert.equal(inventory.totals.blocked,460);
  for(let i=0;i<titleIds.length;i++){
   const title=titleIds[i],pack=registeredV2TitlePack(title),ids=Object.keys(pack.cards).sort();
   assert.equal(ids.length,expected[i]);
