@@ -4,6 +4,7 @@ import {verifiedSlgV2Cards} from '../slg-pack.mjs';
 const records=Object.fromEntries(SOLO_LEVELING_CARDS.map(c=>[c.id,c]));
 const proof=Object.freeze({
  '007':['退場時抽1張','Official Japanese UA51BT/SLG-1-007 エシル purple0 AP1 BP500 gen1; onRetire DRAW1; DRAW Life separately.'],
+ '008':['經自己效果從場外加入手牌時','Official UA51BT/SLG-1-008 エシル purple1/AP1/BP2000/gen1 NO Life: self OWN-OUTSIDE-to-hand by OWN effect triggers mandatory draw1 then discard1. OnPlay inspect TOP4, choose 0..1 by exact JP NAME 水篠 旬 OR 悪魔の城 (both name filters, NOT traits), put the rest in chosen order on BOTTOM, discard1 only after actual addition. Source https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-008; full FAQ QA not claimed.'],
  '014':['經自己的效果從場外加入手牌時','Official UA51BT/SLG-1-014 水篠 聡子 purple2/AP1/BP1000/gen1: OWN outside recovered to own hand by own effect may REST enter ENERGY for free; cannot enter or move to FRONT even with a swap, FAQ Q2025 2026-04-17; onPlay mandatory TOP1 mill. Not full FAQ certified.'],
  '013':['主要階段每回合一次：REST此角色','Official Japanese UA51BT/SLG-1-013 水篠 葵 purple0 AP1 BP1000 gen1; ENERGY line MAIN REST once per turn, +1 energy this turn, retire source at MAIN end; no Life trigger.'],
  '025':['登場時選一項：抽2張','Official Japanese UA51BT/SLG-1-025 観月 絵里 purple3/AP2/BP2000/gen2, ACTIVE life: onPlay mandatory choose draw2 OR draw1 then optional own-outside TRAITLESS character with printed energy <=3 recover; ACTIVE life readies one own character and gives BP+3000 until turn end. Not full FAQ certified.'],
@@ -54,6 +55,7 @@ export default Object.freeze({
      ...(def.id==='SLG-1-002'?['tests/v2-choice-mode-slg002.test.mjs']:[]),
      ...(def.id==='SLG-1-025'?['tests/v2-slg-025-traitless-recovery.test.mjs']:[]),
      ...(def.id==='SLG-1-014'?['tests/v2-slg-014-recover-entry.test.mjs']:[]),
+     ...(def.id==='SLG-1-008'?['tests/v2-slg-008-on-outside-recover.test.mjs']:[]),
      ...(def.id==='SLG-1-012'?['tests/v2-slg-012-own-name.test.mjs']:[]),
      ...(def.id==='SLG-1-018'?['tests/v2-slg-018-compound-top.test.mjs']:[]),
      ...(def.id==='SLG-1-037'?['tests/v2-slg-037-original-bp.test.mjs']:[])],

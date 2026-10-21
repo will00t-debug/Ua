@@ -10,6 +10,21 @@ const authored=[
     "implementation":"dsl","effects":{"onRetire":[{"op":"draw","count":1}]}
   },
   {
+    "id":"SLG-1-008","name":"エシル","color":"purple",
+    "energy":1,"ap":1,"bp":2000,"gen":1,"trigger":null,
+    "type":"character",
+    "textAnchor":"經自己效果從場外加入手牌時",
+    "implementation":"dsl",
+    "templateEffects":{
+      "onOutsideRecover":[{"template":"drawDiscardOne"}],
+      "onPlay":[{"template":"searchTopOneBottomDiscardWhere",
+        "count":4,"filters":[
+         {"field":"name","value":"水篠 旬"},
+         {"field":"name","value":"悪魔の城"}
+        ],"logic":"any"}]
+    }
+  },
+  {
     "id":"SLG-1-014","name":"水篠 聡子","color":"purple",
     "energy":2,"ap":1,"bp":1000,"gen":1,"trigger":null,
     "type":"character","textAnchor":"經自己的效果從場外加入手牌時",

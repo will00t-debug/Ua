@@ -752,6 +752,11 @@ function resolveChoice(s,a,pack){
     throw Error('Outside recovery needs an eligible owned physical card');
    const recovered=p.outside.splice(index,1)[0];
    p.hand.push(recovered);
+   // Recovered card's OWN mandatory print resolves before the recovering
+   // source's remaining jobs. UID ownership and the source zone were
+   // checked above. No trigger on GET Life, searchDeck, draw or bounce.
+   const onRecover=programJobs(pack,recovered,'onOutsideRecover',q.player);
+   if(onRecover.length)s.effectQueue.unshift(...onRecover);
    // Only an OWN outside card recovered to its OWN hand via a printed
    // own effect is eligible. This interrupts the existing ordered queue.
    if(card(pack,recovered).ownOutsideRecovery?.op==='restSelfToEnergy'){

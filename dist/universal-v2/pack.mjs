@@ -5,7 +5,7 @@ import {expandAbilityTemplates} from './ability-templates.mjs';
 export const V2_PHASES=Object.freeze(['start','move','main','attack']);
 export const V2_CARD_TYPES=Object.freeze(['character','event','field']);
 export const V2_TRIGGERS=Object.freeze(['draw','get','final','active','special','color','raid']);
-export const V2_EFFECT_TIMINGS=Object.freeze(['onPlay','onRaid','onAttack','onRaided','onRetire']);
+export const V2_EFFECT_TIMINGS=Object.freeze(['onPlay','onRaid','onAttack','onRaided','onRetire','onOutsideRecover']);
 export const V2_EFFECT_OPS=Object.freeze(['draw','drawIfOwnName','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','restOppFrontUnderBp','restOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw','searchDeckMany','discardGate','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
  'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideColorUnderEnergy','recoverOutsideTraitlessUnderEnergy','buffOwnField','oncePerTurnGate','chooseOne']);
 const integer=(v,low=0)=>Number.isInteger(v)&&v>=low;
@@ -396,6 +396,18 @@ function normalize(card,packId){
   if(name==='onRetire'&&
    (card.type!=='character'||program.some(e=>!['draw','millTop'].includes(e.op))))
    throw Error(card.id+' unsupported onRetire ability program');
+  // Card-self triggered ability for a physical card recovered from OWN
+  // outside to OWN hand via an OWN effect. Explicitly limited to one
+  // printed mandatory draw-one/discard-one, not generic hand-enter effects.
+  // The separate SLG-014 free REST entry cannot be combined without an
+  // audited priority ruling, so reject that ambiguous mixed profile.
+  if(name==='onOutsideRecover'&&(
+   card.type!=='character'||ownOutsideRecovery!==null||
+   program.length!==1||program[0]?.op!=='drawDiscard'||
+   program[0]?.count!==1||
+   Object.keys(program[0]).length!==2||
+   Object.keys(program[0]).some(k=>!['op','count'].includes(k))
+  ))throw Error(card.id+' unsupported onOutsideRecover ability program');
   if(name==='onAttack'&&card.type!=='character')throw Error(card.id+' noncharacter cannot attack');
   if(card.type==='event'&&program.some(e=>e.op==='buffSelf'))
    throw Error(card.id+' event cannot buff itself on field');

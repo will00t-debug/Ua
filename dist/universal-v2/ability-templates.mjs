@@ -2,7 +2,7 @@
 // This module only compiles explicitly authored card abilities into existing
 // battle-engine DSL ops. It NEVER infers effects from printed card prose and
 // cannot authorize a card that has not passed the per-card official gate.
-const timings=Object.freeze(['onPlay','onRaid','onAttack','onRaided']);
+const timings=Object.freeze(['onPlay','onRaid','onAttack','onRaided','onOutsideRecover']);
 const integer=(x,lower,upper)=>Number.isInteger(x)&&x>=lower&&x<=upper;
 const positiveBp=v=>integer(v,1,5000);
 const threshold=v=>integer(v,1,50000);
