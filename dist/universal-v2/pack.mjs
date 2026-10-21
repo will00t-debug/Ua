@@ -6,7 +6,7 @@ export const V2_PHASES=Object.freeze(['start','move','main','attack']);
 export const V2_CARD_TYPES=Object.freeze(['character','event','field']);
 export const V2_TRIGGERS=Object.freeze(['draw','get','final','active','special','color','raid']);
 export const V2_EFFECT_TIMINGS=Object.freeze(['onPlay','onRaid','onAttack','onRaided','onRetire','onOutsideRecover']);
-export const V2_EFFECT_OPS=Object.freeze(['draw','drawIfOwnName','drawIfOwnEnergyAtLeast','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','restOppFrontUnderBp','restOppFrontOne','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw','searchDeckMany','discardGate','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
+export const V2_EFFECT_OPS=Object.freeze(['draw','drawIfOwnName','drawIfOwnEnergyAtLeast','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','restOppFrontUnderBp','restOppFrontOne','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','retireOwnFieldOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw','searchDeckMany','discardGate','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
  'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideColorUnderEnergy','recoverOutsideTraitlessUnderEnergy','buffOwnField','oncePerTurnGate','chooseOne']);
 const integer=(v,low=0)=>Number.isInteger(v)&&v>=low;
 const own=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
@@ -198,7 +198,10 @@ function verifyProgram(program,path){
    !integer(e.bp,1)||e.bp>50000||e.optional!==true||
    Object.keys(e).some(k=>!['op','bp','optional'].includes(k))
   ))throw Error(path+'['+i+'] invalid facedown retirement effect');
-  if(e.op==='restSilenceOppFrontIfOwnOutsideField'&&(
+  if(e.op==='retireOwnFieldOne'&&(e.optional!==true||
+    Object.keys(e).some(k=>!['op','optional'].includes(k))))
+    throw Error(path+'['+i+'] invalid optional own field retirement');
+   if(e.op==='restSilenceOppFrontIfOwnOutsideField'&&(
     e.optional!==true||Object.keys(e).some(k=>!['op','optional'].includes(k))
    ))throw Error(path+'['+i+'] invalid conditional printed silence');
    if(e.op==='restOrRetireOppFrontByLife'&&(
@@ -448,7 +451,7 @@ function normalize(card,packId){
   if(name==='onRaided'&&program.some(e=>!['buffOwnTrait','drawIfRaidUnderFacedown'].includes(e.op)))
    throw Error(card.id+' unsupported Raid-base timing effect');
   if(name==='onRetire'&&
-   (card.type!=='character'||program.some(e=>!['draw','millTop'].includes(e.op))))
+   (!['character','field'].includes(card.type)||program.some(e=>!['draw','millTop'].includes(e.op))))
    throw Error(card.id+' unsupported onRetire ability program');
   // Card-self triggered ability for a physical card recovered from OWN
   // outside to OWN hand via an OWN effect. Explicitly limited to one

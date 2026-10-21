@@ -430,7 +430,13 @@ function continueEffectQueue(pack,s){
    s.effectQueue.unshift(...lethal.map(c=>({
     op:'retireBatchOne',owner,targetPlayer:foe,uid:c.uid
    })));
-  }else if(job.op==='retireOppFrontAllUnderBp'){
+  }else if(job.op==='retireOwnFieldOne'){
+    // Real, existing FIELD objects in OWN ENERGY only. This is true
+    // retirement, distinct from placing a new card in a full line (removal).
+    const choices=pl.energy.filter(c=>c&&card(pack,c).type==='field').map(c=>c.uid);
+    if(choices.length)s.pending={kind:'effect-retire-own-field',player:owner,
+     sourceUid:job.sourceUid,choices,optional:true};
+   }else if(job.op==='retireOppFrontAllUnderBp'){
    // The target set is evaluated ONCE, at the original effect resolution.
    // Protected Raid replacement choices cannot introduce fresh victims.
    const foe=1-owner;
@@ -1003,7 +1009,16 @@ function resolveChoice(s,a,pack){
    controller:q.player,sourceUid:q.sourceUid,targetUid:target.uid});
   s.pending=null;continueEffectQueue(pack,s);return;
  }
- if(q.kind==='effect-retire-bp'){
+ if(q.kind==='effect-retire-own-field'){
+   if(a.uid===null){s.pending=null;continueEffectQueue(pack,s);return;}
+   const slot=p.energy.findIndex(c=>c?.uid===a.uid&&card(pack,c).type==='field');
+   if(slot<0||!q.choices.includes(a.uid))
+    throw Error('Illegal OWN FIELD retirement target');
+   s.pending=null;
+   retire(pack,s,q.player,'energy',slot);
+   continueEffectQueue(pack,s);return;
+  }
+  if(q.kind==='effect-retire-bp'){
   if(a.uid===null&&q.optional){s.pending=null;continueEffectQueue(pack,s);return;}
   const opponent=1-q.player,slot=s.players[opponent].front.findIndex(c=>c?.uid===a.uid);
   if(slot<0||!q.choices.includes(a.uid)||bp(pack,s,s.players[opponent].front[slot])>q.limit)
@@ -1234,7 +1249,11 @@ function legalPending(pack,s){
    ...(q.optional?[{type:'chooseRestBp',uid:null}]:[]),
    ...q.choices.map(uid=>({type:'chooseRestBp',uid}))
   ];
- if(q.kind==='effect-retire-bp')return [
+ if(q.kind==='effect-retire-own-field')return [
+    {type:'chooseOwnFieldRetire',uid:null},
+    ...q.choices.map(uid=>({type:'chooseOwnFieldRetire',uid}))
+   ];
+  if(q.kind==='effect-retire-bp')return [
    ...(q.optional?[{type:'chooseRetireBp',uid:null}]:[]),
    ...q.choices.map(uid=>({type:'chooseRetireBp',uid}))
   ];
@@ -1575,7 +1594,7 @@ export function assertUniversalMatch(pack,s){
    !Array.isArray(s.initialCounts)||s.initialCounts.length!==2||
    s.players?.length!==2||!playerIndex(s.active)||
    !['playing','finished'].includes(s.status))throw Error('Incorrect pack/version or match state');
- if(s.pending&&(!playerIndex(s.pending.player)||!['phase-order','block','life-trigger','effect-target','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-rest-bp','raid-effect-order','effect-buff-trait','effect-buff-own','effect-once-choice','main-two-buff','main-discard-buff','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-order','effect-recover-outside','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-choice-mode','recovered-self-entry'].includes(s.pending.kind)))
+ if(s.pending&&(!playerIndex(s.pending.player)||!['phase-order','block','life-trigger','effect-target','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-retire-own-field','effect-rest-bp','raid-effect-order','effect-buff-trait','effect-buff-own','effect-once-choice','main-two-buff','main-discard-buff','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-order','effect-recover-outside','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-choice-mode','recovered-self-entry'].includes(s.pending.kind)))
   throw Error('Invalid pending controller');
  if(!Array.isArray(s.raidedThisTurn)||s.raidedThisTurn.length!==2||
    s.raidedThisTurn.some(x=>typeof x!=='boolean')||
@@ -1609,7 +1628,7 @@ export function assertUniversalMatch(pack,s){
    !['draw','drawIfOwnName','drawIfOwnEnergyAtLeast','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','restOppFrontUnderBp','restOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
     'discardGate','enemyFrontAllBpDown','retireOppFrontAllUnderBp',
     'buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
-    'recoverOutsideColorUnderEnergy','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','openBlock','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','phaseOrder','advanceAfterAttack'].includes(e.op)))
+    'recoverOutsideColorUnderEnergy','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','retireOwnFieldOne','openBlock','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','phaseOrder','advanceAfterAttack'].includes(e.op)))
   throw Error('Invalid queued effects');
  for(let p=0;p<2;p++){
   const pl=s.players[p],uids=new Set(),items=[];
