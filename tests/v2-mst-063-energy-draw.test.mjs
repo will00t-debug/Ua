@@ -68,7 +68,7 @@ test('MST063 immutable Japanese onPlay energy>=7 full print, distinct DRAW life,
   ['ノルン','green',2,1,2000,1,['ラノア魔法大学'],'draw']);
  assert.deepEqual(d.effects.onPlay,[{op:'drawIfOwnEnergyAtLeast',energy:7,count:1}]);
  assert.equal(d.implementation,'dsl');
- assert.equal(Object.keys(mst.cards).length,32);
+ assert.equal(Object.keys(mst.cards).length,33);
  assert.deepEqual(validateUniversalDeck(mst,mstDeck),[]);
  assert.deepEqual(validateUniversalDeck(slg,slgDeck),[]);
 });

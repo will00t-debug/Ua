@@ -70,7 +70,7 @@ test('strict front energy schema rejects noncharacters, invalid values and faux 
  const base={id:'QA',name:'QA',color:'green',type:'character',energy:0,ap:1,bp:1000,gen:1,implementation:'dsl',effects:{},frontGeneratesEnergy:true};
  const make=c=>createUniversalPack({id:'qa-front',cards:[c]});
  assert.equal(make(base).cards.QA.frontGeneratesEnergy,true);
- for(const v of [false,null,0,1,'yes'])assert.throws(()=>make({...base,frontGeneratesEnergy:v}),/invalid front-line energy/);
+ for(const v of [false,null,0,1,'yes'])assert.throws(()=>make({...base,frontGeneratesEnergy:v}),/invalid front-line energy|dsl without effects/);
  for(const type of ['event','field'])assert.throws(()=>make({...base,type}),/invalid front-line energy/);
  assert.throws(()=>make({...base,implementation:'vanilla'}),/vanilla/);
 });

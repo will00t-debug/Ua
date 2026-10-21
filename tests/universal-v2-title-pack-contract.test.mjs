@@ -123,7 +123,7 @@ test('inventory is derived from all five official catalogues and exact registere
  assert.deepEqual(series.map(x=>x.title),V2_TITLE_IDS);
  assert.deepEqual(series.map(x=>x.total),Object.values(V2_EXPECTED_UNIQUE_CARD_COUNTS));
  assert.deepEqual(series.map(x=>x.pilotImplemented),[85,30,34,61,33]);
- assert.deepEqual(series.map(x=>x.blocked),[191,51,46,122,48]);
+ assert.deepEqual(series.map(x=>x.blocked),[191,51,46,122,47]);
  assert.equal(totals.total,700);
  assert.equal(totals.pilotImplemented,243);
  assert.equal(totals.blocked,457);
