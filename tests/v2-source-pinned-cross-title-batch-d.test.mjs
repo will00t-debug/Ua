@@ -85,7 +85,7 @@ test('Batch D: SAO-1-034 official >4 life REST component is mandatory, BP bounde
  assert.equal(assertUniversalMatch(packs,s),true);
 });
 test('Batch D: official component pilots cannot be mistaken for completed registered V2 cards',()=>{
- assert.equal(registeredV2TitlePack('bleach').cards['BLC-1-006'],undefined);
+ assert.ok(registeredV2TitlePack('bleach').cards['BLC-1-006']);
  assert.ok(registeredV2TitlePack('sword-art-online').cards['SAO-1-034']);
  assert.equal(blc.templateEffects.onAttack[0].optional,true);
  assert.equal(sao.templateEffects.onPlay[0].bp,5000);

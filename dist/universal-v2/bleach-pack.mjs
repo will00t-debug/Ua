@@ -10,6 +10,13 @@ import {verifiedPilotCards} from './real-card-pilots.mjs';
 // 'step' uses the V2 move-phase STEP handler; 'bounce' uses a real V2 template.
 export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
  {
+  "id":"BLC-1-006","kind":"enterActiveAttackRestSkip",
+  "number":"UA08BT/BLC-1-006","name":"キルゲ・オピー",
+  "color":"yellow","energy":4,"ap":2,"bp":4000,"gen":1,
+  "trigger":"get","type":"character",
+  "effect":"敵方場上有至少 1 個 REST 角色時，此角色以 ACTIVE 登場。攻擊時：可選最多 1 個敵方場上的 REST 角色，使其跳過下一次轉為 ACTIVE。"
+ },
+ {
   "id":"BLC-1-005","kind":"restSelfEnemy",
   "number":"UA08BT/BLC-1-005","name":"キルゲ・オピー",
   "color":"yellow","energy":2,"ap":1,"bp":3000,"gen":1,
@@ -910,6 +917,7 @@ export function checkedBleachAddonDefinition(p){
   traitBuffAllDraw:{onPlay:[{template:'buffOwnTraitAllTurn',trait:'護廷十三隊',bp:1000},{template:'draw',count:1}]},
   restEnemy3500:{onPlay:[{template:'restEnemyUnderBp',bp:3500,optional:true}]},
   restEnemyFrontOne:{onPlay:[{template:'restEnemyFrontOne',optional:false}]},
+   enterActiveAttackRestSkip:{onAttack:[{template:'skipNextActiveOppRest',optional:true}]},
   retireBonusYamamoto:{onPlay:[{template:'retireEnemyUnderBp',bp:3000,bonusName:'山本元柳斎重國',bonusBp:5000}]},
   retireBonusRukia:{onPlay:[{template:'retireEnemyUnderBp',bp:3000,bonusName:'朽木ルキア',bonusBp:5000}]},
   enemyBpDown1000:{onPlay:[{template:'enemyBpDown',bp:1000,optional:true}]},
@@ -935,6 +943,7 @@ export function checkedBleachAddonDefinition(p){
   traits:Array.isArray(c.traits)?c.traits:(c.traits&&c.traits!=='無'?[c.traits]:[]),
   implementation:p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'?'vanilla':'dsl',
   ...(p.kind==='step'?{step:true}:{}),
+   ...(p.kind==='enterActiveAttackRestSkip'?{enterActiveIfOpponentRest:true}:{}),
   ...(p.kind==='activeEnergy'?{activeExtraEnergy:1}:{}),
   ...(p.kind==='impactNull'?{impactNull:true}:{}),
   ...(p.kind==='restSelfEnemy'?{mainAbility:{op:'restSelfThenRestOppFrontOne',frontOnly:true}}:{}),

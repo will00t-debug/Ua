@@ -56,7 +56,7 @@ test('BLC-1-005 official printed ID, stats, evidence, unmodified no-life trigger
  assert.deepEqual(printed.effects,{});
  assert.deepEqual(printed.mainAbility,{op:'restSelfThenRestOppFrontOne',frontOnly:true});
  assert.equal(printed.trigger,null);
- assert.equal(Object.keys(bleach.cards).length,85);
+ assert.equal(Object.keys(bleach.cards).length,86);
  assert.deepEqual(validateUniversalDeck(bleach,decks),[]);
 });
 
