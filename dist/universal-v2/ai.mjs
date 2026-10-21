@@ -78,7 +78,13 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
    (catalog[hand.find(c=>c.uid===b.uid)?.cardId]?.energy||0))[0];
  }
  if(s.pending?.kind==='main-two-buff')return legal[0];
- if(s.pending?.kind==='effect-rest-bp')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-rest-bp'){
+  // RESTed characters remain legal targets (official Q91), but choosing one
+  // wastes the effect whenever a READY opponent is also available.
+  const foe=s.players[1-s.pending.player].front;
+  return legal.find(a=>a.uid!==null&&foe.find(c=>c?.uid===a.uid)?.ready)||
+   legal.find(a=>a.uid!==null)||legal[0];
+ }
  if(s.pending?.kind==='effect-retire-bp'){
   // A printed "up to one" retirement presents SKIP first; normal/hard AI
   // should choose an eligible enemy unless there is none.
@@ -170,10 +176,11 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   return energyPlays[0];
  }
  if(difficulty==='hard'&&raids.length)return raids[0];
+ const foeReady=s.players[1-s.active].front.some(c=>c?.ready);
  const activate=legal.find(a=>a.type==='activate'&&a.mode==='readyAndBuff')||
   legal.find(a=>a.type==='activate'&&a.mode==='buff')||
   legal.find(a=>a.type==='activate'&&a.mode==='ready')||
-  legal.find(a=>a.type==='activate'&&a.mode==='selfRestEnemy')||
+  (foeReady?legal.find(a=>a.type==='activate'&&a.mode==='selfRestEnemy'):null)||
   legal.find(a=>a.type==='activate'&&a.mode==='selfRestThen')||
   legal.find(a=>a.type==='activate'&&a.mode==='selfRestEnergyRetire')||
   (difficulty==='hard'&&s.players[s.active].hand.length>1?

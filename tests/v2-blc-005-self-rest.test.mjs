@@ -6,6 +6,7 @@ import {createTtgV2Pack} from '../dist/universal-v2/ttg-pack.mjs';
 import {createUniversalPack,validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  assertUniversalMatch,universalPublicView} from '../dist/universal-v2/engine.mjs';
+import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
 import {uiActionLabel} from '../dist/universal-v2/preview-actions.mjs';
 
 // Independently authored exact source: UA08BT/BLC-1-005, キルゲ・オピー.
@@ -133,6 +134,29 @@ test('opponent front UID choice is exact; never targets own field or enemy energ
  assert.equal(resolved.players[1].front[1].ready,false);
  assert.equal(resolved.players[1].energy[0].ready,true);
  assert.equal(assertUniversalMatch(packs,resolved),true);
+});
+
+test('normal and hard AI preserve self when all targets REST, then prefer a READY target',()=>{
+ for(const difficulty of ['normal','hard']){
+  const allRest=fixture();
+  allRest.s.players[1].front[0].ready=false;
+  assert.ok(option(allRest.packs,allRest.s,allRest.source.uid),
+   'Q91 keeps an already-RESTed opposing front character rules-legal');
+  const action=chooseUniversalAiAction(allRest.packs,allRest.s,{difficulty});
+  assert.notEqual(action?.mode,'selfRestEnemy',difficulty+' must not waste its source REST');
+
+  const mixed=fixture();
+  mixed.s.players[1].front[0].ready=false;
+  const ready=grab(mixed.s,1,'BLC-1-012');
+  ready.ready=true;mixed.s.players[1].front[1]=ready;
+  const paid=dispatchUniversalAction(mixed.packs,mixed.s,
+   option(mixed.packs,mixed.s,mixed.source.uid));
+  assert.deepEqual(legalUniversalActions(mixed.packs,paid),[
+   {type:'chooseRestBp',uid:mixed.enemy.uid},{type:'chooseRestBp',uid:ready.uid}
+  ]);
+  assert.deepEqual(chooseUniversalAiAction(mixed.packs,paid,{difficulty}),
+   {type:'chooseRestBp',uid:ready.uid},difficulty+' must prefer a READY target');
+ }
 });
 
 test('no AP needed to activate main self-REST; does not consume hidden hand or public UID',()=>{
