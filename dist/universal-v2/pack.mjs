@@ -251,8 +251,16 @@ function normalize(card,packId){
   mainAbility.frontOnly===true&&
   Object.keys(mainAbility).length===2&&
   Object.keys(mainAbility).every(k=>['op','frontOnly'].includes(k));
+ const mainRestProgram=mainAbility?.op==='restSelfThen'&&
+  mainAbility.frontOnly===true&&
+  Object.keys(mainAbility).length===3&&
+  Object.keys(mainAbility).every(k=>['op','frontOnly','then'].includes(k))&&
+  Array.isArray(mainAbility.then)&&mainAbility.then.length===1&&
+  mainAbility.then[0]?.op==='millTop'&&
+  Object.keys(mainAbility.then[0]).every(k=>['op','count'].includes(k));
+ if(mainRestProgram)verifyProgram(mainAbility.then,card.id+'.mainAbility.then');
  if(mainAbility!==null&&
-  (card.type!=='character'||!(mainRaid||mainSelfRest)))
+  (card.type!=='character'||!(mainRaid||mainSelfRest||mainRestProgram)))
   throw Error(card.id+' unsupported main action ability');
  const implemented=card.implementation;
  if(!['vanilla','dsl'].includes(implemented))

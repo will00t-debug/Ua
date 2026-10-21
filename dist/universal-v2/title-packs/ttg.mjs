@@ -7,6 +7,7 @@ const proof=Object.freeze({
  'TTG-1-019':['ACTIVE','日本印刷 ACTIVE 時綠色額外能源 1；REST 即無加成。'],
  'TTG-1-010':['牌庫頂查看3張','UA56BT/TTG-1-010：登場查看自己牌頂3張，最多公開大グレン団 1 張入手，其餘任意順序置底；只有拿牌後才強制棄 1 張。Life DRAW 獨立。'],
  'TTG-1-023':['牌庫頂5張','UA56BT/TTG-1-023：登場查看自己牌頂5張，最多公開ガンメン 1 張入手，其餘任意順序置底；只有拿牌後才強制棄 1 張。生命無 Trigger。'],
+ 'TTG-1-053':['主要階段：REST自己，牌庫頂1張送場外。','UA56BT/TTG-1-053 official: active MAIN, own character REST cost before own deck top one outside. No extra AP or printed once-per-turn limit; ACTIVE Life independent.'],
  'TTG-1-077':['ガンメン特徵','2026-10-15 日本官方：赤4/AP1/フィールド/赤赤，登場時「自分の場外から［特徴：ガンメン］を1枚まで手札に加える」。optional 0..1；僅自家場外，不搜 deck 或敵區。UA56BT 現有四張ガンメン印刷 source 的 traits 皆精確為複合「大グレン団／ガンメン」，為共用 filter 拆分僅此單卡的已驗證斜線複合來源成兩個特徵字串（ガンメン），原始 sourceRecord 不變且有來源漂移保護。無生命 Trigger。']
 });
 export default Object.freeze({
@@ -19,7 +20,8 @@ export default Object.freeze({
    id:def.id,sourceRecord:record,definition:def,
    evidence:{printedTextFragments:[review[0]],reviewNote:review[1]+
     ' 日文來源：'+record.source,
-    testFiles:['tests/universal-v2-ttg-port.test.mjs',...(def.id==='TTG-1-010'||def.id==='TTG-1-023'?['tests/v2-ttg-top-filtered.test.mjs']:[])]}
+    testFiles:['tests/universal-v2-ttg-port.test.mjs',...(def.id==='TTG-1-010'||def.id==='TTG-1-023'?['tests/v2-ttg-top-filtered.test.mjs']:[]),
+      ...(def.id==='TTG-1-053'?['tests/v2-ttg-053-rest-mill.test.mjs']:[])]}
   });
  }))
 });
