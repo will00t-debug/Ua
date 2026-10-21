@@ -45,13 +45,18 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
  const pl=s.players[owner];
  const zones=condition.zone==='front'?[pl.front]:
   condition.zone==='energy'?[pl.energy]:[pl.front,pl.energy];
+ // A compound printed-name requirement is conjunctive across distinct names.
+ // Count only own physical field characters; never opponent cards or hidden zones.
+ const remaining=condition.kind==='ownFieldHasAllNames'?new Set(condition.names):null;
  let found=0;
  for(const zone of zones)for(const c of zone){
   if(!c||(condition.excludeSelf&&c.uid===sourceUid))continue;
   const d=printed(c);
   if(d.type!=='character')continue;
   if(condition.kind==='ownNameExists'&&d.name===condition.name)return true;
+  if(remaining)remaining.delete(d.name);
   if(condition.kind==='ownTraitCount'&&d.traits.includes(condition.trait))found++;
  }
+ if(remaining)return remaining.size===0;
  return condition.kind==='ownTraitCount'&&found>=condition.min;
 }
