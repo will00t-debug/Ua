@@ -87,7 +87,11 @@ const registry=Object.freeze({
   args:{optional:yesNo},
   build:v=>[{op:'skipNextActiveOppRest',optional:v.optional}]
  },
- restOrRetireEnemyFrontByOwnLife:{
+ restSilenceOppFrontIfOwnOutsideField:{
+   args:{optional:requiredTrue},
+   build:()=>[{op:'restSilenceOppFrontIfOwnOutsideField',optional:true}]
+  },
+  restOrRetireEnemyFrontByOwnLife:{
    args:{bp:threshold,lifeAtMost:v=>integer(v,0,20),optional:yesNo},
    build:v=>[{op:'restOrRetireOppFrontByLife',bp:v.bp,
     lifeAtMost:v.lifeAtMost,optional:v.optional}]
