@@ -159,7 +159,8 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(difficulty==='hard'&&raids.length)return raids[0];
  const activate=legal.find(a=>a.type==='activate'&&a.mode==='readyAndBuff')||
   legal.find(a=>a.type==='activate'&&a.mode==='buff')||
-  legal.find(a=>a.type==='activate'&&a.mode==='ready');
+  legal.find(a=>a.type==='activate'&&a.mode==='ready')||
+  legal.find(a=>a.type==='activate'&&a.mode==='selfRestEnemy');
  if(activate&&difficulty!=='easy')return activate;
  if(frontPlays.length){
   frontPlays.sort((a,b)=> (cardFor(pack,s,b)?.bp||0)-(cardFor(pack,s,a)?.bp||0));

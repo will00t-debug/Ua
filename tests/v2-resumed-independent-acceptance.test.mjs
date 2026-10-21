@@ -46,13 +46,13 @@ function playFixture(id,deckKey,genId,seed){
  assert.ok(play,'actual legal play available for '+id);
  return {s,packs,source,play};
 }
-test('new stable registry exact 199 IDs across five independently approved official title packs',()=>{
- const expected=[79,24,19,53,24],registered=listRegisteredV2Titles();
+test('new stable registry exact 200 IDs across five independently approved official title packs',()=>{
+ const expected=[80,24,19,53,24],registered=listRegisteredV2Titles();
  assert.deepEqual(registered.map(t=>t.totalV2Cards),expected);
  const inventory=v2AllTitleInventory();
  assert.equal(inventory.totals.total,700);
- assert.equal(inventory.totals.pilotImplemented,199);
- assert.equal(inventory.totals.blocked,501);
+ assert.equal(inventory.totals.pilotImplemented,200);
+ assert.equal(inventory.totals.blocked,500);
  for(let i=0;i<titleIds.length;i++){
   const title=titleIds[i],pack=registeredV2TitlePack(title),ids=Object.keys(pack.cards).sort();
   assert.equal(ids.length,expected[i]);
@@ -219,6 +219,7 @@ test('BLC-1-030 printed mandatory REST cost is rejected pre-AP without opponent,
 test('new handoff cards are registered while unsupported successors remain fail-closed',()=>{
  assert.ok(registeredV2TitlePack('bleach').cards['BLC-4-023']);
  assert.ok(registeredV2TitlePack('gurren-lagann').cards['TTG-1-077']);
- assert.equal(registeredV2TitlePack('bleach').cards['BLC-1-005'],undefined);
+ assert.deepEqual(registeredV2TitlePack('bleach').cards['BLC-1-005'].mainAbility,
+  {op:'restSelfThenRestOppFrontOne',frontOnly:true});
  assert.equal(registeredV2TitlePack('gurren-lagann').cards['TTG-1-010'],undefined);
 });

@@ -28,12 +28,12 @@ Other old handoff inventories remain historical snapshots.
 
 | Title | Integrated | Unported | Catalogue |
 |---|---:|---:|---:|
-| BLEACH | 79 | 197 | 276 |
+| BLEACH | 80 | 196 | 276 |
 | TTG | 24 | 57 | 81 |
 | SLG | 19 | 61 | 80 |
 | SAO | 53 | 130 | 183 |
 | MST | 24 | 56 | 80 |
-| Total | 199 | 501 | 700 |
+| Total | 200 | 500 | 700 |
 
 These are source-pinned registered effects with scenario tests, not a claim that
 every official FAQ interaction is certified. No mobile manual QA or deployment
@@ -83,3 +83,11 @@ was performed in this integration batch.
 - Independent source inventory: BLEACH 79/276, TTG 24/81, SLG 19/80, SAO 53/183, MST 24/80. **V2 integrated 199/700, unported 501**. Catalogued 700; standalone source metadata readiness and full-FAQ acceptance remain separate. Full official FAQ certification still **0** until independent per-card rulings verification.
 - SLG official catalogue metadata incomplete for 12 other records per report. No speculative ports. No changes to main or production, no local clone, no manual mobile QA.
 - Next recommended batch: shared own-character REST payment / target gating for BLC-1-005, or filtered top-N and ordered remainder for TTG-1-010/023, against Japanese official card text and FAQ.
+
+## Batch 2 — BLC-1-005 (2026-10-21)
+
+- Official printed source: https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA08BT%2FBLC-1-005. 2 yellow energy, one AP to PLAY character, 3000 BP, yellow generation 1, Sternritter trait, NO life trigger. Main-phase/front-only ability: REST this READY character as activation cost, then choose one opposing front-line character and REST it. No printed per-turn restriction or extra AP activation cost.
+- Shared V2 operation: `mainAbility:{op:'restSelfThenRestOppFrontOne',frontOnly:true}`, strict pack verifier plus common `activate` legality and mandatory existing opponent REST target queue. The source cost is paid BEFORE target choice, and no null/skip allowed. Existing Raid-based main action is unaffected. V2 AI/preview labels recognize this action.
+- Source fingerprint `dist/expansion-cards.mjs` / checked BLEACH addon, independent formal title contribution and explicit manifest; negative tests for illegal source, target, cost/actor and foreign UID; tests `tests/v2-blc-005-self-rest.test.mjs`.
+- Catalogued 700, V2 implemented/integrated 200 (BLEACH 80, TTG 24, SLG 19, SAO 53, MST 24), unported 500. FAQ full-audit certification remains 0. Printed page has no card-specific Q&A entry; general activation REST rules apply, but further interaction FAQ reviews remain open.
+- CI result/commit SHA: see subsequent verification milestone in this file; do not treat former green run as a new batch result.

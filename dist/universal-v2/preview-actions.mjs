@@ -72,7 +72,8 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'move':return '移至前線 '+(action.slot+1);
   case 'step':return 'STEP 移至能源線 '+(action.slot+1);
   case 'attack':return '宣告攻擊：'+name();
-  case 'activate':return action.mode==='ready'?'主要能力：ACTIVE':
+  case 'activate':return action.mode==='selfRestEnemy'?'主要能力：REST 自身，指定敵方前線角色':
+    action.mode==='ready'?'主要能力：ACTIVE':
     action.mode==='buff'?'主要能力：BP 加成':'主要能力：ACTIVE ＋ BP 加成';
   case 'chooseBlock':return action.uid===null?'不阻擋':'使用 '+name()+' 阻擋';
   case 'chooseTrigger':

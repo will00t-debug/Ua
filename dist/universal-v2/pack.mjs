@@ -218,13 +218,18 @@ function normalize(card,packId){
  // Main-action selectors must be fully explicit: unknown card text is not
  // assumed to behave like the Kamina choose-up-to-two ability.
  const mainAbility=card.mainAbility??null;
- if(mainAbility!==null&&(
-  card.type!=='character'||mainAbility.op!=='chooseTwoAfterOwnRaid'||
-  mainAbility.frontOnly!==true||mainAbility.readyOncePerName!==true||
-  typeof mainAbility.trait!=='string'||!mainAbility.trait.trim()||
-  !integer(mainAbility.bp,1)||mainAbility.bp>5000||
-  Object.keys(mainAbility).some(k=>!['op','frontOnly','readyOncePerName','trait','bp'].includes(k))
- ))throw Error(card.id+' unsupported main action ability');
+ const mainRaid=mainAbility?.op==='chooseTwoAfterOwnRaid'&&
+  mainAbility.frontOnly===true&&mainAbility.readyOncePerName===true&&
+  typeof mainAbility.trait==='string'&&!!mainAbility.trait.trim()&&
+  integer(mainAbility.bp,1)&&mainAbility.bp<=5000&&
+  Object.keys(mainAbility).every(k=>['op','frontOnly','readyOncePerName','trait','bp'].includes(k));
+ const mainSelfRest=mainAbility?.op==='restSelfThenRestOppFrontOne'&&
+  mainAbility.frontOnly===true&&
+  Object.keys(mainAbility).length===2&&
+  Object.keys(mainAbility).every(k=>['op','frontOnly'].includes(k));
+ if(mainAbility!==null&&
+  (card.type!=='character'||!(mainRaid||mainSelfRest)))
+  throw Error(card.id+' unsupported main action ability');
  const implemented=card.implementation;
  if(!['vanilla','dsl'].includes(implemented))
   throw Error(card.id+' must explicitly declare vanilla or dsl (unported effects are not playable)');

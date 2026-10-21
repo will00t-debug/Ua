@@ -1014,7 +1014,17 @@ export function legalUniversalActions(pack,s){
  if(s.phase==='main'){
   for(const c of pl.front.filter(Boolean)){
    const d=card(pack,c),ability=d.mainAbility;
-   if(!ability||!s.raidedThisTurn[p]||s.mainAbilityUsedUids.includes(c.uid))continue;
+   if(!ability)continue;
+   if(ability.op==='restSelfThenRestOppFrontOne'){
+    // This ability has a self-REST cost, NOT AP or per-turn flag. A READY
+    // front-line character and at least one opponent front character are
+    // required before the controller can pay the activation cost.
+    if(c.ready&&s.players[1-p].front.some(Boolean))
+     out.push({type:'activate',uid:c.uid,mode:'selfRestEnemy'});
+    continue;
+   }
+   if(ability.op!=='chooseTwoAfterOwnRaid'||
+    !s.raidedThisTurn[p]||s.mainAbilityUsedUids.includes(c.uid))continue;
    const readyAvailable=!s.mainReadyOnceByName[p].includes(d.name);
    const buffAvailable=field(pl).some(x=>card(pack,x).traits.includes(ability.trait));
    if(readyAvailable){
@@ -1090,7 +1100,19 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
    const selected=pl.front.find(c=>c?.uid===action.uid);
    if(!selected||!card(pack,selected).mainAbility)throw Error('Main ability source missing');
    const d=card(pack,selected),ability=d.mainAbility;
-   if(!s.raidedThisTurn[p]||s.mainAbilityUsedUids.includes(selected.uid))
+   if(ability.op==='restSelfThenRestOppFrontOne'){
+    const targets=s.players[1-p].front.filter(Boolean).map(c=>c.uid);
+    if(action.mode!=='selfRestEnemy'||!selected.ready||!targets.length)
+     throw Error('Main self-REST requires READY front source and legal opposing front target');
+    // Pay precisely the source's REST cost, before entering the mandatory
+    // shared opponent-target choice. No AP and no invented once-per-turn flag.
+    selected.ready=false;
+    s.pending={kind:'effect-rest-bp',player:p,sourceUid:selected.uid,
+     choices:targets,limit:null,optional:false};
+    break;
+   }
+   if(ability.op!=='chooseTwoAfterOwnRaid'||
+    !s.raidedThisTurn[p]||s.mainAbilityUsedUids.includes(selected.uid))
     throw Error('Main ability already used or missing own Raid');
    s.mainAbilityUsedUids.push(selected.uid);
    if(action.mode==='ready'||action.mode==='readyAndBuff'){

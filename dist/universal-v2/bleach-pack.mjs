@@ -10,6 +10,13 @@ import {verifiedPilotCards} from './real-card-pilots.mjs';
 // 'step' uses the V2 move-phase STEP handler; 'bounce' uses a real V2 template.
 export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
  {
+  "id":"BLC-1-005","kind":"restSelfEnemy",
+  "number":"UA08BT/BLC-1-005","name":"キルゲ・オピー",
+  "color":"yellow","energy":2,"ap":1,"bp":3000,"gen":1,
+  "trigger":null,"type":"character",
+  "effect":"主要階段・位於前線：REST 自己，選 1 個敵方前線角色，將其轉為 REST。"
+ },
+ {
   "id": "BLC-1-002",
   "kind": "plain",
   "number": "UA08BT/BLC-1-002",
@@ -888,7 +895,8 @@ export function checkedBleachAddonDefinition(p){
  // Keep p.gen=2 only as a legacy-source fingerprint, never as V2 base energy.
  const v2BaseGen=p.id==='BLC-4-014'?1:c.gen;
  const isPassive=p.kind==='activeEnergy'||p.kind==='impactNull';
- const special=p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive;
+ const isMain=p.kind==='restSelfEnemy';
+ const special=p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -899,6 +907,7 @@ export function checkedBleachAddonDefinition(p){
   ...(p.kind==='step'?{step:true}:{}),
   ...(p.kind==='activeEnergy'?{activeExtraEnergy:1}:{}),
   ...(p.kind==='impactNull'?{impactNull:true}:{}),
+  ...(isMain?{mainAbility:{op:'restSelfThenRestOppFrontOne',frontOnly:true}}:{}),
   ...(p.kind.startsWith('retireBonus')?{triggerEffect:{op:'retireOppFront'}}:{}),
   ...(p.kind==='enemyBpDown500Color'?{triggerEffect:{op:'deployOutsideCharacter',color:'purple',maxEnergy:2,ap:1,frontOnly:true}}:{}),
   ...(p.kind==='drawPlayColorHand'?{triggerEffect:{op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1}}:{}),
