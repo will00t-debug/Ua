@@ -86,7 +86,11 @@ test('draw-one branch offers only OWN OUTSIDE traitless CHARACTER with printed e
    {type:'chooseOutsideRecovery',uid}),/not currently legal|Illegal|eligible/);
  }
  const publicEnemy=universalPublicView(packs,s,1);
- assert.ok(!JSON.stringify(publicEnemy).includes(valid.uid),'opponent view omits private recovery choice UIDs');
+ assert.deepEqual(publicEnemy.pending,{kind:'effect-recover-outside',player:0},
+  'opponent sees pending kind but not controller decision candidates');
+ assert.equal(publicEnemy.players[0].hand,null,'other player hand stays concealed');
+ assert.ok(publicEnemy.players[0].outside.some(c=>c.uid===valid.uid),
+  'own outside is PUBLIC; its physical UID is not secret');
  const chosen=dispatchUniversalAction(packs,s,{type:'chooseOutsideRecovery',uid:valid.uid});
  assert.ok(chosen.players[0].hand.some(c=>c.uid===valid.uid));
  assert.ok(!chosen.players[0].outside.some(c=>c.uid===valid.uid));
