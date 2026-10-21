@@ -30,10 +30,10 @@ Other old handoff inventories remain historical snapshots.
 |---|---:|---:|---:|
 | BLEACH | 80 | 196 | 276 |
 | TTG | 26 | 55 | 81 |
-| SLG | 21 | 59 | 80 |
+| SLG | 22 | 58 | 80 |
 | SAO | 53 | 130 | 183 |
 | MST | 24 | 56 | 80 |
-| Total | 204 | 496 | 700 |
+| Total | 205 | 495 | 700 |
 
 These are source-pinned registered effects with scenario tests, not a claim that
 every official FAQ interaction is certified. No mobile manual QA or deployment
@@ -136,3 +136,17 @@ was performed in this integration batch.
 - Shared engine `searchTopOneBottomDiscard` now handles either a strict single predicate or a source-authored 2–3 predicate ALL/ANY profile via template `searchTopOneBottomDiscardWhere`. Both use only exact inspected top physical UIDs, independent controller-only choices, original unchanged rest deck, ordered bottom, conditional mandatory discard and no shuffle.
 - Strict pack verification rejects missing/duplicate filters, unsupported operators, extra/shuffle fields, illegal counts and unsupported card effects. Explicit manual ID manifest, independent printed proof and new `tests/v2-slg-018-compound-top.test.mjs` cover paid AP, alternatives (name vs trait), skip/empty top window, bottom ordering, forgery, wrong actor, concealed UIDs, separate COLOR life, AP/UID conservation, and fail-closed bad templates.
 - Proposed batch roster: BLEACH 80, TTG 26, SLG 21, SAO 53, MST 24; **204/700 integrated candidates**, 496 unported. Full per-card Japanese FAQ certification still 0. Confirm batch CI before crediting test success.
+
+### Batch 5 verified milestone — SLG-1-018
+
+- Code commit `d1211067460991dbc125497730bdbc997e741efc`, exact independent test-roster fix `d3400e86a69382fc72ed77faf7c7d60606566891`.
+- GitHub Actions `V2 Resumed Integration` run **39539223613** successfully completed Node.js 22 `npm test` **1194/1194 passing**; integrated match matrix **60/60 matches with zero failures**; `scripts/v2-unported-report.mjs` **success** reporting **204/700 V2 integrated, 496 unported**. Initial CI on the prior SHA had one stale independent TTG roster assertion (20 vs 21); fixed without deleting or loosening negative validations.
+- The initial isolated SAO/MST core regression on `d121...` failed for that same outdated roster and was superseded by complete Node regression on `d340...`. Manual visual reveal/UX of added TOP-N cards remains a separate acceptance item.
+- Full per-card official FAQ certification remains zero; printed Japanese card body and relevant generic color handler are source verified, but no all-FAQ certification is claimed.
+
+## Batch 6 — SLG-1-012 own-field named ally draws one (2026-10-21)
+
+- Official Japanese source: https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-012; `後藤 清臣`, purple3, AP1, BP2500, produces purple2, no life trigger. OnPlay: draw **one** only if controller's own field includes `水篠 旬`.
+- Added reusable strict V2 template/DSL `drawIfOwnName` to evaluate actual own FRONT and ENERGY physical characters after source enters field. Does not count opponent field, hand, outside, facedown under-cards, or arbitrary same-name print not yet on field. No additional AP cost; retains ordinary printed play cost.
+- Independent source-pinned ID manifest, strict SLG contribution proof, audit ledger and `tests/v2-slg-012-own-name.test.mjs` cover exact printed values, name present in either own field line, opponent-only/hand/outside negatives, insufficient AP/energy, strict extra fields/counts rejection, proper one-card UID transition and no concealed-hand leak.
+- Proposed coverage becomes BLEACH 80, TTG 26, SLG 22, SAO 53, MST 24; **205/700 V2 candidates, 495 unported**; NOT full per-card FAQ certification. Validate fresh batch CI before claiming pass.

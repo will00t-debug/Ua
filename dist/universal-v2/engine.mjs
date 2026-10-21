@@ -147,6 +147,12 @@ function continueEffectQueue(pack,s){
  while(!s.pending&&s.status==='playing'&&s.effectQueue.length){
   const job=s.effectQueue.shift(),owner=job.owner,pl=s.players[owner];
   if(job.op==='draw')draw(s,owner,job.count);
+  else if(job.op==='drawIfOwnName'){
+   // Evaluate after the character actually entered OWN front/energy field.
+   // Never count hand, deck, opponent field, or hidden Raid under-cards.
+   if(field(pl).some(c=>card(pack,c).name===job.name))
+    draw(s,owner,job.count);
+  }
   else if(job.op==='millTop'){
    for(let i=0;i<job.count&&pl.deck.length;i++)pl.outside.push(pl.deck.shift());
   }else if(job.op==='buffSelf'){
@@ -1251,7 +1257,7 @@ export function assertUniversalMatch(pack,s){
  if(!Number.isInteger(s.attacksThisTurn)||s.attacksThisTurn<0||s.attacksThisTurn>50)
   throw Error('Invalid attack count');
  if(!Array.isArray(s.effectQueue)||s.effectQueue.some(e=>!playerIndex(e.owner)||
-   !['draw','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','restOppFrontUnderBp','restOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
+   !['draw','drawIfOwnName','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','restOppFrontUnderBp','restOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
     'discardGate','enemyFrontAllBpDown','retireOppFrontAllUnderBp',
     'buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
     'recoverOutsideColorUnderEnergy','buffOwnField','oncePerTurnGate','retireBatchOne','openBlock'].includes(e.op)))

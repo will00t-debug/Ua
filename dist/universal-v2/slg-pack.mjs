@@ -33,6 +33,20 @@ const authored=[
     "effects": {}
   },
   {
+    "id": "SLG-1-012",
+    "name": "後藤 清臣",
+    "color": "purple",
+    "energy": 3,
+    "ap": 1,
+    "bp": 2500,
+    "gen": 2,
+    "trigger": null,
+    "type": "character",
+    "textAnchor": "己方場上存在水篠旬",
+    "implementation": "dsl",
+    "templateEffects": {"onPlay":[{"template":"drawIfOwnName","name":"水篠 旬","count":1}]}
+  },
+  {
     "id": "SLG-1-015",
     "name": "水篠 旬",
     "color": "purple",
