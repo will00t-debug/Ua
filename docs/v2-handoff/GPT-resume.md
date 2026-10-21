@@ -137,3 +137,9 @@ was performed in this integration batch.
 - Test `tests/v2-ttg-053-rest-mill.test.mjs` independently pins official printed data, MAIN READY/FRONT and no additional AP, one physical top card outside, UID conservation, actor/forged target rejection, optional re-READY when some other effect does so, and controller-only private top display.
 - Independent literal manifest and provenance list updated. Integrated **204/700** (BLEACH 80, TTG 27, SLG 20, SAO 53, MST 24), 496 unported; **0** official per-card full FAQ audits.
 - CI and commit verification are pending at this point; earlier green runs are unrelated to batch 5.
+
+### Batch 5 concurrent-branch provenance
+
+- The original PR #75 ref moved from `c62da2643b4a359c7811fd5bdcac4bdf4da642f6` to `d1211067460991dbc125497730bdbc997e741efc` before the TTG-053 commit could update it. That upstream commit adds `SLG-1-018` with independent composite TOP3 implementation, so the original integration branch is being independently edited.
+- We **aborted ref update without force** and created isolated `codex/v2-ttg053-isolated-20261021` from the verified `c62da264` parent. Code commit `a6d38f4569d72b2fc927995b94bc5cd4d1396775` is safe standalone. Its independent count `204/700` includes TTG-053, NOT the unrelated concurrent SLG-018; do NOT blindly replace upstream 204 count. Integrate changes by merge/cherry-pick with reconciled 205-card exact manifest, matrix and inventory.
+- To verify this branch independently, the isolated branch adds itself to the existing `.github/workflows/v2-resume.yml` push filter. Original PR #75, main and production workflows remain untouched.

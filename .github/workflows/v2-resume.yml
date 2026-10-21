@@ -1,7 +1,7 @@
 name: V2 Resumed Integration
 on:
   push:
-    branches: [codex/v2-resume-20261021]
+    branches: [codex/v2-resume-20261021, codex/v2-ttg053-isolated-20261021]
   workflow_dispatch:
 permissions:
   contents: read
