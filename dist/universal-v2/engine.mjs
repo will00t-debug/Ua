@@ -3,6 +3,8 @@
 // and official Q99 optional GET/DRAW/FINAL. Unsupported keywords FAIL CLOSED.
 import {validateUniversalDeck} from './pack.mjs';
 import {matchesOwnDistinctTraits,matchesV2LiveCondition} from './field-conditions.mjs';
+import {refreshFieldActive,expireContinuousStates,pruneContinuousStates,
+ fieldRestrictions,validateContinuousStates} from './continuous-states.mjs';
 export const UNIVERSAL_V2_VERSION='ua-v2.0';
 const playerIndex=n=>n===0||n===1;
 const field=p=>[...p.front,...p.energy].filter(Boolean);
@@ -172,6 +174,8 @@ function markOwnEffectZoneMove(s,owner,from,to){
 function startTurn(pack,s){
  const p=s.active,pl=s.players[p];
  pl.ownTurns++;s.turn++;s.phase='start';s.extraDrawn=false;s.moved=false;s.movedUids=[];s.pending=null;s.attacksThisTurn=0;
+ s.endRefreshed=false;
+ expireContinuousStates(s,{player:p,phase:'start',edge:'start'});
  s.raidedThisTurn=[false,false];s.mainAbilityUsedUids=[];s.mainReadyOnceByName=[[],[]];
  s.onceEffectUses=[[],[]];
  // A NEW turn resets both players' previous turn-scoped movement history.
@@ -179,7 +183,8 @@ function startTurn(pack,s){
   {handToOutside:false,outsideToHand:false}];
  const max=pl.ownTurns>=3?3:(pl.ownTurns===1&&p===s.first?1:2);
  for(let i=0;i<pl.apCards.length;i++){pl.apCards[i].inPlay=i<max;pl.apCards[i].ready=i<max;}
- for(const c of field(pl)){c.ready=true;c.buffs=(c.buffs||[]).filter(b=>b.untilTurn>=s.turn);}
+ refreshFieldActive(s,p);
+ for(const c of field(pl))c.buffs=(c.buffs||[]).filter(b=>b.untilTurn>=s.turn);
  if(!(pl.ownTurns===1&&p===s.first)){
   if(!pl.deck.length){s.status='finished';s.winner=1-p;s.endReason='required-draw-empty';return;}
   draw(s,p);
@@ -463,6 +468,7 @@ function performRaid(pack,s,p,cardOnTop,baseUid,line,slot,replaceUid){
   effectiveBase.under.push(base.c);
  }
  cardOnTop.stack=[effectiveBase];cardOnTop.ready=true;
+ cardOnTop.fieldEntryStamp=s.nextFieldEntryStamp++;
  pl[line][slot]=cardOnTop;
  s.raidedThisTurn[p]=true;
  const baseJobs=s.active===p?programJobs(pack,effectiveBase,'onRaided',p,cardOnTop.uid):[];
@@ -569,7 +575,10 @@ function finishPending(s){
 function advanceAfterEnd(pack,s,owner){
  const pl=s.players[owner];
  // End phase: REST cards return ACTIVE before opponent's turn.
- for(const c of field(pl))c.ready=true;
+ if(!s.endRefreshed){
+  expireContinuousStates(s,{player:owner,phase:'attack',edge:'end'});
+  refreshFieldActive(s,owner);s.endRefreshed=true;
+ }
  if(pl.hand.length>8){s.pending={kind:'end-hand-limit',player:owner};return;}
  s.active=1-owner;
  startTurn(pack,s);
@@ -1032,7 +1041,8 @@ export function newUniversalMatch(pack,{decks,seed=1,first=0}={}){
   packIds:packs.map(p=>p.id),packVersions:packs.map(p=>p.version),
   rng:(seed>>>0)||1,first,active:first,turn:0,phase:'start',status:'playing',
   winner:null,endReason:null,pending:null,extraDrawn:false,moved:false,movedUids:[],attacksThisTurn:0,
-  publicReveals:[],effectQueue:[],delayedEffects:[],nextFieldEntryStamp:1,players:[],
+  publicReveals:[],effectQueue:[],delayedEffects:[],nextFieldEntryStamp:1,
+  continuousStates:[],nextContinuousStateId:1,endRefreshed:false,players:[],
   raidedThisTurn:[false,false],mainAbilityUsedUids:[],mainReadyOnceByName:[[],[]],
   onceEffectUses:[[],[]],
   turnEffectZoneMoves:[{handToOutside:false,outsideToHand:false},
@@ -1342,9 +1352,14 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
   case 'extraDraw':
    spendAp(pl,1);draw(s,p);s.extraDrawn=true;break;
   case 'next':
-   if(s.phase==='start')s.phase='move';
-   else if(s.phase==='move')s.phase='main';
+   if(s.phase==='start'){
+    expireContinuousStates(s,{player:p,phase:'start',edge:'end'});s.phase='move';
+   }
+   else if(s.phase==='move'){
+    expireContinuousStates(s,{player:p,phase:'move',edge:'end'});s.phase='main';
+   }
    else if(s.phase==='main'){
+     expireContinuousStates(s,{player:p,phase:'main',edge:'end'});
      s.phase='attack';
      const due=s.delayedEffects.filter(x=>x.turn===s.turn&&x.owner===p);
      s.delayedEffects=s.delayedEffects.filter(x=>!(x.turn===s.turn&&x.owner===p));
@@ -1441,7 +1456,8 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
     performRaid(pack,s,p,current,action.baseUid,'front',action.slot,action.replaceUid);
    }else{
     commitDestination(s,p,action.line,action.slot,action.replaceUid);
-    current.ready=false;pl[action.line][action.slot]=current;
+    current.ready=false;current.fieldEntryStamp=s.nextFieldEntryStamp++;
+    pl[action.line][action.slot]=current;
     applyEffects(pack,s,current,'onPlay',p);
    }
    break;
@@ -1460,6 +1476,7 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
   }
   default:throw Error('Unsupported universal action');
  }
+ pruneContinuousStates(s);
  finishPending(s);
  assertUniversalMatch(pack,s);
  return s;
@@ -1497,6 +1514,8 @@ export function assertUniversalMatch(pack,s){
   throw Error('Invalid movement accounting');
  if(!Number.isInteger(s.attacksThisTurn)||s.attacksThisTurn<0||s.attacksThisTurn>50)
   throw Error('Invalid attack count');
+ validateContinuousStates(s);
+ if(typeof s.endRefreshed!=='boolean')throw Error('Invalid end refresh flag');
  if(!Number.isInteger(s.nextFieldEntryStamp)||s.nextFieldEntryStamp<1||
    !Array.isArray(s.delayedEffects)||s.delayedEffects.some(x=>
     x?.op!=='retireAtMainEnd'||!playerIndex(x.owner)||
@@ -1594,10 +1613,10 @@ export function universalPublicView(pack,s,viewer=0){
     // Front-line energy is public only for a source-verified printed producer.
     // Read the current physical UID; never expose private hand/deck identities.
     ...(card(pack,c).frontGeneratesEnergy?{produces:universalCardEnergy(pack,s,p,c)}:{}),
-    raidDepth:c.stack?.length||0,raidLayers:(c.stack||[]).map(layer=>layerView(layer,p,viewer))}:null),
+    restrictions:fieldRestrictions(s,p,c),raidDepth:c.stack?.length||0,raidLayers:(c.stack||[]).map(layer=>layerView(layer,p,viewer))}:null),
    energy:pl.energy.map(c=>c?{uid:c.uid,cardId:c.cardId,ready:c.ready,
     baseProduces:card(pack,c).gen,produces:universalCardEnergy(pack,s,p,c),
-    raidLayers:(c.stack||[]).map(layer=>layerView(layer,p,viewer))}:null),
+    restrictions:fieldRestrictions(s,p,c),raidLayers:(c.stack||[]).map(layer=>layerView(layer,p,viewer))}:null),
    apReady:pl.apCards.filter(c=>c.ready).length,apTotal:pl.apCards.filter(c=>c.inPlay).length,energyTotal:calcEnergy(pack,s,p),energyByColor:{...universalEnergyByColor(pack,s,p)},
    outside:pl.outside.map(c=>({uid:c.uid,cardId:c.cardId}))
   }))
