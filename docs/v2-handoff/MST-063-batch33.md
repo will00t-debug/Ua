@@ -6,3 +6,9 @@
 - `tests/v2-mst-063-energy-draw.test.mjs` covers official print, source fingerprint, AP/UID, owner P0/P1, live 6/7 generated thresholds, own ENERGY arrival, ACTIVE producer transition, opponent hidden zones, strict invalid profiles. Real cross-title MST/SLG 50-card matches only.
 - **Expected** post-batch: V2 241/700 source-registered, 459 unported; BLEACH85/276, TTG30/81, SLG34/80, SAO61/183, MST31/80. NOT complete per-card official FAQ certification.
 - Feature SHA `30915de62f1164dd290bbed0aa31fd10bcbf01bc`; acceptance-code SHA and CI evidence MUST be populated after verification. No production deploy or main merge.
+
+## Initial CI regression correction
+
+- Feature/test integration commit `60d2626fd4c2f3dbb348817616b0ca2fb5709a73` triggered four tests failing: a strict finite generic template whitelist now needs the new audited template ID; three new MST-063 threshold fixtures mistakenly omitted physical MST-1-050 despite attempting to extract that UID.
+- Corrected the *literal test fixture deck* to include exactly one real MST-1-050 in place of one MST-1-001 (preserves 50-card total), and manually added `drawIfOwnEnergyAtLeast` to the independent finite template whitelist. No gameplay test or negative check was deleted; no engine workaround.
+- Run fresh full Node22 CI and 60-game matrix before reporting green.

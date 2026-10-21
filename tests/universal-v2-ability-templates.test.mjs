@@ -16,7 +16,7 @@ const checked=card=>createUniversalPack({id:'template-validation-fixture',cards:
 
 test('template registry is finite, audited and rejects unknown behaviors instead of guessing from prose',()=>{
  assert.deepEqual(V2_ABILITY_TEMPLATE_IDS,[
-  'draw','drawIfOwnName','millTop','drawDiscardOne','drawDiscardMany','peekTopOne','peekTopOrBottom','recoverAp','buffSelf',
+  'draw','drawIfOwnEnergyAtLeast','drawIfOwnName','millTop','drawDiscardOne','drawDiscardMany','peekTopOne','peekTopOrBottom','recoverAp','buffSelf',
   'enemyBpDown','retireEnemyUnderBp','restEnemyUnderBp','restEnemyFrontOne',
   'retireEnemyIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown',
   'searchDeckOne','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',

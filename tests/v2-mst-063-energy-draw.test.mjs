@@ -12,7 +12,8 @@ const slg=registeredV2TitlePack('solo-leveling');
 const mstIds=['001','002','003','010','012','013','016','017','019','020','024','027','029'];
 const mstDeck=Object.fromEntries(mstIds.map(n=>['MST-1-'+n,4]));
 mstDeck['MST-1-029']=2;
-mstDeck['MST-1-001']=2;
+mstDeck['MST-1-001']=1;
+mstDeck['MST-1-050']=1;
 mstDeck['MST-1-051']=1;
 mstDeck['MST-1-063']=1;
 const slgDeck=Object.fromEntries(['001','002','005','006','007','010','013','015','016','026','032','043']
