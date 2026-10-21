@@ -4,7 +4,8 @@
 import {validateUniversalDeck} from './pack.mjs';
 import {matchesOwnDistinctTraits,matchesV2LiveCondition} from './field-conditions.mjs';
 import {refreshFieldActive,expireContinuousStates,pruneContinuousStates,
- fieldRestrictions,validateContinuousStates} from './continuous-states.mjs';
+ fieldRestrictions,validateContinuousStates,grantContinuousState,
+ attemptFieldActive} from './continuous-states.mjs';
 export const UNIVERSAL_V2_VERSION='ua-v2.0';
 const playerIndex=n=>n===0||n===1;
 const field=p=>[...p.front,...p.energy].filter(Boolean);
@@ -349,14 +350,21 @@ function continueEffectQueue(pack,s){
     if(choices.length)s.pending={kind:'effect-retire-bp',player:owner,
      sourceUid:job.sourceUid,choices,limit:job.bp,optional:true};
    }
+  }else if(job.op==='skipNextActiveOppRest'){
+   const choices=field(s.players[1-owner]).filter(c=>!c.ready).map(c=>c.uid);
+   if(choices.length)s.pending={kind:'effect-rest-bp',player:owner,
+    sourceUid:job.sourceUid,choices,limit:null,optional:job.optional,
+    skipNextActive:true,onlyRest:true,anyLine:true,restTarget:false};
   }else if(job.op==='restOppFrontOne'){
    const choices=s.players[1-owner].front.filter(Boolean).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-rest-bp',player:owner,
-    sourceUid:job.sourceUid,choices,limit:null,optional:job.optional};
+    sourceUid:job.sourceUid,choices,limit:null,optional:job.optional,
+    skipNextActive:job.skipNextActive===true};
   }else if(job.op==='restOppFrontUnderBp'){
    const choices=s.players[1-owner].front.filter(c=>c&&bp(pack,s,c)<=job.bp).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-rest-bp',player:owner,
-    sourceUid:job.sourceUid,choices,limit:job.bp,optional:job.optional};
+    sourceUid:job.sourceUid,choices,limit:job.bp,optional:job.optional,
+    skipNextActive:job.skipNextActive===true};
   }else if(job.op==='buffOwnField'){
    const choices=field(pl).filter(c=>card(pack,c).type==='character'&&
     (!job.excludeSelf||c.uid!==job.sourceUid)&&
@@ -927,11 +935,14 @@ function resolveChoice(s,a,pack){
    if(!q.optional)throw Error('Mandatory opponent REST cannot be declined');
    s.pending=null;continueEffectQueue(pack,s);return;
   }
-  const foe=1-q.player,target=s.players[foe].front.find(c=>c?.uid===a.uid);
+  const foe=1-q.player,target=(q.anyLine?field(s.players[foe]):s.players[foe].front)
+   .find(c=>c?.uid===a.uid);
   if(!target||!q.choices.includes(a.uid)||
-   (q.limit!==null&&bp(pack,s,target)>q.limit))
+   (q.limit!==null&&bp(pack,s,target)>q.limit)||(q.onlyRest&&target.ready))
    throw Error('Illegal opponent REST target');
-  target.ready=false;
+  if(q.restTarget!==false)target.ready=false;
+  if(q.skipNextActive)grantContinuousState(s,{kind:'skipNextActive',
+   controller:q.player,sourceUid:q.sourceUid,targetUid:target.uid});
   s.pending=null;continueEffectQueue(pack,s);return;
  }
  if(q.kind==='effect-retire-bp'){
@@ -970,7 +981,7 @@ function resolveChoice(s,a,pack){
    const target=field(p).find(c=>c.uid===a.uid);
    if(!target||card(pack,target).type!=='character')throw Error('Illegal ACTIVE trigger target');
    // Official FAQ Q101 permits targeting a character already ACTIVE.
-   target.ready=true;
+   attemptFieldActive(s,q.player,target);
    target.buffs??=[];
    target.buffs.push({bp:3000,untilTurn:s.turn});
   }
@@ -998,7 +1009,8 @@ function resolveChoice(s,a,pack){
      d.energy>profile.maxEnergy||d.ap!==profile.ap)
     throw Error('Outside COLOR target does not meet printed requirements');
    commitDestination(s,q.player,'front',a.slot,a.replaceUid);
-   p.outside.splice(index,1);chosen.ready=true;p.front[a.slot]=chosen;
+   p.outside.splice(index,1);chosen.ready=true;
+   chosen.fieldEntryStamp=s.nextFieldEntryStamp++;p.front[a.slot]=chosen;
    // COLOR life deployment spends no AP but does trigger onPlay.
    applyEffects(pack,s,chosen,'onPlay',q.player);
   }
@@ -1011,7 +1023,8 @@ function resolveChoice(s,a,pack){
     d.color!==profile.color||d.energy>profile.maxEnergy||d.ap!==profile.ap||
     !['front','energy'].includes(a.line))throw Error('Illegal COLOR deployment');
    commitDestination(s,q.player,a.line,a.slot,a.replaceUid);
-   p.hand.splice(handIndex,1);picked.ready=true;p[a.line][a.slot]=picked;
+   p.hand.splice(handIndex,1);picked.ready=true;
+   picked.fieldEntryStamp=s.nextFieldEntryStamp++;p[a.line][a.slot]=picked;
    // This is ordinary playing through a trigger, NOT a Raid: no AP is spent.
    applyEffects(pack,s,picked,'onPlay',q.player);
   }
@@ -1427,7 +1440,7 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
     if(s.mainReadyOnceByName[p].includes(d.name))
      throw Error('Per-name ready already used this turn');
     s.mainReadyOnceByName[p].push(d.name);
-    selected.ready=true; // Q2289: READY occurs before any BP target selection.
+    attemptFieldActive(s,p,selected); // Q2289: READY attempt before BP target selection.
    }
    if(action.mode==='buff'||action.mode==='readyAndBuff')
     s.pending={kind:'main-two-buff',player:p,sourceUid:selected.uid,
@@ -1526,7 +1539,7 @@ export function assertUniversalMatch(pack,s){
    !['draw','drawIfOwnName','drawIfOwnEnergyAtLeast','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','restOppFrontUnderBp','restOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
     'discardGate','enemyFrontAllBpDown','retireOppFrontAllUnderBp',
     'buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
-    'recoverOutsideColorUnderEnergy','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','openBlock'].includes(e.op)))
+    'recoverOutsideColorUnderEnergy','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','openBlock','skipNextActiveOppRest'].includes(e.op)))
   throw Error('Invalid queued effects');
  for(let p=0;p<2;p++){
   const pl=s.players[p],uids=new Set(),items=[];

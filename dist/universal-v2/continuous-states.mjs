@@ -47,6 +47,7 @@ export function attemptFieldActive(s,owner,c){
  const restrictions=s.continuousStates.filter(e=>e.targetOwner===owner&&e.targetUid===c.uid&&
   e.targetStamp===c.fieldEntryStamp);
  const skip=restrictions.find(e=>e.kind==='skipNextActive');
+ if(c.ready)return true; // already ACTIVE is not a transition
  if(skip)skip.consumed=true; // multiple skips consume one per distinct ACTIVE attempt
  const blocked=!!skip||restrictions.some(e=>e.kind==='cannotActive');
  c.ready=!blocked;pruneContinuousStates(s);return !blocked;
