@@ -512,8 +512,8 @@ export function validateUniversalDeck(pack,counts){
  for(const [id,num] of Object.entries(counts)){
   if(!own(pack.cards,id)){errors.push('Unregistered/unsupported card: '+id);continue;}
   if(!integer(num)||num>4){errors.push(id+' exceeds 0–4 copies');continue;}
-  if(num>pack.cards[id].maxCopies){errors.push(id+' exceeds 0–'+pack.cards[id].maxCopies+' copies');continue;}
   total+=num;
+  if(num>pack.cards[id].maxCopies){errors.push(id+' exceeds 0–'+pack.cards[id].maxCopies+' copies');continue;}
   if(num){const c=pack.cards[id];colors.add(c.color);if(Object.prototype.hasOwnProperty.call(triggerLimits,c.trigger))triggerLimits[c.trigger]+=num;}
  }
  if(total!==50)errors.push('Deck must have exactly 50 cards (found '+total+')');
