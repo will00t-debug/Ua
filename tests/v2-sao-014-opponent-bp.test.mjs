@@ -85,7 +85,7 @@ test('generic opponentTurnBp schema: explicit positive integer only, no event/un
   type:'character',implementation:'dsl',effects:{}};
  const make=card=>createUniversalPack({id:'strict-opponent-turn',cards:[card]});
  assert.equal(make({...base,opponentTurnBp:1000}).cards['QA-014'].opponentTurnBp,1000);
- assert.equal(make(base).cards['QA-014'].opponentTurnBp,0);
+ assert.equal(make({...base,implementation:'vanilla'}).cards['QA-014'].opponentTurnBp,0);
  for(const value of [0,-1,1.5,5001,'1000',null]){
   assert.throws(()=>make({...base,opponentTurnBp:value}),/invalid opponent-turn BP/);
  }
