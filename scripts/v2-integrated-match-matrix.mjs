@@ -22,8 +22,8 @@ const roster=['bleach-green','gurren-lagann-red','solo-leveling',
 const seeds=[747,20261015,20261016];
 const results=[],errors=[];
 const coverage=listRegisteredV2Titles();
-if(coverage.map(x=>x.totalV2Cards).join(',')!=='78,23,18,39,23')
- throw Error('Integrated V2 candidate drifted from pinned 181 printed IDs');
+if(coverage.map(x=>x.totalV2Cards).join(',')!=='79,24,18,53,24')
+ throw Error('Integrated V2 candidate drifted from pinned 198 printed IDs');
 for(const key of roster){
  const {pack,counts}=presets[key];
  if(validateUniversalDeck(pack,counts).length||

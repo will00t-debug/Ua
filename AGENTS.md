@@ -1,5 +1,13 @@
 # BLEACH Arena – Instructions for AI Coding Agents
 
+## Resumed V2 work (2026-10-21)
+The user has explicitly returned development to ChatGPT/Codex. Historical
+2026-10-15 Cursor-only / stop-development handoffs remain provenance, not a
+current stop instruction. Read `docs/v2-handoff/GPT-resume.md` first for the
+resumed integration status. Work on the new integration branch; preserve the
+original workstream branches, main, and production. Do not count registration
+or passing tests as full official FAQ acceptance.
+
 ## Project purpose
 Non-official BLEACH / UNION ARENA practice simulator in Traditional Chinese.
 App version baseline: v9.1.1 (2026-10-12). This repository is meant for GitHub + Vercel, **not** the original ChatGPT Sites project.

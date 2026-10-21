@@ -312,6 +312,19 @@ const PRINTED_PINS=Object.freeze({
     ],
     "trigger": null,
     "effectJa": "〖登場時〗 自分の場の他のキャラを1枚まで選び、このターン中、BP+1000。"
+  },
+  "MST-1-010": {
+    "kind": "onPlayOrderTopThree",
+    "nameJa": "キシリカ・キシリス",
+    "color": "blue",
+    "energy": 3,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 2,
+    "type": "character",
+    "traits": [],
+    "trigger": "draw",
+    "effectJa": "〖登場時〗 自分の山札の上から3枚見て、望む順で山札の上に置く。"
   }
 });
 export const MST_V2_PILOT_IDS=Object.freeze(Object.keys(PRINTED_PINS).sort());
@@ -338,6 +351,8 @@ export function verifiedMstV2Cards(){
    card.templateEffects={onPlay:[{template:'bounceOwnOtherUnderEnergy',energy:1}]};
   if(pin.kind==='recoverApTwo')
    card.templateEffects={onPlay:[{template:'recoverAp',count:2}]};
+  if(pin.kind==='onPlayOrderTopThree')
+   card.templateEffects={onPlay:[{template:'inspectTopArrange',count:3,toOutside:false,rest:'top'}]};
   if(pin.kind==='onPlayBuffOwnOther1000')
    card.templateEffects={onPlay:[{template:'buffOwnField',
     filter:{field:'type',value:'character'},bp:1000,optional:true,excludeSelf:true}]};
@@ -345,7 +360,7 @@ export function verifiedMstV2Cards(){
  });
 }
 export function mstV2Pack(){
- return createUniversalPack({id:'mushoku-tensei',version:'v2-d-mst-pilot-2',
+ return createUniversalPack({id:'mushoku-tensei',version:'v2-d-mst-pilot-3',
   cards:verifiedMstV2Cards()});
 }
 
