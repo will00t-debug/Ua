@@ -25,10 +25,10 @@ const stableIds=x=>Object.keys(x.cards).sort();
 const mod=e=>structuredClone(e);
 const auditedStatKeys=['energy','ap','bp','gen','type','color','trigger'];
 
-test('the 54 SAO and 26 MST formal contributions meet strict sourceRecord/definition/evidence contract',()=>{
+test('the 54 SAO and 28 MST formal contributions meet strict sourceRecord/definition/evidence contract',()=>{
  for(const [title,contribution,expected,ids,entries] of [
   ['sword-art-online',saoContribution,54,SAO_V2_PILOT_IDS,verifiedSaoV2Entries],
-  ['mushoku-tensei',mstContribution,26,MST_V2_PILOT_IDS,verifiedMstV2Entries]
+  ['mushoku-tensei',mstContribution,28,MST_V2_PILOT_IDS,verifiedMstV2Entries]
  ]){
   assert.equal(contribution.title,title);
   assert.equal(contribution.entries.length,expected);
@@ -57,7 +57,7 @@ test('the 54 SAO and 26 MST formal contributions meet strict sourceRecord/defini
  }
  const listed=listRegisteredV2Titles();
  assert.equal(listed.find(x=>x.title==='sword-art-online').newlyContributed,54);
- assert.equal(listed.find(x=>x.title==='mushoku-tensei').newlyContributed,26);
+ assert.equal(listed.find(x=>x.title==='mushoku-tensei').newlyContributed,28);
  assert.ok(listed.find(x=>x.title==='sword-art-online').previewReady);
  assert.ok(listed.find(x=>x.title==='mushoku-tensei').previewReady);
 });

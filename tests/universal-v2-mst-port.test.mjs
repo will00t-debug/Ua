@@ -38,7 +38,7 @@ function action(s,predicate){
 function toMain(s){for(let i=0;i<2;i++)s=dispatchUniversalAction(pack,s,{type:'next'});return s;}
 function deckWith(id){const d={...deck};d['MST-1-001']--;d[id]=(d[id]||0)+1;
  assert.deepEqual(validateUniversalDeck(pack,d),[]);return d;}
-test('MST source preserves exactly 001–080 Japanese printed regular IDs, and 26 only are V2 allowed',()=>{
+test('MST source preserves exactly 001–080 Japanese printed regular IDs, and 28 only are V2 allowed',()=>{
  assert.equal(UA54BT_VERIFIED.length,80);
  assert.equal(Object.keys(UA54BT_OFFICIAL_PRINT).length,80);
  for(let n=1;n<=80;n++){
@@ -48,9 +48,9 @@ test('MST source preserves exactly 001–080 Japanese printed regular IDs, and 2
   assert.ok(UA54BT_OFFICIAL_PRINT[id].effectJa);
   assert.equal(UA54BT_OFFICIAL_PRINT[id].source.includes('UA54BT%2F'),true);
  }
- assert.equal(MST_V2_PILOT_IDS.length,26);
- assert.equal(verifiedMstV2Cards().length,26);
- assert.equal(Object.keys(pack.cards).length,26);
+ assert.equal(MST_V2_PILOT_IDS.length,28);
+ assert.equal(verifiedMstV2Cards().length,28);
+ assert.equal(Object.keys(pack.cards).length,28);
  assert.ok(!pack.cards['MST-1-051'],'2026-10-01 deck-limit 1 not yet expressible in V2 deck validator');
  assert.ok(!pack.cards['MST-1-068'],'two-mode conditional Raid is unported');
  assert.match(validateUniversalDeck(pack,{...deck,'MST-1-051':1}).join(),/Unregistered/);
