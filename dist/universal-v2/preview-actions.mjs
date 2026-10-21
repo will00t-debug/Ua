@@ -22,6 +22,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-buff-own':'選擇己方角色增加本回合 BP',
  'effect-once-choice':'是否發動本回合一次能力',
  'effect-choice-mode':'選擇一項效果',
+ 'recovered-self-entry':'回收後可 REST 登場至能源線',
  'effect-recover-outside':'從場外回收','effect-retire-bp':'選擇敵方退場',
  'effect-rest-bp':'選擇敵方 REST','effect-buff-trait':'選擇己方 BP 加成',
  'main-two-buff':'主要能力選擇 BP 對象',
@@ -107,6 +108,8 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseHandLimit':return '超過上限，移除 '+name();
   case 'chooseDiscard':return '棄 '+name();
   case 'chooseOutsideRecovery':return action.uid===null?'不回收／完成':'回收 '+name()+' 至手牌';
+  case 'chooseRecoveredEntry':return action.mode==='skip'?'保留在手牌':
+   '回收後免費 REST 登場至能源線 '+(action.slot+1);
   case 'chooseOwnBounce':return '將 '+name()+' 返回手牌';
   case 'chooseDeckSearch':case 'chooseDeckSearchMulti':
    return action.uid===null?'結束搜尋':'將 '+name()+' 加入手牌';

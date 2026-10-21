@@ -418,6 +418,8 @@ function performRaid(pack,s,p,cardOnTop,baseUid,line,slot,replaceUid){
  const pl=s.players[p],base=location(s,p,baseUid),top=card(pack,cardOnTop);
  if(!base||!validRaidBase(pack,s,p,base.c,top))throw Error('Illegal Raid base');
  if(line!=='front'&&line!=='energy')throw Error('Illegal Raid destination');
+ if(line==='front'&&(top.frontForbidden||card(pack,base.c).frontForbidden))
+  throw Error('Printed front-line restriction forbids Raid movement');
  if(base.line==='front'&&(line!=='front'||slot!==base.slot))
   throw Error('Cannot move a front-line Raid base');
  if(line==='energy'&&(base.line!=='energy'||slot!==base.slot))
@@ -748,9 +750,32 @@ function resolveChoice(s,a,pack){
    const index=p.outside.findIndex(c=>c.uid===a.uid);
    if(index<0||!q.choices.includes(a.uid)||!matchesOutsideRecovery(pack,p.outside[index],q))
     throw Error('Outside recovery needs an eligible owned physical card');
-   p.hand.push(p.outside.splice(index,1)[0]);
+   const recovered=p.outside.splice(index,1)[0];
+   p.hand.push(recovered);
+   // Only an OWN outside card recovered to its OWN hand via a printed
+   // own effect is eligible. This interrupts the existing ordered queue.
+   if(card(pack,recovered).ownOutsideRecovery?.op==='restSelfToEnergy'){
+    s.pending={kind:'recovered-self-entry',player:q.player,uid:recovered.uid};
+    return;
+   }
   }else if(!q.optional)throw Error('Mandatory outside recovery cannot be declined');
   s.pending=null;continueEffectQueue(pack,s);return;
+ }
+ if(q.kind==='recovered-self-entry'){
+  const index=p.hand.findIndex(c=>c.uid===q.uid);
+  if(index<0||card(pack,p.hand[index]).ownOutsideRecovery?.op!=='restSelfToEnergy')
+   throw Error('Recovered source no longer in its own hand');
+  if(a.mode==='skip'){s.pending=null;continueEffectQueue(pack,s);return;}
+  if(a.mode!=='enter'||a.line!=='energy')
+   throw Error('Recovered character may enter ENERGY line only');
+  commitDestination(s,q.player,'energy',a.slot,a.replaceUid);
+  const entrant=p.hand.splice(index,1)[0];
+  entrant.ready=false;entrant.fieldEntryStamp=s.nextFieldEntryStamp++;
+  p.energy[a.slot]=entrant;
+  s.pending=null;
+  // This is entry via an effect, so onPlay executes with no additional AP.
+  s.effectQueue.unshift(...programJobs(pack,entrant,'onPlay',q.player));
+  continueEffectQueue(pack,s);return;
  }
  if(q.kind==='effect-discard-cost'){
   if(a.uid!==null){
@@ -911,7 +936,7 @@ function resolveChoice(s,a,pack){
    const index=p.outside.findIndex(c=>c.uid===a.uid);
    if(index<0)throw Error('COLOR outside target is not in own outside');
    const chosen=p.outside[index],d=card(pack,chosen);
-   if(d.type!=='character'||d.color!==profile.color||
+   if(d.type!=='character'||d.frontForbidden||d.color!==profile.color||
      d.energy>profile.maxEnergy||d.ap!==profile.ap)
     throw Error('Outside COLOR target does not meet printed requirements');
    commitDestination(s,q.player,'front',a.slot,a.replaceUid);
@@ -924,7 +949,8 @@ function resolveChoice(s,a,pack){
    const handIndex=p.hand.findIndex(c=>c.uid===a.uid);
    if(handIndex<0)throw Error('COLOR requires a hand character');
    const picked=p.hand[handIndex],d=card(pack,picked);
-   if(d.type!=='character'||d.color!==profile.color||d.energy>profile.maxEnergy||d.ap!==profile.ap||
+   if(d.type!=='character'||(a.line==='front'&&d.frontForbidden)||
+    d.color!==profile.color||d.energy>profile.maxEnergy||d.ap!==profile.ap||
     !['front','energy'].includes(a.line))throw Error('Illegal COLOR deployment');
    commitDestination(s,q.player,a.line,a.slot,a.replaceUid);
    p.hand.splice(handIndex,1);picked.ready=true;p[a.line][a.slot]=picked;
@@ -1028,6 +1054,12 @@ function legalPending(pack,s){
  if(q.kind==='effect-top-order')return q.uids
   .filter(uid=>!q.order.includes(uid)).map(uid=>({type:'chooseTopOrder',uid}));
  if(q.kind==='effect-bounce-own')return q.choices.map(uid=>({type:'chooseOwnBounce',uid}));
+ if(q.kind==='recovered-self-entry')return [
+  {type:'chooseRecoveredEntry',mode:'skip'},
+  ...legalDestinations(p,'energy').map(c=>({
+   type:'chooseRecoveredEntry',mode:'enter',line:'energy',...c
+  }))
+ ];
  if(q.kind==='effect-recover-outside')return [
   ...(q.optional?[{type:'chooseOutsideRecovery',uid:null}]:[]),
   ...p.outside.filter(c=>q.choices.includes(c.uid)&&matchesOutsideRecovery(pack,c,q))
@@ -1088,16 +1120,18 @@ function legalPending(pack,s){
    else if(profile.op==='deployOutsideCharacter'){
     for(const c of p.outside){
      const d=card(pack,c);
-     if(d.type!=='character'||d.color!==profile.color||d.energy>profile.maxEnergy||d.ap!==profile.ap)continue;
+     if(d.type!=='character'||d.frontForbidden||d.color!==profile.color||d.energy>profile.maxEnergy||d.ap!==profile.ap)continue;
      for(const choice of legalDestinations(p,'front'))
       out.push({type:'chooseTrigger',mode:'colorOutside',uid:c.uid,line:'front',...choice});
     }
    }else for(const c of p.hand){
     const d=card(pack,c);
     if(d.type!=='character'||d.color!==profile.color||d.energy>profile.maxEnergy||d.ap!==profile.ap)continue;
-    for(const line of ['front','energy'])
+    for(const line of ['front','energy']){
+     if(line==='front'&&d.frontForbidden)continue;
      for(const choice of legalDestinations(p,line))
       out.push({type:'chooseTrigger',mode:'color',uid:c.uid,line,...choice});
+    }
    }
   }
   if(q.trigger==='raid'){
@@ -1147,7 +1181,8 @@ export function legalUniversalActions(pack,s){
   if(!s.extraDrawn&&pl.apCards.some(c=>c.ready)&&pl.deck.length)out.push({type:'extraDraw'});
  }
  if(s.phase==='move'){
-  for(const c of pl.energy.filter(c=>c&&!s.movedUids.includes(c.uid)&&card(pack,c).type==='character'))
+  for(const c of pl.energy.filter(c=>c&&!s.movedUids.includes(c.uid)&&
+  card(pack,c).type==='character'&&!card(pack,c).frontForbidden))
    for(const choice of legalDestinations(pl,'front'))out.push({type:'move',uid:c.uid,...choice});
   for(const c of pl.front.filter(c=>c&&!s.movedUids.includes(c.uid)&&card(pack,c).step))
    for(const choice of legalDestinations(pl,'energy'))out.push({type:'step',uid:c.uid,...choice});
@@ -1195,14 +1230,15 @@ export function legalUniversalActions(pack,s){
      out.push({type:'event',uid:c.uid});
    }
    else for(const line of ['energy','front']){
-    if(line==='front'&&d.type!=='character')continue;
+    if(line==='front'&&(d.type!=='character'||d.frontForbidden))continue;
     for(const choice of legalDestinations(pl,line))
      out.push({type:'play',uid:c.uid,line,...choice});
    }
    if(d.raidName){
     for(const line of ['energy','front'])for(let slot=0;slot<4;slot++){
      const base=pl[line][slot];
-     if(!validRaidBase(pack,s,p,base,d))continue;
+     if(!validRaidBase(pack,s,p,base,d)||d.frontForbidden||
+       card(pack,base).frontForbidden)continue;
      // A front-line base is already in its destination and cannot be
      // teleported to another occupied slot as a side effect of Raid.
      const dests=line==='front'?[{slot}]:legalDestinations(pl,'front');
@@ -1314,7 +1350,7 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
   }
   case 'move':{
    const l=location(s,p,action.uid);
-   if(!l||l.line!=='energy')throw Error('Invalid move');
+   if(!l||l.line!=='energy'||card(pack,l.c).frontForbidden)throw Error('Invalid move');
    commitDestination(s,p,'front',action.slot,action.replaceUid);
    pl.energy[l.slot]=null;pl.front[action.slot]=l.c;s.moved=true;s.movedUids.push(l.c.uid);break;
   }
@@ -1368,7 +1404,7 @@ export function assertUniversalMatch(pack,s){
    !Array.isArray(s.initialCounts)||s.initialCounts.length!==2||
    s.players?.length!==2||!playerIndex(s.active)||
    !['playing','finished'].includes(s.status))throw Error('Incorrect pack/version or match state');
- if(s.pending&&(!playerIndex(s.pending.player)||!['block','life-trigger','effect-target','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-rest-bp','raid-effect-order','effect-buff-trait','effect-buff-own','effect-once-choice','main-two-buff','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-order','effect-recover-outside','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-choice-mode'].includes(s.pending.kind)))
+ if(s.pending&&(!playerIndex(s.pending.player)||!['block','life-trigger','effect-target','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-rest-bp','raid-effect-order','effect-buff-trait','effect-buff-own','effect-once-choice','main-two-buff','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-order','effect-recover-outside','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-choice-mode','recovered-self-entry'].includes(s.pending.kind)))
   throw Error('Invalid pending controller');
  if(!Array.isArray(s.raidedThisTurn)||s.raidedThisTurn.length!==2||
    s.raidedThisTurn.some(x=>typeof x!=='boolean')||
@@ -1420,7 +1456,7 @@ export function assertUniversalMatch(pack,s){
   for(const id of new Set([...Object.keys(counts),...Object.keys(expected)]))
    if((counts[id]||0)!==(expected[id]||0))
     throw Error('Printed card ID conservation violated for player '+p+' ('+id+')');
-  if(pl.front.some(c=>c&&card(pack,c).type!=='character'))
+  if(pl.front.some(c=>c&&(card(pack,c).type!=='character'||card(pack,c).frontForbidden)))
    throw Error('Front line must contain only characters');
   if(pl.energy.some(c=>c&&card(pack,c).type==='event'))
    throw Error('Event cannot remain in energy line');

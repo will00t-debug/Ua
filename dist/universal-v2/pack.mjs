@@ -320,6 +320,16 @@ function normalize(card,packId){
  }else if(triggerEffect!=null)throw Error(card.id+' unexpected trigger effect definition');
  // Main-action selectors must be fully explicit: unknown card text is not
  // assumed to behave like the Kamina choose-up-to-two ability.
+ // Printed follow-up applies only to the card recovered by its own controller.
+ const ownOutsideRecovery=card.ownOutsideRecovery??null;
+ if(ownOutsideRecovery!==null&&(
+  card.type!=='character'||ownOutsideRecovery?.op!=='restSelfToEnergy'||
+  ownOutsideRecovery?.optional!==true||ownOutsideRecovery?.rest!==true||
+  Object.keys(ownOutsideRecovery).length!==3||
+  Object.keys(ownOutsideRecovery).some(k=>!['op','optional','rest'].includes(k))
+ ))throw Error(card.id+' unsupported own-outside recovery entry');
+ if(card.frontForbidden!==undefined&&(card.type!=='character'||card.frontForbidden!==true))
+  throw Error(card.id+' invalid front-line restriction');
  const mainAbility=card.mainAbility??null;
  const mainRaid=mainAbility?.op==='chooseTwoAfterOwnRaid'&&
   mainAbility.frontOnly===true&&mainAbility.readyOncePerName===true&&
@@ -367,10 +377,12 @@ function normalize(card,packId){
    (card.type!=='character'||timing!=='onPlay'))
    throw Error(card.id+' self-bounce is only valid on character onPlay');
  if(implemented==='vanilla'&&(Object.keys(effects).length||card.effectText||
-  card.activeExtraEnergy||card.conditionalTraitEnergy||passiveBonuses||card.impactNull))
+  card.activeExtraEnergy||card.conditionalTraitEnergy||passiveBonuses||card.impactNull||
+  ownOutsideRecovery||card.frontForbidden))
   throw Error(card.id+' claims vanilla despite printed/declared effects');
  if(implemented==='dsl'&&!Object.keys(effects).length&&!mainAbility&&
-  !card.activeExtraEnergy&&!card.conditionalTraitEnergy&&!passiveBonuses&&!card.impactNull)
+  !card.activeExtraEnergy&&!card.conditionalTraitEnergy&&!passiveBonuses&&!card.impactNull&&
+  !ownOutsideRecovery&&!card.frontForbidden)
   throw Error(card.id+' declares dsl without effects');
  for(const [name,program] of Object.entries(effects)){
   if(!V2_EFFECT_TIMINGS.includes(name))throw Error(card.id+' timing '+name+' unsupported');
@@ -430,6 +442,8 @@ function normalize(card,packId){
   conditionalUnderFaceDown:underProfile?Object.freeze({...underProfile}):null,
   triggerEffect:triggerEffect?Object.freeze({...triggerEffect}):null,
   mainAbility:mainAbility?Object.freeze({...mainAbility}):null,
+  ownOutsideRecovery:ownOutsideRecovery?Object.freeze({...ownOutsideRecovery}):null,
+  frontForbidden:card.frontForbidden===true,
   step:card.step===true,ownTurnBp:card.ownTurnBp||0,
   activeExtraEnergy:card.activeExtraEnergy||0,
   conditionalTraitEnergy:conditionalTraitEnergy?Object.freeze({...conditionalTraitEnergy}):null,

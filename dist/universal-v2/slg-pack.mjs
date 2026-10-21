@@ -10,6 +10,14 @@ const authored=[
     "implementation":"dsl","effects":{"onRetire":[{"op":"draw","count":1}]}
   },
   {
+    "id":"SLG-1-014","name":"水篠 聡子","color":"purple",
+    "energy":2,"ap":1,"bp":1000,"gen":1,"trigger":null,
+    "type":"character","textAnchor":"經自己的效果從場外加入手牌時",
+    "implementation":"dsl","frontForbidden":true,
+    "ownOutsideRecovery":{"op":"restSelfToEnergy","optional":true,"rest":true},
+    "effects":{"onPlay":[{"op":"millTop","count":1}]}
+  },
+  {
     "id":"SLG-1-013","name":"水篠 葵","color":"purple",
     "energy":0,"ap":1,"bp":1000,"gen":1,"trigger":null,
     "type":"character","textAnchor":"主要階段每回合一次：REST此角色",
