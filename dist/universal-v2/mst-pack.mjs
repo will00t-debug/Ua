@@ -58,7 +58,7 @@ const PRINTED_PINS=Object.freeze({
     "effectJa": "-"
   },
   "MST-1-016": {
-    "kind": "restSelfBlueEnergyRetireEndMain",
+    "kind": "restSelfEnergyRetireEndMain",
     "nameJa": "ゼニス",
     "color": "blue",
     "energy": 0,
@@ -69,6 +69,19 @@ const PRINTED_PINS=Object.freeze({
     "traits": [],
     "trigger": null,
     "effectJa": "〖起動メイン〗 〖レストにする〗 〖ターン1〗 このキャラはこのターン中、発生エナジー+ 〖青〗 と「メインフェイズ終了時、このキャラを退場させる。」を得る。"
+  },
+  "MST-1-045": {
+    "kind": "restSelfEnergyRetireEndMain",
+    "nameJa": "ゼニス",
+    "color": "green",
+    "energy": 0,
+    "ap": 1,
+    "bp": 1000,
+    "gen": 1,
+    "type": "character",
+    "traits": [],
+    "trigger": null,
+    "effectJa": "〖起動メイン〗 〖レストにする〗 〖ターン1〗 このキャラはこのターン中、発生エナジー+ 〖緑〗 と「メインフェイズ終了時、このキャラを退場させる。」を得る。"
   },
   "MST-1-024": {
     "kind": "ownTurnRoxyFieldBp",
@@ -407,7 +420,7 @@ export function verifiedMstV2Cards(){
    implementation:['vanilla','step'].includes(pin.kind)?'vanilla':'dsl'};
   if(card.implementation==='vanilla')card.effects={};
   if(pin.kind==='step')card.step=true;
-  if(pin.kind==='restSelfBlueEnergyRetireEndMain'){
+  if(pin.kind==='restSelfEnergyRetireEndMain'){
    card.effects={};
    card.mainAbility={op:'restSelfGainEnergyRetireEndMain',
     energyOnly:true,oncePerTurn:true,extraEnergy:1};
@@ -477,7 +490,7 @@ export function verifiedMstV2Entries(){
      ...(pin.kind==='ownFieldAllNamesBp'?['tests/v2-mst-003-own-names.test.mjs']:[]),
       ...(pin.kind==='onRetireDrawOne'?['tests/v2-mst-013-on-retire.test.mjs']:[]),
      ...(pin.kind==='onPlayDrawDiscardLimited'?['tests/v2-mst-051-limited-draw-discard.test.mjs']:[]),
-     ...(['restSelfBlueEnergyRetireEndMain','ownTurnRoxyFieldBp'].includes(pin.kind)?['tests/v2-mst-016-024-shared.test.mjs']:[])
+     ...(['restSelfEnergyRetireEndMain','ownTurnRoxyFieldBp'].includes(pin.kind)?['tests/v2-mst-016-024-shared.test.mjs']:[])
     ]),
     ...(def.implementation==='vanilla'?{verifiedNoExtraEffects:true}:{})
    })

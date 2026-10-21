@@ -1,0 +1,8 @@
+# V2 Batch 32 — MST-1-045 green MAIN energy / delayed retirement
+
+- Source: BANDAI Japanese UA54BT/MST-1-045, mirrored and validated in `dist/universal-v2/sources/mst-official-print.mjs`; official card URL https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA54BT%2FMST-1-045 .
+- Printed full ability: REST this ENERGY source in MAIN (TURN 1), grant its own generated **green** energy +1 until turn end, and retire this same field instance once when MAIN ends. Green0 / AP1 / BP1000 / printed green gen1, no Life. The source is ゼニス.
+- Reuses the exact shared `restSelfGainEnergyRetireEndMain` DSL and phase-end engine queue already used by blue MST-1-016 and purple SLG-1-013. Renamed adapter-only `restSelfBlueEnergyRetireEndMain` kind to color-neutral `restSelfEnergyRetireEndMain`, without changing existing card behavior.
+- New independent source pin and exact card manifest entry; same-title/SLG cross-title green-vs-blue bonus isolation, P0/P1 actor and UID ownership, physical REST/AP cost, pending retirement one-shot, legality, opponent privacy and conservation tests in `tests/v2-mst-045-green-delayed-energy.test.mjs`.
+- Candidate inventory: original pilot totals BLEACH 85, TTG 30, SLG 34, SAO 61, MST 30 = 240 across packs (includes earlier pilot cards), while unique source-contributed counts/700 must be obtained from fresh unported report. Registration + scenarios are not full Japanese FAQ certification.
+- Check THIS commit's GitHub Actions `V2 Resumed Integration`, five-title matrix and unported report before claiming acceptance. Branch PR #75 Draft only; no main merge, production deploy or manual phone QA.
