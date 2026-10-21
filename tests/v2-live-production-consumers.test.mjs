@@ -31,3 +31,26 @@ for(const owner of [0,1])test('live production resolves current MST029 READY/ide
  assert.equal(universalCardEnergy(packs,s,owner,stale),0);
  assert.equal(assertUniversalMatch(packs,s),true);
 });
+for(const owner of [0,1])test('MST057 FRONT production pays another real GREEN4 play and removal invalidates stale action, seat '+owner,()=>{
+ let {packs,s}=setup(owner);
+ for(let i=0;i<3;i++)put(s,owner,'MST-1-050','energy',i);
+ const producer=put(s,owner,'MST-1-057','front',0);producer.ready=false;
+ const target=take(s,owner,'MST-1-057');s.players[owner].hand.push(target);
+ assert.equal(universalEnergyByColor(packs,s,owner).green,4);
+ const action=legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===target.uid&&a.line==='front'&&a.slot===1);
+ assert.ok(action);
+ const removed=structuredClone(s);removed.players[owner].outside.push(removed.players[owner].front[0]);removed.players[owner].front[0]=null;
+ assert.equal(universalEnergyByColor(packs,removed,owner).green,3);
+ assert.equal(legalUniversalActions(packs,removed).some(a=>a.type==='play'&&a.uid===target.uid),false);
+ const snapshot=structuredClone(removed);
+ assert.throws(()=>dispatchUniversalAction(packs,removed,action,{actor:owner}));
+ assert.deepEqual(removed,snapshot);
+ const ap=s.players[owner].apCards.filter(c=>c.ready).length;
+ s=dispatchUniversalAction(packs,s,action,{actor:owner});
+ assert.equal(s.players[owner].front[1].uid,target.uid);
+ assert.equal(s.players[owner].apCards.filter(c=>c.ready).length,ap-1);
+ assert.equal(universalEnergyByColor(packs,s,owner).green,5);
+ assert.equal(universalPublicView(packs,s,1-owner).players[owner].hand,null);
+ assert.equal(assertUniversalMatch(packs,s),true);
+ assert.equal(assertUniversalMatch(packs,removed),true);
+});
