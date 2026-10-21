@@ -234,24 +234,26 @@ function validatePassiveBonuses(card){
   const q=p.condition;
   if(!q||typeof q!=='object'||Array.isArray(q)||
    !['own','opponent','any'].includes(q.turn)||
-   !['outsideCount','ownNameExists','ownTraitCount','ownEnergyAtLeast','ownEffectHandOutsideOrRecovery'].includes(q.kind))
+   !['outsideCount','ownNameExists','ownFieldHasAllNames','ownTraitCount','ownEnergyAtLeast','ownEffectHandOutsideOrRecovery'].includes(q.kind))
    throw Error(card.id+' invalid passive condition');
   // Effect-zone movement is a no-extra-argument same-turn predicate;
   // reject opponent/any variants until a concrete printed card needs them.
   if(q.kind==='ownEffectHandOutsideOrRecovery'&&q.turn!=='own')
    throw Error(card.id+' invalid effect-zone own-turn condition');
   const count=['outsideCount','ownTraitCount','ownEnergyAtLeast'].includes(q.kind);
-  const field=['ownNameExists','ownTraitCount'].includes(q.kind);
+  const field=['ownNameExists','ownFieldHasAllNames','ownTraitCount'].includes(q.kind);
   if((count&&(!integer(q.min,1)||q.min>200))||
    (field&&(!['field','front','energy'].includes(q.zone)||
     typeof q.excludeSelf!=='boolean'))||
    (q.kind==='ownNameExists'&&(!q.name||typeof q.name!=='string'||!q.name.trim()))||
+   (q.kind==='ownFieldHasAllNames'&&(!Array.isArray(q.names)||q.names.length<2||q.names.length>8||q.names.some(n=>typeof n!=='string'||!n.trim())||new Set(q.names).size!==q.names.length))||
    (q.kind==='ownTraitCount'&&(!q.trait||typeof q.trait!=='string'||!q.trait.trim()))||
    Object.keys(q).length!==(2+(count?1:0)+(field?2:0)+
     (q.kind==='ownNameExists'||q.kind==='ownTraitCount'?1:0))||
    Object.keys(q).some(k=>!['kind','turn',
     ...(count?['min']:[]),...(field?['zone','excludeSelf']:[]),
     ...(q.kind==='ownNameExists'?['name']:[]),
+    ...(q.kind==='ownFieldHasAllNames'?['names']:[]),
     ...(q.kind==='ownTraitCount'?['trait']:[])].includes(k))||
    (p.extraEnergy!==undefined&&q.kind==='ownEnergyAtLeast'))
    throw Error(card.id+' invalid or cyclic passive condition');
