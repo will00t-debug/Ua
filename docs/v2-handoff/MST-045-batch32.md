@@ -10,3 +10,12 @@
 ## Initial CI correction
 
 Commit 878ae9f0 independent MST dedicated action passed, but complete suite reported exactly three stale external expectation counts: MST all-card 29→30, MST blocked 51→50, all-title blocked 461→460. Corrected strict tests without removing assertions or changing engine logic; verify the fresh commit's CI separately.
+
+## Independently verified final result
+
+- Core implementation `878ae9f0`, strict pinned-count correction `eb0c1c7d`, final code-and-test SHA `2998eb8b`.
+- GitHub Actions [V2 Resumed Integration run 39590345691](https://github.com/will00t-debug/Ua/actions/runs/39590345691): **SUCCESS**, Node 22 `npm test` **1382/1382 passed**, 0 failed; seeded five-title match matrix **60/60 completed**, 0 failed; unported report SUCCESS.
+- [V2-D SAO and MST isolated QA run 39590354533](https://github.com/will00t-debug/Ua/actions/runs/39590354533): **SUCCESS**. Dedicated MST045 legal transition, cross-color energy, delayed retire and hidden-zone checks pass.
+- Exact integrated V2 inventory **240/700**, unported **460/700**; title packs BLEACH 85/276, TTG 30/81, SLG 34/80, SAO 61/183, MST 30/80. This is NOT full official per-card FAQ certification, which remains outstanding.
+- First CI found 3 obsolete exact-card counts; second found one stale total (239 instead of 240). These were fixed by adjusting the asserted cardinalities only, while keeping strict negative checks. There were no observed engine regressions.
+- No local clone-based test, manual Android/browser preview, production deployment or main merge.
