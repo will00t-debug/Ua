@@ -382,7 +382,7 @@ function normalize(card,packId){
    (card.type!=='character'||timing!=='onPlay'))
    throw Error(card.id+' self-bounce is only valid on character onPlay');
  if(implemented==='vanilla'&&(Object.keys(effects).length||card.effectText||
-  card.activeExtraEnergy||card.conditionalTraitEnergy||passiveBonuses||card.impactNull||
+  mainAbility||card.activeExtraEnergy||card.conditionalTraitEnergy||passiveBonuses||card.impactNull||
   ownOutsideRecovery||card.frontForbidden))
   throw Error(card.id+' claims vanilla despite printed/declared effects');
  if(implemented==='dsl'&&!Object.keys(effects).length&&!mainAbility&&
