@@ -6,7 +6,7 @@ export const V2_PHASES=Object.freeze(['start','move','main','attack']);
 export const V2_CARD_TYPES=Object.freeze(['character','event','field']);
 export const V2_TRIGGERS=Object.freeze(['draw','get','final','active','special','color','raid']);
 export const V2_EFFECT_TIMINGS=Object.freeze(['onPlay','onRaid','onAttack','onRaided','onRetire','onOutsideRecover']);
-export const V2_EFFECT_OPS=Object.freeze(['draw','drawIfOwnName','drawIfOwnEnergyAtLeast','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','restOppFrontUnderBp','restOppFrontOne','skipNextActiveOppRest','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw','searchDeckMany','discardGate','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
+export const V2_EFFECT_OPS=Object.freeze(['draw','drawIfOwnName','drawIfOwnEnergyAtLeast','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','restOppFrontUnderBp','restOppFrontOne','skipNextActiveOppRest','restOrRetireOppFrontByLife','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw','searchDeckMany','discardGate','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
  'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideColorUnderEnergy','recoverOutsideTraitlessUnderEnergy','buffOwnField','oncePerTurnGate','chooseOne']);
 const integer=(v,low=0)=>Number.isInteger(v)&&v>=low;
 const own=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
@@ -198,7 +198,12 @@ function verifyProgram(program,path){
    !integer(e.bp,1)||e.bp>50000||e.optional!==true||
    Object.keys(e).some(k=>!['op','bp','optional'].includes(k))
   ))throw Error(path+'['+i+'] invalid facedown retirement effect');
-  if(e.op==='skipNextActiveOppRest'&&(
+  if(e.op==='restOrRetireOppFrontByLife'&&(
+    !integer(e.bp,1)||e.bp>50000||!integer(e.lifeAtMost,0)||e.lifeAtMost>20||
+    typeof e.optional!=='boolean'||
+    Object.keys(e).some(k=>!['op','bp','lifeAtMost','optional'].includes(k))
+   ))throw Error(path+'['+i+'] invalid LIFE-gated REST or retirement');
+   if(e.op==='skipNextActiveOppRest'&&(
    typeof e.optional!=='boolean'||Object.keys(e).some(k=>!['op','optional'].includes(k))
   ))throw Error(path+'['+i+'] invalid existing-REST ACTIVE skip');
   if(e.op==='restOppFrontOne'&&(
@@ -347,7 +352,10 @@ function normalize(card,packId){
   Object.keys(ownOutsideRecovery).length!==3||
   Object.keys(ownOutsideRecovery).some(k=>!['op','optional','rest'].includes(k))
  ))throw Error(card.id+' unsupported own-outside recovery entry');
- if(card.frontForbidden!==undefined&&(card.type!=='character'||card.frontForbidden!==true))
+ if(card.enterActiveIfOpponentRest!==undefined&&
+    (card.type!=='character'||card.enterActiveIfOpponentRest!==true))
+   throw Error(card.id+' invalid conditional ACTIVE entry');
+  if(card.frontForbidden!==undefined&&(card.type!=='character'||card.frontForbidden!==true))
   throw Error(card.id+' invalid front-line restriction');
  const mainAbility=card.mainAbility??null;
  const mainRaid=mainAbility?.op==='chooseTwoAfterOwnRaid'&&
@@ -420,10 +428,10 @@ function normalize(card,packId){
    (card.type!=='character'||timing!=='onPlay'))
    throw Error(card.id+' self-bounce is only valid on character onPlay');
  if(implemented==='vanilla'&&(Object.keys(effects).length||card.effectText||
-  mainAbility||phaseEffects.length||card.activeExtraEnergy||card.conditionalTraitEnergy||passiveBonuses||card.impactNull||
+  mainAbility||phaseEffects.length||card.enterActiveIfOpponentRest||card.activeExtraEnergy||card.conditionalTraitEnergy||passiveBonuses||card.impactNull||
   card.frontGeneratesEnergy||ownOutsideRecovery||card.frontForbidden||card.ownTurnBp||card.opponentTurnBp))
   throw Error(card.id+' claims vanilla despite printed/declared effects');
- if(implemented==='dsl'&&!Object.keys(effects).length&&!phaseEffects.length&&!mainAbility&&
+ if(implemented==='dsl'&&!Object.keys(effects).length&&!phaseEffects.length&&!mainAbility&&!card.enterActiveIfOpponentRest&&
   !card.activeExtraEnergy&&!card.conditionalTraitEnergy&&!passiveBonuses&&!card.impactNull&&
   !card.frontGeneratesEnergy&&!ownOutsideRecovery&&!card.frontForbidden&&!card.ownTurnBp&&!card.opponentTurnBp)
   throw Error(card.id+' declares dsl without effects');
@@ -504,7 +512,8 @@ function normalize(card,packId){
   ownOutsideRecovery:ownOutsideRecovery?Object.freeze({...ownOutsideRecovery}):null,
    phaseEffects:Object.freeze(phaseEffects.map(x=>Object.freeze({...x,
     then:Object.freeze(x.then.map(op=>Object.freeze({...op})))}))),
-  frontForbidden:card.frontForbidden===true,
+  enterActiveIfOpponentRest:card.enterActiveIfOpponentRest===true,
+   frontForbidden:card.frontForbidden===true,
   step:card.step===true,ownTurnBp:card.ownTurnBp||0,
   opponentTurnBp:card.opponentTurnBp||0,
   activeExtraEnergy:card.activeExtraEnergy||0,

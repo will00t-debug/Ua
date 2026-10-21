@@ -26,6 +26,10 @@ const card=(pack,c)=>{
  return printed;
 };
 const titleOf=(pack,owner)=>playerPacks(pack)[owner].id;
+function defaultEntryReady(pack,s,owner,physical){
+ return card(pack,physical).enterActiveIfOpponentRest===true&&
+  field(s.players[1-owner]).some(c=>card(pack,c).type==='character'&&!c.ready);
+}
 const random=s=>{let x=s.rng|0;x^=x<<13;x^=x>>>17;x^=x<<5;s.rng=x>>>0;return s.rng/4294967296;};
 function shuffle(s,list){
  for(let i=list.length-1;i>0;i--){const j=Math.floor(random(s)*(i+1));[list[i],list[j]]=[list[j],list[i]];}
@@ -367,6 +371,17 @@ function continueEffectQueue(pack,s){
     const choices=s.players[1-owner].front.filter(c=>c&&bp(pack,s,c)<=job.bp).map(c=>c.uid);
     if(choices.length)s.pending={kind:'effect-retire-bp',player:owner,
      sourceUid:job.sourceUid,choices,limit:job.bp,optional:true};
+   }
+  }else if(job.op==='restOrRetireOppFrontByLife'){
+   // One target set and one choice. The controller's LIFE determines the
+   // branch when the effect is actually resolved, not from the original hand.
+   const targets=s.players[1-owner].front.filter(c=>c&&bp(pack,s,c)<=job.bp);
+   if(targets.length){
+    const retireNow=pl.life.length<=job.lifeAtMost;
+    s.pending={kind:retireNow?'effect-retire-bp':'effect-rest-bp',
+     player:owner,sourceUid:job.sourceUid,limit:job.bp,
+     choices:targets.map(c=>c.uid),optional:job.optional,
+     ...(!retireNow?{skipNextActive:true}:{})};
    }
   }else if(job.op==='skipNextActiveOppRest'){
    const choices=field(s.players[1-owner]).filter(c=>!c.ready).map(c=>c.uid);
@@ -1272,7 +1287,7 @@ function eventMandatoryTargetsAvailable(pack,s,owner,d){
   if(job.optional!==false)return true;
   if(job.op==='restOppFrontOne')
    return enemy.front.some(Boolean);
-  if(job.op==='restOppFrontUnderBp')
+  if(job.op==='restOppFrontUnderBp'||job.op==='restOrRetireOppFrontByLife')
    return enemy.front.some(c=>c&&bp(pack,s,c)<=job.bp);
   return true;
  });
@@ -1506,7 +1521,8 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
     performRaid(pack,s,p,current,action.baseUid,'front',action.slot,action.replaceUid);
    }else{
     commitDestination(s,p,action.line,action.slot,action.replaceUid);
-    current.ready=false;current.fieldEntryStamp=s.nextFieldEntryStamp++;
+    current.ready=defaultEntryReady(pack,s,p,current);
+    current.fieldEntryStamp=s.nextFieldEntryStamp++;
     pl[action.line][action.slot]=current;
     applyEffects(pack,s,current,'onPlay',p);
    }
@@ -1576,7 +1592,7 @@ export function assertUniversalMatch(pack,s){
    !['draw','drawIfOwnName','drawIfOwnEnergyAtLeast','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','restOppFrontUnderBp','restOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
     'discardGate','enemyFrontAllBpDown','retireOppFrontAllUnderBp',
     'buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
-    'recoverOutsideColorUnderEnergy','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','openBlock','skipNextActiveOppRest','phaseOrder','advanceAfterAttack'].includes(e.op)))
+    'recoverOutsideColorUnderEnergy','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','openBlock','skipNextActiveOppRest','restOrRetireOppFrontByLife','phaseOrder','advanceAfterAttack'].includes(e.op)))
   throw Error('Invalid queued effects');
  for(let p=0;p<2;p++){
   const pl=s.players[p],uids=new Set(),items=[];
