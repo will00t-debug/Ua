@@ -74,7 +74,8 @@ for(const owner of [0,1]){
   assert.equal(universalPrivateChoices(packs,s,owner).options[1].card.cardId,'MST-1-070');
   const opp=universalPublicView(packs,s,1-owner);
   assert.equal(opp.players[owner].hand,null);
-  for(const c of window)assert.ok(!JSON.stringify(opp).includes(c.uid));
+  for(const c of window)assert.ok(!JSON.stringify(opp).includes(JSON.stringify(c.uid)),
+   'private inspected physical UID must not occur as an exact JSON string token');
   const snapshot=structuredClone(s);
   for(const uid of [window[0].uid,window[2].uid,'1-999999']){
    assert.throws(()=>dispatchUniversalAction(packs,s,{type:'chooseTopFiltered',uid},{actor:owner}),/not currently legal/);
