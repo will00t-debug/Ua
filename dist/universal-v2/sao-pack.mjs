@@ -4,6 +4,11 @@ import {SAO_OFFICIAL_CARDS} from '../sao-official-import.mjs';
 import {createUniversalPack} from './pack.mjs';
 
 const PRINTED_PINS=Object.freeze({
+ "SAO-1-034":{"kind":"lifeGatedRestRetire","nameJa":"ラディアント・ライト",
+  "color":"yellow","energy":3,"ap":1,"bp":0,"gen":0,"type":"event",
+  "trigger":"special","traits":[],
+  "effectJa":"BP5000以下の相手のフロントLのキャラを1枚選び、『レストにする。それは次の1回アクティブにならない』。自分のライフが4以下の場合、『退場させる』に代わる。"
+ },
   "SAO-1-051": {
     "kind": "impactNullOwnTurnHandFiveBp1000",
     "nameJa": "キリト",
@@ -961,7 +966,12 @@ export function verifiedSaoV2Cards(){
    card.templateEffects={onPlay:[{template:'bounceOwnOtherUnderEnergy',energy:1}]};
   if(pin.kind==='onPlayPeekTop')
    card.templateEffects={onPlay:[{template:'peekTopOne'}]};
-  if(pin.kind==='onPlayRestEnemy3000')
+  if(pin.kind==='lifeGatedRestRetire'){
+    card.templateEffects={onPlay:[{template:'restOrRetireEnemyFrontByOwnLife',
+     bp:5000,lifeAtMost:4,optional:false}]};
+    card.triggerEffect={op:'retireOppFront'};
+   }
+   if(pin.kind==='onPlayRestEnemy3000')
    card.templateEffects={onPlay:[{template:'restEnemyUnderBp',bp:3000,optional:true}]};
   if(pin.kind==='onPlayBuffOwnOther1000'||pin.kind==='onPlayBuffOwnOther500')
    card.templateEffects={onPlay:[{template:'buffOwnField',
@@ -1005,6 +1015,7 @@ export function verifiedSaoV2Entries(){
      source.source,
     testFiles:Object.freeze([
      'tests/universal-v2-sao-port.test.mjs',
+      ...(def.id==='SAO-1-034'?['tests/v2-sao-034-official.test.mjs']:[]),
      ...(def.id==='SAO-2-021'?['tests/v2-sao-021-shared-main-cost.test.mjs']:[]),
      ...(pin.kind==='onRetireDrawOne'?['tests/v2-sao-retire-draw-shared.test.mjs']:[]),
      ...(pin.kind==='opponentTurnBp1000'?['tests/v2-sao-014-opponent-bp.test.mjs']:[]),
