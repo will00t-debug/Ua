@@ -70,6 +70,19 @@ const PRINTED_PINS=Object.freeze({
     "trigger": null,
     "effectJa": "〖起動メイン〗 〖レストにする〗 〖ターン1〗 このキャラはこのターン中、発生エナジー+ 〖青〗 と「メインフェイズ終了時、このキャラを退場させる。」を得る。"
   },
+  "MST-1-063": {
+    "kind": "onPlayDrawIfOwnEnergyAtLeast",
+    "nameJa": "ノルン",
+    "color": "green",
+    "energy": 2,
+    "ap": 1,
+    "bp": 2000,
+    "gen": 1,
+    "type": "character",
+    "traits": ["ラノア魔法大学"],
+    "trigger": "draw",
+    "effectJa": "〖登場時〗 自分の発生エナジーが7以上ある場合、カードを1枚引く。"
+  },
   "MST-1-045": {
     "kind": "restSelfEnergyRetireEndMain",
     "nameJa": "ゼニス",
@@ -433,6 +446,8 @@ export function verifiedMstV2Cards(){
   if(pin.kind==='ownFieldAllNamesBp')
    card.passiveBonuses=[{condition:{kind:'ownFieldHasAllNames',turn:'any',
     zone:'field',excludeSelf:false,names:['ルーデウス','ルイジェルド']},bp:1000}];
+  if(pin.kind==='onPlayDrawIfOwnEnergyAtLeast')
+   card.templateEffects={onPlay:[{template:'drawIfOwnEnergyAtLeast',energy:7,count:1}]};
   if(pin.kind==='onPlayDraw')card.templateEffects={onPlay:[{template:'draw',count:1}]};
   if(pin.kind==='onPlayDrawDiscard')card.templateEffects={onPlay:[{template:'drawDiscardOne'}]};
   if(pin.kind==='onPlayDrawDiscardLimited'){
@@ -489,6 +504,7 @@ export function verifiedMstV2Entries(){
      'tests/universal-v2-sao-mst-cross-title.test.mjs',
      ...(pin.kind==='ownFieldAllNamesBp'?['tests/v2-mst-003-own-names.test.mjs']:[]),
       ...(pin.kind==='onRetireDrawOne'?['tests/v2-mst-013-on-retire.test.mjs']:[]),
+     ...(pin.kind==='onPlayDrawIfOwnEnergyAtLeast'?['tests/v2-mst-063-energy-draw.test.mjs']:[]),
      ...(pin.kind==='onPlayDrawDiscardLimited'?['tests/v2-mst-051-limited-draw-discard.test.mjs']:[]),
      ...(['restSelfEnergyRetireEndMain','ownTurnRoxyFieldBp'].includes(pin.kind)?['tests/v2-mst-016-024-shared.test.mjs']:[])
     ]),

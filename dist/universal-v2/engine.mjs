@@ -203,6 +203,11 @@ function continueEffectQueue(pack,s){
    else throw Error('No legally selectable mandatory printed mode');
   }
   else if(job.op==='draw')draw(s,owner,job.count);
+  else if(job.op==='drawIfOwnEnergyAtLeast'){
+   // Printed generated-energy threshold is checked at resolution, after the
+   // source actually enters the field. Count only this owner's real ENERGY L.
+   if(calcEnergy(pack,s,owner)>=job.energy)draw(s,owner,job.count);
+  }
   else if(job.op==='drawIfOwnName'){
    // Evaluate after the character actually entered OWN front/energy field.
    // Never count hand, deck, opponent field, or hidden Raid under-cards.
@@ -1490,7 +1495,7 @@ export function assertUniversalMatch(pack,s){
     !Number.isInteger(x.fieldEntryStamp)||x.fieldEntryStamp<1))
   throw Error('Invalid delayed effect instances');
  if(!Array.isArray(s.effectQueue)||s.effectQueue.some(e=>!playerIndex(e.owner)||
-   !['draw','drawIfOwnName','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','restOppFrontUnderBp','restOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
+   !['draw','drawIfOwnName','drawIfOwnEnergyAtLeast','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','restOppFrontUnderBp','restOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
     'discardGate','enemyFrontAllBpDown','retireOppFrontAllUnderBp',
     'buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
     'recoverOutsideColorUnderEnergy','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','openBlock'].includes(e.op)))

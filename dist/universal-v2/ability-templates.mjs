@@ -23,6 +23,10 @@ const registry=Object.freeze({
  draw:{
   args:{count:v=>integer(v,1,10)},build:v=>[{op:'draw',count:v.count}]
  },
+ drawIfOwnEnergyAtLeast:{
+  args:{energy:v=>integer(v,1,50),count:v=>integer(v,1,5)},
+  build:v=>[{op:'drawIfOwnEnergyAtLeast',energy:v.energy,count:v.count}]
+ },
  drawIfOwnName:{
   args:{name:named,count:v=>integer(v,1,5)},
   build:v=>[{op:'drawIfOwnName',name:v.name,count:v.count}]
