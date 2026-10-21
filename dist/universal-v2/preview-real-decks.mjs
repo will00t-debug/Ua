@@ -1,9 +1,9 @@
-// Single V2 reducer, six real-only 50-card presets across all FIVE titles.
+// Single V2 reducer, seven real-only 50-card presets across all FIVE titles.
 // No synthetic cards, AP/alternate arts, legacy reducers or unsupported flags.
 // Only use title registry source-pinned V2 profiles, never legacy auto values.
 import {verifiedBleachPurplePilotDeck,verifiedTtgRedPilotDeck}
  from './verified-real-decks.mjs';
-import {verifiedSaoV2RealDeck,verifiedMstV2RealDeck}
+import {verifiedSaoV2RealDeck,verifiedMstV2RealDeck,verifiedMstV2RoxyFieldDeck}
  from './sao-mst-real-decks.mjs';
 import {requireRegisteredV2TitlePack} from './title-packs/registry.mjs';
 import {validateUniversalDeck} from './pack.mjs';
@@ -40,7 +40,8 @@ export function createAllV2PreviewRealDecks(){
   'gurren-lagann-red':verifiedTtgRedPilotDeck(),
   'solo-leveling':strictDeck('solo-leveling',SLG_V2_COUNTS),
   'sword-art-online':verifiedSaoV2RealDeck(),
-  'mushoku-tensei':verifiedMstV2RealDeck()
+  'mushoku-tensei':verifiedMstV2RealDeck(),
+  'mushoku-tensei-roxy-field':verifiedMstV2RoxyFieldDeck()
  };
  for(const [key,{pack,counts}] of Object.entries(decks)){
   if(Object.values(counts).reduce((n,v)=>n+v,0)!==50||

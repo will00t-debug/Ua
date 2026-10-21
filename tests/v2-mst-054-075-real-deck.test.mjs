@@ -6,6 +6,9 @@ import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  universalPublicView,universalBp,assertUniversalMatch} from '../dist/universal-v2/engine.mjs';
 import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
+import {MST_V2_ROXY_FIELD_REAL_DECK_COUNTS,verifiedMstV2RoxyFieldDeck}
+ from '../dist/universal-v2/sao-mst-real-decks.mjs';
+import {createAllV2PreviewRealDecks} from '../dist/universal-v2/preview-real-decks.mjs';
 export const packs=[registeredV2TitlePack('mushoku-tensei'),registeredV2TitlePack('sword-art-online')];
 // Every card is an official registered identity; MST-051 is limited to one.
 const mstIds=['MST-1-050','MST-1-051','MST-1-054','MST-1-075',
@@ -17,7 +20,7 @@ const saoIds=['SAO-1-014','SAO-1-020','SAO-1-001','SAO-1-016','SAO-1-019',
 const deck=ids=>{const c=Object.fromEntries(ids.map(id=>[id,4]));
  if(ids===mstIds){c['MST-1-051']=1;c['MST-1-072']=1;}else c[ids.at(-1)]=2;
  return c;};
-export const verifiedRoxyDeck=Object.freeze(deck(mstIds));
+export const verifiedRoxyDeck=MST_V2_ROXY_FIELD_REAL_DECK_COUNTS;
 const opponentDeck=Object.freeze(deck(saoIds));
 function take(s,p,id){
  for(const z of ['hand','deck','life','outside']){
@@ -96,6 +99,10 @@ test('MST 054/075 are two sourced official V2 cards in a LEGAL 50-card single-ti
  for(const id of ['MST-1-054','MST-1-075'])
   assert.equal(packs[0].cards[id].name,MST_V2_OFFICIAL_BY_ID[id].nameJa);
  assert.equal(Object.keys(packs[0].cards).length,35);
+ assert.deepEqual(verifiedMstV2RoxyFieldDeck().counts,verifiedRoxyDeck);
+ const available=createAllV2PreviewRealDecks();
+ assert.deepEqual(available['mushoku-tensei-roxy-field'].counts,verifiedRoxyDeck);
+ assert.equal(Object.keys(available).length,7);
 });
 test('real MST-075 field onPlay draw/discard pays AP, puts SECOND real field into OUTSIDE; then real MST-054 Raid silences SAO',()=>{
  const {s,roxy,base,victim,field,discard}=officialRaid();
