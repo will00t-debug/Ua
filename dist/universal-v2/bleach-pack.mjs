@@ -849,6 +849,27 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
   "trigger":"active","type":"event",
   "effect":"選 1 個敵方前線角色，將其轉為 REST。"
  }
+ ,{
+  "id":"BLC-1-016","kind":"restEnergyRetire",
+  "number":"UA08BT/BLC-1-016","name":"ベレニケ・ガブリエリ",
+  "color":"yellow","energy":0,"ap":1,"bp":1000,"gen":1,
+  "trigger":null,"type":"character","effect":"主要階段・每回合 1 次：REST 自己，本回合額外產生 1 黃能源；主要階段結束時，此角色退場。"
+ } ,{
+  "id":"BLC-1-069","kind":"restEnergyRetire",
+  "number":"UA08BT/BLC-1-069","name":"浮竹 十四郎",
+  "color":"green","energy":0,"ap":1,"bp":1000,"gen":1,
+  "trigger":null,"type":"character","effect":"主要階段・每回合 1 次：REST 自己，本回合額外產生 1 綠能源；主要階段結束時，此角色退場。"
+ } ,{
+  "id":"BLC-2-022","kind":"restEnergyRetire",
+  "number":"EX07BT/BLC-2-022","name":"志波 岩鷲",
+  "color":"blue","energy":0,"ap":1,"bp":1000,"gen":1,
+  "trigger":null,"type":"character","effect":"主要階段・每回合 1 次：REST 自己，本回合額外產生 1 藍能源；主要階段結束時，此角色退場。"
+ } ,{
+  "id":"BLC-2-040","kind":"onRetireDrawOne",
+  "number":"EX07BT/BLC-2-040","name":"チルッチ・サンダーウィッチ",
+  "color":"blue","energy":0,"ap":1,"bp":1000,"gen":1,
+  "trigger":null,"type":"character","effect":"退場：抽 1 張。"
+ }
 ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -895,8 +916,9 @@ export function checkedBleachAddonDefinition(p){
  // Keep p.gen=2 only as a legacy-source fingerprint, never as V2 base energy.
  const v2BaseGen=p.id==='BLC-4-014'?1:c.gen;
  const isPassive=p.kind==='activeEnergy'||p.kind==='impactNull';
- const isMain=p.kind==='restSelfEnemy';
- const special=p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain;
+ const isMain=p.kind==='restSelfEnemy'||p.kind==='restEnergyRetire';
+ const isRetireDraw=p.kind==='onRetireDrawOne';
+ const special=p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -907,11 +929,12 @@ export function checkedBleachAddonDefinition(p){
   ...(p.kind==='step'?{step:true}:{}),
   ...(p.kind==='activeEnergy'?{activeExtraEnergy:1}:{}),
   ...(p.kind==='impactNull'?{impactNull:true}:{}),
-  ...(isMain?{mainAbility:{op:'restSelfThenRestOppFrontOne',frontOnly:true}}:{}),
+  ...(p.kind==='restSelfEnemy'?{mainAbility:{op:'restSelfThenRestOppFrontOne',frontOnly:true}}:{}),
+  ...(p.kind==='restEnergyRetire'?{mainAbility:{op:'restSelfGainEnergyRetireEndMain',energyOnly:true,oncePerTurn:true,extraEnergy:1}}:{}),
   ...(p.kind.startsWith('retireBonus')?{triggerEffect:{op:'retireOppFront'}}:{}),
   ...(p.kind==='enemyBpDown500Color'?{triggerEffect:{op:'deployOutsideCharacter',color:'purple',maxEnergy:2,ap:1,frontOnly:true}}:{}),
   ...(p.kind==='drawPlayColorHand'?{triggerEffect:{op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1}}:{}),
-  ...(!special?{templateEffects:abilities[p.kind]}:{effects:{}})
+  ...(!special?{templateEffects:abilities[p.kind]}:{effects:isRetireDraw?{onRetire:[{op:'draw',count:1}]}:{}})
  };
 }
 export function bleachV2PortedCards(){

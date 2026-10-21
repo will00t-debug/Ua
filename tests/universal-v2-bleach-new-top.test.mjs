@@ -39,9 +39,9 @@ function setup(counts,id,energyId,seed){
  assert.ok(play,'real cost/AP supports playing '+id);
  return {s,play,source};
 }
-test('new top batch is 65 exact official profiles / 80 real V2 identities with no extra life Trigger',()=>{
- assert.equal(contribution.entries.length,65);
- assert.equal(Object.keys(pack.cards).length,80);
+test('new top batch is 69 exact official profiles / 84 real V2 identities with no extra life Trigger',()=>{
+ assert.equal(contribution.entries.length,69);
+ assert.equal(Object.keys(pack.cards).length,84);
  assert.deepEqual(validateUniversalDeck(pack,purple),[]);
  assert.deepEqual(validateUniversalDeck(pack,yellow),[]);
  assert.equal(Object.values(yellow).reduce((n,v)=>n+v,0),50);

@@ -55,9 +55,9 @@ test('NC batch is exactly two Japanese UA04NC IDs with correct original trigger 
   assert.deepEqual(validateUniversalDeck(pack,c),[]);
   assert.equal(Object.values(c).reduce((a,v)=>a+v,0),50);
  }
- assert.equal(Object.keys(pack.cards).length,80);
- assert.equal(Object.keys(standalone.cards).length,80);
- assert.equal(contribution.entries.length,65);
+ assert.equal(Object.keys(pack.cards).length,84);
+ assert.equal(Object.keys(standalone.cards).length,84);
+ assert.equal(contribution.entries.length,69);
  const official={
   'BLC-3-006':{number:'UA04NC/BLC-3-006',trigger:'active',
    effect:[{op:'inspectTopArrange',count:3,toOutside:true,rest:'top'}]},
