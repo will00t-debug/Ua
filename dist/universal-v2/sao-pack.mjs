@@ -4,6 +4,20 @@ import {SAO_OFFICIAL_CARDS} from '../sao-official-import.mjs';
 import {createUniversalPack} from './pack.mjs';
 
 const PRINTED_PINS=Object.freeze({
+  "SAO-2-019": {
+    "kind": "ownTurnSilicaFieldBp",
+    "nameJa": "ピナ",
+    "color": "blue",
+    "energy": 2,
+    "ap": 1,
+    "bp": 2000,
+    "gen": 1,
+    "type": "character",
+    "trigger": "active",
+    "traits": ["アインクラッド"],
+    "effectJa": "【自分のターン中】自分の場に〈シリカ〉がある場合、このキャラはBP+2000。"
+  },
+
   "SAO-2-016": {
     "kind": "onRetireDrawOne",
     "nameJa": "クラディール",
@@ -841,6 +855,9 @@ export function verifiedSaoV2Cards(){
    implementation:pin.kind==='vanilla'||pin.kind==='step'?'vanilla':'dsl'};
   if(card.implementation==='vanilla')card.effects={};
   if(pin.kind==='step')card.step=true;
+  if(pin.kind==='ownTurnSilicaFieldBp')
+   card.passiveBonuses=[{condition:{kind:'ownNameExists',turn:'own',
+    zone:'field',excludeSelf:true,name:'シリカ'},bp:2000}];
   if(pin.kind==='onRetireDrawOne')
    card.effects={onRetire:[{op:'draw',count:1}]};
   if(pin.kind==='onPlayDraw')
@@ -917,6 +934,7 @@ export function verifiedSaoV2Entries(){
      'tests/universal-v2-sao-port.test.mjs',
      ...(def.id==='SAO-2-021'?['tests/v2-sao-021-shared-main-cost.test.mjs']:[]),
      ...(pin.kind==='onRetireDrawOne'?['tests/v2-sao-retire-draw-shared.test.mjs']:[]),
+     ...(pin.kind==='ownTurnSilicaFieldBp'?['tests/v2-sao-019-own-silica-bp.test.mjs']:[]),
      'tests/universal-v2-sao-mst-cross-title.test.mjs'
     ]),
     ...(def.implementation==='vanilla'?{verifiedNoExtraEffects:true}:{})
