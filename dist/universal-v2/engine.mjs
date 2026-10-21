@@ -627,8 +627,10 @@ function advanceAfterEnd(pack,s,owner){
  const pl=s.players[owner];
  // End phase: REST cards return ACTIVE before opponent's turn.
  if(!s.endRefreshed){
+  // The attack-end ACTIVE refresh still falls inside the printed prohibition.
+  refreshFieldActive(s,owner);
   expireContinuousStates(s,{player:owner,phase:'attack',edge:'end'});
-  refreshFieldActive(s,owner);s.endRefreshed=true;
+  s.endRefreshed=true;
  }
  if(pl.hand.length>8){s.pending={kind:'end-hand-limit',player:owner};return;}
  s.active=1-owner;
@@ -1445,7 +1447,7 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
      queuePhaseBoundary(pack,s,'attack','start',p);
     }
    else if(s.phase==='attack'){
-    expireContinuousStates(s,{player:p,phase:'attack',edge:'end'});
+    // Keep timed prohibitions alive for this boundary's ACTIVE attempt.
     queuePhaseBoundary(pack,s,'attack','end',p);
     s.effectQueue.push({op:'advanceAfterAttack',owner:p});
    }
