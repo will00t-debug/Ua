@@ -80,7 +80,7 @@ for(const owner of [0,1])test('MST057 FRONT producer remains publicly visible an
 
 test('preview consumes sanitized public produces values for FRONT and ENERGY lines',()=>{
  const source=readFileSync(new URL('../dist/universal-v2-preview.mjs',import.meta.url),'utf8');
- assert.match(source,/Number\\.isInteger\\(card\\.produces\\)/);
- assert.match(source,/text:'產能 '\\+card\\.produces/);
- assert.match(source,/function zoneSlots\\(view,side,line/);
+ assert.match(source,/Number\.isInteger\(card\.produces\)/);
+ assert.match(source,/text:'產能 '\+card\.produces/);
+ assert.match(source,/function zoneSlots\(view,side,line/);
 });
