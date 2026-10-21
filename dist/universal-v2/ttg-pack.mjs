@@ -3,6 +3,10 @@ import {TTG_BY_ID} from '../ttg-builder.mjs';
 import {verifiedPilotCards} from './real-card-pilots.mjs';
 import {createUniversalPack} from './pack.mjs';
 const additions=[
+ {id:'TTG-1-006',name:'キタン',energy:2,ap:1,bp:3000,gen:1,color:'green',
+  type:'character',trigger:null,implementation:'dsl',effects:{},
+  passiveBonuses:[{condition:{kind:'ownEnergyAtLeast',turn:'own',min:6},bp:1000}],
+  match:'自己的能源達 6 以上時'},
  {id:'TTG-1-005',name:'キタン',energy:0,ap:1,bp:1500,gen:1,color:'green',type:'character',trigger:'draw',impactNull:true,implementation:'dsl',effects:{},match:'IMPACT 無效'},
  {id:'TTG-1-014',name:'ニア',energy:1,ap:1,bp:1500,gen:2,color:'green',type:'character',trigger:null,implementation:'dsl',templateEffects:{onPlay:[{template:'bounceOwnOtherUnderEnergy',energy:1}]},match:'需求能源1以下'},
  {id:'TTG-1-019',name:'ヨーコ',energy:2,ap:1,bp:2500,gen:1,color:'green',type:'character',trigger:null,activeExtraEnergy:1,implementation:'dsl',effects:{},match:'ACTIVE'},

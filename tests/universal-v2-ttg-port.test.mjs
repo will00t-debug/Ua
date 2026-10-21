@@ -26,11 +26,11 @@ function main(s){
  }
  return s;
 }
-test('TTG additive pack preserves all 20 original V2 pilots; 7 supported additions and real 50-card mixed-title deck',()=>{
+test('TTG additive pack preserves all 20 original V2 pilots; 8 supported additions and real 50-card mixed-title deck',()=>{
  const old=verifiedPilotPack('gurren-lagann');
- assert.deepEqual(TTG_V2_ADDITION_IDS,['TTG-1-005','TTG-1-014','TTG-1-019','TTG-1-010','TTG-1-023','TTG-1-053','TTG-1-077']);
+ assert.deepEqual(TTG_V2_ADDITION_IDS,['TTG-1-006','TTG-1-005','TTG-1-014','TTG-1-019','TTG-1-010','TTG-1-023','TTG-1-053','TTG-1-077']);
  assert.equal(Object.keys(old.cards).length,20);
- assert.equal(Object.keys(ttg.cards).length,27);
+ assert.equal(Object.keys(ttg.cards).length,28);
  for(const [id,c] of Object.entries(old.cards))assert.deepEqual(ttg.cards[id].effects,c.effects);
  assert.deepEqual(validateUniversalDeck(ttg,ttgDeck),[]);
  assert.deepEqual(validateUniversalDeck(slg,slgDeck),[]);
@@ -67,10 +67,10 @@ test('TTG-1-019 ACTIVE generates an extra GREEN energy only until REST, retainin
 test('TTG contribution is consumable by latest shared V2 title registry and is disjoint from original pilots',()=>{
  const row=listRegisteredV2Titles().find(x=>x.title==='gurren-lagann');
  assert.equal(row.baselinePilots,20);
- assert.equal(row.newlyContributed,7);
- assert.equal(row.totalV2Cards,27);
+ assert.equal(row.newlyContributed,8);
+ assert.equal(row.totalV2Cards,28);
  const registered=registeredV2TitlePack('gurren-lagann');
- assert.equal(Object.keys(registered.cards).length,27);
+ assert.equal(Object.keys(registered.cards).length,28);
  for(const id of TTG_V2_ADDITION_IDS){
   assert.deepEqual(registered.cards[id].effects,ttg.cards[id].effects);
   assert.equal(registered.cards[id].trigger,ttg.cards[id].trigger);

@@ -2,6 +2,7 @@
 import {TTG_BY_ID} from '../../ttg-builder.mjs';
 import {verifiedTtgV2Additions} from '../ttg-pack.mjs';
 const proof=Object.freeze({
+ 'TTG-1-006':['自己的能源達 6 以上時','UA56BT/TTG-1-006 キタン, green energy 2/AP1/BP3000/gen1, no Life; on own turn while OWN generated ENERGY is >=6 its BP is +1000 continuously. Full printed source is user-supplied 2026-10-13 TTG card-front PDF provenance and preserved exact identity, trait, effect text & official card detail URL '+TTG_BY_ID['TTG-1-006'].source+'. Does NOT include hand, front-line, or opponent generated energy. Dynamic ACTIVE-to-REST sources recalculate without snapshots. Not comprehensive official FAQ certification.'],
  'TTG-1-005':['IMPACT 無效','日本版 IMPACT null / DRAW。普通對局與生命分開測；無條件牌面特性。'],
  'TTG-1-014':['需求能源1以下','官方登場強制回手另一張符合條件的己方角色，無對象時自回手；來源 Q&A 與遊戲核心守恆測試。'],
  'TTG-1-019':['ACTIVE','日本印刷 ACTIVE 時綠色額外能源 1；REST 即無加成。'],
@@ -21,7 +22,8 @@ export default Object.freeze({
    evidence:{printedTextFragments:[review[0]],reviewNote:review[1]+
     ' 日文來源：'+record.source,
     testFiles:['tests/universal-v2-ttg-port.test.mjs',...(def.id==='TTG-1-010'||def.id==='TTG-1-023'?['tests/v2-ttg-top-filtered.test.mjs']:[]),
-      ...(def.id==='TTG-1-053'?['tests/v2-ttg-053-rest-mill.test.mjs']:[])]}
+      ...(def.id==='TTG-1-053'?['tests/v2-ttg-053-rest-mill.test.mjs']:[]),
+      ...(def.id==='TTG-1-006'?['tests/v2-ttg-006-live-energy.test.mjs']:[])]}
   });
  }))
 });
