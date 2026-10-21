@@ -259,7 +259,8 @@ function validatePassiveBonuses(card){
    throw Error(card.id+' invalid or cyclic passive condition');
  }
  return Object.freeze(entries.map(p=>Object.freeze({...p,
-  condition:Object.freeze({...p.condition})})));
+  condition:Object.freeze({...p.condition,
+   ...(p.condition.kind==='ownFieldHasAllNames'?{names:Object.freeze([...p.condition.names])}:{})})})));
 }
 function normalize(card,packId){
  if(!card||typeof card!=='object'||Array.isArray(card)||typeof card.id!=='string'||!card.id.trim())
