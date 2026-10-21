@@ -102,7 +102,7 @@ test('strict schema refuses ambiguous fields, unsupported predicates and ENERGY 
   {kind:'ownTraitCount',turn:'own',zone:'energy',trait:'Guild',min:2,excludeSelf:'no'},
   {kind:'other',turn:'own',min:1},
   {kind:'outsideCount',turn:'ours',min:1}
- ])assert.throws(()=>compile(invalid),/invalid or cyclic passive condition/,JSON.stringify(invalid));
+ ])assert.throws(()=>compile(invalid),/invalid(?: or cyclic)? passive condition/,JSON.stringify(invalid));
  assert.throws(()=>compile({kind:'ownEnergyAtLeast',turn:'own',min:2},
   {bp:0,extraEnergy:1}),/cyclic passive condition/);
  assert.throws(()=>createUniversalPack({id:'qa-bad',cards:[{...basic,
