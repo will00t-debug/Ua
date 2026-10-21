@@ -4,6 +4,20 @@ import {SAO_OFFICIAL_CARDS} from '../sao-official-import.mjs';
 import {createUniversalPack} from './pack.mjs';
 
 const PRINTED_PINS=Object.freeze({
+  "SAO-1-020": {
+    "kind": "ownLifeAtMostFourBp500",
+    "nameJa": "アスナ（創世神ステイシア）",
+    "color": "yellow",
+    "energy": 1,
+    "ap": 1,
+    "bp": 2500,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "traits": ["女神"],
+    "effectJa": "自分のライフが4以下の場合、このキャラはBP+500。"
+  },
+
   "SAO-1-057": {
     "kind": "ownTurnHandFiveBp",
     "nameJa": "ユージーン",
@@ -887,6 +901,10 @@ export function verifiedSaoV2Cards(){
    card.opponentTurnBp=1000;
    card.effects={}; // Explicit DSL profile: persistent native modifier, no onPlay job
   }
+  if(pin.kind==='ownLifeAtMostFourBp500'){
+   card.effects={};
+   card.passiveBonuses=[{condition:{kind:'ownLifeAtMost',turn:'any',max:4},bp:500}];
+  }
   if(pin.kind==='ownTurnHandFiveBp'){
    card.effects={};
    card.passiveBonuses=[{condition:{kind:'ownHandCountAtLeast',turn:'own',min:5},bp:500}];
@@ -972,6 +990,7 @@ export function verifiedSaoV2Entries(){
      ...(pin.kind==='onRetireDrawOne'?['tests/v2-sao-retire-draw-shared.test.mjs']:[]),
      ...(pin.kind==='opponentTurnBp1000'?['tests/v2-sao-014-opponent-bp.test.mjs']:[]),
      ...(pin.kind==='ownTurnHandFiveBp'?['tests/v2-sao-057-hand-count-bp.test.mjs']:[]),
+     ...(pin.kind==='ownLifeAtMostFourBp500'?['tests/v2-sao-020-life-threshold-bp.test.mjs']:[]),
      ...(pin.kind==='ownTurnSilicaFieldBp'?['tests/v2-sao-019-own-silica-bp.test.mjs']:[]),
      'tests/universal-v2-sao-mst-cross-title.test.mjs'
     ]),

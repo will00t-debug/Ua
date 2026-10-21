@@ -55,7 +55,7 @@ test('SAO-1-057 source-locked original Japanese, BLUE stats, independent ACTIVE 
  assert.deepEqual(card.effects,{});
  assert.equal(card.implementation,'dsl');
  assert.ok(SAO_V2_PILOT_IDS.includes(ID));
- assert.equal(Object.keys(sao.cards).length,59);
+ assert.equal(Object.keys(sao.cards).length,60);
  assert.deepEqual(verifiedSaoV2Cards().find(c=>c.id===ID).passiveBonuses,card.passiveBonuses);
  assert.deepEqual(saoV2Pack().cards[ID],card);
  assert.deepEqual(validateUniversalDeck(sao,saoDeck),[]);
