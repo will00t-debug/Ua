@@ -372,6 +372,12 @@ function normalize(card,packId){
  const implemented=card.implementation;
  if(!['vanilla','dsl'].includes(implemented))
   throw Error(card.id+' must explicitly declare vanilla or dsl (unported effects are not playable)');
+ if(card.ownTurnBp!==undefined&&
+  (card.type!=='character'||!integer(card.ownTurnBp,1)||card.ownTurnBp>5000))
+  throw Error(card.id+' invalid own-turn BP modifier');
+ if(card.opponentTurnBp!==undefined&&
+  (card.type!=='character'||!integer(card.opponentTurnBp,1)||card.opponentTurnBp>5000))
+  throw Error(card.id+' invalid opponent-turn BP modifier');
  // The profile author must explicitly mark vanilla; we do not read text and
  // guess that unknown passive/Raid/keywords can safely be ignored.
  const authored=card.effects??{};
@@ -425,12 +431,6 @@ function normalize(card,packId){
    throw Error(card.id+' event cannot buff itself on field');
  }
  if(card.raidName&&card.type!=='character')throw Error('Raid must be a character');
- if(card.ownTurnBp!==undefined&&
-  (card.type!=='character'||!integer(card.ownTurnBp,1)||card.ownTurnBp>5000))
-  throw Error(card.id+' invalid own-turn BP modifier');
- if(card.opponentTurnBp!==undefined&&
-  (card.type!=='character'||!integer(card.opponentTurnBp,1)||card.opponentTurnBp>5000))
-  throw Error(card.id+' invalid opponent-turn BP modifier');
  // Dedicated passive energy profile; calculation area and own-card inclusion
  // must be explicit. The predicate is intentionally separated from the bonus.
  const conditionalTraitEnergy=card.conditionalTraitEnergy??null;
