@@ -249,7 +249,7 @@ function validatePassiveBonuses(card){
    (q.kind==='ownFieldHasAllNames'&&(!Array.isArray(q.names)||q.names.length<2||q.names.length>8||q.names.some(n=>typeof n!=='string'||!n.trim())||new Set(q.names).size!==q.names.length))||
    (q.kind==='ownTraitCount'&&(!q.trait||typeof q.trait!=='string'||!q.trait.trim()))||
    Object.keys(q).length!==(2+(count?1:0)+(field?2:0)+
-    (q.kind==='ownNameExists'||q.kind==='ownTraitCount'?1:0))||
+    (['ownNameExists','ownFieldHasAllNames','ownTraitCount'].includes(q.kind)?1:0))||
    Object.keys(q).some(k=>!['kind','turn',
     ...(count?['min']:[]),...(field?['zone','excludeSelf']:[]),
     ...(q.kind==='ownNameExists'?['name']:[]),
