@@ -73,7 +73,13 @@ test('four BLEACH printed original sources are strictly fingerprint-pinned; no f
   assert.equal(source.source.includes('/jp/cardlist/'),true);
   assert.deepEqual([registered.name,registered.color,registered.energy,registered.ap,registered.bp,registered.gen,registered.type,registered.trigger],
    [name,color,0,1,1000,1,'character',null]);
-  assert.deepEqual(checkedBleachAddonDefinition(pin),registered);
+  // checkedBleachAddonDefinition returns a SOURCE-LOCKED, raw authored
+  // definition; the registered pack normalizer adds harmless default keys.
+  // Verify its meaningful actions and exact fully normalized pack instead.
+  const rawChecked=checkedBleachAddonDefinition(pin);
+  assert.deepEqual(rawChecked.effects,registered.effects);
+  assert.deepEqual(rawChecked.mainAbility??null,registered.mainAbility??null);
+  assert.deepEqual(createBleachV2Pack().cards[id],registered);
   assert.throws(()=>checkedBleachAddonDefinition({...pin,effect:'fabricated effect'}),/official recheck required/);
  }
  for(const [id] of energyIds){
