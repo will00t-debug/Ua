@@ -41,14 +41,14 @@ function resolveSilence({hasField=true,decline=false}={}){
  s=dispatchUniversalAction(packs,s,{type:'next'});
  const play=legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===source.uid&&a.line==='front'&&a.slot===0);
  assert.ok(play);s=dispatchUniversalAction(packs,s,play);
- if(!hasField)return {s,target,source};
+ if(!hasField)return {s,target:s.players[1].front[0],source:s.players[0].front[0]};
  assert.equal(s.pending?.kind,'effect-rest-bp');
  const opts=legalUniversalActions(packs,s);
  assert.deepEqual(opts,[{type:'chooseRestBp',uid:null},{type:'chooseRestBp',uid:target.uid}]);
  assert.ok(opts.some(x=>JSON.stringify(x)===JSON.stringify(chooseUniversalAiAction(packs,s,{difficulty:'normal'}))));
  assert.ok(opts.some(x=>JSON.stringify(x)===JSON.stringify(chooseUniversalAiAction(packs,s,{difficulty:'hard'}))));
  s=dispatchUniversalAction(packs,s,{type:'chooseRestBp',uid:decline?null:target.uid});
- return {s,target,source};
+ return {s,target:s.players[1].front[0],source:s.players[0].front[0]};
 }
 test('source-gated original ability loss is optional and only reads own OUTSIDE FIELD cards',()=>{
  for(const [hasField,decline,expected] of [[false,false,0],[true,true,0],[true,false,2]]){
@@ -64,19 +64,20 @@ test('source-gated original ability loss is optional and only reads own OUTSIDE 
   assert.equal(assertUniversalMatch(packs,s),true);
  }
 });
-test('until next opponent ATTACK end, never clear granted buffs or set ACTIVE while blocked',()=>{
+test('until next opponent ATTACK end, preserve external buffs until normal expiry and prohibit ACTIVE',()=>{
  let {s,target}=resolveSilence();
  assert.equal(attemptFieldActive(s,1,target),false);
+ assert.equal(target.buffs[0].bp,500,'original silence never clears granted buff');
  s=dispatchUniversalAction(packs,s,{type:'next'}); // controller MAIN -> ATTACK
  s=dispatchUniversalAction(packs,s,{type:'next'}); // controller ATTACK -> opponent START
  assert.equal(s.active,1);
- assert.equal(target.ready,false,'own start refresh prohibited');
+ assert.equal(s.players[1].front[0].ready,false,'own start refresh prohibited');
  assert.equal(s.continuousStates.length,2);
  for(let i=0;i<4;i++)s=dispatchUniversalAction(packs,s,{type:'next'});
  assert.equal(s.active,0);assert.equal(s.continuousStates.length,0);
- assert.equal(target.ready,false,'expiring lock is NOT itself an ACTIVE attempt');
- assert.equal(universalBp(packs,s,target),3500,'original opponent-turn BP returns after expiry');
- assert.equal(target.buffs[0].bp,500,'external granted buff never removed');
+ assert.equal(s.players[1].front[0].ready,false,'expiring lock is NOT itself an ACTIVE attempt');
+ assert.equal(universalBp(packs,s,s.players[1].front[0]),3000,'printed opponent BP returns after expiry');
+ assert.equal(s.players[1].front[0].buffs.length,0,'one-turn granted buff expired by normal turn progression');
  assert.equal(assertUniversalMatch(packs,s),true);
 });
 test('silenced printed onRetire does not queue a draw (official Q2220)',()=>{
