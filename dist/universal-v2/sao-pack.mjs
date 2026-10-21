@@ -869,7 +869,10 @@ export function verifiedSaoV2Cards(){
    implementation:pin.kind==='vanilla'||pin.kind==='step'?'vanilla':'dsl'};
   if(card.implementation==='vanilla')card.effects={};
   if(pin.kind==='step')card.step=true;
-  if(pin.kind==='opponentTurnBp1000')card.opponentTurnBp=1000;
+  if(pin.kind==='opponentTurnBp1000'){
+   card.opponentTurnBp=1000;
+   card.effects={}; // Explicit DSL profile: persistent native modifier, no onPlay job
+  }
   if(pin.kind==='ownTurnSilicaFieldBp')
    card.passiveBonuses=[{condition:{kind:'ownNameExists',turn:'own',
     zone:'field',excludeSelf:true,name:'シリカ'},bp:2000}];
