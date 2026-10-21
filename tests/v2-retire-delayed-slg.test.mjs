@@ -144,7 +144,10 @@ test('013 cannot activate from FRONT and old ACTIVE energy bonus remains source 
  s=phase(s,'main');
  assert.ok(!legalUniversalActions(packs,s).some(x=>x.type==='activate'&&x.uid===front.uid));
  assert.equal(universalCardEnergy(packs,s,0,active),2);
- active.ready=false;assert.equal(universalCardEnergy(packs,s,0,active),1);
+ active.ready=false;
+ assert.equal(universalCardEnergy(packs,s,0,active),2,'detached pre-dispatch reference cannot change live production');
+ s.players[0].energy[0].ready=false;
+ assert.equal(universalCardEnergy(packs,s,0,active),1);
  assert.equal(assertUniversalMatch(packs,s),true);
 });
 test('AI action for 013 is from legal list; synthetic onRetire/mill verification rejects unsupported operations',()=>{
