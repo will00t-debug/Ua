@@ -43,15 +43,15 @@ for(const owner of [0,1]){
  for(const zone of ['front','energy']){
   test('SAO2019 owner '+owner+' with OWN シリカ in '+zone+': BP 4000 own turn, 2000 opponent turn, no stale value',()=>{
    const {packs,s,source}=scene(owner,zone);
-   assert.equal(universalBp(packs,s,owner,s.players[owner].front[0]),4000);
+   assert.equal(universalBp(packs,s,s.players[owner].front[0]),4000);
    const foe=structuredClone(s);foe.active=1-owner;
-   assert.equal(universalBp(packs,foe,owner,foe.players[owner].front[0]),2000);
-   assert.equal(universalBp(packs,s,owner,s.players[owner].front[0]),4000);
+   assert.equal(universalBp(packs,foe,foe.players[owner].front[0]),2000);
+   assert.equal(universalBp(packs,s,s.players[owner].front[0]),4000);
    const changed=structuredClone(s);
    const index=zone==='front'?1:0;
    const moved=changed.players[owner][zone][index];
    changed.players[owner][zone][index]=null;changed.players[owner].hand.push(moved);
-   assert.equal(universalBp(packs,changed,owner,changed.players[owner].front[0]),2000);
+   assert.equal(universalBp(packs,changed,changed.players[owner].front[0]),2000);
    assert.equal(universalPublicView(packs,s,1-owner).players[owner].hand,null);
    assert.equal(assertUniversalMatch(packs,s),true);
    assert.equal(assertUniversalMatch(packs,changed),true);
@@ -65,7 +65,7 @@ test('SAO2019 opponent シリカ and OWN hand/outside never satisfy own-field pa
  const opp=take(s,1,'SAO-2-017');opp.ready=true;s.players[1].front[0]=opp;
  s.players[0].hand.push(take(s,0,'SAO-2-017'));
  s.players[0].outside.push(take(s,0,'SAO-2-017'));
- assert.equal(universalBp(packs,s,0,s.players[0].front[0]),2000);
+ assert.equal(universalBp(packs,s,s.players[0].front[0]),2000);
  assert.equal(assertUniversalMatch(packs,s),true);
 });
 test('strict V2 ownNameExists field predicate rejects fake opponent scope, empty name, and schema drift',()=>{
