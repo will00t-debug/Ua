@@ -12,7 +12,7 @@ function take(s,p,id){for(const z of ['hand','deck','life','outside']){let list=
 function scene({actor=0,ownName='front',opponentName=false}={}){
  let s=newUniversalMatch(packs,{decks:[deck,deck],seed:5300+actor,first:actor});
  const source=take(s,actor,id);s.players[actor].hand.push(source);
- for(let k=0;k<3;k++){const e=take(s,actor,'SLG-1-041');e.ready=true;s.players[actor].energy[k]=e;}
+ for(let k=0;k<3;k++){const e=take(s,actor,'SLG-1-043');e.ready=true;s.players[actor].energy[k]=e;}
  if(ownName==='energy'||ownName==='front'){
   const x=take(s,actor,'SLG-1-015');x.ready=true;s.players[actor][ownName][ownName==='front'?1:3]=x;
  }
