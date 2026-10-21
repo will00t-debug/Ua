@@ -7,6 +7,7 @@ const proof=Object.freeze({
  '006':['ACTIVE','只有 ACTIVE 時紫額外能源一'],
  '015':['無印刷角色能力','無內文效果，GET Life'],
  '016':['牌庫頂2張','登場強制送二卡場外，IMPACT 無效'],
+ '018':['牌庫頂3張','Official UA51BT/SLG-1-018: purple3/AP1/BP2500/gen2; onPlay inspect TOP3, reveal 0..1 name 水篠 旬 OR trait 影の軍団, bottom order the rest, then discard one only on successful hand addition. The imported source labels the printed 影の軍団 trait in Traditional Chinese as 影之軍團 (explicit source-to-filter translation, no source mutation). Independent COLOR life: own OUTSIDE purple CHARACTER energy<=2 and AP1 to ACTIVE front with no AP cost.'],
  '026':['登場時讓另一己方','強制回手其他己方低費角色，否則自身回手'],
  '032':['IMPACT無效','純 IMPACT 無效，ACTIVE Life'],
  '036':['抽3張後將2張手牌送場外','官方 UA51BT/SLG-1-036：抽三張，然後強制送兩張己方手牌場外；ACTIVE Life 獨立處理'],
@@ -41,6 +42,7 @@ export default Object.freeze({
     reviewNote:review[1]+'；日文公式卡文來源 '+record.source+
      '；原始 source BP = '+String(record.bp),
     testFiles:['tests/universal-v2-slg-port.test.mjs',
+     ...(def.id==='SLG-1-018'?['tests/v2-slg-018-compound-top.test.mjs']:[]),
      ...(def.id==='SLG-1-037'?['tests/v2-slg-037-original-bp.test.mjs']:[])],
     ...(def.implementation==='vanilla'?{verifiedNoExtraEffects:true}:{})}
   });

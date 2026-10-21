@@ -191,10 +191,14 @@ function continueEffectQueue(pack,s){
    }else if(job.op==='searchTopOneBottomDiscard'){
     const inspected=pl.deck.slice(0,job.count),uids=inspected.map(c=>c.uid);
     if(uids.length){
-     const choices=filteredChoices(pack,inspected,job.filter);
-     // No matching trait still requires independently chosen BOTTOM ordering.
+     // One shared ordered TOP-N window, with either a single printed filter
+     // or a strict composite ANY/ALL filter. No full-deck search or shuffle.
+     const choices=searchChoices(pack,inspected,job);
+     const predicate=job.filters?{filters:job.filters.map(f=>({...f})),logic:job.logic}:
+      {filter:{...job.filter}};
+     // With no valid match, ALL inspected cards must still be ordered below.
      s.pending=choices.length?{kind:'effect-top-filter-choice',player:owner,
-      sourceUid:job.sourceUid,uids,choices,filter:job.filter}:
+      sourceUid:job.sourceUid,uids,choices,...predicate}:
       {kind:'effect-top-order',player:owner,sourceUid:job.sourceUid,
        uids,order:[],rest:'bottom'};
     }
@@ -584,7 +588,7 @@ function resolveChoice(s,a,pack){
    throw Error('Filtered top deck window changed during private selection');
   if(a.uid!==null){
    const chosen=window.find(c=>c.uid===a.uid);
-   if(!chosen||!q.choices.includes(a.uid)||!matchesFilter(pack,chosen,q.filter))
+   if(!chosen||!q.choices.includes(a.uid)||!matchesSearch(pack,chosen,q))
     throw Error('Filtered top search needs a legal inspected physical card');
    const i=p.deck.findIndex(c=>c.uid===a.uid);
    if(i<0||i>=q.uids.length)throw Error('Selected physical UID outside top window');

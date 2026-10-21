@@ -30,10 +30,10 @@ Other old handoff inventories remain historical snapshots.
 |---|---:|---:|---:|
 | BLEACH | 80 | 196 | 276 |
 | TTG | 26 | 55 | 81 |
-| SLG | 20 | 60 | 80 |
+| SLG | 21 | 59 | 80 |
 | SAO | 53 | 130 | 183 |
 | MST | 24 | 56 | 80 |
-| Total | 203 | 497 | 700 |
+| Total | 204 | 496 | 700 |
 
 These are source-pinned registered effects with scenario tests, not a claim that
 every official FAQ interaction is certified. No mobile manual QA or deployment
@@ -128,3 +128,11 @@ was performed in this integration batch.
 - GitHub Actions `V2 Resumed Integration` run **39537305232** (Node.js 22) **success**: `npm test` **1188/1188 passed**, no failures; `node scripts/v2-integrated-match-matrix.mjs` **60/60 seeded five-title games finished**, no failures; `node scripts/v2-unported-report.mjs` **success**. Other series isolated run `39537307341` checked separately.
 - V2 source-driven integrated roster: **203/700**, unported **497**. Breakdown **BLEACH 80/276, TTG 26/81, SLG 20/80, SAO 53/183, MST 24/80**. Explicitly no full per-card FAQ certification yet (0; Q2039 addressed for one particular printed-BP behavior only), no local mobile manual QA, no main merge or production deployment.
 - Next priorities: group by *shared* missing primitives in `node scripts/v2-unported-report.mjs`; continue source-verified small batches with independent manifests and tested timing/UID/hidden-information details.
+
+## Batch 5 — SLG-1-018, shared compound TOP-N ANY selector (2026-10-21)
+
+- Official Japanese `UA51BT/SLG-1-018`: https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-018. OnPlay inspect exactly own TOP3; choose 0..1 card by name `水篠 旬` **OR** printed trait `影の軍団`; publicly reveal/add it, bottom-order every remaining inspected card; only if added a card force exactly one own hand discard AFTER ordering. Its COLOR life independently deploys own OUTSIDE purple energy<=2/AP1 CHARACTER to ACTIVE FRONT without spending AP; target entering front triggers onPlay if printed.
+- Source provenance: imported Traditional Chinese trait label `影之軍團` is the same printed Japanese `影の軍団`; V2 filter uses the exact source tag and does not rewrite source data or infer unknown traits.
+- Shared engine `searchTopOneBottomDiscard` now handles either a strict single predicate or a source-authored 2–3 predicate ALL/ANY profile via template `searchTopOneBottomDiscardWhere`. Both use only exact inspected top physical UIDs, independent controller-only choices, original unchanged rest deck, ordered bottom, conditional mandatory discard and no shuffle.
+- Strict pack verification rejects missing/duplicate filters, unsupported operators, extra/shuffle fields, illegal counts and unsupported card effects. Explicit manual ID manifest, independent printed proof and new `tests/v2-slg-018-compound-top.test.mjs` cover paid AP, alternatives (name vs trait), skip/empty top window, bottom ordering, forgery, wrong actor, concealed UIDs, separate COLOR life, AP/UID conservation, and fail-closed bad templates.
+- Proposed batch roster: BLEACH 80, TTG 26, SLG 21, SAO 53, MST 24; **204/700 integrated candidates**, 496 unported. Full per-card Japanese FAQ certification still 0. Confirm batch CI before crediting test success.

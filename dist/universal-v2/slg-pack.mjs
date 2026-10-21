@@ -69,6 +69,37 @@ const authored=[
     }
   },
   {
+    "id": "SLG-1-018",
+    "name": "水篠 旬",
+    "color": "purple",
+    "energy": 3,
+    "ap": 1,
+    "bp": 2500,
+    "gen": 2,
+    "trigger": "color",
+    "type": "character",
+    "textAnchor": "牌庫頂3張",
+    "implementation": "dsl",
+    "triggerEffect": {
+      "op": "deployOutsideCharacter",
+      "color": "purple",
+      "maxEnergy": 2,
+      "ap": 1,
+      "frontOnly": true
+    },
+    "templateEffects": {
+      "onPlay": [{
+        "template": "searchTopOneBottomDiscardWhere",
+        "count": 3,
+        "filters": [
+          {"field": "name", "value": "水篠 旬"},
+          {"field": "trait", "value": "影之軍團"}
+        ],
+        "logic": "any"
+      }]
+    }
+  },
+  {
     "id": "SLG-1-026",
     "name": "諸菱 賢太",
     "color": "purple",

@@ -60,14 +60,18 @@ function verifyProgram(program,path){
    Object.keys(e).some(k=>!['op','count','toOutside','rest'].includes(k))
   ))throw Error(path+'['+i+'] invalid top inspect/arrange');
   if(e.op==='searchTopOneBottomDiscard'){
-   const f=e.filter;
-   if(!integer(e.count,1)||e.count>5||
-    !f||typeof f!=='object'||Array.isArray(f)||
-    Object.keys(f).length!==2||
-    !['name','trait','color','type'].includes(f.field)||
-    typeof f.value!=='string'||!f.value.trim()||
-    (f.field==='type'&&!V2_CARD_TYPES.includes(f.value))||
-    Object.keys(e).some(k=>!['op','count','filter'].includes(k)))
+   const isFilter=f=>f&&typeof f==='object'&&!Array.isArray(f)&&
+    Object.keys(f).length===2&&['name','trait','color','type'].includes(f.field)&&
+    typeof f.value==='string'&&!!f.value.trim()&&
+    (f.field!=='type'||V2_CARD_TYPES.includes(f.value));
+   const single=isFilter(e.filter)&&e.filters===undefined&&e.logic===undefined&&
+    Object.keys(e).every(k=>['op','count','filter'].includes(k));
+   const compound=e.filter===undefined&&Array.isArray(e.filters)&&
+    e.filters.length>=2&&e.filters.length<=3&&e.filters.every(isFilter)&&
+    new Set(e.filters.map(f=>f.field+':'+f.value)).size===e.filters.length&&
+    ['any','all'].includes(e.logic)&&
+    Object.keys(e).every(k=>['op','count','filters','logic'].includes(k));
+   if(!integer(e.count,1)||e.count>5||!(single||compound))
     throw Error(path+'['+i+'] invalid top-N filtered bottom/discard profile');
   }
   if(e.op==='discardGate'){
