@@ -2,7 +2,7 @@
 // Pure physical-card reducer: common UA zones/AP/phases/limited effects/Raid
 // and official Q99 optional GET/DRAW/FINAL. Unsupported keywords FAIL CLOSED.
 import {validateUniversalDeck} from './pack.mjs';
-import {matchesOwnDistinctTraits} from './field-conditions.mjs';
+import {matchesOwnDistinctTraits,matchesV2LiveCondition} from './field-conditions.mjs';
 export const UNIVERSAL_V2_VERSION='ua-v2.0';
 const playerIndex=n=>n===0||n===1;
 const field=p=>[...p.front,...p.energy].filter(Boolean);
@@ -52,11 +52,15 @@ function raidNamePresent(pack,s,owner,name){
 export function universalCardEnergy(pack,s,p,c){
  if(!s.players[p].energy.some(x=>x?.uid===c?.uid))return 0;
  const d=card(pack,c),profile=d.conditionalTraitEnergy;
+ const pIndex=p;
  const activeBonus=c.ready?(d.activeExtraEnergy||0):0;
+ const passiveBonus=d.passiveBonuses.reduce((n,p)=>n+(p.extraEnergy&&
+  matchesV2LiveCondition(s,pIndex,c.uid,p.condition,x=>card(pack,x),()=>0)?
+  p.extraEnergy:0),0);
  const distinctBonus=profile&&(!profile.requiresActive||c.ready)&&
   matchesOwnDistinctTraits(s,p,c.uid,profile,x=>card(pack,x))?
   profile.extraEnergy:0;
- return d.gen+activeBonus+distinctBonus;
+ return d.gen+activeBonus+distinctBonus+passiveBonus;
 }
 export function universalEnergyByColor(pack,s,p){
  const counts=Object.create(null);
@@ -75,6 +79,9 @@ function bp(pack,s,c){
  const printed=card(pack,c);
  const owner=Number(String(c.uid).split('-')[0]);
  return (printed?.bp||0)+(s.active===owner?(printed.ownTurnBp||0):0)+
+  printed.passiveBonuses.reduce((n,p)=>n+(p.bp&&
+   matchesV2LiveCondition(s,owner,c.uid,p.condition,x=>card(pack,x),
+    ()=>calcEnergy(pack,s,owner))?p.bp:0),0)+
   (hasFacedownUnder(c)?(printed.conditionalUnderFaceDown?.bp||0):0)+
   (c.buffs||[]).filter(b=>b.untilTurn===s.turn).reduce((n,b)=>n+b.bp,0);
 }

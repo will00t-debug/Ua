@@ -24,3 +24,28 @@ export function ownFieldTraitKinds(s,owner,sourceUid,profile,printed){
 export function matchesOwnDistinctTraits(s,owner,sourceUid,profile,printed){
  return ownFieldTraitKinds(s,owner,sourceUid,profile,printed).size>=profile.minimumDistinctTraits;
 }
+
+// Small immutable predicate family for PRINTED persistent bonuses.
+// Each condition is evaluated from the current match on every BP/energy read,
+// not when a card is played. This is distinct from once-resolved turn buffs.
+// Strictly use the physical controller's fields: never hand/outside/underlayers.
+export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energy){
+ if(condition.turn==='own'&&s.active!==owner)return false;
+ if(condition.turn==='opponent'&&s.active===owner)return false;
+ if(condition.kind==='outsideCount')
+  return s.players[owner].outside.length>=condition.min;
+ if(condition.kind==='ownEnergyAtLeast')
+  return energy()>=condition.min;
+ const pl=s.players[owner];
+ const zones=condition.zone==='front'?[pl.front]:
+  condition.zone==='energy'?[pl.energy]:[pl.front,pl.energy];
+ let found=0;
+ for(const zone of zones)for(const c of zone){
+  if(!c||(condition.excludeSelf&&c.uid===sourceUid))continue;
+  const d=printed(c);
+  if(d.type!=='character')continue;
+  if(condition.kind==='ownNameExists'&&d.name===condition.name)return true;
+  if(condition.kind==='ownTraitCount'&&d.traits.includes(condition.trait))found++;
+ }
+ return condition.kind==='ownTraitCount'&&found>=condition.min;
+}

@@ -4,6 +4,20 @@ import {createUniversalPack} from './pack.mjs';
 const catalog=Object.fromEntries(SOLO_LEVELING_CARDS.map(c=>[c.id,c]));
 const authored=[
   {
+    "id":"SLG-1-001","name":"朝比奈 りん","color":"purple",
+    "energy":1,"ap":1,"bp":2500,"gen":1,"trigger":null,
+    "type":"character","textAnchor":"自己的回合中，若場外至少5張卡",
+    "implementation":"dsl","effects":{},
+    "passiveBonuses":[{"condition":{"kind":"outsideCount","turn":"own","min":5},"bp":500}]
+  },
+  {
+    "id":"SLG-1-010","name":"向坂 雫","color":"purple",
+    "energy":3,"ap":1,"bp":3000,"gen":1,"trigger":"draw",
+    "type":"character","textAnchor":"自己的回合中，若場外有10張以上",
+    "implementation":"dsl","effects":{},
+    "passiveBonuses":[{"condition":{"kind":"outsideCount","turn":"own","min":10},"bp":1000}]
+  },
+  {
     "id": "SLG-1-005",
     "name": "今宮 さつき",
     "color": "purple",

@@ -3,6 +3,8 @@ import {SOLO_LEVELING_CARDS} from '../../solo-leveling.mjs';
 import {verifiedSlgV2Cards} from '../slg-pack.mjs';
 const records=Object.fromEntries(SOLO_LEVELING_CARDS.map(c=>[c.id,c]));
 const proof=Object.freeze({
+ '001':['自己的回合中，若場外至少5張卡','Official UA51BT/SLG-1-001: own turn and own outside >=5 yields persistent BP+500; no life trigger.'],
+ '010':['自己的回合中，若場外有10張以上','Official UA51BT/SLG-1-010: own turn and own outside >=10 yields persistent BP+1000; separate DRAW life trigger.'],
  '005':['無印刷角色能力','無印刷內文，DRAW Life'],
  '006':['ACTIVE','只有 ACTIVE 時紫額外能源一'],
  '012':['己方場上存在水篠旬','Official UA51BT/SLG-1-012: purple 3 AP1 BP2500 gen2; onPlay draw exactly one iff own front or energy line contains a character named 水篠 旬, never hand/opponent field, no life Trigger.'],

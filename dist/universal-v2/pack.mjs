@@ -176,6 +176,44 @@ function verifyProgram(program,path){
   if(e.op==='enemyBpDown'&&e.optional!==undefined&&typeof e.optional!=='boolean')throw Error(path+'['+i+'] invalid optional targeting flag');
  }
 }
+// Explicit conditional benefits are pure board queries. No generic card-text
+// inference, no effect queue, no cached energy or BP modifier.
+function validatePassiveBonuses(card){
+ const entries=card.passiveBonuses;
+ if(entries===undefined)return null;
+ if(card.type==='event'||!Array.isArray(entries)||!entries.length||entries.length>3)
+  throw Error(card.id+' unsupported passive bonuses');
+ for(const p of entries){
+  if(!p||typeof p!=='object'||Array.isArray(p)||!p.condition||
+   Object.keys(p).some(k=>!['condition','bp','extraEnergy'].includes(k))||
+   (p.bp===undefined&&p.extraEnergy===undefined)||
+   (p.bp!==undefined&&(!integer(p.bp,1)||p.bp>5000))||
+   (p.extraEnergy!==undefined&&(!integer(p.extraEnergy,1)||p.extraEnergy>3)))
+    throw Error(card.id+' invalid passive bonus');
+  const q=p.condition;
+  if(!q||typeof q!=='object'||Array.isArray(q)||
+   !['own','opponent','any'].includes(q.turn)||
+   !['outsideCount','ownNameExists','ownTraitCount','ownEnergyAtLeast'].includes(q.kind))
+   throw Error(card.id+' invalid passive condition');
+  const count=['outsideCount','ownTraitCount','ownEnergyAtLeast'].includes(q.kind);
+  const field=['ownNameExists','ownTraitCount'].includes(q.kind);
+  if((count&&(!integer(q.min,1)||q.min>200))||
+   (field&&(!['field','front','energy'].includes(q.zone)||
+    typeof q.excludeSelf!=='boolean'))||
+   (q.kind==='ownNameExists'&&(!q.name||typeof q.name!=='string'||!q.name.trim()))||
+   (q.kind==='ownTraitCount'&&(!q.trait||typeof q.trait!=='string'||!q.trait.trim()))||
+   Object.keys(q).length!==(2+(count?1:0)+(field?2:0)+
+    (q.kind==='ownNameExists'||q.kind==='ownTraitCount'?1:0))||
+   Object.keys(q).some(k=>!['kind','turn',
+    ...(count?['min']:[]),...(field?['zone','excludeSelf']:[]),
+    ...(q.kind==='ownNameExists'?['name']:[]),
+    ...(q.kind==='ownTraitCount'?['trait']:[])].includes(k))||
+   (p.extraEnergy!==undefined&&q.kind==='ownEnergyAtLeast'))
+   throw Error(card.id+' invalid or cyclic passive condition');
+ }
+ return Object.freeze(entries.map(p=>Object.freeze({...p,
+  condition:Object.freeze({...p.condition})})));
+}
 function normalize(card,packId){
  if(!card||typeof card!=='object'||Array.isArray(card)||typeof card.id!=='string'||!card.id.trim())
   throw Error('Invalid card identifier');
@@ -262,6 +300,7 @@ function normalize(card,packId){
  if(mainAbility!==null&&
   (card.type!=='character'||!(mainRaid||mainSelfRest||mainRestProgram)))
   throw Error(card.id+' unsupported main action ability');
+ const passiveBonuses=validatePassiveBonuses(card);
  const implemented=card.implementation;
  if(!['vanilla','dsl'].includes(implemented))
   throw Error(card.id+' must explicitly declare vanilla or dsl (unported effects are not playable)');
@@ -282,10 +321,10 @@ function normalize(card,packId){
    (card.type!=='character'||timing!=='onPlay'))
    throw Error(card.id+' self-bounce is only valid on character onPlay');
  if(implemented==='vanilla'&&(Object.keys(effects).length||card.effectText||
-  card.activeExtraEnergy||card.conditionalTraitEnergy||card.impactNull))
+  card.activeExtraEnergy||card.conditionalTraitEnergy||passiveBonuses||card.impactNull))
   throw Error(card.id+' claims vanilla despite printed/declared effects');
  if(implemented==='dsl'&&!Object.keys(effects).length&&!mainAbility&&
-  !card.activeExtraEnergy&&!card.conditionalTraitEnergy&&!card.impactNull)
+  !card.activeExtraEnergy&&!card.conditionalTraitEnergy&&!passiveBonuses&&!card.impactNull)
   throw Error(card.id+' declares dsl without effects');
  for(const [name,program] of Object.entries(effects)){
   if(!V2_EFFECT_TIMINGS.includes(name))throw Error(card.id+' timing '+name+' unsupported');
@@ -345,6 +384,7 @@ function normalize(card,packId){
   step:card.step===true,ownTurnBp:card.ownTurnBp||0,
   activeExtraEnergy:card.activeExtraEnergy||0,
   conditionalTraitEnergy:conditionalTraitEnergy?Object.freeze({...conditionalTraitEnergy}):null,
+  passiveBonuses:passiveBonuses||Object.freeze([]),
   impactNull:card.impactNull===true,
   implementation:implemented,
   effects:Object.freeze(Object.fromEntries(Object.entries(effects)
