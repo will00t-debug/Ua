@@ -1366,6 +1366,8 @@ function resolveChoice(s,a,pack){
   const entrant=p.hand.splice(index,1)[0];
   entrant.ready=false;entrant.fieldEntryStamp=s.nextFieldEntryStamp++;
   p.energy[a.slot]=entrant;
+  recordCompletedMove(pack,s,{physical:entrant,owner:q.player,from:'hand',
+   to:'energy',reason:'own-effect',sourceUid:entrant.uid});
   s.pending=null;
   // This is entry via an effect, so onPlay executes with no additional AP.
   s.effectQueue.unshift(...programJobs(pack,s,entrant,'onPlay',q.player,undefined,'recoveredEffect'));
@@ -2362,13 +2364,17 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
    const l=location(s,p,action.uid);
    if(!l||l.line!=='energy'||card(pack,l.c).frontForbidden)throw Error('Invalid move');
    commitDestination(s,p,'front',action.slot,action.replaceUid);
-   pl.energy[l.slot]=null;pl.front[action.slot]=l.c;s.moved=true;s.movedUids.push(l.c.uid);break;
+   pl.energy[l.slot]=null;pl.front[action.slot]=l.c;
+   recordCompletedMove(pack,s,{physical:l.c,owner:p,from:'energy',to:'front',reason:'rule'});
+   s.moved=true;s.movedUids.push(l.c.uid);break;
   }
   case 'step':{
    const l=location(s,p,action.uid);
    if(!l||l.line!=='front')throw Error('Invalid STEP');
    commitDestination(s,p,'energy',action.slot,action.replaceUid);
-   pl.front[l.slot]=null;pl.energy[action.slot]=l.c;s.moved=true;s.movedUids.push(l.c.uid);break;
+   pl.front[l.slot]=null;pl.energy[action.slot]=l.c;
+   recordCompletedMove(pack,s,{physical:l.c,owner:p,from:'front',to:'energy',reason:'rule'});
+   s.moved=true;s.movedUids.push(l.c.uid);break;
   }
   case 'play':case 'event':case 'raid':{
    const index=pl.hand.findIndex(c=>c.uid===action.uid);
