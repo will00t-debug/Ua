@@ -4,6 +4,9 @@ import {SAO_OFFICIAL_CARDS} from '../sao-official-import.mjs';
 import {createUniversalPack} from './pack.mjs';
 
 const PRINTED_PINS=Object.freeze({
+ "SAO-1-005":{"kind":"onPlayTopFilterBottomDiscard","nameJa":"ユージオ",
+  "color":"yellow","energy":2,"ap":1,"bp":3000,"gen":1,"type":"character",
+  "trigger":null,"traits":[],"effectJa":"【登場時】自分の山札の上から4枚見る。その中から〈キリト〉か〈アリス〉を1枚まで公開し手札に加える。残りを望む順で自分の山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。"},
  "SAO-1-034":{"kind":"lifeGatedRestRetire","nameJa":"ラディアント・ライト",
   "color":"yellow","energy":3,"ap":1,"bp":0,"gen":0,"type":"event",
   "trigger":"special","traits":[],
@@ -1446,6 +1449,8 @@ export function verifiedSaoV2Cards(){
    card.templateEffects={onPlay:[{template:'peekTopOne'}]};
   if(pin.kind==='onPlayTopFilterBottomDiscard'){
    const spec={
+    'SAO-1-005':{count:4,filters:[{field:'name',value:'キリト'},
+     {field:'name',value:'アリス'}],logic:'any'},
     'SAO-1-009':{count:3,filter:{field:'trait',value:'女神'}},
     'SAO-1-040':{count:3,filter:{field:'trait',value:'アインクラッド'}},
     'SAO-2-023':{count:3,filter:{field:'trait',value:'ALO'}},
@@ -1513,7 +1518,9 @@ export function verifiedSaoV2Entries(){
      ...(pin.kind==='ownLifeAtMostFourBp500'?['tests/v2-sao-020-life-threshold-bp.test.mjs']:[]),
      ...(pin.kind==='impactNullOwnTurnHandFiveBp1000'?['tests/v2-sao-051-hand-impact-null.test.mjs']:[]),
      ...(pin.kind==='ownTurnSilicaFieldBp'?['tests/v2-sao-019-own-silica-bp.test.mjs']:[]),
-     ...(pin.kind==='onPlayTopFilterBottomDiscard'?['tests/v2-cross-title-top-filter-round13.test.mjs']:[]),
+     ...(pin.kind==='onPlayTopFilterBottomDiscard'?
+        [id==='SAO-1-005'?'tests/v2-r31-sao005-official-registry.test.mjs':
+        'tests/v2-cross-title-top-filter-round13.test.mjs']:[]),
      ...(pin.kind==='readyOnFirstBlock'?['tests/v2-ready-on-block-round14.test.mjs']:[]),
      ...(pin.kind==='frontOnceBpDown'||pin.kind==='frontOnceDiscardBpDown'?['tests/v2-single-bp-target-round14.test.mjs']:[]),
      ...(pin.kind==='nameAliasDrawDiscard'||pin.kind==='nameAliasOnly'||pin.kind==='nameAliasStep'?['tests/v2-name-alias-round14.test.mjs']:[]),

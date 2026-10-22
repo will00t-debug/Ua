@@ -1,27 +1,20 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {SAO_OFFICIAL_CARDS} from '../dist/sao-official-import.mjs';
-import {verifiedSaoV2Cards} from '../dist/universal-v2/sao-pack.mjs';
-import {createUniversalPack,validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
+import {registeredV2TitlePack} from '../dist/universal-v2/title-packs/registry.mjs';
+import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  assertUniversalMatch,universalPrivateChoices,universalPublicView} from '../dist/universal-v2/engine.mjs';
 import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
 import {EXPECTED_V2_IDS} from './fixtures/v2-integrated-id-manifest.mjs';
 
-// R31: authentic official source + one isolated (NOT registered) card. The
-// engine and DSL are existing cross-title primitives: no SAO reducer branch.
+// R31: registered official-card source and independent manifest.
+// Engine and DSL are existing cross-title primitives: no SAO reducer branch.
 // https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA15BT%2FSAO-1-005
 const source=SAO_OFFICIAL_CARDS.find(c=>c.id==='SAO-1-005');
 const exact='【登場時】自分の山札の上から4枚見る。その中から〈キリト〉か〈アリス〉を1枚まで公開し手札に加える。残りを望む順で自分の山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。';
 assert.equal(source.effectJa,exact);
-const candidate={id:source.id,name:source.nameJa,type:source.type,
- color:source.color,energy:source.energy,ap:source.ap,bp:source.bp,
- gen:source.gen,traits:source.traits,trigger:source.trigger,implementation:'dsl',
- templateEffects:{onPlay:[{template:'searchTopOneBottomDiscardWhere',
-  count:4,filters:[{field:'name',value:'キリト'},{field:'name',value:'アリス'}],
-  logic:'any'}]}};
-const pack=createUniversalPack({id:'sword-art-online',version:'v2-r31-sao005-isolated',cards:[
- ...verifiedSaoV2Cards(),candidate]});
+const pack=registeredV2TitlePack('sword-art-online');
 const packs=[pack,pack];
 const ids=['SAO-1-005','SAO-1-001','SAO-1-010','SAO-1-011','SAO-1-004',
  'SAO-1-019','SAO-1-020','SAO-1-051','SAO-1-057','SAO-1-073',
@@ -72,8 +65,8 @@ test('R31 SAO 005 printed 2 energy / 1 AP / 3000 BP; exact OR names, not trait',
  assert.deepEqual(pack.cards['SAO-1-005'].effects.onPlay,[{
   op:'searchTopOneBottomDiscard',count:4,
   filters:[{field:'name',value:'キリト'},{field:'name',value:'アリス'}],logic:'any'}]);
- assert.equal(EXPECTED_V2_IDS['sword-art-online'].includes('SAO-1-005'),false,
-  'isolated pilot must NOT claim formal registration before full acceptance');
+ assert.equal(EXPECTED_V2_IDS['sword-art-online'].includes('SAO-1-005'),true,
+  'this official printed ability must be included in independent manifest');
 });
 test('R31 two printed names and Alice alias; return at most one; bottom order then contingent discard',()=>{
  let {s,source,window}=setup(['SAO-1-001','SAO-1-010','SAO-1-004','SAO-1-019']);
