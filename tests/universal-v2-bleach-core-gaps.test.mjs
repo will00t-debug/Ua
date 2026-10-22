@@ -8,19 +8,13 @@ import {V2_ABILITY_TEMPLATE_IDS,expandAbilityTemplates} from '../dist/universal-
 // currently express. These are NOT fake "ported" cards or disabled skills.
 // A new implementation must add a real official scenario test and remove the
 // corresponding entry from this unimplemented set.
-export const BLEACH_CORE_GAP_SCENARIOS=Object.freeze([
- {
-  id:'BLC-2-063',
-  number:'EX07BT/BLC-2-063',
-  exactEffect:'每回合首次攻擊時，此角色立即轉為 ACTIVE，因此可攻擊 2 次。',
-  missing:'First attack per physical UID becomes ACTIVE, but third attack same turn is illegal',
-  fixture:'UID attacks twice (once after 1st ready), other physical UID separately eligible'
- }
-]);
-test('the remaining official BLEACH core blocker is tracked and not misrepresented as V2 playable',()=>{
+export const BLEACH_CORE_GAP_SCENARIOS=Object.freeze([]);
+test('implemented BLEACH core blockers are not left on the fail-closed gap list',()=>{
  const pack=createBleachV2Pack();
  const set=new Set(BLEACH_V2_NEW_IDS);
- assert.equal(BLEACH_CORE_GAP_SCENARIOS.length,1);
+ assert.equal(BLEACH_CORE_GAP_SCENARIOS.length,0);
+ assert.equal(pack.cards['BLC-2-063'].readyOnAttackCount,1);
+ assert.ok(set.has('BLC-2-063'));
  for(const gap of BLEACH_CORE_GAP_SCENARIOS){
   const printed=CARDS.find(c=>c.identity===gap.id);
   assert.ok(printed,gap.id);

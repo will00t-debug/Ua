@@ -928,6 +928,12 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
   "color":"yellow","energy":3,"ap":1,"bp":2500,"gen":2,
   "trigger":"active","type":"character",
   "effect":"登場：所有敵方前線 BP 1000 以上角色，本回合 BP −500。"
+ } ,{
+  "id":"BLC-2-063","kind":"readyOnFirstAttack",
+  "number":"EX07BT/BLC-2-063","name":"京楽 春水",
+  "color":"green","energy":4,"ap":1,"bp":2000,"gen":2,
+  "trigger":null,"type":"character",
+  "effect":"每回合首次攻擊時，此角色立即轉為 ACTIVE，因此可攻擊 2 次。"
  }
 
  ,{
@@ -992,10 +998,11 @@ export function checkedBleachAddonDefinition(p){
  const isPrintedDamage=p.kind==='printedAttackDamage';
  const isOppDiscard=p.kind==='discardOppHandOne';
  const isDrawTwo=p.kind==='drawTwoDiscardOne';
+ const isReadyAttack=p.kind==='readyOnFirstAttack';
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isStripDual;
+ const special=p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1012,6 +1019,7 @@ export function checkedBleachAddonDefinition(p){
   ...(p.kind==='impactNull'?{impactNull:true}:{}),
   ...(isPrintedImpact?{printedImpact:1}:{}),
   ...(isPrintedDamage?{printedAttackDamage:2}:{}),
+  ...(isReadyAttack?{readyOnAttackCount:1}:{}),
   ...(p.kind==='restSelfEnemy'?{mainAbility:{op:'restSelfThenRestOppFrontOne',frontOnly:true}}:{}),
   ...(p.kind==='restEnergyRetire'?{mainAbility:{op:'restSelfGainEnergyRetireEndMain',energyOnly:true,oncePerTurn:true,extraEnergy:1}}:{}),
   ...(p.kind.startsWith('retireBonus')?{triggerEffect:{op:'retireOppFront'}}:{}),

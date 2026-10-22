@@ -212,6 +212,7 @@ function queuePhaseBoundary(pack,s,phase,edge,turnPlayer){
 function startTurn(pack,s){
  const p=s.active,pl=s.players[p];
  pl.ownTurns++;s.turn++;s.phase='start';s.extraDrawn=false;s.moved=false;s.movedUids=[];s.pending=null;s.attacksThisTurn=0;
+ s.attacksByUid={};
  s.endRefreshed=false;
  expireContinuousStates(s,{player:p,phase:'start',edge:'start'});
  s.raidedThisTurn=[false,false];s.mainAbilityUsedUids=[];s.mainReadyOnceByName=[[],[]];
@@ -1387,7 +1388,7 @@ export function newUniversalMatch(pack,{decks,seed=1,first=0}={}){
  const s={version:UNIVERSAL_V2_VERSION,title:isSame?packs[0].id:'cross-title',packVersion:isSame?packs[0].version:null,
   packIds:packs.map(p=>p.id),packVersions:packs.map(p=>p.version),
   rng:(seed>>>0)||1,first,active:first,turn:0,phase:'start',status:'playing',
-  winner:null,endReason:null,pending:null,extraDrawn:false,moved:false,movedUids:[],attacksThisTurn:0,
+  winner:null,endReason:null,pending:null,extraDrawn:false,moved:false,movedUids:[],attacksThisTurn:0,attacksByUid:{},
   publicReveals:[],effectQueue:[],delayedEffects:[],retirementBatch:null,nextFieldEntryStamp:1,
   continuousStates:[],nextContinuousStateId:1,endRefreshed:false,players:[],
   raidedThisTurn:[false,false],mainAbilityUsedUids:[],mainReadyOnceByName:[[],[]],
@@ -1906,6 +1907,18 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
    const attacker=pl.front.find(c=>c?.uid===action.uid);
    if(!attacker)throw Error('Attacker missing');
    attacker.ready=false;s.attacksThisTurn++;
+   // One physical card keeps its own count for this turn, including after
+   // it leaves and re-enters. A new UID, such as a Raid top, starts at zero.
+   // The turn-wide attacksThisTurn counter is a different rule and stays.
+   const declared=(s.attacksByUid[attacker.uid]||0)+1;
+   s.attacksByUid[attacker.uid]=declared;
+   // Official Q79 (2023-03-17): 【2回アタック】 designates the attacker,
+   // rests it, then sets that character ACTIVE before battle. The printed
+   // keyword is an original effect, so silence suppresses it. attemptFieldActive
+   // still consumes 「次の1回アクティブにならない」 instead of forcing ACTIVE.
+   const keyword=card(pack,attacker).readyOnAttackCount;
+   if(keyword&&declared===keyword&&!originalEffectsDisabled(s,attacker))
+    attemptFieldActive(s,p,attacker);
    // Queue the blocker decision after the attack triggers. A targeted
    // onAttack effect may suspend resolution for its controller's choice;
    // assigning block here would overwrite that pending choice.
@@ -1962,6 +1975,11 @@ export function assertUniversalMatch(pack,s){
   throw Error('Invalid movement accounting');
  if(!Number.isInteger(s.attacksThisTurn)||s.attacksThisTurn<0||s.attacksThisTurn>50)
   throw Error('Invalid attack count');
+ if(!s.attacksByUid||typeof s.attacksByUid!=='object'||Array.isArray(s.attacksByUid))
+  throw Error('Invalid per-card attack count');
+ for(const [uid,n] of Object.entries(s.attacksByUid))
+  if(typeof uid!=='string'||!uid.includes('-')||!Number.isInteger(n)||n<1||n>50)
+   throw Error('Invalid per-card attack count');
  validateContinuousStates(s);
  if(typeof s.endRefreshed!=='boolean')throw Error('Invalid end refresh flag');
  if(!Number.isInteger(s.nextFieldEntryStamp)||s.nextFieldEntryStamp<1||
