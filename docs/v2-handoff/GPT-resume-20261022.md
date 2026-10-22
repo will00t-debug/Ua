@@ -425,3 +425,16 @@ Details and official rules in [V2-R27-Q38-physical-event-hardening.md](./V2-R27-
 - E `158cbb52`：官方規則/四批回歸證據集中整理及未驗收差異表；此文件與交接提交需各自核對 CI 的 SHA。
 
 R29 無新增正式卡牌，沒有新增 DSL 原語。五作品仍 **312/700**，未移植 **388**，全卡所有 FAQ 認證 **0**。019/047 與 BLC-4-034 均未加入正式 registry。跨玩家任意多重來源和巢狀第二次 LIFE 不認證；巢狀 LIFE 繼續維持原子 fail-closed。所有測試數皆為 **GitHub Actions 遠端 Node22**，沒有宣稱本地執行。
+
+
+## GPT 第三十輪｜R30 COLOR 返回手牌、034 真卡缺口與 019／047／034 50 張整合（2026-10-23）
+
+延續第 29 輪成功提交 `fc0ab18ba02ea9e9a4d60fe2a8ddee336399b8e7`，原 GPT 分支 `gpt/v2-resume-20261022`、PR #78 合併目標 Cursor 原分支不變。完整官方原文、驗收限制與四批 Commit 對照見 [V2-R30-034-full-print-and-cross-player.md](./V2-R30-034-full-print-and-cross-player.md)。
+
+- **A** generic COLOR `bounceOppFrontUnderBp`，三筆提交 `9da7c8a3`（嚴格 pack schema）、`14bdd4ef`（共用 effect dispatch / 所有權及 Q62 頂層返回）、`3c04c8d1`（真正 BLC-4-034 COLOR / BP3500 邊界 / Raid-under / Human-AI / UID）。GitHub Actions [39867007395](https://github.com/will00t-debug/Ua/actions/runs/39867007395) **success Node22 1817/1817, 60/60**。
+- **B** `ffc04344`：兩張 LIFE 同時公開 COLOR 與 FINAL，Q12／Q38 的兩種排序，COLOR 將對方非攻擊源角色送回其手牌、FINAL 回復 LIFE。Actions [39867247586](https://github.com/will00t-debug/Ua/actions/runs/39867247586) **success 1819/1819, 60/60**，非普遍雙方同時優先權認證。
+- **C** generic `activeSelfIf` 的嚴格 FRONT/ENERGY 位置限制：`de325714`、`906994f1`、`e2eda2c3`。034 以真實 AP／UID 登場 ENERGY 才自動 ACTIVE，FRONT 不會。Actions [39867555312](https://github.com/will00t-debug/Ua/actions/runs/39867555312) **success 1824/1824, 60/60**。
+- **D** `33e5f8fb`：真實印刷卡號 BLC-2-019／047／4-034 的同一 50 張有效牌組原型，實際付費 Raid／雙 BP／指定手牌費／Q1033 延後抽牌／Q2315 場上觀察者 REST 裏向卡／Q2316 私有情報／019 真攻擊授予抽牌，順序正反例與存讀檔。Actions [39867840517](https://github.com/will00t-debug/Ua/actions/runs/39867840517) **success 1828/1828, 60/60**。**034 場上開始為已備妥 ENERGY watcher fixture**，不是同回合另外付費登場。034 的真印刷 **MAIN REST＋自身退場＋回收底下裏向卡** 尚未實作，明確 fail closed。
+- **E** 官方規則與集中交接文件 `ecc23eb4`；更新本檔及 `GPT-resume.md`。需核對最終交接提交的 exact SHA Actions，不能只引用 D 的綠燈。
+
+本輪沒有新的正式登錄卡。分別為 BLEACH97、TTG35、SLG41、SAO91、MST48＝**312/700**，未移植388，逐卡全面 FAQ 證據認證仍 **0**。BLC-2-019、047、4-034 都不在正式 registry；目前只有嚴格支援的**部分完整原語**和具體真卡試作驗收，不可當作三張卡已可在正式跨作品環境無條件使用。額外第二批 LIFE 傷害仍保守原子拒絕，不建第二套佇列。沒有合併 main、正式部署、改寫 Cursor PR77 或 force push；這些測試皆為遠端 Actions，沒有本地 Node22 結果。
