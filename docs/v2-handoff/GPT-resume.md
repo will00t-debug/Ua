@@ -1614,3 +1614,27 @@ SAO-1-003 已經登錄，圖示也是「黃+」，但資料仍是 gen 2 再加 `
 5. MAIN end 同時退場回手、層疊 Raid、
    同 UID 再入場後攻擊/阻擋次數、
    已取得效果與原效果封印時序仍需正式 FAQ。
+
+
+## GPT 第二十一輪｜完整移動來源邊界與 Q73 LIFE 狀態模型（2026-10-22）
+
+沿用 Draft PR #78 `gpt/v2-resume-20261022` → `cursor/v2-multi-retire-life-6ff5`。起始 HEAD `e5b0c87e17df4845be2fd3e8ea6288eeac15f670`，對應遠端 Actions [39772556209](https://github.com/will00t-debug/Ua/actions/runs/39772556209) 成功。未修改 main、原 Cursor PR #77、正式 Vercel 站，未 force-push。此執行環境無法 clone（DNS 失敗），因此以下均為 **GitHub Actions 遠端 Node22**，不是本地執行。
+
+### 本輪分批提交（保留既有 DSL 與單一 effectQueue）
+
+1. **A：新增已完成物理移動**：程式 `198450e835852a12bd71b3f28fd0e9fbcf831964`、測試 `c31ce885b2932f8aca6d57e511701da5004f5397`。補記 MOVE energy→front、STEP front→energy、回收後自身 hand→energy；僅在真實變更後記錄 UID、所有者、來源與區域。負例驗證非法 action 不改狀態及公開視圖不洩露私有 journal。Actions [39775002964](https://github.com/will00t-debug/Ua/actions/runs/39775002964) success。
+2. **B1：來源攻擊及階段結算**：程式 `2a58bc547a12f1e3112d4fd8849a0f300bfd2d2c`、測試 `e4a865270fc70ebf95ee22d172c420b91d1c5dde`。onAttack 在 openBlock 前加入原共用 sourceResolutionBoundary；phaseOrder 每個實際選定來源效果先完成選擇、棄牌及追加能力，再釋放該來源的已完成移動觸發。Human、Normal/Hard AI 共用 legal actions。Actions [39775321902](https://github.com/will00t-debug/Ua/actions/runs/39775321902) success。
+3. **B2：Raid / 回收來源邊界**：程式 `7afba4c607514ff7aab7b696e36ea9235ed56e2b`；新測試 `01a613651768476e939d9b4abc78b7d5040d5a10` 首次 Actions [39775596552](https://github.com/will00t-debug/Ua/actions/runs/39775596552) **failure**，原因為合成 onRaided fixture 使用 pack 驗證器不允許的 draw op（非引擎回歸），修正測試 `3c4f16785bc3a2b0d0a7c0fad4b99d091fde6a87` 使用既有 drawIfRaidUnderFacedown；Actions [39775974235](https://github.com/will00t-debug/Ua/actions/runs/39775974235) **success**。保持 Raid baseFirst / entryFirst 合法選擇、base onRaided 及頂牌 onPlay/onRaid 分別來源、頂牌共享一次完成邊界；onOutsideRecover 接入同一 queue。沒有為通過測試放寬 validator。
+4. **D：Q73 同時公開的純規劃模型**：程式 `fb1b90d7cb7932ff80f86f9362ac3d7cb7f701fa` 新增 `life-reveal-batch.mjs`，測試 `1729defcd6e9957a636ca7447b7f8d621159d649`。函式 `planSimultaneousLifeReveal` 僅在私有狀態上保留同批最上方 min(傷害,目前 LIFE) 的物理 UID，避免非法/重複 UID；不改既有 `damage()`、`effectQueue`、LIFE、公開牌、勝負或選擇流程。Actions [39776021769](https://github.com/will00t-debug/Ua/actions/runs/39776021769) **success**；這是獨立設計／測試，**不能稱 DAMAGE2 已修正**。
+5. **E：覆蓋及官方差異盤點**：`docs/v2-handoff/V2-R21-move-coverage-and-Q73.md`（提交 `b1f4de60ba968c6fa1e28bd44414a8b1a551b3e1`）列出已覆蓋與缺漏的每項物理移動、來源無法辨識原因、特別 Raid 地層、Q71/72/73 與 Q35/36/38 差異、完整 BLC 印刷移植 gate。
+
+### 正式移植及限制
+
+- 本輪正式新增卡牌 **0**；最新已確認盤點仍為 BLEACH 97、TTG 35、SLG 41、SAO 91、MST 48，共 312/700、未移植388；須以每次實際 manifest / report 更新數字，不能當作永遠不變。
+- **BLC-2-019／047 仍未登錄，完整官方能力仍欠：斬月/月牙特定名稱費用、兩敵方目標的 BP 變更、MAIN 完整抽牌/BUFF/授予 onAttack、合法 Raid 與 LIFE trigger 正反例。** 共用移動來源原語不等於完整兩卡驗收。Q1033、Q1046、Q2315 的來源與限制見 R20、R21 文件。
+- **Q73 未整合核心**：原 `additionalBattleDamage` 仍逐張 LIFE 結算，未符合多張同時公開及玩家選擇多 Trigger 順序；Q35 的無 Trigger 時序、Q36 雙 FINAL、Q38 onPlay 插隊必須一併納入既有 effectQueue。避免只為 Q73 改壞 LIFE、IMPACT、SPECIAL、FINAL 的其他流程。
+- **Raid under / full-line replacement / hidden face-down protection** 等實際移動仍有 journal 缺口；`raid-under` 不在 direct `players[p][zone]` 陣列，不能假造符合 helper 驗證的事件。原來源封印、退場中斷及同 UID 回場攻阻計數尚未官方全驗收。
+- 本輪以合成精準測試和原有全標題回歸護欄驗收，**全面逐卡官方 FAQ 認證仍為 0**，未做正式站或手機手動 QA。
+- 本段文件之提交 SHA 與最新遠端 CI 應另外核對；不能沿用更早成功 run 作為最新驗收。
+
+**下一輪首要工作**：先用 Q35/Q36/Q38 官方語意把 Q73 原子 reveal 與動態觸發選擇接到 **原 effectQueue**；其次針對 Raid-under 真正巢狀 destination 擴充驗證／journal（含完整替換與隱藏資訊）；然後才考慮 BLC-2-019/047 full-card 移植。禁止半成品註冊、合併 main 或部署正式站。
