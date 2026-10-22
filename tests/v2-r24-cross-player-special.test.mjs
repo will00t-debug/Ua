@@ -6,7 +6,7 @@ import {newUniversalMatch,dispatchUniversalAction,legalUniversalActions,assertUn
 import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
 
 // Synthetic identities, not real card registry entries. Both players use the same DSL.
-const cards=Array.from({length:13},(_,i)=>({
+const cards=Array.from({length:14},(_,i)=>({
  id:'R24'+i,name:'R24 '+i,type:'character',color:'blue',energy:0,ap:1,bp:3000,gen:1,
  implementation:[0,1,3].includes(i)?'dsl':'vanilla',
  ...(i===0?{printedAttackDamage:2}:{}),
@@ -17,7 +17,7 @@ const cards=Array.from({length:13},(_,i)=>({
  ]}}:{})
 }));
 const pack=createUniversalPack({id:'r24-opponent-retire-life',cards}),packs=[pack,pack];
-const deck=Object.fromEntries(cards.map((c,i)=>[c.id,i===12?2:4]));
+const deck=Object.fromEntries(cards.map((c,i)=>[c.id,i===13||i===1||i===2?2:4]));
 function take(s,p,id){
  for(const zone of ['deck','hand','life','outside']){
   const list=s.players[p][zone],i=list.findIndex(c=>c.cardId===id);
