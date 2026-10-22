@@ -26,11 +26,12 @@ const stableIds=x=>Object.keys(x.cards).sort();
 const mod=e=>structuredClone(e);
 const auditedStatKeys=['energy','ap','bp','gen','type','color','trigger'];
 
-test('the 62 SAO and 41 MST formal contributions meet strict sourceRecord/definition/evidence contract',()=>{
- for(const [title,contribution,expected,ids,entries] of [
-  ['sword-art-online',saoContribution,62,SAO_V2_PILOT_IDS,verifiedSaoV2Entries],
-  ['mushoku-tensei',mstContribution,41,MST_V2_PILOT_IDS,verifiedMstV2Entries]
+test('SAO and MST formal contributions meet strict sourceRecord/definition/evidence contract',()=>{
+ for(const [title,contribution,ids,entries] of [
+  ['sword-art-online',saoContribution,SAO_V2_PILOT_IDS,verifiedSaoV2Entries],
+  ['mushoku-tensei',mstContribution,MST_V2_PILOT_IDS,verifiedMstV2Entries]
  ]){
+  const expected=EXPECTED_V2_COUNTS[title];
   assert.equal(contribution.title,title);
   assert.equal(contribution.entries.length,expected);
   assert.deepEqual(contribution.entries.map(e=>e.id).sort(),[...ids].sort());
@@ -84,7 +85,7 @@ test('formal contract rejects stale source card, altered stats, missing text, fo
   assert.throws(()=>compileV2TitleContribution({...c,entries:[first,first]}),/duplicate/);
  }
 });
-test('SAO official 202 printings deduplicate to 183 IDs; unsupported 122 are NOT imported as ready',()=>{
+test('SAO official 202 printings deduplicate to 183 IDs; IDs outside the manifest stay unregistered',()=>{
  assert.equal(SAO_OFFICIAL_CARDS.length,202);
  assert.equal(new Set(SAO_OFFICIAL_CARDS.map(c=>c.id)).size,183);
  assert.equal(SAO_V2_PILOT_IDS.length,EXPECTED_V2_COUNTS['sword-art-online']);

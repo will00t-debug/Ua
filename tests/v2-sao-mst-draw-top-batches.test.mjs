@@ -275,13 +275,11 @@ test('blocked next-wave cards are source-locked, NOT wrongly registered with par
  const mst=requireRegisteredV2TitlePack('mushoku-tensei');
  const pending=[
   ['SAO-1-031',/上から5枚見る.*2枚まで公開/,pack],
-  ['SAO-2-023',/上から3枚見る.*手札に加えた場合/,pack],
   ['SAO-2-066',/上から2枚見る.*緑の.*1枚まで場外/,pack],
   ['SAO-2-062',/2枚引き.*2枚場外/,pack],
   ['SAO-2-018',/【退場時】.*上から5枚見る/,pack],
   ['SAO-1-081',/自分のターン開始時.*退場/,pack],
   ['MST-1-028',/山札の上から2枚.*残りを場外/,mst],
-  ['MST-1-043',/山札の上から5枚.*緑のフィールド/,mst],
   ['MST-1-068',/〖レイド〗.*〈シルフィエット〉/,mst]
  ];
  for(const [id,text,targetPack] of pending){
