@@ -8,7 +8,7 @@ import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
 // Synthetic identities, not real card registry entries. Both players use the same DSL.
 const cards=Array.from({length:14},(_,i)=>({
  id:'R24'+i,name:'R24 '+i,type:'character',color:'blue',energy:0,ap:1,bp:3000,gen:1,
- implementation:[0,1,3].includes(i)?'dsl':'vanilla',
+ implementation:[0,3].includes(i)?'dsl':'vanilla',
  ...(i===0?{printedAttackDamage:2}:{}),
  ...(i===1?{trigger:'special',triggerEffect:{op:'retireOppFront'}}:{}),
  ...(i===2?{trigger:'final'}:{}),
