@@ -2902,8 +2902,8 @@ export function assertUniversalMatch(pack,s){
    if(!entry||typeof entry.key!=='string'||!Array.isArray(entry.jobs)||
     entry.jobs.length<1||entry.jobs.length>6)
     throw Error('Invalid earned move entry');
-   const watch=entry.key.match(/^observer-([01]-\\d+)-(\\d+)-(\\d+)$/);
-   const moved=entry.key.match(/^moved-([01]-\\d+)-(\\d+)$/);
+   const watch=entry.key.match(/^observer-([01]-\d+)-(\d+)-(\d+)$/);
+   const moved=entry.key.match(/^moved-([01]-\d+)-(\d+)$/);
    if(!watch&&!moved)throw Error('Unknown earned move entry');
    if(watch){
     if(entry.jobs.length!==1)throw Error('Duplicate earned REST reaction');
