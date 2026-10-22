@@ -74,6 +74,10 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   return legal.find(a=>a.type==='chooseEffectMode'&&a.mode===available?.id)||
    legal.find(a=>a.type==='chooseEffectMode'&&a.mode!=='skip')||legal[0];
  }
+ if(['effect-outside-rest','effect-outside-traitless-rest'].includes(s.pending?.kind))
+  return difficulty==='easy'?legal[0]:
+   legal.find(x=>x.mode==='raid'&&!x.replaceUid)||
+   legal.find(x=>x.uid!==null&&!x.replaceUid)||legal[0];
  if(s.pending?.kind==='effect-once-choice')
   return difficulty==='easy'?legal.find(a=>a.mode==='skip')||legal[0]:
    legal.find(a=>a.mode==='activate')||legal[0];
