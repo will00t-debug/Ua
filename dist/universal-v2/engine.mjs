@@ -2,7 +2,8 @@
 // Pure physical-card reducer: common UA zones/AP/phases/limited effects/Raid
 // and official Q99 optional GET/DRAW/FINAL. Unsupported keywords FAIL CLOSED.
 import {validateUniversalDeck} from './pack.mjs';
-import {cardHasName,matchesOwnDistinctTraits,matchesV2LiveCondition,retiredThisTurn} from './field-conditions.mjs';
+import {cardHasName,matchesOwnDistinctTraits,matchesV2LiveCondition,
+ ownRestPrintedBpCount,retiredThisTurn} from './field-conditions.mjs';
 import {refreshFieldActive,expireContinuousStates,pruneContinuousStates,
  fieldRestrictions,validateContinuousStates,grantContinuousState,
  attemptFieldActive,originalEffectsDisabled} from './continuous-states.mjs';
@@ -116,9 +117,11 @@ function bp(pack,s,c){
  const printed=card(pack,c),suppressed=originalEffectsDisabled(s,c);
  const owner=Number(String(c.uid).split('-')[0]);
  return (printed?.bp||0)+(suppressed?0:s.active===owner?(printed.ownTurnBp||0):(printed.opponentTurnBp||0))+
-  (suppressed?[]:printed.passiveBonuses).reduce((n,p)=>n+(p.bp&&
-   matchesV2LiveCondition(s,owner,c.uid,p.condition,x=>card(pack,x),
-    ()=>calcEnergy(pack,s,owner))?p.bp:0),0)+
+  (suppressed?[]:printed.passiveBonuses).reduce((n,p)=>{
+   if(p.bpEach)return n+p.bpEach*ownRestPrintedBpCount(s,owner,c.uid,p.condition,x=>card(pack,x));
+   return n+(p.bp&&matchesV2LiveCondition(s,owner,c.uid,p.condition,x=>card(pack,x),
+    ()=>calcEnergy(pack,s,owner))?p.bp:0);
+  },0)+
   (!suppressed&&hasFacedownUnder(c)?(printed.conditionalUnderFaceDown?.bp||0):0)+
   (c.buffs||[]).filter(b=>b.untilTurn===s.turn).reduce((n,b)=>n+b.bp,0);
 }

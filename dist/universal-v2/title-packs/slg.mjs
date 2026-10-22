@@ -9,6 +9,7 @@ const proof=Object.freeze({
  '069':['己方回合手牌5張以上時BP+1500。','Official UA51BT/SLG-1-069 ケン green2/AP1/BP2500/gen1. Own turn and own hand of at least 5 gives BP+1500 through ownHandCountAtLeast. Official trait is one token DFN／第四次架南島レイド; the catalogue splits DFN and 第四次架南島Raid and is not registered. No life trigger. Page checked 2026-10-22; not a full FAQ certification.'],
  '062':['己方回合中若場上有5張以上第四次架南島Raid卡，BP+1500。','Official UA51BT/SLG-1-062 最上 真 green0/AP1/BP1500/gen1 DRAW. Own turn and at least five own-field characters with the official trait 第四次架南島レイド, including this card, give BP+1500. The printed sentence has no 他の. Catalogue trait 第四次架南島Raid is the known wrong token and is not registered. Page checked 2026-10-22; no FAQ block; not a full FAQ certification.'],
  '065':['己方回合手牌5張以上時BP+1000並獲Impact1。','Official UA51BT/SLG-1-065 アーシー green4/AP1/BP4000/gen1 DRAW. Printed BP is 4000+. Own turn and own hand of at least 5 give both BP+1000 and impact 1. Generated energy alt is 緑, so gen is 1. Official trait is one token DFN／第四次架南島レイド. Page checked 2026-10-22; no FAQ block; not a full FAQ certification.'],
+ '027':['原本BP2500以下且REST的己方影之軍團角色，BP+500','Official UA51BT/SLG-1-027 アイアン purple2/AP1/BP3000+/gen1, no trigger. Generated alt is 紫, so gen is 1. Own turn: each REST own-field character whose printed BP is 2500 or less and whose trait token is exactly 影の軍団 gives BP+500. Q2030: 元々のBP is the printed number. Q2070: a field has no BP and is not counted. The catalogue trait 影之軍團 is not registered. Page checked 2026-10-22; not a full FAQ certification.'],
 
  '042':['主要階段每回合一次REST自己，額外產生1綠能源，主要階段結束時退場。','Official UA51BT/SLG-1-042 2026-04-17 errata-aware source: 馬渕 勲 GREEN0/AP1/BP1000/gen1 no life; rest OWN READY ENERGY source MAIN once per turn, current-turn GREEN+1, mandatory source retirement at MAIN end. Reuses native delayed-retire V2 primitive from SLG-1-013, TTG-1-063, BLEACH-1-069; old Japanese source name corrected in original official errata. No full FAQ certification.'],
 
@@ -76,7 +77,8 @@ export default Object.freeze({
      ...(def.id==='SLG-1-053'?['tests/v2-slg-053-own-name-impact-null.test.mjs']:[]),
      ...(def.id==='SLG-1-023'||def.id==='SLG-1-056'||def.id==='SLG-1-069'?['tests/v2-zero-engine-round14.test.mjs']:[]),
      ...(def.id==='SLG-1-062'?['tests/v2-zero-engine-round15.test.mjs']:[]),
-     ...(def.id==='SLG-1-065'?['tests/v2-zero-engine-round16.test.mjs']:[])],
+     ...(def.id==='SLG-1-065'?['tests/v2-zero-engine-round16.test.mjs']:[]),
+     ...(def.id==='SLG-1-027'?['tests/v2-rest-printed-bp-round17.test.mjs']:[])],
     ...(def.implementation==='vanilla'?{verifiedNoExtraEffects:true}:{})}
   });
  }))

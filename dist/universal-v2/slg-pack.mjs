@@ -560,6 +560,16 @@ const authored=[
   "passiveBonuses":[{"condition":{"kind":"ownHandCountAtLeast","turn":"own","min":5},"bp":1000,"impact":1}],
   "officialTraits":["DFN／第四次架南島レイド"],
   "catalogueTraits":["DFN","第四次架南島Raid"]
+},
+{
+  "id":"SLG-1-027","name":"アイアン","color":"purple","energy":2,
+  "ap":1,"bp":3000,"gen":1,"trigger":null,"type":"character",
+  "textAnchor":"原本BP2500以下且REST的己方影之軍團角色，BP+500",
+  "implementation":"dsl","effects":{},
+  "passiveBonuses":[{"condition":{"kind":"ownRestPrintedBpAtMost","turn":"own",
+    "zone":"field","excludeSelf":false,"trait":"影の軍団","maxPrintedBp":2500},"bpEach":500}],
+  "officialTraits":["影の軍団"],
+  "catalogueTraits":["影之軍團"]
 }
 ];
 export const SLG_V2_VERIFIED_IDS=Object.freeze(authored.map(c=>c.id));

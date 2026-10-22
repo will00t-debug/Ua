@@ -101,6 +101,25 @@ export function countRetirementsThisTurn(s,controller='any',cardType='any'){
   (controller==='any'||e.controller===controller)&&
   (cardType==='any'||e.cardType===cardType)).length;
 }
+// Q2030: 元々のBP is the number printed on the card, not the current total.
+// Q2070: a field has no BP, so it is not counted by a 元々のBP filter even
+// when the sentence does not say キャラ. REST is the physical ready flag.
+// The trait token is exact. This card is included unless excludeSelf is set.
+export function ownRestPrintedBpCount(s,owner,sourceUid,condition,printed){
+ if(condition.turn==='own'&&s.active!==owner)return 0;
+ if(condition.turn==='opponent'&&s.active===owner)return 0;
+ const pl=s.players[owner];
+ const zones=condition.zone==='front'?[pl.front]:
+  condition.zone==='energy'?[pl.energy]:[pl.front,pl.energy];
+ let found=0;
+ for(const zone of zones)for(const c of zone){
+  if(!c||c.ready||(condition.excludeSelf&&c.uid===sourceUid))continue;
+  const d=printed(c);
+  if(d.type!=='character'||!Number.isInteger(d.bp)||d.bp>condition.maxPrintedBp)continue;
+  if((d.traits||[]).includes(condition.trait))found++;
+ }
+ return found;
+}
 export function retiredThisTurn(s,controller,cardType='any'){
  if(![0,1].includes(controller))throw Error('Invalid true-retirement predicate');
  return countRetirementsThisTurn(s,controller,cardType)>0;
