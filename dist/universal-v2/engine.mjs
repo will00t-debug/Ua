@@ -225,8 +225,12 @@ function matchesOutsideRecovery(pack,s,c,q){
 // Stamped only AFTER the actual card reaches its new zone. The source
 // descriptor is snapshotted from the field at move time (not from replay text).
 function recordCompletedMove(pack,s,{physical,owner,controller=owner,from,to,reason,sourceUid=null}){
- const source=sourceUid?[...s.players[0].front,...s.players[0].energy,
+ const activeSource=sourceUid?[...s.players[0].front,...s.players[0].energy,
   ...s.players[1].front,...s.players[1].energy].find(c=>c?.uid===sourceUid):null;
+ // When the source bounces itself, it just left the field. The completed
+ // move still carries the exact physical source object, not a guessed alias.
+ const source=activeSource||(sourceUid===physical.uid&&
+  ['front','energy'].includes(from)?physical:null);
  const definition=source?card(pack,source):null;
  const event=appendCompletedMove(s,{uid:physical.uid,cardId:physical.cardId,owner,controller,
   from,to,reason,sourceUid,sourceCardId:source?.cardId??null,
@@ -388,7 +392,8 @@ function continueEffectQueue(pack,s){
     if(job.count!==1)throw Error('Optional mill is exactly one card');
     if(pl.deck.length)s.pending={kind:'effect-optional-mill',player:owner,
      sourceUid:job.sourceUid};
-   }else for(let i=0;i<job.count&&pl.deck.length;i++)pl.outside.push(pl.deck.shift());
+   }else for(let i=0;i<job.count&&pl.deck.length;i++)moveOwnedLinear(pack,s,{
+    owner,from:'deck',to:'outside',index:0,reason:'own-effect',sourceUid:job.sourceUid});
   }else if(job.op==='buffSelf'){
    const source=field(pl).find(c=>c.uid===job.sourceUid);
    if(!source)throw Error('buffSelf source must be on field');
@@ -537,7 +542,7 @@ function continueEffectQueue(pack,s){
     card(pack,c).type==='character'&&card(pack,c).energy<=job.energy).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-bounce-own',player:owner,
     sourceUid:job.sourceUid,choices,energy:job.energy};
-   else bounceToHand(s,owner,job.sourceUid);
+   else bounceToHand(pack,s,owner,job.sourceUid,job.sourceUid);
   }else if(job.op==='discardOppHand'){
    // The opponent chooses one of their own hand cards. Empty hand does nothing.
    const foe=1-owner;
@@ -669,7 +674,7 @@ function continueEffectQueue(pack,s){
     // Raid layer, a missing card, or a newer entry does nothing.
     const pos=location(s,owner,job.sourceUid);
     if(job.destination==='hand'&&pos&&pos.c.fieldEntryStamp===job.fieldEntryStamp)
-     bounceToHand(s,owner,job.sourceUid);
+     bounceToHand(pack,s,owner,job.sourceUid,job.sourceUid);
    }else if(job.op==='retireBatchOne'){
    // Internal state-based consequence, never a user-authored card DSL op.
    const slot=s.players[job.targetPlayer].front.findIndex(c=>c?.uid===job.uid);
@@ -801,7 +806,7 @@ function location(s,p,uid){
  }
  return null;
 }
-function bounceToHand(s,p,uid){
+function bounceToHand(pack,s,p,uid,sourceUid=uid){
  const found=location(s,p,uid);if(!found)throw Error('Bounce source not on own field');
  const top=found.c,pl=s.players[p];pl[found.line][found.slot]=null;
  // Official Japanese Q62: only the top Raid card returns to hand.
@@ -809,7 +814,14 @@ function bounceToHand(s,p,uid){
  const below=c=>[...(c.stack||[]).flatMap(x=>[x,...below(x)]),
   ...(c.under||[]).flatMap(x=>[x,...below(x)])];
  const reset=c=>({...c,stack:[],under:[],buffs:[],ready:false,faceDown:false,fieldEntryStamp:null});
- pl.outside.push(...below(top).map(reset));pl.hand.push(reset(top));
+ for(const layer of below(top)){
+  const physical=reset(layer);pl.outside.push(physical);
+  recordCompletedMove(pack,s,{physical,owner:p,from:'raid-under',to:'outside',
+   reason:'rule',sourceUid});
+ }
+ const bounced=reset(top);pl.hand.push(bounced);
+ recordCompletedMove(pack,s,{physical:bounced,owner:p,from:found.line,to:'hand',
+  reason:'own-effect',sourceUid});
 }
 function vacate(s,p,line,slot,destination='outside'){
  const top=s.players[p][line][slot];if(!top)throw Error('Empty field slot');
@@ -1036,7 +1048,8 @@ function resolveChoice(s,a,pack){
   continueEffectQueue(pack,s);finishPending(s);return;
  }
  if(q.kind==='private-top-choice'){
-  if(a.mode==='outside'&&p.deck.length)p.outside.push(p.deck.shift());
+  if(a.mode==='outside'&&p.deck.length)moveOwnedLinear(pack,s,{owner:q.player,from:'deck',to:'outside',index:0,
+    reason:'own-effect',sourceUid:q.sourceUid});
   s.pending=null;continueEffectQueue(pack,s);
   return;
  }
@@ -1120,7 +1133,10 @@ function resolveChoice(s,a,pack){
    throw Error('Inspected deck window has changed');
   const chosen=new Set(q.selected),remaining=window.filter(c=>!chosen.has(c.uid));
   p.deck.splice(0,q.uids.length);
-  p.outside.push(...window.filter(c=>chosen.has(c.uid)));
+  const moved=window.filter(c=>chosen.has(c.uid));
+  p.outside.push(...moved);
+  for(const physical of moved)recordCompletedMove(pack,s,{physical,owner:q.player,
+   from:'deck',to:'outside',reason:'own-effect',sourceUid:q.sourceUid});
   p.deck.unshift(...remaining);
   if(remaining.length)s.pending={kind:'effect-top-order',player:q.player,
    sourceUid:q.sourceUid,uids:remaining.map(c=>c.uid),order:[],rest:q.rest};
@@ -1137,7 +1153,8 @@ function resolveChoice(s,a,pack){
     throw Error('Trait top choice is not an inspected exact-token match');
    const index=p.deck.findIndex(c=>c.uid===a.uid);
    if(index<0||index>=q.uids.length)throw Error('Selected card left the top window');
-   p.outside.push(p.deck.splice(index,1)[0]);
+   moveOwnedLinear(pack,s,{owner:q.player,from:'deck',to:'outside',index,
+    reason:'own-effect',sourceUid:q.sourceUid});
   }
   const remaining=q.uids.filter(uid=>uid!==a.uid);
   if(remaining.length)s.pending={kind:'effect-top-order',player:q.player,
@@ -1148,7 +1165,8 @@ function resolveChoice(s,a,pack){
  if(q.kind==='effect-optional-mill'){
   if(a.mode==='mill'){
    if(!p.deck.length)throw Error('Optional mill has no deck card');
-   p.outside.push(p.deck.shift());
+   moveOwnedLinear(pack,s,{owner:q.player,from:'deck',to:'outside',index:0,
+    reason:'own-effect',sourceUid:q.sourceUid});
   }else if(a.mode!=='skip')throw Error('Invalid optional mill');
   s.pending=null;continueEffectQueue(pack,s);return;
  }
@@ -1173,7 +1191,8 @@ function resolveChoice(s,a,pack){
    if(!q.uids.includes(a.uid))throw Error('Cannot send uninspected card outside');
    const index=p.deck.findIndex(c=>c.uid===a.uid);
    if(index<0||index>=q.uids.length)throw Error('Inspected card left deck window');
-   p.outside.push(p.deck.splice(index,1)[0]);
+   moveOwnedLinear(pack,s,{owner:q.player,from:'deck',to:'outside',index,
+    reason:'own-effect',sourceUid:q.sourceUid});
   }
   const remaining=q.uids.filter(uid=>uid!==a.uid);
   if(remaining.length)s.pending={kind:'effect-top-order',player:q.player,
@@ -1210,7 +1229,7 @@ function resolveChoice(s,a,pack){
   if(!found||found.c.uid===q.sourceUid||
    card(pack,found.c).type!=='character'||card(pack,found.c).energy>q.energy)
    throw Error('Invalid own bounce target');
-  bounceToHand(s,q.player,a.uid);
+  bounceToHand(pack,s,q.player,a.uid,q.sourceUid);
   s.pending=null;continueEffectQueue(pack,s);return;
  }
  if(q.kind==='effect-outside-traitless-rest'){
@@ -2312,7 +2331,9 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
    if(index<0)throw Error('Card not in hand');
    const current=pl.hand[index],d=card(pack,current);
    spendAp(pl,d.ap);pl.hand.splice(index,1);
-   if(action.type==='event'){pl.outside.push(current);applyEffects(pack,s,current,'onPlay',p,'event');}
+   if(action.type==='event'){pl.outside.push(current);
+    recordCompletedMove(pack,s,{physical:current,owner:p,from:'hand',to:'outside',reason:'rule'});
+    applyEffects(pack,s,current,'onPlay',p,'event');}
    else if(action.type==='raid'){
     performRaid(pack,s,p,current,action.baseUid,'front',action.slot,action.replaceUid,
      {entryCause:'paidRaid'});
@@ -2321,6 +2342,8 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
     current.ready=defaultEntryReady(pack,s,p,current);
     current.fieldEntryStamp=s.nextFieldEntryStamp++;
     pl[action.line][action.slot]=current;
+    recordCompletedMove(pack,s,{physical:current,owner:p,from:'hand',
+     to:action.line,reason:'rule'});
     applyEffects(pack,s,current,'onPlay',p,'paidPlay');
    }
    break;
