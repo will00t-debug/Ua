@@ -69,6 +69,19 @@ const PRINTED_PINS=Object.freeze({
     "deckLimit": 1,
     "effectJa": "〖登場時〗 カードを1枚引き、自分の手札を1枚場外に置く。"
   },
+  "MST-1-004": {
+    "kind": "activeIfOwnEffectEntry",
+    "nameJa": "エリス",
+    "color": "blue",
+    "energy": 2,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 1,
+    "type": "character",
+    "traits": [],
+    "trigger": null,
+    "effectJa": "〖登場時〗 このキャラが自分の効果で登場していた場合、このキャラをアクティブにする。"
+  },
   "MST-1-003": {
     "kind": "ownFieldAllNamesBp",
     "nameJa": "エリス",
@@ -567,6 +580,8 @@ export function verifiedMstV2Cards(){
    card.effects={onRetire:[{op:'drawIfOwnFieldExists',count:1}]};
   if(pin.kind==='onRetireDrawOne')
    card.effects={onRetire:[{op:'draw',count:1}]};
+  if(pin.kind==='activeIfOwnEffectEntry')
+   card.effects={onPlay:[{op:'activeSelfIf',entry:'ownEffect'}]};
   if(pin.kind==='ownFieldAllNamesBp')
    card.passiveBonuses=[{condition:{kind:'ownFieldHasAllNames',turn:'any',
     zone:'field',excludeSelf:false,names:['ルーデウス','ルイジェルド']},bp:1000}];
@@ -634,6 +649,7 @@ export function verifiedMstV2Entries(){
      'tests/universal-v2-mst-port.test.mjs',
      'tests/universal-v2-sao-mst-cross-title.test.mjs',
      ...(pin.kind==='ownFieldAllNamesBp'?['tests/v2-mst-003-own-names.test.mjs']:[]),
+     ...(pin.kind==='activeIfOwnEffectEntry'?['tests/v2-conditional-entry-active-round15.test.mjs']:[]),
       ...(pin.kind==='onRetireDrawOne'?['tests/v2-mst-013-on-retire.test.mjs']:[]),
       ...(pin.kind==='onRetireDrawIfOwnField'?['tests/v2-mst-052-official-retire.test.mjs']:[]),
        ...(pin.kind==='colorSiteMainRetireDraw'?['tests/v2-mst-053-official-full.test.mjs']:[]),

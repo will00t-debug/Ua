@@ -37,6 +37,11 @@ function shuffle(s,list){
 }
 const clone=source=>structuredClone(source);
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+// 「自分の効果で登場」 is an effect that puts this physical card onto the
+// field. Paying AP to play or Raid from hand is a play. A life trigger also
+// puts a card into play, but no MST-1-004 FAQ was found that counts it, so
+// lifeColor / lifeRaid stay outside this set and the condition fails closed.
+const OWN_EFFECT_ENTRY=new Set(['outsideEffect','outsideEffectRaid','recoveredEffect']);
 // Set only for the synchronous caller that just queued one retirement.
 // Not match state: AI simulations must not leak it into a later action.
 let retirementJobsInserted=0;
@@ -581,6 +586,17 @@ function continueEffectQueue(pack,s){
    const attacking=pl.front.find(c=>c?.uid===job.sourceUid);
    if(!attacking)throw Error('Attack source left the front line before blocking');
    s.pending={kind:'block',player:1-owner,attackerUid:job.sourceUid};
+  }else if(job.op==='activeSelfIf'){
+   // The card is already in its entry slot. A miss means it left, was
+   // replaced, or was never a visible field character. Silence removes the
+   // printed on-play text even if the job was queued before the status.
+   const pos=location(s,owner,job.sourceUid);
+   const live=pos&&card(pack,pos.c).type==='character'?pos.c:null;
+   const boardOk=!job.when||(!!live&&matchesV2LiveCondition(s,owner,live.uid,job.when,
+    c=>card(pack,c),()=>0));
+   const causeOk=job.entry!=='ownEffect'||OWN_EFFECT_ENTRY.has(job.entryCause);
+   if(live&&!originalEffectsDisabled(s,live)&&boardOk&&causeOk)
+    attemptFieldActive(s,owner,live);
   }else if(job.op==='enemyBpDown'){
    const foe=1-owner;
    // The printed BP window is read once, when the choice opens. Applying the
@@ -598,15 +614,16 @@ function continueEffectQueue(pack,s){
   }else throw Error('Unimplemented effect op');
  }
 }
-function programJobs(pack,s,physical,timing,owner,raidUid){
+function programJobs(pack,s,physical,timing,owner,raidUid,entryCause){
  // Q2220: printed leave triggers are lost before true retirement.
  return (originalEffectsDisabled(s,physical)?[]:card(pack,physical).effects[timing]||[])
   .map(e=>({...e,owner,sourceUid:physical.uid,
-   sourceName:card(pack,physical).name,...(raidUid?{raidUid}:{})}));
+   sourceName:card(pack,physical).name,...(raidUid?{raidUid}:{}),
+   ...(timing==='onPlay'&&entryCause?{entryCause}:{})}));
 }
-function applyEffects(pack,s,cardOnField,timing,owner){
+function applyEffects(pack,s,cardOnField,timing,owner,entryCause){
  // Entry/trigger effects interrupt the suspended continuation (e.g. DAMAGE2).
- s.effectQueue.unshift(...programJobs(pack,s,cardOnField,timing,owner));
+ s.effectQueue.unshift(...programJobs(pack,s,cardOnField,timing,owner,undefined,entryCause));
  continueEffectQueue(pack,s);
 }
 function validRaidBase(pack,s,owner,base,top){
@@ -631,7 +648,7 @@ function strippableRaidTop(pack,top){
   card(pack,base).type==='character'&&!card(pack,base).raidName&&
   !(base.stack||[]).length&&!(base.under||[]).length);
 }
-function performRaid(pack,s,p,cardOnTop,baseUid,line,slot,replaceUid,{entryReady=true}={}){
+function performRaid(pack,s,p,cardOnTop,baseUid,line,slot,replaceUid,{entryReady=true,entryCause='paidRaid'}={}){
  const pl=s.players[p],base=location(s,p,baseUid),top=card(pack,cardOnTop);
  const baseOriginalSilenced=base?originalEffectsDisabled(s,base.c):false;
  if(!base||!validRaidBase(pack,s,p,base.c,top))throw Error('Illegal Raid base');
@@ -659,7 +676,7 @@ function performRaid(pack,s,p,cardOnTop,baseUid,line,slot,replaceUid,{entryReady
  pl[line][slot]=cardOnTop;
  s.raidedThisTurn[p]=true;
  const baseJobs=s.active===p&&!baseOriginalSilenced?programJobs(pack,s,effectiveBase,'onRaided',p,cardOnTop.uid):[];
- const entryJobs=programJobs(pack,s,cardOnTop,'onPlay',p);
+ const entryJobs=programJobs(pack,s,cardOnTop,'onPlay',p,undefined,entryCause);
  const raidJobs=programJobs(pack,s,cardOnTop,'onRaid',p);
  if(baseJobs.length&&entryJobs.length)
   s.pending={kind:'raid-effect-order',player:p,baseUid:effectiveBase.uid,
@@ -1059,7 +1076,7 @@ function resolveChoice(s,a,pack){
     p.outside.splice(i,1);
     s.pending=null;
     performRaid(pack,s,q.player,physical,a.baseUid,a.line,a.slot,a.replaceUid,
-     {entryReady:false});
+     {entryReady:false,entryCause:'outsideEffectRaid'});
     continueEffectQueue(pack,s);return;
    }
    if(a.mode!=='enter'||!['front','energy'].includes(a.line)||
@@ -1068,7 +1085,7 @@ function resolveChoice(s,a,pack){
    p.outside.splice(i,1);physical.ready=false;
    physical.fieldEntryStamp=s.nextFieldEntryStamp++;
    p[a.line][a.slot]=physical;s.pending=null;
-   s.effectQueue.unshift(...programJobs(pack,s,physical,'onPlay',q.player));
+   s.effectQueue.unshift(...programJobs(pack,s,physical,'onPlay',q.player,undefined,'outsideEffect'));
    continueEffectQueue(pack,s);return;
   }
   if(q.kind==='effect-outside-rest'){
@@ -1085,7 +1102,7 @@ function resolveChoice(s,a,pack){
    physical.fieldEntryStamp=s.nextFieldEntryStamp++;
    p[a.line][a.slot]=physical;
    s.pending=null;
-   s.effectQueue.unshift(...programJobs(pack,s,physical,'onPlay',q.player));
+   s.effectQueue.unshift(...programJobs(pack,s,physical,'onPlay',q.player,undefined,'outsideEffect'));
    continueEffectQueue(pack,s);return;
   }
   if(q.kind==='effect-recover-outside'){
@@ -1123,7 +1140,7 @@ function resolveChoice(s,a,pack){
   p.energy[a.slot]=entrant;
   s.pending=null;
   // This is entry via an effect, so onPlay executes with no additional AP.
-  s.effectQueue.unshift(...programJobs(pack,s,entrant,'onPlay',q.player));
+  s.effectQueue.unshift(...programJobs(pack,s,entrant,'onPlay',q.player,undefined,'recoveredEffect'));
   continueEffectQueue(pack,s);return;
  }
  if(q.kind==='effect-discard-cost'){
@@ -1373,7 +1390,7 @@ function resolveChoice(s,a,pack){
    p.outside.splice(index,1);chosen.ready=true;
    chosen.fieldEntryStamp=s.nextFieldEntryStamp++;p.front[a.slot]=chosen;
    // COLOR life deployment spends no AP but does trigger onPlay.
-   applyEffects(pack,s,chosen,'onPlay',q.player);
+   applyEffects(pack,s,chosen,'onPlay',q.player,'lifeColorOutside');
   }
   else if(a.mode==='colorField'&&q.trigger==='color'){
    const profile=card(pack,p.outside[i]).triggerEffect;
@@ -1387,7 +1404,7 @@ function resolveChoice(s,a,pack){
    commitDestination(s,q.player,'energy',a.slot,a.replaceUid);
    p.hand.splice(handIndex,1);picked.ready=true;
    picked.fieldEntryStamp=s.nextFieldEntryStamp++;p.energy[a.slot]=picked;
-   applyEffects(pack,s,picked,'onPlay',q.player);
+   applyEffects(pack,s,picked,'onPlay',q.player,'lifeColorField');
   }
   else if(a.mode==='color'&&q.trigger==='color'){
    const profile=card(pack,p.outside[i]).triggerEffect;
@@ -1401,11 +1418,12 @@ function resolveChoice(s,a,pack){
    p.hand.splice(handIndex,1);picked.ready=true;
    picked.fieldEntryStamp=s.nextFieldEntryStamp++;p[a.line][a.slot]=picked;
    // This is ordinary playing through a trigger, NOT a Raid: no AP is spent.
-   applyEffects(pack,s,picked,'onPlay',q.player);
+   applyEffects(pack,s,picked,'onPlay',q.player,'lifeColor');
   }
   else if(a.mode==='raid'&&q.trigger==='raid'){
    const revealed=p.outside.splice(i,1)[0];
-   performRaid(pack,s,q.player,revealed,a.baseUid,a.line,a.slot,a.replaceUid);
+   performRaid(pack,s,q.player,revealed,a.baseUid,a.line,a.slot,a.replaceUid,
+    {entryCause:'lifeRaid'});
   }
   else if(a.mode==='get'&&q.trigger==='raid')p.hand.push(p.outside.splice(i,1)[0]);
   else if(a.mode==='final'&&q.trigger==='final'&&!p.life.length&&p.deck.length)p.life.unshift(p.deck.shift());
@@ -1957,15 +1975,16 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
    if(index<0)throw Error('Card not in hand');
    const current=pl.hand[index],d=card(pack,current);
    spendAp(pl,d.ap);pl.hand.splice(index,1);
-   if(action.type==='event'){pl.outside.push(current);applyEffects(pack,s,current,'onPlay',p);}
+   if(action.type==='event'){pl.outside.push(current);applyEffects(pack,s,current,'onPlay',p,'event');}
    else if(action.type==='raid'){
-    performRaid(pack,s,p,current,action.baseUid,'front',action.slot,action.replaceUid);
+    performRaid(pack,s,p,current,action.baseUid,'front',action.slot,action.replaceUid,
+     {entryCause:'paidRaid'});
    }else{
     commitDestination(s,p,action.line,action.slot,action.replaceUid);
     current.ready=defaultEntryReady(pack,s,p,current);
     current.fieldEntryStamp=s.nextFieldEntryStamp++;
     pl[action.line][action.slot]=current;
-    applyEffects(pack,s,current,'onPlay',p);
+    applyEffects(pack,s,current,'onPlay',p,'paidPlay');
    }
    break;
   }
@@ -2075,7 +2094,7 @@ export function assertUniversalMatch(pack,s){
    !['draw','drawIfOwnName','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
     'discardGate','enemyFrontAllBpDown','retireOppFrontAllUnderBp',
     'buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
-    'recoverOutsideColorUnderEnergy','deployOutsideRest','deployOutsideTraitlessRestOrRaid','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','retireOwnFieldOne','retireOwnCharacterOne','openBlock','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','phaseOrder','advanceAfterAttack','additionalBattleDamage','openRetirementBatch','closeRetirementBatch','retirementOrder','battleImpactDamage','discardOppHand'].includes(e.op)))
+    'recoverOutsideColorUnderEnergy','deployOutsideRest','deployOutsideTraitlessRestOrRaid','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','retireOwnFieldOne','retireOwnCharacterOne','openBlock','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','phaseOrder','advanceAfterAttack','additionalBattleDamage','openRetirementBatch','closeRetirementBatch','retirementOrder','battleImpactDamage','discardOppHand','activeSelfIf'].includes(e.op)))
   throw Error('Invalid queued effects');
  for(let p=0;p<2;p++){
   const pl=s.players[p],uids=new Set(),items=[];

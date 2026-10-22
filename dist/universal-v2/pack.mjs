@@ -7,9 +7,44 @@ export const V2_CARD_TYPES=Object.freeze(['character','event','field']);
 export const V2_TRIGGERS=Object.freeze(['draw','get','final','active','special','color','raid']);
 export const V2_EFFECT_TIMINGS=Object.freeze(['onPlay','onRaid','onAttack','onRaided','onRetire','onOutsideRecover']);
 export const V2_EFFECT_OPS=Object.freeze(['draw','drawIfOwnName','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','retireOwnFieldOne','retireOwnCharacterOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw','searchDeckMany','discardGate','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
- 'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideColorUnderEnergy','recoverOutsideTraitlessUnderEnergy','deployOutsideTraitlessRestOrRaid','deployOutsideRest','buffOwnField','oncePerTurnGate','chooseOne','discardOppHand']);
+ 'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideColorUnderEnergy','recoverOutsideTraitlessUnderEnergy','deployOutsideTraitlessRestOrRaid','deployOutsideRest','buffOwnField','oncePerTurnGate','chooseOne','discardOppHand','activeSelfIf']);
 const integer=(v,low=0)=>Number.isInteger(v)&&v>=low;
 const own=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
+// Shared board predicate used by passive bonuses and on-play ACTIVE.
+// The shape is the printed query, never a title-specific reducer.
+function assertLiveCondition(q,label){
+ if(!q||typeof q!=='object'||Array.isArray(q)||
+  !['own','opponent','any'].includes(q.turn)||
+  !['outsideCount','ownNameExists','ownFieldHasAllNames','ownTraitCount','ownEnergyAtLeast','ownHandCountAtLeast','ownLifeAtMost','ownEffectHandOutsideOrRecovery','ownRetiredThisTurn','retireCountThisTurn'].includes(q.kind))
+  throw Error(label+' invalid passive condition');
+ if(q.kind==='ownEffectHandOutsideOrRecovery'&&q.turn!=='own')
+  throw Error(label+' invalid effect-zone own-turn condition');
+ const retired=q.kind==='ownRetiredThisTurn';
+ const retirementCount=q.kind==='retireCountThisTurn';
+ if(retirementCount&&(!['own','opponent','any'].includes(q.controller)||
+  !['character','field','any'].includes(q.cardType)||!integer(q.min,1)||q.min>50))
+  throw Error(label+' invalid retirement count predicate');
+ if(retired&&!['field','character'].includes(q.cardType))
+  throw Error(label+' invalid retired-card type');
+ const count=['outsideCount','ownTraitCount','ownEnergyAtLeast','ownHandCountAtLeast'].includes(q.kind);
+ const atMost=q.kind==='ownLifeAtMost';
+ const field=['ownNameExists','ownFieldHasAllNames','ownTraitCount'].includes(q.kind);
+ if((count&&(!integer(q.min,1)||q.min>200))||
+  (atMost&&(!integer(q.max)||q.max>10))||
+  (field&&(!['field','front','energy'].includes(q.zone)||
+   typeof q.excludeSelf!=='boolean'))||
+  (q.kind==='ownNameExists'&&(!q.name||typeof q.name!=='string'||!q.name.trim()))||
+  (q.kind==='ownFieldHasAllNames'&&(!Array.isArray(q.names)||q.names.length<2||q.names.length>8||q.names.some(n=>typeof n!=='string'||!n.trim())||new Set(q.names).size!==q.names.length))||
+  (q.kind==='ownTraitCount'&&(!q.trait||typeof q.trait!=='string'||!q.trait.trim()))||
+  Object.keys(q).length!==(2+(count?1:0)+(atMost?1:0)+(retired?1:0)+(retirementCount?3:0)+(field?2:0)+
+   (['ownNameExists','ownFieldHasAllNames','ownTraitCount'].includes(q.kind)?1:0))||
+  Object.keys(q).some(k=>!['kind','turn',
+   ...(count?['min']:[]),...(atMost?['max']:[]),...(retired?['cardType']:[]),...(retirementCount?['controller','cardType','min']:[]),...(field?['zone','excludeSelf']:[]),
+   ...(q.kind==='ownNameExists'?['name']:[]),
+   ...(q.kind==='ownFieldHasAllNames'?['names']:[]),
+   ...(q.kind==='ownTraitCount'?['trait']:[])].includes(k)))
+  throw Error(label+' invalid or cyclic passive condition');
+}
 function verifyProgram(program,path){
  if(!Array.isArray(program))throw Error(path+' must be an array');
  for(const [i,e] of program.entries()){
@@ -284,6 +319,13 @@ function verifyProgram(program,path){
    (e.zone!==undefined&&e.zone!=='front'&&e.zone!=='field')||
    Object.keys(e).some(k=>!['op','bp','optional','minBp','maxBp','zone'].includes(k))
   ))throw Error(path+'['+i+'] invalid optional targeting flag');
+  if(e.op==='activeSelfIf'&&(
+   (e.when===undefined&&e.entry===undefined)||
+   (e.entry!==undefined&&e.entry!=='ownEffect')||
+   Object.keys(e).some(k=>!['op','when','entry'].includes(k))
+  ))throw Error(path+'['+i+'] invalid conditional ACTIVE entry');
+  if(e.op==='activeSelfIf'&&e.when!==undefined)
+   assertLiveCondition(e.when,path+'['+i+'].when');
  }
 }
 // Explicit conditional benefits are pure board queries. No generic card-text
@@ -304,39 +346,8 @@ function validatePassiveBonuses(card){
   const q=p.condition;
   if(p.extraDamage!==undefined&&(card.type!=='character'||q.turn!=='own'))
    throw Error(card.id+' extra damage must be printed own-turn character bonus');
-  if(!q||typeof q!=='object'||Array.isArray(q)||
-   !['own','opponent','any'].includes(q.turn)||
-   !['outsideCount','ownNameExists','ownFieldHasAllNames','ownTraitCount','ownEnergyAtLeast','ownHandCountAtLeast','ownLifeAtMost','ownEffectHandOutsideOrRecovery','ownRetiredThisTurn','retireCountThisTurn'].includes(q.kind))
-   throw Error(card.id+' invalid passive condition');
-  // Effect-zone movement is a no-extra-argument same-turn predicate;
-  // reject opponent/any variants until a concrete printed card needs them.
-  if(q.kind==='ownEffectHandOutsideOrRecovery'&&q.turn!=='own')
-   throw Error(card.id+' invalid effect-zone own-turn condition');
-  const retired=q.kind==='ownRetiredThisTurn';
-  const retirementCount=q.kind==='retireCountThisTurn';
-  if(retirementCount&&(!['own','opponent','any'].includes(q.controller)||
-   !['character','field','any'].includes(q.cardType)||!integer(q.min,1)||q.min>50))
-   throw Error(card.id+' invalid retirement count predicate');
-  if(retired&&!['field','character'].includes(q.cardType))
-   throw Error(card.id+' invalid retired-card type');
-  const count=['outsideCount','ownTraitCount','ownEnergyAtLeast','ownHandCountAtLeast'].includes(q.kind);
-  const atMost=q.kind==='ownLifeAtMost';
-  const field=['ownNameExists','ownFieldHasAllNames','ownTraitCount'].includes(q.kind);
-  if((count&&(!integer(q.min,1)||q.min>200))||
-   (atMost&&(!integer(q.max)||q.max>10))||
-   (field&&(!['field','front','energy'].includes(q.zone)||
-    typeof q.excludeSelf!=='boolean'))||
-   (q.kind==='ownNameExists'&&(!q.name||typeof q.name!=='string'||!q.name.trim()))||
-   (q.kind==='ownFieldHasAllNames'&&(!Array.isArray(q.names)||q.names.length<2||q.names.length>8||q.names.some(n=>typeof n!=='string'||!n.trim())||new Set(q.names).size!==q.names.length))||
-   (q.kind==='ownTraitCount'&&(!q.trait||typeof q.trait!=='string'||!q.trait.trim()))||
-   Object.keys(q).length!==(2+(count?1:0)+(atMost?1:0)+(retired?1:0)+(retirementCount?3:0)+(field?2:0)+
-    (['ownNameExists','ownFieldHasAllNames','ownTraitCount'].includes(q.kind)?1:0))||
-   Object.keys(q).some(k=>!['kind','turn',
-    ...(count?['min']:[]),...(atMost?['max']:[]),...(retired?['cardType']:[]),...(retirementCount?['controller','cardType','min']:[]),...(field?['zone','excludeSelf']:[]),
-    ...(q.kind==='ownNameExists'?['name']:[]),
-    ...(q.kind==='ownFieldHasAllNames'?['names']:[]),
-    ...(q.kind==='ownTraitCount'?['trait']:[])].includes(k))||
-   (p.extraEnergy!==undefined&&q.kind==='ownEnergyAtLeast'))
+  assertLiveCondition(q,card.id);
+  if(p.extraEnergy!==undefined&&q.kind==='ownEnergyAtLeast')
    throw Error(card.id+' invalid or cyclic passive condition');
  }
  return Object.freeze(entries.map(p=>Object.freeze({...p,
@@ -553,6 +564,9 @@ function normalize(card,packId){
    throw Error(card.id+' unsupported Raid-base timing effect');
   if(name!=='onPlay'&&program.some(e=>e.op==='discardOppHand'))
    throw Error(card.id+' opponent hand discard is only an onPlay effect');
+  if(program.some(e=>e.op==='activeSelfIf')&&
+   (card.type!=='character'||name!=='onPlay'))
+   throw Error(card.id+' conditional ACTIVE is only a character onPlay effect');
   if(name==='onRetire'&&
    (!['character','field'].includes(card.type)||program.some(e=>!['draw','millTop','drawIfOwnFieldExists','chooseOne','deployOutsideTraitlessRestOrRaid','retireOppFrontOneUnderBp','restOppFrontUnderBp'].includes(e.op))))
    throw Error(card.id+' unsupported onRetire ability program');
@@ -666,7 +680,9 @@ function normalize(card,packId){
     ...(e.then?{then:Object.freeze(e.then.map(child=>Object.freeze({
       ...child,...(child.filter?{filter:Object.freeze({...child.filter})}:{}),
       ...(child.filters?{filters:Object.freeze(child.filters.map(f=>Object.freeze({...f})))}:{})
-    })))}:{})
+    })))}:{}),
+    ...(e.when?{when:Object.freeze({...e.when,
+     ...(e.when.names?{names:Object.freeze([...e.when.names])}:{})})}:{})
    })))])))
  });
 }
