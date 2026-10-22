@@ -32,6 +32,9 @@ export const V2_PENDING_LABELS=Object.freeze({
  'main-discard-buff':'支付一張手牌，讓自身 BP 增加',
  'effect-grant-attack':'授予己方角色攻擊時能力','granted-attack-draw':'攻擊時是否抽一張',
  'effect-target':'指定角色','effect-target-many':'最多選擇兩名不同敵方角色','raid-effect-order':'突襲能力結算順序',
+ 'effect-move-order':'選擇同時取得的移動觸發處理順序',
+ 'effect-rest-tuck':'是否 REST 角色，放置剛送至場外的手牌',
+ 'effect-tuck-moved':'可將該場外卡裏向放在自身下方',
  'retirement-order':'同時退場效果的結算順序'
 });
 export function isExactLegal(action,legal){
@@ -118,6 +121,12 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseTopCard':return action.mode==='top'?'保留在牌庫頂':action.mode==='bottom'?'放回牌庫底':'送至場外';
   case 'chooseRaidOrder':return action.mode==='baseFirst'?'先結算突襲底板效果':'先結算突襲登場效果';
   case 'chooseRetirementOrder':return '先結算此退場效果';
+  case 'chooseMoveEffectOrder':return action.key.startsWith('observer-')?
+   '先處理場上角色取得的送場外反應':'先處理已取得的卡片移動能力';
+  case 'chooseRestTuck':return action.mode==='rest'?
+   'REST 此角色，選擇是否放置裏向底牌':'不發動 REST 放置';
+  case 'chooseTuckMoved':return action.uid===null?
+   '不放置裏向底牌':'將剛送場外的牌裏向放在角色下方';
   case 'chooseLifeOrder':return '先處理此公開 LIFE：'+name();
   case 'chooseLifeEffect':return '先結算登場效果：'+uiCardLabel(pack,state,state?.pending?.entries?.find(e=>e.key===action.key)?.sourceUid);
   case 'choosePhaseOrder':return '先結算此階段效果';

@@ -36,6 +36,11 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(!UNIVERSAL_AI_LEVELS.includes(difficulty))throw Error('Unknown universal AI difficulty');
  const legal=legalUniversalActions(pack,s);
  if(!legal.length)return null;
+ if(s.pending?.kind==='effect-move-order')return legal[0];
+ if(s.pending?.kind==='effect-rest-tuck')return
+  legal.find(x=>x.mode===(difficulty==='easy'?'skip':'rest'))||legal[0];
+ if(s.pending?.kind==='effect-tuck-moved')return
+  legal.find(x=>difficulty!=='easy'&&x.uid!==null)||legal[0];
  if(s.pending?.kind==='retirement-order')
   return legal.find(a=>a.type==='chooseRetirementOrder')||legal[0];
  if(s.pending?.kind==='effect-discard')
