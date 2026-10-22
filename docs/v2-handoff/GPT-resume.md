@@ -972,7 +972,7 @@ Raid 的新頂牌是另一個 UID，次數從 0 開始，不繼承底板。沒�
 - `node scripts/v2-integrated-match-matrix.mjs`：60/60 finished，failures 0。
 - `node scripts/v2-assert-independent-manifest.mjs`：bleach 97、gurren-lagann 30、solo-leveling 37、sword-art-online 76、mushoku-tensei 42；total 282。
 - `node scripts/v2-unported-report.mjs`：700／Pilot 282／尚未移植 418／嚴格全面驗收 0。
-- GitHub Actions：這個交接 commit 推上之後，要看它自己的 pull_request run。`39734726291` 只屬於 `e57d8d9`，不能拿來當本輪通過。同一 SHA 若有被 concurrency 取消的 push run，那不是測試失敗。
+- GitHub Actions pull_request run [`39739813788`](https://github.com/will00t-debug/Ua/actions/runs/39739813788)（HEAD `ed654b11c0c0b6fd7abd352da98d9e3f5a36e1ce`、Node v22.23.3）：2026-10-22 15:20（台北時間）開始、15:26 結束，conclusion success。Job `regression` 的日誌是 `npm test` 1601 tests、1601 pass、0 fail、0 skipped；矩陣 `60/60 finished (failures 0)`；獨立 manifest `bleach 97, gurren-lagann 30, solo-leveling 37, sword-art-online 76, mushoku-tensei 42; total 282`；未移植報告 `總卡 700／Pilot 282／尚未移植 418／嚴格全面驗收 0`。同一 SHA 的 push run `39739808141` 被 concurrency 取消，那不是測試失敗。這個結論只屬於 `ed654b1`。其後若再推文件修訂，那個新 SHA 要另看自己的 run。
 
 ### 未完成與下一輪
 
