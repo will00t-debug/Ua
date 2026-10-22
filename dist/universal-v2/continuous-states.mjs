@@ -18,7 +18,7 @@ export function grantContinuousState(s,{kind,controller,sourceUid,targetUid,unti
  if(sourceLinked&&!source)throw Error('Source-linked status needs a live source');
  if(kind==='grantedOnAttack'&&(!Array.isArray(program)||program.length!==1||
   program[0]?.op!=='draw'||program[0]?.count!==1||Object.keys(program[0]).length!==2||
-  optional!==true||sourceLinked||until?.player!==controller||until?.phase!=='attack'||
+  optional!==true||sourceLinked||!player(until?.player)||until?.phase!=='attack'||
   until?.edge!=='end'))throw Error('Invalid granted attack program or expiration');
  if(kind!=='grantedOnAttack'&&(program!==null||optional!==false))
   throw Error('Unknown continuous status program');
@@ -87,7 +87,7 @@ export function validateContinuousStates(s){
    (e.kind==='grantedOnAttack'&&(
      e.optional!==true||!Array.isArray(e.program)||e.program.length!==1||
      e.program[0]?.op!=='draw'||e.program[0]?.count!==1||Object.keys(e.program[0]).length!==2||
-     e.sourceLinked||e.until?.player!==e.controller||e.until?.phase!=='attack'||e.until?.edge!=='end'))||
+     e.sourceLinked||!player(e.until?.player)||e.until?.phase!=='attack'||e.until?.edge!=='end'))||
    (e.kind!=='grantedOnAttack'&&(e.program!==undefined||e.optional!==undefined))||
    (['cannotActive','originalEffectsDisabled','grantedOnAttack'].includes(e.kind)&&(!e.until||!player(e.until.player)||
     !['start','move','main','attack'].includes(e.until.phase)||!['start','end'].includes(e.until.edge)))))

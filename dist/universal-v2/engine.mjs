@@ -455,7 +455,7 @@ function continueEffectQueue(pack,s){
    const grantTo=target=>grantContinuousState(s,{
     kind:'grantedOnAttack',controller:owner,sourceUid:job.sourceUid,
     targetUid:target.uid,sourceLinked:false,optional:job.optional,
-    program:job.then,until:{player:owner,phase:'attack',edge:'end'}
+    program:job.then,until:{player:s.active,phase:'attack',edge:'end'}
    });
    if(job.target==='self')grantTo(source.c);
    else{
@@ -1752,7 +1752,7 @@ function resolveChoice(s,a,pack){
    !source||originalEffectsDisabled(s,source.c))throw Error('Illegal granted attack target');
   grantContinuousState(s,{kind:'grantedOnAttack',controller:q.player,
    sourceUid:q.sourceUid,targetUid:target.uid,sourceLinked:false,
-   until:{player:q.player,phase:'attack',edge:'end'},program:q.program,optional:q.optional});
+   until:{player:s.active,phase:'attack',edge:'end'},program:q.program,optional:q.optional});
   s.pending=null;continueEffectQueue(pack,s);return;
  }
  if(q.kind==='granted-attack-draw'){
