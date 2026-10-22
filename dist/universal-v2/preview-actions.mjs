@@ -141,7 +141,7 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseTopOrder':return '依序放回：'+name();
   case 'chooseRestFrontEnergy':return 'REST '+name()+'，本回合產能＋1';
   case 'chooseOwnBuff':case 'chooseMainBuff':case 'chooseTraitBuff':case 'chooseRestBp':
-  case 'chooseRetireBp':case 'chooseTargetMany':return action.uid===null?'完成目標選擇':'選擇第 '+(s.pending?.selected?.length+1||1)+' 個角色';
+  case 'chooseRetireBp':case 'chooseTargetMany':return action.uid===null?'完成目標選擇':'選擇第 '+(state?.pending?.selected?.length+1||1)+' 個角色';
   case 'chooseTarget':
    return action.uid===null?'不指定／完成':'指定 '+name();
   default:return '執行 '+action.type;
