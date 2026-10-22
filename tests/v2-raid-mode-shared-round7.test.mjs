@@ -15,7 +15,7 @@ const mode={op:'chooseOne',optional:false,options:[
 const defs=Array.from({length:13},(_,i)=>({
  id:'MODE-'+i,name:i===1?'Base':i===2?'Raid':'Character '+i,
  type:'character',color:'yellow',energy:0,ap:1,bp:i===3?2500:4000,gen:1,
- implementation:i<=3?'dsl':'vanilla',
+ implementation:i===0||i===2||i===3?'dsl':'vanilla',
  ...(i===0?{effects:{onPlay:[mode]}}:{}),
  ...(i===2?{raidName:'Base',effects:{onRetire:[{op:'draw',count:1}]}}:{}),
  ...(i===3?{effects:{onRetire:[{op:'draw',count:1}]}}:{})
