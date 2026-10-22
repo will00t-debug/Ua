@@ -60,7 +60,7 @@ for(const owner of [0,1])for(const n of [0,1,2])test('same shared multi BP gramm
  assert.equal(universalBp(packs,s,s.players[foe].front[2]),1500);
  assert.equal(universalPublicView(packs,s,foe).players[owner].hand,null);
  assert.equal(assertUniversalMatch(packs,s),true);
-}));
+});
 test('unknown, unbounded and non-optional dual-target profiles reject at pack boundary',()=>{
  const base=cards[0];for(const e of [
   {op:'enemyBpDown',bp:1500,maxTargets:3,optional:true},
