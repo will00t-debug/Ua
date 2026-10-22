@@ -7,7 +7,7 @@ export const V2_CARD_TYPES=Object.freeze(['character','event','field']);
 export const V2_TRIGGERS=Object.freeze(['draw','get','final','active','special','color','raid']);
 export const V2_EFFECT_TIMINGS=Object.freeze(['onPlay','onRaid','onAttack','onRaided','onRetire','onOutsideRecover']);
 export const V2_EFFECT_OPS=Object.freeze(['draw','drawIfOwnName','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','retireOwnFieldOne','retireOwnCharacterOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw','searchDeckMany','discardGate','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
- 'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideColorUnderEnergy','recoverOutsideTraitlessUnderEnergy','buffOwnField','oncePerTurnGate','chooseOne']);
+ 'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideColorUnderEnergy','recoverOutsideTraitlessUnderEnergy','deployOutsideRest','buffOwnField','oncePerTurnGate','chooseOne']);
 const integer=(v,low=0)=>Number.isInteger(v)&&v>=low;
 const own=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
 function verifyProgram(program,path){
@@ -56,6 +56,13 @@ function verifyProgram(program,path){
    Object.keys(e).length!==3||
    Object.keys(e).some(k=>!['op','energy','optional'].includes(k))
   ))throw Error(path+'['+i+'] invalid traitless printed-energy recovery');
+  if(e.op==='deployOutsideRest'&&(
+   typeof e.name!=='string'||!e.name.trim()||e.name.length>80||
+   typeof e.color!=='string'||!e.color.trim()||
+   !integer(e.energy)||e.energy>30||!integer(e.ap,1)||e.ap>3||
+   e.optional!==true||Object.keys(e).length!==6||
+   Object.keys(e).some(k=>!['op','name','color','energy','ap','optional'].includes(k))
+  ))throw Error(path+'['+i+'] invalid outside-to-REST character');
   if(e.op==='searchDeckWhere'){
    if(!Array.isArray(e.filters)||e.filters.length<2||e.filters.length>3||
     e.filters.some(f=>!f||typeof f!=='object'||Array.isArray(f)||
@@ -110,7 +117,7 @@ function verifyProgram(program,path){
      Object.keys(o).some(k=>!['id','label','turn','then'].includes(k))||
      o.then.some(x=>!['draw','drawDiscard','buffOwnField',
       'recoverOutsideOne','recoverOutsideTraitlessUnderEnergy','buffSelf',
-       'stripOppRaidTop','retireOppFrontOneUnderBp'].includes(x?.op)))
+       'stripOppRaidTop','retireOppFrontOneUnderBp','discardGate'].includes(x?.op)))
      throw Error(path+'['+i+'] invalid choose-one option');
     seen.add(o.id);
     // Reuse established nested effect verification AND reject stray fields
@@ -136,7 +143,7 @@ function verifyProgram(program,path){
     Object.keys(e).some(k=>!['op','optional','then'].includes(k))||
     e.then.some(x=>!['draw','millTop','peekTopOne','searchDeckOne',
      'searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside',
-      'peekTopOrBottom','recoverOutsideOne',
+      'peekTopOrBottom','recoverOutsideOne','deployOutsideRest',
      'enemyBpDown','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
      'recoverOutsideColorUnderEnergy','buffOwnField',
      'restOppFrontUnderBp','restOppFrontOne'].includes(x?.op)))
@@ -498,8 +505,11 @@ function normalize(card,packId){
   if(name==='onRaided'&&program.some(e=>!['buffOwnTrait','drawIfRaidUnderFacedown'].includes(e.op)))
    throw Error(card.id+' unsupported Raid-base timing effect');
   if(name==='onRetire'&&
-   (!['character','field'].includes(card.type)||program.some(e=>!['draw','millTop','drawIfOwnFieldExists'].includes(e.op))))
+   (!['character','field'].includes(card.type)||program.some(e=>!['draw','millTop','drawIfOwnFieldExists','chooseOne'].includes(e.op))))
    throw Error(card.id+' unsupported onRetire ability program');
+  if(name==='onRetire'&&program.some(e=>e.op==='chooseOne')&&
+   (program.length!==1||card.type!=='field'))
+   throw Error(card.id+' only FIELD may use retirement two-mode choice');
   if(name!=='onRetire'&&program.some(e=>e.op==='drawIfOwnFieldExists'))
    throw Error(card.id+' FIELD-gated draw requires onRetire');
   // Card-self triggered ability for a physical card recovered from OWN
