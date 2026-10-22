@@ -64,3 +64,12 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
  if(remaining)return remaining.size===0;
  return condition.kind==='ownTraitCount'&&found>=condition.min;
 }
+
+// A history of real field-to-OUTSIDE retirements, not current outside count.
+// This is private internal state; public snapshots do not expose the UIDs.
+export function retiredThisTurn(s,controller,cardType='any'){
+ if(![0,1].includes(controller)||!['any','field','character'].includes(cardType))
+  throw Error('Invalid true-retirement predicate');
+ return (s.turnRetireEvents||[]).some(e=>e.turn===s.turn&&e.controller===controller&&
+  (cardType==='any'||e.cardType===cardType));
+}

@@ -199,6 +199,7 @@ function startTurn(pack,s){
  // A NEW turn resets both players' previous turn-scoped movement history.
  s.turnEffectZoneMoves=[{handToOutside:false,outsideToHand:false},
   {handToOutside:false,outsideToHand:false}];
+ s.turnRetireEvents=[]; // Turn boundary clears history for both controllers.
  const max=pl.ownTurns>=3?3:(pl.ownTurns===1&&p===s.first?1:2);
  for(let i=0;i<pl.apCards.length;i++){pl.apCards[i].inPlay=i<max;pl.apCards[i].ready=i<max;}
  refreshFieldActive(s,p);
@@ -563,6 +564,13 @@ function vacate(s,p,line,slot,destination='outside'){
  const expand=c=>[c,...(c.stack||[]).flatMap(expand),...(c.under||[]).flatMap(expand)];
  s.players[p][destination].push(...expand(top).map(c=>({...c,stack:[],under:[],buffs:[],ready:false,faceDown:false,fieldEntryStamp:null})));
 }
+function recordTrueRetirement(pack,s,controller,physical,line){
+ // One completed field object, not the hidden layers of a Raid stack.
+ const cardType=card(pack,physical).type;
+ if(cardType!=='character'&&cardType!=='field')throw Error('Only field objects retire');
+ s.turnRetireEvents.push({turn:s.turn,controller,cardType,uid:physical.uid,
+  line,fieldEntryStamp:physical.fieldEntryStamp??null});
+}
 function queueRetirement(pack,s,p,c,line){
  // Capture the source before moving to outside. Only GENUINE retirement
  // queues onRetire; bounce, removed area and stripping a Raid top do not.
@@ -583,6 +591,7 @@ function retire(pack,s,p,line,slot,{postImpact=false}={}){
  }
  queueRetirement(pack,s,p,c,line);
  vacate(s,p,line,slot,'outside');
+ recordTrueRetirement(pack,s,p,c,line);
  return false;
 }
 // Full lines are allowed, but replacement is a mandatory explicit choice.
@@ -684,6 +693,7 @@ function resolveChoice(s,a,pack){
   }else if(a.mode==='leave'){
     if(q.destination==='outside')queueRetirement(pack,s,q.player,loc.c,q.line);
     vacate(s,q.player,q.line,q.slot,q.destination);
+    if(q.destination==='outside')recordTrueRetirement(pack,s,q.player,loc.c,q.line);
    }
   else throw Error('Invalid leave replacement option');
   s.pending=null;
@@ -1132,7 +1142,7 @@ export function newUniversalMatch(pack,{decks,seed=1,first=0}={}){
   raidedThisTurn:[false,false],mainAbilityUsedUids:[],mainReadyOnceByName:[[],[]],
   onceEffectUses:[[],[]],
   turnEffectZoneMoves:[{handToOutside:false,outsideToHand:false},
-   {handToOutside:false,outsideToHand:false}],
+   {handToOutside:false,outsideToHand:false}],turnRetireEvents:[],
   initialCounts:decks.map(d=>Object.fromEntries(Object.entries(d).filter(([,n])=>n>0)))
  };
  for(let p=0;p<2;p++){
@@ -1608,6 +1618,14 @@ export function assertUniversalMatch(pack,s){
    Object.keys(x).length!==2||typeof x.handToOutside!=='boolean'||
    typeof x.outsideToHand!=='boolean'))
   throw Error('Invalid own-effect movement ledger');
+ if(!Array.isArray(s.turnRetireEvents)||s.turnRetireEvents.some(e=>
+  !e||e.turn!==s.turn||!playerIndex(e.controller)||
+  !['character','field'].includes(e.cardType)||
+  !['front','energy'].includes(e.line)||
+  typeof e.uid!=='string'||!e.uid.startsWith(e.controller+'-')||
+  !(e.fieldEntryStamp===null||Number.isInteger(e.fieldEntryStamp)&&e.fieldEntryStamp>0)||
+  Object.keys(e).some(k=>!['turn','controller','cardType','uid','line','fieldEntryStamp'].includes(k))))
+  throw Error('Invalid true-retirement history');
  if(!Array.isArray(s.onceEffectUses)||s.onceEffectUses.length!==2||
   s.onceEffectUses.some(x=>!Array.isArray(x)||
    x.some(v=>typeof v!=='string')||new Set(x).size!==x.length))

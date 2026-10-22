@@ -70,6 +70,10 @@ test('printed MST-075 FIELD onRetire draws once ONLY after true retirement, not 
   let {s,field,handBefore}=ready(false);
   s=dispatchUniversalAction(packs,s,{type:'chooseOwnFieldRetire',uid:yes?field.uid:null});
   assert.equal(s.players[0].energy[0]===null,yes);
+  assert.equal(s.turnRetireEvents.length,yes?1:0);
+  if(yes)assert.deepEqual(s.turnRetireEvents[0],{
+   turn:s.turn,controller:0,cardType:'field',uid:field.uid,
+   line:'energy',fieldEntryStamp:null});
   assert.equal(s.players[0].outside.some(c=>c.uid===field.uid),yes);
   // The fixture event is spent; exactly one printed draw for real FIELD retirement.
   assert.equal(s.players[0].hand.length,handBefore-1+(yes?1:0));
@@ -100,5 +104,21 @@ test('full-energy replacement removes the printed FIELD instead of falsely firin
  assert.equal(s.players[0].removed.some(c=>c.uid===field.uid),true);
  assert.equal(s.players[0].outside.some(c=>c.uid===field.uid),false);
  assert.equal(s.players[0].hand.length,hand-1);
+ assert.equal(s.turnRetireEvents.length,0,'REMOVED cannot count as retirement');
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
+
+test('Batch A: ledger preserves same-turn history, resets at next turn, rejects forged prior-turn records',()=>{
+ let {s,field}=ready(false);
+ s=dispatchUniversalAction(packs,s,{type:'chooseOwnFieldRetire',uid:field.uid});
+ assert.equal(s.turnRetireEvents.length,1);
+ s=dispatchUniversalAction(packs,s,{type:'next'});
+ assert.equal(s.turnRetireEvents.length,1);
+ s=dispatchUniversalAction(packs,s,{type:'next'});
+ assert.equal(s.active,1);
+ assert.deepEqual(s.turnRetireEvents,[]);
+ const forged=structuredClone(s);forged.turnRetireEvents.push({turn:s.turn-1,
+  controller:0,cardType:'field',uid:field.uid,line:'energy',fieldEntryStamp:null});
+ assert.throws(()=>assertUniversalMatch(packs,forged),/Invalid true-retirement history/);
  assert.equal(assertUniversalMatch(packs,s),true);
 });
