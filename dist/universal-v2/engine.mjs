@@ -2408,7 +2408,8 @@ export function assertUniversalMatch(pack,s){
   s.nextZoneMoveOrder<1||s.zoneMoveEvents.some((e,i,a)=>
    !e||!Number.isInteger(e.order)||e.order<1||
    (i>0&&a[i-1].order>=e.order)||e.order>=s.nextZoneMoveOrder||
-   e.turn!==s.turn||![0,1].includes(e.owner)||![0,1].includes(e.controller)||
+   (!Number.isInteger(e.turn)||e.turn<0||e.turn>s.turn)||
+   ![0,1].includes(e.owner)||![0,1].includes(e.controller)||
    typeof e.uid!=='string'||!e.uid.startsWith(e.owner+'-')||
    typeof e.cardId!=='string'||!e.cardId||
    !['hand','deck','life','outside','front','energy','removed','raid-under'].includes(e.from)||

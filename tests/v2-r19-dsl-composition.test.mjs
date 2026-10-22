@@ -63,13 +63,17 @@ test('existing choice, paid discard, once-name optional and queued draw compose 
  s=dispatchUniversalAction(packs,s,{type:'chooseEffectMode',mode:'pay'});
  assert.equal(s.pending?.kind,'effect-discard-gate');
  aiLegal(s);
+ const beforeSkip=s.zoneMoveEvents.length;
  const empty=dispatchUniversalAction(packs,s,{type:'chooseDiscardGate',uid:null});
- assert.equal(empty.zoneMoveEvents.length,0,'skipping cost must never produce a move');
+ assert.equal(empty.zoneMoveEvents.length,beforeSkip,
+  'skipping cost must never add an event beyond the already recorded legal play');
  assert.equal(empty.pending?.kind,'effect-once-choice');
  const paidUID=legalUniversalActions(packs,s).find(a=>a.uid!==null).uid;
  s=dispatchUniversalAction(packs,s,{type:'chooseDiscardGate',uid:paidUID});
- assert.equal(s.zoneMoveEvents.length,1);
- const move=s.zoneMoveEvents[0];
+ const payments=s.zoneMoveEvents.filter(e=>e.reason==='payment'&&
+  e.from==='hand'&&e.to==='outside');
+ assert.equal(payments.length,1);
+ const move=payments[0];
  assert.deepEqual([move.uid,move.from,move.to,move.reason,move.sourceUid,move.sourceCardId],
   [paidUID,'hand','outside','payment',source.uid,'X00']);
  assert.equal(s.pending?.kind,'effect-once-choice');
@@ -86,7 +90,7 @@ test('declining first mode or paid gate never skips required once-choice priorit
  let {s}=open();
  s=dispatchUniversalAction(packs,s,{type:'chooseEffectMode',mode:'skip'});
  assert.equal(s.pending.kind,'effect-once-choice');
- assert.equal(s.zoneMoveEvents.length,0);
+ assert.equal(s.zoneMoveEvents.some(e=>e.reason==='payment'),false);
  s=dispatchUniversalAction(packs,s,{type:'chooseOnceEffect',mode:'skip'});
  assert.equal(s.pending,null);
  assert.deepEqual(s.onceEffectUses[0],[]);
