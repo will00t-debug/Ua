@@ -1006,6 +1006,58 @@ const PRINTED_PINS=Object.freeze({
     "traits": ["整合騎士"],
     "effectJa": "このカードは〈ユージオ〉としても扱う。\n【登場時】カードを1枚引き、自分の手札を1枚場外に置く。"
   },
+  "SAO-1-010": {
+    "kind": "nameAliasOnly",
+    "nameJa": "アリス・シンセシス・サーティ",
+    "color": "yellow",
+    "energy": 0,
+    "ap": 1,
+    "bp": 1500,
+    "gen": 1,
+    "type": "character",
+    "trigger": "get",
+    "traits": ["整合騎士"],
+    "effectJa": "このカードは〈アリス〉としても扱う。"
+  },
+  "SAO-1-011": {
+    "kind": "nameAliasStep",
+    "nameJa": "アリス・シンセシス・サーティ",
+    "color": "yellow",
+    "energy": 1,
+    "ap": 1,
+    "bp": 2500,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "traits": ["整合騎士"],
+    "effectJa": "このカードは〈アリス〉としても扱う。\n【ステップ】（自分の移動フェイズにフロントLからエナジーLへ移動できる）"
+  },
+  "SAO-2-003": {
+    "kind": "nameAliasOnly",
+    "nameJa": "キリト＆ユージオ",
+    "color": "yellow",
+    "energy": 3,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 2,
+    "type": "character",
+    "trigger": "draw",
+    "traits": [],
+    "effectJa": "このカードは〈キリト〉としても〈ユージオ〉としても扱う。"
+  },
+  "SAO-2-051": {
+    "kind": "nameAliasOnly",
+    "nameJa": "兎沢 深澄",
+    "color": "purple",
+    "energy": 0,
+    "ap": 1,
+    "bp": 1500,
+    "gen": 1,
+    "type": "character",
+    "trigger": "get",
+    "traits": ["プログレッシブ"],
+    "effectJa": "このカードは〈ミト〉としても扱う。"
+  },
   "SAO-2-055": {
     "kind": "nameAliasDrawDiscard",
     "nameJa": "結城 明日奈",
@@ -1072,10 +1124,17 @@ export function verifiedSaoV2Cards(){
    card.readyOnBlockCount=1;
    card.effects={};
   }
-  if(pin.kind==='nameAliasDrawDiscard'){
-   card.nameAliases={'SAO-2-007':['ユージオ'],'SAO-2-055':['アスナ']}[id];
+  if(pin.kind==='nameAliasDrawDiscard'||pin.kind==='nameAliasOnly'||pin.kind==='nameAliasStep'){
+   card.nameAliases={
+    'SAO-2-007':['ユージオ'],'SAO-2-055':['アスナ'],
+    'SAO-1-010':['アリス'],'SAO-1-011':['アリス'],
+    'SAO-2-003':['キリト','ユージオ'],'SAO-2-051':['ミト']
+   }[id];
    if(!card.nameAliases)throw Error(id+' missing printed name alias');
-   card.templateEffects={onPlay:[{template:'drawDiscardOne'}]};
+   if(pin.kind==='nameAliasStep')card.step=true;
+   if(pin.kind==='nameAliasDrawDiscard')
+    card.templateEffects={onPlay:[{template:'drawDiscardOne'}]};
+   else card.effects={};
   }
   if(pin.kind==='frontOnceBpDown'||pin.kind==='frontOnceDiscardBpDown'){
    const debuff={op:'enemyBpDown',bp:1000,optional:false,minBp:1500,
@@ -1186,7 +1245,8 @@ export function verifiedSaoV2Entries(){
      ...(pin.kind==='onPlayTopFilterBottomDiscard'?['tests/v2-cross-title-top-filter-round13.test.mjs']:[]),
      ...(pin.kind==='readyOnFirstBlock'?['tests/v2-ready-on-block-round14.test.mjs']:[]),
      ...(pin.kind==='frontOnceBpDown'||pin.kind==='frontOnceDiscardBpDown'?['tests/v2-single-bp-target-round14.test.mjs']:[]),
-     ...(pin.kind==='nameAliasDrawDiscard'?['tests/v2-name-alias-round14.test.mjs']:[]),
+     ...(pin.kind==='nameAliasDrawDiscard'||pin.kind==='nameAliasOnly'||pin.kind==='nameAliasStep'?['tests/v2-name-alias-round14.test.mjs']:[]),
+     ...(pin.kind==='nameAliasOnly'||pin.kind==='nameAliasStep'?['tests/v2-zero-engine-round14.test.mjs']:[]),
      'tests/universal-v2-sao-mst-cross-title.test.mjs'
     ]),
     ...(def.implementation==='vanilla'?{verifiedNoExtraEffects:true}:{})

@@ -93,7 +93,7 @@ test('SAO official 202 printings deduplicate to 183 IDs; IDs outside the manifes
   assert.ok(SAO_OFFICIAL_CARDS.find(r=>r.id===id),'SAO source '+id);
  const registry=registeredV2TitlePack('sword-art-online');
  assert.equal(Object.keys(registry.cards).length,EXPECTED_V2_COUNTS['sword-art-online']);
- for(const id of ['SAO-2-063','SAO-2-044','SAO-2-003'])
+ for(const id of ['SAO-2-063','SAO-2-044','SAO-1-012'])
   assert.equal(registry.cards[id],undefined,'not yet full-effect V2 '+id);
 });
 test('MST all 80 official Japanese records are available separately from old placeholder master',()=>{
