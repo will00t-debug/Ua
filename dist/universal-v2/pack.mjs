@@ -390,9 +390,10 @@ function verifyProgram(program,path){
    Object.keys(e).some(k=>!['op','bp','optional','minBp','maxBp','zone','maxTargets'].includes(k))
   ))throw Error(path+'['+i+'] invalid optional targeting flag');
   if(e.op==='activeSelfIf'&&(
-   (e.when===undefined&&e.entry===undefined)||
+   (e.when===undefined&&e.entry===undefined&&e.line===undefined)||
    (e.entry!==undefined&&e.entry!=='ownEffect')||
-   Object.keys(e).some(k=>!['op','when','entry'].includes(k))
+   (e.line!==undefined&&!['front','energy'].includes(e.line))||
+   Object.keys(e).some(k=>!['op','when','entry','line'].includes(k))
   ))throw Error(path+'['+i+'] invalid conditional ACTIVE entry');
   if(e.op==='activeSelfIf'&&e.when!==undefined)
    assertLiveCondition(e.when,path+'['+i+'].when');
