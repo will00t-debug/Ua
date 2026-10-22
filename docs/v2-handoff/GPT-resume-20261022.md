@@ -305,3 +305,50 @@
 - 完整程式範圍、具體 commits、限制、下輪目標見 **[V2-R22-damage2-raid-movement.md](./V2-R22-damage2-raid-movement.md)**。對 R21 文件中「Q73 未整合」的敘述，應視為**當時歷史狀態**而非這輪最新現況。
 
 **剩餘實質缺口：** Q38 同次 LIFE 已進場後 newly-generated onPlay 對其他未處理 Trigger 的**動態選擇交錯次序**尚未完整官方驗證；巢狀重入 LIFE batch 目前 fail-closed；真退場 `vacate` 埋底、裏向保護消耗，以及少數移除實體來源路徑仍未完全 journal；BLC-2-019/047 **尚未全卡移植**，不可擅自登錄。卡牌數未變，原清單 **312/700**、未登錄 388，今後須即時重算。此輪只動 PR #78 分支，不合併 main、不修改 #77、不部署正式站、不 force push。
+
+
+## GPT 第二十三輪｜Q38 動態排序、LIFE 重入護欄、Raid／裏向移動（2026-10-22）
+
+本段為最新狀態，覆蓋 R22 的「所有 Raid 底板跟頂牌一起除外」預期。
+沿用 Draft PR #78，`gpt/v2-resume-20261022` → `cursor/v2-multi-retire-life-6ff5`。
+起始 HEAD `d4e7df1a75e57e96879b2d6a02c82f17ef2275ea` 的 Actions
+39780840034 已核對成功。此輪成功本地 clone，沒有既有未提交修改；遠端
+ref 每次更新帶 expected SHA 且 force=false。沒有變更 Cursor PR #77/main，沒有部署。
+
+### 提交與驗收
+
+| 批次 | GitHub commit | 實際完成 |
+|---|---|---|
+| A | `2ca2dd2e8cde6d556c61f06b6b60e150463e0b60` | Q38 COLOR／RAID 新登場完整程式加入原 lifeBatchStep.entries，可與剩餘 LIFE 自選；維持 Q73 原子公開。Actions 39783245996 success。 |
+| B | `8be66387128b310327015927a8daded7df694489` | 連鎖 LIFE 未全面開放；補 single damage 不得繞過現有 batch 護欄、狀態不變反例與序列化來源檢查。Actions 39783462055 success。 |
+| C | `7063c1656783dc19dd5d87fab0102077c32b74e7` | vacate 真正底層 UID 移動紀錄；Q60/Q61 底板進 outside，僅頂牌依指定目的區域移動／真正退場。首次 CI 39784297026 failure：舊測試仍期待底板 removed。 |
+| D | `aa7bec926866379e43b25db367f1d7f09cd1ed13` | 裏向保護消耗與 rule cleanup 分開，記錄 attachedToUid、wasFaceDown、identityViewersBefore；實際 TTG073 vs BLEACH 驗收。首次 CI 39784693233 同樣因舊 Q61 預期 failure。 |
+| C/D 回歸修正＋E 評估 | `266e7209879dc8201ef076b7a84b88e46fde9548` | 保留三個舊測試全部 AP／UID／pending 檢查，改正底板 outside 預期；官方 BLC 全能力缺口表。Actions 39784988524 success。 |
+| A 人類選擇顯示 | `e70de995abb26cfdb7ece0ab8a8a5f5adb623f4a` | 顯示公開 LIFE 與新登場來源卡名。Actions 39785139959 regression 全部步驟 success。 |
+
+**最後程式驗收 SHA：`e70de995abb26cfdb7ece0ab8a8a5f5adb623f4a`**。
+[GitHub Actions 39785139959](https://github.com/will00t-debug/Ua/actions/runs/39785139959)：
+Node 22 npm test、五作品矩陣、獨立 manifest、未移植報告全部 success。
+本地 Node **22.23.4**：`npm test` **1734/1734 PASS**；矩陣 **60/60，0 failures**；
+manifest/report 通過。最後顯示文字修正後另有 15/15 預覽測試及完整 1734/1734 通過。
+本地測試版本樹與 GitHub 程式樹相同（`6f615de9869e6be577898979b260e8c1ddd9cc63`）；
+shell git push 缺憑證，改用已授權 GitHub object/ref 工具逐批提交，並安全同步本地到遠端 HEAD。
+無手動手機／瀏覽器視覺驗收。後續純文件 HEAD 的 CI 應分開確認，不能冒充程式 SHA 結果。
+
+最新盤點：BLEACH **97/276**、TTG **35/81**、SLG **41/80**、SAO **91/183**、MST **48/80**；
+共 **312/700**，未移植 **388**；本輪正式新增 **0**，全面逐卡 FAQ 認證 **0**。
+
+### 官方結論與尚未完成
+
+- Q35/Q36/Q38/Q71/Q72/Q73 已重新核對；Q38 確認新登場效果可與未處理 LIFE 自選，且仍在 trigger check。
+  已實作同防守者 COLOR／RAID 完整 entry block 的排序、合法 action、Normal/Hard AI、暫停與恢復。
+  **不是全面 Q38 認證**：跨玩家新效果、SPECIAL/onRetire 動態交錯、獨立 onRaid/onPlay 排序仍未完整驗證。
+- **連鎖 LIFE 尚未安全全面支援**，不擴充第二套 queue 或 reducer。已補 single-damage 重入拒絕、狀態保存反例及後續模型要求。
+- Q61 明確：Raid 頂牌除外時底板送場外。R22 舊報告與舊測試在此有誤，R23 修正。
+  底板移動不算退場；裏向消耗不算退場；消耗後頂牌 BP 歸零是另一筆真正退場。
+  日誌序號不是官方同時移動中的可選先後裁定。未新增未驗證多層 Raid 合法幾何。
+- BLC-2-019／047 **仍未正式登錄**。重新核對 Q1033/Q1046/Q2315 與卡文，保留完整命名棄牌成本、
+  雙 BP 目標、授予 onAttack、完整 Raid／Trigger 與場外再埋底資格的全卡驗收缺口。
+- 下一輪優先：跨玩家 Q38/SPECIAL 時序與連鎖傷害官方依據；再做嚴格名稱支付與授予攻擊能力。
+
+詳細規則時序、覆蓋與 BLC gate：`docs/v2-handoff/V2-R23-Q38-and-hidden-moves.md`。
