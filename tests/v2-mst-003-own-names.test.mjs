@@ -66,7 +66,7 @@ test('official JP MST-003 text, DRAW Life and immutable generic AND-name conditi
   names:['ルーデウス','ルイジェルド']},bp:1000}]);
  assert.deepEqual(compiled.effects,{});
  assert.ok(Object.isFrozen(compiled.passiveBonuses));
- assert.equal(Object.keys(mst.cards).length,35);
+ assert.equal(Object.keys(mst.cards).length,37);
  assert.deepEqual(validateUniversalDeck(mst,mstDeck),[]);
  assert.deepEqual(validateUniversalDeck(sao,saoDeck),[]);
 });
