@@ -21,6 +21,7 @@ const entries=Array.from({length:13},(_,i)=>({
  ...(i===7?{printedAttackDamage:2}:{}),
  ...(i===8?{trigger:'final'}:{}),
  ...(i===0?{trigger:'color',
+  effects:{onPlay:[{op:'activeSelfIf',line:'energy'}]},
   triggerEffect:{op:'bounceOppFrontUnderBp',bp:3500},
   moveObserver:{op:'restSelfTuckMovedFaceDown',when:{
    from:'hand',to:'outside',reasons:['payment','own-effect'],
@@ -178,3 +179,42 @@ for(const finalFirst of [false,true])
   assert.equal(universalPublicView(packs,s,1).players[0].hand,null);
   assert.equal(assertUniversalMatch(packs,s),true);
  });
+
+
+// R30 official EX15BT/BLC-4-034: onPlay ACTIVE applies ONLY if she was
+// entered into ENERGY. No unconditional front activation, no invented MAIN.
+for(const owner of [0,1])for(const line of ['energy','front'])
+ test('R30 authentic 034 energy-line-specific onPlay ACTIVE owner '+owner+' line '+line,()=>{
+  let s=newUniversalMatch(packs,{decks:[deck,deck],first:owner,seed:30340});
+  const liruka=take(s,owner,'BLC-4-034');
+  s.players[owner].hand.push(liruka);
+  for(let i=0;i<4&&s.phase!=='main';i++){
+   const action=legalUniversalActions(packs,s).find(a=>a.type==='next');
+   assert.ok(action,'main must be reached using legal turn transitions');
+   s=dispatchUniversalAction(packs,s,action,{actor:owner});
+  }
+  assert.equal(s.phase,'main');
+  const legal=legalUniversalActions(packs,s);
+  const play=legal.find(a=>a.type==='play'&&a.uid===liruka.uid&&a.line===line);
+  assert.ok(play,'zero-energy printed character must be AP-paid legal on chosen line');
+  const beforeAP=s.players[owner].apCards.filter(x=>x.ready).length;
+  s=dispatchUniversalAction(packs,s,play,{actor:owner});
+  assert.equal(s.players[owner].apCards.filter(x=>x.ready).length,beforeAP-1);
+  const active=s.players[owner][line].find(c=>c?.uid===liruka.uid);
+  assert.ok(active);
+  assert.ok(Number.isInteger(active.fieldEntryStamp)&&active.fieldEntryStamp>=1);
+  assert.equal(active.ready,line==='energy','only ENERGY-line onPlay makes this card ACTIVE');
+  assert.equal(s.pending,null);
+  assert.equal(assertUniversalMatch(packs,s),true);
+ });
+test('R30 typed ACTIVE entry rejects unknown line, missing condition and forged key',()=>{
+ const source=entries[0];
+ for(const bad of [{op:'activeSelfIf',line:'outside'},
+  {op:'activeSelfIf',line:'raid-under'},
+  {op:'activeSelfIf',line:'energy',unlockAll:true},
+  {op:'activeSelfIf'}]){
+  assert.throws(()=>createUniversalPack({id:'r30-invalid-active',cards:[
+   {...source,effects:{onPlay:[bad]}}
+  ]}),/invalid conditional ACTIVE entry/i);
+ }
+});
