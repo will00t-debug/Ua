@@ -940,6 +940,32 @@ const PRINTED_PINS=Object.freeze({
     "trigger": "draw",
     "traits": ["ALO"],
     "effectJa": "【登場時】自分の山札の上から3枚見る。その中から緑の［特徴：ALO］を1枚まで公開し手札に加える。残りを望む順で自分の山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。"
+  },
+  "SAO-1-038": {
+    "kind": "readyOnFirstBlock",
+    "nameJa": "エギル",
+    "color": "blue",
+    "energy": 1,
+    "ap": 1,
+    "bp": 2500,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "traits": ["アインクラッド"],
+    "effectJa": "【2回ブロック】（このキャラがこのターン初めてブロックした時、アクティブにする）"
+  },
+  "SAO-1-072": {
+    "kind": "readyOnFirstBlock",
+    "nameJa": "クライン",
+    "color": "green",
+    "energy": 3,
+    "ap": 1,
+    "bp": 3500,
+    "gen": 1,
+    "type": "character",
+    "trigger": "draw",
+    "traits": ["ALO"],
+    "effectJa": "【2回ブロック】（このキャラがこのターン初めてブロックした時、アクティブにする）"
   }
 });
 export const SAO_V2_PILOT_IDS=Object.freeze(Object.keys(PRINTED_PINS).sort());
@@ -990,6 +1016,10 @@ export function verifiedSaoV2Cards(){
     zone:'field',excludeSelf:true,name:'シリカ'},bp:2000}];
   if(pin.kind==='onRetireDrawOne')
    card.effects={onRetire:[{op:'draw',count:1}]};
+  if(pin.kind==='readyOnFirstBlock'){
+   card.readyOnBlockCount=1;
+   card.effects={};
+  }
   if(pin.kind==='onPlayDraw')
    card.templateEffects={onPlay:[{template:'draw',count:1}]};
   if(pin.kind==='onPlayDrawDiscard')
@@ -1088,6 +1118,7 @@ export function verifiedSaoV2Entries(){
      ...(pin.kind==='impactNullOwnTurnHandFiveBp1000'?['tests/v2-sao-051-hand-impact-null.test.mjs']:[]),
      ...(pin.kind==='ownTurnSilicaFieldBp'?['tests/v2-sao-019-own-silica-bp.test.mjs']:[]),
      ...(pin.kind==='onPlayTopFilterBottomDiscard'?['tests/v2-cross-title-top-filter-round13.test.mjs']:[]),
+     ...(pin.kind==='readyOnFirstBlock'?['tests/v2-ready-on-block-round14.test.mjs']:[]),
      'tests/universal-v2-sao-mst-cross-title.test.mjs'
     ]),
     ...(def.implementation==='vanilla'?{verifiedNoExtraEffects:true}:{})

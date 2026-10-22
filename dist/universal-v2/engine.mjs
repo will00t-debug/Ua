@@ -212,7 +212,7 @@ function queuePhaseBoundary(pack,s,phase,edge,turnPlayer){
 function startTurn(pack,s){
  const p=s.active,pl=s.players[p];
  pl.ownTurns++;s.turn++;s.phase='start';s.extraDrawn=false;s.moved=false;s.movedUids=[];s.pending=null;s.attacksThisTurn=0;
- s.attacksByUid={};
+ s.attacksByUid={};s.blocksByUid={};
  s.endRefreshed=false;
  expireContinuousStates(s,{player:p,phase:'start',edge:'start'});
  s.raidedThisTurn=[false,false];s.mainAbilityUsedUids=[];s.mainReadyOnceByName=[[],[]];
@@ -819,6 +819,14 @@ function resolveChoice(s,a,pack){
   const slot=p.front.findIndex(c=>c?.uid===a.uid);
   if(slot<0||!p.front[slot].ready)throw Error('Illegal blocker');
   const blocker=p.front[slot];blocker.ready=false;
+  // Official Q79/Q80 (2023-03-17): 【2回ブロック】 designates the blocker,
+  // rests it, then sets it ACTIVE before battle. A loss therefore leaves
+  // while ACTIVE. This count is per physical UID and is not the attack count.
+  const blocked=(s.blocksByUid[blocker.uid]||0)+1;
+  s.blocksByUid[blocker.uid]=blocked;
+  const blockKeyword=card(pack,blocker).readyOnBlockCount;
+  if(blockKeyword&&blocked===blockKeyword&&!originalEffectsDisabled(s,blocker))
+   attemptFieldActive(s,q.player,blocker);
   if(bp(pack,s,attacker)>=bp(pack,s,blocker)){
    const impact=impactOnBattleWin(pack,s,attacker)>0&&
     !card(pack,blocker).impactNull;
@@ -1388,7 +1396,7 @@ export function newUniversalMatch(pack,{decks,seed=1,first=0}={}){
  const s={version:UNIVERSAL_V2_VERSION,title:isSame?packs[0].id:'cross-title',packVersion:isSame?packs[0].version:null,
   packIds:packs.map(p=>p.id),packVersions:packs.map(p=>p.version),
   rng:(seed>>>0)||1,first,active:first,turn:0,phase:'start',status:'playing',
-  winner:null,endReason:null,pending:null,extraDrawn:false,moved:false,movedUids:[],attacksThisTurn:0,attacksByUid:{},
+  winner:null,endReason:null,pending:null,extraDrawn:false,moved:false,movedUids:[],attacksThisTurn:0,attacksByUid:{},blocksByUid:{},
   publicReveals:[],effectQueue:[],delayedEffects:[],retirementBatch:null,nextFieldEntryStamp:1,
   continuousStates:[],nextContinuousStateId:1,endRefreshed:false,players:[],
   raidedThisTurn:[false,false],mainAbilityUsedUids:[],mainReadyOnceByName:[[],[]],
@@ -1980,6 +1988,11 @@ export function assertUniversalMatch(pack,s){
  for(const [uid,n] of Object.entries(s.attacksByUid))
   if(typeof uid!=='string'||!uid.includes('-')||!Number.isInteger(n)||n<1||n>50)
    throw Error('Invalid per-card attack count');
+ if(!s.blocksByUid||typeof s.blocksByUid!=='object'||Array.isArray(s.blocksByUid))
+  throw Error('Invalid per-card block count');
+ for(const [uid,n] of Object.entries(s.blocksByUid))
+  if(typeof uid!=='string'||!uid.includes('-')||!Number.isInteger(n)||n<1||n>50)
+   throw Error('Invalid per-card block count');
  validateContinuousStates(s);
  if(typeof s.endRefreshed!=='boolean')throw Error('Invalid end refresh flag');
  if(!Number.isInteger(s.nextFieldEntryStamp)||s.nextFieldEntryStamp<1||

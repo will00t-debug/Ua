@@ -504,14 +504,17 @@ function normalize(card,packId){
  if(card.readyOnAttackCount!==undefined&&(
   card.type!=='character'||card.readyOnAttackCount!==1))
   throw Error(card.id+' invalid ready-on-attack count');
+ if(card.readyOnBlockCount!==undefined&&(
+  card.type!=='character'||card.readyOnBlockCount!==1))
+  throw Error(card.id+' invalid ready-on-block count');
  if(implemented==='vanilla'&&(Object.keys(effects).length||card.effectText||
   mainAbility||phaseEffects.length||card.enterActiveIfOpponentRest||card.activeExtraEnergy||card.conditionalTraitEnergy||passiveBonuses||card.impactNull||
-  card.printedImpact||card.printedAttackDamage||card.readyOnAttackCount||
+  card.printedImpact||card.printedAttackDamage||card.readyOnAttackCount||card.readyOnBlockCount||
   card.frontGeneratesEnergy||ownOutsideRecovery||colorTriggerFieldSubstitution||card.frontForbidden||card.ownTurnBp||card.opponentTurnBp))
   throw Error(card.id+' claims vanilla despite printed/declared effects');
  if(implemented==='dsl'&&!Object.keys(effects).length&&!phaseEffects.length&&!mainAbility&&!card.enterActiveIfOpponentRest&&
   !card.activeExtraEnergy&&!card.conditionalTraitEnergy&&!passiveBonuses&&!card.impactNull&&
-  !card.printedImpact&&!card.printedAttackDamage&&!card.readyOnAttackCount&&
+  !card.printedImpact&&!card.printedAttackDamage&&!card.readyOnAttackCount&&!card.readyOnBlockCount&&
   !card.frontGeneratesEnergy&&!ownOutsideRecovery&&!colorTriggerFieldSubstitution&&!card.frontForbidden&&!card.ownTurnBp&&!card.opponentTurnBp)
   throw Error(card.id+' declares dsl without effects');
  for(const [name,program] of Object.entries(effects)){
@@ -622,6 +625,7 @@ function normalize(card,packId){
   printedImpact:card.printedImpact===1?1:0,
   printedAttackDamage:card.printedAttackDamage===2?2:1,
   readyOnAttackCount:card.readyOnAttackCount===1?1:0,
+  readyOnBlockCount:card.readyOnBlockCount===1?1:0,
   implementation:implemented,
   effects:Object.freeze(Object.fromEntries(Object.entries(effects)
    .map(([k,v])=>[k,Object.freeze(v.map(e=>Object.freeze({
