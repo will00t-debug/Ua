@@ -1064,12 +1064,14 @@ function damage(pack,s,defender){
  if(s.publicReveals.length>12)s.publicReveals.shift();
  if(['get','draw','active','special','color','raid'].includes(trig)||(trig==='final'&&!pl.life.length)){
   s.pending={kind:'life-trigger',player:defender,uid:c.uid,trigger:trig};
- }else if(!pl.life.length){
+ }else if(!pl.life.length&&!s.effectQueue.length){
+  // Q12: an already-earned continuation must complete before declaring LIFE-zero.
   s.status='finished';s.winner=1-defender;s.endReason='life-zero';
  }
 }
 function finishPending(s){
- if(s.status==='playing'&&!s.pending&&!s.lifeRevealBatch&&s.players.some(p=>p.life.length===0)){
+ if(s.status==='playing'&&!s.pending&&!s.lifeRevealBatch&&!s.effectQueue.length&&
+  s.players.some(p=>p.life.length===0)){
   const defeated=s.players.findIndex(p=>p.life.length===0);
   s.status='finished';s.winner=1-defeated;s.endReason='life-zero';
  }
