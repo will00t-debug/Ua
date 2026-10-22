@@ -1736,3 +1736,9 @@ unported388, net new0, full official per-card FAQ certifications 0.
 No changes main, Cursor PR77 or production deployment; no force-push.
 Next priority: granted attack-time DSL + two-target BP, then full Q1033/Q2315 BLC scenario
 and simultaneous opponent trigger priority evidence, eventually nested LIFE official model.
+
+
+## GPT R25 — target snapshot, temporary attack grant, completed MAIN composition
+
+Complete detailed evidence: [V2-R25-general-grants-and-blc.md](./V2-R25-general-grants-and-blc.md). Original GPT PR #78/branch stays active and targets Cursor PR #77 branch; no merge/deploy/force-push.
+R25 batches: A `30a60cbadfa50ec9353989dbd1484cbb92477134` (two distinct BP UIDs, previous CI SUCCESS [39793144785](https://github.com/will00t-debug/Ua/actions/runs/39793144785), Node22 1755/1755, matrix 60/60); B `06c1f66b11361ce66c96608870b2b1d20c6739ee` (grantOnAttack, stored per physical field stamp); C `faeb167dfb54e7c1264d7c0152a1fef4c596a4fe` (typed paid MAIN draw/buff/grant before move-trigger), D `1ac80609c2222c7899e85e3eb3a50a30c12417d3` (current-turn expiration and grantor departure), E `04495e2d1e689c799128c616a81a00f67c30d6c9` (real BLC official-print pilot, still unregistered); fixture fix `300ad3d87eb2025ea33e9b82400466ab80b19736`. **Latest Actions for full HEAD must be verified separately; intermediate B/C CI failed, later full runs were queued during handoff.** No local Node verification, only GH Actions. Registry baseline unchanged 312/700, 388 unported, full card FAQ certification zero. BLC-2-019/047 not registered until Q2315 and all full-card independent acceptance. Source timing, ownership, hidden faces and nested LIFE remain conservatively bounded.
