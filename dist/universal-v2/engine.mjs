@@ -194,7 +194,7 @@ function detachFacedown(top,uid){
 // card owner's own title pack. Never use the other player's printed ID table.
 function matchesFilter(pack,s,physical,filter){
  const printed=card(pack,physical);
- if(filter.field==='trait')return printed.traits.some(v=>v.split(/[／/]/).map(x=>x.trim()).includes(filter.value));
+ if(filter.field==='trait')return cardHasTrait(printed,filter.value);
  // Name filters see the alias everywhere this predicate is asked, except a
  // live field card whose original text is negated. Callers pass deck,
  // outside, or visible field cards. They do not pass buried Raid layers.
@@ -1759,7 +1759,7 @@ function legalPending(pack,s){
    type:'chooseMainDiscard',uid:c.uid
   }));
  if(q.kind==='main-two-buff')
-  return field(p).filter(c=>card(pack,c).traits.includes(q.trait))
+  return field(p).filter(c=>cardHasTrait(card(pack,c),q.trait))
    .map(c=>({type:'chooseMainBuff',uid:c.uid}));
  if(q.kind==='effect-choice-mode')return [
   ...(q.optional?[{type:'chooseEffectMode',mode:'skip'}]:[]),
@@ -1991,7 +1991,7 @@ export function legalUniversalActions(pack,s){
    if(ability.op!=='chooseTwoAfterOwnRaid'||
     !s.raidedThisTurn[p]||s.mainAbilityUsedUids.includes(c.uid))continue;
    const readyAvailable=!s.mainReadyOnceByName[p].includes(d.name);
-   const buffAvailable=field(pl).some(x=>card(pack,x).traits.includes(ability.trait));
+   const buffAvailable=field(pl).some(x=>cardHasTrait(card(pack,x),ability.trait));
    if(readyAvailable){
     out.push({type:'activate',uid:c.uid,mode:'ready'});
     if(buffAvailable)out.push({type:'activate',uid:c.uid,mode:'readyAndBuff'});
