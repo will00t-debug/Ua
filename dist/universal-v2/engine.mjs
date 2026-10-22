@@ -819,8 +819,9 @@ function continueEffectQueue(pack,s){
    const live=pos&&card(pack,pos.c).type==='character'?pos.c:null;
    const boardOk=!job.when||(!!live&&matchesV2LiveCondition(s,owner,live.uid,job.when,
     c=>card(pack,c),()=>0));
+   const lineOk=job.line===undefined||pos?.line===job.line;
    const causeOk=job.entry!=='ownEffect'||OWN_EFFECT_ENTRY.has(job.entryCause);
-   if(live&&!originalEffectsDisabled(s,live)&&boardOk&&causeOk)
+   if(live&&lineOk&&!originalEffectsDisabled(s,live)&&boardOk&&causeOk)
     attemptFieldActive(s,owner,live);
   }else if(job.op==='enemyBpDown'){
    const foe=1-owner;
