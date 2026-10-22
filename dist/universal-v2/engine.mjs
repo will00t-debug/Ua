@@ -345,7 +345,7 @@ function continueEffectQueue(pack,s){
     }).map(c=>c.uid);
     if(choices.length)s.pending={kind:'effect-outside-traitless-rest',
      player:owner,sourceUid:job.sourceUid,choices,color:job.color,
-     energyLimit,ap:job.ap,optional:true};
+     baseEnergy:job.energy,energyLimit,ap:job.ap,optional:true};
    }else if(job.op==='deployOutsideRest'){
     const choices=pl.outside.filter(c=>{
      const d=card(pack,c);
@@ -931,7 +931,7 @@ function resolveChoice(s,a,pack){
    if(a.uid===null){s.pending=null;continueEffectQueue(pack,s);return;}
    const i=p.outside.findIndex(c=>c.uid===a.uid),physical=p.outside[i];
    if(!physical||!q.choices.includes(a.uid))throw Error('Invalid OWN outside UID');
-   const d=card(pack,physical),threshold=Math.min(30,1+
+   const d=card(pack,physical),threshold=Math.min(30,q.baseEnergy+
     p.outside.filter(c=>c.uid!==q.sourceUid&&card(pack,c).type==='field').length);
    if(d.type!=='character'||d.traits.length!==0||
     d.color!==q.color||d.energy>q.energyLimit||d.energy>threshold||
