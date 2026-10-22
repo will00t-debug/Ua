@@ -1,0 +1,81 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createUniversalPack} from '../dist/universal-v2/pack.mjs';
+import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,assertUniversalMatch,universalPublicView} from '../dist/universal-v2/engine.mjs';
+import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
+const grant={op:'grantOnAttack',target:'self',until:'endOfTurn',optional:true,then:[{op:'draw',count:1}]};
+const cards=Array.from({length:13},(_,i)=>({
+ id:'G'+i,name:'G'+i,type:'character',color:'green',energy:0,ap:1,bp:2000,gen:1,
+ implementation:[0,1].includes(i)?'dsl':'vanilla',
+ ...(i===0?{effects:{onPlay:[grant],onAttack:[{op:'draw',count:1}]}}:{}),
+ ...(i===1?{effects:{onPlay:[{...grant,target:'ownCharacter'}]}}:{})
+}));
+const deck=Object.fromEntries(cards.map((c,i)=>[c.id,i===12?2:4]));
+const packs=[createUniversalPack({id:'grant-a',cards}),createUniversalPack({id:'grant-b',cards})];
+function take(s,p,id){
+ for(const z of ['hand','deck','life','outside']){
+  const a=s.players[p][z],i=a.findIndex(c=>c.cardId===id);
+  if(i>=0)return a.splice(i,1)[0];
+ }throw Error('missing physical');
+}
+function game(owner,extra){
+ let s=newUniversalMatch(packs,{decks:[deck,deck],first:owner,seed:2501});
+ const target=take(s,owner,'G0');s.players[owner].hand.push(target);
+ s.phase='main';
+ let action=legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===target.uid&&a.line==='front');
+ s=dispatchUniversalAction(packs,s,action,{actor:owner});
+ if(extra){
+  const source=take(s,owner,'G1');s.players[owner].hand.push(source);
+  action=legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===source.uid&&a.line==='front');
+  s=dispatchUniversalAction(packs,s,action,{actor:owner});
+  assert.equal(s.pending?.kind,'effect-grant-attack');
+  const legal=legalUniversalActions(packs,s);
+  assert.ok(legal.some(a=>a.uid===target.uid));
+  for(const difficulty of ['normal','hard'])
+   assert.ok(legal.some(a=>JSON.stringify(a)===JSON.stringify(chooseUniversalAiAction(packs,s,{difficulty}))));
+  s=dispatchUniversalAction(packs,s,{type:'chooseGrantAttack',uid:target.uid},{actor:owner});
+ }
+ s.players[owner].front[0].ready=true;s.phase='attack';
+ return {s,target};
+}
+for(const owner of [0,1])for(const extra of [false,true])test('printed + physical granted onAttack and independent stacking owner '+owner+' extra '+extra,()=>{
+ let {s,target}=game(owner,extra);
+ assert.equal(s.continuousStates.filter(e=>e.kind==='grantedOnAttack'&&e.targetUid===target.uid).length,extra?2:1);
+ const deckStart=s.players[owner].deck.length;
+ s=dispatchUniversalAction(packs,s,{type:'attack',uid:target.uid},{actor:owner});
+ assert.equal(s.pending?.kind,'granted-attack-draw');
+ assert.equal(s.players[owner].deck.length,deckStart-1);
+ const legal=legalUniversalActions(packs,s);
+ for(const difficulty of ['normal','hard'])assert.ok(legal.some(a=>JSON.stringify(a)===JSON.stringify(chooseUniversalAiAction(packs,s,{difficulty}))));
+ const original=structuredClone(s);
+ assert.throws(()=>dispatchUniversalAction(packs,s,{type:'chooseGrantedDraw',mode:'invalid'},{actor:owner}),/not currently legal/);
+ assert.deepEqual(s,original);
+ s=JSON.parse(JSON.stringify(s));assert.equal(assertUniversalMatch(packs,s),true);
+ s=dispatchUniversalAction(packs,s,{type:'chooseGrantedDraw',mode:'draw'},{actor:owner});
+ if(extra){
+  assert.equal(s.pending?.kind,'granted-attack-draw');
+  s=dispatchUniversalAction(packs,s,{type:'chooseGrantedDraw',mode:'skip'},{actor:owner});
+ }
+ assert.equal(s.pending?.kind,'block');
+ assert.equal(s.players[owner].deck.length,deckStart-2);
+ assert.equal(universalPublicView(packs,s,1-owner).players[owner].hand,null);
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
+test('grant expires at attack end, and new field incarnation does not inherit granted abilities',()=>{
+ let {s}=game(0,false);
+ assert.equal(s.continuousStates.filter(e=>e.kind==='grantedOnAttack').length,1);
+ s=dispatchUniversalAction(packs,s,{type:'next'},{actor:0});
+ assert.equal(s.continuousStates.some(e=>e.kind==='grantedOnAttack'),false);
+ ({s}=game(0,false));
+ const physical=s.players[0].front[0];physical.fieldEntryStamp=s.nextFieldEntryStamp++;
+ s=dispatchUniversalAction(packs,s,{type:'next'},{actor:0});
+ assert.equal(s.continuousStates.some(e=>e.kind==='grantedOnAttack'),false);
+});
+test('unknown or permanent grants fail closed rather than becoming real cards',()=>{
+ for(const invalid of [{...grant,until:'forever'},{...grant,target:'opponent'},
+  {...grant,optional:false},{...grant,then:[{op:'draw',count:2}]},
+  {...grant,then:[{op:'draw',count:1},{op:'draw',count:1}]}]){
+  const changed=cards.map(c=>c.id==='G0'?{...c,effects:{onPlay:[invalid]}}:c);
+  assert.throws(()=>createUniversalPack({id:'invalid-grant',cards:changed}),/invalid granted attack/i);
+ }
+});

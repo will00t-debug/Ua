@@ -9,22 +9,29 @@ export function stampFieldInstance(s,c){
  if(!Number.isInteger(c.fieldEntryStamp)||c.fieldEntryStamp<1)c.fieldEntryStamp=s.nextFieldEntryStamp++;
  return c.fieldEntryStamp;
 }
-export function grantContinuousState(s,{kind,controller,sourceUid,targetUid,until=null,sourceLinked=false}){
- if(!['skipNextActive','cannotActive','originalEffectsDisabled'].includes(kind)||!player(controller)||
+export function grantContinuousState(s,{kind,controller,sourceUid,targetUid,until=null,sourceLinked=false,program=null,optional=false}){
+ if(!['skipNextActive','cannotActive','originalEffectsDisabled','grantedOnAttack'].includes(kind)||!player(controller)||
   typeof sourceUid!=='string'||typeof targetUid!=='string'||typeof sourceLinked!=='boolean')
   throw Error('Invalid continuous-state descriptor');
  const target=fieldInstance(s,targetUid),source=fieldInstance(s,sourceUid);
  if(!target)throw Error('Continuous status needs a live field target');
  if(sourceLinked&&!source)throw Error('Source-linked status needs a live source');
+ if(kind==='grantedOnAttack'&&(!Array.isArray(program)||program.length!==1||
+  program[0]?.op!=='draw'||program[0]?.count!==1||Object.keys(program[0]).length!==2||
+  optional!==true||sourceLinked||until?.player!==controller||until?.phase!=='attack'||
+  until?.edge!=='end'))throw Error('Invalid granted attack program or expiration');
+ if(kind!=='grantedOnAttack'&&(program!==null||optional!==false))
+  throw Error('Unknown continuous status program');
  if(kind==='skipNextActive'&&until!==null)throw Error('Skip may not have expiry');
- if(['cannotActive','originalEffectsDisabled'].includes(kind)&&(!until||!player(until.player)||
+ if(['cannotActive','originalEffectsDisabled','grantedOnAttack'].includes(kind)&&(!until||!player(until.player)||
   !['start','move','main','attack'].includes(until.phase)||!['start','end'].includes(until.edge)||
   Object.keys(until).some(k=>!['player','phase','edge'].includes(k))))
   throw Error('Invalid status expiration phase');
  const status={id:s.nextContinuousStateId++,kind,controller,sourceUid,sourceLinked,
   sourceStamp:sourceLinked?stampFieldInstance(s,source.card):null,
   targetUid,targetOwner:target.owner,targetStamp:stampFieldInstance(s,target.card),
-  until:until?{...until}:null,consumed:false};
+  until:until?{...until}:null,consumed:false,
+  ...(kind==='grantedOnAttack'?{program:program.map(p=>({...p})),optional:true}:{})};
  s.continuousStates.push(status);return status.id;
 }
 // Losing original rules does not remove buffs granted by another effect.
@@ -72,12 +79,17 @@ export function validateContinuousStates(s){
  if(!Array.isArray(s.continuousStates)||!Number.isInteger(s.nextContinuousStateId)||
   s.nextContinuousStateId<1||new Set(s.continuousStates.map(e=>e.id)).size!==s.continuousStates.length||
   s.continuousStates.some(e=>!Number.isInteger(e.id)||e.id<1||
-   !['skipNextActive','cannotActive','originalEffectsDisabled'].includes(e.kind)||!player(e.controller)||
+   !['skipNextActive','cannotActive','originalEffectsDisabled','grantedOnAttack'].includes(e.kind)||!player(e.controller)||
    !player(e.targetOwner)||typeof e.sourceUid!=='string'||typeof e.targetUid!=='string'||
    !Number.isInteger(e.targetStamp)||e.targetStamp<1||typeof e.consumed!=='boolean'||
    typeof e.sourceLinked!=='boolean'||(e.sourceLinked&&(!Number.isInteger(e.sourceStamp)||e.sourceStamp<1))||
    (e.kind==='skipNextActive'&&e.until!==null)||
-   (['cannotActive','originalEffectsDisabled'].includes(e.kind)&&(!e.until||!player(e.until.player)||
+   (e.kind==='grantedOnAttack'&&(
+     e.optional!==true||!Array.isArray(e.program)||e.program.length!==1||
+     e.program[0]?.op!=='draw'||e.program[0]?.count!==1||Object.keys(e.program[0]).length!==2||
+     e.sourceLinked||e.until?.player!==e.controller||e.until?.phase!=='attack'||e.until?.edge!=='end'))||
+   (e.kind!=='grantedOnAttack'&&(e.program!==undefined||e.optional!==undefined))||
+   (['cannotActive','originalEffectsDisabled','grantedOnAttack'].includes(e.kind)&&(!e.until||!player(e.until.player)||
     !['start','move','main','attack'].includes(e.until.phase)||!['start','end'].includes(e.until.edge)))))
   throw Error('Invalid continuous-state accounting');
  return true;

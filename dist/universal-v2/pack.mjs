@@ -8,7 +8,7 @@ export const V2_CARD_TYPES=Object.freeze(['character','event','field']);
 export const V2_TRIGGERS=Object.freeze(['draw','get','final','active','special','color','raid']);
 export const V2_EFFECT_TIMINGS=Object.freeze(['onPlay','onRaid','onAttack','onRaided','onRetire','onOutsideRecover']);
 export const V2_EFFECT_OPS=Object.freeze(['draw','drawIfOwnName','drawIfOwnTraitCount','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','retireOwnFieldOne','retireOwnCharacterOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw','searchDeckMany','discardGate','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
- 'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideColorUnderEnergy','recoverOutsideTraitlessUnderEnergy','deployOutsideTraitlessRestOrRaid','deployOutsideRest','deployOutsideNameRest','payApDeployNamedRest','inspectTopTraitOutside','buffOwnField','oncePerTurnGate','chooseOne','discardOppHand','activeSelfIf']);
+ 'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideColorUnderEnergy','recoverOutsideTraitlessUnderEnergy','deployOutsideTraitlessRestOrRaid','deployOutsideRest','deployOutsideNameRest','payApDeployNamedRest','inspectTopTraitOutside','buffOwnField','oncePerTurnGate','chooseOne','discardOppHand','activeSelfIf','grantOnAttack']);
 const integer=(v,low=0)=>Number.isInteger(v)&&v>=low;
 const own=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
 // Shared board predicate used by passive bonuses and on-play ACTIVE.
@@ -252,7 +252,7 @@ function verifyProgram(program,path){
       'peekTopOrBottom','recoverOutsideOne','deployOutsideRest',
      'enemyBpDown','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
      'recoverOutsideColorUnderEnergy','buffOwnField',
-     'restOppFrontUnderBp','restOppFrontOne'].includes(x?.op)))
+     'restOppFrontUnderBp','restOppFrontOne','buffSelf','grantOnAttack'].includes(x?.op)))
     throw Error(path+'['+i+'] invalid gated payment');
    verifyProgram(e.then,path+'['+i+'].then');
   }
@@ -372,6 +372,13 @@ function verifyProgram(program,path){
    Object.keys(e).some(k=>!['op','count','discardCount'].includes(k))
   ))throw Error(path+'['+i+'] invalid mandatory draw/discard profile');
   if(['buffSelf','enemyBpDown'].includes(e.op)&&(!integer(e.bp,1)||e.bp>5000))throw Error(path+'['+i+'] invalid temporary BP');
+  if(e.op==='grantOnAttack'&&(
+   !['self','ownCharacter'].includes(e.target)||e.optional!==true||e.until!=='endOfTurn'||
+   !Array.isArray(e.then)||e.then.length!==1||e.then[0]?.op!=='draw'||
+   e.then[0]?.count!==1||Object.keys(e.then[0]).length!==2||
+   Object.keys(e).length!==5||
+   Object.keys(e).some(k=>!['op','target','optional','until','then'].includes(k))
+  ))throw Error(path+'['+i+'] invalid granted attack program');
   if(e.op==='enemyBpDown'&&(
    (e.maxTargets!==undefined&&(
     e.maxTargets!==2||e.optional!==true||e.zone==='field'))||

@@ -448,6 +448,24 @@ function continueEffectQueue(pack,s){
      sourceUid:job.sourceUid};
    }else for(let i=0;i<job.count&&pl.deck.length;i++)moveOwnedLinear(pack,s,{
     owner,from:'deck',to:'outside',index:0,reason:'own-effect',sourceUid:job.sourceUid});
+  }else if(job.op==='grantOnAttack'){
+   const source=location(s,owner,job.sourceUid);
+   if(!source||originalEffectsDisabled(s,source.c))
+    throw Error('Grant source left or is silenced before resolution');
+   const grantTo=target=>grantContinuousState(s,{
+    kind:'grantedOnAttack',controller:owner,sourceUid:job.sourceUid,
+    targetUid:target.uid,sourceLinked:false,optional:job.optional,
+    program:job.then,until:{player:owner,phase:'attack',edge:'end'}
+   });
+   if(job.target==='self')grantTo(source.c);
+   else{
+    const choices=field(pl).filter(c=>card(pack,c).type==='character').map(c=>c.uid);
+    if(choices.length)s.pending={kind:'effect-grant-attack',player:owner,
+     sourceUid:job.sourceUid,choices,program:job.then,optional:job.optional};
+   }
+  }else if(job.op==='grantedAttackDraw'){
+   s.pending={kind:'granted-attack-draw',player:owner,sourceUid:job.sourceUid,
+    grantId:job.grantId};
   }else if(job.op==='buffSelf'){
    const source=field(pl).find(c=>c.uid===job.sourceUid);
    if(!source)throw Error('buffSelf source must be on field');
@@ -1728,6 +1746,20 @@ function resolveChoice(s,a,pack){
   retire(pack,s,opponent,'front',slot);
   continueEffectQueue(pack,s);return;
  }
+ if(q.kind==='effect-grant-attack'){
+  const target=field(p).find(c=>c.uid===a.uid),source=location(s,q.player,q.sourceUid);
+  if(!target||card(pack,target).type!=='character'||!q.choices.includes(a.uid)||
+   !source||originalEffectsDisabled(s,source.c))throw Error('Illegal granted attack target');
+  grantContinuousState(s,{kind:'grantedOnAttack',controller:q.player,
+   sourceUid:q.sourceUid,targetUid:target.uid,sourceLinked:false,
+   until:{player:q.player,phase:'attack',edge:'end'},program:q.program,optional:q.optional});
+  s.pending=null;continueEffectQueue(pack,s);return;
+ }
+ if(q.kind==='granted-attack-draw'){
+  s.pending=null;
+  if(a.mode==='draw')draw(pack,s,q.player,1,{reason:'own-effect',sourceUid:q.sourceUid});
+  continueEffectQueue(pack,s);return;
+ }
  if(q.kind==='effect-target-many'){
   if(a.uid!==null&&(!q.choices.includes(a.uid)||q.selected.includes(a.uid)))
    throw Error('Illegal or duplicate multi-target UID');
@@ -2092,6 +2124,10 @@ function legalPending(pack,s){
    ...(q.optional?[{type:'chooseRetireBp',uid:null}]:[]),
    ...q.choices.map(uid=>({type:'chooseRetireBp',uid}))
   ];
+ if(q.kind==='effect-grant-attack')return q.choices.map(uid=>({type:'chooseGrantAttack',uid}));
+ if(q.kind==='granted-attack-draw')return [
+  {type:'chooseGrantedDraw',mode:'skip'},{type:'chooseGrantedDraw',mode:'draw'}
+ ];
  if(q.kind==='effect-target-many')return [
   {type:'chooseTargetMany',uid:null},
   ...q.choices.filter(uid=>!q.selected.includes(uid))
@@ -2593,8 +2629,13 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
    // onAttack effect may suspend resolution for its controller's choice;
    // assigning block here would overwrite that pending choice.
    const attackJobs=programJobs(pack,s,attacker,'onAttack',p);
-   s.effectQueue.push(...attackJobs,
-    ...(attackJobs.length?sourceMoveBoundary(pack,s,p,attacker.uid):[]),
+   const gained=s.continuousStates.filter(x=>x.kind==='grantedOnAttack'&&
+    !x.consumed&&x.targetOwner===p&&x.targetUid===attacker.uid&&
+    x.targetStamp===attacker.fieldEntryStamp);
+   const grantJobs=gained.map(x=>({op:'grantedAttackDraw',owner:p,
+    sourceUid:attacker.uid,grantId:x.id}));
+   s.effectQueue.push(...attackJobs,...grantJobs,
+    ...((attackJobs.length||grantJobs.length)?sourceMoveBoundary(pack,s,p,attacker.uid):[]),
     {op:'openBlock',owner:p,sourceUid:attacker.uid});
    continueEffectQueue(pack,s);
    break;
@@ -2617,7 +2658,7 @@ export function assertUniversalMatch(pack,s){
    !Array.isArray(s.initialCounts)||s.initialCounts.length!==2||
    s.players?.length!==2||!playerIndex(s.active)||
    !['playing','finished'].includes(s.status))throw Error('Incorrect pack/version or match state');
- if(s.pending&&(!playerIndex(s.pending.player)||!['phase-order','retirement-order','block','life-batch-order','life-trigger','effect-target','effect-target-many','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-strip-raid-top','effect-retire-own-field','effect-retire-own-character','effect-rest-bp','raid-effect-order','effect-buff-trait','effect-buff-own','effect-once-choice','main-two-buff','main-discard-buff','main-rest-front-energy','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-order','effect-recover-outside','effect-outside-rest','effect-outside-name-rest','effect-outside-traitless-rest','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-choice-mode','recovered-self-entry','effect-optional-mill','effect-pay-ap-deploy','effect-top-trait-outside'].includes(s.pending.kind)))
+ if(s.pending&&(!playerIndex(s.pending.player)||!['phase-order','retirement-order','block','life-batch-order','life-trigger','effect-target','effect-target-many','effect-grant-attack','granted-attack-draw','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-strip-raid-top','effect-retire-own-field','effect-retire-own-character','effect-rest-bp','raid-effect-order','effect-buff-trait','effect-buff-own','effect-once-choice','main-two-buff','main-discard-buff','main-rest-front-energy','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-order','effect-recover-outside','effect-outside-rest','effect-outside-name-rest','effect-outside-traitless-rest','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-choice-mode','recovered-self-entry','effect-optional-mill','effect-pay-ap-deploy','effect-top-trait-outside'].includes(s.pending.kind)))
   throw Error('Invalid pending controller');
  if(!Array.isArray(s.raidedThisTurn)||s.raidedThisTurn.length!==2||
    s.raidedThisTurn.some(x=>typeof x!=='boolean')||
@@ -2726,6 +2767,12 @@ export function assertUniversalMatch(pack,s){
   s.pending.choices.length+(s.pending.entries||[]).length<2||
   s.pending.choices.some(uid=>!s.lifeRevealBatch.remaining.includes(uid))))
   throw Error('Invalid LIFE order snapshot');
+ if(s.pending?.kind==='effect-grant-attack'&&(
+  !Array.isArray(s.pending.choices)||new Set(s.pending.choices).size!==s.pending.choices.length||
+  s.pending.choices.some(x=>typeof x!=='string'||!x.startsWith(s.pending.player+'-'))||
+  !Array.isArray(s.pending.program)||s.pending.program.length!==1||
+  s.pending.program[0]?.op!=='draw'||s.pending.program[0]?.count!==1||
+  s.pending.optional!==true))throw Error('Invalid grant target snapshot');
  if(s.pending?.kind==='effect-target-many'&&(
   s.pending.maxTargets!==2||!Array.isArray(s.pending.choices)||!Array.isArray(s.pending.selected)||
   new Set(s.pending.choices).size!==s.pending.choices.length||
@@ -2738,7 +2785,7 @@ export function assertUniversalMatch(pack,s){
    typeof e.key!=='string'||!Array.isArray(e.jobs))))
   throw Error('Invalid retirement order');
  if(!Array.isArray(s.effectQueue)||[...s.effectQueue,...lifeEntries.flatMap(e=>e.jobs)].some(e=>!playerIndex(e.owner)||
-   !['draw','drawIfOwnName','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
+   !['grantedAttackDraw','grantOnAttack','draw','drawIfOwnName','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
     'discardGate','enemyFrontAllBpDown','retireOppFrontAllUnderBp',
     'buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
     'recoverOutsideColorUnderEnergy','deployOutsideRest','deployOutsideNameRest','payApDeployNamedRest','inspectTopTraitOutside','deployOutsideTraitlessRestOrRaid','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','moveAtMainEnd','retireOwnFieldOne','retireOwnCharacterOne','openBlock','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','phaseOrder','sourceResolutionBoundary','lifeBatchStep','lifeRelease','advanceAfterAttack','additionalBattleDamage','openRetirementBatch','closeRetirementBatch','retirementOrder','battleImpactDamage','discardOppHand','activeSelfIf'].includes(e.op)))
