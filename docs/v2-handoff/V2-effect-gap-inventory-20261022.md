@@ -664,3 +664,11 @@
 - 全部 **252/700 登錄、448 未移植**：BLEACH 87、TTG30、SLG34、SAO62、MST39。原歷史人工／關鍵詞盤點的 457 是不同時點，不應用 448 冒充重新人工審查。
 - 完整 GitHub Actions Node **22.23.3** `npm test` **1487/1487**，跨五作品矩陣 **60/60**，SAO/MST isolated **24/24**。**全面 FAQ 0**，需另驗證所有官方問答和 browser/mobile。
 - 主要下輪：MST-1-074／-076 複合效果、複雜多層 RAID 上層剝離與 FACE-DOWN 隱藏資訊、COLOR FIELD full-line REMOVED 排他邏輯。完整批次 commit／來源／實卡驗收詳見交接第八輪章。
+
+
+## 第九輪更新註記（2026-10-22；不改歷史人工盤點快照）
+
+- **完成實體印刷卡** `MST-1-074`（己方真 CHARACTER 退場後抽2、FIELD 退場二選一：棄手牌後 OUTSIDE Roxy REST 登場／場外 Hydra 回手）與 `MST-1-076`（FIELD 退場：其他場外 FIELD 數決定必要能源上限，符合條件無特徵綠角色 OUTSIDE REST 登場或合法無 AP Raid；SPECIAL 生命對敵 FRONT 真退場），皆與 `dist/universal-v2/sources/mst-official-print.mjs` 逐字來源鎖定。共用引擎新增 `retireOwnCharacterOne`、`deployOutsideRest`、`deployOutsideTraitlessRestOrRaid`、FIELD onRetire `chooseOne` 可繼續效果隊列；不加任何合成 QA 卡進正式 registry。
+- **Node22 正式驗收** 程式 SHA `d64f8bba9b75ac6c4b45fb6101a03df7e8c6f32f`：`npm test` **1503/1503**，五作品實戰矩陣 **60/60**，SAO/MST isolated CI **PASS**；整合 https://github.com/will00t-debug/Ua/actions/runs/39718238077、獨立 https://github.com/will00t-debug/Ua/actions/runs/39718243686。
+- 現在 **254/700 正式登錄、446 未登錄**；BLEACH 87、TTG 30、SLG 34、SAO 62、MST 41；MST 尚 39 未移植。歷史關鍵字盤點 457 等仍是舊時點。**fullyAccepted FAQ = 0**，未證全部官方裁定與 browser/mobile UI。
+- 初版 MST076 由於缺 `triggerEffect={op:'retireOppFront'}`，SPECIAL fail-closed 引起跨 title registry 錯誤，修正後剩舊 40／253 張數斷言，再以三批更新到 41／254；沒有刪測或假稱全面認證。詳見 `docs/v2-handoff/GPT-resume.md` 第九輪章。

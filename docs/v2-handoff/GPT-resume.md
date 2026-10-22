@@ -592,3 +592,21 @@ This section records the last fully evaluated **code commit** `d16ffce0`. A docu
   5. **最終整合 CI** https://github.com/will00t-debug/Ua/actions/runs/39712544649 Node.js **22.23.3**，`npm test` **1487/1487 成功／0失敗**、五作品矩陣 **60/60／0失敗**、unported 報告總700／Pilot252／未移植448／官方全面認證0。**獨立 CI** https://github.com/will00t-debug/Ua/actions/runs/39712548045 SUCCESS：同一 1487/1487，另外 SAO/MST isolated **24/24**。
 - 最終 registry：BLEACH **87/276**（未189）、TTG **30/81**（未51）、SLG **34/80**（未46）、SAO **62/183**（未121）、MST **39/80**（未41）；合計 **252/700**，未移植 **448**。官方完整 FAQ、瀏覽器 UI／手機、所有跨卡/多層 Raid 情境仍屬未全面驗收，**嚴格官方 fullyAccepted 為 0**。
 - **下一輪候選**：逐字核對 MST074/076 的整卡多時機／FIELD 成本／COLOR 或 RAID 組合；多層 facedown under 的 Raid-top stripping；COLOR 中 FIELD 交換面對 full ENERGY replacement 時的既有 `removed` 非退場、同時場域 retirement/對手 turn life trigger 相依時序。採共用引擎、先正反例再移植，不以關鍵字或歷史快照充當完整源驗。
+
+
+## 2026-10-22｜第九輪：完整官方 MST-1-074／MST-1-076，跨系列共用 TRUE RETIRE → OUTSIDE REST/RAID
+
+- **基準** `b9e0c59f3335d81c6ffd2aff36138a7af5331cbc`，**最終完成程式且雙 CI 成功** `d64f8bba9b75ac6c4b45fb6101a03df7e8c6f32f`，分支 `codex/v2-resume-20261021`、Draft PR #75；僅以 GitHub 連線 commit，不合併 main、不部署正式站、不覆蓋其他工作分支。這筆交接文件 commit 自身形成更新 SHA，應獨立確認 CI 後才能宣稱該 docs HEAD GREEN。
+- **官方來源**：
+  - `MST-1-074`：`https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA54BT%2FMST-1-074`。綠色 FIELD，必要能源 2、AP1、產能1、GET Trigger；登場最多退場己方一張 CHARACTER，成功抽2；退場時**一定二選一**：(a) 可先棄己方手牌1張，確實棄掉後從己方 OUTSIDE 選最多1張「必要能源≤1／AP1／綠色／〈ロキシー〉」以 REST 登場；(b) 從己方 OUTSIDE 選最多1張〈迷宮の守護者 マナタイトヒュドラ〉返回手牌。
+  - `MST-1-076`：`https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA54BT%2FMST-1-076`。綠色 FIELD，必要能源 3、AP1、產能2、SPECIAL Trigger（明確 `{op:'retireOppFront'}`，對敵方 FRONT 單張真退場）；退場時從己方 OUTSIDE 選最多1張綠色／無特徵／AP1 的角色，必要能源上限 1＋其他**實際** OUTSIDE FIELD 張數，能以 REST 直接登場，或合法 Raid 到己方真實基底（可繼續位於 ENERGY）。不把自身剛退場的 FIELD 算作『其他』；沒有偷扣 AP，沒有錯算真退場與離場替換。
+- **可重用引擎**：
+  1. `retireOwnCharacterOne` 完整 optional OWN FRONT/ENERGY 角色真退場成本，維持 `turnRetireEvents` 與 onRetire→after draw 隊列順序／合法 UID／保護離場；不得把 REMOVED 當 RETIRED。
+  2. FIELD onRetire `chooseOne` 的兩種封閉 DSL 模式，`discardGate` 真實己方手牌成本→`deployOutsideRest` 真實場外角色 REST 登場（原有入場效果依隊列優先），或原 `recoverOutsideOne` 指定 name 回收。可選分支的支付跳過不是隱形 free effect。
+  3. `deployOutsideTraitlessRestOrRaid` 共用其他 OUTSIDE FIELD 數量放大上限，僅允許符合正式顏色、AP、無特徵的己方場外實體；真實 `performRaid` 與合法目的地、front/energy/REST、AP 不消耗、在場身份與隱藏資訊守恆，不能用作品硬編碼。
+  4. 元件測試：`tests/v2-own-character-retire-round9.test.mjs`、`tests/v2-retire-choice-outside-rest-round9.test.mjs`、`tests/v2-scaled-outside-traitless-round9.test.mjs`（查實際來源名稱）、兩真卡 50 張合法牌組的 `tests/v2-mst-074-official-full.test.mjs`／`tests/v2-mst-076-official-full.test.mjs`。涵蓋付費、跳過、合法 UID、真退場事件、依 OUTSIDE 其他 FIELD 數目增加能源上限、FREE REST RAID 到真實 Roxy 基底與 FRONT/ENERGY、牌張守恆與 AI 合法動作。
+- **已提交批次**：A `0fc1bd9bd`／`02a585ebf`；B `f12d08c4a`／`8b8f86569`；C 官方 MST074 `439d13728`／`848b9259b`／`24aa0dbf5`；D 既有 40 MST、總 253 計數精確更新 `39a71a87c`、`9c0fb9687`、`59357547b`；E 可擴能源 REST/RAID `88e590feb`、`ac810f92b`、`e52122115`、`81a5925b4`、官方 MST076 `c3382e314`／`24bbf9aad`；F 回歸修復 `9ee898bfb`（MST076 SPECIAL 印刷目標明確 profile）、`7570464da`／`12931321f`／`d64f8bba9`（MST41／總254／未移植446 的全部舊版精確驗收；不刪測、不放寬合法性）。
+- **回歸解析**：MST076 剛登錄時 `pack.mjs` 的 SPECIAL 強制驗證因原真卡缺乏 `triggerEffect`，引起跨作品 registry 全域 50 個連鎖失敗；`9ee898bfb` 增加來源鎖定的合法 SPECIAL 單一對敵方 FRONT 角色真退場，測試變為 **1503 total／1487 pass／16 fail**（餘皆舊 MST40 計數斷言）。三組只針對精確更新舊常數、獨立 MANIFEST／60-match gate 的修正後，完整 Node22 測試 **1503/1503／0 fail**。
+- **實際最新程式 CI**：整合 https://github.com/will00t-debug/Ua/actions/runs/39718238077 **SUCCESS**，Node 22.23.3 `npm test` **1503/1503**，五作品矩陣 **60/60**，unported report 總700／Pilot254／未移植446／全面驗收0；獨立 https://github.com/will00t-debug/Ua/actions/runs/39718243686 **SUCCESS**（core-shared + isolated-port）。此為 GitHub Actions 實跑，不是本地 Terminal 跑過。
+- **五作品正式 registry**：BLEACH 87/276（未189）、TTG 30/81（未51）、SLG 34/80（未46）、SAO 62/183（未121）、MST **41/80**（未39），合計 **254/700**，尚未登錄 **446**；全面官方 FAQ certified **0**（不宣稱瀏覽器／手機端 UI 或全部官方 FAQ 證據完成）。
+- **下輪建議**：深層 Raid STACK + facedown UNDER 多層結構剝離（現階段對未審核複雜層 fail closed）；COLOR FIELD full ENERGY replacement 應進 REMOVED 而不推退場；多來源同步 FIELD onRetire／保護離場／兩張 LIFE Trigger；更廣泛的跨系列真實 50 張對戰與視覺操作驗收。保持只在自己的 branch，先查最新 HEAD/CI 和此交接再動作。
