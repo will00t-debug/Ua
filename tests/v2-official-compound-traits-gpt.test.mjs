@@ -9,7 +9,7 @@ import {cardHasTrait,ownFieldTraitKinds,matchesV2LiveCondition} from '../dist/un
 // Keep one exact printed traits token; audit explicitly which parts are traits.
 const slg=createSlgV2Pack();
 const fake=(id,uid)=>({uid,cardId:id,ready:true,buffs:[],stack:[],under:[]});
-const empty=()=>({active:0,players:[{front:Array(4).fill(null),energy:Array(4).fill(null)},
+const empty=()=>({active:0,continuousStates:[],players:[{front:Array(4).fill(null),energy:Array(4).fill(null)},
  {front:Array(4).fill(null),energy:Array(4).fill(null)}]});
 const printed=c=>slg.cards[c.cardId];
 const cond={kind:'ownTraitCount',turn:'own',zone:'field',excludeSelf:false,trait:'DFN',min:3};
