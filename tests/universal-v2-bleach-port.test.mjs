@@ -31,11 +31,11 @@ function reach(s,phase){
  assert.equal(s.phase,phase);
  return s;
 }
-test('72 official standalone BLEACH profiles extend rather than replace 15 existing pilots',()=>{
+test('73 official standalone BLEACH profiles extend rather than replace 15 existing pilots',()=>{
  assert.equal(REAL_V2_PILOT_IDS.bleach.length,15);
- assert.equal(BLEACH_V2_NEW_IDS.length,72);
- assert.equal(new Set(BLEACH_V2_NEW_IDS).size,72);
- assert.equal(Object.keys(pack.cards).length,87);
+ assert.equal(BLEACH_V2_NEW_IDS.length,73);
+ assert.equal(new Set(BLEACH_V2_NEW_IDS).size,73);
+ assert.equal(Object.keys(pack.cards).length,88);
  assert.ok(REAL_V2_PILOT_IDS.bleach.every(id=>pack.cards[id]));
  assert.deepEqual(validateUniversalDeck(pack,counts),[]);
  for(const p of BLEACH_V2_ADDON_PROFILES){

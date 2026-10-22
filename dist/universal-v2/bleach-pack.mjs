@@ -10,6 +10,12 @@ import {verifiedPilotCards} from './real-card-pilots.mjs';
 // 'step' uses the V2 move-phase STEP handler; 'bounce' uses a real V2 template.
 export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
  {
+  id:"BLC-1-023",kind:"raidStripOrRetire2000",
+  number:"UA08BT/BLC-1-023",name:"ユーハバッハ",
+  color:"yellow",energy:4,ap:2,bp:4000,gen:1,trigger:"get",type:"character",
+  effect:"登場：選一項：①選最多 1 個敵方前線處於 Raid 狀態的角色，將其最上層的 1 張卡送至場外；②使最多 1 個敵方前線 BP 2000 以下角色退場。"
+ },
+ {
   id:"BLC-1-024",kind:"raidStripOrRetireDamage2",
   number:"UA08BT/BLC-1-024",name:"ユーハバッハ",
   color:"yellow",energy:6,ap:1,bp:4000,gen:1,trigger:"raid",type:"character",
@@ -941,7 +947,9 @@ export function checkedBleachAddonDefinition(p){
  const isMain=p.kind==='restSelfEnemy'||p.kind==='restEnergyRetire';
  const isRetireDraw=p.kind==='onRetireDrawOne';
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
- const special=p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRaidDual;
+ const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
+ const stripRetireBp=isRaidDual?3000:2000;
+ const special=p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isStripDual;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -963,11 +971,11 @@ export function checkedBleachAddonDefinition(p){
   ...(p.kind==='drawPlayColorHand'?{triggerEffect:{op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1}}:{}),
   ...(!special?{templateEffects:abilities[p.kind]}:{effects:
    isRetireDraw?{onRetire:[{op:'draw',count:1}]}:
-   isRaidDual?{onPlay:[{op:'chooseOne',optional:false,options:[
+   isStripDual?{onPlay:[{op:'chooseOne',optional:false,options:[
     {id:'strip',label:'Strip opponent RAID top',turn:'any',
      then:[{op:'stripOppRaidTop',optional:true}]},
-    {id:'retire',label:'Retire BP 3000 or lower',turn:'any',
-     then:[{op:'retireOppFrontOneUnderBp',bp:3000,optional:true}]}
+    {id:'retire',label:`Retire BP ${stripRetireBp} or lower`,turn:'any',
+     then:[{op:'retireOppFrontOneUnderBp',bp:stripRetireBp,optional:true}]}
    ]}]}:{}})
  };
 }

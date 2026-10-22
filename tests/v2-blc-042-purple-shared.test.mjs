@@ -73,8 +73,8 @@ test('BLC-1-042 source fingerprint protects official merged STARTER while retain
  assert.deepEqual(card.mainAbility,ttg.cards['TTG-1-063'].mainAbility);
  assert.deepEqual(card.mainAbility,slg.cards['SLG-1-013'].mainAbility);
  assert.deepEqual(card.effects,{});
- assert.equal(Object.keys(bleach.cards).length,87);
- assert.equal(BLEACH_V2_ADDON_PROFILES.length,72);
+ assert.equal(Object.keys(bleach.cards).length,88);
+ assert.equal(BLEACH_V2_ADDON_PROFILES.length,73);
  assert.throws(()=>checkedBleachAddonDefinition({...profile,effect:booster.effect}),/official recheck required/,
   'normalizing text variant without audit must not silently alter source fingerprint');
 });

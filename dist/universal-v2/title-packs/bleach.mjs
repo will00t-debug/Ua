@@ -7,6 +7,7 @@ import {BLEACH_V2_ADDON_PROFILES,BLEACH_V2_NEW_IDS,
  checkedBleachAddonDefinition} from '../bleach-pack.mjs';
 
 const testForKind=Object.freeze({
+ raidStripOrRetire2000:'tests/v2-blc-023-official.test.mjs',
  bounce:'tests/universal-v2-bleach-port.test.mjs',
   raidStripOrRetireDamage2:'tests/v2-blc-024-official.test.mjs',
  restEnergyRetire:'tests/v2-blc-shared-rest-retire.test.mjs',
@@ -62,7 +63,7 @@ function contributedEntry(profile){
  });
 }
 const entries=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(contributedEntry));
-if(entries.length!==72||BLEACH_V2_NEW_IDS.length!==entries.length||
+if(entries.length!==73||BLEACH_V2_NEW_IDS.length!==entries.length||
  new Set(entries.map(x=>x.id)).size!==entries.length)
  throw Error('BLEACH V2 contribution cardinality or ID drift');
 export default Object.freeze({
