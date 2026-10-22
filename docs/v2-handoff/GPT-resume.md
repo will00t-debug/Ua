@@ -1648,3 +1648,15 @@ SAO-1-003 已經登錄，圖示也是「黃+」，但資料仍是 gen 2 再加 `
 - Raid：`raid-under` destination 現在驗證場上巢狀實體 UID，`performRaid` 記錄底板 FRONT／ENERGY→raid-under 與 Raid 頂牌 HAND／OUTSIDE／LIFE 公開暫存區→場上；剝離頂牌時底板回 FRONT；滿場替換的每一張頂牌／下層卡分別記錄進 removed，非真正退場不觸發退休效果。具 UID、擁有者、負例和私人視圖測試。
 - **未完成限制**：Q38「登場後新觸發與未結算 LIFE Trigger 的動態交錯」未完整官方逐例驗收；巢狀第二次傷害仍須明確官方時序；消耗 faceDown 保護卡與其他 hidden-layer 移動尚有 journal 缺口；BLC-2-019／047 未註冊、全卡 FAQ 正式逐卡審核仍未完成。本輪正式新增卡牌 0。
 - 最新上游操作基準：PR #78，`gpt/v2-resume-20261022` → `cursor/v2-multi-retire-life-6ff5`；維持 Draft／不改 PR #77，不合併 main，不部署正式站。下輪必須先重查當下最新 HEAD、CI 與衝突，再續增測試。
+
+
+## GPT 第二十二輪｜Q73 同時 LIFE、Raid 埋底與滿場替換 UID（2026-10-22）
+
+**最新程式驗收基準（2026-10-22）：** `4545153f23639934d99359bb9485768e27e71681`；[GitHub Actions #39780010025](https://github.com/will00t-debug/Ua/actions/runs/39780010025) **success**：遠端 Node 22 **1725/1725 tests**、跨五作品完整 **60/60 matches**，manifest 和 unported report 通過。這是**程式 HEAD**；後續交接文件更新為文件專屬 commit，須對應再查 CI。
+
+- **A：Q73 / DAMAGE2** 已在原 `engine.mjs` / **唯一原始 `effectQueue`** 實作同時公開（原先 R21 僅純 planner），暫存在實體 `lifeRevealed`，使用內部 `lifeRevealBatch` 與玩家合法 `chooseLifeOrder`，保留隱藏 LIFE 私隱及精確 UID。包含 Q72 最後一張 LIFE、Q35 無 Trigger 與有 Trigger 選擇、Q36 雙 FINAL（同一合法印刷 ID 兩張不同 UID）。原 BLC／MST 真實 COLOR FIELD、SPECIAL retirement、印刷 DAMAGE2 及攻擊次數的舊測試已按官方同時翻開修正，未刪測試。
+- **B：Raid 真正巢狀 destination** `zone-move-events.mjs` 在 `raid-under` 查實際現存的 `stack/under`，而不是不存在的頂層陣列；實體 `performRaid` 各記錄 base field→raid-under 和 top hand / outside / lifeRevealed→field；頂牌剝離另記 base raid-under→front。完整 UID、owner、source 驗證和偽造負例；仍未推廣稱所有巢狀路徑 100% 覆蓋。
+- **C：滿場替換** `commitDestination(pack,...)` 保證被替換的 visible top 和每一張 nested UID 進 `removed` 都有獨立已完成事件，且不是 onRetire。新增精確負例／公私資訊護欄；全矩陣通過。
+- 完整程式範圍、具體 commits、限制、下輪目標見 **[V2-R22-damage2-raid-movement.md](./V2-R22-damage2-raid-movement.md)**。對 R21 文件中「Q73 未整合」的敘述，應視為**當時歷史狀態**而非這輪最新現況。
+
+**剩餘實質缺口：** Q38 同次 LIFE 已進場後 newly-generated onPlay 對其他未處理 Trigger 的**動態選擇交錯次序**尚未完整官方驗證；巢狀重入 LIFE batch 目前 fail-closed；真退場 `vacate` 埋底、裏向保護消耗，以及少數移除實體來源路徑仍未完全 journal；BLC-2-019/047 **尚未全卡移植**，不可擅自登錄。卡牌數未變，原清單 **312/700**、未登錄 388，今後須即時重算。此輪只動 PR #78 分支，不合併 main、不修改 #77、不部署正式站、不 force push。
