@@ -574,3 +574,21 @@ This section records the last fully evaluated **code commit** `d16ffce0`. A docu
 - 有額外 facedown `under` 或多層重複 Raid 時的官方剝離 Q547–Q551 組合情境需 source pin 及守恆擴充；當前明確 fail closed，不能擅自把所有幾何視為已支援。
 - **MST-1-053**：官方對手回合 COLOR Trigger 的角色卡／FIELD 卡替換＋登場抽棄／FRONT optional retireOwnField→draw 完整資料驅動組合。必須全部印刷分支和生命 Trigger 完成後才登錄；目前 450→449 中**未包含 MST053**。
 - 同回合多來源 onRetire 與 leave replacement、BP 歸零連鎖退場、傷害2 LIFE Trigger 中的第二效果延遲、AI 真實攻防策略、瀏覽器／手機視覺操作仍需更深入測試；不改 main、不更新正式站。
+
+
+## 2026-10-22｜第八輪：官方 MST-1-053 全能力與跨作品 COLOR→FIELD 替代
+
+- 分支 `codex/v2-resume-20261021`／Draft PR #75，起點 HEAD `09dba2b6dae92ebf767a02b588c53b79191a6054`，最後**已完整測試的程式 HEAD `3ede2260bd3997549b9e7670e7999f5ca64b3c10`**。沒有合併 main、沒有部署正式 Vercel、沒有 force push；GitHub 接線直接 commit，Node22 真實測試由 GitHub Actions 遠端 runner 提供，未假稱本機執行。
+- **正式完整移植真卡**：UA54BT/MST-1-053「ロキシー」，綠1／AP1／BP2500／發生綠1／無特徵／CHARACTER／COLOR LIFE Trigger，全部按照 https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA54BT%2FMST-1-053 和 `dist/universal-v2/sources/mst-official-print.mjs` source PIN 核對印刷效果及 Trigger：
+  - 對方回合中：將自己綠色 COLOR Trigger 記載的「キャラカード」依能力改成「フィールドカード」。共用 `colorTriggerFieldSubstitution:'green'` 僅讀自己實存場上角色（不含 hidden Raid under、手牌、場外），符合顏色與需要能源<=2／消費AP1 的己方手牌 FIELD，僅可 ACTIVE 登場於 ENERGY line，不扣 AP，完整執行其 onPlay；**仍保留原本合法 CHARACTER COLOR 選項**。只在對方回合可替代，不是任何回合或所有 COLOR 顏色無條件有效；live source 遭失原能力時按 `originalEffectsDisabled` 不提供新選項。沿用單一 `legalUniversalActions`／`dispatchUniversalAction`／AI／`assertUniversalMatch` 路徑；假造 UID 或位置不合法。
+  - 登場時：原通用 `drawDiscardOne`，抽1後確實從自家手牌選1張場外。
+  - FRONT MAIN：原通用 `retireOwnFieldThen` 放寬為明確 `optional:true`、pay `retireOwnFieldOne` 完成後執行 `after:[{op:'draw',count:1}]`，仍嚴格 one-use、需己方 ENERGY 真 FIELD、不可偽造或用 full-line removed 代替；選 skip 則沒有任何抽牌、能力該回合不能再使用。真 MST-1-075 FIELD 的 `onRetire` 抽1和 MAIN 成功後的抽1**各自結算**，所以可實際增加2張手牌。原 MST046 強制支付 FIELD +1000BP 完全保留。
+- **元件與實卡 QA**：`tests/v2-optional-own-field-main-round8.test.mjs`、`tests/v2-color-field-substitution-round8.test.mjs` 僅使用合成卡測通用能力與嚴格拒絕；`tests/v2-mst-053-official-full.test.mjs` 用正式來源鎖定真 MST 卡，合法50張雙方牌組實測付 AP 登場、抽棄、真 FIELD cost/once、對方 COLOR LIFE 讓真 MST075 以 ACTIVE 登場到 ENERGY，續接 onPlay 抽棄、合法 AI 與隱藏對手手牌保護。**沒有把 QA 合成卡計入 registry**。獨立 `tests/fixtures/v2-integrated-id-manifest.mjs` 包含新 `MST-1-053`；`MST-1-051` 的 2026-10-01 起限1不變。
+- **實際提交／回歸**：
+  1. Batch A `0ed21ad18bd670f922b4530105fa12a14f2dc92c`（通用 optional FIELD MAIN）、`8d0218407bc0a874830efa3037de8d539c72cfdd`（只把舊「draw 不支援」負測換成依然不支援的 millTop，保留嚴格拒絕）。CI SUCCESS。
+  2. Batch B `5967938dba668744eb6aacf96ff4b399ede4f4e1`（共用 COLOR 自己場上活角色修改為 FIELD），`e3d8b8151bde7f50f990131c26be7ee702803f42`（合法／非法／AI／真抽棄元件測試），CI SUCCESS。
+  3. Batch C `2a4fdd8fffddeb920ce3573151f71cc9878573ef`（官方真 MST053 註冊與獨立 manifest）、`688a36377da9b3fefc6c592bcb422ca5170f48cb`（真卡完整實戰測試）。首 CI 效果測試皆通過；舊固定 MST38／全251 數量驗收失敗 15 項。
+  4. Batch D `2c8ee7b46db072990026305b6dce3718b3a5f400`、`ed96fccb3c425943cdef0fce4fb60eb2a41dc817`、`6f77d2b20b8c9c2ee5caded11ed3973983cc5201`、`3ede2260bd3997549b9e7670e7999f5ca64b3c10`：只更新獨立來源、數量、整合矩陣的正確要求為 MST39／V2全252；最後剩 `tests/v2-sao-mst-registry-real-decks.test.mjs` 的單一老 expected=38 亦修正，未刪測試、未放寬遊戲合法性。
+  5. **最終整合 CI** https://github.com/will00t-debug/Ua/actions/runs/39712544649 Node.js **22.23.3**，`npm test` **1487/1487 成功／0失敗**、五作品矩陣 **60/60／0失敗**、unported 報告總700／Pilot252／未移植448／官方全面認證0。**獨立 CI** https://github.com/will00t-debug/Ua/actions/runs/39712548045 SUCCESS：同一 1487/1487，另外 SAO/MST isolated **24/24**。
+- 最終 registry：BLEACH **87/276**（未189）、TTG **30/81**（未51）、SLG **34/80**（未46）、SAO **62/183**（未121）、MST **39/80**（未41）；合計 **252/700**，未移植 **448**。官方完整 FAQ、瀏覽器 UI／手機、所有跨卡/多層 Raid 情境仍屬未全面驗收，**嚴格官方 fullyAccepted 為 0**。
+- **下一輪候選**：逐字核對 MST074/076 的整卡多時機／FIELD 成本／COLOR 或 RAID 組合；多層 facedown under 的 Raid-top stripping；COLOR 中 FIELD 交換面對 full ENERGY replacement 時的既有 `removed` 非退場、同時場域 retirement/對手 turn life trigger 相依時序。採共用引擎、先正反例再移植，不以關鍵字或歷史快照充當完整源驗。

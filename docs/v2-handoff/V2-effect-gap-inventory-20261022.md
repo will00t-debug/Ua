@@ -656,3 +656,11 @@
 - 共用完整實作 `stripOppRaidTop`、`retireOppFrontOneUnderBp`、`chooseOne` 分支、`passiveBonuses.extraDamage`、`universalAttackDamage` 與逐張 LIFE `additionalBattleDamage`。官方 BLC024 Q547–Q551 實牌驗證剝離非退場、底層 REST 承接、刪上層增益、無新觸發。
 - 連續正式實卡 50 張對戰，合法第三回合 AP3 串兩次 Raid／兩真退場／BP5000/DAMAGE2 已通過。Node22 **1478/1478**，五作品 **60/60**，SAO/MST isolated **24/24**。**fullyAccepted=0**，不等同官方全部 FAQ 或瀏覽器/手機 UI。
 - 下一批優先審核不支援的 Raid-top 附加 under 複雜層、MST053 COLOR FIELD 替換全印刷功能，以及同時退場+兩張 LIFE Trigger 嵌套時序。完整交接詳見 `docs/v2-handoff/GPT-resume.md`「第七輪」章。
+
+
+## 第八輪更新註記（2026-10-22；先前人工分類快照保留）
+
+- 最新正式程序化完成并通過 Node22 GitHub Actions 之 SHA `3ede2260bd3997549b9e7670e7999f5ca64b3c10`：UA54BT/MST-1-053 洛琪希完整官方日文效果 source pin；對手回合綠 COLOR 「CHARACTER→FIELD」活場效果，登場抽1棄1，前線每回合1次 optional 退場真 FIELD 後抽1。共用引擎新增 `colorTriggerFieldSubstitution`、`colorField` LEGAL、MAIN `retireOwnFieldThen.optional:true`＋draw，其他五作品規則不重寫。
+- 全部 **252/700 登錄、448 未移植**：BLEACH 87、TTG30、SLG34、SAO62、MST39。原歷史人工／關鍵詞盤點的 457 是不同時點，不應用 448 冒充重新人工審查。
+- 完整 GitHub Actions Node **22.23.3** `npm test` **1487/1487**，跨五作品矩陣 **60/60**，SAO/MST isolated **24/24**。**全面 FAQ 0**，需另驗證所有官方問答和 browser/mobile。
+- 主要下輪：MST-1-074／-076 複合效果、複雜多層 RAID 上層剝離與 FACE-DOWN 隱藏資訊、COLOR FIELD full-line REMOVED 排他邏輯。完整批次 commit／來源／實卡驗收詳見交接第八輪章。
