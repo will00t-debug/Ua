@@ -30,11 +30,52 @@ export function appendCompletedMove(s,move){
 }
 // Narrow predicate family for future declared printed triggers; does not
 // authorize a real card effect or automatically enqueue one.
-export function matchesCompletedMove(e,condition){
- if(!e||!condition||typeof condition!=='object'||Array.isArray(condition)||
+// Data-driven source filter, not permission to enqueue unreviewed official
+// triggers. Source card identity refers to the cause's FIELD top at move time.
+const FILTER_KEYS=Object.freeze(['owner','controller','from','to','reason','reasons',
+ 'sourceUid','sourceCardId','sourceName','sourceColor','sourceOnField','cardId']);
+export function validateCompletedMoveCondition(condition){
+ if(!condition||typeof condition!=='object'||Array.isArray(condition)||
   Object.keys(condition).length===0||
-  Object.keys(condition).some(k=>!['owner','controller','from','to','reason',
-   'sourceUid','sourceCardId','sourceName','sourceColor','sourceOnField','cardId'].includes(k)))
+  Object.keys(condition).some(k=>!FILTER_KEYS.includes(k))||
+  ('reason' in condition&&'reasons' in condition))
   throw Error('Invalid zone move condition');
- return Object.entries(condition).every(([k,v])=>e[k]===v);
+ for(const [key,value] of Object.entries(condition)){
+  if(key==='owner'||key==='controller'){
+   if(![0,1].includes(value))throw Error('Invalid zone move controller');
+  }else if(key==='from'||key==='to'){
+   if(!V2_MOVE_ZONES.includes(value))throw Error('Invalid zone move zone');
+  }else if(key==='reason'){
+   if(!V2_MOVE_REASONS.includes(value))throw Error('Invalid zone move reason');
+  }else if(key==='reasons'){
+   if(!Array.isArray(value)||!value.length||value.length>3||
+    new Set(value).size!==value.length||
+    value.some(r=>!V2_MOVE_REASONS.includes(r)))
+    throw Error('Invalid zone move reasons');
+  }else if(key==='sourceOnField'){
+   if(typeof value!=='boolean')throw Error('Invalid source residency condition');
+  }else if(typeof value!=='string'||!value.trim()){
+   throw Error('Invalid zone move identity filter');
+  }
+ }
+ if(condition.from!==undefined&&condition.to!==undefined&&condition.from===condition.to)
+  throw Error('Invalid no-op zone move condition');
+ return Object.freeze({...condition,...(condition.reasons?{reasons:Object.freeze([...condition.reasons])}:{})});
+}
+export function matchesCompletedMove(e,condition){
+ const q=validateCompletedMoveCondition(condition);
+ if(!e||typeof e!=='object'||!Number.isInteger(e.order))return false;
+ return Object.entries(q).every(([k,v])=>k==='reasons'
+  ?v.includes(e.reason):e[k]===v);
+}
+// The caller decides when the causing source operation has completely
+// finished. Never call effects or enqueue during the physical move itself:
+// e.g. official BLEACH Q1033 explicitly defers the resulting draw until after
+// its Ichigo source ability finishes.
+export function completedMovesMatching(s,condition,{afterOrder=0}={}){
+ const q=validateCompletedMoveCondition(condition);
+ if(!Number.isInteger(afterOrder)||afterOrder<0||
+  !Array.isArray(s?.zoneMoveEvents))throw Error('Invalid move trigger scan');
+ return s.zoneMoveEvents.filter(e=>e.order>afterOrder&&
+  Object.entries(q).every(([k,v])=>k==='reasons'?v.includes(e.reason):e[k]===v));
 }
