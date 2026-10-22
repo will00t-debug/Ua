@@ -116,6 +116,8 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseTopCard':return action.mode==='top'?'保留在牌庫頂':action.mode==='bottom'?'放回牌庫底':'送至場外';
   case 'chooseRaidOrder':return action.mode==='baseFirst'?'先結算突襲底板效果':'先結算突襲登場效果';
   case 'chooseRetirementOrder':return '先結算此退場效果';
+  case 'chooseLifeOrder':return '先處理此公開 LIFE：'+name();
+  case 'chooseLifeEffect':return '先結算登場效果：'+(state?.pending?.entries?.find(e=>e.key===action.key)?.sourceUid||'');
   case 'choosePhaseOrder':return '先結算此階段效果';
   case 'chooseApRecovery':return action.uid===null?'完成恢復 AP':'恢復 AP 卡';
   case 'chooseDiscardGate':return action.uid===null?'不支付成本':'棄 '+name()+' 支付成本';

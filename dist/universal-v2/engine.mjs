@@ -337,14 +337,16 @@ function continueEffectQueue(pack,s){
   }else if(job.op==='lifeBatchStep'){
    const b=s.lifeRevealBatch;
    if(!b||b.owner!==owner)throw Error('Absent LIFE batch');
-   if(!b.remaining.length){
+   const entries=job.entries||[];
+   if(!b.remaining.length&&!entries.length){
     if(pl.lifeRevealed.length)throw Error('LIFE check has unresolved physical cards');
     s.lifeRevealBatch=null;finishPending(s);
-   }else if(b.remaining.length>1)
-    s.pending={kind:'life-batch-order',player:owner,choices:[...b.remaining]};
+   }else if(b.remaining.length+entries.length>1)
+    s.pending={kind:'life-batch-order',player:owner,choices:[...b.remaining],entries};
    else{
     s.effectQueue.unshift({op:'lifeBatchStep',owner});
-    selectLifeBatchItem(pack,s,b.remaining[0]);
+    if(entries.length)s.effectQueue.unshift(...entries[0].jobs);
+    else selectLifeBatchItem(pack,s,b.remaining[0]);
    }
   }else if(job.op==='lifeRelease'){
    const i=pl.lifeRevealed.findIndex(c=>c.uid===job.uid);
@@ -777,10 +779,24 @@ function programJobs(pack,s,physical,timing,owner,raidUid,entryCause){
    sourceName:card(pack,physical).name,...(raidUid?{raidUid}:{}),
    ...(timing==='onPlay'&&entryCause?{entryCause}:{})}));
 }
+// Q38: enqueue a complete earned entry program on the EXISTING batch step.
+// Never split a printed program at a draw/cost/target pending boundary.
+function deferLifeEntry(s,owner,sourceUid,jobs){
+ if(!jobs.length||s.lifeRevealBatch?.owner!==owner)return false;
+ const step=s.effectQueue.find(j=>j.op==='lifeBatchStep'&&j.owner===owner);
+ if(!step)throw Error('Missing LIFE entry continuation');
+ step.entries??=[];
+ const key=sourceUid+':entry:'+s.nextFieldEntryStamp;
+ if(step.entries.some(e=>e.key===key))throw Error('Duplicate LIFE entry');
+ step.entries.push({key,sourceUid,jobs});
+ return true;
+}
 function applyEffects(pack,s,cardOnField,timing,owner,entryCause){
  // Entry/trigger effects interrupt the suspended continuation (e.g. DAMAGE2).
  const jobs=programJobs(pack,s,cardOnField,timing,owner,undefined,entryCause);
- if(jobs.length)s.effectQueue.unshift(...jobs,...sourceMoveBoundary(pack,s,owner,cardOnField.uid));
+ const complete=jobs.length?[...jobs,...sourceMoveBoundary(pack,s,owner,cardOnField.uid)]:[];
+ if(!(timing==='onPlay'&&deferLifeEntry(s,owner,cardOnField.uid,complete)))
+  s.effectQueue.unshift(...complete);
  continueEffectQueue(pack,s);
 }
 function validRaidBase(pack,s,owner,base,top){
@@ -848,7 +864,10 @@ function performRaid(pack,s,p,cardOnTop,baseUid,line,slot,replaceUid,{entryReady
   ...sourceMoveBoundary(pack,s,p,effectiveBase.uid)]:[];
  const raidWithBoundary=entryJobs.length||raidJobs.length?[...raidJobs,
   ...sourceMoveBoundary(pack,s,p,cardOnTop.uid)]:raidJobs;
- if(baseJobs.length&&entryJobs.length)
+ if(entryCause==='lifeRaid'&&deferLifeEntry(s,p,cardOnTop.uid,
+   [...baseWithBoundary,...entryJobs,...raidWithBoundary])){
+  continueEffectQueue(pack,s);
+ }else if(baseJobs.length&&entryJobs.length)
   s.pending={kind:'raid-effect-order',player:p,baseUid:effectiveBase.uid,
    raidUid:cardOnTop.uid,baseJobs:baseWithBoundary,entryJobs,
    raidJobs:raidWithBoundary};
@@ -1062,10 +1081,16 @@ function advanceAfterEnd(pack,s,owner){
 function resolveChoice(s,a,pack){
  const q=s.pending,p=s.players[q.player];
  if(q.kind==='life-batch-order'){
-  if(!s.lifeRevealBatch||!q.choices.includes(a.uid))throw Error('Invalid LIFE UID order');
+  if(!s.lifeRevealBatch)throw Error('Invalid LIFE order');
+  const entries=q.entries||[];
+  const selected=a.type==='chooseLifeEffect'?entries.find(e=>e.key===a.key):null;
+  if(a.type==='chooseLifeEffect'?!selected:!q.choices.includes(a.uid))
+   throw Error('Invalid LIFE UID or effect order');
   s.pending=null;
-  s.effectQueue.unshift({op:'lifeBatchStep',owner:q.player});
-  selectLifeBatchItem(pack,s,a.uid);
+  s.effectQueue.unshift({op:'lifeBatchStep',owner:q.player,
+   entries:entries.filter(e=>e!==selected)});
+  if(selected)s.effectQueue.unshift(...selected.jobs);
+  else selectLifeBatchItem(pack,s,a.uid);
   continueEffectQueue(pack,s);return;
  }
  if(q.kind==='phase-order'||q.kind==='retirement-order'){
@@ -1840,7 +1865,9 @@ export function newUniversalMatch(pack,{decks,seed=1,first=0}={}){
 }
 function legalPending(pack,s){
  const q=s.pending,p=s.players[q.player];
- if(q.kind==='life-batch-order')return q.choices.map(uid=>({type:'chooseLifeOrder',uid}));
+ if(q.kind==='life-batch-order')return [
+  ...q.choices.map(uid=>({type:'chooseLifeOrder',uid})),
+  ...(q.entries||[]).map(e=>({type:'chooseLifeEffect',key:e.key}))];
  if(q.kind==='phase-order')return q.entries.map(x=>({type:'choosePhaseOrder',key:x.key}));
  if(q.kind==='retirement-order')return q.entries.map(x=>({type:'chooseRetirementOrder',key:x.key}));
  if(q.kind==='block')return [
@@ -2620,16 +2647,27 @@ export function assertUniversalMatch(pack,s){
    throw Error('Invalid LIFE reveal batch');
  }else if(s.players.some(p=>p.lifeRevealed.length))
   throw Error('Revealed LIFE cards without live batch');
+ // Deferred entry blocks are private earned programs, never new LIFE cards.
+ const lifeEntries=[...(s.pending?.kind==='life-batch-order'?(s.pending.entries||[]):[]),
+  ...s.effectQueue.filter(j=>j.op==='lifeBatchStep').flatMap(j=>j.entries||[])];
+ if(lifeEntries.length&&(!s.lifeRevealBatch||
+  new Set(lifeEntries.map(e=>e.key)).size!==lifeEntries.length||
+  lifeEntries.some(e=>!e||typeof e.key!=='string'||typeof e.sourceUid!=='string'||
+   !e.sourceUid.startsWith(s.lifeRevealBatch.owner+'-')||!Array.isArray(e.jobs)||!e.jobs.length||
+   e.jobs.some(j=>!j||j.owner!==s.lifeRevealBatch.owner||j.sourceUid!==e.sourceUid||
+    ['lifeBatchStep','lifeRelease','openBlock','additionalBattleDamage'].includes(j.op)))))
+  throw Error('Invalid deferred LIFE entry');
  if(s.pending?.kind==='life-batch-order'&&(!s.lifeRevealBatch||
   s.pending.player!==s.lifeRevealBatch.owner||
-  !Array.isArray(s.pending.choices)||s.pending.choices.length<2||
+  !Array.isArray(s.pending.choices)||
+  s.pending.choices.length+(s.pending.entries||[]).length<2||
   s.pending.choices.some(uid=>!s.lifeRevealBatch.remaining.includes(uid))))
   throw Error('Invalid LIFE order snapshot');
  if(s.pending?.kind==='retirement-order'&&(!Array.isArray(s.pending.entries)||
   s.pending.entries.length<2||s.pending.entries.some(e=>e.owner!==s.pending.player||
    typeof e.key!=='string'||!Array.isArray(e.jobs))))
   throw Error('Invalid retirement order');
- if(!Array.isArray(s.effectQueue)||s.effectQueue.some(e=>!playerIndex(e.owner)||
+ if(!Array.isArray(s.effectQueue)||[...s.effectQueue,...lifeEntries.flatMap(e=>e.jobs)].some(e=>!playerIndex(e.owner)||
    !['draw','drawIfOwnName','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
     'discardGate','enemyFrontAllBpDown','retireOppFrontAllUnderBp',
     'buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',

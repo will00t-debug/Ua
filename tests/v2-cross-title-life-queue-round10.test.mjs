@@ -84,6 +84,10 @@ test('BLEACH Q73 reveals both LIFE before MST COLOR FIELD deployment and mandato
  s=dispatchUniversalAction(packs,s,{type:'chooseLifeOrder',uid:trigger.uid},{actor:1});
  const choice=legalUniversalActions(packs,s).find(a=>a.mode==='colorField'&&a.uid===field.uid);
  assert.ok(choice);s=dispatchUniversalAction(packs,s,choice);
+ assert.equal(s.pending.kind,'life-batch-order');
+ const entry=legalUniversalActions(packs,s).find(a=>a.type==='chooseLifeEffect');
+ assert.ok(entry,'Q38 offers new entry against remaining LIFE');
+ s=dispatchUniversalAction(packs,s,entry);
  assert.equal(s.pending.kind,'effect-discard');
  assert.equal(s.players[1].life.length,beforeLife-2);
  assert.ok(s.players[1].lifeRevealed.some(c=>c.uid===secondLife.uid));
