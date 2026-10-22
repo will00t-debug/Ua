@@ -48,7 +48,7 @@ test('official MST045 JP printed GREEN profile reuses same strict deferred REST 
  assert.deepEqual(card.mainAbility,mst.cards['MST-1-016'].mainAbility);
  assert.deepEqual(card.mainAbility,slg.cards['SLG-1-013'].mainAbility);
  assert.deepEqual(card.effects,{});
- assert.equal(Object.keys(mst.cards).length,37);
+ assert.equal(Object.keys(mst.cards).length,38);
  assert.deepEqual(validateUniversalDeck(mst,mstDeck),[]);
  assert.deepEqual(validateUniversalDeck(slg,slgDeck),[]);
 });

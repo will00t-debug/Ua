@@ -54,7 +54,7 @@ test('MST055 official Japanese full onPlay + independent DRAW Life use shared TT
  assert.deepEqual([card.name,card.color,card.energy,card.ap,card.bp,card.gen,card.traits,card.trigger],
   ['アリエル','green',1,1,2000,1,['ラノア魔法大学'],'draw']);
  assert.deepEqual(card.effects.onPlay,[{op:'searchTopOneBottomDiscard',count:3,filter:{field:'trait',value:'ラノア魔法大学'}}]);
- assert.equal(Object.keys(mst.cards).length,37);
+ assert.equal(Object.keys(mst.cards).length,38);
  assert.deepEqual(validateUniversalDeck(mst,mstDeck),[]);
  assert.deepEqual(validateUniversalDeck(slg,slgDeck),[]);
 });
