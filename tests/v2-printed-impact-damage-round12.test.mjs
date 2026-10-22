@@ -91,16 +91,19 @@ test('printed impact is one direct damage when unblocked and zero against impact
  assert.equal(assertUniversalMatch(packs,blocked.s),true);
 });
 
-test('printed damage 2 reveals the second life only after the first trigger finishes',()=>{
+test('printed damage 2 reveals both LIFE together then orders actual physical triggers',()=>{
  let {s,damage,first,second}=board(1202);
  assert.equal(universalAttackDamage(packs,s,s.players[0].front[1]),2);
  const lives=s.players[1].life.length;
  s=dispatchUniversalAction(packs,s,{type:'attack',uid:damage.uid});
  s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:null},{actor:1});
+ assert.equal(s.pending?.kind,'life-batch-order');
+ assert.deepEqual(s.publicReveals.map(e=>e.uid),[first.uid,second.uid]);
+ assert.deepEqual(s.players[1].lifeRevealed.map(c=>c.uid),[first.uid,second.uid]);
+ assert.equal(s.players[1].life.length,lives-2);
+ assert.equal(s.effectQueue.some(e=>e.op==='additionalBattleDamage'),false);
+ s=dispatchUniversalAction(packs,s,{type:'chooseLifeOrder',uid:first.uid},{actor:1});
  assert.equal(s.pending?.uid,first.uid);
- assert.equal(s.players[1].life[0].uid,second.uid);
- assert.equal(s.players[1].life.length,lives-1);
- assert.equal(s.effectQueue.filter(e=>e.op==='additionalBattleDamage').length,1);
  s=dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'draw'},{actor:1});
  assert.equal(s.pending?.kind,'life-trigger');
  assert.equal(s.pending.uid,second.uid);
@@ -108,6 +111,8 @@ test('printed damage 2 reveals the second life only after the first trigger fini
  s=dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'skip'},{actor:1});
  assert.equal(s.pending,null);
  assert.equal(s.publicReveals.length,2);
+ assert.equal(s.players[1].lifeRevealed.length,0);
+ assert.equal(s.lifeRevealBatch,null);
  assert.equal(assertUniversalMatch(packs,s),true);
 });
 
