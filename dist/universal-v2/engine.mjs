@@ -2523,6 +2523,14 @@ export function assertUniversalMatch(pack,s){
     'buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
     'recoverOutsideColorUnderEnergy','deployOutsideRest','deployOutsideNameRest','payApDeployNamedRest','inspectTopTraitOutside','deployOutsideTraitlessRestOrRaid','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','moveAtMainEnd','retireOwnFieldOne','retireOwnCharacterOne','openBlock','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','phaseOrder','sourceResolutionBoundary','advanceAfterAttack','additionalBattleDamage','openRetirementBatch','closeRetirementBatch','retirementOrder','battleImpactDamage','discardOppHand','activeSelfIf'].includes(e.op)))
   throw Error('Invalid queued effects');
+ // The internal boundary is not user-authored DSL. Reject forged or
+ // out-of-range snapshots before replay or an AI simulation can resolve it.
+ if(s.effectQueue.some(e=>e.op==='sourceResolutionBoundary'&&(
+  !Number.isInteger(e.afterOrder)||e.afterOrder<0||
+  e.afterOrder>=s.nextZoneMoveOrder||
+  typeof e.sourceUid!=='string'||!e.sourceUid.startsWith(e.owner+'-')||
+  Object.keys(e).some(k=>!['op','owner','sourceUid','afterOrder'].includes(k)))))
+  throw Error('Invalid source-resolution boundary');
  for(let p=0;p<2;p++){
   const pl=s.players[p],uids=new Set(),items=[];
   if(pl.front?.length!==4||pl.energy?.length!==4||pl.apCards?.length!==3||
