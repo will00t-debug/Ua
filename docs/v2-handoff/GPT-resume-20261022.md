@@ -412,3 +412,16 @@ Details and official rules in [V2-R27-Q38-physical-event-hardening.md](./V2-R27-
 驗收：修正 A+新增 B 的 [39808947609](https://github.com/will00t-debug/Ua/actions/runs/39808947609) Node22 **1800/1800**，五作品 60/60；加入 C 的 [39809160866](https://github.com/will00t-debug/Ua/actions/runs/39809160866) Node22 **1801/1801**，五作品 60/60、獨立 manifest 和 report 成功；加入 D 文件的 [39809645550](https://github.com/will00t-debug/Ua/actions/runs/39809645550) 同樣 **1801/1801**, 60/60。E 與本交接文件提交後，仍須核對其對應 SHA 的新 Actions，不可沿用更舊的結果。
 
 登錄快照：BLEACH 97、TTG 35、SLG 41、SAO 91、MST 48，共 **312/700**，未移植 **388**，逐卡全面 FAQ 認證 **0**。最新獨立 source 中 SLG 仍有 12 個原始 metadata 缺欄。下一輪先處理 R28 尚未通過官方完整驗收的跨雙方同時待結算效果、SPECIAL/退場與 onRaid 合併優先權、來源不同時間封印後再移動、真卡 BLC-2-019/047 的全場景完整整合及連鎖第二批 LIFE 的必要官方依據。保留 Cursor PR #77、main、正式 Vercel 原狀。
+
+
+## 第 29 輪（2026-10-23）：跨玩家雙 SPECIAL、物理 047、多來源已取得能力
+
+延續第 28 輪完整綠燈 HEAD `66dea296d3e74c9ab0f0569f3f3e58275cb84872`，PR #78，合併目標不變，沒有改寫 Cursor PR #77、main 或正式站。完整逐批證據、官方 FAQ 邊界和下一輪工作見 [V2-R29-earned-events-and-cross-owner-acceptance.md](./V2-R29-earned-events-and-cross-owner-acceptance.md)。
+
+- A `4ac116ad`：BLC-2-019 多物理來源各自棄不同 BLC-2-047、來源 MAIN 完整後各抽額外一張；完整 50-card prototype。第二 019 使用明確 stamped 在場測試 fixture，不代表已合法第二次 Raid。Actions [39864577235](https://github.com/will00t-debug/Ua/actions/runs/39864577235) **SUCCESS 1802/1802**, 60/60。
+- B `3c7c5ed7`：兩份獨立 grantOnAttack、授予者離場、受授者原印刷效果事後封印、錯誤序列化拒絕和回場新的 fieldEntryStamp 不沿用舊能力。Actions [39864773510](https://github.com/will00t-debug/Ua/actions/runs/39864773510) **SUCCESS 1805/1805**, 60/60。
+- C `f23310da`：DAMAGE2 同時兩張物理 SPECIAL LIFE，兩個各自攻擊方 onRetire 的合法選擇和玩家優先權交還；兩種選擇順序、Normal/Hard、錯誤 actor、UID、存讀檔。Actions [39865047656](https://github.com/will00t-debug/Ua/actions/runs/39865047656) **SUCCESS 1807/1807**, 60/60。
+- D `86f12d2e`：Q2315 物理 event→outside 完成後封印原 019 與 Riruka-like watcher，已取得之 REST/tuck 和 047 額外抽牌在兩種排序都不消失，保存 Q2316 裏向牌隱私。Actions [39865310494](https://github.com/will00t-debug/Ua/actions/runs/39865310494) **SUCCESS 1811/1811**, 60/60。
+- E `158cbb52`：官方規則/四批回歸證據集中整理及未驗收差異表；此文件與交接提交需各自核對 CI 的 SHA。
+
+R29 無新增正式卡牌，沒有新增 DSL 原語。五作品仍 **312/700**，未移植 **388**，全卡所有 FAQ 認證 **0**。019/047 與 BLC-4-034 均未加入正式 registry。跨玩家任意多重來源和巢狀第二次 LIFE 不認證；巢狀 LIFE 繼續維持原子 fail-closed。所有測試數皆為 **GitHub Actions 遠端 Node22**，沒有宣稱本地執行。
