@@ -1752,3 +1752,20 @@ See [V2-R26-Q2315-hidden-earned-moves.md](./V2-R26-Q2315-hidden-earned-moves.md)
 ## GPT R27 — Q38 cross-owner and exact earned event provenance (2026-10-22)
 
 Details and official rules in [V2-R27-Q38-physical-event-hardening.md](./V2-R27-Q38-physical-event-hardening.md). Existing PR #78, branch gpt/v2-resume-20261022 unchanged. Four code batches: A `4d834308` prevents stale REST/tuck legal actions after watched physical target leaves (remote Actions 39803940806 success); B `0272eec`→`e15bdc`→`39ef2a2` validates earned move-order save event UID/stamp/queue provenance (intermediate CI RED corrected, do not count); C `047da8e` two-title cross-owner Q38 COLOR onPlay and paid physical event trigger vs FINAL (Actions [39804712396](https://github.com/will00t-debug/Ua/actions/runs/39804712396) SUCCESS Node22 **1792/1792**, matrix **60/60**, unchanged registry 312/700); D `767331e` tests nested LIFE injection atomic rollback and pre-earning Q2220 original-effects silence, remote CI must be checked. E documentation-only consolidation in this commit. Nested LIFE remains fail-closed. No real card registration, main merge, PR77 edit, force push or production deploy. Full official certification 0, 388 unported. Reconfirm final SHA exact CI.
+
+
+## R28 GPT 第 28 輪（2026-10-22）— PR #78 / 五批集中驗收
+
+以 `ee5c1212` (R27 docs HEAD) 為起點，正式開發 PR #78 合併目標仍 `cursor/v2-multi-retire-life-6ff5`。起點 Actions [39805362290](https://github.com/will00t-debug/Ua/actions/runs/39805362290) success；R27 `767331eb` [39804977135](https://github.com/will00t-debug/Ua/actions/runs/39804977135) success。
+
+- **A** `30813700`，測試 fixture 正確 auto-entry 修正 `1460cbf5`：Q12 simultaneous DRAW/FINAL in both orderings, LIFE zero provisional, frozen public/private/saved state on invalid trigger action.
+- **B** `578d3a16`：grantOnAttack original-effects silence distinction, independent grants surviving giver departure, tampered program rejected, common legal/AI actions.
+- **C** `06f3bd3b`：unregistered 50-card BLC-2-019 / 047 integrated Raid→two BP targets→typed named payment→MAIN→earned move draw→actual granted attack draw and state consistency. Pilot passed; complete whole-card FAQ acceptance is **not** claimed.
+- **D** `4d66b1d3`：new `docs/v2-handoff/V2-R28-cross-title-print-audit.md`, four source-checked unported TTG/SLG/SAO/MST official full-text candidates, explicit missing clauses.
+- **E** `819dce2e`：new `docs/v2-handoff/V2-R28-priority-and-nested-life-proof.md`, Q12/35-38/71-74 and Q2220/2228 differences, including unresolved multi-player reentrant damage. Preserve atomic fail closed; no new queue.
+
+Verified **remote GitHub Actions** [39809160866](https://github.com/will00t-debug/Ua/actions/runs/39809160866) on `06f3bd3b`: Node.js22 **1801/1801 PASS**, five-title legal match matrix **60/60 PASS**, independent manifest and unported report passed. D documentation [39809645550](https://github.com/will00t-debug/Ua/actions/runs/39809645550) success same counts. Intermediate `30813700` and `578d3a16` were red due solely to the A fixture; `1460cbf5` fixed them, [39808947609](https://github.com/will00t-debug/Ua/actions/runs/39808947609) success 1800/1800. Final E plus documentation commits' own Actions must be verified separately.
+
+Fresh registry evidence BLEACH **97**, TTG **35**, SLG **41**, SAO **91**, MST **48** = **312/700**, unported **388**, independent full-card all-FAQ audit certification **0**. **No newly registered cards or DSL primitives** in R28; it added validation and official cross-title audit only. BLC-2-019, BLC-2-047 still outside registry/manifest.
+
+Next: complete BLC 019/047 Q1033/Q1046/Q2315/Q2316 full per-card / all-source scenarios before registration; cross-player independently owned pending priority including SPECIAL/onRetire/onRaid; after-earned suppression vs reincarnation under multiple sources; official oracle for nested LIFE before changing the atomic guard. No main merge, Vercel deployment, overwriting Cursor PR #77, force push, local-test claim or unsafe recovery of the old branch.
