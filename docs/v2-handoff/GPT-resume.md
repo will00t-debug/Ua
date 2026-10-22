@@ -533,3 +533,44 @@ This section records the last fully evaluated **code commit** `d16ffce0`. A docu
 - **MST-1-053**：退場 FIELD 可選成本→抽牌已可部分沿用，但其**對方回合 COLOR Trigger 的角色/場域替換**尚缺，不能只實作半卡就正式登錄。
 - **MST-1-074、076**：逐字核對多重條件、退場、選擇、Trigger，再設計能跨作品重用的 program composition；保留 unported。
 - 特別查【退場時】事件與支付費用後原能力的結算優先級（現有 `retirementAfter` 流程對不同原文可能有差別），以及 Raid Q549 非退場、同時狀態移轉及隱藏資訊；任何修正都必須真實 FAQ 與針對性回歸支持。
+
+
+## 2026-10-22｜第七輪：Raid 上層精確剝離、二選一真退場、動態 DAMAGE2、完整 BLC-1-024
+
+**工作分支** `codex/v2-resume-20261021`，**Draft PR #75**。起始最新 HEAD `e89cebb7a319c2e1c4d00634a1015777567045dd`，最後**已通過程式 CI** 的 HEAD `c91e6491eee455021e84486624186876596f1c84`；本文件追加的 docs commit 是後續新 SHA，不能直接冒用前一 SHA 的成功證據。沒有合併 main、沒有 force push、沒有部署正式 Vercel；使用 GitHub 連接直接寫 commit，Node22 實測是 Actions 日誌而非本地執行。
+
+### 共用引擎新功能及其邊界
+
+1. `stripOppRaidTop`（可選擇最多 1）：僅選對手 FRONT 上擁有實際 `raidName`、可見面朝上的單一 `stack` 基底的 Raid 實體；既有 `effectQueue` 和合法目標 `chooseRaidTopStrip` 暫停／恢復。去掉 Raid 最上層送對手 `outside`，保留原面朝上基底在同一 FRONT slot，承接 Raid 的 REST/ACTIVE；top 的 `buffs` 不繼承。重建 `fieldEntryStamp`，整個過程**不是退場或登場**，不執行上下牌的 `onRetire`／`onPlay`，不推進 `turnRetireEvents`。核對官方 Q547–Q551（尤其 Q549/Q550/Q551）：https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA08BT%2FBLC-1-024_p1 。對尚未審核的「Raid top 自身帶額外 under」幾何，**目前 fail-closed** 不選；不得宣稱所有 Raid 多層交互已全面驗收。
+2. `retireOppFrontOneUnderBp`：公用 FRONT BP 上限（印刷 BLC024 是 3000）＋ optional true，沿用 `effect-retire-bp`、真正 `retire()`、保護離場決策及回合退場記錄。加入既有 `chooseOne` 的封閉式合法子效果白名單，玩家從 2 種印刷模式選**一種**，然後才選該模式「最多 1」張，非法 UID 不可選。Normal/Hard AI 只讀合法列表、場上公開 BP/Raid 狀態判斷分支；沒有作品或卡號專屬 reducer。
+3. `passiveBonuses[].extraDamage` + `universalAttackDamage()`：通用 own-turn 條件式攻擊傷害；使用上一輪 `retireCountThisTurn` 正確計算**雙方本回合**角色退場次數。退場累計到 2 張後可**同時**給 BP+1000/DAMAGE(2)，不把 Raid 剝離算作退場。無阻擋攻擊的第二 LIFE 由 `additionalBattleDamage` 內部效果隊列處理：每次傷害單獨揭露／執行 LIFE Trigger，先處理前一個 Trigger 才繼續下一張；不改動被阻擋時的 IMPACT 類型判定，原能力封印依現有 `originalEffectsDisabled` 自動排除印刷被動。嚴格 schema 拒絕非法 `extraDamage`。這項原能力與 `onRetire` / `chooseOne` 共享效果隊列、沒有額外單作品分支。
+
+### 正式完整登錄真卡
+
+- **BLC-1-024《ユーハバッハ》**：日本官方 https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA08BT%2FBLC-1-024_p1 ，黃6/AP1/BP4000/黃1/CHARACTER/星十字騎士團（repo 原始受審核來源字串）/RAID〈ユーハバッハ〉/RAID 生命 Trigger。己方回合中本回合共至少兩張 CHARACTER 真退場時 BP+1000、Damage(2)；登場選一種 (1) 最多 1 張敵 FRONT Raid top 剝離 (2) 最多 1 張敵 FRONT BP<=3000 真退場。完整來源 `dist/expansion-cards.mjs` 的原始 `CARDS` fingerprint 與 `BLEACH_V2_ADDON_PROFILES` 固定字面逐項核對。新增 `tests/v2-blc-024-official.test.mjs` 使用**全部真實登錄官方卡的合法 50 張牌組**，確實支付黃色能源 6/AP1/兩次 Raid／同名 base；驗證兩模式、真退場一次不觸發 Damage2、上層剝離不退場、第三己方回合實際 3AP 串接兩次 Raid＋兩名敵方角色真退場後 BP5000 / Damage2，一次未阻擋攻擊確實造成兩張不同 LIFE 的分別處理，AI normal/hard、UID/守恆與隱藏資訊不洩露。正式 source-pinned BLEACH contribution、独立 ID manifest 与卡號計數同步；**不是單純 component、也不是自動 `auto` 旗標**。
+- 邊界認定：單卡完整印刷邏輯在指定真實場景落地、官方 Q547–Q551 實際對照；**並不等同**所有跨卡 FAQ 交互、Raid top 帶複雜 under 分層、實機 browser/mobile UI 的全面認證。嚴格 fullyAccepted/FAQ = **0**。
+
+### 具體 commit、CI 及回歸處理
+
+1. Batch A `7b8b0a30682ddcb57f5d8cfef0bcbc4f4350c5f6`：物理 Raid 剝離／非退休、未繼承 buff、REST 精確承接、合法不選、官方 Q547–Q551 元件測試；GitHub Node22 雙回歸 SUCCESS。
+2. Batch B `c3ffd4ca89dbdd2bb4a9874f80e9a70199fcd079`：generic `retireOppFrontOneUnderBp`、`chooseOne` 實作與 AI。首 CI **1 個測試 fixture 失敗**：vanilla base 誤標 `dsl`，嚴格編譯如預期拒絕；改正 `976104a02cfe9699b54093ebe5f1c5b4c5e31929`，CI 雙成功，未調弱編譯器驗證。
+3. Batch C `4ef5fd4fdc5a749c4ce9ce4b552d10916004fe12`：通用動態 DAMAGE2、逐張 LIFE queue、實際同回合兩退場和負測；Node22 **1474/1474**、五作品 60/60、isolated 24/24 SUCCESS；此時正式覆蓋 250/700（元件卡沒有算入）。
+4. Batch D `207df17b17a79a393b2f7f583b086e9a738728b2`：正式登錄真 `BLC-1-024` 和真牌組測試。首次完整 CI **14 個失敗均為舊 86 BLEACH/71 新增/250 V2 硬性數量斷言**，不是該卡的真實邏輯失敗。後續 `1acbeb128e3abd03bf58551ca6abc2c2e78a2332`、`27d2b545ce239cf86eba8290bcbb460dbd127756` 只將兩批既有獨立驗收、對戰矩陣的計數修正為精確 87 BLEACH/72 新增/251 V2/449 未移植；不刪測試、不更動遊戲判定以硬通過。
+5. Batch E `c91e6491eee455021e84486624186876596f1c84`：增添真實 3AP 第三回合、先後支付兩張官方 BLC024 Raid 真正退休兩張不同敵方角色、動態 BP／DAMAGE2 與無阻擋兩次 LIFE 實戰驗收。GitHub Actions **Node22.23.3** `npm test` **1478/1478 通過、0 失敗**；`node scripts/v2-integrated-match-matrix.mjs` **60/60 完成、0 失敗**；`node scripts/v2-unported-report.mjs` **總卡700／正式 V2登錄251／未移植449／全面 FAQ0**。整合 CI https://github.com/will00t-debug/Ua/actions/runs/39709687098 SUCCESS；SAO/MST 獨立 CI https://github.com/will00t-debug/Ua/actions/runs/39709693909 SUCCESS、isolated 24/24。沒有假稱本地跑過 Node 測試。
+
+### 最後真實 registry 覆蓋率
+
+| 作品 | V2 已登錄／母體 | 未移植 |
+|---|---:|---:|
+| BLEACH | 87/276 | 189 |
+| TTG | 30/81 | 51 |
+| SLG | 34/80 | 46 |
+| SAO | 62/183 | 121 |
+| MST | 38/80 | 42 |
+| **合計** | **251/700** | **449** |
+
+### 下輪優先：跨作品共用缺口
+
+- 有額外 facedown `under` 或多層重複 Raid 時的官方剝離 Q547–Q551 組合情境需 source pin 及守恆擴充；當前明確 fail closed，不能擅自把所有幾何視為已支援。
+- **MST-1-053**：官方對手回合 COLOR Trigger 的角色卡／FIELD 卡替換＋登場抽棄／FRONT optional retireOwnField→draw 完整資料驅動組合。必須全部印刷分支和生命 Trigger 完成後才登錄；目前 450→449 中**未包含 MST053**。
+- 同回合多來源 onRetire 與 leave replacement、BP 歸零連鎖退場、傷害2 LIFE Trigger 中的第二效果延遲、AI 真實攻防策略、瀏覽器／手機視覺操作仍需更深入測試；不改 main、不更新正式站。

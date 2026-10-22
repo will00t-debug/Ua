@@ -648,3 +648,11 @@
 - BLC-1-024 的「兩張角色退場」條件已可由共用判定表達，但 Raid 頂剝離、DAMAGE2 授予、選擇分支尚待完整實作，不能計入 250 張。
 - 這份原始效果關鍵字表的 457 張統計是舊時點**歷史快照**，不應重新命名為 450 張的最新人工分類。最新精確已登錄與未移植卡號由程式 registry、獨立 manifest 及 `scripts/v2-unported-report.mjs` 計算。
 - 完整開發交接、每批 commit、真 CI、後續工作詳見 `docs/v2-handoff/GPT-resume.md`「第六輪」章。
+
+
+## 第七輪更新註記（2026-10-22；早期 457 張自動盤點快照不改）
+
+- 最新通過 Node22 GitHub Actions 的程式 SHA `c91e6491eee455021e84486624186876596f1c84`：正式註冊 BLEACH `BLC-1-024`，五作品從 250 升至 **251/700**，未移植從 450 降至 **449**（BLEACH 87/276、其餘 TTG30、SLG34、SAO62、MST38）。此前快照的 457 與這裡的 449 非同一盤點時點，請勿偷換自動關鍵字分類。
+- 共用完整實作 `stripOppRaidTop`、`retireOppFrontOneUnderBp`、`chooseOne` 分支、`passiveBonuses.extraDamage`、`universalAttackDamage` 與逐張 LIFE `additionalBattleDamage`。官方 BLC024 Q547–Q551 實牌驗證剝離非退場、底層 REST 承接、刪上層增益、無新觸發。
+- 連續正式實卡 50 張對戰，合法第三回合 AP3 串兩次 Raid／兩真退場／BP5000/DAMAGE2 已通過。Node22 **1478/1478**，五作品 **60/60**，SAO/MST isolated **24/24**。**fullyAccepted=0**，不等同官方全部 FAQ 或瀏覽器/手機 UI。
+- 下一批優先審核不支援的 Raid-top 附加 under 複雜層、MST053 COLOR FIELD 替換全印刷功能，以及同時退場+兩張 LIFE Trigger 嵌套時序。完整交接詳見 `docs/v2-handoff/GPT-resume.md`「第七輪」章。
