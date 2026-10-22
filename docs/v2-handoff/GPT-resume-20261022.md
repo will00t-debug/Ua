@@ -139,3 +139,123 @@
   （3）BLC-2-019／047 真卡測試（4）Q73 DAMAGE2 simultaneous
   life reveal 的獨立狀態與 hidden-information 驗收
   （5）跨標題 AI／人類一致性、UID 再入場 FAQ。
+
+
+## GPT 第二十輪｜來源效果結算邊界與完整移動事件（2026-10-22）
+
+**沿用分支** `gpt/v2-resume-20261022`、Draft PR #78 →
+`cursor/v2-multi-retire-life-6ff5`；起始 HEAD
+`fd469bb86ce1817a9d1b1e504590959d7c437211`，
+最後已驗收**程式** SHA `7b9f1cc6e426b2901c8d56aceec1bf7faf222d2c`。
+沒有建立新分支、改 main、改 Cursor PR #77、部署正式站或 force push。
+
+### 五批實作與各自提交
+
+1. **A：真實抽牌的 deck→hand 事件** —
+   `e9bbda244530759cce6763439cd3827029d73d78`，
+   改善 `draw` 共用呼叫並使用已存在的 completed move ledger，
+   每一張抽到手中的物理 UID 留下順序／來源；
+   一般規則抽牌與已完成的來源效果抽牌分開，
+   opponent 不能從 `universalPublicView` 取得隱藏身分。
+   Node22 遠端 [39770014603](https://github.com/will00t-debug/Ua/actions/runs/39770014603)
+   **1698/1698、矩陣60/60**。
+
+2. **B：指定牌庫搜尋與 LIFE 移動** —
+   `a6bd8034c878f0bfc396409e5af46e1626c0225a`：
+   單張/多張 deck search、top-filter 命中 deck→hand、LIFE
+   RAID/GET 外→手、FINAL deck→life、COLOR hand→field，
+   結束手牌超限 hand→removed 等移動成功後記錄來源。
+   初次 [39770413261](https://github.com/will00t-debug/Ua/actions/runs/39770413261)
+   因新合成測試忘記宣告既有 `shuffle:true` 造成一項檔案層級失敗；
+   修復 fixture `d6f257851206e12f8c46674afd2a36dd075215e9`，
+   未放寬正式 DSL 驗證器；[39770801984](https://github.com/will00t-debug/Ua/actions/runs/39770801984)
+   **1700/1700、60/60**。
+
+3. **C：來源效果整段結束後才處理移動觸發** —
+   `343357a690f19f9f3b90f7daafd8b2532f9fe920`。
+   可審核 `moveTriggers` 印刷來源 profile（來源名稱/顏色、
+   hand→outside、支付/己方效果、真實 field residence），
+   用既有 `sourceResolutionBoundary` **內部**效果隊列哨兵，
+   把符合條件的移動卡片 `then:[{op:'draw',count:1}]`
+   放在**造成它的來源程式及其合法選擇結束之後**。不是新的
+   reducer/作品專屬分支。非本 profile 的效果、對手效果與非法來源
+   fail-closed。純合成來源測試與錯誤 profile 測試；
+   [39771274699](https://github.com/will00t-debug/Ua/actions/runs/39771274699)
+   **1703/1703、60/60**。
+
+4. **D：MAIN 起動費用邊界** —
+   `2e38aa36216f34f3d462814c90d204f80e0b44ed`。
+   `discardHandBuffSelf`、`restSelfThen`、
+   `frontOnceProgram` 的整段完成點加入同一通用邊界；
+   尤其先**確實棄牌／支付、完成 BP 與剩餘主能力**，再觸發
+   被送場外的卡。測試 wrong sourceName、sourceColor、非法 UID，
+   Normal/Hard AI 使用既有 legal actions。
+   [39771651317](https://github.com/will00t-debug/Ua/actions/runs/39771651317)
+   **1706/1706、60/60**。
+
+5. **E：多實體與序列化驗收** —
+   `7b9f1cc6e426b2901c8d56aceec1bf7faf222d2c`，
+   在同一來源依序棄兩張相同印刷卡但不同**物理 UID**時，
+   第一張不提前觸發，等第二張也確實移動、來源其餘效果完成，
+   各自依序觸發一筆而不複製/遺漏。
+   驗證內部 `sourceResolutionBoundary` 欄位，
+   拒絕虛構 UID、越界／非整數順序與多餘欄位。
+   [39772113594](https://github.com/will00t-debug/Ua/actions/runs/39772113594)
+   **1708/1708、60/60**。
+
+### 程式最後一版 Node.js 22 遠端集中驗收
+
+- **程式 SHA** `7b9f1cc6e426b2901c8d56aceec1bf7faf222d2c`；
+  GitHub Actions [39772113594](https://github.com/will00t-debug/Ua/actions/runs/39772113594)：
+  `npm test` **1708 tests / 1708 pass / 0 fail**；
+  `node scripts/v2-integrated-match-matrix.mjs` **60/60 finished、0 fail**；
+  `node scripts/v2-assert-independent-manifest.mjs` **success**；
+  `node scripts/v2-unported-report.mjs` **success**。
+- 五作品維持 BLEACH **97**、TTG **35**、SLG **41**、
+  SAO **91**、MST **48**，**312/700 V2、未移植388**，
+  本輪正式新增 **0**、全面 FAQ 每卡認證 **0**。
+  `moveTriggers` 測試只用合成 `K/U/J` 卡號，不列入卡冊。
+- **沒有本地 Node22 / npm test**。歷史 clone 的 GitHub DNS
+  解析失敗，所以唯一完整驗收來自 Actions，未進行正式站或手機
+  UI 驗收；本份**文件提交**的 HEAD CI 要另行確認。
+
+### 正式來源與尚未支持的部分
+
+- 官方 [EX07BT/BLC-2-047](https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=EX07BT%2FBLC-2-047)
+  **「その名は斬月」**：藍2／AP1 事件；一般使用抽2；
+  **己方場上的藍色〈黒崎 一護〉效果把該物理事件從自己手牌送至場外**
+  時，後續抽1；非任意 discard／pay 皆可觸發。
+  [Q1046](https://www.unionarena-tcg.com/jp/faq/list.php?series=EX07BT)
+  不要求額外能力觸發時支付印刷藍2能源。
+- [EX07BT/BLC-2-019](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX07BT%2FBLC-2-019_p1)
+  除 main 限定卡名含斬月／月牙的棄牌費用，還有 Raid、登場時雙目標
+  BP-1500、自己 main 抽1、BP+1000 與授予攻擊時可抽牌。
+  [Q1033](https://www.unionarena-tcg.com/jp/faq/list.php?series=EX07BT)
+  指明先完整處理此 MAIN，再結算 047 抽1。
+  [Q2315](https://www.unionarena-tcg.com/jp/faq/list.php?series=EX15BT)
+  證實後續把 047 放到別的角色下面裏向，仍可發動抽1。
+  **本輪沒有正式移植 BLC-2-019 或 BLC-2-047**；
+  尚需嚴格名稱過濾費用、Raid/上場目標、
+  主階段授予 attack draw 與 Trigger 完整正負例，不能只加
+  `moveTriggers` 就宣布全卡支援。
+
+### 下一輪精確缺口
+
+1. source boundary 目前覆蓋 **onPlay** 與三種既有 MAIN 來源；
+   onAttack／phaseOrder／Raid entry／onOutsideRecover 等
+   來源程式還沒有完整一致的 boundary；
+   中途 onRetire 插入與來源封印規則需獨立官方審核。
+2. `moveTriggers` 當前是**限制嚴格的原語**（已核對 hand→outside
+   + own named/color field source + draw），不是任意
+   zone→zone/任意 nested ops 的通用驗證認證。
+   費用中的指定印刷名字比對與後續重複移動，
+   必須擴充證據及反例。
+3. 既有私有 journal 仍未列舉完成所有 Raid-under、
+   full-line replacement／removal、部分 LIFE/Raid
+   實體層移動。不得假稱 event bus 全路徑覆蓋。
+4. **Q73 / DAMAGE2** 多張 LIFE 同時翻開與觸發次序；
+   Q71/Q72、Impact/FINAL 組合未完整驗收，沒有
+   冒然改動既有戰鬥核心。
+5. MAIN end 同時退場回手、層疊 Raid、
+   同 UID 再入場後攻擊/阻擋次數、
+   已取得效果與原效果封印時序仍需正式 FAQ。
