@@ -252,3 +252,62 @@ test('R27 paused REST/tuck rejects forged provenance with same-looking UID',()=>
  assert.throws(()=>assertUniversalMatch(packs,noEvent),/Invalid private movement history|Missing earned/);
  assert.equal(assertUniversalMatch(packs,s),true);
 });
+
+
+// R29 official MST Q2220/Q2228 and BLEACH Q2315/Q2316 distinction:
+// sealing the ORIGINAL source/watcher AFTER the physical hand→outside event
+// was earned must not retroactively erase the already-earned 047 draw or
+// the eligible exact stamped field observer's independent REST choice.
+for(const owner of [0,1])for(const movedFirst of [false,true])
+ test('R29 seal AFTER earned Q2315 move preserves both independent earned choices, '+owner+'/'+movedFirst,async()=>{
+  const {grantContinuousState,originalEffectsDisabled}=
+   await import('../dist/universal-v2/continuous-states.mjs');
+  let {s,source,moved,observer}=game(owner);
+  const activate=legalUniversalActions(packs,s).find(a=>a.type==='activate'&&a.uid===source.uid);
+  assert.ok(activate);
+  s=dispatchUniversalAction(packs,s,activate,{actor:owner});
+  const before=s.players[owner].deck.length;
+  s=dispatchUniversalAction(packs,s,{type:'chooseDiscardGate',uid:moved.uid},{actor:owner});
+  assert.equal(s.pending?.kind,'effect-move-order');
+  assert.equal(s.players[owner].deck.length,before-1,'source MAIN completed, moved-event bonus deferred');
+  const entries=legalUniversalActions(packs,s);
+  assert.equal(entries.length,2);
+  assert.ok(entries.some(x=>x.key.startsWith('observer-')));
+  assert.ok(entries.some(x=>x.key.startsWith('moved-')));
+  for(const target of [source,observer])
+   grantContinuousState(s,{kind:'originalEffectsDisabled',controller:1-owner,
+    sourceUid:target.uid,targetUid:target.uid,sourceLinked:false,
+    until:{player:owner,phase:'attack',edge:'end'}});
+  assert.equal(originalEffectsDisabled(s,s.players[owner].front[0]),true);
+  assert.equal(originalEffectsDisabled(s,s.players[owner].energy[0]),true);
+  s=JSON.parse(JSON.stringify(s));
+  assert.equal(assertUniversalMatch(packs,s),true);
+  const first=legalUniversalActions(packs,s).find(x=>
+   x.key.startsWith(movedFirst?'moved-':'observer-'));
+  assert.ok(first);
+  for(const difficulty of ['normal','hard'])
+   assert.ok(legalUniversalActions(packs,s).some(x=>
+    JSON.stringify(x)===JSON.stringify(chooseUniversalAiAction(packs,s,{difficulty}))));
+  s=dispatchUniversalAction(packs,s,first,{actor:owner});
+  assert.equal(s.pending?.kind,'effect-rest-tuck');
+  const rests=legalUniversalActions(packs,s);
+  assert.ok(rests.some(x=>x.type==='chooseRestTuck'&&x.mode==='rest'),
+   'already earned field observer can still pay actual REST despite later original silence');
+  const snapshot=structuredClone(s);
+  assert.throws(()=>dispatchUniversalAction(packs,s,{type:'chooseRestTuck',mode:'rest'},
+   {actor:1-owner}),/Wrong player/);
+  assert.deepEqual(s,snapshot);
+  s=dispatchUniversalAction(packs,s,{type:'chooseRestTuck',mode:'rest'},{actor:owner});
+  assert.equal(s.pending?.kind,'effect-tuck-moved');
+  s=dispatchUniversalAction(packs,s,{type:'chooseTuckMoved',uid:moved.uid},{actor:owner});
+  assert.equal(s.pending,null);
+  assert.equal(s.players[owner].deck.length,before-2,
+   'earned event draw survives original-text silence and later facedown placement');
+  assert.equal(s.players[owner].energy[0].ready,false);
+  assert.equal(s.players[owner].energy[0].under[0].uid,moved.uid);
+  const own=universalPublicView(packs,s,owner),opp=universalPublicView(packs,s,1-owner);
+  assert.equal(own.players[owner].energy[0].underLayers[0].uid,moved.uid);
+  assert.deepEqual(opp.players[owner].energy[0].underLayers,[{faceDown:true}]);
+  assert.equal(opp.players[owner].hand,null);
+  assert.equal(assertUniversalMatch(packs,s),true);
+ });
