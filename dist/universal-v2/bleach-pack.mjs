@@ -888,6 +888,16 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
   "number":"EX07BT/BLC-2-040","name":"チルッチ・サンダーウィッチ",
   "color":"blue","energy":0,"ap":1,"bp":1000,"gen":1,
   "trigger":null,"type":"character","effect":"退場：抽 1 張。"
+ } ,{
+  "id":"BLC-1-051","kind":"onRetireMillTwo",
+  "number":"UA08BT/BLC-1-051","name":"朽木 ルキア",
+  "color":"purple","energy":0,"ap":1,"bp":1500,"gen":1,
+  "trigger":"draw","type":"character","effect":"退場：將己方牌堆頂 2 張送至場外。"
+ } ,{
+  "id":"BLC-2-042","kind":"onRetireMillTwo",
+  "number":"EX07BT/BLC-2-042","name":"ルピ・アンテノール",
+  "color":"blue","energy":0,"ap":1,"bp":1500,"gen":1,
+  "trigger":"draw","type":"character","effect":"退場：將己方牌堆頂 2 張送至場外。"
  }
 
  ,{
@@ -946,10 +956,11 @@ export function checkedBleachAddonDefinition(p){
  const isPassive=p.kind==='activeEnergy'||p.kind==='impactNull';
  const isMain=p.kind==='restSelfEnemy'||p.kind==='restEnergyRetire';
  const isRetireDraw=p.kind==='onRetireDrawOne';
+ const isRetireMill=p.kind==='onRetireMillTwo';
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isStripDual;
+ const special=p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isStripDual;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -971,6 +982,7 @@ export function checkedBleachAddonDefinition(p){
   ...(p.kind==='drawPlayColorHand'?{triggerEffect:{op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1}}:{}),
   ...(!special?{templateEffects:abilities[p.kind]}:{effects:
    isRetireDraw?{onRetire:[{op:'draw',count:1}]}:
+   isRetireMill?{onRetire:[{op:'millTop',count:2}]}:
    isStripDual?{onPlay:[{op:'chooseOne',optional:false,options:[
     {id:'strip',label:'Strip opponent RAID top',turn:'any',
      then:[{op:'stripOppRaidTop',optional:true}]},
