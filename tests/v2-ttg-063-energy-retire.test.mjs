@@ -1,3 +1,4 @@
+import {EXPECTED_V2_COUNTS} from './fixtures/v2-integrated-id-manifest.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {TTG_BY_ID} from '../dist/ttg-builder.mjs';
@@ -67,7 +68,7 @@ test('TTG-063 source fingerprint: original eight-card front and native shared re
  assert.deepEqual(card.mainAbility,slg.cards['SLG-1-013'].mainAbility);
  assert.deepEqual(card.effects,{});
  assert.equal(TTG_V2_ADDITION_IDS.filter(id=>id==='TTG-1-063').length,1);
- assert.deepEqual(Object.keys(ttg.cards).length,30);
+ assert.deepEqual(Object.keys(ttg.cards).length,EXPECTED_V2_COUNTS['gurren-lagann']);
  assert.deepEqual(validateUniversalDeck(ttg,ttgDeck),[]);
  assert.deepEqual(validateUniversalDeck(mst,mstDeck),[]);
 });

@@ -1,3 +1,4 @@
+import {EXPECTED_V2_COUNTS,EXPECTED_V2_ADDED_CARD_IDS} from './fixtures/v2-integrated-id-manifest.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import contribution from '../dist/universal-v2/title-packs/bleach.mjs';
@@ -58,22 +59,22 @@ function lifeHit(id){
 test('registry adds exact 73 official BLEACH IDs to 15 Pilots, never duplicates or ghosts',()=>{
  assert.equal(V2_TITLE_CONTRIBUTIONS.bleach,contribution);
  assert.equal(REAL_V2_PILOT_IDS.bleach.length,15);
- assert.equal(contribution.entries.length,73);
+ assert.equal(contribution.entries.length,EXPECTED_V2_ADDED_CARD_IDS.bleach.length);
  assert.deepEqual(sorted(contribution.entries.map(x=>x.id)),sorted(BLEACH_V2_NEW_IDS));
- assert.equal(new Set(contribution.entries.map(x=>x.id)).size,73);
+ assert.equal(new Set(contribution.entries.map(x=>x.id)).size,EXPECTED_V2_ADDED_CARD_IDS.bleach.length);
  assert.ok(!BLEACH_V2_NEW_IDS.some(id=>REAL_V2_PILOT_IDS.bleach.includes(id)));
  assert.deepEqual(sorted(Object.keys(registered.cards)),
   sorted([...REAL_V2_PILOT_IDS.bleach,...BLEACH_V2_NEW_IDS]));
- assert.equal(Object.keys(registered.cards).length,88);
- assert.equal(Object.keys(standalone.cards).length,88);
+ assert.equal(Object.keys(registered.cards).length,EXPECTED_V2_COUNTS.bleach);
+ assert.equal(Object.keys(standalone.cards).length,EXPECTED_V2_COUNTS.bleach);
  const info=listRegisteredV2Titles().find(x=>x.title==='bleach');
  assert.equal(info.baselinePilots,15);
- assert.equal(info.newlyContributed,73);
- assert.equal(info.totalV2Cards,88);
+ assert.equal(info.newlyContributed,EXPECTED_V2_ADDED_CARD_IDS.bleach.length);
+ assert.equal(info.totalV2Cards,EXPECTED_V2_COUNTS.bleach);
  const inventory=v2InventoryForTitle('bleach');
  assert.equal(inventory.total,276);
- assert.equal(inventory.pilotImplemented,88);
- assert.equal(inventory.blocked,188);
+ assert.equal(inventory.pilotImplemented,EXPECTED_V2_COUNTS.bleach);
+ assert.equal(inventory.blocked,276-EXPECTED_V2_COUNTS.bleach);
  assert.deepEqual(inventory.pilotIds,sorted(Object.keys(registered.cards)));
 });
 

@@ -1,3 +1,4 @@
+import {EXPECTED_V2_COUNTS,EXPECTED_V2_ADDED_CARD_IDS} from './fixtures/v2-integrated-id-manifest.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {CARDS} from '../dist/cards.mjs';
@@ -40,8 +41,8 @@ function setup(counts,id,energyId,seed){
  return {s,play,source};
 }
 test('new top batch preserves official profiles / 88 real V2 identities with no extra life Trigger',()=>{
- assert.equal(contribution.entries.length,73);
- assert.equal(Object.keys(pack.cards).length,88);
+ assert.equal(contribution.entries.length,EXPECTED_V2_ADDED_CARD_IDS.bleach.length);
+ assert.equal(Object.keys(pack.cards).length,EXPECTED_V2_COUNTS.bleach);
  assert.deepEqual(validateUniversalDeck(pack,purple),[]);
  assert.deepEqual(validateUniversalDeck(pack,yellow),[]);
  assert.equal(Object.values(yellow).reduce((n,v)=>n+v,0),50);

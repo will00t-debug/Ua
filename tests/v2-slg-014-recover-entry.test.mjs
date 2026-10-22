@@ -1,3 +1,4 @@
+import {EXPECTED_V2_COUNTS} from './fixtures/v2-integrated-id-manifest.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {registeredV2TitlePack} from '../dist/universal-v2/title-packs/registry.mjs';
@@ -51,7 +52,7 @@ test('official SLG-014 card source, Q2025 FRONT ban, onPlay mill and own-outside
   ['purple',2,1,1000,1,null,true]);
  assert.deepEqual(c.ownOutsideRecovery,{op:'restSelfToEnergy',optional:true,rest:true});
  assert.deepEqual(c.effects.onPlay,[{op:'millTop',count:1}]);
- assert.equal(Object.keys(pack.cards).length,34);
+ assert.equal(Object.keys(pack.cards).length,EXPECTED_V2_COUNTS['solo-leveling']);
 });
 test('optional controller-only free REST ENERGY entry after exact own-outside recovery',()=>{
  const {s,c}=recover(),options=legalUniversalActions(packs,s);

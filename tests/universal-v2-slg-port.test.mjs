@@ -1,3 +1,4 @@
+import {EXPECTED_V2_COUNTS} from './fixtures/v2-integrated-id-manifest.mjs';
 import test from 'node:test';
 import {readFileSync} from 'node:fs';
 import assert from 'node:assert/strict';
@@ -44,8 +45,8 @@ test('TTG 81 and SLG 80 normal official card IDs are unique and contiguous, excl
  }
 });
 test('SLG 34 printed effect profiles do not equate to full 80-card migration and retain life trigger separately',()=>{
- assert.equal(SLG_V2_VERIFIED_IDS.length,34);
- assert.equal(Object.keys(slg.cards).length,34);
+ assert.equal(SLG_V2_VERIFIED_IDS.length,EXPECTED_V2_COUNTS['solo-leveling']);
+ assert.equal(Object.keys(slg.cards).length,EXPECTED_V2_COUNTS['solo-leveling']);
  assert.deepEqual(validateUniversalDeck(slg,slgDeck),[]);
  assert.equal(slg.cards['SLG-1-005'].implementation,'vanilla');
  assert.equal(slg.cards['SLG-1-005'].trigger,'draw');
@@ -170,11 +171,11 @@ test('SLG-040 SPECIAL life trigger is OPTIONAL, independent of its printed BP-li
 test('34 SLG profiles compile through the title-scoped V2 registry without legacy fallback',()=>{
  const row=listRegisteredV2Titles().find(x=>x.title==='solo-leveling');
  assert.equal(row.baselinePilots,0);
- assert.equal(row.newlyContributed,34);
- assert.equal(row.totalV2Cards,34);
+ assert.equal(row.newlyContributed,EXPECTED_V2_COUNTS['solo-leveling']);
+ assert.equal(row.totalV2Cards,EXPECTED_V2_COUNTS['solo-leveling']);
  const registered=registeredV2TitlePack('solo-leveling');
  assert.ok(registered&&registered.kind==='ua-v2-pack');
- assert.equal(Object.keys(registered.cards).length,34);
+ assert.equal(Object.keys(registered.cards).length,EXPECTED_V2_COUNTS['solo-leveling']);
  for(const id of SLG_V2_VERIFIED_IDS){
   assert.ok(registered.cards[id]);
   assert.equal(registered.cards[id].trigger,slg.cards[id].trigger);

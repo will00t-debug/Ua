@@ -1,3 +1,4 @@
+import {EXPECTED_V2_COUNTS,EXPECTED_V2_ADDED_CARD_IDS} from './fixtures/v2-integrated-id-manifest.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {CARDS} from '../dist/cards.mjs';
@@ -73,8 +74,8 @@ test('BLC-1-042 source fingerprint protects official merged STARTER while retain
  assert.deepEqual(card.mainAbility,ttg.cards['TTG-1-063'].mainAbility);
  assert.deepEqual(card.mainAbility,slg.cards['SLG-1-013'].mainAbility);
  assert.deepEqual(card.effects,{});
- assert.equal(Object.keys(bleach.cards).length,88);
- assert.equal(BLEACH_V2_ADDON_PROFILES.length,73);
+ assert.equal(Object.keys(bleach.cards).length,EXPECTED_V2_COUNTS.bleach);
+ assert.equal(BLEACH_V2_ADDON_PROFILES.length,EXPECTED_V2_ADDED_CARD_IDS.bleach.length);
  assert.throws(()=>checkedBleachAddonDefinition({...profile,effect:booster.effect}),/official recheck required/,
   'normalizing text variant without audit must not silently alter source fingerprint');
 });

@@ -1,3 +1,4 @@
+import {EXPECTED_V2_COUNTS,EXPECTED_V2_ADDED_CARD_IDS} from './fixtures/v2-integrated-id-manifest.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {CARDS} from '../dist/cards.mjs';
@@ -33,9 +34,9 @@ function reach(s,phase){
 }
 test('73 official standalone BLEACH profiles extend rather than replace 15 existing pilots',()=>{
  assert.equal(REAL_V2_PILOT_IDS.bleach.length,15);
- assert.equal(BLEACH_V2_NEW_IDS.length,73);
- assert.equal(new Set(BLEACH_V2_NEW_IDS).size,73);
- assert.equal(Object.keys(pack.cards).length,88);
+ assert.equal(BLEACH_V2_NEW_IDS.length,EXPECTED_V2_ADDED_CARD_IDS.bleach.length);
+ assert.equal(new Set(BLEACH_V2_NEW_IDS).size,EXPECTED_V2_ADDED_CARD_IDS.bleach.length);
+ assert.equal(Object.keys(pack.cards).length,EXPECTED_V2_COUNTS.bleach);
  assert.ok(REAL_V2_PILOT_IDS.bleach.every(id=>pack.cards[id]));
  assert.deepEqual(validateUniversalDeck(pack,counts),[]);
  for(const p of BLEACH_V2_ADDON_PROFILES){

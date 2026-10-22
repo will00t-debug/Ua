@@ -1,3 +1,4 @@
+import {EXPECTED_V2_COUNTS} from './fixtures/v2-integrated-id-manifest.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {CARDS} from '../dist/cards.mjs';
@@ -56,7 +57,7 @@ test('BLC-1-005 official printed ID, stats, evidence, unmodified no-life trigger
  assert.deepEqual(printed.effects,{});
  assert.deepEqual(printed.mainAbility,{op:'restSelfThenRestOppFrontOne',frontOnly:true});
  assert.equal(printed.trigger,null);
- assert.equal(Object.keys(bleach.cards).length,88);
+ assert.equal(Object.keys(bleach.cards).length,EXPECTED_V2_COUNTS.bleach);
  assert.deepEqual(validateUniversalDeck(bleach,decks),[]);
 });
 

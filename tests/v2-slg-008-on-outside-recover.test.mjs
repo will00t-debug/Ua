@@ -1,3 +1,4 @@
+import {EXPECTED_V2_COUNTS} from './fixtures/v2-integrated-id-manifest.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {SOLO_LEVELING_CARDS} from '../dist/solo-leveling.mjs';
@@ -71,7 +72,7 @@ test('008 Japanese official source fingerprint, BOTH independent text timings an
  assert.deepEqual(c.effects.onOutsideRecover,[{op:'drawDiscard',count:1}]);
  assert.deepEqual(c.effects.onPlay,[{op:'searchTopOneBottomDiscard',count:4,
   filters:[{field:'name',value:'水篠 旬'},{field:'name',value:'悪魔の城'}],logic:'any'}]);
- assert.equal(Object.keys(slg.cards).length,34);
+ assert.equal(Object.keys(slg.cards).length,EXPECTED_V2_COUNTS['solo-leveling']);
  assert.deepEqual(validateUniversalDeck(slg,deck),[]);
 });
 test('real SLG-037 recovers SLG-008: self mandatory draw then discard BEFORE source trailing draw',()=>{

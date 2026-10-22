@@ -1,3 +1,4 @@
+import {EXPECTED_V2_COUNTS} from './fixtures/v2-integrated-id-manifest.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {MST_V2_OFFICIAL_BY_ID,MST_V2_OFFICIAL_LIMITS} from '../dist/universal-v2/sources/mst-inventory.mjs';
@@ -98,7 +99,7 @@ test('MST 054/075 are two sourced official V2 cards in a LEGAL 50-card single-ti
  assert.equal(verifiedRoxyDeck['MST-1-051'],MST_V2_OFFICIAL_LIMITS['MST-1-051'].maxCopies);
  for(const id of ['MST-1-054','MST-1-075'])
   assert.equal(packs[0].cards[id].name,MST_V2_OFFICIAL_BY_ID[id].nameJa);
- assert.equal(Object.keys(packs[0].cards).length,41);
+ assert.equal(Object.keys(packs[0].cards).length,EXPECTED_V2_COUNTS['mushoku-tensei']);
  assert.deepEqual(verifiedMstV2RoxyFieldDeck().counts,verifiedRoxyDeck);
  const available=createAllV2PreviewRealDecks();
  assert.deepEqual(available['mushoku-tensei-roxy-field'].counts,verifiedRoxyDeck);

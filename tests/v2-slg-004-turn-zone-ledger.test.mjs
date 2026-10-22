@@ -1,3 +1,4 @@
+import {EXPECTED_V2_COUNTS} from './fixtures/v2-integrated-id-manifest.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {SOLO_LEVELING_CARDS} from '../dist/solo-leveling.mjs';
@@ -42,7 +43,7 @@ test('official UA51BT/SLG-1-004 has full standalone onPlay and live own-turn bon
   ['purple',3,1,3500,1,'draw']);
  assert.deepEqual(d.effects.onPlay,[{op:'drawDiscard',count:1}]);
  assert.deepEqual(d.passiveBonuses,[{condition:{kind:'ownEffectHandOutsideOrRecovery',turn:'own'},bp:500}]);
- assert.equal(Object.keys(pack.cards).length,34);
+ assert.equal(Object.keys(pack.cards).length,EXPECTED_V2_COUNTS['solo-leveling']);
 });
 test('own onPlay DRAW alone does not buff: only actual paid hand-to-outside sets factual history',()=>{
  const {s:pre,source,action}=deployedFixture();

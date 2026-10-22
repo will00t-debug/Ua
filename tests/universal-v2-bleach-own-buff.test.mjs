@@ -1,3 +1,4 @@
+import {EXPECTED_V2_COUNTS,EXPECTED_V2_ADDED_CARD_IDS} from './fixtures/v2-integrated-id-manifest.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {CARDS} from '../dist/cards.mjs';
@@ -48,9 +49,9 @@ test('three actual printed other-character buffs have exact source fingerprints,
  assert.deepEqual(validateUniversalDeck(pack,purple),[]);
  assert.deepEqual(validateUniversalDeck(pack,green),[]);
  assert.deepEqual(validateUniversalDeck(pack,blue),[]);
- assert.equal(Object.keys(pack.cards).length,88);
- assert.equal(Object.keys(standalone.cards).length,88);
- assert.equal(contribution.entries.length,73);
+ assert.equal(Object.keys(pack.cards).length,EXPECTED_V2_COUNTS.bleach);
+ assert.equal(Object.keys(standalone.cards).length,EXPECTED_V2_COUNTS.bleach);
+ assert.equal(contribution.entries.length,EXPECTED_V2_ADDED_CARD_IDS.bleach.length);
  for(const [id,color,energy,bp] of [
   ['BLC-1-059','purple',2,3000],['BLC-1-077','green',0,1000],
   ['BLC-4-023','blue',0,500]

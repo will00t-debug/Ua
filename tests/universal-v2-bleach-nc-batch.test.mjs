@@ -1,3 +1,4 @@
+import {EXPECTED_V2_COUNTS,EXPECTED_V2_ADDED_CARD_IDS} from './fixtures/v2-integrated-id-manifest.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {CARDS} from '../dist/cards.mjs';
@@ -55,9 +56,9 @@ test('NC batch is exactly two Japanese UA04NC IDs with correct original trigger 
   assert.deepEqual(validateUniversalDeck(pack,c),[]);
   assert.equal(Object.values(c).reduce((a,v)=>a+v,0),50);
  }
- assert.equal(Object.keys(pack.cards).length,88);
- assert.equal(Object.keys(standalone.cards).length,88);
- assert.equal(contribution.entries.length,73);
+ assert.equal(Object.keys(pack.cards).length,EXPECTED_V2_COUNTS.bleach);
+ assert.equal(Object.keys(standalone.cards).length,EXPECTED_V2_COUNTS.bleach);
+ assert.equal(contribution.entries.length,EXPECTED_V2_ADDED_CARD_IDS.bleach.length);
  const official={
   'BLC-3-006':{number:'UA04NC/BLC-3-006',trigger:'active',
    effect:[{op:'inspectTopArrange',count:3,toOutside:true,rest:'top'}]},

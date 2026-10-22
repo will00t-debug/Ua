@@ -1,3 +1,4 @@
+import {EXPECTED_V2_COUNTS} from './fixtures/v2-integrated-id-manifest.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {SAO_OFFICIAL_CARDS} from '../dist/sao-official-import.mjs';
@@ -51,7 +52,7 @@ test('SAO-1-014 exact JP original opponent-turn BP source, separate DRAW Life an
  assert.deepEqual(card.effects.onPlay,undefined);
  assert.equal(card.implementation,'dsl');
  assert.ok(SAO_V2_PILOT_IDS.includes(ID));
- assert.equal(Object.keys(sao.cards).length,62);
+ assert.equal(Object.keys(sao.cards).length,EXPECTED_V2_COUNTS['sword-art-online']);
  assert.deepEqual(verifiedSaoV2Cards().find(c=>c.id===ID).opponentTurnBp,1000);
  assert.deepEqual(saoV2Pack().cards[ID],card);
  assert.deepEqual(validateUniversalDeck(sao,saoDeck),[]);

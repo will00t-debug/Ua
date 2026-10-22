@@ -1,3 +1,4 @@
+import {EXPECTED_V2_COUNTS} from './fixtures/v2-integrated-id-manifest.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {TTG_BY_ID} from '../dist/ttg-builder.mjs';
@@ -61,7 +62,7 @@ test('TTG-006 exactly pins source-owned front-PDF print and existing reusable li
  assert.deepEqual(compiled.effects,{});
  assert.equal(ttg.cards['TTG-1-006'].implementation,'dsl');
  assert.ok(TTG_V2_ADDITION_IDS.includes('TTG-1-006'));
- assert.equal(Object.keys(ttg.cards).length,30);
+ assert.equal(Object.keys(ttg.cards).length,EXPECTED_V2_COUNTS['gurren-lagann']);
  assert.deepEqual(validateUniversalDeck(ttg,ttgDeck),[]);
  assert.deepEqual(validateUniversalDeck(sao,saoDeck),[]);
 });

@@ -1,3 +1,4 @@
+import {EXPECTED_V2_COUNTS} from './fixtures/v2-integrated-id-manifest.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {SAO_OFFICIAL_CARDS} from '../dist/sao-official-import.mjs';
@@ -56,8 +57,8 @@ test('the 62 SAO and 41 MST formal contributions meet strict sourceRecord/defini
   assert.deepEqual(entries().map(e=>e.id),contribution.entries.map(e=>e.id));
  }
  const listed=listRegisteredV2Titles();
- assert.equal(listed.find(x=>x.title==='sword-art-online').newlyContributed,62);
- assert.equal(listed.find(x=>x.title==='mushoku-tensei').newlyContributed,41);
+ assert.equal(listed.find(x=>x.title==='sword-art-online').newlyContributed,EXPECTED_V2_COUNTS['sword-art-online']);
+ assert.equal(listed.find(x=>x.title==='mushoku-tensei').newlyContributed,EXPECTED_V2_COUNTS['mushoku-tensei']);
  assert.ok(listed.find(x=>x.title==='sword-art-online').previewReady);
  assert.ok(listed.find(x=>x.title==='mushoku-tensei').previewReady);
 });
@@ -86,11 +87,11 @@ test('formal contract rejects stale source card, altered stats, missing text, fo
 test('SAO official 202 printings deduplicate to 183 IDs; unsupported 122 are NOT imported as ready',()=>{
  assert.equal(SAO_OFFICIAL_CARDS.length,202);
  assert.equal(new Set(SAO_OFFICIAL_CARDS.map(c=>c.id)).size,183);
- assert.equal(SAO_V2_PILOT_IDS.length,62);
+ assert.equal(SAO_V2_PILOT_IDS.length,EXPECTED_V2_COUNTS['sword-art-online']);
  for(const id of SAO_V2_PILOT_IDS)
   assert.ok(SAO_OFFICIAL_CARDS.find(r=>r.id===id),'SAO source '+id);
  const registry=registeredV2TitlePack('sword-art-online');
- assert.equal(Object.keys(registry.cards).length,62);
+ assert.equal(Object.keys(registry.cards).length,EXPECTED_V2_COUNTS['sword-art-online']);
  for(const id of ['SAO-2-063','SAO-2-055','SAO-2-044'])
   assert.equal(registry.cards[id],undefined,'not yet full-effect V2 '+id);
 });

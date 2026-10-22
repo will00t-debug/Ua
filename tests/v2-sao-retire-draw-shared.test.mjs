@@ -1,3 +1,4 @@
+import {EXPECTED_V2_COUNTS} from './fixtures/v2-integrated-id-manifest.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {SAO_OFFICIAL_CARDS} from '../dist/sao-official-import.mjs';
@@ -53,7 +54,7 @@ test('both original SAO printed cards are native mandatory onRetire draw, not Li
   assert.equal(def.implementation,'dsl');
   assert.ok(SAO_V2_PILOT_IDS.includes(id));
  }
- assert.equal(Object.keys(sao.cards).length,62);
+ assert.equal(Object.keys(sao.cards).length,EXPECTED_V2_COUNTS['sword-art-online']);
  assert.deepEqual(validateUniversalDeck(sao,saoDeck),[]);
  assert.deepEqual(validateUniversalDeck(ttg,ttgDeck),[]);
 });

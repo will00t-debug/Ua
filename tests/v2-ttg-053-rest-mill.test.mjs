@@ -1,3 +1,4 @@
+import {EXPECTED_V2_COUNTS} from './fixtures/v2-integrated-id-manifest.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {TTG_BY_ID} from '../dist/ttg-builder.mjs';
@@ -50,7 +51,7 @@ test('TTG-053 independent official printed stats, main REST→top outside and AC
  assert.deepEqual(card.effects,{});
  assert.equal(card.trigger,'active');
  assert.deepEqual(validateUniversalDeck(ttg,d),[]);
- assert.equal(Object.keys(ttg.cards).length,30);
+ assert.equal(Object.keys(ttg.cards).length,EXPECTED_V2_COUNTS['gurren-lagann']);
 });
 test('TTG-053 own REST cost fires once when READY, mills OWN single top card and pays NO AP',()=>{
  const {s,source,act}=setup();

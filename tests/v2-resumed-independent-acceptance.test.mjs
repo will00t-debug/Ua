@@ -1,3 +1,4 @@
+import {EXPECTED_V2_COUNTS,EXPECTED_V2_TOTAL,EXPECTED_V2_ADDED_CARD_IDS} from './fixtures/v2-integrated-id-manifest.mjs';
 // Preserved E-line independent scenarios from c3b7dd658b83c964698062bfbd2ff15c89775667.
 // Roster assertions retargeted; former unmerged IDs now have positive checks,
 // with still-unported cards retained as negative controls.
@@ -6,7 +7,6 @@ import assert from 'node:assert/strict';
 import {createAllV2PreviewRealDecks} from '../dist/universal-v2/preview-real-decks.mjs';
 import {registeredV2TitlePack,listRegisteredV2Titles} from '../dist/universal-v2/title-packs/registry.mjs';
 import {v2AllTitleInventory} from '../dist/universal-v2/title-packs/inventory.mjs';
-import {EXPECTED_V2_ADDED_CARD_IDS} from './fixtures/v2-integrated-id-manifest.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  assertUniversalMatch,universalPrivateChoices,universalPublicView} from '../dist/universal-v2/engine.mjs';
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
@@ -47,12 +47,12 @@ function playFixture(id,deckKey,genId,seed){
  return {s,packs,source,play};
 }
 test('new stable registry exact 255 IDs across five independently approved official title packs',()=>{
- const expected=[88,30,34,62,41],registered=listRegisteredV2Titles();
+ const expected=Object.values(EXPECTED_V2_COUNTS),registered=listRegisteredV2Titles();
  assert.deepEqual(registered.map(t=>t.totalV2Cards),expected);
  const inventory=v2AllTitleInventory();
  assert.equal(inventory.totals.total,700);
- assert.equal(inventory.totals.pilotImplemented,255);
- assert.equal(inventory.totals.blocked,445);
+ assert.equal(inventory.totals.pilotImplemented,EXPECTED_V2_TOTAL);
+ assert.equal(inventory.totals.blocked,700-EXPECTED_V2_TOTAL);
  for(let i=0;i<titleIds.length;i++){
   const title=titleIds[i],pack=registeredV2TitlePack(title),ids=Object.keys(pack.cards).sort();
   assert.equal(ids.length,expected[i]);

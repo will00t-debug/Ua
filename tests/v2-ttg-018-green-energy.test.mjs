@@ -1,3 +1,4 @@
+import {EXPECTED_V2_COUNTS} from './fixtures/v2-integrated-id-manifest.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {TTG_BY_ID} from '../dist/ttg-builder.mjs';
@@ -22,7 +23,7 @@ test('TTG-018 official source has NO Life icon, identical shared MAIN op as RED 
  assert.deepEqual(card.mainAbility,ttg.cards['TTG-1-063'].mainAbility);
  assert.deepEqual(card.effects,{});
  assert.ok(TTG_V2_ADDITION_IDS.includes(ID));
- assert.equal(Object.keys(ttg.cards).length,30);
+ assert.equal(Object.keys(ttg.cards).length,EXPECTED_V2_COUNTS['gurren-lagann']);
  assert.deepEqual(validateUniversalDeck(ttg,ttgDeck),[]);
  assert.deepEqual(validateUniversalDeck(mst,mstDeck),[]);
 });

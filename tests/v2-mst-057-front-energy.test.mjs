@@ -1,3 +1,4 @@
+import {EXPECTED_V2_COUNTS} from './fixtures/v2-integrated-id-manifest.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {MST_V2_OFFICIAL_BY_ID} from '../dist/universal-v2/sources/mst-inventory.mjs';
@@ -31,7 +32,7 @@ test('MST057 source-locked front production and real 50-card decks',()=>{
   ['クリフ','green',4,1,3500,1,'character',['ラノア魔法大学'],'draw']);
  assert.equal(c.frontGeneratesEnergy,true);
  assert.equal(c.implementation,'dsl');
- assert.equal(Object.keys(mst.cards).length,41);
+ assert.equal(Object.keys(mst.cards).length,EXPECTED_V2_COUNTS['mushoku-tensei']);
  assert.deepEqual(validateUniversalDeck(mst,mstDeck),[]);
  assert.deepEqual(validateUniversalDeck(slg,slgDeck),[]);
 });

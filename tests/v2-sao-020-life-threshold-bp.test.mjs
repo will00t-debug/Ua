@@ -1,3 +1,4 @@
+import {EXPECTED_V2_COUNTS} from './fixtures/v2-integrated-id-manifest.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {SAO_OFFICIAL_CARDS} from '../dist/sao-official-import.mjs';
@@ -50,7 +51,7 @@ test('official SAO-1-020 original Japanese exact printed trigger, numbers and ge
  assert.deepEqual(c.effects,{});
  assert.equal(c.implementation,'dsl');
  assert.ok(SAO_V2_PILOT_IDS.includes(ID));
- assert.equal(Object.keys(sao.cards).length,62);
+ assert.equal(Object.keys(sao.cards).length,EXPECTED_V2_COUNTS['sword-art-online']);
  assert.deepEqual(verifiedSaoV2Cards().find(x=>x.id===ID).passiveBonuses,c.passiveBonuses);
  assert.deepEqual(saoV2Pack().cards[ID],c);
  assert.deepEqual(validateUniversalDeck(sao,saoDeck),[]);

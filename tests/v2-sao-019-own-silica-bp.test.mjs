@@ -1,3 +1,4 @@
+import {EXPECTED_V2_COUNTS} from './fixtures/v2-integrated-id-manifest.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {SAO_OFFICIAL_CARDS} from '../dist/sao-official-import.mjs';
@@ -33,7 +34,7 @@ test('SAO2019 full EX08BT original Japanese and live OWN-name passive matches sh
  assert.equal(p.effects.onPlay,undefined);
  assert.equal(p.impactNull,false);
  assert.ok(SAO_V2_PILOT_IDS.includes(ID));
- assert.equal(Object.keys(sao.cards).length,62);
+ assert.equal(Object.keys(sao.cards).length,EXPECTED_V2_COUNTS['sword-art-online']);
  assert.deepEqual(verifiedSaoV2Cards().find(c=>c.id===ID).passiveBonuses,p.passiveBonuses);
  assert.deepEqual(saoV2Pack().cards[ID],p);
  assert.deepEqual(validateUniversalDeck(sao,deck),[]);

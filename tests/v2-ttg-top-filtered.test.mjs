@@ -1,3 +1,4 @@
+import {EXPECTED_V2_COUNTS} from './fixtures/v2-integrated-id-manifest.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {TTG_BY_ID} from '../dist/ttg-builder.mjs';
@@ -57,7 +58,7 @@ test('independent official cards and restricted top filter profiles compile, nev
   assert.equal(v2.trigger,trigger);
   assert.equal(v2.type,'character');
  }
- assert.equal(Object.keys(pack.cards).length,30);
+ assert.equal(Object.keys(pack.cards).length,EXPECTED_V2_COUNTS['gurren-lagann']);
  assert.deepEqual(validateUniversalDeck(pack,counts),[]);
 });
 test('023 filters exact TOP5 for ガンメン, then orders other four to BOTTOM before conditional discard',()=>{

@@ -1,3 +1,4 @@
+import {EXPECTED_V2_COUNTS} from './fixtures/v2-integrated-id-manifest.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {SOLO_LEVELING_CARDS} from '../dist/solo-leveling.mjs';
@@ -25,7 +26,7 @@ test('official SLG-1-042 errata-aware original source and all native MAIN effect
  assert.deepEqual(card.mainAbility,slg.cards['SLG-1-013'].mainAbility);
  assert.deepEqual(card.effects,{});
  assert.equal(SLG_V2_VERIFIED_IDS.filter(id=>id===ID).length,1);
- assert.equal(Object.keys(slg.cards).length,34);
+ assert.equal(Object.keys(slg.cards).length,EXPECTED_V2_COUNTS['solo-leveling']);
  assert.deepEqual(validateUniversalDeck(slg,deck),[]);
 });
 for(const owner of [0,1]){

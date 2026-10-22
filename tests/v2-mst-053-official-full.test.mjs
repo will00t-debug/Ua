@@ -1,3 +1,4 @@
+import {EXPECTED_V2_COUNTS} from './fixtures/v2-integrated-id-manifest.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {MST_V2_OFFICIAL_BY_ID} from '../dist/universal-v2/sources/mst-inventory.mjs';
@@ -26,7 +27,7 @@ test('official complete 053 source-locked stats, color trigger, permanent replac
  assert.deepEqual(c.effects.onPlay,[{op:'drawDiscard',count:1}]);
  assert.deepEqual(c.mainAbility,{op:'retireOwnFieldThen',frontOnly:true,
   oncePerTurn:true,optional:true,after:[{op:'draw',count:1}]});
- assert.equal(Object.keys(pack.cards).length,41);
+ assert.equal(Object.keys(pack.cards).length,EXPECTED_V2_COUNTS['mushoku-tensei']);
  assert.deepEqual(validateUniversalDeck(pack,deck),[]);
 });
 test('genuine paid MST053 onPlay draw+discard, then optional paid FIELD retirement draws after MST075 onRetire',()=>{

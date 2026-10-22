@@ -1,3 +1,4 @@
+import {EXPECTED_V2_COUNTS} from './fixtures/v2-integrated-id-manifest.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {MST_V2_OFFICIAL_BY_ID} from '../dist/universal-v2/sources/mst-inventory.mjs';
@@ -48,7 +49,7 @@ test('official MST045 JP printed GREEN profile reuses same strict deferred REST 
  assert.deepEqual(card.mainAbility,mst.cards['MST-1-016'].mainAbility);
  assert.deepEqual(card.mainAbility,slg.cards['SLG-1-013'].mainAbility);
  assert.deepEqual(card.effects,{});
- assert.equal(Object.keys(mst.cards).length,41);
+ assert.equal(Object.keys(mst.cards).length,EXPECTED_V2_COUNTS['mushoku-tensei']);
  assert.deepEqual(validateUniversalDeck(mst,mstDeck),[]);
  assert.deepEqual(validateUniversalDeck(slg,slgDeck),[]);
 });

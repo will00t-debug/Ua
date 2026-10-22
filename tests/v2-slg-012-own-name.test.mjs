@@ -1,3 +1,4 @@
+import {EXPECTED_V2_COUNTS} from './fixtures/v2-integrated-id-manifest.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {SOLO_LEVELING_CARDS} from '../dist/solo-leveling.mjs';
@@ -46,7 +47,7 @@ test('012 official printed fingerprint / zero life trigger / single conditional 
  assert.equal(printed.effect,'登場時，己方場上存在水篠旬即可抽1張。');
  assert.deepEqual(slg.cards['SLG-1-012'].effects.onPlay,[{op:'drawIfOwnName',name:'水篠 旬',count:1}]);
  assert.equal(slg.cards['SLG-1-012'].trigger,null);
- assert.equal(Object.keys(slg.cards).length,34);
+ assert.equal(Object.keys(slg.cards).length,EXPECTED_V2_COUNTS['solo-leveling']);
  assert.deepEqual(validateUniversalDeck(slg,counts),[]);
 });
 test('012 draws once if own energy line has 水篠 旬; AP is paid; deck UID conserved',()=>{

@@ -1,3 +1,4 @@
+import {EXPECTED_V2_COUNTS} from './fixtures/v2-integrated-id-manifest.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {UA54BT_VERIFIED} from '../dist/universal-v2/sources/mst-catalog.mjs';
@@ -48,9 +49,9 @@ test('MST source preserves exactly 001–080 Japanese printed regular IDs, and 4
   assert.ok(UA54BT_OFFICIAL_PRINT[id].effectJa);
   assert.equal(UA54BT_OFFICIAL_PRINT[id].source.includes('UA54BT%2F'),true);
  }
- assert.equal(MST_V2_PILOT_IDS.length,41);
- assert.equal(verifiedMstV2Cards().length,41);
- assert.equal(Object.keys(pack.cards).length,41);
+ assert.equal(MST_V2_PILOT_IDS.length,EXPECTED_V2_COUNTS['mushoku-tensei']);
+ assert.equal(verifiedMstV2Cards().length,EXPECTED_V2_COUNTS['mushoku-tensei']);
+ assert.equal(Object.keys(pack.cards).length,EXPECTED_V2_COUNTS['mushoku-tensei']);
  assert.equal(pack.cards['MST-1-051'].maxCopies,1,'2026-10-01 official restricted limit');
  assert.ok(!pack.cards['MST-1-068'],'two-mode conditional Raid is unported');
  assert.ok(!validateUniversalDeck(pack,{...deck,'MST-1-051':1}).join().includes('Unregistered'));

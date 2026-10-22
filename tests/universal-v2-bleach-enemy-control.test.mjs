@@ -1,3 +1,4 @@
+import {EXPECTED_V2_COUNTS} from './fixtures/v2-integrated-id-manifest.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {CARDS} from '../dist/cards.mjs';
@@ -25,7 +26,7 @@ function to(s,phase){for(let i=0;i<4&&s.phase!==phase;i++)s=dispatchUniversalAct
 
 test('64+ official BLEACH cards include real mandatory BP-limited REST and 2 SPECIAL retirement programs',()=>{
  assert.deepEqual(validateUniversalDeck(pack,counts),[]);
- assert.equal(Object.keys(pack.cards).length,88);
+ assert.equal(Object.keys(pack.cards).length,EXPECTED_V2_COUNTS.bleach);
  assert.deepEqual(pack.cards['BLC-1-013'].effects.onPlay,[{op:'restOppFrontUnderBp',bp:3500,optional:true}]);
  for(const [id,name] of [['BLC-1-099','山本元柳斎重國'],['BLC-2-048','朽木ルキア']]){
   assert.equal(pack.cards[id].trigger,'special');

@@ -1,3 +1,4 @@
+import {EXPECTED_V2_COUNTS} from './fixtures/v2-integrated-id-manifest.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {SOLO_LEVELING_CARDS} from '../dist/solo-leveling.mjs';
@@ -33,7 +34,7 @@ test('SLG053 original full two-clause print is source-pinned; own-name gate + in
   ['諸菱 賢太','green',3,1,2000,2,'draw','character',true]);
  assert.deepEqual(card.effects.onPlay,slg.cards['SLG-1-012'].effects.onPlay);
  assert.deepEqual(card.effects.onPlay,[{op:'drawIfOwnName',name:'水篠 旬',count:1}]);
- assert.equal(Object.keys(slg.cards).length,34);
+ assert.equal(Object.keys(slg.cards).length,EXPECTED_V2_COUNTS['solo-leveling']);
  assert.equal(SLG_V2_VERIFIED_IDS.filter(x=>x===id).length,1);
  assert.deepEqual(createSlgV2Pack().cards[id],card);
  assert.deepEqual(validateUniversalDeck(slg,deck),[]);
