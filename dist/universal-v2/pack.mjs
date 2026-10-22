@@ -7,7 +7,7 @@ export const V2_CARD_TYPES=Object.freeze(['character','event','field']);
 export const V2_TRIGGERS=Object.freeze(['draw','get','final','active','special','color','raid']);
 export const V2_EFFECT_TIMINGS=Object.freeze(['onPlay','onRaid','onAttack','onRaided','onRetire','onOutsideRecover']);
 export const V2_EFFECT_OPS=Object.freeze(['draw','drawIfOwnName','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','retireOwnFieldOne','retireOwnCharacterOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw','searchDeckMany','discardGate','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
- 'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideColorUnderEnergy','recoverOutsideTraitlessUnderEnergy','deployOutsideTraitlessRestOrRaid','deployOutsideRest','buffOwnField','oncePerTurnGate','chooseOne','discardOppHand','activeSelfIf']);
+ 'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideColorUnderEnergy','recoverOutsideTraitlessUnderEnergy','deployOutsideTraitlessRestOrRaid','deployOutsideRest','deployOutsideNameRest','payApDeployNamedRest','inspectTopTraitOutside','buffOwnField','oncePerTurnGate','chooseOne','discardOppHand','activeSelfIf']);
 const integer=(v,low=0)=>Number.isInteger(v)&&v>=low;
 const own=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
 // Shared board predicate used by passive bonuses and on-play ACTIVE.
@@ -66,6 +66,12 @@ function verifyProgram(program,path){
   if(e.op==='millTop'||e.op==='drawDiscard'){
    if(!integer(e.count,1)||e.count>10)throw Error(path+'['+i+'] invalid count');
   }
+  // 「1枚まで」is a choice to mill zero or one. A missing optional key stays
+  // the existing mandatory mill. Optional is rejected for any other count.
+  if(e.op==='millTop'&&e.optional!==undefined&&(
+   e.optional!==true||e.count!==1||
+   Object.keys(e).some(k=>!['op','count','optional'].includes(k))
+  ))throw Error(path+'['+i+'] optional mill is exactly one card');
   if(e.op==='drawIfOwnEnergyAtLeast'&&(
    !integer(e.energy,1)||e.energy>50||
    !integer(e.count,1)||e.count>5||
@@ -117,7 +123,30 @@ function verifyProgram(program,path){
    !integer(e.energy)||e.energy>30||!integer(e.ap,1)||e.ap>3||
    e.optional!==true||Object.keys(e).length!==6||
    Object.keys(e).some(k=>!['op','name','color','energy','ap','optional'].includes(k))
-  ))throw Error(path+'['+i+'] invalid outside-to-REST character');
+   ))throw Error(path+'['+i+'] invalid outside-to-REST character');
+  // Name only. Do not add color, energy, or AP here: that would tighten the
+  // filtered op above, and this print has none of those limits.
+  if(e.op==='deployOutsideNameRest'&&(
+   typeof e.name!=='string'||!e.name.trim()||e.name.length>80||
+   e.optional!==true||Object.keys(e).length!==3||
+   Object.keys(e).some(k=>!['op','name','optional'].includes(k))
+  ))throw Error(path+'['+i+'] invalid name-only outside REST');
+  // Hand entry, then an optional 1 AP payment, then up to one named character
+  // whose required energy the controller currently meets. Color is the card's
+  // own color. The payment is not the character's play cost.
+  if(e.op==='payApDeployNamedRest'&&(
+   e.entry!=='hand'||typeof e.name!=='string'||!e.name.trim()||e.name.length>80||
+   Object.keys(e).length!==3||
+   Object.keys(e).some(k=>!['op','entry','name'].includes(k))
+  ))throw Error(path+'['+i+'] invalid hand-entry AP named REST');
+  // Look at the top N, send up to one exact trait token outside, order the
+  // rest onto the top. The trait is one token; slash composites are not split.
+  if(e.op==='inspectTopTraitOutside'&&(
+   !integer(e.count,2)||e.count>4||
+   typeof e.trait!=='string'||!e.trait.trim()||e.trait.length>80||
+   e.rest!=='top'||Object.keys(e).length!==4||
+   Object.keys(e).some(k=>!['op','count','trait','rest'].includes(k))
+  ))throw Error(path+'['+i+'] invalid trait top-outside profile');
   if(e.op==='searchDeckWhere'){
    if(!Array.isArray(e.filters)||e.filters.length<2||e.filters.length>3||
     e.filters.some(f=>!f||typeof f!=='object'||Array.isArray(f)||
