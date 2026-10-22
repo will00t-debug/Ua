@@ -140,6 +140,21 @@ const registry=Object.freeze({
  enemyFrontAllBpDown:{
   args:{bp:positiveBp},build:v=>[{op:'enemyFrontAllBpDown',bp:v.bp}]
  },
+ // Same batch reduction, restricted to one inclusive BP window captured at
+ // resolution. null on either side means that side is unbounded. At least
+ // one side must be a number; the unbounded card stays on enemyFrontAllBpDown.
+ enemyFrontBpDownInRange:{
+  args:{
+   bp:positiveBp,
+   minBp:v=>v===null||integer(v,0,50000),
+   maxBp:v=>v===null||integer(v,0,50000)
+  },
+  check:v=>(v.minBp!==null||v.maxBp!==null)&&
+   (v.minBp===null||v.maxBp===null||v.minBp<=v.maxBp),
+  build:v=>[{op:'enemyFrontAllBpDown',bp:v.bp,
+   ...(v.minBp===null?{}:{minBp:v.minBp}),
+   ...(v.maxBp===null?{}:{maxBp:v.maxBp})}]
+ },
  // Snapshot every eligible opposing front-line character at resolution time;
  // resolve replacement choices one by one without retargeting later victims.
  retireEnemyFrontAllUnderBp:{

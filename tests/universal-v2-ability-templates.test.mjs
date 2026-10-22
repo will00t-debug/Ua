@@ -23,7 +23,7 @@ test('template registry is finite, audited and rejects unknown behaviors instead
    'restOrRetireEnemyFrontByOwnLife',
   'retireEnemyIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown',
   'searchDeckOne','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
-  'searchDeckMany','enemyFrontAllBpDown','retireEnemyFrontAllUnderBp',
+  'searchDeckMany','enemyFrontAllBpDown','enemyFrontBpDownInRange','retireEnemyFrontAllUnderBp',
   'buffOwnTraitAllTurn','buffOwnField','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
   'recoverOutsideColorUnderEnergy','oncePerTurnThen','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopOneBottomDiscardWhere','payDiscardThen'
  ]);

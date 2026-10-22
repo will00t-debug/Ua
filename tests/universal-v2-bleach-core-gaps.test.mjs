@@ -10,13 +10,6 @@ import {V2_ABILITY_TEMPLATE_IDS,expandAbilityTemplates} from '../dist/universal-
 // corresponding entry from this unimplemented set.
 export const BLEACH_CORE_GAP_SCENARIOS=Object.freeze([
  {
-  id:'BLC-2-007',
-  number:'EX07BT/BLC-2-007',
-  exactEffect:'登場：所有敵方前線 BP 1000 以上角色，本回合 BP −500。',
-  missing:'Batch BP >= 1000 filter snapshot before applying -500, excluding BP <= 999',
-  fixture:'Foe front BP 500/1000/1500 -> debuff only 1000 and 1500, no retarget'
- },
- {
   id:'BLC-2-063',
   number:'EX07BT/BLC-2-063',
   exactEffect:'每回合首次攻擊時，此角色立即轉為 ACTIVE，因此可攻擊 2 次。',
@@ -24,10 +17,10 @@ export const BLEACH_CORE_GAP_SCENARIOS=Object.freeze([
   fixture:'UID attacks twice (once after 1st ready), other physical UID separately eligible'
  }
 ]);
-test('two remaining official BLEACH core blockers are tracked and not misrepresented as V2 playable',()=>{
+test('the remaining official BLEACH core blocker is tracked and not misrepresented as V2 playable',()=>{
  const pack=createBleachV2Pack();
  const set=new Set(BLEACH_V2_NEW_IDS);
- assert.equal(BLEACH_CORE_GAP_SCENARIOS.length,2);
+ assert.equal(BLEACH_CORE_GAP_SCENARIOS.length,1);
  for(const gap of BLEACH_CORE_GAP_SCENARIOS){
   const printed=CARDS.find(c=>c.identity===gap.id);
   assert.ok(printed,gap.id);
@@ -55,8 +48,14 @@ test('A unlocked exact top-or-bottom; BLC-2-055 is now registered without OUTSID
  assert.deepEqual(createBleachV2Pack().cards['BLC-2-055'].effects.onPlay,[{op:'peekTopOrBottom'}]);
  assert.ok(!BLEACH_CORE_GAP_SCENARIOS.some(x=>x.id==='BLC-2-055'));
 });
-test('batch opponent BP down has no printed minimum-BP threshold and cannot stand in for BLC-2-007',()=>{
+test('batch opponent BP down has no printed minimum-BP threshold unless the range template supplies one',()=>{
  const effect=expandAbilityTemplates({onPlay:[{template:'enemyFrontAllBpDown',bp:500}]});
  assert.deepEqual(effect,{onPlay:[{op:'enemyFrontAllBpDown',bp:500}]});
  assert.ok(!Object.hasOwn(effect.onPlay[0],'minBp'));
+ const ranged=expandAbilityTemplates({onPlay:[{template:'enemyFrontBpDownInRange',bp:500,minBp:1000,maxBp:null}]});
+ assert.deepEqual(ranged,{onPlay:[{op:'enemyFrontAllBpDown',bp:500,minBp:1000}]});
+ const pack=createBleachV2Pack();
+ assert.equal(pack.cards['BLC-2-007'].trigger,'active');
+ assert.deepEqual(pack.cards['BLC-2-007'].effects,ranged);
+ assert.ok(!BLEACH_CORE_GAP_SCENARIOS.some(x=>x.id==='BLC-2-007'));
 });

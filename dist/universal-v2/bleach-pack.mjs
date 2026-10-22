@@ -922,6 +922,12 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
   "color":"purple","energy":1,"ap":1,"bp":0,"gen":0,
   "trigger":"draw","type":"event",
   "effect":"抽 2 張，再棄 1 張。"
+ } ,{
+  "id":"BLC-2-007","kind":"frontBpDownMin1000",
+  "number":"EX07BT/BLC-2-007","name":"キャンディス・キャットニップ",
+  "color":"yellow","energy":3,"ap":1,"bp":2500,"gen":2,
+  "trigger":"active","type":"character",
+  "effect":"登場：所有敵方前線 BP 1000 以上角色，本回合 BP −500。"
  }
 
  ,{
@@ -971,7 +977,8 @@ export function checkedBleachAddonDefinition(p){
   inspectTop2:{onPlay:[{template:'inspectTopArrange',count:2,toOutside:true,rest:'top'}]},
   inspectTop3:{onPlay:[{template:'inspectTopArrange',count:3,toOutside:true,rest:'top'}]},
   peekTopOrBottom:{onPlay:[{template:'peekTopOrBottom'}]},
-  inspectTopAnyOutside2:{onPlay:[{template:'inspectTopAnyOutside',count:2,rest:'top'}]}
+  inspectTopAnyOutside2:{onPlay:[{template:'inspectTopAnyOutside',count:2,rest:'top'}]},
+  frontBpDownMin1000:{onPlay:[{template:'enemyFrontBpDownInRange',bp:500,minBp:1000,maxBp:null}]}
  };
 // EX15BT/BLC-4-014 prints yellow+ and ACTIVE adds one yellow. The imported legacy gen=2
  // encoded the ACTIVE total; V2 needs the printed REST base (1) plus an ACTIVE +1.

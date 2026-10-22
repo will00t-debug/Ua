@@ -191,7 +191,11 @@ function verifyProgram(program,path){
    Object.keys(e).some(k=>!['op','color','energy','optional'].includes(k))
   ))throw Error(path+'['+i+'] invalid color+energy recovery');
   if(e.op==='enemyFrontAllBpDown'&&(
-   !integer(e.bp,1)||e.bp>5000||Object.keys(e).some(k=>!['op','bp'].includes(k))
+   !integer(e.bp,1)||e.bp>5000||
+   (e.minBp!==undefined&&(!integer(e.minBp,0)||e.minBp>50000))||
+   (e.maxBp!==undefined&&(!integer(e.maxBp,0)||e.maxBp>50000))||
+   (e.minBp!==undefined&&e.maxBp!==undefined&&e.minBp>e.maxBp)||
+   Object.keys(e).some(k=>!['op','bp','minBp','maxBp'].includes(k))
   ))throw Error(path+'['+i+'] invalid simultaneous BP reduction');
   if(e.op==='buffOwnTraitAllTurn'&&(
    typeof e.trait!=='string'||!e.trait.trim()||

@@ -498,7 +498,13 @@ function continueEffectQueue(pack,s){
    if(choices.length)s.pending={kind:'effect-buff-trait',player:owner,sourceUid:job.sourceUid,
     choices,trait:job.trait,bp:job.bp};
   }else if(job.op==='enemyFrontAllBpDown'){
-   const foe=1-owner,targets=s.players[foe].front.filter(Boolean);
+   const foe=1-owner;
+   // Official timing is this resolution. Current BP is read once, then the
+   // matching physical cards are the only recipients. Later reductions must
+   // not drop a card out of the set or pull a new one in.
+   const targets=s.players[foe].front.filter(c=>c&&
+    (job.minBp===undefined||bp(pack,s,c)>=job.minBp)&&
+    (job.maxBp===undefined||bp(pack,s,c)<=job.maxBp));
    // All modifiers land in the SAME effect step, before any of the
    // simultaneous state-based 0-BP retirements or replacement choices.
    for(const c of targets){

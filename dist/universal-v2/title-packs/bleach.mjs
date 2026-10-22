@@ -28,7 +28,9 @@ const testForKind=Object.freeze({
  drawPlayColorHand:'tests/universal-v2-bleach-nc-batch.test.mjs',
  buffOtherOwn1000:'tests/universal-v2-bleach-own-buff.test.mjs',
  peekTopOrBottom:'tests/universal-v2-bleach-new-top.test.mjs',
- inspectTopAnyOutside2:'tests/universal-v2-bleach-new-top.test.mjs'
+ inspectTopAnyOutside2:'tests/universal-v2-bleach-new-top.test.mjs',
+ drawTwoDiscardOne:'tests/v2-blc-109-draw-discard-round13.test.mjs',
+ frontBpDownMin1000:'tests/v2-bp-range-round13.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
