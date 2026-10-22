@@ -816,7 +816,7 @@ function performRaid(pack,s,p,cardOnTop,baseUid,line,slot,replaceUid,{entryReady
   throw Error('Cannot move a front-line Raid base');
  if(line==='energy'&&(base.line!=='energy'||slot!==base.slot))
   throw Error('Raid can only stay in base energy slot');
- commitDestination(s,p,line,slot,replaceUid,base);
+ commitDestination(pack,s,p,line,slot,replaceUid,base);
  pl[base.line][base.slot]=null;
  let effectiveBase=base.c;
  if(base.c.stack?.length){
@@ -971,7 +971,7 @@ function legalDestinations(pl,line,source=null){
  }
  return out;
 }
-function commitDestination(s,p,line,slot,replaceUid,source=null){
+function commitDestination(pack,s,p,line,slot,replaceUid,source=null){
  const occupant=s.players[p][line][slot];
  if(source&&source.line===line&&source.slot===slot)return;
  if(!occupant){
@@ -980,7 +980,16 @@ function commitDestination(s,p,line,slot,replaceUid,source=null){
  }
  if(replaceUid!==occupant.uid||!s.players[p][line].every(Boolean))
   throw Error('Full line replacement must designate exact existing card');
+ // Full-line replacement is a real removal (not a retirement).
+ // Flattened Raid layers leave their buried zone with independent UIDs.
+ const nested=c=>[...(c.stack||[]).flatMap(x=>[x,...nested(x)]),
+  ...(c.under||[]).flatMap(x=>[x,...nested(x)])];
+ const buried=nested(occupant);
  vacate(s,p,line,slot,'removed');
+ for(const physical of buried)recordCompletedMove(pack,s,{physical,owner:p,
+  from:'raid-under',to:'removed',reason:'rule'});
+ recordCompletedMove(pack,s,{physical:occupant,owner:p,
+  from:line,to:'removed',reason:'rule'});
 }
 
 // Official Q73: one physical, public reveal snapshot before any check is resolved.
@@ -1355,7 +1364,7 @@ function resolveChoice(s,a,pack){
    }
    if(a.mode!=='enter'||!['front','energy'].includes(a.line)||
     (a.line==='front'&&d.frontForbidden))throw Error('Invalid outside REST entry line');
-   commitDestination(s,q.player,a.line,a.slot,a.replaceUid);
+   commitDestination(pack,s,q.player,a.line,a.slot,a.replaceUid);
    p.outside.splice(i,1);physical.ready=false;
    physical.fieldEntryStamp=s.nextFieldEntryStamp++;
    p[a.line][a.slot]=physical;
@@ -1376,7 +1385,7 @@ function resolveChoice(s,a,pack){
     (a.line==='front'&&d.frontForbidden)||
     (produced&&d.energy>(produced[d.color]||0)))
     throw Error('Name REST printed filters changed');
-   commitDestination(s,q.player,a.line,a.slot,a.replaceUid);
+   commitDestination(pack,s,q.player,a.line,a.slot,a.replaceUid);
    p.outside.splice(i,1);physical.ready=false;
    physical.fieldEntryStamp=s.nextFieldEntryStamp++;
    p[a.line][a.slot]=physical;
@@ -1395,7 +1404,7 @@ function resolveChoice(s,a,pack){
    if(d.type!=='character'||d.raidName||!cardHasName(d,q.name)||
     d.color!==q.color||d.energy>q.energy||d.ap!==q.ap)
     throw Error('Outside REST printed filters changed');
-   commitDestination(s,q.player,a.line,a.slot,a.replaceUid);
+   commitDestination(pack,s,q.player,a.line,a.slot,a.replaceUid);
    p.outside.splice(i,1);physical.ready=false;
    physical.fieldEntryStamp=s.nextFieldEntryStamp++;
    p[a.line][a.slot]=physical;
@@ -1436,7 +1445,7 @@ function resolveChoice(s,a,pack){
   if(a.mode==='skip'){s.pending=null;continueEffectQueue(pack,s);return;}
   if(a.mode!=='enter'||a.line!=='energy')
    throw Error('Recovered character may enter ENERGY line only');
-  commitDestination(s,q.player,'energy',a.slot,a.replaceUid);
+  commitDestination(pack,s,q.player,'energy',a.slot,a.replaceUid);
   const entrant=p.hand.splice(index,1)[0];
   entrant.ready=false;entrant.fieldEntryStamp=s.nextFieldEntryStamp++;
   p.energy[a.slot]=entrant;
@@ -1735,7 +1744,7 @@ function resolveChoice(s,a,pack){
    if(d.type!=='character'||d.frontForbidden||d.color!==profile.color||
      d.energy>profile.maxEnergy||d.ap!==profile.ap)
     throw Error('Outside COLOR target does not meet printed requirements');
-   commitDestination(s,q.player,'front',a.slot,a.replaceUid);
+   commitDestination(pack,s,q.player,'front',a.slot,a.replaceUid);
    p.outside.splice(index,1);chosen.ready=true;
    chosen.fieldEntryStamp=s.nextFieldEntryStamp++;p.front[a.slot]=chosen;
    recordCompletedMove(pack,s,{physical:chosen,owner:q.player,from:'outside',to:'front',
@@ -1752,7 +1761,7 @@ function resolveChoice(s,a,pack){
    const picked=p.hand[handIndex],d=card(pack,picked);
    if(d.type!=='field'||d.color!==profile.color||d.energy>profile.maxEnergy||
     d.ap!==profile.ap)throw Error('Invalid substituted COLOR FIELD');
-   commitDestination(s,q.player,'energy',a.slot,a.replaceUid);
+   commitDestination(pack,s,q.player,'energy',a.slot,a.replaceUid);
    p.hand.splice(handIndex,1);picked.ready=true;
    picked.fieldEntryStamp=s.nextFieldEntryStamp++;p.energy[a.slot]=picked;
    recordCompletedMove(pack,s,{physical:picked,owner:q.player,
@@ -1767,7 +1776,7 @@ function resolveChoice(s,a,pack){
    if(d.type!=='character'||(a.line==='front'&&d.frontForbidden)||
     d.color!==profile.color||d.energy>profile.maxEnergy||d.ap!==profile.ap||
     !['front','energy'].includes(a.line))throw Error('Illegal COLOR deployment');
-   commitDestination(s,q.player,a.line,a.slot,a.replaceUid);
+   commitDestination(pack,s,q.player,a.line,a.slot,a.replaceUid);
    p.hand.splice(handIndex,1);picked.ready=true;
    picked.fieldEntryStamp=s.nextFieldEntryStamp++;p[a.line][a.slot]=picked;
    recordCompletedMove(pack,s,{physical:picked,owner:q.player,
@@ -2443,7 +2452,7 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
   case 'move':{
    const l=location(s,p,action.uid);
    if(!l||l.line!=='energy'||card(pack,l.c).frontForbidden)throw Error('Invalid move');
-   commitDestination(s,p,'front',action.slot,action.replaceUid);
+   commitDestination(pack,s,p,'front',action.slot,action.replaceUid);
    pl.energy[l.slot]=null;pl.front[action.slot]=l.c;
    recordCompletedMove(pack,s,{physical:l.c,owner:p,from:'energy',to:'front',reason:'rule'});
    s.moved=true;s.movedUids.push(l.c.uid);break;
@@ -2451,7 +2460,7 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
   case 'step':{
    const l=location(s,p,action.uid);
    if(!l||l.line!=='front')throw Error('Invalid STEP');
-   commitDestination(s,p,'energy',action.slot,action.replaceUid);
+   commitDestination(pack,s,p,'energy',action.slot,action.replaceUid);
    pl.front[l.slot]=null;pl.energy[action.slot]=l.c;
    recordCompletedMove(pack,s,{physical:l.c,owner:p,from:'front',to:'energy',reason:'rule'});
    s.moved=true;s.movedUids.push(l.c.uid);break;
@@ -2468,7 +2477,7 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
     performRaid(pack,s,p,current,action.baseUid,'front',action.slot,action.replaceUid,
      {entryCause:'paidRaid'});
    }else{
-    commitDestination(s,p,action.line,action.slot,action.replaceUid);
+    commitDestination(pack,s,p,action.line,action.slot,action.replaceUid);
     current.ready=defaultEntryReady(pack,s,p,current);
     current.fieldEntryStamp=s.nextFieldEntryStamp++;
     pl[action.line][action.slot]=current;
