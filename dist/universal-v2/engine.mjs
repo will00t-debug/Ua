@@ -54,8 +54,11 @@ function maySubstituteColorTriggerField(pack,s,owner,profile){
   field(s.players[owner]).some(c=>!originalEffectsDisabled(s,c)&&
    card(pack,c).colorTriggerFieldSubstitution===profile.color);
 }
-function draw(s,p,count=1){
- for(let i=0;i<count&&s.players[p].deck.length;i++)s.players[p].hand.push(s.players[p].deck.shift());
+function draw(pack,s,p,count=1,{reason='rule',sourceUid=null}={}){
+ // Every card drawn receives an exact completed deck→hand journal entry.
+ // No source attribution is invented for rule draws or unpaid previews.
+ for(let i=0;i<count&&s.players[p].deck.length;i++)
+  moveOwnedLinear(pack,s,{owner:p,from:'deck',to:'hand',index:0,reason,sourceUid});
 }
 // Each card requires its OWN printed energy color. A mixed-color deck may be
 // legal, but three green icons do not pay a purple energy-3 requirement.
@@ -297,7 +300,7 @@ function startTurn(pack,s){
  for(const c of field(pl))c.buffs=(c.buffs||[]).filter(b=>b.untilTurn>=s.turn);
  if(!(pl.ownTurns===1&&p===s.first)){
   if(!pl.deck.length){s.status='finished';s.winner=1-p;s.endReason='required-draw-empty';return;}
-  draw(s,p);
+  draw(pack,s,p);
  }
  queuePhaseBoundary(pack,s,'start','start',p);
  continueEffectQueue(pack,s);
@@ -358,17 +361,17 @@ function continueEffectQueue(pack,s){
    // An absent gate keeps every existing draw unchanged.
    const gated=job.entry==='ownEffect';
    if(job.entry!==undefined&&!gated)throw Error('Invalid draw entry gate');
-   if(!gated||OWN_EFFECT_ENTRY.has(job.entryCause))draw(s,owner,job.count);
+   if(!gated||OWN_EFFECT_ENTRY.has(job.entryCause))draw(pack,s,owner,job.count,{reason:'own-effect',sourceUid:job.sourceUid});
   }
   else if(job.op==='drawIfOwnEnergyAtLeast'){
    // Printed generated-energy threshold is checked at resolution, after the
    // source actually enters the field, including own explicit FRONT producers.
-   if(calcEnergy(pack,s,owner)>=job.energy)draw(s,owner,job.count);
+   if(calcEnergy(pack,s,owner)>=job.energy)draw(pack,s,owner,job.count,{reason:'own-effect',sourceUid:job.sourceUid});
   }
   else if(job.op==='drawIfOwnFieldExists'){
    // FIELD condition is evaluated at resolution of a genuinely queued onRetire.
    // Do not count outside/removal/hand or Raid undercards.
-   if(field(pl).some(c=>card(pack,c).type==='field'))draw(s,owner,job.count);
+   if(field(pl).some(c=>card(pack,c).type==='field'))draw(pack,s,owner,job.count,{reason:'own-effect',sourceUid:job.sourceUid});
   }
   else if(job.op==='drawIfOwnTraitCount'){
    // The source has already entered the field when onPlay resolves. Count
@@ -377,13 +380,13 @@ function continueEffectQueue(pack,s){
    const q={kind:'ownTraitCount',turn:'any',zone:job.zone,
     excludeSelf:job.excludeSelf,trait:job.trait,min:job.min};
    if(matchesV2LiveCondition(s,owner,job.sourceUid,q,x=>card(pack,x)))
-    draw(s,owner,job.count);
+    draw(pack,s,owner,job.count,{reason:'own-effect',sourceUid:job.sourceUid});
   }
   else if(job.op==='drawIfOwnName'){
    // Evaluate after the character actually entered OWN front/energy field.
    // Never count hand, deck, opponent field, or hidden Raid under-cards.
    if(field(pl).some(c=>cardHasName(card(pack,c),job.name,originalEffectsDisabled(s,c))))
-    draw(s,owner,job.count);
+    draw(pack,s,owner,job.count,{reason:'own-effect',sourceUid:job.sourceUid});
   }
   else if(job.op==='millTop'){
    // Optional is exactly one blind choice. The top card stays hidden until
@@ -549,7 +552,7 @@ function continueEffectQueue(pack,s){
    if(s.players[foe].hand.length)
     s.pending={kind:'effect-discard',player:foe,sourceUid:job.sourceUid};
   }else if(job.op==='drawDiscard'){
-   draw(s,owner,job.count);
+   draw(pack,s,owner,job.count,{reason:'own-effect',sourceUid:job.sourceUid});
    if(pl.hand.length)s.pending={kind:'effect-discard',player:owner,sourceUid:job.sourceUid,
      ...(job.discardCount>1?{remaining:Math.min(job.discardCount,pl.hand.length)}:{})};
   }else if(job.op==='retireOppFrontUnderBp'){
@@ -692,7 +695,7 @@ function continueEffectQueue(pack,s){
    if(!raid)throw Error('Raid-base follow-up missing the Raid target');
    const under=c=>(c.under||[]).some(x=>x.faceDown===true||under(x))||
     (c.stack||[]).some(x=>x.faceDown===true||under(x));
-   if(under(raid))draw(s,owner,1);
+   if(under(raid))draw(pack,s,owner,1,{reason:'own-effect',sourceUid:job.sourceUid});
   }else if(job.op==='openBlock'){
    // Internal attack-window continuation, never a user-authored card DSL op.
    // Blocking begins only AFTER all attack-time choices and queued effects.
@@ -1352,7 +1355,7 @@ function resolveChoice(s,a,pack){
    reason:q.kind==='effect-discard'
     ?(q.sourceUid?.startsWith(q.player+'-')?'own-effect':'opponent-effect')
     :'payment',sourceUid:q.sourceUid});
-   draw(s,q.player,q.count);
+   draw(pack,s,q.player,q.count,{reason:'own-effect',sourceUid:q.sourceUid});
   }else if(!q.optional)throw Error('Mandatory cost cannot be declined');
   s.pending=null;continueEffectQueue(pack,s);return;
  }
@@ -1584,7 +1587,7 @@ function resolveChoice(s,a,pack){
   if(i<0)throw Error('Revealed life card not found');
   if(a.mode==='get'&&q.trigger==='get')moveOwnedLinear(pack,s,{
    owner:q.player,from:'outside',to:'hand',index:i,reason:'life-trigger',sourceUid:q.uid});
-  else if(a.mode==='draw'&&q.trigger==='draw')draw(s,q.player);
+  else if(a.mode==='draw'&&q.trigger==='draw')draw(pack,s,q.player,1,{reason:'life-trigger',sourceUid:q.uid});
   else if(a.mode==='active'&&q.trigger==='active'){
    const target=field(p).find(c=>c.uid===a.uid);
    if(!target||card(pack,target).type!=='character')throw Error('Illegal ACTIVE trigger target');
@@ -2139,7 +2142,7 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
   resolveChoice(s,action,pack);
  }else switch(action.type){
   case 'extraDraw':
-   spendAp(pl,1);draw(s,p);s.extraDrawn=true;break;
+   spendAp(pl,1);draw(pack,s,p);s.extraDrawn=true;break;
   case 'next':
    if(s.phase==='start'){
     expireContinuousStates(s,{player:p,phase:'start',edge:'end'});
@@ -2250,7 +2253,7 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
      throw Error('AP energy requires one ready AP and an unused source');
     spendAp(pl,1);
     s.mainAbilityUsedUids.push(selected.uid);
-    draw(s,p,ability.draw);
+    draw(pack,s,p,ability.draw,{reason:'own-effect',sourceUid:selected.uid});
     selected.buffs??=[];
     selected.buffs.push({energy:ability.extraEnergy,untilTurn:s.turn});
     break;
