@@ -9,7 +9,7 @@ const cards=ids.map(id=>({
  id,name:id==='Z00'?'Base':id==='Z01'?'RaidRole':id,
  type:id==='Z02'?'event':'character',color:'blue',energy:0,ap:1,
  bp:1500,gen:1,implementation:['Z00','Z01','Z02'].includes(id)?'dsl':'vanilla',
- ...(id==='Z00'?{effects:{onRaided:[{op:'draw',count:1}]}}:{}),
+ ...(id==='Z00'?{effects:{onRaided:[{op:'drawIfRaidUnderFacedown'}]}}:{}),
  ...(id==='Z01'?{raidName:'Base',effects:{
   onPlay:[{op:'draw',count:1}],
   onRaid:[{op:'drawDiscard',count:1,discardCount:1}]}}:{}),
@@ -59,9 +59,9 @@ for(const mode of ['baseFirst','entryFirst']){
   assert.ok(bonus[0].order>paid.order);
   const sourceDraws=s.zoneMoveEvents.filter(e=>e.from==='deck'&&
    e.to==='hand'&&e.sourceUid!==null).map(e=>e.sourceUid);
-  assert.deepEqual(sourceDraws,mode==='baseFirst'?
-   [base.uid,raid.uid,raid.uid,trigger.uid]:
-   [raid.uid,base.uid,raid.uid,trigger.uid]);
+  assert.deepEqual(sourceDraws,[raid.uid,raid.uid,trigger.uid]);
+  assert.equal(s.zoneMoveEvents.some(e=>e.sourceUid===base.uid&&e.from==='deck'),false,
+   'base conditional draw is not enabled without a facedown undercard');
   assert.equal(s.players[0].front[0].uid,raid.uid);
   assert.equal(universalPublicView(packs,s,1).zoneMoveEvents,undefined);
   assert.equal(assertUniversalMatch(packs,s),true);
