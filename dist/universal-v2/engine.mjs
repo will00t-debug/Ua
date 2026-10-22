@@ -1324,7 +1324,11 @@ function resolveChoice(s,a,pack){
    const index=p.hand.findIndex(c=>c.uid===a.uid);
    if(index<0)throw Error('Discard payment needs an owned hand card');
    moveOwnedLinear(pack,s,{owner:q.player,from:'hand',to:'outside',index,
-   reason:q.kind==='effect-discard'?'own-effect':'payment',sourceUid:q.sourceUid});
+   controller:q.kind==='effect-discard'&&/^[01]-/.test(q.sourceUid||'')
+    ?Number(q.sourceUid[0]):q.player,
+   reason:q.kind==='effect-discard'
+    ?(q.sourceUid?.startsWith(q.player+'-')?'own-effect':'opponent-effect')
+    :'payment',sourceUid:q.sourceUid});
    draw(s,q.player,q.count);
   }else if(!q.optional)throw Error('Mandatory cost cannot be declined');
   s.pending=null;continueEffectQueue(pack,s);return;
@@ -1334,7 +1338,11 @@ function resolveChoice(s,a,pack){
    const index=p.hand.findIndex(c=>c.uid===a.uid);
    if(index<0)throw Error('Gate payment must discard owned hand card');
    moveOwnedLinear(pack,s,{owner:q.player,from:'hand',to:'outside',index,
-   reason:q.kind==='effect-discard'?'own-effect':'payment',sourceUid:q.sourceUid});
+   controller:q.kind==='effect-discard'&&/^[01]-/.test(q.sourceUid||'')
+    ?Number(q.sourceUid[0]):q.player,
+   reason:q.kind==='effect-discard'
+    ?(q.sourceUid?.startsWith(q.player+'-')?'own-effect':'opponent-effect')
+    :'payment',sourceUid:q.sourceUid});
    // Place paid effects immediately in front of later unrelated effects.
    // Pending nested choices suspend this queue without losing the remaining
    // effects. Declining payment never schedules any of the gated effects.
@@ -1347,7 +1355,11 @@ function resolveChoice(s,a,pack){
   const index=p.hand.findIndex(c=>c.uid===a.uid);
   if(index<0)throw Error('Discard requires an owned hand card');
   moveOwnedLinear(pack,s,{owner:q.player,from:'hand',to:'outside',index,
-   reason:q.kind==='effect-discard'?'own-effect':'payment',sourceUid:q.sourceUid});
+   controller:q.kind==='effect-discard'&&/^[01]-/.test(q.sourceUid||'')
+    ?Number(q.sourceUid[0]):q.player,
+   reason:q.kind==='effect-discard'
+    ?(q.sourceUid?.startsWith(q.player+'-')?'own-effect':'opponent-effect')
+    :'payment',sourceUid:q.sourceUid});
   const remaining=(q.remaining??1)-1;
   if(remaining>0&&p.hand.length)q.remaining=remaining;
   else{s.pending=null;continueEffectQueue(pack,s);}
@@ -1369,7 +1381,11 @@ function resolveChoice(s,a,pack){
   // Payment precedes the temporary BP. No AP, REST or once-use consumed
   // until an exact physical own-hand discard has actually been submitted.
   moveOwnedLinear(pack,s,{owner:q.player,from:'hand',to:'outside',index,
-   reason:q.kind==='effect-discard'?'own-effect':'payment',sourceUid:q.sourceUid});
+   controller:q.kind==='effect-discard'&&/^[01]-/.test(q.sourceUid||'')
+    ?Number(q.sourceUid[0]):q.player,
+   reason:q.kind==='effect-discard'
+    ?(q.sourceUid?.startsWith(q.player+'-')?'own-effect':'opponent-effect')
+    :'payment',sourceUid:q.sourceUid});
   source.buffs??=[];source.buffs.push({bp:q.bp,untilTurn:s.turn});
   s.mainAbilityUsedUids.push(source.uid);
   s.pending=null;continueEffectQueue(pack,s);return;
