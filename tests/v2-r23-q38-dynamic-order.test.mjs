@@ -46,3 +46,25 @@ for(const raid of [false,true])for(const effectFirst of [false,true])test(`Q38 $
  const source=raid?first.uid:entrant.uid;
  assert.equal(s.zoneMoveEvents.filter(e=>e.sourceUid===source&&e.from==='deck'&&e.to==='hand').length,raid?1:2);
 });
+
+for(const op of ['battleImpactDamage','additionalBattleDamage'])test('unsupported nested '+op+' rejects atomically with remaining LIFE preserved',()=>{
+ let {s}=start();
+ // Internal saved-continuation fault injection: no registered card is invented.
+ const original=structuredClone(s),a=legalUniversalActions(packs,s).find(a=>a.type==='chooseLifeEffect');
+ s=dispatchUniversalAction(packs,s,a);
+ assert.equal(s.pending.kind,'effect-discard');
+ s.effectQueue.unshift({op,owner:1,defender:1,remaining:1});
+ const paused=structuredClone(s);
+ assert.throws(()=>dispatchUniversalAction(packs,s,legalUniversalActions(packs,s)[0]),/Nested LIFE reveal unresolved/);
+ assert.deepEqual(s,paused);
+ assert.deepEqual(s.lifeRevealBatch.remaining,original.lifeRevealBatch.remaining);
+ assert.equal(s.status,'playing');
+});
+test('deferred entry snapshots reject foreign controller, duplicate key and unknown job',()=>{
+ const {s}=start();
+ for(const mutate of [x=>x.pending.entries.push(structuredClone(x.pending.entries[0])),
+  x=>x.pending.entries[0].jobs[0].owner=0,
+  x=>x.pending.entries[0].jobs[0].op='unverifiedDamage']){
+  const bad=structuredClone(s);mutate(bad);assert.throws(()=>assertUniversalMatch(packs,bad));
+ }
+});

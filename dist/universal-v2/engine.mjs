@@ -1046,6 +1046,9 @@ function selectLifeBatchItem(pack,s,uid){
   to:'outside',index:at,reason:'rule'});
 }
 function damage(pack,s,defender){
+ // Reentrant single damage must not bypass the atomic-batch guard.
+ if(s.lifeRevealBatch||s.players.some(p=>p.lifeRevealed.length))
+  throw Error('Nested LIFE reveal unresolved');
  const pl=s.players[defender];
  if(!pl.life.length){s.status='finished';s.winner=1-defender;s.endReason='unblocked-attack';return;}
  const c=moveOwnedLinear(pack,s,{owner:defender,from:'life',to:'outside',
