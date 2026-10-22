@@ -438,3 +438,21 @@ R29 無新增正式卡牌，沒有新增 DSL 原語。五作品仍 **312/700**�
 - **E** 官方規則與集中交接文件 `ecc23eb4`；更新本檔及 `GPT-resume.md`。需核對最終交接提交的 exact SHA Actions，不能只引用 D 的綠燈。
 
 本輪沒有新的正式登錄卡。分別為 BLEACH97、TTG35、SLG41、SAO91、MST48＝**312/700**，未移植388，逐卡全面 FAQ 證據認證仍 **0**。BLC-2-019、047、4-034 都不在正式 registry；目前只有嚴格支援的**部分完整原語**和具體真卡試作驗收，不可當作三張卡已可在正式跨作品環境無條件使用。額外第二批 LIFE 傷害仍保守原子拒絕，不建第二套佇列。沒有合併 main、正式部署、改寫 Cursor PR77 或 force push；這些測試皆為遠端 Actions，沒有本地 Node22 結果。
+
+
+
+## GPT 第三十一輪 R31｜REST/退場/裏向附屬卡官方差異、SAO 名稱搜尋正式登錄（2026-10-23）
+
+從確認遠端 baseline `2fae2b6d5ac5628280bf1793241ee0cf5738b2c7` 開始，延續同一 GPT PR #78 `gpt/v2-resume-20261022`（base `cursor/v2-multi-retire-life-6ff5`）。官方審核/未釐清順序見 [V2-R31-official-under-recovery-audit.md](./V2-R31-official-under-recovery-audit.md)，原 R30 BLC 三張合法 50 卡證據與完整正反例原封不動保留。
+
+- **Batch A, official audit** `d9165bedacabda33c035aa789457e680026025b3`: 核對 BLC-4-034 實印 MAIN 的 REST／自身真正退場兩項強制支付，後續最多一張裏向附屬卡回手、Q60–Q62 Raid/base 去向、Q81 最多可選零張、Q2315 已取得觸發可保留、Q2316 只有控制者可看自己的裏向卡。對比 `retire`／`vacate` 立即拆出所有下層到場外，官方未給明確 last-known/select 和 interruption 優先權；**BLC-4-034 MAIN 暫未實作**，舊 fail-closed 斷言保留。[39869518022](https://github.com/will00t-debug/Ua/actions/runs/39869518022) 成功。
+- **Batch D1, true-card isolated preflight** `c2304609ca8831e1cf6e022ab97d92cc56aa6f59`: 單張尚未登錄 SAO-1-005 使用正式日文原文及 50 張真卡牌組，重用已存在 `searchTopOneBottomDiscardWhere` / `searchTopOneBottomDiscard` 多名稱 `logic:'any'` + `cardHasName` alias；印刷需求黃能源2／AP1、TOP4／〈キリト〉或〈アリス〉／最多1張／BOTTOM自選排序／成功取得才棄1。測試正反例、Wrong UID、AI、JSON 恢復、對手不得查看私有檢視。[39869697116](https://github.com/will00t-debug/Ua/actions/runs/39869697116) 成功，當時未計入 registry。
+- **Batch E1, shared public-reveal defect** `1d54bdb8e093f9867eaee3edc997129d912c8d50`: 既有 `effect-top-filter-choice` 在合法 TOP-N 選擇牌入手後，通過既有有界 `publicReveals` **只公開被選中的物理 UID**；不新建事件佇列、不公開其他 inspected 卡，不改 `zoneMoveEvents`；無牌取得時不公開。[39870054641](https://github.com/will00t-debug/Ua/actions/runs/39870054641) 成功。
+- **Batch D2, formal complete printed registration** `79ddbc73c1996dedecbbcb51dbbd319adf3f58ad`: SAO-1-005 加入 `sao-pack.mjs` 嚴格 source-pinned metadata / 已有 ANY-NAME 模板及 `tests/fixtures/v2-integrated-id-manifest.mjs`，將 isolated 測試替換為正式 registry 測試。第一次 [39870434867](https://github.com/will00t-debug/Ua/actions/runs/39870434867) **FAILED**：新增證據檔引用不存在局部變數 `id` 觸發大量 import 錯誤；未刪測試或放寬 validation。緊接 `f796ed985791380bff1f7f38c18bedac37012ecc` 改成 `def.id`，[39870620372](https://github.com/will00t-debug/Ua/actions/runs/39870620372) 成功 **1832/1832**, 60/60。
+- **Batch E2, positive/negative options** `6a885ca40251f4f914c2b8aa5a2f91ccd76b62e6`: 正式 SAO-1-005 TOP4 同時有真實 Kirito 與 Alice 時仍可選 0 張（不公開、不棄牌、底部完整順序），及選 Kirito 的另一實體 UID（只公開該 UID，排序後棄已取得卡合法）；序列化和卡牌守恆。[39870856615](https://github.com/will00t-debug/Ua/actions/runs/39870856615) 成功 **1834/1834 Node22, 60/60 five-title**, independent manifest / `v2-unported-report` success。
+
+**登錄權威結果：** BLEACH **97**, TTG **35**, SLG **41**, SAO **92（本輪+1）**, MST **48**，合計 **313/700**，未移植 **387**；全面逐卡每條官方 FAQ 獨立認證 **0**（現有逐卡/逐原語覆蓋不可誤稱 0→313）。BLC-2-019／BLC-2-047／BLC-4-034 **三張仍未移植**，沒有把未完成原印刷能力計入數量。BLC-019/047 的已支援原語及來源繫結獨立案例依 R30，未擴張成完整全卡 FAQ 認證。BLC-4-034 MAIN 仍 blocked，**未新增**臆造的 undercard recovery DSL，保留 Q60/Q61 Raid 確切 OUTSIDE 去向及真正 onRetire、Q2315 earned-event 已取得觸發，對手不得見自己的裏向卡以外資訊。
+
+**R32 第一優先：** 取得 BLC-4-034 MAIN「支付自我退場後最多 1 底牌回手」的直接官方結算裁定（選取快照時點、真正退場/退休觸發與替代中斷、多人層 Raid 和剩餘下層的去向）；有明確 oracle 才可最小改動既有 queue/zone move UID/stamp 作共享 recovery。官方資料不足則先挑 `TTG-1-028` 的跨作品『至下個己方回合開始前禁止攻擊』通用 *turn-bounded legal action restriction*，先確定官方結束時點、重進場的 stamped expiration，不和 BP Buff、onAttack 授予或產能混用。SLG-1-070 AP 額外目標費及 MST-1-059 FRONT 暫時產能保留為不同的獨立原語候選。巢狀第二批 LIFE 繼續原子 fail-closed；不以未知官方次序強行整合。
+
+**執行邊界：** 全部 PASS 統計來自 GitHub Actions **remote Node.js 22**，本環境 GitHub clone DNS 失敗，未跑本地 Node22，沒有私自並行修改別人的 local working tree、main merge、正式 Vercel 部署、覆寫 Cursor PR #77、force push。已驗證最新已完成程式提交 `6a885ca40251f4f914c2b8aa5a2f91ccd76b62e6`；本交接文件提交本身要另核對精確 SHA Actions，不能只拿舊 green 抵充。
