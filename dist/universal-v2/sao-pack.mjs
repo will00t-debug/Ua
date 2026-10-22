@@ -1188,6 +1188,19 @@ const PRINTED_PINS=Object.freeze({
     "traits": ["整合騎士"],
     "effectJa": "自分の場に他の［特徴：整合騎士］が4枚以上ある場合、このキャラは【インパクト（1）】（アタックしてバトルに勝利した時、相手プレイヤーに1ダメージ）を得る。"
   },
+  "SAO-2-065": {
+    "kind": "nameAbsentBp",
+    "nameJa": "クライン",
+    "color": "green",
+    "energy": 2,
+    "ap": 1,
+    "bp": 3500,
+    "gen": 1,
+    "type": "character",
+    "trigger": "active",
+    "traits": ["ALO"],
+    "effectJa": "自分の場に〈フレイヤ〉がない場合、このキャラはBP-500。"
+  },
   "SAO-2-008": {
     "kind": "ownTurnTraitBp",
     "nameJa": "レンリ・シンセシス・トゥエニセブン",
@@ -1298,6 +1311,14 @@ export function verifiedSaoV2Cards(){
    card.effects={};
    card.passiveBonuses=[{condition:{kind:'ownTraitCount',turn:'any',min:4,
     zone:'field',excludeSelf:true,trait:'整合騎士'},impact:1}];
+  }
+  // SAO-2-065 printed BP is 3500-. The penalty is live while 〈フレイヤ〉 is
+  // absent from this card's own field. No 自分のターン中. A later silence
+  // removes the penalty because it is printed text, not a gained buff.
+  if(pin.kind==='nameAbsentBp'){
+   card.effects={};
+   card.passiveBonuses=[{condition:{kind:'ownNameAbsent',turn:'any',
+    zone:'field',excludeSelf:false,name:'フレイヤ'},bp:-500}];
   }
   // No ターン1. REST this card, then one other own character on either line.
   if(pin.kind==='restSelfBuffOther'){

@@ -75,6 +75,10 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   if(d.type!=='character')continue;
   const silenced=originalEffectsDisabled(s,c);
   if(condition.kind==='ownNameExists'&&cardHasName(d,condition.name,silenced))return true;
+  // 〈名前〉がない is the same character-name check, inverted. Hand, deck,
+  // outside, and Raid under-cards are not the field. Silence drops an alias
+  // and keeps the printed name, matching ownNameExists.
+  if(condition.kind==='ownNameAbsent'&&cardHasName(d,condition.name,silenced))return false;
   if(remaining){
    remaining.delete(d.name);
    if(!silenced)for(const alias of d.nameAliases||[])remaining.delete(alias);
@@ -82,6 +86,7 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   if(condition.kind==='ownTraitCount'&&d.traits.includes(condition.trait))found++;
  }
  if(remaining)return remaining.size===0;
+ if(condition.kind==='ownNameAbsent')return true;
  return condition.kind==='ownTraitCount'&&found>=condition.min;
 }
 
