@@ -3,7 +3,7 @@
 export const V2_MOVE_REASONS=Object.freeze([
  'payment','own-effect','opponent-effect','rule','life-trigger','retirement','raid-strip'
 ]);
-export const V2_MOVE_ZONES=Object.freeze(['hand','deck','life','outside','front','energy','removed','raid-under']);
+export const V2_MOVE_ZONES=Object.freeze(['hand','deck','life','lifeRevealed','outside','front','energy','removed','raid-under']);
 export function appendCompletedMove(s,move){
  const {uid,cardId,owner,controller,from,to,reason,sourceUid=null,
   sourceCardId=null,sourceName=null,sourceColor=null,sourceOnField=false}=move;
