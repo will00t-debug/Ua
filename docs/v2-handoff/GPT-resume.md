@@ -994,7 +994,7 @@ Raid 的新頂牌是另一個 UID，次數從 0 開始，不繼承底板。沒�
 
 接續第十四輪已由 GitHub Actions 驗過的 `ed654b11c0c0b6fd7abd352da98d9e3f5a36e1ce`（pull_request run `39739813788`）與其文件修訂 `c5f0d3e6704fb29ef71a6290e72d7ecf9c9c0b1c`。工作分支仍是 `cursor/v2-multi-retire-life-6ff5`，Draft PR #77 的合併目標仍是 `codex/v2-resume-20261021`。沒有改 main、沒有部署、沒有 force push。第十四輪的阻擋、退場 REST、BP 範圍、別名，以及當時已登錄的卡都沒有重做。
 
-本輪本地驗收使用 Node **v22.23.4**。時間 2026-10-22 16:20（台北時間）完成矩陣與未移植報告。`npm test` 是 1631 則、1631 通過。沒有刪測試、沒有放寬合法性。這個數字含第十五輪 A 到 E 的新測試。GitHub Actions 要看推上去之後、這個文件 commit 所在 HEAD 自己的 pull_request run；撰寫本段時該 run 尚未結案，不能把 `39739813788` 或 `39740692643` 當成第十五輪結果。
+本輪本地驗收使用 Node **v22.23.4**。時間 2026-10-22 16:20（台北時間）完成矩陣與未移植報告。`npm test` 是 1631 則、1631 通過。沒有刪測試、沒有放寬合法性。這個數字含第十五輪 A 到 E 的新測試。GitHub Actions 的規則與交接 SHA 是 `61bbd8765e528b1554bad674c909e3d3161851ca`。記錄這次 Actions 結果的文件修訂是其後的 commit，要另看自己的 run。
 
 ### 本輪共用引擎
 
@@ -1072,7 +1072,7 @@ SAO-1-003 已經登錄，圖示也是「黃+」，但資料仍是 gen 2 再加 `
 - `node scripts/v2-integrated-match-matrix.mjs`：60/60 finished，failures 0。
 - `node scripts/v2-assert-independent-manifest.mjs`：bleach 97、gurren-lagann 31、solo-leveling 38、sword-art-online 84、mushoku-tensei 45；total 295。
 - `node scripts/v2-unported-report.mjs`：700／Pilot 295／尚未移植 405／嚴格全面驗收 0。
-- GitHub Actions：本段撰寫時，第十五輪 HEAD 還沒有結案的 run。被 concurrency 取消的 push run 不能當成測試失敗，也不能把第十四輪的 `39739813788` 記成這輪。
+- GitHub Actions pull_request run [`39747250598`](https://github.com/will00t-debug/Ua/actions/runs/39747250598)（HEAD `61bbd8765e528b1554bad674c909e3d3161851ca`、runner Node v22.23.3）：2026-10-22 16:22（台北時間）開始、16:23 結束，conclusion success。Job `regression` 的日誌是 `npm test` 1631 tests、1631 pass、0 fail、0 skipped；矩陣 `60/60 finished (failures 0)`；獨立 manifest `bleach 97, gurren-lagann 31, solo-leveling 38, sword-art-online 84, mushoku-tensei 45; total 295`；未移植報告 `總卡 700／Pilot 295／尚未移植 405／嚴格全面驗收 0`。同一 SHA 的 push run `39747246588` 被 concurrency 取消。這個結論只屬於 `61bbd87`。
 
 ### 未完成與下一輪
 
