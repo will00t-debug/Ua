@@ -88,3 +88,70 @@ test('official-anchored pilot: ordinary AP-paid 047 event draws two, not movemen
  assert.equal(s.players[0].outside.some(x=>x.uid===eventCard.uid),true);
  assert.equal(assertUniversalMatch(packs,s),true);
 });
+
+test('official 019-anchored RAID LIFE: reveal, legal color energy, optional FREE Raid and full onPlay target',()=>{
+ let {s,raid,base}=prepared(true);
+ const handIndex=s.players[0].hand.findIndex(c=>c.uid===raid.uid);
+ assert.ok(handIndex>=0);
+ s.players[0].hand.splice(handIndex,1);
+ s.players[0].deck.push(s.players[0].life.shift());
+ s.players[0].life.unshift(raid);
+ for(let i=0;i<5;i++){
+  const next=legalUniversalActions(packs,s).find(a=>a.type==='next');
+  assert.ok(next,'must reach actual opponent attack turn');
+  s=dispatchUniversalAction(packs,s,next,{actor:s.pending?.player??s.active});
+ }
+ assert.equal(s.active,1);assert.equal(s.phase,'attack');
+ const attacker=s.players[1].front[0];
+ assert.ok(attacker?.ready);
+ s=dispatchUniversalAction(packs,s,{type:'attack',uid:attacker.uid},{actor:1});
+ assert.equal(s.pending.kind,'block');
+ s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:null},{actor:0});
+ assert.equal(s.pending.kind,'life-trigger');
+ assert.equal(s.pending.trigger,'raid');
+ assert.equal(s.publicReveals.at(-1).uid,raid.uid);
+ const actions=legalUniversalActions(packs,s);
+ assert.ok(actions.some(a=>a.mode==='get'));
+ assert.ok(actions.some(a=>a.mode==='skip'));
+ const choice=actions.find(a=>a.type==='chooseTrigger'&&a.mode==='raid'&&
+  a.baseUid===base.uid&&a.slot===0);
+ assert.ok(choice,'RAID LIFE may Raid at generated blue4');
+ const before=s.players[0].apCards.filter(a=>a.ready).length;
+ const game=dispatchUniversalAction(packs,s,choice,{actor:0});
+ assert.equal(game.players[0].apCards.filter(a=>a.ready).length,before,
+  'RAID LIFE consumes no AP');
+ assert.equal(game.players[0].front[0].uid,raid.uid);
+ assert.equal(game.players[0].front[0].ready,true);
+ assert.equal(game.players[0].front[0].stack[0].uid,base.uid);
+ assert.equal(game.pending.kind,'effect-target-many');
+ assert.equal(assertUniversalMatch(packs,game),true);
+ const declined=dispatchUniversalAction(packs,game,{type:'chooseTargetMany',uid:null},{actor:0});
+ assert.equal(declined.pending,null);
+ assert.equal(assertUniversalMatch(packs,declined),true);
+ const added=dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'get'},{actor:0});
+ assert.equal(added.players[0].hand.some(c=>c.uid===raid.uid),true);
+ assert.equal(added.players[0].front[0].uid,base.uid);
+});
+test('official Q1046: 047 effect-earned draw ignores its energy2 printed event cost',()=>{
+ let s=newUniversalMatch(packs,{decks:[deck,deck],first:0,seed:261046});
+ const raid=pull(s,0,'BLC-2-019'),eventCard=pull(s,0,'BLC-2-047');
+ // Field source has no FRONT energy generation; this is NOT a free event use.
+ raid.fieldEntryStamp=s.nextFieldEntryStamp++;raid.ready=false;
+ s.players[0].front[0]=raid;s.players[0].hand.push(eventCard);
+ s.phase='main';
+ assert.equal(s.players[0].energy.filter(Boolean).length,0);
+ assert.equal(pack.cards['BLC-2-047'].energy,2);
+ assert.ok(!legalUniversalActions(packs,s).some(a=>a.type==='event'&&a.uid===eventCard.uid));
+ const action=legalUniversalActions(packs,s).find(a=>a.type==='activate'&&a.uid===raid.uid);
+ assert.ok(action,'printed MAIN name payment is separate from event AP/energy');
+ s=dispatchUniversalAction(packs,s,action,{actor:0});
+ assert.equal(s.pending.kind,'effect-discard-gate');
+ const ap=s.players[0].apCards.filter(x=>x.ready).length,before=s.players[0].deck.length;
+ s=dispatchUniversalAction(packs,s,{type:'chooseDiscardGate',uid:eventCard.uid},{actor:0});
+ assert.equal(s.pending,null);
+ assert.equal(s.players[0].deck.length,before-2,'MAIN draws1, earned 047 draws1');
+ assert.equal(s.players[0].apCards.filter(x=>x.ready).length,ap);
+ assert.equal(s.zoneMoveEvents.filter(e=>e.from==='hand'&&e.to==='outside'&&
+  e.uid===eventCard.uid&&e.sourceUid===raid.uid).length,1);
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
