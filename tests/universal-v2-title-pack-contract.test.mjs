@@ -43,7 +43,7 @@ test('all five independent titles register exactly the source-pinned official ca
  const list=listRegisteredV2Titles();
  assert.deepEqual(list.map(x=>x.totalV2Cards),[87,30,34,62,40]);
  assert.deepEqual(list.map(x=>x.baselinePilots),[15,20,0,0,0]);
- assert.deepEqual(list.map(x=>x.newlyContributed),[72,10,34,62,39]);
+ assert.deepEqual(list.map(x=>x.newlyContributed),[72,10,34,62,40]);
  for(const title of V2_TITLE_IDS){
   const added=EXPECTED_V2_ADDED_CARD_IDS[title];
   const contribution=V2_TITLE_CONTRIBUTIONS[title];
