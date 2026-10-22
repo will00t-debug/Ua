@@ -910,6 +910,12 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
   "color":"green","energy":3,"ap":1,"bp":2500,"gen":2,
   "trigger":"draw","type":"character",
   "effect":"Damage 2：攻擊直接造成傷害時，改為造成 2 點傷害。"
+ } ,{
+  "id":"BLC-1-054","kind":"discardOppHandOne",
+  "number":"UA08BT/BLC-1-054","name":"涅 マユリ",
+  "color":"purple","energy":3,"ap":1,"bp":3000,"gen":1,
+  "trigger":null,"type":"character",
+  "effect":"登場：敵方將其 1 張手牌送至場外。"
  }
 
  ,{
@@ -971,10 +977,11 @@ export function checkedBleachAddonDefinition(p){
  const isRetireMill=p.kind==='onRetireMillTwo';
  const isPrintedImpact=p.kind==='printedImpact';
  const isPrintedDamage=p.kind==='printedAttackDamage';
+ const isOppDiscard=p.kind==='discardOppHandOne';
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isStripDual;
+ const special=p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isStripDual;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -999,6 +1006,7 @@ export function checkedBleachAddonDefinition(p){
   ...(!special?{templateEffects:abilities[p.kind]}:{effects:
    isRetireDraw?{onRetire:[{op:'draw',count:1}]}:
    isRetireMill?{onRetire:[{op:'millTop',count:2}]}:
+   isOppDiscard?{onPlay:[{op:'discardOppHand',count:1}]}:
    isStripDual?{onPlay:[{op:'chooseOne',optional:false,options:[
     {id:'strip',label:'Strip opponent RAID top',turn:'any',
      then:[{op:'stripOppRaidTop',optional:true}]},
