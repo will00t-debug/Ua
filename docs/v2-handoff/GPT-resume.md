@@ -1382,3 +1382,115 @@ SAO-1-003 已經登錄，圖示也是「黃+」，但資料仍是 gen 2 再加 `
 3. DSL 費用＋合法目標＋時機＋條件組合；未審核 Raid 幾何與連鎖 Raid 繼續 fail-closed。
 4. Q73、DAMAGE(2)、LIFE Trigger 結算相異；再登場 UID 攻擊／阻擋計數歸零尚無正式依據不得猜測。持續比對官方 FAQ 再實作。
 5. 不為增加卡數而新增大量作品專用 `if`；下一批要有共用能力、反例、測試與明確紀錄。
+
+
+## GPT 第十九輪｜統一特徵與私有移動來源（2026-10-22）
+
+**最新程式 SHA `7ad676e42bc6b3fbc97edeee60f4110d899268d0`**；本輪沿用
+`gpt/v2-resume-20261022` / Draft PR [#78](https://github.com/will00t-debug/Ua/pull/78)
+→ `cursor/v2-multi-retire-life-6ff5`，原 PR #77、main、正式站均未修改、未部署、未 force-push。
+第十一～十八輪 Cursor 成果和 GPT 前輪的 SLG-1-072、複合特徵能力均保留。
+
+### 已執行的五個相關批次（含驗收修正）
+
+1. **Batch A** `55123874f274b957d8e860540a15ea69489d810a`：
+   `matchesFilter` 的不安全 slash 字串任意拆分改為已存在的
+   `cardHasTrait`；主階段 trait mode 合法性與 Raid 後 BUFF 模式也共用
+   同一來源審核語意。MST-1-065 的 `inspectTopTraitOutside` 仍依原印刷
+   exact-token 規則嚴格比對，不擅自改語意。新增
+   `tests/v2-r19-trait-selector.test.mjs` 和
+   `docs/v2-handoff/V2-R19-trait-path-audit.md`。Actions
+   [39765760482](https://github.com/will00t-debug/Ua/actions/runs/39765760482) 成功。
+
+2. **Batch B1** `eccffd3dc3f0c6422933dc7edfa4032264a6292a`：
+   新增單一共用來源輔助模組
+   `dist/universal-v2/zone-move-events.mjs`，掛入既有 V2 reducer，
+   每筆完成的私有事件有物理 UID、cardId、owner、controller、
+   來源／目的區域、原因、來源 UID/印刷姓名與顏色、當下來源是否在場、
+   回合及單調序號。接入已完成的手牌棄牌費用、效果棄牌、場外回手，
+   保留 `turnEffectZoneMoves`；非法選擇／預覽／跳過不造假移動。
+   Actions [39766215458](https://github.com/will00t-debug/Ua/actions/runs/39766215458) 成功。
+
+3. **Batch B2** `f693a14950e2f1027f6db161ae375655b7c4a499`：
+   在既有成功移動點記錄真退場、部分場外效果入場、
+   LIFE 傷害移往場外、LIFE GET 回手、COLOR 從場外入場及 Raid 頂牌剝離；
+   保留原本退場／Raid／LIFE 效果排序。Actions
+   [39766727055](https://github.com/will00t-debug/Ua/actions/runs/39766727055) 成功。
+   後續 `3bec0ce6723c59b4b51efe602d1dab7d0bbc4f0f`
+   增加已完成的 deck→outside、部分 TOP-N 放場外、
+   field→hand 自身回手與一般手牌登場來源紀錄，配合
+   `7ad676e42bc6b3fbc97edeee60f4110d899268d0` 的舊測試相容修正後遠端驗收通過。
+   這**不是**所有區域移動的完整覆蓋；draw deck→hand、特殊 Raid
+   幾何與少數其他路徑仍需逐項補審。
+
+4. **Batch C** `f29ed2056f9bdc7015a59fe10fd595eaa47566a4`：
+   `validateCompletedMoveCondition`、`matchesCompletedMove`、
+   `completedMovesMatching` 僅選擇真正完成、有來源證據的紀錄，
+   嚴格限定條件鍵與 enum，允許指定來源、玩家、移動方向及
+   payment／own-effect 等具區別的原因。基於 BLC-2-047
+   官方 EX07BT 卡文與 **Q1033／Q1046／Q2315** 撰寫負例測試與來源文件。
+   **不在移動瞬間盲目執行觸發，也尚未實作來源效果整段結算後入列**。
+   BLC-2-047 與 BLC-2-019 的完整聯動未驗證，兩卡不得因本輪視為完成。
+   Actions [39767072980](https://github.com/will00t-debug/Ua/actions/runs/39767072980) 成功。
+
+5. **Batch D/E 驗收** `d202228be6ce481d6284ff32b08a693170c67c84`：
+   既有 `chooseOne` → `discardGate` → `oncePerTurnGate`
+   → `draw` 可以使用原共用 effectQueue、合法動作及 AI
+   而不新增 op；加上可選成本、非法 UID、取消、負面 DSL 資料測試。
+   另在 `V2-R19-dsl-and-faq-audit.md` 盤點未完成官方規則。
+   Actions [39767402456](https://github.com/will00t-debug/Ua/actions/runs/39767402456) 成功。
+
+### 回歸處理與相容性
+
+- `eeab663b5adcf311723d12aef6556f23cd448c5f`
+  首先正確區分對手強制棄牌為 `opponent-effect`（owner/控制者不同），
+  但舊 `turnEffectZoneMoves` 有歷史較寬布林行為，
+  GitHub Actions [39767604952](https://github.com/will00t-debug/Ua/actions/runs/39767604952)
+  顯示兩個原有案例受影響；`7189d5ab61f882e87ff49f7977c67d0b612fb3dd`
+  恢復舊布林行為，**新的細分移動來源仍正確**，避免既有卡牌回歸。
+  [39767808268](https://github.com/will00t-debug/Ua/actions/runs/39767808268) 成功。
+  對手效果來源必須用新 journal，**不可**靠舊布林辨認。
+- Deck mill / paid-play journal 擴充版 `3bec0ce` 的遠端
+  [39768100161](https://github.com/will00t-debug/Ua/actions/runs/39768100161)
+  1693/1696 通過、3 fail；其中舊 fixture 直接 `s.turn++`
+  和兩個新測試假設一般登場沒有事件。修正
+  `7ad676e42bc6b3fbc97edeee60f4110d899268d0` 後完整通過。
+  **不刪除任何失敗測試，也沒有撤銷實際登場來源紀錄。**
+
+### 最後一個程式提交的實際驗收
+
+**GitHub Actions [39768352364](https://github.com/will00t-debug/Ua/actions/runs/39768352364) —
+`7ad676e4` — Node.js 22 — success**：
+
+- `npm test`：**1696／1696 pass；0 fail**。
+- `node scripts/v2-integrated-match-matrix.mjs`：**60／60**；0 失敗。
+- `node scripts/v2-assert-independent-manifest.mjs`：通過，
+  BLEACH 97、TTG 35、SLG 41、SAO 91、MST 48；合計 **312**。
+- `node scripts/v2-unported-report.mjs`：通過，五作品共 **700**，
+  V2 已登錄 **312**、未移植 **388**；全面官方 FAQ 認證 **0**。
+- 本輪淨新增實卡 **0**；合成測試與資料驗證器絕不計入。
+- **沒有本地 npm test / 本地矩陣**：本工作環境無法 DNS 解析
+  `github.com` 下載專案，完整通過數僅來自遠端 GitHub Actions。
+  沒有進行實機 UI、正式站或完整官方 FAQ 手動驗收。
+- 本次交接文件另提交新 SHA；**文件 SHA 的 CI 要另查**，不可沿用
+  程式 SHA 的成功作為文件提交已驗收的證據。
+
+### 官方規則風險與下一輪
+
+- Q73（2023-03-17，Damage2）原文要求同時翻出多張生命卡並可
+  選擇多觸發順序；現有 `additionalBattleDamage` 按次序逐張處理，
+  存在 **已知尚未完成的官方規則差異**。未在本輪冒然更動核心。
+  須連同 Q71／Q72、FINAL、Impact 與資訊揭露重新設計和驗證。
+- Q1033 明示 BLC-2-019 全部起動效果結算後才觸發 BLC-2-047；
+  來源條件資料已可查詢，**跨效果完成邊界排隊尚未實裝**。
+  Q1046 不需事件卡藍2能源；Q2315 即使後續埋入裏向底牌仍可觸發。
+  先完整審核來源卡與 source effect queue boundary，再考慮正式移植。
+- 其餘：多重退場／中斷恢復、MAIN 結束真退場與回手排序、
+  未審核 Raid 多層幾何／連鎖 Raid、物理 UID 離場再入場後的
+  攻擊阻擋次數、封印後的既成效果、尚未記錄的移動路徑，維持
+  保守判定與回歸保護。
+- 下一輪優先（1）補齊常見移動 journal 缺口與來源 snapshot
+  （2）設計單一共用 after-source-resolution trigger drain
+  （3）BLC-2-019／047 真卡測試（4）Q73 DAMAGE2 simultaneous
+  life reveal 的獨立狀態與 hidden-information 驗收
+  （5）跨標題 AI／人類一致性、UID 再入場 FAQ。
