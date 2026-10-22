@@ -96,6 +96,8 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
    (catalog[hand.find(c=>c.uid===b.uid)?.cardId]?.energy||0))[0];
  }
  if(s.pending?.kind==='main-two-buff')return legal[0];
+ if(s.pending?.kind==='main-rest-front-energy')
+  return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-rest-bp'){
   // RESTed characters remain legal targets (official Q91), but choosing one
   // wastes the effect whenever a READY opponent is also available.
@@ -209,6 +211,7 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   legal.find(a=>a.type==='activate'&&a.mode==='selfRestThen')||
   legal.find(a=>a.type==='activate'&&a.mode==='selfRestBuff')||
   legal.find(a=>a.type==='activate'&&a.mode==='payApDrawEnergy')||
+  legal.find(a=>a.type==='activate'&&a.mode==='restFrontGainEnergy')||
   legal.find(a=>a.type==='activate'&&a.mode==='selfRestEnergyRetire')||
   (difficulty==='hard'&&s.players[s.active].hand.length>1?
    legal.find(a=>a.type==='activate'&&a.mode==='discardSelfBuff'):null);

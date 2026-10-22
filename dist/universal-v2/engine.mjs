@@ -1268,6 +1268,18 @@ function resolveChoice(s,a,pack){
   target.buffs.push({bp:q.bp,untilTurn:s.turn});
   s.pending=null;continueEffectQueue(pack,s);return;
  }
+ if(q.kind==='main-rest-front-energy'){
+  const source=field(p).find(c=>c.uid===q.sourceUid);
+  const target=p.front.find(c=>c?.uid===a.uid);
+  if(!source||!target||!target.ready||!q.choices.includes(a.uid)||
+   card(pack,target).type!=='character')
+   throw Error('Front REST energy needs the chosen ACTIVE front character');
+  target.ready=false;
+  source.buffs??=[];
+  source.buffs.push({energy:q.extraEnergy,untilTurn:s.turn});
+  s.pending=null;
+  return;
+ }
  if(q.kind==='effect-rest-bp'){
   if(a.uid===null){
    if(!q.optional)throw Error('Mandatory opponent REST cannot be declined');
@@ -1626,6 +1638,9 @@ function legalPending(pack,s){
  if(q.kind==='effect-buff-trait')return [
    {type:'chooseTraitBuff',uid:null},...q.choices.map(uid=>({type:'chooseTraitBuff',uid}))
   ];
+ if(q.kind==='main-rest-front-energy')
+  return q.choices.filter(uid=>p.front.some(c=>c?.uid===uid&&c.ready))
+   .map(uid=>({type:'chooseRestFrontEnergy',uid}));
  if(q.kind==='effect-rest-bp')return [
    ...(q.optional?[{type:'chooseRestBp',uid:null}]:[]),
    ...q.choices.map(uid=>({type:'chooseRestBp',uid}))
@@ -1770,6 +1785,10 @@ export function legalUniversalActions(pack,s){
    if(ability?.op==='payApDrawGainEnergy'&&
     !s.mainAbilityUsedUids.includes(c.uid)&&pl.apCards.some(x=>x.ready))
     out.push({type:'activate',uid:c.uid,mode:'payApDrawEnergy'});
+   if(ability?.op==='restSelfRestFrontGainEnergy'&&c.ready&&
+    !s.mainAbilityUsedUids.includes(c.uid)&&
+    pl.front.some(x=>x&&x.ready&&x.uid!==c.uid&&card(pack,x).type==='character'))
+    out.push({type:'activate',uid:c.uid,mode:'restFrontGainEnergy'});
   }
   for(const c of pl.front.filter(Boolean)){
    const d=card(pack,c),ability=originalEffectsDisabled(s,c)?null:d.mainAbility;
@@ -1801,6 +1820,14 @@ export function legalUniversalActions(pack,s){
     // 【APを1支払う】 does not rest this card. A REST character can still pay.
     if(!s.mainAbilityUsedUids.includes(c.uid)&&pl.apCards.some(x=>x.ready))
      out.push({type:'activate',uid:c.uid,mode:'payApDrawEnergy'});
+    continue;
+   }
+   if(ability.op==='restSelfRestFrontGainEnergy'){
+    // Pay REST on this card first. The effect then needs a different
+    // ACTIVE front character, so this card cannot be its own target.
+    if(c.ready&&!s.mainAbilityUsedUids.includes(c.uid)&&
+     pl.front.some(x=>x&&x.ready&&x.uid!==c.uid&&card(pack,x).type==='character'))
+     out.push({type:'activate',uid:c.uid,mode:'restFrontGainEnergy'});
     continue;
    }
    if(ability.op==='restSelfThenRestOppFrontOne'){
@@ -1984,6 +2011,18 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
     else s.delayedEffects.push({...delayed,op:'retireAtMainEnd'});
     break;
    }
+   if(ability.op==='restSelfRestFrontGainEnergy'){
+    const choices=pl.front.filter(c=>c&&c.ready&&c.uid!==selected.uid&&
+     card(pack,c).type==='character').map(c=>c.uid);
+    if(action.mode!=='restFrontGainEnergy'||!selected.ready||
+     s.mainAbilityUsedUids.includes(selected.uid)||!choices.length)
+     throw Error('Front REST energy requires a READY unused source and another ACTIVE front');
+    selected.ready=false;
+    s.mainAbilityUsedUids.push(selected.uid);
+    s.pending={kind:'main-rest-front-energy',player:p,sourceUid:selected.uid,
+     choices,extraEnergy:ability.extraEnergy};
+    break;
+   }
    if(ability.op==='payApDrawGainEnergy'){
     if(action.mode!=='payApDrawEnergy'||s.mainAbilityUsedUids.includes(selected.uid)||
      !pl.apCards.some(c=>c.ready))
@@ -2126,7 +2165,7 @@ export function assertUniversalMatch(pack,s){
    !Array.isArray(s.initialCounts)||s.initialCounts.length!==2||
    s.players?.length!==2||!playerIndex(s.active)||
    !['playing','finished'].includes(s.status))throw Error('Incorrect pack/version or match state');
- if(s.pending&&(!playerIndex(s.pending.player)||!['phase-order','retirement-order','block','life-trigger','effect-target','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-strip-raid-top','effect-retire-own-field','effect-retire-own-character','effect-rest-bp','raid-effect-order','effect-buff-trait','effect-buff-own','effect-once-choice','main-two-buff','main-discard-buff','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-order','effect-recover-outside','effect-outside-rest','effect-outside-traitless-rest','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-choice-mode','recovered-self-entry'].includes(s.pending.kind)))
+ if(s.pending&&(!playerIndex(s.pending.player)||!['phase-order','retirement-order','block','life-trigger','effect-target','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-strip-raid-top','effect-retire-own-field','effect-retire-own-character','effect-rest-bp','raid-effect-order','effect-buff-trait','effect-buff-own','effect-once-choice','main-two-buff','main-discard-buff','main-rest-front-energy','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-order','effect-recover-outside','effect-outside-rest','effect-outside-traitless-rest','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-choice-mode','recovered-self-entry'].includes(s.pending.kind)))
   throw Error('Invalid pending controller');
  if(!Array.isArray(s.raidedThisTurn)||s.raidedThisTurn.length!==2||
    s.raidedThisTurn.some(x=>typeof x!=='boolean')||

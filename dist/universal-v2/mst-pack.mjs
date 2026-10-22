@@ -82,6 +82,19 @@ const PRINTED_PINS=Object.freeze({
     "trigger": null,
     "effectJa": "〖登場時〗 このキャラが自分の効果で登場していた場合、このキャラをアクティブにする。"
   },
+  "MST-1-056": {
+    "kind": "restSelfRestFrontGainEnergy",
+    "nameJa": "エリナリーゼ",
+    "color": "green",
+    "energy": 1,
+    "ap": 1,
+    "bp": 2000,
+    "gen": 1,
+    "type": "character",
+    "traits": ["ラノア魔法大学"],
+    "trigger": null,
+    "effectJa": "〖起動メイン〗 〖レストにする〗 〖ターン1〗 自分のフロントLのアクティブのキャラを1枚レストにする。そうした場合、このキャラはこのターン中、発生エナジー+ 〖緑〗 。"
+  },
   "MST-1-041": {
     "kind": "restSelfBuffOther",
     "nameJa": "アイシャ",
@@ -621,6 +634,10 @@ export function verifiedMstV2Cards(){
    card.effects={onRetire:[{op:'draw',count:1}]};
   if(pin.kind==='activeIfOwnEffectEntry')
    card.effects={onPlay:[{op:'activeSelfIf',entry:'ownEffect'}]};
+  if(pin.kind==='restSelfRestFrontGainEnergy'){
+   card.effects={};
+   card.mainAbility={op:'restSelfRestFrontGainEnergy',oncePerTurn:true,extraEnergy:1};
+  }
   if(pin.kind==='restSelfBuffOther'){
    card.effects={};
    card.mainAbility={op:'restSelfBuffOther',bp:1000};
@@ -702,6 +719,7 @@ export function verifiedMstV2Entries(){
      ...(pin.kind==='activeIfOwnEffectEntry'?['tests/v2-conditional-entry-active-round15.test.mjs']:[]),
      ...(pin.kind==='drawIfOwnEffectEntry'?['tests/v2-mst-023-own-effect-draw.test.mjs']:[]),
      ...(pin.kind==='restSelfBuffOther'?['tests/v2-rest-buff-other-round16.test.mjs']:[]),
+     ...(pin.kind==='restSelfRestFrontGainEnergy'?['tests/v2-mst-056-rest-front-energy.test.mjs']:[]),
      ...(pin.kind==='nameAliasOwnEnergyBp'?['tests/v2-zero-engine-round15.test.mjs']:[]),
       ...(pin.kind==='onRetireDrawOne'?['tests/v2-mst-013-on-retire.test.mjs']:[]),
       ...(pin.kind==='onRetireDrawIfOwnField'?['tests/v2-mst-052-official-retire.test.mjs']:[]),
