@@ -1074,7 +1074,7 @@ function resolveChoice(s,a,pack){
  if(q.kind==='end-hand-limit'){
   const i=p.hand.findIndex(c=>c.uid===a.uid);
   if(i<0)throw Error('End phase must remove an owned hand card');
-  p.removed.push(p.hand.splice(i,1)[0]);
+  moveOwnedLinear(pack,s,{owner:q.player,from:'hand',to:'removed',index:i,reason:'rule'});
   s.pending=null;
   advanceAfterEnd(pack,s,q.player);
   return;
@@ -1084,7 +1084,8 @@ function resolveChoice(s,a,pack){
    const index=p.deck.findIndex(c=>c.uid===a.uid);
    if(index<0||!q.choices.includes(a.uid)||!matchesFilter(pack,s,p.deck[index],q.filter))
     throw Error('Deck search needs an eligible owned physical card');
-   p.hand.push(p.deck.splice(index,1)[0]);
+   moveOwnedLinear(pack,s,{owner:q.player,from:'deck',to:'hand',index,
+    reason:'own-effect',sourceUid:q.sourceUid});
   }else if(!q.optional)throw Error('Mandatory deck search cannot be declined');
   shuffle(s,p.deck);
   s.pending=null;continueEffectQueue(pack,s);return;
@@ -1094,7 +1095,8 @@ function resolveChoice(s,a,pack){
    const index=p.deck.findIndex(c=>c.uid===a.uid);
    if(index<0||!q.choices.includes(a.uid)||!matchesSearch(pack,s,p.deck[index],q))
     throw Error('Multi search needs a matching owned physical card');
-   p.hand.push(p.deck.splice(index,1)[0]);
+   moveOwnedLinear(pack,s,{owner:q.player,from:'deck',to:'hand',index,
+    reason:'own-effect',sourceUid:q.sourceUid});
    q.remaining--;
   }else if(!q.optional)throw Error('Mandatory multi-search cannot be declined');
   const choices=searchChoices(pack,s,p.deck,q);
@@ -1113,7 +1115,8 @@ function resolveChoice(s,a,pack){
     throw Error('Filtered top search needs a legal inspected physical card');
    const i=p.deck.findIndex(c=>c.uid===a.uid);
    if(i<0||i>=q.uids.length)throw Error('Selected physical UID outside top window');
-   p.hand.push(p.deck.splice(i,1)[0]);
+   moveOwnedLinear(pack,s,{owner:q.player,from:'deck',to:'hand',index:i,
+    reason:'own-effect',sourceUid:q.sourceUid});
   }
   const remaining=q.uids.filter(uid=>uid!==a.uid);
   if(remaining.length)s.pending={kind:'effect-top-order',player:q.player,
@@ -1649,6 +1652,8 @@ function resolveChoice(s,a,pack){
    commitDestination(s,q.player,'energy',a.slot,a.replaceUid);
    p.hand.splice(handIndex,1);picked.ready=true;
    picked.fieldEntryStamp=s.nextFieldEntryStamp++;p.energy[a.slot]=picked;
+   recordCompletedMove(pack,s,{physical:picked,owner:q.player,
+    from:'hand',to:'energy',reason:'life-trigger',sourceUid:q.uid});
    applyEffects(pack,s,picked,'onPlay',q.player,'lifeColorField');
   }
   else if(a.mode==='color'&&q.trigger==='color'){
@@ -1662,6 +1667,8 @@ function resolveChoice(s,a,pack){
    commitDestination(s,q.player,a.line,a.slot,a.replaceUid);
    p.hand.splice(handIndex,1);picked.ready=true;
    picked.fieldEntryStamp=s.nextFieldEntryStamp++;p[a.line][a.slot]=picked;
+   recordCompletedMove(pack,s,{physical:picked,owner:q.player,
+    from:'hand',to:a.line,reason:'life-trigger',sourceUid:q.uid});
    // This is ordinary playing through a trigger, NOT a Raid: no AP is spent.
    applyEffects(pack,s,picked,'onPlay',q.player,'lifeColor');
   }
@@ -1670,8 +1677,14 @@ function resolveChoice(s,a,pack){
    performRaid(pack,s,q.player,revealed,a.baseUid,a.line,a.slot,a.replaceUid,
     {entryCause:'lifeRaid'});
   }
-  else if(a.mode==='get'&&q.trigger==='raid')p.hand.push(p.outside.splice(i,1)[0]);
-  else if(a.mode==='final'&&q.trigger==='final'&&!p.life.length&&p.deck.length)p.life.unshift(p.deck.shift());
+  else if(a.mode==='get'&&q.trigger==='raid')moveOwnedLinear(pack,s,{
+   owner:q.player,from:'outside',to:'hand',index:i,
+   reason:'life-trigger',sourceUid:q.uid});
+  else if(a.mode==='final'&&q.trigger==='final'&&!p.life.length&&p.deck.length){
+   const returned=p.deck.shift();p.life.unshift(returned);
+   recordCompletedMove(pack,s,{physical:returned,owner:q.player,from:'deck',
+    to:'life',reason:'life-trigger',sourceUid:q.uid});
+  }
   else if(a.mode!=='skip')throw Error('Illegal trigger option');
   continueEffectQueue(pack,s);
   finishPending(s);
