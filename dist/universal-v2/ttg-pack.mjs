@@ -40,7 +40,15 @@ const additions=[
  {id:'TTG-1-002',name:'ヴィラル',energy:1,ap:1,bp:1500,gen:1,color:'green',type:'character',trigger:'active',
   implementation:'dsl',effects:{},
   mainAbility:{op:'restSelfRestFrontGainEnergy',oncePerTurn:true,extraEnergy:1},
-  match:'產生的綠色能源+1'}
+  match:'產生的綠色能源+1'},
+ {id:'TTG-1-007',name:'ギミー',energy:0,ap:1,bp:1500,gen:1,color:'green',type:'character',trigger:'active',
+  implementation:'dsl',effects:{onPlay:[{op:'payApDeployNamedRest',entry:'hand',name:'ダリー'}]},
+  passiveBonuses:[{condition:{kind:'ownNameExists',turn:'any',zone:'field',excludeSelf:false,name:'ダリー'},bp:1000}],
+  match:'場上有達莉時 BP+1000'},
+ {id:'TTG-1-013',name:'ダリー',energy:0,ap:1,bp:1500,gen:1,color:'green',type:'character',trigger:'draw',
+  implementation:'dsl',effects:{onPlay:[{op:'payApDeployNamedRest',entry:'hand',name:'ギミー'}]},
+  passiveBonuses:[{condition:{kind:'ownNameExists',turn:'any',zone:'field',excludeSelf:false,name:'ギミー'},bp:1000}],
+  match:'場上有吉米時 BP+1000'}
 ];
 export const TTG_V2_ADDITION_IDS=Object.freeze(additions.map(x=>x.id));
 export function verifiedTtgV2Additions(){

@@ -14,7 +14,9 @@ const proof=Object.freeze({
  'TTG-1-077':['ガンメン特徵','2026-10-15 日本官方：赤4/AP1/フィールド/赤赤，登場時「自分の場外から［特徴：ガンメン］を1枚まで手札に加える」。optional 0..1；僅自家場外，不搜 deck 或敵區。UA56BT 現有四張ガンメン印刷 source 的 traits 皆精確為複合「大グレン団／ガンメン」，為共用 filter 拆分僅此單卡的已驗證斜線複合來源成兩個特徵字串（ガンメン），原始 sourceRecord 不變且有來源漂移保護。無生命 Trigger。'],
  'TTG-1-022':['返回手牌','Official UA56BT/TTG-1-022 ヨマコ先生, checked 2026-10-22: green cost 1, AP1, BP1500, trait 大グレン団, generated 緑+ (one green pip, gen 1), DRAW. Printed alias 〈ヨーコ〉. Activate MAIN, REST self, once per turn: this turn generated energy +green and, at end of MAIN, return this character to hand. The return reuses bounceToHand and is not retirement. No card FAQ.'],
  'TTG-1-015':['支付1 AP','Official UA56BT/TTG-1-015 ニア, checked 2026-10-22: cost 緑- (energy 0), AP1, BP500, trait 大グレン団, generated 緑+ (one green pip, gen 1), DRAW. Activate MAIN pays 1 AP, once per turn: draw 1 and this character gains generated energy +1 this turn. The payment does not rest the source. A front character still generates 0. No card FAQ.'],
- 'TTG-1-002':['產生的綠色能源+1','Official UA56BT/TTG-1-002 ヴィラル, checked 2026-10-22: cost 緑1, AP1, BP1500, trait 大グレン団, generated 緑+ (one green pip, gen 1), ACTIVE life. Activate MAIN rests this card, once per turn, then rests one other ACTIVE own front character. Only that success gives generated energy +green this turn. Same resolved profile as MST-1-056. A front character still generates 0. No card FAQ.']
+ 'TTG-1-002':['產生的綠色能源+1','Official UA56BT/TTG-1-002 ヴィラル, checked 2026-10-22: cost 緑1, AP1, BP1500, trait 大グレン団, generated 緑+ (one green pip, gen 1), ACTIVE life. Activate MAIN rests this card, once per turn, then rests one other ACTIVE own front character. Only that success gives generated energy +green this turn. Same resolved profile as MST-1-056. A front character still generates 0. No card FAQ.'],
+ 'TTG-1-007':['場上有達莉時 BP+1000','Official UA56BT/TTG-1-007 ギミー, checked 2026-10-22: cost 緑- (energy 0), AP1, BP1500+, trait 大グレン団, generated 緑 (gen 1), ACTIVE life. While 〈ダリー〉 is on this card\'s own field, BP+1000 on either turn. On play from hand, the controller may pay 1 AP and then REST-play up to one outside 〈ダリー〉 whose required energy that color currently meets. Life and effect entries do not offer the payment. No card FAQ.'],
+ 'TTG-1-013':['場上有吉米時 BP+1000','Official UA56BT/TTG-1-013 ダリー, checked 2026-10-22: cost 緑- (energy 0), AP1, BP1500+, trait 大グレン団, generated 緑 (gen 1), DRAW life. While 〈ギミー〉 is on this card\'s own field, BP+1000 on either turn. On play from hand, the controller may pay 1 AP and then REST-play up to one outside 〈ギミー〉 whose required energy that color currently meets. No card FAQ.']
 });
 export default Object.freeze({
  title:'gurren-lagann',
@@ -33,7 +35,8 @@ export default Object.freeze({
       ...(def.id==='TTG-1-018'?['tests/v2-ttg-018-green-energy.test.mjs']:[]),
       ...(def.id==='TTG-1-022'?['tests/v2-ttg-022-return-hand.test.mjs']:[]),
       ...(def.id==='TTG-1-015'?['tests/v2-ttg-015-pay-ap.test.mjs']:[]),
-      ...(def.id==='TTG-1-002'?['tests/v2-ttg-002-rest-front-energy.test.mjs']:[])]}
+      ...(def.id==='TTG-1-002'?['tests/v2-ttg-002-rest-front-energy.test.mjs']:[]),
+      ...(def.id==='TTG-1-007'||def.id==='TTG-1-013'?['tests/v2-ttg-partner-ap-deploy-round18.test.mjs']:[])]}
   });
  }))
 });
