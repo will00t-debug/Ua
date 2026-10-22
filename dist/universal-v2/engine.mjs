@@ -2,7 +2,7 @@
 // Pure physical-card reducer: common UA zones/AP/phases/limited effects/Raid
 // and official Q99 optional GET/DRAW/FINAL. Unsupported keywords FAIL CLOSED.
 import {validateUniversalDeck} from './pack.mjs';
-import {cardHasName,matchesOwnDistinctTraits,matchesV2LiveCondition,
+import {cardHasName,cardHasTrait,matchesOwnDistinctTraits,matchesV2LiveCondition,
  ownRestPrintedBpCount,retiredThisTurn} from './field-conditions.mjs';
 import {refreshFieldActive,expireContinuousStates,pruneContinuousStates,
  fieldRestrictions,validateContinuousStates,grantContinuousState,
@@ -581,7 +581,7 @@ function continueEffectQueue(pack,s){
     sourceUid:job.sourceUid,choices,filter:job.filter,
     bp:job.bp,optional:job.optional,excludeSelf:job.excludeSelf};
   }else if(job.op==='buffOwnTrait'){
-   const choices=field(pl).filter(c=>card(pack,c).traits.includes(job.trait)).map(c=>c.uid);
+   const choices=field(pl).filter(c=>cardHasTrait(card(pack,c),job.trait)).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-buff-trait',player:owner,sourceUid:job.sourceUid,
     choices,trait:job.trait,bp:job.bp};
   }else if(job.op==='enemyFrontAllBpDown'){
@@ -646,7 +646,7 @@ function continueEffectQueue(pack,s){
   }else if(job.op==='buffOwnTraitAllTurn'){
    // A snapshot of current qualifying field units. Later entrants do not
    // inherit this temporary, printed action effect.
-   for(const c of field(pl))if(card(pack,c).traits.includes(job.trait)){
+   for(const c of field(pl))if(cardHasTrait(card(pack,c),job.trait)){
     c.buffs??=[];c.buffs.push({bp:job.bp,untilTurn:s.turn});
    }
   }else if(job.op==='drawIfRaidUnderFacedown'){
@@ -1336,7 +1336,7 @@ function resolveChoice(s,a,pack){
  }
  if(q.kind==='main-two-buff'){
   const target=field(p).find(c=>c.uid===a.uid);
-  if(!target||!card(pack,target).traits.includes(q.trait))
+  if(!target||!cardHasTrait(card(pack,target),q.trait))
    throw Error('Invalid main-phase trait BP target');
   target.buffs??=[];
   target.buffs.push({bp:q.bp,untilTurn:s.turn});
@@ -1378,7 +1378,7 @@ function resolveChoice(s,a,pack){
  if(q.kind==='effect-buff-trait'){
   if(a.uid===null){s.pending=null;continueEffectQueue(pack,s);return;}
   const target=field(p).find(c=>c.uid===a.uid);
-  if(!target||!q.choices.includes(a.uid)||!card(pack,target).traits.includes(q.trait))
+  if(!target||!q.choices.includes(a.uid)||!cardHasTrait(card(pack,target),q.trait))
    throw Error('Illegal own-trait buff target');
   target.buffs.push({bp:q.bp,untilTurn:s.turn});
   s.pending=null;continueEffectQueue(pack,s);return;
