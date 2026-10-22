@@ -548,7 +548,8 @@ function programJobs(pack,s,physical,timing,owner,raidUid){
    sourceName:card(pack,physical).name,...(raidUid?{raidUid}:{})}));
 }
 function applyEffects(pack,s,cardOnField,timing,owner){
- s.effectQueue.push(...programJobs(pack,s,cardOnField,timing,owner));
+ // Entry/trigger effects interrupt the suspended continuation (e.g. DAMAGE2).
+ s.effectQueue.unshift(...programJobs(pack,s,cardOnField,timing,owner));
  continueEffectQueue(pack,s);
 }
 function validRaidBase(pack,s,owner,base,top){
