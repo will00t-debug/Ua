@@ -219,3 +219,63 @@ test('R28 BLEACH pilot: paid Raid -> two enemy BP -> named 047 MAIN -> earned bo
  assert.equal(s.pending?.kind,'block');
  assert.equal(assertUniversalMatch(packs,s),true);
 });
+
+
+// R29: two independently stamped blue Ichigo physical sources may earn one
+// Q1033/Q1046 draw for two DIFFERENT physical 047 hand cards. This is a
+// bounded already-on-field second source fixture; its entry/Raid is not
+// claimed as an additional officially certified card play.
+test('R29 source-qualified 019s pay two distinct physical 047 UIDs in order, once per source',async()=>{
+ const {chooseUniversalAiAction}=await import('../dist/universal-v2/ai.mjs');
+ let {s,raid,base}=prepared(true);
+ const firstEvent=pull(s,0,'BLC-2-047'),secondEvent=pull(s,0,'BLC-2-047');
+ s.players[0].hand.push(firstEvent,secondEvent);
+ const firstPlay=legalUniversalActions(packs,s).find(a=>a.type==='raid'&&a.uid===raid.uid&&a.baseUid===base.uid);
+ assert.ok(firstPlay);
+ s=dispatchUniversalAction(packs,s,firstPlay,{actor:0});
+ assert.equal(s.pending?.kind,'effect-target-many');
+ s=dispatchUniversalAction(packs,s,{type:'chooseTargetMany',uid:null},{actor:0});
+ const other=pull(s,0,'BLC-2-019');
+ other.ready=true;other.fieldEntryStamp=s.nextFieldEntryStamp++;
+ s.players[0].front[1]=other;
+ assert.equal(assertUniversalMatch(packs,s),true);
+ const start=s.players[0].deck.length;
+ for(const [who,moved,index] of [[raid,firstEvent,0],[other,secondEvent,1]]){
+  const actions=legalUniversalActions(packs,s);
+  const activate=actions.find(a=>a.type==='activate'&&a.uid===who.uid);
+  assert.ok(activate,'an independent printed source still has its own once gate');
+  s=dispatchUniversalAction(packs,s,activate,{actor:0});
+  assert.equal(s.pending?.kind,'effect-discard-gate');
+  const eligible=legalUniversalActions(packs,s);
+  assert.ok(eligible.some(a=>a.uid===moved.uid));
+  for(const difficulty of ['normal','hard'])
+   assert.ok(eligible.some(a=>JSON.stringify(a)===JSON.stringify(
+    chooseUniversalAiAction(packs,s,{difficulty}))));
+  assert.throws(()=>dispatchUniversalAction(packs,s,
+   {type:'chooseDiscardGate',uid:'forged-047'}, {actor:0}),/not currently legal/);
+  const hand=s.players[0].hand.length;
+  const snap=structuredClone(s);
+  assert.throws(()=>dispatchUniversalAction(packs,s,
+   {type:'chooseDiscardGate',uid:moved.uid},{actor:1}),/Wrong player/);
+  assert.deepEqual(s,snap);
+  s=JSON.parse(JSON.stringify(s));
+  assert.equal(assertUniversalMatch(packs,s),true);
+  s=dispatchUniversalAction(packs,s,{type:'chooseDiscardGate',uid:moved.uid},{actor:0});
+  assert.equal(s.pending,null);
+  assert.equal(s.players[0].hand.length,hand-1+2);
+  assert.equal(s.players[0].deck.length,start-(index+1)*2);
+  assert.equal(s.players[0].outside.filter(c=>c.uid===moved.uid).length,1);
+  assert.equal(s.zoneMoveEvents.filter(e=>e.uid===moved.uid&&e.from==='hand'&&
+   e.to==='outside'&&e.sourceUid===who.uid).length,1);
+  assert.equal(s.zoneMoveEvents.filter(e=>e.sourceUid===moved.uid&&
+   e.from==='deck'&&e.to==='hand').length,1,'each earned 047 physically draws once');
+  assert.ok(!legalUniversalActions(packs,s).some(a=>a.type==='activate'&&a.uid===who.uid));
+ }
+ assert.equal(new Set([raid.uid,other.uid]).size,2);
+ assert.equal(new Set([firstEvent.uid,secondEvent.uid]).size,2);
+ assert.equal(s.continuousStates.filter(e=>e.kind==='grantedOnAttack'&&
+  [raid.uid,other.uid].includes(e.targetUid)).length,2);
+ assert.equal(assertUniversalMatch(packs,s),true);
+ assert.equal(registeredV2TitlePack('bleach').cards['BLC-2-019'],undefined);
+ assert.equal(registeredV2TitlePack('bleach').cards['BLC-2-047'],undefined);
+});
