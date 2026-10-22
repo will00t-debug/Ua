@@ -66,3 +66,39 @@ test('FINAL replenishes LIFE but cannot start a second pending damage check; rec
  assert.equal(s.status,'playing');assert.equal(assertUniversalMatch(packs,s),true);
  assert.equal(universalPublicView(packs,s,0).players[1].hand,null);
 });
+
+
+// R28 / official Q12: zero LIFE is provisional until every revealed trigger,
+// including FINAL, and every continuation has fully resolved.
+for(const finalFirst of [false,true])
+ test('R28 Q12 zero-LIFE win check waits for entire trigger check; FINAL first '+finalFirst,()=>{
+  let {s,final,draw}=state();
+  assert.equal(s.players[1].life.length,0);
+  assert.equal(s.status,'playing','revealing the last LIFE must not end the match');
+  const order=finalFirst?[final,draw]:[draw,final];
+  for(const [index,card] of order.entries()){
+   const choices=legalUniversalActions(packs,s);
+   const selected=choices.find(a=>a.type==='chooseLifeOrder'&&a.uid===card.uid);
+   assert.ok(selected,'all remaining simultaneous triggers need legal choices');
+   s=dispatchUniversalAction(packs,s,selected,{actor:1});
+   assert.equal(s.status,'playing');
+   assert.equal(s.pending?.kind,'life-trigger');
+   const before=structuredClone(s),publicBefore=universalPublicView(packs,s,0);
+   assert.throws(()=>dispatchUniversalAction(packs,s,
+    {type:'chooseTrigger',mode:card.uid===final.uid?'draw':'final'},{actor:1}),
+    /not currently legal/);
+   assert.deepEqual(s,before);
+   assert.deepEqual(universalPublicView(packs,s,0),publicBefore);
+   s=JSON.parse(JSON.stringify(s));
+   assert.equal(assertUniversalMatch(packs,s),true);
+   s=dispatchUniversalAction(packs,s,
+    {type:'chooseTrigger',mode:card.uid===final.uid?'final':'draw'},{actor:1});
+   assert.equal(s.status,'playing');
+   assert.equal(s.players[1].life.length,finalFirst||index===1?1:0);
+  }
+  assert.equal(s.players[1].life.length,1);
+  assert.equal(s.lifeRevealBatch,null);
+  assert.equal(s.pending,null);
+  assert.equal(assertUniversalMatch(packs,s),true);
+  assert.equal(universalPublicView(packs,s,0).players[1].hand,null);
+ });
