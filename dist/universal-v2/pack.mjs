@@ -276,7 +276,14 @@ function verifyProgram(program,path){
    Object.keys(e).some(k=>!['op','count','discardCount'].includes(k))
   ))throw Error(path+'['+i+'] invalid mandatory draw/discard profile');
   if(['buffSelf','enemyBpDown'].includes(e.op)&&(!integer(e.bp,1)||e.bp>5000))throw Error(path+'['+i+'] invalid temporary BP');
-  if(e.op==='enemyBpDown'&&e.optional!==undefined&&typeof e.optional!=='boolean')throw Error(path+'['+i+'] invalid optional targeting flag');
+  if(e.op==='enemyBpDown'&&(
+   (e.optional!==undefined&&typeof e.optional!=='boolean')||
+   (e.minBp!==undefined&&(!integer(e.minBp,0)||e.minBp>50000))||
+   (e.maxBp!==undefined&&(!integer(e.maxBp,0)||e.maxBp>50000))||
+   (e.minBp!==undefined&&e.maxBp!==undefined&&e.minBp>e.maxBp)||
+   (e.zone!==undefined&&e.zone!=='front'&&e.zone!=='field')||
+   Object.keys(e).some(k=>!['op','bp','optional','minBp','maxBp','zone'].includes(k))
+  ))throw Error(path+'['+i+'] invalid optional targeting flag');
  }
 }
 // Explicit conditional benefits are pure board queries. No generic card-text
@@ -451,6 +458,18 @@ function normalize(card,packId){
   Number.isInteger(mainAbility.bp)&&mainAbility.bp>=1&&mainAbility.bp<=5000&&
   Object.keys(mainAbility).length===4&&
   Object.keys(mainAbility).every(k=>['op','oncePerTurn','discardCount','bp'].includes(k));
+ const frontProgram=mainAbility?.then;
+ const frontDebuff=frontProgram?.[0]?.op==='discardGate'?frontProgram[0].then:frontProgram;
+ const mainFrontProgram=mainAbility?.op==='frontOnceProgram'&&
+  mainAbility.frontOnly===true&&mainAbility.oncePerTurn===true&&
+  Array.isArray(frontProgram)&&frontProgram.length===1&&
+  (frontProgram[0]?.op==='enemyBpDown'||
+   frontProgram[0]?.op==='discardGate'&&Array.isArray(frontProgram[0].then)&&
+   frontProgram[0].then.length===1)&&
+  frontDebuff?.length===1&&frontDebuff[0]?.op==='enemyBpDown'&&
+  Object.keys(mainAbility).length===4&&
+  Object.keys(mainAbility).every(k=>['op','frontOnly','oncePerTurn','then'].includes(k));
+ if(mainFrontProgram)verifyProgram(mainAbility.then,card.id+'.mainAbility.then');
  const mainRestProgram=mainAbility?.op==='restSelfThen'&&
   mainAbility.frontOnly===true&&
   Object.keys(mainAbility).length===3&&
@@ -460,7 +479,7 @@ function normalize(card,packId){
   Object.keys(mainAbility.then[0]).every(k=>['op','count'].includes(k));
  if(mainRestProgram)verifyProgram(mainAbility.then,card.id+'.mainAbility.then');
  if(mainAbility!==null&&
-  (card.type!=='character'||!(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainEnergyRetire||mainDiscardBuff)))
+  (card.type!=='character'||!(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainEnergyRetire||mainDiscardBuff||mainFrontProgram)))
   throw Error(card.id+' unsupported main action ability');
  const passiveBonuses=validatePassiveBonuses(card);
  const implemented=card.implementation;

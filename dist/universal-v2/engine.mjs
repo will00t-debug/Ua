@@ -569,9 +569,19 @@ function continueEffectQueue(pack,s){
    if(!attacking)throw Error('Attack source left the front line before blocking');
    s.pending={kind:'block',player:1-owner,attackerUid:job.sourceUid};
   }else if(job.op==='enemyBpDown'){
-   const targetUids=s.players[1-owner].front.filter(Boolean).map(c=>c.uid);
+   const foe=1-owner;
+   // The printed BP window is read once, when the choice opens. Applying the
+   // reduction must not rebuild the set, or a card that falls under the floor
+   // would illegally disappear from a choice it already qualified for.
+   const zones=job.zone==='field'
+    ?[...s.players[foe].front,...s.players[foe].energy]
+    :s.players[foe].front;
+   const targetUids=zones.filter(c=>c&&
+    (job.zone!=='field'||card(pack,c).type==='character')&&
+    (job.minBp===undefined||bp(pack,s,c)>=job.minBp)&&
+    (job.maxBp===undefined||bp(pack,s,c)<=job.maxBp)).map(c=>c.uid);
    if(targetUids.length)s.pending={kind:'effect-target',player:owner,sourceUid:job.sourceUid,
-    bp:job.bp,optional:job.optional===true,choices:targetUids};
+    bp:job.bp,optional:job.optional===true,choices:targetUids,zone:job.zone||'front'};
   }else throw Error('Unimplemented effect op');
  }
 }
@@ -1287,14 +1297,21 @@ function resolveChoice(s,a,pack){
   if(a.uid===null&&q.optional===true){
    s.pending=null;continueEffectQueue(pack,s);return;
   }
-  const foe=1-q.player,slot=s.players[foe].front.findIndex(c=>c?.uid===a.uid);
-  if(slot<0||!q.choices.includes(a.uid))throw Error('Illegal cross-title effect target');
-  const target=s.players[foe].front[slot];
+  const foe=1-q.player;
+  const lines=q.zone==='field'?['front','energy']:['front'];
+  let found=null;
+  for(const line of lines){
+   const slot=s.players[foe][line].findIndex(c=>c?.uid===a.uid);
+   if(slot>=0){found={line,slot,target:s.players[foe][line][slot]};break;}
+  }
+  if(!found||!q.choices.includes(a.uid))throw Error('Illegal cross-title effect target');
+  const target=found.target;
   target.buffs??=[];
   target.buffs.push({bp:-q.bp,untilTurn:s.turn});
   // Official state-based rule: characters at 0 BP or below are sidelined.
+  // The choice list stays the snapshot taken when the effect resolved.
   s.pending=null;
-  if(bp(pack,s,target)<=0)retire(pack,s,foe,'front',slot);
+  if(bp(pack,s,target)<=0)retire(pack,s,foe,found.line,found.slot);
   continueEffectQueue(pack,s);
   return;
  }
@@ -1701,6 +1718,19 @@ export function legalUniversalActions(pack,s){
      out.push({type:'activate',uid:c.uid,mode:'selfRestEnemy'});
     continue;
    }
+   if(ability.op==='frontOnceProgram'){
+    if(s.mainAbilityUsedUids.includes(c.uid))continue;
+    const step=ability.then[0];
+    if(step.op==='discardGate'&&!pl.hand.length)continue;
+    const debuff=step.op==='discardGate'?step.then[0]:step;
+    const zones=debuff.zone==='field'
+     ?[...s.players[1-p].front,...s.players[1-p].energy]:s.players[1-p].front;
+    const any=zones.some(x=>x&&(debuff.zone!=='field'||card(pack,x).type==='character')&&
+     (debuff.minBp===undefined||bp(pack,s,x)>=debuff.minBp)&&
+     (debuff.maxBp===undefined||bp(pack,s,x)<=debuff.maxBp));
+    if(any)out.push({type:'activate',uid:c.uid,mode:'frontOnce'});
+    continue;
+   }
    if(ability.op!=='chooseTwoAfterOwnRaid'||
     !s.raidedThisTurn[p]||s.mainAbilityUsedUids.includes(c.uid))continue;
    const readyAvailable=!s.mainReadyOnceByName[p].includes(d.name);
@@ -1851,6 +1881,19 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
      throw Error('REST main action requires READY front character');
     selected.ready=false;
     // Use only the existing common queue; title adapters never execute effects.
+    s.effectQueue.push(...ability.then.map(e=>({...e,owner:p,
+     sourceUid:selected.uid,sourceName:d.name})));
+    continueEffectQueue(pack,s);
+    break;
+   }
+   if(ability.op==='frontOnceProgram'){
+    if(action.mode!=='frontOnce'||!pl.front.some(c=>c?.uid===selected.uid)||
+     s.mainAbilityUsedUids.includes(selected.uid))
+     throw Error('Front once-per-turn program is not legal');
+    const step=ability.then[0];
+    if(step.op==='discardGate'&&!pl.hand.length)
+     throw Error('Front once-per-turn program requires a hand payment');
+    s.mainAbilityUsedUids.push(selected.uid);
     s.effectQueue.push(...ability.then.map(e=>({...e,owner:p,
      sourceUid:selected.uid,sourceName:d.name})));
     continueEffectQueue(pack,s);
