@@ -4,6 +4,11 @@ import {MST_V2_OFFICIAL_CATALOGUE} from './sources/mst-inventory.mjs';
 import {createUniversalPack} from './pack.mjs';
 
 const PRINTED_PINS=Object.freeze({
+ "MST-1-074":{
+  kind:"fieldCharacterRetireDrawAndRetireModes",nameJa:"転移の迷宮",
+  color:"green",energy:2,ap:1,bp:0,gen:1,type:"field",traits:[],trigger:"get",
+  effectJa:"〖登場時〗 自分の場のキャラを1枚退場させてもよい。そうした場合、カードを2枚引く。\n 〖退場時〗 以下から1つ選ぶ。\n・自分の手札を1枚場外に置いてもよい。そうした場合、自分の場外から必要エナジーが1以下の緑の〈ロキシー〉を1枚まで自分の場にレストで登場させる。\n・自分の場外から〈迷宮の守護者 マナタイトヒュドラ〉を1枚まで手札に加える。"
+ },
  "MST-1-053":{
   kind:"colorSiteMainRetireDraw",nameJa:"ロキシー",color:"green",
   energy:1,ap:1,bp:2500,gen:1,type:"character",traits:[],trigger:"color",
@@ -497,7 +502,20 @@ export function verifiedMstV2Cards(){
    card.templateEffects={onPlay:[{template:'restSilenceOppFrontIfOwnOutsideField',
     optional:true}]};
   }
-  if(pin.kind==='colorSiteMainRetireDraw'){
+  if(pin.kind==='fieldCharacterRetireDrawAndRetireModes'){
+    card.effects={
+     onPlay:[{op:'retireOwnCharacterOne',optional:true,after:[{op:'draw',count:2}]}],
+     onRetire:[{op:'chooseOne',optional:false,options:[
+      {id:'deploy',label:'Discard then REST Roxy',turn:'any',
+       then:[{op:'discardGate',optional:true,then:[{op:'deployOutsideRest',
+        name:'ロキシー',color:'green',energy:1,ap:1,optional:true}]}]},
+      {id:'recover',label:'Recover Manatite Hydra',turn:'any',
+       then:[{op:'recoverOutsideOne',
+        filter:{field:'name',value:'迷宮の守護者 マナタイトヒュドラ'},optional:true}]}
+     ]}]
+    };
+   }
+   if(pin.kind==='colorSiteMainRetireDraw'){
    card.colorTriggerFieldSubstitution='green';
    card.templateEffects={onPlay:[{template:'drawDiscardOne'}]};
    card.triggerEffect={op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1};
