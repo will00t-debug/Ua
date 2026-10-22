@@ -873,6 +873,7 @@ function retire(pack,s,p,line,slot,{postImpact=false}={}){
  }
  queueRetirement(pack,s,p,c,line);
  vacate(s,p,line,slot,'outside');
+ recordCompletedMove(pack,s,{physical:c,owner:p,from:line,to:'outside',reason:'retirement'});
  recordTrueRetirement(pack,s,p,c,line);
  return false;
 }
@@ -910,7 +911,8 @@ function commitDestination(s,p,line,slot,replaceUid,source=null){
 function damage(pack,s,defender){
  const pl=s.players[defender];
  if(!pl.life.length){s.status='finished';s.winner=1-defender;s.endReason='unblocked-attack';return;}
- const c=pl.life.shift();pl.outside.push(c);
+ const c=moveOwnedLinear(pack,s,{owner:defender,from:'life',to:'outside',
+  index:0,reason:'rule'});
  const trig=card(pack,c).trigger;
  s.publicReveals.push({owner:defender,title:titleOf(pack,defender),cardId:c.cardId,uid:c.uid,trigger:trig||null,turn:s.turn});
  if(s.publicReveals.length>12)s.publicReveals.shift();
@@ -998,6 +1000,8 @@ function resolveChoice(s,a,pack){
   }else if(a.mode==='leave'){
     if(q.destination==='outside')queueRetirement(pack,s,q.player,loc.c,q.line);
     vacate(s,q.player,q.line,q.slot,q.destination);
+    recordCompletedMove(pack,s,{physical:loc.c,owner:q.player,
+     from:q.line,to:q.destination,reason:q.destination==='outside'?'retirement':'rule'});
     if(q.destination==='outside')recordTrueRetirement(pack,s,q.player,loc.c,q.line);
    }
   else throw Error('Invalid leave replacement option');
@@ -1229,7 +1233,9 @@ function resolveChoice(s,a,pack){
    commitDestination(s,q.player,a.line,a.slot,a.replaceUid);
    p.outside.splice(i,1);physical.ready=false;
    physical.fieldEntryStamp=s.nextFieldEntryStamp++;
-   p[a.line][a.slot]=physical;s.pending=null;
+   p[a.line][a.slot]=physical;
+   recordCompletedMove(pack,s,{physical,owner:q.player,from:'outside',to:a.line,
+    reason:'own-effect',sourceUid:q.sourceUid});s.pending=null;
    s.effectQueue.unshift(...programJobs(pack,s,physical,'onPlay',q.player,undefined,'outsideEffect'));
    continueEffectQueue(pack,s);return;
   }
@@ -1249,6 +1255,8 @@ function resolveChoice(s,a,pack){
    p.outside.splice(i,1);physical.ready=false;
    physical.fieldEntryStamp=s.nextFieldEntryStamp++;
    p[a.line][a.slot]=physical;
+   recordCompletedMove(pack,s,{physical,owner:q.player,from:'outside',to:a.line,
+    reason:'own-effect',sourceUid:q.sourceUid});
    s.pending=null;
    s.effectQueue.unshift(...programJobs(pack,s,physical,'onPlay',q.player,undefined,'outsideEffect'));
    continueEffectQueue(pack,s);return;
@@ -1266,6 +1274,8 @@ function resolveChoice(s,a,pack){
    p.outside.splice(i,1);physical.ready=false;
    physical.fieldEntryStamp=s.nextFieldEntryStamp++;
    p[a.line][a.slot]=physical;
+   recordCompletedMove(pack,s,{physical,owner:q.player,from:'outside',to:a.line,
+    reason:'own-effect',sourceUid:q.sourceUid});
    s.pending=null;
    s.effectQueue.unshift(...programJobs(pack,s,physical,'onPlay',q.player,undefined,'outsideEffect'));
    continueEffectQueue(pack,s);return;
@@ -1492,6 +1502,8 @@ function resolveChoice(s,a,pack){
    s.players[foe].front[slot]=base;
    s.players[foe].outside.push({...top,ready:false,stack:[],under:[],
     buffs:[],faceDown:false,fieldEntryStamp:null});
+   recordCompletedMove(pack,s,{physical:top,owner:foe,controller:q.player,
+    from:'front',to:'outside',reason:'raid-strip',sourceUid:q.sourceUid});
    s.pending=null;continueEffectQueue(pack,s);return;
   }
   if(q.kind==='effect-retire-bp'){
@@ -1531,7 +1543,8 @@ function resolveChoice(s,a,pack){
   s.pending=null;
   const i=p.outside.findIndex(c=>c.uid===q.uid);
   if(i<0)throw Error('Revealed life card not found');
-  if(a.mode==='get'&&q.trigger==='get')p.hand.push(p.outside.splice(i,1)[0]);
+  if(a.mode==='get'&&q.trigger==='get')moveOwnedLinear(pack,s,{
+   owner:q.player,from:'outside',to:'hand',index:i,reason:'life-trigger',sourceUid:q.uid});
   else if(a.mode==='draw'&&q.trigger==='draw')draw(s,q.player);
   else if(a.mode==='active'&&q.trigger==='active'){
    const target=field(p).find(c=>c.uid===a.uid);
@@ -1577,6 +1590,8 @@ function resolveChoice(s,a,pack){
    commitDestination(s,q.player,'front',a.slot,a.replaceUid);
    p.outside.splice(index,1);chosen.ready=true;
    chosen.fieldEntryStamp=s.nextFieldEntryStamp++;p.front[a.slot]=chosen;
+   recordCompletedMove(pack,s,{physical:chosen,owner:q.player,from:'outside',to:'front',
+    reason:'life-trigger',sourceUid:q.uid});
    // COLOR life deployment spends no AP but does trigger onPlay.
    applyEffects(pack,s,chosen,'onPlay',q.player,'lifeColorOutside');
   }
@@ -2346,6 +2361,22 @@ export function assertUniversalMatch(pack,s){
    Object.keys(x).length!==2||typeof x.handToOutside!=='boolean'||
    typeof x.outsideToHand!=='boolean'))
   throw Error('Invalid own-effect movement ledger');
+ if(!Array.isArray(s.zoneMoveEvents)||!Number.isInteger(s.nextZoneMoveOrder)||
+  s.nextZoneMoveOrder<1||s.zoneMoveEvents.some((e,i,a)=>
+   !e||!Number.isInteger(e.order)||e.order<1||
+   (i>0&&a[i-1].order>=e.order)||e.order>=s.nextZoneMoveOrder||
+   e.turn!==s.turn||![0,1].includes(e.owner)||![0,1].includes(e.controller)||
+   typeof e.uid!=='string'||!e.uid.startsWith(e.owner+'-')||
+   typeof e.cardId!=='string'||!e.cardId||
+   !['hand','deck','life','outside','front','energy','removed','raid-under'].includes(e.from)||
+   !['hand','deck','life','outside','front','energy','removed','raid-under'].includes(e.to)||
+   !['payment','own-effect','opponent-effect','rule','life-trigger','retirement','raid-strip'].includes(e.reason)||
+   (e.sourceUid!==null&&typeof e.sourceUid!=='string')||
+   (e.sourceCardId!==null&&typeof e.sourceCardId!=='string')||
+   (e.sourceName!==null&&typeof e.sourceName!=='string')||
+   (e.sourceColor!==null&&typeof e.sourceColor!=='string')||
+   typeof e.sourceOnField!=='boolean'))
+  throw Error('Invalid private movement history');
  if(!Array.isArray(s.turnRetireEvents)||s.turnRetireEvents.some(e=>
   !e||e.turn!==s.turn||!playerIndex(e.controller)||
   !['character','field'].includes(e.cardType)||
