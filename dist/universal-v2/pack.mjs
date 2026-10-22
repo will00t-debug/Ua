@@ -650,6 +650,24 @@ function normalize(card,packId){
  // A moved physical card may print a source-qualified outside trigger.
  // This profile never infers text, never broadens a payment to all discards,
  // and resolves only after the originating source program ends.
+ const moveObserver=card.moveObserver??null;
+ if(moveObserver!==null){
+  // Character with an explicit printed hand→outside listener.
+  if(card.type!=='character'||implemented!=='dsl'||
+   !moveObserver||typeof moveObserver!=='object'||Array.isArray(moveObserver)||
+   Object.keys(moveObserver).length!==2||
+   Object.keys(moveObserver).some(x=>!['when','op'].includes(x))||
+   moveObserver.op!=='restSelfTuckMovedFaceDown')
+   throw Error(card.id+' invalid moved-card field watcher');
+  const q=validateCompletedMoveCondition(moveObserver.when);
+  if(q.from!=='hand'||q.to!=='outside'||q.sourceOnField!==true||
+   typeof q.sourceName!=='string'||!q.sourceName.trim()||
+   typeof q.sourceColor!=='string'||!q.sourceColor.trim()||
+   !Array.isArray(q.reasons)||!q.reasons.length||
+   q.reasons.some(x=>!['payment','own-effect'].includes(x))||
+   Object.keys(q).some(x=>!['from','to','reasons','sourceOnField','sourceName','sourceColor'].includes(x)))
+   throw Error(card.id+' invalid moved-card watcher provenance');
+ }
  const moveTriggers=card.moveTriggers??[];
  if(!Array.isArray(moveTriggers)||moveTriggers.length>2||
   (moveTriggers.length&&implemented!=='dsl')||
@@ -700,11 +718,11 @@ function normalize(card,packId){
   card.type!=='character'||card.readyOnBlockCount!==1))
   throw Error(card.id+' invalid ready-on-block count');
  if(implemented==='vanilla'&&(Object.keys(effects).length||card.effectText||
-  mainAbility||phaseEffects.length||moveTriggers.length||card.enterActiveIfOpponentRest||card.activeExtraEnergy||card.conditionalTraitEnergy||passiveBonuses||card.impactNull||
+  mainAbility||phaseEffects.length||moveTriggers.length||moveObserver||card.enterActiveIfOpponentRest||card.activeExtraEnergy||card.conditionalTraitEnergy||passiveBonuses||card.impactNull||
   card.printedImpact||card.printedAttackDamage||card.readyOnAttackCount||card.readyOnBlockCount||
   card.frontGeneratesEnergy||ownOutsideRecovery||colorTriggerFieldSubstitution||card.frontForbidden||card.ownTurnBp||card.opponentTurnBp||nameAliases))
   throw Error(card.id+' claims vanilla despite printed/declared effects');
- if(implemented==='dsl'&&!Object.keys(effects).length&&!phaseEffects.length&&!moveTriggers.length&&!mainAbility&&!card.enterActiveIfOpponentRest&&
+ if(implemented==='dsl'&&!Object.keys(effects).length&&!phaseEffects.length&&!moveTriggers.length&&!mainAbility&&!moveObserver&&!card.enterActiveIfOpponentRest&&
   !card.activeExtraEnergy&&!card.conditionalTraitEnergy&&!passiveBonuses&&!card.impactNull&&
   !card.printedImpact&&!card.printedAttackDamage&&!card.readyOnAttackCount&&!card.readyOnBlockCount&&
   !card.frontGeneratesEnergy&&!ownOutsideRecovery&&!colorTriggerFieldSubstitution&&!card.frontForbidden&&!card.ownTurnBp&&!card.opponentTurnBp&&!nameAliases)
@@ -833,6 +851,8 @@ function normalize(card,packId){
   readyOnAttackCount:card.readyOnAttackCount===1?1:0,
   readyOnBlockCount:card.readyOnBlockCount===1?1:0,
   implementation:implemented,
+  moveObserver:moveObserver?Object.freeze({op:moveObserver.op,
+   when:validateCompletedMoveCondition(moveObserver.when)}):null,
   moveTriggers:Object.freeze(moveTriggers.map(x=>Object.freeze({
    when:validateCompletedMoveCondition(x.when),
    then:Object.freeze(x.then.map(op=>Object.freeze({...op})))
