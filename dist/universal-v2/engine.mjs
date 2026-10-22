@@ -2315,10 +2315,14 @@ export function legalUniversalActions(pack,s){
     if(s.mainAbilityUsedUids.includes(c.uid))continue;
     const step=ability.then[0];
     if(step.op==='discardGate'&&!payableHand(pack,s,p,step.payment).length)continue;
-    const debuff=step.op==='discardGate'?step.then[0]:step;
-    const zones=debuff.zone==='field'
+    const debuff=step.op==='discardGate'
+     ?step.then.find(e=>e.op==='enemyBpDown'):step;
+    // A named-payment MAIN may draw/buff/grant without an enemy target.
+    // Retain the existing target prerequisite only for a printed debuff.
+    const zones=debuff?.zone==='field'
      ?[...s.players[1-p].front,...s.players[1-p].energy]:s.players[1-p].front;
-    const any=zones.some(x=>x&&(debuff.zone!=='field'||card(pack,x).type==='character')&&
+    const any=!debuff||zones.some(x=>x&&
+     (debuff.zone!=='field'||card(pack,x).type==='character')&&
      (debuff.minBp===undefined||bp(pack,s,x)>=debuff.minBp)&&
      (debuff.maxBp===undefined||bp(pack,s,x)<=debuff.maxBp));
     if(any)out.push({type:'activate',uid:c.uid,mode:'frontOnce'});

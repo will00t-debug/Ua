@@ -588,14 +588,17 @@ function normalize(card,packId){
   Object.keys(mainAbility).length===4&&
   Object.keys(mainAbility).every(k=>['op','oncePerTurn','discardCount','bp'].includes(k));
  const frontProgram=mainAbility?.then;
- const frontDebuff=frontProgram?.[0]?.op==='discardGate'?frontProgram[0].then:frontProgram;
+ const frontGate=frontProgram?.[0]?.op==='discardGate'?frontProgram[0]:null;
+ // A front once-per-turn ability may be a source-complete DSL program,
+ // not just a single debuff. Named payment is a strict cost, not a shortcut.
+ const frontEffects=frontGate?.then||frontProgram;
  const mainFrontProgram=mainAbility?.op==='frontOnceProgram'&&
   mainAbility.frontOnly===true&&mainAbility.oncePerTurn===true&&
   Array.isArray(frontProgram)&&frontProgram.length===1&&
   (frontProgram[0]?.op==='enemyBpDown'||
-   frontProgram[0]?.op==='discardGate'&&Array.isArray(frontProgram[0].then)&&
-   frontProgram[0].then.length===1)&&
-  frontDebuff?.length===1&&frontDebuff[0]?.op==='enemyBpDown'&&
+   frontGate&&Array.isArray(frontGate.then)&&frontGate.then.length>=1&&
+   frontGate.then.length<=6&&frontEffects.every(e=>
+    ['enemyBpDown','draw','buffSelf','grantOnAttack'].includes(e?.op)))&&
   Object.keys(mainAbility).length===4&&
   Object.keys(mainAbility).every(k=>['op','frontOnly','oncePerTurn','then'].includes(k));
  if(mainFrontProgram)verifyProgram(mainAbility.then,card.id+'.mainAbility.then');
