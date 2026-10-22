@@ -10,20 +10,6 @@ import {V2_ABILITY_TEMPLATE_IDS,expandAbilityTemplates} from '../dist/universal-
 // corresponding entry from this unimplemented set.
 export const BLEACH_CORE_GAP_SCENARIOS=Object.freeze([
  {
-  id:'BLC-1-009',
-  number:'UA08BT/BLC-1-009',
-  exactEffect:'Impact 1：攻擊並贏得戰鬥時，對敵方玩家造成 1 點傷害。',
-  missing:'Ordinary IMPACT 1 on a battle won (without facedown); defender IMPACT-null applies',
-  fixture:'ATTACK 3000 v BLOCK 2000 -> 1 damage after battle; IMPACT-null defender -> 0'
- },
- {
-  id:'BLC-1-074',
-  number:'UA08BT/BLC-1-074',
-  exactEffect:'Damage 2：攻擊直接造成傷害時，改為造成 2 點傷害。',
-  missing:'Unblocked DAMAGE 2 replaces one damage with two independent life checks',
-  fixture:'No blocker + 2 life with GET/DRAW -> check each in correct order, all UIDs once'
- },
- {
   id:'BLC-2-007',
   number:'EX07BT/BLC-2-007',
   exactEffect:'登場：所有敵方前線 BP 1000 以上角色，本回合 BP −500。',
@@ -38,10 +24,10 @@ export const BLEACH_CORE_GAP_SCENARIOS=Object.freeze([
   fixture:'UID attacks twice (once after 1st ready), other physical UID separately eligible'
  }
 ]);
-test('four official BLEACH core blockers are tracked and not misrepresented as V2 playable',()=>{
+test('two remaining official BLEACH core blockers are tracked and not misrepresented as V2 playable',()=>{
  const pack=createBleachV2Pack();
  const set=new Set(BLEACH_V2_NEW_IDS);
- assert.equal(BLEACH_CORE_GAP_SCENARIOS.length,4);
+ assert.equal(BLEACH_CORE_GAP_SCENARIOS.length,2);
  for(const gap of BLEACH_CORE_GAP_SCENARIOS){
   const printed=CARDS.find(c=>c.identity===gap.id);
   assert.ok(printed,gap.id);
@@ -52,6 +38,15 @@ test('four official BLEACH core blockers are tracked and not misrepresented as V
   assert.equal(pack.cards[gap.id],undefined,'Unsupported card must be rejected by V2');
   assert.ok(gap.missing.length>=30&&gap.fixture.length>=30);
  }
+});
+test('printed Impact 1 and Damage 2 left the core-gap list once official scenarios existed',()=>{
+ const pack=createBleachV2Pack();
+ const impact=pack.cards['BLC-1-009'],damage=pack.cards['BLC-1-074'];
+ assert.equal(impact.printedImpact,1);
+ assert.equal(damage.printedAttackDamage,2);
+ assert.deepEqual(impact.effects,{});
+ assert.deepEqual(damage.effects,{});
+ assert.ok(!BLEACH_CORE_GAP_SCENARIOS.some(x=>x.id==='BLC-1-009'||x.id==='BLC-1-074'));
 });
 test('A unlocked exact top-or-bottom; BLC-2-055 is now registered without OUTSIDE approximation',()=>{
  assert.ok(V2_ABILITY_TEMPLATE_IDS.includes('peekTopOrBottom'));
