@@ -916,6 +916,12 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
   "color":"purple","energy":3,"ap":1,"bp":3000,"gen":1,
   "trigger":null,"type":"character",
   "effect":"登場：敵方將其 1 張手牌送至場外。"
+ } ,{
+  "id":"BLC-1-109","kind":"drawTwoDiscardOne",
+  "number":"UA08ST/BLC-1-109","name":"空座町の死神代行",
+  "color":"purple","energy":1,"ap":1,"bp":0,"gen":0,
+  "trigger":"draw","type":"event",
+  "effect":"抽 2 張，再棄 1 張。"
  }
 
  ,{
@@ -978,10 +984,11 @@ export function checkedBleachAddonDefinition(p){
  const isPrintedImpact=p.kind==='printedImpact';
  const isPrintedDamage=p.kind==='printedAttackDamage';
  const isOppDiscard=p.kind==='discardOppHandOne';
+ const isDrawTwo=p.kind==='drawTwoDiscardOne';
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isStripDual;
+ const special=p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isStripDual;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1007,6 +1014,7 @@ export function checkedBleachAddonDefinition(p){
    isRetireDraw?{onRetire:[{op:'draw',count:1}]}:
    isRetireMill?{onRetire:[{op:'millTop',count:2}]}:
    isOppDiscard?{onPlay:[{op:'discardOppHand',count:1}]}:
+   isDrawTwo?{onPlay:[{op:'drawDiscard',count:2,discardCount:1}]}:
    isStripDual?{onPlay:[{op:'chooseOne',optional:false,options:[
     {id:'strip',label:'Strip opponent RAID top',turn:'any',
      then:[{op:'stripOppRaidTop',optional:true}]},

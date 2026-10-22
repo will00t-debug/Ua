@@ -22,7 +22,7 @@ const STARTER = [
   {id:'106',name:'朽木露琪亞',key:'rukia',energy:4,ap:2,bp:4000,gen:1,type:'character',tag:'補充手牌',effect:'登場：可將場外 3 張除外；成功時抽 2 張。',trigger:'get'},
   {id:'107',name:'斑目志乃＆行木龍之介',key:'shino',energy:0,ap:1,bp:2000,gen:1,type:'character',tag:'基礎角色',effect:'0 能源的基礎角色。',trigger:null},
   {id:'108',name:'一護的房間',key:'room',energy:2,ap:1,bp:0,gen:1,type:'field',tag:'場域・濾牌',effect:'主要階段：REST 並退場自己，抽 2 張，再棄 1 張。',trigger:'get'},
-  {id:'109',name:'空座町的代理死神',key:'substitute',energy:1,ap:1,bp:0,gen:0,type:'event',tag:'濾牌',effect:'抽 2 張，再棄 1 張。',trigger:'draw'},
+  {id:'109',name:'空座町的代理死神',nameJa:'空座町の死神代行',key:'substitute',energy:1,ap:1,bp:0,gen:0,type:'event',tag:'濾牌',effect:'抽 2 張，再棄 1 張。',trigger:'draw'},
 ].map(c=>({...c,color:'purple',identity:`BLC-1-${c.id}`,sets:['st'],aliases:[`UA08ST/BLC-1-${c.id}`],auto:true,number:`UA08ST/BLC-1-${c.id}`,image:`assets/cards/${c.id}.png`,source:`https://www.unionarena-tcg.com/jp/cardlist/detail.php?card_no=UA08ST/BLC-1-${c.id}`}));
 export const SETS=[{id:'b1',name:'第一彈 · UA08BT'},{id:'b2',name:'第二彈 · EX07BT'},{id:'nc',name:'卡冊 · UA04NC'},{id:'book',name:'書卡／雜誌附錄'},{id:'b3',name:'第三彈 · EX15BT'},{id:'st',name:'起始牌組 · UA08ST'},{id:'dc',name:'高級預組 · UA01DC'}];
 export const COLOR_NAMES={yellow:'黃色',purple:'紫色',green:'綠色',blue:'藍色',red:'紅色',white:'無色'};
