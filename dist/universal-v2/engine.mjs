@@ -436,7 +436,8 @@ function continueEffectQueue(pack,s){
     // retirement, distinct from placing a new card in a full line (removal).
     const choices=pl.energy.filter(c=>c&&card(pack,c).type==='field').map(c=>c.uid);
     if(choices.length)s.pending={kind:'effect-retire-own-field',player:owner,
-     sourceUid:job.sourceUid,choices,optional:true};
+     sourceUid:job.sourceUid,choices,optional:job.optional!==false,
+     after:(job.after||[]).map(x=>({...x,owner,sourceUid:job.sourceUid,sourceName:job.sourceName}))};
    }else if(job.op==='retireOppFrontAllUnderBp'){
    // The target set is evaluated ONCE, at the original effect resolution.
    // Protected Raid replacement choices cannot introduce fresh victims.
@@ -697,6 +698,8 @@ function resolveChoice(s,a,pack){
    }
   else throw Error('Invalid leave replacement option');
   s.pending=null;
+  if(q.retirementAfter)
+   s.effectQueue.push(...(a.mode==='leave'?q.retirementAfter:[]),...q.retirementTail);
   if(q.originalAction&&a.mode==='leave'){
    // The mandatory full-line removal happens BEFORE the original action.
    // Resume the same paid play/movement/life Raid, now with a free slot.
@@ -1020,12 +1023,21 @@ function resolveChoice(s,a,pack){
   s.pending=null;continueEffectQueue(pack,s);return;
  }
  if(q.kind==='effect-retire-own-field'){
-   if(a.uid===null){s.pending=null;continueEffectQueue(pack,s);return;}
+   if(a.uid===null){
+    if(!q.optional)throw Error('Mandatory FIELD cost cannot be skipped');
+    s.pending=null;continueEffectQueue(pack,s);return;
+   }
    const slot=p.energy.findIndex(c=>c?.uid===a.uid&&card(pack,c).type==='field');
    if(slot<0||!q.choices.includes(a.uid))
     throw Error('Illegal OWN FIELD retirement target');
    s.pending=null;
-   retire(pack,s,q.player,'energy',slot);
+   if(q.after?.length){
+    const tail=s.effectQueue.splice(0);
+    const protectedDeparture=retire(pack,s,q.player,'energy',slot);
+    if(protectedDeparture){
+     s.pending.retirementAfter=q.after;s.pending.retirementTail=tail;
+    }else s.effectQueue.push(...q.after,...tail);
+   }else retire(pack,s,q.player,'energy',slot);
    continueEffectQueue(pack,s);return;
   }
   if(q.kind==='effect-retire-bp'){
@@ -1260,7 +1272,7 @@ function legalPending(pack,s){
    ...q.choices.map(uid=>({type:'chooseRestBp',uid}))
   ];
  if(q.kind==='effect-retire-own-field')return [
-    {type:'chooseOwnFieldRetire',uid:null},
+    ...(q.optional?[{type:'chooseOwnFieldRetire',uid:null}]:[]),
     ...q.choices.map(uid=>({type:'chooseOwnFieldRetire',uid}))
    ];
   if(q.kind==='effect-retire-bp')return [
@@ -1375,6 +1387,11 @@ export function legalUniversalActions(pack,s){
   for(const c of pl.front.filter(Boolean)){
    const d=card(pack,c),ability=originalEffectsDisabled(s,c)?null:d.mainAbility;
    if(!ability)continue;
+   if(ability.op==='retireOwnFieldThen'){
+    if(!s.mainAbilityUsedUids.includes(c.uid)&&pl.energy.some(x=>x&&card(pack,x).type==='field'))
+     out.push({type:'activate',uid:c.uid,mode:'retireFieldThen'});
+    continue;
+   }
    if(ability.op==='restSelfThen'){
     // A READY own FRONT source pays its actual REST cost before any effect.
     if(c.ready)out.push({type:'activate',uid:c.uid,mode:'selfRestThen'});
@@ -1490,6 +1507,16 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
    const selected=field(pl).find(c=>c.uid===action.uid);
    if(!selected||originalEffectsDisabled(s,selected)||!card(pack,selected).mainAbility)throw Error('Main ability source missing');
    const d=card(pack,selected),ability=d.mainAbility;
+   if(ability.op==='retireOwnFieldThen'){
+    if(action.mode!=='retireFieldThen'||!pl.front.some(c=>c?.uid===selected.uid)||
+     s.mainAbilityUsedUids.includes(selected.uid)||
+     !pl.energy.some(c=>c&&card(pack,c).type==='field'))
+     throw Error('No legal own FIELD retirement cost');
+    s.mainAbilityUsedUids.push(selected.uid);
+    s.effectQueue.push({op:'retireOwnFieldOne',owner:p,sourceUid:selected.uid,
+     sourceName:d.name,optional:false,after:ability.after});
+    continueEffectQueue(pack,s);break;
+   }
    if(ability.op==='readySelfIfOwnRetiredThisTurn'){
     const key=d.name+'|readySelfIfOwnRetiredThisTurn';
     if(action.mode!=='retireReady'||!retiredThisTurn(s,p,ability.cardType)||

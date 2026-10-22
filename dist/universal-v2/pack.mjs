@@ -372,6 +372,13 @@ function normalize(card,packId){
   typeof mainAbility.trait==='string'&&!!mainAbility.trait.trim()&&
   integer(mainAbility.bp,1)&&mainAbility.bp<=5000&&
   Object.keys(mainAbility).every(k=>['op','frontOnly','readyOncePerName','trait','bp'].includes(k));
+ const mainRetireField=mainAbility?.op==='retireOwnFieldThen'&&
+  mainAbility.frontOnly===true&&mainAbility.oncePerTurn===true&&
+  Array.isArray(mainAbility.after)&&mainAbility.after.length===1&&
+  mainAbility.after[0]?.op==='buffSelf'&&
+  Object.keys(mainAbility).length===4&&
+  Object.keys(mainAbility).every(k=>['op','frontOnly','oncePerTurn','after'].includes(k));
+ if(mainRetireField)verifyProgram(mainAbility.after,card.id+'.mainAbility.after');
  const mainRetireReady=mainAbility?.op==='readySelfIfOwnRetiredThisTurn'&&
   mainAbility.readyOncePerName===true&&['field','character'].includes(mainAbility.cardType)&&
   Object.keys(mainAbility).length===3&&
@@ -399,7 +406,7 @@ function normalize(card,packId){
   Object.keys(mainAbility.then[0]).every(k=>['op','count'].includes(k));
  if(mainRestProgram)verifyProgram(mainAbility.then,card.id+'.mainAbility.then');
  if(mainAbility!==null&&
-  (card.type!=='character'||!(mainRaid||mainRetireReady||mainSelfRest||mainRestProgram||mainEnergyRetire||mainDiscardBuff)))
+  (card.type!=='character'||!(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainEnergyRetire||mainDiscardBuff)))
   throw Error(card.id+' unsupported main action ability');
  const passiveBonuses=validatePassiveBonuses(card);
  const implemented=card.implementation;
