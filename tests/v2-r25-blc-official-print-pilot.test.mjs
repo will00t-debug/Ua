@@ -155,3 +155,67 @@ test('official Q1046: 047 effect-earned draw ignores its energy2 printed event c
   e.uid===eventCard.uid&&e.sourceUid===raid.uid).length,1);
  assert.equal(assertUniversalMatch(packs,s),true);
 });
+
+
+// R28 true 50/50 physical decks, using the complete *isolated* 019/047 pilot
+// and the same user/AI legal action grammar (never enabling production registry).
+test('R28 BLEACH pilot: paid Raid -> two enemy BP -> named 047 MAIN -> earned bonus -> actual attack grant',async()=>{
+ const {chooseUniversalAiAction}=await import('../dist/universal-v2/ai.mjs');
+ let {s,raid,base}=prepared(true);
+ assert.deepEqual(validateUniversalDeck(pack,deck),[]);
+ assert.equal(s.players[0].front[0].uid,base.uid);
+ const eventCard=pull(s,0,'BLC-2-047');
+ s.players[0].hand.push(eventCard);
+ // Ready base models an actually playable Raid attack; do not add fictitious AP.
+ s.players[0].front[0].ready=true;
+ const raidAction=legalUniversalActions(packs,s).find(a=>a.type==='raid'&&
+  a.uid===raid.uid&&a.baseUid===base.uid);
+ assert.ok(raidAction);
+ s=dispatchUniversalAction(packs,s,raidAction,{actor:0});
+ assert.equal(s.players[0].front[0].uid,raid.uid);
+ assert.equal(s.pending?.kind,'effect-target-many');
+ const two=s.players[1].front.slice(0,2).map(c=>c.uid);
+ for(const uid of two){
+  const legal=legalUniversalActions(packs,s);
+  assert.ok(legal.some(a=>a.type==='chooseTargetMany'&&a.uid===uid));
+  for(const difficulty of ['normal','hard'])
+   assert.ok(legal.some(a=>JSON.stringify(a)===JSON.stringify(
+    chooseUniversalAiAction(packs,s,{difficulty}))));
+  s=dispatchUniversalAction(packs,s,{type:'chooseTargetMany',uid},{actor:0});
+ }
+ assert.equal(s.pending,null);
+ assert.deepEqual(s.players[1].front.slice(0,2).map(c=>universalBp(packs,s,c)),[1500,1500]);
+ const activation=legalUniversalActions(packs,s).find(a=>a.type==='activate'&&a.uid===raid.uid);
+ assert.ok(activation,'onPlay must complete before MAIN activation');
+ s=dispatchUniversalAction(packs,s,activation,{actor:0});
+ assert.equal(s.pending?.kind,'effect-discard-gate');
+ const before=s.players[0].deck.length;
+ const paid=legalUniversalActions(packs,s).find(a=>a.type==='chooseDiscardGate'&&a.uid===eventCard.uid);
+ assert.ok(paid);
+ s=dispatchUniversalAction(packs,s,paid,{actor:0});
+ assert.equal(s.pending,null,'entire source MAIN and earned Q1033 bonus completed');
+ assert.equal(s.players[0].deck.length,before-2,'MAIN draw1 then 047 earned draw1');
+ assert.equal(universalBp(packs,s,s.players[0].front[0]),5000);
+ assert.equal(s.continuousStates.filter(c=>c.kind==='grantedOnAttack'&&c.targetUid===raid.uid).length,1);
+ assert.equal(s.players[0].outside.some(c=>c.uid===eventCard.uid),true);
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='activate'&&a.uid===raid.uid),false);
+ assert.equal(assertUniversalMatch(packs,s),true);
+ s=dispatchUniversalAction(packs,s,{type:'next'},{actor:0});
+ assert.equal(s.phase,'attack');
+ const attack=legalUniversalActions(packs,s).find(a=>a.type==='attack'&&a.uid===raid.uid);
+ assert.ok(attack,'the granted attack ability must be used only on a real legal attack');
+ const deckBeforeAttack=s.players[0].deck.length;
+ s=dispatchUniversalAction(packs,s,attack,{actor:0});
+ assert.equal(s.pending?.kind,'granted-attack-draw');
+ assert.equal(s.players[0].deck.length,deckBeforeAttack,'optional grant is not immediate MAIN draw');
+ s=JSON.parse(JSON.stringify(s));
+ assert.equal(assertUniversalMatch(packs,s),true);
+ const offered=legalUniversalActions(packs,s);
+ for(const difficulty of ['normal','hard'])
+  assert.ok(offered.some(a=>JSON.stringify(a)===JSON.stringify(
+   chooseUniversalAiAction(packs,s,{difficulty}))));
+ s=dispatchUniversalAction(packs,s,{type:'chooseGrantedDraw',mode:'draw'},{actor:0});
+ assert.equal(s.players[0].deck.length,deckBeforeAttack-1);
+ assert.equal(s.pending?.kind,'block');
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
