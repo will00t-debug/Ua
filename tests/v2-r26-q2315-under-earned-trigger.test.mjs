@@ -113,3 +113,71 @@ test('Q2315 generic watcher fails closed without printed source identity or corr
   }else assert.throws(()=>createUniversalPack({id:'invalid-watcher',cards:changed}),/invalid moved-card watcher provenance/);
  }
 });
+
+test('Q2315 two distinct watcher UIDs, one physical 047 cannot be tucked twice',()=>{
+ let {s,source,moved,observer}=game(0);
+ const second=take(s,0,'RQ2');
+ second.ready=true;second.fieldEntryStamp=s.nextFieldEntryStamp++;
+ s.players[0].energy[1]=second;
+ s=dispatchUniversalAction(packs,s,{type:'activate',uid:source.uid,mode:'frontOnce'},{actor:0});
+ const deckBefore=s.players[0].deck.length;
+ s=dispatchUniversalAction(packs,s,{type:'chooseDiscardGate',uid:moved.uid},{actor:0});
+ assert.equal(s.pending.kind,'effect-move-order');
+ assert.equal(s.pending.entries.length,3,'both field watcher UIDs earned distinct reactions');
+ const first=legalUniversalActions(packs,s).find(a=>a.key.includes(observer.uid));
+ assert.ok(first);
+ s=dispatchUniversalAction(packs,s,first,{actor:0});
+ s=dispatchUniversalAction(packs,s,{type:'chooseRestTuck',mode:'rest'},{actor:0});
+ s=dispatchUniversalAction(packs,s,{type:'chooseTuckMoved',uid:moved.uid},{actor:0});
+ assert.equal(s.pending.kind,'effect-move-order');
+ const secondChoice=legalUniversalActions(packs,s).find(a=>a.key.includes(second.uid));
+ assert.ok(secondChoice);
+ s=dispatchUniversalAction(packs,s,secondChoice,{actor:0});
+ // The second observer can decline the REST: the event already resides
+ // physically under the first and can never be selected twice.
+ s=dispatchUniversalAction(packs,s,{type:'chooseRestTuck',mode:'skip'},{actor:0});
+ assert.equal(s.pending,null);
+ assert.equal(s.players[0].deck.length,deckBefore-2);
+ assert.equal(s.players[0].energy[0].under[0].uid,moved.uid);
+ assert.deepEqual(s.players[0].energy[1].under,[]);
+ assert.equal(s.players[0].energy[1].ready,true);
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
+for(const kind of ['wrongName','wrongColor'])test('Q2315 strict source '+kind+' prevents watcher and 047 bonus',()=>{
+ const different=cards.map(c=>c.id==='RQ0'?{...c,
+  ...(kind==='wrongName'?{name:'他の一護'}:{color:'red'})}:c);
+ const badPacks=[createUniversalPack({id:'different-a',cards:different}),
+  createUniversalPack({id:'different-b',cards:different})];
+ let s=newUniversalMatch(badPacks,{decks:[deck,deck],first:0,seed:26156});
+ const source=take(s,0,'RQ0'),moved=take(s,0,'RQ1'),observer=take(s,0,'RQ2');
+ source.ready=true;source.fieldEntryStamp=s.nextFieldEntryStamp++;
+ observer.ready=true;observer.fieldEntryStamp=s.nextFieldEntryStamp++;
+ s.players[0].front[0]=source;s.players[0].energy[0]=observer;
+ s.players[0].hand.push(moved);s.phase='main';
+ s=dispatchUniversalAction(badPacks,s,{type:'activate',uid:source.uid,mode:'frontOnce'},{actor:0});
+ const before=s.players[0].deck.length;
+ s=dispatchUniversalAction(badPacks,s,{type:'chooseDiscardGate',uid:moved.uid},{actor:0});
+ assert.equal(s.pending,null,'no source-qualified observer/order effect');
+ assert.equal(s.players[0].deck.length,before-1,'MAIN draw only');
+ assert.equal(s.players[0].energy[0].ready,true);
+ assert.equal(s.players[0].energy[0].under.length,0);
+ assert.ok(s.players[0].outside.some(x=>x.uid===moved.uid));
+ assert.equal(assertUniversalMatch(badPacks,s),true);
+});
+test('a physical move watched by the opponent does not grant its character an action',()=>{
+ let {s,source,moved}=game(0);
+ const enemy=take(s,1,'RQ2');
+ enemy.ready=true;enemy.fieldEntryStamp=s.nextFieldEntryStamp++;
+ s.players[1].energy[0]=enemy;
+ // Remove own observer from the field, preserving all 50 physical cards.
+ const own=s.players[0].energy[0];
+ s.players[0].energy[0]=null;s.players[0].outside.push(own);
+ s=dispatchUniversalAction(packs,s,{type:'activate',uid:source.uid,mode:'frontOnce'},{actor:0});
+ const before=s.players[0].deck.length;
+ s=dispatchUniversalAction(packs,s,{type:'chooseDiscardGate',uid:moved.uid},{actor:0});
+ assert.equal(s.pending,null);
+ assert.equal(s.players[0].deck.length,before-2);
+ assert.equal(s.players[1].energy[0].ready,true);
+ assert.deepEqual(s.players[1].energy[0].under,[]);
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
