@@ -36,7 +36,11 @@ const additions=[
  {id:'TTG-1-015',name:'ニア',energy:0,ap:1,bp:500,gen:1,color:'green',type:'character',trigger:'draw',
   implementation:'dsl',effects:{},
   mainAbility:{op:'payApDrawGainEnergy',oncePerTurn:true,draw:1,extraEnergy:1},
-  match:'主要階段每回合一次，支付1 AP：抽1張；本回合產生能源+1。'}
+  match:'主要階段每回合一次，支付1 AP：抽1張；本回合產生能源+1。'},
+ {id:'TTG-1-002',name:'ヴィラル',energy:1,ap:1,bp:1500,gen:1,color:'green',type:'character',trigger:'active',
+  implementation:'dsl',effects:{},
+  mainAbility:{op:'restSelfRestFrontGainEnergy',oncePerTurn:true,extraEnergy:1},
+  match:'產生的綠色能源+1'}
 ];
 export const TTG_V2_ADDITION_IDS=Object.freeze(additions.map(x=>x.id));
 export function verifiedTtgV2Additions(){
