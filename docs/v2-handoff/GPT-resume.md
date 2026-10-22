@@ -610,3 +610,66 @@ This section records the last fully evaluated **code commit** `d16ffce0`. A docu
 - **實際最新程式 CI**：整合 https://github.com/will00t-debug/Ua/actions/runs/39718238077 **SUCCESS**，Node 22.23.3 `npm test` **1503/1503**，五作品矩陣 **60/60**，unported report 總700／Pilot254／未移植446／全面驗收0；獨立 https://github.com/will00t-debug/Ua/actions/runs/39718243686 **SUCCESS**（core-shared + isolated-port）。此為 GitHub Actions 實跑，不是本地 Terminal 跑過。
 - **五作品正式 registry**：BLEACH 87/276（未189）、TTG 30/81（未51）、SLG 34/80（未46）、SAO 62/183（未121）、MST **41/80**（未39），合計 **254/700**，尚未登錄 **446**；全面官方 FAQ certified **0**（不宣稱瀏覽器／手機端 UI 或全部官方 FAQ 證據完成）。
 - **下輪建議**：深層 Raid STACK + facedown UNDER 多層結構剝離（現階段對未審核複雜層 fail closed）；COLOR FIELD full ENERGY replacement 應進 REMOVED 而不推退場；多來源同步 FIELD onRetire／保護離場／兩張 LIFE Trigger；更廣泛的跨系列真實 50 張對戰與視覺操作驗收。保持只在自己的 branch，先查最新 HEAD/CI 和此交接再動作。
+
+## 2026-10-22｜第十輪：跨作品共用能力整合與驗收強化
+
+起點 `1f060e0467eee6740c8a0f34c0fd5bb969c6381e`，PR #75 仍為 Draft。
+本輪五批已發布至 `codex/v2-resume-20261021`；沒有 main merge、production deployment 或 force push。
+本地 git push 缺少憑證，改用已授權 GitHub connector 依序建立五筆 commit，
+每筆遠端 Git tree SHA 均與本地已測試 tree 完全一致（commit metadata 不同，故 SHA 不同）。
+
+### 程式與測試批次（以下為 GitHub SHA）
+
+| 批次 | 程式/測試成果 | 遠端 commit |
+|---|---|---|
+| A | 正式 BLC-1-023，來源指紋、真 BLEACH vs MST 合法50張、兩模式/skip/非法UID/AP2/黃4/GET/AI/守恆 | `05bda2d7ff0b480dabcae958ecf68680cd39d298` |
+| B | 共用 Raid 剝離阻止底板舊 buff 復活，明確拒絕未審核複雜 stack/under；ACTIVE/REST 與新 fieldEntryStamp | `5643394355d4703943c6fb7443d53cf177395041` |
+| C | 真 BLEACH 攻擊→MST053 COLOR，滿 ENERGY 的 CHARACTER/FIELD 精確替換、REMOVED 不觸發 onRetire、ACTIVE/免費AP/隱藏手牌 | `d7925d71439d9fe3a976963253ebaf8e05247373` |
+| D | 真 BLC024 DAMAGE2→MST053 COLOR→MST075 登場抽棄：修正第二 LIFE 搶先於登場效果的隊列錯誤 | `a2e063fcdc4b3f39b8a9c6b40aca3f7a3854b914` |
+| E | 獨立 literal baseline+新增卡號 manifest，集中數量期待，報告與60場矩陣也檢查精確ID，負測拒絕漏卡/重複/同數量換卡 | `fb2bd3e1f6bf881545fadccccfc0e07c1483986e` |
+
+最後程式 SHA：`fb2bd3e1f6bf881545fadccccfc0e07c1483986e`。
+對應本地程式 SHA `da16c82d87deccfaa48df0677e1727c39a4124d1`，
+相同 tree `561005bd6d6b2edf33e8f57d36e43b2e522a007f`。
+
+### 官方來源及能力界線
+
+- BLC023 日本官方： https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA08BT%2FBLC-1-023 。黃4/AP2/BP4000/黃1/星十字騎士団/GET；登場必選一種，各分支最多1張敵 FRONT（Raid頂層剝離，或BP<=2000真退場）。核對 Q542–546；未賦予 BLC024 的 Raid 或 Damage2。
+- Q542–546：剝離保留底板，承接 ACTIVE/REST，不算退場或登場，不承接 Raid 受到的效果。Q49 https://www.unionarena-tcg.com/jp/faq/list.php?number=49 ：底板之前受的效果不應在 Raid 後繼續；本輪修正剝離時殘留 `base.buffs` 重新生效。
+- Q53 https://www.unionarena-tcg.com/jp/faq/list.php?number=53 是一般不可對 Raid 再 Raid；特別印刷例外必須逐張核對，不據此全面開放多層。
+- MST053 原文 https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA54BT%2FMST-1-053 與 Q22 https://www.unionarena-tcg.com/jp/faq/list.php?number=22 核對：敵回合綠 COLOR 可改 FIELD；滿線先指定一張移至 REMOVED 再進場。測試確認 MST075 的登場抽棄執行，但被替換同名 FIELD 不執行退場抽牌。
+- 完全重用 `chooseOne`、`stripOppRaidTop`、`retireOppFrontOneUnderBp`、GET、COLOR、`commitDestination`、`effectQueue`、Normal/Hard AI 合法動作列舉。沒有新作品 reducer、沒有第二套觸發狀態系統。
+- D 修正 `applyEffects` 將新觸發的登場工作插在暫停的 continuation 之前。新測試先實際支付兩次 BLC024 Raid、造成兩次真退場，才啟用 DAMAGE2；第一 LIFE 的 FIELD 登場 mandatory discard 未完成時，第二 LIFE UID 留在生命區且不公開。
+
+### 實測與登錄數
+
+- 本機只有 Node **24.19.0**；npm 安裝 Node22 的網路請求未完成，因此不宣稱本機 Node22 測試。
+- 每批先跑針對性測試後提交：A 109/109；B 22/22；C 8/8；D 12/12（另含 C 的聯合測試14/14）；E 第一組111/111、第二組28/28。
+- 本機完整 `npm test` **1521/1521，0 failed、0 skipped**；`node scripts/v2-integrated-match-matrix.mjs` **60/60，0 failures**；`node scripts/v2-unported-report.mjs` 成功。
+- GitHub Node22 CI 的實際結果見下方追加驗收；不得拿本機Node24成功代替Node22。
+
+| 作品 | V2正式登錄 | 未移植 |
+|---|---:|---:|
+| BLEACH | 88/276 | 188 |
+| TTG | 30/81 | 51 |
+| SLG | 34/80 | 46 |
+| SAO | 62/183 | 121 |
+| MST | 41/80 | 39 |
+| 合計 | 255/700 | 445 |
+
+本輪只新增正式真卡 **BLC-1-023**；合成測試卡不計入。全面官方 FAQ 認證仍為0。
+
+### 仍封閉與未完成驗收，下一輪優先
+
+1. `strippableRaidTop` 僅開放已驗證的兩張面朝上角色結構。top 帶 under、base 帶 under、巢狀 stack、多 base、facedown base、特殊 Raid 底板均 fail-closed。這是明確收緊原本可能意外通過的幾何，不是宣稱多層剝離已完成。
+2. Batch D 本輪完成 DAMAGE2 / COLOR / FIELD 登場的真跨作品時序修正與回歸；**沒有宣稱已新增涵蓋全部「同時多FIELD退場、退場再次退場、所有退場成本順序」的真卡案例**。舊 phase-order、退場成本、MST074/076 與全量測試通過，但不足以等同這些新情境全部已驗收。
+3. 下一輪最值得優先：共用 onRetire 在既有 continuation 中的優先順序（特別 SPECIAL LIFE→退場→onRetire→第二 LIFE）、多個同時退場的玩家排序與連鎖成本。先找到官方優先級來源並建立跨作品真卡負測，再修改單一 effectQueue。
+4. 本輪沒有瀏覽器／手機手動 UI 驗收；不能將 reducer/label 測試當作實機驗收。
+5. 新卡只應手動更新獨立 manifest 卡號；期待總數由該獨立清單計算，不能從 registry 反推。`v2-unported-report` 和矩陣現會直接拒絕 registry 與 manifest 不一致。
+
+### 第十輪 GitHub Node22 最終程式驗收
+
+- 程式 HEAD `fb2bd3e1f6bf881545fadccccfc0e07c1483986e`。
+- [整合 CI 39720372611](https://github.com/will00t-debug/Ua/actions/runs/39720372611) **SUCCESS**。實際 job `119632205434` 日誌：`tests 1521`、`pass 1521`、`fail 0`；矩陣 `60/60 finished (failures 0)`；unported report `700 / 255 / 445`。setup-node 明確指定 Node22。
+- [SAO/MST 獨立 CI 39720376827](https://github.com/will00t-debug/Ua/actions/runs/39720376827) **SUCCESS**；`core-shared-regression` 和 `isolated-port-regression` 均成功。
+- 本段為後續文件提交，產生的新 HEAD 不是上述程式 SHA；文件 HEAD 的 CI 必須另查，不借用程式 CI 成功。
