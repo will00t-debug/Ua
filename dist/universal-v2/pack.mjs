@@ -393,9 +393,10 @@ function normalize(card,packId){
  const mainRetireField=mainAbility?.op==='retireOwnFieldThen'&&
   mainAbility.frontOnly===true&&mainAbility.oncePerTurn===true&&
   Array.isArray(mainAbility.after)&&mainAbility.after.length===1&&
-  mainAbility.after[0]?.op==='buffSelf'&&
-  Object.keys(mainAbility).length===4&&
-  Object.keys(mainAbility).every(k=>['op','frontOnly','oncePerTurn','after'].includes(k));
+  ['buffSelf','draw'].includes(mainAbility.after[0]?.op)&&
+  (mainAbility.optional===undefined||mainAbility.optional===true)&&
+  Object.keys(mainAbility).length===(mainAbility.optional===undefined?4:5)&&
+  Object.keys(mainAbility).every(k=>['op','frontOnly','oncePerTurn','after','optional'].includes(k));
  if(mainRetireField)verifyProgram(mainAbility.after,card.id+'.mainAbility.after');
  const mainRetireReady=mainAbility?.op==='readySelfIfOwnRetiredThisTurn'&&
   mainAbility.readyOncePerName===true&&['field','character'].includes(mainAbility.cardType)&&

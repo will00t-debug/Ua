@@ -1570,7 +1570,7 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
      throw Error('No legal own FIELD retirement cost');
     s.mainAbilityUsedUids.push(selected.uid);
     s.effectQueue.push({op:'retireOwnFieldOne',owner:p,sourceUid:selected.uid,
-     sourceName:d.name,optional:false,after:ability.after});
+     sourceName:d.name,optional:ability.optional===true,after:ability.after});
     continueEffectQueue(pack,s);break;
    }
    if(ability.op==='readySelfIfOwnRetiredThisTurn'){
