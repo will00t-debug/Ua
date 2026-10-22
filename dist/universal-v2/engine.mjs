@@ -2481,7 +2481,7 @@ export function legalUniversalActions(pack,s){
  }
  if(s.phase==='attack')for(const c of pl.front.filter(c=>c?.ready&&
   card(pack,c).type==='character'&&
-  !fieldRestrictions(s,p,c).some(r=>r.kind==='cannotAttack'))
+  !fieldRestrictions(s,p,c).some(r=>r.kind==='cannotAttack')))
   out.push({type:'attack',uid:c.uid});
  return out;
 }
