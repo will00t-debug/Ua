@@ -2247,6 +2247,9 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
     if(action.mode!=='discardSelfBuff'||!pl.hand.length||
      s.mainAbilityUsedUids.includes(selected.uid))
      throw Error('Discard MAIN requires one owned hand payment and unused source');
+    // The once-per-turn paid source program must finish its BP update
+    // before source-qualified moved cards may release their own draw.
+    s.effectQueue.unshift(...sourceMoveBoundary(pack,s,p,selected.uid));
     s.pending={kind:'main-discard-buff',player:p,sourceUid:selected.uid,
      bp:ability.bp,choices:pl.hand.map(c=>c.uid)};
     break;
@@ -2310,7 +2313,8 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
     selected.ready=false;
     // Use only the existing common queue; title adapters never execute effects.
     s.effectQueue.push(...ability.then.map(e=>({...e,owner:p,
-     sourceUid:selected.uid,sourceName:d.name})));
+     sourceUid:selected.uid,sourceName:d.name})),
+     ...sourceMoveBoundary(pack,s,p,selected.uid));
     continueEffectQueue(pack,s);
     break;
    }
@@ -2323,7 +2327,8 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
      throw Error('Front once-per-turn program requires a hand payment');
     s.mainAbilityUsedUids.push(selected.uid);
     s.effectQueue.push(...ability.then.map(e=>({...e,owner:p,
-     sourceUid:selected.uid,sourceName:d.name})));
+     sourceUid:selected.uid,sourceName:d.name})),
+     ...sourceMoveBoundary(pack,s,p,selected.uid));
     continueEffectQueue(pack,s);
     break;
    }
