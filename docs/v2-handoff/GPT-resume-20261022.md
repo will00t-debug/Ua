@@ -352,3 +352,32 @@ shell git push 缺憑證，改用已授權 GitHub object/ref 工具逐批提交�
 - 下一輪優先：跨玩家 Q38/SPECIAL 時序與連鎖傷害官方依據；再做嚴格名稱支付與授予攻擊能力。
 
 詳細規則時序、覆蓋與 BLC gate：`docs/v2-handoff/V2-R23-Q38-and-hidden-moves.md`。
+
+
+## GPT R24 — Q38 cross-player, conservative LIFE reentry, named UID payment (2026-10-22)
+
+**Use [V2-R24-event-priority-and-payments.md](./V2-R24-event-priority-and-payments.md) as the exact R24 handoff.**
+Work branch `gpt/v2-resume-20261022`, PR #78 → `cursor/v2-multi-retire-life-6ff5` unchanged.
+Starting `2711177ced2a15403863618cdba2a7d03cca6825` Actions 39785577234 success.
+New code progression:
+- A Q12 drain / cross-player SPECIAL→onRetire→FINAL and pending actor/AI: `88f93a44`, fixture corrections through `4d397ffd8d9b5aef16795e4ac5d3e7c264ffece3`;
+- D named hand-payment DSL, strict UID and two-title Human/AI: `8842c7ddf5c5e1057c1527ed684285a2fd3b5d62`;
+- B global other-player LIFE guard, cross-owner second-damage and FINAL replay: `336173a5ebe9a41c279a0fd4b97b1294faf4ca10`;
+- C two same-print different-UID move trigger programs complete **after** source, both controllers: `68ddba44e5ff1e4ad3fa0a5e8048f7d6d231445c`;
+- E official BLC gate, coverage matrix and handoff documentation: this later commit; recheck its actual CI.
+
+**Latest pre-document verified CI:** [39790506182](https://github.com/will00t-debug/Ua/actions/runs/39790506182)
+for `68ddba44`, Node22 **1746/1746 PASS**, five-title **60/60 PASS**, manifest/report success.
+Failures at earlier intermediate test-fixture SHAs were corrected without loosening official validators.
+No **local** full test this session (GitHub DNS from container failed); results are **remote Actions**.
+
+Q38 cross-player SPECIAL/onRetire selected case works; unrestricted global Q38 not certified.
+Nested second damage is still **fail closed**. Q12 zero LIFE waits for earned queue.
+Source resolution covers known restricted timings; not every global cross-owner boundary.
+Named `discardGate.payment` supports strict printed names incl substrings; granted
+temporary onAttack and dual distinct BP targets **not** completed.
+BLC-2-019 and 047 still **not registered**. Latest 312/700 (BLEACH97 TTG35 SLG41 SAO91 MST48),
+unported388, net new0, full official per-card FAQ certifications 0.
+No changes main, Cursor PR77 or production deployment; no force-push.
+Next priority: granted attack-time DSL + two-target BP, then full Q1033/Q2315 BLC scenario
+and simultaneous opponent trigger priority evidence, eventually nested LIFE official model.
