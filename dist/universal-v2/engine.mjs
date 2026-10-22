@@ -562,6 +562,13 @@ function continueEffectQueue(pack,s){
     const pos=location(s,owner,job.sourceUid);
     if(pos&&pos.c.fieldEntryStamp===job.fieldEntryStamp)
      retire(pack,s,owner,pos.line,pos.slot);
+   }else if(job.op==='moveAtMainEnd'){
+    // A delayed zone move is not retirement: no onRetire and no retire count.
+    // The visible field UID must still be this stamped incarnation. A buried
+    // Raid layer, a missing card, or a newer entry does nothing.
+    const pos=location(s,owner,job.sourceUid);
+    if(job.destination==='hand'&&pos&&pos.c.fieldEntryStamp===job.fieldEntryStamp)
+     bounceToHand(s,owner,job.sourceUid);
    }else if(job.op==='retireBatchOne'){
    // Internal state-based consequence, never a user-authored card DSL op.
    const slot=s.players[job.targetPlayer].front.findIndex(c=>c?.uid===job.uid);
@@ -1856,11 +1863,21 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
      s.phase='attack';
      const due=s.delayedEffects.filter(x=>x.turn===s.turn&&x.owner===p);
      s.delayedEffects=s.delayedEffects.filter(x=>!(x.turn===s.turn&&x.owner===p));
-     if(due.length)s.effectQueue.push({op:'openRetirementBatch',owner:p},
-      ...due.map(x=>({
+     const retires=due.filter(x=>x.op==='retireAtMainEnd');
+     const moves=due.filter(x=>x.op==='moveAtMainEnd');
+     if(retires.length+moves.length!==due.length)throw Error('Unknown delayed effect');
+     // True retirements stay in the existing retirement batch. A hand return
+     // is queued after that batch so it cannot be counted as onRetire.
+     // Simultaneous order between the two kinds has no card FAQ here.
+     if(retires.length)s.effectQueue.push({op:'openRetirementBatch',owner:p},
+      ...retires.map(x=>({
        op:'retireAtMainEnd',owner:x.owner,sourceUid:x.sourceUid,
        fieldEntryStamp:x.fieldEntryStamp
       })),{op:'closeRetirementBatch',owner:p});
+     if(moves.length)s.effectQueue.push(...moves.map(x=>({
+      op:'moveAtMainEnd',owner:x.owner,sourceUid:x.sourceUid,
+      fieldEntryStamp:x.fieldEntryStamp,destination:x.destination
+     })));
      queuePhaseBoundary(pack,s,'attack','start',p);
     }
    else if(s.phase==='attack'){
@@ -1915,8 +1932,10 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
     s.mainAbilityUsedUids.push(selected.uid);
     selected.buffs??=[];
     selected.buffs.push({energy:ability.extraEnergy,untilTurn:s.turn});
-    s.delayedEffects.push({op:'retireAtMainEnd',owner:p,sourceUid:selected.uid,
-     fieldEntryStamp:selected.fieldEntryStamp,turn:s.turn});
+    const delayed={owner:p,sourceUid:selected.uid,
+     fieldEntryStamp:selected.fieldEntryStamp,turn:s.turn};
+    if(ability.end==='hand')s.delayedEffects.push({...delayed,op:'moveAtMainEnd',destination:'hand'});
+    else s.delayedEffects.push({...delayed,op:'retireAtMainEnd'});
     break;
    }
    if(ability.op==='restSelfThen'){
@@ -2083,10 +2102,16 @@ export function assertUniversalMatch(pack,s){
  validateContinuousStates(s);
  if(typeof s.endRefreshed!=='boolean')throw Error('Invalid end refresh flag');
  if(!Number.isInteger(s.nextFieldEntryStamp)||s.nextFieldEntryStamp<1||
-   !Array.isArray(s.delayedEffects)||s.delayedEffects.some(x=>
-    x?.op!=='retireAtMainEnd'||!playerIndex(x.owner)||
-    typeof x.sourceUid!=='string'||!Number.isInteger(x.turn)||
-    !Number.isInteger(x.fieldEntryStamp)||x.fieldEntryStamp<1))
+   !Array.isArray(s.delayedEffects)||s.delayedEffects.some(x=>{
+    const retire=x?.op==='retireAtMainEnd'&&x.destination===undefined;
+    const hand=x?.op==='moveAtMainEnd'&&x.destination==='hand';
+    const keys=x&&typeof x==='object'?Object.keys(x):[];
+    return !(retire||hand)||!playerIndex(x.owner)||
+     typeof x.sourceUid!=='string'||!Number.isInteger(x.turn)||
+     !Number.isInteger(x.fieldEntryStamp)||x.fieldEntryStamp<1||
+     keys.some(k=>!['op','owner','sourceUid','fieldEntryStamp','turn','destination'].includes(k))||
+     (retire&&keys.includes('destination'));
+   }))
   throw Error('Invalid delayed effect instances');
  if(s.retirementBatch!==null){
   const batch=s.retirementBatch;
@@ -2104,7 +2129,7 @@ export function assertUniversalMatch(pack,s){
    !['draw','drawIfOwnName','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
     'discardGate','enemyFrontAllBpDown','retireOppFrontAllUnderBp',
     'buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
-    'recoverOutsideColorUnderEnergy','deployOutsideRest','deployOutsideTraitlessRestOrRaid','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','retireOwnFieldOne','retireOwnCharacterOne','openBlock','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','phaseOrder','advanceAfterAttack','additionalBattleDamage','openRetirementBatch','closeRetirementBatch','retirementOrder','battleImpactDamage','discardOppHand','activeSelfIf'].includes(e.op)))
+    'recoverOutsideColorUnderEnergy','deployOutsideRest','deployOutsideTraitlessRestOrRaid','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','moveAtMainEnd','retireOwnFieldOne','retireOwnCharacterOne','openBlock','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','phaseOrder','advanceAfterAttack','additionalBattleDamage','openRetirementBatch','closeRetirementBatch','retirementOrder','battleImpactDamage','discardOppHand','activeSelfIf'].includes(e.op)))
   throw Error('Invalid queued effects');
  for(let p=0;p<2;p++){
   const pl=s.players[p],uids=new Set(),items=[];

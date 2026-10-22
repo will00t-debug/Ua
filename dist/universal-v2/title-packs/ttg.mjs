@@ -11,7 +11,8 @@ const proof=Object.freeze({
  'TTG-1-018':['主要階段結束時退場。','Official UA56BT/TTG-1-018 ブータ GREEN0/AP1/BP1000/gen1/no life; printed MAIN once per turn REST self, this turn green energy generation +1, forced real retirement at end MAIN. Green variant shares EXACT native delayed V2 operation with TTG-1-063 RED, SLG-1-042 GREEN, BLEACH multi-colors, MST blue. Source literal sourceRecord and real physical test tests/v2-ttg-018-green-energy.test.mjs; full official FAQ not certified.'],
  'TTG-1-063':['主要階段結束時讓此角色退場','UA56BT/TTG-1-063 ブータ: red 0/AP1/BP1000/gen1, trait 大グレン団, no Life. Printed card-front PDF 2026-10-13: MAIN once per turn physical REST self in own energy line, generated red +1 for current turn only, and true retirement at the end of MAIN. Independently reuses the SLG-1-013 / MST-1-016 native delayed RETIRE profile. No AP cost, no wrong-owner operation, no stale scheduled retirement after field exit/re-entry. Source-provenance card-front only, not full official FAQ acceptance.'],
   'TTG-1-053':['主要階段：REST自己，牌庫頂1張送場外。','UA56BT/TTG-1-053 official: active MAIN, own character REST cost before own deck top one outside. No extra AP or printed once-per-turn limit; ACTIVE Life independent.'],
- 'TTG-1-077':['ガンメン特徵','2026-10-15 日本官方：赤4/AP1/フィールド/赤赤，登場時「自分の場外から［特徴：ガンメン］を1枚まで手札に加える」。optional 0..1；僅自家場外，不搜 deck 或敵區。UA56BT 現有四張ガンメン印刷 source 的 traits 皆精確為複合「大グレン団／ガンメン」，為共用 filter 拆分僅此單卡的已驗證斜線複合來源成兩個特徵字串（ガンメン），原始 sourceRecord 不變且有來源漂移保護。無生命 Trigger。']
+ 'TTG-1-077':['ガンメン特徵','2026-10-15 日本官方：赤4/AP1/フィールド/赤赤，登場時「自分の場外から［特徴：ガンメン］を1枚まで手札に加える」。optional 0..1；僅自家場外，不搜 deck 或敵區。UA56BT 現有四張ガンメン印刷 source 的 traits 皆精確為複合「大グレン団／ガンメン」，為共用 filter 拆分僅此單卡的已驗證斜線複合來源成兩個特徵字串（ガンメン），原始 sourceRecord 不變且有來源漂移保護。無生命 Trigger。'],
+ 'TTG-1-022':['返回手牌','Official UA56BT/TTG-1-022 ヨマコ先生, checked 2026-10-22: green cost 1, AP1, BP1500, trait 大グレン団, generated 緑+ (one green pip, gen 1), DRAW. Printed alias 〈ヨーコ〉. Activate MAIN, REST self, once per turn: this turn generated energy +green and, at end of MAIN, return this character to hand. The return reuses bounceToHand and is not retirement. No card FAQ.']
 });
 export default Object.freeze({
  title:'gurren-lagann',
@@ -27,7 +28,8 @@ export default Object.freeze({
       ...(def.id==='TTG-1-053'?['tests/v2-ttg-053-rest-mill.test.mjs']:[]),
       ...(def.id==='TTG-1-006'?['tests/v2-ttg-006-live-energy.test.mjs']:[]),
       ...(def.id==='TTG-1-063'?['tests/v2-ttg-063-energy-retire.test.mjs']:[]),
-      ...(def.id==='TTG-1-018'?['tests/v2-ttg-018-green-energy.test.mjs']:[])]}
+      ...(def.id==='TTG-1-018'?['tests/v2-ttg-018-green-energy.test.mjs']:[]),
+      ...(def.id==='TTG-1-022'?['tests/v2-ttg-022-return-hand.test.mjs']:[])]}
   });
  }))
 });

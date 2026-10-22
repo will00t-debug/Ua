@@ -80,7 +80,10 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'activate':return action.mode==='discardSelfBuff'?
     '起動主要：棄一張手牌，本回合自身 BP＋1500（每回合一次）':
     action.mode==='selfRestEnergyRetire'?
-    '起動主要：REST 自身，產能＋1，主要階段結束退場':
+    (pack?.cards&&state?.players?.some(p=>[...p.front,...p.energy].some(c=>c?.uid===action.uid&&
+      pack.cards[c.cardId]?.mainAbility?.end==='hand'))
+     ?'起動主要：REST 自身，產能＋1，主要階段結束回手'
+     :'起動主要：REST 自身，產能＋1，主要階段結束退場'):
     action.mode==='selfRestThen'?'主要能力：REST 自身，執行效果':
     action.mode==='selfRestEnemy'?'主要能力：REST 自身，指定敵方前線角色':
     action.mode==='ready'?'主要能力：ACTIVE':
