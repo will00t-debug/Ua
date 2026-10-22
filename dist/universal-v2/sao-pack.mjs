@@ -1227,6 +1227,32 @@ const PRINTED_PINS=Object.freeze({
     "traits": ["ALO"],
     "effectJa": "自分の場に〈フレイヤ〉がない場合、このキャラはBP-500。"
   },
+  "SAO-1-043": {
+    "kind": "onPlayOutsideNameRest",
+    "nameJa": "シリカ",
+    "color": "blue",
+    "energy": 3,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 1,
+    "type": "character",
+    "trigger": "draw",
+    "traits": ["アインクラッド"],
+    "effectJa": "【登場時】自分の場外から〈ピナ〉を1枚まで自分の場にレストで登場させる。"
+  },
+  "SAO-2-034": {
+    "kind": "onAttackOptionalMill",
+    "nameJa": "エイジ",
+    "color": "purple",
+    "energy": 2,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 1,
+    "type": "character",
+    "trigger": "active",
+    "traits": ["SAOサバイバー"],
+    "effectJa": "【アタック時】自分の山札の上から1枚まで場外に置く。"
+  },
   "SAO-2-008": {
     "kind": "ownTurnTraitBp",
     "nameJa": "レンリ・シンセシス・トゥエニセブン",
@@ -1358,6 +1384,12 @@ export function verifiedSaoV2Cards(){
    card.passiveBonuses=[{condition:{kind:'ownNameAbsent',turn:'any',
     zone:'field',excludeSelf:false,name:'フレイヤ'},bp:-500}];
   }
+  // SAO-1-043 names 〈ピナ〉 only. Energy, color, and AP are not printed filters.
+  if(pin.kind==='onPlayOutsideNameRest')
+   card.effects={onPlay:[{op:'deployOutsideNameRest',name:'ピナ',optional:true}]};
+  // SAO-2-034 is up to one card. The existing mill stays mandatory without optional.
+  if(pin.kind==='onAttackOptionalMill')
+   card.effects={onAttack:[{op:'millTop',count:1,optional:true}]};
   // No ターン1. REST this card, then one other own character on either line.
   if(pin.kind==='restSelfBuffOther'){
    card.effects={};
