@@ -19,9 +19,14 @@ export function appendCompletedMove(s,move){
   typeof sourceOnField!=='boolean'||
   !Array.isArray(s.zoneMoveEvents)||!Number.isInteger(s.nextZoneMoveOrder))
   throw Error('Invalid V2 zone move provenance');
- const pile=s.players[owner][to];
+ const pl=s.players[owner];
  const scan=c=>c?.uid===uid||(c?.stack||[]).some(scan)||(c?.under||[]).some(scan);
- if(!Array.isArray(pile)||!pile.some(scan))
+ // A buried Raid card has no top-level zone array: verify that the UID is
+ // inside a field root's stack/under, not the visible field top or another owner.
+ const buried=()=>[...pl.front,...pl.energy].some(c=>c&&(
+  (c.stack||[]).some(scan)||(c.under||[]).some(scan)));
+ const pile=to==='raid-under'?null:pl[to];
+ if(!(to==='raid-under'?buried():Array.isArray(pile)&&pile.some(scan)))
   throw Error('Zone provenance must follow an actual completed destination');
  const e={order:s.nextZoneMoveOrder++,turn:s.turn,uid,cardId,owner,controller,
   from,to,reason,sourceUid,sourceCardId,sourceName,sourceColor,sourceOnField};
