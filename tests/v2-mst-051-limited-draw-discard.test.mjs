@@ -28,7 +28,7 @@ test('MST051 official Japanese FULL text, DRAW Life and Oct-01 one-copy restrict
  assert.equal(origin.deckLimitSource,'https://www.unionarena-tcg.com/jp/rules/limited.php');
  assert.equal(card.maxCopies,1);
  assert.equal(mst.cards['MST-1-050'].maxCopies,4,'other cards preserve normal 4-copy cap');
- assert.equal(Object.keys(mst.cards).length,39);
+ assert.equal(Object.keys(mst.cards).length,40);
  assert.equal(Object.values(counts).reduce((n,x)=>n+x,0),50);
  assert.deepEqual(validateUniversalDeck(mst,counts),[]);
 });

@@ -31,7 +31,7 @@ test('source-locked MST052 full printed Japanese retirement and empty LIFE trigg
  assert.deepEqual([d.name,d.color,d.energy,d.ap,d.bp,d.gen,d.type,d.trigger,d.traits],
   ['ロキシー','green',0,1,2000,1,'character',null,[]]);
  assert.deepEqual(d.effects.onRetire,[{op:'drawIfOwnFieldExists',count:1}]);
- assert.equal(Object.keys(mst.cards).length,39);
+ assert.equal(Object.keys(mst.cards).length,40);
  assert.deepEqual(validateUniversalDeck(mst,deck),[]);
  assert.ok(Object.isFrozen(d.effects.onRetire));
 });
