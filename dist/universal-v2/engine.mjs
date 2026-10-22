@@ -372,6 +372,12 @@ function continueEffectQueue(pack,s){
    const limit=hasBonus?job.bonusBp:job.bp;
    const choices=s.players[1-owner].front.filter(c=>c&&bp(pack,s,c)<=limit).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-retire-bp',player:owner,sourceUid:job.sourceUid,choices,limit};
+  }else if(job.op==='stripOppRaidTop'){
+   const choices=s.players[1-owner].front.filter(c=>c&&
+    card(pack,c).raidName&&c.stack?.length===1&&c.stack[0]&&
+    c.stack[0].faceDown!==true&&!(c.under||[]).length).map(c=>c.uid);
+   if(choices.length)s.pending={kind:'effect-strip-raid-top',player:owner,
+    sourceUid:job.sourceUid,choices,optional:true};
   }else if(job.op==='retireOppFrontIfFacedown'){
    const source=field(pl).find(c=>c.uid===job.sourceUid);
    if(source&&hasFacedownUnder(source)){
@@ -1045,6 +1051,23 @@ function resolveChoice(s,a,pack){
    }else retire(pack,s,q.player,'energy',slot);
    continueEffectQueue(pack,s);return;
   }
+  if(q.kind==='effect-strip-raid-top'){
+   if(a.uid===null){s.pending=null;continueEffectQueue(pack,s);return;}
+   const foe=1-q.player,slot=s.players[foe].front.findIndex(c=>c?.uid===a.uid);
+   if(slot<0||!q.choices.includes(a.uid))throw Error('Illegal opponent RAID top target');
+   const top=s.players[foe].front[slot],base=top.stack?.[0];
+   if(!card(pack,top).raidName||!base||base.faceDown===true||
+    top.stack.length!==1||(top.under||[]).length)
+    throw Error('RAID top no longer eligible');
+   // Q548-Q551: base stays, inherits readiness but not top modifiers;
+   // neither retirement nor entry, so no onRetire/onPlay jobs.
+   top.stack=[];base.ready=top.ready;
+   base.fieldEntryStamp=s.nextFieldEntryStamp++;
+   s.players[foe].front[slot]=base;
+   s.players[foe].outside.push({...top,ready:false,stack:[],under:[],
+    buffs:[],faceDown:false,fieldEntryStamp:null});
+   s.pending=null;continueEffectQueue(pack,s);return;
+  }
   if(q.kind==='effect-retire-bp'){
   if(a.uid===null&&q.optional){s.pending=null;continueEffectQueue(pack,s);return;}
   const opponent=1-q.player,slot=s.players[opponent].front.findIndex(c=>c?.uid===a.uid);
@@ -1280,6 +1303,10 @@ function legalPending(pack,s){
     ...(q.optional?[{type:'chooseOwnFieldRetire',uid:null}]:[]),
     ...q.choices.map(uid=>({type:'chooseOwnFieldRetire',uid}))
    ];
+  if(q.kind==='effect-strip-raid-top')return [
+   {type:'chooseRaidTopStrip',uid:null},
+   ...q.choices.map(uid=>({type:'chooseRaidTopStrip',uid}))
+  ];
   if(q.kind==='effect-retire-bp')return [
    ...(q.optional?[{type:'chooseRetireBp',uid:null}]:[]),
    ...q.choices.map(uid=>({type:'chooseRetireBp',uid}))
@@ -1649,7 +1676,7 @@ export function assertUniversalMatch(pack,s){
    !Array.isArray(s.initialCounts)||s.initialCounts.length!==2||
    s.players?.length!==2||!playerIndex(s.active)||
    !['playing','finished'].includes(s.status))throw Error('Incorrect pack/version or match state');
- if(s.pending&&(!playerIndex(s.pending.player)||!['phase-order','block','life-trigger','effect-target','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-retire-own-field','effect-rest-bp','raid-effect-order','effect-buff-trait','effect-buff-own','effect-once-choice','main-two-buff','main-discard-buff','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-order','effect-recover-outside','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-choice-mode','recovered-self-entry'].includes(s.pending.kind)))
+ if(s.pending&&(!playerIndex(s.pending.player)||!['phase-order','block','life-trigger','effect-target','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-strip-raid-top','effect-retire-own-field','effect-rest-bp','raid-effect-order','effect-buff-trait','effect-buff-own','effect-once-choice','main-two-buff','main-discard-buff','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-order','effect-recover-outside','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-choice-mode','recovered-self-entry'].includes(s.pending.kind)))
   throw Error('Invalid pending controller');
  if(!Array.isArray(s.raidedThisTurn)||s.raidedThisTurn.length!==2||
    s.raidedThisTurn.some(x=>typeof x!=='boolean')||
@@ -1688,7 +1715,7 @@ export function assertUniversalMatch(pack,s){
     !Number.isInteger(x.fieldEntryStamp)||x.fieldEntryStamp<1))
   throw Error('Invalid delayed effect instances');
  if(!Array.isArray(s.effectQueue)||s.effectQueue.some(e=>!playerIndex(e.owner)||
-   !['draw','drawIfOwnName','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','restOppFrontUnderBp','restOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
+   !['draw','drawIfOwnName','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
     'discardGate','enemyFrontAllBpDown','retireOppFrontAllUnderBp',
     'buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
     'recoverOutsideColorUnderEnergy','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','retireOwnFieldOne','openBlock','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','phaseOrder','advanceAfterAttack'].includes(e.op)))
