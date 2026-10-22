@@ -6,6 +6,7 @@ import {registeredV2TitlePack} from '../dist/universal-v2/title-packs/registry.m
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  assertUniversalMatch,universalPublicView} from '../dist/universal-v2/engine.mjs';
 import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
+import {uiActionLabel,V2_PENDING_LABELS,isExactLegal} from '../dist/universal-v2/preview-actions.mjs';
 // Source-pinned formal registry/manifest acceptance:
 // https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-028
 const record=TTG_BY_ID['TTG-1-028'];
@@ -31,9 +32,9 @@ function take(s,p,id){
   if(i>=0)return a.splice(i,1)[0];
  }throw Error(id);
 }
-function setup(){
+function setup(baseId='TTG-1-010'){
  let s=newUniversalMatch(packs,{decks,first:0,seed:32028});
- const source=take(s,0,'TTG-1-028'),base=take(s,0,'TTG-1-010'),
+ const source=take(s,0,'TTG-1-028'),base=take(s,0,baseId),
   enemy=take(s,1,'SAO-1-001'),other=take(s,1,'SAO-1-005');
  s.players[0].hand.push(source);
  base.fieldEntryStamp=s.nextFieldEntryStamp++;base.ready=true;s.players[0].front[0]=base;
@@ -110,4 +111,66 @@ test('R32 official full print, raid trigger, strict independent ID and source ev
  assert.ok(record.effect.includes('己方回合可使敵方前線最多1名角色直到下次己方回合開始不能攻擊'));
  assert.deepEqual(pack.cards['TTG-1-028'].raidBaseNames,['シモン','ヴィラル']);
  assert.deepEqual(pack.cards['TTG-1-028'].traits,['大グレン団','ガンメン']);
+});
+
+test('R32 both official Simon/Viral Raid bases and named human preview actions retain identical legal decisions',()=>{
+ assert.equal(V2_PENDING_LABELS['effect-attack-ban'],'指定禁止攻擊的對手前線角色');
+ for(const baseId of ['TTG-1-010','TTG-1-002']){
+  let {s,raid,source,base,enemy,other}=setup(baseId);
+  assert.equal(raid.baseUid,base.uid);
+  s=dispatchUniversalAction(packs,s,raid);
+  assert.equal(s.pending.kind,'effect-attack-ban');
+  const actions=legalUniversalActions(packs,s);
+  assert.equal(actions.filter(a=>a.uid!==null).length,2);
+  assert.ok(isExactLegal({type:'chooseAttackBan',uid:enemy.uid},actions));
+  assert.match(uiActionLabel({type:'chooseAttackBan',uid:enemy.uid},{pack:packs,state:s}),/不能攻擊/);
+  assert.match(uiActionLabel({type:'chooseAttackBan',uid:null},{pack:packs,state:s}),/不指定/);
+  assert.ok(uiActionLabel({type:'chooseAttackBan',uid:other.uid},{pack:packs,state:s}).includes('ユージオ'));
+  s=dispatchUniversalAction(packs,s,{type:'chooseAttackBan',uid:other.uid});
+  assert.equal(s.continuousStates[0].targetUid,other.uid);
+  assert.equal(s.players[0].front.some(c=>c?.uid===source.uid),true);
+  assert.equal(assertUniversalMatch(packs,s),true);
+ }
+});
+test('R32 onPlay draw remains mandatory with no enemy FRONT; optional ban target absent',()=>{
+ let {s,raid,enemy,other}=setup();
+ const hand=s.players[0].hand.length,deck=s.players[0].deck.length;
+ for(const c of [enemy,other]){
+  const index=s.players[1].front.findIndex(x=>x?.uid===c.uid);
+  s.players[1].front[index]=null;s.players[1].outside.push(c);
+ }
+ s=dispatchUniversalAction(packs,s,raid);
+ assert.equal(s.pending,null);
+ assert.equal(s.players[0].hand.length,hand);
+ assert.equal(s.players[0].deck.length,deck-1);
+ assert.equal(s.continuousStates.filter(x=>x.kind==='cannotAttack').length,0);
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
+test('R32 old-field-stamp restriction is pruned on reincarnation; unrelated target stays legal',()=>{
+ let {s,raid,enemy,other}=setup();
+ s=dispatchUniversalAction(packs,s,raid);
+ s=dispatchUniversalAction(packs,s,{type:'chooseAttackBan',uid:enemy.uid});
+ assert.equal(s.continuousStates.length,1);
+ const newStamp=s.nextFieldEntryStamp++;
+ s.players[1].front[0].fieldEntryStamp=newStamp;
+ s=dispatchUniversalAction(packs,s,{type:'next'});
+ assert.equal(s.continuousStates.length,0);
+ assert.equal(s.players[1].front[1].uid,other.uid);
+ assert.equal(assertUniversalMatch(packs,JSON.parse(JSON.stringify(s))),true);
+});
+test('R32 synthetic earned onPlay off-turn does not create prohibition on either enemy FRONT',()=>{
+ let {s,raid,source}=setup();
+ s=dispatchUniversalAction(packs,s,raid);
+ s=dispatchUniversalAction(packs,s,{type:'chooseAttackBan',uid:null});
+ s=dispatchUniversalAction(packs,s,{type:'next'}); // attack
+ s=dispatchUniversalAction(packs,s,{type:'next'}); // opponent start
+ assert.equal(s.active,1);
+ assert.equal(s.phase,'start');
+ s.effectQueue.unshift({op:'forbidAttackOppFrontOne',owner:0,sourceUid:source.uid,
+  sourceName:'グレンラガン',optional:true,ownTurnOnly:true,until:'nextOwnTurnStart'});
+ assert.equal(assertUniversalMatch(packs,s),true);
+ s=dispatchUniversalAction(packs,s,{type:'next'}); // opponent move, queue drains
+ assert.equal(s.pending,null);
+ assert.equal(s.continuousStates.filter(x=>x.kind==='cannotAttack').length,0);
+ assert.equal(assertUniversalMatch(packs,s),true);
 });
