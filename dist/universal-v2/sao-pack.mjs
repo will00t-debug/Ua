@@ -1188,6 +1188,19 @@ const PRINTED_PINS=Object.freeze({
     "traits": ["整合騎士"],
     "effectJa": "自分の場に他の［特徴：整合騎士］が4枚以上ある場合、このキャラは【インパクト（1）】（アタックしてバトルに勝利した時、相手プレイヤーに1ダメージ）を得る。"
   },
+  "SAO-1-079": {
+    "kind": "onRetireBuffOne",
+    "nameJa": "ユウキ",
+    "color": "green",
+    "energy": 2,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "traits": ["ALO"],
+    "effectJa": "【退場時】自分の場のキャラを1枚まで選び、このターン中、BP+1000。"
+  },
   "SAO-1-017": {
     "kind": "oppBpImpact",
     "nameJa": "ベルクーリ・シンセシス・ワン",
@@ -1276,6 +1289,11 @@ export function verifiedSaoV2Cards(){
     zone:'field',excludeSelf:true,name:'シリカ'},bp:2000}];
   if(pin.kind==='onRetireDrawOne')
    card.effects={onRetire:[{op:'draw',count:1}]};
+  // 1枚まで is optional. The card has already left, so it is not a target.
+  // Front and energy characters both count as 自分の場.
+  if(pin.kind==='onRetireBuffOne')
+   card.effects={onRetire:[{op:'buffOwnField',filter:{field:'type',value:'character'},
+    bp:1000,optional:true,excludeSelf:true}]};
   if(pin.kind==='readyOnFirstBlock'){
    card.readyOnBlockCount=1;
    card.effects={};
