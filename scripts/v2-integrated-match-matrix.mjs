@@ -22,7 +22,7 @@ const roster=['bleach-green','gurren-lagann-red','solo-leveling',
 const seeds=[747,20261015,20261016];
 const results=[],errors=[];
 const coverage=listRegisteredV2Titles();
-if(coverage.map(x=>x.totalV2Cards).join(',')!=='87,30,34,62,39')
+if(coverage.map(x=>x.totalV2Cards).join(',')!=='87,30,34,62,40')
  throw Error('Integrated V2 candidate drifted from pinned 250 printed IDs');
 for(const key of roster){
  const {pack,counts}=presets[key];
