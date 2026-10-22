@@ -1168,6 +1168,43 @@ function resolveChoice(s,a,pack){
   else selectLifeBatchItem(pack,s,a.uid);
   continueEffectQueue(pack,s);return;
  }
+ if(q.kind==='effect-move-order'){
+  const selected=q.entries.find(x=>x.key===a.key);
+  if(!selected)throw Error('Illegal earned move ordering');
+  const rest=q.entries.filter(x=>x!==selected);
+  s.pending=null;s.effectQueue.unshift(...selected.jobs,
+   ...(rest.length?[{op:'effectMoveOrder',owner:q.player,entries:rest}]:[]));
+  continueEffectQueue(pack,s);return;
+ }
+ if(q.kind==='effect-rest-tuck'){
+  if(a.mode==='rest'){
+   const watcher=location(s,q.player,q.sourceUid);
+   if(!watcher||watcher.c.fieldEntryStamp!==q.sourceStamp||
+    !watcher.c.ready||(watcher.c.under||[]).some(x=>x.faceDown===true))
+    throw Error('Invalid earned REST field watcher');
+   watcher.c.ready=false;
+   s.pending={kind:'effect-tuck-moved',player:q.player,
+    sourceUid:q.sourceUid,sourceStamp:q.sourceStamp,movedUid:q.movedUid};
+  }else{s.pending=null;continueEffectQueue(pack,s);}
+  return;
+ }
+ if(q.kind==='effect-tuck-moved'){
+  if(a.uid!==null){
+   if(a.uid!==q.movedUid)throw Error('Illegal moving physical UID');
+   const watcher=location(s,q.player,q.sourceUid);
+   if(!watcher||watcher.c.fieldEntryStamp!==q.sourceStamp||
+    (watcher.c.under||[]).some(x=>x.faceDown===true))
+    throw Error('Under target has left or changed');
+   const index=p.outside.findIndex(c=>c.uid===q.movedUid);
+   if(index<0)throw Error('Earned moved card no longer outside');
+   const physical=p.outside.splice(index,1)[0];
+   physical.faceDown=true;physical.ready=false;physical.fieldEntryStamp=null;
+   watcher.c.under??=[];watcher.c.under.push(physical);
+   recordCompletedMove(pack,s,{physical,owner:q.player,
+    from:'outside',to:'raid-under',reason:'own-effect',sourceUid:watcher.c.uid});
+  }
+  s.pending=null;continueEffectQueue(pack,s);return;
+ }
  if(q.kind==='phase-order'||q.kind==='retirement-order'){
   const selected=q.entries.find(x=>x.key===a.key);
   if(!selected)throw Error('Invalid simultaneous-effect order');
@@ -1986,6 +2023,14 @@ function legalPending(pack,s){
   ...(q.entries||[]).map(e=>({type:'chooseLifeEffect',key:e.key}))];
  if(q.kind==='phase-order')return q.entries.map(x=>({type:'choosePhaseOrder',key:x.key}));
  if(q.kind==='retirement-order')return q.entries.map(x=>({type:'chooseRetirementOrder',key:x.key}));
+ if(q.kind==='effect-move-order')return q.entries.map(x=>({type:'chooseMoveEffectOrder',key:x.key}));
+ if(q.kind==='effect-rest-tuck')return [
+  {type:'chooseRestTuck',mode:'skip'},{type:'chooseRestTuck',mode:'rest'}
+ ];
+ if(q.kind==='effect-tuck-moved')return [
+  {type:'chooseTuckMoved',uid:null},
+  ...(p.outside.some(c=>c.uid===q.movedUid)?[{type:'chooseTuckMoved',uid:q.movedUid}]:[])
+ ];
  if(q.kind==='block')return [
   {type:'chooseBlock',uid:null},
   ...p.front.filter(c=>c?.ready).map(c=>({type:'chooseBlock',uid:c.uid}))
@@ -2692,7 +2737,7 @@ export function assertUniversalMatch(pack,s){
    !Array.isArray(s.initialCounts)||s.initialCounts.length!==2||
    s.players?.length!==2||!playerIndex(s.active)||
    !['playing','finished'].includes(s.status))throw Error('Incorrect pack/version or match state');
- if(s.pending&&(!playerIndex(s.pending.player)||!['phase-order','retirement-order','block','life-batch-order','life-trigger','effect-target','effect-target-many','effect-grant-attack','granted-attack-draw','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-strip-raid-top','effect-retire-own-field','effect-retire-own-character','effect-rest-bp','raid-effect-order','effect-buff-trait','effect-buff-own','effect-once-choice','main-two-buff','main-discard-buff','main-rest-front-energy','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-order','effect-recover-outside','effect-outside-rest','effect-outside-name-rest','effect-outside-traitless-rest','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-choice-mode','recovered-self-entry','effect-optional-mill','effect-pay-ap-deploy','effect-top-trait-outside'].includes(s.pending.kind)))
+ if(s.pending&&(!playerIndex(s.pending.player)||!['phase-order','retirement-order','effect-move-order','effect-rest-tuck','effect-tuck-moved','block','life-batch-order','life-trigger','effect-target','effect-target-many','effect-grant-attack','granted-attack-draw','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-strip-raid-top','effect-retire-own-field','effect-retire-own-character','effect-rest-bp','raid-effect-order','effect-buff-trait','effect-buff-own','effect-once-choice','main-two-buff','main-discard-buff','main-rest-front-energy','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-order','effect-recover-outside','effect-outside-rest','effect-outside-name-rest','effect-outside-traitless-rest','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-choice-mode','recovered-self-entry','effect-optional-mill','effect-pay-ap-deploy','effect-top-trait-outside'].includes(s.pending.kind)))
   throw Error('Invalid pending controller');
  if(!Array.isArray(s.raidedThisTurn)||s.raidedThisTurn.length!==2||
    s.raidedThisTurn.some(x=>typeof x!=='boolean')||
@@ -2814,6 +2859,17 @@ export function assertUniversalMatch(pack,s){
   s.pending.selected.length>2||s.pending.selected.some(uid=>!s.pending.choices.includes(uid))||
   s.pending.choices.some(uid=>typeof uid!=='string'||!uid.startsWith((1-s.pending.player)+'-'))))
   throw Error('Invalid multi-target snapshot');
+ if(s.pending?.kind==='effect-move-order'&&(!Array.isArray(s.pending.entries)||
+  s.pending.entries.length<2||new Set(s.pending.entries.map(x=>x.key)).size!==s.pending.entries.length||
+  s.pending.entries.some(x=>!x||typeof x.key!=='string'||!Array.isArray(x.jobs)||
+   !x.jobs.length||x.jobs.some(j=>j.owner!==s.pending.player))))
+  throw Error('Invalid simultaneous earned move ordering');
+ if(['effect-rest-tuck','effect-tuck-moved'].includes(s.pending?.kind)&&(
+  typeof s.pending.sourceUid!=='string'||typeof s.pending.movedUid!=='string'||
+  !s.pending.movedUid.startsWith(s.pending.player+'-')||
+  !s.pending.sourceUid.startsWith(s.pending.player+'-')||
+  !Number.isInteger(s.pending.sourceStamp)||s.pending.sourceStamp<1))
+  throw Error('Invalid undercard reaction');
  if(s.pending?.kind==='retirement-order'&&(!Array.isArray(s.pending.entries)||
   s.pending.entries.length<2||s.pending.entries.some(e=>e.owner!==s.pending.player||
    typeof e.key!=='string'||!Array.isArray(e.jobs))))
@@ -2822,7 +2878,7 @@ export function assertUniversalMatch(pack,s){
    !['grantedAttackDraw','grantOnAttack','draw','drawIfOwnName','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
     'discardGate','enemyFrontAllBpDown','retireOppFrontAllUnderBp',
     'buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
-    'recoverOutsideColorUnderEnergy','deployOutsideRest','deployOutsideNameRest','payApDeployNamedRest','inspectTopTraitOutside','deployOutsideTraitlessRestOrRaid','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','moveAtMainEnd','retireOwnFieldOne','retireOwnCharacterOne','openBlock','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','phaseOrder','sourceResolutionBoundary','lifeBatchStep','lifeRelease','advanceAfterAttack','additionalBattleDamage','openRetirementBatch','closeRetirementBatch','retirementOrder','battleImpactDamage','discardOppHand','activeSelfIf'].includes(e.op)))
+    'recoverOutsideColorUnderEnergy','deployOutsideRest','deployOutsideNameRest','payApDeployNamedRest','inspectTopTraitOutside','deployOutsideTraitlessRestOrRaid','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','moveAtMainEnd','retireOwnFieldOne','retireOwnCharacterOne','openBlock','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','phaseOrder','effectMoveOrder','restSelfTuckMovedFaceDown','sourceResolutionBoundary','lifeBatchStep','lifeRelease','advanceAfterAttack','additionalBattleDamage','openRetirementBatch','closeRetirementBatch','retirementOrder','battleImpactDamage','discardOppHand','activeSelfIf'].includes(e.op)))
   throw Error('Invalid queued effects');
  // The internal boundary is not user-authored DSL. Reject forged or
  // out-of-range snapshots before replay or an AI simulation can resolve it.
