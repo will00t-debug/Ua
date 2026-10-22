@@ -639,3 +639,12 @@
 - GitHub CI 通過程式 SHA `d427c19aae8f80af329547fe714000e405c1050a` 的正式 registry 為 **249/700 已登錄、451 尚未移植**；MST 由 35 升至 37，正式新增 **MST-1-042、MST-1-046**。
 - 真正退場的每回合紀錄、退場類型、動態 BP/產能與先結算 onRetire 後支付效果已通用化；完整跨作品候選包括 MST052 條件抽、BLEACH BLC124 至少兩角色退場的計數閾值。仍須來源與 FAQ 審核；不得自動登錄。
 - 完整本輪交接、每批 commit、CI 及下一輪：`docs/v2-handoff/GPT-resume.md`「第五輪」章。
+
+
+## 第六輪更新註記（2026-10-22；舊表保留原盤點時點）
+
+- 正式來源鎖定最新程式及驗收 SHA `667309127ab3c2ff77367673356ae6a5442d140d`：五作品 **250/700 已登錄，450 未移植**，MST **38/80**，本輪淨新增完整真卡 **MST-1-052**。
+- 新增 `countRetirementsThisTurn`（雙方、CHARACTER/FIELD、當回合次數）與資料驅動 `retireCountThisTurn`；新增通用 `drawIfOwnFieldExists` 限定 onRetire，當其控制者場上確實有 FIELD 才抽牌。實卡完整移植不等於全面 FAQ 認證。
+- BLC-1-024 的「兩張角色退場」條件已可由共用判定表達，但 Raid 頂剝離、DAMAGE2 授予、選擇分支尚待完整實作，不能計入 250 張。
+- 這份原始效果關鍵字表的 457 張統計是舊時點**歷史快照**，不應重新命名為 450 張的最新人工分類。最新精確已登錄與未移植卡號由程式 registry、獨立 manifest 及 `scripts/v2-unported-report.mjs` 計算。
+- 完整開發交接、每批 commit、真 CI、後續工作詳見 `docs/v2-handoff/GPT-resume.md`「第六輪」章。

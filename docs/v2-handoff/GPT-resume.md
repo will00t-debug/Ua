@@ -492,3 +492,44 @@ This section records the last fully evaluated **code commit** `d16ffce0`. A docu
 - **BLEACH BLC-1-024**：本回合兩個 CHARACTER 真退休的 BP/DAMAGE2 條件，需共用計數型 `retiredThisTurn`（不只是 boolean）＋ Raid 頂層去向與多模式擇一。尚未登錄；其他 TTG/SLG/SAO 候選不得只靠效果關鍵字推定等同。
 - **推薦下一輪：** 扩充同回合真退場 ledger 的 **次數／所有者／卡型／事件時點條件**，並與泛化 `onRetire` 後續工作隊列和 `chooseOne` 合流。先用 MST052、BLC124 官方逐字卡文做元件測試，再挑完整可移植實卡。優先補真 bounce、Raid 剝離、remove、leave-protection 同回合的各別事件否定測試；不把 full-line removal 偽裝退場。
 - **安全狀態：** main 未合併；正式 Vercel 未更新；未 force push；沒有覆寫競爭分支的 ref（每次更新都帶 `expected_sha`）。
+
+
+## 2026-10-22｜第六輪：真退場張數條件、條件式 onRetire、完整 MST052
+
+**工作分支** `codex/v2-resume-20261021`，**Draft PR #75**；起始 HEAD `e78660a0bd8d4ac99a437b397ca3f6fbc0c2eb22`。最後已通過全量程式 CI 的 SHA 為 **`667309127ab3c2ff77367673356ae6a5442d140d`**，文件更新的 commit 較晚且需另外查 CI。不合併 main、不部署正式 Vercel、不 force push。GitHub 連接工具支援遠端 Git object 及 Actions；本地無完整 git checkout，以下 Node22 證據來自 Actions 日誌而非假稱本機測試。
+
+### 引擎／真卡／驗收必須各別呈現
+
+- **已完成共用引擎：**
+  1. `countRetirementsThisTurn(s,controller,cardType)` 從既有唯一 `turnRetireEvents` 計算**真正完成的事件次數**，可限定 controller 0、1 或 `any`，以及 `character`／`field`／`any`；同一實體離場、回場再退場時按真實事件算，不去重 physical UID；下一個 turn 一律重置。沿用 `retiredThisTurn`，不新增第二套事件隊列、不揭露對手隱藏 card ID。
+  2. `retireCountThisTurn` 為完整資料驗證的 live passive 條件：`{kind,turn,controller:'own'|'opponent'|'any',cardType:'character'|'field'|'any',min:1..50}`。供既有 `passiveBonuses` 使用，不新增作品專用計算器。測試 2 次對方 CHARACTER 真戰鬥退場、0/1/2 閾值、己敵方分離、FIELD 不混算及新回合重置；非法 schema fail-closed。
+  3. `drawIfOwnFieldExists` 為共用、嚴格限定 `onRetire` 的條件式 `draw` operation。真正觸發退場效果結算時檢查**退場卡控制者**當下場上的 FIELD 實體，成功才由其牌庫抽卡。純手牌、場外、除外、Raid 隱藏底層不能代替 FIELD。繼續重用 `programJobs`、`queueRetirement`、`retire`、`effectQueue`；滿線 `removed` 非退場，不排程。`onRetire` 的原本能力已遭封印時沿用原 `programJobs` 規則。
+- **完整移植真卡：** 依 `dist/universal-v2/sources/mst-official-print.mjs` 精確日文原文和官方 [UA54BT/MST-1-052](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA54BT%2FMST-1-052) 的 `MST-1-052` 洛琪希，綠0／AP1／BP2000／產能綠1／CHARACTER／無 Trigger；〖退場時〗己方場上有 FIELD 時抽 1。正式 `mst-pack.mjs` `PRINTED_PINS` 嚴格比對實際 `MST_V2_OFFICIAL_CATALOGUE`，新增完整 `tests/v2-mst-052-official-retire.test.mjs`：真實 50 張 MST×MST、兩個 owner、FIELD 有無／只對方有 FIELD、實際阻擋退場、抽牌來源、UID、隱藏手牌、滿線移除非退場。獨立 `tests/fixtures/v2-integrated-id-manifest.mjs` 同步，不使用測試用假卡充當正式登錄。
+- **元件／未移植：** `BLC-1-024` 的印刷本回合「雙方合計至少 2 張 CHARACTER 真退場」數量條件現可共用，但該卡尚有 Raid 頂層剝離、登場模式選擇及賦予 DAMAGE(2) 等能力，**仍不在 V2 registry**。官方 [BLC-1-024](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA08BT%2FBLC-1-024_p1) 及 FAQ **Q549** 明示 RAID 上層剝離非退場。此輪合成卡計數測試僅證明共用條件，不是 BLC 全卡驗收。
+- **嚴格官方 FAQ 全情境驗收：仍為 0**。既有正反例、特定官方 FAQ 與程序化真卡對戰，均不等於完全官方 FAQ／手動 UI 驗收；下一輪宜核對【退場時】與支付代價後的順序特例，不得把一例推成普遍時序規則。
+
+### 本輪 commit、失敗原因及真實 GitHub Actions
+
+1. Batch A `cab9d835c9ec5d0cbde7994b7901d703a3a36508`：共用本回合 true retirement count 和帶 controller/cardType/min 的嚴格 passive schema，2 組元件測試。兩套 CI success。
+2. Batch B `00193498caa9e941de30a9b16740e4164c8e70b5`：strict `drawIfOwnFieldExists` onRetire opcode、事件隊列及正負例，首 CI **1 例失敗**是測試牌組漏放 `MST-1-001`（非引擎邏輯失敗）。修正 `c02d5701392d48b20ff8292d52844cf76cfcdddc` 合法配置 4 張真 MST001；Node22 完整及隔離測試 success，沒有刪除測試／鬆綁合法性。
+3. Batch C `74fd59af3c8ebf7c093cd7f1730f6d8989c1109a`：正式加入完整 `MST-1-052`，JP PIN、實卡對局及獨立 manifest；首全量 CI 有 **11 例失敗**，均為舊 MST 37 張與 V2 249 張硬編碼斷言，**MST052 的新真卡測試通過**。
+4. Batch D `667309127ab3c2ff77367673356ae6a5442d140d`：對照真實日誌，**只**同步 10 份獨立來源／覆蓋率計數驗收為 MST38、全 250，不刪除測試、不改 game engine 的判定或正規性。
+5. Batch E：`667309127ab3c2ff77367673356ae6a5442d140d` 的 GitHub Actions Node.js **22.23.3**，`npm test` **1466/1466 通過，0 fail**；`node scripts/v2-integrated-match-matrix.mjs` **60/60 完成、0 fail**；`node scripts/v2-unported-report.mjs` 報 **700 張、250 V2 登錄、450 未移植、完整官方 FAQ 0**。[整合 #39705764230](https://github.com/will00t-debug/Ua/actions/runs/39705764230) SUCCESS，[SAO/MST isolated #39705769250](https://github.com/will00t-debug/Ua/actions/runs/39705769250) SUCCESS，獨立 24/24。
+
+### 最新 source-registered 覆蓋率
+
+| 作品 | V2 已登錄 | 未移植 |
+|---|---:|---:|
+| BLEACH | 86 / 276 | 190 |
+| TTG | 30 / 81 | 51 |
+| SLG | 34 / 80 | 46 |
+| SAO | 62 / 183 | 121 |
+| MST | 38 / 80 | 42 |
+| **合計** | **250 / 700** | **450** |
+
+### 下一輪優先級、阻塞與守恆注意事項
+
+- **BLC-1-024**：優先建立通用 Raid 頂層剝離、被 Raid 時/離場 replacement 的明確非退場事件路徑、二選一完整效果與當回合 DAMAGE2 授予；新增普通合法選項/非法 UID/物理卡守恆/不同玩家 AI 圖層，核對 Q549、Q550、Q551。不可只因 2 CHARACTER predicate 就登錄。
+- **MST-1-053**：退場 FIELD 可選成本→抽牌已可部分沿用，但其**對方回合 COLOR Trigger 的角色/場域替換**尚缺，不能只實作半卡就正式登錄。
+- **MST-1-074、076**：逐字核對多重條件、退場、選擇、Trigger，再設計能跨作品重用的 program composition；保留 unported。
+- 特別查【退場時】事件與支付費用後原能力的結算優先級（現有 `retirementAfter` 流程對不同原文可能有差別），以及 Raid Q549 非退場、同時狀態移轉及隱藏資訊；任何修正都必須真實 FAQ 與針對性回歸支持。
