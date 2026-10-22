@@ -1781,3 +1781,20 @@ C `f23310da`: two independently revealed defender SPECIALs retire different atta
 D `86f12d2e`: Q2315 earned moved-047 reaction and Riruka-like observer remain after **post-earn** original source and watcher seal, still exact source stamp, optional legal REST/tuck and Q2316 owner privacy. [CI 39865310494](https://github.com/will00t-debug/Ua/actions/runs/39865310494) green Node22 **1811/1811**, cross-title **60/60** and independent manifest+unported report success. E official rules/next unresolved scope documentation `158cbb52` plus full handoff updates require their **own** exact CI.
 
 No new DSL or registry cards this round. Independent five-title registered **BLEACH97 TTG35 SLG41 SAO91 MST48 = 312/700**, unported **388**, full independent per-card FAQ certifications **0**. BLC-2-019/047 and Riruka BLC-4-034 **NOT** production registered or fully audited. Multiple independent real-player simultaneous choice ownership beyond the bounded tests, complete printed 019/047/034 matching, and real nested LIFE priority remain open. Secondary LIFE during unresolved batch remains atomic fail closed. No local Node22 run, no merge main, deploy, force push, or overwrite PR77.
+
+
+## R30 GPT 第三十輪：COLOR BP hand-return、ENERGY 定位 ACTIVE、三張 BLEACH 官方印刷原型（2026-10-23）
+
+從 R29 full remote-green `fc0ab18ba02ea9e9a4d60fe2a8ddee336399b8e7` 原分支延續。完整 R30 來源 / 限制 / 測試明細在 [V2-R30-034-full-print-and-cross-player.md](./V2-R30-034-full-print-and-cross-player.md)，PR #78 合併目標仍 `cursor/v2-multi-retire-life-6ff5`。
+
+**A** `9da7c8a3`、`14bdd4ef`、`3c04c8d1`：新通用 COLOR `bounceOppFrontUnderBp` 嚴格限制對手 FRONT 3500 以下角色返回其所有者手牌，保留 Raid/裏向 layer 去向及 opponent-effect controller。不視作退場。真正 EX15BT/BLC-4-034 source-pinned 色彩 Trigger 正反測試，遠端 [39867007395](https://github.com/will00t-debug/Ua/actions/runs/39867007395) success **1817/1817, 60/60**。
+
+**B** `ffc04344`：Q38 COLOR（敵方物理 LOW 返回手牌）與同批 FINAL 兩種排序、Q12 zero LIFE 非即時勝負，驗收 [39867247586](https://github.com/will00t-debug/Ua/actions/runs/39867247586) success **1819/1819, 60/60**。
+
+**C** `de325714`、`906994f1`、`e2eda2c3`：擴充既有 `activeSelfIf.line` 僅接受 `front|energy`，以場上真實所在位置決定 ACTIVE；034 只在 ENERGY line 登場可 ACTIVE，FRONT 不能，其他原條件不變。[39867555312](https://github.com/will00t-debug/Ua/actions/runs/39867555312) success **1824/1824, 60/60**。
+
+**D** `33e5f8fb`：同一合法 50 卡獨立牌組使用真正 BLEACH 印刷身分 019／047／4-034，完整已支持的 Raid→雙 BP→名字費用→來源結算抽卡／BP+1000／暫時 grantOnAttack→ Q2315 observer REST/tuck→ Q2316 own-only hidden layer→本回合真攻擊選擇額外抽牌。兩種移動排序、嚴格非法未知 MAIN 拒絕、合法 AI、物理 UID/序列化；Riruka 先前已在 ENERGY 為真正 field witness fixture，未宣稱同回合付費使用。遠端 [39867840517](https://github.com/will00t-debug/Ua/actions/runs/39867840517) success **1828/1828, 60/60**。
+
+**E** `ecc23eb4`：來源證據 + 官方完整卡文差異及下一輪優先工作文件，接續更新兩份 GPT handoff。E 和文件 HEAD 的 CI 需要對應 exact SHA 再確認。
+
+**嚴格非認證：** BLC-4-034 正式印刷的 `MAIN【REST 本身、退場、最多一張自己底下裏向卡回手】` 尚未完全定義成本和實體移動時序，不得跳過。019/047/034 **均未登錄正式 registry**、不改 manifest。五作品仍 BLEACH97 TTG35 SLG41 SAO91 MST48＝**312/700**，未移植388，全卡完整 FAQ 獨立認證 **0**。不宣稱全域跨玩家優先權、任意授予能力或巢狀 LIFE 已驗證；第二次未結算 LIFE 傷害仍原子 fail-closed。沒有 main merge、Cursor PR77 覆寫、Vercel production deploy、force push；Node22 數據全部來自 GitHub 遠端 Actions，非本地。
