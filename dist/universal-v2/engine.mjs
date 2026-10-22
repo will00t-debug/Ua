@@ -320,7 +320,7 @@ function payableHand(pack,s,owner,payment){
 }
 function sourceMoveBoundary(pack,s,owner,sourceUid){
  const any=playerPacks(pack).some(p=>
-  Object.values(p.cards).some(c=>c.moveTriggers?.length));
+  Object.values(p.cards).some(c=>c.moveTriggers?.length||c.moveObserver));
  return any?[{op:'sourceResolutionBoundary',owner,sourceUid,
   afterOrder:s.nextZoneMoveOrder-1}]:[];
 }
@@ -332,17 +332,47 @@ function continueEffectQueue(pack,s){
   if(job.op==='sourceResolutionBoundary'){
    // Cost/choice/target side effects have finished. Only completed moves
    // made by THIS source since the boundary opened can release triggers.
-   const toResolve=[];
+   const toResolve=[],fieldReactions=[];
    for(const event of s.zoneMoveEvents){
     if(event.order<=job.afterOrder||event.sourceUid!==job.sourceUid||
      event.controller!==owner||event.owner!==owner)continue;
     const moved=card(pack,{uid:event.uid,cardId:event.cardId});
+    // The moved card's earned trigger binds to its completed event,
+    // not its current location. Q2315 permits later face-down undercards.
     for(const profile of moved.moveTriggers||[])
      if(matchesCompletedMove(event,profile.when))
       toResolve.push(...profile.then.map(op=>({...op,owner:event.owner,
        sourceUid:event.uid,sourceName:moved.name})));
+    for(const watcher of field(pl)){
+     const observer=card(pack,watcher).moveObserver;
+     if(!observer||originalEffectsDisabled(s,watcher)||!watcher.ready||
+      (watcher.under||[]).some(c=>c.faceDown===true)||
+      !matchesCompletedMove(event,observer.when))continue;
+     fieldReactions.push({op:'restSelfTuckMovedFaceDown',owner,
+      sourceUid:watcher.uid,sourceStamp:watcher.fieldEntryStamp,
+      movedUid:event.uid,moveOrder:event.order});
+    }
    }
-   s.effectQueue.unshift(...toResolve);
+   if(fieldReactions.length&&toResolve.length){
+    const entries=[
+     ...fieldReactions.map((reaction,i)=>({
+      key:'observer-'+reaction.sourceUid+'-'+reaction.moveOrder+'-'+i,
+      jobs:[reaction]})),
+     {key:'moved-'+job.sourceUid+'-'+job.afterOrder,jobs:toResolve}
+    ];
+    s.pending={kind:'effect-move-order',player:owner,entries};
+   }else s.effectQueue.unshift(...fieldReactions,...toResolve);
+  }else if(job.op==='effectMoveOrder'){
+   if(!Array.isArray(job.entries)||!job.entries.length)
+    throw Error('Missing earned move effect order');
+   if(job.entries.length===1)s.effectQueue.unshift(...job.entries[0].jobs);
+   else s.pending={kind:'effect-move-order',player:owner,entries:job.entries};
+  }else if(job.op==='restSelfTuckMovedFaceDown'){
+   const watcher=location(s,owner,job.sourceUid);
+   if(watcher&&watcher.c.fieldEntryStamp===job.sourceStamp&&watcher.c.ready&&
+    !(watcher.c.under||[]).some(x=>x.faceDown===true))
+    s.pending={kind:'effect-rest-tuck',player:owner,sourceUid:job.sourceUid,
+     sourceStamp:job.sourceStamp,movedUid:job.movedUid,moveOrder:job.moveOrder};
   }else if(job.op==='lifeBatchStep'){
    const b=s.lifeRevealBatch;
    if(!b||b.owner!==owner)throw Error('Absent LIFE batch');
