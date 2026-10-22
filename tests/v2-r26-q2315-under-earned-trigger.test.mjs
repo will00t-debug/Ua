@@ -216,3 +216,39 @@ test('R27 target leaves after earned REST but before tuck: exact UID cannot be a
  assert.equal(s.pending,null);
  assert.equal(assertUniversalMatch(packs,s),true);
 });
+
+test('R27 adversarial saved move choices reject forged owner, move UID, watcher stamp and injected draw',()=>{
+ let {s,source,moved}=game(0);
+ s=dispatchUniversalAction(packs,s,{type:'activate',uid:source.uid,mode:'frontOnce'},{actor:0});
+ s=dispatchUniversalAction(packs,s,{type:'chooseDiscardGate',uid:moved.uid},{actor:0});
+ assert.equal(s.pending.kind,'effect-move-order');
+ const edits=[
+  x=>x.pending.entries[0].jobs[0].sourceStamp+=100,
+  x=>x.pending.entries[0].jobs[0].movedUid=x.players[0].hand[0].uid,
+  x=>x.pending.entries[0].jobs[0].owner=1,
+  x=>x.pending.entries[0].jobs[0].op='draw',
+  x=>x.pending.entries[1].jobs[0].sourceUid=x.players[0].hand[0].uid,
+  x=>x.pending.entries[1].jobs[0].count=12,
+  x=>x.pending.entries[1].key='moved-1-9-0',
+  x=>x.pending.entries.push(structuredClone(x.pending.entries[0])),
+  x=>x.pending.entries[0].jobs[0].unknown=true
+ ];
+ for(const corrupt of edits){
+  const bad=structuredClone(s);corrupt(bad);
+  assert.throws(()=>assertUniversalMatch(packs,bad),'forged move-order save must fail');
+ }
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
+test('R27 paused REST/tuck rejects forged provenance with same-looking UID',()=>{
+ let {s,source,moved}=game(0);
+ s=dispatchUniversalAction(packs,s,{type:'activate',uid:source.uid,mode:'frontOnce'},{actor:0});
+ s=dispatchUniversalAction(packs,s,{type:'chooseDiscardGate',uid:moved.uid},{actor:0});
+ s=dispatchUniversalAction(packs,s,legalUniversalActions(packs,s).find(a=>a.key.startsWith('observer-')),{actor:0});
+ const noStamp=structuredClone(s);noStamp.pending.sourceStamp++;
+ assert.throws(()=>assertUniversalMatch(packs,noStamp),/Missing earned/);
+ s=dispatchUniversalAction(packs,s,{type:'chooseRestTuck',mode:'rest'},{actor:0});
+ const noEvent=structuredClone(s);
+ noEvent.zoneMoveEvents.find(x=>x.uid===moved.uid&&x.from==='hand'&&x.to==='outside').earnedFieldObservers=[];
+ assert.throws(()=>assertUniversalMatch(packs,noEvent),/Missing earned/);
+ assert.equal(assertUniversalMatch(packs,s),true);
+});

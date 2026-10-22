@@ -2885,11 +2885,61 @@ export function assertUniversalMatch(pack,s){
   s.pending.selected.length>2||s.pending.selected.some(uid=>!s.pending.choices.includes(uid))||
   s.pending.choices.some(uid=>typeof uid!=='string'||!uid.startsWith((1-s.pending.player)+'-'))))
   throw Error('Invalid multi-target snapshot');
- if(s.pending?.kind==='effect-move-order'&&(!Array.isArray(s.pending.entries)||
-  s.pending.entries.length<2||new Set(s.pending.entries.map(x=>x.key)).size!==s.pending.entries.length||
-  s.pending.entries.some(x=>!x||typeof x.key!=='string'||!Array.isArray(x.jobs)||
-   !x.jobs.length||x.jobs.some(j=>j.owner!==s.pending.player))))
-  throw Error('Invalid simultaneous earned move ordering');
+ // Every paused move effect is a historically earned physical UID job.
+ // Validate pending AND deferred queue entries; otherwise an imported save
+ // could smuggle arbitrary draw/retire jobs through a legal choice key.
+ const moveWindows=[
+  ...(s.pending?.kind==='effect-move-order'?
+   [{owner:s.pending.player,entries:s.pending.entries}]:[]),
+  ...(Array.isArray(s.effectQueue)?s.effectQueue.filter(j=>j.op==='effectMoveOrder'):[])
+ ];
+ for(const win of moveWindows){
+  const entries=win.entries;
+  if(!playerIndex(win.owner)||!Array.isArray(entries)||entries.length<1||
+   entries.length>9||new Set(entries.map(x=>x?.key)).size!==entries.length)
+   throw Error('Invalid simultaneous earned move ordering');
+  for(const entry of entries){
+   if(!entry||typeof entry.key!=='string'||!Array.isArray(entry.jobs)||
+    entry.jobs.length<1||entry.jobs.length>6)
+    throw Error('Invalid earned move entry');
+   const watch=entry.key.match(/^observer-([01]-\\d+)-(\\d+)-(\\d+)$/);
+   const moved=entry.key.match(/^moved-([01]-\\d+)-(\\d+)$/);
+   if(!watch&&!moved)throw Error('Unknown earned move entry');
+   if(watch){
+    if(entry.jobs.length!==1)throw Error('Duplicate earned REST reaction');
+    const j=entry.jobs[0];
+    if(j?.op!=='restSelfTuckMovedFaceDown'||j.owner!==win.owner||
+     j.sourceUid!==watch[1]||j.moveOrder!==Number(watch[2])||
+     !Number.isInteger(j.sourceStamp)||j.sourceStamp<1||
+     Object.keys(j).some(k=>!['op','owner','sourceUid','sourceStamp','movedUid','moveOrder'].includes(k))||
+     !s.zoneMoveEvents.some(ev=>ev.order===j.moveOrder&&ev.owner===win.owner&&
+      ev.uid===j.movedUid&&ev.earnedFieldObservers?.some(x=>
+       x.sourceUid===j.sourceUid&&x.sourceStamp===j.sourceStamp)))
+     throw Error('Forged physical REST reaction');
+   }else{
+    if(moved[1][0]!==String(win.owner))throw Error('Foreign earned card effect');
+    const after=Number(moved[2]);
+    if(!Number.isSafeInteger(after)||after<0||after>=s.nextZoneMoveOrder)
+     throw Error('Invalid moved trigger boundary');
+    for(const j of entry.jobs){
+     if(j?.op!=='draw'||j.owner!==win.owner||
+      !Number.isInteger(j.count)||j.count<1||j.count>10||
+      Object.keys(j).some(k=>!['op','count','owner','sourceUid','sourceName'].includes(k))||
+      !s.zoneMoveEvents.some(ev=>ev.order>after&&ev.owner===win.owner&&
+       ev.controller===win.owner&&ev.sourceUid===moved[1]&&
+       ev.uid===j.sourceUid&&ev.from==='hand'&&ev.to==='outside'))
+      throw Error('Forged moved-card earned draw');
+    }
+   }
+  }
+ }
+ // REST/tuck decisions can lose their target while paused; their provenance
+ // remains necessary even if only the safe skip action survives.
+ if(['effect-rest-tuck','effect-tuck-moved'].includes(s.pending?.kind)&&(
+  !s.zoneMoveEvents.some(ev=>ev.owner===s.pending.player&&
+   ev.uid===s.pending.movedUid&&ev.earnedFieldObservers?.some(x=>
+    x.sourceUid===s.pending.sourceUid&&x.sourceStamp===s.pending.sourceStamp))))
+  throw Error('Missing earned undercard provenance');
  if(['effect-rest-tuck','effect-tuck-moved'].includes(s.pending?.kind)&&(
   typeof s.pending.sourceUid!=='string'||typeof s.pending.movedUid!=='string'||
   !s.pending.movedUid.startsWith(s.pending.player+'-')||
