@@ -4,6 +4,16 @@ import {MST_V2_OFFICIAL_CATALOGUE} from './sources/mst-inventory.mjs';
 import {createUniversalPack} from './pack.mjs';
 
 const PRINTED_PINS=Object.freeze({
+ "MST-1-042":{
+  kind:"retiredFieldReady",nameJa:"エリナリーゼ",color:"green",energy:4,ap:1,
+  bp:4000,gen:1,type:"character",traits:[],trigger:"active",
+  effectJa:"〖インパクト無効〗 （このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）\n 〖起動メイン〗 このターン中に自分の場のフィールドが退場している場合のみ発動できる。このキャラをアクティブにする。〈エリナリーゼ〉のこの効果は1ターンに1回のみ発動できる。"
+ },
+ "MST-1-046":{
+  kind:"retiredFieldEnergyAndCostBuff",nameJa:"タルハンド",color:"green",energy:3,ap:1,
+  bp:3000,gen:2,type:"character",traits:[],trigger:null,
+  effectJa:"このターン中に自分の場のフィールドが退場している場合、このキャラの発生エナジー+ 〖緑〗 。\n 〖起動メイン〗 〖フロントLにある場合〗 〖ターン1〗 自分の場のフィールドを1枚退場させる。そうした場合、このキャラはこのターン中、BP+1000。"
+ },
   "MST-1-054": {
     "kind":"onPlayRestSilenceOpponentIfFieldOutside",
     "nameJa":"ロキシー","color":"green","energy":4,"ap":1,
@@ -476,6 +486,16 @@ export function verifiedMstV2Cards(){
    card.templateEffects={onPlay:[{template:'restSilenceOppFrontIfOwnOutsideField',
     optional:true}]};
   }
+  if(pin.kind==='retiredFieldReady'){
+   card.impactNull=true;
+   card.mainAbility={op:'readySelfIfOwnRetiredThisTurn',cardType:'field',readyOncePerName:true};
+  }
+  if(pin.kind==='retiredFieldEnergyAndCostBuff'){
+   card.passiveBonuses=[{condition:{kind:'ownRetiredThisTurn',turn:'any',cardType:'field'},
+    extraEnergy:1}];
+   card.mainAbility={op:'retireOwnFieldThen',frontOnly:true,oncePerTurn:true,
+    after:[{op:'buffSelf',bp:1000}]};
+  }
   if(pin.kind==='fieldOnPlayDrawDiscardOnRetireDraw'){
    card.templateEffects={onPlay:[{template:'drawDiscardOne'}]};
    card.effects={onRetire:[{op:'draw',count:1}]};
@@ -562,6 +582,8 @@ export function verifiedMstV2Entries(){
        ['tests/v2-mst-054-075-real-deck.test.mjs']:[]),
       ...(pin.kind==='fieldOnPlayDrawDiscardOnRetireDraw'?
        ['tests/v2-mst-075-retire-trigger.test.mjs']:[]),
+      ...(['retiredFieldReady','retiredFieldEnergyAndCostBuff'].includes(pin.kind)?
+       ['tests/v2-mst-042-046-retirement-official.test.mjs']:[]),
      ...(pin.kind==='onPlayDrawDiscardLimited'?['tests/v2-mst-051-limited-draw-discard.test.mjs']:[]),
      ...(['restSelfEnergyRetireEndMain','ownTurnRoxyFieldBp'].includes(pin.kind)?['tests/v2-mst-016-024-shared.test.mjs']:[])
     ]),
