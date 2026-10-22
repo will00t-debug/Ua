@@ -33,6 +33,6 @@ test('Batch C nonexistent FIELD cannot be paid or grant BP',()=>{let {s,source}=
  assert.throws(()=>dispatchUniversalAction(packs,s,{type:'activate',uid:source.uid,mode:'retireFieldThen'}),/not currently legal/);
  assert.equal(assertUniversalMatch(packs,s),true);
 });
-test('Batch C unknown after-cost profiles fail closed',()=>{for(const after of [[],[{op:'fake'}],[{op:'draw',count:1}],[{op:'buffSelf',bp:1000},{op:'draw',count:1}]]){
+test('Batch C unknown after-cost profiles fail closed',()=>{for(const after of [[],[{op:'fake'}],[{op:'millTop',count:1}],[{op:'buffSelf',bp:1000},{op:'draw',count:1}]]){
  assert.throws(()=>createUniversalPack({id:'bad',cards:[{...caller,mainAbility:{...caller.mainAbility,after}}]}),/unsupported main action/);
 }});
