@@ -1,10 +1,23 @@
 name: V2 Resumed Integration
+# pull_request re-runs on open, push, and reopen for PRs into the V2
+# integration branch. It checks out the merge ref and uses read-only
+# GITHUB_TOKEN. This file is not on main, and push is the event that runs a
+# workflow before it reaches the default branch, so cursor/* pushes also run
+# the same jobs. No pull_request_target and no repository secrets.
 on:
   push:
-    branches: [codex/v2-resume-20261021]
+    branches:
+      - codex/v2-resume-20261021
+      - 'cursor/**'
+  pull_request:
+    branches:
+      - codex/v2-resume-20261021
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: v2-resume-${{ github.event.pull_request.head.sha || github.sha }}
+  cancel-in-progress: true
 jobs:
   regression:
     runs-on: ubuntu-latest
@@ -14,9 +27,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: npm test
-      - run: node scripts/v2-integrated-match-matrix.mjs
-      - run: node scripts/v2-unported-report.mjs
+      - name: Node 22 test suite
+        run: npm test
+      - name: Five-title 60-match matrix
+        run: node scripts/v2-integrated-match-matrix.mjs
+      - name: Independent card-id manifest
+        run: node scripts/v2-assert-independent-manifest.mjs
+      - name: V2 unported report
+        run: node scripts/v2-unported-report.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
