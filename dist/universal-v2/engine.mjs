@@ -1383,6 +1383,16 @@ function resolveChoice(s,a,pack){
     throw Error('Illegal COLOR retirement target');
    retire(pack,s,1-q.player,'front',slot);
   }
+  else if(a.mode==='colorRestSkip'&&q.trigger==='color'){
+   const foe=1-q.player,slot=s.players[foe].front.findIndex(c=>c?.uid===a.uid);
+   const profile=card(pack,p.outside[i]).triggerEffect;
+   if(profile.op!=='restOppFrontSkipNextActive'||slot<0)
+    throw Error('Illegal COLOR rest target');
+   const target=s.players[foe].front[slot];
+   target.ready=false;
+   grantContinuousState(s,{kind:'skipNextActive',controller:q.player,
+    sourceUid:q.uid,targetUid:target.uid});
+  }
   else if(a.mode==='colorOutside'&&q.trigger==='color'){
    const profile=card(pack,p.outside[i]).triggerEffect;
    if(profile.op!=='deployOutsideCharacter'||a.line!=='front'||profile.frontOnly!==true)
@@ -1638,6 +1648,9 @@ function legalPending(pack,s){
    if(profile.op==='retireOppFrontUnderBp')
     out.push(...s.players[1-q.player].front.filter(c=>c&&bp(pack,s,c)<=profile.bp)
      .map(c=>({type:'chooseTrigger',mode:'colorRetire',uid:c.uid})));
+   else if(profile.op==='restOppFrontSkipNextActive')
+    out.push(...s.players[1-q.player].front.filter(Boolean)
+     .map(c=>({type:'chooseTrigger',mode:'colorRestSkip',uid:c.uid})));
    else if(profile.op==='deployOutsideCharacter'){
     for(const c of p.outside){
      const d=card(pack,c);

@@ -410,6 +410,8 @@ function normalize(card,packId){
   const retired=triggerEffect?.op==='retireOppFrontUnderBp'&&
    integer(triggerEffect.bp,1)&&triggerEffect.bp<=50000&&
    Object.keys(triggerEffect).every(k=>['op','bp'].includes(k));
+  const restSkip=triggerEffect?.op==='restOppFrontSkipNextActive'&&
+   Object.keys(triggerEffect).length===1;
   const deploy=(from)=>triggerEffect?.op===from&&
    typeof triggerEffect.color==='string'&&!!triggerEffect.color.trim()&&
    integer(triggerEffect.maxEnergy)&&triggerEffect.maxEnergy<=30&&
@@ -417,7 +419,7 @@ function normalize(card,packId){
    (from==='deployOutsideCharacter'?triggerEffect.frontOnly===true:true)&&
    Object.keys(triggerEffect).every(k=>['op','color','maxEnergy','ap',
     ...(from==='deployOutsideCharacter'?['frontOnly']:[])].includes(k));
-  if(!retired&&!deploy('deployHandCharacter')&&!deploy('deployOutsideCharacter'))
+  if(!retired&&!restSkip&&!deploy('deployHandCharacter')&&!deploy('deployOutsideCharacter'))
    throw Error(card.id+' COLOR requires supported printed deployment/retirement profile');
  }else if(card.trigger==='raid'){
   if(!card.raidName||card.type!=='character'||triggerEffect!=null)

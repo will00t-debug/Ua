@@ -86,7 +86,7 @@ test('seven existing-DSL cards keep official text, ids, and a legal 50-card deck
   assert.equal(card.templateEffects,undefined);
   assert.ok(EXPECTED_V2_IDS['sword-art-online'].includes(id));
  }
- assert.equal(sao.cards['SAO-1-012'],undefined);
+ assert.equal(sao.cards['SAO-1-012'].triggerEffect.op,'restOppFrontSkipNextActive');
  const slgSpecs=[
   ['SLG-1-023',4000,'active',0,[]],
   ['SLG-1-056',3000,null,1,['第四次架南島レイド']],

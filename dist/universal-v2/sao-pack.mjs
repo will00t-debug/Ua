@@ -1032,6 +1032,19 @@ const PRINTED_PINS=Object.freeze({
     "traits": ["整合騎士"],
     "effectJa": "このカードは〈アリス〉としても扱う。\n【ステップ】（自分の移動フェイズにフロントLからエナジーLへ移動できる）"
   },
+  "SAO-1-012": {
+    "kind": "nameAliasStepBothNamesColorRest",
+    "nameJa": "アリス・シンセシス・サーティ",
+    "color": "yellow",
+    "energy": 3,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 2,
+    "type": "character",
+    "trigger": "color",
+    "traits": ["整合騎士"],
+    "effectJa": "このカードは〈アリス〉としても扱う。\n【ステップ】（自分の移動フェイズにフロントLからエナジーLへ移動できる）\n【自分のターン中】自分の場に〈キリト〉と〈ユージオ〉がある場合、このキャラはBP+1000。"
+  },
   "SAO-2-004": {
     "kind": "nameAliasActiveIfTrait",
     "nameJa": "アリス・シンセシス・サーティ",
@@ -1189,6 +1202,14 @@ export function verifiedSaoV2Cards(){
    card.readyOnBlockCount=1;
    card.effects={};
   }
+  if(pin.kind==='nameAliasStepBothNamesColorRest'){
+   card.nameAliases=['アリス'];
+   card.step=true;
+   card.effects={};
+   card.passiveBonuses=[{condition:{kind:'ownFieldHasAllNames',turn:'own',zone:'field',
+    excludeSelf:true,names:['キリト','ユージオ']},bp:1000}];
+   card.triggerEffect={op:'restOppFrontSkipNextActive'};
+  }
   if(pin.kind==='nameAliasActiveIfTrait'){
    card.nameAliases=['アリス'];
    card.effects={onPlay:[{op:'activeSelfIf',when:{
@@ -1328,6 +1349,7 @@ export function verifiedSaoV2Entries(){
      ...(pin.kind==='frontOnceBpDown'||pin.kind==='frontOnceDiscardBpDown'?['tests/v2-single-bp-target-round14.test.mjs']:[]),
      ...(pin.kind==='nameAliasDrawDiscard'||pin.kind==='nameAliasOnly'||pin.kind==='nameAliasStep'?['tests/v2-name-alias-round14.test.mjs']:[]),
      ...(pin.kind==='nameAliasActiveIfTrait'?['tests/v2-conditional-entry-active-round15.test.mjs']:[]),
+     ...(pin.kind==='nameAliasStepBothNamesColorRest'?['tests/v2-sao-012-color-rest.test.mjs']:[]),
      ...(pin.kind==='fieldRestEnergyRetireEndMain'?['tests/v2-field-energy-retire-round15.test.mjs']:[]),
      ...(pin.kind==='nameAliasOnly'||pin.kind==='nameAliasStep'?['tests/v2-zero-engine-round14.test.mjs']:[]),
      'tests/universal-v2-sao-mst-cross-title.test.mjs'

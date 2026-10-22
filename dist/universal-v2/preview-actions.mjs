@@ -95,6 +95,7 @@ export function uiActionLabel(action,{pack,state}={}){
    if(action.mode==='draw')return '抽 1 張';
    if(action.mode==='final')return 'FINAL 恢復生命';
    if(action.mode==='raid')return '使用 RAID 觸發 · 前線 '+(action.slot+1);
+   if(action.mode==='colorRestSkip')return 'COLOR：使 '+name()+' REST，下次不能 ACTIVE';
    if(action.mode==='colorOutside')return '從場外登場 '+name()+suffix();
    if(action.mode==='color')return 'COLOR 登場 '+name()+suffix();
    if(action.mode==='active')return '使 '+name()+' ACTIVE';
