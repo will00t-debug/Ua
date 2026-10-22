@@ -2033,13 +2033,21 @@ function legalPending(pack,s){
  if(q.kind==='phase-order')return q.entries.map(x=>({type:'choosePhaseOrder',key:x.key}));
  if(q.kind==='retirement-order')return q.entries.map(x=>({type:'chooseRetirementOrder',key:x.key}));
  if(q.kind==='effect-move-order')return q.entries.map(x=>({type:'chooseMoveEffectOrder',key:x.key}));
- if(q.kind==='effect-rest-tuck')return [
-  {type:'chooseRestTuck',mode:'skip'},{type:'chooseRestTuck',mode:'rest'}
- ];
- if(q.kind==='effect-tuck-moved')return [
-  {type:'chooseTuckMoved',uid:null},
-  ...(p.outside.some(c=>c.uid===q.movedUid)?[{type:'chooseTuckMoved',uid:q.movedUid}]:[])
- ];
+ if(q.kind==='effect-rest-tuck'){
+  const watcher=location(s,q.player,q.sourceUid)?.c;
+  const canRest=!!watcher&&watcher.fieldEntryStamp===q.sourceStamp&&
+   watcher.ready&&!(watcher.under||[]).some(x=>x.faceDown===true);
+  return [{type:'chooseRestTuck',mode:'skip'},
+   ...(canRest?[{type:'chooseRestTuck',mode:'rest'}]:[])];
+ }
+ if(q.kind==='effect-tuck-moved'){
+  const watcher=location(s,q.player,q.sourceUid)?.c;
+  const canTuck=!!watcher&&watcher.fieldEntryStamp===q.sourceStamp&&
+   !(watcher.under||[]).some(x=>x.faceDown===true)&&
+   p.outside.some(c=>c.uid===q.movedUid);
+  return [{type:'chooseTuckMoved',uid:null},
+   ...(canTuck?[{type:'chooseTuckMoved',uid:q.movedUid}]:[])];
+ }
  if(q.kind==='block')return [
   {type:'chooseBlock',uid:null},
   ...p.front.filter(c=>c?.ready).map(c=>({type:'chooseBlock',uid:c.uid}))

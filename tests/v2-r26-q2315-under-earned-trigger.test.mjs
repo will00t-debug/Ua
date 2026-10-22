@@ -181,3 +181,38 @@ test('a physical move watched by the opponent does not grant its character an ac
  assert.deepEqual(s.players[1].energy[0].under,[]);
  assert.equal(assertUniversalMatch(packs,s),true);
 });
+
+test('R27 earned REST observer loses legal REST when exact target leaves during pending, card moves conserved',()=>{
+ let {s,source,moved,observer}=game(0);
+ s=dispatchUniversalAction(packs,s,{type:'activate',uid:source.uid,mode:'frontOnce'},{actor:0});
+ s=dispatchUniversalAction(packs,s,{type:'chooseDiscardGate',uid:moved.uid},{actor:0});
+ const first=legalUniversalActions(packs,s).find(a=>a.key.includes('observer-'));
+ s=dispatchUniversalAction(packs,s,first,{actor:0});
+ assert.equal(s.pending.kind,'effect-rest-tuck');
+ const o=s.players[0].energy[0];
+ s.players[0].energy[0]=null;s.players[0].outside.push(o);
+ assert.deepEqual(legalUniversalActions(packs,s),[{type:'chooseRestTuck',mode:'skip'}]);
+ assert.throws(()=>dispatchUniversalAction(packs,s,{type:'chooseRestTuck',mode:'rest'},{actor:0}),/not currently legal/);
+ s=dispatchUniversalAction(packs,s,{type:'chooseRestTuck',mode:'skip'},{actor:0});
+ assert.equal(s.pending,null);
+ assert.equal(s.players[0].deck.some(c=>c.uid===moved.uid),false);
+ assert.equal(s.players[0].outside.some(c=>c.uid===moved.uid),true);
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
+test('R27 target leaves after earned REST but before tuck: exact UID cannot be attached to another incarnation',()=>{
+ let {s,source,moved}=game(0);
+ s=dispatchUniversalAction(packs,s,{type:'activate',uid:source.uid,mode:'frontOnce'},{actor:0});
+ s=dispatchUniversalAction(packs,s,{type:'chooseDiscardGate',uid:moved.uid},{actor:0});
+ s=dispatchUniversalAction(packs,s,legalUniversalActions(packs,s).find(a=>a.key.includes('observer-')),{actor:0});
+ s=dispatchUniversalAction(packs,s,{type:'chooseRestTuck',mode:'rest'},{actor:0});
+ assert.equal(s.pending.kind,'effect-tuck-moved');
+ const o=s.players[0].energy[0];
+ s.players[0].energy[0]=null;s.players[0].outside.push(o);
+ assert.deepEqual(legalUniversalActions(packs,s),[{type:'chooseTuckMoved',uid:null}]);
+ assert.throws(()=>dispatchUniversalAction(packs,s,{type:'chooseTuckMoved',uid:moved.uid},{actor:0}),/not currently legal/);
+ s=JSON.parse(JSON.stringify(s));assert.equal(assertUniversalMatch(packs,s),true);
+ s=dispatchUniversalAction(packs,s,{type:'chooseTuckMoved',uid:null},{actor:0});
+ assert.equal(s.players[0].outside.some(c=>c.uid===moved.uid),true);
+ assert.equal(s.pending,null);
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
