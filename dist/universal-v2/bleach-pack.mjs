@@ -10,6 +10,12 @@ import {verifiedPilotCards} from './real-card-pilots.mjs';
 // 'step' uses the V2 move-phase STEP handler; 'bounce' uses a real V2 template.
 export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
  {
+  id:"BLC-1-024",kind:"raidStripOrRetireDamage2",
+  number:"UA08BT/BLC-1-024",name:"ユーハバッハ",
+  color:"yellow",energy:6,ap:1,bp:4000,gen:1,trigger:"raid",type:"character",
+  effect:"Raid〈友哈巴赫〉：轉為 ACTIVE，可移至前線。己方回合中，若本回合已有至少 2 個角色退場，此角色 BP +1000 並獲得 Damage 2。登場：選一項：①選最多 1 個敵方前線 Raid 角色，將其最上層的 1 張卡送至場外；②使最多 1 個敵方前線 BP 3000 以下角色退場。"
+ },
+ {
   "id":"BLC-1-006","kind":"enterActiveAttackRestSkip",
   "number":"UA08BT/BLC-1-006","name":"キルゲ・オピー",
   "color":"yellow","energy":4,"ap":2,"bp":4000,"gen":1,
@@ -934,7 +940,8 @@ export function checkedBleachAddonDefinition(p){
  const isPassive=p.kind==='activeEnergy'||p.kind==='impactNull';
  const isMain=p.kind==='restSelfEnemy'||p.kind==='restEnergyRetire';
  const isRetireDraw=p.kind==='onRetireDrawOne';
- const special=p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw;
+ const isRaidDual=p.kind==='raidStripOrRetireDamage2';
+ const special=p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRaidDual;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -943,6 +950,9 @@ export function checkedBleachAddonDefinition(p){
   traits:Array.isArray(c.traits)?c.traits:(c.traits&&c.traits!=='無'?[c.traits]:[]),
   implementation:p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'?'vanilla':'dsl',
   ...(p.kind==='step'?{step:true}:{}),
+  ...(isRaidDual?{raidName:'ユーハバッハ',
+   passiveBonuses:[{condition:{kind:'retireCountThisTurn',turn:'own',
+    controller:'any',cardType:'character',min:2},bp:1000,extraDamage:1}]}:{}),
    ...(p.kind==='enterActiveAttackRestSkip'?{enterActiveIfOpponentRest:true}:{}),
   ...(p.kind==='activeEnergy'?{activeExtraEnergy:1}:{}),
   ...(p.kind==='impactNull'?{impactNull:true}:{}),
@@ -951,7 +961,14 @@ export function checkedBleachAddonDefinition(p){
   ...(p.kind.startsWith('retireBonus')?{triggerEffect:{op:'retireOppFront'}}:{}),
   ...(p.kind==='enemyBpDown500Color'?{triggerEffect:{op:'deployOutsideCharacter',color:'purple',maxEnergy:2,ap:1,frontOnly:true}}:{}),
   ...(p.kind==='drawPlayColorHand'?{triggerEffect:{op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1}}:{}),
-  ...(!special?{templateEffects:abilities[p.kind]}:{effects:isRetireDraw?{onRetire:[{op:'draw',count:1}]}:{}})
+  ...(!special?{templateEffects:abilities[p.kind]}:{effects:
+   isRetireDraw?{onRetire:[{op:'draw',count:1}]}:
+   isRaidDual?{onPlay:[{op:'chooseOne',optional:false,options:[
+    {id:'strip',label:'Strip opponent RAID top',turn:'any',
+     then:[{op:'stripOppRaidTop',optional:true}]},
+    {id:'retire',label:'Retire BP 3000 or lower',turn:'any',
+     then:[{op:'retireOppFrontOneUnderBp',bp:3000,optional:true}]}
+   ]}]}:{}})
  };
 }
 export function bleachV2PortedCards(){
