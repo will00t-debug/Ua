@@ -78,9 +78,16 @@ for(const finalFirst of [false,true])
   const order=finalFirst?[final,draw]:[draw,final];
   for(const [index,card] of order.entries()){
    const choices=legalUniversalActions(packs,s);
-   const selected=choices.find(a=>a.type==='chooseLifeOrder'&&a.uid===card.uid);
-   assert.ok(selected,'all remaining simultaneous triggers need legal choices');
-   s=dispatchUniversalAction(packs,s,selected,{actor:1});
+   if(s.pending?.kind==='life-batch-order'){
+    const selected=choices.find(a=>a.type==='chooseLifeOrder'&&a.uid===card.uid);
+    assert.ok(selected,'simultaneous unresolved triggers need a legal order');
+    s=dispatchUniversalAction(packs,s,selected,{actor:1});
+   }else{
+    // The last remaining trigger is automatically entered by the existing
+    // scheduler; requesting another order choice would be an illegal action.
+    assert.equal(s.pending?.kind,'life-trigger');
+    assert.equal(s.pending?.uid,card.uid);
+   }
    assert.equal(s.status,'playing');
    assert.equal(s.pending?.kind,'life-trigger');
    const before=structuredClone(s),publicBefore=universalPublicView(packs,s,0);
