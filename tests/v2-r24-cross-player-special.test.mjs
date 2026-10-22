@@ -13,7 +13,7 @@ const cards=Array.from({length:14},(_,i)=>({
  ...(i===1?{trigger:'special',triggerEffect:{op:'retireOppFront'}}:{}),
  ...(i===2?{trigger:'final'}:{}),
  ...(i===3?{effects:{onRetire:[
-  {op:'drawDiscard',count:1,discardCount:1},{op:'draw',count:1}
+  {op:'buffOwnField',filter:{field:'name',value:'R24 0'},bp:500,optional:true,excludeSelf:false},{op:'draw',count:1}
  ]}}:{})
 }));
 const pack=createUniversalPack({id:'r24-opponent-retire-life',cards}),packs=[pack,pack];
@@ -48,14 +48,14 @@ for(const finalFirst of [false,true])test('Q38 SPECIAL retirement owner switches
  }
  s=dispatchUniversalAction(packs,s,{type:'chooseLifeOrder',uid:special.uid},{actor:1});
  s=dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'special',uid:victim.uid},{actor:1});
- assert.equal(s.pending?.kind,'effect-discard');
+ assert.equal(s.pending?.kind,'effect-buff-own');
  assert.equal(s.pending.player,0,'onRetire belongs to active attacking player');
  assert.equal(s.status,'playing');
  assert.ok(s.players[0].outside.some(c=>c.uid===victim.uid));
  assert.ok(!s.players[0].front.some(c=>c?.uid===victim.uid));
  assert.equal(s.players[1].lifeRevealed.some(c=>c.uid===final.uid),!finalFirst);
  const legal=legalUniversalActions(packs,s);
- assert.ok(legal.length>0&&legal.every(x=>x.type==='chooseDiscard'));
+ assert.ok(legal.length>0&&legal.every(x=>x.type==='chooseOwnBuff'));
  for(const difficulty of ['normal','hard']){
   const ai=chooseUniversalAiAction(packs,s,{difficulty});
   assert.ok(legal.some(a=>JSON.stringify(a)===JSON.stringify(ai)));
