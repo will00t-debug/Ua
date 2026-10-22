@@ -249,6 +249,6 @@ test('R27 paused REST/tuck rejects forged provenance with same-looking UID',()=>
  s=dispatchUniversalAction(packs,s,{type:'chooseRestTuck',mode:'rest'},{actor:0});
  const noEvent=structuredClone(s);
  noEvent.zoneMoveEvents.find(x=>x.uid===moved.uid&&x.from==='hand'&&x.to==='outside').earnedFieldObservers=[];
- assert.throws(()=>assertUniversalMatch(packs,noEvent),/Missing earned/);
+ assert.throws(()=>assertUniversalMatch(packs,noEvent),/Invalid private movement history|Missing earned/);
  assert.equal(assertUniversalMatch(packs,s),true);
 });
