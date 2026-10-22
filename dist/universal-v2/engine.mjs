@@ -1031,7 +1031,8 @@ function commitDestination(pack,s,p,line,slot,replaceUid,source=null){
 // The existing effectQueue serializes choices, nested effects and late releases.
 function revealLifeBatch(pack,s,owner,count){
  const pl=s.players[owner];
- if(s.lifeRevealBatch||pl.lifeRevealed.length)throw Error('Nested LIFE reveal unresolved');
+ if(s.lifeRevealBatch||s.players.some(p=>p.lifeRevealed.length))
+  throw Error('Nested LIFE reveal unresolved');
  const {revealed}=planSimultaneousLifeReveal(pl.life,count);
  if(!revealed.length){s.status='finished';s.winner=1-owner;s.endReason='unblocked-attack';return;}
  const remaining=[];
