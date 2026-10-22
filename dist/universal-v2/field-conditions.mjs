@@ -40,6 +40,9 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
  }
  if(condition.kind==='ownRetiredThisTurn')
   return retiredThisTurn(s,owner,condition.cardType);
+ if(condition.kind==='retireCountThisTurn')
+  return countRetirementsThisTurn(s,condition.controller==='own'?owner:
+   condition.controller==='opponent'?1-owner:'any',condition.cardType)>=condition.min;
  if(condition.kind==='ownLifeAtMost')
   return s.players[owner].life.length<=condition.max;
  if(condition.kind==='ownHandCountAtLeast')
@@ -69,9 +72,16 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
 
 // A history of real field-to-OUTSIDE retirements, not current outside count.
 // This is private internal state; public snapshots do not expose the UIDs.
+export function countRetirementsThisTurn(s,controller='any',cardType='any'){
+ if(![0,1,'any'].includes(controller)||!['any','field','character'].includes(cardType))
+  throw Error('Invalid true-retirement count predicate');
+ // Count completed departure EVENTS, not unique UIDs or the cards currently
+ // in outside. A returned/replayed physical card can retire again.
+ return (s.turnRetireEvents||[]).filter(e=>e.turn===s.turn&&
+  (controller==='any'||e.controller===controller)&&
+  (cardType==='any'||e.cardType===cardType)).length;
+}
 export function retiredThisTurn(s,controller,cardType='any'){
- if(![0,1].includes(controller)||!['any','field','character'].includes(cardType))
-  throw Error('Invalid true-retirement predicate');
- return (s.turnRetireEvents||[]).some(e=>e.turn===s.turn&&e.controller===controller&&
-  (cardType==='any'||e.cardType===cardType));
+ if(![0,1].includes(controller))throw Error('Invalid true-retirement predicate');
+ return countRetirementsThisTurn(s,controller,cardType)>0;
 }
