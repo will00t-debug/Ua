@@ -26,7 +26,7 @@ test('official complete 053 source-locked stats, color trigger, permanent replac
  assert.deepEqual(c.effects.onPlay,[{op:'drawDiscard',count:1}]);
  assert.deepEqual(c.mainAbility,{op:'retireOwnFieldThen',frontOnly:true,
   oncePerTurn:true,optional:true,after:[{op:'draw',count:1}]});
- assert.equal(Object.keys(pack.cards).length,40);
+ assert.equal(Object.keys(pack.cards).length,41);
  assert.deepEqual(validateUniversalDeck(pack,deck),[]);
 });
 test('genuine paid MST053 onPlay draw+discard, then optional paid FIELD retirement draws after MST075 onRetire',()=>{
