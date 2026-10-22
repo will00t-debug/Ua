@@ -30,7 +30,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-rest-bp':'選擇敵方 REST','effect-buff-trait':'選擇己方 BP 加成',
  'main-two-buff':'主要能力選擇 BP 對象',
  'main-discard-buff':'支付一張手牌，讓自身 BP 增加',
- 'effect-target':'指定角色','raid-effect-order':'突襲能力結算順序',
+ 'effect-target':'指定角色','effect-target-many':'最多選擇兩名不同敵方角色','raid-effect-order':'突襲能力結算順序',
  'retirement-order':'同時退場效果的結算順序'
 });
 export function isExactLegal(action,legal){
@@ -141,7 +141,8 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseTopOrder':return '依序放回：'+name();
   case 'chooseRestFrontEnergy':return 'REST '+name()+'，本回合產能＋1';
   case 'chooseOwnBuff':case 'chooseMainBuff':case 'chooseTraitBuff':case 'chooseRestBp':
-  case 'chooseRetireBp':case 'chooseTarget':
+  case 'chooseRetireBp':case 'chooseTargetMany':return action.uid===null?'完成目標選擇':'選擇第 '+(s.pending?.selected?.length+1||1)+' 個角色';
+  case 'chooseTarget':
    return action.uid===null?'不指定／完成':'指定 '+name();
   default:return '執行 '+action.type;
  }

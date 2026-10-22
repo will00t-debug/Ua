@@ -373,12 +373,14 @@ function verifyProgram(program,path){
   ))throw Error(path+'['+i+'] invalid mandatory draw/discard profile');
   if(['buffSelf','enemyBpDown'].includes(e.op)&&(!integer(e.bp,1)||e.bp>5000))throw Error(path+'['+i+'] invalid temporary BP');
   if(e.op==='enemyBpDown'&&(
+   (e.maxTargets!==undefined&&(
+    e.maxTargets!==2||e.optional!==true||e.zone==='field'))||
    (e.optional!==undefined&&typeof e.optional!=='boolean')||
    (e.minBp!==undefined&&(!integer(e.minBp,0)||e.minBp>50000))||
    (e.maxBp!==undefined&&(!integer(e.maxBp,0)||e.maxBp>50000))||
    (e.minBp!==undefined&&e.maxBp!==undefined&&e.minBp>e.maxBp)||
    (e.zone!==undefined&&e.zone!=='front'&&e.zone!=='field')||
-   Object.keys(e).some(k=>!['op','bp','optional','minBp','maxBp','zone'].includes(k))
+   Object.keys(e).some(k=>!['op','bp','optional','minBp','maxBp','zone','maxTargets'].includes(k))
   ))throw Error(path+'['+i+'] invalid optional targeting flag');
   if(e.op==='activeSelfIf'&&(
    (e.when===undefined&&e.entry===undefined)||

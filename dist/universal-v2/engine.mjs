@@ -777,8 +777,13 @@ function continueEffectQueue(pack,s){
     (job.zone!=='field'||card(pack,c).type==='character')&&
     (job.minBp===undefined||bp(pack,s,c)>=job.minBp)&&
     (job.maxBp===undefined||bp(pack,s,c)<=job.maxBp)).map(c=>c.uid);
-   if(targetUids.length)s.pending={kind:'effect-target',player:owner,sourceUid:job.sourceUid,
-    bp:job.bp,optional:job.optional===true,choices:targetUids,zone:job.zone||'front'};
+   if(targetUids.length){
+    if(job.maxTargets===2)s.pending={kind:'effect-target-many',player:owner,
+     sourceUid:job.sourceUid,bp:job.bp,choices:targetUids,selected:[],
+     maxTargets:2,zone:'front'};
+    else s.pending={kind:'effect-target',player:owner,sourceUid:job.sourceUid,
+     bp:job.bp,optional:job.optional===true,choices:targetUids,zone:job.zone||'front'};
+   }
   }else throw Error('Unimplemented effect op');
  }
 }
@@ -1723,6 +1728,27 @@ function resolveChoice(s,a,pack){
   retire(pack,s,opponent,'front',slot);
   continueEffectQueue(pack,s);return;
  }
+ if(q.kind==='effect-target-many'){
+  if(a.uid!==null&&(!q.choices.includes(a.uid)||q.selected.includes(a.uid)))
+   throw Error('Illegal or duplicate multi-target UID');
+  if(a.uid!==null)q.selected.push(a.uid);
+  if(a.uid===null||q.selected.length===q.maxTargets){
+   // The targets are chosen before any modifier is applied.
+   const foe=1-q.player,targets=q.selected.map(uid=>{
+    const found=s.players[foe].front.find(c=>c?.uid===uid);
+    if(!found)throw Error('Selected multi-target left the front line');
+    return found;
+   });
+   for(const c of targets){c.buffs??=[];c.buffs.push({bp:-q.bp,untilTurn:s.turn});}
+   const lethal=targets.filter(c=>bp(pack,s,c)<=0);
+   s.pending=null;
+   queueSimultaneousRetires(s,q.player,lethal.map(c=>({
+    op:'retireBatchOne',owner:q.player,targetPlayer:foe,uid:c.uid
+   })));
+   continueEffectQueue(pack,s);
+  }
+  return;
+ }
  if(q.kind==='effect-target'){
   if(a.uid===null&&q.optional===true){
    s.pending=null;continueEffectQueue(pack,s);return;
@@ -2066,6 +2092,11 @@ function legalPending(pack,s){
    ...(q.optional?[{type:'chooseRetireBp',uid:null}]:[]),
    ...q.choices.map(uid=>({type:'chooseRetireBp',uid}))
   ];
+ if(q.kind==='effect-target-many')return [
+  {type:'chooseTargetMany',uid:null},
+  ...q.choices.filter(uid=>!q.selected.includes(uid))
+   .map(uid=>({type:'chooseTargetMany',uid}))
+ ];
  if(q.kind==='effect-target')return [
    ...(q.optional?[{type:'chooseTarget',uid:null}]:[]),
    ...q.choices.map(uid=>({type:'chooseTarget',uid}))
@@ -2586,7 +2617,7 @@ export function assertUniversalMatch(pack,s){
    !Array.isArray(s.initialCounts)||s.initialCounts.length!==2||
    s.players?.length!==2||!playerIndex(s.active)||
    !['playing','finished'].includes(s.status))throw Error('Incorrect pack/version or match state');
- if(s.pending&&(!playerIndex(s.pending.player)||!['phase-order','retirement-order','block','life-batch-order','life-trigger','effect-target','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-strip-raid-top','effect-retire-own-field','effect-retire-own-character','effect-rest-bp','raid-effect-order','effect-buff-trait','effect-buff-own','effect-once-choice','main-two-buff','main-discard-buff','main-rest-front-energy','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-order','effect-recover-outside','effect-outside-rest','effect-outside-name-rest','effect-outside-traitless-rest','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-choice-mode','recovered-self-entry','effect-optional-mill','effect-pay-ap-deploy','effect-top-trait-outside'].includes(s.pending.kind)))
+ if(s.pending&&(!playerIndex(s.pending.player)||!['phase-order','retirement-order','block','life-batch-order','life-trigger','effect-target','effect-target-many','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-strip-raid-top','effect-retire-own-field','effect-retire-own-character','effect-rest-bp','raid-effect-order','effect-buff-trait','effect-buff-own','effect-once-choice','main-two-buff','main-discard-buff','main-rest-front-energy','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-order','effect-recover-outside','effect-outside-rest','effect-outside-name-rest','effect-outside-traitless-rest','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-choice-mode','recovered-self-entry','effect-optional-mill','effect-pay-ap-deploy','effect-top-trait-outside'].includes(s.pending.kind)))
   throw Error('Invalid pending controller');
  if(!Array.isArray(s.raidedThisTurn)||s.raidedThisTurn.length!==2||
    s.raidedThisTurn.some(x=>typeof x!=='boolean')||
@@ -2695,6 +2726,13 @@ export function assertUniversalMatch(pack,s){
   s.pending.choices.length+(s.pending.entries||[]).length<2||
   s.pending.choices.some(uid=>!s.lifeRevealBatch.remaining.includes(uid))))
   throw Error('Invalid LIFE order snapshot');
+ if(s.pending?.kind==='effect-target-many'&&(
+  s.pending.maxTargets!==2||!Array.isArray(s.pending.choices)||!Array.isArray(s.pending.selected)||
+  new Set(s.pending.choices).size!==s.pending.choices.length||
+  new Set(s.pending.selected).size!==s.pending.selected.length||
+  s.pending.selected.length>2||s.pending.selected.some(uid=>!s.pending.choices.includes(uid))||
+  s.pending.choices.some(uid=>typeof uid!=='string'||!uid.startsWith((1-s.pending.player)+'-'))))
+  throw Error('Invalid multi-target snapshot');
  if(s.pending?.kind==='retirement-order'&&(!Array.isArray(s.pending.entries)||
   s.pending.entries.length<2||s.pending.entries.some(e=>e.owner!==s.pending.player||
    typeof e.key!=='string'||!Array.isArray(e.jobs))))

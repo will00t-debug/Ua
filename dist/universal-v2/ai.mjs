@@ -146,6 +146,7 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   return leave;
  }
  if(s.pending?.kind==='block')return chooseBlock(pack,s,legal,difficulty);
+ if(s.pending?.kind==='effect-target-many')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-target'){
   const choices=legal.filter(a=>a.uid!==null).map(a=>({
    a,character:s.players[1-s.pending.player].front.find(c=>c?.uid===a.uid)
