@@ -1519,7 +1519,7 @@ export function verifiedSaoV2Entries(){
      ...(pin.kind==='impactNullOwnTurnHandFiveBp1000'?['tests/v2-sao-051-hand-impact-null.test.mjs']:[]),
      ...(pin.kind==='ownTurnSilicaFieldBp'?['tests/v2-sao-019-own-silica-bp.test.mjs']:[]),
      ...(pin.kind==='onPlayTopFilterBottomDiscard'?
-        [id==='SAO-1-005'?'tests/v2-r31-sao005-official-registry.test.mjs':
+        [def.id==='SAO-1-005'?'tests/v2-r31-sao005-official-registry.test.mjs':
         'tests/v2-cross-title-top-filter-round13.test.mjs']:[]),
      ...(pin.kind==='readyOnFirstBlock'?['tests/v2-ready-on-block-round14.test.mjs']:[]),
      ...(pin.kind==='frontOnceBpDown'||pin.kind==='frontOnceDiscardBpDown'?['tests/v2-single-bp-target-round14.test.mjs']:[]),
