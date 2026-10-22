@@ -186,7 +186,7 @@ function syntheticPull(s,owner,id){
  }
  throw Error('Synthetic UID missing '+id);
 }
-test('simultaneous retirement snapshots BOTH physical victims; draw/mill follow stable front order',()=>{
+test('simultaneous retirement lets the controller choose onRetire order; both still resolve once',()=>{
  const {p,deck}=syntheticRetirePack(),pair=[p,p];
  let s=newUniversalMatch(pair,{decks:[deck,deck],seed:884,first:0});
  const first=syntheticPull(s,1,'T0'),second=syntheticPull(s,1,'T1');
@@ -198,15 +198,28 @@ test('simultaneous retirement snapshots BOTH physical victims; draw/mill follow 
  const playEvent=legalUniversalActions(pair,s).find(a=>a.type==='event'&&a.uid===event.uid);
  assert.ok(playEvent);
  s=dispatchUniversalAction(pair,s,playEvent);
+ assert.equal(s.pending?.kind,'retirement-order');
+ assert.equal(s.pending.player,1,'the retired cards controller orders their own triggers');
+ assert.equal(s.active,0);
+ const choices=legalUniversalActions(pair,s);
+ assert.equal(choices.length,2);
+ assert.ok(choices.every(a=>a.type==='chooseRetirementOrder'));
+ const drawFirst=choices.find(a=>a.key.startsWith(first.uid));
+ assert.ok(drawFirst);
+ assert.throws(()=>dispatchUniversalAction(pair,s,{type:'chooseRetirementOrder',key:'forged'},{actor:1}),
+  /not currently legal/);
+ s=dispatchUniversalAction(pair,s,drawFirst,{actor:1});
  assert.equal(s.pending,null);
  assert.ok(s.players[1].outside.some(c=>c.uid===first.uid));
  assert.ok(s.players[1].outside.some(c=>c.uid===second.uid));
  assert.ok(s.players[1].hand.some(c=>c.uid===top[0]),
-  'left victim DRAW resolves before right victim mill');
+  'choosing the left victim first draws that deck top');
  assert.ok(s.players[1].outside.some(c=>c.uid===top[1]),
-  'right victim mills next card, rather than drawing it');
+  'the other victim then mills the next card');
  assert.equal(s.players[1].hand.length,handBefore+1);
  assert.equal(s.players[1].deck.length,deckBefore-2);
+ assert.equal(s.turnRetireEvents.filter(e=>e.uid===first.uid).length,1);
+ assert.equal(s.turnRetireEvents.filter(e=>e.uid===second.uid).length,1);
  assert.equal(assertUniversalMatch(pair,s),true);
 });
 test('protected retirement never fires onRetire; choosing genuine leave DOES fire from pre-exit source',()=>{

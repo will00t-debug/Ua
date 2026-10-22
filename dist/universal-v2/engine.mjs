@@ -37,6 +37,9 @@ function shuffle(s,list){
 }
 const clone=source=>structuredClone(source);
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+// Set only for the synchronous caller that just queued one retirement.
+// Not match state: AI simulations must not leak it into a later action.
+let retirementJobsInserted=0;
 function actor(s){return s.pending?.player??s.active;}
 export const universalActor=actor;
 function maySubstituteColorTriggerField(pack,s,owner,profile){
@@ -231,7 +234,21 @@ function continueEffectQueue(pack,s){
   if(job.op==='phaseOrder'){
    if(job.entries.length===1)s.effectQueue.unshift(...job.entries[0].jobs);
    else if(job.entries.length>1)s.pending={kind:'phase-order',player:owner,entries:job.entries};
-  }else if(job.op==='advanceAfterAttack')advanceAfterEnd(pack,s,owner);
+  }else if(job.op==='openRetirementBatch'){
+   if(s.retirementBatch!==null)throw Error('Retirement batch already open');
+   s.retirementBatch=[];
+  }else if(job.op==='closeRetirementBatch'){
+   if(!Array.isArray(s.retirementBatch))throw Error('Retirement batch is not open');
+   const entries=s.retirementBatch;
+   s.retirementBatch=null;
+   unshiftRetirementEntries(s,entries);
+  }else if(job.op==='retirementOrder'){
+   if(!Array.isArray(job.entries)||!job.entries.length)
+    throw Error('Retirement order needs triggers');
+   if(job.entries.length===1)s.effectQueue.unshift(...job.entries[0].jobs);
+   else s.pending={kind:'retirement-order',player:owner,entries:job.entries};
+  }else if(job.op==='battleImpactDamage')damage(pack,s,job.defender);
+  else if(job.op==='advanceAfterAttack')advanceAfterEnd(pack,s,owner);
    else if(job.op==='additionalBattleDamage'){
     // The previous life trigger (if any) has already fully resolved.
     // Never collapse separate LIFE cards into one draw or bypass triggers.
@@ -480,7 +497,7 @@ function continueEffectQueue(pack,s){
    const lethal=targets.filter(c=>bp(pack,s,c)<=0);
    // Internal jobs retain the original snapshot of physical UIDs; they do
    // NOT pick a fresh target between protected leave decisions.
-   s.effectQueue.unshift(...lethal.map(c=>({
+   queueSimultaneousRetires(s,owner,lethal.map(c=>({
     op:'retireBatchOne',owner,targetPlayer:foe,uid:c.uid
    })));
   }else if(job.op==='retireOwnCharacterOne'){
@@ -502,7 +519,7 @@ function continueEffectQueue(pack,s){
    // Protected Raid replacement choices cannot introduce fresh victims.
    const foe=1-owner;
    const targets=s.players[foe].front.filter(c=>c&&bp(pack,s,c)<=job.bp);
-   s.effectQueue.unshift(...targets.map(c=>({
+   queueSimultaneousRetires(s,owner,targets.map(c=>({
     op:'retireBatchOne',owner,targetPlayer:foe,uid:c.uid,mode:'threshold'
    })));
   }else if(job.op==='retireAtMainEnd'){
@@ -641,6 +658,25 @@ function recordTrueRetirement(pack,s,controller,physical,line){
  s.turnRetireEvents.push({turn:s.turn,controller,cardType,uid:physical.uid,
   line,fieldEntryStamp:physical.fieldEntryStamp??null});
 }
+function queueSimultaneousRetires(s,owner,jobs){
+ if(!jobs.length)return;
+ // Physical departures finish, including leave-replacement pauses, before
+ // any of their onRetire programs are ordered or resolved.
+ s.effectQueue.unshift({op:'openRetirementBatch',owner},...jobs,
+  {op:'closeRetirementBatch',owner});
+}
+function unshiftRetirementEntries(s,entries){
+ const blocks=[];
+ // Turn player resolves every trigger they control, then the opponent.
+ // One card keeps its printed instruction order; several cards are chosen.
+ for(const owner of [s.active,1-s.active]){
+  const mine=entries.filter(e=>e.owner===owner);
+  if(mine.length===1)blocks.push(...mine[0].jobs);
+  else if(mine.length>1)blocks.push({op:'retirementOrder',owner,entries:mine});
+ }
+ if(blocks.length)s.effectQueue.unshift(...blocks);
+ return blocks.length;
+}
 function queueRetirement(pack,s,p,c,line){
  // Capture the source before moving to outside. Only GENUINE retirement
  // queues onRetire; bounce, removed area and stripping a Raid top do not.
@@ -648,12 +684,25 @@ function queueRetirement(pack,s,p,c,line){
   ...job,retiredSource:{uid:c.uid,cardId:c.cardId,line,ready:c.ready,
    bp:bp(pack,s,c),fieldEntryStamp:c.fieldEntryStamp??null}
  }));
- // With simultaneous retirement: finish physical moves before queued triggers.
- s.effectQueue.push(...jobs);
+ if(!jobs.length){retirementJobsInserted=0;return 0;}
+ const entry={key:c.uid+':onRetire:'+(c.fieldEntryStamp??'0'),owner:p,
+  sourceUid:c.uid,jobs};
+ if(Array.isArray(s.retirementBatch)){
+  if(s.retirementBatch.some(x=>x.sourceUid===c.uid))
+   throw Error('Retirement trigger already queued for this physical card');
+  s.retirementBatch.push(entry);
+  retirementJobsInserted=0;
+  return 0;
+ }
+ // A lone retirement interrupts the suspended continuation (next LIFE,
+ // Impact damage, or the causing effect's follow-up). Q74: 退場時 before Impact.
+ retirementJobsInserted=unshiftRetirementEntries(s,[entry]);
+ return retirementJobsInserted;
 }
 function retire(pack,s,p,line,slot,{postImpact=false}={}){
  const c=s.players[p][line][slot];
  if(!c)throw Error('Cannot retire empty field');
+ retirementJobsInserted=0;
  if(protectedLeave(pack,s,c)){
   s.pending={kind:'leave-replacement',player:p,uid:c.uid,line,slot,
    postImpact,destination:'outside'};
@@ -663,6 +712,12 @@ function retire(pack,s,p,line,slot,{postImpact=false}={}){
  vacate(s,p,line,slot,'outside');
  recordTrueRetirement(pack,s,p,c,line);
  return false;
+}
+function queueImpactAfterRetirement(pack,s,defender){
+ // Q74: printed 退場時 finishes before Impact's life check.
+ if(retirementJobsInserted>0)s.effectQueue.splice(retirementJobsInserted,0,
+  {op:'battleImpactDamage',owner:defender,defender});
+ else damage(pack,s,defender);
 }
 // Full lines are allowed, but replacement is a mandatory explicit choice.
 // The displaced card (and any Raid layers) goes to REMOVAL, not sideline.
@@ -723,12 +778,13 @@ function advanceAfterEnd(pack,s,owner){
 }
 function resolveChoice(s,a,pack){
  const q=s.pending,p=s.players[q.player];
- if(q.kind==='phase-order'){
+ if(q.kind==='phase-order'||q.kind==='retirement-order'){
   const selected=q.entries.find(x=>x.key===a.key);
-  if(!selected)throw Error('Invalid phase-trigger-order choice');
+  if(!selected)throw Error('Invalid simultaneous-effect order');
   const rest=q.entries.filter(x=>x.key!==a.key);
+  const orderOp=q.kind==='phase-order'?'phaseOrder':'retirementOrder';
   s.pending=null;s.effectQueue.unshift(...selected.jobs,
-   ...(rest.length?[{op:'phaseOrder',owner:q.player,entries:rest}]:[]));
+   ...(rest.length?[{op:orderOp,owner:q.player,entries:rest}]:[]));
   continueEffectQueue(pack,s);return;
  }
  if(q.kind==='block'){
@@ -750,7 +806,7 @@ function resolveChoice(s,a,pack){
    const impact=impactOnBattleWin(pack,s,attacker)>0&&
     !card(pack,blocker).impactNull;
    const replacement=retire(pack,s,q.player,'front',slot,{postImpact:impact});
-   if(impact&&!replacement)damage(pack,s,q.player);
+   if(impact&&!replacement)queueImpactAfterRetirement(pack,s,q.player);
   }
   if(!s.pending)continueEffectQueue(pack,s);
   return;
@@ -758,6 +814,7 @@ function resolveChoice(s,a,pack){
  if(q.kind==='leave-replacement'){
   const loc=location(s,q.player,q.uid);
   if(!loc||loc.line!==q.line||loc.slot!==q.slot)throw Error('Leaving character moved');
+  retirementJobsInserted=0;
   if(a.mode==='protect'){
    const choices=facedownChoices(loc.c);
    if(!choices.length||!protectedLeave(pack,s,loc.c))throw Error('No eligible facedown replacement');
@@ -796,7 +853,7 @@ function resolveChoice(s,a,pack){
    if(survivor&&bp(pack,s,survivor.c)<=0)
     retire(pack,s,q.player,survivor.line,survivor.slot);
   }
-  if(q.postImpact)damage(pack,s,q.player);
+  if(q.postImpact)queueImpactAfterRetirement(pack,s,q.player);
   continueEffectQueue(pack,s);finishPending(s);return;
  }
  if(q.kind==='private-top-choice'){
@@ -1315,7 +1372,7 @@ export function newUniversalMatch(pack,{decks,seed=1,first=0}={}){
   packIds:packs.map(p=>p.id),packVersions:packs.map(p=>p.version),
   rng:(seed>>>0)||1,first,active:first,turn:0,phase:'start',status:'playing',
   winner:null,endReason:null,pending:null,extraDrawn:false,moved:false,movedUids:[],attacksThisTurn:0,
-  publicReveals:[],effectQueue:[],delayedEffects:[],nextFieldEntryStamp:1,
+  publicReveals:[],effectQueue:[],delayedEffects:[],retirementBatch:null,nextFieldEntryStamp:1,
   continuousStates:[],nextContinuousStateId:1,endRefreshed:false,players:[],
   raidedThisTurn:[false,false],mainAbilityUsedUids:[],mainReadyOnceByName:[[],[]],
   onceEffectUses:[[],[]],
@@ -1339,6 +1396,7 @@ export function newUniversalMatch(pack,{decks,seed=1,first=0}={}){
 function legalPending(pack,s){
  const q=s.pending,p=s.players[q.player];
  if(q.kind==='phase-order')return q.entries.map(x=>({type:'choosePhaseOrder',key:x.key}));
+ if(q.kind==='retirement-order')return q.entries.map(x=>({type:'chooseRetirementOrder',key:x.key}));
  if(q.kind==='block')return [
   {type:'chooseBlock',uid:null},
   ...p.front.filter(c=>c?.ready).map(c=>({type:'chooseBlock',uid:c.uid}))
@@ -1703,10 +1761,11 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
      s.phase='attack';
      const due=s.delayedEffects.filter(x=>x.turn===s.turn&&x.owner===p);
      s.delayedEffects=s.delayedEffects.filter(x=>!(x.turn===s.turn&&x.owner===p));
-     s.effectQueue.push(...due.map(x=>({
-      op:'retireAtMainEnd',owner:x.owner,sourceUid:x.sourceUid,
-      fieldEntryStamp:x.fieldEntryStamp
-     })));
+     if(due.length)s.effectQueue.push({op:'openRetirementBatch',owner:p},
+      ...due.map(x=>({
+       op:'retireAtMainEnd',owner:x.owner,sourceUid:x.sourceUid,
+       fieldEntryStamp:x.fieldEntryStamp
+      })),{op:'closeRetirementBatch',owner:p});
      queuePhaseBoundary(pack,s,'attack','start',p);
     }
    else if(s.phase==='attack'){
@@ -1857,7 +1916,7 @@ export function assertUniversalMatch(pack,s){
    !Array.isArray(s.initialCounts)||s.initialCounts.length!==2||
    s.players?.length!==2||!playerIndex(s.active)||
    !['playing','finished'].includes(s.status))throw Error('Incorrect pack/version or match state');
- if(s.pending&&(!playerIndex(s.pending.player)||!['phase-order','block','life-trigger','effect-target','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-strip-raid-top','effect-retire-own-field','effect-retire-own-character','effect-rest-bp','raid-effect-order','effect-buff-trait','effect-buff-own','effect-once-choice','main-two-buff','main-discard-buff','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-order','effect-recover-outside','effect-outside-rest','effect-outside-traitless-rest','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-choice-mode','recovered-self-entry'].includes(s.pending.kind)))
+ if(s.pending&&(!playerIndex(s.pending.player)||!['phase-order','retirement-order','block','life-trigger','effect-target','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-strip-raid-top','effect-retire-own-field','effect-retire-own-character','effect-rest-bp','raid-effect-order','effect-buff-trait','effect-buff-own','effect-once-choice','main-two-buff','main-discard-buff','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-order','effect-recover-outside','effect-outside-rest','effect-outside-traitless-rest','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-choice-mode','recovered-self-entry'].includes(s.pending.kind)))
   throw Error('Invalid pending controller');
  if(!Array.isArray(s.raidedThisTurn)||s.raidedThisTurn.length!==2||
    s.raidedThisTurn.some(x=>typeof x!=='boolean')||
@@ -1895,11 +1954,23 @@ export function assertUniversalMatch(pack,s){
     typeof x.sourceUid!=='string'||!Number.isInteger(x.turn)||
     !Number.isInteger(x.fieldEntryStamp)||x.fieldEntryStamp<1))
   throw Error('Invalid delayed effect instances');
+ if(s.retirementBatch!==null){
+  const batch=s.retirementBatch;
+  if(!Array.isArray(batch)||batch.some(e=>!e||!playerIndex(e.owner)||
+   typeof e.key!=='string'||typeof e.sourceUid!=='string'||!Array.isArray(e.jobs)||
+   e.jobs.some(j=>!j||!playerIndex(j.owner)||typeof j.op!=='string'))||
+   !s.effectQueue.some(e=>e.op==='closeRetirementBatch'))
+   throw Error('Invalid open retirement batch');
+ }
+ if(s.pending?.kind==='retirement-order'&&(!Array.isArray(s.pending.entries)||
+  s.pending.entries.length<2||s.pending.entries.some(e=>e.owner!==s.pending.player||
+   typeof e.key!=='string'||!Array.isArray(e.jobs))))
+  throw Error('Invalid retirement order');
  if(!Array.isArray(s.effectQueue)||s.effectQueue.some(e=>!playerIndex(e.owner)||
    !['draw','drawIfOwnName','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
     'discardGate','enemyFrontAllBpDown','retireOppFrontAllUnderBp',
     'buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
-    'recoverOutsideColorUnderEnergy','deployOutsideRest','deployOutsideTraitlessRestOrRaid','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','retireOwnFieldOne','retireOwnCharacterOne','openBlock','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','phaseOrder','advanceAfterAttack','additionalBattleDamage'].includes(e.op)))
+    'recoverOutsideColorUnderEnergy','deployOutsideRest','deployOutsideTraitlessRestOrRaid','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','retireOwnFieldOne','retireOwnCharacterOne','openBlock','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','phaseOrder','advanceAfterAttack','additionalBattleDamage','openRetirementBatch','closeRetirementBatch','retirementOrder','battleImpactDamage'].includes(e.op)))
   throw Error('Invalid queued effects');
  for(let p=0;p<2;p++){
   const pl=s.players[p],uids=new Set(),items=[];
