@@ -551,6 +551,15 @@ const authored=[
   "passiveBonuses":[{"condition":{"kind":"ownTraitCount","turn":"own","min":5,"zone":"field","excludeSelf":false,"trait":"第四次架南島レイド"},"bp":1500}],
   "officialTraits":["第四次架南島レイド"],
   "catalogueTraits":["第四次架南島Raid"]
+},
+{
+  "id":"SLG-1-065","name":"アーシー","color":"green","energy":4,
+  "ap":1,"bp":4000,"gen":1,"trigger":"draw","type":"character",
+  "textAnchor":"己方回合手牌5張以上時BP+1000並獲Impact1。",
+  "implementation":"dsl","effects":{},
+  "passiveBonuses":[{"condition":{"kind":"ownHandCountAtLeast","turn":"own","min":5},"bp":1000,"impact":1}],
+  "officialTraits":["DFN／第四次架南島レイド"],
+  "catalogueTraits":["DFN","第四次架南島Raid"]
 }
 ];
 export const SLG_V2_VERIFIED_IDS=Object.freeze(authored.map(c=>c.id));
