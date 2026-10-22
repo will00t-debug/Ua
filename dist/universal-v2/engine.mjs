@@ -2,6 +2,7 @@
 // Pure physical-card reducer: common UA zones/AP/phases/limited effects/Raid
 // and official Q99 optional GET/DRAW/FINAL. Unsupported keywords FAIL CLOSED.
 import {validateUniversalDeck} from './pack.mjs';
+import {appendCompletedMove} from './zone-move-events.mjs';
 import {cardHasName,cardHasTrait,matchesOwnDistinctTraits,matchesV2LiveCondition,
  ownRestPrintedBpCount,retiredThisTurn} from './field-conditions.mjs';
 import {refreshFieldActive,expireContinuousStates,pruneContinuousStates,
@@ -221,6 +222,33 @@ function matchesOutsideRecovery(pack,s,c,q){
   return d.type==='character'&&d.traits.length===0&&d.energy<=q.traitlessEnergyLimit;
  return d.color===q.color&&d.energy<=q.energy;
 }
+// Stamped only AFTER the actual card reaches its new zone. The source
+// descriptor is snapshotted from the field at move time (not from replay text).
+function recordCompletedMove(pack,s,{physical,owner,controller=owner,from,to,reason,sourceUid=null}){
+ const source=sourceUid?[...s.players[0].front,...s.players[0].energy,
+  ...s.players[1].front,...s.players[1].energy].find(c=>c?.uid===sourceUid):null;
+ const definition=source?card(pack,source):null;
+ const event=appendCompletedMove(s,{uid:physical.uid,cardId:physical.cardId,owner,controller,
+  from,to,reason,sourceUid,sourceCardId:source?.cardId??null,
+  sourceName:definition?.name??null,sourceColor:definition?.color??null,
+  sourceOnField:!!source});
+ if(owner===controller&&['own-effect','payment'].includes(reason)){
+  if(from==='hand'&&to==='outside'||from==='outside'&&to==='hand')
+   markOwnEffectZoneMove(s,owner,from,to);
+ }
+ return event;
+}
+function moveOwnedLinear(pack,s,{owner,controller=owner,from,to,index,reason,sourceUid=null}){
+ const pl=s.players[owner];
+ if(!['hand','deck','life','outside','removed'].includes(from)||
+  !['hand','deck','outside','removed'].includes(to)||from===to||
+  !Number.isInteger(index)||index<0||index>=pl[from].length)
+  throw Error('Invalid V2 linear zone move');
+ const physical=pl[from].splice(index,1)[0];
+ pl[to].push(physical);
+ recordCompletedMove(pack,s,{physical,owner,controller,from,to,reason,sourceUid});
+ return physical;
+}
 // Track only actual own-effect zone changes, NEVER ordinary drawn cards,
 // outside mill, opponent effects, GET life, or simulated unpaid choices.
 function markOwnEffectZoneMove(s,owner,from,to){
@@ -254,6 +282,7 @@ function startTurn(pack,s){
  s.turnEffectZoneMoves=[{handToOutside:false,outsideToHand:false},
   {handToOutside:false,outsideToHand:false}];
  s.turnRetireEvents=[]; // Turn boundary clears history for both controllers.
+ s.zoneMoveEvents=[]; // Per-turn internal provenance; ordinal monotonic across turns.
  const max=pl.ownTurns>=3?3:(pl.ownTurns===1&&p===s.first?1:2);
  for(let i=0;i<pl.apCards.length;i++){pl.apCards[i].inPlay=i<max;pl.apCards[i].ready=i<max;}
  refreshFieldActive(s,p);
@@ -1248,7 +1277,8 @@ function resolveChoice(s,a,pack){
     throw Error('Outside recovery needs an eligible owned physical card');
    const recovered=p.outside.splice(index,1)[0];
    p.hand.push(recovered);
-   markOwnEffectZoneMove(s,q.player,'outside','hand');
+   recordCompletedMove(pack,s,{physical:recovered,owner:q.player,from:'outside',to:'hand',
+   reason:'own-effect',sourceUid:q.sourceUid});
    // Recovered card's OWN mandatory print resolves before the recovering
    // source's remaining jobs. UID ownership and the source zone were
    // checked above. No trigger on GET Life, searchDeck, draw or bounce.
@@ -1283,8 +1313,8 @@ function resolveChoice(s,a,pack){
   if(a.uid!==null){
    const index=p.hand.findIndex(c=>c.uid===a.uid);
    if(index<0)throw Error('Discard payment needs an owned hand card');
-   p.outside.push(p.hand.splice(index,1)[0]);
-  markOwnEffectZoneMove(s,q.player,'hand','outside');
+   moveOwnedLinear(pack,s,{owner:q.player,from:'hand',to:'outside',index,
+   reason:q.kind==='effect-discard'?'own-effect':'payment',sourceUid:q.sourceUid});
    draw(s,q.player,q.count);
   }else if(!q.optional)throw Error('Mandatory cost cannot be declined');
   s.pending=null;continueEffectQueue(pack,s);return;
@@ -1293,8 +1323,8 @@ function resolveChoice(s,a,pack){
   if(a.uid!==null){
    const index=p.hand.findIndex(c=>c.uid===a.uid);
    if(index<0)throw Error('Gate payment must discard owned hand card');
-   p.outside.push(p.hand.splice(index,1)[0]);
-  markOwnEffectZoneMove(s,q.player,'hand','outside');
+   moveOwnedLinear(pack,s,{owner:q.player,from:'hand',to:'outside',index,
+   reason:q.kind==='effect-discard'?'own-effect':'payment',sourceUid:q.sourceUid});
    // Place paid effects immediately in front of later unrelated effects.
    // Pending nested choices suspend this queue without losing the remaining
    // effects. Declining payment never schedules any of the gated effects.
@@ -1306,8 +1336,8 @@ function resolveChoice(s,a,pack){
  if(q.kind==='effect-discard'){
   const index=p.hand.findIndex(c=>c.uid===a.uid);
   if(index<0)throw Error('Discard requires an owned hand card');
-  p.outside.push(p.hand.splice(index,1)[0]);
-  markOwnEffectZoneMove(s,q.player,'hand','outside');
+  moveOwnedLinear(pack,s,{owner:q.player,from:'hand',to:'outside',index,
+   reason:q.kind==='effect-discard'?'own-effect':'payment',sourceUid:q.sourceUid});
   const remaining=(q.remaining??1)-1;
   if(remaining>0&&p.hand.length)q.remaining=remaining;
   else{s.pending=null;continueEffectQueue(pack,s);}
@@ -1328,8 +1358,8 @@ function resolveChoice(s,a,pack){
    throw Error('Main discard BP must pay one OWN hand card for a current OWN source');
   // Payment precedes the temporary BP. No AP, REST or once-use consumed
   // until an exact physical own-hand discard has actually been submitted.
-  p.outside.push(p.hand.splice(index,1)[0]);
-  markOwnEffectZoneMove(s,q.player,'hand','outside');
+  moveOwnedLinear(pack,s,{owner:q.player,from:'hand',to:'outside',index,
+   reason:q.kind==='effect-discard'?'own-effect':'payment',sourceUid:q.sourceUid});
   source.buffs??=[];source.buffs.push({bp:q.bp,untilTurn:s.turn});
   s.mainAbilityUsedUids.push(source.uid);
   s.pending=null;continueEffectQueue(pack,s);return;
@@ -1610,7 +1640,7 @@ export function newUniversalMatch(pack,{decks,seed=1,first=0}={}){
   raidedThisTurn:[false,false],mainAbilityUsedUids:[],mainReadyOnceByName:[[],[]],
   onceEffectUses:[[],[]],
   turnEffectZoneMoves:[{handToOutside:false,outsideToHand:false},
-   {handToOutside:false,outsideToHand:false}],turnRetireEvents:[],
+   {handToOutside:false,outsideToHand:false}],turnRetireEvents:[],zoneMoveEvents:[],nextZoneMoveOrder:1,
   initialCounts:decks.map(d=>Object.fromEntries(Object.entries(d).filter(([,n])=>n>0)))
  };
  for(let p=0;p<2;p++){
