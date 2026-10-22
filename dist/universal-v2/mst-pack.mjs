@@ -28,6 +28,11 @@ const PRINTED_PINS=Object.freeze({
   energy:0,ap:1,bp:2000,gen:1,type:"character",traits:[],trigger:null,
   effectJa:"〖退場時〗 自分の場にフィールドがある場合、カードを1枚引く。"
  },
+ "MST-1-043":{
+  kind:"onPlayTop5GreenFieldBottomDiscard",nameJa:"ギース",color:"green",
+  energy:0,ap:1,bp:1500,gen:1,type:"character",traits:[],trigger:null,
+  effectJa:"〖登場時〗 自分の山札の上から5枚見て、緑のフィールドカードを1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。"
+ },
  "MST-1-042":{
   kind:"retiredFieldReady",nameJa:"エリナリーゼ",color:"green",energy:4,ap:1,
   bp:4000,gen:1,type:"character",traits:[],trigger:"active",
@@ -568,6 +573,9 @@ export function verifiedMstV2Cards(){
   if(pin.kind==='onPlayTop3OwnTraitBottomDiscard')
    card.templateEffects={onPlay:[{template:'searchTopOneBottomDiscard',count:3,
     filter:{field:'trait',value:'ラノア魔法大学'}}]};
+  if(pin.kind==='onPlayTop5GreenFieldBottomDiscard')
+   card.templateEffects={onPlay:[{template:'searchTopOneBottomDiscardWhere',count:5,
+    filters:[{field:'color',value:'green'},{field:'type',value:'field'}],logic:'all'}]};
   if(pin.kind==='onPlayDrawIfOwnEnergyAtLeast')
    card.templateEffects={onPlay:[{template:'drawIfOwnEnergyAtLeast',energy:7,count:1}]};
   if(pin.kind==='onPlayDraw')card.templateEffects={onPlay:[{template:'draw',count:1}]};
@@ -631,6 +639,7 @@ export function verifiedMstV2Entries(){
        ...(pin.kind==='colorSiteMainRetireDraw'?['tests/v2-mst-053-official-full.test.mjs']:[]),
      ...(pin.kind==='onPlayDrawIfOwnEnergyAtLeast'?['tests/v2-mst-063-energy-draw.test.mjs']:[]),
      ...(pin.kind==='onPlayTop3OwnTraitBottomDiscard'?['tests/v2-mst-055-cross-title-top.test.mjs']:[]),
+     ...(pin.kind==='onPlayTop5GreenFieldBottomDiscard'?['tests/v2-cross-title-top-filter-round13.test.mjs']:[]),
      ...(pin.kind==='frontGeneratesEnergy'?['tests/v2-mst-057-front-energy.test.mjs']:[]),
       ...(['onPlayRestSilenceOpponentIfFieldOutside','fieldOnPlayDrawDiscardOnRetireDraw'].includes(pin.kind)?
        ['tests/v2-mst-054-075-real-deck.test.mjs']:[]),

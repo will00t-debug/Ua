@@ -888,6 +888,58 @@ const PRINTED_PINS=Object.freeze({
       "プログレッシブ"
     ],
     "effectJa": "このキャラがアクティブの場合、このキャラの発生エナジー+【紫】。"
+  },
+  "SAO-1-009": {
+    "kind": "onPlayTopFilterBottomDiscard",
+    "nameJa": "リズベット",
+    "color": "yellow",
+    "energy": 3,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 2,
+    "type": "character",
+    "trigger": "draw",
+    "traits": ["ALO"],
+    "effectJa": "【登場時】自分の山札の上から3枚見る。その中から［特徴：女神］を1枚まで公開し手札に加える。残りを望む順で自分の山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。"
+  },
+  "SAO-1-040": {
+    "kind": "onPlayTopFilterBottomDiscard",
+    "nameJa": "キリト",
+    "color": "blue",
+    "energy": 1,
+    "ap": 1,
+    "bp": 2000,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "traits": ["アインクラッド"],
+    "effectJa": "【登場時】自分の山札の上から3枚見る。その中から［特徴：アインクラッド］を1枚まで公開し手札に加える。残りを望む順で自分の山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。"
+  },
+  "SAO-2-023": {
+    "kind": "onPlayTopFilterBottomDiscard",
+    "nameJa": "リーファ",
+    "color": "blue",
+    "energy": 1,
+    "ap": 1,
+    "bp": 2000,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "traits": ["ALO"],
+    "effectJa": "【登場時】自分の山札の上から3枚見る。その中から［特徴：ALO］を1枚まで公開し手札に加える。残りを望む順で自分の山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。"
+  },
+  "SAO-1-077": {
+    "kind": "onPlayTopFilterBottomDiscard",
+    "nameJa": "ユイ",
+    "color": "green",
+    "energy": 1,
+    "ap": 1,
+    "bp": 1500,
+    "gen": 1,
+    "type": "character",
+    "trigger": "draw",
+    "traits": ["ALO"],
+    "effectJa": "【登場時】自分の山札の上から3枚見る。その中から緑の［特徴：ALO］を1枚まで公開し手札に加える。残りを望む順で自分の山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。"
   }
 });
 export const SAO_V2_PILOT_IDS=Object.freeze(Object.keys(PRINTED_PINS).sort());
@@ -966,6 +1018,18 @@ export function verifiedSaoV2Cards(){
    card.templateEffects={onPlay:[{template:'bounceOwnOtherUnderEnergy',energy:1}]};
   if(pin.kind==='onPlayPeekTop')
    card.templateEffects={onPlay:[{template:'peekTopOne'}]};
+  if(pin.kind==='onPlayTopFilterBottomDiscard'){
+   const spec={
+    'SAO-1-009':{count:3,filter:{field:'trait',value:'女神'}},
+    'SAO-1-040':{count:3,filter:{field:'trait',value:'アインクラッド'}},
+    'SAO-2-023':{count:3,filter:{field:'trait',value:'ALO'}},
+    'SAO-1-077':{count:3,filters:[{field:'color',value:'green'},{field:'trait',value:'ALO'}],logic:'all'}
+   }[id];
+   if(!spec)throw Error(id+' missing audited top-filter');
+   card.templateEffects={onPlay:[spec.filters
+    ?{template:'searchTopOneBottomDiscardWhere',count:spec.count,filters:spec.filters,logic:spec.logic}
+    :{template:'searchTopOneBottomDiscard',count:spec.count,filter:spec.filter}]};
+  }
   if(pin.kind==='lifeGatedRestRetire'){
     card.templateEffects={onPlay:[{template:'restOrRetireEnemyFrontByOwnLife',
      bp:5000,lifeAtMost:4,optional:false}]};
@@ -1023,6 +1087,7 @@ export function verifiedSaoV2Entries(){
      ...(pin.kind==='ownLifeAtMostFourBp500'?['tests/v2-sao-020-life-threshold-bp.test.mjs']:[]),
      ...(pin.kind==='impactNullOwnTurnHandFiveBp1000'?['tests/v2-sao-051-hand-impact-null.test.mjs']:[]),
      ...(pin.kind==='ownTurnSilicaFieldBp'?['tests/v2-sao-019-own-silica-bp.test.mjs']:[]),
+     ...(pin.kind==='onPlayTopFilterBottomDiscard'?['tests/v2-cross-title-top-filter-round13.test.mjs']:[]),
      'tests/universal-v2-sao-mst-cross-title.test.mjs'
     ]),
     ...(def.implementation==='vanilla'?{verifiedNoExtraEffects:true}:{})
