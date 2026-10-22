@@ -518,6 +518,11 @@ function normalize(card,packId){
   integer(mainAbility.bp,1)&&mainAbility.bp<=5000&&
   Object.keys(mainAbility).length===2&&
   Object.keys(mainAbility).every(k=>['op','bp'].includes(k));
+ const mainPayAp=mainAbility?.op==='payApDrawGainEnergy'&&
+  mainAbility.oncePerTurn===true&&mainAbility.draw===1&&
+  integer(mainAbility.extraEnergy,1)&&mainAbility.extraEnergy<=3&&
+  Object.keys(mainAbility).length===4&&
+  Object.keys(mainAbility).every(k=>['op','oncePerTurn','draw','extraEnergy'].includes(k));
  const mainRestProgram=mainAbility?.op==='restSelfThen'&&
   mainAbility.frontOnly===true&&
   Object.keys(mainAbility).length===3&&
@@ -527,7 +532,7 @@ function normalize(card,packId){
   Object.keys(mainAbility.then[0]).every(k=>['op','count'].includes(k));
  if(mainRestProgram)verifyProgram(mainAbility.then,card.id+'.mainAbility.then');
  if(mainAbility!==null&&
-  (card.type!=='character'||!(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainRestBuff||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainFrontProgram)))
+  (card.type!=='character'||!(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainRestBuff||mainPayAp||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainFrontProgram)))
   throw Error(card.id+' unsupported main action ability');
  const passiveBonuses=validatePassiveBonuses(card);
  const implemented=card.implementation;

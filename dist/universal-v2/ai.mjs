@@ -208,6 +208,7 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   (foeReady?legal.find(a=>a.type==='activate'&&a.mode==='selfRestEnemy'):null)||
   legal.find(a=>a.type==='activate'&&a.mode==='selfRestThen')||
   legal.find(a=>a.type==='activate'&&a.mode==='selfRestBuff')||
+  legal.find(a=>a.type==='activate'&&a.mode==='payApDrawEnergy')||
   legal.find(a=>a.type==='activate'&&a.mode==='selfRestEnergyRetire')||
   (difficulty==='hard'&&s.players[s.active].hand.length>1?
    legal.find(a=>a.type==='activate'&&a.mode==='discardSelfBuff'):null);

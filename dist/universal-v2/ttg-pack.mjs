@@ -32,7 +32,11 @@ const additions=[
   implementation:'dsl',effects:{},nameAliases:['ヨーコ'],
   mainAbility:{op:'restSelfGainEnergyRetireEndMain',lines:'field',oncePerTurn:true,
    extraEnergy:1,end:'hand'},
-  match:'返回手牌'}
+  match:'返回手牌'},
+ {id:'TTG-1-015',name:'ニア',energy:0,ap:1,bp:500,gen:1,color:'green',type:'character',trigger:'draw',
+  implementation:'dsl',effects:{},
+  mainAbility:{op:'payApDrawGainEnergy',oncePerTurn:true,draw:1,extraEnergy:1},
+  match:'主要階段每回合一次，支付1 AP：抽1張；本回合產生能源+1。'}
 ];
 export const TTG_V2_ADDITION_IDS=Object.freeze(additions.map(x=>x.id));
 export function verifiedTtgV2Additions(){

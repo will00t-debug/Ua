@@ -1767,6 +1767,9 @@ export function legalUniversalActions(pack,s){
    if(ability?.op==='restSelfBuffOther'&&c.ready&&
     field(pl).some(x=>x.uid!==c.uid&&card(pack,x).type==='character'))
     out.push({type:'activate',uid:c.uid,mode:'selfRestBuff'});
+   if(ability?.op==='payApDrawGainEnergy'&&
+    !s.mainAbilityUsedUids.includes(c.uid)&&pl.apCards.some(x=>x.ready))
+    out.push({type:'activate',uid:c.uid,mode:'payApDrawEnergy'});
   }
   for(const c of pl.front.filter(Boolean)){
    const d=card(pack,c),ability=originalEffectsDisabled(s,c)?null:d.mainAbility;
@@ -1792,6 +1795,12 @@ export function legalUniversalActions(pack,s){
     // on either line. No ターン1 is printed, so a later ACTIVE can pay again.
     if(c.ready&&field(pl).some(x=>x.uid!==c.uid&&card(pack,x).type==='character'))
      out.push({type:'activate',uid:c.uid,mode:'selfRestBuff'});
+    continue;
+   }
+   if(ability.op==='payApDrawGainEnergy'){
+    // 【APを1支払う】 does not rest this card. A REST character can still pay.
+    if(!s.mainAbilityUsedUids.includes(c.uid)&&pl.apCards.some(x=>x.ready))
+     out.push({type:'activate',uid:c.uid,mode:'payApDrawEnergy'});
     continue;
    }
    if(ability.op==='restSelfThenRestOppFrontOne'){
@@ -1973,6 +1982,17 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
      fieldEntryStamp:selected.fieldEntryStamp,turn:s.turn};
     if(ability.end==='hand')s.delayedEffects.push({...delayed,op:'moveAtMainEnd',destination:'hand'});
     else s.delayedEffects.push({...delayed,op:'retireAtMainEnd'});
+    break;
+   }
+   if(ability.op==='payApDrawGainEnergy'){
+    if(action.mode!=='payApDrawEnergy'||s.mainAbilityUsedUids.includes(selected.uid)||
+     !pl.apCards.some(c=>c.ready))
+     throw Error('AP energy requires one ready AP and an unused source');
+    spendAp(pl,1);
+    s.mainAbilityUsedUids.push(selected.uid);
+    draw(s,p,ability.draw);
+    selected.buffs??=[];
+    selected.buffs.push({energy:ability.extraEnergy,untilTurn:s.turn});
     break;
    }
    if(ability.op==='restSelfBuffOther'){
