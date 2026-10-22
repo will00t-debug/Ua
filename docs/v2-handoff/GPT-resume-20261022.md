@@ -456,3 +456,16 @@ R29 無新增正式卡牌，沒有新增 DSL 原語。五作品仍 **312/700**�
 **R32 第一優先：** 取得 BLC-4-034 MAIN「支付自我退場後最多 1 底牌回手」的直接官方結算裁定（選取快照時點、真正退場/退休觸發與替代中斷、多人層 Raid 和剩餘下層的去向）；有明確 oracle 才可最小改動既有 queue/zone move UID/stamp 作共享 recovery。官方資料不足則先挑 `TTG-1-028` 的跨作品『至下個己方回合開始前禁止攻擊』通用 *turn-bounded legal action restriction*，先確定官方結束時點、重進場的 stamped expiration，不和 BP Buff、onAttack 授予或產能混用。SLG-1-070 AP 額外目標費及 MST-1-059 FRONT 暫時產能保留為不同的獨立原語候選。巢狀第二批 LIFE 繼續原子 fail-closed；不以未知官方次序強行整合。
 
 **執行邊界：** 全部 PASS 統計來自 GitHub Actions **remote Node.js 22**，本環境 GitHub clone DNS 失敗，未跑本地 Node22，沒有私自並行修改別人的 local working tree、main merge、正式 Vercel 部署、覆寫 Cursor PR #77、force push。已驗證最新已完成程式提交 `6a885ca40251f4f914c2b8aa5a2f91ccd76b62e6`；本交接文件提交本身要另核對精確 SHA Actions，不能只拿舊 green 抵充。
+
+
+
+## 第三十二輪｜通用禁止攻擊、正式 TTG-1-028 及跨作品真卡測試（2026-10-23）
+
+從 R31 [39871185997](https://github.com/will00t-debug/Ua/actions/runs/39871185997) 成功 HEAD `2aa041e5f7b31090966be09af551b2cd930e94ef` 延續 GPT PR #78，保留 Cursor base/main/production。官方印刷來源與逐批差異詳見 [V2-R32-cross-title-next-own-start-attack-ban.md](./V2-R32-cross-title-next-own-start-attack-ban.md)。
+
+1. **A** `02893557` + syntax fix `52aa9b4b`: existing `continuousStates` 新增 physical/stamped `cannotAttack`，僅濾除合法 `attack` action，`sourceLinked:false`，嚴格於能力授予者 **下個自己回合 START** 到期；不影響阻擋／REST／BP／能源。第一次 [39872555141](https://github.com/will00t-debug/Ua/actions/runs/39872555141) 因一處括號語法錯誤失敗，修正後 [39872730722](https://github.com/will00t-debug/Ua/actions/runs/39872730722) full green。
+2. **B** `64a17b76e091771aed54bbbbc81bf4f9ae4e5a33`: 嚴格通用 onPlay DSL `forbidAttackOppFrontOne` + 現有 `effectQueue` 上的 `effect-attack-ban` pending，選 0/1 敵方 FRONT，原子核對所有者／UID／`fieldEntryStamp`、AI 合法選項；真正 TTG-028 合法 50 卡 cross-title 隔離測試。 [39873136036](https://github.com/will00t-debug/Ua/actions/runs/39873136036) **1838/1838，60/60**。
+3. **C** `2f1f7c0ec71453026053d22693378a4ec44d8e62` 正式註冊綠4/AP1/BP4000、Simon 或 Viral 雙 Raid 底板、onPlay 抽1、僅己方回合對手 FRONT 攻擊禁止、LIFE RAID 的 `TTG-1-028`。同步 TTG 審核資料、獨立 manifest、真卡測試。初 CI [39873375638](https://github.com/will00t-debug/Ua/actions/runs/39873375638) 兩個歷史清單失配，`f5f1323d` 更新來源 CSV 和 TTG 明確名單，`7481cde1` 更新獨立 workstream 範疇，[39873771779](https://github.com/will00t-debug/Ua/actions/runs/39873771779) **1839/1839，60/60**。
+4. **D** `c5b08f0d4d32402a6eaf22d368be388bcc15d750`: 兩種 Raid 底板、沒有敵方 FRONT 時仍抽牌、選 0、過期實體 stamp、off-turn 無效、Human UI 選項的真卡正反例與公開提示。[39874056639](https://github.com/will00t-debug/Ua/actions/runs/39874056639) **1843/1843 Node22, 60/60 matrix, independent manifest and unported report success**。
+
+**目前最新程式數據：** BLEACH97 TTG**36** SLG41 SAO92 MST48 → **314/700**，未移植 **386**，全面逐卡 FAQ 完整認證仍 **0**。TTG-1-028 本輪正式移植，非隔離 prototype；新增通用不能攻擊的 *legal action restriction*，**不是** `grantOnAttack`、`cannotActive` 或增加能源。BLC-4-034 MAIN 的 REST／真正退場費用與下層裏向卡回收優先權欠官方明確依據，**仍不實作**，BLC-2-019/047 也未登錄；巢狀二次 LIFE 繼續 fail closed。下一輪可先等 BLC-034 官方裁定，或研究 SLG-1-070 Q2062 的共用 AP 選擇加價，而非猜時序。既有前30輪能力未刪，未改 main/PR77/正式站、未 force push；Node22 僅 GitHub Actions 遠端實測。本交接 docs SHA 另需 CI。
