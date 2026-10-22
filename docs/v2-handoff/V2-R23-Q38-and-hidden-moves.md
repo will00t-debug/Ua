@@ -54,3 +54,20 @@ an official selectable order between subordinate moves. No new Raid geometry is
 made playable; existing strip eligibility remains restricted. Departing source
 metadata is unknown unless captured by the original route; no owner/controller
 or field-source proof is invented for underlying rule cleanup.
+
+## D — facedown consumption provenance
+
+`zoneMoveEvents` now records completed protection consumption (`protection`) and
+rule cleanup separately, with original immediate `attachedToUid`, physical UID,
+`wasFaceDown`, and `identityViewersBefore`. The protective field top is the known
+source; ordinary rule cleanup has no invented field source. Hidden history stays
+in the private ledger. Before movement, the owner can inspect their attachments,
+the opponent cannot; after an actual move outside the card becomes public.
+Official [Q2316, EX15BT](https://www.unionarena-tcg.com/jp/faq/list.php?series=EX15BT)
+confirms this owner/opponent distinction. No speculative hidden identity is used
+to produce triggers. Unknown source metadata stays null/false. Protection
+consumption does not retire the undercard. If loss of a modifier subsequently
+kills the top, that is a separate genuine retirement. Existing real TTG-1-073 vs
+BLEACH scenarios now assert the journal, in addition to synthetic negative UID,
+actor, owner, visibility and serialized-history tests. Other attachment effects
+not routed through these operations remain unaudited.

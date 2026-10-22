@@ -2,7 +2,7 @@
 // Pure physical-card reducer: common UA zones/AP/phases/limited effects/Raid
 // and official Q99 optional GET/DRAW/FINAL. Unsupported keywords FAIL CLOSED.
 import {validateUniversalDeck} from './pack.mjs';
-import {appendCompletedMove,matchesCompletedMove} from './zone-move-events.mjs';
+import {appendCompletedMove,matchesCompletedMove,V2_MOVE_REASONS} from './zone-move-events.mjs';
 import {planSimultaneousLifeReveal} from './life-reveal-batch.mjs';
 import {cardHasName,cardHasTrait,matchesOwnDistinctTraits,matchesV2LiveCondition,
  ownRestPrintedBpCount,retiredThisTurn} from './field-conditions.mjs';
@@ -228,7 +228,7 @@ function matchesOutsideRecovery(pack,s,c,q){
 }
 // Stamped only AFTER the actual card reaches its new zone. The source
 // descriptor is snapshotted from the field at move time (not from replay text).
-function recordCompletedMove(pack,s,{physical,owner,controller=owner,from,to,reason,sourceUid=null}){
+function recordCompletedMove(pack,s,{physical,owner,controller=owner,from,to,reason,sourceUid=null,attachedToUid=null,wasFaceDown=false}){
  const activeSource=sourceUid?[...s.players[0].front,...s.players[0].energy,
   ...s.players[1].front,...s.players[1].energy].find(c=>c?.uid===sourceUid):null;
  // When the source bounces itself, it just left the field. The completed
@@ -239,7 +239,7 @@ function recordCompletedMove(pack,s,{physical,owner,controller=owner,from,to,rea
  const event=appendCompletedMove(s,{uid:physical.uid,cardId:physical.cardId,owner,controller,
   from,to,reason,sourceUid,sourceCardId:source?.cardId??null,
   sourceName:definition?.name??null,sourceColor:definition?.color??null,
-  sourceOnField:!!source});
+  sourceOnField:!!source,attachedToUid,wasFaceDown});
  // Keep the prior turnEffectZoneMoves boolean contract unchanged, including
  // historical forced opponent discards. It is NOT source-sensitive and must
  // NOT be used for new specific-source triggers; zoneMoveEvents is authoritative.
@@ -900,19 +900,22 @@ function bounceToHand(pack,s,p,uid,sourceUid=uid){
  recordCompletedMove(pack,s,{physical:bounced,owner:p,from:found.line,to:'hand',
   reason:'own-effect',sourceUid});
 }
+function buriedMoves(top){
+ return [...(top.stack||[]),...(top.under||[])].flatMap(c=>[
+  {physical:c,attachedToUid:top.uid,wasFaceDown:c.faceDown===true},...buriedMoves(c)]);
+}
 function vacate(pack,s,p,line,slot,destination='outside'){
  const top=s.players[p][line][slot];if(!top)throw Error('Empty field slot');
  if(!['outside','removed'].includes(destination))throw Error('Invalid destination');
  s.players[p][line][slot]=null;
- const expand=c=>[c,...(c.stack||[]).flatMap(expand),...(c.under||[]).flatMap(expand)];
  const reset=c=>({...c,stack:[],under:[],buffs:[],ready:false,faceDown:false,fieldEntryStamp:null});
  // Q60/Q61/Q62: subordinate cards go OUTSIDE even if the top is removed.
  // Only the visible field object qualifies for onRetire, never its layers.
- const [visible,...buried]=expand(top);
- s.players[p][destination].push(reset(visible));
- for(const c of buried){
-  const physical=reset(c);s.players[p].outside.push(physical);
-  recordCompletedMove(pack,s,{physical,owner:p,from:'raid-under',to:'outside',reason:'rule'});
+ const buried=buriedMoves(top);
+ s.players[p][destination].push(reset(top));
+ for(const entry of buried){
+  const physical=reset(entry.physical);s.players[p].outside.push(physical);
+  recordCompletedMove(pack,s,{...entry,physical,owner:p,from:'raid-under',to:'outside',reason:'rule'});
  }
 }
 function recordTrueRetirement(pack,s,controller,physical,line){
@@ -1148,10 +1151,16 @@ function resolveChoice(s,a,pack){
    if(!choices.length||!protectedLeave(pack,s,loc.c))throw Error('No eligible facedown replacement');
    const selection=choices.length===1?choices[0]:a.uid;
    if(!choices.includes(selection))throw Error('Must select an owned facedown replacement');
+   const entry=buriedMoves(loc.c).find(e=>e.physical.uid===selection);
+   if(!entry)throw Error('Missing attachment provenance');
    const consumed=detachFacedown(loc.c,selection);
    if(!consumed)throw Error('Facedown card no longer available');
-   const expand=c=>[c,...(c.stack||[]).flatMap(expand),...(c.under||[]).flatMap(expand)];
-   p.outside.push(...expand(consumed).map(c=>({...c,faceDown:false,ready:false,stack:[],under:[],buffs:[]})));
+   for(const moved of [entry,...buriedMoves(consumed)]){
+    const physical={...moved.physical,faceDown:false,ready:false,stack:[],under:[],buffs:[],fieldEntryStamp:null};
+    p.outside.push(physical);
+    recordCompletedMove(pack,s,{...moved,physical,owner:q.player,from:'raid-under',
+     to:'outside',reason:moved===entry?'protection':'rule',sourceUid:loc.c.uid});
+   }
   }else if(a.mode==='leave'){
     if(q.destination==='outside')queueRetirement(pack,s,q.player,loc.c,q.line);
     vacate(pack,s,q.player,q.line,q.slot,q.destination);
@@ -2588,12 +2597,16 @@ export function assertUniversalMatch(pack,s){
    typeof e.cardId!=='string'||!e.cardId||
    !['hand','deck','life','lifeRevealed','outside','front','energy','removed','raid-under'].includes(e.from)||
    !['hand','deck','life','lifeRevealed','outside','front','energy','removed','raid-under'].includes(e.to)||
-   !['payment','own-effect','opponent-effect','rule','life-trigger','retirement','raid-strip'].includes(e.reason)||
+   !V2_MOVE_REASONS.includes(e.reason)||
    (e.sourceUid!==null&&typeof e.sourceUid!=='string')||
    (e.sourceCardId!==null&&typeof e.sourceCardId!=='string')||
    (e.sourceName!==null&&typeof e.sourceName!=='string')||
    (e.sourceColor!==null&&typeof e.sourceColor!=='string')||
-   typeof e.sourceOnField!=='boolean'))
+   typeof e.sourceOnField!=='boolean'||
+   (e.attachedToUid!==undefined&&(typeof e.attachedToUid!=='string'||
+    !e.attachedToUid.startsWith(e.owner+'-')||e.attachedToUid===e.uid||
+    e.from!=='raid-under'||typeof e.wasFaceDown!=='boolean'||
+    JSON.stringify(e.identityViewersBefore)!==JSON.stringify(e.wasFaceDown?[e.owner]:[0,1])))))
   throw Error('Invalid private movement history');
  if(!Array.isArray(s.turnRetireEvents)||s.turnRetireEvents.some(e=>
   !e||e.turn!==s.turn||!playerIndex(e.controller)||
