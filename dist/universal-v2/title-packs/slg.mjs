@@ -8,6 +8,7 @@ const proof=Object.freeze({
  '056':['Impact1。','Official UA51BT/SLG-1-056 向坂 雫 green2/AP1/BP3000/gen1 no trigger. Printed impact is exactly 1 on a won battle. Official trait is the single token 第四次架南島レイド; the catalogue token 第四次架南島Raid is the known wrong label and is not registered. No life trigger. Page checked 2026-10-22; not a full FAQ certification.'],
  '069':['己方回合手牌5張以上時BP+1500。','Official UA51BT/SLG-1-069 ケン green2/AP1/BP2500/gen1. Own turn and own hand of at least 5 gives BP+1500 through ownHandCountAtLeast. Official trait is one token DFN／第四次架南島レイド; the catalogue splits DFN and 第四次架南島Raid and is not registered. No life trigger. Page checked 2026-10-22; not a full FAQ certification.'],
  '062':['己方回合中若場上有5張以上第四次架南島Raid卡，BP+1500。','Official UA51BT/SLG-1-062 最上 真 green0/AP1/BP1500/gen1 DRAW. Own turn and at least five own-field characters with the official trait 第四次架南島レイド, including this card, give BP+1500. The printed sentence has no 他の. Catalogue trait 第四次架南島Raid is the known wrong token and is not registered. Page checked 2026-10-22; no FAQ block; not a full FAQ certification.'],
+ '072':['登場時若己方有3張以上DFN，抽1張。','Official UA51BT/SLG-1-072 ミズア GREEN3/AP1/BP2000/gen2, no LIFE; onPlay draw 1 if own field has at least 3 cards with DFN trait including this entering character. The printed trait is one token DFN／第四次架南島レイド; components are independently source-audited, never inferred by splitting arbitrary slash text. Official https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-072; full FAQ acceptance remains outstanding.'],
  '065':['己方回合手牌5張以上時BP+1000並獲Impact1。','Official UA51BT/SLG-1-065 アーシー green4/AP1/BP4000/gen1 DRAW. Printed BP is 4000+. Own turn and own hand of at least 5 give both BP+1000 and impact 1. Generated energy alt is 緑, so gen is 1. Official trait is one token DFN／第四次架南島レイド. Page checked 2026-10-22; no FAQ block; not a full FAQ certification.'],
  '027':['原本BP2500以下且REST的己方影之軍團角色，BP+500','Official UA51BT/SLG-1-027 アイアン purple2/AP1/BP3000+/gen1, no trigger. Generated alt is 紫, so gen is 1. Own turn: each REST own-field character whose printed BP is 2500 or less and whose trait token is exactly 影の軍団 gives BP+500. Q2030: 元々のBP is the printed number. Q2070: a field has no BP and is not counted. The catalogue trait 影之軍團 is not registered. Page checked 2026-10-22; not a full FAQ certification.'],
 
@@ -78,7 +79,8 @@ export default Object.freeze({
      ...(def.id==='SLG-1-023'||def.id==='SLG-1-056'||def.id==='SLG-1-069'?['tests/v2-zero-engine-round14.test.mjs']:[]),
      ...(def.id==='SLG-1-062'?['tests/v2-zero-engine-round15.test.mjs']:[]),
      ...(def.id==='SLG-1-065'?['tests/v2-zero-engine-round16.test.mjs']:[]),
-     ...(def.id==='SLG-1-027'?['tests/v2-rest-printed-bp-round17.test.mjs']:[])],
+     ...(def.id==='SLG-1-027'?['tests/v2-rest-printed-bp-round17.test.mjs']:[]),
+     ...(def.id==='SLG-1-072'?['tests/v2-slg-072-dfn-draw-gpt.test.mjs']:[])],
     ...(def.implementation==='vanilla'?{verifiedNoExtraEffects:true}:{})}
   });
  }))
