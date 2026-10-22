@@ -735,3 +735,68 @@ GitHub CI：Draft PR https://github.com/will00t-debug/Ua/pull/77 合併目標是
 - 沒有瀏覽器或手機手動操作驗收。
 - 下一輪仍優先「現有 DSL 能完整表達」的真卡。候選：無條件 Damage 2／Impact 1（例如 BLC-1-074、BLC-1-009）要先確認是否只需資料、不能為了單卡加計算器；登場讓對手棄 1 張（BLC-1-054）若要做，必須是跨作品的棄牌目標 op，而不是 BLEACH 專用判斷。
 
+## 2026-10-22｜第十二輪：印刷 Impact 1、直接 Damage 2、登場對手棄 1
+
+接續第十一輪已推送的 `9f818d8f89d10d08a46d112ff533780f4faf761a`。工作分支仍是 `cursor/v2-multi-retire-life-6ff5`，Draft PR #77 的合併目標仍是 `codex/v2-resume-20261021`，不是 main。沒有改 main、沒有部署、沒有 force push，也沒有把 commit 推上共用整合分支。
+
+本輪驗收使用本機 Node **v22.23.4**，時間 2026-10-22 13:49（台北時間）。第一次完整 `npm test` 是 1549 則、1 失敗：`BLEACH_CORE_GAP_SCENARIOS` 仍把已有官方情境的 BLC-1-009、BLC-1-074 當成不能玩。已從該 fail-closed 清單移除，清單剩下 BLC-2-007 與 BLC-2-063。沒有刪測試、沒有放寬合法性。
+
+### 共用引擎
+
+1. `printedImpact` 只能是 1，代表無條件【インパクト（1）】。`impactOnBattleWin` 在原效果未被關閉時先回傳它，再看裏向底卡的條件 Impact。不能和 `conditionalUnderFaceDown` 疊加。原效果關閉時 Impact 為 0。阻擋者已有的 `impactNull` 仍會讓大於 0 的 Impact 變成 0。戰鬥勝利才造成那 1 點生命；沒有阻擋時也是 1 點，不會變成 2。
+2. `printedAttackDamage` 只能是 2，代表【ダメージ（2）】。直接攻擊的基礎生命傷害從 1 改成 2，既有被動 `extraDamage` 仍往上加。被阻擋時這 2 點生命不發生。多張生命仍走既有 `additionalBattleDamage`，一張結完才下一張。沒有為了對齊 Q73 而重寫 DAMAGE2。原效果關閉時攻擊傷害回到 1。
+3. `discardOppHand` 的 `count` 只能是 1，而且只能掛在 `onPlay`（角色或事件）。引擎把 `pending` 設成 `effect-discard`，玩家是對手（`1-owner`），沿用既有手牌送場外與 `markOwnEffectZoneMove`。手牌是空的就不開 pending、也不跳過其他效果。控制者不能代選。公開視圖不露出對手手牌。Normal／Hard AI 只能選合法的 `chooseDiscard`。`turnEffectZoneMoves` 只記實際棄牌的那一方。
+
+非角色、Impact 不是 1、Damage 不是 2、棄牌不是 1、或棄牌不在登場時，pack 驗證直接拒絕。
+
+### 批次 SHA
+
+| 批次 | 內容 | commit |
+|---|---|---|
+| A | 印刷 Impact 1 與直接 Damage 2；合成卡正負測 | `d4113aa4550f325dfb67db517bd33e7ed4b827e6` |
+| B | 正式登錄 BLC-1-009、BLC-1-074 | `ca89e91207a216fc3d94ed25bc3b65d2204a6af5` |
+| C | 登場時讓對手棄正好 1 張手牌；合成卡正負測 | `58e070d90898ffc29f3e1482656fe3fdb7845770` |
+| D | 正式登錄 BLC-1-054 | `109a9ad0af8fd80138a63ae64f493ec1c74fdf85` |
+| 回歸 | 核心缺口清單改為只留 BLC-2-007、BLC-2-063，並鎖定 009／074 已登錄 | `6b8718785332fe89dc03ab71e45a360c93d17bf2` |
+
+### 新增正式卡
+
+官方頁皆於 2026-10-22 核對。發生能源讀圖示 alt，不讀檔名數字。三張該頁都沒有獨立 FAQ。
+
+- **UA08BT/BLC-1-009** ドリスコール・ベルチ。黃 2、AP1、角色、BP3000、特徵頁「星十字騎士団」（目錄既有同義 token「星十字騎士團」）、發生黃 1、【インパクト（1）】、括號是攻擊並贏得戰鬥時對對手 1 傷害、無 Trigger。
+- **UA08BT/BLC-1-074** 京楽 春水。綠 3、AP1、角色、BP2500、護廷十三隊、發生是兩個綠（圖檔 `green3` 是 sprite 索引）、【ダメージ（2）】、括號是直接攻擊傷害改為 2、DRAW。
+- **UA08BT/BLC-1-054** 涅 マユリ。紫 3、AP1、角色、BP3000、護廷十三隊、發生紫 1、登場時「相手は自身の手札を1枚場外に置く」、無 Trigger。跨作品測試對手是 MST；MST-1-051 的 `maxCopies` 仍是 1，牌組組裝有排除，沒有放寬張數上限。
+
+條件式 Impact／Damage（例如 BLC-1-011、BLC-1-024 的被動加傷、帶額外句子的其他作品卡）沒有掛上這兩個無條件欄位。本地日文目錄裡沒有另一張「整句只有對手棄 1 張」的完整卡，所以只加了這個共用 op 和 BLC-1-054。
+
+### 登錄數（`node scripts/v2-unported-report.mjs`）
+
+| 作品 | V2 正式登錄 | 未移植 |
+|---|---:|---:|
+| BLEACH | 93/276 | 183 |
+| TTG | 30/81 | 51 |
+| SLG | 34/80 | 46 |
+| SAO | 62/183 | 121 |
+| MST | 41/80 | 39 |
+| 合計 | 260/700 | 440 |
+
+嚴格全面官方 FAQ 驗收仍為 0。
+
+### 本輪實際測試（Node v22.23.4）
+
+- `npm test`：1550 tests、1550 pass、0 fail、0 skipped。
+- `node scripts/v2-integrated-match-matrix.mjs`：60/60 finished，failures 0。
+- `node scripts/v2-unported-report.mjs`：700／Pilot 260／尚未移植 440／嚴格全面驗收 0，且 manifest 與 registry 一致。
+
+GitHub CI：`.github/workflows/v2-resume.yml` 仍只在 push 到 `codex/v2-resume-20261021` 時跑 Node 22 的 `npm test`、矩陣與未移植報告。本輪沒有推上那條共用分支，因此不能宣稱本輪 GitHub Node 22 CI 已通過，也不能借用 `fb2bd3e` 或第十一輪的本地數字。
+
+### 未完成與下一輪
+
+- Q73 與逐張 LIFE 的差異仍開放。
+- 未審核的 Raid 幾何仍 fail closed。
+- 印刷 Impact 不與裏向底卡 Impact 疊加；Impact 以外的數值、Damage 以外的 2，驗證器拒絕。
+- `discardOppHand` 固定 1 張且只在登場時。`onRetire` 白名單仍是 `draw`、`millTop`、`drawIfOwnFieldExists`、`chooseOne`、`deployOutsideTraitlessRestOrRaid`、`retireOppFrontOneUnderBp`，所以 BLC-2-010 這種退場時可選 REST 還不能當純資料卡。
+- 核心缺口清單剩下 BLC-2-007（敵方前線 BP≥1000 再 −500；現有 `enemyFrontAllBpDown` 沒有 `minBp`）與 BLC-2-063（每張實體卡本回合第一次攻擊後轉 ACTIVE）。
+- 沒有瀏覽器或手機手動操作驗收。全面 FAQ 認證仍為 0。
+- 下一輪若走現有 DSL：先對官方日文重核「整句就是抽 2 再棄 1」的事件（目錄摘要裡的 BLC-1-109），確認沒有額外句子後才用既有 `drawDiscard`。不要把條件式 Impact／Damage 登錄成 `printedImpact`／`printedAttackDamage`。若要做 BLC-2-007 或 BLC-2-063，必須先加可重用的共用規則與正負測，不能只翻支援旗標。
+
