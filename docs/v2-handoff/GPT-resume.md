@@ -788,7 +788,7 @@ GitHub CI：Draft PR https://github.com/will00t-debug/Ua/pull/77 合併目標是
 - `node scripts/v2-integrated-match-matrix.mjs`：60/60 finished，failures 0。
 - `node scripts/v2-unported-report.mjs`：700／Pilot 260／尚未移植 440／嚴格全面驗收 0，且 manifest 與 registry 一致。
 
-GitHub CI：`.github/workflows/v2-resume.yml` 仍只在 push 到 `codex/v2-resume-20261021` 時跑 Node 22 的 `npm test`、矩陣與未移植報告。本輪沒有推上那條共用分支，因此不能宣稱本輪 GitHub Node 22 CI 已通過，也不能借用 `fb2bd3e` 或第十一輪的本地數字。
+GitHub CI：`.github/workflows/v2-resume.yml` 仍只在 push 到 `codex/v2-resume-20261021` 時跑 Node 22 的 `npm test`、矩陣與未移植報告。本輪沒有推上那條共用分支。推送 `4165574a73e2834f86a5e69b1274c8b478f3414d` 之後，`gh run list --branch cursor/v2-multi-retire-life-6ff5` 沒有 Actions run；PR #77 的檢查只有 Gitar pending。因此不能宣稱本輪 GitHub Node 22 CI 已通過，也不能借用 `fb2bd3e` 或第十一輪的本地數字。
 
 ### 未完成與下一輪
 
