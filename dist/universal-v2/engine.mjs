@@ -2887,10 +2887,12 @@ export function universalPublicView(pack,s,viewer=0){
     // Front-line energy is public only for a source-verified printed producer.
     // Read the current physical UID; never expose private hand/deck identities.
     ...(card(pack,c).frontGeneratesEnergy&&!originalEffectsDisabled(s,c)?{produces:universalCardEnergy(pack,s,p,c)}:{}),
-    restrictions:fieldRestrictions(s,p,c),raidDepth:c.stack?.length||0,raidLayers:(c.stack||[]).map(layer=>layerView(layer,p,viewer))}:null),
+    restrictions:fieldRestrictions(s,p,c),raidDepth:c.stack?.length||0,raidLayers:(c.stack||[]).map(layer=>layerView(layer,p,viewer)),
+    underLayers:(c.under||[]).map(layer=>layerView(layer,p,viewer))}:null),
    energy:pl.energy.map(c=>c?{uid:c.uid,cardId:c.cardId,ready:c.ready,
     baseProduces:card(pack,c).gen,produces:universalCardEnergy(pack,s,p,c),
-    restrictions:fieldRestrictions(s,p,c),raidLayers:(c.stack||[]).map(layer=>layerView(layer,p,viewer))}:null),
+    restrictions:fieldRestrictions(s,p,c),raidLayers:(c.stack||[]).map(layer=>layerView(layer,p,viewer)),
+    underLayers:(c.under||[]).map(layer=>layerView(layer,p,viewer))}:null),
    apReady:pl.apCards.filter(c=>c.ready).length,apTotal:pl.apCards.filter(c=>c.inPlay).length,energyTotal:calcEnergy(pack,s,p),energyByColor:{...universalEnergyByColor(pack,s,p)},
    outside:pl.outside.map(c=>({uid:c.uid,cardId:c.cardId}))
   }))
