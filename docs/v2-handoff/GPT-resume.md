@@ -990,3 +990,107 @@ Raid 的新頂牌是另一個 UID，次數從 0 開始，不繼承底板。沒�
   - `TTG-1-022`：也視為庸子，加上 REST 自己、本回合能源 +1、主要階段結束時回手。回手不是現有的結束時退場。
   - `MST-1-004`：只有「因己方效果登場」時才轉 ACTIVE。
 
+## 第十五輪（2026-10-22）
+
+接續第十四輪已由 GitHub Actions 驗過的 `ed654b11c0c0b6fd7abd352da98d9e3f5a36e1ce`（pull_request run `39739813788`）與其文件修訂 `c5f0d3e6704fb29ef71a6290e72d7ecf9c9c0b1c`。工作分支仍是 `cursor/v2-multi-retire-life-6ff5`，Draft PR #77 的合併目標仍是 `codex/v2-resume-20261021`。沒有改 main、沒有部署、沒有 force push。第十四輪的阻擋、退場 REST、BP 範圍、別名，以及當時已登錄的卡都沒有重做。
+
+本輪本地驗收使用 Node **v22.23.4**。時間 2026-10-22 16:20（台北時間）完成矩陣與未移植報告。`npm test` 是 1631 則、1631 通過。沒有刪測試、沒有放寬合法性。這個數字含第十五輪 A 到 E 的新測試。GitHub Actions 要看推上去之後、這個文件 commit 所在 HEAD 自己的 pull_request run；撰寫本段時該 run 尚未結案，不能把 `39739813788` 或 `39740692643` 當成第十五輪結果。
+
+### 本輪共用引擎
+
+- `activeSelfIf`：登場後依印刷條件把自己轉 ACTIVE。條件可以是己方場上其他指定特徵的角色數量，也可以是「這次登場是己方效果造成」。`paidPlay`、`paidRaid` 是支付登場，不是效果。`outsideEffect`、`outsideEffectRaid`、`recoveredEffect` 算己方效果。`lifeColor`、`lifeRaid` 沒有卡牌 FAQ 把它們算進去，所以 fail closed，不轉 ACTIVE。滿場替換走既有 `commitDestination`，被換下的卡進 REMOVED，不是退場。封印、`skipNextActive`、`cannotActive` 都維持 REST。
+- `restSelfGainEnergyRetireEndMain` 的位置改成資料裡的 `lines`：`front`、`energy` 或 `field`。舊的四鍵 `energyOnly:true` 仍只能在能源線起動。REST 自己是代價，本回合指定顏色 +1，支付當下重算。主要階段結束的退場仍走既有延遲隊列。每回合一次鎖在實體 UID。事先被封印不能起動。起動之後才被封印，不會收回已經加上的能源，也不會取消已經排好的退場；SAO-2-050 的「を得る」沒有另外的 FAQ，沒有做成第二套引擎。
+- `moveAtMainEnd` 的目的地 `hand` 走同一條延遲隊列，結算時用既有 `bounceToHand`。頂牌回手，底板與裏向 under 去自己的場外，暫時狀態清掉。不跑 `onRetire`，不加真退場計數。UID 不在、stamp 不符、或人在 Raid 底下，都不動作。同一時間的真退場仍先走退場 batch，回手排在後面。這個順序沒有卡牌 FAQ，是 fail closed，不是控制者可選的順序。對手的公開視圖仍看不到手牌內容。
+- COLOR 的 `restOppFrontSkipNextActive` 是獨立模式 `colorRestSkip`。選一張敵方 FRONT，轉 REST，並給沒有期限的 `skipNextActive`。不是 `colorRetire`，也不是一般的 COLOR 登場。沒有敵方 FRONT 就只跳過。能源線與己方 FRONT 不是目標。
+- `draw` 可選的 `entry:'ownEffect'` 只允許角色的登場時。原因集合與上面的 ACTIVE 相同。沒有這個鍵的舊抽牌不變。
+
+### Batch A：條件式 ACTIVE 登場
+
+`187b101c585d8fce566b3b2184048a62f09f6f92`
+
+- **EX08BT/SAO-2-004** アリス・シンセシス・サーティ。也視為〈アリス〉。其他整合騎士至少 4 張時，登場轉 ACTIVE。發生能源 alt 是黃，gen 1。標準 ACTIVE Trigger。該頁沒有 FAQ。
+- **UA54BT/MST-1-004** エリス。只有「自分の効果で登場」才轉 ACTIVE。無 Trigger。該頁沒有 FAQ。
+
+### Batch B：不限定能源線的 MAIN 產能
+
+`27de62c5f83c3f1bc4edeb7c593e213f3e3039c1`
+
+四張的標頭都是「色+」：一顆色珠加一個加號，休息時的發生量是 1，不是 `activeExtraEnergy`。印刷沒有「アクティブの場合」。前線可以起動，但前線不產生能源。能源線起動後該顏色立刻 +1，主要階段結束退場。
+
+- **UA15BT/SAO-1-008** ユイ。黃。
+- **UA15BT/SAO-1-045** ピナ。青。UA15ST 再錄同一句，gen 也是 1。
+- **UA15BT/SAO-1-093** ゼクシード。綠。
+- **EX08BT/SAO-2-050** ディアベル。紫。「を得る」與上面三張用同一個已結算的 REST、+1、結束退場。
+
+SAO-1-003 已經登錄，圖示也是「黃+」，但資料仍是 gen 2 再加 `activeExtraEnergy` 1。這輪沒有改它。
+
+### Batch C：MAIN 結束時回手
+
+`d5e31fa8c365bd2f3492d1ac9312d5711749889d`
+
+- **UA56BT/TTG-1-022** ヨマコ先生。也視為〈ヨーコ〉。REST 自己，本回合綠 +1，主要階段結束時回手。標頭「綠+」是 gen 1。必要能源 1、AP 1、BP 1500、特徵大グレン団、DRAW。回手不是退場。該頁沒有 FAQ。
+
+### Batch D：COLOR 觸發的控制效果
+
+`2d3bdcfb3b70ee81b4f545bd80f0037304207868`
+
+- **UA15BT/SAO-1-012** アリス・シンセシス・サーティ。也視為〈アリス〉，有【ステップ】。己方回合場上同時有〈キリト〉與〈ユージオ〉時 BP+1000；一張 SAO-2-003 可以同時滿足兩個名字，封印後別名與這個 BP 都不算。COLOR 另句：選 1 張敵方 FRONT 轉 REST，它下一次不能 ACTIVE。發生能源圖示 alt 是「黃黃」，gen 從 3 改為 2。BP 印刷 `3000+`，數值 3000。必要能源黃 3、AP 1、特徵整合騎士。角色本文不含 COLOR 那句。該頁沒有 FAQ。
+
+### Batch E：跨作品移植
+
+`2591b21eaeb65d8b141862fba9a98f3d7d95452b`
+
+不改引擎就完整移植的是下面 4 張。A 到 D 與 MST-1-023 都不計入這個數字。
+
+- **EX08BT/SAO-2-006** ベルクーリ・シンセシス・ワン。其他整合騎士至少 3 張時，發生能源 +黃。沒有「自分のターン中」，也沒有「アクティブの場合」。標頭「黃+」所以 gen 從匯入的 2 改為 1。只有能源線真的多產生 1。無 Trigger。該頁沒有 FAQ。
+- **EX08BT/SAO-2-008** レンリ・シンセシス・トゥエニセブン。己方回合、其他整合騎士至少 4 張時 BP+1500。BP 印刷 `1500+`。發生黃，gen 1。標準 ACTIVE Trigger。該頁沒有 FAQ。
+- **UA51BT/SLG-1-062** 最上 真。己方回合、場上「第四次架南島レイド」至少 5 張時 BP+1500。印刷沒有「他の」，自己要算進去。登錄特徵用官方那一條；目錄的「第四次架南島Raid」沒有拿來計數。發生綠，gen 1。DRAW。該頁沒有 FAQ。
+- **UA54BT/MST-1-066** フィッツ。也視為〈シルフィエット〉。己方回合、己方發生能源至少 7 時 BP+1000。發生能源 alt 是「綠綠」，gen 2。特徵ラノア魔法大学。DRAW。該頁沒有 FAQ。
+
+另外用本輪的登場原因，給既有 `draw` 加了可選閘門：
+
+- **UA54BT/MST-1-023** ルーデウス。登場時若是己方效果造成，抽 1。支付 AP 登場與 LIFE 的 COLOR 登場都不抽。無 Trigger。該頁沒有 FAQ。這張算少量條件擴充，不是零引擎移植。
+
+這輪看過、仍不登錄：SLG-1-027 是逐張計數；SLG-1-065 同時要 BP 與 Impact；SLG-1-072 是特徵數量到了才抽，目前沒有這個閘門；TTG-1-015 付的是 AP 不是 REST；SAO-1-007 與 MST-1-041 是 REST 自己再給另一張角色 BP，現有的後續只允許磨牌；SAO-2-005 的 Impact 1 帶有整合騎士數量條件，不能掛上無條件的 `printedImpact`。
+
+### 登錄數（`node scripts/v2-unported-report.mjs`）
+
+| 作品 | V2 正式登錄 | 未移植 |
+|---|---:|---:|
+| BLEACH | 97/276 | 179 |
+| TTG | 31/81 | 50 |
+| SLG | 38/80 | 42 |
+| SAO | 84/183 | 99 |
+| MST | 45/80 | 35 |
+| 合計 | 295/700 | 405 |
+
+本輪正式新增 13 張。其中不改引擎就移植的是 4 張。嚴格全面官方 FAQ 驗收仍為 0。合成測試卡沒有計入。
+
+### 本輪實際測試（Node v22.23.4）
+
+- `npm test`：1631 tests、1631 pass、0 fail、0 skipped。
+- `node scripts/v2-integrated-match-matrix.mjs`：60/60 finished，failures 0。
+- `node scripts/v2-assert-independent-manifest.mjs`：bleach 97、gurren-lagann 31、solo-leveling 38、sword-art-online 84、mushoku-tensei 45；total 295。
+- `node scripts/v2-unported-report.mjs`：700／Pilot 295／尚未移植 405／嚴格全面驗收 0。
+- GitHub Actions：本段撰寫時，第十五輪 HEAD 還沒有結案的 run。被 concurrency 取消的 push run 不能當成測試失敗，也不能把第十四輪的 `39739813788` 記成這輪。
+
+### 未完成與下一輪
+
+- Q73 與逐張 LIFE 的差異仍開放。
+- 未審核的 Raid 幾何與連鎖 Raid 仍 fail closed。
+- 2回アタック與 2回ブロック都沒有「同一 UID 離場再登場後次數歸零」的專用 FAQ。目前保留該回合的次數。
+- 「自分の効果で登場」不含 LIFE Trigger。這是沒有卡牌 FAQ 時的 fail closed，不是已確認的官方排除。
+- 前線上的條件式發生能源不加進資源。只有能源線，或印了前線也能產生的卡，才產生。
+- SAO-1-003 的「黃+」與 `activeExtraEnergy` 疊加仍未改。
+- SAO-2-050、TTG-1-022 在起動後才被封印時，已獲得的能源與已排定的退場或回手不收回。沒有對應 FAQ。
+- 主要階段結束時，真退場與回手同時發生的順序沒有 FAQ。目前先退場、再回手。
+- 埋在 Raid 底下的層不會被延遲回手或延遲退場抽出來。
+- 全面 FAQ 認證仍為 0。沒有瀏覽器或手機手動操作驗收。
+- 下一輪最接近、但這輪沒有完整印刷支援的卡：
+  - `SLG-1-072`：登場時己方 DFN 至少 3 張才抽 1。缺的是特徵數量閘門。官方特徵是單一トークン，目錄把 DFN 與 Raid 拆開。
+  - `SAO-2-005`：其他整合騎士至少 4 張時才得到 Impact 1。不能把無條件 Impact 套上去。
+  - `SLG-1-065`：手牌至少 5 張時同時 BP+1000 與 Impact 1。現有的手牌 BP 不會附帶 Impact。
+  - `TTG-1-015`：付 1 AP、抽 1、本回合綠 +1。代價不是 REST 自己。
+  - `SAO-1-007`、`MST-1-041`：REST 自己，再選另一張己方角色 BP+1000。現有後續只允許磨牌頂。
+  - `MST-1-056`：REST 另一張己方 ACTIVE 的前線角色，成功後自己本回合綠 +1。不是 REST 自己的那條產能。
+
