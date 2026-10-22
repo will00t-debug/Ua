@@ -40,7 +40,7 @@ export function matchesOwnDistinctTraits(s,owner,sourceUid,profile,printed){
 // Each condition is evaluated from the current match on every BP/energy read,
 // not when a card is played. This is distinct from once-resolved turn buffs.
 // Strictly use the physical controller's fields: never hand/outside/underlayers.
-export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energy){
+export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energy,cardBp){
  if(condition.turn==='own'&&s.active!==owner)return false;
  if(condition.turn==='opponent'&&s.active===owner)return false;
  if(condition.kind==='ownEffectHandOutsideOrRecovery'){
@@ -62,6 +62,20 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   return s.players[owner].outside.length>=condition.min;
  if(condition.kind==='ownEnergyAtLeast')
   return energy()>=condition.min;
+ if(condition.kind==='oppCharacterBpAtLeast'){
+  // Q749: an effect that raises current BP counts. Printed BP alone is not
+  // the check. Mutual current-BP lookups stop at the card already being
+  // measured so two such sentences cannot recurse.
+  if(typeof cardBp!=='function')throw Error('Opponent BP condition needs a live BP reader');
+  const foe=s.players[1-owner];
+  const areas=condition.zone==='front'?[foe.front]:
+   condition.zone==='energy'?[foe.energy]:[foe.front,foe.energy];
+  for(const area of areas)for(const c of area){
+   if(!c||printed(c).type!=='character')continue;
+   if(cardBp(c)>=condition.minBp)return true;
+  }
+  return false;
+ }
  const pl=s.players[owner];
  const zones=condition.zone==='front'?[pl.front]:
   condition.zone==='energy'?[pl.energy]:[pl.front,pl.energy];

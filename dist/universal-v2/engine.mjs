@@ -113,17 +113,26 @@ function calcEnergy(pack,s,p){
  return Object.values(universalEnergyByColor(pack,s,p)).reduce((n,c)=>n+c,0);
 }
 export const universalEnergy=calcEnergy;
+const bpVisit=new Set();
 function bp(pack,s,c){
  const printed=card(pack,c),suppressed=originalEffectsDisabled(s,c);
  const owner=Number(String(c.uid).split('-')[0]);
- return (printed?.bp||0)+(suppressed?0:s.active===owner?(printed.ownTurnBp||0):(printed.opponentTurnBp||0))+
-  (suppressed?[]:printed.passiveBonuses).reduce((n,p)=>{
-   if(p.bpEach)return n+p.bpEach*ownRestPrintedBpCount(s,owner,c.uid,p.condition,x=>card(pack,x));
-   return n+(p.bp&&matchesV2LiveCondition(s,owner,c.uid,p.condition,x=>card(pack,x),
-    ()=>calcEnergy(pack,s,owner))?p.bp:0);
-  },0)+
-  (!suppressed&&hasFacedownUnder(c)?(printed.conditionalUnderFaceDown?.bp||0):0)+
-  (c.buffs||[]).filter(b=>b.untilTurn===s.turn).reduce((n,b)=>n+b.bp,0);
+ const turnBp=suppressed?0:s.active===owner?(printed.ownTurnBp||0):(printed.opponentTurnBp||0);
+ const facedown=!suppressed&&hasFacedownUnder(c)?(printed.conditionalUnderFaceDown?.bp||0):0;
+ const buffs=(c.buffs||[]).filter(b=>b.untilTurn===s.turn).reduce((n,b)=>n+b.bp,0);
+ // A current-BP condition may look back at this card. Stop there instead of
+ // walking the same passive again. Printed BP, turn BP, and this-turn buffs
+ // stay visible. Q749 still sees an effect bonus on the card being measured.
+ if(bpVisit.has(c.uid))return (printed?.bp||0)+turnBp+facedown+buffs;
+ bpVisit.add(c.uid);
+ try{
+  return (printed?.bp||0)+turnBp+facedown+buffs+
+   (suppressed?0:printed.passiveBonuses.reduce((n,p)=>{
+    if(p.bpEach)return n+p.bpEach*ownRestPrintedBpCount(s,owner,c.uid,p.condition,x=>card(pack,x));
+    return n+(p.bp&&matchesV2LiveCondition(s,owner,c.uid,p.condition,x=>card(pack,x),
+     ()=>calcEnergy(pack,s,owner),x=>bp(pack,s,x))?p.bp:0);
+   },0));
+ }finally{bpVisit.delete(c.uid);}
 }
 export const universalBp=bp;
 export function universalAttackDamage(pack,s,c){
@@ -133,7 +142,7 @@ export function universalAttackDamage(pack,s,c){
  const base=d.printedAttackDamage||1;
  return base+d.passiveBonuses.reduce((n,p)=>n+(p.extraDamage&&
   matchesV2LiveCondition(s,owner,c.uid,p.condition,x=>card(pack,x),
-   ()=>calcEnergy(pack,s,owner))?p.extraDamage:0),0);
+   ()=>calcEnergy(pack,s,owner),x=>bp(pack,s,x))?p.extraDamage:0),0);
 }
 function impactOnBattleWin(pack,s,c){
  const d=card(pack,c);
@@ -146,7 +155,7 @@ function impactOnBattleWin(pack,s,c){
  const owner=Number(String(c.uid).split('-')[0]);
  return d.passiveBonuses.reduce((n,p)=>n+(p.impact&&
   matchesV2LiveCondition(s,owner,c.uid,p.condition,x=>card(pack,x),
-   ()=>calcEnergy(pack,s,owner))?p.impact:0),0);
+   ()=>calcEnergy(pack,s,owner),x=>bp(pack,s,x))?p.impact:0),0);
 }
 export function universalImpact(pack,s,c){return impactOnBattleWin(pack,s,c);}
 function protectedLeave(pack,s,c){

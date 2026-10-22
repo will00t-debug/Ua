@@ -1188,6 +1188,19 @@ const PRINTED_PINS=Object.freeze({
     "traits": ["整合騎士"],
     "effectJa": "自分の場に他の［特徴：整合騎士］が4枚以上ある場合、このキャラは【インパクト（1）】（アタックしてバトルに勝利した時、相手プレイヤーに1ダメージ）を得る。"
   },
+  "SAO-1-017": {
+    "kind": "oppBpImpact",
+    "nameJa": "ベルクーリ・シンセシス・ワン",
+    "color": "yellow",
+    "energy": 5,
+    "ap": 1,
+    "bp": 4000,
+    "gen": 1,
+    "type": "character",
+    "trigger": "active",
+    "traits": ["整合騎士"],
+    "effectJa": "相手の場にBP4000以上のキャラがある場合、このキャラは【インパクト（1）】（アタックしてバトルに勝利した時、相手プレイヤーに1ダメージ）を得る。"
+  },
   "SAO-2-065": {
     "kind": "nameAbsentBp",
     "nameJa": "クライン",
@@ -1315,6 +1328,13 @@ export function verifiedSaoV2Cards(){
   // SAO-2-065 printed BP is 3500-. The penalty is live while 〈フレイヤ〉 is
   // absent from this card's own field. No 自分のターン中. A later silence
   // removes the penalty because it is printed text, not a gained buff.
+  // Q749: current BP, including a bonus from an effect, not only the printed
+  // number. 相手の場 is the opponent's front and energy lines. No turn limit.
+  if(pin.kind==='oppBpImpact'){
+   card.effects={};
+   card.passiveBonuses=[{condition:{kind:'oppCharacterBpAtLeast',turn:'any',
+    zone:'field',minBp:4000},impact:1}];
+  }
   if(pin.kind==='nameAbsentBp'){
    card.effects={};
    card.passiveBonuses=[{condition:{kind:'ownNameAbsent',turn:'any',
