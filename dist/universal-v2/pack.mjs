@@ -235,9 +235,18 @@ function verifyProgram(program,path){
    e.count!==1||Object.keys(e).some(k=>!['op','count'].includes(k))
   ))throw Error(path+'['+i+'] invalid opponent hand discard');
   if(e.op==='discardGate'){
+   // Typed hand-name payment: only exact printed names, never an arbitrary UID.
+   // An absent payment preserves the legacy unfiltered gate.
+   const pay=e.payment;
+   const validPay=pay===undefined||pay&&typeof pay==='object'&&!Array.isArray(pay)&&
+    Object.keys(pay).length===4&&pay.zone==='hand'&&pay.field==='name'&&
+    ['exactAny','containsAny'].includes(pay.match)&&Array.isArray(pay.values)&&
+    pay.values.length>=1&&pay.values.length<=4&&new Set(pay.values).size===pay.values.length&&
+    pay.values.every(v=>typeof v==='string'&&!!v.trim()&&v.length<=48&&v===v.trim());
+   if(!validPay)throw Error(path+'['+i+'] invalid typed name payment');
    if(typeof e.optional!=='boolean'||!Array.isArray(e.then)||
     !e.then.length||e.then.length>6||
-    Object.keys(e).some(k=>!['op','optional','then'].includes(k))||
+    Object.keys(e).some(k=>!['op','optional','then','payment'].includes(k))||
     e.then.some(x=>!['draw','millTop','peekTopOne','searchDeckOne',
      'searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside',
       'peekTopOrBottom','recoverOutsideOne','deployOutsideRest',

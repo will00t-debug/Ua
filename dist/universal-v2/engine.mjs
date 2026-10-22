@@ -309,6 +309,15 @@ function startTurn(pack,s){
 }
 // A source boundary has no gameplay effect unless a registered moved card
 // actually has an explicit source-qualified trigger profile.
+function legalNamedPayment(pack,physical,payment){
+ if(!payment)return true;
+ const name=card(pack,physical).name;
+ return payment.match==='exactAny'?payment.values.includes(name):
+  payment.match==='containsAny'&&payment.values.some(piece=>name.includes(piece));
+}
+function payableHand(pack,s,owner,payment){
+ return s.players[owner].hand.filter(c=>legalNamedPayment(pack,c,payment));
+}
 function sourceMoveBoundary(pack,s,owner,sourceUid){
  const any=playerPacks(pack).some(p=>
   Object.values(p.cards).some(c=>c.moveTriggers?.length));
@@ -570,8 +579,9 @@ function continueEffectQueue(pack,s){
     }
    }
   }else if(job.op==='discardGate'){
-   if(pl.hand.length)s.pending={kind:'effect-discard-gate',player:owner,
-    sourceUid:job.sourceUid,optional:job.optional,then:job.then};
+   if(payableHand(pack,s,owner,job.payment).length)s.pending={kind:'effect-discard-gate',player:owner,
+    sourceUid:job.sourceUid,optional:job.optional,then:job.then,
+    ...(job.payment?{payment:job.payment}:{})};
   }else if(job.op==='recoverOutsideColorUnderEnergy'){
    const choices=pl.outside.filter(c=>matchesOutsideRecovery(pack,s,c,job)).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-recover-outside',player:owner,
@@ -1514,8 +1524,8 @@ function resolveChoice(s,a,pack){
  }
  if(q.kind==='effect-discard-gate'){
   if(a.uid!==null){
-   const index=p.hand.findIndex(c=>c.uid===a.uid);
-   if(index<0)throw Error('Gate payment must discard owned hand card');
+   const index=p.hand.findIndex(c=>c.uid===a.uid&&legalNamedPayment(pack,c,q.payment));
+   if(index<0)throw Error('Gate payment must discard a matching owned hand card');
    moveOwnedLinear(pack,s,{owner:q.player,from:'hand',to:'outside',index,
    controller:q.kind==='effect-discard'&&/^[01]-/.test(q.sourceUid||'')
     ?Number(q.sourceUid[0]):q.player,
@@ -2006,7 +2016,7 @@ function legalPending(pack,s){
  ];
  if(q.kind==='effect-discard-gate')return [
   ...(q.optional?[{type:'chooseDiscardGate',uid:null}]:[]),
-  ...p.hand.map(c=>({type:'chooseDiscardGate',uid:c.uid}))
+  ...payableHand(pack,s,q.player,q.payment).map(c=>({type:'chooseDiscardGate',uid:c.uid}))
  ];
  if(q.kind==='raid-effect-order')return [
    {type:'chooseRaidOrder',mode:'baseFirst'},{type:'chooseRaidOrder',mode:'entryFirst'}
@@ -2236,7 +2246,7 @@ export function legalUniversalActions(pack,s){
    if(ability.op==='frontOnceProgram'){
     if(s.mainAbilityUsedUids.includes(c.uid))continue;
     const step=ability.then[0];
-    if(step.op==='discardGate'&&!pl.hand.length)continue;
+    if(step.op==='discardGate'&&!payableHand(pack,s,p,step.payment).length)continue;
     const debuff=step.op==='discardGate'?step.then[0]:step;
     const zones=debuff.zone==='field'
      ?[...s.players[1-p].front,...s.players[1-p].energy]:s.players[1-p].front;
@@ -2458,8 +2468,8 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
      s.mainAbilityUsedUids.includes(selected.uid))
      throw Error('Front once-per-turn program is not legal');
     const step=ability.then[0];
-    if(step.op==='discardGate'&&!pl.hand.length)
-     throw Error('Front once-per-turn program requires a hand payment');
+    if(step.op==='discardGate'&&!payableHand(pack,s,p,step.payment).length)
+     throw Error('Front once-per-turn program requires a matching hand payment');
     s.mainAbilityUsedUids.push(selected.uid);
     s.effectQueue.push(...ability.then.map(e=>({...e,owner:p,
      sourceUid:selected.uid,sourceName:d.name})),
