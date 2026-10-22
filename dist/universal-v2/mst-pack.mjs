@@ -4,6 +4,14 @@ import {MST_V2_OFFICIAL_CATALOGUE} from './sources/mst-inventory.mjs';
 import {createUniversalPack} from './pack.mjs';
 
 const PRINTED_PINS=Object.freeze({
+ "MST-1-076":{
+  kind:"fieldRetireOutsideTraitlessRestOrRaid",
+  nameJa:"迷宮の守護者 マナタイトヒュドラ",
+  color:"green",energy:3,ap:1,bp:0,gen:2,type:"field",traits:[],trigger:"special",
+  effectJa:"〖退場時〗 自分の場外から必要エナジーが『1』以下で消費APが1の特徴を持たない緑のキャラカードを1枚まで自分の場にレストで登場させるかレイドさせる。自分の場外にある他のフィールドカード1枚につき、この効果で登場させるキャラの必要エナジーの範囲+1。",
+  triggerEffectJa:"〖スペシャル〗 相手のフロントLのキャラを1枚選び、退場させる。"
+ },
+
  "MST-1-074":{
   kind:"fieldCharacterRetireDrawAndRetireModes",nameJa:"転移の迷宮",
   color:"green",energy:2,ap:1,bp:0,gen:1,type:"field",traits:[],trigger:"get",
@@ -502,7 +510,11 @@ export function verifiedMstV2Cards(){
    card.templateEffects={onPlay:[{template:'restSilenceOppFrontIfOwnOutsideField',
     optional:true}]};
   }
-  if(pin.kind==='fieldCharacterRetireDrawAndRetireModes'){
+  if(pin.kind==='fieldRetireOutsideTraitlessRestOrRaid'){
+    card.effects={onRetire:[{op:'deployOutsideTraitlessRestOrRaid',
+     color:'green',energy:1,ap:1,optional:true,perOtherOutsideField:1}]};
+   }
+   if(pin.kind==='fieldCharacterRetireDrawAndRetireModes'){
     card.effects={
      onPlay:[{op:'retireOwnCharacterOne',optional:true,after:[{op:'draw',count:2}]}],
      onRetire:[{op:'chooseOne',optional:false,options:[
