@@ -939,10 +939,10 @@ function resolveChoice(s,a,pack){
    if(a.mode==='raid'){
     const base=location(s,q.player,a.baseUid);
     if(!base||!d.raidName||!validRaidBase(pack,s,q.player,base.c,d)||
-     a.line!=='front')throw Error('Invalid named base for outside Raid');
+     !['front','energy'].includes(a.line))throw Error('Invalid named base for outside Raid');
     p.outside.splice(i,1);
     s.pending=null;
-    performRaid(pack,s,q.player,physical,a.baseUid,'front',a.slot,a.replaceUid,
+    performRaid(pack,s,q.player,physical,a.baseUid,a.line,a.slot,a.replaceUid,
      {entryReady:false});
     continueEffectQueue(pack,s);return;
    }
@@ -1403,6 +1403,8 @@ function legalPending(pack,s){
       const dests=line==='front'?[{slot}]:legalDestinations(p,'front');
       for(const dest of dests)out.push({type:'chooseOutsideTraitlessRest',
        mode:'raid',uid:c.uid,baseUid:base.uid,line:'front',...dest});
+      if(line==='energy')out.push({type:'chooseOutsideTraitlessRest',
+       mode:'raid',uid:c.uid,baseUid:base.uid,line:'energy',slot});
      }
    }
    return out;
