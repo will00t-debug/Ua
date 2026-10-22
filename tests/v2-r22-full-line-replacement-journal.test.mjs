@@ -39,14 +39,16 @@ test('full line replaces one top and buried physical UID exactly once, no retire
  assert.deepEqual(s,original);
  s=dispatchUniversalAction(packs,s,action);
  const moves=s.zoneMoveEvents.slice(before);
- const removed=moves.filter(e=>e.to==='removed');
+ const removed=moves.filter(e=>e.to==='removed'||e.from==='raid-under');
  assert.equal(removed.length,2);
+ assert.deepEqual(removed.map(e=>e.to),['outside','removed'],'official Q61: bottom goes outside');
+ assert.equal(s.players[0].removed.some(c=>c.uid===under.uid),false);
  assert.deepEqual(removed.map(e=>[e.uid,e.from,e.reason]),
   [[under.uid,'raid-under','rule'],[top.uid,'front','rule']]);
  assert.ok(removed[0].order<removed[1].order);
  assert.equal(s.players[0].front[0].uid,played.uid);
  assert.ok(s.players[0].removed.some(c=>c.uid===top.uid));
- assert.ok(s.players[0].removed.some(c=>c.uid===under.uid));
+ assert.ok(s.players[0].outside.some(c=>c.uid===under.uid));
  assert.equal(s.turnRetireEvents.some(e=>e.uid===top.uid||e.uid===under.uid),false);
  assert.equal(universalPublicView(packs,s,1).zoneMoveEvents,undefined);
  assert.equal(assertUniversalMatch(packs,s),true);

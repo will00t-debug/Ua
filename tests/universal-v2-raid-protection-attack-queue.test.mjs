@@ -131,3 +131,24 @@ test('multi-layer Raid protection selects exact hidden UID and retains a positiv
   a.type==='chooseBlock'&&a.uid===defender.uid));
  assert.equal(assertUniversalMatch(packs,preserved),true);
 });
+
+test('R23 Q60 true retirement journals each buried UID once but only top retires',()=>{
+ const {s,defender,originalBase,hidden}=arrange({layers:2});
+ const before=structuredClone(s);
+ assert.throws(()=>dispatchUniversalAction(packs,s,
+  {type:'chooseLeaveReplacement',mode:'leave'},{actor:0}),/Wrong player turn/);
+ assert.deepEqual(s,before);
+ const result=dispatchUniversalAction(packs,s,{type:'chooseLeaveReplacement',mode:'leave'},{actor:1});
+ for(const c of [originalBase,...hidden]){
+  const moves=result.zoneMoveEvents.filter(e=>e.uid===c.uid&&e.from==='raid-under');
+  assert.equal(moves.length,1);assert.equal(moves[0].to,'outside');
+  assert.equal(moves[0].owner,1);assert.equal(moves[0].reason,'rule');
+  assert.equal(result.turnRetireEvents.some(e=>e.uid===c.uid),false);
+  assert.equal(result.players[1].outside.filter(x=>x.uid===c.uid).length,1);
+  assert.ok(!legalUniversalActions(packs,result).some(a=>a.uid===c.uid));
+ }
+ assert.equal(result.turnRetireEvents.filter(e=>e.uid===defender.uid).length,1);
+ assert.equal(result.zoneMoveEvents.filter(e=>e.uid===defender.uid&&e.reason==='retirement').length,1);
+ assert.equal(universalPublicView(packs,result,0).zoneMoveEvents,undefined);
+ assert.equal(assertUniversalMatch(packs,result),true);
+});

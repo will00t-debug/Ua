@@ -900,12 +900,20 @@ function bounceToHand(pack,s,p,uid,sourceUid=uid){
  recordCompletedMove(pack,s,{physical:bounced,owner:p,from:found.line,to:'hand',
   reason:'own-effect',sourceUid});
 }
-function vacate(s,p,line,slot,destination='outside'){
+function vacate(pack,s,p,line,slot,destination='outside'){
  const top=s.players[p][line][slot];if(!top)throw Error('Empty field slot');
  if(!['outside','removed'].includes(destination))throw Error('Invalid destination');
  s.players[p][line][slot]=null;
  const expand=c=>[c,...(c.stack||[]).flatMap(expand),...(c.under||[]).flatMap(expand)];
- s.players[p][destination].push(...expand(top).map(c=>({...c,stack:[],under:[],buffs:[],ready:false,faceDown:false,fieldEntryStamp:null})));
+ const reset=c=>({...c,stack:[],under:[],buffs:[],ready:false,faceDown:false,fieldEntryStamp:null});
+ // Q60/Q61/Q62: subordinate cards go OUTSIDE even if the top is removed.
+ // Only the visible field object qualifies for onRetire, never its layers.
+ const [visible,...buried]=expand(top);
+ s.players[p][destination].push(reset(visible));
+ for(const c of buried){
+  const physical=reset(c);s.players[p].outside.push(physical);
+  recordCompletedMove(pack,s,{physical,owner:p,from:'raid-under',to:'outside',reason:'rule'});
+ }
 }
 function recordTrueRetirement(pack,s,controller,physical,line){
  // One completed field object, not the hidden layers of a Raid stack.
@@ -965,7 +973,7 @@ function retire(pack,s,p,line,slot,{postImpact=false}={}){
   return true;
  }
  queueRetirement(pack,s,p,c,line);
- vacate(s,p,line,slot,'outside');
+ vacate(pack,s,p,line,slot,'outside');
  recordCompletedMove(pack,s,{physical:c,owner:p,from:line,to:'outside',reason:'retirement'});
  recordTrueRetirement(pack,s,p,c,line);
  return false;
@@ -1000,13 +1008,8 @@ function commitDestination(pack,s,p,line,slot,replaceUid,source=null){
  if(replaceUid!==occupant.uid||!s.players[p][line].every(Boolean))
   throw Error('Full line replacement must designate exact existing card');
  // Full-line replacement is a real removal (not a retirement).
- // Flattened Raid layers leave their buried zone with independent UIDs.
- const nested=c=>[...(c.stack||[]).flatMap(x=>[x,...nested(x)]),
-  ...(c.under||[]).flatMap(x=>[x,...nested(x)])];
- const buried=nested(occupant);
- vacate(s,p,line,slot,'removed');
- for(const physical of buried)recordCompletedMove(pack,s,{physical,owner:p,
-  from:'raid-under',to:'removed',reason:'rule'});
+ // Q61 subordinate Raid layers go outside, not removed.
+ vacate(pack,s,p,line,slot,'removed');
  recordCompletedMove(pack,s,{physical:occupant,owner:p,
   from:line,to:'removed',reason:'rule'});
 }
@@ -1151,7 +1154,7 @@ function resolveChoice(s,a,pack){
    p.outside.push(...expand(consumed).map(c=>({...c,faceDown:false,ready:false,stack:[],under:[],buffs:[]})));
   }else if(a.mode==='leave'){
     if(q.destination==='outside')queueRetirement(pack,s,q.player,loc.c,q.line);
-    vacate(s,q.player,q.line,q.slot,q.destination);
+    vacate(pack,s,q.player,q.line,q.slot,q.destination);
     recordCompletedMove(pack,s,{physical:loc.c,owner:q.player,
      from:q.line,to:q.destination,reason:q.destination==='outside'?'retirement':'rule'});
     if(q.destination==='outside')recordTrueRetirement(pack,s,q.player,loc.c,q.line);

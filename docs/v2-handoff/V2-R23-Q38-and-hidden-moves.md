@@ -40,3 +40,17 @@ both checks, not merely a stack of batch objects. Required cases: new damage at
 zero hidden LIFE; FINAL replenishment then damage; two owners; SPECIAL retirement
 and onRetire; stop/resume while both checks have unresolved effects. No complete
 chain-damage support or full Q38 certification is claimed.
+
+## C — actual Raid departure and Q61 correction
+
+Official Japanese [Q60–62](https://www.unionarena-tcg.com/jp/faq/list.php?category=カード効果):
+Raid bases go outside when the top retires, is removed, or returns to hand/deck.
+Q61 therefore contradicts R22's removal of the entire stack. Corrected only the
+existing `vacate` destination: visible top uses its designated destination;
+subordinate physical cards go outside and receive individual completed-move
+records. Their reason is `rule`, never `retirement`. Only the top generates a
+true-retirement event/onRetire. Journal sequence is bookkeeping, not evidence of
+an official selectable order between subordinate moves. No new Raid geometry is
+made playable; existing strip eligibility remains restricted. Departing source
+metadata is unknown unless captured by the original route; no owner/controller
+or field-source proof is invented for underlying rule cleanup.
