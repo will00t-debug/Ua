@@ -8,7 +8,7 @@ const ids=Array.from({length:13},(_,i)=>'P'+String(i).padStart(2,'0'));
 const cards=ids.map(id=>({id,name:id,type:'character',color:'green',energy:0,
  ap:1,bp:1000,gen:1,implementation:id==='P00'?'dsl':'vanilla',
  ...(id==='P00'?{effects:{onPlay:[{op:'searchDeckOne',
-  filter:{field:'name',value:'P01'},optional:true}]}}:{})}));
+  filter:{field:'name',value:'P01'},optional:true,shuffle:true}]}}:{})}));
 const pack=createUniversalPack({id:'r20-search-uid-provenance',cards}),packs=[pack,pack];
 const deck=Object.fromEntries(ids.map((id,i)=>[id,i===12?2:4]));
 assert.deepEqual(validateUniversalDeck(pack,deck),[]);
