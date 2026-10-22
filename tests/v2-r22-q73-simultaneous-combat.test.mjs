@@ -10,7 +10,7 @@ const cards=Array.from({length:13},(_,i)=>({
  gen:1,implementation:i===0?'dsl':'vanilla',
  ...(i===0?{printedAttackDamage:2}:{}),
  ...(i===3?{trigger:'draw'}:{}),...(i===4?{trigger:'get'}:{}),
- ...(i===5||i===6?{trigger:'final'}:{})
+ ...(i===5?{trigger:'final'}:{})
 }));
 const pack=createUniversalPack({id:'r22-q73-atomic-battle',cards}),packs=[pack,pack];
 const deck=Object.fromEntries(cards.map((c,i)=>[c.id,i===12?2:4]));
@@ -65,7 +65,7 @@ test('Q73 physical DAMAGE2 both revealed at once, defender can pick reverse trig
  assert.equal(assertUniversalMatch(packs,s),true);
 });
 test('Q36 both FINAL checks: first restores one LIFE, second no longer activates',()=>{
- let {s,chosen}=duel(['L5','L6']);
+ let {s,chosen}=duel(['L5','L5']);
  assert.equal(s.pending?.kind,'life-batch-order');
  s=dispatchUniversalAction(packs,s,{type:'chooseLifeOrder',uid:chosen[1].uid},{actor:1});
  assert.equal(s.pending?.kind,'life-trigger');
