@@ -673,3 +673,65 @@ This section records the last fully evaluated **code commit** `d16ffce0`. A docu
 - [整合 CI 39720372611](https://github.com/will00t-debug/Ua/actions/runs/39720372611) **SUCCESS**。實際 job `119632205434` 日誌：`tests 1521`、`pass 1521`、`fail 0`；矩陣 `60/60 finished (failures 0)`；unported report `700 / 255 / 445`。setup-node 明確指定 Node22。
 - [SAO/MST 獨立 CI 39720376827](https://github.com/will00t-debug/Ua/actions/runs/39720376827) **SUCCESS**；`core-shared-regression` 和 `isolated-port-regression` 均成功。
 - 本段為後續文件提交，產生的新 HEAD 不是上述程式 SHA；文件 HEAD 的 CI 必須另查，不借用程式 CI 成功。
+
+## 2026-10-22｜第十一輪：同時退場順序、LIFE 連鎖與兩張 mill 退場真卡
+
+接續時重新確認：`origin/codex/v2-resume-20261021` HEAD 為 `810e66959906fe18316bf7c49ab486ff1b93effc`（第十輪交接文件）。其前一個程式 SHA `fb2bd3e1f6bf881545fadccccfc0e07c1483986e` 的 Node 22 CI 仍是上一輪已記錄的成功，不借用到本輪。PR #75 當時為 Draft、可合併，CI 全綠。本輪工作分支 `cursor/v2-multi-retire-life-6ff5` 從該 HEAD 建立，PR 合併目標是 `codex/v2-resume-20261021`，不是 main。沒有改 main、沒有部署正式站、沒有 force push。
+
+本輪驗收使用本機 Node **v22.23.4**（`node -v`），時間 2026-10-22 13:34（台北時間）。
+
+### 共用引擎（沒有另寫第二套觸發系統）
+
+1. 同時真退場先完成實體離場（含既有 leave-replacement），再關閉 batch。同一控制者的多個 `onRetire` 由該玩家排序；回合玩家的觸發全部先於非回合玩家。單張卡維持印刷順序，不另開選項。
+2. 退場效果再次造成的真退場，其 `onRetire` 插到剩餘隊列之前，因此先於其他同時觸發，也先於造成此次退場的後續動作（例如事件的後續抽牌）。同一張實體卡在同一個 batch 內不會重複排隊。
+3. Q74：阻擋勝方的 Impact 生命確認排在阻擋者 `onRetire` 之後。沒有退場觸發時仍立即傷害，與舊行為一致。
+4. 單獨的 `onRetire` 會插進暫停中的 continuation。既有 `additionalBattleDamage` 與一張一張 LIFE 的 DAMAGE2 流程沒有重寫。Raid 頂層剝離與滿線 REMOVED 仍不發 `onRetire`、不記真退場。
+5. `onRetire` 允許清單補上既有 op `retireOppFrontOneUnderBp`，讓退場可以再退場。`millTop`、`draw` 原本就可用，所以沒有為了新卡再加引擎。Batch C 复查後沒有另開 DSL：能量不足或條件不完整的卡沒有登錄。
+
+官方 Q73（DAMAGE2 同時公開、再由玩家排 Trigger）與本程式「一張 LIFE 結完才下一張」仍然不一致。本輪依指示保留既有時序，不把它改成同時公開。
+
+### 批次 SHA
+
+| 批次 | 內容 | commit |
+|---|---|---|
+| A | 同時退場排序、巢狀退場、Q74 Impact 時序；合成卡測試與舊 SLG 同時退場測試改為玩家排序 | `308040b80fbf98fccb7ac105af5ab17dc43b9760` |
+| B | 真卡 MST-1-076 SPECIAL → BLC-2-040 退場抽 1 → 第二張 LIFE；無 onRetire 的角色仍正好前進一張。LIFE 離區不發 076 自己的退場時 | `b774f9bebb13734e996fbec0805286e08c67e33c` |
+| C | 不擴充引擎。既有 `millTop`／`draw`／`retireOppFrontOneUnderBp` 已夠用 | 無獨立 commit |
+| D | 正式登錄 BLC-1-051、BLC-2-042 | `10b17feb421bb9b915e601a80037411e1a90c2ad` |
+
+### 新增正式卡
+
+- **UA08BT/BLC-1-051** 朽木 ルキア。官方頁 2026-10-22 核對：紫0、AP1、角色、BP1500、特徵「護廷十三隊」、發生紫1、退場時將自己牌庫頂 2 張置於場外、DRAW Trigger。Q563：必須執行；牌庫只剩 1 張時仍送出那 1 張。
+- **EX07BT/BLC-2-042** ルピ・アンテノール。官方頁同一天核對：青0、AP1、角色、BP1500、特徵頁面為單一字串「破面／涅骸部隊」（不拆斜線）、發生青1、同一句退場時與 DRAW。該頁沒有獨立 FAQ，不把 Q563 說成這張卡的官方問答。
+
+兩張都只用既有 `{op:'millTop',count:2}`。登場、DRAW Trigger、滿能源線 REMOVED 都不磨牌。合成 `Q*`／`R*`／`I*` 測試卡沒有進 registry。
+
+### 登錄數（`node scripts/v2-unported-report.mjs`）
+
+| 作品 | V2 正式登錄 | 未移植 |
+|---|---:|---:|
+| BLEACH | 90/276 | 186 |
+| TTG | 30/81 | 51 |
+| SLG | 34/80 | 46 |
+| SAO | 62/183 | 121 |
+| MST | 41/80 | 39 |
+| 合計 | 257/700 | 443 |
+
+嚴格全面官方 FAQ 驗收仍為 0。
+
+### 本輪實際測試（Node v22.23.4）
+
+- `npm test`：1533 tests、1533 pass、0 fail、0 skipped。
+- `node scripts/v2-integrated-match-matrix.mjs`：60/60 finished，failures 0。
+- `node scripts/v2-unported-report.mjs`：700／Pilot 257／尚未移植 443／嚴格全面驗收 0，且 manifest 與 registry 一致。
+
+GitHub Actions 在本文件寫下時尚未對 `cursor/v2-multi-retire-life-6ff5` 回報。推送後的 CI 必須另查，不能借用 `fb2bd3e` 或 `810e669`。
+
+### 未完成與下一輪
+
+- Q73 與逐張 LIFE 的差異仍開放。不要為了對齊 Q73 而重寫已修好的 DAMAGE2。
+- 未審核的 Raid 幾何（top/base 的 under、巢狀 stack、多 base、facedown base）仍 fail closed。
+- 雙方同時各有退場觸發時，目前規則是回合玩家全部先結，再換另一方；這輪的真卡案例是單方同時退場加上巢狀退場，不是雙方各多張的官方問答全集。
+- 沒有瀏覽器或手機手動操作驗收。
+- 下一輪仍優先「現有 DSL 能完整表達」的真卡。候選：無條件 Damage 2／Impact 1（例如 BLC-1-074、BLC-1-009）要先確認是否只需資料、不能為了單卡加計算器；登場讓對手棄 1 張（BLC-1-054）若要做，必須是跨作品的棄牌目標 op，而不是 BLEACH 專用判斷。
+
