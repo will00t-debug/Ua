@@ -11,6 +11,7 @@ export const V2_TITLE_LABELS=Object.freeze({
 });
 export const V2_PENDING_LABELS=Object.freeze({
  block:'選擇是否阻擋', 'life-trigger':'生命觸發',
+ 'life-batch-order':'選擇 LIFE／登場效果結算順序',
  'leave-replacement':'角色離場保護','private-top-choice':'查看牌庫頂','private-top-place':'選擇牌頂或牌底',
  'effect-recover-ap':'恢復 AP','end-hand-limit':'手牌上限',
  'effect-discard':'選擇棄牌','effect-discard-cost':'支付棄牌成本',
@@ -47,7 +48,7 @@ export function uiCardLabel(pack,state,uid){
  const sourcePack=Array.isArray(pack)?pack[owner]:pack;
  const id=state?.players?.[owner];
  if(!id)return '卡片';
- const zones=[id.hand,id.front,id.energy,id.outside,id.removed,id.deck,id.life];
+ const zones=[id.hand,id.front,id.energy,id.outside,id.removed,id.deck,id.life,id.lifeRevealed];
  const locate=(entry)=>{
   if(!entry)return null;
   if(entry.uid===uid)return entry;
@@ -117,7 +118,7 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseRaidOrder':return action.mode==='baseFirst'?'先結算突襲底板效果':'先結算突襲登場效果';
   case 'chooseRetirementOrder':return '先結算此退場效果';
   case 'chooseLifeOrder':return '先處理此公開 LIFE：'+name();
-  case 'chooseLifeEffect':return '先結算登場效果：'+(state?.pending?.entries?.find(e=>e.key===action.key)?.sourceUid||'');
+  case 'chooseLifeEffect':return '先結算登場效果：'+uiCardLabel(pack,state,state?.pending?.entries?.find(e=>e.key===action.key)?.sourceUid);
   case 'choosePhaseOrder':return '先結算此階段效果';
   case 'chooseApRecovery':return action.uid===null?'完成恢復 AP':'恢復 AP 卡';
   case 'chooseDiscardGate':return action.uid===null?'不支付成本':'棄 '+name()+' 支付成本';
