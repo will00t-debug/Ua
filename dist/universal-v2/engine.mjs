@@ -342,7 +342,10 @@ function continueEffectQueue(pack,s){
     s.lifeRevealBatch=null;finishPending(s);
    }else if(b.remaining.length>1)
     s.pending={kind:'life-batch-order',player:owner,choices:[...b.remaining]};
-   else selectLifeBatchItem(pack,s,b.remaining[0]);
+   else{
+    s.effectQueue.unshift({op:'lifeBatchStep',owner});
+    selectLifeBatchItem(pack,s,b.remaining[0]);
+   }
   }else if(job.op==='lifeRelease'){
    const i=pl.lifeRevealed.findIndex(c=>c.uid===job.uid);
    if(i>=0)moveOwnedLinear(pack,s,{owner,from:'lifeRevealed',to:'outside',
