@@ -3,6 +3,13 @@ import {TTG_BY_ID} from '../ttg-builder.mjs';
 import {verifiedPilotCards} from './real-card-pilots.mjs';
 import {createUniversalPack} from './pack.mjs';
 const additions=[
+ {id:'TTG-1-028',name:'グレンラガン',energy:4,ap:1,bp:4000,gen:1,color:'green',
+  type:'character',traits:['大グレン団','ガンメン'],trigger:'raid',
+  raidName:'シモン',raidBaseNames:['シモン','ヴィラル'],implementation:'dsl',
+  effects:{onPlay:[{op:'draw',count:1},
+   {op:'forbidAttackOppFrontOne',optional:true,ownTurnOnly:true,
+    until:'nextOwnTurnStart'}]},
+  match:'下次己方回合開始不能攻擊'},
  {id:'TTG-1-006',name:'キタン',energy:2,ap:1,bp:3000,gen:1,color:'green',
   type:'character',trigger:null,implementation:'dsl',effects:{},
   passiveBonuses:[{condition:{kind:'ownEnergyAtLeast',turn:'own',min:6},bp:1000}],

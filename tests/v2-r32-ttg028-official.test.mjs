@@ -1,22 +1,21 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {TTG_BY_ID} from '../dist/ttg-builder.mjs';
-import {verifiedPilotCards} from '../dist/universal-v2/real-card-pilots.mjs';
-import {verifiedTtgV2Additions} from '../dist/universal-v2/ttg-pack.mjs';
 import {createUniversalPack,validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {registeredV2TitlePack} from '../dist/universal-v2/title-packs/registry.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  assertUniversalMatch,universalPublicView} from '../dist/universal-v2/engine.mjs';
 import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
-// Official https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-028
+// Source-pinned formal registry/manifest acceptance:
+// https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-028
 const record=TTG_BY_ID['TTG-1-028'];
 const pilot={id:record.id,name:record.nameJa,energy:4,ap:1,bp:4000,gen:1,color:'green',
  type:'character',traits:['大グレン団','ガンメン'],trigger:'raid',
  raidName:'シモン',raidBaseNames:['シモン','ヴィラル'],implementation:'dsl',
  effects:{onPlay:[{op:'draw',count:1},
   {op:'forbidAttackOppFrontOne',optional:true,ownTurnOnly:true,until:'nextOwnTurnStart'}]}};
-const pack=createUniversalPack({id:'gurren-lagann',version:'r32-isolated-028',cards:[
- ...verifiedPilotCards('gurren-lagann'),...verifiedTtgV2Additions(),pilot]});
+const pack=registeredV2TitlePack('gurren-lagann');
+assert.deepEqual(pack.cards['TTG-1-028'].effects.onPlay,pilot.effects.onPlay);
 const sao=registeredV2TitlePack('sword-art-online'),packs=[pack,sao];
 const ttgIds=['TTG-1-028','TTG-1-010','TTG-1-002','TTG-1-001','TTG-1-005','TTG-1-006',
  'TTG-1-007','TTG-1-009','TTG-1-014','TTG-1-018','TTG-1-019','TTG-1-023','TTG-1-022'];
@@ -54,7 +53,7 @@ function setup(){
  assert.ok(raid,'paid Raid legal only with printed 4 green energy/AP and Simon');
  return {s,raid,source,base,enemy,other};
 }
-test('R32 isolated real TTG-028: legal paid Raid draws exactly 1, targets opponent FRONT, AI legal',()=>{
+test('R32 registered real TTG-028: legal paid Raid draws exactly 1, targets opponent FRONT, AI legal',()=>{
  let {s,raid,source,enemy,other}=setup();
  const handBefore=s.players[0].hand.length,deckBefore=s.players[0].deck.length;
  s=dispatchUniversalAction(packs,s,raid);
@@ -79,7 +78,7 @@ test('R32 isolated real TTG-028: legal paid Raid draws exactly 1, targets oppone
  assert.equal(s.continuousStates[0].targetUid,enemy.uid);
  assert.equal(assertUniversalMatch(packs,s),true);
 });
-test('R32 isolated optional 0 grants nothing; forged pending stamp and unsupported DSL keys fail closed',()=>{
+test('R32 registered optional 0 grants nothing; forged pending stamp and unsupported DSL keys fail closed',()=>{
  let {s,raid}=setup();
  s=dispatchUniversalAction(packs,s,raid);
  const orig=structuredClone(s);
@@ -100,4 +99,15 @@ test('R32 isolated optional 0 grants nothing; forged pending stamp and unsupport
   assert.throws(()=>createUniversalPack({id:'bad-ban',cards:[
    {...pilot,effects:{onPlay:[invalid]}}]}),/invalid temporary attack prohibition/);
  }
+});
+
+test('R32 official full print, raid trigger, strict independent ID and source evidence',async()=>{
+ const {EXPECTED_V2_IDS}=await import('./fixtures/v2-integrated-id-manifest.mjs');
+ assert.equal(EXPECTED_V2_IDS['gurren-lagann'].includes('TTG-1-028'),true);
+ assert.deepEqual([record.nameJa,record.color,record.energy,record.ap,record.bp,
+  record.gen,record.trigger],['グレンラガン','green',4,1,4000,1,'raid']);
+ assert.equal(record.effect.includes('登場抽1張'),true);
+ assert.ok(record.effect.includes('己方回合可使敵方前線最多1名角色直到下次己方回合開始不能攻擊'));
+ assert.deepEqual(pack.cards['TTG-1-028'].raidBaseNames,['シモン','ヴィラル']);
+ assert.deepEqual(pack.cards['TTG-1-028'].traits,['大グレン団','ガンメン']);
 });
