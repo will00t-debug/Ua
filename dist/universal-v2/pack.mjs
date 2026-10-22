@@ -508,6 +508,11 @@ function normalize(card,packId){
    Object.keys(triggerEffect).every(k=>['op','bp'].includes(k));
   const restSkip=triggerEffect?.op==='restOppFrontSkipNextActive'&&
    Object.keys(triggerEffect).length===1;
+  // Official COLOR return-to-hand effects share physical Raid/Q62 handling.
+  // Never treat this as retirement or extend eligibility past printed BP.
+  const bounced=triggerEffect?.op==='bounceOppFrontUnderBp'&&
+   integer(triggerEffect.bp,1)&&triggerEffect.bp<=50000&&
+   Object.keys(triggerEffect).length===2;
   const deploy=(from)=>triggerEffect?.op===from&&
    typeof triggerEffect.color==='string'&&!!triggerEffect.color.trim()&&
    integer(triggerEffect.maxEnergy)&&triggerEffect.maxEnergy<=30&&
@@ -515,8 +520,8 @@ function normalize(card,packId){
    (from==='deployOutsideCharacter'?triggerEffect.frontOnly===true:true)&&
    Object.keys(triggerEffect).every(k=>['op','color','maxEnergy','ap',
     ...(from==='deployOutsideCharacter'?['frontOnly']:[])].includes(k));
-  if(!retired&&!restSkip&&!deploy('deployHandCharacter')&&!deploy('deployOutsideCharacter'))
-   throw Error(card.id+' COLOR requires supported printed deployment/retirement profile');
+  if(!retired&&!restSkip&&!bounced&&!deploy('deployHandCharacter')&&!deploy('deployOutsideCharacter'))
+   throw Error(card.id+' COLOR requires supported printed deployment/retirement/return profile');
  }else if(card.trigger==='raid'){
   if(!card.raidName||card.type!=='character'||triggerEffect!=null)
    throw Error(card.id+' RAID trigger requires explicitly registered Raid character');
