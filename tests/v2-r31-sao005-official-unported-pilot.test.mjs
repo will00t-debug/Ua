@@ -91,6 +91,11 @@ test('R31 two printed names and Alice alias; return at most one; bottom order th
  assert.throws(()=>dispatchUniversalAction(packs,s,{type:'chooseTopFiltered',uid:window[2].uid}),/not currently legal/);
  assert.deepEqual(s,untouched);
  s=dispatchUniversalAction(packs,s,{type:'chooseTopFiltered',uid:window[1].uid});
+ assert.deepEqual(universalPublicView(packs,s,1).publicReveals,[{
+  kind:'searched-to-hand',owner:0,title:'sword-art-online',
+  cardId:'SAO-1-010',uid:window[1].uid,trigger:null,turn:s.turn
+ }],'only chosen alias UID publicly revealed; other inspected cards stay private');
+ assert.equal(universalPublicView(packs,s,1).players[0].hand,null);
  assert.equal(s.pending.kind,'effect-top-order');
  s=JSON.parse(JSON.stringify(s));
  assert.equal(assertUniversalMatch(packs,s),true);
@@ -110,6 +115,8 @@ test('R31 optional zero take keeps four bottom cards, no discard; no accidental 
  let {s,source,window}=setup(['SAO-1-004','SAO-1-019','SAO-1-073','SAO-2-016']);
  const deckBefore=s.players[0].deck.map(c=>c.uid);
  s=play(s,source);
+ assert.deepEqual(universalPublicView(packs,s,1).publicReveals,[],
+  'no-match may not reveal any inspected deck card');
  // No valid printed name; all four are ordered even without a selection.
  assert.equal(s.pending.kind,'effect-top-order');
  assert.equal(s.pending.discardAfter,undefined);

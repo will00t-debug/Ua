@@ -1375,6 +1375,13 @@ function resolveChoice(s,a,pack){
    if(i<0||i>=q.uids.length)throw Error('Selected physical UID outside top window');
    moveOwnedLinear(pack,s,{owner:q.player,from:'deck',to:'hand',index:i,
     reason:'own-effect',sourceUid:q.sourceUid});
+   // Printed 「公開し手札に加える」: expose ONLY the physical selected card
+   // through the existing bounded publicReveals. Never expose the full
+   // privately inspected window or leak private zoneMoveEvents.
+   s.publicReveals.push({kind:'searched-to-hand',owner:q.player,
+    title:titleOf(pack,q.player),cardId:chosen.cardId,uid:chosen.uid,
+    trigger:null,turn:s.turn});
+   if(s.publicReveals.length>12)s.publicReveals.splice(0,s.publicReveals.length-12);
   }
   const remaining=q.uids.filter(uid=>uid!==a.uid);
   if(remaining.length)s.pending={kind:'effect-top-order',player:q.player,
