@@ -71,3 +71,32 @@ kills the top, that is a separate genuine retirement. Existing real TTG-1-073 vs
 BLEACH scenarios now assert the journal, in addition to synthetic negative UID,
 actor, owner, visibility and serialized-history tests. Other attachment effects
 not routed through these operations remain unaudited.
+
+## E — BLC complete-port gate (no registration)
+
+Re-read official EX07BT BLC-2-019 and 047 print and EX07BT Q1033/Q1046,
+EX15BT Q2315/Q2316. URLs: [019](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX07BT%2FBLC-2-019_p1),
+[047](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX07BT%2FBLC-2-047),
+[EX07BT FAQs](https://www.unionarena-tcg.com/jp/faq/list.php?series=EX07BT).
+
+| Requirement | Current gate |
+|---|---|
+| 019 named substring discard (斬月 or 月牙) | Missing typed cost selector; generic discardGate is not sufficient. |
+| 019 up to two enemy front BP >=2000, -1500 | Missing complete distinct-target selection with live eligibility acceptance. |
+| 019 MAIN draw1, self +1000, granted optional attack draw | Granted attack program/lifetime not implemented for this card. |
+| 019 Raid base and Raid LIFE trigger | Generic framework exists; complete-card tests absent. |
+| 047 normal play draw2 | Generic draw exists; not a complete registration. |
+| 047 own blue Ichigo hand-to-outside provenance | Existing source-qualified moveTriggers are available. |
+| Q1033 source MAIN finishes before bonus draw | Existing sourceResolutionBoundary; full 019 scenario still gated. |
+| Q1046 no printed energy needed for extra effect | Existing movement trigger is independent of event-play energy. |
+| Q2315 earned trigger survives later facedown placement | Official yes; full real-card placement/source sequence not certified. |
+
+Both remain unregistered. Do not infer complete support from synthetic programs.
+Next priorities: cross-player Q38/SPECIAL retirement order, verified nested damage
+priority, independently earned onRaid/onPlay ordering, then typed named payment
+and granted attack effects. No second reducer/queue or new official card in R23.
+
+Full-suite correction: three legacy protected full-line replacement tests still
+expected underlying cards in removed. Updated only those destination assertions
+to outside per Q61; retained top removal, AP, pending, deployment, UID and privacy
+checks. First C/D CI runs therefore failed, not successful acceptance milestones.
