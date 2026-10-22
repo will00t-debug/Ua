@@ -276,7 +276,8 @@ function queuePhaseBoundary(pack,s,phase,edge,turnPlayer){
   for(const c of units)for(const [i,q] of (originalEffectsDisabled(s,c)?[]:card(pack,c).phaseEffects).entries()){
    if(q.phase!==phase||q.edge!==edge||(q.turn==='own')!==(owner===turnPlayer))continue;
    entries.push({key:c.uid+':'+i,sourceUid:c.uid,
-    jobs:q.then.map(op=>({...op,owner,sourceUid:c.uid,sourceName:card(pack,c).name}))});
+    jobs:[...q.then.map(op=>({...op,owner,sourceUid:c.uid,
+     sourceName:card(pack,c).name})),...sourceMoveBoundary(pack,s,owner,c.uid)]});
   }
   if(entries.length)s.effectQueue.push({op:'phaseOrder',owner,entries});
  }
@@ -2417,7 +2418,9 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
    // Queue the blocker decision after the attack triggers. A targeted
    // onAttack effect may suspend resolution for its controller's choice;
    // assigning block here would overwrite that pending choice.
-   s.effectQueue.push(...programJobs(pack,s,attacker,'onAttack',p),
+   const attackJobs=programJobs(pack,s,attacker,'onAttack',p);
+   s.effectQueue.push(...attackJobs,
+    ...(attackJobs.length?sourceMoveBoundary(pack,s,p,attacker.uid):[]),
     {op:'openBlock',owner:p,sourceUid:attacker.uid});
    continueEffectQueue(pack,s);
    break;
