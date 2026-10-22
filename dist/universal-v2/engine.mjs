@@ -240,6 +240,19 @@ function recordCompletedMove(pack,s,{physical,owner,controller=owner,from,to,rea
   from,to,reason,sourceUid,sourceCardId:source?.cardId??null,
   sourceName:definition?.name??null,sourceColor:definition?.color??null,
   sourceOnField:!!source,attachedToUid,wasFaceDown});
+ // Snapshot READY field listeners at the exact move, not when the source
+ // program later finishes. Earned triggers survive later source changes.
+ // This is provenance within the existing ledger, never a second queue.
+ if(owner===controller&&from==='hand'&&to==='outside'&&
+  ['payment','own-effect'].includes(reason)&&event.sourceOnField){
+  const earned=field(s.players[owner]).filter(w=>{
+   const observer=card(pack,w).moveObserver;
+   return !!observer&&w.ready&&!originalEffectsDisabled(s,w)&&
+    !(w.under||[]).some(x=>x.faceDown===true)&&
+    matchesCompletedMove(event,observer.when);
+  }).map(w=>({sourceUid:w.uid,sourceStamp:w.fieldEntryStamp}));
+  if(earned.length)event.earnedFieldObservers=earned;
+ }
  // Keep the prior turnEffectZoneMoves boolean contract unchanged, including
  // historical forced opponent discards. It is NOT source-sensitive and must
  // NOT be used for new specific-source triggers; zoneMoveEvents is authoritative.
@@ -343,13 +356,9 @@ function continueEffectQueue(pack,s){
      if(matchesCompletedMove(event,profile.when))
       toResolve.push(...profile.then.map(op=>({...op,owner:event.owner,
        sourceUid:event.uid,sourceName:moved.name})));
-    for(const watcher of field(pl)){
-     const observer=card(pack,watcher).moveObserver;
-     if(!observer||originalEffectsDisabled(s,watcher)||!watcher.ready||
-      (watcher.under||[]).some(c=>c.faceDown===true)||
-      !matchesCompletedMove(event,observer.when))continue;
+    for(const earned of event.earnedFieldObservers||[]){
      fieldReactions.push({op:'restSelfTuckMovedFaceDown',owner,
-      sourceUid:watcher.uid,sourceStamp:watcher.fieldEntryStamp,
+      sourceUid:earned.sourceUid,sourceStamp:earned.sourceStamp,
       movedUid:event.uid,moveOrder:event.order});
     }
    }
@@ -2767,6 +2776,15 @@ export function assertUniversalMatch(pack,s){
    (e.sourceName!==null&&typeof e.sourceName!=='string')||
    (e.sourceColor!==null&&typeof e.sourceColor!=='string')||
    typeof e.sourceOnField!=='boolean'||
+   (e.earnedFieldObservers!==undefined&&(
+    e.from!=='hand'||e.to!=='outside'||e.owner!==e.controller||
+    !['payment','own-effect'].includes(e.reason)||!e.sourceOnField||
+    !Array.isArray(e.earnedFieldObservers)||!e.earnedFieldObservers.length||
+    e.earnedFieldObservers.length>8||
+    new Set(e.earnedFieldObservers.map(x=>x.sourceUid)).size!==e.earnedFieldObservers.length||
+    e.earnedFieldObservers.some(x=>!x||typeof x.sourceUid!=='string'||
+     !x.sourceUid.startsWith(e.owner+'-')||!Number.isInteger(x.sourceStamp)||
+     x.sourceStamp<1||Object.keys(x).some(k=>!['sourceUid','sourceStamp'].includes(k)))))||
    (e.attachedToUid!==undefined&&(typeof e.attachedToUid!=='string'||
     !e.attachedToUid.startsWith(e.owner+'-')||e.attachedToUid===e.uid||
     e.from!=='raid-under'||typeof e.wasFaceDown!=='boolean'||
