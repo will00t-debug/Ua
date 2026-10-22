@@ -107,3 +107,40 @@ for(const lifeFirst of [false,true])test('Q38 CROSS-owner COLOR onPlay → Q2315
  assert.equal(foe.effectQueue,undefined);
  assert.equal(assertUniversalMatch(packs,s),true);
 });
+
+for(const op of ['battleImpactDamage','additionalBattleDamage'])
+ test('R27 cross-owner Q38 deferred COLOR refuses nested '+op+' without moving hidden card',()=>{
+  let {s,event}=begin();
+  s=dispatchUniversalAction(packs,s,legalUniversalActions(packs,s).find(a=>a.type==='chooseLifeEffect'),{actor:1});
+  assert.equal(s.pending.kind,'effect-discard');
+  const foreignJob={op,owner:0,defender:0,...(op==='additionalBattleDamage'?{remaining:1}:{})};
+  s.effectQueue.unshift(foreignJob);
+  const previous=structuredClone(s),foe=universalPublicView(packs,s,0);
+  assert.throws(()=>dispatchUniversalAction(packs,s,{type:'chooseDiscard',uid:event.uid},{actor:1}),
+   /Nested LIFE reveal unresolved/);
+  assert.deepEqual(s,previous,'failed secondary LIFE cannot partially discard a physical card');
+  assert.deepEqual(universalPublicView(packs,s,0),foe,'cannot leak private LIFE or moved card');
+  assert.equal(s.players[1].hand.some(c=>c.uid===event.uid),true);
+  assert.equal(s.players[0].lifeRevealed.length,0);
+  assert.equal(s.status,'playing');
+  assert.equal(assertUniversalMatch(packs,s),true);
+ });
+test('Q2220 original-effect silence before the movement prevents a printed field watcher being earned, not 047 drawn',async()=>{
+ const {grantContinuousState}=await import('../dist/universal-v2/continuous-states.mjs');
+ let {s,event,observer,lifeFinal}=begin();
+ grantContinuousState(s,{kind:'originalEffectsDisabled',controller:0,
+  sourceUid:s.players[0].front[0].uid,targetUid:observer.uid,
+  until:{player:0,phase:'attack',edge:'end'}});
+ s=dispatchUniversalAction(packs,s,legalUniversalActions(packs,s).find(a=>a.type==='chooseLifeEffect'),{actor:1});
+ const before=s.players[1].deck.length;
+ s=dispatchUniversalAction(packs,s,{type:'chooseDiscard',uid:event.uid},{actor:1});
+ assert.ok(!['effect-move-order','effect-rest-tuck'].includes(s.pending?.kind));
+ assert.equal(s.pending.kind,'life-trigger');
+ assert.equal(s.pending.uid,lifeFinal.uid);
+ assert.equal(s.players[1].deck.length,before-2,'onPlay draw and the earned 047 draw both finish');
+ assert.equal(s.players[1].energy[0].ready,true);
+ assert.deepEqual(s.players[1].energy[0].under,[]);
+ s=dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'final'},{actor:1});
+ assert.equal(s.players[1].life.length,1);
+ assert.equal(s.pending,null);assert.equal(assertUniversalMatch(packs,s),true);
+});
