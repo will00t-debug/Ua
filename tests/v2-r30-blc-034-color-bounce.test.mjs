@@ -17,7 +17,9 @@ const entries=Array.from({length:13},(_,i)=>({
  name:i===0?actual.nameJa:'Printed '+i,
  type:'character',color:'blue',energy:i===0?actual.energy:0,ap:1,
  bp:i===0?actual.bp:i===2?4000:3000,gen:1,
- implementation:i===0?'dsl':'vanilla',
+ implementation:i===0||i===7?'dsl':'vanilla',
+ ...(i===7?{printedAttackDamage:2}:{}),
+ ...(i===8?{trigger:'final'}:{}),
  ...(i===0?{trigger:'color',
   triggerEffect:{op:'bounceOppFrontUnderBp',bp:3500},
   moveObserver:{op:'restSelfTuckMovedFaceDown',when:{
@@ -119,3 +121,60 @@ test('R30 strict COLOR return template rejects wrong type, unknown fields and in
    /COLOR requires/);
  }
 });
+
+
+// R30 / Q12, Q38 and Q73: real 034 COLOR card and a simultaneous FINAL
+// both resolve in the defender's trigger check. The opponent's independent
+// LOW card is returned without interrupting the DAMAGE2 attacking source.
+for(const finalFirst of [false,true])
+ test('R30 opponent COLOR BP return interleaves with outstanding FINAL, FINAL first '+finalFirst,()=>{
+  let s=newUniversalMatch(packs,{decks:[deck,deck],first:0,seed:3038});
+  const attacking=take(s,0,'X7'),victim=take(s,0,'LOW'),high=take(s,0,'HIGH');
+  for(const [slot,c] of [attacking,victim,high].entries()){
+   c.ready=true;c.fieldEntryStamp=s.nextFieldEntryStamp++;s.players[0].front[slot]=c;
+  }
+  const p=s.players[1];p.deck.push(...p.life.splice(0));
+  const color=take(s,1,'BLC-4-034'),final=take(s,1,'X8');
+  p.life.push(color,final);
+  s.phase='attack';
+  s=dispatchUniversalAction(packs,s,{type:'attack',uid:attacking.uid},{actor:0});
+  s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:null},{actor:1});
+  assert.equal(s.pending?.kind,'life-batch-order');
+  assert.deepEqual(s.lifeRevealBatch.remaining,[color.uid,final.uid]);
+  assert.equal(s.players[1].life.length,0);
+  assert.equal(s.status,'playing','zero LIFE before FINAL cannot end the match');
+  assert.ok(!legalUniversalActions(packs,s).some(a=>a.type==='chooseTrigger'));
+  const ordered=finalFirst?[final,color]:[color,final];
+  for(const [index,card] of ordered.entries()){
+   if(s.pending?.kind==='life-batch-order'){
+    s=dispatchUniversalAction(packs,s,{type:'chooseLifeOrder',uid:card.uid},{actor:1});
+   }
+   assert.equal(s.pending?.kind,'life-trigger');
+   assert.equal(s.pending.uid,card.uid);
+   const opts=legalUniversalActions(packs,s);
+   for(const difficulty of ['normal','hard'])
+    assert.ok(opts.some(a=>JSON.stringify(a)===JSON.stringify(
+     chooseUniversalAiAction(packs,s,{difficulty}))));
+   const intended=card.uid===color.uid?
+    {type:'chooseTrigger',mode:'colorBounce',uid:victim.uid}:
+    {type:'chooseTrigger',mode:'final'};
+   assert.ok(opts.some(x=>JSON.stringify(x)===JSON.stringify(intended)));
+   const snap=structuredClone(s);
+   assert.throws(()=>dispatchUniversalAction(packs,s,intended,{actor:0}),/Wrong player/);
+   assert.deepEqual(s,snap);
+   s=JSON.parse(JSON.stringify(s));assert.equal(assertUniversalMatch(packs,s),true);
+   s=dispatchUniversalAction(packs,s,intended,{actor:1});
+   assert.equal(s.status,'playing','do not declare winner during triggered chain');
+   if(index===0)assert.equal(s.pending?.uid,ordered[1].uid);
+  }
+  assert.equal(s.players[0].hand.some(c=>c.uid===victim.uid),true);
+  assert.equal(s.players[0].front[0].uid,attacking.uid);
+  assert.equal(s.players[0].front[1],null);
+  assert.equal(s.players[0].front[2].uid,high.uid);
+  assert.equal(s.players[1].life.length,1,'FINAL restored LIFE regardless of chosen order');
+  assert.equal(s.pending,null);assert.equal(s.lifeRevealBatch,null);
+  assert.equal(s.effectQueue.length,0);
+  assert.equal(s.status,'playing');
+  assert.equal(universalPublicView(packs,s,1).players[0].hand,null);
+  assert.equal(assertUniversalMatch(packs,s),true);
+ });
