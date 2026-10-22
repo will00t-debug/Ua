@@ -955,7 +955,7 @@ function location(s,p,uid){
  }
  return null;
 }
-function bounceToHand(pack,s,p,uid,sourceUid=uid){
+function bounceToHand(pack,s,p,uid,sourceUid=uid,{reason='own-effect',controller=p}={}){
  const found=location(s,p,uid);if(!found)throw Error('Bounce source not on own field');
  const top=found.c,pl=s.players[p];pl[found.line][found.slot]=null;
  // Official Japanese Q62: only the top Raid card returns to hand.
@@ -969,8 +969,8 @@ function bounceToHand(pack,s,p,uid,sourceUid=uid){
    reason:'rule',sourceUid});
  }
  const bounced=reset(top);pl.hand.push(bounced);
- recordCompletedMove(pack,s,{physical:bounced,owner:p,from:found.line,to:'hand',
-  reason:'own-effect',sourceUid});
+ recordCompletedMove(pack,s,{physical:bounced,owner:p,controller,from:found.line,to:'hand',
+  reason,sourceUid});
 }
 function buriedMoves(top){
  return [...(top.stack||[]),...(top.under||[])].flatMap(c=>[
@@ -1911,6 +1911,16 @@ function resolveChoice(s,a,pack){
     throw Error('Illegal COLOR retirement target');
    retire(pack,s,1-q.player,'front',slot);
   }
+  else if(a.mode==='colorBounce'&&q.trigger==='color'){
+   const foe=1-q.player,slot=s.players[foe].front.findIndex(c=>c?.uid===a.uid);
+   const profile=card(pack,p[sourceZone][i]).triggerEffect;
+   if(profile.op!=='bounceOppFrontUnderBp'||slot<0||
+     bp(pack,s,s.players[foe].front[slot])>profile.bp)
+    throw Error('Illegal COLOR BP-limited return target');
+   // Q62: only a visible Raid top returns to hand; underlying physical
+   // layers go to OUTSIDE. Returning never emits an onRetire event.
+   bounceToHand(pack,s,foe,a.uid,q.uid,{reason:'opponent-effect',controller:q.player});
+  }
   else if(a.mode==='colorRestSkip'&&q.trigger==='color'){
    const foe=1-q.player,slot=s.players[foe].front.findIndex(c=>c?.uid===a.uid);
    const profile=card(pack,p[sourceZone][i]).triggerEffect;
@@ -2245,6 +2255,9 @@ function legalPending(pack,s){
    else if(profile.op==='restOppFrontSkipNextActive')
     out.push(...s.players[1-q.player].front.filter(Boolean)
      .map(c=>({type:'chooseTrigger',mode:'colorRestSkip',uid:c.uid})));
+   else if(profile.op==='bounceOppFrontUnderBp')
+    out.push(...s.players[1-q.player].front.filter(c=>c&&bp(pack,s,c)<=profile.bp)
+     .map(c=>({type:'chooseTrigger',mode:'colorBounce',uid:c.uid})));
    else if(profile.op==='deployOutsideCharacter'){
     for(const c of p.outside){
      const d=card(pack,c);
