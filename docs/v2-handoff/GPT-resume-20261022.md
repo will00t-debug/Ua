@@ -405,7 +405,7 @@ Details and official rules in [V2-R27-Q38-physical-event-hardening.md](./V2-R27-
 
 1. **A** `30813700`，修正 `1460cbf5`: [official Q12](https://www.unionarena-tcg.com/jp/faq/list.php?category=ゲーム進行) 在最後兩張 LIFE 以 DRAW→FINAL 和 FINAL→DRAW 結算時，先確保 zero LIFE 不立即勝負判定，並驗證非法 Trigger 選擇不改變序列化及公開狀態。初版 Actions [39808601108](https://github.com/will00t-debug/Ua/actions/runs/39808601108) RED，測試自身誤以為最後單一剩餘 LIFE 仍需 `chooseLifeOrder`；修正依既有排程器自動進入最後 Trigger，沒有削弱檢查。
 2. **B** `578d3a16`: 在正式 50 張模擬資料的共享 grant 引擎驗證兩張獨立授予、來源離場、已獲能力於印刷文字遭封印後仍可抽，原本印刷 onAttack 抽牌停止，並對壞的程序 count、optional、到期、source linkage 序列化拒絕。這是特定原語的驗證，不稱所有授予語意都已完成。
-3. **C** `06f3bd3b`: `tests/v2-r25-blc-official-print-pilot.test.mjs` 補一條原本獨立 50 卡合法 deck 的 BLC-2-019 Raid→兩敵方 -1500→MAIN 合法棄 BLC-2-047→整段來源抽1、+1000 BP、授予 onAttack→已取得 047 抽1→**真正 attack 時**另外選擇抽1；驗證合法 AI 選項、UID、存檔狀態。完整「017/047 及其他互動」的全卡 FAQ 認證仍尚缺，**019、047 不正式登錄**。
+3. **C** `06f3bd3b`: `tests/v2-r25-blc-official-print-pilot.test.mjs` 補一條原本獨立 50 卡合法 deck 的 BLC-2-019 Raid→兩敵方 -1500→MAIN 合法棄 BLC-2-047→整段來源抽1、+1000 BP、授予 onAttack→已取得 047 抽1→**真正 attack 時**另外選擇抽1；驗證合法 AI 選項、UID、存檔狀態。完整「019/047 及其他互動」的全卡 FAQ 認證仍尚缺，**019、047 不正式登錄**。
 4. **D** `4d66b1d3`: [跨作品完整印刷卡文與缺口矩陣](./V2-R28-cross-title-print-audit.md)：TTG-1-028、SLG-1-070、SAO-1-005、MST-1-059 各自來源可查、皆尚未移植；拒絕只憑 DSL 部分吻合就登錄。
 5. **E** `819dce2e`: [跨玩家優先權及連鎖 LIFE 官方規則差異表](./V2-R28-priority-and-nested-life-proof.md)：辨別 Q12、Q35–38、Q71–74 和 MST Q2220/Q2228 已覆蓋與未知的範圍，保留既有 **nested LIFE atomic fail-closed**。沒有建立第二套引擎、沒有增加任何 DSL operation，只有可驗證測試與研究檔。
 
