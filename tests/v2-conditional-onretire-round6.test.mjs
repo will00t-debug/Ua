@@ -11,7 +11,7 @@ const qa={id:'TEST-FIELD-GATED-RETIRE',name:'Test conditional retire',color:'gre
  effects:{onRetire:[{op:'drawIfOwnFieldExists',count:1}]}};
 const pack=createUniversalPack({id:'onretire-field-fixture',cards:[...verifiedMstV2Cards(),qa]});
 const packs=[pack,pack],deck={...MST_V2_ROXY_FIELD_REAL_DECK_COUNTS,
- 'MST-1-050':3,[qa.id]:1};
+ 'MST-1-050':3,'MST-1-055':0,'MST-1-001':4,[qa.id]:1};
 function take(s,p,id){for(const zone of ['hand','deck','life','outside']){
  const a=s.players[p][zone],i=a.findIndex(c=>c.cardId===id);
  if(i!==-1)return a.splice(i,1)[0];
