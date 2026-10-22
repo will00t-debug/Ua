@@ -62,8 +62,18 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   return options[0]?.action||legal[0];
  }
  if(s.pending?.kind==='raid-effect-order')return legal.find(a=>a.mode==='entryFirst')||legal[0];
- if(s.pending?.kind==='effect-choice-mode')
-  return legal.find(a=>a.type==='chooseEffectMode'&&a.mode!=='skip')||legal[0];
+ if(s.pending?.kind==='effect-choice-mode'){
+  // Entirely generic printed-mode selection; inspect only public enemy FRONT
+  // and the validated program profile, never hard-code a title/card ID.
+  const foe=s.players[1-s.pending.player].front;
+  const options=s.pending.options||[];
+  const available=options.find(o=>o.then.some(x=>x.op==='retireOppFrontOneUnderBp'&&
+   foe.some(c=>c&&universalBp(pack,s,c)<=x.bp)))||
+   options.find(o=>o.then.some(x=>x.op==='stripOppRaidTop'&&
+    foe.some(c=>c&&c.stack?.length&&packsOf(pack)[1-s.pending.player].cards[c.cardId].raidName)));
+  return legal.find(a=>a.type==='chooseEffectMode'&&a.mode===available?.id)||
+   legal.find(a=>a.type==='chooseEffectMode'&&a.mode!=='skip')||legal[0];
+ }
  if(s.pending?.kind==='effect-once-choice')
   return difficulty==='easy'?legal.find(a=>a.mode==='skip')||legal[0]:
    legal.find(a=>a.mode==='activate')||legal[0];
@@ -85,6 +95,8 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   return legal.find(a=>a.uid!==null&&foe.find(c=>c?.uid===a.uid)?.ready)||
    legal.find(a=>a.uid!==null)||legal[0];
  }
+ if(s.pending?.kind==='effect-strip-raid-top')
+  return difficulty==='easy'?legal[0]:legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-retire-bp'){
   // A printed "up to one" retirement presents SKIP first; normal/hard AI
   // should choose an eligible enemy unless there is none.
