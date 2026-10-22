@@ -28,7 +28,7 @@ const auditedStatKeys=['energy','ap','bp','gen','type','color','trigger'];
 test('the 62 SAO and 39 MST formal contributions meet strict sourceRecord/definition/evidence contract',()=>{
  for(const [title,contribution,expected,ids,entries] of [
   ['sword-art-online',saoContribution,62,SAO_V2_PILOT_IDS,verifiedSaoV2Entries],
-  ['mushoku-tensei',mstContribution,38,MST_V2_PILOT_IDS,verifiedMstV2Entries]
+  ['mushoku-tensei',mstContribution,39,MST_V2_PILOT_IDS,verifiedMstV2Entries]
  ]){
   assert.equal(contribution.title,title);
   assert.equal(contribution.entries.length,expected);
