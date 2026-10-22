@@ -890,3 +890,103 @@ Raid 的新頂牌是另一個 UID，次數從 0 開始，不繼承底板。沒�
 - 沒有瀏覽器或手機手動操作驗收。全面 FAQ 認證仍為 0。
 - 下一輪可先核對、但還不能直接登錄的方向：BLC-2-010 的退場 REST；SAO-1-038／SAO-1-072 的第一次阻擋後 ACTIVE；把單目標 BP 下限做成和這次全體範圍同一套條件。每張仍要先對官方日文與 FAQ，不能靠目錄摘要。
 
+## 第十四輪（2026-10-22）
+
+接續第十三輪已由 GitHub Actions 驗過的 `e57d8d97bcee16c95888caa66d1f9a5725acd500`（pull_request run `39734726291`）。工作分支仍是 `cursor/v2-multi-retire-life-6ff5`，Draft PR #77 的合併目標仍是 `codex/v2-resume-20261021`。沒有改 main、沒有部署、沒有 force push。BP 範圍、第一次攻擊後 ACTIVE、Impact 1、Damage 2、LIFE 連鎖，以及當時已登錄的卡都沒有重做。
+
+本輪本地驗收使用 Node **v22.23.4**。時間 2026-10-22 15:19（台北時間）完成矩陣與未移植報告。`npm test` 是 1601 則、1601 通過。沒有刪測試、沒有放寬合法性。
+
+### Batch A：退場時 REST
+
+`restOppFrontUnderBp` 原本就能選至多一張敵方 FRONT、BP 在上限以內的角色並轉 REST。這次只把 `onRetire` 放進時機白名單，沒有另寫一套 REST 判定。Q83：「1枚まで」可以選 0。Q91：已經 REST 的角色仍可被選，結果維持 REST。
+
+只有真正退場會排隊。Raid 剝離頂牌、回手、REMOVED 都不會。`protectedLeave` 消耗裏向底卡時不退場。無合法目標時效果正常結束，不開空選擇。非法 UID 不在合法行動裡。
+
+**EX07BT/BLC-2-010** ミニーニャ・マカロン。黃、必要能源 0、AP1、BP2000、發生黃。印刷句是「BP2000以下の相手のフロントLのキャラを1枚まで選び、レストにする。」無 Trigger。該頁沒有獨立 FAQ。特徵沿用目錄的一整條，沒有拆斜線。
+
+### Batch B：第一次阻擋後 ACTIVE
+
+`blocksByUid` 跟 `attacksByUid` 分開。`readyOnBlockCount` 目前只接受 1。Q79／Q80（2023-03-17）：指定阻擋者、REST，然後在戰鬥之前 ACTIVE。第一次阻擋即使輸掉，ACTIVE 也已經發生。第三下不再轉 ACTIVE。原效果被封印時不轉。`skipNextActive` 與 `cannotActive` 仍會讓它維持 REST。下一個回合開始時清空。Raid 頂牌是另一個 UID，次數從 0 開始。沒有找到「同一張實體卡離場再登場後，2回ブロック次數是否歸零」的專用 FAQ；依印刷「このキャラがこのターン」保留同一個 UID 的次數。這是印刷讀法，不是已核對的再登場 FAQ。Normal／Hard AI 只從當時的合法阻擋列表選。Q68 的狙い撃ち不是阻擋；引擎沒有這個動作，沒有另做。
+
+- **UA15BT/SAO-1-038** エギル。青 1、BP2500、アインクラッド、發生青、無 Trigger。只有【2回ブロック】。
+- **UA15BT/SAO-1-072** クライン。綠 3、BP3500、ALO、發生綠、DRAW。同一句，DRAW 仍抽 1。
+
+兩張官方頁都沒有卡牌 FAQ。
+
+### Batch C：單目標 BP 範圍
+
+`enemyBpDown` 增加可選的含邊界 `minBp`／`maxBp`，以及 `zone`。預設 `front` 只看敵方 FRONT。`field` 只看敵方 FRONT 或 ENERGY 上的角色，不看場域卡。目標在 pending 打開時抓一次；結算時對同一個 UID 減 BP，減到 0 以下就從它所在的那一列退場，不會用減完後的 BP 重新篩選。
+
+`frontOnceProgram` 是角色、只在 FRONT、每回合一次。後續只能是一發 `enemyBpDown`，或一層不能拒絕的 `discardGate` 再接那一發。Q84：「1枚選び」是必選。Q770：【ターン1】按實體卡。封印後看不到起動。
+
+- **EX08BT/SAO-2-052** ミト。紫 1、BP1500、プログレッシブ、發生紫、無 Trigger。選 1 張 BP1500 以上的敵方 FRONT，本回合 BP-1000。
+- **EX08BT/SAO-2-043** アルゴ。紫 2、BP3000、發生紫、DRAW。先支付「手札を1枚場外に置く」，目標改為敵方場上角色（FRONT 或 ENERGY）。沒有手牌就不能起動。DRAW 另外抽 1。
+
+### Batch D：正式名稱別名
+
+`nameAliases` 不改 `cardId`，也不改印刷卡名。Q87（2023-03-17）：別名在手牌、牌庫、場外、場上、REMOVED 以及其他區域都成立。Q1946：元々のカード名仍是卡面頂端的名字，每回合一次的卡名鍵繼續用這個名字。Q2077：別名可以滿足場上或場外的指定卡名。Q50／Q55：Raid 埋在下面的那層不是場上的那張卡，所以埋層的別名不算；埋層的印刷本名仍沿用既有的牌堆掃描，沒有改掉。封印只在這張卡是場上可見實體時拿掉別名。場外的 `originalEffectsDisabled` 不成立，所以手牌、牌庫、場外、REMOVED 仍保留別名。另一個作品裡字面相同的名字仍是另一張卡，身份看 UID 前綴與 `cardId`。LIFE 被 Q87 的「全て」涵蓋，但目前沒有依卡名搜 LIFE 的效果，沒有另做。牌庫搜尋與場外回收不會列出 LIFE 或 REMOVED。
+
+- **EX08BT/SAO-2-007** ユージオ・シンセシス・サーティツー。也視為〈ユージオ〉。登場時抽 1 棄 1。DRAW。
+- **EX08BT/SAO-2-055** 結城 明日奈。也視為〈アスナ〉。同一句登場抽棄。DRAW。
+
+### Batch E：零引擎修改
+
+這 7 張沒有再改 `engine.mjs`、`pack.mjs`、`field-conditions.mjs`、`ability-templates.mjs`。A 到 D 是規則擴充，不計入這個數字。TTG 與 MST 剩下的短卡都還有額外句子，這輪沒有半張能只靠既有 DSL 完整移植，所以零引擎張數是 7，不是只擴充 BLEACH。
+
+- **UA15BT/SAO-1-010** 也視為〈アリス〉。無其他角色能力。GET 把公開的那張加入手牌。
+- **UA15BT/SAO-1-011** 也視為〈アリス〉，加上【ステップ】。無 Trigger。封印後不能 STEP，別名也不算。
+- **EX08BT/SAO-2-003** キリト＆ユージオ。也視為〈キリト〉與〈ユージオ〉。Q1195（2024-11-08）：場上這一張同時滿足兩個名字。發生能源圖示 alt 是「黃黃」，`gen` 從 3 改為 2，與 SAO-1-009 同一讀法。DRAW。
+- **EX08BT/SAO-2-051** 也視為〈ミト〉。GET。
+- **UA51BT/SLG-1-023** 水篠 潤一郎。既有 2回ブロック，ACTIVE 是通用的己方角色 ACTIVE 並 BP+3000。
+- **UA51BT/SLG-1-056** 向坂 雫。既有 Impact 1。登錄特徵是官方的單一代幣「第四次架南島レイド」。目錄的「第四次架南島Raid」沒有拿來註冊。
+- **UA51BT/SLG-1-069** ケン。己方回合且手牌至少 5 張時 BP+1500。登錄特徵是單一代币「DFN／第四次架南島レイド」，沒有拆斜線。
+
+沒有登錄：SAO-1-012 的 COLOR 是選 1 張敵方 FRONT 轉 REST，並使它下一次不能 ACTIVE，不是現有的 COLOR 模式。SAO-2-004 除了別名，還要在其他整合騎士至少 4 張時把自己轉 ACTIVE。SAO-1-008、SAO-1-045、SAO-1-093、SAO-2-050 的起動不是「只在能源線」。
+
+### 批次 SHA
+
+| 批次 | 內容 | commit |
+|---|---|---|
+| A | `onRetire` 可重用 REST；BLC-2-010 | `3491223d23bee779af2306fc686ce54654a66435` |
+| B | 第一次阻擋後 ACTIVE；SAO-1-038、SAO-1-072 | `bb4831ab87d507ad816d80470ed92353b05b35cb` |
+| C | 單目標 BP 範圍；SAO-2-052、SAO-2-043 | `f4f739edeca91be79ed646625dd892b24e1f4b9f` |
+| D | 印刷卡名別名；SAO-2-007、SAO-2-055 | `52e24211c9dbc9a19cf68b9b8d45995bb8629b9e` |
+| E | 零引擎 7 張：SAO-1-010、SAO-1-011、SAO-2-003、SAO-2-051、SLG-1-023、SLG-1-056、SLG-1-069 | `9180c86a4d2bb95779c9b8a2f0562717b8209b44` |
+
+### 登錄數（`node scripts/v2-unported-report.mjs`）
+
+| 作品 | V2 正式登錄 | 未移植 |
+|---|---:|---:|
+| BLEACH | 97/276 | 179 |
+| TTG | 30/81 | 51 |
+| SLG | 37/80 | 43 |
+| SAO | 76/183 | 107 |
+| MST | 42/80 | 38 |
+| 合計 | 282/700 | 418 |
+
+本輪正式新增 14 張。零引擎完整移植是其中 7 張。嚴格全面官方 FAQ 驗收仍為 0。合成測試卡沒有計入。
+
+### 本輪實際測試（Node v22.23.4）
+
+- `npm test`：1601 tests、1601 pass、0 fail、0 skipped。
+- `node scripts/v2-integrated-match-matrix.mjs`：60/60 finished，failures 0。
+- `node scripts/v2-assert-independent-manifest.mjs`：bleach 97、gurren-lagann 30、solo-leveling 37、sword-art-online 76、mushoku-tensei 42；total 282。
+- `node scripts/v2-unported-report.mjs`：700／Pilot 282／尚未移植 418／嚴格全面驗收 0。
+- GitHub Actions：這個交接 commit 推上之後，要看它自己的 pull_request run。`39734726291` 只屬於 `e57d8d9`，不能拿來當本輪通過。同一 SHA 若有被 concurrency 取消的 push run，那不是測試失敗。
+
+### 未完成與下一輪
+
+- Q73 與逐張 LIFE 的差異仍開放。DAMAGE2 沒有重寫。
+- 未審核的 Raid 幾何仍 fail closed。
+- 2回アタック與 2回ブロック都沒有「同一 UID 離場再登場後次數歸零」的專用 FAQ。目前保留該回合的次數。
+- 埋在 Raid 底下的印刷本名仍算進既有的名稱掃描。別名不算。LIFE 沒有依名字搜尋的效果。
+- 全面 FAQ 認證仍為 0。沒有瀏覽器或手機手動操作驗收。
+- TTG、MST 目前沒有剩下一張可以零引擎完整移植的卡。
+- 下一輪最值得先核對官方頁再決定要不要加共用規則的卡：
+  - `SAO-2-004`：別名已經可用，缺的是「其他整合騎士至少 4 張時，登場轉 ACTIVE」。
+  - `SAO-1-012`：別名、STEP、兩個名字的 BP 比較接近了，但 COLOR 是「敵方 FRONT 1 張 REST，且下一次不能 ACTIVE」，不能套現有 COLOR。
+  - `SAO-1-008`、`SAO-1-045`、`SAO-1-093`、`SAO-2-050`：REST 自己產生能源，但不是只限能源線。
+  - `BLC-2-047`：除了抽 2，還有被己方藍一護從手牌送場外時再抽 1。
+  - `TTG-1-022`：也視為庸子，加上 REST 自己、本回合能源 +1、主要階段結束時回手。回手不是現有的結束時退場。
+  - `MST-1-004`：只有「因己方效果登場」時才轉 ACTIVE。
+
