@@ -1,7 +1,18 @@
 // Shared V2 live-state predicates. No per-title reducer and no cached bonuses.
 // Pure condition evaluation shared by energy today and conditional BP later.
-// Source traits must already be independently verified by its own pack adapter;
-// DO NOT infer Japanese aliases, translate strings, or split slash composites.
+// Source traits must already be independently verified by its own pack adapter.
+// DO NOT infer Japanese aliases from prose, translate strings, or split slash
+// composites. A printed name alias is an explicit card field, never a guess.
+import {originalEffectsDisabled} from './continuous-states.mjs';
+// Q1946: the name printed at the top stays the original name. An alias is
+// additional. Q87 applies that extra name in hand, deck, outside, field,
+// removed, and the other zones. Q50/Q55: a card buried under a Raid is not
+// the field card, so callers must not ask this helper for a buried layer.
+// Silence removes the printed alias and leaves the original name.
+export function cardHasName(definition,name,silenced=false){
+ if(definition?.name===name)return true;
+ return silenced!==true&&(definition?.nameAliases||[]).includes(name);
+}
 export const V2_TRAIT_ZONES=Object.freeze(['field','front','energy']);
 export const V2_TRAIT_SUBJECTS=Object.freeze(['character','card']);
 export function ownFieldTraitKinds(s,owner,sourceUid,profile,printed){
@@ -29,7 +40,7 @@ export function matchesOwnDistinctTraits(s,owner,sourceUid,profile,printed){
 // Each condition is evaluated from the current match on every BP/energy read,
 // not when a card is played. This is distinct from once-resolved turn buffs.
 // Strictly use the physical controller's fields: never hand/outside/underlayers.
-export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energy){
+export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energy,cardBp){
  if(condition.turn==='own'&&s.active!==owner)return false;
  if(condition.turn==='opponent'&&s.active===owner)return false;
  if(condition.kind==='ownEffectHandOutsideOrRecovery'){
@@ -51,6 +62,20 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   return s.players[owner].outside.length>=condition.min;
  if(condition.kind==='ownEnergyAtLeast')
   return energy()>=condition.min;
+ if(condition.kind==='oppCharacterBpAtLeast'){
+  // Q749: an effect that raises current BP counts. Printed BP alone is not
+  // the check. Mutual current-BP lookups stop at the card already being
+  // measured so two such sentences cannot recurse.
+  if(typeof cardBp!=='function')throw Error('Opponent BP condition needs a live BP reader');
+  const foe=s.players[1-owner];
+  const areas=condition.zone==='front'?[foe.front]:
+   condition.zone==='energy'?[foe.energy]:[foe.front,foe.energy];
+  for(const area of areas)for(const c of area){
+   if(!c||printed(c).type!=='character')continue;
+   if(cardBp(c)>=condition.minBp)return true;
+  }
+  return false;
+ }
  const pl=s.players[owner];
  const zones=condition.zone==='front'?[pl.front]:
   condition.zone==='energy'?[pl.energy]:[pl.front,pl.energy];
@@ -62,11 +87,20 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   if(!c||(condition.excludeSelf&&c.uid===sourceUid))continue;
   const d=printed(c);
   if(d.type!=='character')continue;
-  if(condition.kind==='ownNameExists'&&d.name===condition.name)return true;
-  if(remaining)remaining.delete(d.name);
+  const silenced=originalEffectsDisabled(s,c);
+  if(condition.kind==='ownNameExists'&&cardHasName(d,condition.name,silenced))return true;
+  // 〈名前〉がない is the same character-name check, inverted. Hand, deck,
+  // outside, and Raid under-cards are not the field. Silence drops an alias
+  // and keeps the printed name, matching ownNameExists.
+  if(condition.kind==='ownNameAbsent'&&cardHasName(d,condition.name,silenced))return false;
+  if(remaining){
+   remaining.delete(d.name);
+   if(!silenced)for(const alias of d.nameAliases||[])remaining.delete(alias);
+  }
   if(condition.kind==='ownTraitCount'&&d.traits.includes(condition.trait))found++;
  }
  if(remaining)return remaining.size===0;
+ if(condition.kind==='ownNameAbsent')return true;
  return condition.kind==='ownTraitCount'&&found>=condition.min;
 }
 
@@ -80,6 +114,25 @@ export function countRetirementsThisTurn(s,controller='any',cardType='any'){
  return (s.turnRetireEvents||[]).filter(e=>e.turn===s.turn&&
   (controller==='any'||e.controller===controller)&&
   (cardType==='any'||e.cardType===cardType)).length;
+}
+// Q2030: 元々のBP is the number printed on the card, not the current total.
+// Q2070: a field has no BP, so it is not counted by a 元々のBP filter even
+// when the sentence does not say キャラ. REST is the physical ready flag.
+// The trait token is exact. This card is included unless excludeSelf is set.
+export function ownRestPrintedBpCount(s,owner,sourceUid,condition,printed){
+ if(condition.turn==='own'&&s.active!==owner)return 0;
+ if(condition.turn==='opponent'&&s.active===owner)return 0;
+ const pl=s.players[owner];
+ const zones=condition.zone==='front'?[pl.front]:
+  condition.zone==='energy'?[pl.energy]:[pl.front,pl.energy];
+ let found=0;
+ for(const zone of zones)for(const c of zone){
+  if(!c||c.ready||(condition.excludeSelf&&c.uid===sourceUid))continue;
+  const d=printed(c);
+  if(d.type!=='character'||!Number.isInteger(d.bp)||d.bp>condition.maxPrintedBp)continue;
+  if((d.traits||[]).includes(condition.trait))found++;
+ }
+ return found;
 }
 export function retiredThisTurn(s,controller,cardType='any'){
  if(![0,1].includes(controller))throw Error('Invalid true-retirement predicate');

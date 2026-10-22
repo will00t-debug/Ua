@@ -519,18 +519,74 @@ const authored=[
       }
     ]
   }
+},
+{
+  "id":"SLG-1-023","name":"水篠 潤一郎","color":"purple","energy":4,
+  "ap":1,"bp":4000,"gen":1,"trigger":"active","type":"character",
+  "textAnchor":"兩次阻擋：本回合第一次阻擋時ACTIVE。",
+  "implementation":"dsl","effects":{},"readyOnBlockCount":1
+},
+{
+  "id":"SLG-1-056","name":"向坂 雫","color":"green","energy":2,
+  "ap":1,"bp":3000,"gen":1,"trigger":null,"type":"character",
+  "textAnchor":"Impact1。",
+  "implementation":"dsl","effects":{},"printedImpact":1,
+  "officialTraits":["第四次架南島レイド"],
+  "catalogueTraits":["第四次架南島Raid"]
+},
+{
+  "id":"SLG-1-069","name":"ケン","color":"green","energy":2,
+  "ap":1,"bp":2500,"gen":1,"trigger":null,"type":"character",
+  "textAnchor":"己方回合手牌5張以上時BP+1500。",
+  "implementation":"dsl","effects":{},
+  "passiveBonuses":[{"condition":{"kind":"ownHandCountAtLeast","turn":"own","min":5},"bp":1500}],
+  "officialTraits":["DFN／第四次架南島レイド"],
+  "catalogueTraits":["DFN","第四次架南島Raid"]
+},
+{
+  "id":"SLG-1-062","name":"最上 真","color":"green","energy":0,
+  "ap":1,"bp":1500,"gen":1,"trigger":"draw","type":"character",
+  "textAnchor":"己方回合中若場上有5張以上第四次架南島Raid卡，BP+1500。",
+  "implementation":"dsl","effects":{},
+  "passiveBonuses":[{"condition":{"kind":"ownTraitCount","turn":"own","min":5,"zone":"field","excludeSelf":false,"trait":"第四次架南島レイド"},"bp":1500}],
+  "officialTraits":["第四次架南島レイド"],
+  "catalogueTraits":["第四次架南島Raid"]
+},
+{
+  "id":"SLG-1-065","name":"アーシー","color":"green","energy":4,
+  "ap":1,"bp":4000,"gen":1,"trigger":"draw","type":"character",
+  "textAnchor":"己方回合手牌5張以上時BP+1000並獲Impact1。",
+  "implementation":"dsl","effects":{},
+  "passiveBonuses":[{"condition":{"kind":"ownHandCountAtLeast","turn":"own","min":5},"bp":1000,"impact":1}],
+  "officialTraits":["DFN／第四次架南島レイド"],
+  "catalogueTraits":["DFN","第四次架南島Raid"]
+},
+{
+  "id":"SLG-1-027","name":"アイアン","color":"purple","energy":2,
+  "ap":1,"bp":3000,"gen":1,"trigger":null,"type":"character",
+  "textAnchor":"原本BP2500以下且REST的己方影之軍團角色，BP+500",
+  "implementation":"dsl","effects":{},
+  "passiveBonuses":[{"condition":{"kind":"ownRestPrintedBpAtMost","turn":"own",
+    "zone":"field","excludeSelf":false,"trait":"影の軍団","maxPrintedBp":2500},"bpEach":500}],
+  "officialTraits":["影の軍団"],
+  "catalogueTraits":["影之軍團"]
 }
 ];
 export const SLG_V2_VERIFIED_IDS=Object.freeze(authored.map(c=>c.id));
 export function verifiedSlgV2Cards(){
- return authored.map(({textAnchor,...spec})=>{
+ return authored.map(({textAnchor,officialTraits,catalogueTraits,...spec})=>{
   const card=catalog[spec.id];
   if(!card||card.identity!==spec.id||!card.source?.includes('/cardlist/')||!card.effect?.includes(textAnchor))throw Error('SLG official text changed: '+spec.id);
   for(const key of ['name','color','energy','ap','bp','gen','trigger','type']){
    const actual=key==='name'?(card.nameJa||card.name):(key==='bp'?(card.bp??0):(card[key]??null));
    if(actual!==(spec[key]??null))throw Error('SLG printed '+key+' changed: '+spec.id);
   }
-  return {...spec,traits:card.traits||[]};
+  // The catalogue sometimes stores a translated or split trait. When the
+  // official page uses one different token, keep that token and require the
+  // known catalogue value so a later catalogue correction cannot pass silently.
+  if(catalogueTraits&&JSON.stringify(card.traits||[])!==JSON.stringify(catalogueTraits))
+   throw Error('SLG catalogue trait drift: '+spec.id);
+  return {...spec,traits:officialTraits||card.traits||[]};
  });
 }
 export function createSlgV2Pack(){return createUniversalPack({id:'solo-leveling',version:'v2-c-20261015',cards:verifiedSlgV2Cards()});}

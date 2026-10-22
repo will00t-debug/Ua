@@ -888,6 +888,58 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
   "number":"EX07BT/BLC-2-040","name":"チルッチ・サンダーウィッチ",
   "color":"blue","energy":0,"ap":1,"bp":1000,"gen":1,
   "trigger":null,"type":"character","effect":"退場：抽 1 張。"
+ } ,{
+  "id":"BLC-1-051","kind":"onRetireMillTwo",
+  "number":"UA08BT/BLC-1-051","name":"朽木 ルキア",
+  "color":"purple","energy":0,"ap":1,"bp":1500,"gen":1,
+  "trigger":"draw","type":"character","effect":"退場：將己方牌堆頂 2 張送至場外。"
+ } ,{
+  "id":"BLC-2-042","kind":"onRetireMillTwo",
+  "number":"EX07BT/BLC-2-042","name":"ルピ・アンテノール",
+  "color":"blue","energy":0,"ap":1,"bp":1500,"gen":1,
+  "trigger":"draw","type":"character","effect":"退場：將己方牌堆頂 2 張送至場外。"
+ } ,{
+  "id":"BLC-1-009","kind":"printedImpact",
+  "number":"UA08BT/BLC-1-009","name":"ドリスコール・ベルチ",
+  "color":"yellow","energy":2,"ap":1,"bp":3000,"gen":1,
+  "trigger":null,"type":"character",
+  "effect":"Impact 1：攻擊並贏得戰鬥時，對敵方玩家造成 1 點傷害。"
+ } ,{
+  "id":"BLC-1-074","kind":"printedAttackDamage",
+  "number":"UA08BT/BLC-1-074","name":"京楽 春水",
+  "color":"green","energy":3,"ap":1,"bp":2500,"gen":2,
+  "trigger":"draw","type":"character",
+  "effect":"Damage 2：攻擊直接造成傷害時，改為造成 2 點傷害。"
+ } ,{
+  "id":"BLC-1-054","kind":"discardOppHandOne",
+  "number":"UA08BT/BLC-1-054","name":"涅 マユリ",
+  "color":"purple","energy":3,"ap":1,"bp":3000,"gen":1,
+  "trigger":null,"type":"character",
+  "effect":"登場：敵方將其 1 張手牌送至場外。"
+ } ,{
+  "id":"BLC-1-109","kind":"drawTwoDiscardOne",
+  "number":"UA08ST/BLC-1-109","name":"空座町の死神代行",
+  "color":"purple","energy":1,"ap":1,"bp":0,"gen":0,
+  "trigger":"draw","type":"event",
+  "effect":"抽 2 張，再棄 1 張。"
+ } ,{
+  "id":"BLC-2-007","kind":"frontBpDownMin1000",
+  "number":"EX07BT/BLC-2-007","name":"キャンディス・キャットニップ",
+  "color":"yellow","energy":3,"ap":1,"bp":2500,"gen":2,
+  "trigger":"active","type":"character",
+  "effect":"登場：所有敵方前線 BP 1000 以上角色，本回合 BP −500。"
+ } ,{
+  "id":"BLC-2-063","kind":"readyOnFirstAttack",
+  "number":"EX07BT/BLC-2-063","name":"京楽 春水",
+  "color":"green","energy":4,"ap":1,"bp":2000,"gen":2,
+  "trigger":null,"type":"character",
+  "effect":"每回合首次攻擊時，此角色立即轉為 ACTIVE，因此可攻擊 2 次。"
+ } ,{
+  "id":"BLC-2-010","kind":"onRetireRestUnder2000",
+  "number":"EX07BT/BLC-2-010","name":"ミニーニャ・マカロン",
+  "color":"yellow","energy":0,"ap":1,"bp":2000,"gen":1,
+  "trigger":null,"type":"character",
+  "effect":"退場：可將最多 1 個敵方前線 BP 2000 以下角色轉為 REST。"
  }
 
  ,{
@@ -937,7 +989,9 @@ export function checkedBleachAddonDefinition(p){
   inspectTop2:{onPlay:[{template:'inspectTopArrange',count:2,toOutside:true,rest:'top'}]},
   inspectTop3:{onPlay:[{template:'inspectTopArrange',count:3,toOutside:true,rest:'top'}]},
   peekTopOrBottom:{onPlay:[{template:'peekTopOrBottom'}]},
-  inspectTopAnyOutside2:{onPlay:[{template:'inspectTopAnyOutside',count:2,rest:'top'}]}
+  inspectTopAnyOutside2:{onPlay:[{template:'inspectTopAnyOutside',count:2,rest:'top'}]},
+  frontBpDownMin1000:{onPlay:[{template:'enemyFrontBpDownInRange',bp:500,minBp:1000,maxBp:null}]},
+  onRetireRestUnder2000:{onRetire:[{template:'restEnemyUnderBp',bp:2000,optional:true}]}
  };
 // EX15BT/BLC-4-014 prints yellow+ and ACTIVE adds one yellow. The imported legacy gen=2
  // encoded the ACTIVE total; V2 needs the printed REST base (1) plus an ACTIVE +1.
@@ -946,10 +1000,16 @@ export function checkedBleachAddonDefinition(p){
  const isPassive=p.kind==='activeEnergy'||p.kind==='impactNull';
  const isMain=p.kind==='restSelfEnemy'||p.kind==='restEnergyRetire';
  const isRetireDraw=p.kind==='onRetireDrawOne';
+ const isRetireMill=p.kind==='onRetireMillTwo';
+ const isPrintedImpact=p.kind==='printedImpact';
+ const isPrintedDamage=p.kind==='printedAttackDamage';
+ const isOppDiscard=p.kind==='discardOppHandOne';
+ const isDrawTwo=p.kind==='drawTwoDiscardOne';
+ const isReadyAttack=p.kind==='readyOnFirstAttack';
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isStripDual;
+ const special=p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -964,6 +1024,9 @@ export function checkedBleachAddonDefinition(p){
    ...(p.kind==='enterActiveAttackRestSkip'?{enterActiveIfOpponentRest:true}:{}),
   ...(p.kind==='activeEnergy'?{activeExtraEnergy:1}:{}),
   ...(p.kind==='impactNull'?{impactNull:true}:{}),
+  ...(isPrintedImpact?{printedImpact:1}:{}),
+  ...(isPrintedDamage?{printedAttackDamage:2}:{}),
+  ...(isReadyAttack?{readyOnAttackCount:1}:{}),
   ...(p.kind==='restSelfEnemy'?{mainAbility:{op:'restSelfThenRestOppFrontOne',frontOnly:true}}:{}),
   ...(p.kind==='restEnergyRetire'?{mainAbility:{op:'restSelfGainEnergyRetireEndMain',energyOnly:true,oncePerTurn:true,extraEnergy:1}}:{}),
   ...(p.kind.startsWith('retireBonus')?{triggerEffect:{op:'retireOppFront'}}:{}),
@@ -971,6 +1034,9 @@ export function checkedBleachAddonDefinition(p){
   ...(p.kind==='drawPlayColorHand'?{triggerEffect:{op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1}}:{}),
   ...(!special?{templateEffects:abilities[p.kind]}:{effects:
    isRetireDraw?{onRetire:[{op:'draw',count:1}]}:
+   isRetireMill?{onRetire:[{op:'millTop',count:2}]}:
+   isOppDiscard?{onPlay:[{op:'discardOppHand',count:1}]}:
+   isDrawTwo?{onPlay:[{op:'drawDiscard',count:2,discardCount:1}]}:
    isStripDual?{onPlay:[{op:'chooseOne',optional:false,options:[
     {id:'strip',label:'Strip opponent RAID top',turn:'any',
      then:[{op:'stripOppRaidTop',optional:true}]},

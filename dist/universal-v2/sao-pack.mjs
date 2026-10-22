@@ -888,6 +888,383 @@ const PRINTED_PINS=Object.freeze({
       "プログレッシブ"
     ],
     "effectJa": "このキャラがアクティブの場合、このキャラの発生エナジー+【紫】。"
+  },
+  "SAO-1-009": {
+    "kind": "onPlayTopFilterBottomDiscard",
+    "nameJa": "リズベット",
+    "color": "yellow",
+    "energy": 3,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 2,
+    "type": "character",
+    "trigger": "draw",
+    "traits": ["ALO"],
+    "effectJa": "【登場時】自分の山札の上から3枚見る。その中から［特徴：女神］を1枚まで公開し手札に加える。残りを望む順で自分の山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。"
+  },
+  "SAO-1-040": {
+    "kind": "onPlayTopFilterBottomDiscard",
+    "nameJa": "キリト",
+    "color": "blue",
+    "energy": 1,
+    "ap": 1,
+    "bp": 2000,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "traits": ["アインクラッド"],
+    "effectJa": "【登場時】自分の山札の上から3枚見る。その中から［特徴：アインクラッド］を1枚まで公開し手札に加える。残りを望む順で自分の山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。"
+  },
+  "SAO-2-023": {
+    "kind": "onPlayTopFilterBottomDiscard",
+    "nameJa": "リーファ",
+    "color": "blue",
+    "energy": 1,
+    "ap": 1,
+    "bp": 2000,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "traits": ["ALO"],
+    "effectJa": "【登場時】自分の山札の上から3枚見る。その中から［特徴：ALO］を1枚まで公開し手札に加える。残りを望む順で自分の山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。"
+  },
+  "SAO-1-077": {
+    "kind": "onPlayTopFilterBottomDiscard",
+    "nameJa": "ユイ",
+    "color": "green",
+    "energy": 1,
+    "ap": 1,
+    "bp": 1500,
+    "gen": 1,
+    "type": "character",
+    "trigger": "draw",
+    "traits": ["ALO"],
+    "effectJa": "【登場時】自分の山札の上から3枚見る。その中から緑の［特徴：ALO］を1枚まで公開し手札に加える。残りを望む順で自分の山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。"
+  },
+  "SAO-1-038": {
+    "kind": "readyOnFirstBlock",
+    "nameJa": "エギル",
+    "color": "blue",
+    "energy": 1,
+    "ap": 1,
+    "bp": 2500,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "traits": ["アインクラッド"],
+    "effectJa": "【2回ブロック】（このキャラがこのターン初めてブロックした時、アクティブにする）"
+  },
+  "SAO-2-052": {
+    "kind": "frontOnceBpDown",
+    "nameJa": "ミト",
+    "color": "purple",
+    "energy": 1,
+    "ap": 1,
+    "bp": 1500,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "traits": ["プログレッシブ"],
+    "effectJa": "【起動メイン】【フロントLにある場合】 【ターン1】BP1500以上の相手のフロントLのキャラを1枚選び、このターン中、BP-1000。"
+  },
+  "SAO-2-043": {
+    "kind": "frontOnceDiscardBpDown",
+    "nameJa": "アルゴ",
+    "color": "purple",
+    "energy": 2,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 1,
+    "type": "character",
+    "trigger": "draw",
+    "traits": ["プログレッシブ"],
+    "effectJa": "【起動メイン】【フロントLにある場合】 【手札を1枚場外に置く】 【ターン1】BP1500以上の相手の場のキャラを1枚選び、このターン中、BP-1000。"
+  },
+  "SAO-1-072": {
+    "kind": "readyOnFirstBlock",
+    "nameJa": "クライン",
+    "color": "green",
+    "energy": 3,
+    "ap": 1,
+    "bp": 3500,
+    "gen": 1,
+    "type": "character",
+    "trigger": "draw",
+    "traits": ["ALO"],
+    "effectJa": "【2回ブロック】（このキャラがこのターン初めてブロックした時、アクティブにする）"
+  },
+  "SAO-2-007": {
+    "kind": "nameAliasDrawDiscard",
+    "nameJa": "ユージオ・シンセシス・サーティツー",
+    "color": "yellow",
+    "energy": 1,
+    "ap": 1,
+    "bp": 2000,
+    "gen": 1,
+    "type": "character",
+    "trigger": "draw",
+    "traits": ["整合騎士"],
+    "effectJa": "このカードは〈ユージオ〉としても扱う。\n【登場時】カードを1枚引き、自分の手札を1枚場外に置く。"
+  },
+  "SAO-1-010": {
+    "kind": "nameAliasOnly",
+    "nameJa": "アリス・シンセシス・サーティ",
+    "color": "yellow",
+    "energy": 0,
+    "ap": 1,
+    "bp": 1500,
+    "gen": 1,
+    "type": "character",
+    "trigger": "get",
+    "traits": ["整合騎士"],
+    "effectJa": "このカードは〈アリス〉としても扱う。"
+  },
+  "SAO-1-011": {
+    "kind": "nameAliasStep",
+    "nameJa": "アリス・シンセシス・サーティ",
+    "color": "yellow",
+    "energy": 1,
+    "ap": 1,
+    "bp": 2500,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "traits": ["整合騎士"],
+    "effectJa": "このカードは〈アリス〉としても扱う。\n【ステップ】（自分の移動フェイズにフロントLからエナジーLへ移動できる）"
+  },
+  "SAO-1-012": {
+    "kind": "nameAliasStepBothNamesColorRest",
+    "nameJa": "アリス・シンセシス・サーティ",
+    "color": "yellow",
+    "energy": 3,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 2,
+    "type": "character",
+    "trigger": "color",
+    "traits": ["整合騎士"],
+    "effectJa": "このカードは〈アリス〉としても扱う。\n【ステップ】（自分の移動フェイズにフロントLからエナジーLへ移動できる）\n【自分のターン中】自分の場に〈キリト〉と〈ユージオ〉がある場合、このキャラはBP+1000。"
+  },
+  "SAO-2-004": {
+    "kind": "nameAliasActiveIfTrait",
+    "nameJa": "アリス・シンセシス・サーティ",
+    "color": "yellow",
+    "energy": 3,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 1,
+    "type": "character",
+    "trigger": "active",
+    "traits": ["整合騎士"],
+    "effectJa": "このカードは〈アリス〉としても扱う。\n【登場時】自分の場に他の［特徴：整合騎士］が4枚以上ある場合、このキャラをアクティブにする。"
+  },
+  "SAO-2-003": {
+    "kind": "nameAliasOnly",
+    "nameJa": "キリト＆ユージオ",
+    "color": "yellow",
+    "energy": 3,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 2,
+    "type": "character",
+    "trigger": "draw",
+    "traits": [],
+    "effectJa": "このカードは〈キリト〉としても〈ユージオ〉としても扱う。"
+  },
+  "SAO-2-051": {
+    "kind": "nameAliasOnly",
+    "nameJa": "兎沢 深澄",
+    "color": "purple",
+    "energy": 0,
+    "ap": 1,
+    "bp": 1500,
+    "gen": 1,
+    "type": "character",
+    "trigger": "get",
+    "traits": ["プログレッシブ"],
+    "effectJa": "このカードは〈ミト〉としても扱う。"
+  },
+  "SAO-2-055": {
+    "kind": "nameAliasDrawDiscard",
+    "nameJa": "結城 明日奈",
+    "color": "purple",
+    "energy": 0,
+    "ap": 1,
+    "bp": 1500,
+    "gen": 1,
+    "type": "character",
+    "trigger": "draw",
+    "traits": ["プログレッシブ"],
+    "effectJa": "このカードは〈アスナ〉としても扱う。\n【登場時】カードを1枚引き、自分の手札を1枚場外に置く。"
+  },
+  "SAO-1-008": {
+    "kind": "fieldRestEnergyRetireEndMain",
+    "nameJa": "ユイ",
+    "color": "yellow",
+    "energy": 0,
+    "ap": 1,
+    "bp": 1000,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "traits": ["ALO"],
+    "effectJa": "【起動メイン】【レストにする】 【ターン1】このターン中、このキャラの発生エナジー+【黄】。メインフェイズ終了時、このキャラを退場させる。"
+  },
+  "SAO-1-045": {
+    "kind": "fieldRestEnergyRetireEndMain",
+    "nameJa": "ピナ",
+    "color": "blue",
+    "energy": 0,
+    "ap": 1,
+    "bp": 1000,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "traits": ["アインクラッド"],
+    "effectJa": "【起動メイン】【レストにする】 【ターン1】このターン中、このキャラの発生エナジー+【青】。メインフェイズ終了時、このキャラを退場させる。"
+  },
+  "SAO-1-093": {
+    "kind": "fieldRestEnergyRetireEndMain",
+    "nameJa": "ゼクシード",
+    "color": "green",
+    "energy": 0,
+    "ap": 1,
+    "bp": 1000,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "traits": ["GGO"],
+    "effectJa": "【起動メイン】【レストにする】 【ターン1】このターン中、このキャラの発生エナジー+【緑】。メインフェイズ終了時、このキャラを退場させる。"
+  },
+  "SAO-2-050": {
+    "kind": "fieldRestEnergyRetireEndMain",
+    "nameJa": "ディアベル",
+    "color": "purple",
+    "energy": 0,
+    "ap": 1,
+    "bp": 1000,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "traits": ["プログレッシブ"],
+    "effectJa": "【起動メイン】【レストにする】 【ターン1】このキャラはこのターン中、発生エナジー+【紫】と「メインフェイズ終了時、このキャラを退場させる。」を得る。"
+  },
+  "SAO-2-006": {
+    "kind": "ownTraitEnergy",
+    "nameJa": "ベルクーリ・シンセシス・ワン",
+    "color": "yellow",
+    "energy": 2,
+    "ap": 1,
+    "bp": 2500,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "traits": ["整合騎士"],
+    "effectJa": "自分の場に他の［特徴：整合騎士］が3枚以上ある場合、このキャラの発生エナジー+【黄】。"
+  },
+  "SAO-1-007": {
+    "kind": "restSelfBuffOther",
+    "nameJa": "シリカ",
+    "color": "yellow",
+    "energy": 2,
+    "ap": 1,
+    "bp": 2500,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "traits": ["ALO"],
+    "effectJa": "【起動メイン】【レストにする】自分の場の他のキャラを1枚選び、このターン中、BP+1000。"
+  },
+  "SAO-2-005": {
+    "kind": "ownTraitImpact",
+    "nameJa": "シェータ・シンセシス・トゥエルブ",
+    "color": "yellow",
+    "energy": 2,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "traits": ["整合騎士"],
+    "effectJa": "自分の場に他の［特徴：整合騎士］が4枚以上ある場合、このキャラは【インパクト（1）】（アタックしてバトルに勝利した時、相手プレイヤーに1ダメージ）を得る。"
+  },
+  "SAO-1-079": {
+    "kind": "onRetireBuffOne",
+    "nameJa": "ユウキ",
+    "color": "green",
+    "energy": 2,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "traits": ["ALO"],
+    "effectJa": "【退場時】自分の場のキャラを1枚まで選び、このターン中、BP+1000。"
+  },
+  "SAO-1-017": {
+    "kind": "oppBpImpact",
+    "nameJa": "ベルクーリ・シンセシス・ワン",
+    "color": "yellow",
+    "energy": 5,
+    "ap": 1,
+    "bp": 4000,
+    "gen": 1,
+    "type": "character",
+    "trigger": "active",
+    "traits": ["整合騎士"],
+    "effectJa": "相手の場にBP4000以上のキャラがある場合、このキャラは【インパクト（1）】（アタックしてバトルに勝利した時、相手プレイヤーに1ダメージ）を得る。"
+  },
+  "SAO-2-065": {
+    "kind": "nameAbsentBp",
+    "nameJa": "クライン",
+    "color": "green",
+    "energy": 2,
+    "ap": 1,
+    "bp": 3500,
+    "gen": 1,
+    "type": "character",
+    "trigger": "active",
+    "traits": ["ALO"],
+    "effectJa": "自分の場に〈フレイヤ〉がない場合、このキャラはBP-500。"
+  },
+  "SAO-1-043": {
+    "kind": "onPlayOutsideNameRest",
+    "nameJa": "シリカ",
+    "color": "blue",
+    "energy": 3,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 1,
+    "type": "character",
+    "trigger": "draw",
+    "traits": ["アインクラッド"],
+    "effectJa": "【登場時】自分の場外から〈ピナ〉を1枚まで自分の場にレストで登場させる。"
+  },
+  "SAO-2-034": {
+    "kind": "onAttackOptionalMill",
+    "nameJa": "エイジ",
+    "color": "purple",
+    "energy": 2,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 1,
+    "type": "character",
+    "trigger": "active",
+    "traits": ["SAOサバイバー"],
+    "effectJa": "【アタック時】自分の山札の上から1枚まで場外に置く。"
+  },
+  "SAO-2-008": {
+    "kind": "ownTurnTraitBp",
+    "nameJa": "レンリ・シンセシス・トゥエニセブン",
+    "color": "yellow",
+    "energy": 0,
+    "ap": 1,
+    "bp": 1500,
+    "gen": 1,
+    "type": "character",
+    "trigger": "active",
+    "traits": ["整合騎士"],
+    "effectJa": "【自分のターン中】自分の場に他の［特徴：整合騎士］が4枚以上ある場合、このキャラはBP+1500。"
   }
 });
 export const SAO_V2_PILOT_IDS=Object.freeze(Object.keys(PRINTED_PINS).sort());
@@ -938,6 +1315,107 @@ export function verifiedSaoV2Cards(){
     zone:'field',excludeSelf:true,name:'シリカ'},bp:2000}];
   if(pin.kind==='onRetireDrawOne')
    card.effects={onRetire:[{op:'draw',count:1}]};
+  // 1枚まで is optional. The card has already left, so it is not a target.
+  // Front and energy characters both count as 自分の場.
+  if(pin.kind==='onRetireBuffOne')
+   card.effects={onRetire:[{op:'buffOwnField',filter:{field:'type',value:'character'},
+    bp:1000,optional:true,excludeSelf:true}]};
+  if(pin.kind==='readyOnFirstBlock'){
+   card.readyOnBlockCount=1;
+   card.effects={};
+  }
+  if(pin.kind==='nameAliasStepBothNamesColorRest'){
+   card.nameAliases=['アリス'];
+   card.step=true;
+   card.effects={};
+   card.passiveBonuses=[{condition:{kind:'ownFieldHasAllNames',turn:'own',zone:'field',
+    excludeSelf:true,names:['キリト','ユージオ']},bp:1000}];
+   card.triggerEffect={op:'restOppFrontSkipNextActive'};
+  }
+  if(pin.kind==='nameAliasActiveIfTrait'){
+   card.nameAliases=['アリス'];
+   card.effects={onPlay:[{op:'activeSelfIf',when:{
+    kind:'ownTraitCount',turn:'any',min:4,zone:'field',excludeSelf:true,trait:'整合騎士'
+   }}]};
+  }
+  // Printed 【レストにする】 has no エナジーL / フロントL restriction.
+  // The header 色+ icon is one color pip plus a plus mark (gen 1). The extra
+  // pip is this activate ability, not a continuous ACTIVE bonus. SAO-2-050
+  // gains the same resolved state with 「を得る」; a later silence does not
+  // erase that gained energy or the already scheduled retirement.
+  if(pin.kind==='fieldRestEnergyRetireEndMain'){
+   card.effects={};
+   card.mainAbility={op:'restSelfGainEnergyRetireEndMain',lines:'field',
+    oncePerTurn:true,extraEnergy:1};
+  }
+  // SAO-2-006 header is 黄+ : one yellow pip plus the printed conditional
+  // sentence, so resting generation is 1. There is no 「アクティブの場合」.
+  // The extra pip exists only while three other 整合騎士 are on the own field,
+  // and only the energy line actually produces it.
+  if(pin.kind==='ownTraitEnergy'){
+   card.effects={};
+   card.passiveBonuses=[{condition:{kind:'ownTraitCount',turn:'any',min:3,
+    zone:'field',excludeSelf:true,trait:'整合騎士'},extraEnergy:1}];
+  }
+  if(pin.kind==='ownTurnTraitBp'){
+   card.effects={};
+   card.passiveBonuses=[{condition:{kind:'ownTraitCount',turn:'own',min:4,
+    zone:'field',excludeSelf:true,trait:'整合騎士'},bp:1500}];
+  }
+  // SAO-2-005 has no 自分のターン中 and no unconditional 【インパクト（1）】.
+  // Four other 整合騎士 must be on the own field. This card does not count.
+  if(pin.kind==='ownTraitImpact'){
+   card.effects={};
+   card.passiveBonuses=[{condition:{kind:'ownTraitCount',turn:'any',min:4,
+    zone:'field',excludeSelf:true,trait:'整合騎士'},impact:1}];
+  }
+  // SAO-2-065 printed BP is 3500-. The penalty is live while 〈フレイヤ〉 is
+  // absent from this card's own field. No 自分のターン中. A later silence
+  // removes the penalty because it is printed text, not a gained buff.
+  // Q749: current BP, including a bonus from an effect, not only the printed
+  // number. 相手の場 is the opponent's front and energy lines. No turn limit.
+  if(pin.kind==='oppBpImpact'){
+   card.effects={};
+   card.passiveBonuses=[{condition:{kind:'oppCharacterBpAtLeast',turn:'any',
+    zone:'field',minBp:4000},impact:1}];
+  }
+  if(pin.kind==='nameAbsentBp'){
+   card.effects={};
+   card.passiveBonuses=[{condition:{kind:'ownNameAbsent',turn:'any',
+    zone:'field',excludeSelf:false,name:'フレイヤ'},bp:-500}];
+  }
+  // SAO-1-043 names 〈ピナ〉 only. Energy, color, and AP are not printed filters.
+  if(pin.kind==='onPlayOutsideNameRest')
+   card.effects={onPlay:[{op:'deployOutsideNameRest',name:'ピナ',optional:true}]};
+  // SAO-2-034 is up to one card. The existing mill stays mandatory without optional.
+  if(pin.kind==='onAttackOptionalMill')
+   card.effects={onAttack:[{op:'millTop',count:1,optional:true}]};
+  // No ターン1. REST this card, then one other own character on either line.
+  if(pin.kind==='restSelfBuffOther'){
+   card.effects={};
+   card.mainAbility={op:'restSelfBuffOther',bp:1000};
+  }
+  if(pin.kind==='nameAliasDrawDiscard'||pin.kind==='nameAliasOnly'||pin.kind==='nameAliasStep'){
+   card.nameAliases={
+    'SAO-2-007':['ユージオ'],'SAO-2-055':['アスナ'],
+    'SAO-1-010':['アリス'],'SAO-1-011':['アリス'],
+    'SAO-2-003':['キリト','ユージオ'],'SAO-2-051':['ミト']
+   }[id];
+   if(!card.nameAliases)throw Error(id+' missing printed name alias');
+   if(pin.kind==='nameAliasStep')card.step=true;
+   if(pin.kind==='nameAliasDrawDiscard')
+    card.templateEffects={onPlay:[{template:'drawDiscardOne'}]};
+   else card.effects={};
+  }
+  if(pin.kind==='frontOnceBpDown'||pin.kind==='frontOnceDiscardBpDown'){
+   const debuff={op:'enemyBpDown',bp:1000,optional:false,minBp:1500,
+    zone:pin.kind==='frontOnceDiscardBpDown'?'field':'front'};
+   card.effects={};
+   card.mainAbility={op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,
+    then:pin.kind==='frontOnceDiscardBpDown'
+     ?[{op:'discardGate',optional:false,then:[debuff]}]
+     :[debuff]};
+  }
   if(pin.kind==='onPlayDraw')
    card.templateEffects={onPlay:[{template:'draw',count:1}]};
   if(pin.kind==='onPlayDrawDiscard')
@@ -966,6 +1444,18 @@ export function verifiedSaoV2Cards(){
    card.templateEffects={onPlay:[{template:'bounceOwnOtherUnderEnergy',energy:1}]};
   if(pin.kind==='onPlayPeekTop')
    card.templateEffects={onPlay:[{template:'peekTopOne'}]};
+  if(pin.kind==='onPlayTopFilterBottomDiscard'){
+   const spec={
+    'SAO-1-009':{count:3,filter:{field:'trait',value:'女神'}},
+    'SAO-1-040':{count:3,filter:{field:'trait',value:'アインクラッド'}},
+    'SAO-2-023':{count:3,filter:{field:'trait',value:'ALO'}},
+    'SAO-1-077':{count:3,filters:[{field:'color',value:'green'},{field:'trait',value:'ALO'}],logic:'all'}
+   }[id];
+   if(!spec)throw Error(id+' missing audited top-filter');
+   card.templateEffects={onPlay:[spec.filters
+    ?{template:'searchTopOneBottomDiscardWhere',count:spec.count,filters:spec.filters,logic:spec.logic}
+    :{template:'searchTopOneBottomDiscard',count:spec.count,filter:spec.filter}]};
+  }
   if(pin.kind==='lifeGatedRestRetire'){
     card.templateEffects={onPlay:[{template:'restOrRetireEnemyFrontByOwnLife',
      bp:5000,lifeAtMost:4,optional:false}]};
@@ -1023,6 +1513,17 @@ export function verifiedSaoV2Entries(){
      ...(pin.kind==='ownLifeAtMostFourBp500'?['tests/v2-sao-020-life-threshold-bp.test.mjs']:[]),
      ...(pin.kind==='impactNullOwnTurnHandFiveBp1000'?['tests/v2-sao-051-hand-impact-null.test.mjs']:[]),
      ...(pin.kind==='ownTurnSilicaFieldBp'?['tests/v2-sao-019-own-silica-bp.test.mjs']:[]),
+     ...(pin.kind==='onPlayTopFilterBottomDiscard'?['tests/v2-cross-title-top-filter-round13.test.mjs']:[]),
+     ...(pin.kind==='readyOnFirstBlock'?['tests/v2-ready-on-block-round14.test.mjs']:[]),
+     ...(pin.kind==='frontOnceBpDown'||pin.kind==='frontOnceDiscardBpDown'?['tests/v2-single-bp-target-round14.test.mjs']:[]),
+     ...(pin.kind==='nameAliasDrawDiscard'||pin.kind==='nameAliasOnly'||pin.kind==='nameAliasStep'?['tests/v2-name-alias-round14.test.mjs']:[]),
+     ...(pin.kind==='nameAliasActiveIfTrait'?['tests/v2-conditional-entry-active-round15.test.mjs']:[]),
+     ...(pin.kind==='nameAliasStepBothNamesColorRest'?['tests/v2-sao-012-color-rest.test.mjs']:[]),
+     ...(pin.kind==='fieldRestEnergyRetireEndMain'?['tests/v2-field-energy-retire-round15.test.mjs']:[]),
+     ...(pin.kind==='ownTraitEnergy'||pin.kind==='ownTurnTraitBp'?['tests/v2-zero-engine-round15.test.mjs']:[]),
+     ...(pin.kind==='ownTraitImpact'?['tests/v2-conditional-impact-round16.test.mjs']:[]),
+     ...(pin.kind==='restSelfBuffOther'?['tests/v2-rest-buff-other-round16.test.mjs']:[]),
+     ...(pin.kind==='nameAliasOnly'||pin.kind==='nameAliasStep'?['tests/v2-zero-engine-round14.test.mjs']:[]),
      'tests/universal-v2-sao-mst-cross-title.test.mjs'
     ]),
     ...(def.implementation==='vanilla'?{verifiedNoExtraEffects:true}:{})

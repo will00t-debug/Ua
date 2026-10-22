@@ -2,7 +2,7 @@
 // This module only compiles explicitly authored card abilities into existing
 // battle-engine DSL ops. It NEVER infers effects from printed card prose and
 // cannot authorize a card that has not passed the per-card official gate.
-const timings=Object.freeze(['onPlay','onRaid','onAttack','onRaided','onOutsideRecover']);
+const timings=Object.freeze(['onPlay','onRaid','onAttack','onRaided','onRetire','onOutsideRecover']);
 const integer=(x,lower,upper)=>Number.isInteger(x)&&x>=lower&&x<=upper;
 const positiveBp=v=>integer(v,1,5000);
 const threshold=v=>integer(v,1,50000);
@@ -139,6 +139,21 @@ const registry=Object.freeze({
  // change lands before state-based retirement queues any leave replacement.
  enemyFrontAllBpDown:{
   args:{bp:positiveBp},build:v=>[{op:'enemyFrontAllBpDown',bp:v.bp}]
+ },
+ // Same batch reduction, restricted to one inclusive BP window captured at
+ // resolution. null on either side means that side is unbounded. At least
+ // one side must be a number; the unbounded card stays on enemyFrontAllBpDown.
+ enemyFrontBpDownInRange:{
+  args:{
+   bp:positiveBp,
+   minBp:v=>v===null||integer(v,0,50000),
+   maxBp:v=>v===null||integer(v,0,50000)
+  },
+  check:v=>(v.minBp!==null||v.maxBp!==null)&&
+   (v.minBp===null||v.maxBp===null||v.minBp<=v.maxBp),
+  build:v=>[{op:'enemyFrontAllBpDown',bp:v.bp,
+   ...(v.minBp===null?{}:{minBp:v.minBp}),
+   ...(v.maxBp===null?{}:{maxBp:v.maxBp})}]
  },
  // Snapshot every eligible opposing front-line character at resolution time;
  // resolve replacement choices one by one without retargeting later victims.

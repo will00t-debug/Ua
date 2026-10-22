@@ -673,3 +673,686 @@ This section records the last fully evaluated **code commit** `d16ffce0`. A docu
 - [整合 CI 39720372611](https://github.com/will00t-debug/Ua/actions/runs/39720372611) **SUCCESS**。實際 job `119632205434` 日誌：`tests 1521`、`pass 1521`、`fail 0`；矩陣 `60/60 finished (failures 0)`；unported report `700 / 255 / 445`。setup-node 明確指定 Node22。
 - [SAO/MST 獨立 CI 39720376827](https://github.com/will00t-debug/Ua/actions/runs/39720376827) **SUCCESS**；`core-shared-regression` 和 `isolated-port-regression` 均成功。
 - 本段為後續文件提交，產生的新 HEAD 不是上述程式 SHA；文件 HEAD 的 CI 必須另查，不借用程式 CI 成功。
+
+## 2026-10-22｜第十一輪：同時退場順序、LIFE 連鎖與兩張 mill 退場真卡
+
+接續時重新確認：`origin/codex/v2-resume-20261021` HEAD 為 `810e66959906fe18316bf7c49ab486ff1b93effc`（第十輪交接文件）。其前一個程式 SHA `fb2bd3e1f6bf881545fadccccfc0e07c1483986e` 的 Node 22 CI 仍是上一輪已記錄的成功，不借用到本輪。PR #75 當時為 Draft、可合併，CI 全綠。本輪工作分支 `cursor/v2-multi-retire-life-6ff5` 從該 HEAD 建立，PR 合併目標是 `codex/v2-resume-20261021`，不是 main。沒有改 main、沒有部署正式站、沒有 force push。
+
+本輪驗收使用本機 Node **v22.23.4**（`node -v`），時間 2026-10-22 13:34（台北時間）。
+
+### 共用引擎（沒有另寫第二套觸發系統）
+
+1. 同時真退場先完成實體離場（含既有 leave-replacement），再關閉 batch。同一控制者的多個 `onRetire` 由該玩家排序；回合玩家的觸發全部先於非回合玩家。單張卡維持印刷順序，不另開選項。
+2. 退場效果再次造成的真退場，其 `onRetire` 插到剩餘隊列之前，因此先於其他同時觸發，也先於造成此次退場的後續動作（例如事件的後續抽牌）。同一張實體卡在同一個 batch 內不會重複排隊。
+3. Q74：阻擋勝方的 Impact 生命確認排在阻擋者 `onRetire` 之後。沒有退場觸發時仍立即傷害，與舊行為一致。
+4. 單獨的 `onRetire` 會插進暫停中的 continuation。既有 `additionalBattleDamage` 與一張一張 LIFE 的 DAMAGE2 流程沒有重寫。Raid 頂層剝離與滿線 REMOVED 仍不發 `onRetire`、不記真退場。
+5. `onRetire` 允許清單補上既有 op `retireOppFrontOneUnderBp`，讓退場可以再退場。`millTop`、`draw` 原本就可用，所以沒有為了新卡再加引擎。Batch C 复查後沒有另開 DSL：能量不足或條件不完整的卡沒有登錄。
+
+官方 Q73（DAMAGE2 同時公開、再由玩家排 Trigger）與本程式「一張 LIFE 結完才下一張」仍然不一致。本輪依指示保留既有時序，不把它改成同時公開。
+
+### 批次 SHA
+
+| 批次 | 內容 | commit |
+|---|---|---|
+| A | 同時退場排序、巢狀退場、Q74 Impact 時序；合成卡測試與舊 SLG 同時退場測試改為玩家排序 | `308040b80fbf98fccb7ac105af5ab17dc43b9760` |
+| B | 真卡 MST-1-076 SPECIAL → BLC-2-040 退場抽 1 → 第二張 LIFE；無 onRetire 的角色仍正好前進一張。LIFE 離區不發 076 自己的退場時 | `b774f9bebb13734e996fbec0805286e08c67e33c` |
+| C | 不擴充引擎。既有 `millTop`／`draw`／`retireOppFrontOneUnderBp` 已夠用 | 無獨立 commit |
+| D | 正式登錄 BLC-1-051、BLC-2-042 | `10b17feb421bb9b915e601a80037411e1a90c2ad` |
+
+### 新增正式卡
+
+- **UA08BT/BLC-1-051** 朽木 ルキア。官方頁 2026-10-22 核對：紫0、AP1、角色、BP1500、特徵「護廷十三隊」、發生紫1、退場時將自己牌庫頂 2 張置於場外、DRAW Trigger。Q563：必須執行；牌庫只剩 1 張時仍送出那 1 張。
+- **EX07BT/BLC-2-042** ルピ・アンテノール。官方頁同一天核對：青0、AP1、角色、BP1500、特徵頁面為單一字串「破面／涅骸部隊」（不拆斜線）、發生青1、同一句退場時與 DRAW。該頁沒有獨立 FAQ，不把 Q563 說成這張卡的官方問答。
+
+兩張都只用既有 `{op:'millTop',count:2}`。登場、DRAW Trigger、滿能源線 REMOVED 都不磨牌。合成 `Q*`／`R*`／`I*` 測試卡沒有進 registry。
+
+### 登錄數（`node scripts/v2-unported-report.mjs`）
+
+| 作品 | V2 正式登錄 | 未移植 |
+|---|---:|---:|
+| BLEACH | 90/276 | 186 |
+| TTG | 30/81 | 51 |
+| SLG | 34/80 | 46 |
+| SAO | 62/183 | 121 |
+| MST | 41/80 | 39 |
+| 合計 | 257/700 | 443 |
+
+嚴格全面官方 FAQ 驗收仍為 0。
+
+### 本輪實際測試（Node v22.23.4）
+
+- `npm test`：1533 tests、1533 pass、0 fail、0 skipped。
+- `node scripts/v2-integrated-match-matrix.mjs`：60/60 finished，failures 0。
+- `node scripts/v2-unported-report.mjs`：700／Pilot 257／尚未移植 443／嚴格全面驗收 0，且 manifest 與 registry 一致。
+
+GitHub CI：Draft PR https://github.com/will00t-debug/Ua/pull/77 合併目標是 `codex/v2-resume-20261021`。建立後唯一檢查是 Gitar pending；`gh run list --branch cursor/v2-multi-retire-life-6ff5` 沒有 Actions run。原因是 `.github/workflows/v2-resume.yml` 只在 push 到 `codex/v2-resume-20261021` 時跑 Node 22 的 `npm test`、矩陣與未移植報告，PR 進該分支不會觸發。本輪沒有把 commit 推上那條共用分支，避免改寫 PR #75 的 HEAD。因此不能宣稱本輪 GitHub Node 22 CI 已通過，也不能借用 `fb2bd3e`。
+
+### 未完成與下一輪
+
+- Q73 與逐張 LIFE 的差異仍開放。不要為了對齊 Q73 而重寫已修好的 DAMAGE2。
+- 未審核的 Raid 幾何（top/base 的 under、巢狀 stack、多 base、facedown base）仍 fail closed。
+- 雙方同時各有退場觸發時，目前規則是回合玩家全部先結，再換另一方；這輪的真卡案例是單方同時退場加上巢狀退場，不是雙方各多張的官方問答全集。
+- 沒有瀏覽器或手機手動操作驗收。
+- 下一輪仍優先「現有 DSL 能完整表達」的真卡。候選：無條件 Damage 2／Impact 1（例如 BLC-1-074、BLC-1-009）要先確認是否只需資料、不能為了單卡加計算器；登場讓對手棄 1 張（BLC-1-054）若要做，必須是跨作品的棄牌目標 op，而不是 BLEACH 專用判斷。
+
+## 2026-10-22｜第十二輪：印刷 Impact 1、直接 Damage 2、登場對手棄 1
+
+接續第十一輪已推送的 `9f818d8f89d10d08a46d112ff533780f4faf761a`。工作分支仍是 `cursor/v2-multi-retire-life-6ff5`，Draft PR #77 的合併目標仍是 `codex/v2-resume-20261021`，不是 main。沒有改 main、沒有部署、沒有 force push，也沒有把 commit 推上共用整合分支。
+
+本輪驗收使用本機 Node **v22.23.4**，時間 2026-10-22 13:49（台北時間）。第一次完整 `npm test` 是 1549 則、1 失敗：`BLEACH_CORE_GAP_SCENARIOS` 仍把已有官方情境的 BLC-1-009、BLC-1-074 當成不能玩。已從該 fail-closed 清單移除，清單剩下 BLC-2-007 與 BLC-2-063。沒有刪測試、沒有放寬合法性。
+
+### 共用引擎
+
+1. `printedImpact` 只能是 1，代表無條件【インパクト（1）】。`impactOnBattleWin` 在原效果未被關閉時先回傳它，再看裏向底卡的條件 Impact。不能和 `conditionalUnderFaceDown` 疊加。原效果關閉時 Impact 為 0。阻擋者已有的 `impactNull` 仍會讓大於 0 的 Impact 變成 0。戰鬥勝利才造成那 1 點生命；沒有阻擋時也是 1 點，不會變成 2。
+2. `printedAttackDamage` 只能是 2，代表【ダメージ（2）】。直接攻擊的基礎生命傷害從 1 改成 2，既有被動 `extraDamage` 仍往上加。被阻擋時這 2 點生命不發生。多張生命仍走既有 `additionalBattleDamage`，一張結完才下一張。沒有為了對齊 Q73 而重寫 DAMAGE2。原效果關閉時攻擊傷害回到 1。
+3. `discardOppHand` 的 `count` 只能是 1，而且只能掛在 `onPlay`（角色或事件）。引擎把 `pending` 設成 `effect-discard`，玩家是對手（`1-owner`），沿用既有手牌送場外與 `markOwnEffectZoneMove`。手牌是空的就不開 pending、也不跳過其他效果。控制者不能代選。公開視圖不露出對手手牌。Normal／Hard AI 只能選合法的 `chooseDiscard`。`turnEffectZoneMoves` 只記實際棄牌的那一方。
+
+非角色、Impact 不是 1、Damage 不是 2、棄牌不是 1、或棄牌不在登場時，pack 驗證直接拒絕。
+
+### 批次 SHA
+
+| 批次 | 內容 | commit |
+|---|---|---|
+| A | 印刷 Impact 1 與直接 Damage 2；合成卡正負測 | `d4113aa4550f325dfb67db517bd33e7ed4b827e6` |
+| B | 正式登錄 BLC-1-009、BLC-1-074 | `ca89e91207a216fc3d94ed25bc3b65d2204a6af5` |
+| C | 登場時讓對手棄正好 1 張手牌；合成卡正負測 | `58e070d90898ffc29f3e1482656fe3fdb7845770` |
+| D | 正式登錄 BLC-1-054 | `109a9ad0af8fd80138a63ae64f493ec1c74fdf85` |
+| 回歸 | 核心缺口清單改為只留 BLC-2-007、BLC-2-063，並鎖定 009／074 已登錄 | `6b8718785332fe89dc03ab71e45a360c93d17bf2` |
+
+### 新增正式卡
+
+官方頁皆於 2026-10-22 核對。發生能源讀圖示 alt，不讀檔名數字。三張該頁都沒有獨立 FAQ。
+
+- **UA08BT/BLC-1-009** ドリスコール・ベルチ。黃 2、AP1、角色、BP3000、特徵頁「星十字騎士団」（目錄既有同義 token「星十字騎士團」）、發生黃 1、【インパクト（1）】、括號是攻擊並贏得戰鬥時對對手 1 傷害、無 Trigger。
+- **UA08BT/BLC-1-074** 京楽 春水。綠 3、AP1、角色、BP2500、護廷十三隊、發生是兩個綠（圖檔 `green3` 是 sprite 索引）、【ダメージ（2）】、括號是直接攻擊傷害改為 2、DRAW。
+- **UA08BT/BLC-1-054** 涅 マユリ。紫 3、AP1、角色、BP3000、護廷十三隊、發生紫 1、登場時「相手は自身の手札を1枚場外に置く」、無 Trigger。跨作品測試對手是 MST；MST-1-051 的 `maxCopies` 仍是 1，牌組組裝有排除，沒有放寬張數上限。
+
+條件式 Impact／Damage（例如 BLC-1-011、BLC-1-024 的被動加傷、帶額外句子的其他作品卡）沒有掛上這兩個無條件欄位。本地日文目錄裡沒有另一張「整句只有對手棄 1 張」的完整卡，所以只加了這個共用 op 和 BLC-1-054。
+
+### 登錄數（`node scripts/v2-unported-report.mjs`）
+
+| 作品 | V2 正式登錄 | 未移植 |
+|---|---:|---:|
+| BLEACH | 93/276 | 183 |
+| TTG | 30/81 | 51 |
+| SLG | 34/80 | 46 |
+| SAO | 62/183 | 121 |
+| MST | 41/80 | 39 |
+| 合計 | 260/700 | 440 |
+
+嚴格全面官方 FAQ 驗收仍為 0。
+
+### 本輪實際測試（Node v22.23.4）
+
+- `npm test`：1550 tests、1550 pass、0 fail、0 skipped。
+- `node scripts/v2-integrated-match-matrix.mjs`：60/60 finished，failures 0。
+- `node scripts/v2-unported-report.mjs`：700／Pilot 260／尚未移植 440／嚴格全面驗收 0，且 manifest 與 registry 一致。
+
+GitHub CI：`.github/workflows/v2-resume.yml` 仍只在 push 到 `codex/v2-resume-20261021` 時跑 Node 22 的 `npm test`、矩陣與未移植報告。本輪沒有推上那條共用分支。推送 `4165574a73e2834f86a5e69b1274c8b478f3414d` 之後，`gh run list --branch cursor/v2-multi-retire-life-6ff5` 沒有 Actions run；PR #77 的檢查只有 Gitar pending。因此不能宣稱本輪 GitHub Node 22 CI 已通過，也不能借用 `fb2bd3e` 或第十一輪的本地數字。
+
+### 未完成與下一輪
+
+- Q73 與逐張 LIFE 的差異仍開放。
+- 未審核的 Raid 幾何仍 fail closed。
+- 印刷 Impact 不與裏向底卡 Impact 疊加；Impact 以外的數值、Damage 以外的 2，驗證器拒絕。
+- `discardOppHand` 固定 1 張且只在登場時。`onRetire` 白名單仍是 `draw`、`millTop`、`drawIfOwnFieldExists`、`chooseOne`、`deployOutsideTraitlessRestOrRaid`、`retireOppFrontOneUnderBp`，所以 BLC-2-010 這種退場時可選 REST 還不能當純資料卡。
+- 核心缺口清單剩下 BLC-2-007（敵方前線 BP≥1000 再 −500；現有 `enemyFrontAllBpDown` 沒有 `minBp`）與 BLC-2-063（每張實體卡本回合第一次攻擊後轉 ACTIVE）。
+- 沒有瀏覽器或手機手動操作驗收。全面 FAQ 認證仍為 0。
+- 下一輪若走現有 DSL：先對官方日文重核「整句就是抽 2 再棄 1」的事件（目錄摘要裡的 BLC-1-109），確認沒有額外句子後才用既有 `drawDiscard`。不要把條件式 Impact／Damage 登錄成 `printedImpact`／`printedAttackDamage`。若要做 BLC-2-007 或 BLC-2-063，必須先加可重用的共用規則與正負測，不能只翻支援旗標。
+
+## 第十三輪（2026-10-22）
+
+接續第十二輪已推送的 `35df0defd37d503270f4852e02df657047cfe51b`。工作分支仍是 `cursor/v2-multi-retire-life-6ff5`，Draft PR #77 的合併目標仍是 `codex/v2-resume-20261021`，不是 main。沒有改 main、沒有部署、沒有 force push，也沒有把 commit 推上共用整合分支。第十一、十二輪的多重退場、LIFE 連鎖、Impact 1、Damage 2、對手棄牌，以及 BLC-1-051、BLC-2-042、BLC-1-009、BLC-1-074、BLC-1-054 都沒有重做。
+
+本輪驗收使用本機 Node **v22.23.4**。時間 2026-10-22 14:28（台北時間）完成矩陣與未移植報告。完整 `npm test` 在修正 SAO／MST 舊的硬編碼張數後是 1570 則、1570 通過。沒有刪測試、沒有放寬合法性。
+
+### Batch A：開發 PR 的 GitHub Actions
+
+`.github/workflows/v2-resume.yml` 本來只在 push 到 `codex/v2-resume-20261021` 時跑。現在另外接受：
+
+- push 到 `cursor/**`（這個 workflow 不在 main 上；push 是 workflow 還沒進預設分支時也能跑的事件）
+- `pull_request` 目標為 `codex/v2-resume-20261021`（開啟、同步、重開都會再跑；checkout 的是 merge ref）
+
+權限只有 `contents: read`。沒有 `pull_request_target`，沒有 repository secrets。同一 SHA 的 push 與 pull_request 會共用 concurrency group，後到的會取消先到的，所以驗收要看最後留下的那一個 run，不能把被取消的 push run 當成失敗測試。步驟是 Node 22 `npm test`、五作品 60 場矩陣、`scripts/v2-assert-independent-manifest.mjs`、未移植報告。
+
+`99a76a07e515bc11481917e4d5eb7013e2d1db9a` 的 pull_request run `39731138495` 後來也成功，但那不是本輪最終 SHA。最終交接 commit `5d37287bc6f10b553ea3f6d678252f6c476d481f` 的驗收是 pull_request run [`39734484979`](https://github.com/will00t-debug/Ua/actions/runs/39734484979)。同一 SHA 的 push run `39734481119` 被 concurrency 在 3 秒內取消，那不是測試失敗。留下的 run 於 2026-10-22 14:31（台北時間）開始、14:32 結束，runner 是 Node v22.23.3，conclusion 是 success。Job `regression` 的日誌是：`npm test` 1570 tests、1570 pass、0 fail、0 skipped；矩陣 `60/60 finished (failures 0)`；獨立 manifest `bleach 96, gurren-lagann 30, solo-leveling 34, sword-art-online 66, mushoku-tensei 42; total 268`；未移植報告 `總卡 700／Pilot 268／尚未移植 432／嚴格全面驗收 0`。這個結論只屬於 `5d37287`。若其後再推文件修訂，那個新 SHA 要另看自己的 run。
+
+### Batch B：既有 DSL 的跨作品卡
+
+官方頁都在 2026-10-22 用 iframe HTML 核對。發生能源讀圖示 alt。這些頁面沒有獨立 FAQ。
+
+- **UA15BT/SAO-1-009** リズベット。黃 3、發生是兩個黃（圖檔 `yellow3` 是 sprite 索引，本地 `gen` 從 3 改為 2）。登場時看牌頂 3 張，特徵「女神」最多 1 張入手，其餘任意順序放牌底，入手後棄 1。DRAW。
+- **UA15BT/SAO-1-040** キリト。青 1、發生青。同樣的牌頂 3 張，特徵「アインクラッド」。無 Trigger。
+- **UA15BT/SAO-1-077** ユイ。綠 1、發生綠。牌頂 3 張裡同時是綠色且特徵 ALO 的最多 1 張。DRAW。
+- **EX08BT/SAO-2-023** リーファ。青 1、發生青。牌頂 3 張，特徵 ALO。無 Trigger。
+- **UA54BT/MST-1-043** ギース。必要能源 0、發生綠。牌頂 5 張裡同時是綠色且為場地卡的最多 1 張。無 Trigger。
+- **UA08ST/BLC-1-109** 空座町の死神代行。日文是「カードを2枚引き、自分の手札を1枚場外に置く。」紫 1、事件、無發生能源、無特徵。DRAW 的括號是「カードを1枚引く。」中文目錄「抽 2 張，再棄 1 張。」只當指紋。用既有 `drawDiscard`，`count:2`、`discardCount:1`。牌庫空仍要棄手上剩下的牌；抽完後手牌也是空的則不開 pending。不能跳過。
+
+沒有登錄的接近卡：SAO-1-008、SAO-1-045、SAO-1-093、SAO-2-050 的起動能源句不是「只在能源線」，既有 `restSelfGainEnergyRetireEndMain` 不能套。SAO-2-007、SAO-2-055 還有卡名代用，不能只登錄抽棄。條件式 Impact／Damage 沒有掛上無條件欄位。
+
+### Batch C：共用 BP 範圍
+
+`enemyFrontAllBpDown` 增加可選的 `minBp`／`maxBp`，含邊界。目標集合在效果結算當下用當時 BP 抓一次，之後的減益不會把已經入選的卡剔掉，也不會把後來才登場或剛掉出範圍的卡補進來。沒有上下限時行為與舊模板相同。新模板 `enemyFrontBpDownInRange` 至少要有一側是數字。這不是 BLEACH 專用判定。
+
+**EX07BT/BLC-2-007** キャンディス・キャットニップ。黃 3、AP1、BP2500、發生兩個黃、登場時「BP1000以上の相手のフロントLのキャラ全ては、このターン中、BP-500。」ACTIVE 是既有的選 1 張己方角色轉 ACTIVE 並本回合 BP+3000。該頁沒有 FAQ。特徵沿用目錄裡的一整條「星十字騎士團／邦比愛塔親衛隊」，沒有拆斜線。官方頁的日文特徵是「星十字騎士団／バンビーズ」。
+
+### Batch D：每張實體卡的第一次攻擊
+
+官方關鍵字【2回アタック】的括號是「このキャラがこのターン初めてアタックした時、アクティブにする」。Q79（2023-03-17）：指定攻擊角色並 REST 之後才轉 ACTIVE，而且發生在戰鬥之前。`attacksThisTurn` 仍是整回合計數，不用來判斷這張卡。新的 `attacksByUid` 按實體 UID 累計，下一個回合開始時清空。`readyOnAttackCount` 目前只接受 1。原效果被封印時不轉 ACTIVE。`attemptFieldActive` 仍會吃掉「次の1回アクティブにならない」。第二下攻擊不再轉 ACTIVE，所以沒有第三下。AI 只能選當時的合法行動。
+
+Raid 的新頂牌是另一個 UID，次數從 0 開始，不繼承底板。沒有找到「同一張實體卡離場再登場後次數是否歸零」的專用 FAQ；依印刷的「このキャラがこのターン」保留同一個 UID 的次數，不在再登場時清掉。這個解釋要標成印刷讀法，不是已核對的再登場 FAQ。
+
+**EX07BT/BLC-2-063** 京楽 春水。綠 4、AP1、BP2000、護廷十三隊、發生兩個綠、無 Trigger。一般登場是 REST，所以第一次合法攻擊是下一回合刷新之後，不是登場的那一回合。該頁沒有卡牌 FAQ。Q78 的 Impact 組合不是這張卡的印刷內容，沒有加進去。
+
+核心缺口清單在 007 與 063 都有官方情境測試後清空。
+
+### 批次 SHA
+
+| 批次 | 內容 | commit |
+|---|---|---|
+| A | `cursor/**` push 與整合分支 PR 的 Node 22 CI | `99a76a07e515bc11481917e4d5eb7013e2d1db9a` |
+| B | SAO／MST 牌頂篩選；SAO-1-009 發生能源改為 2 | `ddcef2c406526ca516ca62a7dad2f6f817b40682` |
+| B | BLC-1-109 抽 2 棄 1 | `e1f8de9e7cfa59330554bc7edd7453dfa728a91e` |
+| C | 共用 BP 範圍與 BLC-2-007 | `44d8dcb49a287ad21a08a6ce9804da134802e069` |
+| D | 每張實體卡第一次攻擊後 ACTIVE，與 BLC-2-063 | `b3f7db5908bf64f78970905d85467e37824d8aa7` |
+| 回歸 | SAO 66、MST 42 改走獨立 manifest，023／043 移出未完成清單 | `14e659769a636a85796032dd47ee25550534a80f` |
+
+### 登錄數（`node scripts/v2-unported-report.mjs`）
+
+| 作品 | V2 正式登錄 | 未移植 |
+|---|---:|---:|
+| BLEACH | 96/276 | 180 |
+| TTG | 30/81 | 51 |
+| SLG | 34/80 | 46 |
+| SAO | 66/183 | 117 |
+| MST | 42/80 | 38 |
+| 合計 | 268/700 | 432 |
+
+嚴格全面官方 FAQ 驗收仍為 0。合成測試卡沒有計入。
+
+### 本輪實際測試（Node v22.23.4）
+
+- `npm test`：1570 tests、1570 pass、0 fail、0 skipped。
+- `node scripts/v2-integrated-match-matrix.mjs`：60/60 finished，failures 0。
+- `node scripts/v2-unported-report.mjs`：700／Pilot 268／尚未移植 432／嚴格全面驗收 0。獨立 manifest 與 registry 一致（bleach 96、gurren-lagann 30、solo-leveling 34、sword-art-online 66、mushoku-tensei 42）。
+- GitHub Actions pull_request run `39734484979`（HEAD `5d37287`、Node v22.23.3、2026-10-22 14:32 台北時間結束）：同一組數字，conclusion success。push run `39734481119` 被 concurrency 取消。
+
+### 未完成與下一輪
+
+- Q73 與逐張 LIFE 的差異仍開放。DAMAGE2 沒有重寫。
+- 未審核的 Raid 幾何仍 fail closed。2 回アタック的 Raid 測試只覆蓋「新頂牌是另一個 UID」。
+- BLC-2-063 的再登場次數沒有專用 FAQ。目前保留同一個 UID 在該回合的攻擊次數。
+- `onRetire` 白名單仍沒有 REST，所以 BLC-2-010 還不能當純資料卡。
+- 【2回ブロック】（例如 SAO-1-038、SAO-1-072）不是這次的攻擊計數。Q80 的時機要另外做。
+- 單張「BP 以上的對手角色 1 張」不是全體 BP 範圍。SAO-2-052、SAO-2-043 還沒有對應的單目標下限。
+- 卡名代用加抽棄（SAO-2-007、SAO-2-055）不能只登錄抽棄。SAO-1-008、SAO-1-045、SAO-1-093、SAO-2-050 不能套用「只在能源線」的起動。
+- BLC-2-047 的目錄句除了抽 2 還有另一句，不能當成純抽牌。
+- 沒有瀏覽器或手機手動操作驗收。全面 FAQ 認證仍為 0。
+- 下一輪可先核對、但還不能直接登錄的方向：BLC-2-010 的退場 REST；SAO-1-038／SAO-1-072 的第一次阻擋後 ACTIVE；把單目標 BP 下限做成和這次全體範圍同一套條件。每張仍要先對官方日文與 FAQ，不能靠目錄摘要。
+
+## 第十四輪（2026-10-22）
+
+接續第十三輪已由 GitHub Actions 驗過的 `e57d8d97bcee16c95888caa66d1f9a5725acd500`（pull_request run `39734726291`）。工作分支仍是 `cursor/v2-multi-retire-life-6ff5`，Draft PR #77 的合併目標仍是 `codex/v2-resume-20261021`。沒有改 main、沒有部署、沒有 force push。BP 範圍、第一次攻擊後 ACTIVE、Impact 1、Damage 2、LIFE 連鎖，以及當時已登錄的卡都沒有重做。
+
+本輪本地驗收使用 Node **v22.23.4**。時間 2026-10-22 15:19（台北時間）完成矩陣與未移植報告。`npm test` 是 1601 則、1601 通過。沒有刪測試、沒有放寬合法性。
+
+### Batch A：退場時 REST
+
+`restOppFrontUnderBp` 原本就能選至多一張敵方 FRONT、BP 在上限以內的角色並轉 REST。這次只把 `onRetire` 放進時機白名單，沒有另寫一套 REST 判定。Q83：「1枚まで」可以選 0。Q91：已經 REST 的角色仍可被選，結果維持 REST。
+
+只有真正退場會排隊。Raid 剝離頂牌、回手、REMOVED 都不會。`protectedLeave` 消耗裏向底卡時不退場。無合法目標時效果正常結束，不開空選擇。非法 UID 不在合法行動裡。
+
+**EX07BT/BLC-2-010** ミニーニャ・マカロン。黃、必要能源 0、AP1、BP2000、發生黃。印刷句是「BP2000以下の相手のフロントLのキャラを1枚まで選び、レストにする。」無 Trigger。該頁沒有獨立 FAQ。特徵沿用目錄的一整條，沒有拆斜線。
+
+### Batch B：第一次阻擋後 ACTIVE
+
+`blocksByUid` 跟 `attacksByUid` 分開。`readyOnBlockCount` 目前只接受 1。Q79／Q80（2023-03-17）：指定阻擋者、REST，然後在戰鬥之前 ACTIVE。第一次阻擋即使輸掉，ACTIVE 也已經發生。第三下不再轉 ACTIVE。原效果被封印時不轉。`skipNextActive` 與 `cannotActive` 仍會讓它維持 REST。下一個回合開始時清空。Raid 頂牌是另一個 UID，次數從 0 開始。沒有找到「同一張實體卡離場再登場後，2回ブロック次數是否歸零」的專用 FAQ；依印刷「このキャラがこのターン」保留同一個 UID 的次數。這是印刷讀法，不是已核對的再登場 FAQ。Normal／Hard AI 只從當時的合法阻擋列表選。Q68 的狙い撃ち不是阻擋；引擎沒有這個動作，沒有另做。
+
+- **UA15BT/SAO-1-038** エギル。青 1、BP2500、アインクラッド、發生青、無 Trigger。只有【2回ブロック】。
+- **UA15BT/SAO-1-072** クライン。綠 3、BP3500、ALO、發生綠、DRAW。同一句，DRAW 仍抽 1。
+
+兩張官方頁都沒有卡牌 FAQ。
+
+### Batch C：單目標 BP 範圍
+
+`enemyBpDown` 增加可選的含邊界 `minBp`／`maxBp`，以及 `zone`。預設 `front` 只看敵方 FRONT。`field` 只看敵方 FRONT 或 ENERGY 上的角色，不看場域卡。目標在 pending 打開時抓一次；結算時對同一個 UID 減 BP，減到 0 以下就從它所在的那一列退場，不會用減完後的 BP 重新篩選。
+
+`frontOnceProgram` 是角色、只在 FRONT、每回合一次。後續只能是一發 `enemyBpDown`，或一層不能拒絕的 `discardGate` 再接那一發。Q84：「1枚選び」是必選。Q770：【ターン1】按實體卡。封印後看不到起動。
+
+- **EX08BT/SAO-2-052** ミト。紫 1、BP1500、プログレッシブ、發生紫、無 Trigger。選 1 張 BP1500 以上的敵方 FRONT，本回合 BP-1000。
+- **EX08BT/SAO-2-043** アルゴ。紫 2、BP3000、發生紫、DRAW。先支付「手札を1枚場外に置く」，目標改為敵方場上角色（FRONT 或 ENERGY）。沒有手牌就不能起動。DRAW 另外抽 1。
+
+### Batch D：正式名稱別名
+
+`nameAliases` 不改 `cardId`，也不改印刷卡名。Q87（2023-03-17）：別名在手牌、牌庫、場外、場上、REMOVED 以及其他區域都成立。Q1946：元々のカード名仍是卡面頂端的名字，每回合一次的卡名鍵繼續用這個名字。Q2077：別名可以滿足場上或場外的指定卡名。Q50／Q55：Raid 埋在下面的那層不是場上的那張卡，所以埋層的別名不算；埋層的印刷本名仍沿用既有的牌堆掃描，沒有改掉。封印只在這張卡是場上可見實體時拿掉別名。場外的 `originalEffectsDisabled` 不成立，所以手牌、牌庫、場外、REMOVED 仍保留別名。另一個作品裡字面相同的名字仍是另一張卡，身份看 UID 前綴與 `cardId`。LIFE 被 Q87 的「全て」涵蓋，但目前沒有依卡名搜 LIFE 的效果，沒有另做。牌庫搜尋與場外回收不會列出 LIFE 或 REMOVED。
+
+- **EX08BT/SAO-2-007** ユージオ・シンセシス・サーティツー。也視為〈ユージオ〉。登場時抽 1 棄 1。DRAW。
+- **EX08BT/SAO-2-055** 結城 明日奈。也視為〈アスナ〉。同一句登場抽棄。DRAW。
+
+### Batch E：零引擎修改
+
+這 7 張沒有再改 `engine.mjs`、`pack.mjs`、`field-conditions.mjs`、`ability-templates.mjs`。A 到 D 是規則擴充，不計入這個數字。TTG 與 MST 剩下的短卡都還有額外句子，這輪沒有半張能只靠既有 DSL 完整移植，所以零引擎張數是 7，不是只擴充 BLEACH。
+
+- **UA15BT/SAO-1-010** 也視為〈アリス〉。無其他角色能力。GET 把公開的那張加入手牌。
+- **UA15BT/SAO-1-011** 也視為〈アリス〉，加上【ステップ】。無 Trigger。封印後不能 STEP，別名也不算。
+- **EX08BT/SAO-2-003** キリト＆ユージオ。也視為〈キリト〉與〈ユージオ〉。Q1195（2024-11-08）：場上這一張同時滿足兩個名字。發生能源圖示 alt 是「黃黃」，`gen` 從 3 改為 2，與 SAO-1-009 同一讀法。DRAW。
+- **EX08BT/SAO-2-051** 也視為〈ミト〉。GET。
+- **UA51BT/SLG-1-023** 水篠 潤一郎。既有 2回ブロック，ACTIVE 是通用的己方角色 ACTIVE 並 BP+3000。
+- **UA51BT/SLG-1-056** 向坂 雫。既有 Impact 1。登錄特徵是官方的單一代幣「第四次架南島レイド」。目錄的「第四次架南島Raid」沒有拿來註冊。
+- **UA51BT/SLG-1-069** ケン。己方回合且手牌至少 5 張時 BP+1500。登錄特徵是單一代币「DFN／第四次架南島レイド」，沒有拆斜線。
+
+沒有登錄：SAO-1-012 的 COLOR 是選 1 張敵方 FRONT 轉 REST，並使它下一次不能 ACTIVE，不是現有的 COLOR 模式。SAO-2-004 除了別名，還要在其他整合騎士至少 4 張時把自己轉 ACTIVE。SAO-1-008、SAO-1-045、SAO-1-093、SAO-2-050 的起動不是「只在能源線」。
+
+### 批次 SHA
+
+| 批次 | 內容 | commit |
+|---|---|---|
+| A | `onRetire` 可重用 REST；BLC-2-010 | `3491223d23bee779af2306fc686ce54654a66435` |
+| B | 第一次阻擋後 ACTIVE；SAO-1-038、SAO-1-072 | `bb4831ab87d507ad816d80470ed92353b05b35cb` |
+| C | 單目標 BP 範圍；SAO-2-052、SAO-2-043 | `f4f739edeca91be79ed646625dd892b24e1f4b9f` |
+| D | 印刷卡名別名；SAO-2-007、SAO-2-055 | `52e24211c9dbc9a19cf68b9b8d45995bb8629b9e` |
+| E | 零引擎 7 張：SAO-1-010、SAO-1-011、SAO-2-003、SAO-2-051、SLG-1-023、SLG-1-056、SLG-1-069 | `9180c86a4d2bb95779c9b8a2f0562717b8209b44` |
+
+### 登錄數（`node scripts/v2-unported-report.mjs`）
+
+| 作品 | V2 正式登錄 | 未移植 |
+|---|---:|---:|
+| BLEACH | 97/276 | 179 |
+| TTG | 30/81 | 51 |
+| SLG | 37/80 | 43 |
+| SAO | 76/183 | 107 |
+| MST | 42/80 | 38 |
+| 合計 | 282/700 | 418 |
+
+本輪正式新增 14 張。零引擎完整移植是其中 7 張。嚴格全面官方 FAQ 驗收仍為 0。合成測試卡沒有計入。
+
+### 本輪實際測試（Node v22.23.4）
+
+- `npm test`：1601 tests、1601 pass、0 fail、0 skipped。
+- `node scripts/v2-integrated-match-matrix.mjs`：60/60 finished，failures 0。
+- `node scripts/v2-assert-independent-manifest.mjs`：bleach 97、gurren-lagann 30、solo-leveling 37、sword-art-online 76、mushoku-tensei 42；total 282。
+- `node scripts/v2-unported-report.mjs`：700／Pilot 282／尚未移植 418／嚴格全面驗收 0。
+- GitHub Actions pull_request run [`39739813788`](https://github.com/will00t-debug/Ua/actions/runs/39739813788)（HEAD `ed654b11c0c0b6fd7abd352da98d9e3f5a36e1ce`、Node v22.23.3）：2026-10-22 15:20（台北時間）開始、15:26 結束，conclusion success。Job `regression` 的日誌是 `npm test` 1601 tests、1601 pass、0 fail、0 skipped；矩陣 `60/60 finished (failures 0)`；獨立 manifest `bleach 97, gurren-lagann 30, solo-leveling 37, sword-art-online 76, mushoku-tensei 42; total 282`；未移植報告 `總卡 700／Pilot 282／尚未移植 418／嚴格全面驗收 0`。同一 SHA 的 push run `39739808141` 被 concurrency 取消，那不是測試失敗。這個結論只屬於 `ed654b1`。其後若再推文件修訂，那個新 SHA 要另看自己的 run。
+
+### 未完成與下一輪
+
+- Q73 與逐張 LIFE 的差異仍開放。DAMAGE2 沒有重寫。
+- 未審核的 Raid 幾何仍 fail closed。
+- 2回アタック與 2回ブロック都沒有「同一 UID 離場再登場後次數歸零」的專用 FAQ。目前保留該回合的次數。
+- 埋在 Raid 底下的印刷本名仍算進既有的名稱掃描。別名不算。LIFE 沒有依名字搜尋的效果。
+- 全面 FAQ 認證仍為 0。沒有瀏覽器或手機手動操作驗收。
+- TTG、MST 目前沒有剩下一張可以零引擎完整移植的卡。
+- 下一輪最值得先核對官方頁再決定要不要加共用規則的卡：
+  - `SAO-2-004`：別名已經可用，缺的是「其他整合騎士至少 4 張時，登場轉 ACTIVE」。
+  - `SAO-1-012`：別名、STEP、兩個名字的 BP 比較接近了，但 COLOR 是「敵方 FRONT 1 張 REST，且下一次不能 ACTIVE」，不能套現有 COLOR。
+  - `SAO-1-008`、`SAO-1-045`、`SAO-1-093`、`SAO-2-050`：REST 自己產生能源，但不是只限能源線。
+  - `BLC-2-047`：除了抽 2，還有被己方藍一護從手牌送場外時再抽 1。
+  - `TTG-1-022`：也視為庸子，加上 REST 自己、本回合能源 +1、主要階段結束時回手。回手不是現有的結束時退場。
+  - `MST-1-004`：只有「因己方效果登場」時才轉 ACTIVE。
+
+## 第十五輪（2026-10-22）
+
+接續第十四輪已由 GitHub Actions 驗過的 `ed654b11c0c0b6fd7abd352da98d9e3f5a36e1ce`（pull_request run `39739813788`）與其文件修訂 `c5f0d3e6704fb29ef71a6290e72d7ecf9c9c0b1c`。工作分支仍是 `cursor/v2-multi-retire-life-6ff5`，Draft PR #77 的合併目標仍是 `codex/v2-resume-20261021`。沒有改 main、沒有部署、沒有 force push。第十四輪的阻擋、退場 REST、BP 範圍、別名，以及當時已登錄的卡都沒有重做。
+
+本輪本地驗收使用 Node **v22.23.4**。時間 2026-10-22 16:20（台北時間）完成矩陣與未移植報告。`npm test` 是 1631 則、1631 通過。沒有刪測試、沒有放寬合法性。這個數字含第十五輪 A 到 E 的新測試。GitHub Actions 的規則與交接 SHA 是 `61bbd8765e528b1554bad674c909e3d3161851ca`。記錄這次 Actions 結果的文件修訂是其後的 commit，要另看自己的 run。
+
+### 本輪共用引擎
+
+- `activeSelfIf`：登場後依印刷條件把自己轉 ACTIVE。條件可以是己方場上其他指定特徵的角色數量，也可以是「這次登場是己方效果造成」。`paidPlay`、`paidRaid` 是支付登場，不是效果。`outsideEffect`、`outsideEffectRaid`、`recoveredEffect` 算己方效果。`lifeColor`、`lifeRaid` 沒有卡牌 FAQ 把它們算進去，所以 fail closed，不轉 ACTIVE。滿場替換走既有 `commitDestination`，被換下的卡進 REMOVED，不是退場。封印、`skipNextActive`、`cannotActive` 都維持 REST。
+- `restSelfGainEnergyRetireEndMain` 的位置改成資料裡的 `lines`：`front`、`energy` 或 `field`。舊的四鍵 `energyOnly:true` 仍只能在能源線起動。REST 自己是代價，本回合指定顏色 +1，支付當下重算。主要階段結束的退場仍走既有延遲隊列。每回合一次鎖在實體 UID。事先被封印不能起動。起動之後才被封印，不會收回已經加上的能源，也不會取消已經排好的退場；SAO-2-050 的「を得る」沒有另外的 FAQ，沒有做成第二套引擎。
+- `moveAtMainEnd` 的目的地 `hand` 走同一條延遲隊列，結算時用既有 `bounceToHand`。頂牌回手，底板與裏向 under 去自己的場外，暫時狀態清掉。不跑 `onRetire`，不加真退場計數。UID 不在、stamp 不符、或人在 Raid 底下，都不動作。同一時間的真退場仍先走退場 batch，回手排在後面。這個順序沒有卡牌 FAQ，是 fail closed，不是控制者可選的順序。對手的公開視圖仍看不到手牌內容。
+- COLOR 的 `restOppFrontSkipNextActive` 是獨立模式 `colorRestSkip`。選一張敵方 FRONT，轉 REST，並給沒有期限的 `skipNextActive`。不是 `colorRetire`，也不是一般的 COLOR 登場。沒有敵方 FRONT 就只跳過。能源線與己方 FRONT 不是目標。
+- `draw` 可選的 `entry:'ownEffect'` 只允許角色的登場時。原因集合與上面的 ACTIVE 相同。沒有這個鍵的舊抽牌不變。
+
+### Batch A：條件式 ACTIVE 登場
+
+`187b101c585d8fce566b3b2184048a62f09f6f92`
+
+- **EX08BT/SAO-2-004** アリス・シンセシス・サーティ。也視為〈アリス〉。其他整合騎士至少 4 張時，登場轉 ACTIVE。發生能源 alt 是黃，gen 1。標準 ACTIVE Trigger。該頁沒有 FAQ。
+- **UA54BT/MST-1-004** エリス。只有「自分の効果で登場」才轉 ACTIVE。無 Trigger。該頁沒有 FAQ。
+
+### Batch B：不限定能源線的 MAIN 產能
+
+`27de62c5f83c3f1bc4edeb7c593e213f3e3039c1`
+
+四張的標頭都是「色+」：一顆色珠加一個加號，休息時的發生量是 1，不是 `activeExtraEnergy`。印刷沒有「アクティブの場合」。前線可以起動，但前線不產生能源。能源線起動後該顏色立刻 +1，主要階段結束退場。
+
+- **UA15BT/SAO-1-008** ユイ。黃。
+- **UA15BT/SAO-1-045** ピナ。青。UA15ST 再錄同一句，gen 也是 1。
+- **UA15BT/SAO-1-093** ゼクシード。綠。
+- **EX08BT/SAO-2-050** ディアベル。紫。「を得る」與上面三張用同一個已結算的 REST、+1、結束退場。
+
+SAO-1-003 已經登錄，圖示也是「黃+」，但資料仍是 gen 2 再加 `activeExtraEnergy` 1。這輪沒有改它。
+
+### Batch C：MAIN 結束時回手
+
+`d5e31fa8c365bd2f3492d1ac9312d5711749889d`
+
+- **UA56BT/TTG-1-022** ヨマコ先生。也視為〈ヨーコ〉。REST 自己，本回合綠 +1，主要階段結束時回手。標頭「綠+」是 gen 1。必要能源 1、AP 1、BP 1500、特徵大グレン団、DRAW。回手不是退場。該頁沒有 FAQ。
+
+### Batch D：COLOR 觸發的控制效果
+
+`2d3bdcfb3b70ee81b4f545bd80f0037304207868`
+
+- **UA15BT/SAO-1-012** アリス・シンセシス・サーティ。也視為〈アリス〉，有【ステップ】。己方回合場上同時有〈キリト〉與〈ユージオ〉時 BP+1000；一張 SAO-2-003 可以同時滿足兩個名字，封印後別名與這個 BP 都不算。COLOR 另句：選 1 張敵方 FRONT 轉 REST，它下一次不能 ACTIVE。發生能源圖示 alt 是「黃黃」，gen 從 3 改為 2。BP 印刷 `3000+`，數值 3000。必要能源黃 3、AP 1、特徵整合騎士。角色本文不含 COLOR 那句。該頁沒有 FAQ。
+
+### Batch E：跨作品移植
+
+`2591b21eaeb65d8b141862fba9a98f3d7d95452b`
+
+不改引擎就完整移植的是下面 4 張。A 到 D 與 MST-1-023 都不計入這個數字。
+
+- **EX08BT/SAO-2-006** ベルクーリ・シンセシス・ワン。其他整合騎士至少 3 張時，發生能源 +黃。沒有「自分のターン中」，也沒有「アクティブの場合」。標頭「黃+」所以 gen 從匯入的 2 改為 1。只有能源線真的多產生 1。無 Trigger。該頁沒有 FAQ。
+- **EX08BT/SAO-2-008** レンリ・シンセシス・トゥエニセブン。己方回合、其他整合騎士至少 4 張時 BP+1500。BP 印刷 `1500+`。發生黃，gen 1。標準 ACTIVE Trigger。該頁沒有 FAQ。
+- **UA51BT/SLG-1-062** 最上 真。己方回合、場上「第四次架南島レイド」至少 5 張時 BP+1500。印刷沒有「他の」，自己要算進去。登錄特徵用官方那一條；目錄的「第四次架南島Raid」沒有拿來計數。發生綠，gen 1。DRAW。該頁沒有 FAQ。
+- **UA54BT/MST-1-066** フィッツ。也視為〈シルフィエット〉。己方回合、己方發生能源至少 7 時 BP+1000。發生能源 alt 是「綠綠」，gen 2。特徵ラノア魔法大学。DRAW。該頁沒有 FAQ。
+
+另外用本輪的登場原因，給既有 `draw` 加了可選閘門：
+
+- **UA54BT/MST-1-023** ルーデウス。登場時若是己方效果造成，抽 1。支付 AP 登場與 LIFE 的 COLOR 登場都不抽。無 Trigger。該頁沒有 FAQ。這張算少量條件擴充，不是零引擎移植。
+
+這輪看過、仍不登錄：SLG-1-027 是逐張計數；SLG-1-065 同時要 BP 與 Impact；SLG-1-072 是特徵數量到了才抽，目前沒有這個閘門；TTG-1-015 付的是 AP 不是 REST；SAO-1-007 與 MST-1-041 是 REST 自己再給另一張角色 BP，現有的後續只允許磨牌；SAO-2-005 的 Impact 1 帶有整合騎士數量條件，不能掛上無條件的 `printedImpact`。
+
+### 登錄數（`node scripts/v2-unported-report.mjs`）
+
+| 作品 | V2 正式登錄 | 未移植 |
+|---|---:|---:|
+| BLEACH | 97/276 | 179 |
+| TTG | 31/81 | 50 |
+| SLG | 38/80 | 42 |
+| SAO | 84/183 | 99 |
+| MST | 45/80 | 35 |
+| 合計 | 295/700 | 405 |
+
+本輪正式新增 13 張。其中不改引擎就移植的是 4 張。嚴格全面官方 FAQ 驗收仍為 0。合成測試卡沒有計入。
+
+### 本輪實際測試（Node v22.23.4）
+
+- `npm test`：1631 tests、1631 pass、0 fail、0 skipped。
+- `node scripts/v2-integrated-match-matrix.mjs`：60/60 finished，failures 0。
+- `node scripts/v2-assert-independent-manifest.mjs`：bleach 97、gurren-lagann 31、solo-leveling 38、sword-art-online 84、mushoku-tensei 45；total 295。
+- `node scripts/v2-unported-report.mjs`：700／Pilot 295／尚未移植 405／嚴格全面驗收 0。
+- GitHub Actions pull_request run [`39747250598`](https://github.com/will00t-debug/Ua/actions/runs/39747250598)（HEAD `61bbd8765e528b1554bad674c909e3d3161851ca`、runner Node v22.23.3）：2026-10-22 16:22（台北時間）開始、16:23 結束，conclusion success。Job `regression` 的日誌是 `npm test` 1631 tests、1631 pass、0 fail、0 skipped；矩陣 `60/60 finished (failures 0)`；獨立 manifest `bleach 97, gurren-lagann 31, solo-leveling 38, sword-art-online 84, mushoku-tensei 45; total 295`；未移植報告 `總卡 700／Pilot 295／尚未移植 405／嚴格全面驗收 0`。同一 SHA 的 push run `39747246588` 被 concurrency 取消。這個結論只屬於 `61bbd87`。
+
+### 未完成與下一輪
+
+- Q73 與逐張 LIFE 的差異仍開放。
+- 未審核的 Raid 幾何與連鎖 Raid 仍 fail closed。
+- 2回アタック與 2回ブロック都沒有「同一 UID 離場再登場後次數歸零」的專用 FAQ。目前保留該回合的次數。
+- 「自分の効果で登場」不含 LIFE Trigger。這是沒有卡牌 FAQ 時的 fail closed，不是已確認的官方排除。
+- 前線上的條件式發生能源不加進資源。只有能源線，或印了前線也能產生的卡，才產生。
+- SAO-1-003 的「黃+」與 `activeExtraEnergy` 疊加仍未改。
+- SAO-2-050、TTG-1-022 在起動後才被封印時，已獲得的能源與已排定的退場或回手不收回。沒有對應 FAQ。
+- 主要階段結束時，真退場與回手同時發生的順序沒有 FAQ。目前先退場、再回手。
+- 埋在 Raid 底下的層不會被延遲回手或延遲退場抽出來。
+- 全面 FAQ 認證仍為 0。沒有瀏覽器或手機手動操作驗收。
+- 下一輪最接近、但這輪沒有完整印刷支援的卡：
+  - `SLG-1-072`：登場時己方 DFN 至少 3 張才抽 1。缺的是特徵數量閘門。官方特徵是單一トークン，目錄把 DFN 與 Raid 拆開。
+  - `SAO-2-005`：其他整合騎士至少 4 張時才得到 Impact 1。不能把無條件 Impact 套上去。
+  - `SLG-1-065`：手牌至少 5 張時同時 BP+1000 與 Impact 1。現有的手牌 BP 不會附帶 Impact。
+  - `TTG-1-015`：付 1 AP、抽 1、本回合綠 +1。代價不是 REST 自己。
+  - `SAO-1-007`、`MST-1-041`：REST 自己，再選另一張己方角色 BP+1000。現有後續只允許磨牌頂。
+  - `MST-1-056`：REST 另一張己方 ACTIVE 的前線角色，成功後自己本回合綠 +1。不是 REST 自己的那條產能。
+
+## 第十六輪（2026-10-22）
+
+接續第十五輪規則與交接 SHA `61bbd8765e528b1554bad674c909e3d3161851ca`。記錄該 SHA 的文件修訂 `d8c15e288471bebe0646e8ee6740dbaff7f3b56e`，其 pull_request run [`39747804954`](https://github.com/will00t-debug/Ua/actions/runs/39747804954) 是 success。runner Node v22.23.3。2026-10-22 16:26（台北時間）開始、16:29 結束。Job `regression` 的日誌是 `npm test` 1631 tests、1631 pass、0 fail、0 skipped；矩陣 `60/60 finished (failures 0)`；獨立 manifest `bleach 97, gurren-lagann 31, solo-leveling 38, sword-art-online 84, mushoku-tensei 45; total 295`；未移植報告 `總卡 700／Pilot 295／尚未移植 405／嚴格全面驗收 0`。同一 SHA 的 push run `39747797200` 被 concurrency 取消。這個結論只屬於 `d8c15e2`，不涵蓋本輪。
+
+工作分支仍是 `cursor/v2-multi-retire-life-6ff5`，Draft PR #77 的合併目標仍是 `codex/v2-resume-20261021`。沒有改 main、沒有部署、沒有 force push。第十五輪已登錄的卡與共用能力沒有重做。SAO-1-003 沒有改。斜線複合特徵仍是一個完整トークン，沒有拆開。各作品包的版本字串沒有改。
+
+本輪本地驗收使用 Node **v22.23.4**。時間 2026-10-22 16:46（台北時間）完成矩陣與未移植報告。`npm test` 是 1646 則、1646 通過、0 fail、0 skipped。沒有刪測試、沒有放寬合法性。規則 SHA 是 `65ae315e605aa12516e79be0016564bc64acc672`。記錄本輪的這份文件修訂是其後的 commit，要另看自己的 pull_request run。不要把 `39747804954` 當成第十六輪的結果。
+
+### 本輪共用引擎
+
+- 條件式 Impact 1 走 `passiveBonuses.impact`，只能正好是 1。`impactOnBattleWin` 在沒有 `printedImpact`、也沒有裏向底卡 Impact 時，才加總仍成立的被動 Impact。不寫進 `printedImpact`。已有無條件 Impact 或裏向底卡 Impact 時，包驗證會拒絕再掛條件式 Impact。封印後這個被動不算。條件不成立時，被阻擋的勝利不扣生命。
+- `restSelfBuffOther` 只有 `op` 與 `bp` 正好 1000。前線與能源線都可以起動。沒有每回合一次。先 REST 自己，再強制選另一張己方角色（前線或能源線），本回合 BP+1000。場上沒有另一張角色就不能起動。再次轉成 ACTIVE 後可以再付一次，兩次 +1000 會疊加。起動之後才被封印，不會收回已經加上的 BP。沒有對應 FAQ，沒有做成第二套收回。
+- `payApDrawGainEnergy` 的鍵是 `op`、`oncePerTurn:true`、`draw:1`、`extraEnergy:1`。付 1 AP，不 REST 來源。已經 REST 的角色只要還有 AP 就能付。每回合一次鎖在實體 UID。抽 1；牌庫空了抽 0，但 AP 已經付掉，能源仍加上。能源加成是本回合的 `{energy, untilTurn}`。前線仍走既有的早退，產生 0。能源線才把印刷發生量與這次加成加在一起。
+- `restSelfRestFrontGainEnergy` 的鍵是 `op`、`oncePerTurn:true`、`extraEnergy:1`。先 REST 這張卡（前線或能源線），再選另一張目前 ACTIVE 的前線角色並 REST 它。能源加成只在那次 REST 成功之後才加上。來源自己已經 REST，不能當目標。場上只剩這張 ACTIVE 前線時不能起動。能源線的角色不是目標。不付 AP，不加真退場計數。能源線來源該顏色變成印刷量 +1；前線來源仍產生 0。
+
+### Batch A：條件式 Impact 1
+
+`89f4392af793d26e30a41231002a85c84660e56e`
+
+- **EX08BT/SAO-2-005** シェータ・シンセシス・トゥエルブ。其他整合騎士至少 4 張時，這張得到 Impact 1。沒有「自分のターン中」。自己不算進那 4 張。任一回合、前線或能源線都算。3 張、把自己算進去、或被封印，都沒有 Impact。條件成立時，被阻擋且戰鬥勝利只扣 1 點生命，並只在公開到的 LIFE 有 Trigger 時開 LIFE。發生能源 alt 是黃，gen 1。無 Trigger。該頁 2026-10-22 沒有 FAQ。
+
+### Batch B：REST 自己，再給另一張角色 BP
+
+`7d20598535b1cf100b4e9ff1a6d767fc396427d1`
+
+- **UA15BT/SAO-1-007** シリカ。黃。必要能源 2、AP 1、BP 2500、gen 1、特徵 ALO。無 Trigger。REST 自己，選另一張己方角色，本回合 BP+1000。能源線測過。該頁 2026-10-22 沒有 FAQ。
+- **UA54BT/MST-1-041** アイシャ。綠。必要能源 2、AP 1、BP 2000、gen 1。標準 DRAW。同一句 REST 與 BP+1000。前線測過。該頁 2026-10-22 沒有 FAQ。
+
+### Batch C：付 AP 抽牌並本回合產能
+
+`aaf677fde8edfb350bab9a74a5883be9f9697ec3`
+
+- **UA56BT/TTG-1-015** ニア。綠。必要能源 alt 是「綠-」，能源費用 0。AP 1、BP 500。發生能源 alt 是「綠+」，gen 1。特徵大グレン団。DRAW。主要階段每回合一次：付 1 AP，抽 1，本回合發生能源 +1。不 REST。沒有 AP 不能起動。同一回合即使再標一張 AP 卡，也不能付第二次。REST 的前線仍能付，但仍產生 0。能源線產生 2。牌庫空了仍付 AP 並得到能源。該頁 2026-10-22 沒有 FAQ。目錄中文指紋是「主要階段每回合一次，支付1 AP：抽1張；本回合產生能源+1。」
+
+### Batch D：不改引擎
+
+`3f23b51dd86dfe1e41a165482a840e321add8bb6`
+
+這輪不改引擎就完整移植的只有 1 張。A、B、C、E 都改了引擎，不計入這個數字。第十五輪的 4 張也不在這裡重算。
+
+- **UA51BT/SLG-1-065** アーシー。己方回合、自己手牌至少 5 張時，同時 BP+1000 與 Impact 1。手牌 4 張、對手回合、或被封印，兩個都沒有。BP 印刷 `4000+`，數值 4000。發生能源 alt 是「綠」，gen 1。必要能源綠 4、AP 1。DRAW。官方特徵是單一トークン `DFN／第四次架南島レイド`。目錄拆成 `DFN` 與 `第四次架南島Raid`，沒有拿來當登錄特徵。能源線只產生印刷的 1。該頁 2026-10-22 沒有 FAQ。
+
+### Batch E：REST 另一張前線再產能
+
+`65ae315e605aa12516e79be0016564bc64acc672`
+
+- **UA54BT/MST-1-056** エリナリーゼ。綠。必要能源 1、AP 1、BP 2000、gen 1。特徵ラノア魔法大学。無 Trigger。標頭「綠+」是 gen 1，不是 gen 2。起動：先 REST 自己，再 REST 另一張目前 ACTIVE 的前線角色。成功後，這張本回合發生能源 +綠。每回合一次。只剩自己一張 ACTIVE 前線時不能起動。能源線角色與自己都不是目標。不付 AP。能源線來源該卡綠色發生量變成 2；前線來源仍是 0。該頁 2026-10-22 沒有 FAQ。印刷本文是 `〖起動メイン〗 〖レストにする〗 〖ターン1〗 自分のフロントLのアクティブのキャラを1枚レストにする。そうした場合、このキャラはこのターン中、発生エナジー+ 〖緑〗 。`（`+` 與 `〖緑〗` 之間有空格）。
+
+這輪看過、仍不登錄：SLG-1-072。官方效果是登場時己方場上「特徵：DFN」至少 3 張才抽 1。官方特徵卻是複合トークン `DFN／第四次架南島レイド`。發生能源 alt 是「綠綠」，gen 2。必要能源綠 3、BP 2000、無 Trigger、名字ミズア。現有 `ownTraitCount` 用完整トークン比對，不會把這張自己或其他複合 DFN 算成 `DFN`。若拆開斜線，會改掉第十五輪已鎖住的測試：SLG-1-069 的複合特徵不算 `第四次架南島レイド`。TTG-1-002 的中文目錄看起來接近 MST-1-056，這輪沒有抓官方頁，沒有當成同一句。
+
+### 登錄數（`node scripts/v2-unported-report.mjs`）
+
+| 作品 | V2 正式登錄 | 未移植 |
+|---|---:|---:|
+| BLEACH | 97/276 | 179 |
+| TTG | 32/81 | 49 |
+| SLG | 39/80 | 41 |
+| SAO | 86/183 | 97 |
+| MST | 47/80 | 33 |
+| 合計 | 301/700 | 399 |
+
+本輪正式新增 6 張：SAO-2-005、SAO-1-007、MST-1-041、TTG-1-015、SLG-1-065、MST-1-056。其中不改引擎就移植的是 1 張。嚴格全面官方 FAQ 驗收仍為 0。合成測試卡沒有計入。正式登錄、測試通過、全面 FAQ 認證是三件不同的事。
+
+### 本輪實際測試（Node v22.23.4）
+
+- `npm test`：1646 tests、1646 pass、0 fail、0 skipped。時間 2026-10-22 16:46（台北時間）。
+- `node scripts/v2-integrated-match-matrix.mjs`：60/60 finished，failures 0。
+- `node scripts/v2-assert-independent-manifest.mjs`：bleach 97、gurren-lagann 32、solo-leveling 39、sword-art-online 86、mushoku-tensei 47；total 301。
+- `node scripts/v2-unported-report.mjs`：700／Pilot 301／尚未移植 399／嚴格全面驗收 0。
+- 上面是本機結果。GitHub Actions 尚未跑本輪。`39747804954` 只屬於 `d8c15e2`。
+
+### 未完成與下一輪
+
+- Q73 與逐張 LIFE 的差異仍開放。
+- 未審核的 Raid 幾何與連鎖 Raid 仍 fail closed。
+- 2回アタック與 2回ブロック都沒有「同一 UID 離場再登場後次數歸零」的專用 FAQ。目前保留該回合的次數。
+- 「自分の効果で登場」不含 LIFE Trigger。這是沒有卡牌 FAQ 時的 fail closed，不是已確認的官方排除。
+- 前線上的條件式或起動獲得的發生能源不加進資源。TTG-1-015 與 MST-1-056 都維持這個早退。只有能源線，或印了前線也能產生的卡，才產生。
+- SAO-1-003 的「黃+」與 gen 2 再加 `activeExtraEnergy` 仍未改。
+- SAO-2-050、TTG-1-022，以及本輪起動後才被封印的能源與 BP，已獲得的文字不收回。沒有對應 FAQ。
+- 主要階段結束時，真退場與回手同時發生的順序沒有 FAQ。目前先退場、再回手。
+- 埋在 Raid 底下的層不會被延遲回手或延遲退場抽出來。
+- 斜線複合特徵維持一個完整トークン。SLG-1-072 因此這輪不登錄。
+- 全面 FAQ 認證仍為 0。沒有瀏覽器或手機手動操作驗收。
+- 下一輪最接近、但這輪沒有完整印刷支援的卡：
+  - `SLG-1-072`：要先決定斜線複合特徵能不能在特定效果裡拆成 `DFN`。沒有這個決定之前不移植。
+  - `TTG-1-002`：中文目錄接近 MST-1-056 的 REST 另一張前線。官方頁這輪沒有抓，不能假設同一句。
+  - `SAO-2-065`：不在場時的 BP。這輪沒有抓官方頁。
+  - `TTG-1-007`、`TTG-1-013`：這輪沒有抓官方頁。
+  - `SLG-1-027`：逐張 REST 的 BP，現有被動不是逐張計數。
+
+## 第十七輪（2026-10-22）
+
+接續第十六輪規則 SHA `65ae315e605aa12516e79be0016564bc64acc672`。記錄該輪的文件修訂 `d930207ce295b38167eb0f9f595302e1adef2cbd`，其 pull_request run [`39750703694`](https://github.com/will00t-debug/Ua/actions/runs/39750703694) 是 success。runner Node v22.23.3。2026-10-22 16:49（台北時間）開始、16:51 結束。Job `regression` 的日誌是 `npm test` 1646 tests、1646 pass、0 fail、0 skipped；矩陣 `60/60 finished (failures 0)`；獨立 manifest `bleach 97, gurren-lagann 32, solo-leveling 39, sword-art-online 86, mushoku-tensei 47; total 301`；未移植報告 `總卡 700／Pilot 301／尚未移植 399／嚴格全面驗收 0`。同一 SHA 的 push run `39750700005` 被 concurrency 取消。checkout、setup-node、upload-artifact 的 Node.js 20 淘汰警告是 runner 警告，不是測試失敗。這個結論只屬於 `d930207`，不涵蓋本輪。
+
+工作分支仍是 `cursor/v2-multi-retire-life-6ff5`，Draft PR #77 的合併目標仍是 `codex/v2-resume-20261021`。沒有改 main、沒有部署、沒有 force push。第十六輪已登錄的卡與共用能力沒有重做。SAO-1-003 沒有改。斜線複合特徵仍是一個完整トークン。各作品包的版本字串沒有改。
+
+本輪本地驗收使用 Node **v22.23.4**。時間 2026-10-22 17:19（台北時間）完成矩陣與未移植報告。`npm test` 是 1661 則、1661 通過、0 fail、0 skipped。沒有刪測試、沒有放寬合法性。規則 SHA 是 `17a1d486ff447041b14d334fd387e89d9af8300f`。記錄本輪的這份文件修訂是其後的 commit，要另看自己的 pull_request run。不要把 `39750703694` 當成第十七輪的結果。
+
+### 本輪共用引擎
+
+- `ownNameAbsent`：自己場上沒有指定名字的角色時成立。前線與能源線都算。手牌、場外、對手場上、Raid 底下不算。別名與封印的處理跟 `ownNameExists` 一樣：封印拿掉別名，印刷名字還在。這個條件只允許負的 BP，而且必須是 500 的倍數、最低 -5000。正的 BP 不能掛在這個條件上。
+- `ownRestPrintedBpAtMost` 配 `bpEach`：己方回合，每有 1 張符合的 REST 角色就加一次 BP。比的是印刷 BP，不是現在的 BP。Q2030：元々のBP 是卡面左下的數字。Q2070：場域沒有 BP，所以不算；實作只數角色。特徵是完整トークン。印刷沒有「他の」時，自己也數，但自己的印刷 BP 超過上限就不算。ACTIVE、對手、中文譯名特徵都不算。
+- `oppCharacterBpAtLeast`：對手場上有現在 BP 達到門檻的角色。Q749：效果把 BP 抬到門檻也算。自己的場上不算。手牌不算。互相讀取現在 BP 時，正在計算的那張卡不再往下展開被動，避免循環。Q749 要看的那張卡，本身的本回合加值仍算進去。
+- 退場時可以選擇性使用既有的 `buffOwnField`。必須是 optional。角色已經離場，所以自己不是目標。Q2220：退場前被封印，印刷的退場文不會發動。
+
+### Batch A：名字不在場時的 BP
+
+`e8d5bf81393720204cee54ddcfeddc7d4bc1f66a`
+
+- **EX08BT/SAO-2-065** クライン。自己場上沒有〈フレイヤ〉時 BP-500。沒有「自分のターン中」。BP 印刷 `3500-`，數值 3500。發生能源 alt 是「綠」，gen 1。必要能源綠 2、AP 1、特徵 ALO。標準 ACTIVE Trigger。手牌、場外、對手的フレイヤ都不取消減成。自己場上的別名算。別名被封印後不算；印刷名字被封印仍算。這張自己被封印後，減成消失，回到 3500。該頁 2026-10-22 沒有 FAQ。
+
+### Batch B：逐張 REST 的印刷 BP
+
+`9e59100a8983ca2dddd7d095eaf3659748ee77ad`
+
+- **UA51BT/SLG-1-027** アイアン。己方回合，每有 1 張印刷 BP 2500 以下、REST、特徵正好是 `影の軍団` 的己方角色，BP+500。能源線也算。ACTIVE 不算。印刷 3000 即使本回合被減到 2500 以下也不算。場域不算。目錄特徵 `影之軍團` 沒有拿來計數。BP 印刷 `3000+`，數值 3000。發生能源 alt 是「紫」，gen 1。必要能源紫 2、AP 1。無 Trigger。Q2030、Q2070 如上。這不是整頁 FAQ 認證。
+
+### Batch C：對手現在 BP 的 Impact
+
+`17a0d9158b618817ef59aaa5af53183d5792aad0`
+
+- **UA15BT/SAO-1-017** ベルクーリ・シンセシス・ワン。對手場上有現在 BP 4000 以上的角色時，這張得到 Impact 1。Q749：效果把 BP 抬上去也算。自己場上的 4000 不算。3500 不算。手牌不算。能源線的對手角色算。這張被封印後 Impact 是 0。發生能源 alt 是「黃」，gen 1。必要能源黃 5、AP 1、BP 4000、特徵整合騎士。標準 ACTIVE Trigger。
+
+### Batch D：退場時給另一張角色 BP
+
+`9343216b18a00e4f3e09bede2470e719265b0826`
+
+- **UA15BT/SAO-1-079** ユウキ。真退場時，可選自己場上 1 張角色，本回合 BP+1000。可以不選。前線與能源線都是目標。自己已經離場，不是目標。場上沒有其他角色就不會開選擇。退場前被封印則這句不發動。選完之後，目標再被封印，已加上的 BP 不收回。發生能源 alt 是「綠」，gen 1。必要能源綠 2、AP 1、BP 3000、特徵 ALO。無 Trigger。該頁 2026-10-22 沒有 FAQ。
+
+### Batch E：不改引擎
+
+`17a1d486ff447041b14d334fd387e89d9af8300f`
+
+這輪不改引擎就完整移植的只有 1 張。A 到 D 都改了規則，不計入這個數字。第十六輪的 1 張也不在這裡重算。
+
+- **UA56BT/TTG-1-002** ヴィラル。官方句與 MST-1-056 是同一條已結算的能力：先 REST 自己，再 REST 另一張目前 ACTIVE 的前線角色。成功後，這張本回合發生能源 +綠。每回合一次。標頭「綠+」是 gen 1。必要能源綠 1、AP 1、BP 1500、特徵大グレン団。標準 ACTIVE Trigger。前線起動後仍產生 0。能源線起動後該卡變成 2。不付 AP，不加真退場計數。該頁 2026-10-22 沒有 FAQ。
+
+這輪看過、仍不登錄：SLG-1-072 仍卡在斜線複合特徵。TTG-1-007 與 TTG-1-013 除了場上有搭檔時 BP+1000，還有從手牌登場可付 1 AP、把場外搭檔 REST 登場；只做 BP 會是半套。SAO-1-043 是場外〈ピナ〉最多 1 張 REST 登場，現有 `deployOutsideRest` 還強制顏色、能源與 AP，這張印刷沒有那些限制。SAO-2-034 的「1枚まで」是可選磨牌，不是強制 `millTop`。MST-1-065 是看頂 2、符合特徵的最多 1 張放場外、其餘放回牌庫頂；現有查看不是這個目的地。
+
+### 登錄數（`node scripts/v2-unported-report.mjs`）
+
+| 作品 | V2 正式登錄 | 未移植 |
+|---|---:|---:|
+| BLEACH | 97/276 | 179 |
+| TTG | 33/81 | 48 |
+| SLG | 40/80 | 40 |
+| SAO | 89/183 | 94 |
+| MST | 47/80 | 33 |
+| 合計 | 306/700 | 394 |
+
+本輪正式新增 5 張：SAO-2-065、SLG-1-027、SAO-1-017、SAO-1-079、TTG-1-002。其中不改引擎就移植的是 1 張。嚴格全面官方 FAQ 驗收仍為 0。合成測試卡沒有計入。正式登錄、測試通過、全面 FAQ 認證是三件不同的事。
+
+### 本輪實際測試（Node v22.23.4）
+
+- `npm test`：1661 tests、1661 pass、0 fail、0 skipped。時間 2026-10-22 17:19（台北時間）。
+- `node scripts/v2-integrated-match-matrix.mjs`：60/60 finished，failures 0。
+- `node scripts/v2-assert-independent-manifest.mjs`：bleach 97、gurren-lagann 33、solo-leveling 40、sword-art-online 89、mushoku-tensei 47；total 306。
+- `node scripts/v2-unported-report.mjs`：700／Pilot 306／尚未移植 394／嚴格全面驗收 0。
+- 上面是本機結果。GitHub Actions 尚未跑本輪。`39750703694` 只屬於 `d930207`。
+
+### 未完成與下一輪
+
+- Q73 與逐張 LIFE 的差異仍開放。
+- 未審核的 Raid 幾何與連鎖 Raid 仍 fail closed。
+- 2回アタック與 2回ブロック都沒有「同一 UID 離場再登場後次數歸零」的專用 FAQ。目前保留該回合的次數。
+- 「自分の効果で登場」不含 LIFE Trigger。這是沒有卡牌 FAQ 時的 fail closed。
+- 前線上起動或條件得到的發生能源不加進資源。TTG-1-002 也維持這個早退。
+- SAO-1-003 的「黃+」與 gen 2 再加 `activeExtraEnergy` 仍未改。
+- 起動或退場選擇之後才被封印時，已獲得的能源與 BP 不收回。沒有對應 FAQ。
+- 主要階段結束時，真退場與回手同時發生的順序沒有 FAQ。目前先退場、再回手。
+- 埋在 Raid 底下的層不會被延遲回手或延遲退場抽出來。
+- 斜線複合特徵維持一個完整トークン。SLG-1-072 因此仍不登錄。
+- 互相讀取現在 BP 時，正在計算的那張不再展開自己的被動。這不是另一條 FAQ，只是避免循環。
+- 全面 FAQ 認證仍為 0。沒有瀏覽器或手機手動操作驗收。
+- 下一輪最接近、但這輪沒有完整印刷支援的卡：
+  - `SLG-1-072`：要先決定斜線複合特徵能不能在特定效果裡拆成 `DFN`。
+  - `TTG-1-007`、`TTG-1-013`：BP 與付 AP 從場外 REST 登場是同一張卡的兩句，不能只登 BP。
+  - `SAO-1-043`：場外〈ピナ〉REST 登場沒有顏色、能源、AP 上限。
+  - `SAO-2-034`：攻擊時牌庫頂最多 1 張放場外，是可選，不是強制磨 1。
+  - `MST-1-065`：也視為〈シルフィエット〉。看頂 2，特徵符合的最多 1 張放場外，其餘放回牌庫頂。
+
+## 第十八輪（2026-10-22）
+
+接續第十七輪規則 SHA `17a1d486ff447041b14d334fd387e89d9af8300f`。記錄該輪的文件修訂 `a3630814ac265fc2042c0e8858cd8a48eea10ee0`，其 pull_request run [`39754862677`](https://github.com/will00t-debug/Ua/actions/runs/39754862677) 是 success。runner Node v22.23.3。2026-10-22 17:22（台北時間）開始、17:23 結束。Job `regression` 的日誌是 `npm test` 1661 tests、1661 pass、0 fail、0 skipped；矩陣 `60/60 finished (failures 0)`；獨立 manifest `bleach 97, gurren-lagann 33, solo-leveling 40, sword-art-online 89, mushoku-tensei 47; total 306`；未移植報告 `總卡 700／Pilot 306／尚未移植 394／嚴格全面驗收 0`。同一 SHA 的 push run `39754856464` 被 concurrency 取消。checkout、setup-node、upload-artifact 的 Node.js 20 淘汰警告是 runner 警告，不是測試失敗。這個結論只屬於 `a363081`，不涵蓋本輪。
+
+工作分支仍是 `cursor/v2-multi-retire-life-6ff5`，Draft PR #77 的合併目標仍是 `codex/v2-resume-20261021`。沒有改 main、沒有部署、沒有 force push。第十七輪已登錄的卡與共用能力沒有重做。SAO-1-003 沒有改。斜線複合特徵仍是一個完整トークン。各作品包的版本字串沒有改。
+
+本輪本地驗收使用 Node **v22.23.4**。時間 2026-10-22 17:53（台北時間）完成矩陣與未移植報告。`npm test` 是 1674 則、1674 通過、0 fail、0 skipped。沒有刪測試、沒有放寬合法性。共用引擎 SHA 是 `eff466e628f746c85d473087da01b03d30eae09c`。規則與卡牌的最終 SHA 是 `79fde3d65bc48b35c8faff1ac61872a1e281d19f`。記錄本輪的這份文件修訂是其後的 commit，要另看自己的 pull_request run。不要把 `39754862677` 當成第十八輪的結果。
+
+`202c9745169b556109b4880f9b34169dccb87061` 的 manifest 已經寫入 `MST-1-065`，MST 卡包與測試在下一個提交 `1a5b965c300777109c305dc47e40cb85fcc89046`。最終 HEAD `79fde3d` 的 manifest 與卡包一致。沒有用 force push 改寫中間提交。
+
+### 本輪共用引擎
+
+- `deployOutsideNameRest`：鍵只有 `op`、`name`、`optional:true`。只看名字。既有 `deployOutsideRest` 仍要齊顏色、能源、AP 六個鍵，缺了仍拒絕。目標是自己場外、沒有 `raidName`、`cardHasName` 符合的角色。別名算。場外的卡套不到只對場上卡生效的 `originalEffectsDisabled`，所以場外別名一直算。可以不選。登場是 REST，前線或能源線；前線被禁止時不能上前線。入場原因是 `outsideEffect`。手牌與對手的同名不算。
+- `millTop` 加上 `optional:true` 時，張數必須正好是 1。沒有 `optional` 的舊磨牌仍是強制，張數 2 仍合法。選擇不公開牌庫頂。空牌庫，以及排隊當下被封印，都不開選擇，直接進阻擋。接受後只把那一張放到場外，然後開阻擋。
+- `inspectTopTraitOutside`：看牌庫頂 2 到 4 張。特徵用完整トークン的 `traits.includes`，不走會拆斜線的 `matchesFilter`。有符合的才開「0 或 1 張放場外」。沒有符合的就直接進既有的牌頂順序，全部放回牌庫頂。不加手牌、不棄牌、不放牌庫底。
+- `payApDeployNamedRest`：鍵只有 `op`、`entry:'hand'`、`name`。只在入場原因是 `paidPlay` 或 `paidRaid`、而且至少還有 1 AP 時才開。LIFE、`outsideEffect`、`recoveredEffect`、沒有入場原因都不開。跳過不付 AP。接受時先付 1 AP，再從場外挑同名、而且該顏色已有的發生能源夠付必要能源的角色。必要能源 0 一定夠。其他顏色的能源不算。付完沒有合法目標時，選擇關掉，AP 已經花掉。先攻第一回合只有 1 AP，打出 AP 1 的卡之後這個選擇不開。被效果登場的搭檔，自己的登場時不再提供這次付費。場上有指定名字時的 BP+1000 用既有 `ownNameExists`，沒有新的 BP 引擎。手牌、場外、對手不算。來源被封印後加值消失。任一回合都算。
+
+### Batch A 與 B：指名 REST 登場、可選磨 1
+
+`202c9745169b556109b4880f9b34169dccb87061`
+
+- **UA15BT/SAO-1-043** シリカ。登場時，自己場外的〈ピナ〉最多 1 張，REST 登場。印刷沒有顏色、必要能源、AP 上限。已登錄的 SAO-2-019（必要能源 2）與 SAO-1-045（必要能源 0）都可以。不是ピナ的不算。手牌與對手的ピナ不算。進場是 REST。SAO-2-019 進場後，自己回合、場上有シリカ時 BP 是 4000（印刷 2000，加上既有的己方回合 +2000）。對手回合回到 2000。前線的シリカ發生能源仍是 0。該頁 2026-10-22 沒有 FAQ。
+- **EX08BT/SAO-2-034** エイジ。攻擊時，自己牌庫頂最多 1 張放場外。可以不放。不放時牌庫頂留在原位。放了就只移那一張到場外，然後開阻擋。選擇不公開那張牌。空牌庫與被封印直接進阻擋。發生能源 alt 是「紫」，gen 1。必要能源紫 2、AP 1、BP 3000、特徵 SAOサバイバー。標準 ACTIVE Trigger。該頁 2026-10-22 沒有 FAQ。
+
+### Batch C：別名與特徵牌頂放場外
+
+`1a5b965c300777109c305dc47e40cb85fcc89046`
+
+- **UA54BT/MST-1-065** フィッツ。也視為〈シルフィエット〉。登場時看自己牌庫頂 2 張，特徵正好是 `ラノア魔法大學` 的最多 1 張放場外，其餘以想要的順序放回牌庫頂。`ラノア魔法大學／別` 這種斜線複合特徵不算。沒有符合的就不開「放場外」，直接排順序放回頂端。費用 alt「綠-」是能源 0。發生能源 alt「綠」是 gen 1。BP 1500、特徵ラノア魔法大學、標準 ACTIVE Trigger。`effectJa` 對的是目錄字串，含換行與空格。該頁 2026-10-22 沒有 FAQ。Q87：場上未封印時別名算；封印後別名拿掉，印刷名字フィッツ仍算。場外沒有另做封印。
+
+### Batch D：搭檔 BP 與付 AP 的 REST 登場
+
+`79fde3d65bc48b35c8faff1ac61872a1e281d19f`
+
+- **UA56BT/TTG-1-007** ギミー 與 **UA56BT/TTG-1-013** ダリー。兩句都做了。自己場上有對方名字時 BP+1000。手牌、場外、對手不算。能源線的搭檔也算。任一回合都算。自己被封印後回到印刷 1500。從手牌登場時可付 1 AP，然後把自己場外、必要能源已滿足的搭檔最多 1 張 REST 登場。先攻第一回合打出這張會用掉僅有的 1 AP，付費選擇不開。自己的第二回合有 2 AP：打出花 1，不付則搭檔留在場外、剩下的 AP 還在；付掉之後，能源 0 的搭檔可以 REST 到能源線，而且不再開第二次付費，來源 BP 變成 2500。綠色 1 點付得起能源 0 的ダリー與未封印的別名，付不起必要能源 2 的綠卡，也付不起必要能源 1 的藍卡。效果登場的搭檔不再開這次付費。費用 alt「綠-」是能源 0。發生能源 alt「綠」是 gen 1。BP 印刷 1500。特徵 `大グレン団`。007 是 ACTIVE Trigger，013 是抽牌 Trigger。兩頁 2026-10-22 都沒有 FAQ。
+
+這輪不改引擎就完整移植的是 0 張。A 到 D 都依賴共用引擎提交。第十七輪的 1 張、第十六輪的 1 張、第十五輪的 4 張不在這裡重算。
+
+這輪看過、仍不登錄：SLG-1-072。官方頁 2026-10-22 抓過，沒有 FAQ。登場時自己場上［特徴：DFN］有 3 張以上就抽 1。印刷特徵是一個トークン `DFN／第四次架南島レイド`。發生能源 alt「綠綠」是 gen 2。費用綠 3。名字ミズア。斜線沒有拆開。本輪五張移植之後沒有再抓其他官方頁。
+
+### 登錄數（`node scripts/v2-unported-report.mjs`）
+
+| 作品 | V2 正式登錄 | 未移植 |
+|---|---:|---:|
+| BLEACH | 97/276 | 179 |
+| TTG | 35/81 | 46 |
+| SLG | 40/80 | 40 |
+| SAO | 91/183 | 92 |
+| MST | 48/80 | 32 |
+| 合計 | 311/700 | 389 |
+
+本輪正式新增 5 張：SAO-1-043、SAO-2-034、MST-1-065、TTG-1-007、TTG-1-013。其中不改引擎就移植的是 0 張。嚴格全面官方 FAQ 驗收仍為 0。合成測試卡沒有計入。正式登錄、測試通過、全面 FAQ 認證是三件不同的事。
+
+### 本輪實際測試（Node v22.23.4）
+
+- `npm test`：1674 tests、1674 pass、0 fail、0 skipped。時間 2026-10-22 17:53（台北時間）。
+- `node scripts/v2-integrated-match-matrix.mjs`：60/60 finished，failures 0。
+- `node scripts/v2-assert-independent-manifest.mjs`：bleach 97、gurren-lagann 35、solo-leveling 40、sword-art-online 91、mushoku-tensei 48；total 311。
+- `node scripts/v2-unported-report.mjs`：700／Pilot 311／尚未移植 389／嚴格全面驗收 0。
+- 上面是本機結果。GitHub Actions 尚未跑本輪。`39754862677` 只屬於 `a363081`。
+
+### 未完成與下一輪
+
+- Q73 與逐張 LIFE 的差異仍開放。
+- 未審核的 Raid 幾何與連鎖 Raid 仍 fail closed。
+- 2回アタック與 2回ブロック都沒有「同一 UID 離場再登場後次數歸零」的專用 FAQ。目前保留該回合的次數。
+- 「自分の効果で登場」不含 LIFE Trigger。這是沒有卡牌 FAQ 時的 fail closed。
+- 前線上起動或條件得到的發生能源不加進資源。
+- SAO-1-003 的「黃+」與 gen 2 再加 `activeExtraEnergy` 仍未改。
+- 起動或退場選擇之後才被封印時，已獲得的能源與 BP 不收回。沒有對應 FAQ。
+- 主要階段結束時，真退場與回手同時發生的順序沒有 FAQ。目前先退場、再回手。
+- 埋在 Raid 底下的層不會被延遲回手或延遲退場抽出來。
+- 斜線複合特徵維持一個完整トークン。SLG-1-072 因此仍不登錄。
+- 互相讀取現在 BP 時，正在計算的那張不再展開自己的被動。這不是另一條 FAQ，只是避免循環。
+- `originalEffectsDisabled` 只作用在場上的卡。場外的卡不會被封印，場外別名因此一直算。沒有另做場外封印。
+- 全面 FAQ 認證仍為 0。沒有瀏覽器或手機手動操作驗收。
+- 下一輪最接近、但這輪沒有完整印刷支援的卡：
+  - `SLG-1-072`：要先決定斜線複合特徵能不能在特定效果裡拆成 `DFN`。官方頁已抓，沒有 FAQ。登場時自己場上［特徴：DFN］3 張以上抽 1。特徵是一個トークン `DFN／第四次架南島レイド`。發生能源「綠綠」是 gen 2。
+- 本輪五張之後沒有再抓其他官方頁，所以不另列尚未核對印刷的卡。
+

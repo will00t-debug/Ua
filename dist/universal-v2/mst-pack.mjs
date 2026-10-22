@@ -28,6 +28,11 @@ const PRINTED_PINS=Object.freeze({
   energy:0,ap:1,bp:2000,gen:1,type:"character",traits:[],trigger:null,
   effectJa:"〖退場時〗 自分の場にフィールドがある場合、カードを1枚引く。"
  },
+ "MST-1-043":{
+  kind:"onPlayTop5GreenFieldBottomDiscard",nameJa:"ギース",color:"green",
+  energy:0,ap:1,bp:1500,gen:1,type:"character",traits:[],trigger:null,
+  effectJa:"〖登場時〗 自分の山札の上から5枚見て、緑のフィールドカードを1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。"
+ },
  "MST-1-042":{
   kind:"retiredFieldReady",nameJa:"エリナリーゼ",color:"green",energy:4,ap:1,
   bp:4000,gen:1,type:"character",traits:[],trigger:"active",
@@ -63,6 +68,84 @@ const PRINTED_PINS=Object.freeze({
     "trigger": "draw",
     "deckLimit": 1,
     "effectJa": "〖登場時〗 カードを1枚引き、自分の手札を1枚場外に置く。"
+  },
+  "MST-1-004": {
+    "kind": "activeIfOwnEffectEntry",
+    "nameJa": "エリス",
+    "color": "blue",
+    "energy": 2,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 1,
+    "type": "character",
+    "traits": [],
+    "trigger": null,
+    "effectJa": "〖登場時〗 このキャラが自分の効果で登場していた場合、このキャラをアクティブにする。"
+  },
+  "MST-1-056": {
+    "kind": "restSelfRestFrontGainEnergy",
+    "nameJa": "エリナリーゼ",
+    "color": "green",
+    "energy": 1,
+    "ap": 1,
+    "bp": 2000,
+    "gen": 1,
+    "type": "character",
+    "traits": ["ラノア魔法大学"],
+    "trigger": null,
+    "effectJa": "〖起動メイン〗 〖レストにする〗 〖ターン1〗 自分のフロントLのアクティブのキャラを1枚レストにする。そうした場合、このキャラはこのターン中、発生エナジー+ 〖緑〗 。"
+  },
+  "MST-1-041": {
+    "kind": "restSelfBuffOther",
+    "nameJa": "アイシャ",
+    "color": "green",
+    "energy": 2,
+    "ap": 1,
+    "bp": 2000,
+    "gen": 1,
+    "type": "character",
+    "traits": [],
+    "trigger": "draw",
+    "effectJa": "〖起動メイン〗 〖レストにする〗 自分の場の他のキャラを1枚選び、このターン中、BP+1000。"
+  },
+  "MST-1-023": {
+    "kind": "drawIfOwnEffectEntry",
+    "nameJa": "ルーデウス",
+    "color": "blue",
+    "energy": 2,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 1,
+    "type": "character",
+    "traits": [],
+    "trigger": null,
+    "effectJa": "〖登場時〗 このキャラが自分の効果で登場していた場合、カードを1枚引く。"
+  },
+  "MST-1-065": {
+    "kind": "nameAliasTopTraitOutside",
+    "nameJa": "フィッツ",
+    "color": "green",
+    "energy": 0,
+    "ap": 1,
+    "bp": 1500,
+    "gen": 1,
+    "type": "character",
+    "traits": ["ラノア魔法大学"],
+    "trigger": "active",
+    "effectJa": "このカードは〈シルフィエット〉としても扱う。\n 〖登場時〗 自分の山札の上から2枚見て、［特徴：ラノア魔法大学］を1枚まで場外に置く。残りを望む順で山札の上に置く。"
+  },
+  "MST-1-066": {
+    "kind": "nameAliasOwnEnergyBp",
+    "nameJa": "フィッツ",
+    "color": "green",
+    "energy": 3,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 2,
+    "type": "character",
+    "traits": ["ラノア魔法大学"],
+    "trigger": "draw",
+    "effectJa": "このカードは〈シルフィエット〉としても扱う。\n 〖自分のターン中〗 自分の発生エナジーが7以上ある場合、このキャラはBP+1000。"
   },
   "MST-1-003": {
     "kind": "ownFieldAllNamesBp",
@@ -562,12 +645,37 @@ export function verifiedMstV2Cards(){
    card.effects={onRetire:[{op:'drawIfOwnFieldExists',count:1}]};
   if(pin.kind==='onRetireDrawOne')
    card.effects={onRetire:[{op:'draw',count:1}]};
+  if(pin.kind==='activeIfOwnEffectEntry')
+   card.effects={onPlay:[{op:'activeSelfIf',entry:'ownEffect'}]};
+  if(pin.kind==='restSelfRestFrontGainEnergy'){
+   card.effects={};
+   card.mainAbility={op:'restSelfRestFrontGainEnergy',oncePerTurn:true,extraEnergy:1};
+  }
+  if(pin.kind==='restSelfBuffOther'){
+   card.effects={};
+   card.mainAbility={op:'restSelfBuffOther',bp:1000};
+  }
+  if(pin.kind==='drawIfOwnEffectEntry')
+   card.effects={onPlay:[{op:'draw',count:1,entry:'ownEffect'}]};
+  if(pin.kind==='nameAliasTopTraitOutside'){
+   card.nameAliases=['シルフィエット'];
+   card.effects={onPlay:[{op:'inspectTopTraitOutside',count:2,
+    trait:'ラノア魔法大学',rest:'top'}]};
+  }
+  if(pin.kind==='nameAliasOwnEnergyBp'){
+   card.nameAliases=['シルフィエット'];
+   card.effects={};
+   card.passiveBonuses=[{condition:{kind:'ownEnergyAtLeast',turn:'own',min:7},bp:1000}];
+  }
   if(pin.kind==='ownFieldAllNamesBp')
    card.passiveBonuses=[{condition:{kind:'ownFieldHasAllNames',turn:'any',
     zone:'field',excludeSelf:false,names:['ルーデウス','ルイジェルド']},bp:1000}];
   if(pin.kind==='onPlayTop3OwnTraitBottomDiscard')
    card.templateEffects={onPlay:[{template:'searchTopOneBottomDiscard',count:3,
     filter:{field:'trait',value:'ラノア魔法大学'}}]};
+  if(pin.kind==='onPlayTop5GreenFieldBottomDiscard')
+   card.templateEffects={onPlay:[{template:'searchTopOneBottomDiscardWhere',count:5,
+    filters:[{field:'color',value:'green'},{field:'type',value:'field'}],logic:'all'}]};
   if(pin.kind==='onPlayDrawIfOwnEnergyAtLeast')
    card.templateEffects={onPlay:[{template:'drawIfOwnEnergyAtLeast',energy:7,count:1}]};
   if(pin.kind==='onPlayDraw')card.templateEffects={onPlay:[{template:'draw',count:1}]};
@@ -626,11 +734,18 @@ export function verifiedMstV2Entries(){
      'tests/universal-v2-mst-port.test.mjs',
      'tests/universal-v2-sao-mst-cross-title.test.mjs',
      ...(pin.kind==='ownFieldAllNamesBp'?['tests/v2-mst-003-own-names.test.mjs']:[]),
+     ...(pin.kind==='activeIfOwnEffectEntry'?['tests/v2-conditional-entry-active-round15.test.mjs']:[]),
+     ...(pin.kind==='drawIfOwnEffectEntry'?['tests/v2-mst-023-own-effect-draw.test.mjs']:[]),
+     ...(pin.kind==='restSelfBuffOther'?['tests/v2-rest-buff-other-round16.test.mjs']:[]),
+     ...(pin.kind==='restSelfRestFrontGainEnergy'?['tests/v2-mst-056-rest-front-energy.test.mjs']:[]),
+     ...(pin.kind==='nameAliasOwnEnergyBp'?['tests/v2-zero-engine-round15.test.mjs']:[]),
+     ...(pin.kind==='nameAliasTopTraitOutside'?['tests/v2-mst-065-top-trait-outside.test.mjs']:[]),
       ...(pin.kind==='onRetireDrawOne'?['tests/v2-mst-013-on-retire.test.mjs']:[]),
       ...(pin.kind==='onRetireDrawIfOwnField'?['tests/v2-mst-052-official-retire.test.mjs']:[]),
        ...(pin.kind==='colorSiteMainRetireDraw'?['tests/v2-mst-053-official-full.test.mjs']:[]),
      ...(pin.kind==='onPlayDrawIfOwnEnergyAtLeast'?['tests/v2-mst-063-energy-draw.test.mjs']:[]),
      ...(pin.kind==='onPlayTop3OwnTraitBottomDiscard'?['tests/v2-mst-055-cross-title-top.test.mjs']:[]),
+     ...(pin.kind==='onPlayTop5GreenFieldBottomDiscard'?['tests/v2-cross-title-top-filter-round13.test.mjs']:[]),
      ...(pin.kind==='frontGeneratesEnergy'?['tests/v2-mst-057-front-energy.test.mjs']:[]),
       ...(['onPlayRestSilenceOpponentIfFieldOutside','fieldOnPlayDrawDiscardOnRetireDraw'].includes(pin.kind)?
        ['tests/v2-mst-054-075-real-deck.test.mjs']:[]),

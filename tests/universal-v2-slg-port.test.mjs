@@ -44,7 +44,7 @@ test('TTG 81 and SLG 80 normal official card IDs are unique and contiguous, excl
   assert.ok(cards.every(c=>c.type!=='ap'&&c.type!=='action_point'&&!c.id.includes('-AP')));
  }
 });
-test('SLG 34 printed effect profiles do not equate to full 80-card migration and retain life trigger separately',()=>{
+test('registered SLG printed effect profiles do not equate to full 80-card migration and retain life trigger separately',()=>{
  assert.equal(SLG_V2_VERIFIED_IDS.length,EXPECTED_V2_COUNTS['solo-leveling']);
  assert.equal(Object.keys(slg.cards).length,EXPECTED_V2_COUNTS['solo-leveling']);
  assert.deepEqual(validateUniversalDeck(slg,slgDeck),[]);
@@ -168,7 +168,7 @@ test('SLG-040 SPECIAL life trigger is OPTIONAL, independent of its printed BP-li
  assert.equal(assertUniversalMatch(packs,done),true);
 });
 
-test('34 SLG profiles compile through the title-scoped V2 registry without legacy fallback',()=>{
+test('registered SLG profiles compile through the title-scoped V2 registry without legacy fallback',()=>{
  const row=listRegisteredV2Titles().find(x=>x.title==='solo-leveling');
  assert.equal(row.baselinePilots,0);
  assert.equal(row.newlyContributed,EXPECTED_V2_COUNTS['solo-leveling']);
@@ -304,7 +304,7 @@ test('V2-C card-by-card evidence CSV remains complete, disjoint and tracks the r
    if(body==='existing_v2_pilot'){
     assert.equal(scope[1],'pr70_baseline_pilot');pilots.push(id);
    }else if(body.startsWith('v2_batch')){
-    assert.equal(scope[1],(['TTG-1-018','TTG-1-006','TTG-1-077','TTG-1-010','TTG-1-023','TTG-1-053','TTG-1-063','SLG-1-036','SLG-1-037','SLG-1-018','SLG-1-012','SLG-1-001','SLG-1-010','SLG-1-002','SLG-1-007','SLG-1-013','SLG-1-014','SLG-1-008','SLG-1-009','SLG-1-004','SLG-1-042','SLG-1-053','SLG-1-025'].includes(id))?'codex_integrated_contribution':'pr70_integrated_contribution');added.push(id);
+    assert.equal(scope[1],(['TTG-1-007','TTG-1-013','TTG-1-002','TTG-1-015','TTG-1-022','TTG-1-018','TTG-1-006','TTG-1-077','TTG-1-010','TTG-1-023','TTG-1-053','TTG-1-063','SLG-1-036','SLG-1-037','SLG-1-018','SLG-1-012','SLG-1-001','SLG-1-010','SLG-1-002','SLG-1-007','SLG-1-013','SLG-1-014','SLG-1-008','SLG-1-009','SLG-1-004','SLG-1-042','SLG-1-053','SLG-1-025','SLG-1-023','SLG-1-056','SLG-1-069','SLG-1-062','SLG-1-065','SLG-1-027'].includes(id))?'codex_integrated_contribution':'pr70_integrated_contribution');added.push(id);
    }else{
     assert.equal(body,'not_ported');assert.equal(scope[1],'not_implemented_any_branch');
     assert.equal(life,trigger==='none'?'not_applicable':'not_registered');

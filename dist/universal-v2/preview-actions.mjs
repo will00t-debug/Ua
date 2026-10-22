@@ -17,7 +17,9 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-discard-gate':'是否支付棄牌成本',
  'effect-search-deck':'搜尋牌庫', 'effect-search-deck-multi':'依序搜尋牌庫',
  'effect-top-inspect':'查看牌庫頂','effect-top-inspect-many':'任意張卡送場外',
- 'effect-top-filter-choice':'查看牌頂，選擇符合特徵的角色／卡','effect-top-order':'排列牌庫頂或底',
+ 'effect-top-filter-choice':'查看牌頂，選擇符合特徵的角色／卡','effect-top-trait-outside':'查看牌頂，將符合特徵的卡送場外',
+ 'effect-top-order':'排列牌庫頂或底','effect-optional-mill':'可將牌庫頂 1 張送場外',
+ 'effect-pay-ap-deploy':'可支付 1 AP，從場外 REST 登場',
  'effect-bounce-own':'選擇返回手牌的己方角色',
  'effect-buff-own':'選擇己方角色增加本回合 BP',
  'effect-once-choice':'是否發動本回合一次能力',
@@ -27,7 +29,8 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-rest-bp':'選擇敵方 REST','effect-buff-trait':'選擇己方 BP 加成',
  'main-two-buff':'主要能力選擇 BP 對象',
  'main-discard-buff':'支付一張手牌，讓自身 BP 增加',
- 'effect-target':'指定角色','raid-effect-order':'突襲能力結算順序'
+ 'effect-target':'指定角色','raid-effect-order':'突襲能力結算順序',
+ 'retirement-order':'同時退場效果的結算順序'
 });
 export function isExactLegal(action,legal){
  return Array.isArray(legal)&&legal.some(candidate=>
@@ -79,8 +82,14 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'activate':return action.mode==='discardSelfBuff'?
     '起動主要：棄一張手牌，本回合自身 BP＋1500（每回合一次）':
     action.mode==='selfRestEnergyRetire'?
-    '起動主要：REST 自身，產能＋1，主要階段結束退場':
+    (pack?.cards&&state?.players?.some(p=>[...p.front,...p.energy].some(c=>c?.uid===action.uid&&
+      pack.cards[c.cardId]?.mainAbility?.end==='hand'))
+     ?'起動主要：REST 自身，產能＋1，主要階段結束回手'
+     :'起動主要：REST 自身，產能＋1，主要階段結束退場'):
     action.mode==='selfRestThen'?'主要能力：REST 自身，執行效果':
+    action.mode==='selfRestBuff'?'主要能力：REST 自身，指定另一張己方角色本回合 BP 加成':
+    action.mode==='payApDrawEnergy'?'起動主要：支付 1 AP，抽 1 張，本回合產能＋1':
+    action.mode==='restFrontGainEnergy'?'起動主要：REST 自身，再 REST 一張己方前線，本回合產能＋1':
     action.mode==='selfRestEnemy'?'主要能力：REST 自身，指定敵方前線角色':
     action.mode==='ready'?'主要能力：ACTIVE':
     action.mode==='buff'?'主要能力：BP 加成':'主要能力：ACTIVE ＋ BP 加成';
@@ -91,6 +100,7 @@ export function uiActionLabel(action,{pack,state}={}){
    if(action.mode==='draw')return '抽 1 張';
    if(action.mode==='final')return 'FINAL 恢復生命';
    if(action.mode==='raid')return '使用 RAID 觸發 · 前線 '+(action.slot+1);
+   if(action.mode==='colorRestSkip')return 'COLOR：使 '+name()+' REST，下次不能 ACTIVE';
    if(action.mode==='colorOutside')return '從場外登場 '+name()+suffix();
    if(action.mode==='color')return 'COLOR 登場 '+name()+suffix();
    if(action.mode==='active')return '使 '+name()+' ACTIVE';
@@ -105,6 +115,8 @@ export function uiActionLabel(action,{pack,state}={}){
    return action.mode==='leave'?'讓角色退場':'消耗裏向底卡保護角色'+(action.uid?'（'+name()+'）':'');
   case 'chooseTopCard':return action.mode==='top'?'保留在牌庫頂':action.mode==='bottom'?'放回牌庫底':'送至場外';
   case 'chooseRaidOrder':return action.mode==='baseFirst'?'先結算突襲底板效果':'先結算突襲登場效果';
+  case 'chooseRetirementOrder':return '先結算此退場效果';
+  case 'choosePhaseOrder':return '先結算此階段效果';
   case 'chooseApRecovery':return action.uid===null?'完成恢復 AP':'恢復 AP 卡';
   case 'chooseDiscardGate':return action.uid===null?'不支付成本':'棄 '+name()+' 支付成本';
   case 'chooseDiscardCost':return action.uid===null?'不支付成本':'棄 '+name()+' 支付成本';
@@ -118,8 +130,13 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseDeckSearch':case 'chooseDeckSearchMulti':
    return action.uid===null?'結束搜尋':'將 '+name()+' 加入手牌';
   case 'chooseInspectedOutside':return action.uid===null?'完成選擇並排列剩餘牌':'將 '+name()+' 送場外';
+  case 'chooseTopTraitOutside':return action.uid===null?'不送場外，排列剩餘牌':'將符合特徵的 '+name()+' 送場外';
+  case 'chooseOptionalMill':return action.mode==='mill'?'將牌庫頂 1 張送場外':'不送場外';
+  case 'choosePayApDeploy':return action.mode==='pay'?'支付 1 AP，接著選擇場外角色':'不支付 AP';
+  case 'chooseOutsideNameRest':return action.uid===null?'不從場外登場':'REST 登場 '+name()+suffix();
   case 'chooseTopFiltered':return action.uid===null?'不加入手牌，將其餘卡排列至底部':'加入手牌：'+name();
   case 'chooseTopOrder':return '依序放回：'+name();
+  case 'chooseRestFrontEnergy':return 'REST '+name()+'，本回合產能＋1';
   case 'chooseOwnBuff':case 'chooseMainBuff':case 'chooseTraitBuff':case 'chooseRestBp':
   case 'chooseRetireBp':case 'chooseTarget':
    return action.uid===null?'不指定／完成':'指定 '+name();

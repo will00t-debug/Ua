@@ -27,7 +27,28 @@ const additions=[
  {id:'TTG-1-053',name:'シモン',energy:0,ap:1,bp:1500,gen:1,color:'red',type:'character',trigger:'active',
   implementation:'dsl',mainAbility:{op:'restSelfThen',frontOnly:true,then:[{op:'millTop',count:1}]},
   effects:{},match:'主要階段：REST自己，牌庫頂1張送場外。'},
- {id:'TTG-1-077',name:'ダイグレン',energy:4,ap:1,bp:0,gen:2,color:'red',type:'field',trigger:null,implementation:'dsl',templateEffects:{onPlay:[{template:'recoverOutsideOne',filter:{field:'trait',value:'ガンメン'},optional:true}]},match:'ガンメン特徵'}
+ {id:'TTG-1-077',name:'ダイグレン',energy:4,ap:1,bp:0,gen:2,color:'red',type:'field',trigger:null,implementation:'dsl',templateEffects:{onPlay:[{template:'recoverOutsideOne',filter:{field:'trait',value:'ガンメン'},optional:true}]},match:'ガンメン特徵'},
+ {id:'TTG-1-022',name:'ヨマコ先生',energy:1,ap:1,bp:1500,gen:1,color:'green',type:'character',trigger:'draw',
+  implementation:'dsl',effects:{},nameAliases:['ヨーコ'],
+  mainAbility:{op:'restSelfGainEnergyRetireEndMain',lines:'field',oncePerTurn:true,
+   extraEnergy:1,end:'hand'},
+  match:'返回手牌'},
+ {id:'TTG-1-015',name:'ニア',energy:0,ap:1,bp:500,gen:1,color:'green',type:'character',trigger:'draw',
+  implementation:'dsl',effects:{},
+  mainAbility:{op:'payApDrawGainEnergy',oncePerTurn:true,draw:1,extraEnergy:1},
+  match:'主要階段每回合一次，支付1 AP：抽1張；本回合產生能源+1。'},
+ {id:'TTG-1-002',name:'ヴィラル',energy:1,ap:1,bp:1500,gen:1,color:'green',type:'character',trigger:'active',
+  implementation:'dsl',effects:{},
+  mainAbility:{op:'restSelfRestFrontGainEnergy',oncePerTurn:true,extraEnergy:1},
+  match:'產生的綠色能源+1'},
+ {id:'TTG-1-007',name:'ギミー',energy:0,ap:1,bp:1500,gen:1,color:'green',type:'character',trigger:'active',
+  implementation:'dsl',effects:{onPlay:[{op:'payApDeployNamedRest',entry:'hand',name:'ダリー'}]},
+  passiveBonuses:[{condition:{kind:'ownNameExists',turn:'any',zone:'field',excludeSelf:false,name:'ダリー'},bp:1000}],
+  match:'場上有達莉時 BP+1000'},
+ {id:'TTG-1-013',name:'ダリー',energy:0,ap:1,bp:1500,gen:1,color:'green',type:'character',trigger:'draw',
+  implementation:'dsl',effects:{onPlay:[{op:'payApDeployNamedRest',entry:'hand',name:'ギミー'}]},
+  passiveBonuses:[{condition:{kind:'ownNameExists',turn:'any',zone:'field',excludeSelf:false,name:'ギミー'},bp:1000}],
+  match:'場上有吉米時 BP+1000'}
 ];
 export const TTG_V2_ADDITION_IDS=Object.freeze(additions.map(x=>x.id));
 export function verifiedTtgV2Additions(){

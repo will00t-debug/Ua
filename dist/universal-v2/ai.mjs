@@ -36,8 +36,12 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(!UNIVERSAL_AI_LEVELS.includes(difficulty))throw Error('Unknown universal AI difficulty');
  const legal=legalUniversalActions(pack,s);
  if(!legal.length)return null;
+ if(s.pending?.kind==='retirement-order')
+  return legal.find(a=>a.type==='chooseRetirementOrder')||legal[0];
+ if(s.pending?.kind==='effect-discard')
+  return legal.find(a=>a.type==='chooseDiscard')||legal[0];
  if(s.pending?.kind==='life-trigger')
-  return legal.find(a=>['final','raid','special','colorRetire','colorField','color','active','draw','get'].includes(a.mode))||legal[0];
+  return legal.find(a=>['final','raid','special','colorRetire','colorRestSkip','colorField','color','active','draw','get'].includes(a.mode))||legal[0];
  if(s.pending?.kind==='effect-recover-ap')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='recovered-self-entry')return difficulty==='easy'?legal[0]:
   legal.find(a=>a.mode==='enter'&&!a.replaceUid)||legal[0];
@@ -49,6 +53,15 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='private-top-place')return legal[0];
  if(s.pending?.kind==='effect-top-inspect-many')return legal.find(x=>x.uid===null)||legal[0];
  if(s.pending?.kind==='effect-top-filter-choice')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-top-trait-outside')
+  return difficulty==='easy'?legal.find(a=>a.uid===null)||legal[0]:
+   legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-optional-mill')
+  return difficulty==='easy'?legal.find(a=>a.mode==='skip')||legal[0]:
+   legal.find(a=>a.mode==='mill')||legal[0];
+ if(s.pending?.kind==='effect-pay-ap-deploy')
+  return difficulty==='easy'?legal.find(a=>a.mode==='skip')||legal[0]:
+   legal.find(a=>a.mode==='pay')||legal[0];
  if(s.pending?.kind==='effect-top-order')return legal[0];
  if(['effect-discard-cost','effect-discard-gate'].includes(s.pending?.kind)){
   // An optional cost may be declined; tougher bots pay with a lower-value
@@ -92,6 +105,8 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
    (catalog[hand.find(c=>c.uid===b.uid)?.cardId]?.energy||0))[0];
  }
  if(s.pending?.kind==='main-two-buff')return legal[0];
+ if(s.pending?.kind==='main-rest-front-energy')
+  return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-rest-bp'){
   // RESTed characters remain legal targets (official Q91), but choosing one
   // wastes the effect whenever a READY opponent is also available.
@@ -203,6 +218,9 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   legal.find(a=>a.type==='activate'&&a.mode==='ready')||
   (foeReady?legal.find(a=>a.type==='activate'&&a.mode==='selfRestEnemy'):null)||
   legal.find(a=>a.type==='activate'&&a.mode==='selfRestThen')||
+  legal.find(a=>a.type==='activate'&&a.mode==='selfRestBuff')||
+  legal.find(a=>a.type==='activate'&&a.mode==='payApDrawEnergy')||
+  legal.find(a=>a.type==='activate'&&a.mode==='restFrontGainEnergy')||
   legal.find(a=>a.type==='activate'&&a.mode==='selfRestEnergyRetire')||
   (difficulty==='hard'&&s.players[s.active].hand.length>1?
    legal.find(a=>a.type==='activate'&&a.mode==='discardSelfBuff'):null);
