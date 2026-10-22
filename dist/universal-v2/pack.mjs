@@ -460,6 +460,17 @@ function normalize(card,packId){
  if(card.traits!==undefined&&(!Array.isArray(card.traits)||
   card.traits.some(v=>typeof v!=='string'||!v.trim())))
   throw Error(card.id+' invalid printed traits');
+ const traitComponents=card.traitComponents;
+ // Source-verified composite meaning, not guessed from arbitrary slash strings.
+ // Preserve printed traits as written; explicitly typed components count as
+ // separate affinities only where the title adapter pins the official proof.
+ if(traitComponents!==undefined&&(
+  !Array.isArray(traitComponents)||traitComponents.length<2||traitComponents.length>3||
+  traitComponents.some(x=>typeof x!=='string'||!x.trim()||x!==x.trim())||
+  new Set(traitComponents).size!==traitComponents.length||
+  !Array.isArray(card.traits)||card.traits.length!==1||
+  card.traits[0].split(/[／/]/).map(x=>x.trim()).join('／')!==traitComponents.join('／')
+ ))throw Error(card.id+' invalid audited compound traits');
  if(card.trigger==='special'){
   if(!triggerEffect||triggerEffect.op!=='retireOppFront'||Object.keys(triggerEffect).some(k=>k!=='op'))
    throw Error(card.id+' SPECIAL requires explicit supported target profile');
@@ -735,6 +746,7 @@ function normalize(card,packId){
   color:card.color,
   type:card.type,energy:card.energy,ap:card.ap,bp:card.bp,gen:card.gen,
   traits:Object.freeze([...(card.traits||[])]),
+  ...(traitComponents?{traitComponents:Object.freeze([...traitComponents])}:{}),
   trigger:card.trigger||null,raidName:card.raidName||null,
   raidFromRaid:Object.freeze([...(card.raidFromRaid||[])]),
   raidBaseNames:Object.freeze([...(card.raidBaseNames||[card.raidName].filter(Boolean))]),

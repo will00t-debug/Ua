@@ -13,6 +13,13 @@ export function cardHasName(definition,name,silenced=false){
  if(definition?.name===name)return true;
  return silenced!==true&&(definition?.nameAliases||[]).includes(name);
 }
+// Printed slash-composite remains one immutable card-face token. Only an
+// explicitly audited pack-level declaration supplies separately recognized
+// components; no title prose/translated alias is inferred here.
+export function cardHasTrait(definition,trait){
+ return (definition?.traits||[]).includes(trait)||
+  (definition?.traitComponents||[]).includes(trait);
+}
 export const V2_TRAIT_ZONES=Object.freeze(['field','front','energy']);
 export const V2_TRAIT_SUBJECTS=Object.freeze(['character','card']);
 export function ownFieldTraitKinds(s,owner,sourceUid,profile,printed){
@@ -26,7 +33,7 @@ export function ownFieldTraitKinds(s,owner,sourceUid,profile,printed){
   if(profile.subject==='character'&&definition.type!=='character')continue;
   // [] means traitless; a source-verified multi-trait card has separate tokens.
   // An unverified composite string remains ONE exact token, not guessed parts.
-  for(const trait of definition.traits||[]){
+  for(const trait of definition.traitComponents||definition.traits||[]){
    if(typeof trait==='string'&&trait.trim())distinct.add(trait);
   }
  }
@@ -97,7 +104,7 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
    remaining.delete(d.name);
    if(!silenced)for(const alias of d.nameAliases||[])remaining.delete(alias);
   }
-  if(condition.kind==='ownTraitCount'&&d.traits.includes(condition.trait))found++;
+  if(condition.kind==='ownTraitCount'&&cardHasTrait(d,condition.trait))found++;
  }
  if(remaining)return remaining.size===0;
  if(condition.kind==='ownNameAbsent')return true;
@@ -130,7 +137,7 @@ export function ownRestPrintedBpCount(s,owner,sourceUid,condition,printed){
   if(!c||c.ready||(condition.excludeSelf&&c.uid===sourceUid))continue;
   const d=printed(c);
   if(d.type!=='character'||!Number.isInteger(d.bp)||d.bp>condition.maxPrintedBp)continue;
-  if((d.traits||[]).includes(condition.trait))found++;
+  if(cardHasTrait(d,condition.trait))found++;
  }
  return found;
 }

@@ -541,6 +541,7 @@ const authored=[
   "implementation":"dsl","effects":{},
   "passiveBonuses":[{"condition":{"kind":"ownHandCountAtLeast","turn":"own","min":5},"bp":1500}],
   "officialTraits":["DFN／第四次架南島レイド"],
+  "traitComponents":["DFN","第四次架南島レイド"],
   "catalogueTraits":["DFN","第四次架南島Raid"]
 },
 {
@@ -559,6 +560,7 @@ const authored=[
   "implementation":"dsl","effects":{},
   "passiveBonuses":[{"condition":{"kind":"ownHandCountAtLeast","turn":"own","min":5},"bp":1000,"impact":1}],
   "officialTraits":["DFN／第四次架南島レイド"],
+  "traitComponents":["DFN","第四次架南島レイド"],
   "catalogueTraits":["DFN","第四次架南島Raid"]
 },
 {
