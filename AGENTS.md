@@ -27,3 +27,8 @@ Some complex multi-Yoruichi interactions, facedown cards/view permissions, UA01D
 
 ## Local preview
 `python3 -m http.server 8000 --directory dist`, then visit http://localhost:8000.
+
+## Cursor Cloud specific instructions
+- There are no npm dependencies and no lockfile. Do not run `npm ci`. `npm test` is `node --test tests/*.test.mjs` and needs Node.js 22, which is already on the image.
+- There is no compile or lint step. CI also syntax-checks `dist/app.mjs` and `dist/ai-v2.mjs` with `node --check`.
+- Cloud Agent startup serves `dist/` on port 8000. If that port is already listening, reuse http://localhost:8000 instead of starting another server.
