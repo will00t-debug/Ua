@@ -296,7 +296,14 @@ function continueEffectQueue(pack,s){
      sourceName:job.sourceName,options:available,optional:job.optional};
    else throw Error('No legally selectable mandatory printed mode');
   }
-  else if(job.op==='draw')draw(s,owner,job.count);
+  else if(job.op==='draw'){
+   // A printed 「自分の効果で登場」gate uses the entry cause already stamped
+   // on this on-play job. Paid play, paid Raid, and life triggers do not draw.
+   // An absent gate keeps every existing draw unchanged.
+   const gated=job.entry==='ownEffect';
+   if(job.entry!==undefined&&!gated)throw Error('Invalid draw entry gate');
+   if(!gated||OWN_EFFECT_ENTRY.has(job.entryCause))draw(s,owner,job.count);
+  }
   else if(job.op==='drawIfOwnEnergyAtLeast'){
    // Printed generated-energy threshold is checked at resolution, after the
    // source actually enters the field, including own explicit FRONT producers.

@@ -542,6 +542,15 @@ const authored=[
   "passiveBonuses":[{"condition":{"kind":"ownHandCountAtLeast","turn":"own","min":5},"bp":1500}],
   "officialTraits":["DFN／第四次架南島レイド"],
   "catalogueTraits":["DFN","第四次架南島Raid"]
+},
+{
+  "id":"SLG-1-062","name":"最上 真","color":"green","energy":0,
+  "ap":1,"bp":1500,"gen":1,"trigger":"draw","type":"character",
+  "textAnchor":"己方回合中若場上有5張以上第四次架南島Raid卡，BP+1500。",
+  "implementation":"dsl","effects":{},
+  "passiveBonuses":[{"condition":{"kind":"ownTraitCount","turn":"own","min":5,"zone":"field","excludeSelf":false,"trait":"第四次架南島レイド"},"bp":1500}],
+  "officialTraits":["第四次架南島レイド"],
+  "catalogueTraits":["第四次架南島Raid"]
 }
 ];
 export const SLG_V2_VERIFIED_IDS=Object.freeze(authored.map(c=>c.id));

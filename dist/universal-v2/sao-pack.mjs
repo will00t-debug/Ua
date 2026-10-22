@@ -1148,6 +1148,32 @@ const PRINTED_PINS=Object.freeze({
     "trigger": null,
     "traits": ["プログレッシブ"],
     "effectJa": "【起動メイン】【レストにする】 【ターン1】このキャラはこのターン中、発生エナジー+【紫】と「メインフェイズ終了時、このキャラを退場させる。」を得る。"
+  },
+  "SAO-2-006": {
+    "kind": "ownTraitEnergy",
+    "nameJa": "ベルクーリ・シンセシス・ワン",
+    "color": "yellow",
+    "energy": 2,
+    "ap": 1,
+    "bp": 2500,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "traits": ["整合騎士"],
+    "effectJa": "自分の場に他の［特徴：整合騎士］が3枚以上ある場合、このキャラの発生エナジー+【黄】。"
+  },
+  "SAO-2-008": {
+    "kind": "ownTurnTraitBp",
+    "nameJa": "レンリ・シンセシス・トゥエニセブン",
+    "color": "yellow",
+    "energy": 0,
+    "ap": 1,
+    "bp": 1500,
+    "gen": 1,
+    "type": "character",
+    "trigger": "active",
+    "traits": ["整合騎士"],
+    "effectJa": "【自分のターン中】自分の場に他の［特徴：整合騎士］が4枚以上ある場合、このキャラはBP+1500。"
   }
 });
 export const SAO_V2_PILOT_IDS=Object.freeze(Object.keys(PRINTED_PINS).sort());
@@ -1225,6 +1251,20 @@ export function verifiedSaoV2Cards(){
    card.effects={};
    card.mainAbility={op:'restSelfGainEnergyRetireEndMain',lines:'field',
     oncePerTurn:true,extraEnergy:1};
+  }
+  // SAO-2-006 header is 黄+ : one yellow pip plus the printed conditional
+  // sentence, so resting generation is 1. There is no 「アクティブの場合」.
+  // The extra pip exists only while three other 整合騎士 are on the own field,
+  // and only the energy line actually produces it.
+  if(pin.kind==='ownTraitEnergy'){
+   card.effects={};
+   card.passiveBonuses=[{condition:{kind:'ownTraitCount',turn:'any',min:3,
+    zone:'field',excludeSelf:true,trait:'整合騎士'},extraEnergy:1}];
+  }
+  if(pin.kind==='ownTurnTraitBp'){
+   card.effects={};
+   card.passiveBonuses=[{condition:{kind:'ownTraitCount',turn:'own',min:4,
+    zone:'field',excludeSelf:true,trait:'整合騎士'},bp:1500}];
   }
   if(pin.kind==='nameAliasDrawDiscard'||pin.kind==='nameAliasOnly'||pin.kind==='nameAliasStep'){
    card.nameAliases={
@@ -1351,6 +1391,7 @@ export function verifiedSaoV2Entries(){
      ...(pin.kind==='nameAliasActiveIfTrait'?['tests/v2-conditional-entry-active-round15.test.mjs']:[]),
      ...(pin.kind==='nameAliasStepBothNamesColorRest'?['tests/v2-sao-012-color-rest.test.mjs']:[]),
      ...(pin.kind==='fieldRestEnergyRetireEndMain'?['tests/v2-field-energy-retire-round15.test.mjs']:[]),
+     ...(pin.kind==='ownTraitEnergy'||pin.kind==='ownTurnTraitBp'?['tests/v2-zero-engine-round15.test.mjs']:[]),
      ...(pin.kind==='nameAliasOnly'||pin.kind==='nameAliasStep'?['tests/v2-zero-engine-round14.test.mjs']:[]),
      'tests/universal-v2-sao-mst-cross-title.test.mjs'
     ]),

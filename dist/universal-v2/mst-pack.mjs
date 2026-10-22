@@ -82,6 +82,32 @@ const PRINTED_PINS=Object.freeze({
     "trigger": null,
     "effectJa": "〖登場時〗 このキャラが自分の効果で登場していた場合、このキャラをアクティブにする。"
   },
+  "MST-1-023": {
+    "kind": "drawIfOwnEffectEntry",
+    "nameJa": "ルーデウス",
+    "color": "blue",
+    "energy": 2,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 1,
+    "type": "character",
+    "traits": [],
+    "trigger": null,
+    "effectJa": "〖登場時〗 このキャラが自分の効果で登場していた場合、カードを1枚引く。"
+  },
+  "MST-1-066": {
+    "kind": "nameAliasOwnEnergyBp",
+    "nameJa": "フィッツ",
+    "color": "green",
+    "energy": 3,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 2,
+    "type": "character",
+    "traits": ["ラノア魔法大学"],
+    "trigger": "draw",
+    "effectJa": "このカードは〈シルフィエット〉としても扱う。\n 〖自分のターン中〗 自分の発生エナジーが7以上ある場合、このキャラはBP+1000。"
+  },
   "MST-1-003": {
     "kind": "ownFieldAllNamesBp",
     "nameJa": "エリス",
@@ -582,6 +608,13 @@ export function verifiedMstV2Cards(){
    card.effects={onRetire:[{op:'draw',count:1}]};
   if(pin.kind==='activeIfOwnEffectEntry')
    card.effects={onPlay:[{op:'activeSelfIf',entry:'ownEffect'}]};
+  if(pin.kind==='drawIfOwnEffectEntry')
+   card.effects={onPlay:[{op:'draw',count:1,entry:'ownEffect'}]};
+  if(pin.kind==='nameAliasOwnEnergyBp'){
+   card.nameAliases=['シルフィエット'];
+   card.effects={};
+   card.passiveBonuses=[{condition:{kind:'ownEnergyAtLeast',turn:'own',min:7},bp:1000}];
+  }
   if(pin.kind==='ownFieldAllNamesBp')
    card.passiveBonuses=[{condition:{kind:'ownFieldHasAllNames',turn:'any',
     zone:'field',excludeSelf:false,names:['ルーデウス','ルイジェルド']},bp:1000}];
@@ -650,6 +683,8 @@ export function verifiedMstV2Entries(){
      'tests/universal-v2-sao-mst-cross-title.test.mjs',
      ...(pin.kind==='ownFieldAllNamesBp'?['tests/v2-mst-003-own-names.test.mjs']:[]),
      ...(pin.kind==='activeIfOwnEffectEntry'?['tests/v2-conditional-entry-active-round15.test.mjs']:[]),
+     ...(pin.kind==='drawIfOwnEffectEntry'?['tests/v2-mst-023-own-effect-draw.test.mjs']:[]),
+     ...(pin.kind==='nameAliasOwnEnergyBp'?['tests/v2-zero-engine-round15.test.mjs']:[]),
       ...(pin.kind==='onRetireDrawOne'?['tests/v2-mst-013-on-retire.test.mjs']:[]),
       ...(pin.kind==='onRetireDrawIfOwnField'?['tests/v2-mst-052-official-retire.test.mjs']:[]),
        ...(pin.kind==='colorSiteMainRetireDraw'?['tests/v2-mst-053-official-full.test.mjs']:[]),

@@ -143,7 +143,7 @@ export const SAO_OFFICIAL_CARDS=[
   "ap": 1,
   "bp": 2500,
   "bpPrinted": "2500",
-  "gen": 2,
+  "gen": 1,
   "traits": [
    "整合騎士"
   ],

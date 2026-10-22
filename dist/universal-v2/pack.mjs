@@ -50,7 +50,13 @@ function verifyProgram(program,path){
  for(const [i,e] of program.entries()){
   if(!e||typeof e!=='object'||Array.isArray(e)||!V2_EFFECT_OPS.includes(e.op))
    throw Error(path+'['+i+'] effect op unsupported');
-  if(e.op==='draw'||e.op==='millTop'||e.op==='drawDiscard'){
+  if(e.op==='draw'){
+   if(!integer(e.count,1)||e.count>10)throw Error(path+'['+i+'] invalid count');
+   if((e.entry!==undefined&&e.entry!=='ownEffect')||
+    Object.keys(e).some(k=>!['op','count','entry'].includes(k)))
+    throw Error(path+'['+i+'] invalid own-effect draw gate');
+  }
+  if(e.op==='millTop'||e.op==='drawDiscard'){
    if(!integer(e.count,1)||e.count>10)throw Error(path+'['+i+'] invalid count');
   }
   if(e.op==='drawIfOwnEnergyAtLeast'&&(
@@ -583,6 +589,9 @@ function normalize(card,packId){
   if(program.some(e=>e.op==='activeSelfIf')&&
    (card.type!=='character'||name!=='onPlay'))
    throw Error(card.id+' conditional ACTIVE is only a character onPlay effect');
+  if(program.some(e=>e.op==='draw'&&e.entry!==undefined)&&
+   (card.type!=='character'||name!=='onPlay'))
+   throw Error(card.id+' own-effect draw gate is only a character onPlay effect');
   if(name==='onRetire'&&
    (!['character','field'].includes(card.type)||program.some(e=>!['draw','millTop','drawIfOwnFieldExists','chooseOne','deployOutsideTraitlessRestOrRaid','retireOppFrontOneUnderBp','restOppFrontUnderBp'].includes(e.op))))
    throw Error(card.id+' unsupported onRetire ability program');
