@@ -4,6 +4,11 @@ import {MST_V2_OFFICIAL_CATALOGUE} from './sources/mst-inventory.mjs';
 import {createUniversalPack} from './pack.mjs';
 
 const PRINTED_PINS=Object.freeze({
+ "MST-1-052":{
+  kind:"onRetireDrawIfOwnField",nameJa:"ロキシー",color:"green",
+  energy:0,ap:1,bp:2000,gen:1,type:"character",traits:[],trigger:null,
+  effectJa:"〖退場時〗 自分の場にフィールドがある場合、カードを1枚引く。"
+ },
  "MST-1-042":{
   kind:"retiredFieldReady",nameJa:"エリナリーゼ",color:"green",energy:4,ap:1,
   bp:4000,gen:1,type:"character",traits:[],trigger:"active",
@@ -508,6 +513,8 @@ export function verifiedMstV2Cards(){
   if(pin.kind==='ownTurnRoxyFieldBp')
    card.passiveBonuses=[{condition:{kind:'ownNameExists',turn:'own',
     zone:'field',excludeSelf:true,name:'ロキシー'},bp:1000}];
+  if(pin.kind==='onRetireDrawIfOwnField')
+   card.effects={onRetire:[{op:'drawIfOwnFieldExists',count:1}]};
   if(pin.kind==='onRetireDrawOne')
    card.effects={onRetire:[{op:'draw',count:1}]};
   if(pin.kind==='ownFieldAllNamesBp')
@@ -575,6 +582,7 @@ export function verifiedMstV2Entries(){
      'tests/universal-v2-sao-mst-cross-title.test.mjs',
      ...(pin.kind==='ownFieldAllNamesBp'?['tests/v2-mst-003-own-names.test.mjs']:[]),
       ...(pin.kind==='onRetireDrawOne'?['tests/v2-mst-013-on-retire.test.mjs']:[]),
+      ...(pin.kind==='onRetireDrawIfOwnField'?['tests/v2-mst-052-official-retire.test.mjs']:[]),
      ...(pin.kind==='onPlayDrawIfOwnEnergyAtLeast'?['tests/v2-mst-063-energy-draw.test.mjs']:[]),
      ...(pin.kind==='onPlayTop3OwnTraitBottomDiscard'?['tests/v2-mst-055-cross-title-top.test.mjs']:[]),
      ...(pin.kind==='frontGeneratesEnergy'?['tests/v2-mst-057-front-energy.test.mjs']:[]),
