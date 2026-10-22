@@ -110,7 +110,7 @@ test('BLC-1-009 impact is one life on a battle win, one when unblocked, and zero
  assert.equal(assertUniversalMatch(packs,nulled),true);
 });
 
-test('BLC-1-074 direct attack deals two sequential lives and a block deals none',()=>{
+test('BLC-1-074 direct attack simultaneously checks two LIFE; block deals none',()=>{
  let s=newUniversalMatch(packs,{decks:[decks['BLC-1-074'],decks['BLC-1-074']],seed:1074,first:0});
  const attacker=take(s,0,'BLC-1-074');
  s.players[0].energy[0]=attacker;
@@ -123,12 +123,19 @@ test('BLC-1-074 direct attack deals two sequential lives and a block deals none'
  const lives=s.players[1].life.length;
  s=dispatchUniversalAction(packs,s,{type:'attack',uid:attacker.uid});
  s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:null},{actor:1});
- assert.equal(s.pending?.uid,first.uid);
- assert.equal(s.players[1].life[0].uid,second.uid);
- s=dispatchUniversalAction(packs,s,legalUniversalActions(packs,s).find(a=>a.mode==='draw'||a.mode==='get'||a.mode==='skip'),{actor:1});
- assert.equal(s.pending?.uid,second.uid);
+ assert.equal(s.pending?.kind,'life-batch-order');
+ assert.deepEqual(s.publicReveals.map(e=>e.uid),[first.uid,second.uid]);
+ assert.deepEqual(s.players[1].lifeRevealed.map(c=>c.uid),[first.uid,second.uid]);
  assert.equal(s.players[1].life.length,lives-2);
- s=dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'skip'},{actor:1});
+ s=dispatchUniversalAction(packs,s,{type:'chooseLifeOrder',uid:first.uid},{actor:1});
+ if(s.pending?.kind==='life-trigger'){
+  const action=legalUniversalActions(packs,s).find(a=>a.mode==='draw'||a.mode==='get'||a.mode==='skip');
+  s=dispatchUniversalAction(packs,s,action,{actor:1});
+ }
+ if(s.pending?.kind==='life-trigger')
+  s=dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'skip'},{actor:1});
+ assert.equal(s.pending,null);
+ assert.equal(s.players[1].lifeRevealed.length,0);
  assert.equal(s.publicReveals.length,2);
  let blocked=newUniversalMatch(packs,{decks:[decks['BLC-1-074'],decks['BLC-1-074']],seed:1075,first:0});
  const hitter=take(blocked,0,'BLC-1-074');hitter.ready=true;blocked.players[0].front[0]=hitter;
