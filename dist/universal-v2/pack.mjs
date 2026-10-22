@@ -7,7 +7,7 @@ export const V2_PHASES=Object.freeze(['start','move','main','attack']);
 export const V2_CARD_TYPES=Object.freeze(['character','event','field']);
 export const V2_TRIGGERS=Object.freeze(['draw','get','final','active','special','color','raid']);
 export const V2_EFFECT_TIMINGS=Object.freeze(['onPlay','onRaid','onAttack','onRaided','onRetire','onOutsideRecover']);
-export const V2_EFFECT_OPS=Object.freeze(['draw','drawIfOwnName','drawIfOwnTraitCount','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','retireOwnFieldOne','retireOwnCharacterOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw','searchDeckMany','discardGate','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
+export const V2_EFFECT_OPS=Object.freeze(['draw','drawIfOwnName','drawIfOwnTraitCount','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','skipNextActiveOppRest','forbidAttackOppFrontOne','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','retireOwnFieldOne','retireOwnCharacterOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw','searchDeckMany','discardGate','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
  'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideColorUnderEnergy','recoverOutsideTraitlessUnderEnergy','deployOutsideTraitlessRestOrRaid','deployOutsideRest','deployOutsideNameRest','payApDeployNamedRest','inspectTopTraitOutside','buffOwnField','oncePerTurnGate','chooseOne','discardOppHand','activeSelfIf','grantOnAttack']);
 const integer=(v,low=0)=>Number.isInteger(v)&&v>=low;
 const own=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
@@ -349,6 +349,11 @@ function verifyProgram(program,path){
    if(e.op==='skipNextActiveOppRest'&&(
    typeof e.optional!=='boolean'||Object.keys(e).some(k=>!['op','optional'].includes(k))
   ))throw Error(path+'['+i+'] invalid existing-REST ACTIVE skip');
+  if(e.op==='forbidAttackOppFrontOne'&&(
+   e.optional!==true||e.ownTurnOnly!==true||e.until!=='nextOwnTurnStart'||
+   Object.keys(e).length!==4||Object.keys(e).some(k=>
+    !['op','optional','ownTurnOnly','until'].includes(k))
+  ))throw Error(path+'['+i+'] invalid temporary attack prohibition');
   if(e.op==='restOppFrontOne'&&(
    typeof e.optional!=='boolean'||
    (e.skipNextActive!==undefined&&e.skipNextActive!==true)||
@@ -738,6 +743,8 @@ function normalize(card,packId){
   verifyProgram(program,card.id+'.'+name);
   if(name==='onRaid'&&!card.raidName)throw Error(card.id+' has Raid-only effects but no Raid target');
   if(name==='onRaided'&&card.type!=='character')throw Error(card.id+' Raid-base trigger must be a character');
+  if(name!=='onPlay'&&program.some(e=>e.op==='forbidAttackOppFrontOne'))
+   throw Error(card.id+' attack prohibition may be granted only onPlay');
   if(name!=='onRaided'&&program.some(e=>['buffOwnTrait','drawIfRaidUnderFacedown'].includes(e.op)))
    throw Error(card.id+' Raid-base effects require onRaided timing');
   if(name==='onRaided'&&program.some(e=>!['buffOwnTrait','drawIfRaidUnderFacedown'].includes(e.op)))
