@@ -121,6 +121,19 @@ const PRINTED_PINS=Object.freeze({
     "trigger": null,
     "effectJa": "〖登場時〗 このキャラが自分の効果で登場していた場合、カードを1枚引く。"
   },
+  "MST-1-065": {
+    "kind": "nameAliasTopTraitOutside",
+    "nameJa": "フィッツ",
+    "color": "green",
+    "energy": 0,
+    "ap": 1,
+    "bp": 1500,
+    "gen": 1,
+    "type": "character",
+    "traits": ["ラノア魔法大学"],
+    "trigger": "active",
+    "effectJa": "このカードは〈シルフィエット〉としても扱う。\n 〖登場時〗 自分の山札の上から2枚見て、［特徴：ラノア魔法大学］を1枚まで場外に置く。残りを望む順で山札の上に置く。"
+  },
   "MST-1-066": {
     "kind": "nameAliasOwnEnergyBp",
     "nameJa": "フィッツ",
@@ -644,6 +657,11 @@ export function verifiedMstV2Cards(){
   }
   if(pin.kind==='drawIfOwnEffectEntry')
    card.effects={onPlay:[{op:'draw',count:1,entry:'ownEffect'}]};
+  if(pin.kind==='nameAliasTopTraitOutside'){
+   card.nameAliases=['シルフィエット'];
+   card.effects={onPlay:[{op:'inspectTopTraitOutside',count:2,
+    trait:'ラノア魔法大学',rest:'top'}]};
+  }
   if(pin.kind==='nameAliasOwnEnergyBp'){
    card.nameAliases=['シルフィエット'];
    card.effects={};
@@ -721,6 +739,7 @@ export function verifiedMstV2Entries(){
      ...(pin.kind==='restSelfBuffOther'?['tests/v2-rest-buff-other-round16.test.mjs']:[]),
      ...(pin.kind==='restSelfRestFrontGainEnergy'?['tests/v2-mst-056-rest-front-energy.test.mjs']:[]),
      ...(pin.kind==='nameAliasOwnEnergyBp'?['tests/v2-zero-engine-round15.test.mjs']:[]),
+     ...(pin.kind==='nameAliasTopTraitOutside'?['tests/v2-mst-065-top-trait-outside.test.mjs']:[]),
       ...(pin.kind==='onRetireDrawOne'?['tests/v2-mst-013-on-retire.test.mjs']:[]),
       ...(pin.kind==='onRetireDrawIfOwnField'?['tests/v2-mst-052-official-retire.test.mjs']:[]),
        ...(pin.kind==='colorSiteMainRetireDraw'?['tests/v2-mst-053-official-full.test.mjs']:[]),
