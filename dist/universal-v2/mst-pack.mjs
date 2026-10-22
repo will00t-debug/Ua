@@ -82,6 +82,19 @@ const PRINTED_PINS=Object.freeze({
     "trigger": null,
     "effectJa": "〖登場時〗 このキャラが自分の効果で登場していた場合、このキャラをアクティブにする。"
   },
+  "MST-1-041": {
+    "kind": "restSelfBuffOther",
+    "nameJa": "アイシャ",
+    "color": "green",
+    "energy": 2,
+    "ap": 1,
+    "bp": 2000,
+    "gen": 1,
+    "type": "character",
+    "traits": [],
+    "trigger": "draw",
+    "effectJa": "〖起動メイン〗 〖レストにする〗 自分の場の他のキャラを1枚選び、このターン中、BP+1000。"
+  },
   "MST-1-023": {
     "kind": "drawIfOwnEffectEntry",
     "nameJa": "ルーデウス",
@@ -608,6 +621,10 @@ export function verifiedMstV2Cards(){
    card.effects={onRetire:[{op:'draw',count:1}]};
   if(pin.kind==='activeIfOwnEffectEntry')
    card.effects={onPlay:[{op:'activeSelfIf',entry:'ownEffect'}]};
+  if(pin.kind==='restSelfBuffOther'){
+   card.effects={};
+   card.mainAbility={op:'restSelfBuffOther',bp:1000};
+  }
   if(pin.kind==='drawIfOwnEffectEntry')
    card.effects={onPlay:[{op:'draw',count:1,entry:'ownEffect'}]};
   if(pin.kind==='nameAliasOwnEnergyBp'){
@@ -684,6 +701,7 @@ export function verifiedMstV2Entries(){
      ...(pin.kind==='ownFieldAllNamesBp'?['tests/v2-mst-003-own-names.test.mjs']:[]),
      ...(pin.kind==='activeIfOwnEffectEntry'?['tests/v2-conditional-entry-active-round15.test.mjs']:[]),
      ...(pin.kind==='drawIfOwnEffectEntry'?['tests/v2-mst-023-own-effect-draw.test.mjs']:[]),
+     ...(pin.kind==='restSelfBuffOther'?['tests/v2-rest-buff-other-round16.test.mjs']:[]),
      ...(pin.kind==='nameAliasOwnEnergyBp'?['tests/v2-zero-engine-round15.test.mjs']:[]),
       ...(pin.kind==='onRetireDrawOne'?['tests/v2-mst-013-on-retire.test.mjs']:[]),
       ...(pin.kind==='onRetireDrawIfOwnField'?['tests/v2-mst-052-official-retire.test.mjs']:[]),

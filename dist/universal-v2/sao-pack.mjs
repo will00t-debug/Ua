@@ -1162,6 +1162,19 @@ const PRINTED_PINS=Object.freeze({
     "traits": ["整合騎士"],
     "effectJa": "自分の場に他の［特徴：整合騎士］が3枚以上ある場合、このキャラの発生エナジー+【黄】。"
   },
+  "SAO-1-007": {
+    "kind": "restSelfBuffOther",
+    "nameJa": "シリカ",
+    "color": "yellow",
+    "energy": 2,
+    "ap": 1,
+    "bp": 2500,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "traits": ["ALO"],
+    "effectJa": "【起動メイン】【レストにする】自分の場の他のキャラを1枚選び、このターン中、BP+1000。"
+  },
   "SAO-2-005": {
     "kind": "ownTraitImpact",
     "nameJa": "シェータ・シンセシス・トゥエルブ",
@@ -1285,6 +1298,11 @@ export function verifiedSaoV2Cards(){
    card.effects={};
    card.passiveBonuses=[{condition:{kind:'ownTraitCount',turn:'any',min:4,
     zone:'field',excludeSelf:true,trait:'整合騎士'},impact:1}];
+  }
+  // No ターン1. REST this card, then one other own character on either line.
+  if(pin.kind==='restSelfBuffOther'){
+   card.effects={};
+   card.mainAbility={op:'restSelfBuffOther',bp:1000};
   }
   if(pin.kind==='nameAliasDrawDiscard'||pin.kind==='nameAliasOnly'||pin.kind==='nameAliasStep'){
    card.nameAliases={
@@ -1413,6 +1431,7 @@ export function verifiedSaoV2Entries(){
      ...(pin.kind==='fieldRestEnergyRetireEndMain'?['tests/v2-field-energy-retire-round15.test.mjs']:[]),
      ...(pin.kind==='ownTraitEnergy'||pin.kind==='ownTurnTraitBp'?['tests/v2-zero-engine-round15.test.mjs']:[]),
      ...(pin.kind==='ownTraitImpact'?['tests/v2-conditional-impact-round16.test.mjs']:[]),
+     ...(pin.kind==='restSelfBuffOther'?['tests/v2-rest-buff-other-round16.test.mjs']:[]),
      ...(pin.kind==='nameAliasOnly'||pin.kind==='nameAliasStep'?['tests/v2-zero-engine-round14.test.mjs']:[]),
      'tests/universal-v2-sao-mst-cross-title.test.mjs'
     ]),

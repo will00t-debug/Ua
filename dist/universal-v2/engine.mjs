@@ -1764,6 +1764,9 @@ export function legalUniversalActions(pack,s){
     (ability.energyOnly===true||ability.lines==='energy'||ability.lines==='field')&&
     c.ready&&!s.mainAbilityUsedUids.includes(c.uid))
     out.push({type:'activate',uid:c.uid,mode:'selfRestEnergyRetire'});
+   if(ability?.op==='restSelfBuffOther'&&c.ready&&
+    field(pl).some(x=>x.uid!==c.uid&&card(pack,x).type==='character'))
+    out.push({type:'activate',uid:c.uid,mode:'selfRestBuff'});
   }
   for(const c of pl.front.filter(Boolean)){
    const d=card(pack,c),ability=originalEffectsDisabled(s,c)?null:d.mainAbility;
@@ -1782,6 +1785,13 @@ export function legalUniversalActions(pack,s){
    if(ability.op==='restSelfThen'){
     // A READY own FRONT source pays its actual REST cost before any effect.
     if(c.ready)out.push({type:'activate',uid:c.uid,mode:'selfRestThen'});
+    continue;
+   }
+   if(ability.op==='restSelfBuffOther'){
+    // 【レストにする】 rests this card. The choice is another own character
+    // on either line. No ターン1 is printed, so a later ACTIVE can pay again.
+    if(c.ready&&field(pl).some(x=>x.uid!==c.uid&&card(pack,x).type==='character'))
+     out.push({type:'activate',uid:c.uid,mode:'selfRestBuff'});
     continue;
    }
    if(ability.op==='restSelfThenRestOppFrontOne'){
@@ -1963,6 +1973,16 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
      fieldEntryStamp:selected.fieldEntryStamp,turn:s.turn};
     if(ability.end==='hand')s.delayedEffects.push({...delayed,op:'moveAtMainEnd',destination:'hand'});
     else s.delayedEffects.push({...delayed,op:'retireAtMainEnd'});
+    break;
+   }
+   if(ability.op==='restSelfBuffOther'){
+    const choices=field(pl).filter(c=>c.uid!==selected.uid&&card(pack,c).type==='character')
+     .map(c=>c.uid);
+    if(action.mode!=='selfRestBuff'||!selected.ready||!choices.length)
+     throw Error('REST buff requires a READY source and another own character');
+    selected.ready=false;
+    s.pending={kind:'effect-buff-own',player:p,sourceUid:selected.uid,choices,
+     filter:{field:'type',value:'character'},bp:ability.bp,optional:false,excludeSelf:true};
     break;
    }
    if(ability.op==='restSelfThen'){
