@@ -18,7 +18,16 @@ export const MST_V2_REAL_DECK_COUNTS=Object.freeze({
  'MST-1-015':4,'MST-1-029':4,'MST-1-019':4,
  'MST-1-050':4,'MST-1-070':2
 });
-function auditedDeck(title,counts,prefix){
+// Formal 50-card Roxy + Labyrinth City FIELD deck used in full V2 previews.
+ // Every included ID is source-pinned in the MST V2 registry. MST-051 x1
+ // reflects its effective 2026-10-01 Japanese official copy restriction.
+ export const MST_V2_ROXY_FIELD_REAL_DECK_COUNTS=Object.freeze({
+  'MST-1-050':4,'MST-1-051':1,'MST-1-054':4,'MST-1-075':4,
+  'MST-1-055':4,'MST-1-057':4,'MST-1-061':4,'MST-1-063':4,
+  'MST-1-070':4,'MST-1-069':4,'MST-1-047':4,'MST-1-010':4,
+  'MST-1-077':4,'MST-1-072':1
+ });
+ function auditedDeck(title,counts,prefix){
  const pack=requireRegisteredV2TitlePack(title);
  const cardIds=Object.keys(counts);
  if(!cardIds.length||cardIds.some(id=>!id.startsWith(prefix)||
@@ -35,6 +44,9 @@ function auditedDeck(title,counts,prefix){
 }
 export function verifiedSaoV2RealDeck(){
  return auditedDeck('sword-art-online',SAO_V2_REAL_DECK_COUNTS,'SAO-');
+}
+export function verifiedMstV2RoxyFieldDeck(){
+ return auditedDeck('mushoku-tensei',MST_V2_ROXY_FIELD_REAL_DECK_COUNTS,'MST-');
 }
 export function verifiedMstV2RealDeck(){
  return auditedDeck('mushoku-tensei',MST_V2_REAL_DECK_COUNTS,'MST-');

@@ -1,3 +1,4 @@
+import {EXPECTED_V2_COUNTS} from './fixtures/v2-integrated-id-manifest.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {SAO_OFFICIAL_CARDS} from '../dist/sao-official-import.mjs';
@@ -41,10 +42,10 @@ test('SAO official dedup identity and product scopes stay unchanged, AP/parallel
  assert.equal(new Set(SAO_OFFICIAL_CARDS.map(c=>c.id)).size,183);
  for(const [set,count] of Object.entries({UA15BT:100,EX08BT:74,UA15ST:18,UAPR:10}))
   assert.equal(SAO_OFFICIAL_CARDS.filter(c=>c.set===set).length,count);
- assert.equal(SAO_V2_PILOT_IDS.length,39);
- assert.equal(Object.keys(pack.cards).length,39);
+ assert.equal(SAO_V2_PILOT_IDS.length,EXPECTED_V2_COUNTS['sword-art-online']);
+ assert.equal(Object.keys(pack.cards).length,EXPECTED_V2_COUNTS['sword-art-online']);
  assert.ok(!pack.cards['SAO-2-063'],'conditional STEP + onPlay is NOT a basic vanilla');
- assert.ok(!pack.cards['SAO-1-107'],'draw 3 then discard 1 is NOT drawDiscardOne');
+ assert.deepEqual(pack.cards['SAO-1-107'].effects.onPlay,[{op:'draw',count:2},{op:'drawDiscard',count:1}]);
  for(const id of SAO_V2_PILOT_IDS){
   const source=SAO_OFFICIAL_CARDS.find(c=>c.id===id);
   assert.ok(source&&source.source.includes('unionarena-tcg.com'));
@@ -52,7 +53,7 @@ test('SAO official dedup identity and product scopes stay unchanged, AP/parallel
   for(const field of ['color','energy','ap','bp','gen','type','trigger'])
    assert.equal(data[field],source[field],id+' mismatch '+field);
  }
- assert.equal(verifiedSaoV2Cards().length,39);
+ assert.equal(verifiedSaoV2Cards().length,EXPECTED_V2_COUNTS['sword-art-online']);
  assert.match(validateUniversalDeck(pack,{...deck,'SAO-2-063':1}).join(),/Unregistered/);
 });
 test('SAO 50 physical-card deck, actual AP spending and entry draw/discard are V2 transitions',()=>{

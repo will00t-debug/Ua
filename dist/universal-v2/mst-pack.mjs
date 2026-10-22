@@ -4,6 +4,79 @@ import {MST_V2_OFFICIAL_CATALOGUE} from './sources/mst-inventory.mjs';
 import {createUniversalPack} from './pack.mjs';
 
 const PRINTED_PINS=Object.freeze({
+ "MST-1-076":{
+  kind:"fieldRetireOutsideTraitlessRestOrRaid",
+  nameJa:"迷宮の守護者 マナタイトヒュドラ",
+  color:"green",energy:3,ap:1,bp:0,gen:2,type:"field",traits:[],trigger:"special",
+  effectJa:"〖退場時〗 自分の場外から必要エナジーが『1』以下で消費APが1の特徴を持たない緑のキャラカードを1枚まで自分の場にレストで登場させるかレイドさせる。自分の場外にある他のフィールドカード1枚につき、この効果で登場させるキャラの必要エナジーの範囲+1。",
+  triggerEffectJa:"〖スペシャル〗 相手のフロントLのキャラを1枚選び、退場させる。"
+ },
+
+ "MST-1-074":{
+  kind:"fieldCharacterRetireDrawAndRetireModes",nameJa:"転移の迷宮",
+  color:"green",energy:2,ap:1,bp:0,gen:1,type:"field",traits:[],trigger:"get",
+  effectJa:"〖登場時〗 自分の場のキャラを1枚退場させてもよい。そうした場合、カードを2枚引く。\n 〖退場時〗 以下から1つ選ぶ。\n・自分の手札を1枚場外に置いてもよい。そうした場合、自分の場外から必要エナジーが1以下の緑の〈ロキシー〉を1枚まで自分の場にレストで登場させる。\n・自分の場外から〈迷宮の守護者 マナタイトヒュドラ〉を1枚まで手札に加える。"
+ },
+ "MST-1-053":{
+  kind:"colorSiteMainRetireDraw",nameJa:"ロキシー",color:"green",
+  energy:1,ap:1,bp:2500,gen:1,type:"character",traits:[],trigger:"color",
+  effectJa:"〖相手のターン中〗 自分の緑の 〖カラートリガー〗 の効果に記載されている「キャラカード」を「フィールドカード」に代えてもよい。\n 〖登場時〗 カードを1枚引き、自分の手札を1枚場外に置く。\n 〖起動メイン〗 〖フロントLにある場合〗 〖ターン1〗 自分の場のフィールドを1枚退場させてもよい。そうした場合、カードを1枚引く。",
+  triggerEffectJa:"〖カラー〗 自分の手札から必要エナジーが2以下で消費APが1の緑のキャラカードを1枚自分の場にアクティブで登場させる。"
+ },
+ "MST-1-052":{
+  kind:"onRetireDrawIfOwnField",nameJa:"ロキシー",color:"green",
+  energy:0,ap:1,bp:2000,gen:1,type:"character",traits:[],trigger:null,
+  effectJa:"〖退場時〗 自分の場にフィールドがある場合、カードを1枚引く。"
+ },
+ "MST-1-042":{
+  kind:"retiredFieldReady",nameJa:"エリナリーゼ",color:"green",energy:4,ap:1,
+  bp:4000,gen:1,type:"character",traits:[],trigger:"active",
+  effectJa:"〖インパクト無効〗 （このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）\n 〖起動メイン〗 このターン中に自分の場のフィールドが退場している場合のみ発動できる。このキャラをアクティブにする。〈エリナリーゼ〉のこの効果は1ターンに1回のみ発動できる。"
+ },
+ "MST-1-046":{
+  kind:"retiredFieldEnergyAndCostBuff",nameJa:"タルハンド",color:"green",energy:3,ap:1,
+  bp:3000,gen:2,type:"character",traits:[],trigger:null,
+  effectJa:"このターン中に自分の場のフィールドが退場している場合、このキャラの発生エナジー+ 〖緑〗 。\n 〖起動メイン〗 〖フロントLにある場合〗 〖ターン1〗 自分の場のフィールドを1枚退場させる。そうした場合、このキャラはこのターン中、BP+1000。"
+ },
+  "MST-1-054": {
+    "kind":"onPlayRestSilenceOpponentIfFieldOutside",
+    "nameJa":"ロキシー","color":"green","energy":4,"ap":1,
+    "bp":4000,"gen":1,"type":"character","traits":[],"trigger":"raid",
+    "effectJa":"〖レイド〗 〈ロキシー〉アクティブにし、フロントLに移動できる\n 〖登場時〗 自分の場外にフィールドカードがある場合、相手のフロントLのキャラを1枚まで選び、レストにする。それは次の相手のアタックフェイズ終了時まで、元々の効果を全て失い、アクティブにならない。"
+  },
+  "MST-1-075": {
+    "kind":"fieldOnPlayDrawDiscardOnRetireDraw",
+    "nameJa":"迷宮都市ラパン","color":"green","energy":0,"ap":1,
+    "bp":0,"gen":1,"type":"field","traits":[],"trigger":"get",
+    "effectJa":"〖登場時〗 カードを1枚引き、自分の手札を1枚場外に置く。\n 〖退場時〗 カードを1枚引く。"
+  },
+  "MST-1-051": {
+    "kind": "onPlayDrawDiscardLimited",
+    "nameJa": "ロキシー",
+    "color": "green",
+    "energy": 3,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 2,
+    "type": "character",
+    "traits": [],
+    "trigger": "draw",
+    "deckLimit": 1,
+    "effectJa": "〖登場時〗 カードを1枚引き、自分の手札を1枚場外に置く。"
+  },
+  "MST-1-003": {
+    "kind": "ownFieldAllNamesBp",
+    "nameJa": "エリス",
+    "color": "blue",
+    "energy": 1,
+    "ap": 1,
+    "bp": 2000,
+    "gen": 1,
+    "type": "character",
+    "traits": [],
+    "trigger": "draw",
+    "effectJa": "自分の場に〈ルーデウス〉と〈ルイジェルド〉がある場合、このキャラはBP+1000。"
+  },
   "MST-1-001": {
     "kind": "vanilla",
     "nameJa": "エリス",
@@ -29,6 +102,97 @@ const PRINTED_PINS=Object.freeze({
     "traits": [],
     "trigger": "active",
     "effectJa": "-"
+  },
+  "MST-1-016": {
+    "kind": "restSelfEnergyRetireEndMain",
+    "nameJa": "ゼニス",
+    "color": "blue",
+    "energy": 0,
+    "ap": 1,
+    "bp": 1000,
+    "gen": 1,
+    "type": "character",
+    "traits": [],
+    "trigger": null,
+    "effectJa": "〖起動メイン〗 〖レストにする〗 〖ターン1〗 このキャラはこのターン中、発生エナジー+ 〖青〗 と「メインフェイズ終了時、このキャラを退場させる。」を得る。"
+  },
+  "MST-1-055": {
+    "kind": "onPlayTop3OwnTraitBottomDiscard",
+    "nameJa": "アリエル",
+    "color": "green",
+    "energy": 1,
+    "ap": 1,
+    "bp": 2000,
+    "gen": 1,
+    "type": "character",
+    "traits": ["ラノア魔法大学"],
+    "trigger": "draw",
+    "effectJa": "〖登場時〗 自分の山札の上から3枚見て、［特徴：ラノア魔法大学］を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。"
+  },
+  "MST-1-057": {
+    "kind": "frontGeneratesEnergy",
+    "nameJa": "クリフ",
+    "color": "green",
+    "energy": 4,
+    "ap": 1,
+    "bp": 3500,
+    "gen": 1,
+    "type": "character",
+    "traits": ["ラノア魔法大学"],
+    "trigger": "draw",
+    "effectJa": "このキャラはフロントLでもエナジーを発生させる。"
+  },
+  "MST-1-063": {
+    "kind": "onPlayDrawIfOwnEnergyAtLeast",
+    "nameJa": "ノルン",
+    "color": "green",
+    "energy": 2,
+    "ap": 1,
+    "bp": 2000,
+    "gen": 1,
+    "type": "character",
+    "traits": ["ラノア魔法大学"],
+    "trigger": "draw",
+    "effectJa": "〖登場時〗 自分の発生エナジーが7以上ある場合、カードを1枚引く。"
+  },
+  "MST-1-045": {
+    "kind": "restSelfEnergyRetireEndMain",
+    "nameJa": "ゼニス",
+    "color": "green",
+    "energy": 0,
+    "ap": 1,
+    "bp": 1000,
+    "gen": 1,
+    "type": "character",
+    "traits": [],
+    "trigger": null,
+    "effectJa": "〖起動メイン〗 〖レストにする〗 〖ターン1〗 このキャラはこのターン中、発生エナジー+ 〖緑〗 と「メインフェイズ終了時、このキャラを退場させる。」を得る。"
+  },
+  "MST-1-024": {
+    "kind": "ownTurnRoxyFieldBp",
+    "nameJa": "ルーデウス",
+    "color": "blue",
+    "energy": 1,
+    "ap": 1,
+    "bp": 2000,
+    "gen": 1,
+    "type": "character",
+    "traits": [],
+    "trigger": "draw",
+    "effectJa": "〖自分のターン中〗 自分の場に〈ロキシー〉がある場合、このキャラはBP+1000。"
+  },
+  "MST-1-013": {
+    "kind": "onRetireDrawOne",
+    "nameJa": "シルフィエット",
+    "color": "blue",
+    "energy": 1,
+    "ap": 1,
+    "bp": 2000,
+    "gen": 1,
+    "type": "character",
+    "traits": [],
+    "trigger": null,
+    "effectJa": "〖退場時〗 カードを1枚引く。"
   },
   "MST-1-020": {
     "kind": "vanilla",
@@ -312,6 +476,19 @@ const PRINTED_PINS=Object.freeze({
     ],
     "trigger": null,
     "effectJa": "〖登場時〗 自分の場の他のキャラを1枚まで選び、このターン中、BP+1000。"
+  },
+  "MST-1-010": {
+    "kind": "onPlayOrderTopThree",
+    "nameJa": "キシリカ・キシリス",
+    "color": "blue",
+    "energy": 3,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 2,
+    "type": "character",
+    "traits": [],
+    "trigger": "draw",
+    "effectJa": "〖登場時〗 自分の山札の上から3枚見て、望む順で山札の上に置く。"
   }
 });
 export const MST_V2_PILOT_IDS=Object.freeze(Object.keys(PRINTED_PINS).sort());
@@ -328,16 +505,88 @@ export function verifiedMstV2Cards(){
    implementation:['vanilla','step'].includes(pin.kind)?'vanilla':'dsl'};
   if(card.implementation==='vanilla')card.effects={};
   if(pin.kind==='step')card.step=true;
+  if(pin.kind==='onPlayRestSilenceOpponentIfFieldOutside'){
+   card.raidName=pin.nameJa;
+   card.templateEffects={onPlay:[{template:'restSilenceOppFrontIfOwnOutsideField',
+    optional:true}]};
+  }
+  if(pin.kind==='fieldRetireOutsideTraitlessRestOrRaid'){
+    // Official SPECIAL LIFE: choose one opposing FRONT character to retire.
+    card.triggerEffect={op:'retireOppFront'};
+    card.effects={onRetire:[{op:'deployOutsideTraitlessRestOrRaid',
+     color:'green',energy:1,ap:1,optional:true,perOtherOutsideField:1}]};
+   }
+   if(pin.kind==='fieldCharacterRetireDrawAndRetireModes'){
+    card.effects={
+     onPlay:[{op:'retireOwnCharacterOne',optional:true,after:[{op:'draw',count:2}]}],
+     onRetire:[{op:'chooseOne',optional:false,options:[
+      {id:'deploy',label:'Discard then REST Roxy',turn:'any',
+       then:[{op:'discardGate',optional:true,then:[{op:'deployOutsideRest',
+        name:'ロキシー',color:'green',energy:1,ap:1,optional:true}]}]},
+      {id:'recover',label:'Recover Manatite Hydra',turn:'any',
+       then:[{op:'recoverOutsideOne',
+        filter:{field:'name',value:'迷宮の守護者 マナタイトヒュドラ'},optional:true}]}
+     ]}]
+    };
+   }
+   if(pin.kind==='colorSiteMainRetireDraw'){
+   card.colorTriggerFieldSubstitution='green';
+   card.templateEffects={onPlay:[{template:'drawDiscardOne'}]};
+   card.triggerEffect={op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1};
+   card.mainAbility={op:'retireOwnFieldThen',frontOnly:true,oncePerTurn:true,
+    optional:true,after:[{op:'draw',count:1}]};
+  }
+  if(pin.kind==='retiredFieldReady'){
+   card.impactNull=true;
+   card.mainAbility={op:'readySelfIfOwnRetiredThisTurn',cardType:'field',readyOncePerName:true};
+  }
+  if(pin.kind==='retiredFieldEnergyAndCostBuff'){
+   card.passiveBonuses=[{condition:{kind:'ownRetiredThisTurn',turn:'any',cardType:'field'},
+    extraEnergy:1}];
+   card.mainAbility={op:'retireOwnFieldThen',frontOnly:true,oncePerTurn:true,
+    after:[{op:'buffSelf',bp:1000}]};
+  }
+  if(pin.kind==='fieldOnPlayDrawDiscardOnRetireDraw'){
+   card.templateEffects={onPlay:[{template:'drawDiscardOne'}]};
+   card.effects={onRetire:[{op:'draw',count:1}]};
+  }
+  if(pin.kind==='restSelfEnergyRetireEndMain'){
+   card.effects={};
+   card.mainAbility={op:'restSelfGainEnergyRetireEndMain',
+    energyOnly:true,oncePerTurn:true,extraEnergy:1};
+  }
+  if(pin.kind==='ownTurnRoxyFieldBp')
+   card.passiveBonuses=[{condition:{kind:'ownNameExists',turn:'own',
+    zone:'field',excludeSelf:true,name:'ロキシー'},bp:1000}];
+  if(pin.kind==='onRetireDrawIfOwnField')
+   card.effects={onRetire:[{op:'drawIfOwnFieldExists',count:1}]};
+  if(pin.kind==='onRetireDrawOne')
+   card.effects={onRetire:[{op:'draw',count:1}]};
+  if(pin.kind==='ownFieldAllNamesBp')
+   card.passiveBonuses=[{condition:{kind:'ownFieldHasAllNames',turn:'any',
+    zone:'field',excludeSelf:false,names:['ルーデウス','ルイジェルド']},bp:1000}];
+  if(pin.kind==='onPlayTop3OwnTraitBottomDiscard')
+   card.templateEffects={onPlay:[{template:'searchTopOneBottomDiscard',count:3,
+    filter:{field:'trait',value:'ラノア魔法大学'}}]};
+  if(pin.kind==='onPlayDrawIfOwnEnergyAtLeast')
+   card.templateEffects={onPlay:[{template:'drawIfOwnEnergyAtLeast',energy:7,count:1}]};
   if(pin.kind==='onPlayDraw')card.templateEffects={onPlay:[{template:'draw',count:1}]};
   if(pin.kind==='onPlayDrawDiscard')card.templateEffects={onPlay:[{template:'drawDiscardOne'}]};
+  if(pin.kind==='onPlayDrawDiscardLimited'){
+   card.templateEffects={onPlay:[{template:'drawDiscardOne'}]};
+   card.maxCopies=pin.deckLimit;
+  }
   if(pin.kind==='onAttackDrawDiscard')card.templateEffects={onAttack:[{template:'drawDiscardOne'}]};
   if(pin.kind==='impactNull')card.impactNull=true;
   if(pin.kind==='activeExtraEnergy')card.activeExtraEnergy=1;
+  if(pin.kind==='frontGeneratesEnergy')card.frontGeneratesEnergy=true;
   if(pin.kind==='peekTopOne')card.templateEffects={onPlay:[{template:'peekTopOne'}]};
   if(pin.kind==='bounceOtherEnergyOne')
    card.templateEffects={onPlay:[{template:'bounceOwnOtherUnderEnergy',energy:1}]};
   if(pin.kind==='recoverApTwo')
    card.templateEffects={onPlay:[{template:'recoverAp',count:2}]};
+  if(pin.kind==='onPlayOrderTopThree')
+   card.templateEffects={onPlay:[{template:'inspectTopArrange',count:3,toOutside:false,rest:'top'}]};
   if(pin.kind==='onPlayBuffOwnOther1000')
    card.templateEffects={onPlay:[{template:'buffOwnField',
     filter:{field:'type',value:'character'},bp:1000,optional:true,excludeSelf:true}]};
@@ -345,7 +594,7 @@ export function verifiedMstV2Cards(){
  });
 }
 export function mstV2Pack(){
- return createUniversalPack({id:'mushoku-tensei',version:'v2-d-mst-pilot-2',
+ return createUniversalPack({id:'mushoku-tensei',version:'v2-d-mst-pilot-4',
   cards:verifiedMstV2Cards()});
 }
 
@@ -375,7 +624,22 @@ export function verifiedMstV2Entries(){
      source.source,
     testFiles:Object.freeze([
      'tests/universal-v2-mst-port.test.mjs',
-     'tests/universal-v2-sao-mst-cross-title.test.mjs'
+     'tests/universal-v2-sao-mst-cross-title.test.mjs',
+     ...(pin.kind==='ownFieldAllNamesBp'?['tests/v2-mst-003-own-names.test.mjs']:[]),
+      ...(pin.kind==='onRetireDrawOne'?['tests/v2-mst-013-on-retire.test.mjs']:[]),
+      ...(pin.kind==='onRetireDrawIfOwnField'?['tests/v2-mst-052-official-retire.test.mjs']:[]),
+       ...(pin.kind==='colorSiteMainRetireDraw'?['tests/v2-mst-053-official-full.test.mjs']:[]),
+     ...(pin.kind==='onPlayDrawIfOwnEnergyAtLeast'?['tests/v2-mst-063-energy-draw.test.mjs']:[]),
+     ...(pin.kind==='onPlayTop3OwnTraitBottomDiscard'?['tests/v2-mst-055-cross-title-top.test.mjs']:[]),
+     ...(pin.kind==='frontGeneratesEnergy'?['tests/v2-mst-057-front-energy.test.mjs']:[]),
+      ...(['onPlayRestSilenceOpponentIfFieldOutside','fieldOnPlayDrawDiscardOnRetireDraw'].includes(pin.kind)?
+       ['tests/v2-mst-054-075-real-deck.test.mjs']:[]),
+      ...(pin.kind==='fieldOnPlayDrawDiscardOnRetireDraw'?
+       ['tests/v2-mst-075-retire-trigger.test.mjs']:[]),
+      ...(['retiredFieldReady','retiredFieldEnergyAndCostBuff'].includes(pin.kind)?
+       ['tests/v2-mst-042-046-retirement-official.test.mjs']:[]),
+     ...(pin.kind==='onPlayDrawDiscardLimited'?['tests/v2-mst-051-limited-draw-discard.test.mjs']:[]),
+     ...(['restSelfEnergyRetireEndMain','ownTurnRoxyFieldBp'].includes(pin.kind)?['tests/v2-mst-016-024-shared.test.mjs']:[])
     ]),
     ...(def.implementation==='vanilla'?{verifiedNoExtraEffects:true}:{})
    })

@@ -1,3 +1,4 @@
+import {EXPECTED_V2_COUNTS} from './fixtures/v2-integrated-id-manifest.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
@@ -46,8 +47,8 @@ test('official BLEACH pilot has fifteen distinct allowed identities and exact 50
   'the original fifteen individually reviewed pilots cannot be deleted or renamed');
  assert.ok(expect.every(id=>pack.cards[id]?.id===id),
   'the expanded registered pack must retain every original Pilot card');
- assert.equal(Object.keys(pack.cards).length,78,
-  '15 baseline + exact 63 individually pinned BLEACH additions');
+ assert.equal(Object.keys(pack.cards).length,EXPECTED_V2_COUNTS.bleach,
+  '15 baseline + exact 73 individually pinned BLEACH additions');
  const s=fresh();
  assert.equal(s.players[0].life.length,7);
  assert.equal(s.players[1].life.length,7);

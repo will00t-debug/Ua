@@ -16,13 +16,16 @@ const checked=card=>createUniversalPack({id:'template-validation-fixture',cards:
 
 test('template registry is finite, audited and rejects unknown behaviors instead of guessing from prose',()=>{
  assert.deepEqual(V2_ABILITY_TEMPLATE_IDS,[
-  'draw','millTop','drawDiscardOne','peekTopOne','peekTopOrBottom','recoverAp','buffSelf',
+  'draw','drawIfOwnEnergyAtLeast','drawIfOwnName','millTop','drawDiscardOne','drawDiscardMany','peekTopOne','peekTopOrBottom','recoverAp','buffSelf',
   'enemyBpDown','retireEnemyUnderBp','restEnemyUnderBp','restEnemyFrontOne',
+   'restEnemyFrontSkipNextActive','restEnemyUnderBpSkipNextActive','skipNextActiveOppRest',
+   'restSilenceOppFrontIfOwnOutsideField',
+   'restOrRetireEnemyFrontByOwnLife',
   'retireEnemyIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown',
-  'searchDeckOne','recoverOutsideOne','discardToDraw',
+  'searchDeckOne','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
   'searchDeckMany','enemyFrontAllBpDown','retireEnemyFrontAllUnderBp',
   'buffOwnTraitAllTurn','buffOwnField','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
-  'recoverOutsideColorUnderEnergy','oncePerTurnThen','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','payDiscardThen'
+  'recoverOutsideColorUnderEnergy','oncePerTurnThen','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopOneBottomDiscardWhere','payDiscardThen'
  ]);
  assert.throws(()=>checked(character({
   implementation:'dsl',templateEffects:{onPlay:[{template:'drawEnemyDeck',count:1}]}

@@ -1,3 +1,4 @@
+import {EXPECTED_V2_COUNTS,EXPECTED_V2_ADDED_CARD_IDS} from './fixtures/v2-integrated-id-manifest.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import contribution from '../dist/universal-v2/title-packs/bleach.mjs';
@@ -55,25 +56,25 @@ function lifeHit(id){
  assert.equal(s.pending?.kind,'life-trigger');
  return {s,victim};
 }
-test('registry adds exact 63 official BLEACH IDs to 15 Pilots, never duplicates or ghosts',()=>{
+test('registry adds exact 73 official BLEACH IDs to 15 Pilots, never duplicates or ghosts',()=>{
  assert.equal(V2_TITLE_CONTRIBUTIONS.bleach,contribution);
  assert.equal(REAL_V2_PILOT_IDS.bleach.length,15);
- assert.equal(contribution.entries.length,63);
+ assert.equal(contribution.entries.length,EXPECTED_V2_ADDED_CARD_IDS.bleach.length);
  assert.deepEqual(sorted(contribution.entries.map(x=>x.id)),sorted(BLEACH_V2_NEW_IDS));
- assert.equal(new Set(contribution.entries.map(x=>x.id)).size,63);
+ assert.equal(new Set(contribution.entries.map(x=>x.id)).size,EXPECTED_V2_ADDED_CARD_IDS.bleach.length);
  assert.ok(!BLEACH_V2_NEW_IDS.some(id=>REAL_V2_PILOT_IDS.bleach.includes(id)));
  assert.deepEqual(sorted(Object.keys(registered.cards)),
   sorted([...REAL_V2_PILOT_IDS.bleach,...BLEACH_V2_NEW_IDS]));
- assert.equal(Object.keys(registered.cards).length,78);
- assert.equal(Object.keys(standalone.cards).length,78);
+ assert.equal(Object.keys(registered.cards).length,EXPECTED_V2_COUNTS.bleach);
+ assert.equal(Object.keys(standalone.cards).length,EXPECTED_V2_COUNTS.bleach);
  const info=listRegisteredV2Titles().find(x=>x.title==='bleach');
  assert.equal(info.baselinePilots,15);
- assert.equal(info.newlyContributed,63);
- assert.equal(info.totalV2Cards,78);
+ assert.equal(info.newlyContributed,EXPECTED_V2_ADDED_CARD_IDS.bleach.length);
+ assert.equal(info.totalV2Cards,EXPECTED_V2_COUNTS.bleach);
  const inventory=v2InventoryForTitle('bleach');
  assert.equal(inventory.total,276);
- assert.equal(inventory.pilotImplemented,78);
- assert.equal(inventory.blocked,198);
+ assert.equal(inventory.pilotImplemented,EXPECTED_V2_COUNTS.bleach);
+ assert.equal(inventory.blocked,276-EXPECTED_V2_COUNTS.bleach);
  assert.deepEqual(inventory.pilotIds,sorted(Object.keys(registered.cards)));
 });
 
@@ -97,7 +98,10 @@ test('every integrated card is exactly the same compiled definition as independe
 });
 
 test('fail-closed contract rejects source drift, fake vanilla, unknown code and duplicate Pilot IDs',()=>{
- const base=contribution.entries[0];
+ // This rejection suite intentionally uses an explicitly verified VANILLA
+ // profile, not whichever entry happens to be first in the growing registry.
+ const base=contribution.entries.find(x=>x.evidence.verifiedNoExtraEffects===true);
+ assert.ok(base,'test requires source-pinned vanilla negative-control fixture');
  function invalid(change){
   const candidate=structuredClone(base);
   change(candidate);

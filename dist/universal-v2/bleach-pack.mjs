@@ -10,6 +10,32 @@ import {verifiedPilotCards} from './real-card-pilots.mjs';
 // 'step' uses the V2 move-phase STEP handler; 'bounce' uses a real V2 template.
 export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
  {
+  id:"BLC-1-023",kind:"raidStripOrRetire2000",
+  number:"UA08BT/BLC-1-023",name:"ユーハバッハ",
+  color:"yellow",energy:4,ap:2,bp:4000,gen:1,trigger:"get",type:"character",
+  effect:"登場：選一項：①選最多 1 個敵方前線處於 Raid 狀態的角色，將其最上層的 1 張卡送至場外；②使最多 1 個敵方前線 BP 2000 以下角色退場。"
+ },
+ {
+  id:"BLC-1-024",kind:"raidStripOrRetireDamage2",
+  number:"UA08BT/BLC-1-024",name:"ユーハバッハ",
+  color:"yellow",energy:6,ap:1,bp:4000,gen:1,trigger:"raid",type:"character",
+  effect:"Raid〈友哈巴赫〉：轉為 ACTIVE，可移至前線。己方回合中，若本回合已有至少 2 個角色退場，此角色 BP +1000 並獲得 Damage 2。登場：選一項：①選最多 1 個敵方前線 Raid 角色，將其最上層的 1 張卡送至場外；②使最多 1 個敵方前線 BP 3000 以下角色退場。"
+ },
+ {
+  "id":"BLC-1-006","kind":"enterActiveAttackRestSkip",
+  "number":"UA08BT/BLC-1-006","name":"キルゲ・オピー",
+  "color":"yellow","energy":4,"ap":2,"bp":4000,"gen":1,
+  "trigger":"get","type":"character",
+  "effect":"敵方場上有至少 1 個 REST 角色時，此角色以 ACTIVE 登場。攻擊時：可選最多 1 個敵方場上的 REST 角色，使其跳過下一次轉為 ACTIVE。"
+ },
+ {
+  "id":"BLC-1-005","kind":"restSelfEnemy",
+  "number":"UA08BT/BLC-1-005","name":"キルゲ・オピー",
+  "color":"yellow","energy":2,"ap":1,"bp":3000,"gen":1,
+  "trigger":null,"type":"character",
+  "effect":"主要階段・位於前線：REST 自己，選 1 個敵方前線角色，將其轉為 REST。"
+ },
+ {
   "id": "BLC-1-002",
   "kind": "plain",
   "number": "UA08BT/BLC-1-002",
@@ -818,6 +844,12 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
   "trigger":"color","type":"character",
   "effect":"【登場時】抽 1 張牌。"
  } ,{
+  "id":"BLC-4-023","kind":"buffOtherOwn1000",
+  "number":"EX15BT/BLC-4-023","name":"浦原 喜助",
+  "color":"blue","energy":0,"ap":1,"bp":500,"gen":1,
+  "trigger":"draw","type":"character",
+  "effect":"登場時：最多選自己場上另1個角色，本回合BP+1000。"
+ } ,{
   "id":"BLC-2-055","kind":"peekTopOrBottom",
   "number":"EX07BT/BLC-2-055","name":"麒麟寺 天示郎",
   "color":"purple","energy":0,"ap":1,"bp":2000,"gen":1,
@@ -835,6 +867,35 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
   "color":"yellow","energy":2,"ap":1,"bp":0,"gen":0,
   "trigger":"active","type":"event",
   "effect":"選 1 個敵方前線角色，將其轉為 REST。"
+ }
+ ,{
+  "id":"BLC-1-016","kind":"restEnergyRetire",
+  "number":"UA08BT/BLC-1-016","name":"ベレニケ・ガブリエリ",
+  "color":"yellow","energy":0,"ap":1,"bp":1000,"gen":1,
+  "trigger":null,"type":"character","effect":"主要階段・每回合 1 次：REST 自己，本回合額外產生 1 黃能源；主要階段結束時，此角色退場。"
+ } ,{
+  "id":"BLC-1-069","kind":"restEnergyRetire",
+  "number":"UA08BT/BLC-1-069","name":"浮竹 十四郎",
+  "color":"green","energy":0,"ap":1,"bp":1000,"gen":1,
+  "trigger":null,"type":"character","effect":"主要階段・每回合 1 次：REST 自己，本回合額外產生 1 綠能源；主要階段結束時，此角色退場。"
+ } ,{
+  "id":"BLC-2-022","kind":"restEnergyRetire",
+  "number":"EX07BT/BLC-2-022","name":"志波 岩鷲",
+  "color":"blue","energy":0,"ap":1,"bp":1000,"gen":1,
+  "trigger":null,"type":"character","effect":"主要階段・每回合 1 次：REST 自己，本回合額外產生 1 藍能源；主要階段結束時，此角色退場。"
+ } ,{
+  "id":"BLC-2-040","kind":"onRetireDrawOne",
+  "number":"EX07BT/BLC-2-040","name":"チルッチ・サンダーウィッチ",
+  "color":"blue","energy":0,"ap":1,"bp":1000,"gen":1,
+  "trigger":null,"type":"character","effect":"退場：抽 1 張。"
+ }
+
+ ,{
+  "id":"BLC-1-042","kind":"restEnergyRetire",
+  "number":"UA08ST/BLC-1-042","name":"茶渡 泰虎",
+  "color":"purple","energy":0,"ap":1,"bp":1000,"gen":1,
+  "trigger":null,"type":"character",
+  "effect":"主要階段・每回合 1 次：REST 自己，本回合多產生 1 紫能源；主要階段結束時退場。"
  }
 ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
@@ -868,6 +929,7 @@ export function checkedBleachAddonDefinition(p){
   traitBuffAllDraw:{onPlay:[{template:'buffOwnTraitAllTurn',trait:'護廷十三隊',bp:1000},{template:'draw',count:1}]},
   restEnemy3500:{onPlay:[{template:'restEnemyUnderBp',bp:3500,optional:true}]},
   restEnemyFrontOne:{onPlay:[{template:'restEnemyFrontOne',optional:false}]},
+   enterActiveAttackRestSkip:{onAttack:[{template:'skipNextActiveOppRest',optional:true}]},
   retireBonusYamamoto:{onPlay:[{template:'retireEnemyUnderBp',bp:3000,bonusName:'山本元柳斎重國',bonusBp:5000}]},
   retireBonusRukia:{onPlay:[{template:'retireEnemyUnderBp',bp:3000,bonusName:'朽木ルキア',bonusBp:5000}]},
   enemyBpDown1000:{onPlay:[{template:'enemyBpDown',bp:1000,optional:true}]},
@@ -882,7 +944,12 @@ export function checkedBleachAddonDefinition(p){
  // Keep p.gen=2 only as a legacy-source fingerprint, never as V2 base energy.
  const v2BaseGen=p.id==='BLC-4-014'?1:c.gen;
  const isPassive=p.kind==='activeEnergy'||p.kind==='impactNull';
- const special=p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive;
+ const isMain=p.kind==='restSelfEnemy'||p.kind==='restEnergyRetire';
+ const isRetireDraw=p.kind==='onRetireDrawOne';
+ const isRaidDual=p.kind==='raidStripOrRetireDamage2';
+ const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
+ const stripRetireBp=isRaidDual?3000:2000;
+ const special=p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isStripDual;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -891,12 +958,25 @@ export function checkedBleachAddonDefinition(p){
   traits:Array.isArray(c.traits)?c.traits:(c.traits&&c.traits!=='無'?[c.traits]:[]),
   implementation:p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'?'vanilla':'dsl',
   ...(p.kind==='step'?{step:true}:{}),
+  ...(isRaidDual?{raidName:'ユーハバッハ',
+   passiveBonuses:[{condition:{kind:'retireCountThisTurn',turn:'own',
+    controller:'any',cardType:'character',min:2},bp:1000,extraDamage:1}]}:{}),
+   ...(p.kind==='enterActiveAttackRestSkip'?{enterActiveIfOpponentRest:true}:{}),
   ...(p.kind==='activeEnergy'?{activeExtraEnergy:1}:{}),
   ...(p.kind==='impactNull'?{impactNull:true}:{}),
+  ...(p.kind==='restSelfEnemy'?{mainAbility:{op:'restSelfThenRestOppFrontOne',frontOnly:true}}:{}),
+  ...(p.kind==='restEnergyRetire'?{mainAbility:{op:'restSelfGainEnergyRetireEndMain',energyOnly:true,oncePerTurn:true,extraEnergy:1}}:{}),
   ...(p.kind.startsWith('retireBonus')?{triggerEffect:{op:'retireOppFront'}}:{}),
   ...(p.kind==='enemyBpDown500Color'?{triggerEffect:{op:'deployOutsideCharacter',color:'purple',maxEnergy:2,ap:1,frontOnly:true}}:{}),
   ...(p.kind==='drawPlayColorHand'?{triggerEffect:{op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1}}:{}),
-  ...(!special?{templateEffects:abilities[p.kind]}:{effects:{}})
+  ...(!special?{templateEffects:abilities[p.kind]}:{effects:
+   isRetireDraw?{onRetire:[{op:'draw',count:1}]}:
+   isStripDual?{onPlay:[{op:'chooseOne',optional:false,options:[
+    {id:'strip',label:'Strip opponent RAID top',turn:'any',
+     then:[{op:'stripOppRaidTop',optional:true}]},
+    {id:'retire',label:`Retire BP ${stripRetireBp} or lower`,turn:'any',
+     then:[{op:'retireOppFrontOneUnderBp',bp:stripRetireBp,optional:true}]}
+   ]}]}:{}})
  };
 }
 export function bleachV2PortedCards(){

@@ -1,3 +1,4 @@
+import {EXPECTED_V2_COUNTS} from './fixtures/v2-integrated-id-manifest.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {UA54BT_VERIFIED} from '../dist/universal-v2/sources/mst-catalog.mjs';
@@ -10,7 +11,13 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,assertUn
 
 const pack=mstV2Pack();
 function deck50(){
- const ids=MST_V2_PILOT_IDS.filter(id=>pack.cards[id].trigger!=='final').slice(0,13);
+ // Source-pinned physical fixture: newly ported IDs MUST NOT eject the
+ // original STEP 047 / energy 029 / discard 022 / peek 069 test subjects.
+ const ids=[
+  'MST-1-001','MST-1-002','MST-1-010','MST-1-012','MST-1-017',
+  'MST-1-018','MST-1-019','MST-1-020','MST-1-022','MST-1-027',
+  'MST-1-029','MST-1-047','MST-1-069'
+ ];
  const counts=Object.fromEntries(ids.map(id=>[id,4]));counts[ids.at(-1)]=2;
  assert.deepEqual(validateUniversalDeck(pack,counts),[]);
  return counts;
@@ -32,7 +39,7 @@ function action(s,predicate){
 function toMain(s){for(let i=0;i<2;i++)s=dispatchUniversalAction(pack,s,{type:'next'});return s;}
 function deckWith(id){const d={...deck};d['MST-1-001']--;d[id]=(d[id]||0)+1;
  assert.deepEqual(validateUniversalDeck(pack,d),[]);return d;}
-test('MST source preserves exactly 001–080 Japanese printed regular IDs, and 22 only are V2 allowed',()=>{
+test('MST source preserves exactly 001–080 Japanese printed regular IDs, and 41 only are V2 allowed',()=>{
  assert.equal(UA54BT_VERIFIED.length,80);
  assert.equal(Object.keys(UA54BT_OFFICIAL_PRINT).length,80);
  for(let n=1;n<=80;n++){
@@ -42,12 +49,13 @@ test('MST source preserves exactly 001–080 Japanese printed regular IDs, and 2
   assert.ok(UA54BT_OFFICIAL_PRINT[id].effectJa);
   assert.equal(UA54BT_OFFICIAL_PRINT[id].source.includes('UA54BT%2F'),true);
  }
- assert.equal(MST_V2_PILOT_IDS.length,23);
- assert.equal(verifiedMstV2Cards().length,23);
- assert.equal(Object.keys(pack.cards).length,23);
- assert.ok(!pack.cards['MST-1-051'],'2026-10-01 deck-limit 1 not yet expressible in V2 deck validator');
+ assert.equal(MST_V2_PILOT_IDS.length,EXPECTED_V2_COUNTS['mushoku-tensei']);
+ assert.equal(verifiedMstV2Cards().length,EXPECTED_V2_COUNTS['mushoku-tensei']);
+ assert.equal(Object.keys(pack.cards).length,EXPECTED_V2_COUNTS['mushoku-tensei']);
+ assert.equal(pack.cards['MST-1-051'].maxCopies,1,'2026-10-01 official restricted limit');
  assert.ok(!pack.cards['MST-1-068'],'two-mode conditional Raid is unported');
- assert.match(validateUniversalDeck(pack,{...deck,'MST-1-051':1}).join(),/Unregistered/);
+ assert.ok(!validateUniversalDeck(pack,{...deck,'MST-1-051':1}).join().includes('Unregistered'));
+ assert.match(validateUniversalDeck(pack,{...deck,'MST-1-051':2}).join(),/0–1 copies/);
  for(const id of MST_V2_PILOT_IDS){
   const original=UA54BT_OFFICIAL_PRINT[id],card=pack.cards[id];
   for(const field of ['energy','ap','bp','gen','type','trigger'])

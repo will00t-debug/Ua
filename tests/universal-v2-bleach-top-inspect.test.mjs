@@ -1,3 +1,4 @@
+import {EXPECTED_V2_COUNTS} from './fixtures/v2-integrated-id-manifest.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {CARDS} from '../dist/cards.mjs';
@@ -30,7 +31,7 @@ function play(s,uid){
 }
 test('EX15BT printed BLC-4-009/067 exactly match top 2/3 inspect templates and retain DRAW trigger',()=>{
  assert.deepEqual(validateUniversalDeck(pack,deck),[]);
- assert.equal(Object.keys(pack.cards).length,78);
+ assert.equal(Object.keys(pack.cards).length,EXPECTED_V2_COUNTS.bleach);
  for(const [id,count] of [['BLC-4-009',2],['BLC-4-067',3]]){
   assert.deepEqual(pack.cards[id].effects.onPlay,[{op:'inspectTopArrange',count,toOutside:true,rest:'top'}]);
   assert.equal(pack.cards[id].trigger,'draw');

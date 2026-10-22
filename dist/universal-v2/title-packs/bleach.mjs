@@ -7,7 +7,11 @@ import {BLEACH_V2_ADDON_PROFILES,BLEACH_V2_NEW_IDS,
  checkedBleachAddonDefinition} from '../bleach-pack.mjs';
 
 const testForKind=Object.freeze({
+ raidStripOrRetire2000:'tests/v2-blc-023-official.test.mjs',
  bounce:'tests/universal-v2-bleach-port.test.mjs',
+  raidStripOrRetireDamage2:'tests/v2-blc-024-official.test.mjs',
+ restEnergyRetire:'tests/v2-blc-shared-rest-retire.test.mjs',
+ onRetireDrawOne:'tests/v2-blc-shared-rest-retire.test.mjs',
  activeEnergy:'tests/universal-v2-bleach-port.test.mjs',
  impactNull:'tests/universal-v2-bleach-enemy-control.test.mjs',
  enemyBpDown1000:'tests/universal-v2-bleach-enemy-control.test.mjs',
@@ -19,6 +23,8 @@ const testForKind=Object.freeze({
  inspectTop2:'tests/universal-v2-bleach-top-inspect.test.mjs',
  inspectTop3:'tests/universal-v2-bleach-top-inspect.test.mjs',
  restEnemyFrontOne:'tests/universal-v2-bleach-enemy-control.test.mjs',
+ restSelfEnemy:'tests/v2-blc-005-self-rest.test.mjs',
+  enterActiveAttackRestSkip:'tests/v2-blc-006-official.test.mjs',
  drawPlayColorHand:'tests/universal-v2-bleach-nc-batch.test.mjs',
  buffOtherOwn1000:'tests/universal-v2-bleach-own-buff.test.mjs',
  peekTopOrBottom:'tests/universal-v2-bleach-new-top.test.mjs',
@@ -48,7 +54,7 @@ function contributedEntry(profile){
    testFiles:Object.freeze([
     'tests/universal-v2-bleach-registry.test.mjs',
     ...(profile.id.startsWith('BLC-3-')?['tests/universal-v2-bleach-nc-batch.test.mjs']:[]),
-    ...(['BLC-1-059','BLC-1-077'].includes(profile.id)?['tests/universal-v2-bleach-own-buff.test.mjs']:[]),
+    ...(['BLC-1-059','BLC-1-077','BLC-4-023'].includes(profile.id)?['tests/universal-v2-bleach-own-buff.test.mjs']:[]),
     ...(['BLC-2-055','BLC-4-013'].includes(profile.id)?['tests/universal-v2-bleach-new-top.test.mjs']:[]),
     testForKind[profile.kind]||'tests/universal-v2-bleach-port.test.mjs'
    ]),
@@ -57,7 +63,7 @@ function contributedEntry(profile){
  });
 }
 const entries=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(contributedEntry));
-if(entries.length!==63||BLEACH_V2_NEW_IDS.length!==entries.length||
+if(BLEACH_V2_NEW_IDS.length!==entries.length||
  new Set(entries.map(x=>x.id)).size!==entries.length)
  throw Error('BLEACH V2 contribution cardinality or ID drift');
 export default Object.freeze({

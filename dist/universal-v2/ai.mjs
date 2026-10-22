@@ -1,6 +1,6 @@
 // Cross-title Universal v2 AI baseline. Uses only the native legal-action
 // list; no work-specific card-ID shortcuts and no mutation of match state.
-import {legalUniversalActions,dispatchUniversalAction,universalBp,universalEnergy,universalEnergyByColor} from './engine.mjs';
+import {legalUniversalActions,dispatchUniversalAction,universalBp,universalEnergy,universalEnergyByColor,universalCardEnergy} from './engine.mjs';
 export const UNIVERSAL_AI_LEVELS=Object.freeze(['easy','normal','hard']);
 const packsOf=pack=>Array.isArray(pack)?pack:[pack,pack];
 const option=(list,type)=>list.find(x=>x.type===type);
@@ -37,8 +37,10 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  const legal=legalUniversalActions(pack,s);
  if(!legal.length)return null;
  if(s.pending?.kind==='life-trigger')
-  return legal.find(a=>['final','raid','special','colorRetire','color','active','draw','get'].includes(a.mode))||legal[0];
+  return legal.find(a=>['final','raid','special','colorRetire','colorField','color','active','draw','get'].includes(a.mode))||legal[0];
  if(s.pending?.kind==='effect-recover-ap')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='recovered-self-entry')return difficulty==='easy'?legal[0]:
+  legal.find(a=>a.mode==='enter'&&!a.replaceUid)||legal[0];
  if(['effect-search-deck','effect-search-deck-multi','effect-recover-outside'].includes(s.pending?.kind))
   return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-top-inspect')
@@ -46,6 +48,7 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
    legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='private-top-place')return legal[0];
  if(s.pending?.kind==='effect-top-inspect-many')return legal.find(x=>x.uid===null)||legal[0];
+ if(s.pending?.kind==='effect-top-filter-choice')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-top-order')return legal[0];
  if(['effect-discard-cost','effect-discard-gate'].includes(s.pending?.kind)){
   // An optional cost may be declined; tougher bots pay with a lower-value
@@ -59,13 +62,48 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   return options[0]?.action||legal[0];
  }
  if(s.pending?.kind==='raid-effect-order')return legal.find(a=>a.mode==='entryFirst')||legal[0];
+ if(s.pending?.kind==='effect-choice-mode'){
+  // Entirely generic printed-mode selection; inspect only public enemy FRONT
+  // and the validated program profile, never hard-code a title/card ID.
+  const foe=s.players[1-s.pending.player].front;
+  const options=s.pending.options||[];
+  const available=options.find(o=>o.then.some(x=>x.op==='retireOppFrontOneUnderBp'&&
+   foe.some(c=>c&&universalBp(pack,s,c)<=x.bp)))||
+   options.find(o=>o.then.some(x=>x.op==='stripOppRaidTop'&&
+    foe.some(c=>c&&c.stack?.length&&packsOf(pack)[1-s.pending.player].cards[c.cardId].raidName)));
+  return legal.find(a=>a.type==='chooseEffectMode'&&a.mode===available?.id)||
+   legal.find(a=>a.type==='chooseEffectMode'&&a.mode!=='skip')||legal[0];
+ }
+ if(['effect-outside-rest','effect-outside-traitless-rest'].includes(s.pending?.kind))
+  return difficulty==='easy'?legal[0]:
+   legal.find(x=>x.mode==='raid'&&!x.replaceUid)||
+   legal.find(x=>x.uid!==null&&!x.replaceUid)||legal[0];
  if(s.pending?.kind==='effect-once-choice')
   return difficulty==='easy'?legal.find(a=>a.mode==='skip')||legal[0]:
    legal.find(a=>a.mode==='activate')||legal[0];
  if(s.pending?.kind==='effect-buff-own')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-buff-trait')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='main-discard-buff'){
+  // The payment is mandatory once activated. Choose a low-cost OWN hand
+  // card, not a forged or opponent target; all candidates are exact legal.
+  const catalog=packsOf(pack)[s.pending.player].cards;
+  const hand=s.players[s.pending.player].hand;
+  return [...legal].sort((a,b)=>(catalog[hand.find(c=>c.uid===a.uid)?.cardId]?.energy||0)-
+   (catalog[hand.find(c=>c.uid===b.uid)?.cardId]?.energy||0))[0];
+ }
  if(s.pending?.kind==='main-two-buff')return legal[0];
- if(s.pending?.kind==='effect-rest-bp')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-rest-bp'){
+  // RESTed characters remain legal targets (official Q91), but choosing one
+  // wastes the effect whenever a READY opponent is also available.
+  const foe=s.players[1-s.pending.player].front;
+  return legal.find(a=>a.uid!==null&&foe.find(c=>c?.uid===a.uid)?.ready)||
+   legal.find(a=>a.uid!==null)||legal[0];
+ }
+ if(s.pending?.kind==='effect-retire-own-field')
+  return difficulty==='easy'?legal.find(a=>a.uid===null)||legal[0]:
+   legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-strip-raid-top')
+  return difficulty==='easy'?legal[0]:legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-retire-bp'){
   // A printed "up to one" retirement presents SKIP first; normal/hard AI
   // should choose an eligible enemy unless there is none.
@@ -116,7 +154,7 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
    if(a.type!=='move')return false;
    const c=pl.energy.find(c=>c?.uid===a.uid),d=catalog[c?.cardId];
    return d&&d.bp>=3000&&
-    energy-(d.gen||0)-(c.ready?(d.activeExtraEnergy||0):0)>=target;
+    energy-universalCardEnergy(pack,s,s.active,c)>=target;
   })||next;
  }
  if(s.phase==='attack'){
@@ -157,9 +195,17 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   return energyPlays[0];
  }
  if(difficulty==='hard'&&raids.length)return raids[0];
- const activate=legal.find(a=>a.type==='activate'&&a.mode==='readyAndBuff')||
+ const foeReady=s.players[1-s.active].front.some(c=>c?.ready);
+ const activate=legal.find(a=>a.type==='activate'&&a.mode==='retireReady')||
+  legal.find(a=>a.type==='activate'&&a.mode==='retireFieldThen')||
+  legal.find(a=>a.type==='activate'&&a.mode==='readyAndBuff')||
   legal.find(a=>a.type==='activate'&&a.mode==='buff')||
-  legal.find(a=>a.type==='activate'&&a.mode==='ready');
+  legal.find(a=>a.type==='activate'&&a.mode==='ready')||
+  (foeReady?legal.find(a=>a.type==='activate'&&a.mode==='selfRestEnemy'):null)||
+  legal.find(a=>a.type==='activate'&&a.mode==='selfRestThen')||
+  legal.find(a=>a.type==='activate'&&a.mode==='selfRestEnergyRetire')||
+  (difficulty==='hard'&&s.players[s.active].hand.length>1?
+   legal.find(a=>a.type==='activate'&&a.mode==='discardSelfBuff'):null);
  if(activate&&difficulty!=='easy')return activate;
  if(frontPlays.length){
   frontPlays.sort((a,b)=> (cardFor(pack,s,b)?.bp||0)-(cardFor(pack,s,a)?.bp||0));

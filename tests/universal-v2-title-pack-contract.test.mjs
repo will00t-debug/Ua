@@ -1,3 +1,4 @@
+import {EXPECTED_V2_COUNTS,EXPECTED_V2_TOTAL,EXPECTED_V2_ADDED_CARD_IDS,EXPECTED_V2_BASELINE_IDS} from './fixtures/v2-integrated-id-manifest.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createUniversalPack} from '../dist/universal-v2/pack.mjs';
@@ -12,7 +13,6 @@ import {verifiedBleachPurplePilotDeck,verifiedTtgRedPilotDeck}
  from '../dist/universal-v2/verified-real-decks.mjs';
 import {newUniversalMatch,assertUniversalMatch} from '../dist/universal-v2/engine.mjs';
 import {REAL_V2_PILOT_IDS} from '../dist/universal-v2/real-card-pilots.mjs';
-import {EXPECTED_V2_ADDED_CARD_IDS} from './fixtures/v2-integrated-id-manifest.mjs';
 
 const contractTitle='solo-leveling';
 const fixture={
@@ -41,16 +41,17 @@ test('all five independent titles register exactly the source-pinned official ca
   ['bleach','gurren-lagann','solo-leveling','sword-art-online','mushoku-tensei']);
  assert.equal(Object.keys(V2_TITLE_CONTRIBUTIONS).length,5);
  const list=listRegisteredV2Titles();
- assert.deepEqual(list.map(x=>x.totalV2Cards),[78,23,18,39,23]);
+ assert.deepEqual(list.map(x=>x.totalV2Cards),Object.values(EXPECTED_V2_COUNTS));
  assert.deepEqual(list.map(x=>x.baselinePilots),[15,20,0,0,0]);
- assert.deepEqual(list.map(x=>x.newlyContributed),[63,3,18,39,23]);
+ assert.deepEqual(list.map(x=>x.newlyContributed),Object.values(EXPECTED_V2_ADDED_CARD_IDS).map(ids=>ids.length));
  for(const title of V2_TITLE_IDS){
   const added=EXPECTED_V2_ADDED_CARD_IDS[title];
   const contribution=V2_TITLE_CONTRIBUTIONS[title];
   assert.deepEqual(contribution.entries.map(e=>e.id).sort(),added,
    title+' actual reviewed contribution IDs must match independent exact manifest');
   const pack=requireRegisteredV2TitlePack(title),ids=Object.keys(pack.cards);
-  const pilots=REAL_V2_PILOT_IDS[title]||[];
+  const pilots=EXPECTED_V2_BASELINE_IDS[title];
+  assert.deepEqual([...(REAL_V2_PILOT_IDS[title]||[])].sort(),pilots);
   assert.deepEqual(ids.slice().sort(),[...pilots,...added].sort(),
    title+' registry must contain exactly Pilot + contribution IDs');
   assert.equal(new Set(ids).size,ids.length,'no duplicate physical card identity');
@@ -122,11 +123,11 @@ test('inventory is derived from all five official catalogues and exact registere
  const result=v2AllTitleInventory(),{series,totals}=result;
  assert.deepEqual(series.map(x=>x.title),V2_TITLE_IDS);
  assert.deepEqual(series.map(x=>x.total),Object.values(V2_EXPECTED_UNIQUE_CARD_COUNTS));
- assert.deepEqual(series.map(x=>x.pilotImplemented),[78,23,18,39,23]);
- assert.deepEqual(series.map(x=>x.blocked),[198,58,62,144,57]);
+ assert.deepEqual(series.map(x=>x.pilotImplemented),Object.values(EXPECTED_V2_COUNTS));
+ assert.deepEqual(series.map(x=>x.blocked),series.map(x=>x.total-EXPECTED_V2_COUNTS[x.title]));
  assert.equal(totals.total,700);
- assert.equal(totals.pilotImplemented,181);
- assert.equal(totals.blocked,519);
+ assert.equal(totals.pilotImplemented,EXPECTED_V2_TOTAL);
+ assert.equal(totals.blocked,700-EXPECTED_V2_TOTAL);
  assert.equal(totals.fullyAccepted,0);
  assert.equal(totals.total-totals.pilotImplemented,totals.blocked);
  for(const record of series){
@@ -137,7 +138,7 @@ test('inventory is derived from all five official catalogues and exact registere
   assert.deepEqual(record.pilotIds,Object.keys(titlePack.cards).sort(),
    'inventory must exactly reflect installed pack, never permit unknown flag-based support');
   assert.deepEqual(record.pilotIds,
-   [...(REAL_V2_PILOT_IDS[record.title]||[]),
+   [...EXPECTED_V2_BASELINE_IDS[record.title],
     ...EXPECTED_V2_ADDED_CARD_IDS[record.title]].sort());
  }
  const text=formatV2UnportedIds();

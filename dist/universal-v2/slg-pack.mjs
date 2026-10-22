@@ -3,6 +3,114 @@ import {SOLO_LEVELING_CARDS} from '../solo-leveling.mjs';
 import {createUniversalPack} from './pack.mjs';
 const catalog=Object.fromEntries(SOLO_LEVELING_CARDS.map(c=>[c.id,c]));
 const authored=[
+  {"id":"SLG-1-053","name":"諸菱 賢太","color":"green","energy":3,
+   "ap":1,"bp":2000,"gen":2,"trigger":"draw","type":"character",
+   "textAnchor":"Impact無效。登場時若場上有己方水篠旬，抽1張。",
+   "implementation":"dsl","impactNull":true,
+   "effects":{"onPlay":[{"op":"drawIfOwnName","name":"水篠 旬","count":1}]}},
+
+  {"id":"SLG-1-042","name":"馬渕 勲","color":"green","energy":0,
+   "ap":1,"bp":1000,"gen":1,"trigger":null,"type":"character",
+   "textAnchor":"主要階段每回合一次REST自己，額外產生1綠能源，主要階段結束時退場。",
+   "implementation":"dsl","effects":{},
+   "mainAbility":{"op":"restSelfGainEnergyRetireEndMain",
+     "energyOnly":true,"oncePerTurn":true,"extraEnergy":1}},
+
+  {
+    "id":"SLG-1-004","name":"犬飼 晃","color":"purple",
+    "energy":3,"ap":1,"bp":3500,"gen":1,"trigger":"draw",
+    "type":"character",
+    "textAnchor":"自己的回合中，若本回合曾以己方效果將手牌送場外或從場外回收手牌",
+    "implementation":"dsl",
+    "effects":{"onPlay":[{"op":"drawDiscard","count":1}]},
+    "passiveBonuses":[{"condition":{"kind":"ownEffectHandOutsideOrRecovery",
+      "turn":"own"},"bp":500}]
+  },
+  {
+    "id":"SLG-1-007","name":"エシル","color":"purple",
+    "energy":0,"ap":1,"bp":500,"gen":1,"trigger":"draw",
+    "type":"character","textAnchor":"退場時抽1張",
+    "implementation":"dsl","effects":{"onRetire":[{"op":"draw","count":1}]}
+  },
+  {
+    "id":"SLG-1-008","name":"エシル","color":"purple",
+    "energy":1,"ap":1,"bp":2000,"gen":1,"trigger":null,
+    "type":"character",
+    "textAnchor":"經自己效果從場外加入手牌時",
+    "implementation":"dsl",
+    "templateEffects":{
+      "onOutsideRecover":[{"template":"drawDiscardOne"}],
+      "onPlay":[{"template":"searchTopOneBottomDiscardWhere",
+        "count":4,"filters":[
+         {"field":"name","value":"水篠 旬"},
+         {"field":"name","value":"悪魔の城"}
+        ],"logic":"any"}]
+    }
+  },
+  {
+    "id":"SLG-1-014","name":"水篠 聡子","color":"purple",
+    "energy":2,"ap":1,"bp":1000,"gen":1,"trigger":null,
+    "type":"character","textAnchor":"經自己的效果從場外加入手牌時",
+    "implementation":"dsl","frontForbidden":true,
+    "ownOutsideRecovery":{"op":"restSelfToEnergy","optional":true,"rest":true},
+    "effects":{"onPlay":[{"op":"millTop","count":1}]}
+  },
+  {
+    "id":"SLG-1-013","name":"水篠 葵","color":"purple",
+    "energy":0,"ap":1,"bp":1000,"gen":1,"trigger":null,
+    "type":"character","textAnchor":"主要階段每回合一次：REST此角色",
+    "implementation":"dsl","effects":{},
+    "mainAbility":{"op":"restSelfGainEnergyRetireEndMain",
+      "energyOnly":true,"oncePerTurn":true,"extraEnergy":1}
+  },
+  {
+    "id":"SLG-1-025","name":"観月 絵里","color":"purple",
+    "energy":3,"ap":2,"bp":2000,"gen":2,"trigger":"active",
+    "type":"character","textAnchor":"登場時選一項：抽2張",
+    "implementation":"dsl",
+    "effects":{"onPlay":[{"op":"chooseOne","optional":false,"options":[
+      {"id":"drawTwo","label":"抽兩張牌","turn":"any",
+       "then":[{"op":"draw","count":2}]},
+      {"id":"drawRecover","label":"抽一張，再回收最多一張能源3以下無特徵角色",
+       "turn":"any","then":[{"op":"draw","count":1},
+        {"op":"recoverOutsideTraitlessUnderEnergy","energy":3,"optional":true}]}
+    ]}]}
+  },
+  {
+    "id":"SLG-1-002","name":"朝比奈 りん","color":"purple",
+    "energy":0,"ap":1,"bp":500,"gen":1,"trigger":"draw",
+    "type":"character","textAnchor":"登場時選一項：抽1張後將1張手牌送場外",
+    "implementation":"dsl",
+    "effects":{"onPlay":[{"op":"chooseOne","optional":false,"options":[
+      {"id":"drawDiscard","label":"抽一張，再將一張手牌送場外",
+       "turn":"any","then":[{"op":"drawDiscard","count":1}]},
+      {"id":"buffOther","label":"至多選其他己方角色 BP＋1000",
+       "turn":"own","then":[{"op":"buffOwnField","filter":{"field":"type","value":"character"},
+        "bp":1000,"optional":true,"excludeSelf":true}]}
+    ]}]}
+  },
+  {
+    "id":"SLG-1-001","name":"朝比奈 りん","color":"purple",
+    "energy":1,"ap":1,"bp":2500,"gen":1,"trigger":null,
+    "type":"character","textAnchor":"自己的回合中，若場外至少5張卡",
+    "implementation":"dsl","effects":{},
+    "passiveBonuses":[{"condition":{"kind":"outsideCount","turn":"own","min":5},"bp":500}]
+  },
+  {
+    "id":"SLG-1-009","name":"向坂 雫","color":"purple",
+    "energy":0,"ap":1,"bp":1500,"gen":1,"trigger":"active",
+    "type":"character","textAnchor":"主要階段每回合一次：將1張手牌送場外",
+    "implementation":"dsl","effects":{},
+    "mainAbility":{"op":"discardHandBuffSelf","oncePerTurn":true,
+      "discardCount":1,"bp":1500}
+  },
+  {
+    "id":"SLG-1-010","name":"向坂 雫","color":"purple",
+    "energy":3,"ap":1,"bp":3000,"gen":1,"trigger":"draw",
+    "type":"character","textAnchor":"自己的回合中，若場外有10張以上",
+    "implementation":"dsl","effects":{},
+    "passiveBonuses":[{"condition":{"kind":"outsideCount","turn":"own","min":10},"bp":1000}]
+  },
   {
     "id": "SLG-1-005",
     "name": "今宮 さつき",
@@ -31,6 +139,20 @@ const authored=[
     "implementation": "dsl",
     "activeExtraEnergy": 1,
     "effects": {}
+  },
+  {
+    "id": "SLG-1-012",
+    "name": "後藤 清臣",
+    "color": "purple",
+    "energy": 3,
+    "ap": 1,
+    "bp": 2500,
+    "gen": 2,
+    "trigger": null,
+    "type": "character",
+    "textAnchor": "己方場上存在水篠旬",
+    "implementation": "dsl",
+    "templateEffects": {"onPlay":[{"template":"drawIfOwnName","name":"水篠 旬","count":1}]}
   },
   {
     "id": "SLG-1-015",
@@ -69,6 +191,37 @@ const authored=[
     }
   },
   {
+    "id": "SLG-1-018",
+    "name": "水篠 旬",
+    "color": "purple",
+    "energy": 3,
+    "ap": 1,
+    "bp": 2500,
+    "gen": 2,
+    "trigger": "color",
+    "type": "character",
+    "textAnchor": "牌庫頂3張",
+    "implementation": "dsl",
+    "triggerEffect": {
+      "op": "deployOutsideCharacter",
+      "color": "purple",
+      "maxEnergy": 2,
+      "ap": 1,
+      "frontOnly": true
+    },
+    "templateEffects": {
+      "onPlay": [{
+        "template": "searchTopOneBottomDiscardWhere",
+        "count": 3,
+        "filters": [
+          {"field": "name", "value": "水篠 旬"},
+          {"field": "trait", "value": "影之軍團"}
+        ],
+        "logic": "any"
+      }]
+    }
+  },
+  {
     "id": "SLG-1-026",
     "name": "諸菱 賢太",
     "color": "purple",
@@ -103,6 +256,41 @@ const authored=[
     "implementation": "dsl",
     "impactNull": true,
     "effects": {}
+  },
+  {
+    "id": "SLG-1-036",
+    "name": "あの人に追いつきたい",
+    "color": "purple",
+    "energy": 3,
+    "ap": 1,
+    "bp": 0,
+    "gen": 0,
+    "trigger": "active",
+    "type": "event",
+    "textAnchor": "抽3張後將2張手牌送場外",
+    "implementation": "dsl",
+    "templateEffects": {
+      "onPlay": [{"template": "drawDiscardMany", "drawCount": 3, "discardCount": 2}]
+    }
+  },
+  {
+    "id": "SLG-1-037",
+    "name": "命の神水",
+    "color": "purple",
+    "energy": 4,
+    "ap": 1,
+    "bp": 0,
+    "gen": 0,
+    "trigger": "draw",
+    "type": "event",
+    "textAnchor": "原本BP4000以下的角色",
+    "implementation": "dsl",
+    "templateEffects": {
+      "onPlay": [
+        {"template": "recoverOutsidePrintedBp", "bp": 4000, "optional": true},
+        {"template": "draw", "count": 1}
+      ]
+    }
   },
   {
     "id": "SLG-1-038",

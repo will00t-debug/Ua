@@ -2,7 +2,7 @@
 // This module only compiles explicitly authored card abilities into existing
 // battle-engine DSL ops. It NEVER infers effects from printed card prose and
 // cannot authorize a card that has not passed the per-card official gate.
-const timings=Object.freeze(['onPlay','onRaid','onAttack','onRaided']);
+const timings=Object.freeze(['onPlay','onRaid','onAttack','onRaided','onOutsideRecover']);
 const integer=(x,lower,upper)=>Number.isInteger(x)&&x>=lower&&x<=upper;
 const positiveBp=v=>integer(v,1,5000);
 const threshold=v=>integer(v,1,50000);
@@ -23,11 +23,24 @@ const registry=Object.freeze({
  draw:{
   args:{count:v=>integer(v,1,10)},build:v=>[{op:'draw',count:v.count}]
  },
+ drawIfOwnEnergyAtLeast:{
+  args:{energy:v=>integer(v,1,50),count:v=>integer(v,1,5)},
+  build:v=>[{op:'drawIfOwnEnergyAtLeast',energy:v.energy,count:v.count}]
+ },
+ drawIfOwnName:{
+  args:{name:named,count:v=>integer(v,1,5)},
+  build:v=>[{op:'drawIfOwnName',name:v.name,count:v.count}]
+ },
  millTop:{
   args:{count:v=>integer(v,1,10)},build:v=>[{op:'millTop',count:v.count}]
  },
  drawDiscardOne:{
   args:{},build:()=>[{op:'drawDiscard',count:1}]
+ },
+ // Draw first, then require sequential physical-UID hand discards.
+ drawDiscardMany:{
+  args:{drawCount:v=>integer(v,1,10),discardCount:v=>integer(v,1,10)},
+  build:v=>[{op:'drawDiscard',count:v.drawCount,discardCount:v.discardCount}]
  },
  peekTopOne:{
   args:{},build:()=>[{op:'peekTopOne'}]
@@ -62,7 +75,28 @@ const registry=Object.freeze({
   args:{optional:yesNo},
   build:v=>[{op:'restOppFrontOne',optional:v.optional}]
  },
- retireEnemyIfFacedown:{
+ restEnemyFrontSkipNextActive:{
+  args:{optional:yesNo},
+  build:v=>[{op:'restOppFrontOne',optional:v.optional,skipNextActive:true}]
+ },
+ restEnemyUnderBpSkipNextActive:{
+  args:{bp:threshold,optional:yesNo},
+  build:v=>[{op:'restOppFrontUnderBp',bp:v.bp,optional:v.optional,skipNextActive:true}]
+ },
+ skipNextActiveOppRest:{
+  args:{optional:yesNo},
+  build:v=>[{op:'skipNextActiveOppRest',optional:v.optional}]
+ },
+ restSilenceOppFrontIfOwnOutsideField:{
+   args:{optional:requiredTrue},
+   build:()=>[{op:'restSilenceOppFrontIfOwnOutsideField',optional:true}]
+  },
+  restOrRetireEnemyFrontByOwnLife:{
+   args:{bp:threshold,lifeAtMost:v=>integer(v,0,20),optional:yesNo},
+   build:v=>[{op:'restOrRetireOppFrontByLife',bp:v.bp,
+    lifeAtMost:v.lifeAtMost,optional:v.optional}]
+  },
+  retireEnemyIfFacedown:{
   args:{bp:threshold,optional:requiredTrue},
   build:v=>[{op:'retireOppFrontIfFacedown',bp:v.bp,optional:true}]
  },
@@ -83,6 +117,11 @@ const registry=Object.freeze({
  recoverOutsideOne:{
   args:{filter,optional:yesNo},
   build:v=>[{op:'recoverOutsideOne',filter:{...v.filter},optional:v.optional}]
+ },
+ // Explicit printed original BP, never temporary buffs / source energy.
+ recoverOutsidePrintedBp:{
+  args:{bp:v=>integer(v,1,50000),optional:yesNo},
+  build:v=>[{op:'recoverOutsidePrintedBp',bp:v.bp,optional:v.optional}]
  },
  // An atomic, optional discard-one cost THEN draw; declining never draws.
  discardToDraw:{
@@ -168,6 +207,31 @@ const registry=Object.freeze({
  inspectTopAnyOutside:{
   args:{count:v=>integer(v,2,4),rest:v=>v==='top'||v==='bottom'},
   build:v=>[{op:'inspectTopAnyOutside',count:v.count,rest:v.rest}]
+ },
+ // Select up to one qualifying physical UID from exactly the top N cards.
+ // Controller orders all remaining inspected cards onto DECK BOTTOM, with no
+ // shuffle; only after a successful hand addition must exactly one card be
+ // discarded from hand (the chosen card itself remains a legal discard).
+ searchTopOneBottomDiscard:{
+  args:{count:v=>integer(v,1,5),filter},
+  build:v=>[{op:'searchTopOneBottomDiscard',count:v.count,filter:{...v.filter}}]
+ },
+ // Compose 2–3 distinct official name/trait predicates against the SAME
+ // inspected private TOP-N window. Preserves the same bottom-order and
+ // "discard only if a card was taken" runtime as single-filter cards.
+ searchTopOneBottomDiscardWhere:{
+  args:{
+   count:v=>integer(v,1,5),
+   filters:v=>Array.isArray(v)&&v.length>=2&&v.length<=3&&v.every(f=>
+    f&&typeof f==='object'&&!Array.isArray(f)&&Object.keys(f).length===2&&
+    ['name','trait','color','type'].includes(f.field)&&
+    typeof f.value==='string'&&!!f.value.trim()&&
+    (f.field!=='type'||['character','event','field'].includes(f.value)))&&
+    new Set(v.map(f=>f.field+':'+f.value)).size===v.length,
+   logic:v=>v==='any'||v==='all'
+  },
+  build:v=>[{op:'searchTopOneBottomDiscard',count:v.count,
+   filters:v.filters.map(f=>({...f})),logic:v.logic}]
  },
  payDiscardThen:{
   args:{optional:yesNo,then:v=>Array.isArray(v)&&v.length>=1&&v.length<=6},

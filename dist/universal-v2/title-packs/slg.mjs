@@ -3,12 +3,30 @@ import {SOLO_LEVELING_CARDS} from '../../solo-leveling.mjs';
 import {verifiedSlgV2Cards} from '../slg-pack.mjs';
 const records=Object.fromEntries(SOLO_LEVELING_CARDS.map(c=>[c.id,c]));
 const proof=Object.freeze({
+ '053':['Impact無效。登場時若場上有己方水篠旬，抽1張。','Original Japanese UA51BT/SLG-1-053 諸菱 賢太 GREEN3/AP1/BP2000/gen2 DRAW Life separately: IMPACT nullification plus onPlay draw exactly 1 only when OWN field has 〈水篠 旬〉 in front or energy line. Both printed clauses share existing native impactNull and drawIfOwnName V2 predicates, no separate reducer. Official https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-053; not fully FAQ certified.'],
+
+ '042':['主要階段每回合一次REST自己，額外產生1綠能源，主要階段結束時退場。','Official UA51BT/SLG-1-042 2026-04-17 errata-aware source: 馬渕 勲 GREEN0/AP1/BP1000/gen1 no life; rest OWN READY ENERGY source MAIN once per turn, current-turn GREEN+1, mandatory source retirement at MAIN end. Reuses native delayed-retire V2 primitive from SLG-1-013, TTG-1-063, BLEACH-1-069; old Japanese source name corrected in original official errata. No full FAQ certification.'],
+
+ '004':['自己的回合中，若本回合曾以己方效果將手牌送場外或從場外回收手牌','Official Japanese UA51BT/SLG-1-004 犬飼 晃 purple3/AP1/BP3500/gen1 DRAW life. OnPlay mandatory draw ONE then put ONE own HAND card into OUTSIDE. Live own-turn BP+500 only if since current turn start one OWN effect physically moved own HAND to OUTSIDE or own OUTSIDE to HAND (source independent; no stale count, no opponent effect). Exact source https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-004; no comprehensive FAQ certification.'],
+ '007':['退場時抽1張','Official Japanese UA51BT/SLG-1-007 エシル purple0 AP1 BP500 gen1; onRetire DRAW1; DRAW Life separately.'],
+ '008':['經自己效果從場外加入手牌時','Official UA51BT/SLG-1-008 エシル purple1/AP1/BP2000/gen1 NO Life: self OWN-OUTSIDE-to-hand by OWN effect triggers mandatory draw1 then discard1. OnPlay inspect TOP4, choose 0..1 by exact JP NAME 水篠 旬 OR 悪魔の城 (both name filters, NOT traits), put the rest in chosen order on BOTTOM, discard1 only after actual addition. Source https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-008; full FAQ QA not claimed.'],
+ '014':['經自己的效果從場外加入手牌時','Official UA51BT/SLG-1-014 水篠 聡子 purple2/AP1/BP1000/gen1: OWN outside recovered to own hand by own effect may REST enter ENERGY for free; cannot enter or move to FRONT even with a swap, FAQ Q2025 2026-04-17; onPlay mandatory TOP1 mill. Not full FAQ certified.'],
+ '013':['主要階段每回合一次：REST此角色','Official Japanese UA51BT/SLG-1-013 水篠 葵 purple0 AP1 BP1000 gen1; ENERGY line MAIN REST once per turn, +1 energy this turn, retire source at MAIN end; no Life trigger.'],
+ '025':['登場時選一項：抽2張','Official Japanese UA51BT/SLG-1-025 観月 絵里 purple3/AP2/BP2000/gen2, ACTIVE life: onPlay mandatory choose draw2 OR draw1 then optional own-outside TRAITLESS character with printed energy <=3 recover; ACTIVE life readies one own character and gives BP+3000 until turn end. Not full FAQ certified.'],
+ '002':['登場時選一項：抽1張後將1張手牌送場外','UA51BT/SLG-1-002 printed: purple0/AP1/BP500/gen1, DRAW life; onPlay choose exactly ONE: draw1 then mandatory discard1; OR own turn select up to one OTHER own field character for current-turn BP+1000. Official Japanese source https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-002. Not full FAQ certified.'],
+ '001':['自己的回合中，若場外至少5張卡','Official UA51BT/SLG-1-001: own turn and own outside >=5 yields persistent BP+500; no life trigger.'],
+ '009':['主要階段每回合一次：將1張手牌送場外','Official Japanese UA51BT/SLG-1-009 向坂 雫: purple0/AP1/BP1500/gen1 and independent ACTIVE Life; MAIN discard exactly one OWN hand physical UID, once per turn, this character BP+1500 for that turn, no AP or REST activation cost. Source: https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-009; not fully FAQ-certified.'],
+ '010':['自己的回合中，若場外有10張以上','Official UA51BT/SLG-1-010: own turn and own outside >=10 yields persistent BP+1000; separate DRAW life trigger.'],
  '005':['無印刷角色能力','無印刷內文，DRAW Life'],
  '006':['ACTIVE','只有 ACTIVE 時紫額外能源一'],
+ '012':['己方場上存在水篠旬','Official UA51BT/SLG-1-012: purple 3 AP1 BP2500 gen2; onPlay draw exactly one iff own front or energy line contains a character named 水篠 旬, never hand/opponent field, no life Trigger.'],
  '015':['無印刷角色能力','無內文效果，GET Life'],
  '016':['牌庫頂2張','登場強制送二卡場外，IMPACT 無效'],
+ '018':['牌庫頂3張','Official UA51BT/SLG-1-018: purple3/AP1/BP2500/gen2; onPlay inspect TOP3, reveal 0..1 name 水篠 旬 OR trait 影の軍団, bottom order the rest, then discard one only on successful hand addition. The imported source labels the printed 影の軍団 trait in Traditional Chinese as 影之軍團 (explicit source-to-filter translation, no source mutation). Independent COLOR life: own OUTSIDE purple CHARACTER energy<=2 and AP1 to ACTIVE front with no AP cost.'],
  '026':['登場時讓另一己方','強制回手其他己方低費角色，否則自身回手'],
  '032':['IMPACT無效','純 IMPACT 無效，ACTIVE Life'],
+ '036':['抽3張後將2張手牌送場外','官方 UA51BT/SLG-1-036：抽三張，然後強制送兩張己方手牌場外；ACTIVE Life 獨立處理'],
+ '037':['原本BP4000以下的角色','UA51BT/SLG-1-037 optional own-outside printed character BP<=4000, then unconditional draw one. Official Q2039 (2026-04-17): original BP is bottom-left PRINTED number; no buffs. Life DRAW is separate.'],
  '038':['最多2張己方AP','事件至多回復二 AP，Life FINAL 與事件分流'],
  '040':['BP3000以下','紫事件有水篠旬才把退場 BP3000 改為 BP5000；Life SPECIAL 無條件'],
  '041':['ACTIVE','只有 ACTIVE 時綠額外能源一'],
@@ -38,7 +56,19 @@ export default Object.freeze({
    evidence:{printedTextFragments:[review[0]],
     reviewNote:review[1]+'；日文公式卡文來源 '+record.source+
      '；原始 source BP = '+String(record.bp),
-    testFiles:['tests/universal-v2-slg-port.test.mjs'],
+    testFiles:['tests/universal-v2-slg-port.test.mjs',
+     ...(def.id==='SLG-1-007'||def.id==='SLG-1-013'?['tests/v2-retire-delayed-slg.test.mjs']:[]),
+     ...(def.id==='SLG-1-002'?['tests/v2-choice-mode-slg002.test.mjs']:[]),
+     ...(def.id==='SLG-1-025'?['tests/v2-slg-025-traitless-recovery.test.mjs']:[]),
+     ...(def.id==='SLG-1-014'?['tests/v2-slg-014-recover-entry.test.mjs']:[]),
+     ...(def.id==='SLG-1-008'?['tests/v2-slg-008-on-outside-recover.test.mjs']:[]),
+     ...(def.id==='SLG-1-009'?['tests/v2-slg-009-discard-main.test.mjs']:[]),
+     ...(def.id==='SLG-1-004'?['tests/v2-slg-004-turn-zone-ledger.test.mjs']:[]),
+     ...(def.id==='SLG-1-012'?['tests/v2-slg-012-own-name.test.mjs']:[]),
+     ...(def.id==='SLG-1-018'?['tests/v2-slg-018-compound-top.test.mjs']:[]),
+     ...(def.id==='SLG-1-037'?['tests/v2-slg-037-original-bp.test.mjs']:[]),
+     ...(def.id==='SLG-1-042'?['tests/v2-slg-042-shared-energy.test.mjs']:[]),
+     ...(def.id==='SLG-1-053'?['tests/v2-slg-053-own-name-impact-null.test.mjs']:[])],
     ...(def.implementation==='vanilla'?{verifiedNoExtraEffects:true}:{})}
   });
  }))

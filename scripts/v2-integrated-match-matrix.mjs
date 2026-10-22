@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import {assertIndependentV2Inventory} from '../tests/fixtures/v2-integrated-id-manifest.mjs';
+import {v2AllTitleInventory} from '../dist/universal-v2/title-packs/inventory.mjs';
 // 2026-10-15 integrated V2 candidate verification: 5 independent real titles,
 // 10 title pairs x 2 first-player orientations x 3 fixed shuffle seeds.
 // This exercises the EXACT current registry and one reducer in one commit.
@@ -22,8 +24,7 @@ const roster=['bleach-green','gurren-lagann-red','solo-leveling',
 const seeds=[747,20261015,20261016];
 const results=[],errors=[];
 const coverage=listRegisteredV2Titles();
-if(coverage.map(x=>x.totalV2Cards).join(',')!=='78,23,18,39,23')
- throw Error('Integrated V2 candidate drifted from pinned 181 printed IDs');
+assertIndependentV2Inventory(v2AllTitleInventory());
 for(const key of roster){
  const {pack,counts}=presets[key];
  if(validateUniversalDeck(pack,counts).length||
@@ -63,7 +64,7 @@ for(let i=0;i<roster.length;i++)for(let j=i+1;j<roster.length;j++){
   results.push(entry);
  }
 }
-const summary={candidate:'V2 five-title 181-card pilot integrated matrix',
+const summary={candidate:'V2 five-title 250-card source-pinned integrated matrix',
  seedValues:seeds,matchCount:results.length,passed:results.filter(x=>x.pass).length,
  failed:errors.length,titles:coverage.map(x=>({title:x.title,ported:x.totalV2Cards})),
  disclaimer:'Only selected real 50-card decks, NOT full printed-FAQ acceptance',
