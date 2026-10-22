@@ -6,9 +6,8 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
 import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
 import {countRetirementsThisTurn} from '../dist/universal-v2/field-conditions.mjs';
 
-// Real cards only. DAMAGE2 stays the existing one-LIFE-at-a-time queue.
-// Official Q74 orders 退場時 before the next battle consequence. Here the
-// consequence is the already-queued second LIFE, not a rewritten damage loop.
+// Real cards only. Q73 simultaneously reveals LIFE, while Q74 guarantees
+// SPECIAL retirement triggers finish before another LIFE trigger is resolved.
 // MST-1-076 SPECIAL retires one opposing front character. BLC-2-040 prints
 // 退場：抽1張. Leaving LIFE is not retirement, so 076's own 退場時 does not fire.
 const pack=registeredV2TitlePack('bleach'),mst=registeredV2TitlePack('mushoku-tensei'),packs=[pack,mst];
@@ -79,19 +78,24 @@ function reachSpecialLife(){
  assert.equal(s.pending?.kind,'block');
  const beforeLife=s.players[1].life.length;
  s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:null},{actor:1});
+ assert.equal(s.pending?.kind,'life-batch-order');
+ assert.equal(s.publicReveals.length,2);
+ assert.deepEqual(s.players[1].lifeRevealed.map(c=>c.uid),[special.uid,secondLife.uid]);
+ s=dispatchUniversalAction(packs,s,{type:'chooseLifeOrder',uid:special.uid},{actor:1});
  assert.equal(s.pending?.kind,'life-trigger');
  assert.equal(s.pending.trigger,'special');
  assert.equal(s.pending.uid,special.uid);
  assert.equal(s.pending.player,1);
- assert.equal(s.players[1].life.length,beforeLife-1);
- assert.equal(s.players[1].life[0].uid,secondLife.uid);
+ assert.equal(s.players[1].life.length,beforeLife-2);
+ assert.ok(s.players[1].lifeRevealed.some(c=>c.uid===secondLife.uid));
  assert.equal(s.effectQueue.some(e=>e.op==='deployOutsideTraitlessRestOrRaid'),false,
   'LIFE leaving the life area is not 退場時');
- assert.equal(s.effectQueue.filter(e=>e.op==='additionalBattleDamage').length,1);
+ assert.equal(s.effectQueue.filter(e=>e.op==='additionalBattleDamage').length,0);
+ assert.ok(s.effectQueue.some(e=>e.op==='lifeBatchStep'));
  return {s,chilch,attacker:firstTop,secondLife,beforeLife,special};
 }
 
-test('SPECIAL retirement draws BLC-2-040 before the queued second LIFE is revealed',()=>{
+test('Q73 SPECIAL retirement draws BLC-2-040 before second revealed LIFE trigger resolves',()=>{
  let {s,chilch,secondLife,beforeLife}=reachSpecialLife();
  const drawn=s.players[0].deck[0];
  const ownDeck=s.players[0].deck.length,ownHand=s.players[0].hand.length;
@@ -111,7 +115,7 @@ test('SPECIAL retirement draws BLC-2-040 before the queued second LIFE is reveal
  assert.equal(s.players[0].deck.length,ownDeck-1);
  assert.equal(s.players[0].hand.length,ownHand+1);
  assert.equal(s.players[1].life.length,beforeLife-2);
- assert.ok(s.players[1].outside.some(c=>c.uid===secondLife.uid));
+ assert.ok(s.players[1].lifeRevealed.some(c=>c.uid===secondLife.uid));
  assert.ok(!s.players[1].hand.some(c=>c.uid===secondLife.uid));
  assert.equal(s.effectQueue.some(e=>e.op==='draw'),false);
  assert.equal(s.turnRetireEvents.filter(e=>e.uid===chilch.uid).length,1);
@@ -124,11 +128,13 @@ test('SPECIAL retirement draws BLC-2-040 before the queued second LIFE is reveal
  assert.ok(legalUniversalActions(packs,s).some(a=>a.mode==='get'));
  s=dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'skip'},{actor:1});
  assert.equal(s.pending,null);
+ assert.ok(s.players[1].outside.some(c=>c.uid===secondLife.uid));
+ assert.equal(s.lifeRevealBatch,null);
  assert.equal(s.players[0].hand.filter(c=>c.uid===drawn.uid).length,1);
  assert.equal(assertUniversalMatch(packs,s),true);
 });
 
-test('SPECIAL retirement of a character with no onRetire still reveals the next LIFE exactly once',()=>{
+test('SPECIAL without onRetire does not duplicate already revealed Q73 LIFE',()=>{
  let {s,attacker,chilch,secondLife,beforeLife}=reachSpecialLife();
  const ownDeck=s.players[0].deck.length;
  const choice=legalUniversalActions(packs,s).find(a=>a.mode==='special'&&a.uid===attacker.uid);
