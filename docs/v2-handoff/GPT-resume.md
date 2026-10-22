@@ -725,7 +725,7 @@ This section records the last fully evaluated **code commit** `d16ffce0`. A docu
 - `node scripts/v2-integrated-match-matrix.mjs`：60/60 finished，failures 0。
 - `node scripts/v2-unported-report.mjs`：700／Pilot 257／尚未移植 443／嚴格全面驗收 0，且 manifest 與 registry 一致。
 
-GitHub Actions 在本文件寫下時尚未對 `cursor/v2-multi-retire-life-6ff5` 回報。推送後的 CI 必須另查，不能借用 `fb2bd3e` 或 `810e669`。
+GitHub CI：Draft PR https://github.com/will00t-debug/Ua/pull/77 合併目標是 `codex/v2-resume-20261021`。建立後唯一檢查是 Gitar pending；`gh run list --branch cursor/v2-multi-retire-life-6ff5` 沒有 Actions run。原因是 `.github/workflows/v2-resume.yml` 只在 push 到 `codex/v2-resume-20261021` 時跑 Node 22 的 `npm test`、矩陣與未移植報告，PR 進該分支不會觸發。本輪沒有把 commit 推上那條共用分支，避免改寫 PR #75 的 HEAD。因此不能宣稱本輪 GitHub Node 22 CI 已通過，也不能借用 `fb2bd3e`。
 
 ### 未完成與下一輪
 
