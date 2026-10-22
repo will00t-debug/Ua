@@ -33,6 +33,8 @@ function duel({single=false}={}){
  const pl=s.players[1];pl.deck.push(...pl.life.splice(0));
  const special=take(s,1,'R241'),final=take(s,1,'R242'),plain=take(s,1,'R247');
  pl.life.push(...(single?[plain]:[special,final]));
+ // Every unused fixture stays in a real zone: never fabricate missing UID cards.
+ pl.deck.push(...(single?[special,final]:[plain]));
  s.phase='attack';
  s=dispatchUniversalAction(packs,s,{type:'attack',uid:attacker.uid});
  return {s,attacker,victim,special,final,plain};
