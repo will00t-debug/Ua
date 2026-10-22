@@ -154,3 +154,69 @@ test('R28 serialized earned grant cannot upgrade its bounded printed-free progra
  }
  assert.equal(assertUniversalMatch(packs,s),true);
 });
+
+
+// R29: combined physical source departure, original-text silence, and
+// independently earned status grants; all operations are verified in the
+// already existing universal continuousStates/action pipeline.
+for(const owner of [0,1])
+ test('R29 granted two independent attacks survive giver departure AND recipient printed silence, owner '+owner,async()=>{
+  const {grantContinuousState,pruneContinuousStates,originalEffectsDisabled}=
+   await import('../dist/universal-v2/continuous-states.mjs');
+  let {s,target}=game(owner,true);
+  const giverIndex=s.players[owner].front.findIndex(c=>c?.cardId==='G1');
+  const giver=s.players[owner].front[giverIndex];
+  assert.ok(giver&&giver.uid!==target.uid);
+  const ids=s.continuousStates.filter(e=>e.kind==='grantedOnAttack'&&e.targetUid===target.uid).map(e=>e.id);
+  assert.equal(new Set(ids).size,2);
+  grantContinuousState(s,{kind:'originalEffectsDisabled',controller:1-owner,
+   sourceUid:target.uid,targetUid:target.uid,sourceLinked:false,
+   until:{player:owner,phase:'attack',edge:'end'}});
+  s.players[owner].front[giverIndex]=null;s.players[owner].outside.push(giver);
+  pruneContinuousStates(s);
+  assert.equal(originalEffectsDisabled(s,s.players[owner].front[0]),true);
+  assert.deepEqual(s.continuousStates.filter(e=>e.kind==='grantedOnAttack'&&
+   e.targetUid===target.uid).map(e=>e.id),ids);
+  assert.equal(assertUniversalMatch(packs,s),true);
+  const start=s.players[owner].deck.length;
+  s=dispatchUniversalAction(packs,s,{type:'attack',uid:target.uid},{actor:owner});
+  assert.equal(s.players[owner].deck.length,start,'original printed onAttack is silenced');
+  for(const mode of ['draw','skip']){
+   assert.equal(s.pending?.kind,'granted-attack-draw');
+   const actions=legalUniversalActions(packs,s);
+   for(const difficulty of ['normal','hard'])
+    assert.ok(actions.some(a=>JSON.stringify(a)===JSON.stringify(
+     chooseUniversalAiAction(packs,s,{difficulty}))));
+   const before=structuredClone(s);
+   assert.throws(()=>dispatchUniversalAction(packs,s,{type:'chooseGrantedDraw',
+    mode:'fake'},{actor:owner}),/not currently legal/);
+   assert.deepEqual(s,before);
+   s=JSON.parse(JSON.stringify(s));
+   assert.equal(assertUniversalMatch(packs,s),true);
+   s=dispatchUniversalAction(packs,s,{type:'chooseGrantedDraw',mode},{actor:owner});
+  }
+  assert.equal(s.pending?.kind,'block');
+  assert.equal(s.players[owner].deck.length,start-1,'only one of two earned draws was chosen');
+  assert.equal(universalPublicView(packs,s,1-owner).players[owner].hand,null);
+  assert.equal(assertUniversalMatch(packs,s),true);
+ });
+
+test('R29 earned grants cannot follow reused physical UID into a new field incarnation',async()=>{
+ const {pruneContinuousStates}=await import('../dist/universal-v2/continuous-states.mjs');
+ let {s,target}=game(0,true);
+ const oldStamp=s.players[0].front[0].fieldEntryStamp;
+ assert.equal(s.continuousStates.filter(e=>e.kind==='grantedOnAttack'&&e.targetUid===target.uid).length,2);
+ const slot=s.players[0].front.findIndex(c=>c?.uid===target.uid);
+ assert.ok(slot>=0);
+ const samePhysical=s.players[0].front[slot];s.players[0].front[slot]=null;
+ s.players[0].outside.push(samePhysical);
+ pruneContinuousStates(s);
+ assert.equal(s.continuousStates.some(e=>e.kind==='grantedOnAttack'&&e.targetUid===target.uid),false);
+ assert.equal(assertUniversalMatch(packs,s),true);
+ s.players[0].outside.splice(s.players[0].outside.findIndex(c=>c.uid===target.uid),1);
+ samePhysical.fieldEntryStamp=s.nextFieldEntryStamp++;
+ s.players[0].front[slot]=samePhysical;
+ assert.notEqual(samePhysical.fieldEntryStamp,oldStamp);
+ assert.equal(s.continuousStates.some(e=>e.kind==='grantedOnAttack'&&e.targetUid===target.uid),false);
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
