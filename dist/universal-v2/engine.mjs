@@ -1727,12 +1727,19 @@ export function legalUniversalActions(pack,s){
   for(const c of pl.energy.filter(Boolean)){
    const ability=originalEffectsDisabled(s,c)?null:card(pack,c).mainAbility;
    if(ability?.op==='restSelfGainEnergyRetireEndMain'&&
+    (ability.energyOnly===true||ability.lines==='energy'||ability.lines==='field')&&
     c.ready&&!s.mainAbilityUsedUids.includes(c.uid))
     out.push({type:'activate',uid:c.uid,mode:'selfRestEnergyRetire'});
   }
   for(const c of pl.front.filter(Boolean)){
    const d=card(pack,c),ability=originalEffectsDisabled(s,c)?null:d.mainAbility;
    if(!ability)continue;
+   if(ability.op==='restSelfGainEnergyRetireEndMain'){
+    if((ability.lines==='front'||ability.lines==='field')&&
+     c.ready&&!s.mainAbilityUsedUids.includes(c.uid))
+     out.push({type:'activate',uid:c.uid,mode:'selfRestEnergyRetire'});
+    continue;
+   }
    if(ability.op==='retireOwnFieldThen'){
     if(!s.mainAbilityUsedUids.includes(c.uid)&&pl.energy.some(x=>x&&card(pack,x).type==='field'))
      out.push({type:'activate',uid:c.uid,mode:'retireFieldThen'});
@@ -1895,10 +1902,13 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
     break;
    }
    if(ability.op==='restSelfGainEnergyRetireEndMain'){
-    if(action.mode!=='selfRestEnergyRetire'||
-     !pl.energy.some(c=>c?.uid===selected.uid)||!selected.ready||
+    const line=pl.energy.some(c=>c?.uid===selected.uid)?'energy':
+     pl.front.some(c=>c?.uid===selected.uid)?'front':null;
+    const lineAllowed=ability.energyOnly===true?line==='energy':
+     ability.lines==='field'||ability.lines===line;
+    if(action.mode!=='selfRestEnergyRetire'||!lineAllowed||!selected.ready||
      s.mainAbilityUsedUids.includes(selected.uid))
-     throw Error('Delayed energy requires READY own energy-line source, once per turn');
+     throw Error('Delayed energy requires a READY source on a printed line, once per turn');
     if(!Number.isInteger(selected.fieldEntryStamp)||selected.fieldEntryStamp<1)
      selected.fieldEntryStamp=s.nextFieldEntryStamp++;
     selected.ready=false;

@@ -1311,7 +1311,7 @@ export const SAO_OFFICIAL_CARDS=[
   "ap": 1,
   "bp": 1000,
   "bpPrinted": "1000",
-  "gen": 2,
+  "gen": 1,
   "traits": [
    "プログレッシブ"
   ],
@@ -2157,7 +2157,7 @@ export const SAO_OFFICIAL_CARDS=[
   "ap": 1,
   "bp": 1000,
   "bpPrinted": "1000",
-  "gen": 2,
+  "gen": 1,
   "traits": [
    "ALO"
   ],
@@ -3144,7 +3144,7 @@ export const SAO_OFFICIAL_CARDS=[
   "ap": 1,
   "bp": 1000,
   "bpPrinted": "1000",
-  "gen": 2,
+  "gen": 1,
   "traits": [
    "アインクラッド"
   ],
@@ -4430,7 +4430,7 @@ export const SAO_OFFICIAL_CARDS=[
   "ap": 1,
   "bp": 1000,
   "bpPrinted": "1000",
-  "gen": 2,
+  "gen": 1,
   "traits": [
    "GGO"
   ],
@@ -4744,7 +4744,7 @@ export const SAO_OFFICIAL_CARDS=[
   "ap": 1,
   "bp": 1000,
   "bpPrinted": "1000",
-  "gen": 2,
+  "gen": 1,
   "traits": [
    "アインクラッド"
   ],

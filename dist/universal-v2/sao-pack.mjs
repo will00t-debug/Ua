@@ -1083,6 +1083,58 @@ const PRINTED_PINS=Object.freeze({
     "trigger": "draw",
     "traits": ["プログレッシブ"],
     "effectJa": "このカードは〈アスナ〉としても扱う。\n【登場時】カードを1枚引き、自分の手札を1枚場外に置く。"
+  },
+  "SAO-1-008": {
+    "kind": "fieldRestEnergyRetireEndMain",
+    "nameJa": "ユイ",
+    "color": "yellow",
+    "energy": 0,
+    "ap": 1,
+    "bp": 1000,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "traits": ["ALO"],
+    "effectJa": "【起動メイン】【レストにする】 【ターン1】このターン中、このキャラの発生エナジー+【黄】。メインフェイズ終了時、このキャラを退場させる。"
+  },
+  "SAO-1-045": {
+    "kind": "fieldRestEnergyRetireEndMain",
+    "nameJa": "ピナ",
+    "color": "blue",
+    "energy": 0,
+    "ap": 1,
+    "bp": 1000,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "traits": ["アインクラッド"],
+    "effectJa": "【起動メイン】【レストにする】 【ターン1】このターン中、このキャラの発生エナジー+【青】。メインフェイズ終了時、このキャラを退場させる。"
+  },
+  "SAO-1-093": {
+    "kind": "fieldRestEnergyRetireEndMain",
+    "nameJa": "ゼクシード",
+    "color": "green",
+    "energy": 0,
+    "ap": 1,
+    "bp": 1000,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "traits": ["GGO"],
+    "effectJa": "【起動メイン】【レストにする】 【ターン1】このターン中、このキャラの発生エナジー+【緑】。メインフェイズ終了時、このキャラを退場させる。"
+  },
+  "SAO-2-050": {
+    "kind": "fieldRestEnergyRetireEndMain",
+    "nameJa": "ディアベル",
+    "color": "purple",
+    "energy": 0,
+    "ap": 1,
+    "bp": 1000,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "traits": ["プログレッシブ"],
+    "effectJa": "【起動メイン】【レストにする】 【ターン1】このキャラはこのターン中、発生エナジー+【紫】と「メインフェイズ終了時、このキャラを退場させる。」を得る。"
   }
 });
 export const SAO_V2_PILOT_IDS=Object.freeze(Object.keys(PRINTED_PINS).sort());
@@ -1142,6 +1194,16 @@ export function verifiedSaoV2Cards(){
    card.effects={onPlay:[{op:'activeSelfIf',when:{
     kind:'ownTraitCount',turn:'any',min:4,zone:'field',excludeSelf:true,trait:'整合騎士'
    }}]};
+  }
+  // Printed 【レストにする】 has no エナジーL / フロントL restriction.
+  // The header 色+ icon is one color pip plus a plus mark (gen 1). The extra
+  // pip is this activate ability, not a continuous ACTIVE bonus. SAO-2-050
+  // gains the same resolved state with 「を得る」; a later silence does not
+  // erase that gained energy or the already scheduled retirement.
+  if(pin.kind==='fieldRestEnergyRetireEndMain'){
+   card.effects={};
+   card.mainAbility={op:'restSelfGainEnergyRetireEndMain',lines:'field',
+    oncePerTurn:true,extraEnergy:1};
   }
   if(pin.kind==='nameAliasDrawDiscard'||pin.kind==='nameAliasOnly'||pin.kind==='nameAliasStep'){
    card.nameAliases={
@@ -1266,6 +1328,7 @@ export function verifiedSaoV2Entries(){
      ...(pin.kind==='frontOnceBpDown'||pin.kind==='frontOnceDiscardBpDown'?['tests/v2-single-bp-target-round14.test.mjs']:[]),
      ...(pin.kind==='nameAliasDrawDiscard'||pin.kind==='nameAliasOnly'||pin.kind==='nameAliasStep'?['tests/v2-name-alias-round14.test.mjs']:[]),
      ...(pin.kind==='nameAliasActiveIfTrait'?['tests/v2-conditional-entry-active-round15.test.mjs']:[]),
+     ...(pin.kind==='fieldRestEnergyRetireEndMain'?['tests/v2-field-energy-retire-round15.test.mjs']:[]),
      ...(pin.kind==='nameAliasOnly'||pin.kind==='nameAliasStep'?['tests/v2-zero-engine-round14.test.mjs']:[]),
      'tests/universal-v2-sao-mst-cross-title.test.mjs'
     ]),
