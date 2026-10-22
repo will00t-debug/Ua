@@ -48,7 +48,8 @@ for(const finalFirst of [false,true])test('Q38 SPECIAL retirement owner switches
   s=dispatchUniversalAction(packs,s,{type:'chooseLifeOrder',uid:final.uid},{actor:1});
   s=dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'final'},{actor:1});
  }
- s=dispatchUniversalAction(packs,s,{type:'chooseLifeOrder',uid:special.uid},{actor:1});
+ if(!finalFirst)s=dispatchUniversalAction(packs,s,{type:'chooseLifeOrder',uid:special.uid},{actor:1});
+ else assert.equal(s.pending?.uid,special.uid,'single remaining LIFE automatically opens its check');
  s=dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'special',uid:victim.uid},{actor:1});
  assert.equal(s.pending?.kind,'effect-buff-own');
  assert.equal(s.pending.player,0,'onRetire belongs to active attacking player');
