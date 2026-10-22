@@ -397,3 +397,18 @@ See [V2-R26-Q2315-hidden-earned-moves.md](./V2-R26-Q2315-hidden-earned-moves.md)
 ## GPT R27 — Q38 cross-owner and exact earned event provenance (2026-10-22)
 
 Details and official rules in [V2-R27-Q38-physical-event-hardening.md](./V2-R27-Q38-physical-event-hardening.md). Existing PR #78, branch gpt/v2-resume-20261022 unchanged. Four code batches: A `4d834308` prevents stale REST/tuck legal actions after watched physical target leaves (remote Actions 39803940806 success); B `0272eec`→`e15bdc`→`39ef2a2` validates earned move-order save event UID/stamp/queue provenance (intermediate CI RED corrected, do not count); C `047da8e` two-title cross-owner Q38 COLOR onPlay and paid physical event trigger vs FINAL (Actions [39804712396](https://github.com/will00t-debug/Ua/actions/runs/39804712396) SUCCESS Node22 **1792/1792**, matrix **60/60**, unchanged registry 312/700); D `767331e` tests nested LIFE injection atomic rollback and pre-earning Q2220 original-effects silence, remote CI must be checked. E documentation-only consolidation in this commit. Nested LIFE remains fail-closed. No real card registration, main merge, PR77 edit, force push or production deploy. Full official certification 0, 388 unported. Reconfirm final SHA exact CI.
+
+
+## GPT 第二十八輪｜Q12、授予能力、019/047 合成整合及跨作品真卡盤點（2026-10-22）
+
+在同一 PR #78 / `gpt/v2-resume-20261022` 上接續已驗收第 27 輪 HEAD `ee5c1212`。確認程式 `767331eb` 遠端 Actions [39804977135](https://github.com/will00t-debug/Ua/actions/runs/39804977135) **success**，交接 `ee5c1212` [39805362290](https://github.com/will00t-debug/Ua/actions/runs/39805362290) success。寫入前檢查遠端 HEAD；沒有可用本地 checkout，所有 Node22 測試依實際 GitHub Actions 為證據，並不宣稱本地執行。
+
+1. **A** `30813700`，修正 `1460cbf5`: [official Q12](https://www.unionarena-tcg.com/jp/faq/list.php?category=ゲーム進行) 在最後兩張 LIFE 以 DRAW→FINAL 和 FINAL→DRAW 結算時，先確保 zero LIFE 不立即勝負判定，並驗證非法 Trigger 選擇不改變序列化及公開狀態。初版 Actions [39808601108](https://github.com/will00t-debug/Ua/actions/runs/39808601108) RED，測試自身誤以為最後單一剩餘 LIFE 仍需 `chooseLifeOrder`；修正依既有排程器自動進入最後 Trigger，沒有削弱檢查。
+2. **B** `578d3a16`: 在正式 50 張模擬資料的共享 grant 引擎驗證兩張獨立授予、來源離場、已獲能力於印刷文字遭封印後仍可抽，原本印刷 onAttack 抽牌停止，並對壞的程序 count、optional、到期、source linkage 序列化拒絕。這是特定原語的驗證，不稱所有授予語意都已完成。
+3. **C** `06f3bd3b`: `tests/v2-r25-blc-official-print-pilot.test.mjs` 補一條原本獨立 50 卡合法 deck 的 BLC-2-019 Raid→兩敵方 -1500→MAIN 合法棄 BLC-2-047→整段來源抽1、+1000 BP、授予 onAttack→已取得 047 抽1→**真正 attack 時**另外選擇抽1；驗證合法 AI 選項、UID、存檔狀態。完整「017/047 及其他互動」的全卡 FAQ 認證仍尚缺，**019、047 不正式登錄**。
+4. **D** `4d66b1d3`: [跨作品完整印刷卡文與缺口矩陣](./V2-R28-cross-title-print-audit.md)：TTG-1-028、SLG-1-070、SAO-1-005、MST-1-059 各自來源可查、皆尚未移植；拒絕只憑 DSL 部分吻合就登錄。
+5. **E** `819dce2e`: [跨玩家優先權及連鎖 LIFE 官方規則差異表](./V2-R28-priority-and-nested-life-proof.md)：辨別 Q12、Q35–38、Q71–74 和 MST Q2220/Q2228 已覆蓋與未知的範圍，保留既有 **nested LIFE atomic fail-closed**。沒有建立第二套引擎、沒有增加任何 DSL operation，只有可驗證測試與研究檔。
+
+驗收：修正 A+新增 B 的 [39808947609](https://github.com/will00t-debug/Ua/actions/runs/39808947609) Node22 **1800/1800**，五作品 60/60；加入 C 的 [39809160866](https://github.com/will00t-debug/Ua/actions/runs/39809160866) Node22 **1801/1801**，五作品 60/60、獨立 manifest 和 report 成功；加入 D 文件的 [39809645550](https://github.com/will00t-debug/Ua/actions/runs/39809645550) 同樣 **1801/1801**, 60/60。E 與本交接文件提交後，仍須核對其對應 SHA 的新 Actions，不可沿用更舊的結果。
+
+登錄快照：BLEACH 97、TTG 35、SLG 41、SAO 91、MST 48，共 **312/700**，未移植 **388**，逐卡全面 FAQ 認證 **0**。最新獨立 source 中 SLG 仍有 12 個原始 metadata 缺欄。下一輪先處理 R28 尚未通過官方完整驗收的跨雙方同時待結算效果、SPECIAL/退場與 onRaid 合併優先權、來源不同時間封印後再移動、真卡 BLC-2-019/047 的全場景完整整合及連鎖第二批 LIFE 的必要官方依據。保留 Cursor PR #77、main、正式 Vercel 原狀。
