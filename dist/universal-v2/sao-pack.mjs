@@ -1162,6 +1162,19 @@ const PRINTED_PINS=Object.freeze({
     "traits": ["整合騎士"],
     "effectJa": "自分の場に他の［特徴：整合騎士］が3枚以上ある場合、このキャラの発生エナジー+【黄】。"
   },
+  "SAO-2-005": {
+    "kind": "ownTraitImpact",
+    "nameJa": "シェータ・シンセシス・トゥエルブ",
+    "color": "yellow",
+    "energy": 2,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "traits": ["整合騎士"],
+    "effectJa": "自分の場に他の［特徴：整合騎士］が4枚以上ある場合、このキャラは【インパクト（1）】（アタックしてバトルに勝利した時、相手プレイヤーに1ダメージ）を得る。"
+  },
   "SAO-2-008": {
     "kind": "ownTurnTraitBp",
     "nameJa": "レンリ・シンセシス・トゥエニセブン",
@@ -1265,6 +1278,13 @@ export function verifiedSaoV2Cards(){
    card.effects={};
    card.passiveBonuses=[{condition:{kind:'ownTraitCount',turn:'own',min:4,
     zone:'field',excludeSelf:true,trait:'整合騎士'},bp:1500}];
+  }
+  // SAO-2-005 has no 自分のターン中 and no unconditional 【インパクト（1）】.
+  // Four other 整合騎士 must be on the own field. This card does not count.
+  if(pin.kind==='ownTraitImpact'){
+   card.effects={};
+   card.passiveBonuses=[{condition:{kind:'ownTraitCount',turn:'any',min:4,
+    zone:'field',excludeSelf:true,trait:'整合騎士'},impact:1}];
   }
   if(pin.kind==='nameAliasDrawDiscard'||pin.kind==='nameAliasOnly'||pin.kind==='nameAliasStep'){
    card.nameAliases={
@@ -1392,6 +1412,7 @@ export function verifiedSaoV2Entries(){
      ...(pin.kind==='nameAliasStepBothNamesColorRest'?['tests/v2-sao-012-color-rest.test.mjs']:[]),
      ...(pin.kind==='fieldRestEnergyRetireEndMain'?['tests/v2-field-energy-retire-round15.test.mjs']:[]),
      ...(pin.kind==='ownTraitEnergy'||pin.kind==='ownTurnTraitBp'?['tests/v2-zero-engine-round15.test.mjs']:[]),
+     ...(pin.kind==='ownTraitImpact'?['tests/v2-conditional-impact-round16.test.mjs']:[]),
      ...(pin.kind==='nameAliasOnly'||pin.kind==='nameAliasStep'?['tests/v2-zero-engine-round14.test.mjs']:[]),
      'tests/universal-v2-sao-mst-cross-title.test.mjs'
     ]),

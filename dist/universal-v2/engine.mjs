@@ -135,10 +135,17 @@ export function universalAttackDamage(pack,s,c){
 function impactOnBattleWin(pack,s,c){
  const d=card(pack,c);
  if(originalEffectsDisabled(s,c))return 0;
- // Printed impact and the facedown-under profile stay separate.
+ // Printed impact and the facedown-under profile stay separate from each
+ // other and from a live passive impact. Pack validation refuses stacking.
  if(d.printedImpact)return d.printedImpact;
- return hasFacedownUnder(c)?(d.conditionalUnderFaceDown?.impact||0):0;
+ const under=hasFacedownUnder(c)?(d.conditionalUnderFaceDown?.impact||0):0;
+ if(under)return under;
+ const owner=Number(String(c.uid).split('-')[0]);
+ return d.passiveBonuses.reduce((n,p)=>n+(p.impact&&
+  matchesV2LiveCondition(s,owner,c.uid,p.condition,x=>card(pack,x),
+   ()=>calcEnergy(pack,s,owner))?p.impact:0),0);
 }
+export function universalImpact(pack,s,c){return impactOnBattleWin(pack,s,c);}
 function protectedLeave(pack,s,c){
  const profile=card(pack,c).conditionalUnderFaceDown;
  return !originalEffectsDisabled(s,c)&&!!profile&&hasFacedownUnder(c)&&bp(pack,s,c)>=profile.leaveReplacementMinBp;

@@ -343,12 +343,17 @@ function validatePassiveBonuses(card){
   throw Error(card.id+' unsupported passive bonuses');
  for(const p of entries){
   if(!p||typeof p!=='object'||Array.isArray(p)||!p.condition||
-   Object.keys(p).some(k=>!['condition','bp','extraEnergy','extraDamage'].includes(k))||
-   (p.bp===undefined&&p.extraEnergy===undefined&&p.extraDamage===undefined)||
+   Object.keys(p).some(k=>!['condition','bp','extraEnergy','extraDamage','impact'].includes(k))||
+   (p.bp===undefined&&p.extraEnergy===undefined&&p.extraDamage===undefined&&p.impact===undefined)||
    (p.bp!==undefined&&(!integer(p.bp,1)||p.bp>5000))||
    (p.extraEnergy!==undefined&&(!integer(p.extraEnergy,1)||p.extraEnergy>3))||
-   (p.extraDamage!==undefined&&(!integer(p.extraDamage,1)||p.extraDamage>2)))
+   (p.extraDamage!==undefined&&(!integer(p.extraDamage,1)||p.extraDamage>2))||
+   (p.impact!==undefined&&p.impact!==1))
     throw Error(card.id+' invalid passive bonus');
+  // 【インパクト（1）】 from a live condition is not added on top of a
+  // printed impact keyword or a facedown-under impact. No FAQ stacks them.
+  if(p.impact===1&&(card.printedImpact||card.conditionalUnderFaceDown?.impact))
+   throw Error(card.id+' conditional impact does not stack with a printed impact profile');
   const q=p.condition;
   if(p.extraDamage!==undefined&&(card.type!=='character'||q.turn!=='own'))
    throw Error(card.id+' extra damage must be printed own-turn character bonus');
