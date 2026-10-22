@@ -452,3 +452,43 @@ This section records the last fully evaluated **code commit** `d16ffce0`. A docu
 
 ### 尚未聲稱通過的關卡
 完整官方 FAQ 多卡同時交互／視覺 UI 與手機手動驗收仍未完成；官方個別印刷規則和指定回歸通過不等於所有 Q&A 全面認證。本輪測試專用 `retireOwnFieldOne` source 不是官方可玩卡。後續優先把真 FIELD 發生 retirement 的官方 MST 卡能力（例如 MST-053／MST-074）以完整原文驗證後再移植；不要擅自把測試用 fake event 混入 V2。
+
+## 2026-10-22｜第五輪：共用實體退場事件、場域退場成本與完整 MST042／046
+
+**工作分支** `codex/v2-resume-20261021`；**Draft PR** #75，接續起點 `6040ddf15bf4ada5ff82220c35d62b534c94a3e5`。本輪最後完整程式 CI 驗收的 SHA 是 `d427c19aae8f80af329547fe714000e405c1050a`，**不是**後續文件更新 commit。沒有合併 main、部署正式 Vercel 或 force push。
+
+### 三種完成層級必須區分
+
+- **共用引擎已實作：** `turnRetireEvents`（每個 turn 清空；真實場上實體退至場外才紀錄）、`retiredThisTurn(s,controller,cardType)`、`ownRetiredThisTurn` 動態 BP/產能條件、`readySelfIfOwnRetiredThisTurn`、`retireOwnFieldThen`；退場的控制者、CHARACTER/FIELD、物理 UID、原場上行與 `fieldEntryStamp` 均記錄。沿用既有 `retire()`、`onRetire`、`retireOwnFieldOne`、`mainReadyOnceByName`、`passiveBonuses`、`effectQueue`、`leave-replacement` 和 LEGAL/AI 單一來源。不把 full-line replacement/remove、bounce、Raid 內部層隱藏移除當作普通實體退休事件。
+- **新增完整 V2 登錄真卡：** `MST-1-042`（エリナリーゼ；GREEN4/AP1/4000/GEN1；IMPACT null、已退場的己方 FIELD 才可 MAIN READY、每回合同名一次、ACTIVE LIFE trigger）與 `MST-1-046`（タルハンド；GREEN3/AP1/3000/GEN2；己方 FIELD 已退場同回合 +GREEN1；FRONT 的每回合一次 MAIN：選己方實存 FIELD 真退場成功後自身 +1000BP）。完整來源 `dist/universal-v2/sources/mst-official-print.mjs` 以及 Bandai `UA54BT/MST-1-042`、`UA54BT/MST-1-046`；Q2156 同名條件核對。成功支付可接續真正的 `MST-1-075` FIELD onRetire DRAW。對應完整真牌 `tests/v2-mst-042-046-retirement-official.test.mjs`。沒有把測試用合成卡登錄。
+- **官方 FAQ 全面驗收：** 仍為 **0**，不得和上兩欄混淆。官方 Q2156 有精確參照；其他跨牌交互、瀏覽器 UI/手機、所有可能 leave/Raid 情境尚未宣稱全面 FAQ 認證。
+
+### 正式 coverage／守恆
+
+| 作品 | 已登錄 / 總母體 | 尚未移植 |
+|---|---:|---:|
+| BLEACH | 86 / 276 | 190 |
+| TTG | 30 / 81 | 51 |
+| SLG | 34 / 80 | 46 |
+| SAO | 62 / 183 | 121 |
+| MST | 37 / 80 | 43 |
+| **合計** | **249 / 700** | **451** |
+
+獨立 `tests/fixtures/v2-integrated-id-manifest.mjs` 包含新增兩個精確實卡 ID。劇本確保兩位玩家共用合法動作及 UID/原版牌組簽名；此輪沒有新增 BLEACH/TTG/SLG/SAO registry 卡數。原 457 卡自動效果關鍵字盤點是歷史快照，不以重新宣稱等同 451 卡人工重分類。
+
+### 分批 commit（逐批接續，失敗修復保留日誌）
+
+1. **Batch A** `30b7df9a203e5f8c18f0566f7412c39c01a96090`：實際完成的退場 ledger、回合重設與正負例；GitHub CI [整合 #39700550898](https://github.com/will00t-debug/Ua/actions/runs/39700550898)、[SAO/MST #39700553713](https://github.com/will00t-debug/Ua/actions/runs/39700553713) SUCCESS。
+2. **Batch B** `cca14bc5c20d79ad63efba14b91b868bd6299bfa`：同回合退場分類條件的共享能量、BP、同名 once MAIN READY；合成卡元件負測、AI 單一合法動作回歸。當 SHA 的整合與獨立 CI 均 SUCCESS。
+3. **Batch C** `a95bf7abb0f5dd0b558b8042b0c5524046db9943`：共用 MAIN 強制 FIELD 真實成本、非空法定選擇、真退休的 MST075 onRetire 先於成功代價後的 BP buff；[整合 #39702004595](https://github.com/will00t-debug/Ua/actions/runs/39702004595)、[SAO/MST #39702007299](https://github.com/will00t-debug/Ua/actions/runs/39702007299) SUCCESS。
+4. **Batch D** `e1663eb2fbcf8a0c4669363e7d01631ac78d82e6`：完整 MST042/MST046 官方日文 pin、正式 registry、獨立 manifest、真實 50 卡對局。第一輪 Node22 **11 項失敗**，全都來自舊的 `35 MST/247 V2` 歷史固定數量斷言，非實卡邏輯失敗。保留實際日誌並只修正正確數量：`6918a042ae63a8a5d43ca4029d7f272460c01cbe`、`d427c19aae8f80af329547fe714000e405c1050a`。不刪測試、未弱化任何 engine legal/assert。新的 `MST042/046` 官方測試均通過。
+5. **Batch E** 在 `d427c19aae8f80af329547fe714000e405c1050a` 的 GitHub Actions：Node.js **22.23.3**，`npm test` **1458/1458 通過，0 失敗**；`node scripts/v2-integrated-match-matrix.mjs` **60/60 完成，0 失敗**；`node scripts/v2-unported-report.mjs` **700 總卡／249 Pilot／451 未移植／完整 FAQ 0**。 [V2 Resumed Integration #39703049095](https://github.com/will00t-debug/Ua/actions/runs/39703049095) SUCCESS、[SAO/MST isolated #39703051722](https://github.com/will00t-debug/Ua/actions/runs/39703051722) SUCCESS，獨立 QA **24/24**。GitHub CI 是真正 Node22 執行來源；本地 runtime 無法 DNS 連 github.com，沒有聲稱本機執行所有測試。
+
+### 未完成／下一輪最佳共用解鎖
+
+- **MST-1-052**：〖退場時〗僅在己方場上有 FIELD 才抽 1；需共用條件式 onRetire、確認退場觸發當刻的場域狀態與同時事件順序。仍 **未登錄**。
+- **MST-1-053**：COLOR trigger 的對應替代（角色卡改 FIELD 卡）、登場抽棄、FRONT optional FIELD retire → draw；不能只實作後半就登錄。
+- **MST-1-074／076**：複合效果，需逐字核對 full JP text、Raid／生命 Trigger／事件連鎖。
+- **BLEACH BLC-1-024**：本回合兩個 CHARACTER 真退休的 BP/DAMAGE2 條件，需共用計數型 `retiredThisTurn`（不只是 boolean）＋ Raid 頂層去向與多模式擇一。尚未登錄；其他 TTG/SLG/SAO 候選不得只靠效果關鍵字推定等同。
+- **推薦下一輪：** 扩充同回合真退場 ledger 的 **次數／所有者／卡型／事件時點條件**，並與泛化 `onRetire` 後續工作隊列和 `chooseOne` 合流。先用 MST052、BLC124 官方逐字卡文做元件測試，再挑完整可移植實卡。優先補真 bounce、Raid 剝離、remove、leave-protection 同回合的各別事件否定測試；不把 full-line removal 偽裝退場。
+- **安全狀態：** main 未合併；正式 Vercel 未更新；未 force push；沒有覆寫競爭分支的 ref（每次更新都帶 `expected_sha`）。

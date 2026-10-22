@@ -632,3 +632,10 @@
 **驗證檔**：`tests/v2-mst-054-source-pinned-component.test.mjs` 現已改成正式兩卡來源鎖定、沒有假 FIELD；`tests/v2-mst-054-075-real-deck.test.mjs` 真正付費 FIELD onPlay、丟一張**實卡** FIELD 至 outside、同回合真 RAID、對 SAO014 目標 REST/沉默、合法可略選、正常 AI；`tests/v2-mst-075-retire-trigger.test.mjs` test-only effect source 測真退休和滿場移除／失效原能力的差異。只有**正式** MST054、MST075 新登錄，`TEST-RETIRE-FIELD-EVENT` 僅驗收工具，絕不包含於正式系列／真牌組／對戰矩陣。
 
 **最新已通過的程式 SHA** `d075dcc6b10ee6c6efea544ae3fcd04ed05dd988`：[Node22 CI 1449/1449、五系列 60/60](https://github.com/will00t-debug/Ua/actions/runs/39695493230)；[SAO/MST isolated QA 24/24](https://github.com/will00t-debug/Ua/actions/runs/39695496325)。無 main 合併、無正式站部署、無手動手機 UI／全 FAQ 覆蓋認證。後續可依正式 MST-053 等其它場域退場來源擴通用能力。
+
+
+## 第五輪更新註記（2026-10-22；原上方 457 快照保留）
+- 此表為早期 `243/700` 時點的關鍵字自動初篩，**不是**第五輪目前的 451 未移植重新分類。其分類數字與逐卡名單不應被偷換為即時盤點。
+- GitHub CI 通過程式 SHA `d427c19aae8f80af329547fe714000e405c1050a` 的正式 registry 為 **249/700 已登錄、451 尚未移植**；MST 由 35 升至 37，正式新增 **MST-1-042、MST-1-046**。
+- 真正退場的每回合紀錄、退場類型、動態 BP/產能與先結算 onRetire 後支付效果已通用化；完整跨作品候選包括 MST052 條件抽、BLEACH BLC124 至少兩角色退場的計數閾值。仍須來源與 FAQ 審核；不得自動登錄。
+- 完整本輪交接、每批 commit、CI 及下一輪：`docs/v2-handoff/GPT-resume.md`「第五輪」章。
