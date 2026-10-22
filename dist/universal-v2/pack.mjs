@@ -258,12 +258,15 @@ function validatePassiveBonuses(card){
   throw Error(card.id+' unsupported passive bonuses');
  for(const p of entries){
   if(!p||typeof p!=='object'||Array.isArray(p)||!p.condition||
-   Object.keys(p).some(k=>!['condition','bp','extraEnergy'].includes(k))||
-   (p.bp===undefined&&p.extraEnergy===undefined)||
+   Object.keys(p).some(k=>!['condition','bp','extraEnergy','extraDamage'].includes(k))||
+   (p.bp===undefined&&p.extraEnergy===undefined&&p.extraDamage===undefined)||
    (p.bp!==undefined&&(!integer(p.bp,1)||p.bp>5000))||
-   (p.extraEnergy!==undefined&&(!integer(p.extraEnergy,1)||p.extraEnergy>3)))
+   (p.extraEnergy!==undefined&&(!integer(p.extraEnergy,1)||p.extraEnergy>3))||
+   (p.extraDamage!==undefined&&(!integer(p.extraDamage,1)||p.extraDamage>2)))
     throw Error(card.id+' invalid passive bonus');
   const q=p.condition;
+  if(p.extraDamage!==undefined&&(card.type!=='character'||q.turn!=='own'))
+   throw Error(card.id+' extra damage must be printed own-turn character bonus');
   if(!q||typeof q!=='object'||Array.isArray(q)||
    !['own','opponent','any'].includes(q.turn)||
    !['outsideCount','ownNameExists','ownFieldHasAllNames','ownTraitCount','ownEnergyAtLeast','ownHandCountAtLeast','ownLifeAtMost','ownEffectHandOutsideOrRecovery','ownRetiredThisTurn','retireCountThisTurn'].includes(q.kind))

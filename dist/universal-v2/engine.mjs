@@ -105,6 +105,13 @@ function bp(pack,s,c){
   (c.buffs||[]).filter(b=>b.untilTurn===s.turn).reduce((n,b)=>n+b.bp,0);
 }
 export const universalBp=bp;
+export function universalAttackDamage(pack,s,c){
+ const d=card(pack,c),owner=Number(String(c.uid).split('-')[0]);
+ if(d.type!=='character'||originalEffectsDisabled(s,c))return 1;
+ return 1+d.passiveBonuses.reduce((n,p)=>n+(p.extraDamage&&
+  matchesV2LiveCondition(s,owner,c.uid,p.condition,x=>card(pack,x),
+   ()=>calcEnergy(pack,s,owner))?p.extraDamage:0),0);
+}
 function impactOnBattleWin(pack,s,c){
  const d=card(pack,c);
  return !originalEffectsDisabled(s,c)&&hasFacedownUnder(c)?(d.conditionalUnderFaceDown?.impact||0):0;
@@ -220,6 +227,12 @@ function continueEffectQueue(pack,s){
    if(job.entries.length===1)s.effectQueue.unshift(...job.entries[0].jobs);
    else if(job.entries.length>1)s.pending={kind:'phase-order',player:owner,entries:job.entries};
   }else if(job.op==='advanceAfterAttack')advanceAfterEnd(pack,s,owner);
+   else if(job.op==='additionalBattleDamage'){
+    // The previous life trigger (if any) has already fully resolved.
+    // Never collapse separate LIFE cards into one draw or bypass triggers.
+    if(job.remaining>1)s.effectQueue.unshift({...job,remaining:job.remaining-1});
+    damage(pack,s,job.defender);
+   }
   else if(job.op==='chooseOne'){
    // Select before executing any branch; zero-target optional modes remain selectable.
    const available=job.options.filter(o=>(
@@ -681,7 +694,14 @@ function resolveChoice(s,a,pack){
   const attacker=s.players[s.active].front.find(c=>c?.uid===q.attackerUid);
   if(!attacker)throw Error('Attacker no longer exists');
   s.pending=null;
-  if(a.uid===null){damage(pack,s,q.player);return;}
+  if(a.uid===null){
+    const extra=universalAttackDamage(pack,s,attacker)-1;
+    if(extra)s.effectQueue.unshift({op:'additionalBattleDamage',
+     owner:s.active,defender:q.player,remaining:extra});
+    damage(pack,s,q.player);
+    if(!s.pending)continueEffectQueue(pack,s);
+    return;
+   }
   const slot=p.front.findIndex(c=>c?.uid===a.uid);
   if(slot<0||!p.front[slot].ready)throw Error('Illegal blocker');
   const blocker=p.front[slot];blocker.ready=false;
@@ -1722,7 +1742,7 @@ export function assertUniversalMatch(pack,s){
    !['draw','drawIfOwnName','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
     'discardGate','enemyFrontAllBpDown','retireOppFrontAllUnderBp',
     'buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
-    'recoverOutsideColorUnderEnergy','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','retireOwnFieldOne','openBlock','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','phaseOrder','advanceAfterAttack'].includes(e.op)))
+    'recoverOutsideColorUnderEnergy','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','retireOwnFieldOne','openBlock','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','phaseOrder','advanceAfterAttack','additionalBattleDamage'].includes(e.op)))
   throw Error('Invalid queued effects');
  for(let p=0;p<2;p++){
   const pl=s.players[p],uids=new Set(),items=[];
