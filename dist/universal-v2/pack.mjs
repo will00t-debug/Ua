@@ -351,6 +351,12 @@ function normalize(card,packId){
    !integer(card.bp)||!integer(card.gen)||card.gen>10||
    typeof card.color!=='string'||!card.color.trim()||typeof card.name!=='string'||!card.name.trim())
   throw Error(card.id+' invalid printed characteristics');
+ // Extra official names. They never replace card.name or card.id.
+ const nameAliases=card.nameAliases;
+ if(nameAliases!==undefined&&(!Array.isArray(nameAliases)||!nameAliases.length||
+  nameAliases.length>3||nameAliases.some(n=>typeof n!=='string'||!n.trim()||
+   n.length>80||n===card.name)||new Set(nameAliases).size!==nameAliases.length))
+  throw Error(card.id+' invalid printed name aliases');
  if(card.trigger!=null&&!V2_TRIGGERS.includes(card.trigger))
   throw Error(card.id+' trigger not yet supported by universal v2 (fail closed)');
  if(card.raidBaseNames!==undefined&&(
@@ -529,12 +535,12 @@ function normalize(card,packId){
  if(implemented==='vanilla'&&(Object.keys(effects).length||card.effectText||
   mainAbility||phaseEffects.length||card.enterActiveIfOpponentRest||card.activeExtraEnergy||card.conditionalTraitEnergy||passiveBonuses||card.impactNull||
   card.printedImpact||card.printedAttackDamage||card.readyOnAttackCount||card.readyOnBlockCount||
-  card.frontGeneratesEnergy||ownOutsideRecovery||colorTriggerFieldSubstitution||card.frontForbidden||card.ownTurnBp||card.opponentTurnBp))
+  card.frontGeneratesEnergy||ownOutsideRecovery||colorTriggerFieldSubstitution||card.frontForbidden||card.ownTurnBp||card.opponentTurnBp||nameAliases))
   throw Error(card.id+' claims vanilla despite printed/declared effects');
  if(implemented==='dsl'&&!Object.keys(effects).length&&!phaseEffects.length&&!mainAbility&&!card.enterActiveIfOpponentRest&&
   !card.activeExtraEnergy&&!card.conditionalTraitEnergy&&!passiveBonuses&&!card.impactNull&&
   !card.printedImpact&&!card.printedAttackDamage&&!card.readyOnAttackCount&&!card.readyOnBlockCount&&
-  !card.frontGeneratesEnergy&&!ownOutsideRecovery&&!colorTriggerFieldSubstitution&&!card.frontForbidden&&!card.ownTurnBp&&!card.opponentTurnBp)
+  !card.frontGeneratesEnergy&&!ownOutsideRecovery&&!colorTriggerFieldSubstitution&&!card.frontForbidden&&!card.ownTurnBp&&!card.opponentTurnBp&&!nameAliases)
   throw Error(card.id+' declares dsl without effects');
  for(const [name,program] of Object.entries(effects)){
   if(!V2_EFFECT_TIMINGS.includes(name))throw Error(card.id+' timing '+name+' unsupported');
@@ -618,7 +624,9 @@ function normalize(card,packId){
   throw Error(card.id+' invalid deck copy cap');
  return Object.freeze({
   maxCopies,
-  id:card.id,title:packId,name:card.name,color:card.color,
+  id:card.id,title:packId,name:card.name,
+  ...(nameAliases?{nameAliases:Object.freeze([...nameAliases])}:{}),
+  color:card.color,
   type:card.type,energy:card.energy,ap:card.ap,bp:card.bp,gen:card.gen,
   traits:Object.freeze([...(card.traits||[])]),
   trigger:card.trigger||null,raidName:card.raidName||null,

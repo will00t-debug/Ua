@@ -2,7 +2,7 @@
 // Pure physical-card reducer: common UA zones/AP/phases/limited effects/Raid
 // and official Q99 optional GET/DRAW/FINAL. Unsupported keywords FAIL CLOSED.
 import {validateUniversalDeck} from './pack.mjs';
-import {matchesOwnDistinctTraits,matchesV2LiveCondition,retiredThisTurn} from './field-conditions.mjs';
+import {cardHasName,matchesOwnDistinctTraits,matchesV2LiveCondition,retiredThisTurn} from './field-conditions.mjs';
 import {refreshFieldActive,expireContinuousStates,pruneContinuousStates,
  fieldRestrictions,validateContinuousStates,grantContinuousState,
  attemptFieldActive,originalEffectsDisabled} from './continuous-states.mjs';
@@ -58,7 +58,12 @@ function hasFacedownUnder(c){
  return !!c&&inspect(c);
 }
 function raidNamePresent(pack,s,owner,name){
- const inspect=c=>card(pack,c).name===name||(c.stack||[]).some(inspect);
+ // The visible field card may use a printed alias. A buried Raid layer keeps
+ // only its original printed name: Q50 stops the layer's effects, and Q55
+ // treats the stack as the top card.
+ const buried=c=>card(pack,c).name===name||(c.stack||[]).some(buried);
+ const inspect=c=>cardHasName(card(pack,c),name,originalEffectsDisabled(s,c))||
+  (c.stack||[]).some(buried);
  return field(s.players[owner]).some(inspect);
 }
 // Normally only own ENERGY-line cards produce energy. Source-pinned
@@ -163,24 +168,28 @@ function detachFacedown(top,uid){
 }
 // Shared named/trait/color/type selector, always resolved with the physical
 // card owner's own title pack. Never use the other player's printed ID table.
-function matchesFilter(pack,physical,filter){
+function matchesFilter(pack,s,physical,filter){
  const printed=card(pack,physical);
  if(filter.field==='trait')return printed.traits.some(v=>v.split(/[／/]/).map(x=>x.trim()).includes(filter.value));
+ // Name filters see the alias everywhere this predicate is asked, except a
+ // live field card whose original text is negated. Callers pass deck,
+ // outside, or visible field cards. They do not pass buried Raid layers.
+ if(filter.field==='name')return cardHasName(printed,filter.value,originalEffectsDisabled(s,physical));
  return printed[filter.field]===filter.value;
 }
-function filteredChoices(pack,cards,filter){
- return cards.filter(c=>matchesFilter(pack,c,filter)).map(c=>c.uid);
+function filteredChoices(pack,s,cards,filter){
+ return cards.filter(c=>matchesFilter(pack,s,c,filter)).map(c=>c.uid);
 }
-function matchesSearch(pack,physical,query){
- if(!query.filters)return matchesFilter(pack,physical,query.filter);
- const result=query.filters.map(f=>matchesFilter(pack,physical,f));
+function matchesSearch(pack,s,physical,query){
+ if(!query.filters)return matchesFilter(pack,s,physical,query.filter);
+ const result=query.filters.map(f=>matchesFilter(pack,s,physical,f));
  return query.logic==='all'?result.every(Boolean):result.some(Boolean);
 }
-function searchChoices(pack,cards,query){
- return cards.filter(c=>matchesSearch(pack,c,query)).map(c=>c.uid);
+function searchChoices(pack,s,cards,query){
+ return cards.filter(c=>matchesSearch(pack,s,c,query)).map(c=>c.uid);
 }
-function matchesOutsideRecovery(pack,c,q){
- if(q.filter)return matchesFilter(pack,c,q.filter);
+function matchesOutsideRecovery(pack,s,c,q){
+ if(q.filter)return matchesFilter(pack,s,c,q.filter);
  const d=card(pack,c);
  if(q.printedBpLimit!==undefined)
   return d.type==='character'&&d.bp<=q.printedBpLimit;
@@ -269,11 +278,11 @@ function continueEffectQueue(pack,s){
    )&&o.then.every(child=>{
     if(child.op==='buffOwnField'&&!child.optional)
      return field(pl).some(c=>card(pack,c).type==='character'&&
-      (!child.excludeSelf||c.uid!==job.sourceUid)&&matchesFilter(pack,c,child.filter));
+      (!child.excludeSelf||c.uid!==job.sourceUid)&&matchesFilter(pack,s,c,child.filter));
     if(child.op==='recoverOutsideOne'&&!child.optional)
-     return pl.outside.some(c=>matchesFilter(pack,c,child.filter));
+     return pl.outside.some(c=>matchesFilter(pack,s,c,child.filter));
     if(child.op==='recoverOutsideTraitlessUnderEnergy'&&!child.optional)
-     return pl.outside.some(c=>matchesOutsideRecovery(pack,c,
+     return pl.outside.some(c=>matchesOutsideRecovery(pack,s,c,
       {traitlessEnergyLimit:child.energy}));
     return true;
    }));
@@ -296,7 +305,7 @@ function continueEffectQueue(pack,s){
   else if(job.op==='drawIfOwnName'){
    // Evaluate after the character actually entered OWN front/energy field.
    // Never count hand, deck, opponent field, or hidden Raid under-cards.
-   if(field(pl).some(c=>card(pack,c).name===job.name))
+   if(field(pl).some(c=>cardHasName(card(pack,c),job.name,originalEffectsDisabled(s,c))))
     draw(s,owner,job.count);
   }
   else if(job.op==='millTop'){
@@ -315,18 +324,18 @@ function continueEffectQueue(pack,s){
    if(pl.apCards.some(c=>c.inPlay&&!c.ready))
     s.pending={kind:'effect-recover-ap',player:owner,sourceUid:job.sourceUid,remaining:job.count};
   }else if(job.op==='searchDeckOne'){
-   const matches=filteredChoices(pack,pl.deck,job.filter);
+   const matches=filteredChoices(pack,s,pl.deck,job.filter);
    if(matches.length)s.pending={kind:'effect-search-deck',player:owner,
     sourceUid:job.sourceUid,filter:job.filter,choices:matches,optional:job.optional};
    else shuffle(s,pl.deck); // mandatory shuffle even when nothing matches
   }else if(job.op==='searchDeckMany'){
-   const choices=filteredChoices(pack,pl.deck,job.filter);
+   const choices=filteredChoices(pack,s,pl.deck,job.filter);
    if(choices.length)s.pending={kind:'effect-search-deck-multi',player:owner,
     sourceUid:job.sourceUid,filter:job.filter,choices,
     remaining:job.count,optional:job.optional};
    else shuffle(s,pl.deck);
   }else if(job.op==='searchDeckWhere'){
-   const choices=searchChoices(pack,pl.deck,job);
+   const choices=searchChoices(pack,s,pl.deck,job);
    if(choices.length)s.pending={kind:'effect-search-deck-multi',player:owner,
     sourceUid:job.sourceUid,filters:job.filters,logic:job.logic,choices,
     remaining:job.count,optional:job.optional};
@@ -345,7 +354,7 @@ function continueEffectQueue(pack,s){
     if(uids.length){
      // One shared ordered TOP-N window, with either a single printed filter
      // or a strict composite ANY/ALL filter. No full-deck search or shuffle.
-     const choices=searchChoices(pack,inspected,job);
+     const choices=searchChoices(pack,s,inspected,job);
      const predicate=job.filters?{filters:job.filters.map(f=>({...f})),logic:job.logic}:
       {filter:{...job.filter}};
      // With no valid match, ALL inspected cards must still be ordered below.
@@ -355,7 +364,7 @@ function continueEffectQueue(pack,s){
        uids,order:[],rest:'bottom'};
     }
    }else if(job.op==='recoverOutsideOne'){
-   const matches=filteredChoices(pack,pl.outside,job.filter);
+   const matches=filteredChoices(pack,s,pl.outside,job.filter);
    if(matches.length)s.pending={kind:'effect-recover-outside',player:owner,
     sourceUid:job.sourceUid,filter:job.filter,choices:matches,optional:job.optional};
   }else if(job.op==='deployOutsideTraitlessRestOrRaid'){
@@ -372,20 +381,20 @@ function continueEffectQueue(pack,s){
    }else if(job.op==='deployOutsideRest'){
     const choices=pl.outside.filter(c=>{
      const d=card(pack,c);
-     return d.type==='character'&&!d.raidName&&d.name===job.name&&
+     return d.type==='character'&&!d.raidName&&cardHasName(d,job.name)&&
       d.color===job.color&&d.energy<=job.energy&&d.ap===job.ap;
     }).map(c=>c.uid);
     if(choices.length)s.pending={kind:'effect-outside-rest',player:owner,
      sourceUid:job.sourceUid,choices,name:job.name,color:job.color,
      energy:job.energy,ap:job.ap,optional:true};
    }else if(job.op==='recoverOutsidePrintedBp'){
-   const choices=pl.outside.filter(c=>matchesOutsideRecovery(pack,c,
+   const choices=pl.outside.filter(c=>matchesOutsideRecovery(pack,s,c,
     {printedBpLimit:job.bp})).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-recover-outside',player:owner,
     sourceUid:job.sourceUid,printedBpLimit:job.bp,
     choices,optional:job.optional};
   }else if(job.op==='recoverOutsideTraitlessUnderEnergy'){
-   const choices=pl.outside.filter(c=>matchesOutsideRecovery(pack,c,
+   const choices=pl.outside.filter(c=>matchesOutsideRecovery(pack,s,c,
     {traitlessEnergyLimit:job.energy})).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-recover-outside',player:owner,
     sourceUid:job.sourceUid,traitlessEnergyLimit:job.energy,
@@ -408,7 +417,7 @@ function continueEffectQueue(pack,s){
    if(pl.hand.length)s.pending={kind:'effect-discard-gate',player:owner,
     sourceUid:job.sourceUid,optional:job.optional,then:job.then};
   }else if(job.op==='recoverOutsideColorUnderEnergy'){
-   const choices=pl.outside.filter(c=>matchesOutsideRecovery(pack,c,job)).map(c=>c.uid);
+   const choices=pl.outside.filter(c=>matchesOutsideRecovery(pack,s,c,job)).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-recover-outside',player:owner,
     sourceUid:job.sourceUid,color:job.color,energy:job.energy,
     choices,optional:job.optional};
@@ -434,7 +443,11 @@ function continueEffectQueue(pack,s){
      ...(job.discardCount>1?{remaining:Math.min(job.discardCount,pl.hand.length)}:{})};
   }else if(job.op==='retireOppFrontUnderBp'){
    const ownName=job.bonusName.replace(/\s+/g,'');
-   const hasBonus=field(pl).some(c=>card(pack,c).name.replace(/\s+/g,'')===ownName);
+   const hasBonus=field(pl).some(c=>{
+    const d=card(pack,c),silenced=originalEffectsDisabled(s,c);
+    return [d.name,...(silenced?[]:d.nameAliases||[])]
+     .some(n=>n.replace(/\s+/g,'')===ownName);
+   });
    const limit=hasBonus?job.bonusBp:job.bp;
    const choices=s.players[1-owner].front.filter(c=>c&&bp(pack,s,c)<=limit).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-retire-bp',player:owner,sourceUid:job.sourceUid,choices,limit};
@@ -490,7 +503,7 @@ function continueEffectQueue(pack,s){
   }else if(job.op==='buffOwnField'){
    const choices=field(pl).filter(c=>card(pack,c).type==='character'&&
     (!job.excludeSelf||c.uid!==job.sourceUid)&&
-    matchesFilter(pack,c,job.filter)).map(c=>c.uid);
+    matchesFilter(pack,s,c,job.filter)).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-buff-own',player:owner,
     sourceUid:job.sourceUid,choices,filter:job.filter,
     bp:job.bp,optional:job.optional,excludeSelf:job.excludeSelf};
@@ -600,12 +613,14 @@ function validRaidBase(pack,s,owner,base,top){
  if(!base||!top.raidName||
   !top.raidRequiresNames.every(n=>raidNamePresent(pack,s,owner,n)))return false;
  const b=card(pack,base),names=top.raidBaseNames;
+ const accepts=list=>list.some(n=>cardHasName(b,n,originalEffectsDisabled(s,base)));
  if(base.stack?.length){
   const bottom=base.stack[0];
-  return top.raidFromRaid.includes(b.name)&&names.includes(card(pack,bottom).name)&&
+  // The buried layer is not the visible card. Q50 keeps its alias inactive.
+  return accepts(top.raidFromRaid)&&names.includes(card(pack,bottom).name)&&
    !card(pack,bottom).raidName;
  }
- return names.includes(b.name)&&!b.raidName;
+ return accepts(names)&&!b.raidName;
 }
 // Only the Q542-Q546 audited two-face-up-card geometry is selectable.
 // Chain-Raid/facedown attachment placement needs a separate official ruling.
@@ -922,7 +937,7 @@ function resolveChoice(s,a,pack){
  if(q.kind==='effect-search-deck'){
   if(a.uid!==null){
    const index=p.deck.findIndex(c=>c.uid===a.uid);
-   if(index<0||!q.choices.includes(a.uid)||!matchesFilter(pack,p.deck[index],q.filter))
+   if(index<0||!q.choices.includes(a.uid)||!matchesFilter(pack,s,p.deck[index],q.filter))
     throw Error('Deck search needs an eligible owned physical card');
    p.hand.push(p.deck.splice(index,1)[0]);
   }else if(!q.optional)throw Error('Mandatory deck search cannot be declined');
@@ -932,12 +947,12 @@ function resolveChoice(s,a,pack){
  if(q.kind==='effect-search-deck-multi'){
   if(a.uid!==null){
    const index=p.deck.findIndex(c=>c.uid===a.uid);
-   if(index<0||!q.choices.includes(a.uid)||!matchesSearch(pack,p.deck[index],q))
+   if(index<0||!q.choices.includes(a.uid)||!matchesSearch(pack,s,p.deck[index],q))
     throw Error('Multi search needs a matching owned physical card');
    p.hand.push(p.deck.splice(index,1)[0]);
    q.remaining--;
   }else if(!q.optional)throw Error('Mandatory multi-search cannot be declined');
-  const choices=searchChoices(pack,p.deck,q);
+  const choices=searchChoices(pack,s,p.deck,q);
   if(a.uid===null||q.remaining<=0||!choices.length){
    shuffle(s,p.deck);s.pending=null;continueEffectQueue(pack,s);
   }else q.choices=choices;
@@ -949,7 +964,7 @@ function resolveChoice(s,a,pack){
    throw Error('Filtered top deck window changed during private selection');
   if(a.uid!==null){
    const chosen=window.find(c=>c.uid===a.uid);
-   if(!chosen||!q.choices.includes(a.uid)||!matchesSearch(pack,chosen,q))
+   if(!chosen||!q.choices.includes(a.uid)||!matchesSearch(pack,s,chosen,q))
     throw Error('Filtered top search needs a legal inspected physical card');
    const i=p.deck.findIndex(c=>c.uid===a.uid);
    if(i<0||i>=q.uids.length)throw Error('Selected physical UID outside top window');
@@ -1062,7 +1077,7 @@ function resolveChoice(s,a,pack){
    if(i<0||!q.choices.includes(a.uid)||!['front','energy'].includes(a.line))
     throw Error('Outside REST deployment needs eligible own UID and line');
    const physical=p.outside[i],d=card(pack,physical);
-   if(d.type!=='character'||d.raidName||d.name!==q.name||
+   if(d.type!=='character'||d.raidName||!cardHasName(d,q.name)||
     d.color!==q.color||d.energy>q.energy||d.ap!==q.ap)
     throw Error('Outside REST printed filters changed');
    commitDestination(s,q.player,a.line,a.slot,a.replaceUid);
@@ -1076,7 +1091,7 @@ function resolveChoice(s,a,pack){
   if(q.kind==='effect-recover-outside'){
   if(a.uid!==null){
    const index=p.outside.findIndex(c=>c.uid===a.uid);
-   if(index<0||!q.choices.includes(a.uid)||!matchesOutsideRecovery(pack,p.outside[index],q))
+   if(index<0||!q.choices.includes(a.uid)||!matchesOutsideRecovery(pack,s,p.outside[index],q))
     throw Error('Outside recovery needs an eligible owned physical card');
    const recovered=p.outside.splice(index,1)[0];
    p.hand.push(recovered);
@@ -1202,7 +1217,7 @@ function resolveChoice(s,a,pack){
   const target=field(p).find(c=>c.uid===a.uid);
   if(!target||!q.choices.includes(a.uid)||
    (target.uid===q.sourceUid&&q.excludeSelf)||
-   card(pack,target).type!=='character'||!matchesFilter(pack,target,q.filter))
+   card(pack,target).type!=='character'||!matchesFilter(pack,s,target,q.filter))
    throw Error('Illegal own field BP target');
   target.buffs??=[];target.buffs.push({bp:q.bp,untilTurn:s.turn});
   s.pending=null;continueEffectQueue(pack,s);return;
@@ -1466,12 +1481,12 @@ function legalPending(pack,s){
  if(q.kind==='effect-discard')return p.hand.map(c=>({type:'chooseDiscard',uid:c.uid}));
  if(q.kind==='effect-search-deck')return [
   ...(q.optional?[{type:'chooseDeckSearch',uid:null}]:[]),
-  ...p.deck.filter(c=>q.choices.includes(c.uid)&&matchesFilter(pack,c,q.filter))
+  ...p.deck.filter(c=>q.choices.includes(c.uid)&&matchesFilter(pack,s,c,q.filter))
    .map(c=>({type:'chooseDeckSearch',uid:c.uid}))
  ];
  if(q.kind==='effect-search-deck-multi')return [
   ...(q.optional?[{type:'chooseDeckSearchMulti',uid:null}]:[]),
-  ...p.deck.filter(c=>q.choices.includes(c.uid)&&matchesSearch(pack,c,q))
+  ...p.deck.filter(c=>q.choices.includes(c.uid)&&matchesSearch(pack,s,c,q))
    .map(c=>({type:'chooseDeckSearchMulti',uid:c.uid}))
  ];
  if(q.kind==='effect-top-filter-choice')return [
@@ -1527,7 +1542,7 @@ function legalPending(pack,s){
   ];
   if(q.kind==='effect-recover-outside')return [
   ...(q.optional?[{type:'chooseOutsideRecovery',uid:null}]:[]),
-  ...p.outside.filter(c=>q.choices.includes(c.uid)&&matchesOutsideRecovery(pack,c,q))
+  ...p.outside.filter(c=>q.choices.includes(c.uid)&&matchesOutsideRecovery(pack,s,c,q))
    .map(c=>({type:'chooseOutsideRecovery',uid:c.uid}))
  ];
  if(q.kind==='effect-discard-cost')return [

@@ -1,7 +1,18 @@
 // Shared V2 live-state predicates. No per-title reducer and no cached bonuses.
 // Pure condition evaluation shared by energy today and conditional BP later.
-// Source traits must already be independently verified by its own pack adapter;
-// DO NOT infer Japanese aliases, translate strings, or split slash composites.
+// Source traits must already be independently verified by its own pack adapter.
+// DO NOT infer Japanese aliases from prose, translate strings, or split slash
+// composites. A printed name alias is an explicit card field, never a guess.
+import {originalEffectsDisabled} from './continuous-states.mjs';
+// Q1946: the name printed at the top stays the original name. An alias is
+// additional. Q87 applies that extra name in hand, deck, outside, field,
+// removed, and the other zones. Q50/Q55: a card buried under a Raid is not
+// the field card, so callers must not ask this helper for a buried layer.
+// Silence removes the printed alias and leaves the original name.
+export function cardHasName(definition,name,silenced=false){
+ if(definition?.name===name)return true;
+ return silenced!==true&&(definition?.nameAliases||[]).includes(name);
+}
 export const V2_TRAIT_ZONES=Object.freeze(['field','front','energy']);
 export const V2_TRAIT_SUBJECTS=Object.freeze(['character','card']);
 export function ownFieldTraitKinds(s,owner,sourceUid,profile,printed){
@@ -62,8 +73,12 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   if(!c||(condition.excludeSelf&&c.uid===sourceUid))continue;
   const d=printed(c);
   if(d.type!=='character')continue;
-  if(condition.kind==='ownNameExists'&&d.name===condition.name)return true;
-  if(remaining)remaining.delete(d.name);
+  const silenced=originalEffectsDisabled(s,c);
+  if(condition.kind==='ownNameExists'&&cardHasName(d,condition.name,silenced))return true;
+  if(remaining){
+   remaining.delete(d.name);
+   if(!silenced)for(const alias of d.nameAliases||[])remaining.delete(alias);
+  }
   if(condition.kind==='ownTraitCount'&&d.traits.includes(condition.trait))found++;
  }
  if(remaining)return remaining.size===0;

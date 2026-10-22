@@ -992,6 +992,32 @@ const PRINTED_PINS=Object.freeze({
     "trigger": "draw",
     "traits": ["ALO"],
     "effectJa": "【2回ブロック】（このキャラがこのターン初めてブロックした時、アクティブにする）"
+  },
+  "SAO-2-007": {
+    "kind": "nameAliasDrawDiscard",
+    "nameJa": "ユージオ・シンセシス・サーティツー",
+    "color": "yellow",
+    "energy": 1,
+    "ap": 1,
+    "bp": 2000,
+    "gen": 1,
+    "type": "character",
+    "trigger": "draw",
+    "traits": ["整合騎士"],
+    "effectJa": "このカードは〈ユージオ〉としても扱う。\n【登場時】カードを1枚引き、自分の手札を1枚場外に置く。"
+  },
+  "SAO-2-055": {
+    "kind": "nameAliasDrawDiscard",
+    "nameJa": "結城 明日奈",
+    "color": "purple",
+    "energy": 0,
+    "ap": 1,
+    "bp": 1500,
+    "gen": 1,
+    "type": "character",
+    "trigger": "draw",
+    "traits": ["プログレッシブ"],
+    "effectJa": "このカードは〈アスナ〉としても扱う。\n【登場時】カードを1枚引き、自分の手札を1枚場外に置く。"
   }
 });
 export const SAO_V2_PILOT_IDS=Object.freeze(Object.keys(PRINTED_PINS).sort());
@@ -1045,6 +1071,11 @@ export function verifiedSaoV2Cards(){
   if(pin.kind==='readyOnFirstBlock'){
    card.readyOnBlockCount=1;
    card.effects={};
+  }
+  if(pin.kind==='nameAliasDrawDiscard'){
+   card.nameAliases={'SAO-2-007':['ユージオ'],'SAO-2-055':['アスナ']}[id];
+   if(!card.nameAliases)throw Error(id+' missing printed name alias');
+   card.templateEffects={onPlay:[{template:'drawDiscardOne'}]};
   }
   if(pin.kind==='frontOnceBpDown'||pin.kind==='frontOnceDiscardBpDown'){
    const debuff={op:'enemyBpDown',bp:1000,optional:false,minBp:1500,
@@ -1155,6 +1186,7 @@ export function verifiedSaoV2Entries(){
      ...(pin.kind==='onPlayTopFilterBottomDiscard'?['tests/v2-cross-title-top-filter-round13.test.mjs']:[]),
      ...(pin.kind==='readyOnFirstBlock'?['tests/v2-ready-on-block-round14.test.mjs']:[]),
      ...(pin.kind==='frontOnceBpDown'||pin.kind==='frontOnceDiscardBpDown'?['tests/v2-single-bp-target-round14.test.mjs']:[]),
+     ...(pin.kind==='nameAliasDrawDiscard'?['tests/v2-name-alias-round14.test.mjs']:[]),
      'tests/universal-v2-sao-mst-cross-title.test.mjs'
     ]),
     ...(def.implementation==='vanilla'?{verifiedNoExtraEffects:true}:{})
