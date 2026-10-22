@@ -39,6 +39,11 @@ const clone=source=>structuredClone(source);
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 function actor(s){return s.pending?.player??s.active;}
 export const universalActor=actor;
+function maySubstituteColorTriggerField(pack,s,owner,profile){
+ return s.active!==owner&&profile?.op==='deployHandCharacter'&&
+  field(s.players[owner]).some(c=>!originalEffectsDisabled(s,c)&&
+   card(pack,c).colorTriggerFieldSubstitution===profile.color);
+}
 function draw(s,p,count=1){
  for(let i=0;i<count&&s.players[p].deck.length;i++)s.players[p].hand.push(s.players[p].deck.shift());
 }
@@ -1161,6 +1166,20 @@ function resolveChoice(s,a,pack){
    // COLOR life deployment spends no AP but does trigger onPlay.
    applyEffects(pack,s,chosen,'onPlay',q.player);
   }
+  else if(a.mode==='colorField'&&q.trigger==='color'){
+   const profile=card(pack,p.outside[i]).triggerEffect;
+   if(!maySubstituteColorTriggerField(pack,s,q.player,profile)||a.line!=='energy')
+    throw Error('COLOR FIELD substitution no longer active');
+   const handIndex=p.hand.findIndex(c=>c.uid===a.uid);
+   if(handIndex<0)throw Error('COLOR FIELD must come from OWN hand');
+   const picked=p.hand[handIndex],d=card(pack,picked);
+   if(d.type!=='field'||d.color!==profile.color||d.energy>profile.maxEnergy||
+    d.ap!==profile.ap)throw Error('Invalid substituted COLOR FIELD');
+   commitDestination(s,q.player,'energy',a.slot,a.replaceUid);
+   p.hand.splice(handIndex,1);picked.ready=true;
+   picked.fieldEntryStamp=s.nextFieldEntryStamp++;p.energy[a.slot]=picked;
+   applyEffects(pack,s,picked,'onPlay',q.player);
+  }
   else if(a.mode==='color'&&q.trigger==='color'){
    const profile=card(pack,p.outside[i]).triggerEffect;
    const handIndex=p.hand.findIndex(c=>c.uid===a.uid);
@@ -1358,7 +1377,16 @@ function legalPending(pack,s){
      for(const choice of legalDestinations(p,'front'))
       out.push({type:'chooseTrigger',mode:'colorOutside',uid:c.uid,line:'front',...choice});
     }
-   }else for(const c of p.hand){
+   }else{
+    if(maySubstituteColorTriggerField(pack,s,q.player,profile))
+     for(const c of p.hand){
+      const d=card(pack,c);
+      if(d.type!=='field'||d.color!==profile.color||d.energy>profile.maxEnergy||
+       d.ap!==profile.ap)continue;
+      for(const choice of legalDestinations(p,'energy'))
+       out.push({type:'chooseTrigger',mode:'colorField',uid:c.uid,line:'energy',...choice});
+     }
+    for(const c of p.hand){
     const d=card(pack,c);
     if(d.type!=='character'||d.color!==profile.color||d.energy>profile.maxEnergy||d.ap!==profile.ap)continue;
     for(const line of ['front','energy']){
@@ -1367,6 +1395,7 @@ function legalPending(pack,s){
       out.push({type:'chooseTrigger',mode:'color',uid:c.uid,line,...choice});
     }
    }
+  }
   }
   if(q.trigger==='raid'){
    const revealed=p.outside.find(c=>c.uid===q.uid),d=card(pack,revealed);

@@ -384,6 +384,11 @@ function normalize(card,packId){
    throw Error(card.id+' invalid conditional ACTIVE entry');
   if(card.frontForbidden!==undefined&&(card.type!=='character'||card.frontForbidden!==true))
   throw Error(card.id+' invalid front-line restriction');
+ const colorTriggerFieldSubstitution=card.colorTriggerFieldSubstitution??null;
+ if(colorTriggerFieldSubstitution!==null&&
+  (card.type!=='character'||card.color!==colorTriggerFieldSubstitution||
+   typeof colorTriggerFieldSubstitution!=='string'||!colorTriggerFieldSubstitution.trim()))
+  throw Error(card.id+' invalid live COLOR field-substitution profile');
  const mainAbility=card.mainAbility??null;
  const mainRaid=mainAbility?.op==='chooseTwoAfterOwnRaid'&&
   mainAbility.frontOnly===true&&mainAbility.readyOncePerName===true&&
@@ -468,11 +473,11 @@ function normalize(card,packId){
    throw Error(card.id+' self-bounce is only valid on character onPlay');
  if(implemented==='vanilla'&&(Object.keys(effects).length||card.effectText||
   mainAbility||phaseEffects.length||card.enterActiveIfOpponentRest||card.activeExtraEnergy||card.conditionalTraitEnergy||passiveBonuses||card.impactNull||
-  card.frontGeneratesEnergy||ownOutsideRecovery||card.frontForbidden||card.ownTurnBp||card.opponentTurnBp))
+  card.frontGeneratesEnergy||ownOutsideRecovery||colorTriggerFieldSubstitution||card.frontForbidden||card.ownTurnBp||card.opponentTurnBp))
   throw Error(card.id+' claims vanilla despite printed/declared effects');
  if(implemented==='dsl'&&!Object.keys(effects).length&&!phaseEffects.length&&!mainAbility&&!card.enterActiveIfOpponentRest&&
   !card.activeExtraEnergy&&!card.conditionalTraitEnergy&&!passiveBonuses&&!card.impactNull&&
-  !card.frontGeneratesEnergy&&!ownOutsideRecovery&&!card.frontForbidden&&!card.ownTurnBp&&!card.opponentTurnBp)
+  !card.frontGeneratesEnergy&&!ownOutsideRecovery&&!colorTriggerFieldSubstitution&&!card.frontForbidden&&!card.ownTurnBp&&!card.opponentTurnBp)
   throw Error(card.id+' declares dsl without effects');
  for(const [name,program] of Object.entries(effects)){
   if(!V2_EFFECT_TIMINGS.includes(name))throw Error(card.id+' timing '+name+' unsupported');
@@ -559,6 +564,7 @@ function normalize(card,packId){
   opponentTurnBp:card.opponentTurnBp||0,
   activeExtraEnergy:card.activeExtraEnergy||0,
   frontGeneratesEnergy:card.frontGeneratesEnergy===true,
+  colorTriggerFieldSubstitution,
   conditionalTraitEnergy:conditionalTraitEnergy?Object.freeze({...conditionalTraitEnergy}):null,
   passiveBonuses:passiveBonuses||Object.freeze([]),
   impactNull:card.impactNull===true,

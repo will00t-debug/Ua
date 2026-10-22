@@ -37,7 +37,7 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  const legal=legalUniversalActions(pack,s);
  if(!legal.length)return null;
  if(s.pending?.kind==='life-trigger')
-  return legal.find(a=>['final','raid','special','colorRetire','color','active','draw','get'].includes(a.mode))||legal[0];
+  return legal.find(a=>['final','raid','special','colorRetire','colorField','color','active','draw','get'].includes(a.mode))||legal[0];
  if(s.pending?.kind==='effect-recover-ap')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='recovered-self-entry')return difficulty==='easy'?legal[0]:
   legal.find(a=>a.mode==='enter'&&!a.replaceUid)||legal[0];
