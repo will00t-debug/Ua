@@ -496,10 +496,12 @@ function normalize(card,packId){
    throw Error(card.id+' self-bounce is only valid on character onPlay');
  if(implemented==='vanilla'&&(Object.keys(effects).length||card.effectText||
   mainAbility||phaseEffects.length||card.enterActiveIfOpponentRest||card.activeExtraEnergy||card.conditionalTraitEnergy||passiveBonuses||card.impactNull||
+  card.printedImpact||card.printedAttackDamage||
   card.frontGeneratesEnergy||ownOutsideRecovery||colorTriggerFieldSubstitution||card.frontForbidden||card.ownTurnBp||card.opponentTurnBp))
   throw Error(card.id+' claims vanilla despite printed/declared effects');
  if(implemented==='dsl'&&!Object.keys(effects).length&&!phaseEffects.length&&!mainAbility&&!card.enterActiveIfOpponentRest&&
   !card.activeExtraEnergy&&!card.conditionalTraitEnergy&&!passiveBonuses&&!card.impactNull&&
+  !card.printedImpact&&!card.printedAttackDamage&&
   !card.frontGeneratesEnergy&&!ownOutsideRecovery&&!colorTriggerFieldSubstitution&&!card.frontForbidden&&!card.ownTurnBp&&!card.opponentTurnBp)
   throw Error(card.id+' declares dsl without effects');
  for(const [name,program] of Object.entries(effects)){
@@ -569,6 +571,14 @@ function normalize(card,packId){
  if(card.impactNull!==undefined&&(
   card.type!=='character'||card.impactNull!==true))
   throw Error(card.id+' invalid IMPACT nullification profile');
+ // Printed 【インパクト（1）】 and 【ダメージ（2）】 are unconditional keywords.
+ // Stacking either with the facedown-under impact profile needs its own ruling.
+ if(card.printedImpact!==undefined&&(
+  card.type!=='character'||card.printedImpact!==1||card.conditionalUnderFaceDown))
+  throw Error(card.id+' invalid printed impact');
+ if(card.printedAttackDamage!==undefined&&(
+  card.type!=='character'||card.printedAttackDamage!==2))
+  throw Error(card.id+' invalid printed attack damage');
  const maxCopies=card.maxCopies===undefined?4:card.maxCopies;
  if(!integer(maxCopies,1)||maxCopies>4)
   throw Error(card.id+' invalid deck copy cap');
@@ -597,6 +607,8 @@ function normalize(card,packId){
   conditionalTraitEnergy:conditionalTraitEnergy?Object.freeze({...conditionalTraitEnergy}):null,
   passiveBonuses:passiveBonuses||Object.freeze([]),
   impactNull:card.impactNull===true,
+  printedImpact:card.printedImpact===1?1:0,
+  printedAttackDamage:card.printedAttackDamage===2?2:1,
   implementation:implemented,
   effects:Object.freeze(Object.fromEntries(Object.entries(effects)
    .map(([k,v])=>[k,Object.freeze(v.map(e=>Object.freeze({

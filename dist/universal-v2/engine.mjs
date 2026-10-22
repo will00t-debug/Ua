@@ -116,13 +116,18 @@ export const universalBp=bp;
 export function universalAttackDamage(pack,s,c){
  const d=card(pack,c),owner=Number(String(c.uid).split('-')[0]);
  if(d.type!=='character'||originalEffectsDisabled(s,c))return 1;
- return 1+d.passiveBonuses.reduce((n,p)=>n+(p.extraDamage&&
+ // 【ダメージ（2）】 replaces the 1 direct-attack damage. It is not Impact.
+ const base=d.printedAttackDamage||1;
+ return base+d.passiveBonuses.reduce((n,p)=>n+(p.extraDamage&&
   matchesV2LiveCondition(s,owner,c.uid,p.condition,x=>card(pack,x),
    ()=>calcEnergy(pack,s,owner))?p.extraDamage:0),0);
 }
 function impactOnBattleWin(pack,s,c){
  const d=card(pack,c);
- return !originalEffectsDisabled(s,c)&&hasFacedownUnder(c)?(d.conditionalUnderFaceDown?.impact||0):0;
+ if(originalEffectsDisabled(s,c))return 0;
+ // Printed impact and the facedown-under profile stay separate.
+ if(d.printedImpact)return d.printedImpact;
+ return hasFacedownUnder(c)?(d.conditionalUnderFaceDown?.impact||0):0;
 }
 function protectedLeave(pack,s,c){
  const profile=card(pack,c).conditionalUnderFaceDown;
