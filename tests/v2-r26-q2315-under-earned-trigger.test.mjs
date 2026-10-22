@@ -53,7 +53,7 @@ for(const owner of [0,1])for(const first of ['observer','moved'])
   s=dispatchUniversalAction(packs,s,{type:'chooseDiscardGate',uid:moved.uid},{actor:owner});
   assert.equal(s.pending.kind,'effect-move-order');
   assert.equal(s.players[owner].deck.length,before-1,'MAIN draw must complete before earned order');
-  assert.equal(universalBp(packs,s,source),5000);
+  assert.equal(universalBp(packs,s,s.players[owner].front[0]),5000);
   assert.equal(s.continuousStates.some(x=>x.kind==='grantedOnAttack'&&x.targetUid===source.uid),true);
   assert.equal(s.players[owner].outside.some(x=>x.uid===moved.uid),true);
   const actions=legalUniversalActions(packs,s);
