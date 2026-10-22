@@ -31,7 +31,8 @@ const testForKind=Object.freeze({
  inspectTopAnyOutside2:'tests/universal-v2-bleach-new-top.test.mjs',
  drawTwoDiscardOne:'tests/v2-blc-109-draw-discard-round13.test.mjs',
  frontBpDownMin1000:'tests/v2-bp-range-round13.test.mjs',
- readyOnFirstAttack:'tests/v2-ready-on-attack-round13.test.mjs'
+ readyOnFirstAttack:'tests/v2-ready-on-attack-round13.test.mjs',
+ onRetireRestUnder2000:'tests/v2-onretire-rest-round14.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.

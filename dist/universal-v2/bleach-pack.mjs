@@ -934,6 +934,12 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
   "color":"green","energy":4,"ap":1,"bp":2000,"gen":2,
   "trigger":null,"type":"character",
   "effect":"每回合首次攻擊時，此角色立即轉為 ACTIVE，因此可攻擊 2 次。"
+ } ,{
+  "id":"BLC-2-010","kind":"onRetireRestUnder2000",
+  "number":"EX07BT/BLC-2-010","name":"ミニーニャ・マカロン",
+  "color":"yellow","energy":0,"ap":1,"bp":2000,"gen":1,
+  "trigger":null,"type":"character",
+  "effect":"退場：可將最多 1 個敵方前線 BP 2000 以下角色轉為 REST。"
  }
 
  ,{
@@ -984,7 +990,8 @@ export function checkedBleachAddonDefinition(p){
   inspectTop3:{onPlay:[{template:'inspectTopArrange',count:3,toOutside:true,rest:'top'}]},
   peekTopOrBottom:{onPlay:[{template:'peekTopOrBottom'}]},
   inspectTopAnyOutside2:{onPlay:[{template:'inspectTopAnyOutside',count:2,rest:'top'}]},
-  frontBpDownMin1000:{onPlay:[{template:'enemyFrontBpDownInRange',bp:500,minBp:1000,maxBp:null}]}
+  frontBpDownMin1000:{onPlay:[{template:'enemyFrontBpDownInRange',bp:500,minBp:1000,maxBp:null}]},
+  onRetireRestUnder2000:{onRetire:[{template:'restEnemyUnderBp',bp:2000,optional:true}]}
  };
 // EX15BT/BLC-4-014 prints yellow+ and ACTIVE adds one yellow. The imported legacy gen=2
  // encoded the ACTIVE total; V2 needs the printed REST base (1) plus an ACTIVE +1.
