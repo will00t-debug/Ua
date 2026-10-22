@@ -134,3 +134,44 @@ test('R31 cannot play without two yellow energy; no fabricated UID or cross-owne
  }
  assert.equal(assertUniversalMatch(packs,s),true);
 });
+
+
+test('R31 optional zero take with qualifying Kirito AND Alice still orders all four bottom and discloses neither',()=>{
+ let {s,source,window}=setup(['SAO-1-001','SAO-1-010','SAO-1-004','SAO-1-019']);
+ const before=s.players[0].deck.map(c=>c.uid);
+ s=play(s,source);
+ assert.equal(s.pending.kind,'effect-top-filter-choice');
+ assert.deepEqual(legalUniversalActions(packs,s).map(a=>a.uid),
+  [null,window[0].uid,window[1].uid]);
+ const hand=s.players[0].hand.length,outside=s.players[0].outside.length;
+ const optionalSkip={type:'chooseTopFiltered',uid:null};
+ s=dispatchUniversalAction(packs,s,optionalSkip);
+ assert.equal(s.pending.kind,'effect-top-order');
+ assert.equal(s.pending.discardAfter,undefined);
+ assert.deepEqual(universalPublicView(packs,s,1).publicReveals,[]);
+ s=arrange(s,[window[3].uid,window[2].uid,window[0].uid,window[1].uid]);
+ assert.equal(s.pending,null);
+ assert.deepEqual(s.players[0].deck.map(c=>c.uid),
+  [...before.slice(4),window[3].uid,window[2].uid,window[0].uid,window[1].uid]);
+ assert.equal(s.players[0].hand.length,hand);
+ assert.equal(s.players[0].outside.length,outside);
+ assert.equal(assertUniversalMatch(packs,JSON.parse(JSON.stringify(s))),true);
+});
+test('R31 selecting Kirito and another physical UID proves OR predicate and one-only public reveal',()=>{
+ let {s,source,window}=setup(['SAO-1-001','SAO-1-010','SAO-1-004','SAO-1-019']);
+ s=play(s,source);
+ s=dispatchUniversalAction(packs,s,{type:'chooseTopFiltered',uid:window[0].uid});
+ const reveals=universalPublicView(packs,s,1).publicReveals;
+ assert.equal(reveals.length,1);
+ assert.equal(reveals[0].uid,window[0].uid);
+ assert.equal(reveals[0].cardId,'SAO-1-001');
+ assert.equal(universalPrivateChoices(packs,s,1),null);
+ assert.equal(universalPublicView(packs,s,1).players[0].hand,null);
+ s=arrange(s,[window[1].uid,window[3].uid,window[2].uid]);
+ assert.equal(s.pending.kind,'effect-discard');
+ const paid=legalUniversalActions(packs,s).find(a=>a.type==='chooseDiscard'&&a.uid===window[0].uid);
+ assert.ok(paid);
+ s=dispatchUniversalAction(packs,s,paid);
+ assert.ok(s.players[0].outside.some(c=>c.uid===window[0].uid));
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
