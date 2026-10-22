@@ -815,7 +815,7 @@ GitHub CI：`.github/workflows/v2-resume.yml` 仍只在 push 到 `codex/v2-resum
 
 權限只有 `contents: read`。沒有 `pull_request_target`，沒有 repository secrets。同一 SHA 的 push 與 pull_request 會共用 concurrency group，後到的會取消先到的，所以驗收要看最後留下的那一個 run，不能把被取消的 push run 當成失敗測試。步驟是 Node 22 `npm test`、五作品 60 場矩陣、`scripts/v2-assert-independent-manifest.mjs`、未移植報告。
 
-`99a76a07e515bc11481917e4d5eb7013e2d1db9a` 推上後，GitHub 確實建立了 Actions run（push `39731135605` 被 concurrency 取消，pull_request `39731138495` 進入佇列）。那不是最終 SHA。本檔不把本地 1570/1570 或 60/60 寫成遠端 CI 已通過。最終 HEAD 的 run 要等這次 push 之後由 GitHub 回報。
+`99a76a07e515bc11481917e4d5eb7013e2d1db9a` 的 pull_request run `39731138495` 後來也成功，但那不是本輪最終 SHA。最終交接 commit `5d37287bc6f10b553ea3f6d678252f6c476d481f` 的驗收是 pull_request run [`39734484979`](https://github.com/will00t-debug/Ua/actions/runs/39734484979)。同一 SHA 的 push run `39734481119` 被 concurrency 在 3 秒內取消，那不是測試失敗。留下的 run 於 2026-10-22 14:31（台北時間）開始、14:32 結束，runner 是 Node v22.23.3，conclusion 是 success。Job `regression` 的日誌是：`npm test` 1570 tests、1570 pass、0 fail、0 skipped；矩陣 `60/60 finished (failures 0)`；獨立 manifest `bleach 96, gurren-lagann 30, solo-leveling 34, sword-art-online 66, mushoku-tensei 42; total 268`；未移植報告 `總卡 700／Pilot 268／尚未移植 432／嚴格全面驗收 0`。這個結論只屬於 `5d37287`。若其後再推文件修訂，那個新 SHA 要另看自己的 run。
 
 ### Batch B：既有 DSL 的跨作品卡
 
@@ -875,6 +875,7 @@ Raid 的新頂牌是另一個 UID，次數從 0 開始，不繼承底板。沒�
 - `npm test`：1570 tests、1570 pass、0 fail、0 skipped。
 - `node scripts/v2-integrated-match-matrix.mjs`：60/60 finished，failures 0。
 - `node scripts/v2-unported-report.mjs`：700／Pilot 268／尚未移植 432／嚴格全面驗收 0。獨立 manifest 與 registry 一致（bleach 96、gurren-lagann 30、solo-leveling 34、sword-art-online 66、mushoku-tensei 42）。
+- GitHub Actions pull_request run `39734484979`（HEAD `5d37287`、Node v22.23.3、2026-10-22 14:32 台北時間結束）：同一組數字，conclusion success。push run `39734481119` 被 concurrency 取消。
 
 ### 未完成與下一輪
 
