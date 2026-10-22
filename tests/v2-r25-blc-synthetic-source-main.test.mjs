@@ -35,6 +35,11 @@ function pull(s,p,id){
 function start(owner){
  let s=newUniversalMatch(packs,{decks:[decks,decks],first:owner,seed:251903});
  const source=pull(s,owner,'BC0'),event=pull(s,owner,'BC1');
+ // Move unrelated matching starting-hand copies aside; only the intended
+ // physical event is eligible for this exact name-payment scenario.
+ const hand=s.players[owner].hand;
+ for(let i=hand.length-1;i>=0;i--)if(['BC1','BC2'].includes(hand[i].cardId))
+  s.players[owner].outside.push(hand.splice(i,1)[0]);
  s.players[owner].hand.push(source,event);
  s.phase='main';
  const play=legalUniversalActions(packs,s).find(x=>x.type==='play'&&x.uid===source.uid&&x.line==='front');
