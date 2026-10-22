@@ -2,7 +2,7 @@
 // Pure physical-card reducer: common UA zones/AP/phases/limited effects/Raid
 // and official Q99 optional GET/DRAW/FINAL. Unsupported keywords FAIL CLOSED.
 import {validateUniversalDeck} from './pack.mjs';
-import {appendCompletedMove} from './zone-move-events.mjs';
+import {appendCompletedMove,matchesCompletedMove} from './zone-move-events.mjs';
 import {cardHasName,cardHasTrait,matchesOwnDistinctTraits,matchesV2LiveCondition,
  ownRestPrintedBpCount,retiredThisTurn} from './field-conditions.mjs';
 import {refreshFieldActive,expireContinuousStates,pruneContinuousStates,
@@ -305,12 +305,34 @@ function startTurn(pack,s){
  queuePhaseBoundary(pack,s,'start','start',p);
  continueEffectQueue(pack,s);
 }
+// A source boundary has no gameplay effect unless a registered moved card
+// actually has an explicit source-qualified trigger profile.
+function sourceMoveBoundary(pack,s,owner,sourceUid){
+ const any=playerPacks(pack).some(p=>
+  Object.values(p.cards).some(c=>c.moveTriggers?.length));
+ return any?[{op:'sourceResolutionBoundary',owner,sourceUid,
+  afterOrder:s.nextZoneMoveOrder-1}]:[];
+}
 // Queue printed effects so each pending cross-title target is chosen before
 // remaining steps resolve. Native card packs remain responsible for their own text.
 function continueEffectQueue(pack,s){
  while(!s.pending&&s.status==='playing'&&s.effectQueue.length){
   const job=s.effectQueue.shift(),owner=job.owner,pl=s.players[owner];
-  if(job.op==='phaseOrder'){
+  if(job.op==='sourceResolutionBoundary'){
+   // Cost/choice/target side effects have finished. Only completed moves
+   // made by THIS source since the boundary opened can release triggers.
+   const toResolve=[];
+   for(const event of s.zoneMoveEvents){
+    if(event.order<=job.afterOrder||event.sourceUid!==job.sourceUid||
+     event.controller!==owner||event.owner!==owner)continue;
+    const moved=card(pack,{uid:event.uid,cardId:event.cardId});
+    for(const profile of moved.moveTriggers||[])
+     if(matchesCompletedMove(event,profile.when))
+      toResolve.push(...profile.then.map(op=>({...op,owner:event.owner,
+       sourceUid:event.uid,sourceName:moved.name})));
+   }
+   s.effectQueue.unshift(...toResolve);
+  }else if(job.op==='phaseOrder'){
    if(job.entries.length===1)s.effectQueue.unshift(...job.entries[0].jobs);
    else if(job.entries.length>1)s.pending={kind:'phase-order',player:owner,entries:job.entries};
   }else if(job.op==='openRetirementBatch'){
@@ -739,7 +761,8 @@ function programJobs(pack,s,physical,timing,owner,raidUid,entryCause){
 }
 function applyEffects(pack,s,cardOnField,timing,owner,entryCause){
  // Entry/trigger effects interrupt the suspended continuation (e.g. DAMAGE2).
- s.effectQueue.unshift(...programJobs(pack,s,cardOnField,timing,owner,undefined,entryCause));
+ const jobs=programJobs(pack,s,cardOnField,timing,owner,undefined,entryCause);
+ if(jobs.length)s.effectQueue.unshift(...jobs,...sourceMoveBoundary(pack,s,owner,cardOnField.uid));
  continueEffectQueue(pack,s);
 }
 function validRaidBase(pack,s,owner,base,top){
@@ -2493,7 +2516,7 @@ export function assertUniversalMatch(pack,s){
    !['draw','drawIfOwnName','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
     'discardGate','enemyFrontAllBpDown','retireOppFrontAllUnderBp',
     'buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
-    'recoverOutsideColorUnderEnergy','deployOutsideRest','deployOutsideNameRest','payApDeployNamedRest','inspectTopTraitOutside','deployOutsideTraitlessRestOrRaid','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','moveAtMainEnd','retireOwnFieldOne','retireOwnCharacterOne','openBlock','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','phaseOrder','advanceAfterAttack','additionalBattleDamage','openRetirementBatch','closeRetirementBatch','retirementOrder','battleImpactDamage','discardOppHand','activeSelfIf'].includes(e.op)))
+    'recoverOutsideColorUnderEnergy','deployOutsideRest','deployOutsideNameRest','payApDeployNamedRest','inspectTopTraitOutside','deployOutsideTraitlessRestOrRaid','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','moveAtMainEnd','retireOwnFieldOne','retireOwnCharacterOne','openBlock','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','phaseOrder','sourceResolutionBoundary','advanceAfterAttack','additionalBattleDamage','openRetirementBatch','closeRetirementBatch','retirementOrder','battleImpactDamage','discardOppHand','activeSelfIf'].includes(e.op)))
   throw Error('Invalid queued effects');
  for(let p=0;p<2;p++){
   const pl=s.players[p],uids=new Set(),items=[];

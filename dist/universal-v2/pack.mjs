@@ -1,5 +1,6 @@
 // UNION ARENA Universal Rules v2 (experimental; NOT used by Production matches).
 import {expandAbilityTemplates} from './ability-templates.mjs';
+import {validateCompletedMoveCondition} from './zone-move-events.mjs';
 // Data schema and *explicit* ability coverage. No automatic inference from
 // Japanese/translated prose and no optimistic `auto:true` for unported cards.
 export const V2_PHASES=Object.freeze(['start','move','main','attack']);
@@ -625,6 +626,33 @@ function normalize(card,packId){
   if(Object.prototype.hasOwnProperty.call(authored,timing))
    throw Error(card.id+' cannot mix raw and templated effects at '+timing);
  const effects={...authored,...compiled};
+ // A moved physical card may print a source-qualified outside trigger.
+ // This profile never infers text, never broadens a payment to all discards,
+ // and resolves only after the originating source program ends.
+ const moveTriggers=card.moveTriggers??[];
+ if(!Array.isArray(moveTriggers)||moveTriggers.length>2||
+  (moveTriggers.length&&implemented!=='dsl')||
+  moveTriggers.some(x=>!x||typeof x!=='object'||Array.isArray(x)||
+   Object.keys(x).length!==2||
+   Object.keys(x).some(k=>!['when','then'].includes(k))||
+   !x.when||typeof x.when!=='object'||Array.isArray(x.when)||
+   !Array.isArray(x.then)||!x.then.length||x.then.length>3||
+   x.then.some(job=>job?.op!=='draw')))
+  throw Error(card.id+' invalid source-qualified moved-card trigger');
+ for(const [i,entry] of moveTriggers.entries()){
+  const when=validateCompletedMoveCondition(entry.when);
+  // Current audited subset covers only an OWN source's card effect/payment
+  // sending this exact hand card to outside. Further causes require proof.
+  if(when.from!=='hand'||when.to!=='outside'||
+   when.sourceOnField!==true||
+   typeof when.sourceName!=='string'||!when.sourceName.trim()||
+   typeof when.sourceColor!=='string'||!when.sourceColor.trim()||
+   !Array.isArray(when.reasons)||when.reasons.length<1||
+   when.reasons.some(r=>!['payment','own-effect'].includes(r))||
+   Object.keys(when).some(k=>!['from','to','reasons','sourceName','sourceColor','sourceOnField'].includes(k)))
+   throw Error(card.id+' unsupported moved-card source condition');
+  verifyProgram(entry.then,card.id+'.moveTriggers['+i+'].then');
+ }
   // Exact, printed phase-boundary programs; only field cards may own them.
   const phaseEffects=card.phaseEffects??[];
   if(!Array.isArray(phaseEffects)||phaseEffects.length>4||
@@ -651,11 +679,11 @@ function normalize(card,packId){
   card.type!=='character'||card.readyOnBlockCount!==1))
   throw Error(card.id+' invalid ready-on-block count');
  if(implemented==='vanilla'&&(Object.keys(effects).length||card.effectText||
-  mainAbility||phaseEffects.length||card.enterActiveIfOpponentRest||card.activeExtraEnergy||card.conditionalTraitEnergy||passiveBonuses||card.impactNull||
+  mainAbility||phaseEffects.length||moveTriggers.length||card.enterActiveIfOpponentRest||card.activeExtraEnergy||card.conditionalTraitEnergy||passiveBonuses||card.impactNull||
   card.printedImpact||card.printedAttackDamage||card.readyOnAttackCount||card.readyOnBlockCount||
   card.frontGeneratesEnergy||ownOutsideRecovery||colorTriggerFieldSubstitution||card.frontForbidden||card.ownTurnBp||card.opponentTurnBp||nameAliases))
   throw Error(card.id+' claims vanilla despite printed/declared effects');
- if(implemented==='dsl'&&!Object.keys(effects).length&&!phaseEffects.length&&!mainAbility&&!card.enterActiveIfOpponentRest&&
+ if(implemented==='dsl'&&!Object.keys(effects).length&&!phaseEffects.length&&!moveTriggers.length&&!mainAbility&&!card.enterActiveIfOpponentRest&&
   !card.activeExtraEnergy&&!card.conditionalTraitEnergy&&!passiveBonuses&&!card.impactNull&&
   !card.printedImpact&&!card.printedAttackDamage&&!card.readyOnAttackCount&&!card.readyOnBlockCount&&
   !card.frontGeneratesEnergy&&!ownOutsideRecovery&&!colorTriggerFieldSubstitution&&!card.frontForbidden&&!card.ownTurnBp&&!card.opponentTurnBp&&!nameAliases)
@@ -784,6 +812,10 @@ function normalize(card,packId){
   readyOnAttackCount:card.readyOnAttackCount===1?1:0,
   readyOnBlockCount:card.readyOnBlockCount===1?1:0,
   implementation:implemented,
+  moveTriggers:Object.freeze(moveTriggers.map(x=>Object.freeze({
+   when:validateCompletedMoveCondition(x.when),
+   then:Object.freeze(x.then.map(op=>Object.freeze({...op})))
+  }))),
   effects:Object.freeze(Object.fromEntries(Object.entries(effects)
    .map(([k,v])=>[k,Object.freeze(v.map(e=>Object.freeze({
     ...e,...(e.filter?{filter:Object.freeze({...e.filter})}:{}),
