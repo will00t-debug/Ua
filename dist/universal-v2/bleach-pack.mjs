@@ -898,6 +898,18 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
   "number":"EX07BT/BLC-2-042","name":"ルピ・アンテノール",
   "color":"blue","energy":0,"ap":1,"bp":1500,"gen":1,
   "trigger":"draw","type":"character","effect":"退場：將己方牌堆頂 2 張送至場外。"
+ } ,{
+  "id":"BLC-1-009","kind":"printedImpact",
+  "number":"UA08BT/BLC-1-009","name":"ドリスコール・ベルチ",
+  "color":"yellow","energy":2,"ap":1,"bp":3000,"gen":1,
+  "trigger":null,"type":"character",
+  "effect":"Impact 1：攻擊並贏得戰鬥時，對敵方玩家造成 1 點傷害。"
+ } ,{
+  "id":"BLC-1-074","kind":"printedAttackDamage",
+  "number":"UA08BT/BLC-1-074","name":"京楽 春水",
+  "color":"green","energy":3,"ap":1,"bp":2500,"gen":2,
+  "trigger":"draw","type":"character",
+  "effect":"Damage 2：攻擊直接造成傷害時，改為造成 2 點傷害。"
  }
 
  ,{
@@ -957,10 +969,12 @@ export function checkedBleachAddonDefinition(p){
  const isMain=p.kind==='restSelfEnemy'||p.kind==='restEnergyRetire';
  const isRetireDraw=p.kind==='onRetireDrawOne';
  const isRetireMill=p.kind==='onRetireMillTwo';
+ const isPrintedImpact=p.kind==='printedImpact';
+ const isPrintedDamage=p.kind==='printedAttackDamage';
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isStripDual;
+ const special=p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isStripDual;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -975,6 +989,8 @@ export function checkedBleachAddonDefinition(p){
    ...(p.kind==='enterActiveAttackRestSkip'?{enterActiveIfOpponentRest:true}:{}),
   ...(p.kind==='activeEnergy'?{activeExtraEnergy:1}:{}),
   ...(p.kind==='impactNull'?{impactNull:true}:{}),
+  ...(isPrintedImpact?{printedImpact:1}:{}),
+  ...(isPrintedDamage?{printedAttackDamage:2}:{}),
   ...(p.kind==='restSelfEnemy'?{mainAbility:{op:'restSelfThenRestOppFrontOne',frontOnly:true}}:{}),
   ...(p.kind==='restEnergyRetire'?{mainAbility:{op:'restSelfGainEnergyRetireEndMain',energyOnly:true,oncePerTurn:true,extraEnergy:1}}:{}),
   ...(p.kind.startsWith('retireBonus')?{triggerEffect:{op:'retireOppFront'}}:{}),
