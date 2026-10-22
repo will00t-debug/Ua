@@ -3,6 +3,7 @@
 // and official Q99 optional GET/DRAW/FINAL. Unsupported keywords FAIL CLOSED.
 import {validateUniversalDeck} from './pack.mjs';
 import {appendCompletedMove,matchesCompletedMove} from './zone-move-events.mjs';
+import {planSimultaneousLifeReveal} from './life-reveal-batch.mjs';
 import {cardHasName,cardHasTrait,matchesOwnDistinctTraits,matchesV2LiveCondition,
  ownRestPrintedBpCount,retiredThisTurn} from './field-conditions.mjs';
 import {refreshFieldActive,expireContinuousStates,pruneContinuousStates,
@@ -251,8 +252,8 @@ function recordCompletedMove(pack,s,{physical,owner,controller=owner,from,to,rea
 }
 function moveOwnedLinear(pack,s,{owner,controller=owner,from,to,index,reason,sourceUid=null}){
  const pl=s.players[owner];
- if(!['hand','deck','life','outside','removed'].includes(from)||
-  !['hand','deck','outside','removed'].includes(to)||from===to||
+ if(!['hand','deck','life','lifeRevealed','outside','removed'].includes(from)||
+  !['hand','deck','lifeRevealed','outside','removed'].includes(to)||from===to||
   !Number.isInteger(index)||index<0||index>=pl[from].length)
   throw Error('Invalid V2 linear zone move');
  const physical=pl[from].splice(index,1)[0];
@@ -333,6 +334,19 @@ function continueEffectQueue(pack,s){
        sourceUid:event.uid,sourceName:moved.name})));
    }
    s.effectQueue.unshift(...toResolve);
+  }else if(job.op==='lifeBatchStep'){
+   const b=s.lifeRevealBatch;
+   if(!b||b.owner!==owner)throw Error('Absent LIFE batch');
+   if(!b.remaining.length){
+    if(pl.lifeRevealed.length)throw Error('LIFE check has unresolved physical cards');
+    s.lifeRevealBatch=null;finishPending(s);
+   }else if(b.remaining.length>1)
+    s.pending={kind:'life-batch-order',player:owner,choices:[...b.remaining]};
+   else selectLifeBatchItem(pack,s,b.remaining[0]);
+  }else if(job.op==='lifeRelease'){
+   const i=pl.lifeRevealed.findIndex(c=>c.uid===job.uid);
+   if(i>=0)moveOwnedLinear(pack,s,{owner,from:'lifeRevealed',to:'outside',
+    index:i,reason:'life-trigger',sourceUid:job.uid});
   }else if(job.op==='phaseOrder'){
    if(job.entries.length===1)s.effectQueue.unshift(...job.entries[0].jobs);
    else if(job.entries.length>1)s.pending={kind:'phase-order',player:owner,entries:job.entries};
@@ -958,6 +972,41 @@ function commitDestination(s,p,line,slot,replaceUid,source=null){
   throw Error('Full line replacement must designate exact existing card');
  vacate(s,p,line,slot,'removed');
 }
+
+// Official Q73: one physical, public reveal snapshot before any check is resolved.
+// The existing effectQueue serializes choices, nested effects and late releases.
+function revealLifeBatch(pack,s,owner,count){
+ const pl=s.players[owner];
+ if(s.lifeRevealBatch||pl.lifeRevealed.length)throw Error('Nested LIFE reveal unresolved');
+ const {revealed}=planSimultaneousLifeReveal(pl.life,count);
+ if(!revealed.length){s.status='finished';s.winner=1-owner;s.endReason='unblocked-attack';return;}
+ const remaining=[];
+ for(const physical of revealed){
+  if(pl.life[0]?.uid!==physical.uid)throw Error('Physical LIFE order changed');
+  pl.life.shift();pl.lifeRevealed.push(physical);
+  recordCompletedMove(pack,s,{physical,owner,from:'life',to:'lifeRevealed',reason:'rule'});
+  const trig=card(pack,physical).trigger;
+  s.publicReveals.push({owner,title:titleOf(pack,owner),cardId:physical.cardId,
+   uid:physical.uid,trigger:trig||null,turn:s.turn});
+  remaining.push(physical.uid);
+ }
+ if(s.publicReveals.length>12)s.publicReveals.splice(0,s.publicReveals.length-12);
+ s.lifeRevealBatch={owner,remaining};
+ s.effectQueue.unshift({op:'lifeBatchStep',owner});
+}
+function selectLifeBatchItem(pack,s,uid){
+ const batch=s.lifeRevealBatch,pl=s.players[batch.owner];
+ if(!batch.remaining.includes(uid))throw Error('Not an available LIFE UID');
+ const at=pl.lifeRevealed.findIndex(c=>c.uid===uid);
+ if(at<0)throw Error('Revealed physical LIFE card missing');
+ batch.remaining.splice(batch.remaining.indexOf(uid),1);
+ const trigger=card(pack,pl.lifeRevealed[at]).trigger;
+ if(['draw','get','active','special','color','raid'].includes(trigger)||
+  trigger==='final'&&!pl.life.length)
+  s.pending={kind:'life-trigger',player:batch.owner,uid,trigger,batch:true};
+ else moveOwnedLinear(pack,s,{owner:batch.owner,from:'lifeRevealed',
+  to:'outside',index:at,reason:'rule'});
+}
 function damage(pack,s,defender){
  const pl=s.players[defender];
  if(!pl.life.length){s.status='finished';s.winner=1-defender;s.endReason='unblocked-attack';return;}
@@ -973,7 +1022,7 @@ function damage(pack,s,defender){
  }
 }
 function finishPending(s){
- if(s.status==='playing'&&!s.pending&&s.players.some(p=>p.life.length===0)){
+ if(s.status==='playing'&&!s.pending&&!s.lifeRevealBatch&&s.players.some(p=>p.life.length===0)){
   const defeated=s.players.findIndex(p=>p.life.length===0);
   s.status='finished';s.winner=1-defeated;s.endReason='life-zero';
  }
@@ -993,6 +1042,13 @@ function advanceAfterEnd(pack,s,owner){
 }
 function resolveChoice(s,a,pack){
  const q=s.pending,p=s.players[q.player];
+ if(q.kind==='life-batch-order'){
+  if(!s.lifeRevealBatch||!q.choices.includes(a.uid))throw Error('Invalid LIFE UID order');
+  s.pending=null;
+  s.effectQueue.unshift({op:'lifeBatchStep',owner:q.player});
+  selectLifeBatchItem(pack,s,a.uid);
+  continueEffectQueue(pack,s);return;
+ }
  if(q.kind==='phase-order'||q.kind==='retirement-order'){
   const selected=q.entries.find(x=>x.key===a.key);
   if(!selected)throw Error('Invalid simultaneous-effect order');
@@ -1007,10 +1063,9 @@ function resolveChoice(s,a,pack){
   if(!attacker)throw Error('Attacker no longer exists');
   s.pending=null;
   if(a.uid===null){
-    const extra=universalAttackDamage(pack,s,attacker)-1;
-    if(extra)s.effectQueue.unshift({op:'additionalBattleDamage',
-     owner:s.active,defender:q.player,remaining:extra});
-    damage(pack,s,q.player);
+    const count=universalAttackDamage(pack,s,attacker);
+    if(count>1)revealLifeBatch(pack,s,q.player,count);
+    else damage(pack,s,q.player);
     if(!s.pending)continueEffectQueue(pack,s);
     return;
    }
@@ -1620,10 +1675,12 @@ function resolveChoice(s,a,pack){
   // Clear only the original life choice. A COLOR/RAID onPlay can create a NEW
   // pending decision; never wipe that nested decision after resolving it.
   s.pending=null;
-  const i=p.outside.findIndex(c=>c.uid===q.uid);
+  const sourceZone=q.batch?'lifeRevealed':'outside';
+  const i=p[sourceZone].findIndex(c=>c.uid===q.uid);
+  if(q.batch)s.effectQueue.unshift({op:'lifeRelease',owner:q.player,uid:q.uid});
   if(i<0)throw Error('Revealed life card not found');
   if(a.mode==='get'&&q.trigger==='get')moveOwnedLinear(pack,s,{
-   owner:q.player,from:'outside',to:'hand',index:i,reason:'life-trigger',sourceUid:q.uid});
+   owner:q.player,from:sourceZone,to:'hand',index:i,reason:'life-trigger',sourceUid:q.uid});
   else if(a.mode==='draw'&&q.trigger==='draw')draw(pack,s,q.player,1,{reason:'life-trigger',sourceUid:q.uid});
   else if(a.mode==='active'&&q.trigger==='active'){
    const target=field(p).find(c=>c.uid===a.uid);
@@ -1640,7 +1697,7 @@ function resolveChoice(s,a,pack){
   }
   else if(a.mode==='colorRetire'&&q.trigger==='color'){
    const slot=s.players[1-q.player].front.findIndex(c=>c?.uid===a.uid);
-   const profile=card(pack,p.outside[i]).triggerEffect;
+   const profile=card(pack,p[sourceZone][i]).triggerEffect;
    if(profile.op!=='retireOppFrontUnderBp'||slot<0||
     bp(pack,s,s.players[1-q.player].front[slot])>profile.bp)
     throw Error('Illegal COLOR retirement target');
@@ -1648,7 +1705,7 @@ function resolveChoice(s,a,pack){
   }
   else if(a.mode==='colorRestSkip'&&q.trigger==='color'){
    const foe=1-q.player,slot=s.players[foe].front.findIndex(c=>c?.uid===a.uid);
-   const profile=card(pack,p.outside[i]).triggerEffect;
+   const profile=card(pack,p[sourceZone][i]).triggerEffect;
    if(profile.op!=='restOppFrontSkipNextActive'||slot<0)
     throw Error('Illegal COLOR rest target');
    const target=s.players[foe].front[slot];
@@ -1657,7 +1714,7 @@ function resolveChoice(s,a,pack){
     sourceUid:q.uid,targetUid:target.uid});
   }
   else if(a.mode==='colorOutside'&&q.trigger==='color'){
-   const profile=card(pack,p.outside[i]).triggerEffect;
+   const profile=card(pack,p[sourceZone][i]).triggerEffect;
    if(profile.op!=='deployOutsideCharacter'||a.line!=='front'||profile.frontOnly!==true)
     throw Error('COLOR source must explicitly allow outside-to-front play');
    const index=p.outside.findIndex(c=>c.uid===a.uid);
@@ -1675,7 +1732,7 @@ function resolveChoice(s,a,pack){
    applyEffects(pack,s,chosen,'onPlay',q.player,'lifeColorOutside');
   }
   else if(a.mode==='colorField'&&q.trigger==='color'){
-   const profile=card(pack,p.outside[i]).triggerEffect;
+   const profile=card(pack,p[sourceZone][i]).triggerEffect;
    if(!maySubstituteColorTriggerField(pack,s,q.player,profile)||a.line!=='energy')
     throw Error('COLOR FIELD substitution no longer active');
    const handIndex=p.hand.findIndex(c=>c.uid===a.uid);
@@ -1691,7 +1748,7 @@ function resolveChoice(s,a,pack){
    applyEffects(pack,s,picked,'onPlay',q.player,'lifeColorField');
   }
   else if(a.mode==='color'&&q.trigger==='color'){
-   const profile=card(pack,p.outside[i]).triggerEffect;
+   const profile=card(pack,p[sourceZone][i]).triggerEffect;
    const handIndex=p.hand.findIndex(c=>c.uid===a.uid);
    if(handIndex<0)throw Error('COLOR requires a hand character');
    const picked=p.hand[handIndex],d=card(pack,picked);
@@ -1707,12 +1764,12 @@ function resolveChoice(s,a,pack){
    applyEffects(pack,s,picked,'onPlay',q.player,'lifeColor');
   }
   else if(a.mode==='raid'&&q.trigger==='raid'){
-   const revealed=p.outside.splice(i,1)[0];
+   const revealed=p[sourceZone].splice(i,1)[0];
    performRaid(pack,s,q.player,revealed,a.baseUid,a.line,a.slot,a.replaceUid,
     {entryCause:'lifeRaid'});
   }
   else if(a.mode==='get'&&q.trigger==='raid')moveOwnedLinear(pack,s,{
-   owner:q.player,from:'outside',to:'hand',index:i,
+   owner:q.player,from:sourceZone,to:'hand',index:i,
    reason:'life-trigger',sourceUid:q.uid});
   else if(a.mode==='final'&&q.trigger==='final'&&!p.life.length&&p.deck.length){
    const returned=p.deck.shift();p.life.unshift(returned);
@@ -1739,7 +1796,7 @@ export function newUniversalMatch(pack,{decks,seed=1,first=0}={}){
   packIds:packs.map(p=>p.id),packVersions:packs.map(p=>p.version),
   rng:(seed>>>0)||1,first,active:first,turn:0,phase:'start',status:'playing',
   winner:null,endReason:null,pending:null,extraDrawn:false,moved:false,movedUids:[],attacksThisTurn:0,attacksByUid:{},blocksByUid:{},
-  publicReveals:[],effectQueue:[],delayedEffects:[],retirementBatch:null,nextFieldEntryStamp:1,
+  publicReveals:[],effectQueue:[],delayedEffects:[],retirementBatch:null,lifeRevealBatch:null,nextFieldEntryStamp:1,
   continuousStates:[],nextContinuousStateId:1,endRefreshed:false,players:[],
   raidedThisTurn:[false,false],mainAbilityUsedUids:[],mainReadyOnceByName:[[],[]],
   onceEffectUses:[[],[]],
@@ -1751,7 +1808,7 @@ export function newUniversalMatch(pack,{decks,seed=1,first=0}={}){
   const ids=Object.entries(decks[p]).flatMap(([id,count])=>Array(count).fill(id));
   const pile=shuffle(s,ids.map((id,i)=>({uid:p+'-'+i,cardId:id,ready:false,stack:[],under:[],buffs:[]})));
   s.players.push({
-   deck:pile,hand:pile.splice(0,7),life:pile.splice(0,7),
+   deck:pile,hand:pile.splice(0,7),life:pile.splice(0,7),lifeRevealed:[],
    front:[null,null,null,null],energy:[null,null,null,null],
    outside:[],removed:[],apCards:[0,1,2].map(i=>({uid:'AP'+p+'-'+i,ready:false,inPlay:false})),ownTurns:0
   });
@@ -1762,6 +1819,7 @@ export function newUniversalMatch(pack,{decks,seed=1,first=0}={}){
 }
 function legalPending(pack,s){
  const q=s.pending,p=s.players[q.player];
+ if(q.kind==='life-batch-order')return q.choices.map(uid=>({type:'chooseLifeOrder',uid}));
  if(q.kind==='phase-order')return q.entries.map(x=>({type:'choosePhaseOrder',key:x.key}));
  if(q.kind==='retirement-order')return q.entries.map(x=>({type:'chooseRetirementOrder',key:x.key}));
  if(q.kind==='block')return [
@@ -1937,6 +1995,7 @@ function legalPending(pack,s){
    ...q.choices.map(uid=>({type:'chooseTarget',uid}))
   ];
  if(q.kind==='life-trigger'){
+  const triggerPile=q.batch?p.lifeRevealed:p.outside;
   const out=[{type:'chooseTrigger',mode:'skip'}];
   if(q.trigger==='active')out.push(...field(p).filter(c=>card(pack,c).type==='character')
    .map(c=>({type:'chooseTrigger',mode:'active',uid:c.uid})));
@@ -1944,7 +2003,7 @@ function legalPending(pack,s){
    out.push(...s.players[1-q.player].front.filter(Boolean)
     .map(c=>({type:'chooseTrigger',mode:'special',uid:c.uid})));
   if(q.trigger==='color'){
-   const profile=card(pack,p.outside.find(c=>c.uid===q.uid)).triggerEffect;
+   const profile=card(pack,triggerPile.find(c=>c.uid===q.uid)).triggerEffect;
    if(profile.op==='retireOppFrontUnderBp')
     out.push(...s.players[1-q.player].front.filter(c=>c&&bp(pack,s,c)<=profile.bp)
      .map(c=>({type:'chooseTrigger',mode:'colorRetire',uid:c.uid})));
@@ -1979,7 +2038,7 @@ function legalPending(pack,s){
   }
   }
   if(q.trigger==='raid'){
-   const revealed=p.outside.find(c=>c.uid===q.uid),d=card(pack,revealed);
+   const revealed=triggerPile.find(c=>c.uid===q.uid),d=card(pack,revealed);
    out.push({type:'chooseTrigger',mode:'get'});
    if(d.energy<=(universalEnergyByColor(pack,s,q.player)[d.color]||0)){
     for(const line of ['front','energy'])for(let slot=0;slot<4;slot++){
@@ -2451,7 +2510,7 @@ export function assertUniversalMatch(pack,s){
    !Array.isArray(s.initialCounts)||s.initialCounts.length!==2||
    s.players?.length!==2||!playerIndex(s.active)||
    !['playing','finished'].includes(s.status))throw Error('Incorrect pack/version or match state');
- if(s.pending&&(!playerIndex(s.pending.player)||!['phase-order','retirement-order','block','life-trigger','effect-target','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-strip-raid-top','effect-retire-own-field','effect-retire-own-character','effect-rest-bp','raid-effect-order','effect-buff-trait','effect-buff-own','effect-once-choice','main-two-buff','main-discard-buff','main-rest-front-energy','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-order','effect-recover-outside','effect-outside-rest','effect-outside-name-rest','effect-outside-traitless-rest','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-choice-mode','recovered-self-entry','effect-optional-mill','effect-pay-ap-deploy','effect-top-trait-outside'].includes(s.pending.kind)))
+ if(s.pending&&(!playerIndex(s.pending.player)||!['phase-order','retirement-order','block','life-batch-order','life-trigger','effect-target','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-strip-raid-top','effect-retire-own-field','effect-retire-own-character','effect-rest-bp','raid-effect-order','effect-buff-trait','effect-buff-own','effect-once-choice','main-two-buff','main-discard-buff','main-rest-front-energy','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-order','effect-recover-outside','effect-outside-rest','effect-outside-name-rest','effect-outside-traitless-rest','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-choice-mode','recovered-self-entry','effect-optional-mill','effect-pay-ap-deploy','effect-top-trait-outside'].includes(s.pending.kind)))
   throw Error('Invalid pending controller');
  if(!Array.isArray(s.raidedThisTurn)||s.raidedThisTurn.length!==2||
    s.raidedThisTurn.some(x=>typeof x!=='boolean')||
@@ -2473,8 +2532,8 @@ export function assertUniversalMatch(pack,s){
    ![0,1].includes(e.owner)||![0,1].includes(e.controller)||
    typeof e.uid!=='string'||!e.uid.startsWith(e.owner+'-')||
    typeof e.cardId!=='string'||!e.cardId||
-   !['hand','deck','life','outside','front','energy','removed','raid-under'].includes(e.from)||
-   !['hand','deck','life','outside','front','energy','removed','raid-under'].includes(e.to)||
+   !['hand','deck','life','lifeRevealed','outside','front','energy','removed','raid-under'].includes(e.from)||
+   !['hand','deck','life','lifeRevealed','outside','front','energy','removed','raid-under'].includes(e.to)||
    !['payment','own-effect','opponent-effect','rule','life-trigger','retirement','raid-strip'].includes(e.reason)||
    (e.sourceUid!==null&&typeof e.sourceUid!=='string')||
    (e.sourceCardId!==null&&typeof e.sourceCardId!=='string')||
@@ -2530,6 +2589,21 @@ export function assertUniversalMatch(pack,s){
    !s.effectQueue.some(e=>e.op==='closeRetirementBatch'))
    throw Error('Invalid open retirement batch');
  }
+ if(s.lifeRevealBatch!==null){
+  const b=s.lifeRevealBatch;
+  if(!b||!playerIndex(b.owner)||!Array.isArray(b.remaining)||
+   new Set(b.remaining).size!==b.remaining.length||
+   b.remaining.some(uid=>typeof uid!=='string'||
+    !s.players[b.owner].lifeRevealed.some(c=>c.uid===uid))||
+   s.players[1-b.owner].lifeRevealed.length)
+   throw Error('Invalid LIFE reveal batch');
+ }else if(s.players.some(p=>p.lifeRevealed.length))
+  throw Error('Revealed LIFE cards without live batch');
+ if(s.pending?.kind==='life-batch-order'&&(!s.lifeRevealBatch||
+  s.pending.player!==s.lifeRevealBatch.owner||
+  !Array.isArray(s.pending.choices)||s.pending.choices.length<2||
+  s.pending.choices.some(uid=>!s.lifeRevealBatch.remaining.includes(uid))))
+  throw Error('Invalid LIFE order snapshot');
  if(s.pending?.kind==='retirement-order'&&(!Array.isArray(s.pending.entries)||
   s.pending.entries.length<2||s.pending.entries.some(e=>e.owner!==s.pending.player||
    typeof e.key!=='string'||!Array.isArray(e.jobs))))
@@ -2538,7 +2612,7 @@ export function assertUniversalMatch(pack,s){
    !['draw','drawIfOwnName','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
     'discardGate','enemyFrontAllBpDown','retireOppFrontAllUnderBp',
     'buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
-    'recoverOutsideColorUnderEnergy','deployOutsideRest','deployOutsideNameRest','payApDeployNamedRest','inspectTopTraitOutside','deployOutsideTraitlessRestOrRaid','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','moveAtMainEnd','retireOwnFieldOne','retireOwnCharacterOne','openBlock','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','phaseOrder','sourceResolutionBoundary','advanceAfterAttack','additionalBattleDamage','openRetirementBatch','closeRetirementBatch','retirementOrder','battleImpactDamage','discardOppHand','activeSelfIf'].includes(e.op)))
+    'recoverOutsideColorUnderEnergy','deployOutsideRest','deployOutsideNameRest','payApDeployNamedRest','inspectTopTraitOutside','deployOutsideTraitlessRestOrRaid','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','moveAtMainEnd','retireOwnFieldOne','retireOwnCharacterOne','openBlock','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','phaseOrder','sourceResolutionBoundary','lifeBatchStep','lifeRelease','advanceAfterAttack','additionalBattleDamage','openRetirementBatch','closeRetirementBatch','retirementOrder','battleImpactDamage','discardOppHand','activeSelfIf'].includes(e.op)))
   throw Error('Invalid queued effects');
  // The internal boundary is not user-authored DSL. Reject forged or
  // out-of-range snapshots before replay or an AI simulation can resolve it.
@@ -2550,7 +2624,7 @@ export function assertUniversalMatch(pack,s){
   throw Error('Invalid source-resolution boundary');
  for(let p=0;p<2;p++){
   const pl=s.players[p],uids=new Set(),items=[];
-  if(pl.front?.length!==4||pl.energy?.length!==4||pl.apCards?.length!==3||
+  if(pl.front?.length!==4||pl.energy?.length!==4||!Array.isArray(pl.lifeRevealed)||pl.apCards?.length!==3||
     pl.apCards.some(c=>typeof c.ready!=='boolean'||typeof c.inPlay!=='boolean'||(c.ready&&!c.inPlay)))throw Error('Invalid zones or AP cards');
   function visit(c){
    if(!c)return;
@@ -2560,7 +2634,7 @@ export function assertUniversalMatch(pack,s){
    for(const q of c.stack||[])visit(q);
    for(const q of c.under||[])visit(q);
   }
-  for(const zone of ['deck','hand','life','outside','removed'])for(const c of pl[zone]||[])visit(c);
+  for(const zone of ['deck','hand','life','lifeRevealed','outside','removed'])for(const c of pl[zone]||[])visit(c);
   for(const c of field(pl))visit(c);
   if(items.length!==50)throw Error('Card conservation violated ('+items.length+'/50)');
   const counts=Object.create(null);
