@@ -10,7 +10,7 @@ export function stampFieldInstance(s,c){
  return c.fieldEntryStamp;
 }
 export function grantContinuousState(s,{kind,controller,sourceUid,targetUid,until=null,sourceLinked=false,program=null,optional=false}){
- if(!['skipNextActive','cannotActive','originalEffectsDisabled','grantedOnAttack'].includes(kind)||!player(controller)||
+ if(!['skipNextActive','cannotActive','cannotAttack','originalEffectsDisabled','grantedOnAttack'].includes(kind)||!player(controller)||
   typeof sourceUid!=='string'||typeof targetUid!=='string'||typeof sourceLinked!=='boolean')
   throw Error('Invalid continuous-state descriptor');
  const target=fieldInstance(s,targetUid),source=fieldInstance(s,sourceUid);
@@ -23,7 +23,11 @@ export function grantContinuousState(s,{kind,controller,sourceUid,targetUid,unti
  if(kind!=='grantedOnAttack'&&(program!==null||optional!==false))
   throw Error('Unknown continuous status program');
  if(kind==='skipNextActive'&&until!==null)throw Error('Skip may not have expiry');
- if(['cannotActive','originalEffectsDisabled','grantedOnAttack'].includes(kind)&&(!until||!player(until.player)||
+ // Only the controller's next own START may expire a temporary attack ban.
+ if(kind==='cannotAttack'&&(sourceLinked||until?.player!==controller||
+  until?.phase!=='start'||until?.edge!=='start'))
+  throw Error('Attack ban must expire on granting controller next own start');
+ if(['cannotActive','cannotAttack','originalEffectsDisabled','grantedOnAttack'].includes(kind)&&(!until||!player(until.player)||
   !['start','move','main','attack'].includes(until.phase)||!['start','end'].includes(until.edge)||
   Object.keys(until).some(k=>!['player','phase','edge'].includes(k))))
   throw Error('Invalid status expiration phase');
@@ -79,17 +83,19 @@ export function validateContinuousStates(s){
  if(!Array.isArray(s.continuousStates)||!Number.isInteger(s.nextContinuousStateId)||
   s.nextContinuousStateId<1||new Set(s.continuousStates.map(e=>e.id)).size!==s.continuousStates.length||
   s.continuousStates.some(e=>!Number.isInteger(e.id)||e.id<1||
-   !['skipNextActive','cannotActive','originalEffectsDisabled','grantedOnAttack'].includes(e.kind)||!player(e.controller)||
+   !['skipNextActive','cannotActive','cannotAttack','originalEffectsDisabled','grantedOnAttack'].includes(e.kind)||!player(e.controller)||
    !player(e.targetOwner)||typeof e.sourceUid!=='string'||typeof e.targetUid!=='string'||
    !Number.isInteger(e.targetStamp)||e.targetStamp<1||typeof e.consumed!=='boolean'||
    typeof e.sourceLinked!=='boolean'||(e.sourceLinked&&(!Number.isInteger(e.sourceStamp)||e.sourceStamp<1))||
    (e.kind==='skipNextActive'&&e.until!==null)||
+   (e.kind==='cannotAttack'&&(e.sourceLinked||e.until?.player!==e.controller||
+    e.until?.phase!=='start'||e.until?.edge!=='start'))||
    (e.kind==='grantedOnAttack'&&(
      e.optional!==true||!Array.isArray(e.program)||e.program.length!==1||
      e.program[0]?.op!=='draw'||e.program[0]?.count!==1||Object.keys(e.program[0]).length!==2||
      e.sourceLinked||!player(e.until?.player)||e.until?.phase!=='attack'||e.until?.edge!=='end'))||
    (e.kind!=='grantedOnAttack'&&(e.program!==undefined||e.optional!==undefined))||
-   (['cannotActive','originalEffectsDisabled','grantedOnAttack'].includes(e.kind)&&(!e.until||!player(e.until.player)||
+   (['cannotActive','cannotAttack','originalEffectsDisabled','grantedOnAttack'].includes(e.kind)&&(!e.until||!player(e.until.player)||
     !['start','move','main','attack'].includes(e.until.phase)||!['start','end'].includes(e.until.edge)))))
   throw Error('Invalid continuous-state accounting');
  return true;
