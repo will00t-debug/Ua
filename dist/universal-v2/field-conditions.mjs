@@ -38,6 +38,8 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   const moves=s.turnEffectZoneMoves?.[owner];
   return moves?.handToOutside===true||moves?.outsideToHand===true;
  }
+ if(condition.kind==='ownRetiredThisTurn')
+  return retiredThisTurn(s,owner,condition.cardType);
  if(condition.kind==='ownLifeAtMost')
   return s.players[owner].life.length<=condition.max;
  if(condition.kind==='ownHandCountAtLeast')

@@ -2,7 +2,7 @@
 // Pure physical-card reducer: common UA zones/AP/phases/limited effects/Raid
 // and official Q99 optional GET/DRAW/FINAL. Unsupported keywords FAIL CLOSED.
 import {validateUniversalDeck} from './pack.mjs';
-import {matchesOwnDistinctTraits,matchesV2LiveCondition} from './field-conditions.mjs';
+import {matchesOwnDistinctTraits,matchesV2LiveCondition,retiredThisTurn} from './field-conditions.mjs';
 import {refreshFieldActive,expireContinuousStates,pruneContinuousStates,
  fieldRestrictions,validateContinuousStates,grantContinuousState,
  attemptFieldActive,originalEffectsDisabled} from './continuous-states.mjs';
@@ -1357,7 +1357,11 @@ export function legalUniversalActions(pack,s){
   // A discard-cost MAIN ability can be activated from either field line,
   // regardless of source REST state; it does NOT require spending AP.
   for(const c of field(pl)){
-   const ability=originalEffectsDisabled(s,c)?null:card(pack,c).mainAbility;
+   const d=card(pack,c),ability=originalEffectsDisabled(s,c)?null:d.mainAbility;
+   if(ability?.op==='readySelfIfOwnRetiredThisTurn'&&
+    retiredThisTurn(s,p,ability.cardType)&&
+    !s.mainReadyOnceByName[p].includes(d.name+'|readySelfIfOwnRetiredThisTurn'))
+    out.push({type:'activate',uid:c.uid,mode:'retireReady'});
    if(ability?.op==='discardHandBuffSelf'&&pl.hand.length>0&&
     !s.mainAbilityUsedUids.includes(c.uid))
     out.push({type:'activate',uid:c.uid,mode:'discardSelfBuff'});
@@ -1486,6 +1490,15 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
    const selected=field(pl).find(c=>c.uid===action.uid);
    if(!selected||originalEffectsDisabled(s,selected)||!card(pack,selected).mainAbility)throw Error('Main ability source missing');
    const d=card(pack,selected),ability=d.mainAbility;
+   if(ability.op==='readySelfIfOwnRetiredThisTurn'){
+    const key=d.name+'|readySelfIfOwnRetiredThisTurn';
+    if(action.mode!=='retireReady'||!retiredThisTurn(s,p,ability.cardType)||
+     s.mainReadyOnceByName[p].includes(key))
+     throw Error('No completed own retirement or same-name MAIN already used');
+    s.mainReadyOnceByName[p].push(key);
+    attemptFieldActive(s,p,selected);
+    break;
+   }
    if(ability.op==='discardHandBuffSelf'){
     if(action.mode!=='discardSelfBuff'||!pl.hand.length||
      s.mainAbilityUsedUids.includes(selected.uid))

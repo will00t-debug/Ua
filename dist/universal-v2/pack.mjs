@@ -255,12 +255,15 @@ function validatePassiveBonuses(card){
   const q=p.condition;
   if(!q||typeof q!=='object'||Array.isArray(q)||
    !['own','opponent','any'].includes(q.turn)||
-   !['outsideCount','ownNameExists','ownFieldHasAllNames','ownTraitCount','ownEnergyAtLeast','ownHandCountAtLeast','ownLifeAtMost','ownEffectHandOutsideOrRecovery'].includes(q.kind))
+   !['outsideCount','ownNameExists','ownFieldHasAllNames','ownTraitCount','ownEnergyAtLeast','ownHandCountAtLeast','ownLifeAtMost','ownEffectHandOutsideOrRecovery','ownRetiredThisTurn'].includes(q.kind))
    throw Error(card.id+' invalid passive condition');
   // Effect-zone movement is a no-extra-argument same-turn predicate;
   // reject opponent/any variants until a concrete printed card needs them.
   if(q.kind==='ownEffectHandOutsideOrRecovery'&&q.turn!=='own')
    throw Error(card.id+' invalid effect-zone own-turn condition');
+  const retired=q.kind==='ownRetiredThisTurn';
+  if(retired&&!['field','character'].includes(q.cardType))
+   throw Error(card.id+' invalid retired-card type');
   const count=['outsideCount','ownTraitCount','ownEnergyAtLeast','ownHandCountAtLeast'].includes(q.kind);
   const atMost=q.kind==='ownLifeAtMost';
   const field=['ownNameExists','ownFieldHasAllNames','ownTraitCount'].includes(q.kind);
@@ -271,10 +274,10 @@ function validatePassiveBonuses(card){
    (q.kind==='ownNameExists'&&(!q.name||typeof q.name!=='string'||!q.name.trim()))||
    (q.kind==='ownFieldHasAllNames'&&(!Array.isArray(q.names)||q.names.length<2||q.names.length>8||q.names.some(n=>typeof n!=='string'||!n.trim())||new Set(q.names).size!==q.names.length))||
    (q.kind==='ownTraitCount'&&(!q.trait||typeof q.trait!=='string'||!q.trait.trim()))||
-   Object.keys(q).length!==(2+(count?1:0)+(atMost?1:0)+(field?2:0)+
+   Object.keys(q).length!==(2+(count?1:0)+(atMost?1:0)+(retired?1:0)+(field?2:0)+
     (['ownNameExists','ownFieldHasAllNames','ownTraitCount'].includes(q.kind)?1:0))||
    Object.keys(q).some(k=>!['kind','turn',
-    ...(count?['min']:[]),...(atMost?['max']:[]),...(field?['zone','excludeSelf']:[]),
+    ...(count?['min']:[]),...(atMost?['max']:[]),...(retired?['cardType']:[]),...(field?['zone','excludeSelf']:[]),
     ...(q.kind==='ownNameExists'?['name']:[]),
     ...(q.kind==='ownFieldHasAllNames'?['names']:[]),
     ...(q.kind==='ownTraitCount'?['trait']:[])].includes(k))||
@@ -369,6 +372,10 @@ function normalize(card,packId){
   typeof mainAbility.trait==='string'&&!!mainAbility.trait.trim()&&
   integer(mainAbility.bp,1)&&mainAbility.bp<=5000&&
   Object.keys(mainAbility).every(k=>['op','frontOnly','readyOncePerName','trait','bp'].includes(k));
+ const mainRetireReady=mainAbility?.op==='readySelfIfOwnRetiredThisTurn'&&
+  mainAbility.readyOncePerName===true&&['field','character'].includes(mainAbility.cardType)&&
+  Object.keys(mainAbility).length===3&&
+  Object.keys(mainAbility).every(k=>['op','cardType','readyOncePerName'].includes(k));
  const mainSelfRest=mainAbility?.op==='restSelfThenRestOppFrontOne'&&
   mainAbility.frontOnly===true&&
   Object.keys(mainAbility).length===2&&
@@ -392,7 +399,7 @@ function normalize(card,packId){
   Object.keys(mainAbility.then[0]).every(k=>['op','count'].includes(k));
  if(mainRestProgram)verifyProgram(mainAbility.then,card.id+'.mainAbility.then');
  if(mainAbility!==null&&
-  (card.type!=='character'||!(mainRaid||mainSelfRest||mainRestProgram||mainEnergyRetire||mainDiscardBuff)))
+  (card.type!=='character'||!(mainRaid||mainRetireReady||mainSelfRest||mainRestProgram||mainEnergyRetire||mainDiscardBuff)))
   throw Error(card.id+' unsupported main action ability');
  const passiveBonuses=validatePassiveBonuses(card);
  const implemented=card.implementation;
