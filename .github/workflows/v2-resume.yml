@@ -2,13 +2,14 @@ name: V2 Resumed Integration
 # pull_request re-runs on open, push, and reopen for PRs into the V2
 # integration branch. It checks out the merge ref and uses read-only
 # GITHUB_TOKEN. This file is not on main, and push is the event that runs a
-# workflow before it reaches the default branch, so cursor/* pushes also run
+# workflow before it reaches the default branch, so cursor/* and gpt/* pushes also run
 # the same jobs. No pull_request_target and no repository secrets.
 on:
   push:
     branches:
       - codex/v2-resume-20261021
       - 'cursor/**'
+      - 'gpt/**'
   pull_request:
     branches:
       - codex/v2-resume-20261021
