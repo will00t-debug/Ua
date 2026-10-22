@@ -805,7 +805,7 @@ function strippableRaidTop(pack,top){
   card(pack,base).type==='character'&&!card(pack,base).raidName&&
   !(base.stack||[]).length&&!(base.under||[]).length);
 }
-function performRaid(pack,s,p,cardOnTop,baseUid,line,slot,replaceUid,{entryReady=true,entryCause='paidRaid'}={}){
+function performRaid(pack,s,p,cardOnTop,baseUid,line,slot,replaceUid,{entryReady=true,entryCause='paidRaid',entryFrom='hand',effectSourceUid=null}={}){
  const pl=s.players[p],base=location(s,p,baseUid),top=card(pack,cardOnTop);
  const baseOriginalSilenced=base?originalEffectsDisabled(s,base.c):false;
  if(!base||!validRaidBase(pack,s,p,base.c,top))throw Error('Illegal Raid base');
@@ -831,6 +831,13 @@ function performRaid(pack,s,p,cardOnTop,baseUid,line,slot,replaceUid,{entryReady
  cardOnTop.stack=[effectiveBase];cardOnTop.ready=entryReady;
  cardOnTop.fieldEntryStamp=s.nextFieldEntryStamp++;
  pl[line][slot]=cardOnTop;
+ // Both physical movements are real and complete. A Raid base remains
+ // nested under the new top; do not count its UID twice or expose hidden layers.
+ recordCompletedMove(pack,s,{physical:base.c,owner:p,from:base.line,
+  to:'raid-under',reason:'rule',sourceUid:cardOnTop.uid});
+ recordCompletedMove(pack,s,{physical:cardOnTop,owner:p,from:entryFrom,to:line,
+  reason:entryCause==='lifeRaid'?'life-trigger':
+   entryCause==='paidRaid'?'rule':'own-effect',sourceUid:effectSourceUid});
  s.raidedThisTurn[p]=true;
  const baseJobs=s.active===p&&!baseOriginalSilenced?programJobs(pack,s,effectiveBase,'onRaided',p,cardOnTop.uid):[];
  const entryJobs=programJobs(pack,s,cardOnTop,'onPlay',p,undefined,entryCause);
@@ -1343,7 +1350,7 @@ function resolveChoice(s,a,pack){
     p.outside.splice(i,1);
     s.pending=null;
     performRaid(pack,s,q.player,physical,a.baseUid,a.line,a.slot,a.replaceUid,
-     {entryReady:false,entryCause:'outsideEffectRaid'});
+     {entryReady:false,entryCause:'outsideEffectRaid',entryFrom:'outside',effectSourceUid:q.sourceUid});
     continueEffectQueue(pack,s);return;
    }
    if(a.mode!=='enter'||!['front','energy'].includes(a.line)||
@@ -1641,6 +1648,8 @@ function resolveChoice(s,a,pack){
     buffs:[],faceDown:false,fieldEntryStamp:null});
    recordCompletedMove(pack,s,{physical:top,owner:foe,controller:q.player,
     from:'front',to:'outside',reason:'raid-strip',sourceUid:q.sourceUid});
+   recordCompletedMove(pack,s,{physical:base,owner:foe,controller:q.player,
+    from:'raid-under',to:'front',reason:'raid-strip',sourceUid:q.sourceUid});
    s.pending=null;continueEffectQueue(pack,s);return;
   }
   if(q.kind==='effect-retire-bp'){
@@ -1769,7 +1778,7 @@ function resolveChoice(s,a,pack){
   else if(a.mode==='raid'&&q.trigger==='raid'){
    const revealed=p[sourceZone].splice(i,1)[0];
    performRaid(pack,s,q.player,revealed,a.baseUid,a.line,a.slot,a.replaceUid,
-    {entryCause:'lifeRaid'});
+    {entryCause:'lifeRaid',entryFrom:sourceZone,effectSourceUid:q.uid});
   }
   else if(a.mode==='get'&&q.trigger==='raid')moveOwnedLinear(pack,s,{
    owner:q.player,from:sourceZone,to:'hand',index:i,
