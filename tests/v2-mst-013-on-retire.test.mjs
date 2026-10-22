@@ -42,7 +42,7 @@ test('MST013 immutable official printed onRetire DRAW matches previously verifie
  assert.deepEqual(card.effects.onRetire,[{op:'draw',count:1}]);
  assert.deepEqual(card.effects.onRetire,slg.cards['SLG-1-007'].effects.onRetire);
  assert.ok(Object.isFrozen(card.effects.onRetire));
- assert.equal(Object.keys(mst.cards).length,40);
+ assert.equal(Object.keys(mst.cards).length,41);
  assert.deepEqual(validateUniversalDeck(mst,mstDeck),[]);
  assert.deepEqual(validateUniversalDeck(slg,slgDeck),[]);
 });

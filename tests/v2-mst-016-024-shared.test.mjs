@@ -65,7 +65,7 @@ test('MST016/024 source-complete official JP print and exact generic V2 profile'
    name:'ロキシー'},bp:1000}]);
  assert.equal(mst.cards['MST-1-016'].implementation,'dsl');
  assert.equal(mst.cards['MST-1-024'].implementation,'dsl');
- assert.equal(Object.keys(mst.cards).length,40);
+ assert.equal(Object.keys(mst.cards).length,41);
  assert.deepEqual(validateUniversalDeck(mst,mstDeck),[]);
  assert.deepEqual(validateUniversalDeck(slg,slgDeck),[]);
 });
