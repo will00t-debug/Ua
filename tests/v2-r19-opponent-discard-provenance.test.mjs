@@ -44,7 +44,9 @@ test('opponent discard is opponent-effect, controlled by causing actor; never an
  assert.equal(move.sourceOnField,true);
  assert.equal(matchesCompletedMove(move,{owner:1,controller:0,reason:'opponent-effect'}),true);
  assert.equal(matchesCompletedMove(move,{reason:'own-effect'}),false);
- assert.equal(s.turnEffectZoneMoves[1].handToOutside,false);
+ // Legacy broad boolean is intentionally compatible with pre-R19 behavior;
+ // source-specific conditions must inspect the new typed event instead.
+ assert.equal(s.turnEffectZoneMoves[1].handToOutside,true);
  assert.equal(universalPublicView(packs,s,0).players[1].hand,null);
  assert.equal(assertUniversalMatch(packs,s),true);
 });

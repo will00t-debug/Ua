@@ -232,7 +232,11 @@ function recordCompletedMove(pack,s,{physical,owner,controller=owner,from,to,rea
   from,to,reason,sourceUid,sourceCardId:source?.cardId??null,
   sourceName:definition?.name??null,sourceColor:definition?.color??null,
   sourceOnField:!!source});
- if(owner===controller&&['own-effect','payment'].includes(reason)){
+ // Keep the prior turnEffectZoneMoves boolean contract unchanged, including
+ // historical forced opponent discards. It is NOT source-sensitive and must
+ // NOT be used for new specific-source triggers; zoneMoveEvents is authoritative.
+ if(owner===controller&&['own-effect','payment'].includes(reason)||
+   reason==='opponent-effect'&&from==='hand'&&to==='outside'){
   if(from==='hand'&&to==='outside'||from==='outside'&&to==='hand')
    markOwnEffectZoneMove(s,owner,from,to);
  }
