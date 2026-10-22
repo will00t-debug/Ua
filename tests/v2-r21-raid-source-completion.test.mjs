@@ -37,6 +37,14 @@ function started(){
  assert.ok(action,'existing two-layer Raid geometry must be legal');
  s=dispatchUniversalAction(packs,s,action);
  assert.equal(s.pending?.kind,'raid-effect-order');
+ const baseMove=s.zoneMoveEvents.find(e=>e.uid===base.uid&&e.to==='raid-under');
+ const raidMove=s.zoneMoveEvents.find(e=>e.uid===raid.uid&&e.from==='hand'&&e.to==='front');
+ assert.ok(baseMove&&raidMove,'Raid is two completed UID movements');
+ assert.deepEqual([baseMove.from,baseMove.owner,baseMove.sourceUid],
+  ['front',0,raid.uid]);
+ assert.ok(baseMove.order<raidMove.order);
+ assert.equal(s.players[0].front[0].stack[0].uid,base.uid);
+ assert.equal(assertUniversalMatch(packs,s),true);
  return {s,base,raid,trigger};
 }
 for(const mode of ['baseFirst','entryFirst']){
