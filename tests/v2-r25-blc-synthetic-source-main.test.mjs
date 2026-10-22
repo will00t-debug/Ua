@@ -41,6 +41,11 @@ function start(owner){
  for(let i=hand.length-1;i>=0;i--)if(['BC1','BC2'].includes(hand[i].cardId))
   s.players[owner].outside.push(hand.splice(i,1)[0]);
  s.players[owner].hand.push(source,event);
+ // Genuine enemy front-line characters make the onPlay dual-target window legal.
+ for(const [slot,id] of ['BC5','BC6'].entries()){
+  const victim=pull(s,1-owner,id);victim.ready=true;
+  s.players[1-owner].front[slot]=victim;
+ }
  s.phase='main';
  const play=legalUniversalActions(packs,s).find(x=>x.type==='play'&&x.uid===source.uid&&x.line==='front');
  assert.ok(play);s=dispatchUniversalAction(packs,s,play,{actor:owner});

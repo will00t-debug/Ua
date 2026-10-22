@@ -21,7 +21,16 @@ function take(s,p,id){
 function game(owner,extra){
  let s=newUniversalMatch(packs,{decks:[deck,deck],first:owner,seed:2501});
  const target=take(s,owner,'G0');s.players[owner].hand.push(target);
- s.phase='main';
+ if(extra){
+  // Two actual AP become available on the second own turn; do not fake AP.
+  for(let i=0;i<12&&!(s.players[owner].ownTurns===2&&s.active===owner&&s.phase==='main');i++){
+   const next=legalUniversalActions(packs,s).find(a=>a.type==='next');
+   assert.ok(next,'legal round advance');
+   s=dispatchUniversalAction(packs,s,next,{actor:s.pending?.player??s.active});
+  }
+  assert.equal(s.players[owner].ownTurns,2);
+  assert.equal(s.phase,'main');
+ }else s.phase='main';
  let action=legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===target.uid&&a.line==='front');
  s=dispatchUniversalAction(packs,s,action,{actor:owner});
  if(extra){
