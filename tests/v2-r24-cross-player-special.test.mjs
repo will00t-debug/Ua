@@ -91,3 +91,82 @@ test('Q12 queued earned effect drains before single LIFE-zero result',()=>{
  assert.equal(s.status,'finished');assert.equal(s.winner,0);
  assert.equal(assertUniversalMatch(packs,s),true);
 });
+
+
+// R29 bounded Q35/Q38: two *physical* SPECIAL LIFE cards retire two
+// different attacking player's characters. Each actual onRetire pauses the
+// defending player's unresolved LIFE check and hands the legal choice to its
+// original controller. Not a global all-player event scheduler certification.
+for(const reverseOrder of [false,true])
+ test('R29 opposing double SPECIAL causes two distinct attacker-owned onRetire choice windows, reverse '+reverseOrder,()=>{
+  let {s,attacker,victim,special,final}=duel();
+  const otherVictim=take(s,0,'R243');
+  const otherSpecial=take(s,1,'R241');
+  const plain=take(s,1,'R247');
+  s.players[0].front[2]=otherVictim;
+  const removedFinal=s.players[1].life.splice(1,1)[0];
+  assert.equal(removedFinal.uid,final.uid);
+  s.players[1].deck.push(removedFinal);
+  s.players[1].life.push(otherSpecial,plain);
+  assert.equal(assertUniversalMatch(packs,s),true);
+  s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:null},{actor:1});
+  assert.equal(s.pending?.kind,'life-batch-order');
+  assert.equal(s.lifeRevealBatch.remaining.length,2);
+  const [one,two]=reverseOrder?[otherSpecial,special]:[special,otherSpecial];
+  const [firstVictim,secondVictim]=reverseOrder?[otherVictim,victim]:[victim,otherVictim];
+  const ownerHandBefore=s.players[0].hand.length;
+  const firstChoices=legalUniversalActions(packs,s);
+  assert.ok(firstChoices.some(a=>a.type==='chooseLifeOrder'&&a.uid===one.uid));
+  assert.ok(firstChoices.some(a=>a.type==='chooseLifeOrder'&&a.uid===two.uid));
+  for(const difficulty of ['normal','hard'])
+   assert.ok(firstChoices.some(a=>JSON.stringify(a)===JSON.stringify(
+    chooseUniversalAiAction(packs,s,{difficulty}))));
+  const old=structuredClone(s);
+  assert.throws(()=>dispatchUniversalAction(packs,s,
+   {type:'chooseLifeOrder',uid:one.uid},{actor:0}),/Wrong player/);
+  assert.deepEqual(s,old);
+  s=dispatchUniversalAction(packs,s,{type:'chooseLifeOrder',uid:one.uid},{actor:1});
+  assert.equal(s.pending?.kind,'life-trigger');
+  assert.equal(s.pending?.uid,one.uid);
+  for(const [life,victimCard] of [[one,firstVictim],[two,secondVictim]]){
+   assert.equal(s.pending?.uid,life.uid);
+   const victimOption=legalUniversalActions(packs,s).find(a=>a.type==='chooseTrigger'&&
+    a.mode==='special'&&a.uid===victimCard.uid);
+   assert.ok(victimOption);
+   const paused=structuredClone(s);
+   assert.throws(()=>dispatchUniversalAction(packs,s,
+    {type:'chooseTrigger',mode:'special',uid:'nonexistent'},{actor:1}),/not currently legal/);
+   assert.deepEqual(s,paused);
+   s=dispatchUniversalAction(packs,s,victimOption,{actor:1});
+   assert.equal(s.pending?.kind,'effect-buff-own');
+   assert.equal(s.pending?.player,0,'attacking player controls the retired character');
+   assert.equal(s.players[0].outside.some(c=>c.uid===victimCard.uid),true);
+   assert.equal(s.lifeRevealBatch?.remaining.length,life.uid===one.uid?1:0);
+   const earned=legalUniversalActions(packs,s);
+   assert.ok(earned.length>0&&earned.every(a=>a.type==='chooseOwnBuff'));
+   for(const difficulty of ['normal','hard'])
+    assert.ok(earned.some(a=>JSON.stringify(a)===JSON.stringify(
+     chooseUniversalAiAction(packs,s,{difficulty}))));
+   const exact=structuredClone(s),enemyView=universalPublicView(packs,s,1);
+   assert.throws(()=>dispatchUniversalAction(packs,s,earned[0],{actor:1}),/Wrong player/);
+   assert.deepEqual(s,exact);
+   assert.deepEqual(universalPublicView(packs,s,1),enemyView);
+   s=JSON.parse(JSON.stringify(s));
+   assert.equal(assertUniversalMatch(packs,s),true);
+   s=dispatchUniversalAction(packs,s,earned[0],{actor:0});
+   if(life.uid===one.uid){
+    assert.equal(s.pending?.kind,'life-trigger',
+     'second outstanding physical SPECIAL continues after first entire onRetire');
+    assert.equal(s.pending?.uid,two.uid);
+   }
+  }
+  assert.equal(s.pending,null);
+  assert.equal(s.lifeRevealBatch,null);
+  assert.equal(s.players[0].hand.length,ownerHandBefore+2,'two separate retired sources each draw once');
+  assert.equal(s.players[1].life.length,1);
+  assert.equal(s.players[1].lifeRevealed.length,0);
+  assert.equal(s.status,'playing');
+  assert.equal(assertUniversalMatch(packs,s),true);
+  assert.equal(universalPublicView(packs,s,1).players[0].hand,null);
+  assert.equal(s.players[0].front[0].uid,attacker.uid);
+ });
