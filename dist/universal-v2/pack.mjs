@@ -6,7 +6,7 @@ export const V2_PHASES=Object.freeze(['start','move','main','attack']);
 export const V2_CARD_TYPES=Object.freeze(['character','event','field']);
 export const V2_TRIGGERS=Object.freeze(['draw','get','final','active','special','color','raid']);
 export const V2_EFFECT_TIMINGS=Object.freeze(['onPlay','onRaid','onAttack','onRaided','onRetire','onOutsideRecover']);
-export const V2_EFFECT_OPS=Object.freeze(['draw','drawIfOwnName','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','retireOwnFieldOne','retireOwnCharacterOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw','searchDeckMany','discardGate','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
+export const V2_EFFECT_OPS=Object.freeze(['draw','drawIfOwnName','drawIfOwnTraitCount','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','retireOwnFieldOne','retireOwnCharacterOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw','searchDeckMany','discardGate','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
  'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideColorUnderEnergy','recoverOutsideTraitlessUnderEnergy','deployOutsideTraitlessRestOrRaid','deployOutsideRest','deployOutsideNameRest','payApDeployNamedRest','inspectTopTraitOutside','buffOwnField','oncePerTurnGate','chooseOne','discardOppHand','activeSelfIf']);
 const integer=(v,low=0)=>Number.isInteger(v)&&v>=low;
 const own=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
@@ -81,6 +81,15 @@ function verifyProgram(program,path){
    !Number.isInteger(e.count)||e.count<1||e.count>5||
    Object.keys(e).length!==2||Object.keys(e).some(k=>!['op','count'].includes(k))
   ))throw Error(path+'['+i+'] invalid FIELD-gated draw profile');
+  if(e.op==='drawIfOwnTraitCount'&&(
+   typeof e.trait!=='string'||!e.trait.trim()||
+   !['field','front','energy'].includes(e.zone)||
+   typeof e.excludeSelf!=='boolean'||
+   !integer(e.min,1)||e.min>8||
+   !integer(e.count,1)||e.count>5||
+   Object.keys(e).length!==6||
+   Object.keys(e).some(k=>!['op','trait','zone','excludeSelf','min','count'].includes(k))
+  ))throw Error(path+'['+i+'] invalid live trait-count draw profile');
   if(e.op==='drawIfOwnName'&&(
    typeof e.name!=='string'||!e.name.trim()||
    !integer(e.count,1)||e.count>5||
@@ -662,6 +671,9 @@ function normalize(card,packId){
    throw Error(card.id+' unsupported Raid-base timing effect');
   if(name!=='onPlay'&&program.some(e=>e.op==='discardOppHand'))
    throw Error(card.id+' opponent hand discard is only an onPlay effect');
+  if(program.some(e=>e.op==='drawIfOwnTraitCount')&&
+   (card.type!=='character'||name!=='onPlay'))
+   throw Error(card.id+' trait-count draw is only a character onPlay effect');
   if(program.some(e=>e.op==='activeSelfIf')&&
    (card.type!=='character'||name!=='onPlay'))
    throw Error(card.id+' conditional ACTIVE is only a character onPlay effect');

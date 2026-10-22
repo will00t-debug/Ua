@@ -564,6 +564,17 @@ const authored=[
   "catalogueTraits":["DFN","第四次架南島Raid"]
 },
 {
+  "id":"SLG-1-072","name":"ミズア","color":"green","energy":3,
+  "ap":1,"bp":2000,"gen":2,"trigger":null,"type":"character",
+  "textAnchor":"登場時若己方有3張以上DFN，抽1張。",
+  "implementation":"dsl","templateEffects":{
+    "onPlay":[{"template":"drawIfOwnTraitCount","trait":"DFN",
+      "zone":"field","excludeSelf":false,"min":3,"count":1}]},
+  "officialTraits":["DFN／第四次架南島レイド"],
+  "traitComponents":["DFN","第四次架南島レイド"],
+  "catalogueTraits":["DFN","第四次架南島Raid"]
+},
+{
   "id":"SLG-1-027","name":"アイアン","color":"purple","energy":2,
   "ap":1,"bp":3000,"gen":1,"trigger":null,"type":"character",
   "textAnchor":"原本BP2500以下且REST的己方影之軍團角色，BP+500",

@@ -333,6 +333,15 @@ function continueEffectQueue(pack,s){
    // Do not count outside/removal/hand or Raid undercards.
    if(field(pl).some(c=>card(pack,c).type==='field'))draw(s,owner,job.count);
   }
+  else if(job.op==='drawIfOwnTraitCount'){
+   // The source has already entered the field when onPlay resolves. Count
+   // audited component traits using OWN current front + energy physical cards.
+   // Never include hand, outside, opponent or buried Raid cards.
+   const q={kind:'ownTraitCount',turn:'any',zone:job.zone,
+    excludeSelf:job.excludeSelf,trait:job.trait,min:job.min};
+   if(matchesV2LiveCondition(s,owner,job.sourceUid,q,x=>card(pack,x)))
+    draw(s,owner,job.count);
+  }
   else if(job.op==='drawIfOwnName'){
    // Evaluate after the character actually entered OWN front/energy field.
    // Never count hand, deck, opponent field, or hidden Raid under-cards.

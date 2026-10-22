@@ -27,6 +27,12 @@ const registry=Object.freeze({
   args:{energy:v=>integer(v,1,50),count:v=>integer(v,1,5)},
   build:v=>[{op:'drawIfOwnEnergyAtLeast',energy:v.energy,count:v.count}]
  },
+ drawIfOwnTraitCount:{
+  args:{trait:named,zone:v=>['field','front','energy'].includes(v),
+   excludeSelf:yesNo,min:v=>integer(v,1,8),count:v=>integer(v,1,5)},
+  build:v=>[{op:'drawIfOwnTraitCount',trait:v.trait,zone:v.zone,
+   excludeSelf:v.excludeSelf,min:v.min,count:v.count}]
+ },
  drawIfOwnName:{
   args:{name:named,count:v=>integer(v,1,5)},
   build:v=>[{op:'drawIfOwnName',name:v.name,count:v.count}]
