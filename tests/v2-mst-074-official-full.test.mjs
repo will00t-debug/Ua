@@ -10,7 +10,7 @@ import {countRetirementsThisTurn} from '../dist/universal-v2/field-conditions.mj
 // Official: https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA54BT%2FMST-1-074
 const pack=registeredV2TitlePack('mushoku-tensei'),packs=[pack,pack];
 const deck={...MST_V2_ROXY_FIELD_REAL_DECK_COUNTS,
- 'MST-1-050':2,'MST-1-053':1,'MST-1-074':1};
+ 'MST-1-050':1,'MST-1-052':1,'MST-1-053':1,'MST-1-074':1};
 function take(s,id){for(const zone of ['deck','hand','life','outside']){
  const p=s.players[0][zone],i=p.findIndex(c=>c.cardId===id);
  if(i>=0)return p.splice(i,1)[0];}throw Error('Missing official physical '+id);}
