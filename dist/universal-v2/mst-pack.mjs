@@ -4,6 +4,12 @@ import {MST_V2_OFFICIAL_CATALOGUE} from './sources/mst-inventory.mjs';
 import {createUniversalPack} from './pack.mjs';
 
 const PRINTED_PINS=Object.freeze({
+ "MST-1-053":{
+  kind:"colorSiteMainRetireDraw",nameJa:"ロキシー",color:"green",
+  energy:1,ap:1,bp:2500,gen:1,type:"character",traits:[],trigger:"color",
+  effectJa:"〖相手のターン中〗 自分の緑の 〖カラートリガー〗 の効果に記載されている「キャラカード」を「フィールドカード」に代えてもよい。\n 〖登場時〗 カードを1枚引き、自分の手札を1枚場外に置く。\n 〖起動メイン〗 〖フロントLにある場合〗 〖ターン1〗 自分の場のフィールドを1枚退場させてもよい。そうした場合、カードを1枚引く。",
+  triggerEffectJa:"〖カラー〗 自分の手札から必要エナジーが2以下で消費APが1の緑のキャラカードを1枚自分の場にアクティブで登場させる。"
+ },
  "MST-1-052":{
   kind:"onRetireDrawIfOwnField",nameJa:"ロキシー",color:"green",
   energy:0,ap:1,bp:2000,gen:1,type:"character",traits:[],trigger:null,
@@ -491,6 +497,13 @@ export function verifiedMstV2Cards(){
    card.templateEffects={onPlay:[{template:'restSilenceOppFrontIfOwnOutsideField',
     optional:true}]};
   }
+  if(pin.kind==='colorSiteMainRetireDraw'){
+   card.colorTriggerFieldSubstitution='green';
+   card.templateEffects={onPlay:[{template:'drawDiscardOne'}]};
+   card.triggerEffect={op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1};
+   card.mainAbility={op:'retireOwnFieldThen',frontOnly:true,oncePerTurn:true,
+    optional:true,after:[{op:'draw',count:1}]};
+  }
   if(pin.kind==='retiredFieldReady'){
    card.impactNull=true;
    card.mainAbility={op:'readySelfIfOwnRetiredThisTurn',cardType:'field',readyOncePerName:true};
@@ -583,6 +596,7 @@ export function verifiedMstV2Entries(){
      ...(pin.kind==='ownFieldAllNamesBp'?['tests/v2-mst-003-own-names.test.mjs']:[]),
       ...(pin.kind==='onRetireDrawOne'?['tests/v2-mst-013-on-retire.test.mjs']:[]),
       ...(pin.kind==='onRetireDrawIfOwnField'?['tests/v2-mst-052-official-retire.test.mjs']:[]),
+       ...(pin.kind==='colorSiteMainRetireDraw'?['tests/v2-mst-053-official-full.test.mjs']:[]),
      ...(pin.kind==='onPlayDrawIfOwnEnergyAtLeast'?['tests/v2-mst-063-energy-draw.test.mjs']:[]),
      ...(pin.kind==='onPlayTop3OwnTraitBottomDiscard'?['tests/v2-mst-055-cross-title-top.test.mjs']:[]),
      ...(pin.kind==='frontGeneratesEnergy'?['tests/v2-mst-057-front-energy.test.mjs']:[]),
