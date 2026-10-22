@@ -7,7 +7,7 @@ export const V2_CARD_TYPES=Object.freeze(['character','event','field']);
 export const V2_TRIGGERS=Object.freeze(['draw','get','final','active','special','color','raid']);
 export const V2_EFFECT_TIMINGS=Object.freeze(['onPlay','onRaid','onAttack','onRaided','onRetire','onOutsideRecover']);
 export const V2_EFFECT_OPS=Object.freeze(['draw','drawIfOwnName','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','retireOwnFieldOne','retireOwnCharacterOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw','searchDeckMany','discardGate','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
- 'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideColorUnderEnergy','recoverOutsideTraitlessUnderEnergy','deployOutsideTraitlessRestOrRaid','deployOutsideRest','buffOwnField','oncePerTurnGate','chooseOne']);
+ 'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideColorUnderEnergy','recoverOutsideTraitlessUnderEnergy','deployOutsideTraitlessRestOrRaid','deployOutsideRest','buffOwnField','oncePerTurnGate','chooseOne','discardOppHand']);
 const integer=(v,low=0)=>Number.isInteger(v)&&v>=low;
 const own=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
 function verifyProgram(program,path){
@@ -144,6 +144,9 @@ function verifyProgram(program,path){
     verifyProgram(o.then,path+'['+i+'].options.'+o.id+'.then');
    }
   }
+  if(e.op==='discardOppHand'&&(
+   e.count!==1||Object.keys(e).some(k=>!['op','count'].includes(k))
+  ))throw Error(path+'['+i+'] invalid opponent hand discard');
   if(e.op==='discardGate'){
    if(typeof e.optional!=='boolean'||!Array.isArray(e.then)||
     !e.then.length||e.then.length>6||
@@ -513,6 +516,8 @@ function normalize(card,packId){
    throw Error(card.id+' Raid-base effects require onRaided timing');
   if(name==='onRaided'&&program.some(e=>!['buffOwnTrait','drawIfRaidUnderFacedown'].includes(e.op)))
    throw Error(card.id+' unsupported Raid-base timing effect');
+  if(name!=='onPlay'&&program.some(e=>e.op==='discardOppHand'))
+   throw Error(card.id+' opponent hand discard is only an onPlay effect');
   if(name==='onRetire'&&
    (!['character','field'].includes(card.type)||program.some(e=>!['draw','millTop','drawIfOwnFieldExists','chooseOne','deployOutsideTraitlessRestOrRaid','retireOppFrontOneUnderBp'].includes(e.op))))
    throw Error(card.id+' unsupported onRetire ability program');

@@ -422,6 +422,11 @@ function continueEffectQueue(pack,s){
    if(choices.length)s.pending={kind:'effect-bounce-own',player:owner,
     sourceUid:job.sourceUid,choices,energy:job.energy};
    else bounceToHand(s,owner,job.sourceUid);
+  }else if(job.op==='discardOppHand'){
+   // The opponent chooses one of their own hand cards. Empty hand does nothing.
+   const foe=1-owner;
+   if(s.players[foe].hand.length)
+    s.pending={kind:'effect-discard',player:foe,sourceUid:job.sourceUid};
   }else if(job.op==='drawDiscard'){
    draw(s,owner,job.count);
    if(pl.hand.length)s.pending={kind:'effect-discard',player:owner,sourceUid:job.sourceUid,
@@ -1975,7 +1980,7 @@ export function assertUniversalMatch(pack,s){
    !['draw','drawIfOwnName','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
     'discardGate','enemyFrontAllBpDown','retireOppFrontAllUnderBp',
     'buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
-    'recoverOutsideColorUnderEnergy','deployOutsideRest','deployOutsideTraitlessRestOrRaid','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','retireOwnFieldOne','retireOwnCharacterOne','openBlock','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','phaseOrder','advanceAfterAttack','additionalBattleDamage','openRetirementBatch','closeRetirementBatch','retirementOrder','battleImpactDamage'].includes(e.op)))
+    'recoverOutsideColorUnderEnergy','deployOutsideRest','deployOutsideTraitlessRestOrRaid','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','retireOwnFieldOne','retireOwnCharacterOne','openBlock','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','phaseOrder','advanceAfterAttack','additionalBattleDamage','openRetirementBatch','closeRetirementBatch','retirementOrder','battleImpactDamage','discardOppHand'].includes(e.op)))
   throw Error('Invalid queued effects');
  for(let p=0;p<2;p++){
   const pl=s.players[p],uids=new Set(),items=[];
