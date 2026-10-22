@@ -17,7 +17,7 @@ const deck=Object.fromEntries(cards.map((c,i)=>[c.id,i===12?2:4]));
 function take(s,p,id){for(const z of ['deck','hand','life','outside']){
  const a=s.players[p][z],i=a.findIndex(c=>c.cardId===id);
  if(i>=0)return a.splice(i,1)[0];}throw Error('missing '+id);}
-function setup(raid=true){
+function setup(raid=true,shape=null){
  let s=newUniversalMatch(packs,{decks:[deck,deck],first:0,seed:7024});
  const source=take(s,0,'RAID-0');s.players[0].hand.push(source);
  const top=take(s,1,raid?'RAID-2':'RAID-1');
@@ -26,6 +26,7 @@ function setup(raid=true){
  top.buffs=[{bp:1000,untilTurn:s.turn}];
  if(base){base.ready=true;base.fieldEntryStamp=s.nextFieldEntryStamp++;top.stack=[base];}
  s.players[1].front[0]=top;
+ if(shape)shape(s,top,base);
  s=dispatchUniversalAction(packs,s,{type:'next'});
  s=dispatchUniversalAction(packs,s,{type:'next'});
  const a=legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===source.uid&&a.line==='energy');
@@ -63,3 +64,32 @@ test('schema rejects mandatory or unverified strip effects',()=>{
   assert.throws(()=>createUniversalPack({id:'bad',cards:[{...cards[0],effects:{onPlay:[op]}}]}),
    /invalid optional opponent RAID-top strip/);
 });
+
+// Round 10: Q49 + Q542-Q546; complex unverified geometries stay closed.
+for(const ready of [false,true])test(`stripped base does not revive pre-Raid buff; ACTIVE=${ready}`,()=>{
+ let {s,base}=setup(true,(s,top,base)=>{
+  top.ready=ready;base.buffs=[{bp:3000,untilTurn:s.turn}];
+ });
+ const oldStamp=base.fieldEntryStamp;
+ s=dispatchUniversalAction(packs,s,legalUniversalActions(packs,s)[1]);
+ const survivor=s.players[1].front[0];
+ assert.equal(survivor.ready,ready);assert.deepEqual(survivor.buffs,[]);
+ assert.notEqual(survivor.fieldEntryStamp,oldStamp);
+ assert.equal(s.turnRetireEvents.length,0);assert.equal(assertUniversalMatch(packs,s),true);
+});
+for(const shape of ['top-under','base-under','nested-stack','two-bases','facedown-base'])
+ test(`unverified ${shape} is fail-closed without losing or revealing cards`,()=>{
+  const {s,top}=setup(true,(s,top,base)=>{
+   if(shape==='facedown-base'){base.faceDown=true;return;}
+   const extra=take(s,1,'RAID-4');extra.faceDown=true;
+   if(shape==='top-under')top.under=[extra];
+   if(shape==='base-under')base.under=[extra];
+   if(shape==='nested-stack')base.stack=[extra];
+   if(shape==='two-bases')top.stack.push(extra);
+  });
+  assert.equal(s.pending,null);assert.equal(s.players[1].front[0].uid,top.uid);
+  assert.equal(s.turnRetireEvents.length,0);assert.equal(assertUniversalMatch(packs,s),true);
+  const publicView=JSON.stringify(universalPublicView(packs,s,0));
+  const hidden=[...(top.under||[]),...(top.stack||[]).flatMap(c=>[...(c.under||[]),...(c.stack||[])])];
+  for(const c of hidden)assert.ok(!publicView.includes(c.uid));
+ });

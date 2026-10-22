@@ -416,8 +416,7 @@ function continueEffectQueue(pack,s){
     sourceUid:job.sourceUid,choices,limit:job.bp,optional:true};
   }else if(job.op==='stripOppRaidTop'){
    const choices=s.players[1-owner].front.filter(c=>c&&
-    card(pack,c).raidName&&c.stack?.length===1&&c.stack[0]&&
-    c.stack[0].faceDown!==true&&!(c.under||[]).length).map(c=>c.uid);
+    strippableRaidTop(pack,c)).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-strip-raid-top',player:owner,
     sourceUid:job.sourceUid,choices,optional:true};
   }else if(job.op==='retireOppFrontIfFacedown'){
@@ -562,6 +561,15 @@ function validRaidBase(pack,s,owner,base,top){
    !card(pack,bottom).raidName;
  }
  return names.includes(b.name)&&!b.raidName;
+}
+// Only the Q542-Q546 audited two-face-up-card geometry is selectable.
+// Chain-Raid/facedown attachment placement needs a separate official ruling.
+function strippableRaidTop(pack,top){
+ const base=top?.stack?.[0];
+ return !!(top&&card(pack,top).raidName&&top.stack.length===1&&
+  !top.faceDown&&!(top.under||[]).length&&base&&!base.faceDown&&
+  card(pack,base).type==='character'&&!card(pack,base).raidName&&
+  !(base.stack||[]).length&&!(base.under||[]).length);
 }
 function performRaid(pack,s,p,cardOnTop,baseUid,line,slot,replaceUid,{entryReady=true}={}){
  const pl=s.players[p],base=location(s,p,baseUid),top=card(pack,cardOnTop);
@@ -1170,12 +1178,13 @@ function resolveChoice(s,a,pack){
    const foe=1-q.player,slot=s.players[foe].front.findIndex(c=>c?.uid===a.uid);
    if(slot<0||!q.choices.includes(a.uid))throw Error('Illegal opponent RAID top target');
    const top=s.players[foe].front[slot],base=top.stack?.[0];
-   if(!card(pack,top).raidName||!base||base.faceDown===true||
-    top.stack.length!==1||(top.under||[]).length)
+   if(!strippableRaidTop(pack,top))
     throw Error('RAID top no longer eligible');
    // Q548-Q551: base stays, inherits readiness but not top modifiers;
    // neither retirement nor entry, so no onRetire/onPlay jobs.
    top.stack=[];base.ready=top.ready;
+   // Q49 + Q546: pre-Raid base modifiers must not revive after stripping.
+   base.buffs=[];
    base.fieldEntryStamp=s.nextFieldEntryStamp++;
    s.players[foe].front[slot]=base;
    s.players[foe].outside.push({...top,ready:false,stack:[],under:[],
