@@ -818,11 +818,18 @@ function performRaid(pack,s,p,cardOnTop,baseUid,line,slot,replaceUid,{entryReady
  const baseJobs=s.active===p&&!baseOriginalSilenced?programJobs(pack,s,effectiveBase,'onRaided',p,cardOnTop.uid):[];
  const entryJobs=programJobs(pack,s,cardOnTop,'onPlay',p,undefined,entryCause);
  const raidJobs=programJobs(pack,s,cardOnTop,'onRaid',p);
+ // Keep the legal base/entry ordering choice. onPlay and onRaid share the
+ // new Raid-top source UID, and use ONE completed-move trigger boundary.
+ const baseWithBoundary=baseJobs.length?[...baseJobs,
+  ...sourceMoveBoundary(pack,s,p,effectiveBase.uid)]:[];
+ const raidWithBoundary=entryJobs.length||raidJobs.length?[...raidJobs,
+  ...sourceMoveBoundary(pack,s,p,cardOnTop.uid)]:raidJobs;
  if(baseJobs.length&&entryJobs.length)
   s.pending={kind:'raid-effect-order',player:p,baseUid:effectiveBase.uid,
-   raidUid:cardOnTop.uid,baseJobs,entryJobs,raidJobs};
+   raidUid:cardOnTop.uid,baseJobs:baseWithBoundary,entryJobs,
+   raidJobs:raidWithBoundary};
  else{
-  s.effectQueue.unshift(...baseJobs,...entryJobs,...raidJobs);
+  s.effectQueue.unshift(...baseWithBoundary,...entryJobs,...raidWithBoundary);
   continueEffectQueue(pack,s);
  }
 }
@@ -1346,7 +1353,8 @@ function resolveChoice(s,a,pack){
    // source's remaining jobs. UID ownership and the source zone were
    // checked above. No trigger on GET Life, searchDeck, draw or bounce.
    const onRecover=programJobs(pack,s,recovered,'onOutsideRecover',q.player);
-   if(onRecover.length)s.effectQueue.unshift(...onRecover);
+   if(onRecover.length)s.effectQueue.unshift(...onRecover,
+   ...sourceMoveBoundary(pack,s,q.player,recovered.uid));
    // Only an OWN outside card recovered to its OWN hand via a printed
    // own effect is eligible. This interrupts the existing ordered queue.
    if(card(pack,recovered).ownOutsideRecovery?.op==='restSelfToEnergy'){
