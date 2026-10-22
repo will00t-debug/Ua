@@ -88,3 +88,69 @@ test('unknown or permanent grants fail closed rather than becoming real cards',(
   assert.throws(()=>createUniversalPack({id:'invalid-grant',cards:changed}),/invalid granted attack/i);
  }
 });
+
+
+// R28: official MST Q2220/Q2228 distinguish lost ORIGINAL text from
+// independently earned grants. These tests use actual 50-card deck actions.
+test('R28 original-effects silence after earning suppresses printed onAttack but keeps earned draw',async()=>{
+ const {grantContinuousState,originalEffectsDisabled}=await import('../dist/universal-v2/continuous-states.mjs');
+ let {s,target}=game(0,false);
+ const count=s.continuousStates.filter(e=>e.kind==='grantedOnAttack'&&e.targetUid===target.uid).length;
+ assert.equal(count,1);
+ grantContinuousState(s,{kind:'originalEffectsDisabled',controller:1,
+  sourceUid:target.uid,targetUid:target.uid,sourceLinked:false,
+  until:{player:0,phase:'attack',edge:'end'}});
+ assert.equal(originalEffectsDisabled(s,s.players[0].front[0]),true);
+ assert.equal(assertUniversalMatch(packs,s),true);
+ const before=s.players[0].deck.length;
+ s=dispatchUniversalAction(packs,s,{type:'attack',uid:target.uid},{actor:0});
+ assert.equal(s.pending?.kind,'granted-attack-draw','earned grant must still offer legal choice');
+ assert.equal(s.players[0].deck.length,before,'silenced printed draw did not fire');
+ const offered=legalUniversalActions(packs,s);
+ assert.ok(offered.some(a=>a.type==='chooseGrantedDraw'&&a.mode==='draw'));
+ for(const difficulty of ['normal','hard'])
+  assert.ok(offered.some(a=>JSON.stringify(a)===JSON.stringify(chooseUniversalAiAction(packs,s,{difficulty}))));
+ s=dispatchUniversalAction(packs,s,{type:'chooseGrantedDraw',mode:'draw'},{actor:0});
+ assert.equal(s.players[0].deck.length,before-1);
+ assert.equal(s.pending?.kind,'block');
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
+
+test('R28 giver may depart after a completed grant; two physical grants still resolve separately',async()=>{
+ const {pruneContinuousStates}=await import('../dist/universal-v2/continuous-states.mjs');
+ let {s,target}=game(0,true);
+ const giverIndex=s.players[0].front.findIndex(c=>c?.cardId==='G1');
+ assert.ok(giverIndex>=0);
+ const giver=s.players[0].front[giverIndex];
+ s.players[0].front[giverIndex]=null;s.players[0].outside.push(giver);
+ pruneContinuousStates(s);
+ assert.equal(s.continuousStates.filter(e=>e.kind==='grantedOnAttack'&&e.targetUid===target.uid).length,2);
+ const before=s.players[0].deck.length;
+ assert.equal(assertUniversalMatch(packs,s),true);
+ s=dispatchUniversalAction(packs,s,{type:'attack',uid:target.uid},{actor:0});
+ assert.equal(s.pending?.kind,'granted-attack-draw');
+ assert.equal(s.players[0].deck.length,before-1,'printed draw');
+ s=dispatchUniversalAction(packs,s,{type:'chooseGrantedDraw',mode:'draw'},{actor:0});
+ assert.equal(s.pending?.kind,'granted-attack-draw');
+ s=dispatchUniversalAction(packs,s,{type:'chooseGrantedDraw',mode:'skip'},{actor:0});
+ assert.equal(s.players[0].deck.length,before-2);
+ assert.equal(s.pending?.kind,'block');
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
+
+test('R28 serialized earned grant cannot upgrade its bounded printed-free program',()=>{
+ const {s}=game(0,false);
+ const pristine=JSON.parse(JSON.stringify(s));
+ assert.equal(assertUniversalMatch(packs,pristine),true);
+ for(const breakGrant of [
+  g=>{g.program[0].count=2;},
+  g=>{g.optional=false;},
+  g=>{g.until.edge='forever';},
+  g=>{g.sourceLinked=true;g.sourceStamp=999999;}
+ ]){
+  const bad=structuredClone(pristine);
+  breakGrant(bad.continuousStates.find(g=>g.kind==='grantedOnAttack'));
+  assert.throws(()=>assertUniversalMatch(packs,bad),/Invalid|invalid/i);
+ }
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
