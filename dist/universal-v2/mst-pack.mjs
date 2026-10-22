@@ -511,6 +511,8 @@ export function verifiedMstV2Cards(){
     optional:true}]};
   }
   if(pin.kind==='fieldRetireOutsideTraitlessRestOrRaid'){
+    // Official SPECIAL LIFE: choose one opposing FRONT character to retire.
+    card.triggerEffect={op:'retireOppFront'};
     card.effects={onRetire:[{op:'deployOutsideTraitlessRestOrRaid',
      color:'green',energy:1,ap:1,optional:true,perOtherOutsideField:1}]};
    }
