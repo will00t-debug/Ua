@@ -283,3 +283,13 @@
 - 本段文件之提交 SHA 與最新遠端 CI 應另外核對；不能沿用更早成功 run 作為最新驗收。
 
 **下一輪首要工作**：先用 Q35/Q36/Q38 官方語意把 Q73 原子 reveal 與動態觸發選擇接到 **原 effectQueue**；其次針對 Raid-under 真正巢狀 destination 擴充驗證／journal（含完整替換與隱藏資訊）；然後才考慮 BLC-2-019/047 full-card 移植。禁止半成品註冊、合併 main 或部署正式站。
+
+
+## GPT 第二十二輪｜Q73 正式整合、Raid 底板與滿場替換（2026-10-22）
+
+**此段覆蓋前述 R21「Q73 未整合」／Raid-under 缺口的舊狀態；不要再將 R21 快照當最新成果。** 詳見 `docs/v2-handoff/V2-R22-Q73-raid-replacement.md`。在程式 SHA `4545153f23639934d99359bb9485768e27e71681`，GitHub Actions [39780010025](https://github.com/will00t-debug/Ua/actions/runs/39780010025) **SUCCESS**：Node.js 22 **1725/1725**、跨五作品對戰 **60/60**、manifest 與未移植盤點步驟通過。
+
+- Q72/Q73：原 `effectQueue` 接入 `life-reveal-batch.mjs`；DAMAGE2 一次公開正確數量的物理 LIFE UID 到暫時 `lifeRevealed`，防守方可決定兩張卡及無 Trigger 卡的處理順序；GET/DRAW/SPECIAL/COLOR/RAID/FINAL 由原引擎處理，Q35、雙 FINAL Q36 已有驗證。既有真實卡牌與跨作品測試改為核對「同時公開、依序結算」，不是刪除測試。單次傷害、Impact 保留原行為。
+- Raid：`raid-under` destination 現在驗證場上巢狀實體 UID，`performRaid` 記錄底板 FRONT／ENERGY→raid-under 與 Raid 頂牌 HAND／OUTSIDE／LIFE 公開暫存區→場上；剝離頂牌時底板回 FRONT；滿場替換的每一張頂牌／下層卡分別記錄進 removed，非真正退場不觸發退休效果。具 UID、擁有者、負例和私人視圖測試。
+- **未完成限制**：Q38「登場後新觸發與未結算 LIFE Trigger 的動態交錯」未完整官方逐例驗收；巢狀第二次傷害仍須明確官方時序；消耗 faceDown 保護卡與其他 hidden-layer 移動尚有 journal 缺口；BLC-2-019／047 未註冊、全卡 FAQ 正式逐卡審核仍未完成。本輪正式新增卡牌 0。
+- 最新上游操作基準：PR #78，`gpt/v2-resume-20261022` → `cursor/v2-multi-retire-life-6ff5`；維持 Draft／不改 PR #77，不合併 main，不部署正式站。下輪必須先重查當下最新 HEAD、CI 與衝突，再續增測試。
