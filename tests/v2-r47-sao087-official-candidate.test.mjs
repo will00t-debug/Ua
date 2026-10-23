@@ -19,7 +19,7 @@ const candidate={id:'SAO-1-087',name:source.nameJa,type:'character',color:'green
  selectionHandDiscardTax:{...SAO_Q978_SELF_EVENT_TAX,
   sourceTypes:[...SAO_Q978_SELF_EVENT_TAX.sourceTypes]},
  mainAbility:{op:'fieldOnceBuffOther',lines:'field',oncePerTurn:true,bp:1000}};
-const sao=createUniversalPack({id:'sword-art-online',cards:[...verifiedSaoV2Cards(),candidate]});
+const sao=createUniversalPack({id:'sword-art-online',cards:[...verifiedSaoV2Cards().filter(c=>c.id!=='SAO-1-087'),candidate]});
 const bleach=createBleachV2Pack();
 const ids=['SAO-1-001','SAO-1-068','SAO-1-075','SAO-1-095','SAO-1-073',
  'SAO-2-035','SAO-2-047','SAO-1-004','SAO-1-019','SAO-1-020',
