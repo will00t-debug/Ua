@@ -1,3 +1,4 @@
+import {validatePrintedPlayFilter} from './ap-discounts.mjs';
 // UNION ARENA Universal Rules v2 (experimental; NOT used by Production matches).
 import {expandAbilityTemplates} from './ability-templates.mjs';
 import {validateCompletedMoveCondition} from './zone-move-events.mjs';
@@ -7,7 +8,7 @@ export const V2_PHASES=Object.freeze(['start','move','main','attack']);
 export const V2_CARD_TYPES=Object.freeze(['character','event','field']);
 export const V2_TRIGGERS=Object.freeze(['draw','get','final','active','special','color','raid']);
 export const V2_EFFECT_TIMINGS=Object.freeze(['onPlay','onRaid','onAttack','onRaided','onRetire','onOutsideRecover']);
-export const V2_EFFECT_OPS=Object.freeze(['draw','drawIfOwnName','drawIfOwnTraitCount','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','skipNextActiveOppRest','forbidAttackOppFrontOne','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','retireOwnFieldOne','retireOwnCharacterOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw','searchDeckMany','discardGate','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
+export const V2_EFFECT_OPS=Object.freeze(['nextEligibleHandPlayApDiscount','draw','drawIfOwnName','drawIfOwnTraitCount','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','skipNextActiveOppRest','forbidAttackOppFrontOne','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','retireOwnFieldOne','retireOwnCharacterOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw','searchDeckMany','discardGate','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
  'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideColorUnderEnergy','recoverOutsideTraitlessUnderEnergy','deployOutsideTraitlessRestOrRaid','deployOutsideRest','deployOutsideNameRest','payApDeployNamedRest','inspectTopTraitOutside','buffOwnField','oncePerTurnGate','chooseOne','discardOppHand','activeSelfIf','grantOnAttack','grantSelectionApTaxOwnOtherTrait','grantFrontEnergyOwnOtherFrontTrait']);
 const integer=(v,low=0)=>Number.isInteger(v)&&v>=low;
 const own=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
@@ -350,6 +351,10 @@ function verifyProgram(program,path){
    if(e.op==='skipNextActiveOppRest'&&(
    typeof e.optional!=='boolean'||Object.keys(e).some(k=>!['op','optional'].includes(k))
   ))throw Error(path+'['+i+'] invalid existing-REST ACTIVE skip');
+  if(e.op==='nextEligibleHandPlayApDiscount'){
+   if(Object.keys(e).length!==2||!Object.hasOwn(e,'filter'))throw Error('Invalid hand discount operation');
+   validatePrintedPlayFilter(e.filter);
+  }
   if(e.op==='grantFrontEnergyOwnOtherFrontTrait'&&(
     e.optional!==true||e.until!=='thisTurn'||
     typeof e.trait!=='string'||!e.trait.trim()||e.trait.length>80||

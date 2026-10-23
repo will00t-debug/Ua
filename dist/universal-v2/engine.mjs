@@ -1,3 +1,4 @@
+import {DISCOUNT_KIND,grantHandDiscount,handPlayApPlan,definitionGrantsDiscount} from './ap-discounts.mjs';
 // UNIVERSAL RULES V2 EXPERIMENT. No production title uses this reducer yet.
 // Pure physical-card reducer: common UA zones/AP/phases/limited effects/Raid
 // and official Q99 optional GET/DRAW/FINAL. Unsupported keywords FAIL CLOSED.
@@ -726,6 +727,10 @@ function continueEffectQueue(pack,s){
      uid:c.uid,stamp:c.fieldEntryStamp}));
    if(choices.length)s.pending={kind:'effect-grant-ap-tax',player:owner,
     sourceUid:job.sourceUid,trait:job.trait,choices,optional:true};
+  }else if(job.op==='nextEligibleHandPlayApDiscount'){
+   const source=field(pl).find(c=>c.uid===job.sourceUid);
+   if(!source||!definitionGrantsDiscount(card(pack,source),job.filter))throw Error('Unproven hand discount source');
+   grantHandDiscount(s,owner,source,job.filter);
   }else if(job.op==='grantFrontEnergyOwnOtherFrontTrait'){
    const choices=pl.front.filter(c=>c&&c.uid!==job.sourceUid&&
     card(pack,c).type==='character'&&cardHasTrait(card(pack,c),job.trait))
@@ -2402,15 +2407,15 @@ function legalPending(pack,s){
 // one" cannot be played at all unless ALL mandatory choices exist.
 // This check is performed BEFORE spending AP or moving the event outside.
 // Optional "up to one" choices remain playable with zero targets.
-function eventMandatoryTargetsAvailable(pack,s,owner,d){
+function eventMandatoryTargetsAvailable(pack,s,owner,d,reservedAp=d.ap){
  const enemy=s.players[1-owner];
  return (d.effects?.onPlay||[]).every(job=>{
   if(job.optional!==false)return true;
   if(job.op==='restOppFrontOne')
-   return enemy.front.some(c=>c&&cardEffectTargetPayable(s,owner,c.uid,d.ap));
+   return enemy.front.some(c=>c&&cardEffectTargetPayable(s,owner,c.uid,reservedAp));
   if(job.op==='restOppFrontUnderBp'||job.op==='restOrRetireOppFrontByLife')
    return enemy.front.some(c=>c&&bp(pack,s,c)<=job.bp&&
-    cardEffectTargetPayable(s,owner,c.uid,d.ap));
+    cardEffectTargetPayable(s,owner,c.uid,reservedAp));
   return true;
  });
 }
@@ -2561,9 +2566,10 @@ export function legalUniversalActions(pack,s){
   const produced=universalEnergyByColor(pack,s,p);
   for(const c of pl.hand){
    const d=card(pack,c);
-   if(d.energy>(produced[d.color]||0)||d.ap>ap)continue;
+   const payment=handPlayApPlan(s,p,d);
+   if(d.energy>(produced[d.color]||0)||payment.cost>ap)continue;
    if(d.type==='event'){
-    if(eventMandatoryTargetsAvailable(pack,s,p,d))
+    if(eventMandatoryTargetsAvailable(pack,s,p,d,payment.cost))
      out.push({type:'event',uid:c.uid});
    }
    else for(const line of ['energy','front']){
@@ -2818,7 +2824,10 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
    const index=pl.hand.findIndex(c=>c.uid===action.uid);
    if(index<0)throw Error('Card not in hand');
    const current=pl.hand[index],d=card(pack,current);
-   spendAp(pl,d.ap);pl.hand.splice(index,1);
+   const payment=handPlayApPlan(s,p,d);
+   spendAp(pl,payment.cost);
+   s.continuousStates=s.continuousStates.filter(e=>!payment.ids.includes(e.id));
+   pl.hand.splice(index,1);
    if(action.type==='event'){pl.outside.push(current);
     recordCompletedMove(pack,s,{physical:current,owner:p,from:'hand',to:'outside',reason:'rule'});
     applyEffects(pack,s,current,'onPlay',p,'event');}
@@ -3130,7 +3139,7 @@ export function assertUniversalMatch(pack,s){
  if(!Array.isArray(s.effectQueue)||[...s.effectQueue,...lifeEntries.flatMap(e=>e.jobs)].some(e=>!playerIndex(e.owner)||
    !['grantedAttackDraw','grantOnAttack','draw','drawIfOwnName','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','forbidAttackOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
     'discardGate','enemyFrontAllBpDown','retireOppFrontAllUnderBp',
-    'buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
+    'nextEligibleHandPlayApDiscount','buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
     'recoverOutsideColorUnderEnergy','deployOutsideRest','deployOutsideNameRest','payApDeployNamedRest','inspectTopTraitOutside','deployOutsideTraitlessRestOrRaid','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','moveAtMainEnd','retireOwnFieldOne','retireOwnCharacterOne','openBlock','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','phaseOrder','effectMoveOrder','restSelfTuckMovedFaceDown','sourceResolutionBoundary','lifeBatchStep','lifeRelease','advanceAfterAttack','additionalBattleDamage','openRetirementBatch','closeRetirementBatch','retirementOrder','battleImpactDamage','discardOppHand','activeSelfIf'].includes(e.op)))
   throw Error('Invalid queued effects');
  // The internal boundary is not user-authored DSL. Reject forged or
@@ -3155,6 +3164,11 @@ export function assertUniversalMatch(pack,s){
   }
   for(const zone of ['deck','hand','life','lifeRevealed','outside','removed'])for(const c of pl[zone]||[])visit(c);
   for(const c of field(pl))visit(c);
+  for(const e of s.continuousStates.filter(e=>e.kind===DISCOUNT_KIND&&e.controller===p)){
+   const source=items.find(c=>c.uid===e.sourceUid);
+   if(!source||source.cardId!==e.sourceCardId||!definitionGrantsDiscount(packs[p].cards[source.cardId],e.filter))
+    throw Error('Unproven hand discount source');
+  }
   if(items.length!==50)throw Error('Card conservation violated ('+items.length+'/50)');
   const counts=Object.create(null);
   for(const c of items)counts[c.cardId]=(counts[c.cardId]||0)+1;

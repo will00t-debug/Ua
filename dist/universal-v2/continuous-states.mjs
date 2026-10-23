@@ -1,3 +1,4 @@
+import {DISCOUNT_KIND,validateHandDiscount} from './ap-discounts.mjs';
 // Reusable V2 physical-field continuous statuses, never inferred from card prose.
 const field=p=>[...p.front,...p.energy].filter(Boolean);
 const player=n=>n===0||n===1;
@@ -61,6 +62,7 @@ export function originalEffectsDisabled(s,c){
 export function pruneContinuousStates(s){
  s.continuousStates=s.continuousStates.filter(e=>{
   if(e.consumed)return false;
+  if(e.kind===DISCOUNT_KIND)return e.turn===s.turn;
   const t=fieldInstance(s,e.targetUid);
   if(!t||t.owner!==e.targetOwner||t.card.fieldEntryStamp!==e.targetStamp)return false;
   if(e.sourceLinked){const src=fieldInstance(s,e.sourceUid);
@@ -114,7 +116,7 @@ export function fieldRestrictions(s,owner,c){
 export function validateContinuousStates(s){
  if(!Array.isArray(s.continuousStates)||!Number.isInteger(s.nextContinuousStateId)||
   s.nextContinuousStateId<1||new Set(s.continuousStates.map(e=>e.id)).size!==s.continuousStates.length||
-  s.continuousStates.some(e=>!Number.isInteger(e.id)||e.id<1||
+  s.continuousStates.some(e=>e.kind===DISCOUNT_KIND ? !validateHandDiscount(s,e) : !Number.isInteger(e.id)||e.id<1||
    !['skipNextActive','cannotActive','cannotAttack','selectionApTax','frontEnergyPermission','originalEffectsDisabled','grantedOnAttack'].includes(e.kind)||!player(e.controller)||
    !player(e.targetOwner)||typeof e.sourceUid!=='string'||typeof e.targetUid!=='string'||
    !Number.isInteger(e.targetStamp)||e.targetStamp<1||typeof e.consumed!=='boolean'||
