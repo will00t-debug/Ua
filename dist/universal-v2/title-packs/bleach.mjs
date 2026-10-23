@@ -8,6 +8,7 @@ import {BLEACH_V2_ADDON_PROFILES,BLEACH_V2_NEW_IDS,
 
 const testForKind=Object.freeze({
  topOneEnergyDiscount:'tests/v2-r38-blc070-real.test.mjs',
+ topTwoGoteiEvent:'tests/v2-r48-BLC-1-095-complete.test.mjs',
  raidStripOrRetire2000:'tests/v2-blc-023-official.test.mjs',
  bounce:'tests/universal-v2-bleach-port.test.mjs',
   raidStripOrRetireDamage2:'tests/v2-blc-024-official.test.mjs',

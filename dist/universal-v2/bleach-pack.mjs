@@ -9,6 +9,13 @@ import {verifiedPilotCards} from './real-card-pilots.mjs';
 // 'plain' means no character effect text (the printed life trigger is still active).
 // 'step' uses the V2 move-phase STEP handler; 'bounce' uses a real V2 template.
 export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
+ {
+  id:'BLC-1-095',kind:'topTwoGoteiEvent',
+  number:'UA08BT/BLC-1-095',name:'護廷十三隊',
+  color:'green',energy:2,ap:1,bp:0,gen:0,
+  trigger:null,type:'event',
+  effect:'查看己方牌堆頂 4 張，可公開其中最多 2 張具有「護廷十三隊」特徵的卡並加入手牌，其餘以任意順序放至牌堆底。'
+ },
  {"id":"BLC-1-070","kind":"topOneEnergyDiscount","number":"UA08BT/BLC-1-070","name":"卯ノ花 八千流","color":"green","energy":6,"ap":1,"bp":4000,"gen":1,"trigger":"raid","type":"character","effect":"Raid〈卯之花烈〉：轉為 ACTIVE，可移至前線。登場：查看己方牌堆頂 4 張，可公開其中最多 1 張需求能源 4 以下且具有「護廷十三隊」特徵的角色卡並加入手牌，其餘以任意順序放至牌堆底。本回合下一張從手牌使用、需求能源 4 以下的角色卡，AP 消耗減少 1。"},
  {
   id:"BLC-1-023",kind:"raidStripOrRetire2000",
@@ -1008,10 +1015,11 @@ export function checkedBleachAddonDefinition(p){
  const isDrawTwo=p.kind==='drawTwoDiscardOne';
  const isReadyAttack=p.kind==='readyOnFirstAttack';
  const isTopRequired=p.kind==='topOneEnergyDiscount';
+ const isTopTwoGotei=p.kind==='topTwoGoteiEvent';
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isTopRequired||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual;
+ const special=isTopRequired||isTopTwoGotei||p.kind='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1036,6 +1044,10 @@ export function checkedBleachAddonDefinition(p){
   ...(p.kind==='enemyBpDown500Color'?{triggerEffect:{op:'deployOutsideCharacter',color:'purple',maxEnergy:2,ap:1,frontOnly:true}}:{}),
   ...(p.kind==='drawPlayColorHand'?{triggerEffect:{op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1}}:{}),
   ...(!special?{templateEffects:abilities[p.kind]}:{effects:
+   isTopTwoGotei?{onPlay:[
+    {op:'searchTopUpToTwoBottom',count:4,max:2,rest:'bottom',logic:'all',
+     filters:[{field:'trait',value:'護廷十三隊'}]}
+   ]}:
    isTopRequired?{onPlay:[
     {op:'searchTopUpToTwoBottom',count:4,max:1,rest:'bottom',logic:'all',
      filters:[{field:'type',value:'character'},{field:'trait',value:'護廷十三隊'},
