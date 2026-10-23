@@ -130,6 +130,11 @@ test('R48 A: FOUR distinct official registered green EVENT cards reach OUTSIDE t
     opponentFront:s.players[1].front.map(c=>c?.cardId),
     actions:legalUniversalActions(packs,s).map(a=>a.type)}));
   apply(option);settle();
+  assert.ok(s.players[0].outside.some(c=>c.uid===source[id]),
+   'legally paid printed EVENT must move hand -> OWN OUTSIDE '+id);
+  assert.ok(s.zoneMoveEvents.some(e=>e.uid===source[id]&&
+   e.from==='hand'&&e.to==='outside'),
+   'physical event movement must be present in CURRENT turn ledger '+id);
  }
  while(s.phase!=='main')apply(legalUniversalActions(packs,s).find(a=>a.type==='next'));
  paid('BLC-1-099'); // legal BP-limited opponent retirement while foe exists
@@ -139,7 +144,8 @@ test('R48 A: FOUR distinct official registered green EVENT cards reach OUTSIDE t
  for(const id of ['BLC-1-095','BLC-1-097','BLC-1-099','BLC-1-100']){
   assert.ok(s.players[0].outside.some(c=>c.uid===source[id]),
    'printed event must reach OWN outside through legal use '+id);
-  assert.ok(s.zoneMoveEvents.some(e=>e.uid===source[id]&&e.to==='outside'));
+  // zoneMoveEvents is a bounded recent-turn ledger; assert at each payment above,
+  // not across all four genuine turns after historic entries expire.
  }
  assert.equal(countOwnOutsideDistinctPrintedNames(s,0,c=>pack.cards[c.cardId],
   {color:'green',types:['event','field']}),4);
