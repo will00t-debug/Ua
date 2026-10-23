@@ -75,3 +75,22 @@ test('R43 human/normal/hard share safe MAIN decision, saved pending and hidden h
  }
  assert.equal(assertUniversalMatch(packs,JSON.parse(JSON.stringify(s))),true);
 });
+
+test('R43 printed ACTIVE LIFE remains separate from MAIN payment, acts on own field',()=>{
+ let {s,src}=scene();
+ // A second physical copy leaves LIFE as the trigger source; it never
+ // activates or pays the printed MAIN cost.
+ const lifeCopy=take(s,'SAO-2-068');s.players[0].outside.push(lifeCopy);
+ src.ready=false;
+ s.pending={kind:'life-trigger',player:0,uid:lifeCopy.uid,trigger:'active'};
+ const a=legalUniversalActions(packs,s).find(x=>x.type==='chooseTrigger'&&
+  x.mode==='active'&&x.uid===src.uid);
+ assert.ok(a,'ACTIVE LIFE must offer a real own field target');
+ const outside=s.players[0].outside.length;
+ s=use(s,a);
+ const current=s.players[0].energy[0];
+ assert.equal(current.uid,src.uid);assert.equal(current.ready,true);
+ assert.ok(current.buffs.some(x=>x.bp===3000&&x.untilTurn===s.turn));
+ assert.equal(s.players[0].outside.length,outside);
+ assert.equal(assertUniversalMatch(packs,s),true);
+});

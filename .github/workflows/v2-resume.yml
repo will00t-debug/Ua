@@ -40,6 +40,8 @@ jobs:
         run: node scripts/v2-r41-special-hand-candidate-report.mjs
       - name: R42 all five-title named free entry, TOP-N and protection rescan
         run: node scripts/v2-r42-named-zone-candidate-report.mjs
+      - name: R43 full five-title source and paid MAIN effect inventory
+        run: node scripts/v2-r43-main-cost-unported-report.mjs
       - name: Node 22 test suite
         run: npm test
       - name: Five-title 60-match matrix
