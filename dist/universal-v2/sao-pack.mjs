@@ -4,6 +4,11 @@ import {SAO_OFFICIAL_CARDS} from '../sao-official-import.mjs';
 import {createUniversalPack} from './pack.mjs';
 
 const PRINTED_PINS=Object.freeze({
+  // Q1207: scoped grant to actually free-ACTIVE-entered character; SPECIAL independently retires.
+  "SAO-2-060":{"kind":"outsideRecoverActiveProtected","nameJa":"smile for you",
+   "color":"purple","energy":4,"ap":1,"bp":0,"gen":0,"type":"event",
+   "trigger":"special","traits":["歌"],
+   "effectJa":"自分の場外からキャラカードを1枚まで手札に加える。自分の手札から消費APが1の紫の［特徴：SAOサバイバー］を1枚まで自分の場にアクティブで登場させる。そのキャラに次の自分のターン開始時まで、「このキャラは、相手のキャラの効果で選ばれない。」を与える。"},
   // Q1206: protection prohibits explicit choice by ALL opponent effects;
   // whole EVENT includes Asuna-only optional AP ACTIVE and ACTIVE LIFE.
   "SAO-2-058":{"kind":"grantOwnFrontChoiceProtection",
@@ -1324,6 +1329,14 @@ export function verifiedSaoV2Cards(){
   if(pin.kind==='grantOwnFrontChoiceProtection')
    card.effects={onPlay:[{op:'grantOwnFrontChoiceProtection',optional:false,
     scope:'any',until:'nextOwnStart',apRecoveryOnName:'アスナ'}]};
+  if(pin.kind==='outsideRecoverActiveProtected'){
+   card.effects={onPlay:[
+    {op:'recoverOutsideOne',filter:{field:'type',value:'character'},optional:true},
+    {op:'deployOwnHandSpecial',type:'character',color:'purple',ap:1,
+     trait:'SAOサバイバー',maxEnergy:null,ready:true,max:1,
+     protectionScope:'character'}]};
+   card.triggerEffect={op:'retireOppFront'};
+  }
   if(pin.kind==='opponentTurnBp1000'){
    card.opponentTurnBp=1000;
    card.effects={}; // Explicit DSL profile: persistent native modifier, no onPlay job
@@ -1564,6 +1577,7 @@ export function verifiedSaoV2Entries(){
     testFiles:Object.freeze([
      ...(pin.kind==='nextHandApDiscount'?['tests/v2-r36-real-discount-cards.test.mjs']:[]),
      ...(pin.kind==='grantOwnFrontChoiceProtection'?['tests/v2-r40-sao058-full-print-probe.test.mjs']:[]),
+     ...(pin.kind==='outsideRecoverActiveProtected'?['tests/v2-r41-sao060-full-print.test.mjs']:[]),
      'tests/universal-v2-sao-port.test.mjs',
       ...(def.id==='SAO-1-034'?['tests/v2-sao-034-official.test.mjs']:[]),
      ...(def.id==='SAO-2-021'?['tests/v2-sao-021-shared-main-cost.test.mjs']:[]),
