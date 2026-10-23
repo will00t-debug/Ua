@@ -1928,3 +1928,14 @@ Reproduction commands: `node scripts/v2-card-certification-report.mjs`, `node sc
 - **每個新共用原語後回查全部當期未移植卡**：R40 初次 372/372，移植 SAO-2-058 後 371/371；保護關鍵字候選從 6（SAO5/MST1）→ 5（SAO4/MST1）。同時重查 R39 特殊手牌登場 32、真退場 TOP-N 8、TOP-N 59 文字候選，**可重疊不得相加，也不可視關鍵字命中＝READY**。正式覆蓋 **329/700**：BLEACH98、TTG36、SLG43、SAO98、MST54；未移植 371。官方整卡審核 3，部分來源驗收不等於獨立完成逐卡 FAQ 認證，後者仍 **0**。
 - **已證實程序提交 `a81fae38e42ee6e0f6edcea3947e0ec79ded7866`**：[GitHub Actions 39932466201](https://github.com/will00t-debug/Ua/actions/runs/39932466201) SUCCESS，遠端 Node22 **1973/1973 PASS**、矩陣 **60/60 PASS**、ledger、R35／R37、manifest、未移植報告皆綠。之後另外將 SAO 測試改成直接使用正式 registry，並追加交接文件；**必須重新檢查最終 HEAD Actions**，不能以前一筆成功冒充新提交成功。
 - 下一輪首選 `outsideOneRecoverThenFreeActiveHandDeploy` 並完整驗證 SAO-2-060；回審保護文字候選其他3張，必要時再處理 BLC-4-069 `attackEndDistinctOutsideNamesSwap` Q2337/Q2338。MST-1-067 等官方範圍與多層 Raid 退場裁定；BLC-4-034 和未驗證巢狀 LIFE 維持安全阻塞。
+
+
+## R41 補充交接（2026-10-23；新節點優先於上方 R40 歷史快照）
+
+- **保持原 GPT PR #78**（`gpt/v2-resume-20261022` → `cursor/v2-multi-retire-life-6ff5`），不合併／不部署／不改 Cursor PR #77／不 force push；每次 push 先比對最新 PR HEAD。
+- A 官方 `SAO-2-060` Q1207 全文驗證，`f11e234`。B 通用 `deployOwnHandSpecial` 共用效果，`1988226`；負例 `5eb0bd1`，嚴格佇列白名單修正 `09cf3e4`，[39937109260](https://github.com/will00t-debug/Ua/actions/runs/39937109260) SUCCESS。
+- C 完整 `SAO-2-060` registry／manifest／八個真卡案例 `bff66c8`，R40 歷史盤點與實際 pending fixture 更正 `708468e`， [39937890797](https://github.com/will00t-debug/Ua/actions/runs/39937890797) SUCCESS，1985 Node22 測試／60局。
+- D `c40dd06` 同一 `capabilityIndex` 重新搜索所有 **370 張**未移植真卡、五作品文字候選 **72** 張（手牌31／場外回手32／保護4，重疊不可相加），[39938053007](https://github.com/will00t-debug/Ua/actions/runs/39938053007) SUCCESS，1987/1987、60/60。
+- E `9cd3f87` 官方全文／FAQ 分類尚未移植候選 **9 張：PARTIAL8、RULE BLOCKED1、REVIEW PENDING63、READY0**（63 為其他文字候選，非完整人工審核），[39938875140](https://github.com/will00t-debug/Ua/actions/runs/39938875140) SUCCESS，1988/1988、60/60。`cf944bd` 另外加固 save pending 的來源、免費 ACTIVE 與角色保護作用域 anti-forgery；該 SHA 和後續文件 SHA 都要查自己的 CI。
+- 最新通過的已登錄 **330/700**（BLEACH98、TTG36、SLG43、SAO99、MST54），未移植 **370**；完整獨立逐張 FAQ 認證 **0**。**SAO-2-060 現在已完整登錄，舊 R40「仍 PARTIAL」記錄僅供歷史，不再是最新狀態**。
+- 核對與優先序：詳 [R41 SAO-2-060 DSL 規格](./V2-R41-sao060-official-dsl-spec.md) 和 [R41 全庫官方保護／重用審查](./V2-R41-official-protection-roster-and-next.md)。SAO-2-069、SAO-2-068、SLG-1-028、BLC-4-042、SAO-1-087、SAO-2-064 等需要其他共用能力才能完整移植。MST-1-067 Q2162、BLC-4-034 真退場與裏向底卡、未核准第二批巢狀 LIFE 維持安全封鎖。
