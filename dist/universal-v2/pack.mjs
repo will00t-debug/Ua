@@ -780,8 +780,11 @@ function normalize(card,packId){
   if(name==='onRaided'&&card.type!=='character')throw Error(card.id+' Raid-base trigger must be a character');
   if(program.some(e=>e.op==='grantFrontEnergyOwnOtherFrontTrait'||
    (e.op==='chooseOne'&&e.options.some(o=>o.then.some(x=>x.op==='grantFrontEnergyOwnOtherFrontTrait'))))&&
-   (name!=='onPlay'||card.type!=='character'))
-   throw Error(card.id+' FRONT energy grant requires character onPlay');
+   name!=='onPlay')
+   throw Error(card.id+' FRONT energy grant requires a printed onPlay effect');
+  // Events resolve from outside after normal AP payment. Their own physical
+  // UID is not a FRONT target; share the same independent target permission.
+  // No grant from unrelated timings, Raid bases, or nonprinted programs.
   if(program.some(e=>e.op==='grantSelectionApTaxOwnOtherTrait')&&
    (name!=='onPlay'||card.type!=='character'))
    throw Error(card.id+' targeting AP tax grant requires character onPlay');

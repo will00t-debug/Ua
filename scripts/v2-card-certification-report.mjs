@@ -23,6 +23,7 @@ const sources=Object.freeze({
  'SAO-1-031':['sword-art-online','UA15BT','tests/v2-r37-sao-two-events.test.mjs',['Q1119','Q312','Q313','Q314']],
  'SAO-1-066':['sword-art-online','UA15BT','tests/v2-r37-sao-two-events.test.mjs',['Q1119','Q312','Q313','Q314']],
  'SAO-2-074':['sword-art-online','EX08BT','tests/v2-r36-real-discount-cards.test.mjs',['Q1209','Q1210','Q670']],
+ 'MST-1-080':['mushoku-tensei','UA54BT','tests/v2-r37-mst080-event-front.test.mjs',[]],
  'MST-1-062':['mushoku-tensei','UA54BT','tests/v2-r36-real-discount-cards.test.mjs',['Q2161','Q670']],
  'SAO-1-005':['sword-art-online','UA15BT','tests/v2-r31-sao005-official-registry.test.mjs',[]],
  'TTG-1-028':['gurren-lagann','UA56BT','tests/v2-r32-ttg028-official.test.mjs',[]],

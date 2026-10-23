@@ -4,6 +4,12 @@ import {MST_V2_OFFICIAL_CATALOGUE} from './sources/mst-inventory.mjs';
 import {createUniversalPack} from './pack.mjs';
 
 const PRINTED_PINS=Object.freeze({
+ "MST-1-080":{
+  "kind":"eventDrawTwoFrontEnergy","nameJa":"そう、ボクはシルフィエット",
+  "color":"green","energy":3,"ap":1,"bp":0,"gen":0,"type":"event",
+  "traits":[],"trigger":"draw",
+  "effectJa":"カードを2枚引く。自分のフロントLの［特徴：ラノア魔法大学］を1枚まで選び、このターン中、「このキャラはフロントLでもエナジーを発生させる。」を与える。"
+ },
  "MST-1-062":{"kind":"nextHandApDiscount","nameJa":"ナナホシ","color":"green","energy":3,"ap":1,"bp":2000,"gen":2,"type":"character","trigger":"color","traits":["ラノア魔法大学"],"effectJa":"〖登場時〗 以下から1つ選ぶ。\n・〈ナナホシ〉以外の自分の場のキャラを1枚手札に戻してもよい。そうした場合、このターン中、次に手札から使用する元々の発生エナジーが2以上のキャラカードの消費APを-1する。\n・カードを1枚引く。"},
  "MST-1-059":{
   kind:"onPlayChooseTemporaryFrontEnergy",
@@ -695,6 +701,10 @@ export function verifiedMstV2Cards(){
     filters:[{field:'color',value:'green'},{field:'type',value:'field'}],logic:'all'}]};
   if(pin.kind==='onPlayDrawIfOwnEnergyAtLeast')
    card.templateEffects={onPlay:[{template:'drawIfOwnEnergyAtLeast',energy:7,count:1}]};
+  if(pin.kind==='eventDrawTwoFrontEnergy')
+   card.effects={onPlay:[{op:'draw',count:2},
+    {op:'grantFrontEnergyOwnOtherFrontTrait',trait:'ラノア魔法大学',
+     optional:true,until:'thisTurn'}]};
   if(pin.kind==='onPlayDraw')card.templateEffects={onPlay:[{template:'draw',count:1}]};
   if(pin.kind==='onPlayDrawDiscard')card.templateEffects={onPlay:[{template:'drawDiscardOne'}]};
   if(pin.kind==='onPlayChooseTemporaryFrontEnergy')
@@ -758,6 +768,7 @@ export function verifiedMstV2Entries(){
      source.source,
     testFiles:Object.freeze([
      ...(pin.kind==='nextHandApDiscount'?['tests/v2-r36-real-discount-cards.test.mjs']:[]),
+     ...(pin.kind==='eventDrawTwoFrontEnergy'?['tests/v2-r37-mst080-event-front.test.mjs']:[]),
      'tests/universal-v2-mst-port.test.mjs',
      'tests/universal-v2-sao-mst-cross-title.test.mjs',
      ...(pin.kind==='ownFieldAllNamesBp'?['tests/v2-mst-003-own-names.test.mjs']:[]),
