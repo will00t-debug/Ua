@@ -676,3 +676,12 @@ Permanent fail-closed rules, no rewrite/merge/deploy/force-push/retired hidden-l
 ## R50 follow-up — independent physical FIELD MAIN usage (2026-10-24)
 
 R50 common `fieldDualMain` previously shared once-per-turn mode keys by printed FIELD **name**, incorrectly preventing a second physical copy from activating its own MAIN ability. Minimal common-engine correction `8025909f` keys both independent printed modes by source physical UID in legal actions, dispatch and saved pending validation. Strict two-copy 50-card model regression `1339609c` verifies independent trait-retire, REST/BP buff, source UID and serialization. Handoff: [V2-R50-physical-field-usage.md](./V2-R50-physical-field-usage.md). This is not a new full official card certification; **exact current HEAD CI is not yet confirmed**. No main/production/Cursor PR77 changes.
+
+
+## R51 實際共用能力接續（2026-10-24）
+
+- 基準：R50 既有 HEAD `7c0817e0`，BLC-2-044／4-042／4-069／4-076 已在 R50 正式登錄，不得重做；Q770 兩張相同 FIELD 的獨立 Turn1 UID 修正與測試已存在。R50 最終 HEAD CI 尚需獨立查核。
+- 新增通用 `ownOutsideNamedCountAtLeast`：從 OWN OUTSIDE 即時計算符合指定印刷卡名或官方核對 alias 的**物理卡張數**，同一實體符合多名仍只算一張；不與 R45 Q2337「不同卡名種類數」混用。已接入共用 `passiveBonuses` BP/IMPACT 條件並加嚴 schema；50 張模型牌組、負例、真實 `universalBp`／`universalImpact` 測試與五作品 R35 動態補集搜尋腳本。
+- 官方 UA15BT/SAO-1-070 アスナ 完整卡文已核對，4 張〈ユウキ〉＋〈マザーズ・ロザリオ〉合計給己回 BP+500、6 張給 IMPACT1；但仍 **PARTIAL**，需要真實合法 SAO 牌組與兩個印刷名稱的完整已登錄來源、6 張場外可達性、真戰鬥及來源 pin 後才可正式移植。不得將模型測試視為完整真卡驗收。
+- 最新獨立 manifest 快照 **341/700**（BLEACH103／TTG36／SLG45／SAO103／MST54），未移植359；**不是** R51 最後 HEAD 已驗收綠燈。遠端 GitHub connector 僅回傳 PR 觸發 Actions，push-run 可能查不到；尚未能在本地執行 Node22，必須核對新 SHA Actions SUCCESS 才宣稱測試通過。
+- 詳細：`docs/v2-handoff/V2-R51-named-outside-threshold.md`。下輪先查最新 CI／修回歸，再查完整五作品 R35～R51 候選與 SAO-1-070 真卡來源；維持 main／正式站／Cursor PR #77 不動。
