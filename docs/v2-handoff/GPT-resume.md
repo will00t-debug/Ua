@@ -1917,3 +1917,14 @@ Reproduction commands: `node scripts/v2-card-certification-report.mjs`, `node sc
 - 每個新共用原語後以原來的 `capabilityIndex()` 掃描所有當下尚未移植卡，先 **374 張**、再 **372 張**；最新手牌特殊登場文字候選 **32**、真退場+TOP-N 文字候選 **8**、TOP-N **59**。未完成全印刷個別審核的候選只標待審，**沒有**宣稱額外 READY 或衝卡數登錄。
 - **截至文件編寫前最後可驗證程式 SHA `97acfeb159eee068eba0ebf08039651baa7cdd58`**：遠端 Actions [39926750588](https://github.com/will00t-debug/Ua/actions/runs/39926750588) SUCCESS，Node22 **1962/1962**、五作品 **60/60**、獨立 manifest、R35/R37 全庫腳本、認證與 unported 報告成功。**追加文件與證據檔案產生新的 HEAD，務必對新 SHA 另行查驗 Actions，不能借舊成功。**
 - 後續建議 `cannotBeChosenByOppEffect`（Q1206/Q2162；絕不可誤用選擇 AP surcharge）→ 完整來源審核上述文字候選 → 高風險攻擊結束交換 Q2337/Q2338。BLC-4-034 裏向底卡時序和巢狀 LIFE 繼續 fail-closed。
+
+
+## GPT R40：來源分級不可選、SAO 完整事件移植及五作品全庫回查（2026-10-23）
+
+- **R40 官方來源、完整真卡／候選、程式與安全阻塞**：[V2-R40-official-choice-protection.md](./V2-R40-official-choice-protection.md)、[V2-R40-choice-protection-full-roster.md](./V2-R40-choice-protection-full-roster.md)。沿用 GPT Draft PR #78 / `gpt/v2-resume-20261022` → Cursor base；未合 main、未修改 PR #77、未部署、未 force push。
+- **通用原語** `cannotBeChosenByOppEffect` 與 `grantOwnFrontChoiceProtection`：由現有 continuousStates、fieldEntryStamp、合法行動清單／原子 dispatch、sourceResolutionBoundary 和 effectQueue 重用，來源分 `any/character/trigger`，人類與 Easy/Normal/Hard AI 走同一驗證；場外 EVENT、Trigger 物理來源、Q1119 EVENT 必選前置檢查、加費並存、到期、來源與目標 UID／序列化皆有正反例；不影響無個別選擇之全體效果／戰鬥宣告。
+- **完整印刷正式新增 SAO-2-058**，官方 EX08BT Q1206：紫2/AP1 EVENT、必選己方 FRONT、對手所有效果選擇保護至下次己方回合開始、若〈アスナ〉則自選最多1張己方 AP ACTIVE、完整 ACTIVE LIFE。新 shared DSL 不含卡號特判，正式 SAO registry + source pin + independent manifest + 50 張真卡／AI／UID 測試。
+- **保留阻塞**：SAO-2-060 Q1207 僅防對手「角色」效果；整張仍缺場外回收、從手牌免費 ACTIVE 登場、來源授予及 SPECIAL LIFE 完整驗收，維持 PARTIAL。MST-1-067 最新卡文為「對手效果」、Q2162 卻引「對手角色效果」且 Raid 底卡真退場處理未完整驗收，維持 RULE BLOCKED；沒有猜測勘誤或部分登錄。BLEACH Q2311/Q2313 源範圍對照已列文。
+- **每個新共用原語後回查全部當期未移植卡**：R40 初次 372/372，移植 SAO-2-058 後 371/371；保護關鍵字候選從 6（SAO5/MST1）→ 5（SAO4/MST1）。同時重查 R39 特殊手牌登場 32、真退場 TOP-N 8、TOP-N 59 文字候選，**可重疊不得相加，也不可視關鍵字命中＝READY**。正式覆蓋 **329/700**：BLEACH98、TTG36、SLG43、SAO98、MST54；未移植 371。官方整卡審核 3，部分來源驗收不等於獨立完成逐卡 FAQ 認證，後者仍 **0**。
+- **已證實程序提交 `a81fae38e42ee6e0f6edcea3947e0ec79ded7866`**：[GitHub Actions 39932466201](https://github.com/will00t-debug/Ua/actions/runs/39932466201) SUCCESS，遠端 Node22 **1973/1973 PASS**、矩陣 **60/60 PASS**、ledger、R35／R37、manifest、未移植報告皆綠。之後另外將 SAO 測試改成直接使用正式 registry，並追加交接文件；**必須重新檢查最終 HEAD Actions**，不能以前一筆成功冒充新提交成功。
+- 下一輪首選 `outsideOneRecoverThenFreeActiveHandDeploy` 並完整驗證 SAO-2-060；回審保護文字候選其他3張，必要時再處理 BLC-4-069 `attackEndDistinctOutsideNamesSwap` Q2337/Q2338。MST-1-067 等官方範圍與多層 Raid 退場裁定；BLC-4-034 和未驗證巢狀 LIFE 維持安全阻塞。
