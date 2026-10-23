@@ -675,25 +675,28 @@ function continueEffectQueue(pack,s){
    const choices=s.players[1-owner].front.filter(c=>c&&bp(pack,s,c)<=limit).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-retire-bp',player:owner,sourceUid:job.sourceUid,choices,limit};
   }else if(job.op==='retireOppFrontOneUnderBp'){
-   const choices=s.players[1-owner].front.filter(c=>c&&bp(pack,s,c)<=job.bp).map(c=>c.uid);
+   const choices=s.players[1-owner].front.filter(c=>c&&bp(pack,s,c)<=job.bp&&
+     cardEffectTargetPayable(s,owner,c.uid)).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-retire-bp',player:owner,
     sourceUid:job.sourceUid,choices,limit:job.bp,optional:true};
   }else if(job.op==='stripOppRaidTop'){
    const choices=s.players[1-owner].front.filter(c=>c&&
-    strippableRaidTop(pack,c)).map(c=>c.uid);
+    strippableRaidTop(pack,c)&&cardEffectTargetPayable(s,owner,c.uid)).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-strip-raid-top',player:owner,
     sourceUid:job.sourceUid,choices,optional:true};
   }else if(job.op==='retireOppFrontIfFacedown'){
    const source=field(pl).find(c=>c.uid===job.sourceUid);
    if(source&&hasFacedownUnder(source)){
-    const choices=s.players[1-owner].front.filter(c=>c&&bp(pack,s,c)<=job.bp).map(c=>c.uid);
+    const choices=s.players[1-owner].front.filter(c=>c&&bp(pack,s,c)<=job.bp&&
+     cardEffectTargetPayable(s,owner,c.uid)).map(c=>c.uid);
     if(choices.length)s.pending={kind:'effect-retire-bp',player:owner,
      sourceUid:job.sourceUid,choices,limit:job.bp,optional:true};
    }
   }else if(job.op==='restOrRetireOppFrontByLife'){
    // One target set and one choice. The controller's LIFE determines the
    // branch when the effect is actually resolved, not from the original hand.
-   const targets=s.players[1-owner].front.filter(c=>c&&bp(pack,s,c)<=job.bp);
+   const targets=s.players[1-owner].front.filter(c=>c&&bp(pack,s,c)<=job.bp&&
+     cardEffectTargetPayable(s,owner,c.uid));
    if(targets.length){
     const retireNow=pl.life.length<=job.lifeAtMost;
     s.pending={kind:retireNow?'effect-retire-bp':'effect-rest-bp',
@@ -703,13 +706,15 @@ function continueEffectQueue(pack,s){
    }
   }else if(job.op==='restSilenceOppFrontIfOwnOutsideField'){
    if(pl.outside.some(c=>card(pack,c).type==='field')){
-    const choices=s.players[1-owner].front.filter(Boolean).map(c=>c.uid);
+    const choices=s.players[1-owner].front.filter(c=>c&&
+     cardEffectTargetPayable(s,owner,c.uid)).map(c=>c.uid);
     if(choices.length)s.pending={kind:'effect-rest-bp',player:owner,
      sourceUid:job.sourceUid,choices,limit:null,optional:true,
      silenceUntil:{player:1-owner,phase:'attack',edge:'end'}};
    }
   }else if(job.op==='skipNextActiveOppRest'){
-   const choices=field(s.players[1-owner]).filter(c=>!c.ready).map(c=>c.uid);
+   const choices=field(s.players[1-owner]).filter(c=>!c.ready&&
+     cardEffectTargetPayable(s,owner,c.uid)).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-rest-bp',player:owner,
     sourceUid:job.sourceUid,choices,limit:null,optional:job.optional,
     skipNextActive:true,onlyRest:true,anyLine:true,restTarget:false};
@@ -728,12 +733,14 @@ function continueEffectQueue(pack,s){
      sourceUid:job.sourceUid,choices,optional:true};
    }
   }else if(job.op==='restOppFrontOne'){
-   const choices=s.players[1-owner].front.filter(Boolean).map(c=>c.uid);
+   const choices=s.players[1-owner].front.filter(c=>c&&
+     cardEffectTargetPayable(s,owner,c.uid)).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-rest-bp',player:owner,
     sourceUid:job.sourceUid,choices,limit:null,optional:job.optional,
     skipNextActive:job.skipNextActive===true};
   }else if(job.op==='restOppFrontUnderBp'){
-   const choices=s.players[1-owner].front.filter(c=>c&&bp(pack,s,c)<=job.bp).map(c=>c.uid);
+   const choices=s.players[1-owner].front.filter(c=>c&&bp(pack,s,c)<=job.bp&&
+     cardEffectTargetPayable(s,owner,c.uid)).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-rest-bp',player:owner,
     sourceUid:job.sourceUid,choices,limit:job.bp,optional:job.optional,
     skipNextActive:job.skipNextActive===true};
@@ -848,7 +855,8 @@ function continueEffectQueue(pack,s){
    const targetUids=zones.filter(c=>c&&
     (job.zone!=='field'||card(pack,c).type==='character')&&
     (job.minBp===undefined||bp(pack,s,c)>=job.minBp)&&
-    (job.maxBp===undefined||bp(pack,s,c)<=job.maxBp)).map(c=>c.uid);
+    (job.maxBp===undefined||bp(pack,s,c)<=job.maxBp)&&
+     cardEffectTargetPayable(s,owner,c.uid)).map(c=>c.uid);
    if(targetUids.length){
     if(job.maxTargets===2)s.pending={kind:'effect-target-many',player:owner,
      sourceUid:job.sourceUid,bp:job.bp,choices:targetUids,selected:[],
@@ -2374,9 +2382,10 @@ function eventMandatoryTargetsAvailable(pack,s,owner,d){
  return (d.effects?.onPlay||[]).every(job=>{
   if(job.optional!==false)return true;
   if(job.op==='restOppFrontOne')
-   return enemy.front.some(Boolean);
+   return enemy.front.some(c=>c&&cardEffectTargetPayable(s,owner,c.uid,d.ap));
   if(job.op==='restOppFrontUnderBp'||job.op==='restOrRetireOppFrontByLife')
-   return enemy.front.some(c=>c&&bp(pack,s,c)<=job.bp);
+   return enemy.front.some(c=>c&&bp(pack,s,c)<=job.bp&&
+    cardEffectTargetPayable(s,owner,c.uid,d.ap));
   return true;
  });
 }
@@ -2399,8 +2408,8 @@ function effectSelectionApTax(s,a){
  return selectionApSurcharge(s,q.player,a.uid);
 }
 function availableAp(s,p){return s.players[p].apCards.filter(c=>c.ready).length;}
-function cardEffectTargetPayable(s,selector,uid){
- return selectionApSurcharge(s,selector,uid)<=availableAp(s,selector);
+function cardEffectTargetPayable(s,selector,uid,reservedAp=0){
+ return selectionApSurcharge(s,selector,uid)<=availableAp(s,selector)-reservedAp;
 }
 export function legalUniversalActions(pack,s){
  assertUniversalMatch(pack,s);
