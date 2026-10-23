@@ -582,3 +582,15 @@ GPT PR #78 原分支 `gpt/v2-resume-20261022`（對 `cursor/v2-multi-retire-life
 - E `9cd3f87` 官方全文／FAQ 分類尚未移植候選 **9 張：PARTIAL8、RULE BLOCKED1、REVIEW PENDING63、READY0**（63 為其他文字候選，非完整人工審核），[39938875140](https://github.com/will00t-debug/Ua/actions/runs/39938875140) SUCCESS，1988/1988、60/60。`cf944bd` 另外加固 save pending 的來源、免費 ACTIVE 與角色保護作用域 anti-forgery；該 SHA 和後續文件 SHA 都要查自己的 CI。
 - 最新通過的已登錄 **330/700**（BLEACH98、TTG36、SLG43、SAO99、MST54），未移植 **370**；完整獨立逐張 FAQ 認證 **0**。**SAO-2-060 現在已完整登錄，舊 R40「仍 PARTIAL」記錄僅供歷史，不再是最新狀態**。
 - 核對與優先序：詳 [R41 SAO-2-060 DSL 規格](./V2-R41-sao060-official-dsl-spec.md) 和 [R41 全庫官方保護／重用審查](./V2-R41-official-protection-roster-and-next.md)。SAO-2-069、SAO-2-068、SLG-1-028、BLC-4-042、SAO-1-087、SAO-2-064 等需要其他共用能力才能完整移植。MST-1-067 Q2162、BLC-4-034 真退場與裏向底卡、未核准第二批巢狀 LIFE 維持安全封鎖。
+
+
+## R42 補充交接（2026-10-23；以最新 SHA Actions 為準）
+
+- **原 GPT Draft PR #78、原分支 `gpt/v2-resume-20261022`**，不得合併 main、部署、force push、改 Cursor PR #77，所有 commit 前均確認 PR HEAD。
+- **Batch A** `b14fd9e4`：基於 `inspectTopTraitOutside` 的 `orName`／`requiresOtherOwnTrait` 最小擴充；TOP2 選0或1→OUTSIDE、剩餘依序TOP，最初遠端 Actions [39945024669](https://github.com/will00t-debug/Ua/actions/runs/39945024669) 成功。
+- **Batch B** `d0a1c4d` ＋ `23277fa`／`68b9589`／`ea2b38e`：SLG-1-030 影の兵士 官方完整印刷 12 張牌組例外、其他己方影の軍団存在、TOP2 特徵或水篠旬卡名選擇；完整 registry／獨立 manifest／來源 CSV。中間紅燈是 source deckLimit 未傳遞、一般上限4特殊12、TOP2 fixture；修正後 [39946175840](https://github.com/will00t-debug/Ua/actions/runs/39946175840) SUCCESS，未刪測試。
+- **Batch C** `d00a2340` 新共用 `deployNamedFromZones`：從 OWN HAND 或 OWN OUTSIDE 選印刷卡名、指定 ACTIVE/REST 與合法目的地，來源 UID 事件、entryStamp、onPlay、Human/AI 同一合法操作，不新增第二套 AP/效果隊列；[39946348220](https://github.com/will00t-debug/Ua/actions/runs/39946348220) SUCCESS。
+- **Batch D** `c6baf7bc`＋`3680ff59`：SLG-1-028 イグリット 官方紫4/AP2/BP4000/GET，`enterAlwaysActive`，onPlay 手牌**或**場外影の兵士 0–1 免費 REST 登場，會真正觸發 SLG-1-030 TOP2；修正 AP2 fixture + R41 歷史名單，不改規則，[39947064630](https://github.com/will00t-debug/Ua/actions/runs/39947064630) SUCCESS：Node22 **2003/2003**、矩陣 **60/60**、manifest **332**。
+- **Batch E** `cfbe11c2`：saved pending 防偽，防改成未印刷的 READY／改卡名／換所有權／免費區域；[39947235806](https://github.com/will00t-debug/Ua/actions/runs/39947235806) SUCCESS。 `84839279`：以現有 R35/R41 能力索引重掃所有 **368** 未移植、全700來源，候選去重約71（需最新 Actions 確認），新 R42 CI 工作流程與自動分類；最新 HEAD 不得借前一個成功記錄。
+- **目前基準：332/700**：BLEACH98、TTG36、SLG45、SAO99、MST54；未移植 **368**。原 R41 的9張官方未移植候選，現在 SLG-1-028 已移植，其餘官方整卡審核 **8張：7 PARTIAL + 1 RULE BLOCKED**、其他 REVIEW PENDING63；獨立完整 FAQ **0**。
+- 完整官方來源、測試、剩餘缺口、優先序：[R42 handoff](./V2-R42-named-free-zone-slg-pair.md)。SAO-2-068／069、BLC-4-042、SAO-1-087／2-064 複合印刷效果未完整支援，MST-1-067 Q2162、BLC-4-034 和巢狀 LIFE 仍維持封鎖。正式站 Vercel 未部署。
