@@ -678,6 +678,15 @@ function normalize(card,packId){
    typeof colorTriggerFieldSubstitution!=='string'||!colorTriggerFieldSubstitution.trim()))
   throw Error(card.id+' invalid live COLOR field-substitution profile');
  const mainAbility=card.mainAbility??null;
+ // Two independently printed MAIN 「ターン1」 on the same FIELD source.
+ // Name-shared once accounting lives in the engine, not title-specific cases.
+ const fieldDualMain=mainAbility?.op==='fieldDualMain'&&
+  card.type==='field'&&
+  ['retireTrait','buffTrait','buffName'].every(k=>
+   typeof mainAbility[k]==='string'&&!!mainAbility[k].trim()&&mainAbility[k].length<=80)&&
+  Number.isInteger(mainAbility.bp)&&mainAbility.bp>=1&&mainAbility.bp<=5000&&
+  Object.keys(mainAbility).length===5&&
+  Object.keys(mainAbility).every(k=>['op','retireTrait','buffTrait','buffName','bp'].includes(k));
  const mainRaid=mainAbility?.op==='chooseTwoAfterOwnRaid'&&
   mainAbility.frontOnly===true&&mainAbility.readyOncePerName===true&&
   typeof mainAbility.trait==='string'&&!!mainAbility.trait.trim()&&
@@ -783,7 +792,7 @@ function normalize(card,packId){
   Object.keys(mainAbility.then[0]).every(k=>['op','count'].includes(k));
  if(mainRestProgram)verifyProgram(mainAbility.then,card.id+'.mainAbility.then');
  if(mainAbility!==null&&
-  (card.type!=='character'||!(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainRestBuff||mainPayAp||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainRestDiscardRetire||mainFrontProgram||mainFieldOnceBuff)))
+  (!['character','field'].includes(card.type)||!(fieldDualMain||card.type==='character'&&(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainRestBuff||mainPayAp||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainRestDiscardRetire||mainFrontProgram||mainFieldOnceBuff))))
   throw Error(card.id+' unsupported main action ability');
  const passiveBonuses=validatePassiveBonuses(card);
  const implemented=card.implementation;
