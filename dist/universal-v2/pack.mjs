@@ -153,8 +153,14 @@ function verifyProgram(program,path){
     new Set(e.zones).size!==e.zones.length||
     e.zones.some(z=>!['hand','outside'].includes(z))||
     !['any','front','energy'].includes(e.line)||typeof e.ready!=='boolean'||
-    e.optional!==true||Object.keys(e).length!==6||
-    Object.keys(e).some(k=>!['op','name','zones','line','ready','optional'].includes(k))
+    e.optional!==true||
+    (Object.keys(e).length!==6&&Object.keys(e).length!==10)||
+    (Object.keys(e).length===10&&(
+     !['red','yellow','green','blue','purple'].includes(e.color)||
+     !integer(e.ap,1)||e.ap>3||!integer(e.maxEnergy)||e.maxEnergy>30||
+     !integer(e.grantBp,1)||e.grantBp>5000))||
+    Object.keys(e).some(k=>!['op','name','zones','line','ready','optional',
+     'color','ap','maxEnergy','grantBp'].includes(k))
    ))throw Error(path+'['+i+'] invalid free named-zone entry');
    if(e.op==='payApDeployNamedRest'&&(
    e.entry!=='hand'||typeof e.name!=='string'||!e.name.trim()||e.name.length>80||
