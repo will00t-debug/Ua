@@ -33,7 +33,8 @@ const card=(pack,c)=>{
 };
 const titleOf=(pack,owner)=>playerPacks(pack)[owner].id;
 function defaultEntryReady(pack,s,owner,physical){
- return card(pack,physical).enterActiveIfOpponentRest===true&&
+ return card(pack,physical).enterAlwaysActive===true||
+  card(pack,physical).enterActiveIfOpponentRest===true&&
   field(s.players[1-owner]).some(c=>card(pack,c).type==='character'&&!c.ready);
 }
 const random=s=>{let x=s.rng|0;x^=x<<13;x^=x>>>17;x^=x<<5;s.rng=x>>>0;return s.rng/4294967296;};

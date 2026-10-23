@@ -638,6 +638,10 @@ function normalize(card,packId){
  if(card.enterActiveIfOpponentRest!==undefined&&
     (card.type!=='character'||card.enterActiveIfOpponentRest!==true))
    throw Error(card.id+' invalid conditional ACTIVE entry');
+  if(card.enterAlwaysActive!==undefined&&
+    (card.type!=='character'||card.enterAlwaysActive!==true||
+     card.enterActiveIfOpponentRest===true))
+   throw Error(card.id+' invalid unconditional ACTIVE entry');
   if(card.frontForbidden!==undefined&&(card.type!=='character'||card.frontForbidden!==true))
   throw Error(card.id+' invalid front-line restriction');
  const colorTriggerFieldSubstitution=card.colorTriggerFieldSubstitution??null;
@@ -831,11 +835,11 @@ function normalize(card,packId){
   card.type!=='character'||card.readyOnBlockCount!==1))
   throw Error(card.id+' invalid ready-on-block count');
  if(implemented==='vanilla'&&(Object.keys(effects).length||card.effectText||
-  mainAbility||phaseEffects.length||moveTriggers.length||moveObserver||card.enterActiveIfOpponentRest||card.activeExtraEnergy||card.conditionalTraitEnergy||passiveBonuses||card.impactNull||
+  mainAbility||phaseEffects.length||moveTriggers.length||moveObserver||card.enterActiveIfOpponentRest||card.enterAlwaysActive||card.activeExtraEnergy||card.conditionalTraitEnergy||passiveBonuses||card.impactNull||
   card.printedImpact||card.printedAttackDamage||card.readyOnAttackCount||card.readyOnBlockCount||
   card.frontGeneratesEnergy||ownOutsideRecovery||colorTriggerFieldSubstitution||card.frontForbidden||card.ownTurnBp||card.opponentTurnBp||nameAliases))
   throw Error(card.id+' claims vanilla despite printed/declared effects');
- if(implemented==='dsl'&&!Object.keys(effects).length&&!phaseEffects.length&&!moveTriggers.length&&!mainAbility&&!moveObserver&&!card.enterActiveIfOpponentRest&&
+ if(implemented==='dsl'&&!Object.keys(effects).length&&!phaseEffects.length&&!moveTriggers.length&&!mainAbility&&!moveObserver&&!card.enterActiveIfOpponentRest&&!card.enterAlwaysActive&&
   !card.activeExtraEnergy&&!card.conditionalTraitEnergy&&!passiveBonuses&&!card.impactNull&&
   !card.printedImpact&&!card.printedAttackDamage&&!card.readyOnAttackCount&&!card.readyOnBlockCount&&
   !card.frontGeneratesEnergy&&!ownOutsideRecovery&&!colorTriggerFieldSubstitution&&!card.frontForbidden&&!card.ownTurnBp&&!card.opponentTurnBp&&!nameAliases)
@@ -966,6 +970,7 @@ function normalize(card,packId){
    phaseEffects:Object.freeze(phaseEffects.map(x=>Object.freeze({...x,
     then:Object.freeze(x.then.map(op=>Object.freeze({...op})))}))),
   enterActiveIfOpponentRest:card.enterActiveIfOpponentRest===true,
+   enterAlwaysActive:card.enterAlwaysActive===true,
    frontForbidden:card.frontForbidden===true,
   step:card.step===true,ownTurnBp:card.ownTurnBp||0,
   opponentTurnBp:card.opponentTurnBp||0,

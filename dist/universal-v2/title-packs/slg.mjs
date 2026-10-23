@@ -3,6 +3,8 @@ import {SOLO_LEVELING_CARDS} from '../../solo-leveling.mjs';
 import {verifiedSlgV2Cards} from '../slg-pack.mjs';
 const records=Object.fromEntries(SOLO_LEVELING_CARDS.map(c=>[c.id,c]));
 const proof=Object.freeze({
+ '028':['以ACTIVE登場',
+ 'Official UA51BT/SLG-1-028 イグリット purple4/AP2/BP4000/影の軍団; enters ACTIVE without an opponent condition. OnPlay may choose up to one exact named 〈影の兵士〉 from OWN HAND OR OWN OUTSIDE and enter any legal line REST for free; nested onPlay of SLG-1-030 resolves using existing effectQueue, GET life separately. Official https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-028; not complete independent FAQ certification.'],
  '030':['同卡號牌組最多12張',
  'Official UA51BT/SLG-1-030 影の兵士 PURPLE0/AP1/BP1500/gen1/DRAW life: deck limit 12 copies; onPlay requires OTHER own field character with exact trait 影の軍団; inspect TOP2, optionally send one either exact trait 影の軍団 OR named 〈水篠 旬〉 outside, reorder rest to TOP. Q no per-card special ruling found. Printed source https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-030; not fully independently FAQ-certified.'],
  '046':['登場時：查看牌庫頂4張','Official UA51BT/SLG-1-046 水篠 旬 GREEN1/AP1/BP2000/gen1, no LIFE; TOP4 reveal 0..1 exact name 水篠 旬 OR デイリークエスト, bottom-order rest, only on successful addition discard exactly one own hand card. Reuses existing contingent TOP-N search op; full FAQ certification remains independent.'],
@@ -90,6 +92,7 @@ export default Object.freeze({
      ...(def.id==='SLG-1-065'?['tests/v2-zero-engine-round16.test.mjs']:[]),
      ...(def.id==='SLG-1-027'?['tests/v2-rest-printed-bp-round17.test.mjs']:[]),
      ...(def.id==='SLG-1-030'?['tests/v2-r42-slg030-official.test.mjs']:[]),
+     ...(def.id==='SLG-1-028'?['tests/v2-r42-slg028-030-official.test.mjs']:[]),
      ...(def.id==='SLG-1-070'?['tests/v2-r33-slg070-official.test.mjs']:[]),
      ...(def.id==='SLG-1-072'?['tests/v2-slg-072-dfn-draw-gpt.test.mjs']:[])],
     ...(def.implementation==='vanilla'?{verifiedNoExtraEffects:true}:{})}

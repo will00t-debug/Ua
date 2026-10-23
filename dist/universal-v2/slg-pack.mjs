@@ -3,6 +3,15 @@ import {SOLO_LEVELING_CARDS} from '../solo-leveling.mjs';
 import {createUniversalPack} from './pack.mjs';
 const catalog=Object.fromEntries(SOLO_LEVELING_CARDS.map(c=>[c.id,c]));
 const authored=[
+ // UA51BT/SLG-1-028: always ACTIVE on entry; its onPlay uses one shared
+ // named physical choice across HAND and OUTSIDE, without normal AP.
+ {"id":"SLG-1-028","name":"イグリット","color":"purple","energy":4,"ap":2,
+  "bp":4000,"gen":1,"trigger":"get","type":"character",
+  "textAnchor":"以ACTIVE登場","implementation":"dsl",
+  "officialTraits":["影の軍団"],"catalogueTraits":["影之軍團"],
+  "enterAlwaysActive":true,
+  "effects":{"onPlay":[{"op":"deployNamedFromZones","name":"影の兵士",
+   "zones":["hand","outside"],"line":"any","ready":false,"optional":true}]}},
  // 12 printed copies allowed; another own shadow-army card must exist before
  // inspecting TOP2. Printed name 水篠 旬 and exact trait 影の軍団 are OR filters.
  {"id":"SLG-1-030","name":"影の兵士","color":"purple","energy":0,"ap":1,
