@@ -30,3 +30,18 @@ test('R41 official multi-effect SAO-2-069 PARTIAL and Q2162 MST-1-067 RULE BLOCK
   assert.notEqual(c.status,'READY');
  }
 });
+
+test('R41 seven new full-print source reviews all blocked, no source-scope conflation',()=>{
+ const r=r41SpecialHandCandidateReport();
+ const ids=["SAO-1-028","SAO-1-087","SAO-2-064","SAO-2-068","BLC-4-042","BLC-4-036","SLG-1-028"];
+ assert.equal(r.stats.manuallyVerifiedUnportedR41,9);
+ for(const id of ids){
+  const c=r.candidates.find(c=>c.id===id);
+  assert.ok(c,id+' not scanned');
+  assert.equal(c.status,'PARTIAL');
+  assert.ok(c.missing.length>=3);
+  assert.ok(c.sourceUrl.startsWith('https://www.unionarena-tcg.com/jp/'));
+ }
+ assert.equal(r.stats.byStatus['READY'],0);
+ assert.equal(r.stats.byStatus['RULE BLOCKED'],1);
+});
