@@ -109,8 +109,9 @@ test('R48 A: FOUR distinct genuine green EVENT/FIELD cards reach own OUTSIDE thr
   assert.ok(bound>0,'effect settlement bounded and finite');
  }
  function paid(id,line,slot){
-  const action=legalUniversalActions(packs,s).find(a=>a.type==='play'&&
-   a.uid===source[id]&&a.line===line&&a.slot===slot);
+  const action=legalUniversalActions(packs,s).find(a=>
+   a.uid===source[id]&&(line===undefined?a.type==='event':
+    a.type==='play'&&a.line===line&&a.slot===slot));
   assert.ok(action,'must be legal paid use of registered '+id);
   apply(action);settle();
  }
