@@ -4,6 +4,10 @@ import {SAO_OFFICIAL_CARDS} from '../sao-official-import.mjs';
 import {createUniversalPack} from './pack.mjs';
 
 const PRINTED_PINS=Object.freeze({
+  // R44 exact printed full text, no inference from a partial keyword hit.
+  "SAO-2-069":{"kind":"raidBothAttackEndRetireFreeRestAsuna",
+   "nameJa":"ユウキ","color":"green","energy":4,"ap":1,"bp":4000,"gen":1,
+   "type":"character","trigger":"raid","traits":["ALO"],"effectJa":"【レイド】〈ユウキ〉アクティブにし、フロントLに移動できる\n自分と相手のアタックフェイズ終了時、このキャラを退場させる。\n【登場時】BP4000以下の相手のフロントLのキャラを1枚まで選び、退場させる。\n【退場時】自分の手札から必要エナジーが3以下で消費APが1の緑の〈アスナ〉を1枚まで自分の場にレストで登場させる。"},
  "SAO-2-068":{"kind":"mainRestDiscardRetireFreeActiveAsuna",
   "nameJa":"ユウキ","color":"green","energy":2,"ap":1,"bp":2000,"gen":1,
   "type":"character","trigger":"active","traits":["ALO"],
@@ -1333,6 +1337,17 @@ export function verifiedSaoV2Cards(){
   if(pin.kind==='grantOwnFrontChoiceProtection')
    card.effects={onPlay:[{op:'grantOwnFrontChoiceProtection',optional:false,
     scope:'any',until:'nextOwnStart',apRecoveryOnName:'アスナ'}]};
+  if(pin.kind==='raidBothAttackEndRetireFreeRestAsuna'){
+   // Core Raid placement/LIFE uses the universal Raid entry/trigger engine.
+   card.raidName='ユウキ';
+   card.phaseEffects=['own','opponent'].map(turn=>({
+    phase:'attack',edge:'end',turn,then:[{op:'retireSourceOnPhaseEnd'}]}));
+   card.effects={
+    onPlay:[{op:'retireOppFrontOneUnderBp',bp:4000,optional:true}],
+    onRetire:[{op:'deployNamedFromZones',name:'アスナ',zones:['hand'],line:'any',
+     ready:false,optional:true,color:'green',ap:1,maxEnergy:3}]
+   };
+  }
   if(pin.kind==='mainRestDiscardRetireFreeActiveAsuna'){
    card.effects={};
    card.mainAbility={op:'restDiscardRetireThen',lines:'field',discardCount:1,
@@ -1589,6 +1604,7 @@ export function verifiedSaoV2Entries(){
      ...(pin.kind==='grantOwnFrontChoiceProtection'?['tests/v2-r40-sao058-full-print-probe.test.mjs']:[]),
      ...(pin.kind==='outsideRecoverActiveProtected'?['tests/v2-r41-sao060-full-print.test.mjs']:[]),
      ...(pin.kind==='mainRestDiscardRetireFreeActiveAsuna'?['tests/v2-r43-sao068-full-print.test.mjs']:[]),
+     ...(pin.kind==='raidBothAttackEndRetireFreeRestAsuna'?['tests/v2-r44-sao069-full-print.test.mjs']:[]),
      'tests/universal-v2-sao-port.test.mjs',
       ...(def.id==='SAO-1-034'?['tests/v2-sao-034-official.test.mjs']:[]),
      ...(def.id==='SAO-2-021'?['tests/v2-sao-021-shared-main-cost.test.mjs']:[]),

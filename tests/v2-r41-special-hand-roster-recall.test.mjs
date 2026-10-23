@@ -21,7 +21,8 @@ test('R41 scan indexes all 700 cards and each unique currently unported UID afte
 test('R41 official multi-effect SAO-2-069 PARTIAL and Q2162 MST-1-067 RULE BLOCKED',()=>{
  const r=r41SpecialHandCandidateReport();
  const sao=r.candidates.find(c=>c.id==='SAO-2-069');
- assert.ok(sao);assert.equal(sao.status,'PARTIAL');assert.ok(sao.missing.length>=4);
+ assert.equal(sao,undefined,'R44 source-complete 069 is no longer unported');
+ assert.ok(R41_OFFICIAL_REVIEWS['SAO-2-069'].missing.length>=4,'historical blocker evidence retained');
  const mst=r.candidates.find(c=>c.id==='MST-1-067');
  assert.ok(mst);assert.equal(mst.status,'RULE BLOCKED');
  assert.ok(mst.missing.some(x=>x.includes('Q2162')));
@@ -34,7 +35,7 @@ test('R41 official multi-effect SAO-2-069 PARTIAL and Q2162 MST-1-067 RULE BLOCK
 test('R41 historical reviews retain evidence as later source-pinned cards become registered',()=>{
  const r=r41SpecialHandCandidateReport();
  const ids=["SAO-1-028","SAO-1-087","SAO-2-064","SAO-2-068","BLC-4-042","BLC-4-036","SLG-1-028"];
- assert.equal(r.stats.manuallyVerifiedUnportedR41,7);
+ assert.equal(r.stats.manuallyVerifiedUnportedR41,6);
  for(const id of ids){
   if(id==='SLG-1-028'||id==='SAO-2-068'){
    assert.ok(!r.candidates.some(c=>c.id===id),'now registered whole printed card cannot remain unported');

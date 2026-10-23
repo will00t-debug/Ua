@@ -9,8 +9,8 @@ test('R42 full 700 IDs and 368 currently unported searched, with no partial card
  assert.deepEqual(report.newlyFullyRegistered,['SLG-1-030','SLG-1-028']);
  assert.equal(s.readyVerifiedUnported,0);
  assert.equal(s.officallyReviewedRemaining,undefined);
- assert.equal(s.officiallyReviewedRemaining,7);
- assert.equal(s.partial,6);assert.equal(s.ruleBlocked,1);
+ assert.equal(s.officiallyReviewedRemaining,6);
+ assert.equal(s.partial,5);assert.equal(s.ruleBlocked,1);
  const remaining=[...report.candidates.map(c=>c.id),...report.remainingNoKeywords];
  assert.equal(remaining.length,inv.totals.blocked);
  assert.equal(new Set(remaining).size,inv.totals.blocked);
@@ -25,5 +25,5 @@ test('R42 cannot count historical R41 blocked SLG-028 after real full card regis
  const critical=new Map(r.priorities.map(row=>[row.id,row]));
  assert.equal(critical.get('MST-1-067').status,'RULE BLOCKED');
  for(const id of ['SAO-2-068','SAO-2-069','BLC-4-042','SAO-1-087','SAO-2-064'])
-  if(id!=='SAO-2-068')assert.equal(critical.get(id).status,'PARTIAL');
+  if(!['SAO-2-068','SAO-2-069'].includes(id))assert.equal(critical.get(id).status,'PARTIAL');
 });

@@ -901,8 +901,14 @@ function normalize(card,packId){
    (card.type!=='character'||name!=='onPlay'))
    throw Error(card.id+' own-effect draw gate is only a character onPlay effect');
   if(name==='onRetire'&&
-   (!['character','field'].includes(card.type)||program.some(e=>!['draw','millTop','drawIfOwnFieldExists','chooseOne','deployOutsideTraitlessRestOrRaid','retireOppFrontOneUnderBp','restOppFrontUnderBp','buffOwnField'].includes(e.op))))
+   (!['character','field'].includes(card.type)||program.some(e=>!['draw','millTop','drawIfOwnFieldExists','chooseOne','deployOutsideTraitlessRestOrRaid','retireOppFrontOneUnderBp','restOppFrontUnderBp','buffOwnField','deployNamedFromZones'].includes(e.op))))
    throw Error(card.id+' unsupported onRetire ability program');
+  if(name==='onRetire'&&program.some(e=>e.op==='deployNamedFromZones')&&
+   (card.type!=='character'||program.length!==1||
+    program[0].zones.length!==1||program[0].zones[0]!=='hand'||
+    program[0].color===undefined||program[0].grantBp!==undefined||
+    program[0].ready!==false))
+   throw Error(card.id+' invalid printed onRetire optional hand REST entry');
   if(name==='onRetire'&&program.some(e=>e.op==='buffOwnField'&&e.optional!==true))
    throw Error(card.id+' retirement BP choice must be optional');
   if(name==='onRetire'&&program.some(e=>e.op==='deployOutsideTraitlessRestOrRaid')&&

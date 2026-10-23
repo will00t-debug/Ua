@@ -42,7 +42,9 @@ export function r43MainCostFullRoster(){
  const registered=new Map(audit.cards.filter(c=>c.registered).map(c=>[c.id,c]));
  if(!registered.get('SAO-2-068')?.operations.includes('deployNamedFromZones')||
   !registered.get('SAO-2-068')?.operations.includes('restDiscardRetireThen')||
-  ids.has('SAO-2-068')||!ids.has('SAO-2-069'))
+  ids.has('SAO-2-068')||ids.has('SAO-2-069')||
+  !['retireSourceOnPhaseEnd','retireOppFrontOneUnderBp','deployNamedFromZones'].every(op=>
+   registered.get('SAO-2-069')?.operations.includes(op)))
   throw Error('R43 official SAO-068 full registration or SAO-069 strict PARTIAL changed');
  const candidates=original.candidates.map(c=>({
   id:c.id,title:c.title,status:c.status,flags:c.flags,
@@ -50,6 +52,7 @@ export function r43MainCostFullRoster(){
  }));
  const checked=Object.entries(R43_OFFICIAL_MULTI_EFFECT_AUDIT).map(([id,review])=>{
   const row=candidates.find(x=>x.id===id);
+  if(registered.has(id))return {id,status:'REGISTERED',missing:[],source:review.source};
   if(!row||row.status!==review.status)return {id,status:'SOURCE PENDING',missing:['statusChangedReviewRequired']};
   return {id,status:row.status,missing:[...review.missing],source:review.source};
  });
@@ -74,9 +77,9 @@ export function r43MainCostFullRoster(){
  if(counts.registered+counts.unportedSearched!==700)
   throw Error('R43 registration count mismatch');
  return {counts,reviewed:checked,candidates,otherUnportedIds:original.remainingNoKeywords,
-  newlyRegistered:'SAO-2-068',unresolved:'SAO-2-069',
+  newlyRegistered:'SAO-2-068',unresolved:null,
   nextAtomicPriorities:[
-   {op:'namedPrintedHandDeployUnderTrueRetirement',cards:['SAO-2-069','SAO-2-068'],note:'reused R43 base, needs Raid and phase-end on 069'},
+   {op:'namedPrintedHandDeployUnderTrueRetirement',cards:['SAO-2-069','SAO-2-068'],note:'historical R43 gap; both now REGISTERED, R44 audit supersedes'},
    {op:'phaseAttackEndDistinctOutsideNamesSwap',cards:['BLC-4-069'],note:'Q2337 Q2338 to review before changing phase order'},
    {op:'sourceSpecificHandDiscardSelectionTax',cards:['SAO-1-087','SAO-2-064'],note:'Q978 and Q1208; not AP tax or full protection'},
    {op:'strictThreeWayConditionalRetireMode',cards:['BLC-4-042'],note:'Q2323 printed name, not trait'},
