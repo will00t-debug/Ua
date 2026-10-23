@@ -5,6 +5,7 @@ import {DISCOUNT_KIND,grantHandDiscount,handPlayApPlan,definitionGrantsDiscount}
 import {validateUniversalDeck} from './pack.mjs';
 import {appendCompletedMove,matchesCompletedMove,V2_MOVE_REASONS} from './zone-move-events.mjs';
 import {planSimultaneousLifeReveal} from './life-reveal-batch.mjs';
+import {matchesPrintedRequiredEnergyAtMost} from './ap-discounts.mjs';
 import {cardHasName,cardHasTrait,matchesOwnDistinctTraits,matchesV2LiveCondition,
  ownRestPrintedBpCount,retiredThisTurn} from './field-conditions.mjs';
 import {refreshFieldActive,expireContinuousStates,pruneContinuousStates,
@@ -202,6 +203,7 @@ function detachFacedown(top,uid){
 function matchesFilter(pack,s,physical,filter){
  const printed=card(pack,physical);
  if(filter.field==='trait')return cardHasTrait(printed,filter.value);
+ if(filter.field==='printedRequiredEnergyAtMost')return matchesPrintedRequiredEnergyAtMost(printed,filter.value);
  // Name filters see the alias everywhere this predicate is asked, except a
  // live field card whose original text is negated. Callers pass deck,
  // outside, or visible field cards. They do not pass buried Raid layers.

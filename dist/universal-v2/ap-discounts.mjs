@@ -1,13 +1,19 @@
 // Q1210/Q2161: only the next matching hand use consumes the effect.
 // Q1209: printed BP; Q670: repeated next-use reductions stack on that use.
-import {cardHasTrait} from './field-conditions.mjs';
+import {cardHasTrait,cardHasName} from './field-conditions.mjs';
+// Card-face required energy (necessary cost), never the card's generated energy.
+export function matchesPrintedRequiredEnergyAtMost(definition,max){
+ return Number.isInteger(max)&&max>=0&&max<=30&&Number.isInteger(definition?.energy)&&definition.energy<=max;
+}
 export const DISCOUNT_KIND='nextEligibleHandPlayApDiscount';
 export function validatePrintedPlayFilter(f){
  if(!f||typeof f!=='object'||Array.isArray(f)||!Object.keys(f).length||
-  Object.keys(f).some(k=>!['cardType','printedBp','printedGenAtLeast','trait'].includes(k))||
+  Object.keys(f).some(k=>!['cardType','printedBp','printedGenAtLeast','printedRequiredEnergyAtMost','trait','namesAny'].includes(k))||
   (f.cardType!==undefined&&!['character','field','event'].includes(f.cardType))||
   (f.printedBp!==undefined&&(!Number.isInteger(f.printedBp)||f.printedBp<0||f.printedBp>50000))||
   (f.printedGenAtLeast!==undefined&&(!Number.isInteger(f.printedGenAtLeast)||f.printedGenAtLeast<0||f.printedGenAtLeast>50))||
+  (f.printedRequiredEnergyAtMost!==undefined&&(!Number.isInteger(f.printedRequiredEnergyAtMost)||f.printedRequiredEnergyAtMost<0||f.printedRequiredEnergyAtMost>30))||
+  (f.namesAny!==undefined&&(!Array.isArray(f.namesAny)||f.namesAny.length<2||f.namesAny.length>5||f.namesAny.some(n=>typeof n!=='string'||!n.trim()||n.length>80)||new Set(f.namesAny).size!==f.namesAny.length))||
   (f.trait!==undefined&&(typeof f.trait!=='string'||!f.trait.trim()||f.trait.length>80)))
   throw Error('Invalid printed hand-play discount filter');
  return true;
@@ -16,6 +22,8 @@ export function matchesPrintedPlayFilter(d,f){
  return (f.cardType===undefined||d.type===f.cardType)&&
   (f.printedBp===undefined||d.bp===f.printedBp)&&
   (f.printedGenAtLeast===undefined||d.gen>=f.printedGenAtLeast)&&
+  (f.printedRequiredEnergyAtMost===undefined||matchesPrintedRequiredEnergyAtMost(d,f.printedRequiredEnergyAtMost))&&
+  (f.namesAny===undefined||f.namesAny.some(name=>cardHasName(d,name)))&&
   (f.trait===undefined||cardHasTrait(d,f.trait));
 }
 export function validateHandDiscount(s,e){

@@ -198,8 +198,10 @@ function verifyProgram(program,path){
   }
   if(e.op==='searchTopUpToTwoBottom'){
    const valid=f=>f&&typeof f==='object'&&!Array.isArray(f)&&Object.keys(f).length===2&&
-    ['name','trait','color','type'].includes(f.field)&&typeof f.value==='string'&&
-    !!f.value.trim()&&f.value.length<=80&&(f.field!=='type'||V2_CARD_TYPES.includes(f.value));
+    ['name','trait','color','type','printedRequiredEnergyAtMost'].includes(f.field)&&
+    (f.field==='printedRequiredEnergyAtMost'?integer(f.value)&&f.value<=30:
+     typeof f.value==='string'&&!!f.value.trim()&&f.value.length<=80&&
+      (f.field!=='type'||V2_CARD_TYPES.includes(f.value)));
    if(!integer(e.count,1)||e.count>5||e.max!==2||e.rest!=='bottom'||
     !Array.isArray(e.filters)||e.filters.length<1||e.filters.length>3||
     !e.filters.every(valid)||new Set(e.filters.map(f=>f.field+':'+f.value)).size!==e.filters.length||

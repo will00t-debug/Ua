@@ -258,9 +258,11 @@ const registry=Object.freeze({
  searchTopUpToTwoBottom:{
   args:{count:v=>integer(v,1,5),filters:v=>Array.isArray(v)&&v.length>=1&&v.length<=3&&
    v.every(f=>f&&typeof f==='object'&&!Array.isArray(f)&&Object.keys(f).length===2&&
-    ['name','trait','color','type'].includes(f.field)&&typeof f.value==='string'&&
-    !!f.value.trim()&&f.value.length<=80&&
-    (f.field!=='type'||['character','event','field'].includes(f.value)))&&
+    ['name','trait','color','type','printedRequiredEnergyAtMost'].includes(f.field)&&
+    (f.field==='printedRequiredEnergyAtMost'?
+     integer(f.value,0,30):
+     typeof f.value==='string'&&!!f.value.trim()&&f.value.length<=80&&
+     (f.field!=='type'||['character','event','field'].includes(f.value))))&&
     new Set(v.map(f=>f.field+':'+f.value)).size===v.length,
    logic:v=>['any','all'].includes(v)},
   build:v=>[{op:'searchTopUpToTwoBottom',count:v.count,max:2,rest:'bottom',
