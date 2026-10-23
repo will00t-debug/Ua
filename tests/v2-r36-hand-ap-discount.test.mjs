@@ -62,3 +62,9 @@ test('R36 unused discount expires at current turn end',()=>{
  let {pack,s}=scene();s=dispatchUniversalAction(pack,s,{type:'next'});s=dispatchUniversalAction(pack,s,{type:'next'});
  assert.equal(s.continuousStates.length,0);
 });
+test('R36 eligible printed card with insufficient required energy does not consume the discount',()=>{
+ const {pack,s}=scene();const c=take(s,'MST-1-046');s.players[0].hand.push(c);
+ const producer=s.players[0].energy[0];s.players[0].energy[0]=null;s.players[0].deck.push(producer);
+ const before=structuredClone(s);assert.ok(!play(pack,s,c.uid));
+ assert.throws(()=>dispatchUniversalAction(pack,s,{type:'play',uid:c.uid,line:'front',slot:1}));assert.deepEqual(s,before);
+});

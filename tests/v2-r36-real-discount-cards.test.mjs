@@ -75,3 +75,17 @@ for(const defender of [0,1])test('R36 real cross-title combat resolves '+(defend
  const a=legalUniversalActions(packs,s).find(a=>a.mode===(defender?'color':'active')&&a.uid===(defender?hand.uid:target.uid));assert.ok(a);s=act(s,a);
  assert.equal(s.continuousStates.length,0);assert.equal(assertUniversalMatch(packs,s),true);
 });
+test('R36 same physical FIELD reentry gets a new stamp; earned old grant and new grant stack',()=>{
+ let {s,source}=scene();s=play(s,source.uid,'energy');const first=s.continuousStates[0].sourceStamp;
+ const slot=s.players[0].energy.findIndex(c=>c?.uid===source.uid),c=s.players[0].energy[slot];s.players[0].energy[slot]=null;c.fieldEntryStamp=null;c.ready=false;s.players[0].hand.push(c);
+ s=play(s,c.uid,'energy');assert.equal(s.continuousStates.length,2);assert.notEqual(s.continuousStates[1].sourceStamp,first);
+ assert.equal(assertUniversalMatch(packs,JSON.parse(JSON.stringify(s))),true);
+ const target=take(s,0,'SAO-2-065');s.players[0].hand.push(target);for(const ap of s.players[0].apCards)ap.ready=false;
+ s=play(s,target.uid,'front');assert.equal(s.continuousStates.length,0);
+});
+test('R36 MST bounce of a Raid top retains physical top, sends all lower layers outside, then grants discount',()=>{
+ let {s,source}=scene(1);const top=put(s,1,'MST-1-054','front',0),base=take(s,1,'MST-1-052');top.stack=[base];
+ s=act(play(s,source.uid,'energy'),{type:'chooseEffectMode',mode:'bounce'});s=act(s,{type:'chooseOwnBounce',uid:top.uid});
+ assert.ok(s.players[1].hand.some(c=>c.uid===top.uid&&c.stack.length===0));assert.ok(s.players[1].outside.some(c=>c.uid===base.uid));
+ assert.equal(s.turnRetireEvents.length,0);assert.equal(s.continuousStates.length,1);assert.equal(assertUniversalMatch(packs,s),true);
+});

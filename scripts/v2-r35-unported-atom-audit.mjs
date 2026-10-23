@@ -63,7 +63,7 @@ export function r35UnportedAtomAudit(){
    if(seen.has(id))throw Error('Duplicate audited source '+id);
    if(unported.has(id))seen.add(id);
   }
-  return {...g,sourceUrls:g.ids.map((id,i)=>
+  return {...g,historicalR35Assessment:true,currentlyRegisteredIds:g.ids.filter(id=>!unported.has(id)),currentlyUnportedIds:g.ids.filter(id=>unported.has(id)),sourceUrls:g.ids.map((id,i)=>
    'https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no='+
    g.series[i]+'%2F'+id)};
  });
@@ -100,13 +100,18 @@ export function prioritizeMissingAtoms(cards){
  for(const c of cards.filter(c=>!c.registered&&c.missingAtoms))for(const atom of c.missingAtoms){
   if(!gaps.has(atom))gaps.set(atom,{atom,ids:[],titles:[],directCompletionIds:[],ruleBlockedIds:[]});
   const row=gaps.get(atom);row.ids.push(c.id);if(!row.titles.includes(c.title))row.titles.push(c.title);
-  if(c.missingAtoms.length===1)row.directCompletionIds.push(c.id);
+  if(c.missingAtoms.length===1&&c.status==='NEAR READY')row.directCompletionIds.push(c.id);
   if(c.status==='RULE BLOCKED')row.ruleBlockedIds.push(c.id);
  }
- return [...gaps.values()].map(g=>({...g,
-  score:5*g.directCompletionIds.length+2*g.titles.length+g.ids.length-10*g.ruleBlockedIds.length,
+ return [...gaps.values()].map(g=>{
+  const old=R35_SHARED_ATOM_CANDIDATES.find(x=>x.atom===g.atom);
+  const risk=old?.risk||(/attackEnd|Raid|Remove|Damage/.test(g.atom)?'high':'medium');
+  const complexity=/Filter/.test(g.atom)?'low':risk==='high'?'high':'medium';
+  const ruleClarity=g.ids.every(id=>R36_DISCOUNT_REVIEWS[id]?.faq.length)?'specific-faq-reviewed':'further-scope-review';
+  return {...g,risk,complexity,ruleClarity,
+  score:5*g.directCompletionIds.length+2*g.titles.length+g.ids.length-10*g.ruleBlockedIds.length-(risk==='high'?3:1)-(complexity==='high'?2:0)+(ruleClarity==='specific-faq-reviewed'?1:0),
   note:'Triage score only: complexity and core regression risk require reviewer judgment before implementation'
- })).sort((a,b)=>b.score-a.score||a.atom.localeCompare(b.atom));
+ };}).sort((a,b)=>b.score-a.score||a.atom.localeCompare(b.atom));
 }
 export function capabilityIndex(inventory=v2AllTitleInventory()){
  const cards=[];const usage=new Map();
@@ -126,7 +131,7 @@ export function capabilityIndex(inventory=v2AllTitleInventory()){
     sourceUrl:c.source||c.sourceUrl||null,operations:ops,
     status:review?.status||(!text?'SOURCE PENDING':'REVIEW PENDING'),
     officialReview:review?{reviewedOn:'2026-10-23',url:'https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no='+review.series+'%2F'+id,faq:review.faq}:null,
-    missingAtoms:review?.missing||null,
+    missingAtoms:review?.missing||(groups.length?groups.map(g=>g.atom):null),
     priorSourceMatched:groups.length>0,
     requiredAtomCandidates:groups.map(g=>g.atom),
     searchHits:discountCandidate?['nextEligibleHandPlayApDiscount']:[],
