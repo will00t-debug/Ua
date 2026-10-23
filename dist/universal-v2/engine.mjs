@@ -635,7 +635,7 @@ function continueEffectQueue(pack,s){
      player:owner,sourceUid:job.sourceUid,choices,color:job.color,
      baseEnergy:job.energy,energyLimit,ap:job.ap,optional:true};
    }else if(job.op==='deployNamedFromZones'){
-     const printedName=c=>{const d=card(pack,c);return d.type==='character'&&
+     const printedName=c=>{const d=card(pack,c);return d.type===(job.cardType||'character')&&
       cardHasName(d,job.name,originalEffectsDisabled(s,c))&&
       (job.color===undefined||(d.color===job.color&&d.ap===job.ap&&
        d.energy<=job.maxEnergy));};
@@ -645,6 +645,7 @@ function continueEffectQueue(pack,s){
       s.pending={kind:'effect-named-zone-entry',player:owner,sourceUid:job.sourceUid,
        sourceName:job.sourceName,name:job.name,ready:job.ready,line:job.line,
        handChoices,outsideChoices,
+       ...(job.cardType?{cardType:job.cardType}:{}),
        ...(job.color===undefined?{}:{color:job.color,ap:job.ap,
         maxEnergy:job.maxEnergy,
         ...(job.grantBp===undefined?{}:{grantBp:job.grantBp})})};
@@ -1776,7 +1777,7 @@ function resolveChoice(s,a,pack){
    const i=p[a.zone].findIndex(c=>c.uid===a.uid);
    if(i<0||!choices.includes(a.uid))throw Error('Invalid named-zone own UID');
    const physical=p[a.zone][i],d=card(pack,physical);
-   if(d.type!=='character'||!cardHasName(d,q.name,originalEffectsDisabled(s,physical))||
+   if(d.type!==(q.cardType||'character')||!cardHasName(d,q.name,originalEffectsDisabled(s,physical))||
     (q.color!==undefined&&(d.color!==q.color||d.ap!==q.ap||d.energy>q.maxEnergy))||
     (a.line==='front'&&d.frontForbidden))throw Error('Name/entry restriction changed');
    commitDestination(pack,s,q.player,a.line,a.slot,a.replaceUid);
@@ -3551,7 +3552,7 @@ export function assertUniversalMatch(pack,s){
    if(!x||typeof x!=='object')return null;
    if(Array.isArray(x)){for(const part of x){const matched=find(part);if(matched)return matched;}return null;}
    if(x.op==='deployNamedFromZones'&&x.name===q.name&&x.ready===q.ready&&
-    x.line===q.line&&x.optional===true&&x.color===q.color&&
+    x.line===q.line&&x.optional===true&&x.cardType===q.cardType&&x.color===q.color&&
     x.ap===q.ap&&x.maxEnergy===q.maxEnergy&&x.grantBp===q.grantBp)return x;
    for(const value of Object.values(x)){const matched=find(value);if(matched)return matched;}
    return null;
@@ -3560,7 +3561,7 @@ export function assertUniversalMatch(pack,s){
   // so match against both whole printed onPlay and MAIN payloads.
   const earned=printed&&find({effects:printed.effects,mainAbility:printed.mainAbility});
   const legalZone=zone=>earned?.zones.includes(zone)?
-   pl[zone].filter(c=>{const d=card(pack,c);return d.type==='character'&&
+   pl[zone].filter(c=>{const d=card(pack,c);return d.type===(q.cardType||'character')&&
     cardHasName(d,q.name,originalEffectsDisabled(s,c))&&
     (q.color===undefined||(d.color===q.color&&d.ap===q.ap&&d.energy<=q.maxEnergy));
    }).map(c=>c.uid):[];
@@ -3568,11 +3569,11 @@ export function assertUniversalMatch(pack,s){
    !Array.isArray(q.handChoices)||!Array.isArray(q.outsideChoices)||
    !same(q.handChoices,legalZone('hand'))||
    !same(q.outsideChoices,legalZone('outside'))||
-   Object.keys(q).length!==(earned&&earned.color===undefined?9:
-    earned&&earned.grantBp===undefined?12:13)||
+   Object.keys(q).length!==((earned&&earned.color===undefined?9:
+    earned&&earned.grantBp===undefined?12:13)+Number(q.cardType==='field'))||
    Object.keys(q).some(k=>!['kind','player','sourceUid','sourceName','name',
     'ready','line','handChoices','outsideChoices','color','ap',
-    'maxEnergy','grantBp'].includes(k)))
+    'maxEnergy','grantBp','cardType'].includes(k)))
    throw Error('Invalid named free zone entry provenance');
  }
  if(s.pending?.kind==='main-discard-self-retire'){
