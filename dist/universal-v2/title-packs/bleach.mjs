@@ -9,6 +9,8 @@ import {BLEACH_V2_ADDON_PROFILES,BLEACH_V2_NEW_IDS,
 const testForKind=Object.freeze({
  topOneEnergyDiscount:'tests/v2-r38-blc070-real.test.mjs',
   fieldDualMain:'tests/v2-r50-blc044-042-official.test.mjs',
+  kyorakuAttackEnd:'tests/v2-r50-blc069-076-official.test.mjs',
+  fieldRestRetireNamed:'tests/v2-r50-blc069-076-official.test.mjs',
   mayuriThreeMode:'tests/v2-r50-blc044-042-official.test.mjs',
  topTwoGoteiEvent:'tests/v2-r48-BLC-1-095-complete.test.mjs',
  raidStripOrRetire2000:'tests/v2-blc-023-official.test.mjs',
