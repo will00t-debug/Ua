@@ -568,7 +568,7 @@ function continueEffectQueue(pack,s){
      const choices=searchChoices(pack,s,inspected,job);
      s.pending=choices.length?{kind:'effect-top-filter-many-choice',player:owner,
       sourceUid:job.sourceUid,uids,choices,selected:[],
-      filters:job.filters.map(f=>({...f})),logic:job.logic,max:2}:
+      filters:job.filters.map(f=>({...f})),logic:job.logic,max:job.max}:
       {kind:'effect-top-order',player:owner,sourceUid:job.sourceUid,
        uids,order:[],rest:'bottom'};
     }
@@ -3026,11 +3026,11 @@ export function assertUniversalMatch(pack,s){
   const rest=q.uids?.filter(uid=>!q.selected?.includes(uid));
   const source=[...pl.outside,...field(pl)].find(c=>c.uid===q.sourceUid);
   const printed=source&&card(pack,source).effects?.onPlay?.some(e=>
-   e.op==='searchTopUpToTwoBottom'&&e.max===2&&e.rest==='bottom'&&
+   e.op==='searchTopUpToTwoBottom'&&e.max===q.max&&e.rest==='bottom'&&
    e.count>=q.uids?.length&&same(e.filters,q.filters)&&e.logic===q.logic);
-  if(!printed||q.max!==2||!Array.isArray(q.uids)||q.uids.length<1||q.uids.length>5||
+  if(!printed||![1,2].includes(q.max)||!Array.isArray(q.uids)||q.uids.length<1||q.uids.length>5||
    new Set(q.uids).size!==q.uids.length||!Array.isArray(q.choices)||
-   !Array.isArray(q.selected)||q.selected.length>1||
+   !Array.isArray(q.selected)||q.selected.length>=q.max||
    new Set(q.selected).size!==q.selected.length||
    q.selected.some(uid=>!q.uids.includes(uid)||!q.choices.includes(uid)||
     !pl.hand.some(c=>c.uid===uid))||
