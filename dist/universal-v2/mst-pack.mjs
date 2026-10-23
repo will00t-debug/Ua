@@ -781,8 +781,10 @@ export function verifiedMstV2Entries(){
      source.source,
     testFiles:Object.freeze([
      ...(pin.kind==='nextHandApDiscount'?['tests/v2-r36-real-discount-cards.test.mjs']:[]),
-     ...(pin.kind==='eventDrawTwoFrontEnergy'?['tests/v2-r37-mst080-event-front.test.mjs']:[]),
-     ...(pin.kind==='stepFrontMainDrawDiscardFrontEnergy'?['tests/v2-r37-mst060-main-step.test.mjs']:[]),
+     ...(pin.kind==='eventDrawTwoFrontEnergy'?['tests/v2-r37-mst080-event-front.test.mjs',
+      'tests/v2-r37-mst-front-life.test.mjs']:[]),
+     ...(pin.kind==='stepFrontMainDrawDiscardFrontEnergy'?['tests/v2-r37-mst060-main-step.test.mjs',
+      'tests/v2-r37-mst-front-life.test.mjs']:[]),
      'tests/universal-v2-mst-port.test.mjs',
      'tests/universal-v2-sao-mst-cross-title.test.mjs',
      ...(pin.kind==='ownFieldAllNamesBp'?['tests/v2-mst-003-own-names.test.mjs']:[]),

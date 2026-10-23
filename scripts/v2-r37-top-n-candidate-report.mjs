@@ -6,6 +6,11 @@ import {capabilityIndex,ATOM_REVIEW_STATUSES}
  from './v2-r35-unported-atom-audit.mjs';
 import {v2AllTitleInventory} from '../dist/universal-v2/title-packs/inventory.mjs';
 export const R37_TOP_SOURCE_REVIEWS=Object.freeze({
+ 'SLG-1-059':Object.freeze({
+  status:'PARTIAL',series:'UA51BT',
+  missing:['onPlayOptionalDiscardThenReadySelfBp1000','onAttackTopFourDoubleTraitThenSkipNextActiveIfHandAdded','Q2058NextActiveConsumption'],
+  note:'Official green character AP2: optional onPlay hand discard then self ACTIVE/BP+1000; onAttack TOP4 double fourth-Jeju Raid trait, taking any hand card makes source skip its next ACTIVE; GET LIFE. Q2058 applies.',
+  source:'https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-059'}),
  'SAO-2-056':Object.freeze({
   status:'PARTIAL',series:'EX08BT',
   missing:['optionalRetireOwnCharacterThenSearch','afterRetireSelectionSourceBoundary'],
@@ -74,7 +79,7 @@ export function r37TopNCandidateReport(){
  const unportedNoTopCandidate=unported.map(c=>c.id).filter(id=>!covered.has(id));
  if(candidateRows.length+unportedNoTopCandidate.length!==unported.length)
   throw Error('Candidate and not-candidate partition lost IDs');
- return {stats,sourceVerifiedNowRegistered:['SAO-1-031','SAO-1-066'].map(id=>({
+ return {stats,sourceVerifiedNowRegistered:['SAO-1-031','SAO-1-066','MST-1-080','MST-1-060'].map(id=>({
   id,registered:index.cards.find(c=>c.id===id)?.registered||false,
   independentFaqCertified:false})),
   categories:['TWO_HAND_REVEAL','ONE_HAND_REVEAL','TOP_TO_OUTSIDE','TOP_REARRANGE','TOP_OTHER'],

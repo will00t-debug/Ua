@@ -94,3 +94,17 @@ test('MST060 once-per-turn keys on physical UID not globally shared printed name
  assert.ok(legalUniversalActions(packs,a).some(x=>x.type==='activate'&&x.uid===second.uid));
  assert.equal(assertUniversalMatch(packs,a),true);
 });
+
+test('MST060 serialized paused grant remains source-authenticated (no fake UID, trait, expiry or source name)',()=>{
+ let {a,source}=setup();a=act(a,{type:'activate',uid:source.uid,mode:'frontOnce'});
+ assert.equal(a.pending.kind,'effect-discard');
+ const pending=a.effectQueue.find(x=>x.op==='grantFrontEnergyOwnOtherFrontTrait');
+ assert.ok(pending,'a real grant is queued behind the paid discard');
+ assert.equal(assertUniversalMatch(packs,JSON.parse(JSON.stringify(a))),true);
+ for(const modify of [x=>x.sourceUid='0-fake',x=>x.trait='incorrect',
+   x=>x.until='nextTurn',x=>x.sourceName='forged']){
+  const forged=structuredClone(a),grant=forged.effectQueue.find(x=>x.op==='grantFrontEnergyOwnOtherFrontTrait');
+  modify(grant);assert.throws(()=>assertUniversalMatch(packs,forged),
+   /Unproven queued FRONT energy grant/);
+ }
+});

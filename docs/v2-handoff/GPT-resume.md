@@ -1885,3 +1885,15 @@ Reproduction commands: `node scripts/v2-card-certification-report.mjs`, `node sc
 **固定後續流程**：完成共用能力 → 重算所有未移植真卡及印刷來源候選 → 必須逐張核對官方全部印刷效果 → 完整才移植並更新各名單/驗收 → 集中 CI → 排序下一批缺口。不以字串命中為官方語意等價，並主動回查過往因該原語阻塞的卡。下一批優先 TOP-N 0–2 UID 合法選擇（SAO-1-031/066）、重用 FRONT 產能 grant（MST-1-080/060）、印刷產能上限（BLC-1-070/MST-1-031），高風險 BLC-4-069 攻擊結束/SAO-2-058/MST-1-067 不可被效果選擇另做官方時序與選擇作用域審核。
 
 **不得越過安全閘門**：BLC-2-019/047/4-034 未登錄，4-034 強制 REST→真正退場→底下裏向卡回手選擇時點未獲官方明確裁定；巢狀第二批 LIFE 保留原子安全拒絕。R36 文件更新 SHA 的 CI 需按最終 HEAD 另查，不可用 `6823a12` 成功宣稱文件提交已驗證。
+
+
+## GPT R37：共用 TOP-N 雙選、380 張全庫篩查及兩張 MST FRONT 重用（2026-10-23）
+
+- **必看最終詳細交接**：[V2-R37-top-n-two-full-roster-cross-title.md](./V2-R37-top-n-two-full-roster-cross-title.md)。工作分支仍是 `gpt/v2-resume-20261022`、GPT Draft PR #78 指向 Cursor 工作 base，不碰 main / PR #77 / production。
+- 共用嚴格 `searchTopUpToTwoBottom`：TOP 5/4、可選 0/1/2 不同 UID、只公開選中、合法人類與兩級 AI、餘卡 bottom-order、嚴格存檔/序列化來源。SAO-1-031（黃3 AP1 三名稱）與 SAO-1-066（藍2 AP1 ALO）正式源卡登錄。
+- 重用既有 `frontEnergyPermission`：MST-1-080（EVENT 抽2，可選前線授產能 DRAW）和 MST-1-060（STEP FRONT-only Turn1 MAIN 抽1棄1後可授予其他前線產能 GET）正式登錄；後者維持共用 effectQueue 並額外驗證暫停中的 grant 絕非偽造來源。
+- 依真實 source catalogue + `capabilityIndex()` 掃描當時 380 張未登錄，64 TOP-N 候選（BLEACH29/TTG7/SLG11/SAO12/MST5），其中 SAO-2-056/MST-1-049/SLG-1-059 已查官方完整卡文與各自其他缺口（PARTIAL）；剩餘 61 REVIEW PENDING，無其他安全 READY。
+- **最後已核對遠端成功程式 SHA `95a30319c24ee4f8b0653c277d30cad4c68c91fd`，Actions [39895776980](https://github.com/will00t-debug/Ua/actions/runs/39895776980)：Node22 1922/1922；五作品矩陣60/60；manifest、獨立 card ledger、兩層 audit、unported 報告 success。** 新文件/LIFE tests 的最終提交需要各自新 CI，不可沿用這個 SHA 的成功。
+- **正式 322/700，未移植 378：BLEACH97/179、TTG36/45、SLG42/38、SAO95/88、MST52/28**。獨立全面 FAQ 認證 **0**，局部來源/情境評審 **10 張**。所有源卡印刷/功能驗收不得宣稱全面官方 FAQ 認證。
+- 下輪優先 printedEnergyAtMostFilter、cannotBeChosenByOppEffect（官方 Q1206/Q2162）、topNOptionalSingleNoDiscard、optionalRetireThenProgram、attackEndDistinctOutsideNamesSwap（官方 Q2337/Q2338）；每新增一個原語都要回查五作品當時全部未移植真卡，完整整卡驗收後才能登錄。
+- **禁止**合併 main、部署、force push、寫回 PR #77、重建 effectQueue／AP／能源；BLC-4-034 與未裁定巢狀 LIFE 照舊 fail closed。
