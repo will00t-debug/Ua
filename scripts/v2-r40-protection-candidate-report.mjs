@@ -15,10 +15,10 @@ export const R40_SOURCE_PINNED_REVIEWS=Object.freeze({
   note:'Official purple ENERGY2/AP1 EVENT: mandatory own FRONT, opponent-any protection through next own START, conditional Asuna optional AP ACTIVE; complete generic ACTIVE LIFE, authenticated 50-card tests. Independently FAQ-certified count remains 0.'
  }),
  'SAO-2-060':Object.freeze({
-  status:'PARTIAL',series:'EX08BT',faq:['Q1207'],
+  status:'READY',series:'EX08BT',faq:['Q1207'],
   scope:'opponent-character',
-  missing:['outsideUpToOneCharacterRecover','handFreeActiveSaoSurvivorAp1Deploy','grantToDeployedPhysicalUid'],
-  note:'Purple ENERGY4/AP1 song EVENT, outside recover, free ACTIVE purple SAO survivor HAND deploy; character-only protection to deployed UID; SPECIAL LIFE. Do not conflate Q1207 with Q1206.'
+  missing:[],
+  note:'R41 full purple ENERGY4/AP1 song EVENT: optional outside CHARACTER recover; independent optional purple printed AP1 SAOサバイバー HAND ACTIVE entry; physical character-only choice protection until own START; SPECIAL LIFE. No full independent FAQ certification claim.'
  }),
  'MST-1-067':Object.freeze({
   status:'RULE BLOCKED',series:'UA54BT',faq:['Q2162'],

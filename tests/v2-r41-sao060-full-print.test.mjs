@@ -39,10 +39,12 @@ function place(s,p,id,line,slot){
  const c=take(s,p,id);c.ready=true;c.fieldEntryStamp=s.nextFieldEntryStamp++;
  s.players[p][line][slot]=c;return c;
 }
-function scene(){
+function scene({withAnyRecoveries=false}={}){
  let s=newUniversalMatch(packs,{decks:[deck,foe],seed:41060,first:0});
  const event=take(s,0,'SAO-2-060'),rec=take(s,0,'SAO-2-035'),hand=take(s,0,'SAO-2-034');
  s.players[0].hand.push(event,hand);s.players[0].outside.push(rec);
+ if(withAnyRecoveries)s.players[0].outside.push(take(s,0,'SAO-2-047'),take(s,0,'SAO-1-068'));
+
  place(s,0,'SAO-2-035','energy',0);
  place(s,0,'SAO-2-035','energy',1);
  place(s,0,'SAO-2-047','energy',2);
@@ -99,9 +101,9 @@ test('R41 recovers A, ACTIVE deploys already-in-hand B; source-linked actual UID
  assert.equal(assertUniversalMatch(packs,s),true);
 });
 test('R41 first recovery has no unprinted trait/color restriction; second enforces printed trait',()=>{
- let {s,hand}=scene();
- const wrongTrait=take(s,0,'SAO-2-047'),green=take(s,0,'SAO-1-068');
- s.players[0].outside.push(wrongTrait,green);
+ let {s,hand}=scene({withAnyRecoveries:true});
+ const wrongTrait=s.players[0].outside.find(c=>c.cardId==='SAO-2-047');
+ const green=s.players[0].outside.find(c=>c.cardId==='SAO-1-068');
  assert.ok(legalUniversalActions(packs,s).some(a=>a.type==='chooseOutsideRecovery'&&a.uid===wrongTrait.uid));
  assert.ok(legalUniversalActions(packs,s).some(a=>a.type==='chooseOutsideRecovery'&&a.uid===green.uid));
  s=run(s,{type:'chooseOutsideRecovery',uid:wrongTrait.uid});

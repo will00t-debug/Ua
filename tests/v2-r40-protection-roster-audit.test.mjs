@@ -12,7 +12,7 @@ test('R40 full 700 catalogue, all currently unported, and three historical candi
  assert.equal(s.registered,roster.totals.pilotImplemented);
  assert.equal(s.protectionKeywordCandidates,idx.protectionPotential.length);
  assert.equal(s.officialCompletePrintReviewedThisRound,3);
- assert.equal(s.newlyRegisteredByThisAudit,1);
+ assert.equal(s.newlyRegisteredByThisAudit,2);
  assert.equal(s.readyFromKeywordOnly,0);
  assert.equal(s.handDeployKeywordCandidates,idx.handRestPotential.length);
  assert.equal(s.optionalRetireTopKeywordCandidates,idx.retireTopPotential.length);
@@ -38,7 +38,8 @@ test('R40 source-qualified full print and Q2162 conflict are never promoted by k
  const music=r.sourcePinnedReviews.find(c=>c.id==='SAO-2-060');
  assert.equal(sao.scope,'opponent-any');assert.equal(sao.status,'REGISTERED');
  assert.equal(sao.registered,true);assert.deepEqual(sao.missing,[]);
- assert.equal(music.scope,'opponent-character');assert.equal(music.status,'PARTIAL');
+ assert.equal(music.scope,'opponent-character');assert.equal(music.status,'REGISTERED');
+ assert.equal(music.registered,true);assert.deepEqual(music.missing,[]);
  assert.equal(mst.scope,'UNRESOLVED');assert.equal(mst.status,'RULE BLOCKED');
  for(const item of r.sourcePinnedReviews.filter(x=>!x.registered)){
   assert.ok(item.missing.length,'incomplete card must keep all printed blockers');
