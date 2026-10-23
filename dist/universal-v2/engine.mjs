@@ -10,7 +10,8 @@ import {cardHasName,cardHasTrait,matchesOwnDistinctTraits,matchesV2LiveCondition
  ownRestPrintedBpCount,retiredThisTurn} from './field-conditions.mjs';
 import {refreshFieldActive,expireContinuousStates,pruneContinuousStates,
  fieldRestrictions,validateContinuousStates,grantContinuousState,
- attemptFieldActive,originalEffectsDisabled,selectionApSurcharge,hasFrontEnergyPermission} from './continuous-states.mjs';
+ attemptFieldActive,originalEffectsDisabled,selectionApSurcharge,hasFrontEnergyPermission,
+ effectChoiceProtected} from './continuous-states.mjs';
 export const UNIVERSAL_V2_VERSION='ua-v2.0';
 const playerIndex=n=>n===0||n===1;
 const field=p=>[...p.front,...p.energy].filter(Boolean);
@@ -2516,9 +2517,11 @@ function eventMandatoryTargetsAvailable(pack,s,owner,d,reservedAp=d.ap){
  return (d.effects?.onPlay||[]).every(job=>{
   if(job.optional!==false)return true;
   if(job.op==='restOppFrontOne')
-   return enemy.front.some(c=>c&&cardEffectTargetPayable(s,owner,c.uid,reservedAp));
+   return enemy.front.some(c=>c&&!effectChoiceProtected(s,owner,c.uid,'event')&&
+    cardEffectTargetPayable(s,owner,c.uid,reservedAp));
   if(job.op==='restOppFrontUnderBp'||job.op==='restOrRetireOppFrontByLife')
    return enemy.front.some(c=>c&&bp(pack,s,c)<=job.bp&&
+    !effectChoiceProtected(s,owner,c.uid,'event')&&
     cardEffectTargetPayable(s,owner,c.uid,reservedAp));
   return true;
  });
@@ -2533,6 +2536,24 @@ const TARGETING_CARD_EFFECT_CHOICES=new Set([
 const TARGETING_LIFE_MODES=new Set([
  'special','colorRetire','colorBounce','colorRestSkip'
 ]);
+// Human and both AI levels receive this same authoritative action list.
+// Resolve provenance from the actual source UID, never from action payload.
+// LIFE choice is a Trigger effect even when the LIFE card is an EVENT.
+function effectChoiceProvenance(pack,s){
+ const q=s.pending;
+ if(q?.kind==='life-trigger')return 'trigger';
+ const physical=q&&typeof q.sourceUid==='string'
+  ?location(s,q.player,q.sourceUid)?.c:null;
+ return physical?card(pack,physical).type:'unknown';
+}
+function effectSelectionProhibited(pack,s,a){
+ const q=s.pending;
+ if(!q||typeof a?.uid!=='string')return false;
+ if(!TARGETING_CARD_EFFECT_CHOICES.has(a.type)&&
+  !(q.kind==='life-trigger'&&a.type==='chooseTrigger'&&
+   TARGETING_LIFE_MODES.has(a.mode)))return false;
+ return effectChoiceProtected(s,q.player,a.uid,effectChoiceProvenance(pack,s));
+}
 function effectSelectionApTax(s,a){
  const q=s.pending;
  if(!q||typeof a?.uid!=='string')return 0;
@@ -2549,6 +2570,7 @@ export function legalUniversalActions(pack,s){
  assertUniversalMatch(pack,s);
  if(s.status!=='playing')return [];
  if(s.pending)return legalPending(pack,s).filter(a=>
+  !effectSelectionProhibited(pack,s,a)&&
   effectSelectionApTax(s,a)<=availableAp(s,s.pending.player));
  const p=s.active,pl=s.players[p],out=[{type:'next'}];
  if(s.phase==='start'){
