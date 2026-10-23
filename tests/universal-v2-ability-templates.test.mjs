@@ -25,7 +25,7 @@ test('template registry is finite, audited and rejects unknown behaviors instead
   'searchDeckOne','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
   'searchDeckMany','enemyFrontAllBpDown','enemyFrontBpDownInRange','retireEnemyFrontAllUnderBp',
   'buffOwnTraitAllTurn','buffOwnField','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
-  'recoverOutsideColorUnderEnergy','oncePerTurnThen','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopOneBottomDiscardWhere','payDiscardThen'
+  'recoverOutsideColorUnderEnergy','oncePerTurnThen','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopOneBottomDiscardWhere','searchTopUpToTwoBottom','payDiscardThen'
  ]);
  assert.throws(()=>checked(character({
   implementation:'dsl',templateEffects:{onPlay:[{template:'drawEnemyDeck',count:1}]}
