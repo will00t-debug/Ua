@@ -15,7 +15,7 @@ const trial=createUniversalPack({id:'sword-art-online',cards:[{
   scope:'any',until:'nextOwnStart',optional:false,apRecoveryOnName:'アスナ'}]}
 }]});
 const packs=[{...baseline,cards:{...baseline.cards,...trial.cards}},baseline];
-const ids=['SAO-1-001','SAO-1-005','SAO-1-010','SAO-1-011','SAO-1-004',
+const ids=['SAO-1-001','SAO-1-005','SAO-2-035','SAO-2-047','SAO-1-004',
  'SAO-1-019','SAO-1-020','SAO-1-051','SAO-1-057','SAO-1-068',
  'SAO-1-073','SAO-2-016','SAO-2-058'];
 const deck=Object.fromEntries(ids.map((id,i)=>[id,i===12?2:4]));
@@ -34,7 +34,7 @@ function scene(name='アスナ'){
  let s=newUniversalMatch(packs,{decks:[deck,other],first:0,seed:40580});
  const event=pull(s,0,'SAO-2-058');s.players[0].hand.push(event);
  const target=placed(s,name==='アスナ'?'SAO-1-068':'SAO-1-051','front',0);
- placed(s,'SAO-1-020','energy',0);placed(s,'SAO-1-020','energy',1);
+ placed(s,'SAO-2-035','energy',0);placed(s,'SAO-2-047','energy',1);
  s=dispatchUniversalAction(packs,s,{type:'next'});
  s=dispatchUniversalAction(packs,s,{type:'next'});
  assert.equal(s.phase,'main');
