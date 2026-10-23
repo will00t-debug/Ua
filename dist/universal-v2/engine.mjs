@@ -2140,7 +2140,18 @@ function resolveChoice(s,a,pack){
    controller:q.player,sourceUid:q.sourceUid,targetUid:target.uid});
   s.pending=null;continueEffectQueue(pack,s);return;
  }
- if(q.kind==='effect-retire-own-character'){
+ if(q.kind==='main-field-trait-retire'){
+   const src=field(p).find(c=>c.uid===q.sourceUid);
+   const ability=src&&card(pack,src).mainAbility,loc=location(s,q.player,a.uid);
+   if(!src||card(pack,src).type!=='field'||ability?.op!=='fieldDualMain'||
+    !loc||!['front','energy'].includes(loc.line)||
+    !q.choices.includes(a.uid)||card(pack,loc.c).type!=='character'||
+    !cardHasTrait(card(pack,loc.c),ability.retireTrait))
+    throw Error('FIELD MAIN must retire an owned matching trait character');
+   s.pending=null;retire(pack,s,q.player,loc.line,loc.slot);
+   continueEffectQueue(pack,s);return;
+  }
+  if(q.kind==='effect-retire-own-character'){
    if(a.uid===null){s.pending=null;continueEffectQueue(pack,s);return;}
    const loc=location(s,q.player,a.uid);
    if(!loc||!q.choices.includes(a.uid)||card(pack,loc.c).type!=='character')
@@ -2649,6 +2660,7 @@ function legalPending(pack,s){
    ...(q.optional?[{type:'chooseRestBp',uid:null}]:[]),
    ...q.choices.map(uid=>({type:'chooseRestBp',uid}))
   ];
+ if(q.kind==='main-field-trait-retire')return q.choices.map(uid=>({type:'chooseFieldTraitRetire',uid}));
  if(q.kind==='effect-retire-own-character')return [
    {type:'chooseOwnCharacterRetire',uid:null},
    ...q.choices.map(uid=>({type:'chooseOwnCharacterRetire',uid}))
@@ -2871,6 +2883,18 @@ export function legalUniversalActions(pack,s){
    for(const choice of legalDestinations(pl,'energy'))out.push({type:'step',uid:c.uid,...choice});
  }
  if(s.phase==='main'){
+   for(const c of pl.energy.filter(Boolean)){
+    const d=originalEffectsDisabled(s,c)?null:card(pack,c),ab=d?.mainAbility;
+    if(ab?.op!=='fieldDualMain'||d.type!=='field')continue;
+    const retiredKey=d.name+'|fieldDualRetire',buffKey=d.name+'|fieldDualBuff';
+    if(!s.mainReadyOnceByName[p].includes(retiredKey)&&
+     field(pl).some(v=>v.uid!==c.uid&&card(pack,v).type==='character'&&
+      cardHasTrait(card(pack,v),ab.retireTrait)))
+     out.push({type:'activate',uid:c.uid,mode:'fieldRetireTrait'});
+    if(c.ready&&!s.mainReadyOnceByName[p].includes(buffKey)&&
+     retiredThisTurn(s,p,'character'))
+     out.push({type:'activate',uid:c.uid,mode:'fieldRestBuffGroup'});
+   }
   // A discard-cost MAIN ability can be activated from either field line,
   // regardless of source REST state; it does NOT require spending AP.
   for(const c of field(pl)){
@@ -3108,6 +3132,32 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
    const selected=field(pl).find(c=>c.uid===action.uid);
    if(!selected||originalEffectsDisabled(s,selected)||!card(pack,selected).mainAbility)throw Error('Main ability source missing');
    const d=card(pack,selected),ability=d.mainAbility;
+   if(ability.op==='fieldDualMain'){
+    if(!pl.energy.some(c=>c?.uid===selected.uid)||d.type!=='field')
+     throw Error('Dual MAIN requires own energy FIELD');
+    const retireKey=d.name+'|fieldDualRetire',buffKey=d.name+'|fieldDualBuff';
+    if(action.mode==='fieldRetireTrait'){
+     const choices=field(pl).filter(c=>c.uid!==selected.uid&&
+      card(pack,c).type==='character'&&cardHasTrait(card(pack,c),ability.retireTrait))
+      .map(c=>c.uid);
+     if(!choices.length||s.mainReadyOnceByName[p].includes(retireKey))
+      throw Error('Dual MAIN retirement already used or no valid own character');
+     s.mainReadyOnceByName[p].push(retireKey);
+     s.pending={kind:'main-field-trait-retire',player:p,sourceUid:selected.uid,
+      sourceStamp:selected.fieldEntryStamp,choices};
+    }else if(action.mode==='fieldRestBuffGroup'){
+     if(!selected.ready||s.mainReadyOnceByName[p].includes(buffKey)||
+      !retiredThisTurn(s,p,'character'))
+      throw Error('Dual MAIN buff requires true own retirement and ACTIVE FIELD');
+     selected.ready=false;s.mainReadyOnceByName[p].push(buffKey);
+     for(const target of field(pl).filter(c=>card(pack,c).type==='character'&&
+      (card(pack,c).name===ability.buffName||
+       cardHasTrait(card(pack,c),ability.buffTrait)))){
+      target.buffs??=[];target.buffs.push({bp:ability.bp,untilTurn:s.turn});
+     }
+    }else throw Error('Unknown dual FIELD MAIN mode');
+    break;
+   }
    if(ability.op==='retireOwnFieldThen'){
     if(action.mode!=='retireFieldThen'||!pl.front.some(c=>c?.uid===selected.uid)||
      s.mainAbilityUsedUids.includes(selected.uid)||
@@ -3480,7 +3530,20 @@ export function assertUniversalMatch(pack,s){
    Object.keys(q).some(k=>!['kind','player','sourceUid','optional','then','payment','count'].includes(k)))
    throw Error('Invalid saved atomic two-hand payment provenance');
  }
- if(s.pending?.kind==='effect-retire-own-character'&&s.pending.excludeSelf===true){
+ if(s.pending?.kind==='main-field-trait-retire'){
+   const q=s.pending,src=s.players[q.player].energy.find(c=>c?.uid===q.sourceUid);
+   const d=src&&card(pack,src),ab=d?.mainAbility;
+   const choices=field(s.players[q.player]).filter(c=>c.uid!==q.sourceUid&&
+    card(pack,c).type==='character'&&cardHasTrait(card(pack,c),ab?.retireTrait)).map(c=>c.uid);
+   if(!src||ab?.op!=='fieldDualMain'||!Number.isInteger(q.sourceStamp)||
+    q.sourceStamp!==src.fieldEntryStamp||
+    !s.mainReadyOnceByName[q.player].includes(d.name+'|fieldDualRetire')||
+    !Array.isArray(q.choices)||!q.choices.length||!same(q.choices,choices)||
+    Object.keys(q).length!==5||
+    Object.keys(q).some(k=>!['kind','player','sourceUid','sourceStamp','choices'].includes(k)))
+    throw Error('Invalid saved dual FIELD trait-retirement pending');
+  }
+  if(s.pending?.kind==='effect-retire-own-character'&&s.pending.excludeSelf===true){
   const q=s.pending,pl=s.players[q.player];
   const src=field(pl).find(c=>c.uid===q.sourceUid),printed=src&&card(pack,src);
   const branches=printed?.effects?.onPlay?.flatMap(e=>e.op==='chooseOne'?
