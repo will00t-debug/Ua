@@ -74,7 +74,9 @@ export function r35UnportedAtomAudit(){
   manuallySourceMatched:seen.size,needsIndividualSemanticAudit:pending.length,
   groups,pendingIds:pending, capabilityIndex:index,
   handRestPotential:index.handRestPotential,
-  handRestPotentialCount:index.handRestPotential.length};
+  handRestPotentialCount:index.handRestPotential.length,
+  retireTopPotential:index.retireTopPotential,
+  retireTopPotentialCount:index.retireTopPotential.length};
 }
 // Candidate detection is deliberately broad and is NEVER semantic acceptance.
 export const ATOM_REVIEW_STATUSES=Object.freeze(['READY','NEAR READY','PARTIAL',
@@ -136,6 +138,16 @@ export function capabilityIndex(inventory=v2AllTitleInventory()){
     color:/(?:青|藍|蓝|赤|紅|红|黄|緑|綠|紫)/u.test(text),
     printedEnergy:/(?:必要エナジー|必要能源)/u.test(text),
     printedAp:/(?:消費AP|消费AP|印刷AP)/iu.test(text)}:null;
+   // R39: capture textual candidates after every new true-retire primitive;
+   // keyword hits are not sufficient for semantic READY or official FAQ claims.
+   const retireTopFlags=/(?:退場|退场|retire)/iu.test(text)&&
+    /(?:山札|牌庫|牌堆|deck)/iu.test(text)&&
+    /(?:上から|top|頂|查看|見る)/iu.test(text)?{
+     conditional:/(?:そうした場合|成功|場合|之後|after|如果)/iu.test(text),
+     field:/(?:フィールド|FIELD|場地)/iu.test(text),
+     character:/(?:キャラ|character|角色)/iu.test(text),
+     active:/(?:アクティブ|ACTIVE|激活)/iu.test(text)
+    }:null;
    cards.push({id,title:title.title,registered,sourceText:text,
     sourceTextLanguage:c.effectJa||/[のを]/u.test(text)?'ja':'catalogue-translation',
     sourceFingerprint:createHash('sha256').update(text).digest('hex'),
@@ -146,7 +158,7 @@ export function capabilityIndex(inventory=v2AllTitleInventory()){
     priorSourceMatched:groups.length>0,
     requiredAtomCandidates:groups.map(g=>g.atom),
     searchHits:discountCandidate?['nextEligibleHandPlayApDiscount']:[],
-    handRestTextFlags,
+    handRestTextFlags,retireTopFlags,
     remaining:groups.map(g=>g.fullPortBlockedBy),
     // Old R35 groups are evidence pointers, not a full-card readiness certificate.
     semanticReviewRequired:!review});
@@ -163,7 +175,12 @@ export function capabilityIndex(inventory=v2AllTitleInventory()){
    sourceFingerprint:c.sourceFingerprint,flags:c.handRestTextFlags,
    status:'REVIEW PENDING',
    note:'Requires full printed text and applicable FAQ check; no automatic READY'}));
- return {cards,atoms,handRestPotential,
+ const retireTopPotential=cards.filter(c=>!c.registered&&c.retireTopFlags)
+  .map(c=>({id:c.id,title:c.title,sourceUrl:c.sourceUrl,
+   sourceFingerprint:c.sourceFingerprint,flags:c.retireTopFlags,
+   status:c.status==='SOURCE PENDING'?'SOURCE PENDING':'REVIEW PENDING',
+   note:'Text candidate only: complete printed effect/FAQ required'}));
+ return {cards,atoms,handRestPotential,retireTopPotential,
   unportedSearched:cards.filter(c=>!c.registered).length,
   reviewedDiscountCards:cards.filter(c=>c.officialReview).map(c=>c.id),
   priorities:prioritizeMissingAtoms(cards),
