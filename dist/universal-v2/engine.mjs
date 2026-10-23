@@ -299,7 +299,9 @@ function queuePhaseBoundary(pack,s,phase,edge,turnPlayer){
    if(q.phase!==phase||q.edge!==edge||(q.turn==='own')!==(owner===turnPlayer))continue;
    entries.push({key:c.uid+':'+i,sourceUid:c.uid,
     jobs:[...q.then.map(op=>({...op,owner,sourceUid:c.uid,
-     sourceName:card(pack,c).name})),...sourceMoveBoundary(pack,s,owner,c.uid)]});
+     sourceName:card(pack,c).name,
+     ...(op.op==='retireSourceOnPhaseEnd'?{sourceStamp:c.fieldEntryStamp}:{})})),
+     ...sourceMoveBoundary(pack,s,owner,c.uid)]});
   }
   if(entries.length)s.effectQueue.push({op:'phaseOrder',owner,entries});
  }
@@ -875,6 +877,15 @@ function continueEffectQueue(pack,s){
    queueSimultaneousRetires(s,owner,targets.map(c=>({
     op:'retireBatchOne',owner,targetPlayer:foe,uid:c.uid,mode:'threshold'
    })));
+   }else if(job.op==='retireSourceOnPhaseEnd'){
+    const pos=location(s,owner,job.sourceUid);
+    if(pos&&pos.c.fieldEntryStamp===job.sourceStamp&&!originalEffectsDisabled(s,pos.c)){
+     if(!card(pack,pos.c).phaseEffects.some(q=>q.phase==='attack'&&q.edge==='end'&&
+      q.turn===(owner===s.active?'own':'opponent')&&q.then.length===1&&
+      q.then[0].op==='retireSourceOnPhaseEnd'))
+      throw Error('Unproven phase-end true retirement');
+     retire(pack,s,owner,pos.line,pos.slot);
+    }
   }else if(job.op==='retireAtMainEnd'){
     // Only this physical field incarnation may satisfy a delayed retirement.
     const pos=location(s,owner,job.sourceUid);
@@ -3519,7 +3530,7 @@ export function assertUniversalMatch(pack,s){
    !['grantedAttackDraw','grantOnAttack','draw','drawIfOwnName','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','forbidAttackOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopUpToTwoBottom','deployOwnHandRest','deployOwnHandSpecial','optionalRetireThenProgram','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
     'discardGate','enemyFrontAllBpDown','retireOppFrontAllUnderBp',
     'nextEligibleHandPlayApDiscount','grantFrontEnergyOwnOtherFrontTrait','buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
-    'recoverOutsideColorUnderEnergy','deployOutsideRest','deployOutsideNameRest','deployNamedFromZones','payApDeployNamedRest','inspectTopTraitOutside','deployOutsideTraitlessRestOrRaid','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','moveAtMainEnd','retireOwnFieldOne','retireOwnCharacterOne','openBlock','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','phaseOrder','effectMoveOrder','restSelfTuckMovedFaceDown','sourceResolutionBoundary','lifeBatchStep','lifeRelease','advanceAfterAttack','additionalBattleDamage','openRetirementBatch','closeRetirementBatch','retirementOrder','battleImpactDamage','discardOppHand','activeSelfIf'].includes(e.op)))
+    'recoverOutsideColorUnderEnergy','deployOutsideRest','deployOutsideNameRest','deployNamedFromZones','payApDeployNamedRest','inspectTopTraitOutside','deployOutsideTraitlessRestOrRaid','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','retireSourceOnPhaseEnd','moveAtMainEnd','retireOwnFieldOne','retireOwnCharacterOne','openBlock','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','phaseOrder','effectMoveOrder','restSelfTuckMovedFaceDown','sourceResolutionBoundary','lifeBatchStep','lifeRelease','advanceAfterAttack','additionalBattleDamage','openRetirementBatch','closeRetirementBatch','retirementOrder','battleImpactDamage','discardOppHand','activeSelfIf'].includes(e.op)))
   throw Error('Invalid queued effects');
  // Suspended MAIN can hold an earned FRONT grant *after* its mandatory
  // draw/discard decision. Its source/printed operation must still be exact;
