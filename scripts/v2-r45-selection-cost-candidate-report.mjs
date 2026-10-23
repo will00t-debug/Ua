@@ -57,8 +57,14 @@ export function r45FiveTitleSourceTaxRescan(){
  pinSao('SAO-2-064','EX08BT/SAO-2-064',
   ['フロントLにある場合','〈アスナ〉','キャラの効果やイベントカード',
    '手札を1枚場外','重複しない']);
+ // Earlier full-print candidates can be formally registered by a later
+ // independently reviewed round. Verify migration against the live canonical
+ // five-title registered IDs, rather than pretending the 2026-10-22 unported
+ // snapshot is immutable. Unknown or missing identities still fail closed.
+ const registered=new Set(roster.series.flatMap(row=>row.pilotIds));
  for(const id of Object.keys(R45_OFFICIAL_FULL_PRINT_REVIEWS))
-  if(!ids.has(id))throw Error('R45 candidate changed registration; re-audit '+id);
+  if(!ids.has(id)&&!registered.has(id))
+   throw Error('R45 official candidate disappeared from both registries '+id);
  const historical=new Map(previous.flagged.map(x=>[x.id,x.status]));
  const rows=notPorted.map(c=>{
   const review=R45_OFFICIAL_FULL_PRINT_REVIEWS[c.id];
