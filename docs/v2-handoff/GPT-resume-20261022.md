@@ -539,3 +539,14 @@ GPT PR #78 原分支 `gpt/v2-resume-20261022`（對 `cursor/v2-multi-retire-life
 - **正式 322/700，未移植 378：BLEACH97/179、TTG36/45、SLG42/38、SAO95/88、MST52/28**。獨立全面 FAQ 認證 **0**，局部來源/情境評審 **10 張**。所有源卡印刷/功能驗收不得宣稱全面官方 FAQ 認證。
 - 下輪優先 printedEnergyAtMostFilter、cannotBeChosenByOppEffect（官方 Q1206/Q2162）、topNOptionalSingleNoDiscard、optionalRetireThenProgram、attackEndDistinctOutsideNamesSwap（官方 Q2337/Q2338）；每新增一個原語都要回查五作品當時全部未移植真卡，完整整卡驗收後才能登錄。
 - **禁止**合併 main、部署、force push、寫回 PR #77、重建 effectQueue／AP／能源；BLC-4-034 與未裁定巢狀 LIFE 照舊 fail closed。
+
+
+## GPT R38：共用必要能源篩選、TOP-N 真卡重用、375 張全庫缺口（2026-10-23）
+
+- **最完整 R38 官方印刷／能力／批次／驗收與後續優先交接**：[V2-R38-printed-required-energy-top-n-full-roster.md](./V2-R38-printed-required-energy-top-n-full-roster.md)。沿用 GPT #78／`gpt/v2-resume-20261022`，合併目標為 Cursor 原工作 base，未合 main／未修改 PR #77／未部署／未 force push。
+- 新原語 `printedRequiredEnergyAtMost` 使用卡面必要能源 `energy`，**不使用**印刷產能 `gen`／暫時產能／即時能源。既有 TOP-N 共用多 UID 安全執行器加入最多單張無棄牌的模板 `searchTopUpToOneBottom`（不是第二套 queue）。`ownEventUsedThisTurn` 判定重用 `zoneMoveEvents` 真實事件，禁止非法 EVENT 觸發 conditional Impact。
+- 三張已完整移植／獨立情境驗收：**BLC-1-070、SLG-1-046、MST-1-031**，各自官方全卡文與來源、Raid／LIFE／AP／TOP-N／UID／真人和兩種 AI 行動、正式 50 張場景都由新增測試及集中 CI 把關；不宣稱全面 FAQ 認證。
+- **最新已驗證程式 SHA `010482e1a40e1984f79129e694e535d22ddcad2d`**：[GitHub Actions 39899603904](https://github.com/will00t-debug/Ua/actions/runs/39899603904) SUCCESS，遠端 Node.js 22 **1941/1941**、五作品矩陣 60/60、manifest、來源與候選盤點、未移植報告成功。登錄 **BLEACH98、TTG36、SLG43、SAO95、MST53＝325/700**；待移植 375；全面獨立 FAQ **0**、局部審核 13。這些是**遠端**驗收數字。
+- 目前全庫重新掃 **375 張**；TOP-N 62 個文字候選，其中 SAO-1-056 官方全文新審核為 **NEAR READY**（TOP2 可用，但二選一之「免費 REST 登場指定藍色必要能源≤2角色」仍缺完整來源／AP／UID 共用原語），R37 原 3 張仍 PARTIAL，其餘 58 REVIEW PENDING，不誤認字詞相似＝全部效果相同。
+- **下一輪共用能力首選** `chooseOneFreeRestHandCharacterWithPrintedColorEnergyAp` → `optionalRetireThenProgram` (SAO-2-056/MST-1-049) → `cannotBeChosenByOppEffect` (SAO-2-058/MST-1-067，Q1206/Q2162，不等於 AP 選取加費)。BLC-4-069 攻擊結束交換須先 Q2337/Q2338，全局戰鬥高風險稍後；BLC-4-034 強制 REST/真退場/裏向底卡及巢狀 LIFE 一律維持安全阻塞。
+- 更新任何程式／交接後，重看當下 **精確 HEAD** 的 CI，舊綠燈不能證明新 commit。每新增共用能力必須使用既有 `capabilityIndex()`、R35/R37 腳本回查當時五作品所有未移植卡。
