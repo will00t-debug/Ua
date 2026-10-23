@@ -3532,6 +3532,41 @@ export function assertUniversalMatch(pack,s){
     'nextEligibleHandPlayApDiscount','grantFrontEnergyOwnOtherFrontTrait','buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
     'recoverOutsideColorUnderEnergy','deployOutsideRest','deployOutsideNameRest','deployNamedFromZones','payApDeployNamedRest','inspectTopTraitOutside','deployOutsideTraitlessRestOrRaid','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','retireSourceOnPhaseEnd','moveAtMainEnd','retireOwnFieldOne','retireOwnCharacterOne','openBlock','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','phaseOrder','effectMoveOrder','restSelfTuckMovedFaceDown','sourceResolutionBoundary','lifeBatchStep','lifeRelease','advanceAfterAttack','additionalBattleDamage','openRetirementBatch','closeRetirementBatch','retirementOrder','battleImpactDamage','discardOppHand','activeSelfIf'].includes(e.op)))
   throw Error('Invalid queued effects');
+ // A saved phase-end retirement can only come from a printed source
+ // during its real original attack-end window (never normal MAIN/ATTACK).
+ const queuedRetires=[
+  ...s.effectQueue.flatMap(x=>x.op==='phaseOrder'?
+   x.entries.flatMap(y=>y.jobs):[x]),
+  ...(s.pending?.kind==='phase-order'?
+   s.pending.entries.flatMap(y=>y.jobs):[])
+ ].filter(x=>x.op==='retireSourceOnPhaseEnd');
+ if(queuedRetires.length&&(s.phase!=='attack'||
+  !s.effectQueue.some(x=>x.op==='advanceAfterAttack'&&x.owner===s.active)))
+  throw Error('Unproven queued attack-end retirement window');
+ for(const j of queuedRetires){
+  if(!playerIndex(j.owner)||!Number.isInteger(j.sourceStamp)||j.sourceStamp<1||
+   typeof j.sourceUid!=='string'||!j.sourceUid.startsWith(j.owner+'-')||
+   typeof j.sourceName!=='string'||Object.keys(j).length!==5||
+   Object.keys(j).some(k=>!['op','owner','sourceUid','sourceName','sourceStamp'].includes(k)))
+   throw Error('Invalid stamped phase-end retirement job');
+  const pl=s.players[j.owner];
+  const todo=[...field(pl),...pl.hand,...pl.deck,...pl.life,...pl.lifeRevealed,
+   ...pl.outside,...pl.removed];
+  let physical=null;
+  while(todo.length){
+   const c=todo.pop();if(!c)continue;
+   if(c.uid===j.sourceUid){physical=c;break;}
+   todo.push(...(c.stack||[]),...(c.under||[]));
+  }
+  const def=physical&&card(pack,physical);
+  if(!def||def.name!==j.sourceName||!def.phaseEffects.some(q=>
+   q.phase==='attack'&&q.edge==='end'&&q.turn===(j.owner===s.active?'own':'opponent')&&
+   q.then.length===1&&q.then[0].op==='retireSourceOnPhaseEnd'))
+   throw Error('Unproven printed phase-end retirement source');
+  const live=field(pl).find(c=>c.uid===j.sourceUid);
+  if(live&&live.fieldEntryStamp!==j.sourceStamp)
+   throw Error('Stale phase-end retirement incarnation');
+ }
  // Suspended MAIN can hold an earned FRONT grant *after* its mandatory
  // draw/discard decision. Its source/printed operation must still be exact;
  // a forged serialized queue must not become a free permission generator.

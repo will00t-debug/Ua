@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createUniversalPack} from '../dist/universal-v2/pack.mjs';
-import {newUniversalMatch,dispatchUniversalAction,assertUniversalMatch} from '../dist/universal-v2/engine.mjs';
+import {newUniversalMatch,dispatchUniversalAction,assertUniversalMatch,legalUniversalActions} from '../dist/universal-v2/engine.mjs';
 const phases=[{phase:'attack',edge:'end',turn:'own',then:[{op:'retireSourceOnPhaseEnd'}]},
  {phase:'attack',edge:'end',turn:'opponent',then:[{op:'retireSourceOnPhaseEnd'}]}];
 const mk=(i,a={})=>({id:'QA-'+String(i).padStart(3,'0'),name:'C'+i,color:'green',
@@ -29,4 +29,38 @@ test('R44 phase-only op illegal in other timing, with extra payment or FIELD',()
   {...cards[0],phaseEffects:[{phase:'attack',edge:'end',turn:'own',then:[{op:'retireSourceOnPhaseEnd',payAp:1}]}]},
   {...cards[0],type:'field'}])
   assert.throws(()=>createUniversalPack({id:'bad',cards:[invalid,...cards.slice(1)]}),/invalid/);
+});
+
+test('R44 saved MAIN or ordinary ATTACK cannot inject earned attack-end self-retirement',()=>{
+ let s=newUniversalMatch(pack,{decks:[deck,deck],seed:44012,first:0});
+ const source=place(s,0);
+ for(let i=0;i<2;i++)s=use(s,{type:'next'});
+ const fake={op:'retireSourceOnPhaseEnd',owner:0,sourceUid:source.uid,
+  sourceName:'C1',sourceStamp:source.fieldEntryStamp};
+ let saved=structuredClone(s);saved.effectQueue.push(fake);
+ assert.throws(()=>assertUniversalMatch(pack,saved),/Unproven queued attack-end/);
+ s=use(s,{type:'next'});
+ assert.equal(s.phase,'attack');
+ saved=structuredClone(s);saved.effectQueue.push(fake);
+ assert.throws(()=>assertUniversalMatch(pack,saved),/Unproven queued attack-end/);
+});
+test('R44 two printed same-name but different UID phase sources use original legal priority',()=>{
+ let s=newUniversalMatch(pack,{decks:[deck,deck],seed:44014,first:0});
+ const extract=()=>{for(const zone of ['deck','hand','life','outside']){
+  const a=s.players[0][zone],i=a.findIndex(c=>c.cardId==='QA-001');
+  if(i>=0)return a.splice(i,1)[0];}throw Error('Need source')};
+ for(let i=0;i<2;i++){
+  const c=extract();c.ready=true;c.fieldEntryStamp=s.nextFieldEntryStamp++;
+  s.players[0].front[i]=c;
+ }
+ for(let i=0;i<3;i++)s=use(s,{type:'next'});
+ s=use(s,{type:'next'});
+ assert.equal(s.pending?.kind,'phase-order');
+ assert.equal(assertUniversalMatch(pack,JSON.parse(JSON.stringify(s))),true);
+ for(let i=0;i<3&&s.pending?.kind==='phase-order';i++){
+  const a=legalUniversalActions(pack,s).find(x=>x.key);
+  assert.ok(a);s=use(s,a);
+ }
+ assert.ok(s.players[0].outside.filter(c=>c.cardId==='QA-001').length>=2);
+ assert.equal(assertUniversalMatch(pack,s),true);
 });
