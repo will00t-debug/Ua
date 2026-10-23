@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {registeredV2TitlePack} from '../dist/universal-v2/title-packs/registry.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,assertUniversalMatch} from '../dist/universal-v2/engine.mjs';
-import {grantContinuousState} from '../dist/universal-v2/continuous-states.mjs';
+import {grantContinuousState,selectionApSurcharge} from '../dist/universal-v2/continuous-states.mjs';
 const packs=[registeredV2TitlePack('solo-leveling'),registeredV2TitlePack('sword-art-online')];
 const sids=['SLG-1-070','SLG-1-072','SLG-1-069','SLG-1-062','SLG-1-065','SLG-1-053',
  'SLG-1-042','SLG-1-004','SLG-1-007','SLG-1-008','SLG-1-014','SLG-1-013','SLG-1-025'];
@@ -26,6 +26,9 @@ function setup(includeFree){
  const ready=s.players[1].apCards.filter(c=>c.ready);
  assert.ok(ready.length>=1);for(const x of ready.slice(1))x.ready=false;
  assert.equal(assertUniversalMatch(packs,s),true);
+ assert.equal(s.continuousStates.length,1,'protection status must survive both turn phase transitions');
+ assert.equal(s.continuousStates[0].until.ownTurn,s.players[1].ownTurns,'targeting protection must activate on opponent next own turn');
+ assert.equal(selectionApSurcharge(s,1,protectedCard.uid),1,'Q2062 surcharge must be active for exact physical target');
  return {s,event,protectedCard,free};
 }
 test('R33 Q2062 + Q1119: mandatory paid event is not offered when its ONLY target needs unaffordable extra AP',()=>{
