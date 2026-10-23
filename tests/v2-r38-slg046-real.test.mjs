@@ -17,7 +17,7 @@ function scene(){
  const window=['SLG-1-045','SLG-1-078','SLG-1-046','SLG-1-070'].map(id=>take(s,id));s.players[0].deck.unshift(...window);
  s=act(s,{type:'next'});s=act(s,{type:'next'});
  const play=legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===c.uid&&a.line==='front');
- assert.ok(play);return {s,play,window};
+ assert.ok(play,'legal '+JSON.stringify({phase:s.phase,active:s.active,ap:s.players[0].apCards,hand:s.players[0].hand.map(c=>c.cardId),play:legalUniversalActions(packs,s).filter(a=>a.type==='play')}));return {s,play,window};
 }
 test('R38 SLG 046 full official printed stats, no trigger and exact name-OR TOP4 contingent discard',()=>{
  const source=SOLO_LEVELING_CARDS.find(c=>c.id==='SLG-1-046'),d=pack.cards['SLG-1-046'];
