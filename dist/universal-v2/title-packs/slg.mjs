@@ -3,6 +3,8 @@ import {SOLO_LEVELING_CARDS} from '../../solo-leveling.mjs';
 import {verifiedSlgV2Cards} from '../slg-pack.mjs';
 const records=Object.fromEntries(SOLO_LEVELING_CARDS.map(c=>[c.id,c]));
 const proof=Object.freeze({
+ '070':['登場時令另一己方DFN角色最多1張',
+ 'Official UA51BT/SLG-1-070 シーマ GREEN0/AP1/BP1000/gen1, printed compound DFN／第四次架南島レイド traits and ACTIVE Life. OnPlay choose UP TO ONE OTHER OWN field DFN character; during next opponent turn, that opponent must pay extra 1 READY AP when selecting this stamped target by a CARD EFFECT; may choose another or 0 if allowed, and without AP cannot choose it. Explicit Q2062 2026-04-17. Physical UID/field stamp, AI choice, optional 0 and owner-only private state in tests/v2-r33-slg070-official.test.mjs; complete all-FAQ certificate NOT claimed.'],
  '053':['Impact無效。登場時若場上有己方水篠旬，抽1張。','Original Japanese UA51BT/SLG-1-053 諸菱 賢太 GREEN3/AP1/BP2000/gen2 DRAW Life separately: IMPACT nullification plus onPlay draw exactly 1 only when OWN field has 〈水篠 旬〉 in front or energy line. Both printed clauses share existing native impactNull and drawIfOwnName V2 predicates, no separate reducer. Official https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-053; not fully FAQ certified.'],
  '023':['兩次阻擋：本回合第一次阻擋時ACTIVE。','Official UA51BT/SLG-1-023 水篠 潤一郎 purple4/AP1/BP4000/gen1. Printed [2回ブロック] uses the shared readyOnBlockCount of 1. ACTIVE life is the generic own-character ACTIVE plus BP+3000. Catalogue traits are empty. Official page checked 2026-10-22; not a full FAQ certification. https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-023'],
  '056':['Impact1。','Official UA51BT/SLG-1-056 向坂 雫 green2/AP1/BP3000/gen1 no trigger. Printed impact is exactly 1 on a won battle. Official trait is the single token 第四次架南島レイド; the catalogue token 第四次架南島Raid is the known wrong label and is not registered. No life trigger. Page checked 2026-10-22; not a full FAQ certification.'],
@@ -80,6 +82,7 @@ export default Object.freeze({
      ...(def.id==='SLG-1-062'?['tests/v2-zero-engine-round15.test.mjs']:[]),
      ...(def.id==='SLG-1-065'?['tests/v2-zero-engine-round16.test.mjs']:[]),
      ...(def.id==='SLG-1-027'?['tests/v2-rest-printed-bp-round17.test.mjs']:[]),
+     ...(def.id==='SLG-1-070'?['tests/v2-r33-slg070-official.test.mjs']:[]),
      ...(def.id==='SLG-1-072'?['tests/v2-slg-072-dfn-draw-gpt.test.mjs']:[])],
     ...(def.implementation==='vanilla'?{verifiedNoExtraEffects:true}:{})}
   });

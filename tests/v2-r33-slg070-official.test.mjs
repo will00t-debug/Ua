@@ -1,7 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {SOLO_LEVELING_CARDS} from '../dist/solo-leveling.mjs';
-import {verifiedSlgV2Cards} from '../dist/universal-v2/slg-pack.mjs';
 import {createUniversalPack,validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {registeredV2TitlePack} from '../dist/universal-v2/title-packs/registry.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
@@ -16,8 +15,8 @@ const pilot={id:'SLG-1-070',name:'シーマ',color:'green',energy:0,ap:1,bp:1000
  traits:['DFN／第四次架南島レイド'],traitComponents:['DFN','第四次架南島レイド'],
  implementation:'dsl',effects:{onPlay:[
  {op:'grantSelectionApTaxOwnOtherTrait',trait:'DFN',optional:true,until:'nextOpponentTurn'}]}};
-const pack=createUniversalPack({id:'solo-leveling',version:'r33-070-isolated',
- cards:[...verifiedSlgV2Cards(),pilot]});
+const pack=registeredV2TitlePack('solo-leveling');
+assert.deepEqual(pack.cards['SLG-1-070'].effects.onPlay,pilot.effects.onPlay);
 const foe=registeredV2TitlePack('sword-art-online'),packs=[pack,foe];
 const slgIds=['SLG-1-070','SLG-1-072','SLG-1-069','SLG-1-062','SLG-1-065','SLG-1-053',
  'SLG-1-042','SLG-1-004','SLG-1-007','SLG-1-008','SLG-1-014','SLG-1-013','SLG-1-025'];
@@ -39,7 +38,7 @@ function setup(targetId='SLG-1-072'){
  assert.equal(s.phase,'main');const action=legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===source.uid&&a.line==='front');
  assert.ok(action);return {s,source,target,action};
 }
-test('R33 genuine 50-card isolated シーマ onPlay grants only other own DFN, no AP payment, controller/UID stamped',()=>{
+test('R33 officially registered 50-card シーマ onPlay grants only other own DFN, no AP payment, controller/UID stamped',()=>{
  let {s,source,target,action}=setup();
  const sourceProof=SOLO_LEVELING_CARDS.find(c=>c.id==='SLG-1-070');
  assert.equal(sourceProof.energy,0);assert.equal(sourceProof.ap,1);
@@ -78,4 +77,15 @@ test('R33 optional 0 legal and wrong trait cannot receive selection tax, schema 
   {op:'grantSelectionApTaxOwnOtherTrait',trait:'DFN',optional:true,until:'nextOpponentTurn',tax:2}
  ])assert.throws(()=>createUniversalPack({id:'bad',cards:[
   {...pilot,effects:{onPlay:[effect]}}]}),/invalid shared targeting AP tax grant/);
+});
+
+test('R33 strict formal SLG-070 manifest and original-source exact traits/trigger',async()=>{
+ const {EXPECTED_V2_IDS}=await import('./fixtures/v2-integrated-id-manifest.mjs');
+ assert.equal(EXPECTED_V2_IDS['solo-leveling'].includes('SLG-1-070'),true);
+ assert.equal(source.identity,'SLG-1-070');
+ assert.deepEqual([source.nameJa,source.color,source.energy,source.ap,
+  source.bp,source.gen,source.trigger],['シーマ','green',0,1,1000,1,'active']);
+ assert.deepEqual(pack.cards['SLG-1-070'].traits,['DFN／第四次架南島レイド']);
+ assert.deepEqual(pack.cards['SLG-1-070'].traitComponents,['DFN','第四次架南島レイド']);
+ assert.equal(pack.cards['SLG-1-070'].effects.onPlay[0].until,'nextOpponentTurn');
 });

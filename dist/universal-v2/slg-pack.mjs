@@ -3,6 +3,16 @@ import {SOLO_LEVELING_CARDS} from '../solo-leveling.mjs';
 import {createUniversalPack} from './pack.mjs';
 const catalog=Object.fromEntries(SOLO_LEVELING_CARDS.map(c=>[c.id,c]));
 const authored=[
+  {"id":"SLG-1-070","name":"シーマ","color":"green","energy":0,
+   "ap":1,"bp":1000,"gen":1,"trigger":"active","type":"character",
+   "textAnchor":"登場時令另一己方DFN角色最多1張",
+   "implementation":"dsl",
+   "effects":{"onPlay":[{"op":"grantSelectionApTaxOwnOtherTrait",
+     "trait":"DFN","optional":true,"until":"nextOpponentTurn"}]},
+   "officialTraits":["DFN／第四次架南島レイド"],
+   "traitComponents":["DFN","第四次架南島レイド"],
+   "catalogueTraits":["DFN","第四次架南島Raid"]
+  },
   {"id":"SLG-1-053","name":"諸菱 賢太","color":"green","energy":3,
    "ap":1,"bp":2000,"gen":2,"trigger":"draw","type":"character",
    "textAnchor":"Impact無效。登場時若場上有己方水篠旬，抽1張。",
