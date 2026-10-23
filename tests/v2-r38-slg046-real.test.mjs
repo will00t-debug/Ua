@@ -14,7 +14,7 @@ function scene(){
  let s=newUniversalMatch(packs,{decks:[deck,deck],first:0,seed:38046});
  const c=take(s,'SLG-1-046');s.players[0].hand.push(c);
  const e=take(s,'SLG-1-041');e.ready=true;e.fieldEntryStamp=s.nextFieldEntryStamp++;s.players[0].energy[0]=e;
- const window=['SLG-1-045','SLG-1-078','SLG-1-046','SLG-1-070'].map(id=>take(s,id));s.players[0].deck.unshift(...window);
+ const window=['SLG-1-045','SLG-1-078','SLG-1-015','SLG-1-070'].map(id=>take(s,id));s.players[0].deck.unshift(...window);
  s=act(s,{type:'next'});s=act(s,{type:'next'});
  const play=legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===c.uid&&a.line==='front');
  assert.ok(play,'legal '+JSON.stringify({phase:s.phase,active:s.active,ap:s.players[0].apCards,hand:s.players[0].hand.map(c=>c.cardId),play:legalUniversalActions(packs,s).filter(a=>a.type==='play')}));return {s,play,window};
