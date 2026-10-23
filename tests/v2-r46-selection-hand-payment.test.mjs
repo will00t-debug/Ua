@@ -10,7 +10,7 @@ const f=Array.from({length:9},(_,i)=>({id:'f'+i,name:'filler'+i,type:'character'
  color:'green',energy:0,ap:1,bp:1000,gen:1,traits:[],
  implementation:'vanilla',effects:{}}));
 const c=(id,name,bp,tax)=>({id,name,type:'character',color:'green',
- energy:0,ap:1,bp,gen:1,traits:[],implementation:'dsl',effects:{},
+ energy:0,ap:1,bp,gen:1,traits:[],implementation:tax?'dsl':'vanilla',effects:{},
  ...(tax?{selectionHandDiscardTax:tax}:{})});
 const cards=[c('k','キリト',4000,SAO_Q1208_ASUNA_AURA),
  c('a','アスナ',1500),c('other','ユウキ',1000),
