@@ -3177,6 +3177,35 @@ export function assertUniversalMatch(pack,s){
   if(!expected||!same(expected.after,q.after)||!same(choices,q.choices)||Object.keys(q).length!==7)
    throw Error('Invalid optional bounce continuation');
  }
+ // R41 serialized pending: free entry and its grant must be earned by
+ // the exact printed source program, not forged via hidden pending JSON.
+ if(s.pending?.kind==='effect-hand-rest'&&s.pending.special===true){
+  const q=s.pending,pl=s.players[q.player];
+  const physical=[...pl.hand,...pl.outside,...pl.deck,...pl.life,...pl.lifeRevealed,
+   ...(pl.removed||[]),...field(pl)].find(c=>c.uid===q.sourceUid);
+  const printed=physical&&card(pack,physical);
+  const findOp=x=>{
+   if(!x||typeof x!=='object')return false;
+   if(Array.isArray(x))return x.some(findOp);
+   return (x.op==='deployOwnHandSpecial'&&x.type===q.type&&x.color===q.color&&
+    x.ap===q.ap&&x.trait===q.trait&&x.maxEnergy===q.maxEnergy&&
+    x.ready===q.ready&&x.protectionScope===q.protectionScope&&
+    Number.isInteger(q.max)&&q.max>=1&&q.max<=x.max)||
+    Object.values(x).some(findOp);
+  };
+  const expected=pl.hand.filter(c=>{
+   const d=card(pack,c);
+   return d.type===q.type&&d.color===q.color&&d.ap===q.ap&&
+    (q.maxEnergy===null||d.energy<=q.maxEnergy)&&
+    (q.trait===null||cardHasTrait(d,q.trait));
+  }).map(c=>c.uid);
+  if(!printed||q.sourceName!==printed.name||!findOp(printed.effects)||
+   !Array.isArray(q.choices)||!same(q.choices,expected)||
+   Object.keys(q).length!==14||Object.keys(q).some(k=>![
+    'kind','player','sourceUid','sourceName','choices','type','color','ap',
+    'max','special','trait','maxEnergy','ready','protectionScope'].includes(k)))
+   throw Error('Invalid special hand entry pending provenance');
+ }
  validateContinuousStates(s);
  if(typeof s.endRefreshed!=='boolean')throw Error('Invalid end refresh flag');
  if(!Number.isInteger(s.nextFieldEntryStamp)||s.nextFieldEntryStamp<1||

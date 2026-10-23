@@ -92,3 +92,15 @@ test('R41 strict data profile rejects counterfeit payment/scope/type/energy cap'
    cards:[{...cards[0],effects:{onPlay:[wrong]}},...cards.slice(1)]}),/invalid/);
  }
 });
+
+test('R41 saved special entry cannot forge typed filter, ready or target protection scope',()=>{
+ let {s,recovered}=scene();s=use(s,{type:'chooseOutsideRecovery',uid:recovered.uid});
+ assert.equal(assertUniversalMatch(packs,s),true);
+ for(const mutate of [
+  q=>{q.protectionScope='any';},q=>{q.trait=null;},q=>{q.ready=false;},
+  q=>{q.sourceUid='0-forged';},q=>{q.choices=[];},q=>{q.extra=true;}
+ ]){
+  const forged=structuredClone(s);mutate(forged.pending);
+  assert.throws(()=>assertUniversalMatch(packs,forged),/Invalid special hand entry/);
+ }
+});
