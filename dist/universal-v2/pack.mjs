@@ -2,6 +2,7 @@ import {validatePrintedPlayFilter} from './ap-discounts.mjs';
 // UNION ARENA Universal Rules v2 (experimental; NOT used by Production matches).
 import {expandAbilityTemplates} from './ability-templates.mjs';
 import {validateCompletedMoveCondition} from './zone-move-events.mjs';
+import {validateSelectionHandTaxProfile} from './selection-hand-tax.mjs';
 // Data schema and *explicit* ability coverage. No automatic inference from
 // Japanese/translated prose and no optimistic `auto:true` for unported cards.
 export const V2_PHASES=Object.freeze(['start','move','main','attack']);
@@ -966,6 +967,11 @@ function normalize(card,packId){
  if(card.impactNull!==undefined&&(
   card.type!=='character'||card.impactNull!==true))
   throw Error(card.id+' invalid IMPACT nullification profile');
+ const selectionHandDiscardTax=card.selectionHandDiscardTax??null;
+ if(selectionHandDiscardTax!==null){
+  if(card.type!=='character')throw Error(card.id+' tax needs CHARACTER source');
+  validateSelectionHandTaxProfile(selectionHandDiscardTax);
+ }
  // Printed 【インパクト（1）】 and 【ダメージ（2）】 are unconditional keywords.
  // Stacking either with the facedown-under impact profile needs its own ruling.
  if(card.printedImpact!==undefined&&(
@@ -1007,6 +1013,9 @@ function normalize(card,packId){
   colorTriggerFieldSubstitution,
   conditionalTraitEnergy:conditionalTraitEnergy?Object.freeze({...conditionalTraitEnergy}):null,
   passiveBonuses:passiveBonuses||Object.freeze([]),
+  selectionHandDiscardTax:selectionHandDiscardTax?
+   Object.freeze({...selectionHandDiscardTax,
+    sourceTypes:Object.freeze([...selectionHandDiscardTax.sourceTypes])}):null,
   impactNull:card.impactNull===true,
   printedImpact:card.printedImpact===1?1:0,
   printedAttackDamage:card.printedAttackDamage===2?2:1,

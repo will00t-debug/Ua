@@ -5,6 +5,7 @@ import {DISCOUNT_KIND,grantHandDiscount,handPlayApPlan,definitionGrantsDiscount}
 import {validateUniversalDeck} from './pack.mjs';
 import {appendCompletedMove,matchesCompletedMove,V2_MOVE_REASONS} from './zone-move-events.mjs';
 import {planSimultaneousLifeReveal} from './life-reveal-batch.mjs';
+import {selectionHandDiscardTaxPlan} from './selection-hand-tax.mjs';
 import {matchesPrintedRequiredEnergyAtMost} from './ap-discounts.mjs';
 import {cardHasName,cardHasTrait,matchesOwnDistinctTraits,matchesV2LiveCondition,
  ownRestPrintedBpCount,retiredThisTurn} from './field-conditions.mjs';
@@ -731,19 +732,19 @@ function continueEffectQueue(pack,s){
    if(choices.length)s.pending={kind:'effect-retire-bp',player:owner,sourceUid:job.sourceUid,choices,limit};
   }else if(job.op==='retireOppFrontOneUnderBp'){
    const choices=s.players[1-owner].front.filter(c=>c&&bp(pack,s,c)<=job.bp&&
-     cardEffectTargetPayable(s,owner,c.uid)).map(c=>c.uid);
+     cardEffectTargetPayable(pack,s,owner,c.uid,0,job.sourceUid)).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-retire-bp',player:owner,
     sourceUid:job.sourceUid,choices,limit:job.bp,optional:true};
   }else if(job.op==='stripOppRaidTop'){
    const choices=s.players[1-owner].front.filter(c=>c&&
-    strippableRaidTop(pack,c)&&cardEffectTargetPayable(s,owner,c.uid)).map(c=>c.uid);
+    strippableRaidTop(pack,c)&&cardEffectTargetPayable(pack,s,owner,c.uid,0,job.sourceUid)).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-strip-raid-top',player:owner,
     sourceUid:job.sourceUid,choices,optional:true};
   }else if(job.op==='retireOppFrontIfFacedown'){
    const source=field(pl).find(c=>c.uid===job.sourceUid);
    if(source&&hasFacedownUnder(source)){
     const choices=s.players[1-owner].front.filter(c=>c&&bp(pack,s,c)<=job.bp&&
-     cardEffectTargetPayable(s,owner,c.uid)).map(c=>c.uid);
+     cardEffectTargetPayable(pack,s,owner,c.uid,0,job.sourceUid)).map(c=>c.uid);
     if(choices.length)s.pending={kind:'effect-retire-bp',player:owner,
      sourceUid:job.sourceUid,choices,limit:job.bp,optional:true};
    }
@@ -751,7 +752,7 @@ function continueEffectQueue(pack,s){
    // One target set and one choice. The controller's LIFE determines the
    // branch when the effect is actually resolved, not from the original hand.
    const targets=s.players[1-owner].front.filter(c=>c&&bp(pack,s,c)<=job.bp&&
-     cardEffectTargetPayable(s,owner,c.uid));
+     cardEffectTargetPayable(pack,s,owner,c.uid,0,job.sourceUid));
    if(targets.length){
     const retireNow=pl.life.length<=job.lifeAtMost;
     s.pending={kind:retireNow?'effect-retire-bp':'effect-rest-bp',
@@ -762,14 +763,14 @@ function continueEffectQueue(pack,s){
   }else if(job.op==='restSilenceOppFrontIfOwnOutsideField'){
    if(pl.outside.some(c=>card(pack,c).type==='field')){
     const choices=s.players[1-owner].front.filter(c=>c&&
-     cardEffectTargetPayable(s,owner,c.uid)).map(c=>c.uid);
+     cardEffectTargetPayable(pack,s,owner,c.uid,0,job.sourceUid)).map(c=>c.uid);
     if(choices.length)s.pending={kind:'effect-rest-bp',player:owner,
      sourceUid:job.sourceUid,choices,limit:null,optional:true,
      silenceUntil:{player:1-owner,phase:'attack',edge:'end'}};
    }
   }else if(job.op==='skipNextActiveOppRest'){
    const choices=field(s.players[1-owner]).filter(c=>!c.ready&&
-     cardEffectTargetPayable(s,owner,c.uid)).map(c=>c.uid);
+     cardEffectTargetPayable(pack,s,owner,c.uid,0,job.sourceUid)).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-rest-bp',player:owner,
     sourceUid:job.sourceUid,choices,limit:null,optional:job.optional,
     skipNextActive:true,onlyRest:true,anyLine:true,restTarget:false};
@@ -805,13 +806,13 @@ function continueEffectQueue(pack,s){
    }
   }else if(job.op==='restOppFrontOne'){
    const choices=s.players[1-owner].front.filter(c=>c&&
-     cardEffectTargetPayable(s,owner,c.uid)).map(c=>c.uid);
+     cardEffectTargetPayable(pack,s,owner,c.uid,0,job.sourceUid)).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-rest-bp',player:owner,
     sourceUid:job.sourceUid,choices,limit:null,optional:job.optional,
     skipNextActive:job.skipNextActive===true};
   }else if(job.op==='restOppFrontUnderBp'){
    const choices=s.players[1-owner].front.filter(c=>c&&bp(pack,s,c)<=job.bp&&
-     cardEffectTargetPayable(s,owner,c.uid)).map(c=>c.uid);
+     cardEffectTargetPayable(pack,s,owner,c.uid,0,job.sourceUid)).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-rest-bp',player:owner,
     sourceUid:job.sourceUid,choices,limit:job.bp,optional:job.optional,
     skipNextActive:job.skipNextActive===true};
@@ -946,7 +947,7 @@ function continueEffectQueue(pack,s){
     (job.zone!=='field'||card(pack,c).type==='character')&&
     (job.minBp===undefined||bp(pack,s,c)>=job.minBp)&&
     (job.maxBp===undefined||bp(pack,s,c)<=job.maxBp)&&
-     cardEffectTargetPayable(s,owner,c.uid)).map(c=>c.uid);
+     cardEffectTargetPayable(pack,s,owner,c.uid,0,job.sourceUid)).map(c=>c.uid);
    if(targetUids.length){
     if(job.maxTargets===2)s.pending={kind:'effect-target-many',player:owner,
      sourceUid:job.sourceUid,bp:job.bp,choices:targetUids,selected:[],
@@ -1816,6 +1817,14 @@ function resolveChoice(s,a,pack){
   s.effectQueue.unshift(...programJobs(pack,s,entrant,'onPlay',q.player,undefined,'recoveredEffect'));
   continueEffectQueue(pack,s);return;
  }
+ if(q.kind==='effect-selection-hand-payment'){
+  const index=p.hand.findIndex(c=>c.uid===a.uid);
+  if(index<0)throw Error('Tax payment needs physical OWN hand UID');
+  const original=q.originPending,chosen=q.targetAction;
+  moveOwnedLinear(pack,s,{owner:q.player,from:'hand',to:'outside',index,
+   reason:'payment',sourceUid:q.sourceUid});
+  s.pending=original;resolveChoice(s,chosen,pack);return;
+ }
  if(q.kind==='effect-discard-cost'){
   if(a.uid!==null){
    const index=p.hand.findIndex(c=>c.uid===a.uid);
@@ -2483,6 +2492,9 @@ function legalPending(pack,s){
   ...p.outside.filter(c=>q.choices.includes(c.uid)&&matchesOutsideRecovery(pack,s,c,q))
    .map(c=>({type:'chooseOutsideRecovery',uid:c.uid}))
  ];
+ if(q.kind==='effect-selection-hand-payment')return p.hand.map(c=>({
+  type:'chooseSelectionTaxDiscard',uid:c.uid
+ }));
  if(q.kind==='effect-discard-cost')return [
   ...(q.optional?[{type:'chooseDiscardCost',uid:null}]:[]),
   ...p.hand.map(c=>({type:'chooseDiscardCost',uid:c.uid}))
@@ -2643,7 +2655,7 @@ function legalPending(pack,s){
 // one" cannot be played at all unless ALL mandatory choices exist.
 // This check is performed BEFORE spending AP or moving the event outside.
 // Optional "up to one" choices remain playable with zero targets.
-function eventMandatoryTargetsAvailable(pack,s,owner,d,reservedAp=d.ap){
+function eventMandatoryTargetsAvailable(pack,s,owner,d,reservedAp=d.ap,reservedHandUid=null){
  const enemy=s.players[1-owner];
  return (d.effects?.onPlay||[]).every(job=>{
   if(job.op==='grantOwnFrontChoiceProtection')
@@ -2651,11 +2663,11 @@ function eventMandatoryTargetsAvailable(pack,s,owner,d,reservedAp=d.ap){
   if(job.optional!==false)return true;
   if(job.op==='restOppFrontOne')
    return enemy.front.some(c=>c&&!effectChoiceProtected(s,owner,c.uid,'event')&&
-    cardEffectTargetPayable(s,owner,c.uid,reservedAp));
+    cardEffectTargetPayable(pack,s,owner,c.uid,reservedAp,null,'event',reservedHandUid));
   if(job.op==='restOppFrontUnderBp'||job.op==='restOrRetireOppFrontByLife')
    return enemy.front.some(c=>c&&bp(pack,s,c)<=job.bp&&
     !effectChoiceProtected(s,owner,c.uid,'event')&&
-    cardEffectTargetPayable(s,owner,c.uid,reservedAp));
+    cardEffectTargetPayable(pack,s,owner,c.uid,reservedAp,null,'event',reservedHandUid));
   return true;
  });
 }
@@ -2701,16 +2713,56 @@ function effectSelectionApTax(s,a){
     TARGETING_LIFE_MODES.has(a.mode)))return 0;
  return selectionApSurcharge(s,q.player,a.uid);
 }
+function sourceTypeFromUid(pack,s,uid){
+ if(typeof uid!=='string'||!/^([01])-\d+$/.test(uid))return 'unknown';
+ const owner=Number(uid[0]),pl=s.players[owner];
+ const physical=[...field(pl),...pl.outside,...pl.lifeRevealed,...pl.removed,
+  ...pl.hand].find(c=>c.uid===uid);
+ return physical?card(pack,physical).type:'unknown';
+}
+function selectionHandTax(pack,s,selector,uid,sourceType){
+ const evalType=type=>selectionHandDiscardTaxPlan(pack,s,selector,uid,type,{
+  isSuppressed:(state,src)=>originalEffectsDisabled(state,src)});
+ if(sourceType==='unknown'){
+  const ev=evalType('event'),ch=evalType('character');
+  if(ev.cost||ch.cost||ev.blocked||ch.blocked)
+   return {cost:0,payable:false,blocked:true};
+  return {cost:0,payable:true,blocked:false};
+ }
+ return evalType(sourceType);
+}
+function effectSelectionHandTax(pack,s,a){
+ const q=s.pending;
+ if(!q||typeof a?.uid!=='string'||
+  !TARGETING_CARD_EFFECT_CHOICES.has(a.type)&&
+  !(q.kind==='life-trigger'&&a.type==='chooseTrigger'&&
+    TARGETING_LIFE_MODES.has(a.mode)))
+  return {cost:0,payable:true,blocked:false};
+ return selectionHandTax(pack,s,q.player,a.uid,effectChoiceProvenance(pack,s));
+}
 function availableAp(s,p){return s.players[p].apCards.filter(c=>c.ready).length;}
-function cardEffectTargetPayable(s,selector,uid,reservedAp=0){
- return selectionApSurcharge(s,selector,uid)<=availableAp(s,selector)-reservedAp;
+function cardEffectTargetPayable(pack,s,selector,uid,reservedAp=0,
+ sourceUid=null,sourceType=null,reservedHandUid=null){
+ const apTax=selectionApSurcharge(s,selector,uid);
+ const tax=selectionHandTax(pack,s,selector,uid,
+  sourceType||sourceTypeFromUid(pack,s,sourceUid));
+ if(tax.blocked||!tax.payable||tax.cost&&apTax>0)return false;
+ if(tax.cost&&reservedHandUid!==null&&
+  s.players[selector].hand.filter(c=>c.uid!==reservedHandUid).length<tax.cost)
+  return false;
+ return apTax<=availableAp(s,selector)-reservedAp;
 }
 export function legalUniversalActions(pack,s){
  assertUniversalMatch(pack,s);
  if(s.status!=='playing')return [];
- if(s.pending)return legalPending(pack,s).filter(a=>
-  !effectSelectionProhibited(pack,s,a)&&
-  effectSelectionApTax(s,a)<=availableAp(s,s.pending.player));
+ if(s.pending)return legalPending(pack,s).filter(a=>{
+  if(effectSelectionProhibited(pack,s,a))return false;
+  const apTax=effectSelectionApTax(s,a),handTax=effectSelectionHandTax(pack,s,a);
+  // No official ordering for selecting multiple targets or combined AP+hand costs.
+  return !handTax.blocked&&handTax.payable&&
+   !(handTax.cost&&(s.pending.kind==='effect-target-many'||apTax>0))&&
+   apTax<=availableAp(s,s.pending.player);
+ });
  const p=s.active,pl=s.players[p],out=[{type:'next'}];
  if(s.phase==='start'){
   if(!s.extraDrawn&&pl.apCards.some(c=>c.ready)&&pl.deck.length)out.push({type:'extraDraw'});
@@ -2841,7 +2893,7 @@ export function legalUniversalActions(pack,s){
    const payment=handPlayApPlan(s,p,d);
    if(d.energy>(produced[d.color]||0)||payment.cost>ap)continue;
    if(d.type==='event'){
-    if(eventMandatoryTargetsAvailable(pack,s,p,d,payment.cost))
+    if(eventMandatoryTargetsAvailable(pack,s,p,d,payment.cost,c.uid))
      out.push({type:'event',uid:c.uid});
    }
    else for(const line of ['energy','front']){
@@ -2892,8 +2944,23 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
   // Pass the entire pre-validated action: some life triggers choose both a
   // mode and an owned field UID (e.g. ACTIVE); stripping the UID corrupts it.
   const surcharge=effectSelectionApTax(s,action);
-  if(surcharge)spendAp(s.players[p],surcharge);
-  resolveChoice(s,action,pack);
+  const tax=effectSelectionHandTax(pack,s,action);
+  if(tax.blocked||!tax.payable||
+   tax.cost&&(s.pending.kind==='effect-target-many'||surcharge))
+   throw Error('Unsupported compound selection cost');
+  if(tax.cost){
+   const q=s.pending,target=field(s.players[1-p]).find(c=>c.uid===action.uid);
+   if(!target||!Number.isInteger(target.fieldEntryStamp)||target.fieldEntryStamp<1||
+    !q.sourceUid||!TARGETING_CARD_EFFECT_CHOICES.has(action.type))
+    throw Error('Invalid selection payment source');
+   const sourceType=effectChoiceProvenance(pack,s);
+   s.pending={kind:'effect-selection-hand-payment',player:p,
+    sourceUid:q.sourceUid,originPending:q,targetAction:{...action},
+    targetUid:target.uid,targetStamp:target.fieldEntryStamp,sourceType};
+  }else{
+   if(surcharge)spendAp(s.players[p],surcharge);
+   resolveChoice(s,action,pack);
+  }
  }else switch(action.type){
   case 'extraDraw':
    spendAp(pl,1);draw(pack,s,p);s.extraDrawn=true;break;
@@ -3176,7 +3243,7 @@ export function assertUniversalMatch(pack,s){
    !Array.isArray(s.initialCounts)||s.initialCounts.length!==2||
    s.players?.length!==2||!playerIndex(s.active)||
    !['playing','finished'].includes(s.status))throw Error('Incorrect pack/version or match state');
- if(s.pending&&(!playerIndex(s.pending.player)||!['phase-order','retirement-order','effect-move-order','effect-rest-tuck','effect-tuck-moved','block','life-batch-order','life-trigger','effect-target','effect-target-many','effect-grant-attack','granted-attack-draw','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-strip-raid-top','effect-retire-own-field','effect-retire-own-character','effect-rest-bp','effect-attack-ban','effect-own-front-protect','effect-grant-ap-tax','effect-grant-front-energy','raid-effect-order','effect-buff-trait','effect-buff-own','effect-once-choice','main-two-buff','main-discard-buff','main-discard-self-retire','main-rest-front-energy','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-filter-many-choice','effect-top-order','effect-recover-outside','effect-outside-rest','effect-outside-name-rest','effect-outside-traitless-rest','effect-named-zone-entry','effect-hand-rest','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-choice-mode','recovered-self-entry','effect-optional-mill','effect-pay-ap-deploy','effect-top-trait-outside'].includes(s.pending.kind)))
+ if(s.pending&&(!playerIndex(s.pending.player)||!['phase-order','retirement-order','effect-move-order','effect-rest-tuck','effect-tuck-moved','block','life-batch-order','life-trigger','effect-target','effect-target-many','effect-grant-attack','granted-attack-draw','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-strip-raid-top','effect-retire-own-field','effect-retire-own-character','effect-rest-bp','effect-attack-ban','effect-own-front-protect','effect-grant-ap-tax','effect-grant-front-energy','raid-effect-order','effect-buff-trait','effect-buff-own','effect-once-choice','main-two-buff','main-discard-buff','main-discard-self-retire','main-rest-front-energy','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-filter-many-choice','effect-top-order','effect-recover-outside','effect-outside-rest','effect-outside-name-rest','effect-outside-traitless-rest','effect-named-zone-entry','effect-hand-rest','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-selection-hand-payment','effect-choice-mode','recovered-self-entry','effect-optional-mill','effect-pay-ap-deploy','effect-top-trait-outside'].includes(s.pending.kind)))
   throw Error('Invalid pending controller');
  if(!Array.isArray(s.raidedThisTurn)||s.raidedThisTurn.length!==2||
    s.raidedThisTurn.some(x=>typeof x!=='boolean')||
@@ -3246,6 +3313,27 @@ export function assertUniversalMatch(pack,s){
  for(const [uid,n] of Object.entries(s.blocksByUid))
   if(typeof uid!=='string'||!uid.includes('-')||!Number.isInteger(n)||n<1||n>50)
    throw Error('Invalid per-card block count');
+ if(s.pending?.kind==='effect-selection-hand-payment'){
+  const q=s.pending,orig=q.originPending;
+  const target=field(s.players[1-q.player]).find(c=>c.uid===q.targetUid);
+  const inner={...s,pending:orig};
+  const plan=selectionHandTax(pack,inner,q.player,q.targetUid,q.sourceType);
+  if(!orig||typeof orig!=='object'||orig.player!==q.player||
+   orig.sourceUid!==q.sourceUid||q.player!==s.active||
+   q.targetAction?.uid!==q.targetUid||
+   !TARGETING_CARD_EFFECT_CHOICES.has(q.targetAction?.type)||
+   orig.kind==='effect-target-many'||
+   q.sourceType!==sourceTypeFromUid(pack,s,q.sourceUid)||
+   !target||target.fieldEntryStamp!==q.targetStamp||
+   !Number.isInteger(q.targetStamp)||q.targetStamp<1||
+   plan.blocked||!plan.payable||plan.cost!==1||
+   selectionApSurcharge(s,q.player,q.targetUid)!==0||
+   !legalPending(pack,inner).some(a=>same(a,q.targetAction))||
+   Object.keys(q).length!==8||
+   Object.keys(q).some(k=>!['kind','player','sourceUid','originPending',
+    'targetAction','targetUid','targetStamp','sourceType'].includes(k)))
+   throw Error('Invalid resumed selection hand-payment');
+ }
  if(s.pending?.kind==='effect-top-filter-many-choice'){
   const q=s.pending,pl=s.players[q.player];
   const rest=q.uids?.filter(uid=>!q.selected?.includes(uid));
@@ -3649,7 +3737,7 @@ export function universalPrivateChoices(pack,s,viewer){
      color:card(pack,c).color}:null};
    })};
   if(!q||q.player!==viewer||
-  !['effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-filter-many-choice','effect-top-order','effect-top-trait-outside','effect-recover-outside','effect-outside-rest','effect-outside-name-rest','effect-outside-traitless-rest','effect-named-zone-entry','effect-hand-rest','effect-bounce-own','effect-discard-cost','effect-discard-gate'].includes(q.kind))
+  !['effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-filter-many-choice','effect-top-order','effect-top-trait-outside','effect-recover-outside','effect-outside-rest','effect-outside-name-rest','effect-outside-traitless-rest','effect-named-zone-entry','effect-hand-rest','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-selection-hand-payment'].includes(q.kind))
   return null;
  const zone=['effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-filter-many-choice','effect-top-order','effect-top-trait-outside'].includes(q.kind)?'deck':
   q.kind==='effect-recover-outside'||q.kind==='effect-outside-rest'||q.kind==='effect-outside-name-rest'||q.kind==='effect-outside-traitless-rest'?'outside':
