@@ -1897,3 +1897,13 @@ Reproduction commands: `node scripts/v2-card-certification-report.mjs`, `node sc
 - **正式 322/700，未移植 378：BLEACH97/179、TTG36/45、SLG42/38、SAO95/88、MST52/28**。獨立全面 FAQ 認證 **0**，局部來源/情境評審 **10 張**。所有源卡印刷/功能驗收不得宣稱全面官方 FAQ 認證。
 - 下輪優先 printedEnergyAtMostFilter、cannotBeChosenByOppEffect（官方 Q1206/Q2162）、topNOptionalSingleNoDiscard、optionalRetireThenProgram、attackEndDistinctOutsideNamesSwap（官方 Q2337/Q2338）；每新增一個原語都要回查五作品當時全部未移植真卡，完整整卡驗收後才能登錄。
 - **禁止**合併 main、部署、force push、寫回 PR #77、重建 effectQueue／AP／能源；BLC-4-034 與未裁定巢狀 LIFE 照舊 fail closed。
+
+
+## GPT R38：必要能源上限、TOP-N 單張選取、完整真卡跨作品批次重用（2026-10-23）
+
+- **詳細交接**：[V2-R38-printed-required-energy-top-n-full-roster.md](./V2-R38-printed-required-energy-top-n-full-roster.md)。沿用 GPT Draft PR #78／`gpt/v2-resume-20261022`，對 Cursor 工作分支提 PR，不合 main、不覆寫 PR #77、不部署正式站、不 force push。
+- R38 共用原語：`printedRequiredEnergyAtMost` 比較 **印刷必要能源 `energy`**，不等於發生能源 `gen`；已重用手牌 AP 減費與 TOP-N filters。`searchTopUpToOneBottom` 專用模板重用 TOP-N 物理 UID 多選引擎的 `max=1` 流程。`ownEventUsedThisTurn` 直接從已完成的區域搬移紀錄檢視成功的 EVENT 使用，不新建事件計數器／效果隊列。
+- **已登錄三張完整印刷效果真卡**：BLC-1-070（護廷十三隊 TOP4 0–1、下個合格必要能源≤4手牌角色 AP−1、Raid）；MST-1-031（Impact 無效＋己方已用 EVENT 才 Impact1、下個必要能源≤3 EVENT AP−1、Raid／LIFE，Q2152）；SLG-1-046（TOP4 指定兩名字 OR 0–1、成功入手才棄一手牌）。皆更新 registry、independent manifest、來源證據、正式情境測試；**不是**官方全部 FAQ 獨立認證。
+- 完整掃描 **375** 尚未移植卡、其中 TOP-N 關鍵字候選 **62**（BLEACH28/TTG7/SLG10/SAO12/MST5）。已核對官方 SAO-1-056 全文，**NEAR READY**：TOP2 或 REST 免費手牌登場二選一，後者缺完整可驗證的 `chooseOneFreeRestHandCharacterWithPrintedColorEnergyAp`，不登錄。SAO-2-056/MST-1-049/SLG-1-059 仍 PARTIAL，其餘 58 TOP-N 字串候選 REVIEW PENDING，不能視為已核對完 62 張。
+- **截至已驗證程式 SHA `010482e1a40e1984f79129e694e535d22ddcad2d`** 遠端 GitHub Actions [39899603904](https://github.com/will00t-debug/Ua/actions/runs/39899603904) SUCCESS：Node22 **1941/1941**、五作品 60/60、ledger、R35/R37 報告、independent manifest、unported report。各系列 BLEACH98／TTG36／SLG43／SAO95／MST53，**325/700，未移植375**。獨立完整 FAQ 認證 **0**，局部獨立來源／情境審核 **13**。這是遠端結果，沒有宣稱本地執行。
+- 本段與 R38 文件新增後的 **最新 HEAD** 必須另查其精確 SHA 對應 CI，不可以把 `010482e1` 的成功直接冒充文件新 HEAD 的成功。下輪優先 SAO-1-056 的 REST 免費手牌登場共用 op → optionalRetireThenProgram → cannotBeChosenByOppEffect（Q1206/Q2162），BLC-4-069 攻擊結束交換高風險留後。BLC-4-034 真退場／裏向底卡與巢狀 LIFE 繼續安全阻塞。
