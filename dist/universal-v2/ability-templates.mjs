@@ -254,6 +254,18 @@ const registry=Object.freeze({
   build:v=>[{op:'searchTopOneBottomDiscard',count:v.count,
    filters:v.filters.map(f=>({...f})),logic:v.logic}]
  },
+ // Typed and strictly bounded version of the existing TOP-N choice/order path.
+ searchTopUpToTwoBottom:{
+  args:{count:v=>integer(v,1,5),filters:v=>Array.isArray(v)&&v.length>=1&&v.length<=3&&
+   v.every(f=>f&&typeof f==='object'&&!Array.isArray(f)&&Object.keys(f).length===2&&
+    ['name','trait','color','type'].includes(f.field)&&typeof f.value==='string'&&
+    !!f.value.trim()&&f.value.length<=80&&
+    (f.field!=='type'||['character','event','field'].includes(f.value)))&&
+    new Set(v.map(f=>f.field+':'+f.value)).size===v.length,
+   logic:v=>['any','all'].includes(v)},
+  build:v=>[{op:'searchTopUpToTwoBottom',count:v.count,max:2,rest:'bottom',
+   filters:v.filters.map(f=>({...f})),logic:v.logic}]
+ },
  payDiscardThen:{
   args:{optional:yesNo,then:v=>Array.isArray(v)&&v.length>=1&&v.length<=6},
   check:v=>v.then.every(x=>x&&[

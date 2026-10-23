@@ -560,6 +560,16 @@ function continueEffectQueue(pack,s){
       {kind:'effect-top-order',player:owner,sourceUid:job.sourceUid,
        uids,order:[],rest:'bottom'};
     }
+   }else if(job.op==='searchTopUpToTwoBottom'){
+    const inspected=pl.deck.slice(0,job.count),uids=inspected.map(c=>c.uid);
+    if(uids.length){
+     const choices=searchChoices(pack,s,inspected,job);
+     s.pending=choices.length?{kind:'effect-top-filter-many-choice',player:owner,
+      sourceUid:job.sourceUid,uids,choices,selected:[],
+      filters:job.filters.map(f=>({...f})),logic:job.logic,max:2}:
+      {kind:'effect-top-order',player:owner,sourceUid:job.sourceUid,
+       uids,order:[],rest:'bottom'};
+    }
    }else if(job.op==='recoverOutsideOne'){
    const matches=filteredChoices(pack,s,pl.outside,job.filter);
    if(matches.length)s.pending={kind:'effect-recover-outside',player:owner,
@@ -1428,6 +1438,34 @@ function resolveChoice(s,a,pack){
   else{s.pending=null;continueEffectQueue(pack,s);}
   return;
  }
+ if(q.kind==='effect-top-filter-many-choice'){
+  const rest=q.uids.filter(uid=>!q.selected.includes(uid));
+  const window=p.deck.slice(0,rest.length);
+  if(window.length!==rest.length||window.some((c,i)=>c.uid!==rest[i]))
+   throw Error('Inspected TOP-N cards changed');
+  if(a.uid!==null){
+   const picked=window.find(c=>c.uid===a.uid);
+   if(!picked||q.selected.includes(a.uid)||!q.choices.includes(a.uid)||
+    !matchesSearch(pack,s,picked,q))throw Error('Invalid inspected physical UID');
+   const index=p.deck.findIndex(c=>c.uid===a.uid);
+   if(index<0||index>=rest.length)throw Error('TOP-N UID outside inspected window');
+   moveOwnedLinear(pack,s,{owner:q.player,from:'deck',to:'hand',index,
+    reason:'own-effect',sourceUid:q.sourceUid});
+   s.publicReveals.push({kind:'searched-to-hand',owner:q.player,
+    title:titleOf(pack,q.player),cardId:picked.cardId,uid:picked.uid,
+    trigger:null,turn:s.turn});
+   if(s.publicReveals.length>12)s.publicReveals.splice(0,s.publicReveals.length-12);
+   q.selected.push(a.uid);
+  }
+  const leftover=q.uids.filter(uid=>!q.selected.includes(uid));
+  const candidates=p.deck.slice(0,leftover.length).filter(c=>q.choices.includes(c.uid));
+  if(a.uid===null||q.selected.length===q.max||!candidates.length){
+   if(leftover.length)s.pending={kind:'effect-top-order',player:q.player,
+    sourceUid:q.sourceUid,uids:leftover,order:[],rest:'bottom'};
+   else{s.pending=null;continueEffectQueue(pack,s);}
+  }
+  return;
+ }
  if(q.kind==='effect-top-inspect-many'){
   if(a.uid!==null){
    if(!q.uids.includes(a.uid)||q.selected.includes(a.uid))
@@ -2186,6 +2224,12 @@ function legalPending(pack,s){
   {type:'chooseTopFiltered',uid:null},
   ...q.choices.map(uid=>({type:'chooseTopFiltered',uid}))
  ];
+ if(q.kind==='effect-top-filter-many-choice')return [
+  {type:'chooseTopFilteredMany',uid:null},
+  ...q.choices.filter(uid=>!q.selected.includes(uid)&&
+   p.deck.slice(0,q.uids.length-q.selected.length).some(c=>c.uid===uid))
+   .map(uid=>({type:'chooseTopFilteredMany',uid}))
+ ];
  if(q.kind==='effect-top-inspect-many')return [
   {type:'chooseInspectedOutside',uid:null},
   ...q.uids.filter(uid=>!q.selected.includes(uid))
@@ -2900,7 +2944,7 @@ export function assertUniversalMatch(pack,s){
    !Array.isArray(s.initialCounts)||s.initialCounts.length!==2||
    s.players?.length!==2||!playerIndex(s.active)||
    !['playing','finished'].includes(s.status))throw Error('Incorrect pack/version or match state');
- if(s.pending&&(!playerIndex(s.pending.player)||!['phase-order','retirement-order','effect-move-order','effect-rest-tuck','effect-tuck-moved','block','life-batch-order','life-trigger','effect-target','effect-target-many','effect-grant-attack','granted-attack-draw','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-strip-raid-top','effect-retire-own-field','effect-retire-own-character','effect-rest-bp','effect-attack-ban','effect-grant-ap-tax','effect-grant-front-energy','raid-effect-order','effect-buff-trait','effect-buff-own','effect-once-choice','main-two-buff','main-discard-buff','main-rest-front-energy','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-order','effect-recover-outside','effect-outside-rest','effect-outside-name-rest','effect-outside-traitless-rest','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-choice-mode','recovered-self-entry','effect-optional-mill','effect-pay-ap-deploy','effect-top-trait-outside'].includes(s.pending.kind)))
+ if(s.pending&&(!playerIndex(s.pending.player)||!['phase-order','retirement-order','effect-move-order','effect-rest-tuck','effect-tuck-moved','block','life-batch-order','life-trigger','effect-target','effect-target-many','effect-grant-attack','granted-attack-draw','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-strip-raid-top','effect-retire-own-field','effect-retire-own-character','effect-rest-bp','effect-attack-ban','effect-grant-ap-tax','effect-grant-front-energy','raid-effect-order','effect-buff-trait','effect-buff-own','effect-once-choice','main-two-buff','main-discard-buff','main-rest-front-energy','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-filter-many-choice','effect-top-order','effect-recover-outside','effect-outside-rest','effect-outside-name-rest','effect-outside-traitless-rest','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-choice-mode','recovered-self-entry','effect-optional-mill','effect-pay-ap-deploy','effect-top-trait-outside'].includes(s.pending.kind)))
   throw Error('Invalid pending controller');
  if(!Array.isArray(s.raidedThisTurn)||s.raidedThisTurn.length!==2||
    s.raidedThisTurn.some(x=>typeof x!=='boolean')||
@@ -2970,6 +3014,27 @@ export function assertUniversalMatch(pack,s){
  for(const [uid,n] of Object.entries(s.blocksByUid))
   if(typeof uid!=='string'||!uid.includes('-')||!Number.isInteger(n)||n<1||n>50)
    throw Error('Invalid per-card block count');
+ if(s.pending?.kind==='effect-top-filter-many-choice'){
+  const q=s.pending,pl=s.players[q.player];
+  const rest=q.uids?.filter(uid=>!q.selected?.includes(uid));
+  const source=[...pl.outside,...field(pl)].find(c=>c.uid===q.sourceUid);
+  const printed=source&&card(pack,source).effects?.onPlay?.some(e=>
+   e.op==='searchTopUpToTwoBottom'&&e.max===2&&e.rest==='bottom'&&
+   e.count>=q.uids?.length&&same(e.filters,q.filters)&&e.logic===q.logic);
+  if(!printed||q.max!==2||!Array.isArray(q.uids)||q.uids.length<1||q.uids.length>5||
+   new Set(q.uids).size!==q.uids.length||!Array.isArray(q.choices)||
+   !Array.isArray(q.selected)||q.selected.length>1||
+   new Set(q.selected).size!==q.selected.length||
+   q.selected.some(uid=>!q.uids.includes(uid)||!q.choices.includes(uid)||
+    !pl.hand.some(c=>c.uid===uid))||
+   !same(pl.deck.slice(0,rest.length).map(c=>c.uid),rest)||
+   !same(q.choices,q.uids.filter(uid=>{
+    const physical=pl.deck.find(c=>c.uid===uid)||pl.hand.find(c=>c.uid===uid);
+    return physical&&matchesSearch(pack,s,physical,q);
+   }))||Object.keys(q).length!==9||
+   Object.keys(q).some(k=>!['kind','player','sourceUid','uids','choices','selected','filters','logic','max'].includes(k)))
+   throw Error('Invalid resumed TOP-N multi choice');
+ }
  if(s.pending?.kind==='effect-bounce-own'&&s.pending.optional===true){
   const q=s.pending,src=field(s.players[q.player]).find(c=>c.uid===q.sourceUid);
   const expected=src&&card(pack,src).effects?.onPlay?.flatMap(e=>e.op==='chooseOne'?e.options.flatMap(o=>o.then):[e])
@@ -3151,7 +3216,7 @@ export function assertUniversalMatch(pack,s){
    typeof e.key!=='string'||!Array.isArray(e.jobs))))
   throw Error('Invalid retirement order');
  if(!Array.isArray(s.effectQueue)||[...s.effectQueue,...lifeEntries.flatMap(e=>e.jobs)].some(e=>!playerIndex(e.owner)||
-   !['grantedAttackDraw','grantOnAttack','draw','drawIfOwnName','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','forbidAttackOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
+   !['grantedAttackDraw','grantOnAttack','draw','drawIfOwnName','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','forbidAttackOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopUpToTwoBottom','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
     'discardGate','enemyFrontAllBpDown','retireOppFrontAllUnderBp',
     'nextEligibleHandPlayApDiscount','buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
     'recoverOutsideColorUnderEnergy','deployOutsideRest','deployOutsideNameRest','payApDeployNamedRest','inspectTopTraitOutside','deployOutsideTraitlessRestOrRaid','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','moveAtMainEnd','retireOwnFieldOne','retireOwnCharacterOne','openBlock','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','phaseOrder','effectMoveOrder','restSelfTuckMovedFaceDown','sourceResolutionBoundary','lifeBatchStep','lifeRelease','advanceAfterAttack','additionalBattleDamage','openRetirementBatch','closeRetirementBatch','retirementOrder','battleImpactDamage','discardOppHand','activeSelfIf'].includes(e.op)))
@@ -3215,9 +3280,9 @@ export function universalPrivateChoices(pack,s,viewer){
   }))};
  }
  if(!q||q.player!==viewer||
-  !['effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-order','effect-top-trait-outside','effect-recover-outside','effect-outside-rest','effect-outside-name-rest','effect-outside-traitless-rest','effect-bounce-own','effect-discard-cost','effect-discard-gate'].includes(q.kind))
+  !['effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-filter-many-choice','effect-top-order','effect-top-trait-outside','effect-recover-outside','effect-outside-rest','effect-outside-name-rest','effect-outside-traitless-rest','effect-bounce-own','effect-discard-cost','effect-discard-gate'].includes(q.kind))
   return null;
- const zone=['effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-order','effect-top-trait-outside'].includes(q.kind)?'deck':
+ const zone=['effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-filter-many-choice','effect-top-order','effect-top-trait-outside'].includes(q.kind)?'deck':
   q.kind==='effect-recover-outside'||q.kind==='effect-outside-rest'||q.kind==='effect-outside-name-rest'||q.kind==='effect-outside-traitless-rest'?'outside':
   q.kind==='effect-bounce-own'?'field':'hand';
  return {kind:q.kind,player:viewer,options:legalPending(pack,s).map(action=>{
