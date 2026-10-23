@@ -149,11 +149,34 @@ export const universalBp=bp;
 export function universalAttackDamage(pack,s,c){
  const d=card(pack,c),owner=Number(String(c.uid).split('-')[0]);
  if(d.type!=='character'||originalEffectsDisabled(s,c))return 1;
+ // A resolved BLOCK battle win by ANOTHER own physical character is a
+ // temporary replacement keyword. It does not invent Impact or extra LIFE.
+ const gained=c.otherOwnBattleWinDamage2;
  // 【ダメージ（2）】 replaces the 1 direct-attack damage. It is not Impact.
- const base=d.printedAttackDamage||1;
+ const base=Math.max(d.printedAttackDamage||1,
+  gained&&gained.turn===s.turn&&
+   gained.stamp===c.fieldEntryStamp?2:1);
  return base+d.passiveBonuses.reduce((n,p)=>n+(p.extraDamage&&
   matchesV2LiveCondition(s,owner,c.uid,p.condition,x=>card(pack,x),
    ()=>calcEnergy(pack,s,owner),x=>bp(pack,s,x))?p.extraDamage:0),0);
+}
+// Invoked only at an actual BLOCK battle outcome, never at LIFE damage.
+// Attacker wins equality; blocker must be strictly greater to win. This
+// shared live grant applies to both sides without a title-specific reducer.
+function grantBattleWinToOtherOwn(pack,s,owner,winner,role){
+ if(!['attacker','blocker'].includes(role)||
+  !winner||typeof winner.uid!=='string'||
+  !Number.isInteger(winner.fieldEntryStamp)||winner.fieldEntryStamp<1)
+  throw Error('Invalid physical combat victory');
+ for(const watcher of field(s.players[owner])){
+  if(watcher.uid===winner.uid||
+   !card(pack,watcher).otherOwnBattleWonDamageTwo||
+   originalEffectsDisabled(s,watcher))continue;
+  watcher.otherOwnBattleWinDamage2={
+   turn:s.turn,stamp:watcher.fieldEntryStamp,
+   winnerUid:winner.uid,winnerStamp:winner.fieldEntryStamp,role
+  };
+ }
 }
 function impactOnBattleWin(pack,s,c){
  const d=card(pack,c);
@@ -1360,10 +1383,14 @@ function resolveChoice(s,a,pack){
   if(blockKeyword&&blocked===blockKeyword&&!originalEffectsDisabled(s,blocker))
    attemptFieldActive(s,q.player,blocker);
   if(bp(pack,s,attacker)>=bp(pack,s,blocker)){
+   grantBattleWinToOtherOwn(pack,s,s.active,attacker,'attacker');
    const impact=impactOnBattleWin(pack,s,attacker)>0&&
     !card(pack,blocker).impactNull;
    const replacement=retire(pack,s,q.player,'front',slot,{postImpact:impact});
    if(impact&&!replacement)queueImpactAfterRetirement(pack,s,q.player);
+  }else{
+   // Only strict defender BP > attacker BP earns the defender's victory.
+   grantBattleWinToOtherOwn(pack,s,q.player,blocker,'blocker');
   }
   if(!s.pending)continueEffectQueue(pack,s);
   return;
@@ -3694,6 +3721,23 @@ export function assertUniversalMatch(pack,s){
   }
   for(const zone of ['deck','hand','life','lifeRevealed','outside','removed'])for(const c of pl[zone]||[])visit(c);
   for(const c of field(pl))visit(c);
+  // Printed source provenance is checked even after JSON restoration.
+  // A departed grantor may still have earned a valid temporary keyword;
+  // the target's exact field entry incarnation remains mandatory.
+  for(const c of items)if(c.otherOwnBattleWinDamage2!==undefined){
+   const g=c.otherOwnBattleWinDamage2;
+   const winner=items.find(x=>x.uid===g?.winnerUid);
+   if(!card(pack,c).otherOwnBattleWonDamageTwo||
+    !g||typeof g!=='object'||Array.isArray(g)||
+    !Number.isInteger(g.turn)||g.turn<1||g.turn>s.turn||
+    !Number.isInteger(g.stamp)||g.stamp<1||
+    !Number.isInteger(g.winnerStamp)||g.winnerStamp<1||
+    !['attacker','blocker'].includes(g.role)||
+    typeof g.winnerUid!=='string'||!g.winnerUid.startsWith(p+'-')||
+    !winner||winner.uid===c.uid||
+    Object.keys(g).sort().join(',')!=='role,stamp,turn,winnerStamp,winnerUid')
+    throw Error('Invalid saved other-own battle-win DAMAGE2 grant');
+  }
   for(const e of s.continuousStates.filter(e=>e.kind===DISCOUNT_KIND&&e.controller===p)){
    const source=items.find(c=>c.uid===e.sourceUid);
    if(!source||source.cardId!==e.sourceCardId||!definitionGrantsDiscount(packs[p].cards[source.cardId],e.filter))
