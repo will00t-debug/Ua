@@ -1872,3 +1872,16 @@ Continue on `gpt/v2-resume-20261022` / PR #78 against `cursor/v2-multi-retire-li
 Previous known green code `525e01925ee62270e75646a3823e18ec60f2cffa` and Actions [39884026935](https://github.com/will00t-debug/Ua/actions/runs/39884026935) Node22 **1869/1869**, 60/60, independent manifest/report success **ONLY covers earlier R34 code**. New R35 HEAD, including this handoff doc, requires its own GitHub Actions logs; these **have not been verified yet** through connected GitHub workflow-run lookup (which only includes PR-triggered runs, not push runs). Do not claim successful R35 Node22 or matrix until a matching new HEAD job log is reviewed. No local clone/Node22 run. Baseline counts only: BLEACH97, TTG36, SLG42, SAO92, MST49 = **316/700**; **384** still unported; all-card exhaustive official FAQ certification **0**. Main, production and Cursor PR #77 untouched; no force push.
 
 Reproduction commands: `node scripts/v2-card-certification-report.mjs`, `node scripts/v2-r35-unported-atom-audit.mjs`, `npm test`, `node scripts/v2-integrated-match-matrix.mjs`, `node scripts/v2-assert-independent-manifest.mjs`, `node scripts/v2-unported-report.mjs`. Next immediate task is **inspect current-head CI, fix any real failures, then complete comprehensive per-card FAQ matrix or safely implement first shared original-stat next eligible hand-play AP modifier**.
+
+
+## 第三十六輪 R36｜能力全庫對照 → AP 減費 → SAO/MST 真卡批次移植（2026-10-23）
+
+本輪詳細且**可重跑**的資料請看 [V2-R36-capability-to-real-cards-and-ap-discount.md](./V2-R36-capability-to-real-cards-and-ap-discount.md)，並參照較精確的當日累積 [GPT-resume-20261022.md](./GPT-resume-20261022.md) R36 段落。PR #78 `gpt/v2-resume-20261022` → `cursor/v2-multi-retire-life-6ff5` 仍 Draft；不合併 main／不部署正式站／不改 PR #77／不 force-push。
+
+本輪在原 R35 腳本實作來源 roster + registry 動態 `capabilityIndex()`（`15334bd8`）；既有支付和 `continuousStates` 實作一次性的 `nextEligibleHandPlayApDiscount`（`182f7e37`），印刷 BP/產能/trait/card type、合格手牌使用才消耗、到期、UID/stamp、save/restore、Q1210/Q2161/Q670 疊加；同時把 **SAO-2-074 トンキー** 和 **MST-1-062 ナナホシ** 的完整已知印刷效果登錄 V2 registry、獨立 manifest 和局部獨立認證紀錄（`5088cf49`），另驗 AP selection surcharge 互不混用和 LIFE、AI、跨作品、UID（`6823a12`）。新增 7 張已核對仍缺其他能力的減費真卡候選，不自動登錄。
+
+**已正式驗證程式 SHA `6823a1205c1615b0f91342f018a96c08ae15038c` → [Actions 39891258143](https://github.com/will00t-debug/Ua/actions/runs/39891258143) success：Node22 1896/1896；五作品矩陣60/60；認證 ledger／atom audit／獨立 manifest／未移植報告 success。** BLEACH97、TTG36、SLG42、SAO93、MST50，合計 **318/700**，未移植 **382**；獨立全面 FAQ 完整認證 **0**，局部認證紀錄 6 張。所有 Node22 數字來自遠端，不宣稱本地 test。早期 R35 `07c01009` 的 CI 曾失敗；不可拿舊 R34 綠燈套用。
+
+**固定後續流程**：完成共用能力 → 重算所有未移植真卡及印刷來源候選 → 必須逐張核對官方全部印刷效果 → 完整才移植並更新各名單/驗收 → 集中 CI → 排序下一批缺口。不以字串命中為官方語意等價，並主動回查過往因該原語阻塞的卡。下一批優先 TOP-N 0–2 UID 合法選擇（SAO-1-031/066）、重用 FRONT 產能 grant（MST-1-080/060）、印刷產能上限（BLC-1-070/MST-1-031），高風險 BLC-4-069 攻擊結束/SAO-2-058/MST-1-067 不可被效果選擇另做官方時序與選擇作用域審核。
+
+**不得越過安全閘門**：BLC-2-019/047/4-034 未登錄，4-034 強制 REST→真正退場→底下裏向卡回手選擇時點未獲官方明確裁定；巢狀第二批 LIFE 保留原子安全拒絕。R36 文件更新 SHA 的 CI 需按最終 HEAD 另查，不可用 `6823a12` 成功宣稱文件提交已驗證。
