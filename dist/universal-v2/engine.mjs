@@ -2885,6 +2885,8 @@ export function legalUniversalActions(pack,s){
  if(s.phase==='main'){
    for(const c of pl.energy.filter(Boolean)){
     const d=originalEffectsDisabled(s,c)?null:card(pack,c),ab=d?.mainAbility;
+    if(ab?.op==='fieldRestRetireThen'&&d.type==='field'&&c.ready)
+     out.push({type:'activate',uid:c.uid,mode:'fieldRestTrueRetireDeploy'});
     if(ab?.op!=='fieldDualMain'||d.type!=='field')continue;
     const retiredKey=d.name+'|fieldDualRetire',buffKey=d.name+'|fieldDualBuff';
     if(!s.mainReadyOnceByName[p].includes(retiredKey)&&
@@ -3132,6 +3134,20 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
    const selected=field(pl).find(c=>c.uid===action.uid);
    if(!selected||originalEffectsDisabled(s,selected)||!card(pack,selected).mainAbility)throw Error('Main ability source missing');
    const d=card(pack,selected),ability=d.mainAbility;
+   if(ability.op==='fieldRestRetireThen'){
+    if(action.mode!=='fieldRestTrueRetireDeploy'||!selected.ready||
+     !pl.energy.some(c=>c?.uid===selected.uid)||d.type!=='field')
+     throw Error('FIELD REST+true-retire MAIN requires ACTIVE own ENERGY FIELD');
+    selected.ready=false;
+    // True retirement resolves first; only then does the named outside entry
+    // reach the existing queue, retaining original source UID/name provenance.
+    s.effectQueue.unshift(...ability.then.map(x=>({...x,owner:p,
+     sourceUid:selected.uid,sourceName:d.name})));
+    const pos=location(s,p,selected.uid);
+    const paused=retire(pack,s,p,pos.line,pos.slot);
+    if(!paused)continueEffectQueue(pack,s);
+    break;
+   }
    if(ability.op==='fieldDualMain'){
     if(!pl.energy.some(c=>c?.uid===selected.uid)||d.type!=='field')
      throw Error('Dual MAIN requires own energy FIELD');
