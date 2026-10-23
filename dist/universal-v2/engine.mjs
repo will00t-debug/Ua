@@ -745,6 +745,12 @@ function continueEffectQueue(pack,s){
    if(choices.length)s.pending={kind:'effect-rest-bp',player:owner,
     sourceUid:job.sourceUid,choices,limit:null,optional:job.optional,
     skipNextActive:true,onlyRest:true,anyLine:true,restTarget:false};
+  }else if(job.op==='grantOwnFrontChoiceProtection'){
+   const choices=pl.front.filter(c=>c&&card(pack,c).type==='character')
+    .map(c=>({uid:c.uid,stamp:c.fieldEntryStamp}));
+   if(choices.length)s.pending={kind:'effect-own-front-protect',player:owner,
+    sourceUid:job.sourceUid,choices,scope:job.scope,
+    apRecoveryOnName:job.apRecoveryOnName};
   }else if(job.op==='grantSelectionApTaxOwnOtherTrait'){
    const choices=field(pl).filter(c=>c.uid!==job.sourceUid&&
     card(pack,c).type==='character'&&
@@ -1871,6 +1877,23 @@ function resolveChoice(s,a,pack){
   s.pending=null;
   return;
  }
+ if(q.kind==='effect-own-front-protect'){
+   const choice=q.choices.find(c=>c.uid===a.uid),
+    selected=p.front.find(c=>c?.uid===a.uid);
+   if(!choice||!selected||selected.fieldEntryStamp!==choice.stamp||
+    card(pack,selected).type!=='character')
+    throw Error('Illegal or stale own FRONT selection protection target');
+   grantContinuousState(s,{kind:'cannotBeChosenByOppEffect',controller:q.player,
+    sourceUid:q.sourceUid,targetUid:selected.uid,sourceLinked:false,
+    selectionScope:q.scope,until:{player:q.player,phase:'start',edge:'start'}});
+   const recover=!!q.apRecoveryOnName&&
+    cardHasName(card(pack,selected),q.apRecoveryOnName,
+      originalEffectsDisabled(s,selected));
+   s.pending=null;
+   if(recover)s.effectQueue.unshift({op:'recoverAp',owner:q.player,
+    sourceUid:q.sourceUid,count:1});
+   continueEffectQueue(pack,s);return;
+ }
  if(q.kind==='effect-grant-ap-tax'){
    if(a.uid!==null){
     const selected=q.choices.find(c=>c.uid===a.uid);
@@ -2394,6 +2417,9 @@ function legalPending(pack,s){
  if(q.kind==='main-rest-front-energy')
   return q.choices.filter(uid=>p.front.some(c=>c?.uid===uid&&c.ready))
    .map(uid=>({type:'chooseRestFrontEnergy',uid}));
+ if(q.kind==='effect-own-front-protect')return q.choices
+  .filter(c=>p.front.some(x=>x?.uid===c.uid&&x.fieldEntryStamp===c.stamp))
+  .map(c=>({type:'chooseOwnFrontProtect',uid:c.uid}));
  if(q.kind==='effect-grant-ap-tax')return [
    {type:'chooseApTaxGrant',uid:null},
    ...q.choices.map(c=>({type:'chooseApTaxGrant',uid:c.uid}))
@@ -2515,6 +2541,8 @@ function legalPending(pack,s){
 function eventMandatoryTargetsAvailable(pack,s,owner,d,reservedAp=d.ap){
  const enemy=s.players[1-owner];
  return (d.effects?.onPlay||[]).every(job=>{
+  if(job.op==='grantOwnFrontChoiceProtection')
+   return s.players[owner].front.some(c=>c&&card(pack,c).type==='character');
   if(job.optional!==false)return true;
   if(job.op==='restOppFrontOne')
    return enemy.front.some(c=>c&&!effectChoiceProtected(s,owner,c.uid,'event')&&
