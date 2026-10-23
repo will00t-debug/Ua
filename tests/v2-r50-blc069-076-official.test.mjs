@@ -89,6 +89,16 @@ test('R50 076 truly RETIRES physical FIELD and offers exact printed energy<=2 ou
  assert.ok(action);s=doIt(s,action);
  const cheap=pull(s,'BLC-4-067');
  s.players[0].outside.push(cheap);
+ // Normal hand FIELD entry is REST. It legitimately refreshes ACTIVE at
+ // the next own turn; never turn it ACTIVE by test fiat.
+ let steps=45;
+ while(!(s.active===0&&s.players[0].ownTurns===4&&s.phase==='main')&&--steps>0){
+  const actions=legalUniversalActions(pack,s);
+  const next=actions.find(a=>a.type==='next')||actions.find(a=>a.uid===null)||actions[0];
+  assert.ok(next);s=doIt(s,next);
+ }
+ assert.ok(steps>0);
+ assert.ok(s.players[0].energy.some(c=>c?.uid===field.uid&&c.ready));
  const ap=s.players[0].apCards.filter(c=>c.ready).length;
  assert.ok(legalUniversalActions(pack,s).some(a=>a.type==='activate'&&a.uid===field.uid&&
   a.mode==='fieldRestTrueRetireDeploy'));
