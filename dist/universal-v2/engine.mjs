@@ -565,14 +565,20 @@ function continueEffectQueue(pack,s){
       {kind:'effect-top-order',player:owner,sourceUid:job.sourceUid,
        uids,order:[],rest:'bottom'};
     }
-   }else if(job.op==='deployOwnHandRest'){
+   }else if(job.op==='deployOwnHandRest'||job.op==='deployOwnHandSpecial'){
+    // Current hand is recomputed AFTER earlier optional outside recovery.
+    const special=job.op==='deployOwnHandSpecial';
     const choices=pl.hand.filter(c=>{
      const d=card(pack,c);
-     return d.type===job.type&&d.color===job.color&&d.energy<=job.energy&&d.ap===job.ap;
+     return d.type===job.type&&d.color===job.color&&d.ap===job.ap&&
+      (special?(job.maxEnergy===null||d.energy<=job.maxEnergy)&&
+       (job.trait===null||cardHasTrait(d,job.trait)):d.energy<=job.energy);
     }).map(c=>c.uid);
     if(choices.length)s.pending={kind:'effect-hand-rest',player:owner,
      sourceUid:job.sourceUid,sourceName:job.sourceName,choices,
-     type:job.type,color:job.color,energy:job.energy,ap:job.ap,max:job.max};
+     type:job.type,color:job.color,ap:job.ap,max:job.max,
+     ...(special?{special:true,trait:job.trait,maxEnergy:job.maxEnergy,
+      ready:job.ready,protectionScope:job.protectionScope}:{energy:job.energy})};
    }else if(job.op==='searchTopUpToTwoBottom'){
     const inspected=pl.deck.slice(0,job.count),uids=inspected.map(c=>c.uid);
     if(uids.length){
@@ -1666,21 +1672,31 @@ function resolveChoice(s,a,pack){
    if(a.uid===null){s.pending=null;continueEffectQueue(pack,s);return;}
    const i=p.hand.findIndex(c=>c.uid===a.uid);
    if(i<0||!q.choices.includes(a.uid)||!['front','energy'].includes(a.line))
-    throw Error('Hand REST requires eligible own UID');
+    throw Error('Hand effect entry requires eligible own UID');
    const physical=p.hand[i],d=card(pack,physical);
-   if(d.type!==q.type||d.color!==q.color||d.energy>q.energy||d.ap!==q.ap||
+   if(d.type!==q.type||d.color!==q.color||d.ap!==q.ap||
+    (q.special?(q.maxEnergy!==null&&d.energy>q.maxEnergy)||
+      (q.trait!==null&&!cardHasTrait(d,q.trait)):d.energy>q.energy)||
     (a.line==='front'&&(d.type!=='character'||d.frontForbidden)))
-    throw Error('Hand REST printed condition changed');
+    throw Error('Hand effect entry printed condition changed');
    commitDestination(pack,s,q.player,a.line,a.slot,a.replaceUid);
-   p.hand.splice(i,1);physical.ready=false;
+   p.hand.splice(i,1);physical.ready=q.special?q.ready:false;
    physical.fieldEntryStamp=s.nextFieldEntryStamp++;
    p[a.line][a.slot]=physical;
    recordCompletedMove(pack,s,{physical,owner:q.player,from:'hand',to:a.line,
     reason:'own-effect',sourceUid:q.sourceUid});
    s.pending=null;
-   if(q.max>1)s.effectQueue.unshift({op:'deployOwnHandRest',owner:q.player,
-    sourceUid:q.sourceUid,sourceName:q.sourceName,type:q.type,color:q.color,
-    energy:q.energy,ap:q.ap,max:q.max-1});
+   // Grant only to the card that has actually entered this legal slot.
+   if(q.special&&q.protectionScope!==null)
+    grantContinuousState(s,{kind:'cannotBeChosenByOppEffect',controller:q.player,
+     sourceUid:q.sourceUid,targetUid:physical.uid,sourceLinked:false,
+     selectionScope:q.protectionScope,
+     until:{player:q.player,phase:'start',edge:'start'}});
+   if(q.max>1)s.effectQueue.unshift({op:q.special?'deployOwnHandSpecial':'deployOwnHandRest',
+    owner:q.player,sourceUid:q.sourceUid,sourceName:q.sourceName,
+    type:q.type,color:q.color,ap:q.ap,max:q.max-1,
+    ...(q.special?{trait:q.trait,maxEnergy:q.maxEnergy,ready:q.ready,
+     protectionScope:q.protectionScope}:{energy:q.energy})});
    applyEffects(pack,s,physical,'onPlay',q.player,'ownEffect');
    return;
   }
