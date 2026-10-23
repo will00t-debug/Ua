@@ -14,7 +14,12 @@ const trial=createUniversalPack({id:'sword-art-online',cards:[{
  effects:{onPlay:[{op:'grantOwnFrontChoiceProtection',
   scope:'any',until:'nextOwnStart',optional:false,apRecoveryOnName:'アスナ'}]}
 }]});
-const packs=[{...baseline,cards:{...baseline.cards,...trial.cards}},baseline];
+// Full-print tests now run against the actual registered title pack, not
+// the pre-registration isolated probe. The independently constructed DSL
+// profile remains a strict comparison of the full printed effect.
+assert.deepEqual(baseline.cards['SAO-2-058'].effects.onPlay,
+ trial.cards['SAO-2-058'].effects.onPlay);
+const packs=[baseline,baseline];
 const ids=['SAO-1-001','SAO-1-005','SAO-2-035','SAO-2-047','SAO-1-004',
  'SAO-1-019','SAO-1-020','SAO-1-051','SAO-1-057','SAO-1-068',
  'SAO-1-073','SAO-2-016','SAO-2-058'];
