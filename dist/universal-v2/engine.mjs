@@ -1857,6 +1857,26 @@ function resolveChoice(s,a,pack){
   s.pending=null;s.effectQueue.unshift(...ordered);
   continueEffectQueue(pack,s);return;
  }
+ if(q.kind==='main-discard-self-retire'){
+  const pos=location(s,q.player,q.sourceUid),src=pos?.c;
+  const ability=src&&card(pack,src).mainAbility;
+  const idx=p.hand.findIndex(c=>c.uid===a.uid);
+  if(!pos||!src||!['front','energy'].includes(pos.line)||
+   src.fieldEntryStamp!==q.sourceStamp||src.ready!==false||
+   ability?.op!=='restDiscardRetireThen'||idx<0||!q.choices.includes(a.uid))
+   throw Error('MAIN cost requires exact REST source and OWN hand UID');
+  moveOwnedLinear(pack,s,{owner:q.player,from:'hand',to:'outside',index:idx,
+   reason:'payment',sourceUid:q.sourceUid});
+  s.pending=null;
+  // Earn a continuation first; true retirement inserts any onRetire jobs
+  // before that continuation in the ORIGINAL queue.
+  s.effectQueue.unshift(...ability.then.map(x=>({...x,owner:q.player,
+   sourceUid:q.sourceUid,sourceName:card(pack,src).name})),
+   ...sourceMoveBoundary(pack,s,q.player,q.sourceUid));
+  const paused=retire(pack,s,q.player,pos.line,pos.slot);
+  if(!paused)continueEffectQueue(pack,s);
+  return;
+ }
  if(q.kind==='main-discard-buff'){
   const index=p.hand.findIndex(c=>c.uid===a.uid);
   const source=field(p).find(c=>c.uid===q.sourceUid);
@@ -2462,6 +2482,10 @@ function legalPending(pack,s){
  if(q.kind==='raid-effect-order')return [
    {type:'chooseRaidOrder',mode:'baseFirst'},{type:'chooseRaidOrder',mode:'entryFirst'}
   ];
+ if(q.kind==='main-discard-self-retire')
+  return p.hand.filter(c=>q.choices.includes(c.uid)).map(c=>({
+   type:'chooseMainDiscardRetire',uid:c.uid
+  }));
  if(q.kind==='main-discard-buff')
   return p.hand.filter(c=>q.choices.includes(c.uid)).map(c=>({
    type:'chooseMainDiscard',uid:c.uid
@@ -2695,6 +2719,8 @@ export function legalUniversalActions(pack,s){
     retiredThisTurn(s,p,ability.cardType)&&
     !s.mainReadyOnceByName[p].includes(d.name+'|readySelfIfOwnRetiredThisTurn'))
     out.push({type:'activate',uid:c.uid,mode:'retireReady'});
+   if(ability?.op==='restDiscardRetireThen'&&c.ready&&pl.hand.length)
+    out.push({type:'activate',uid:c.uid,mode:'restDiscardRetire'});
    if(ability?.op==='discardHandBuffSelf'&&pl.hand.length>0&&
     !s.mainAbilityUsedUids.includes(c.uid))
     out.push({type:'activate',uid:c.uid,mode:'discardSelfBuff'});
@@ -2914,6 +2940,16 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
      sourceName:d.name,optional:ability.optional===true,after:ability.after});
     continueEffectQueue(pack,s);break;
    }
+   if(ability.op==='restDiscardRetireThen'){
+    if(action.mode!=='restDiscardRetire'||!selected.ready||!pl.hand.length||
+     !Number.isInteger(selected.fieldEntryStamp))
+     throw Error('Printed REST+hand+retire MAIN prerequisites missing');
+    selected.ready=false;
+    s.pending={kind:'main-discard-self-retire',player:p,
+     sourceUid:selected.uid,sourceStamp:selected.fieldEntryStamp,
+     choices:pl.hand.map(c=>c.uid)};
+    break;
+   }
    if(ability.op==='readySelfIfOwnRetiredThisTurn'){
     const key=d.name+'|readySelfIfOwnRetiredThisTurn';
     if(action.mode!=='retireReady'||!retiredThisTurn(s,p,ability.cardType)||
@@ -3128,7 +3164,7 @@ export function assertUniversalMatch(pack,s){
    !Array.isArray(s.initialCounts)||s.initialCounts.length!==2||
    s.players?.length!==2||!playerIndex(s.active)||
    !['playing','finished'].includes(s.status))throw Error('Incorrect pack/version or match state');
- if(s.pending&&(!playerIndex(s.pending.player)||!['phase-order','retirement-order','effect-move-order','effect-rest-tuck','effect-tuck-moved','block','life-batch-order','life-trigger','effect-target','effect-target-many','effect-grant-attack','granted-attack-draw','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-strip-raid-top','effect-retire-own-field','effect-retire-own-character','effect-rest-bp','effect-attack-ban','effect-own-front-protect','effect-grant-ap-tax','effect-grant-front-energy','raid-effect-order','effect-buff-trait','effect-buff-own','effect-once-choice','main-two-buff','main-discard-buff','main-rest-front-energy','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-filter-many-choice','effect-top-order','effect-recover-outside','effect-outside-rest','effect-outside-name-rest','effect-outside-traitless-rest','effect-named-zone-entry','effect-hand-rest','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-choice-mode','recovered-self-entry','effect-optional-mill','effect-pay-ap-deploy','effect-top-trait-outside'].includes(s.pending.kind)))
+ if(s.pending&&(!playerIndex(s.pending.player)||!['phase-order','retirement-order','effect-move-order','effect-rest-tuck','effect-tuck-moved','block','life-batch-order','life-trigger','effect-target','effect-target-many','effect-grant-attack','granted-attack-draw','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-strip-raid-top','effect-retire-own-field','effect-retire-own-character','effect-rest-bp','effect-attack-ban','effect-own-front-protect','effect-grant-ap-tax','effect-grant-front-energy','raid-effect-order','effect-buff-trait','effect-buff-own','effect-once-choice','main-two-buff','main-discard-buff','main-discard-self-retire','main-rest-front-energy','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-filter-many-choice','effect-top-order','effect-recover-outside','effect-outside-rest','effect-outside-name-rest','effect-outside-traitless-rest','effect-named-zone-entry','effect-hand-rest','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-choice-mode','recovered-self-entry','effect-optional-mill','effect-pay-ap-deploy','effect-top-trait-outside'].includes(s.pending.kind)))
   throw Error('Invalid pending controller');
  if(!Array.isArray(s.raidedThisTurn)||s.raidedThisTurn.length!==2||
    s.raidedThisTurn.some(x=>typeof x!=='boolean')||
@@ -3294,6 +3330,16 @@ export function assertUniversalMatch(pack,s){
     'ready','line','handChoices','outsideChoices','color','ap',
     'maxEnergy','grantBp'].includes(k)))
    throw Error('Invalid named free zone entry provenance');
+ }
+ if(s.pending?.kind==='main-discard-self-retire'){
+  const q=s.pending,pos=location(s,q.player,q.sourceUid),src=pos?.c,pl=s.players[q.player];
+  if(!src||src.ready!==false||src.fieldEntryStamp!==q.sourceStamp||
+   !['front','energy'].includes(pos.line)||
+   card(pack,src).mainAbility?.op!=='restDiscardRetireThen'||
+   !Array.isArray(q.choices)||!same(q.choices,pl.hand.map(c=>c.uid))||
+   Object.keys(q).length!==5||Object.keys(q).some(k=>
+    !['kind','player','sourceUid','sourceStamp','choices'].includes(k)))
+   throw Error('Invalid paid MAIN retire pending provenance');
  }
  validateContinuousStates(s);
  if(typeof s.endRefreshed!=='boolean')throw Error('Invalid end refresh flag');
