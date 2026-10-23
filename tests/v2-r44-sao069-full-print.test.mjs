@@ -69,7 +69,10 @@ test('R44 actual paid RAID onPlay BP check and attack-end self retirement leads 
  const before=s.players[0].apCards.filter(x=>x.ready).length;
  s=use(s,choice);
  const entered=s.players[0].front[choice.slot];
- assert.equal(entered.uid,as.uid);assert.equal(entered.ready,false);
+ assert.equal(entered.uid,as.uid);
+ // Asuna enters REST, then this turn player's END refresh happens immediately
+ // once the attack-end retirement/entry queue has fully resolved.
+ assert.equal(s.active,1);assert.equal(entered.ready,true);
  assert.equal(s.players[0].apCards.filter(x=>x.ready).length,before);
  assert.equal(assertUniversalMatch(packs,JSON.parse(JSON.stringify(s))),true);
 });
