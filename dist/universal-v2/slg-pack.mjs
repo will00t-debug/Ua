@@ -3,6 +3,15 @@ import {SOLO_LEVELING_CARDS} from '../solo-leveling.mjs';
 import {createUniversalPack} from './pack.mjs';
 const catalog=Object.fromEntries(SOLO_LEVELING_CARDS.map(c=>[c.id,c]));
 const authored=[
+ // 12 printed copies allowed; another own shadow-army card must exist before
+ // inspecting TOP2. Printed name 水篠 旬 and exact trait 影の軍団 are OR filters.
+ {"id":"SLG-1-030","name":"影の兵士","color":"purple","energy":0,"ap":1,
+  "bp":1500,"gen":1,"trigger":"draw","type":"character","maxCopies":12,
+  "textAnchor":"同卡號牌組最多12張","implementation":"dsl",
+  "officialTraits":["影の軍団"],"catalogueTraits":["影之軍團"],
+  "effects":{"onPlay":[{"op":"inspectTopTraitOutside","count":2,
+   "trait":"影の軍団","orName":"水篠 旬",
+   "requiresOtherOwnTrait":"影の軍団","rest":"top"}]}},
  {"id":"SLG-1-046","name":"水篠 旬","color":"green","energy":1,"ap":1,"bp":2000,"gen":1,"trigger":null,"type":"character","textAnchor":"登場時：查看牌庫頂4張","implementation":"dsl","templateEffects":{"onPlay":[{"template":"searchTopOneBottomDiscardWhere","count":4,"filters":[{"field":"name","value":"水篠 旬"},{"field":"name","value":"デイリークエスト"}],"logic":"any"}]}},
   {"id":"SLG-1-070","name":"シーマ","color":"green","energy":0,
    "ap":1,"bp":1000,"gen":1,"trigger":"active","type":"character",
