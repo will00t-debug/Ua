@@ -2853,6 +2853,9 @@ export function legalUniversalActions(pack,s){
     out.push({type:'activate',uid:c.uid,mode:'retireReady'});
    if(ability?.op==='restDiscardRetireThen'&&c.ready&&pl.hand.length)
     out.push({type:'activate',uid:c.uid,mode:'restDiscardRetire'});
+   if(ability?.op==='fieldOnceBuffOther'&&!s.mainAbilityUsedUids.includes(c.uid)&&
+    field(pl).some(x=>x.uid!==c.uid&&card(pack,x).type==='character'))
+    out.push({type:'activate',uid:c.uid,mode:'fieldOnceBuffOther'});
    if(ability?.op==='discardHandBuffSelf'&&pl.hand.length>0&&
     !s.mainAbilityUsedUids.includes(c.uid))
     out.push({type:'activate',uid:c.uid,mode:'discardSelfBuff'});
@@ -3095,6 +3098,19 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
     s.pending={kind:'main-discard-self-retire',player:p,
      sourceUid:selected.uid,sourceStamp:selected.fieldEntryStamp,
      choices:pl.hand.map(c=>c.uid)};
+    break;
+   }
+   if(ability.op==='fieldOnceBuffOther'){
+    if(action.mode!=='fieldOnceBuffOther'||ability.lines!=='field'||
+     s.mainAbilityUsedUids.includes(selected.uid))
+     throw Error('Unproven field MAIN once-per-turn buff');
+    const choices=field(pl).filter(c=>c.uid!==selected.uid&&
+     card(pack,c).type==='character').map(c=>c.uid);
+    if(!choices.length)throw Error('Other own CHARACTER required');
+    s.mainAbilityUsedUids.push(selected.uid);
+    s.pending={kind:'effect-buff-own',player:p,sourceUid:selected.uid,
+     choices,filter:{field:'type',value:'character'},
+     bp:ability.bp,optional:false,excludeSelf:true};
     break;
    }
    if(ability.op==='readySelfIfOwnRetiredThisTurn'){
