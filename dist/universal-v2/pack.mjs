@@ -253,7 +253,7 @@ function verifyProgram(program,path){
    }
    if(e.op==='chooseOne'){
    if(typeof e.optional!=='boolean'||!Array.isArray(e.options)||
-    e.options.length!==2||Object.keys(e).length!==3||
+    (e.options.length<2||e.options.length>3)||Object.keys(e).length!==3||
     Object.keys(e).some(k=>!['op','optional','options'].includes(k)))
     throw Error(path+'['+i+'] invalid choose-one options');
    const seen=new Set();
