@@ -5,6 +5,14 @@ import {createUniversalPack} from './pack.mjs';
 
 const PRINTED_PINS=Object.freeze({
  "SAO-2-074":{"kind":"nextHandApDiscount","nameJa":"トンキー","color":"green","energy":3,"ap":1,"bp":0,"gen":1,"type":"field","trigger":"active","traits":["ALO"],"effectJa":"【登場時】このターン中、次に手札から使用する元々のBPが3500の［特徴：ALO］の消費APを-1する。"},
+ "SAO-1-031":{"kind":"onPlayTopTwoBottom","nameJa":"三人の思い出",
+  "color":"yellow","energy":3,"ap":1,"bp":0,"gen":0,"type":"event",
+  "trigger":"draw","traits":[],
+  "effectJa":"自分の山札の上から5枚見る。その中から〈キリト〉か〈アリス〉か〈ユージオ〉を2枚まで公開し手札に加える。残りを望む順で自分の山札の下に置く。"},
+ "SAO-1-066":{"kind":"onPlayTopTwoBottom","nameJa":"妖精たちの国",
+  "color":"blue","energy":2,"ap":1,"bp":0,"gen":0,"type":"event",
+  "trigger":"draw","traits":[],
+  "effectJa":"自分の山札の上から4枚見る。その中から［特徴：ALO］を2枚まで公開し手札に加える。残りを望む順で自分の山札の下に置く。"},
  "SAO-1-005":{"kind":"onPlayTopFilterBottomDiscard","nameJa":"ユージオ",
   "color":"yellow","energy":2,"ap":1,"bp":3000,"gen":1,"type":"character",
   "trigger":null,"traits":[],"effectJa":"【登場時】自分の山札の上から4枚見る。その中から〈キリト〉か〈アリス〉を1枚まで公開し手札に加える。残りを望む順で自分の山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。"},
@@ -1449,6 +1457,14 @@ export function verifiedSaoV2Cards(){
    card.templateEffects={onPlay:[{template:'bounceOwnOtherUnderEnergy',energy:1}]};
   if(pin.kind==='onPlayPeekTop')
    card.templateEffects={onPlay:[{template:'peekTopOne'}]};
+  if(pin.kind==='onPlayTopTwoBottom'){
+   const spec=id==='SAO-1-031'?
+    {count:5,filters:[{field:'name',value:'キリト'},
+     {field:'name',value:'アリス'},{field:'name',value:'ユージオ'}]}:
+    id==='SAO-1-066'?{count:4,filters:[{field:'trait',value:'ALO'}]}:null;
+   if(!spec)throw Error(id+' missing audited printed TOP-N double-pick');
+   card.templateEffects={onPlay:[{template:'searchTopUpToTwoBottom',...spec,logic:'any'}]};
+  }
   if(pin.kind==='onPlayTopFilterBottomDiscard'){
    const spec={
     'SAO-1-005':{count:4,filters:[{field:'name',value:'キリト'},
@@ -1521,6 +1537,7 @@ export function verifiedSaoV2Entries(){
      ...(pin.kind==='ownLifeAtMostFourBp500'?['tests/v2-sao-020-life-threshold-bp.test.mjs']:[]),
      ...(pin.kind==='impactNullOwnTurnHandFiveBp1000'?['tests/v2-sao-051-hand-impact-null.test.mjs']:[]),
      ...(pin.kind==='ownTurnSilicaFieldBp'?['tests/v2-sao-019-own-silica-bp.test.mjs']:[]),
+     ...(pin.kind==='onPlayTopTwoBottom'?['tests/v2-r37-sao-two-events.test.mjs']:[]),
      ...(pin.kind==='onPlayTopFilterBottomDiscard'?
         [def.id==='SAO-1-005'?'tests/v2-r31-sao005-official-registry.test.mjs':
         'tests/v2-cross-title-top-filter-round13.test.mjs']:[]),
