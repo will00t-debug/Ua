@@ -20,6 +20,7 @@ export const R35_STATUS=Object.freeze({
  certified:'complete-independent-official-acceptance'
 });
 const sources=Object.freeze({
+ 'SAO-2-064':['sword-art-online','EX08BT','tests/v2-r46-sao064-full-print.test.mjs',['Q1208','Q1119']],
   'SAO-2-056':['sword-art-online','EX08BT','tests/v2-r39-retire-search-real.test.mjs',[]],
   'MST-1-049':['mushoku-tensei','UA54BT','tests/v2-r39-retire-search-real.test.mjs',[]],
   'SAO-1-056':['sword-art-online','UA15BT','tests/v2-r39-sao056-official.test.mjs',[]],

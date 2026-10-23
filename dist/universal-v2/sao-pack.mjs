@@ -2,8 +2,12 @@
 // Importing data never grants unsupported card IDs playability.
 import {SAO_OFFICIAL_CARDS} from '../sao-official-import.mjs';
 import {createUniversalPack} from './pack.mjs';
+import {SAO_Q1208_ASUNA_AURA} from './selection-hand-tax.mjs';
 
 const PRINTED_PINS=Object.freeze({
+ "SAO-2-064":{"kind":"frontNamedSelectionHandTax",
+  "nameJa":"キリト","color":"green","energy":4,"ap":1,"bp":4000,"gen":1,
+  "type":"character","trigger":"draw","traits":["ALO"],"effectJa":"【フロントLにある場合】自分の場の〈アスナ〉は「【相手のターン中】相手はキャラの効果やイベントカードの効果でこのキャラを選ぶ際に、追加で自身の手札を1枚場外に置かないと選べない。」を得る。〈キリト〉のこの効果は重複しない。"},
   // R44 exact printed full text, no inference from a partial keyword hit.
   "SAO-2-069":{"kind":"raidBothAttackEndRetireFreeRestAsuna",
    "nameJa":"ユウキ","color":"green","energy":4,"ap":1,"bp":4000,"gen":1,
@@ -1333,6 +1337,11 @@ export function verifiedSaoV2Cards(){
    implementation:pin.kind==='vanilla'||pin.kind==='step'?'vanilla':'dsl'};
   if(card.implementation==='vanilla')card.effects={};
   if(pin.kind==='step')card.step=true;
+  if(pin.kind==='frontNamedSelectionHandTax'){
+   card.selectionHandDiscardTax={...SAO_Q1208_ASUNA_AURA,
+    sourceTypes:[...SAO_Q1208_ASUNA_AURA.sourceTypes]};
+   card.effects={};
+  }
   if(pin.kind==='nextHandApDiscount')card.effects={onPlay:[{op:'nextEligibleHandPlayApDiscount',filter:{printedBp:3500,trait:'ALO'}}]};
   if(pin.kind==='grantOwnFrontChoiceProtection')
    card.effects={onPlay:[{op:'grantOwnFrontChoiceProtection',optional:false,
@@ -1601,6 +1610,7 @@ export function verifiedSaoV2Entries(){
      source.source,
     testFiles:Object.freeze([
      ...(pin.kind==='nextHandApDiscount'?['tests/v2-r36-real-discount-cards.test.mjs']:[]),
+     ...(pin.kind==='frontNamedSelectionHandTax'?['tests/v2-r46-sao064-full-print.test.mjs']:[]),
      ...(pin.kind==='grantOwnFrontChoiceProtection'?['tests/v2-r40-sao058-full-print-probe.test.mjs']:[]),
      ...(pin.kind==='outsideRecoverActiveProtected'?['tests/v2-r41-sao060-full-print.test.mjs']:[]),
      ...(pin.kind==='mainRestDiscardRetireFreeActiveAsuna'?['tests/v2-r43-sao068-full-print.test.mjs']:[]),
