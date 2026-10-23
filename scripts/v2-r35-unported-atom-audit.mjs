@@ -3,7 +3,9 @@
 // are NOT automatically called fully port-able; remaining IDs stay explicitly
 // unaudited rather than receiving a keyword-based, misleading DSL classification.
 import {pathToFileURL} from 'node:url';
-import {v2AllTitleInventory} from '../dist/universal-v2/title-packs/inventory.mjs';
+import {createHash} from 'node:crypto';
+import {registeredV2TitlePack} from '../dist/universal-v2/title-packs/registry.mjs';
+import {v2AllTitleInventory,V2_SOURCE_CATALOGUES} from '../dist/universal-v2/title-packs/inventory.mjs';
 
 export const R35_SHARED_ATOM_CANDIDATES=Object.freeze([
  {rank:1,atom:'nextEligibleHandPlayApDiscount',
@@ -57,9 +59,9 @@ export function r35UnportedAtomAudit(){
  const seen=new Set(),groups=R35_SHARED_ATOM_CANDIDATES.map(g=>{
   if(g.ids.length!==g.series.length||new Set(g.ids).size!==g.ids.length)throw Error('Invalid R35 group IDs');
   for(const id of g.ids) {
-   if(!unported.has(id))throw Error('Candidate already registered or not in exact source catalogue: '+id);
+   if(!Object.values(V2_SOURCE_CATALOGUES).some(cs=>cs.some(c=>(c.identity||c.id)===id)))throw Error('Unknown source catalogue: '+id);
    if(seen.has(id))throw Error('Duplicate audited source '+id);
-   seen.add(id);
+   if(unported.has(id))seen.add(id);
   }
   return {...g,sourceUrls:g.ids.map((id,i)=>
    'https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no='+
@@ -69,7 +71,50 @@ export function r35UnportedAtomAudit(){
  if(seen.size+pending.length!==audit.totals.blocked)throw Error('Missing unported UID partition');
  return {totalUnported:audit.totals.blocked,
   manuallySourceMatched:seen.size,needsIndividualSemanticAudit:pending.length,
-  groups,pendingIds:pending};
+  groups,pendingIds:pending, capabilityIndex:capabilityIndex(audit)};
+}
+// Candidate detection is deliberately broad and is NEVER semantic acceptance.
+export const ATOM_REVIEW_STATUSES=Object.freeze(['READY','NEAR READY','PARTIAL',
+ 'RULE BLOCKED','SOURCE PENDING','REVIEW PENDING']);
+function operations(value,out=new Set()){
+ if(!value||typeof value!=='object')return out;
+ if(typeof value.op==='string')out.add(value.op);
+ for(const v of Object.values(value))if(v&&typeof v==='object')operations(v,out);
+ return out;
+}
+export function capabilityIndex(inventory=v2AllTitleInventory()){
+ const cards=[];const usage=new Map();
+ for(const title of inventory.series){
+  const pack=registeredV2TitlePack(title.title),seen=new Set();
+  for(const c of V2_SOURCE_CATALOGUES[title.title]){
+   const id=c.identity||c.id;if(seen.has(id)||!title.pilotIds.includes(id)&&!title.unportedIds.includes(id))continue;
+   seen.add(id);
+   const text=c.effectJa||c.effect||'',registered=!!pack.cards[id];
+   const ops=registered?[...operations(pack.cards[id])].sort():[];
+   for(const op of ops){if(!usage.has(op))usage.set(op,[]);usage.get(op).push(id);}
+   const groups=R35_SHARED_ATOM_CANDIDATES.filter(g=>g.ids.includes(id));
+   const discountCandidate=/(?:次に|下一|下次)/u.test(text)&&/(?:AP|ＡＰ)/u.test(text)&&/(?:-1|−1|－1|減少|減費)/u.test(text);
+   cards.push({id,title:title.title,registered,sourceText:text,
+    sourceTextLanguage:c.effectJa||/[のを]/u.test(text)?'ja':'catalogue-translation',
+    sourceFingerprint:createHash('sha256').update(text).digest('hex'),
+    sourceUrl:c.source||c.sourceUrl||null,operations:ops,
+    status:!text?'SOURCE PENDING':'REVIEW PENDING',
+    priorSourceMatched:groups.length>0,
+    requiredAtomCandidates:groups.map(g=>g.atom),
+    searchHits:discountCandidate?['nextEligibleHandPlayApDiscount']:[],
+    remaining:groups.map(g=>g.fullPortBlockedBy),
+    // Old R35 groups are evidence pointers, not a full-card readiness certificate.
+    semanticReviewRequired:true});
+  }
+ }
+ const atoms=[...new Set([...usage.keys(),...R35_SHARED_ATOM_CANDIDATES.map(g=>g.atom)])].sort().map(atom=>({
+  atom,registeredIds:usage.get(atom)||[],
+  unportedCandidates:cards.filter(c=>!c.registered&&(c.requiredAtomCandidates.includes(atom)||c.searchHits.includes(atom))).map(c=>c.id),
+  titles:[...new Set(cards.filter(c=>c.operations.includes(atom)||c.requiredAtomCandidates.includes(atom)||c.searchHits.includes(atom)).map(c=>c.title))],
+  readyIds:cards.filter(c=>c.status==='READY'&&c.requiredAtomCandidates.includes(atom)).map(c=>c.id)
+ }));
+ return {cards,atoms,unportedSearched:cards.filter(c=>!c.registered).length,
+  apDiscountCandidates:cards.filter(c=>!c.registered&&c.searchHits.length).map(c=>c.id)};
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
  const audit=r35UnportedAtomAudit();
