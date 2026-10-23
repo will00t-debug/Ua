@@ -166,10 +166,15 @@ function verifyProgram(program,path){
     (Object.keys(e).length>6&&(
      !['red','yellow','green','blue','purple'].includes(e.color)||
      !integer(e.ap,1)||e.ap>3||!integer(e.maxEnergy)||e.maxEnergy>30||
-     (Object.keys(e).length===10&&(!integer(e.grantBp,1)||e.grantBp>5000))||
+     (Object.keys(e).length===10&&e.cardType!== 'field'&&
+      (!integer(e.grantBp,1)||e.grantBp>5000))||
      (Object.keys(e).length===9&&Object.hasOwn(e,'grantBp'))))||
+    (e.cardType!==undefined&&(
+     e.cardType!=='field'||Object.keys(e).length!==10||
+     e.zones.length!==1||e.zones[0]!=='hand'||e.line!=='energy'||
+     e.ready!==true||e.color===undefined||e.grantBp!==undefined))||
     Object.keys(e).some(k=>!['op','name','zones','line','ready','optional',
-     'color','ap','maxEnergy','grantBp'].includes(k))
+     'color','ap','maxEnergy','grantBp','cardType'].includes(k))
    ))throw Error(path+'['+i+'] invalid free named-zone entry');
    if(e.op==='payApDeployNamedRest'&&(
    e.entry!=='hand'||typeof e.name!=='string'||!e.name.trim()||e.name.length>80||
