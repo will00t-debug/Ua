@@ -113,7 +113,7 @@ test('R48 A: three official events reach OUTSIDE, legal FIELD replacement goes R
   const action=legalUniversalActions(packs,s).find(a=>
    a.uid===source[id]&&(line===undefined?a.type==='event':
     a.type==='play'&&a.line===line&&a.slot===slot));
-  assert.ok(action,'must be legal paid use of registered '+id);
+  assert.ok(action,'must be legal paid use of registered '+id+' '+JSON.stringify({phase:s.phase,active:s.active,pending:s.pending,ap:s.players[0].apCards.map(a=>a.ready),hand:s.players[0].hand.map(c=>c.cardId),energy:s.players[0].energy.map(c=>c?.cardId),actions:legalUniversalActions(packs,s).filter(a=>a.uid===source[id])}));
   apply(action);settle();
  }
  // Advance with normal phase actions, then perform all five paid uses.
