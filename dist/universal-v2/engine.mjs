@@ -238,6 +238,7 @@ function matchesFilter(pack,s,physical,filter){
  // live field card whose original text is negated. Callers pass deck,
  // outside, or visible field cards. They do not pass buried Raid layers.
  if(filter.field==='name')return cardHasName(printed,filter.value,originalEffectsDisabled(s,physical));
+ if(filter.field==='printedNameAny')return filter.values.includes(printed.name);
  return printed[filter.field]===filter.value;
 }
 function filteredChoices(pack,s,cards,filter){
