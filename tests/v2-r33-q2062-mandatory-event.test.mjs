@@ -13,7 +13,9 @@ function take(s,p,id){for(const z of ['hand','deck','life','outside']){const a=s
 function set(s,p,id,line,slot){const c=take(s,p,id);c.fieldEntryStamp=s.nextFieldEntryStamp++;c.ready=true;s.players[p][line][slot]=c;return c;}
 function setup(includeFree){
  let s=newUniversalMatch(packs,{decks,first:0,seed:33071});
- const source=set(s,0,'SLG-1-070','front',0),protectedCard=set(s,0,'SLG-1-072','front',1);
+ // OnPlay works in either field line (official Q90). Keep the source outside
+ // the opponent's FRONT-only mandatory event target pool.
+ const source=set(s,0,'SLG-1-070','energy',0),protectedCard=set(s,0,'SLG-1-072','front',1);
  const free=includeFree?set(s,0,'SLG-1-053','front',2):null;
  grantContinuousState(s,{kind:'selectionApTax',controller:0,sourceUid:source.uid,
   targetUid:protectedCard.uid,sourceLinked:false,
