@@ -34,10 +34,10 @@ test('R41 official multi-effect SAO-2-069 PARTIAL and Q2162 MST-1-067 RULE BLOCK
 test('R41 historical reviews retain evidence as later source-pinned cards become registered',()=>{
  const r=r41SpecialHandCandidateReport();
  const ids=["SAO-1-028","SAO-1-087","SAO-2-064","SAO-2-068","BLC-4-042","BLC-4-036","SLG-1-028"];
- assert.equal(r.stats.manuallyVerifiedUnportedR41,8);
+ assert.equal(r.stats.manuallyVerifiedUnportedR41,7);
  for(const id of ids){
-  if(id==='SLG-1-028'){
-   assert.ok(!r.candidates.some(c=>c.id===id),'now registered SLG-1-028 cannot remain unported');
+  if(id==='SLG-1-028'||id==='SAO-2-068'){
+   assert.ok(!r.candidates.some(c=>c.id===id),'now registered whole printed card cannot remain unported');
    continue;
   }
   const c=r.candidates.find(c=>c.id===id);

@@ -4,6 +4,10 @@ import {SAO_OFFICIAL_CARDS} from '../sao-official-import.mjs';
 import {createUniversalPack} from './pack.mjs';
 
 const PRINTED_PINS=Object.freeze({
+ "SAO-2-068":{"kind":"mainRestDiscardRetireFreeActiveAsuna",
+  "nameJa":"ユウキ","color":"green","energy":2,"ap":1,"bp":2000,"gen":1,
+  "type":"character","trigger":"active","traits":["ALO"],
+  "effectJa":"【起動メイン】【レストにする】 【手札を1枚場外に置く】 【このカードを退場させる】自分の手札から必要エナジーが3以下で消費APが1の緑の〈アスナ〉を1枚まで自分の場にアクティブで登場させ、そのキャラはこのターン中、BP+1000。"},
   // Q1207: scoped grant to actually free-ACTIVE-entered character; SPECIAL independently retires.
   "SAO-2-060":{"kind":"outsideRecoverActiveProtected","nameJa":"smile for you",
    "color":"purple","energy":4,"ap":1,"bp":0,"gen":0,"type":"event",
@@ -1329,6 +1333,12 @@ export function verifiedSaoV2Cards(){
   if(pin.kind==='grantOwnFrontChoiceProtection')
    card.effects={onPlay:[{op:'grantOwnFrontChoiceProtection',optional:false,
     scope:'any',until:'nextOwnStart',apRecoveryOnName:'アスナ'}]};
+  if(pin.kind==='mainRestDiscardRetireFreeActiveAsuna'){
+   card.effects={};
+   card.mainAbility={op:'restDiscardRetireThen',lines:'field',discardCount:1,
+    then:[{op:'deployNamedFromZones',name:'アスナ',zones:['hand'],
+     line:'any',ready:true,optional:true,color:'green',ap:1,maxEnergy:3,grantBp:1000}]};
+  }
   if(pin.kind==='outsideRecoverActiveProtected'){
    card.effects={onPlay:[
     {op:'recoverOutsideOne',filter:{field:'type',value:'character'},optional:true},
@@ -1578,6 +1588,7 @@ export function verifiedSaoV2Entries(){
      ...(pin.kind==='nextHandApDiscount'?['tests/v2-r36-real-discount-cards.test.mjs']:[]),
      ...(pin.kind==='grantOwnFrontChoiceProtection'?['tests/v2-r40-sao058-full-print-probe.test.mjs']:[]),
      ...(pin.kind==='outsideRecoverActiveProtected'?['tests/v2-r41-sao060-full-print.test.mjs']:[]),
+     ...(pin.kind==='mainRestDiscardRetireFreeActiveAsuna'?['tests/v2-r43-sao068-full-print.test.mjs']:[]),
      'tests/universal-v2-sao-port.test.mjs',
       ...(def.id==='SAO-1-034'?['tests/v2-sao-034-official.test.mjs']:[]),
      ...(def.id==='SAO-2-021'?['tests/v2-sao-021-shared-main-cost.test.mjs']:[]),
