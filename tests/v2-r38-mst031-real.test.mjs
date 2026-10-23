@@ -51,9 +51,9 @@ test('R38 MST-031 no phantom Impact, actual successful EVENT changes impact, cor
  assert.equal(assertUniversalMatch(packs,JSON.parse(JSON.stringify(s))),true);
  assert.ok(!JSON.stringify(universalPublicView(packs,s,1)).includes('nextEligibleHandPlayApDiscount'));
 });
-test('R38 paid non EVENT character does not consume discount or activate Impact',()=>{
- let {s,front,ordinary}=scene();let a=legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===ordinary.uid);
- assert.ok(a);s=act(s,a);
+test('R38 non EVENT card cannot consume discount or activate Impact; AP is not fabricated',()=>{
+ let {s,front,ordinary}=scene();
+ assert.equal(handPlayApPlan(s,0,pack.cards[ordinary.cardId]).cost,1);
  assert.equal(universalImpact(packs,s,front),0);
  assert.equal(s.continuousStates.filter(x=>x.kind==='nextEligibleHandPlayApDiscount').length,1);
  assert.equal(assertUniversalMatch(packs,s),true);
