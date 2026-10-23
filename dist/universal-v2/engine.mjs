@@ -3078,7 +3078,8 @@ export function assertUniversalMatch(pack,s){
   const rest=q.uids?.filter(uid=>!q.selected?.includes(uid));
   const source=[...pl.outside,...field(pl)].find(c=>c.uid===q.sourceUid);
   const printed=source&&card(pack,source).effects?.onPlay
-   ?.flatMap(e=>e.op==='chooseOne'?e.options.flatMap(o=>o.then):[e])
+   ?.flatMap(e=>e.op==='chooseOne'?e.options.flatMap(o=>o.then):
+    e.op==='optionalRetireThenProgram'?e.after:[e])
    .some(e=>e.op==='searchTopUpToTwoBottom'&&e.max===q.max&&
     e.rest==='bottom'&&e.count>=q.uids?.length&&
     same(e.filters,q.filters)&&e.logic===q.logic);
