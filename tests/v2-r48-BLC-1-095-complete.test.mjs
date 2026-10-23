@@ -6,9 +6,11 @@ import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,dispatchUniversalAction,legalUniversalActions,
  assertUniversalMatch,universalPrivateChoices,universalPublicView} from '../dist/universal-v2/engine.mjs';
 import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
-import {R48_GREEN_REAL_COUNTS} from './v2-r48-four-official-green-sources.test.mjs';
+import {BLEACH_GREEN_V2_COUNTS} from '../dist/universal-v2/preview-real-decks.mjs';
 const pack=registeredV2TitlePack('bleach'),packs=[pack,pack],id='BLC-1-095';
-const counts={...R48_GREEN_REAL_COUNTS};delete counts['BLC-1-090'];counts[id]=4;
+const counts={...BLEACH_GREEN_V2_COUNTS};
+delete counts['BLC-4-061'];delete counts['BLC-1-090'];
+counts['BLC-1-099']=4;counts[id]=4;
 assert.deepEqual(validateUniversalDeck(pack,counts),[]);
 function take(s,p,id){
  for(const zone of ['hand','deck','life','outside']){
