@@ -9,7 +9,7 @@ export const V2_CARD_TYPES=Object.freeze(['character','event','field']);
 export const V2_TRIGGERS=Object.freeze(['draw','get','final','active','special','color','raid']);
 export const V2_EFFECT_TIMINGS=Object.freeze(['onPlay','onRaid','onAttack','onRaided','onRetire','onOutsideRecover']);
 export const V2_EFFECT_OPS=Object.freeze(['nextEligibleHandPlayApDiscount','draw','drawIfOwnName','drawIfOwnTraitCount','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','skipNextActiveOppRest','forbidAttackOppFrontOne','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','retireOwnFieldOne','retireOwnCharacterOne','optionalRetireThenProgram','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw','searchDeckMany','discardGate','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopUpToTwoBottom','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
- 'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideColorUnderEnergy','recoverOutsideTraitlessUnderEnergy','deployOutsideTraitlessRestOrRaid','deployOutsideRest','deployOutsideNameRest','payApDeployNamedRest','inspectTopTraitOutside','buffOwnField','oncePerTurnGate','chooseOne','deployOwnHandRest','discardOppHand','activeSelfIf','grantOnAttack','grantSelectionApTaxOwnOtherTrait','grantFrontEnergyOwnOtherFrontTrait']);
+ 'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideColorUnderEnergy','recoverOutsideTraitlessUnderEnergy','deployOutsideTraitlessRestOrRaid','deployOutsideRest','deployOutsideNameRest','payApDeployNamedRest','inspectTopTraitOutside','buffOwnField','oncePerTurnGate','chooseOne','deployOwnHandRest','discardOppHand','activeSelfIf','grantOnAttack','grantSelectionApTaxOwnOtherTrait','grantFrontEnergyOwnOtherFrontTrait','grantOwnFrontChoiceProtection']);
 const integer=(v,low=0)=>Number.isInteger(v)&&v>=low;
 const own=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
 // Shared board predicate used by passive bonuses and on-play ACTIVE.
@@ -400,6 +400,17 @@ function verifyProgram(program,path){
     Object.keys(e).length!==4||
     Object.keys(e).some(k=>!['op','optional','until','trait'].includes(k))
    ))throw Error(path+'['+i+'] invalid temporary FRONT generation grant');
+  // Same protection choice for EVENT and character sources, with optional
+  // name-based follow-up AP activation. Source/UID checks live in reducer.
+  if(e.op==='grantOwnFrontChoiceProtection'&&(
+    !['any','character','trigger'].includes(e.scope)||
+    e.until!=='nextOwnStart'||e.optional!==false||
+    !(e.apRecoveryOnName===null||
+      typeof e.apRecoveryOnName==='string'&&
+      !!e.apRecoveryOnName.trim()&&e.apRecoveryOnName.length<=80)||
+    Object.keys(e).length!==5||
+    Object.keys(e).some(k=>!['op','scope','until','optional','apRecoveryOnName'].includes(k))
+   ))throw Error(path+'['+i+'] invalid FRONT choice protection grant');
   if(e.op==='grantSelectionApTaxOwnOtherTrait'&&(
     e.optional!==true||e.until!=='nextOpponentTurn'||
     typeof e.trait!=='string'||!e.trait.trim()||e.trait.length>80||
@@ -816,6 +827,8 @@ function normalize(card,packId){
   // Events resolve from outside after normal AP payment. Their own physical
   // UID is not a FRONT target; share the same independent target permission.
   // No grant from unrelated timings, Raid bases, or nonprinted programs.
+  if(program.some(e=>e.op==='grantOwnFrontChoiceProtection')&&name!=='onPlay')
+   throw Error(card.id+' protected FRONT selection must resolve onPlay');
   if(program.some(e=>e.op==='grantSelectionApTaxOwnOtherTrait')&&
    (name!=='onPlay'||card.type!=='character'))
    throw Error(card.id+' targeting AP tax grant requires character onPlay');
