@@ -9,6 +9,7 @@ import {verifiedPilotCards} from './real-card-pilots.mjs';
 // 'plain' means no character effect text (the printed life trigger is still active).
 // 'step' uses the V2 move-phase STEP handler; 'bounce' uses a real V2 template.
 export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
+ {"id":"BLC-1-070","kind":"topOneEnergyDiscount","number":"UA08BT/BLC-1-070","name":"卯ノ花 八千流","color":"green","energy":6,"ap":1,"bp":4000,"gen":1,"trigger":"raid","type":"character","effect":"Raid〈卯之花烈〉：轉為 ACTIVE，可移至前線。登場：查看己方牌堆頂 4 張，可公開其中最多 1 張需求能源 4 以下且具有「護廷十三隊」特徵的角色卡並加入手牌，其餘以任意順序放至牌堆底。本回合下一張從手牌使用、需求能源 4 以下的角色卡，AP 消耗減少 1。"},
  {
   id:"BLC-1-023",kind:"raidStripOrRetire2000",
   number:"UA08BT/BLC-1-023",name:"ユーハバッハ",
@@ -1006,10 +1007,11 @@ export function checkedBleachAddonDefinition(p){
  const isOppDiscard=p.kind==='discardOppHandOne';
  const isDrawTwo=p.kind==='drawTwoDiscardOne';
  const isReadyAttack=p.kind==='readyOnFirstAttack';
+ const isTopRequired=p.kind==='topOneEnergyDiscount';
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual;
+ const special=isTopRequired||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1018,6 +1020,7 @@ export function checkedBleachAddonDefinition(p){
   traits:Array.isArray(c.traits)?c.traits:(c.traits&&c.traits!=='無'?[c.traits]:[]),
   implementation:p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'?'vanilla':'dsl',
   ...(p.kind==='step'?{step:true}:{}),
+  ...(isTopRequired?{raidName:'卯ノ花 烈'}:{}),
   ...(isRaidDual?{raidName:'ユーハバッハ',
    passiveBonuses:[{condition:{kind:'retireCountThisTurn',turn:'own',
     controller:'any',cardType:'character',min:2},bp:1000,extraDamage:1}]}:{}),
@@ -1033,6 +1036,12 @@ export function checkedBleachAddonDefinition(p){
   ...(p.kind==='enemyBpDown500Color'?{triggerEffect:{op:'deployOutsideCharacter',color:'purple',maxEnergy:2,ap:1,frontOnly:true}}:{}),
   ...(p.kind==='drawPlayColorHand'?{triggerEffect:{op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1}}:{}),
   ...(!special?{templateEffects:abilities[p.kind]}:{effects:
+   isTopRequired?{onPlay:[
+    {op:'searchTopUpToTwoBottom',count:4,max:1,rest:'bottom',logic:'all',
+     filters:[{field:'type',value:'character'},{field:'trait',value:'護廷十三隊'},
+      {field:'printedRequiredEnergyAtMost',value:4}]},
+    {op:'nextEligibleHandPlayApDiscount',filter:{cardType:'character',printedRequiredEnergyAtMost:4}}
+   ]}:
    isRetireDraw?{onRetire:[{op:'draw',count:1}]}:
    isRetireMill?{onRetire:[{op:'millTop',count:2}]}:
    isOppDiscard?{onPlay:[{op:'discardOppHand',count:1}]}:
