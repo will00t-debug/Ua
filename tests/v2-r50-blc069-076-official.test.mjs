@@ -21,9 +21,16 @@ function doIt(s,a){assert.ok(legalUniversalActions(pack,s).some(x=>JSON.stringif
  'must use legal action '+JSON.stringify(a));return dispatchUniversalAction(pack,s,a);}
 function lateGame(){
  let s=newUniversalMatch(pack,{decks:[counts,counts],first:0,seed:50069});
- let bound=40;
- while(!(s.active===0&&s.players[0].ownTurns===3&&s.phase==='main')&&--bound>0)
-  s=doIt(s,{type:'next'});
+ let bound=90;
+ while(!(s.active===0&&s.players[0].ownTurns===3&&s.phase==='main')&&--bound>0){
+  // Real turns can require mandatory end-hand-limit or trigger decisions.
+  // Settle the CURRENT legitimate action instead of assuming NEXT exists.
+  const actions=legalUniversalActions(pack,s);
+  const decision=actions.find(a=>a.type==='next')||actions.find(a=>a.uid===null)||
+   actions[0];
+  assert.ok(decision,'legal phase/mandatory action while earning third own AP turn');
+  s=doIt(s,decision);
+ }
  assert.ok(bound>0,'three real turns start with three ready AP');
  return s;
 }
