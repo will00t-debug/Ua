@@ -64,7 +64,9 @@ export function r37TopNCandidateReport(){
    probableReuse:print.category==='TWO_HAND_REVEAL'?'TOP2 candidate only':null,
    evidence:print.evidence}];
  });
- const sourceReviewed=Object.keys(R37_TOP_SOURCE_REVIEWS);
+ const historicalReviewed=Object.keys(R37_TOP_SOURCE_REVIEWS);
+ const sourceReviewed=historicalReviewed.filter(id=>actual.has(id));
+ const newlyRegistered=historicalReviewed.filter(id=>!actual.has(id));
  for(const id of sourceReviewed)if(!candidateRows.some(c=>c.id===id))
   throw Error('Pinned official R37 reviewed TOP-N candidate missing '+id);
  const stats={totalSource:index.cards.length,registered:inventory.totals.pilotImplemented,
@@ -84,7 +86,7 @@ export function r37TopNCandidateReport(){
  const unportedNoTopCandidate=unported.map(c=>c.id).filter(id=>!covered.has(id));
  if(candidateRows.length+unportedNoTopCandidate.length!==unported.length)
   throw Error('Candidate and not-candidate partition lost IDs');
- return {stats,sourceVerifiedNowRegistered:['SAO-1-031','SAO-1-066','MST-1-080','MST-1-060'].map(id=>({
+ return {stats,sourceVerifiedNowRegistered:['SAO-1-031','SAO-1-066','MST-1-080','MST-1-060',...newlyRegistered].map(id=>({
   id,registered:index.cards.find(c=>c.id===id)?.registered||false,
   independentFaqCertified:false})),
   categories:['TWO_HAND_REVEAL','ONE_HAND_REVEAL','TOP_TO_OUTSIDE','TOP_REARRANGE','TOP_OTHER'],

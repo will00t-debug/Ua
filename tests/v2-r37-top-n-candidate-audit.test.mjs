@@ -12,14 +12,13 @@ test('R37 TOP-N scans every unported physical card ID across five independently 
  assert.equal(new Set([...report.candidates.map(x=>x.id),...report.unportedNoTopCandidate]).size,
   live.totals.blocked);
  assert.deepEqual(report.sourceVerifiedNowRegistered.map(x=>[x.id,x.registered]),[
-  ['SAO-1-031',true],['SAO-1-066',true],['MST-1-080',true],['MST-1-060',true]]);
+  ['SAO-1-031',true],['SAO-1-066',true],['MST-1-080',true],['MST-1-060',true],['SAO-1-056',true]]);
  assert.equal(report.stats.readyUnported,0);
 });
 test('R37 no keyword is mistaken for complete official legality; retirement prerequisites remain missing',()=>{
  const rows=r37TopNCandidateReport().candidates;
- const near=rows.find(c=>c.id==='SAO-1-056');
- assert.ok(near);assert.equal(near.status,'NEAR READY');
- assert.deepEqual(near.reviewEvidence.missing,['chooseOneFreeRestHandCharacterWithPrintedColorEnergyAp']);
+ assert.equal(rows.some(c=>c.id==='SAO-1-056'),false);
+ assert.ok(r37TopNCandidateReport().sourceVerifiedNowRegistered.some(c=>c.id==='SAO-1-056'&&c.registered));
  for(const id of ['SAO-2-056','MST-1-049','SLG-1-059']){
   const c=rows.find(c=>c.id===id);
   assert.ok(c);assert.equal(c.status,'PARTIAL');
