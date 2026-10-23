@@ -50,3 +50,8 @@ GitHub connector 可以直接修改工作分支，但本執行環境無法 DNS �
 重新搜尋原始 `dist/sao-official-import.mjs`，找到未登錄的官方 `SAO-1-100`（UA15BT 綠 EVENT、必要綠4／AP1、SPECIAL LIFE）。其完整效果是選對手 FRONT BP5000 以下角色，通常回手；若自己 OUTSIDE 的〈ユウキ〉與〈マザーズ・ロザリオ〉合計 **3 張以上**，改為真正退場。這張卡**不能當成無能力事件卡**直接登錄來湊 SAO-1-070 的六張來源；必須先完成通用「依 OWN OUTSIDE 指定名稱總張數，選擇回手或真正退場」效果、SPECIAL LIFE、來源 UID／目標合法性／實際真牌驗收。官方來源：https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA15BT%2FSAO-1-100 。
 
 因此 R51 下一輪最高重用路線為：已完成的 `ownOutsideNamedCountAtLeast` → 新的來源限定條件式 bounce-or-retire（重用現有真正回手／真退場）→ SAO-1-100 完整真卡 → 以真正 SAO 牌組驗收 SAO-1-070 的 4/6 門檻。每新增共用能力重新搜尋五作品未移植卡，不預先聲稱 READY。
+
+
+### 官方 Q767 必須保留的效果支付／來源時序
+
+`SAO-1-100` 官方 Q767（2024-01-19）：使用前自己場外合計只有 2 張時，**不能**把正在從手牌使用的 `SAO-1-100` 本身算作第 3 張。EVENT 卡要在**該 EVENT 效果處理完成後**才放入場外。下一輪的條件式回手／退場引擎必須在此時間點取樣，並測試使用前 2→回手、使用前 3→真正退場兩種完整真實流程；不能因為共用物理移動日誌先記錄 hand→outside 而提前成立。來源：https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA15BT%2FSAO-1-100 。
