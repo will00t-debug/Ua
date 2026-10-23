@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {matchesPrintedRequiredEnergyAtMost,matchesPrintedPlayFilter,validatePrintedPlayFilter} from '../dist/universal-v2/ap-discounts.mjs';
 import {createUniversalPack} from '../dist/universal-v2/pack.mjs';
-const printed={id:'ENERGY-001',name:'合法角色',type:'character',energy:4,gen:5,ap:1,bp:4000,color:'green',traits:['護廷十三隊'],trigger:null};
+const printed={id:'ENERGY-001',name:'合法角色',type:'character',energy:4,gen:5,ap:1,bp:4000,color:'green',traits:['護廷十三隊'],trigger:null,implementation:'vanilla',effects:{}};
 test('R38 printed required energy is card-face necessary energy, not production, BP, or live board supply',()=>{
  assert.equal(matchesPrintedRequiredEnergyAtMost(printed,4),true);
  assert.equal(matchesPrintedRequiredEnergyAtMost({...printed,energy:5,gen:0},4),false);
@@ -25,7 +25,7 @@ test('R38 strictly typed energy ceiling, printed name OR, and selectors reject m
 });
 test('R38 existing TOP-N DSL validates printed required energy alongside exact trait AND type',()=>{
  const candidate={id:'E-000',name:'調查',type:'event',color:'green',energy:0,gen:0,ap:1,bp:0,trigger:null,traits:[],
-  templateEffects:{onPlay:[{template:'searchTopUpToTwoBottom',count:4,
+  implementation:'dsl',templateEffects:{onPlay:[{template:'searchTopUpToTwoBottom',count:4,
    filters:[{field:'type',value:'character'},{field:'trait',value:'護廷十三隊'},
     {field:'printedRequiredEnergyAtMost',value:4}],logic:'all'}]}};
  assert.doesNotThrow(()=>createUniversalPack({id:'printed-top',cards:[candidate,printed]}));
