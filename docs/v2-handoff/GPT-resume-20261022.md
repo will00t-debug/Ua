@@ -550,3 +550,13 @@ GPT PR #78 原分支 `gpt/v2-resume-20261022`（對 `cursor/v2-multi-retire-life
 - 目前全庫重新掃 **375 張**；TOP-N 62 個文字候選，其中 SAO-1-056 官方全文新審核為 **NEAR READY**（TOP2 可用，但二選一之「免費 REST 登場指定藍色必要能源≤2角色」仍缺完整來源／AP／UID 共用原語），R37 原 3 張仍 PARTIAL，其餘 58 REVIEW PENDING，不誤認字詞相似＝全部效果相同。
 - **下一輪共用能力首選** `chooseOneFreeRestHandCharacterWithPrintedColorEnergyAp` → `optionalRetireThenProgram` (SAO-2-056/MST-1-049) → `cannotBeChosenByOppEffect` (SAO-2-058/MST-1-067，Q1206/Q2162，不等於 AP 選取加費)。BLC-4-069 攻擊結束交換須先 Q2337/Q2338，全局戰鬥高風險稍後；BLC-4-034 強制 REST/真退場/裏向底卡及巢狀 LIFE 一律維持安全阻塞。
 - 更新任何程式／交接後，重看當下 **精確 HEAD** 的 CI，舊綠燈不能證明新 commit。每新增共用能力必須使用既有 `capabilityIndex()`、R35/R37 腳本回查當時五作品所有未移植卡。
+
+
+## GPT R39：免費手牌 REST 登場、可選真退場後 TOP-N、雙次五作品全庫回查（2026-10-23）
+
+- **完整官方卡文／真卡／共用原語／驗收／候選統計與下一輪排序**：[V2-R39-free-hand-rest-optional-retire-roster.md](./V2-R39-free-hand-rest-optional-retire-roster.md)。工作分支仍為 `gpt/v2-resume-20261022`、GPT Draft PR #78 → Cursor base，不動 main／Cursor PR #77／正式部署，不 force push。
+- 新增通用 `deployOwnHandRest`（印刷顏色／必要能源／AP／卡種限制；免費效果登場不二次扣 AP、不消耗正常手牌 AP 減費；實體 UID、fieldEntryStamp、onPlay、法定滿場替換，UI/AI 共用合法選擇），及 `optionalRetireThenProgram`（先可選真正 CHARACTER／FIELD 退場，後續 TOP-N／自身 ACTIVE 僅在確實退場完成後執行，沿用現有 onRetire 與 queue）。TOP-N 增 `traitlessCharacterOrField` 精確過濾。沒有第二套登場／退場流程。
+- 完整印刷來源移植三張：**SAO-1-056、SAO-2-056、MST-1-049**，含同源真卡對戰、二選一／可選0、TOP2／TOP5／TOP4、底排序、印刷限定、UID／AP／Human+AI 負例。正式 registry + independent manifest + 獨立局部審核共 **328/700**，尚未 **372**（BLEACH98、TTG36、SLG43、SAO97、MST54）；局部 16、完整獨立 FAQ 認證 **0**。
+- 每個新共用原語後以原來的 `capabilityIndex()` 掃描所有當下尚未移植卡，先 **374 張**、再 **372 張**；最新手牌特殊登場文字候選 **32**、真退場+TOP-N 文字候選 **8**、TOP-N **59**。未完成全印刷個別審核的候選只標待審，**沒有**宣稱額外 READY 或衝卡數登錄。
+- **截至文件編寫前最後可驗證程式 SHA `97acfeb159eee068eba0ebf08039651baa7cdd58`**：遠端 Actions [39926750588](https://github.com/will00t-debug/Ua/actions/runs/39926750588) SUCCESS，Node22 **1962/1962**、五作品 **60/60**、獨立 manifest、R35/R37 全庫腳本、認證與 unported 報告成功。**追加文件與證據檔案產生新的 HEAD，務必對新 SHA 另行查驗 Actions，不能借舊成功。**
+- 後續建議 `cannotBeChosenByOppEffect`（Q1206/Q2162；絕不可誤用選擇 AP surcharge）→ 完整來源審核上述文字候選 → 高風險攻擊結束交換 Q2337/Q2338。BLC-4-034 裏向底卡時序和巢狀 LIFE 繼續 fail-closed。

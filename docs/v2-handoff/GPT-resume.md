@@ -1907,3 +1907,13 @@ Reproduction commands: `node scripts/v2-card-certification-report.mjs`, `node sc
 - 完整掃描 **375** 尚未移植卡、其中 TOP-N 關鍵字候選 **62**（BLEACH28/TTG7/SLG10/SAO12/MST5）。已核對官方 SAO-1-056 全文，**NEAR READY**：TOP2 或 REST 免費手牌登場二選一，後者缺完整可驗證的 `chooseOneFreeRestHandCharacterWithPrintedColorEnergyAp`，不登錄。SAO-2-056/MST-1-049/SLG-1-059 仍 PARTIAL，其餘 58 TOP-N 字串候選 REVIEW PENDING，不能視為已核對完 62 張。
 - **截至已驗證程式 SHA `010482e1a40e1984f79129e694e535d22ddcad2d`** 遠端 GitHub Actions [39899603904](https://github.com/will00t-debug/Ua/actions/runs/39899603904) SUCCESS：Node22 **1941/1941**、五作品 60/60、ledger、R35/R37 報告、independent manifest、unported report。各系列 BLEACH98／TTG36／SLG43／SAO95／MST53，**325/700，未移植375**。獨立完整 FAQ 認證 **0**，局部獨立來源／情境審核 **13**。這是遠端結果，沒有宣稱本地執行。
 - 本段與 R38 文件新增後的 **最新 HEAD** 必須另查其精確 SHA 對應 CI，不可以把 `010482e1` 的成功直接冒充文件新 HEAD 的成功。下輪優先 SAO-1-056 的 REST 免費手牌登場共用 op → optionalRetireThenProgram → cannotBeChosenByOppEffect（Q1206/Q2162），BLC-4-069 攻擊結束交換高風險留後。BLC-4-034 真退場／裏向底卡與巢狀 LIFE 繼續安全阻塞。
+
+
+## GPT R39：免費手牌 REST 登場、可選真退場後 TOP-N、雙次五作品全庫回查（2026-10-23）
+
+- **完整官方卡文／真卡／共用原語／驗收／候選統計與下一輪排序**：[V2-R39-free-hand-rest-optional-retire-roster.md](./V2-R39-free-hand-rest-optional-retire-roster.md)。工作分支仍為 `gpt/v2-resume-20261022`、GPT Draft PR #78 → Cursor base，不動 main／Cursor PR #77／正式部署，不 force push。
+- 新增通用 `deployOwnHandRest`（印刷顏色／必要能源／AP／卡種限制；免費效果登場不二次扣 AP、不消耗正常手牌 AP 減費；實體 UID、fieldEntryStamp、onPlay、法定滿場替換，UI/AI 共用合法選擇），及 `optionalRetireThenProgram`（先可選真正 CHARACTER／FIELD 退場，後續 TOP-N／自身 ACTIVE 僅在確實退場完成後執行，沿用現有 onRetire 與 queue）。TOP-N 增 `traitlessCharacterOrField` 精確過濾。沒有第二套登場／退場流程。
+- 完整印刷來源移植三張：**SAO-1-056、SAO-2-056、MST-1-049**，含同源真卡對戰、二選一／可選0、TOP2／TOP5／TOP4、底排序、印刷限定、UID／AP／Human+AI 負例。正式 registry + independent manifest + 獨立局部審核共 **328/700**，尚未 **372**（BLEACH98、TTG36、SLG43、SAO97、MST54）；局部 16、完整獨立 FAQ 認證 **0**。
+- 每個新共用原語後以原來的 `capabilityIndex()` 掃描所有當下尚未移植卡，先 **374 張**、再 **372 張**；最新手牌特殊登場文字候選 **32**、真退場+TOP-N 文字候選 **8**、TOP-N **59**。未完成全印刷個別審核的候選只標待審，**沒有**宣稱額外 READY 或衝卡數登錄。
+- **截至文件編寫前最後可驗證程式 SHA `97acfeb159eee068eba0ebf08039651baa7cdd58`**：遠端 Actions [39926750588](https://github.com/will00t-debug/Ua/actions/runs/39926750588) SUCCESS，Node22 **1962/1962**、五作品 **60/60**、獨立 manifest、R35/R37 全庫腳本、認證與 unported 報告成功。**追加文件與證據檔案產生新的 HEAD，務必對新 SHA 另行查驗 Actions，不能借舊成功。**
+- 後續建議 `cannotBeChosenByOppEffect`（Q1206/Q2162；絕不可誤用選擇 AP surcharge）→ 完整來源審核上述文字候選 → 高風險攻擊結束交換 Q2337/Q2338。BLC-4-034 裏向底卡時序和巢狀 LIFE 繼續 fail-closed。

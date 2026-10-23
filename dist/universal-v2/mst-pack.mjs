@@ -806,6 +806,7 @@ export function verifiedMstV2Entries(){
       'tests/v2-r37-mst-front-life.test.mjs']:[]),
      ...(pin.kind==='stepFrontMainDrawDiscardFrontEnergy'?['tests/v2-r37-mst060-main-step.test.mjs',
       'tests/v2-r37-mst-front-life.test.mjs']:[]),
+     ...(pin.kind==='retireFieldActivateTopTraitless'?['tests/v2-r39-retire-search-real.test.mjs']:[]),
      'tests/universal-v2-mst-port.test.mjs',
      'tests/universal-v2-sao-mst-cross-title.test.mjs',
      ...(pin.kind==='ownFieldAllNamesBp'?['tests/v2-mst-003-own-names.test.mjs']:[]),
