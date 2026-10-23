@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createBleachV2Pack} from '../dist/universal-v2/bleach-pack.mjs';
+import {createBleachV2Pack,BLEACH_V2_ADDON_PROFILES,checkedBleachAddonDefinition} from '../dist/universal-v2/bleach-pack.mjs';
 import {createUniversalPack,validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,dispatchUniversalAction,legalUniversalActions,
  assertUniversalMatch,universalEnergyByColor,universalPrivateChoices}
@@ -97,7 +97,7 @@ test('R50 REAL 042 mode C retires other physical character before true BLUE FIEL
  assert.equal(assertUniversalMatch(official,JSON.parse(JSON.stringify(s))),true);
 });
 test('R50 generic FIELD two printed MAIN modes are independently keyed and strict conditional',()=>{
- const printable=official.cards['BLC-2-044'];
+ const printable=checkedBleachAddonDefinition(BLEACH_V2_ADDON_PROFILES.find(p=>p.id==='BLC-2-044'));
  const char={id:'R50-C',name:'Other Mukuro',color:'blue',type:'character',energy:0,
   ap:1,bp:1000,gen:1,traits:['涅骸部隊'],implementation:'vanilla'};
  // Synthetic ally tests a legal generic trait predicate, NOT a further official registered ID.
