@@ -653,9 +653,11 @@ function continueEffectQueue(pack,s){
    }
   }else if(job.op==='bounceOwnOtherUnderEnergy'){
    const choices=field(pl).filter(c=>c.uid!==job.sourceUid&&
-    card(pack,c).type==='character'&&card(pack,c).energy<=job.energy).map(c=>c.uid);
-   if(choices.length)s.pending={kind:'effect-bounce-own',player:owner,
-    sourceUid:job.sourceUid,choices,energy:job.energy};
+    card(pack,c).type==='character'&&(job.optional===true?
+     !cardHasName(card(pack,c),job.excludeName):card(pack,c).energy<=job.energy)).map(c=>c.uid);
+   if(choices.length||job.optional===true)s.pending={kind:'effect-bounce-own',player:owner,
+    sourceUid:job.sourceUid,choices,...(job.optional===true?
+     {optional:true,excludeName:job.excludeName,after:job.after}:{energy:job.energy})};
    else bounceToHand(pack,s,owner,job.sourceUid,job.sourceUid);
   }else if(job.op==='discardOppHand'){
    // The opponent chooses one of their own hand cards. Empty hand does nothing.
@@ -1529,12 +1531,16 @@ function resolveChoice(s,a,pack){
   return;
  }
  if(q.kind==='effect-bounce-own'){
+  if(a.uid===null&&q.optional===true){s.pending=null;continueEffectQueue(pack,s);return;}
   if(!q.choices.includes(a.uid))throw Error('Illegal own bounce target');
   const found=location(s,q.player,a.uid);
-  if(!found||found.c.uid===q.sourceUid||
-   card(pack,found.c).type!=='character'||card(pack,found.c).energy>q.energy)
+  if(!found||!['front','energy'].includes(found.line)||found.c.uid===q.sourceUid||
+   card(pack,found.c).type!=='character'||(q.optional===true?
+    cardHasName(card(pack,found.c),q.excludeName):card(pack,found.c).energy>q.energy))
    throw Error('Invalid own bounce target');
   bounceToHand(pack,s,q.player,a.uid,q.sourceUid);
+  if(q.optional===true&&s.players[q.player].hand.some(c=>c.uid===a.uid))
+   s.effectQueue.unshift(...q.after.map(e=>({...e,owner:q.player,sourceUid:q.sourceUid})));
   s.pending=null;continueEffectQueue(pack,s);return;
  }
  if(q.kind==='effect-outside-traitless-rest'){
@@ -2203,7 +2209,7 @@ function legalPending(pack,s){
  ];
  if(q.kind==='effect-top-order')return q.uids
   .filter(uid=>!q.order.includes(uid)).map(uid=>({type:'chooseTopOrder',uid}));
- if(q.kind==='effect-bounce-own')return q.choices.map(uid=>({type:'chooseOwnBounce',uid}));
+ if(q.kind==='effect-bounce-own')return [...(q.optional===true?[null]:[]),...q.choices].map(uid=>({type:'chooseOwnBounce',uid}));
  if(q.kind==='recovered-self-entry')return [
   {type:'chooseRecoveredEntry',mode:'skip'},
   ...legalDestinations(p,'energy').map(c=>({
@@ -2964,6 +2970,14 @@ export function assertUniversalMatch(pack,s){
  for(const [uid,n] of Object.entries(s.blocksByUid))
   if(typeof uid!=='string'||!uid.includes('-')||!Number.isInteger(n)||n<1||n>50)
    throw Error('Invalid per-card block count');
+ if(s.pending?.kind==='effect-bounce-own'&&s.pending.optional===true){
+  const q=s.pending,src=field(s.players[q.player]).find(c=>c.uid===q.sourceUid);
+  const expected=src&&card(pack,src).effects?.onPlay?.flatMap(e=>e.op==='chooseOne'?e.options.flatMap(o=>o.then):[e])
+   .find(e=>e.op==='bounceOwnOtherUnderEnergy'&&e.optional===true&&e.excludeName===q.excludeName);
+  const choices=field(s.players[q.player]).filter(c=>c.uid!==q.sourceUid&&card(pack,c).type==='character'&&!cardHasName(card(pack,c),q.excludeName)).map(c=>c.uid);
+  if(!expected||!same(expected.after,q.after)||!same(choices,q.choices)||Object.keys(q).length!==7)
+   throw Error('Invalid optional bounce continuation');
+ }
  validateContinuousStates(s);
  if(typeof s.endRefreshed!=='boolean')throw Error('Invalid end refresh flag');
  if(!Number.isInteger(s.nextFieldEntryStamp)||s.nextFieldEntryStamp<1||

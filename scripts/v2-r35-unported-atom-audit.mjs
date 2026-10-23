@@ -76,11 +76,37 @@ export function r35UnportedAtomAudit(){
 // Candidate detection is deliberately broad and is NEVER semantic acceptance.
 export const ATOM_REVIEW_STATUSES=Object.freeze(['READY','NEAR READY','PARTIAL',
  'RULE BLOCKED','SOURCE PENDING','REVIEW PENDING']);
+// Manually reviewed against official full print on 2026-10-23. This is a
+// review overlay on the existing catalogue, never a second card roster.
+export const R36_DISCOUNT_REVIEWS=Object.freeze({
+ 'SAO-2-074':{series:'EX08BT',status:'READY',missing:[],faq:['Q1209','Q1210','Q670']},
+ 'MST-1-062':{series:'UA54BT',status:'READY',missing:[],faq:['Q2161','Q670']},
+ 'BLC-1-070':{series:'UA08BT',status:'PARTIAL',missing:['printedEnergyAtMostFilter','topNOptionalPickWithoutDiscard'],faq:[]},
+ 'BLC-2-030':{series:'EX07BT',status:'PARTIAL',missing:['nextHandNameFilter','enteredNamedCharacterThisTurn'],faq:[]},
+ 'BLC-4-055':{series:'EX15BT',status:'PARTIAL',missing:['optionalRemoveOtherThen','nextHandTraitOrNameFilter','upToTwoDistinctBuffTargets'],faq:['Q2328']},
+ 'BLC-4-069':{series:'EX15BT',status:'NEAR READY',missing:['attackEndDistinctOutsideNamesSwap'],faq:['Q2337','Q2338']},
+ 'TTG-1-080':{series:'UA56BT',status:'PARTIAL',missing:['fieldOrRaidBaseNamePlayGate','nextHandRaidOnlyNameOrFilter','eventSourceDiscount'],faq:['Q2300']},
+ 'SAO-2-031':{series:'EX08BT',status:'PARTIAL',missing:['outsideFourOrderedBottomCost','grantDamageTwo'],faq:['Q1202']},
+ 'MST-1-031':{series:'UA54BT',status:'PARTIAL',missing:['printedEnergyAtMostFilter','ownEventUsedThisTurnImpact'],faq:['Q2152']}
+});
 function operations(value,out=new Set()){
  if(!value||typeof value!=='object')return out;
  if(typeof value.op==='string')out.add(value.op);
  for(const v of Object.values(value))if(v&&typeof v==='object')operations(v,out);
  return out;
+}
+export function prioritizeMissingAtoms(cards){
+ const gaps=new Map();
+ for(const c of cards.filter(c=>!c.registered&&c.missingAtoms))for(const atom of c.missingAtoms){
+  if(!gaps.has(atom))gaps.set(atom,{atom,ids:[],titles:[],directCompletionIds:[],ruleBlockedIds:[]});
+  const row=gaps.get(atom);row.ids.push(c.id);if(!row.titles.includes(c.title))row.titles.push(c.title);
+  if(c.missingAtoms.length===1)row.directCompletionIds.push(c.id);
+  if(c.status==='RULE BLOCKED')row.ruleBlockedIds.push(c.id);
+ }
+ return [...gaps.values()].map(g=>({...g,
+  score:5*g.directCompletionIds.length+2*g.titles.length+g.ids.length-10*g.ruleBlockedIds.length,
+  note:'Triage score only: complexity and core regression risk require reviewer judgment before implementation'
+ })).sort((a,b)=>b.score-a.score||a.atom.localeCompare(b.atom));
 }
 export function capabilityIndex(inventory=v2AllTitleInventory()){
  const cards=[];const usage=new Map();
@@ -89,7 +115,7 @@ export function capabilityIndex(inventory=v2AllTitleInventory()){
   for(const c of V2_SOURCE_CATALOGUES[title.title]){
    const id=c.identity||c.id;if(seen.has(id)||!title.pilotIds.includes(id)&&!title.unportedIds.includes(id))continue;
    seen.add(id);
-   const text=c.effectJa||c.effect||'',registered=!!pack.cards[id];
+   const text=c.effectJa||c.effect||'',registered=!!pack.cards[id],review=R36_DISCOUNT_REVIEWS[id];
    const ops=registered?[...operations(pack.cards[id])].sort():[];
    for(const op of ops){if(!usage.has(op))usage.set(op,[]);usage.get(op).push(id);}
    const groups=R35_SHARED_ATOM_CANDIDATES.filter(g=>g.ids.includes(id));
@@ -98,13 +124,15 @@ export function capabilityIndex(inventory=v2AllTitleInventory()){
     sourceTextLanguage:c.effectJa||/[のを]/u.test(text)?'ja':'catalogue-translation',
     sourceFingerprint:createHash('sha256').update(text).digest('hex'),
     sourceUrl:c.source||c.sourceUrl||null,operations:ops,
-    status:!text?'SOURCE PENDING':'REVIEW PENDING',
+    status:review?.status||(!text?'SOURCE PENDING':'REVIEW PENDING'),
+    officialReview:review?{reviewedOn:'2026-10-23',url:'https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no='+review.series+'%2F'+id,faq:review.faq}:null,
+    missingAtoms:review?.missing||null,
     priorSourceMatched:groups.length>0,
     requiredAtomCandidates:groups.map(g=>g.atom),
     searchHits:discountCandidate?['nextEligibleHandPlayApDiscount']:[],
     remaining:groups.map(g=>g.fullPortBlockedBy),
     // Old R35 groups are evidence pointers, not a full-card readiness certificate.
-    semanticReviewRequired:true});
+    semanticReviewRequired:!review});
   }
  }
  const atoms=[...new Set([...usage.keys(),...R35_SHARED_ATOM_CANDIDATES.map(g=>g.atom)])].sort().map(atom=>({
@@ -114,6 +142,8 @@ export function capabilityIndex(inventory=v2AllTitleInventory()){
   readyIds:cards.filter(c=>c.status==='READY'&&c.requiredAtomCandidates.includes(atom)).map(c=>c.id)
  }));
  return {cards,atoms,unportedSearched:cards.filter(c=>!c.registered).length,
+  reviewedDiscountCards:cards.filter(c=>c.officialReview).map(c=>c.id),
+  priorities:prioritizeMissingAtoms(cards),
   apDiscountCandidates:cards.filter(c=>!c.registered&&c.searchHits.length).map(c=>c.id)};
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){

@@ -10,10 +10,11 @@ test('R35 C: every currently unported identity appears once in exact source part
  assert.equal(audit.totalUnported,audit.manuallySourceMatched+audit.needsIndividualSemanticAudit);
  assert.equal(audit.groups.length,5);
  const actual=new Set(inventory.series.flatMap(s=>s.unportedIds));
- const grouped=audit.groups.flatMap(g=>g.ids);
+ const grouped=audit.groups.flatMap(g=>g.ids).filter(id=>actual.has(id));
  assert.equal(new Set([...grouped,...audit.pendingIds]).size,actual.size);
  assert.deepEqual(new Set([...grouped,...audit.pendingIds]),actual);
- assert.equal(grouped.length,10);
+ assert.equal(grouped.length,audit.manuallySourceMatched);
+ assert.equal(audit.groups.flatMap(g=>g.ids).length,10);
  for(const group of audit.groups){
   assert.ok(group.missing);
   assert.ok(group.existing);

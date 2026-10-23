@@ -213,7 +213,7 @@ function verifyProgram(program,path){
      o.then.some(x=>!['draw','drawDiscard','buffOwnField',
       'recoverOutsideOne','recoverOutsideTraitlessUnderEnergy','buffSelf',
        'stripOppRaidTop','retireOppFrontOneUnderBp','discardGate',
-       'grantFrontEnergyOwnOtherFrontTrait'].includes(x?.op)))
+       'grantFrontEnergyOwnOtherFrontTrait','bounceOwnOtherUnderEnergy','nextEligibleHandPlayApDiscount'].includes(x?.op)))
      throw Error(path+'['+i+'] invalid choose-one option');
     seen.add(o.id);
     // Reuse established nested effect verification AND reject stray fields
@@ -278,10 +278,16 @@ function verifyProgram(program,path){
   if(e.op==='buffSelfIfFirstAttack'&&(
    !integer(e.bp,1)||e.bp>5000||Object.keys(e).some(k=>!['op','bp'].includes(k))
   ))throw Error(path+'['+i+'] invalid first-attack buff');
-  if(e.op==='bounceOwnOtherUnderEnergy'&&(
-   !integer(e.energy)||e.energy<0||e.energy>30||
-   Object.keys(e).some(k=>!['op','energy'].includes(k))
-  ))throw Error(path+'['+i+'] invalid own bounce');
+  if(e.op==='bounceOwnOtherUnderEnergy'){
+   if(e.optional===true){
+    if(Object.keys(e).length!==4||Object.keys(e).some(k=>!['op','optional','excludeName','after'].includes(k))||
+     typeof e.excludeName!=='string'||!e.excludeName.trim()||e.excludeName.length>80||
+     !Array.isArray(e.after)||e.after.length!==1||e.after[0]?.op!=='nextEligibleHandPlayApDiscount')
+     throw Error('Invalid optional bounce prerequisite');
+    verifyProgram(e.after,path+'['+i+'].after');
+   }else if(!integer(e.energy)||e.energy>30||Object.keys(e).some(k=>!['op','energy'].includes(k)))
+    throw Error(path+'['+i+'] invalid own bounce');
+  }
   if(e.op==='recoverOutsideColorUnderEnergy'&&(
    typeof e.color!=='string'||!e.color.trim()||
    !integer(e.energy)||e.energy<0||e.energy>30||

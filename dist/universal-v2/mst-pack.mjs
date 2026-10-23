@@ -4,6 +4,7 @@ import {MST_V2_OFFICIAL_CATALOGUE} from './sources/mst-inventory.mjs';
 import {createUniversalPack} from './pack.mjs';
 
 const PRINTED_PINS=Object.freeze({
+ "MST-1-062":{"kind":"nextHandApDiscount","nameJa":"ナナホシ","color":"green","energy":3,"ap":1,"bp":2000,"gen":2,"type":"character","trigger":"color","traits":["ラノア魔法大学"],"effectJa":"〖登場時〗 以下から1つ選ぶ。\n・〈ナナホシ〉以外の自分の場のキャラを1枚手札に戻してもよい。そうした場合、このターン中、次に手札から使用する元々の発生エナジーが2以上のキャラカードの消費APを-1する。\n・カードを1枚引く。"},
  "MST-1-059":{
   kind:"onPlayChooseTemporaryFrontEnergy",
   nameJa:"シルフィエット",color:"green",energy:2,ap:1,bp:3000,gen:1,
@@ -595,6 +596,15 @@ export function verifiedMstV2Cards(){
    implementation:['vanilla','step'].includes(pin.kind)?'vanilla':'dsl'};
   if(card.implementation==='vanilla')card.effects={};
   if(pin.kind==='step')card.step=true;
+  if(pin.kind==='nextHandApDiscount'){
+   card.effects={onPlay:[{op:'chooseOne',optional:false,options:[
+    {id:'bounce',label:'可選回手非七星角色，下一張原產能2以上角色減1AP',turn:'any',then:[
+     {op:'bounceOwnOtherUnderEnergy',optional:true,excludeName:'ナナホシ',after:[
+      {op:'nextEligibleHandPlayApDiscount',filter:{cardType:'character',printedGenAtLeast:2}}]}]},
+    {id:'draw',label:'抽一張牌',turn:'any',then:[{op:'draw',count:1}]}
+   ]}]};
+   card.triggerEffect={op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1};
+  }
   if(pin.kind==='onPlayRestSilenceOpponentIfFieldOutside'){
    card.raidName=pin.nameJa;
    card.templateEffects={onPlay:[{template:'restSilenceOppFrontIfOwnOutsideField',
@@ -747,6 +757,7 @@ export function verifiedMstV2Entries(){
      '; pilot behavior and generic Trigger only, NOT complete FAQ acceptance. '+
      source.source,
     testFiles:Object.freeze([
+     ...(pin.kind==='nextHandApDiscount'?['tests/v2-r36-real-discount-cards.test.mjs']:[]),
      'tests/universal-v2-mst-port.test.mjs',
      'tests/universal-v2-sao-mst-cross-title.test.mjs',
      ...(pin.kind==='ownFieldAllNamesBp'?['tests/v2-mst-003-own-names.test.mjs']:[]),

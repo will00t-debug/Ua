@@ -4,6 +4,7 @@ import {SAO_OFFICIAL_CARDS} from '../sao-official-import.mjs';
 import {createUniversalPack} from './pack.mjs';
 
 const PRINTED_PINS=Object.freeze({
+ "SAO-2-074":{"kind":"nextHandApDiscount","nameJa":"トンキー","color":"green","energy":3,"ap":1,"bp":0,"gen":1,"type":"field","trigger":"active","traits":["ALO"],"effectJa":"【登場時】このターン中、次に手札から使用する元々のBPが3500の［特徴：ALO］の消費APを-1する。"},
  "SAO-1-005":{"kind":"onPlayTopFilterBottomDiscard","nameJa":"ユージオ",
   "color":"yellow","energy":2,"ap":1,"bp":3000,"gen":1,"type":"character",
   "trigger":null,"traits":[],"effectJa":"【登場時】自分の山札の上から4枚見る。その中から〈キリト〉か〈アリス〉を1枚まで公開し手札に加える。残りを望む順で自分の山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。"},
@@ -1296,6 +1297,7 @@ export function verifiedSaoV2Cards(){
    implementation:pin.kind==='vanilla'||pin.kind==='step'?'vanilla':'dsl'};
   if(card.implementation==='vanilla')card.effects={};
   if(pin.kind==='step')card.step=true;
+  if(pin.kind==='nextHandApDiscount')card.effects={onPlay:[{op:'nextEligibleHandPlayApDiscount',filter:{printedBp:3500,trait:'ALO'}}]};
   if(pin.kind==='opponentTurnBp1000'){
    card.opponentTurnBp=1000;
    card.effects={}; // Explicit DSL profile: persistent native modifier, no onPlay job
@@ -1509,6 +1511,7 @@ export function verifiedSaoV2Entries(){
      '; pilot logic and generic Trigger only, not complete official FAQ acceptance. '+
      source.source,
     testFiles:Object.freeze([
+     ...(pin.kind==='nextHandApDiscount'?['tests/v2-r36-real-discount-cards.test.mjs']:[]),
      'tests/universal-v2-sao-port.test.mjs',
       ...(def.id==='SAO-1-034'?['tests/v2-sao-034-official.test.mjs']:[]),
      ...(def.id==='SAO-2-021'?['tests/v2-sao-021-shared-main-cost.test.mjs']:[]),

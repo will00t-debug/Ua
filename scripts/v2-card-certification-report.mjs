@@ -20,6 +20,8 @@ export const R35_STATUS=Object.freeze({
  certified:'complete-independent-official-acceptance'
 });
 const sources=Object.freeze({
+ 'SAO-2-074':['sword-art-online','EX08BT','tests/v2-r36-real-discount-cards.test.mjs',['Q1209','Q1210','Q670']],
+ 'MST-1-062':['mushoku-tensei','UA54BT','tests/v2-r36-real-discount-cards.test.mjs',['Q2161','Q670']],
  'SAO-1-005':['sword-art-online','UA15BT','tests/v2-r31-sao005-official-registry.test.mjs',[]],
  'TTG-1-028':['gurren-lagann','UA56BT','tests/v2-r32-ttg028-official.test.mjs',[]],
  'SLG-1-070':['solo-leveling','UA51BT','tests/v2-r33-slg070-official.test.mjs',['Q2062']],
