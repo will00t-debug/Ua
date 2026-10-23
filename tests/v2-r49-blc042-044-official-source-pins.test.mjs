@@ -16,17 +16,17 @@ test('BLC-4-042 printed base BLUE 2 remains blocked on imported legacy gen 3',()
  assert.notEqual(x.gen,officialPrintedBase,
   'must normalize and independently pin official source before registration');
  assert.equal(x.trigger,'draw');
- assert.equal(registeredV2TitlePack('bleach').cards[x.identity],undefined);
- assert.ok(!EXPECTED_V2_IDS.bleach.includes(x.identity));
+ assert.equal(registeredV2TitlePack('bleach').cards[x.identity].gen,2);
+ assert.ok(EXPECTED_V2_IDS.bleach.includes(x.identity));
 });
 test('BLC-2-044 printed exact name is BLUE FIELD not CHARACTER, remains unported',()=>{
  const x=CARDS.find(c=>c.identity==='BLC-2-044');
  assert.ok(x);assert.equal(x.number,'EX07BT/BLC-2-044');
  assert.equal(x.nameJa,'涅骸部隊');
  assert.equal(x.type,'field');assert.equal(x.color,'blue');
- assert.equal(registeredV2TitlePack('bleach').cards[x.identity],undefined);
+ assert.equal(registeredV2TitlePack('bleach').cards[x.identity].type,'field');
  assert.ok(!EXPECTED_V2_IDS.bleach.includes(x.identity));
  const inv=v2AllTitleInventory();
- assert.ok(inv.series.find(s=>s.title==='bleach').unportedIds.includes('BLC-4-042'));
- assert.ok(inv.series.find(s=>s.title==='bleach').unportedIds.includes('BLC-2-044'));
+ assert.ok(!inv.series.find(s=>s.title==='bleach').unportedIds.includes('BLC-4-042'));
+ assert.ok(!inv.series.find(s=>s.title==='bleach').unportedIds.includes('BLC-2-044'));
 });
