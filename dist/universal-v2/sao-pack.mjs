@@ -4,6 +4,9 @@ import {SAO_OFFICIAL_CARDS} from '../sao-official-import.mjs';
 import {createUniversalPack} from './pack.mjs';
 
 const PRINTED_PINS=Object.freeze({
+  "SAO-1-056":{"kind":"onPlayChoiceTopOrHandRest","nameJa":"ユイ","color":"blue","energy":3,
+   "ap":1,"bp":2000,"gen":1,"type":"character","trigger":"draw","traits":["ALO"],
+   "effectJa":"【登場時】以下から1つを選ぶ。\n・自分の山札の上から2枚見る。その中からキャラカードかフィールドカードを1枚まで公開し手札に加え、残りを望む順で自分の山札の下に置く。\n・自分の手札から必要エナジーが2以下で消費APが1の青のキャラカードを1枚まで自分の場にレストで登場させる。"},
  "SAO-2-074":{"kind":"nextHandApDiscount","nameJa":"トンキー","color":"green","energy":3,"ap":1,"bp":0,"gen":1,"type":"field","trigger":"active","traits":["ALO"],"effectJa":"【登場時】このターン中、次に手札から使用する元々のBPが3500の［特徴：ALO］の消費APを-1する。"},
  "SAO-1-031":{"kind":"onPlayTopTwoBottom","nameJa":"三人の思い出",
   "color":"yellow","energy":3,"ap":1,"bp":0,"gen":0,"type":"event",
@@ -1457,6 +1460,17 @@ export function verifiedSaoV2Cards(){
    card.templateEffects={onPlay:[{template:'bounceOwnOtherUnderEnergy',energy:1}]};
   if(pin.kind==='onPlayPeekTop')
    card.templateEffects={onPlay:[{template:'peekTopOne'}]};
+  if(pin.kind==='onPlayChoiceTopOrHandRest'){
+   card.effects={onPlay:[{op:'chooseOne',optional:false,options:[
+    {id:'topTwo',label:'查看牌庫頂 2 張並最多取得一張角色或 FIELD',
+     turn:'any',then:[{op:'searchTopUpToTwoBottom',count:2,max:1,
+      rest:'bottom',filters:[{field:'type',value:'character'},
+       {field:'type',value:'field'}],logic:'any'}]},
+    {id:'freeRest',label:'從手牌免費 REST 登場最多一張藍色角色',
+     turn:'any',then:[{op:'deployOwnHandRest',type:'character',
+      color:'blue',energy:2,ap:1,max:1}]}
+   ]}]};
+  }
   if(pin.kind==='onPlayTopTwoBottom'){
    const spec=id==='SAO-1-031'?
     {count:5,filters:[{field:'name',value:'キリト'},
@@ -1538,6 +1552,7 @@ export function verifiedSaoV2Entries(){
      ...(pin.kind==='impactNullOwnTurnHandFiveBp1000'?['tests/v2-sao-051-hand-impact-null.test.mjs']:[]),
      ...(pin.kind==='ownTurnSilicaFieldBp'?['tests/v2-sao-019-own-silica-bp.test.mjs']:[]),
      ...(pin.kind==='onPlayTopTwoBottom'?['tests/v2-r37-sao-two-events.test.mjs']:[]),
+      ...(pin.kind==='onPlayChoiceTopOrHandRest'?['tests/v2-r39-sao056-official.test.mjs']:[]),
      ...(pin.kind==='onPlayTopFilterBottomDiscard'?
         [def.id==='SAO-1-005'?'tests/v2-r31-sao005-official-registry.test.mjs':
         'tests/v2-cross-title-top-filter-round13.test.mjs']:[]),
