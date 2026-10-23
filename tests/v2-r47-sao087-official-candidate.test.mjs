@@ -92,7 +92,7 @@ test('Real MAIN Turn1 from ENERGY without REST/AP, other own BP only, AI and exp
 });
 test('Real BLEACH EVENT Q978 forces physical own-hand payment before choosing Kirito',()=>{
  const packs=[sao,bleach];let s=newUniversalMatch(packs,{decks:[deck,bleachDeck],first:1,seed:470873});
- const watcher=put(s,0,'SAO-1-087','energy',0);
+ const watcher=put(s,0,'SAO-1-087','front',0);
  const event=pull(s,1,'BLC-1-030');
  const funding=pull(s,1,'BLC-1-001');
  s.players[1].outside.push(...s.players[1].hand.splice(0));
@@ -117,7 +117,7 @@ test('Real BLEACH EVENT Q978 forces physical own-hand payment before choosing Ki
  assert.ok(s.players[1].outside.some(c=>c.uid===funding.uid));
  assert.ok(s.zoneMoveEvents.some(e=>e.uid===funding.uid&&e.from==='hand'&&
   e.to==='outside'&&e.reason==='payment'));
- assert.equal(s.players[0].energy[0].ready,false);
+ assert.equal(s.players[0].front[0].ready,false);
  assert.equal(assertUniversalMatch(packs,s),true);
 });
 test('Genuine paid RAID and RAID LIFE remain independently legal without conflating Impact2',()=>{
