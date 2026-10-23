@@ -73,11 +73,12 @@ function r48Take(s,owner,id){
  }
  throw Error('Missing existing physical printed card '+owner+'/'+id);
 }
-test('R48 A: FOUR distinct genuine green EVENT/FIELD cards reach own OUTSIDE through legal paid actions',()=>{
+test('R48 A: three official events reach OUTSIDE, legal FIELD replacement goes REMOVED (Q2337 blocker)',()=>{
  const counts={...R48_GREEN_REAL_COUNTS},packs=[pack,pack];
  let s=newUniversalMatch(packs,{decks:[counts,counts],first:0,seed:48069});
- // Arrange a deterministic REAL 50-card game fixture. ALL four source cards
- // enter own outside through gameplay actions below, never fixture injection.
+ // Arrange a deterministic REAL 50-card game fixture. Genuine events go to
+ // OUTSIDE, but the only registered GREEN FIELD cannot be retired via this deck.
+ // Replacement goes to REMOVED; never count it as OUTSIDE.
  const p=s.players[0];
  for(let i=0;i<4;i++){
   const c=r48Take(s,0,'BLC-1-068');
@@ -118,18 +119,21 @@ test('R48 A: FOUR distinct genuine green EVENT/FIELD cards reach own OUTSIDE thr
  // Advance with normal phase actions, then perform all five paid uses.
  while(s.phase!=='main')apply(legalUniversalActions(packs,s).find(a=>a.type==='next'));
  paid('BLC-1-094','energy',0);   // genuine FIELD on-play; remains ENERGY
- paid('BLC-1-071','energy',0);   // legal line overwrite moves FIELD to OUTSIDE
+ paid('BLC-1-071','energy',0);   // legal overwrite sends FIELD to REMOVED, not OUTSIDE
  paid('BLC-1-100',undefined,undefined); // FINAL EVENT, recover REST AP
  paid('BLC-1-097',undefined,undefined); // EVENT, BP buff and draw
  paid('BLC-1-099',undefined,undefined); // EVENT, legal enemy retirement
- for(const [id] of R48_GREEN_FOUR_SOURCES)
+ for(const id of ['BLC-1-097','BLC-1-099','BLC-1-100'])
   assert.ok(p.outside.some(c=>c.cardId===id),
-   'source must actually leave field/hand for outside: '+id);
+   'EVENT must actually be paid and resolve into OUTSIDE: '+id);
+ assert.ok(p.removed.some(c=>c.cardId==='BLC-1-094'),
+  'FIELD replacement is rule removal, NEVER an outside card');
  assert.equal(countOwnOutsideDistinctPrintedNames(s,0,c=>pack.cards[c.cardId],
-  {color:'green',types:['event','field']}),4);
+  {color:'green',types:['event','field']}),3);
  assert.equal(assertUniversalMatch(packs,s),true);
  assert.ok(s.zoneMoveEvents.some(e=>e.uid===source['BLC-1-094']&&
-  e.from==='energy'&&e.to==='outside'));
+  e.from==='energy'&&e.to==='removed'));
+ assert.ok(!s.zoneMoveEvents.some(e=>e.uid===source['BLC-1-094']&&e.to==='outside'));
  for(const id of ['BLC-1-097','BLC-1-099','BLC-1-100'])
   assert.ok(s.zoneMoveEvents.some(e=>e.uid===source[id]&&e.to==='outside'));
 });
