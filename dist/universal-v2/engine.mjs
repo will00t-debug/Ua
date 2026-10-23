@@ -164,14 +164,16 @@ export function universalAttackDamage(pack,s,c){
 // Attacker wins equality; blocker must be strictly greater to win. This
 // shared live grant applies to both sides without a title-specific reducer.
 function grantBattleWinToOtherOwn(pack,s,owner,winner,role){
+ // Keep legacy battles without printed observers exactly unchanged.
+ // Physical stamp validation applies when an actual ability is listening.
+ const watchers=field(s.players[owner]).filter(c=>c.uid!==winner?.uid&&
+  card(pack,c).otherOwnBattleWonDamageTwo&&!originalEffectsDisabled(s,c));
+ if(!watchers.length)return;
  if(!['attacker','blocker'].includes(role)||
   !winner||typeof winner.uid!=='string'||
   !Number.isInteger(winner.fieldEntryStamp)||winner.fieldEntryStamp<1)
   throw Error('Invalid physical combat victory');
- for(const watcher of field(s.players[owner])){
-  if(watcher.uid===winner.uid||
-   !card(pack,watcher).otherOwnBattleWonDamageTwo||
-   originalEffectsDisabled(s,watcher))continue;
+ for(const watcher of watchers){
   watcher.otherOwnBattleWinDamage2={
    turn:s.turn,stamp:watcher.fieldEntryStamp,
    winnerUid:winner.uid,winnerStamp:winner.fieldEntryStamp,role
