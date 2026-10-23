@@ -111,13 +111,13 @@ test('R48 A: FOUR distinct official registered green EVENT cards reach OUTSIDE t
  }
  function paid(id){
   const action=legalUniversalActions(packs,s).find(a=>a.type==='event'&&a.uid===source[id]);
-  assert.ok(action,'must legally pay event '+id+' '+JSON.stringify({phase:s.phase,ap:p.apCards.map(c=>c.ready),produced:p.energy.map(c=>c?.cardId)}));
+  assert.ok(action,'must legally pay event '+id+' '+JSON.stringify({phase:s.phase,ap:p.apCards.map(c=>c.ready),produced:p.energy.map(c=>c?.cardId),hand:p.hand.map(c=>c.cardId),opponentFront:s.players[1].front.map(c=>c?.cardId),sourceUid:source[id],actions:legalUniversalActions(packs,s).filter(a=>a.type==='event')}));
   apply(action);settle();
  }
  while(s.phase!=='main')apply(legalUniversalActions(packs,s).find(a=>a.type==='next'));
  paid('BLC-1-097'); // real green EVENT: trait buff + draw
- paid('BLC-1-099'); // real green EVENT: opponent front retirement
  paid('BLC-1-100'); // real green EVENT: AP reactivation
+ paid('BLC-1-099'); // real green EVENT: opponent front retirement
  paid('BLC-1-095'); // new full-print green EVENT: TOP4 0..2 + order bottom
  for(const id of ['BLC-1-095','BLC-1-097','BLC-1-099','BLC-1-100']){
   assert.ok(p.outside.some(c=>c.uid===source[id]),
