@@ -1,7 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {matchesV2LiveCondition} from '../dist/universal-v2/field-conditions.mjs';
-import {createUniversalPack} from '../dist/universal-v2/pack.mjs';
+import {createUniversalPack,validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
+import {newUniversalMatch,universalBp,universalImpact,assertUniversalMatch}
+ from '../dist/universal-v2/engine.mjs';
 
 // Shared cross-title atom: counts PHYSICAL cards bearing any named card name
 // in own OUTSIDE, never the number of distinct names (unlike Q2337).
@@ -80,4 +82,37 @@ test('printed condition schema rejects malformed names, duplicate aliases and in
   const changed={...source,passiveBonuses:[{condition:bad,bp:500}]};
   assert.throws(()=>createUniversalPack({id:'r51-invalid',cards:[changed,...cards.slice(1)]}));
  }
+});
+
+test('R51 live 50-card match recomputes BP+500 at 4 and IMPACT1 at 6 own OUTSIDE names',()=>{
+ const ids=Object.keys(pack.cards);
+ const counts=Object.fromEntries(ids.map((id,i)=>[id,i===ids.length-1?2:4]));
+ assert.equal(Object.values(counts).reduce((n,v)=>n+v,0),50);
+ assert.deepEqual(validateUniversalDeck(pack,counts),[]);
+ const s=newUniversalMatch(pack,{decks:[counts,counts],seed:51070,first:0});
+ const take=id=>{
+  for(const zone of ['hand','deck','life']){
+   const a=s.players[0][zone],i=a.findIndex(c=>c.cardId===id);
+   if(i>=0)return a.splice(i,1)[0];
+  }
+  throw Error('missing named OUTSIDE physical '+id);
+ };
+ const asuna=take('source');asuna.ready=true;
+ asuna.fieldEntryStamp=s.nextFieldEntryStamp++;
+ s.players[0].front[0]=asuna;
+ const outside=id=>s.players[0].outside.push(take(id));
+ assert.equal(universalBp(pack,s,asuna),3500);
+ assert.equal(universalImpact(pack,s,asuna),0);
+ for(let i=0;i<3;i++)outside('yuuki');
+ assert.equal(universalBp(pack,s,asuna),3500);
+ outside('rosario');
+ assert.equal(universalBp(pack,s,asuna),4000);
+ assert.equal(universalImpact(pack,s,asuna),0);
+ outside('yuuki');outside('rosario');
+ assert.equal(universalBp(pack,s,asuna),4000);
+ assert.equal(universalImpact(pack,s,asuna),1);
+ assert.equal(assertUniversalMatch(pack,JSON.parse(JSON.stringify(s))),true);
+ s.active=1;
+ assert.equal(universalBp(pack,s,asuna),3500);
+ assert.equal(universalImpact(pack,s,asuna),1);
 });
