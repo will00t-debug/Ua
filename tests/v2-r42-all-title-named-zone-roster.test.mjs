@@ -11,8 +11,8 @@ test('R42 full 700 IDs and 368 currently unported searched, with no partial card
  assert.equal(s.officallyReviewedRemaining,undefined);
  // Historical reviews persist, but a newly source-pinned registered card
  // must no longer count as currently unported or currently PARTIAL.
- assert.equal(s.officiallyReviewedRemaining,4);
- assert.equal(s.partial,3);assert.equal(s.ruleBlocked,1);
+ assert.equal(s.officiallyReviewedRemaining,3);
+ assert.equal(s.partial,2);assert.equal(s.ruleBlocked,1);
  const remaining=[...report.candidates.map(c=>c.id),...report.remainingNoKeywords];
  assert.equal(remaining.length,inv.totals.blocked);
  assert.equal(new Set(remaining).size,inv.totals.blocked);
@@ -27,5 +27,5 @@ test('R42 cannot count historical R41 blocked SLG-028 after real full card regis
  const critical=new Map(r.priorities.map(row=>[row.id,row]));
  assert.equal(critical.get('MST-1-067').status,'RULE BLOCKED');
  for(const id of ['SAO-2-068','SAO-2-069','BLC-4-042','SAO-1-087','SAO-2-064'])
-  if(!['SAO-2-068','SAO-2-069'].includes(id))assert.equal(critical.get(id).status,'PARTIAL');
+  if(!['SAO-2-068','SAO-2-069','BLC-4-042'].includes(id))assert.equal(critical.get(id).status,'PARTIAL');
 });

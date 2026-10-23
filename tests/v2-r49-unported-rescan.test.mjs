@@ -10,8 +10,9 @@ test('R49 every new shared primitive rechecks all then-current unported official
  assert.equal(report.registered+report.unportedSearched,700);
  assert.equal(report.readyVerified,0,'a text match NEVER awards full-card READY');
  for(const group of Object.values(hits))assert.ok(group.every(id=>ids.has(id)));
- for(const id of ['BLC-4-042','BLC-2-044','BLC-4-069'])
-  assert.ok(report.focus.some(c=>c.id===id&&c.status==='PARTIAL'));
+ for(const id of ['BLC-4-042','BLC-2-044'])
+  assert.ok(report.focus.some(c=>c.id===id&&c.status==='REGISTERED'));
+ assert.ok(report.focus.some(c=>c.id==='BLC-4-069'&&c.status==='PARTIAL'));
  assert.ok(manual.every(c=>ids.has(c.id)&&c.missing?.length>0));
  assert.equal(Object.values(report.byTitle).reduce((x,y)=>x+y.unported,0),ids.size);
 });

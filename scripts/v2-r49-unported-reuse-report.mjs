@@ -41,7 +41,7 @@ export function r49NewAtomFiveTitleRescan(){
    hitIds:new Set(cards.filter(c=>c.title===s.title&&
     Object.values(evidence).some(rx=>rx.test(c.sourceText||''))).map(c=>c.id)).size}])),
   focus:['BLC-4-042','BLC-2-044','BLC-4-069'].map(id=>({
-   id,status:known.get(id)||'REVIEW PENDING'}))
+   id,status:expected.has(id)?known.get(id)||'REVIEW PENDING':'REGISTERED'}))
  };
  if(report.registered+report.unportedSearched!==700||
   report.partial+report.ruleBlocked+report.readyVerified+report.reviewPending!==cards.length||

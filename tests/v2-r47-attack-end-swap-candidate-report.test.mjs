@@ -14,13 +14,14 @@ test('R47 ALL five title unported identities and explicit official-partial swap 
  assert.equal(new Set(keys).size,keys.length);
  assert.deepEqual(new Set(keys),new Set(inv.series.flatMap(x=>x.unportedIds)));
  assert.equal(r.summary.readyVerified,0);
- for(const id of ['BLC-4-069','BLC-4-042']){
+ for(const id of ['BLC-4-069']){
   const c=r.candidates.find(x=>x.id===id);
   assert.ok(c);
   assert.equal(c.status,'PARTIAL');
   assert.ok(c.missing.length>=3);
  }
  assert.ok(r.candidates.every(c=>c.status==='PARTIAL'||c.status==='REVIEW PENDING'));
+ assert.ok(!r.candidates.some(c=>c.id==='BLC-4-042'),'full real card now registered');
  assert.equal(r.summary.registered+inv.totals.blocked,700);
  console.log('R47_FIVE_TITLE_RESCAN '+JSON.stringify(r.summary));
 });

@@ -15,7 +15,7 @@ test('R48 scans all 700 source cards and precisely partitions every dynamically 
  assert.ok(merged.every(id=>expected.has(id)));
  assert.ok(reviewed.every(c=>expected.has(c.id)&&c.status==='PARTIAL'&&
   c.missing.length>0));
- assert.ok(reviewed.some(c=>c.id==='BLC-4-042'&&c.missing.some(x=>x.includes('FIELD'))));
+ assert.ok(!reviewed.some(c=>c.id==='BLC-4-042'),'full source now ported');
  assert.ok(reviewed.some(c=>c.id==='BLC-4-069'&&c.faq.includes('Q2337')));
  for(const id of ['TTG-1-067','SLG-1-021','SAO-1-018','SAO-1-070','MST-1-009'])
   assert.ok(reviewed.some(c=>c.id===id),'independent official source review '+id);
