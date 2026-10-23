@@ -8,6 +8,8 @@ import {BLEACH_V2_ADDON_PROFILES,BLEACH_V2_NEW_IDS,
 
 const testForKind=Object.freeze({
  topOneEnergyDiscount:'tests/v2-r38-blc070-real.test.mjs',
+  fieldDualMain:'tests/v2-r50-blc044-042-official.test.mjs',
+  mayuriThreeMode:'tests/v2-r50-blc044-042-official.test.mjs',
  topTwoGoteiEvent:'tests/v2-r48-BLC-1-095-complete.test.mjs',
  raidStripOrRetire2000:'tests/v2-blc-023-official.test.mjs',
  bounce:'tests/universal-v2-bleach-port.test.mjs',
@@ -44,7 +46,7 @@ function contributedEntry(profile){
  // The legacy gen=2 for EX15BT/BLC-4-014 describes the ACTIVE total, not
  // the printed REST base. SourceRecord is the normalized printed card record;
  // retain original.gen separately and require the profile fingerprint above.
- const normalized=profile.id==='BLC-4-014';
+ const normalized=['BLC-4-014','BLC-4-042'].includes(profile.id);
  const sourceRecord=Object.freeze(normalized?
   {...original,gen:definition.gen,legacyImportedGen:original.gen}: {...original});
  const vanilla=['plain','plainAlt','step'].includes(profile.kind);
@@ -54,7 +56,9 @@ function contributedEntry(profile){
   evidence:Object.freeze({
    printedTextFragments:Object.freeze([profile.effect]),
    reviewNote:normalized?
-    'EX15BT/BLC-4-014 official yellow+ base is REST 1; ACTIVE adds +1. Imported legacy gen=2 describes ACTIVE total; sourceRecord.gen=1, legacyImportedGen=2. Tested ACTIVE=2/REST=1. FAQ acceptance still pending.':
+    profile.id==='BLC-4-014'?
+      'EX15BT/BLC-4-014 official yellow+ base is REST 1; ACTIVE adds +1. Imported legacy gen=2 describes ACTIVE total; sourceRecord.gen=1, legacyImportedGen=2. Tested ACTIVE=2/REST=1. FAQ acceptance still pending.':
+      'EX15BT/BLC-4-042 printed base BLUE BLUE=2 but legacy gen=3; audited sourceRecord.gen=2 retains legacyImportedGen=3; official Q2323 and full three-mode tests.':
     'Official printed '+profile.number+'; profile '+profile.kind+
      '; fingerprint matched source text and printed stats. V2 program/trigger tests exist; NOT per-card complete FAQ acceptance.',
    testFiles:Object.freeze([
