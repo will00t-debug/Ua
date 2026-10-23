@@ -17,6 +17,9 @@ test('R37 TOP-N scans every unported physical card ID across five independently 
 });
 test('R37 no keyword is mistaken for complete official legality; retirement prerequisites remain missing',()=>{
  const rows=r37TopNCandidateReport().candidates;
+ const near=rows.find(c=>c.id==='SAO-1-056');
+ assert.ok(near);assert.equal(near.status,'NEAR READY');
+ assert.deepEqual(near.reviewEvidence.missing,['chooseOneFreeRestHandCharacterWithPrintedColorEnergyAp']);
  for(const id of ['SAO-2-056','MST-1-049','SLG-1-059']){
   const c=rows.find(c=>c.id===id);
   assert.ok(c);assert.equal(c.status,'PARTIAL');

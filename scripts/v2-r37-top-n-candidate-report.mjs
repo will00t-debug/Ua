@@ -6,6 +6,11 @@ import {capabilityIndex,ATOM_REVIEW_STATUSES}
  from './v2-r35-unported-atom-audit.mjs';
 import {v2AllTitleInventory} from '../dist/universal-v2/title-packs/inventory.mjs';
 export const R37_TOP_SOURCE_REVIEWS=Object.freeze({
+ 'SAO-1-056':Object.freeze({
+  status:'NEAR READY',series:'UA15BT',
+  missing:['chooseOneFreeRestHandCharacterWithPrintedColorEnergyAp'],
+  note:'Official UA15BT Yui blue3/AP1/BP2000/ALO, DRAW LIFE. OnPlay choose exactly one: TOP2 reveal up to one CHARACTER OR FIELD then bottom-order rest; OR select up to one own HAND blue CHARACTER printed required energy<=2, AP1 and REST enter own field WITHOUT spending another AP. Top2 already reusable. Missing atomic child of chooseOne for conditional no-cost REST hand play; never register partial mode.',
+  source:'https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA15BT%2FSAO-1-056'}),
  'SLG-1-059':Object.freeze({
   status:'PARTIAL',series:'UA51BT',
   missing:['onPlayOptionalDiscardThenReadySelfBp1000','onAttackTopFourDoubleTraitThenSkipNextActiveIfHandAdded','Q2058NextActiveConsumption'],

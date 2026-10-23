@@ -81,13 +81,13 @@ export const ATOM_REVIEW_STATUSES=Object.freeze(['READY','NEAR READY','PARTIAL',
 export const R36_DISCOUNT_REVIEWS=Object.freeze({
  'SAO-2-074':{series:'EX08BT',status:'READY',missing:[],faq:['Q1209','Q1210','Q670']},
  'MST-1-062':{series:'UA54BT',status:'READY',missing:[],faq:['Q2161','Q670']},
- 'BLC-1-070':{series:'UA08BT',status:'PARTIAL',missing:['printedEnergyAtMostFilter','topNOptionalPickWithoutDiscard'],faq:[]},
+ 'BLC-1-070':{series:'UA08BT',status:'READY',missing:[],faq:[]},
  'BLC-2-030':{series:'EX07BT',status:'PARTIAL',missing:['nextHandNameFilter','enteredNamedCharacterThisTurn'],faq:[]},
  'BLC-4-055':{series:'EX15BT',status:'PARTIAL',missing:['optionalRemoveOtherThen','nextHandTraitOrNameFilter','upToTwoDistinctBuffTargets'],faq:['Q2328']},
  'BLC-4-069':{series:'EX15BT',status:'NEAR READY',missing:['attackEndDistinctOutsideNamesSwap'],faq:['Q2337','Q2338']},
  'TTG-1-080':{series:'UA56BT',status:'PARTIAL',missing:['fieldOrRaidBaseNamePlayGate','nextHandRaidOnlyNameOrFilter','eventSourceDiscount'],faq:['Q2300']},
  'SAO-2-031':{series:'EX08BT',status:'PARTIAL',missing:['outsideFourOrderedBottomCost','grantDamageTwo'],faq:['Q1202']},
- 'MST-1-031':{series:'UA54BT',status:'PARTIAL',missing:['printedEnergyAtMostFilter','ownEventUsedThisTurnImpact'],faq:['Q2152']}
+ 'MST-1-031':{series:'UA54BT',status:'READY',missing:[],faq:['Q2152']}
 });
 function operations(value,out=new Set()){
  if(!value||typeof value!=='object')return out;
