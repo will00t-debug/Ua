@@ -68,7 +68,7 @@ test('R33 genuine 50-card isolated シーマ onPlay grants only other own DFN, n
 test('R33 optional 0 legal and wrong trait cannot receive selection tax, schema extra fields fail closed',()=>{
  let {s,source,target,action}=setup('SLG-1-053');
  s=dispatchUniversalAction(packs,s,action);
- assert.equal(s.pending?.kind,'effect-grant-ap-tax',undefined);
+ assert.equal(s.pending,null);
  assert.equal(s.continuousStates.length,0);
  const sourceNoOptions=SOLO_LEVELING_CARDS.find(c=>c.id==='SLG-1-070');
  assert.match(sourceNoOptions.effect,/最多1張/);
