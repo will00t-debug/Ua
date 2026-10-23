@@ -36,7 +36,13 @@ function prepare(id){
  s.players[player][line][slot]=target;
  const sequence=isSao?['SAO-2-056','SAO-2-035','SAO-2-056','SAO-2-028','SAO-2-047']:
   ['MST-1-060','MST-1-075','MST-1-049','MST-1-062','MST-1-059'];
- const top=sequence.map(x=>take(s,player,x));s.players[player].deck.unshift(...top);
+ // TOP setup must draw distinct physical cards from the DECK only. The
+ // source in hand is not available for the TOP5/TOP4 window.
+ const top=sequence.map(id=>{
+  const deck=s.players[player].deck,i=deck.findIndex(c=>c.cardId===id);
+  assert.ok(i>=0,'missing deck copy for TOP fixture '+id);
+  return deck.splice(i,1)[0];
+ });s.players[player].deck.unshift(...top);
  for(let i=0;i<4&&s.phase!=='main';i++)s=act(s,{type:'next'});
  const play=legalUniversalActions(packs,s).find(x=>x.type==='play'&&x.uid===src.uid&&
   x.line===(isSao?'energy':'front'));
