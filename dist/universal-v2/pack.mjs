@@ -304,7 +304,8 @@ function verifyProgram(program,path){
    if(!validPay)throw Error(path+'['+i+'] invalid typed name payment');
    if(typeof e.optional!=='boolean'||!Array.isArray(e.then)||
     !e.then.length||e.then.length>6||
-    Object.keys(e).some(k=>!['op','optional','then','payment'].includes(k))||
+    (e.count!==undefined&&e.count!==2)||
+    Object.keys(e).some(k=>!['op','optional','then','payment','count'].includes(k))||
     e.then.some(x=>!['draw','millTop','peekTopOne','searchDeckOne',
      'searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside',
       'peekTopOrBottom','recoverOutsideOne','deployOutsideRest',
