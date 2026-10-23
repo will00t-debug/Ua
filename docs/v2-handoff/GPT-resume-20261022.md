@@ -657,3 +657,17 @@ Permanent fail-closed rules, no rewrite/merge/deploy/force-push/retired hidden-l
 - 能力優先順序：①單次來源限定**雙 UID 手費**原子完成再回收，②真退場後指定印刷卡名 **FIELD** 從 HAND 零 AP ACTIVE 進 ENERGY，③本回合暫時授予 attack-end 換位（MST-1-009）；④花天狂骨真卡 BLC-4-076／077／081 可全印刷移植者，實測 BLC-4-069 Q2338；⑤TTG 勝戰抽卡、SLG 依場外張數動態 BP 與回收門檻。
 - 不改舊保留疑義：MST-1-067 Q2162、BLC-4-034 裏向底卡、未釐清巢狀 LIFE、多目標 AP＋棄手費用。**全面獨立逐卡 FAQ 認證仍為 0**；R48 新真卡個別整卡測試不等於全 337 張逐卡 FAQ 認證。
 - 集中 CI 指令：`node scripts/v2-card-certification-report.mjs`、`node scripts/v2-r35-unported-atom-audit.mjs`、`node scripts/v2-r46-battle-win-candidate-report.mjs`、`node scripts/v2-r47-attack-end-swap-candidate-report.mjs`、`node scripts/v2-r48-official-readiness-report.mjs`、`npm test`、`node scripts/v2-integrated-match-matrix.mjs`、`node scripts/v2-assert-independent-manifest.mjs`、`node scripts/v2-unported-report.mjs`，核實最新 HEAD Actions SUCCESS 才報成功。
+
+
+## R49 下一輪接續（2026-10-24）
+
+- 基準：R48 HEAD `126ae120`、Actions `40002474994` SUCCESS（2,092/2,092 + 60/60），從最新 GPT Draft PR #78 `gpt/v2-resume-20261022` 接續；PR base `cursor/v2-multi-retire-life-6ff5`，未修改 Cursor #77、不合 main、不部署、不 force push。
+- 詳細官方印刷、源 UID、整卡阻塞及分批內容：`docs/v2-handoff/V2-R49-atomic-payment-field-three-mode.md`。
+- Batch A 原子雙手費：在已存在 `discardGate` 增加 `count:2`，單一次合法 action 指定兩個不同 OWN HAND 實體 UID，先驗兩張再一起進 OUTSIDE；直到完整支付才可執行後續；可選 0 張完全不支付、不接續；待決來源與私有資訊嚴格驗證。保留 count1。測試 `tests/v2-r49-atomic-two-hand-cost.test.mjs`。
+- Batch B 精確印刷名稱：`recoverOutsideOne` 新 `filter.field='printedNameAny'`，支付完成後從**現在** OWN OUTSIDE 判定精確 `['涅 マユリ','涅 ネム']`，不是同特徵或舊 aliases；反例、Hand/Outside UID、Human/AI 測試。
+- Batch C 通用 FIELD 免費登場：既有 `deployNamedFromZones` 嚴格 `cardType:'field'`＋手牌＋ENERGY＋ACTIVE＋顏色、印刷名及其他合法參數；真實 UID 搬移、新入場 stamp、onPlay，0 額外 AP；`tests/v2-r49-named-active-field-entry.test.mjs`。
+- Batch D `retireOwnCharacterOne(excludeSelf:true)` 真正己方其他角色退場後才接續 FIELD；原本 draw 接續和 AP/排隊系統不重寫；加入 `chooseOne` 分支合法的 `inspectTopAnyOutside`／`retireOwnCharacterOne`。三模式合成 50 張牌組完整操作 `tests/v2-r49-three-mode-live-integration.test.mjs`。截至 R49 核心程式 HEAD `42983156`，Node 22 **2101/2101 PASS**、60/60 PASS、Actions `40006288492` SUCCESS；後續提交必須另外確認自己的 CI。
+- Batch E：`scripts/v2-r49-unported-reuse-report.mjs` 直接重用 R35、R48 registry/官方 source index，動態搜尋五作品**目前所有未移植卡牌**；`tests/v2-r49-unported-rescan.test.mjs` 守住母體700、UID保存及不憑文字自動 READY；來源證據 `tests/v2-r49-blc042-044-official-source-pins.test.mjs` 分別確認 `BLC-4-042` Legacy gen3 **不能**直接沿用為官方發生藍能源2，和 `BLC-2-044` 是精確印刷名藍色 FIELD。
+- **正式登錄尚未增加：337／700，未移植 363**（應再執行報告查最新）。`BLC-4-042` **PARTIAL**：雖三種模式可於共用引擎真實 UI ACTION 結算，但 BLC-2-044 本身兩種不同 MAIN 特殊能力、042 的印刷能源正規化與真正合法 50 張 BLEACH 卡牌、DRAW LIFE 尚未完成官方整卡認證；不得把合成能力通過誤作完成。BLC-4-069 同樣 PARTIAL，還需花天狂骨合法來源與真實整卡驗收。完整人工官方核對 R48 8 張仍 PARTIAL，其他文字候選 REVIEW PENDING。
+- 下一輪：優先 `BLC-2-044` 同一卡兩項獨立 once MAIN 能力、退場後的 FIELD REST 全體 buff；其次真正 BLC-4-042 印刷正規化與全卡三模式；再 BLC-4-076／077／081 真卡使 BLC-4-069 完成 Q2337/2338。每新原語完成都重跑五作品全庫，READY 才批次移植。
+- 保留 MST-1-067 Q2162、BLC-4-034 face-down bottom／退場、未裁決二批巢狀 LIFE、合併 AP＋棄手費。全面獨立 FAQ 認證仍 **0**。集中 CI：`node scripts/v2-card-certification-report.mjs`、`node scripts/v2-r35-unported-atom-audit.mjs`、`node scripts/v2-r46-battle-win-candidate-report.mjs`、`node scripts/v2-r47-attack-end-swap-candidate-report.mjs`、`node scripts/v2-r48-official-readiness-report.mjs`、`node scripts/v2-r49-unported-reuse-report.mjs`、`npm test`、`node scripts/v2-integrated-match-matrix.mjs`、`node scripts/v2-assert-independent-manifest.mjs`、`node scripts/v2-unported-report.mjs`；只承認最後程式 HEAD 自己的 SUCCESS。
