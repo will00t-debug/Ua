@@ -10,7 +10,7 @@ export function stampFieldInstance(s,c){
  return c.fieldEntryStamp;
 }
 export function grantContinuousState(s,{kind,controller,sourceUid,targetUid,until=null,sourceLinked=false,program=null,optional=false}){
- if(!['skipNextActive','cannotActive','cannotAttack','originalEffectsDisabled','grantedOnAttack'].includes(kind)||!player(controller)||
+ if(!['skipNextActive','cannotActive','cannotAttack','selectionApTax','originalEffectsDisabled','grantedOnAttack'].includes(kind)||!player(controller)||
   typeof sourceUid!=='string'||typeof targetUid!=='string'||typeof sourceLinked!=='boolean')
   throw Error('Invalid continuous-state descriptor');
  const target=fieldInstance(s,targetUid),source=fieldInstance(s,sourceUid);
@@ -23,13 +23,20 @@ export function grantContinuousState(s,{kind,controller,sourceUid,targetUid,unti
  if(kind!=='grantedOnAttack'&&(program!==null||optional!==false))
   throw Error('Unknown continuous status program');
  if(kind==='skipNextActive'&&until!==null)throw Error('Skip may not have expiry');
+ // Q2062: the first OPPONENT turn that begins after the grant. An onPlay
+ // during their current turn does not make the surcharge active early.
+ const foe=1-controller;
+ if(kind==='selectionApTax'&&(sourceLinked||!target||target.owner!==controller||
+  until?.player!==foe||until?.phase!=='attack'||until?.edge!=='end'||
+  !Number.isInteger(until?.ownTurn)||until.ownTurn!==s.players[foe].ownTurns+1))
+  throw Error('Selection AP tax requires own target and next opponent turn');
  // Only the controller's next own START may expire a temporary attack ban.
  if(kind==='cannotAttack'&&(sourceLinked||until?.player!==controller||
   until?.phase!=='start'||until?.edge!=='start'))
   throw Error('Attack ban must expire on granting controller next own start');
- if(['cannotActive','cannotAttack','originalEffectsDisabled','grantedOnAttack'].includes(kind)&&(!until||!player(until.player)||
+ if(['cannotActive','cannotAttack','selectionApTax','originalEffectsDisabled','grantedOnAttack'].includes(kind)&&(!until||!player(until.player)||
   !['start','move','main','attack'].includes(until.phase)||!['start','end'].includes(until.edge)||
-  Object.keys(until).some(k=>!['player','phase','edge'].includes(k))))
+  Object.keys(until).some(k=>!['player','phase','edge',...(kind==='selectionApTax'?['ownTurn']:[])].includes(k))))
   throw Error('Invalid status expiration phase');
  const status={id:s.nextContinuousStateId++,kind,controller,sourceUid,sourceLinked,
   sourceStamp:sourceLinked?stampFieldInstance(s,source.card):null,
@@ -57,7 +64,8 @@ export function pruneContinuousStates(s){
 }
 export function expireContinuousStates(s,{player,phase,edge}){
  s.continuousStates=s.continuousStates.filter(e=>!e.until||
-  !(e.until.player===player&&e.until.phase===phase&&e.until.edge===edge));
+  !(e.until.player===player&&e.until.phase===phase&&e.until.edge===edge&&
+  (e.until.ownTurn===undefined||s.players[player].ownTurns>=e.until.ownTurn)));
  pruneContinuousStates(s);
 }
 export function attemptFieldActive(s,owner,c){
@@ -74,6 +82,17 @@ export function refreshFieldActive(s,owner){
  pruneContinuousStates(s);
  for(const c of field(s.players[owner]))attemptFieldActive(s,owner,c);
 }
+// A card-effect selection tax is not a combat attacker/blocker restriction.
+export function selectionApSurcharge(s,selector,targetUid){
+ if(!player(selector)||s.active!==selector)return 0;
+ const target=fieldInstance(s,targetUid);
+ if(!target||target.owner===selector)return 0;
+ return s.continuousStates.filter(e=>e.kind==='selectionApTax'&&!e.consumed&&
+  e.controller===target.owner&&e.targetOwner===target.owner&&
+  e.targetUid===targetUid&&e.targetStamp===target.card.fieldEntryStamp&&
+  e.until?.player===selector&&
+  e.until.ownTurn===s.players[selector].ownTurns).length;
+}
 export function fieldRestrictions(s,owner,c){
  return s.continuousStates.filter(e=>!e.consumed&&e.targetOwner===owner&&
   e.targetUid===c.uid&&e.targetStamp===c.fieldEntryStamp)
@@ -83,19 +102,24 @@ export function validateContinuousStates(s){
  if(!Array.isArray(s.continuousStates)||!Number.isInteger(s.nextContinuousStateId)||
   s.nextContinuousStateId<1||new Set(s.continuousStates.map(e=>e.id)).size!==s.continuousStates.length||
   s.continuousStates.some(e=>!Number.isInteger(e.id)||e.id<1||
-   !['skipNextActive','cannotActive','cannotAttack','originalEffectsDisabled','grantedOnAttack'].includes(e.kind)||!player(e.controller)||
+   !['skipNextActive','cannotActive','cannotAttack','selectionApTax','originalEffectsDisabled','grantedOnAttack'].includes(e.kind)||!player(e.controller)||
    !player(e.targetOwner)||typeof e.sourceUid!=='string'||typeof e.targetUid!=='string'||
    !Number.isInteger(e.targetStamp)||e.targetStamp<1||typeof e.consumed!=='boolean'||
    typeof e.sourceLinked!=='boolean'||(e.sourceLinked&&(!Number.isInteger(e.sourceStamp)||e.sourceStamp<1))||
    (e.kind==='skipNextActive'&&e.until!==null)||
    (e.kind==='cannotAttack'&&(e.sourceLinked||e.until?.player!==e.controller||
     e.until?.phase!=='start'||e.until?.edge!=='start'))||
+   (e.kind==='selectionApTax'&&(e.sourceLinked||e.targetOwner!==e.controller||
+    e.until?.player!==1-e.controller||e.until?.phase!=='attack'||
+    e.until?.edge!=='end'||!Number.isInteger(e.until?.ownTurn)||
+    e.until.ownTurn<1||Object.keys(e.until).length!==4||
+    Object.keys(e.until).some(k=>!['player','phase','edge','ownTurn'].includes(k))))||
    (e.kind==='grantedOnAttack'&&(
      e.optional!==true||!Array.isArray(e.program)||e.program.length!==1||
      e.program[0]?.op!=='draw'||e.program[0]?.count!==1||Object.keys(e.program[0]).length!==2||
      e.sourceLinked||!player(e.until?.player)||e.until?.phase!=='attack'||e.until?.edge!=='end'))||
    (e.kind!=='grantedOnAttack'&&(e.program!==undefined||e.optional!==undefined))||
-   (['cannotActive','cannotAttack','originalEffectsDisabled','grantedOnAttack'].includes(e.kind)&&(!e.until||!player(e.until.player)||
+   (['cannotActive','cannotAttack','selectionApTax','originalEffectsDisabled','grantedOnAttack'].includes(e.kind)&&(!e.until||!player(e.until.player)||
     !['start','move','main','attack'].includes(e.until.phase)||!['start','end'].includes(e.until.edge)))))
   throw Error('Invalid continuous-state accounting');
  return true;
