@@ -3223,9 +3223,26 @@ export function assertUniversalMatch(pack,s){
  if(!Array.isArray(s.effectQueue)||[...s.effectQueue,...lifeEntries.flatMap(e=>e.jobs)].some(e=>!playerIndex(e.owner)||
    !['grantedAttackDraw','grantOnAttack','draw','drawIfOwnName','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','millTop','buffSelf','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','forbidAttackOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopUpToTwoBottom','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
     'discardGate','enemyFrontAllBpDown','retireOppFrontAllUnderBp',
-    'nextEligibleHandPlayApDiscount','buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
+    'nextEligibleHandPlayApDiscount','grantFrontEnergyOwnOtherFrontTrait','buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
     'recoverOutsideColorUnderEnergy','deployOutsideRest','deployOutsideNameRest','payApDeployNamedRest','inspectTopTraitOutside','deployOutsideTraitlessRestOrRaid','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','moveAtMainEnd','retireOwnFieldOne','retireOwnCharacterOne','openBlock','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','phaseOrder','effectMoveOrder','restSelfTuckMovedFaceDown','sourceResolutionBoundary','lifeBatchStep','lifeRelease','advanceAfterAttack','additionalBattleDamage','openRetirementBatch','closeRetirementBatch','retirementOrder','battleImpactDamage','discardOppHand','activeSelfIf'].includes(e.op)))
   throw Error('Invalid queued effects');
+ // Suspended MAIN can hold an earned FRONT grant *after* its mandatory
+ // draw/discard decision. Its source/printed operation must still be exact;
+ // a forged serialized queue must not become a free permission generator.
+ for(const e of s.effectQueue.filter(x=>x.op==='grantFrontEnergyOwnOtherFrontTrait')){
+  const pl=s.players[e.owner],physical=pl&&[
+   ...field(pl),...pl.outside,...pl.hand,...pl.deck,...pl.life,...pl.lifeRevealed
+  ].find(c=>c&&c.uid===e.sourceUid);
+  const printed=physical&&card(pack,physical);
+  const declared=[
+   ...(printed?.effects?.onPlay||[]),...(printed?.mainAbility?.then||[])
+  ].some(x=>x.op==='grantFrontEnergyOwnOtherFrontTrait'&&
+   x.trait===e.trait&&x.optional===e.optional&&x.until===e.until);
+  if(!declared||e.sourceName!==printed.name||
+   Object.keys(e).some(k=>!['op','owner','sourceUid','sourceName','trait',
+    'optional','until','entryCause'].includes(k)))
+   throw Error('Unproven queued FRONT energy grant');
+ }
  // The internal boundary is not user-authored DSL. Reject forged or
  // out-of-range snapshots before replay or an AI simulation can resolve it.
  if(s.effectQueue.some(e=>e.op==='sourceResolutionBoundary'&&(
