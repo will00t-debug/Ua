@@ -93,3 +93,57 @@ test('R44 no automatic FREE REST if no eligible current hand card; clean skip',(
  assert.equal(s.pending,null);
  assert.equal(assertUniversalMatch(packs,s),true);
 });
+
+test('R44 generic RAID LIFE GET mode returns real card to own hand with no printed onPlay',()=>{
+ let {s,top,base}=scene();
+ s.players[0].hand.splice(s.players[0].hand.findIndex(c=>c.uid===top.uid),1);
+ s.players[0].outside.push(top);
+ s.pending={kind:'life-trigger',player:0,uid:top.uid,trigger:'raid'};
+ const actions=legalUniversalActions(packs,s);
+ const get=actions.find(a=>a.type==='chooseTrigger'&&a.mode==='get');
+ const raid=actions.find(a=>a.type==='chooseTrigger'&&a.mode==='raid'&&a.baseUid===base.uid);
+ assert.ok(get);assert.ok(raid);
+ const before=s.players[0].front[0].uid;
+ s=use(s,get);
+ assert.ok(s.players[0].hand.some(c=>c.uid===top.uid));
+ assert.equal(s.players[0].front[0].uid,before);
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
+test('R44 actual RAID LIFE free Raid enters shared onPlay and spends no normal AP',()=>{
+ let {s,top,base}=scene();
+ s.players[0].hand.splice(s.players[0].hand.findIndex(c=>c.uid===top.uid),1);
+ s.players[0].outside.push(top);
+ s.pending={kind:'life-trigger',player:0,uid:top.uid,trigger:'raid'};
+ const a=legalUniversalActions(packs,s).find(x=>x.type==='chooseTrigger'&&x.mode==='raid'&&x.baseUid===base.uid);
+ assert.ok(a);const ap=s.players[0].apCards.filter(x=>x.ready).length;
+ s=use(s,a);
+ assert.equal(s.players[0].apCards.filter(x=>x.ready).length,ap);
+ assert.ok(s.players[0].front.some(c=>c?.uid===top.uid));
+ assert.equal(s.pending?.kind,'effect-retire-bp');
+ assert.equal(assertUniversalMatch(packs,JSON.parse(JSON.stringify(s))),true);
+});
+test('R44 BP-limit uses CURRENT opponent BP; buffs above 4000 make onPlay skip safely',()=>{
+ let {s,base,top,enemy}=scene();
+ enemy.buffs.push({bp:4000,untilTurn:s.turn});
+ const a=legalUniversalActions(packs,s).find(x=>x.type==='raid'&&x.baseUid===base.uid&&x.uid===top.uid);
+ assert.ok(a);s=use(s,a);
+ assert.equal(s.pending,null);
+ assert.ok(s.players[1].front.some(c=>c?.uid===enemy.uid));
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
+test('R44 opponent attack-end retires printed Yuuki and opens own-hand REST entry',()=>{
+ let s=newUniversalMatch(packs,{decks:[deck,deck],first:1,seed:44070});
+ const top=take(s,0,'SAO-2-069'),as=take(s,0,'SAO-1-068');
+ top.ready=true;top.fieldEntryStamp=s.nextFieldEntryStamp++;s.players[0].front[0]=top;
+ s.players[0].hand.push(as);
+ for(let i=0;i<3;i++)s=use(s,{type:'next'});
+ assert.equal(s.phase,'attack');assert.equal(s.active,1);
+ s=use(s,{type:'next'});
+ assert.ok(s.players[0].outside.some(c=>c.uid===top.uid));
+ assert.equal(s.pending?.kind,'effect-named-zone-entry');
+ assert.ok(s.zoneMoveEvents.some(x=>x.uid===top.uid&&x.reason==='retirement'));
+ const a=legalUniversalActions(packs,s).find(x=>x.uid===as.uid&&x.type==='chooseNamedZoneDeploy'&&x.line==='energy');
+ assert.ok(a);s=use(s,a);
+ assert.ok(s.players[0].energy.some(c=>c?.uid===as.uid));
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
