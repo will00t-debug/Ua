@@ -4,6 +4,12 @@ import {MST_V2_OFFICIAL_CATALOGUE} from './sources/mst-inventory.mjs';
 import {createUniversalPack} from './pack.mjs';
 
 const PRINTED_PINS=Object.freeze({
+ "MST-1-060":{
+  "kind":"stepFrontMainDrawDiscardFrontEnergy","nameJa":"シルフィエット",
+  "color":"green","energy":3,"ap":1,"bp":2500,"gen":2,"type":"character",
+  "traits":["ラノア魔法大学"],"trigger":"get",
+  "effectJa":"〖ステップ〗 （自分の移動フェイズにフロントLからエナジーLへ移動できる）\n 〖起動メイン〗 〖フロントLにある場合〗 〖ターン1〗 カードを1枚引き、自分の手札を1枚場外に置く。自分のフロントLの他の［特徴：ラノア魔法大学］を1枚まで選び、このターン中、「このキャラはフロントLでもエナジーを発生させる。」を与える。"
+ },
  "MST-1-080":{
   "kind":"eventDrawTwoFrontEnergy","nameJa":"そう、ボクはシルフィエット",
   "color":"green","energy":3,"ap":1,"bp":0,"gen":0,"type":"event",
@@ -701,6 +707,13 @@ export function verifiedMstV2Cards(){
     filters:[{field:'color',value:'green'},{field:'type',value:'field'}],logic:'all'}]};
   if(pin.kind==='onPlayDrawIfOwnEnergyAtLeast')
    card.templateEffects={onPlay:[{template:'drawIfOwnEnergyAtLeast',energy:7,count:1}]};
+  if(pin.kind==='stepFrontMainDrawDiscardFrontEnergy'){
+   card.step=true;
+   card.mainAbility={op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,
+    then:[{op:'drawDiscard',count:1},
+     {op:'grantFrontEnergyOwnOtherFrontTrait',trait:'ラノア魔法大学',
+      optional:true,until:'thisTurn'}]};
+  }
   if(pin.kind==='eventDrawTwoFrontEnergy')
    card.effects={onPlay:[{op:'draw',count:2},
     {op:'grantFrontEnergyOwnOtherFrontTrait',trait:'ラノア魔法大学',
@@ -769,6 +782,7 @@ export function verifiedMstV2Entries(){
     testFiles:Object.freeze([
      ...(pin.kind==='nextHandApDiscount'?['tests/v2-r36-real-discount-cards.test.mjs']:[]),
      ...(pin.kind==='eventDrawTwoFrontEnergy'?['tests/v2-r37-mst080-event-front.test.mjs']:[]),
+     ...(pin.kind==='stepFrontMainDrawDiscardFrontEnergy'?['tests/v2-r37-mst060-main-step.test.mjs']:[]),
      'tests/universal-v2-mst-port.test.mjs',
      'tests/universal-v2-sao-mst-cross-title.test.mjs',
      ...(pin.kind==='ownFieldAllNamesBp'?['tests/v2-mst-003-own-names.test.mjs']:[]),

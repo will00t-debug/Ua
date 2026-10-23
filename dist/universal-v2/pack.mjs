@@ -638,14 +638,23 @@ function normalize(card,packId){
  // A front once-per-turn ability may be a source-complete DSL program,
  // not just a single debuff. Named payment is a strict cost, not a shortcut.
  const frontEffects=frontGate?.then||frontProgram;
+ // Keep the prior debuff/payment program intact. A two-step no-cost
+ // draw/discard then optional FRONT grant is another printed, bounded
+ // existing front-once program; it does not introduce a second MAIN engine.
  const mainFrontProgram=mainAbility?.op==='frontOnceProgram'&&
   mainAbility.frontOnly===true&&mainAbility.oncePerTurn===true&&
-  Array.isArray(frontProgram)&&frontProgram.length===1&&
-  (frontProgram[0]?.op==='enemyBpDown'||
-   frontGate&&Array.isArray(frontGate.then)&&frontGate.then.length>=1&&
-   frontGate.then.length<=6&&frontEffects.every(e=>
-    ['enemyBpDown','draw','buffSelf','grantOnAttack'].includes(e?.op)))&&
-  Object.keys(mainAbility).length===4&&
+  Array.isArray(frontProgram)&&(
+   (frontProgram.length===1&&(frontProgram[0]?.op==='enemyBpDown'||
+    frontGate&&Array.isArray(frontGate.then)&&frontGate.then.length>=1&&
+    frontGate.then.length<=6&&frontEffects.every(e=>
+     ['enemyBpDown','draw','buffSelf','grantOnAttack'].includes(e?.op))))||
+   (frontProgram.length===2&&frontProgram[0]?.op==='drawDiscard'&&
+    frontProgram[0].count===1&&Object.keys(frontProgram[0]).length===2&&
+    frontProgram[1]?.op==='grantFrontEnergyOwnOtherFrontTrait'&&
+    frontProgram[1].optional===true&&frontProgram[1].until==='thisTurn'&&
+    typeof frontProgram[1].trait==='string'&&!!frontProgram[1].trait.trim()&&
+    frontProgram[1].trait.length<=80&&Object.keys(frontProgram[1]).length===4)
+  )&&Object.keys(mainAbility).length===4&&
   Object.keys(mainAbility).every(k=>['op','frontOnly','oncePerTurn','then'].includes(k));
  if(mainFrontProgram)verifyProgram(mainAbility.then,card.id+'.mainAbility.then');
  const mainRestBuff=mainAbility?.op==='restSelfBuffOther'&&

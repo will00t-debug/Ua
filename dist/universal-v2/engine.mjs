@@ -2587,6 +2587,11 @@ export function legalUniversalActions(pack,s){
    }
    if(ability.op==='frontOnceProgram'){
     if(s.mainAbilityUsedUids.includes(c.uid))continue;
+    // Non-attack FRONT ability never requires an opponent target to activate.
+    if(ability.then.length===2&&ability.then[0].op==='drawDiscard'&&
+     ability.then[1].op==='grantFrontEnergyOwnOtherFrontTrait'){
+     out.push({type:'activate',uid:c.uid,mode:'frontOnce'});continue;
+    }
     const step=ability.then[0];
     if(step.op==='discardGate'&&!payableHand(pack,s,p,step.payment).length)continue;
     const debuff=step.op==='discardGate'
