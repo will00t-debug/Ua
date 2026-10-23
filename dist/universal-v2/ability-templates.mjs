@@ -268,7 +268,15 @@ const registry=Object.freeze({
   build:v=>[{op:'searchTopUpToTwoBottom',count:v.count,max:2,rest:'bottom',
    filters:v.filters.map(f=>({...f})),logic:v.logic}]
  },
- // Single-selection specialization of the SAME multi-choice runtime (no new op/queue).
+ // Printed hand selection, never a paid PLAY.
+  deployOwnHandRest:{
+   args:{type:v=>['character','field'].includes(v),
+    color:v=>['blue','yellow','green','purple','red'].includes(v),
+    energy:v=>integer(v,0,30),ap:v=>integer(v,1,3),max:v=>integer(v,1,4)},
+   build:v=>[{op:'deployOwnHandRest',type:v.type,color:v.color,
+    energy:v.energy,ap:v.ap,max:v.max}]
+  },
+  // Single-selection specialization of the SAME multi-choice runtime (no new op/queue).
  searchTopUpToOneBottom:{
   args:{count:v=>integer(v,1,5),filters:v=>Array.isArray(v)&&v.length>=1&&v.length<=3&&
    v.every(f=>f&&typeof f==='object'&&!Array.isArray(f)&&Object.keys(f).length===2&&
