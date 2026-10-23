@@ -46,6 +46,14 @@ jobs:
         run: node scripts/v2-r44-phase-retire-candidate-report.mjs
       - name: R45 selection hand-discard tax and official all-title rescan
         run: node scripts/v2-r45-selection-cost-candidate-report.mjs
+      - name: R46 official battle-win five-title rescan
+        run: node scripts/v2-r46-battle-win-candidate-report.mjs
+      - name: R47 attack-end exchange five-title rescan
+        run: node scripts/v2-r47-attack-end-swap-candidate-report.mjs
+      - name: R48 official whole-print readiness census
+        run: node scripts/v2-r48-official-readiness-report.mjs
+      - name: R49 two-card payment, printed name and FIELD full-roster rescan
+        run: node scripts/v2-r49-unported-reuse-report.mjs
       - name: Node 22 test suite
         run: npm test
       - name: Five-title 60-match matrix
