@@ -39,7 +39,7 @@ test('R41 historical reviews retain evidence as later source-pinned cards become
  assert.equal(r.stats.manuallyVerifiedUnportedR41,
   Object.keys(R41_OFFICIAL_REVIEWS).filter(id=>!registered.has(id)).length);
  for(const id of ids){
-  if(id==='SLG-1-028'||id==='SAO-2-068'||id==='SAO-2-064'){
+  if(id==='SLG-1-028'||id==='SAO-2-068'||id==='SAO-2-064'||id==='SAO-1-087'){
    assert.ok(!r.candidates.some(c=>c.id===id),'now registered whole printed card cannot remain unported');
    continue;
   }
