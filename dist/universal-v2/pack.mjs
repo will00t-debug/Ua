@@ -154,11 +154,12 @@ function verifyProgram(program,path){
     e.zones.some(z=>!['hand','outside'].includes(z))||
     !['any','front','energy'].includes(e.line)||typeof e.ready!=='boolean'||
     e.optional!==true||
-    (Object.keys(e).length!==6&&Object.keys(e).length!==10)||
-    (Object.keys(e).length===10&&(
+    ![6,9,10].includes(Object.keys(e).length)||
+    (Object.keys(e).length>6&&(
      !['red','yellow','green','blue','purple'].includes(e.color)||
      !integer(e.ap,1)||e.ap>3||!integer(e.maxEnergy)||e.maxEnergy>30||
-     !integer(e.grantBp,1)||e.grantBp>5000))||
+     (Object.keys(e).length===10&&(!integer(e.grantBp,1)||e.grantBp>5000))||
+     (Object.keys(e).length===9&&Object.hasOwn(e,'grantBp'))))||
     Object.keys(e).some(k=>!['op','name','zones','line','ready','optional',
      'color','ap','maxEnergy','grantBp'].includes(k))
    ))throw Error(path+'['+i+'] invalid free named-zone entry');

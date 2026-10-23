@@ -617,7 +617,8 @@ function continueEffectQueue(pack,s){
        sourceName:job.sourceName,name:job.name,ready:job.ready,line:job.line,
        handChoices,outsideChoices,
        ...(job.color===undefined?{}:{color:job.color,ap:job.ap,
-        maxEnergy:job.maxEnergy,grantBp:job.grantBp})};
+        maxEnergy:job.maxEnergy,
+        ...(job.grantBp===undefined?{}:{grantBp:job.grantBp})})};
    }else if(job.op==='deployOutsideNameRest'){
     const choices=pl.outside.filter(c=>{
      const d=card(pack,c);
@@ -3325,7 +3326,8 @@ export function assertUniversalMatch(pack,s){
    !Array.isArray(q.handChoices)||!Array.isArray(q.outsideChoices)||
    !same(q.handChoices,legalZone('hand'))||
    !same(q.outsideChoices,legalZone('outside'))||
-   Object.keys(q).length!==(earned&&earned.color===undefined?9:13)||
+   Object.keys(q).length!==(earned&&earned.color===undefined?9:
+    earned&&earned.grantBp===undefined?12:13)||
    Object.keys(q).some(k=>!['kind','player','sourceUid','sourceName','name',
     'ready','line','handChoices','outsideChoices','color','ap',
     'maxEnergy','grantBp'].includes(k)))

@@ -57,3 +57,16 @@ test('R43 filter cannot be expanded, omitted or used to mint extra payment',()=>
   assert.throws(()=>assertUniversalMatch(pack,altered),/Invalid named free zone entry/);
  }
 });
+
+test('R44 named free REST may filter printed energy/AP/color with NO invented BP buff',()=>{
+ const rest={op:'deployNamedFromZones',name:'Asuna',zones:['hand'],line:'any',
+  ready:false,optional:true,color:'green',ap:1,maxEnergy:3};
+ const noBuff=createUniversalPack({id:'r44-filtered-rest',cards:[
+  {...cards[0],effects:{onPlay:[rest]}},...cards.slice(1)]});
+ assert.deepEqual(noBuff.cards['QA-001'].effects.onPlay,[rest]);
+ for(const bad of [{...rest,grantBp:0},{...rest,grantBp:undefined},
+  {...rest,color:null},{...rest,maxEnergy:31},{...rest,payAp:1}]){
+  assert.throws(()=>createUniversalPack({id:'r44-invalid',cards:[
+   {...cards[0],effects:{onPlay:[bad]}},...cards.slice(1)]}),/invalid/);
+ }
+});
