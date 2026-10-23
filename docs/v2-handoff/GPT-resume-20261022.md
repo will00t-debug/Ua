@@ -498,3 +498,15 @@ GPT PR #78 原分支 `gpt/v2-resume-20261022`（對 `cursor/v2-multi-retire-life
 **最後完成程式 SHA `525e01925ee62270e75646a3823e18ec60f2cffa`，GitHub Actions [39884026935](https://github.com/will00t-debug/Ua/actions/runs/39884026935) Node 22 `npm test` **1869/1869 PASS**、五作品對戰 **60/60 PASS**、獨立 manifest／未移植報告成功。登錄 BLEACH97、TTG36、SLG42、SAO92、MST49，共 **316/700**，未移植 **384**；逐卡全部官方 FAQ 完整認證仍 **0**。測試在 GitHub 遠端，不宣稱本地 Node22；此文件提交自己的 CI 待另驗。未合併 main、未部署、未改 Cursor PR77、未 force-push。
 
 **R35 首要缺口**：在取得官方的 BLC-4-034 退場費用與下層回收優先權依據以前，延續共用來源完成邊界、fieldEntryStamp、背面可視資訊及跨作品逐卡 FAQ 驗收，不為卡數加入作品專屬判定。
+
+## R35｜真卡獨立驗收、跨作品實際複合狀態、DSL 原子缺口（2026-10-23）
+
+本輪基準為 R34 文件 HEAD `63544e34445339c570230b37082037079c351f3a`。詳細可重現證據與官方印刷連結：[`V2-R35-real-card-certification-and-atom-gaps.md`](./V2-R35-real-card-certification-and-atom-gaps.md)。
+
+- **A（獨立逐卡認證框架）**：`ea8239042a53a45442d0c5123f570fd2ffb6423c`、`0c3b0edc7a886d78eee7d2331446784a3c417e4c`。新增 `scripts/v2-card-certification-report.mjs` 與 `tests/v2-r35-card-certification.test.mjs`，明確區分源目錄700張、正式登錄、僅有部分效果測試與全面 FAQ 認證。四張近期卡 SAO-1-005、TTG-1-028、SLG-1-070、MST-1-059 均維持部分案例驗證；不以已通過的原子／合成測試冒充「完整官方驗收」。
+- **B（真實來源複合）**：`f8718bf0eeb069f4c75ba7b7119c25d8fa31d294`。新增 `tests/v2-r35-real-cross-title-composite.test.mjs`：在一局合法50張 SLG vs MST，先真正登場 SLG-070 並授予額外 AP 指定費，再由 MST-059 真正登場二選一給另一己方 FRONT 暫時產能；重疊期間檢查行動集合、JSON、來源、UID/stamp、非法動作原子拒絕、Normal/Hard AI、獨立到期與隱藏資訊。
+- **C（共用原子缺口盤點）**：`b44198fd838931472fac5c66b481ed2143fdf06f`、`993a88351ab86fc87d5c661b205acc6a20af5540`。新增可重跑 `scripts/v2-r35-unported-atom-audit.mjs` 與測試：精確分開當前未移植卡號，對10張印刷來源具體比對成5組共用原子候選；尚餘374張保留待逐卡原文驗證，**不可誤稱已完成384張完整語意盤點**。
+- **D（保守閘門）**：沒有為湊實作數增加 DSL 或完整卡牌；最高價值候選為「下一張符合印刷條件的手牌使用減1 AP」（SAO-2-074／MST-1-062，官方 Q1210/Q2161），但須先建立原子費用預檢、一次性授予期限、Human/AI 同源 validator 與兩作品印刷正反例，才能安全進主引擎。
+- **E（官方未解決）**：`703cc4c97e1cbe9c6881f925f76c8b844131b52c` 新增完整 R35 文件。BLC-2-019/047/4-034 仍未登錄；BLC034 MAIN REST+真退場後底牌恢復的實際選牌時序未有可直接套用官方依據；第二批巢狀 LIFE 繼續原子 fail-closed，不新增 last-known undercard 假快照。
+- **CI 紀律**：之前 `525e01925ee62270e75646a3823e18ec60f2cffa` 的遠端 Node22 [39884026935](https://github.com/will00t-debug/Ua/actions/runs/39884026935) 1869/1869 與60/60 僅屬 R34 程式碼。**R35 新提交的完整 Actions 尚未取得可驗證 job/log；不能宣稱通過，也未在本環境執行本地 Node22。** 此連線的 commit-workflow-run 讀取只涵蓋 PR 事件，對本分支 push workflow 返回空列表不代表測試綠燈。待查每個最新 SHA 的實際 CI 並修復錯誤後才可進行正式整體驗收。
+- **計數不變（依最後可核對來源 roster）**：BLEACH97、TTG36、SLG42、SAO92、MST49，**316/700** 登錄、**384** 未移植、逐卡全面 FAQ 認證 **0**。沒有改 main、Cursor #77、正式 Vercel，沒有 force push。
