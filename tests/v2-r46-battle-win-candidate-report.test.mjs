@@ -14,7 +14,8 @@ test('R46 Q763 all 365-current-unported card identities scanned across five real
  assert.deepEqual(new Set([...r.candidateCards.map(x=>x.id),...r.unflaggedIds]),
   new Set(inv.series.flatMap(s=>s.unportedIds)));
  assert.equal(r.summary.readyVerified,0);
- assert.ok(r.candidateCards.some(c=>c.id==='SAO-1-087'&&c.status==='PARTIAL'));
+ assert.ok(!r.candidateCards.some(c=>c.id==='SAO-1-087'),
+  'source complete migrated SAO-1-087 must not remain unported');
  assert.ok(r.candidateCards.every(c=>c.status==='PARTIAL'||c.status==='REVIEW PENDING'));
  console.log('R46_Q763_ALL_TITLE_SCAN '+JSON.stringify(r.summary));
  console.log('R46_Q763_CANDIDATES '+JSON.stringify(r.candidateCards));
