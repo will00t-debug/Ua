@@ -3,6 +3,7 @@ import {SOLO_LEVELING_CARDS} from '../solo-leveling.mjs';
 import {createUniversalPack} from './pack.mjs';
 const catalog=Object.fromEntries(SOLO_LEVELING_CARDS.map(c=>[c.id,c]));
 const authored=[
+ {"id":"SLG-1-046","name":"水篠 旬","color":"green","energy":1,"ap":1,"bp":2000,"gen":1,"trigger":null,"type":"character","textAnchor":"登場時：查看牌庫頂4張","implementation":"dsl","templateEffects":{"onPlay":[{"template":"searchTopOneBottomDiscardWhere","count":4,"filters":[{"field":"name","value":"水篠 旬"},{"field":"name","value":"デイリークエスト"}],"logic":"any"}]}},
   {"id":"SLG-1-070","name":"シーマ","color":"green","energy":0,
    "ap":1,"bp":1000,"gen":1,"trigger":"active","type":"character",
    "textAnchor":"登場時令另一己方DFN角色最多1張",

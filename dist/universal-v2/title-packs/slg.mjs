@@ -3,6 +3,7 @@ import {SOLO_LEVELING_CARDS} from '../../solo-leveling.mjs';
 import {verifiedSlgV2Cards} from '../slg-pack.mjs';
 const records=Object.fromEntries(SOLO_LEVELING_CARDS.map(c=>[c.id,c]));
 const proof=Object.freeze({
+ '046':['登場時：查看牌庫頂4張','Official UA51BT/SLG-1-046 水篠 旬 GREEN1/AP1/BP2000/gen1, no LIFE; TOP4 reveal 0..1 exact name 水篠 旬 OR デイリークエスト, bottom-order rest, only on successful addition discard exactly one own hand card. Reuses existing contingent TOP-N search op; full FAQ certification remains independent.'],
  '070':['登場時令另一己方DFN角色最多1張',
  'Official UA51BT/SLG-1-070 シーマ GREEN0/AP1/BP1000/gen1, printed compound DFN／第四次架南島レイド traits and ACTIVE Life. OnPlay choose UP TO ONE OTHER OWN field DFN character; during next opponent turn, that opponent must pay extra 1 READY AP when selecting this stamped target by a CARD EFFECT; may choose another or 0 if allowed, and without AP cannot choose it. Explicit Q2062 2026-04-17. Physical UID/field stamp, AI choice, optional 0 and owner-only private state in tests/v2-r33-slg070-official.test.mjs; complete all-FAQ certificate NOT claimed.'],
  '053':['Impact無效。登場時若場上有己方水篠旬，抽1張。','Original Japanese UA51BT/SLG-1-053 諸菱 賢太 GREEN3/AP1/BP2000/gen2 DRAW Life separately: IMPACT nullification plus onPlay draw exactly 1 only when OWN field has 〈水篠 旬〉 in front or energy line. Both printed clauses share existing native impactNull and drawIfOwnName V2 predicates, no separate reducer. Official https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-053; not fully FAQ certified.'],
@@ -75,6 +76,7 @@ export default Object.freeze({
      ...(def.id==='SLG-1-004'?['tests/v2-slg-004-turn-zone-ledger.test.mjs']:[]),
      ...(def.id==='SLG-1-012'?['tests/v2-slg-012-own-name.test.mjs']:[]),
      ...(def.id==='SLG-1-018'?['tests/v2-slg-018-compound-top.test.mjs']:[]),
+     ...(def.id==='SLG-1-046'?['tests/v2-r38-slg046-real.test.mjs']:[]),
      ...(def.id==='SLG-1-037'?['tests/v2-slg-037-original-bp.test.mjs']:[]),
      ...(def.id==='SLG-1-042'?['tests/v2-slg-042-shared-energy.test.mjs']:[]),
      ...(def.id==='SLG-1-053'?['tests/v2-slg-053-own-name-impact-null.test.mjs']:[]),

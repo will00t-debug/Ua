@@ -20,6 +20,7 @@ export const R35_STATUS=Object.freeze({
  certified:'complete-independent-official-acceptance'
 });
 const sources=Object.freeze({
+ 'SLG-1-046':['solo-leveling','UA51BT','tests/v2-r38-slg046-real.test.mjs',[]],
  'BLC-1-070':['bleach','UA08BT','tests/v2-r38-blc070-real.test.mjs',[]],
  'SAO-1-031':['sword-art-online','UA15BT','tests/v2-r37-sao-two-events.test.mjs',['Q1119','Q312','Q313','Q314']],
  'SAO-1-066':['sword-art-online','UA15BT','tests/v2-r37-sao-two-events.test.mjs',['Q1119','Q312','Q313','Q314']],
