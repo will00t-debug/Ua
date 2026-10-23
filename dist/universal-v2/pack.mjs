@@ -415,11 +415,16 @@ function verifyProgram(program,path){
   }
   if(e.op==='retireSourceOnPhaseEnd'&&Object.keys(e).length!==1)throw Error(path+'['+i+'] invalid phase self retirement');
   if(e.op==='retireOwnCharacterOne'){
-   if(e.optional!==true||!Array.isArray(e.after)||e.after.length!==1||
-    e.after[0]?.op!=='draw'||!Number.isInteger(e.after[0].count)||
-    e.after[0].count<1||e.after[0].count>5||
-    Object.keys(e).length!==3||
-    Object.keys(e).some(k=>!['op','optional','after'].includes(k)))
+   const legacyDraw=e.after?.length===1&&e.after[0]?.op==='draw'&&
+    Number.isInteger(e.after[0].count)&&e.after[0].count>=1&&e.after[0].count<=5&&
+    e.excludeSelf===undefined;
+   const otherThenField=e.excludeSelf===true&&e.after?.length===1&&
+    e.after[0]?.op==='deployNamedFromZones'&&
+    e.after[0].cardType==='field'&&e.after[0].line==='energy'&&
+    e.after[0].ready===true;
+   if(e.optional!==true||!Array.isArray(e.after)||!legacyDraw&&!otherThenField||
+    Object.keys(e).length!==(otherThenField?4:3)||
+    Object.keys(e).some(k=>!['op','optional','after','excludeSelf'].includes(k)))
     throw Error(path+'['+i+'] invalid own character retirement and follow-up');
    verifyProgram(e.after,path+'['+i+'].after');
   }
