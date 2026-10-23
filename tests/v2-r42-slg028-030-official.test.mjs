@@ -29,6 +29,7 @@ function fixture(zone){
  for(let k=0;k<4&&s.phase!=='main';k++)s=run(s,{type:'next'});
  // Arrange the inspected top window AFTER phase changes/mandatory draw.
  const inspected=take(s,'SLG-1-027');s.players[0].deck.unshift(inspected);
+ for(const ap of s.players[0].apCards){ap.ready=true;ap.inPlay=true;} // AP2 is genuinely paid once
  const play=legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===src.uid&&a.line==='front');
  assert.ok(play,'4 purple energy and AP2 source can be played');
  return {s:run(s,play),src,target,inspected};
@@ -48,11 +49,11 @@ for(const zone of ['hand','outside'])test('R42 028 ACTIVE; printed named 030 ent
  let {s,src,target,inspected}=fixture(zone);
  assert.ok(s.players[0].front.some(c=>c?.uid===src.uid&&c.ready));
  assert.equal(s.pending.kind,'effect-named-zone-entry');
- const a=legalUniversalActions(packs,s).find(x=>x.type==='chooseNamedZoneDeploy'&&x.zone===zone&&x.uid===target.uid&&x.line==='energy');
+ const a=legalUniversalActions(packs,s).find(x=>x.type==='chooseNamedZoneDeploy'&&x.zone===zone&&x.uid===target.uid&&x.line==='front');
  assert.ok(a);const paid=s.players[0].apCards.filter(x=>x.ready).length;
- s=run(s,a);assert.ok(s.players[0].energy.some(c=>c?.uid===target.uid&&!c.ready));
+ s=run(s,a);assert.ok(s.players[0].front.some(c=>c?.uid===target.uid&&!c.ready));
  assert.equal(s.players[0].apCards.filter(x=>x.ready).length,paid);
- assert.ok(s.zoneMoveEvents.some(e=>e.uid===target.uid&&e.sourceUid===src.uid&&e.from===zone&&e.to==='energy'));
+ assert.ok(s.zoneMoveEvents.some(e=>e.uid===target.uid&&e.sourceUid===src.uid&&e.from===zone&&e.to==='front'));
  assert.equal(s.pending.kind,'effect-top-trait-outside');
  const select=legalUniversalActions(packs,s).find(x=>x.type==='chooseTopTraitOutside'&&x.uid===inspected.uid);
  assert.ok(select);s=run(s,select);
