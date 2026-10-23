@@ -678,6 +678,18 @@ function normalize(card,packId){
    typeof colorTriggerFieldSubstitution!=='string'||!colorTriggerFieldSubstitution.trim()))
   throw Error(card.id+' invalid live COLOR field-substitution profile');
  const mainAbility=card.mainAbility??null;
+ // Generic printed FIELD cost: REST itself, truly retire it, then one optional
+ // name-filtered CHARACTER from OWN OUTSIDE enters ACTIVE ENERGY for no AP.
+ const fieldRestRetireThen=mainAbility?.op==='fieldRestRetireThen'&&
+  card.type==='field'&&Object.keys(mainAbility).length===2&&
+  Array.isArray(mainAbility.then)&&mainAbility.then.length===1&&
+  mainAbility.then[0]?.op==='deployNamedFromZones'&&
+  mainAbility.then[0].zones?.length===1&&mainAbility.then[0].zones[0]==='outside'&&
+  mainAbility.then[0].line==='energy'&&mainAbility.then[0].ready===true&&
+  mainAbility.then[0].optional===true&&
+  mainAbility.then[0].color!==undefined&&
+  mainAbility.then[0].ap===1;
+ if(fieldRestRetireThen)verifyProgram(mainAbility.then,card.id+'.mainAbility.then');
  // Two independently printed MAIN 「ターン1」 on the same FIELD source.
  // Name-shared once accounting lives in the engine, not title-specific cases.
  const fieldDualMain=mainAbility?.op==='fieldDualMain'&&
@@ -792,7 +804,7 @@ function normalize(card,packId){
   Object.keys(mainAbility.then[0]).every(k=>['op','count'].includes(k));
  if(mainRestProgram)verifyProgram(mainAbility.then,card.id+'.mainAbility.then');
  if(mainAbility!==null&&
-  (!['character','field'].includes(card.type)||!(fieldDualMain||card.type==='character'&&(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainRestBuff||mainPayAp||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainRestDiscardRetire||mainFrontProgram||mainFieldOnceBuff))))
+  (!['character','field'].includes(card.type)||!(fieldDualMain||fieldRestRetireThen||card.type==='character'&&(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainRestBuff||mainPayAp||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainRestDiscardRetire||mainFrontProgram||mainFieldOnceBuff))))
   throw Error(card.id+' unsupported main action ability');
  const passiveBonuses=validatePassiveBonuses(card);
  const implemented=card.implementation;
