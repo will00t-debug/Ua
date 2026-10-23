@@ -12,11 +12,11 @@ test('R35 A: exact independent 700-card status partition; no synthetic FAQ certi
  assert.equal(audit.unported,source.totals.blocked);
  assert.equal(audit.registered+audit.unported,audit.total);
  assert.equal(audit.independentlyCertified,0);
- assert.equal(audit.counts[R35_STATUS.partial],6);
- assert.equal(audit.counts[R35_STATUS.registered],audit.registered-6);
+ assert.equal(audit.counts[R35_STATUS.partial],8);
+ assert.equal(audit.counts[R35_STATUS.registered],audit.registered-8);
  assert.equal(audit.counts[R35_STATUS.unported],audit.unported);
  assert.equal(new Set(audit.entries.map(x=>x.id)).size,700);
- for(const id of ['SAO-1-005','TTG-1-028','SLG-1-070','MST-1-059','SAO-2-074','MST-1-062']){
+ for(const id of ['SAO-1-031','SAO-1-066','SAO-1-005','TTG-1-028','SLG-1-070','MST-1-059','SAO-2-074','MST-1-062']){
   const row=audit.entries.find(x=>x.id===id);
   assert.equal(row.registered,true);assert.equal(row.status,R35_STATUS.partial);
   assert.equal(R35_INDEPENDENT_REVIEWS[id].officialUrl.includes(id),true);
