@@ -43,6 +43,8 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   legal.find(x=>difficulty!=='easy'&&x.uid!==null)||legal[0];
  if(s.pending?.kind==='retirement-order')
   return legal.find(a=>a.type==='chooseRetirementOrder')||legal[0];
+ if(s.pending?.kind==='effect-grant-front-energy')
+  return difficulty==='easy'?legal[0]:legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-grant-ap-tax')
   return difficulty==='easy'?legal[0]:legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-attack-ban')

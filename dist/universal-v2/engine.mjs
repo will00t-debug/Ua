@@ -8,7 +8,7 @@ import {cardHasName,cardHasTrait,matchesOwnDistinctTraits,matchesV2LiveCondition
  ownRestPrintedBpCount,retiredThisTurn} from './field-conditions.mjs';
 import {refreshFieldActive,expireContinuousStates,pruneContinuousStates,
  fieldRestrictions,validateContinuousStates,grantContinuousState,
- attemptFieldActive,originalEffectsDisabled,selectionApSurcharge} from './continuous-states.mjs';
+ attemptFieldActive,originalEffectsDisabled,selectionApSurcharge,hasFrontEnergyPermission} from './continuous-states.mjs';
 export const UNIVERSAL_V2_VERSION='ua-v2.0';
 const playerIndex=n=>n===0||n===1;
 const field=p=>[...p.front,...p.energy].filter(Boolean);
@@ -90,7 +90,7 @@ export function universalCardEnergy(pack,s,p,c){
  c=live;
  const d=card(pack,c),profile=d.conditionalTraitEnergy;
  const suppressed=originalEffectsDisabled(s,c);
- if(!inEnergy&&(!d.frontGeneratesEnergy||suppressed))return 0;
+ if(!inEnergy&&!((d.frontGeneratesEnergy&&!suppressed)||hasFrontEnergyPermission(s,p,c)))return 0;
  const pIndex=p;
  const activeBonus=!suppressed&&c.ready?(d.activeExtraEnergy||0):0;
  const timedBonus=(c.buffs||[]).filter(b=>b.untilTurn===s.turn)
@@ -106,7 +106,8 @@ export function universalCardEnergy(pack,s,p,c){
 export function universalEnergyByColor(pack,s,p){
  const counts=Object.create(null);
  const producers=[...s.players[p].energy,
-  ...s.players[p].front.filter(c=>c&&card(pack,c).frontGeneratesEnergy&&!originalEffectsDisabled(s,c))];
+  ...s.players[p].front.filter(c=>c&&((card(pack,c).frontGeneratesEnergy&&!originalEffectsDisabled(s,c))||
+   hasFrontEnergyPermission(s,p,c)))];
  for(const c of producers){
   if(!c)continue;
   const d=card(pack,c);
@@ -724,6 +725,12 @@ function continueEffectQueue(pack,s){
     cardHasTrait(card(pack,c),job.trait)).map(c=>({
      uid:c.uid,stamp:c.fieldEntryStamp}));
    if(choices.length)s.pending={kind:'effect-grant-ap-tax',player:owner,
+    sourceUid:job.sourceUid,trait:job.trait,choices,optional:true};
+  }else if(job.op==='grantFrontEnergyOwnOtherFrontTrait'){
+   const choices=pl.front.filter(c=>c&&c.uid!==job.sourceUid&&
+    card(pack,c).type==='character'&&cardHasTrait(card(pack,c),job.trait))
+    .map(c=>({uid:c.uid,stamp:c.fieldEntryStamp}));
+   if(choices.length)s.pending={kind:'effect-grant-front-energy',player:owner,
     sourceUid:job.sourceUid,trait:job.trait,choices,optional:true};
   }else if(job.op==='forbidAttackOppFrontOne'){
    if(s.active===owner){
@@ -1785,6 +1792,20 @@ function resolveChoice(s,a,pack){
    }
    s.pending=null;continueEffectQueue(pack,s);return;
   }
+  if(q.kind==='effect-grant-front-energy'){
+   if(a.uid!==null){
+    const choice=q.choices.find(c=>c.uid===a.uid);
+    const target=p.front.find(c=>c?.uid===a.uid);
+    if(!choice||!target||target.fieldEntryStamp!==choice.stamp||
+     target.uid===q.sourceUid||card(pack,target).type!=='character'||
+     !cardHasTrait(card(pack,target),q.trait))
+     throw Error('Stale or illegal FRONT energy grant target');
+    grantContinuousState(s,{kind:'frontEnergyPermission',controller:q.player,
+     sourceUid:q.sourceUid,targetUid:target.uid,sourceLinked:false,
+     until:{player:s.active,phase:'attack',edge:'end'}});
+   }
+   s.pending=null;continueEffectQueue(pack,s);return;
+  }
   if(q.kind==='effect-attack-ban'){
    if(a.uid!==null){
     const choice=q.choices.find(c=>c.uid===a.uid);
@@ -2266,6 +2287,10 @@ function legalPending(pack,s){
  if(q.kind==='effect-grant-ap-tax')return [
    {type:'chooseApTaxGrant',uid:null},
    ...q.choices.map(c=>({type:'chooseApTaxGrant',uid:c.uid}))
+  ];
+  if(q.kind==='effect-grant-front-energy')return [
+   {type:'chooseFrontEnergyGrant',uid:null},
+   ...q.choices.map(c=>({type:'chooseFrontEnergyGrant',uid:c.uid}))
   ];
   if(q.kind==='effect-attack-ban')return [
    {type:'chooseAttackBan',uid:null},
@@ -2860,7 +2885,7 @@ export function assertUniversalMatch(pack,s){
    !Array.isArray(s.initialCounts)||s.initialCounts.length!==2||
    s.players?.length!==2||!playerIndex(s.active)||
    !['playing','finished'].includes(s.status))throw Error('Incorrect pack/version or match state');
- if(s.pending&&(!playerIndex(s.pending.player)||!['phase-order','retirement-order','effect-move-order','effect-rest-tuck','effect-tuck-moved','block','life-batch-order','life-trigger','effect-target','effect-target-many','effect-grant-attack','granted-attack-draw','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-strip-raid-top','effect-retire-own-field','effect-retire-own-character','effect-rest-bp','effect-attack-ban','effect-grant-ap-tax','raid-effect-order','effect-buff-trait','effect-buff-own','effect-once-choice','main-two-buff','main-discard-buff','main-rest-front-energy','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-order','effect-recover-outside','effect-outside-rest','effect-outside-name-rest','effect-outside-traitless-rest','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-choice-mode','recovered-self-entry','effect-optional-mill','effect-pay-ap-deploy','effect-top-trait-outside'].includes(s.pending.kind)))
+ if(s.pending&&(!playerIndex(s.pending.player)||!['phase-order','retirement-order','effect-move-order','effect-rest-tuck','effect-tuck-moved','block','life-batch-order','life-trigger','effect-target','effect-target-many','effect-grant-attack','granted-attack-draw','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-strip-raid-top','effect-retire-own-field','effect-retire-own-character','effect-rest-bp','effect-attack-ban','effect-grant-ap-tax','effect-grant-front-energy','raid-effect-order','effect-buff-trait','effect-buff-own','effect-once-choice','main-two-buff','main-discard-buff','main-rest-front-energy','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-order','effect-recover-outside','effect-outside-rest','effect-outside-name-rest','effect-outside-traitless-rest','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-choice-mode','recovered-self-entry','effect-optional-mill','effect-pay-ap-deploy','effect-top-trait-outside'].includes(s.pending.kind)))
   throw Error('Invalid pending controller');
  if(!Array.isArray(s.raidedThisTurn)||s.raidedThisTurn.length!==2||
    s.raidedThisTurn.some(x=>typeof x!=='boolean')||
@@ -3000,6 +3025,22 @@ export function assertUniversalMatch(pack,s){
       cardHasTrait(card(pack,t),q.trait)))||
     Object.keys(q).some(k=>!['kind','player','sourceUid','trait','choices','optional'].includes(k)))
     throw Error('Invalid AP-tax grant pending snapshot');
+  }
+  if(s.pending?.kind==='effect-grant-front-energy'){
+   const q=s.pending;
+   if(q.optional!==true||typeof q.sourceUid!=='string'||
+    !q.sourceUid.startsWith(q.player+'-')||
+    typeof q.trait!=='string'||!q.trait.trim()||
+    !Array.isArray(q.choices)||!q.choices.length||q.choices.length>4||
+    new Set(q.choices.map(c=>c?.uid)).size!==q.choices.length||
+    q.choices.some(c=>!c||typeof c.uid!=='string'||!c.uid.startsWith(q.player+'-')||
+     c.uid===q.sourceUid||!Number.isInteger(c.stamp)||c.stamp<1||
+     Object.keys(c).length!==2||Object.keys(c).some(k=>!['uid','stamp'].includes(k))||
+     !s.players[q.player].front.some(t=>t?.uid===c.uid&&
+      t.fieldEntryStamp===c.stamp&&card(pack,t).type==='character'&&
+      cardHasTrait(card(pack,t),q.trait)))||
+    Object.keys(q).some(k=>!['kind','player','sourceUid','trait','choices','optional'].includes(k)))
+    throw Error('Invalid FRONT energy grant pending snapshot');
   }
   if(s.pending?.kind==='effect-attack-ban'){
   const q=s.pending,foe=1-q.player;

@@ -10,7 +10,7 @@ export function stampFieldInstance(s,c){
  return c.fieldEntryStamp;
 }
 export function grantContinuousState(s,{kind,controller,sourceUid,targetUid,until=null,sourceLinked=false,program=null,optional=false}){
- if(!['skipNextActive','cannotActive','cannotAttack','selectionApTax','originalEffectsDisabled','grantedOnAttack'].includes(kind)||!player(controller)||
+ if(!['skipNextActive','cannotActive','cannotAttack','selectionApTax','frontEnergyPermission','originalEffectsDisabled','grantedOnAttack'].includes(kind)||!player(controller)||
   typeof sourceUid!=='string'||typeof targetUid!=='string'||typeof sourceLinked!=='boolean')
   throw Error('Invalid continuous-state descriptor');
  const target=fieldInstance(s,targetUid),source=fieldInstance(s,sourceUid);
@@ -30,11 +30,17 @@ export function grantContinuousState(s,{kind,controller,sourceUid,targetUid,unti
   until?.player!==foe||until?.phase!=='attack'||until?.edge!=='end'||
   !Number.isInteger(until?.ownTurn)||until.ownTurn!==s.players[foe].ownTurns+1))
   throw Error('Selection AP tax requires own target and next opponent turn');
+ // FRONT generation is a separately gained permission this CURRENT turn, not a +1 energy bonus.
+ // It can survive its source leaving or losing ORIGINAL printed effects (MST Q2228).
+ if(kind==='frontEnergyPermission'&&(sourceLinked||target.owner!==controller||
+  until?.player!==s.active||until?.phase!=='attack'||until?.edge!=='end'||
+  Object.keys(until).length!==3))
+  throw Error('FRONT energy permission requires own live target and current turn end');
  // Only the controller's next own START may expire a temporary attack ban.
  if(kind==='cannotAttack'&&(sourceLinked||until?.player!==controller||
   until?.phase!=='start'||until?.edge!=='start'))
   throw Error('Attack ban must expire on granting controller next own start');
- if(['cannotActive','cannotAttack','selectionApTax','originalEffectsDisabled','grantedOnAttack'].includes(kind)&&(!until||!player(until.player)||
+ if(['cannotActive','cannotAttack','selectionApTax','frontEnergyPermission','originalEffectsDisabled','grantedOnAttack'].includes(kind)&&(!until||!player(until.player)||
   !['start','move','main','attack'].includes(until.phase)||!['start','end'].includes(until.edge)||
   Object.keys(until).some(k=>!['player','phase','edge',...(kind==='selectionApTax'?['ownTurn']:[])].includes(k))))
   throw Error('Invalid status expiration phase');
@@ -93,6 +99,13 @@ export function selectionApSurcharge(s,selector,targetUid){
   e.until?.player===selector&&
   e.until.ownTurn===s.players[selector].ownTurns).length;
 }
+export function hasFrontEnergyPermission(s,owner,c){
+ const live=fieldInstance(s,c?.uid);
+ return !!live&&live.owner===owner&&s.continuousStates.some(e=>
+  e.kind==='frontEnergyPermission'&&!e.consumed&&e.controller===owner&&
+  e.targetOwner===owner&&e.targetUid===c.uid&&
+  e.targetStamp===live.card.fieldEntryStamp);
+}
 export function fieldRestrictions(s,owner,c){
  return s.continuousStates.filter(e=>!e.consumed&&e.targetOwner===owner&&
   e.targetUid===c.uid&&e.targetStamp===c.fieldEntryStamp)
@@ -102,13 +115,19 @@ export function validateContinuousStates(s){
  if(!Array.isArray(s.continuousStates)||!Number.isInteger(s.nextContinuousStateId)||
   s.nextContinuousStateId<1||new Set(s.continuousStates.map(e=>e.id)).size!==s.continuousStates.length||
   s.continuousStates.some(e=>!Number.isInteger(e.id)||e.id<1||
-   !['skipNextActive','cannotActive','cannotAttack','selectionApTax','originalEffectsDisabled','grantedOnAttack'].includes(e.kind)||!player(e.controller)||
+   !['skipNextActive','cannotActive','cannotAttack','selectionApTax','frontEnergyPermission','originalEffectsDisabled','grantedOnAttack'].includes(e.kind)||!player(e.controller)||
    !player(e.targetOwner)||typeof e.sourceUid!=='string'||typeof e.targetUid!=='string'||
    !Number.isInteger(e.targetStamp)||e.targetStamp<1||typeof e.consumed!=='boolean'||
    typeof e.sourceLinked!=='boolean'||(e.sourceLinked&&(!Number.isInteger(e.sourceStamp)||e.sourceStamp<1))||
    (e.kind==='skipNextActive'&&e.until!==null)||
    (e.kind==='cannotAttack'&&(e.sourceLinked||e.until?.player!==e.controller||
     e.until?.phase!=='start'||e.until?.edge!=='start'))||
+   (e.kind==='frontEnergyPermission'&&(e.sourceLinked||e.targetOwner!==e.controller||
+    e.sourceStamp!==null||e.until?.phase!=='attack'||e.until?.edge!=='end'||
+    !player(e.until?.player)||Object.keys(e.until).length!==3||
+    Object.keys(e).length!==11||
+    Object.keys(e).some(k=>!['id','kind','controller','sourceUid','sourceLinked','sourceStamp',
+     'targetUid','targetOwner','targetStamp','until','consumed'].includes(k))))||
    (e.kind==='selectionApTax'&&(e.sourceLinked||e.targetOwner!==e.controller||
     e.until?.player!==1-e.controller||e.until?.phase!=='attack'||
     e.until?.edge!=='end'||!Number.isInteger(e.until?.ownTurn)||
@@ -119,7 +138,7 @@ export function validateContinuousStates(s){
      e.program[0]?.op!=='draw'||e.program[0]?.count!==1||Object.keys(e.program[0]).length!==2||
      e.sourceLinked||!player(e.until?.player)||e.until?.phase!=='attack'||e.until?.edge!=='end'))||
    (e.kind!=='grantedOnAttack'&&(e.program!==undefined||e.optional!==undefined))||
-   (['cannotActive','cannotAttack','selectionApTax','originalEffectsDisabled','grantedOnAttack'].includes(e.kind)&&(!e.until||!player(e.until.player)||
+   (['cannotActive','cannotAttack','selectionApTax','frontEnergyPermission','originalEffectsDisabled','grantedOnAttack'].includes(e.kind)&&(!e.until||!player(e.until.player)||
     !['start','move','main','attack'].includes(e.until.phase)||!['start','end'].includes(e.until.edge)))))
   throw Error('Invalid continuous-state accounting');
  return true;
