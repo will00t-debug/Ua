@@ -33,7 +33,7 @@ function setup({targetId='MST-1-063',targetZone='front',includeTarget=true}={}){
   c.ready=true;c.fieldEntryStamp=s.nextFieldEntryStamp++;s.players[0].energy[i]=c;
  }
  // Three ordinary ENERGY producers are enough for the official green 2.
- for(let i=0;i<3;i++)s=dispatchUniversalAction(packs,s,{type:'next'});
+ for(let i=0;i<2;i++)s=dispatchUniversalAction(packs,s,{type:'next'});
  assert.equal(s.phase,'main');
  const play=legalUniversalActions(packs,s).find(a=>
   a.type==='play'&&a.uid===source.uid&&a.line==='front');
