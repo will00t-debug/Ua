@@ -715,9 +715,11 @@ function continueEffectQueue(pack,s){
     }
    }
   }else if(job.op==='discardGate'){
-   if(payableHand(pack,s,owner,job.payment).length)s.pending={kind:'effect-discard-gate',player:owner,
-    sourceUid:job.sourceUid,optional:job.optional,then:job.then,
-    ...(job.payment?{payment:job.payment}:{})};
+   if(payableHand(pack,s,owner,job.payment).length>=(job.count??1))
+     s.pending={kind:'effect-discard-gate',player:owner,
+      sourceUid:job.sourceUid,optional:job.optional,then:job.then,
+      ...(job.payment?{payment:job.payment}:{}),
+      ...(job.count===2?{count:2}:{})};
   }else if(job.op==='recoverOutsideColorUnderEnergy'){
    const choices=pl.outside.filter(c=>matchesOutsideRecovery(pack,s,c,job)).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-recover-outside',player:owner,
@@ -1904,6 +1906,21 @@ function resolveChoice(s,a,pack){
   s.pending=null;continueEffectQueue(pack,s);return;
  }
  if(q.kind==='effect-discard-gate'){
+  if(q.count===2){
+   if(Array.isArray(a.uids)){
+    if(a.uids.length!==2||a.uids[0]===a.uids[1]||
+     a.uids.some(uid=>!p.hand.some(c=>c.uid===uid&&legalNamedPayment(pack,c,q.payment))))
+     throw Error('Two hand payment requires two distinct owned physical UIDs');
+    // Both UIDs validate before moving any card; dispatch works on a clone.
+    for(const uid of a.uids){
+     const index=p.hand.findIndex(c=>c.uid===uid);
+     moveOwnedLinear(pack,s,{owner:q.player,from:'hand',to:'outside',
+      index,reason:'payment',sourceUid:q.sourceUid});
+    }
+    s.effectQueue.unshift(...q.then.map(e=>({...e,owner:q.player,sourceUid:q.sourceUid})));
+   }else if(a.uid!==null||!q.optional)throw Error('Atomic hand pair cannot partially pay');
+   s.pending=null;continueEffectQueue(pack,s);return;
+  }
   if(a.uid!==null){
    const index=p.hand.findIndex(c=>c.uid===a.uid&&legalNamedPayment(pack,c,q.payment));
    if(index<0)throw Error('Gate payment must discard a matching owned hand card');
@@ -2567,10 +2584,17 @@ function legalPending(pack,s){
   ...(q.optional?[{type:'chooseDiscardCost',uid:null}]:[]),
   ...p.hand.map(c=>({type:'chooseDiscardCost',uid:c.uid}))
  ];
- if(q.kind==='effect-discard-gate')return [
-  ...(q.optional?[{type:'chooseDiscardGate',uid:null}]:[]),
-  ...payableHand(pack,s,q.player,q.payment).map(c=>({type:'chooseDiscardGate',uid:c.uid}))
- ];
+ if(q.kind==='effect-discard-gate'){
+  const choices=payableHand(pack,s,q.player,q.payment);
+  if(q.count===2){
+   const pairs=[];
+   for(let i=0;i<choices.length;i++)for(let j=i+1;j<choices.length;j++)
+    pairs.push({type:'chooseDiscardGate',uids:[choices[i].uid,choices[j].uid]});
+   return [...(q.optional?[{type:'chooseDiscardGate',uid:null}]:[]),...pairs];
+  }
+  return [...(q.optional?[{type:'chooseDiscardGate',uid:null}]:[]),
+   ...choices.map(c=>({type:'chooseDiscardGate',uid:c.uid}))];
+ }
  if(q.kind==='raid-effect-order')return [
    {type:'chooseRaidOrder',mode:'baseFirst'},{type:'chooseRaidOrder',mode:'entryFirst'}
   ];
@@ -3433,6 +3457,25 @@ export function assertUniversalMatch(pack,s){
     'targetAction','targetUid','targetStamp','sourceType'].includes(k)))
    throw Error('Invalid resumed selection hand-payment');
  }
+ if(s.pending?.kind==='effect-discard-gate'&&s.pending.count===2){
+  const q=s.pending,pl=s.players[q.player];
+  const owned=[...field(pl),...pl.outside,...pl.hand,...pl.deck,...pl.life,
+   ...pl.lifeRevealed,...(pl.removed||[])];
+  const source=owned.find(c=>c.uid===q.sourceUid),printed=source&&card(pack,source);
+  const find=x=>{
+   if(!x||typeof x!=='object')return false;
+   if(Array.isArray(x))return x.some(find);
+   if(x.op==='discardGate'&&x.count===2&&x.optional===q.optional&&
+    same(x.payment,q.payment)&&same(x.then,q.then))return true;
+   return Object.values(x).some(find);
+  };
+  if(!printed||!find({effects:printed.effects,mainAbility:printed.mainAbility})||
+   payableHand(pack,s,q.player,q.payment).length<2||
+   !q.sourceUid.startsWith(q.player+'-')||
+   Object.keys(q).length!==(q.payment?7:6)||
+   Object.keys(q).some(k=>!['kind','player','sourceUid','optional','then','payment','count'].includes(k)))
+   throw Error('Invalid saved atomic two-hand payment provenance');
+ }
  if(s.pending?.kind==='effect-top-filter-many-choice'){
   const q=s.pending,pl=s.players[q.player];
   const rest=q.uids?.filter(uid=>!q.selected?.includes(uid));
@@ -3873,8 +3916,13 @@ export function universalPrivateChoices(pack,s,viewer){
   const physical=action.uid===null?null:
    (zone==='field'?field(s.players[viewer]):s.players[viewer][zone])
     .find(c=>c.uid===action.uid);
+  const cards=Array.isArray(action.uids)?action.uids.map(uid=>{
+   const c=s.players[viewer].hand.find(x=>x.uid===uid);
+   return {cardId:c.cardId,name:card(pack,c).name,color:card(pack,c).color};
+  }):null;
   return {action:{...action},card:physical?
-   {cardId:physical.cardId,name:card(pack,physical).name,color:card(pack,physical).color}:null};
+   {cardId:physical.cardId,name:card(pack,physical).name,color:card(pack,physical).color}:null,
+   ...(cards?{cards}:{})};
  })};
 }
 // Safe, title-agnostic view model for common UI: no opponent hand IDs, hidden
