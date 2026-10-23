@@ -1951,3 +1951,15 @@ Reproduction commands: `node scripts/v2-card-certification-report.mjs`, `node sc
 - **Batch E** `cfbe11c2`：saved pending 防偽，防改成未印刷的 READY／改卡名／換所有權／免費區域；[39947235806](https://github.com/will00t-debug/Ua/actions/runs/39947235806) SUCCESS。 `84839279`：以現有 R35/R41 能力索引重掃所有 **368** 未移植、全700來源，候選去重約71（需最新 Actions 確認），新 R42 CI 工作流程與自動分類；最新 HEAD 不得借前一個成功記錄。
 - **目前基準：332/700**：BLEACH98、TTG36、SLG45、SAO99、MST54；未移植 **368**。原 R41 的9張官方未移植候選，現在 SLG-1-028 已移植，其餘官方整卡審核 **8張：7 PARTIAL + 1 RULE BLOCKED**、其他 REVIEW PENDING63；獨立完整 FAQ **0**。
 - 完整官方來源、測試、剩餘缺口、優先序：[R42 handoff](./V2-R42-named-free-zone-slg-pair.md)。SAO-2-068／069、BLC-4-042、SAO-1-087／2-064 複合印刷效果未完整支援，MST-1-067 Q2162、BLC-4-034 和巢狀 LIFE 仍維持封鎖。正式站 Vercel 未部署。
+
+
+## R43 接續完成／下一輪基準（2026-10-23）
+
+- GPT PR #78、原工作分支 `gpt/v2-resume-20261022`；不合 main、不能覆寫 Cursor PR #77、不部署、不 force push。開工 HEAD `ac04417d`（39947812815 SUCCESS）。
+- **Batch A** `30968fae`：擴充既有 `deployNamedFromZones` 印刷 AP／能源／顏色篩選與當回合物理 UID BP 增益；[39950145957](https://github.com/will00t-debug/Ua/actions/runs/39950145957) SUCCESS。
+- **Batch B** `d8d64e40`：資料驅動 `restDiscardRetireThen` 真實 MAIN 成本，REST→合法己方 hand discard→真正己方退場→可選後續；原有 retirement queue、source UID、來源完成時序，安全否決偽造 saved pending；[39950677505](https://github.com/will00t-debug/Ua/actions/runs/39950677505) SUCCESS。
+- **Batch C** `2b7eaacb`：SAO-2-068 官方 EX08BT card 本文 pin，完整 MAIN＋ACTIVE LIFE、免費綠〈アスナ〉ACTIVE 印刷能源≤3 AP1、BP+1000 當回合；與 registry／獨立 manifest／真牌測試一致；[39951145269](https://github.com/will00t-debug/Ua/actions/runs/39951145269) SUCCESS。
+- **Batch D** `42b13411`：補 LIFE 真行動，R43 同既有全庫原始 catalog 重新搜尋，明列 SAO-2-069 Raid/phase/onPlay/onRetire/LIFE 完整阻塞、MST Q2162 仍 RULE BLOCKED；新增集中 CI 掃描。**D 的 CI 不可沿用 C 成功**。
+- **Batch E** 新增 [R43 handoff](./V2-R43-paid-main-true-retire-sao068.md)，完整官方來源、負例、共同 DSL、全庫候選及 R44 排序；此文件的**最後 HEAD Actions 必須另查**。
+- 基準：**333/700 正式登錄／367 未移植**，BLEACH98／TTG36／SLG45／SAO100／MST54。R41 已核對候選仍未移植7張：PARTIAL6、MST-1-067 Q2162 RULE BLOCKED1。獨立完整逐卡 FAQ Certified **0**。SAO-2-069 不因部分原語重用而登錄。
+- 必跑 `node scripts/v2-card-certification-report.mjs`、R35/R37/R40/R41/R42/R43 audit、`npm test`、`node scripts/v2-integrated-match-matrix.mjs`、`node scripts/v2-assert-independent-manifest.mjs`、`node scripts/v2-unported-report.mjs`，核對最新 SHA Actions URL。沒有本地 clone 與手機 UI QA；不部署正式站。
