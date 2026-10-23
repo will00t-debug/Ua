@@ -2542,8 +2542,14 @@ const TARGETING_LIFE_MODES=new Set([
 function effectChoiceProvenance(pack,s){
  const q=s.pending;
  if(q?.kind==='life-trigger')return 'trigger';
+ const player=q&&s.players[q.player];
+ // A paid EVENT resolves from the owner's OUTSIDE, not from FIELD.
+ // Resolved revealed LIFE effects are handled above as Trigger provenance.
  const physical=q&&typeof q.sourceUid==='string'
-  ?location(s,q.player,q.sourceUid)?.c:null;
+  ?(location(s,q.player,q.sourceUid)?.c||
+    player?.outside.find(c=>c.uid===q.sourceUid)||
+    player?.removed.find(c=>c.uid===q.sourceUid)||
+    player?.lifeRevealed?.find(c=>c.uid===q.sourceUid)):null;
  return physical?card(pack,physical).type:'unknown';
 }
 function effectSelectionProhibited(pack,s,a){
