@@ -4,6 +4,10 @@ import {MST_V2_OFFICIAL_CATALOGUE} from './sources/mst-inventory.mjs';
 import {createUniversalPack} from './pack.mjs';
 
 const PRINTED_PINS=Object.freeze({
+ "MST-1-049":{"kind":"retireFieldActivateTopTraitless",
+  "nameJa":"ルーデウス","color":"green","energy":4,"ap":1,"bp":4000,
+  "gen":1,"type":"character","traits":[],"trigger":"get",
+  "effectJa":"〖登場時〗 自分の場のフィールドを1枚退場させてもよい。そうした場合、このキャラをアクティブにし、自分の山札の上から4枚見て、特徴を持たない〔キャラカードかフィールドカード〕を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。"},
  "MST-1-031":{"kind":"ownTurnEventImpactDiscount","nameJa":"ロキシー","color":"blue","energy":4,"ap":1,"bp":4000,"gen":1,"type":"character","traits":[],"trigger":"raid","effectJa":"〖レイド〗 〈ロキシー〉アクティブにし、フロントLに移動できる\n 〖インパクト無効〗 （このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）\n 〖自分のターン中〗 このターン中に自分がイベントカードを使用している場合、このキャラは 〖インパクト（1）〗 を得る。\n 〖登場時〗 このターン中、次に手札から使用する必要エナジーが3以下のイベントカードの消費APを-1する。"},
  "MST-1-060":{
   "kind":"stepFrontMainDrawDiscardFrontEnergy","nameJa":"シルフィエット",
@@ -609,6 +613,14 @@ export function verifiedMstV2Cards(){
    implementation:['vanilla','step'].includes(pin.kind)?'vanilla':'dsl'};
   if(card.implementation==='vanilla')card.effects={};
   if(pin.kind==='step')card.step=true;
+  if(pin.kind==='retireFieldActivateTopTraitless'){
+   card.effects={onPlay:[{op:'optionalRetireThenProgram',optional:true,
+    cardType:'field',after:[
+     {op:'activeSelfIf',when:{kind:'ownRetiredThisTurn',turn:'any',cardType:'field'}},
+     {op:'searchTopUpToTwoBottom',count:4,max:1,rest:'bottom',
+      filters:[{field:'traitlessCharacterOrField',value:true}],logic:'any'}
+    ]}]};
+  }
   if(pin.kind==='ownTurnEventImpactDiscount'){
    card.raidName='ロキシー';
    card.impactNull=true;

@@ -4,6 +4,10 @@ import {SAO_OFFICIAL_CARDS} from '../sao-official-import.mjs';
 import {createUniversalPack} from './pack.mjs';
 
 const PRINTED_PINS=Object.freeze({
+  "SAO-2-056":{"kind":"retireCharacterTopProgressive","nameJa":"茅場 晶彦",
+   "color":"purple","energy":2,"ap":1,"bp":0,"gen":1,"type":"field",
+   "traits":["プログレッシブ"],"trigger":"get",
+   "effectJa":"【登場時】自分の場のキャラを1枚退場させてもよい。そうした場合、自分の山札の上から5枚見る。その中から［特徴：プログレッシブ］を2枚まで公開し手札に加える。残りを望む順で自分の山札の下に置く。"},
   "SAO-1-056":{"kind":"onPlayChoiceTopOrHandRest","nameJa":"ユイ","color":"blue","energy":3,
    "ap":1,"bp":2000,"gen":1,"type":"character","trigger":"draw","traits":["ALO"],
    "effectJa":"【登場時】以下から1つを選ぶ。\n・自分の山札の上から2枚見る。その中からキャラカードかフィールドカードを1枚まで公開し手札に加え、残りを望む順で自分の山札の下に置く。\n・自分の手札から必要エナジーが2以下で消費APが1の青のキャラカードを1枚まで自分の場にレストで登場させる。"},
@@ -1460,6 +1464,12 @@ export function verifiedSaoV2Cards(){
    card.templateEffects={onPlay:[{template:'bounceOwnOtherUnderEnergy',energy:1}]};
   if(pin.kind==='onPlayPeekTop')
    card.templateEffects={onPlay:[{template:'peekTopOne'}]};
+  if(pin.kind==='retireCharacterTopProgressive'){
+   card.effects={onPlay:[{op:'optionalRetireThenProgram',optional:true,
+    cardType:'character',after:[{op:'searchTopUpToTwoBottom',count:5,
+     max:2,rest:'bottom',filters:[{field:'trait',value:'プログレッシブ'}],
+     logic:'any'}]}]};
+  }
   if(pin.kind==='onPlayChoiceTopOrHandRest'){
    card.effects={onPlay:[{op:'chooseOne',optional:false,options:[
     {id:'topTwo',label:'查看牌庫頂 2 張並最多取得一張角色或 FIELD',
@@ -1553,6 +1563,7 @@ export function verifiedSaoV2Entries(){
      ...(pin.kind==='ownTurnSilicaFieldBp'?['tests/v2-sao-019-own-silica-bp.test.mjs']:[]),
      ...(pin.kind==='onPlayTopTwoBottom'?['tests/v2-r37-sao-two-events.test.mjs']:[]),
       ...(pin.kind==='onPlayChoiceTopOrHandRest'?['tests/v2-r39-sao056-official.test.mjs']:[]),
+      ...(pin.kind==='retireCharacterTopProgressive'?['tests/v2-r39-retire-search-real.test.mjs']:[]),
      ...(pin.kind==='onPlayTopFilterBottomDiscard'?
         [def.id==='SAO-1-005'?'tests/v2-r31-sao005-official-registry.test.mjs':
         'tests/v2-cross-title-top-filter-round13.test.mjs']:[]),
