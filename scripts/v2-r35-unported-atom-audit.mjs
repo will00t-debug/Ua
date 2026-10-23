@@ -76,7 +76,9 @@ export function r35UnportedAtomAudit(){
   handRestPotential:index.handRestPotential,
   handRestPotentialCount:index.handRestPotential.length,
   retireTopPotential:index.retireTopPotential,
-  retireTopPotentialCount:index.retireTopPotential.length};
+  retireTopPotentialCount:index.retireTopPotential.length,
+  protectionPotential:index.protectionPotential,
+  protectionPotentialCount:index.protectionPotential.length};
 }
 // Candidate detection is deliberately broad and is NEVER semantic acceptance.
 export const ATOM_REVIEW_STATUSES=Object.freeze(['READY','NEAR READY','PARTIAL',
@@ -148,6 +150,18 @@ export function capabilityIndex(inventory=v2AllTitleInventory()){
      character:/(?:キャラ|character|角色)/iu.test(text),
      active:/(?:アクティブ|ACTIVE|激活)/iu.test(text)
     }:null;
+   // R40: never infer the FULL printed card or source scope from keywords.
+   const protectionMention=/(?:選ばれない|選択されない|選べない|不會被選擇|不能被選擇|无法被选择)/iu.test(text)&&
+    /(?:効果|能力|トリガー|Trigger|觸發|触发)/iu.test(text);
+   const protectionTextFlags=protectionMention?{
+    characterScope:/(?:キャラの効果|角色效果|character.{0,8}effect)/iu.test(text),
+    eventScope:/(?:イベントの効果|EVENT.{0,8}effect|事件效果)/iu.test(text),
+    triggerScope:/(?:トリガーの効果|Trigger.{0,8}effect|觸發效果)/iu.test(text),
+    opponent:/(?:相手|對手|对手|opponent)/iu.test(text),
+    timeBound:/(?:次の自分のターン|このターン|本回合|下個己方回合|until)/iu.test(text),
+    conditional:/(?:場合|のみ|なら|如果|條件|条件|while)/iu.test(text),
+    raid:/(?:レイド|Raid)/iu.test(text)
+   }:null;
    cards.push({id,title:title.title,registered,sourceText:text,
     sourceTextLanguage:c.effectJa||/[のを]/u.test(text)?'ja':'catalogue-translation',
     sourceFingerprint:createHash('sha256').update(text).digest('hex'),
@@ -158,7 +172,7 @@ export function capabilityIndex(inventory=v2AllTitleInventory()){
     priorSourceMatched:groups.length>0,
     requiredAtomCandidates:groups.map(g=>g.atom),
     searchHits:discountCandidate?['nextEligibleHandPlayApDiscount']:[],
-    handRestTextFlags,retireTopFlags,
+    handRestTextFlags,retireTopFlags,protectionTextFlags,
     remaining:groups.map(g=>g.fullPortBlockedBy),
     // Old R35 groups are evidence pointers, not a full-card readiness certificate.
     semanticReviewRequired:!review});
@@ -175,12 +189,17 @@ export function capabilityIndex(inventory=v2AllTitleInventory()){
    sourceFingerprint:c.sourceFingerprint,flags:c.handRestTextFlags,
    status:'REVIEW PENDING',
    note:'Requires full printed text and applicable FAQ check; no automatic READY'}));
+ const protectionPotential=cards.filter(c=>!c.registered&&c.protectionTextFlags)
+  .map(c=>({id:c.id,title:c.title,sourceUrl:c.sourceUrl,
+   sourceFingerprint:c.sourceFingerprint,flags:c.protectionTextFlags,
+   status:c.status==='SOURCE PENDING'?'SOURCE PENDING':'REVIEW PENDING',
+   note:'Textual scope flags are not a full official card review or READY certification'}));
  const retireTopPotential=cards.filter(c=>!c.registered&&c.retireTopFlags)
   .map(c=>({id:c.id,title:c.title,sourceUrl:c.sourceUrl,
    sourceFingerprint:c.sourceFingerprint,flags:c.retireTopFlags,
    status:c.status==='SOURCE PENDING'?'SOURCE PENDING':'REVIEW PENDING',
    note:'Text candidate only: complete printed effect/FAQ required'}));
- return {cards,atoms,handRestPotential,retireTopPotential,
+ return {cards,atoms,handRestPotential,retireTopPotential,protectionPotential,
   unportedSearched:cards.filter(c=>!c.registered).length,
   reviewedDiscountCards:cards.filter(c=>c.officialReview).map(c=>c.id),
   priorities:prioritizeMissingAtoms(cards),
