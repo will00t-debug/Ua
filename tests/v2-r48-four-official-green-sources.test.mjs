@@ -110,17 +110,34 @@ test('R48 A: FOUR distinct official registered green EVENT cards reach OUTSIDE t
   assert.ok(bound>0,'finite genuine event effect settlement');
  }
  function paid(id){
-  const action=legalUniversalActions(packs,s).find(a=>a.type==='event'&&a.uid===source[id]);
-  assert.ok(action,'must legally pay event '+id+' '+JSON.stringify({phase:s.phase,ap:p.apCards.map(c=>c.ready),produced:p.energy.map(c=>c?.cardId),hand:p.hand.map(c=>c.cardId),opponentFront:s.players[1].front.map(c=>c?.cardId),sourceUid:source[id],actions:legalUniversalActions(packs,s).filter(a=>a.type==='event')}));
-  apply(action);settle();
+  // The true AP economy on player zero starts with only one ACTIVE AP.
+  // Complete real turns, rather than forcing four paid events in one turn
+  // or injecting arbitrary AP and misrepresenting a legal match.
+  let option=null,steps=0;
+  while(steps++<28){
+   const actions=legalUniversalActions(packs,s);
+   option=actions.find(a=>a.type==='event'&&a.uid===source[id]);
+   if(option)break;
+   const next=actions.find(a=>a.type==='next');
+   assert.ok(next,'cannot legally advance to next paid event '+id);
+   apply(next);settle();
+  }
+  assert.ok(option,'must find legal paid event over legitimate turns '+id+
+   ' '+JSON.stringify({phase:s.phase,active:s.active,turn:s.turn,
+    ap:s.players[0].apCards.map(c=>c.ready),
+    inHand:s.players[0].hand.some(c=>c.uid===source[id]),
+    energy:s.players[0].energy.map(c=>c?.cardId),
+    opponentFront:s.players[1].front.map(c=>c?.cardId),
+    actions:legalUniversalActions(packs,s).map(a=>a.type)}));
+  apply(option);settle();
  }
  while(s.phase!=='main')apply(legalUniversalActions(packs,s).find(a=>a.type==='next'));
+ paid('BLC-1-099'); // legal BP-limited opponent retirement while foe exists
  paid('BLC-1-097'); // real green EVENT: trait buff + draw
  paid('BLC-1-100'); // real green EVENT: AP reactivation
- paid('BLC-1-099'); // real green EVENT: opponent front retirement
- paid('BLC-1-095'); // new full-print green EVENT: TOP4 0..2 + order bottom
+ paid('BLC-1-095'); // verified green EVENT: TOP4 0..2 + order bottom
  for(const id of ['BLC-1-095','BLC-1-097','BLC-1-099','BLC-1-100']){
-  assert.ok(p.outside.some(c=>c.uid===source[id]),
+  assert.ok(s.players[0].outside.some(c=>c.uid===source[id]),
    'printed event must reach OWN outside through legal use '+id);
   assert.ok(s.zoneMoveEvents.some(e=>e.uid===source[id]&&e.to==='outside'));
  }
