@@ -9,10 +9,10 @@ import {v2AllTitleInventory} from '../dist/universal-v2/title-packs/inventory.mj
 // Read from complete JP official source, separately from imprecise catalogue text.
 export const R40_SOURCE_PINNED_REVIEWS=Object.freeze({
  'SAO-2-058':Object.freeze({
-  status:'PARTIAL',series:'EX08BT',faq:['Q1206'],
+  status:'READY',series:'EX08BT',faq:['Q1206'],
   scope:'opponent-any',
-  missing:['ownFrontMandatoryProtectionGrant','conditionalAsunaRecoverOwnAp'],
-  note:'Purple ENERGY2/AP1 EVENT, own FRONT choose one, grant opponent-any protection through next own START, Asuna grants optional ACTIVE AP; ACTIVE LIFE chooses own character ACTIVE +3000 BP. Common protection status alone is not whole-card coverage.'
+  missing:[],
+  note:'Official purple ENERGY2/AP1 EVENT: mandatory own FRONT, opponent-any protection through next own START, conditional Asuna optional AP ACTIVE; complete generic ACTIVE LIFE, authenticated 50-card tests. Independently FAQ-certified count remains 0.'
  }),
  'SAO-2-060':Object.freeze({
   status:'PARTIAL',series:'EX08BT',faq:['Q1207'],
@@ -48,7 +48,7 @@ export function r40ProtectionCandidateReport(){
   return {id,title:card.title,registered:card.registered,source:
    'https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no='+v.series+'%2F'+id,
    status:card.registered?'REGISTERED':v.status,scope:v.scope,faq:[...v.faq],
-   missing:[...v.missing],note:v.note,keywordHit:candidateIds.has(id)};
+   missing:card.registered?[]:[...v.missing],note:v.note,keywordHit:candidateIds.has(id)};
  });
  const byTitle=Object.fromEntries(roster.series.map(x=>[x.title,
   idx.protectionPotential.filter(c=>c.title===x.title).length]));
@@ -65,7 +65,8 @@ export function r40ProtectionCandidateReport(){
   optionalRetireTopKeywordCandidates:r35.retireTopPotentialCount,
   topNKeywordCandidates:top.candidates.length,
   officialCompletePrintReviewedThisRound:reviews.length,
-  newlyRegisteredByThisAudit:0,readyFromKeywordOnly:0,byTitle};
+  newlyRegisteredByThisAudit:reviews.filter(x=>x.registered).length,
+  readyFromKeywordOnly:0,byTitle};
  return {stats,sourcePinnedReviews:reviews,keywordOnlyProtectionCandidates:
   idx.protectionPotential.filter(c=>!R40_SOURCE_PINNED_REVIEWS[c.id]).map(c=>({
    ...c,status:'REVIEW PENDING'})),overlap,
