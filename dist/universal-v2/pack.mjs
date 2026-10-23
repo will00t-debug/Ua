@@ -102,10 +102,17 @@ function verifyProgram(program,path){
   ))throw Error(path+'['+i+'] invalid own-field-name draw profile');
   if(['searchDeckOne','searchDeckMany','recoverOutsideOne'].includes(e.op)){
    const f=e.filter;
+   const anyName=e.op==='recoverOutsideOne'&&f?.field==='printedNameAny';
+   const validNameGroup=anyName&&f&&typeof f==='object'&&!Array.isArray(f)&&
+     Object.keys(f).length===2&&Array.isArray(f.values)&&
+     f.values.length>=2&&f.values.length<=4&&
+     new Set(f.values).size===f.values.length&&
+     f.values.every(n=>typeof n==='string'&&!!n.trim()&&n.length<=80);
    if(!f||typeof f!=='object'||Array.isArray(f)||
-     Object.keys(f).length!==2||!['name','trait','color','type'].includes(f.field)||
-     typeof f.value!=='string'||!f.value.trim()||
-     (f.field==='type'&&!V2_CARD_TYPES.includes(f.value))||
+     (anyName?!validNameGroup:(
+      Object.keys(f).length!==2||!['name','trait','color','type'].includes(f.field)||
+      typeof f.value!=='string'||!f.value.trim()||
+      (f.field==='type'&&!V2_CARD_TYPES.includes(f.value))))||
      typeof e.optional!=='boolean'||
      (['searchDeckOne','searchDeckMany'].includes(e.op)&&e.shuffle!==true)||
      (e.op==='searchDeckMany'&&(!integer(e.count,1)||e.count>5))||
