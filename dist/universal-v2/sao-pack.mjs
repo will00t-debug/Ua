@@ -2,9 +2,12 @@
 // Importing data never grants unsupported card IDs playability.
 import {SAO_OFFICIAL_CARDS} from '../sao-official-import.mjs';
 import {createUniversalPack} from './pack.mjs';
-import {SAO_Q1208_ASUNA_AURA} from './selection-hand-tax.mjs';
+import {SAO_Q1208_ASUNA_AURA,SAO_Q978_SELF_EVENT_TAX} from './selection-hand-tax.mjs';
 
 const PRINTED_PINS=Object.freeze({
+ "SAO-1-087":{"kind":"raidOtherOwnWinDamageMainSelectionTax",
+  "nameJa":"キリト","color":"green","energy":7,"ap":1,"bp":5000,"gen":1,
+  "type":"character","trigger":"raid","traits":["GGO"],"effectJa":"【レイド】〈キリト〉アクティブにし、フロントLに移動できる\n【インパクト（1）】（アタックしてバトルに勝利した時、相手プレイヤーに1ダメージ）\n自分の場の他のキャラがバトルに勝利した時、このキャラはこのターン中、【ダメージ（2）】を得る。\n【相手のターン中】相手はイベントカードの効果でこのキャラを選ぶ際に、追加で自身の手札を1枚場外に置かないと選べない。\n【起動メイン】【ターン1】自分の場の他のキャラを1枚選び、このターン中、BP+1000。"},
  "SAO-2-064":{"kind":"frontNamedSelectionHandTax",
   "nameJa":"キリト","color":"green","energy":4,"ap":1,"bp":4000,"gen":1,
   "type":"character","trigger":"draw","traits":["ALO"],"effectJa":"【フロントLにある場合】自分の場の〈アスナ〉は「【相手のターン中】相手はキャラの効果やイベントカードの効果でこのキャラを選ぶ際に、追加で自身の手札を1枚場外に置かないと選べない。」を得る。〈キリト〉のこの効果は重複しない。"},
@@ -1337,6 +1340,16 @@ export function verifiedSaoV2Cards(){
    implementation:pin.kind==='vanilla'||pin.kind==='step'?'vanilla':'dsl'};
   if(card.implementation==='vanilla')card.effects={};
   if(pin.kind==='step')card.step=true;
+  if(pin.kind==='raidOtherOwnWinDamageMainSelectionTax'){
+   card.raidName='キリト';
+   card.printedImpact=1;
+   card.otherOwnBattleWonDamageTwo=true;
+   card.selectionHandDiscardTax={...SAO_Q978_SELF_EVENT_TAX,
+    sourceTypes:[...SAO_Q978_SELF_EVENT_TAX.sourceTypes]};
+   card.mainAbility={op:'fieldOnceBuffOther',lines:'field',
+    oncePerTurn:true,bp:1000};
+   card.effects={};
+  }
   if(pin.kind==='frontNamedSelectionHandTax'){
    card.selectionHandDiscardTax={...SAO_Q1208_ASUNA_AURA,
     sourceTypes:[...SAO_Q1208_ASUNA_AURA.sourceTypes]};
@@ -1611,6 +1624,8 @@ export function verifiedSaoV2Entries(){
     testFiles:Object.freeze([
      ...(pin.kind==='nextHandApDiscount'?['tests/v2-r36-real-discount-cards.test.mjs']:[]),
      ...(pin.kind==='frontNamedSelectionHandTax'?['tests/v2-r46-sao064-full-print.test.mjs']:[]),
+     ...(pin.kind==='raidOtherOwnWinDamageMainSelectionTax'?
+      ['tests/v2-r47-sao087-official-candidate.test.mjs']:[]),
      ...(pin.kind==='grantOwnFrontChoiceProtection'?['tests/v2-r40-sao058-full-print-probe.test.mjs']:[]),
      ...(pin.kind==='outsideRecoverActiveProtected'?['tests/v2-r41-sao060-full-print.test.mjs']:[]),
      ...(pin.kind==='mainRestDiscardRetireFreeActiveAsuna'?['tests/v2-r43-sao068-full-print.test.mjs']:[]),
