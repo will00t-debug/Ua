@@ -124,7 +124,8 @@ test('R44 actual RAID LIFE free Raid enters shared onPlay and spends no normal A
 });
 test('R44 BP-limit uses CURRENT opponent BP; buffs above 4000 make onPlay skip safely',()=>{
  let {s,base,top,enemy}=scene();
- enemy.buffs.push({bp:4000,untilTurn:s.turn});
+ // dispatch returns a cloned state; mutate its current physical target, not the stale fixture reference.
+ s.players[1].front[0].buffs.push({bp:4000,untilTurn:s.turn});
  const a=legalUniversalActions(packs,s).find(x=>x.type==='raid'&&x.baseUid===base.uid&&x.uid===top.uid);
  assert.ok(a);s=use(s,a);
  assert.equal(s.pending,null);
