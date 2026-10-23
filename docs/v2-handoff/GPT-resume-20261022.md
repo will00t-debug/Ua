@@ -469,3 +469,17 @@ R29 無新增正式卡牌，沒有新增 DSL 原語。五作品仍 **312/700**�
 4. **D** `c5b08f0d4d32402a6eaf22d368be388bcc15d750`: 兩種 Raid 底板、沒有敵方 FRONT 時仍抽牌、選 0、過期實體 stamp、off-turn 無效、Human UI 選項的真卡正反例與公開提示。[39874056639](https://github.com/will00t-debug/Ua/actions/runs/39874056639) **1843/1843 Node22, 60/60 matrix, independent manifest and unported report success**。
 
 **目前最新程式數據：** BLEACH97 TTG**36** SLG41 SAO92 MST48 → **314/700**，未移植 **386**，全面逐卡 FAQ 完整認證仍 **0**。TTG-1-028 本輪正式移植，非隔離 prototype；新增通用不能攻擊的 *legal action restriction*，**不是** `grantOnAttack`、`cannotActive` 或增加能源。BLC-4-034 MAIN 的 REST／真正退場費用與下層裏向卡回收優先權欠官方明確依據，**仍不實作**，BLC-2-019/047 也未登錄；巢狀二次 LIFE 繼續 fail closed。下一輪可先等 BLC-034 官方裁定，或研究 SLG-1-070 Q2062 的共用 AP 選擇加價，而非猜時序。既有前30輪能力未刪，未改 main/PR77/正式站、未 force push；Node22 僅 GitHub Actions 遠端實測。本交接 docs SHA 另需 CI。
+
+
+
+## R33 — 2026-10-23: Q2062 card-effect targeting AP tax, SLG-1-070 officially registered
+
+See [V2-R33-Q2062-AP-selection-tax-audit.md](./V2-R33-Q2062-AP-selection-tax-audit.md) for official source, Q2062/Q1119 semantics, exact commits, CI failure repairs and tests.
+Started from R32 green b7b02699e664bbc979dbfafb6001093aeceefe41. Five batches:
+- A bc1c3614: target physical UID+stamp; own-next-opponent-turn scoped selection surcharge; GitHub CI [39876085032](https://github.com/will00t-debug/Ua/actions/runs/39876085032) 1845/1845 Node22, 60/60.
+- B c95b0295: choose target only with enough extra ready AP, charge at exact target decision, no attack/block tax; [39876436885](https://github.com/will00t-debug/Ua/actions/runs/39876436885) 1849/1849, 60/60.
+- C c141febe, corrected f8405cb1: generic other-own-DFN onPlay optional-grant, valid UID/stamp target snapshots, Normal/Hard AI, source-pinned 50-card isolated tests; [39876971666](https://github.com/will00t-debug/Ua/actions/runs/39876971666) 1851/1851, 60/60.
+- D d7a1d4ff: register official SLG-1-070 / シーマ (green 0/AP1/BP1000/gen1, ACTIVE LIFE, official one-token DFN／第四次架南島レイド with audited individual traits). Independent manifest, historical evidence CSV, actual true-card tests; [39877281648](https://github.com/will00t-debug/Ua/actions/runs/39877281648) 1852/1852, 60/60.
+- E 0d8db897 through final code 745d378be6105921a272d1e825818ea7ac9dc09d: Q2062 plus Q1119 mandatory event legal-target preflight RESERVING own event AP; protected target surcharge after event-cost, free alternate target still legal. Initial test fixture accidentally put UNPROTECTED grantor into FRONT and assumed protected character sole FRONT target; the free alternate made prior red CI correctly reject test assertions. Fix moved grantor to ENERGY and [39878428295](https://github.com/will00t-debug/Ua/actions/runs/39878428295) **1854/1854 PASS, 60/60 PASS, independent manifest and unported report PASS**.
+
+Validated source-code totals: BLEACH 97, TTG 36, SLG 42, SAO 92, MST 48 = **315/700** registered; **385** unported. Full independent all-card/all-FAQ official certification still **0**, not a denial of focused card tests. BLC-2-019/047/4-034 still NOT registered; BLC034 facing-down recovery after own REST + true retirement requires direct ruling, do not invent chronology. Nested LIFE atomic fail-closed. Next: MST-1-059 front temporary energy permission with source-pinned conditions, or official BLC034 chronological oracle. All tests remote GitHub Actions Node22, not local clone. No main merge, no Cursor PR #77 write, no production Vercel, no force-push. R33 documentation commit must have its own CI checked.
