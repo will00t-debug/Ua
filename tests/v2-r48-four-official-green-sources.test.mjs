@@ -61,3 +61,74 @@ test('R48 A: distinct PRINTED name outside counter rejects duplicates, wrong typ
  s.players[1].outside.push({uid:'1-8',cardId:'BLC-1-100'});
  assert.equal(countOwnOutsideDistinctPrintedNames(s,0,lookup,rule),3);
 });
+
+
+import {newUniversalMatch,dispatchUniversalAction,legalUniversalActions,assertUniversalMatch}
+ from '../dist/universal-v2/engine.mjs';
+
+function r48Take(s,owner,id){
+ for(const zone of ['hand','deck','life','outside']){
+  const cards=s.players[owner][zone],i=cards.findIndex(c=>c.cardId===id);
+  if(i>=0)return cards.splice(i,1)[0];
+ }
+ throw Error('Missing existing physical printed card '+owner+'/'+id);
+}
+test('R48 A: FOUR distinct genuine green EVENT/FIELD cards reach own OUTSIDE through legal paid actions',()=>{
+ const counts={...R48_GREEN_REAL_COUNTS},packs=[pack,pack];
+ let s=newUniversalMatch(packs,{decks:[counts,counts],first:0,seed:48069});
+ // Arrange a deterministic REAL 50-card game fixture. ALL four source cards
+ // enter own outside through gameplay actions below, never fixture injection.
+ const p=s.players[0];
+ for(let i=0;i<4;i++){
+  const c=r48Take(s,0,'BLC-1-068');
+  c.ready=true;c.fieldEntryStamp=s.nextFieldEntryStamp++;
+  p.energy[i]=c;
+ }
+ const foe=r48Take(s,1,'BLC-1-071');
+ foe.ready=true;foe.fieldEntryStamp=s.nextFieldEntryStamp++;
+ s.players[1].front[0]=foe;
+ const source={};
+ for(const id of ['BLC-1-094','BLC-1-097','BLC-1-099','BLC-1-100','BLC-1-071']){
+  const c=r48Take(s,0,id);source[id]=c.uid;p.hand.push(c);
+ }
+ function apply(action){
+  const allowed=legalUniversalActions(packs,s);
+  assert.ok(allowed.some(a=>JSON.stringify(a)===JSON.stringify(action)),
+   'must be actual legal action '+JSON.stringify(action));
+  s=dispatchUniversalAction(packs,s,action);
+ }
+ function settle(){
+  let bound=12;
+  while(s.pending&&bound-->0){
+   const actions=legalUniversalActions(packs,s);
+   // A required enemy retirement and AP reactivation use the real chooser.
+   const choice=actions.find(a=>a.uid!==null&&a.mode!=='skip'&&a.type!=='next')||actions[0];
+   assert.ok(choice,'pending must have a legal controller action: '+s.pending.kind);
+   apply(choice);
+  }
+  assert.ok(bound>0,'effect settlement bounded and finite');
+ }
+ function paid(id,line,slot){
+  const action=legalUniversalActions(packs,s).find(a=>a.type==='play'&&
+   a.uid===source[id]&&a.line===line&&a.slot===slot);
+  assert.ok(action,'must be legal paid use of registered '+id);
+  apply(action);settle();
+ }
+ // Advance with normal phase actions, then perform all five paid uses.
+ while(s.phase!=='main')apply(legalUniversalActions(packs,s).find(a=>a.type==='next'));
+ paid('BLC-1-094','energy',0);   // genuine FIELD on-play; remains ENERGY
+ paid('BLC-1-071','energy',0);   // legal line overwrite moves FIELD to OUTSIDE
+ paid('BLC-1-100',undefined,undefined); // FINAL EVENT, recover REST AP
+ paid('BLC-1-097',undefined,undefined); // EVENT, BP buff and draw
+ paid('BLC-1-099',undefined,undefined); // EVENT, legal enemy retirement
+ for(const [id] of R48_GREEN_FOUR_SOURCES)
+  assert.ok(p.outside.some(c=>c.cardId===id),
+   'source must actually leave field/hand for outside: '+id);
+ assert.equal(countOwnOutsideDistinctPrintedNames(s,0,c=>pack.cards[c.cardId],
+  {color:'green',types:['event','field']}),4);
+ assert.equal(assertUniversalMatch(packs,s),true);
+ assert.ok(s.zoneMoveEvents.some(e=>e.uid===source['BLC-1-094']&&
+  e.from==='energy'&&e.to==='outside'));
+ for(const id of ['BLC-1-097','BLC-1-099','BLC-1-100'])
+  assert.ok(s.zoneMoveEvents.some(e=>e.uid===source[id]&&e.to==='outside'));
+});
