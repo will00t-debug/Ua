@@ -19,11 +19,13 @@ function scene(){
  let s=newUniversalMatch(packs,{decks:[deck,deck],first:0,seed:44069});
  const base=take(s,0,'SAO-2-068'),top=take(s,0,'SAO-2-069'),as=take(s,0,'SAO-1-068');
  base.ready=true;base.fieldEntryStamp=s.nextFieldEntryStamp++;s.players[0].front[0]=base;
- s.players[0].hand.push(top,as);
+ s.players[0].hand.push(top);
  for(let i=0;i<3;i++){const c=take(s,0,'SAO-1-068');
   c.ready=true;c.fieldEntryStamp=s.nextFieldEntryStamp++;s.players[0].energy[i]=c;}
  const c=take(s,0,'SAO-1-069');c.ready=true;c.fieldEntryStamp=s.nextFieldEntryStamp++;
  s.players[0].energy[3]=c;
+ // Do NOT let take() retrieve the intended in-hand Asuna as an energy producer.
+ s.players[0].hand.push(as);
  const enemy=take(s,1,'SAO-1-068');enemy.ready=true;
  enemy.fieldEntryStamp=s.nextFieldEntryStamp++;s.players[1].front[0]=enemy;
  for(let k=0;k<2;k++)s=use(s,{type:'next'});
@@ -73,8 +75,14 @@ test('R44 actual paid RAID onPlay BP check and attack-end self retirement leads 
 });
 test('R44 no automatic FREE REST if no eligible current hand card; clean skip',()=>{
  let {s,base,top,as}=scene();
- s.players[0].hand=s.players[0].hand.filter(c=>c.uid!==as.uid);
- s.players[0].outside.push(as);
+ // Remove every eligible printed Asuna from hand without violating conservation.
+ for(const c of [...s.players[0].hand]){
+  const d=pack.cards[c.cardId];
+  if(d.name==='アスナ'&&d.color==='green'&&d.ap===1&&d.energy<=3){
+   s.players[0].hand.splice(s.players[0].hand.findIndex(x=>x.uid===c.uid),1);
+   s.players[0].outside.push(c);
+  }
+ }
  const raid=legalUniversalActions(packs,s).find(a=>a.type==='raid'&&a.baseUid===base.uid&&a.uid===top.uid);
  s=use(s,raid);
  const skip=legalUniversalActions(packs,s).find(a=>a.uid===null);
