@@ -38,7 +38,8 @@ test('R49 pair cost exposes only unordered distinct OWN UID pairs and private me
  assert.equal(s.pending.kind,'effect-discard-gate');
  assert.equal(s.pending.count,2);
  const pairs=options.filter(x=>Array.isArray(x.uids));
- assert.equal(pairs.length,3);
+ const n=s.players[0].hand.length;
+ assert.equal(pairs.length,n*(n-1)/2,'every legal unordered pair of real hand UIDs');
  assert.ok(pairs.some(x=>x.uids.includes(a.uid)&&x.uids.includes(b.uid)));
  assert.ok(pairs.every(x=>x.uids.length===2&&new Set(x.uids).size===2));
  assert.equal(universalPrivateChoices(pack,s,1),null);
