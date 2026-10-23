@@ -34,6 +34,8 @@ function setup(includeFree){
 test('R33 Q2062 + Q1119: mandatory paid event is not offered when its ONLY target needs unaffordable extra AP',()=>{
  const {s,event,protectedCard}=setup(false);
  assert.equal(s.players[1].apCards.filter(c=>c.ready).length,1);
+ assert.deepEqual(packs[1].cards['SAO-1-034'].effects.onPlay,[
+  {op:'restOrRetireOppFrontByLife',bp:5000,lifeAtMost:4,optional:false}]);
  const legal=legalUniversalActions(packs,s);
  assert.equal(legal.some(x=>x.type==='event'&&x.uid===event.uid),false);
  const snap=structuredClone(s);
@@ -48,6 +50,8 @@ test('R33 Q2062: paid event can select unprotected alternate for FREE; no mid-ef
  s=dispatchUniversalAction(packs,s,play);
  assert.equal(s.players[1].apCards.filter(c=>c.ready).length,0);
  assert.equal(s.pending?.kind,'effect-rest-bp');
+ assert.equal(s.continuousStates.length,1,'targeting protection must survive event dispatch');
+ assert.equal(selectionApSurcharge(s,1,protectedCard.uid),1,'printed Q2062 tax must still exist at target resolution');
  assert.deepEqual(legalUniversalActions(packs,s),[{type:'chooseRestBp',uid:free.uid}]);
  s=dispatchUniversalAction(packs,s,{type:'chooseRestBp',uid:free.uid});
  assert.equal(s.players[0].front[2].ready,false);
