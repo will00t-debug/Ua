@@ -4,6 +4,13 @@ import {MST_V2_OFFICIAL_CATALOGUE} from './sources/mst-inventory.mjs';
 import {createUniversalPack} from './pack.mjs';
 
 const PRINTED_PINS=Object.freeze({
+ "MST-1-059":{
+  kind:"onPlayChooseTemporaryFrontEnergy",
+  nameJa:"シルフィエット",color:"green",energy:2,ap:1,bp:3000,gen:1,
+  type:"character",traits:["ラノア魔法大学"],trigger:null,
+  effectJa:"〖登場時〗 以下から1つ選ぶ。\n・カードを1枚引き、自分の手札を1枚場外に置く。\n・自分のフロントLの他の［特徴：ラノア魔法大学］を1枚まで選び、このターン中、「このキャラはフロントLでもエナジーを発生させる。」を与える。"
+ },
+
  "MST-1-076":{
   kind:"fieldRetireOutsideTraitlessRestOrRaid",
   nameJa:"迷宮の守護者 マナタイトヒュドラ",
@@ -680,6 +687,15 @@ export function verifiedMstV2Cards(){
    card.templateEffects={onPlay:[{template:'drawIfOwnEnergyAtLeast',energy:7,count:1}]};
   if(pin.kind==='onPlayDraw')card.templateEffects={onPlay:[{template:'draw',count:1}]};
   if(pin.kind==='onPlayDrawDiscard')card.templateEffects={onPlay:[{template:'drawDiscardOne'}]};
+  if(pin.kind==='onPlayChooseTemporaryFrontEnergy')
+   card.effects={onPlay:[{op:'chooseOne',optional:false,options:[
+    {id:'draw',label:'Draw one, put one own hand card outside',turn:'any',
+     then:[{op:'drawDiscard',count:1}]},
+    {id:'energy',label:'One other own Ranoa FRONT produces energy this turn',turn:'any',
+     then:[{op:'grantFrontEnergyOwnOtherFrontTrait',trait:'ラノア魔法大学',
+      optional:true,until:'thisTurn'}]}
+   ]}]};
+
   if(pin.kind==='onPlayDrawDiscardLimited'){
    card.templateEffects={onPlay:[{template:'drawDiscardOne'}]};
    card.maxCopies=pin.deckLimit;
@@ -747,6 +763,7 @@ export function verifiedMstV2Entries(){
      ...(pin.kind==='onPlayTop3OwnTraitBottomDiscard'?['tests/v2-mst-055-cross-title-top.test.mjs']:[]),
      ...(pin.kind==='onPlayTop5GreenFieldBottomDiscard'?['tests/v2-cross-title-top-filter-round13.test.mjs']:[]),
      ...(pin.kind==='frontGeneratesEnergy'?['tests/v2-mst-057-front-energy.test.mjs']:[]),
+      ...(pin.kind==='onPlayChooseTemporaryFrontEnergy'?['tests/v2-r34-mst059-official.test.mjs','tests/v2-r34-front-energy-permission.test.mjs']:[]),
       ...(['onPlayRestSilenceOpponentIfFieldOutside','fieldOnPlayDrawDiscardOnRetireDraw'].includes(pin.kind)?
        ['tests/v2-mst-054-075-real-deck.test.mjs']:[]),
       ...(pin.kind==='fieldOnPlayDrawDiscardOnRetireDraw'?
