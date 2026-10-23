@@ -2888,7 +2888,8 @@ export function legalUniversalActions(pack,s){
     if(ab?.op==='fieldRestRetireThen'&&d.type==='field'&&c.ready)
      out.push({type:'activate',uid:c.uid,mode:'fieldRestTrueRetireDeploy'});
     if(ab?.op!=='fieldDualMain'||d.type!=='field')continue;
-    const retiredKey=d.name+'|fieldDualRetire',buffKey=d.name+'|fieldDualBuff';
+    // Each physical FIELD owns its own printed once-per-turn MAIN abilities.
+    const retiredKey=c.uid+'|fieldDualRetire',buffKey=c.uid+'|fieldDualBuff';
     if(!s.mainReadyOnceByName[p].includes(retiredKey)&&
      field(pl).some(v=>v.uid!==c.uid&&card(pack,v).type==='character'&&
       cardHasTrait(card(pack,v),ab.retireTrait)))
@@ -3151,7 +3152,7 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
    if(ability.op==='fieldDualMain'){
     if(!pl.energy.some(c=>c?.uid===selected.uid)||d.type!=='field')
      throw Error('Dual MAIN requires own energy FIELD');
-    const retireKey=d.name+'|fieldDualRetire',buffKey=d.name+'|fieldDualBuff';
+    const retireKey=selected.uid+'|fieldDualRetire',buffKey=selected.uid+'|fieldDualBuff';
     if(action.mode==='fieldRetireTrait'){
      const choices=field(pl).filter(c=>c.uid!==selected.uid&&
       card(pack,c).type==='character'&&cardHasTrait(card(pack,c),ability.retireTrait))
@@ -3553,7 +3554,7 @@ export function assertUniversalMatch(pack,s){
     card(pack,c).type==='character'&&cardHasTrait(card(pack,c),ab?.retireTrait)).map(c=>c.uid);
    if(!src||ab?.op!=='fieldDualMain'||!Number.isInteger(q.sourceStamp)||
     q.sourceStamp!==src.fieldEntryStamp||
-    !s.mainReadyOnceByName[q.player].includes(d.name+'|fieldDualRetire')||
+    !s.mainReadyOnceByName[q.player].includes(q.sourceUid+'|fieldDualRetire')||
     !Array.isArray(q.choices)||!q.choices.length||!same(q.choices,choices)||
     Object.keys(q).length!==5||
     Object.keys(q).some(k=>!['kind','player','sourceUid','sourceStamp','choices'].includes(k)))
