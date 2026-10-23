@@ -887,9 +887,11 @@ function continueEffectQueue(pack,s){
       sourceName:job.sourceName}))};
   }else if(job.op==='retireOwnCharacterOne'){
     const choices=[...pl.front,...pl.energy].filter(c=>c&&
-     card(pack,c).type==='character').map(c=>c.uid);
+     card(pack,c).type==='character'&&
+     (job.excludeSelf!==true||c.uid!==job.sourceUid)).map(c=>c.uid);
     if(choices.length)s.pending={kind:'effect-retire-own-character',
      player:owner,sourceUid:job.sourceUid,choices,optional:true,
+     ...(job.excludeSelf===true?{excludeSelf:true}:{}),
      after:job.after.map(x=>({...x,owner,sourceUid:job.sourceUid,
       sourceName:job.sourceName}))};
   }else if(job.op==='retireOwnFieldOne'){
@@ -3477,6 +3479,25 @@ export function assertUniversalMatch(pack,s){
    Object.keys(q).length!==(q.payment?7:6)||
    Object.keys(q).some(k=>!['kind','player','sourceUid','optional','then','payment','count'].includes(k)))
    throw Error('Invalid saved atomic two-hand payment provenance');
+ }
+ if(s.pending?.kind==='effect-retire-own-character'&&s.pending.excludeSelf===true){
+  const q=s.pending,pl=s.players[q.player];
+  const src=field(pl).find(c=>c.uid===q.sourceUid),printed=src&&card(pack,src);
+  const branches=printed?.effects?.onPlay?.flatMap(e=>e.op==='chooseOne'?
+   e.options.flatMap(o=>o.then):[e])||[];
+  const earned=branches.find(e=>e.op==='retireOwnCharacterOne'&&
+   e.excludeSelf===true&&e.optional===true);
+  const candidates=field(pl).filter(c=>c.uid!==q.sourceUid&&
+   card(pack,c).type==='character').map(c=>c.uid);
+  const after=q.after?.map(({owner,sourceUid,sourceName,...x})=>x);
+  if(!earned||!Array.isArray(q.after)||q.after.length!==1||
+   !same(earned.after,after)||
+   q.after.some(e=>e.owner!==q.player||e.sourceUid!==q.sourceUid||
+    e.sourceName!==printed.name)||
+   !Array.isArray(q.choices)||!same(q.choices,candidates)||
+   Object.keys(q).length!==7||
+   Object.keys(q).some(k=>!['kind','player','sourceUid','choices','optional','after','excludeSelf'].includes(k)))
+   throw Error('Invalid saved other-character retirement continuation');
  }
  if(s.pending?.kind==='effect-top-filter-many-choice'){
   const q=s.pending,pl=s.players[q.player];
