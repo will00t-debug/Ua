@@ -3065,12 +3065,11 @@ export function assertUniversalMatch(pack,s){
   const q=s.pending,pl=s.players[q.player];
   const rest=q.uids?.filter(uid=>!q.selected?.includes(uid));
   const source=[...pl.outside,...field(pl)].find(c=>c.uid===q.sourceUid);
-  const printed=source&&card(pack,source).effects?.onPlay?.some(e=>
-   (e.op==='searchTopUpToTwoBottom'||e.op==='chooseOne'&&e.options.some(o=>
-     o.then.some(t=>t.op==='searchTopUpToTwoBottom'&&t.max===q.max&&
-      t.rest==='bottom'&&t.count>=q.uids?.length&&same(t.filters,q.filters)&&t.logic===q.logic)))&&
-    (e.op==='chooseOne'||e.max===q.max&&e.rest==='bottom')&&
-   e.count>=q.uids?.length&&same(e.filters,q.filters)&&e.logic===q.logic);
+  const printed=source&&card(pack,source).effects?.onPlay
+   ?.flatMap(e=>e.op==='chooseOne'?e.options.flatMap(o=>o.then):[e])
+   .some(e=>e.op==='searchTopUpToTwoBottom'&&e.max===q.max&&
+    e.rest==='bottom'&&e.count>=q.uids?.length&&
+    same(e.filters,q.filters)&&e.logic===q.logic);
   if(!printed||![1,2].includes(q.max)||!Array.isArray(q.uids)||q.uids.length<1||q.uids.length>5||
    new Set(q.uids).size!==q.uids.length||!Array.isArray(q.choices)||
    !Array.isArray(q.selected)||q.selected.length>=q.max||
