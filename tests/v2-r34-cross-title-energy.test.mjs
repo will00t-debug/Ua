@@ -13,7 +13,7 @@ const ttg=registeredV2TitlePack('gurren-lagann');
 const sao=registeredV2TitlePack('sword-art-online');
 const slg=registeredV2TitlePack('solo-leveling');
 const mstDeck=Object.fromEntries(['001','002','010','012','013','016','017','019','050','059','063','055'].map(n=>['MST-1-'+n,4]));mstDeck['MST-1-057']=2;
-const ttgDeck=Object.fromEntries(['001','005','006','009','014','019','042','043','047','051','064','065'].map(n=>['TTG-1-'+n,4]));ttgDeck['TTG-1-036']=2;
+const ttgDeck=Object.fromEntries(['002','005','006','009','014','019','042','043','047','051','064','065'].map(n=>['TTG-1-'+n,4]));ttgDeck['TTG-1-036']=2;
 const saoIds=['SAO-1-001','SAO-1-005','SAO-1-010','SAO-1-011','SAO-1-004','SAO-1-019','SAO-1-020','SAO-1-051','SAO-1-057','SAO-1-073','SAO-1-077','SAO-2-016','SAO-2-003'];
 const saoDeck=Object.fromEntries(saoIds.map(id=>[id,4]));saoDeck[saoIds.at(-1)]=2;
 const slgDeck=Object.fromEntries(['001','002','005','006','007','010','013','015','016','026','070','072'].map(n=>['SLG-1-'+n,4]));slgDeck['SLG-1-041']=2;
