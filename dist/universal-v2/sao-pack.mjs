@@ -4,6 +4,14 @@ import {SAO_OFFICIAL_CARDS} from '../sao-official-import.mjs';
 import {createUniversalPack} from './pack.mjs';
 
 const PRINTED_PINS=Object.freeze({
+  // Q1206: protection prohibits explicit choice by ALL opponent effects;
+  // whole EVENT includes Asuna-only optional AP ACTIVE and ACTIVE LIFE.
+  "SAO-2-058":{"kind":"grantOwnFrontChoiceProtection",
+   "nameJa":"ペンダント・オブ・アニオライト",
+   "color":"purple","energy":2,"ap":1,"bp":0,"gen":0,"type":"event",
+   "trigger":"active","traits":[],
+   "effectJa":"自分のフロントLのキャラを1枚選び、次の自分のターン開始時まで、「このキャラは、相手の効果で選ばれない。」を与える。選んだキャラが〈アスナ〉の場合、自分のAPカードを1枚まで選び、アクティブにする。"},
+
   "SAO-2-056":{"kind":"retireCharacterTopProgressive","nameJa":"茅場 晶彦",
    "color":"purple","energy":2,"ap":1,"bp":0,"gen":1,"type":"field",
    "traits":["プログレッシブ"],"trigger":"get",
@@ -1313,6 +1321,9 @@ export function verifiedSaoV2Cards(){
   if(card.implementation==='vanilla')card.effects={};
   if(pin.kind==='step')card.step=true;
   if(pin.kind==='nextHandApDiscount')card.effects={onPlay:[{op:'nextEligibleHandPlayApDiscount',filter:{printedBp:3500,trait:'ALO'}}]};
+  if(pin.kind==='grantOwnFrontChoiceProtection')
+   card.effects={onPlay:[{op:'grantOwnFrontChoiceProtection',optional:false,
+    scope:'any',until:'nextOwnStart',apRecoveryOnName:'アスナ'}]};
   if(pin.kind==='opponentTurnBp1000'){
    card.opponentTurnBp=1000;
    card.effects={}; // Explicit DSL profile: persistent native modifier, no onPlay job
@@ -1552,6 +1563,7 @@ export function verifiedSaoV2Entries(){
      source.source,
     testFiles:Object.freeze([
      ...(pin.kind==='nextHandApDiscount'?['tests/v2-r36-real-discount-cards.test.mjs']:[]),
+     ...(pin.kind==='grantOwnFrontChoiceProtection'?['tests/v2-r40-sao058-full-print-probe.test.mjs']:[]),
      'tests/universal-v2-sao-port.test.mjs',
       ...(def.id==='SAO-1-034'?['tests/v2-sao-034-official.test.mjs']:[]),
      ...(def.id==='SAO-2-021'?['tests/v2-sao-021-shared-main-cost.test.mjs']:[]),
