@@ -77,7 +77,8 @@ test('R34 mode 1 draws exactly one physical card then discards an OWN hand UID, 
  assert.equal(s.pending,null);
  assert.equal(s.players[0].hand.length,before.players[0].hand.length-1);
  assert.equal(s.players[0].outside.some(c=>c.uid===act.uid),true);
- assert.equal(s.zoneMoveEvents.some(e=>e.physicalUid===undefined&&e.from==='deck'),false);
+ assert.equal(s.zoneMoveEvents.some(e=>e.from==='deck'&&e.to==='hand'&&e.owner===0&&e.reason==='own-effect'&&e.sourceUid===source.uid),true);
+ assert.equal(s.zoneMoveEvents.some(e=>e.from==='hand'&&e.to==='outside'&&e.uid===act.uid&&e.owner===0&&e.reason==='own-effect'&&e.sourceUid===source.uid),true);
  assert.equal(universalPublicView(packs,s,1).players[0].hand,null);
  assert.equal(assertUniversalMatch(packs,JSON.parse(JSON.stringify(s))),true);
 });
