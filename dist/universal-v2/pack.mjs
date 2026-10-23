@@ -157,8 +157,10 @@ function verifyProgram(program,path){
   if(e.op==='inspectTopTraitOutside'&&(
    !integer(e.count,2)||e.count>4||
    typeof e.trait!=='string'||!e.trait.trim()||e.trait.length>80||
-   e.rest!=='top'||Object.keys(e).length!==4||
-   Object.keys(e).some(k=>!['op','count','trait','rest'].includes(k))
+   (e.orName!==undefined&&(typeof e.orName!=='string'||!e.orName.trim()||e.orName.length>80))||
+   (e.requiresOtherOwnTrait!==undefined&&(typeof e.requiresOtherOwnTrait!=='string'||!e.requiresOtherOwnTrait.trim()||e.requiresOtherOwnTrait.length>80))||
+   e.rest!=='top'||Object.keys(e).length!==4+Number(e.orName!==undefined)+Number(e.requiresOtherOwnTrait!==undefined)||
+   Object.keys(e).some(k=>!['op','count','trait','rest','orName','requiresOtherOwnTrait'].includes(k))
   ))throw Error(path+'['+i+'] invalid trait top-outside profile');
   if(e.op==='searchDeckWhere'){
    if(!Array.isArray(e.filters)||e.filters.length<2||e.filters.length>3||

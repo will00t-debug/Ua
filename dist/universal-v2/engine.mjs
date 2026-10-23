@@ -622,12 +622,17 @@ function continueEffectQueue(pack,s){
      s.pending={kind:'effect-pay-ap-deploy',player:owner,
       sourceUid:job.sourceUid,name:job.name};
    }else if(job.op==='inspectTopTraitOutside'){
-    const uids=pl.deck.slice(0,job.count).map(c=>c.uid);
+    // A "different own" prerequisite excludes the physical source UID.
+    const active=!job.requiresOtherOwnTrait||field(pl).some(c=>
+     c.uid!==job.sourceUid&&cardHasTrait(card(pack,c),job.requiresOtherOwnTrait));
+    const uids=active?pl.deck.slice(0,job.count).map(c=>c.uid):[];
     if(uids.length){
      const window=pl.deck.slice(0,uids.length);
-     const choices=window.filter(c=>card(pack,c).traits.includes(job.trait)).map(c=>c.uid);
+     const choices=window.filter(c=>cardHasTrait(card(pack,c),job.trait)||
+      (job.orName&&cardHasName(card(pack,c),job.orName))).map(c=>c.uid);
      s.pending=choices.length?{kind:'effect-top-trait-outside',player:owner,
-      sourceUid:job.sourceUid,uids,choices,trait:job.trait}:
+      sourceUid:job.sourceUid,uids,choices,trait:job.trait,
+      ...(job.orName?{orName:job.orName}:{})}:
       {kind:'effect-top-order',player:owner,sourceUid:job.sourceUid,
        uids,order:[],rest:'top'};
     }
@@ -1529,7 +1534,8 @@ function resolveChoice(s,a,pack){
    throw Error('Trait top window changed during private selection');
   if(a.uid!==null){
    const chosen=window.find(c=>c.uid===a.uid);
-   if(!chosen||!q.choices.includes(a.uid)||!card(pack,chosen).traits.includes(q.trait))
+   if(!chosen||!q.choices.includes(a.uid)||!(cardHasTrait(card(pack,chosen),q.trait)||
+     (q.orName&&cardHasName(card(pack,chosen),q.orName))))
     throw Error('Trait top choice is not an inspected exact-token match');
    const index=p.deck.findIndex(c=>c.uid===a.uid);
    if(index<0||index>=q.uids.length)throw Error('Selected card left the top window');
