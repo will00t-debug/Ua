@@ -632,3 +632,9 @@ GPT PR #78 原分支 `gpt/v2-resume-20261022`（對 `cursor/v2-multi-retire-life
 
 ### R46 2026-10-23 update
 Batch A generic live selection hand payment, Q1119 mandatory EVENT preflight, actual physical UID payment and serialized pending. Verified green Node22 2055/2055 + 60/60 at SHA 2e756a7 (Actions 39984451710). Batch B adds official SAO-2-064 Q1208 profile, actual 50-card SAO selection via SAO-2-069 and DRAW LIFE tests, independent manifest and partial FAQ record, subject to NEW SHA CI. Details docs/v2-handoff/V2-R46-live-selection-payment.md. No exhaustive FAQ certification, no main merge/deploy/Cursor PR change.
+
+
+### R46 2026-10-23 battle-win engine handoff
+- Generic actual blocked-victory DAMAGE2 profile now integrated in engine; attacker >= blocker and blocker > attacker are distinct Q763 branches. No direct LIFE trigger, no self trigger, current-turn-only and same physical stamp. Negative saved UID and alternate AI tests. Verified 09e6684: Actions 39987041690 SUCCESS; exact latest doc/scanner commit still needs new CI.
+- R46 conservative full unported scan reuses R35 capabilityIndex. Source word hits do not grant READY; SAO-1-087 remains PARTIAL until MAIN Turn1, Raid/RAID LIFE, IMPACT, Q978 EVENT selection payment full acceptance.
+- SAO-2-064 is 102nd registered SAO card; all 335/700, 365 unported, independent FAQ certified 0. BLC-4-069 attack-end physical swap and BLC-4-042 three-mode actual resolution remain unported; Q2162 MST-1-067 remains RULE BLOCKED.

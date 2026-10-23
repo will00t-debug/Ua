@@ -1990,3 +1990,10 @@ Five-title catalogue **334/700 registered, 366 unported** (BLEACH98 TTG36 SLG45 
 
 ### R46 2026-10-23 update
 Batch A generic live selection hand payment, Q1119 mandatory EVENT preflight, actual physical UID payment and serialized pending. Verified green Node22 2055/2055 + 60/60 at SHA 2e756a7 (Actions 39984451710). Batch B adds official SAO-2-064 Q1208 profile, actual 50-card SAO selection via SAO-2-069 and DRAW LIFE tests, independent manifest and partial FAQ record, subject to NEW SHA CI. Details docs/v2-handoff/V2-R46-live-selection-payment.md. No exhaustive FAQ certification, no main merge/deploy/Cursor PR change.
+
+
+### R46 third live batch and Q763 full-roster conservative discovery
+- Batch C: actual blocked combat winner hook for both attacker BP>=blocker and defender BP>attacker, granting THIS TURN DAMAGE2 on printed other-own watcher (not self or direct LIFE). Normal existing battle flows only run the strict stamp hook if an actual printed listener exists. Physical UID, fieldEntryStamp, expiry, AI and saved-state negatives in tests/v2-r46-battle-won-damage2-live.test.mjs.
+- SHA 09e6684: Node22 full regression and 60/60 matrix green, Actions https://github.com/will00t-debug/Ua/actions/runs/39987041690 . SAO-1-087 is NOT registered pending all other full print and official FAQ composite scenarios.
+- R46 live five-title scan for other-battle-win cards: scripts/v2-r46-battle-win-candidate-report.mjs and its strict all-UID test. Scanner reports candidate words as REVIEW PENDING, never READY. New doc/scan SHA requires independent Actions.
+- SAO-2-064 is now registered and complete-print tested at SHA 467f79a, Actions 39986070774: 2061/2061, 60/60; inventory now SAO 102, all titles 335/700, unported 365, independently exhaustive FAQ certified 0.
