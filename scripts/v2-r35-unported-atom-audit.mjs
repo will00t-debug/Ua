@@ -44,7 +44,7 @@ export const R35_SHARED_ATOM_CANDIDATES=Object.freeze([
   sourceVerified:true},
  {rank:5,atom:'conditionalSelfRetireThenTopSearch',
   ids:['SAO-2-056','MST-1-049'],series:['EX08BT','UA54BT'],
-  missing:'true retirement optional prerequisite gates top search with different count/filter/extra ACTIVE branch',
+  missing:'true character/field retirement optional prerequisite gates top search with different count/filter/extra ACTIVE branch',
   reuse:'Retire own character in SAO; retire own field in MST — must keep type distinct',
   existing:'retireOwnCharacterOne, retireOwnFieldOne, searchTopOneBottomDiscard',
   faq:'print inspected; retirement interruption/choice ordering still needs independent evidence',
