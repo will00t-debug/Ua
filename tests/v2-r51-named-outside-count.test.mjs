@@ -18,7 +18,8 @@ const source={...basic('source','アスナ'),energy:3,bp:3500,traits:['ALO'],
   {condition:bpCondition,bp:500},{condition:impactCondition,impact:1}
  ]};
 const cards=[source,basic('yuuki','ユウキ'),basic('rosario','マザーズ・ロザリオ'),
- {...basic('alias','another print'),nameAliases:['ユウキ','マザーズ・ロザリオ']},
+ {...basic('alias','another print'),implementation:'dsl',
+  nameAliases:['ユウキ','マザーズ・ロザリオ']},
  basic('other','other'),...Array.from({length:8},(_,i)=>basic('f'+i,'f'+i))];
 const pack=createUniversalPack({id:'r51-named-outside-count',cards});
 const printed=c=>pack.cards[c.cardId];
