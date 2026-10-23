@@ -62,7 +62,10 @@ export default Object.freeze({
   // The printed BP dash is a null source-catalogue field; V2 events/fields
   // have no battle BP and encode that same non-BP property as numeric 0.
   // Never coerce CHARACTER printed BP here.
-  const normalized=record.bp==null&&record.type!=='character'?{...record,bp:0}:record;
+  const normalized={...(record.bp==null&&record.type!=='character'?{...record,bp:0}:record),
+   // Deck-limit print is explicit in source catalogue maxCopies (030 permits 12).
+   // Contract checks deckLimit against authored maxCopies; do not silently cap at 4.
+   deckLimit:record.maxCopies??4};
   return Object.freeze({
    id:def.id,sourceRecord:normalized,definition:def,
    evidence:{printedTextFragments:[review[0]],
