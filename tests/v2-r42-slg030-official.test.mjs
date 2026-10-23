@@ -12,9 +12,11 @@ function take(s,id){for(const z of ['hand','deck','life','outside']){const a=s.p
 function scene(withOther=true){
  let s=newUniversalMatch(packs,{decks:[deck,deck],seed:42030,first:0});
  const target=take(s,'SLG-1-030');s.players[0].hand.push(target);
- const candidate=take(s,'SLG-1-027');s.players[0].deck.unshift(candidate);
+ // Only arrange the inspected window AFTER automatic phase draws.
+ let candidate;
  if(withOther){const other=take(s,'SLG-1-027');other.ready=true;other.fieldEntryStamp=s.nextFieldEntryStamp++;s.players[0].front[1]=other;}
  for(let i=0;i<4&&s.phase!=='main';i++)s=run(s,{type:'next'});
+ candidate=take(s,'SLG-1-027');s.players[0].deck.unshift(candidate);
  const play=legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===target.uid&&a.line==='energy');
  assert.ok(play);
  return {s:run(s,play),target,candidate};

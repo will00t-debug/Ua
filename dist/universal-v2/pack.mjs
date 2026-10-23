@@ -936,7 +936,7 @@ function normalize(card,packId){
  const maxCopies=card.maxCopies===undefined?4:card.maxCopies;
  // Officially printed exceptions, including SLG-1-030, may have up to 12 copies.
  // The title contribution contract verifies the exact source deckLimit.
- if(!integer(maxCopies,1)||maxCopies>12)
+ if(!integer(maxCopies,1)||(maxCopies>4&&maxCopies!==12))
   throw Error(card.id+' invalid deck copy cap');
  return Object.freeze({
   maxCopies,
