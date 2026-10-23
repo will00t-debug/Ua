@@ -960,6 +960,9 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 ,
 {"id":"BLC-2-044","kind":"fieldDualMain","number":"EX07BT/BLC-2-044","name":"涅骸部隊","color":"blue","energy":3,"ap":1,"bp":0,"gen":1,"trigger":"get","type":"field","effect":"主要階段・每回合 1 次：使 1 個己方場上具有「涅骸部隊」特徵的角色退場。另一個主要階段效果・每回合 1 次：僅在本回合有己方場上角色退場後可發動，REST 此場域，使所有己方場上的〈涅音夢〉及具有「涅骸部隊」特徵的角色本回合 BP +1000。"},
 {"id":"BLC-4-042","kind":"mayuriThreeMode","number":"EX15BT/BLC-4-042","name":"涅 マユリ","color":"blue","energy":3,"ap":1,"bp":2000,"gen":3,"trigger":"draw","type":"character","effect":"登場時：選1項。①查看牌庫頂2張，將任意張依任意順序放回牌庫頂，其餘送至場外。②可將2張手牌送至場外；如此則可從場外將最多1張《涅繭利》或《涅音夢》加入手牌。③可使自己場上另1個角色退場；如此則可從手牌將最多1張卡名為《涅骸部隊》的藍色卡以Active登場於自己的能量線（只具同名特徵不符合）。"}
+,
+{"id":"BLC-4-069","kind":"kyorakuAttackEnd","number":"EX15BT/BLC-4-069","name":"京楽 春水","color":"green","energy":5,"ap":1,"bp":4000,"gen":1,"trigger":"raid","type":"character","effect":"突襲《京樂春水》：改為Active，可移至前線。以下僅在突襲狀態適用：此角色攻擊結束時，若自己場外的綠色事件卡及綠色場地卡合計有4種以上不同卡名，可選自己能量線最多1個角色，與此角色交換位置；戰鬥後或傷害的Trigger檢查結束後處理。登場時：本回合下一張從手牌使用、具有「花天狂骨」特徵的卡，消費AP−1；先使用其他卡不會耗掉減費效果。"},
+{"id":"BLC-4-076","kind":"fieldRestRetireNamed","number":"EX15BT/BLC-4-076","name":"花天","color":"green","energy":0,"ap":1,"bp":0,"gen":1,"trigger":"active","type":"field","effect":"啟動・主要〔改為Rest，並使此卡退場〕：可從場外將最多1張所需能量2以下的綠色《京樂春水》以Active登場於自己的能量線。"}
 ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1008,6 +1011,8 @@ export function checkedBleachAddonDefinition(p){
  // encoded the ACTIVE total; V2 needs the printed REST base (1) plus an ACTIVE +1.
  // Keep p.gen=2 only as a legacy-source fingerprint, never as V2 base energy.
  const v2BaseGen=p.id==='BLC-4-014'?1:p.id==='BLC-4-042'?2:c.gen;
+ const isKyoraku=p.kind==='kyorakuAttackEnd';
+ const isRestRetireField=p.kind==='fieldRestRetireNamed';
  const isFieldDual=p.kind==='fieldDualMain';
  const isMayuri=p.kind==='mayuriThreeMode';
  const isPassive=p.kind==='activeEnergy'||p.kind==='impactNull';
@@ -1024,7 +1029,7 @@ export function checkedBleachAddonDefinition(p){
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual;
+ const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1033,6 +1038,11 @@ export function checkedBleachAddonDefinition(p){
   traits:Array.isArray(c.traits)?c.traits:(c.traits&&c.traits!=='無'?[c.traits]:[]),
   implementation:p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'?'vanilla':'dsl',
   ...(p.kind==='step'?{step:true}:{}),
+   ...(isKyoraku?{raidName:'京楽 春水',
+    attackEndSwap:{color:'green',types:['event','field'],minDistinctNames:4}}:{}),
+   ...(isRestRetireField?{mainAbility:{op:'fieldRestRetireThen',then:[
+    {op:'deployNamedFromZones',name:'京楽 春水',zones:['outside'],
+     line:'energy',ready:true,optional:true,color:'green',ap:1,maxEnergy:2}]}}:{}),
    ...(isFieldDual?{mainAbility:{op:'fieldDualMain',retireTrait:'涅骸部隊',
     buffName:'涅 ネム',buffTrait:'涅骸部隊',bp:1000}}:{}),
   ...(isTopRequired?{raidName:'卯ノ花 烈'}:{}),
@@ -1051,7 +1061,9 @@ export function checkedBleachAddonDefinition(p){
   ...(p.kind==='enemyBpDown500Color'?{triggerEffect:{op:'deployOutsideCharacter',color:'purple',maxEnergy:2,ap:1,frontOnly:true}}:{}),
   ...(p.kind==='drawPlayColorHand'?{triggerEffect:{op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1}}:{}),
   ...(!special?{templateEffects:abilities[p.kind]}:{effects:
-   isMayuri?{onPlay:[{op:'chooseOne',optional:false,options:[
+   isKyoraku?{onPlay:[{op:'nextEligibleHandPlayApDiscount',
+     filter:{trait:'花天狂骨'}}]}:
+    isMayuri?{onPlay:[{op:'chooseOne',optional:false,options:[
      {id:'top',label:'TOP2 / remainder OUTSIDE',turn:'any',
       then:[{op:'inspectTopAnyOutside',count:2,rest:'top'}]},
      {id:'recover',label:'Discard two hand then recover outside',turn:'any',
