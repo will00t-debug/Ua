@@ -44,3 +44,14 @@ test('R42 named entry rejects invented AP cost, deck zone and malformed printed 
  for(const bad of [{...op,payAp:1},{...op,zones:['deck']},{...op,name:''},{...op,line:'removed'}])
   assert.throws(()=>createUniversalPack({id:'bad',cards:[{...cards[0],effects:{onPlay:[bad]}},...cards.slice(1)]}),/invalid/);
 });
+
+test('R42 saved pending cannot mint free ACTIVE, forge other zone or change printed name',()=>{
+ let {s}=scene('hand');
+ assert.equal(assertUniversalMatch(pack,s),true);
+ for(const mutate of [q=>{q.ready=true},q=>{q.name='Other'},
+  q=>{q.outsideChoices=[q.handChoices[0]]},q=>{q.sourceUid='0-forged'},
+  q=>{q.sourceName='forged'},q=>{q.extra=1}]){
+  const forged=structuredClone(s);mutate(forged.pending);
+  assert.throws(()=>assertUniversalMatch(pack,forged),/Invalid named free zone entry/);
+ }
+});

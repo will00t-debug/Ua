@@ -3252,6 +3252,36 @@ export function assertUniversalMatch(pack,s){
     'max','special','trait','maxEnergy','ready','protectionScope'].includes(k)))
    throw Error('Invalid special hand entry pending provenance');
  }
+ // R42: saved cross-zone free-entry selection must be earned by an actual
+ // owned printed source, with exact READY/REST mode and legal physical UIDs.
+ // Never accept forged serialized pending state as an unearned free play.
+ if(s.pending?.kind==='effect-named-zone-entry'){
+  const q=s.pending,pl=s.players[q.player];
+  const owned=[...field(pl),...pl.outside,...pl.hand,...pl.deck,...pl.life,
+   ...pl.lifeRevealed,...(pl.removed||[])];
+  const src=owned.find(c=>c.uid===q.sourceUid);
+  const printed=src&&card(pack,src);
+  const find=x=>{
+   if(!x||typeof x!=='object')return null;
+   if(Array.isArray(x)){for(const part of x){const matched=find(part);if(matched)return matched;}return null;}
+   if(x.op==='deployNamedFromZones'&&x.name===q.name&&x.ready===q.ready&&
+    x.line===q.line&&x.optional===true)return x;
+   for(const value of Object.values(x)){const matched=find(value);if(matched)return matched;}
+   return null;
+  };
+  const earned=printed&&find(printed.effects);
+  const legalZone=zone=>earned?.zones.includes(zone)?
+   pl[zone].filter(c=>card(pack,c).type==='character'&&
+    cardHasName(card(pack,c),q.name,originalEffectsDisabled(s,c))).map(c=>c.uid):[];
+  if(!earned||q.sourceName!==printed.name||
+   !Array.isArray(q.handChoices)||!Array.isArray(q.outsideChoices)||
+   !same(q.handChoices,legalZone('hand'))||
+   !same(q.outsideChoices,legalZone('outside'))||
+   Object.keys(q).length!==9||
+   Object.keys(q).some(k=>!['kind','player','sourceUid','sourceName','name',
+    'ready','line','handChoices','outsideChoices'].includes(k)))
+   throw Error('Invalid named free zone entry provenance');
+ }
  validateContinuousStates(s);
  if(typeof s.endRefreshed!=='boolean')throw Error('Invalid end refresh flag');
  if(!Number.isInteger(s.nextFieldEntryStamp)||s.nextFieldEntryStamp<1||
