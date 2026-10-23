@@ -120,3 +120,19 @@ test('R34 nested common mode DSL requires strictly optional current-turn trait t
   assert.throws(()=>make(x),/invalid temporary FRONT generation grant/);
  }
 });
+
+
+test('R34 off-turn granted permission expires on that active opponent turn, not next owner turn',()=>{
+ const {s,source,target}=setup();
+ s.active=1;s.players[1].ownTurns++;
+ grantContinuousState(s,{kind:'frontEnergyPermission',controller:0,
+  sourceUid:source.uid,targetUid:target.uid,sourceLinked:false,
+  until:{player:1,phase:'attack',edge:'end'}});
+ assert.equal(hasFrontEnergyPermission(s,0,target),true);
+ assert.equal(universalCardEnergy(packs,s,0,target),1);
+ expireContinuousStates(s,{player:0,phase:'attack',edge:'end'});
+ assert.equal(hasFrontEnergyPermission(s,0,target),true);
+ expireContinuousStates(s,{player:1,phase:'attack',edge:'end'});
+ assert.equal(hasFrontEnergyPermission(s,0,target),false);
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
