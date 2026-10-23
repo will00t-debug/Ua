@@ -9,8 +9,10 @@ test('R42 full 700 IDs and 368 currently unported searched, with no partial card
  assert.deepEqual(report.newlyFullyRegistered,['SLG-1-030','SLG-1-028']);
  assert.equal(s.readyVerifiedUnported,0);
  assert.equal(s.officallyReviewedRemaining,undefined);
- assert.equal(s.officiallyReviewedRemaining,6);
- assert.equal(s.partial,5);assert.equal(s.ruleBlocked,1);
+ // Historical reviews persist, but a newly source-pinned registered card
+ // must no longer count as currently unported or currently PARTIAL.
+ assert.equal(s.officiallyReviewedRemaining,5);
+ assert.equal(s.partial,4);assert.equal(s.ruleBlocked,1);
  const remaining=[...report.candidates.map(c=>c.id),...report.remainingNoKeywords];
  assert.equal(remaining.length,inv.totals.blocked);
  assert.equal(new Set(remaining).size,inv.totals.blocked);
