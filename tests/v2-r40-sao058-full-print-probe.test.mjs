@@ -10,7 +10,7 @@ const official=SAO_OFFICIAL_CARDS.find(x=>x.id==='SAO-2-058');
 const baseline=registeredV2TitlePack('sword-art-online');
 const trial=createUniversalPack({id:'sword-art-online',cards:[{
  id:'SAO-2-058',name:official.nameJa,type:'event',color:'purple',
- energy:2,ap:1,bp:0,gen:0,traits:[],trigger:'active',
+ energy:2,ap:1,bp:0,gen:0,traits:[],trigger:'active',implementation:'dsl',
  effects:{onPlay:[{op:'grantOwnFrontChoiceProtection',
   scope:'any',until:'nextOwnStart',optional:false,apRecoveryOnName:'アスナ'}]}
 }]});
