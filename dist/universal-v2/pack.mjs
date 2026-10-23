@@ -280,6 +280,7 @@ function verifyProgram(program,path){
      Object.keys(o).some(k=>!['id','label','turn','then'].includes(k))||
      o.then.some(x=>!['draw','drawDiscard','buffOwnField',
       'recoverOutsideOne','recoverOutsideTraitlessUnderEnergy','buffSelf',
+       'inspectTopAnyOutside','retireOwnCharacterOne',
        'stripOppRaidTop','retireOppFrontOneUnderBp','discardGate',
        'grantFrontEnergyOwnOtherFrontTrait','bounceOwnOtherUnderEnergy','nextEligibleHandPlayApDiscount','searchTopUpToTwoBottom','deployOwnHandRest'].includes(x?.op)))
      throw Error(path+'['+i+'] invalid choose-one option');
