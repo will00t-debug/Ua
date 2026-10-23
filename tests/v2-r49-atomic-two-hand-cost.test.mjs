@@ -7,7 +7,7 @@ import {newUniversalMatch,dispatchUniversalAction,legalUniversalActions,
 import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
 // Shared DSL integration only: this is NOT a complete BLC-4-042 card certification.
 const cost={op:'discardGate',count:2,optional:true,then:[
- {op:'recoverOutsideOne',optional:true,filter:{field:'name',value:'涅 マユリ'}}]};
+ {op:'recoverOutsideOne',optional:true,filter:{field:'printedNameAny',values:['涅 マユリ','涅 ネム']}}]};
 const cards=Array.from({length:13},(_,i)=>({
  id:'X'+i,name:'Filler '+i,type:'character',color:'blue',energy:0,ap:1,bp:1000,gen:1,
  traits:i===3?['涅 マユリ']:[],implementation:i===0?'dsl':'vanilla',
@@ -61,7 +61,7 @@ test('R49 pair cost exposes only unordered distinct OWN UID pairs and private me
  assert.throws(()=>assertUniversalMatch(pack,bad),/atomic two-hand payment/);
  assert.equal(assertUniversalMatch(pack,JSON.parse(JSON.stringify(s))),true);
 });
-test('R49 two physical payment moves occur before dynamic OUTSIDE recovery and only exact name qualifies',()=>{
+test('R49 two physical payment moves occur before dynamic OUTSIDE recovery and only two exact printed names qualify',()=>{
  let {s,src,a,b,c}=setup();
  const before=structuredClone(s),pre=s.zoneMoveEvents.length;
  const pair=legalUniversalActions(pack,s).find(x=>x.uids?.includes(a.uid)&&x.uids.includes(b.uid));
@@ -74,7 +74,8 @@ test('R49 two physical payment moves occur before dynamic OUTSIDE recovery and o
  assert.deepEqual(paid.map(x=>x.from+'>'+x.to),['hand>outside','hand>outside']);
  const options=legalUniversalActions(pack,s);
  assert.ok(options.some(x=>x.uid===a.uid));
- assert.ok(!options.some(x=>x.uid===b.uid||x.uid===c.uid));
+ assert.ok(options.some(x=>x.uid===b.uid));
+ assert.ok(!options.some(x=>x.uid===c.uid));
  s=run(s,options.find(x=>x.uid===a.uid));
  assert.ok(s.players[0].hand.some(x=>x.uid===a.uid));
  assert.ok(!s.players[0].hand.some(x=>x.uid===b.uid));
@@ -92,4 +93,11 @@ test('R49 decline skips BOTH fees and invalid count three is rejected',()=>{
   s.players[0].hand.some(x=>x.uid===b.uid));
  const invalid=cards.map((x,i)=>i===0?{...x,effects:{onPlay:[{...cost,count:3}]}}:x);
  assert.throws(()=>createUniversalPack({id:'bad-cost-count',cards:invalid}),/invalid gated payment/);
+ for(const filter of [{field:'printedNameAny',values:['涅 マユリ','涅 マユリ']},
+  {field:'printedNameAny',values:['涅 マユリ']},
+  {field:'printedNameAny',values:['涅 マユリ','涅 ネム'],allowTraits:true}]){
+  const malformed=cards.map((x,i)=>i===0?{...x,effects:{onPlay:[{...cost,then:[
+   {op:'recoverOutsideOne',optional:true,filter}]}]}}:x);
+  assert.throws(()=>createUniversalPack({id:'bad-recover',cards:malformed}),/invalid searched-card/);
+ }
 });
