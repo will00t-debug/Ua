@@ -69,9 +69,12 @@ export function r35UnportedAtomAudit(){
  });
  const pending=[...unported].filter(id=>!seen.has(id)).sort();
  if(seen.size+pending.length!==audit.totals.blocked)throw Error('Missing unported UID partition');
+ const index=capabilityIndex(audit);
  return {totalUnported:audit.totals.blocked,
   manuallySourceMatched:seen.size,needsIndividualSemanticAudit:pending.length,
-  groups,pendingIds:pending, capabilityIndex:capabilityIndex(audit)};
+  groups,pendingIds:pending, capabilityIndex:index,
+  handRestPotential:index.handRestPotential,
+  handRestPotentialCount:index.handRestPotential.length};
 }
 // Candidate detection is deliberately broad and is NEVER semantic acceptance.
 export const ATOM_REVIEW_STATUSES=Object.freeze(['READY','NEAR READY','PARTIAL',
@@ -125,6 +128,14 @@ export function capabilityIndex(inventory=v2AllTitleInventory()){
    for(const op of ops){if(!usage.has(op))usage.set(op,[]);usage.get(op).push(id);}
    const groups=R35_SHARED_ATOM_CANDIDATES.filter(g=>g.ids.includes(id));
    const discountCandidate=/(?:次に|下一|下次)/u.test(text)&&/(?:AP|ＡＰ)/u.test(text)&&/(?:-1|−1|－1|減少|減費)/u.test(text);
+   // Broad candidates, not a proof of printed semantic equivalence.
+   const handRestMention=/(?:手札から|手札にある|手札の|從手牌|从手牌)/u.test(text)&&
+    /(?:登場|登场|入場|進場)/u.test(text);
+   const handRestTextFlags=handRestMention?{
+    explicitRest:/(?:レスト|REST|橫置|横置)/iu.test(text),
+    color:/(?:青|藍|蓝|赤|紅|红|黄|緑|綠|紫)/u.test(text),
+    printedEnergy:/(?:必要エナジー|必要能源)/u.test(text),
+    printedAp:/(?:消費AP|消费AP|印刷AP)/iu.test(text)}:null;
    cards.push({id,title:title.title,registered,sourceText:text,
     sourceTextLanguage:c.effectJa||/[のを]/u.test(text)?'ja':'catalogue-translation',
     sourceFingerprint:createHash('sha256').update(text).digest('hex'),
@@ -135,6 +146,7 @@ export function capabilityIndex(inventory=v2AllTitleInventory()){
     priorSourceMatched:groups.length>0,
     requiredAtomCandidates:groups.map(g=>g.atom),
     searchHits:discountCandidate?['nextEligibleHandPlayApDiscount']:[],
+    handRestTextFlags,
     remaining:groups.map(g=>g.fullPortBlockedBy),
     // Old R35 groups are evidence pointers, not a full-card readiness certificate.
     semanticReviewRequired:!review});
@@ -146,7 +158,13 @@ export function capabilityIndex(inventory=v2AllTitleInventory()){
   titles:[...new Set(cards.filter(c=>c.operations.includes(atom)||c.requiredAtomCandidates.includes(atom)||c.searchHits.includes(atom)).map(c=>c.title))],
   readyIds:cards.filter(c=>c.status==='READY'&&c.requiredAtomCandidates.includes(atom)).map(c=>c.id)
  }));
- return {cards,atoms,unportedSearched:cards.filter(c=>!c.registered).length,
+ const handRestPotential=cards.filter(c=>!c.registered&&c.handRestTextFlags)
+  .map(c=>({id:c.id,title:c.title,sourceUrl:c.sourceUrl,
+   sourceFingerprint:c.sourceFingerprint,flags:c.handRestTextFlags,
+   status:'REVIEW PENDING',
+   note:'Requires full printed text and applicable FAQ check; no automatic READY'}));
+ return {cards,atoms,handRestPotential,
+  unportedSearched:cards.filter(c=>!c.registered).length,
   reviewedDiscountCards:cards.filter(c=>c.officialReview).map(c=>c.id),
   priorities:prioritizeMissingAtoms(cards),
   apDiscountCandidates:cards.filter(c=>!c.registered&&c.searchHits.length).map(c=>c.id)};
