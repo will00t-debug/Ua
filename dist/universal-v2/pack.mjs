@@ -934,7 +934,9 @@ function normalize(card,packId){
   card.type!=='character'||card.printedAttackDamage!==2))
   throw Error(card.id+' invalid printed attack damage');
  const maxCopies=card.maxCopies===undefined?4:card.maxCopies;
- if(!integer(maxCopies,1)||maxCopies>4)
+ // Officially printed exceptions, including SLG-1-030, may have up to 12 copies.
+ // The title contribution contract verifies the exact source deckLimit.
+ if(!integer(maxCopies,1)||maxCopies>12)
   throw Error(card.id+' invalid deck copy cap');
  return Object.freeze({
   maxCopies,
