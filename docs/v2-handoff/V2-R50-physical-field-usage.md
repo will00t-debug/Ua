@@ -60,3 +60,9 @@ acceptance and run `npm test`, the five-title 60-game matrix, independent
 manifest and current R48/R49 full-roster rescans. Existing official-print
 R50 additions BLC-2-044/4-042/4-069/4-076 must not be called fully
 FAQ-certified merely because they are registered and have targeted tests.
+
+## Independent official ruling confirmed
+
+Official Japanese Q770 (updated 2024-01-19): https://www.unionarena-tcg.com/jp/faq/list.php?category=カード効果 . It explicitly distinguishes ordinary **[ターン1]** (each physical card can use its own effect once, even with duplicate names) from the special wording **〈name〉のこの効果は1ターンに1回のみ発動** (shared across same-name copies). The exact official BLC-2-044 print at https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX07BT%2FBLC-2-044 shows two independent **[ターン1]** MAIN abilities and does not contain the name-wide restriction. This is affirmative official evidence for the per-UID correction, not a guessed card-specific exception.
+
+Source comment cites Q770 in commit `deccd4c21b4e1bec389d2dd0b40a33721302f638`. The new regression deliberately includes two physical copies of BLC-2-044 to enforce Q770; it does not claim complete Q770 compliance for every other legacy once-per-name ability.
