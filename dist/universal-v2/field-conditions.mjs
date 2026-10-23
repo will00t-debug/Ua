@@ -153,3 +153,29 @@ export function retiredThisTurn(s,controller,cardType='any'){
  if(![0,1].includes(controller))throw Error('Invalid true-retirement predicate');
  return countRetirementsThisTurn(s,controller,cardType)>0;
 }
+
+
+// R45 Q2337: count DIFFERENT original printed card names in the owner's
+// OUTSIDE among a union of allowed types. Four physical copies bearing the
+// same printed name are one kind. RAID undercards and hand/deck are not OUTSIDE.
+// The caller supplies the existing owner-aware printed-card resolver.
+export function countOwnOutsideDistinctPrintedNames(s,owner,printed,{color,types}){
+ if(![0,1].includes(owner)||typeof printed!=='function'||
+  typeof color!=='string'||!['green','yellow','blue','purple','red'].includes(color)||
+  !Array.isArray(types)||!types.length||types.length>3||
+  new Set(types).size!==types.length||
+  types.some(x=>!['character','event','field'].includes(x))||
+  !Array.isArray(s?.players?.[owner]?.outside))
+  throw Error('Invalid outside printed-name count predicate');
+ const names=new Set();
+ for(const physical of s.players[owner].outside){
+  if(!physical||typeof physical.uid!=='string'||
+   !physical.uid.startsWith(owner+'-'))throw Error('Invalid outside physical owner');
+  const d=printed(physical);
+  if(!d||typeof d.name!=='string'||!d.name.trim()||
+   !['character','event','field'].includes(d.type))
+   throw Error('Invalid outside printed card face');
+  if(d.color===color&&types.includes(d.type))names.add(d.name);
+ }
+ return names.size;
+}
