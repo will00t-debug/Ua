@@ -856,6 +856,11 @@ function normalize(card,packId){
  if(card.readyOnBlockCount!==undefined&&(
   card.type!=='character'||card.readyOnBlockCount!==1))
   throw Error(card.id+' invalid ready-on-block count');
+ const selectionHandDiscardTax=card.selectionHandDiscardTax??null;
+ if(selectionHandDiscardTax!==null){
+  if(card.type!=='character')throw Error(card.id+' tax needs CHARACTER source');
+  validateSelectionHandTaxProfile(selectionHandDiscardTax);
+ }
  if(implemented==='vanilla'&&(Object.keys(effects).length||card.effectText||
   mainAbility||phaseEffects.length||moveTriggers.length||moveObserver||card.enterActiveIfOpponentRest||card.enterAlwaysActive||card.activeExtraEnergy||card.conditionalTraitEnergy||passiveBonuses||card.impactNull||
   card.printedImpact||card.printedAttackDamage||card.readyOnAttackCount||card.readyOnBlockCount||
@@ -967,11 +972,6 @@ function normalize(card,packId){
  if(card.impactNull!==undefined&&(
   card.type!=='character'||card.impactNull!==true))
   throw Error(card.id+' invalid IMPACT nullification profile');
- const selectionHandDiscardTax=card.selectionHandDiscardTax??null;
- if(selectionHandDiscardTax!==null){
-  if(card.type!=='character')throw Error(card.id+' tax needs CHARACTER source');
-  validateSelectionHandTaxProfile(selectionHandDiscardTax);
- }
  // Printed 【インパクト（1）】 and 【ダメージ（2）】 are unconditional keywords.
  // Stacking either with the facedown-under impact profile needs its own ruling.
  if(card.printedImpact!==undefined&&(
