@@ -8,7 +8,7 @@ import {cardHasName,cardHasTrait,matchesOwnDistinctTraits,matchesV2LiveCondition
  ownRestPrintedBpCount,retiredThisTurn} from './field-conditions.mjs';
 import {refreshFieldActive,expireContinuousStates,pruneContinuousStates,
  fieldRestrictions,validateContinuousStates,grantContinuousState,
- attemptFieldActive,originalEffectsDisabled} from './continuous-states.mjs';
+ attemptFieldActive,originalEffectsDisabled,selectionApSurcharge} from './continuous-states.mjs';
 export const UNIVERSAL_V2_VERSION='ua-v2.0';
 const playerIndex=n=>n===0||n===1;
 const field=p=>[...p.front,...p.energy].filter(Boolean);
@@ -2354,10 +2354,33 @@ function eventMandatoryTargetsAvailable(pack,s,owner,d){
   return true;
  });
 }
+// Q2062 is a cost of SELECTING a protected character by a CARD EFFECT,
+// not a cost of playing a card, attacking or blocking.
+// The existing pending action is the exact resolution boundary; no new queue.
+const TARGETING_CARD_EFFECT_CHOICES=new Set([
+ 'chooseRetireBp','chooseRestBp','chooseTarget','chooseTargetMany',
+ 'chooseRaidTopStrip','chooseAttackBan'
+]);
+const TARGETING_LIFE_MODES=new Set([
+ 'special','colorRetire','colorBounce','colorRestSkip'
+]);
+function effectSelectionApTax(s,a){
+ const q=s.pending;
+ if(!q||typeof a?.uid!=='string')return 0;
+ if(!TARGETING_CARD_EFFECT_CHOICES.has(a.type)&&
+  !(q.kind==='life-trigger'&&a.type==='chooseTrigger'&&
+    TARGETING_LIFE_MODES.has(a.mode)))return 0;
+ return selectionApSurcharge(s,q.player,a.uid);
+}
+function availableAp(s,p){return s.players[p].apCards.filter(c=>c.ready).length;}
+function cardEffectTargetPayable(s,selector,uid){
+ return selectionApSurcharge(s,selector,uid)<=availableAp(s,selector);
+}
 export function legalUniversalActions(pack,s){
  assertUniversalMatch(pack,s);
  if(s.status!=='playing')return [];
- if(s.pending)return legalPending(pack,s);
+ if(s.pending)return legalPending(pack,s).filter(a=>
+  effectSelectionApTax(s,a)<=availableAp(s,s.pending.player));
  const p=s.active,pl=s.players[p],out=[{type:'next'}];
  if(s.phase==='start'){
   if(!s.extraDrawn&&pl.apCards.some(c=>c.ready)&&pl.deck.length)out.push({type:'extraDraw'});
@@ -2530,6 +2553,8 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
  if(s.pending){
   // Pass the entire pre-validated action: some life triggers choose both a
   // mode and an owned field UID (e.g. ACTIVE); stripping the UID corrupts it.
+  const surcharge=effectSelectionApTax(s,action);
+  if(surcharge)spendAp(s.players[p],surcharge);
   resolveChoice(s,action,pack);
  }else switch(action.type){
   case 'extraDraw':
