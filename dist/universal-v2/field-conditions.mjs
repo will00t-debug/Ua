@@ -75,6 +75,15 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   return s.players[owner].hand.length>=condition.min;
  if(condition.kind==='outsideCount')
   return s.players[owner].outside.length>=condition.min;
+ if(condition.kind==='ownOutsideNamedCountAtLeast'){
+  // Printed names are a union, not distinct-name kinds: each physical card
+  // in OWN OUTSIDE counts ONCE, even when it has multiple audited aliases.
+  // Do not count raid underlayers, opponent outside, hand or removed cards.
+  return s.players[owner].outside.filter(c=>{
+   const d=printed(c);
+   return condition.names.some(name=>cardHasName(d,name));
+  }).length>=condition.min;
+ }
  if(condition.kind==='ownEnergyAtLeast')
   return energy()>=condition.min;
  if(condition.kind==='oppCharacterBpAtLeast'){
