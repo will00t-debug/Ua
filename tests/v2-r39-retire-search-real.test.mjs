@@ -40,7 +40,7 @@ function prepare(id){
  for(let i=0;i<4&&s.phase!=='main';i++)s=act(s,{type:'next'});
  const play=legalUniversalActions(packs,s).find(x=>x.type==='play'&&x.uid===src.uid&&
   x.line===(isSao?'energy':'front'));
- assert.ok(play,id+' source paid play must be legal');
+ assert.ok(play,id+' source paid play must be legal; '+JSON.stringify({phase:s.phase,active:s.active,expectedPlayer:player,hand:s.players[player].hand.map(x=>x.cardId),energy:s.players[player].energy.map(x=>x?.cardId),ap:s.players[player].apCards.map(x=>x.ready),legal:legalUniversalActions(packs,s).filter(x=>x.type==='play').slice(0,12)}));
  s=act(s,play);
  return {s,src,target,top,player,isSao};
 }
