@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {verifiedSaoV2Cards} from '../dist/universal-v2/sao-pack.mjs';
+import {registeredV2TitlePack} from '../dist/universal-v2/title-packs/registry.mjs';
 import {SAO_OFFICIAL_CARDS} from '../dist/sao-official-import.mjs';
 import {createUniversalPack,validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {createBleachV2Pack} from '../dist/universal-v2/bleach-pack.mjs';
@@ -39,7 +40,15 @@ function put(s,p,id,line,slot,ready=true){
  s.players[p][line][slot]=c;return c;
 }
 const run=(packs,s,a)=>dispatchUniversalAction(packs,s,a);
-test('Candidate identity exactly official Q763/Q978 full print with no registry promotion',()=>{
+test('SAO-1-087 formal registry exactly matches independently built all-printed-effects candidate',()=>{
+ const d=registeredV2TitlePack('sword-art-online').cards['SAO-1-087'];
+ assert.ok(d,'official printed source must be formally registered');
+ for(const field of ['name','color','type','energy','ap','bp','gen','traits','trigger',
+  'raidName','printedImpact','printedAttackDamage','otherOwnBattleWonDamageTwo',
+  'selectionHandDiscardTax','mainAbility','effects'])
+  assert.deepEqual(d[field],sao.cards['SAO-1-087'][field],field+' drift');
+});
+test('Candidate identity exactly official Q763/Q978 full print matching registry',()=>{
  assert.equal(source.number,'UA15BT/SAO-1-087');
  assert.deepEqual([source.energy,source.ap,source.bp,source.gen,source.color,source.trigger],
   [7,1,5000,1,'green','raid']);
