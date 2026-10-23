@@ -50,6 +50,14 @@ export function matchesOwnDistinctTraits(s,owner,sourceUid,profile,printed){
 export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energy,cardBp){
  if(condition.turn==='own'&&s.active!==owner)return false;
  if(condition.turn==='opponent'&&s.active===owner)return false;
+ // Successful EVENT usage is already recorded as an atomic physical HAND ->
+ // OUTSIDE rule move. Reuse this ledger; never infer usage from event count,
+ // deck inspections, cancelled plays, opponent actions or transient zones.
+ if(condition.kind==='ownEventUsedThisTurn')
+  return (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&
+   e.owner===owner&&e.controller===owner&&e.from==='hand'&&
+   e.to==='outside'&&e.reason==='rule'&&
+   printed({uid:e.uid,cardId:e.cardId})?.type==='event');
  if(condition.kind==='ownEffectHandOutsideOrRecovery'){
   // Same-turn factual records, never inferred from deck/hand counts or
   // the printed contents of any card. Own turn check is enforced above.

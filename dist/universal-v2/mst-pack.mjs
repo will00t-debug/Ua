@@ -4,6 +4,7 @@ import {MST_V2_OFFICIAL_CATALOGUE} from './sources/mst-inventory.mjs';
 import {createUniversalPack} from './pack.mjs';
 
 const PRINTED_PINS=Object.freeze({
+ "MST-1-031":{"kind":"ownTurnEventImpactDiscount","nameJa":"ロキシー","color":"blue","energy":4,"ap":1,"bp":4000,"gen":1,"type":"character","traits":[],"trigger":"raid","effectJa":"〖レイド〗 〈ロキシー〉アクティブにし、フロントLに移動できる\n 〖インパクト無効〗 （このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）\n 〖自分のターン中〗 このターン中に自分がイベントカードを使用している場合、このキャラは 〖インパクト（1）〗 を得る。\n 〖登場時〗 このターン中、次に手札から使用する必要エナジーが3以下のイベントカードの消費APを-1する。"},
  "MST-1-060":{
   "kind":"stepFrontMainDrawDiscardFrontEnergy","nameJa":"シルフィエット",
   "color":"green","energy":3,"ap":1,"bp":2500,"gen":2,"type":"character",
@@ -608,6 +609,13 @@ export function verifiedMstV2Cards(){
    implementation:['vanilla','step'].includes(pin.kind)?'vanilla':'dsl'};
   if(card.implementation==='vanilla')card.effects={};
   if(pin.kind==='step')card.step=true;
+  if(pin.kind==='ownTurnEventImpactDiscount'){
+   card.raidName='ロキシー';
+   card.impactNull=true;
+   card.passiveBonuses=[{condition:{kind:'ownEventUsedThisTurn',turn:'own'},impact:1}];
+   card.effects={onPlay:[{op:'nextEligibleHandPlayApDiscount',
+    filter:{cardType:'event',printedRequiredEnergyAtMost:3}}]};
+  }
   if(pin.kind==='nextHandApDiscount'){
    card.effects={onPlay:[{op:'chooseOne',optional:false,options:[
     {id:'bounce',label:'可選回手非七星角色，下一張原產能2以上角色減1AP',turn:'any',then:[
@@ -781,6 +789,7 @@ export function verifiedMstV2Entries(){
      source.source,
     testFiles:Object.freeze([
      ...(pin.kind==='nextHandApDiscount'?['tests/v2-r36-real-discount-cards.test.mjs']:[]),
+      ...(pin.kind==='ownTurnEventImpactDiscount'?['tests/v2-r38-mst031-real.test.mjs']:[]),
      ...(pin.kind==='eventDrawTwoFrontEnergy'?['tests/v2-r37-mst080-event-front.test.mjs',
       'tests/v2-r37-mst-front-life.test.mjs']:[]),
      ...(pin.kind==='stepFrontMainDrawDiscardFrontEnergy'?['tests/v2-r37-mst060-main-step.test.mjs',
