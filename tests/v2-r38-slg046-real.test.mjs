@@ -6,7 +6,7 @@ import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,assertUniversalMatch,universalPrivateChoices,universalPublicView} from '../dist/universal-v2/engine.mjs';
 import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
 const pack=registeredV2TitlePack('solo-leveling'),packs=[pack,pack];
-const ids=['SLG-1-046','SLG-1-041','SLG-1-043','SLG-1-045','SLG-1-052','SLG-1-055','SLG-1-066','SLG-1-068','SLG-1-070','SLG-1-072','SLG-1-078','SLG-1-079','SLG-1-015'];
+const ids=['SLG-1-046','SLG-1-041','SLG-1-043','SLG-1-045','SLG-1-052','SLG-1-055','SLG-1-066','SLG-1-068','SLG-1-070','SLG-1-072','SLG-1-078','SLG-1-032','SLG-1-015'];
 const deck=Object.fromEntries(ids.map((id,i)=>[id,i===12?2:4]));assert.deepEqual(validateUniversalDeck(pack,deck),[]);
 function take(s,id){for(const zone of ['hand','deck','life','outside']){const arr=s.players[0][zone],i=arr.findIndex(c=>c.cardId===id);if(i>=0)return arr.splice(i,1)[0];}throw Error('Missing '+id);}
 const act=(s,a)=>dispatchUniversalAction(packs,s,a);
