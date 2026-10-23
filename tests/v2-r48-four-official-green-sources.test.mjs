@@ -52,12 +52,12 @@ test('R48 A: distinct PRINTED name outside counter rejects duplicates, wrong typ
  // See countOwnOutsideDistinctPrintedNames signature: state owns both players.
  const s={players:[p,{outside:[]}]};
  assert.equal(countOwnOutsideDistinctPrintedNames(s,0,lookup,rule),4);
- p.outside[3]=physical('BLC-1-100',5);
+ p.outside[2]=physical('BLC-1-100',5);
  assert.equal(countOwnOutsideDistinctPrintedNames(s,0,lookup,rule),3);
- p.outside[3]=physical('BLC-2-049',6); // Registered BLUE event, same printed name.
+ p.outside[2]=physical('BLC-2-049',6); // Registered BLUE event, same printed name.
  assert.equal(countOwnOutsideDistinctPrintedNames(s,0,lookup,rule),3);
- p.outside[3]=physical('BLC-1-071',7); // GREEN character is not EVENT/FIELD.
+ p.outside[2]=physical('BLC-1-071',7); // GREEN character is not EVENT/FIELD.
  assert.equal(countOwnOutsideDistinctPrintedNames(s,0,lookup,rule),3);
- s.players[1].outside.push(physical('BLC-1-100',8));
+ s.players[1].outside.push({uid:'1-8',cardId:'BLC-1-100'});
  assert.equal(countOwnOutsideDistinctPrintedNames(s,0,lookup,rule),3);
 });
