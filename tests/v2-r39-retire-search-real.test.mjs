@@ -122,6 +122,11 @@ for(const id of ['SAO-2-056','MST-1-049']){
    assert.ok(!legal.some(x=>x.uid===top[3].uid),'traited character forbidden');
   }
   s=act(s,allowed);
+  // SAO allows up to TWO picks. Choosing exactly one requires a separate
+  // optional stop before entering the bottom-order phase.
+  if(s.pending?.kind==='effect-top-filter-many-choice')
+   s=act(s,{type:'chooseTopFilteredMany',uid:null});
+  assert.equal(s.pending.kind,'effect-top-order');
   const remain=s.pending.uids.filter(x=>x!==allowed.uid).reverse();
   for(const uid of remain)s=act(s,{type:'chooseTopOrder',uid});
   assert.equal(s.pending,null);
