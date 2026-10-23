@@ -2888,7 +2888,7 @@ export function legalUniversalActions(pack,s){
     if(ab?.op==='fieldRestRetireThen'&&d.type==='field'&&c.ready)
      out.push({type:'activate',uid:c.uid,mode:'fieldRestTrueRetireDeploy'});
     if(ab?.op!=='fieldDualMain'||d.type!=='field')continue;
-    // Each physical FIELD owns its own printed once-per-turn MAIN abilities.
+    // Official Q770: [ターン1] applies to each physical card, not all copies of a name.
     const retiredKey=c.uid+'|fieldDualRetire',buffKey=c.uid+'|fieldDualBuff';
     if(!s.mainReadyOnceByName[p].includes(retiredKey)&&
      field(pl).some(v=>v.uid!==c.uid&&card(pack,v).type==='character'&&
