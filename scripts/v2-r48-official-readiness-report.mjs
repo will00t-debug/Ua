@@ -19,7 +19,7 @@ export const R48_QUERY_ATOMS=Object.freeze({
  outsideNameCondition:/自分の場外.{0,70}〈|場外.{0,70}卡名/u
 });
 const R48_OFFICIAL_REVIEWS=Object.freeze({
- 'BLC-4-069':{status:'PARTIAL',faq:['Q2337','Q2338'],missing:['legal fourth OUTSIDE green printed name via registered real play','real 花天狂骨 printed-trait hand use with once AP discount','paid RAID, RAID LIFE and attack-end timing on whole real card']},
+ 'BLC-4-069':{status:'PARTIAL',faq:['Q2337','Q2338'],missing:['verify Q2337 four legal EVENT outside sequence with newly registered BLC-1-095','real 花天狂骨 printed-trait hand use with once AP discount','paid RAID, RAID LIFE and attack-end timing on whole real card']},
  'BLC-4-042':{status:'PARTIAL',faq:['Q2323'],missing:['TOP2 + two distinct hand UID payment integrated with chooseOne','named blue FIELD BLC-2-044 ACTIVE ENERGY effect entry','correct imported base energy 2 versus legacy 3 and DRAW LIFE']},
  'BLC-2-044':{status:'PARTIAL',faq:[],missing:['two different printed MAIN abilities with separate turn1/rest costs','true trait retirement and conditional global BP boost','GET LIFE']},
  'TTG-1-067':{status:'PARTIAL',faq:['Q2295'],missing:['onPlay temporary battle-win draw and sniper','active entry and BP>=4000 block prohibition','AP2, ACTIVE LIFE complete test']},
