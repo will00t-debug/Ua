@@ -510,3 +510,20 @@ GPT PR #78 原分支 `gpt/v2-resume-20261022`（對 `cursor/v2-multi-retire-life
 - **E（官方未解決）**：`703cc4c97e1cbe9c6881f925f76c8b844131b52c` 新增完整 R35 文件。BLC-2-019/047/4-034 仍未登錄；BLC034 MAIN REST+真退場後底牌恢復的實際選牌時序未有可直接套用官方依據；第二批巢狀 LIFE 繼續原子 fail-closed，不新增 last-known undercard 假快照。
 - **CI 紀律**：之前 `525e01925ee62270e75646a3823e18ec60f2cffa` 的遠端 Node22 [39884026935](https://github.com/will00t-debug/Ua/actions/runs/39884026935) 1869/1869 與60/60 僅屬 R34 程式碼。**R35 新提交的完整 Actions 尚未取得可驗證 job/log；不能宣稱通過，也未在本環境執行本地 Node22。** 此連線的 commit-workflow-run 讀取只涵蓋 PR 事件，對本分支 push workflow 返回空列表不代表測試綠燈。待查每個最新 SHA 的實際 CI 並修復錯誤後才可進行正式整體驗收。
 - **計數不變（依最後可核對來源 roster）**：BLEACH97、TTG36、SLG42、SAO92、MST49，**316/700** 登錄、**384** 未移植、逐卡全面 FAQ 認證 **0**。沒有改 main、Cursor #77、正式 Vercel，沒有 force push。
+
+
+## R36（2026-10-23）｜共用能力驅動的全庫候選檢索、一次性手牌 AP 減費與雙作品登錄
+
+**最新已驗證程式 SHA** `6823a1205c1615b0f91342f018a96c08ae15038c`；遠端 [Actions 39891258143](https://github.com/will00t-debug/Ua/actions/runs/39891258143) Node 22 **1896/1896 PASS**、五作品 **60/60 PASS**，獨立認證報告、全庫共用原子盤點、獨立 manifest、未移植報告皆 PASS。R35 `07c01009` 的 [Actions 39886593190](https://github.com/will00t-debug/Ua/actions/runs/39886593190) 曾為 **failure**，不可沿用 R34 舊綠燈；後續程式已單獨驗收。沒有本地 clone/Node22，僅依 GitHub Actions logs。
+
+- **A** `15334bd887c1c16b21b34e28b5220e78851a74db`：在原本 `scripts/v2-r35-unported-atom-audit.mjs` 增加 `capabilityIndex()`，以現有 source catalogue、V2 registry、未移植 roster 自動更新 700 張唯一 ID、來源 fingerprint、已使用共用 op、未登錄候選、缺口與官方語意審核狀態。這是**既有清單的衍生檢視**，非第二份資料庫；關鍵字命中不可當官方效果一致性或 READY。
+- **B** `182f7e372fdf2886505ab9cc7a4c8999edae5772`：`nextEligibleHandPlayApDiscount` 重用單一合法使用／`spendAp`，以印刷 BP／產能／特徵／卡類別選擇下一張符合條件的手牌卡，成功使用才消耗，本回合失效；Q1209、Q1210、Q2161、Q670 來源核對。非合法行動與偽造 UID 不消耗；不混同 Q2062 選擇目標 AP 加價。
+- **C/D** `5088cf49285f38ac30df9732a32e51ab10ae4904`：五作品尚未移植 **382 張**皆重新掃描；另 7 張減費候選（BLC-1-070、BLC-2-030、BLC-4-055、BLC-4-069、TTG-1-080、SAO-2-031、MST-1-031）逐卡區分其他缺口；不能因減費相同就宣稱全卡可用。正式登錄 **SAO-2-074** 及 **MST-1-062**，全印刷 body、LIFE、合法 50 張真卡、Human/Normal/Hard、UID／存檔／跨作品真卡測試與獨立 manifest 同步。
+- **D 強化** `6823a1205c1615b0f91342f018a96c08ae15038c`：AP 出牌減費／必選目標 AP 加價分離、同 UID 再登場新 stamp、未付能源原子拒絕、CI 自動加入兩個 audit 指令，遠端 Actions 39891258143 完整綠燈。
+- **E** `33e16451b27f4c30116dba4402c22040595b0b36`：永久 R36 詳細交接文件 [V2-R36-capability-to-real-cards-and-ap-discount.md](./V2-R36-capability-to-real-cards-and-ap-discount.md) 明確區分 READY/NEAR READY/PARTIAL/RULE BLOCKED/SOURCE PENDING/REVIEW PENDING、15 張已有來源候選審核的未移植卡與 374 張 R35 原分群未逐卡分解清單、七張其他缺口、下一輪 5 個原語優先序與精確官方未解問題。
+
+**當前已驗證 registry：BLEACH 97、TTG 36、SLG 42、SAO 93、MST 50 = 318/700，未移植382。** 獨立完整官方 FAQ 認證 **0**；另外有 **6 張局部驗收**（不是全卡所有 FAQ 狀態）。BLC-2-019/047/4-034 仍未登錄；4-034 self-REST→真正退場→裏向 under 回收順序和二次巢狀 LIFE 繼續 fail closed。
+
+**下輪優先**：`topNChooseUpToTwoThenOrderBottom`（SAO-1-031/066）、重用 `frontEnergyPermission`（MST-1-080/060）、`printedEnergyAtMostFilter`（BLC-1-070/MST-1-031），有官方可靠時序再評估 `attackEndDistinctOutsideNamesSwap`（BLC-4-069），最後另作 `cannotBeChosenByOppEffect`（SAO-2-058/MST-1-067）。任何新原語都要重新搜尋 **五作品當時全部未移植卡**，未能表達完整印刷效果不得登錄。
+
+本段新增文件 commit 後，該文件及後續 HEAD 的 GitHub Actions 必須另行核對**精確 SHA**，不可將 `6823a12` 綠燈誤當文件新提交的驗收結果。沿用 Draft PR #78、原 Cursor base，未合併 main、未部署、未覆寫 PR #77、未 force push。
