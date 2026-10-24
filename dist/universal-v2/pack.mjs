@@ -70,10 +70,8 @@ function verifyProgram(program,path){
   if(['grantSelfSniperThisTurn','grantSelfAttackWinDrawThisTurn'].includes(e.op)&&
    Object.keys(e).length!==1)
    throw Error(path+'['+i+'] invalid self timed battle grant');
-  if(e.op==='grantSelfMustBlockThisTurn'&&
-   (e.entry!=='ownEffect'||Object.keys(e).length!==2||
-    Object.keys(e).some(k=>!['op','entry'].includes(k))))
-   throw Error(path+'['+i+'] mandatory block requires own-effect entry and exact profile');
+  if(e.op==='grantSelfMustBlockThisTurn'&&Object.keys(e).length!==1)
+   throw Error(path+'['+i+'] invalid onPlay current-turn mandatory block grant');
   if(e.op==='draw'){
    if(!integer(e.count,1)||e.count>10)throw Error(path+'['+i+'] invalid count');
    if((e.entry!==undefined&&e.entry!=='ownEffect')||
