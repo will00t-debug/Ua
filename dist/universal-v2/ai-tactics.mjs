@@ -68,7 +68,7 @@ function stableTransitionRejection(before,after,action,owner){
 }
 function nativeChild(packs,s,a,owner,record=()=>{}){
  const reject=reason=>{
-  record({at:'native',phase:s.phase,action:a.type,line:a.line??null,uid:a.uid??null,reason});
+  record({at:'native',phase:s.phase,action:a.type,line:a.line??null,uid:a.uid??null,slot:a.slot??null,reason});
   return null;
  };
  if(!['play','raid','event','activate','next','move','step'].includes(a.type)&&
@@ -100,7 +100,7 @@ function nativeChild(packs,s,a,owner,record=()=>{}){
   const nextVisible=createUniversalAiObservation(packs,child,legalUniversalActions(packs,child));
   const probeVisible=createUniversalAiObservation(packs,other,legalUniversalActions(packs,other));
   if(!same(nextVisible,probeVisible))return reject('adversarial-observation-differs');
-  record({at:'native',phase:s.phase,action:a.type,line:a.line??null,uid:a.uid??null,accepted:true});
+  record({at:'native',phase:s.phase,action:a.type,line:a.line??null,uid:a.uid??null,slot:a.slot??null,accepted:true});
   return child;
  }catch(error){return reject('exception-'+(error?.name||'unknown'));}
 }
