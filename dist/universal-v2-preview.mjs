@@ -9,6 +9,7 @@ import {listRegisteredV2Titles} from './universal-v2/title-packs/registry.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  universalPublicView,universalPrivateChoices,assertUniversalMatch} from './universal-v2/engine.mjs';
 import {chooseUniversalAiAction} from './universal-v2/ai.mjs';
+import {chooseProgressSafeAiAction,AI_ACTIONS_PER_FRAME} from './universal-v2/ai-driver-safety.mjs';
 import {ttgArtSource,ttgArtErrorFallback} from './ttg-art.mjs';
 import {CARDS} from './cards.mjs?v=9.1.0';
 import {SOLO_LEVELING_CARDS} from './solo-leveling.mjs';
@@ -54,7 +55,7 @@ $('v2-coverage').textContent=
  v2Entries.reduce((sum,item)=>sum+item.totalV2Cards,0)+' 張真卡 Pilot';
 const app={state:null,packs:null,selectedUid:null,
  selectedSide:null,history:[],busy:false,aiTimer:null,error:'',
- undo:null,replay:null,targetChoices:null,aiDifficulty:'normal',sequence:0,allActions:false, maxAuto:4500,autoMoves:0};
+ undo:null,replay:null,targetChoices:null,aiDifficulty:'normal',sequence:0,allActions:false, maxAuto:4500,autoMoves:0,aiPhaseKey:null,aiPhaseCount:0,aiFallbacks:0};
 const phases=V2_PHASE_LABELS;
 const btn=(label,fn,cls='')=>el('button',{type:'button',class:cls,text:label,onClick:fn});
 const fmtTitle=(id)=>V2_TITLE_LABELS[id]||id;
@@ -385,8 +386,11 @@ function render(){
    btn('重開對局',()=>startGame(),'btn small'),
    btn('復原一步',()=>undoMove(),'btn small'),
    btn('下載紀錄',downloadHistory,'btn small'),
-   btn('除錯重播',downloadReplay,'btn small')));
+   btn('除錯重播',downloadReplay,'btn small'),
+   s.status==='playing'&&uiActor(s)===1?
+    btn('AI 沒反應？重新繼續',()=>{resetAi();app.error='';driveAi();},'btn small'):null));
  target.append(title);
+ if(app.error)target.append(el('div',{class:'panel v2-error',role:'alert',text:app.error}));
  const arena=el('div',{class:'arena'});
  const phasesEl=el('div',{class:'phaseBar','aria-label':'回合階段'});
  for(const [n,name] of [['start','開始'],['move','移動'],['main','主要'],['attack','攻擊']])
@@ -407,6 +411,7 @@ function render(){
  const next=legal.find(a=>a.type==='next');
  const phase=el('div',{class:'phaseAction'},el('p',{text:s.pending?'請完成效果選擇。':
   app.busy?'AI 正在思考與操作…':s.status==='finished'?'對局結束':
+  uiActor(s)===1?'電腦回合已暫停，可按上方「AI 沒反應？重新繼續」。':
   '點手牌再點亮起的場上位置，即可用 V2 合法動作出牌。'}));
  if(app.error)phase.append(el('p',{class:'v2-error',role:'alert',text:app.error}));
  const controls=el('div',{class:'v2-legal-buttons'});
@@ -443,30 +448,50 @@ function undoMove(){
 function driveAi(){
  if(!app.state||app.busy||app.state.status!=='playing'||uiActor(app.state)!==1)return;
  app.busy=true;app.autoMoves=0;app.sequence++;
+ app.aiPhaseKey=null;app.aiPhaseCount=0;
  const sequence=app.sequence,limit=app.maxAuto;
  function chunk(){
   if(sequence!==app.sequence)return;
   try{
+   // On mobile, yield after a few synchronous reducer/AI decisions.
+   // The old 35-action burst could freeze the browser's only UI thread.
    let n=0;
-   while(app.state.status==='playing'&&uiActor(app.state)===1&&n++<35){
-    if(++app.autoMoves>limit)throw Error('電腦操作已達安全上限，停止自動操作避免死循環。');
-    const choice=chooseUniversalAiAction(app.packs,app.state,
-     {difficulty:app.aiDifficulty});
-    if(!choice||!isExactLegal(choice,legalUniversalActions(app.packs,app.state)))
-     throw Error('AI 未回傳合法操作：'+String(choice?.type||'null'));
+   while(app.state.status==='playing'&&uiActor(app.state)===1&&n++<AI_ACTIONS_PER_FRAME){
+    if(++app.autoMoves>limit)throw Error('電腦操作已達安全上限，請下載重播檔供除錯。');
+    const key=app.state.turn+'|'+app.state.active+'|'+app.state.phase;
+    if(app.aiPhaseKey!==key){app.aiPhaseKey=key;app.aiPhaseCount=0;}
+    const {action:choice,reason}=chooseProgressSafeAiAction(app.packs,app.state,
+     {difficulty:app.aiDifficulty,actionsInPhase:app.aiPhaseCount});
     const previous=app.state;
+    // The chosen action is copied from this state's legal list, never made up.
     app.state=dispatchUniversalAction(app.packs,app.state,choice,{actor:1});
     app.replay=appendUniversalReplay(app.replay,choice,1);
     pushHistory(publicPreviewActionLabel(app.packs,previous,app.state,choice,1));
+    if(reason){
+     app.aiFallbacks++;
+     pushHistory('AI 使用 V2 合法備援操作（'+reason+'），避免對局停住。');
+    }
+    app.aiPhaseCount++;
     if(app.autoMoves%20===0)assertUniversalMatch(app.packs,app.state);
    }
    if(app.state.status==='playing'&&uiActor(app.state)===1){
+    // Render between chunks so a user can see progress and tap retry even
+    // when a mobile browser throttles timers.
+    render();
     app.aiTimer=setTimeout(chunk,0);
    }else{
     app.busy=false;app.aiTimer=null;app.error='';
     render();
    }
-  }catch(e){app.busy=false;app.aiTimer=null;alertText(e?.message||String(e));}
+  }catch(e){
+   app.busy=false;app.aiTimer=null;
+   app.error='電腦操作已暫停：'+(e?.message||String(e))+
+    '。可按上方「AI 沒反應？重新繼續」，或下載除錯重播檔。';
+   try{render();}catch{
+    const target=$('match-view');
+    if(target)target.prepend(el('div',{class:'panel v2-error',role:'alert',text:app.error}));
+   }
+  }
  }
  app.aiTimer=setTimeout(chunk,0);render();
 }
@@ -565,7 +590,7 @@ function startGame(){
   const first=$('first-player').value==='ai'?1:0;
   app.state=newUniversalMatch(app.packs,{decks:[mine.counts,foe.counts],seed,first});
   assertUniversalMatch(app.packs,app.state);
-  app.error='';app.selectedUid=null;app.undo=null;app.allActions=false;
+  app.error='';app.selectedUid=null;app.undo=null;app.allActions=false;app.aiFallbacks=0;
   app.aiDifficulty=$('ai-level').value;
   app.history=['新對局：'+(mine.label||fmtTitle(myTitle))+' vs '+(foe.label||fmtTitle(foeTitle))+
    '｜先手 '+(first===0?'你':'電腦')+'｜種子 '+seed];
