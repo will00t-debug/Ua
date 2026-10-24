@@ -29,7 +29,7 @@ function main(s){
 }
 test('TTG additive pack preserves all 20 original V2 pilots, the registered additions, and a real 50-card mixed-title deck',()=>{
  const old=verifiedPilotPack('gurren-lagann');
- assert.deepEqual(TTG_V2_ADDITION_IDS,['TTG-1-028','TTG-1-006','TTG-1-005','TTG-1-014','TTG-1-019','TTG-1-010','TTG-1-023','TTG-1-018','TTG-1-063','TTG-1-053','TTG-1-077','TTG-1-022','TTG-1-015','TTG-1-002','TTG-1-007','TTG-1-013']);
+ assert.deepEqual(TTG_V2_ADDITION_IDS,['TTG-1-067','TTG-1-028','TTG-1-006','TTG-1-005','TTG-1-014','TTG-1-019','TTG-1-010','TTG-1-023','TTG-1-018','TTG-1-063','TTG-1-053','TTG-1-077','TTG-1-022','TTG-1-015','TTG-1-002','TTG-1-007','TTG-1-013']);
  assert.equal(Object.keys(old.cards).length,20);
  assert.equal(Object.keys(ttg.cards).length,EXPECTED_V2_COUNTS['gurren-lagann']);
  for(const [id,c] of Object.entries(old.cards))assert.deepEqual(ttg.cards[id].effects,c.effects);

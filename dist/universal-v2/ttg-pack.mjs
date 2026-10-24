@@ -3,6 +3,13 @@ import {TTG_BY_ID} from '../ttg-builder.mjs';
 import {verifiedPilotCards} from './real-card-pilots.mjs';
 import {createUniversalPack} from './pack.mjs';
 const additions=[
+ {id:'TTG-1-067',name:'ヨーコ',energy:4,ap:2,bp:3500,gen:1,color:'red',
+  type:'character',traits:['大グレン団'],trigger:'active',implementation:'dsl',
+  enterAlwaysActive:true,
+  blockBpRestriction:{relation:'atLeast',bp:4000,condition:null},
+  effects:{onPlay:[{op:'grantSelfSniperThisTurn'},
+   {op:'grantSelfAttackWinDrawThisTurn'}]},
+  match:'狙擊'},
  {id:'TTG-1-028',name:'グレンラガン',energy:4,ap:1,bp:4000,gen:1,color:'green',
   type:'character',traits:['大グレン団','ガンメン'],trigger:'raid',
   raidName:'シモン',raidBaseNames:['シモン','ヴィラル'],implementation:'dsl',

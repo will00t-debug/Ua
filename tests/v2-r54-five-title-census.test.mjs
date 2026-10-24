@@ -9,12 +9,13 @@ test('R54 every common atom rescans the live unported complement without keyword
  assert.equal(report.catalogue,700);
  assert.equal(report.unportedSearched,unported.size);
  assert.equal(report.registered+report.unportedSearched,700);
- assert.equal(report.officialReviewedRegistered,1);
- assert.equal(report.officialReviewedPartial,3);
+ assert.equal(report.officialReviewedRegistered,2);
+ assert.equal(report.officialReviewedPartial,2);
  assert.equal(report.readyAutoPromoted,0);
  assert.equal(report.independentFaqCertified,0);
  assert.ok(focused.some(f=>f.id==='SAO-1-071'&&f.status==='REGISTERED'));
- for(const id of ['TTG-1-067','SLG-1-021','MST-1-009'])
+ assert.ok(focused.some(f=>f.id==='TTG-1-067'&&f.status==='REGISTERED'));
+ for(const id of ['SLG-1-021','MST-1-009'])
   assert.ok(focused.some(f=>f.id===id&&f.status==='PARTIAL'&&f.missing.length>=3));
  for(const hits of Object.values(searches)){
   assert.equal(new Set(hits.map(x=>x.id)).size,hits.length);
