@@ -261,8 +261,19 @@ export function chooseUniversalAiAction(pack,s,options={}){
    Object.assign(options.telemetry,{
     searchNodes:analysis?.nodes??0,tacticalFallback:analysis?.fallback??null,
     nativeExactSteps:analysis?.exactSteps??0,
-    heuristicFrontiers:analysis?.heuristicFrontiers??0
+    heuristicFrontiers:analysis?.heuristicFrontiers??0,
+    tacticalEligible:!!analysis&&analysis.fallback!=='not-eligible',
+    tacticalUsed:!!analysis?.used,tacticalSearchedRoots:analysis?.searchedRoots??0,
+    tacticalOmittedRoots:analysis?.omittedRoots??0,
+    tacticalChanged:!!analysis?.action&&JSON.stringify(analysis.action)!==JSON.stringify(ranked[0]?.action),
+    heuristicFirstAction:ranked[0]?.action??null,
+    principalVariation:analysis?.principalVariation??[]
    });
  }else candidate=chooseBaselineAction(pack,s,options);
- return legal.find(a=>JSON.stringify(a)===JSON.stringify(candidate))||legal[0];
+ const native=legal.find(a=>JSON.stringify(a)===JSON.stringify(candidate));
+ if(options.telemetry&&typeof options.telemetry==='object')Object.assign(options.telemetry,{
+  rawAction:candidate??null,rawActionLegal:!!native,
+  legalFallback:!native,legalFallbackReason:native?null:'raw-action-not-legal'
+ });
+ return native||legal[0];
 }
