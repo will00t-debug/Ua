@@ -17,8 +17,11 @@ test('R48 scans all 700 source cards and precisely partitions every dynamically 
   c.missing.length>0));
  assert.ok(!reviewed.some(c=>c.id==='BLC-4-042'),'full source now ported');
  assert.ok(!reviewed.some(c=>c.id==='BLC-4-069'),'registered full card is no longer unported');
- for(const id of ['TTG-1-067','SLG-1-021','SAO-1-018','MST-1-009'])
+ for(const id of ['SLG-1-021','SAO-1-018','MST-1-009'])
   assert.ok(reviewed.some(c=>c.id===id),'independent official source review '+id);
+ assert.ok(!reviewed.some(c=>c.id==='TTG-1-067'));
+ assert.ok(inv.series.find(c=>c.title==='gurren-lagann').pilotIds.includes('TTG-1-067'),
+  'R55 source-audited Q2295 TTG remains in registered manifest');
  // R52: a completely ported official SAO-1-070 no longer belongs to the
  // dynamic UNPORTED partition. Keep its independent source proof in the
  // official pinned registry + R52 whole-card scenario instead.
