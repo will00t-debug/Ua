@@ -41,7 +41,9 @@ test('73 official standalone BLEACH profiles extend rather than replace 15 exist
  assert.deepEqual(validateUniversalDeck(pack,counts),[]);
  for(const p of BLEACH_V2_ADDON_PROFILES){
   const c=pack.cards[p.id],old=CARDS.find(x=>x.identity===p.id);
-  assert.ok(c&&old&&old.source.includes('unionarena-tcg.com'));
+  const recordedShop=p.id==='BLC-4-082'&&old?.source==='https://shopping.fullcomp.jp/products/pdsrqs97vlmo'||
+   p.id==='BLC-4-083'&&old?.source==='https://dorasuta.jp/union-arena/product?pid=709493';
+  assert.ok(c&&old&&(old.source.includes('unionarena-tcg.com/jp/cardlist/')||recordedShop),p.id);
   for(const field of ['energy','ap','bp','color','trigger','type'])
    assert.equal(c[field],p[field],p.id+' '+field);
   assert.equal(c.gen,p.id==='BLC-4-014'||p.id==='BLC-4-074'?1:p.id==='BLC-4-042'?2:p.gen,p.id+' printed base energy');

@@ -36,7 +36,8 @@ test('outside removal accepts only an own optional payment and a short follow-up
   then:[{op:'millTop',count:1},{op:'buffSelf',bp:500}]}]}})]));
  assert.throws(()=>accept([unit('BAD',{effects:{onPlay:[{...one,count:0}]}})]),
   /invalid outside removal payment/);
- assert.throws(()=>accept([unit('BAD',{effects:{onPlay:[{...one,count:4}]}})]),
+ assert.doesNotThrow(()=>accept([unit('FOUR',{effects:{onPlay:[{...one,count:4}]}})]));
+ assert.throws(()=>accept([unit('BAD',{effects:{onPlay:[{...one,count:5}]}})]),
   /invalid outside removal payment/);
  assert.throws(()=>accept([unit('BAD',{effects:{onPlay:[{...one,cardType:'event'}]}})]),
   /invalid outside removal payment/);

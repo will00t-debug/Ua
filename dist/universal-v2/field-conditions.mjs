@@ -50,6 +50,10 @@ export function matchesOwnDistinctTraits(s,owner,sourceUid,profile,printed){
 export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energy,cardBp){
  if(condition.turn==='own'&&s.active!==owner)return false;
  if(condition.turn==='opponent'&&s.active===owner)return false;
+ // Printed 「このターン中」 with no 自分のターン icon. The ledger is effect
+ // AP only; paying AP to play a card does not qualify.
+ if(condition.kind==='ownEffectApPaidColor')
+  return (s.effectApPaidColors?.[owner]||[]).includes(condition.color);
  // Successful EVENT usage is already recorded as an atomic physical HAND ->
  // OUTSIDE rule move. Reuse this ledger; never infer usage from event count,
  // deck inspections, cancelled plays, opponent actions or transient zones.
