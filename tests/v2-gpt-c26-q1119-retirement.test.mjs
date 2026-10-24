@@ -51,7 +51,7 @@ test('C26/Q1119: all four mandatory retire events are unplayable without a front
  for(const row of rows){
   const packs=[row.pack,sao];
   const own=deckOf(row.pack,[row.id,row.fuel,row.named]);
-  const foe=deckOf(sao,['SAO-2-063','SAO-1-087']);
+  const foe=deckOf(sao,['SAO-2-063','SAO-2-069']);
   let s=newUniversalMatch(packs,{decks:[own,foe],first:0,seed:261119});
   for(let i=0;i<4;i++)place(s,0,row.fuel,'energy',i);
   const event=hold(s,0,row.id);
@@ -63,8 +63,9 @@ test('C26/Q1119: all four mandatory retire events are unplayable without a front
   assert.equal(s.players[0].hand.some(c=>c.uid===event.uid),true);
   assert.equal(assertUniversalMatch(packs,s),true);
   // BP5000 is too large without the printed bonus name.
-  const large=place(s,1,'SAO-1-087','front',0);
-  assert.equal(universalBp(packs,s,large),5000);
+  const large=place(s,1,'SAO-2-069','front',0);
+  s.players[1].front[0].buffs.push({bp:1000,untilTurn:s.turn});
+  assert.equal(universalBp(packs,s,s.players[1].front[0]),5000);
   assert.equal(eventActions(packs,s,event.uid).length,0,row.id+' BP5000 without name');
   // Actual field name is sufficient; this case also checks both titles.
   place(s,0,row.named,'front',0);
@@ -92,7 +93,7 @@ test('C26/Q32: inclusive BP3000 boundary and current BP (3000+500) reject withou
  assert.equal(universalBp(packs,s,target),3000);
  assert.equal(eventActions(packs,s,event.uid).length,1,'3000 exact is legal');
  s.players[1].front[0].buffs.push({bp:500,untilTurn:s.turn});
- assert.equal(universalBp(packs,s,target),3500);
+ assert.equal(universalBp(packs,s,s.players[1].front[0]),3500);
  assert.equal(eventActions(packs,s,event.uid).length,0,'3500 is above 3000');
  place(s,0,row.named,'front',0);
  assert.equal(eventActions(packs,s,event.uid).length,1,'named 3500 legal');
