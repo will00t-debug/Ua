@@ -52,7 +52,8 @@ const testForKind=Object.freeze({
  aliasFieldRestEnergyRetire:'tests/v2-c10-blc-alias-field-energy.test.mjs',
  drawIfOppRestCharacter:'tests/v2-c16-conditional-board.test.mjs',
  drawIfOppCharacterBpAtLeast:'tests/v2-c16-conditional-board.test.mjs',
- activeOwnNamed:'tests/v2-c16-conditional-board.test.mjs'
+ activeOwnNamed:'tests/v2-c16-conditional-board.test.mjs',
+ drawIfOwnNameAndHandFewer:'tests/v2-c17-name-hand-draw.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.

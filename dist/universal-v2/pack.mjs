@@ -9,7 +9,7 @@ export const V2_PHASES=Object.freeze(['start','move','main','attack']);
 export const V2_CARD_TYPES=Object.freeze(['character','event','field']);
 export const V2_TRIGGERS=Object.freeze(['draw','get','final','active','special','color','raid']);
 export const V2_EFFECT_TIMINGS=Object.freeze(['onPlay','onRaid','onAttack','onRaided','onRetire','onOutsideRecover']);
-export const V2_EFFECT_OPS=Object.freeze(['nextEligibleHandPlayApDiscount','draw','drawIfOwnName','drawIfOwnTraitCount','drawIfOwnOutsideNamedCountAtLeast','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','drawIfOppRestCharacter','drawIfOppCharacterBpAtLeast','activeOwnNamed','grantSelfSniperThisTurn','grantSelfAttackWinDrawThisTurn','grantSelfMustBlockThisTurn','buffSelfUntilNextOwnStart','grantSelfAttackEndSwapThisTurn','millTop','buffSelf','buffSelfPerOwnOutsideGroups','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','conditionalBounceOrRetireByOwnOutsideNames','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','skipNextActiveOppRest','forbidAttackOppFrontOne','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','retireOwnFieldOne','retireOwnCharacterOne','optionalRetireThenProgram','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw','searchDeckMany','discardGate','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopUpToTwoBottom','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
+export const V2_EFFECT_OPS=Object.freeze(['nextEligibleHandPlayApDiscount','draw','drawIfOwnName','drawIfOwnTraitCount','drawIfOwnOutsideNamedCountAtLeast','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','drawIfOppRestCharacter','drawIfOppCharacterBpAtLeast','drawIfOwnNameAndHandFewer','activeOwnNamed','grantSelfSniperThisTurn','grantSelfAttackWinDrawThisTurn','grantSelfMustBlockThisTurn','buffSelfUntilNextOwnStart','grantSelfAttackEndSwapThisTurn','millTop','buffSelf','buffSelfPerOwnOutsideGroups','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','conditionalBounceOrRetireByOwnOutsideNames','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','skipNextActiveOppRest','forbidAttackOppFrontOne','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','retireOwnFieldOne','retireOwnCharacterOne','optionalRetireThenProgram','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw','searchDeckMany','discardGate','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopUpToTwoBottom','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
  'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideColorUnderEnergy','recoverOutsideTraitlessUnderEnergy','deployOutsideTraitlessRestOrRaid','deployOutsideRest','deployOutsideNameRest','deployNamedFromZones','payApDeployNamedRest','inspectTopTraitOutside','buffOwnField','oncePerTurnGate','chooseOne','deployOwnHandRest','deployOwnHandSpecial','deployOwnHandRestOrRaid','optionalPayApThen','discardOppHand','retireSourceOnPhaseEnd','activeSelfIf','grantOnAttack','grantSelectionApTaxOwnOtherTrait','grantFrontEnergyOwnOtherFrontTrait','grantOwnFrontChoiceProtection']);
 const integer=(v,low=0)=>Number.isInteger(v)&&v>=low;
 const own=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
@@ -18,7 +18,7 @@ const own=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
 function assertLiveCondition(q,label){
  if(!q||typeof q!=='object'||Array.isArray(q)||
   !['own','opponent','any'].includes(q.turn)||
-  !['outsideCount','ownNameExists','ownNameAbsent','ownFieldHasAllNames','ownTraitCount','ownEnergyAtLeast','ownHandCountAtLeast','ownLifeAtMost','ownEffectHandOutsideOrRecovery','ownEventUsedThisTurn','ownRetiredThisTurn','retireCountThisTurn','ownOutsideNamedCountAtLeast','ownRestPrintedBpAtMost','oppCharacterBpAtLeast','oppRestCharacter'].includes(q.kind))
+  !['outsideCount','ownNameExists','ownNameAbsent','ownFieldHasAllNames','ownTraitCount','ownEnergyAtLeast','ownHandCountAtLeast','ownLifeAtMost','ownEffectHandOutsideOrRecovery','ownEventUsedThisTurn','ownRetiredThisTurn','retireCountThisTurn','ownOutsideNamedCountAtLeast','ownRestPrintedBpAtMost','oppCharacterBpAtLeast','oppRestCharacter','ownHandFewerThanOpponent'].includes(q.kind))
   throw Error(label+' invalid passive condition');
  if(q.kind==='ownEventUsedThisTurn'&&q.turn!=='own')
   throw Error(label+' event-use predicate requires own turn');
@@ -143,6 +143,11 @@ function verifyProgram(program,path){
    !integer(e.count,1)||e.count>5||Object.keys(e).length!==3||
    Object.keys(e).some(k=>!['op','minBp','count'].includes(k))
   ))throw Error(path+'['+i+'] invalid opponent current-BP draw');
+  if(e.op==='drawIfOwnNameAndHandFewer'&&(
+   typeof e.name!=='string'||!e.name.trim()||e.name.length>80||
+   !integer(e.count,1)||e.count>5||Object.keys(e).length!==3||
+   Object.keys(e).some(k=>!['op','name','count'].includes(k))
+  ))throw Error(path+'['+i+'] invalid named hand-count draw');
   if(e.op==='activeOwnNamed'&&(
    typeof e.name!=='string'||!e.name.trim()||e.name.length>80||
    e.max!==1||e.optional!==true||Object.keys(e).length!==4||
@@ -1089,7 +1094,7 @@ function normalize(card,packId){
   if(program.some(e=>e.op==='drawIfOwnTraitCount')&&
    (card.type!=='character'||name!=='onPlay'))
    throw Error(card.id+' trait-count draw is only a character onPlay effect');
-  if(program.some(e=>['drawIfOppRestCharacter','drawIfOppCharacterBpAtLeast','activeOwnNamed'].includes(e.op))&&
+  if(program.some(e=>['drawIfOppRestCharacter','drawIfOppCharacterBpAtLeast','drawIfOwnNameAndHandFewer','activeOwnNamed'].includes(e.op))&&
    (card.type!=='character'||name!=='onPlay'))
    throw Error(card.id+' opponent-board draw and named ACTIVE are character onPlay effects');
   if(program.some(e=>e.op==='activeSelfIf')&&

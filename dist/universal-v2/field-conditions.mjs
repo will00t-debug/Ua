@@ -100,6 +100,8 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   }
   return false;
  }
+ if(condition.kind==='ownHandFewerThanOpponent')
+  return s.players[owner].hand.length<s.players[1-owner].hand.length;
  if(condition.kind==='oppRestCharacter'){
   // 場 is the opponent's front and energy. A REST character is type
   // character with the live ready flag false. Printed BP, hand, deck,

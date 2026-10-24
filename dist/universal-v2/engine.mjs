@@ -609,6 +609,14 @@ function continueEffectQueue(pack,s){
     ()=>calcEnergy(pack,s,owner),x=>bp(pack,s,x)))
     draw(pack,s,owner,job.count,{reason:'own-effect',sourceUid:job.sourceUid});
   }
+  else if(job.op==='drawIfOwnNameAndHandFewer'){
+   // Compare hand sizes after this character has left the hand. Count every
+   // physical hand card. The name check is an own field character.
+   const named={kind:'ownNameExists',turn:'any',zone:'field',excludeSelf:false,name:job.name};
+   const fewer=pl.hand.length<s.players[1-owner].hand.length;
+   if(fewer&&matchesV2LiveCondition(s,owner,job.sourceUid,named,x=>card(pack,x)))
+    draw(pack,s,owner,job.count,{reason:'own-effect',sourceUid:job.sourceUid});
+  }
   else if(job.op==='activeOwnNamed'){
    const choices=field(pl).filter(c=>card(pack,c).type==='character'&&
     cardHasName(card(pack,c),job.name,originalEffectsDisabled(s,c))).map(c=>c.uid);
@@ -4341,7 +4349,7 @@ export function assertUniversalMatch(pack,s){
    typeof e.key!=='string'||!Array.isArray(e.jobs))))
   throw Error('Invalid retirement order');
  if(!Array.isArray(s.effectQueue)||[...s.effectQueue,...lifeEntries.flatMap(e=>e.jobs)].some(e=>!playerIndex(e.owner)||
-   !['grantedAttackDraw','grantOnAttack','grantSelfSniperThisTurn','grantSelfAttackWinDrawThisTurn','grantSelfMustBlockThisTurn','buffSelfUntilNextOwnStart','grantSelfAttackEndSwapThisTurn','resolveAttackWinRecovery','draw','drawIfOwnName','drawIfOwnOutsideNamedCountAtLeast','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','drawIfOppRestCharacter','drawIfOppCharacterBpAtLeast','activeOwnNamed','millTop','buffSelf','buffSelfPerOwnOutsideGroups','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','conditionalBounceOrRetireByOwnOutsideNames','completeResolvingEvent','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','forbidAttackOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopUpToTwoBottom','deployOwnHandRest','deployOwnHandSpecial','deployOwnHandRestOrRaid','optionalPayApThen','optionalRetireThenProgram','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
+   !['grantedAttackDraw','grantOnAttack','grantSelfSniperThisTurn','grantSelfAttackWinDrawThisTurn','grantSelfMustBlockThisTurn','buffSelfUntilNextOwnStart','grantSelfAttackEndSwapThisTurn','resolveAttackWinRecovery','draw','drawIfOwnName','drawIfOwnOutsideNamedCountAtLeast','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','drawIfOppRestCharacter','drawIfOppCharacterBpAtLeast','drawIfOwnNameAndHandFewer','activeOwnNamed','millTop','buffSelf','buffSelfPerOwnOutsideGroups','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','conditionalBounceOrRetireByOwnOutsideNames','completeResolvingEvent','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','forbidAttackOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopUpToTwoBottom','deployOwnHandRest','deployOwnHandSpecial','deployOwnHandRestOrRaid','optionalPayApThen','optionalRetireThenProgram','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
     'discardGate','enemyFrontAllBpDown','retireOppFrontAllUnderBp',
     'nextEligibleHandPlayApDiscount','grantFrontEnergyOwnOtherFrontTrait','buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
     'recoverOutsideColorUnderEnergy','deployOutsideRest','deployOutsideNameRest','deployNamedFromZones','payApDeployNamedRest','inspectTopTraitOutside','deployOutsideTraitlessRestOrRaid','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','retireSourceOnPhaseEnd','moveAtMainEnd','retireOwnFieldOne','retireOwnCharacterOne','openBlock','resolveSniperBattle','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','resolveAttackEndSwap','phaseOrder','effectMoveOrder','restSelfTuckMovedFaceDown','sourceResolutionBoundary','lifeBatchStep','lifeRelease','advanceAfterAttack','additionalBattleDamage','openRetirementBatch','closeRetirementBatch','retirementOrder','battleImpactDamage','discardOppHand','activeSelfIf'].includes(e.op)))
