@@ -19,7 +19,7 @@ test('R56 700-card live all-title rescan partitions exact remaining 353, no fals
   assert.ok(hits.every(x=>complement.has(x.id)&&x.status==='REVIEW PENDING'));
  }
  assert.ok(r.reviewed.some(x=>x.id==='SLG-1-021'&&x.status==='REGISTERED'));
- assert.ok(r.reviewed.some(x=>x.id==='MST-1-009'&&x.status==='ENGINE BLOCKED'));
+ assert.ok(r.reviewed.some(x=>x.id==='MST-1-009'&&x.status==='REGISTERED'));
  for(const c of r.cursor){
   assert.equal(c.owner,'Cursor');
   assert.ok(complement.has(c.id));
