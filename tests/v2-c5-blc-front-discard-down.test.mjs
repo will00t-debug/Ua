@@ -64,9 +64,9 @@ function aiOk(s){
 test('C5 registers only the whole-print front discard BP reduction',()=>{
  const x=c5BlcFrontDiscardDown();
  assert.deepEqual(x.registered,['BLC-2-003']);
- assert.equal(x.report.bleach,115);
+ assert.equal(x.report.bleach,117);
  assert.equal(x.report.mst,55);
- assert.equal(x.report.registered,365);
+ assert.equal(x.report.registered,367);
  assert.equal(x.report.readyFromKeywords,0);
  assert.equal(EXPECTED_V2_IDS.bleach.includes('BLC-2-003'),true);
 });
