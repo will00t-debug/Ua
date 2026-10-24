@@ -42,7 +42,9 @@ const testForKind=Object.freeze({
  restSelfBuffOther:'tests/v2-c1-blc-ready-reuse.test.mjs',
  readyOnFirstBlock:'tests/v2-c1-blc-ready-reuse.test.mjs',
  ownTurnNamedBp:'tests/v2-c1-blc-ready-reuse.test.mjs',
- opponentFieldHandEnergy:'tests/v2-c2-hand-energy-register.test.mjs'
+ opponentFieldHandEnergy:'tests/v2-c2-hand-energy-register.test.mjs',
+ drawIfOwnEffectEntry:'tests/v2-c3-blc-mst-reuse.test.mjs',
+ blockBpAtMost:'tests/v2-c3-blc-mst-reuse.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.

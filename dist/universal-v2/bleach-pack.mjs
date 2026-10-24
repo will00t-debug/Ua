@@ -969,7 +969,9 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-4-073","kind":"ownTurnNamedBp","number":"EX15BT/BLC-4-073","name":"斑目 一角","color":"green","energy":2,"ap":1,"bp":2500,"gen":1,"trigger":null,"type":"character","effect":"自己的回合中：若自己場上有《更木劍八》，此角色BP+1500。"},
 {"id":"BLC-1-007","kind":"opponentFieldHandEnergy","number":"UA08BT/BLC-1-007","name":"ジェローム・ギズバット","color":"yellow","energy":3,"ap":1,"bp":3000,"gen":2,"trigger":null,"type":"character","effect":"敵方場上有紫色或綠色卡片時，手牌中此卡的黃色需求能源減少 1。"},
 {"id":"BLC-1-044","kind":"opponentFieldHandEnergy","number":"UA08BT/BLC-1-044","name":"阿近","color":"purple","energy":3,"ap":1,"bp":3000,"gen":2,"trigger":null,"type":"character","effect":"敵方場上有黃色或綠色卡片時，手牌中此卡的紫色需求能源減少 1。"},
-{"id":"BLC-1-073","kind":"opponentFieldHandEnergy","number":"UA08BT/BLC-1-073","name":"鳳橋 楼十郎","color":"green","energy":3,"ap":1,"bp":3000,"gen":2,"trigger":null,"type":"character","effect":"敵方場上有黃色或紫色卡片時，手牌中此卡的綠色需求能源減少 1。"}
+{"id":"BLC-1-073","kind":"opponentFieldHandEnergy","number":"UA08BT/BLC-1-073","name":"鳳橋 楼十郎","color":"green","energy":3,"ap":1,"bp":3000,"gen":2,"trigger":null,"type":"character","effect":"敵方場上有黃色或紫色卡片時，手牌中此卡的綠色需求能源減少 1。"},
+{"id":"BLC-4-029","kind":"blockBpAtMost","number":"EX15BT/BLC-4-029","name":"志波 岩鷲","color":"blue","energy":1,"ap":1,"bp":2000,"gen":1,"trigger":"active","type":"character","effect":"此角色不會被BP2000以下的角色阻擋。"},
+{"id":"BLC-4-031","kind":"drawIfOwnEffectEntry","number":"EX15BT/BLC-4-031","name":"四楓院 夜一","color":"blue","energy":1,"ap":1,"bp":2000,"gen":1,"trigger":null,"type":"character","effect":"登場時：若此角色是以自己的效果登場，抽1張牌。"}
 ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1035,12 +1037,14 @@ export function checkedBleachAddonDefinition(p){
  const isReadyBlock=p.kind==='readyOnFirstBlock';
  const isNamedBp=p.kind==='ownTurnNamedBp';
  const isHandDiscount=p.kind==='opponentFieldHandEnergy';
+ const isOwnEffectDraw=p.kind==='drawIfOwnEffectEntry';
+ const isBlockLow=p.kind==='blockBpAtMost';
  const isTopRequired=p.kind==='topOneEnergyDiscount';
  const isTopTwoGotei=p.kind==='topTwoGoteiEvent';
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount;
+ const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1073,6 +1077,7 @@ export function checkedBleachAddonDefinition(p){
   ...(isHandDiscount?{opponentFieldColorsHandEnergyDiscount:{
    colors:{'BLC-1-007':['purple','green'],'BLC-1-044':['yellow','green'],
     'BLC-1-073':['yellow','purple']}[p.id],amount:1}}:{}),
+  ...(isBlockLow?{blockBpRestriction:{relation:'atMost',bp:2000,condition:null}}:{}),
   ...(p.kind==='restSelfEnemy'?{mainAbility:{op:'restSelfThenRestOppFrontOne',frontOnly:true}}:{}),
   ...(p.kind==='restEnergyRetire'?{mainAbility:{op:'restSelfGainEnergyRetireEndMain',energyOnly:true,oncePerTurn:true,extraEnergy:1}}:{}),
   ...(p.kind.startsWith('retireBonus')?{triggerEffect:{op:'retireOppFront'}}:{}),
@@ -1107,6 +1112,7 @@ export function checkedBleachAddonDefinition(p){
    isRetireMill?{onRetire:[{op:'millTop',count:2}]}:
    isOppDiscard?{onPlay:[{op:'discardOppHand',count:1}]}:
    isDrawTwo?{onPlay:[{op:'drawDiscard',count:2,discardCount:1}]}:
+   isOwnEffectDraw?{onPlay:[{op:'draw',count:1,entry:'ownEffect'}]}:
    isStripDual?{onPlay:[{op:'chooseOne',optional:false,options:[
     {id:'strip',label:'Strip opponent RAID top',turn:'any',
      then:[{op:'stripOppRaidTop',optional:true}]},
