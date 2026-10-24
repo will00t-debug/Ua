@@ -35,7 +35,7 @@ test('manual native-legal progress goes from purple AI start to green player wit
  const decks=[d['white-sword'],d.renruki];
  for(const seed of [20261015,20261016]){
   let s=newUniversalMatch(packs,{decks,seed,first:1});
-  let tape=makeUniversalPreviewReplay(packs,{decks,seed,first});
+  let tape=makeUniversalPreviewReplay(packs,{decks,seed,first:1});
   let steps=0;
   for(;s.status==='playing'&&(s.pending?.player??s.active)===1&&steps<100;steps++){
    const legal=legalUniversalActions(packs,s);
