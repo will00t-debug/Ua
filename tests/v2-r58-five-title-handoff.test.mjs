@@ -17,16 +17,15 @@ test('R58 all five titles classify the dynamically unported entire 700-card cata
    [...title.unportedIds].sort());
  }
 });
-test('R58 official six hand reduction candidates are source-pinned, Cursor-only and not falsely registered',()=>{
+test('R58 six hand reduction cards are Cursor production registrations and absent from the unported ledger',()=>{
  const live=v2AllTitleInventory(),{records}=r58FiveTitleReview();
  const registered=new Set(live.series.flatMap(s=>s.pilotIds));
  for(const id of SIX){
-  assert.ok(!registered.has(id),'No early GPT registration: '+id);
-  const row=records.find(c=>c.id===id);assert.ok(row);
-  assert.equal(row.owner,'Cursor');
-  assert.equal(row.status,id.startsWith('BLC-')?'READY':'PARTIAL');
-  assert.ok(row.source.includes(id));
-  assert.ok(R58_OFFICIAL_REVIEW[id]);
+  assert.ok(registered.has(id),id);
+  assert.equal(records.find(c=>c.id===id),undefined);
+  assert.equal(R58_OFFICIAL_REVIEW[id].owner,'Cursor');
+  assert.equal(R58_OFFICIAL_REVIEW[id].status,'READY');
+  assert.ok(R58_OFFICIAL_REVIEW[id].source.includes(id));
  }
 });
 test('R58 strict blockers remain unported, especially corrected TTG Q2301',()=>{
