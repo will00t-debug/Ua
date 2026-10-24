@@ -131,7 +131,7 @@ export function evaluateTrustedUniversalAiTactics(packs,state,rootObservation,ra
   limits.roots===0||limits.timeMs===0)return fallback('not-eligible');
  const now=typeof performance==='undefined'?null:performance,start=now?.now()??0;
  const timeout=()=>now&&now.now()-start>limits.timeMs;
- let nodes=0,exactSteps=0,frontiers=0;
+ let nodes=0,exactSteps=0,frontiers=0,abortReason=null;
  const rootChoices=selected(ranked,limits.roots);
  record({at:'roots',selected:rootChoices.map(x=>x.action),skipped:ranked.filter(x=>!rootChoices.includes(x)).length,limits});
  // Exclude a root that cannot produce a native deterministic child, rather
@@ -143,7 +143,10 @@ export function evaluateTrustedUniversalAiTactics(packs,state,rootObservation,ra
  const position=o=>evaluateUniversalAiPosition(packs,o);
  const zero=()=>({value:0,path:[]});
  function follow(current,depth,path){
-  if(depth<=0)return current.pending?null:zero();
+  if(depth<=0){
+   if(current.pending){abortReason='mandatory-pending-depth';return null;}
+   return zero();
+  }
   // Combat is a heuristic frontier, not a native exact LIFE rollout.
   if(!current.pending&&current.phase!=='main')return zero();
   const legal=legalUniversalActions(packs,current);
@@ -162,7 +165,8 @@ export function evaluateTrustedUniversalAiTactics(packs,state,rootObservation,ra
   // branch would be convenient; a legal 'skip' action is expanded normally.
   let best=current.pending?null:zero();
   for(const candidate of next){
-   if(++nodes>limits.nodes||timeout())return null;
+   if(++nodes>limits.nodes){abortReason='node-budget';return null;}
+   if(timeout()){abortReason='emergency-clock';return null;}
    const candidatePath=[...path,stableUniversalAiActionKey(candidate.action)];
    if(candidate.action.type==='attack'){
     frontiers++;
@@ -187,7 +191,8 @@ export function evaluateTrustedUniversalAiTactics(packs,state,rootObservation,ra
  }
  let bestChoice=null,bestValue=-Infinity,bestPath=[],searchedRoots=0;
  for(const root of rootChoices){
-  if(++nodes>limits.nodes||timeout())return fallback('budget-or-emergency-clock',nodes);
+  if(++nodes>limits.nodes)return fallback('node-budget',nodes);
+  if(timeout())return fallback('emergency-clock',nodes);
   const path=[stableUniversalAiActionKey(root.action)];
   const child=nativeChild(packs,state,root.action,actor,
    entry=>record({...entry,path}));
@@ -197,7 +202,7 @@ export function evaluateTrustedUniversalAiTactics(packs,state,rootObservation,ra
   const childObs=createUniversalAiObservation(packs,child,legalUniversalActions(packs,child));
   const material=clamp((position(childObs)-position(rootObservation))*0.85,-12,12);
   const continuation=follow(child,limits.depth-1,path);
-  if(continuation===null)return fallback('unresolved-or-budget',nodes);
+  if(continuation===null)return fallback(abortReason||'unresolved-branch',nodes);
   const value=root.score*0.15+material+continuation.value*0.75;
   record({at:'root-score',path,prior:root.score,material,
    continuation:continuation.value,value});
