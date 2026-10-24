@@ -55,8 +55,9 @@ $('v2-coverage').textContent=
  v2Entries.reduce((sum,item)=>sum+item.totalV2Cards,0)+' 張真卡 Pilot';
 const app={state:null,packs:null,selectedUid:null,
  selectedSide:null,history:[],busy:false,aiTimer:null,error:'',
- undo:null,replay:null,targetChoices:null,aiDifficulty:'normal',sequence:0,allActions:false, maxAuto:4500,autoMoves:0,aiPhaseKey:null,aiPhaseCount:0,aiFallbacks:0};
+ undo:null,replay:null,targetChoices:null,aiDifficulty:'normal',sequence:0,allActions:false, maxAuto:4500,autoMoves:0,aiPhaseKey:null,aiPhaseCount:0,aiFallbacks:0,aiCompletedSteps:0,lastAiProgress:'未啟動'};
 const phases=V2_PHASE_LABELS;
+const CLIENT_RELEASE='AI 修復 R2 · 2026-10-24';
 const btn=(label,fn,cls='')=>el('button',{type:'button',class:cls,text:label,onClick:fn});
 const fmtTitle=(id)=>V2_TITLE_LABELS[id]||id;
 const cardDef=(side,id)=>app.packs?.[side]?.cards[id]||null;
@@ -381,15 +382,27 @@ function render(){
  }
  const s=app.state,v=universalPublicView(app.packs,s,0),legal=legalUniversalActions(app.packs,s);
  const title=el('header',{class:'matchHeader'},
-  el('h1',{},'UNION ARENA V2 ',el('span',{class:'textMuted',text:' / 舊版對戰介面'})),
+  el('h1',{},'UNION ARENA V2 ',el('span',{class:'textMuted',text:' / 舊版對戰介面'}),
+   el('small',{class:'v2-client-version',text:' · '+CLIENT_RELEASE})),
   el('div',{class:'matchControls'},
    btn('重開對局',()=>startGame(),'btn small'),
    btn('復原一步',()=>undoMove(),'btn small'),
    btn('下載紀錄',downloadHistory,'btn small'),
    btn('除錯重播',downloadReplay,'btn small'),
    s.status==='playing'&&uiActor(s)===1?
-    btn('AI 沒反應？重新繼續',()=>{resetAi();app.error='';driveAi();},'btn small'):null));
+    btn('AI 沒反應？重新繼續',()=>{resetAi();app.error='';driveAi();},'btn small'):null,
+   s.status==='playing'&&uiActor(s)===1?
+    btn('手動推進 AI 一步',manualAiStep,'btn small'):null,
+   s.status==='playing'&&uiActor(s)===1&&app.busy?
+    btn('暫停 AI',()=>{resetAi();app.error='AI 已暫停，請按「手動推進 AI 一步」或重新繼續。';render();},'btn small'):null));
  target.append(title);
+ if(s.status==='playing'&&uiActor(s)===1){
+  target.append(el('div',{class:'panel v2-ai-status','aria-live':'polite'},
+   el('b',{text:app.busy?'AI 自動操作中':'AI 目前暫停'}),
+   el('span',{text:'　進度 '+app.aiCompletedSteps+' 步 · 最近：'+app.lastAiProgress+
+    ' · 待處理合法動作 '+legal.length+
+    '。若沒有反應，按上方「手動推進 AI 一步」；按一下就會使用 V2 合法動作推進一次。'})));
+ }
  if(app.error)target.append(el('div',{class:'panel v2-error',role:'alert',text:app.error}));
  const arena=el('div',{class:'arena'});
  const phasesEl=el('div',{class:'phaseBar','aria-label':'回合階段'});
@@ -445,6 +458,36 @@ function undoMove(){
  app.undo=null;app.error='';app.selectedUid=null;render();
  if(uiActor(app.state)===1)driveAi();
 }
+// Fully synchronous, one-click rescue. No browser timers or AI chooser.
+// Pending choices still use only reducer-approved actions.
+function manualAiStep(){
+ if(!app.state||app.state.status!=='playing'||uiActor(app.state)!==1)return;
+ resetAi();
+ try{
+  const legal=legalUniversalActions(app.packs,app.state);
+  if(!legal.length)throw Error('目前沒有可供電腦使用的合法動作。');
+  const next=!app.state.pending?legal.find(a=>a.type==='next'):null;
+  const move=next||legal.find(a=>a.type==='chooseBlock'&&a.uid===null)||
+   legal.find(a=>a.mode==='skip')||legal[0];
+  if(!isExactLegal(move,legal))throw Error('手動推進未找到合法動作。');
+  const previous=app.state;
+  app.state=dispatchUniversalAction(app.packs,app.state,move,{actor:1});
+  assertUniversalMatch(app.packs,app.state);
+  app.replay=appendUniversalReplay(app.replay,move,1);
+  pushHistory(publicPreviewActionLabel(app.packs,previous,app.state,move,1));
+  app.aiCompletedSteps++;
+  app.lastAiProgress='手動 '+move.type+' · T'+app.state.turn+'/'+app.state.phase;
+  app.error='';
+  render();
+ }catch(e){
+  app.error='手動推進失敗：'+(e?.message||String(e))+
+   '。請使用「除錯重播」保留紀錄供檢查。';
+  try{render();}catch{
+   const elRoot=$('match-view');
+   if(elRoot)elRoot.prepend(el('div',{class:'panel v2-error',role:'alert',text:app.error}));
+  }
+ }
+}
 function driveAi(){
  if(!app.state||app.busy||app.state.status!=='playing'||uiActor(app.state)!==1)return;
  app.busy=true;app.autoMoves=0;app.sequence++;
@@ -472,13 +515,15 @@ function driveAi(){
      pushHistory('AI 使用 V2 合法備援操作（'+reason+'），避免對局停住。');
     }
     app.aiPhaseCount++;
+    app.aiCompletedSteps++;
+    app.lastAiProgress=choice.type+' · T'+app.state.turn+'/'+app.state.phase;
     if(app.autoMoves%20===0)assertUniversalMatch(app.packs,app.state);
    }
    if(app.state.status==='playing'&&uiActor(app.state)===1){
     // Render between chunks so a user can see progress and tap retry even
     // when a mobile browser throttles timers.
     render();
-    app.aiTimer=setTimeout(chunk,0);
+    app.aiTimer=setTimeout(chunk,16);
    }else{
     app.busy=false;app.aiTimer=null;app.error='';
     render();
@@ -493,7 +538,7 @@ function driveAi(){
    }
   }
  }
- app.aiTimer=setTimeout(chunk,0);render();
+ app.aiTimer=setTimeout(chunk,16);render();
 }
 function resetAi(){
  app.sequence++;if(app.aiTimer!==null)clearTimeout(app.aiTimer);
@@ -590,7 +635,7 @@ function startGame(){
   const first=$('first-player').value==='ai'?1:0;
   app.state=newUniversalMatch(app.packs,{decks:[mine.counts,foe.counts],seed,first});
   assertUniversalMatch(app.packs,app.state);
-  app.error='';app.selectedUid=null;app.undo=null;app.allActions=false;app.aiFallbacks=0;
+  app.error='';app.selectedUid=null;app.undo=null;app.allActions=false;app.aiFallbacks=0;app.aiCompletedSteps=0;app.lastAiProgress='新對局';
   app.aiDifficulty=$('ai-level').value;
   app.history=['新對局：'+(mine.label||fmtTitle(myTitle))+' vs '+(foe.label||fmtTitle(foeTitle))+
    '｜先手 '+(first===0?'你':'電腦')+'｜種子 '+seed];
