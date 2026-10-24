@@ -95,4 +95,4 @@
 
 Manifest：BLEACH 138／276，五作品 390／700。
 
-實作與本文件在同一個分支提交。Actions 必須跑該分支推送後的 HEAD，不能沿用 40071544974。SHA 與該次 Actions 連結記在 PR。
+實作提交：`cc77210b6bc6e07e37b934b5cc219858e4b47afd`。Actions 必須跑推送後的分支 HEAD，不能沿用 40071544974。該次連結記在 PR。
