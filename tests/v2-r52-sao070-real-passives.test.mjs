@@ -32,11 +32,12 @@ function scene(){
   c.fieldEntryStamp=s.nextFieldEntryStamp++;
   s.players[0].front[i+1]=c;sources.push(c);
  }
- const events=[];
- for(let i=0;i<3;i++){
-  const c=take(s,0,'SAO-1-100');s.players[0].hand.push(c);events.push(c);
- }
- for(let i=0;i<3;i++)s.players[0].hand.push(take(s,0,'SAO-1-005'));
+ // Extract three DISTINCT physical IDs before returning them to HAND:
+ // repeated take/push would select the same UID three times.
+ const events=Array.from({length:3},()=>take(s,0,'SAO-1-100'));
+ s.players[0].hand.push(...events);
+ const payments=Array.from({length:3},()=>take(s,0,'SAO-1-005'));
+ s.players[0].hand.push(...payments);
  for(let i=0;i<4;i++){
   const c=take(s,0,'SAO-1-068');c.ready=true;
   c.fieldEntryStamp=s.nextFieldEntryStamp++;
