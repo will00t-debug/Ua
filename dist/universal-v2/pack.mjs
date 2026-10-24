@@ -9,7 +9,7 @@ export const V2_PHASES=Object.freeze(['start','move','main','attack']);
 export const V2_CARD_TYPES=Object.freeze(['character','event','field']);
 export const V2_TRIGGERS=Object.freeze(['draw','get','final','active','special','color','raid']);
 export const V2_EFFECT_TIMINGS=Object.freeze(['onPlay','onRaid','onAttack','onRaided','onRetire','onOutsideRecover']);
-export const V2_EFFECT_OPS=Object.freeze(['nextEligibleHandPlayApDiscount','draw','drawIfOwnName','drawIfOwnTraitCount','drawIfOwnOutsideNamedCountAtLeast','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','drawIfOppRestCharacter','drawIfOppCharacterBpAtLeast','drawIfOwnNameAndHandFewer','activeOwnNamed','grantSelfSniperThisTurn','grantSelfAttackWinDrawThisTurn','grantSelfMustBlockThisTurn','buffSelfUntilNextOwnStart','grantSelfAttackEndSwapThisTurn','millTop','buffSelf','buffSelfPerOwnOutsideGroups','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','conditionalBounceOrRetireByOwnOutsideNames','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','skipNextActiveOppRest','forbidAttackOppFrontOne','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','retireOwnFieldOne','retireOwnCharacterOne','optionalRetireThenProgram','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw','searchDeckMany','discardGate','removeOutsideThen','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopUpToTwoBottom','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
+export const V2_EFFECT_OPS=Object.freeze(['nextEligibleHandPlayApDiscount','draw','drawIfOwnName','drawIfOwnTraitCount','drawIfOwnOutsideNamedCountAtLeast','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','drawIfSelfBpAtLeast','returnRetiredToHand','drawIfOppRestCharacter','drawIfOppCharacterBpAtLeast','drawIfOwnNameAndHandFewer','activeOwnNamed','grantSelfSniperThisTurn','grantSelfAttackWinDrawThisTurn','grantSelfMustBlockThisTurn','buffSelfUntilNextOwnStart','grantSelfAttackEndSwapThisTurn','millTop','buffSelf','buffSelfPerOwnOutsideGroups','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','conditionalBounceOrRetireByOwnOutsideNames','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','skipNextActiveOppRest','forbidAttackOppFrontOne','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','retireOwnFieldOne','retireOwnCharacterOne','optionalRetireThenProgram','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw','searchDeckMany','discardGate','removeOutsideThen','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopUpToTwoBottom','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
  'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideColorUnderEnergy','recoverOutsideTraitlessUnderEnergy','deployOutsideTraitlessRestOrRaid','deployOutsideRest','deployOutsideNameRest','deployNamedFromZones','payApDeployNamedRest','inspectTopTraitOutside','buffOwnField','oncePerTurnGate','chooseOne','deployOwnHandRest','deployOwnHandSpecial','deployOwnHandRestOrRaid','optionalPayApThen','discardOppHand','retireSourceOnPhaseEnd','activeSelfIf','grantOnAttack','grantSelectionApTaxOwnOtherTrait','grantFrontEnergyOwnOtherFrontTrait','grantOwnFrontChoiceProtection','grantCauseBlockAtMost','handBottomGrantDoubleAttack','payApDeployMovedActive','noteEntryTurn','grantSelfEnergyMoveOnAttackStart','grantSelfTriggerUnchosen','outsideColorEnergyHandOrRest','moveOtherAcrossOrRemove','raidBaseEnergyThen','grantSelfAttackDamageThisTurn','restOppFrontLockActive','removeAnyOutsideScale','inspectTopColoredNamesOutside','drawDiscardIfEffectApPaid','activeSelf','grantSelfImpactThisTurn','grantOwnNameBlockAtLeast']);
 const integer=(v,low=0)=>Number.isInteger(v)&&v>=low;
 const own=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
@@ -120,6 +120,15 @@ function verifyProgram(program,path){
    e.optional!==true||![1,2].includes(e.count)||
    Object.keys(e).some(k=>!['op','count','optional'].includes(k))
   ))throw Error(path+'['+i+'] optional mill is one or two cards');
+  if(e.op==='drawIfSelfBpAtLeast'&&(
+   !integer(e.bp,500)||e.bp>50000||e.bp%500!==0||e.count!==1||
+   Object.keys(e).length!==3||
+   Object.keys(e).some(k=>!['op','bp','count'].includes(k))
+  ))throw Error(path+'['+i+'] invalid self-BP attack draw');
+  if(e.op==='returnRetiredToHand'&&(
+   e.optional!==true||Object.keys(e).length!==2||
+   Object.keys(e).some(k=>!['op','optional'].includes(k))
+  ))throw Error(path+'['+i+'] invalid optional return of the retired card');
   if(e.op==='drawIfOwnEnergyAtLeast'&&(
    !integer(e.energy,1)||e.energy>50||
    !integer(e.count,1)||e.count>5||
@@ -680,11 +689,16 @@ function verifyProgram(program,path){
    Object.keys(e).some(k=>!['op','count','discardCount'].includes(k))
   ))throw Error(path+'['+i+'] invalid mandatory draw/discard profile');
   if(['buffSelf','enemyBpDown'].includes(e.op)&&(!integer(e.bp,1)||e.bp>5000))throw Error(path+'['+i+'] invalid temporary BP');
-  if(e.op==='moveOtherAcrossOrRemove'&&(
-   e.optional!==true||typeof e.excludeName!=='string'||!e.excludeName.trim()||
-   e.excludeName.length>80||Object.keys(e).length!==3||
-   Object.keys(e).some(k=>!['op','optional','excludeName'].includes(k))))
-   throw Error(path+'['+i+'] invalid other-character line move');
+  if(e.op==='moveOtherAcrossOrRemove'){
+   const keys=Object.keys(e);
+   const named=typeof e.excludeName==='string'&&!!e.excludeName.trim()&&e.excludeName.length<=80;
+   const self=e.includeSelf===true;
+   const legacy=e.optional===true&&named&&!self&&keys.length===3&&
+    keys.every(k=>['op','optional','excludeName'].includes(k));
+   const anyOwn=e.optional===true&&self&&e.excludeName===undefined&&keys.length===3&&
+    keys.every(k=>['op','optional','includeSelf'].includes(k));
+   if(!legacy&&!anyOwn)throw Error(path+'['+i+'] invalid other-character line move');
+  }
   if(e.op==='raidBaseEnergyThen'&&(
    !integer(e.minEnergy,1)||e.minEnergy>10||
    !Array.isArray(e.then)||e.then.length<1||e.then.length>4||
@@ -999,6 +1013,9 @@ function normalize(card,packId){
     frontGate.then.length<=6&&frontEffects.every(e=>
      ['enemyBpDown','draw','buffSelf','grantOnAttack',
       'grantSelfEnergyMoveOnAttackStart','grantSelfTriggerUnchosen'].includes(e?.op))))||
+   (frontProgram.length===1&&frontProgram[0]?.op==='buffOwnField'&&
+    frontProgram[0].optional===false&&frontProgram[0].excludeSelf===false&&
+    frontProgram[0].filter?.field==='name'&&frontProgram[0].zone===undefined)||
    (frontProgram.length===2&&frontProgram[0]?.op==='drawDiscard'&&
     frontProgram[0].count===1&&Object.keys(frontProgram[0]).length===2&&
     frontProgram[1]?.op==='grantFrontEnergyOwnOtherFrontTrait'&&
@@ -1278,7 +1295,7 @@ function normalize(card,packId){
   if(program.some(e=>e.op==='grantSelfAttackDamageThisTurn')&&name!=='onPlay')
    throw Error(card.id+' earned attack damage is only an onPlay effect');
   if(name==='onRetire'&&
-   (!['character','field'].includes(card.type)||program.some(e=>!['draw','millTop','drawIfOwnFieldExists','chooseOne','deployOutsideTraitlessRestOrRaid','retireOppFrontOneUnderBp','restOppFrontUnderBp','buffOwnField','deployNamedFromZones','oncePerTurnGate'].includes(e.op))))
+   (!['character','field'].includes(card.type)||program.some(e=>!['draw','millTop','drawIfOwnFieldExists','chooseOne','deployOutsideTraitlessRestOrRaid','retireOppFrontOneUnderBp','restOppFrontUnderBp','buffOwnField','deployNamedFromZones','oncePerTurnGate','returnRetiredToHand'].includes(e.op))))
    throw Error(card.id+' unsupported onRetire ability program');
   if(name==='onRetire'&&program.some(e=>e.op==='deployNamedFromZones')&&
    (card.type!=='character'||program.length!==1||
@@ -1314,6 +1331,12 @@ function normalize(card,packId){
   if(program.some(e=>e.op==='buffSelfPerOwnOutsideGroups')&&
    (name!=='onAttack'||card.type!=='character'))
    throw Error(card.id+' outside group BP is onAttack CHARACTER only');
+  if(program.some(e=>e.op==='drawIfSelfBpAtLeast')&&
+   (name!=='onAttack'||card.type!=='character'||program.length!==1))
+   throw Error(card.id+' self-BP draw is only a lone character onAttack effect');
+  if(program.some(e=>e.op==='returnRetiredToHand')&&
+   (name!=='onRetire'||card.type!=='character'||program.length!==1))
+   throw Error(card.id+' returning the retired card is only a lone character onRetire effect');
   if(program.some(e=>['grantSelfSniperThisTurn','grantSelfAttackWinDrawThisTurn','grantSelfMustBlockThisTurn'].includes(e.op))&&
    (name!=='onPlay'||card.type!=='character'||card.implementation!=='dsl'))
    throw Error(card.id+' timed sniper/win ability requires onPlay CHARACTER');

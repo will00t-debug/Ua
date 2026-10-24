@@ -75,23 +75,22 @@ test('C2 registers seven whole prints and leaves no exact reuse unported',()=>{
  const x=c2BlcSaoRegister();
  assert.deepEqual([...C2_REGISTERED].sort(),[
   'BLC-1-007','BLC-1-044','BLC-1-073','SAO-1-015','SAO-1-050','SAO-1-090','SAO-1-092']);
- assert.equal(x.report.registered,421);
+ assert.equal(x.report.registered,425);
  assert.equal(x.report.bleach,160);
- assert.equal(x.report.sao,119);
+ assert.equal(x.report.sao,121);
  assert.equal(x.report.registeredThisRound,7);
  assert.equal(x.report.readyFromKeywords,0);
- assert.equal(x.report.engineBlocked,5);
+ assert.equal(x.report.engineBlocked,3);
  assert.equal(x.report.partial,1);
  assert.equal(x.report.reviewPending,174);
- assert.equal(x.report.bleachSaoUnported,180);
+ assert.equal(x.report.bleachSaoUnported,178);
  for(const id of C2_REGISTERED){
   const title=id.startsWith('BLC-')?'bleach':'sword-art-online';
   assert.equal(EXPECTED_V2_IDS[title].includes(id),true);
  }
  const blocked=x.reviewed.map(c=>c.id).sort();
  assert.deepEqual(blocked,[
-  'BLC-1-091','BLC-2-041',
-  'SAO-1-085','SAO-1-103','SAO-2-039','SAO-2-066']);
+  'BLC-1-091','BLC-2-041','SAO-2-039','SAO-2-066']);
  assert.equal(x.reviewed.find(c=>c.id==='BLC-1-091').status,'PARTIAL');
 });
 

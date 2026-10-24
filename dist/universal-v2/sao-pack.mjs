@@ -106,6 +106,14 @@ const PRINTED_PINS=Object.freeze({
   "color":"purple","energy":0,"ap":1,"bp":1500,"gen":1,"type":"character",
   "trigger":"active","traits":["SAOサバイバー"],
   "effectJa":"【退場時】自分の山札の上から2枚まで場外に置く。"},
+ "SAO-1-085":{"kind":"onAttackDrawIfSelfBp","nameJa":"キリト",
+  "color":"green","energy":4,"ap":1,"bp":4000,"gen":1,"type":"character",
+  "trigger":null,"traits":["GGO"],
+  "effectJa":"【アタック時】このキャラのBPが5000以上の場合、カードを1枚引く。"},
+ "SAO-1-103":{"kind":"onPlayMoveAnyOwnLine","nameJa":"キリト",
+  "color":"blue","energy":3,"ap":1,"bp":3000,"gen":3,"type":"character",
+  "trigger":"color","traits":["アインクラッド"],
+  "effectJa":"【登場時】自分の場のキャラを1枚まで選び、別のラインに移動させる。"},
   "SAO-1-051": {
     "kind": "impactNullOwnTurnHandFiveBp1000",
     "nameJa": "キリト",
@@ -1739,6 +1747,19 @@ export function verifiedSaoV2Cards(){
    if(!m)throw Error(id+' is not the printed optional retirement mill');
    card.effects={onRetire:[{op:'millTop',count:Number(m[1]),optional:true}]};
   }
+  if(pin.kind==='onAttackDrawIfSelfBp'){
+   const m=/^【アタック時】このキャラのBPが(\d{3,5})以上の場合、カードを1枚引く。$/.exec(pin.effectJa);
+   if(!m)throw Error(id+' is not the printed self-BP attack draw');
+   card.effects={onAttack:[{op:'drawIfSelfBpAtLeast',bp:Number(m[1]),count:1}]};
+  }
+  if(pin.kind==='onPlayMoveAnyOwnLine'){
+   if(pin.effectJa!=='【登場時】自分の場のキャラを1枚まで選び、別のラインに移動させる。')
+    throw Error(id+' is not the printed any-own line move');
+   // Official COLOR text fetched 2026-10-24 from the UA15ST iframe:
+   // BP3500以下の相手のフロントLのキャラを1枚選び、手札に戻す。
+   card.effects={onPlay:[{op:'moveOtherAcrossOrRemove',optional:true,includeSelf:true}]};
+   card.triggerEffect={op:'bounceOppFrontUnderBp',bp:3500};
+  }
   if(pin.kind==='lifeGatedRestRetire'){
     card.templateEffects={onPlay:[{template:'restOrRetireEnemyFrontByOwnLife',
      bp:5000,lifeAtMost:4,optional:false}]};
@@ -1836,7 +1857,8 @@ export function verifiedSaoV2Entries(){
         [def.id==='SAO-1-005'?'tests/v2-r31-sao005-official-registry.test.mjs':
         'tests/v2-cross-title-top-filter-round13.test.mjs']:[]),
      ...(def.id==='SAO-2-029'||['namedFieldRetireBonus','frontBuffThenDraw',
-      'onPlayAnyColorHandRestTrait','onPlayRecoverColorTrait','onRetireMillUpTo']
+      'onPlayAnyColorHandRestTrait','onPlayRecoverColorTrait','onRetireMillUpTo',
+      'onAttackDrawIfSelfBp','onPlayMoveAnyOwnLine']
       .includes(pin.kind)?['tests/v2-c26-five-title-batch.test.mjs']:[]),
      ...(pin.kind==='readyOnFirstBlock'?['tests/v2-ready-on-block-round14.test.mjs']:[]),
      ...(pin.kind==='frontOnceBpDown'||pin.kind==='frontOnceDiscardBpDown'?['tests/v2-single-bp-target-round14.test.mjs']:[]),
