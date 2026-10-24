@@ -3,6 +3,7 @@
 // All game transitions pass through legalUniversalActions/dispatchUniversalAction.
 import {createAllV2PreviewRealDecks} from './universal-v2/preview-real-decks.mjs';
 import {summarizeDesignatedDecks,designatedPlayableCounts} from './universal-v2/bleach-designated-decks.mjs';
+import {validateUniversalDeck} from './universal-v2/pack.mjs';
 import {V2_ABILITY_TEMPLATE_IDS} from './universal-v2/ability-templates.mjs';
 import {listRegisteredV2Titles} from './universal-v2/title-packs/registry.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
@@ -479,8 +480,8 @@ function renderDesignatedDecks(){
  const registered=new Set(Object.keys(decks['bleach-green'].pack.cards));
  root.replaceChildren();
  for(const row of summarizeDesignatedDecks(id=>registered.has(id))){
-  const article=document.createElement('article');
-  const title=document.createElement('h3');
+  const article=document.createElement('details');
+  const title=document.createElement('summary');
   title.textContent=row.name+'（'+row.colorLabel+'）｜'+row.copies+' 張｜已登錄 '+
    row.registeredKinds+'/'+row.kinds+'｜'+(row.playable?'完整可玩':'不可完整對局');
   article.append(title);
@@ -520,6 +521,36 @@ function renderDesignatedDecks(){
  }
 }
 renderDesignatedDecks();
+// Import only source-registered, complete BLEACH lists; never pretend unsupported
+// classic cards gained official V2 profiles.
+function importClassicLobbyDecks(){
+ $('my-title').value=designatedReady.has('reject-blue')?'reject-blue':'bleach-purple';
+ $('ai-title').value=designatedReady.has('white-sword')?'white-sword':'bleach-green';
+ let raw=null;
+ try{
+  raw=JSON.parse(sessionStorage.getItem('ua-v2-classic-entry-v1')||'null');
+  sessionStorage.removeItem('ua-v2-classic-entry-v1');
+ }catch{raw=null;}
+ if(!raw||typeof raw!=='object')return;
+ const pack=decks['bleach-green'].pack,notices=[];
+ for(const [side,key,label] of [['mine','my-title','你的'],['foe','ai-title','電腦']]){
+  const counts=raw[side],problems=counts&&typeof counts==='object'&&!Array.isArray(counts)?
+   validateUniversalDeck(pack,counts):['不是合法牌組'];
+  if(problems.length){
+   notices.push(label+'舊版構築尚無法使用 V2 完整判定（'+problems.slice(0,2).join('、')+'），已保留可玩的預設牌組供選擇。');
+   continue;
+  }
+  const value='classic-'+side;
+  designatedReady.set(value,{pack,counts:Object.freeze({...counts}),
+   label:typeof raw[side+'Name']==='string'?raw[side+'Name'].slice(0,40):'從舊版匯入的牌組'});
+  $(key).append(el('option',{value,text:'從舊版匯入｜'+(side==='mine'?'你的牌組':'對手牌組')}));
+  $(key).value=value;
+ }
+ if(['easy','normal','hard'].includes(raw.aiDifficulty))$('ai-level').value=raw.aiDifficulty;
+ if(raw.first==='0'||raw.first==='1')$('first-player').value=raw.first==='1'?'ai':'human';
+ if(notices.length)$('restart-notice').textContent=notices.join(' ');
+}
+importClassicLobbyDecks();
 function startGame(){
  resetAi();
  try{
