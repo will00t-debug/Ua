@@ -934,6 +934,24 @@ function normalize(card,packId){
  if(card.readyOnBlockCount!==undefined&&(
   card.type!=='character'||card.readyOnBlockCount!==1))
   throw Error(card.id+' invalid ready-on-block count');
+ const attackWinRecover=card.attackWinRecover??null;
+ if(attackWinRecover!==null&&(
+  card.type!=='character'||card.implementation!=='dsl'||
+  !attackWinRecover||typeof attackWinRecover!=='object'||Array.isArray(attackWinRecover)||
+  !integer(attackWinRecover.basePrintedBp,0)||attackWinRecover.basePrintedBp>50000||
+  !integer(attackWinRecover.unit,1)||attackWinRecover.unit>200||
+  !integer(attackWinRecover.bpPerGroup,1)||attackWinRecover.bpPerGroup>5000||
+  attackWinRecover.bpPerGroup%500!==0||
+  typeof attackWinRecover.excludeName!=='string'||!attackWinRecover.excludeName.trim()||
+  attackWinRecover.excludeName.length>80||
+  Object.keys(attackWinRecover).length!==4||
+  Object.keys(attackWinRecover).some(k=>!['basePrintedBp','unit','bpPerGroup','excludeName'].includes(k))
+ ))throw Error(card.id+' invalid generic printed attacking-victory recovery');
+ if(card.conditionalImpactBpAtLeast!==undefined&&(
+  card.type!=='character'||card.implementation!=='dsl'||
+  !integer(card.conditionalImpactBpAtLeast,1)||card.conditionalImpactBpAtLeast>50000||
+  card.printedImpact!==undefined||card.conditionalUnderFaceDown
+ ))throw Error(card.id+' invalid live-current-BP IMPACT threshold');
  const attackEndSwap=card.attackEndSwap??null;
  if(attackEndSwap!==null&&(
   card.type!=='character'||typeof attackEndSwap!=='object'||Array.isArray(attackEndSwap)||
@@ -964,12 +982,12 @@ function normalize(card,packId){
  if(implemented==='vanilla'&&(Object.keys(effects).length||card.effectText||
   mainAbility||phaseEffects.length||moveTriggers.length||moveObserver||card.enterActiveIfOpponentRest||card.enterAlwaysActive||card.activeExtraEnergy||card.conditionalTraitEnergy||passiveBonuses||card.impactNull||
   card.printedImpact||card.printedAttackDamage||card.readyOnAttackCount||card.readyOnBlockCount||
-  card.frontGeneratesEnergy||ownOutsideRecovery||colorTriggerFieldSubstitution||card.frontForbidden||card.ownTurnBp||card.opponentTurnBp||nameAliases||selectionHandDiscardTax||card.otherOwnBattleWonDamageTwo||attackEndSwap||blockBpRestriction))
+  card.frontGeneratesEnergy||ownOutsideRecovery||colorTriggerFieldSubstitution||card.frontForbidden||card.ownTurnBp||card.opponentTurnBp||nameAliases||selectionHandDiscardTax||card.otherOwnBattleWonDamageTwo||attackEndSwap||blockBpRestriction||attackWinRecover||card.conditionalImpactBpAtLeast))
   throw Error(card.id+' claims vanilla despite printed/declared effects');
  if(implemented==='dsl'&&!Object.keys(effects).length&&!phaseEffects.length&&!moveTriggers.length&&!mainAbility&&!moveObserver&&!card.enterActiveIfOpponentRest&&!card.enterAlwaysActive&&
   !card.activeExtraEnergy&&!card.conditionalTraitEnergy&&!passiveBonuses&&!card.impactNull&&
   !card.printedImpact&&!card.printedAttackDamage&&!card.readyOnAttackCount&&!card.readyOnBlockCount&&
-  !card.frontGeneratesEnergy&&!ownOutsideRecovery&&!colorTriggerFieldSubstitution&&!card.frontForbidden&&!card.ownTurnBp&&!card.opponentTurnBp&&!nameAliases&&!selectionHandDiscardTax&&!card.otherOwnBattleWonDamageTwo&&!attackEndSwap&&!blockBpRestriction)
+  !card.frontGeneratesEnergy&&!ownOutsideRecovery&&!colorTriggerFieldSubstitution&&!card.frontForbidden&&!card.ownTurnBp&&!card.opponentTurnBp&&!nameAliases&&!selectionHandDiscardTax&&!card.otherOwnBattleWonDamageTwo&&!attackEndSwap&&!blockBpRestriction&&!attackWinRecover&&!card.conditionalImpactBpAtLeast)
   throw Error(card.id+' declares dsl without effects');
  for(const [name,program] of Object.entries(effects)){
   if(program.some(x=>x.op==='retireSourceOnPhaseEnd'))throw Error(card.id+' invalid phase-only self retirement');
@@ -1134,6 +1152,8 @@ function normalize(card,packId){
    condition:blockBpRestriction.condition?Object.freeze({
     ...blockBpRestriction.condition,
     names:Object.freeze([...blockBpRestriction.condition.names])}):null}):null,
+  attackWinRecover:attackWinRecover?Object.freeze({...attackWinRecover}):null,
+  conditionalImpactBpAtLeast:card.conditionalImpactBpAtLeast??null,
   attackEndSwap:attackEndSwap?Object.freeze({
    color:attackEndSwap.color,types:Object.freeze([...attackEndSwap.types]),
    minDistinctNames:attackEndSwap.minDistinctNames}):null,
