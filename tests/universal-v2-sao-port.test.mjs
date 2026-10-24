@@ -55,7 +55,7 @@ test('SAO official dedup identity and product scopes stay unchanged, AP/parallel
  }
  assert.equal(verifiedSaoV2Cards().length,EXPECTED_V2_COUNTS['sword-art-online']);
  assert.ok(pack.cards['SAO-1-071']?.raidName==='アスナ','R54 full composite card explicitly registered');
-  assert.match(validateUniversalDeck(pack,{...deck,'SAO-1-083':1}).join(),/Unregistered/);
+  assert.match(validateUniversalDeck(pack,{...deck,'SAO-2-066':1}).join(),/Unregistered/);
 });
 test('SAO 50 physical-card deck, actual AP spending and entry draw/discard are V2 transitions',()=>{
  let s=fresh(),p=s.players[0],card=take(s,0,'SAO-1-055');
