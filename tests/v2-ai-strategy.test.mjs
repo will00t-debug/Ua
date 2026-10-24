@@ -89,10 +89,16 @@ test('hidden-zone permutations cannot affect Hard observations, rankings or dete
    const b=createUniversalAiObservation(packs,altered,legalUniversalActions(packs,altered));
    assert.deepEqual(a,b);assert.deepEqual(rankUniversalAiActions(packs,a),rankUniversalAiActions(packs,b));
   }
-  const action=chooseUniversalAiAction(packs,s,{difficulty:'hard'}),actor=s.pending?.player??s.active;
+  const diagA={},diagB={};
+  const action=chooseUniversalAiAction(packs,s,{difficulty:'hard',telemetry:diagA}),actor=s.pending?.player??s.active;
   const next=dispatchUniversalAction(packs,s,action,{actor});
   const restored=JSON.parse(JSON.stringify(s));
-  assert.deepEqual(chooseUniversalAiAction(packs,restored,{difficulty:'hard'}),action);
+  const repeated=chooseUniversalAiAction(packs,restored,{difficulty:'hard',telemetry:diagB});
+  if(JSON.stringify(repeated)!==JSON.stringify(action))
+   console.error('R3 REPLAY DIVERGENCE',JSON.stringify({n,phase:s.phase,
+    pending:s.pending?.kind||null,initial:diagA,repeated:diagB,
+    rootActions:legalUniversalActions(packs,s).length}));
+  assert.deepEqual(repeated,action);
   assert.deepEqual(dispatchUniversalAction(packs,restored,action,{actor}),next);
   s=next;
  }
