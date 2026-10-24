@@ -61,9 +61,9 @@ function nativeChild(packs,s,a,owner){
   if(!legalUniversalActions(packs,probe).some(x=>same(x,real)))return null;
   const other=dispatchUniversalAction(packs,probe,real,{actor:owner});
   if(!publiclyStableTransition(probe,other,real,owner))return null;
-  const a=createUniversalAiObservation(packs,child,legalUniversalActions(packs,child));
-  const b=createUniversalAiObservation(packs,other,legalUniversalActions(packs,other));
-  if(!same(a,b))return null;
+  const nextVisible=createUniversalAiObservation(packs,child,legalUniversalActions(packs,child));
+  const probeVisible=createUniversalAiObservation(packs,other,legalUniversalActions(packs,other));
+  if(!same(nextVisible,probeVisible))return null;
   return child;
  }catch{return null;}
 }
