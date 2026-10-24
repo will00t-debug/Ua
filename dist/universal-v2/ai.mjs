@@ -1,6 +1,8 @@
+import {createUniversalAiObservation} from './ai-observation.mjs';
+import {chooseStrategicUniversalAction} from './ai-strategy.mjs';
 // Cross-title Universal v2 AI baseline. Uses only the native legal-action
 // list; no work-specific card-ID shortcuts and no mutation of match state.
-import {legalUniversalActions,dispatchUniversalAction,universalBp,universalEnergy,universalEnergyByColor,universalCardEnergy} from './engine.mjs';
+import {legalUniversalActions,universalBp,universalEnergy,universalEnergyByColor,universalCardEnergy} from './engine.mjs';
 export const UNIVERSAL_AI_LEVELS=Object.freeze(['easy','normal','hard']);
 const packsOf=pack=>Array.isArray(pack)?pack:[pack,pack];
 const option=(list,type)=>list.find(x=>x.type===type);
@@ -144,16 +146,11 @@ function chooseBaselineAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='leave-replacement'){
   const leave=legal.find(a=>a.mode==='leave')||legal[0];
   if(difficulty==='easy')return leave;
-  // A facedown layer may provide the ONLY +BP keeping a Raid alive.
-  // Never waste that layer if the post-payment state-based BP check still
-  // sends the protected top to outside. Simulate using the pure reducer so
-  // chained layers, nested pending actions and game-zone invariants agree.
-  for(const choice of legal.filter(a=>a.mode==='protect')){
-   const after=dispatchUniversalAction(pack,s,choice,{actor:s.pending.player});
-   const field=[...after.players[s.pending.player].front,
-    ...after.players[s.pending.player].energy];
-   if(field.some(c=>c?.uid===s.pending.uid))return choice;
-  }
+  const own=s.players[s.pending.player];
+  const c=[...own.front,...own.energy].find(x=>x?.uid===s.pending.uid);
+  const loss=packsOf(pack)[s.pending.player].cards[c?.cardId]?.conditionalUnderFaceDown?.bp||0;
+  const protect=legal.filter(a=>a.mode==='protect');
+  if(c&&universalBp(pack,s,c)-(protect.length>1?0:loss)>0)return protect[0]||leave;
   return leave;
  }
  if(s.pending?.kind==='block')return chooseBlock(pack,s,legal,difficulty);
@@ -250,6 +247,7 @@ function chooseBaselineAction(pack,s,{difficulty='normal'}={}){
 export function chooseUniversalAiAction(pack,s,options={}){
  const legal=legalUniversalActions(pack,s);
  if(!legal.length)return null;
- const candidate=chooseBaselineAction(pack,s,options);
+ if(options.difficulty&&!UNIVERSAL_AI_LEVELS.includes(options.difficulty))throw Error('Unknown universal AI difficulty');
+ const candidate=options.difficulty==='hard'?chooseStrategicUniversalAction(packsOf(pack),createUniversalAiObservation(pack,s,legal)):chooseBaselineAction(pack,s,options);
  return legal.find(a=>JSON.stringify(a)===JSON.stringify(candidate))||legal[0];
 }
