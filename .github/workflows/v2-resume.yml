@@ -76,6 +76,8 @@ jobs:
         run: node scripts/v2-integrated-match-matrix.mjs
       - name: Shared AI mirrored five-title benchmark
         run: node scripts/v2-ai-benchmark.mjs
+      - name: Round 2 same-title 50-card mirrors vs frozen Round 1 Hard
+        run: node scripts/v2-ai-mirror-benchmark.mjs
       - name: Independent card-id manifest
         run: node scripts/v2-assert-independent-manifest.mjs
       - name: V2 unported report
@@ -87,4 +89,5 @@ jobs:
           path: |
             audit/v2-integrated-match-matrix.json
             audit/v2-ai-benchmark.json
+            audit/v2-ai-round2-mirror.json
             audit/v2-r58-five-title-rescan.json
