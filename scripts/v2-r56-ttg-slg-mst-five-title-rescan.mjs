@@ -17,8 +17,8 @@ export const R56_SEARCH_TERMS=Object.freeze({
 const PRIORITY=Object.freeze([
  {id:'SLG-1-021',owner:'GPT',status:'REGISTERED',faq:'Q2028',
   reason:'JP five-clause whole print, physical printed BP and forced legal BLOCK; independent FAQ exhaustiveness pending'},
- {id:'MST-1-009',owner:'GPT',status:'ENGINE BLOCKED',faq:'Q2147',
-  reason:'own-effect-entry chooseOne, next-own-start BP and physical attack-end swap atomicity'},
+ {id:'MST-1-009',owner:'GPT',status:'REGISTERED',faq:'Q2147',
+  reason:'Full Japanese print; own-effect-only chooseOne, physical next-own-start BP and Q2147 attack-end swap, independent FAQ certification still pending'},
  {id:'TTG-1-057',owner:'GPT',status:'ENGINE BLOCKED',faq:null,
   reason:'IMPACT cancellation + grant to other own target until next own start, hidden source'},
  {id:'TTG-1-069',owner:'GPT',status:'ENGINE BLOCKED',faq:null,
