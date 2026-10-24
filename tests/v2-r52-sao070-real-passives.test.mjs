@@ -79,7 +79,11 @@ test('R52 REAL ACTIONS: three paid SAO100 EVENT plus three SAO068 true retire re
  const foes=s.players[1].front.filter(Boolean).map(x=>x.uid);
  for(let i=0;i<3;i++){
   const a=legalUniversalActions(packs,s).find(x=>x.type==='event'&&x.uid===events[i].uid);
-  assert.ok(a,'true physical SAO-1-100 legal paid action');
+  assert.ok(a,'true physical SAO-1-100 legal paid action iteration='+i+
+   ' phase='+s.phase+' AP='+s.players[0].apCards.filter(x=>x.ready).length+
+   ' sources='+actualNameOutside(s)+' energy='+s.players[0].energy
+    .filter(Boolean).map(x=>pack.cards[x.cardId].gen).join(',')+
+   ' candidates='+legalUniversalActions(packs,s).map(x=>x.type).join(','));
   s=use(s,a);
   assert.equal(s.pending?.kind,'effect-named-outside-bounce-retire');
   assert.equal(actualNameOutside(s),i,'Q767 source not yet added');
