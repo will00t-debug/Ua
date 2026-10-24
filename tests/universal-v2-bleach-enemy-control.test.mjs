@@ -80,10 +80,12 @@ test('BLC-2-048 bonus Rukia enables legal 4000-BP retirement; no Rukia means no 
  // Without Rukia, above 3000 BP has no eligible retirement target.
  const noRukia=structuredClone(s);
  noRukia.players[0].front[0]=null;noRukia.players[0].outside.push(rukia);
- const base=dispatchUniversalAction(packs,noRukia,option,{actor:0});
- assert.equal(base.pending,null);
- assert.equal(base.players[1].front[0]?.uid,high.uid);
- assert.equal(assertUniversalMatch(packs,base),true);
+ // Q1119: mandatory retirement cannot be played with no legal BP<=3000 target.
+ assert.equal(legalUniversalActions(packs,noRukia).some(x=>x.type==='event'&&x.uid===spell.uid),false);
+ assert.throws(()=>dispatchUniversalAction(packs,noRukia,option,{actor:0}),/Action not currently legal/);
+ assert.equal(noRukia.players[1].front[0]?.uid,high.uid);
+ assert.ok(noRukia.players[0].hand.some(x=>x.uid===spell.uid));
+ assert.equal(assertUniversalMatch(packs,noRukia),true);
 });
 
 test('BLC-2-048 SPECIAL life trigger can retire a BP4000 foe without event energy/AP cost',()=>{
