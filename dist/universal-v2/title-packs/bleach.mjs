@@ -41,7 +41,13 @@ const testForKind=Object.freeze({
  onRetireRestUnder2000:'tests/v2-onretire-rest-round14.test.mjs',
  restSelfBuffOther:'tests/v2-c1-blc-ready-reuse.test.mjs',
  readyOnFirstBlock:'tests/v2-c1-blc-ready-reuse.test.mjs',
- ownTurnNamedBp:'tests/v2-c1-blc-ready-reuse.test.mjs'
+ ownTurnNamedBp:'tests/v2-c1-blc-ready-reuse.test.mjs',
+ opponentFieldHandEnergy:'tests/v2-c2-hand-energy-register.test.mjs',
+ drawIfOwnEffectEntry:'tests/v2-c3-blc-mst-reuse.test.mjs',
+ blockBpAtMost:'tests/v2-c3-blc-mst-reuse.test.mjs',
+ frontDiscardDraw:'tests/v2-c4-blc-front-discard-draw.test.mjs',
+ frontDiscardFieldBpDown:'tests/v2-c5-blc-front-discard-down.test.mjs',
+ aliasPeekTopOutside:'tests/v2-c6-blc-alias-peek.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.

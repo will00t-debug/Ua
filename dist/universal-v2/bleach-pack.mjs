@@ -966,7 +966,15 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-1-058","kind":"restSelfBuffOther","number":"UA08BT/BLC-1-058","name":"二枚屋 王悦","color":"purple","energy":2,"ap":1,"bp":2500,"gen":1,"trigger":null,"type":"character","effect":"主要階段：REST 自己，使 1 個其他己方場上角色本回合 BP +1000。"},
 {"id":"BLC-1-088","kind":"readyOnFirstBlock","number":"UA08BT/BLC-1-088","name":"斑目 一角","color":"green","energy":3,"ap":1,"bp":3500,"gen":1,"trigger":"draw","type":"character","effect":"每回合第一次阻擋時，此角色立即轉為 ACTIVE，因此可阻擋 2 次。"},
 {"id":"BLC-1-101","kind":"readyOnFirstBlock","number":"UA08ST/BLC-1-101","name":"井上 織姫","color":"purple","energy":2,"ap":1,"bp":3000,"gen":1,"trigger":"active","type":"character","effect":"本回合第一次阻擋時，立即轉為 ACTIVE。"},
-{"id":"BLC-4-073","kind":"ownTurnNamedBp","number":"EX15BT/BLC-4-073","name":"斑目 一角","color":"green","energy":2,"ap":1,"bp":2500,"gen":1,"trigger":null,"type":"character","effect":"自己的回合中：若自己場上有《更木劍八》，此角色BP+1500。"}
+{"id":"BLC-4-073","kind":"ownTurnNamedBp","number":"EX15BT/BLC-4-073","name":"斑目 一角","color":"green","energy":2,"ap":1,"bp":2500,"gen":1,"trigger":null,"type":"character","effect":"自己的回合中：若自己場上有《更木劍八》，此角色BP+1500。"},
+{"id":"BLC-1-007","kind":"opponentFieldHandEnergy","number":"UA08BT/BLC-1-007","name":"ジェローム・ギズバット","color":"yellow","energy":3,"ap":1,"bp":3000,"gen":2,"trigger":null,"type":"character","effect":"敵方場上有紫色或綠色卡片時，手牌中此卡的黃色需求能源減少 1。"},
+{"id":"BLC-1-044","kind":"opponentFieldHandEnergy","number":"UA08BT/BLC-1-044","name":"阿近","color":"purple","energy":3,"ap":1,"bp":3000,"gen":2,"trigger":null,"type":"character","effect":"敵方場上有黃色或綠色卡片時，手牌中此卡的紫色需求能源減少 1。"},
+{"id":"BLC-1-073","kind":"opponentFieldHandEnergy","number":"UA08BT/BLC-1-073","name":"鳳橋 楼十郎","color":"green","energy":3,"ap":1,"bp":3000,"gen":2,"trigger":null,"type":"character","effect":"敵方場上有黃色或紫色卡片時，手牌中此卡的綠色需求能源減少 1。"},
+{"id":"BLC-4-029","kind":"blockBpAtMost","number":"EX15BT/BLC-4-029","name":"志波 岩鷲","color":"blue","energy":1,"ap":1,"bp":2000,"gen":1,"trigger":"active","type":"character","effect":"此角色不會被BP2000以下的角色阻擋。"},
+{"id":"BLC-4-031","kind":"drawIfOwnEffectEntry","number":"EX15BT/BLC-4-031","name":"四楓院 夜一","color":"blue","energy":1,"ap":1,"bp":2000,"gen":1,"trigger":null,"type":"character","effect":"登場時：若此角色是以自己的效果登場，抽1張牌。"},
+{"id":"BLC-4-025","kind":"frontDiscardDraw","number":"EX15BT/BLC-4-025","name":"黒崎 一護","color":"blue","energy":4,"ap":1,"bp":4000,"gen":1,"trigger":null,"type":"character","effect":"啟動・主要〔前線／每回合1次／將1張手牌送至場外〕：抽1張牌。"},
+{"id":"BLC-2-003","kind":"frontDiscardFieldBpDown","number":"EX07BT/BLC-2-003","name":"バズビー","color":"yellow","energy":2,"ap":1,"bp":3000,"gen":1,"trigger":"active","type":"character","effect":"主要階段・位於前線・每回合 1 次：將 1 張手牌送至場外，使 1 個敵方場上 BP 1500 以上角色本回合 BP −1000。"},
+{"id":"BLC-4-002","kind":"aliasPeekTopOutside","number":"EX15BT/BLC-4-002","name":"ユーゴー","color":"yellow","energy":0,"ap":1,"bp":1500,"gen":1,"trigger":"draw","type":"character","effect":"此卡也視為《雨葛蘭・哈斯沃德》。登場時：查看牌庫頂1張，放回牌庫頂或送至場外。"}
 ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1007,6 +1015,7 @@ export function checkedBleachAddonDefinition(p){
   inspectTop2:{onPlay:[{template:'inspectTopArrange',count:2,toOutside:true,rest:'top'}]},
   inspectTop3:{onPlay:[{template:'inspectTopArrange',count:3,toOutside:true,rest:'top'}]},
   peekTopOrBottom:{onPlay:[{template:'peekTopOrBottom'}]},
+  aliasPeekTopOutside:{onPlay:[{template:'peekTopOne'}]},
   inspectTopAnyOutside2:{onPlay:[{template:'inspectTopAnyOutside',count:2,rest:'top'}]},
   frontBpDownMin1000:{onPlay:[{template:'enemyFrontBpDownInRange',bp:500,minBp:1000,maxBp:null}]},
   onRetireRestUnder2000:{onRetire:[{template:'restEnemyUnderBp',bp:2000,optional:true}]}
@@ -1031,12 +1040,17 @@ export function checkedBleachAddonDefinition(p){
  const isRestBuff=p.kind==='restSelfBuffOther';
  const isReadyBlock=p.kind==='readyOnFirstBlock';
  const isNamedBp=p.kind==='ownTurnNamedBp';
+ const isHandDiscount=p.kind==='opponentFieldHandEnergy';
+ const isOwnEffectDraw=p.kind==='drawIfOwnEffectEntry';
+ const isBlockLow=p.kind==='blockBpAtMost';
+ const isFrontDiscardDraw=p.kind==='frontDiscardDraw';
+ const isFrontDiscardDown=p.kind==='frontDiscardFieldBpDown';
  const isTopRequired=p.kind==='topOneEnergyDiscount';
  const isTopTwoGotei=p.kind==='topTwoGoteiEvent';
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp;
+ const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1066,6 +1080,16 @@ export function checkedBleachAddonDefinition(p){
   ...(isRestBuff?{mainAbility:{op:'restSelfBuffOther',bp:1000}}:{}),
   ...(isNamedBp?{passiveBonuses:[{condition:{kind:'ownNameExists',turn:'own',
    zone:'field',excludeSelf:false,name:'更木 剣八'},bp:1500}]}:{}),
+  ...(isHandDiscount?{opponentFieldColorsHandEnergyDiscount:{
+   colors:{'BLC-1-007':['purple','green'],'BLC-1-044':['yellow','green'],
+    'BLC-1-073':['yellow','purple']}[p.id],amount:1}}:{}),
+  ...(isBlockLow?{blockBpRestriction:{relation:'atMost',bp:2000,condition:null}}:{}),
+  ...(isFrontDiscardDraw?{mainAbility:{op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,
+   then:[{op:'discardGate',optional:false,then:[{op:'draw',count:1}]}]}}:{}),
+  ...(isFrontDiscardDown?{mainAbility:{op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,
+   then:[{op:'discardGate',optional:false,then:[{op:'enemyBpDown',bp:1000,optional:false,
+    minBp:1500,zone:'field'}]}]}}:{}),
+  ...(p.kind==='aliasPeekTopOutside'?{nameAliases:['ユーグラム・ハッシュヴァルト']}:{}),
   ...(p.kind==='restSelfEnemy'?{mainAbility:{op:'restSelfThenRestOppFrontOne',frontOnly:true}}:{}),
   ...(p.kind==='restEnergyRetire'?{mainAbility:{op:'restSelfGainEnergyRetireEndMain',energyOnly:true,oncePerTurn:true,extraEnergy:1}}:{}),
   ...(p.kind.startsWith('retireBonus')?{triggerEffect:{op:'retireOppFront'}}:{}),
@@ -1100,6 +1124,7 @@ export function checkedBleachAddonDefinition(p){
    isRetireMill?{onRetire:[{op:'millTop',count:2}]}:
    isOppDiscard?{onPlay:[{op:'discardOppHand',count:1}]}:
    isDrawTwo?{onPlay:[{op:'drawDiscard',count:2,discardCount:1}]}:
+   isOwnEffectDraw?{onPlay:[{op:'draw',count:1,entry:'ownEffect'}]}:
    isStripDual?{onPlay:[{op:'chooseOne',optional:false,options:[
     {id:'strip',label:'Strip opponent RAID top',turn:'any',
      then:[{op:'stripOppRaidTop',optional:true}]},

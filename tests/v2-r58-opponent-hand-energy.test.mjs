@@ -6,12 +6,13 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  effectiveHandRequiredEnergy,universalPublicView,assertUniversalMatch}
  from '../dist/universal-v2/engine.mjs';
 
-// All six source records: official UNION ARENA (NA) detailed card pages,
-// read 2026-10-24. Test fixtures ONLY; do not register these six as complete
-// production cards here. Each printed: required 3 of own color, AP 1,
-// generated 2 of own color, BP 3000, no trigger; HAND-only -1 when an
-// opponent FRONT/ENERGY field card has one of the two enumerated colors.
-// None of these six English official detail pages has a card-specific FAQ.
+// All six source records were read from the Japanese official pages on
+// 2026-10-24 and registered by Cursor C2. Each printed card: required 3 of
+// its own color, AP 1, generated 2 of its own color, BP 3000, no trigger.
+// While the card is in hand, required energy is 2 when an opponent FRONT or
+// ENERGY card has one of the two enumerated colors. No card-specific FAQ
+// was on those pages. The fixture below stays only for malformed-profile
+// rejection; gameplay uses the production packs.
 const PRINTED=[
  ['bleach','BLC-1-007','yellow',['purple','green'],'Jerome Guizbatt','UE01BT'],
  ['bleach','BLC-1-044','purple',['yellow','green'],'Akon','UE01BT'],
@@ -27,9 +28,15 @@ const fixture=([title,id,color,colors,name])=>({
 });
 function testOnlyPack(profile){
  const base=registeredV2TitlePack(profile[0]);
- assert.equal(base.cards[profile[1]],undefined,'Cursor retains production port');
- const one=createUniversalPack({id:'r58-test-only',cards:[fixture(profile)]});
- return {...base,cards:{...base.cards,...one.cards}};
+ const live=base.cards[profile[1]];
+ assert.ok(live,'C2 production card '+profile[1]);
+ assert.equal(live.energy,3);
+ assert.equal(live.ap,1);
+ assert.equal(live.gen,2);
+ assert.equal(live.bp,3000);
+ assert.equal(live.trigger,null);
+ assert.deepEqual(live.opponentFieldColorsHandEnergyDiscount,{colors:profile[3],amount:1});
+ return base;
 }
 // All physical cards in either player's deck have actual card IDs; 50
 // physical cards, <=4 of each ID, no invented dummy cards or invalid triggers.

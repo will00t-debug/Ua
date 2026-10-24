@@ -1329,6 +1329,58 @@ const PRINTED_PINS=Object.freeze({
     "trigger": "active",
     "traits": ["整合騎士"],
     "effectJa": "【自分のターン中】自分の場に他の［特徴：整合騎士］が4枚以上ある場合、このキャラはBP+1500。"
+  },
+  "SAO-1-015": {
+    "kind": "opponentFieldHandEnergy",
+    "nameJa": "デュソルバート・シンセシス・セブン",
+    "color": "yellow",
+    "energy": 3,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 2,
+    "type": "character",
+    "trigger": null,
+    "traits": ["整合騎士"],
+    "effectJa": "相手の場に青か緑のカードがある場合、手札にあるこのカードの必要エナジーを【黄×1】減らす。"
+  },
+  "SAO-1-050": {
+    "kind": "opponentFieldHandEnergy",
+    "nameJa": "アリシャ・ルー",
+    "color": "blue",
+    "energy": 3,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 2,
+    "type": "character",
+    "trigger": null,
+    "traits": ["ALO"],
+    "effectJa": "相手の場に黄か緑のカードがある場合、手札にあるこのカードの必要エナジーを【青×1】減らす。"
+  },
+  "SAO-1-092": {
+    "kind": "opponentFieldHandEnergy",
+    "nameJa": "シュピーゲル",
+    "color": "green",
+    "energy": 3,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 2,
+    "type": "character",
+    "trigger": null,
+    "traits": ["GGO"],
+    "effectJa": "相手の場に黄か青のカードがある場合、手札にあるこのカードの必要エナジーを【緑×1】減らす。"
+  },
+  "SAO-1-090": {
+    "kind": "conditionalSelfBpImpact",
+    "nameJa": "シノン",
+    "color": "green",
+    "energy": 3,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 2,
+    "type": "character",
+    "trigger": "color",
+    "traits": ["GGO"],
+    "effectJa": "このキャラのBPが4000以上の場合、このキャラは【インパクト（1）】（アタックしてバトルに勝利した時、相手プレイヤーに1ダメージ）を得る。"
   }
 });
 export const SAO_V2_PILOT_IDS=Object.freeze(Object.keys(PRINTED_PINS).sort());
@@ -1632,6 +1684,27 @@ export function verifiedSaoV2Cards(){
     filter:{field:'type',value:'character'},
     bp:pin.kind==='onPlayBuffOwnOther500'?500:1000,
     optional:true,excludeSelf:true}]};
+  // Official generated energy is the double pip (黄黄 / 青青 / 緑緑 = 2).
+  // Required energy stays 3. Discount colors are the two other printed colors.
+  if(pin.kind==='opponentFieldHandEnergy'){
+   const colors={
+    'SAO-1-015':['blue','green'],
+    'SAO-1-050':['yellow','green'],
+    'SAO-1-092':['yellow','blue']
+   }[id];
+   if(!colors)throw Error(id+' missing official opponent field colors');
+   card.effects={};
+   card.opponentFieldColorsHandEnergyDiscount={colors,amount:1};
+  }
+  // UA15BT/SAO-1-090 card text is only the current-BP Impact sentence.
+  // COLOR life is the standard green hand deploy: energy at most 2, AP 1, ACTIVE.
+  // Printed BP 3000 does not meet 4000 until a live bonus raises current BP.
+  if(pin.kind==='conditionalSelfBpImpact'){
+   if(id!=='SAO-1-090')throw Error(id+' missing official self-BP impact profile');
+   card.effects={};
+   card.conditionalImpactBpAtLeast=4000;
+   card.triggerEffect={op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1};
+  }
   return card;
  });
 }
@@ -1705,6 +1778,8 @@ export function verifiedSaoV2Entries(){
      ...(pin.kind==='ownTraitImpact'?['tests/v2-conditional-impact-round16.test.mjs']:[]),
      ...(pin.kind==='restSelfBuffOther'?['tests/v2-rest-buff-other-round16.test.mjs']:[]),
      ...(pin.kind==='nameAliasOnly'||pin.kind==='nameAliasStep'?['tests/v2-zero-engine-round14.test.mjs']:[]),
+     ...(pin.kind==='opponentFieldHandEnergy'||pin.kind==='conditionalSelfBpImpact'?
+      ['tests/v2-c2-hand-energy-register.test.mjs']:[]),
      'tests/universal-v2-sao-mst-cross-title.test.mjs'
     ]),
     ...(def.implementation==='vanilla'?{verifiedNoExtraEffects:true}:{})

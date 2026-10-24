@@ -19,8 +19,8 @@ No TTG, SLG or MST card added from these eight until their *entire* official eff
 
 ## Batch D — direct Cursor handoff
 
-- **READY for Cursor full source normalization and registration:** BLC-1-007 / BLC-1-044 / BLC-1-073. The entire official print is one 3→2 hand energy predicate with no life trigger.
-- **PARTIAL before Cursor's source normalization:** SAO-1-015 / SAO-1-050 / SAO-1-092. Same shared engine applies, but imported generated energy 3 is incorrect: official gen is exactly 2. Keep required energy 3, AP1, BP3000.
+- **Registered by Cursor C2:** BLC-1-007 / BLC-1-044 / BLC-1-073. The entire official print is one 3→2 hand energy predicate with no life trigger.
+- **Registered by Cursor C2 after gen normalization:** SAO-1-015 / SAO-1-050 / SAO-1-092. Imported generated energy 3 was incorrect; official gen is exactly 2. Required energy stays 3, AP stays 1, BP stays 3000.
 - Other Cursor verified engine gaps remain `ENGINE BLOCKED`, not auto-READY. BLC-4-044 and SAO-1-097 remain `REVIEW PENDING`.
 
 This is independent of the literal registry manifest, which remains a static, separately verified list; no registered numbers are ever raised simply because a card's keywords match a primitive.
