@@ -1081,6 +1081,8 @@ function normalize(card,packId){
   if(program.some(e=>['grantSelfSniperThisTurn','grantSelfAttackWinDrawThisTurn','grantSelfMustBlockThisTurn'].includes(e.op))&&
    (name!=='onPlay'||card.type!=='character'||card.implementation!=='dsl'))
    throw Error(card.id+' timed sniper/win ability requires onPlay CHARACTER');
+  if(program.some(e=>['buffSelfUntilNextOwnStart','grantSelfAttackEndSwapThisTurn'].includes(e.op)))
+   throw Error(card.id+' timed self gains must be nested inside gated onPlay chooseOne');
   if(program.some(e=>e.op==='chooseOne'&&e.entry==='ownEffect'&&
    e.options.some(o=>o.then.some(t=>['buffSelfUntilNextOwnStart','grantSelfAttackEndSwapThisTurn'].includes(t.op))))&&
    (name!=='onPlay'||card.type!=='character'||card.implementation!=='dsl'))
