@@ -1,5 +1,5 @@
 // Pure bounded heuristic policy. No reducer, hidden match state or network.
-import {boundedUniversalAiContinuation} from './ai-planner.mjs';
+import {boundedUniversalAiContinuation,stableUniversalAiActionKey} from './ai-planner.mjs';
 // Numbers are utility estimates, NOT a second effects/battle rules engine.
 const sum=xs=>xs.reduce((a,b)=>a+b,0);
 const field=p=>[...p.front,...p.energy].filter(Boolean);
@@ -214,8 +214,7 @@ export function rankUniversalAiActions(packs,o){
  const position=evaluateUniversalAiPosition(packs,o);
  // The current position is identical for every action; it is diagnostic only.
  // Candidate-specific marginal continuation is what can alter rankings.
- const continuation=boundedUniversalAiContinuation(packs,o);
- return o.legal.map((action,index)=>{
+ const base=o.legal.map((action,index)=>{
   const a=action,c=[...own.hand,...field(own)].find(c=>c.uid===a.uid),d=def(packs,o.actor,c);
   let score=0;
   if(o.pending)score=pendingScore(packs,o,a);
@@ -240,8 +239,17 @@ export function rankUniversalAiActions(packs,o){
    if(a.mode==='discardSelfBuff')score-=1.8;
    score-=0.05; // Unknown/no-benefit activation must not form loops.
   }
-  const gain=continuation.get(JSON.stringify(action))||0;
-  return {action,score:score+gain,utility:score+gain,position,index};
- }).sort((a,b)=>b.score-a.score||(o.pending?.kind?.startsWith('effect-search-deck')?JSON.stringify(a.action).localeCompare(JSON.stringify(b.action)):a.index-b.index));
+  return {action,score,utility:score,position,index};
+ });
+ // Every legal action receives the same first-pass heuristic assessment.
+ // The bounded optional estimator receives scores only AFTER this full pass.
+ // If it cannot finish its fixed search budget, all bonuses disappear.
+ const priorities=new Map(base.map(x=>[stableUniversalAiActionKey(x.action),x.score]));
+ const continuation=boundedUniversalAiContinuation(packs,o,{priorities});
+ return base.map(x=>{
+  const gain=continuation.get(JSON.stringify(x.action))||0;
+  return {...x,score:x.score+gain,utility:x.utility+gain};
+ }).sort((a,b)=>b.score-a.score||
+  stableUniversalAiActionKey(a.action).localeCompare(stableUniversalAiActionKey(b.action)));
 }
 export function chooseStrategicUniversalAction(packs,o){return rankUniversalAiActions(packs,o)[0]?.action||null;}
