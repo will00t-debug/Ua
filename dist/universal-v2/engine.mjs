@@ -3224,7 +3224,10 @@ export function legalUniversalActions(pack,s){
   for(const c of pl.hand){
    const d=card(pack,c);
    const payment=handPlayApPlan(s,p,d);
-   if(d.energy>(produced[d.color]||0)||payment.cost>ap)continue;
+   const printedHandEnergy=Math.max(0,d.energy-
+    (d.emptyOwnFieldHandEnergyDiscount&&field(pl).length===0?
+     d.emptyOwnFieldHandEnergyDiscount:0));
+   if(printedHandEnergy>(produced[d.color]||0)||payment.cost>ap)continue;
    if(d.type==='event'){
     if(eventMandatoryTargetsAvailable(pack,s,p,d,payment.cost,c.uid))
      out.push({type:'event',uid:c.uid});
