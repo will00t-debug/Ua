@@ -13,13 +13,13 @@ const fresh=(first=0)=>newUniversalMatch(packs,{decks:[mine.counts,foe.counts],f
 const source=path=>readFileSync(fileURLToPath(new URL(path,import.meta.url)),'utf8');
 test('V2 standalone preview is never injected into existing production index and references shipped mobile assets',()=>{
  const existing=source('../dist/index.html'),page=source('../dist/universal-v2-preview.html');
- const script=source('../dist/universal-v2-preview.mjs'),css=source('../dist/universal-v2-preview.css');
+ const script=source('../dist/universal-v2-preview.mjs'),css=source('../dist/universal-v2-legacy.css');
  assert.ok(!existing.includes('universal-v2-preview'));
  assert.ok(page.includes('<meta name="robots" content="noindex,nofollow,noarchive">'));
- for(const asset of ['universal-v2-preview.css','universal-v2-preview.mjs'])assert.ok(page.includes(asset));
+ for(const asset of ['universal-v2-legacy.css','universal-v2-preview.mjs'])assert.ok(page.includes(asset));
  for(const id of ['my-title','ai-title','ai-level','first-player','match-seed','match-view','start-game'])
   assert.ok(page.includes('id="'+id+'"'));
- assert.match(css,/@media\(max-width:690px\)/);
+ assert.match(css,/@media\(max-width:620px\)/);
  assert.match(script,/dispatchUniversalAction\(app.packs,app.state,a,\{actor:0\}\)/);
  assert.match(script,/uiActor\(app.state\)===1/);
  assert.match(script,/universalPrivateChoices\(app.packs,s,0\)/);
@@ -73,14 +73,14 @@ test('card labels use the correct player title pack, even with identical printed
 
 test('mobile board shares one prevalidated legal set per render and freezes selected AI difficulty',()=>{
  const script=source('../dist/universal-v2-preview.mjs');
- const slots=script.split('function zoneSlots(')[1]?.split('function stats(')[0];
+ const slots=script.split('function legacySlot(')[1]?.split('function legacyLine(')[0];
  assert.ok(slots);
  assert.ok(!slots.includes('legalUniversalActions('),
-  'mobile board must not re-validate the full 50-card deck per visible slot');
- assert.match(script,/const legal=legalUniversalActions\(app.packs,s\);/);
- assert.match(script,/sideBoard\(v,1,legal\)/);
- assert.match(script,/sideBoard\(v,0,legal\)/);
- assert.match(script,/choices\(legal\)/);
+  'classic V2 board must reuse one validated legal list per render');
+ assert.match(script,/legal=legalUniversalActions\(app.packs,s\)/);
+ assert.match(script,/legacyPlayer\(v,1,legal\)/);
+ assert.match(script,/legacyPlayer\(v,0,legal\)/);
+ assert.match(script,/legacyCommands\(legal\)/);
  assert.match(script,/pendingDialog\(legal\)/);
  assert.match(script,/app.aiDifficulty=\$\('ai-level'\).value/);
  assert.match(script,/difficulty:app.aiDifficulty/);
