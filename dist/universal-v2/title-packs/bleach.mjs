@@ -38,7 +38,10 @@ const testForKind=Object.freeze({
  drawTwoDiscardOne:'tests/v2-blc-109-draw-discard-round13.test.mjs',
  frontBpDownMin1000:'tests/v2-bp-range-round13.test.mjs',
  readyOnFirstAttack:'tests/v2-ready-on-attack-round13.test.mjs',
- onRetireRestUnder2000:'tests/v2-onretire-rest-round14.test.mjs'
+ onRetireRestUnder2000:'tests/v2-onretire-rest-round14.test.mjs',
+ restSelfBuffOther:'tests/v2-c1-blc-ready-reuse.test.mjs',
+ readyOnFirstBlock:'tests/v2-c1-blc-ready-reuse.test.mjs',
+ ownTurnNamedBp:'tests/v2-c1-blc-ready-reuse.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.

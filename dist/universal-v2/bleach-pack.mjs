@@ -962,7 +962,11 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-4-042","kind":"mayuriThreeMode","number":"EX15BT/BLC-4-042","name":"涅 マユリ","color":"blue","energy":3,"ap":1,"bp":2000,"gen":3,"trigger":"draw","type":"character","effect":"登場時：選1項。①查看牌庫頂2張，將任意張依任意順序放回牌庫頂，其餘送至場外。②可將2張手牌送至場外；如此則可從場外將最多1張《涅繭利》或《涅音夢》加入手牌。③可使自己場上另1個角色退場；如此則可從手牌將最多1張卡名為《涅骸部隊》的藍色卡以Active登場於自己的能量線（只具同名特徵不符合）。"}
 ,
 {"id":"BLC-4-069","kind":"kyorakuAttackEnd","number":"EX15BT/BLC-4-069","name":"京楽 春水","color":"green","energy":5,"ap":1,"bp":4000,"gen":1,"trigger":"raid","type":"character","effect":"突襲《京樂春水》：改為Active，可移至前線。以下僅在突襲狀態適用：此角色攻擊結束時，若自己場外的綠色事件卡及綠色場地卡合計有4種以上不同卡名，可選自己能量線最多1個角色，與此角色交換位置；戰鬥後或傷害的Trigger檢查結束後處理。登場時：本回合下一張從手牌使用、具有「花天狂骨」特徵的卡，消費AP−1；先使用其他卡不會耗掉減費效果。"},
-{"id":"BLC-4-076","kind":"fieldRestRetireNamed","number":"EX15BT/BLC-4-076","name":"花天","color":"green","energy":0,"ap":1,"bp":0,"gen":1,"trigger":"active","type":"field","effect":"啟動・主要〔改為Rest，並使此卡退場〕：可從場外將最多1張所需能量2以下的綠色《京樂春水》以Active登場於自己的能量線。"}
+{"id":"BLC-4-076","kind":"fieldRestRetireNamed","number":"EX15BT/BLC-4-076","name":"花天","color":"green","energy":0,"ap":1,"bp":0,"gen":1,"trigger":"active","type":"field","effect":"啟動・主要〔改為Rest，並使此卡退場〕：可從場外將最多1張所需能量2以下的綠色《京樂春水》以Active登場於自己的能量線。"},
+{"id":"BLC-1-058","kind":"restSelfBuffOther","number":"UA08BT/BLC-1-058","name":"二枚屋 王悦","color":"purple","energy":2,"ap":1,"bp":2500,"gen":1,"trigger":null,"type":"character","effect":"主要階段：REST 自己，使 1 個其他己方場上角色本回合 BP +1000。"},
+{"id":"BLC-1-088","kind":"readyOnFirstBlock","number":"UA08BT/BLC-1-088","name":"斑目 一角","color":"green","energy":3,"ap":1,"bp":3500,"gen":1,"trigger":"draw","type":"character","effect":"每回合第一次阻擋時，此角色立即轉為 ACTIVE，因此可阻擋 2 次。"},
+{"id":"BLC-1-101","kind":"readyOnFirstBlock","number":"UA08ST/BLC-1-101","name":"井上 織姫","color":"purple","energy":2,"ap":1,"bp":3000,"gen":1,"trigger":"active","type":"character","effect":"本回合第一次阻擋時，立即轉為 ACTIVE。"},
+{"id":"BLC-4-073","kind":"ownTurnNamedBp","number":"EX15BT/BLC-4-073","name":"斑目 一角","color":"green","energy":2,"ap":1,"bp":2500,"gen":1,"trigger":null,"type":"character","effect":"自己的回合中：若自己場上有《更木劍八》，此角色BP+1500。"}
 ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1024,12 +1028,15 @@ export function checkedBleachAddonDefinition(p){
  const isOppDiscard=p.kind==='discardOppHandOne';
  const isDrawTwo=p.kind==='drawTwoDiscardOne';
  const isReadyAttack=p.kind==='readyOnFirstAttack';
+ const isRestBuff=p.kind==='restSelfBuffOther';
+ const isReadyBlock=p.kind==='readyOnFirstBlock';
+ const isNamedBp=p.kind==='ownTurnNamedBp';
  const isTopRequired=p.kind==='topOneEnergyDiscount';
  const isTopTwoGotei=p.kind==='topTwoGoteiEvent';
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual;
+ const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1055,6 +1062,10 @@ export function checkedBleachAddonDefinition(p){
   ...(isPrintedImpact?{printedImpact:1}:{}),
   ...(isPrintedDamage?{printedAttackDamage:2}:{}),
   ...(isReadyAttack?{readyOnAttackCount:1}:{}),
+  ...(isReadyBlock?{readyOnBlockCount:1}:{}),
+  ...(isRestBuff?{mainAbility:{op:'restSelfBuffOther',bp:1000}}:{}),
+  ...(isNamedBp?{passiveBonuses:[{condition:{kind:'ownNameExists',turn:'own',
+   zone:'field',excludeSelf:false,name:'更木 剣八'},bp:1500}]}:{}),
   ...(p.kind==='restSelfEnemy'?{mainAbility:{op:'restSelfThenRestOppFrontOne',frontOnly:true}}:{}),
   ...(p.kind==='restEnergyRetire'?{mainAbility:{op:'restSelfGainEnergyRetireEndMain',energyOnly:true,oncePerTurn:true,extraEnergy:1}}:{}),
   ...(p.kind.startsWith('retireBonus')?{triggerEffect:{op:'retireOppFront'}}:{}),
