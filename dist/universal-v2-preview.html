@@ -4,23 +4,22 @@
  <meta charset="utf-8">
  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
  <meta name="theme-color" content="#0a1019">
- <meta name="robots" content="noindex,nofollow,noarchive">
- <meta name="description" content="實驗版 UNION ARENA V2：五作品六組已移植官方真卡 50 張牌組跨作品 AI 對戰，僅供私人預覽驗證。">
+ <meta name="description" content="UNION ARENA V2 非官方練習模擬器：保留經典對戰介面，以 V2 規則引擎執行已支援牌組的對戰。">
  <link rel="icon" href="assets/mark.svg" type="image/svg+xml">
  <link rel="stylesheet" href="universal-v2-legacy.css">
- <title>UNION ARENA V2｜BLEACH Arena 原版對戰介面</title>
+ <title>UNION ARENA V2｜正式對戰</title>
 </head>
 <body>
  <div class="v2-shell">
   <header class="topbar">
    <div class="identity">
     <div class="logo">UA</div>
-    <div><div class="eyebrow">EXPERIMENTAL · V2 PREVIEW</div><h1>UNION ARENA V2 跨作品實戰測試</h1></div>
+    <div><div class="eyebrow">UNION ARENA · V2</div><h1>UNION ARENA V2 正式對戰</h1></div>
    </div>
    <div class="status"><span class="tag">V2 正式引擎</span><span class="tag">真卡 50 vs 50</span>
-   <span class="tag">沿用 BLEACH Arena 對戰介面</span><a class="tag" href="/index.html">舊版牌組編輯／圖鑑 ↗</a></div>
+   <span class="tag">沿用 BLEACH Arena 對戰介面</span><a class="tag" href="/index.html">牌組編輯／卡片圖鑑 ↗</a></div>
   </header>
-  <section class="panel setup" aria-label="測試對局設定">
+  <section class="panel setup" aria-label="對局設定">
    <div class="headline"><h2>建立新對局</h2><span id="v2-coverage" class="small">正在讀取 V2 卡包覆蓋率…</span></div>
    <div class="setup-grid">
     <div class="field"><label for="my-title">你的作品</label>
@@ -56,12 +55,12 @@
    <div class="setup-actions"><button id="start-game" type="button" class="primary">開始新對局</button>
    <span id="restart-notice" class="small" aria-live="polite"></span></div>
    <div id="designated-decks" class="designated" aria-label="指定 BLEACH 牌組"></div>
-   <p class="note">這是 UNION ARENA V2 規則驗收測試介面，使用者可與電腦對打。對局在瀏覽器執行，不會將對局紀錄上傳至伺服器。此入口以 V2 規則引擎處理對局，提供 BLEACH 藍綠指定牌組及五作品已登錄的 50 張牌組。下方三副是使用者指定構築；標成不可完整對局的牌組不能開始對戰。這是持續驗收中的測試版，不代表所有官方卡牌及 FAQ 都已完成認證。</p>
+   <p class="note">這是正式網站的 V2 對戰入口，使用者可與電腦對打。對局在瀏覽器執行，不會將對局紀錄上傳至伺服器。此入口以 V2 規則引擎處理對局，提供 BLEACH 藍綠指定牌組及五作品已登錄的 50 張牌組。下方三副是使用者指定構築；標成不可完整對局的牌組不能開始對戰。V2 仍在持續補充卡牌與驗收規則，不代表所有官方卡牌及 FAQ 都已完成認證。</p>
   </section>
   <main id="match-view" aria-live="off"></main>
   <footer class="foot">
    <span>UNOFFICIAL FAN TEST · 日版 UNION ARENA 卡牌版權屬其權利人</span>
-   <span>卡圖以原站外部來源載入，若顯示失敗會使用暫代圖。<a href="/index.html" title="開啟牌組圖鑑與編輯器">舊版牌組圖鑑／編輯器</a></span>
+   <span>卡圖以原站外部來源載入，若顯示失敗會使用暫代圖。<a href="/index.html" title="開啟牌組圖鑑與編輯器">牌組圖鑑／編輯器</a></span>
   </footer>
  </div>
  <script type="module" src="universal-v2-preview.mjs"></script>
