@@ -58,7 +58,23 @@ function programValue(packs,o,program,source,depth=0){
    return own.outside.length?2:0;
   if(['searchDeckOne','searchDeckMany','searchDeckWhere','searchTopOneBottomDiscard','searchTopUpToTwoBottom'].includes(e.op))return own.deckCount>1?1.5:0;
   if(e.op==='chooseOne')return Math.max(0,...(e.options||[]).map(x=>programValue(packs,o,x.then,source,depth+1)));
-  if(['oncePerTurnGate','discardGate'].includes(e.op))return programValue(packs,o,e.then,source,depth+1)-(e.op==='discardGate'?1.8:0);
+  if(['oncePerTurnGate','discardGate'].includes(e.op)){
+   const future=programValue(packs,o,e.then,source,depth+1);
+   if(e.op==='oncePerTurnGate')return future;
+   // Cost is real material, not an unconditional bonus for activating gates.
+   const cheapest=own.hand.map(c=>handValue(packs,o,c)).sort((a,b)=>a-b);
+   const count=e.count===2?2:1;
+   const cost=cheapest.length>=count?sum(cheapest.slice(0,count)):8;
+   return Math.max(e.optional?0:-8,future-cost);
+  }
+  if(e.op==='bounceOwnOtherUnderEnergy'){
+   const candidates=field(own).filter(c=>c.uid!==source?.uid&&
+    (e.optional===true?def(packs,o.actor,c).name!==e.excludeName:
+     (def(packs,o.actor,c).energy||0)<=(e.energy??Infinity)));
+   if(!candidates.length)return e.optional?0:-3;
+   const best=Math.max(...candidates.map(c=>bounceUtility(packs,o,c,e.after)));
+   return e.optional?Math.max(0,best):best;
+  }
   if(e.op==='retireSourceOnPhaseEnd')return -universalAiCardValue(def(packs,o.actor,source),source)*0.8;
   return 0;
  }));
@@ -109,6 +125,20 @@ function attackScore(packs,o,c,target){
  // Prefer a cheaper equally effective attacker, preserving high-value choices.
  return gain-value*0.04;
 }
+// Estimate bounce net value in public/own-information space. A return to hand
+// is not a free draw: it removes a producer or defender and may need AP to replay.
+function bounceUtility(packs,o,c,after=[]){
+ const own=o.players[o.actor],d=def(packs,o.actor,c);
+ const onFront=own.front.some(x=>x?.uid===c.uid);
+ const material=universalAiCardValue(d,c);
+ const producer=onFront?0:Math.max(0,c.produces||d.gen||0);
+ const colorShortage=producer&&own.energyByColor[d.color]-producer<(d.energy||0);
+ const fieldLoss=onFront?material*0.9:producer*3.2+material*0.15;
+ const replayCost=own.ap<=1?1.7:0.7;
+ const exposed=onFront&&own.life<=2&&own.front.filter(Boolean).length<=2?2:0;
+ return handValue(packs,o,c)*0.55-fieldLoss-replayCost-exposed-(colorShortage?2:0)+
+  programValue(packs,o,after,c);
+}
 function pendingScore(packs,o,a){
  const q=o.pending,own=o.players[o.actor],foe=o.players[1-o.actor];
  const ownCards=[...field(own),...own.hand,...own.outside];
@@ -131,7 +161,10 @@ function pendingScore(packs,o,a){
  if(['effect-discard','end-hand-limit','effect-discard-cost','effect-discard-gate','effect-selection-hand-payment','main-discard-buff','main-discard-self-retire'].includes(q.kind)){
   const cards=a.uids?a.uids.map(uid=>own.hand.find(c=>c.uid===uid)):[c];
   const cost=sum(cards.filter(Boolean).map(c=>handValue(packs,o,c)));
-  return (['effect-discard-cost','effect-discard-gate'].includes(q.kind)?3:0)-cost;
+  // Only a confirmed printed continuation earns a bonus; forced costs
+  // always pick the lowest-opportunity-cost legal payment.
+  return (q.kind==='effect-discard-gate'?
+   programValue(packs,o,q.continuation,c):0)-cost;
  }
  if(q.kind==='effect-choice-mode')return programValue(packs,o,q.options?.find(x=>x.id===a.mode)?.then);
  if(a.line)return deployment(packs,o,a,visible,true);
@@ -149,7 +182,8 @@ function pendingScore(packs,o,a){
  }
  if(['effect-retire-own-field','effect-retire-own-character','main-field-trait-retire'].includes(q.kind))
   return programValue(packs,o,q.after,c)+programValue(packs,o,def(packs,o.actor,c).effects?.onRetire,c)-value;
- if(['effect-bounce-own','main-rest-front-energy'].includes(q.kind))return -value;
+ if(q.kind==='effect-bounce-own')return c?bounceUtility(packs,o,c,q.after):0;
+ if(q.kind==='main-rest-front-energy')return -value;
  if(['effect-retire-bp','effect-target','effect-target-many','effect-strip-raid-top','effect-named-outside-bounce-retire'].includes(q.kind))return enemyValue+(enemy&&q.bp&&enemy.bp<=q.bp?3:0);
  if(['effect-rest-bp','effect-attack-ban'].includes(q.kind))return enemy?.ready?enemyValue*0.7:0.05;
  if(q.kind==='attack-end-swap')return c?(c.ready?1:0)+value*0.3:0;
@@ -165,7 +199,8 @@ function pendingScore(packs,o,a){
  if(q.kind==='effect-optional-mill')return own.deckCount>5?0.1:-1;
  if(q.kind==='effect-pay-ap-deploy')return own.ap>1?0.5:-0.5;
  if(q.kind==='effect-rest-tuck')return 0.5;
- if(q.kind==='effect-once-choice')return 0.5;
+ if(q.kind==='effect-once-choice')return a.mode==='activate'?
+  programValue(packs,o,q.continuation,c)-0.15:0;
  if(q.kind==='effect-recover-ap')return 1;
  if(['effect-top-inspect','effect-top-inspect-many','effect-top-trait-outside'].includes(q.kind))return visible?2-handValue(packs,o,visible):0.1;
  if(q.kind==='raid-effect-order')return a.mode==='entryFirst'?0.1:0;
