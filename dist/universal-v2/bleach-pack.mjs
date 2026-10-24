@@ -978,6 +978,12 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-4-030","kind":"optionalDiscardPeekDraw","number":"EX15BT/BLC-4-030","name":"四楓院 夜一","color":"blue","energy":0,"ap":1,"bp":1500,"gen":1,"trigger":"draw","type":"character","effect":"登場時：可將1張手牌送至場外；如此則查看牌庫頂1張，將其放回牌庫頂或底，再抽1張牌。"},
 {"id":"BLC-4-066","kind":"optionalDiscardPeekDraw","number":"EX15BT/BLC-4-066","name":"卯ノ花 烈","color":"green","energy":0,"ap":1,"bp":1500,"gen":1,"trigger":"active","type":"character","effect":"登場時：可將1張手牌送至場外；如此則查看牌庫頂1張，放回牌庫頂或底，再抽1張牌。"},
 {"id":"BLC-4-074","kind":"aliasFieldRestEnergyRetire","number":"EX15BT/BLC-4-074","name":"山本 重國","color":"green","energy":0,"ap":1,"bp":1000,"gen":2,"trigger":null,"type":"character","effect":"此卡也視為《山本元柳齋重國》。啟動・主要〔改為Rest／每回合1次〕：此角色本回合額外產生1個綠色能量，並獲得「主要階段結束時，使此角色退場」。"}
+,
+{"id":"BLC-1-015","kind":"drawIfOppRestCharacter","number":"UA08BT/BLC-1-015","name":"BG9","color":"yellow","energy":3,"ap":1,"bp":3000,"gen":2,"trigger":null,"type":"character","effect":"登場：敵方場上有 REST 角色時，抽 1 張。"}
+,
+{"id":"BLC-1-027","kind":"drawIfOppCharacterBpAtLeast","number":"UA08BT/BLC-1-027","name":"ロバート・アキュトロン","color":"yellow","energy":3,"ap":1,"bp":3000,"gen":2,"trigger":null,"type":"character","effect":"登場：敵方場上有 BP 4000 以上角色時，抽 1 張。"}
+,
+{"id":"BLC-1-076","kind":"activeOwnNamed","number":"UA08BT/BLC-1-076","name":"草鹿 やちる","color":"green","energy":1,"ap":1,"bp":2000,"gen":1,"trigger":"active","type":"character","effect":"登場：可將最多 1 個己方場上的〈更木劍八〉轉為 ACTIVE。"}
 ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1046,6 +1052,11 @@ export function checkedBleachAddonDefinition(p){
  const isNamedBp=p.kind==='ownTurnNamedBp';
  const isHandDiscount=p.kind==='opponentFieldHandEnergy';
  const isOwnEffectDraw=p.kind==='drawIfOwnEffectEntry';
+ const isOppRestDraw=p.kind==='drawIfOppRestCharacter';
+ const isOppBpDraw=p.kind==='drawIfOppCharacterBpAtLeast';
+ const isActiveNamed=p.kind==='activeOwnNamed';
+ const namedActive={'BLC-1-076':'更木 剣八'}[p.id];
+ const oppBpGate={'BLC-1-027':4000}[p.id];
  const isBlockLow=p.kind==='blockBpAtMost';
  const isFrontDiscardDraw=p.kind==='frontDiscardDraw';
  const isFrontDiscardDown=p.kind==='frontDiscardFieldBpDown';
@@ -1056,7 +1067,7 @@ export function checkedBleachAddonDefinition(p){
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy;
+ const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1133,6 +1144,9 @@ export function checkedBleachAddonDefinition(p){
    isOppDiscard?{onPlay:[{op:'discardOppHand',count:1}]}:
    isDrawTwo?{onPlay:[{op:'drawDiscard',count:2,discardCount:1}]}:
    isOwnEffectDraw?{onPlay:[{op:'draw',count:1,entry:'ownEffect'}]}:
+   isOppRestDraw?{onPlay:[{op:'drawIfOppRestCharacter',count:1}]}:
+   isOppBpDraw?{onPlay:[{op:'drawIfOppCharacterBpAtLeast',minBp:oppBpGate,count:1}]}:
+   isActiveNamed?{onPlay:[{op:'activeOwnNamed',name:namedActive,max:1,optional:true}]}:
    isOptionalPeek?{onPlay:[{op:'discardGate',optional:true,then:[
     {op:'peekTopOrBottom'},{op:'draw',count:1}]}]}:
    isStripDual?{onPlay:[{op:'chooseOne',optional:false,options:[

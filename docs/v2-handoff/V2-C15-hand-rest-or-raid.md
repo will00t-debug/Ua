@@ -25,3 +25,5 @@ MST-1-007, MST-1-021, and MST-1-033 still have extra sentences, so they stay unr
 ## Counts
 
 BLEACH 118/276. MST 56/80. Five titles 369/700. Strict FAQ certification stays 0.
+
+Local Node 22 suite on `08d41b0`: 2252/2252, matrix 60/60, manifest 369/700. That commit is pushed to `cursor/v2-blc-mst-c3-20261024-6ff5`. Its Actions run is recorded separately from this note.

@@ -100,6 +100,19 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   }
   return false;
  }
+ if(condition.kind==='oppRestCharacter'){
+  // 場 is the opponent's front and energy. A REST character is type
+  // character with the live ready flag false. Printed BP, hand, deck,
+  // outside, and a rested field are not this check.
+  const foe=s.players[1-owner];
+  const areas=condition.zone==='front'?[foe.front]:
+   condition.zone==='energy'?[foe.energy]:[foe.front,foe.energy];
+  for(const area of areas)for(const c of area){
+   if(!c||c.ready||printed(c).type!=='character')continue;
+   return true;
+  }
+  return false;
+ }
  const pl=s.players[owner];
  const zones=condition.zone==='front'?[pl.front]:
   condition.zone==='energy'?[pl.energy]:[pl.front,pl.energy];

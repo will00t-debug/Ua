@@ -10,8 +10,6 @@ const FOCUS=['bleach','sword-art-online'];
 const PORTED=['BLC-1-058','BLC-1-088','BLC-1-101','BLC-4-073'];
 // Official iframe pages fetched 2026-10-24. None of these pages contained an FAQ.
 export const C1_OFFICIAL_REVIEWS=Object.freeze({
- 'BLC-1-076':{status:'ENGINE BLOCKED',set:'UA08BT',
-  missing:'on play, optional ACTIVE of one own 更木 剣八'},
  'BLC-1-084':{status:'ENGINE BLOCKED',set:'UA08BT',
   missing:'ownTraitCount counts characters only; the print counts every other card with exact trait 護廷十三隊'},
  'BLC-1-091':{status:'PARTIAL',set:'UA08BT',
