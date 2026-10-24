@@ -9,13 +9,13 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,assertUn
 
 const read=path=>readFileSync(new URL(path,import.meta.url),'utf8');
 
-test('classic BLEACH lobby enters V2, never creates a new legacy game',()=>{
- const app=read('../dist/app.mjs');
- const start=app.slice(app.indexOf('function startGame(){'),app.indexOf('function act(a){'));
- assert.match(start,/window\.location\.assign\('universal-v2-preview\.html\?from=classic-lobby'\)/);
- assert.doesNotMatch(start,/(?:newGame|startMatchForTitle|dispatchMatchAction)\s*\(/);
- assert.match(app,/if\(view==='arena'\)\{window\.location\.assign/);
- assert.match(app,/ua-v2-classic-entry-v1/);
+test('official root uses V2 while classic builder remains a separate legacy document',()=>{
+ const config=JSON.parse(read('../vercel.json'));
+ assert.deepEqual(config.rewrites,[{source:'/',destination:'/universal-v2-preview.html'}]);
+ const root=read('../dist/index.html');
+ assert.match(root,/src="app.mjs/);
+ assert.doesNotMatch(root,/src="universal-v2-preview.mjs/);
+ assert.match(read('../dist/universal-v2-preview.html'),/src="universal-v2-preview.mjs"/);
 });
 
 test('battle UI is classic BLEACH Arena, but every action uses V2 legal reducer',()=>{
