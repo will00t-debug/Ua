@@ -15,8 +15,8 @@ test('production root exclusively resolves to the V2 entry point', () => {
 
 test('classic deck editor redirects all legacy battle entries to V2', () => {
   const editor = read('dist/app.mjs');
-  assert.match(editor, /function chooseView\(view\)\{if\(\['arena','soloArena','ttgArena'\]\.includes\(view\)\)\{window\.location\.assign\('\/'\)/);
-  assert.match(editor, /if\(\['arena','soloArena','ttgArena'\]\.includes\(ui\.view\)\)\{window\.location\.replace\('\/'\)/);
+  assert.ok(editor.includes("function chooseView(view){if(PUBLIC_EDITOR_ONLY&&['arena','soloArena','ttgArena'].includes(view)){window.location.assign('/');return;}"));
+  assert.ok(editor.includes("if(PUBLIC_EDITOR_ONLY&&['arena','soloArena','ttgArena'].includes(ui.view)){window.location.replace('/');return;}"));
   for (const action of ['start','soloTrainingStartShadow','soloTrainingStartCustom','soloTrainingStart','ttgBetaStartGreen','ttgBetaStartRed','ttgBetaStartDeck'])
     assert.ok(editor.includes("'"+action+"'"), action+' must be redirected');
   assert.match(editor, /舊版與各作品獨立 Beta 對戰入口/);
