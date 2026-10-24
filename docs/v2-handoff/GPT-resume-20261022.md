@@ -714,3 +714,14 @@ R50 common `fieldDualMain` previously shared once-per-turn mode keys by printed 
 - 下輪可安全延伸的核心原語：① TTG 暫時戰勝抽牌 + 狙擊合法選擇；② SLG 場外每五張的攻擊 BP/戰勝回收動態兩個消費者 + Q2028 強制 block；③ MST 來源限定二選一／Q2147 暫時攻擊結束交換；④ SAO-1-071 4／6／8 門檻複合效果；⑤ 官方核對後其他跨作品 READY 真卡整批移植。
 - 繼續嚴格保留 MST-1-067 Q2162、BLC-4-034 裏向 Raid 底層、未認證巢狀 LIFE、混合多目標 AP/棄手支付阻塞。
 
+
+
+## R54 | Five-title shared atom development, 2026-10-24
+
+Same branch `gpt/v2-resume-20261022`, Draft PR #78 against Cursor integration branch only. Four initial independent source candidates: TTG-1-067/Q2295, SLG-1-021/Q2028, MST-1-009/Q2147, SAO-1-071. Full source review and limitations are in [V2-R54-five-direction-official-audit.md](./V2-R54-five-direction-official-audit.md).
+
+R54 introduced source-stamped `onAttack` 0-or-1 named-OUTSIDE optional draw (`92af0774`, Actions [40047961290](https://github.com/will00t-debug/Ua/actions/runs/40047961290) SUCCESS); source pinned the four/six/eight cumulative SAO-1-071 Raid card (`d0468fa3`); and re-used R53 physical-group counter to grant attack-time `buffSelfPerOwnOutsideGroups` (`7c631931`). Registry includes SAO-1-071 only after strict printed pin and independent expected-ID manifest; TTG/SLG/MST above remain PARTIAL, no partial-card registrations.
+
+Historic R54 intermediate CI failures were caused by a stale 106 SAO independent roster, the 1-AP fixture on first turn, an immutable reducer test that inspected stale actor rather than resulting physical state, and an opponent end-of-turn 8-hand pending choice. Fixes preserve all real payment and negative tests. Latest status MUST be checked against newest Actions SHA. R54 has repeatable `node scripts/v2-r54-five-title-candidate-report.mjs` census integrated into workflow. A text hit never sets READY.
+
+Assuming the R54 SAO registration remains intact: inventory 345/700, 355 unported, BLEACH 103, TTG 36, SLG 45, SAO 107, MST 54. These are registration counts, not independent FAQ certification: 0/700. Remain on GPT Draft PR #78, do not merge/deploy, do not modify Cursor PR #77.
