@@ -188,12 +188,25 @@ function grantBattleWinToOtherOwn(pack,s,owner,winner,role){
   };
  }
 }
+// Earned only at a real attacking CHARACTER-vs-CHARACTER victory, not LIFE.
+function queueAttackWinRecovery(pack,s,owner,attacker){
+ const rule=card(pack,attacker).attackWinRecover;
+ if(!rule||originalEffectsDisabled(s,attacker))return;
+ if(s.active!==owner||s.phase!=='attack'||!(s.attacksByUid[attacker.uid]>=1)||
+  !Number.isInteger(attacker.fieldEntryStamp)||attacker.fieldEntryStamp<1)
+  throw Error('No genuine attacking victory recovery provenance');
+ s.effectQueue.splice(retirementJobsInserted,0,{
+  op:'resolveAttackWinRecovery',owner,sourceUid:attacker.uid,
+  sourceStamp:attacker.fieldEntryStamp,sourceCardId:attacker.cardId});
+}
 function impactOnBattleWin(pack,s,c){
  const d=card(pack,c);
  if(originalEffectsDisabled(s,c))return 0;
  // Printed impact and the facedown-under profile stay separate from each
  // other and from a live passive impact. Pack validation refuses stacking.
  if(d.printedImpact)return d.printedImpact;
+ if(d.conditionalImpactBpAtLeast!==null&&
+  bp(pack,s,c)>=d.conditionalImpactBpAtLeast)return 1;
  const under=hasFacedownUnder(c)?(d.conditionalUnderFaceDown?.impact||0):0;
  if(under)return under;
  const owner=Number(String(c.uid).split('-')[0]);
@@ -263,6 +276,7 @@ function searchChoices(pack,s,cards,query){
 function matchesOutsideRecovery(pack,s,c,q){
  if(q.filter)return matchesFilter(pack,s,c,q.filter);
  const d=card(pack,c);
+ if(q.excludeName&&cardHasName(d,q.excludeName))return false;
  if(q.printedBpLimit!==undefined)
   return d.type==='character'&&d.bp<=q.printedBpLimit;
  if(q.traitlessEnergyLimit!==undefined)
@@ -747,7 +761,20 @@ function continueEffectQueue(pack,s){
     if(choices.length)s.pending={kind:'effect-outside-rest',player:owner,
      sourceUid:job.sourceUid,choices,name:job.name,color:job.color,
      energy:job.energy,ap:job.ap,optional:true};
-   }else if(job.op==='recoverOutsidePrintedBp'){
+   }else if(job.op==='resolveAttackWinRecovery'){
+   const printed=card(pack,{uid:job.sourceUid,cardId:job.sourceCardId});
+   const profile=printed.attackWinRecover;
+   if(!profile)throw Error('Attacking victory has no printed recovery source');
+   // Re-evaluate live own OUTSIDE at effect resolution; no second cache,
+   // opponent OUTSIDE, buried Raid card or removed card may be counted.
+   const limit=profile.basePrintedBp+
+    countOwnOutsidePhysicalGroups(s,owner,profile.unit)*profile.bpPerGroup;
+   const q={printedBpLimit:limit,excludeName:profile.excludeName};
+   const choices=pl.outside.filter(c=>matchesOutsideRecovery(pack,s,c,q))
+    .map(c=>c.uid);
+   if(choices.length)s.pending={kind:'effect-recover-outside',player:owner,
+    sourceUid:job.sourceUid,...q,choices,optional:true};
+  }else if(job.op==='recoverOutsidePrintedBp'){
    const choices=pl.outside.filter(c=>matchesOutsideRecovery(pack,s,c,
     {printedBpLimit:job.bp})).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-recover-outside',player:owner,
@@ -1048,6 +1075,7 @@ function continueEffectQueue(pack,s){
     // LIFE. Preserve the existing onRetire-before-followup effect ordering.
     if(hasDraw)s.effectQueue.splice(retirementJobsInserted,0,
      {op:'draw',owner,count:1,sourceUid:attacker.uid});
+    queueAttackWinRecovery(pack,s,owner,attacker);
     if(impact&&!replacement)queueImpactAfterRetirement(pack,s,1-owner);
    }else grantBattleWinToOtherOwn(pack,s,1-owner,defender,'blocker');
    // The target remains ACTIVE/REST if it survives. No fake block action.
@@ -1523,6 +1551,7 @@ function resolveChoice(s,a,pack){
    const replacement=retire(pack,s,q.player,'front',slot,{postImpact:impact});
    if(earnedSelfDraw)s.effectQueue.splice(retirementJobsInserted,0,
     {op:'draw',owner:s.active,count:1,sourceUid:attacker.uid});
+   queueAttackWinRecovery(pack,s,s.active,attacker);
    if(impact&&!replacement)queueImpactAfterRetirement(pack,s,q.player);
   }else{
    // Only strict defender BP > attacker BP earns the defender's victory.
@@ -4061,7 +4090,7 @@ export function assertUniversalMatch(pack,s){
    typeof e.key!=='string'||!Array.isArray(e.jobs))))
   throw Error('Invalid retirement order');
  if(!Array.isArray(s.effectQueue)||[...s.effectQueue,...lifeEntries.flatMap(e=>e.jobs)].some(e=>!playerIndex(e.owner)||
-   !['grantedAttackDraw','grantOnAttack','grantSelfSniperThisTurn','grantSelfAttackWinDrawThisTurn','grantSelfMustBlockThisTurn','draw','drawIfOwnName','drawIfOwnOutsideNamedCountAtLeast','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','millTop','buffSelf','buffSelfPerOwnOutsideGroups','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','conditionalBounceOrRetireByOwnOutsideNames','completeResolvingEvent','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','forbidAttackOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopUpToTwoBottom','deployOwnHandRest','deployOwnHandSpecial','optionalRetireThenProgram','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
+   !['grantedAttackDraw','grantOnAttack','grantSelfSniperThisTurn','grantSelfAttackWinDrawThisTurn','grantSelfMustBlockThisTurn','resolveAttackWinRecovery','draw','drawIfOwnName','drawIfOwnOutsideNamedCountAtLeast','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','millTop','buffSelf','buffSelfPerOwnOutsideGroups','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','conditionalBounceOrRetireByOwnOutsideNames','completeResolvingEvent','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','forbidAttackOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopUpToTwoBottom','deployOwnHandRest','deployOwnHandSpecial','optionalRetireThenProgram','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
     'discardGate','enemyFrontAllBpDown','retireOppFrontAllUnderBp',
     'nextEligibleHandPlayApDiscount','grantFrontEnergyOwnOtherFrontTrait','buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
     'recoverOutsideColorUnderEnergy','deployOutsideRest','deployOutsideNameRest','deployNamedFromZones','payApDeployNamedRest','inspectTopTraitOutside','deployOutsideTraitlessRestOrRaid','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','retireSourceOnPhaseEnd','moveAtMainEnd','retireOwnFieldOne','retireOwnCharacterOne','openBlock','resolveSniperBattle','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','resolveAttackEndSwap','phaseOrder','effectMoveOrder','restSelfTuckMovedFaceDown','sourceResolutionBoundary','lifeBatchStep','lifeRelease','advanceAfterAttack','additionalBattleDamage','openRetirementBatch','closeRetirementBatch','retirementOrder','battleImpactDamage','discardOppHand','activeSelfIf'].includes(e.op)))
@@ -4086,6 +4115,14 @@ export function assertUniversalMatch(pack,s){
    Object.keys(j).length!==4||
    Object.keys(j).some(k=>!['op','owner','sourceUid','sourceStamp'].includes(k)))
    throw Error('Invalid earned attack-end swap continuation');
+ }
+ for(const j of s.effectQueue.filter(e=>e.op==='resolveAttackWinRecovery')){
+  if(j.owner!==s.active||s.phase!=='attack'||!Number.isInteger(j.sourceStamp)||
+   j.sourceStamp<1||!(s.attacksByUid[j.sourceUid]>=1)||
+   !card(pack,{uid:j.sourceUid,cardId:j.sourceCardId}).attackWinRecover||
+   Object.keys(j).length!==5||
+   Object.keys(j).some(k=>!['op','owner','sourceUid','sourceStamp','sourceCardId'].includes(k)))
+   throw Error('Forged queued attacking-win outside recovery');
  }
  // A saved phase-end retirement can only come from a printed source
  // during its real original attack-end window (never normal MAIN/ATTACK).
