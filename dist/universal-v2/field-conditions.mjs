@@ -188,3 +188,23 @@ export function countOwnOutsideDistinctPrintedNames(s,owner,printed,{color,types
  }
  return names.size;
 }
+
+
+// R53: physical own-OUTSIDE groups. This is a pure reusable piece for cards
+// printing "every N cards in OWN outside", not a global cached power source.
+// A Raid's buried base/undercards, HAND and opponent outside are NOT in this
+// linear zone. For SLG-1-021, unit 5 is printed but later recovery and onAttack
+// both need independently audited consumers.
+export function countOwnOutsidePhysicalGroups(s,owner,unit){
+ if(![0,1].includes(owner)||!Number.isInteger(unit)||unit<1||unit>200||
+  !Array.isArray(s?.players?.[owner]?.outside))
+  throw Error('Invalid own OUTSIDE physical group query');
+ const seen=new Set();
+ for(const physical of s.players[owner].outside){
+  if(!physical||typeof physical.uid!=='string'||
+   !physical.uid.startsWith(owner+'-')||seen.has(physical.uid))
+   throw Error('Invalid/duplicated outside physical UID');
+  seen.add(physical.uid);
+ }
+ return Math.floor(seen.size/unit);
+}
