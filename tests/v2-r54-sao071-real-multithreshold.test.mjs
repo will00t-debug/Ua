@@ -131,6 +131,12 @@ test('R54 REAL legal 50-card actions: 4 paid EVENT + 4 Yuuki true retire reach 8
  assert.equal(named(s),7);
  s=use(s,{type:'next'});
  for(let i=0;i<12&&!(s.active===0&&s.phase==='main');i++){
+  if(s.pending?.kind==='end-hand-limit'){
+   // Advance through the real game's mandatory max-eight hand rule,
+   // never bypass the turn phase or remove cards without a legal action.
+   const trim=legalUniversalActions(both,s).find(x=>x.type==='chooseHandLimit');
+   assert.ok(trim);s=use(s,trim);continue;
+  }
   assert.equal(s.pending,null);
   s=use(s,{type:'next'});
  }
