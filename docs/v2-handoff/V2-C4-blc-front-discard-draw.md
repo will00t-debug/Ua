@@ -26,4 +26,6 @@ Fetched 2026-10-24. These are not whole-print matches of an existing operation.
 - BLC-4-038: during your turn, BP+1500 if any own front character has printed AP 2 or higher. Q2319 repeats the printed-AP definition. There is no existence form of that check.
 - BLC-4-046: on play, up to one purple 黒崎 一護, BP+1500 this turn. `buffOwnField` takes one filter, not color and name together.
 
-Phase 2 battle AI has not started.
+Local Node v22.23.4: `npm test` 2226/2226 fail 0, matrix 60/60, manifest bleach 113, gurren-lagann 38, solo-leveling 46, sword-art-online 111, mushoku-tensei 55, total 363/700. Unported 337, of which BLEACH 163 and MST 25. FAQ certification stays 0. This C4 SHA still needs its own GitHub Actions SUCCESS.
+
+Phase 2 battle AI has not started. BLEACH is 113/276 and MST is 55/80.
