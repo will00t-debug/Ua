@@ -86,3 +86,28 @@ test('Round 3: exact native main-to-attack phase transition is actually expanded
  assert.ok(result.exactSteps>=1,'a deterministic native reducer edge was exercised');
  assert.equal(result.used,true);
 });
+
+test('Round 3: registered deck can demonstrate native ENERGY play into native FRONT play',()=>{
+ let verified=false;
+ for(let seed=21;seed<61&&!verified;seed++){
+  let s=newUniversalMatch(packs,{decks:[p.counts,p.counts],seed});
+  for(let i=0;i<8&&s.phase!=='main';i++){
+   const a=legalUniversalActions(packs,s).find(x=>x.type==='next');
+   assert.ok(a);
+   s=dispatchUniversalAction(packs,s,a,{actor:s.active});
+  }
+  for(const first of legalUniversalActions(packs,s).filter(a=>a.type==='play'&&a.line==='energy')){
+   const mid=dispatchUniversalAction(packs,s,first,{actor:s.active});
+   if(mid.pending||mid.status!=='playing')continue;
+   const follow=legalUniversalActions(packs,mid).find(a=>a.type==='play'&&a.line==='front');
+   if(!follow)continue;
+   const final=dispatchUniversalAction(packs,mid,follow,{actor:mid.active});
+   assert.ok(final,'actual V2 reducer certified both actions');
+   const legal=legalUniversalActions(packs,s),o=createUniversalAiObservation(packs,s,legal);
+   const tactical=evaluateTrustedUniversalAiTactics(packs,s,o,
+    [{action:first,score:0,utility:0}],{roots:1,children:10,depth:2,nodes:100,timeMs:100});
+   if(tactical.exactSteps>=2){verified=true;break;}
+  }
+ }
+ assert.equal(verified,true,'requires a real two-action reducer sequence, not guessed energy affordability');
+});
