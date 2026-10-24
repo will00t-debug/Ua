@@ -131,7 +131,9 @@ function bp(pack,s,c){
  const owner=Number(String(c.uid).split('-')[0]);
  const turnBp=suppressed?0:s.active===owner?(printed.ownTurnBp||0):(printed.opponentTurnBp||0);
  const facedown=!suppressed&&hasFacedownUnder(c)?(printed.conditionalUnderFaceDown?.bp||0):0;
- const buffs=(c.buffs||[]).filter(b=>b.untilTurn===s.turn).reduce((n,b)=>n+b.bp,0);
+ const buffs=(c.buffs||[]).filter(b=>b.untilTurn===s.turn||
+  Number.isInteger(b.untilOwnTurnStart)&&
+  s.players[owner].ownTurns<b.untilOwnTurnStart).reduce((n,b)=>n+(b.bp||0),0);
  // A current-BP condition may look back at this card. Stop there instead of
  // walking the same passive again. Printed BP, turn BP, and this-turn buffs
  // stay visible. Q749 still sees an effect bonus on the card being measured.
@@ -163,6 +165,16 @@ export function universalAttackDamage(pack,s,c){
 }
 // A self-granted attack permission is attached to the physical incarnation
 // only, and ends with the actual turn, not an assumed next player phase.
+// Printed own-effect-granted attack-end swap survives loss of original effects
+// (official Q2228). The earned UID and incarnation must still be current.
+function hasEarnedAttackEndSwap(s,c){
+ const g=c?.attackEndSwapGranted;
+ return !!g&&g.turn===s.turn&&g.stamp===c.fieldEntryStamp;
+}
+function attackEndSwapAvailable(pack,s,c){
+ return !!c&&((!!card(pack,c).attackEndSwap&&!originalEffectsDisabled(s,c))||
+  hasEarnedAttackEndSwap(s,c));
+}
 function hasCurrentBattleGrant(s,c,property){
  const g=c?.[property];
  return !!g&&g.turn===s.turn&&g.stamp===c.fieldEntryStamp&&
@@ -188,12 +200,25 @@ function grantBattleWinToOtherOwn(pack,s,owner,winner,role){
   };
  }
 }
+// Earned only at a real attacking CHARACTER-vs-CHARACTER victory, not LIFE.
+function queueAttackWinRecovery(pack,s,owner,attacker){
+ const rule=card(pack,attacker).attackWinRecover;
+ if(!rule||originalEffectsDisabled(s,attacker))return;
+ if(s.active!==owner||s.phase!=='attack'||!(s.attacksByUid[attacker.uid]>=1)||
+  !Number.isInteger(attacker.fieldEntryStamp)||attacker.fieldEntryStamp<1)
+  throw Error('No genuine attacking victory recovery provenance');
+ s.effectQueue.splice(retirementJobsInserted,0,{
+  op:'resolveAttackWinRecovery',owner,sourceUid:attacker.uid,
+  sourceStamp:attacker.fieldEntryStamp,sourceCardId:attacker.cardId});
+}
 function impactOnBattleWin(pack,s,c){
  const d=card(pack,c);
  if(originalEffectsDisabled(s,c))return 0;
  // Printed impact and the facedown-under profile stay separate from each
  // other and from a live passive impact. Pack validation refuses stacking.
  if(d.printedImpact)return d.printedImpact;
+ if(d.conditionalImpactBpAtLeast!==null&&
+  bp(pack,s,c)>=d.conditionalImpactBpAtLeast)return 1;
  const under=hasFacedownUnder(c)?(d.conditionalUnderFaceDown?.impact||0):0;
  if(under)return under;
  const owner=Number(String(c.uid).split('-')[0]);
@@ -263,6 +288,7 @@ function searchChoices(pack,s,cards,query){
 function matchesOutsideRecovery(pack,s,c,q){
  if(q.filter)return matchesFilter(pack,s,c,q.filter);
  const d=card(pack,c);
+ if(q.excludeName&&cardHasName(d,q.excludeName))return false;
  if(q.printedBpLimit!==undefined)
   return d.type==='character'&&d.bp<=q.printedBpLimit;
  if(q.traitlessEnergyLimit!==undefined)
@@ -357,7 +383,9 @@ function startTurn(pack,s){
  const max=pl.ownTurns>=3?3:(pl.ownTurns===1&&p===s.first?1:2);
  for(let i=0;i<pl.apCards.length;i++){pl.apCards[i].inPlay=i<max;pl.apCards[i].ready=i<max;}
  refreshFieldActive(s,p);
- for(const c of field(pl))c.buffs=(c.buffs||[]).filter(b=>b.untilTurn>=s.turn);
+ for(const c of field(pl))c.buffs=(c.buffs||[]).filter(b=>
+  b.untilTurn>=s.turn||(Number.isInteger(b.untilOwnTurnStart)&&
+   b.untilOwnTurnStart>pl.ownTurns));
  if(!(pl.ownTurns===1&&p===s.first)){
   if(!pl.deck.length){s.status='finished';s.winner=1-p;s.endReason='required-draw-empty';return;}
   draw(pack,s,p);
@@ -478,6 +506,9 @@ function continueEffectQueue(pack,s){
     damage(pack,s,job.defender);
    }
   else if(job.op==='chooseOne'){
+   // A mandatory printed choose-one may be conditional on HOW the physical
+   // card entered, never solely on title or matching a translated keyword.
+   if(job.entry==='ownEffect'&&!OWN_EFFECT_ENTRY.has(job.entryCause))continue;
    // Select before executing any branch; zero-target optional modes remain selectable.
    const available=job.options.filter(o=>(
     o.turn==='any'||o.turn==='own'&&s.active===owner||
@@ -558,13 +589,15 @@ function continueEffectQueue(pack,s){
      sourceUid:job.sourceUid};
    }else for(let i=0;i<job.count&&pl.deck.length;i++)moveOwnedLinear(pack,s,{
     owner,from:'deck',to:'outside',index:0,reason:'own-effect',sourceUid:job.sourceUid});
-  }else if(job.op==='grantSelfSniperThisTurn'||job.op==='grantSelfAttackWinDrawThisTurn'){
+  }else if(job.op==='grantSelfSniperThisTurn'||job.op==='grantSelfAttackWinDrawThisTurn'||
+   job.op==='grantSelfMustBlockThisTurn'){
    const loc=location(s,owner,job.sourceUid);
    if(!loc||card(pack,loc.c).type!=='character'||
     !Number.isInteger(loc.c.fieldEntryStamp)||loc.c.fieldEntryStamp<1||
     originalEffectsDisabled(s,loc.c))
     throw Error('Timed battle grant requires own live character entry');
-   const key=job.op==='grantSelfSniperThisTurn'?'sniperGranted':'attackWinDrawGranted';
+   const key=job.op==='grantSelfSniperThisTurn'?'sniperGranted':
+    job.op==='grantSelfMustBlockThisTurn'?'mustBlockGranted':'attackWinDrawGranted';
    loc.c[key]={turn:s.turn,stamp:loc.c.fieldEntryStamp};
   }else if(job.op==='grantOnAttack'){
    const source=location(s,owner,job.sourceUid);
@@ -597,6 +630,17 @@ function continueEffectQueue(pack,s){
   }else if(job.op==='grantedAttackDraw'){
    s.pending={kind:'granted-attack-draw',player:owner,sourceUid:job.sourceUid,
     grantId:job.grantId};
+  }else if(job.op==='buffSelfUntilNextOwnStart'){
+   const source=field(pl).find(c=>c.uid===job.sourceUid);
+   if(!source||!Number.isInteger(source.fieldEntryStamp))
+    throw Error('Next-own-start BP source has left its physical field entry');
+   source.buffs??=[];
+   source.buffs.push({bp:job.bp,untilOwnTurnStart:pl.ownTurns+1});
+  }else if(job.op==='grantSelfAttackEndSwapThisTurn'){
+   const source=field(pl).find(c=>c.uid===job.sourceUid);
+   if(!source||!Number.isInteger(source.fieldEntryStamp))
+    throw Error('Attack-end swap source must exist on own field');
+   source.attackEndSwapGranted={turn:s.turn,stamp:source.fieldEntryStamp};
   }else if(job.op==='buffSelf'){
    const source=field(pl).find(c=>c.uid===job.sourceUid);
    if(!source)throw Error('buffSelf source must be on field');
@@ -745,7 +789,20 @@ function continueEffectQueue(pack,s){
     if(choices.length)s.pending={kind:'effect-outside-rest',player:owner,
      sourceUid:job.sourceUid,choices,name:job.name,color:job.color,
      energy:job.energy,ap:job.ap,optional:true};
-   }else if(job.op==='recoverOutsidePrintedBp'){
+   }else if(job.op==='resolveAttackWinRecovery'){
+   const printed=card(pack,{uid:job.sourceUid,cardId:job.sourceCardId});
+   const profile=printed.attackWinRecover;
+   if(!profile)throw Error('Attacking victory has no printed recovery source');
+   // Re-evaluate live own OUTSIDE at effect resolution; no second cache,
+   // opponent OUTSIDE, buried Raid card or removed card may be counted.
+   const limit=profile.basePrintedBp+
+    countOwnOutsidePhysicalGroups(s,owner,profile.unit)*profile.bpPerGroup;
+   const q={printedBpLimit:limit,excludeName:profile.excludeName};
+   const choices=pl.outside.filter(c=>matchesOutsideRecovery(pack,s,c,q))
+    .map(c=>c.uid);
+   if(choices.length)s.pending={kind:'effect-recover-outside',player:owner,
+    sourceUid:job.sourceUid,...q,choices,optional:true};
+  }else if(job.op==='recoverOutsidePrintedBp'){
    const choices=pl.outside.filter(c=>matchesOutsideRecovery(pack,s,c,
     {printedBpLimit:job.bp})).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-recover-outside',player:owner,
@@ -1013,11 +1070,12 @@ function continueEffectQueue(pack,s){
    if(under(raid))draw(pack,s,owner,1,{reason:'own-effect',sourceUid:job.sourceUid});
   }else if(job.op==='resolveAttackEndSwap'){
    const src=pl.front.find(c=>c?.uid===job.sourceUid);
-   if(src&&src.fieldEntryStamp===job.sourceStamp&&card(pack,src).attackEndSwap&&
-    !originalEffectsDisabled(s,src)){
+   if(src&&src.fieldEntryStamp===job.sourceStamp&&attackEndSwapAvailable(pack,s,src)){
     const rule=card(pack,src).attackEndSwap;
-    if(countOwnOutsideDistinctPrintedNames(s,owner,c=>card(pack,c),rule)>=
-     rule.minDistinctNames){
+    const permitted=hasEarnedAttackEndSwap(s,src)||!!rule&&
+     countOwnOutsideDistinctPrintedNames(s,owner,c=>card(pack,c),rule)>=
+      rule.minDistinctNames;
+    if(permitted){
      const choices=pl.energy.filter(c=>c&&card(pack,c).type==='character')
       .map(c=>({uid:c.uid,stamp:c.fieldEntryStamp}));
      if(choices.length)s.pending={kind:'attack-end-swap',player:owner,
@@ -1046,6 +1104,7 @@ function continueEffectQueue(pack,s){
     // LIFE. Preserve the existing onRetire-before-followup effect ordering.
     if(hasDraw)s.effectQueue.splice(retirementJobsInserted,0,
      {op:'draw',owner,count:1,sourceUid:attacker.uid});
+    queueAttackWinRecovery(pack,s,owner,attacker);
     if(impact&&!replacement)queueImpactAfterRetirement(pack,s,1-owner);
    }else grantBattleWinToOtherOwn(pack,s,1-owner,defender,'blocker');
    // The target remains ACTIVE/REST if it survives. No fake block action.
@@ -1488,7 +1547,7 @@ function resolveChoice(s,a,pack){
   const attacker=s.players[s.active].front.find(c=>c?.uid===q.attackerUid);
   if(!attacker)throw Error('Attacker no longer exists');
   s.pending=null;
-  if(card(pack,attacker).attackEndSwap){
+  if(attackEndSwapAvailable(pack,s,attacker)){
    if(!Number.isInteger(attacker.fieldEntryStamp)||attacker.fieldEntryStamp<1||
     s.phase!=='attack'||!(s.attacksByUid[attacker.uid]>=1))
     throw Error('Unproven physical Q2337 attack');
@@ -1521,6 +1580,7 @@ function resolveChoice(s,a,pack){
    const replacement=retire(pack,s,q.player,'front',slot,{postImpact:impact});
    if(earnedSelfDraw)s.effectQueue.splice(retirementJobsInserted,0,
     {op:'draw',owner:s.active,count:1,sourceUid:attacker.uid});
+   queueAttackWinRecovery(pack,s,s.active,attacker);
    if(impact&&!replacement)queueImpactAfterRetirement(pack,s,q.player);
   }else{
    // Only strict defender BP > attacker BP earns the defender's victory.
@@ -2582,10 +2642,14 @@ function legalPending(pack,s){
     x=>card(pack,x)));
   const canBlock=c=>!applies||!(rule.relation==='atLeast'
    ?bp(pack,s,c)>=rule.bp:bp(pack,s,c)<=rule.bp);
+  const candidates=p.front.filter(c=>c?.ready&&canBlock(c));
+  // Official mandatory BLOCK: only after a valid own-effect-entry grant,
+  // and only if an otherwise legal ACTIVE blocker exists. SNIPER bypasses
+  // this entire pending BLOCK window, as required by Q65-Q70.
+  const forced=hasCurrentBattleGrant(s,attacker,'mustBlockGranted');
   return [
-   {type:'chooseBlock',uid:null},
-   ...p.front.filter(c=>c?.ready&&canBlock(c))
-    .map(c=>({type:'chooseBlock',uid:c.uid}))
+   ...(!forced||!candidates.length?[{type:'chooseBlock',uid:null}]:[]),
+   ...candidates.map(c=>({type:'chooseBlock',uid:c.uid}))
   ];
  }
  if(q.kind==='leave-replacement'){
@@ -3160,7 +3224,10 @@ export function legalUniversalActions(pack,s){
   for(const c of pl.hand){
    const d=card(pack,c);
    const payment=handPlayApPlan(s,p,d);
-   if(d.energy>(produced[d.color]||0)||payment.cost>ap)continue;
+   const printedHandEnergy=Math.max(0,d.energy-
+    (d.emptyOwnFieldHandEnergyDiscount&&field(pl).length===0?
+     d.emptyOwnFieldHandEnergyDiscount:0));
+   if(printedHandEnergy>(produced[d.color]||0)||payment.cost>ap)continue;
    if(d.type==='event'){
     if(eventMandatoryTargetsAvailable(pack,s,p,d,payment.cost,c.uid))
      out.push({type:'event',uid:c.uid});
@@ -3662,7 +3729,8 @@ export function assertUniversalMatch(pack,s){
    throw Error('Invalid per-card block count');
  for(let owner=0;owner<2;owner++)for(const physical of field(s.players[owner]))
   for(const [key,op] of [['sniperGranted','grantSelfSniperThisTurn'],
-   ['attackWinDrawGranted','grantSelfAttackWinDrawThisTurn']]){
+   ['attackWinDrawGranted','grantSelfAttackWinDrawThisTurn'],
+   ['mustBlockGranted','grantSelfMustBlockThisTurn']]){
    const g=physical[key];
    if(g===undefined)continue;
    if(!g||typeof g!=='object'||Array.isArray(g)||
@@ -3672,6 +3740,27 @@ export function assertUniversalMatch(pack,s){
     !card(pack,physical).effects.onPlay?.some(x=>x.op===op))
     throw Error('Forged temporary physical battle grant');
   }
+ for(let owner=0;owner<2;owner++)for(const physical of field(s.players[owner])){
+  const grant=physical.attackEndSwapGranted;
+  if(grant!==undefined&&(!grant||typeof grant!=='object'||Array.isArray(grant)||
+   !Number.isInteger(grant.turn)||grant.turn<1||grant.turn>s.turn||
+   !Number.isInteger(grant.stamp)||grant.stamp!==physical.fieldEntryStamp||
+   Object.keys(grant).length!==2||
+   Object.keys(grant).some(k=>!['turn','stamp'].includes(k))||
+   !card(pack,physical).effects.onPlay?.some(e=>e.op==='chooseOne'&&
+    e.entry==='ownEffect'&&e.options.some(o=>o.then.some(t=>
+     t.op==='grantSelfAttackEndSwapThisTurn')))))
+   throw Error('Forged physical attack-end grant');
+  for(const buff of physical.buffs||[])if(buff.untilOwnTurnStart!==undefined&&(
+   !Number.isInteger(buff.untilOwnTurnStart)||
+   buff.untilOwnTurnStart!==s.players[owner].ownTurns+1||
+   !Number.isInteger(buff.bp)||buff.bp<1||buff.bp>5000||
+   Object.keys(buff).length!==2||
+   Object.keys(buff).some(k=>!['bp','untilOwnTurnStart'].includes(k))||
+   !card(pack,physical).effects.onPlay?.some(e=>e.op==='chooseOne'&&e.entry==='ownEffect'&&
+    e.options.some(o=>o.then.some(t=>t.op==='buffSelfUntilNextOwnStart'&&t.bp===buff.bp)))))
+   throw Error('Forged next-own-start physical BP modifier');
+ }
  if(s.pending?.kind==='effect-optional-draw'){
   const q=s.pending,src=s.players[q.player].front.find(c=>c?.uid===q.sourceUid);
   const printed=src&&card(pack,src);
@@ -3690,13 +3779,14 @@ export function assertUniversalMatch(pack,s){
   const q=s.pending,pl=s.players[q.player],src=pl.front.find(c=>c?.uid===q.sourceUid);
   const d=src&&card(pack,src),choices=pl.energy.filter(c=>c&&
    card(pack,c).type==='character').map(c=>({uid:c.uid,stamp:c.fieldEntryStamp}));
-  if(q.player!==s.active||s.phase!=='attack'||!d?.attackEndSwap||
+  if(q.player!==s.active||s.phase!=='attack'||!attackEndSwapAvailable(pack,s,src)||
    !src||src.fieldEntryStamp!==q.sourceStamp||
    !(s.attacksByUid[q.sourceUid]>=1)||!Number.isInteger(q.sourceStamp)||
    q.sourceStamp<1||!Array.isArray(q.choices)||!q.choices.length||
    !same(q.choices,choices)||
-   countOwnOutsideDistinctPrintedNames(s,q.player,c=>card(pack,c),
-    d.attackEndSwap)<d.attackEndSwap.minDistinctNames||
+   (!hasEarnedAttackEndSwap(s,src)&&(!d.attackEndSwap||
+    countOwnOutsideDistinctPrintedNames(s,q.player,c=>card(pack,c),
+     d.attackEndSwap)<d.attackEndSwap.minDistinctNames))||
    Object.keys(q).length!==5||
    Object.keys(q).some(k=>!['kind','player','sourceUid','sourceStamp','choices'].includes(k)))
    throw Error('Invalid saved attack-end swap pending');
@@ -4054,7 +4144,7 @@ export function assertUniversalMatch(pack,s){
    typeof e.key!=='string'||!Array.isArray(e.jobs))))
   throw Error('Invalid retirement order');
  if(!Array.isArray(s.effectQueue)||[...s.effectQueue,...lifeEntries.flatMap(e=>e.jobs)].some(e=>!playerIndex(e.owner)||
-   !['grantedAttackDraw','grantOnAttack','grantSelfSniperThisTurn','grantSelfAttackWinDrawThisTurn','draw','drawIfOwnName','drawIfOwnOutsideNamedCountAtLeast','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','millTop','buffSelf','buffSelfPerOwnOutsideGroups','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','conditionalBounceOrRetireByOwnOutsideNames','completeResolvingEvent','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','forbidAttackOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopUpToTwoBottom','deployOwnHandRest','deployOwnHandSpecial','optionalRetireThenProgram','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
+   !['grantedAttackDraw','grantOnAttack','grantSelfSniperThisTurn','grantSelfAttackWinDrawThisTurn','grantSelfMustBlockThisTurn','buffSelfUntilNextOwnStart','grantSelfAttackEndSwapThisTurn','resolveAttackWinRecovery','draw','drawIfOwnName','drawIfOwnOutsideNamedCountAtLeast','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','millTop','buffSelf','buffSelfPerOwnOutsideGroups','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','conditionalBounceOrRetireByOwnOutsideNames','completeResolvingEvent','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','forbidAttackOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopUpToTwoBottom','deployOwnHandRest','deployOwnHandSpecial','optionalRetireThenProgram','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
     'discardGate','enemyFrontAllBpDown','retireOppFrontAllUnderBp',
     'nextEligibleHandPlayApDiscount','grantFrontEnergyOwnOtherFrontTrait','buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
     'recoverOutsideColorUnderEnergy','deployOutsideRest','deployOutsideNameRest','deployNamedFromZones','payApDeployNamedRest','inspectTopTraitOutside','deployOutsideTraitlessRestOrRaid','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','retireSourceOnPhaseEnd','moveAtMainEnd','retireOwnFieldOne','retireOwnCharacterOne','openBlock','resolveSniperBattle','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','resolveAttackEndSwap','phaseOrder','effectMoveOrder','restSelfTuckMovedFaceDown','sourceResolutionBoundary','lifeBatchStep','lifeRelease','advanceAfterAttack','additionalBattleDamage','openRetirementBatch','closeRetirementBatch','retirementOrder','battleImpactDamage','discardOppHand','activeSelfIf'].includes(e.op)))
@@ -4074,11 +4164,22 @@ export function assertUniversalMatch(pack,s){
   const src=[...field(pl),...pl.hand,...pl.deck,...pl.life,
    ...pl.lifeRevealed,...pl.outside,...pl.removed].find(c=>c.uid===j.sourceUid);
   if(j.owner!==s.active||s.phase!=='attack'||!src||
-   !card(pack,src).attackEndSwap||!Number.isInteger(j.sourceStamp)||
+   !(card(pack,src).attackEndSwap||
+    card(pack,src).effects.onPlay?.some(e=>e.op==='chooseOne'&&e.entry==='ownEffect'&&
+     e.options.some(o=>o.then.some(t=>t.op==='grantSelfAttackEndSwapThisTurn'))))||
+   !Number.isInteger(j.sourceStamp)||
    j.sourceStamp<1||!(s.attacksByUid[j.sourceUid]>=1)||
    Object.keys(j).length!==4||
    Object.keys(j).some(k=>!['op','owner','sourceUid','sourceStamp'].includes(k)))
    throw Error('Invalid earned attack-end swap continuation');
+ }
+ for(const j of s.effectQueue.filter(e=>e.op==='resolveAttackWinRecovery')){
+  if(j.owner!==s.active||s.phase!=='attack'||!Number.isInteger(j.sourceStamp)||
+   j.sourceStamp<1||!(s.attacksByUid[j.sourceUid]>=1)||
+   !card(pack,{uid:j.sourceUid,cardId:j.sourceCardId}).attackWinRecover||
+   Object.keys(j).length!==5||
+   Object.keys(j).some(k=>!['op','owner','sourceUid','sourceStamp','sourceCardId'].includes(k)))
+   throw Error('Forged queued attacking-win outside recovery');
  }
  // A saved phase-end retirement can only come from a printed source
  // during its real original attack-end window (never normal MAIN/ATTACK).

@@ -3,6 +3,8 @@ import {SOLO_LEVELING_CARDS} from '../../solo-leveling.mjs';
 import {verifiedSlgV2Cards} from '../slg-pack.mjs';
 const records=Object.fromEntries(SOLO_LEVELING_CARDS.map(c=>[c.id,c]));
 const proof=Object.freeze({
+ '021':['戰鬥獲勝時可回收場外非水篠旬角色',
+ 'Official UA51BT/SLG-1-021 水篠 旬 purple5/AP1/BP4000/gen1, raid 水篠 旬, RAID Life. Live BP >=6000 gains IMPACT1; own OUTSIDE each five cards gives +500 BP onAttack; true attacking battle victory chooses up to one own OUTSIDE CHARACTER other than printed name 水篠 旬 with printed BP <=2000+500 per five own OUTSIDE (not current BP). Unconditional onPlay mandatory legal BLOCK grant lasts this turn; Q2028 2026-04-17 requires a legal opponent blocker if any, otherwise normal LIFE. Same physical UID/entry stamp preserved. Full official https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-021; all-FAQ certification is independent.'],
  '028':['以ACTIVE登場',
  'Official UA51BT/SLG-1-028 イグリット purple4/AP2/BP4000/影の軍団; enters ACTIVE without an opponent condition. OnPlay may choose up to one exact named 〈影の兵士〉 from OWN HAND OR OWN OUTSIDE and enter any legal line REST for free; nested onPlay of SLG-1-030 resolves using existing effectQueue, GET life separately. Official https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-028; not complete independent FAQ certification.'],
  '030':['同卡號牌組最多12張',
@@ -74,6 +76,7 @@ export default Object.freeze({
     reviewNote:review[1]+'；日文公式卡文來源 '+record.source+
      '；原始 source BP = '+String(record.bp),
     testFiles:['tests/universal-v2-slg-port.test.mjs',
+     ...(def.id==='SLG-1-021'?['tests/v2-r56-slg021-full-print.test.mjs']:[]),
      ...(def.id==='SLG-1-007'||def.id==='SLG-1-013'?['tests/v2-retire-delayed-slg.test.mjs']:[]),
      ...(def.id==='SLG-1-002'?['tests/v2-choice-mode-slg002.test.mjs']:[]),
      ...(def.id==='SLG-1-025'?['tests/v2-slg-025-traitless-recovery.test.mjs']:[]),

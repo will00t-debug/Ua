@@ -17,8 +17,12 @@ test('R48 scans all 700 source cards and precisely partitions every dynamically 
   c.missing.length>0));
  assert.ok(!reviewed.some(c=>c.id==='BLC-4-042'),'full source now ported');
  assert.ok(!reviewed.some(c=>c.id==='BLC-4-069'),'registered full card is no longer unported');
- for(const id of ['SLG-1-021','SAO-1-018','MST-1-009'])
+ for(const id of ['SAO-1-018'])
   assert.ok(reviewed.some(c=>c.id===id),'independent official source review '+id);
+ assert.ok(!reviewed.some(c=>c.id==='MST-1-009'));
+ assert.ok(inv.series.find(c=>c.title==='mushoku-tensei').pilotIds.includes('MST-1-009'));
+ assert.ok(!reviewed.some(c=>c.id==='SLG-1-021'));
+ assert.ok(inv.series.find(c=>c.title==='solo-leveling').pilotIds.includes('SLG-1-021'));
  assert.ok(!reviewed.some(c=>c.id==='TTG-1-067'));
  assert.ok(inv.series.find(c=>c.title==='gurren-lagann').pilotIds.includes('TTG-1-067'),
   'R55 source-audited Q2295 TTG remains in registered manifest');

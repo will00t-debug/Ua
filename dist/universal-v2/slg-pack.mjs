@@ -3,6 +3,19 @@ import {SOLO_LEVELING_CARDS} from '../solo-leveling.mjs';
 import {createUniversalPack} from './pack.mjs';
 const catalog=Object.fromEntries(SOLO_LEVELING_CARDS.map(c=>[c.id,c]));
 const authored=[
+// R56: UA51BT/SLG-1-021 all five printed clauses audited against JP card and Q2028.
+{
+ id:'SLG-1-021',name:'水篠 旬',color:'purple',energy:5,ap:1,bp:4000,
+ gen:1,trigger:'raid',type:'character',implementation:'dsl',
+ raidName:'水篠 旬',conditionalImpactBpAtLeast:6000,
+ attackWinRecover:{basePrintedBp:2000,unit:5,bpPerGroup:500,excludeName:'水篠 旬'},
+ effects:{
+  onPlay:[{op:'grantSelfMustBlockThisTurn'}],
+  onAttack:[{op:'buffSelfPerOwnOutsideGroups',unit:5,bpPerGroup:500}]
+ },
+ textAnchor:'戰鬥獲勝時可回收場外非水篠旬角色',
+ officialTraits:[],catalogueTraits:[]
+},
  // UA51BT/SLG-1-028: always ACTIVE on entry; its onPlay uses one shared
  // named physical choice across HAND and OUTSIDE, without normal AP.
  {"id":"SLG-1-028","name":"イグリット","color":"purple","energy":4,"ap":2,

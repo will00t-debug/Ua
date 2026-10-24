@@ -2,6 +2,8 @@
 import {TTG_BY_ID} from '../../ttg-builder.mjs';
 import {verifiedTtgV2Additions} from '../ttg-pack.mjs';
 const proof=Object.freeze({
+ 'TTG-1-020':['手牌本卡需求能源減2',
+ 'Official JP/EN UA56BT/TTG-1-020 ヨーコ GREEN2 AP1 BP2500/gen1 大グレン団 ACTIVE LIFE. While this card is in OWN HAND, if OWN FRONT and ENERGY are completely empty, its green required energy is reduced by 2 (not its AP), with normal printed STEP from FRONT to ENERGY during own movement phase. Source https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-020; Q&A searched, no card-specific exception verified. Full 50-card positive/negative tests tests/v2-r57-ttg020-official.test.mjs; does not certify all general FAQ.'],
  'TTG-1-067':['狙擊',
  'Official [UA56BT/TTG-1-067] Yoko red energy4 AP2 BP3500 gen red1 Great Gurren trait, enters ACTIVE regardless paid entry; current BP>=4000 cannot block; onPlay this-turn earned SNIPER targeted FRONT combat and attacker real battle victory draws exactly one (including equality per Q2295 and Q65-Q70), never direct LIFE. ACTIVE LIFE choose own character ACTIVE BP3000 current turn. Physical UID and field incarnation stamped; legal 50-card TTG real deck and distinct normal/sniper/ACTIVE LIFE positive+negative checks in tests/v2-r55-ttg067-full-print.test.mjs. Individual official rule audit, not 700-card FAQ certification.'],
  'TTG-1-028':['下次己方回合開始不能攻擊',
@@ -33,6 +35,7 @@ export default Object.freeze({
    evidence:{printedTextFragments:[review[0]],reviewNote:review[1]+
     ' 日文來源：'+record.source,
     testFiles:['tests/universal-v2-ttg-port.test.mjs',
+     ...(def.id==='TTG-1-020'?['tests/v2-r57-ttg020-official.test.mjs']:[]),
      ...(def.id==='TTG-1-067'?['tests/v2-r55-ttg067-full-print.test.mjs']:[]),...(def.id==='TTG-1-010'||def.id==='TTG-1-023'?['tests/v2-ttg-top-filtered.test.mjs']:[]),
       ...(def.id==='TTG-1-028'?['tests/v2-r32-ttg028-official.test.mjs']:[]),
       ...(def.id==='TTG-1-053'?['tests/v2-ttg-053-rest-mill.test.mjs']:[]),

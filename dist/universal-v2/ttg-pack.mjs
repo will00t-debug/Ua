@@ -3,6 +3,10 @@ import {TTG_BY_ID} from '../ttg-builder.mjs';
 import {verifiedPilotCards} from './real-card-pilots.mjs';
 import {createUniversalPack} from './pack.mjs';
 const additions=[
+ {id:'TTG-1-020',name:'ヨーコ',energy:2,ap:1,bp:2500,gen:1,color:'green',
+  type:'character',traits:['大グレン団'],trigger:'active',step:true,
+  implementation:'dsl',effects:{},emptyOwnFieldHandEnergyDiscount:2,
+  match:'手牌本卡需求能源減2'},
  {id:'TTG-1-067',name:'ヨーコ',energy:4,ap:2,bp:3500,gen:1,color:'red',
   type:'character',traits:['大グレン団'],trigger:'active',implementation:'dsl',
   enterAlwaysActive:true,

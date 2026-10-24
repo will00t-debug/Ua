@@ -64,6 +64,8 @@ jobs:
         run: node scripts/v2-r54-five-title-candidate-report.mjs
       - name: R55 sniper combat and battle-win five-title audit
         run: node scripts/v2-r55-sniper-battle-candidate-report.mjs
+      - name: R56 live 700-card rescan and BLEACH SAO handoff
+        run: node scripts/v2-r56-ttg-slg-mst-five-title-rescan.mjs
       - name: Node 22 test suite
         run: npm test
       - name: Five-title 60-match matrix
