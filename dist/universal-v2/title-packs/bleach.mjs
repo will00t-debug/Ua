@@ -53,7 +53,8 @@ const testForKind=Object.freeze({
  drawIfOppRestCharacter:'tests/v2-c16-conditional-board.test.mjs',
  drawIfOppCharacterBpAtLeast:'tests/v2-c16-conditional-board.test.mjs',
  activeOwnNamed:'tests/v2-c16-conditional-board.test.mjs',
- drawIfOwnNameAndHandFewer:'tests/v2-c17-name-hand-draw.test.mjs'
+ drawIfOwnNameAndHandFewer:'tests/v2-c17-name-hand-draw.test.mjs',
+ onRetireOwnTurnNameRest:'tests/v2-c18-own-turn-name-rest.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.

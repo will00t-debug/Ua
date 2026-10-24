@@ -986,6 +986,8 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-1-076","kind":"activeOwnNamed","number":"UA08BT/BLC-1-076","name":"草鹿 やちる","color":"green","energy":1,"ap":1,"bp":2000,"gen":1,"trigger":"active","type":"character","effect":"登場：可將最多 1 個己方場上的〈更木劍八〉轉為 ACTIVE。"}
 ,
 {"id":"BLC-2-004","kind":"drawIfOwnNameAndHandFewer","number":"EX07BT/BLC-2-004","name":"ユーグラム・ハッシュヴァルト","color":"yellow","energy":4,"ap":1,"bp":4000,"gen":1,"trigger":null,"type":"character","effect":"登場：己方場上有〈友哈巴赫〉且己方手牌少於敵方時，抽 1 張。"}
+,
+{"id":"BLC-2-039","kind":"onRetireOwnTurnNameRest","number":"EX07BT/BLC-2-039","name":"シャルロッテ・クールホーン","color":"blue","energy":2,"ap":1,"bp":3000,"gen":1,"trigger":"active","type":"character","effect":"退場：若現在是己方回合，可將最多 1 個敵方前線角色轉為 REST。所有〈夏洛特・庫爾霍恩〉的此效果，合計每回合只能發動 1 次。"}
 ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1058,6 +1060,7 @@ export function checkedBleachAddonDefinition(p){
  const isOppBpDraw=p.kind==='drawIfOppCharacterBpAtLeast';
  const isActiveNamed=p.kind==='activeOwnNamed';
  const isNameHandDraw=p.kind==='drawIfOwnNameAndHandFewer';
+ const isOwnTurnNameRest=p.kind==='onRetireOwnTurnNameRest';
  const handName={'BLC-2-004':'ユーハバッハ'}[p.id];
  const namedActive={'BLC-1-076':'更木 剣八'}[p.id];
  const oppBpGate={'BLC-1-027':4000}[p.id];
@@ -1071,7 +1074,7 @@ export function checkedBleachAddonDefinition(p){
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw;
+ const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1152,6 +1155,8 @@ export function checkedBleachAddonDefinition(p){
    isOppBpDraw?{onPlay:[{op:'drawIfOppCharacterBpAtLeast',minBp:oppBpGate,count:1}]}:
    isActiveNamed?{onPlay:[{op:'activeOwnNamed',name:namedActive,max:1,optional:true}]}:
    isNameHandDraw?{onPlay:[{op:'drawIfOwnNameAndHandFewer',name:handName,count:1}]}:
+   isOwnTurnNameRest?{onRetire:[{op:'oncePerTurnGate',scope:'name',optional:false,
+    ownTurnOnly:true,then:[{op:'restOppFrontOne',optional:true}]}]}:
    isOptionalPeek?{onPlay:[{op:'discardGate',optional:true,then:[
     {op:'peekTopOrBottom'},{op:'draw',count:1}]}]}:
    isStripDual?{onPlay:[{op:'chooseOne',optional:false,options:[

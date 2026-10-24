@@ -61,9 +61,9 @@ function aiOk(s){
 test('C8 registers both whole-print optional peek draws',()=>{
  const x=c8BlcOptionalPeekDraw();
  assert.deepEqual([...x.registered].sort(),['BLC-4-030','BLC-4-066']);
- assert.equal(x.report.bleach,122);
+ assert.equal(x.report.bleach,123);
  assert.equal(x.report.mst,56);
- assert.equal(x.report.registered,373);
+ assert.equal(x.report.registered,374);
  assert.equal(x.report.readyFromKeywords,0);
  for(const id of ['BLC-4-030','BLC-4-066'])
   assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);

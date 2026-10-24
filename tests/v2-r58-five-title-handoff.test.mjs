@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {v2AllTitleInventory} from '../dist/universal-v2/title-packs/inventory.mjs';
 import {r58FiveTitleReview,R58_OFFICIAL_REVIEW} from '../scripts/v2-r58-five-title-handoff.mjs';
-const SIX=['BLC-1-007','BLC-1-044','BLC-1-073','SAO-1-015','SAO-1-050','SAO-1-092','MST-1-006','BLC-1-015','BLC-1-027','BLC-1-076','BLC-2-004'];
+const SIX=['BLC-1-007','BLC-1-044','BLC-1-073','SAO-1-015','SAO-1-050','SAO-1-092','MST-1-006','BLC-1-015','BLC-1-027','BLC-1-076','BLC-2-004','BLC-2-039'];
 test('R58 all five titles classify the dynamically unported entire 700-card catalogue',()=>{
  const live=v2AllTitleInventory(),{report,records}=r58FiveTitleReview();
  assert.equal(report.catalogue,700);

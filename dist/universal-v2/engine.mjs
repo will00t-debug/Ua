@@ -874,6 +874,9 @@ function continueEffectQueue(pack,s){
    if(pl.hand.length)s.pending={kind:'effect-discard-cost',player:owner,
     sourceUid:job.sourceUid,count:job.count,optional:job.optional};
   }else if(job.op==='oncePerTurnGate'){
+   // ownTurnOnly is the printed 「自分のターン」 condition. A miss does not
+   // start the effect, so the shared name or card use stays unspent.
+   if(!(job.ownTurnOnly===true&&s.active!==owner)){
    const key=job.scope==='name'?'name:'+job.sourceName:'uid:'+job.sourceUid;
    if(!s.onceEffectUses[owner].includes(key)){
     if(job.optional)s.pending={kind:'effect-once-choice',player:owner,
@@ -883,6 +886,7 @@ function continueEffectQueue(pack,s){
      s.effectQueue.unshift(...job.then.map(e=>({...e,owner,
       sourceUid:job.sourceUid,sourceName:job.sourceName})));
     }
+   }
    }
   }else if(job.op==='discardGate'){
    if(payableHand(pack,s,owner,job.payment).length>=(job.count??1))
@@ -1640,7 +1644,12 @@ function resolveChoice(s,a,pack){
    if(impact&&!replacement)queueImpactAfterRetirement(pack,s,q.player);
   }else{
    // Only strict defender BP > attacker BP earns the defender's victory.
+   // The attacker is the character that loses, so it retires now. No life
+   // damage is dealt. onRetire, if any, runs before the attack continues.
    grantBattleWinToOtherOwn(pack,s,q.player,blocker,'blocker');
+   const attackerSlot=s.players[s.active].front.findIndex(c=>c?.uid===attacker.uid);
+   if(attackerSlot<0)throw Error('Attacker left before the lost battle');
+   retire(pack,s,s.active,'front',attackerSlot);
   }
   if(!s.pending)continueEffectQueue(pack,s);
   return;
