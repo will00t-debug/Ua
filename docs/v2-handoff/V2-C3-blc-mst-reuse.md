@@ -38,4 +38,6 @@ SAO prints that also contain REST-or-Raid, and stay with their other sentences: 
 
 ## Still open
 
-BLEACH 164 and MST 25 remain unported after this round. Expected registry: BLEACH 112, SAO 111, TTG 38, SLG 46, MST 55, total 362/700. FAQ certification stays 0. Phase 2 battle AI starts only after BLEACH 276/276 and MST 80/80, or after every remaining card has an official-page gap record and no further Cursor-only port is possible. This round has not reached either condition.
+Local Node v22.23.4, 2026-10-24: `npm test` 2223/2223 fail 0, five-title matrix 60/60, independent manifest bleach 112, gurren-lagann 38, solo-leveling 46, sword-art-online 111, mushoku-tensei 55, total 362/700. Unported report: 338, of which BLEACH 164 and MST 25. FAQ certification stays 0. This SHA still needs its own GitHub Actions SUCCESS before it is accepted.
+
+Phase 2 battle AI starts only after BLEACH 276/276 and MST 80/80, or after every remaining card has an official-page gap record and no further Cursor-only port is possible. This round has not reached either condition. No other unported BLEACH effect string is identical to an already registered card, so the next batch needs a fresh official-page check rather than a text clone.
