@@ -143,3 +143,28 @@ test('C26/Q1206: an unselectable enemy FRONT is not a playable-event target',()=
  assert.deepEqual(a.pending.choices,[other.uid],'protected UID never enters pending');
  assert.equal(assertUniversalMatch(packs,a),true);
 });
+
+test('C26/Q81: Klein triggered by real battle retirement may mill exactly one, then stop',()=>{
+ const packs=[sao,sao];
+ const one=deckOf(sao,['SAO-2-063','SAO-1-020']);
+ const two=deckOf(sao,['SAO-2-037','SAO-1-020']);
+ let s=newUniversalMatch(packs,{decks:[one,two],first:0,seed:263710});
+ const attacker=place(s,0,'SAO-2-063','front',0);
+ const klein=place(s,1,'SAO-2-037','front',0);
+ attacker.ready=true;klein.ready=true;
+ const top=take(s,1,'SAO-1-020');s.players[1].deck.unshift(top);
+ s=toMain(packs,s);
+ s=dispatchUniversalAction(packs,s,{type:'next'});
+ assert.equal(s.phase,'attack');
+ s=dispatchUniversalAction(packs,s,{type:'attack',uid:attacker.uid});
+ assert.ok(legalUniversalActions(packs,s).some(a=>a.type==='chooseBlock'&&a.uid===klein.uid));
+ s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:klein.uid});
+ assert.equal(s.players[1].front[0],null);
+ assert.equal(s.pending.kind,'effect-optional-mill','true battle retirement fires Klein effect');
+ s=dispatchUniversalAction(packs,s,{type:'chooseOptionalMill',mode:'mill'});
+ assert.equal(s.pending.remaining,1);
+ s=dispatchUniversalAction(packs,s,{type:'chooseOptionalMill',mode:'skip'});
+ assert.equal(s.pending,null);
+ assert.ok(s.players[1].outside.some(c=>c.uid===top.uid));
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
