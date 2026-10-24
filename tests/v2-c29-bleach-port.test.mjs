@@ -23,7 +23,7 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 //   The character choice is mandatory. The AP choice is up to one.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -33,9 +33,10 @@ function realDeck(required,color){
  assert.deepEqual(validateUniversalDeck(bleach,counts),[]);
  return counts;
 }
-const green=realDeck(['BLC-1-080','BLC-1-091','BLC-1-070','BLC-1-071'],'green');
+const green=realDeck(['BLC-1-080','BLC-1-091','BLC-1-078','BLC-1-070','BLC-4-062'],'green');
 const blue=realDeck(['BLC-2-041','BLC-2-031','BLC-4-036'],'blue');
 const purple=realDeck(['BLC-1-062','BLC-1-035','BLC-1-103'],'purple');
+const yellow=realDeck(['BLC-1-032','BLC-1-023','BLC-1-006'],'yellow');
 function take(s,p,id){
  for(const zone of ['hand','deck','life','outside','removed']){
   const list=s.players[p][zone],i=list.findIndex(c=>c.cardId===id);
@@ -80,12 +81,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers four whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,440);
- assert.equal(EXPECTED_V2_COUNTS.bleach,164);
+test('C29 registers six whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,442);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,166);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,164);
+ assert.equal(Object.keys(bleach.cards).length,166);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -261,4 +262,96 @@ test('BLC-1-062 must buff one own character, then may ready one rested AP',()=>{
  assert.equal(readied.players[0].apCards.find(c=>c.uid===rested[0].uid).ready,true);
  aiOk(packs,readied);
  assert.equal(assertUniversalMatch(packs,readied),true);
+});
+
+test('BLC-1-032 chooses one optional buff or one optional front BP reduction',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-1-032');
+ assert.equal(printed.effect,'選一項：①可使最多 1 個己方場上角色本回合 BP +1000；②可使最多 1 個敵方前線角色本回合 BP −1000。');
+ assert.equal(printed.trigger,'draw');
+ const card=bleach.cards['BLC-1-032'];
+ assert.equal(card.triggerEffect,null);
+ assert.equal(card.effects.onPlay[0].op,'chooseOne');
+ assert.equal(card.effects.onPlay[0].optional,false);
+ const {packs,s}=main(yellow,29032);
+ const event=take(s,0,'BLC-1-032');
+ s.players[0].hand.push(event);
+ const fuel=put(s,0,'BLC-1-023','energy',0);
+ const front=put(s,0,'BLC-1-006','front',0);
+ const foeFront=put(s,1,'BLC-1-023','front',0);
+ const foeEnergy=put(s,1,'BLC-1-006','energy',0);
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='event'&&a.uid===event.uid),true);
+ let played=dispatchUniversalAction(packs,s,{type:'event',uid:event.uid});
+ assert.equal(played.pending.kind,'effect-choice-mode');
+ const modes=legalUniversalActions(packs,played);
+ assert.deepEqual(modes.map(a=>a.mode).sort(),['buff','down']);
+ let buffed=dispatchUniversalAction(packs,played,{type:'chooseEffectMode',mode:'buff'});
+ assert.equal(buffed.pending.kind,'effect-buff-own');
+ assert.equal(buffed.pending.optional,true);
+ const buffChoices=legalUniversalActions(packs,buffed);
+ assert.equal(buffChoices.some(a=>a.type==='chooseOwnBuff'&&a.uid===null),true);
+ assert.equal(buffChoices.some(a=>a.type==='chooseOwnBuff'&&a.uid===fuel.uid),true);
+ assert.equal(buffChoices.some(a=>a.type==='chooseOwnBuff'&&a.uid===front.uid),true);
+ assert.equal(buffChoices.some(a=>a.uid===foeFront.uid),false);
+ const skipped=dispatchUniversalAction(packs,buffed,{type:'chooseOwnBuff',uid:null});
+ assert.equal(skipped.pending,null);
+ assert.equal(universalBp(packs,skipped,live(skipped,0,front.uid)),4000);
+ buffed=dispatchUniversalAction(packs,buffed,{type:'chooseOwnBuff',uid:fuel.uid});
+ assert.equal(universalBp(packs,buffed,live(buffed,0,fuel.uid)),5000);
+ let down=dispatchUniversalAction(packs,played,{type:'chooseEffectMode',mode:'down'});
+ assert.equal(down.pending.kind,'effect-target');
+ assert.equal(down.pending.optional,true);
+ const downChoices=legalUniversalActions(packs,down);
+ assert.equal(downChoices.some(a=>a.type==='chooseTarget'&&a.uid===foeFront.uid),true);
+ assert.equal(downChoices.some(a=>a.type==='chooseTarget'&&a.uid===foeEnergy.uid),false);
+ assert.equal(downChoices.some(a=>a.type==='chooseTarget'&&a.uid===null),true);
+ down=dispatchUniversalAction(packs,down,{type:'chooseTarget',uid:foeFront.uid});
+ assert.equal(universalBp(packs,down,live(down,1,foeFront.uid)),3000);
+ assert.equal(universalBp(packs,down,live(down,1,foeEnergy.uid)),4000);
+ assert.equal(assertUniversalMatch(packs,down),true);
+});
+
+test('BLC-1-078 steps to energy and may buff one Gotei character on attack',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-1-078');
+ assert.equal(printed.effect,'Step：己方移動階段可由前線移至能源線。攻擊時：可使最多 1 個己方場上具有「護廷十三隊」特徵的角色本回合 BP +500。');
+ assert.equal(printed.gen,2);
+ const card=bleach.cards['BLC-1-078'];
+ assert.equal(card.step,true);
+ assert.equal(card.gen,2);
+ assert.equal(card.trigger,'active');
+ assert.equal(card.triggerEffect,null);
+ assert.deepEqual(card.effects.onAttack,[{op:'buffOwnField',filter:{field:'trait',value:'護廷十三隊'},
+  bp:500,optional:true,excludeSelf:false}]);
+ const packs=[bleach,bleach];
+ let moving=newUniversalMatch(packs,{decks:[green,green],seed:29078,first:0});
+ for(let n=0;n<6&&moving.phase!=='move';n++)
+  moving=dispatchUniversalAction(packs,moving,{type:'next'});
+ assert.equal(moving.phase,'move');
+ const stepper=put(moving,0,'BLC-1-078','front',0);
+ assert.equal(legalUniversalActions(packs,moving).some(a=>a.type==='step'&&a.uid===stepper.uid),true);
+ moving=dispatchUniversalAction(packs,moving,{type:'step',uid:stepper.uid,slot:0});
+ assert.equal(moving.players[0].energy[0]?.uid,stepper.uid);
+ assert.equal(moving.players[0].front[0],null);
+ const {s}=main(green,29079);
+ const self=put(s,0,'BLC-1-078','front',0);
+ const ally=put(s,0,'BLC-1-070','energy',0);
+ const other=put(s,0,'BLC-4-062','front',1);
+ put(s,1,'BLC-1-070','front',0);
+ let battle=s;
+ for(let n=0;n<6&&battle.phase!=='attack';n++)
+  battle=dispatchUniversalAction(packs,battle,{type:'next'});
+ battle=dispatchUniversalAction(packs,battle,{type:'attack',uid:self.uid});
+ assert.equal(battle.pending.kind,'effect-buff-own');
+ assert.equal(battle.pending.optional,true);
+ const choices=legalUniversalActions(packs,battle);
+ assert.equal(choices.some(a=>a.type==='chooseOwnBuff'&&a.uid===null),true);
+ assert.equal(choices.some(a=>a.type==='chooseOwnBuff'&&a.uid===self.uid),true);
+ assert.equal(choices.some(a=>a.type==='chooseOwnBuff'&&a.uid===ally.uid),true);
+ assert.equal(choices.some(a=>a.type==='chooseOwnBuff'&&a.uid===other.uid),false);
+ const skipped=dispatchUniversalAction(packs,battle,{type:'chooseOwnBuff',uid:null});
+ assert.equal(universalBp(packs,skipped,live(skipped,0,self.uid)),3000);
+ battle=dispatchUniversalAction(packs,battle,{type:'chooseOwnBuff',uid:ally.uid});
+ assert.equal(universalBp(packs,battle,live(battle,0,ally.uid)),bleach.cards['BLC-1-070'].bp+500);
+ assert.equal(universalBp(packs,battle,live(battle,0,other.uid)),bleach.cards['BLC-4-062'].bp);
+ assert.equal(assertUniversalMatch(packs,moving),true);
+ assert.equal(assertUniversalMatch(packs,battle),true);
 });

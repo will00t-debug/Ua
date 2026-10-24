@@ -93,7 +93,9 @@ const testForKind=Object.freeze({
  ownTurnBpImmune:'tests/v2-c29-bleach-port.test.mjs',
  aliasFrontSoloBp:'tests/v2-c29-bleach-port.test.mjs',
  otherOwnRetireThisTurnBp:'tests/v2-c29-bleach-port.test.mjs',
- fieldBuffRecoverAp:'tests/v2-c29-bleach-port.test.mjs'
+ fieldBuffRecoverAp:'tests/v2-c29-bleach-port.test.mjs',
+ chooseBuffOrFrontDown:'tests/v2-c29-bleach-port.test.mjs',
+ stepAttackTraitBuff:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.

@@ -68,9 +68,9 @@ function orderBottom(s){
 }
 
 test('nine blue prints complete the reject deck without joining the seven presets',()=>{
- assert.equal(Object.keys(pack.cards).length,164);
- assert.equal(EXPECTED_V2_COUNTS.bleach,164);
- assert.equal(EXPECTED_V2_TOTAL,440);
+ assert.equal(Object.keys(pack.cards).length,166);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,166);
+ assert.equal(EXPECTED_V2_TOTAL,442);
  const row=summarizeDesignatedDecks(id=>!!pack.cards[id]).find(r=>r.key==='reject-blue');
  assert.equal(row.playable,true);
  assert.equal(row.registeredKinds,13);
