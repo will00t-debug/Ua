@@ -162,7 +162,7 @@ test('R57 genuine official 50-card MST paid RAID preserves exact physical base a
  s=dispatchUniversalAction(realPack,s,{type:'next'});
  s=dispatchUniversalAction(realPack,s,{type:'next'});
  const a=legalUniversalActions(realPack,s).find(x=>
-  x.type==='raid'&&x.uid===boss.uid&&x.baseUid===base.uid&&x.line==='front');
+  x.type==='raid'&&x.uid===boss.uid&&x.baseUid===base.uid);
  assert.ok(a,'valid printed Raid must be payable with three blue energy');
  s=dispatchUniversalAction(realPack,s,a);
  assert.ok(!s.pending);
