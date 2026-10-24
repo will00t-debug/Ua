@@ -748,11 +748,16 @@ function verifyProgram(program,path){
    const keys=Object.keys(e);
    const named=typeof e.excludeName==='string'&&!!e.excludeName.trim()&&e.excludeName.length<=80;
    const self=e.includeSelf===true;
-   const legacy=e.optional===true&&named&&!self&&keys.length===3&&
+   const noTrait=e.traitless===true;
+   // traitless is a third closed shape: another character whose printed
+   // trait list is empty. It cannot combine with a name exclusion or self.
+   const legacy=e.optional===true&&named&&!self&&!noTrait&&keys.length===3&&
     keys.every(k=>['op','optional','excludeName'].includes(k));
-   const anyOwn=e.optional===true&&self&&e.excludeName===undefined&&keys.length===3&&
+   const anyOwn=e.optional===true&&self&&!noTrait&&e.excludeName===undefined&&keys.length===3&&
     keys.every(k=>['op','optional','includeSelf'].includes(k));
-   if(!legacy&&!anyOwn)throw Error(path+'['+i+'] invalid other-character line move');
+   const traitlessOther=e.optional===true&&noTrait&&!self&&e.excludeName===undefined&&
+    keys.length===3&&keys.every(k=>['op','optional','traitless'].includes(k));
+   if(!legacy&&!anyOwn&&!traitlessOther)throw Error(path+'['+i+'] invalid other-character line move');
   }
   if(e.op==='raidBaseEnergyThen'&&(
    !integer(e.minEnergy,1)||e.minEnergy>10||
@@ -1091,7 +1096,11 @@ function normalize(card,packId){
     frontProgram[1].trait.length<=80&&Object.keys(frontProgram[1]).length===4)||
    (frontProgram.length===1&&frontProgram[0]?.op==='drawDiscard'&&
     frontProgram[0].count===1&&frontProgram[0].discardCount===1&&
-    Object.keys(frontProgram[0]).length===3)
+    Object.keys(frontProgram[0]).length===3)||
+   (frontProgram.length===1&&frontProgram[0]?.op==='restOppFrontUnderBp'&&
+    frontProgram[0].optional===true&&integer(frontProgram[0].bp,1)&&
+    frontProgram[0].bp<=50000&&Object.keys(frontProgram[0]).length===3&&
+    Object.keys(frontProgram[0]).every(k=>['op','bp','optional'].includes(k)))
   )&&Object.keys(mainAbility).length===4&&
   Object.keys(mainAbility).every(k=>['op','frontOnly','oncePerTurn','then'].includes(k));
  if(mainFrontProgram)verifyProgram(mainAbility.then,card.id+'.mainAbility.then');

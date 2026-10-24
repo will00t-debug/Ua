@@ -1171,14 +1171,19 @@ function continueEffectQueue(pack,s){
    const loc=location(s,owner,job.sourceUid);
    const effect=loc&&(card(pack,loc.c).effects.onPlay||[]).find(e=>e.op==='moveOtherAcrossOrRemove');
    const includeSelf=job.includeSelf===true;
-   if(!effect||effect.excludeName!==job.excludeName||(effect.includeSelf===true)!==includeSelf)
+   const traitless=job.traitless===true;
+   if(!effect||effect.excludeName!==job.excludeName||(effect.includeSelf===true)!==includeSelf||
+    (effect.traitless===true)!==traitless)
     throw Error('Unproven line move');
-   const choices=!originalEffectsDisabled(s,loc.c)?field(pl).filter(c=>
-    (includeSelf||c.uid!==job.sourceUid)&&
-    card(pack,c).type==='character'&&
-    !(job.excludeName&&cardHasName(card(pack,c),job.excludeName,originalEffectsDisabled(s,c)))).map(c=>c.uid):[];
+   const choices=!originalEffectsDisabled(s,loc.c)?field(pl).filter(c=>{
+    const printed=card(pack,c);
+    return (includeSelf||c.uid!==job.sourceUid)&&
+     printed.type==='character'&&
+     !(traitless&&printed.traits.length!==0)&&
+     !(job.excludeName&&cardHasName(printed,job.excludeName,originalEffectsDisabled(s,c)));
+   }).map(c=>c.uid):[];
    if(choices.length)s.pending={kind:'effect-line-move',player:owner,sourceUid:job.sourceUid,
-    choices,optional:true,excludeName:job.excludeName??null,includeSelf};
+    choices,optional:true,excludeName:job.excludeName??null,includeSelf,traitless};
   }else if(job.op==='raidBaseEnergyThen'){
    const source=field(pl).find(c=>c.uid===job.sourceUid);
    const printed=source&&card(pack,source);
@@ -3301,6 +3306,7 @@ function resolveChoice(s,a,pack){
   if(!from||!source||!q.choices.includes(a.uid)||
    (!q.includeSelf&&from.c.uid===q.sourceUid)||
    card(pack,from.c).type!=='character'||
+   (q.traitless&&card(pack,from.c).traits.length!==0)||
    (q.excludeName&&cardHasName(card(pack,from.c),q.excludeName,originalEffectsDisabled(s,from.c))))
    throw Error('Illegal line-move character');
   const line=from.line==='front'?'energy':'front';
@@ -4238,6 +4244,12 @@ export function legalUniversalActions(pack,s){
     }
     // Draw then discard does not choose an opposing character.
     if(step.op==='drawDiscard'){
+     out.push({type:'activate',uid:c.uid,mode:'frontOnce'});
+     continue;
+    }
+    // 1枚まで is optional. Zero opposing front characters still leaves
+    // the ability legal; the shared REST resolver then sets no pending.
+    if(step.op==='restOppFrontUnderBp'&&step.optional===true){
      out.push({type:'activate',uid:c.uid,mode:'frontOnce'});
      continue;
     }
