@@ -1,0 +1,96 @@
+{
+  "actions": [
+    "next",
+    "extraDraw",
+    "move",
+    "step",
+    "play",
+    "event",
+    "raid",
+    "activate",
+    "attack"
+  ],
+  "pendingGroups": {
+    "combat": [
+      "block"
+    ],
+    "ordering": [
+      "phase-order",
+      "retirement-order",
+      "effect-move-order",
+      "life-batch-order",
+      "raid-effect-order",
+      "effect-top-order"
+    ],
+    "payment": [
+      "effect-discard",
+      "end-hand-limit",
+      "effect-discard-cost",
+      "effect-discard-gate",
+      "effect-selection-hand-payment",
+      "main-discard-buff",
+      "main-discard-self-retire"
+    ],
+    "acquisition": [
+      "effect-search-deck",
+      "effect-search-deck-multi",
+      "effect-recover-outside",
+      "effect-top-filter-choice",
+      "effect-top-filter-many-choice"
+    ],
+    "deployment": [
+      "effect-outside-rest",
+      "effect-outside-name-rest",
+      "effect-outside-traitless-rest",
+      "effect-named-zone-entry",
+      "effect-hand-rest",
+      "recovered-self-entry"
+    ],
+    "privateInspection": [
+      "private-top-choice",
+      "private-top-place",
+      "effect-top-inspect",
+      "effect-top-inspect-many",
+      "effect-top-trait-outside"
+    ],
+    "enemyTargets": [
+      "effect-target",
+      "effect-target-many",
+      "effect-retire-bp",
+      "effect-named-outside-bounce-retire",
+      "effect-rest-bp",
+      "effect-attack-ban",
+      "effect-strip-raid-top"
+    ],
+    "ownTargets": [
+      "effect-grant-attack",
+      "effect-buff-own",
+      "effect-buff-trait",
+      "main-two-buff",
+      "main-rest-front-energy",
+      "effect-own-front-protect",
+      "effect-grant-ap-tax",
+      "effect-grant-front-energy",
+      "effect-tuck-moved",
+      "attack-end-swap"
+    ],
+    "sacrifice": [
+      "effect-retire-own-field",
+      "effect-retire-own-character",
+      "main-field-trait-retire",
+      "effect-bounce-own"
+    ],
+    "choices": [
+      "life-trigger",
+      "granted-attack-draw",
+      "effect-recover-ap",
+      "effect-rest-tuck",
+      "effect-optional-draw",
+      "effect-optional-mill",
+      "effect-pay-ap-deploy",
+      "effect-once-choice",
+      "effect-choice-mode",
+      "leave-replacement"
+    ]
+  }
+}
