@@ -257,6 +257,12 @@ export function chooseUniversalAiAction(pack,s,options={}){
    evaluateTrustedUniversalAiTactics(packs,s,observation,ranked,
     {...options.tacticalLimits,ablation:options.ablation});
   candidate=analysis?.action||ranked[0]?.action;
+  if(options.telemetry&&typeof options.telemetry==='object')
+   Object.assign(options.telemetry,{
+    searchNodes:analysis?.nodes??0,tacticalFallback:analysis?.fallback??null,
+    nativeExactSteps:analysis?.exactSteps??0,
+    heuristicFrontiers:analysis?.heuristicFrontiers??0
+   });
  }else candidate=chooseBaselineAction(pack,s,options);
  return legal.find(a=>JSON.stringify(a)===JSON.stringify(candidate))||legal[0];
 }
