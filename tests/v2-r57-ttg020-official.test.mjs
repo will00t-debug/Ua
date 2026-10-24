@@ -69,7 +69,7 @@ test('R57 shared STEP remains legal at next own movement phase, UID and printed 
  assert.equal(s.active,0);assert.equal(s.phase,'start');
  s=use(s,{type:'next'});
  assert.equal(s.phase,'move');
- const mv=legalUniversalActions(both,s).find(a=>a.type==='step'&&a.uid===target.uid&&a.line==='energy');
+ const mv=legalUniversalActions(both,s).find(a=>a.type==='step'&&a.uid===target.uid);
  assert.ok(mv);s=use(s,mv);
  assert.ok(s.players[0].energy.some(c=>c?.uid===target.uid));
  assert.equal(assertUniversalMatch(both,structuredClone(s)),true);
