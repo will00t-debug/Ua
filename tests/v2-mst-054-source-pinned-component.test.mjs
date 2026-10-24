@@ -1,0 +1,32 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {MST_V2_OFFICIAL_BY_ID} from '../dist/universal-v2/sources/mst-inventory.mjs';
+import {registeredV2TitlePack} from '../dist/universal-v2/title-packs/registry.mjs';
+const pack=registeredV2TitlePack('mushoku-tensei');
+test('MST-1-054: source-pinned official Japanese print now registered, never a synthetic component',()=>{
+ const src=MST_V2_OFFICIAL_BY_ID['MST-1-054'];
+ const live=pack.cards['MST-1-054'];
+ assert.equal(src.verified,true);
+ assert.equal(src.number,'UA54BT/MST-1-054');
+ assert.equal(src.nameJa,'ロキシー');
+ assert.equal(src.energy,4);assert.equal(src.ap,1);assert.equal(src.bp,4000);
+ assert.equal(src.gen,1);assert.equal(src.color,'green');assert.equal(src.trigger,'raid');
+ assert.match(src.source,/unionarena-tcg.com\/jp\/cardlist\/detail_iframe/);
+ assert.ok(src.effectJa.includes('元々の効果を全て失い'));
+ assert.equal(live.name,src.nameJa);
+ assert.equal(live.raidName,src.nameJa);
+ assert.equal(live.trigger,'raid');
+ assert.deepEqual(live.effects.onPlay,[{op:'restSilenceOppFrontIfOwnOutsideField',optional:true}]);
+});
+test('MST-1-075: genuine green FIELD, printed onPlay draw-discard, onRetire draw and GET',()=>{
+ const src=MST_V2_OFFICIAL_BY_ID['MST-1-075'],live=pack.cards['MST-1-075'];
+ assert.equal(src.verified,true);
+ assert.equal(src.number,'UA54BT/MST-1-075');
+ assert.equal(src.nameJa,'迷宮都市ラパン');
+ assert.equal(src.type,'field');assert.equal(src.color,'green');
+ assert.equal(src.energy,0);assert.equal(src.gen,1);assert.equal(src.ap,1);
+ assert.equal(src.trigger,'get');
+ assert.equal(live.type,'field');assert.equal(live.trigger,'get');
+ assert.deepEqual(live.effects.onPlay,[{op:'drawDiscard',count:1}]);
+ assert.deepEqual(live.effects.onRetire,[{op:'draw',count:1}]);
+});

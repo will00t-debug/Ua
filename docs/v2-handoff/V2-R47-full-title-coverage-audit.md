@@ -1,0 +1,12 @@
+# R47 full-title audit — after Q2337 live swap and MAIN Turn1, plus SAO-1-087 migration
+
+Uses only canonical R35 `capabilityIndex()`, current registry, original inventory `V2_SOURCE_CATALOGUES`, and the R44/R45 official review context. Every one of the 700 original card IDs is indexed and every currently unported ID is accounted for exactly once; textual pattern matching never yields READY or card playability.
+
+- Current registered BLEACH green EVENT/FIELD printed names are independently counted, to distinguish BLC-4-069 generic synthetic four-kind swap acceptance from an actually buildable 50-card BLEACH deck. Four DIFFERENT original names must be present in own OUTSIDE, not simply four physical cards. Any absent registered green sources must first be formally fully ported without treating source hits as READY.
+- BLC-4-069 remains PARTIAL until Raid/RAID LIFE/next eligible hand AP discount/real four-kind source validation and Q2337/2338 composite acceptance; BLC-4-042 stays PARTIAL until all three choices actually execute with cost/retirement/UID safety.
+- SAO-1-087 was independently tested as candidate with 50 legitimate SAO cards and actual BLEACH EVENT Q978 cross-title hand payment, then pinned with EXACT official Japanese print in shared SAO contribution. It must pass the exact new GitHub SHA after independent manifest and all R35–R46 old counts are updated; exhaustive independent FAQ certification remains 0.
+- New script: `scripts/v2-r47-attack-end-swap-candidate-report.mjs`, strict test: `tests/v2-r47-attack-end-swap-candidate-report.test.mjs`. Output is an audit, NOT a second card database. Each new generic atom re-uses all-five roster search; no additional incomplete real cards are registered.
+
+
+## Latest observed real all-title audit (R47)
+CI at source SHA 7765edfb: catalogue 700, registered 336, currently unported 364 (BLEACH 178, TTG 45, SLG 35, SAO 80, MST 26), text candidates 51, reviewed PARTIAL 2, unreviewed REVIEW PENDING 49, zero READY, no automatic source upgrade. Confirmed registered BLEACH green EVENT/FIELD distinct names exactly 卍解, 天地灰尽, 尸魂界, 隊首羽織 = 4. Nine unported additional source IDs: BLC-1-095, BLC-1-096, BLC-1-098, BLC-2-073, BLC-4-076, BLC-4-077, BLC-4-078, BLC-4-079, BLC-4-081. None independently approved here. R47 full official SAO-1-087 accepted into shared SAO registry and tested, not independent fully exhaustive FAQ certified. This documentation mutation demands new SHA CI green.

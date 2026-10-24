@@ -64,7 +64,7 @@ export const SAO_OFFICIAL_CARDS=[
   "ap": 1,
   "bp": 3000,
   "bpPrinted": "3000",
-  "gen": 3,
+  "gen": 2,
   "traits": [],
   "rarity": "C",
   "trigger": "draw",
@@ -143,7 +143,7 @@ export const SAO_OFFICIAL_CARDS=[
   "ap": 1,
   "bp": 2500,
   "bpPrinted": "2500",
-  "gen": 2,
+  "gen": 1,
   "traits": [
    "整合騎士"
   ],
@@ -1311,7 +1311,7 @@ export const SAO_OFFICIAL_CARDS=[
   "ap": 1,
   "bp": 1000,
   "bpPrinted": "1000",
-  "gen": 2,
+  "gen": 1,
   "traits": [
    "プログレッシブ"
   ],
@@ -2157,7 +2157,7 @@ export const SAO_OFFICIAL_CARDS=[
   "ap": 1,
   "bp": 1000,
   "bpPrinted": "1000",
-  "gen": 2,
+  "gen": 1,
   "traits": [
    "ALO"
   ],
@@ -2184,7 +2184,7 @@ export const SAO_OFFICIAL_CARDS=[
   "ap": 1,
   "bp": 3000,
   "bpPrinted": "3000",
-  "gen": 3,
+  "gen": 2,
   "traits": [
    "ALO"
   ],
@@ -2265,7 +2265,7 @@ export const SAO_OFFICIAL_CARDS=[
   "ap": 1,
   "bp": 3000,
   "bpPrinted": "3000+",
-  "gen": 3,
+  "gen": 2,
   "traits": [
    "整合騎士"
   ],
@@ -2346,7 +2346,7 @@ export const SAO_OFFICIAL_CARDS=[
   "ap": 1,
   "bp": 3000,
   "bpPrinted": "3000",
-  "gen": 3,
+  "gen": 2,
   "traits": [
    "整合騎士"
   ],
@@ -3144,7 +3144,7 @@ export const SAO_OFFICIAL_CARDS=[
   "ap": 1,
   "bp": 1000,
   "bpPrinted": "1000",
-  "gen": 2,
+  "gen": 1,
   "traits": [
    "アインクラッド"
   ],
@@ -3279,7 +3279,7 @@ export const SAO_OFFICIAL_CARDS=[
   "ap": 1,
   "bp": 3000,
   "bpPrinted": "3000",
-  "gen": 3,
+  "gen": 2,
   "traits": [
    "ALO"
   ],
@@ -4349,7 +4349,7 @@ export const SAO_OFFICIAL_CARDS=[
   "ap": 1,
   "bp": 3000,
   "bpPrinted": "3000",
-  "gen": 3,
+  "gen": 2,
   "traits": [
    "GGO"
   ],
@@ -4403,7 +4403,7 @@ export const SAO_OFFICIAL_CARDS=[
   "ap": 1,
   "bp": 3000,
   "bpPrinted": "3000",
-  "gen": 3,
+  "gen": 2,
   "traits": [
    "GGO"
   ],
@@ -4430,7 +4430,7 @@ export const SAO_OFFICIAL_CARDS=[
   "ap": 1,
   "bp": 1000,
   "bpPrinted": "1000",
-  "gen": 2,
+  "gen": 1,
   "traits": [
    "GGO"
   ],
@@ -4744,7 +4744,7 @@ export const SAO_OFFICIAL_CARDS=[
   "ap": 1,
   "bp": 1000,
   "bpPrinted": "1000",
-  "gen": 2,
+  "gen": 1,
   "traits": [
    "アインクラッド"
   ],

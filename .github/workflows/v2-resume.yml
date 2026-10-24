@@ -1,0 +1,101 @@
+name: V2 Resumed Integration
+# pull_request re-runs on open, push, and reopen for PRs into the V2
+# integration branch. It checks out the merge ref and uses read-only
+# GITHUB_TOKEN. This file is not on main, and push is the event that runs a
+# workflow before it reaches the default branch, so cursor/* and gpt/* pushes also run
+# the same jobs. No pull_request_target and no repository secrets.
+on:
+  push:
+    branches:
+      - codex/v2-resume-20261021
+      - 'cursor/**'
+      - 'gpt/**'
+  pull_request:
+    branches:
+      - codex/v2-resume-20261021
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: v2-resume-${{ github.event.pull_request.head.sha || github.sha }}
+  cancel-in-progress: true
+jobs:
+  regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Independent card certification ledger
+        run: node scripts/v2-card-certification-report.mjs
+      - name: Shared capability and unported audit
+        run: node scripts/v2-r35-unported-atom-audit.mjs
+      - name: R37 all-five-title TOP-N full-roster candidate audit
+        run: node scripts/v2-r37-top-n-candidate-report.mjs
+      - name: R40 full protection provenance candidate audit
+        run: node scripts/v2-r40-protection-candidate-report.mjs
+      - name: R41 free hand-entry and outside-recovery five-title audit
+        run: node scripts/v2-r41-special-hand-candidate-report.mjs
+      - name: R42 all five-title named free entry, TOP-N and protection rescan
+        run: node scripts/v2-r42-named-zone-candidate-report.mjs
+      - name: R43 full five-title source and paid MAIN effect inventory
+        run: node scripts/v2-r43-main-cost-unported-report.mjs
+      - name: R44 source-stamped phase-end and five-title pending official audit
+        run: node scripts/v2-r44-phase-retire-candidate-report.mjs
+      - name: R45 selection hand-discard tax and official all-title rescan
+        run: node scripts/v2-r45-selection-cost-candidate-report.mjs
+      - name: R46 official battle-win five-title rescan
+        run: node scripts/v2-r46-battle-win-candidate-report.mjs
+      - name: R47 attack-end exchange five-title rescan
+        run: node scripts/v2-r47-attack-end-swap-candidate-report.mjs
+      - name: R48 official whole-print readiness census
+        run: node scripts/v2-r48-official-readiness-report.mjs
+      - name: R49 two-card payment, printed name and FIELD full-roster rescan
+        run: node scripts/v2-r49-unported-reuse-report.mjs
+      - name: R51 five-title physical named-OUTSIDE candidate audit
+        run: node scripts/v2-r51-named-outside-candidate-report.mjs
+      - name: R52 live conditional named-OUTSIDE official complement
+        run: node scripts/v2-r52-conditional-outside-candidate-report.mjs
+      - name: R53 five-direction official-source full-roster rescan
+        run: node scripts/v2-r53-five-direction-candidate-report.mjs
+      - name: R54 live common-atom five-title physical complement
+        run: node scripts/v2-r54-five-title-candidate-report.mjs
+      - name: R55 sniper combat and battle-win five-title audit
+        run: node scripts/v2-r55-sniper-battle-candidate-report.mjs
+      - name: R56 live 700-card rescan and BLEACH SAO handoff
+        run: node scripts/v2-r56-ttg-slg-mst-five-title-rescan.mjs
+      - name: Cursor C1 BLEACH and SAO official readiness census
+        run: node scripts/v2-c1-blc-sao-readiness.mjs
+      - name: R58 full five-title hand-energy and Cursor source handoff
+        run: node scripts/v2-r58-five-title-handoff.mjs
+      - name: Cursor C2 BLEACH and SAO whole-print registration census
+        run: node scripts/v2-c2-blc-sao-register.mjs
+      - name: Cursor C3 BLEACH reuse and MST priority gap
+        run: node scripts/v2-c3-blc-mst-reuse.mjs
+      - name: Cursor C4 BLEACH front discard draw
+        run: node scripts/v2-c4-blc-front-discard-draw.mjs
+      - name: Cursor C5 BLEACH front discard BP down
+        run: node scripts/v2-c5-blc-front-discard-down.mjs
+      - name: Cursor C6 BLEACH alias peek
+        run: node scripts/v2-c6-blc-alias-peek.mjs
+      - name: Cursor C8 BLEACH optional peek draw
+        run: node scripts/v2-c8-blc-optional-peek-draw.mjs
+      - name: Cursor C10 BLEACH alias field energy
+        run: node scripts/v2-c10-blc-alias-field-energy.mjs
+      - name: Node 22 test suite
+        run: npm test
+      - name: Five-title 60-match matrix
+        run: node scripts/v2-integrated-match-matrix.mjs
+      - name: Independent card-id manifest
+        run: node scripts/v2-assert-independent-manifest.mjs
+      - name: V2 unported report
+        run: node scripts/v2-unported-report.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: resumed-v2-match-evidence
+          path: |
+            audit/v2-integrated-match-matrix.json
+            audit/v2-r58-five-title-rescan.json

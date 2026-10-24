@@ -7,5 +7,11 @@
       "**": false,
       "main": true
     }
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/universal-v2-preview.html"
+    }
+  ]
 }

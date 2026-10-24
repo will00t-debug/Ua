@@ -23,8 +23,16 @@ jobs:
         run: |
           node --check dist/app.mjs
           node --check dist/ai-v2.mjs
+          node --check dist/universal-v2-preview.mjs
+          node --check dist/universal-v2/preview-actions.mjs
+          node --check dist/universal-v2/preview-replay.mjs
+          node --check dist/universal-v2/engine.mjs
       - name: Check static entry point
         run: |
           test -s dist/index.html
           test -s dist/app.mjs
           test -s dist/engine.mjs
+          test -s dist/universal-v2-preview.html
+          test -s dist/universal-v2-preview.mjs
+          test -s dist/universal-v2-preview.css
+          test -s dist/universal-v2/preview-replay.mjs

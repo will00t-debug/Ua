@@ -1,0 +1,5 @@
+# Batch 26 — SLG-1-053 combines independent IMPACT nullification and OWN-name onPlay draw
+
+Official Japanese UA51BT/SLG-1-053 諸菱 賢太, green3 AP1 BP2000 gen2 no trait, DRAW life: IMPACT nullification plus onPlay draw1 iff OWN front OR energy line contains 〈水篠 旬〉. Verified source https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-053 (complete print includes both clauses). Uses strict existing `impactNull` and `effects.onPlay:[{op:'drawIfOwnName',name:'水篠 旬',count:1}]`, no title engine fallback, does not trigger on opponent's name/hand/outside. Test both owner indices, both zone types, no source/AP/energy bypass, physical drawn UID and opponent hidden hand. DRAW Life is separate.
+
+After green CI: independent SLG 34/80, all five 234/700, 466 unported, FAQ-certified 0. No main merge/production deployment.
