@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {SAO_OFFICIAL_CARDS} from '../dist/sao-official-import.mjs';
 import {SOLO_LEVELING_CARDS} from '../dist/solo-leveling.mjs';
+import {TTG_BY_ID} from '../dist/ttg-builder.mjs';
 import {registeredV2TitlePack} from '../dist/universal-v2/title-packs/registry.mjs';
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
@@ -58,27 +59,28 @@ function hold(s,p,id){
  s.players[p].hand.push(card);
  return card;
 }
-function toMain(s){
+function toMain(s,use=packs){
  for(let n=0;n<6&&s.phase!=='main';n++)
-  s=dispatchUniversalAction(packs,s,{type:'next'});
+  s=dispatchUniversalAction(use,s,{type:'next'});
  assert.equal(s.phase,'main');
  return s;
 }
-function aiOk(s){
- const legal=legalUniversalActions(packs,s);
+function aiOk(s,use=packs){
+ const legal=legalUniversalActions(use,s);
  for(const difficulty of ['easy','normal','hard']){
-  const ai=chooseUniversalAiAction(packs,s,{difficulty});
+  const ai=chooseUniversalAiAction(use,s,{difficulty});
   assert.ok(legal.some(a=>JSON.stringify(a)===JSON.stringify(ai)),difficulty);
  }
 }
-function play(s,uid,line='front',slot=0){
- return dispatchUniversalAction(packs,s,legalUniversalActions(packs,s)
+function play(s,uid,line='front',slot=0,use=packs){
+ return dispatchUniversalAction(use,s,legalUniversalActions(use,s)
   .find(a=>a.type==='play'&&a.uid===uid&&a.line===line&&a.slot===slot));
 }
 
 test('C27 class A registers three SLG prints on existing deck and discount DSL',()=>{
- assert.equal(EXPECTED_V2_TOTAL,428);
- assert.equal(EXPECTED_V2_COUNTS['solo-leveling'],49);
+ assert.equal(EXPECTED_V2_TOTAL,430);
+ assert.equal(EXPECTED_V2_COUNTS['solo-leveling'],50);
+ assert.equal(EXPECTED_V2_COUNTS['gurren-lagann'],39);
  for(const id of ['SLG-1-017','SLG-1-054','SLG-1-063']){
   assert.equal(EXPECTED_V2_IDS['solo-leveling'].includes(id),true);
   const source=SOLO_LEVELING_CARDS.find(c=>c.id===id);
@@ -173,4 +175,65 @@ test('SLG-1-063 adds one island-raid card from the top three and discards only a
  assert.equal(s.players[0].deck.at(-1).uid,other.uid);
  assert.equal(s.pending,null);
  assert.equal(assertUniversalMatch(packs,s),true);
+});
+
+test('SLG-1-050 rests, truly retires, then may add one outside 水篠 旬',()=>{
+ const card=slg.cards['SLG-1-050'];
+ assert.deepEqual(card.mainAbility,{op:'restRetireRecoverOutside',optional:true,
+  filter:{field:'name',value:'水篠 旬'}});
+ const counts=deckOf(slg,['SLG-1-050','SLG-1-046','SLG-1-053']);
+ let s=toMain(newUniversalMatch(packs,{decks:[counts,counts],first:0,seed:17050}));
+ const source=place(s,0,'SLG-1-050','front',0);
+ source.ready=true;
+ assert.ok(legalUniversalActions(packs,s).some(a=>a.type==='activate'&&a.uid===source.uid&&a.mode==='restRetireRecover'));
+ const named=take(s,0,'SLG-1-046'),other=take(s,0,'SLG-1-053');
+ s.players[0].outside.push(named,other);
+ s=dispatchUniversalAction(packs,s,{type:'activate',uid:source.uid,mode:'restRetireRecover'});
+ assert.ok(s.players[0].outside.some(c=>c.uid===source.uid));
+ assert.equal(s.players[0].front[0],null);
+ assert.equal(s.pending.kind,'effect-recover-outside');
+ assert.deepEqual(s.pending.choices,[named.uid]);
+ const skipped=dispatchUniversalAction(packs,s,{type:'chooseOutsideRecovery',uid:null});
+ assert.equal(skipped.players[0].outside.some(c=>c.uid===named.uid),true);
+ s=dispatchUniversalAction(packs,s,{type:'chooseOutsideRecovery',uid:named.uid});
+ assert.ok(s.players[0].hand.some(c=>c.uid===named.uid));
+ assert.ok(s.players[0].outside.some(c=>c.uid===other.uid));
+ assert.equal(s.pending,null);
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
+
+test('TTG-1-069 requires an outside ガンメン before REST and true retirement',()=>{
+ const ttg=registeredV2TitlePack('gurren-lagann');
+ const use=[ttg,ttg];
+ const sourceCard=ttg.cards['TTG-1-069'];
+ assert.equal(sourceCard.mainAbility.optional,false);
+ assert.equal(sourceCard.mainAbility.filter.value,'ガンメン');
+ assert.match(TTG_BY_ID['TTG-1-069'].source,/UA56BT%2FTTG-1-069/);
+ assert.equal(EXPECTED_V2_IDS['gurren-lagann'].includes('TTG-1-069'),true);
+ const counts=deckOf(ttg,['TTG-1-069','TTG-1-028','TTG-1-010']);
+ let bare=toMain(newUniversalMatch(use,{decks:[counts,counts],first:0,seed:17069}),use);
+ const blocked=place(bare,0,'TTG-1-069','energy',0);
+ blocked.ready=true;
+ bare.players[0].outside.push(take(bare,0,'TTG-1-010'));
+ assert.equal(legalUniversalActions(use,bare).some(a=>a.type==='activate'&&a.uid===blocked.uid),false);
+
+ let s=toMain(newUniversalMatch(use,{decks:[counts,counts],first:0,seed:17070}),use);
+ const source=place(s,0,'TTG-1-069','energy',0);
+ source.ready=true;
+ const gunmen=take(s,0,'TTG-1-028'),notGunmen=take(s,0,'TTG-1-010');
+ s.players[0].outside.push(gunmen,notGunmen);
+ aiOk(s,use);
+ s=dispatchUniversalAction(use,s,{type:'activate',uid:source.uid,mode:'restRetireRecover'});
+ assert.ok(s.players[0].outside.some(c=>c.uid===source.uid));
+ assert.equal(s.players[0].energy[0],null);
+ assert.equal(s.pending.kind,'effect-recover-outside');
+ assert.equal(s.pending.optional,false);
+ assert.deepEqual(s.pending.choices,[gunmen.uid]);
+ assert.equal(legalUniversalActions(use,s).some(a=>a.uid===null),false);
+ s=dispatchUniversalAction(use,s,{type:'chooseOutsideRecovery',uid:gunmen.uid});
+ assert.ok(s.players[0].hand.some(c=>c.uid===gunmen.uid));
+ assert.ok(s.players[0].outside.some(c=>c.uid===notGunmen.uid));
+ assert.ok(s.players[0].outside.some(c=>c.uid===source.uid));
+ assert.equal(s.pending,null);
+ assert.equal(assertUniversalMatch(use,s),true);
 });

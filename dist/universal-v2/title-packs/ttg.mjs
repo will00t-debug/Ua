@@ -22,7 +22,9 @@ const proof=Object.freeze({
  'TTG-1-015':['支付1 AP','Official UA56BT/TTG-1-015 ニア, checked 2026-10-22: cost 緑- (energy 0), AP1, BP500, trait 大グレン団, generated 緑+ (one green pip, gen 1), DRAW. Activate MAIN pays 1 AP, once per turn: draw 1 and this character gains generated energy +1 this turn. The payment does not rest the source. A front character still generates 0. No card FAQ.'],
  'TTG-1-002':['產生的綠色能源+1','Official UA56BT/TTG-1-002 ヴィラル, checked 2026-10-22: cost 緑1, AP1, BP1500, trait 大グレン団, generated 緑+ (one green pip, gen 1), ACTIVE life. Activate MAIN rests this card, once per turn, then rests one other ACTIVE own front character. Only that success gives generated energy +green this turn. Same resolved profile as MST-1-056. A front character still generates 0. No card FAQ.'],
  'TTG-1-007':['場上有達莉時 BP+1000','Official UA56BT/TTG-1-007 ギミー, checked 2026-10-22: cost 緑- (energy 0), AP1, BP1500+, trait 大グレン団, generated 緑 (gen 1), ACTIVE life. While 〈ダリー〉 is on this card\'s own field, BP+1000 on either turn. On play from hand, the controller may pay 1 AP and then REST-play up to one outside 〈ダリー〉 whose required energy that color currently meets. Life and effect entries do not offer the payment. No card FAQ.'],
- 'TTG-1-013':['場上有吉米時 BP+1000','Official UA56BT/TTG-1-013 ダリー, checked 2026-10-22: cost 緑- (energy 0), AP1, BP1500+, trait 大グレン団, generated 緑 (gen 1), DRAW life. While 〈ギミー〉 is on this card\'s own field, BP+1000 on either turn. On play from hand, the controller may pay 1 AP and then REST-play up to one outside 〈ギミー〉 whose required energy that color currently meets. No card FAQ.']
+ 'TTG-1-013':['場上有吉米時 BP+1000','Official UA56BT/TTG-1-013 ダリー, checked 2026-10-22: cost 緑- (energy 0), AP1, BP1500+, trait 大グレン団, generated 緑 (gen 1), DRAW life. While 〈ギミー〉 is on this card\'s own field, BP+1000 on either turn. On play from hand, the controller may pay 1 AP and then REST-play up to one outside 〈ギミー〉 whose required energy that color currently meets. No card FAQ.'],
+ 'TTG-1-069':['主要階段 REST 並退場自己',
+  'Official UA56BT/TTG-1-069 リーロン red0/AP1/BP1000/gen1, trait 大グレン団, no life. MAIN rests this character on either line, truly retires it, then adds exactly one own outside card with trait ガンメン. Official Japanese has no まで, so the ability is not offered without a match. The Chinese catalogue 可 is not the printed text. Page checked 2026-10-24; not a full FAQ certification.']
 });
 export default Object.freeze({
  title:'gurren-lagann',
@@ -45,7 +47,8 @@ export default Object.freeze({
       ...(def.id==='TTG-1-022'?['tests/v2-ttg-022-return-hand.test.mjs']:[]),
       ...(def.id==='TTG-1-015'?['tests/v2-ttg-015-pay-ap.test.mjs']:[]),
       ...(def.id==='TTG-1-002'?['tests/v2-ttg-002-rest-front-energy.test.mjs']:[]),
-      ...(def.id==='TTG-1-007'||def.id==='TTG-1-013'?['tests/v2-ttg-partner-ap-deploy-round18.test.mjs']:[])]}
+      ...(def.id==='TTG-1-007'||def.id==='TTG-1-013'?['tests/v2-ttg-partner-ap-deploy-round18.test.mjs']:[]),
+      ...(def.id==='TTG-1-069'?['tests/v2-c27-five-title-batch.test.mjs']:[])]}
   });
  }))
 });

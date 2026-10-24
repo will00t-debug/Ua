@@ -63,6 +63,14 @@ const additions=[
   implementation:'dsl',effects:{onPlay:[{op:'payApDeployNamedRest',entry:'hand',name:'ダリー'}]},
   passiveBonuses:[{condition:{kind:'ownNameExists',turn:'any',zone:'field',excludeSelf:false,name:'ダリー'},bp:1000}],
   match:'場上有達莉時 BP+1000'},
+ // Official Japanese has no まで: the ガンメン recovery is mandatory, so the
+ // ability is offered only when a match is already outside. The Chinese
+ // catalogue says 可 and is not the printed cost.
+ {id:'TTG-1-069',name:'リーロン',energy:0,ap:1,bp:1000,gen:1,color:'red',
+  type:'character',trigger:null,implementation:'dsl',effects:{},
+  mainAbility:{op:'restRetireRecoverOutside',optional:false,
+   filter:{field:'trait',value:'ガンメン'}},
+  match:'主要階段 REST 並退場自己'},
  {id:'TTG-1-013',name:'ダリー',energy:0,ap:1,bp:1500,gen:1,color:'green',type:'character',trigger:'draw',
   implementation:'dsl',effects:{onPlay:[{op:'payApDeployNamedRest',entry:'hand',name:'ギミー'}]},
   passiveBonuses:[{condition:{kind:'ownNameExists',turn:'any',zone:'field',excludeSelf:false,name:'ギミー'},bp:1000}],

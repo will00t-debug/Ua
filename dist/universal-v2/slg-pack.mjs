@@ -651,7 +651,15 @@ const authored=[
  "templateEffects":{"onPlay":[{"template":"searchTopOneBottomDiscard","count":3,
   "filter":{"field":"trait","value":"第四次架南島レイド"}}]},
  "officialTraits":["第四次架南島レイド"],
- "catalogueTraits":["第四次架南島Raid"]}
+ "catalogueTraits":["第四次架南島Raid"]},
+// UA51BT/SLG-1-050: MAIN rests this character, truly retires it, then adds
+// up to one own outside 〈水篠 旬〉. Either field line. No life trigger.
+{"id":"SLG-1-050","name":"観月 絵里","color":"green","energy":0,"ap":1,
+ "bp":500,"gen":1,"trigger":null,"type":"character",
+ "textAnchor":"主要階段REST並退場此角色，可從己方場外回收最多1張水篠旬。",
+ "implementation":"dsl","effects":{},
+ "mainAbility":{"op":"restRetireRecoverOutside","optional":true,
+  "filter":{"field":"name","value":"水篠 旬"}}}
 ];
 export const SLG_V2_VERIFIED_IDS=Object.freeze(authored.map(c=>c.id));
 export function verifiedSlgV2Cards(){

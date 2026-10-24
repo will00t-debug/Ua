@@ -3933,6 +3933,9 @@ export function legalUniversalActions(pack,s){
    if(ability?.op==='fieldOnceBuffOther'&&!s.mainAbilityUsedUids.includes(c.uid)&&
     field(pl).some(x=>x.uid!==c.uid&&card(pack,x).type==='character'))
     out.push({type:'activate',uid:c.uid,mode:'fieldOnceBuffOther'});
+   if(ability?.op==='restRetireRecoverOutside'&&c.ready&&(ability.optional||
+    pl.outside.some(x=>matchesOutsideRecovery(pack,s,x,{filter:ability.filter}))))
+    out.push({type:'activate',uid:c.uid,mode:'restRetireRecover'});
    if(ability?.op==='discardHandBuffSelf'&&pl.hand.length>0&&
     !s.mainAbilityUsedUids.includes(c.uid))
     out.push({type:'activate',uid:c.uid,mode:'discardSelfBuff'});
@@ -4402,6 +4405,21 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
     selected.ready=false;
     s.pending={kind:'effect-buff-own',player:p,sourceUid:selected.uid,choices,
      filter:{field:'type',value:'character'},bp:ability.bp,optional:false,excludeSelf:true};
+    break;
+   }
+   if(ability.op==='restRetireRecoverOutside'){
+    const query={filter:{...ability.filter}};
+    const readyTarget=pl.outside.some(c=>matchesOutsideRecovery(pack,s,c,query));
+    if(action.mode!=='restRetireRecover'||!selected.ready||
+     (!ability.optional&&!readyTarget))
+     throw Error('REST retire recovery needs a READY source and, when mandatory, an outside match');
+    selected.ready=false;
+    // Retirement finishes, including its 退場時, before the outside recovery.
+    s.effectQueue.unshift({op:'recoverOutsideOne',owner:p,sourceUid:selected.uid,
+     sourceName:d.name,...query,optional:ability.optional});
+    const pos=location(s,p,selected.uid);
+    const paused=retire(pack,s,p,pos.line,pos.slot);
+    if(!paused)continueEffectQueue(pack,s);
     break;
    }
    if(ability.op==='restSelfThen'){

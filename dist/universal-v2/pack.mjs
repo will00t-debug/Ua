@@ -1053,6 +1053,18 @@ function normalize(card,packId){
   integer(mainAbility.bp,1)&&mainAbility.bp<=5000&&
   Object.keys(mainAbility).length===2&&
   Object.keys(mainAbility).every(k=>['op','bp'].includes(k));
+ // Printed 【レストにする】【このカードを退場させる】 then one own-outside
+ // recovery. optional false means a matching card must already be outside.
+ const mainRestRetireRecover=mainAbility?.op==='restRetireRecoverOutside'&&
+  typeof mainAbility.optional==='boolean'&&
+  mainAbility.filter&&typeof mainAbility.filter==='object'&&
+  !Array.isArray(mainAbility.filter)&&
+  Object.keys(mainAbility.filter).length===2&&
+  ['name','trait'].includes(mainAbility.filter.field)&&
+  typeof mainAbility.filter.value==='string'&&!!mainAbility.filter.value.trim()&&
+  mainAbility.filter.value.length<=80&&
+  Object.keys(mainAbility).length===3&&
+  Object.keys(mainAbility).every(k=>['op','optional','filter'].includes(k));
  const mainPayAp=mainAbility?.op==='payApDrawGainEnergy'&&
   mainAbility.oncePerTurn===true&&mainAbility.draw===1&&
   integer(mainAbility.extraEnergy,1)&&mainAbility.extraEnergy<=3&&
@@ -1072,7 +1084,7 @@ function normalize(card,packId){
   Object.keys(mainAbility.then[0]).every(k=>['op','count'].includes(k));
  if(mainRestProgram)verifyProgram(mainAbility.then,card.id+'.mainAbility.then');
  if(mainAbility!==null&&
-  (!['character','field'].includes(card.type)||!(fieldDualMain||fieldRestRetireThen||card.type==='character'&&(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainRestBuff||mainPayAp||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainRestDiscardRetire||mainFrontProgram||mainFieldOnceBuff||mainEntryProtect||mainRestRetireUnder||mainRestTwoMove||mainOncePay))))
+  (!['character','field'].includes(card.type)||!(fieldDualMain||fieldRestRetireThen||card.type==='character'&&(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainRestBuff||mainRestRetireRecover||mainPayAp||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainRestDiscardRetire||mainFrontProgram||mainFieldOnceBuff||mainEntryProtect||mainRestRetireUnder||mainRestTwoMove||mainOncePay))))
   throw Error(card.id+' unsupported main action ability');
  const passiveBonuses=validatePassiveBonuses(card);
  const implemented=card.implementation;
