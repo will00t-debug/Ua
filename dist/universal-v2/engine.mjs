@@ -701,8 +701,14 @@ function continueEffectQueue(pack,s){
     if(![1,2].includes(job.count))throw Error('Optional mill is one or two cards');
     if(pl.deck.length)s.pending={kind:'effect-optional-mill',player:owner,
      sourceUid:job.sourceUid,remaining:job.count};
-   }else for(let i=0;i<job.count&&pl.deck.length;i++)moveOwnedLinear(pack,s,{
-    owner,from:'deck',to:'outside',index:0,reason:'own-effect',sourceUid:job.sourceUid});
+   }else{
+    const before=pl.deck.length;
+    for(let i=0;i<job.count&&pl.deck.length;i++)moveOwnedLinear(pack,s,{
+     owner,from:'deck',to:'outside',index:0,reason:'own-effect',sourceUid:job.sourceUid});
+    if(Array.isArray(job.then)&&before!==pl.deck.length)
+     s.effectQueue.unshift(...job.then.map(e=>({...e,owner,
+      sourceUid:job.sourceUid,sourceName:job.sourceName})));
+   }
   }else if(job.op==='grantSelfSniperThisTurn'||job.op==='grantSelfAttackWinDrawThisTurn'||
    job.op==='grantSelfMustBlockThisTurn'){
    const loc=location(s,owner,job.sourceUid);
@@ -4250,6 +4256,12 @@ export function legalUniversalActions(pack,s){
     // 1枚まで is optional. Zero opposing front characters still leaves
     // the ability legal; the shared REST resolver then sets no pending.
     if(step.op==='restOppFrontUnderBp'&&step.optional===true){
+     out.push({type:'activate',uid:c.uid,mode:'frontOnce'});
+     continue;
+    }
+    // Milling the top card does not need another character first.
+    // The BP choice is queued only after a card actually leaves the deck.
+    if(step.op==='millTop'&&step.count===1&&Array.isArray(step.then)){
      out.push({type:'activate',uid:c.uid,mode:'frontOnce'});
      continue;
     }

@@ -113,7 +113,8 @@ const testForKind=Object.freeze({
  bounceUnderFrontDraw:'tests/v2-c29-bleach-port.test.mjs',
  restRetirePurpleCharacter:'tests/v2-c29-bleach-port.test.mjs',
  traitlessLineMove:'tests/v2-c29-bleach-port.test.mjs',
- raidImpactFrontRest:'tests/v2-c29-bleach-port.test.mjs'
+ raidImpactFrontRest:'tests/v2-c29-bleach-port.test.mjs',
+ frontMillBuffOther:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.

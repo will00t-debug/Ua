@@ -123,6 +123,22 @@ function verifyProgram(program,path){
    e.optional!==true||![1,2].includes(e.count)||
    Object.keys(e).some(k=>!['op','count','optional'].includes(k))
   ))throw Error(path+'['+i+'] optional mill is one or two cards');
+  // そうした場合: the follow-up exists only after this mandatory mill
+  // actually moved a card. It is one other own character, BP+500.
+  if(e.op==='millTop'&&e.then!==undefined){
+   const follow=e.then?.[0];
+   const buff=follow?.op==='buffOwnField'&&follow.optional===true&&
+    follow.excludeSelf===true&&follow.bp===500&&follow.also===undefined&&
+    follow.zone===undefined&&follow.filter?.field==='type'&&
+    follow.filter?.value==='character'&&Object.keys(follow).length===5&&
+    Object.keys(follow.filter||{}).length===2&&
+    Object.keys(follow).every(k=>['op','filter','bp','optional','excludeSelf'].includes(k));
+   if(e.optional!==undefined||e.count!==1||!Array.isArray(e.then)||e.then.length!==1||
+    !buff||Object.keys(e).length!==3||
+    Object.keys(e).some(k=>!['op','count','then'].includes(k)))
+    throw Error(path+'['+i+'] mill follow-up must be one other-character BP+500');
+   verifyProgram(e.then,path+'['+i+'].then');
+  }
   if(e.op==='drawIfSelfBpAtLeast'&&(
    !integer(e.bp,500)||e.bp>50000||e.bp%500!==0||e.count!==1||
    Object.keys(e).length!==3||
@@ -1100,7 +1116,12 @@ function normalize(card,packId){
    (frontProgram.length===1&&frontProgram[0]?.op==='restOppFrontUnderBp'&&
     frontProgram[0].optional===true&&integer(frontProgram[0].bp,1)&&
     frontProgram[0].bp<=50000&&Object.keys(frontProgram[0]).length===3&&
-    Object.keys(frontProgram[0]).every(k=>['op','bp','optional'].includes(k)))
+    Object.keys(frontProgram[0]).every(k=>['op','bp','optional'].includes(k)))||
+   (frontProgram.length===1&&frontProgram[0]?.op==='millTop'&&
+    frontProgram[0].count===1&&frontProgram[0].optional===undefined&&
+    Array.isArray(frontProgram[0].then)&&frontProgram[0].then.length===1&&
+    Object.keys(frontProgram[0]).length===3&&
+    Object.keys(frontProgram[0]).every(k=>['op','count','then'].includes(k)))
   )&&Object.keys(mainAbility).length===4&&
   Object.keys(mainAbility).every(k=>['op','frontOnly','oncePerTurn','then'].includes(k));
  if(mainFrontProgram)verifyProgram(mainAbility.then,card.id+'.mainAbility.then');
