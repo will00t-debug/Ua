@@ -98,8 +98,10 @@ const PRINTED_PINS=Object.freeze({
   "color":"green","energy":3,"ap":1,"bp":2500,"gen":1,"type":"character",
   "trigger":null,"traits":["ALO"],
   "effectJa":"【登場時】自分の手札から必要エナジーが2以下で消費APが1の特徴に「ALO」を持つキャラカードを1枚まで自分の場にレストで登場させる。"},
+ // Generated energy is two green pips. ico_resource_energy_green3.png is a
+ // sprite index (alt 緑緑), the same mapping already used for SAO-1-009.
  "SAO-1-083":{"kind":"onPlayRecoverColorTrait","nameJa":"リズベット",
-  "color":"green","energy":3,"ap":2,"bp":3000,"gen":3,"type":"character",
+  "color":"green","energy":3,"ap":2,"bp":3000,"gen":2,"type":"character",
   "trigger":"active","traits":["ALO"],
   "effectJa":"【登場時】自分の場外から緑の［特徴：ALO］を1枚まで手札に加える。"},
  "SAO-2-037":{"kind":"onRetireMillUpTo","nameJa":"クライン",
