@@ -57,7 +57,9 @@ test('all five independent titles register exactly the source-pinned official ca
   assert.equal(new Set(ids).size,ids.length,'no duplicate physical card identity');
   for(const c of contribution.entries){
    assert.equal(c.definition.id,c.id);
-   assert.ok(c.sourceRecord.source?.includes('/jp/cardlist/'));
+   const recordedShop=c.id==='BLC-4-082'&&c.sourceRecord.source==='https://shopping.fullcomp.jp/products/pdsrqs97vlmo'||
+    c.id==='BLC-4-083'&&c.sourceRecord.source==='https://dorasuta.jp/union-arena/product?pid=709493';
+   assert.ok(recordedShop||c.sourceRecord.source?.includes('/jp/cardlist/'),c.id);
    assert.ok(c.evidence.testFiles.length>0);
    assert.ok(pack.cards[c.id]?.implementation);
   }

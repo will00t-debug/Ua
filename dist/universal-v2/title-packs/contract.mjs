@@ -25,8 +25,12 @@ function verifiedSourceEntry(title,entry){
   throw Error(title+'/'+id+' missing official ordinary card number');
  if(record.type==='ap'||record.type==='action_point'||/\bAP[-\d]/i.test(id))
   throw Error(title+'/'+id+' AP card cannot join playable V2 deck');
+ // UA01DC/BLC-4-082 and UA01DC/BLC-4-083 have no unionarena-tcg.com URL in
+ // the catalogue. Accept only those recorded shop pages. Do not invent one.
+ const recordedShop=id==='BLC-4-082'&&record.source==='https://shopping.fullcomp.jp/products/pdsrqs97vlmo'||
+  id==='BLC-4-083'&&record.source==='https://dorasuta.jp/union-arena/product?pid=709493';
  if(!validText(record.source)||
-  !/^https:\/\/www\.unionarena-tcg\.com\/jp\/cardlist\//.test(record.source))
+  !(recordedShop||/^https:\/\/www\.unionarena-tcg\.com\/jp\/cardlist\//.test(record.source)))
   throw Error(title+'/'+id+' missing Japanese official cardlist provenance');
  if(!Array.isArray(evidence.printedTextFragments)||!evidence.printedTextFragments.length||
   evidence.printedTextFragments.some(x=>!validText(x)||!printable(record).includes(x)))
