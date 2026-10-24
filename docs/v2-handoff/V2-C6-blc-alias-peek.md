@@ -17,4 +17,6 @@ Fetched 2026-10-24. Neither page had a FAQ.
 - BLC-4-001: also treated as バズビー, then look at the top 3, add up to one バズビー or ユーグラム・ハッシュヴァルト, put the rest on the bottom, and discard one hand card if a card was added. The discard after a successful add is a second result.
 - BLC-1-091: also treated as 山本 元柳斎 重國, and BP+1000 while no other character is on the own front. The empty-front BP bonus is not the existing empty-field hand-energy discount.
 
-Phase 2 battle AI has not started.
+Local Node v22.23.4: `npm test` 2234/2234 fail 0, matrix 60/60, manifest bleach 115, gurren-lagann 38, solo-leveling 46, sword-art-online 111, mushoku-tensei 55, total 365/700. Unported 335, of which BLEACH 161 and MST 25. FAQ certification stays 0. This C6 SHA still needs its own GitHub Actions SUCCESS.
+
+Phase 2 battle AI has not started. BLEACH is 115/276 and MST is 55/80.
