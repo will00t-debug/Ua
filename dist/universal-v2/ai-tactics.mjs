@@ -10,7 +10,24 @@ import {stableUniversalAiActionKey} from './ai-planner.mjs';
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 const fingerprint=zone=>JSON.stringify(zone.map(c=>[c.uid,c.cardId]));
 const secretPending=/life|top|search|deck|inspect|mill|hand-rest|outside-name/i;
-const selected=(r,n)=>r.filter(x=>x.action.type!=='extraDraw').slice(0,n);
+// A high-scoring card can appear several times for different destination
+// slots. Preserve strategic action-family diversity before filling remaining
+// nodes; otherwise 10 copies of ENERGY can hide every FRONT continuation.
+const selected=(ranked,n)=>{
+ const legal=ranked.filter(x=>x.action.type!=='extraDraw');
+ const family=a=>a.type==='play'?'play:'+a.line:
+  a.type==='activate'?'activate:'+a.mode:a.type;
+ const out=[],seen=new Set();
+ for(const x of legal){
+  const f=family(x.action);if(seen.has(f))continue;
+  seen.add(f);out.push(x);if(out.length>=n)return out;
+ }
+ for(const x of legal){
+  if(out.includes(x))continue;
+  out.push(x);if(out.length>=n)return out;
+ }
+ return out;
+};
 const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
 function publiclyStableTransition(before,after,action,owner){
  if(before.rng!==after.rng||after.active!==owner&&after.pending?.player!==owner)return false;
