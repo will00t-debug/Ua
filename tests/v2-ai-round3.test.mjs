@@ -75,3 +75,14 @@ test('Round 3: hidden-zone reordering never becomes a future exact LIFE predicti
  };
  assert.deepEqual(take(s),take(other));
 });
+
+test('Round 3: exact native main-to-attack phase transition is actually expanded',()=>{
+ const s=begin(),legal=legalUniversalActions(packs,s),next=legal.find(a=>a.type==='next');
+ assert.ok(next,'native main phase has a next action');
+ const observation=createUniversalAiObservation(packs,s,legal);
+ const result=evaluateTrustedUniversalAiTactics(packs,s,observation,
+  [{action:next,score:0,utility:0}],{roots:1,children:1,depth:1,nodes:8,timeMs:100});
+ assert.equal(result.fallback,null);
+ assert.ok(result.exactSteps>=1,'a deterministic native reducer edge was exercised');
+ assert.equal(result.used,true);
+});
