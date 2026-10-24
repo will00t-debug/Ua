@@ -1,4 +1,5 @@
 // Pure bounded heuristic policy. No reducer, hidden match state or network.
+import {boundedUniversalAiContinuation} from './ai-planner.mjs';
 // Numbers are utility estimates, NOT a second effects/battle rules engine.
 const sum=xs=>xs.reduce((a,b)=>a+b,0);
 const field=p=>[...p.front,...p.energy].filter(Boolean);
@@ -211,6 +212,9 @@ function pendingScore(packs,o,a){
 export function rankUniversalAiActions(packs,o){
  const own=o.players[o.actor],foe=o.players[1-o.actor];
  const position=evaluateUniversalAiPosition(packs,o);
+ // The current position is identical for every action; it is diagnostic only.
+ // Candidate-specific marginal continuation is what can alter rankings.
+ const continuation=boundedUniversalAiContinuation(packs,o);
  return o.legal.map((action,index)=>{
   const a=action,c=[...own.hand,...field(own)].find(c=>c.uid===a.uid),d=def(packs,o.actor,c);
   let score=0;
@@ -236,7 +240,8 @@ export function rankUniversalAiActions(packs,o){
    if(a.mode==='discardSelfBuff')score-=1.8;
    score-=0.05; // Unknown/no-benefit activation must not form loops.
   }
-  return {action,score:position+score,utility:score,index};
+  const gain=continuation.get(JSON.stringify(action))||0;
+  return {action,score:score+gain,utility:score+gain,position,index};
  }).sort((a,b)=>b.score-a.score||(o.pending?.kind?.startsWith('effect-search-deck')?JSON.stringify(a.action).localeCompare(JSON.stringify(b.action)):a.index-b.index));
 }
 export function chooseStrategicUniversalAction(packs,o){return rankUniversalAiActions(packs,o)[0]?.action||null;}
