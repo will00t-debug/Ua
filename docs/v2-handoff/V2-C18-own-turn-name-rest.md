@@ -23,3 +23,5 @@ A rescan of the five-title unported set found no other whole print that is only 
 ## Counts
 
 BLEACH 123/276. MST 56/80. Five titles 374/700. Strict FAQ certification stays 0.
+
+Local Node 22 suite on `4aefac6`: 2266/2266, matrix 60/60, manifest bleach 123 / mst 56 / total 374, unported 326. Actions for that commit is recorded separately from this note.
