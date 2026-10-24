@@ -5,6 +5,7 @@ import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  assertUniversalMatch,universalBp} from '../dist/universal-v2/engine.mjs';
 import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
+import {grantContinuousState} from '../dist/universal-v2/continuous-states.mjs';
 
 // Official Q1119 (2024-09-06): an EVENT with mandatory "1枚選び"
 // is unplayable without a legal target, even though an optional event is legal.
@@ -100,4 +101,45 @@ test('C26/Q32: inclusive BP3000 boundary and current BP (3000+500) reject withou
  const p=dispatchUniversalAction(packs,s,{type:'event',uid:event.uid});
  assert.deepEqual(p.pending.choices,[target.uid]);
  assert.equal(assertUniversalMatch(packs,p),true);
+});
+
+test('C26/Q87/Q1946: silencing an alias loses the name, silencing an original print does not',()=>{
+ for(const [i,stillNamed] of [[0,false],[1,true]]){
+  const row=rows[i],packs=[sao,sao];
+  const own=deckOf(sao,[row.id,row.fuel,row.named]);
+  const foe=deckOf(sao,['SAO-2-069']);
+  let s=newUniversalMatch(packs,{decks:[own,foe],first:0,seed:261946+i});
+  for(let k=0;k<4;k++)place(s,0,row.fuel,'energy',k);
+  const event=hold(s,0,row.id),name=place(s,0,row.named,'front',0);
+  place(s,1,'SAO-2-069','front',0);
+  s=toMain(packs,s);
+  assert.equal(universalBp(packs,s,s.players[1].front[0]),4000);
+  assert.equal(eventActions(packs,s,event.uid).length,1,'un-silenced printed name/alias qualifies');
+  grantContinuousState(s,{kind:'originalEffectsDisabled',controller:0,
+   sourceUid:name.uid,targetUid:name.uid,sourceLinked:false,
+   until:{player:0,phase:'attack',edge:'end'}});
+  assert.equal(eventActions(packs,s,event.uid).length,stillNamed?1:0,
+   (stillNamed?'original print remains':'alias is disabled')+' on silence');
+  assert.equal(assertUniversalMatch(packs,s),true);
+ }
+});
+test('C26/Q1206: an unselectable enemy FRONT is not a playable-event target',()=>{
+ const row=rows[0],packs=[sao,sao];
+ const own=deckOf(sao,[row.id,row.fuel,row.named]);
+ const foe=deckOf(sao,['SAO-2-063','SAO-1-082']);
+ let s=newUniversalMatch(packs,{decks:[own,foe],first:0,seed:261206});
+ for(let i=0;i<4;i++)place(s,0,row.fuel,'energy',i);
+ const event=hold(s,0,row.id),target=place(s,1,'SAO-2-063','front',0);
+ s=toMain(packs,s);
+ assert.equal(eventActions(packs,s,event.uid).length,1);
+ grantContinuousState(s,{kind:'cannotBeChosenByOppEffect',controller:1,
+  sourceUid:target.uid,targetUid:target.uid,sourceLinked:false,
+  selectionScope:'any',until:{player:1,phase:'start',edge:'start'}});
+ assert.equal(eventActions(packs,s,event.uid).length,0,
+  'an entirely protected FRONT cannot satisfy mandatory event choice');
+ const other=place(s,1,'SAO-1-082','front',1);
+ assert.equal(eventActions(packs,s,event.uid).length,1);
+ const a=dispatchUniversalAction(packs,s,{type:'event',uid:event.uid});
+ assert.deepEqual(a.pending.choices,[other.uid],'protected UID never enters pending');
+ assert.equal(assertUniversalMatch(packs,a),true);
 });
