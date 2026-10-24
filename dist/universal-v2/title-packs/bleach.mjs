@@ -62,7 +62,12 @@ const testForKind=Object.freeze({
  otherCardTraitEnergy:'tests/v2-c21-live-board-predicates.test.mjs',
  otherCardTraitBp:'tests/v2-c21-live-board-predicates.test.mjs',
  ownFrontPrintedApBp:'tests/v2-c21-live-board-predicates.test.mjs',
- handOutsideThisTurnBp:'tests/v2-c21-live-board-predicates.test.mjs'
+ handOutsideThisTurnBp:'tests/v2-c21-live-board-predicates.test.mjs',
+ handEnergyBpImmune:'tests/v2-c22-designated-decks.test.mjs',
+ impactNullMustBlock:'tests/v2-c22-designated-decks.test.mjs',
+ retireFieldOrOutside:'tests/v2-c22-designated-decks.test.mjs',
+ traitDiscardRecoverNamed:'tests/v2-c22-designated-decks.test.mjs',
+ blockHandOutsideBp:'tests/v2-c22-designated-decks.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.

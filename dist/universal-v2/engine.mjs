@@ -147,9 +147,13 @@ function bp(pack,s,c){
  const owner=Number(String(c.uid).split('-')[0]);
  const turnBp=suppressed?0:s.active===owner?(printed.ownTurnBp||0):(printed.opponentTurnBp||0);
  const facedown=!suppressed&&hasFacedownUnder(c)?(printed.conditionalUnderFaceDown?.bp||0):0;
+ const immune=!suppressed&&printed.bpDownImmune===true;
  const buffs=(c.buffs||[]).filter(b=>b.untilTurn===s.turn||
   Number.isInteger(b.untilOwnTurnStart)&&
-  s.players[owner].ownTurns<b.untilOwnTurnStart).reduce((n,b)=>n+(b.bp||0),0);
+  s.players[owner].ownTurns<b.untilOwnTurnStart).reduce((n,b)=>{
+  const delta=b.bp||0;
+  return immune&&delta<0?n:n+delta;
+ },0);
  // A current-BP condition may look back at this card. Stop there instead of
  // walking the same passive again. Printed BP, turn BP, and this-turn buffs
  // stay visible. Q749 still sees an effect bonus on the card being measured.
@@ -158,11 +162,12 @@ function bp(pack,s,c){
  try{
   return (printed?.bp||0)+turnBp+facedown+buffs+
    (suppressed?0:printed.passiveBonuses.reduce((n,p)=>{
-    if(p.bpEach)return n+p.bpEach*(p.condition.kind==='oppRestCharacterCount'?
+    const delta=p.bpEach?p.bpEach*(p.condition.kind==='oppRestCharacterCount'?
     countOppRestCharacters(s,owner,p.condition,x=>card(pack,x)):
-    ownRestPrintedBpCount(s,owner,c.uid,p.condition,x=>card(pack,x)));
-    return n+(p.bp&&matchesV2LiveCondition(s,owner,c.uid,p.condition,x=>card(pack,x),
+    ownRestPrintedBpCount(s,owner,c.uid,p.condition,x=>card(pack,x))):
+    (p.bp&&matchesV2LiveCondition(s,owner,c.uid,p.condition,x=>card(pack,x),
      ()=>calcEnergy(pack,s,owner),x=>bp(pack,s,x))?p.bp:0);
+    return immune&&delta<0?n:n+delta;
    },0));
  }finally{bpVisit.delete(c.uid);}
 }
@@ -897,7 +902,9 @@ function continueEffectQueue(pack,s){
    }
    }
   }else if(job.op==='discardGate'){
-   if(payableHand(pack,s,owner,job.payment).length>=(job.count??1))
+   const gateOpen=!job.when||matchesV2LiveCondition(s,owner,job.sourceUid,job.when,
+    c=>card(pack,c),()=>calcEnergy(pack,s,owner),c=>bp(pack,s,c));
+   if(gateOpen&&payableHand(pack,s,owner,job.payment).length>=(job.count??1))
      s.pending={kind:'effect-discard-gate',player:owner,
       sourceUid:job.sourceUid,optional:job.optional,then:job.then,
       ...(job.payment?{payment:job.payment}:{}),
@@ -937,13 +944,15 @@ function continueEffectQueue(pack,s){
    if(pl.hand.length)s.pending={kind:'effect-discard',player:owner,sourceUid:job.sourceUid,
      ...(job.discardCount>1?{remaining:Math.min(job.discardCount,pl.hand.length)}:{})};
   }else if(job.op==='retireOppFrontUnderBp'){
-   const ownName=job.bonusName.replace(/\s+/g,'');
-   const hasBonus=field(pl).some(c=>{
-    const d=card(pack,c),silenced=originalEffectsDisabled(s,c);
+   const same=name=>String(name).replace(/\s+/g,'');
+   const matchesName=(physical,name,silenced)=>{
+    const d=card(pack,physical);
     return [d.name,...(silenced?[]:d.nameAliases||[])]
-     .some(n=>n.replace(/\s+/g,'')===ownName);
-   });
-   const limit=hasBonus?job.bonusBp:job.bp;
+     .some(n=>same(n)===same(name));
+   };
+   const hasField=field(pl).some(c=>matchesName(c,job.bonusName,originalEffectsDisabled(s,c)));
+   const hasOutside=!!job.bonusOutsideName&&pl.outside.some(c=>matchesName(c,job.bonusOutsideName,false));
+   const limit=hasField||hasOutside?job.bonusBp:job.bp;
    const choices=s.players[1-owner].front.filter(c=>c&&bp(pack,s,c)<=limit).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-retire-bp',player:owner,sourceUid:job.sourceUid,choices,limit};
   }else if(job.op==='conditionalBounceOrRetireByOwnOutsideNames'){
@@ -2812,9 +2821,15 @@ function legalPending(pack,s){
   // and only if an otherwise legal ACTIVE blocker exists. SNIPER bypasses
   // this entire pending BLOCK window, as required by Q65-Q70.
   const forced=hasCurrentBattleGrant(s,attacker,'mustBlockGranted');
+  // Printed 「可能ならブロックしなければならない」. Q2339: if more than one
+  // such character can block, the controller chooses among those only.
+  const printedMust=candidates.filter(c=>card(pack,c).mustBlock&&
+   !originalEffectsDisabled(s,c));
+  const pool=printedMust.length?printedMust:candidates;
+  const must=forced||printedMust.length>0;
   return [
-   ...(!forced||!candidates.length?[{type:'chooseBlock',uid:null}]:[]),
-   ...candidates.map(c=>({type:'chooseBlock',uid:c.uid}))
+   ...(!must||!pool.length?[{type:'chooseBlock',uid:null}]:[]),
+   ...pool.map(c=>({type:'chooseBlock',uid:c.uid}))
   ];
  }
  if(q.kind==='leave-replacement'){
@@ -3483,7 +3498,8 @@ export function effectiveHandRequiredEnergy(pack,s,p,d){
   profile.colors.includes(card(pack,c).color));
  return Math.max(0,d.energy-
   (ownEmpty?d.emptyOwnFieldHandEnergyDiscount:0)-
-  (matchingOpponent?profile.amount:0));
+  (matchingOpponent?profile.amount:0)-
+  (d.printedHandEnergyDiscount||0));
 }
 function spendAp(pl,n){
  let remaining=n;for(const c of pl.apCards)if(c.ready&&remaining){c.ready=false;remaining--;}

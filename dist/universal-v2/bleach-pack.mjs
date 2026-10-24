@@ -1008,6 +1008,16 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-1-084","kind":"otherCardTraitBp","number":"UA08BT/BLC-1-084","name":"日番谷 冬獅郎","color":"green","energy":2,"ap":1,"bp":3000,"gen":1,"trigger":"color","type":"character","effect":"己方場上有至少 6 張其他具有「護廷十三隊」特徵的卡時，此角色 BP +500。"}
 ,
 {"id":"BLC-2-068","kind":"otherCardTraitBp","number":"EX07BT/BLC-2-068","name":"檜佐木 修兵","color":"green","energy":0,"ap":1,"bp":1500,"gen":1,"trigger":"draw","type":"character","effect":"己方場上有至少 6 張其他具有「護廷十三隊」特徵的卡時，此角色 BP +1500。"}
+,
+{"id":"BLC-3-008","kind":"handEnergyBpImmune","number":"UA04NC/BLC-3-008","name":"更木 剣八","color":"green","energy":4,"ap":1,"bp":3000,"gen":2,"trigger":null,"type":"character","effect":"此卡片在手牌時，能源需求減少綠 1。\n此角色不受 BP 減少的效果影響。\n【自己的回合中】對手前線有 BP3500 以上的角色時，此角色 BP＋1000。"}
+,
+{"id":"BLC-4-070","kind":"impactNullMustBlock","number":"EX15BT/BLC-4-070","name":"更木 剣八","color":"green","energy":1,"ap":1,"bp":4000,"gen":1,"trigger":"draw","type":"character","effect":"Impact無效。此角色必須盡可能阻擋對方的攻擊；若有多個具有此強制阻擋效果且能阻擋的角色，從中選1個阻擋。"}
+,
+{"id":"BLC-2-073","kind":"retireFieldOrOutside","number":"EX07BT/BLC-2-073","name":"野晒","color":"green","energy":4,"ap":1,"bp":0,"gen":0,"trigger":"special","type":"event","effect":"使 1 個敵方前線 BP 3000 以下角色退場；己方場上有〈更木劍八〉，或己方場外有〈草鹿八千流〉時，BP 上限改為 5000。"}
+,
+{"id":"BLC-2-069","kind":"traitDiscardRecoverNamed","number":"EX07BT/BLC-2-069","name":"日番谷 冬獅郎","color":"green","energy":1,"ap":1,"bp":2500,"gen":1,"trigger":null,"type":"character","effect":"登場：己方場上有至少 6 張其他具有「護廷十三隊」特徵的卡時，可將 1 張手牌送至場外；成功時可從己方場外將最多 1 張〈日番谷冬獅郎〉加入手牌。"}
+,
+{"id":"BLC-3-001","kind":"blockHandOutsideBp","number":"UA04NC/BLC-3-001","name":"黒崎 一護","color":"blue","energy":3,"ap":1,"bp":3000,"gen":2,"trigger":"active","type":"character","effect":"【兩次阻擋】此角色在本回合第一次阻擋時，將其轉為 Active。\n【自己的回合中】本回合中自己曾將手牌放到場外時，此角色 BP＋1000。"}
 ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1090,6 +1100,11 @@ export function checkedBleachAddonDefinition(p){
  const traitBp={'BLC-1-084':500,'BLC-2-068':1500}[p.id];
  const isPrintedApBp=p.kind==='ownFrontPrintedApBp';
  const isHandOutsideBp=p.kind==='handOutsideThisTurnBp';
+ const isHandEnergyImmune=p.kind==='handEnergyBpImmune';
+ const isMustBlock=p.kind==='impactNullMustBlock';
+ const isRetireOr=p.kind==='retireFieldOrOutside';
+ const isTraitDiscard=p.kind==='traitDiscardRecoverNamed';
+ const isBlockHandBp=p.kind==='blockHandOutsideBp';
  const outsideRemove={'BLC-1-098':{count:1,cardType:'character'},
   'BLC-1-106':{count:3,cardType:'any'}}[p.id];
  const handName={'BLC-2-004':'ユーハバッハ'}[p.id];
@@ -1106,7 +1121,7 @@ export function checkedBleachAddonDefinition(p){
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp;
+ const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1164,6 +1179,11 @@ export function checkedBleachAddonDefinition(p){
   ...(isPrintedApBp?{passiveBonuses:[{condition:{kind:'ownPrintedApAtLeast',turn:'any',
    zone:'front',excludeSelf:false,minAp:2},bp:1500}]}:{}),
   ...(isHandOutsideBp?{passiveBonuses:[{condition:{kind:'ownHandToOutsideThisTurn',turn:'any'},bp:500}]}:{}),
+  ...(isHandEnergyImmune?{printedHandEnergyDiscount:1,bpDownImmune:true,
+   passiveBonuses:[{condition:{kind:'oppCharacterBpAtLeast',turn:'own',zone:'front',minBp:3500},bp:1000}]}:{}),
+  ...(isMustBlock?{impactNull:true,mustBlock:true}:{}),
+  ...(isRetireOr?{triggerEffect:{op:'retireOppFront'}}:{}),
+  ...(isBlockHandBp?{readyOnBlockCount:1,passiveBonuses:[{condition:{kind:'ownHandToOutsideThisTurn',turn:'own'},bp:1000}]}:{}),
   ...(p.kind==='enemyBpDown500Color'?{triggerEffect:{op:'deployOutsideCharacter',color:'purple',maxEnergy:2,ap:1,frontOnly:true}}:{}),
   ...(p.kind==='drawPlayColorHand'?{triggerEffect:{op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1}}:{}),
   ...(!special?{templateEffects:abilities[p.kind]}:{effects:
@@ -1208,6 +1228,12 @@ export function checkedBleachAddonDefinition(p){
    isOutsideRemove?{onPlay:[{op:'removeOutsideThen',count:outsideRemove.count,
     optional:true,cardType:outsideRemove.cardType,zone:'outside',controller:'own',
     then:[{op:'draw',count:2}]}]}:
+   isRetireOr?{onPlay:[{op:'retireOppFrontUnderBp',bp:3000,bonusName:'更木 剣八',
+    bonusOutsideName:'草鹿 やちる',bonusBp:5000}]}:
+   isTraitDiscard?{onPlay:[{op:'discardGate',optional:true,when:{
+    kind:'ownCardTraitCount',turn:'any',min:6,zone:'field',excludeSelf:true,
+    trait:'護廷十三隊'},then:[{op:'recoverOutsideOne',optional:true,
+    filter:{field:'name',value:'日番谷 冬獅郎'}}]}]}:
    isOptionalPeek?{onPlay:[{op:'discardGate',optional:true,then:[
     {op:'peekTopOrBottom'},{op:'draw',count:1}]}]}:
    isStripDual?{onPlay:[{op:'chooseOne',optional:false,options:[

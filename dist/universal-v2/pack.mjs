@@ -24,8 +24,10 @@ function assertLiveCondition(q,label){
   throw Error(label+' event-use predicate requires own turn');
  if(q.kind==='ownEffectHandOutsideOrRecovery'&&q.turn!=='own')
   throw Error(label+' invalid effect-zone own-turn condition');
- if(q.kind==='ownHandToOutsideThisTurn'&&q.turn!=='any')
-  throw Error(label+' hand-to-outside history is not an own-turn gate');
+ // turn:'any' is the printed check with no extra turn icon. turn:'own'
+ // is the printed 自分のターン中 icon. Opponent turn is not this sentence.
+ if(q.kind==='ownHandToOutsideThisTurn'&&q.turn==='opponent')
+  throw Error(label+' hand-to-outside history is not an opponent-turn gate');
  const retired=q.kind==='ownRetiredThisTurn';
  const retirementCount=q.kind==='retireCountThisTurn';
  if(retirementCount&&(!['own','opponent','any'].includes(q.controller)||
@@ -401,10 +403,11 @@ function verifyProgram(program,path){
     pay.values.length>=1&&pay.values.length<=4&&new Set(pay.values).size===pay.values.length&&
     pay.values.every(v=>typeof v==='string'&&!!v.trim()&&v.length<=48&&v===v.trim());
    if(!validPay)throw Error(path+'['+i+'] invalid typed name payment');
+   if(e.when!==undefined)assertLiveCondition(e.when,path+'['+i+'].when');
    if(typeof e.optional!=='boolean'||!Array.isArray(e.then)||
     !e.then.length||e.then.length>6||
     (e.count!==undefined&&e.count!==2)||
-    Object.keys(e).some(k=>!['op','optional','then','payment','count'].includes(k))||
+    Object.keys(e).some(k=>!['op','optional','then','payment','count','when'].includes(k))||
     e.then.some(x=>!['draw','millTop','peekTopOne','searchDeckOne',
      'searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside',
       'peekTopOrBottom','recoverOutsideOne','deployOutsideRest',
@@ -596,7 +599,9 @@ function verifyProgram(program,path){
   if(e.op==='retireOppFrontUnderBp'&&(
    !integer(e.bp,1)||e.bp>50000||typeof e.bonusName!=='string'||
    !e.bonusName.trim()||!integer(e.bonusBp,e.bp)||e.bonusBp>50000||
-   Object.keys(e).some(k=>!['op','bp','bonusName','bonusBp'].includes(k))
+   (e.bonusOutsideName!==undefined&&(typeof e.bonusOutsideName!=='string'||
+    !e.bonusOutsideName.trim()||e.bonusOutsideName.length>80))||
+   Object.keys(e).some(k=>!['op','bp','bonusName','bonusBp','bonusOutsideName'].includes(k))
   ))throw Error(path+'['+i+'] unsupported printed BP retirement profile');
   if(e.op==='peekTopOne'&&Object.keys(e).some(key=>key!=='op'))throw Error(path+'['+i+'] unsupported private peek options');
   if(e.op==='recoverAp'&&(!integer(e.count,1)||e.count>3))throw Error(path+'['+i+'] invalid AP recovery count');
@@ -1083,12 +1088,12 @@ function normalize(card,packId){
  if(implemented==='vanilla'&&(Object.keys(effects).length||card.effectText||
   mainAbility||phaseEffects.length||moveTriggers.length||moveObserver||card.enterActiveIfOpponentRest||card.enterAlwaysActive||card.activeExtraEnergy||card.conditionalTraitEnergy||passiveBonuses||card.impactNull||
   card.printedImpact||card.printedAttackDamage||card.readyOnAttackCount||card.readyOnBlockCount||
-  card.frontGeneratesEnergy||ownOutsideRecovery||colorTriggerFieldSubstitution||card.frontForbidden||card.ownTurnBp||card.opponentTurnBp||nameAliases||selectionHandDiscardTax||card.otherOwnBattleWonDamageTwo||attackEndSwap||blockBpRestriction||attackWinRecover||card.conditionalImpactBpAtLeast||emptyOwnFieldHandEnergyDiscount||opponentFieldColorsHandEnergyDiscount))
+  card.frontGeneratesEnergy||ownOutsideRecovery||colorTriggerFieldSubstitution||card.frontForbidden||card.ownTurnBp||card.opponentTurnBp||nameAliases||selectionHandDiscardTax||card.otherOwnBattleWonDamageTwo||attackEndSwap||blockBpRestriction||attackWinRecover||card.conditionalImpactBpAtLeast||emptyOwnFieldHandEnergyDiscount||opponentFieldColorsHandEnergyDiscount||card.mustBlock||card.bpDownImmune||card.printedHandEnergyDiscount))
   throw Error(card.id+' claims vanilla despite printed/declared effects');
  if(implemented==='dsl'&&!Object.keys(effects).length&&!phaseEffects.length&&!moveTriggers.length&&!mainAbility&&!moveObserver&&!card.enterActiveIfOpponentRest&&!card.enterAlwaysActive&&
   !card.activeExtraEnergy&&!card.conditionalTraitEnergy&&!passiveBonuses&&!card.impactNull&&
   !card.printedImpact&&!card.printedAttackDamage&&!card.readyOnAttackCount&&!card.readyOnBlockCount&&
-  !card.frontGeneratesEnergy&&!ownOutsideRecovery&&!colorTriggerFieldSubstitution&&!card.frontForbidden&&!card.ownTurnBp&&!card.opponentTurnBp&&!nameAliases&&!selectionHandDiscardTax&&!card.otherOwnBattleWonDamageTwo&&!attackEndSwap&&!blockBpRestriction&&!attackWinRecover&&!card.conditionalImpactBpAtLeast&&!emptyOwnFieldHandEnergyDiscount&&!opponentFieldColorsHandEnergyDiscount)
+  !card.frontGeneratesEnergy&&!ownOutsideRecovery&&!colorTriggerFieldSubstitution&&!card.frontForbidden&&!card.ownTurnBp&&!card.opponentTurnBp&&!nameAliases&&!selectionHandDiscardTax&&!card.otherOwnBattleWonDamageTwo&&!attackEndSwap&&!blockBpRestriction&&!attackWinRecover&&!card.conditionalImpactBpAtLeast&&!emptyOwnFieldHandEnergyDiscount&&!opponentFieldColorsHandEnergyDiscount&&!card.mustBlock&&!card.bpDownImmune&&!card.printedHandEnergyDiscount)
   throw Error(card.id+' declares dsl without effects');
  for(const [name,program] of Object.entries(effects)){
   if(program.some(x=>x.op==='retireSourceOnPhaseEnd'))throw Error(card.id+' invalid phase-only self retirement');
@@ -1213,6 +1218,19 @@ function normalize(card,packId){
  if(card.impactNull!==undefined&&(
   card.type!=='character'||card.impactNull!==true))
   throw Error(card.id+' invalid IMPACT nullification profile');
+ if(card.mustBlock!==undefined&&(
+  card.type!=='character'||card.mustBlock!==true))
+  throw Error(card.id+' invalid printed mandatory block');
+ if(card.bpDownImmune!==undefined&&(
+  card.type!=='character'||card.bpDownImmune!==true))
+  throw Error(card.id+' invalid printed BP-reduction immunity');
+ const printedHandEnergyDiscount=card.printedHandEnergyDiscount??0;
+ if(printedHandEnergyDiscount!==0&&(
+  card.type!=='character'||card.implementation!=='dsl'||
+  !integer(printedHandEnergyDiscount,1)||
+  printedHandEnergyDiscount>card.energy||
+  printedHandEnergyDiscount>5))
+  throw Error(card.id+' invalid printed hand energy discount');
  // True live Q763 battle victories can grant this turn's DAMAGE(2) to
  // OTHER own characters; never infer a grant from an unblocked direct hit.
  if(card.otherOwnBattleWonDamageTwo!==undefined&&
@@ -1257,6 +1275,7 @@ function normalize(card,packId){
   step:card.step===true,ownTurnBp:card.ownTurnBp||0,
   opponentTurnBp:card.opponentTurnBp||0,
   emptyOwnFieldHandEnergyDiscount,
+  printedHandEnergyDiscount,
   opponentFieldColorsHandEnergyDiscount:opponentFieldColorsHandEnergyDiscount?Object.freeze({
    amount:opponentFieldColorsHandEnergyDiscount.amount,
    colors:Object.freeze([...opponentFieldColorsHandEnergyDiscount.colors])}):null,
@@ -1280,6 +1299,8 @@ function normalize(card,packId){
    Object.freeze({...selectionHandDiscardTax,
     sourceTypes:Object.freeze([...selectionHandDiscardTax.sourceTypes])}):null,
   impactNull:card.impactNull===true,
+  mustBlock:card.mustBlock===true,
+  bpDownImmune:card.bpDownImmune===true,
   printedImpact:card.printedImpact===1?1:0,
   printedAttackDamage:card.printedAttackDamage===2?2:1,
   readyOnAttackCount:card.readyOnAttackCount===1?1:0,
