@@ -2500,10 +2500,21 @@ function legalPending(pack,s){
   {type:'chooseAttackEndSwap',uid:null},
   ...q.choices.map(c=>({type:'chooseAttackEndSwap',uid:c.uid}))
  ];
- if(q.kind==='block')return [
-  {type:'chooseBlock',uid:null},
-  ...p.front.filter(c=>c?.ready).map(c=>({type:'chooseBlock',uid:c.uid}))
- ];
+ if(q.kind==='block'){
+  const attacker=s.players[s.active].front.find(c=>c?.uid===q.attackerUid);
+  if(!attacker)throw Error('Missing printed attacker for block legality');
+  const rule=originalEffectsDisabled(s,attacker)?null:card(pack,attacker).blockBpRestriction;
+  const applies=!!rule&&(!rule.condition||
+   matchesV2LiveCondition(s,s.active,attacker.uid,rule.condition,
+    x=>card(pack,x)));
+  const canBlock=c=>!applies||!(rule.relation==='atLeast'
+   ?bp(pack,s,c)>=rule.bp:bp(pack,s,c)<=rule.bp);
+  return [
+   {type:'chooseBlock',uid:null},
+   ...p.front.filter(c=>c?.ready&&canBlock(c))
+    .map(c=>({type:'chooseBlock',uid:c.uid}))
+  ];
+ }
  if(q.kind==='leave-replacement'){
    const loc=location(s,q.player,q.uid);
    const choices=loc?facedownChoices(loc.c):[];

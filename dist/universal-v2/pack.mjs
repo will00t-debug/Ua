@@ -929,6 +929,21 @@ function normalize(card,packId){
   JSON.stringify(attackEndSwap.types)!==JSON.stringify(['event','field'])||
   attackEndSwap.minDistinctNames!==4||Object.keys(attackEndSwap).length!==3))
   throw Error(card.id+' invalid source-pinned Q2337 attack-end swap');
+ const blockBpRestriction=card.blockBpRestriction??null;
+ if(blockBpRestriction!==null){
+  if(card.type!=='character'||card.implementation!=='dsl'||
+   !blockBpRestriction||typeof blockBpRestriction!=='object'||
+   Array.isArray(blockBpRestriction)||
+   !['atLeast','atMost'].includes(blockBpRestriction.relation)||
+   !integer(blockBpRestriction.bp,1)||blockBpRestriction.bp>50000||
+   Object.keys(blockBpRestriction).length!==3||
+   Object.keys(blockBpRestriction).some(k=>!['relation','bp','condition'].includes(k))||
+   !(blockBpRestriction.condition===null||
+    blockBpRestriction.condition?.kind==='ownOutsideNamedCountAtLeast'))
+   throw Error(card.id+' invalid printed blocker BP restriction');
+  if(blockBpRestriction.condition)
+   assertLiveCondition(blockBpRestriction.condition,card.id+'.blockBpRestriction');
+ }
  const selectionHandDiscardTax=card.selectionHandDiscardTax??null;
  if(selectionHandDiscardTax!==null){
   if(card.type!=='character')throw Error(card.id+' tax needs CHARACTER source');
@@ -937,12 +952,12 @@ function normalize(card,packId){
  if(implemented==='vanilla'&&(Object.keys(effects).length||card.effectText||
   mainAbility||phaseEffects.length||moveTriggers.length||moveObserver||card.enterActiveIfOpponentRest||card.enterAlwaysActive||card.activeExtraEnergy||card.conditionalTraitEnergy||passiveBonuses||card.impactNull||
   card.printedImpact||card.printedAttackDamage||card.readyOnAttackCount||card.readyOnBlockCount||
-  card.frontGeneratesEnergy||ownOutsideRecovery||colorTriggerFieldSubstitution||card.frontForbidden||card.ownTurnBp||card.opponentTurnBp||nameAliases||selectionHandDiscardTax||card.otherOwnBattleWonDamageTwo||attackEndSwap))
+  card.frontGeneratesEnergy||ownOutsideRecovery||colorTriggerFieldSubstitution||card.frontForbidden||card.ownTurnBp||card.opponentTurnBp||nameAliases||selectionHandDiscardTax||card.otherOwnBattleWonDamageTwo||attackEndSwap||blockBpRestriction))
   throw Error(card.id+' claims vanilla despite printed/declared effects');
  if(implemented==='dsl'&&!Object.keys(effects).length&&!phaseEffects.length&&!moveTriggers.length&&!mainAbility&&!moveObserver&&!card.enterActiveIfOpponentRest&&!card.enterAlwaysActive&&
   !card.activeExtraEnergy&&!card.conditionalTraitEnergy&&!passiveBonuses&&!card.impactNull&&
   !card.printedImpact&&!card.printedAttackDamage&&!card.readyOnAttackCount&&!card.readyOnBlockCount&&
-  !card.frontGeneratesEnergy&&!ownOutsideRecovery&&!colorTriggerFieldSubstitution&&!card.frontForbidden&&!card.ownTurnBp&&!card.opponentTurnBp&&!nameAliases&&!selectionHandDiscardTax&&!card.otherOwnBattleWonDamageTwo&&!attackEndSwap)
+  !card.frontGeneratesEnergy&&!ownOutsideRecovery&&!colorTriggerFieldSubstitution&&!card.frontForbidden&&!card.ownTurnBp&&!card.opponentTurnBp&&!nameAliases&&!selectionHandDiscardTax&&!card.otherOwnBattleWonDamageTwo&&!attackEndSwap&&!blockBpRestriction)
   throw Error(card.id+' declares dsl without effects');
  for(const [name,program] of Object.entries(effects)){
   if(program.some(x=>x.op==='retireSourceOnPhaseEnd'))throw Error(card.id+' invalid phase-only self retirement');
@@ -1093,6 +1108,11 @@ function normalize(card,packId){
   colorTriggerFieldSubstitution,
   conditionalTraitEnergy:conditionalTraitEnergy?Object.freeze({...conditionalTraitEnergy}):null,
   passiveBonuses:passiveBonuses||Object.freeze([]),
+  blockBpRestriction:blockBpRestriction?Object.freeze({
+   relation:blockBpRestriction.relation,bp:blockBpRestriction.bp,
+   condition:blockBpRestriction.condition?Object.freeze({
+    ...blockBpRestriction.condition,
+    names:Object.freeze([...blockBpRestriction.condition.names])}):null}):null,
   attackEndSwap:attackEndSwap?Object.freeze({
    color:attackEndSwap.color,types:Object.freeze([...attackEndSwap.types]),
    minDistinctNames:attackEndSwap.minDistinctNames}):null,
