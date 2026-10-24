@@ -50,6 +50,20 @@ function nativeChild(packs,s,a,owner){
   const child=dispatchUniversalAction(packs,s,real,{actor:owner});
   if(!publiclyStableTransition(s,child,real,owner))return null;
   if(child.status!=='playing'||(child.pending?.player??child.active)!==owner)return null;
+  // Adversarial observation equivalence: secret deck/LIFE permutations and a
+  // concealed enemy hand/deck exchange cannot affect an accepted exact path.
+  // This uses the same native engine twice; no shadow card rules or reveal.
+  const probe=structuredClone(s);
+  for(const pl of probe.players){pl.deck.reverse();pl.life.reverse();}
+  const enemy=probe.players[1-owner];
+  if(enemy.hand.length&&enemy.deck.length)
+   [enemy.hand[0],enemy.deck[0]]=[enemy.deck[0],enemy.hand[0]];
+  if(!legalUniversalActions(packs,probe).some(x=>same(x,real)))return null;
+  const other=dispatchUniversalAction(packs,probe,real,{actor:owner});
+  if(!publiclyStableTransition(probe,other,real,owner))return null;
+  const a=createUniversalAiObservation(packs,child,legalUniversalActions(packs,child));
+  const b=createUniversalAiObservation(packs,other,legalUniversalActions(packs,other));
+  if(!same(a,b))return null;
   return child;
  }catch{return null;}
 }
@@ -57,7 +71,7 @@ export function evaluateTrustedUniversalAiTactics(packs,state,rootObservation,ra
  const limits={
   roots:clamp(options.roots??3,0,10),children:clamp(options.children??2,0,10),
   depth:clamp(options.depth??3,1,3),nodes:clamp(options.nodes??24,0,200),
-  timeMs:clamp(options.timeMs??12,0,100)
+  timeMs:clamp(options.timeMs??90,0,100)
  };
  const baseline=ranked[0]?.action||null,actor=rootObservation.actor;
  const fallback=(reason,nodes=0)=>({action:baseline,nodes,fallback:reason,
