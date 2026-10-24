@@ -102,22 +102,28 @@ test('Round 3: registered deck can demonstrate native ENERGY play into native FR
      const mid=dispatchUniversalAction(packs,s,first,{actor});
      if(mid.pending||mid.status!=='playing')continue;
      const afterEnergy=legalUniversalActions(packs,mid);
-     const follow=afterEnergy.find(a=>a.type==='play'&&a.line==='front');
-     if(!follow)continue;
-     const final=dispatchUniversalAction(packs,mid,follow,{actor});
-     assert.ok(final,'two official reducer dispatches, no predicted costs');
+     const frontLegal=afterEnergy.filter(a=>a.type==='play'&&a.line==='front');
+     if(!frontLegal.length)continue;
      const o=createUniversalAiObservation(packs,s,legal),trace=[];
      const tactical=evaluateTrustedUniversalAiTactics(packs,s,o,
       [{action:first,score:0,utility:0}],{roots:1,children:10,depth:2,nodes:100,timeMs:100,trace});
+     // Native exactSteps could otherwise count ENERGY→ENERGY and silently
+     // pass even when every true FRONT candidate was rejected.
+     const acceptedFront=trace.find(e=>e.at==='native'&&e.action==='play'&&
+      e.line==='front'&&e.accepted===true);
+     const follow=frontLegal.find(a=>a.uid===acceptedFront?.uid&&a.slot===acceptedFront?.slot);
+     const final=follow?dispatchUniversalAction(packs,mid,follow,{actor}):null;
+     if(final)assert.equal(final.status,'playing','certified FRONT retains a real match state');
      const evidence={seed,tick,turn:s.turn,
       initial:{phase:s.phase,actor,ap:o.players[actor].ap,
        hand:o.players[actor].hand.map(c=>({uid:c.uid,cardId:c.cardId})),
        energy:o.players[actor].energyByColor},
       first,mid:{phase:mid.phase,ap:mid.players[actor].ap,legal:afterEnergy.length},
-      follow,final:{phase:final.phase,active:final.active},
+      follow:follow||null,frontLegalCount:frontLegal.length,
+      final:final?{phase:final.phase,active:final.active}:null,
       tactical,trace};
      if(!firstPair)firstPair=evidence;
-     if(tactical.exactSteps>=2){
+     if(tactical.exactSteps>=2&&follow&&final){
       console.log('R3 TWO-STEP CERTIFIED',JSON.stringify(evidence));
       verified=true;break;
      }
