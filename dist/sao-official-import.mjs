@@ -4160,7 +4160,7 @@ export const SAO_OFFICIAL_CARDS=[
   "ap": 2,
   "bp": 3000,
   "bpPrinted": "3000",
-  "gen": 3,
+  "gen": 2,
   "traits": [
    "ALO"
   ],

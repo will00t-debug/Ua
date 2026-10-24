@@ -30,7 +30,7 @@ test('R58 six hand reduction cards are Cursor production registrations and absen
 });
 test('R58 strict blockers remain unported, especially corrected TTG Q2301',()=>{
  const {records}=r58FiveTitleReview();
- for(const id of ['TTG-1-057','TTG-1-069','TTG-1-081','SLG-1-022',
+ for(const id of ['TTG-1-057','TTG-1-081','SLG-1-022',
   'MST-1-021','MST-1-033']){
   const c=records.find(c=>c.id===id);
   assert.ok(c,id+' incorrectly auto-ported from a keyword');
