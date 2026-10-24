@@ -18,7 +18,7 @@ const deck=Object.fromEntries(ids.map((id,i)=>[id,i===12?2:4]));
 function take(s,p,id){for(const zone of ['deck','hand','life','outside']){
  const a=s.players[p][zone],i=a.findIndex(c=>c.cardId===id);
  if(i>=0)return a.splice(i,1)[0];}throw Error('Missing real '+id);}
-test('real BLEACH DAMAGE2 waits through MST COLOR FIELD deployment and mandatory discard before second LIFE',()=>{
+test('BLEACH Q73 reveals both LIFE before MST COLOR FIELD deployment and mandatory discard',()=>{
  let s=newUniversalMatch(packs,{decks:[deck,mstDeck],seed:7248,first:0});
  // Reach an actual third own turn: 3 paid AP, not synthetic AP injected.
  for(let n=0;n<35&&(s.players[0].ownTurns<3||s.active!==0);n++){
@@ -77,14 +77,21 @@ test('real BLEACH DAMAGE2 waits through MST COLOR FIELD deployment and mandatory
  assert.equal(s.pending?.kind,'block');
  const beforeLife=s.players[1].life.length,beforeReveals=s.publicReveals.length;
  s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:null});
- assert.equal(s.players[1].life.length,beforeLife-1);
- assert.equal(s.players[1].life[0].uid,secondLife.uid);
+ assert.equal(s.players[1].life.length,beforeLife-2);
+ assert.equal(s.publicReveals.length,beforeReveals+2);
+ assert.ok(s.players[1].lifeRevealed.some(c=>c.uid===secondLife.uid));
+ assert.equal(s.pending?.kind,'life-batch-order');
+ s=dispatchUniversalAction(packs,s,{type:'chooseLifeOrder',uid:trigger.uid},{actor:1});
  const choice=legalUniversalActions(packs,s).find(a=>a.mode==='colorField'&&a.uid===field.uid);
  assert.ok(choice);s=dispatchUniversalAction(packs,s,choice);
+ assert.equal(s.pending.kind,'life-batch-order');
+ const entry=legalUniversalActions(packs,s).find(a=>a.type==='chooseLifeEffect');
+ assert.ok(entry,'Q38 offers new entry against remaining LIFE');
+ s=dispatchUniversalAction(packs,s,entry);
  assert.equal(s.pending.kind,'effect-discard');
- assert.equal(s.players[1].life.length,beforeLife-1);
- assert.equal(s.players[1].life[0].uid,secondLife.uid);
- assert.equal(s.publicReveals.length,beforeReveals+1);
+ assert.equal(s.players[1].life.length,beforeLife-2);
+ assert.ok(s.players[1].lifeRevealed.some(c=>c.uid===secondLife.uid));
+ assert.equal(s.publicReveals.length,beforeReveals+2);
  assert.throws(()=>dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'get'}),/not currently legal/);
  for(const difficulty of ['normal','hard']){
   const ai=chooseUniversalAiAction(packs,s,{difficulty});
@@ -96,5 +103,7 @@ test('real BLEACH DAMAGE2 waits through MST COLOR FIELD deployment and mandatory
  assert.equal(s.pending,null);
  assert.equal(s.players[1].life.length,beforeLife-2);
  assert.equal(s.publicReveals.length,beforeReveals+2);
+ assert.equal(s.players[1].lifeRevealed.length,0);
+ assert.equal(s.lifeRevealBatch,null);
  assert.equal(assertUniversalMatch(packs,s),true);
 });

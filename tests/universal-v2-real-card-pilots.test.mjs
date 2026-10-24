@@ -1058,6 +1058,14 @@ test('TTG073 multi-facedown leave substitute lets owner choose precise UID witho
  assert.equal(chosen.players[1].front[0].stack[0].under.length,1);
  assert.equal(chosen.players[1].front[0].stack[0].under[0].uid,first.uid);
  assert.ok(chosen.players[1].outside.some(c=>c.uid===extra.uid));
+ const consumed=chosen.zoneMoveEvents.filter(e=>e.uid===extra.uid&&e.reason==='protection');
+ assert.equal(consumed.length,1);
+ assert.equal(consumed[0].attachedToUid,s.players[1].front[0].stack[0].uid);
+ assert.equal(consumed[0].sourceUid,second.uid);
+ assert.equal(consumed[0].wasFaceDown,true);
+ assert.deepEqual(consumed[0].identityViewersBefore,[1]);
+ assert.equal(chosen.turnRetireEvents.some(e=>e.uid===extra.uid),false);
+
  assert.equal(universalBp(packs,chosen,chosen.players[1].front[0]),5000);
  assert.equal(assertUniversalMatch(packs,chosen),true);
  assert.deepEqual(s,before,'no mutation of prior pending match');

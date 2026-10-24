@@ -3,11 +3,19 @@ import {SOLO_LEVELING_CARDS} from '../../solo-leveling.mjs';
 import {verifiedSlgV2Cards} from '../slg-pack.mjs';
 const records=Object.fromEntries(SOLO_LEVELING_CARDS.map(c=>[c.id,c]));
 const proof=Object.freeze({
+ '028':['以ACTIVE登場',
+ 'Official UA51BT/SLG-1-028 イグリット purple4/AP2/BP4000/影の軍団; enters ACTIVE without an opponent condition. OnPlay may choose up to one exact named 〈影の兵士〉 from OWN HAND OR OWN OUTSIDE and enter any legal line REST for free; nested onPlay of SLG-1-030 resolves using existing effectQueue, GET life separately. Official https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-028; not complete independent FAQ certification.'],
+ '030':['同卡號牌組最多12張',
+ 'Official UA51BT/SLG-1-030 影の兵士 PURPLE0/AP1/BP1500/gen1/DRAW life: deck limit 12 copies; onPlay requires OTHER own field character with exact trait 影の軍団; inspect TOP2, optionally send one either exact trait 影の軍団 OR named 〈水篠 旬〉 outside, reorder rest to TOP. Q no per-card special ruling found. Printed source https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-030; not fully independently FAQ-certified.'],
+ '046':['登場時：查看牌庫頂4張','Official UA51BT/SLG-1-046 水篠 旬 GREEN1/AP1/BP2000/gen1, no LIFE; TOP4 reveal 0..1 exact name 水篠 旬 OR デイリークエスト, bottom-order rest, only on successful addition discard exactly one own hand card. Reuses existing contingent TOP-N search op; full FAQ certification remains independent.'],
+ '070':['登場時令另一己方DFN角色最多1張',
+ 'Official UA51BT/SLG-1-070 シーマ GREEN0/AP1/BP1000/gen1, printed compound DFN／第四次架南島レイド traits and ACTIVE Life. OnPlay choose UP TO ONE OTHER OWN field DFN character; during next opponent turn, that opponent must pay extra 1 READY AP when selecting this stamped target by a CARD EFFECT; may choose another or 0 if allowed, and without AP cannot choose it. Explicit Q2062 2026-04-17. Physical UID/field stamp, AI choice, optional 0 and owner-only private state in tests/v2-r33-slg070-official.test.mjs; complete all-FAQ certificate NOT claimed.'],
  '053':['Impact無效。登場時若場上有己方水篠旬，抽1張。','Original Japanese UA51BT/SLG-1-053 諸菱 賢太 GREEN3/AP1/BP2000/gen2 DRAW Life separately: IMPACT nullification plus onPlay draw exactly 1 only when OWN field has 〈水篠 旬〉 in front or energy line. Both printed clauses share existing native impactNull and drawIfOwnName V2 predicates, no separate reducer. Official https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-053; not fully FAQ certified.'],
  '023':['兩次阻擋：本回合第一次阻擋時ACTIVE。','Official UA51BT/SLG-1-023 水篠 潤一郎 purple4/AP1/BP4000/gen1. Printed [2回ブロック] uses the shared readyOnBlockCount of 1. ACTIVE life is the generic own-character ACTIVE plus BP+3000. Catalogue traits are empty. Official page checked 2026-10-22; not a full FAQ certification. https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-023'],
  '056':['Impact1。','Official UA51BT/SLG-1-056 向坂 雫 green2/AP1/BP3000/gen1 no trigger. Printed impact is exactly 1 on a won battle. Official trait is the single token 第四次架南島レイド; the catalogue token 第四次架南島Raid is the known wrong label and is not registered. No life trigger. Page checked 2026-10-22; not a full FAQ certification.'],
  '069':['己方回合手牌5張以上時BP+1500。','Official UA51BT/SLG-1-069 ケン green2/AP1/BP2500/gen1. Own turn and own hand of at least 5 gives BP+1500 through ownHandCountAtLeast. Official trait is one token DFN／第四次架南島レイド; the catalogue splits DFN and 第四次架南島Raid and is not registered. No life trigger. Page checked 2026-10-22; not a full FAQ certification.'],
  '062':['己方回合中若場上有5張以上第四次架南島Raid卡，BP+1500。','Official UA51BT/SLG-1-062 最上 真 green0/AP1/BP1500/gen1 DRAW. Own turn and at least five own-field characters with the official trait 第四次架南島レイド, including this card, give BP+1500. The printed sentence has no 他の. Catalogue trait 第四次架南島Raid is the known wrong token and is not registered. Page checked 2026-10-22; no FAQ block; not a full FAQ certification.'],
+ '072':['登場時若己方有3張以上DFN，抽1張。','Official UA51BT/SLG-1-072 ミズア GREEN3/AP1/BP2000/gen2, no LIFE; onPlay draw 1 if own field has at least 3 cards with DFN trait including this entering character. The printed trait is one token DFN／第四次架南島レイド; components are independently source-audited, never inferred by splitting arbitrary slash text. Official https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-072; full FAQ acceptance remains outstanding.'],
  '065':['己方回合手牌5張以上時BP+1000並獲Impact1。','Official UA51BT/SLG-1-065 アーシー green4/AP1/BP4000/gen1 DRAW. Printed BP is 4000+. Own turn and own hand of at least 5 give both BP+1000 and impact 1. Generated energy alt is 緑, so gen is 1. Official trait is one token DFN／第四次架南島レイド. Page checked 2026-10-22; no FAQ block; not a full FAQ certification.'],
  '027':['原本BP2500以下且REST的己方影之軍團角色，BP+500','Official UA51BT/SLG-1-027 アイアン purple2/AP1/BP3000+/gen1, no trigger. Generated alt is 紫, so gen is 1. Own turn: each REST own-field character whose printed BP is 2500 or less and whose trait token is exactly 影の軍団 gives BP+500. Q2030: 元々のBP is the printed number. Q2070: a field has no BP and is not counted. The catalogue trait 影之軍團 is not registered. Page checked 2026-10-22; not a full FAQ certification.'],
 
@@ -56,7 +64,10 @@ export default Object.freeze({
   // The printed BP dash is a null source-catalogue field; V2 events/fields
   // have no battle BP and encode that same non-BP property as numeric 0.
   // Never coerce CHARACTER printed BP here.
-  const normalized=record.bp==null&&record.type!=='character'?{...record,bp:0}:record;
+  const normalized={...(record.bp==null&&record.type!=='character'?{...record,bp:0}:record),
+   // Deck-limit print is explicit in source catalogue maxCopies (030 permits 12).
+   // Contract checks deckLimit against authored maxCopies; do not silently cap at 4.
+   deckLimit:record.maxCopies??4};
   return Object.freeze({
    id:def.id,sourceRecord:normalized,definition:def,
    evidence:{printedTextFragments:[review[0]],
@@ -72,13 +83,18 @@ export default Object.freeze({
      ...(def.id==='SLG-1-004'?['tests/v2-slg-004-turn-zone-ledger.test.mjs']:[]),
      ...(def.id==='SLG-1-012'?['tests/v2-slg-012-own-name.test.mjs']:[]),
      ...(def.id==='SLG-1-018'?['tests/v2-slg-018-compound-top.test.mjs']:[]),
+     ...(def.id==='SLG-1-046'?['tests/v2-r38-slg046-real.test.mjs']:[]),
      ...(def.id==='SLG-1-037'?['tests/v2-slg-037-original-bp.test.mjs']:[]),
      ...(def.id==='SLG-1-042'?['tests/v2-slg-042-shared-energy.test.mjs']:[]),
      ...(def.id==='SLG-1-053'?['tests/v2-slg-053-own-name-impact-null.test.mjs']:[]),
      ...(def.id==='SLG-1-023'||def.id==='SLG-1-056'||def.id==='SLG-1-069'?['tests/v2-zero-engine-round14.test.mjs']:[]),
      ...(def.id==='SLG-1-062'?['tests/v2-zero-engine-round15.test.mjs']:[]),
      ...(def.id==='SLG-1-065'?['tests/v2-zero-engine-round16.test.mjs']:[]),
-     ...(def.id==='SLG-1-027'?['tests/v2-rest-printed-bp-round17.test.mjs']:[])],
+     ...(def.id==='SLG-1-027'?['tests/v2-rest-printed-bp-round17.test.mjs']:[]),
+     ...(def.id==='SLG-1-030'?['tests/v2-r42-slg030-official.test.mjs']:[]),
+     ...(def.id==='SLG-1-028'?['tests/v2-r42-slg028-030-official.test.mjs']:[]),
+     ...(def.id==='SLG-1-070'?['tests/v2-r33-slg070-official.test.mjs']:[]),
+     ...(def.id==='SLG-1-072'?['tests/v2-slg-072-dfn-draw-gpt.test.mjs']:[])],
     ...(def.implementation==='vanilla'?{verifiedNoExtraEffects:true}:{})}
   });
  }))

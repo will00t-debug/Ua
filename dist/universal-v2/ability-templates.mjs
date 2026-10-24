@@ -27,6 +27,12 @@ const registry=Object.freeze({
   args:{energy:v=>integer(v,1,50),count:v=>integer(v,1,5)},
   build:v=>[{op:'drawIfOwnEnergyAtLeast',energy:v.energy,count:v.count}]
  },
+ drawIfOwnTraitCount:{
+  args:{trait:named,zone:v=>['field','front','energy'].includes(v),
+   excludeSelf:yesNo,min:v=>integer(v,1,8),count:v=>integer(v,1,5)},
+  build:v=>[{op:'drawIfOwnTraitCount',trait:v.trait,zone:v.zone,
+   excludeSelf:v.excludeSelf,min:v.min,count:v.count}]
+ },
  drawIfOwnName:{
   args:{name:named,count:v=>integer(v,1,5)},
   build:v=>[{op:'drawIfOwnName',name:v.name,count:v.count}]
@@ -246,6 +252,42 @@ const registry=Object.freeze({
    logic:v=>v==='any'||v==='all'
   },
   build:v=>[{op:'searchTopOneBottomDiscard',count:v.count,
+   filters:v.filters.map(f=>({...f})),logic:v.logic}]
+ },
+ // Typed and strictly bounded version of the existing TOP-N choice/order path.
+ searchTopUpToTwoBottom:{
+  args:{count:v=>integer(v,1,5),filters:v=>Array.isArray(v)&&v.length>=1&&v.length<=3&&
+   v.every(f=>f&&typeof f==='object'&&!Array.isArray(f)&&Object.keys(f).length===2&&
+    ['name','trait','color','type','printedRequiredEnergyAtMost'].includes(f.field)&&
+    (f.field==='printedRequiredEnergyAtMost'?
+     integer(f.value,0,30):
+     typeof f.value==='string'&&!!f.value.trim()&&f.value.length<=80&&
+     (f.field!=='type'||['character','event','field'].includes(f.value))))&&
+    new Set(v.map(f=>f.field+':'+f.value)).size===v.length,
+   logic:v=>['any','all'].includes(v)},
+  build:v=>[{op:'searchTopUpToTwoBottom',count:v.count,max:2,rest:'bottom',
+   filters:v.filters.map(f=>({...f})),logic:v.logic}]
+ },
+ // Printed hand selection, never a paid PLAY.
+  deployOwnHandRest:{
+   args:{type:v=>['character','field'].includes(v),
+    color:v=>['blue','yellow','green','purple','red'].includes(v),
+    energy:v=>integer(v,0,30),ap:v=>integer(v,1,3),max:v=>integer(v,1,4)},
+   build:v=>[{op:'deployOwnHandRest',type:v.type,color:v.color,
+    energy:v.energy,ap:v.ap,max:v.max}]
+  },
+  // Single-selection specialization of the SAME multi-choice runtime (no new op/queue).
+ searchTopUpToOneBottom:{
+  args:{count:v=>integer(v,1,5),filters:v=>Array.isArray(v)&&v.length>=1&&v.length<=3&&
+   v.every(f=>f&&typeof f==='object'&&!Array.isArray(f)&&Object.keys(f).length===2&&
+    ['name','trait','color','type','printedRequiredEnergyAtMost'].includes(f.field)&&
+    (f.field==='printedRequiredEnergyAtMost'?
+     integer(f.value,0,30):
+     typeof f.value==='string'&&!!f.value.trim()&&f.value.length<=80&&
+     (f.field!=='type'||['character','event','field'].includes(f.value))))&&
+    new Set(v.map(f=>f.field+':'+f.value)).size===v.length,
+   logic:v=>['any','all'].includes(v)},
+  build:v=>[{op:'searchTopUpToTwoBottom',count:v.count,max:1,rest:'bottom',
    filters:v.filters.map(f=>({...f})),logic:v.logic}]
  },
  payDiscardThen:{

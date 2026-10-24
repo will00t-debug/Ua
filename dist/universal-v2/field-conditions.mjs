@@ -13,6 +13,13 @@ export function cardHasName(definition,name,silenced=false){
  if(definition?.name===name)return true;
  return silenced!==true&&(definition?.nameAliases||[]).includes(name);
 }
+// Printed slash-composite remains one immutable card-face token. Only an
+// explicitly audited pack-level declaration supplies separately recognized
+// components; no title prose/translated alias is inferred here.
+export function cardHasTrait(definition,trait){
+ return (definition?.traits||[]).includes(trait)||
+  (definition?.traitComponents||[]).includes(trait);
+}
 export const V2_TRAIT_ZONES=Object.freeze(['field','front','energy']);
 export const V2_TRAIT_SUBJECTS=Object.freeze(['character','card']);
 export function ownFieldTraitKinds(s,owner,sourceUid,profile,printed){
@@ -26,7 +33,7 @@ export function ownFieldTraitKinds(s,owner,sourceUid,profile,printed){
   if(profile.subject==='character'&&definition.type!=='character')continue;
   // [] means traitless; a source-verified multi-trait card has separate tokens.
   // An unverified composite string remains ONE exact token, not guessed parts.
-  for(const trait of definition.traits||[]){
+  for(const trait of definition.traitComponents||definition.traits||[]){
    if(typeof trait==='string'&&trait.trim())distinct.add(trait);
   }
  }
@@ -43,6 +50,14 @@ export function matchesOwnDistinctTraits(s,owner,sourceUid,profile,printed){
 export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energy,cardBp){
  if(condition.turn==='own'&&s.active!==owner)return false;
  if(condition.turn==='opponent'&&s.active===owner)return false;
+ // Successful EVENT usage is already recorded as an atomic physical HAND ->
+ // OUTSIDE rule move. Reuse this ledger; never infer usage from event count,
+ // deck inspections, cancelled plays, opponent actions or transient zones.
+ if(condition.kind==='ownEventUsedThisTurn')
+  return (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&
+   e.owner===owner&&e.controller===owner&&e.from==='hand'&&
+   e.to==='outside'&&e.reason==='rule'&&
+   printed({uid:e.uid,cardId:e.cardId})?.type==='event');
  if(condition.kind==='ownEffectHandOutsideOrRecovery'){
   // Same-turn factual records, never inferred from deck/hand counts or
   // the printed contents of any card. Own turn check is enforced above.
@@ -60,6 +75,15 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   return s.players[owner].hand.length>=condition.min;
  if(condition.kind==='outsideCount')
   return s.players[owner].outside.length>=condition.min;
+ if(condition.kind==='ownOutsideNamedCountAtLeast'){
+  // Printed names are a union, not distinct-name kinds: each physical card
+  // in OWN OUTSIDE counts ONCE, even when it has multiple audited aliases.
+  // Do not count raid underlayers, opponent outside, hand or removed cards.
+  return s.players[owner].outside.filter(c=>{
+   const d=printed(c);
+   return condition.names.some(name=>cardHasName(d,name));
+  }).length>=condition.min;
+ }
  if(condition.kind==='ownEnergyAtLeast')
   return energy()>=condition.min;
  if(condition.kind==='oppCharacterBpAtLeast'){
@@ -97,7 +121,7 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
    remaining.delete(d.name);
    if(!silenced)for(const alias of d.nameAliases||[])remaining.delete(alias);
   }
-  if(condition.kind==='ownTraitCount'&&d.traits.includes(condition.trait))found++;
+  if(condition.kind==='ownTraitCount'&&cardHasTrait(d,condition.trait))found++;
  }
  if(remaining)return remaining.size===0;
  if(condition.kind==='ownNameAbsent')return true;
@@ -130,11 +154,57 @@ export function ownRestPrintedBpCount(s,owner,sourceUid,condition,printed){
   if(!c||c.ready||(condition.excludeSelf&&c.uid===sourceUid))continue;
   const d=printed(c);
   if(d.type!=='character'||!Number.isInteger(d.bp)||d.bp>condition.maxPrintedBp)continue;
-  if((d.traits||[]).includes(condition.trait))found++;
+  if(cardHasTrait(d,condition.trait))found++;
  }
  return found;
 }
 export function retiredThisTurn(s,controller,cardType='any'){
  if(![0,1].includes(controller))throw Error('Invalid true-retirement predicate');
  return countRetirementsThisTurn(s,controller,cardType)>0;
+}
+
+
+// R45 Q2337: count DIFFERENT original printed card names in the owner's
+// OUTSIDE among a union of allowed types. Four physical copies bearing the
+// same printed name are one kind. RAID undercards and hand/deck are not OUTSIDE.
+// The caller supplies the existing owner-aware printed-card resolver.
+export function countOwnOutsideDistinctPrintedNames(s,owner,printed,{color,types}){
+ if(![0,1].includes(owner)||typeof printed!=='function'||
+  typeof color!=='string'||!['green','yellow','blue','purple','red'].includes(color)||
+  !Array.isArray(types)||!types.length||types.length>3||
+  new Set(types).size!==types.length||
+  types.some(x=>!['character','event','field'].includes(x))||
+  !Array.isArray(s?.players?.[owner]?.outside))
+  throw Error('Invalid outside printed-name count predicate');
+ const names=new Set();
+ for(const physical of s.players[owner].outside){
+  if(!physical||typeof physical.uid!=='string'||
+   !physical.uid.startsWith(owner+'-'))throw Error('Invalid outside physical owner');
+  const d=printed(physical);
+  if(!d||typeof d.name!=='string'||!d.name.trim()||
+   !['character','event','field'].includes(d.type))
+   throw Error('Invalid outside printed card face');
+  if(d.color===color&&types.includes(d.type))names.add(d.name);
+ }
+ return names.size;
+}
+
+
+// R53: physical own-OUTSIDE groups. This is a pure reusable piece for cards
+// printing "every N cards in OWN outside", not a global cached power source.
+// A Raid's buried base/undercards, HAND and opponent outside are NOT in this
+// linear zone. For SLG-1-021, unit 5 is printed but later recovery and onAttack
+// both need independently audited consumers.
+export function countOwnOutsidePhysicalGroups(s,owner,unit){
+ if(![0,1].includes(owner)||!Number.isInteger(unit)||unit<1||unit>200||
+  !Array.isArray(s?.players?.[owner]?.outside))
+  throw Error('Invalid own OUTSIDE physical group query');
+ const seen=new Set();
+ for(const physical of s.players[owner].outside){
+  if(!physical||typeof physical.uid!=='string'||
+   !physical.uid.startsWith(owner+'-')||seen.has(physical.uid))
+   throw Error('Invalid/duplicated outside physical UID');
+  seen.add(physical.uid);
+ }
+ return Math.floor(seen.size/unit);
 }

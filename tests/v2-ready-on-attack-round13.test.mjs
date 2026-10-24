@@ -59,8 +59,11 @@ function advance(s){
 }
 function settle(s){
  if(s.pending?.kind==='block')s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:null},{actor:1});
- while(s.pending?.kind==='life-trigger')
-  s=dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'skip'},{actor:1});
+ while(['life-batch-order','life-trigger'].includes(s.pending?.kind)){
+  const choice=s.pending.kind==='life-batch-order'?legalUniversalActions(packs,s)[0]:
+   {type:'chooseTrigger',mode:'skip'};
+  s=dispatchUniversalAction(packs,s,choice,{actor:1});
+ }
  return s;
 }
 function live(s,uid){

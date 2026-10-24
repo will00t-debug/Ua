@@ -11,6 +11,7 @@ export const V2_TITLE_LABELS=Object.freeze({
 });
 export const V2_PENDING_LABELS=Object.freeze({
  block:'選擇是否阻擋', 'life-trigger':'生命觸發',
+ 'life-batch-order':'選擇 LIFE／登場效果結算順序',
  'leave-replacement':'角色離場保護','private-top-choice':'查看牌庫頂','private-top-place':'選擇牌頂或牌底',
  'effect-recover-ap':'恢復 AP','end-hand-limit':'手牌上限',
  'effect-discard':'選擇棄牌','effect-discard-cost':'支付棄牌成本',
@@ -19,17 +20,25 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-top-inspect':'查看牌庫頂','effect-top-inspect-many':'任意張卡送場外',
  'effect-top-filter-choice':'查看牌頂，選擇符合特徵的角色／卡','effect-top-trait-outside':'查看牌頂，將符合特徵的卡送場外',
  'effect-top-order':'排列牌庫頂或底','effect-optional-mill':'可將牌庫頂 1 張送場外',
+ 'effect-optional-draw':'攻擊時可抽 0 或 1 張',
  'effect-pay-ap-deploy':'可支付 1 AP，從場外 REST 登場',
+ 'effect-hand-rest':'從己方手牌免費 REST 登場',
  'effect-bounce-own':'選擇返回手牌的己方角色',
  'effect-buff-own':'選擇己方角色增加本回合 BP',
  'effect-once-choice':'是否發動本回合一次能力',
  'effect-choice-mode':'選擇一項效果',
  'recovered-self-entry':'回收後可 REST 登場至能源線',
  'effect-recover-outside':'從場外回收','effect-retire-bp':'選擇敵方退場',
- 'effect-rest-bp':'選擇敵方 REST','effect-buff-trait':'選擇己方 BP 加成',
+ 'effect-grant-front-energy':'讓另一張己方前線指定特徵角色本回合也能產生能源',
+ 'effect-rest-bp':'選擇敵方 REST','effect-grant-ap-tax':'讓另一張己方 DFN 角色獲得指定時的 AP 加價保護','effect-attack-ban':'指定禁止攻擊的對手前線角色',
+ 'effect-buff-trait':'選擇己方 BP 加成',
  'main-two-buff':'主要能力選擇 BP 對象',
  'main-discard-buff':'支付一張手牌，讓自身 BP 增加',
- 'effect-target':'指定角色','raid-effect-order':'突襲能力結算順序',
+ 'effect-grant-attack':'授予己方角色攻擊時能力','granted-attack-draw':'攻擊時是否抽一張',
+ 'effect-target':'指定角色','effect-target-many':'最多選擇兩名不同敵方角色','raid-effect-order':'突襲能力結算順序',
+ 'effect-move-order':'選擇同時取得的移動觸發處理順序',
+ 'effect-rest-tuck':'是否 REST 角色，放置剛送至場外的手牌',
+ 'effect-tuck-moved':'可將該場外卡裏向放在自身下方',
  'retirement-order':'同時退場效果的結算順序'
 });
 export function isExactLegal(action,legal){
@@ -47,7 +56,7 @@ export function uiCardLabel(pack,state,uid){
  const sourcePack=Array.isArray(pack)?pack[owner]:pack;
  const id=state?.players?.[owner];
  if(!id)return '卡片';
- const zones=[id.hand,id.front,id.energy,id.outside,id.removed,id.deck,id.life];
+ const zones=[id.hand,id.front,id.energy,id.outside,id.removed,id.deck,id.life,id.lifeRevealed];
  const locate=(entry)=>{
   if(!entry)return null;
   if(entry.uid===uid)return entry;
@@ -78,7 +87,9 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'event':return '使用事件：'+name();
   case 'move':return '移至前線 '+(action.slot+1);
   case 'step':return 'STEP 移至能源線 '+(action.slot+1);
-  case 'attack':return '宣告攻擊：'+name();
+  case 'attack':return action.targetUid?
+   '狙擊攻擊：'+name()+' → '+uiCardLabel(pack,state,action.targetUid):
+   '宣告攻擊：'+name();
   case 'activate':return action.mode==='discardSelfBuff'?
     '起動主要：棄一張手牌，本回合自身 BP＋1500（每回合一次）':
     action.mode==='selfRestEnergyRetire'?
@@ -116,6 +127,14 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseTopCard':return action.mode==='top'?'保留在牌庫頂':action.mode==='bottom'?'放回牌庫底':'送至場外';
   case 'chooseRaidOrder':return action.mode==='baseFirst'?'先結算突襲底板效果':'先結算突襲登場效果';
   case 'chooseRetirementOrder':return '先結算此退場效果';
+  case 'chooseMoveEffectOrder':return action.key.startsWith('observer-')?
+   '先處理場上角色取得的送場外反應':'先處理已取得的卡片移動能力';
+  case 'chooseRestTuck':return action.mode==='rest'?
+   'REST 此角色，選擇是否放置裏向底牌':'不發動 REST 放置';
+  case 'chooseTuckMoved':return action.uid===null?
+   '不放置裏向底牌':'將剛送場外的牌裏向放在角色下方';
+  case 'chooseLifeOrder':return '先處理此公開 LIFE：'+name();
+  case 'chooseLifeEffect':return '先結算登場效果：'+uiCardLabel(pack,state,state?.pending?.entries?.find(e=>e.key===action.key)?.sourceUid);
   case 'choosePhaseOrder':return '先結算此階段效果';
   case 'chooseApRecovery':return action.uid===null?'完成恢復 AP':'恢復 AP 卡';
   case 'chooseDiscardGate':return action.uid===null?'不支付成本':'棄 '+name()+' 支付成本';
@@ -131,14 +150,25 @@ export function uiActionLabel(action,{pack,state}={}){
    return action.uid===null?'結束搜尋':'將 '+name()+' 加入手牌';
   case 'chooseInspectedOutside':return action.uid===null?'完成選擇並排列剩餘牌':'將 '+name()+' 送場外';
   case 'chooseTopTraitOutside':return action.uid===null?'不送場外，排列剩餘牌':'將符合特徵的 '+name()+' 送場外';
+  case 'chooseOptionalDraw':return action.mode==='draw'?'攻擊時抽 1 張':'不抽牌';
   case 'chooseOptionalMill':return action.mode==='mill'?'將牌庫頂 1 張送場外':'不送場外';
   case 'choosePayApDeploy':return action.mode==='pay'?'支付 1 AP，接著選擇場外角色':'不支付 AP';
-  case 'chooseOutsideNameRest':return action.uid===null?'不從場外登場':'REST 登場 '+name()+suffix();
+  case 'chooseHandRest':return action.uid===null?'不特殊登場':'免費 REST 登場 '+name()+suffix();
+   case 'chooseOutsideNameRest':return action.uid===null?'不從場外登場':'REST 登場 '+name()+suffix();
   case 'chooseTopFiltered':return action.uid===null?'不加入手牌，將其餘卡排列至底部':'加入手牌：'+name();
   case 'chooseTopOrder':return '依序放回：'+name();
   case 'chooseRestFrontEnergy':return 'REST '+name()+'，本回合產能＋1';
   case 'chooseOwnBuff':case 'chooseMainBuff':case 'chooseTraitBuff':case 'chooseRestBp':
-  case 'chooseRetireBp':case 'chooseTarget':
+  case 'chooseRetireBp':case 'chooseTargetMany':return action.uid===null?'完成目標選擇':'選擇第 '+(state?.pending?.selected?.length+1||1)+' 個角色';
+  case 'chooseFrontEnergyGrant':return action.uid===null?
+   '不指定暫時 FRONT 產能對象':'讓 '+name()+' 本回合在前線也能產生能源';
+  case 'chooseApTaxGrant':return action.uid===null?
+   '不指定 AP 加價保護角色':'令 '+name()+' 於對手下一回合被卡牌效果指定時，對手須額外支付 1 AP';
+  case 'chooseAttackBan':return action.uid===null?'不指定攻擊禁止對象':
+   '令 '+name()+' 至下個己方回合開始前不能攻擊';
+  case 'chooseGrantAttack':return '授予 '+name()+' 本回合攻擊時抽牌';
+  case 'chooseGrantedDraw':return action.mode==='draw'?'使用獲得的攻擊時抽 1 張':'不抽牌';
+  case 'chooseTarget':
    return action.uid===null?'不指定／完成':'指定 '+name();
   default:return '執行 '+action.type;
  }

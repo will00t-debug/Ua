@@ -131,3 +131,53 @@ test('multi-layer Raid protection selects exact hidden UID and retains a positiv
   a.type==='chooseBlock'&&a.uid===defender.uid));
  assert.equal(assertUniversalMatch(packs,preserved),true);
 });
+
+test('R23 Q60 true retirement journals each buried UID once but only top retires',()=>{
+ const {s,defender,originalBase,hidden}=arrange({layers:2});
+ const before=structuredClone(s);
+ assert.throws(()=>dispatchUniversalAction(packs,s,
+  {type:'chooseLeaveReplacement',mode:'leave'},{actor:0}),/Wrong player turn/);
+ assert.deepEqual(s,before);
+ const result=dispatchUniversalAction(packs,s,{type:'chooseLeaveReplacement',mode:'leave'},{actor:1});
+ for(const c of [originalBase,...hidden]){
+  const moves=result.zoneMoveEvents.filter(e=>e.uid===c.uid&&e.from==='raid-under');
+  assert.equal(moves.length,1);assert.equal(moves[0].to,'outside');
+  assert.equal(moves[0].owner,1);assert.equal(moves[0].reason,'rule');
+  assert.equal(result.turnRetireEvents.some(e=>e.uid===c.uid),false);
+  assert.equal(result.players[1].outside.filter(x=>x.uid===c.uid).length,1);
+  assert.ok(!legalUniversalActions(packs,result).some(a=>a.uid===c.uid));
+ }
+ assert.equal(result.turnRetireEvents.filter(e=>e.uid===defender.uid).length,1);
+ assert.equal(result.zoneMoveEvents.filter(e=>e.uid===defender.uid&&e.reason==='retirement').length,1);
+ assert.equal(universalPublicView(packs,result,0).zoneMoveEvents,undefined);
+ assert.equal(assertUniversalMatch(packs,result),true);
+});
+
+test('R23 protection consumption records physical attachment, visibility and cause only after choice',()=>{
+ const {s,defender,originalBase,hidden}=arrange({layers:2});
+ const prior=structuredClone(s);
+ const foe=JSON.stringify(universalPublicView(packs,s,0));
+ for(const c of hidden)assert.equal(foe.includes(c.uid),false);
+ assert.throws(()=>dispatchUniversalAction(packs,s,
+  {type:'chooseLeaveReplacement',mode:'protect',uid:'0-forged'},{actor:1}),/not currently legal/);
+ assert.deepEqual(s,prior);
+ const result=dispatchUniversalAction(packs,s,
+  {type:'chooseLeaveReplacement',mode:'protect',uid:hidden[0].uid},{actor:1});
+ const events=result.zoneMoveEvents.filter(e=>e.uid===hidden[0].uid);
+ assert.equal(events.length,1);
+ assert.deepEqual([events[0].from,events[0].to,events[0].reason,events[0].attachedToUid],
+  ['raid-under','outside','protection',originalBase.uid]);
+ assert.equal(events[0].sourceUid,defender.uid);assert.equal(events[0].sourceOnField,true);
+ assert.equal(events[0].wasFaceDown,true);assert.deepEqual(events[0].identityViewersBefore,[1]);
+ for(const change of [e=>e.attachedToUid='0-wrong',e=>e.identityViewersBefore=[0,1],e=>e.wasFaceDown='true']){
+  const bad=structuredClone(result);change(bad.zoneMoveEvents.find(e=>e.uid===hidden[0].uid));
+  assert.throws(()=>assertUniversalMatch(packs,bad),/Invalid private movement history/);
+ }
+
+ assert.equal(result.turnRetireEvents.some(e=>e.uid===hidden[0].uid),false);
+ const view=universalPublicView(packs,result,0);
+ assert.equal(view.zoneMoveEvents,undefined);
+ assert.equal(JSON.stringify(view).includes(hidden[1].uid),false);
+ assert.ok(view.players[1].outside.some(c=>c.uid===hidden[0].uid),'outside is now public');
+ assert.equal(assertUniversalMatch(packs,result),true);
+});

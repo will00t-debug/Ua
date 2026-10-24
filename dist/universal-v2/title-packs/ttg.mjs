@@ -2,6 +2,10 @@
 import {TTG_BY_ID} from '../../ttg-builder.mjs';
 import {verifiedTtgV2Additions} from '../ttg-pack.mjs';
 const proof=Object.freeze({
+ 'TTG-1-067':['狙擊',
+ 'Official [UA56BT/TTG-1-067] Yoko red energy4 AP2 BP3500 gen red1 Great Gurren trait, enters ACTIVE regardless paid entry; current BP>=4000 cannot block; onPlay this-turn earned SNIPER targeted FRONT combat and attacker real battle victory draws exactly one (including equality per Q2295 and Q65-Q70), never direct LIFE. ACTIVE LIFE choose own character ACTIVE BP3000 current turn. Physical UID and field incarnation stamped; legal 50-card TTG real deck and distinct normal/sniper/ACTIVE LIFE positive+negative checks in tests/v2-r55-ttg067-full-print.test.mjs. Individual official rule audit, not 700-card FAQ certification.'],
+ 'TTG-1-028':['下次己方回合開始不能攻擊',
+ 'Official UA56BT/TTG-1-028, GREEN 4/AP1/BP4000/gen1, Raid on Simon or Viral, green Gunmen/Great Gurren dual traits, RAID Life. OnPlay draws one, and only during OWN turn chooses up to one opponent FRONT character: that physical field incarnation cannot attack until the controller next own START. Reuses shared cannotAttack status with stamped target, bounded expiration, owner-scoped optional target, and source-independent earned status. Verified by tests/v2-r32-ttg028-official.test.mjs, not all-title FAQ certification.'],
  'TTG-1-006':['自己的能源達 6 以上時','UA56BT/TTG-1-006 キタン, green energy 2/AP1/BP3000/gen1, no Life; on own turn while OWN generated ENERGY is >=6 its BP is +1000 continuously. Full printed source is user-supplied 2026-10-13 TTG card-front PDF provenance and preserved exact identity, trait, effect text & official card detail URL '+TTG_BY_ID['TTG-1-006'].source+'. Does NOT include hand, front-line, or opponent generated energy. Dynamic ACTIVE-to-REST sources recalculate without snapshots. Not comprehensive official FAQ certification.'],
  'TTG-1-005':['IMPACT 無效','日本版 IMPACT null / DRAW。普通對局與生命分開測；無條件牌面特性。'],
  'TTG-1-014':['需求能源1以下','官方登場強制回手另一張符合條件的己方角色，無對象時自回手；來源 Q&A 與遊戲核心守恆測試。'],
@@ -28,7 +32,9 @@ export default Object.freeze({
    id:def.id,sourceRecord:record,definition:def,
    evidence:{printedTextFragments:[review[0]],reviewNote:review[1]+
     ' 日文來源：'+record.source,
-    testFiles:['tests/universal-v2-ttg-port.test.mjs',...(def.id==='TTG-1-010'||def.id==='TTG-1-023'?['tests/v2-ttg-top-filtered.test.mjs']:[]),
+    testFiles:['tests/universal-v2-ttg-port.test.mjs',
+     ...(def.id==='TTG-1-067'?['tests/v2-r55-ttg067-full-print.test.mjs']:[]),...(def.id==='TTG-1-010'||def.id==='TTG-1-023'?['tests/v2-ttg-top-filtered.test.mjs']:[]),
+      ...(def.id==='TTG-1-028'?['tests/v2-r32-ttg028-official.test.mjs']:[]),
       ...(def.id==='TTG-1-053'?['tests/v2-ttg-053-rest-mill.test.mjs']:[]),
       ...(def.id==='TTG-1-006'?['tests/v2-ttg-006-live-energy.test.mjs']:[]),
       ...(def.id==='TTG-1-063'?['tests/v2-ttg-063-energy-retire.test.mjs']:[]),

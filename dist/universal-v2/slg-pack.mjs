@@ -3,6 +3,35 @@ import {SOLO_LEVELING_CARDS} from '../solo-leveling.mjs';
 import {createUniversalPack} from './pack.mjs';
 const catalog=Object.fromEntries(SOLO_LEVELING_CARDS.map(c=>[c.id,c]));
 const authored=[
+ // UA51BT/SLG-1-028: always ACTIVE on entry; its onPlay uses one shared
+ // named physical choice across HAND and OUTSIDE, without normal AP.
+ {"id":"SLG-1-028","name":"イグリット","color":"purple","energy":4,"ap":2,
+  "bp":4000,"gen":1,"trigger":"get","type":"character",
+  "textAnchor":"以ACTIVE登場","implementation":"dsl",
+  "officialTraits":["影の軍団"],"catalogueTraits":["影之軍團"],
+  "enterAlwaysActive":true,
+  "effects":{"onPlay":[{"op":"deployNamedFromZones","name":"影の兵士",
+   "zones":["hand","outside"],"line":"any","ready":false,"optional":true}]}},
+ // 12 printed copies allowed; another own shadow-army card must exist before
+ // inspecting TOP2. Printed name 水篠 旬 and exact trait 影の軍団 are OR filters.
+ {"id":"SLG-1-030","name":"影の兵士","color":"purple","energy":0,"ap":1,
+  "bp":1500,"gen":1,"trigger":"draw","type":"character","maxCopies":12,
+  "textAnchor":"同卡號牌組最多12張","implementation":"dsl",
+  "officialTraits":["影の軍団"],"catalogueTraits":["影之軍團"],
+  "effects":{"onPlay":[{"op":"inspectTopTraitOutside","count":2,
+   "trait":"影の軍団","orName":"水篠 旬",
+   "requiresOtherOwnTrait":"影の軍団","rest":"top"}]}},
+ {"id":"SLG-1-046","name":"水篠 旬","color":"green","energy":1,"ap":1,"bp":2000,"gen":1,"trigger":null,"type":"character","textAnchor":"登場時：查看牌庫頂4張","implementation":"dsl","templateEffects":{"onPlay":[{"template":"searchTopOneBottomDiscardWhere","count":4,"filters":[{"field":"name","value":"水篠 旬"},{"field":"name","value":"デイリークエスト"}],"logic":"any"}]}},
+  {"id":"SLG-1-070","name":"シーマ","color":"green","energy":0,
+   "ap":1,"bp":1000,"gen":1,"trigger":"active","type":"character",
+   "textAnchor":"登場時令另一己方DFN角色最多1張",
+   "implementation":"dsl",
+   "effects":{"onPlay":[{"op":"grantSelectionApTaxOwnOtherTrait",
+     "trait":"DFN","optional":true,"until":"nextOpponentTurn"}]},
+   "officialTraits":["DFN／第四次架南島レイド"],
+   "traitComponents":["DFN","第四次架南島レイド"],
+   "catalogueTraits":["DFN","第四次架南島Raid"]
+  },
   {"id":"SLG-1-053","name":"諸菱 賢太","color":"green","energy":3,
    "ap":1,"bp":2000,"gen":2,"trigger":"draw","type":"character",
    "textAnchor":"Impact無效。登場時若場上有己方水篠旬，抽1張。",
@@ -541,6 +570,7 @@ const authored=[
   "implementation":"dsl","effects":{},
   "passiveBonuses":[{"condition":{"kind":"ownHandCountAtLeast","turn":"own","min":5},"bp":1500}],
   "officialTraits":["DFN／第四次架南島レイド"],
+  "traitComponents":["DFN","第四次架南島レイド"],
   "catalogueTraits":["DFN","第四次架南島Raid"]
 },
 {
@@ -559,6 +589,18 @@ const authored=[
   "implementation":"dsl","effects":{},
   "passiveBonuses":[{"condition":{"kind":"ownHandCountAtLeast","turn":"own","min":5},"bp":1000,"impact":1}],
   "officialTraits":["DFN／第四次架南島レイド"],
+  "traitComponents":["DFN","第四次架南島レイド"],
+  "catalogueTraits":["DFN","第四次架南島Raid"]
+},
+{
+  "id":"SLG-1-072","name":"ミズア","color":"green","energy":3,
+  "ap":1,"bp":2000,"gen":2,"trigger":null,"type":"character",
+  "textAnchor":"登場時若己方有3張以上DFN，抽1張。",
+  "implementation":"dsl","templateEffects":{
+    "onPlay":[{"template":"drawIfOwnTraitCount","trait":"DFN",
+      "zone":"field","excludeSelf":false,"min":3,"count":1}]},
+  "officialTraits":["DFN／第四次架南島レイド"],
+  "traitComponents":["DFN","第四次架南島レイド"],
   "catalogueTraits":["DFN","第四次架南島Raid"]
 },
 {

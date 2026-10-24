@@ -4,6 +4,31 @@ import {MST_V2_OFFICIAL_CATALOGUE} from './sources/mst-inventory.mjs';
 import {createUniversalPack} from './pack.mjs';
 
 const PRINTED_PINS=Object.freeze({
+ "MST-1-049":{"kind":"retireFieldActivateTopTraitless",
+  "nameJa":"ルーデウス","color":"green","energy":4,"ap":1,"bp":4000,
+  "gen":1,"type":"character","traits":[],"trigger":"get",
+  "effectJa":"〖登場時〗 自分の場のフィールドを1枚退場させてもよい。そうした場合、このキャラをアクティブにし、自分の山札の上から4枚見て、特徴を持たない〔キャラカードかフィールドカード〕を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。"},
+ "MST-1-031":{"kind":"ownTurnEventImpactDiscount","nameJa":"ロキシー","color":"blue","energy":4,"ap":1,"bp":4000,"gen":1,"type":"character","traits":[],"trigger":"raid","effectJa":"〖レイド〗 〈ロキシー〉アクティブにし、フロントLに移動できる\n 〖インパクト無効〗 （このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）\n 〖自分のターン中〗 このターン中に自分がイベントカードを使用している場合、このキャラは 〖インパクト（1）〗 を得る。\n 〖登場時〗 このターン中、次に手札から使用する必要エナジーが3以下のイベントカードの消費APを-1する。"},
+ "MST-1-060":{
+  "kind":"stepFrontMainDrawDiscardFrontEnergy","nameJa":"シルフィエット",
+  "color":"green","energy":3,"ap":1,"bp":2500,"gen":2,"type":"character",
+  "traits":["ラノア魔法大学"],"trigger":"get",
+  "effectJa":"〖ステップ〗 （自分の移動フェイズにフロントLからエナジーLへ移動できる）\n 〖起動メイン〗 〖フロントLにある場合〗 〖ターン1〗 カードを1枚引き、自分の手札を1枚場外に置く。自分のフロントLの他の［特徴：ラノア魔法大学］を1枚まで選び、このターン中、「このキャラはフロントLでもエナジーを発生させる。」を与える。"
+ },
+ "MST-1-080":{
+  "kind":"eventDrawTwoFrontEnergy","nameJa":"そう、ボクはシルフィエット",
+  "color":"green","energy":3,"ap":1,"bp":0,"gen":0,"type":"event",
+  "traits":[],"trigger":"draw",
+  "effectJa":"カードを2枚引く。自分のフロントLの［特徴：ラノア魔法大学］を1枚まで選び、このターン中、「このキャラはフロントLでもエナジーを発生させる。」を与える。"
+ },
+ "MST-1-062":{"kind":"nextHandApDiscount","nameJa":"ナナホシ","color":"green","energy":3,"ap":1,"bp":2000,"gen":2,"type":"character","trigger":"color","traits":["ラノア魔法大学"],"effectJa":"〖登場時〗 以下から1つ選ぶ。\n・〈ナナホシ〉以外の自分の場のキャラを1枚手札に戻してもよい。そうした場合、このターン中、次に手札から使用する元々の発生エナジーが2以上のキャラカードの消費APを-1する。\n・カードを1枚引く。"},
+ "MST-1-059":{
+  kind:"onPlayChooseTemporaryFrontEnergy",
+  nameJa:"シルフィエット",color:"green",energy:2,ap:1,bp:3000,gen:1,
+  type:"character",traits:["ラノア魔法大学"],trigger:null,
+  effectJa:"〖登場時〗 以下から1つ選ぶ。\n・カードを1枚引き、自分の手札を1枚場外に置く。\n・自分のフロントLの他の［特徴：ラノア魔法大学］を1枚まで選び、このターン中、「このキャラはフロントLでもエナジーを発生させる。」を与える。"
+ },
+
  "MST-1-076":{
   kind:"fieldRetireOutsideTraitlessRestOrRaid",
   nameJa:"迷宮の守護者 マナタイトヒュドラ",
@@ -588,6 +613,30 @@ export function verifiedMstV2Cards(){
    implementation:['vanilla','step'].includes(pin.kind)?'vanilla':'dsl'};
   if(card.implementation==='vanilla')card.effects={};
   if(pin.kind==='step')card.step=true;
+  if(pin.kind==='retireFieldActivateTopTraitless'){
+   card.effects={onPlay:[{op:'optionalRetireThenProgram',optional:true,
+    cardType:'field',after:[
+     {op:'activeSelfIf',when:{kind:'ownRetiredThisTurn',turn:'any',cardType:'field'}},
+     {op:'searchTopUpToTwoBottom',count:4,max:1,rest:'bottom',
+      filters:[{field:'traitlessCharacterOrField',value:true}],logic:'any'}
+    ]}]};
+  }
+  if(pin.kind==='ownTurnEventImpactDiscount'){
+   card.raidName='ロキシー';
+   card.impactNull=true;
+   card.passiveBonuses=[{condition:{kind:'ownEventUsedThisTurn',turn:'own'},impact:1}];
+   card.effects={onPlay:[{op:'nextEligibleHandPlayApDiscount',
+    filter:{cardType:'event',printedRequiredEnergyAtMost:3}}]};
+  }
+  if(pin.kind==='nextHandApDiscount'){
+   card.effects={onPlay:[{op:'chooseOne',optional:false,options:[
+    {id:'bounce',label:'可選回手非七星角色，下一張原產能2以上角色減1AP',turn:'any',then:[
+     {op:'bounceOwnOtherUnderEnergy',optional:true,excludeName:'ナナホシ',after:[
+      {op:'nextEligibleHandPlayApDiscount',filter:{cardType:'character',printedGenAtLeast:2}}]}]},
+    {id:'draw',label:'抽一張牌',turn:'any',then:[{op:'draw',count:1}]}
+   ]}]};
+   card.triggerEffect={op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1};
+  }
   if(pin.kind==='onPlayRestSilenceOpponentIfFieldOutside'){
    card.raidName=pin.nameJa;
    card.templateEffects={onPlay:[{template:'restSilenceOppFrontIfOwnOutsideField',
@@ -678,8 +727,28 @@ export function verifiedMstV2Cards(){
     filters:[{field:'color',value:'green'},{field:'type',value:'field'}],logic:'all'}]};
   if(pin.kind==='onPlayDrawIfOwnEnergyAtLeast')
    card.templateEffects={onPlay:[{template:'drawIfOwnEnergyAtLeast',energy:7,count:1}]};
+  if(pin.kind==='stepFrontMainDrawDiscardFrontEnergy'){
+   card.step=true;
+   card.mainAbility={op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,
+    then:[{op:'drawDiscard',count:1},
+     {op:'grantFrontEnergyOwnOtherFrontTrait',trait:'ラノア魔法大学',
+      optional:true,until:'thisTurn'}]};
+  }
+  if(pin.kind==='eventDrawTwoFrontEnergy')
+   card.effects={onPlay:[{op:'draw',count:2},
+    {op:'grantFrontEnergyOwnOtherFrontTrait',trait:'ラノア魔法大学',
+     optional:true,until:'thisTurn'}]};
   if(pin.kind==='onPlayDraw')card.templateEffects={onPlay:[{template:'draw',count:1}]};
   if(pin.kind==='onPlayDrawDiscard')card.templateEffects={onPlay:[{template:'drawDiscardOne'}]};
+  if(pin.kind==='onPlayChooseTemporaryFrontEnergy')
+   card.effects={onPlay:[{op:'chooseOne',optional:false,options:[
+    {id:'draw',label:'Draw one, put one own hand card outside',turn:'any',
+     then:[{op:'drawDiscard',count:1}]},
+    {id:'energy',label:'One other own Ranoa FRONT produces energy this turn',turn:'any',
+     then:[{op:'grantFrontEnergyOwnOtherFrontTrait',trait:'ラノア魔法大学',
+      optional:true,until:'thisTurn'}]}
+   ]}]};
+
   if(pin.kind==='onPlayDrawDiscardLimited'){
    card.templateEffects={onPlay:[{template:'drawDiscardOne'}]};
    card.maxCopies=pin.deckLimit;
@@ -731,6 +800,13 @@ export function verifiedMstV2Entries(){
      '; pilot behavior and generic Trigger only, NOT complete FAQ acceptance. '+
      source.source,
     testFiles:Object.freeze([
+     ...(pin.kind==='nextHandApDiscount'?['tests/v2-r36-real-discount-cards.test.mjs']:[]),
+      ...(pin.kind==='ownTurnEventImpactDiscount'?['tests/v2-r38-mst031-real.test.mjs']:[]),
+     ...(pin.kind==='eventDrawTwoFrontEnergy'?['tests/v2-r37-mst080-event-front.test.mjs',
+      'tests/v2-r37-mst-front-life.test.mjs']:[]),
+     ...(pin.kind==='stepFrontMainDrawDiscardFrontEnergy'?['tests/v2-r37-mst060-main-step.test.mjs',
+      'tests/v2-r37-mst-front-life.test.mjs']:[]),
+     ...(pin.kind==='retireFieldActivateTopTraitless'?['tests/v2-r39-retire-search-real.test.mjs']:[]),
      'tests/universal-v2-mst-port.test.mjs',
      'tests/universal-v2-sao-mst-cross-title.test.mjs',
      ...(pin.kind==='ownFieldAllNamesBp'?['tests/v2-mst-003-own-names.test.mjs']:[]),
@@ -747,6 +823,7 @@ export function verifiedMstV2Entries(){
      ...(pin.kind==='onPlayTop3OwnTraitBottomDiscard'?['tests/v2-mst-055-cross-title-top.test.mjs']:[]),
      ...(pin.kind==='onPlayTop5GreenFieldBottomDiscard'?['tests/v2-cross-title-top-filter-round13.test.mjs']:[]),
      ...(pin.kind==='frontGeneratesEnergy'?['tests/v2-mst-057-front-energy.test.mjs']:[]),
+      ...(pin.kind==='onPlayChooseTemporaryFrontEnergy'?['tests/v2-r34-mst059-official.test.mjs','tests/v2-r34-front-energy-permission.test.mjs']:[]),
       ...(['onPlayRestSilenceOpponentIfFieldOutside','fieldOnPlayDrawDiscardOnRetireDraw'].includes(pin.kind)?
        ['tests/v2-mst-054-075-real-deck.test.mjs']:[]),
       ...(pin.kind==='fieldOnPlayDrawDiscardOnRetireDraw'?

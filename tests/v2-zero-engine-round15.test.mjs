@@ -211,9 +211,13 @@ test('SLG-1-062 counts five raid-trait characters including itself, and DRAW add
  many(s,0,'SLG-1-062',3,'energy',0);
  assert.equal(universalBp(slgPacks,s,s.players[0].front[0]),1500);
  const other=place(s,0,'SLG-1-069','energy',3);
- assert.equal(universalBp(slgPacks,s,s.players[0].front[0]),1500);
+ // Official 069 carries DFN／第四次架南島レイド; verified components
+ // mean it IS the fifth 第四次架南島レイド character (not a missing trait).
+ assert.equal(universalBp(slgPacks,s,s.players[0].front[0]),3000);
  s.players[0].outside.push(other);
  s.players[0].energy[3]=null;
+ assert.equal(universalBp(slgPacks,s,s.players[0].front[0]),1500,
+  'a card moved outside stops contributing to the live field count');
  place(s,0,'SLG-1-056','front',1);
  assert.equal(universalBp(slgPacks,s,s.players[0].front[0]),3000);
  const enemy=structuredClone(s);enemy.active=1;

@@ -452,8 +452,8 @@ test('full-line protected Raided target: explicit removal choice resumes origina
  assert.equal(applied.players[0].front[0].uid,newcomer.uid);
  assert.equal(applied.players[0].apCards.filter(a=>a.ready).length,ap-1);
  assert.ok(applied.players[0].removed.some(c=>c.uid===main.uid));
- assert.ok(applied.players[0].removed.some(c=>c.uid===baseCard.uid));
- assert.ok(applied.players[0].removed.some(c=>c.uid===under.uid&&c.faceDown===false));
+ assert.ok(applied.players[0].outside.some(c=>c.uid===baseCard.uid));
+ assert.ok(applied.players[0].outside.some(c=>c.uid===under.uid&&c.faceDown===false));
  assert.equal(assertUniversalMatch(packs,applied),true);
  assert.deepEqual(s,original);
 });
@@ -514,7 +514,7 @@ test('nested COLOR life trigger into protected full front line preserves its ori
  assert.equal(accepted.players[0].front[0].ready,true);
  assert.equal(accepted.players[0].deck.length,beforeDraw-1,'free COLOR onPlay draw executes after replacement');
  assert.ok(accepted.players[0].removed.some(c=>c.uid===main.uid));
- assert.ok(accepted.players[0].removed.some(c=>c.uid===under.uid));
+ assert.ok(accepted.players[0].outside.some(c=>c.uid===under.uid));
  assert.equal(assertUniversalMatch(packs,accepted),true);
  const protectedGame=dispatchUniversalAction(packs,nested,{type:'chooseLeaveReplacement',mode:'protect'},{actor:0});
  assert.equal(protectedGame.pending,null);
@@ -562,7 +562,7 @@ test('protected Raided card in a FULL ENERGY line resolves leave replacement bef
   {type:'chooseLeaveReplacement',mode:'leave'},{actor:0});
  assert.equal(accepted.players[0].energy[0].uid,newcomer.uid);
  assert.ok(accepted.players[0].removed.some(x=>x.uid===main.uid));
- assert.ok(accepted.players[0].removed.some(x=>x.uid===under.uid));
+ assert.ok(accepted.players[0].outside.some(x=>x.uid===under.uid));
  assert.equal(accepted.players[0].apCards.filter(x=>x.ready).length,ap-1);
  assert.equal(assertUniversalMatch(packs,accepted),true);
 });

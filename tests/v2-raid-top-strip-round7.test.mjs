@@ -45,6 +45,10 @@ test('official Q548-551: only top goes OUTSIDE, base stays REST, no retire/entry
  assert.equal(s.players[1].front[0].ready,false);
  assert.deepEqual(s.players[1].front[0].buffs,[]);
  assert.ok(s.players[1].outside.some(c=>c.uid===top.uid&&c.stack.length===0));
+ const baseEntry=s.zoneMoveEvents.find(x=>x.uid===base.uid&&
+  x.from==='raid-under'&&x.to==='front'&&x.reason==='raid-strip');
+ assert.ok(baseEntry,'stripped physical Raid base returns to visible FRONT');
+ assert.equal(baseEntry.owner,1);
  assert.equal(s.players[1].hand.length,hand);assert.equal(s.players[1].deck.length,decks);
  assert.deepEqual(s.turnRetireEvents,[]);
  assert.equal(universalPublicView(packs,s,0).players[1].hand,null);

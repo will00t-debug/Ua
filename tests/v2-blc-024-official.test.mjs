@@ -70,7 +70,7 @@ test('actual BLC024 alternative retires only legal BP3000 target, count1 does no
  assert.equal(assertUniversalMatch(packs,s),true);
 });
 
-test('two distinct official BLC024 paid Raid deployments cause two true retirements, live BP5000 and two separate LIFE damage',()=>{
+test('two distinct official BLC024 paid Raid deployments cause two true retirements, live BP5000 and Q73 simultaneous LIFE damage',()=>{
  let s=newUniversalMatch(packs,{decks:[deck,deck],seed:7248,first:0});
  // Reach an actual third own turn: 3 paid AP, not synthetic AP injected.
  for(let n=0;n<35&&(s.players[0].ownTurns<3||s.active!==0);n++){
@@ -125,8 +125,13 @@ test('two distinct official BLC024 paid Raid deployments cause two true retireme
  assert.equal(s.pending?.kind,'block');
  const beforeLife=s.players[1].life.length,beforeReveals=s.publicReveals.length;
  s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:null});
- for(let n=0;n<8&&s.pending?.kind==='life-trigger';n++)
-  s=dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'skip'});
+ assert.equal(s.publicReveals.length,beforeReveals+2,'Q73 reveals both LIFE at once');
+ assert.equal(s.players[1].lifeRevealed.length,2);
+ for(let n=0;n<8&&s.pending;n++){
+  const action=s.pending.kind==='life-batch-order'?legalUniversalActions(packs,s)[0]:
+   {type:'chooseTrigger',mode:'skip'};
+  s=dispatchUniversalAction(packs,s,action);
+ }
  assert.equal(s.pending,null);
  assert.equal(s.players[1].life.length,beforeLife-2);
  assert.equal(s.publicReveals.length,beforeReveals+2);

@@ -2,13 +2,14 @@ name: V2 Resumed Integration
 # pull_request re-runs on open, push, and reopen for PRs into the V2
 # integration branch. It checks out the merge ref and uses read-only
 # GITHUB_TOKEN. This file is not on main, and push is the event that runs a
-# workflow before it reaches the default branch, so cursor/* pushes also run
+# workflow before it reaches the default branch, so cursor/* and gpt/* pushes also run
 # the same jobs. No pull_request_target and no repository secrets.
 on:
   push:
     branches:
       - codex/v2-resume-20261021
       - 'cursor/**'
+      - 'gpt/**'
   pull_request:
     branches:
       - codex/v2-resume-20261021
@@ -27,6 +28,42 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Independent card certification ledger
+        run: node scripts/v2-card-certification-report.mjs
+      - name: Shared capability and unported audit
+        run: node scripts/v2-r35-unported-atom-audit.mjs
+      - name: R37 all-five-title TOP-N full-roster candidate audit
+        run: node scripts/v2-r37-top-n-candidate-report.mjs
+      - name: R40 full protection provenance candidate audit
+        run: node scripts/v2-r40-protection-candidate-report.mjs
+      - name: R41 free hand-entry and outside-recovery five-title audit
+        run: node scripts/v2-r41-special-hand-candidate-report.mjs
+      - name: R42 all five-title named free entry, TOP-N and protection rescan
+        run: node scripts/v2-r42-named-zone-candidate-report.mjs
+      - name: R43 full five-title source and paid MAIN effect inventory
+        run: node scripts/v2-r43-main-cost-unported-report.mjs
+      - name: R44 source-stamped phase-end and five-title pending official audit
+        run: node scripts/v2-r44-phase-retire-candidate-report.mjs
+      - name: R45 selection hand-discard tax and official all-title rescan
+        run: node scripts/v2-r45-selection-cost-candidate-report.mjs
+      - name: R46 official battle-win five-title rescan
+        run: node scripts/v2-r46-battle-win-candidate-report.mjs
+      - name: R47 attack-end exchange five-title rescan
+        run: node scripts/v2-r47-attack-end-swap-candidate-report.mjs
+      - name: R48 official whole-print readiness census
+        run: node scripts/v2-r48-official-readiness-report.mjs
+      - name: R49 two-card payment, printed name and FIELD full-roster rescan
+        run: node scripts/v2-r49-unported-reuse-report.mjs
+      - name: R51 five-title physical named-OUTSIDE candidate audit
+        run: node scripts/v2-r51-named-outside-candidate-report.mjs
+      - name: R52 live conditional named-OUTSIDE official complement
+        run: node scripts/v2-r52-conditional-outside-candidate-report.mjs
+      - name: R53 five-direction official-source full-roster rescan
+        run: node scripts/v2-r53-five-direction-candidate-report.mjs
+      - name: R54 live common-atom five-title physical complement
+        run: node scripts/v2-r54-five-title-candidate-report.mjs
+      - name: R55 sniper combat and battle-win five-title audit
+        run: node scripts/v2-r55-sniper-battle-candidate-report.mjs
       - name: Node 22 test suite
         run: npm test
       - name: Five-title 60-match matrix

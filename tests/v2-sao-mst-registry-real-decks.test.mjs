@@ -93,8 +93,14 @@ test('SAO official 202 printings deduplicate to 183 IDs; IDs outside the manifes
   assert.ok(SAO_OFFICIAL_CARDS.find(r=>r.id===id),'SAO source '+id);
  const registry=registeredV2TitlePack('sword-art-online');
  assert.equal(Object.keys(registry.cards).length,EXPECTED_V2_COUNTS['sword-art-online']);
- for(const id of ['SAO-2-063','SAO-2-044'])
-  assert.equal(registry.cards[id],undefined,'not yet full-effect V2 '+id);
+ // R53 whole-print green STEP+named-OUTSIDE onPlay now has its own
+ // official source pin, strict effect schema and 50-card action test.
+ assert.deepEqual(registry.cards['SAO-2-063'].effects.onPlay,
+  [{op:'drawIfOwnOutsideNamedCountAtLeast',min:2,
+   names:['ユウキ','マザーズ・ロザリオ'],count:1}]);
+ assert.equal(registry.cards['SAO-2-063'].step,true);
+ assert.equal(registry.cards['SAO-2-044'],undefined,
+  'unreviewed SAO-2-044 must stay unregistered');
 });
 test('MST all 80 official Japanese records are available separately from old placeholder master',()=>{
  assert.equal(LEGACY_MST.length,80);

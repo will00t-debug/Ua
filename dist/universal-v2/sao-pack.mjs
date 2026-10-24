@@ -2,8 +2,72 @@
 // Importing data never grants unsupported card IDs playability.
 import {SAO_OFFICIAL_CARDS} from '../sao-official-import.mjs';
 import {createUniversalPack} from './pack.mjs';
+import {SAO_Q1208_ASUNA_AURA,SAO_Q978_SELF_EVENT_TAX} from './selection-hand-tax.mjs';
 
 const PRINTED_PINS=Object.freeze({
+ "SAO-2-063":{"kind":"stepNamedOutsideOnPlayDraw",
+  "nameJa":"アスナ","color":"green","energy":3,"ap":1,"bp":3000,"gen":3,
+  "type":"character","trigger":null,"traits":["ALO"],
+  "effectJa":"【ステップ】（自分の移動フェイズにフロントLからエナジーLへ移動できる）\n【登場時】自分の場外に〈ユウキ〉と〈マザーズ・ロザリオ〉が合計2枚以上ある場合、カードを1枚引く。"},
+ "SAO-1-100":{"kind":"conditionalNamedOutsideBounceRetireEvent",
+  "nameJa":"マザーズ・ロザリオ","color":"green","energy":4,"ap":1,"bp":0,"gen":0,
+  "type":"event","trigger":"special","traits":[],
+  "effectJa":"BP5000以下の相手のフロントLのキャラを1枚選び、『手札に戻す』。自分の場外に〈ユウキ〉と〈マザーズ・ロザリオ〉が合計3枚以上ある場合、『退場させる』に代わる。"},
+ "SAO-1-071":{"kind":"ownOutsideNamedFourSixEightRaidAsuna",
+  "nameJa":"アスナ","color":"green","energy":4,"ap":1,"bp":4000,"gen":1,
+  "type":"character","trigger":"raid","traits":["ALO"],
+  "effectJa":"【レイド】〈アスナ〉アクティブにし、フロントLに移動できる\n自分の場外にある〈ユウキ〉と〈マザーズ・ロザリオ〉の合計枚数により、このキャラは以下の効果を全て得る。\n・4枚以上：【アタック時】カードを1枚まで引く。\n・6枚以上：【自分のターン中】このキャラはBP+1000と【ダメージ（2）】\n・8枚以上：このキャラはBP3000以下のキャラにブロックされない。"},
+ "SAO-1-070":{"kind":"ownOutsideNamedFourSixAsuna",
+  "nameJa":"アスナ","color":"green","energy":3,"ap":1,"bp":3500,"gen":1,
+  "type":"character","trigger":null,"traits":["ALO"],
+  "effectJa":"自分の場外にある〈ユウキ〉と〈マザーズ・ロザリオ〉の合計枚数により、このキャラは以下の効果を全て得る。\n・4枚以上：【自分のターン中】このキャラはBP+500。\n・6枚以上：【インパクト（1）】（アタックしてバトルに勝利した時、相手プレイヤーに1ダメージ）"},
+
+ "SAO-1-087":{"kind":"raidOtherOwnWinDamageMainSelectionTax",
+  "nameJa":"キリト","color":"green","energy":7,"ap":1,"bp":5000,"gen":1,
+  "type":"character","trigger":"raid","traits":["GGO"],"effectJa":"【レイド】〈キリト〉アクティブにし、フロントLに移動できる\n【インパクト（1）】（アタックしてバトルに勝利した時、相手プレイヤーに1ダメージ）\n自分の場の他のキャラがバトルに勝利した時、このキャラはこのターン中、【ダメージ（2）】を得る。\n【相手のターン中】相手はイベントカードの効果でこのキャラを選ぶ際に、追加で自身の手札を1枚場外に置かないと選べない。\n【起動メイン】【ターン1】自分の場の他のキャラを1枚選び、このターン中、BP+1000。"},
+ "SAO-2-064":{"kind":"frontNamedSelectionHandTax",
+  "nameJa":"キリト","color":"green","energy":4,"ap":1,"bp":4000,"gen":1,
+  "type":"character","trigger":"draw","traits":["ALO"],"effectJa":"【フロントLにある場合】自分の場の〈アスナ〉は「【相手のターン中】相手はキャラの効果やイベントカードの効果でこのキャラを選ぶ際に、追加で自身の手札を1枚場外に置かないと選べない。」を得る。〈キリト〉のこの効果は重複しない。"},
+  // R44 exact printed full text, no inference from a partial keyword hit.
+  "SAO-2-069":{"kind":"raidBothAttackEndRetireFreeRestAsuna",
+   "nameJa":"ユウキ","color":"green","energy":4,"ap":1,"bp":4000,"gen":1,
+   "type":"character","trigger":"raid","traits":["ALO"],"effectJa":"【レイド】〈ユウキ〉アクティブにし、フロントLに移動できる\n自分と相手のアタックフェイズ終了時、このキャラを退場させる。\n【登場時】BP4000以下の相手のフロントLのキャラを1枚まで選び、退場させる。\n【退場時】自分の手札から必要エナジーが3以下で消費APが1の緑の〈アスナ〉を1枚まで自分の場にレストで登場させる。"},
+ "SAO-2-068":{"kind":"mainRestDiscardRetireFreeActiveAsuna",
+  "nameJa":"ユウキ","color":"green","energy":2,"ap":1,"bp":2000,"gen":1,
+  "type":"character","trigger":"active","traits":["ALO"],
+  "effectJa":"【起動メイン】【レストにする】 【手札を1枚場外に置く】 【このカードを退場させる】自分の手札から必要エナジーが3以下で消費APが1の緑の〈アスナ〉を1枚まで自分の場にアクティブで登場させ、そのキャラはこのターン中、BP+1000。"},
+  // Q1207: scoped grant to actually free-ACTIVE-entered character; SPECIAL independently retires.
+  "SAO-2-060":{"kind":"outsideRecoverActiveProtected","nameJa":"smile for you",
+   "color":"purple","energy":4,"ap":1,"bp":0,"gen":0,"type":"event",
+   "trigger":"special","traits":["歌"],
+   "effectJa":"自分の場外からキャラカードを1枚まで手札に加える。自分の手札から消費APが1の紫の［特徴：SAOサバイバー］を1枚まで自分の場にアクティブで登場させる。そのキャラに次の自分のターン開始時まで、「このキャラは、相手のキャラの効果で選ばれない。」を与える。"},
+  // Q1206: protection prohibits explicit choice by ALL opponent effects;
+  // whole EVENT includes Asuna-only optional AP ACTIVE and ACTIVE LIFE.
+  "SAO-2-058":{"kind":"grantOwnFrontChoiceProtection",
+   "nameJa":"ペンダント・オブ・アニオライト",
+   "color":"purple","energy":2,"ap":1,"bp":0,"gen":0,"type":"event",
+   "trigger":"active","traits":[],
+   "effectJa":"自分のフロントLのキャラを1枚選び、次の自分のターン開始時まで、「このキャラは、相手の効果で選ばれない。」を与える。選んだキャラが〈アスナ〉の場合、自分のAPカードを1枚まで選び、アクティブにする。"},
+
+  "SAO-2-056":{"kind":"retireCharacterTopProgressive","nameJa":"茅場 晶彦",
+   "color":"purple","energy":2,"ap":1,"bp":0,"gen":1,"type":"field",
+   "traits":["プログレッシブ"],"trigger":"get",
+   "effectJa":"【登場時】自分の場のキャラを1枚退場させてもよい。そうした場合、自分の山札の上から5枚見る。その中から［特徴：プログレッシブ］を2枚まで公開し手札に加える。残りを望む順で自分の山札の下に置く。"},
+  "SAO-1-056":{"kind":"onPlayChoiceTopOrHandRest","nameJa":"ユイ","color":"blue","energy":3,
+   "ap":1,"bp":2000,"gen":1,"type":"character","trigger":"draw","traits":["ALO"],
+   "effectJa":"【登場時】以下から1つを選ぶ。\n・自分の山札の上から2枚見る。その中からキャラカードかフィールドカードを1枚まで公開し手札に加え、残りを望む順で自分の山札の下に置く。\n・自分の手札から必要エナジーが2以下で消費APが1の青のキャラカードを1枚まで自分の場にレストで登場させる。"},
+ "SAO-2-074":{"kind":"nextHandApDiscount","nameJa":"トンキー","color":"green","energy":3,"ap":1,"bp":0,"gen":1,"type":"field","trigger":"active","traits":["ALO"],"effectJa":"【登場時】このターン中、次に手札から使用する元々のBPが3500の［特徴：ALO］の消費APを-1する。"},
+ "SAO-1-031":{"kind":"onPlayTopTwoBottom","nameJa":"三人の思い出",
+  "color":"yellow","energy":3,"ap":1,"bp":0,"gen":0,"type":"event",
+  "trigger":"draw","traits":[],
+  "effectJa":"自分の山札の上から5枚見る。その中から〈キリト〉か〈アリス〉か〈ユージオ〉を2枚まで公開し手札に加える。残りを望む順で自分の山札の下に置く。"},
+ "SAO-1-066":{"kind":"onPlayTopTwoBottom","nameJa":"妖精たちの国",
+  "color":"blue","energy":2,"ap":1,"bp":0,"gen":0,"type":"event",
+  "trigger":"draw","traits":[],
+  "effectJa":"自分の山札の上から4枚見る。その中から［特徴：ALO］を2枚まで公開し手札に加える。残りを望む順で自分の山札の下に置く。"},
+ "SAO-1-005":{"kind":"onPlayTopFilterBottomDiscard","nameJa":"ユージオ",
+  "color":"yellow","energy":2,"ap":1,"bp":3000,"gen":1,"type":"character",
+  "trigger":null,"traits":[],"effectJa":"【登場時】自分の山札の上から4枚見る。その中から〈キリト〉か〈アリス〉を1枚まで公開し手札に加える。残りを望む順で自分の山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。"},
  "SAO-1-034":{"kind":"lifeGatedRestRetire","nameJa":"ラディアント・ライト",
   "color":"yellow","energy":3,"ap":1,"bp":0,"gen":0,"type":"event",
   "trigger":"special","traits":[],
@@ -1293,6 +1357,79 @@ export function verifiedSaoV2Cards(){
    implementation:pin.kind==='vanilla'||pin.kind==='step'?'vanilla':'dsl'};
   if(card.implementation==='vanilla')card.effects={};
   if(pin.kind==='step')card.step=true;
+  if(pin.kind==='raidOtherOwnWinDamageMainSelectionTax'){
+   card.raidName='キリト';
+   card.printedImpact=1;
+   card.otherOwnBattleWonDamageTwo=true;
+   card.selectionHandDiscardTax={...SAO_Q978_SELF_EVENT_TAX,
+    sourceTypes:[...SAO_Q978_SELF_EVENT_TAX.sourceTypes]};
+   card.mainAbility={op:'fieldOnceBuffOther',lines:'field',
+    oncePerTurn:true,bp:1000};
+   card.effects={};
+  }
+  if(pin.kind==='frontNamedSelectionHandTax'){
+   card.selectionHandDiscardTax={...SAO_Q1208_ASUNA_AURA,
+    sourceTypes:[...SAO_Q1208_ASUNA_AURA.sourceTypes]};
+   card.effects={};
+  }
+  if(pin.kind==='stepNamedOutsideOnPlayDraw'){
+   card.step=true;
+   card.effects={onPlay:[{op:'drawIfOwnOutsideNamedCountAtLeast',min:2,
+    names:['ユウキ','マザーズ・ロザリオ'],count:1}]};
+  }
+  if(pin.kind==='conditionalNamedOutsideBounceRetireEvent'){
+   card.effects={onPlay:[{op:'conditionalBounceOrRetireByOwnOutsideNames',
+    bp:5000,min:3,names:['ユウキ','マザーズ・ロザリオ']}]};
+   card.triggerEffect={op:'retireOppFront'};
+  }
+  if(pin.kind==='ownOutsideNamedFourSixEightRaidAsuna'){
+   const names=['ユウキ','マザーズ・ロザリオ'];
+   card.raidName='アスナ';
+   card.effects={onAttack:[{op:'drawIfOwnOutsideNamedCountAtLeast',
+    min:4,count:1,names,optional:true}]};
+   card.passiveBonuses=[{condition:{
+    kind:'ownOutsideNamedCountAtLeast',turn:'own',min:6,names},
+    bp:1000,extraDamage:1}];
+   card.blockBpRestriction={relation:'atMost',bp:3000,
+    condition:{kind:'ownOutsideNamedCountAtLeast',turn:'any',min:8,names}};
+  }
+  if(pin.kind==='ownOutsideNamedFourSixAsuna'){
+   card.effects={};
+   const names=['ユウキ','マザーズ・ロザリオ'];
+   card.passiveBonuses=[
+    {condition:{kind:'ownOutsideNamedCountAtLeast',turn:'own',min:4,names},bp:500},
+    {condition:{kind:'ownOutsideNamedCountAtLeast',turn:'any',min:6,names},impact:1}
+   ];
+  }
+  if(pin.kind==='nextHandApDiscount')card.effects={onPlay:[{op:'nextEligibleHandPlayApDiscount',filter:{printedBp:3500,trait:'ALO'}}]};
+  if(pin.kind==='grantOwnFrontChoiceProtection')
+   card.effects={onPlay:[{op:'grantOwnFrontChoiceProtection',optional:false,
+    scope:'any',until:'nextOwnStart',apRecoveryOnName:'アスナ'}]};
+  if(pin.kind==='raidBothAttackEndRetireFreeRestAsuna'){
+   // Core Raid placement/LIFE uses the universal Raid entry/trigger engine.
+   card.raidName='ユウキ';
+   card.phaseEffects=['own','opponent'].map(turn=>({
+    phase:'attack',edge:'end',turn,then:[{op:'retireSourceOnPhaseEnd'}]}));
+   card.effects={
+    onPlay:[{op:'retireOppFrontOneUnderBp',bp:4000,optional:true}],
+    onRetire:[{op:'deployNamedFromZones',name:'アスナ',zones:['hand'],line:'any',
+     ready:false,optional:true,color:'green',ap:1,maxEnergy:3}]
+   };
+  }
+  if(pin.kind==='mainRestDiscardRetireFreeActiveAsuna'){
+   card.effects={};
+   card.mainAbility={op:'restDiscardRetireThen',lines:'field',discardCount:1,
+    then:[{op:'deployNamedFromZones',name:'アスナ',zones:['hand'],
+     line:'any',ready:true,optional:true,color:'green',ap:1,maxEnergy:3,grantBp:1000}]};
+  }
+  if(pin.kind==='outsideRecoverActiveProtected'){
+   card.effects={onPlay:[
+    {op:'recoverOutsideOne',filter:{field:'type',value:'character'},optional:true},
+    {op:'deployOwnHandSpecial',type:'character',color:'purple',ap:1,
+     trait:'SAOサバイバー',maxEnergy:null,ready:true,max:1,
+     protectionScope:'character'}]};
+   card.triggerEffect={op:'retireOppFront'};
+  }
   if(pin.kind==='opponentTurnBp1000'){
    card.opponentTurnBp=1000;
    card.effects={}; // Explicit DSL profile: persistent native modifier, no onPlay job
@@ -1444,8 +1581,35 @@ export function verifiedSaoV2Cards(){
    card.templateEffects={onPlay:[{template:'bounceOwnOtherUnderEnergy',energy:1}]};
   if(pin.kind==='onPlayPeekTop')
    card.templateEffects={onPlay:[{template:'peekTopOne'}]};
+  if(pin.kind==='retireCharacterTopProgressive'){
+   card.effects={onPlay:[{op:'optionalRetireThenProgram',optional:true,
+    cardType:'character',after:[{op:'searchTopUpToTwoBottom',count:5,
+     max:2,rest:'bottom',filters:[{field:'trait',value:'プログレッシブ'}],
+     logic:'any'}]}]};
+  }
+  if(pin.kind==='onPlayChoiceTopOrHandRest'){
+   card.effects={onPlay:[{op:'chooseOne',optional:false,options:[
+    {id:'topTwo',label:'查看牌庫頂 2 張並最多取得一張角色或 FIELD',
+     turn:'any',then:[{op:'searchTopUpToTwoBottom',count:2,max:1,
+      rest:'bottom',filters:[{field:'type',value:'character'},
+       {field:'type',value:'field'}],logic:'any'}]},
+    {id:'freeRest',label:'從手牌免費 REST 登場最多一張藍色角色',
+     turn:'any',then:[{op:'deployOwnHandRest',type:'character',
+      color:'blue',energy:2,ap:1,max:1}]}
+   ]}]};
+  }
+  if(pin.kind==='onPlayTopTwoBottom'){
+   const spec=id==='SAO-1-031'?
+    {count:5,filters:[{field:'name',value:'キリト'},
+     {field:'name',value:'アリス'},{field:'name',value:'ユージオ'}]}:
+    id==='SAO-1-066'?{count:4,filters:[{field:'trait',value:'ALO'}]}:null;
+   if(!spec)throw Error(id+' missing audited printed TOP-N double-pick');
+   card.templateEffects={onPlay:[{template:'searchTopUpToTwoBottom',...spec,logic:'any'}]};
+  }
   if(pin.kind==='onPlayTopFilterBottomDiscard'){
    const spec={
+    'SAO-1-005':{count:4,filters:[{field:'name',value:'キリト'},
+     {field:'name',value:'アリス'}],logic:'any'},
     'SAO-1-009':{count:3,filter:{field:'trait',value:'女神'}},
     'SAO-1-040':{count:3,filter:{field:'trait',value:'アインクラッド'}},
     'SAO-2-023':{count:3,filter:{field:'trait',value:'ALO'}},
@@ -1504,6 +1668,18 @@ export function verifiedSaoV2Entries(){
      '; pilot logic and generic Trigger only, not complete official FAQ acceptance. '+
      source.source,
     testFiles:Object.freeze([
+     ...(pin.kind==='stepNamedOutsideOnPlayDraw'?['tests/v2-r53-sao063-real-print.test.mjs']:[]),
+     ...(pin.kind==='conditionalNamedOutsideBounceRetireEvent'?['tests/v2-r52-sao100-real-event.test.mjs']:[]),
+     ...(pin.kind==='ownOutsideNamedFourSixAsuna'?['tests/v2-r52-sao070-real-passives.test.mjs']:[]),
+     ...(pin.kind==='ownOutsideNamedFourSixEightRaidAsuna'?['tests/v2-r54-sao071-real-multithreshold.test.mjs']:[]),
+     ...(pin.kind==='nextHandApDiscount'?['tests/v2-r36-real-discount-cards.test.mjs']:[]),
+     ...(pin.kind==='frontNamedSelectionHandTax'?['tests/v2-r46-sao064-full-print.test.mjs']:[]),
+     ...(pin.kind==='raidOtherOwnWinDamageMainSelectionTax'?
+      ['tests/v2-r47-sao087-official-candidate.test.mjs']:[]),
+     ...(pin.kind==='grantOwnFrontChoiceProtection'?['tests/v2-r40-sao058-full-print-probe.test.mjs']:[]),
+     ...(pin.kind==='outsideRecoverActiveProtected'?['tests/v2-r41-sao060-full-print.test.mjs']:[]),
+     ...(pin.kind==='mainRestDiscardRetireFreeActiveAsuna'?['tests/v2-r43-sao068-full-print.test.mjs']:[]),
+     ...(pin.kind==='raidBothAttackEndRetireFreeRestAsuna'?['tests/v2-r44-sao069-full-print.test.mjs']:[]),
      'tests/universal-v2-sao-port.test.mjs',
       ...(def.id==='SAO-1-034'?['tests/v2-sao-034-official.test.mjs']:[]),
      ...(def.id==='SAO-2-021'?['tests/v2-sao-021-shared-main-cost.test.mjs']:[]),
@@ -1513,7 +1689,12 @@ export function verifiedSaoV2Entries(){
      ...(pin.kind==='ownLifeAtMostFourBp500'?['tests/v2-sao-020-life-threshold-bp.test.mjs']:[]),
      ...(pin.kind==='impactNullOwnTurnHandFiveBp1000'?['tests/v2-sao-051-hand-impact-null.test.mjs']:[]),
      ...(pin.kind==='ownTurnSilicaFieldBp'?['tests/v2-sao-019-own-silica-bp.test.mjs']:[]),
-     ...(pin.kind==='onPlayTopFilterBottomDiscard'?['tests/v2-cross-title-top-filter-round13.test.mjs']:[]),
+     ...(pin.kind==='onPlayTopTwoBottom'?['tests/v2-r37-sao-two-events.test.mjs']:[]),
+      ...(pin.kind==='onPlayChoiceTopOrHandRest'?['tests/v2-r39-sao056-official.test.mjs']:[]),
+      ...(pin.kind==='retireCharacterTopProgressive'?['tests/v2-r39-retire-search-real.test.mjs']:[]),
+     ...(pin.kind==='onPlayTopFilterBottomDiscard'?
+        [def.id==='SAO-1-005'?'tests/v2-r31-sao005-official-registry.test.mjs':
+        'tests/v2-cross-title-top-filter-round13.test.mjs']:[]),
      ...(pin.kind==='readyOnFirstBlock'?['tests/v2-ready-on-block-round14.test.mjs']:[]),
      ...(pin.kind==='frontOnceBpDown'||pin.kind==='frontOnceDiscardBpDown'?['tests/v2-single-bp-target-round14.test.mjs']:[]),
      ...(pin.kind==='nameAliasDrawDiscard'||pin.kind==='nameAliasOnly'||pin.kind==='nameAliasStep'?['tests/v2-name-alias-round14.test.mjs']:[]),
