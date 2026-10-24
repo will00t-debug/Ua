@@ -1076,6 +1076,12 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-1-078","kind":"stepAttackTraitBuff","number":"UA08BT/BLC-1-078","name":"狛村 左陣","color":"green","energy":3,"ap":1,"bp":3000,"gen":2,"trigger":"active","type":"character","effect":"Step：己方移動階段可由前線移至能源線。攻擊時：可使最多 1 個己方場上具有「護廷十三隊」特徵的角色本回合 BP +500。"}
 ,
 {"id":"BLC-1-087","kind":"impactPlusTrait","number":"UA08BT/BLC-1-087","name":"平子 真子","color":"green","energy":2,"ap":1,"bp":3000,"gen":1,"trigger":"active","type":"character","effect":"登場：可使最多 1 個己方場上具有「護廷十三隊」特徵的角色本回合獲得 Impact +1；沒有 Impact 的角色則獲得 Impact 1。"}
+,
+{"id":"BLC-2-026","kind":"impactPlusPrintedAp","number":"EX07BT/BLC-2-026","name":"阿散井 恋次","color":"blue","energy":2,"ap":1,"bp":3000,"gen":1,"trigger":"draw","type":"character","effect":"登場：可使最多 1 個己方場上原始 AP 消耗 2 以上的角色，本回合獲得 Impact +1；沒有 Impact 的角色則獲得 Impact 1。"}
+,
+{"id":"BLC-2-027","kind":"frontPrintedApBpEach","number":"EX07BT/BLC-2-027","name":"阿散井 恋次","color":"blue","energy":1,"ap":1,"bp":2500,"gen":1,"trigger":"active","type":"character","effect":"己方回合中，己方前線每有 1 個原始 AP 消耗 2 以上的角色，此角色 BP +500。"}
+,
+{"id":"BLC-4-046","kind":"purpleIchigoBuff","number":"EX15BT/BLC-4-046","name":"井上 織姫","color":"purple","energy":0,"ap":1,"bp":1000,"gen":1,"trigger":"active","type":"character","effect":"登場時：最多選自己場上1個紫色《黑崎一護》，本回合BP+1500。"}
 ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1176,6 +1182,9 @@ export function checkedBleachAddonDefinition(p){
  const isPurpleShared=['millRemoveScale','payDamageRemoveFour','purpleNamesTop','purpleApBpChoice','raidApDiscountChoice','raidDrawDiscardBuff','renjiPayDeploy','topSplitEnergyDraw','emptyRaidPeek','renjiEventRetire'].includes(p.kind);
  const isChooseBuff=p.kind==='chooseBuffOrFrontDown';
  const isImpactPlus=p.kind==='impactPlusTrait';
+ const isImpactAp=p.kind==='impactPlusPrintedAp';
+ const isApEach=p.kind==='frontPrintedApBpEach';
+ const isPurpleIchigo=p.kind==='purpleIchigoBuff';
  const isOwnTurnImmune=p.kind==='ownTurnBpImmune';
  const isFrontSolo=p.kind==='aliasFrontSoloBp';
  const isOtherRetireBp=p.kind==='otherOwnRetireThisTurnBp';
@@ -1201,7 +1210,7 @@ export function checkedBleachAddonDefinition(p){
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus;
+ const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1258,6 +1267,8 @@ export function checkedBleachAddonDefinition(p){
    ...(p.id==='BLC-1-084'?{triggerEffect:{op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1}}:{})}:{}),
   ...(isPrintedApBp?{passiveBonuses:[{condition:{kind:'ownPrintedApAtLeast',turn:'any',
    zone:'front',excludeSelf:false,minAp:2},bp:1500}]}:{}),
+  ...(isApEach?{passiveBonuses:[{condition:{kind:'ownPrintedApAtLeast',turn:'own',
+   zone:'front',excludeSelf:false,minAp:2},bpEach:500}]}:{}),
   ...(isHandOutsideBp?{passiveBonuses:[{condition:{kind:'ownHandToOutsideThisTurn',turn:'any'},bp:500}]}:{}),
   ...(isHandEnergyImmune?{printedHandEnergyDiscount:1,bpDownImmune:true,
    passiveBonuses:[{condition:{kind:'oppCharacterBpAtLeast',turn:'own',zone:'front',minBp:3500},bp:1000}]}:{}),
@@ -1301,6 +1312,10 @@ export function checkedBleachAddonDefinition(p){
   ...(p.kind==='enemyBpDown500Color'?{triggerEffect:{op:'deployOutsideCharacter',color:'purple',maxEnergy:2,ap:1,frontOnly:true}}:{}),
   ...(p.kind==='drawPlayColorHand'?{triggerEffect:{op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1}}:{}),
   ...(!special?{templateEffects:abilities[p.kind]}:{effects:
+   isImpactAp?{onPlay:[{op:'grantOtherImpactThisTurn',minPrintedAp:2,amount:1,
+    optional:true,plus:true,includeSelf:true}]}:
+   isPurpleIchigo?{onPlay:[{op:'buffOwnField',filter:{field:'color',value:'purple'},
+    also:{field:'name',value:'黒崎 一護'},bp:1500,optional:true,excludeSelf:false}]}:
    isImpactPlus?{onPlay:[{op:'grantOtherImpactThisTurn',trait:'護廷十三隊',amount:1,
     optional:true,plus:true,includeSelf:true}]}:
    isChooseBuff?{onPlay:[{op:'chooseOne',optional:false,options:[

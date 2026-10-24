@@ -25,9 +25,16 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 //   [インパクト（+1）]を与える。 The parenthetical gives Impact 1 when the
 //   target has none. The sentence does not say 他の, so this character is legal.
 //   ACTIVE is the generic sentence. Generated energy alt is 緑.
+// BLC-2-026 EX07BT: [登場時]自分の場の元々の消費APが2以上のキャラを1枚まで選び、
+//   このターン中、[インパクト（+1）]を与える。 DRAW is generic. Gen alt is 青.
+//   This card's own printed AP is 1, so it is not its own target.
+// BLC-2-027 EX07BT: [自分のターン中]自分のフロントLの元々の消費APが2以上のキャラ
+//   1枚につき、このキャラはBP+500。 ACTIVE is generic. Energy-line cards do not count.
+// BLC-4-046 EX15BT: [登場時]自分の場の紫の〈黒崎 一護〉を1枚まで選び、このターン中、BP+1500。
+//   ACTIVE is generic. Required energy is 紫- (0). Traits are empty.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -38,8 +45,8 @@ function realDeck(required,color){
  return counts;
 }
 const green=realDeck(['BLC-1-080','BLC-1-091','BLC-1-078','BLC-1-070','BLC-4-062','BLC-1-087','BLC-2-067'],'green');
-const blue=realDeck(['BLC-2-041','BLC-2-031','BLC-4-036'],'blue');
-const purple=realDeck(['BLC-1-062','BLC-1-035','BLC-1-103'],'purple');
+const blue=realDeck(['BLC-2-041','BLC-2-031','BLC-4-036','BLC-2-026','BLC-2-027','BLC-4-022'],'blue');
+const purple=realDeck(['BLC-1-062','BLC-1-035','BLC-1-103','BLC-4-046','BLC-1-039'],'purple');
 const yellow=realDeck(['BLC-1-032','BLC-1-023','BLC-1-006'],'yellow');
 function take(s,p,id){
  for(const zone of ['hand','deck','life','outside','removed']){
@@ -85,12 +92,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers seven whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,443);
- assert.equal(EXPECTED_V2_COUNTS.bleach,167);
+test('C29 registers ten whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,446);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,170);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,167);
+ assert.equal(Object.keys(bleach.cards).length,170);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -420,4 +427,111 @@ test('BLC-1-087 adds one Impact to at most one own Gotei character, including it
  aiOk(packs,played);
  assert.equal(assertUniversalMatch(packs,added),true);
  assert.equal(assertUniversalMatch(packs,later),true);
+});
+
+test('BLC-2-026 adds Impact 1 only to an own character with printed AP 2 or more',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-2-026');
+ assert.equal(printed.effect,'登場：可使最多 1 個己方場上原始 AP 消耗 2 以上的角色，本回合獲得 Impact +1；沒有 Impact 的角色則獲得 Impact 1。');
+ assert.equal(printed.traits,'護廷十三隊');
+ const card=bleach.cards['BLC-2-026'];
+ assert.equal(card.trigger,'draw');
+ assert.equal(card.triggerEffect,null);
+ assert.equal(card.ap,1);
+ assert.deepEqual(card.effects.onPlay,[{op:'grantOtherImpactThisTurn',minPrintedAp:2,
+  amount:1,optional:true,plus:true,includeSelf:true}]);
+ const {packs,s}=main(blue,29026);
+ put(s,0,'BLC-2-027','energy',0);
+ const heavy=put(s,0,'BLC-4-022','energy',1);
+ const light=put(s,0,'BLC-2-031','front',0);
+ const foe=put(s,1,'BLC-4-022','front',0);
+ const self=take(s,0,'BLC-2-026');
+ s.players[0].hand.push(self);
+ const play=legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===self.uid&&a.line==='front'&&a.slot===1);
+ assert.ok(play);
+ const played=dispatchUniversalAction(packs,s,play);
+ assert.equal(played.pending.kind,'effect-grant-impact');
+ assert.equal(played.pending.minPrintedAp,2);
+ assert.equal(played.pending.plus,true);
+ const choices=legalUniversalActions(packs,played);
+ const chosen=uid=>choices.some(a=>a.type==='chooseGrantImpact'&&a.uid===uid);
+ assert.equal(chosen(null),true);
+ assert.equal(chosen(heavy.uid),true);
+ assert.equal(chosen(self.uid),false);
+ assert.equal(chosen(light.uid),false);
+ assert.equal(chosen(foe.uid),false);
+ const skipped=dispatchUniversalAction(packs,played,{type:'chooseGrantImpact',uid:null});
+ assert.equal(universalImpact(packs,skipped,live(skipped,0,heavy.uid)),0);
+ const granted=dispatchUniversalAction(packs,played,{type:'chooseGrantImpact',uid:heavy.uid});
+ assert.equal(universalImpact(packs,granted,live(granted,0,heavy.uid)),1);
+ assert.equal(universalImpact(packs,granted,live(granted,0,self.uid)),0);
+ aiOk(packs,played);
+ assert.equal(assertUniversalMatch(packs,granted),true);
+});
+
+test('BLC-2-027 gains 500 on its own turn for each own front character with printed AP 2 or more',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-2-027');
+ assert.equal(printed.effect,'己方回合中，己方前線每有 1 個原始 AP 消耗 2 以上的角色，此角色 BP +500。');
+ const card=bleach.cards['BLC-2-027'];
+ assert.equal(card.trigger,'active');
+ assert.equal(card.triggerEffect,null);
+ assert.deepEqual(card.passiveBonuses,[{condition:{kind:'ownPrintedApAtLeast',turn:'own',
+  zone:'front',excludeSelf:false,minAp:2},bpEach:500}]);
+ const {packs,s}=main(blue,29027);
+ const self=put(s,0,'BLC-2-027','front',0);
+ const heavy=put(s,0,'BLC-4-022','front',1);
+ put(s,0,'BLC-2-031','front',2);
+ assert.equal(universalBp(packs,s,self),3000);
+ const moved=live(s,0,heavy.uid);
+ s.players[0].front[1]=null;
+ s.players[0].energy[0]=moved;
+ assert.equal(universalBp(packs,s,self),2500);
+ s.players[0].energy[0]=null;
+ s.players[0].front[1]=moved;
+ const foe=put(s,1,'BLC-4-022','front',0);
+ assert.equal(universalBp(packs,s,self),3000);
+ assert.equal(foe.cardId,'BLC-4-022');
+ let later=s;
+ for(let n=0;n<16&&later.active===0;n++)
+  later=dispatchUniversalAction(packs,later,{type:'next'});
+ assert.equal(later.active,1);
+ assert.equal(universalBp(packs,later,live(later,0,self.uid)),2500);
+ assert.equal(assertUniversalMatch(packs,later),true);
+});
+
+test('BLC-4-046 may buff one own purple Ichigo',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-4-046');
+ assert.equal(printed.effect,'登場時：最多選自己場上1個紫色《黑崎一護》，本回合BP+1500。');
+ assert.deepEqual(printed.traits,[]);
+ const card=bleach.cards['BLC-4-046'];
+ assert.equal(card.energy,0);
+ assert.equal(card.trigger,'active');
+ assert.equal(card.triggerEffect,null);
+ assert.deepEqual(card.traits,[]);
+ assert.deepEqual(card.effects.onPlay,[{op:'buffOwnField',filter:{field:'color',value:'purple'},
+  also:{field:'name',value:'黒崎 一護'},bp:1500,optional:true,excludeSelf:false}]);
+ const {packs,s}=main(purple,29046);
+ const self=take(s,0,'BLC-4-046');
+ s.players[0].hand.push(self);
+ const front=put(s,0,'BLC-1-103','front',0);
+ const energy=put(s,0,'BLC-1-039','energy',0);
+ const other=put(s,0,'BLC-1-035','front',1);
+ const play=legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===self.uid&&a.line==='front'&&a.slot===2);
+ assert.ok(play);
+ const played=dispatchUniversalAction(packs,s,play);
+ assert.equal(played.pending.kind,'effect-buff-own');
+ assert.equal(played.pending.optional,true);
+ const choices=legalUniversalActions(packs,played);
+ const chosen=uid=>choices.some(a=>a.type==='chooseOwnBuff'&&a.uid===uid);
+ assert.equal(chosen(null),true);
+ assert.equal(chosen(front.uid),true);
+ assert.equal(chosen(energy.uid),true);
+ assert.equal(chosen(other.uid),false);
+ assert.equal(chosen(self.uid),false);
+ const skipped=dispatchUniversalAction(packs,played,{type:'chooseOwnBuff',uid:null});
+ assert.equal(universalBp(packs,skipped,live(skipped,0,front.uid)),3000);
+ const buffed=dispatchUniversalAction(packs,played,{type:'chooseOwnBuff',uid:energy.uid});
+ assert.equal(universalBp(packs,buffed,live(buffed,0,energy.uid)),3000);
+ assert.equal(universalBp(packs,buffed,live(buffed,0,front.uid)),3000);
+ aiOk(packs,played);
+ assert.equal(assertUniversalMatch(packs,buffed),true);
 });

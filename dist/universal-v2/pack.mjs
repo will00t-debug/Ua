@@ -502,12 +502,14 @@ function verifyProgram(program,path){
    Object.keys(e).some(k=>!['op','amount'].includes(k))))
    throw Error(path+'['+i+'] invalid this-turn impact grant');
   if(e.op==='grantOtherImpactThisTurn'&&(
-   typeof e.trait!=='string'||!e.trait.trim()||e.trait.length>80||
    e.amount!==1||e.optional!==true||
    (e.plus!==undefined&&e.plus!==true)||
    (e.includeSelf!==undefined&&e.includeSelf!==true)||
+   ((e.trait!==undefined)===(e.minPrintedAp!==undefined))||
+   (e.trait!==undefined&&(typeof e.trait!=='string'||!e.trait.trim()||e.trait.length>80))||
+   (e.minPrintedAp!==undefined&&e.minPrintedAp!==2)||
    Object.keys(e).length!==4+(e.plus!==undefined?1:0)+(e.includeSelf!==undefined?1:0)||
-   Object.keys(e).some(k=>!['op','trait','amount','optional','plus','includeSelf'].includes(k))))
+   Object.keys(e).some(k=>!['op','trait','minPrintedAp','amount','optional','plus','includeSelf'].includes(k))))
    throw Error(path+'['+i+'] invalid other-character impact grant');
   if(e.op==='returnSourceToHand'&&Object.keys(e).some(k=>k!=='op'))
    throw Error(path+'['+i+'] invalid source hand return');
@@ -574,15 +576,16 @@ function verifyProgram(program,path){
    Object.keys(e).some(k=>!['op','trait','bp'].includes(k))
   ))throw Error(path+'['+i+'] invalid all-trait temporary BP');
   if(e.op==='buffOwnField'){
-   const f=e.filter;
-   if(!f||typeof f!=='object'||Array.isArray(f)||Object.keys(f).length!==2||
-    !['name','trait','color','type'].includes(f.field)||
-    typeof f.value!=='string'||!f.value.trim()||
-    (f.field==='type'&&!V2_CARD_TYPES.includes(f.value))||
+   const one=x=>x&&typeof x==='object'&&!Array.isArray(x)&&Object.keys(x).length===2&&
+    ['name','trait','color','type'].includes(x.field)&&
+    typeof x.value==='string'&&!!x.value.trim()&&x.value.length<=80&&
+    (x.field!=='type'||V2_CARD_TYPES.includes(x.value));
+   const f=e.filter,also=e.also;
+   if(!one(f)||(also!==undefined&&(!one(also)||also.field===f.field))||
     !integer(e.bp,1)||e.bp>5000||
     typeof e.optional!=='boolean'||typeof e.excludeSelf!=='boolean'||
     (e.zone!==undefined&&e.zone!=='front')||
-    Object.keys(e).some(k=>!['op','filter','bp','optional','excludeSelf','zone'].includes(k)))
+    Object.keys(e).some(k=>!['op','filter','also','bp','optional','excludeSelf','zone'].includes(k)))
     throw Error(path+'['+i+'] invalid own-field BP choice');
   }
   if(e.op==='buffOwnTrait'&&(
@@ -834,7 +837,9 @@ function validatePassiveBonuses(card){
   if(q.kind==='ownNameAbsent'&&(p.bp===undefined||p.extraEnergy!==undefined||
    p.extraDamage!==undefined||p.impact!==undefined||p.bpEach!==undefined))
    throw Error(card.id+' name-absence penalty is BP only');
-  if((q.kind==='ownRestPrintedBpAtMost'||q.kind==='oppRestCharacterCount')!==(p.bpEach!==undefined))
+  if((q.kind==='ownRestPrintedBpAtMost'||q.kind==='oppRestCharacterCount')&&p.bpEach===undefined)
+   throw Error(card.id+' per-card printed BP bonus needs bpEach');
+  if(p.bpEach!==undefined&&!['ownRestPrintedBpAtMost','oppRestCharacterCount','ownPrintedApAtLeast'].includes(q.kind))
    throw Error(card.id+' per-card printed BP bonus needs bpEach');
   if(p.extraEnergy!==undefined&&q.kind==='ownEnergyAtLeast')
    throw Error(card.id+' invalid or cyclic passive condition');

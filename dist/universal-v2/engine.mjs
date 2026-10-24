@@ -8,7 +8,7 @@ import {planSimultaneousLifeReveal} from './life-reveal-batch.mjs';
 import {selectionHandDiscardTaxPlan} from './selection-hand-tax.mjs';
 import {matchesPrintedRequiredEnergyAtMost} from './ap-discounts.mjs';
 import {cardHasName,cardHasTrait,matchesOwnDistinctTraits,matchesV2LiveCondition,
- ownRestPrintedBpCount,countOppRestCharacters,retiredThisTurn,countOwnOutsideDistinctPrintedNames,
+ ownRestPrintedBpCount,countOppRestCharacters,countOwnPrintedApAtLeast,retiredThisTurn,countOwnOutsideDistinctPrintedNames,
  countOwnOutsidePhysicalGroups} from './field-conditions.mjs';
 import {refreshFieldActive,expireContinuousStates,pruneContinuousStates,
  fieldRestrictions,validateContinuousStates,grantContinuousState,
@@ -171,6 +171,8 @@ function bp(pack,s,c){
    (suppressed?0:printed.passiveBonuses.reduce((n,p)=>{
     const delta=p.bpEach?p.bpEach*(p.condition.kind==='oppRestCharacterCount'?
     countOppRestCharacters(s,owner,p.condition,x=>card(pack,x)):
+    p.condition.kind==='ownPrintedApAtLeast'?
+    countOwnPrintedApAtLeast(s,owner,c.uid,p.condition,x=>card(pack,x)):
     ownRestPrintedBpCount(s,owner,c.uid,p.condition,x=>card(pack,x))):
     (p.bp&&matchesV2LiveCondition(s,owner,c.uid,p.condition,x=>card(pack,x),
      ()=>calcEnergy(pack,s,owner),x=>bp(pack,s,x))?p.bp:0);
@@ -1021,12 +1023,17 @@ function continueEffectQueue(pack,s){
    if(pl.life.length)s.pending={kind:'effect-life-to-hand',player:owner,
     sourceUid:job.sourceUid,choices:pl.life.map(c=>c.uid),optional:true};
   }else if(job.op==='grantOtherImpactThisTurn'){
-   const choices=field(pl).filter(c=>(job.includeSelf===true||c.uid!==job.sourceUid)&&
-    card(pack,c).type==='character'&&cardHasTrait(card(pack,c),job.trait)&&
-    Number.isInteger(c.fieldEntryStamp)).map(c=>c.uid);
+   const matches=c=>{
+    const d=card(pack,c);
+    if(d.type!=='character'||!Number.isInteger(c.fieldEntryStamp))return false;
+    return job.minPrintedAp!==undefined?d.ap>=job.minPrintedAp:cardHasTrait(d,job.trait);
+   };
+   const choices=field(pl).filter(c=>(job.includeSelf===true||c.uid!==job.sourceUid)&&matches(c)).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-grant-impact',player:owner,
-    sourceUid:job.sourceUid,choices,trait:job.trait,amount:job.amount,
-    optional:true,plus:job.plus===true,includeSelf:job.includeSelf===true};
+    sourceUid:job.sourceUid,choices,
+    ...(job.trait!==undefined?{trait:job.trait}:{}),
+    ...(job.minPrintedAp!==undefined?{minPrintedAp:job.minPrintedAp}:{}),
+    amount:job.amount,optional:true,plus:job.plus===true,includeSelf:job.includeSelf===true};
   }else if(job.op==='grantOwnNameBlockAtLeast'){
    const choices=field(pl).filter(c=>card(pack,c).type==='character'&&
     cardHasName(card(pack,c),job.name,originalEffectsDisabled(s,c))).map(c=>c.uid);
@@ -1203,9 +1210,11 @@ function continueEffectQueue(pack,s){
    const pool=job.zone==='front'?pl.front.filter(Boolean):field(pl);
    const choices=pool.filter(c=>card(pack,c).type==='character'&&
     (!job.excludeSelf||c.uid!==job.sourceUid)&&
-    matchesFilter(pack,s,c,job.filter)).map(c=>c.uid);
+    matchesFilter(pack,s,c,job.filter)&&
+    (!job.also||matchesFilter(pack,s,c,job.also))).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-buff-own',player:owner,
     sourceUid:job.sourceUid,choices,filter:job.filter,
+    ...(job.also?{also:job.also}:{}),
     bp:job.bp,optional:job.optional,excludeSelf:job.excludeSelf};
   }else if(job.op==='buffOwnTrait'){
    const choices=field(pl).filter(c=>cardHasTrait(card(pack,c),job.trait)).map(c=>c.uid);
@@ -2836,7 +2845,8 @@ function resolveChoice(s,a,pack){
   const target=field(p).find(c=>c.uid===a.uid);
   if(!target||!q.choices.includes(a.uid)||
    (target.uid===q.sourceUid&&q.excludeSelf)||
-   card(pack,target).type!=='character'||!matchesFilter(pack,s,target,q.filter))
+   card(pack,target).type!=='character'||!matchesFilter(pack,s,target,q.filter)||
+   (q.also&&!matchesFilter(pack,s,target,q.also)))
    throw Error('Illegal own field BP target');
   target.buffs??=[];target.buffs.push({bp:q.bp,untilTurn:s.turn});
   s.pending=null;continueEffectQueue(pack,s);return;
@@ -2847,10 +2857,11 @@ function resolveChoice(s,a,pack){
    s.pending=null;continueEffectQueue(pack,s);return;
   }
   const target=field(p).find(c=>c.uid===a.uid);
+  const impactPrinted=target&&card(pack,target);
   if(!target||!q.choices.includes(a.uid)||
    (target.uid===q.sourceUid&&q.includeSelf!==true)||
    !Number.isInteger(target.fieldEntryStamp)||
-   !cardHasTrait(card(pack,target),q.trait))
+   (q.minPrintedAp!==undefined?impactPrinted.ap<q.minPrintedAp:!cardHasTrait(impactPrinted,q.trait)))
    throw Error('Illegal other-character impact target');
   target.impactGranted={turn:s.turn,stamp:target.fieldEntryStamp,amount:q.amount,
    ...(q.plus===true?{plus:true}:{})};
@@ -3684,7 +3695,8 @@ function legalPending(pack,s){
   {type:'chooseGrantImpact',uid:null},
   ...q.choices.filter(uid=>field(p).some(c=>c.uid===uid&&
    (q.includeSelf===true||c.uid!==q.sourceUid)&&
-   cardHasTrait(card(pack,c),q.trait))).map(uid=>({type:'chooseGrantImpact',uid}))
+   (q.minPrintedAp!==undefined?card(pack,c).ap>=q.minPrintedAp:
+    cardHasTrait(card(pack,c),q.trait)))).map(uid=>({type:'chooseGrantImpact',uid}))
  ];
  if(q.kind==='effect-buff-trait')return [
    {type:'chooseTraitBuff',uid:null},...q.choices.map(uid=>({type:'chooseTraitBuff',uid}))
@@ -3879,6 +3891,7 @@ function eventMandatoryTargetsAvailable(pack,s,owner,d,reservedAp=d.ap,reservedH
    return pool.some(c=>card(pack,c).type==='character'&&
     (!job.excludeSelf||c.uid!==reservedHandUid)&&
     matchesFilter(pack,s,c,job.filter)&&
+    (!job.also||matchesFilter(pack,s,c,job.also))&&
     cardEffectTargetPayable(pack,s,owner,c.uid,reservedAp,null,'event',reservedHandUid));
   }
   return true;

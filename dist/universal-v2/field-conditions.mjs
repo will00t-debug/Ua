@@ -222,6 +222,22 @@ export function countRetirementsThisTurn(s,controller='any',cardType='any',exclu
   (cardType==='any'||e.cardType===cardType)&&
   (excludeUid==null||e.uid!==excludeUid)).length;
 }
+// 元々の消費AP count. Front and energy stay separate zones. This card
+// counts unless excludeSelf is set. The boolean predicate stays above.
+export function countOwnPrintedApAtLeast(s,owner,sourceUid,condition,printed){
+ if(condition.turn==='own'&&s.active!==owner)return 0;
+ if(condition.turn==='opponent'&&s.active===owner)return 0;
+ const pl=s.players[owner];
+ const zones=condition.zone==='front'?[pl.front]:
+  condition.zone==='energy'?[pl.energy]:[pl.front,pl.energy];
+ let found=0;
+ for(const zone of zones)for(const c of zone){
+  if(!c||(condition.excludeSelf&&c.uid===sourceUid))continue;
+  const d=printed(c);
+  if(d.type==='character'&&d.ap>=condition.minAp)found++;
+ }
+ return found;
+}
 // Q2030: 元々のBP is the number printed on the card, not the current total.
 // Q2070: a field has no BP, so it is not counted by a 元々のBP filter even
 // when the sentence does not say キャラ. REST is the physical ready flag.
