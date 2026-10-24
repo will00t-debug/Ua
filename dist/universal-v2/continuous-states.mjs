@@ -30,7 +30,7 @@ export function stampFieldInstance(s,c){
  if(!Number.isInteger(c.fieldEntryStamp)||c.fieldEntryStamp<1)c.fieldEntryStamp=s.nextFieldEntryStamp++;
  return c.fieldEntryStamp;
 }
-export function grantContinuousState(s,{kind,controller,sourceUid,targetUid,until=null,sourceLinked=false,program=null,optional=false,selectionScope=null}){
+export function grantContinuousState(s,{kind,controller,sourceUid,targetUid,until=null,sourceLinked=false,program=null,optional=false,selectionScope=null,releaseBeforeRefresh=false}){
  if(!['skipNextActive','cannotActive','cannotAttack','selectionApTax','frontEnergyPermission','originalEffectsDisabled','grantedOnAttack','cannotBeChosenByOppEffect'].includes(kind)||!player(controller)||
   typeof sourceUid!=='string'||typeof targetUid!=='string'||typeof sourceLinked!=='boolean')
   throw Error('Invalid continuous-state descriptor');
@@ -67,6 +67,8 @@ export function grantContinuousState(s,{kind,controller,sourceUid,targetUid,unti
  if(kind==='cannotAttack'&&(sourceLinked||until?.player!==controller||
   until?.phase!=='start'||until?.edge!=='start'))
   throw Error('Attack ban must expire on granting controller next own start');
+ if(releaseBeforeRefresh!==false&&(releaseBeforeRefresh!==true||kind!=='cannotActive'||sourceLinked))
+  throw Error('Early refresh release belongs only to a cannot-active lock');
  if(['cannotActive','cannotAttack','selectionApTax','frontEnergyPermission','originalEffectsDisabled','grantedOnAttack','cannotBeChosenByOppEffect'].includes(kind)&&(!until||!player(until.player)||
   !['start','move','main','attack'].includes(until.phase)||!['start','end'].includes(until.edge)||
   Object.keys(until).some(k=>!['player','phase','edge',...(kind==='selectionApTax'?['ownTurn']:[])].includes(k))))
@@ -76,7 +78,8 @@ export function grantContinuousState(s,{kind,controller,sourceUid,targetUid,unti
   targetUid,targetOwner:target.owner,targetStamp:stampFieldInstance(s,target.card),
   until:until?{...until}:null,consumed:false,
   ...(kind==='grantedOnAttack'?{program:program.map(p=>({...p})),optional:true}:{}),
-  ...(kind==='cannotBeChosenByOppEffect'?{selectionScope}:{})};
+  ...(kind==='cannotBeChosenByOppEffect'?{selectionScope}:{}),
+  ...(releaseBeforeRefresh===true?{releaseBeforeRefresh:true}:{})};
  s.continuousStates.push(status);return status.id;
 }
 // Losing original rules does not remove buffs granted by another effect.
@@ -97,10 +100,15 @@ export function pruneContinuousStates(s){
   return true;
  });
 }
-export function expireContinuousStates(s,{player,phase,edge}){
- s.continuousStates=s.continuousStates.filter(e=>!e.until||
-  !(e.until.player===player&&e.until.phase===phase&&e.until.edge===edge&&
-  (e.until.ownTurn===undefined||s.players[player].ownTurns>=e.until.ownTurn)));
+export function expireContinuousStates(s,{player,phase,edge,onlyReleaseBeforeRefresh=false}){
+ s.continuousStates=s.continuousStates.filter(e=>{
+  const due=!!e.until&&e.until.player===player&&e.until.phase===phase&&
+   e.until.edge===edge&&
+   (e.until.ownTurn===undefined||s.players[player].ownTurns>=e.until.ownTurn);
+  if(!due)return true;
+  if(onlyReleaseBeforeRefresh)return e.releaseBeforeRefresh!==true;
+  return false;
+ });
  pruneContinuousStates(s);
 }
 export function attemptFieldActive(s,owner,c){
@@ -122,7 +130,11 @@ export function refreshFieldActive(s,owner){
 export function effectChoiceProtected(s,selector,targetUid,sourceType){
  if(!player(selector)||typeof targetUid!=='string')return false;
  const target=fieldInstance(s,targetUid);
- if(!target||target.owner===selector)return false;
+ if(!target)return false;
+ const triggerImmune=target.card.triggerUnchosenGranted;
+ if(sourceType==='trigger'&&triggerImmune&&triggerImmune.turn===s.turn&&
+  triggerImmune.stamp===target.card.fieldEntryStamp)return true;
+ if(target.owner===selector)return false;
  return s.continuousStates.some(e=>
   e.kind==='cannotBeChosenByOppEffect'&&!e.consumed&&
   e.controller===target.owner&&e.targetOwner===target.owner&&
@@ -191,6 +203,7 @@ export function validateContinuousStates(s){
      e.program[0]?.op!=='draw'||e.program[0]?.count!==1||Object.keys(e.program[0]).length!==2||
      e.sourceLinked||!player(e.until?.player)||e.until?.phase!=='attack'||e.until?.edge!=='end'))||
    (e.kind!=='grantedOnAttack'&&(e.program!==undefined||e.optional!==undefined))||
+   (e.releaseBeforeRefresh!==undefined&&(e.kind!=='cannotActive'||e.releaseBeforeRefresh!==true||e.sourceLinked))||
    (['cannotActive','cannotAttack','selectionApTax','frontEnergyPermission','originalEffectsDisabled','grantedOnAttack','cannotBeChosenByOppEffect'].includes(e.kind)&&(!e.until||!player(e.until.player)||
     !['start','move','main','attack'].includes(e.until.phase)||!['start','end'].includes(e.until.edge)))))
   throw Error('Invalid continuous-state accounting');

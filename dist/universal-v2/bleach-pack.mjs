@@ -1008,13 +1008,71 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-1-084","kind":"otherCardTraitBp","number":"UA08BT/BLC-1-084","name":"日番谷 冬獅郎","color":"green","energy":2,"ap":1,"bp":3000,"gen":1,"trigger":"color","type":"character","effect":"己方場上有至少 6 張其他具有「護廷十三隊」特徵的卡時，此角色 BP +500。"}
 ,
 {"id":"BLC-2-068","kind":"otherCardTraitBp","number":"EX07BT/BLC-2-068","name":"檜佐木 修兵","color":"green","energy":0,"ap":1,"bp":1500,"gen":1,"trigger":"draw","type":"character","effect":"己方場上有至少 6 張其他具有「護廷十三隊」特徵的卡時，此角色 BP +1500。"}
+,
+{"id":"BLC-3-008","kind":"handEnergyBpImmune","number":"UA04NC/BLC-3-008","name":"更木 剣八","color":"green","energy":4,"ap":1,"bp":3000,"gen":2,"trigger":null,"type":"character","effect":"此卡片在手牌時，能源需求減少綠 1。\n此角色不受 BP 減少的效果影響。\n【自己的回合中】對手前線有 BP3500 以上的角色時，此角色 BP＋1000。"}
+,
+{"id":"BLC-4-070","kind":"impactNullMustBlock","number":"EX15BT/BLC-4-070","name":"更木 剣八","color":"green","energy":1,"ap":1,"bp":4000,"gen":1,"trigger":"draw","type":"character","effect":"Impact無效。此角色必須盡可能阻擋對方的攻擊；若有多個具有此強制阻擋效果且能阻擋的角色，從中選1個阻擋。"}
+,
+{"id":"BLC-2-073","kind":"retireFieldOrOutside","number":"EX07BT/BLC-2-073","name":"野晒","color":"green","energy":4,"ap":1,"bp":0,"gen":0,"trigger":"special","type":"event","effect":"使 1 個敵方前線 BP 3000 以下角色退場；己方場上有〈更木劍八〉，或己方場外有〈草鹿八千流〉時，BP 上限改為 5000。"}
+,
+{"id":"BLC-2-069","kind":"traitDiscardRecoverNamed","number":"EX07BT/BLC-2-069","name":"日番谷 冬獅郎","color":"green","energy":1,"ap":1,"bp":2500,"gen":1,"trigger":null,"type":"character","effect":"登場：己方場上有至少 6 張其他具有「護廷十三隊」特徵的卡時，可將 1 張手牌送至場外；成功時可從己方場外將最多 1 張〈日番谷冬獅郎〉加入手牌。"}
+,
+{"id":"BLC-3-001","kind":"blockHandOutsideBp","number":"UA04NC/BLC-3-001","name":"黒崎 一護","color":"blue","energy":3,"ap":1,"bp":3000,"gen":2,"trigger":"active","type":"character","effect":"【兩次阻擋】此角色在本回合第一次阻擋時，將其轉為 Active。\n【自己的回合中】本回合中自己曾將手牌放到場外時，此角色 BP＋1000。"}
+,
+{"id":"BLC-2-015","kind":"traitlessTopDiscard","number":"EX07BT/BLC-2-015","name":"浦原 喜助","color":"blue","energy":1,"ap":1,"bp":1500,"gen":1,"trigger":"draw","type":"character","effect":"登場：查看己方牌堆頂 3 張，可公開其中最多 1 張不具有特徵的角色卡並加入手牌，其餘以任意順序放至牌堆底。若有卡加入手牌，再將 1 張手牌送至場外。"}
+,
+{"id":"BLC-2-019","kind":"ichigoRaidSlash","number":"EX07BT/BLC-2-019","name":"黒崎 一護","color":"blue","energy":4,"ap":1,"bp":4000,"gen":1,"trigger":"raid","type":"character","effect":"Raid〈黑崎一護〉：轉為 ACTIVE，可移至前線。登場：可使最多 2 個敵方前線 BP 2000 以上角色本回合 BP −1500。主要階段・每回合 1 次：將 1 張卡名含「斬月」或「月牙」的手牌送至場外；成功時抽 1 張，並使此角色本回合 BP +1000，且獲得「攻擊時，可抽最多 1 張」。"}
+,
+{"id":"BLC-2-021","kind":"zangetsuBlockFloor","number":"EX07BT/BLC-2-021","name":"斬月","color":"blue","energy":0,"ap":1,"bp":1500,"gen":1,"trigger":"active","type":"character","effect":"此卡因己方場上藍色〈黑崎一護〉的效果從手牌送至場外時，可使發動該效果的〈黑崎一護〉本回合不能被 BP 3000 以下角色阻擋。"}
+,
+{"id":"BLC-4-022","kind":"orihimeEntry","number":"EX15BT/BLC-4-022","name":"井上 織姫","color":"blue","energy":4,"ap":2,"bp":4000,"gen":1,"trigger":"get","type":"character","effect":"此角色以Active登場。登場時：可將1張手牌送至場外；如此則可從場外將最多1張所需能量1以下的藍色角色加入手牌，或以Rest登場於自己場上（可以選剛丟棄的卡）。啟動・主要〔每回合1次〕：僅可在此角色登場的回合發動；選自己場上1個角色，到自己下次回合開始前賦予「不會被對方效果選擇」。"}
+,
+{"id":"BLC-4-027","kind":"ichigoImpactGrants","number":"EX15BT/BLC-4-027","name":"黒崎 一護","color":"blue","energy":3,"ap":1,"bp":2500,"gen":3,"trigger":"draw","type":"character","effect":"Impact無效。啟動・主要〔每回合1次〕：將手牌中1張卡名包含「斬月」或「月牙」的卡送至場外；如此則抽1張牌，此角色本回合BP+1500，並獲得「〔能量線〕自己攻擊階段開始時，若自己的前線有空位，將此角色移至前線」與「不會被Trigger效果選擇」。"}
+,
+{"id":"BLC-4-034","kind":"rirukaUnder","number":"EX15BT/BLC-4-034","name":"毒ヶ峰 リルカ","color":"blue","energy":0,"ap":1,"bp":1000,"gen":1,"trigger":"color","type":"character","effect":"因自己《黑崎一護》的效果將手牌送至場外時，若此角色下方沒有裏向卡片，可將Active的此角色改為Rest；如此則可將該效果送至場外的最多1張卡以裏向置於此角色下方。登場時〔能量線〕：將此角色改為Active。啟動・主要〔改為Rest，並使此卡退場〕：可將此角色下方最多1張裏向卡片加入手牌。自己可查看自己場上卡片下的裏向卡，對方不可查看；被移至下方的《其名為斬月》仍可完成原本已觸發的抽牌效果。"}
+,
+{"id":"BLC-4-036","kind":"grimmjowOutsideEntry","number":"EX15BT/BLC-4-036","name":"グリムジョー・ジャガージャック","color":"blue","energy":6,"ap":1,"bp":4000,"gen":1,"trigger":"get","type":"character","effect":"此卡因自己《黑崎一護》或《浦原喜助》的效果從手牌送至場外時，若自己有4以上藍色能量，且自己場上所有卡片皆沒有「破面」以外的特徵，可支付1 AP；如此則將此卡以Active登場。所有《葛力姆喬・賈卡傑克》的此效果合計每回合僅限1次；沒有特徵的卡片不妨礙此條件。"}
+,
+{"id":"BLC-2-046","kind":"getsugaRetire","number":"EX07BT/BLC-2-046","name":"月牙十字衝","color":"blue","energy":3,"ap":1,"bp":0,"gen":0,"trigger":"special","type":"event","effect":"使 1 個敵方前線 BP 3500 以下角色退場。此卡因己方場上藍色〈黑崎一護〉的效果從手牌送至場外時，可將 1 張手牌放至己方牌堆底；成功時使發動該效果的〈黑崎一護〉本回合獲得 2 次攻擊，首次攻擊時立即轉為 ACTIVE。"}
+,
+{"id":"BLC-2-047","kind":"zangetsuDraw","number":"EX07BT/BLC-2-047","name":"その名は斬月","color":"blue","energy":2,"ap":1,"bp":0,"gen":0,"trigger":null,"type":"event","effect":"抽 2 張。此卡因己方場上藍色〈黑崎一護〉的效果從手牌送至場外時，抽 1 張。"}
+,
+{"id":"BLC-4-060","kind":"aizenEnergyFront","number":"EX15BT/BLC-4-060","name":"藍染 惣右介","color":"green","energy":3,"ap":1,"bp":4000,"gen":3,"trigger":"get","type":"character","effect":"此卡不能在前線登場，也不能由自己的效果以外的方式移至前線。登場時：最多選自己場上1個《藍染惣右介》以外的角色，移至另一條線；目的線已滿時，先選該線1張卡除外。啟動・主要〔能量線〕：將自己前線2個Active角色改為Rest，如此則將此角色移至前線。攻擊時：抽1張牌。"}
+,
+{"id":"BLC-2-067","kind":"raidBaseLeaveDamage","number":"EX07BT/BLC-2-067","name":"更木 剣八","color":"green","energy":4,"ap":1,"bp":4000,"gen":1,"trigger":"raid","type":"character","effect":"Raid〈更木劍八〉：轉為 ACTIVE，可移至前線。不受降低 BP 的效果影響。Impact 1。若 Raid 基底的需求能源為 4 以上，再獲得以下兩項效果：①因敵方效果或戰鬥將離場時，可改為將 1 張己方手牌送至場外；成功時將此角色 Raid 狀態最上層的卡送至場外；②登場：此角色本回合 BP +1000 並獲得 Damage 2。"}
+,
+{"id":"BLC-1-085","kind":"restLockFrontUpgrade","number":"UA08BT/BLC-1-085","name":"日番谷 冬獅郎","color":"green","energy":4,"ap":1,"bp":4000,"gen":1,"trigger":"raid","type":"character","effect":"Raid〈日番谷冬獅郎〉：轉為 ACTIVE，可移至前線。登場：可選最多 1 個敵方前線角色，將其轉為 REST，且直到下一個敵方攻擊階段結束前不能轉為 ACTIVE；己方場上有至少 6 張其他具有「護廷十三隊」特徵的卡時，改為將所選角色及所有敵方能源線角色轉為 REST，並套用相同的 ACTIVE 限制。"}
+,
+{"id":"BLC-1-041","kind":"millRemoveScale","number":"UA08BT/BLC-1-041","name":"黒崎 一護","color":"purple","energy":5,"ap":1,"bp":4000,"gen":1,"trigger":"raid","type":"character","effect":"Raid〈黑崎一護〉：轉為 ACTIVE，可移至前線。登場：將己方牌堆頂 2 張送至場外，再將己方場外任意張數的卡除外；成功時可選最多 1 個敵方前線角色，本回合每除外 1 張，該角色 BP −500。"}
+,
+{"id":"BLC-1-047","kind":"payDamageRemoveFour","number":"UA08BT/BLC-1-047","name":"阿散井 恋次","color":"purple","energy":4,"ap":1,"bp":4000,"gen":1,"trigger":"raid","type":"character","effect":"主要階段・每回合 1 次：支付 1 AP，使此角色本回合獲得 Damage 2。Raid〈阿散井戀次〉：轉為 ACTIVE，可移至前線。登場：可將己方場外 4 張卡除外；成功時可使最多 1 個敵方前線角色本回合 BP −3000。"}
+,
+{"id":"BLC-4-048","kind":"purpleNamesTop","number":"EX15BT/BLC-4-048","name":"阿散井 恋次","color":"purple","energy":0,"ap":1,"bp":1500,"gen":1,"trigger":"draw","type":"character","effect":"登場時：查看牌庫頂2張，可將最多1張紫色《阿散井戀次》或《朽木露琪亞》送至場外，其餘依任意順序放回牌庫頂。"}
+,
+{"id":"BLC-4-049","kind":"purpleApBpChoice","number":"EX15BT/BLC-4-049","name":"阿散井 恋次","color":"purple","energy":2,"ap":1,"bp":2000,"gen":1,"trigger":"draw","type":"character","effect":"若本回合曾因自己的紫色卡片效果支付AP，此角色BP+2000。啟動・主要〔前線／支付1 AP／每回合1次〕：僅在自己場上有《朽木露琪亞》時可發動，選1項。①抽1張牌。②將此角色改為Active，並最多選1個對方前線角色，本回合BP−1000。"}
+,
+{"id":"BLC-4-050","kind":"raidApDiscountChoice","number":"EX15BT/BLC-4-050","name":"阿散井 恋次","color":"purple","energy":4,"ap":1,"bp":4000,"gen":1,"trigger":"raid","type":"character","effect":"若本回合曾因自己的紫色卡片效果支付AP，從手牌將此卡突襲時消費AP−1；若本回合已從手牌使用其他《阿散井戀次》且未支付AP，此減費效果無效。以其他卡片的效果使角色登場不算從手牌使用。突襲《阿散井戀次》：改為Active，可移至前線。僅在突襲狀態適用：啟動・主要〔前線／每回合1次〕，選1項。①此角色本回合獲得Impact(1)。②選1個對方前線角色，本回合BP−1000。"}
+,
+{"id":"BLC-1-053","kind":"raidDrawDiscardBuff","number":"UA08BT/BLC-1-053","name":"朽木 ルキア","color":"purple","energy":4,"ap":1,"bp":4000,"gen":1,"trigger":"raid","type":"character","effect":"Raid〈朽木露琪亞〉：轉為 ACTIVE，可移至前線。登場：抽 3 張，再將 2 張手牌送至場外。主要階段・每回合 1 次：將 1 張手牌送至場外，可使最多 1 個己方場上角色本回合 BP +500。"}
+,
+{"id":"BLC-4-054","kind":"renjiPayDeploy","number":"EX15BT/BLC-4-054","name":"朽木 ルキア","color":"purple","energy":3,"ap":1,"bp":2000,"gen":3,"trigger":"color","type":"character","effect":"登場時：若自己場上有《阿散井戀次》，可支付1 AP；如此則抽1張牌，並可從手牌將最多1張能量需求已滿足、消費AP1的《阿散井戀次》或《朽木露琪亞》以Rest登場，或進行突襲。"}
+,
+{"id":"BLC-4-082","kind":"topSplitEnergyDraw","number":"UA01DC/BLC-4-082","name":"黒崎 一護","color":"purple","energy":3,"ap":1,"bp":2500,"gen":2,"trigger":"get","type":"character","effect":"【登場時】查看自己牌庫頂 2 張，任意張依順序放回牌庫頂，其餘送場外。若本次送場外的卡中有能源需求 3 以上的卡，抽 1 張。"}
+,
+{"id":"BLC-4-083","kind":"emptyRaidPeek","number":"UA01DC/BLC-4-083","name":"朽木 ルキア","color":"purple","energy":2,"ap":1,"bp":2500,"gen":1,"trigger":null,"type":"character","effect":"己方場上沒有卡時，這張手牌的需求能源減少。被突襲時：選擇查看牌庫頂 1 張（可送場外），或使己方 1 個露琪亞本回合不會被 BP 4000 以上角色阻擋。登場時：查看牌庫頂 1 張，放回頂部或送場外。"}
+,
+{"id":"BLC-4-058","kind":"renjiEventRetire","number":"EX15BT/BLC-4-058","name":"双王蛇尾丸","color":"purple","energy":4,"ap":1,"bp":0,"gen":0,"trigger":"special","type":"event","effect":"僅在自己場上有《阿散井戀次》時可使用。選1個對方前線BP5000以下的角色使其退場；若本回合曾因自己的紫色卡片效果支付AP，可抽1張牌，如此則將1張手牌送至場外。"}
 ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
 export function checkedBleachAddonDefinition(p){
  const c=CARDS.find(x=>x.identity===p.id);
+ // UA01DC/BLC-4-082 and UA01DC/BLC-4-083 have no unionarena-tcg.com URL in
+ // the catalogue. Accept only the recorded shop page; do not invent one.
+ const recordedShopSource=p.id==='BLC-4-082'&&c?.source==='https://shopping.fullcomp.jp/products/pdsrqs97vlmo'||
+  p.id==='BLC-4-083'&&c?.source==='https://dorasuta.jp/union-arena/product?pid=709493';
  if(!c || c.identity!==p.id || ![c.number,...(c.aliases||[])].includes(p.number) ||
-    !c.source?.includes('unionarena-tcg.com/jp/cardlist/') ||
+    !(c.source?.includes('unionarena-tcg.com/jp/cardlist/')||recordedShopSource) ||
     c.nameJa!==p.name || c.color!==p.color ||
     c.energy!==p.energy || c.ap!==p.ap || c.bp!==p.bp || c.gen!==p.gen ||
     (c.trigger??null)!==(p.trigger??null) || c.type!==p.type ||
@@ -1090,6 +1148,20 @@ export function checkedBleachAddonDefinition(p){
  const traitBp={'BLC-1-084':500,'BLC-2-068':1500}[p.id];
  const isPrintedApBp=p.kind==='ownFrontPrintedApBp';
  const isHandOutsideBp=p.kind==='handOutsideThisTurnBp';
+ const isHandEnergyImmune=p.kind==='handEnergyBpImmune';
+ const isMustBlock=p.kind==='impactNullMustBlock';
+ const isRetireOr=p.kind==='retireFieldOrOutside';
+ const isTraitDiscard=p.kind==='traitDiscardRecoverNamed';
+ const isBlockHandBp=p.kind==='blockHandOutsideBp';
+ const isBlueShared=['traitlessTopDiscard','ichigoRaidSlash','zangetsuBlockFloor','orihimeEntry','ichigoImpactGrants','rirukaUnder','grimmjowOutsideEntry','getsugaRetire','zangetsuDraw'].includes(p.kind);
+ const isGreenShared=['aizenEnergyFront','raidBaseLeaveDamage','restLockFrontUpgrade'].includes(p.kind);
+ const isPurpleShared=['millRemoveScale','payDamageRemoveFour','purpleNamesTop','purpleApBpChoice','raidApDiscountChoice','raidDrawDiscardBuff','renjiPayDeploy','topSplitEnergyDraw','emptyRaidPeek','renjiEventRetire'].includes(p.kind);
+ const renjiName='阿散井 恋次',rukiaName='朽木 ルキア';
+ const slashPay={zone:'hand',field:'name',match:'containsAny',values:['斬月','月牙']};
+ const causedBy=(sourceName,sourceColor)=>({from:'hand',to:'outside',sourceName,
+  ...(sourceColor?{sourceColor}:{}),sourceOnField:true,reasons:['payment','own-effect']});
+ const grimmjowEntry={op:'payApDeployMovedActive',ap:1,optional:true,minEnergy:4,
+  energyColor:'blue',exclusiveTrait:'破面',once:'name'};
  const outsideRemove={'BLC-1-098':{count:1,cardType:'character'},
   'BLC-1-106':{count:3,cardType:'any'}}[p.id];
  const handName={'BLC-2-004':'ユーハバッハ'}[p.id];
@@ -1106,7 +1178,7 @@ export function checkedBleachAddonDefinition(p){
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp;
+ const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1164,6 +1236,40 @@ export function checkedBleachAddonDefinition(p){
   ...(isPrintedApBp?{passiveBonuses:[{condition:{kind:'ownPrintedApAtLeast',turn:'any',
    zone:'front',excludeSelf:false,minAp:2},bp:1500}]}:{}),
   ...(isHandOutsideBp?{passiveBonuses:[{condition:{kind:'ownHandToOutsideThisTurn',turn:'any'},bp:500}]}:{}),
+  ...(isHandEnergyImmune?{printedHandEnergyDiscount:1,bpDownImmune:true,
+   passiveBonuses:[{condition:{kind:'oppCharacterBpAtLeast',turn:'own',zone:'front',minBp:3500},bp:1000}]}:{}),
+  ...(isMustBlock?{impactNull:true,mustBlock:true}:{}),
+  ...(isRetireOr?{triggerEffect:{op:'retireOppFront'}}:{}),
+  ...(isBlockHandBp?{readyOnBlockCount:1,passiveBonuses:[{condition:{kind:'ownHandToOutsideThisTurn',turn:'own'},bp:1000}]}:{}),
+  ...(p.kind==='ichigoRaidSlash'?{raidName:'黒崎 一護',mainAbility:{op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,
+   then:[{op:'discardGate',optional:false,payment:slashPay,then:[{op:'draw',count:1},{op:'buffSelf',bp:1000},
+    {op:'grantOnAttack',target:'self',optional:true,until:'endOfTurn',then:[{op:'draw',count:1}]}]}]}}:{}),
+  ...(p.kind==='zangetsuBlockFloor'?{moveTriggers:[{when:causedBy('黒崎 一護','blue'),
+   then:[{op:'grantCauseBlockAtMost',bp:3000,optional:true}]}]}:{}),
+  ...(p.kind==='orihimeEntry'?{enterAlwaysActive:true,mainAbility:{op:'entryTurnProtect',oncePerTurn:true,selectionScope:'any'}}:{}),
+  ...(p.kind==='ichigoImpactGrants'?{impactNull:true,mainAbility:{op:'frontOnceProgram',frontOnly:false,oncePerTurn:true,
+   then:[{op:'discardGate',optional:false,payment:slashPay,then:[{op:'draw',count:1},{op:'buffSelf',bp:1500},
+    {op:'grantSelfEnergyMoveOnAttackStart'},{op:'grantSelfTriggerUnchosen'}]}]}}:{}),
+  ...(p.kind==='rirukaUnder'?{moveObserver:{op:'restSelfTuckMovedFaceDown',when:causedBy('黒崎 一護')},
+   mainAbility:{op:'restRetireRecoverUnder'},triggerEffect:{op:'bounceOppFrontUnderBp',bp:3500}}:{}),
+  ...(p.kind==='grimmjowOutsideEntry'?{moveTriggers:[
+   {when:causedBy('黒崎 一護'),then:[{...grimmjowEntry}]},
+   {when:causedBy('浦原 喜助'),then:[{...grimmjowEntry}]}]}:{}),
+  ...(p.kind==='getsugaRetire'?{triggerEffect:{op:'retireOppFront'},moveTriggers:[{when:causedBy('黒崎 一護','blue'),
+   then:[{op:'handBottomGrantDoubleAttack',optional:true}]}]}:{}),
+  ...(p.kind==='zangetsuDraw'?{moveTriggers:[{when:causedBy('黒崎 一護','blue'),then:[{op:'draw',count:1}]}]}:{}),
+  ...(p.kind==='aizenEnergyFront'?{frontForbidden:true,mainAbility:{op:'restTwoActiveFrontMoveSelf',line:'energy'}}:{}),
+  ...(p.kind==='raidBaseLeaveDamage'?{raidName:'更木 剣八',bpDownImmune:true,printedImpact:1,
+   raidHandLeaveReplace:{minBaseEnergy:4}}:{}),
+  ...(p.kind==='restLockFrontUpgrade'?{raidName:'日番谷 冬獅郎'}:{}),
+  ...(p.kind==='millRemoveScale'?{raidName:'黒崎 一護'}:{}),
+  ...(p.kind==='payDamageRemoveFour'?{raidName:'阿散井 恋次',mainAbility:{op:'oncePayProgram',oncePerTurn:true,frontOnly:false,raidOnly:false,payAp:1,requiresOwnName:null,then:[{op:'grantSelfAttackDamageThisTurn',amount:2}]}}:{}),
+  ...(p.kind==='purpleApBpChoice'?{passiveBonuses:[{condition:{kind:'ownEffectApPaidColor',turn:'any',color:'purple'},bp:2000}],mainAbility:{op:'oncePayProgram',oncePerTurn:true,frontOnly:true,raidOnly:false,payAp:1,requiresOwnName:rukiaName,then:[{op:'chooseOne',optional:false,options:[{id:'draw',label:'抽1張',turn:'any',then:[{op:'draw',count:1}]},{id:'active',label:'改為Active並減BP',turn:'any',then:[{op:'activeSelf'},{op:'enemyBpDown',bp:1000,optional:true}]}]}]}}:{}),
+  ...(p.kind==='raidApDiscountChoice'?{raidName:'阿散井 恋次',raidHandApDiscount:{amount:1,requiresEffectApColor:'purple',voidIfOtherZeroApHandName:true},mainAbility:{op:'oncePayProgram',oncePerTurn:true,frontOnly:true,raidOnly:true,payAp:0,requiresOwnName:null,then:[{op:'chooseOne',optional:false,options:[{id:'impact',label:'Impact 1',turn:'any',then:[{op:'grantSelfImpactThisTurn',amount:1}]},{id:'down',label:'敵方前線BP-1000',turn:'any',then:[{op:'enemyBpDown',bp:1000,optional:false}]}]}]}}:{}),
+  ...(p.kind==='raidDrawDiscardBuff'?{raidName:'朽木 ルキア',mainAbility:{op:'oncePayProgram',oncePerTurn:true,frontOnly:false,raidOnly:false,payAp:0,requiresOwnName:null,then:[{op:'discardGate',optional:false,then:[{op:'buffOwnField',filter:{field:'type',value:'character'},bp:500,optional:true,excludeSelf:false}]}]}}:{}),
+  ...(p.kind==='renjiPayDeploy'?{triggerEffect:{op:'deployOutsideCharacter',color:'purple',maxEnergy:2,ap:1,frontOnly:true}}:{}),
+  ...(p.kind==='emptyRaidPeek'?{emptyOwnFieldHandEnergyDiscount:2}:{}),
+  ...(p.kind==='renjiEventRetire'?{playRequiresOwnName:renjiName,triggerEffect:{op:'retireOppFront'}}:{}),
   ...(p.kind==='enemyBpDown500Color'?{triggerEffect:{op:'deployOutsideCharacter',color:'purple',maxEnergy:2,ap:1,frontOnly:true}}:{}),
   ...(p.kind==='drawPlayColorHand'?{triggerEffect:{op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1}}:{}),
   ...(!special?{templateEffects:abilities[p.kind]}:{effects:
@@ -1208,8 +1314,36 @@ export function checkedBleachAddonDefinition(p){
    isOutsideRemove?{onPlay:[{op:'removeOutsideThen',count:outsideRemove.count,
     optional:true,cardType:outsideRemove.cardType,zone:'outside',controller:'own',
     then:[{op:'draw',count:2}]}]}:
+   isRetireOr?{onPlay:[{op:'retireOppFrontUnderBp',bp:3000,bonusName:'更木 剣八',
+    bonusOutsideName:'草鹿 やちる',bonusBp:5000}]}:
+   isTraitDiscard?{onPlay:[{op:'discardGate',optional:true,when:{
+    kind:'ownCardTraitCount',turn:'any',min:6,zone:'field',excludeSelf:true,
+    trait:'護廷十三隊'},then:[{op:'recoverOutsideOne',optional:true,
+    filter:{field:'name',value:'日番谷 冬獅郎'}}]}]}:
    isOptionalPeek?{onPlay:[{op:'discardGate',optional:true,then:[
     {op:'peekTopOrBottom'},{op:'draw',count:1}]}]}:
+   p.kind==='traitlessTopDiscard'?{onPlay:[{op:'searchTopOneBottomDiscard',count:3,
+    filter:{field:'traitlessCharacter',value:true}}]}:
+   p.kind==='ichigoRaidSlash'?{onPlay:[{op:'enemyBpDown',bp:1500,minBp:2000,maxTargets:2,optional:true}]}:
+   p.kind==='zangetsuDraw'?{onPlay:[{op:'draw',count:2}]}:
+   p.kind==='getsugaRetire'?{onPlay:[{op:'retireOppFrontUnderBp',bp:3500}]}:
+   p.kind==='orihimeEntry'?{onPlay:[{op:'noteEntryTurn'},{op:'discardGate',optional:true,then:[
+    {op:'outsideColorEnergyHandOrRest',color:'blue',energy:1,optional:true}]}]}:
+   p.kind==='rirukaUnder'?{onPlay:[{op:'activeSelfIf',line:'energy'}]}:
+   p.kind==='aizenEnergyFront'?{onPlay:[{op:'moveOtherAcrossOrRemove',optional:true,excludeName:'藍染 惣右介'}],
+    onAttack:[{op:'draw',count:1}]}:
+   p.kind==='raidBaseLeaveDamage'?{onPlay:[{op:'raidBaseEnergyThen',minEnergy:4,then:[
+    {op:'buffSelf',bp:1000},{op:'grantSelfAttackDamageThisTurn',amount:2}]}]}:
+   p.kind==='restLockFrontUpgrade'?{onPlay:[{op:'restOppFrontLockActive',optional:true,
+    upgrade:{trait:'護廷十三隊',minOthers:6,also:'energy'}}]}:
+   p.kind==='millRemoveScale'?{onPlay:[{op:'millTop',count:2},{op:'removeAnyOutsideScale',optional:true,cardType:'any',zone:'outside',controller:'own',per:500}]}:
+   p.kind==='payDamageRemoveFour'?{onPlay:[{op:'removeOutsideThen',count:4,optional:true,cardType:'any',zone:'outside',controller:'own',then:[{op:'enemyBpDown',bp:3000,optional:true}]}]}:
+   p.kind==='purpleNamesTop'?{onPlay:[{op:'inspectTopColoredNamesOutside',count:2,rest:'top',max:1,color:'purple',names:[renjiName,rukiaName]}]}:
+   p.kind==='raidDrawDiscardBuff'?{onPlay:[{op:'drawDiscard',count:3,discardCount:2}]}:
+   p.kind==='renjiPayDeploy'?{onPlay:[{op:'optionalPayApThen',ap:1,optional:true,when:{kind:'ownNameExists',turn:'any',zone:'field',excludeSelf:false,name:renjiName},then:[{op:'draw',count:1},{op:'deployOwnHandRestOrRaid',type:'character',color:'purple',maxEnergy:30,ap:1,max:1,optional:true,names:[renjiName,rukiaName],requireAffordableEnergy:true}]}]}:
+   p.kind==='topSplitEnergyDraw'?{onPlay:[{op:'inspectTopAnyOutside',count:2,rest:'top',drawIfOutsideEnergyAtLeast:3}]}:
+   p.kind==='emptyRaidPeek'?{onPlay:[{op:'peekTopOne'}],onRaided:[{op:'chooseOne',optional:false,options:[{id:'top',label:'查看牌庫頂1張',turn:'any',then:[{op:'peekTopOne'}]},{id:'block',label:'露琪亞不被BP4000以上阻擋',turn:'any',then:[{op:'grantOwnNameBlockAtLeast',name:rukiaName,bp:4000,optional:true}]}]}]}:
+   p.kind==='renjiEventRetire'?{onPlay:[{op:'retireOppFrontUnderBp',bp:5000},{op:'drawDiscardIfEffectApPaid',color:'purple',discardCount:1}]}:
    isStripDual?{onPlay:[{op:'chooseOne',optional:false,options:[
     {id:'strip',label:'Strip opponent RAID top',turn:'any',
      then:[{op:'stripOppRaidTop',optional:true}]},

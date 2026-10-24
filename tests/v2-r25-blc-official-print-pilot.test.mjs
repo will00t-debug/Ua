@@ -48,7 +48,7 @@ function prepared(withRaid){
  assert.equal(s.phase,'main');
  return {s,raid,base};
 }
-test('official 019/047 source signatures are locked; neither is prematurely registered',()=>{
+test('official 019/047 source signatures stay locked after whole-print registration',()=>{
  assert.deepEqual([source.nameJa,source.color,source.energy,source.ap,source.bp,source.gen,source.type,source.trigger],
   ['黒崎 一護','blue',4,1,4000,1,'character','raid']);
  assert.deepEqual([event.nameJa,event.color,event.energy,event.ap,event.type,event.trigger],
@@ -56,8 +56,9 @@ test('official 019/047 source signatures are locked; neither is prematurely regi
  assert.ok(source.effect.includes('斬月')&&source.effect.includes('月牙')&&source.effect.includes('1500'));
  assert.ok(event.effect.includes('抽 2 張')&&event.effect.includes('抽 1 張'));
  assert.deepEqual(validateUniversalDeck(pack,deck),[]);
- assert.equal(registeredV2TitlePack('bleach').cards['BLC-2-019'],undefined);
- assert.equal(registeredV2TitlePack('bleach').cards['BLC-2-047'],undefined);
+ const registered=registeredV2TitlePack('bleach').cards;
+ assert.equal(registered['BLC-2-019'].raidName,'黒崎 一護');
+ assert.equal(registered['BLC-2-047'].moveTriggers[0].then[0].op,'draw');
 });
 test('official-anchored pilot: 4 blue energy and 1 AP legal Raid plus two exact eligible BP targets',()=>{
  let {s,raid,base}=prepared(true);
@@ -276,6 +277,6 @@ test('R29 source-qualified 019s pay two distinct physical 047 UIDs in order, onc
  assert.equal(s.continuousStates.filter(e=>e.kind==='grantedOnAttack'&&
   [raid.uid,other.uid].includes(e.targetUid)).length,2);
  assert.equal(assertUniversalMatch(packs,s),true);
- assert.equal(registeredV2TitlePack('bleach').cards['BLC-2-019'],undefined);
- assert.equal(registeredV2TitlePack('bleach').cards['BLC-2-047'],undefined);
+ assert.equal(registeredV2TitlePack('bleach').cards['BLC-2-019'].raidName,'黒崎 一護');
+ assert.equal(registeredV2TitlePack('bleach').cards['BLC-2-047'].effects.onPlay[0].count,2);
 });

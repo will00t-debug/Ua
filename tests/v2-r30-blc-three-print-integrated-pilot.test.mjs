@@ -75,7 +75,7 @@ function prepared(){
  assert.equal(assertUniversalMatch(packs,s),true);
  return {s,raid,event,watcher,base};
 }
-test('R30 exact three official print signatures remain intentionally unregistered',()=>{
+test('R30 exact three official print signatures are registered whole prints',()=>{
  assert.deepEqual(originals.map(x=>[x.identity,x.energy,x.ap,x.bp,x.color,x.trigger]),[
   ['BLC-2-019',4,1,4000,'blue','raid'],
   ['BLC-2-047',2,1,0,'blue',null],
@@ -84,7 +84,10 @@ test('R30 exact three official print signatures remain intentionally unregistere
  assert.ok(riruka.effect.includes('裏向'));
  assert.ok(riruka.effect.includes('退場'));
  assert.deepEqual(validateUniversalDeck(pack,deck),[]);
- for(const id of ids)assert.equal(registeredV2TitlePack('bleach').cards[id],undefined);
+ const bleach=registeredV2TitlePack('bleach');
+ assert.equal(bleach.cards['BLC-2-019'].raidName,'黒崎 一護');
+ assert.equal(bleach.cards['BLC-2-047'].effects.onPlay[0].count,2);
+ assert.equal(bleach.cards['BLC-4-034'].moveObserver.op,'restSelfTuckMovedFaceDown');
 });
 for(const firstMoved of [false,true])
  test('R30 paid real 019 Raid → full MAIN 047 → true 034 Q2315 witness → attack '+firstMoved,()=>{

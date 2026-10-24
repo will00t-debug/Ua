@@ -45,10 +45,19 @@ export function grantHandDiscount(s,owner,source,filter){
  s.nextContinuousStateId++;validateHandDiscount(s,e);s.continuousStates.push(e);
 }
 // A payment plan only; spendAp remains the single AP payment implementation.
-export function handPlayApPlan(s,owner,d){
+export function handPlayApPlan(s,owner,d,{raid=false,uid=null}={}){
  const ids=s.continuousStates.filter(e=>e.kind===DISCOUNT_KIND&&e.controller===owner&&
   !e.consumed&&e.turn===s.turn&&matchesPrintedPlayFilter(d,e.filter)).map(e=>e.id);
- return {cost:Math.max(0,d.ap-ids.length),ids};
+ // Raid-only printed AP reduction. A zero-AP hand use of another card with
+ // the same name voids it. Effect entries are not recorded as hand uses.
+ let raidCut=0;
+ const rule=d.raidHandApDiscount;
+ if(raid&&rule&&(s.effectApPaidColors?.[owner]||[]).includes(rule.requiresEffectApColor)){
+  const voided=rule.voidIfOtherZeroApHandName&&(s.handZeroApUses||[]).some(e=>
+   e.turn===s.turn&&e.owner===owner&&e.uid!==uid&&cardHasName(d,e.name));
+  if(!voided)raidCut=rule.amount;
+ }
+ return {cost:Math.max(0,d.ap-ids.length-raidCut),ids};
 }
 export function definitionGrantsDiscount(value,filter){
  if(!value||typeof value!=='object')return false;

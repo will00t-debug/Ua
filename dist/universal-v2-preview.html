@@ -55,7 +55,8 @@
    </div>
    <div class="setup-actions"><button id="start-game" type="button" class="primary">開始新對局</button>
    <span id="restart-notice" class="small" aria-live="polite"></span></div>
-   <p class="note">這是只讀取自己已授權 GitHub 專案資料的 V2 獨立測試介面。與電腦對打，不會儲存個人資料到伺服器。目前提供 BLEACH 紫／綠、天元紅、我獨自升級、刀劍神域與無職轉生等六套 50 張全真卡測試牌組，但每個系列仍有尚未移植的卡號，並未完成全卡官方 FAQ 驗收。預覽連結受到 Vercel 專案的登入權限控制。</p>
+   <div id="designated-decks" class="designated" aria-label="指定 BLEACH 牌組"></div>
+   <p class="note">這是只讀取自己已授權 GitHub 專案資料的 V2 獨立測試介面。與電腦對打，不會儲存個人資料到伺服器。目前可開局的是 BLEACH 紫／綠、天元紅、我獨自升級、刀劍神域與無職轉生等已驗證 50 張牌組。下方三副是使用者指定構築；標成不可完整對局的牌組不能開始對戰。預覽連結受到 Vercel 專案的登入權限控制。</p>
   </section>
   <main id="match-view" aria-live="off"></main>
   <footer class="foot">

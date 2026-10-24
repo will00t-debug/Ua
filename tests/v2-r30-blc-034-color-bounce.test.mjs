@@ -70,7 +70,11 @@ test('R30 official 034 print oracle and unsupported whole-card gate are explicit
   assert.ok(actual.effect.includes(text)||actual.effect.includes(
    ({'アクティブ':'Active','レスト':'Rest','退場':'退場','裏向き':'裏向'})[text]));
  assert.deepEqual(validateUniversalDeck(packs[0],deck),[]);
- assert.equal(registeredV2TitlePack('bleach').cards['BLC-4-034'],undefined);
+ const registered=registeredV2TitlePack('bleach').cards['BLC-4-034'];
+ assert.equal(registered.moveObserver.op,'restSelfTuckMovedFaceDown');
+ assert.equal(registered.effects.onPlay[0].op,'activeSelfIf');
+ assert.equal(registered.mainAbility.op,'restRetireRecoverUnder');
+ assert.equal(registered.triggerEffect.op,'bounceOppFrontUnderBp');
 });
 for(const withRaid of [false,true])for(const buffTo3500 of [false,true])
  test('R30 034 COLOR 3500 inclusive, opponent choice, return top only, layers to own outside '+withRaid+'/'+buffTo3500,()=>{

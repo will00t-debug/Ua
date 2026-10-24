@@ -3,12 +3,19 @@ import assert from 'node:assert/strict';
 import {registeredV2TitlePack} from '../dist/universal-v2/title-packs/registry.mjs';
 import {createUniversalPack} from '../dist/universal-v2/pack.mjs';
 
-// Snapshot gate. Remove it only when BOTH official cards have full-print / FAQ
-// tests and a separately reviewed explicit registration PR.
-test('BLC-2-019/047 remain deliberately unregistered until all printed clauses pass',()=>{
+test('BLC-2-019/047 are registered as whole printed programs',()=>{
  const registered=registeredV2TitlePack('bleach');
- assert.equal(registered.cards['BLC-2-019'],undefined);
- assert.equal(registered.cards['BLC-2-047'],undefined);
+ const ichigo=registered.cards['BLC-2-019'];
+ const event=registered.cards['BLC-2-047'];
+ assert.equal(ichigo.raidName,'黒崎 一護');
+ assert.equal(ichigo.mainAbility.op,'frontOnceProgram');
+ assert.equal(ichigo.mainAbility.frontOnly,true);
+ assert.equal(ichigo.effects.onPlay[0].op,'enemyBpDown');
+ assert.equal(event.effects.onPlay[0].count,2);
+ assert.equal(event.moveTriggers[0].then[0].op,'draw');
+ assert.equal(event.moveTriggers[0].then[0].count,1);
+ assert.equal(event.moveTriggers[0].when.sourceName,'黒崎 一護');
+ assert.equal(event.moveTriggers[0].when.sourceColor,'blue');
 });
 test('typed named cost must not imply an unsupported temporary granted attack program',()=>{
  const base={id:'AUDIT-BLC019',name:'黒崎 一護',type:'character',

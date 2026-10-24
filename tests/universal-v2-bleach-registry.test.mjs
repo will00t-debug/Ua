@@ -81,7 +81,9 @@ test('registry adds exact 73 official BLEACH IDs to 15 Pilots, never duplicates 
 test('every integrated card is exactly the same compiled definition as independent BLEACH pack',()=>{
  for(const id of Object.keys(registered.cards)){
   assert.deepEqual(registered.cards[id],standalone.cards[id],id+' independent/registry drift');
-  assert.ok(CARDS.some(c=>c.identity===id&&c.source?.includes('unionarena-tcg.com')));
+  assert.ok(CARDS.some(c=>c.identity===id&&(c.source?.includes('unionarena-tcg.com/jp/cardlist/')||
+   id==='BLC-4-082'&&c.source==='https://shopping.fullcomp.jp/products/pdsrqs97vlmo'||
+   id==='BLC-4-083'&&c.source==='https://dorasuta.jp/union-arena/product?pid=709493')),id);
  }
  for(const [index,p] of BLEACH_V2_ADDON_PROFILES.entries()){
   const entry=contribution.entries[index];
