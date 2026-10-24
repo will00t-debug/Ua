@@ -316,6 +316,7 @@ function matchesFilter(pack,s,physical,filter){
  if(filter.field==='traitlessCharacter')return filter.value===true&&
   printed.type==='character'&&!(printed.traits||[]).length;
  if(filter.field==='printedRequiredEnergyAtMost')return matchesPrintedRequiredEnergyAtMost(printed,filter.value);
+ if(filter.field==='printedApAtLeast')return filter.value===2&&printed.ap>=2;
  // Name filters see the alias everywhere this predicate is asked, except a
  // live field card whose original text is negated. Callers pass deck,
  // outside, or visible field cards. They do not pass buried Raid layers.

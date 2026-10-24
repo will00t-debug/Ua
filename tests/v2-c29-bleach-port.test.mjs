@@ -41,7 +41,7 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 //   same look-3 with 〈バズビー〉か〈ユーグラム・ハッシュヴァルト〉. DRAW is generic. Gen alt is 黄.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -52,7 +52,7 @@ function realDeck(required,color){
  return counts;
 }
 const green=realDeck(['BLC-1-080','BLC-1-091','BLC-1-078','BLC-1-070','BLC-4-062','BLC-1-087','BLC-2-067','BLC-3-007','BLC-4-060','BLC-4-061','BLC-2-072','BLC-1-083'],'green');
-const blue=realDeck(['BLC-2-041','BLC-2-031','BLC-4-036','BLC-2-026','BLC-2-027','BLC-4-022','BLC-4-028','BLC-3-002','BLC-2-016','BLC-2-029'],'blue');
+const blue=realDeck(['BLC-2-041','BLC-2-031','BLC-4-036','BLC-2-026','BLC-2-027','BLC-4-022','BLC-4-028','BLC-3-002','BLC-2-016','BLC-2-029','BLC-2-032'],'blue');
 const purple=realDeck(['BLC-1-062','BLC-1-035','BLC-1-103','BLC-4-046','BLC-1-039','BLC-4-052'],'purple');
 const yellow=realDeck(['BLC-1-032','BLC-1-023','BLC-1-006','BLC-4-001','BLC-2-003','BLC-1-018'],'yellow');
 function take(s,p,id){
@@ -112,12 +112,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers sixteen whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,452);
- assert.equal(EXPECTED_V2_COUNTS.bleach,176);
+test('C29 registers seventeen whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,453);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,177);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,176);
+ assert.equal(Object.keys(bleach.cards).length,177);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -808,4 +808,45 @@ test('BLC-2-072 rests a cheap green character from hand only while Hitsugaya is 
  assert.equal(arrived.ready,false);
  aiOk(packs,played);
  assert.equal(assertUniversalMatch(packs,entered),true);
+});
+
+test('BLC-2-032 reveals one printed-AP-2 card from the top five and does not discard',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-2-032');
+ assert.equal(printed.effect,'登場：查看己方牌堆頂 5 張，可公開其中最多 1 張原始 AP 消耗 2 以上的卡並加入手牌，其餘以任意順序放至牌堆底。');
+ assert.equal(printed.traits,'護廷十三隊');
+ const card=bleach.cards['BLC-2-032'];
+ assert.equal(card.energy,2);
+ assert.equal(card.trigger,null);
+ assert.equal(card.triggerEffect,null);
+ assert.deepEqual(card.effects.onPlay,[{op:'searchTopUpToTwoBottom',count:5,max:1,rest:'bottom',
+  logic:'all',filters:[{field:'printedApAtLeast',value:2}]}]);
+ const {packs,s}=main(blue,29032);
+ put(s,0,'BLC-2-026','energy',0);
+ put(s,0,'BLC-4-028','energy',1);
+ const [heavy,light,a,b,c]=setTop(s,0,['BLC-4-022','BLC-2-031','BLC-2-027','BLC-2-041','BLC-4-036']);
+ const self=take(s,0,'BLC-2-032');
+ s.players[0].hand.push(self);
+ const play=legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===self.uid&&a.line==='front');
+ assert.ok(play);
+ const played=dispatchUniversalAction(packs,s,play);
+ assert.equal(played.pending.kind,'effect-top-filter-many-choice');
+ assert.equal(played.pending.max,1);
+ const choices=legalUniversalActions(packs,played);
+ const chosen=uid=>choices.some(a=>a.type==='chooseTopFilteredMany'&&a.uid===uid);
+ assert.equal(chosen(null),true);
+ assert.equal(chosen(heavy.uid),true);
+ assert.equal(chosen(light.uid),false);
+ const skipped=orderBottom(packs,dispatchUniversalAction(packs,played,{type:'chooseTopFilteredMany',uid:null}));
+ assert.equal(skipped.pending,null);
+ assert.equal(skipped.players[0].hand.some(x=>x.uid===heavy.uid),false);
+ const taken=dispatchUniversalAction(packs,played,{type:'chooseTopFilteredMany',uid:heavy.uid});
+ assert.equal(taken.publicReveals.at(-1).cardId,'BLC-4-022');
+ assert.equal(taken.pending.kind,'effect-top-order');
+ assert.equal(taken.pending.discardAfter,undefined);
+ const done=orderBottom(packs,taken);
+ assert.equal(done.pending,null);
+ assert.equal(done.players[0].hand.some(x=>x.uid===heavy.uid),true);
+ assert.deepEqual(done.players[0].deck.slice(-4).map(x=>x.uid).sort(),[light.uid,a.uid,b.uid,c.uid].sort());
+ aiOk(packs,played);
+ assert.equal(assertUniversalMatch(packs,done),true);
 });

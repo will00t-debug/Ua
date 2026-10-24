@@ -334,9 +334,10 @@ function verifyProgram(program,path){
   }
   if(e.op==='searchTopUpToTwoBottom'){
    const valid=f=>f&&typeof f==='object'&&!Array.isArray(f)&&Object.keys(f).length===2&&
-    ['name','trait','color','type','printedRequiredEnergyAtMost','traitlessCharacterOrField'].includes(f.field)&&
+    ['name','trait','color','type','printedRequiredEnergyAtMost','printedApAtLeast','traitlessCharacterOrField'].includes(f.field)&&
     (f.field==='traitlessCharacterOrField'?f.value===true:
       f.field==='printedRequiredEnergyAtMost'?integer(f.value)&&f.value<=30:
+      f.field==='printedApAtLeast'?f.value===2:
      typeof f.value==='string'&&!!f.value.trim()&&f.value.length<=80&&
       (f.field!=='type'||V2_CARD_TYPES.includes(f.value)));
    if(!integer(e.count,1)||e.count>5||![1,2].includes(e.max)||e.rest!=='bottom'||
