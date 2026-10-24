@@ -89,10 +89,21 @@ test('hidden-zone permutations cannot affect Hard observations, rankings or dete
    const b=createUniversalAiObservation(packs,altered,legalUniversalActions(packs,altered));
    assert.deepEqual(a,b);assert.deepEqual(rankUniversalAiActions(packs,a),rankUniversalAiActions(packs,b));
   }
-  const action=chooseUniversalAiAction(packs,s,{difficulty:'hard'}),actor=s.pending?.player??s.active;
+  const diagA={},diagB={};
+  // Fixed, deliberately small node budget: do not mistake different emergency
+  // wall-clock preemptions for hidden-card influence in replay equivalence.
+  const limits={roots:2,children:1,depth:2,nodes:6,timeMs:100};
+  const action=chooseUniversalAiAction(packs,s,{difficulty:'hard',
+   tacticalLimits:limits,telemetry:diagA}),actor=s.pending?.player??s.active;
   const next=dispatchUniversalAction(packs,s,action,{actor});
   const restored=JSON.parse(JSON.stringify(s));
-  assert.deepEqual(chooseUniversalAiAction(packs,restored,{difficulty:'hard'}),action);
+  const repeated=chooseUniversalAiAction(packs,restored,{difficulty:'hard',
+   tacticalLimits:limits,telemetry:diagB});
+  if(JSON.stringify(repeated)!==JSON.stringify(action))
+   console.error('R3 REPLAY DIVERGENCE',JSON.stringify({n,phase:s.phase,
+    pending:s.pending?.kind||null,initial:diagA,repeated:diagB,
+    rootActions:legalUniversalActions(packs,s).length}));
+  assert.deepEqual(repeated,action);
   assert.deepEqual(dispatchUniversalAction(packs,restored,action,{actor}),next);
   s=next;
  }

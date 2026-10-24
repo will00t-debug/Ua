@@ -43,7 +43,9 @@ const decks=[{name:'registered-preset',counts:preset.counts,swap:null},
 const results=[],times={};
 function frozenRound1(s,legal){
  const o=round1Observation(packs,s,legal),a=round1Policy(packs,o);
- return legal.find(x=>same(x,a))||legal[0];
+ if(!legal.some(x=>same(x,a)))
+  throw Error('Frozen R1 illegal raw action: '+JSON.stringify(a));
+ return a;
 }
 for(const deck of decks)for(const variant of variants)
  for(const seed of seeds)for(const first of [0,1])for(const seat of [0,1]){
@@ -53,7 +55,9 @@ for(const deck of decks)for(const variant of variants)
    playEnergy:0,plays:0,raids:0,attacks:0,
    observedPending:[],completedZonePayments:0,
    nativeExactSteps:0,heuristicFrontiers:0,searchNodes:0,
-   tacticalFallbacks:{},hardDecisions:0,hardMs:[],error:null};
+   tacticalFallbacks:{},hardDecisions:0,hardMs:[],
+   tacticalEligible:0,tacticalUsed:0,tacticalChanged:0,
+   rawIllegal:0,legalFallbacks:0,error:null};
   const kinds=new Set();
   try{
    for(;state.status==='playing'&&rec.actions<1800;rec.actions++){
@@ -68,6 +72,11 @@ for(const deck of decks)for(const variant of variants)
      rec.searchNodes+=data.searchNodes||0;
      rec.nativeExactSteps+=data.nativeExactSteps||0;
      rec.heuristicFrontiers+=data.heuristicFrontiers||0;
+     if(data.tacticalEligible)rec.tacticalEligible++;
+     if(data.tacticalUsed)rec.tacticalUsed++;
+     if(data.tacticalChanged)rec.tacticalChanged++;
+     if(data.rawActionLegal===false)rec.rawIllegal++;
+     if(data.legalFallback)rec.legalFallbacks++;
      if(data.tacticalFallback)rec.tacticalFallbacks[data.tacticalFallback]=
       (rec.tacticalFallbacks[data.tacticalFallback]||0)+1;
      if(a?.type==='play'){rec.plays++;if(a.line==='energy')rec.playEnergy++;}
@@ -88,7 +97,11 @@ for(const deck of decks)for(const variant of variants)
    }
    assertUniversalMatch(packs,state);
    rec.finished=state.status==='finished';rec.win=rec.finished&&state.winner===seat;
-  }catch(e){rec.error=String(e.stack||e);}
+  }catch(e){rec.error=String(e.stack||e);
+   rec.failureSnapshot={status:state.status,phase:state.phase,active:state.active,
+    pending:state.pending,turn:state.turn,players:state.players,
+    legal:legalUniversalActions(packs,state)};
+  }
   rec.observedPending=[...kinds].sort();
   results.push(rec);
   const k=variant.name;times[k]??=[];
@@ -105,6 +118,13 @@ const stat=rs=>({
  exactStepExpansions:rs.reduce((n,r)=>n+r.nativeExactSteps,0),
  heuristicAttackFrontiers:rs.reduce((n,r)=>n+r.heuristicFrontiers,0),
  searchNodes:rs.reduce((n,r)=>n+r.searchNodes,0),
+ tacticalEligible:rs.reduce((n,r)=>n+r.tacticalEligible,0),
+ tacticalUsed:rs.reduce((n,r)=>n+r.tacticalUsed,0),
+ tacticalChanged:rs.reduce((n,r)=>n+r.tacticalChanged,0),
+ tacticalChangeRate:rs.reduce((n,r)=>n+r.tacticalChanged,0)/
+  (rs.reduce((n,r)=>n+r.tacticalEligible,0)||1),
+ rawIllegal:rs.reduce((n,r)=>n+r.rawIllegal,0),
+ legalFallbacks:rs.reduce((n,r)=>n+r.legalFallbacks,0),
  fallbacks:rs.reduce((o,r)=>{for(const [key,n] of Object.entries(r.tacticalFallbacks))
   o[key]=(o[key]||0)+n;return o;},{}),
  observedPending:[...new Set(rs.flatMap(r=>r.observedPending))].sort()
@@ -121,4 +141,4 @@ const report={kind:'SLG matched 50-card native V2 ablations against frozen first
 mkdirSync('audit',{recursive:true});
 writeFileSync('audit/v2-ai-round3-slg-ablation.json',JSON.stringify(report,null,2)+'\n');
 console.log(JSON.stringify({...report,records:undefined},null,2));
-if(results.some(r=>r.illegal||!r.finished||r.error))process.exitCode=1;
+if(results.some(r=>r.illegal||r.rawIllegal||r.legalFallbacks||!r.finished||r.error))process.exitCode=1;

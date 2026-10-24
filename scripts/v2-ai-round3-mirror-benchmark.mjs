@@ -18,16 +18,20 @@ const presets=createAllV2PreviewRealDecks();
 const seeds=(process.env.AI_R3_MIRROR_SEEDS||'12031,32063').split(',').map(Number);
 const opponents=['round1-hard','round2-hard','normal'];
 const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
-const records=[],latencies=[],pendingKinds=new Set();
+const records=[],latencies=[],latenciesByTitle={},pendingKinds=new Set();
 function policy(kind,packs,s,legal,telemetry){
  if(kind==='new')return chooseUniversalAiAction(packs,s,{difficulty:'hard',telemetry});
  if(kind==='round1-hard'){
   const a=policy1(packs,observation1(packs,s,legal));
-  return legal.find(x=>same(x,a))||legal[0];
+  telemetry.rawPolicyAction=a;
+  if(!legal.some(x=>same(x,a)))throw Error('Frozen R1 illegal raw action: '+JSON.stringify(a));
+  return a;
  }
  if(kind==='round2-hard'){
   const a=policy2(packs,createUniversalAiObservation(packs,s,legal));
-  return legal.find(x=>same(x,a))||legal[0];
+  telemetry.rawPolicyAction=a;
+  if(!legal.some(x=>same(x,a)))throw Error('Frozen R2 illegal raw action: '+JSON.stringify(a));
+  return a;
  }
  return chooseUniversalAiAction(packs,s,{difficulty:'normal'});
 }
@@ -40,17 +44,29 @@ for(const title of names){
   for(const first of [0,1])for(const seed of seeds){
    let state=newUniversalMatch(packs,{decks:[d.counts,d.counts],first,seed});
    const rec={title,opponent,hardSeat,first,seed,steps:0,illegal:0,finished:false,
-    hardWin:false,searchNodes:0,exactExpansions:0,fallbacks:0,error:null};
+    hardWin:false,searchNodes:0,exactExpansions:0,fallbacks:0,
+    eligibleMain:0,usedNative:0,changedFromHeuristic:0,rawIllegal:0,legalFallbacks:0,
+    failureReasons:{},error:null};
    try{
     for(;state.status==='playing'&&rec.steps<1800;rec.steps++){
      const actor=state.pending?.player??state.active,legal=legalUniversalActions(packs,state);
      const kind=actor===hardSeat?'new':opponent,t=performance.now(),telemetry={};
      const action=policy(kind,packs,state,legal,telemetry);
      if(actor===hardSeat){
-      latencies.push(performance.now()-t);
+      const ms=performance.now()-t;
+      latencies.push(ms);(latenciesByTitle[title]??=[]).push(ms);
       rec.searchNodes+=telemetry.searchNodes||0;
       rec.exactExpansions+=telemetry.nativeExactSteps||0;
-      if(telemetry.tacticalFallback)rec.fallbacks++;
+      if(telemetry.tacticalEligible)rec.eligibleMain++;
+      if(telemetry.tacticalUsed)rec.usedNative++;
+      if(telemetry.tacticalChanged)rec.changedFromHeuristic++;
+      if(telemetry.legalFallback)rec.legalFallbacks++;
+      if(telemetry.rawActionLegal===false)rec.rawIllegal++;
+      if(telemetry.tacticalFallback){
+       rec.fallbacks++;
+       const k=telemetry.tacticalFallback;
+       rec.failureReasons[k]=(rec.failureReasons[k]||0)+1;
+      }
      }
      if(!action||!legal.some(x=>same(x,action))){rec.illegal++;throw Error('Non-native action '+kind);}
      if(state.pending)pendingKinds.add(state.pending.kind);
@@ -59,7 +75,12 @@ for(const title of names){
     }
     assertUniversalMatch(packs,state);rec.finished=state.status==='finished';
     rec.hardWin=rec.finished&&state.winner===hardSeat;
-   }catch(e){rec.error=String(e.stack||e);}
+   }catch(e){
+    rec.error=String(e.stack||e);
+    rec.failureSnapshot={status:state.status,phase:state.phase,active:state.active,
+     pending:state.pending,turn:state.turn,players:state.players,
+     legal:legalUniversalActions(packs,state)};
+   }
    records.push(rec);
   }
 }
@@ -70,10 +91,25 @@ const stat=rs=>({
  unfinished:rs.filter(x=>!x.finished).length,
  meanSearchNodes:rs.reduce((n,x)=>n+x.searchNodes,0)/(rs.length||1),
  exactExpansions:rs.reduce((n,x)=>n+x.exactExpansions,0),
- fallbackCount:rs.reduce((n,x)=>n+x.fallbacks,0)
+ fallbackCount:rs.reduce((n,x)=>n+x.fallbacks,0),
+ eligibleMain:rs.reduce((n,x)=>n+x.eligibleMain,0),
+ usedNative:rs.reduce((n,x)=>n+x.usedNative,0),
+ changedFromHeuristic:rs.reduce((n,x)=>n+x.changedFromHeuristic,0),
+ searchChangeRateAmongEligible:rs.reduce((n,x)=>n+x.changedFromHeuristic,0)/
+  (rs.reduce((n,x)=>n+x.eligibleMain,0)||1),
+ rawIllegal:rs.reduce((n,x)=>n+x.rawIllegal,0),
+ legalFallbacks:rs.reduce((n,x)=>n+x.legalFallbacks,0),
+ failureReasons:rs.reduce((out,r)=>{
+  for(const [key,n] of Object.entries(r.failureReasons))out[key]=(out[key]||0)+n;
+  return out;
+ },{})
 });
 latencies.sort((a,b)=>a-b);
-const pct=p=>latencies[Math.min(latencies.length-1,Math.floor(latencies.length*p))]||0;
+const pct=(xs,p)=>xs[Math.min(xs.length-1,Math.floor(xs.length*p))]||0;
+const timing=xs=>({decisions:xs.length,
+ meanMs:xs.reduce((n,x)=>n+x,0)/(xs.length||1),
+ p95Ms:pct(xs,.95),p99Ms:pct(xs,.99),maxMs:xs.at(-1)||0});
+for(const xs of Object.values(latenciesByTitle))xs.sort((a,b)=>a-b);
 const summary={
  explanation:'Round 3 native reducer hard vs immutable Round 1 and Round 2 policies and Normal, on identical integrated V2 card/engine builds; two previously unused seeds.',
  seeds,opponents,
@@ -82,11 +118,11 @@ const summary={
  byTitle:Object.fromEntries(names.map(x=>[x,Object.fromEntries(opponents.map(op=>[op,stat(records.filter(r=>r.title===x&&r.opponent===op))]))])),
  initiative:Object.fromEntries(['first','second'].map(x=>[x,stat(records.filter(r=>(r.hardSeat===r.first?'first':'second')===x))])),
  observedPending:[...pendingKinds].sort(),
- timing:{decisions:latencies.length,meanMs:latencies.reduce((n,x)=>n+x,0)/(latencies.length||1),
-  p95Ms:pct(.95),p99Ms:pct(.99),maxMs:latencies.at(-1)||0},
+ timing:timing(latencies),
+ timingByTitle:Object.fromEntries(names.map(n=>[n,timing(latenciesByTitle[n]||[])])),
  records
 };
 mkdirSync('audit',{recursive:true});
 writeFileSync('audit/v2-ai-round3-mirror.json',JSON.stringify(summary,null,2)+'\n');
 console.log(JSON.stringify({...summary,records:undefined},null,2));
-if(records.some(r=>r.illegal||!r.finished||r.error))process.exitCode=1;
+if(records.some(r=>r.illegal||r.rawIllegal||r.legalFallbacks||!r.finished||r.error))process.exitCode=1;
