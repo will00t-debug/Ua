@@ -106,14 +106,55 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   // 場 is the opponent's front and energy. A REST character is type
   // character with the live ready flag false. Printed BP, hand, deck,
   // outside, and a rested field are not this check.
+  return countOppRestCharacters(s,owner,condition,printed)>0;
+ }
+ if(condition.kind==='oppCharacterCurrentBpCount'){
+  // 相手の場の BP is the live total, read when the bonus is calculated.
+  // A field has no BP. The count is characters, not every card.
+  if(typeof cardBp!=='function')throw Error('Opponent BP count needs a live BP reader');
   const foe=s.players[1-owner];
   const areas=condition.zone==='front'?[foe.front]:
    condition.zone==='energy'?[foe.energy]:[foe.front,foe.energy];
+  let found=0;
   for(const area of areas)for(const c of area){
-   if(!c||c.ready||printed(c).type!=='character')continue;
-   return true;
+   if(!c||printed(c).type!=='character')continue;
+   if(cardBp(c)>=condition.minBp)found++;
+  }
+  return found>=condition.min;
+ }
+ if(condition.kind==='ownPrintedApAtLeast'){
+  // 元々の消費AP is the printed AP. Q2319. Energy-line cards are a
+  // different zone, and a field is not a character.
+  const pl=s.players[owner];
+  const zones=condition.zone==='front'?[pl.front]:
+   condition.zone==='energy'?[pl.energy]:[pl.front,pl.energy];
+  for(const zone of zones)for(const c of zone){
+   if(!c||(condition.excludeSelf&&c.uid===sourceUid))continue;
+   const d=printed(c);
+   if(d.type==='character'&&d.ap>=condition.minAp)return true;
   }
   return false;
+ }
+ if(condition.kind==='ownHandToOutsideThisTurn'){
+  // 自分の手札を場外に置いている: the owner placed that hand card.
+  // An event play is a rule move. A payment or own effect also counts.
+  // An opponent's discard uses a different controller and does not.
+  return (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.owner===owner&&
+   e.controller===owner&&e.from==='hand'&&e.to==='outside'&&
+   ['rule','payment','own-effect'].includes(e.reason));
+ }
+ if(condition.kind==='ownCardTraitCount'){
+  // 枚 counts every own field card with the printed trait, including a
+  // field. It is not the character-only ownTraitCount predicate.
+  const pl=s.players[owner];
+  const zones=condition.zone==='front'?[pl.front]:
+   condition.zone==='energy'?[pl.energy]:[pl.front,pl.energy];
+  let found=0;
+  for(const zone of zones)for(const c of zone){
+   if(!c||(condition.excludeSelf&&c.uid===sourceUid))continue;
+   if(cardHasTrait(printed(c),condition.trait))found++;
+  }
+  return found>=condition.min;
  }
  const pl=s.players[owner];
  const zones=condition.zone==='front'?[pl.front]:
@@ -143,6 +184,19 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
  return condition.kind==='ownTraitCount'&&found>=condition.min;
 }
 
+// Live REST characters on the opponent's named line. The ready flag is read
+// at the moment of the check, so a blocker who has just rested is included.
+export function countOppRestCharacters(s,owner,condition,printed){
+ if(condition.turn==='own'&&s.active!==owner)return 0;
+ if(condition.turn==='opponent'&&s.active===owner)return 0;
+ const foe=s.players[1-owner];
+ const areas=condition.zone==='front'?[foe.front]:
+  condition.zone==='energy'?[foe.energy]:[foe.front,foe.energy];
+ let found=0;
+ for(const area of areas)for(const c of area)
+  if(c&&!c.ready&&printed(c).type==='character')found++;
+ return found;
+}
 // A history of real field-to-OUTSIDE retirements, not current outside count.
 // This is private internal state; public snapshots do not expose the UIDs.
 export function countRetirementsThisTurn(s,controller='any',cardType='any'){

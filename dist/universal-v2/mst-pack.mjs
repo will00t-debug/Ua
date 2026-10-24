@@ -124,6 +124,19 @@ const PRINTED_PINS=Object.freeze({
     "trigger": "color",
     "effectJa": "〖登場時〗 APを1支払ってもよい。そうした場合、カードを1枚引き、自分の手札から必要エナジーが3以下で消費APが1の青の〔〈ルーデウス〉か〈エリス〉か〈ルイジェルド〉〕を1枚まで自分の場にレストで登場させるかレイドさせる。"
   },
+  "MST-1-007": {
+    "kind": "onPlayChooseDrawOrOwnEffectNamedHand",
+    "nameJa": "エリス",
+    "color": "blue",
+    "energy": 1,
+    "ap": 1,
+    "bp": 2000,
+    "gen": 1,
+    "type": "character",
+    "traits": [],
+    "trigger": null,
+    "effectJa": "〖登場時〗 以下から1つ選ぶ。\n・カードを1枚引き、自分の手札を1枚場外に置く。\n・このキャラが自分の効果で登場していた場合、自分の手札から必要エナジーが3以下で消費APが1の青の〔〈ルーデウス〉か〈エリス〉か〈ルイジェルド〉〕を1枚まで自分の場にレストで登場させるかレイドさせる。〈エリス〉のこの効果は1ターンに1回のみ選べる。"
+  },
   "MST-1-056": {
     "kind": "restSelfRestFrontGainEnergy",
     "nameJa": "エリナリーゼ",
@@ -723,6 +736,15 @@ export function verifiedMstV2Cards(){
    card.effects={onRetire:[{op:'draw',count:1}]};
   if(pin.kind==='activeIfOwnEffectEntry')
    card.effects={onPlay:[{op:'activeSelfIf',entry:'ownEffect'}]};
+  if(pin.kind==='onPlayChooseDrawOrOwnEffectNamedHand')
+   card.effects={onPlay:[{op:'chooseOne',optional:false,options:[
+    {id:'draw',label:'Draw one and put one own hand card outside',turn:'any',
+     then:[{op:'drawDiscard',count:1}]},
+    {id:'deploy',label:'Own-effect entry: named blue hand REST or Raid',turn:'any',
+     entry:'ownEffect',then:[{op:'oncePerTurnGate',scope:'name',optional:false,then:[
+      {op:'deployOwnHandRestOrRaid',type:'character',color:'blue',maxEnergy:3,
+       ap:1,max:1,optional:true,names:['ルーデウス','エリス','ルイジェルド']}]}]}
+   ]}]};
   if(pin.kind==='optionalApDrawNamedHandRestOrRaid'){
    card.triggerEffect={op:'bounceOppFrontUnderBp',bp:3500};
    card.effects={onPlay:[{op:'optionalPayApThen',ap:1,optional:true,then:[
@@ -847,6 +869,7 @@ export function verifiedMstV2Entries(){
      ...(pin.kind==='ownFieldAllNamesBp'?['tests/v2-mst-003-own-names.test.mjs']:[]),
      ...(pin.kind==='activeIfOwnEffectEntry'?['tests/v2-conditional-entry-active-round15.test.mjs']:[]),
      ...(pin.kind==='optionalApDrawNamedHandRestOrRaid'?['tests/v2-c15-hand-rest-or-raid.test.mjs']:[]),
+     ...(pin.kind==='onPlayChooseDrawOrOwnEffectNamedHand'?['tests/v2-c21-mst007-own-effect-choice.test.mjs']:[]),
      ...(pin.kind==='onOwnEffectEntryChooseTimedSelf'?['tests/v2-r57-mst009-official.test.mjs']:[]),
      ...(pin.kind==='drawIfOwnEffectEntry'?['tests/v2-mst-023-own-effect-draw.test.mjs']:[]),
      ...(pin.kind==='restSelfBuffOther'?['tests/v2-rest-buff-other-round16.test.mjs']:[]),

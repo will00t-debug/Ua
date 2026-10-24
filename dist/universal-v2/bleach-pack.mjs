@@ -994,6 +994,20 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-1-098","kind":"removeOutsideThen","number":"UA08BT/BLC-1-098","name":"隊葬","color":"green","energy":1,"ap":1,"bp":0,"gen":0,"trigger":"draw","type":"event","effect":"可將己方場外 1 張角色卡除外；成功時抽 2 張。"}
 ,
 {"id":"BLC-1-106","kind":"removeOutsideThen","number":"UA08ST/BLC-1-106","name":"朽木 ルキア","color":"purple","energy":4,"ap":2,"bp":4000,"gen":1,"trigger":"get","type":"character","effect":"登場：可將場外 3 張除外；成功時抽 2 張。"}
+,
+{"id":"BLC-1-003","kind":"oppRestFrontBpEach","number":"UA08BT/BLC-1-003","name":"エス・ノト","color":"yellow","energy":3,"ap":1,"bp":2000,"gen":1,"trigger":"color","type":"character","effect":"敵方前線每有 1 個 REST 角色，此角色 BP +1000。"}
+,
+{"id":"BLC-1-019","kind":"oppCurrentBpCountBonus","number":"UA08BT/BLC-1-019","name":"ユーグラム・ハッシュヴァルト","color":"yellow","energy":3,"ap":1,"bp":3500,"gen":1,"trigger":"active","type":"character","effect":"敵方場上有至少 2 個 BP 4000 以上角色時，此角色 BP +500。"}
+,
+{"id":"BLC-2-062","kind":"otherCardTraitEnergy","number":"EX07BT/BLC-2-062","name":"綾瀬川 弓親","color":"green","energy":2,"ap":1,"bp":2500,"gen":1,"trigger":null,"type":"character","effect":"己方場上有至少 3 張其他具有「護廷十三隊」特徵的卡時，此角色額外產生 1 綠能源。"}
+,
+{"id":"BLC-4-038","kind":"ownFrontPrintedApBp","number":"EX15BT/BLC-4-038","name":"朽木 ルキア","color":"blue","energy":0,"ap":1,"bp":1500,"gen":1,"trigger":"draw","type":"character","effect":"自己的回合中：若自己的前線有印刷消費AP為2以上的角色，此角色BP+1500。"}
+,
+{"id":"BLC-2-054","kind":"handOutsideThisTurnBp","number":"EX07BT/BLC-2-054","name":"朽木 ルキア","color":"purple","energy":2,"ap":1,"bp":3000,"gen":1,"trigger":"active","type":"character","effect":"己方回合中，若本回合己方曾將手牌送至場外，此角色 BP +500。"}
+,
+{"id":"BLC-1-084","kind":"otherCardTraitBp","number":"UA08BT/BLC-1-084","name":"日番谷 冬獅郎","color":"green","energy":2,"ap":1,"bp":3000,"gen":1,"trigger":"color","type":"character","effect":"己方場上有至少 6 張其他具有「護廷十三隊」特徵的卡時，此角色 BP +500。"}
+,
+{"id":"BLC-2-068","kind":"otherCardTraitBp","number":"EX07BT/BLC-2-068","name":"檜佐木 修兵","color":"green","energy":0,"ap":1,"bp":1500,"gen":1,"trigger":"draw","type":"character","effect":"己方場上有至少 6 張其他具有「護廷十三隊」特徵的卡時，此角色 BP +1500。"}
 ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1069,6 +1083,13 @@ export function checkedBleachAddonDefinition(p){
  const isOwnTurnNameRest=p.kind==='onRetireOwnTurnNameRest';
  const isNameOncePayOutside=p.kind==='nameOncePayOutsideRest';
  const isOutsideRemove=p.kind==='removeOutsideThen';
+ const isOppRestBp=p.kind==='oppRestFrontBpEach';
+ const isOppBpCount=p.kind==='oppCurrentBpCountBonus';
+ const isCardTraitEnergy=p.kind==='otherCardTraitEnergy';
+ const isCardTraitBp=p.kind==='otherCardTraitBp';
+ const traitBp={'BLC-1-084':500,'BLC-2-068':1500}[p.id];
+ const isPrintedApBp=p.kind==='ownFrontPrintedApBp';
+ const isHandOutsideBp=p.kind==='handOutsideThisTurnBp';
  const outsideRemove={'BLC-1-098':{count:1,cardType:'character'},
   'BLC-1-106':{count:3,cardType:'any'}}[p.id];
  const handName={'BLC-2-004':'ユーハバッハ'}[p.id];
@@ -1085,7 +1106,7 @@ export function checkedBleachAddonDefinition(p){
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove;
+ const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1131,6 +1152,18 @@ export function checkedBleachAddonDefinition(p){
   ...(p.kind==='restEnergyRetire'?{mainAbility:{op:'restSelfGainEnergyRetireEndMain',energyOnly:true,oncePerTurn:true,extraEnergy:1}}:{}),
   ...(p.kind.startsWith('retireBonus')?{triggerEffect:{op:'retireOppFront'}}:{}),
   ...(isNameOncePayOutside?{triggerEffect:{op:'bounceOppFrontUnderBp',bp:3500}}:{}),
+  ...(isOppRestBp?{passiveBonuses:[{condition:{kind:'oppRestCharacterCount',turn:'any',
+   zone:'front'},bpEach:1000}],triggerEffect:{op:'restOppFrontSkipNextActive'}}:{}),
+  ...(isOppBpCount?{passiveBonuses:[{condition:{kind:'oppCharacterCurrentBpCount',turn:'any',
+   zone:'field',minBp:4000,min:2},bp:500}]}:{}),
+  ...(isCardTraitEnergy?{passiveBonuses:[{condition:{kind:'ownCardTraitCount',turn:'any',
+   min:3,zone:'field',excludeSelf:true,trait:'護廷十三隊'},extraEnergy:1}]}:{}),
+  ...(isCardTraitBp?{passiveBonuses:[{condition:{kind:'ownCardTraitCount',turn:'any',
+   min:6,zone:'field',excludeSelf:true,trait:'護廷十三隊'},bp:traitBp}],
+   ...(p.id==='BLC-1-084'?{triggerEffect:{op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1}}:{})}:{}),
+  ...(isPrintedApBp?{passiveBonuses:[{condition:{kind:'ownPrintedApAtLeast',turn:'any',
+   zone:'front',excludeSelf:false,minAp:2},bp:1500}]}:{}),
+  ...(isHandOutsideBp?{passiveBonuses:[{condition:{kind:'ownHandToOutsideThisTurn',turn:'any'},bp:500}]}:{}),
   ...(p.kind==='enemyBpDown500Color'?{triggerEffect:{op:'deployOutsideCharacter',color:'purple',maxEnergy:2,ap:1,frontOnly:true}}:{}),
   ...(p.kind==='drawPlayColorHand'?{triggerEffect:{op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1}}:{}),
   ...(!special?{templateEffects:abilities[p.kind]}:{effects:

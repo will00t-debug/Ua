@@ -8,7 +8,7 @@ import {planSimultaneousLifeReveal} from './life-reveal-batch.mjs';
 import {selectionHandDiscardTaxPlan} from './selection-hand-tax.mjs';
 import {matchesPrintedRequiredEnergyAtMost} from './ap-discounts.mjs';
 import {cardHasName,cardHasTrait,matchesOwnDistinctTraits,matchesV2LiveCondition,
- ownRestPrintedBpCount,retiredThisTurn,countOwnOutsideDistinctPrintedNames,
+ ownRestPrintedBpCount,countOppRestCharacters,retiredThisTurn,countOwnOutsideDistinctPrintedNames,
  countOwnOutsidePhysicalGroups} from './field-conditions.mjs';
 import {refreshFieldActive,expireContinuousStates,pruneContinuousStates,
  fieldRestrictions,validateContinuousStates,grantContinuousState,
@@ -158,7 +158,9 @@ function bp(pack,s,c){
  try{
   return (printed?.bp||0)+turnBp+facedown+buffs+
    (suppressed?0:printed.passiveBonuses.reduce((n,p)=>{
-    if(p.bpEach)return n+p.bpEach*ownRestPrintedBpCount(s,owner,c.uid,p.condition,x=>card(pack,x));
+    if(p.bpEach)return n+p.bpEach*(p.condition.kind==='oppRestCharacterCount'?
+    countOppRestCharacters(s,owner,p.condition,x=>card(pack,x)):
+    ownRestPrintedBpCount(s,owner,c.uid,p.condition,x=>card(pack,x)));
     return n+(p.bp&&matchesV2LiveCondition(s,owner,c.uid,p.condition,x=>card(pack,x),
      ()=>calcEnergy(pack,s,owner),x=>bp(pack,s,x))?p.bp:0);
    },0));
@@ -527,9 +529,15 @@ function continueEffectQueue(pack,s){
    if(job.entry==='ownEffect'&&!OWN_EFFECT_ENTRY.has(job.entryCause))continue;
    // Select before executing any branch; zero-target optional modes remain selectable.
    const available=job.options.filter(o=>(
+    o.entry!=='ownEffect'||OWN_EFFECT_ENTRY.has(job.entryCause)
+   )&&(
     o.turn==='any'||o.turn==='own'&&s.active===owner||
     o.turn==='opponent'&&s.active!==owner
    )&&o.then.every(child=>{
+    if(child.op==='oncePerTurnGate'){
+     const key=child.scope==='name'?'name:'+job.sourceName:'uid:'+job.sourceUid;
+     if(s.onceEffectUses[owner].includes(key))return false;
+    }
     if(child.op==='buffOwnField'&&!child.optional)
      return field(pl).some(c=>card(pack,c).type==='character'&&
       (!child.excludeSelf||c.uid!==job.sourceUid)&&matchesFilter(pack,s,c,child.filter));

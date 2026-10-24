@@ -56,7 +56,13 @@ const testForKind=Object.freeze({
  drawIfOwnNameAndHandFewer:'tests/v2-c17-name-hand-draw.test.mjs',
  onRetireOwnTurnNameRest:'tests/v2-c18-own-turn-name-rest.test.mjs',
  nameOncePayOutsideRest:'tests/v2-c19-name-pay-outside-rest.test.mjs',
- removeOutsideThen:'tests/v2-c20-outside-remove-draw.test.mjs'
+ removeOutsideThen:'tests/v2-c20-outside-remove-draw.test.mjs',
+ oppRestFrontBpEach:'tests/v2-c21-live-board-predicates.test.mjs',
+ oppCurrentBpCountBonus:'tests/v2-c21-live-board-predicates.test.mjs',
+ otherCardTraitEnergy:'tests/v2-c21-live-board-predicates.test.mjs',
+ otherCardTraitBp:'tests/v2-c21-live-board-predicates.test.mjs',
+ ownFrontPrintedApBp:'tests/v2-c21-live-board-predicates.test.mjs',
+ handOutsideThisTurnBp:'tests/v2-c21-live-board-predicates.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.

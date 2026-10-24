@@ -18,12 +18,14 @@ const own=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
 function assertLiveCondition(q,label){
  if(!q||typeof q!=='object'||Array.isArray(q)||
   !['own','opponent','any'].includes(q.turn)||
-  !['outsideCount','ownNameExists','ownNameAbsent','ownFieldHasAllNames','ownTraitCount','ownEnergyAtLeast','ownHandCountAtLeast','ownLifeAtMost','ownEffectHandOutsideOrRecovery','ownEventUsedThisTurn','ownRetiredThisTurn','retireCountThisTurn','ownOutsideNamedCountAtLeast','ownRestPrintedBpAtMost','oppCharacterBpAtLeast','oppRestCharacter','ownHandFewerThanOpponent'].includes(q.kind))
+  !['outsideCount','ownNameExists','ownNameAbsent','ownFieldHasAllNames','ownTraitCount','ownCardTraitCount','ownEnergyAtLeast','ownHandCountAtLeast','ownLifeAtMost','ownEffectHandOutsideOrRecovery','ownEventUsedThisTurn','ownRetiredThisTurn','retireCountThisTurn','ownOutsideNamedCountAtLeast','ownRestPrintedBpAtMost','oppCharacterBpAtLeast','oppCharacterCurrentBpCount','oppRestCharacter','oppRestCharacterCount','ownPrintedApAtLeast','ownHandToOutsideThisTurn','ownHandFewerThanOpponent'].includes(q.kind))
   throw Error(label+' invalid passive condition');
  if(q.kind==='ownEventUsedThisTurn'&&q.turn!=='own')
   throw Error(label+' event-use predicate requires own turn');
  if(q.kind==='ownEffectHandOutsideOrRecovery'&&q.turn!=='own')
   throw Error(label+' invalid effect-zone own-turn condition');
+ if(q.kind==='ownHandToOutsideThisTurn'&&q.turn!=='any')
+  throw Error(label+' hand-to-outside history is not an own-turn gate');
  const retired=q.kind==='ownRetiredThisTurn';
  const retirementCount=q.kind==='retireCountThisTurn';
  if(retirementCount&&(!['own','opponent','any'].includes(q.controller)||
@@ -31,13 +33,15 @@ function assertLiveCondition(q,label){
   throw Error(label+' invalid retirement count predicate');
  if(retired&&!['field','character'].includes(q.cardType))
   throw Error(label+' invalid retired-card type');
- const count=['outsideCount','ownTraitCount','ownEnergyAtLeast','ownHandCountAtLeast'].includes(q.kind);
+ const count=['outsideCount','ownTraitCount','ownCardTraitCount','ownEnergyAtLeast','ownHandCountAtLeast'].includes(q.kind);
  const namedOutside=q.kind==='ownOutsideNamedCountAtLeast';
  const atMost=q.kind==='ownLifeAtMost';
  const restEach=q.kind==='ownRestPrintedBpAtMost';
  const oppBp=q.kind==='oppCharacterBpAtLeast';
- const oppRest=q.kind==='oppRestCharacter';
- const field=['ownNameExists','ownNameAbsent','ownFieldHasAllNames','ownTraitCount','ownRestPrintedBpAtMost'].includes(q.kind);
+ const oppBpCount=q.kind==='oppCharacterCurrentBpCount';
+ const oppRest=q.kind==='oppRestCharacter'||q.kind==='oppRestCharacterCount';
+ const printedAp=q.kind==='ownPrintedApAtLeast';
+ const field=['ownNameExists','ownNameAbsent','ownFieldHasAllNames','ownTraitCount','ownCardTraitCount','ownRestPrintedBpAtMost'].includes(q.kind);
  if((count&&(!integer(q.min,1)||q.min>200))||
   (namedOutside&&(!integer(q.min,1)||q.min>200||
    !Array.isArray(q.names)||q.names.length<1||q.names.length>8||
@@ -48,21 +52,27 @@ function assertLiveCondition(q,label){
    typeof q.excludeSelf!=='boolean'))||
   ((q.kind==='ownNameExists'||q.kind==='ownNameAbsent')&&(!q.name||typeof q.name!=='string'||!q.name.trim()))||
   (q.kind==='ownFieldHasAllNames'&&(!Array.isArray(q.names)||q.names.length<2||q.names.length>8||q.names.some(n=>typeof n!=='string'||!n.trim())||new Set(q.names).size!==q.names.length))||
-  ((q.kind==='ownTraitCount'||restEach)&&(!q.trait||typeof q.trait!=='string'||!q.trait.trim()))||
+  ((q.kind==='ownTraitCount'||q.kind==='ownCardTraitCount'||restEach)&&(!q.trait||typeof q.trait!=='string'||!q.trait.trim()))||
   (restEach&&(!integer(q.maxPrintedBp,0)||q.maxPrintedBp>50000))||
   (oppBp&&(!['field','front','energy'].includes(q.zone)||!integer(q.minBp,1)||q.minBp>50000))||
+  (oppBpCount&&(!['field','front','energy'].includes(q.zone)||!integer(q.minBp,1)||q.minBp>50000||
+   !integer(q.min,1)||q.min>8))||
   (oppRest&&!['field','front','energy'].includes(q.zone))||
+  (printedAp&&(!['field','front','energy'].includes(q.zone)||typeof q.excludeSelf!=='boolean'||
+   !integer(q.minAp,1)||q.minAp>3))||
   Object.keys(q).length!==(2+(count?1:0)+(namedOutside?2:0)+(atMost?1:0)+(retired?1:0)+(retirementCount?3:0)+(field?2:0)+
-   (['ownNameExists','ownNameAbsent','ownFieldHasAllNames','ownTraitCount','ownRestPrintedBpAtMost'].includes(q.kind)?1:0)+
-   (restEach?1:0)+(oppBp?2:0)+(oppRest?1:0))||
+   (['ownNameExists','ownNameAbsent','ownFieldHasAllNames','ownTraitCount','ownCardTraitCount','ownRestPrintedBpAtMost'].includes(q.kind)?1:0)+
+   (restEach?1:0)+(oppBp?2:0)+(oppBpCount?3:0)+(oppRest?1:0)+(printedAp?3:0))||
   Object.keys(q).some(k=>!['kind','turn',
    ...(count?['min']:[]),...(namedOutside?['min','names']:[]),...(atMost?['max']:[]),...(retired?['cardType']:[]),...(retirementCount?['controller','cardType','min']:[]),...(field?['zone','excludeSelf']:[]),
    ...(q.kind==='ownNameExists'||q.kind==='ownNameAbsent'?['name']:[]),
    ...(q.kind==='ownFieldHasAllNames'?['names']:[]),
-   ...(q.kind==='ownTraitCount'||restEach?['trait']:[]),
+   ...(q.kind==='ownTraitCount'||q.kind==='ownCardTraitCount'||restEach?['trait']:[]),
    ...(restEach?['maxPrintedBp']:[]),
    ...(oppBp?['zone','minBp']:[]),
-   ...(oppRest?['zone']:[])].includes(k)))
+   ...(oppBpCount?['zone','minBp','min']:[]),
+   ...(oppRest?['zone']:[]),
+   ...(printedAp?['zone','excludeSelf','minAp']:[])].includes(k)))
   throw Error(label+' invalid or cyclic passive condition');
 }
 function verifyProgram(program,path){
@@ -351,13 +361,14 @@ function verifyProgram(program,path){
      seen.has(o.id)||typeof o.label!=='string'||!o.label.trim()||
      o.label.length>64||!['any','own','opponent'].includes(o.turn)||
      !Array.isArray(o.then)||o.then.length<1||o.then.length>3||
-     Object.keys(o).length!==4||
-     Object.keys(o).some(k=>!['id','label','turn','then'].includes(k))||
+     (o.entry!==undefined&&o.entry!=='ownEffect')||
+     Object.keys(o).some(k=>!['id','label','turn','then','entry'].includes(k))||
+     Object.keys(o).length!==(o.entry===undefined?4:5)||
      o.then.some(x=>!['draw','drawDiscard','buffOwnField',
       'recoverOutsideOne','recoverOutsideTraitlessUnderEnergy','buffSelf',
        'inspectTopAnyOutside','retireOwnCharacterOne',
        'stripOppRaidTop','retireOppFrontOneUnderBp','discardGate',
-       'grantFrontEnergyOwnOtherFrontTrait','bounceOwnOtherUnderEnergy','nextEligibleHandPlayApDiscount','searchTopUpToTwoBottom','deployOwnHandRest','buffSelfUntilNextOwnStart','grantSelfAttackEndSwapThisTurn'].includes(x?.op)))
+       'grantFrontEnergyOwnOtherFrontTrait','bounceOwnOtherUnderEnergy','nextEligibleHandPlayApDiscount','searchTopUpToTwoBottom','deployOwnHandRest','buffSelfUntilNextOwnStart','grantSelfAttackEndSwapThisTurn','oncePerTurnGate','deployOwnHandRestOrRaid'].includes(x?.op)))
      throw Error(path+'['+i+'] invalid choose-one option');
     seen.add(o.id);
     // Reuse established nested effect verification AND reject stray fields
@@ -423,7 +434,7 @@ function verifyProgram(program,path){
     Object.keys(e).some(k=>!['op','scope','optional','then','ownTurnOnly'].includes(k))||
     e.then.some(x=>!['draw','millTop','peekTopOne','enemyBpDown',
      'restOppFrontUnderBp','restOppFrontOne','buffOwnField','searchDeckOne',
-     'recoverOutsideOne','buffSelf','optionalPayApThen'].includes(x?.op)))
+     'recoverOutsideOne','buffSelf','optionalPayApThen','deployOwnHandRestOrRaid'].includes(x?.op)))
     throw Error(path+'['+i+'] invalid once-per-turn gate');
    verifyProgram(e.then,path+'['+i+'].then');
   }
@@ -654,8 +665,8 @@ function validatePassiveBonuses(card){
   if(q.kind==='ownNameAbsent'&&(p.bp===undefined||p.extraEnergy!==undefined||
    p.extraDamage!==undefined||p.impact!==undefined||p.bpEach!==undefined))
    throw Error(card.id+' name-absence penalty is BP only');
-  if((q.kind==='ownRestPrintedBpAtMost')!==(p.bpEach!==undefined))
-   throw Error(card.id+' per-card printed BP bonus needs bpEach');
+  if((q.kind==='ownRestPrintedBpAtMost'||q.kind==='oppRestCharacterCount')!==(p.bpEach!==undefined))
+   throw Error(card.id+' per-card bonus needs bpEach');
   if(p.extraEnergy!==undefined&&q.kind==='ownEnergyAtLeast')
    throw Error(card.id+' invalid or cyclic passive condition');
  }
