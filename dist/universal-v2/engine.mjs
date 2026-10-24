@@ -161,6 +161,13 @@ export function universalAttackDamage(pack,s,c){
   matchesV2LiveCondition(s,owner,c.uid,p.condition,x=>card(pack,x),
    ()=>calcEnergy(pack,s,owner),x=>bp(pack,s,x))?p.extraDamage:0),0);
 }
+// A self-granted attack permission is attached to the physical incarnation
+// only, and ends with the actual turn, not an assumed next player phase.
+function hasCurrentBattleGrant(s,c,property){
+ const g=c?.[property];
+ return !!g&&g.turn===s.turn&&g.stamp===c.fieldEntryStamp&&
+  !originalEffectsDisabled(s,c);
+}
 // Invoked only at an actual BLOCK battle outcome, never at LIFE damage.
 // Attacker wins equality; blocker must be strictly greater to win. This
 // shared live grant applies to both sides without a title-specific reducer.
@@ -551,6 +558,14 @@ function continueEffectQueue(pack,s){
      sourceUid:job.sourceUid};
    }else for(let i=0;i<job.count&&pl.deck.length;i++)moveOwnedLinear(pack,s,{
     owner,from:'deck',to:'outside',index:0,reason:'own-effect',sourceUid:job.sourceUid});
+  }else if(job.op==='grantSelfSniperThisTurn'||job.op==='grantSelfAttackWinDrawThisTurn'){
+   const loc=location(s,owner,job.sourceUid);
+   if(!loc||card(pack,loc.c).type!=='character'||
+    !Number.isInteger(loc.c.fieldEntryStamp)||loc.c.fieldEntryStamp<1||
+    originalEffectsDisabled(s,loc.c))
+    throw Error('Timed battle grant requires own live character entry');
+   const key=job.op==='grantSelfSniperThisTurn'?'sniperGranted':'attackWinDrawGranted';
+   loc.c[key]={turn:s.turn,stamp:loc.c.fieldEntryStamp};
   }else if(job.op==='grantOnAttack'){
    const source=location(s,owner,job.sourceUid);
    if(!source||originalEffectsDisabled(s,source.c))
@@ -1009,6 +1024,31 @@ function continueEffectQueue(pack,s){
       sourceUid:src.uid,sourceStamp:src.fieldEntryStamp,choices};
     }
    }
+  }else if(job.op==='resolveSniperBattle'){
+   // Q65-Q70: a designated enemy FRONT character battles without ever
+   // blocking. No chooseBlock, REST, block count or onBlock keyword is earned.
+   const attacker=pl.front.find(c=>c?.uid===job.sourceUid);
+   const defender= s.players[1-owner].front.find(c=>c?.uid===job.targetUid);
+   if(s.active!==owner||s.phase!=='attack'||!attacker||!defender||
+    attacker.fieldEntryStamp!==job.sourceStamp||
+    defender.fieldEntryStamp!==job.targetStamp||
+    !(s.attacksByUid[job.sourceUid]>=1)||
+    !hasCurrentBattleGrant(s,attacker,'sniperGranted'))
+    throw Error('Unproven physical SNIPER battle');
+   if(bp(pack,s,attacker)>=bp(pack,s,defender)){
+    grantBattleWinToOtherOwn(pack,s,owner,attacker,'attacker');
+    const hasDraw=hasCurrentBattleGrant(s,attacker,'attackWinDrawGranted');
+    const defenderSlot=s.players[1-owner].front.findIndex(c=>c?.uid===job.targetUid);
+    const impact=impactOnBattleWin(pack,s,attacker)>0&&
+     !card(pack,defender).impactNull;
+    const replacement=retire(pack,s,1-owner,'front',defenderSlot,{postImpact:impact});
+    // An earned draw belongs to the real attacking victor, never direct
+    // LIFE. Preserve the existing onRetire-before-followup effect ordering.
+    if(hasDraw)s.effectQueue.splice(retirementJobsInserted,0,
+     {op:'draw',owner,count:1,sourceUid:attacker.uid});
+    if(impact&&!replacement)queueImpactAfterRetirement(pack,s,1-owner);
+   }else grantBattleWinToOtherOwn(pack,s,1-owner,defender,'blocker');
+   // The target remains ACTIVE/REST if it survives. No fake block action.
   }else if(job.op==='openBlock'){
    // Internal attack-window continuation, never a user-authored card DSL op.
    // Blocking begins only AFTER all attack-time choices and queued effects.
@@ -3143,8 +3183,14 @@ export function legalUniversalActions(pack,s){
  }
  if(s.phase==='attack')for(const c of pl.front.filter(c=>c?.ready&&
   card(pack,c).type==='character'&&
-  !fieldRestrictions(s,p,c).some(r=>r.kind==='cannotAttack')))
+  !fieldRestrictions(s,p,c).some(r=>r.kind==='cannotAttack'))){
   out.push({type:'attack',uid:c.uid});
+  if(hasCurrentBattleGrant(s,c,'sniperGranted'))for(const target of
+   s.players[1-p].front.filter(t=>t&&card(pack,t).type==='character'&&
+    Number.isInteger(t.fieldEntryStamp)&&t.fieldEntryStamp>0))
+   out.push({type:'attack',uid:c.uid,targetUid:target.uid,
+    targetStamp:target.fieldEntryStamp});
+ }
  return out;
 }
 function spendAp(pl,n){
@@ -3513,9 +3559,13 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
     x.targetStamp===attacker.fieldEntryStamp);
    const grantJobs=gained.map(x=>({op:'grantedAttackDraw',owner:p,
     sourceUid:attacker.uid,grantId:x.id}));
+   const targeted=typeof action.targetUid==='string';
    s.effectQueue.push(...attackJobs,...grantJobs,
     ...((attackJobs.length||grantJobs.length)?sourceMoveBoundary(pack,s,p,attacker.uid):[]),
-    {op:'openBlock',owner:p,sourceUid:attacker.uid});
+    ...(targeted?[{op:'resolveSniperBattle',owner:p,sourceUid:attacker.uid,
+     sourceStamp:attacker.fieldEntryStamp,targetUid:action.targetUid,
+     targetStamp:action.targetStamp}]:
+     [{op:'openBlock',owner:p,sourceUid:attacker.uid}]));
    continueEffectQueue(pack,s);
    break;
   }
@@ -3607,6 +3657,18 @@ export function assertUniversalMatch(pack,s){
  for(const [uid,n] of Object.entries(s.blocksByUid))
   if(typeof uid!=='string'||!uid.includes('-')||!Number.isInteger(n)||n<1||n>50)
    throw Error('Invalid per-card block count');
+ for(let owner=0;owner<2;owner++)for(const physical of field(s.players[owner]))
+  for(const [key,op] of [['sniperGranted','grantSelfSniperThisTurn'],
+   ['attackWinDrawGranted','grantSelfAttackWinDrawThisTurn']]){
+   const g=physical[key];
+   if(g===undefined)continue;
+   if(!g||typeof g!=='object'||Array.isArray(g)||
+    !Number.isInteger(g.turn)||g.turn<0||g.turn>s.turn||
+    !Number.isInteger(g.stamp)||g.stamp<1||g.stamp>=s.nextFieldEntryStamp||
+    Object.keys(g).length!==2||Object.keys(g).some(k=>!['turn','stamp'].includes(k))||
+    !card(pack,physical).effects.onPlay?.some(x=>x.op===op))
+    throw Error('Forged temporary physical battle grant');
+  }
  if(s.pending?.kind==='effect-optional-draw'){
   const q=s.pending,src=s.players[q.player].front.find(c=>c?.uid===q.sourceUid);
   const printed=src&&card(pack,src);
@@ -3989,11 +4051,21 @@ export function assertUniversalMatch(pack,s){
    typeof e.key!=='string'||!Array.isArray(e.jobs))))
   throw Error('Invalid retirement order');
  if(!Array.isArray(s.effectQueue)||[...s.effectQueue,...lifeEntries.flatMap(e=>e.jobs)].some(e=>!playerIndex(e.owner)||
-   !['grantedAttackDraw','grantOnAttack','draw','drawIfOwnName','drawIfOwnOutsideNamedCountAtLeast','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','millTop','buffSelf','buffSelfPerOwnOutsideGroups','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','conditionalBounceOrRetireByOwnOutsideNames','completeResolvingEvent','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','forbidAttackOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopUpToTwoBottom','deployOwnHandRest','deployOwnHandSpecial','optionalRetireThenProgram','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
+   !['grantedAttackDraw','grantOnAttack','grantSelfSniperThisTurn','grantSelfAttackWinDrawThisTurn','draw','drawIfOwnName','drawIfOwnOutsideNamedCountAtLeast','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','millTop','buffSelf','buffSelfPerOwnOutsideGroups','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','conditionalBounceOrRetireByOwnOutsideNames','completeResolvingEvent','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','forbidAttackOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopUpToTwoBottom','deployOwnHandRest','deployOwnHandSpecial','optionalRetireThenProgram','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
     'discardGate','enemyFrontAllBpDown','retireOppFrontAllUnderBp',
     'nextEligibleHandPlayApDiscount','grantFrontEnergyOwnOtherFrontTrait','buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
-    'recoverOutsideColorUnderEnergy','deployOutsideRest','deployOutsideNameRest','deployNamedFromZones','payApDeployNamedRest','inspectTopTraitOutside','deployOutsideTraitlessRestOrRaid','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','retireSourceOnPhaseEnd','moveAtMainEnd','retireOwnFieldOne','retireOwnCharacterOne','openBlock','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','resolveAttackEndSwap','phaseOrder','effectMoveOrder','restSelfTuckMovedFaceDown','sourceResolutionBoundary','lifeBatchStep','lifeRelease','advanceAfterAttack','additionalBattleDamage','openRetirementBatch','closeRetirementBatch','retirementOrder','battleImpactDamage','discardOppHand','activeSelfIf'].includes(e.op)))
+    'recoverOutsideColorUnderEnergy','deployOutsideRest','deployOutsideNameRest','deployNamedFromZones','payApDeployNamedRest','inspectTopTraitOutside','deployOutsideTraitlessRestOrRaid','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','retireSourceOnPhaseEnd','moveAtMainEnd','retireOwnFieldOne','retireOwnCharacterOne','openBlock','resolveSniperBattle','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','resolveAttackEndSwap','phaseOrder','effectMoveOrder','restSelfTuckMovedFaceDown','sourceResolutionBoundary','lifeBatchStep','lifeRelease','advanceAfterAttack','additionalBattleDamage','openRetirementBatch','closeRetirementBatch','retirementOrder','battleImpactDamage','discardOppHand','activeSelfIf'].includes(e.op)))
   throw Error('Invalid queued effects');
+ for(const j of s.effectQueue.filter(e=>e.op==='resolveSniperBattle')){
+  const source=s.players[j.owner]?.front.find(c=>c?.uid===j.sourceUid);
+  const target=s.players[1-j.owner]?.front.find(c=>c?.uid===j.targetUid);
+  if(j.owner!==s.active||s.phase!=='attack'||!source||!target||
+   !hasCurrentBattleGrant(s,source,'sniperGranted')||
+   source.fieldEntryStamp!==j.sourceStamp||target.fieldEntryStamp!==j.targetStamp||
+   !(s.attacksByUid[j.sourceUid]>=1)||Object.keys(j).length!==6||
+   Object.keys(j).some(k=>!['op','owner','sourceUid','sourceStamp','targetUid','targetStamp'].includes(k)))
+   throw Error('Forged queued sniper battle');
+ }
  for(const j of s.effectQueue.filter(e=>e.op==='resolveAttackEndSwap')){
   const pl=s.players[j.owner];
   const src=[...field(pl),...pl.hand,...pl.deck,...pl.life,
