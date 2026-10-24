@@ -333,7 +333,7 @@ function verifyProgram(program,path){
     if(e.ap!==1||e.optional!==true||!Array.isArray(e.then)||
      e.then.length<1||e.then.length>3||Object.keys(e).length!==4||
      Object.keys(e).some(k=>!['op','ap','optional','then'].includes(k))||
-     e.then.some(x=>!['draw','deployOwnHandRestOrRaid'].includes(x?.op)))
+     e.then.some(x=>!['draw','deployOwnHandRestOrRaid','deployOutsideNameRest'].includes(x?.op)))
      throw Error(path+'['+i+'] invalid optional AP payment');
     verifyProgram(e.then,path+'['+i+'].then');
    }
@@ -410,7 +410,7 @@ function verifyProgram(program,path){
     Object.keys(e).some(k=>!['op','scope','optional','then','ownTurnOnly'].includes(k))||
     e.then.some(x=>!['draw','millTop','peekTopOne','enemyBpDown',
      'restOppFrontUnderBp','restOppFrontOne','buffOwnField','searchDeckOne',
-     'recoverOutsideOne','buffSelf'].includes(x?.op)))
+     'recoverOutsideOne','buffSelf','optionalPayApThen'].includes(x?.op)))
     throw Error(path+'['+i+'] invalid once-per-turn gate');
    verifyProgram(e.then,path+'['+i+'].then');
   }

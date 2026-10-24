@@ -988,6 +988,8 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-2-004","kind":"drawIfOwnNameAndHandFewer","number":"EX07BT/BLC-2-004","name":"ユーグラム・ハッシュヴァルト","color":"yellow","energy":4,"ap":1,"bp":4000,"gen":1,"trigger":null,"type":"character","effect":"登場：己方場上有〈友哈巴赫〉且己方手牌少於敵方時，抽 1 張。"}
 ,
 {"id":"BLC-2-039","kind":"onRetireOwnTurnNameRest","number":"EX07BT/BLC-2-039","name":"シャルロッテ・クールホーン","color":"blue","energy":2,"ap":1,"bp":3000,"gen":1,"trigger":"active","type":"character","effect":"退場：若現在是己方回合，可將最多 1 個敵方前線角色轉為 REST。所有〈夏洛特・庫爾霍恩〉的此效果，合計每回合只能發動 1 次。"}
+,
+{"id":"BLC-2-043","kind":"nameOncePayOutsideRest","number":"EX07BT/BLC-2-043","name":"六車 拳西＆鳳橋 楼十郎","color":"blue","energy":2,"ap":1,"bp":3000,"gen":1,"trigger":"color","type":"character","effect":"登場：可支付 1 AP；成功時可從己方場外將最多 1 張〈六車拳西＆鳳橋樓十郎〉以 REST 登場於己方場上。所有〈六車拳西＆鳳橋樓十郎〉的此效果，合計每回合只能發動 1 次。"}
 ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1061,7 +1063,9 @@ export function checkedBleachAddonDefinition(p){
  const isActiveNamed=p.kind==='activeOwnNamed';
  const isNameHandDraw=p.kind==='drawIfOwnNameAndHandFewer';
  const isOwnTurnNameRest=p.kind==='onRetireOwnTurnNameRest';
+ const isNameOncePayOutside=p.kind==='nameOncePayOutsideRest';
  const handName={'BLC-2-004':'ユーハバッハ'}[p.id];
+ const outsideRestName={'BLC-2-043':'六車 拳西＆鳳橋 楼十郎'}[p.id];
  const namedActive={'BLC-1-076':'更木 剣八'}[p.id];
  const oppBpGate={'BLC-1-027':4000}[p.id];
  const isBlockLow=p.kind==='blockBpAtMost';
@@ -1074,7 +1078,7 @@ export function checkedBleachAddonDefinition(p){
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest;
+ const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1119,6 +1123,7 @@ export function checkedBleachAddonDefinition(p){
   ...(p.kind==='restSelfEnemy'?{mainAbility:{op:'restSelfThenRestOppFrontOne',frontOnly:true}}:{}),
   ...(p.kind==='restEnergyRetire'?{mainAbility:{op:'restSelfGainEnergyRetireEndMain',energyOnly:true,oncePerTurn:true,extraEnergy:1}}:{}),
   ...(p.kind.startsWith('retireBonus')?{triggerEffect:{op:'retireOppFront'}}:{}),
+  ...(isNameOncePayOutside?{triggerEffect:{op:'bounceOppFrontUnderBp',bp:3500}}:{}),
   ...(p.kind==='enemyBpDown500Color'?{triggerEffect:{op:'deployOutsideCharacter',color:'purple',maxEnergy:2,ap:1,frontOnly:true}}:{}),
   ...(p.kind==='drawPlayColorHand'?{triggerEffect:{op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1}}:{}),
   ...(!special?{templateEffects:abilities[p.kind]}:{effects:
@@ -1157,6 +1162,9 @@ export function checkedBleachAddonDefinition(p){
    isNameHandDraw?{onPlay:[{op:'drawIfOwnNameAndHandFewer',name:handName,count:1}]}:
    isOwnTurnNameRest?{onRetire:[{op:'oncePerTurnGate',scope:'name',optional:false,
     ownTurnOnly:true,then:[{op:'restOppFrontOne',optional:true}]}]}:
+   isNameOncePayOutside?{onPlay:[{op:'oncePerTurnGate',scope:'name',optional:true,then:[
+    {op:'optionalPayApThen',ap:1,optional:true,then:[
+     {op:'deployOutsideNameRest',name:outsideRestName,optional:true}]}]}]}:
    isOptionalPeek?{onPlay:[{op:'discardGate',optional:true,then:[
     {op:'peekTopOrBottom'},{op:'draw',count:1}]}]}:
    isStripDual?{onPlay:[{op:'chooseOne',optional:false,options:[
