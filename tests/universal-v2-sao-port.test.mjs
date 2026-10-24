@@ -44,7 +44,7 @@ test('SAO official dedup identity and product scopes stay unchanged, AP/parallel
   assert.equal(SAO_OFFICIAL_CARDS.filter(c=>c.set===set).length,count);
  assert.equal(SAO_V2_PILOT_IDS.length,EXPECTED_V2_COUNTS['sword-art-online']);
  assert.equal(Object.keys(pack.cards).length,EXPECTED_V2_COUNTS['sword-art-online']);
- assert.ok(!pack.cards['SAO-2-063'],'conditional STEP + onPlay is NOT a basic vanilla');
+ assert.ok(pack.cards['SAO-2-063']?.step&&pack.cards['SAO-2-063']?.effects.onPlay.length===1,'R53 full conditional STEP+onPlay now registered');
  assert.deepEqual(pack.cards['SAO-1-107'].effects.onPlay,[{op:'draw',count:2},{op:'drawDiscard',count:1}]);
  for(const id of SAO_V2_PILOT_IDS){
   const source=SAO_OFFICIAL_CARDS.find(c=>c.id===id);
@@ -54,7 +54,7 @@ test('SAO official dedup identity and product scopes stay unchanged, AP/parallel
    assert.equal(data[field],source[field],id+' mismatch '+field);
  }
  assert.equal(verifiedSaoV2Cards().length,EXPECTED_V2_COUNTS['sword-art-online']);
- assert.match(validateUniversalDeck(pack,{...deck,'SAO-2-063':1}).join(),/Unregistered/);
+ assert.match(validateUniversalDeck(pack,{...deck,'SAO-1-071':1}).join(),/Unregistered/);
 });
 test('SAO 50 physical-card deck, actual AP spending and entry draw/discard are V2 transitions',()=>{
  let s=fresh(),p=s.players[0],card=take(s,0,'SAO-1-055');

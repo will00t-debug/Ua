@@ -5,6 +5,10 @@ import {createUniversalPack} from './pack.mjs';
 import {SAO_Q1208_ASUNA_AURA,SAO_Q978_SELF_EVENT_TAX} from './selection-hand-tax.mjs';
 
 const PRINTED_PINS=Object.freeze({
+ "SAO-2-063":{"kind":"stepNamedOutsideOnPlayDraw",
+  "nameJa":"アスナ","color":"green","energy":3,"ap":1,"bp":3000,"gen":3,
+  "type":"character","trigger":null,"traits":["ALO"],
+  "effectJa":"【ステップ】（自分の移動フェイズにフロントLからエナジーLへ移動できる）\n【登場時】自分の場外に〈ユウキ〉と〈マザーズ・ロザリオ〉が合計2枚以上ある場合、カードを1枚引く。"},
  "SAO-1-100":{"kind":"conditionalNamedOutsideBounceRetireEvent",
   "nameJa":"マザーズ・ロザリオ","color":"green","energy":4,"ap":1,"bp":0,"gen":0,
   "type":"event","trigger":"special","traits":[],
@@ -1364,6 +1368,11 @@ export function verifiedSaoV2Cards(){
     sourceTypes:[...SAO_Q1208_ASUNA_AURA.sourceTypes]};
    card.effects={};
   }
+  if(pin.kind==='stepNamedOutsideOnPlayDraw'){
+   card.step=true;
+   card.effects={onPlay:[{op:'drawIfOwnOutsideNamedCountAtLeast',min:2,
+    names:['ユウキ','マザーズ・ロザリオ'],count:1}]};
+  }
   if(pin.kind==='conditionalNamedOutsideBounceRetireEvent'){
    card.effects={onPlay:[{op:'conditionalBounceOrRetireByOwnOutsideNames',
     bp:5000,min:3,names:['ユウキ','マザーズ・ロザリオ']}]};
@@ -1644,6 +1653,7 @@ export function verifiedSaoV2Entries(){
      '; pilot logic and generic Trigger only, not complete official FAQ acceptance. '+
      source.source,
     testFiles:Object.freeze([
+     ...(pin.kind==='stepNamedOutsideOnPlayDraw'?['tests/v2-r53-sao063-real-print.test.mjs']:[]),
      ...(pin.kind==='conditionalNamedOutsideBounceRetireEvent'?['tests/v2-r52-sao100-real-event.test.mjs']:[]),
      ...(pin.kind==='ownOutsideNamedFourSixAsuna'?['tests/v2-r52-sao070-real-passives.test.mjs']:[]),
      ...(pin.kind==='nextHandApDiscount'?['tests/v2-r36-real-discount-cards.test.mjs']:[]),
