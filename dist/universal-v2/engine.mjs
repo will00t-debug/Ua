@@ -606,9 +606,15 @@ function continueEffectQueue(pack,s){
     draw(pack,s,owner,job.count,{reason:'own-effect',sourceUid:job.sourceUid});
   }
   else if(job.op==='returnRetiredToHand'){
-   const retired=pl.outside.find(c=>c.uid===job.sourceUid);
-   if(!retired)throw Error('Retired card is not in its owner outside');
-   s.pending={kind:'effect-return-retired',player:owner,sourceUid:job.sourceUid};
+   const index=pl.outside.findIndex(c=>c.uid===job.sourceUid);
+   if(index<0)throw Error('Retired card is not in its owner outside');
+   // 「手札に加える」moves the retired card. 「加えてもよい」still asks.
+   if(job.optional===false){
+    const physical=pl.outside.splice(index,1)[0];
+    pl.hand.push(physical);
+    recordCompletedMove(pack,s,{physical,owner,from:'outside',to:'hand',
+     reason:'own-effect',sourceUid:job.sourceUid});
+   }else s.pending={kind:'effect-return-retired',player:owner,sourceUid:job.sourceUid};
   }
   else if(job.op==='drawIfOwnFieldExists'){
    // FIELD condition is evaluated at resolution of a genuinely queued onRetire.

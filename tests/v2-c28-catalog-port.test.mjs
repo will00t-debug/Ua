@@ -4,7 +4,8 @@ import {SAO_OFFICIAL_CARDS} from '../dist/sao-official-import.mjs';
 import {registeredV2TitlePack} from '../dist/universal-v2/title-packs/registry.mjs';
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
- assertUniversalMatch,universalPublicView,universalPrivateChoices,universalBp} from '../dist/universal-v2/engine.mjs';
+ assertUniversalMatch,universalPublicView,universalPrivateChoices,universalBp,
+ universalAttackDamage} from '../dist/universal-v2/engine.mjs';
 import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
 import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v2-integrated-id-manifest.mjs';
 
@@ -72,8 +73,8 @@ test('SAO-1-021 may add one own life card to hand and draws only after that take
  assert.equal(card.gen,2);
  assert.deepEqual(card.effects.onPlay,[{op:'optionalOwnLifeToHandThenDraw',then:[{op:'draw',count:1}]}]);
  assert.deepEqual(card.triggerEffect,{op:'restOppFrontSkipNextActive'});
- assert.equal(EXPECTED_V2_TOTAL,435);
- assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],124);
+ assert.equal(EXPECTED_V2_TOTAL,436);
+ assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  assert.equal(EXPECTED_V2_IDS['sword-art-online'].includes('SAO-1-021'),true);
 
  const counts=deckOf(['SAO-1-021','SAO-1-001','SAO-1-004']);
@@ -236,4 +237,56 @@ test('SAO-2-013 retires one opposing front at 1000 current BP per own field Inte
  assert.ok(two.players[0].energy.some(c=>c&&c.cardId==='SAO-1-010'));
  assert.ok(two.players[0].front.some(c=>c&&c.cardId==='SAO-2-008'));
  assert.equal(assertUniversalMatch(packs,two),true);
+});
+
+test('SAO-1-044 returns itself to hand when retired and deals 2 direct damage',()=>{
+ const card=sao.cards['SAO-1-044'];
+ const source=SAO_OFFICIAL_CARDS.find(c=>c.id==='SAO-1-044');
+ assert.equal(source.number,'UA15BT/SAO-1-044');
+ assert.match(source.source,/unionarena-tcg\.com\/jp\/cardlist/);
+ assert.equal(source.energy,4);
+ assert.equal(source.ap,2);
+ assert.equal(source.bp,4000);
+ assert.equal(source.gen,1);
+ assert.equal(source.trigger,'get');
+ assert.equal(source.effectJa,'【ダメージ（2）】（このキャラがアタックで直接ダメージを与える時、代わりに2ダメージ）\n【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、【インパクト】を失う）\n【退場時】このカードを手札に加える。');
+ assert.equal(card.name,'ヒースクリフ');
+ assert.equal(card.printedAttackDamage,2);
+ assert.equal(card.impactNull,true);
+ assert.equal(card.triggerEffect,null);
+ assert.deepEqual(card.effects.onRetire,[{op:'returnRetiredToHand',optional:false}]);
+ assert.equal(EXPECTED_V2_IDS['sword-art-online'].includes('SAO-1-044'),true);
+
+ const counts=deckOf(['SAO-1-044','SAO-1-030','SAO-1-001','SAO-1-010']);
+ let back=newUniversalMatch(packs,{decks:[counts,counts],first:0,seed:20144});
+ for(let i=0;i<3;i++)place(back,0,'SAO-1-001','energy',i);
+ place(back,0,'SAO-1-010','energy',3);
+ const heath=place(back,1,'SAO-1-044','front',0);
+ assert.equal(universalAttackDamage(packs,back,heath),2);
+ const event=hold(back,0,'SAO-1-030');
+ back=toMain(back);
+ back=dispatchUniversalAction(packs,back,legalUniversalActions(packs,back)
+  .find(a=>a.type==='event'&&a.uid===event.uid));
+ assert.equal(back.pending.limit,5000);
+ assert.deepEqual(back.pending.choices,[heath.uid]);
+ back=dispatchUniversalAction(packs,back,{type:'chooseRetireBp',uid:heath.uid});
+ assert.equal(back.pending,null);
+ assert.equal(back.players[1].front[0],null);
+ assert.ok(back.players[1].hand.some(c=>c.uid===heath.uid));
+ assert.equal(back.players[1].outside.some(c=>c.uid===heath.uid),false);
+ assert.equal(back.status,'playing');
+ assert.equal(assertUniversalMatch(packs,back),true);
+
+ let stay=newUniversalMatch(packs,{decks:[counts,counts],first:0,seed:20145});
+ for(let i=0;i<4;i++)place(stay,0,'SAO-1-001','energy',i);
+ const plain=place(stay,1,'SAO-1-001','front',0);
+ const spell=hold(stay,0,'SAO-1-030');
+ stay=toMain(stay);
+ stay=dispatchUniversalAction(packs,stay,legalUniversalActions(packs,stay)
+  .find(a=>a.type==='event'&&a.uid===spell.uid));
+ stay=dispatchUniversalAction(packs,stay,{type:'chooseRetireBp',uid:plain.uid});
+ assert.equal(stay.pending,null);
+ assert.ok(stay.players[1].outside.some(c=>c.uid===plain.uid));
+ assert.equal(stay.players[1].hand.some(c=>c.uid===plain.uid),false);
+ assert.equal(assertUniversalMatch(packs,stay),true);
 });

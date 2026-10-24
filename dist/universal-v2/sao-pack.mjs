@@ -120,6 +120,10 @@ const PRINTED_PINS=Object.freeze({
  // sprite index (alt 黄黄). Required energy stays 3. COLOR rests one opposing
  // front character and skips its next ACTIVE. Q750: life zero is checked
  // after this on-play effect, including the contingent draw, has finished.
+ "SAO-1-044":{"kind":"damageNullReturnSelf","nameJa":"ヒースクリフ",
+  "color":"blue","energy":4,"ap":2,"bp":4000,"gen":1,"type":"character",
+  "trigger":"get","traits":["アインクラッド"],
+  "effectJa":"【ダメージ（2）】（このキャラがアタックで直接ダメージを与える時、代わりに2ダメージ）\n【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、【インパクト】を失う）\n【退場時】このカードを手札に加える。"},
  "SAO-2-013":{"kind":"traitCountRetireFront","nameJa":"記憶解放術",
   "color":"yellow","energy":4,"ap":1,"bp":0,"gen":0,"type":"event",
   "trigger":"special","traits":[],
@@ -1760,6 +1764,13 @@ export function verifiedSaoV2Cards(){
    card.effects={onPlay:[{op:'recoverOutsideOne',optional:true,logic:'all',
     filters:[{field:'color',value:color},{field:'trait',value:m[2]}]}]};
   }
+  if(pin.kind==='damageNullReturnSelf'){
+   if(pin.effectJa!=='【ダメージ（2）】（このキャラがアタックで直接ダメージを与える時、代わりに2ダメージ）\n【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、【インパクト】を失う）\n【退場時】このカードを手札に加える。')
+    throw Error(id+' is not the printed damage, impact null, and mandatory hand return');
+   card.printedAttackDamage=2;
+   card.impactNull=true;
+   card.effects={onRetire:[{op:'returnRetiredToHand',optional:false}]};
+  }
   if(pin.kind==='traitCountRetireFront'){
    const m=/^自分の場の［特徴：([^］]{1,40})］の枚数×1000以下のBPの相手のフロントLのキャラを1枚選び、退場させる。$/.exec(pin.effectJa);
    if(!m)throw Error(id+' is not the printed trait-count front retire');
@@ -1898,8 +1909,8 @@ export function verifiedSaoV2Entries(){
       'onAttackDrawIfSelfBp','onPlayMoveAnyOwnLine']
       .includes(pin.kind)?['tests/v2-c26-five-title-batch.test.mjs']:[]),
      ...(pin.kind==='onPlayTopColorTraitOutside'?['tests/v2-c27-five-title-batch.test.mjs']:[]),
-     ...(pin.kind==='onPlayOptionalLifeToHandDraw'||pin.kind==='traitCountRetireFront'?
-      ['tests/v2-c28-catalog-port.test.mjs']:[]),
+     ...(pin.kind==='onPlayOptionalLifeToHandDraw'||pin.kind==='traitCountRetireFront'||
+      pin.kind==='damageNullReturnSelf'?['tests/v2-c28-catalog-port.test.mjs']:[]),
      ...(pin.kind==='readyOnFirstBlock'?['tests/v2-ready-on-block-round14.test.mjs']:[]),
      ...(pin.kind==='frontOnceBpDown'||pin.kind==='frontOnceDiscardBpDown'?['tests/v2-single-bp-target-round14.test.mjs']:[]),
      ...(pin.kind==='nameAliasDrawDiscard'||pin.kind==='nameAliasOnly'||pin.kind==='nameAliasStep'?['tests/v2-name-alias-round14.test.mjs']:[]),

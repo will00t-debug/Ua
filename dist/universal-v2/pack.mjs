@@ -126,9 +126,9 @@ function verifyProgram(program,path){
    Object.keys(e).some(k=>!['op','bp','count'].includes(k))
   ))throw Error(path+'['+i+'] invalid self-BP attack draw');
   if(e.op==='returnRetiredToHand'&&(
-   e.optional!==true||Object.keys(e).length!==2||
+   typeof e.optional!=='boolean'||Object.keys(e).length!==2||
    Object.keys(e).some(k=>!['op','optional'].includes(k))
-  ))throw Error(path+'['+i+'] invalid optional return of the retired card');
+  ))throw Error(path+'['+i+'] invalid return of the retired card');
   if(e.op==='drawIfOwnEnergyAtLeast'&&(
    !integer(e.energy,1)||e.energy>50||
    !integer(e.count,1)||e.count>5||
