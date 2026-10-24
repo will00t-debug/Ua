@@ -119,7 +119,7 @@ export function evaluateTrustedUniversalAiTactics(packs,state,rootObservation,ra
  const limits={
   roots:clamp(options.roots??3,0,10),children:clamp(options.children??2,0,10),
   depth:clamp(options.depth??3,1,3),nodes:clamp(options.nodes??24,0,200),
-  timeMs:clamp(options.timeMs??90,0,100)
+  timeMs:clamp(options.timeMs??100,0,100)
  };
  const baseline=ranked[0]?.action||null,actor=rootObservation.actor;
  const record=Array.isArray(options.trace)?entry=>{
@@ -148,7 +148,11 @@ export function evaluateTrustedUniversalAiTactics(packs,state,rootObservation,ra
   if(!current.pending&&current.phase!=='main')return zero();
   const legal=legalUniversalActions(packs,current);
   const o=createUniversalAiObservation(packs,current,legal);
-  const rankedNext=rankUniversalAiActions(packs,o,options.ablation);
+  // The native child already supplies exact resources/position deltas.
+  // Do not re-add the speculative energy continuation estimate at every
+  // descendant (and do not let its wall-clock guard perturb replay).
+  const rankedNext=rankUniversalAiActions(packs,o,
+   {...options.ablation,energyContinuation:false});
   const next=selected(rankedNext,limits.children,packs,o);
   record({at:'follow',path,phase:current.phase,pending:current.pending?.kind??null,
    legal:legal.length,selected:next.map(x=>x.action),
