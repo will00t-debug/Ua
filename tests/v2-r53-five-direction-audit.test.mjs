@@ -24,12 +24,13 @@ test('R53 five-direction census checks all 700 source identities, not keyword RE
  assert.equal(report.catalogue,700);
  assert.equal(report.registered+report.unportedSearched,700);
  assert.equal(report.titles,5);
- assert.equal(report.officialReviewedPartial,2);
- assert.equal(report.officialReviewedRegistered,2);
+ assert.equal(report.officialReviewedPartial,1);
+ assert.equal(report.officialReviewedRegistered,3);
  assert.equal(report.readyInferredFromText,0);
  assert.equal(Object.values(report.byTitle).reduce((n,x)=>n+x.unported,0),
   report.unportedSearched);
- for(const id of ['SLG-1-021','MST-1-009'])
+ assert.ok(focused.some(x=>x.id==='SLG-1-021'&&x.status==='REGISTERED'&&x.missing.length===0));
+ for(const id of ['MST-1-009'])
   assert.ok(focused.some(x=>x.id===id&&x.status==='PARTIAL'&&x.missing.length>=3));
  assert.ok(focused.some(x=>x.id==='TTG-1-067'&&x.status==='REGISTERED'&&x.missing.length===0));
  assert.ok(focused.some(x=>x.id==='SAO-1-071'&&x.status==='REGISTERED'&&x.missing.length===0));
