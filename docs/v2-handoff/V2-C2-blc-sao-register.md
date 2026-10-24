@@ -3,7 +3,7 @@
 Branch: `cursor/v2-blc-sao-c2-20261024-6ff5`.
 Base: verified GPT R58 HEAD `b03e8a6674ab09323b140a80385bef0f3e34f1db`
 (`gpt/v2-r58-safe-integration-20261024`, Actions run 40053951453 SUCCESS).
-This note records the registration. The new HEAD still needs its own push Actions SUCCESS before it counts as accepted. FAQ certification stays 0.
+This note records the registration. Local Node v22.23.4 on 2026-10-24: `npm test` 2218/2218, matrix 60/60, manifest 360/700, unported 340, `independentlyCertified` 0. The new HEAD still needs its own push Actions SUCCESS before it counts as accepted. FAQ certification stays 0.
 
 ## Registered this round
 
