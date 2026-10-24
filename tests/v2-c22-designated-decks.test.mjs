@@ -44,8 +44,8 @@ function phase(s,target){
 function sit(card,ready=true){card.ready=ready;return card;}
 test('three designated lists stay exact and are not offered as playable 50-card presets',()=>{
  assert.equal(Object.keys(pack.cards).length,EXPECTED_V2_COUNTS.bleach);
- assert.equal(EXPECTED_V2_COUNTS.bleach,150);
- assert.equal(EXPECTED_V2_TOTAL,402);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,160);
+ assert.equal(EXPECTED_V2_TOTAL,412);
  const registered=id=>!!pack.cards[id];
  const report=summarizeDesignatedDecks(registered);
  assert.equal(report.length,3);
@@ -75,10 +75,12 @@ test('three designated lists stay exact and are not offered as playable 50-card 
  assert.deepEqual(byKey['white-sword'].missing,[]);
  assert.equal(byKey['white-sword'].registeredKinds,13);
  assert.deepEqual(validateUniversalDeck(pack,designatedPlayableCounts(byKey['white-sword'])),[]);
- assert.equal(byKey.renruki.playable,false);
- assert.equal(byKey.renruki.registeredKinds,4);
- assert.equal(byKey.renruki.missing.some(e=>e.source==='UA01DC/BLC-1-053'),true);
- assert.equal(byKey.renruki.missing.some(e=>e.source==='UA01DC/BLC-1-041'),true);
+ assert.equal(byKey.renruki.playable,true);
+ assert.deepEqual(byKey.renruki.missing,[]);
+ assert.equal(byKey.renruki.registeredKinds,13);
+ assert.equal(byKey.renruki.entries[0].source,'UA08BT/BLC-1-039');
+ assert.equal(byKey.renruki.entries[0].sourcePinned,true);
+ assert.deepEqual(validateUniversalDeck(pack,designatedPlayableCounts(byKey.renruki)),[]);
  const page=readFileSync(new URL('../dist/universal-v2-preview.html',import.meta.url),'utf8');
  const script=readFileSync(new URL('../dist/universal-v2-preview.mjs',import.meta.url),'utf8');
  assert.ok(page.includes('id="designated-decks"'));

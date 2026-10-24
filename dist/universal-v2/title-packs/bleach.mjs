@@ -79,7 +79,17 @@ const testForKind=Object.freeze({
  zangetsuDraw:'tests/v2-c23-blue-shared.test.mjs',
  aizenEnergyFront:'tests/v2-c24-green-shared.test.mjs',
  raidBaseLeaveDamage:'tests/v2-c24-green-shared.test.mjs',
- restLockFrontUpgrade:'tests/v2-c24-green-shared.test.mjs'
+ restLockFrontUpgrade:'tests/v2-c24-green-shared.test.mjs',
+ millRemoveScale:'tests/v2-c25-purple-shared.test.mjs',
+ payDamageRemoveFour:'tests/v2-c25-purple-shared.test.mjs',
+ purpleNamesTop:'tests/v2-c25-purple-shared.test.mjs',
+ purpleApBpChoice:'tests/v2-c25-purple-shared.test.mjs',
+ raidApDiscountChoice:'tests/v2-c25-purple-shared.test.mjs',
+ raidDrawDiscardBuff:'tests/v2-c25-purple-shared.test.mjs',
+ renjiPayDeploy:'tests/v2-c25-purple-shared.test.mjs',
+ topSplitEnergyDraw:'tests/v2-c25-purple-shared.test.mjs',
+ emptyRaidPeek:'tests/v2-c25-purple-shared.test.mjs',
+ renjiEventRetire:'tests/v2-c25-purple-shared.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -98,7 +108,9 @@ function contributedEntry(profile){
   definition:Object.freeze(definition),
   evidence:Object.freeze({
    printedTextFragments:Object.freeze([profile.effect]),
-   reviewNote:normalized?
+   reviewNote:profile.id==='BLC-4-082'||profile.id==='BLC-4-083'?
+    'Catalogue source for '+profile.number+' is a shop page, not unionarena-tcg.com. Number, Japanese name, stats and stored effect matched that record. No official URL was invented. Tested in tests/v2-c25-purple-shared.test.mjs.':
+   normalized?
     profile.id==='BLC-4-014'?
       'EX15BT/BLC-4-014 official yellow+ base is REST 1; ACTIVE adds +1. Imported legacy gen=2 describes ACTIVE total; sourceRecord.gen=1, legacyImportedGen=2. Tested ACTIVE=2/REST=1. FAQ acceptance still pending.':
     profile.id==='BLC-4-074'?
