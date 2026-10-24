@@ -8,6 +8,6 @@ Official page checked 2026-10-24. No FAQ.
 
 A five-title scan found no other unported card with that catalogue sentence.
 
-Local Node v22.23.4: `npm test` 2242/2242 fail 0, matrix 60/60, manifest bleach 118, gurren-lagann 38, solo-leveling 46, sword-art-online 111, mushoku-tensei 55, total 368/700. Unported 332, of which BLEACH 158 and MST 25. FAQ certification stays 0. This C10 SHA still needs its own GitHub Actions SUCCESS.
+Local Node v22.23.4: `npm test` 2242/2242 fail 0, matrix 60/60, manifest bleach 118, gurren-lagann 38, solo-leveling 46, sword-art-online 111, mushoku-tensei 55, total 368/700. Unported 332, of which BLEACH 158 and MST 25. FAQ certification stays 0. Push Actions run 40060307791 on `edde298` succeeded at 2026-10-24 11:55–11:56 Asia/Taipei, Node v22.23.3, with the same 2242/2242, 60/60 and 368/700.
 
 Phase 2 battle AI has not started. BLEACH is 118/276 and MST is 55/80.
