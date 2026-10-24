@@ -1082,6 +1082,8 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-2-027","kind":"frontPrintedApBpEach","number":"EX07BT/BLC-2-027","name":"阿散井 恋次","color":"blue","energy":1,"ap":1,"bp":2500,"gen":1,"trigger":"active","type":"character","effect":"己方回合中，己方前線每有 1 個原始 AP 消耗 2 以上的角色，此角色 BP +500。"}
 ,
 {"id":"BLC-4-046","kind":"purpleIchigoBuff","number":"EX15BT/BLC-4-046","name":"井上 織姫","color":"purple","energy":0,"ap":1,"bp":1000,"gen":1,"trigger":"active","type":"character","effect":"登場時：最多選自己場上1個紫色《黑崎一護》，本回合BP+1500。"}
+,
+{"id":"BLC-4-028","kind":"restOnceSelfBp","number":"EX15BT/BLC-4-028","name":"茶渡 泰虎","color":"blue","energy":4,"ap":1,"bp":4000,"gen":1,"trigger":"draw","type":"character","effect":"啟動・主要〔改為Rest／每回合1次〕：此角色到自己下次回合開始前BP+1000。"}
 ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1185,6 +1187,7 @@ export function checkedBleachAddonDefinition(p){
  const isImpactAp=p.kind==='impactPlusPrintedAp';
  const isApEach=p.kind==='frontPrintedApBpEach';
  const isPurpleIchigo=p.kind==='purpleIchigoBuff';
+ const isRestOnceSelf=p.kind==='restOnceSelfBp';
  const isOwnTurnImmune=p.kind==='ownTurnBpImmune';
  const isFrontSolo=p.kind==='aliasFrontSoloBp';
  const isOtherRetireBp=p.kind==='otherOwnRetireThisTurnBp';
@@ -1210,7 +1213,7 @@ export function checkedBleachAddonDefinition(p){
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo;
+ const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1269,6 +1272,7 @@ export function checkedBleachAddonDefinition(p){
    zone:'front',excludeSelf:false,minAp:2},bp:1500}]}:{}),
   ...(isApEach?{passiveBonuses:[{condition:{kind:'ownPrintedApAtLeast',turn:'own',
    zone:'front',excludeSelf:false,minAp:2},bpEach:500}]}:{}),
+  ...(isRestOnceSelf?{mainAbility:{op:'restOnceBuffSelfUntilNextOwnStart',oncePerTurn:true,bp:1000}}:{}),
   ...(isHandOutsideBp?{passiveBonuses:[{condition:{kind:'ownHandToOutsideThisTurn',turn:'any'},bp:500}]}:{}),
   ...(isHandEnergyImmune?{printedHandEnergyDiscount:1,bpDownImmune:true,
    passiveBonuses:[{condition:{kind:'oppCharacterBpAtLeast',turn:'own',zone:'front',minBp:3500},bp:1000}]}:{}),

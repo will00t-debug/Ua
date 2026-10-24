@@ -4061,6 +4061,9 @@ export function legalUniversalActions(pack,s){
    if(ability?.op==='restSelfBuffOther'&&c.ready&&
     field(pl).some(x=>x.uid!==c.uid&&card(pack,x).type==='character'))
     out.push({type:'activate',uid:c.uid,mode:'selfRestBuff'});
+   if(ability?.op==='restOnceBuffSelfUntilNextOwnStart'&&c.ready&&
+    !s.mainAbilityUsedUids.includes(c.uid))
+    out.push({type:'activate',uid:c.uid,mode:'restOnceSelfBuff'});
    if(ability?.op==='payApDrawGainEnergy'&&
     !s.mainAbilityUsedUids.includes(c.uid)&&pl.apCards.some(x=>x.ready))
     out.push({type:'activate',uid:c.uid,mode:'payApDrawEnergy'});
@@ -4110,6 +4113,11 @@ export function legalUniversalActions(pack,s){
    if(ability.op==='restSelfThen'){
     // A READY own FRONT source pays its actual REST cost before any effect.
     if(c.ready)out.push({type:'activate',uid:c.uid,mode:'selfRestThen'});
+    continue;
+   }
+   if(ability.op==='restOnceBuffSelfUntilNextOwnStart'){
+    if(c.ready&&!s.mainAbilityUsedUids.includes(c.uid))
+     out.push({type:'activate',uid:c.uid,mode:'restOnceSelfBuff'});
     continue;
    }
    if(ability.op==='restSelfBuffOther'){
@@ -4537,6 +4545,18 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
      filter:{field:'type',value:'character'},bp:ability.bp,optional:false,excludeSelf:true};
     break;
    }
+   if(ability.op==='restOnceBuffSelfUntilNextOwnStart'){
+    if(action.mode!=='restOnceSelfBuff'||!selected.ready||
+     s.mainAbilityUsedUids.includes(selected.uid))
+     throw Error('Once REST self buff needs a READY unused character');
+    selected.ready=false;
+    s.mainAbilityUsedUids.push(selected.uid);
+    s.effectQueue.push({op:'buffSelfUntilNextOwnStart',bp:ability.bp,owner:p,
+     sourceUid:selected.uid,sourceName:d.name},
+     ...sourceMoveBoundary(pack,s,p,selected.uid));
+    continueEffectQueue(pack,s);
+    break;
+   }
    if(ability.op==='restSelfThen'){
     if(action.mode!=='selfRestThen'||!selected.ready)
      throw Error('REST main action requires READY front character');
@@ -4873,8 +4893,10 @@ export function assertUniversalMatch(pack,s){
    !Number.isInteger(buff.bp)||buff.bp<1||buff.bp>5000||
    Object.keys(buff).length!==2||
    Object.keys(buff).some(k=>!['bp','untilOwnTurnStart'].includes(k))||
-   !card(pack,physical).effects.onPlay?.some(e=>e.op==='chooseOne'&&e.entry==='ownEffect'&&
-    e.options.some(o=>o.then.some(t=>t.op==='buffSelfUntilNextOwnStart'&&t.bp===buff.bp)))))
+   !(card(pack,physical).effects.onPlay?.some(e=>e.op==='chooseOne'&&e.entry==='ownEffect'&&
+    e.options.some(o=>o.then.some(t=>t.op==='buffSelfUntilNextOwnStart'&&t.bp===buff.bp)))||
+    (card(pack,physical).mainAbility?.op==='restOnceBuffSelfUntilNextOwnStart'&&
+     card(pack,physical).mainAbility.bp===buff.bp))))
    throw Error('Forged next-own-start physical BP modifier');
  }
  if(s.pending?.kind==='effect-optional-draw'){

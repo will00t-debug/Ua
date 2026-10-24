@@ -34,7 +34,7 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 //   ACTIVE is generic. Required energy is 紫- (0). Traits are empty.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -45,7 +45,7 @@ function realDeck(required,color){
  return counts;
 }
 const green=realDeck(['BLC-1-080','BLC-1-091','BLC-1-078','BLC-1-070','BLC-4-062','BLC-1-087','BLC-2-067'],'green');
-const blue=realDeck(['BLC-2-041','BLC-2-031','BLC-4-036','BLC-2-026','BLC-2-027','BLC-4-022'],'blue');
+const blue=realDeck(['BLC-2-041','BLC-2-031','BLC-4-036','BLC-2-026','BLC-2-027','BLC-4-022','BLC-4-028'],'blue');
 const purple=realDeck(['BLC-1-062','BLC-1-035','BLC-1-103','BLC-4-046','BLC-1-039'],'purple');
 const yellow=realDeck(['BLC-1-032','BLC-1-023','BLC-1-006'],'yellow');
 function take(s,p,id){
@@ -92,12 +92,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers ten whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,446);
- assert.equal(EXPECTED_V2_COUNTS.bleach,170);
+test('C29 registers eleven whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,447);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,171);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,170);
+ assert.equal(Object.keys(bleach.cards).length,171);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -534,4 +534,40 @@ test('BLC-4-046 may buff one own purple Ichigo',()=>{
  assert.equal(universalBp(packs,buffed,live(buffed,0,front.uid)),3000);
  aiOk(packs,played);
  assert.equal(assertUniversalMatch(packs,buffed),true);
+});
+
+test('BLC-4-028 rests once and keeps BP+1000 until its next own turn starts',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-4-028');
+ assert.equal(printed.effect,'啟動・主要〔改為Rest／每回合1次〕：此角色到自己下次回合開始前BP+1000。');
+ assert.deepEqual(printed.traits,[]);
+ const card=bleach.cards['BLC-4-028'];
+ assert.equal(card.trigger,'draw');
+ assert.equal(card.triggerEffect,null);
+ assert.equal(card.gen,1);
+ assert.deepEqual(card.mainAbility,{op:'restOnceBuffSelfUntilNextOwnStart',oncePerTurn:true,bp:1000});
+ const {packs,s}=main(blue,29028);
+ const energy=put(s,0,'BLC-4-028','energy',0);
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='activate'&&a.uid===energy.uid&&a.mode==='restOnceSelfBuff'),true);
+ let used=dispatchUniversalAction(packs,s,legalUniversalActions(packs,s).find(a=>a.type==='activate'&&a.uid===energy.uid));
+ assert.equal(live(used,0,energy.uid).ready,false);
+ assert.equal(universalBp(packs,used,live(used,0,energy.uid)),5000);
+ live(used,0,energy.uid).ready=true;
+ assert.equal(legalUniversalActions(packs,used).some(a=>a.type==='activate'&&a.uid===energy.uid),false);
+ let later=used;
+ for(let n=0;n<16&&later.active===0;n++)
+  later=dispatchUniversalAction(packs,later,{type:'next'});
+ assert.equal(later.active,1);
+ assert.equal(universalBp(packs,later,live(later,0,energy.uid)),5000);
+ for(let n=0;n<16&&later.active===1;n++)
+  later=dispatchUniversalAction(packs,later,{type:'next'});
+ assert.equal(later.active,0);
+ assert.equal(universalBp(packs,later,live(later,0,energy.uid)),4000);
+ assert.equal(assertUniversalMatch(packs,later),true);
+ const fresh=main(blue,29029);
+ const front=put(fresh.s,0,'BLC-4-028','front',0);
+ assert.equal(legalUniversalActions(fresh.packs,fresh.s).some(a=>a.type==='activate'&&a.uid===front.uid&&a.mode==='restOnceSelfBuff'),true);
+ const fromFront=dispatchUniversalAction(fresh.packs,fresh.s,legalUniversalActions(fresh.packs,fresh.s).find(a=>a.type==='activate'&&a.uid===front.uid));
+ assert.equal(live(fromFront,0,front.uid).ready,false);
+ assert.equal(universalBp(fresh.packs,fromFront,live(fromFront,0,front.uid)),5000);
+ assert.equal(assertUniversalMatch(fresh.packs,fromFront),true);
 });

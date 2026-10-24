@@ -1113,6 +1113,11 @@ function normalize(card,packId){
   integer(mainAbility.extraEnergy,1)&&mainAbility.extraEnergy<=3&&
   Object.keys(mainAbility).length===4&&
   Object.keys(mainAbility).every(k=>['op','oncePerTurn','draw','extraEnergy'].includes(k));
+ const mainRestOnceSelf=mainAbility?.op==='restOnceBuffSelfUntilNextOwnStart'&&
+  mainAbility.oncePerTurn===true&&
+  integer(mainAbility.bp,1)&&mainAbility.bp<=5000&&
+  Object.keys(mainAbility).length===3&&
+  Object.keys(mainAbility).every(k=>['op','oncePerTurn','bp'].includes(k));
  const mainRestFrontEnergy=mainAbility?.op==='restSelfRestFrontGainEnergy'&&
   mainAbility.oncePerTurn===true&&
   integer(mainAbility.extraEnergy,1)&&mainAbility.extraEnergy<=3&&
@@ -1127,7 +1132,7 @@ function normalize(card,packId){
   Object.keys(mainAbility.then[0]).every(k=>['op','count'].includes(k));
  if(mainRestProgram)verifyProgram(mainAbility.then,card.id+'.mainAbility.then');
  if(mainAbility!==null&&
-  (!['character','field'].includes(card.type)||!(fieldDualMain||fieldRestRetireThen||card.type==='character'&&(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainRestBuff||mainRestRetireRecover||mainRestOnceBuffReturn||mainPayAp||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainRestDiscardRetire||mainFrontProgram||mainFieldOnceBuff||mainEntryProtect||mainRestRetireUnder||mainRestTwoMove||mainOncePay))))
+  (!['character','field'].includes(card.type)||!(fieldDualMain||fieldRestRetireThen||card.type==='character'&&(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainRestBuff||mainRestRetireRecover||mainRestOnceBuffReturn||mainRestOnceSelf||mainPayAp||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainRestDiscardRetire||mainFrontProgram||mainFieldOnceBuff||mainEntryProtect||mainRestRetireUnder||mainRestTwoMove||mainOncePay))))
   throw Error(card.id+' unsupported main action ability');
  const passiveBonuses=validatePassiveBonuses(card);
  const implemented=card.implementation;
