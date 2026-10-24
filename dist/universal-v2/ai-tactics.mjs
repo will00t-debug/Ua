@@ -39,7 +39,7 @@ const selected=(ranked,n,packs=null,o=null)=>{
  return out;
 };
 const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
-function stableTransitionRejection(before,after,action,owner){
+export function stableTransitionRejection(before,after,action,owner){
  if(before.rng!==after.rng)return 'rng-changed';
  if(after.active!==owner&&after.pending?.player!==owner)return 'actor-changed';
  if(before.status!=='playing'||before.players.length!==2)return 'initial-match-invalid';
@@ -57,7 +57,18 @@ function stableTransitionRejection(before,after,action,owner){
  // Own hand consumption must be attributable to an actual selected physical
  // card, not an unknown draw, automatic search, or unrevealed consequence.
  const old=before.players[owner].hand.map(c=>c.uid),now=after.players[owner].hand.map(c=>c.uid);
- if(now.some(uid=>!old.includes(uid)))return false;
+ // A new physical UID is exact only when it moved from an observable
+ // OWN public zone. A draw/search from an unknown deck is never a free hand
+ // addition. The deck/LIFE fingerprint checks above guard those sources.
+ const arrivals=after.players[owner].hand.filter(c=>!old.includes(c.uid));
+ for(const card of arrivals){
+  const beforePublic=[...before.players[owner].front,...before.players[owner].energy,
+   ...before.players[owner].outside].filter(Boolean);
+  const afterPublic=[...after.players[owner].front,...after.players[owner].energy,
+   ...after.players[owner].outside].filter(Boolean);
+  if(!beforePublic.some(c=>c.uid===card.uid&&c.cardId===card.cardId)||
+   afterPublic.some(c=>c.uid===card.uid))return 'own-hand-unattributed-arrival';
+ }
  const gone=old.filter(uid=>!now.includes(uid));
  if(gone.length){
   if(gone.length!==1||gone[0]!==action.uid||
@@ -125,63 +136,79 @@ export function evaluateTrustedUniversalAiTactics(packs,state,rootObservation,ra
  record({at:'roots',selected:rootChoices.map(x=>x.action),skipped:ranked.filter(x=>!rootChoices.includes(x)).length,limits});
  // Exclude a root that cannot produce a native deterministic child, rather
  // than inferring the existence of a future card from printed text.
- function follow(current,depth){
-  if(depth<=0||current.phase==='start'||current.phase==='move')return 0;
+ // All native edges use the same metric: marginal observed position.
+ // The action heuristic is only a small root prior (not rewarded at every
+ // exact edge). Unknown transitions abort the whole comparison rather than
+ // being silently compared with fully evaluated branches.
+ const position=o=>evaluateUniversalAiPosition(packs,o);
+ const zero=()=>({value:0,path:[]});
+ function follow(current,depth,path){
+  if(depth<=0)return current.pending?null:zero();
+  // Combat is a heuristic frontier, not a native exact LIFE rollout.
+  if(!current.pending&&current.phase!=='main')return zero();
   const legal=legalUniversalActions(packs,current);
   const o=createUniversalAiObservation(packs,current,legal);
   const rankedNext=rankUniversalAiActions(packs,o,options.ablation);
   const next=selected(rankedNext,limits.children,packs,o);
-  record({at:'follow',phase:current.phase,legal:legal.length,selected:next.map(x=>x.action),
+  record({at:'follow',path,phase:current.phase,pending:current.pending?.kind??null,
+   legal:legal.length,selected:next.map(x=>x.action),
    skipped:rankedNext.filter(x=>!next.includes(x)).length,depth,nodes});
-  let best=0;
+  // Skipping further MAIN actions is allowed: the reducer exposes 'next'.
+  // Pending payments/selections are NOT optional merely because a zero-score
+  // branch would be convenient; a legal 'skip' action is expanded normally.
+  let best=current.pending?null:zero();
   for(const candidate of next){
    if(++nodes>limits.nodes||timeout())return null;
+   const candidatePath=[...path,stableUniversalAiActionKey(candidate.action)];
    if(candidate.action.type==='attack'){
-    // Attack legality is exact, but BLOCK/LIFE outcome is NOT simulated.
     frontiers++;
-    best=Math.max(best,clamp(candidate.score,0,12)*0.65);
+    const value=clamp(candidate.score,-12,12)*0.65;
+    if(!best||value>best.value)best={value,path:[candidate.action]};
     continue;
    }
-   const child=nativeChild(packs,current,candidate.action,actor,record);
+   const child=nativeChild(packs,current,candidate.action,actor,
+    entry=>record({...entry,path:candidatePath}));
    if(!child)continue;
    exactSteps++;
    const childObs=createUniversalAiObservation(packs,child,legalUniversalActions(packs,child));
-   const before=evaluateUniversalAiPosition(packs,o),after=evaluateUniversalAiPosition(packs,childObs);
-   const material=clamp((after-before)*0.26,-5,5);
-   const tail=depth>1?follow(child,depth-1):0;
-   if(tail===null)return null;
-   best=Math.max(best,candidate.score*0.25+material+tail*0.58);
+   const material=clamp((position(childObs)-position(o))*0.85,-12,12);
+   const tail=follow(child,depth-1,candidatePath);
+   // An unresolvable compulsory pending branch cannot be scored as a
+   // free stop. Optional MAIN branches may simply be declined.
+   if(tail===null){if(current.pending)return null;continue;}
+   const value=material+tail.value*0.7;
+   if(!best||value>best.value+1e-9)best={value,path:[candidate.action,...tail.path]};
   }
   return best;
  }
- let bestChoice=ranked[0],bestValue=-Infinity;
+ let bestChoice=null,bestValue=-Infinity,bestPath=[],searchedRoots=0;
  for(const root of rootChoices){
   if(++nodes>limits.nodes||timeout())return fallback('budget-or-emergency-clock',nodes);
-  const child=nativeChild(packs,state,root.action,actor,record);
-  let value=root.score;
-  if(child){
-   exactSteps++;
-   const childObs=createUniversalAiObservation(packs,child,legalUniversalActions(packs,child));
-   const material=clamp((evaluateUniversalAiPosition(packs,childObs)-
-    evaluateUniversalAiPosition(packs,rootObservation))*0.26,-5,5);
-   const continuation=follow(child,limits.depth-1);
-   if(continuation===null)return fallback('budget-or-emergency-clock',nodes);
-   // Native path changes are exact, but the terminal value is heuristic.
-   value+=clamp(material+continuation*0.52,-4,5);
-  }
+  const path=[stableUniversalAiActionKey(root.action)];
+  const child=nativeChild(packs,state,root.action,actor,
+   entry=>record({...entry,path}));
+  // Do not compare an unsearched prior against evaluated native outcomes.
+  if(!child)return fallback('untrusted-root-transition',nodes);
+  exactSteps++;searchedRoots++;
+  const childObs=createUniversalAiObservation(packs,child,legalUniversalActions(packs,child));
+  const material=clamp((position(childObs)-position(rootObservation))*0.85,-12,12);
+  const continuation=follow(child,limits.depth-1,path);
+  if(continuation===null)return fallback('unresolved-or-budget',nodes);
+  const value=root.score*0.15+material+continuation.value*0.75;
+  record({at:'root-score',path,prior:root.score,material,
+   continuation:continuation.value,value});
   if(value>bestValue+1e-9||
-   Math.abs(value-bestValue)<1e-9&&stableUniversalAiActionKey(root.action)<
-    stableUniversalAiActionKey(bestChoice.action)){
+   Math.abs(value-bestValue)<1e-9&&(!bestChoice||
+    stableUniversalAiActionKey(root.action)<stableUniversalAiActionKey(bestChoice.action))){
    bestChoice=root;bestValue=value;
+   bestPath=[root.action,...continuation.path];
   }
  }
  if(timeout())return fallback('emergency-clock',nodes);
- // Unsearched legal roots retain their fully assessed heuristic rankings.
- // A candidate can only displace the full-set heuristic best if its
- // conservative tactical score exceeds that best score.
- if(bestValue<ranked[0].score)bestChoice=ranked[0];
  return {action:bestChoice.action,nodes,fallback:null,exactSteps,
   heuristicFrontiers:frontiers,estimated:true,used:!!exactSteps,
+  searchedRoots,omittedRoots:ranked.length-rootChoices.length,
+  principalVariation:bestPath,
   // No hidden-state or random futures are ever returned to the policy.
-  scope:'native deterministic transitions; heuristic terminal attacks'};
+  scope:'native deterministic MAIN transitions; no hidden combat resolution'};
 }
