@@ -84,6 +84,36 @@ test('FAQ Q570: a REST and cannot-ACTIVE Raid base never locks the newly raided 
  assert.equal(assertUniversalMatch(packs,s),true);
 });
 
+
+test('FAQ Q571: Hitsugaya LIFE Raid during the opponent attack phase expires at THIS attack phase end',()=>{
+ let s=fresh('white-sword','white-sword',5711,0);
+ const attacker=field(s,0,'BLC-1-083','front',0,true);
+ const raidBase=field(s,1,'BLC-1-083','front',0,false);
+ field(s,1,'BLC-3-009','energy',0);
+ field(s,1,'BLC-3-009','energy',1);
+ const raidCard=take(s,1,'BLC-1-085');
+ const displaced=s.players[1].life.shift();
+ s.players[1].deck.push(displaced);
+ s.players[1].life.unshift(raidCard);
+ s=phase(s,'attack');
+ s=legalStep(s,a=>a.type==='attack'&&a.uid===attacker.uid);
+ s=legalStep(s,a=>a.type==='chooseBlock'&&a.uid===null);
+ assert.equal(s.pending?.trigger,'raid');
+ s=legalStep(s,a=>a.type==='chooseTrigger'&&a.mode==='raid'&&
+  a.baseUid===raidBase.uid&&a.line==='front'&&a.slot===0);
+ assert.equal(s.players[1].front[0].uid,raidCard.uid);
+ assert.equal(s.pending?.kind,'effect-rest-lock');
+ s=legalStep(s,a=>a.type==='chooseRestLock'&&a.uid===attacker.uid);
+ assert.equal(s.continuousStates.some(e=>e.kind==='cannotActive'&&
+  e.targetUid===attacker.uid&&e.until.player===0&&e.until.phase==='attack'),true);
+ assert.equal(s.phase,'attack');
+ assert.equal(s.active,0);
+ s=legalStep(s,a=>a.type==='next');
+ assert.equal(s.continuousStates.some(e=>e.kind==='cannotActive'&&e.targetUid===attacker.uid),false,
+  'Q571: lock must not persist into a subsequent attack phase');
+ assert.equal(s.players[0].front[0].ready,true);
+});
+
 test('FAQ Q1053-Q1057: REST Raid top strip keeps REST base, no entry trigger and no inherited top buff',()=>{
  let s=phase(fresh('white-sword','white-sword',10567),'main');
  field(s,0,'BLC-3-009','energy',0);field(s,0,'BLC-3-009','energy',1);
@@ -174,7 +204,11 @@ test('exact 50-card specified decks: both starts and both mirrors, legal seeded 
   ['reject-blue','white-sword',0,2601],
   ['reject-blue','white-sword',1,2602],
   ['reject-blue','reject-blue',0,2603],
-  ['white-sword','white-sword',1,2604]
+  ['white-sword','white-sword',1,2604],
+  ['reject-blue','white-sword',0,2701],
+  ['reject-blue','white-sword',1,2702],
+  ['reject-blue','reject-blue',1,2703],
+  ['white-sword','white-sword',0,2704]
  ];
  for(const [one,two,first,seed] of cases){
   for(const key of [one,two]){
