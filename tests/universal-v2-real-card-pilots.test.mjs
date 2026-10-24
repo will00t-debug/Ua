@@ -411,13 +411,15 @@ test('real BLEACH Getsugatensho 064 main effect requires BP<=3000 unless own Ich
   s=advanceToMain(packs,s);
   assert.equal(universalBp(packs,s,s.players[1].front[0]),4000);
   const effect=legalUniversalActions(packs,s).find(x=>x.type==='event'&&x.uid===card.uid);
-  assert.ok(effect,'energy-4 purple event playable with 2x purple double-generator');
+  if(withIchigo)assert.ok(effect,'energy-4 event and legal named target');
+  else assert.equal(effect,undefined,'Q1119 forbids event without eligible BP<=3000 target');
   return {s,target,effect};
  };
  const notEnough=prepare(false);
- const normal=dispatchUniversalAction(packs,notEnough.s,notEnough.effect,{actor:0});
- assert.equal(normal.pending,null,'BP4000 cannot be selected without Ichigo');
- assert.equal(normal.players[1].front[0].uid,notEnough.target.uid);
+ const noUid=notEnough.s.players[0].hand.find(c=>c.cardId==='BLC-1-064').uid;
+ assert.throws(()=>dispatchUniversalAction(packs,notEnough.s,{type:'event',uid:noUid},{actor:0}),
+  /Action not currently legal/);
+ assert.equal(notEnough.s.players[1].front[0].uid,notEnough.target.uid);
  const withBonus=prepare(true);
  const awaiting=dispatchUniversalAction(packs,withBonus.s,withBonus.effect,{actor:0});
  assert.equal(awaiting.pending?.kind,'effect-retire-bp');
