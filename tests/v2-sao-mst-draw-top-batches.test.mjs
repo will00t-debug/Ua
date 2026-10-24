@@ -277,7 +277,6 @@ test('blocked next-wave cards are source-locked, NOT wrongly registered with par
  assert.deepEqual(pack.cards['SAO-1-031'].effects.onPlay,[{op:'searchTopUpToTwoBottom',count:5,max:2,rest:'bottom',
   filters:[{field:'name',value:'キリト'},{field:'name',value:'アリス'},{field:'name',value:'ユージオ'}],logic:'any'}]);
  const pending=[
-  ['SAO-2-066',/上から2枚見る.*緑の.*1枚まで場外/,pack],
   ['SAO-2-062',/2枚引き.*2枚場外/,pack],
   ['SAO-2-018',/【退場時】.*上から5枚見る/,pack],
   ['SAO-1-081',/自分のターン開始時.*退場/,pack],

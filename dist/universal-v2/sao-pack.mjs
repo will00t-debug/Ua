@@ -116,6 +116,10 @@ const PRINTED_PINS=Object.freeze({
   "color":"blue","energy":3,"ap":1,"bp":3000,"gen":3,"type":"character",
   "trigger":"color","traits":["アインクラッド"],
   "effectJa":"【登場時】自分の場のキャラを1枚まで選び、別のラインに移動させる。"},
+ "SAO-2-066":{"kind":"onPlayTopColorTraitOutside","nameJa":"シノン",
+  "color":"green","energy":0,"ap":1,"bp":1500,"gen":1,"type":"character",
+  "trigger":"draw","traits":["ALO"],
+  "effectJa":"【登場時】自分の山札の上から2枚見る。その中から緑の［特徴：ALO］を1枚まで場外に置く。残りを望む順で自分の山札の上に置く。"},
   "SAO-1-051": {
     "kind": "impactNullOwnTurnHandFiveBp1000",
     "nameJa": "キリト",
@@ -1744,6 +1748,13 @@ export function verifiedSaoV2Cards(){
    card.effects={onPlay:[{op:'recoverOutsideOne',optional:true,logic:'all',
     filters:[{field:'color',value:color},{field:'trait',value:m[2]}]}]};
   }
+  if(pin.kind==='onPlayTopColorTraitOutside'){
+   const m=/^【登場時】自分の山札の上から([2-4])枚見る。その中から([青黄緑紫赤])の［特徴：([^］]{1,40})］を1枚まで場外に置く。残りを望む順で自分の山札の上に置く。$/.exec(pin.effectJa);
+   const color={青:'blue',黄:'yellow',緑:'green',紫:'purple',赤:'red'}[m?.[2]];
+   if(!color)throw Error(id+' is not the printed color-and-trait top outside');
+   card.effects={onPlay:[{op:'inspectTopTraitOutside',count:Number(m[1]),
+    trait:m[3],color,rest:'top'}]};
+  }
   if(pin.kind==='onRetireMillUpTo'){
    const m=/^【退場時】自分の山札の上から([12])枚まで場外に置く。$/.exec(pin.effectJa);
    if(!m)throw Error(id+' is not the printed optional retirement mill');
@@ -1862,6 +1873,7 @@ export function verifiedSaoV2Entries(){
       'onPlayAnyColorHandRestTrait','onPlayRecoverColorTrait','onRetireMillUpTo',
       'onAttackDrawIfSelfBp','onPlayMoveAnyOwnLine']
       .includes(pin.kind)?['tests/v2-c26-five-title-batch.test.mjs']:[]),
+     ...(pin.kind==='onPlayTopColorTraitOutside'?['tests/v2-c27-five-title-batch.test.mjs']:[]),
      ...(pin.kind==='readyOnFirstBlock'?['tests/v2-ready-on-block-round14.test.mjs']:[]),
      ...(pin.kind==='frontOnceBpDown'||pin.kind==='frontOnceDiscardBpDown'?['tests/v2-single-bp-target-round14.test.mjs']:[]),
      ...(pin.kind==='nameAliasDrawDiscard'||pin.kind==='nameAliasOnly'||pin.kind==='nameAliasStep'?['tests/v2-name-alias-round14.test.mjs']:[]),

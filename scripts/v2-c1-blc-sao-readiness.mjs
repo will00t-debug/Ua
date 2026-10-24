@@ -15,9 +15,7 @@ export const C1_OFFICIAL_REVIEWS=Object.freeze({
  'BLC-2-041':{status:'ENGINE BLOCKED',set:'EX07BT',
   missing:'BP while another own character truly retired this turn; the current count includes this physical card'},
  'SAO-2-039':{status:'ENGINE BLOCKED',set:'EX08BT',
-  missing:'this turn BP+1000 after this player has used a 歌 card; event-use is a different ledger'},
- 'SAO-2-066':{status:'ENGINE BLOCKED',set:'EX08BT',
-  missing:'look at top 2, up to one green card with exact trait ALO to outside, order the rest on top'}
+  missing:'this turn BP+1000 after this player has used a 歌 card; event-use is a different ledger'}
 });
 export function c1BlcSaoReadiness(){
  const inv=v2AllTitleInventory(),index=capabilityIndex(inv);

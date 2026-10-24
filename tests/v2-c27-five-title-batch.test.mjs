@@ -84,7 +84,7 @@ function play(s,uid,line='front',slot=0,use=packs){
 }
 
 test('C27 class A registers three SLG prints on existing deck and discount DSL',()=>{
- assert.equal(EXPECTED_V2_TOTAL,432);
+ assert.equal(EXPECTED_V2_TOTAL,433);
  assert.equal(EXPECTED_V2_COUNTS['solo-leveling'],52);
  assert.equal(EXPECTED_V2_COUNTS['gurren-lagann'],39);
  for(const id of ['SLG-1-017','SLG-1-054','SLG-1-063']){
@@ -308,4 +308,62 @@ test('SLG-1-074 gives Impact 1 to at most one other own DFN',()=>{
  assert.equal(universalImpact(packs,s,s.players[0].front[0]),0);
  assert.equal(s.pending,null);
  assert.equal(assertUniversalMatch(packs,s),true);
+});
+
+test('SAO-2-066 sends at most one green ALO from the top two outside',()=>{
+ const sao=registeredV2TitlePack('sword-art-online');
+ const use=[sao,sao];
+ const card=sao.cards['SAO-2-066'];
+ const source=SAO_OFFICIAL_CARDS.find(c=>c.id==='SAO-2-066');
+ assert.equal(source.number,'EX08BT/SAO-2-066');
+ assert.match(source.source,/unionarena-tcg\.com\/jp\/cardlist/);
+ assert.match(source.effectJa,/上から2枚見る。その中から緑の［特徴：ALO］を1枚まで場外/);
+ assert.equal(card.name,'シノン');
+ assert.equal(card.trigger,'draw');
+ assert.equal(card.triggerEffect,null);
+ assert.deepEqual(card.effects.onPlay,[{op:'inspectTopTraitOutside',count:2,
+  trait:'ALO',color:'green',rest:'top'}]);
+ assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],122);
+ assert.equal(EXPECTED_V2_IDS['sword-art-online'].includes('SAO-2-066'),true);
+
+ const counts=deckOf(sao,['SAO-2-066','SAO-1-082','SAO-1-051','SAO-1-092']);
+ let s=toMain(newUniversalMatch(use,{decks:[counts,counts],first:0,seed:2066}),use);
+ const hit=take(s,0,'SAO-1-082'),blue=take(s,0,'SAO-1-051');
+ s.players[0].deck.unshift(hit,blue);
+ const played=hold(s,0,'SAO-2-066');
+ s=play(s,played.uid,'front',0,use);
+ assert.equal(s.pending.kind,'effect-top-trait-outside');
+ assert.equal(s.pending.color,'green');
+ assert.equal(s.pending.trait,'ALO');
+ assert.equal(s.pending.orName,undefined);
+ assert.deepEqual(s.pending.choices,[hit.uid]);
+ assert.deepEqual(universalPublicView(use,s).pending,{kind:'effect-top-trait-outside',player:0});
+ assert.throws(()=>dispatchUniversalAction(use,s,{type:'chooseTopTraitOutside',uid:blue.uid}),
+  /not currently legal/);
+ aiOk(s,use);
+ const skipped=dispatchUniversalAction(use,s,{type:'chooseTopTraitOutside',uid:null});
+ assert.equal(skipped.pending.kind,'effect-top-order');
+ assert.equal(skipped.players[0].outside.some(c=>c.uid===hit.uid),false);
+ s=dispatchUniversalAction(use,s,{type:'chooseTopTraitOutside',uid:hit.uid});
+ assert.ok(s.players[0].outside.some(c=>c.uid===hit.uid));
+ assert.deepEqual(s.pending.uids,[blue.uid]);
+ s=dispatchUniversalAction(use,s,{type:'chooseTopOrder',uid:blue.uid});
+ assert.equal(s.players[0].deck[0].uid,blue.uid);
+ assert.equal(s.pending,null);
+ assert.equal(assertUniversalMatch(use,s),true);
+
+ let miss=toMain(newUniversalMatch(use,{decks:[counts,counts],first:0,seed:2067}),use);
+ const notAlo=take(miss,0,'SAO-1-092'),blueOnly=take(miss,0,'SAO-1-051');
+ miss.players[0].deck.unshift(notAlo,blueOnly);
+ const again=hold(miss,0,'SAO-2-066');
+ miss=play(miss,again.uid,'front',0,use);
+ assert.equal(miss.pending.kind,'effect-top-order');
+ assert.deepEqual([...miss.pending.uids].sort(),[notAlo.uid,blueOnly.uid].sort());
+ assert.equal(miss.players[0].outside.some(c=>c.uid===notAlo.uid||c.uid===blueOnly.uid),false);
+ miss=dispatchUniversalAction(use,miss,{type:'chooseTopOrder',uid:blueOnly.uid});
+ miss=dispatchUniversalAction(use,miss,{type:'chooseTopOrder',uid:notAlo.uid});
+ assert.equal(miss.players[0].deck[0].uid,blueOnly.uid);
+ assert.equal(miss.players[0].deck[1].uid,notAlo.uid);
+ assert.equal(miss.pending,null);
+ assert.equal(assertUniversalMatch(use,miss),true);
 });

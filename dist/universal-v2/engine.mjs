@@ -888,11 +888,17 @@ function continueEffectQueue(pack,s){
     const uids=active?pl.deck.slice(0,job.count).map(c=>c.uid):[];
     if(uids.length){
      const window=pl.deck.slice(0,uids.length);
-     const choices=window.filter(c=>cardHasTrait(card(pack,c),job.trait)||
-      (job.orName&&cardHasName(card(pack,c),job.orName))).map(c=>c.uid);
+     const choices=window.filter(c=>{
+      const printed=card(pack,c);
+      const traitOk=cardHasTrait(printed,job.trait)&&
+       (job.color===undefined||printed.color===job.color);
+      const nameOk=job.orName&&job.color===undefined&&cardHasName(printed,job.orName);
+      return traitOk||nameOk;
+     }).map(c=>c.uid);
      s.pending=choices.length?{kind:'effect-top-trait-outside',player:owner,
       sourceUid:job.sourceUid,uids,choices,trait:job.trait,
-      ...(job.orName?{orName:job.orName}:{})}:
+      ...(job.orName?{orName:job.orName}:{}),
+      ...(job.color?{color:job.color}:{})}:
       {kind:'effect-top-order',player:owner,sourceUid:job.sourceUid,
        uids,order:[],rest:'top'};
     }
@@ -2242,8 +2248,10 @@ function resolveChoice(s,a,pack){
    const printed=card(pack,chosen);
    const named=Array.isArray(q.names)&&printed.type==='character'&&
     printed.color===q.color&&q.names.some(n=>cardHasName(printed,n));
-   if(!chosen||!q.choices.includes(a.uid)||!(named||cardHasTrait(printed,q.trait)||
-     (q.orName&&cardHasName(printed,q.orName))))
+   const traitOk=typeof q.trait==='string'&&cardHasTrait(printed,q.trait)&&
+    (q.color===undefined||printed.color===q.color);
+   const nameOr=q.orName&&q.color===undefined&&cardHasName(printed,q.orName);
+   if(!chosen||!q.choices.includes(a.uid)||!(named||traitOk||nameOr))
     throw Error('Trait top choice is not an inspected exact-token match');
    const index=p.deck.findIndex(c=>c.uid===a.uid);
    if(index<0||index>=q.uids.length)throw Error('Selected card left the top window');
