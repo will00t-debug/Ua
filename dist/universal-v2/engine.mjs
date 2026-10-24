@@ -1018,7 +1018,13 @@ function continueEffectQueue(pack,s){
      ...(job.discardCount>1?{remaining:Math.min(job.discardCount,pl.hand.length)}:{})};
   }else if(job.op==='retireOppFrontUnderBp'){
    const limit=retireOppFrontLimit(pack,s,owner,job);
-   const choices=s.players[1-owner].front.filter(c=>c&&bp(pack,s,c)<=limit).map(c=>c.uid);
+   // Q1206: protected characters are never valid "choose one" targets.
+   // Check payable target surcharges before creating a pending decision.
+   const sourceType=sourceTypeFromUid(pack,s,job.sourceUid);
+   const choices=s.players[1-owner].front.filter(c=>c&&
+    card(pack,c).type==='character'&&bp(pack,s,c)<=limit&&
+    !effectChoiceProtected(s,owner,c.uid,sourceType)&&
+    cardEffectTargetPayable(pack,s,owner,c.uid,0,job.sourceUid,sourceType)).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-retire-bp',player:owner,sourceUid:job.sourceUid,choices,limit};
   }else if(job.op==='conditionalBounceOrRetireByOwnOutsideNames'){
    const choices=s.players[1-owner].front.filter(c=>c&&
@@ -3758,6 +3764,13 @@ function eventMandatoryTargetsAvailable(pack,s,owner,d,reservedAp=d.ap,reservedH
   if(job.op==='conditionalBounceOrRetireByOwnOutsideNames')
    return enemy.front.some(c=>c&&card(pack,c).type==='character'&&
     bp(pack,s,c)<=job.bp&&
+    !effectChoiceProtected(s,owner,c.uid,'event')&&
+    cardEffectTargetPayable(pack,s,owner,c.uid,reservedAp,null,'event',reservedHandUid));
+  // Q1119: the printed "1枚選び" is mandatory even when the DSL omits
+  // optional:false. Named thresholds must be evaluated before using an event.
+  if(job.op==='retireOppFrontUnderBp')
+   return enemy.front.some(c=>c&&card(pack,c).type==='character'&&
+    bp(pack,s,c)<=retireOppFrontLimit(pack,s,owner,job)&&
     !effectChoiceProtected(s,owner,c.uid,'event')&&
     cardEffectTargetPayable(pack,s,owner,c.uid,reservedAp,null,'event',reservedHandUid));
   if(job.optional!==false)return true;
