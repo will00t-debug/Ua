@@ -990,6 +990,10 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-2-039","kind":"onRetireOwnTurnNameRest","number":"EX07BT/BLC-2-039","name":"シャルロッテ・クールホーン","color":"blue","energy":2,"ap":1,"bp":3000,"gen":1,"trigger":"active","type":"character","effect":"退場：若現在是己方回合，可將最多 1 個敵方前線角色轉為 REST。所有〈夏洛特・庫爾霍恩〉的此效果，合計每回合只能發動 1 次。"}
 ,
 {"id":"BLC-2-043","kind":"nameOncePayOutsideRest","number":"EX07BT/BLC-2-043","name":"六車 拳西＆鳳橋 楼十郎","color":"blue","energy":2,"ap":1,"bp":3000,"gen":1,"trigger":"color","type":"character","effect":"登場：可支付 1 AP；成功時可從己方場外將最多 1 張〈六車拳西＆鳳橋樓十郎〉以 REST 登場於己方場上。所有〈六車拳西＆鳳橋樓十郎〉的此效果，合計每回合只能發動 1 次。"}
+,
+{"id":"BLC-1-098","kind":"removeOutsideThen","number":"UA08BT/BLC-1-098","name":"隊葬","color":"green","energy":1,"ap":1,"bp":0,"gen":0,"trigger":"draw","type":"event","effect":"可將己方場外 1 張角色卡除外；成功時抽 2 張。"}
+,
+{"id":"BLC-1-106","kind":"removeOutsideThen","number":"UA08ST/BLC-1-106","name":"朽木 ルキア","color":"purple","energy":4,"ap":2,"bp":4000,"gen":1,"trigger":"get","type":"character","effect":"登場：可將場外 3 張除外；成功時抽 2 張。"}
 ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1064,6 +1068,9 @@ export function checkedBleachAddonDefinition(p){
  const isNameHandDraw=p.kind==='drawIfOwnNameAndHandFewer';
  const isOwnTurnNameRest=p.kind==='onRetireOwnTurnNameRest';
  const isNameOncePayOutside=p.kind==='nameOncePayOutsideRest';
+ const isOutsideRemove=p.kind==='removeOutsideThen';
+ const outsideRemove={'BLC-1-098':{count:1,cardType:'character'},
+  'BLC-1-106':{count:3,cardType:'any'}}[p.id];
  const handName={'BLC-2-004':'ユーハバッハ'}[p.id];
  const outsideRestName={'BLC-2-043':'六車 拳西＆鳳橋 楼十郎'}[p.id];
  const namedActive={'BLC-1-076':'更木 剣八'}[p.id];
@@ -1078,7 +1085,7 @@ export function checkedBleachAddonDefinition(p){
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside;
+ const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1165,6 +1172,9 @@ export function checkedBleachAddonDefinition(p){
    isNameOncePayOutside?{onPlay:[{op:'oncePerTurnGate',scope:'name',optional:true,then:[
     {op:'optionalPayApThen',ap:1,optional:true,then:[
      {op:'deployOutsideNameRest',name:outsideRestName,optional:true}]}]}]}:
+   isOutsideRemove?{onPlay:[{op:'removeOutsideThen',count:outsideRemove.count,
+    optional:true,cardType:outsideRemove.cardType,zone:'outside',controller:'own',
+    then:[{op:'draw',count:2}]}]}:
    isOptionalPeek?{onPlay:[{op:'discardGate',optional:true,then:[
     {op:'peekTopOrBottom'},{op:'draw',count:1}]}]}:
    isStripDual?{onPlay:[{op:'chooseOne',optional:false,options:[
