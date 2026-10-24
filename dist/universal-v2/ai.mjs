@@ -252,9 +252,10 @@ export function chooseUniversalAiAction(pack,s,options={}){
  let candidate;
  if(options.difficulty==='hard'){
   const packs=packsOf(pack),observation=createUniversalAiObservation(pack,s,legal);
-  const ranked=rankUniversalAiActions(packs,observation);
+  const ranked=rankUniversalAiActions(packs,observation,options.ablation);
   const analysis=options.tactical===false?null:
-   evaluateTrustedUniversalAiTactics(packs,s,observation,ranked,options.tacticalLimits);
+   evaluateTrustedUniversalAiTactics(packs,s,observation,ranked,
+    {...options.tacticalLimits,ablation:options.ablation});
   candidate=analysis?.action||ranked[0]?.action;
  }else candidate=chooseBaselineAction(pack,s,options);
  return legal.find(a=>JSON.stringify(a)===JSON.stringify(candidate))||legal[0];
