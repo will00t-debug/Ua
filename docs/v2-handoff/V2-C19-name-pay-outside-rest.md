@@ -23,3 +23,5 @@ A rescan of BLEACH and MST outside REST prints found no other whole card that is
 ## Counts
 
 BLEACH 124/276. MST 56/80. Five titles 375/700. Strict FAQ certification stays 0.
+
+Local Node 22 suite on `f268f41`: 2274/2274, matrix 60/60, manifest bleach 124 / mst 56 / total 375, unported 325. Actions for that commit is recorded separately from this note.
