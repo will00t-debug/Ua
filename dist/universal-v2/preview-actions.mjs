@@ -20,6 +20,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-top-inspect':'查看牌庫頂','effect-top-inspect-many':'任意張卡送場外',
  'effect-top-filter-choice':'查看牌頂，選擇符合特徵的角色／卡','effect-top-trait-outside':'查看牌頂，將符合特徵的卡送場外',
  'effect-top-order':'排列牌庫頂或底','effect-optional-mill':'可將牌庫頂 1 張送場外',
+ 'effect-optional-draw':'攻擊時可抽 0 或 1 張',
  'effect-pay-ap-deploy':'可支付 1 AP，從場外 REST 登場',
  'effect-hand-rest':'從己方手牌免費 REST 登場',
  'effect-bounce-own':'選擇返回手牌的己方角色',
@@ -86,7 +87,9 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'event':return '使用事件：'+name();
   case 'move':return '移至前線 '+(action.slot+1);
   case 'step':return 'STEP 移至能源線 '+(action.slot+1);
-  case 'attack':return '宣告攻擊：'+name();
+  case 'attack':return action.targetUid?
+   '狙擊攻擊：'+name()+' → '+uiCardLabel(pack,state,action.targetUid):
+   '宣告攻擊：'+name();
   case 'activate':return action.mode==='discardSelfBuff'?
     '起動主要：棄一張手牌，本回合自身 BP＋1500（每回合一次）':
     action.mode==='selfRestEnergyRetire'?
@@ -147,6 +150,7 @@ export function uiActionLabel(action,{pack,state}={}){
    return action.uid===null?'結束搜尋':'將 '+name()+' 加入手牌';
   case 'chooseInspectedOutside':return action.uid===null?'完成選擇並排列剩餘牌':'將 '+name()+' 送場外';
   case 'chooseTopTraitOutside':return action.uid===null?'不送場外，排列剩餘牌':'將符合特徵的 '+name()+' 送場外';
+  case 'chooseOptionalDraw':return action.mode==='draw'?'攻擊時抽 1 張':'不抽牌';
   case 'chooseOptionalMill':return action.mode==='mill'?'將牌庫頂 1 張送場外':'不送場外';
   case 'choosePayApDeploy':return action.mode==='pay'?'支付 1 AP，接著選擇場外角色':'不支付 AP';
   case 'chooseHandRest':return action.uid===null?'不特殊登場':'免費 REST 登場 '+name()+suffix();
