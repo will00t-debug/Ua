@@ -141,6 +141,39 @@ test('R57 normal paid play is not own-effect; no bonus or swap is earned',()=>{
  assert.equal(universalBp(both,s,current),4000);
  assert.equal(universalImpact(both,s,current),1);
 });
+test('R57 genuine official 50-card MST paid RAID preserves exact physical base and ignores own-effect-only branch',()=>{
+ const real=mstV2Pack(),realPack=[real,real];
+ const ids=['MST-1-009','MST-1-001','MST-1-002','MST-1-010','MST-1-012',
+  'MST-1-017','MST-1-018','MST-1-019','MST-1-020',
+  'MST-1-022','MST-1-027','MST-1-029','MST-1-047'];
+ const actualDeck=Object.fromEntries(ids.map((id,i)=>[id,i===12?2:4]));
+ assert.deepEqual(validateUniversalDeck(real,actualDeck),[]);
+ let s=newUniversalMatch(realPack,{decks:[actualDeck,actualDeck],first:0,seed:571009});
+ const boss=take(s,0,'MST-1-009'),base=take(s,0,'MST-1-002');
+ base.ready=true;base.fieldEntryStamp=s.nextFieldEntryStamp++;
+ s.players[0].front[0]=base;
+ const energyIds=['MST-1-001','MST-1-002','MST-1-010'];
+ energyIds.forEach((id,i)=>{
+  const energy=take(s,0,id);energy.ready=true;
+  energy.fieldEntryStamp=s.nextFieldEntryStamp++;
+  s.players[0].energy[i]=energy;
+ });
+ s.players[0].hand.push(boss);
+ s=dispatchUniversalAction(realPack,s,{type:'next'});
+ s=dispatchUniversalAction(realPack,s,{type:'next'});
+ const a=legalUniversalActions(realPack,s).find(x=>
+  x.type==='raid'&&x.uid===boss.uid&&x.baseUid===base.uid&&x.line==='front');
+ assert.ok(a,'valid printed Raid must be payable with three blue energy');
+ s=dispatchUniversalAction(realPack,s,a);
+ assert.ok(!s.pending);
+ const top=s.players[0].front.find(c=>c?.uid===boss.uid);
+ assert.ok(top&&top.ready);
+ assert.equal(top.stack.length,1);assert.equal(top.stack[0].uid,base.uid);
+ assert.equal(top.attackEndSwapGranted,undefined);
+ assert.equal(universalBp(realPack,s,top),4000);
+ assert.equal(universalImpact(realPack,s,top),1);
+ assert.equal(assertUniversalMatch(realPack,structuredClone(s)),true);
+});
 test('R57 reject malformed free own-effect branch and forged stamped grant',()=>{
  let {s,target}=scene();
  s=step(s,{type:'chooseEffectMode',mode:'swap'});
