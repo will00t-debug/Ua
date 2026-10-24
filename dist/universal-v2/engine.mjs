@@ -787,9 +787,11 @@ function continueEffectQueue(pack,s){
    else shuffle(s,pl.deck);
   }else if(job.op==='inspectTopArrange'){
    const uids=pl.deck.slice(0,job.count).map(c=>c.uid);
-   if(uids.length)s.pending={kind:job.toOutside?'effect-top-inspect':'effect-top-order',
-    player:owner,sourceUid:job.sourceUid,uids,rest:job.rest,
-    ...(job.toOutside?{}:{order:[]})};
+   if(uids.length)s.pending=job.split===true?
+    {kind:'effect-top-order',player:owner,sourceUid:job.sourceUid,uids,split:true,order:[]}:
+    {kind:job.toOutside?'effect-top-inspect':'effect-top-order',
+     player:owner,sourceUid:job.sourceUid,uids,rest:job.rest,
+     ...(job.toOutside?{}:{order:[]})};
   }else if(job.op==='inspectTopAnyOutside'){
     const uids=pl.deck.slice(0,job.count).map(c=>c.uid);
     if(uids.length)s.pending={kind:'effect-top-inspect-many',player:owner,
@@ -2374,6 +2376,26 @@ function resolveChoice(s,a,pack){
   else{s.pending=null;continueEffectQueue(pack,s);}
   return;
  }
+ if(q.kind==='effect-top-order'&&q.split===true){
+  if(!q.uids.includes(a.uid)||q.order.some(x=>x.uid===a.uid)||
+   (a.place!=='top'&&a.place!=='bottom'))
+   throw Error('Split arrangement must place one remaining card on top or bottom');
+  q.order.push({uid:a.uid,place:a.place});
+  if(q.order.length===q.uids.length){
+   const window=p.deck.splice(0,q.uids.length);
+   if(new Set(window.map(c=>c.uid)).size!==q.uids.length||
+    window.some(c=>!q.uids.includes(c.uid)))
+    throw Error('Inspected deck window was changed');
+   const byUid=new Map(window.map(c=>[c.uid,c]));
+   const placed=side=>q.order.filter(x=>x.place===side).map(x=>byUid.get(x.uid));
+   // First card chosen for a side is the outer card on top, and the inner
+   // card on the bottom, matching the single-side order already used.
+   p.deck.unshift(...placed('top'));
+   p.deck.push(...placed('bottom'));
+   s.pending=null;continueEffectQueue(pack,s);
+  }
+  return;
+ }
  if(q.kind==='effect-top-order'){
   if(!q.uids.includes(a.uid)||q.order.includes(a.uid))
    throw Error('Top arrangement must pick one remaining inspected card');
@@ -3531,6 +3553,13 @@ function legalPending(pack,s){
   {type:'choosePayApDeploy',mode:'skip'},
   {type:'choosePayApDeploy',mode:'pay'}
  ];
+ if(q.kind==='effect-top-order'&&q.split===true){
+  const placed=new Set(q.order.map(x=>x.uid));
+  return q.uids.filter(uid=>!placed.has(uid)).flatMap(uid=>[
+   {type:'chooseTopOrder',uid,place:'top'},
+   {type:'chooseTopOrder',uid,place:'bottom'}
+  ]);
+ }
  if(q.kind==='effect-top-order')return q.uids
   .filter(uid=>!q.order.includes(uid)).map(uid=>({type:'chooseTopOrder',uid}));
  if(q.kind==='effect-bounce-own')return [...(q.optional===true?[null]:[]),...q.choices].map(uid=>({type:'chooseOwnBounce',uid}));

@@ -309,11 +309,16 @@ function verifyProgram(program,path){
     (!integer(e.drawIfOutsideEnergyAtLeast,1)||e.drawIfOutsideEnergyAtLeast>30))||
    Object.keys(e).some(k=>!['op','count','rest','drawIfOutsideEnergyAtLeast'].includes(k))
   ))throw Error(path+'['+i+'] invalid arbitrary top-outside choice');
-  if(e.op==='inspectTopArrange'&&(
-   !integer(e.count,2)||e.count>4||typeof e.toOutside!=='boolean'||
-   !['top','bottom'].includes(e.rest)||
-   Object.keys(e).some(k=>!['op','count','toOutside','rest'].includes(k))
-  ))throw Error(path+'['+i+'] invalid top inspect/arrange');
+  if(e.op==='inspectTopArrange'){
+   // split places each inspected card on top or bottom. Absent split keeps
+   // the whole window on one printed side.
+   const split=e.split===true&&e.count===2&&Object.keys(e).length===3&&
+    Object.keys(e).every(k=>['op','count','split'].includes(k));
+   const whole=integer(e.count,2)&&e.count<=4&&typeof e.toOutside==='boolean'&&
+    ['top','bottom'].includes(e.rest)&&e.split===undefined&&
+    Object.keys(e).every(k=>['op','count','toOutside','rest'].includes(k));
+   if(!(split||whole))throw Error(path+'['+i+'] invalid top inspect/arrange');
+  }
   if(e.op==='searchTopOneBottomDiscard'){
    const isFilter=f=>f&&typeof f==='object'&&!Array.isArray(f)&&
     Object.keys(f).length===2&&(

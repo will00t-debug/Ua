@@ -41,7 +41,7 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 //   same look-3 with 〈バズビー〉か〈ユーグラム・ハッシュヴァルト〉. DRAW is generic. Gen alt is 黄.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -112,12 +112,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers twenty-one whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,457);
- assert.equal(EXPECTED_V2_COUNTS.bleach,181);
+test('C29 registers twenty-two whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,458);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,182);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,181);
+ assert.equal(Object.keys(bleach.cards).length,182);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -1034,4 +1034,71 @@ test('BLC-1-108 rests, retires itself, draws two, then puts one hand card outsid
  assert.equal(legalUniversalActions(quiet.packs,quiet.s).some(a=>a.type==='activate'&&a.uid===asleep.uid),false);
  aiOk(packs,used);
  assert.equal(assertUniversalMatch(packs,done),true);
+});
+
+test('BLC-3-010 places each of the top two on the top or the bottom',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-3-010');
+ assert.equal(printed.effect,'【登場時】查看自己牌庫上方 2 張牌。將這些卡片依任意張數與任意順序，分別放到牌庫頂與牌庫底。');
+ assert.deepEqual(printed.traits,['護廷十三隊']);
+ const card=bleach.cards['BLC-3-010'];
+ assert.equal(card.trigger,'draw');
+ assert.equal(card.triggerEffect,null);
+ assert.deepEqual(card.effects.onPlay,[{op:'inspectTopArrange',count:2,split:true}]);
+ const hirako=realDeck(['BLC-3-010','BLC-1-080','BLC-1-078','BLC-1-070','BLC-4-062','BLC-1-087','BLC-2-067','BLC-3-007','BLC-4-060','BLC-4-061','BLC-2-072','BLC-1-083','BLC-1-079'],'green');
+ const {packs,s}=main(hirako,29010);
+ put(s,0,'BLC-1-080','energy',0);
+ const [first,second]=setTop(s,0,['BLC-1-078','BLC-4-062']);
+ const under=s.players[0].deck[2];
+ const self=take(s,0,'BLC-3-010');
+ s.players[0].hand.push(self);
+ const play=legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===self.uid&&a.line==='front');
+ assert.ok(play);
+ const played=dispatchUniversalAction(packs,s,play);
+ assert.equal(played.pending.kind,'effect-top-order');
+ assert.equal(played.pending.split,true);
+ const choices=legalUniversalActions(packs,played);
+ assert.equal(choices.some(a=>a.uid===null),false);
+ assert.equal(choices.filter(a=>a.uid===first.uid).map(a=>a.place).sort().join(','),'bottom,top');
+ assert.equal(choices.some(a=>a.place===undefined),false);
+ const bottom=choices.find(a=>a.uid===first.uid&&a.place==='bottom');
+ const afterBottom=dispatchUniversalAction(packs,played,bottom);
+ const top=legalUniversalActions(packs,afterBottom).find(a=>a.uid===second.uid&&a.place==='top');
+ const split=dispatchUniversalAction(packs,afterBottom,top);
+ assert.equal(split.pending,null);
+ assert.equal(split.players[0].deck[0].uid,second.uid);
+ assert.equal(split.players[0].deck.at(-1).uid,first.uid);
+ assert.equal(split.players[0].deck[1].uid,under.uid);
+ const both=main(hirako,29011);
+ put(both.s,0,'BLC-1-080','energy',0);
+ const [alpha,beta]=setTop(both.s,0,['BLC-1-070','BLC-2-072']);
+ const again=take(both.s,0,'BLC-3-010');
+ both.s.players[0].hand.push(again);
+ const opened=dispatchUniversalAction(both.packs,both.s,legalUniversalActions(both.packs,both.s).find(a=>a.type==='play'&&a.uid===again.uid&&a.line==='front'));
+ const firstTop=legalUniversalActions(both.packs,opened).find(a=>a.uid===alpha.uid&&a.place==='top');
+ const mid=dispatchUniversalAction(both.packs,opened,firstTop);
+ const secondTop=legalUniversalActions(both.packs,mid).find(a=>a.uid===beta.uid&&a.place==='top');
+ const stacked=dispatchUniversalAction(both.packs,mid,secondTop);
+ assert.equal(stacked.players[0].deck[0].uid,alpha.uid);
+ assert.equal(stacked.players[0].deck[1].uid,beta.uid);
+ const short=main(hirako,29012);
+ put(short.s,0,'BLC-1-080','energy',0);
+ const only=setTop(short.s,0,['BLC-4-060'])[0];
+ short.s.players[0].outside.push(...short.s.players[0].deck.splice(1));
+ const lone=take(short.s,0,'BLC-3-010');
+ short.s.players[0].hand.push(lone);
+ const one=dispatchUniversalAction(short.packs,short.s,legalUniversalActions(short.packs,short.s).find(a=>a.type==='play'&&a.uid===lone.uid&&a.line==='front'));
+ assert.equal(one.pending.uids.length,1);
+ const placed=dispatchUniversalAction(short.packs,one,legalUniversalActions(short.packs,one).find(a=>a.uid===only.uid&&a.place==='bottom'));
+ assert.equal(placed.players[0].deck.at(-1).uid,only.uid);
+ const bare=main(hirako,29013);
+ put(bare.s,0,'BLC-1-080','energy',0);
+ bare.s.players[0].outside.push(...bare.s.players[0].deck.splice(0));
+ const emptyHand=take(bare.s,0,'BLC-3-010');
+ bare.s.players[0].hand.push(emptyHand);
+ const quiet=dispatchUniversalAction(bare.packs,bare.s,legalUniversalActions(bare.packs,bare.s).find(a=>a.type==='play'&&a.uid===emptyHand.uid&&a.line==='front'));
+ assert.equal(quiet.pending,null);
+ assert.equal(quiet.players[0].front.some(c=>c?.uid===emptyHand.uid),true);
+ aiOk(packs,played);
+ assert.equal(assertUniversalMatch(packs,split),true);
+ assert.equal(assertUniversalMatch(both.packs,stacked),true);
 });
