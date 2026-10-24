@@ -1,5 +1,6 @@
 import {createUniversalAiObservation} from './ai-observation.mjs';
-import {chooseStrategicUniversalAction} from './ai-strategy.mjs';
+import {rankUniversalAiActions} from './ai-strategy.mjs';
+import {evaluateTrustedUniversalAiTactics} from './ai-tactics.mjs';
 // Cross-title Universal v2 AI baseline. Uses only the native legal-action
 // list; no work-specific card-ID shortcuts and no mutation of match state.
 import {legalUniversalActions,universalBp,universalEnergy,universalEnergyByColor,universalCardEnergy} from './engine.mjs';
@@ -248,6 +249,13 @@ export function chooseUniversalAiAction(pack,s,options={}){
  const legal=legalUniversalActions(pack,s);
  if(!legal.length)return null;
  if(options.difficulty&&!UNIVERSAL_AI_LEVELS.includes(options.difficulty))throw Error('Unknown universal AI difficulty');
- const candidate=options.difficulty==='hard'?chooseStrategicUniversalAction(packsOf(pack),createUniversalAiObservation(pack,s,legal)):chooseBaselineAction(pack,s,options);
+ let candidate;
+ if(options.difficulty==='hard'){
+  const packs=packsOf(pack),observation=createUniversalAiObservation(pack,s,legal);
+  const ranked=rankUniversalAiActions(packs,observation);
+  const analysis=options.tactical===false?null:
+   evaluateTrustedUniversalAiTactics(packs,s,observation,ranked,options.tacticalLimits);
+  candidate=analysis?.action||ranked[0]?.action;
+ }else candidate=chooseBaselineAction(pack,s,options);
  return legal.find(a=>JSON.stringify(a)===JSON.stringify(candidate))||legal[0];
 }
