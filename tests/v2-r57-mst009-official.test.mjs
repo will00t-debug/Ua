@@ -14,7 +14,10 @@ const provider={id:'provider',name:'provider',type:'event',color:'blue',energy:0
  ap:1,bp:0,gen:0,traits:[],trigger:null,implementation:'dsl',
  effects:{onPlay:[{op:'deployNamedFromZones',name:'エリス',
  zones:['outside'],line:'front',ready:true,optional:true}]}};
-const cards=[m,basic('eris-base','エリス'),basic('blocker','阻擋者',2500),provider,
+const mstRaw={id:'MST-1-009',name:'エリス',color:'blue',type:'character',
+ energy:3,ap:1,bp:3500,gen:1,traits:[],trigger:'raid',implementation:'dsl',
+ raidName:'エリス',printedImpact:1,ownTurnBp:500,effects:m.effects};
+const cards=[mstRaw,basic('eris-base','エリス'),basic('blocker','阻擋者',2500),provider,
  ...Array.from({length:9},(_,i)=>basic('filler'+i))];
 const pack=createUniversalPack({id:'r57-mst009-physical',cards}),both=[pack,pack];
 const deck=Object.fromEntries(cards.map((c,i)=>[c.id,i===12?2:4]));
@@ -145,10 +148,10 @@ test('R57 reject malformed free own-effect branch and forged stamped grant',()=>
  forged.players[0].front.find(c=>c?.uid===target.uid).attackEndSwapGranted.stamp=999999;
  assert.throws(()=>assertUniversalMatch(both,forged));
  for(const wrong of [
-  {...m,effects:{onPlay:[{...m.effects.onPlay[0],entry:'paidRaid'}]}},
-  {...m,effects:{onPlay:[{...m.effects.onPlay[0],options:[
+  {...mstRaw,effects:{onPlay:[{...m.effects.onPlay[0],entry:'paidRaid'}]}},
+  {...mstRaw,effects:{onPlay:[{...m.effects.onPlay[0],options:[
    {...m.effects.onPlay[0].options[0],then:[{op:'buffSelfUntilNextOwnStart',bp:-1}]},
    m.effects.onPlay[0].options[1]]}]}},
-  {...m,effects:{onPlay:[{op:'grantSelfAttackEndSwapThisTurn'}]}}
+  {...mstRaw,effects:{onPlay:[{op:'grantSelfAttackEndSwapThisTurn'}]}}
  ])assert.throws(()=>createUniversalPack({id:'invalid',cards:[wrong]}));
 });
