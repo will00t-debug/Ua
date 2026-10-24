@@ -93,3 +93,17 @@ test('R55 source-stamped grants fail closed for arbitrary cards and wrong schema
  actor.sniperGranted={turn:forged.turn,stamp:99999};
  assert.throws(()=>assertUniversalMatch(both,forged));
 });
+
+test('R55 Q2295 ordinary BLOCK at equal BP earns self battle victory draw once',()=>{
+ let {s,attacker,target}=scene('equal');
+ const hand=s.players[0].hand.length;
+ s=use(s,{type:'attack',uid:attacker.uid});
+ assert.equal(s.pending?.kind,'block');
+ const options=legalUniversalActions(both,s);
+ assert.ok(options.some(x=>x.type==='chooseBlock'&&x.uid===target.uid));
+ s=use(s,{type:'chooseBlock',uid:target.uid});
+ assert.equal(s.players[0].hand.length,hand+1);
+ assert.ok(s.players[1].outside.some(x=>x.uid===target.uid));
+ assert.equal(s.blocksByUid[target.uid],1);
+ assert.equal(assertUniversalMatch(both,s),true);
+});

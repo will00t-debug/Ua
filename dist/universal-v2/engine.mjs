@@ -1517,7 +1517,10 @@ function resolveChoice(s,a,pack){
    grantBattleWinToOtherOwn(pack,s,s.active,attacker,'attacker');
    const impact=impactOnBattleWin(pack,s,attacker)>0&&
     !card(pack,blocker).impactNull;
+   const earnedSelfDraw=hasCurrentBattleGrant(s,attacker,'attackWinDrawGranted');
    const replacement=retire(pack,s,q.player,'front',slot,{postImpact:impact});
+   if(earnedSelfDraw)s.effectQueue.splice(retirementJobsInserted,0,
+    {op:'draw',owner:s.active,count:1,sourceUid:attacker.uid});
    if(impact&&!replacement)queueImpactAfterRetirement(pack,s,q.player);
   }else{
    // Only strict defender BP > attacker BP earns the defender's victory.
