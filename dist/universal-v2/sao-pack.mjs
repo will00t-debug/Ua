@@ -116,6 +116,14 @@ const PRINTED_PINS=Object.freeze({
   "color":"blue","energy":3,"ap":1,"bp":3000,"gen":3,"type":"character",
   "trigger":"color","traits":["アインクラッド"],
   "effectJa":"【登場時】自分の場のキャラを1枚まで選び、別のラインに移動させる。"},
+ // Generated energy is two yellow pips. ico_resource_energy_yellow3.png is a
+ // sprite index (alt 黄黄). Required energy stays 3. COLOR rests one opposing
+ // front character and skips its next ACTIVE. Q750: life zero is checked
+ // after this on-play effect, including the contingent draw, has finished.
+ "SAO-1-021":{"kind":"onPlayOptionalLifeToHandDraw","nameJa":"アスナ（創世神ステイシア）",
+  "color":"yellow","energy":3,"ap":1,"bp":3000,"gen":2,"type":"character",
+  "trigger":"color","traits":["女神"],
+  "effectJa":"【登場時】自分のライフエリアにあるカードを1枚手札に加えてもよい。そうした場合、カードを1枚引く。"},
  "SAO-2-066":{"kind":"onPlayTopColorTraitOutside","nameJa":"シノン",
   "color":"green","energy":0,"ap":1,"bp":1500,"gen":1,"type":"character",
   "trigger":"draw","traits":["ALO"],
@@ -1748,6 +1756,12 @@ export function verifiedSaoV2Cards(){
    card.effects={onPlay:[{op:'recoverOutsideOne',optional:true,logic:'all',
     filters:[{field:'color',value:color},{field:'trait',value:m[2]}]}]};
   }
+  if(pin.kind==='onPlayOptionalLifeToHandDraw'){
+   if(pin.effectJa!=='【登場時】自分のライフエリアにあるカードを1枚手札に加えてもよい。そうした場合、カードを1枚引く。')
+    throw Error(id+' is not the printed optional life-to-hand draw');
+   card.effects={onPlay:[{op:'optionalOwnLifeToHandThenDraw',then:[{op:'draw',count:1}]}]};
+   card.triggerEffect={op:'restOppFrontSkipNextActive'};
+  }
   if(pin.kind==='onPlayTopColorTraitOutside'){
    const m=/^【登場時】自分の山札の上から([2-4])枚見る。その中から([青黄緑紫赤])の［特徴：([^］]{1,40})］を1枚まで場外に置く。残りを望む順で自分の山札の上に置く。$/.exec(pin.effectJa);
    const color={青:'blue',黄:'yellow',緑:'green',紫:'purple',赤:'red'}[m?.[2]];
@@ -1874,6 +1888,7 @@ export function verifiedSaoV2Entries(){
       'onAttackDrawIfSelfBp','onPlayMoveAnyOwnLine']
       .includes(pin.kind)?['tests/v2-c26-five-title-batch.test.mjs']:[]),
      ...(pin.kind==='onPlayTopColorTraitOutside'?['tests/v2-c27-five-title-batch.test.mjs']:[]),
+     ...(pin.kind==='onPlayOptionalLifeToHandDraw'?['tests/v2-c28-catalog-port.test.mjs']:[]),
      ...(pin.kind==='readyOnFirstBlock'?['tests/v2-ready-on-block-round14.test.mjs']:[]),
      ...(pin.kind==='frontOnceBpDown'||pin.kind==='frontOnceDiscardBpDown'?['tests/v2-single-bp-target-round14.test.mjs']:[]),
      ...(pin.kind==='nameAliasDrawDiscard'||pin.kind==='nameAliasOnly'||pin.kind==='nameAliasStep'?['tests/v2-name-alias-round14.test.mjs']:[]),
