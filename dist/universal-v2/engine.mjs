@@ -558,13 +558,17 @@ function continueEffectQueue(pack,s){
      sourceUid:job.sourceUid};
    }else for(let i=0;i<job.count&&pl.deck.length;i++)moveOwnedLinear(pack,s,{
     owner,from:'deck',to:'outside',index:0,reason:'own-effect',sourceUid:job.sourceUid});
-  }else if(job.op==='grantSelfSniperThisTurn'||job.op==='grantSelfAttackWinDrawThisTurn'){
+  }else if(job.op==='grantSelfSniperThisTurn'||job.op==='grantSelfAttackWinDrawThisTurn'||
+   job.op==='grantSelfMustBlockThisTurn'){
+   if(job.op==='grantSelfMustBlockThisTurn'&&
+    !OWN_EFFECT_ENTRY.has(job.entryCause))continue;
    const loc=location(s,owner,job.sourceUid);
    if(!loc||card(pack,loc.c).type!=='character'||
     !Number.isInteger(loc.c.fieldEntryStamp)||loc.c.fieldEntryStamp<1||
     originalEffectsDisabled(s,loc.c))
     throw Error('Timed battle grant requires own live character entry');
-   const key=job.op==='grantSelfSniperThisTurn'?'sniperGranted':'attackWinDrawGranted';
+   const key=job.op==='grantSelfSniperThisTurn'?'sniperGranted':
+    job.op==='grantSelfMustBlockThisTurn'?'mustBlockGranted':'attackWinDrawGranted';
    loc.c[key]={turn:s.turn,stamp:loc.c.fieldEntryStamp};
   }else if(job.op==='grantOnAttack'){
    const source=location(s,owner,job.sourceUid);
@@ -2582,10 +2586,14 @@ function legalPending(pack,s){
     x=>card(pack,x)));
   const canBlock=c=>!applies||!(rule.relation==='atLeast'
    ?bp(pack,s,c)>=rule.bp:bp(pack,s,c)<=rule.bp);
+  const candidates=p.front.filter(c=>c?.ready&&canBlock(c));
+  // Official mandatory BLOCK: only after a valid own-effect-entry grant,
+  // and only if an otherwise legal ACTIVE blocker exists. SNIPER bypasses
+  // this entire pending BLOCK window, as required by Q65-Q70.
+  const forced=hasCurrentBattleGrant(s,attacker,'mustBlockGranted');
   return [
-   {type:'chooseBlock',uid:null},
-   ...p.front.filter(c=>c?.ready&&canBlock(c))
-    .map(c=>({type:'chooseBlock',uid:c.uid}))
+   ...(!forced||!candidates.length?[{type:'chooseBlock',uid:null}]:[]),
+   ...candidates.map(c=>({type:'chooseBlock',uid:c.uid}))
   ];
  }
  if(q.kind==='leave-replacement'){
@@ -3662,7 +3670,8 @@ export function assertUniversalMatch(pack,s){
    throw Error('Invalid per-card block count');
  for(let owner=0;owner<2;owner++)for(const physical of field(s.players[owner]))
   for(const [key,op] of [['sniperGranted','grantSelfSniperThisTurn'],
-   ['attackWinDrawGranted','grantSelfAttackWinDrawThisTurn']]){
+   ['attackWinDrawGranted','grantSelfAttackWinDrawThisTurn'],
+   ['mustBlockGranted','grantSelfMustBlockThisTurn']]){
    const g=physical[key];
    if(g===undefined)continue;
    if(!g||typeof g!=='object'||Array.isArray(g)||
@@ -4054,7 +4063,7 @@ export function assertUniversalMatch(pack,s){
    typeof e.key!=='string'||!Array.isArray(e.jobs))))
   throw Error('Invalid retirement order');
  if(!Array.isArray(s.effectQueue)||[...s.effectQueue,...lifeEntries.flatMap(e=>e.jobs)].some(e=>!playerIndex(e.owner)||
-   !['grantedAttackDraw','grantOnAttack','grantSelfSniperThisTurn','grantSelfAttackWinDrawThisTurn','draw','drawIfOwnName','drawIfOwnOutsideNamedCountAtLeast','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','millTop','buffSelf','buffSelfPerOwnOutsideGroups','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','conditionalBounceOrRetireByOwnOutsideNames','completeResolvingEvent','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','forbidAttackOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopUpToTwoBottom','deployOwnHandRest','deployOwnHandSpecial','optionalRetireThenProgram','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
+   !['grantedAttackDraw','grantOnAttack','grantSelfSniperThisTurn','grantSelfAttackWinDrawThisTurn','grantSelfMustBlockThisTurn','draw','drawIfOwnName','drawIfOwnOutsideNamedCountAtLeast','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','millTop','buffSelf','buffSelfPerOwnOutsideGroups','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','conditionalBounceOrRetireByOwnOutsideNames','completeResolvingEvent','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','forbidAttackOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopUpToTwoBottom','deployOwnHandRest','deployOwnHandSpecial','optionalRetireThenProgram','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
     'discardGate','enemyFrontAllBpDown','retireOppFrontAllUnderBp',
     'nextEligibleHandPlayApDiscount','grantFrontEnergyOwnOtherFrontTrait','buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
     'recoverOutsideColorUnderEnergy','deployOutsideRest','deployOutsideNameRest','deployNamedFromZones','payApDeployNamedRest','inspectTopTraitOutside','deployOutsideTraitlessRestOrRaid','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','retireSourceOnPhaseEnd','moveAtMainEnd','retireOwnFieldOne','retireOwnCharacterOne','openBlock','resolveSniperBattle','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','resolveAttackEndSwap','phaseOrder','effectMoveOrder','restSelfTuckMovedFaceDown','sourceResolutionBoundary','lifeBatchStep','lifeRelease','advanceAfterAttack','additionalBattleDamage','openRetirementBatch','closeRetirementBatch','retirementOrder','battleImpactDamage','discardOppHand','activeSelfIf'].includes(e.op)))
