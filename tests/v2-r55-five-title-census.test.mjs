@@ -17,8 +17,7 @@ test('R55 same authoritative registry scans ALL five unported title identities, 
  for(const id of ['BLC-4-044','SLG-1-022','SAO-1-097'])
   assert.ok(focus.some(x=>x.id===id&&x.status==='REVIEW PENDING'));
  assert.ok(focus.some(f=>f.id==='SLG-1-021'&&f.status==='REGISTERED'));
- for(const id of ['MST-1-009'])
-  assert.ok(focus.some(x=>x.id===id&&x.status==='PARTIAL'));
+ assert.ok(focus.some(x=>x.id==='MST-1-009'&&x.status==='REGISTERED'));
  for(const candidates of Object.values(searchGroups)){
   assert.equal(candidates.length,new Set(candidates.map(x=>x.id)).size);
   assert.ok(candidates.every(x=>rest.has(x.id)&&x.status==='REVIEW PENDING'));
