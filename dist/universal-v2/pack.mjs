@@ -96,8 +96,9 @@ function verifyProgram(program,path){
    !Array.isArray(e.names)||e.names.length<1||e.names.length>8||
    e.names.some(n=>typeof n!=='string'||!n.trim()||n.length>80)||
    new Set(e.names).size!==e.names.length||
-   Object.keys(e).length!==4||
-   Object.keys(e).some(k=>!['op','min','count','names'].includes(k))
+   (e.optional!==undefined&&(e.optional!==true||e.count!==1))||
+   Object.keys(e).length!==(e.optional===true?5:4)||
+   Object.keys(e).some(k=>!['op','min','count','names','optional'].includes(k))
   ))throw Error(path+'['+i+'] invalid named outside conditional draw');
   if(e.op==='drawIfOwnTraitCount'&&(
    typeof e.trait!=='string'||!e.trait.trim()||
@@ -1025,6 +1026,9 @@ function normalize(card,packId){
    Object.keys(program[0]).length!==2||
    Object.keys(program[0]).some(k=>!['op','count'].includes(k))
   ))throw Error(card.id+' unsupported onOutsideRecover ability program');
+  if(program.some(e=>e.op==='drawIfOwnOutsideNamedCountAtLeast'&&e.optional===true)&&
+   (name!=='onAttack'||card.type!=='character'))
+   throw Error(card.id+' optional named OUTSIDE draw requires onAttack CHARACTER');
   if(name==='onAttack'&&card.type!=='character')throw Error(card.id+' noncharacter cannot attack');
   if(card.type==='event'&&program.some(e=>e.op==='buffSelf'))
    throw Error(card.id+' event cannot buff itself on field');

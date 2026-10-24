@@ -514,8 +514,17 @@ function continueEffectQueue(pack,s){
    // credit for hand/removed/RAID underlayers/opponent cards.
    const q={kind:'ownOutsideNamedCountAtLeast',turn:'any',
     min:job.min,names:job.names};
-   if(matchesV2LiveCondition(s,owner,job.sourceUid,q,x=>card(pack,x)))
-    draw(pack,s,owner,job.count,{reason:'own-effect',sourceUid:job.sourceUid});
+   if(matchesV2LiveCondition(s,owner,job.sourceUid,q,x=>card(pack,x))){
+    if(job.optional===true){
+     const source=location(s,owner,job.sourceUid);
+     if(job.count!==1||!source||source.line!=='front'||
+      !Number.isInteger(source.c.fieldEntryStamp)||
+      !(s.attacksByUid[job.sourceUid]>=1)||s.active!==owner||s.phase!=='attack')
+      throw Error('Unproven optional onAttack draw source');
+     if(pl.deck.length)s.pending={kind:'effect-optional-draw',player:owner,
+      sourceUid:job.sourceUid,sourceStamp:source.c.fieldEntryStamp};
+    }else draw(pack,s,owner,job.count,{reason:'own-effect',sourceUid:job.sourceUid});
+   }
   }
   else if(job.op==='drawIfOwnTraitCount'){
    // The source has already entered the field when onPlay resolves. Count
@@ -1670,6 +1679,13 @@ function resolveChoice(s,a,pack){
   else{s.pending=null;continueEffectQueue(pack,s);}
   return;
  }
+ if(q.kind==='effect-optional-draw'){
+  if(a.mode==='draw'){
+   if(!p.deck.length)throw Error('Optional draw has no deck card');
+   draw(pack,s,q.player,1,{reason:'own-effect',sourceUid:q.sourceUid});
+  }else if(a.mode!=='skip')throw Error('Invalid optional draw');
+  s.pending=null;continueEffectQueue(pack,s);return;
+ }
  if(q.kind==='effect-optional-mill'){
   if(a.mode==='mill'){
    if(!p.deck.length)throw Error('Optional mill has no deck card');
@@ -2568,6 +2584,10 @@ function legalPending(pack,s){
  if(q.kind==='effect-top-trait-outside')return [
   {type:'chooseTopTraitOutside',uid:null},
   ...q.choices.map(uid=>({type:'chooseTopTraitOutside',uid}))
+ ];
+ if(q.kind==='effect-optional-draw')return [
+  {type:'chooseOptionalDraw',mode:'skip'},
+  ...(p.deck.length?[{type:'chooseOptionalDraw',mode:'draw'}]:[])
  ];
  if(q.kind==='effect-optional-mill')return [
   {type:'chooseOptionalMill',mode:'skip'},
@@ -3503,7 +3523,7 @@ export function assertUniversalMatch(pack,s){
    !Array.isArray(s.initialCounts)||s.initialCounts.length!==2||
    s.players?.length!==2||!playerIndex(s.active)||
    !['playing','finished'].includes(s.status))throw Error('Incorrect pack/version or match state');
- if(s.pending&&(!playerIndex(s.pending.player)||!['phase-order','retirement-order','effect-move-order','effect-rest-tuck','effect-tuck-moved','block','life-batch-order','life-trigger','effect-target','effect-target-many','effect-grant-attack','granted-attack-draw','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-named-outside-bounce-retire','effect-strip-raid-top','effect-retire-own-field','effect-retire-own-character','main-field-trait-retire','effect-rest-bp','effect-attack-ban','effect-own-front-protect','effect-grant-ap-tax','effect-grant-front-energy','raid-effect-order','effect-buff-trait','effect-buff-own','effect-once-choice','main-two-buff','main-discard-buff','main-discard-self-retire','main-rest-front-energy','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-filter-many-choice','effect-top-order','effect-recover-outside','effect-outside-rest','effect-outside-name-rest','effect-outside-traitless-rest','effect-named-zone-entry','effect-hand-rest','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-selection-hand-payment','attack-end-swap','effect-choice-mode','recovered-self-entry','effect-optional-mill','effect-pay-ap-deploy','effect-top-trait-outside'].includes(s.pending.kind)))
+ if(s.pending&&(!playerIndex(s.pending.player)||!['phase-order','retirement-order','effect-move-order','effect-rest-tuck','effect-tuck-moved','block','life-batch-order','life-trigger','effect-target','effect-target-many','effect-grant-attack','granted-attack-draw','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-named-outside-bounce-retire','effect-optional-draw','effect-strip-raid-top','effect-retire-own-field','effect-retire-own-character','main-field-trait-retire','effect-rest-bp','effect-attack-ban','effect-own-front-protect','effect-grant-ap-tax','effect-grant-front-energy','raid-effect-order','effect-buff-trait','effect-buff-own','effect-once-choice','main-two-buff','main-discard-buff','main-discard-self-retire','main-rest-front-energy','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-filter-many-choice','effect-top-order','effect-recover-outside','effect-outside-rest','effect-outside-name-rest','effect-outside-traitless-rest','effect-named-zone-entry','effect-hand-rest','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-selection-hand-payment','attack-end-swap','effect-choice-mode','recovered-self-entry','effect-optional-mill','effect-pay-ap-deploy','effect-top-trait-outside'].includes(s.pending.kind)))
   throw Error('Invalid pending controller');
  if(!Array.isArray(s.raidedThisTurn)||s.raidedThisTurn.length!==2||
    s.raidedThisTurn.some(x=>typeof x!=='boolean')||
@@ -3573,6 +3593,20 @@ export function assertUniversalMatch(pack,s){
  for(const [uid,n] of Object.entries(s.blocksByUid))
   if(typeof uid!=='string'||!uid.includes('-')||!Number.isInteger(n)||n<1||n>50)
    throw Error('Invalid per-card block count');
+ if(s.pending?.kind==='effect-optional-draw'){
+  const q=s.pending,src=s.players[q.player].front.find(c=>c?.uid===q.sourceUid);
+  const printed=src&&card(pack,src);
+  if(q.player!==s.active||s.phase!=='attack'||!src||
+   !Number.isInteger(q.sourceStamp)||q.sourceStamp<1||
+   src.fieldEntryStamp!==q.sourceStamp||
+   !Number.isInteger(s.attacksByUid[q.sourceUid])||
+   s.attacksByUid[q.sourceUid]<1||
+   !printed.effects.onAttack?.some(x=>
+    x.op==='drawIfOwnOutsideNamedCountAtLeast'&&x.count===1&&x.optional===true)||
+   Object.keys(q).length!==4||
+   Object.keys(q).some(k=>!['kind','player','sourceUid','sourceStamp'].includes(k)))
+   throw Error('Invalid saved optional-draw source');
+ }
  if(s.pending?.kind==='attack-end-swap'){
   const q=s.pending,pl=s.players[q.player],src=pl.front.find(c=>c?.uid===q.sourceUid);
   const d=src&&card(pack,src),choices=pl.energy.filter(c=>c&&
