@@ -4914,14 +4914,29 @@ export function assertUniversalMatch(pack,s){
     const after=Number(moved[2]);
     if(!Number.isSafeInteger(after)||after<0||after>=s.nextZoneMoveOrder)
      throw Error('Invalid moved trigger boundary');
+    // Do not assume all earned hand-move triggers are DRAW. The printed
+    // BLEACH chain can grant an optional block floor, two attacks, or a
+    // paid character deployment while another observer RESTs/tucks the
+    // moved card. Validate each queued job against BOTH its physical
+    // completed move and its exact registered print, including all args.
+    const earned=s.zoneMoveEvents.filter(ev=>
+     ev.order>after&&ev.owner===win.owner&&ev.controller===win.owner&&
+     ev.sourceUid===moved[1])
+     .flatMap(ev=>{
+      const printed=card(pack,{uid:ev.uid,cardId:ev.cardId});
+      return (printed.moveTriggers||[])
+       .filter(profile=>matchesCompletedMove(ev,profile.when))
+       .flatMap(profile=>profile.then.map(op=>({...op,owner:ev.owner,
+        sourceUid:ev.uid,sourceName:printed.name,
+        ...(['grantCauseBlockAtMost','handBottomGrantDoubleAttack',
+         'payApDeployMovedActive'].includes(op.op)?{causeUid:ev.sourceUid}:{})})));
+     });
+    const signature=x=>JSON.stringify(Object.entries(x||{}).sort(([a],[b])=>a.localeCompare(b)));
+    const unused=earned.map(signature);
     for(const j of entry.jobs){
-     if(j?.op!=='draw'||j.owner!==win.owner||
-      !Number.isInteger(j.count)||j.count<1||j.count>10||
-      Object.keys(j).some(k=>!['op','count','owner','sourceUid','sourceName'].includes(k))||
-      !s.zoneMoveEvents.some(ev=>ev.order>after&&ev.owner===win.owner&&
-       ev.controller===win.owner&&ev.sourceUid===moved[1]&&
-       ev.uid===j.sourceUid&&ev.from==='hand'&&ev.to==='outside'))
-      throw Error('Forged moved-card earned draw');
+     const ix=unused.indexOf(signature(j));
+     if(ix<0)throw Error('Forged moved-card earned effect');
+     unused.splice(ix,1); // one physical trigger cannot be spent twice
     }
    }
   }
