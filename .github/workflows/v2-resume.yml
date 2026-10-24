@@ -76,6 +76,8 @@ jobs:
         run: node scripts/v2-c3-blc-mst-reuse.mjs
       - name: Cursor C4 BLEACH front discard draw
         run: node scripts/v2-c4-blc-front-discard-draw.mjs
+      - name: Cursor C5 BLEACH front discard BP down
+        run: node scripts/v2-c5-blc-front-discard-down.mjs
       - name: Node 22 test suite
         run: npm test
       - name: Five-title 60-match matrix
