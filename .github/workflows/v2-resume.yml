@@ -62,6 +62,8 @@ jobs:
         run: node scripts/v2-r53-five-direction-candidate-report.mjs
       - name: R54 live common-atom five-title physical complement
         run: node scripts/v2-r54-five-title-candidate-report.mjs
+      - name: R55 sniper combat and battle-win five-title audit
+        run: node scripts/v2-r55-sniper-battle-candidate-report.mjs
       - name: Node 22 test suite
         run: npm test
       - name: Five-title 60-match matrix

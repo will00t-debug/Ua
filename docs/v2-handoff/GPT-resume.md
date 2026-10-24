@@ -2083,3 +2083,14 @@ R54 introduced source-stamped `onAttack` 0-or-1 named-OUTSIDE optional draw (`92
 Historic R54 intermediate CI failures were caused by a stale 106 SAO independent roster, the 1-AP fixture on first turn, an immutable reducer test that inspected stale actor rather than resulting physical state, and an opponent end-of-turn 8-hand pending choice. Fixes preserve all real payment and negative tests. Latest status MUST be checked against newest Actions SHA. R54 has repeatable `node scripts/v2-r54-five-title-candidate-report.mjs` census integrated into workflow. A text hit never sets READY.
 
 Assuming the R54 SAO registration remains intact: inventory 345/700, 355 unported, BLEACH 103, TTG 36, SLG 45, SAO 107, MST 54. These are registration counts, not independent FAQ certification: 0/700. Remain on GPT Draft PR #78, do not merge/deploy, do not modify Cursor PR #77.
+
+
+## GPT R55｜2026-10-24 SNIPER & 戰勝抽牌擴展
+
+依前輪 R54 的永久約束：共用能力 → 五作品全部未移植卡來源搜尋 → 官方完整卡文 FAQ 查對 → READY/PARTIAL/REVIEW PENDING → 僅登錄整卡正式驗收者 → Node22 + 60 矩陣及獨立清單。
+
+沿用 `gpt/v2-resume-20261022` 與 Draft PR #78，來源 [V2-R55-sniper-battle-official-audit.md](./V2-R55-sniper-battle-official-audit.md)。`2112b79a` 新增物理 UID/stamp 限期的狙擊合法指定角色攻擊與戰鬥判定，官方 Q65～Q70，無阻擋／不計 BLOCK；`11752289` 補上普通 BLOCK 戰勝抽牌；`ed62a591` 正式來源綁定 TTG-1-067、獨立 manifest、合法 50 張紅牌組及 AP2／ACTIVE LIFE 測試。新增 `scripts/v2-r55-sniper-battle-candidate-report.mjs` 與整庫驗收 workflow step。
+
+R55 TTG-1-067 的最新 CI 必須對應實際最終 HEAD，不可挪用先前成功；若 CI 未成功應標為未驗收。登錄基準在無其他提交時為 BLEACH 103、TTG 37、SLG 45、SAO 107、MST 54，合計 346／700，尚未 354；全體獨立 FAQ 仍 0。BLC-4-044／SLG-1-022／SAO-1-097 屬文字候選，不因共用能力完成而算 READY。SLG-1-021、MST-1-009 仍 PARTIAL。
+
+不合併 main、不部署正式站、不動 Cursor #77、不 force push。
