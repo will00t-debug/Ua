@@ -17,7 +17,18 @@ test('R48 scans all 700 source cards and precisely partitions every dynamically 
   c.missing.length>0));
  assert.ok(!reviewed.some(c=>c.id==='BLC-4-042'),'full source now ported');
  assert.ok(!reviewed.some(c=>c.id==='BLC-4-069'),'registered full card is no longer unported');
- for(const id of ['TTG-1-067','SLG-1-021','SAO-1-018','SAO-1-070','MST-1-009'])
+ for(const id of ['TTG-1-067','SLG-1-021','SAO-1-018','MST-1-009'])
   assert.ok(reviewed.some(c=>c.id===id),'independent official source review '+id);
+ // R52: a completely ported official SAO-1-070 no longer belongs to the
+ // dynamic UNPORTED partition. Keep its independent source proof in the
+ // official pinned registry + R52 whole-card scenario instead.
+ if(expected.has('SAO-1-070'))
+  assert.ok(reviewed.some(c=>c.id==='SAO-1-070'),'independent SAO source review');
+ else{
+  assert.ok(inv.series.find(c=>c.title==='sword-art-online')
+   .pilotIds.includes('SAO-1-070'),'R52 official SAO-070 remains registered');
+  assert.ok(!reviewed.some(c=>c.id==='SAO-1-070'),
+   'registered true card cannot remain in unported review partition');
+ }
  assert.ok(Object.keys(R48_QUERY_ATOMS).length>=9);
 });
