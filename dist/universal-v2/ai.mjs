@@ -1,5 +1,6 @@
 import {createUniversalAiObservation} from './ai-observation.mjs';
-import {chooseStrategicUniversalAction} from './ai-strategy.mjs';
+import {rankUniversalAiActions} from './ai-strategy.mjs';
+import {evaluateTrustedUniversalAiTactics} from './ai-tactics.mjs';
 // Cross-title Universal v2 AI baseline. Uses only the native legal-action
 // list; no work-specific card-ID shortcuts and no mutation of match state.
 import {legalUniversalActions,universalBp,universalEnergy,universalEnergyByColor,universalCardEnergy} from './engine.mjs';
@@ -248,6 +249,31 @@ export function chooseUniversalAiAction(pack,s,options={}){
  const legal=legalUniversalActions(pack,s);
  if(!legal.length)return null;
  if(options.difficulty&&!UNIVERSAL_AI_LEVELS.includes(options.difficulty))throw Error('Unknown universal AI difficulty');
- const candidate=options.difficulty==='hard'?chooseStrategicUniversalAction(packsOf(pack),createUniversalAiObservation(pack,s,legal)):chooseBaselineAction(pack,s,options);
- return legal.find(a=>JSON.stringify(a)===JSON.stringify(candidate))||legal[0];
+ let candidate;
+ if(options.difficulty==='hard'){
+  const packs=packsOf(pack),observation=createUniversalAiObservation(pack,s,legal);
+  const ranked=rankUniversalAiActions(packs,observation,options.ablation);
+  const analysis=options.tactical===false?null:
+   evaluateTrustedUniversalAiTactics(packs,s,observation,ranked,
+    {...options.tacticalLimits,ablation:options.ablation});
+  candidate=analysis?.action||ranked[0]?.action;
+  if(options.telemetry&&typeof options.telemetry==='object')
+   Object.assign(options.telemetry,{
+    searchNodes:analysis?.nodes??0,tacticalFallback:analysis?.fallback??null,
+    nativeExactSteps:analysis?.exactSteps??0,
+    heuristicFrontiers:analysis?.heuristicFrontiers??0,
+    tacticalEligible:!!analysis&&analysis.fallback!=='not-eligible',
+    tacticalUsed:!!analysis?.used,tacticalSearchedRoots:analysis?.searchedRoots??0,
+    tacticalOmittedRoots:analysis?.omittedRoots??0,
+    tacticalChanged:!!analysis?.action&&JSON.stringify(analysis.action)!==JSON.stringify(ranked[0]?.action),
+    heuristicFirstAction:ranked[0]?.action??null,
+    principalVariation:analysis?.principalVariation??[]
+   });
+ }else candidate=chooseBaselineAction(pack,s,options);
+ const native=legal.find(a=>JSON.stringify(a)===JSON.stringify(candidate));
+ if(options.telemetry&&typeof options.telemetry==='object')Object.assign(options.telemetry,{
+  rawAction:candidate??null,rawActionLegal:!!native,
+  legalFallback:!native,legalFallbackReason:native?null:'raw-action-not-legal'
+ });
+ return native||legal[0];
 }

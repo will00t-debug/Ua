@@ -1,5 +1,5 @@
 // Pure bounded heuristic policy. No reducer, hidden match state or network.
-import {boundedUniversalAiContinuation} from './ai-planner.mjs';
+import {boundedUniversalAiContinuation,stableUniversalAiActionKey} from './ai-planner.mjs';
 // Numbers are utility estimates, NOT a second effects/battle rules engine.
 const sum=xs=>xs.reduce((a,b)=>a+b,0);
 const field=p=>[...p.front,...p.energy].filter(Boolean);
@@ -65,7 +65,8 @@ function programValue(packs,o,program,source,depth=0){
    // Cost is real material, not an unconditional bonus for activating gates.
    const cheapest=own.hand.map(c=>handValue(packs,o,c)).sort((a,b)=>a-b);
    const count=e.count===2?2:1;
-   const cost=cheapest.length>=count?sum(cheapest.slice(0,count)):8;
+   const cost=o.aiAblation?.discardCost===false?0:
+    cheapest.length>=count?sum(cheapest.slice(0,count)):8;
    return Math.max(e.optional?0:-8,future-cost);
   }
   if(e.op==='bounceOwnOtherUnderEnergy'){
@@ -73,6 +74,7 @@ function programValue(packs,o,program,source,depth=0){
     (e.optional===true?def(packs,o.actor,c).name!==e.excludeName:
      (def(packs,o.actor,c).energy||0)<=(e.energy??Infinity)));
    if(!candidates.length)return e.optional?0:-3;
+   if(o.aiAblation?.ownBounce===false)return Math.max(0,programValue(packs,o,e.after,source,depth+1));
    const best=Math.max(...candidates.map(c=>bounceUtility(packs,o,c,e.after)));
    return e.optional?Math.max(0,best):best;
   }
@@ -137,7 +139,8 @@ function bounceUtility(packs,o,c,after=[]){
  const fieldLoss=onFront?material*0.9:producer*3.2+material*0.15;
  const replayCost=own.ap<=1?1.7:0.7;
  const exposed=onFront&&own.life<=2&&own.front.filter(Boolean).length<=2?2:0;
- return handValue(packs,o,c)*0.55-fieldLoss-replayCost-exposed-(colorShortage?2:0)+
+ return handValue(packs,o,c)*0.55-(o.aiAblation?.ownBounce===false?0:
+  fieldLoss+replayCost+exposed+(colorShortage?2:0))+
   programValue(packs,o,after,c);
 }
 function pendingScore(packs,o,a){
@@ -165,10 +168,12 @@ function pendingScore(packs,o,a){
   // Only a confirmed printed continuation earns a bonus; forced costs
   // always pick the lowest-opportunity-cost legal payment.
   return (q.kind==='effect-discard-gate'?
-   programValue(packs,o,q.continuation,c):0)-cost;
+   programValue(packs,o,q.continuation,c):0)-
+   (o.aiAblation?.discardCost===false?0:cost);
  }
  if(q.kind==='effect-choice-mode')return programValue(packs,o,q.options?.find(x=>x.id===a.mode)?.then);
- if(a.line)return deployment(packs,o,a,visible,true);
+ if(a.line)return o.aiAblation?.conditionalFreeEntry===false?0:
+  deployment(packs,o,a,visible,true);
  if(['effect-search-deck','effect-search-deck-multi','effect-recover-outside','effect-top-filter-choice','effect-top-filter-many-choice'].includes(q.kind))return visible?handValue(packs,o,visible):0.5;
  if(q.kind==='effect-top-order')return visible?-handValue(packs,o,visible):0;
  if(q.kind==='private-top-place'||q.kind==='private-top-choice'){
@@ -209,13 +214,13 @@ function pendingScore(packs,o,a){
  // valuable own ready characters, with zero-score decline for optional choices.
  return c?value*0.3+(c.ready?0.3:0):a.uid?0.1:0;
 }
-export function rankUniversalAiActions(packs,o){
+export function rankUniversalAiActions(packs,observation,ablation={}){
+ const o={...observation,aiAblation:ablation};
  const own=o.players[o.actor],foe=o.players[1-o.actor];
  const position=evaluateUniversalAiPosition(packs,o);
  // The current position is identical for every action; it is diagnostic only.
  // Candidate-specific marginal continuation is what can alter rankings.
- const continuation=boundedUniversalAiContinuation(packs,o);
- return o.legal.map((action,index)=>{
+ const base=o.legal.map((action,index)=>{
   const a=action,c=[...own.hand,...field(own)].find(c=>c.uid===a.uid),d=def(packs,o.actor,c);
   let score=0;
   if(o.pending)score=pendingScore(packs,o,a);
@@ -240,8 +245,22 @@ export function rankUniversalAiActions(packs,o){
    if(a.mode==='discardSelfBuff')score-=1.8;
    score-=0.05; // Unknown/no-benefit activation must not form loops.
   }
-  const gain=continuation.get(JSON.stringify(action))||0;
-  return {action,score:score+gain,utility:score+gain,position,index};
- }).sort((a,b)=>b.score-a.score||(o.pending?.kind?.startsWith('effect-search-deck')?JSON.stringify(a.action).localeCompare(JSON.stringify(b.action)):a.index-b.index));
+  return {action,score,utility:score,position,index};
+ });
+ // Every legal action receives the same first-pass heuristic assessment.
+ // The bounded optional estimator receives scores only AFTER this full pass.
+ // If it cannot finish its fixed search budget, all bonuses disappear.
+ const priorities=new Map(base.map(x=>[stableUniversalAiActionKey(x.action),x.score]));
+ const continuation=ablation.energyContinuation===false?new Map():
+  boundedUniversalAiContinuation(packs,o,{priorities});
+ return base.map(x=>{
+  const gain=continuation.get(JSON.stringify(x.action))||0;
+  return {...x,score:x.score+gain,utility:x.utility+gain};
+ }).sort((a,b)=>b.score-a.score||
+  // Equal-value mandatory pending choices preserve the V2 resolver order:
+  // physical under-layer retirement and simultaneous effect order are not
+  // fungible. Root non-pending ties use a canonical action key instead.
+  (o.pending?a.index-b.index:
+   stableUniversalAiActionKey(a.action).localeCompare(stableUniversalAiActionKey(b.action))));
 }
 export function chooseStrategicUniversalAction(packs,o){return rankUniversalAiActions(packs,o)[0]?.action||null;}
