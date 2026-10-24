@@ -32,15 +32,13 @@ function chooseBlock(pack,s,actions,difficulty){
   (difficulty==='hard'&&s.players[s.pending.player].life.length<=1?
    actions.find(a=>a.uid!==null)||no:no);
 }
-export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
+function chooseBaselineAction(pack,s,{difficulty='normal'}={}){
  if(!UNIVERSAL_AI_LEVELS.includes(difficulty))throw Error('Unknown universal AI difficulty');
  const legal=legalUniversalActions(pack,s);
  if(!legal.length)return null;
  if(s.pending?.kind==='effect-move-order')return legal[0];
- if(s.pending?.kind==='effect-rest-tuck')return
-  legal.find(x=>x.mode===(difficulty==='easy'?'skip':'rest'))||legal[0];
- if(s.pending?.kind==='effect-tuck-moved')return
-  legal.find(x=>difficulty!=='easy'&&x.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-rest-tuck')return   legal.find(x=>x.mode===(difficulty==='easy'?'skip':'rest'))||legal[0];
+ if(s.pending?.kind==='effect-tuck-moved')return   legal.find(x=>difficulty!=='easy'&&x.uid!==null)||legal[0];
  if(s.pending?.kind==='retirement-order')
   return legal.find(a=>a.type==='chooseRetirementOrder')||legal[0];
  if(s.pending?.kind==='effect-grant-front-energy')
@@ -246,4 +244,12 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   return frontPlays[0];
  }
  return energyPlays[0]||raids[0]||events[0]||next;
+}
+
+// Guard every level at the native engine boundary, including new pending kinds.
+export function chooseUniversalAiAction(pack,s,options={}){
+ const legal=legalUniversalActions(pack,s);
+ if(!legal.length)return null;
+ const candidate=chooseBaselineAction(pack,s,options);
+ return legal.find(a=>JSON.stringify(a)===JSON.stringify(candidate))||legal[0];
 }
