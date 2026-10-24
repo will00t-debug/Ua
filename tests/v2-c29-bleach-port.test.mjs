@@ -41,7 +41,7 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 //   same look-3 with 〈バズビー〉か〈ユーグラム・ハッシュヴァルト〉. DRAW is generic. Gen alt is 黄.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -112,12 +112,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers twenty-three whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,459);
- assert.equal(EXPECTED_V2_COUNTS.bleach,183);
+test('C29 registers twenty-four whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,460);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,184);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,183);
+ assert.equal(Object.keys(bleach.cards).length,184);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -1190,4 +1190,50 @@ test('BLC-2-018 returns one opposing front character at BP 4000 or lower, then d
  aiOk(packs,opened);
  assert.equal(assertUniversalMatch(packs,dumped),true);
  assert.equal(assertUniversalMatch(skipped.packs,entered),true);
+});
+
+test('BLC-1-056 rests, retires, and must add one purple character from outside',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-1-056');
+ assert.equal(printed.effect,'主要階段：REST 並退場自己，從己方場外將 1 張紫色角色卡加入手牌。');
+ assert.equal(printed.traits,'零番隊');
+ const card=bleach.cards['BLC-1-056'];
+ assert.equal(card.trigger,null);
+ assert.equal(card.triggerEffect,null);
+ assert.deepEqual(card.traits,['零番隊']);
+ assert.deepEqual(card.mainAbility,{op:'restRetireRecoverOutside',optional:false,
+  filters:[{field:'color',value:'purple'},{field:'type',value:'character'}],logic:'all'});
+ const kirinji=realDeck(['BLC-1-056','BLC-1-062','BLC-1-108','BLC-1-039','BLC-4-046'],'purple');
+ const {packs,s}=main(kirinji,29056);
+ const self=put(s,0,'BLC-1-056','energy',0,true);
+ const asleep=put(s,0,'BLC-1-056','front',0,false);
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='activate'&&a.uid===asleep.uid),false);
+ const event=take(s,0,'BLC-1-062');
+ const fieldCard=take(s,0,'BLC-1-108');
+ const other=take(s,0,'BLC-4-046');
+ s.players[0].outside.push(event,fieldCard,other);
+ const act=legalUniversalActions(packs,s).find(a=>a.type==='activate'&&a.uid===self.uid&&a.mode==='restRetireRecover');
+ assert.ok(act);
+ const paid=dispatchUniversalAction(packs,s,act);
+ assert.equal(paid.players[0].energy[0],null);
+ assert.equal(paid.pending.kind,'effect-recover-outside');
+ assert.equal(paid.pending.optional,false);
+ assert.equal(legalUniversalActions(packs,paid).some(a=>a.uid===null),false);
+ const ids=paid.pending.choices.map(uid=>paid.players[0].outside.find(c=>c.uid===uid).cardId).sort();
+ assert.deepEqual(ids,['BLC-1-056','BLC-4-046']);
+ const taken=dispatchUniversalAction(packs,paid,legalUniversalActions(packs,paid).find(a=>a.uid===other.uid));
+ assert.equal(taken.pending,null);
+ assert.equal(taken.players[0].hand.some(c=>c.uid===other.uid),true);
+ assert.equal(taken.players[0].outside.some(c=>c.uid===self.uid),true);
+ assert.equal(taken.players[0].outside.some(c=>c.uid===event.uid),true);
+ assert.equal(taken.players[0].outside.some(c=>c.uid===fieldCard.uid),true);
+ const alone=main(kirinji,29057);
+ const only=put(alone.s,0,'BLC-1-056','front',0,true);
+ const back=dispatchUniversalAction(alone.packs,alone.s,legalUniversalActions(alone.packs,alone.s).find(a=>a.type==='activate'&&a.uid===only.uid&&a.mode==='restRetireRecover'));
+ assert.deepEqual(back.pending.choices,[only.uid]);
+ const home=dispatchUniversalAction(alone.packs,back,legalUniversalActions(alone.packs,back)[0]);
+ assert.equal(home.players[0].hand.some(c=>c.uid===only.uid),true);
+ assert.equal(home.players[0].front[0],null);
+ aiOk(packs,paid);
+ assert.equal(assertUniversalMatch(packs,taken),true);
+ assert.equal(assertUniversalMatch(alone.packs,home),true);
 });

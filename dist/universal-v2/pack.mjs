@@ -1124,17 +1124,27 @@ function normalize(card,packId){
   Object.keys(mainAbility).length===2&&
   Object.keys(mainAbility).every(k=>['op','bp'].includes(k));
  // Printed 【レストにする】【このカードを退場させる】 then one own-outside
- // recovery. optional false means a matching card must already be outside.
+ // recovery. A name or trait filter is the older shape. Color plus character
+ // is the other closed shape. optional false still cannot be skipped.
+ const outsideOne=f=>f&&typeof f==='object'&&!Array.isArray(f)&&
+  Object.keys(f).length===2&&typeof f.field==='string'&&typeof f.value==='string';
+ const singleOutside=outsideOne(mainAbility?.filter)&&
+  ['name','trait'].includes(mainAbility.filter.field)&&
+  !!mainAbility.filter.value.trim()&&mainAbility.filter.value.length<=80;
+ const colorCharacterOutside=Array.isArray(mainAbility?.filters)&&
+  mainAbility.filters.length===2&&mainAbility.filters.every(outsideOne)&&
+  mainAbility.filters.some(f=>f.field==='color'&&
+   ['yellow','green','blue','purple'].includes(f.value))&&
+  mainAbility.filters.some(f=>f.field==='type'&&f.value==='character')&&
+  mainAbility.logic==='all';
  const mainRestRetireRecover=mainAbility?.op==='restRetireRecoverOutside'&&
   typeof mainAbility.optional==='boolean'&&
-  mainAbility.filter&&typeof mainAbility.filter==='object'&&
-  !Array.isArray(mainAbility.filter)&&
-  Object.keys(mainAbility.filter).length===2&&
-  ['name','trait'].includes(mainAbility.filter.field)&&
-  typeof mainAbility.filter.value==='string'&&!!mainAbility.filter.value.trim()&&
-  mainAbility.filter.value.length<=80&&
-  Object.keys(mainAbility).length===3&&
-  Object.keys(mainAbility).every(k=>['op','optional','filter'].includes(k));
+  (singleOutside&&mainAbility.filters===undefined&&mainAbility.logic===undefined&&
+   Object.keys(mainAbility).length===3&&
+   Object.keys(mainAbility).every(k=>['op','optional','filter'].includes(k))||
+   colorCharacterOutside&&mainAbility.filter===undefined&&
+   Object.keys(mainAbility).length===4&&
+   Object.keys(mainAbility).every(k=>['op','optional','filters','logic'].includes(k)));
  // 【ターン1】【レストにする】, buff one other character, then return this card.
  const mainRestOnceBuffReturn=mainAbility?.op==='restOnceBuffReturnSelf'&&
   mainAbility.oncePerTurn===true&&

@@ -4098,9 +4098,15 @@ export function legalUniversalActions(pack,s){
    if(ability?.op==='fieldOnceBuffOther'&&!s.mainAbilityUsedUids.includes(c.uid)&&
     field(pl).some(x=>x.uid!==c.uid&&card(pack,x).type==='character'))
     out.push({type:'activate',uid:c.uid,mode:'fieldOnceBuffOther'});
-   if(ability?.op==='restRetireRecoverOutside'&&c.ready&&(ability.optional||
-    pl.outside.some(x=>matchesOutsideRecovery(pack,s,x,{filter:ability.filter}))))
-    out.push({type:'activate',uid:c.uid,mode:'restRetireRecover'});
+   if(ability?.op==='restRetireRecoverOutside'&&c.ready){
+    const query=ability.filters?{filters:ability.filters,logic:ability.logic}:
+     {filter:ability.filter};
+    // Retirement puts this card into outside before recovery. A source that
+    // itself matches is already a legal mandatory target.
+    if(ability.optional||pl.outside.some(x=>matchesOutsideRecovery(pack,s,x,query))||
+     matchesOutsideRecovery(pack,s,c,query))
+     out.push({type:'activate',uid:c.uid,mode:'restRetireRecover'});
+   }
    if(ability?.op==='restOnceBuffReturnSelf'&&c.ready&&
     !s.mainAbilityUsedUids.includes(c.uid)&&
     field(pl).some(x=>x.uid!==c.uid&&card(pack,x).type==='character'))
@@ -4591,8 +4597,10 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
     break;
    }
    if(ability.op==='restRetireRecoverOutside'){
-    const query={filter:{...ability.filter}};
-    const readyTarget=pl.outside.some(c=>matchesOutsideRecovery(pack,s,c,query));
+    const query=ability.filters?{filters:ability.filters.map(f=>({...f})),logic:ability.logic}:
+     {filter:{...ability.filter}};
+    const readyTarget=pl.outside.some(c=>matchesOutsideRecovery(pack,s,c,query))||
+     matchesOutsideRecovery(pack,s,selected,query);
     if(action.mode!=='restRetireRecover'||!selected.ready||
      (!ability.optional&&!readyTarget))
      throw Error('REST retire recovery needs a READY source and, when mandatory, an outside match');
