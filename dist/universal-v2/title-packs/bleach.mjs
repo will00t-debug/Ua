@@ -67,7 +67,16 @@ const testForKind=Object.freeze({
  impactNullMustBlock:'tests/v2-c22-designated-decks.test.mjs',
  retireFieldOrOutside:'tests/v2-c22-designated-decks.test.mjs',
  traitDiscardRecoverNamed:'tests/v2-c22-designated-decks.test.mjs',
- blockHandOutsideBp:'tests/v2-c22-designated-decks.test.mjs'
+ blockHandOutsideBp:'tests/v2-c22-designated-decks.test.mjs',
+ traitlessTopDiscard:'tests/v2-c23-blue-shared.test.mjs',
+ ichigoRaidSlash:'tests/v2-c23-blue-shared.test.mjs',
+ zangetsuBlockFloor:'tests/v2-c23-blue-shared.test.mjs',
+ orihimeEntry:'tests/v2-c23-blue-shared.test.mjs',
+ ichigoImpactGrants:'tests/v2-c23-blue-shared.test.mjs',
+ rirukaUnder:'tests/v2-c23-blue-shared.test.mjs',
+ grimmjowOutsideEntry:'tests/v2-c23-blue-shared.test.mjs',
+ getsugaRetire:'tests/v2-c23-blue-shared.test.mjs',
+ zangetsuDraw:'tests/v2-c23-blue-shared.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.

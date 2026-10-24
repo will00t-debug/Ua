@@ -122,7 +122,11 @@ export function refreshFieldActive(s,owner){
 export function effectChoiceProtected(s,selector,targetUid,sourceType){
  if(!player(selector)||typeof targetUid!=='string')return false;
  const target=fieldInstance(s,targetUid);
- if(!target||target.owner===selector)return false;
+ if(!target)return false;
+ const triggerImmune=target.card.triggerUnchosenGranted;
+ if(sourceType==='trigger'&&triggerImmune&&triggerImmune.turn===s.turn&&
+  triggerImmune.stamp===target.card.fieldEntryStamp)return true;
+ if(target.owner===selector)return false;
  return s.continuousStates.some(e=>
   e.kind==='cannotBeChosenByOppEffect'&&!e.consumed&&
   e.controller===target.owner&&e.targetOwner===target.owner&&

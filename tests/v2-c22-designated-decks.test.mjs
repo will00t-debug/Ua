@@ -44,17 +44,16 @@ function phase(s,target){
 function sit(card,ready=true){card.ready=ready;return card;}
 test('three designated lists stay exact and are not offered as playable 50-card presets',()=>{
  assert.equal(Object.keys(pack.cards).length,EXPECTED_V2_COUNTS.bleach);
- assert.equal(EXPECTED_V2_COUNTS.bleach,138);
- assert.equal(EXPECTED_V2_TOTAL,390);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,147);
+ assert.equal(EXPECTED_V2_TOTAL,399);
  const registered=id=>!!pack.cards[id];
  const report=summarizeDesignatedDecks(registered);
  assert.equal(report.length,3);
  const playableKeys=new Set(Object.keys(createAllV2PreviewRealDecks()));
  for(const row of report){
   assert.equal(row.copies,50);
-  assert.equal(row.playable,false);
   assert.equal(playableKeys.has(row.key),false);
-  assert.throws(()=>designatedPlayableCounts(row),/not a complete playable deck/);
+  if(!row.playable)assert.throws(()=>designatedPlayableCounts(row),/not a complete playable deck/);
   const seen=new Set();
   for(const entry of row.entries){
    assert.equal(seen.has(entry.cardId),false);
@@ -68,12 +67,15 @@ test('three designated lists stay exact and are not offered as playable 50-card 
   }
  }
  const byKey=Object.fromEntries(report.map(r=>[r.key,r]));
- assert.deepEqual(byKey['reject-blue'].missing.map(e=>e.cardId),
-  ['BLC-4-034','BLC-2-021','BLC-2-015','BLC-4-027','BLC-2-019','BLC-4-022','BLC-4-036','BLC-2-047','BLC-2-046']);
+ assert.equal(byKey['reject-blue'].playable,true);
+ assert.deepEqual(byKey['reject-blue'].missing,[]);
+ assert.equal(byKey['reject-blue'].registeredKinds,13);
+ assert.deepEqual(validateUniversalDeck(pack,designatedPlayableCounts(byKey['reject-blue'])),[]);
+ assert.equal(byKey['white-sword'].playable,false);
  assert.deepEqual(byKey['white-sword'].missing.map(e=>e.cardId),
   ['BLC-4-060','BLC-2-067','BLC-1-085']);
  assert.equal(byKey['white-sword'].registeredKinds,10);
- assert.equal(byKey['reject-blue'].registeredKinds,4);
+ assert.equal(byKey.renruki.playable,false);
  assert.equal(byKey.renruki.registeredKinds,4);
  assert.equal(byKey.renruki.missing.some(e=>e.source==='UA01DC/BLC-1-053'),true);
  assert.equal(byKey.renruki.missing.some(e=>e.source==='UA01DC/BLC-1-041'),true);
@@ -81,6 +83,7 @@ test('three designated lists stay exact and are not offered as playable 50-card 
  const script=readFileSync(new URL('../dist/universal-v2-preview.mjs',import.meta.url),'utf8');
  assert.ok(page.includes('id="designated-decks"'));
  assert.match(script,/不可完整對局/);
+ assert.match(script,/designatedReady/);
  assert.equal(script.includes("decks['reject-blue']"),false);
 });
 test('BLC-3-008 reduces hand energy by 1, ignores BP reductions, and gains 1000 only on its turn',()=>{

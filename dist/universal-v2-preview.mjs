@@ -2,7 +2,7 @@
 // This entrypoint is intentionally NOT linked from the production index.html.
 // All game transitions pass through legalUniversalActions/dispatchUniversalAction.
 import {createAllV2PreviewRealDecks} from './universal-v2/preview-real-decks.mjs';
-import {summarizeDesignatedDecks} from './universal-v2/bleach-designated-decks.mjs';
+import {summarizeDesignatedDecks,designatedPlayableCounts} from './universal-v2/bleach-designated-decks.mjs';
 import {V2_ABILITY_TEMPLATE_IDS} from './universal-v2/ability-templates.mjs';
 import {listRegisteredV2Titles} from './universal-v2/title-packs/registry.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
@@ -19,6 +19,7 @@ import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalRepla
  publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
 
 const decks=createAllV2PreviewRealDecks();
+const designatedReady=new Map();
 const allArt=Object.freeze({
  bleach:new Map(CARDS.map(c=>[c.identity,c.image||null])),
  'solo-leveling':new Map(SOLO_LEVELING_CARDS.map(c=>[c.id,c.image||null])),
@@ -356,6 +357,18 @@ function renderDesignatedDecks(){
     option.textContent=row.name+'（'+row.colorLabel+'）｜缺口 '+row.missing.length+' 種｜不可完整對局';
     $(id).append(option);
    }
+  }else{
+   designatedReady.set(row.key,{
+    pack:decks['bleach-green'].pack,
+    counts:designatedPlayableCounts(row),
+    label:row.name+'（'+row.colorLabel+'）'
+   });
+   for(const id of ['my-title','ai-title']){
+    const option=document.createElement('option');
+    option.value=row.key;
+    option.textContent=row.name+'（'+row.colorLabel+'）｜'+row.copies+' 張｜完整可玩';
+    $(id).append(option);
+   }
   }
  }
 }
@@ -364,7 +377,8 @@ function startGame(){
  resetAi();
  try{
   const myTitle=$('my-title').value,foeTitle=$('ai-title').value;
-  const mine=decks[myTitle],foe=decks[foeTitle];
+  const mine=decks[myTitle]||designatedReady.get(myTitle);
+  const foe=decks[foeTitle]||designatedReady.get(foeTitle);
   if(!mine||!foe)throw Error('請選擇有已驗證 50 張牌組的作品。');
   app.packs=[mine.pack,foe.pack];
   const seed=Number($('match-seed').value);
@@ -375,7 +389,7 @@ function startGame(){
   assertUniversalMatch(app.packs,app.state);
   app.error='';app.selectedUid=null;app.undo=null;app.allActions=false;
   app.aiDifficulty=$('ai-level').value;
-  app.history=['新對局：'+fmtTitle(myTitle)+' vs '+fmtTitle(foeTitle)+
+  app.history=['新對局：'+(mine.label||fmtTitle(myTitle))+' vs '+(foe.label||fmtTitle(foeTitle))+
    '｜先手 '+(first===0?'你':'電腦')+'｜種子 '+seed];
   app.replay=makeUniversalPreviewReplay(app.packs,{
    decks:[mine.counts,foe.counts],seed,first});
