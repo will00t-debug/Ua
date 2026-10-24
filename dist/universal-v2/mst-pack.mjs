@@ -4,6 +4,10 @@ import {MST_V2_OFFICIAL_CATALOGUE} from './sources/mst-inventory.mjs';
 import {createUniversalPack} from './pack.mjs';
 
 const PRINTED_PINS=Object.freeze({
+ "MST-1-009":{kind:"onOwnEffectEntryChooseTimedSelf",
+  nameJa:"エリス",color:"blue",energy:3,ap:1,bp:3500,gen:1,
+  type:"character",traits:[],trigger:"raid",
+  effectJa:"〖レイド〗 〈エリス〉アクティブにし、フロントLに移動できる\n 〖インパクト（1）〗 （アタックしてバトルに勝利した時、相手に1ダメージ）\n 〖自分のターン中〗 このキャラはBP+500。\n 〖登場時〗 このキャラが自分の効果で登場していた場合、以下から1つ選ぶ。\n・このキャラは次の自分のターン開始時まで、BP+1000。\n・このキャラはこのターン中、「このキャラのアタック終了時、自分のエナジーLのキャラを1枚選び、このキャラと位置を入れ替えてもよい。」を得る。"},
  "MST-1-049":{"kind":"retireFieldActivateTopTraitless",
   "nameJa":"ルーデウス","color":"green","energy":4,"ap":1,"bp":4000,
   "gen":1,"type":"character","traits":[],"trigger":"get",
@@ -612,6 +616,16 @@ export function verifiedMstV2Cards(){
    traits:[...pin.traits],trigger:pin.trigger,
    implementation:['vanilla','step'].includes(pin.kind)?'vanilla':'dsl'};
   if(card.implementation==='vanilla')card.effects={};
+  if(pin.kind==='onOwnEffectEntryChooseTimedSelf'){
+   card.raidName='エリス';card.printedImpact=1;card.ownTurnBp=500;
+   card.effects={onPlay:[{op:'chooseOne',entry:'ownEffect',optional:false,
+    options:[
+     {id:'bp',label:'BP +1000 until next own turn start',turn:'any',
+      then:[{op:'buffSelfUntilNextOwnStart',bp:1000}]},
+     {id:'swap',label:'May swap own ENERGY character at attack end this turn',turn:'any',
+      then:[{op:'grantSelfAttackEndSwapThisTurn'}]}
+    ]}]};
+  }
   if(pin.kind==='step')card.step=true;
   if(pin.kind==='retireFieldActivateTopTraitless'){
    card.effects={onPlay:[{op:'optionalRetireThenProgram',optional:true,
@@ -811,6 +825,7 @@ export function verifiedMstV2Entries(){
      'tests/universal-v2-sao-mst-cross-title.test.mjs',
      ...(pin.kind==='ownFieldAllNamesBp'?['tests/v2-mst-003-own-names.test.mjs']:[]),
      ...(pin.kind==='activeIfOwnEffectEntry'?['tests/v2-conditional-entry-active-round15.test.mjs']:[]),
+     ...(pin.kind==='onOwnEffectEntryChooseTimedSelf'?['tests/v2-r57-mst009-official.test.mjs']:[]),
      ...(pin.kind==='drawIfOwnEffectEntry'?['tests/v2-mst-023-own-effect-draw.test.mjs']:[]),
      ...(pin.kind==='restSelfBuffOther'?['tests/v2-rest-buff-other-round16.test.mjs']:[]),
      ...(pin.kind==='restSelfRestFrontGainEnergy'?['tests/v2-mst-056-rest-front-energy.test.mjs']:[]),
