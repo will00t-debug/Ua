@@ -1106,6 +1106,8 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-1-108","kind":"fieldRestRetireDraw","number":"UA08ST/BLC-1-108","name":"一護の部屋","color":"purple","energy":2,"ap":1,"bp":0,"gen":1,"trigger":"get","type":"field","effect":"主要階段：REST 並退場自己，抽 2 張，再棄 1 張。"}
 ,
 {"id":"BLC-3-010","kind":"topSplitSides","number":"UA04NC/BLC-3-010","name":"平子 真子","color":"green","energy":1,"ap":1,"bp":2000,"gen":1,"trigger":"draw","type":"character","effect":"【登場時】查看自己牌庫上方 2 張牌。將這些卡片依任意張數與任意順序，分別放到牌庫頂與牌庫底。"}
+,
+{"id":"BLC-2-018","kind":"bounceUnderFrontDraw","number":"EX07BT/BLC-2-018","name":"黒崎 一護","color":"blue","energy":4,"ap":2,"bp":4000,"gen":1,"trigger":"active","type":"character","effect":"登場：可將最多 1 個敵方前線 BP 4000 以下角色返回手牌。主要階段・位於前線・每回合 1 次：抽 1 張，再將 1 張手牌送至場外。"}
 ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1219,6 +1221,7 @@ export function checkedBleachAddonDefinition(p){
  const isNoRaidTop=p.kind==='traitlessNoRaidTop';
  const isFieldDraw=p.kind==='fieldRestRetireDraw';
  const isTopSplit=p.kind==='topSplitSides';
+ const isBounceDraw=p.kind==='bounceUnderFrontDraw';
  const topDiscard={
   'BLC-3-007':{count:3,filter:{field:'trait',value:'護廷十三隊'}},
   'BLC-3-002':{count:3,filters:[
@@ -1252,7 +1255,7 @@ export function checkedBleachAddonDefinition(p){
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit;
+ const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1315,6 +1318,8 @@ export function checkedBleachAddonDefinition(p){
   ...(isRestFrontEnergy?{mainAbility:{op:'restSelfRestFrontGainEnergy',oncePerTurn:true,extraEnergy:1}}:{}),
   ...(isDiscardGainEnergy?{mainAbility:{op:'discardHandBuffSelf',oncePerTurn:true,discardCount:1,energy:2}}:{}),
   ...(isFieldDraw?{mainAbility:{op:'fieldRestRetireThen',then:[{op:'drawDiscard',count:2,discardCount:1}]}}:{}),
+  ...(isBounceDraw?{mainAbility:{op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,
+   then:[{op:'drawDiscard',count:1,discardCount:1}]}}:{}),
   ...(isBelowPrinted?{passiveBonuses:[{condition:{kind:'oppFrontLiveBpBelowPrinted',turn:'any'},bp:1500}]}:{}),
   ...(isHandOutsideBp?{passiveBonuses:[{condition:{kind:'ownHandToOutsideThisTurn',turn:'any'},bp:500}]}:{}),
   ...(isHandEnergyImmune?{printedHandEnergyDiscount:1,bpDownImmune:true,
@@ -1449,6 +1454,7 @@ export function checkedBleachAddonDefinition(p){
    p.kind==='topSplitEnergyDraw'?{onPlay:[{op:'inspectTopAnyOutside',count:2,rest:'top',drawIfOutsideEnergyAtLeast:3}]}:
    p.kind==='emptyRaidPeek'?{onPlay:[{op:'peekTopOne'}],onRaided:[{op:'chooseOne',optional:false,options:[{id:'top',label:'查看牌庫頂1張',turn:'any',then:[{op:'peekTopOne'}]},{id:'block',label:'露琪亞不被BP4000以上阻擋',turn:'any',then:[{op:'grantOwnNameBlockAtLeast',name:rukiaName,bp:4000,optional:true}]}]}]}:
    p.kind==='renjiEventRetire'?{onPlay:[{op:'retireOppFrontUnderBp',bp:5000},{op:'drawDiscardIfEffectApPaid',color:'purple',discardCount:1}]}:
+   isBounceDraw?{onPlay:[{op:'bounceOppFrontOneUnderBp',bp:4000,optional:true}]}:
    isTopSplit?{onPlay:[{op:'inspectTopArrange',count:2,split:true}]}:
    isNoRaidTop?{onPlay:[{op:'searchTopOneBottomDiscard',count:5,excludeRaid:true,
     filter:{field:'traitlessCharacter',value:true}}]}:
