@@ -3,6 +3,7 @@
 import {SAO_OFFICIAL_CARDS} from '../sao-official-import.mjs';
 import {createUniversalPack} from './pack.mjs';
 import {SAO_Q1208_ASUNA_AURA,SAO_Q978_SELF_EVENT_TAX} from './selection-hand-tax.mjs';
+import {parseNamedFieldRetireBonus} from './ability-templates.mjs';
 
 const PRINTED_PINS=Object.freeze({
  "SAO-2-063":{"kind":"stepNamedOutsideOnPlayDraw",
@@ -73,6 +74,38 @@ const PRINTED_PINS=Object.freeze({
   "trigger":"special","traits":[],
   "effectJa":"BP5000以下の相手のフロントLのキャラを1枚選び、『レストにする。それは次の1回アクティブにならない』。自分のライフが4以下の場合、『退場させる』に代わる。"
  },
+ "SAO-1-030":{"kind":"namedFieldRetireBonus","nameJa":"金木犀の剣",
+  "color":"yellow","energy":4,"ap":1,"bp":0,"gen":0,"type":"event",
+  "trigger":"special","traits":[],
+  "effectJa":"『BP3000以下』の相手のフロントLのキャラを1枚選び、退場させる。自分の場に〈アリス〉がある場合、『BP5000以下』に代わる。"},
+ "SAO-1-065":{"kind":"namedFieldRetireBonus","nameJa":"スターバースト・ストリーム",
+  "color":"blue","energy":4,"ap":1,"bp":0,"gen":0,"type":"event",
+  "trigger":"special","traits":[],
+  "effectJa":"『BP3000以下』の相手のフロントLのキャラを1枚選び、退場させる。自分の場に〈キリト〉がある場合、『BP5000以下』に代わる。"},
+ "SAO-2-059":{"kind":"namedFieldRetireBonus","nameJa":"リニアー",
+  "color":"purple","energy":4,"ap":1,"bp":0,"gen":0,"type":"event",
+  "trigger":"special","traits":[],
+  "effectJa":"『BP3000以下』の相手のフロントLのキャラを1枚選び、退場させる。自分の場に〈アスナ〉がある場合、『BP5000以下』に代わる。"},
+ "SAO-2-029":{"kind":"onPlayTopFilterBottomDiscard","nameJa":"ユナ",
+  "color":"purple","energy":1,"ap":1,"bp":1500,"gen":1,"type":"character",
+  "trigger":"draw","traits":[],
+  "effectJa":"【登場時】自分の山札の上から5枚見る。その中から［特徴：歌］を1枚まで公開し手札に加える。残りを望む順で自分の山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。"},
+ "SAO-1-067":{"kind":"frontBuffThenDraw","nameJa":"ラグー・ラビットのシチュー",
+  "color":"blue","energy":2,"ap":1,"bp":0,"gen":0,"type":"event",
+  "trigger":"active","traits":[],
+  "effectJa":"自分のフロントLのキャラを1枚まで選び、このターン中、BP+2000。カードを1枚引く。"},
+ "SAO-1-076":{"kind":"onPlayAnyColorHandRestTrait","nameJa":"スリーピング・ナイツ",
+  "color":"green","energy":3,"ap":1,"bp":2500,"gen":1,"type":"character",
+  "trigger":null,"traits":["ALO"],
+  "effectJa":"【登場時】自分の手札から必要エナジーが2以下で消費APが1の特徴に「ALO」を持つキャラカードを1枚まで自分の場にレストで登場させる。"},
+ "SAO-1-083":{"kind":"onPlayRecoverColorTrait","nameJa":"リズベット",
+  "color":"green","energy":3,"ap":2,"bp":3000,"gen":3,"type":"character",
+  "trigger":"active","traits":["ALO"],
+  "effectJa":"【登場時】自分の場外から緑の［特徴：ALO］を1枚まで手札に加える。"},
+ "SAO-2-037":{"kind":"onRetireMillUpTo","nameJa":"クライン",
+  "color":"purple","energy":0,"ap":1,"bp":1500,"gen":1,"type":"character",
+  "trigger":"active","traits":["SAOサバイバー"],
+  "effectJa":"【退場時】自分の山札の上から2枚まで場外に置く。"},
   "SAO-1-051": {
     "kind": "impactNullOwnTurnHandFiveBp1000",
     "nameJa": "キリト",
@@ -1659,7 +1692,9 @@ export function verifiedSaoV2Cards(){
    card.templateEffects={onPlay:[{template:'searchTopUpToTwoBottom',...spec,logic:'any'}]};
   }
   if(pin.kind==='onPlayTopFilterBottomDiscard'){
-   const spec={
+   const printedTrait=/^【登場時】自分の山札の上から([1-5])枚見る。その中から［特徴：([^］]{1,40})］を1枚まで公開し手札に加える。残りを望む順で自分の山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。$/.exec(pin.effectJa);
+   const spec=printedTrait?{count:Number(printedTrait[1]),
+    filter:{field:'trait',value:printedTrait[2]}}:{
     'SAO-1-005':{count:4,filters:[{field:'name',value:'キリト'},
      {field:'name',value:'アリス'}],logic:'any'},
     'SAO-1-009':{count:3,filter:{field:'trait',value:'女神'}},
@@ -1671,6 +1706,38 @@ export function verifiedSaoV2Cards(){
    card.templateEffects={onPlay:[spec.filters
     ?{template:'searchTopOneBottomDiscardWhere',count:spec.count,filters:spec.filters,logic:spec.logic}
     :{template:'searchTopOneBottomDiscard',count:spec.count,filter:spec.filter}]};
+  }
+  if(pin.kind==='namedFieldRetireBonus'){
+   const bonus=parseNamedFieldRetireBonus(pin.effectJa);
+   if(!bonus)throw Error(id+' is not the printed field-name retire bonus');
+   card.effects={onPlay:[{op:'retireOppFrontUnderBp',...bonus}]};
+   card.triggerEffect={op:'retireOppFront'};
+  }
+  if(pin.kind==='frontBuffThenDraw'){
+   const m=/^自分のフロントLのキャラを1枚まで選び、このターン中、BP\+(\d{3,4})。カードを1枚引く。$/.exec(pin.effectJa);
+   if(!m)throw Error(id+' is not the printed front buff then draw');
+   card.effects={onPlay:[
+    {op:'buffOwnField',filter:{field:'type',value:'character'},bp:Number(m[1]),
+     optional:true,excludeSelf:false,zone:'front'},
+    {op:'draw',count:1}]};
+  }
+  if(pin.kind==='onPlayAnyColorHandRestTrait'){
+   const m=/^【登場時】自分の手札から必要エナジーが(\d{1,2})以下で消費APが1の特徴に「([^」]{1,40})」を持つキャラカードを1枚まで自分の場にレストで登場させる。$/.exec(pin.effectJa);
+   if(!m)throw Error(id+' is not the printed any-color trait REST entry');
+   card.effects={onPlay:[{op:'deployOwnHandSpecial',type:'character',color:null,
+    ap:1,trait:m[2],maxEnergy:Number(m[1]),ready:false,max:1,protectionScope:null}]};
+  }
+  if(pin.kind==='onPlayRecoverColorTrait'){
+   const m=/^【登場時】自分の場外から([青黄緑紫赤])の［特徴：([^］]{1,40})］を1枚まで手札に加える。$/.exec(pin.effectJa);
+   const color={青:'blue',黄:'yellow',緑:'green',紫:'purple',赤:'red'}[m?.[1]];
+   if(!color)throw Error(id+' is not the printed color-and-trait outside recovery');
+   card.effects={onPlay:[{op:'recoverOutsideOne',optional:true,logic:'all',
+    filters:[{field:'color',value:color},{field:'trait',value:m[2]}]}]};
+  }
+  if(pin.kind==='onRetireMillUpTo'){
+   const m=/^【退場時】自分の山札の上から([12])枚まで場外に置く。$/.exec(pin.effectJa);
+   if(!m)throw Error(id+' is not the printed optional retirement mill');
+   card.effects={onRetire:[{op:'millTop',count:Number(m[1]),optional:true}]};
   }
   if(pin.kind==='lifeGatedRestRetire'){
     card.templateEffects={onPlay:[{template:'restOrRetireEnemyFrontByOwnLife',
@@ -1768,6 +1835,9 @@ export function verifiedSaoV2Entries(){
      ...(pin.kind==='onPlayTopFilterBottomDiscard'?
         [def.id==='SAO-1-005'?'tests/v2-r31-sao005-official-registry.test.mjs':
         'tests/v2-cross-title-top-filter-round13.test.mjs']:[]),
+     ...(def.id==='SAO-2-029'||['namedFieldRetireBonus','frontBuffThenDraw',
+      'onPlayAnyColorHandRestTrait','onPlayRecoverColorTrait','onRetireMillUpTo']
+      .includes(pin.kind)?['tests/v2-c26-five-title-batch.test.mjs']:[]),
      ...(pin.kind==='readyOnFirstBlock'?['tests/v2-ready-on-block-round14.test.mjs']:[]),
      ...(pin.kind==='frontOnceBpDown'||pin.kind==='frontOnceDiscardBpDown'?['tests/v2-single-bp-target-round14.test.mjs']:[]),
      ...(pin.kind==='nameAliasDrawDiscard'||pin.kind==='nameAliasOnly'||pin.kind==='nameAliasStep'?['tests/v2-name-alias-round14.test.mjs']:[]),

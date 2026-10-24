@@ -305,6 +305,17 @@ const registry=Object.freeze({
 });
 export const V2_ABILITY_TEMPLATE_IDS=Object.freeze(Object.keys(registry));
 
+// Printed sentence shared by SAO and MST events. The bonus name is read from
+// the card text. A raid-base or outside clause is a different sentence and
+// must not match.
+export function parseNamedFieldRetireBonus(effectJa){
+ const m=/^『BP(\d{3,5})以下』の相手のフロントLのキャラを1枚選び、退場させる。自分の場に〈([^〉]{1,40})〉がある場合、『BP(\d{3,5})以下』に代わる。$/.exec(effectJa||'');
+ if(!m)return null;
+ const bp=Number(m[1]),bonusBp=Number(m[3]);
+ if(bonusBp<bp)return null;
+ return {bp,bonusName:m[2],bonusBp};
+}
+
 function expandOne(spec,path){
  if(!spec||typeof spec!=='object'||Array.isArray(spec)||
   typeof spec.template!=='string'||!Object.prototype.hasOwnProperty.call(registry,spec.template))

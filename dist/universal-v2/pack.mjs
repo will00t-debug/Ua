@@ -114,10 +114,12 @@ function verifyProgram(program,path){
   }
   // 「1枚まで」is a choice to mill zero or one. A missing optional key stays
   // the existing mandatory mill. Optional is rejected for any other count.
+  // 「N枚まで」is zero through N blind mills. Count 1 stays the older
+  // single choice. Count 2 is the same choice repeated, and a skip stops.
   if(e.op==='millTop'&&e.optional!==undefined&&(
-   e.optional!==true||e.count!==1||
+   e.optional!==true||![1,2].includes(e.count)||
    Object.keys(e).some(k=>!['op','count','optional'].includes(k))
-  ))throw Error(path+'['+i+'] optional mill is exactly one card');
+  ))throw Error(path+'['+i+'] optional mill is one or two cards');
   if(e.op==='drawIfOwnEnergyAtLeast'&&(
    !integer(e.energy,1)||e.energy>50||
    !integer(e.count,1)||e.count>5||
@@ -169,7 +171,20 @@ function verifyProgram(program,path){
    e.max!==1||e.optional!==true||Object.keys(e).length!==4||
    Object.keys(e).some(k=>!['op','name','max','optional'].includes(k))
   ))throw Error(path+'['+i+'] invalid named own ACTIVE');
-  if(['searchDeckOne','searchDeckMany','recoverOutsideOne'].includes(e.op)){
+  if(e.op==='recoverOutsideOne'&&e.filters){
+   const valid=f=>f&&typeof f==='object'&&!Array.isArray(f)&&
+    Object.keys(f).length===2&&['name','trait','color','type'].includes(f.field)&&
+    typeof f.value==='string'&&!!f.value.trim()&&f.value.length<=80&&
+    (f.field!=='type'||V2_CARD_TYPES.includes(f.value));
+   if(!Array.isArray(e.filters)||e.filters.length!==2||!e.filters.every(valid)||
+    new Set(e.filters.map(f=>f.field)).size!==2||
+    !['all','any'].includes(e.logic)||typeof e.optional!=='boolean'||
+    Object.keys(e).length!==4||
+    Object.keys(e).some(k=>!['op','filters','logic','optional'].includes(k)))
+    throw Error(path+'['+i+'] invalid compound outside recovery');
+  }
+  if(['searchDeckOne','searchDeckMany'].includes(e.op)||
+   (e.op==='recoverOutsideOne'&&!e.filters)){
    const f=e.filter;
    const anyName=e.op==='recoverOutsideOne'&&f?.field==='printedNameAny';
    const validNameGroup=anyName&&f&&typeof f==='object'&&!Array.isArray(f)&&
@@ -325,8 +340,9 @@ function verifyProgram(program,path){
   }
   if(e.op==='deployOwnHandSpecial'){
     // A null maxEnergy means NO printed energy cap.
+    // A null color means the print does not name a color.
     if(!['character','field'].includes(e.type)||
-     !['blue','yellow','green','purple','red'].includes(e.color)||
+     !(e.color===null||['blue','yellow','green','purple','red'].includes(e.color))||
      !integer(e.ap,1)||e.ap>3||!integer(e.max,1)||e.max>4||
      !(e.trait===null||typeof e.trait==='string'&&!!e.trait.trim()&&e.trait.length<=80)||
      !(e.maxEnergy===null||integer(e.maxEnergy)&&e.maxEnergy<=30)||
@@ -534,7 +550,8 @@ function verifyProgram(program,path){
     (f.field==='type'&&!V2_CARD_TYPES.includes(f.value))||
     !integer(e.bp,1)||e.bp>5000||
     typeof e.optional!=='boolean'||typeof e.excludeSelf!=='boolean'||
-    Object.keys(e).some(k=>!['op','filter','bp','optional','excludeSelf'].includes(k)))
+    (e.zone!==undefined&&e.zone!=='front')||
+    Object.keys(e).some(k=>!['op','filter','bp','optional','excludeSelf','zone'].includes(k)))
     throw Error(path+'['+i+'] invalid own-field BP choice');
   }
   if(e.op==='buffOwnTrait'&&(

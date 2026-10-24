@@ -327,6 +327,7 @@ function searchChoices(pack,s,cards,query){
  return cards.filter(c=>matchesSearch(pack,s,c,query)).map(c=>c.uid);
 }
 function matchesOutsideRecovery(pack,s,c,q){
+ if(q.filters)return matchesSearch(pack,s,c,{filters:q.filters,logic:q.logic});
  if(q.filter)return matchesFilter(pack,s,c,q.filter);
  const d=card(pack,c);
  if(q.excludeName&&cardHasName(d,q.excludeName))return false;
@@ -666,12 +667,13 @@ function continueEffectQueue(pack,s){
     choices,optional:true,max:job.max};
   }
   else if(job.op==='millTop'){
-   // Optional is exactly one blind choice. The top card stays hidden until
-   // the controller accepts. Mandatory mills keep the previous loop.
+   // Optional is one or two blind choices. The top card stays hidden until
+   // the controller accepts, and a skip stops the rest. Mandatory mills
+   // keep the previous loop.
    if(job.optional===true){
-    if(job.count!==1)throw Error('Optional mill is exactly one card');
+    if(![1,2].includes(job.count))throw Error('Optional mill is one or two cards');
     if(pl.deck.length)s.pending={kind:'effect-optional-mill',player:owner,
-     sourceUid:job.sourceUid};
+     sourceUid:job.sourceUid,remaining:job.count};
    }else for(let i=0;i<job.count&&pl.deck.length;i++)moveOwnedLinear(pack,s,{
     owner,from:'deck',to:'outside',index:0,reason:'own-effect',sourceUid:job.sourceUid});
   }else if(job.op==='grantSelfSniperThisTurn'||job.op==='grantSelfAttackWinDrawThisTurn'||
@@ -785,7 +787,7 @@ function continueEffectQueue(pack,s){
     const special=job.op==='deployOwnHandSpecial';
     const choices=pl.hand.filter(c=>{
      const d=card(pack,c);
-     return d.type===job.type&&d.color===job.color&&d.ap===job.ap&&
+     return d.type===job.type&&(job.color===null||d.color===job.color)&&d.ap===job.ap&&
       (special?(job.maxEnergy===null||d.energy<=job.maxEnergy)&&
        (job.trait===null||cardHasTrait(d,job.trait)):d.energy<=job.energy);
     }).map(c=>c.uid);
@@ -821,9 +823,11 @@ function continueEffectQueue(pack,s){
        uids,order:[],rest:'bottom'};
     }
    }else if(job.op==='recoverOutsideOne'){
-   const matches=filteredChoices(pack,s,pl.outside,job.filter);
+   const query=job.filters?{filters:job.filters.map(f=>({...f})),logic:job.logic}:
+    {filter:{...job.filter}};
+   const matches=pl.outside.filter(c=>matchesOutsideRecovery(pack,s,c,query)).map(c=>c.uid);
    if(matches.length)s.pending={kind:'effect-recover-outside',player:owner,
-    sourceUid:job.sourceUid,filter:job.filter,choices:matches,optional:job.optional};
+    sourceUid:job.sourceUid,...query,choices:matches,optional:job.optional};
   }else if(job.op==='deployOutsideTraitlessRestOrRaid'){
     const extra=pl.outside.filter(c=>c.uid!==job.sourceUid&&card(pack,c).type==='field').length;
     const energyLimit=Math.min(30,job.energy+extra*job.perOtherOutsideField);
@@ -1150,7 +1154,8 @@ function continueEffectQueue(pack,s){
     sourceUid:job.sourceUid,choices,limit:job.bp,optional:job.optional,
     skipNextActive:job.skipNextActive===true};
   }else if(job.op==='buffOwnField'){
-   const choices=field(pl).filter(c=>card(pack,c).type==='character'&&
+   const pool=job.zone==='front'?pl.front.filter(Boolean):field(pl);
+   const choices=pool.filter(c=>card(pack,c).type==='character'&&
     (!job.excludeSelf||c.uid!==job.sourceUid)&&
     matchesFilter(pack,s,c,job.filter)).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-buff-own',player:owner,
@@ -2241,6 +2246,12 @@ function resolveChoice(s,a,pack){
    if(!p.deck.length)throw Error('Optional mill has no deck card');
    moveOwnedLinear(pack,s,{owner:q.player,from:'deck',to:'outside',index:0,
     reason:'own-effect',sourceUid:q.sourceUid});
+   const left=(q.remaining??1)-1;
+   if(left>0&&p.deck.length){
+    s.pending={kind:'effect-optional-mill',player:q.player,
+     sourceUid:q.sourceUid,remaining:left};
+    return;
+   }
   }else if(a.mode!=='skip')throw Error('Invalid optional mill');
   s.pending=null;continueEffectQueue(pack,s);return;
  }
@@ -2394,7 +2405,7 @@ function resolveChoice(s,a,pack){
    if(i<0||!q.choices.includes(a.uid)||!['front','energy'].includes(a.line))
     throw Error('Hand effect entry requires eligible own UID');
    const physical=p.hand[i],d=card(pack,physical);
-   if(d.type!==q.type||d.color!==q.color||d.ap!==q.ap||
+   if(d.type!==q.type||(q.color!==null&&d.color!==q.color)||d.ap!==q.ap||
     (q.special?(q.maxEnergy!==null&&d.energy>q.maxEnergy)||
       (q.trait!==null&&!cardHasTrait(d,q.trait)):d.energy>q.energy)||
     (a.line==='front'&&(d.type!=='character'||d.frontForbidden)))
@@ -4904,7 +4915,7 @@ export function assertUniversalMatch(pack,s){
   };
   const expected=pl.hand.filter(c=>{
    const d=card(pack,c);
-   return d.type===q.type&&d.color===q.color&&d.ap===q.ap&&
+   return d.type===q.type&&(q.color===null||d.color===q.color)&&d.ap===q.ap&&
     (q.maxEnergy===null||d.energy<=q.maxEnergy)&&
     (q.trait===null||cardHasTrait(d,q.trait));
   }).map(c=>c.uid);

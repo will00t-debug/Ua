@@ -2,6 +2,7 @@
 // Source copies are isolated under ./sources, not merged into Production records.
 import {MST_V2_OFFICIAL_CATALOGUE} from './sources/mst-inventory.mjs';
 import {createUniversalPack} from './pack.mjs';
+import {parseNamedFieldRetireBonus} from './ability-templates.mjs';
 
 const PRINTED_PINS=Object.freeze({
  "MST-1-009":{kind:"onOwnEffectEntryChooseTimedSelf",
@@ -33,6 +34,10 @@ const PRINTED_PINS=Object.freeze({
   effectJa:"〖登場時〗 以下から1つ選ぶ。\n・カードを1枚引き、自分の手札を1枚場外に置く。\n・自分のフロントLの他の［特徴：ラノア魔法大学］を1枚まで選び、このターン中、「このキャラはフロントLでもエナジーを発生させる。」を与える。"
  },
 
+ "MST-1-078":{"kind":"namedFieldRetireBonus","nameJa":"守護術師フィッツ",
+  "color":"green","energy":4,"ap":1,"bp":0,"gen":0,"type":"event",
+  "traits":[],"trigger":"special",
+  "effectJa":"『BP3000以下』の相手のフロントLのキャラを1枚選び、退場させる。自分の場に〈シルフィエット〉がある場合、『BP5000以下』に代わる。"},
  "MST-1-076":{
   kind:"fieldRetireOutsideTraitlessRestOrRaid",
   nameJa:"迷宮の守護者 マナタイトヒュドラ",
@@ -821,6 +826,12 @@ export function verifiedMstV2Cards(){
    card.templateEffects={onPlay:[{template:'recoverAp',count:2}]};
   if(pin.kind==='onPlayOrderTopThree')
    card.templateEffects={onPlay:[{template:'inspectTopArrange',count:3,toOutside:false,rest:'top'}]};
+  if(pin.kind==='namedFieldRetireBonus'){
+   const bonus=parseNamedFieldRetireBonus(pin.effectJa);
+   if(!bonus)throw Error(id+' is not the printed field-name retire bonus');
+   card.effects={onPlay:[{op:'retireOppFrontUnderBp',...bonus}]};
+   card.triggerEffect={op:'retireOppFront'};
+  }
   if(pin.kind==='onPlayBuffOwnOther1000')
    card.templateEffects={onPlay:[{template:'buffOwnField',
     filter:{field:'type',value:'character'},bp:1000,optional:true,excludeSelf:true}]};
@@ -857,6 +868,7 @@ export function verifiedMstV2Entries(){
      '; pilot behavior and generic Trigger only, NOT complete FAQ acceptance. '+
      source.source,
     testFiles:Object.freeze([
+     ...(pin.kind==='namedFieldRetireBonus'?['tests/v2-c26-five-title-batch.test.mjs']:[]),
      ...(pin.kind==='nextHandApDiscount'?['tests/v2-r36-real-discount-cards.test.mjs']:[]),
       ...(pin.kind==='ownTurnEventImpactDiscount'?['tests/v2-r38-mst031-real.test.mjs']:[]),
      ...(pin.kind==='eventDrawTwoFrontEnergy'?['tests/v2-r37-mst080-event-front.test.mjs',
