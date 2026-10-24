@@ -503,8 +503,11 @@ function verifyProgram(program,path){
    throw Error(path+'['+i+'] invalid this-turn impact grant');
   if(e.op==='grantOtherImpactThisTurn'&&(
    typeof e.trait!=='string'||!e.trait.trim()||e.trait.length>80||
-   e.amount!==1||e.optional!==true||Object.keys(e).length!==4||
-   Object.keys(e).some(k=>!['op','trait','amount','optional'].includes(k))))
+   e.amount!==1||e.optional!==true||
+   (e.plus!==undefined&&e.plus!==true)||
+   (e.includeSelf!==undefined&&e.includeSelf!==true)||
+   Object.keys(e).length!==4+(e.plus!==undefined?1:0)+(e.includeSelf!==undefined?1:0)||
+   Object.keys(e).some(k=>!['op','trait','amount','optional','plus','includeSelf'].includes(k))))
    throw Error(path+'['+i+'] invalid other-character impact grant');
   if(e.op==='returnSourceToHand'&&Object.keys(e).some(k=>k!=='op'))
    throw Error(path+'['+i+'] invalid source hand return');

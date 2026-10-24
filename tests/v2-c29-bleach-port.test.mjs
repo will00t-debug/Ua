@@ -5,7 +5,7 @@ import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {registeredV2TitlePack} from '../dist/universal-v2/title-packs/registry.mjs';
 import {cardHasName} from '../dist/universal-v2/field-conditions.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
- assertUniversalMatch,universalBp} from '../dist/universal-v2/engine.mjs';
+ assertUniversalMatch,universalBp,universalImpact} from '../dist/universal-v2/engine.mjs';
 import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
 import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v2-integrated-id-manifest.mjs';
 
@@ -21,9 +21,13 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 // BLC-1-062 UA08ST: 自分の場のキャラを1枚選び、このターン中、BP+1000。
 //   自分のAPカードを1枚まで選び、アクティブにする。 ACTIVE is generic.
 //   The character choice is mandatory. The AP choice is up to one.
+// BLC-1-087 UA08BT: [登場時]自分の場の［特徴：護廷十三隊］を1枚まで選び、このターン中、
+//   [インパクト（+1）]を与える。 The parenthetical gives Impact 1 when the
+//   target has none. The sentence does not say 他の, so this character is legal.
+//   ACTIVE is the generic sentence. Generated energy alt is 緑.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -33,7 +37,7 @@ function realDeck(required,color){
  assert.deepEqual(validateUniversalDeck(bleach,counts),[]);
  return counts;
 }
-const green=realDeck(['BLC-1-080','BLC-1-091','BLC-1-078','BLC-1-070','BLC-4-062'],'green');
+const green=realDeck(['BLC-1-080','BLC-1-091','BLC-1-078','BLC-1-070','BLC-4-062','BLC-1-087','BLC-2-067'],'green');
 const blue=realDeck(['BLC-2-041','BLC-2-031','BLC-4-036'],'blue');
 const purple=realDeck(['BLC-1-062','BLC-1-035','BLC-1-103'],'purple');
 const yellow=realDeck(['BLC-1-032','BLC-1-023','BLC-1-006'],'yellow');
@@ -81,12 +85,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers six whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,442);
- assert.equal(EXPECTED_V2_COUNTS.bleach,166);
+test('C29 registers seven whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,443);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,167);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,166);
+ assert.equal(Object.keys(bleach.cards).length,167);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -354,4 +358,66 @@ test('BLC-1-078 steps to energy and may buff one Gotei character on attack',()=>
  assert.equal(universalBp(packs,battle,live(battle,0,other.uid)),bleach.cards['BLC-4-062'].bp);
  assert.equal(assertUniversalMatch(packs,moving),true);
  assert.equal(assertUniversalMatch(packs,battle),true);
+});
+
+test('BLC-1-087 adds one Impact to at most one own Gotei character, including itself',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-1-087');
+ assert.equal(printed.effect,'登場：可使最多 1 個己方場上具有「護廷十三隊」特徵的角色本回合獲得 Impact +1；沒有 Impact 的角色則獲得 Impact 1。');
+ assert.equal(printed.traits,'護廷十三隊');
+ assert.equal(printed.gen,1);
+ const card=bleach.cards['BLC-1-087'];
+ assert.equal(card.trigger,'active');
+ assert.equal(card.triggerEffect,null);
+ assert.equal(card.printedImpact||0,0);
+ assert.deepEqual(card.traits,['護廷十三隊']);
+ assert.deepEqual(card.effects.onPlay,[{op:'grantOtherImpactThisTurn',trait:'護廷十三隊',
+  amount:1,optional:true,plus:true,includeSelf:true}]);
+ const {packs,s}=main(green,29087);
+ put(s,0,'BLC-1-080','energy',0);
+ put(s,0,'BLC-1-091','energy',1);
+ const other=put(s,0,'BLC-4-062','energy',2);
+ const ken=put(s,0,'BLC-2-067','front',0);
+ const plain=put(s,0,'BLC-1-070','front',1);
+ const foe=put(s,1,'BLC-1-080','front',0);
+ const self=take(s,0,'BLC-1-087');
+ s.players[0].hand.push(self);
+ const play=legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===self.uid&&a.line==='front'&&a.slot===2);
+ assert.ok(play);
+ let played=dispatchUniversalAction(packs,s,play);
+ assert.equal(played.pending.kind,'effect-grant-impact');
+ assert.equal(played.pending.plus,true);
+ assert.equal(played.pending.includeSelf,true);
+ assert.equal(played.pending.optional,true);
+ const choices=legalUniversalActions(packs,played);
+ const chosen=uid=>choices.some(a=>a.type==='chooseGrantImpact'&&a.uid===uid);
+ assert.equal(chosen(null),true);
+ assert.equal(chosen(self.uid),true);
+ assert.equal(chosen(ken.uid),true);
+ assert.equal(chosen(plain.uid),true);
+ assert.equal(chosen(other.uid),false);
+ assert.equal(chosen(foe.uid),false);
+ const skipped=dispatchUniversalAction(packs,played,{type:'chooseGrantImpact',uid:null});
+ assert.equal(skipped.pending,null);
+ assert.equal(universalImpact(packs,skipped,live(skipped,0,self.uid)),0);
+ assert.equal(universalImpact(packs,skipped,live(skipped,0,ken.uid)),1);
+ assert.equal(universalImpact(packs,skipped,live(skipped,0,plain.uid)),0);
+ let added=dispatchUniversalAction(packs,played,{type:'chooseGrantImpact',uid:ken.uid});
+ assert.equal(universalImpact(packs,added,live(added,0,ken.uid)),2);
+ assert.equal(universalImpact(packs,added,live(added,0,self.uid)),0);
+ assert.equal(universalImpact(packs,added,live(added,0,plain.uid)),0);
+ added=dispatchUniversalAction(packs,played,{type:'chooseGrantImpact',uid:plain.uid});
+ assert.equal(universalImpact(packs,added,live(added,0,plain.uid)),1);
+ assert.equal(universalImpact(packs,added,live(added,0,ken.uid)),1);
+ added=dispatchUniversalAction(packs,played,{type:'chooseGrantImpact',uid:self.uid});
+ assert.equal(universalImpact(packs,added,live(added,0,self.uid)),1);
+ assert.equal(universalImpact(packs,added,live(added,0,ken.uid)),1);
+ let later=added;
+ for(let n=0;n<16&&later.turn===added.turn;n++)
+  later=dispatchUniversalAction(packs,later,{type:'next'});
+ assert.notEqual(later.turn,added.turn);
+ assert.equal(universalImpact(packs,later,live(later,0,self.uid)),0);
+ assert.equal(universalImpact(packs,later,live(later,0,ken.uid)),1);
+ aiOk(packs,played);
+ assert.equal(assertUniversalMatch(packs,added),true);
+ assert.equal(assertUniversalMatch(packs,later),true);
 });

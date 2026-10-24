@@ -252,18 +252,24 @@ function impactOnBattleWin(pack,s,c){
  const d=card(pack,c);
  const g=c.impactGranted;
  const earned=g&&g.turn===s.turn&&g.stamp===c.fieldEntryStamp?g.amount:0;
+ const plus=earned&&g.plus===true;
  if(originalEffectsDisabled(s,c))return earned;
  // Printed impact and the facedown-under profile stay separate from each
  // other and from a live passive impact. Pack validation refuses stacking.
+ // インパクト（+1）adds to that base. A plain grant stays the larger value.
+ const under=hasFacedownUnder(c)?(d.conditionalUnderFaceDown?.impact||0):0;
+ const owner=Number(String(c.uid).split('-')[0]);
+ const passive=d.passiveBonuses.reduce((n,p)=>n+(p.impact&&
+  matchesV2LiveCondition(s,owner,c.uid,p.condition,x=>card(pack,x),
+   ()=>calcEnergy(pack,s,owner),x=>bp(pack,s,x))?p.impact:0),0);
+ const base=d.printedImpact||(d.conditionalImpactBpAtLeast!==null&&
+  bp(pack,s,c)>=d.conditionalImpactBpAtLeast?1:0)||under||passive;
+ if(plus)return base+earned;
  if(d.printedImpact)return Math.max(d.printedImpact,earned);
  if(d.conditionalImpactBpAtLeast!==null&&
   bp(pack,s,c)>=d.conditionalImpactBpAtLeast)return Math.max(1,earned);
- const under=hasFacedownUnder(c)?(d.conditionalUnderFaceDown?.impact||0):0;
  if(under)return Math.max(under,earned);
- const owner=Number(String(c.uid).split('-')[0]);
- return Math.max(earned,d.passiveBonuses.reduce((n,p)=>n+(p.impact&&
-  matchesV2LiveCondition(s,owner,c.uid,p.condition,x=>card(pack,x),
-   ()=>calcEnergy(pack,s,owner),x=>bp(pack,s,x))?p.impact:0),0));
+ return Math.max(earned,passive);
 }
 export function universalImpact(pack,s,c){return impactOnBattleWin(pack,s,c);}
 function protectedLeave(pack,s,c){
@@ -1015,11 +1021,12 @@ function continueEffectQueue(pack,s){
    if(pl.life.length)s.pending={kind:'effect-life-to-hand',player:owner,
     sourceUid:job.sourceUid,choices:pl.life.map(c=>c.uid),optional:true};
   }else if(job.op==='grantOtherImpactThisTurn'){
-   const choices=field(pl).filter(c=>c.uid!==job.sourceUid&&
+   const choices=field(pl).filter(c=>(job.includeSelf===true||c.uid!==job.sourceUid)&&
     card(pack,c).type==='character'&&cardHasTrait(card(pack,c),job.trait)&&
     Number.isInteger(c.fieldEntryStamp)).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-grant-impact',player:owner,
-    sourceUid:job.sourceUid,choices,trait:job.trait,amount:job.amount,optional:true};
+    sourceUid:job.sourceUid,choices,trait:job.trait,amount:job.amount,
+    optional:true,plus:job.plus===true,includeSelf:job.includeSelf===true};
   }else if(job.op==='grantOwnNameBlockAtLeast'){
    const choices=field(pl).filter(c=>card(pack,c).type==='character'&&
     cardHasName(card(pack,c),job.name,originalEffectsDisabled(s,c))).map(c=>c.uid);
@@ -2840,11 +2847,13 @@ function resolveChoice(s,a,pack){
    s.pending=null;continueEffectQueue(pack,s);return;
   }
   const target=field(p).find(c=>c.uid===a.uid);
-  if(!target||!q.choices.includes(a.uid)||target.uid===q.sourceUid||
+  if(!target||!q.choices.includes(a.uid)||
+   (target.uid===q.sourceUid&&q.includeSelf!==true)||
    !Number.isInteger(target.fieldEntryStamp)||
    !cardHasTrait(card(pack,target),q.trait))
    throw Error('Illegal other-character impact target');
-  target.impactGranted={turn:s.turn,stamp:target.fieldEntryStamp,amount:q.amount};
+  target.impactGranted={turn:s.turn,stamp:target.fieldEntryStamp,amount:q.amount,
+   ...(q.plus===true?{plus:true}:{})};
   s.pending=null;continueEffectQueue(pack,s);return;
  }
  if(q.kind==='effect-buff-trait'){
@@ -3673,7 +3682,8 @@ function legalPending(pack,s){
  ];
  if(q.kind==='effect-grant-impact')return [
   {type:'chooseGrantImpact',uid:null},
-  ...q.choices.filter(uid=>field(p).some(c=>c.uid===uid&&c.uid!==q.sourceUid&&
+  ...q.choices.filter(uid=>field(p).some(c=>c.uid===uid&&
+   (q.includeSelf===true||c.uid!==q.sourceUid)&&
    cardHasTrait(card(pack,c),q.trait))).map(uid=>({type:'chooseGrantImpact',uid}))
  ];
  if(q.kind==='effect-buff-trait')return [

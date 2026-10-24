@@ -95,7 +95,8 @@ const testForKind=Object.freeze({
  otherOwnRetireThisTurnBp:'tests/v2-c29-bleach-port.test.mjs',
  fieldBuffRecoverAp:'tests/v2-c29-bleach-port.test.mjs',
  chooseBuffOrFrontDown:'tests/v2-c29-bleach-port.test.mjs',
- stepAttackTraitBuff:'tests/v2-c29-bleach-port.test.mjs'
+ stepAttackTraitBuff:'tests/v2-c29-bleach-port.test.mjs',
+ impactPlusTrait:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
