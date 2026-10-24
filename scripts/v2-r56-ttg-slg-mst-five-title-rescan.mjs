@@ -12,9 +12,14 @@ export const R56_SEARCH_TERMS=Object.freeze({
  mandatoryBlock:/ブロックしなければ|必須阻擋|必須格擋|必須要阻擋|必須BLOCK|必須阻擋/u,
  attackEndSwap:/アタック終了時|攻擊結束|交換位置|位置を入れ替/u,
  twoModes:/以下から1つ|二選一|選一項|2つから1つ/u,
- sniper:/狙い撃ち|狙擊/u
+ sniper:/狙い撃ち|狙擊/u,
+ ownEffectEntry:/自分の効果で登場|己方效果登場|透過自己的效果登場|經自己的效果登場/u,
+ emptyOwnFieldHand:/場にカードが1枚もない|己方場上沒有卡片|自己場上沒有任何卡|場上沒有卡片時/u,
+ nextOwnStart:/次の自分のターン開始|下次己方回合開始|下次自己的回合開始/u
 });
 const PRIORITY=Object.freeze([
+ {id:'TTG-1-020',owner:'GPT',status:'REGISTERED',faq:null,
+  reason:'Official JP printed own empty field hand-only green-2, STEP, ACTIVE life; real 50-card positive/negative scenario, all-FAQ certification separate'},
  {id:'SLG-1-021',owner:'GPT',status:'REGISTERED',faq:'Q2028',
   reason:'JP five-clause whole print, physical printed BP and forced legal BLOCK; independent FAQ exhaustiveness pending'},
  {id:'MST-1-009',owner:'GPT',status:'REGISTERED',faq:'Q2147',
@@ -55,6 +60,8 @@ export function r56TtgSlgMstRescan(){
    fingerprint:card.sourceFingerprint};
  });
  const cursor=reviewed.filter(x=>x.owner==='Cursor');
+ const cursorReuse=Object.fromEntries(Object.entries(hits).map(([kind,rows])=>
+  [kind,rows.filter(x=>['bleach','sword-art-online'].includes(x.title))]));
  if(cursor.some(x=>x.status==='REGISTERED'||!expected.has(x.id)))
   throw Error('Do not preempt Cursor-owned unported title cards');
  return {
@@ -65,7 +72,7 @@ export function r56TtgSlgMstRescan(){
    scannedCandidateMatches:Object.fromEntries(Object.entries(hits).map(([k,v])=>[k,v.length])),
    byTitle:Object.fromEntries(inv.series.map(c=>[c.title,{
     registered:c.pilotImplemented,unported:c.blocked}]))
-  },reviewed,cursor,hits
+  },reviewed,cursor,cursorReuse,hits
  };
 }
 if(import.meta.url===pathToFileURL(process.argv[1]||'').href){
@@ -73,6 +80,7 @@ if(import.meta.url===pathToFileURL(process.argv[1]||'').href){
  console.log('R56_ALL_TITLE_COMPLEMENT '+JSON.stringify(r.report));
  console.log('R56_MANUAL_FULL_PRINT_STATES '+JSON.stringify(r.reviewed));
  console.log('R56_CURSOR_CANDIDATES_NO_MIGRATION '+JSON.stringify(r.cursor));
+ console.log('R57_CURSOR_SOURCE_REUSE_ONLY '+JSON.stringify(r.cursorReuse));
  for(const [k,arr] of Object.entries(r.hits))
   console.log('R56_UNPORTED_TEXT_ONLY_'+k.toUpperCase()+' '+JSON.stringify(arr));
 }
