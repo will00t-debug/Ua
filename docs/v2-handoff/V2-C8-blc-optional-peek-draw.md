@@ -15,4 +15,6 @@ The program is an optional `discardGate`, then `peekTopOrBottom`, then `draw` 1.
 
 A five-title scan found no other unported card with either catalogue sentence. BLC-1-078 was also fetched: Step plus an attack-time choice of one own-field Gotei card, BP+500. The shared field buff selects characters only, while the official text does not say キャラ, so it stays unregistered.
 
-Phase 2 battle AI has not started.
+Local Node v22.23.4: `npm test` 2238/2238 fail 0, matrix 60/60, manifest bleach 117, gurren-lagann 38, solo-leveling 46, sword-art-online 111, mushoku-tensei 55, total 367/700. Unported 333, of which BLEACH 159 and MST 25. FAQ certification stays 0. This C8 SHA still needs its own GitHub Actions SUCCESS.
+
+Phase 2 battle AI has not started. BLEACH is 117/276 and MST is 55/80.
