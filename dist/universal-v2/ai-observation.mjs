@@ -30,6 +30,7 @@ export function createUniversalAiObservation(pack,s,legal){
   // Only public resolution parameters, never copy the complete pending queue.
   for(const k of ['sourceUid','attackerUid','uid','bp'])
    if(q[k]!==undefined)pending[k]=q[k];
+  if(['effect-retire-own-field','effect-retire-own-character','main-field-trait-retire'].includes(q.kind))pending.after=(q.after||[]).map(({op,count,bp})=>({op,count,bp}));
   if(q.kind==='effect-choice-mode')pending.options=structuredClone(q.options);
  }
  return {actor,active:s.active,first:s.first,turn:s.turn,phase:s.phase,

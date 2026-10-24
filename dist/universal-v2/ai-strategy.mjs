@@ -41,6 +41,7 @@ function programValue(packs,o,program,source,depth=0){
  return sum((program||[]).map(e=>{
   if(e.op==='draw')return Math.min(e.count||1,Math.max(0,own.deckCount-1))*2;
   if(e.op==='drawDiscard')return 0.7;
+  if(e.op==='restSilenceOppFrontIfOwnOutsideField')return own.outside.some(x=>def(packs,o.actor,x).type==='field')?Math.max(0,...enemies.map(c=>val(c)*0.8)):0;
   if(e.op==='recoverAp')return 1.5;
   if(['retireOppFrontUnderBp','retireOppFrontOneUnderBp','conditionalBounceOrRetireByOwnOutsideNames'].includes(e.op))
    return Math.max(0,...enemies.filter(c=>c.bp<=e.bp).map(val));
@@ -79,9 +80,12 @@ function deployment(packs,o,a,c,free=false){
  score-=replacing;
  if(base){
   score-=own.front.includes(base)?universalAiCardValue(def(packs,o.actor,base),base)*0.8:energyGain(packs,o,def(packs,o.actor,base),base.produces);
-  score+=2+(base.ready?0:1);
+  // Raid preserves a destination slot and may earn a base onRaided effect.
+  score+=2.5+(base.ready?0:1)+programValue(packs,o,def(packs,o.actor,base).effects?.onRaided,base);
  }
- score+=programValue(packs,o,d.effects?.[base?'onRaid':'onPlay'],c);
+ score+=programValue(packs,o,d.effects?.onPlay,c);
+ if(base)score+=programValue(packs,o,d.effects?.onRaid,c);
+ if(d.type==='field')score+=programValue(packs,o,d.effects?.onRetire,c)*0.8;
  if(!free)score-=0.7+(d.ap||1)*0.8;
  // Don't turn a valuable attacker into a marginal excess producer.
  if(line==='energy')score-=value*0.15;
@@ -95,11 +99,12 @@ function attackScore(packs,o,c,target){
  const trade=b=>c.bp>=b.bp?universalAiCardValue(def(packs,1-o.actor,b),b)+(c.impact||0)*lifeValue(foe.life):-value;
  let gain=target?trade(target):Math.min(reward,...blockers.map(trade));
  if(!target&&!blockers.length&&foe.life<(c.damage||1))gain+=1000;
- // Keep a useful blocker when lethal counter-pressure is visible. Opponent
- // cards refresh next turn, so count all their public attackers, not just READY.
+ // V2 refreshes our field at turn end. Retaining a READY blocker only adds
+ // value when a public restriction prevents that refresh; don't invent fatigue.
  const reserve=own.front.filter(x=>x?.ready&&x.uid!==c.uid).length;
  const pressure=foe.front.filter(Boolean).length;
- if(own.life<=2&&pressure>reserve+own.life)gain-=value*0.9;
+ if(own.life<=2&&pressure>reserve+own.life&&
+  c.restrictions?.some(r=>['cannotActive','skipNextActive'].includes(r.kind)))gain-=value*0.9;
  gain+=programValue(packs,o,def(packs,o.actor,c).effects?.onAttack,c);
  // Prefer a cheaper equally effective attacker, preserving high-value choices.
  return gain-value*0.04;
@@ -142,7 +147,9 @@ function pendingScore(packs,o,a){
   const layers=o.legal.filter(x=>x.mode==='protect').length;
   return a.mode==='protect'?(protectedCard&&protectedCard.bp-(layers>1?0:loss)>0?1:-1):0;
  }
- if(['effect-retire-own-field','effect-retire-own-character','main-field-trait-retire','effect-bounce-own','main-rest-front-energy'].includes(q.kind))return -value;
+ if(['effect-retire-own-field','effect-retire-own-character','main-field-trait-retire'].includes(q.kind))
+  return programValue(packs,o,q.after,c)+programValue(packs,o,def(packs,o.actor,c).effects?.onRetire,c)-value;
+ if(['effect-bounce-own','main-rest-front-energy'].includes(q.kind))return -value;
  if(['effect-retire-bp','effect-target','effect-target-many','effect-strip-raid-top','effect-named-outside-bounce-retire'].includes(q.kind))return enemyValue+(enemy&&q.bp&&enemy.bp<=q.bp?3:0);
  if(['effect-rest-bp','effect-attack-ban'].includes(q.kind))return enemy?.ready?enemyValue*0.7:0.05;
  if(q.kind==='attack-end-swap')return c?(c.ready?1:0)+value*0.3:0;
@@ -188,12 +195,13 @@ export function rankUniversalAiActions(packs,o){
    if(['buff','fieldOnceBuffOther','fieldRestBuffGroup'].includes(a.mode))score+=own.front.some(x=>x?.ready)?1.3:0;
    if(a.mode==='selfRestEnemy')score+=Math.max(0,...foe.front.filter(x=>x?.ready).map(x=>universalAiCardValue(def(packs,1-o.actor,x),x)*0.6));
    if(a.mode==='payApDrawEnergy')score+=own.deckCount>2?1:0;
+   if(a.mode==='retireFieldThen')score+=Math.max(0,...own.energy.filter(x=>x&&def(packs,o.actor,x).type==='field').map(x=>programValue(packs,o,ab?.after,c)+programValue(packs,o,def(packs,o.actor,x).effects?.onRetire,x)-universalAiCardValue(def(packs,o.actor,x),x)));
    if(a.mode==='discardSelfBuff')score+=own.hand.length>3&&foe.front.some(x=>x&&x.bp>=c.bp&&x.bp<c.bp+(ab?.bp||0))?2.5:0;
    if(/^(selfRest|restDiscard|fieldRest)/.test(a.mode))score-=own.front.includes(c)?universalAiCardValue(d,c)*0.55:0.3;
    if(a.mode==='discardSelfBuff')score-=1.8;
    score-=0.05; // Unknown/no-benefit activation must not form loops.
   }
   return {action,score:position+score,utility:score,index};
- }).sort((a,b)=>b.score-a.score||JSON.stringify(a.action).localeCompare(JSON.stringify(b.action)));
+ }).sort((a,b)=>b.score-a.score||(o.pending?.kind?.startsWith('effect-search-deck')?JSON.stringify(a.action).localeCompare(JSON.stringify(b.action)):a.index-b.index));
 }
 export function chooseStrategicUniversalAction(packs,o){return rankUniversalAiActions(packs,o)[0]?.action||null;}

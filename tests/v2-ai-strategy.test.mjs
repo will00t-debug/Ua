@@ -46,11 +46,12 @@ test('Hard values live BP and rejects a losing sniper battle; retains exact targ
  assert.deepEqual(pick(o),o.legal[2]);
  o.players[0].front.pop();o.legal.pop();assert.equal(pick(o).type,'next');
 });
-test('Hard preserves a blocker under visible lethal counter-pressure but attacks at healthy LIFE',()=>{
+test('Hard respects end-turn refresh and preserves a refresh-prohibited blocker under lethal counter-pressure',()=>{
  const o=tactical();o.players[0].front=[physical('strong','0-a',4000)];
  o.players[1].front=[physical('weak','1-a',1000,false),physical('weak','1-b',1000,false),physical('weak','1-c',1000,false)];
  o.legal=[{type:'next'},{type:'attack',uid:'0-a'}];
- assert.equal(pick(o).type,'attack');o.players[0].life=1;assert.equal(pick(o).type,'next');
+ assert.equal(pick(o).type,'attack');o.players[0].life=1;assert.equal(pick(o).type,'attack','normal end-turn refresh preserves defense');
+ o.players[0].front[0].restrictions=[{kind:'cannotActive'}];assert.equal(pick(o).type,'next');
 });
 test('Hard avoids replacing a stronger own card for a weaker play and values lethal damage',()=>{
  const o=tactical();o.phase='main';o.players[0].hand=[{cardId:'weak',uid:'0-w'}];
@@ -95,4 +96,19 @@ test('hidden-zone permutations cannot affect Hard observations, rankings or dete
   assert.deepEqual(dispatchUniversalAction(packs,restored,action,{actor}),next);
   s=next;
  }
+});
+import {readFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+test('every engine pending kind has an explicit reviewed AI category; new kinds fail this gate',()=>{
+ const engine=readFileSync(new URL('../dist/universal-v2/engine.mjs',import.meta.url),'utf8');
+ const start=engine.indexOf("!['phase-order'");
+ const list=engine.slice(start,engine.indexOf('].includes(s.pending.kind)',start));
+ const actual=[...list.matchAll(/'([^']+)'/g)].map(x=>x[1]).sort();
+ const inventory=JSON.parse(readFileSync(new URL('./fixtures/v2-ai-decision-inventory.json',import.meta.url)));
+ const reviewed=Object.values(inventory.pendingGroups).flat().sort();
+ assert.deepEqual(actual,reviewed);assert.equal(new Set(reviewed).size,reviewed.length);
+});
+test('new strategy has no reducer import, remote API or access to concealed state',()=>{
+ const code=readFileSync(new URL('../dist/universal-v2/ai-strategy.mjs',import.meta.url),'utf8');
+ assert.ok(!/dispatchUniversalAction|fetch\(|XMLHttpRequest|\.rng\b|\.effectQueue\b|\.players\[[^\]]+\]\.deck\b/.test(code));
 });
