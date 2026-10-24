@@ -134,12 +134,14 @@ test('SLG-040 paid event: no Jinwoo only BP3000, printed Jinwoo present raises l
   }
   s.players[1].hand.push(source);s=advance(s,'main');
   const action=legalUniversalActions(packs,s).find(a=>a.type==='event'&&a.uid===source.uid);
-  assert.ok(action,'purple energy and AP must permit paid event');
-  return {s:dispatchUniversalAction(packs,s,action),enemy};
+  if(withJinwoo)assert.ok(action,'printed Jinwoo raises cap to BP5000');
+  else assert.equal(action,undefined,'Q1119 forbids event with no eligible target');
+  return {s:withJinwoo?dispatchUniversalAction(packs,s,action):s,enemy,source};
  };
  const without=setup(false);
- assert.equal(without.s.pending,null,'boosted enemy 4000 is NOT under base 3000');
+ assert.equal(without.s.pending,null);
  assert.equal(without.s.players[0].front[0].uid,without.enemy.uid);
+ assert.ok(without.s.players[1].hand.some(c=>c.uid===without.source.uid));
  assert.equal(assertUniversalMatch(packs,without.s),true);
  const withName=setup(true);
  assert.equal(withName.s.pending?.kind,'effect-retire-bp');
@@ -205,13 +207,13 @@ test('SLG-076 green SPECIAL event has real energy/AP cost and no false bonus wit
  s.players[1].hand.push(source);s=advance(s,'main');
  const before=s.players[1].apCards.filter(c=>c.inPlay&&c.ready).length;
  const event=legalUniversalActions(packs,s).find(a=>a.type==='event'&&a.uid===source.uid);
- assert.ok(event,'4 green energy is required for this event');
- const resolved=dispatchUniversalAction(packs,s,event);
- assert.equal(resolved.pending,null,'4000BP cannot be targeted without Jinwoo');
- assert.equal(resolved.players[1].apCards.filter(c=>c.inPlay&&c.ready).length,before-1);
- assert.equal(resolved.players[0].front[0].uid,target.uid);
- assert.ok(resolved.players[1].outside.some(c=>c.uid===source.uid));
- assert.equal(assertUniversalMatch(packs,resolved),true);
+ assert.equal(event,undefined,'Q1119: BP4000 with no Jinwoo is not targetable');
+ assert.throws(()=>dispatchUniversalAction(packs,s,{type:'event',uid:source.uid}),
+  /Action not currently legal/);
+ assert.equal(s.players[1].apCards.filter(c=>c.inPlay&&c.ready).length,before);
+ assert.equal(s.players[0].front[0].uid,target.uid);
+ assert.ok(s.players[1].hand.some(c=>c.uid===source.uid));
+ assert.equal(assertUniversalMatch(packs,s),true);
 });
 test('SLG-076 SPECIAL Life Trigger can retire opposing front unit regardless of normal event BP threshold',()=>{
  let s=fresh(0),attacker=take(s,0,'TTG-1-042'),flip=take(s,1,'SLG-1-076');
