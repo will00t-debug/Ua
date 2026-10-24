@@ -659,7 +659,27 @@ const authored=[
  "textAnchor":"主要階段REST並退場此角色，可從己方場外回收最多1張水篠旬。",
  "implementation":"dsl","effects":{},
  "mainAbility":{"op":"restRetireRecoverOutside","optional":true,
-  "filter":{"field":"name","value":"水篠 旬"}}}
+  "filter":{"field":"name","value":"水篠 旬"}}},
+// UA51BT/SLG-1-071: once per turn, REST, buff one other character +1000,
+// then return this card to hand. The return is not retirement.
+{"id":"SLG-1-071","name":"マリー","color":"green","energy":0,"ap":1,
+ "bp":1500,"gen":1,"trigger":"draw","type":"character",
+ "textAnchor":"主要階段每回合一次：REST自己，使另一己方角色本回合BP+1000並將自身返回手牌。",
+ "implementation":"dsl","effects":{},
+ "mainAbility":{"op":"restOnceBuffReturnSelf","oncePerTurn":true,"bp":1000},
+ "officialTraits":["DFN／第四次架南島レイド"],
+ "traitComponents":["DFN","第四次架南島レイド"],
+ "catalogueTraits":["DFN","第四次架南島Raid"]},
+// UA51BT/SLG-1-074: on play, up to one other own DFN gains Impact 1 this turn.
+{"id":"SLG-1-074","name":"ルノー","color":"green","energy":2,"ap":1,
+ "bp":3000,"gen":1,"trigger":"draw","type":"character",
+ "textAnchor":"登場時令另一己方DFN角色最多1張本回合獲Impact1。",
+ "implementation":"dsl",
+ "effects":{"onPlay":[{"op":"grantOtherImpactThisTurn","trait":"DFN",
+  "amount":1,"optional":true}]},
+ "officialTraits":["DFN／第四次架南島レイド"],
+ "traitComponents":["DFN","第四次架南島レイド"],
+ "catalogueTraits":["DFN","第四次架南島Raid"]}
 ];
 export const SLG_V2_VERIFIED_IDS=Object.freeze(authored.map(c=>c.id));
 export function verifiedSlgV2Cards(){

@@ -6,7 +6,7 @@ import {TTG_BY_ID} from '../dist/ttg-builder.mjs';
 import {registeredV2TitlePack} from '../dist/universal-v2/title-packs/registry.mjs';
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
- assertUniversalMatch,universalPublicView} from '../dist/universal-v2/engine.mjs';
+ assertUniversalMatch,universalPublicView,universalBp,universalImpact} from '../dist/universal-v2/engine.mjs';
 import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
 import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v2-integrated-id-manifest.mjs';
 
@@ -72,14 +72,20 @@ function aiOk(s,use=packs){
   assert.ok(legal.some(a=>JSON.stringify(a)===JSON.stringify(ai)),difficulty);
  }
 }
+function readyAp(s,p,n){
+ for(let i=0;i<3;i++){
+  s.players[p].apCards[i].inPlay=i<n;
+  s.players[p].apCards[i].ready=i<n;
+ }
+}
 function play(s,uid,line='front',slot=0,use=packs){
  return dispatchUniversalAction(use,s,legalUniversalActions(use,s)
   .find(a=>a.type==='play'&&a.uid===uid&&a.line===line&&a.slot===slot));
 }
 
 test('C27 class A registers three SLG prints on existing deck and discount DSL',()=>{
- assert.equal(EXPECTED_V2_TOTAL,430);
- assert.equal(EXPECTED_V2_COUNTS['solo-leveling'],50);
+ assert.equal(EXPECTED_V2_TOTAL,432);
+ assert.equal(EXPECTED_V2_COUNTS['solo-leveling'],52);
  assert.equal(EXPECTED_V2_COUNTS['gurren-lagann'],39);
  for(const id of ['SLG-1-017','SLG-1-054','SLG-1-063']){
   assert.equal(EXPECTED_V2_IDS['solo-leveling'].includes(id),true);
@@ -236,4 +242,70 @@ test('TTG-1-069 requires an outside ガンメン before REST and true retirement
  assert.ok(s.players[0].outside.some(c=>c.uid===source.uid));
  assert.equal(s.pending,null);
  assert.equal(assertUniversalMatch(use,s),true);
+});
+
+test('SLG-1-071 buffs another character once, then returns itself to hand',()=>{
+ assert.deepEqual(slg.cards['SLG-1-071'].mainAbility,
+  {op:'restOnceBuffReturnSelf',oncePerTurn:true,bp:1000});
+ assert.deepEqual(slg.cards['SLG-1-071'].traits,['DFN／第四次架南島レイド']);
+ const counts=deckOf(slg,['SLG-1-071','SLG-1-053']);
+ let alone=toMain(newUniversalMatch(packs,{decks:[counts,counts],first:0,seed:17071}));
+ const lone=place(alone,0,'SLG-1-071','front',0);
+ lone.ready=true;
+ assert.equal(legalUniversalActions(packs,alone).some(a=>a.uid===lone.uid&&a.type==='activate'),false);
+
+ let s=toMain(newUniversalMatch(packs,{decks:[counts,counts],first:0,seed:17072}));
+ const source=place(s,0,'SLG-1-071','front',0);
+ source.ready=true;
+ const other=place(s,0,'SLG-1-053','energy',0);
+ other.ready=true;
+ const before=universalBp(packs,s,other);
+ aiOk(s);
+ s=dispatchUniversalAction(packs,s,{type:'activate',uid:source.uid,mode:'restOnceBuffReturn'});
+ assert.equal(s.players[0].front[0].ready,false);
+ assert.equal(s.pending.kind,'effect-buff-own');
+ assert.deepEqual(s.pending.choices,[other.uid]);
+ s=dispatchUniversalAction(packs,s,{type:'chooseOwnBuff',uid:other.uid});
+ const buffed=[...s.players[0].front,...s.players[0].energy].find(c=>c&&c.uid===other.uid);
+ assert.equal(universalBp(packs,s,buffed),before+1000);
+ assert.ok(s.players[0].hand.some(c=>c.uid===source.uid));
+ assert.equal(s.players[0].front[0],null);
+ readyAp(s,0,2);
+ s=play(s,source.uid);
+ const replayed=s.players[0].front.find(c=>c&&c.uid===source.uid);
+ replayed.ready=true;
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='activate'&&a.uid===source.uid),false);
+ assert.equal(s.pending,null);
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
+
+test('SLG-1-074 gives Impact 1 to at most one other own DFN',()=>{
+ assert.deepEqual(slg.cards['SLG-1-074'].effects.onPlay,[{op:'grantOtherImpactThisTurn',
+  trait:'DFN',amount:1,optional:true}]);
+ const counts=deckOf(slg,['SLG-1-074','SLG-1-072','SLG-1-053']);
+ let none=toMain(newUniversalMatch(packs,{decks:[counts,counts],first:0,seed:17074}));
+ place(none,0,'SLG-1-053','energy',0);
+ const lonely=hold(none,0,'SLG-1-074');
+ none=play(none,lonely.uid);
+ assert.equal(none.pending,null);
+ assert.equal(universalImpact(packs,none,none.players[0].front[0]),0);
+
+ let s=toMain(newUniversalMatch(packs,{decks:[counts,counts],first:0,seed:17075}));
+ const target=place(s,0,'SLG-1-072','energy',0);
+ const miss=place(s,0,'SLG-1-053','front',1);
+ const source=hold(s,0,'SLG-1-074');
+ s=play(s,source.uid);
+ assert.equal(s.pending.kind,'effect-grant-impact');
+ assert.deepEqual(s.pending.choices,[target.uid]);
+ assert.equal(s.pending.choices.includes(miss.uid),false);
+ assert.equal(s.pending.choices.includes(source.uid),false);
+ const skipped=dispatchUniversalAction(packs,s,{type:'chooseGrantImpact',uid:null});
+ assert.equal(universalImpact(packs,skipped,skipped.players[0].energy[0]),0);
+ aiOk(s);
+ s=dispatchUniversalAction(packs,s,{type:'chooseGrantImpact',uid:target.uid});
+ const granted=s.players[0].energy.find(c=>c&&c.uid===target.uid);
+ assert.equal(universalImpact(packs,s,granted),1);
+ assert.equal(universalImpact(packs,s,s.players[0].front[0]),0);
+ assert.equal(s.pending,null);
+ assert.equal(assertUniversalMatch(packs,s),true);
 });
