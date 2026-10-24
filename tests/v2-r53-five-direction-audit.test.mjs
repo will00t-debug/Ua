@@ -38,10 +38,25 @@ test('R53 real 50-card own OUTSIDE groups at 0/4/5/9/10: no cached or opponent c
  const s=newUniversalMatch(packs,{decks:[deck,deck],first:0,seed:53021});
  const tally=()=>countOwnOutsidePhysicalGroups(s,0,5);
  assert.equal(tally(),0);
- const physical=Array.from({length:10},()=>take(s,0,'SAO-1-078'));
- // Each printed card can have max 4 copies; use other exact printed cards
- // to reach groups, not duplicate a card identifier or physical UID.
- assert.equal(physical.length,10);
+ // Four copies is the actual deck cap; use 4+4+2 distinct registered
+ // cards and do not place a card back in a source zone before taking the next.
+ const physical=[
+  ...Array.from({length:4},()=>take(s,0,'SAO-1-078')),
+  ...Array.from({length:4},()=>take(s,0,'SAO-1-079')),
+  ...Array.from({length:2},()=>take(s,0,'SAO-2-068'))
+ ];
+ const takeNumber=n=>s.players[0].outside.push(...physical.splice(0,n));
+ takeNumber(4);assert.equal(tally(),0);
+ takeNumber(1);assert.equal(tally(),1);
+ takeNumber(4);assert.equal(tally(),1);
+ takeNumber(1);assert.equal(tally(),2);
+ for(let i=0;i<2;i++)s.players[1].outside.push(take(s,1,'SAO-1-078'));
+ assert.equal(tally(),2,'opponent named OUTSIDE does not affect own groups');
+ const top=take(s,0,'SAO-1-005'),below=take(s,0,'SAO-1-051');
+ top.stack=[below];top.fieldEntryStamp=s.nextFieldEntryStamp++;
+ s.players[0].front[0]=top;
+ assert.equal(tally(),2,'RAID buried layer is not an OUTSIDE physical card');
+ assert.equal(assertUniversalMatch(packs,JSON.parse(JSON.stringify(s))),true);
 });
 test('R53 physical groups reject forged owner, UID duplicates, invalid divisor',()=>{
  const state={players:[{outside:[{uid:'0-1'},{uid:'0-2'}]},
