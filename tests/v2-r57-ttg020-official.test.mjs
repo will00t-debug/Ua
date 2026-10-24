@@ -74,6 +74,34 @@ test('R57 shared STEP remains legal at next own movement phase, UID and printed 
  assert.ok(s.players[0].energy.some(c=>c?.uid===target.uid));
  assert.equal(assertUniversalMatch(both,structuredClone(s)),true);
 });
+test('R57 genuine TTG-1-020 ACTIVE LIFE flips one owned character and grants exactly +3000 BP',()=>{
+ let s=newUniversalMatch(both,{decks:[deck,deck],first:0,seed:572023});
+ const attacker=take(s,0,'TTG-1-005');
+ attacker.ready=true;attacker.fieldEntryStamp=s.nextFieldEntryStamp++;
+ s.players[0].front[0]=attacker;
+ const revealed=take(s,1,'TTG-1-020'),defender=take(s,1,'TTG-1-005');
+ defender.ready=false;defender.fieldEntryStamp=s.nextFieldEntryStamp++;
+ s.players[1].front[0]=defender;
+ while(s.players[1].life.length>=7)
+  s.players[1].deck.push(s.players[1].life.shift());
+ s.players[1].life.unshift(revealed);
+ while(s.players[1].life.length<7)
+  s.players[1].life.push(s.players[1].deck.shift());
+ s=use(s,{type:'next'});s=use(s,{type:'next'});s=use(s,{type:'next'});
+ assert.equal(s.phase,'attack');
+ s=use(s,{type:'attack',uid:attacker.uid});
+ s=use(s,{type:'chooseBlock',uid:null});
+ assert.equal(s.pending?.kind,'life-trigger');
+ assert.equal(s.pending.uid,revealed.uid);
+ const a=legalUniversalActions(both,s).find(x=>
+  x.type==='chooseTrigger'&&x.mode==='active'&&x.uid===defender.uid);
+ assert.ok(a);
+ s=use(s,a);
+ assert.equal(s.players[1].front[0].ready,true);
+ assert.ok(s.players[1].front[0].buffs.some(b=>b.bp===3000&&b.untilTurn===s.turn));
+ assert.ok(s.players[1].outside.some(x=>x.uid===revealed.uid));
+ assert.equal(assertUniversalMatch(both,structuredClone(s)),true);
+});
 test('R57 invalid printed discount spec fails closed, never author auto inference',()=>{
  const d={...pack.cards['TTG-1-020'],
   raidBaseNames:undefined,raidFromRaid:undefined,raidRequiresNames:undefined};
