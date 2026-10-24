@@ -44,7 +44,8 @@ const testForKind=Object.freeze({
  ownTurnNamedBp:'tests/v2-c1-blc-ready-reuse.test.mjs',
  opponentFieldHandEnergy:'tests/v2-c2-hand-energy-register.test.mjs',
  drawIfOwnEffectEntry:'tests/v2-c3-blc-mst-reuse.test.mjs',
- blockBpAtMost:'tests/v2-c3-blc-mst-reuse.test.mjs'
+ blockBpAtMost:'tests/v2-c3-blc-mst-reuse.test.mjs',
+ frontDiscardDraw:'tests/v2-c4-blc-front-discard-draw.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
