@@ -156,7 +156,7 @@ test('silence, skip-next-active and cannot-active suppress the printed block rec
 });
 
 test('the next turn clears block counts, and the same UID keeps its count after re-entry',()=>{
- let {s,a,small}=open(1042);
+ let {s,a,small,mid}=open(1042);
  s=attack(s,small);
  s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:a},{actor:1});
  assert.equal(s.blocksByUid[a],1);
@@ -164,7 +164,7 @@ test('the next turn clears block counts, and the same UID keeps its count after 
  for(let n=0;n<24&&!(s.active===0&&s.phase==='attack'&&s.turn>played);n++)s=advance(s);
  assert.equal(s.blocksByUid[a],undefined);
  assert.equal(live(s,a).ready,true);
- s=attack(s,small);
+ s=attack(s,mid);
  s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:a},{actor:1});
  assert.equal(live(s,a).ready,true);
  assert.equal(s.blocksByUid[a],1);

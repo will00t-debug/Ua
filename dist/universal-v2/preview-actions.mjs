@@ -16,13 +16,17 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-recover-ap':'恢復 AP','end-hand-limit':'手牌上限',
  'effect-discard':'選擇棄牌','effect-discard-cost':'支付棄牌成本',
  'effect-discard-gate':'是否支付棄牌成本',
+ 'effect-remove-outside':'可將己方場外卡移入移除區',
  'effect-search-deck':'搜尋牌庫', 'effect-search-deck-multi':'依序搜尋牌庫',
  'effect-top-inspect':'查看牌庫頂','effect-top-inspect-many':'任意張卡送場外',
  'effect-top-filter-choice':'查看牌頂，選擇符合特徵的角色／卡','effect-top-trait-outside':'查看牌頂，將符合特徵的卡送場外',
  'effect-top-order':'排列牌庫頂或底','effect-optional-mill':'可將牌庫頂 1 張送場外',
  'effect-optional-draw':'攻擊時可抽 0 或 1 張',
  'effect-pay-ap-deploy':'可支付 1 AP，從場外 REST 登場',
+ 'effect-optional-pay-ap':'可支付 1 AP，然後結算後續效果',
  'effect-hand-rest':'從己方手牌免費 REST 登場',
+ 'effect-hand-rest-or-raid':'從己方手牌 REST 登場或合法 Raid',
+ 'effect-active-own-named':'可將最多 1 個己方指定名稱角色轉為 ACTIVE',
  'effect-bounce-own':'選擇返回手牌的己方角色',
  'effect-buff-own':'選擇己方角色增加本回合 BP',
  'effect-once-choice':'是否發動本回合一次能力',
@@ -138,6 +142,8 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'choosePhaseOrder':return '先結算此階段效果';
   case 'chooseApRecovery':return action.uid===null?'完成恢復 AP':'恢復 AP 卡';
   case 'chooseDiscardGate':return action.uid===null?'不支付成本':'棄 '+name()+' 支付成本';
+  case 'chooseRemoveOutside':return action.mode==='skip'?'不將場外卡移入移除區':
+   action.mode==='all'?'將目前場外的可選卡全部移入移除區，不結算後續':'將 '+name()+' 移入移除區';
   case 'chooseDiscardCost':return action.uid===null?'不支付成本':'棄 '+name()+' 支付成本';
   case 'chooseHandLimit':return '超過上限，移除 '+name();
   case 'chooseDiscard':return '棄 '+name();
@@ -153,7 +159,11 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseOptionalDraw':return action.mode==='draw'?'攻擊時抽 1 張':'不抽牌';
   case 'chooseOptionalMill':return action.mode==='mill'?'將牌庫頂 1 張送場外':'不送場外';
   case 'choosePayApDeploy':return action.mode==='pay'?'支付 1 AP，接著選擇場外角色':'不支付 AP';
+  case 'chooseOptionalPayAp':return action.mode==='pay'?'支付 1 AP，然後結算後續效果':'不支付 AP';
   case 'chooseHandRest':return action.uid===null?'不特殊登場':'免費 REST 登場 '+name()+suffix();
+  case 'chooseActiveOwnNamed':return action.uid===null?'不將指定名稱角色轉為 ACTIVE':'將 '+name()+' 轉為 ACTIVE';
+  case 'chooseHandRestOrRaid':return action.uid===null?'不從手牌登場':
+   (action.mode==='raid'?'從手牌 Raid ':'從手牌 REST 登場 ')+name()+suffix();
    case 'chooseOutsideNameRest':return action.uid===null?'不從場外登場':'REST 登場 '+name()+suffix();
   case 'chooseTopFiltered':return action.uid===null?'不加入手牌，將其餘卡排列至底部':'加入手牌：'+name();
   case 'chooseTopOrder':return '依序放回：'+name();

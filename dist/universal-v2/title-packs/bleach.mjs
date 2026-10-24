@@ -42,7 +42,27 @@ const testForKind=Object.freeze({
  restSelfBuffOther:'tests/v2-c1-blc-ready-reuse.test.mjs',
  readyOnFirstBlock:'tests/v2-c1-blc-ready-reuse.test.mjs',
  ownTurnNamedBp:'tests/v2-c1-blc-ready-reuse.test.mjs',
- opponentFieldHandEnergy:'tests/v2-c2-hand-energy-register.test.mjs'
+ opponentFieldHandEnergy:'tests/v2-c2-hand-energy-register.test.mjs',
+ drawIfOwnEffectEntry:'tests/v2-c3-blc-mst-reuse.test.mjs',
+ blockBpAtMost:'tests/v2-c3-blc-mst-reuse.test.mjs',
+ frontDiscardDraw:'tests/v2-c4-blc-front-discard-draw.test.mjs',
+ frontDiscardFieldBpDown:'tests/v2-c5-blc-front-discard-down.test.mjs',
+ aliasPeekTopOutside:'tests/v2-c6-blc-alias-peek.test.mjs',
+ optionalDiscardPeekDraw:'tests/v2-c8-blc-optional-peek-draw.test.mjs',
+ aliasFieldRestEnergyRetire:'tests/v2-c10-blc-alias-field-energy.test.mjs',
+ drawIfOppRestCharacter:'tests/v2-c16-conditional-board.test.mjs',
+ drawIfOppCharacterBpAtLeast:'tests/v2-c16-conditional-board.test.mjs',
+ activeOwnNamed:'tests/v2-c16-conditional-board.test.mjs',
+ drawIfOwnNameAndHandFewer:'tests/v2-c17-name-hand-draw.test.mjs',
+ onRetireOwnTurnNameRest:'tests/v2-c18-own-turn-name-rest.test.mjs',
+ nameOncePayOutsideRest:'tests/v2-c19-name-pay-outside-rest.test.mjs',
+ removeOutsideThen:'tests/v2-c20-outside-remove-draw.test.mjs',
+ oppRestFrontBpEach:'tests/v2-c21-live-board-predicates.test.mjs',
+ oppCurrentBpCountBonus:'tests/v2-c21-live-board-predicates.test.mjs',
+ otherCardTraitEnergy:'tests/v2-c21-live-board-predicates.test.mjs',
+ otherCardTraitBp:'tests/v2-c21-live-board-predicates.test.mjs',
+ ownFrontPrintedApBp:'tests/v2-c21-live-board-predicates.test.mjs',
+ handOutsideThisTurnBp:'tests/v2-c21-live-board-predicates.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -52,7 +72,7 @@ function contributedEntry(profile){
  // The legacy gen=2 for EX15BT/BLC-4-014 describes the ACTIVE total, not
  // the printed REST base. SourceRecord is the normalized printed card record;
  // retain original.gen separately and require the profile fingerprint above.
- const normalized=['BLC-4-014','BLC-4-042'].includes(profile.id);
+ const normalized=['BLC-4-014','BLC-4-042','BLC-4-074'].includes(profile.id);
  const sourceRecord=Object.freeze(normalized?
   {...original,gen:definition.gen,legacyImportedGen:original.gen}: {...original});
  const vanilla=['plain','plainAlt','step'].includes(profile.kind);
@@ -64,6 +84,8 @@ function contributedEntry(profile){
    reviewNote:normalized?
     profile.id==='BLC-4-014'?
       'EX15BT/BLC-4-014 official yellow+ base is REST 1; ACTIVE adds +1. Imported legacy gen=2 describes ACTIVE total; sourceRecord.gen=1, legacyImportedGen=2. Tested ACTIVE=2/REST=1. FAQ acceptance still pending.':
+    profile.id==='BLC-4-074'?
+      'EX15BT/BLC-4-074 official 緑+ is REST 1. The plus is the field-line REST activate, not a second resting pip and not activeExtraEnergy. Imported legacy gen=2; sourceRecord.gen=1, legacyImportedGen=2. No card FAQ.':
       'EX15BT/BLC-4-042 printed base BLUE BLUE=2 but legacy gen=3; audited sourceRecord.gen=2 retains legacyImportedGen=3; official Q2323 and full three-mode tests.':
     'Official printed '+profile.number+'; profile '+profile.kind+
      '; fingerprint matched source text and printed stats. V2 program/trigger tests exist; NOT per-card complete FAQ acceptance.',

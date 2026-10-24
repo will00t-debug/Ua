@@ -132,13 +132,12 @@ test('playing or removing BLC-2-042 does not mill; DRAW life still draws one',()
  const occupant=take(removed,0,'BLC-2-042');occupant.ready=true;removed.players[0].energy[0]=occupant;
  const fillers=[];
  for(let slot=1;slot<4;slot++){
-  const filler=removed.players[0].deck.find(c=>bleach.cards[c.cardId].energy===0);
-  assert.ok(filler);fillers.push(take(removed,0,filler.cardId));
-  fillers.at(-1).ready=true;removed.players[0].energy[slot]=fillers.at(-1);
+  const filler=take(removed,0,'BLC-2-025');
+  filler.ready=true;removed.players[0].energy[slot]=filler;fillers.push(filler);
  }
  let ready=phase(packs,removed,'main');
- const incoming=ready.players[0].hand.find(c=>bleach.cards[c.cardId].energy===0&&c.uid!==occupant.uid)
-  ||take(ready,0,ready.players[0].deck.find(c=>bleach.cards[c.cardId].energy===0).cardId);
+ const incoming=ready.players[0].hand.find(c=>c.cardId==='BLC-2-025')
+  ||take(ready,0,'BLC-2-025');
  if(!ready.players[0].hand.some(c=>c.uid===incoming.uid))ready.players[0].hand.push(incoming);
  const replace=legalUniversalActions(packs,ready).find(a=>a.type==='play'&&a.uid===incoming.uid&&
   a.line==='energy'&&a.slot===0&&a.replaceUid===occupant.uid);

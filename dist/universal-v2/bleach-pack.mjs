@@ -969,7 +969,45 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-4-073","kind":"ownTurnNamedBp","number":"EX15BT/BLC-4-073","name":"斑目 一角","color":"green","energy":2,"ap":1,"bp":2500,"gen":1,"trigger":null,"type":"character","effect":"自己的回合中：若自己場上有《更木劍八》，此角色BP+1500。"},
 {"id":"BLC-1-007","kind":"opponentFieldHandEnergy","number":"UA08BT/BLC-1-007","name":"ジェローム・ギズバット","color":"yellow","energy":3,"ap":1,"bp":3000,"gen":2,"trigger":null,"type":"character","effect":"敵方場上有紫色或綠色卡片時，手牌中此卡的黃色需求能源減少 1。"},
 {"id":"BLC-1-044","kind":"opponentFieldHandEnergy","number":"UA08BT/BLC-1-044","name":"阿近","color":"purple","energy":3,"ap":1,"bp":3000,"gen":2,"trigger":null,"type":"character","effect":"敵方場上有黃色或綠色卡片時，手牌中此卡的紫色需求能源減少 1。"},
-{"id":"BLC-1-073","kind":"opponentFieldHandEnergy","number":"UA08BT/BLC-1-073","name":"鳳橋 楼十郎","color":"green","energy":3,"ap":1,"bp":3000,"gen":2,"trigger":null,"type":"character","effect":"敵方場上有黃色或紫色卡片時，手牌中此卡的綠色需求能源減少 1。"}
+{"id":"BLC-1-073","kind":"opponentFieldHandEnergy","number":"UA08BT/BLC-1-073","name":"鳳橋 楼十郎","color":"green","energy":3,"ap":1,"bp":3000,"gen":2,"trigger":null,"type":"character","effect":"敵方場上有黃色或紫色卡片時，手牌中此卡的綠色需求能源減少 1。"},
+{"id":"BLC-4-029","kind":"blockBpAtMost","number":"EX15BT/BLC-4-029","name":"志波 岩鷲","color":"blue","energy":1,"ap":1,"bp":2000,"gen":1,"trigger":"active","type":"character","effect":"此角色不會被BP2000以下的角色阻擋。"},
+{"id":"BLC-4-031","kind":"drawIfOwnEffectEntry","number":"EX15BT/BLC-4-031","name":"四楓院 夜一","color":"blue","energy":1,"ap":1,"bp":2000,"gen":1,"trigger":null,"type":"character","effect":"登場時：若此角色是以自己的效果登場，抽1張牌。"},
+{"id":"BLC-4-025","kind":"frontDiscardDraw","number":"EX15BT/BLC-4-025","name":"黒崎 一護","color":"blue","energy":4,"ap":1,"bp":4000,"gen":1,"trigger":null,"type":"character","effect":"啟動・主要〔前線／每回合1次／將1張手牌送至場外〕：抽1張牌。"},
+{"id":"BLC-2-003","kind":"frontDiscardFieldBpDown","number":"EX07BT/BLC-2-003","name":"バズビー","color":"yellow","energy":2,"ap":1,"bp":3000,"gen":1,"trigger":"active","type":"character","effect":"主要階段・位於前線・每回合 1 次：將 1 張手牌送至場外，使 1 個敵方場上 BP 1500 以上角色本回合 BP −1000。"},
+{"id":"BLC-4-002","kind":"aliasPeekTopOutside","number":"EX15BT/BLC-4-002","name":"ユーゴー","color":"yellow","energy":0,"ap":1,"bp":1500,"gen":1,"trigger":"draw","type":"character","effect":"此卡也視為《雨葛蘭・哈斯沃德》。登場時：查看牌庫頂1張，放回牌庫頂或送至場外。"},
+{"id":"BLC-4-030","kind":"optionalDiscardPeekDraw","number":"EX15BT/BLC-4-030","name":"四楓院 夜一","color":"blue","energy":0,"ap":1,"bp":1500,"gen":1,"trigger":"draw","type":"character","effect":"登場時：可將1張手牌送至場外；如此則查看牌庫頂1張，將其放回牌庫頂或底，再抽1張牌。"},
+{"id":"BLC-4-066","kind":"optionalDiscardPeekDraw","number":"EX15BT/BLC-4-066","name":"卯ノ花 烈","color":"green","energy":0,"ap":1,"bp":1500,"gen":1,"trigger":"active","type":"character","effect":"登場時：可將1張手牌送至場外；如此則查看牌庫頂1張，放回牌庫頂或底，再抽1張牌。"},
+{"id":"BLC-4-074","kind":"aliasFieldRestEnergyRetire","number":"EX15BT/BLC-4-074","name":"山本 重國","color":"green","energy":0,"ap":1,"bp":1000,"gen":2,"trigger":null,"type":"character","effect":"此卡也視為《山本元柳齋重國》。啟動・主要〔改為Rest／每回合1次〕：此角色本回合額外產生1個綠色能量，並獲得「主要階段結束時，使此角色退場」。"}
+,
+{"id":"BLC-1-015","kind":"drawIfOppRestCharacter","number":"UA08BT/BLC-1-015","name":"BG9","color":"yellow","energy":3,"ap":1,"bp":3000,"gen":2,"trigger":null,"type":"character","effect":"登場：敵方場上有 REST 角色時，抽 1 張。"}
+,
+{"id":"BLC-1-027","kind":"drawIfOppCharacterBpAtLeast","number":"UA08BT/BLC-1-027","name":"ロバート・アキュトロン","color":"yellow","energy":3,"ap":1,"bp":3000,"gen":2,"trigger":null,"type":"character","effect":"登場：敵方場上有 BP 4000 以上角色時，抽 1 張。"}
+,
+{"id":"BLC-1-076","kind":"activeOwnNamed","number":"UA08BT/BLC-1-076","name":"草鹿 やちる","color":"green","energy":1,"ap":1,"bp":2000,"gen":1,"trigger":"active","type":"character","effect":"登場：可將最多 1 個己方場上的〈更木劍八〉轉為 ACTIVE。"}
+,
+{"id":"BLC-2-004","kind":"drawIfOwnNameAndHandFewer","number":"EX07BT/BLC-2-004","name":"ユーグラム・ハッシュヴァルト","color":"yellow","energy":4,"ap":1,"bp":4000,"gen":1,"trigger":null,"type":"character","effect":"登場：己方場上有〈友哈巴赫〉且己方手牌少於敵方時，抽 1 張。"}
+,
+{"id":"BLC-2-039","kind":"onRetireOwnTurnNameRest","number":"EX07BT/BLC-2-039","name":"シャルロッテ・クールホーン","color":"blue","energy":2,"ap":1,"bp":3000,"gen":1,"trigger":"active","type":"character","effect":"退場：若現在是己方回合，可將最多 1 個敵方前線角色轉為 REST。所有〈夏洛特・庫爾霍恩〉的此效果，合計每回合只能發動 1 次。"}
+,
+{"id":"BLC-2-043","kind":"nameOncePayOutsideRest","number":"EX07BT/BLC-2-043","name":"六車 拳西＆鳳橋 楼十郎","color":"blue","energy":2,"ap":1,"bp":3000,"gen":1,"trigger":"color","type":"character","effect":"登場：可支付 1 AP；成功時可從己方場外將最多 1 張〈六車拳西＆鳳橋樓十郎〉以 REST 登場於己方場上。所有〈六車拳西＆鳳橋樓十郎〉的此效果，合計每回合只能發動 1 次。"}
+,
+{"id":"BLC-1-098","kind":"removeOutsideThen","number":"UA08BT/BLC-1-098","name":"隊葬","color":"green","energy":1,"ap":1,"bp":0,"gen":0,"trigger":"draw","type":"event","effect":"可將己方場外 1 張角色卡除外；成功時抽 2 張。"}
+,
+{"id":"BLC-1-106","kind":"removeOutsideThen","number":"UA08ST/BLC-1-106","name":"朽木 ルキア","color":"purple","energy":4,"ap":2,"bp":4000,"gen":1,"trigger":"get","type":"character","effect":"登場：可將場外 3 張除外；成功時抽 2 張。"}
+,
+{"id":"BLC-1-003","kind":"oppRestFrontBpEach","number":"UA08BT/BLC-1-003","name":"エス・ノト","color":"yellow","energy":3,"ap":1,"bp":2000,"gen":1,"trigger":"color","type":"character","effect":"敵方前線每有 1 個 REST 角色，此角色 BP +1000。"}
+,
+{"id":"BLC-1-019","kind":"oppCurrentBpCountBonus","number":"UA08BT/BLC-1-019","name":"ユーグラム・ハッシュヴァルト","color":"yellow","energy":3,"ap":1,"bp":3500,"gen":1,"trigger":"active","type":"character","effect":"敵方場上有至少 2 個 BP 4000 以上角色時，此角色 BP +500。"}
+,
+{"id":"BLC-2-062","kind":"otherCardTraitEnergy","number":"EX07BT/BLC-2-062","name":"綾瀬川 弓親","color":"green","energy":2,"ap":1,"bp":2500,"gen":1,"trigger":null,"type":"character","effect":"己方場上有至少 3 張其他具有「護廷十三隊」特徵的卡時，此角色額外產生 1 綠能源。"}
+,
+{"id":"BLC-4-038","kind":"ownFrontPrintedApBp","number":"EX15BT/BLC-4-038","name":"朽木 ルキア","color":"blue","energy":0,"ap":1,"bp":1500,"gen":1,"trigger":"draw","type":"character","effect":"自己的回合中：若自己的前線有印刷消費AP為2以上的角色，此角色BP+1500。"}
+,
+{"id":"BLC-2-054","kind":"handOutsideThisTurnBp","number":"EX07BT/BLC-2-054","name":"朽木 ルキア","color":"purple","energy":2,"ap":1,"bp":3000,"gen":1,"trigger":"active","type":"character","effect":"己方回合中，若本回合己方曾將手牌送至場外，此角色 BP +500。"}
+,
+{"id":"BLC-1-084","kind":"otherCardTraitBp","number":"UA08BT/BLC-1-084","name":"日番谷 冬獅郎","color":"green","energy":2,"ap":1,"bp":3000,"gen":1,"trigger":"color","type":"character","effect":"己方場上有至少 6 張其他具有「護廷十三隊」特徵的卡時，此角色 BP +500。"}
+,
+{"id":"BLC-2-068","kind":"otherCardTraitBp","number":"EX07BT/BLC-2-068","name":"檜佐木 修兵","color":"green","energy":0,"ap":1,"bp":1500,"gen":1,"trigger":"draw","type":"character","effect":"己方場上有至少 6 張其他具有「護廷十三隊」特徵的卡時，此角色 BP +1500。"}
 ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1010,14 +1048,16 @@ export function checkedBleachAddonDefinition(p){
   inspectTop2:{onPlay:[{template:'inspectTopArrange',count:2,toOutside:true,rest:'top'}]},
   inspectTop3:{onPlay:[{template:'inspectTopArrange',count:3,toOutside:true,rest:'top'}]},
   peekTopOrBottom:{onPlay:[{template:'peekTopOrBottom'}]},
+  aliasPeekTopOutside:{onPlay:[{template:'peekTopOne'}]},
   inspectTopAnyOutside2:{onPlay:[{template:'inspectTopAnyOutside',count:2,rest:'top'}]},
   frontBpDownMin1000:{onPlay:[{template:'enemyFrontBpDownInRange',bp:500,minBp:1000,maxBp:null}]},
   onRetireRestUnder2000:{onRetire:[{template:'restEnemyUnderBp',bp:2000,optional:true}]}
  };
 // EX15BT/BLC-4-014 prints yellow+ and ACTIVE adds one yellow. The imported legacy gen=2
  // encoded the ACTIVE total; V2 needs the printed REST base (1) plus an ACTIVE +1.
- // Keep p.gen=2 only as a legacy-source fingerprint, never as V2 base energy.
- const v2BaseGen=p.id==='BLC-4-014'?1:p.id==='BLC-4-042'?2:c.gen;
+ // EX15BT/BLC-4-074 prints 緑+. That plus is the activate ability, so the REST
+ // base is 1. Keep p.gen=2 only as a legacy-source fingerprint.
+ const v2BaseGen=p.id==='BLC-4-014'||p.id==='BLC-4-074'?1:p.id==='BLC-4-042'?2:c.gen;
  const isKyoraku=p.kind==='kyorakuAttackEnd';
  const isRestRetireField=p.kind==='fieldRestRetireNamed';
  const isFieldDual=p.kind==='fieldDualMain';
@@ -1035,12 +1075,38 @@ export function checkedBleachAddonDefinition(p){
  const isReadyBlock=p.kind==='readyOnFirstBlock';
  const isNamedBp=p.kind==='ownTurnNamedBp';
  const isHandDiscount=p.kind==='opponentFieldHandEnergy';
+ const isOwnEffectDraw=p.kind==='drawIfOwnEffectEntry';
+ const isOppRestDraw=p.kind==='drawIfOppRestCharacter';
+ const isOppBpDraw=p.kind==='drawIfOppCharacterBpAtLeast';
+ const isActiveNamed=p.kind==='activeOwnNamed';
+ const isNameHandDraw=p.kind==='drawIfOwnNameAndHandFewer';
+ const isOwnTurnNameRest=p.kind==='onRetireOwnTurnNameRest';
+ const isNameOncePayOutside=p.kind==='nameOncePayOutsideRest';
+ const isOutsideRemove=p.kind==='removeOutsideThen';
+ const isOppRestBp=p.kind==='oppRestFrontBpEach';
+ const isOppBpCount=p.kind==='oppCurrentBpCountBonus';
+ const isCardTraitEnergy=p.kind==='otherCardTraitEnergy';
+ const isCardTraitBp=p.kind==='otherCardTraitBp';
+ const traitBp={'BLC-1-084':500,'BLC-2-068':1500}[p.id];
+ const isPrintedApBp=p.kind==='ownFrontPrintedApBp';
+ const isHandOutsideBp=p.kind==='handOutsideThisTurnBp';
+ const outsideRemove={'BLC-1-098':{count:1,cardType:'character'},
+  'BLC-1-106':{count:3,cardType:'any'}}[p.id];
+ const handName={'BLC-2-004':'ユーハバッハ'}[p.id];
+ const outsideRestName={'BLC-2-043':'六車 拳西＆鳳橋 楼十郎'}[p.id];
+ const namedActive={'BLC-1-076':'更木 剣八'}[p.id];
+ const oppBpGate={'BLC-1-027':4000}[p.id];
+ const isBlockLow=p.kind==='blockBpAtMost';
+ const isFrontDiscardDraw=p.kind==='frontDiscardDraw';
+ const isFrontDiscardDown=p.kind==='frontDiscardFieldBpDown';
+ const isOptionalPeek=p.kind==='optionalDiscardPeekDraw';
+ const isAliasEnergy=p.kind==='aliasFieldRestEnergyRetire';
  const isTopRequired=p.kind==='topOneEnergyDiscount';
  const isTopTwoGotei=p.kind==='topTwoGoteiEvent';
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount;
+ const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1073,9 +1139,31 @@ export function checkedBleachAddonDefinition(p){
   ...(isHandDiscount?{opponentFieldColorsHandEnergyDiscount:{
    colors:{'BLC-1-007':['purple','green'],'BLC-1-044':['yellow','green'],
     'BLC-1-073':['yellow','purple']}[p.id],amount:1}}:{}),
+  ...(isBlockLow?{blockBpRestriction:{relation:'atMost',bp:2000,condition:null}}:{}),
+  ...(isFrontDiscardDraw?{mainAbility:{op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,
+   then:[{op:'discardGate',optional:false,then:[{op:'draw',count:1}]}]}}:{}),
+  ...(isFrontDiscardDown?{mainAbility:{op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,
+   then:[{op:'discardGate',optional:false,then:[{op:'enemyBpDown',bp:1000,optional:false,
+    minBp:1500,zone:'field'}]}]}}:{}),
+  ...(p.kind==='aliasPeekTopOutside'?{nameAliases:['ユーグラム・ハッシュヴァルト']}:{}),
+  ...(isAliasEnergy?{nameAliases:['山本 元柳斎 重國'],mainAbility:{
+   op:'restSelfGainEnergyRetireEndMain',lines:'field',oncePerTurn:true,extraEnergy:1}}:{}),
   ...(p.kind==='restSelfEnemy'?{mainAbility:{op:'restSelfThenRestOppFrontOne',frontOnly:true}}:{}),
   ...(p.kind==='restEnergyRetire'?{mainAbility:{op:'restSelfGainEnergyRetireEndMain',energyOnly:true,oncePerTurn:true,extraEnergy:1}}:{}),
   ...(p.kind.startsWith('retireBonus')?{triggerEffect:{op:'retireOppFront'}}:{}),
+  ...(isNameOncePayOutside?{triggerEffect:{op:'bounceOppFrontUnderBp',bp:3500}}:{}),
+  ...(isOppRestBp?{passiveBonuses:[{condition:{kind:'oppRestCharacterCount',turn:'any',
+   zone:'front'},bpEach:1000}],triggerEffect:{op:'restOppFrontSkipNextActive'}}:{}),
+  ...(isOppBpCount?{passiveBonuses:[{condition:{kind:'oppCharacterCurrentBpCount',turn:'any',
+   zone:'field',minBp:4000,min:2},bp:500}]}:{}),
+  ...(isCardTraitEnergy?{passiveBonuses:[{condition:{kind:'ownCardTraitCount',turn:'any',
+   min:3,zone:'field',excludeSelf:true,trait:'護廷十三隊'},extraEnergy:1}]}:{}),
+  ...(isCardTraitBp?{passiveBonuses:[{condition:{kind:'ownCardTraitCount',turn:'any',
+   min:6,zone:'field',excludeSelf:true,trait:'護廷十三隊'},bp:traitBp}],
+   ...(p.id==='BLC-1-084'?{triggerEffect:{op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1}}:{})}:{}),
+  ...(isPrintedApBp?{passiveBonuses:[{condition:{kind:'ownPrintedApAtLeast',turn:'any',
+   zone:'front',excludeSelf:false,minAp:2},bp:1500}]}:{}),
+  ...(isHandOutsideBp?{passiveBonuses:[{condition:{kind:'ownHandToOutsideThisTurn',turn:'any'},bp:500}]}:{}),
   ...(p.kind==='enemyBpDown500Color'?{triggerEffect:{op:'deployOutsideCharacter',color:'purple',maxEnergy:2,ap:1,frontOnly:true}}:{}),
   ...(p.kind==='drawPlayColorHand'?{triggerEffect:{op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1}}:{}),
   ...(!special?{templateEffects:abilities[p.kind]}:{effects:
@@ -1107,6 +1195,21 @@ export function checkedBleachAddonDefinition(p){
    isRetireMill?{onRetire:[{op:'millTop',count:2}]}:
    isOppDiscard?{onPlay:[{op:'discardOppHand',count:1}]}:
    isDrawTwo?{onPlay:[{op:'drawDiscard',count:2,discardCount:1}]}:
+   isOwnEffectDraw?{onPlay:[{op:'draw',count:1,entry:'ownEffect'}]}:
+   isOppRestDraw?{onPlay:[{op:'drawIfOppRestCharacter',count:1}]}:
+   isOppBpDraw?{onPlay:[{op:'drawIfOppCharacterBpAtLeast',minBp:oppBpGate,count:1}]}:
+   isActiveNamed?{onPlay:[{op:'activeOwnNamed',name:namedActive,max:1,optional:true}]}:
+   isNameHandDraw?{onPlay:[{op:'drawIfOwnNameAndHandFewer',name:handName,count:1}]}:
+   isOwnTurnNameRest?{onRetire:[{op:'oncePerTurnGate',scope:'name',optional:false,
+    ownTurnOnly:true,then:[{op:'restOppFrontOne',optional:true}]}]}:
+   isNameOncePayOutside?{onPlay:[{op:'oncePerTurnGate',scope:'name',optional:true,then:[
+    {op:'optionalPayApThen',ap:1,optional:true,then:[
+     {op:'deployOutsideNameRest',name:outsideRestName,optional:true}]}]}]}:
+   isOutsideRemove?{onPlay:[{op:'removeOutsideThen',count:outsideRemove.count,
+    optional:true,cardType:outsideRemove.cardType,zone:'outside',controller:'own',
+    then:[{op:'draw',count:2}]}]}:
+   isOptionalPeek?{onPlay:[{op:'discardGate',optional:true,then:[
+    {op:'peekTopOrBottom'},{op:'draw',count:1}]}]}:
    isStripDual?{onPlay:[{op:'chooseOne',optional:false,options:[
     {id:'strip',label:'Strip opponent RAID top',turn:'any',
      then:[{op:'stripOppRaidTop',optional:true}]},
