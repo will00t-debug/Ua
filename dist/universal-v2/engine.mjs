@@ -560,8 +560,6 @@ function continueEffectQueue(pack,s){
     owner,from:'deck',to:'outside',index:0,reason:'own-effect',sourceUid:job.sourceUid});
   }else if(job.op==='grantSelfSniperThisTurn'||job.op==='grantSelfAttackWinDrawThisTurn'||
    job.op==='grantSelfMustBlockThisTurn'){
-   if(job.op==='grantSelfMustBlockThisTurn'&&
-    !OWN_EFFECT_ENTRY.has(job.entryCause))continue;
    const loc=location(s,owner,job.sourceUid);
    if(!loc||card(pack,loc.c).type!=='character'||
     !Number.isInteger(loc.c.fieldEntryStamp)||loc.c.fieldEntryStamp<1||
