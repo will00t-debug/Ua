@@ -32,9 +32,16 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 //   1枚につき、このキャラはBP+500。 ACTIVE is generic. Energy-line cards do not count.
 // BLC-4-046 EX15BT: [登場時]自分の場の紫の〈黒崎 一護〉を1枚まで選び、このターン中、BP+1500。
 //   ACTIVE is generic. Required energy is 紫- (0). Traits are empty.
+// BLC-3-007 UA04NC: [登場時]自分の山札の上から3枚見る。その中から［特徴：護廷十三隊］を
+//   1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、
+//   自分の手札を1枚場外に置く。 DRAW is generic. Gen alt is 緑.
+// BLC-3-002 UA04NC: the same sentence with 〈黒崎 一護〉か〈阿散井 恋次〉か
+//   〈朽木 ルキア〉か〈朽木 白哉〉. DRAW is generic. Gen alt is 青.
+// BLC-4-001 EX15BT: このカードは〈バズビー〉としても扱う。 The on-play sentence is the
+//   same look-3 with 〈バズビー〉か〈ユーグラム・ハッシュヴァルト〉. DRAW is generic. Gen alt is 黄.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -44,10 +51,10 @@ function realDeck(required,color){
  assert.deepEqual(validateUniversalDeck(bleach,counts),[]);
  return counts;
 }
-const green=realDeck(['BLC-1-080','BLC-1-091','BLC-1-078','BLC-1-070','BLC-4-062','BLC-1-087','BLC-2-067'],'green');
-const blue=realDeck(['BLC-2-041','BLC-2-031','BLC-4-036','BLC-2-026','BLC-2-027','BLC-4-022','BLC-4-028'],'blue');
+const green=realDeck(['BLC-1-080','BLC-1-091','BLC-1-078','BLC-1-070','BLC-4-062','BLC-1-087','BLC-2-067','BLC-3-007','BLC-4-060','BLC-4-061'],'green');
+const blue=realDeck(['BLC-2-041','BLC-2-031','BLC-4-036','BLC-2-026','BLC-2-027','BLC-4-022','BLC-4-028','BLC-3-002','BLC-2-016','BLC-2-029'],'blue');
 const purple=realDeck(['BLC-1-062','BLC-1-035','BLC-1-103','BLC-4-046','BLC-1-039','BLC-4-052'],'purple');
-const yellow=realDeck(['BLC-1-032','BLC-1-023','BLC-1-006'],'yellow');
+const yellow=realDeck(['BLC-1-032','BLC-1-023','BLC-1-006','BLC-4-001','BLC-2-003','BLC-1-018'],'yellow');
 function take(s,p,id){
  for(const zone of ['hand','deck','life','outside','removed']){
   const list=s.players[p][zone],i=list.findIndex(c=>c.cardId===id);
@@ -65,6 +72,19 @@ function main(deck,seed){
  let s=newUniversalMatch(packs,{decks:[deck,deck],seed,first:0});
  for(let n=0;n<8&&s.phase!=='main';n++)s=dispatchUniversalAction(packs,s,{type:'next'});
  return {packs,s};
+}
+function setTop(s,p,ids){
+ const cards=ids.map(id=>take(s,p,id));
+ s.players[p].deck.unshift(...cards);
+ return cards;
+}
+function orderBottom(packs,s){
+ while(s.pending?.kind==='effect-top-order'){
+  const action=legalUniversalActions(packs,s).find(a=>a.type==='chooseTopOrder');
+  assert.ok(action);
+  s=dispatchUniversalAction(packs,s,action);
+ }
+ return s;
 }
 function live(s,p,uid){
  for(const line of ['front','energy']){
@@ -92,12 +112,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers twelve whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,448);
- assert.equal(EXPECTED_V2_COUNTS.bleach,172);
+test('C29 registers fifteen whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,451);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,175);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,172);
+ assert.equal(Object.keys(bleach.cards).length,175);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -604,4 +624,135 @@ test('BLC-4-052 gains 1500 while an opposing front character is below its printe
  reduced.buffs.push({bp:-500,untilTurn:later.turn});
  assert.equal(universalBp(packs,later,there),3000);
  assert.equal(assertUniversalMatch(packs,later),true);
+});
+
+test('BLC-3-007 may reveal one Gotei card from the top three, then discards only if it took one',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-3-007');
+ assert.equal(printed.effect,'【登場時】查看自己牌庫上方 3 張牌。可以從中公開最多 1 張【特徵：護廷十三隊】的卡片，加入手牌。將剩餘卡片依任意順序放到牌庫底。若加入了手牌，將自己的 1 張手牌放到場外。');
+ assert.deepEqual(printed.traits,['護廷十三隊']);
+ const card=bleach.cards['BLC-3-007'];
+ assert.equal(card.energy,2);
+ assert.equal(card.trigger,'draw');
+ assert.equal(card.triggerEffect,null);
+ assert.deepEqual(card.effects.onPlay,[{op:'searchTopOneBottomDiscard',count:3,
+  filter:{field:'trait',value:'護廷十三隊'}}]);
+ const {packs,s}=main(green,29007);
+ put(s,0,'BLC-1-070','energy',0);
+ put(s,0,'BLC-1-078','energy',1);
+ const [gotei,visor,other]=setTop(s,0,['BLC-1-080','BLC-4-062','BLC-4-060']);
+ const self=take(s,0,'BLC-3-007');
+ s.players[0].hand.push(self);
+ const play=legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===self.uid&&a.line==='front');
+ assert.ok(play);
+ const played=dispatchUniversalAction(packs,s,play);
+ assert.equal(played.pending.kind,'effect-top-filter-choice');
+ const choices=legalUniversalActions(packs,played);
+ const chosen=uid=>choices.some(a=>a.type==='chooseTopFiltered'&&a.uid===uid);
+ assert.equal(chosen(null),true);
+ assert.equal(chosen(gotei.uid),true);
+ assert.equal(chosen(visor.uid),false);
+ assert.equal(chosen(other.uid),false);
+ const missed=orderBottom(packs,dispatchUniversalAction(packs,played,{type:'chooseTopFiltered',uid:null}));
+ assert.equal(missed.pending,null);
+ assert.equal(missed.players[0].hand.some(c=>[gotei.uid,visor.uid,other.uid].includes(c.uid)),false);
+ assert.deepEqual(missed.players[0].deck.slice(-3).map(c=>c.uid).sort(),[gotei.uid,visor.uid,other.uid].sort());
+ const taken=dispatchUniversalAction(packs,played,{type:'chooseTopFiltered',uid:gotei.uid});
+ assert.equal(taken.publicReveals.at(-1).cardId,'BLC-1-080');
+ assert.equal(taken.pending.kind,'effect-top-order');
+ assert.equal(taken.pending.discardAfter,true);
+ const ordered=orderBottom(packs,taken);
+ assert.equal(ordered.pending.kind,'effect-discard');
+ const spare=ordered.players[0].hand.find(c=>c.uid!==gotei.uid);
+ const done=dispatchUniversalAction(packs,ordered,{type:'chooseDiscard',uid:spare.uid});
+ assert.equal(done.pending,null);
+ assert.equal(done.players[0].hand.some(c=>c.uid===gotei.uid),true);
+ assert.equal(done.players[0].outside.some(c=>c.uid===spare.uid),true);
+ assert.deepEqual(done.players[0].deck.slice(-2).map(c=>c.uid).sort(),[visor.uid,other.uid].sort());
+ const empty=main(green,29008);
+ put(empty.s,0,'BLC-1-070','energy',0);
+ put(empty.s,0,'BLC-1-078','energy',1);
+ const none=setTop(empty.s,0,['BLC-4-062','BLC-4-061','BLC-4-060']);
+ const again=take(empty.s,0,'BLC-3-007');
+ empty.s.players[0].hand.push(again);
+ const replay=legalUniversalActions(empty.packs,empty.s).find(a=>a.type==='play'&&a.uid===again.uid&&a.line==='front');
+ const opened=dispatchUniversalAction(empty.packs,empty.s,replay);
+ assert.equal(opened.pending.kind,'effect-top-order');
+ const closed=orderBottom(empty.packs,opened);
+ assert.equal(closed.pending,null);
+ assert.equal(closed.players[0].hand.some(c=>none.some(x=>x.uid===c.uid)),false);
+ aiOk(packs,played);
+ assert.equal(assertUniversalMatch(packs,done),true);
+});
+
+test('BLC-3-002 may reveal one of four printed names from the top three',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-3-002');
+ assert.equal(printed.effect,'【登場時】查看自己牌庫上方 3 張牌。可以從中公開最多 1 張〈黑崎一護〉、〈阿散井戀次〉、〈朽木露琪亞〉或〈朽木白哉〉，加入手牌。將剩餘卡片依任意順序放到牌庫底。若加入了手牌，將自己的 1 張手牌放到場外。');
+ const card=bleach.cards['BLC-3-002'];
+ assert.equal(card.trigger,'draw');
+ assert.equal(card.triggerEffect,null);
+ assert.deepEqual(card.effects.onPlay,[{op:'searchTopOneBottomDiscard',count:3,logic:'any',filters:[
+  {field:'name',value:'黒崎 一護'},{field:'name',value:'阿散井 恋次'},
+  {field:'name',value:'朽木 ルキア'},{field:'name',value:'朽木 白哉'}]}]);
+ const {packs,s}=main(blue,29002);
+ put(s,0,'BLC-2-027','energy',0);
+ const [ichigo,other,byakuya]=setTop(s,0,['BLC-2-016','BLC-2-041','BLC-2-029']);
+ const self=take(s,0,'BLC-3-002');
+ s.players[0].hand.push(self);
+ const play=legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===self.uid&&a.line==='front');
+ assert.ok(play);
+ const played=dispatchUniversalAction(packs,s,play);
+ const choices=legalUniversalActions(packs,played);
+ const chosen=uid=>choices.some(a=>a.type==='chooseTopFiltered'&&a.uid===uid);
+ assert.equal(chosen(ichigo.uid),true);
+ assert.equal(chosen(byakuya.uid),true);
+ assert.equal(chosen(other.uid),false);
+ const taken=dispatchUniversalAction(packs,played,{type:'chooseTopFiltered',uid:byakuya.uid});
+ assert.equal(taken.publicReveals.at(-1).cardId,'BLC-2-029');
+ const ordered=orderBottom(packs,taken);
+ const spare=ordered.players[0].hand.find(c=>c.uid!==byakuya.uid);
+ const done=dispatchUniversalAction(packs,ordered,{type:'chooseDiscard',uid:spare.uid});
+ assert.equal(done.players[0].hand.some(c=>c.uid===byakuya.uid),true);
+ assert.equal(done.players[0].outside.some(c=>c.uid===spare.uid),true);
+ assert.equal(done.players[0].deck.some(c=>c.uid===other.uid),true);
+ aiOk(packs,played);
+ assert.equal(assertUniversalMatch(packs,done),true);
+});
+
+test('BLC-4-001 is also Bazz-B and may reveal Bazz-B or Jugram from the top three',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-4-001');
+ assert.equal(printed.effect,'此卡也視為《巴茲比》。登場時：查看牌庫頂3張，最多公開1張《巴茲比》或《雨葛蘭・哈斯沃德》加入手牌，其餘依任意順序放回牌庫底；若有加入手牌，將1張手牌送至場外。');
+ assert.deepEqual(printed.traits,[]);
+ const card=bleach.cards['BLC-4-001'];
+ assert.equal(card.energy,1);
+ assert.equal(card.gen,1);
+ assert.equal(card.trigger,'draw');
+ assert.equal(card.triggerEffect,null);
+ assert.equal(cardHasName(card,'バズ'),true);
+ assert.equal(cardHasName(card,'バズビー'),true);
+ assert.equal(cardHasName(card,'バズビー',true),false);
+ assert.deepEqual(card.effects.onPlay,[{op:'searchTopOneBottomDiscard',count:3,logic:'any',filters:[
+  {field:'name',value:'バズビー'},{field:'name',value:'ユーグラム・ハッシュヴァルト'}]}]);
+ const {packs,s}=main(yellow,29001);
+ put(s,0,'BLC-1-023','energy',0);
+ const self=take(s,0,'BLC-4-001');
+ const [alias,jugram,other]=setTop(s,0,['BLC-4-001','BLC-1-018','BLC-1-006']);
+ s.players[0].hand.push(self);
+ const play=legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===self.uid&&a.line==='front');
+ assert.ok(play);
+ const played=dispatchUniversalAction(packs,s,play);
+ const choices=legalUniversalActions(packs,played);
+ const chosen=uid=>choices.some(a=>a.type==='chooseTopFiltered'&&a.uid===uid);
+ assert.equal(chosen(alias.uid),true);
+ assert.equal(chosen(jugram.uid),true);
+ assert.equal(chosen(other.uid),false);
+ const taken=dispatchUniversalAction(packs,played,{type:'chooseTopFiltered',uid:alias.uid});
+ assert.equal(taken.publicReveals.at(-1).cardId,'BLC-4-001');
+ const ordered=orderBottom(packs,taken);
+ const spare=ordered.players[0].hand.find(c=>c.uid!==alias.uid);
+ const done=dispatchUniversalAction(packs,ordered,{type:'chooseDiscard',uid:spare.uid});
+ assert.equal(done.players[0].hand.some(c=>c.uid===alias.uid),true);
+ assert.equal(done.players[0].outside.some(c=>c.uid===spare.uid),true);
+ assert.equal(done.players[0].hand.some(c=>c.uid===other.uid),false);
+ aiOk(packs,played);
+ assert.equal(assertUniversalMatch(packs,done),true);
 });

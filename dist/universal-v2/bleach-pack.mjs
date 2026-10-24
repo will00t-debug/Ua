@@ -1086,6 +1086,12 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-4-028","kind":"restOnceSelfBp","number":"EX15BT/BLC-4-028","name":"茶渡 泰虎","color":"blue","energy":4,"ap":1,"bp":4000,"gen":1,"trigger":"draw","type":"character","effect":"啟動・主要〔改為Rest／每回合1次〕：此角色到自己下次回合開始前BP+1000。"}
 ,
 {"id":"BLC-4-052","kind":"oppFrontBelowPrintedBp","number":"EX15BT/BLC-4-052","name":"朽木 白哉","color":"purple","energy":0,"ap":1,"bp":1500,"gen":1,"trigger":"draw","type":"character","effect":"若對方前線有BP低於印刷BP的角色，此角色BP+1500。"}
+,
+{"id":"BLC-3-007","kind":"topFilterDiscard","number":"UA04NC/BLC-3-007","name":"京楽 春水","color":"green","energy":2,"ap":1,"bp":3000,"gen":1,"trigger":"draw","type":"character","effect":"【登場時】查看自己牌庫上方 3 張牌。可以從中公開最多 1 張【特徵：護廷十三隊】的卡片，加入手牌。將剩餘卡片依任意順序放到牌庫底。若加入了手牌，將自己的 1 張手牌放到場外。"}
+,
+{"id":"BLC-3-002","kind":"topFilterDiscard","number":"UA04NC/BLC-3-002","name":"朽木 ルキア","color":"blue","energy":1,"ap":1,"bp":2000,"gen":1,"trigger":"draw","type":"character","effect":"【登場時】查看自己牌庫上方 3 張牌。可以從中公開最多 1 張〈黑崎一護〉、〈阿散井戀次〉、〈朽木露琪亞〉或〈朽木白哉〉，加入手牌。將剩餘卡片依任意順序放到牌庫底。若加入了手牌，將自己的 1 張手牌放到場外。"}
+,
+{"id":"BLC-4-001","kind":"topFilterDiscard","number":"EX15BT/BLC-4-001","name":"バズ","color":"yellow","energy":1,"ap":1,"bp":1500,"gen":1,"trigger":"draw","type":"character","effect":"此卡也視為《巴茲比》。登場時：查看牌庫頂3張，最多公開1張《巴茲比》或《雨葛蘭・哈斯沃德》加入手牌，其餘依任意順序放回牌庫底；若有加入手牌，將1張手牌送至場外。"}
 ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1191,6 +1197,15 @@ export function checkedBleachAddonDefinition(p){
  const isPurpleIchigo=p.kind==='purpleIchigoBuff';
  const isRestOnceSelf=p.kind==='restOnceSelfBp';
  const isBelowPrinted=p.kind==='oppFrontBelowPrintedBp';
+ const isTopDiscard=p.kind==='topFilterDiscard';
+ const topDiscard={
+  'BLC-3-007':{count:3,filter:{field:'trait',value:'護廷十三隊'}},
+  'BLC-3-002':{count:3,filters:[
+   {field:'name',value:'黒崎 一護'},{field:'name',value:'阿散井 恋次'},
+   {field:'name',value:'朽木 ルキア'},{field:'name',value:'朽木 白哉'}],logic:'any'},
+  'BLC-4-001':{count:3,filters:[
+   {field:'name',value:'バズビー'},{field:'name',value:'ユーグラム・ハッシュヴァルト'}],logic:'any'}
+ }[p.id];
  const isOwnTurnImmune=p.kind==='ownTurnBpImmune';
  const isFrontSolo=p.kind==='aliasFrontSoloBp';
  const isOtherRetireBp=p.kind==='otherOwnRetireThisTurnBp';
@@ -1216,7 +1231,7 @@ export function checkedBleachAddonDefinition(p){
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted;
+ const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1282,6 +1297,7 @@ export function checkedBleachAddonDefinition(p){
    passiveBonuses:[{condition:{kind:'oppCharacterBpAtLeast',turn:'own',zone:'front',minBp:3500},bp:1000}]}:{}),
   ...(isMustBlock?{impactNull:true,mustBlock:true}:{}),
   ...(isOwnTurnImmune?{bpDownImmune:true,ownTurnBp:1000}:{}),
+  ...(p.id==='BLC-4-001'?{nameAliases:['バズビー']}:{}),
   ...(isFrontSolo?{nameAliases:['山本 元柳斎 重國'],passiveBonuses:[{
    condition:{kind:'ownFrontNoOtherCharacter',turn:'any'},bp:1000}]}:{}),
   ...(isOtherRetireBp?{passiveBonuses:[{condition:{kind:'retireCountThisTurn',turn:'own',
@@ -1320,6 +1336,7 @@ export function checkedBleachAddonDefinition(p){
   ...(p.kind==='enemyBpDown500Color'?{triggerEffect:{op:'deployOutsideCharacter',color:'purple',maxEnergy:2,ap:1,frontOnly:true}}:{}),
   ...(p.kind==='drawPlayColorHand'?{triggerEffect:{op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1}}:{}),
   ...(!special?{templateEffects:abilities[p.kind]}:{effects:
+   isTopDiscard?{onPlay:[{op:'searchTopOneBottomDiscard',...topDiscard}]}:
    isImpactAp?{onPlay:[{op:'grantOtherImpactThisTurn',minPrintedAp:2,amount:1,
     optional:true,plus:true,includeSelf:true}]}:
    isPurpleIchigo?{onPlay:[{op:'buffOwnField',filter:{field:'color',value:'purple'},

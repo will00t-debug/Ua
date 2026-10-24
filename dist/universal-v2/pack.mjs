@@ -323,8 +323,9 @@ function verifyProgram(program,path){
      (f.field!=='type'||V2_CARD_TYPES.includes(f.value)));
    const single=isFilter(e.filter)&&e.filters===undefined&&e.logic===undefined&&
     Object.keys(e).every(k=>['op','count','filter'].includes(k));
+   // Four is the printed か chain on BLC-3-002. Five remains invalid.
    const compound=e.filter===undefined&&Array.isArray(e.filters)&&
-    e.filters.length>=2&&e.filters.length<=3&&e.filters.every(isFilter)&&
+    e.filters.length>=2&&e.filters.length<=4&&e.filters.every(isFilter)&&
     new Set(e.filters.map(f=>f.field+':'+f.value)).size===e.filters.length&&
     ['any','all'].includes(e.logic)&&
     Object.keys(e).every(k=>['op','count','filters','logic'].includes(k));
