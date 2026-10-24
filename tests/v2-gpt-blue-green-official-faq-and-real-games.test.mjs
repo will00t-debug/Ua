@@ -139,6 +139,36 @@ test('FAQ Q1046 is an energy-independent hand-move trigger, and Q1033 is source-
  assert.equal(s.players[0].outside.some(c=>c.uid===event.uid),true);
 });
 
+
+test('Q2315 and physical source proof: Riruka observer orders a non-draw Zangetsu grant without accepting forged jobs',()=>{
+ let s=phase(fresh('reject-blue','reject-blue',23150),'main');
+ const observer=field(s,0,'BLC-4-034','front',0,true);
+ const ichigo=moveHand(s,0,'BLC-2-016');
+ const zangetsu=moveHand(s,0,'BLC-2-021');
+ s=legalStep(s,a=>a.type==='play'&&a.uid===ichigo.uid&&a.line==='front');
+ assert.equal(s.pending?.kind,'effect-discard');
+ s=legalStep(s,a=>a.type==='chooseDiscard'&&a.uid===zangetsu.uid);
+ assert.equal(s.pending?.kind,'effect-move-order');
+ assert.ok(s.pending.entries.some(e=>String(e.key).startsWith('moved-')&&
+  e.jobs.some(j=>j.op==='grantCauseBlockAtMost')));
+ assert.ok(s.pending.entries.some(e=>String(e.key).startsWith('observer-')));
+ const forged=structuredClone(s);
+ const earned=forged.pending.entries.find(e=>String(e.key).startsWith('moved-'));
+ earned.jobs[0].bp=999999;
+ assert.throws(()=>assertUniversalMatch(packs,forged),/Forged moved-card earned effect/);
+ assert.equal(assertUniversalMatch(packs,s),true);
+ s=legalStep(s,a=>a.type==='chooseMoveEffectOrder'&&String(a.key).startsWith('moved-'));
+ assert.equal(s.pending?.kind,'effect-grant-cause');
+ s=legalStep(s,a=>a.type==='chooseGrantCause'&&a.mode==='grant');
+ assert.equal(s.pending?.kind,'effect-rest-tuck');
+ s=legalStep(s,a=>a.type==='chooseRestTuck'&&a.mode==='rest');
+ s=legalStep(s,a=>a.type==='chooseTuckMoved'&&a.uid===zangetsu.uid);
+ assert.equal(s.pending,null);
+ assert.equal(s.players[0].front[0].uid,observer.uid);
+ assert.equal(s.players[0].front[0].under[0].uid,zangetsu.uid);
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
+
 test('exact 50-card specified decks: both starts and both mirrors, legal seeded AI paths and replay',()=>{
  const cases=[
   ['reject-blue','white-sword',0,2601],
