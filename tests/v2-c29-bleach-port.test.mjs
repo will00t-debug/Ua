@@ -41,7 +41,7 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 //   same look-3 with 〈バズビー〉か〈ユーグラム・ハッシュヴァルト〉. DRAW is generic. Gen alt is 黄.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -51,7 +51,7 @@ function realDeck(required,color){
  assert.deepEqual(validateUniversalDeck(bleach,counts),[]);
  return counts;
 }
-const green=realDeck(['BLC-1-080','BLC-1-091','BLC-1-078','BLC-1-070','BLC-4-062','BLC-1-087','BLC-2-067','BLC-3-007','BLC-4-060','BLC-4-061'],'green');
+const green=realDeck(['BLC-1-080','BLC-1-091','BLC-1-078','BLC-1-070','BLC-4-062','BLC-1-087','BLC-2-067','BLC-3-007','BLC-4-060','BLC-4-061','BLC-2-072','BLC-1-083'],'green');
 const blue=realDeck(['BLC-2-041','BLC-2-031','BLC-4-036','BLC-2-026','BLC-2-027','BLC-4-022','BLC-4-028','BLC-3-002','BLC-2-016','BLC-2-029'],'blue');
 const purple=realDeck(['BLC-1-062','BLC-1-035','BLC-1-103','BLC-4-046','BLC-1-039','BLC-4-052'],'purple');
 const yellow=realDeck(['BLC-1-032','BLC-1-023','BLC-1-006','BLC-4-001','BLC-2-003','BLC-1-018'],'yellow');
@@ -112,12 +112,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers fifteen whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,451);
- assert.equal(EXPECTED_V2_COUNTS.bleach,175);
+test('C29 registers sixteen whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,452);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,176);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,175);
+ assert.equal(Object.keys(bleach.cards).length,176);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -755,4 +755,57 @@ test('BLC-4-001 is also Bazz-B and may reveal Bazz-B or Jugram from the top thre
  assert.equal(done.players[0].hand.some(c=>c.uid===other.uid),false);
  aiOk(packs,played);
  assert.equal(assertUniversalMatch(packs,done),true);
+});
+
+test('BLC-2-072 rests a cheap green character from hand only while Hitsugaya is on the own field',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-2-072');
+ assert.equal(printed.effect,'登場：己方場上有〈日番谷冬獅郎〉時，可從手牌將最多 1 張需求能源 2 以下、AP 消耗 1 的綠色角色卡，以 REST 登場於己方場上。');
+ assert.equal(printed.traits,'護廷十三隊');
+ const card=bleach.cards['BLC-2-072'];
+ assert.equal(card.energy,3);
+ assert.equal(card.trigger,'draw');
+ assert.equal(card.triggerEffect,null);
+ assert.deepEqual(card.effects.onPlay,[{op:'deployOwnHandRest',type:'character',color:'green',
+  energy:2,ap:1,max:1,when:{kind:'ownNameExists',turn:'any',zone:'field',
+  excludeSelf:false,name:'日番谷 冬獅郎'}}]);
+ const closed=main(green,29072);
+ put(closed.s,0,'BLC-1-078','energy',0);
+ put(closed.s,0,'BLC-1-080','energy',1);
+ put(closed.s,1,'BLC-1-083','front',0);
+ const lone=take(closed.s,0,'BLC-2-072');
+ closed.s.players[0].hand.push(lone);
+ const blocked=legalUniversalActions(closed.packs,closed.s).find(a=>a.type==='play'&&a.uid===lone.uid&&a.line==='front');
+ assert.ok(blocked);
+ const quiet=dispatchUniversalAction(closed.packs,closed.s,blocked);
+ assert.equal(quiet.pending,null);
+ const {packs,s}=main(green,29073);
+ put(s,0,'BLC-1-078','energy',0);
+ put(s,0,'BLC-1-080','energy',1);
+ const gate=put(s,0,'BLC-1-083','energy',2);
+ const cheap=take(s,0,'BLC-4-062');
+ const heavy=take(s,0,'BLC-1-070');
+ s.players[0].hand.push(cheap,heavy);
+ const self=take(s,0,'BLC-2-072');
+ s.players[0].hand.push(self);
+ const play=legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===self.uid&&a.line==='front');
+ assert.ok(play);
+ const played=dispatchUniversalAction(packs,s,play);
+ assert.equal(played.pending.kind,'effect-hand-rest');
+ const choices=legalUniversalActions(packs,played);
+ const chosen=uid=>choices.some(a=>a.type==='chooseHandRest'&&a.uid===uid);
+ assert.equal(chosen(null),true);
+ assert.equal(chosen(cheap.uid),true);
+ assert.equal(chosen(heavy.uid),false);
+ assert.equal(chosen(gate.uid),false);
+ const skipped=dispatchUniversalAction(packs,played,{type:'chooseHandRest',uid:null});
+ assert.equal(skipped.pending,null);
+ assert.equal(skipped.players[0].hand.some(c=>c.uid===cheap.uid),true);
+ const enter=choices.find(a=>a.type==='chooseHandRest'&&a.uid===cheap.uid&&a.line==='front');
+ assert.ok(enter);
+ const entered=dispatchUniversalAction(packs,played,enter);
+ assert.equal(entered.pending,null);
+ const arrived=live(entered,0,cheap.uid);
+ assert.equal(arrived.ready,false);
+ aiOk(packs,played);
+ assert.equal(assertUniversalMatch(packs,entered),true);
 });

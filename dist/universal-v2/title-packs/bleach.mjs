@@ -102,7 +102,8 @@ const testForKind=Object.freeze({
  purpleIchigoBuff:'tests/v2-c29-bleach-port.test.mjs',
  restOnceSelfBp:'tests/v2-c29-bleach-port.test.mjs',
  oppFrontBelowPrintedBp:'tests/v2-c29-bleach-port.test.mjs',
- topFilterDiscard:'tests/v2-c29-bleach-port.test.mjs'
+ topFilterDiscard:'tests/v2-c29-bleach-port.test.mjs',
+ namedHandRest:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.

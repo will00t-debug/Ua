@@ -1092,6 +1092,8 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-3-002","kind":"topFilterDiscard","number":"UA04NC/BLC-3-002","name":"朽木 ルキア","color":"blue","energy":1,"ap":1,"bp":2000,"gen":1,"trigger":"draw","type":"character","effect":"【登場時】查看自己牌庫上方 3 張牌。可以從中公開最多 1 張〈黑崎一護〉、〈阿散井戀次〉、〈朽木露琪亞〉或〈朽木白哉〉，加入手牌。將剩餘卡片依任意順序放到牌庫底。若加入了手牌，將自己的 1 張手牌放到場外。"}
 ,
 {"id":"BLC-4-001","kind":"topFilterDiscard","number":"EX15BT/BLC-4-001","name":"バズ","color":"yellow","energy":1,"ap":1,"bp":1500,"gen":1,"trigger":"draw","type":"character","effect":"此卡也視為《巴茲比》。登場時：查看牌庫頂3張，最多公開1張《巴茲比》或《雨葛蘭・哈斯沃德》加入手牌，其餘依任意順序放回牌庫底；若有加入手牌，將1張手牌送至場外。"}
+,
+{"id":"BLC-2-072","kind":"namedHandRest","number":"EX07BT/BLC-2-072","name":"松本 乱菊","color":"green","energy":3,"ap":1,"bp":3000,"gen":1,"trigger":"draw","type":"character","effect":"登場：己方場上有〈日番谷冬獅郎〉時，可從手牌將最多 1 張需求能源 2 以下、AP 消耗 1 的綠色角色卡，以 REST 登場於己方場上。"}
 ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1198,6 +1200,7 @@ export function checkedBleachAddonDefinition(p){
  const isRestOnceSelf=p.kind==='restOnceSelfBp';
  const isBelowPrinted=p.kind==='oppFrontBelowPrintedBp';
  const isTopDiscard=p.kind==='topFilterDiscard';
+ const isNamedHandRest=p.kind==='namedHandRest';
  const topDiscard={
   'BLC-3-007':{count:3,filter:{field:'trait',value:'護廷十三隊'}},
   'BLC-3-002':{count:3,filters:[
@@ -1231,7 +1234,7 @@ export function checkedBleachAddonDefinition(p){
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard;
+ const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1336,6 +1339,9 @@ export function checkedBleachAddonDefinition(p){
   ...(p.kind==='enemyBpDown500Color'?{triggerEffect:{op:'deployOutsideCharacter',color:'purple',maxEnergy:2,ap:1,frontOnly:true}}:{}),
   ...(p.kind==='drawPlayColorHand'?{triggerEffect:{op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1}}:{}),
   ...(!special?{templateEffects:abilities[p.kind]}:{effects:
+   isNamedHandRest?{onPlay:[{op:'deployOwnHandRest',type:'character',color:'green',
+    energy:2,ap:1,max:1,when:{kind:'ownNameExists',turn:'any',zone:'field',
+    excludeSelf:false,name:'日番谷 冬獅郎'}}]}:
    isTopDiscard?{onPlay:[{op:'searchTopOneBottomDiscard',...topDiscard}]}:
    isImpactAp?{onPlay:[{op:'grantOtherImpactThisTurn',minPrintedAp:2,amount:1,
     optional:true,plus:true,includeSelf:true}]}:

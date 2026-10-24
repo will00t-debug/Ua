@@ -808,8 +808,12 @@ function continueEffectQueue(pack,s){
     }
    }else if(job.op==='deployOwnHandRest'||job.op==='deployOwnHandSpecial'){
     // Current hand is recomputed AFTER earlier optional outside recovery.
+    // when is the printed 自分の場に〈名前〉がある場合 gate. A miss does not
+    // open the optional REST entry. Absent when keeps every older profile.
     const special=job.op==='deployOwnHandSpecial';
-    const choices=pl.hand.filter(c=>{
+    const gate=special||!job.when||matchesV2LiveCondition(s,owner,job.sourceUid,job.when,
+     c=>card(pack,c),()=>calcEnergy(pack,s,owner),c=>bp(pack,s,c));
+    const choices=!gate?[]:pl.hand.filter(c=>{
      const d=card(pack,c);
      return d.type===job.type&&(job.color===null||d.color===job.color)&&d.ap===job.ap&&
       (special?(job.maxEnergy===null||d.energy<=job.maxEnergy)&&
@@ -2506,6 +2510,7 @@ function resolveChoice(s,a,pack){
    if(q.max>1)s.effectQueue.unshift({op:q.special?'deployOwnHandSpecial':'deployOwnHandRest',
     owner:q.player,sourceUid:q.sourceUid,sourceName:q.sourceName,
     type:q.type,color:q.color,ap:q.ap,max:q.max-1,
+    ...(q.when?{when:q.when}:{}),
     ...(q.special?{trait:q.trait,maxEnergy:q.maxEnergy,ready:q.ready,
      protectionScope:q.protectionScope}:{energy:q.energy})});
    applyEffects(pack,s,physical,'onPlay',q.player,'ownEffect');

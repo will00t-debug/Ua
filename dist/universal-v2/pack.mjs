@@ -347,10 +347,11 @@ function verifyProgram(program,path){
     throw Error(path+'['+i+'] invalid TOP-N two-card hand search');
   }
   if(e.op==='deployOwnHandRest'){
+   if(e.when!==undefined)assertLiveCondition(e.when,path+'['+i+'].when');
    if(!['character','field'].includes(e.type)||!['blue','yellow','green','purple','red'].includes(e.color)||
     !integer(e.energy)||e.energy>30||!integer(e.ap,1)||e.ap>3||
-    !integer(e.max,1)||e.max>4||Object.keys(e).length!==6||
-    Object.keys(e).some(k=>!['op','type','color','energy','ap','max'].includes(k)))
+    !integer(e.max,1)||e.max>4||Object.keys(e).length!==6+Number(e.when!==undefined)||
+    Object.keys(e).some(k=>!['op','type','color','energy','ap','max','when'].includes(k)))
     throw Error(path+'['+i+'] invalid hand REST entry');
   }
   if(e.op==='deployOwnHandSpecial'){
