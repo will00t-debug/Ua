@@ -50,8 +50,7 @@ test('R53 EX08BT/SAO-2-063 full official exact 3 energy, gen 3, STEP, live OUTSI
  assert.deepEqual([original.nameJa,original.color,original.energy,original.ap,
   original.bp,original.gen,original.trigger],['アスナ','green',3,1,3000,3,null]);
  assert.deepEqual(original.traits,['ALO']);
- assert.equal(original.effectJa,
-  '【ステップ】（自分の移動フェイズにフロントLからエナジーLへ移動できる）\\n【登場時】自分の場外に〈ユウキ〉と〈マザーズ・ロザリオ〉が合計2枚以上ある場合、カードを1枚引く。'.replace('\\n','\n'));
+ assert.equal(original.effectJa, "【ステップ】（自分の移動フェイズにフロントLからエナジーLへ移動できる）\n【登場時】自分の場外に〈ユウキ〉と〈マザーズ・ロザリオ〉が合計2枚以上ある場合、カードを1枚引く。");
  const d=pack.cards[original.id];assert.equal(d.step,true);
  assert.deepEqual(d.effects.onPlay,[{op:'drawIfOwnOutsideNamedCountAtLeast',
   min:2,names:['ユウキ','マザーズ・ロザリオ'],count:1}]);
