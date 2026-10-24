@@ -41,7 +41,7 @@ export function r54FiveTitleSourceRescan(){
   const card=index.cards.find(c=>c.id===id);
   if(!card||!card.sourceText?.length)throw Error('R54 official focus missing source '+id);
   const status=card.registered?'REGISTERED':'PARTIAL';
-  if(['SAO-1-071','TTG-1-067','SLG-1-021'].includes(id)!==card.registered)
+  if(['SAO-1-071','TTG-1-067','SLG-1-021','MST-1-009'].includes(id)!==card.registered)
    throw Error('R54 official full-card status changed, audit source '+id);
   return {id,status,title:card.title,
    source:'https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no='+detail.set+'%2F'+id,
