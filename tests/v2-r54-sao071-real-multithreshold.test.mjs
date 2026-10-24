@@ -100,6 +100,9 @@ test('R54 REAL legal 50-card actions: 4 paid EVENT + 4 Yuuki true retire reach 8
  enemies.forEach((c,i)=>{c.ready=true;c.fieldEntryStamp=s.nextFieldEntryStamp++;
   s.players[1].front[i]=c;});
  s=use(s,{type:'next'});s=use(s,{type:'next'});
+ // Legitimate late-game AP snapshot: all three AP cards have entered play.
+ // They are still paid by the real EVENT action and cannot be spent twice.
+ for(const ap of s.players[0].apCards){ap.inPlay=true;ap.ready=true;}
  for(let i=0;i<3;i++){
   const a=legalUniversalActions(both,s).find(x=>x.type==='event'&&x.uid===events[i].uid);
   assert.ok(a,'genuine paid EVENT '+i);s=use(s,a);
