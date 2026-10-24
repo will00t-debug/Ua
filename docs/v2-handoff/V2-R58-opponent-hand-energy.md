@@ -1,6 +1,6 @@
 # R58 — opponent-field-color HAND required-energy reduction (shared engine)
 
-Review date: 2026-10-24. Work branch: `gpt/v2-r58-safe-integration-20261024`. Source-pinned six cards; **test-only candidate profiles, NOT production-registered**.
+Review date: 2026-10-24. Work branch: `gpt/v2-r58-safe-integration-20261024`. R58 added the shared primitive and kept the six cards as test-only profiles. Cursor C2 later registered all six on `cursor/v2-blc-sao-c2-20261024-6ff5`; see `docs/v2-handoff/V2-C2-blc-sao-register.md`.
 
 ## Official source matrix
 
@@ -26,6 +26,6 @@ All six are character BP3000, printed 3 colored required energy, generated **2**
 
 ## Cursor handoff
 
-Cursor alone owns source normalization and **full-card registration** for BLC-1-007, BLC-1-044, BLC-1-073 and SAO-1-015, SAO-1-050, SAO-1-092. SAO source catalogue imported gen 3 must be normalized to official 2 without changing official `energy=3` or `ap=1`. Use the exact source matrix, never keyword auto-port.
+R58 left registration to Cursor. C2 normalized SAO generated energy from imported 3 to official 2 and registered BLC-1-007, BLC-1-044, BLC-1-073, SAO-1-015, SAO-1-050 and SAO-1-092. Required energy stays 3 and AP stays 1.
 
-No production BLEACH/SAO registry or independent manifest IDs changed by this batch. Never merge `main`, deploy production, force-push or alter Cursor branch.
+R58 itself changed no production BLEACH/SAO registry or independent manifest IDs. Never merge `main`, deploy production, force-push or alter the other line's branch.

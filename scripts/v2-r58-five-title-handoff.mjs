@@ -10,17 +10,17 @@ import {C1_OFFICIAL_REVIEWS} from './v2-c1-blc-sao-readiness.mjs';
 const cardSource=(set,id)=>'https://www.unionarena-tcg.com/na/cardlist/detail_iframe.php?card_no='+set+'%2F'+id;
 const SIX=Object.freeze({
  'BLC-1-007':{status:'READY',owner:'Cursor',source:cardSource('UE01BT','BLC-1-007'),
-  missing:'none after shared hand-energy DSL; profile yellow -1 iff opponent purple or green, printed gen 2'},
+  missing:'C2 registered the whole print: yellow hand -1 iff opponent purple or green, printed gen 2'},
  'BLC-1-044':{status:'READY',owner:'Cursor',source:cardSource('UE01BT','BLC-1-044'),
-  missing:'none after shared hand-energy DSL; profile purple -1 iff opponent yellow or green, printed gen 2'},
+  missing:'C2 registered the whole print: purple hand -1 iff opponent yellow or green, printed gen 2'},
  'BLC-1-073':{status:'READY',owner:'Cursor',source:cardSource('UE01BT','BLC-1-073'),
-  missing:'none after shared hand-energy DSL; profile green -1 iff opponent yellow or purple, printed gen 2'},
- 'SAO-1-015':{status:'PARTIAL',owner:'Cursor',source:cardSource('UE07BT','SAO-1-015'),
-  missing:'shared DSL READY; source catalogue generated energy 3 must be normalized to official yellow 2 first'},
- 'SAO-1-050':{status:'PARTIAL',owner:'Cursor',source:cardSource('UE07BT','SAO-1-050'),
-  missing:'shared DSL READY; source catalogue generated energy 3 must be normalized to official blue 2 first'},
- 'SAO-1-092':{status:'PARTIAL',owner:'Cursor',source:cardSource('UE07BT','SAO-1-092'),
-  missing:'shared DSL READY; source catalogue generated energy 3 must be normalized to official green 2 first'}
+  missing:'C2 registered the whole print: green hand -1 iff opponent yellow or purple, printed gen 2'},
+ 'SAO-1-015':{status:'READY',owner:'Cursor',source:cardSource('UE07BT','SAO-1-015'),
+  missing:'C2 registered after normalizing generated energy from imported 3 to official 黄黄 = 2'},
+ 'SAO-1-050':{status:'READY',owner:'Cursor',source:cardSource('UE07BT','SAO-1-050'),
+  missing:'C2 registered after normalizing generated energy from imported 3 to official 青青 = 2'},
+ 'SAO-1-092':{status:'READY',owner:'Cursor',source:cardSource('UE07BT','SAO-1-092'),
+  missing:'C2 registered after normalizing generated energy from imported 3 to official 緑緑 = 2'}
 });
 const PRIORITY=Object.freeze({
  'TTG-1-069':{status:'ENGINE BLOCKED',owner:'GPT',

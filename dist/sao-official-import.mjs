@@ -2346,7 +2346,7 @@ export const SAO_OFFICIAL_CARDS=[
   "ap": 1,
   "bp": 3000,
   "bpPrinted": "3000",
-  "gen": 3,
+  "gen": 2,
   "traits": [
    "整合騎士"
   ],
@@ -3279,7 +3279,7 @@ export const SAO_OFFICIAL_CARDS=[
   "ap": 1,
   "bp": 3000,
   "bpPrinted": "3000",
-  "gen": 3,
+  "gen": 2,
   "traits": [
    "ALO"
   ],
@@ -4349,7 +4349,7 @@ export const SAO_OFFICIAL_CARDS=[
   "ap": 1,
   "bp": 3000,
   "bpPrinted": "3000",
-  "gen": 3,
+  "gen": 2,
   "traits": [
    "GGO"
   ],
@@ -4403,7 +4403,7 @@ export const SAO_OFFICIAL_CARDS=[
   "ap": 1,
   "bp": 3000,
   "bpPrinted": "3000",
-  "gen": 3,
+  "gen": 2,
   "traits": [
    "GGO"
   ],
