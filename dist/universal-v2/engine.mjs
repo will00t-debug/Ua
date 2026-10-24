@@ -328,6 +328,8 @@ function filteredChoices(pack,s,cards,filter){
  return cards.filter(c=>matchesFilter(pack,s,c,filter)).map(c=>c.uid);
 }
 function matchesSearch(pack,s,physical,query){
+ // Printed レイドを持たない. Absent excludeRaid still accepts a Raid character.
+ if(query.excludeRaid===true&&card(pack,physical).raidName)return false;
  if(!query.filters)return matchesFilter(pack,s,physical,query.filter);
  const result=query.filters.map(f=>matchesFilter(pack,s,physical,f));
  return query.logic==='all'?result.every(Boolean):result.some(Boolean);
@@ -803,7 +805,8 @@ function continueEffectQueue(pack,s){
       {filter:{...job.filter}};
      // With no valid match, ALL inspected cards must still be ordered below.
      s.pending=choices.length?{kind:'effect-top-filter-choice',player:owner,
-      sourceUid:job.sourceUid,uids,choices,...predicate}:
+      sourceUid:job.sourceUid,uids,choices,...predicate,
+      ...(job.excludeRaid===true?{excludeRaid:true}:{})}:
       {kind:'effect-top-order',player:owner,sourceUid:job.sourceUid,
        uids,order:[],rest:'bottom'};
     }
@@ -2775,7 +2778,17 @@ function resolveChoice(s,a,pack){
    reason:q.kind==='effect-discard'
     ?(q.sourceUid?.startsWith(q.player+'-')?'own-effect':'opponent-effect')
     :'payment',sourceUid:q.sourceUid});
-  source.buffs??=[];source.buffs.push({bp:q.bp,untilTurn:s.turn});
+  const gain=card(pack,source).mainAbility;
+  source.buffs??=[];
+  if(Number.isInteger(gain.energy)){
+   if(q.energy!==gain.energy||q.bp!==undefined)
+    throw Error('Main discard energy does not match the printed gain');
+   source.buffs.push({energy:gain.energy,untilTurn:s.turn});
+  }else{
+   if(q.bp!==gain.bp||q.energy!==undefined)
+    throw Error('Main discard BP does not match the printed gain');
+   source.buffs.push({bp:gain.bp,untilTurn:s.turn});
+  }
   s.mainAbilityUsedUids.push(source.uid);
   s.pending=null;continueEffectQueue(pack,s);return;
  }
@@ -4465,7 +4478,8 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
     // before source-qualified moved cards may release their own draw.
     s.effectQueue.unshift(...sourceMoveBoundary(pack,s,p,selected.uid));
     s.pending={kind:'main-discard-buff',player:p,sourceUid:selected.uid,
-     bp:ability.bp,choices:pl.hand.map(c=>c.uid)};
+     ...(Number.isInteger(ability.energy)?{energy:ability.energy}:{bp:ability.bp}),
+     choices:pl.hand.map(c=>c.uid)};
     break;
    }
    if(ability.op==='restSelfGainEnergyRetireEndMain'){

@@ -321,8 +321,13 @@ function verifyProgram(program,path){
      ['name','trait','color','type'].includes(f.field)&&
      typeof f.value==='string'&&!!f.value.trim()&&
      (f.field!=='type'||V2_CARD_TYPES.includes(f.value)));
+   // Absent excludeRaid keeps every older traitless window, including a
+   // printed Raid character. True is only the レイドを持たない sentence.
+   const excludeRaid=e.excludeRaid===true&&e.filter?.field==='traitlessCharacter'&&
+    e.filters===undefined&&e.logic===undefined;
    const single=isFilter(e.filter)&&e.filters===undefined&&e.logic===undefined&&
-    Object.keys(e).every(k=>['op','count','filter'].includes(k));
+    (e.excludeRaid===undefined||excludeRaid)&&
+    Object.keys(e).every(k=>['op','count','filter',...(e.excludeRaid===true?['excludeRaid']:[])].includes(k));
    // Four is the printed か chain on BLC-3-002. Five remains invalid.
    const compound=e.filter===undefined&&Array.isArray(e.filters)&&
     e.filters.length>=2&&e.filters.length<=4&&e.filters.every(isFilter)&&
@@ -963,17 +968,23 @@ function normalize(card,packId){
    typeof colorTriggerFieldSubstitution!=='string'||!colorTriggerFieldSubstitution.trim()))
   throw Error(card.id+' invalid live COLOR field-substitution profile');
  const mainAbility=card.mainAbility??null;
- // Generic printed FIELD cost: REST itself, truly retire it, then one optional
- // name-filtered CHARACTER from OWN OUTSIDE enters ACTIVE ENERGY for no AP.
+ // Generic printed FIELD cost: REST itself, truly retire it, then either one
+ // optional named CHARACTER from OWN OUTSIDE enters ACTIVE ENERGY for no AP,
+ // or the printed draw-two then discard-one. The two continuations do not mix.
+ const fieldThen=mainAbility?.then;
+ const fieldDeploy=fieldThen?.[0]?.op==='deployNamedFromZones'&&
+  fieldThen[0].zones?.length===1&&fieldThen[0].zones[0]==='outside'&&
+  fieldThen[0].line==='energy'&&fieldThen[0].ready===true&&
+  fieldThen[0].optional===true&&
+  fieldThen[0].color!==undefined&&
+  fieldThen[0].ap===1;
+ const fieldDraw=fieldThen?.[0]?.op==='drawDiscard'&&
+  fieldThen[0].count===2&&fieldThen[0].discardCount===1&&
+  Object.keys(fieldThen[0]).length===3&&
+  Object.keys(fieldThen[0]).every(k=>['op','count','discardCount'].includes(k));
  const fieldRestRetireThen=mainAbility?.op==='fieldRestRetireThen'&&
   card.type==='field'&&Object.keys(mainAbility).length===2&&
-  Array.isArray(mainAbility.then)&&mainAbility.then.length===1&&
-  mainAbility.then[0]?.op==='deployNamedFromZones'&&
-  mainAbility.then[0].zones?.length===1&&mainAbility.then[0].zones[0]==='outside'&&
-  mainAbility.then[0].line==='energy'&&mainAbility.then[0].ready===true&&
-  mainAbility.then[0].optional===true&&
-  mainAbility.then[0].color!==undefined&&
-  mainAbility.then[0].ap===1;
+  Array.isArray(fieldThen)&&fieldThen.length===1&&(fieldDeploy||fieldDraw);
  if(fieldRestRetireThen)verifyProgram(mainAbility.then,card.id+'.mainAbility.then');
  // Two independently printed MAIN 「ターン1」 on the same FIELD source.
  // Name-shared once accounting lives in the engine, not title-specific cases.
@@ -1032,11 +1043,15 @@ function normalize(card,packId){
   Object.keys(mainAbility).length===4&&
   Object.keys(mainAbility).every(k=>['op','lines','discardCount','then'].includes(k));
  if(mainRestDiscardRetire)verifyProgram(mainAbility.then,card.id+'.mainAbility.then');
+ // Exactly one printed gain: BP, or this card's own generated energy.
+ // Absent energy keeps every older BP profile. Both keys together are illegal.
+ const discardBuffBp=Number.isInteger(mainAbility?.bp)&&mainAbility.bp>=1&&mainAbility.bp<=5000;
+ const discardBuffEnergy=Number.isInteger(mainAbility?.energy)&&mainAbility.energy>=1&&mainAbility.energy<=3;
  const mainDiscardBuff=mainAbility?.op==='discardHandBuffSelf'&&
   mainAbility.oncePerTurn===true&&mainAbility.discardCount===1&&
-  Number.isInteger(mainAbility.bp)&&mainAbility.bp>=1&&mainAbility.bp<=5000&&
+  discardBuffBp!==discardBuffEnergy&&
   Object.keys(mainAbility).length===4&&
-  Object.keys(mainAbility).every(k=>['op','oncePerTurn','discardCount','bp'].includes(k));
+  Object.keys(mainAbility).every(k=>['op','oncePerTurn','discardCount',discardBuffBp?'bp':'energy'].includes(k));
  const frontProgram=mainAbility?.then;
  const frontGate=frontProgram?.[0]?.op==='discardGate'?frontProgram[0]:null;
  // A front once-per-turn ability may be a source-complete DSL program,

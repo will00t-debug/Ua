@@ -1096,6 +1096,14 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-2-072","kind":"namedHandRest","number":"EX07BT/BLC-2-072","name":"松本 乱菊","color":"green","energy":3,"ap":1,"bp":3000,"gen":1,"trigger":"draw","type":"character","effect":"登場：己方場上有〈日番谷冬獅郎〉時，可從手牌將最多 1 張需求能源 2 以下、AP 消耗 1 的綠色角色卡，以 REST 登場於己方場上。"}
 ,
 {"id":"BLC-2-032","kind":"printedApTop","number":"EX07BT/BLC-2-032","name":"朽木 ルキア","color":"blue","energy":2,"ap":1,"bp":2000,"gen":1,"trigger":null,"type":"character","effect":"登場：查看己方牌堆頂 5 張，可公開其中最多 1 張原始 AP 消耗 2 以上的卡並加入手牌，其餘以任意順序放至牌堆底。"}
+,
+{"id":"BLC-3-004","kind":"restFrontEnergy","number":"UA04NC/BLC-3-004","name":"浦原 喜助","color":"purple","energy":1,"ap":1,"bp":2000,"gen":1,"trigger":"draw","type":"character","effect":"【啟動主要】【將此角色轉為 Rest】【每回合一次】將自己前線的 1 張 Active 角色轉為 Rest。若如此做，此角色在本回合中產生能源＋紫 1。"}
+,
+{"id":"BLC-1-079","kind":"discardGainEnergy","number":"UA08BT/BLC-1-079","name":"雀部 長次郎 忠息","color":"green","energy":3,"ap":1,"bp":1500,"gen":1,"trigger":null,"type":"character","effect":"主要階段・每回合 1 次：將 1 張手牌送至場外，本回合額外產生 2 綠能源。"}
+,
+{"id":"BLC-2-050","kind":"traitlessNoRaidTop","number":"EX07BT/BLC-2-050","name":"浦原 喜助","color":"purple","energy":3,"ap":1,"bp":2500,"gen":2,"trigger":"draw","type":"character","effect":"登場：查看己方牌堆頂 5 張，可公開其中最多 1 張不具有特徵、且不具有 Raid 的角色卡並加入手牌，其餘以任意順序放至牌堆底。若有卡加入手牌，再將 1 張手牌送至場外。"}
+,
+{"id":"BLC-1-108","kind":"fieldRestRetireDraw","number":"UA08ST/BLC-1-108","name":"一護の部屋","color":"purple","energy":2,"ap":1,"bp":0,"gen":1,"trigger":"get","type":"field","effect":"主要階段：REST 並退場自己，抽 2 張，再棄 1 張。"}
 ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1204,6 +1212,10 @@ export function checkedBleachAddonDefinition(p){
  const isTopDiscard=p.kind==='topFilterDiscard';
  const isNamedHandRest=p.kind==='namedHandRest';
  const isPrintedApTop=p.kind==='printedApTop';
+ const isRestFrontEnergy=p.kind==='restFrontEnergy';
+ const isDiscardGainEnergy=p.kind==='discardGainEnergy';
+ const isNoRaidTop=p.kind==='traitlessNoRaidTop';
+ const isFieldDraw=p.kind==='fieldRestRetireDraw';
  const topDiscard={
   'BLC-3-007':{count:3,filter:{field:'trait',value:'護廷十三隊'}},
   'BLC-3-002':{count:3,filters:[
@@ -1237,7 +1249,7 @@ export function checkedBleachAddonDefinition(p){
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop;
+ const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1297,6 +1309,9 @@ export function checkedBleachAddonDefinition(p){
   ...(isApEach?{passiveBonuses:[{condition:{kind:'ownPrintedApAtLeast',turn:'own',
    zone:'front',excludeSelf:false,minAp:2},bpEach:500}]}:{}),
   ...(isRestOnceSelf?{mainAbility:{op:'restOnceBuffSelfUntilNextOwnStart',oncePerTurn:true,bp:1000}}:{}),
+  ...(isRestFrontEnergy?{mainAbility:{op:'restSelfRestFrontGainEnergy',oncePerTurn:true,extraEnergy:1}}:{}),
+  ...(isDiscardGainEnergy?{mainAbility:{op:'discardHandBuffSelf',oncePerTurn:true,discardCount:1,energy:2}}:{}),
+  ...(isFieldDraw?{mainAbility:{op:'fieldRestRetireThen',then:[{op:'drawDiscard',count:2,discardCount:1}]}}:{}),
   ...(isBelowPrinted?{passiveBonuses:[{condition:{kind:'oppFrontLiveBpBelowPrinted',turn:'any'},bp:1500}]}:{}),
   ...(isHandOutsideBp?{passiveBonuses:[{condition:{kind:'ownHandToOutsideThisTurn',turn:'any'},bp:500}]}:{}),
   ...(isHandEnergyImmune?{printedHandEnergyDiscount:1,bpDownImmune:true,
@@ -1431,6 +1446,8 @@ export function checkedBleachAddonDefinition(p){
    p.kind==='topSplitEnergyDraw'?{onPlay:[{op:'inspectTopAnyOutside',count:2,rest:'top',drawIfOutsideEnergyAtLeast:3}]}:
    p.kind==='emptyRaidPeek'?{onPlay:[{op:'peekTopOne'}],onRaided:[{op:'chooseOne',optional:false,options:[{id:'top',label:'查看牌庫頂1張',turn:'any',then:[{op:'peekTopOne'}]},{id:'block',label:'露琪亞不被BP4000以上阻擋',turn:'any',then:[{op:'grantOwnNameBlockAtLeast',name:rukiaName,bp:4000,optional:true}]}]}]}:
    p.kind==='renjiEventRetire'?{onPlay:[{op:'retireOppFrontUnderBp',bp:5000},{op:'drawDiscardIfEffectApPaid',color:'purple',discardCount:1}]}:
+   isNoRaidTop?{onPlay:[{op:'searchTopOneBottomDiscard',count:5,excludeRaid:true,
+    filter:{field:'traitlessCharacter',value:true}}]}:
    isStripDual?{onPlay:[{op:'chooseOne',optional:false,options:[
     {id:'strip',label:'Strip opponent RAID top',turn:'any',
      then:[{op:'stripOppRaidTop',optional:true}]},
