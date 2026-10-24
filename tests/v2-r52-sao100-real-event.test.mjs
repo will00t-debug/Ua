@@ -109,3 +109,34 @@ test('R52 SAO-1-100 SPECIAL LIFE is separate unconditional true retirement',()=>
  assert.ok(s.players[1].outside.some(c=>c.uid===foe.uid));
  assert.equal(assertUniversalMatch(packs,JSON.parse(JSON.stringify(s))),true);
 });
+
+
+test('R52 Q62 real SAO RAID: bounce returns top alone, retirement discards both layers',()=>{
+ for(const threshold of [2,3]){
+  let {s,evt,target}=scene(threshold);
+  const old=s.players[1].front[0];
+  assert.equal(old.uid,target.uid);
+  s.players[1].front[0]=null;
+  s.players[1].hand.push(old);
+  const base=take(s,1,'SAO-1-078'),top=take(s,1,'SAO-2-069');
+  top.ready=true;top.fieldEntryStamp=s.nextFieldEntryStamp++;
+  top.stack=[base];s.players[1].front[0]=top;
+  assert.equal(assertUniversalMatch(packs,s),true);
+  const event=legalUniversalActions(packs,s).find(a=>a.type==='event'&&a.uid===evt.uid);
+  assert.ok(event);
+  s=use(s,event);
+  const choice=legalUniversalActions(packs,s).find(a=>
+   a.type==='chooseNamedOutsideBounceRetire'&&a.uid===top.uid);
+  assert.ok(choice);s=use(s,choice);
+  assert.ok(s.players[1].outside.some(c=>c.uid===base.uid),
+   'real RAID base always outside by Q62');
+  if(threshold===2){
+   assert.ok(s.players[1].hand.some(c=>c.uid===top.uid));
+   assert.ok(!s.players[1].outside.some(c=>c.uid===top.uid));
+  }else{
+   assert.ok(s.players[1].outside.some(c=>c.uid===top.uid));
+   assert.ok(!s.players[1].hand.some(c=>c.uid===top.uid));
+  }
+  assert.equal(assertUniversalMatch(packs,JSON.parse(JSON.stringify(s))),true);
+ }
+});
