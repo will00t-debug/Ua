@@ -53,7 +53,7 @@ $('v2-coverage').textContent=
  v2Entries.reduce((sum,item)=>sum+item.totalV2Cards,0)+' 張真卡 Pilot';
 const app={state:null,packs:null,selectedUid:null,
  selectedSide:null,history:[],busy:false,aiTimer:null,error:'',
- undo:null,replay:null,aiDifficulty:'normal',sequence:0,allActions:false, maxAuto:4500,autoMoves:0};
+ undo:null,replay:null,targetChoices:null,aiDifficulty:'normal',sequence:0,allActions:false, maxAuto:4500,autoMoves:0};
 const phases=V2_PHASE_LABELS;
 const btn=(label,fn,cls='')=>el('button',{type:'button',class:cls,text:label,onClick:fn});
 const fmtTitle=(id)=>V2_TITLE_LABELS[id]||id;
@@ -246,30 +246,177 @@ function finishMessage(){
   el('h2',{text:isWin?'你獲勝了！':'電腦獲勝了'}),
   el('p',{class:'note',text:'結束原因：'+s.endReason+'。這是 V2 引擎測試結果，不代表全部日本官方 FAQ 已驗收。'}));
 }
+// V2 rules + classic BLEACH Arena table. These are presentation-only adapters.
+ // Every command comes from the V2 legal action list; no old reducer is imported.
+function legacySlot(view,side,line,index,legal){
+ const v=view.players[side],c=v[line][index];
+ const yours=side===0&&uiActor(app.state)===0&&!app.busy;
+ const selected=!!c&&c.uid===app.selectedUid;
+ const moves=yours&&app.selectedUid?legal.filter(a=>
+  a.line===line&&a.slot===index&&
+  ((a.uid===app.selectedUid&&['play','move','step','raid'].includes(a.type))||
+   (a.type==='raid'&&a.baseUid===app.selectedUid))):[];
+ const d=c?cardDef(side,c.cardId):null;
+ const btnSlot=el('button',{type:'button',class:'slot'+(c?' occupied':'')+
+  (c&&!c.ready?' rested':'')+(selected?' selected':'')+
+  (moves.length?' destination':''),
+  'aria-label':(side===0?'你的':'對手的')+(line==='front'?'前線':'能源線')+
+   (index+1)+(d?' '+d.name:' 空位')+(moves.length?'，可執行選定操作':''),
+  'data-placement':moves.length?'放置／移動':''});
+ if(c){
+  const art=el('img',{class:'art',src:imgUrl(side,c.cardId),alt:d?.name||c.cardId,loading:'lazy'});
+  art.onerror=()=>{
+   if(app.packs?.[side]?.id==='gurren-lagann'&&ttgArtErrorFallback(art))return;
+   if(!art.src.endsWith('/assets/mark.svg'))art.src='assets/mark.svg';
+  };
+  const face=el('span',{class:'slotFace'},art);
+  if(c.raidDepth||c.raidLayers?.length)
+   face.append(el('span',{class:'slotStack',text:'RAID '+(c.raidDepth||c.raidLayers.length)}));
+  face.append(el('span',{class:'slotBp'},el('b',{text:line==='front'?String(c.bp):'◆ '+String(c.produces??0)})));
+  btnSlot.append(face);
+ }else btnSlot.append(el('span',{class:'slotIndex',text:'0'+(index+1)}));
+ btnSlot.addEventListener('click',()=>{
+  if(moves.length===1){applyAction(moves[0]);return;}
+  if(moves.length>1){app.targetChoices=moves;render();return;}
+  if(yours&&c){app.selectedUid=c.uid;app.selectedSide=side;app.targetChoices=null;app.allActions=false;render();}
+ });
+ return btnSlot;
+}
+function legacyLine(view,side,line,legal){
+ const p=view.players[side],label=el('span',{class:'lineLabel '+line,text:line==='front'?'前線 FRONT':'能源 ENERGY'});
+ const slots=el('div',{class:'slots'});
+ for(let i=0;i<4;i++)slots.append(legacySlot(view,side,line,i,legal));
+ const piles=el('div',{class:'piles'},el('div',{class:'pile'},line==='front'?'DECK':'場外',
+  el('b',{text:line==='front'?p.deckCount:p.outside.length})),
+  el('div',{class:'pile'},line==='front'?'HAND':'ENERGY',
+   el('b',{text:line==='front'?p.handCount:p.energyTotal})));
+ return el('div',{class:'lineGroup'},label,slots,piles);
+}
+function legacyLife(count){
+ const life=el('div',{class:'lifeRow'},el('span',{class:'lifeText'},'LIFE ',el('b',{text:count})));
+ for(let i=0;i<count;i++)life.append(el('span',{class:'lifeCard','aria-hidden':'true',text:'✦'}));
+ return life;
+}
+function legacyPlayer(view,side,legal){
+ const p=view.players[side],mine=side===0;
+ const resources=el('div',{class:'playerResources'});
+ const colorStr=Object.entries(p.energyByColor).filter(([,v])=>v>0)
+  .map(([k,v])=>k+' '+v).join(' / ')||'◆ 0';
+ resources.append(el('span',{class:'energyCount',text:colorStr}));
+ const ap=el('div',{class:'apDots','aria-label':p.apReady+'/'+p.apTotal+' AP'});
+ for(let i=0;i<3;i++)ap.append(el('i',{class:i<p.apReady?'available':i>=p.apTotal?'locked':''}));
+ ap.append(el('span',{text:'AP'}));resources.append(ap);
+ const info=el('header',{class:'playerInfo'},
+  el('div',{class:'playerName'},el('span',{class:'avatar'+(mine?'':' opponent'),text:mine?'Ⅰ':'Ⅱ'}),
+   el('div',{},el('b',{text:(mine?'你':'電腦')+' · '+fmtTitle(app.packs[side].id)}),
+    el('small',{text:app.state.active===side?'目前回合':'等待回合'}))),resources);
+ const area=el('section',{class:'playerArea'+(mine?'':' opponent'),
+  'aria-label':mine?'你的場地':'電腦場地'},info);
+ if(mine){area.append(legacyLine(view,side,'front',legal),legacyLine(view,side,'energy',legal),legacyLife(p.lifeCount));}
+ else{area.append(legacyLife(p.lifeCount),legacyLine(view,side,'energy',legal),legacyLine(view,side,'front',legal));}
+ return area;
+}
+function legacyHand(view,legal){
+ const cards=view.players[0].hand||[];
+ const hand=el('div',{class:'hand',style:'--hand-wide:'+Math.max(1,Math.min(cards.length,9))});
+ for(const c of cards){
+  const d=cardDef(0,c.cardId)||{},selected=app.selectedUid===c.uid;
+  const playable=legal.some(a=>a.uid===c.uid&&['play','raid','event'].includes(a.type));
+  const card=el('button',{type:'button',class:'handCard '+(selected?'selected ':'')+
+   (playable?'playable':'unplayable'),'aria-label':d.name||c.cardId});
+  const picture=el('img',{src:imgUrl(0,c.cardId),alt:d.name||c.cardId,loading:'lazy'});
+  picture.onerror=()=>{if(!picture.src.endsWith('/assets/mark.svg'))picture.src='assets/mark.svg';};
+  card.append(picture,el('span',{class:'handCost',text:'◆ '+(d.energy??'?')}),
+   el('span',{class:'handName',text:d.name||c.cardId}));
+  card.addEventListener('click',()=>{
+   if(app.busy||uiActor(app.state)!==0)return;
+   app.selectedUid=c.uid;app.selectedSide=0;app.targetChoices=null;app.allActions=false;render();
+  });
+  hand.append(card);
+ }
+ if(!cards.length)hand.append(el('span',{class:'small',text:'目前沒有手牌'}));
+ return hand;
+}
+function legacyCommands(legal){
+ const s=app.state,actor=uiActor(s),bar=el('div',{class:'selectionBar'});
+ if(actor!==0||app.busy){
+  bar.append(el('p',{class:'selectionHint',text:'對手正在操作與結算…'}));return bar;
+ }
+ if(s.pending){
+  bar.append(el('p',{class:'selectionHint',text:'請在選擇視窗中完成效果結算。'}));return bar;
+ }
+ const selected=app.selectedUid?visibleActionsForCard(legal,app.selectedUid):[];
+ const passive=legal.filter(a=>a.type==='extraDraw');
+ const all=app.targetChoices|| (app.allActions?legal.filter(a=>a.type!=='next'):
+  selected.length?[...passive,...selected]:passive);
+ const list=[...new Map(all.map(a=>[JSON.stringify(a),a])).values()];
+ if(app.selectedUid){
+  const owner=app.selectedSide??0,d=app.packs[owner].cards[
+   (s.players[owner].hand.find(x=>x.uid===app.selectedUid)||
+    [...s.players[owner].front,...s.players[owner].energy].find(x=>x?.uid===app.selectedUid))?.cardId];
+  if(d)bar.append(el('b',{},d.name,' · ',d.energy+' 能源 / '+(d.bp||0)+' BP'));
+ }
+ if(app.targetChoices)bar.append(el('b',{text:'此位置有多種合法方式，請確認：'}));
+ const row=el('div',{class:'v2-legal-buttons'});
+ for(const a of list.slice(0,100)){
+  const b=btn(uiActionLabel(a,{pack:app.packs,state:s}),
+   ()=>{app.targetChoices=null;applyAction(a);},a.type==='raid'?'primary':'');
+  b.className+=' btn small';row.append(b);
+ }
+ bar.append(row);
+ if(!list.length)bar.append(el('p',{class:'selectionHint',text:'點選手牌或自己的場上卡片，可選擇合法動作。'}));
+ if(!app.targetChoices)bar.append(btn(app.allActions?'收合全部動作':'查看全部合法動作',
+  ()=>{app.allActions=!app.allActions;render();},'btn small'));
+ else bar.append(btn('取消選擇',()=>{app.targetChoices=null;render();},'btn small'));
+ return bar;
+}
 function render(){
  const target=$('match-view');if(!target)return;
  target.replaceChildren();
  if(!app.state){
-  target.append(el('div',{class:'panel note',text:'選擇兩個作品、AI 難度與先手後，開始 V2 測試。'}));
+  target.append(el('div',{class:'panel v2-empty',text:'在上方選擇牌組並按「開始新對局」。所有卡牌結算交給 UNION ARENA V2 規則引擎。'}));
   return;
  }
- const s=app.state,v=universalPublicView(app.packs,s,0);
- const legal=legalUniversalActions(app.packs,s);
- const panel=el('div',{class:'panel'});
- panel.append(el('div',{class:'headline'},
-  el('h2',{text:'第 '+s.turn+' 回合 · '+(phases[s.phase]||s.phase)}),
-  el('div',{class:'status'},
-   el('span',{class:'tag',text:'目前決策：'+(uiActor(s)===0?'你':'電腦')}),
-   el('span',{class:'tag',text:s.status==='playing'?'對戰進行中':'已結束'}))));
- if(app.error)panel.append(el('div',{class:'alerts',role:'alert',text:app.error}));
- target.append(panel);
- if(s.status==='finished')target.append(finishMessage());
- const board=el('div',{class:'board'});
- const left=el('div',{class:'battle'});
- left.append(sideBoard(v,1,legal),
-  el('div',{class:'combat-info panel',text:'↑ 電腦前線／能源線　·　↓ 你的前線／能源線。點選卡片後，在操作面板選擇合法行動。'}),
-  sideBoard(v,0,legal));
- board.append(left,choices(legal));target.append(board);
+ const s=app.state,v=universalPublicView(app.packs,s,0),legal=legalUniversalActions(app.packs,s);
+ const title=el('header',{class:'matchHeader'},
+  el('h1',{},'UNION ARENA V2 ',el('span',{class:'textMuted',text:' / 舊版對戰介面'})),
+  el('div',{class:'matchControls'},
+   btn('重開對局',()=>startGame(),'btn small'),
+   btn('復原一步',()=>undoMove(),'btn small'),
+   btn('下載紀錄',downloadHistory,'btn small'),
+   btn('除錯重播',downloadReplay,'btn small')));
+ target.append(title);
+ const arena=el('div',{class:'arena'});
+ const phasesEl=el('div',{class:'phaseBar','aria-label':'回合階段'});
+ for(const [n,name] of [['start','開始'],['move','移動'],['main','主要'],['attack','攻擊']])
+  phasesEl.append(el('span',{class:s.phase===n?'current':'',text:name}));
+ arena.append(phasesEl);
+ if(s.status==='finished'){
+  arena.append(el('div',{class:'resultBanner'},el('h2',{text:s.winner===0?'你獲勝了！':'電腦獲勝'})));
+ }
+ arena.append(legacyPlayer(v,1,legal),
+  el('div',{class:'centerLine',text:'TURN '+s.turn+' · '+(phases[s.phase]||s.phase)}),
+  legacyPlayer(v,0,legal));
+ const handArea=el('section',{class:'handArea'},
+  el('header',{class:'handTitle'},
+   el('span',{text:'你的手牌 · '+v.players[0].hand.length+' 張'}),
+   el('span',{text:'REST 仍可產生能源'})),
+  legacyCommands(legal),legacyHand(v,legal));
+ arena.append(handArea);
+ const next=legal.find(a=>a.type==='next');
+ const phase=el('div',{class:'phaseAction'},el('p',{text:s.pending?'請完成效果選擇。':
+  app.busy?'AI 正在思考與操作…':s.status==='finished'?'對局結束':
+  '點手牌再點亮起的場上位置，即可用 V2 合法動作出牌。'}));
+ if(app.error)phase.append(el('p',{class:'v2-error',role:'alert',text:app.error}));
+ const controls=el('div',{class:'v2-legal-buttons'});
+ if(next&&uiActor(s)===0&&!app.busy)
+  controls.append(btn(uiActionLabel(next,{pack:app.packs,state:s})+' →',()=>applyAction(next),'btn primary'));
+ phase.append(controls);
+ arena.append(phase);
+ target.append(arena);
+ const log=el('details',{class:'v2-log panel'},el('summary',{text:'對局紀錄（'+app.history.length+' 步）'}),
+  el('ol',{class:'history'},...app.history.slice(0,70).map(x=>el('li',{text:x}))));
+ target.append(log);
  const prompt=pendingDialog(legal);if(prompt)target.append(prompt);
 }
 function applyAction(a){
@@ -283,7 +430,7 @@ function applyAction(a){
   assertUniversalMatch(app.packs,app.state);
   app.replay=appendUniversalReplay(app.replay,a,0);
   pushHistory(publicPreviewActionLabel(app.packs,previous,app.state,a,0));
-  app.selectedUid=null;app.error='';app.allActions=false;render();driveAi();
+  app.selectedUid=null;app.targetChoices=null;app.error='';app.allActions=false;render();driveAi();
  }catch(e){alertText(e?.message||String(e));}
 }
 function undoMove(){
