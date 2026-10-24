@@ -48,13 +48,13 @@
 | 官方編號 | 官方裁定要點與官方歸屬 | 已存在的機制或重現測試 | 本輪最終狀態 |
 |---|---|---|---|
 | Q1053 | BLC-2-067 只有 Raid 效果＋下有正面底板才屬 Raid；上層是最外可見卡 | `validRaidBase` / `performRaid`；C24 high/low/normal | NOT TESTED：尚缺巢狀完整體現 |
-| Q1054 | BLC-2-067 只將上層送場外，下面的正面底板留場 | `stripRaidTopInPlace`；C24 / GPT FAQ 測試 | 待最新 CI |
-| Q1055 | 底板露出不會重新發動「登場時」 | `stripRaidTopInPlace`；GPT FAQ 無新 pending 斷言 | 待最新 CI，還需有印刷登場效果底板的強斷言 |
-| Q1056 | 底板繼承上層離場當刻 ACTIVE／REST | C24 ACTIVE；GPT 新 REST 案例 | 待最新 CI |
-| Q1057 | 上層曾受到效果不再附著底板 | C24 / GPT buff清理 | 待最新 CI |
-| Q569 | BLC-1-085 限制不能被一般 ACTIVE 效果提早解除 | `attemptFieldActive`；GPT 在舊底板禁止 Active 斷言 | 待最新 CI |
-| Q570 | 已受限制底板被 Raid 後新 Raid 實體可 ACTIVE | `performRaid` + `pruneContinuousStates`；GPT 新重現 | 待最新 CI |
-| Q571 | 在對手攻擊階段發動，該次攻擊階段結束即解除 | C24 一般下次攻擊階段解除；同次攻擊特殊流程 | NOT TESTED：同階段入場尚缺 |
+| Q1054 | BLC-2-067 只將上層送場外，下面的正面底板留場 | `stripRaidTopInPlace`；C24 / GPT FAQ 測試 | **PASS**：ACTIVE、REST、支付後基地 UID 保留 |
+| Q1055 | 底板露出不會重新發動「登場時」 | `stripRaidTopInPlace`；GPT FAQ 無新 pending 斷言 | **PASS**：無二次 pending 的規則路徑；**NOT TESTED**：帶登場能力底板特殊交互 |
+| Q1056 | 底板繼承上層離場當刻 ACTIVE／REST | C24 ACTIVE；GPT 新 REST 案例 | **PASS**：兩種狀態測試 |
+| Q1057 | 上層曾受到效果不再附著底板 | C24 / GPT buff清理 | **PASS**：頂層buff、Damage期限、底板狀態清理；其他持續來源組合仍待 |
+| Q569 | BLC-1-085 限制不能被一般 ACTIVE 效果提早解除 | `attemptFieldActive`；GPT 在舊底板禁止 Active 斷言 | **PASS**：被鎖基底不允許早 ACTIVE |
+| Q570 | 已受限制底板被 Raid 後新 Raid 實體可 ACTIVE | `performRaid` + `pruneContinuousStates`；GPT 新重現 | **PASS**：新實體 ACTIVE、舊 UID 及效果分離 |
+| Q571 | 在對手攻擊階段發動，該次攻擊階段結束即解除 | GPT 用真正 LIFE 觸發 Raid 施加效果；同攻擊階段結束即驗證清除 | **PASS**：同次攻擊階段特例；一般下次攻擊由 C24 PASS |
 | Q2334 | BLC-4-060 目的線滿時先將一張置移除區，然後移線 | `commitDestination`；C24 full-line + 移除 | C24 既有 PASS；仍需邊界補驗 |
 | Q2339 | BLC-4-070 有合法強制阻擋者必擋；多張只能在同類中擇一 | C22 blocked/rest fallback | C22 既有 PASS；特殊保護分支待補 |
 | Q2315,Q2316 | BLC-4-034 裏向壓底及被移動卡待結算效果的交互 | C23 facedown/tuck 和 source resolution | 既有正反例；仍待逐條專屬驗收 |
@@ -63,20 +63,44 @@
 | Q2313 | BLC-4-027 主動能力的發動與區域裁定 | C23 能源線啟動/移前 | 既有正反例；仍待逐條專屬驗收 |
 | Q1033 | **個別歸屬 BLC-2-019**；BLC-2-047 的額外抽1應等來源效果完成 | C23 BLC-2-019 / 047 | 既有 PASS（指定交互） |
 | Q1045 | **個別歸屬 BLC-2-046**；印刷能源不足也能觸發由一護造成的棄牌效果 | C23 + 共用 sourceMoveBoundary | 部分覆蓋，NOT TESTED 獨立零能量 |
-| Q1046 | **個別歸屬 BLC-2-047**；印刷能源不足也能觸發棄牌抽牌 | GPT 新「零能源一護棄手」 | 待最新 CI |
+| Q1046 | **個別歸屬 BLC-2-047**；印刷能源不足也能觸發棄牌抽牌 | GPT 新「零能源一護棄手」 | **PASS**：無能源的來源因果抽牌 |
 
 ### 誤植修正
 交接舊說法「Q1046 代表浦原喜助棄牌不抽」的 FAQ 號碼歸屬**不正確**。Q1046 實際討論能源不足仍能發動；浦原喜助引發的離場是否觸發，是另一個依 *發動來源必須為藍色一護* 印刷條件的判斷，不可偷換成 Q1046 官方原文。
 
 ### 指定實戰與再現性
-- 用 4 組固定 seed：藍先攻對綠、綠先攻對藍、藍鏡像、綠鏡像。完全採兩副原始50張內容。
+- 用 **8 組固定 seed**：四種先手／對局型態各有兩組，種子 2601–2604、2701–2704。完全採兩副原始50張內容。
 - 每步檢查合法性、物理 UID 守恆；每 40 步完整 reducer 不變量；結束時完整不變量、勝負和完整 Replay 還原。
 - 若 AI 無動作但 reducer 有合法行動，記錄 `aiFallbacks`，只使用引擎 `legalUniversalActions` 的已列合法行動作為保底，**不得把保底當成 AI 能力合格**。不修改 AI。
-- CI 必須以 **最新 GPT FAQ branch HEAD** 執行 SUCCESS；舊 Actions `40083017238` 不作新改動證據。完整對局完成場數、錯誤和回播依該 HEAD Actions 日誌 `DESIGNATED_GAME_RESULT` 標記為準。
+- **已驗證**：程式版 HEAD `ef70c0702717962953143379f5a3bb6452102582` 的 [Actions 40084849157](https://github.com/will00t-debug/Ua/actions/runs/40084849157) **SUCCESS**；Node.js 22 `2321/2321` 通過、五作品 `60/60`；8 場 `DESIGNATED_GAME_RESULT` 全部已結束且回播 PASS。若本文有後續文件更新，仍應另確認新 HEAD Actions。
 
+
+### 最新實戰證據（Actions 40084849157；資料來源是測試日誌，不是舊 60 場矩陣）
+
+| 指定牌組／先攻 | Seed | 逐步操作 | 勝方（player 0/1） | AI合法保底次數 | Replay |
+|---|---:|---:|---:|---:|---|
+| 藍 vs 綠；藍先 | 2601 | 138 | 綠（1） | 2 | PASS |
+| 藍 vs 綠；綠先 | 2602 | 148 | 藍（0） | 0 | PASS |
+| 藍鏡像；player0先 | 2603 | 194 | player1 | 1 | PASS |
+| 綠鏡像；player1先 | 2604 | 178 | player0 | 0 | PASS |
+| 藍 vs 綠；藍先 | 2701 | 200 | 藍（0） | 1 | PASS |
+| 藍 vs 綠；綠先 | 2702 | 165 | 綠（1） | 0 | PASS |
+| 藍鏡像；player1先 | 2703 | 138 | player1 | 0 | PASS |
+| 綠鏡像；player0先 | 2704 | 115 | player0 | 0 | PASS |
+
+全部 `endReason=life-zero`，累計 1,276 步，8/8 完整到終局、8/8 重播一致；AI 回傳空動作的 4 次合法選項保底已明列，**不可聲稱 AI 本身 8/8 無停滯**。
+
+### 已確認並修復的 Bug
+
+| 類別 | 原因 | 舊分支最小實戰失敗 | 修復 | 完整回歸 |
+|---|---|---|---|---|
+| 來源移動觸發／驗證器假陽性 | `assertUniversalMatch` 的 `effect-move-order` 驗證僅允許 `draw`，不認可確實被印刷卡移動事件賺取的 `grantCauseBlockAtMost` 等非抽牌效果；合法一護棄手與莉露卡壓卡交錯時拋出 `Forged moved-card earned draw` | 新指定牌組初版 Actions 40084323337 FAIL（第 79 步後有合法動作仍不能結算）；獨立莉露卡＋斬月負例可觸發待結算視窗 | `dist/universal-v2/engine.mjs` 提交 `517e7cecc9d36d0d4c68e54918ae36ae49ff1cfc`；逐 job 比對真實來源移動事件、卡牌已註冊 moveTrigger/條件、來源/參數，並拒重複領取 | `tests/v2-gpt-blue-green-official-faq-and-real-games.test.mjs`；後續 Actions 40084691936、40084849157 SUCCESS |
+| 測試場景誤設（非引擎 Bug） | REST 測試在跨回合普通 refresh 前就把上層設 REST，導致剝離前上層已自然 ACTIVE | 新測試初版 Actions 40084000740 FAIL | 將 REST 狀態放到對手離場事件即將發生之前，沒有修改 Raid 規則 | REST 底板繼承驗證 SUCCESS |
+
+規則引擎未因為原來成功的 Actions 而被視為「全部 26 張 PASS」；同時保留以上未完成缺口。
 ### 尚未完成
 1. 每張精確日本語原文逐語句核對、一般通用裁定含 2026-10-23 新版修訂全文：本報有連結與摘要，不得視為閉合。
-2. Q571「對方攻擊階段中 Raid」特殊交互、Q1055 有登場能力的底板測試、Raid 多層 UID、指定雙組多種特殊 LIFE 交互。
+2. Q571「對方攻擊階段中 LIFE Raid」已由新測試通過；仍缺 Q1055 有登場能力的底板強斷言、Raid 多層 UID、指定雙組多種特殊 LIFE 交互。
 3. 一些普通卡沒有自己的獨立逐卡正反例，雖有共用原語與舊場景，仍列 NOT TESTED。
 4. 持續核對新版 CI；如仍失敗，此 PR 維持 Draft 且不可宣稱已驗收。
 
