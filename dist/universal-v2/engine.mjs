@@ -3224,10 +3224,8 @@ export function legalUniversalActions(pack,s){
   for(const c of pl.hand){
    const d=card(pack,c);
    const payment=handPlayApPlan(s,p,d);
-   const printedHandEnergy=Math.max(0,d.energy-
-    (d.emptyOwnFieldHandEnergyDiscount&&field(pl).length===0?
-     d.emptyOwnFieldHandEnergyDiscount:0));
-   if(printedHandEnergy>(produced[d.color]||0)||payment.cost>ap)continue;
+   const requiredEnergy=effectiveHandRequiredEnergy(pack,s,p,d);
+   if(requiredEnergy>(produced[d.color]||0)||payment.cost>ap)continue;
    if(d.type==='event'){
     if(eventMandatoryTargetsAvailable(pack,s,p,d,payment.cost,c.uid))
      out.push({type:'event',uid:c.uid});
@@ -3262,6 +3260,18 @@ export function legalUniversalActions(pack,s){
     targetStamp:target.fieldEntryStamp});
  }
  return out;
+}
+// Calculate the *current* required energy for a card being legally played
+// from its owner's hand. No private opponent zone is read or exposed.
+// AP, printed required energy and source definition stay untouched.
+export function effectiveHandRequiredEnergy(pack,s,p,d){
+ const ownEmpty=!!d.emptyOwnFieldHandEnergyDiscount&&field(s.players[p]).length===0;
+ const profile=d.opponentFieldColorsHandEnergyDiscount;
+ const matchingOpponent=!!profile&&field(s.players[1-p]).some(c=>
+  profile.colors.includes(card(pack,c).color));
+ return Math.max(0,d.energy-
+  (ownEmpty?d.emptyOwnFieldHandEnergyDiscount:0)-
+  (matchingOpponent?profile.amount:0));
 }
 function spendAp(pl,n){
  let remaining=n;for(const c of pl.apCards)if(c.ready&&remaining){c.ready=false;remaining--;}

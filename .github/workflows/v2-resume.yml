@@ -66,6 +66,10 @@ jobs:
         run: node scripts/v2-r55-sniper-battle-candidate-report.mjs
       - name: R56 live 700-card rescan and BLEACH SAO handoff
         run: node scripts/v2-r56-ttg-slg-mst-five-title-rescan.mjs
+      - name: Cursor C1 BLEACH and SAO official readiness census
+        run: node scripts/v2-c1-blc-sao-readiness.mjs
+      - name: R58 full five-title hand-energy and Cursor source handoff
+        run: node scripts/v2-r58-five-title-handoff.mjs
       - name: Node 22 test suite
         run: npm test
       - name: Five-title 60-match matrix
@@ -78,4 +82,6 @@ jobs:
         if: always()
         with:
           name: resumed-v2-match-evidence
-          path: audit/v2-integrated-match-matrix.json
+          path: |
+            audit/v2-integrated-match-matrix.json
+            audit/v2-r58-five-title-rescan.json

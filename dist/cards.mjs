@@ -14,7 +14,7 @@ const STARTER = [
   {id:'062',name:'美味的麵包',key:'bread',energy:2,ap:1,bp:0,gen:0,type:'event',tag:'AP 回復',effect:'一個己方角色本回合 BP +1000，可回復 1 AP。',trigger:'active'},
   {id:'064',name:'月牙天衝',key:'getsuga',energy:4,ap:1,bp:0,gen:0,type:'event',tag:'角色移除',effect:'退場一個敵方前線 BP 3000 以下角色；己方有一護時，上限改為 5000。',trigger:'special'},
   {id:'066',name:'卍解',key:'bankai',energy:3,ap:1,bp:0,gen:0,type:'event',tag:'AP 回復',effect:'可回復最多 2 AP。',trigger:'final'},
-  {id:'101',name:'井上織姬',key:'orihime',energy:2,ap:1,bp:3000,gen:1,type:'character',tag:'兩次阻擋',effect:'本回合第一次阻擋時，立即轉為 ACTIVE。',trigger:'active',doubleBlock:true},
+  {id:'101',name:'井上織姬',nameJa:'井上 織姫',key:'orihime',energy:2,ap:1,bp:3000,gen:1,type:'character',tag:'兩次阻擋',effect:'本回合第一次阻擋時，立即轉為 ACTIVE。',trigger:'active',doubleBlock:true},
   {id:'102',name:'浦原喜助',key:'urahara',energy:3,ap:1,bp:3000,gen:2,type:'character',tag:'雙能源',effect:'產生 2 紫能源。',trigger:'active'},
   {id:'103',name:'黑崎一護',key:'ichigo',energy:3,ap:1,bp:3000,gen:2,type:'character',tag:'攻擊強化',effect:'攻擊時，本回合 BP +1000。',trigger:null},
   {id:'104',name:'黑崎一護',key:'ichigo',energy:4,ap:1,bp:4000,gen:1,type:'character',tag:'Raid・Impact',effect:'Raid 一護：轉為 ACTIVE，可移到前線。每回合 1 次：場外 4 張除外，成功時抽 1 張並獲得 Impact 1。',trigger:'raid',raid:'ichigo'},
