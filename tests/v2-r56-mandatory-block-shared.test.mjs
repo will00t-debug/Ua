@@ -7,7 +7,7 @@ import {newUniversalMatch,dispatchUniversalAction,legalUniversalActions,
 const unit=(id,bp=2000)=>({id,name:id,type:'character',color:'purple',
  energy:0,ap:1,bp,gen:1,traits:[],trigger:null,implementation:'vanilla',effects:{}});
 const hunter={...unit('hunter',4000),implementation:'dsl',effects:{
- onPlay:[{op:'grantSelfMustBlockThisTurn',entry:'ownEffect'}]}};
+ onPlay:[{op:'grantSelfMustBlockThisTurn'}]}};
 const summon={id:'summon',name:'summon',type:'event',color:'purple',
  energy:0,ap:1,bp:0,gen:0,traits:[],trigger:null,implementation:'dsl',
  effects:{onPlay:[{op:'deployNamedFromZones',name:'hunter',
@@ -49,7 +49,7 @@ function prepare(){
  assert.equal(s.phase,'attack');
  return {s,blocker,hunterCard};
 }
-test('R56 Q2028 own-effect entry grants only a real one-turn mandatory legal BLOCK',()=>{
+test('R56 Q2028 real own-effect entry grants a one-turn mandatory legal BLOCK',()=>{
  let {s,blocker,hunterCard}=prepare();
  s=dispatch(s,{type:'attack',uid:hunterCard.uid});
  assert.equal(s.pending?.kind,'block');
@@ -66,7 +66,7 @@ test('R56 Q2028 mandatory block is not possible without a legal ready blocker',(
  s=dispatch(s,{type:'attack',uid:hunterCard.uid});
  assert.deepEqual(legalUniversalActions(packs,s),[{type:'chooseBlock',uid:null}]);
 });
-test('R56 paid play never earns the own-effect-only mandatory block',()=>{
+test('R56 paid play also earns printed onPlay mandatory BLOCK per official Q2028',()=>{
  let s=newUniversalMatch(packs,{decks:[deck,deck],first:0,seed:561003});
  const h=take(s,0,'hunter');s.players[0].hand.push(h);
  const blocker=take(s,1,'blocker');blocker.ready=true;
@@ -76,23 +76,23 @@ test('R56 paid play never earns the own-effect-only mandatory block',()=>{
  assert.ok(play);
  s=dispatch(s,play);
  const actor=s.players[0].front.find(c=>c?.uid===h.uid);
- assert.equal(actor.mustBlockGranted,undefined);
+ assert.deepEqual(actor.mustBlockGranted,{turn:s.turn,stamp:actor.fieldEntryStamp});
  // Paid entry is REST. Ready this physically existing object for subsequent
- // combat; this does not grant a printed ability.
+ // combat; this does not create a new printed ability.
  actor.ready=true;
  s=dispatch(s,{type:'next'});
  s=dispatch(s,{type:'attack',uid:h.uid});
- assert.ok(legalUniversalActions(packs,s).some(a=>a.type==='chooseBlock'&&a.uid===null));
+ assert.deepEqual(legalUniversalActions(packs,s),[{type:'chooseBlock',uid:blocker.uid}]);
 });
 test('R56 rejected grant schemes cannot authorize foreign timings or permanent/block bypass',()=>{
  for(const op of [
-  {op:'grantSelfMustBlockThisTurn'},
   {op:'grantSelfMustBlockThisTurn',entry:'paidPlay'},
-  {op:'grantSelfMustBlockThisTurn',entry:'ownEffect',until:'forever'}
+  {op:'grantSelfMustBlockThisTurn',entry:'ownEffect'},
+  {op:'grantSelfMustBlockThisTurn',until:'forever'}
  ])assert.throws(()=>createUniversalPack({id:'bad',cards:[
   {...hunter,effects:{onPlay:[op]}}]}));
  assert.throws(()=>createUniversalPack({id:'bad',cards:[
-  {...hunter,effects:{onAttack:[{op:'grantSelfMustBlockThisTurn',entry:'ownEffect'}]}}]}));
+  {...hunter,effects:{onAttack:[{op:'grantSelfMustBlockThisTurn'}]}}]}));
  const {s}=prepare(),forged=structuredClone(s);
  const actor=forged.players[0].front.find(Boolean);
  actor.mustBlockGranted.stamp=forged.nextFieldEntryStamp+1;
