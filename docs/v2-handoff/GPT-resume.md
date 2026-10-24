@@ -2053,3 +2053,10 @@ Batch A generic live selection hand payment, Q1119 mandatory EVENT preflight, ac
 - Dynamic R35-sourced five-title scan at current registry: 343/700 registered, 357 unported (BLEACH103 TTG36 SLG45 SAO105 MST54), R52 text candidates 34, zero automatically READY. R51 broader text candidates 93. Exhaustive independently verified FAQ certificates remain 0.
 - Shared engine + strict queue validation commit 9b3ba352 had GitHub Actions SUCCESS run https://github.com/will00t-debug/Ua/actions/runs/40043667572. Full official-card latest-SHA CI is a separate required gate; do not inherit earlier success. Old R48 assumption that SAO070 was unported and R52 test fixture repeating the same hand UID were corrected without deleting negative tests.
 - New current source and CI handoff: docs/v2-handoff/V2-R52-conditional-outside-official-cards.md and docs/v2-handoff/V2-R52-SAO-Q767-source-audit.md. Next review official TTG-1-067, SLG-1-021, MST-1-009 and other text candidates; retain rule blocks on MST-1-067, BLC-4-034, unaudited LIFE nesting and multi-target AP+hand costs.
+
+### R52 full code-head Actions SUCCESS (2026-10-24)
+
+- **Executed code SHA**: 36f67514a6de7e2f33edcf61ff3519022e36aa52.
+- **GitHub Actions run**: https://github.com/will00t-debug/Ua/actions/runs/40044354789 ; event push, conclusion **SUCCESS**, Node.js 22 tests **2136/2136 PASS**, five-title matrix **60/60** (zero failures), independent literal manifest PASS and 700-source R35/R51/R52 dynamic censuses PASS.
+- 5-title current registration: BLEACH 103, TTG 36, SLG 45, SAO 105, MST 54 = **343/700**; remaining **357**. R52 named-OUTSIDE text hits 34 require individual full print / FAQ reviews; no other card inferred READY.
+- This SHA is the final R52 gameplay/test implementation before handoff-only documentation commits. After documentation pushes, confirm the exact *latest* PR HEAD GitHub Actions SUCCESS independently; older source green evidence cannot be substituted.

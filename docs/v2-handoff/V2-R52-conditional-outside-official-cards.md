@@ -36,3 +36,10 @@ See [R52 official Q767 source inventory](./V2-R52-SAO-Q767-source-audit.md). Exa
 ## Remaining work / next priority
 
 Do not label any additional R52 text-hit as READY automatically. First reconfirm final Node22+60-match+independent manifest CI for current SHA; if failed fix its real cause. Re-run full R35/R46/R47/R48/R49/R51/R52 censuses on latest registry. Candidate gaps next: `TTG-1-067` battle-win/ACTIVE life, `SLG-1-021` dynamic OUTSIDE BP, `MST-1-009` temporary grant, source-audited SAO name/OUTSIDE effects, cross-BLEACH/SAO known generic atoms. Continue blocking MST-1-067 Q2162, BLC-4-034 facedown Raid bottom, unaudited nested LIFE, mixed multi-target AP/hand costs.
+
+### R52 full code-head Actions SUCCESS (2026-10-24)
+
+- **Executed code SHA**: 36f67514a6de7e2f33edcf61ff3519022e36aa52.
+- **GitHub Actions run**: https://github.com/will00t-debug/Ua/actions/runs/40044354789 ; event push, conclusion **SUCCESS**, Node.js 22 tests **2136/2136 PASS**, five-title matrix **60/60** (zero failures), independent literal manifest PASS and 700-source R35/R51/R52 dynamic censuses PASS.
+- 5-title current registration: BLEACH 103, TTG 36, SLG 45, SAO 105, MST 54 = **343/700**; remaining **357**. R52 named-OUTSIDE text hits 34 require individual full print / FAQ reviews; no other card inferred READY.
+- This SHA is the final R52 gameplay/test implementation before handoff-only documentation commits. After documentation pushes, confirm the exact *latest* PR HEAD GitHub Actions SUCCESS independently; older source green evidence cannot be substituted.
