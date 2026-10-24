@@ -88,7 +88,7 @@ test('Round 3: exact native main-to-attack phase transition is actually expanded
 });
 
 test('Round 3: registered deck can demonstrate native ENERGY play into native FRONT play',()=>{
- let verified=false;
+ let verified=false,debugPrinted=false;
  for(let seed=21;seed<61&&!verified;seed++){
   let s=newUniversalMatch(packs,{decks:[p.counts,p.counts],seed});
   for(let i=0;i<8&&s.phase!=='main';i++){
@@ -104,8 +104,19 @@ test('Round 3: registered deck can demonstrate native ENERGY play into native FR
    const final=dispatchUniversalAction(packs,mid,follow,{actor:mid.active});
    assert.ok(final,'actual V2 reducer certified both actions');
    const legal=legalUniversalActions(packs,s),o=createUniversalAiObservation(packs,s,legal);
+   const trace=[];
    const tactical=evaluateTrustedUniversalAiTactics(packs,s,o,
-    [{action:first,score:0,utility:0}],{roots:1,children:10,depth:2,nodes:100,timeMs:100});
+    [{action:first,score:0,utility:0}],{roots:1,children:10,depth:2,nodes:100,timeMs:100,trace});
+   if(!debugPrinted){
+    console.log('R3 TWO-STEP REPRO',JSON.stringify({
+     seed,initial:{phase:s.phase,actor:s.active,ap:o.players[o.actor].ap,
+      ownHand:o.players[o.actor].hand.map(x=>({uid:x.uid,cardId:x.cardId})),
+      energy:o.players[o.actor].energyByColor},
+     first,mid:{phase:mid.phase,ap:mid.players[mid.active].ap,legal:legalUniversalActions(packs,mid).length},
+     follow,final:{phase:final.phase,active:final.active},
+     tactical,trace}));
+    debugPrinted=true;
+   }
    if(tactical.exactSteps>=2){verified=true;break;}
   }
  }
