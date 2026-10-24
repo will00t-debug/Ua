@@ -666,7 +666,7 @@ function validatePassiveBonuses(card){
    p.extraDamage!==undefined||p.impact!==undefined||p.bpEach!==undefined))
    throw Error(card.id+' name-absence penalty is BP only');
   if((q.kind==='ownRestPrintedBpAtMost'||q.kind==='oppRestCharacterCount')!==(p.bpEach!==undefined))
-   throw Error(card.id+' per-card bonus needs bpEach');
+   throw Error(card.id+' per-card printed BP bonus needs bpEach');
   if(p.extraEnergy!==undefined&&q.kind==='ownEnergyAtLeast')
    throw Error(card.id+' invalid or cyclic passive condition');
  }

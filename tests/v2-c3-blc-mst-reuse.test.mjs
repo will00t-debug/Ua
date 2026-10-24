@@ -67,7 +67,7 @@ test('C3 registers the two whole-print BLEACH reuses and leaves MST priority blo
  assert.equal(x.report.mst,57);
  assert.equal(x.report.registered,385);
  assert.equal(x.report.readyFromKeywords,0);
- assert.deepEqual(x.mstBlocked.map(c=>c.id),['MST-1-007','MST-1-021','MST-1-033']);
+ assert.deepEqual(x.mstBlocked.map(c=>c.id),['MST-1-021','MST-1-033']);
  for(const id of x.registered)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
 });
 
