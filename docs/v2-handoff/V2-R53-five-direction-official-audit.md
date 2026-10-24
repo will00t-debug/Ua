@@ -51,3 +51,10 @@ No READY classification follows from a regex; historical source-matched audits d
 - Complete TTG live battle-win draw + targeted SNIPER; SLG two per-five consumers and mandatory block; MST temporary granted swap Q2147; SAO-1-071 4/6/8.
 - Only when entire official print, legitimate 50-card decks, target/pending security, AI and LIFE have been verified, update registry/independent manifest.
 - All documentation commits have their own pushed SHA and must not borrow a previous green workflow.
+
+### R53 test SHA-specific evidence (2026-10-24)
+
+- Tested SHA: `db9920fc50d1108dac4572604f5abc601d55916b`
+- [Full GitHub Actions SUCCESS #40045611773](https://github.com/will00t-debug/Ua/actions/runs/40045611773): Node.js 22 **2146/2146 PASS**, five-title **60/60 PASS**, independent registered ID manifest **344/700 PASS**, R35/R51/R52 audit scripts PASS.
+- Register: BLEACH 103, TTG 36, SLG 45, SAO 106, MST 54; 356 pending.
+- This is the tested pre-final-handoff code commit; the subsequent R53 workflow and handoff SHA must be checked separately.

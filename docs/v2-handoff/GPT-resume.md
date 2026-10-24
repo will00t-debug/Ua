@@ -2060,3 +2060,15 @@ Batch A generic live selection hand payment, Q1119 mandatory EVENT preflight, ac
 - **GitHub Actions run**: https://github.com/will00t-debug/Ua/actions/runs/40044354789 ; event push, conclusion **SUCCESS**, Node.js 22 tests **2136/2136 PASS**, five-title matrix **60/60** (zero failures), independent literal manifest PASS and 700-source R35/R51/R52 dynamic censuses PASS.
 - 5-title current registration: BLEACH 103, TTG 36, SLG 45, SAO 105, MST 54 = **343/700**; remaining **357**. R52 named-OUTSIDE text hits 34 require individual full print / FAQ reviews; no other card inferred READY.
 - This SHA is the final R52 gameplay/test implementation before handoff-only documentation commits. After documentation pushes, confirm the exact *latest* PR HEAD GitHub Actions SUCCESS independently; older source green evidence cannot be substituted.
+
+## R53 — 五方向一起納入，真卡來源與跨作品原語（2026-10-24）
+
+- 延續 Draft PR #78／`gpt/v2-resume-20261022`，未合 main／未部署正式站／未修改 Cursor PR #77／未 force push。R52 起始 HEAD `2f8cd915` 的完整 Actions [40044586095](https://github.com/will00t-debug/Ua/actions/runs/40044586095) SUCCESS。
+- **Batch A 官方來源與 FAQ 審核：** TTG-1-067 ヨーコ Q2295（ACTIVE 入場、高 BP 不可阻擋、登場給本回合狙擊和自身攻擊戰勝抽牌、ACTIVE LIFE）；SLG-1-021 水篠旬 Q2028（場外每5張攻擊 BP+500、戰勝後按張數回收、強制阻擋、RAID 和條件 IMPACT）；MST-1-009 エリス Q2147（自身效果登場二選一：跨回合 BP 或本回合攻擊結束交換、RAID/IMPACT）。三張都未全卡 READY，保持 PARTIAL。
+- **Batch B 共用能力：** `countOwnOutsidePhysicalGroups`（只計自己 OUTSIDE 真實實體，floor(n/N)，不包含 opponent/under）與嚴格 `blockBpRestriction`（atLeast/atMost 當前 BP，或套 R51 官方來源指定名稱條件），目前是跨作品共用能力，**不等於** TTG/SLG/MST 完整移植。
+- **Batch C 已完成真卡：** 官方 EX08BT/SAO-2-063 アスナ：綠3/AP1/BP3000/真實產能**3**/ALO/無 LIFE、STEP、OUTSIDE 〈ユウキ〉＋〈マザーズ・ロザリオ〉合計 2 張才於真正登場結算抽1。新增 `drawIfOwnOutsideNamedCountAtLeast` 原語、完整卡文 pin、registry、獨立 manifest、合法50張真卡 EVENT 付費來源正反測試與 AI／UID／STEP；沿用 R51 計數而非建立第二套。
+- **Batch D 五作品全庫與 12 張 SAO 回查：** `scripts/v2-r53-five-direction-candidate-report.mjs` 從 R35 `capabilityIndex()` 使用當下 registry 完整查 700 張；官方 SAO-1-071 4／6／8 場外多門檻仍 PARTIAL；SAO-1-083、2-001、2-002、2-009、2-020、2-031、2-032、2-036、2-049、2-062 逐卡官方全文已比對，詳見 [R53 官方全文與阻塞表](./V2-R53-five-direction-official-audit.md)。保留 SOURCE/FAQ／多效果阻塞，不從關鍵字自動 READY。
+- **Batch E 回歸與交接：** `db9920fc50d1108dac4572604f5abc601d55916b` 的 [GitHub Actions 40045611773](https://github.com/will00t-debug/Ua/actions/runs/40045611773) **Node22 2146/2146 PASS**、五作品 60/60、獨立 manifest PASS；正式登錄 **344／700**，未移植 **356**（BLEACH 103／TTG 36／SLG 45／SAO **106**／MST 54）。R52 檢索本輪新 33 筆文字候選，不直接視為 READY；逐張獨立 FAQ 全面認證仍 0。已新增 R53 稽核到既有 `.github/workflows/v2-resume.yml`，**最新提交仍須各自確認 Actions SUCCESS**。
+- 下輪可安全延伸的核心原語：① TTG 暫時戰勝抽牌 + 狙擊合法選擇；② SLG 場外每五張的攻擊 BP/戰勝回收動態兩個消費者 + Q2028 強制 block；③ MST 來源限定二選一／Q2147 暫時攻擊結束交換；④ SAO-1-071 4／6／8 門檻複合效果；⑤ 官方核對後其他跨作品 READY 真卡整批移植。
+- 繼續嚴格保留 MST-1-067 Q2162、BLC-4-034 裏向 Raid 底層、未認證巢狀 LIFE、混合多目標 AP/棄手支付阻塞。
+
