@@ -50,11 +50,11 @@ test('R54 SLG reusable floor(own OUTSIDE/5) applied AT ATTACK, never cached',()=
   assert.equal(s.phase,'attack');
   s=use(s,{type:'attack',uid:attacker.uid});
   assert.equal(s.pending?.kind,'block');
-  assert.equal(universalBp(both,s,attacker),4000+500*Math.floor(n/5));
+  assert.equal(universalBp(both,s,s.players[0].front[0]),4000+500*Math.floor(n/5));
   // The buff is a once-earned attack-time result, not a continuous tally.
   if(s.players[0].outside.length){
    s.players[0].hand.push(s.players[0].outside.pop());
-   assert.equal(universalBp(both,s,attacker),4000+500*Math.floor(n/5));
+   assert.equal(universalBp(both,s,s.players[0].front[0]),4000+500*Math.floor(n/5));
   }
   assert.equal(assertUniversalMatch(both,JSON.parse(JSON.stringify(s))),true);
   for(const difficulty of ['easy','normal','hard']){
