@@ -30,7 +30,17 @@ export function createUniversalAiObservation(pack,s,legal){
   // Only public resolution parameters, never copy the complete pending queue.
   for(const k of ['sourceUid','attackerUid','uid','bp'])
    if(q[k]!==undefined)pending[k]=q[k];
-  if(['effect-retire-own-field','effect-retire-own-character','main-field-trait-retire'].includes(q.kind))pending.after=(q.after||[]).map(({op,count,bp})=>({op,count,bp}));
+  // Carry only printed program parameters visible to the resolving player,
+  // never internal queues, deck order, RNG or undisclosed identities.
+  const printed=(program,depth=0)=>depth>4?[]:(program||[]).map(e=>({
+   ...Object.fromEntries(['op','bp','count','energy','optional'].filter(k=>e[k]!==undefined).map(k=>[k,e[k]])),
+   ...(e.then?{then:printed(e.then,depth+1)}:{}),
+   ...(e.options?{options:e.options.map(x=>({id:x.id,then:printed(x.then,depth+1)}))}: {})
+  }));
+  if(['effect-retire-own-field','effect-retire-own-character','main-field-trait-retire','effect-bounce-own'].includes(q.kind))
+   pending.after=printed(q.after);
+  if(['effect-discard-gate','effect-once-choice'].includes(q.kind))
+   pending.continuation=printed(q.then);
   if(q.kind==='effect-choice-mode')pending.options=structuredClone(q.options);
  }
  return {actor,active:s.active,first:s.first,turn:s.turn,phase:s.phase,
