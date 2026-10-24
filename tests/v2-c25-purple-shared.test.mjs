@@ -87,9 +87,9 @@ function find(s,p,uid){
 }
 
 test('the purple list is the 50-card UA08BT print and stays out of the seven presets',()=>{
- assert.equal(Object.keys(pack.cards).length,187);
- assert.equal(EXPECTED_V2_COUNTS.bleach,187);
- assert.equal(EXPECTED_V2_TOTAL,463);
+ assert.equal(Object.keys(pack.cards).length,188);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,188);
+ assert.equal(EXPECTED_V2_TOTAL,464);
  assert.equal(purple.playable,true);
  assert.equal(purple.registeredKinds,13);
  assert.deepEqual(purple.missing,[]);

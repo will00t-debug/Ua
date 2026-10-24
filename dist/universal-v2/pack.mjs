@@ -614,7 +614,12 @@ function verifyProgram(program,path){
     !integer(e.bp,1)||e.bp>5000||
     typeof e.optional!=='boolean'||typeof e.excludeSelf!=='boolean'||
     (e.zone!==undefined&&e.zone!=='front')||
-    Object.keys(e).some(k=>!['op','filter','also','bp','optional','excludeSelf','zone'].includes(k)))
+    ((e.bonusNames!==undefined||e.bonusBp!==undefined)&&!(
+     Array.isArray(e.bonusNames)&&e.bonusNames.length>=1&&e.bonusNames.length<=4&&
+     e.bonusNames.every(n=>typeof n==='string'&&!!n.trim()&&n.length<=80)&&
+     new Set(e.bonusNames).size===e.bonusNames.length&&
+     integer(e.bonusBp,e.bp+1)&&e.bonusBp<=5000))||
+    Object.keys(e).some(k=>!['op','filter','also','bp','optional','excludeSelf','zone','bonusNames','bonusBp'].includes(k)))
     throw Error(path+'['+i+'] invalid own-field BP choice');
   }
   if(e.op==='buffOwnTrait'&&(

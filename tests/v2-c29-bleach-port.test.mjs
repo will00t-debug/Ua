@@ -41,7 +41,7 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 //   same look-3 with 〈バズビー〉か〈ユーグラム・ハッシュヴァルト〉. DRAW is generic. Gen alt is 黄.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -112,12 +112,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers twenty-seven whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,463);
- assert.equal(EXPECTED_V2_COUNTS.bleach,187);
+test('C29 registers twenty-eight whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,464);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,188);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,187);
+ assert.equal(Object.keys(bleach.cards).length,188);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -1450,4 +1450,75 @@ test('BLC-1-046 mills one card from the front, then may give another character B
  assert.equal(legalUniversalActions(quiet.packs,done).some(a=>a.type==='activate'&&a.uid===lone.uid),false);
  assert.equal(assertUniversalMatch(packs,buffed),true);
  assert.equal(assertUniversalMatch(quiet.packs,done),true);
+});
+
+test('BLC-4-063 gives another character BP+1000, or BP+2000 for four printed names',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-4-063');
+ assert.equal(printed.effect,'登場時：最多選自己場上另1個角色，本回合BP+1000；若所選角色為《更木劍八》、《草鹿八千流》、《斑目一角》或《綾瀨川弓親》，改為BP+2000。');
+ assert.deepEqual(printed.traits,['護廷十三隊']);
+ assert.equal(printed.gen,3);
+ const card=bleach.cards['BLC-4-063'];
+ assert.equal(card.gen,2);
+ assert.equal(card.trigger,'draw');
+ assert.equal(card.triggerEffect,null);
+ assert.deepEqual(card.traits,['護廷十三隊']);
+ assert.equal(card.effects.onPlay[0].bp,1000);
+ assert.equal(card.effects.onPlay[0].bonusBp,2000);
+ assert.deepEqual(card.effects.onPlay[0].bonusNames,['更木 剣八','草鹿 やちる','斑目 一角','綾瀬川 弓親']);
+ const yumi=realDeck(['BLC-4-063','BLC-1-094','BLC-4-076','BLC-1-080','BLC-1-076','BLC-2-071','BLC-1-067','BLC-1-091','BLC-1-078','BLC-1-087','BLC-4-062','BLC-2-072','BLC-1-079'],'green');
+ const {packs,s}=main(yumi,29063);
+ const fieldA=put(s,0,'BLC-1-094','energy',0);
+ const fieldB=put(s,0,'BLC-4-076','energy',1);
+ const before=universalEnergyByColor(packs,s,0).green;
+ const generator=put(s,0,'BLC-4-063','energy',2);
+ assert.equal(universalEnergyByColor(packs,s,0).green,before+2);
+ const ken=put(s,0,'BLC-1-080','front',0);
+ const yama=put(s,0,'BLC-1-091','front',1);
+ const yachiru=put(s,0,'BLC-1-076','energy',3);
+ const self=take(s,0,'BLC-4-063');
+ s.players[0].hand.push(self);
+ const play=legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===self.uid&&a.line==='front'&&a.slot===2);
+ assert.ok(play);
+ const opened=dispatchUniversalAction(packs,s,play);
+ assert.equal(opened.pending.kind,'effect-buff-own');
+ assert.equal(opened.pending.bonusBp,2000);
+ assert.equal(opened.pending.choices.includes(ken.uid),true);
+ assert.equal(opened.pending.choices.includes(yama.uid),true);
+ assert.equal(opened.pending.choices.includes(yachiru.uid),true);
+ assert.equal(opened.pending.choices.includes(self.uid),false);
+ assert.equal(opened.pending.choices.includes(generator.uid),true);
+ assert.equal(opened.pending.choices.includes(fieldA.uid),false);
+ assert.equal(opened.pending.choices.includes(fieldB.uid),false);
+ aiOk(packs,opened);
+ const kenBefore=universalBp(packs,opened,opened.players[0].front[0]);
+ const yamaBefore=universalBp(packs,opened,opened.players[0].front[1]);
+ const skipped=dispatchUniversalAction(packs,opened,{type:'chooseOwnBuff',uid:null});
+ assert.equal(skipped.pending,null);
+ assert.equal(universalBp(packs,skipped,skipped.players[0].front[0]),kenBefore);
+ const named=dispatchUniversalAction(packs,opened,legalUniversalActions(packs,opened).find(a=>a.type==='chooseOwnBuff'&&a.uid===ken.uid));
+ assert.equal(universalBp(packs,named,named.players[0].front[0]),kenBefore+2000);
+ const plain=main(yumi,29064);
+ put(plain.s,0,'BLC-1-094','energy',0);
+ put(plain.s,0,'BLC-4-076','energy',1);
+ const other=put(plain.s,0,'BLC-1-091','front',0);
+ const ikkaku=put(plain.s,0,'BLC-2-071','front',1);
+ const entering=take(plain.s,0,'BLC-4-063');
+ plain.s.players[0].hand.push(entering);
+ const again=dispatchUniversalAction(plain.packs,plain.s,legalUniversalActions(plain.packs,plain.s).find(a=>a.type==='play'&&a.uid===entering.uid&&a.line==='front'&&a.slot===2));
+ const otherBefore=universalBp(plain.packs,again,again.players[0].front[0]);
+ const ikkakuBefore=universalBp(plain.packs,again,again.players[0].front[1]);
+ const raised=dispatchUniversalAction(plain.packs,again,legalUniversalActions(plain.packs,again).find(a=>a.type==='chooseOwnBuff'&&a.uid===other.uid));
+ assert.equal(universalBp(plain.packs,raised,raised.players[0].front[0]),otherBefore+1000);
+ assert.equal(universalBp(plain.packs,raised,raised.players[0].front[1]),ikkakuBefore);
+ const quiet=main(yumi,29065);
+ put(quiet.s,0,'BLC-1-094','energy',0);
+ put(quiet.s,0,'BLC-4-076','energy',1);
+ const alone=take(quiet.s,0,'BLC-4-063');
+ quiet.s.players[0].hand.push(alone);
+ const none=dispatchUniversalAction(quiet.packs,quiet.s,legalUniversalActions(quiet.packs,quiet.s).find(a=>a.type==='play'&&a.uid===alone.uid&&a.line==='front'));
+ assert.equal(none.pending,null);
+ assert.equal(none.players[0].front.some(c=>c?.uid===alone.uid),true);
+ assert.equal(assertUniversalMatch(packs,named),true);
+ assert.equal(assertUniversalMatch(plain.packs,raised),true);
+ assert.equal(assertUniversalMatch(quiet.packs,none),true);
 });

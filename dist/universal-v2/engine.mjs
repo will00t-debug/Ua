@@ -1241,7 +1241,8 @@ function continueEffectQueue(pack,s){
    if(choices.length)s.pending={kind:'effect-buff-own',player:owner,
     sourceUid:job.sourceUid,choices,filter:job.filter,
     ...(job.also?{also:job.also}:{}),
-    bp:job.bp,optional:job.optional,excludeSelf:job.excludeSelf};
+    bp:job.bp,optional:job.optional,excludeSelf:job.excludeSelf,
+    ...(job.bonusNames?{bonusNames:job.bonusNames,bonusBp:job.bonusBp}:{})};
   }else if(job.op==='buffOwnTrait'){
    const choices=field(pl).filter(c=>cardHasTrait(card(pack,c),job.trait)).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-buff-trait',player:owner,sourceUid:job.sourceUid,
@@ -2905,7 +2906,16 @@ function resolveChoice(s,a,pack){
    card(pack,target).type!=='character'||!matchesFilter(pack,s,target,q.filter)||
    (q.also&&!matchesFilter(pack,s,target,q.also)))
    throw Error('Illegal own field BP target');
-  target.buffs??=[];target.buffs.push({bp:q.bp,untilTurn:s.turn});
+  const named=Array.isArray(q.bonusNames)&&q.bonusNames.some(n=>
+   cardHasName(card(pack,target),n,originalEffectsDisabled(s,target)));
+  if(named){
+   const source=location(s,q.player,q.sourceUid);
+   const effect=(source?card(pack,source.c).effects.onPlay||[]:[]).find(e=>
+    e.op==='buffOwnField'&&e.bp===q.bp&&e.bonusBp===q.bonusBp&&
+    JSON.stringify(e.bonusNames)===JSON.stringify(q.bonusNames));
+   if(!effect)throw Error('Unproven named BP bonus');
+  }
+  target.buffs??=[];target.buffs.push({bp:named?q.bonusBp:q.bp,untilTurn:s.turn});
   s.pending=null;continueEffectQueue(pack,s);return;
  }
  if(q.kind==='effect-grant-impact'){
