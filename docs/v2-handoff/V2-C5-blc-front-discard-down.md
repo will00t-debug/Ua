@@ -20,6 +20,6 @@ Fetched 2026-10-24.
 - BLC-1-079: once per turn, discard one hand card, this character generates two extra green energy this turn. That energy grant is not the field-card energy program.
 - BLC-1-108: field card rests and retires itself, then draws 2 and discards 1. The retire-self main program does not draw and discard.
 
-Local Node v22.23.4: `npm test` 2230/2230 fail 0, matrix 60/60, manifest bleach 114, gurren-lagann 38, solo-leveling 46, sword-art-online 111, mushoku-tensei 55, total 364/700. Unported 336, of which BLEACH 162 and MST 25. FAQ certification stays 0. This C5 SHA still needs its own GitHub Actions SUCCESS.
+Local Node v22.23.4: `npm test` 2230/2230 fail 0, matrix 60/60, manifest bleach 114, gurren-lagann 38, solo-leveling 46, sword-art-online 111, mushoku-tensei 55, total 364/700. Unported 336, of which BLEACH 162 and MST 25. FAQ certification stays 0. Push Actions run 40058004910 on `ad4b833` succeeded at 2026-10-24 11:22–11:23 Asia/Taipei, Node v22.23.3, with the same 2230/2230, 60/60 and 364/700.
 
 Phase 2 battle AI has not started. BLEACH is 114/276 and MST is 55/80.

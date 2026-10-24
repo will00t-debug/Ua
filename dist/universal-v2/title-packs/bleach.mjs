@@ -46,7 +46,8 @@ const testForKind=Object.freeze({
  drawIfOwnEffectEntry:'tests/v2-c3-blc-mst-reuse.test.mjs',
  blockBpAtMost:'tests/v2-c3-blc-mst-reuse.test.mjs',
  frontDiscardDraw:'tests/v2-c4-blc-front-discard-draw.test.mjs',
- frontDiscardFieldBpDown:'tests/v2-c5-blc-front-discard-down.test.mjs'
+ frontDiscardFieldBpDown:'tests/v2-c5-blc-front-discard-down.test.mjs',
+ aliasPeekTopOutside:'tests/v2-c6-blc-alias-peek.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.

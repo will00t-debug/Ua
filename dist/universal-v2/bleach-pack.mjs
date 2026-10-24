@@ -973,7 +973,8 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-4-029","kind":"blockBpAtMost","number":"EX15BT/BLC-4-029","name":"志波 岩鷲","color":"blue","energy":1,"ap":1,"bp":2000,"gen":1,"trigger":"active","type":"character","effect":"此角色不會被BP2000以下的角色阻擋。"},
 {"id":"BLC-4-031","kind":"drawIfOwnEffectEntry","number":"EX15BT/BLC-4-031","name":"四楓院 夜一","color":"blue","energy":1,"ap":1,"bp":2000,"gen":1,"trigger":null,"type":"character","effect":"登場時：若此角色是以自己的效果登場，抽1張牌。"},
 {"id":"BLC-4-025","kind":"frontDiscardDraw","number":"EX15BT/BLC-4-025","name":"黒崎 一護","color":"blue","energy":4,"ap":1,"bp":4000,"gen":1,"trigger":null,"type":"character","effect":"啟動・主要〔前線／每回合1次／將1張手牌送至場外〕：抽1張牌。"},
-{"id":"BLC-2-003","kind":"frontDiscardFieldBpDown","number":"EX07BT/BLC-2-003","name":"バズビー","color":"yellow","energy":2,"ap":1,"bp":3000,"gen":1,"trigger":"active","type":"character","effect":"主要階段・位於前線・每回合 1 次：將 1 張手牌送至場外，使 1 個敵方場上 BP 1500 以上角色本回合 BP −1000。"}
+{"id":"BLC-2-003","kind":"frontDiscardFieldBpDown","number":"EX07BT/BLC-2-003","name":"バズビー","color":"yellow","energy":2,"ap":1,"bp":3000,"gen":1,"trigger":"active","type":"character","effect":"主要階段・位於前線・每回合 1 次：將 1 張手牌送至場外，使 1 個敵方場上 BP 1500 以上角色本回合 BP −1000。"},
+{"id":"BLC-4-002","kind":"aliasPeekTopOutside","number":"EX15BT/BLC-4-002","name":"ユーゴー","color":"yellow","energy":0,"ap":1,"bp":1500,"gen":1,"trigger":"draw","type":"character","effect":"此卡也視為《雨葛蘭・哈斯沃德》。登場時：查看牌庫頂1張，放回牌庫頂或送至場外。"}
 ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1014,6 +1015,7 @@ export function checkedBleachAddonDefinition(p){
   inspectTop2:{onPlay:[{template:'inspectTopArrange',count:2,toOutside:true,rest:'top'}]},
   inspectTop3:{onPlay:[{template:'inspectTopArrange',count:3,toOutside:true,rest:'top'}]},
   peekTopOrBottom:{onPlay:[{template:'peekTopOrBottom'}]},
+  aliasPeekTopOutside:{onPlay:[{template:'peekTopOne'}]},
   inspectTopAnyOutside2:{onPlay:[{template:'inspectTopAnyOutside',count:2,rest:'top'}]},
   frontBpDownMin1000:{onPlay:[{template:'enemyFrontBpDownInRange',bp:500,minBp:1000,maxBp:null}]},
   onRetireRestUnder2000:{onRetire:[{template:'restEnemyUnderBp',bp:2000,optional:true}]}
@@ -1087,6 +1089,7 @@ export function checkedBleachAddonDefinition(p){
   ...(isFrontDiscardDown?{mainAbility:{op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,
    then:[{op:'discardGate',optional:false,then:[{op:'enemyBpDown',bp:1000,optional:false,
     minBp:1500,zone:'field'}]}]}}:{}),
+  ...(p.kind==='aliasPeekTopOutside'?{nameAliases:['ユーグラム・ハッシュヴァルト']}:{}),
   ...(p.kind==='restSelfEnemy'?{mainAbility:{op:'restSelfThenRestOppFrontOne',frontOnly:true}}:{}),
   ...(p.kind==='restEnergyRetire'?{mainAbility:{op:'restSelfGainEnergyRetireEndMain',energyOnly:true,oncePerTurn:true,extraEnergy:1}}:{}),
   ...(p.kind.startsWith('retireBonus')?{triggerEffect:{op:'retireOppFront'}}:{}),
