@@ -100,7 +100,8 @@ const testForKind=Object.freeze({
  impactPlusPrintedAp:'tests/v2-c29-bleach-port.test.mjs',
  frontPrintedApBpEach:'tests/v2-c29-bleach-port.test.mjs',
  purpleIchigoBuff:'tests/v2-c29-bleach-port.test.mjs',
- restOnceSelfBp:'tests/v2-c29-bleach-port.test.mjs'
+ restOnceSelfBp:'tests/v2-c29-bleach-port.test.mjs',
+ oppFrontBelowPrintedBp:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.

@@ -74,6 +74,13 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   return countRetirementsThisTurn(s,condition.controller==='own'?owner:
    condition.controller==='opponent'?1-owner:'any',condition.cardType,
    condition.excludeSelf===true?sourceUid:null)>=condition.min;
+ if(condition.kind==='oppFrontLiveBpBelowPrinted'){
+  // 元々のBPよりBPが低い is live BP against the printed number.
+  // Only the opponent's front characters count. Energy-line cards do not.
+  if(typeof cardBp!=='function')throw Error('Live BP comparison needs a BP reader');
+  return s.players[1-owner].front.some(c=>c&&printed(c).type==='character'&&
+   cardBp(c)<printed(c).bp);
+ }
  if(condition.kind==='ownFrontNoOtherCharacter'){
   // 自分のフロントLに他のキャラがない. Energy-line cards and fields are
   // not front characters. This physical card does not count as another.

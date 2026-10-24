@@ -34,7 +34,7 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 //   ACTIVE is generic. Required energy is 紫- (0). Traits are empty.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -46,7 +46,7 @@ function realDeck(required,color){
 }
 const green=realDeck(['BLC-1-080','BLC-1-091','BLC-1-078','BLC-1-070','BLC-4-062','BLC-1-087','BLC-2-067'],'green');
 const blue=realDeck(['BLC-2-041','BLC-2-031','BLC-4-036','BLC-2-026','BLC-2-027','BLC-4-022','BLC-4-028'],'blue');
-const purple=realDeck(['BLC-1-062','BLC-1-035','BLC-1-103','BLC-4-046','BLC-1-039'],'purple');
+const purple=realDeck(['BLC-1-062','BLC-1-035','BLC-1-103','BLC-4-046','BLC-1-039','BLC-4-052'],'purple');
 const yellow=realDeck(['BLC-1-032','BLC-1-023','BLC-1-006'],'yellow');
 function take(s,p,id){
  for(const zone of ['hand','deck','life','outside','removed']){
@@ -92,12 +92,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers eleven whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,447);
- assert.equal(EXPECTED_V2_COUNTS.bleach,171);
+test('C29 registers twelve whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,448);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,172);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,171);
+ assert.equal(Object.keys(bleach.cards).length,172);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -570,4 +570,38 @@ test('BLC-4-028 rests once and keeps BP+1000 until its next own turn starts',()=
  assert.equal(live(fromFront,0,front.uid).ready,false);
  assert.equal(universalBp(fresh.packs,fromFront,live(fromFront,0,front.uid)),5000);
  assert.equal(assertUniversalMatch(fresh.packs,fromFront),true);
+});
+
+test('BLC-4-052 gains 1500 while an opposing front character is below its printed BP',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-4-052');
+ assert.equal(printed.effect,'若對方前線有BP低於印刷BP的角色，此角色BP+1500。');
+ assert.deepEqual(printed.traits,['護廷十三隊']);
+ const card=bleach.cards['BLC-4-052'];
+ assert.equal(card.energy,0);
+ assert.equal(card.trigger,'draw');
+ assert.equal(card.triggerEffect,null);
+ assert.deepEqual(card.passiveBonuses,[{condition:{kind:'oppFrontLiveBpBelowPrinted',turn:'any'},bp:1500}]);
+ const {packs,s}=main(purple,29052);
+ const self=put(s,0,'BLC-4-052','front',0);
+ const foe=put(s,1,'BLC-1-039','front',0);
+ const side=put(s,1,'BLC-1-035','energy',0);
+ assert.equal(universalBp(packs,s,self),1500);
+ foe.buffs.push({bp:-1000,untilTurn:s.turn});
+ assert.equal(universalBp(packs,s,self),3000);
+ foe.buffs.length=0;
+ side.buffs.push({bp:-1000,untilTurn:s.turn});
+ assert.equal(universalBp(packs,s,self),1500);
+ side.buffs.length=0;
+ foe.buffs.push({bp:500,untilTurn:s.turn});
+ assert.equal(universalBp(packs,s,self),1500);
+ foe.buffs.length=0;
+ let later=s;
+ for(let n=0;n<16&&later.active===0;n++)
+  later=dispatchUniversalAction(packs,later,{type:'next'});
+ assert.equal(later.active,1);
+ const there=live(later,0,self.uid);
+ const reduced=live(later,1,foe.uid);
+ reduced.buffs.push({bp:-500,untilTurn:later.turn});
+ assert.equal(universalBp(packs,later,there),3000);
+ assert.equal(assertUniversalMatch(packs,later),true);
 });
