@@ -250,6 +250,10 @@ export function rankUniversalAiActions(packs,o){
   const gain=continuation.get(JSON.stringify(x.action))||0;
   return {...x,score:x.score+gain,utility:x.utility+gain};
  }).sort((a,b)=>b.score-a.score||
-  stableUniversalAiActionKey(a.action).localeCompare(stableUniversalAiActionKey(b.action)));
+  // Equal-value mandatory pending choices preserve the V2 resolver order:
+  // physical under-layer retirement and simultaneous effect order are not
+  // fungible. Root non-pending ties use a canonical action key instead.
+  (o.pending?a.index-b.index:
+   stableUniversalAiActionKey(a.action).localeCompare(stableUniversalAiActionKey(b.action))));
 }
 export function chooseStrategicUniversalAction(packs,o){return rankUniversalAiActions(packs,o)[0]?.action||null;}
