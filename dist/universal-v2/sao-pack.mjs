@@ -13,6 +13,10 @@ const PRINTED_PINS=Object.freeze({
   "nameJa":"マザーズ・ロザリオ","color":"green","energy":4,"ap":1,"bp":0,"gen":0,
   "type":"event","trigger":"special","traits":[],
   "effectJa":"BP5000以下の相手のフロントLのキャラを1枚選び、『手札に戻す』。自分の場外に〈ユウキ〉と〈マザーズ・ロザリオ〉が合計3枚以上ある場合、『退場させる』に代わる。"},
+ "SAO-1-071":{"kind":"ownOutsideNamedFourSixEightRaidAsuna",
+  "nameJa":"アスナ","color":"green","energy":4,"ap":1,"bp":4000,"gen":1,
+  "type":"character","trigger":"raid","traits":["ALO"],
+  "effectJa":"【レイド】〈アスナ〉アクティブにし、フロントLに移動できる\n自分の場外にある〈ユウキ〉と〈マザーズ・ロザリオ〉の合計枚数により、このキャラは以下の効果を全て得る。\n・4枚以上：【アタック時】カードを1枚まで引く。\n・6枚以上：【自分のターン中】このキャラはBP+1000と【ダメージ（2）】\n・8枚以上：このキャラはBP3000以下のキャラにブロックされない。"},
  "SAO-1-070":{"kind":"ownOutsideNamedFourSixAsuna",
   "nameJa":"アスナ","color":"green","energy":3,"ap":1,"bp":3500,"gen":1,
   "type":"character","trigger":null,"traits":["ALO"],
@@ -1378,6 +1382,17 @@ export function verifiedSaoV2Cards(){
     bp:5000,min:3,names:['ユウキ','マザーズ・ロザリオ']}]};
    card.triggerEffect={op:'retireOppFront'};
   }
+  if(pin.kind==='ownOutsideNamedFourSixEightRaidAsuna'){
+   const names=['ユウキ','マザーズ・ロザリオ'];
+   card.raidName='アスナ';
+   card.effects={onAttack:[{op:'drawIfOwnOutsideNamedCountAtLeast',
+    min:4,count:1,names,optional:true}]};
+   card.passiveBonuses=[{condition:{
+    kind:'ownOutsideNamedCountAtLeast',turn:'own',min:6,names},
+    bp:1000,extraDamage:1}];
+   card.blockBpRestriction={relation:'atMost',bp:3000,
+    condition:{kind:'ownOutsideNamedCountAtLeast',turn:'any',min:8,names}};
+  }
   if(pin.kind==='ownOutsideNamedFourSixAsuna'){
    card.effects={};
    const names=['ユウキ','マザーズ・ロザリオ'];
@@ -1656,6 +1671,7 @@ export function verifiedSaoV2Entries(){
      ...(pin.kind==='stepNamedOutsideOnPlayDraw'?['tests/v2-r53-sao063-real-print.test.mjs']:[]),
      ...(pin.kind==='conditionalNamedOutsideBounceRetireEvent'?['tests/v2-r52-sao100-real-event.test.mjs']:[]),
      ...(pin.kind==='ownOutsideNamedFourSixAsuna'?['tests/v2-r52-sao070-real-passives.test.mjs']:[]),
+     ...(pin.kind==='ownOutsideNamedFourSixEightRaidAsuna'?['tests/v2-r54-sao071-real-multithreshold.test.mjs']:[]),
      ...(pin.kind==='nextHandApDiscount'?['tests/v2-r36-real-discount-cards.test.mjs']:[]),
      ...(pin.kind==='frontNamedSelectionHandTax'?['tests/v2-r46-sao064-full-print.test.mjs']:[]),
      ...(pin.kind==='raidOtherOwnWinDamageMainSelectionTax'?

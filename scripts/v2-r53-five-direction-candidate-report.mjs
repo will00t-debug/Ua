@@ -43,22 +43,26 @@ export function r53FiveDirectionLiveAudit(){
  if(past.report.unportedSearched!==rest.length)
   throw Error('R53 historic R52 conditional probe stale');
  const focused=Object.entries(PROBES).map(([id,profile])=>{
-  const card=rest.find(c=>c.id===id);
-  if(!card)throw Error('R53 official printed candidate changed registration: '+id);
+  const card=index.cards.find(c=>c.id===id);
+  if(!card)throw Error('R53 official candidate missing identity: '+id);
   if(!card.sourceText?.length)throw Error('R53 official candidate missing source: '+id);
-  return {id,title:card.title,status:'PARTIAL',source:profile.source,
-   faq:profile.faq,missing:profile.missing};
+  return {id,title:card.title,status:card.registered?'REGISTERED':'PARTIAL',
+   source:profile.source,faq:profile.faq,
+   missing:card.registered?[]:profile.missing};
  });
  const sao=R53_SAO_R52_IDS.map(id=>({
   id,registered:registered.some(c=>c.id===id),
   status:registered.some(c=>c.id===id)?'REGISTERED':'REVIEW PENDING'
  }));
- if(sao.filter(x=>x.registered).length!==1||!sao.find(x=>x.id==='SAO-2-063')?.registered)
+ if(sao.filter(x=>x.registered).length!==2||
+  !sao.find(x=>x.id==='SAO-2-063')?.registered||
+  !sao.find(x=>x.id==='SAO-1-071')?.registered)
   throw Error('R53 SAO named source audit drift');
  const candidates=past.candidates.filter(c=>ids.has(c.id));
  const unreviewed=candidates.filter(c=>!focused.some(f=>f.id===c.id));
  const report={catalogue:700,titles:5,registered:registered.length,
-  unportedSearched:rest.length,officialReviewedPartial:focused.length,
+  unportedSearched:rest.length,officialReviewedPartial:focused.filter(x=>x.status==='PARTIAL').length,
+  officialReviewedRegistered:focused.filter(x=>x.status==='REGISTERED').length,
   r52TextCandidates:candidates.length,saoReviewedFromPriorR52:12,
   readyInferredFromText:0,
   crossTitleSharedAtoms:['ownOutsideNamedCountAtLeast',
@@ -69,7 +73,7 @@ export function r53FiveDirectionLiveAudit(){
    r52TextCandidates:candidates.filter(c=>c.title===s.title).length
   }]))};
  if(report.registered+report.unportedSearched!==700||
-  focused.some(c=>!ids.has(c.id))||
+  focused.some(c=>c.status==='PARTIAL'&&!ids.has(c.id))||
   Object.values(report.byTitle).reduce((n,s)=>n+s.unported,0)!==rest.length)
   throw Error('R53 5-title physical catalogue conservation');
  return {report,focused,sao,unreviewed};
