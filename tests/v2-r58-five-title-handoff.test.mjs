@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {v2AllTitleInventory} from '../dist/universal-v2/title-packs/inventory.mjs';
 import {r58FiveTitleReview,R58_OFFICIAL_REVIEW} from '../scripts/v2-r58-five-title-handoff.mjs';
-const SIX=['BLC-1-007','BLC-1-044','BLC-1-073','SAO-1-015','SAO-1-050','SAO-1-092'];
+const SIX=['BLC-1-007','BLC-1-044','BLC-1-073','SAO-1-015','SAO-1-050','SAO-1-092','MST-1-006'];
 test('R58 all five titles classify the dynamically unported entire 700-card catalogue',()=>{
  const live=v2AllTitleInventory(),{report,records}=r58FiveTitleReview();
  assert.equal(report.catalogue,700);
@@ -31,7 +31,7 @@ test('R58 six hand reduction cards are Cursor production registrations and absen
 test('R58 strict blockers remain unported, especially corrected TTG Q2301',()=>{
  const {records}=r58FiveTitleReview();
  for(const id of ['TTG-1-057','TTG-1-069','TTG-1-081','SLG-1-022',
-  'MST-1-006','MST-1-007','MST-1-021','MST-1-033']){
+  'MST-1-007','MST-1-021','MST-1-033']){
   const c=records.find(c=>c.id===id);
   assert.ok(c,id+' incorrectly auto-ported from a keyword');
   assert.equal(c.owner,'GPT');

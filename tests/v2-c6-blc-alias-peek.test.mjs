@@ -67,8 +67,8 @@ test('C6 registers only the whole-print alias and top choice',()=>{
  const x=c6BlcAliasPeek();
  assert.deepEqual(x.registered,['BLC-4-002']);
  assert.equal(x.report.bleach,118);
- assert.equal(x.report.mst,55);
- assert.equal(x.report.registered,368);
+ assert.equal(x.report.mst,56);
+ assert.equal(x.report.registered,369);
  assert.equal(x.report.readyFromKeywords,0);
  assert.equal(EXPECTED_V2_IDS.bleach.includes('BLC-4-002'),true);
 });

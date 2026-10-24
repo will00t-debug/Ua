@@ -111,6 +111,19 @@ const PRINTED_PINS=Object.freeze({
     "trigger": null,
     "effectJa": "〖登場時〗 このキャラが自分の効果で登場していた場合、このキャラをアクティブにする。"
   },
+  "MST-1-006": {
+    "kind": "optionalApDrawNamedHandRestOrRaid",
+    "nameJa": "エリス",
+    "color": "blue",
+    "energy": 3,
+    "ap": 1,
+    "bp": 2500,
+    "gen": 2,
+    "type": "character",
+    "traits": [],
+    "trigger": "color",
+    "effectJa": "〖登場時〗 APを1支払ってもよい。そうした場合、カードを1枚引き、自分の手札から必要エナジーが3以下で消費APが1の青の〔〈ルーデウス〉か〈エリス〉か〈ルイジェルド〉〕を1枚まで自分の場にレストで登場させるかレイドさせる。"
+  },
   "MST-1-056": {
     "kind": "restSelfRestFrontGainEnergy",
     "nameJa": "エリナリーゼ",
@@ -710,6 +723,14 @@ export function verifiedMstV2Cards(){
    card.effects={onRetire:[{op:'draw',count:1}]};
   if(pin.kind==='activeIfOwnEffectEntry')
    card.effects={onPlay:[{op:'activeSelfIf',entry:'ownEffect'}]};
+  if(pin.kind==='optionalApDrawNamedHandRestOrRaid'){
+   card.triggerEffect={op:'bounceOppFrontUnderBp',bp:3500};
+   card.effects={onPlay:[{op:'optionalPayApThen',ap:1,optional:true,then:[
+    {op:'draw',count:1},
+    {op:'deployOwnHandRestOrRaid',type:'character',color:'blue',maxEnergy:3,
+     ap:1,max:1,optional:true,names:['ルーデウス','エリス','ルイジェルド']}
+   ]}]};
+  }
   if(pin.kind==='restSelfRestFrontGainEnergy'){
    card.effects={};
    card.mainAbility={op:'restSelfRestFrontGainEnergy',oncePerTurn:true,extraEnergy:1};
@@ -785,7 +806,7 @@ export function verifiedMstV2Cards(){
  });
 }
 export function mstV2Pack(){
- return createUniversalPack({id:'mushoku-tensei',version:'v2-d-mst-pilot-4',
+ return createUniversalPack({id:'mushoku-tensei',version:'v2-d-mst-pilot-5',
   cards:verifiedMstV2Cards()});
 }
 
@@ -825,6 +846,7 @@ export function verifiedMstV2Entries(){
      'tests/universal-v2-sao-mst-cross-title.test.mjs',
      ...(pin.kind==='ownFieldAllNamesBp'?['tests/v2-mst-003-own-names.test.mjs']:[]),
      ...(pin.kind==='activeIfOwnEffectEntry'?['tests/v2-conditional-entry-active-round15.test.mjs']:[]),
+     ...(pin.kind==='optionalApDrawNamedHandRestOrRaid'?['tests/v2-c15-hand-rest-or-raid.test.mjs']:[]),
      ...(pin.kind==='onOwnEffectEntryChooseTimedSelf'?['tests/v2-r57-mst009-official.test.mjs']:[]),
      ...(pin.kind==='drawIfOwnEffectEntry'?['tests/v2-mst-023-own-effect-draw.test.mjs']:[]),
      ...(pin.kind==='restSelfBuffOther'?['tests/v2-rest-buff-other-round16.test.mjs']:[]),

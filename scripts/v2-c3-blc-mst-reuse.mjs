@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Cursor C3: BLEACH whole-print reuse on the CI-accepted C2 registry.
-// Keyword text is never READY. MST-1-006/007/021/033 stay blocked: each
-// printed card is more than the shared own-effect entry gate on MST-1-009.
+// Keyword text is never READY. MST-1-006 is registered in C15. MST-1-007/021/033
+// stay blocked: each printed card is more than the shared hand REST/Raid gate.
 import {pathToFileURL} from 'node:url';
 import {v2AllTitleInventory,V2_SOURCE_CATALOGUES} from '../dist/universal-v2/title-packs/inventory.mjs';
 
@@ -9,9 +9,6 @@ export const C3_REGISTERED=Object.freeze(['BLC-4-029','BLC-4-031']);
 const OWN_DRAW=/^(登場時：若此角色是以自己的效果登場，抽1張牌。|【登場時】このキャラが自分の効果で登場していた場合、カードを1枚引く。|〖登場時〗 このキャラが自分の効果で登場していた場合、カードを1枚引く。)$/;
 const LOW_BLOCK=/^(此角色不會被BP2000以下的角色阻擋。|このキャラはBP2000以下のキャラにブロックされない。)$/;
 export const C3_MST_BLOCKED=Object.freeze({
- 'MST-1-006':{status:'ENGINE BLOCKED',
-  source:'https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA54BT%2FMST-1-006',
-  missing:'optional pay 1 AP, draw 1, then up to one blue energy<=3 AP1 hand character named ルーデウス, エリス or ルイジェルド, REST or Raid'},
  'MST-1-007':{status:'ENGINE BLOCKED',
   source:'https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA54BT%2FMST-1-007',
   missing:'on play choose draw-discard or, only after own-effect entry, the same named blue REST-or-Raid; Eris mode once per turn'},

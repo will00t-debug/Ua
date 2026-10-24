@@ -22,7 +22,9 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-top-order':'排列牌庫頂或底','effect-optional-mill':'可將牌庫頂 1 張送場外',
  'effect-optional-draw':'攻擊時可抽 0 或 1 張',
  'effect-pay-ap-deploy':'可支付 1 AP，從場外 REST 登場',
+ 'effect-optional-pay-ap':'可支付 1 AP，然後結算後續效果',
  'effect-hand-rest':'從己方手牌免費 REST 登場',
+ 'effect-hand-rest-or-raid':'從己方手牌 REST 登場或合法 Raid',
  'effect-bounce-own':'選擇返回手牌的己方角色',
  'effect-buff-own':'選擇己方角色增加本回合 BP',
  'effect-once-choice':'是否發動本回合一次能力',
@@ -153,7 +155,10 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseOptionalDraw':return action.mode==='draw'?'攻擊時抽 1 張':'不抽牌';
   case 'chooseOptionalMill':return action.mode==='mill'?'將牌庫頂 1 張送場外':'不送場外';
   case 'choosePayApDeploy':return action.mode==='pay'?'支付 1 AP，接著選擇場外角色':'不支付 AP';
+  case 'chooseOptionalPayAp':return action.mode==='pay'?'支付 1 AP，然後結算後續效果':'不支付 AP';
   case 'chooseHandRest':return action.uid===null?'不特殊登場':'免費 REST 登場 '+name()+suffix();
+  case 'chooseHandRestOrRaid':return action.uid===null?'不從手牌登場':
+   (action.mode==='raid'?'從手牌 Raid ':'從手牌 REST 登場 ')+name()+suffix();
    case 'chooseOutsideNameRest':return action.uid===null?'不從場外登場':'REST 登場 '+name()+suffix();
   case 'chooseTopFiltered':return action.uid===null?'不加入手牌，將其餘卡排列至底部':'加入手牌：'+name();
   case 'chooseTopOrder':return '依序放回：'+name();

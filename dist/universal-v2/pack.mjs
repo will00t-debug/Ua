@@ -10,7 +10,7 @@ export const V2_CARD_TYPES=Object.freeze(['character','event','field']);
 export const V2_TRIGGERS=Object.freeze(['draw','get','final','active','special','color','raid']);
 export const V2_EFFECT_TIMINGS=Object.freeze(['onPlay','onRaid','onAttack','onRaided','onRetire','onOutsideRecover']);
 export const V2_EFFECT_OPS=Object.freeze(['nextEligibleHandPlayApDiscount','draw','drawIfOwnName','drawIfOwnTraitCount','drawIfOwnOutsideNamedCountAtLeast','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','grantSelfSniperThisTurn','grantSelfAttackWinDrawThisTurn','grantSelfMustBlockThisTurn','buffSelfUntilNextOwnStart','grantSelfAttackEndSwapThisTurn','millTop','buffSelf','buffSelfPerOwnOutsideGroups','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','conditionalBounceOrRetireByOwnOutsideNames','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','skipNextActiveOppRest','forbidAttackOppFrontOne','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','retireOwnFieldOne','retireOwnCharacterOne','optionalRetireThenProgram','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw','searchDeckMany','discardGate','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopUpToTwoBottom','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
- 'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideColorUnderEnergy','recoverOutsideTraitlessUnderEnergy','deployOutsideTraitlessRestOrRaid','deployOutsideRest','deployOutsideNameRest','deployNamedFromZones','payApDeployNamedRest','inspectTopTraitOutside','buffOwnField','oncePerTurnGate','chooseOne','deployOwnHandRest','deployOwnHandSpecial','discardOppHand','retireSourceOnPhaseEnd','activeSelfIf','grantOnAttack','grantSelectionApTaxOwnOtherTrait','grantFrontEnergyOwnOtherFrontTrait','grantOwnFrontChoiceProtection']);
+ 'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideColorUnderEnergy','recoverOutsideTraitlessUnderEnergy','deployOutsideTraitlessRestOrRaid','deployOutsideRest','deployOutsideNameRest','deployNamedFromZones','payApDeployNamedRest','inspectTopTraitOutside','buffOwnField','oncePerTurnGate','chooseOne','deployOwnHandRest','deployOwnHandSpecial','deployOwnHandRestOrRaid','optionalPayApThen','discardOppHand','retireSourceOnPhaseEnd','activeSelfIf','grantOnAttack','grantSelectionApTaxOwnOtherTrait','grantFrontEnergyOwnOtherFrontTrait','grantOwnFrontChoiceProtection']);
 const integer=(v,low=0)=>Number.isInteger(v)&&v>=low;
 const own=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
 // Shared board predicate used by passive bonuses and on-play ACTIVE.
@@ -294,6 +294,26 @@ function verifyProgram(program,path){
      Object.keys(e).length!==9||
      Object.keys(e).some(k=>!['op','type','color','ap','trait','maxEnergy','ready','max','protectionScope'].includes(k)))
      throw Error(path+'['+i+'] invalid special hand entry');
+   }
+   if(e.op==='deployOwnHandRestOrRaid'){
+    const namesOk=e.names===null||(Array.isArray(e.names)&&e.names.length>=1&&
+     e.names.length<=6&&new Set(e.names).size===e.names.length&&
+     e.names.every(n=>typeof n==='string'&&!!n.trim()&&n.length<=80));
+    if(e.type!=='character'||
+     !['blue','yellow','green','purple','red'].includes(e.color)||
+     !integer(e.maxEnergy)||e.maxEnergy>30||!integer(e.ap,1)||e.ap>3||
+     !integer(e.max,1)||e.max>4||e.optional!==true||!namesOk||
+     Object.keys(e).length!==8||
+     Object.keys(e).some(k=>!['op','type','color','maxEnergy','ap','max','optional','names'].includes(k)))
+     throw Error(path+'['+i+'] invalid hand REST or Raid entry');
+   }
+   if(e.op==='optionalPayApThen'){
+    if(e.ap!==1||e.optional!==true||!Array.isArray(e.then)||
+     e.then.length<1||e.then.length>3||Object.keys(e).length!==4||
+     Object.keys(e).some(k=>!['op','ap','optional','then'].includes(k))||
+     e.then.some(x=>!['draw','deployOwnHandRestOrRaid'].includes(x?.op)))
+     throw Error(path+'['+i+'] invalid optional AP payment');
+    verifyProgram(e.then,path+'['+i+'].then');
    }
    if(e.op==='chooseOne'){
    if(typeof e.optional!=='boolean'||!Array.isArray(e.options)||
