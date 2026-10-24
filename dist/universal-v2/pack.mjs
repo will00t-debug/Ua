@@ -686,6 +686,15 @@ function verifyProgram(program,path){
    Object.keys(e).some(k=>!['op','bp','optional','skipNextActive'].includes(k))
   ))throw Error(path+'['+i+'] invalid opponent REST optionality/profile');
   if(e.op==='retireOppFrontUnderBp'){
+   if(e.traitPerBp!==undefined){
+    const scale=e.traitPerBp;
+    if(e.bp!==undefined||e.bonusName!==undefined||e.bonusBp!==undefined||e.bonusOutsideName!==undefined||
+     !scale||typeof scale!=='object'||Array.isArray(scale)||
+     typeof scale.trait!=='string'||!scale.trait.trim()||scale.trait.length>80||scale.per!==1000||
+     Object.keys(scale).length!==2||Object.keys(scale).some(k=>!['trait','per'].includes(k))||
+     Object.keys(e).length!==2||Object.keys(e).some(k=>!['op','traitPerBp'].includes(k)))
+     throw Error(path+'['+i+'] unsupported trait-scaled BP retirement');
+   }else{
    const plain=e.bonusName===undefined&&e.bonusBp===undefined&&e.bonusOutsideName===undefined;
    if(plain){
     if(!integer(e.bp,1)||e.bp>50000||Object.keys(e).some(k=>!['op','bp'].includes(k)))
@@ -696,6 +705,7 @@ function verifyProgram(program,path){
      !e.bonusOutsideName.trim()||e.bonusOutsideName.length>80))||
     Object.keys(e).some(k=>!['op','bp','bonusName','bonusBp','bonusOutsideName'].includes(k)))
     throw Error(path+'['+i+'] unsupported printed BP retirement profile');
+   }
   }
   if(e.op==='peekTopOne'&&Object.keys(e).some(key=>key!=='op'))throw Error(path+'['+i+'] unsupported private peek options');
   if(e.op==='recoverAp'&&(!integer(e.count,1)||e.count>3))throw Error(path+'['+i+'] invalid AP recovery count');

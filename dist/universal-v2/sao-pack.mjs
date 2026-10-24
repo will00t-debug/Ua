@@ -120,6 +120,10 @@ const PRINTED_PINS=Object.freeze({
  // sprite index (alt 黄黄). Required energy stays 3. COLOR rests one opposing
  // front character and skips its next ACTIVE. Q750: life zero is checked
  // after this on-play effect, including the contingent draw, has finished.
+ "SAO-2-013":{"kind":"traitCountRetireFront","nameJa":"記憶解放術",
+  "color":"yellow","energy":4,"ap":1,"bp":0,"gen":0,"type":"event",
+  "trigger":"special","traits":[],
+  "effectJa":"自分の場の［特徴：整合騎士］の枚数×1000以下のBPの相手のフロントLのキャラを1枚選び、退場させる。"},
  "SAO-1-021":{"kind":"onPlayOptionalLifeToHandDraw","nameJa":"アスナ（創世神ステイシア）",
   "color":"yellow","energy":3,"ap":1,"bp":3000,"gen":2,"type":"character",
   "trigger":"color","traits":["女神"],
@@ -1756,6 +1760,12 @@ export function verifiedSaoV2Cards(){
    card.effects={onPlay:[{op:'recoverOutsideOne',optional:true,logic:'all',
     filters:[{field:'color',value:color},{field:'trait',value:m[2]}]}]};
   }
+  if(pin.kind==='traitCountRetireFront'){
+   const m=/^自分の場の［特徴：([^］]{1,40})］の枚数×1000以下のBPの相手のフロントLのキャラを1枚選び、退場させる。$/.exec(pin.effectJa);
+   if(!m)throw Error(id+' is not the printed trait-count front retire');
+   card.effects={onPlay:[{op:'retireOppFrontUnderBp',traitPerBp:{trait:m[1],per:1000}}]};
+   card.triggerEffect={op:'retireOppFront'};
+  }
   if(pin.kind==='onPlayOptionalLifeToHandDraw'){
    if(pin.effectJa!=='【登場時】自分のライフエリアにあるカードを1枚手札に加えてもよい。そうした場合、カードを1枚引く。')
     throw Error(id+' is not the printed optional life-to-hand draw');
@@ -1888,7 +1898,8 @@ export function verifiedSaoV2Entries(){
       'onAttackDrawIfSelfBp','onPlayMoveAnyOwnLine']
       .includes(pin.kind)?['tests/v2-c26-five-title-batch.test.mjs']:[]),
      ...(pin.kind==='onPlayTopColorTraitOutside'?['tests/v2-c27-five-title-batch.test.mjs']:[]),
-     ...(pin.kind==='onPlayOptionalLifeToHandDraw'?['tests/v2-c28-catalog-port.test.mjs']:[]),
+     ...(pin.kind==='onPlayOptionalLifeToHandDraw'||pin.kind==='traitCountRetireFront'?
+      ['tests/v2-c28-catalog-port.test.mjs']:[]),
      ...(pin.kind==='readyOnFirstBlock'?['tests/v2-ready-on-block-round14.test.mjs']:[]),
      ...(pin.kind==='frontOnceBpDown'||pin.kind==='frontOnceDiscardBpDown'?['tests/v2-single-bp-target-round14.test.mjs']:[]),
      ...(pin.kind==='nameAliasDrawDiscard'||pin.kind==='nameAliasOnly'||pin.kind==='nameAliasStep'?['tests/v2-name-alias-round14.test.mjs']:[]),

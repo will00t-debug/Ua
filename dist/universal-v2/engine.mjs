@@ -3824,6 +3824,10 @@ function legalPending(pack,s){
 // This check is performed BEFORE spending AP or moving the event outside.
 // Optional "up to one" choices remain playable with zero targets.
 function retireOppFrontLimit(pack,s,owner,job){
+ if(job.traitPerBp){
+  const count=field(s.players[owner]).filter(c=>cardHasTrait(card(pack,c),job.traitPerBp.trait)).length;
+  return count*job.traitPerBp.per;
+ }
  if(!job.bonusName)return job.bp;
  const pl=s.players[owner];
  const same=name=>String(name).replace(/\s+/g,'');

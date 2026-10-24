@@ -4,7 +4,7 @@ import {SAO_OFFICIAL_CARDS} from '../dist/sao-official-import.mjs';
 import {registeredV2TitlePack} from '../dist/universal-v2/title-packs/registry.mjs';
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
- assertUniversalMatch,universalPublicView,universalPrivateChoices} from '../dist/universal-v2/engine.mjs';
+ assertUniversalMatch,universalPublicView,universalPrivateChoices,universalBp} from '../dist/universal-v2/engine.mjs';
 import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
 import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v2-integrated-id-manifest.mjs';
 
@@ -72,8 +72,8 @@ test('SAO-1-021 may add one own life card to hand and draws only after that take
  assert.equal(card.gen,2);
  assert.deepEqual(card.effects.onPlay,[{op:'optionalOwnLifeToHandThenDraw',then:[{op:'draw',count:1}]}]);
  assert.deepEqual(card.triggerEffect,{op:'restOppFrontSkipNextActive'});
- assert.equal(EXPECTED_V2_TOTAL,434);
- assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],123);
+ assert.equal(EXPECTED_V2_TOTAL,435);
+ assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],124);
  assert.equal(EXPECTED_V2_IDS['sword-art-online'].includes('SAO-1-021'),true);
 
  const counts=deckOf(['SAO-1-021','SAO-1-001','SAO-1-004']);
@@ -147,4 +147,93 @@ test('SAO-1-021 may add one own life card to hand and draws only after that take
  assert.equal(last.endReason,'life-zero');
  assert.equal(last.winner,1);
  assert.equal(assertUniversalMatch(packs,last),true);
+});
+
+test('SAO-2-013 retires one opposing front at 1000 current BP per own field Integrity Knight',()=>{
+ const card=sao.cards['SAO-2-013'];
+ const source=SAO_OFFICIAL_CARDS.find(c=>c.id==='SAO-2-013');
+ assert.equal(source.number,'EX08BT/SAO-2-013');
+ assert.match(source.source,/unionarena-tcg\.com\/jp\/cardlist/);
+ assert.equal(source.energy,4);
+ assert.equal(source.ap,1);
+ assert.equal(source.bp,0);
+ assert.equal(source.gen,0);
+ assert.equal(source.trigger,'special');
+ assert.deepEqual(source.traits,[]);
+ assert.equal(source.effectJa,'自分の場の［特徴：整合騎士］の枚数×1000以下のBPの相手のフロントLのキャラを1枚選び、退場させる。');
+ assert.equal(card.name,'記憶解放術');
+ assert.equal(card.type,'event');
+ assert.deepEqual(card.effects.onPlay,[{op:'retireOppFrontUnderBp',traitPerBp:{trait:'整合騎士',per:1000}}]);
+ assert.deepEqual(card.triggerEffect,{op:'retireOppFront'});
+ assert.equal(EXPECTED_V2_IDS['sword-art-online'].includes('SAO-2-013'),true);
+
+ const counts=deckOf(['SAO-2-013','SAO-1-001','SAO-1-010','SAO-2-008','SAO-1-008','SAO-1-082','SAO-1-011']);
+ function fueled(seed,knights){
+  let s=newUniversalMatch(packs,{decks:[counts,counts],first:0,seed});
+  for(let i=0;i<4-knights.length;i++)place(s,0,'SAO-1-001','energy',i);
+  knights.forEach((id,i)=>place(s,0,id,'energy',4-knights.length+i));
+  return s;
+ }
+ function cast(s){
+  const event=hold(s,0,'SAO-2-013');
+  s=toMain(s);
+  const action=legalUniversalActions(packs,s).find(a=>a.type==='event'&&a.uid===event.uid);
+  assert.ok(action);
+  return dispatchUniversalAction(packs,s,action);
+ }
+
+ let none=fueled(20130,[]);
+ const idleKnight=hold(none,0,'SAO-1-010');
+ none.players[0].outside.push(take(none,0,'SAO-2-008'));
+ const low=place(none,1,'SAO-1-008','front',0);
+ const theirKnight=place(none,1,'SAO-1-010','front',1);
+ none=cast(none);
+ assert.equal(none.pending,null);
+ assert.equal(none.players[1].front[0].uid,low.uid);
+ assert.equal(none.players[1].front[1].uid,theirKnight.uid);
+ assert.ok(none.players[0].hand.some(c=>c.uid===idleKnight.uid));
+ assert.ok(none.players[0].outside.some(c=>c.cardId==='SAO-2-013'));
+ assert.equal(none.status,'playing');
+ assert.equal(assertUniversalMatch(packs,none),true);
+
+ let one=fueled(20131,['SAO-1-010']);
+ hold(one,0,'SAO-2-008');
+ const exact=place(one,1,'SAO-1-008','front',0);
+ const over=place(one,1,'SAO-1-082','front',1);
+ one=cast(one);
+ assert.equal(one.pending.kind,'effect-retire-bp');
+ assert.equal(one.pending.limit,1000);
+ assert.deepEqual(one.pending.choices,[exact.uid]);
+ assert.deepEqual(universalPublicView(packs,one).pending,{kind:'effect-retire-bp',player:0});
+ assert.throws(()=>dispatchUniversalAction(packs,one,{type:'chooseRetireBp',uid:null}),/not currently legal/);
+ assert.throws(()=>dispatchUniversalAction(packs,one,{type:'chooseRetireBp',uid:over.uid}),/not currently legal/);
+ aiOk(one);
+ one=dispatchUniversalAction(packs,one,{type:'chooseRetireBp',uid:exact.uid});
+ assert.equal(one.players[1].front[0],null);
+ assert.equal(one.players[1].front[1].uid,over.uid);
+ assert.ok(one.players[1].outside.some(c=>c.uid===exact.uid));
+ assert.equal(one.pending,null);
+ assert.equal(assertUniversalMatch(packs,one),true);
+
+ let two=fueled(20132,['SAO-1-010']);
+ place(two,0,'SAO-2-008','front',0);
+ place(two,1,'SAO-1-082','front',0);
+ place(two,1,'SAO-1-011','front',1);
+ const event=hold(two,0,'SAO-2-013');
+ two=toMain(two);
+ const printedHigh=two.players[1].front[0],printedLow=two.players[1].front[1];
+ printedHigh.buffs=[{bp:1000,untilTurn:two.turn}];
+ printedLow.buffs=[{bp:-500,untilTurn:two.turn}];
+ two=dispatchUniversalAction(packs,two,legalUniversalActions(packs,two)
+  .find(a=>a.type==='event'&&a.uid===event.uid));
+ assert.equal(universalBp(packs,two,two.players[1].front[0]),3000);
+ assert.equal(universalBp(packs,two,two.players[1].front[1]),2000);
+ assert.equal(two.pending.limit,2000);
+ assert.deepEqual(two.pending.choices,[printedLow.uid]);
+ two=dispatchUniversalAction(packs,two,{type:'chooseRetireBp',uid:printedLow.uid});
+ assert.equal(two.players[1].front[1],null);
+ assert.equal(two.players[1].front[0].uid,printedHigh.uid);
+ assert.ok(two.players[0].energy.some(c=>c&&c.cardId==='SAO-1-010'));
+ assert.ok(two.players[0].front.some(c=>c&&c.cardId==='SAO-2-008'));
+ assert.equal(assertUniversalMatch(packs,two),true);
 });
