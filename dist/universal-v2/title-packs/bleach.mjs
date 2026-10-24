@@ -89,7 +89,11 @@ const testForKind=Object.freeze({
  renjiPayDeploy:'tests/v2-c25-purple-shared.test.mjs',
  topSplitEnergyDraw:'tests/v2-c25-purple-shared.test.mjs',
  emptyRaidPeek:'tests/v2-c25-purple-shared.test.mjs',
- renjiEventRetire:'tests/v2-c25-purple-shared.test.mjs'
+ renjiEventRetire:'tests/v2-c25-purple-shared.test.mjs',
+ ownTurnBpImmune:'tests/v2-c29-bleach-port.test.mjs',
+ aliasFrontSoloBp:'tests/v2-c29-bleach-port.test.mjs',
+ otherOwnRetireThisTurnBp:'tests/v2-c29-bleach-port.test.mjs',
+ fieldBuffRecoverAp:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.

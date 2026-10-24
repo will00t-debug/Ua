@@ -1062,6 +1062,14 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-4-083","kind":"emptyRaidPeek","number":"UA01DC/BLC-4-083","name":"朽木 ルキア","color":"purple","energy":2,"ap":1,"bp":2500,"gen":1,"trigger":null,"type":"character","effect":"己方場上沒有卡時，這張手牌的需求能源減少。被突襲時：選擇查看牌庫頂 1 張（可送場外），或使己方 1 個露琪亞本回合不會被 BP 4000 以上角色阻擋。登場時：查看牌庫頂 1 張，放回頂部或送場外。"}
 ,
 {"id":"BLC-4-058","kind":"renjiEventRetire","number":"EX15BT/BLC-4-058","name":"双王蛇尾丸","color":"purple","energy":4,"ap":1,"bp":0,"gen":0,"trigger":"special","type":"event","effect":"僅在自己場上有《阿散井戀次》時可使用。選1個對方前線BP5000以下的角色使其退場；若本回合曾因自己的紫色卡片效果支付AP，可抽1張牌，如此則將1張手牌送至場外。"}
+,
+{"id":"BLC-1-080","kind":"ownTurnBpImmune","number":"UA08BT/BLC-1-080","name":"更木 剣八","color":"green","energy":4,"ap":1,"bp":4000,"gen":1,"trigger":"active","type":"character","effect":"此角色不受降低 BP 的效果影響。己方回合中，此角色 BP +1000。"}
+,
+{"id":"BLC-1-091","kind":"aliasFrontSoloBp","number":"UA08BT/BLC-1-091","name":"山本 重國","color":"green","energy":1,"ap":1,"bp":2000,"gen":1,"trigger":"get","type":"character","effect":"此卡亦視為〈山本元柳齋重國〉。己方前線沒有其他角色時，此角色 BP +1000。"}
+,
+{"id":"BLC-2-041","kind":"otherOwnRetireThisTurnBp","number":"EX07BT/BLC-2-041","name":"ドルドーニ・アレッサンドロ・デル・ソカッチオ","color":"blue","energy":1,"ap":1,"bp":2000,"gen":1,"trigger":"active","type":"character","effect":"己方回合中，若本回合已有其他己方場上角色退場，此角色 BP +1000。"}
+,
+{"id":"BLC-1-062","kind":"fieldBuffRecoverAp","number":"UA08ST/BLC-1-062","name":"おいしいパン","color":"purple","energy":2,"ap":1,"bp":0,"gen":0,"trigger":"active","type":"event","effect":"一個己方角色本回合 BP +1000，可回復 1 AP。"}
 ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1109,7 +1117,10 @@ export function checkedBleachAddonDefinition(p){
   aliasPeekTopOutside:{onPlay:[{template:'peekTopOne'}]},
   inspectTopAnyOutside2:{onPlay:[{template:'inspectTopAnyOutside',count:2,rest:'top'}]},
   frontBpDownMin1000:{onPlay:[{template:'enemyFrontBpDownInRange',bp:500,minBp:1000,maxBp:null}]},
-  onRetireRestUnder2000:{onRetire:[{template:'restEnemyUnderBp',bp:2000,optional:true}]}
+  onRetireRestUnder2000:{onRetire:[{template:'restEnemyUnderBp',bp:2000,optional:true}]},
+  fieldBuffRecoverAp:{onPlay:[
+   {template:'buffOwnField',filter:{field:'type',value:'character'},bp:1000,optional:false,excludeSelf:false},
+   {template:'recoverAp',count:1}]}
  };
 // EX15BT/BLC-4-014 prints yellow+ and ACTIVE adds one yellow. The imported legacy gen=2
  // encoded the ACTIVE total; V2 needs the printed REST base (1) plus an ACTIVE +1.
@@ -1156,6 +1167,9 @@ export function checkedBleachAddonDefinition(p){
  const isBlueShared=['traitlessTopDiscard','ichigoRaidSlash','zangetsuBlockFloor','orihimeEntry','ichigoImpactGrants','rirukaUnder','grimmjowOutsideEntry','getsugaRetire','zangetsuDraw'].includes(p.kind);
  const isGreenShared=['aizenEnergyFront','raidBaseLeaveDamage','restLockFrontUpgrade'].includes(p.kind);
  const isPurpleShared=['millRemoveScale','payDamageRemoveFour','purpleNamesTop','purpleApBpChoice','raidApDiscountChoice','raidDrawDiscardBuff','renjiPayDeploy','topSplitEnergyDraw','emptyRaidPeek','renjiEventRetire'].includes(p.kind);
+ const isOwnTurnImmune=p.kind==='ownTurnBpImmune';
+ const isFrontSolo=p.kind==='aliasFrontSoloBp';
+ const isOtherRetireBp=p.kind==='otherOwnRetireThisTurnBp';
  const renjiName='阿散井 恋次',rukiaName='朽木 ルキア';
  const slashPay={zone:'hand',field:'name',match:'containsAny',values:['斬月','月牙']};
  const causedBy=(sourceName,sourceColor)=>({from:'hand',to:'outside',sourceName,
@@ -1178,7 +1192,7 @@ export function checkedBleachAddonDefinition(p){
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared;
+ const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1239,6 +1253,11 @@ export function checkedBleachAddonDefinition(p){
   ...(isHandEnergyImmune?{printedHandEnergyDiscount:1,bpDownImmune:true,
    passiveBonuses:[{condition:{kind:'oppCharacterBpAtLeast',turn:'own',zone:'front',minBp:3500},bp:1000}]}:{}),
   ...(isMustBlock?{impactNull:true,mustBlock:true}:{}),
+  ...(isOwnTurnImmune?{bpDownImmune:true,ownTurnBp:1000}:{}),
+  ...(isFrontSolo?{nameAliases:['山本 元柳斎 重國'],passiveBonuses:[{
+   condition:{kind:'ownFrontNoOtherCharacter',turn:'any'},bp:1000}]}:{}),
+  ...(isOtherRetireBp?{passiveBonuses:[{condition:{kind:'retireCountThisTurn',turn:'own',
+   controller:'own',cardType:'character',min:1,excludeSelf:true},bp:1000}]}:{}),
   ...(isRetireOr?{triggerEffect:{op:'retireOppFront'}}:{}),
   ...(isBlockHandBp?{readyOnBlockCount:1,passiveBonuses:[{condition:{kind:'ownHandToOutsideThisTurn',turn:'own'},bp:1000}]}:{}),
   ...(p.kind==='ichigoRaidSlash'?{raidName:'黒崎 一護',mainAbility:{op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,

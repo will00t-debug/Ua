@@ -72,7 +72,14 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   return retiredThisTurn(s,owner,condition.cardType);
  if(condition.kind==='retireCountThisTurn')
   return countRetirementsThisTurn(s,condition.controller==='own'?owner:
-   condition.controller==='opponent'?1-owner:'any',condition.cardType)>=condition.min;
+   condition.controller==='opponent'?1-owner:'any',condition.cardType,
+   condition.excludeSelf===true?sourceUid:null)>=condition.min;
+ if(condition.kind==='ownFrontNoOtherCharacter'){
+  // 自分のフロントLに他のキャラがない. Energy-line cards and fields are
+  // not front characters. This physical card does not count as another.
+  return !s.players[owner].front.some(c=>c&&c.uid!==sourceUid&&
+   printed(c).type==='character');
+ }
  if(condition.kind==='ownLifeAtMost')
   return s.players[owner].life.length<=condition.max;
  if(condition.kind==='ownHandCountAtLeast')
@@ -203,14 +210,17 @@ export function countOppRestCharacters(s,owner,condition,printed){
 }
 // A history of real field-to-OUTSIDE retirements, not current outside count.
 // This is private internal state; public snapshots do not expose the UIDs.
-export function countRetirementsThisTurn(s,controller='any',cardType='any'){
+export function countRetirementsThisTurn(s,controller='any',cardType='any',excludeUid=null){
  if(![0,1,'any'].includes(controller)||!['any','field','character'].includes(cardType))
   throw Error('Invalid true-retirement count predicate');
  // Count completed departure EVENTS, not unique UIDs or the cards currently
  // in outside. A returned/replayed physical card can retire again.
+ // excludeUid is the printed 他の: this physical card's own departure
+ // does not satisfy a sentence about another character.
  return (s.turnRetireEvents||[]).filter(e=>e.turn===s.turn&&
   (controller==='any'||e.controller===controller)&&
-  (cardType==='any'||e.cardType===cardType)).length;
+  (cardType==='any'||e.cardType===cardType)&&
+  (excludeUid==null||e.uid!==excludeUid)).length;
 }
 // Q2030: 元々のBP is the number printed on the card, not the current total.
 // Q2070: a field has no BP, so it is not counted by a 元々のBP filter even

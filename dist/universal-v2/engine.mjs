@@ -3863,6 +3863,14 @@ function eventMandatoryTargetsAvailable(pack,s,owner,d,reservedAp=d.ap,reservedH
    return enemy.front.some(c=>c&&bp(pack,s,c)<=job.bp&&
     !effectChoiceProtected(s,owner,c.uid,'event')&&
     cardEffectTargetPayable(pack,s,owner,c.uid,reservedAp,null,'event',reservedHandUid));
+  if(job.op==='buffOwnField'){
+   const mine=s.players[owner];
+   const pool=job.zone==='front'?mine.front.filter(Boolean):field(mine);
+   return pool.some(c=>card(pack,c).type==='character'&&
+    (!job.excludeSelf||c.uid!==reservedHandUid)&&
+    matchesFilter(pack,s,c,job.filter)&&
+    cardEffectTargetPayable(pack,s,owner,c.uid,reservedAp,null,'event',reservedHandUid));
+  }
   return true;
  });
 }
