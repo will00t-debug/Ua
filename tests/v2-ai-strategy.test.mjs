@@ -107,6 +107,8 @@ test('every engine pending kind has an explicit reviewed AI category; new kinds 
  const inventory=JSON.parse(readFileSync(new URL('./fixtures/v2-ai-decision-inventory.json',import.meta.url)));
  const reviewed=Object.values(inventory.pendingGroups).flat().sort();
  assert.deepEqual(actual,reviewed);assert.equal(new Set(reviewed).size,reviewed.length);
+ const baseline=readFileSync(new URL('./fixtures/ai-r58/ai.mjs',import.meta.url),'utf8').replace("from '../../../dist/universal-v2/engine.mjs'","from './engine.mjs'");
+ assert.equal(createHash('sha256').update(baseline).digest('hex'),'b7c17bb203cba998d6417775d07656b058ec22c33b0fcf54e8eda5306a12e616');
 });
 test('new strategy has no reducer import, remote API or access to concealed state',()=>{
  const code=readFileSync(new URL('../dist/universal-v2/ai-strategy.mjs',import.meta.url),'utf8');
