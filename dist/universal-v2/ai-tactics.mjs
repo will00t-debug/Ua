@@ -74,7 +74,7 @@ export function evaluateTrustedUniversalAiTactics(packs,state,rootObservation,ra
   if(depth<=0||current.phase==='start'||current.phase==='move')return 0;
   const legal=legalUniversalActions(packs,current);
   const o=createUniversalAiObservation(packs,current,legal);
-  const next=selected(rankUniversalAiActions(packs,o),limits.children);
+  const next=selected(rankUniversalAiActions(packs,o,options.ablation),limits.children);
   let best=0;
   for(const candidate of next){
    if(++nodes>limits.nodes||timeout())return null;
