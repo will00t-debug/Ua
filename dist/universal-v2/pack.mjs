@@ -991,6 +991,23 @@ function normalize(card,packId){
   emptyOwnFieldHandEnergyDiscount>card.energy||
   emptyOwnFieldHandEnergyDiscount>5))
   throw Error(card.id+' invalid hand-only own-empty-field energy discount');
+ // Source-pinned, HAND-only required-energy modifier. The opponent's
+ // publicly visible FRONT or ENERGY card color is checked at legal play time.
+ // Never adjust printed energy, AP, or generated energy in the source record.
+ const opponentFieldColorsHandEnergyDiscount=card.opponentFieldColorsHandEnergyDiscount??null;
+ if(opponentFieldColorsHandEnergyDiscount!==null&&(
+  card.type!=='character'||card.implementation!=='dsl'||card.raidName||
+  emptyOwnFieldHandEnergyDiscount!==0||
+  !Array.isArray(opponentFieldColorsHandEnergyDiscount.colors)||
+  opponentFieldColorsHandEnergyDiscount.colors.length!==2||
+  new Set(opponentFieldColorsHandEnergyDiscount.colors).size!==2||
+  opponentFieldColorsHandEnergyDiscount.colors.some(c=>
+   !['red','blue','yellow','green','purple'].includes(c)||c===card.color)||
+  opponentFieldColorsHandEnergyDiscount.amount!==1||
+  card.energy<1||
+  Object.keys(opponentFieldColorsHandEnergyDiscount).length!==2||
+  Object.keys(opponentFieldColorsHandEnergyDiscount).some(k=>!['colors','amount'].includes(k))))
+  throw Error(card.id+' invalid hand-only opponent-field-color required-energy discount');
  const selectionHandDiscardTax=card.selectionHandDiscardTax??null;
  if(selectionHandDiscardTax!==null){
   if(card.type!=='character')throw Error(card.id+' tax needs CHARACTER source');
@@ -999,12 +1016,12 @@ function normalize(card,packId){
  if(implemented==='vanilla'&&(Object.keys(effects).length||card.effectText||
   mainAbility||phaseEffects.length||moveTriggers.length||moveObserver||card.enterActiveIfOpponentRest||card.enterAlwaysActive||card.activeExtraEnergy||card.conditionalTraitEnergy||passiveBonuses||card.impactNull||
   card.printedImpact||card.printedAttackDamage||card.readyOnAttackCount||card.readyOnBlockCount||
-  card.frontGeneratesEnergy||ownOutsideRecovery||colorTriggerFieldSubstitution||card.frontForbidden||card.ownTurnBp||card.opponentTurnBp||nameAliases||selectionHandDiscardTax||card.otherOwnBattleWonDamageTwo||attackEndSwap||blockBpRestriction||attackWinRecover||card.conditionalImpactBpAtLeast||emptyOwnFieldHandEnergyDiscount))
+  card.frontGeneratesEnergy||ownOutsideRecovery||colorTriggerFieldSubstitution||card.frontForbidden||card.ownTurnBp||card.opponentTurnBp||nameAliases||selectionHandDiscardTax||card.otherOwnBattleWonDamageTwo||attackEndSwap||blockBpRestriction||attackWinRecover||card.conditionalImpactBpAtLeast||emptyOwnFieldHandEnergyDiscount||opponentFieldColorsHandEnergyDiscount))
   throw Error(card.id+' claims vanilla despite printed/declared effects');
  if(implemented==='dsl'&&!Object.keys(effects).length&&!phaseEffects.length&&!moveTriggers.length&&!mainAbility&&!moveObserver&&!card.enterActiveIfOpponentRest&&!card.enterAlwaysActive&&
   !card.activeExtraEnergy&&!card.conditionalTraitEnergy&&!passiveBonuses&&!card.impactNull&&
   !card.printedImpact&&!card.printedAttackDamage&&!card.readyOnAttackCount&&!card.readyOnBlockCount&&
-  !card.frontGeneratesEnergy&&!ownOutsideRecovery&&!colorTriggerFieldSubstitution&&!card.frontForbidden&&!card.ownTurnBp&&!card.opponentTurnBp&&!nameAliases&&!selectionHandDiscardTax&&!card.otherOwnBattleWonDamageTwo&&!attackEndSwap&&!blockBpRestriction&&!attackWinRecover&&!card.conditionalImpactBpAtLeast&&!emptyOwnFieldHandEnergyDiscount)
+  !card.frontGeneratesEnergy&&!ownOutsideRecovery&&!colorTriggerFieldSubstitution&&!card.frontForbidden&&!card.ownTurnBp&&!card.opponentTurnBp&&!nameAliases&&!selectionHandDiscardTax&&!card.otherOwnBattleWonDamageTwo&&!attackEndSwap&&!blockBpRestriction&&!attackWinRecover&&!card.conditionalImpactBpAtLeast&&!emptyOwnFieldHandEnergyDiscount&&!opponentFieldColorsHandEnergyDiscount)
   throw Error(card.id+' declares dsl without effects');
  for(const [name,program] of Object.entries(effects)){
   if(program.some(x=>x.op==='retireSourceOnPhaseEnd'))throw Error(card.id+' invalid phase-only self retirement');
@@ -1170,6 +1187,9 @@ function normalize(card,packId){
   step:card.step===true,ownTurnBp:card.ownTurnBp||0,
   opponentTurnBp:card.opponentTurnBp||0,
   emptyOwnFieldHandEnergyDiscount,
+  opponentFieldColorsHandEnergyDiscount:opponentFieldColorsHandEnergyDiscount?Object.freeze({
+   amount:opponentFieldColorsHandEnergyDiscount.amount,
+   colors:Object.freeze([...opponentFieldColorsHandEnergyDiscount.colors])}):null,
   activeExtraEnergy:card.activeExtraEnergy||0,
   frontGeneratesEnergy:card.frontGeneratesEnergy===true,
   colorTriggerFieldSubstitution,
