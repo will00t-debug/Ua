@@ -5,6 +5,15 @@ import {createUniversalPack} from './pack.mjs';
 import {SAO_Q1208_ASUNA_AURA,SAO_Q978_SELF_EVENT_TAX} from './selection-hand-tax.mjs';
 
 const PRINTED_PINS=Object.freeze({
+ "SAO-1-100":{"kind":"conditionalNamedOutsideBounceRetireEvent",
+  "nameJa":"マザーズ・ロザリオ","color":"green","energy":4,"ap":1,"bp":0,"gen":0,
+  "type":"event","trigger":"special","traits":[],
+  "effectJa":"BP5000以下の相手のフロントLのキャラを1枚選び、『手札に戻す』。自分の場外に〈ユウキ〉と〈マザーズ・ロザリオ〉が合計3枚以上ある場合、『退場させる』に代わる。"},
+ "SAO-1-070":{"kind":"ownOutsideNamedFourSixAsuna",
+  "nameJa":"アスナ","color":"green","energy":3,"ap":1,"bp":3500,"gen":1,
+  "type":"character","trigger":null,"traits":["ALO"],
+  "effectJa":"自分の場外にある〈ユウキ〉と〈マザーズ・ロザリオ〉の合計枚数により、このキャラは以下の効果を全て得る。\n・4枚以上：【自分のターン中】このキャラはBP+500。\n・6枚以上：【インパクト（1）】（アタックしてバトルに勝利した時、相手プレイヤーに1ダメージ）"},
+
  "SAO-1-087":{"kind":"raidOtherOwnWinDamageMainSelectionTax",
   "nameJa":"キリト","color":"green","energy":7,"ap":1,"bp":5000,"gen":1,
   "type":"character","trigger":"raid","traits":["GGO"],"effectJa":"【レイド】〈キリト〉アクティブにし、フロントLに移動できる\n【インパクト（1）】（アタックしてバトルに勝利した時、相手プレイヤーに1ダメージ）\n自分の場の他のキャラがバトルに勝利した時、このキャラはこのターン中、【ダメージ（2）】を得る。\n【相手のターン中】相手はイベントカードの効果でこのキャラを選ぶ際に、追加で自身の手札を1枚場外に置かないと選べない。\n【起動メイン】【ターン1】自分の場の他のキャラを1枚選び、このターン中、BP+1000。"},
@@ -1355,6 +1364,19 @@ export function verifiedSaoV2Cards(){
     sourceTypes:[...SAO_Q1208_ASUNA_AURA.sourceTypes]};
    card.effects={};
   }
+  if(pin.kind==='conditionalNamedOutsideBounceRetireEvent'){
+   card.effects={onPlay:[{op:'conditionalBounceOrRetireByOwnOutsideNames',
+    bp:5000,min:3,names:['ユウキ','マザーズ・ロザリオ']}]};
+   card.triggerEffect={op:'retireOppFront'};
+  }
+  if(pin.kind==='ownOutsideNamedFourSixAsuna'){
+   card.effects={};
+   const names=['ユウキ','マザーズ・ロザリオ'];
+   card.passiveBonuses=[
+    {condition:{kind:'ownOutsideNamedCountAtLeast',turn:'own',min:4,names},bp:500},
+    {condition:{kind:'ownOutsideNamedCountAtLeast',turn:'any',min:6,names},impact:1}
+   ];
+  }
   if(pin.kind==='nextHandApDiscount')card.effects={onPlay:[{op:'nextEligibleHandPlayApDiscount',filter:{printedBp:3500,trait:'ALO'}}]};
   if(pin.kind==='grantOwnFrontChoiceProtection')
    card.effects={onPlay:[{op:'grantOwnFrontChoiceProtection',optional:false,
@@ -1622,6 +1644,8 @@ export function verifiedSaoV2Entries(){
      '; pilot logic and generic Trigger only, not complete official FAQ acceptance. '+
      source.source,
     testFiles:Object.freeze([
+     ...(pin.kind==='conditionalNamedOutsideBounceRetireEvent'?['tests/v2-r52-sao100-real-event.test.mjs']:[]),
+     ...(pin.kind==='ownOutsideNamedFourSixAsuna'?['tests/v2-r52-sao070-real-passives.test.mjs']:[]),
      ...(pin.kind==='nextHandApDiscount'?['tests/v2-r36-real-discount-cards.test.mjs']:[]),
      ...(pin.kind==='frontNamedSelectionHandTax'?['tests/v2-r46-sao064-full-print.test.mjs']:[]),
      ...(pin.kind==='raidOtherOwnWinDamageMainSelectionTax'?
