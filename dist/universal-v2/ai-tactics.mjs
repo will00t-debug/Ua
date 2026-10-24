@@ -13,10 +13,20 @@ const secretPending=/life|top|search|deck|inspect|mill|hand-rest|outside-name/i;
 // A high-scoring card can appear several times for different destination
 // slots. Preserve strategic action-family diversity before filling remaining
 // nodes; otherwise 10 copies of ENERGY can hide every FRONT continuation.
-const selected=(ranked,n)=>{
+const selected=(ranked,n,packs=null,o=null)=>{
  const legal=ranked.filter(x=>x.action.type!=='extraDraw');
- const family=a=>a.type==='play'?'play:'+a.line:
-  a.type==='activate'?'activate:'+a.mode:a.type;
+ const family=a=>{
+  if(a.type==='play'&&a.line==='front'&&packs&&o){
+   const owned=o.players[o.actor].hand.find(c=>c.uid===a.uid);
+   const printed=packs[o.actor].cards[owned?.cardId];
+   // Prefer at least one effect-free native FRONT continuation alongside
+   // higher-value effectful plays. This is not a legality approximation.
+   if(printed&&!(printed.effects?.onPlay||[]).length&&
+    !(printed.effects?.onRaid||[]).length)return 'play:front:quiet';
+  }
+  return a.type==='play'?'play:'+a.line:
+   a.type==='activate'?'activate:'+a.mode:a.type;
+ };
  const out=[],seen=new Set();
  for(const x of legal){
   const f=family(x.action);if(seen.has(f))continue;
@@ -105,7 +115,7 @@ export function evaluateTrustedUniversalAiTactics(packs,state,rootObservation,ra
   if(depth<=0||current.phase==='start'||current.phase==='move')return 0;
   const legal=legalUniversalActions(packs,current);
   const o=createUniversalAiObservation(packs,current,legal);
-  const next=selected(rankUniversalAiActions(packs,o,options.ablation),limits.children);
+  const next=selected(rankUniversalAiActions(packs,o,options.ablation),limits.children,packs,o);
   let best=0;
   for(const candidate of next){
    if(++nodes>limits.nodes||timeout())return null;
