@@ -76,7 +76,10 @@ const testForKind=Object.freeze({
  rirukaUnder:'tests/v2-c23-blue-shared.test.mjs',
  grimmjowOutsideEntry:'tests/v2-c23-blue-shared.test.mjs',
  getsugaRetire:'tests/v2-c23-blue-shared.test.mjs',
- zangetsuDraw:'tests/v2-c23-blue-shared.test.mjs'
+ zangetsuDraw:'tests/v2-c23-blue-shared.test.mjs',
+ aizenEnergyFront:'tests/v2-c24-green-shared.test.mjs',
+ raidBaseLeaveDamage:'tests/v2-c24-green-shared.test.mjs',
+ restLockFrontUpgrade:'tests/v2-c24-green-shared.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.

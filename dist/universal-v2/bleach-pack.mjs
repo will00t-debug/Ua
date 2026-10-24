@@ -1036,6 +1036,12 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-2-046","kind":"getsugaRetire","number":"EX07BT/BLC-2-046","name":"月牙十字衝","color":"blue","energy":3,"ap":1,"bp":0,"gen":0,"trigger":"special","type":"event","effect":"使 1 個敵方前線 BP 3500 以下角色退場。此卡因己方場上藍色〈黑崎一護〉的效果從手牌送至場外時，可將 1 張手牌放至己方牌堆底；成功時使發動該效果的〈黑崎一護〉本回合獲得 2 次攻擊，首次攻擊時立即轉為 ACTIVE。"}
 ,
 {"id":"BLC-2-047","kind":"zangetsuDraw","number":"EX07BT/BLC-2-047","name":"その名は斬月","color":"blue","energy":2,"ap":1,"bp":0,"gen":0,"trigger":null,"type":"event","effect":"抽 2 張。此卡因己方場上藍色〈黑崎一護〉的效果從手牌送至場外時，抽 1 張。"}
+,
+{"id":"BLC-4-060","kind":"aizenEnergyFront","number":"EX15BT/BLC-4-060","name":"藍染 惣右介","color":"green","energy":3,"ap":1,"bp":4000,"gen":3,"trigger":"get","type":"character","effect":"此卡不能在前線登場，也不能由自己的效果以外的方式移至前線。登場時：最多選自己場上1個《藍染惣右介》以外的角色，移至另一條線；目的線已滿時，先選該線1張卡除外。啟動・主要〔能量線〕：將自己前線2個Active角色改為Rest，如此則將此角色移至前線。攻擊時：抽1張牌。"}
+,
+{"id":"BLC-2-067","kind":"raidBaseLeaveDamage","number":"EX07BT/BLC-2-067","name":"更木 剣八","color":"green","energy":4,"ap":1,"bp":4000,"gen":1,"trigger":"raid","type":"character","effect":"Raid〈更木劍八〉：轉為 ACTIVE，可移至前線。不受降低 BP 的效果影響。Impact 1。若 Raid 基底的需求能源為 4 以上，再獲得以下兩項效果：①因敵方效果或戰鬥將離場時，可改為將 1 張己方手牌送至場外；成功時將此角色 Raid 狀態最上層的卡送至場外；②登場：此角色本回合 BP +1000 並獲得 Damage 2。"}
+,
+{"id":"BLC-1-085","kind":"restLockFrontUpgrade","number":"UA08BT/BLC-1-085","name":"日番谷 冬獅郎","color":"green","energy":4,"ap":1,"bp":4000,"gen":1,"trigger":"raid","type":"character","effect":"Raid〈日番谷冬獅郎〉：轉為 ACTIVE，可移至前線。登場：可選最多 1 個敵方前線角色，將其轉為 REST，且直到下一個敵方攻擊階段結束前不能轉為 ACTIVE；己方場上有至少 6 張其他具有「護廷十三隊」特徵的卡時，改為將所選角色及所有敵方能源線角色轉為 REST，並套用相同的 ACTIVE 限制。"}
 ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1124,6 +1130,7 @@ export function checkedBleachAddonDefinition(p){
  const isTraitDiscard=p.kind==='traitDiscardRecoverNamed';
  const isBlockHandBp=p.kind==='blockHandOutsideBp';
  const isBlueShared=['traitlessTopDiscard','ichigoRaidSlash','zangetsuBlockFloor','orihimeEntry','ichigoImpactGrants','rirukaUnder','grimmjowOutsideEntry','getsugaRetire','zangetsuDraw'].includes(p.kind);
+ const isGreenShared=['aizenEnergyFront','raidBaseLeaveDamage','restLockFrontUpgrade'].includes(p.kind);
  const slashPay={zone:'hand',field:'name',match:'containsAny',values:['斬月','月牙']};
  const causedBy=(sourceName,sourceColor)=>({from:'hand',to:'outside',sourceName,
   ...(sourceColor?{sourceColor}:{}),sourceOnField:true,reasons:['payment','own-effect']});
@@ -1145,7 +1152,7 @@ export function checkedBleachAddonDefinition(p){
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared;
+ const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1225,6 +1232,10 @@ export function checkedBleachAddonDefinition(p){
   ...(p.kind==='getsugaRetire'?{triggerEffect:{op:'retireOppFront'},moveTriggers:[{when:causedBy('黒崎 一護','blue'),
    then:[{op:'handBottomGrantDoubleAttack',optional:true}]}]}:{}),
   ...(p.kind==='zangetsuDraw'?{moveTriggers:[{when:causedBy('黒崎 一護','blue'),then:[{op:'draw',count:1}]}]}:{}),
+  ...(p.kind==='aizenEnergyFront'?{frontForbidden:true,mainAbility:{op:'restTwoActiveFrontMoveSelf',line:'energy'}}:{}),
+  ...(p.kind==='raidBaseLeaveDamage'?{raidName:'更木 剣八',bpDownImmune:true,printedImpact:1,
+   raidHandLeaveReplace:{minBaseEnergy:4}}:{}),
+  ...(p.kind==='restLockFrontUpgrade'?{raidName:'日番谷 冬獅郎'}:{}),
   ...(p.kind==='enemyBpDown500Color'?{triggerEffect:{op:'deployOutsideCharacter',color:'purple',maxEnergy:2,ap:1,frontOnly:true}}:{}),
   ...(p.kind==='drawPlayColorHand'?{triggerEffect:{op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1}}:{}),
   ...(!special?{templateEffects:abilities[p.kind]}:{effects:
@@ -1285,6 +1296,12 @@ export function checkedBleachAddonDefinition(p){
    p.kind==='orihimeEntry'?{onPlay:[{op:'noteEntryTurn'},{op:'discardGate',optional:true,then:[
     {op:'outsideColorEnergyHandOrRest',color:'blue',energy:1,optional:true}]}]}:
    p.kind==='rirukaUnder'?{onPlay:[{op:'activeSelfIf',line:'energy'}]}:
+   p.kind==='aizenEnergyFront'?{onPlay:[{op:'moveOtherAcrossOrRemove',optional:true,excludeName:'藍染 惣右介'}],
+    onAttack:[{op:'draw',count:1}]}:
+   p.kind==='raidBaseLeaveDamage'?{onPlay:[{op:'raidBaseEnergyThen',minEnergy:4,then:[
+    {op:'buffSelf',bp:1000},{op:'grantSelfAttackDamageThisTurn',amount:2}]}]}:
+   p.kind==='restLockFrontUpgrade'?{onPlay:[{op:'restOppFrontLockActive',optional:true,
+    upgrade:{trait:'護廷十三隊',minOthers:6,also:'energy'}}]}:
    isStripDual?{onPlay:[{op:'chooseOne',optional:false,options:[
     {id:'strip',label:'Strip opponent RAID top',turn:'any',
      then:[{op:'stripOppRaidTop',optional:true}]},

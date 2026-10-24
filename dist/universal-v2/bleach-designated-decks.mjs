@@ -77,7 +77,7 @@ export const DESIGNATED_GAP_NOTES=Object.freeze({
  'EX07BT/BLC-2-046':'退場 BP3500 以下，另有被藍色一護送出場外後的牌底與兩次攻擊授予。',
  'EX15BT/BLC-4-060':'不能自行放上前線、登場移線並可能移除、能源線啟動 REST 兩名後移到前線、攻擊抽 1。',
  'EX07BT/BLC-2-067':'Raid、BP 減少免疫、Impact 1，以及基底需求 4 以上才有的離場替代與 Damage 2。',
- 'UA08BT/BLC-1-085':'Raid 後可 REST 並限制主動；6 張其他護廷十三隊時改為連能源線一起 REST。升級分支尚未有共用原語。',
+ 'UA08BT/BLC-1-085':'Raid 後可 REST 並限制主動；6 張其他護廷十三隊時改為連能源線一起 REST。',
  'UA08BT/BLC-1-047':'每回合支付 1 AP 獲得 Damage 2，Raid，以及除外 4 張後的減 BP。',
  'EX15BT/BLC-4-048':'登場看頂 2 張，最多 1 張紫色戀次或露琪亞送出場外，其餘依序回頂。',
  'EX15BT/BLC-4-049':'本回合紫色效果支付過 AP 才加 BP，以及前線支付 1 AP 的二選一。',

@@ -1,10 +1,10 @@
 # V2 C22｜三副指定 BLEACH 牌組交接
 
-時間：2026-10-24 16:35（台北，UTC+8）
+時間：2026-10-24 17:30（台北，UTC+8）
 
-上一輪已驗證提交是 `8b1fd207d6d1dfb6be92fc88d0dd69d544f7171b`，Actions [40074661273](https://github.com/will00t-debug/Ua/actions/runs/40074661273) SUCCESS。本輪仍在 `cursor/v2-blc-three-decks-6ff5`，沒有改 `dist/universal-v2/ai.mjs`，沒有合併 main，沒有部署。本輪提交的 Actions 還沒跑完，不能把這個新 SHA 當成已驗證，也不能沿用 40074661273。
+已驗證提交是 `068b8ce1c3e00ad44a365606ea3a26bf54f82e25`，Actions [40079041661](https://github.com/will00t-debug/Ua/actions/runs/40079041661) SUCCESS。那一輪登錄藍「我拒絕」的九張整卡。本輪仍在 `cursor/v2-blc-three-decks-6ff5`，沒有改 `dist/universal-v2/ai.mjs`，沒有合併 main，沒有部署。本輪綠卡提交的 Actions 還沒跑，不能把這個新 SHA 當成已驗證，也不能沿用 40079041661。
 
-藍「我拒絕」13 種、50 張都已整卡登錄，可以從指定牌組面板開局。綠「白劍」與紫「戀露」仍有缺口。不能拿其他 50 張牌組代替這三副，也不能把三副都標成可完整對局。
+藍「我拒絕」與綠「白劍」都是 13 種、50 張，可以從指定牌組面板開局。紫「戀露」仍有缺口。不能拿其他 50 張牌組代替這三副。三副都完成之前，不要做六組真實牌組對打。
 
 ## 三副張數
 
@@ -13,12 +13,10 @@
 | 牌組 | 張數 | 卡號 | 已登錄卡號 | 已登錄張數 | 可完整對局 |
 | --- | --- | --- | --- | --- | --- |
 | 我拒絕（藍） | 50 | 13 | 13 | 50 | 是 |
-| 白劍（綠） | 50 | 13 | 10 | 38 | 否 |
+| 白劍（綠） | 50 | 13 | 13 | 50 | 是 |
 | 戀露（紫） | 50 | 14 | 4 | 12 | 否 |
 
-藍的 13 個來源編碼都在登錄表。它不在既有七組預覽牌組裡，`createAllV2PreviewRealDecks` 仍是那七組。
-
-已登錄的綠：原本 6 種，加上 `UA04NC/BLC-3-008`、`EX07BT/BLC-2-069`、`EX15BT/BLC-4-070`、`EX07BT/BLC-2-073`。
+藍和綠都不在既有七組預覽牌組裡。`createAllV2PreviewRealDecks` 仍是那七組。開局走 `designatedReady`。
 
 已登錄的紫：`UA08BT/BLC-1-045`、`EX07BT/BLC-2-052`、`UA08BT/BLC-1-051`、`EX15BT/BLC-4-059`。
 
@@ -32,7 +30,7 @@
 - `EX07BT/BLC-2-069`：登場時，其他護廷十三隊至少 6 張才可棄 1 張手牌；棄了才可從場外回收最多 1 張日番谷冬獅郎。[官方](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX07BT%2FBLC-2-069)
 - `UA04NC/BLC-3-001`：本回合第一次阻擋後轉為 Active；自己的回合，而且本回合自己把牌從手牌放到場外時 BP+1000。[官方](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA04NC%2FBLC-3-001)
 
-## 本輪整卡登錄的藍
+## 藍「我拒絕」九張
 
 行為在共用原語，沒有用卡號分支。測試在 `tests/v2-c23-blue-shared.test.mjs`。
 
@@ -45,6 +43,14 @@
 - `EX15BT/BLC-4-036` 葛力姆喬：被自己〈黒崎一護〉或〈浦原喜助〉的效果從手牌送出場外時，藍色生成能源至少 4，且自己場上每張卡都沒有「破面」以外的特徵，才可支付 1 AP，以 Active 登場。同名此效果每回合合計 1 次。拒絕支付不消耗次數。沒有特徵的卡不妨礙條件。Q2317、Q2318。[官方](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX15BT%2FBLC-4-036)
 - `EX07BT/BLC-2-046` 月牙十字衝：使 1 個敵方前線 BP3500 以下退場。被己方場上藍色〈黒崎一護〉的效果從手牌送出場外時，可把 1 張手牌放到底；成功才讓那個一護本回合獲得 2 次攻擊，首次攻擊前轉為 Active。[官方](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX07BT%2FBLC-2-046)
 - `EX07BT/BLC-2-047` 其名為斬月：抽 2。被己方場上藍色〈黒崎一護〉的效果從手牌送出場外時再抽 1。沒有能源條件。Q1033：額外的 1 張要等來源效果全部結束。Q1046：浦原造成的離場不抽這 1 張。[官方](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX07BT%2FBLC-2-047)
+
+## 本輪整卡登錄的綠
+
+行為在共用原語，沒有用卡號分支。測試在 `tests/v2-c24-green-shared.test.mjs`。
+
+- `EX15BT/BLC-4-060` 藍染惣右介：不能自行放上前線，規則移動也不能。登場時最多選自己場上 1 個《藍染惣右介》以外的角色移到另一條線；目的線已滿時，先把該線 1 張卡除外。啟動・主要〔能量線〕：Rest 自己前線 2 個 Active 角色，然後把這張卡移到空的前線。沒有每回合一次。攻擊時抽 1。GET 是生命觸發圖示，不在中文效果字串裡。[官方](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX15BT%2FBLC-4-060)
+- `EX07BT/BLC-2-067` 更木劍八：Raid〈更木劍八〉，登場 Active，可移到前線。不受 BP 減少。Impact 1。只有 Raid 基底的印刷需求能源至少 4，才有離場替代和登場 BP+1000、Damage 2。基底看印刷能源，不看生成能源，也不看當前 BP。一般登場，或疊在能源 1 的 `BLC-4-070` 上，沒有這兩項。Damage 2 是未被阻擋的攻擊打 2 點生命，不是 Impact，登場當下不打生命。阻擋勝利只結算 Impact 1。本回合結束後 BP 與 Damage 回到印刷值。Q1054–1057：因對方效果或戰鬥將離場時，可改為棄 1 張手牌到場外，成功則只把 Raid 最上層送到場外，基底留下。拒絕就照原本的離場。手牌是空的、基底能源不足、一般登場，或效果被沉默，都沒有這個視窗。已結算的 +1000 與 Damage 2 在之後失去原文時仍在；BP 減少免疫會被沉默關掉。連鎖 Raid 的幾何沒有這次的替代。[官方](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=EX07BT%2FBLC-2-067)
+- `UA08BT/BLC-1-085` 日番谷冬獅郎：Raid〈日番谷冬獅郎〉。登場可選最多 1 個敵方前線角色，將其 Rest，並且到那個玩家的下一個攻擊階段結束前不能轉 Active。這個限制在刷新之前解除，所以該攻擊階段結束時會回到 Active。己方場上另外至少 6 張「護廷十三隊」時，改為連所選角色和所有敵方能源線角色一起 Rest 並套用相同限制。埋在 Raid 底下的基底不算那 6 張。沒有敵方前線目標時，即使有 6 張也不做事。可以不選。[官方](https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA08BT%2FBLC-1-085)
 
 ## 共用原語
 
@@ -66,20 +72,25 @@
 - `triggerUnchosenGranted`：Trigger 效果不能選這張卡，包含自己的 Trigger。
 - `enterAlwaysActive`、`outsideColorEnergyHandOrRest`、`entryTurnProtect`：Active 登場、場外顏色與能源上限的入手或 Rest 登場、登場回合的選擇保護。
 - `restSelfTuckMovedFaceDown`、`activeSelfIf`、`restRetireRecoverUnder`：Rest 後把離場卡裏向放在下方、指定線登場轉 Active、Rest 退場後回收下方卡。自己的公開視圖看得到下方 uid；對方只看到裏向。
+- `frontForbidden` 與 `ownEffectFront`：印刷禁止前線的卡，不能用登場或規則移動上去。只有自己的效果把它移到前線時才設 `ownEffectFront`。離開該位置後旗標清除。
+- `moveOtherAcrossOrRemove`：登場時可選自己場上另一個、名稱不符的角色，移到另一條線。目的線滿了才指定一張除外。
+- `restTwoActiveFrontMoveSelf`：能源線啟動。Rest 恰好 2 個自己的 Active 前線角色，然後把自己移到空的前線。沒有每回合一次。
+- `raidBaseEnergyThen`：只在 Raid 基底的印刷需求能源達到門檻時，才接著做 `then`。一般登場或低能源基底會跳過。
+- `grantSelfAttackDamageThisTurn`：本回合 Damage 2。未被阻擋才打 2 點生命。已經結算的授予在沉默後仍在，回合開始時清除。
+- `raidHandLeaveReplace`：對方效果或戰鬥將使這張雙面向上的 Raid 頂卡離場時，可支付 1 張手牌到場外，只剝掉最上層。拒絕則原本的離場發生。手牌空、沉默、基底能源不足，都不開視窗。
+- `restOppFrontLockActive`：可選 1 個敵方前線角色並 Rest。`cannotActive` 帶 `releaseBeforeRefresh`，在該玩家攻擊階段結束、刷新之前解除。`upgrade` 用現場其他特徵張數決定要不要連能源線角色一起鎖。來源離場不解除。
 
 ## 仍未移植
 
 精確原因在 `DESIGNATED_GAP_NOTES`。已登錄的列不會再出現在缺口報告。
 
-綠還缺 3：`BLC-4-060`、`BLC-2-067`、`BLC-1-085`。
-
 紫還缺 10：`BLC-1-047`、`BLC-4-048`、`BLC-4-049`、`BLC-4-050`、`UA01DC/BLC-1-053`、`BLC-4-054`、`UA01DC/BLC-4-083`、`UA01DC/BLC-4-082`、`UA01DC/BLC-1-041`、`BLC-4-058`。
 
-不要用別的印刷版補 `UA01DC/BLC-1-053` 或 `UA01DC/BLC-1-041`。不要把未完成的綠、紫放進七組預覽牌組。
+不要用別的印刷版補 `UA01DC/BLC-1-053` 或 `UA01DC/BLC-1-041`。不要把未完成的紫放進七組預覽牌組，也不要為了湊對戰而拿別的 50 張牌組代替白劍或戀露。
 
 ## 預覽
 
-`dist/universal-v2-preview.html` 列出三副的名稱、來源編碼、張數和已登錄或未移植。藍的選項是「我拒絕（藍）｜50 張｜完整可玩」，可以和另一個已完成牌組開局。綠、紫仍是停用的「缺口 N 種｜不可完整對局」。開局走 `designatedReady`，沒有把藍寫進 `decks['reject-blue']`。
+`dist/universal-v2-preview.html` 列出三副的名稱、來源編碼、張數和已登錄或未移植。藍的選項是「我拒絕（藍）｜50 張｜完整可玩」。綠的選項是「白劍（綠）｜50 張｜完整可玩」。紫仍是停用的「缺口 10 種｜不可完整對局」。開局走 `designatedReady`。沒有把藍寫進 `decks['reject-blue']`，也沒有把綠寫進 `decks['white-sword']`。
 
 ## AI 要看的支付和連鎖
 
@@ -95,6 +106,9 @@
 - `BLC-4-022` 的保護只在登場的那個回合。對方的退場選擇會被這層保護擋下。剛棄掉的藍色、需求能源 1 以下角色可以入手或以 Rest 登場。
 - `BLC-4-034` 把〈其名為斬月〉放到下方後，那張卡已經取得的抽牌仍要結算。對方看不到下方卡面。
 - `BLC-4-036` 看的是藍色生成能源，不是藍色卡的張數。登場不另付印刷的 6。沒有特徵的卡可以留在場上。有「破面」以外特徵，或藍色生成能源少於 4，或沒有準備好的 AP，都不能登場。一護與浦原都能當來源；織姬不能。
+- `BLC-4-060` 不能選前線登場，也不能在移動階段用規則移上去。登場移線可以不選。選了之後，空位就移過去；線滿了必須先除外一張。能源線啟動需要恰好還有 2 個 Active 前線和 1 個空前線。這個啟動沒有每回合一次。攻擊抽 1 發生在阻擋選擇之前。
+- `BLC-2-067` 只有印刷需求能源 4 以上的 Raid 基底才給 BP+1000 和 Damage 2。`BLC-3-008` 的印刷能源是 4，`BLC-4-070` 是 1。Damage 2 打未被阻擋的生命；擋下而且攻方勝利只打 Impact 1。離場替代只在對方效果或戰鬥、手牌至少 1 張、而且是可剝的一層 Raid 時出現。支付成功留下基底；拒絕則整疊離場，手牌不付。沉默後沒有替代，BP 減少會生效，已經拿到的 Damage 2 還在。
+- `BLC-1-085` 可以不選。選了 1 個敵方前線後才 Rest。其他護廷十三隊少於 6 張時，敵方能源線不動。滿 6 張時，敵方能源線角色也 Rest，並套用同一個不能 Active。埋在 Raid 底下的卡不算。沒有敵方前線時整段不做。鎖在對方攻擊階段結束、刷新之前解除。
 
 ### effect-outside-name-rest
 
@@ -106,24 +120,25 @@
 
 ## 測試入口
 
-`tests/v2-c22-designated-decks.test.mjs` 固定三副清單，並確認藍可以通過牌組合法檢查、且不在七組預覽牌組。`tests/v2-c23-blue-shared.test.mjs` 覆蓋九張藍卡的正例與反例。三副彼此對打還沒有，因為綠、紫還有未登錄卡，引擎不會用無效果卡代替。
+`tests/v2-c22-designated-decks.test.mjs` 固定三副清單。藍和綠可以通過牌組合法檢查，而且兩個 key 都不在七組預覽牌組。`tests/v2-c23-blue-shared.test.mjs` 覆蓋九張藍卡。`tests/v2-c24-green-shared.test.mjs` 覆蓋三張綠卡的正例與反例。三副彼此對打還沒有。紫還有未登錄卡，引擎不會用無效果卡代替。
 
 ## 下一輪
 
-綠的 `BLC-4-060`、`BLC-2-067`、`BLC-1-085`，以及紫的 10 張。藍染移線、劍八的 Raid 替代、冬獅郎的升級 REST 彼此不共用一個小原語。三副都完成之後才做六組真實牌組對打。不要用其他牌組代打。
+紫的 10 張。三副都完成之後才做六組真實牌組對打。不要用其他牌組代打，也不要換印刷版。
 
 ## 不可宣稱
 
-- 綠與紫還不能完整對局。三副計畫還沒有完成。
+- 紫還不能完整對局。三副計畫還沒有完成。
 - 沒有做三副彼此對打。
 - 沒有把 UA08BT 的 `BLC-1-053`、`BLC-1-041` 當成 UA01DC。
 - 新卡有官方原文和正反例，不是每張卡的全部 FAQ 認證。
 - 登錄數增加不代表 276 張 BLEACH 都完成。
+- 本輪綠卡提交自己的 Actions 成功之前，已驗證的 SHA 仍是 `068b8ce1c3e00ad44a365606ea3a26bf54f82e25`。
 
 ## 本輪提交
 
-Manifest：BLEACH 147／276，五作品 399／700。
+Manifest：BLEACH 150／276，五作品 402／700。`reviewPending` 190，`bleachSaoUnported` 198，`bleachUnported` 126。
 
-上一輪已驗證提交：`8b1fd207d6d1dfb6be92fc88d0dd69d544f7171b`。Actions [40074661273](https://github.com/will00t-debug/Ua/actions/runs/40074661273) SUCCESS。
+已驗證提交：`068b8ce1c3e00ad44a365606ea3a26bf54f82e25`。Actions [40079041661](https://github.com/will00t-debug/Ua/actions/runs/40079041661) SUCCESS。
 
-本輪九張藍卡與這份交接在同一個新提交。那個提交自己的 Actions 成功之前，已驗證的 SHA 仍是 8b1fd20。
+本輪三張綠卡與這份交接在同一個新提交。那個提交自己的 Actions 成功之前，不要把它寫成已驗證。

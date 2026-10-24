@@ -44,8 +44,8 @@ function phase(s,target){
 function sit(card,ready=true){card.ready=ready;return card;}
 test('three designated lists stay exact and are not offered as playable 50-card presets',()=>{
  assert.equal(Object.keys(pack.cards).length,EXPECTED_V2_COUNTS.bleach);
- assert.equal(EXPECTED_V2_COUNTS.bleach,147);
- assert.equal(EXPECTED_V2_TOTAL,399);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,150);
+ assert.equal(EXPECTED_V2_TOTAL,402);
  const registered=id=>!!pack.cards[id];
  const report=summarizeDesignatedDecks(registered);
  assert.equal(report.length,3);
@@ -71,10 +71,10 @@ test('three designated lists stay exact and are not offered as playable 50-card 
  assert.deepEqual(byKey['reject-blue'].missing,[]);
  assert.equal(byKey['reject-blue'].registeredKinds,13);
  assert.deepEqual(validateUniversalDeck(pack,designatedPlayableCounts(byKey['reject-blue'])),[]);
- assert.equal(byKey['white-sword'].playable,false);
- assert.deepEqual(byKey['white-sword'].missing.map(e=>e.cardId),
-  ['BLC-4-060','BLC-2-067','BLC-1-085']);
- assert.equal(byKey['white-sword'].registeredKinds,10);
+ assert.equal(byKey['white-sword'].playable,true);
+ assert.deepEqual(byKey['white-sword'].missing,[]);
+ assert.equal(byKey['white-sword'].registeredKinds,13);
+ assert.deepEqual(validateUniversalDeck(pack,designatedPlayableCounts(byKey['white-sword'])),[]);
  assert.equal(byKey.renruki.playable,false);
  assert.equal(byKey.renruki.registeredKinds,4);
  assert.equal(byKey.renruki.missing.some(e=>e.source==='UA01DC/BLC-1-053'),true);
