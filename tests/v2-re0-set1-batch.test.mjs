@@ -66,9 +66,9 @@ test('UA40BT and UA40ST share one catalogue and keep parallel art out',()=>{
  }
 });
 
-test('sixty-three whole prints enter the V2 pack and the other fifty stay out',()=>{
- assert.equal(REZERO_ENGINE_IDS.length,63);
- assert.equal(Object.keys(pack.cards).length,63);
+test('sixty-four whole prints enter the V2 pack and the other forty-nine stay out',()=>{
+ assert.equal(REZERO_ENGINE_IDS.length,64);
+ assert.equal(Object.keys(pack.cards).length,64);
  assert.equal(pack.cards['REZ-1-001'],undefined);
  assert.equal(pack.cards['REZ-1-008'].step,true);
  assert.equal(pack.cards['REZ-1-008'].implementation,'vanilla');
@@ -143,6 +143,10 @@ test('sixty-three whole prints enter the V2 pack and the other fifty stay out',(
   condition:{kind:'ownPrintedCharacter',turn:'own',zone:'front',excludeSelf:false,
    name:'ナツキ・スバル',color:'blue',energy:0},bp:1000}]);
  assert.equal(pack.cards['REZ-1-041'].trigger,'active');
+ assert.deepEqual(pack.cards['REZ-1-045'].mainAbility,{
+  op:'revealHandBottomBuff',oncePerTurn:true,minPrintedBp:4000,bp:2500});
+ assert.equal(pack.cards['REZ-1-045'].trigger,'active');
+ assert.equal(pack.cards['REZ-1-045'].triggerEffect,null);
  assert.equal(pack.cards['REZ-1-101'],undefined);
  assert.deepEqual(validateUniversalDeck(pack,counts),[]);
  const s=fresh();
@@ -1100,4 +1104,78 @@ test('Felix buffs one other character on either field and Patrasche needs a blue
  mismatch=dispatchUniversalAction(fp,mismatch,play);
  assert.equal(universalBp(fp,mismatch,at(mismatch,0,printed.uid)),3000);
  assert.equal(mismatch.players[0].front.some(c=>c?.uid===heavy.uid),true);
+});
+
+const mimiCounts={
+ ...Object.fromEntries(['REZ-1-045','REZ-1-075','REZ-1-014','REZ-1-029','REZ-1-007',
+  'REZ-1-022','REZ-1-012','REZ-1-036','REZ-1-043','REZ-1-086','REZ-1-008'].map(id=>[id,4])),
+ 'REZ-1-010':4,'REZ-1-056':2
+};
+const mimi=seed=>newUniversalMatch(packs,{decks:[mimiCounts,mimiCounts],first:0,seed});
+function revealAct(s,uid){
+ return legalUniversalActions(packs,s).find(a=>a.type==='activate'&&a.mode==='revealBottomBuff'&&a.uid===uid);
+}
+test('Mimi reveals one hand card to the bottom and buffs only a 4000 character',()=>{
+ assert.equal(Object.values(mimiCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(pack,mimiCounts),[]);
+ const shell={id:'REVEAL',name:'Gate',color:'blue',type:'character',energy:0,ap:1,bp:1000,gen:1,
+  traits:[],trigger:null,implementation:'dsl',effects:{}};
+ assert.throws(()=>createUniversalPack({id:'bad-reveal',cards:[{...shell,mainAbility:{
+  op:'revealHandBottomBuff',oncePerTurn:true,bp:2500}}]}),/unsupported main/);
+
+ let high=mimi(4801);
+ high=reach(high,'main');
+ let actor;
+ [high,actor]=playFront(high,'REZ-1-045');
+ assert.equal(at(high,0,actor.uid).ready,false);
+ const big=pull(high,0,'REZ-1-075');
+ high.players[0].hand.push(big);
+ const before=high.players[0].deck.map(c=>c.uid);
+ const act=revealAct(high,actor.uid);
+ assert.ok(act);
+ high=dispatchUniversalAction(packs,high,act);
+ assert.equal(high.pending.kind,'effect-reveal-bottom');
+ assert.ok(high.pending.choices.includes(big.uid));
+ assert.equal(revealAct(high,actor.uid),undefined);
+ high=dispatchUniversalAction(packs,high,{type:'chooseRevealBottom',uid:big.uid});
+ assert.equal(high.pending,null);
+ assert.equal(high.players[0].deck.at(-1).uid,big.uid);
+ assert.deepEqual(high.players[0].deck.slice(0,-1).map(c=>c.uid),before);
+ assert.equal(high.players[0].hand.some(c=>c.uid===big.uid),false);
+ assert.equal(high.publicReveals.at(-1).cardId,'REZ-1-075');
+ assert.equal(high.publicReveals.at(-1).kind,'hand-to-bottom');
+ assert.equal(universalBp(packs,high,at(high,0,actor.uid)),4000);
+ assert.equal(revealAct(high,actor.uid),undefined);
+ high=ownMain(high,2);
+ const again=pull(high,0,'REZ-1-075');
+ high.players[0].hand.push(again);
+ assert.ok(revealAct(high,actor.uid));
+
+ let low=mimi(4802);
+ low=reach(low,'main');
+ [low,actor]=playFront(low,'REZ-1-045');
+ const small=pull(low,0,'REZ-1-014');
+ low.players[0].hand.push(small);
+ low=dispatchUniversalAction(packs,low,revealAct(low,actor.uid));
+ low=dispatchUniversalAction(packs,low,{type:'chooseRevealBottom',uid:small.uid});
+ assert.equal(low.players[0].deck.at(-1).uid,small.uid);
+ assert.equal(low.publicReveals.at(-1).cardId,'REZ-1-014');
+ assert.equal(universalBp(packs,low,at(low,0,actor.uid)),1500);
+
+ let event=mimi(4803);
+ event=reach(event,'main');
+ [event,actor]=playEnergy(event,'REZ-1-045');
+ assert.equal(event.players[0].energy.some(c=>c?.uid===actor.uid),true);
+ const spell=pull(event,0,'REZ-1-029');
+ event.players[0].hand.push(spell);
+ event=dispatchUniversalAction(packs,event,revealAct(event,actor.uid));
+ event=dispatchUniversalAction(packs,event,{type:'chooseRevealBottom',uid:spell.uid});
+ assert.equal(event.players[0].deck.at(-1).cardId,'REZ-1-029');
+ assert.equal(universalBp(packs,event,at(event,0,actor.uid)),1500);
+
+ let empty=mimi(4804);
+ empty=reach(empty,'main');
+ [empty,actor]=playFront(empty,'REZ-1-045');
+ empty.players[0].outside.push(...empty.players[0].hand.splice(0));
+ assert.equal(revealAct(empty,actor.uid),undefined);
 });

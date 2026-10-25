@@ -109,6 +109,17 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
    legal.find(a=>a.mode==='activate')||legal[0];
  if(s.pending?.kind==='effect-buff-own')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-buff-either')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-reveal-bottom'){
+  const catalog=packsOf(pack)[s.pending.player].cards;
+  const hand=s.players[s.pending.player].hand;
+  return [...legal].sort((a,b)=>{
+   const score=uid=>{
+    const printed=catalog[hand.find(c=>c.uid===uid)?.cardId];
+    return printed?.type==='character'&&printed.bp>=s.pending.minPrintedBp?printed.bp:0;
+   };
+   return score(b.uid)-score(a.uid);
+  })[0];
+ }
  if(s.pending?.kind==='effect-buff-trait')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='main-discard-buff'){
   // The payment is mandatory once activated. Choose a low-cost OWN hand

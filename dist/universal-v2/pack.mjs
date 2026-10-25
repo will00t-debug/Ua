@@ -1011,6 +1011,14 @@ function normalize(card,packId){
   Number.isInteger(mainAbility.bp)&&mainAbility.bp>=1&&mainAbility.bp<=5000&&
   Object.keys(mainAbility).length===4&&
   Object.keys(mainAbility).every(k=>['op','oncePerTurn','discardCount','bp'].includes(k));
+ // 公開して山札の下. The check is the revealed card's printed BP, and the
+ // bonus lands on this character. No front-line icon and no REST cost.
+ const mainRevealBottom=mainAbility?.op==='revealHandBottomBuff'&&
+  card.type==='character'&&mainAbility.oncePerTurn===true&&
+  integer(mainAbility.minPrintedBp,1)&&mainAbility.minPrintedBp<=50000&&
+  integer(mainAbility.bp,1)&&mainAbility.bp<=5000&&
+  Object.keys(mainAbility).length===4&&
+  Object.keys(mainAbility).every(k=>['op','oncePerTurn','minPrintedBp','bp'].includes(k));
  const frontProgram=mainAbility?.then;
  const frontGate=frontProgram?.[0]?.op==='discardGate'?frontProgram[0]:null;
  // A front once-per-turn ability may be a source-complete DSL program,
@@ -1097,7 +1105,7 @@ function normalize(card,packId){
   Object.keys(mainAbility).every(k=>['op','frontOnly','oncePerTurn','then'].includes(k));
  if(mainRestProgram)verifyProgram(mainAbility.then,card.id+'.mainAbility.then');
  if(mainAbility!==null&&
-  (!['character','field'].includes(card.type)||!(fieldDualMain||fieldRestRetireThen||fieldPeek||card.type==='character'&&(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainRestBuff||mainPayAp||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainRestDiscardRetire||mainFrontProgram||mainNameDrawDiscard||mainFieldOnceBuff||mainEntryProtect||mainRestRetireUnder||mainRestTwoMove||mainOncePay))))
+  (!['character','field'].includes(card.type)||!(fieldDualMain||fieldRestRetireThen||fieldPeek||card.type==='character'&&(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainRestBuff||mainPayAp||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainRestDiscardRetire||mainFrontProgram||mainNameDrawDiscard||mainFieldOnceBuff||mainEntryProtect||mainRestRetireUnder||mainRestTwoMove||mainOncePay||mainRevealBottom))))
   throw Error(card.id+' unsupported main action ability');
  const passiveBonuses=validatePassiveBonuses(card);
  const implemented=card.implementation;

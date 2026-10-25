@@ -43,6 +43,7 @@ export function rezeroEngineKind(effectJa){
  if(e===SEARCH_SEVEN)return 'searchName7';
  if(e==='【起動メイン】【フロントLにある場合】 【ターン1】自分の場に〈ラム〉と〈レム〉がある場合のみ発動できる。カードを1枚引き、自分の手札を1枚場外に置く。')return 'namesDrawDiscard';
  if(e==='【起動メイン】【レストにする】 【ターン1】自分の山札の上から1枚見る。そのカードを山札の上か下に置く。')return 'fieldPeek';
+ if(e==='【起動メイン】【ターン1】自分の手札を1枚公開し、自分の山札の下に置く。公開したカードがBP4000以上のキャラカードの場合、このキャラはこのターン中、BP+2500。')return 'revealBottom2500';
  return null;
 }
 const TOP_OUTSIDE=new Map([
@@ -142,6 +143,8 @@ export function rezeroPackCard(card){
    then:[{op:'drawDiscard',count:1}]}}:{}),
   ...(kind==='fieldPeek'?{mainAbility:{
    op:'restSelfThen',frontOnly:false,oncePerTurn:true,then:[{op:'peekTopOrBottom'}]}}:{}),
+  ...(kind==='revealBottom2500'?{mainAbility:{
+   op:'revealHandBottomBuff',oncePerTurn:true,minPrintedBp:4000,bp:2500}}:{}),
   ...(kind==='feltTurnBp'?{passiveBonuses:[{
    condition:{kind:'ownNameExists',turn:'own',zone:'field',excludeSelf:false,name:'フェルト'},
    bp:1000}]}:{}),

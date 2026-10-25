@@ -30,6 +30,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-bounce-own':'選擇返回手牌的己方角色',
  'effect-buff-own':'選擇己方角色增加本回合 BP',
  'effect-buff-either':'選擇自己或對手的其他角色，本回合 BP+1000',
+ 'effect-reveal-bottom':'公開 1 張手牌並放到牌底',
  'effect-once-choice':'是否發動本回合一次能力',
  'effect-choice-mode':'選擇一項效果',
  'recovered-self-entry':'回收後可 REST 登場至能源線',
@@ -95,7 +96,9 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'attack':return action.targetUid?
    '狙擊攻擊：'+name()+' → '+uiCardLabel(pack,state,action.targetUid):
    '宣告攻擊：'+name();
-  case 'activate':return action.mode==='discardSelfBuff'?
+  case 'activate':return action.mode==='revealBottomBuff'?
+   '起動主要：公開 1 張手牌放到牌底':
+   action.mode==='discardSelfBuff'?
     '起動主要：棄一張手牌，本回合自身 BP＋1500（每回合一次）':
     action.mode==='selfRestEnergyRetire'?
     (pack?.cards&&state?.players?.some(p=>[...p.front,...p.energy].some(c=>c?.uid===action.uid&&
@@ -170,6 +173,7 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseTopOrder':return '依序放回：'+name();
   case 'chooseRestFrontEnergy':return 'REST '+name()+'，本回合產能＋1';
   case 'chooseEitherBuff':return action.uid===null?'不指定其他角色':'選擇 '+name()+'，本回合 BP+1000';
+  case 'chooseRevealBottom':return '公開 '+name()+' 並放到牌底';
   case 'chooseOwnBuff':case 'chooseMainBuff':case 'chooseTraitBuff':case 'chooseRestBp':
   case 'chooseRetireBp':case 'chooseTargetMany':return action.uid===null?'完成目標選擇':'選擇第 '+(state?.pending?.selected?.length+1||1)+' 個角色';
   case 'chooseFrontEnergyGrant':return action.uid===null?

@@ -1885,6 +1885,26 @@ function resolveChoice(s,a,pack){
   }else if(a.mode!=='skip')throw Error('Invalid block floor choice');
   s.pending=null;continueEffectQueue(pack,s);return;
  }
+ if(q.kind==='effect-reveal-bottom'){
+  const index=p.hand.findIndex(c=>c.uid===a.uid);
+  const source=field(p).find(c=>c.uid===q.sourceUid);
+  if(index<0||!q.choices.includes(a.uid)||!source||source.fieldEntryStamp!==q.sourceStamp)
+   throw Error('Reveal-to-bottom lost its hand card or source');
+  const physical=p.hand[index];
+  const printed=card(pack,physical);
+  s.publicReveals.push({kind:'hand-to-bottom',owner:q.player,
+   title:titleOf(pack,q.player),cardId:physical.cardId,uid:physical.uid,
+   trigger:printed.trigger||null,turn:s.turn});
+  if(s.publicReveals.length>12)s.publicReveals.splice(0,s.publicReveals.length-12);
+  moveOwnedLinear(pack,s,{owner:q.player,from:'hand',to:'deck',index,
+   reason:'own-effect',sourceUid:q.sourceUid});
+  if(printed.type==='character'&&Number.isInteger(printed.bp)&&printed.bp>=q.minPrintedBp){
+   source.buffs??=[];
+   source.buffs.push({bp:q.bp,untilTurn:s.turn});
+  }
+  s.pending=null;
+  return;
+ }
  if(q.kind==='effect-hand-bottom'){
   if(a.uid!==null){
    const index=p.hand.findIndex(c=>c.uid===a.uid);
@@ -3345,6 +3365,9 @@ function legalPending(pack,s){
  if(q.kind==='effect-hand-bottom')return [
   ...p.hand.map(c=>({type:'chooseHandBottom',uid:c.uid})),
   {type:'chooseHandBottom',uid:null}];
+ if(q.kind==='effect-reveal-bottom')return q.choices
+  .filter(uid=>p.hand.some(c=>c.uid===uid))
+  .map(uid=>({type:'chooseRevealBottom',uid}));
  if(q.kind==='effect-pay-deploy-self')return [
   {type:'choosePayDeploy',mode:'pay'},{type:'choosePayDeploy',mode:'skip'}];
  if(q.kind==='effect-deploy-self-active')return ['front','energy'].flatMap(line=>
@@ -3985,6 +4008,9 @@ export function legalUniversalActions(pack,s){
    if(ability?.op==='discardHandBuffSelf'&&pl.hand.length>0&&
     !s.mainAbilityUsedUids.includes(c.uid))
     out.push({type:'activate',uid:c.uid,mode:'discardSelfBuff'});
+   if(ability?.op==='revealHandBottomBuff'&&pl.hand.length>0&&
+    !s.mainAbilityUsedUids.includes(c.uid))
+    out.push({type:'activate',uid:c.uid,mode:'revealBottomBuff'});
    if(ability?.op==='oncePayProgram'&&!s.mainAbilityUsedUids.includes(c.uid)){
     const onFront=pl.front.some(x=>x?.uid===c.uid);
     const placed=onFront||pl.energy.some(x=>x?.uid===c.uid);
@@ -4405,6 +4431,17 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
     attemptFieldActive(s,p,selected);
     break;
    }
+   if(ability.op==='revealHandBottomBuff'){
+    if(action.mode!=='revealBottomBuff'||!pl.hand.length||
+     s.mainAbilityUsedUids.includes(selected.uid)||
+     !Number.isInteger(selected.fieldEntryStamp)||selected.fieldEntryStamp<1)
+     throw Error('Reveal-to-bottom MAIN requires an unused source and one hand card');
+    s.mainAbilityUsedUids.push(selected.uid);
+    s.pending={kind:'effect-reveal-bottom',player:p,sourceUid:selected.uid,
+     sourceStamp:selected.fieldEntryStamp,choices:pl.hand.map(c=>c.uid),
+     minPrintedBp:ability.minPrintedBp,bp:ability.bp};
+    break;
+   }
    if(ability.op==='discardHandBuffSelf'){
     if(action.mode!=='discardSelfBuff'||!pl.hand.length||
      s.mainAbilityUsedUids.includes(selected.uid))
@@ -4680,7 +4717,7 @@ export function assertUniversalMatch(pack,s){
    !Array.isArray(s.initialCounts)||s.initialCounts.length!==2||
    s.players?.length!==2||!playerIndex(s.active)||
    !['playing','finished'].includes(s.status))throw Error('Incorrect pack/version or match state');
- if(s.pending&&(!playerIndex(s.pending.player)||!['phase-order','retirement-order','effect-move-order','effect-rest-tuck','effect-tuck-moved','effect-grant-cause','effect-hand-bottom','effect-pay-deploy-self','effect-deploy-self-active','effect-outside-hand-or-rest','effect-recover-under','effect-energy-front','effect-entry-protect','block','life-batch-order','life-trigger','effect-target','effect-target-many','effect-grant-attack','granted-attack-draw','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-named-outside-bounce-retire','effect-optional-draw','effect-strip-raid-top','effect-retire-own-field','effect-retire-own-character','main-field-trait-retire','effect-rest-bp','effect-attack-ban','effect-own-front-protect','effect-grant-ap-tax','effect-grant-front-energy','raid-effect-order','effect-buff-trait','effect-buff-own','effect-buff-either','effect-active-own-named','effect-once-choice','main-two-buff','main-discard-buff','main-discard-self-retire','main-rest-front-energy','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-filter-many-choice','effect-top-order','effect-recover-outside','effect-outside-rest','effect-outside-name-rest','effect-outside-traitless-rest','effect-named-zone-entry','effect-hand-rest','effect-hand-rest-or-raid','effect-optional-pay-ap','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-remove-outside','effect-selection-hand-payment','attack-end-swap','effect-choice-mode','recovered-self-entry','effect-optional-mill','effect-pay-ap-deploy','effect-top-trait-outside','effect-line-move','effect-line-slot','effect-rest-two','effect-self-front','effect-raid-leave','effect-rest-lock','effect-grant-block-at-least','effect-may-draw-discard'].includes(s.pending.kind)))
+ if(s.pending&&(!playerIndex(s.pending.player)||!['phase-order','retirement-order','effect-move-order','effect-rest-tuck','effect-tuck-moved','effect-grant-cause','effect-hand-bottom','effect-pay-deploy-self','effect-deploy-self-active','effect-outside-hand-or-rest','effect-recover-under','effect-energy-front','effect-entry-protect','block','life-batch-order','life-trigger','effect-target','effect-target-many','effect-grant-attack','granted-attack-draw','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-named-outside-bounce-retire','effect-optional-draw','effect-strip-raid-top','effect-retire-own-field','effect-retire-own-character','main-field-trait-retire','effect-rest-bp','effect-attack-ban','effect-own-front-protect','effect-grant-ap-tax','effect-grant-front-energy','raid-effect-order','effect-buff-trait','effect-buff-own','effect-buff-either','effect-reveal-bottom','effect-active-own-named','effect-once-choice','main-two-buff','main-discard-buff','main-discard-self-retire','main-rest-front-energy','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-filter-many-choice','effect-top-order','effect-recover-outside','effect-outside-rest','effect-outside-name-rest','effect-outside-traitless-rest','effect-named-zone-entry','effect-hand-rest','effect-hand-rest-or-raid','effect-optional-pay-ap','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-remove-outside','effect-selection-hand-payment','attack-end-swap','effect-choice-mode','recovered-self-entry','effect-optional-mill','effect-pay-ap-deploy','effect-top-trait-outside','effect-line-move','effect-line-slot','effect-rest-two','effect-self-front','effect-raid-leave','effect-rest-lock','effect-grant-block-at-least','effect-may-draw-discard'].includes(s.pending.kind)))
   throw Error('Invalid pending controller');
  if(!Array.isArray(s.raidedThisTurn)||s.raidedThisTurn.length!==2||
    s.raidedThisTurn.some(x=>typeof x!=='boolean')||
@@ -5090,6 +5127,17 @@ export function assertUniversalMatch(pack,s){
    Object.keys(q).length!==5||Object.keys(q).some(k=>
     !['kind','player','sourceUid','sourceStamp','choices'].includes(k)))
    throw Error('Invalid paid MAIN retire pending provenance');
+ }
+ if(s.pending?.kind==='effect-reveal-bottom'){
+  const q=s.pending,src=field(s.players[q.player]).find(c=>c.uid===q.sourceUid);
+  const printed=src&&card(pack,src),ab=printed?.mainAbility;
+  if(!src||src.fieldEntryStamp!==q.sourceStamp||ab?.op!=='revealHandBottomBuff'||
+   ab.minPrintedBp!==q.minPrintedBp||ab.bp!==q.bp||
+   !s.mainAbilityUsedUids.includes(q.sourceUid)||
+   !Array.isArray(q.choices)||!same(q.choices,s.players[q.player].hand.map(c=>c.uid))||
+   Object.keys(q).length!==7||
+   Object.keys(q).some(k=>!['kind','player','sourceUid','sourceStamp','choices','minPrintedBp','bp'].includes(k)))
+   throw Error('Invalid reveal-to-bottom pending');
  }
  validateContinuousStates(s);
  if(typeof s.endRefreshed!=='boolean')throw Error('Invalid end refresh flag');
