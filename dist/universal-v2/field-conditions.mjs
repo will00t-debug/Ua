@@ -139,6 +139,26 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   }
   return false;
  }
+ if(condition.kind==='ownFrontNoOtherCharacter'){
+  // 他のキャラ is another character on this player's front line. Energy-line
+  // cards and fields are a different zone. This card does not count itself.
+  return !s.players[owner].front.some(c=>c&&c.uid!==sourceUid&&
+   printed(c).type==='character');
+ }
+ if(condition.kind==='oppFrontCurrentBpBelowPrinted'){
+  // 元々のBP is the number printed at the lower left (Q2325). The live total
+  // is read now. Energy-line cards and fields are not the opponent's front.
+  // A card sitting exactly at its printed BP does not qualify.
+  if(typeof cardBp!=='function')throw Error('Printed BP comparison needs a live BP reader');
+  return s.players[1-owner].front.some(c=>c&&printed(c).type==='character'&&
+   cardBp(c)<printed(c).bp);
+ }
+ if(condition.kind==='otherOwnCharacterRetiredThisTurn'){
+  // このターン中、自分の場の他のキャラ. Front and energy are both 場.
+  // A field is not a character. This physical card does not count itself.
+  return (s.turnRetireEvents||[]).some(e=>e.turn===s.turn&&
+   e.controller===owner&&e.cardType==='character'&&e.uid!==sourceUid);
+ }
  if(condition.kind==='ownHandToOutsideThisTurn'){
   // 自分の手札を場外に置いている: the owner placed that hand card.
   // An event play is a rule move. A payment or own effect also counts.

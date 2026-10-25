@@ -10,10 +10,6 @@ const FOCUS=['bleach','sword-art-online'];
 const PORTED=['BLC-1-058','BLC-1-088','BLC-1-101','BLC-4-073'];
 // Official iframe pages fetched 2026-10-24. None of these pages contained an FAQ.
 export const C1_OFFICIAL_REVIEWS=Object.freeze({
- 'BLC-1-091':{status:'PARTIAL',set:'UA08BT',
-  missing:'name alias 山本 元柳斎 重國 exists; BP while own front has no other character does not'},
- 'BLC-2-041':{status:'ENGINE BLOCKED',set:'EX07BT',
-  missing:'BP while another own character truly retired this turn; the current count includes this physical card'},
  'SAO-1-076':{status:'ENGINE BLOCKED',set:'UA15BT',
   missing:'on play, REST-play up to one hand character with energy at most 2, AP 1 and trait ALO; no color is printed'},
  'SAO-1-085':{status:'ENGINE BLOCKED',set:'UA15BT',
