@@ -131,7 +131,9 @@ const testForKind=Object.freeze({
  soifonNameActive:'tests/v2-c29-askin-soifon.test.mjs',
  nellielEntryReplay:'tests/v2-c29-nelliel-pernida-loyd.test.mjs',
  pernidaFieldDown:'tests/v2-c29-nelliel-pernida-loyd.test.mjs',
- loydRaidBase:'tests/v2-c29-nelliel-pernida-loyd.test.mjs'
+ loydRaidBase:'tests/v2-c29-nelliel-pernida-loyd.test.mjs',
+ konRestRetireIchigo:'tests/v2-c29-kon-bazz.test.mjs',
+ bazzDiscardGrants:'tests/v2-c29-kon-bazz.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.

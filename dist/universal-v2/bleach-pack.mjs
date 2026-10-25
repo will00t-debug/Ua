@@ -1145,6 +1145,10 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-4-010","kind":"pernidaFieldDown","number":"EX15BT/BLC-4-010","name":"ペルニダ・パルンカジャス","color":"yellow","energy":4,"ap":1,"bp":4000,"gen":1,"trigger":"draw","type":"character","effect":"啟動・主要〔前線／每回合1次／將1張手牌送至場外〕：僅在自己場上有《友哈巴赫》時可發動；選1個對方場上BP1500以上的角色，本回合BP−1000。"}
 ,
 {"id":"BLC-1-026","kind":"loydRaidBase","number":"UA08BT/BLC-1-026","name":"ロイド・ロイド（R）","color":"yellow","energy":1,"ap":1,"bp":2000,"gen":1,"trigger":null,"type":"character","effect":"己方具有 Raid 的角色卡可在此角色上 Raid。"}
+,
+{"id":"BLC-4-047","kind":"konRestRetireIchigo","number":"EX15BT/BLC-4-047","name":"コン","color":"purple","energy":0,"ap":1,"bp":500,"gen":1,"trigger":"draw","type":"character","effect":"啟動・主要〔改為Rest，並使此卡退場〕：可從自己場外將最多1張所需能量0的紫色《黑崎一護》以Rest登場。"}
+,
+{"id":"BLC-1-011","kind":"bazzDiscardGrants","number":"UA08BT/BLC-1-011","name":"バズビー","color":"yellow","energy":5,"ap":1,"bp":4000,"gen":1,"trigger":"draw","type":"character","effect":"主要階段：將 1 張手牌送至場外，使此角色本回合獲得 Damage 2，以及「攻擊並贏得戰鬥時，抽 1 張」。"}
  ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1283,6 +1287,8 @@ export function checkedBleachAddonDefinition(p){
  const isNelliel=p.kind==='nellielEntryReplay';
  const isPernida=p.kind==='pernidaFieldDown';
  const isLoyd=p.kind==='loydRaidBase';
+ const isKon=p.kind==='konRestRetireIchigo';
+ const isBazz=p.kind==='bazzDiscardGrants';
  const topDiscard={
   'BLC-3-007':{count:3,filter:{field:'trait',value:'護廷十三隊'}},
   'BLC-3-002':{count:3,filters:[
@@ -1316,7 +1322,7 @@ export function checkedBleachAddonDefinition(p){
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isAskin||isSoifon||isNelliel||isPernida||isLoyd||isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest||isOwnCharacterDraw||isPeekAttack||isDrawInstead||isRevealOppTop||isRevealWindow||isEnergyWindow||isMillPurple||isEnergyBounce||isStepOr;
+ const special=isAskin||isSoifon||isNelliel||isPernida||isLoyd||isKon||isBazz||isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest||isOwnCharacterDraw||isPeekAttack||isDrawInstead||isRevealOppTop||isRevealWindow||isEnergyWindow||isMillPurple||isEnergyBounce||isStepOr;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1331,6 +1337,8 @@ export function checkedBleachAddonDefinition(p){
   ...(isNelliel?{mainAbility:{op:'oncePayProgram',oncePerTurn:true,frontOnly:false,raidOnly:false,payAp:1,requiresOwnName:null,then:[{op:'enemyBpDown',bp:1000,optional:true,minBp:1500}]}}:{}),
   ...(isPernida?{mainAbility:{op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,then:[{op:'discardGate',optional:false,when:{kind:'ownNameExists',turn:'any',zone:'field',excludeSelf:false,name:'ユーハバッハ'},then:[{op:'enemyBpDown',bp:1000,optional:false,minBp:1500,zone:'field'}]}]}}:{}),
   ...(isLoyd?{raidAcceptsAny:true}:{}),
+  ...(isKon?{mainAbility:{op:'restRetireDeployOutside',then:[{op:'deployOutsideEnergyRest',name:'黒崎 一護',color:'purple',maxEnergy:0,optional:true,anyAp:true}]}}:{}),
+  ...(isBazz?{mainAbility:{op:'discardGrantProgram',frontOnly:false,then:[{op:'discardGate',optional:false,then:[{op:'grantSelfAttackDamageThisTurn',amount:2},{op:'grantSelfAttackWinDrawThisTurn'}]}]}}:{}),
   ...(isStepOr?{mainAbility:{op:'onceBuffSelfWhen',oncePerTurn:true,bp:1000,when:{logic:'any',checks:[
    {kind:'oppFrontLiveBpBelowPrinted',turn:'any'},
    {kind:'oppRestCharacter',turn:'any',zone:'front'}]}}}:{}),

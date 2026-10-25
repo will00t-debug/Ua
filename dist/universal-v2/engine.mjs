@@ -54,6 +54,11 @@ const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 // (REST or a legal Raid). They are not the older deployOwnHandRest cause,
 // which remains the literal string 'ownEffect' and stays outside this set.
 const OWN_EFFECT_ENTRY=new Set(['outsideEffect','outsideEffectRaid','recoveredEffect','handEffect','handEffectRaid']);
+function matchesOutsideEnergyRest(pack,physical,job){
+ const d=card(pack,physical);
+ return d.type==='character'&&cardHasName(d,job.name)&&
+  d.color===job.color&&d.energy<=job.maxEnergy;
+}
 function matchesHandRestOrRaid(pack,s,physical,spec){
  const d=card(pack,physical);
  if(!(d.type===spec.type&&d.color===spec.color&&d.ap===spec.ap&&
@@ -994,6 +999,11 @@ function continueEffectQueue(pack,s){
     if(choices.length)s.pending={kind:'effect-outside-rest',player:owner,
      sourceUid:job.sourceUid,choices,name:job.name,color:job.color,
      energy:job.energy,ap:job.ap,optional:true};
+   }else if(job.op==='deployOutsideEnergyRest'){
+    const choices=pl.outside.filter(c=>matchesOutsideEnergyRest(pack,c,job)).map(c=>c.uid);
+    if(choices.length)s.pending={kind:'effect-outside-rest',player:owner,
+     sourceUid:job.sourceUid,choices,name:job.name,color:job.color,
+     maxEnergy:job.maxEnergy,anyAp:true,optional:true};
    }else if(job.op==='resolveAttackWinRecovery'){
    const printed=card(pack,{uid:job.sourceUid,cardId:job.sourceCardId});
    const profile=printed.attackWinRecover;
@@ -1277,7 +1287,10 @@ function continueEffectQueue(pack,s){
    const earned=printed?.effects.onPlay?.some(e=>e.op==='raidBaseEnergyThen'&&
     e.then.some(x=>x.op==='grantSelfAttackDamageThisTurn'&&x.amount===job.amount))||
     printed?.mainAbility?.op==='oncePayProgram'&&
-    printed.mainAbility.then.some(e=>e.op==='grantSelfAttackDamageThisTurn'&&e.amount===job.amount);
+    printed.mainAbility.then.some(e=>e.op==='grantSelfAttackDamageThisTurn'&&e.amount===job.amount)||
+    printed?.mainAbility?.op==='discardGrantProgram'&&
+    printed.mainAbility.then[0]?.op==='discardGate'&&
+    printed.mainAbility.then[0].then?.some(e=>e.op==='grantSelfAttackDamageThisTurn'&&e.amount===job.amount);
    if(!source||!earned||!Number.isInteger(source.fieldEntryStamp))
     throw Error('Unproven this-turn attack damage');
    source.attackDamageGranted={turn:s.turn,stamp:source.fieldEntryStamp,amount:2};
@@ -2802,7 +2815,10 @@ function resolveChoice(s,a,pack){
    if(i<0||!q.choices.includes(a.uid)||!['front','energy'].includes(a.line))
     throw Error('Outside REST deployment needs eligible own UID and line');
    const physical=p.outside[i],d=card(pack,physical);
-   if(d.type!=='character'||d.raidName||!cardHasName(d,q.name)||
+   if(q.anyAp===true){
+    if(!matchesOutsideEnergyRest(pack,physical,q))
+     throw Error('Outside energy REST printed filters changed');
+   }else if(d.type!=='character'||d.raidName||!cardHasName(d,q.name)||
     d.color!==q.color||d.energy>q.energy||d.ap!==q.ap)
     throw Error('Outside REST printed filters changed');
    commitDestination(pack,s,q.player,a.line,a.slot,a.replaceUid);
@@ -4373,6 +4389,10 @@ export function legalUniversalActions(pack,s){
    if(ability?.op==='fieldOnceBuffOther'&&!s.mainAbilityUsedUids.includes(c.uid)&&
     field(pl).some(x=>x.uid!==c.uid&&card(pack,x).type==='character'))
     out.push({type:'activate',uid:c.uid,mode:'fieldOnceBuffOther'});
+   if(ability?.op==='restRetireDeployOutside'&&c.ready)
+    out.push({type:'activate',uid:c.uid,mode:'restRetireDeploy'});
+   if(ability?.op==='discardGrantProgram'&&pl.hand.length)
+    out.push({type:'activate',uid:c.uid,mode:'discardGrant'});
    if(ability?.op==='restRetireRecoverOutside'&&c.ready){
     const query=ability.filters?{filters:ability.filters,logic:ability.logic}:
      {filter:ability.filter};
@@ -4904,6 +4924,29 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
      filter:{field:'type',value:'character'},bp:ability.bp,optional:false,excludeSelf:true};
     break;
    }
+   if(ability.op==='restRetireDeployOutside'){
+    if(action.mode!=='restRetireDeploy'||!selected.ready)
+     throw Error('REST retire deploy needs a READY character');
+    selected.ready=false;
+    // Retirement, including 退場時, finishes before the outside deploy.
+    s.effectQueue.unshift({...ability.then[0],owner:p,sourceUid:selected.uid,
+     sourceName:d.name});
+    const pos=location(s,p,selected.uid);
+    const paused=retire(pack,s,p,pos.line,pos.slot);
+    if(!paused)continueEffectQueue(pack,s);
+    break;
+   }
+   if(ability.op==='discardGrantProgram'){
+    const placed=pl.front.some(c=>c?.uid===selected.uid)||
+     pl.energy.some(c=>c?.uid===selected.uid);
+    if(action.mode!=='discardGrant'||!placed||!pl.hand.length)
+     throw Error('Repeatable discard grants need a field character and a hand card');
+    s.effectQueue.push(...ability.then.map(e=>({...e,owner:p,
+     sourceUid:selected.uid,sourceName:d.name})),
+     ...sourceMoveBoundary(pack,s,p,selected.uid));
+    continueEffectQueue(pack,s);
+    break;
+   }
    if(ability.op==='restRetireRecoverOutside'){
     const query=ability.filters?{filters:ability.filters.map(f=>({...f})),logic:ability.logic}:
      {filter:{...ability.filter}};
@@ -5241,11 +5284,16 @@ export function assertUniversalMatch(pack,s){
    ['mustBlockGranted','grantSelfMustBlockThisTurn']]){
    const g=physical[key];
    if(g===undefined)continue;
+   const printed=card(pack,physical);
+   const fromPlay=printed.effects.onPlay?.some(x=>x.op===op);
+   const fromDiscard=printed.mainAbility?.op==='discardGrantProgram'&&
+    printed.mainAbility.then?.[0]?.op==='discardGate'&&
+    printed.mainAbility.then[0].then?.some(x=>x.op===op);
    if(!g||typeof g!=='object'||Array.isArray(g)||
     !Number.isInteger(g.turn)||g.turn<0||g.turn>s.turn||
     !Number.isInteger(g.stamp)||g.stamp<1||g.stamp>=s.nextFieldEntryStamp||
     Object.keys(g).length!==2||Object.keys(g).some(k=>!['turn','stamp'].includes(k))||
-    !card(pack,physical).effects.onPlay?.some(x=>x.op===op))
+    !(fromPlay||fromDiscard))
     throw Error('Forged temporary physical battle grant');
   }
  for(let owner=0;owner<2;owner++)for(const physical of field(s.players[owner])){
@@ -5871,7 +5919,7 @@ export function assertUniversalMatch(pack,s){
    !['grantedAttackDraw','grantOnAttack','grantSelfSniperThisTurn','grantSelfAttackWinDrawThisTurn','grantSelfMustBlockThisTurn','buffSelfUntilNextOwnStart','grantSelfAttackEndSwapThisTurn','resolveAttackWinRecovery','draw','drawIfOwnName','drawIfOwnOutsideNamedCountAtLeast','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','drawIfSelfBpAtLeast','returnRetiredToHand','drawIfOppRestCharacter','drawIfOppCharacterBpAtLeast','drawIfOwnNameAndHandFewer','activeOwnNamed','millTop','buffSelf','buffSelfPerOwnOutsideGroups','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','revealOppTopPlace','chooseEnergyRevealOutside','optionalRemoveHandThen','retireOppFrontUnderBp','retireOppFrontOneUnderBp','bounceOppFrontOneUnderBp','conditionalBounceOrRetireByOwnOutsideNames','completeResolvingEvent','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','forbidAttackOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopUpToTwoBottom','deployOwnHandRest','deployOwnHandSpecial','deployOwnHandRestOrRaid','optionalPayApThen','optionalRetireThenProgram','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
     'discardGate','removeOutsideThen','enemyFrontAllBpDown','retireOppFrontAllUnderBp',
     'nextEligibleHandPlayApDiscount','grantFrontEnergyOwnOtherFrontTrait','buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
-    'recoverOutsideUnderEnergy','recoverOutsideColorUnderEnergy','deployOutsideRest','deployOutsideNameRest','deployNamedFromZones','payApDeployNamedRest','inspectTopTraitOutside','deployOutsideTraitlessRestOrRaid','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','retireSourceOnPhaseEnd','moveAtMainEnd','retireOwnFieldOne','retireOwnCharacterOne','openBlock','resolveSniperBattle','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','resolveAttackEndSwap','phaseOrder','effectMoveOrder','restSelfTuckMovedFaceDown','sourceResolutionBoundary','lifeBatchStep','lifeRelease','advanceAfterAttack','additionalBattleDamage','openRetirementBatch','closeRetirementBatch','retirementOrder','battleImpactDamage','discardOppHand','activeSelfIf','openEnergyMoveGrants','moveOtherAcrossOrRemove','raidBaseEnergyThen','grantSelfAttackDamageThisTurn','restOppFrontLockActive','removeAnyOutsideScale','inspectTopColoredNamesOutside','drawDiscardIfEffectApPaid','activeSelf','grantSelfImpactThisTurn','grantOtherImpactThisTurn','returnSourceToHand','optionalOwnLifeToHandThenDraw','grantOwnNameBlockAtLeast'].includes(e.op)))
+    'recoverOutsideUnderEnergy','recoverOutsideColorUnderEnergy','deployOutsideRest','deployOutsideEnergyRest','deployOutsideNameRest','deployNamedFromZones','payApDeployNamedRest','inspectTopTraitOutside','deployOutsideTraitlessRestOrRaid','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','retireSourceOnPhaseEnd','moveAtMainEnd','retireOwnFieldOne','retireOwnCharacterOne','openBlock','resolveSniperBattle','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','resolveAttackEndSwap','phaseOrder','effectMoveOrder','restSelfTuckMovedFaceDown','sourceResolutionBoundary','lifeBatchStep','lifeRelease','advanceAfterAttack','additionalBattleDamage','openRetirementBatch','closeRetirementBatch','retirementOrder','battleImpactDamage','discardOppHand','activeSelfIf','openEnergyMoveGrants','moveOtherAcrossOrRemove','raidBaseEnergyThen','grantSelfAttackDamageThisTurn','restOppFrontLockActive','removeAnyOutsideScale','inspectTopColoredNamesOutside','drawDiscardIfEffectApPaid','activeSelf','grantSelfImpactThisTurn','grantOtherImpactThisTurn','returnSourceToHand','optionalOwnLifeToHandThenDraw','grantOwnNameBlockAtLeast'].includes(e.op)))
   throw Error('Invalid queued effects');
  const energyMoves=s.effectQueue.filter(e=>e.op==='openEnergyMoveGrants');
  if(energyMoves.length>1||energyMoves.some(j=>j.owner!==s.active||s.phase!=='attack'||
