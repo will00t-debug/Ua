@@ -66,9 +66,9 @@ test('UA40BT and UA40ST share one catalogue and keep parallel art out',()=>{
  }
 });
 
-test('sixty-one whole prints enter the V2 pack and the other fifty-two stay out',()=>{
- assert.equal(REZERO_ENGINE_IDS.length,61);
- assert.equal(Object.keys(pack.cards).length,61);
+test('sixty-three whole prints enter the V2 pack and the other fifty stay out',()=>{
+ assert.equal(REZERO_ENGINE_IDS.length,63);
+ assert.equal(Object.keys(pack.cards).length,63);
  assert.equal(pack.cards['REZ-1-001'],undefined);
  assert.equal(pack.cards['REZ-1-008'].step,true);
  assert.equal(pack.cards['REZ-1-008'].implementation,'vanilla');
@@ -135,7 +135,14 @@ test('sixty-one whole prints enter the V2 pack and the other fifty-two stay out'
  assert.equal(pack.cards['REZ-1-108'].type,'field');
  assert.deepEqual(pack.cards['REZ-1-108'].mainAbility,{
   op:'restSelfThen',frontOnly:false,oncePerTurn:true,then:[{op:'peekTopOrBottom'}]});
- assert.equal(pack.cards['REZ-1-042'],undefined);
+ assert.deepEqual(pack.cards['REZ-1-042'].effects.onPlay,[{
+  op:'buffEitherOther',bp:1000,optional:true}]);
+ assert.equal(pack.cards['REZ-1-042'].trigger,'active');
+ assert.equal(pack.cards['REZ-1-042'].triggerEffect,null);
+ assert.deepEqual(pack.cards['REZ-1-041'].passiveBonuses,[{
+  condition:{kind:'ownPrintedCharacter',turn:'own',zone:'front',excludeSelf:false,
+   name:'ナツキ・スバル',color:'blue',energy:0},bp:1000}]);
+ assert.equal(pack.cards['REZ-1-041'].trigger,'active');
  assert.equal(pack.cards['REZ-1-101'],undefined);
  assert.deepEqual(validateUniversalDeck(pack,counts),[]);
  const s=fresh();
@@ -945,4 +952,152 @@ test('Roswaal mansion rests once and places the top card on top or bottom',()=>{
  empty=dispatchUniversalAction(packs,empty,{type:'activate',uid:house.uid,mode:'selfRestThen'});
  assert.equal(empty.pending,null);
  assert.equal(at(empty,0,house.uid).ready,false);
+});
+
+const eitherCounts={
+ ...Object.fromEntries(['REZ-1-007','REZ-1-008','REZ-1-012','REZ-1-014','REZ-1-022',
+  'REZ-1-036','REZ-1-043','REZ-1-037','REZ-1-068','REZ-1-086','REZ-1-042'].map(id=>[id,4])),
+ 'REZ-1-041':4,'REZ-1-010':2
+};
+const either=seed=>newUniversalMatch(packs,{decks:[eitherCounts,eitherCounts],first:0,seed});
+test('Felix buffs one other character on either field and Patrasche needs a blue zero-cost Subaru',()=>{
+ assert.equal(Object.values(eitherCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(pack,eitherCounts),[]);
+ const shell={id:'EITHER',name:'Gate',color:'blue',type:'character',energy:0,ap:1,bp:1000,gen:1,
+  traits:[],trigger:null,implementation:'dsl',effects:{}};
+ assert.throws(()=>createUniversalPack({id:'bad-either',cards:[{...shell,effects:{onPlay:[
+  {op:'buffEitherOther',bp:1000}]}}]}),/invalid either-field/);
+ assert.throws(()=>createUniversalPack({id:'bad-either',cards:[{...shell,type:'event',bp:0,effects:{onPlay:[
+  {op:'buffEitherOther',bp:1000,optional:true}]}}]}),/character onPlay/);
+ assert.throws(()=>createUniversalPack({id:'bad-print',cards:[{...shell,passiveBonuses:[{
+  condition:{kind:'ownPrintedCharacter',turn:'own',zone:'front',excludeSelf:false,
+   name:'ナツキ・スバル',color:'blue'},bp:1000}]}]}),/invalid or cyclic passive condition/);
+
+ let alone=either(4701);
+ alone=reach(alone,'main');
+ let felix;
+ [alone,felix]=playHand(alone,'REZ-1-042');
+ assert.equal(alone.pending,null);
+ assert.equal(universalBp(packs,alone,at(alone,0,felix.uid)),500);
+
+ let sided=either(4702);
+ const ally=pull(sided,0,'REZ-1-007');
+ const energyAlly=pull(sided,0,'REZ-1-008');
+ const enemy=pull(sided,1,'REZ-1-014');
+ const enemyEnergy=pull(sided,1,'REZ-1-012');
+ sided.players[0].front[0]=ally;
+ sided.players[0].energy[0]=energyAlly;
+ sided.players[1].front[0]=enemy;
+ sided.players[1].energy[0]=enemyEnergy;
+ sided=reach(sided,'main');
+ [sided,felix]=playHand(sided,'REZ-1-042');
+ assert.equal(sided.pending.kind,'effect-buff-either');
+ assert.equal(sided.pending.optional,true);
+ assert.equal(sided.pending.bp,1000);
+ for(const uid of [ally.uid,energyAlly.uid,enemy.uid,enemyEnergy.uid])
+  assert.ok(sided.pending.choices.includes(uid),uid);
+ assert.equal(sided.pending.choices.includes(felix.uid),false);
+ assert.equal(sided.players[0].energy.some(c=>c?.uid===energyAlly.uid),true);
+ const allyBp=universalBp(packs,sided,at(sided,0,ally.uid));
+ const energyBp=universalBp(packs,sided,at(sided,0,energyAlly.uid));
+ const enemyBp=universalBp(packs,sided,at(sided,1,enemy.uid));
+ const enemyEnergyBp=universalBp(packs,sided,at(sided,1,enemyEnergy.uid));
+ sided=dispatchUniversalAction(packs,sided,{type:'chooseEitherBuff',uid:energyAlly.uid});
+ assert.equal(sided.pending,null);
+ assert.equal(universalBp(packs,sided,at(sided,0,energyAlly.uid)),energyBp+1000);
+ assert.equal(universalBp(packs,sided,at(sided,0,ally.uid)),allyBp);
+ assert.equal(universalBp(packs,sided,at(sided,1,enemy.uid)),enemyBp);
+ assert.equal(universalBp(packs,sided,at(sided,1,enemyEnergy.uid)),enemyEnergyBp);
+
+ let foe=either(4703);
+ const wall=pull(foe,1,'REZ-1-014');
+ const friend=pull(foe,0,'REZ-1-007');
+ foe.players[1].front[0]=wall;
+ foe.players[0].front[0]=friend;
+ foe=reach(foe,'main');
+ [foe,felix]=playHand(foe,'REZ-1-042');
+ const wallBp=universalBp(packs,foe,at(foe,1,wall.uid));
+ const friendBp=universalBp(packs,foe,at(foe,0,friend.uid));
+ foe=dispatchUniversalAction(packs,foe,{type:'chooseEitherBuff',uid:wall.uid});
+ assert.equal(universalBp(packs,foe,at(foe,1,wall.uid)),wallBp+1000);
+ assert.equal(universalBp(packs,foe,at(foe,0,friend.uid)),friendBp);
+
+ let skipped=either(4704);
+ const kept=pull(skipped,0,'REZ-1-007');
+ const keptFoe=pull(skipped,1,'REZ-1-014');
+ skipped.players[0].front[0]=kept;
+ skipped.players[1].front[0]=keptFoe;
+ skipped=reach(skipped,'main');
+ [skipped]=playHand(skipped,'REZ-1-042');
+ const keptBp=universalBp(packs,skipped,at(skipped,0,kept.uid));
+ const keptFoeBp=universalBp(packs,skipped,at(skipped,1,keptFoe.uid));
+ skipped=dispatchUniversalAction(packs,skipped,{type:'chooseEitherBuff',uid:null});
+ assert.equal(skipped.pending,null);
+ assert.equal(universalBp(packs,skipped,at(skipped,0,kept.uid)),keptBp);
+ assert.equal(universalBp(packs,skipped,at(skipped,1,keptFoe.uid)),keptFoeBp);
+
+ let patrasche=either(4705);
+ fuel(patrasche,['REZ-1-043','REZ-1-043','REZ-1-043']);
+ patrasche=reach(patrasche,'main');
+ let horse;
+ [patrasche,horse]=playFront(patrasche,'REZ-1-041');
+ assert.equal(patrasche.pending,null);
+ assert.equal(universalBp(packs,patrasche,at(patrasche,0,horse.uid)),3000);
+ const handSubaru=pull(patrasche,0,'REZ-1-037');
+ patrasche.players[0].hand.push(handSubaru);
+ assert.equal(universalBp(packs,patrasche,at(patrasche,0,horse.uid)),3000);
+ patrasche.players[0].hand.pop();
+ patrasche.players[0].front[1]=handSubaru;
+ assert.equal(universalBp(packs,patrasche,at(patrasche,0,horse.uid)),4000);
+ patrasche.players[0].front[1]=null;
+ patrasche.players[0].energy[3]=handSubaru;
+ assert.equal(universalBp(packs,patrasche,at(patrasche,0,horse.uid)),3000);
+ patrasche.players[0].energy[3]=null;
+ patrasche.players[1].front[0]=handSubaru;
+ assert.equal(universalBp(packs,patrasche,at(patrasche,0,horse.uid)),3000);
+ patrasche.players[1].front[0]=null;
+ patrasche.players[0].front[1]=handSubaru;
+ patrasche.active=1;
+ assert.equal(universalBp(packs,patrasche,at(patrasche,0,horse.uid)),3000);
+ patrasche.active=0;
+ assert.equal(universalBp(packs,patrasche,at(patrasche,0,horse.uid)),4000);
+ const purple=pull(patrasche,0,'REZ-1-068');
+ patrasche.players[0].front[2]=purple;
+ assert.equal(universalBp(packs,patrasche,at(patrasche,0,horse.uid)),4000);
+ patrasche.players[0].front[1]=null;
+ assert.equal(universalBp(packs,patrasche,at(patrasche,0,horse.uid)),3000);
+
+ const labs=['LAB-A','LAB-B','LAB-C','LAB-D','LAB-E','LAB-F','LAB-G','LAB-H','LAB-I','LAB-J'];
+ const lab=(id,color)=>({id,name:id,color,type:'character',energy:0,ap:1,bp:1000,gen:1,
+  traits:[],trigger:null,implementation:'vanilla',effects:{}});
+ const fixture=createUniversalPack({id:'rezero-printed-lab',cards:[
+  rezeroPackCard(REZERO_BY_ID['REZ-1-041']),
+  rezeroPackCard(REZERO_BY_ID['REZ-1-043']),
+  {id:'LAB-SUBARU',name:'ナツキ・スバル',color:'blue',type:'character',energy:1,ap:1,bp:1000,gen:0,
+   traits:[],trigger:null,implementation:'vanilla',effects:{}},
+  ...labs.map(id=>lab(id,'blue'))
+ ]});
+ const fixtureCounts={'REZ-1-041':4,'REZ-1-043':4,'LAB-SUBARU':2,
+  ...Object.fromEntries(labs.map(id=>[id,4]))};
+ assert.equal(Object.values(fixtureCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(fixture,fixtureCounts),[]);
+ const fp=[fixture,fixture];
+ let mismatch=newUniversalMatch(fp,{decks:[fixtureCounts,fixtureCounts],first:0,seed:4706});
+ ['REZ-1-043','REZ-1-043','REZ-1-043'].forEach((id,i)=>{
+  const card=pull(mismatch,0,id);
+  card.ready=true;
+  mismatch.players[0].energy[i]=card;
+ });
+ mismatch=dispatchUniversalAction(fp,mismatch,{type:'next'});
+ mismatch=dispatchUniversalAction(fp,mismatch,{type:'next'});
+ assert.equal(mismatch.phase,'main');
+ const heavy=pull(mismatch,0,'LAB-SUBARU');
+ mismatch.players[0].front[0]=heavy;
+ const printed=pull(mismatch,0,'REZ-1-041');
+ mismatch.players[0].hand.push(printed);
+ const play=legalUniversalActions(fp,mismatch).find(a=>a.type==='play'&&a.uid===printed.uid&&a.line==='front');
+ assert.ok(play);
+ mismatch=dispatchUniversalAction(fp,mismatch,play);
+ assert.equal(universalBp(fp,mismatch,at(mismatch,0,printed.uid)),3000);
+ assert.equal(mismatch.players[0].front.some(c=>c?.uid===heavy.uid),true);
 });

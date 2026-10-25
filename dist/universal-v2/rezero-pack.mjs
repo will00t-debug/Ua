@@ -28,7 +28,9 @@ export function rezeroEngineKind(effectJa){
  if(e==='【自分のターン中】自分の場に〈フェルト〉がある場合、このキャラはBP+1000。')return 'feltTurnBp';
  if(e==='【自分のターン中】このターン中に自分がイベントカードを使用している場合、このキャラはBP+1000。')return 'eventTurnBp';
  if(e==='自分のフロントLに〈ナツキ・スバル〉がある場合、このキャラの発生エナジー+【青】。')return 'subaruFrontEnergy';
+ if(e==='【自分のターン中】自分のフロントLに必要エナジーが0の青の〈ナツキ・スバル〉がある場合、このキャラはBP+1000。')return 'subaruZeroBlueBp';
  if(e==='【登場時】自分の場の他のキャラを1枚まで選び、このターン中、BP+1000。')return 'buffOther';
+ if(e==='【登場時】自分か相手の場の他のキャラを1枚まで選び、このターン中、BP+1000。')return 'buffEither';
  if(e==='【登場時】BP2500以上の相手のフロントLのキャラを1枚まで選び、このターン中、BP-2000。')return 'frontDown2500';
  if(TOP_OUTSIDE.has(e))return 'topOutside';
  if(e===TOP_KEEP)return 'topKeep';
@@ -76,6 +78,7 @@ function onPlay(card,kind){
  if(kind==='bounce')return [{op:'bounceOwnOtherUnderEnergy',energy:1}];
  if(kind==='recoverAp2')return [{op:'recoverAp',count:2}];
  if(kind==='buffOther')return [{op:'buffOwnField',filter:{field:'type',value:'character'},bp:1000,optional:true,excludeSelf:true}];
+ if(kind==='buffEither')return [{op:'buffEitherOther',bp:1000,optional:true}];
  if(kind==='frontDown2500')return [{op:'enemyBpDown',bp:2000,optional:true,minBp:2500,zone:'front'}];
  if(kind==='topOutside')return [{op:'inspectTopArrange',count:TOP_OUTSIDE.get(card.effectJa),toOutside:true,rest:'top'}];
  if(kind==='topKeep'||kind==='aliasTopKeep')return [{op:'inspectTopAnyOutside',count:2,rest:'top'}];
@@ -147,6 +150,9 @@ export function rezeroPackCard(card){
   ...(kind==='subaruFrontEnergy'?{passiveBonuses:[{
    condition:{kind:'ownNameExists',turn:'any',zone:'front',excludeSelf:false,name:'ナツキ・スバル'},
    extraEnergy:1}]}:{}),
+  ...(kind==='subaruZeroBlueBp'?{passiveBonuses:[{
+   condition:{kind:'ownPrintedCharacter',turn:'own',zone:'front',excludeSelf:false,
+    name:'ナツキ・スバル',color:'blue',energy:0},bp:1000}]}:{}),
   ...(kind==='aliasTopKeep'?{nameAliases:['クルシュ・カルステン','フェリス']}:{}),
   ...(triggerEffect?{triggerEffect}:{})
  };

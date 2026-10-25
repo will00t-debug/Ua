@@ -180,6 +180,21 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   }
   return found>=condition.min;
  }
+ if(condition.kind==='ownPrintedCharacter'){
+  // 必要エナジー and 青 are the printed cost and printed color. Current
+  // energy, a generated pip, and a color change are not this sentence.
+  // Hand, deck, outside, the opponent, and a Raid under-card are not 場.
+  const pl=s.players[owner];
+  const zones=condition.zone==='front'?[pl.front]:
+   condition.zone==='energy'?[pl.energy]:[pl.front,pl.energy];
+  for(const zone of zones)for(const c of zone){
+   if(!c||(condition.excludeSelf&&c.uid===sourceUid))continue;
+   const d=printed(c);
+   if(d.type!=='character'||d.color!==condition.color||d.energy!==condition.energy)continue;
+   if(cardHasName(d,condition.name,originalEffectsDisabled(s,c)))return true;
+  }
+  return false;
+ }
  const pl=s.players[owner];
  const zones=condition.zone==='front'?[pl.front]:
   condition.zone==='energy'?[pl.energy]:[pl.front,pl.energy];

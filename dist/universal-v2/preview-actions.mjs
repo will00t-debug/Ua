@@ -29,6 +29,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-active-own-named':'可將最多 1 個己方指定名稱角色轉為 ACTIVE',
  'effect-bounce-own':'選擇返回手牌的己方角色',
  'effect-buff-own':'選擇己方角色增加本回合 BP',
+ 'effect-buff-either':'選擇自己或對手的其他角色，本回合 BP+1000',
  'effect-once-choice':'是否發動本回合一次能力',
  'effect-choice-mode':'選擇一項效果',
  'recovered-self-entry':'回收後可 REST 登場至能源線',
@@ -168,6 +169,7 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseTopFiltered':return action.uid===null?'不加入手牌，將其餘卡排列至底部':'加入手牌：'+name();
   case 'chooseTopOrder':return '依序放回：'+name();
   case 'chooseRestFrontEnergy':return 'REST '+name()+'，本回合產能＋1';
+  case 'chooseEitherBuff':return action.uid===null?'不指定其他角色':'選擇 '+name()+'，本回合 BP+1000';
   case 'chooseOwnBuff':case 'chooseMainBuff':case 'chooseTraitBuff':case 'chooseRestBp':
   case 'chooseRetireBp':case 'chooseTargetMany':return action.uid===null?'完成目標選擇':'選擇第 '+(state?.pending?.selected?.length+1||1)+' 個角色';
   case 'chooseFrontEnergyGrant':return action.uid===null?
