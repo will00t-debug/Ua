@@ -49,7 +49,7 @@ test('73 official standalone BLEACH profiles extend rather than replace 15 exist
   assert.equal(c.gen,p.id==='BLC-4-014'||p.id==='BLC-4-074'?1:p.id==='BLC-4-042'||p.id==='BLC-4-024'||p.id==='BLC-4-063'?2:p.gen,p.id+' printed base energy');
   assert.ok(!Object.hasOwn(c,'auto'));
   assert.equal(c.title,'bleach');
-  assert.equal(c.step,p.kind==='step'||p.kind==='stepAttackTraitBuff');
+  assert.equal(c.step,p.kind==='step'||p.kind==='stepAttackTraitBuff'||p.kind==='stepOnceFrontOr');
   if(p.kind==='bounce')
    assert.deepEqual(c.effects.onPlay,[{op:'bounceOwnOtherUnderEnergy',energy:1}]);
   if(p.kind==='drawPlay')assert.deepEqual(c.effects.onPlay,[{op:'draw',count:1}]);
