@@ -57,6 +57,7 @@ export function rezeroEngineKind(effectJa){
  if(e==='『BP3000以下』の相手のフロントLのキャラを1枚選び、退場させる。自分の場に〈ベアトリス〉がある場合、『BP4000以下』に代わる。自分の場に〈ベアトリス〉と〈ナツキ・スバル〉がある場合、『BP5000以下』に代わる。')return 'minaRetire';
  if(e==='自分の場の〈レム〉を1枚選び、このターン中、BP+1000と【インパクト（+1）】（インパクトの与えるダメージが+1され、インパクトを持たない場合、【インパクト（1）】を得る）を与え、カードを1枚引く。')return 'remImpactDraw';
  if(e==='自分の山札の上から5枚見る。その中から［特徴：王選候補者］かイベントカードを1枚まで公開し手札に加える。残りを望む順で山札の下に置く。公開したカードが［特徴：王選候補者］の場合、自分のAPカードを1枚まで選び、アクティブにする。')return 'candidateApSearch';
+ if(e==='【起動メイン】【フロントLにある場合】 【ターン1】このターン中にこのキャラが自分の効果でアクティブからレストになったことがある場合のみ発動できる。このターン中、次に手札から使用する〈エミリア〉の必要エナジーを【紫×1】減らす。')return 'emiliaHandEnergy';
  return null;
 }
 const TOP_OUTSIDE=new Map([
@@ -199,6 +200,9 @@ export function rezeroPackCard(card){
   ...(kind==='emiliaRestActive'?{mainAbility:{
    op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,requireOwnEffectRest:true,
    then:[{op:'activeSelf'},{op:'buffSelfUntilNextOwnStart',bp:1000}]}}:{}),
+  ...(kind==='emiliaHandEnergy'?{mainAbility:{
+   op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,requireOwnEffectRest:true,
+   then:[{op:'discountNextNamedHandEnergy',name:'エミリア',color:'purple',amount:1}]}}:{}),
   ...(kind==='feltTurnBp'?{passiveBonuses:[{
    condition:{kind:'ownNameExists',turn:'own',zone:'field',excludeSelf:false,name:'フェルト'},
    bp:1000}]}:{}),

@@ -70,9 +70,9 @@ test('UA40BT and UA40ST share one catalogue and keep parallel art out',()=>{
  }
 });
 
-test('seventy-eight whole prints enter the V2 pack and the other thirty-five stay out',()=>{
- assert.equal(REZERO_ENGINE_IDS.length,78);
- assert.equal(Object.keys(pack.cards).length,78);
+test('seventy-nine whole prints enter the V2 pack and the other thirty-four stay out',()=>{
+ assert.equal(REZERO_ENGINE_IDS.length,79);
+ assert.equal(Object.keys(pack.cards).length,79);
  assert.equal(pack.cards['REZ-1-001'],undefined);
  assert.equal(pack.cards['REZ-1-008'].step,true);
  assert.equal(pack.cards['REZ-1-008'].implementation,'vanilla');
@@ -187,6 +187,13 @@ test('seventy-eight whole prints enter the V2 pack and the other thirty-five sta
  assert.equal(pack.cards['REZ-1-109'].triggerEffect,null);
  assert.deepEqual(pack.cards['REZ-1-109'].effects.onPlay,[{
   op:'searchTopTraitOrEventAp',count:5,trait:'王選候補者'}]);
+ assert.equal(pack.cards['REZ-1-085'].color,'purple');
+ assert.equal(pack.cards['REZ-1-085'].trigger,'draw');
+ assert.equal(pack.cards['REZ-1-085'].triggerEffect,null);
+ assert.equal(pack.cards['REZ-1-085'].effects.onPlay,undefined);
+ assert.deepEqual(pack.cards['REZ-1-085'].mainAbility,{
+  op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,requireOwnEffectRest:true,
+  then:[{op:'discountNextNamedHandEnergy',name:'エミリア',color:'purple',amount:1}]});
  assert.equal(pack.cards['REZ-1-067'].enterAlwaysActive,true);
  assert.equal(pack.cards['REZ-1-067'].impactNull,true);
  assert.equal(pack.cards['REZ-1-067'].trigger,'active');
@@ -2686,4 +2693,119 @@ test('the candidate insignia takes one trait or event, then readies AP only for 
  assert.equal(declined.players[0].hand.some(c=>c.uid===offered[0].uid),false);
  assert.equal(declined.players[0].apCards.filter(c=>c.ready).length,0);
  assert.equal(assertUniversalMatch(packs,declined),true);
+});
+
+const emiliaEnergyCounts={
+ ...Object.fromEntries(['REZ-1-085','REZ-1-098','REZ-1-088','REZ-1-086','REZ-1-081',
+  'REZ-1-068','REZ-1-105','REZ-1-016','REZ-1-072','REZ-1-073','REZ-1-079','REZ-1-080'].map(id=>[id,4])),
+ 'REZ-1-075':2
+};
+const emiliaEnergy=seed=>newUniversalMatch(packs,{decks:[emiliaEnergyCounts,emiliaEnergyCounts],first:0,seed});
+function restEmilia(s,uid){
+ const trial=pull(s,0,'REZ-1-098');
+ s.players[0].hand.push(trial);
+ s=dispatchUniversalAction(packs,s,legalUniversalActions(packs,s).find(a=>a.type==='event'&&a.uid===trial.uid));
+ const dumped=s.players[0].hand[0];
+ s=dispatchUniversalAction(packs,s,{type:'chooseDiscard',uid:dumped.uid});
+ s=dispatchUniversalAction(packs,s,{type:'chooseRestFrontAp',uid});
+ if(s.pending?.kind==='effect-recover-ap'){
+  const ap=s.players[0].apCards.find(c=>c.inPlay&&!c.ready);
+  s=dispatchUniversalAction(packs,s,{type:'chooseApRecovery',uid:ap.uid});
+ }
+ return s;
+}
+test('Emilia discounts the next hand Emilia by one purple only after her own effect rests her',()=>{
+ assert.equal(Object.values(emiliaEnergyCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(pack,emiliaEnergyCounts),[]);
+ const shell={id:'EM2',name:'Emilia',color:'purple',type:'character',energy:2,ap:1,bp:3000,gen:0,
+  traits:['王選候補者'],trigger:'draw',implementation:'dsl',effects:{}};
+ assert.throws(()=>createUniversalPack({id:'bad-em-energy',cards:[{...shell,effects:{onPlay:[
+  {op:'discountNextNamedHandEnergy',name:'エミリア',color:'purple',amount:1}]}}]}),/front main ability/);
+ assert.throws(()=>createUniversalPack({id:'bad-em-energy',cards:[{...shell,mainAbility:{
+  op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,requireOwnEffectRest:true,
+  then:[{op:'discountNextNamedHandEnergy',name:'レム',color:'purple',amount:1}]}}]}),/unsupported main action/);
+ let quiet=emiliaEnergy(6101);
+ fuel(quiet,['REZ-1-086','REZ-1-086']);
+ quiet=ownMain(quiet,2);
+ let holder;
+ [quiet,holder]=playFront(quiet,'REZ-1-085');
+ const costly=pull(quiet,0,'REZ-1-088');
+ quiet.players[0].hand.push(costly);
+ assert.equal(effectiveHandRequiredEnergy(pack,quiet,0,pack.cards['REZ-1-088']),3);
+ assert.equal(legalUniversalActions(packs,quiet).some(a=>a.uid===costly.uid),false);
+ at(quiet,0,holder.uid).ready=true;
+ assert.equal(frontOnce(quiet,holder.uid),false);
+ at(quiet,0,holder.uid).ready=false;
+ assert.equal(frontOnce(quiet,holder.uid),false);
+ at(quiet,0,holder.uid).ready=true;
+ quiet=restEmilia(quiet,holder.uid);
+ assert.equal(at(quiet,0,holder.uid).ready,false);
+ const heldSlot=quiet.players[0].front.findIndex(c=>c?.uid===holder.uid);
+ const held=quiet.players[0].front[heldSlot];
+ quiet.players[0].front[heldSlot]=null;
+ quiet.players[0].energy[2]=held;
+ assert.equal(frontOnce(quiet,holder.uid),false);
+ quiet.players[0].energy[2]=null;
+ quiet.players[0].front[heldSlot]=held;
+ const act=legalUniversalActions(packs,quiet).find(a=>a.type==='activate'&&a.uid===holder.uid);
+ assert.equal(uiActionLabel(act,{pack,state:quiet}),'起動主要：下一張從手牌使用的愛蜜莉雅，能源需求減少紫 1');
+ quiet=dispatchUniversalAction(packs,quiet,act);
+ assert.equal(effectiveHandRequiredEnergy(pack,quiet,0,pack.cards['REZ-1-088']),2);
+ assert.equal(effectiveHandRequiredEnergy(pack,quiet,0,pack.cards['REZ-1-105']),2);
+ assert.ok(legalUniversalActions(packs,quiet).some(a=>a.type==='play'&&a.uid===costly.uid&&a.line==='front'));
+ const zero=pull(quiet,0,'REZ-1-081');
+ quiet.players[0].hand.push(zero);
+ quiet=dispatchUniversalAction(packs,quiet,legalUniversalActions(packs,quiet).find(a=>a.type==='play'&&a.uid===zero.uid&&a.line==='front'));
+ assert.equal(quiet.players[0].nextNamedHandEnergy.length,0);
+ assert.equal(effectiveHandRequiredEnergy(pack,quiet,0,pack.cards['REZ-1-088']),3);
+ assert.equal(legalUniversalActions(packs,quiet).some(a=>a.uid===costly.uid),false);
+ assert.equal(assertUniversalMatch(packs,quiet),true);
+
+ let kept=emiliaEnergy(6102);
+ fuel(kept,['REZ-1-086','REZ-1-086']);
+ kept=ownMain(kept,2);
+ let source;
+ [kept,source]=playFront(kept,'REZ-1-085');
+ at(kept,0,source.uid).ready=true;
+ kept=restEmilia(kept,source.uid);
+ kept=dispatchUniversalAction(packs,kept,legalUniversalActions(packs,kept).find(a=>a.type==='activate'&&a.uid===source.uid));
+ const yellow=pull(kept,0,'REZ-1-105');
+ kept.players[0].hand.push(yellow);
+ assert.equal(legalUniversalActions(packs,kept).some(a=>a.type==='play'&&a.uid===yellow.uid),false);
+ const yellowFuel=pull(kept,0,'REZ-1-016');
+ yellowFuel.ready=true;
+ kept.players[0].energy[2]=yellowFuel;
+ const yellowFuel2=pull(kept,0,'REZ-1-016');
+ yellowFuel2.ready=true;
+ kept.players[0].energy[3]=yellowFuel2;
+ assert.equal(effectiveHandRequiredEnergy(pack,kept,0,pack.cards['REZ-1-105']),2);
+ kept=dispatchUniversalAction(packs,kept,legalUniversalActions(packs,kept).find(a=>a.type==='play'&&a.uid===yellow.uid&&a.line==='front'));
+ assert.equal(kept.players[0].nextNamedHandEnergy.length,0);
+ const later=pull(kept,0,'REZ-1-088');
+ kept.players[0].hand.push(later);
+ assert.equal(effectiveHandRequiredEnergy(pack,kept,0,pack.cards['REZ-1-088']),3);
+ assert.equal(assertUniversalMatch(packs,kept),true);
+
+ let expired=emiliaEnergy(6103);
+ fuel(expired,['REZ-1-086','REZ-1-086']);
+ expired=ownMain(expired,2);
+ let timed;
+ [expired,timed]=playFront(expired,'REZ-1-085');
+ at(expired,0,timed.uid).ready=true;
+ expired=restEmilia(expired,timed.uid);
+ expired=dispatchUniversalAction(packs,expired,legalUniversalActions(packs,expired).find(a=>a.type==='activate'&&a.uid===timed.uid));
+ const bystander=pull(expired,0,'REZ-1-068');
+ expired.players[0].hand.push(bystander);
+ expired=dispatchUniversalAction(packs,expired,legalUniversalActions(packs,expired).find(a=>a.type==='play'&&a.uid===bystander.uid&&a.line==='front'));
+ assert.equal(expired.players[0].nextNamedHandEnergy.length,1);
+ assert.equal(effectiveHandRequiredEnergy(pack,expired,0,pack.cards['REZ-1-088']),2);
+ expired=ownMain(expired,3);
+ assert.equal(expired.players[0].nextNamedHandEnergy.length,0);
+ assert.equal(effectiveHandRequiredEnergy(pack,expired,0,pack.cards['REZ-1-088']),3);
+ const slot=expired.players[0].front.findIndex(c=>c?.uid===timed.uid);
+ const parked=expired.players[0].front[slot];
+ expired.players[0].front[slot]=null;
+ expired.players[0].energy[2]=parked;
+ assert.equal(frontOnce(expired,timed.uid),false);
+ assert.equal(assertUniversalMatch(packs,expired),true);
 });
