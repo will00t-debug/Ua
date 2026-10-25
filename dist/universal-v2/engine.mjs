@@ -461,7 +461,10 @@ function startTurn(pack,s){
  s.turnEffectZoneMoves=[{handToOutside:false,outsideToHand:false},
   {handToOutside:false,outsideToHand:false}];
  s.ownEffectRests=[[],[]];
- for(const side of s.players)side.nextNamedHandEnergy=[];
+ for(const side of s.players){
+  side.nextNamedHandEnergy=[];
+  side.handCharacterBpMay=null;
+ }
  s.turnRetireEvents=[]; // Turn boundary clears history for both controllers.
  s.zoneMoveEvents=[]; // Per-turn internal provenance; ordinal monotonic across turns.
  for(const side of s.players)for(const unit of field(side)){
@@ -1102,6 +1105,23 @@ function continueEffectQueue(pack,s){
    if(!choices.length)throw Error('At-least front retirement lost its mandatory target');
    s.pending={kind:'effect-retire-at-least',player:owner,sourceUid:job.sourceUid,
     choices,floor:job.bp};
+  }else if(job.op==='retireOppFrontAtMostBp'){
+   const choices=s.players[1-owner].front.filter(c=>c&&bp(pack,s,c)<=job.bp&&
+    cardEffectTargetPayable(pack,s,owner,c.uid,0,job.sourceUid)).map(c=>c.uid);
+   if(!choices.length)throw Error('At-most front retirement lost its mandatory target');
+   s.pending={kind:'effect-retire-at-most',player:owner,sourceUid:job.sourceUid,
+    choices,ceiling:job.bp};
+  }else if(job.op==='grantHandCharacterBpMay'){
+   const source=pl.outside.find(c=>c.uid===job.sourceUid);
+   const printed=source&&card(pack,source);
+   const program=printed?.effects?.onPlay||[];
+   const retired=program.some(e=>e.op==='retireOppFrontAtMostBp'&&e.bp===5000);
+   const granted=program.some(e=>e.op==='grantHandCharacterBpMay'&&e.amount===1000);
+   const moved=s.zoneMoveEvents.some(e=>e.turn===s.turn&&e.owner===owner&&
+    e.uid===job.sourceUid&&e.from==='hand'&&e.to==='outside'&&e.reason==='rule');
+   if(!source||printed.type!=='event'||!retired||!granted||!moved||job.amount!==1000)
+    throw Error('Unproven hand character BP option');
+   pl.handCharacterBpMay={turn:s.turn,amount:1000,sourceUid:source.uid};
   }else if(job.op==='retireOppFrontUnderBp'){
    const limit=retireOppFrontLimit(pack,s,owner,job);
    const choices=s.players[1-owner].front.filter(c=>c&&bp(pack,s,c)<=limit).map(c=>c.uid);
@@ -2055,7 +2075,34 @@ function resolveChoice(s,a,pack){
   moveOwnedLinear(pack,s,{owner:q.player,from:'hand',to:'deck',index,
    reason:'own-effect',sourceUid:q.sourceUid});
   const shown=handRevealIdentity(printed);
-  if(shown.type==='character'&&Number.isInteger(shown.bp)&&shown.bp>=q.minPrintedBp){
+  const may=p.handCharacterBpMay;
+  const bonus=may&&may.turn===s.turn&&may.amount===1000&&
+   shown.type==='character'&&Number.isInteger(shown.bp)?1000:0;
+  const baseMeets=shown.type==='character'&&Number.isInteger(shown.bp)&&shown.bp>=q.minPrintedBp;
+  const boostedMeets=bonus>0&&shown.bp+bonus>=q.minPrintedBp;
+  if(bonus&&baseMeets!==boostedMeets){
+   s.pending={kind:'effect-hand-bp-may',player:q.player,sourceUid:q.sourceUid,
+    sourceStamp:q.sourceStamp,revealedUid:physical.uid,minPrintedBp:q.minPrintedBp,
+    bp:q.bp,baseBp:shown.bp,amount:1000};
+   return;
+  }
+  if(baseMeets){
+   source.buffs??=[];
+   source.buffs.push({bp:q.bp,untilTurn:s.turn});
+  }
+  s.pending=null;
+  return;
+ }
+ if(q.kind==='effect-hand-bp-may'){
+  if(a.mode!=='accept'&&a.mode!=='decline')throw Error('Invalid hand BP option');
+  const source=field(p).find(c=>c.uid===q.sourceUid);
+  const revealed=p.deck.find(c=>c.uid===q.revealedUid);
+  const shown=revealed&&handRevealIdentity(card(pack,revealed));
+  if(!source||source.fieldEntryStamp!==q.sourceStamp||!shown||
+   shown.type!=='character'||shown.bp!==q.baseBp)
+   throw Error('Hand BP option lost its source or revealed card');
+  const used=a.mode==='accept'?q.baseBp+q.amount:q.baseBp;
+  if(used>=q.minPrintedBp){
    source.buffs??=[];
    source.buffs.push({bp:q.bp,untilTurn:s.turn});
   }
@@ -3364,6 +3411,14 @@ function resolveChoice(s,a,pack){
   retire(pack,s,opponent,'front',slot,{by:'opponent'});
   continueEffectQueue(pack,s);return;
  }
+ if(q.kind==='effect-retire-at-most'){
+  const opponent=1-q.player,slot=s.players[opponent].front.findIndex(c=>c?.uid===a.uid);
+  if(slot<0||!q.choices.includes(a.uid)||bp(pack,s,s.players[opponent].front[slot])>q.ceiling)
+   throw Error('Illegal maximum-BP retirement target');
+  s.pending=null;
+  retire(pack,s,opponent,'front',slot,{by:'opponent'});
+  continueEffectQueue(pack,s);return;
+ }
  if(q.kind==='effect-retire-bp'){
   if(a.uid===null&&q.optional){s.pending=null;continueEffectQueue(pack,s);return;}
   const opponent=1-q.player,slot=s.players[opponent].front.findIndex(c=>c?.uid===a.uid);
@@ -3664,7 +3719,7 @@ export function newUniversalMatch(pack,{decks,seed=1,first=0}={}){
    deck:pile,hand:pile.splice(0,7),life:pile.splice(0,7),lifeRevealed:[],
    front:[null,null,null,null],energy:[null,null,null,null],
    outside:[],resolvingEvents:[],removed:[],apCards:[0,1,2].map(i=>({uid:'AP'+p+'-'+i,ready:false,inPlay:false})),ownTurns:0,
-   nextNamedHandEnergy:[]
+   nextNamedHandEnergy:[],handCharacterBpMay:null
   });
  }
  startTurn(pack,s);
@@ -4088,6 +4143,9 @@ function legalPending(pack,s){
   if(q.kind==='effect-named-outside-bounce-retire')
    return q.choices.map(uid=>({type:'chooseNamedOutsideBounceRetire',uid}));
   if(q.kind==='effect-retire-at-least')return q.choices.map(uid=>({type:'chooseRetireAtLeast',uid}));
+  if(q.kind==='effect-retire-at-most')return q.choices.map(uid=>({type:'chooseRetireAtMost',uid}));
+  if(q.kind==='effect-hand-bp-may')return [
+   {type:'chooseHandBpMay',mode:'accept'},{type:'chooseHandBpMay',mode:'decline'}];
   if(q.kind==='effect-retire-bp')return [
    ...(q.optional?[{type:'chooseRetireBp',uid:null}]:[]),
    ...q.choices.map(uid=>({type:'chooseRetireBp',uid}))
@@ -4260,6 +4318,10 @@ function eventMandatoryTargetsAvailable(pack,s,owner,d,reservedAp=d.ap,reservedH
    return enemy.front.some(c=>c&&bp(pack,s,c)>=job.bp&&
     !effectChoiceProtected(s,owner,c.uid,'event')&&
     cardEffectTargetPayable(pack,s,owner,c.uid,reservedAp,null,'event',reservedHandUid));
+  if(job.op==='retireOppFrontAtMostBp')
+   return enemy.front.some(c=>c&&bp(pack,s,c)<=job.bp&&
+    !effectChoiceProtected(s,owner,c.uid,'event')&&
+    cardEffectTargetPayable(pack,s,owner,c.uid,reservedAp,null,'event',reservedHandUid));
   if(job.op==='grantOwnFrontChoiceProtection')
    return s.players[owner].front.some(c=>c&&card(pack,c).type==='character');
   if(job.op==='conditionalBounceOrRetireByOwnOutsideNames')
@@ -4285,7 +4347,7 @@ function eventMandatoryTargetsAvailable(pack,s,owner,d,reservedAp=d.ap,reservedH
 // not a cost of playing a card, attacking or blocking.
 // The existing pending action is the exact resolution boundary; no new queue.
 const TARGETING_CARD_EFFECT_CHOICES=new Set([
- 'chooseRetireBp','chooseRetireAtLeast','chooseRestBp','chooseTarget','chooseTargetMany','chooseNamedOutsideBounceRetire',
+ 'chooseRetireBp','chooseRetireAtLeast','chooseRetireAtMost','chooseRestBp','chooseTarget','chooseTargetMany','chooseNamedOutsideBounceRetire',
  'chooseRaidTopStrip','chooseAttackBan','chooseRestLock','chooseEitherBuff'
 ]);
 const TARGETING_LIFE_MODES=new Set([
@@ -5167,7 +5229,7 @@ export function assertUniversalMatch(pack,s){
    !Array.isArray(s.initialCounts)||s.initialCounts.length!==2||
    s.players?.length!==2||!playerIndex(s.active)||
    !['playing','finished'].includes(s.status))throw Error('Incorrect pack/version or match state');
- if(s.pending&&(!playerIndex(s.pending.player)||!['phase-order','retirement-order','effect-move-order','effect-rest-tuck','effect-tuck-moved','effect-grant-cause','effect-hand-bottom','effect-pay-deploy-self','effect-deploy-self-active','effect-outside-hand-or-rest','effect-recover-under','effect-energy-front','effect-entry-protect','block','life-batch-order','life-trigger','effect-target','effect-target-many','effect-grant-attack','granted-attack-draw','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-retire-at-least','effect-named-outside-bounce-retire','effect-optional-draw','effect-strip-raid-top','effect-retire-own-field','effect-retire-own-character','main-field-trait-retire','effect-rest-bp','effect-attack-ban','effect-own-front-protect','effect-grant-ap-tax','effect-grant-front-energy','raid-effect-order','effect-buff-trait','effect-buff-own','effect-named-impact','effect-top-trait-event','effect-buff-either','effect-return-printed','effect-remove-named','effect-pay-named','effect-add-named','effect-reveal-bottom','effect-hand-top','effect-rest-front-ap','effect-discard-active','effect-active-own-named','effect-once-choice','main-two-buff','main-discard-buff','main-discard-self-retire','main-rest-front-energy','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-filter-many-choice','effect-top-order','effect-recover-outside','effect-outside-rest','effect-outside-name-rest','effect-outside-traitless-rest','effect-named-zone-entry','effect-hand-rest','effect-hand-rest-or-raid','effect-optional-pay-ap','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-remove-outside','effect-selection-hand-payment','attack-end-swap','effect-choice-mode','recovered-self-entry','effect-optional-mill','effect-pay-ap-deploy','effect-top-trait-outside','effect-line-move','effect-line-slot','effect-rest-two','effect-self-front','effect-raid-leave','effect-rest-lock','effect-grant-block-at-least','effect-may-draw-discard'].includes(s.pending.kind)))
+ if(s.pending&&(!playerIndex(s.pending.player)||!['phase-order','retirement-order','effect-move-order','effect-rest-tuck','effect-tuck-moved','effect-grant-cause','effect-hand-bottom','effect-pay-deploy-self','effect-deploy-self-active','effect-outside-hand-or-rest','effect-recover-under','effect-energy-front','effect-entry-protect','block','life-batch-order','life-trigger','effect-target','effect-target-many','effect-grant-attack','granted-attack-draw','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-retire-at-least','effect-retire-at-most','effect-hand-bp-may','effect-named-outside-bounce-retire','effect-optional-draw','effect-strip-raid-top','effect-retire-own-field','effect-retire-own-character','main-field-trait-retire','effect-rest-bp','effect-attack-ban','effect-own-front-protect','effect-grant-ap-tax','effect-grant-front-energy','raid-effect-order','effect-buff-trait','effect-buff-own','effect-named-impact','effect-top-trait-event','effect-buff-either','effect-return-printed','effect-remove-named','effect-pay-named','effect-add-named','effect-reveal-bottom','effect-hand-top','effect-rest-front-ap','effect-discard-active','effect-active-own-named','effect-once-choice','main-two-buff','main-discard-buff','main-discard-self-retire','main-rest-front-energy','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-filter-many-choice','effect-top-order','effect-recover-outside','effect-outside-rest','effect-outside-name-rest','effect-outside-traitless-rest','effect-named-zone-entry','effect-hand-rest','effect-hand-rest-or-raid','effect-optional-pay-ap','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-remove-outside','effect-selection-hand-payment','attack-end-swap','effect-choice-mode','recovered-self-entry','effect-optional-mill','effect-pay-ap-deploy','effect-top-trait-outside','effect-line-move','effect-line-slot','effect-rest-two','effect-self-front','effect-raid-leave','effect-rest-lock','effect-grant-block-at-least','effect-may-draw-discard'].includes(s.pending.kind)))
   throw Error('Invalid pending controller');
  if(!Array.isArray(s.raidedThisTurn)||s.raidedThisTurn.length!==2||
    s.raidedThisTurn.some(x=>typeof x!=='boolean')||
@@ -5215,6 +5277,20 @@ export function assertUniversalMatch(pack,s){
     step?.op!=='discountNextNamedHandEnergy'||step.name!==e.name||
     step.color!==e.color||step.amount!==e.amount)
     throw Error('Forged next named hand energy');
+  }
+  const flag=s.players[owner].handCharacterBpMay;
+  if(flag!==null){
+   const source=s.players[owner].outside.find(c=>c.uid===flag?.sourceUid);
+   const program=source&&card(pack,source).effects?.onPlay||[];
+   const moved=s.zoneMoveEvents.some(e=>e.turn===s.turn&&e.owner===owner&&
+    e.uid===flag?.sourceUid&&e.from==='hand'&&e.to==='outside'&&e.reason==='rule');
+   if(!source||card(pack,source).type!=='event'||flag.turn!==s.turn||flag.amount!==1000||
+    typeof flag.sourceUid!=='string'||!flag.sourceUid.startsWith(owner+'-')||
+    Object.keys(flag).length!==3||
+    Object.keys(flag).some(k=>!['turn','amount','sourceUid'].includes(k))||
+    !program.some(e=>e.op==='retireOppFrontAtMostBp'&&e.bp===5000)||
+    !program.some(e=>e.op==='grantHandCharacterBpMay'&&e.amount===1000)||!moved)
+    throw Error('Forged hand character BP option');
   }
  }
  if(!Array.isArray(s.zoneMoveEvents)||!Number.isInteger(s.nextZoneMoveOrder)||
@@ -5640,6 +5716,41 @@ export function assertUniversalMatch(pack,s){
    Object.keys(q).some(k=>!['kind','player','sourceUid','choices','floor'].includes(k)))
    throw Error('Invalid minimum-BP retirement pending');
  }
+ if(s.pending?.kind==='effect-retire-at-most'){
+  const q=s.pending;
+  const source=s.players[q.player].outside.find(c=>c.uid===q.sourceUid);
+  const effect=source&&card(pack,source).effects?.onPlay?.find(e=>
+   e.op==='retireOppFrontAtMostBp'&&e.bp===5000);
+  const moved=s.zoneMoveEvents.some(e=>e.turn===s.turn&&e.owner===q.player&&
+   e.uid===q.sourceUid&&e.from==='hand'&&e.to==='outside'&&e.reason==='rule');
+  const choices=s.players[1-q.player].front.filter(c=>c&&bp(pack,s,c)<=5000&&
+   cardEffectTargetPayable(pack,s,q.player,c.uid,0,q.sourceUid)).map(c=>c.uid);
+  if(!effect||card(pack,source).type!=='event'||q.ceiling!==5000||!moved||
+   !choices.length||!same(q.choices,choices)||
+   Object.keys(q).length!==5||
+   Object.keys(q).some(k=>!['kind','player','sourceUid','choices','ceiling'].includes(k)))
+   throw Error('Invalid maximum-BP retirement pending');
+ }
+ if(s.pending?.kind==='effect-hand-bp-may'){
+  const q=s.pending,pl=s.players[q.player];
+  const source=field(pl).find(c=>c.uid===q.sourceUid);
+  const ability=source&&card(pack,source).mainAbility;
+  const revealed=pl.deck.find(c=>c.uid===q.revealedUid);
+  const shown=revealed&&handRevealIdentity(card(pack,revealed));
+  const flag=pl.handCharacterBpMay;
+  const moved=s.zoneMoveEvents.some(e=>e.turn===s.turn&&e.owner===q.player&&
+   e.uid===q.revealedUid&&e.from==='hand'&&e.to==='deck'&&e.reason==='own-effect');
+  if(!source||source.fieldEntryStamp!==q.sourceStamp||
+   ability?.op!=='revealHandBottomBuff'||ability.minPrintedBp!==q.minPrintedBp||
+   ability.bp!==q.bp||!s.mainAbilityUsedUids.includes(q.sourceUid)||
+   !shown||shown.type!=='character'||shown.bp!==q.baseBp||q.amount!==1000||
+   !(q.baseBp<q.minPrintedBp&&q.baseBp+q.amount>=q.minPrintedBp)||
+   !flag||flag.turn!==s.turn||flag.amount!==1000||!moved||
+   Object.keys(q).length!==9||
+   Object.keys(q).some(k=>!['kind','player','sourceUid','sourceStamp','revealedUid',
+    'minPrintedBp','bp','baseBp','amount'].includes(k)))
+   throw Error('Invalid hand character BP option pending');
+ }
  if(s.pending?.kind==='effect-top-trait-event'){
   const q=s.pending,pl=s.players[q.player];
   const source=pl.outside.find(c=>c.uid===q.sourceUid);
@@ -5960,7 +6071,7 @@ export function assertUniversalMatch(pack,s){
    typeof e.key!=='string'||!Array.isArray(e.jobs))))
   throw Error('Invalid retirement order');
  if(!Array.isArray(s.effectQueue)||[...s.effectQueue,...lifeEntries.flatMap(e=>e.jobs)].some(e=>!playerIndex(e.owner)||
-   !['grantedAttackDraw','grantOnAttack','grantSelfSniperThisTurn','grantSelfAttackWinDrawThisTurn','grantSelfMustBlockThisTurn','buffSelfUntilNextOwnStart','grantSelfAttackEndSwapThisTurn','resolveAttackWinRecovery','draw','drawIfOwnName','drawIfOwnEventUsed','drawIfOwnOutsideNamedCountAtLeast','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','drawIfOppRestCharacter','drawIfOppCharacterBpAtLeast','drawIfOppFrontBelowPrinted','drawIfOwnNameAndHandFewer','activeOwnNamed','millTop','buffSelf','buffSelfPerOwnOutsideGroups','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontTiered','retireOppFrontOneUnderBp','conditionalBounceOrRetireByOwnOutsideNames','completeResolvingEvent','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','forbidAttackOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopTraitOrEventAp','discountNextNamedHandEnergy','retireOppFrontAtLeastBp','searchTopUpToTwoBottom','deployOwnHandRest','deployOwnHandSpecial','deployOwnHandRestOrRaid','optionalPayApThen','optionalRetireThenProgram','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
+   !['grantedAttackDraw','grantOnAttack','grantSelfSniperThisTurn','grantSelfAttackWinDrawThisTurn','grantSelfMustBlockThisTurn','buffSelfUntilNextOwnStart','grantSelfAttackEndSwapThisTurn','resolveAttackWinRecovery','draw','drawIfOwnName','drawIfOwnEventUsed','drawIfOwnOutsideNamedCountAtLeast','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','drawIfOppRestCharacter','drawIfOppCharacterBpAtLeast','drawIfOppFrontBelowPrinted','drawIfOwnNameAndHandFewer','activeOwnNamed','millTop','buffSelf','buffSelfPerOwnOutsideGroups','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontTiered','retireOppFrontOneUnderBp','conditionalBounceOrRetireByOwnOutsideNames','completeResolvingEvent','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','forbidAttackOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopTraitOrEventAp','discountNextNamedHandEnergy','retireOppFrontAtLeastBp','retireOppFrontAtMostBp','grantHandCharacterBpMay','searchTopUpToTwoBottom','deployOwnHandRest','deployOwnHandSpecial','deployOwnHandRestOrRaid','optionalPayApThen','optionalRetireThenProgram','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
     'discardGate','removeOutsideThen','enemyFrontAllBpDown','retireOppFrontAllUnderBp',
     'nextEligibleHandPlayApDiscount','grantFrontEnergyOwnOtherFrontTrait','buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
     'recoverOutsideColorUnderEnergy','deployOutsideRest','deployOutsideNameRest','deployNamedFromZones','payApDeployNamedRest','inspectTopTraitOutside','deployOutsideTraitlessRestOrRaid','buffOwnField','buffEitherOther','returnPrintedActiveBuff','removeNamedOutsideActive','payHandOrRestForNamed','handTopBuffSelf','optionalRestFrontRecoverAp','drawHandTop','optionalDiscardActiveSelf','oncePerTurnGate','retireBatchOne','retireAtMainEnd','retireSourceOnPhaseEnd','moveAtMainEnd','retireOwnFieldOne','retireOwnCharacterOne','openBlock','resolveSniperBattle','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','resolveAttackEndSwap','phaseOrder','effectMoveOrder','restSelfTuckMovedFaceDown','sourceResolutionBoundary','lifeBatchStep','lifeRelease','advanceAfterAttack','additionalBattleDamage','openRetirementBatch','closeRetirementBatch','retirementOrder','battleImpactDamage','discardOppHand','activeSelfIf','openEnergyMoveGrants','moveOtherAcrossOrRemove','raidBaseEnergyThen','grantSelfAttackDamageThisTurn','restOppFrontLockActive','removeAnyOutsideScale','inspectTopColoredNamesOutside','drawDiscardIfEffectApPaid','activeSelf','grantSelfImpactThisTurn','buffNamedImpactDraw','grantOwnNameBlockAtLeast'].includes(e.op)))

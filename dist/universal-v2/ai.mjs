@@ -141,8 +141,11 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
    const score=uid=>{
     const printed=catalog[hand.find(c=>c.uid===uid)?.cardId];
     const shown=handRevealIdentity(printed);
-    return shown.type==='character'&&Number.isInteger(shown.bp)&&
-     shown.bp>=s.pending.minPrintedBp?shown.bp:0;
+    const may=s.players[s.pending.player].handCharacterBpMay;
+    const bonus=may&&may.turn===s.turn&&may.amount===1000&&
+     shown.type==='character'?1000:0;
+    const referenced=Number.isInteger(shown.bp)?shown.bp+bonus:null;
+    return shown.type==='character'&&referenced>=s.pending.minPrintedBp?referenced:0;
    };
    return score(b.uid)-score(a.uid);
   })[0];
@@ -172,6 +175,8 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='effect-strip-raid-top')
   return difficulty==='easy'?legal[0]:legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-retire-at-least')return legal[0];
+ if(s.pending?.kind==='effect-retire-at-most')return legal[0];
+ if(s.pending?.kind==='effect-hand-bp-may')return legal.find(a=>a.mode==='accept')||legal[0];
  if(s.pending?.kind==='effect-retire-bp'){
   // A printed "up to one" retirement presents SKIP first; normal/hard AI
   // should choose an eligible enemy unless there is none.

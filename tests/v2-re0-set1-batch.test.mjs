@@ -70,9 +70,9 @@ test('UA40BT and UA40ST share one catalogue and keep parallel art out',()=>{
  }
 });
 
-test('eighty-one whole prints enter the V2 pack and the other thirty-two stay out',()=>{
- assert.equal(REZERO_ENGINE_IDS.length,81);
- assert.equal(Object.keys(pack.cards).length,81);
+test('eighty-two whole prints enter the V2 pack and the other thirty-one stay out',()=>{
+ assert.equal(REZERO_ENGINE_IDS.length,82);
+ assert.equal(Object.keys(pack.cards).length,82);
  assert.equal(pack.cards['REZ-1-001'],undefined);
  assert.equal(pack.cards['REZ-1-008'].step,true);
  assert.equal(pack.cards['REZ-1-008'].implementation,'vanilla');
@@ -210,6 +210,15 @@ test('eighty-one whole prints enter the V2 pack and the other thirty-two stay ou
   op:'enemyBpDown',bp:1000,optional:true,minBp:1500,maxTargets:2,zone:'front'}]);
  assert.deepEqual(pack.cards['REZ-1-104'].effects.onAttack,[{
   op:'drawIfOppFrontBelowPrinted',count:1}]);
+ assert.equal(pack.cards['REZ-1-066'].type,'event');
+ assert.equal(pack.cards['REZ-1-066'].color,'blue');
+ assert.equal(pack.cards['REZ-1-066'].energy,4);
+ assert.equal(pack.cards['REZ-1-066'].trigger,'special');
+ assert.deepEqual(pack.cards['REZ-1-066'].triggerEffect,{op:'retireOppFront'});
+ assert.equal(pack.cards['REZ-1-066'].playRequiresOwnName,'クルシュ・カルステン');
+ assert.deepEqual(pack.cards['REZ-1-066'].effects.onPlay,[
+  {op:'retireOppFrontAtMostBp',bp:5000},
+  {op:'grantHandCharacterBpMay',amount:1000}]);
  assert.equal(pack.cards['REZ-1-067'].enterAlwaysActive,true);
  assert.equal(pack.cards['REZ-1-067'].impactNull,true);
  assert.equal(pack.cards['REZ-1-067'].trigger,'active');
@@ -3002,4 +3011,134 @@ test('Rem enters active, lowers up to two fronts of at least 1500, and draws whe
  assert.equal(at(empty,0,alone.uid).ready,true);
  assert.equal(empty.pending,null);
  assert.equal(assertUniversalMatch(packs,empty),true);
+});
+
+const bladeCounts={
+ ...Object.fromEntries(['REZ-1-066','REZ-1-043','REZ-1-055','REZ-1-045','REZ-1-008',
+  'REZ-1-014','REZ-1-007','REZ-1-012','REZ-1-022','REZ-1-065','REZ-1-024','REZ-1-075'].map(id=>[id,4])),
+ 'REZ-1-029':2
+};
+const blade=seed=>newUniversalMatch(packs,{decks:[bladeCounts,bladeCounts],first:0,seed});
+test('Hundred-Man Slash requires Crusch, retires BP 5000 or less, and may add 1000 when a hand character BP is referenced',()=>{
+ assert.equal(Object.values(bladeCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(pack,bladeCounts),[]);
+ const shell={id:'BLADE',name:'Gate',color:'blue',type:'event',energy:4,ap:1,bp:0,gen:0,
+  traits:[],trigger:null,implementation:'dsl',effects:{}};
+ assert.throws(()=>createUniversalPack({id:'bad-blade',cards:[{...shell,type:'character',bp:1000,effects:{onPlay:[
+  {op:'retireOppFrontAtMostBp',bp:5000}]}}]}),/event onPlay/);
+ assert.throws(()=>createUniversalPack({id:'bad-blade',cards:[{...shell,effects:{onPlay:[
+  {op:'retireOppFrontAtMostBp',bp:3000}]}}]}),/maximum front retirement/);
+ assert.throws(()=>createUniversalPack({id:'bad-blade',cards:[{...shell,effects:{onPlay:[
+  {op:'grantHandCharacterBpMay',amount:500}]}}]}),/hand character BP option/);
+ assert.equal(V2_PENDING_LABELS['effect-retire-at-most'],'選擇 BP 5000 以下的對手前線並使其退場');
+ assert.equal(V2_PENDING_LABELS['effect-hand-bp-may'],'這次參照手牌角色 BP 時，是否視為 +1000');
+
+ let locked=blade(6401);
+ fuel(locked,['REZ-1-043','REZ-1-043','REZ-1-043','REZ-1-043']);
+ locked=reach(locked,'main');
+ const open=pull(locked,1,'REZ-1-014');
+ locked.players[1].front[0]=open;
+ const waiting=pull(locked,0,'REZ-1-066');
+ locked.players[0].hand.push(waiting);
+ assert.equal(legalUniversalActions(packs,locked).some(a=>a.type==='event'&&a.uid===waiting.uid),false);
+ const crusch=pull(locked,0,'REZ-1-055');
+ locked.players[0].front[0]=crusch;
+ const huge=pull(locked,1,'REZ-1-008');
+ huge.buffs=[{bp:2500,untilTurn:locked.turn}];
+ locked.players[1].deck.push(open);
+ locked.players[1].front[0]=huge;
+ assert.equal(universalBp(packs,locked,huge),5500);
+ assert.equal(legalUniversalActions(packs,locked).some(a=>a.type==='event'&&a.uid===waiting.uid),false);
+
+ let live=blade(6402);
+ fuel(live,['REZ-1-043','REZ-1-043','REZ-1-043','REZ-1-043']);
+ live=ownMain(live,2);
+ const named=pull(live,0,'REZ-1-055');
+ const readers=[0,1,2].map(()=>stamp(live,pull(live,0,'REZ-1-045')));
+ placeFront(live,0,[named,...readers]);
+ const exact=pull(live,1,'REZ-1-014');
+ exact.buffs=[{bp:2500,untilTurn:live.turn}];
+ const over=pull(live,1,'REZ-1-008');
+ over.buffs=[{bp:2500,untilTurn:live.turn}];
+ const lined=pull(live,1,'REZ-1-012');
+ live.players[1].front[0]=exact;
+ live.players[1].front[1]=over;
+ live.players[1].energy[0]=lined;
+ assert.equal(universalEnergyByColor(packs,live,0).blue,4);
+ let paid;
+ [paid]=castEvent(live,'REZ-1-066');
+ assert.equal(paid.pending.kind,'effect-retire-at-most');
+ assert.equal(paid.pending.ceiling,5000);
+ assert.deepEqual(paid.pending.choices,[exact.uid]);
+ assert.equal(legalUniversalActions(packs,paid).some(a=>a.uid===null||a.uid===over.uid||a.uid===lined.uid),false);
+ const take=legalUniversalActions(packs,paid).find(a=>a.uid===exact.uid);
+ assert.equal(uiActionLabel(take,{pack,state:paid}),'使 レム 退場');
+ assert.equal(chooseUniversalAiAction(packs,paid).uid,exact.uid);
+ const forged=structuredClone(paid);
+ forged.pending.ceiling=4000;
+ assert.throws(()=>assertUniversalMatch(packs,forged),/Invalid maximum-BP retirement pending/);
+ paid=dispatchUniversalAction(packs,paid,take);
+ assert.equal(paid.pending,null);
+ assert.ok(paid.players[1].outside.some(c=>c.uid===exact.uid));
+ assert.equal(paid.players[1].front[1]?.uid,over.uid);
+ assert.equal(paid.players[0].handCharacterBpMay.amount,1000);
+ assert.equal(paid.players[0].handCharacterBpMay.turn,paid.turn);
+ const forgedFlag=structuredClone(paid);
+ forgedFlag.players[0].handCharacterBpMay.amount=2000;
+ assert.throws(()=>assertUniversalMatch(packs,forgedFlag),/Forged hand character BP option/);
+ const lowCard=pull(paid,0,'REZ-1-014');
+ const monster=pull(paid,0,'REZ-1-065');
+ const border=pull(paid,0,'REZ-1-008');
+ const kept=paid.players[0].hand.filter(c=>![lowCard.uid,monster.uid,border.uid].includes(c.uid));
+ paid.players[0].outside.push(...kept,monster);
+ paid.players[0].hand=[border,lowCard];
+ paid=dispatchUniversalAction(packs,paid,revealAct(paid,readers[0].uid));
+ assert.equal(chooseUniversalAiAction(packs,paid).uid,border.uid);
+ paid=dispatchUniversalAction(packs,paid,{type:'chooseRevealBottom',uid:border.uid});
+ assert.equal(paid.pending.kind,'effect-hand-bp-may');
+ assert.equal(paid.pending.baseBp,3000);
+ assert.equal(uiActionLabel(legalUniversalActions(packs,paid).find(a=>a.mode==='decline'),{pack,state:paid}),'維持原本 BP');
+ assert.equal(chooseUniversalAiAction(packs,paid).mode,'accept');
+ paid=dispatchUniversalAction(packs,paid,{type:'chooseHandBpMay',mode:'decline'});
+ assert.equal(paid.pending,null);
+ assert.equal(universalBp(packs,paid,at(paid,0,readers[0].uid)),1500);
+ assert.equal(paid.players[0].deck.at(-1).uid,border.uid);
+ paid=dispatchUniversalAction(packs,paid,revealAct(paid,readers[1].uid));
+ paid=dispatchUniversalAction(packs,paid,{type:'chooseRevealBottom',uid:lowCard.uid});
+ assert.equal(paid.pending,null);
+ assert.equal(universalBp(packs,paid,at(paid,0,readers[1].uid)),1500);
+ const held=paid.players[0].outside.findIndex(c=>c.uid===monster.uid);
+ paid.players[0].hand.push(paid.players[0].outside.splice(held,1)[0]);
+ paid=dispatchUniversalAction(packs,paid,revealAct(paid,readers[2].uid));
+ paid=dispatchUniversalAction(packs,paid,{type:'chooseRevealBottom',uid:monster.uid});
+ assert.equal(paid.pending,null);
+ assert.equal(universalBp(packs,paid,at(paid,0,readers[2].uid)),4000);
+ assert.equal(assertUniversalMatch(packs,paid),true);
+
+ let accepted=blade(6403);
+ fuel(accepted,['REZ-1-043','REZ-1-043','REZ-1-043','REZ-1-043']);
+ accepted=ownMain(accepted,2);
+ const lady=pull(accepted,0,'REZ-1-055');
+ const reader=stamp(accepted,pull(accepted,0,'REZ-1-045'));
+ placeFront(accepted,0,[lady,reader]);
+ const victim=pull(accepted,1,'REZ-1-012');
+ accepted.players[1].front[0]=victim;
+ [accepted]=castEvent(accepted,'REZ-1-066');
+ accepted=dispatchUniversalAction(packs,accepted,{type:'chooseRetireAtMost',uid:victim.uid});
+ const shown=pull(accepted,0,'REZ-1-008');
+ accepted.players[0].hand.push(shown);
+ accepted=dispatchUniversalAction(packs,accepted,revealAct(accepted,reader.uid));
+ accepted=dispatchUniversalAction(packs,accepted,{type:'chooseRevealBottom',uid:shown.uid});
+ assert.equal(accepted.pending.kind,'effect-hand-bp-may');
+ accepted=dispatchUniversalAction(packs,accepted,{type:'chooseHandBpMay',mode:'accept'});
+ assert.equal(universalBp(packs,accepted,at(accepted,0,reader.uid)),4000);
+ accepted=ownMain(accepted,3);
+ assert.equal(accepted.players[0].handCharacterBpMay,null);
+ const later=pull(accepted,0,'REZ-1-008');
+ accepted.players[0].hand.push(later);
+ accepted=dispatchUniversalAction(packs,accepted,revealAct(accepted,reader.uid));
+ accepted=dispatchUniversalAction(packs,accepted,{type:'chooseRevealBottom',uid:later.uid});
+ assert.equal(accepted.pending,null);
+ assert.equal(universalBp(packs,accepted,at(accepted,0,reader.uid)),1500);
+ assert.equal(assertUniversalMatch(packs,accepted),true);
 });

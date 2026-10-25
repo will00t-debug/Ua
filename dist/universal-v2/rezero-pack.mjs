@@ -60,6 +60,7 @@ export function rezeroEngineKind(effectJa){
  if(e==='【起動メイン】【フロントLにある場合】 【ターン1】このターン中にこのキャラが自分の効果でアクティブからレストになったことがある場合のみ発動できる。このターン中、次に手札から使用する〈エミリア〉の必要エナジーを【紫×1】減らす。')return 'emiliaHandEnergy';
  if(e==='自分の効果で自分の手札から公開しているこのカードは元々のBPが4000のキャラカードとしても扱う。BP4500以上の相手のフロントLのキャラを1枚選び、退場させる。')return 'handRevealRetire';
  if(e==='このキャラはアクティブで場に登場させる。【登場時】BP1500以上の相手のフロントLのキャラを2枚まで選び、このターン中、BP-1000。【アタック時】相手のフロントLに元々のBPよりBPが低いキャラがある場合、カードを1枚引く。')return 'activeFrontDownDraw';
+ if(e==='このカードは自分の場に〈クルシュ・カルステン〉がある場合のみ使用できる。BP5000以下の相手のフロントLのキャラを1枚選び、退場させる。このターン中、自分の効果で自分の手札のキャラカードのBPを参照する場合、BP+1000されたものとして扱ってもよい。')return 'cruschRetireHandBp';
  return null;
 }
 const TOP_OUTSIDE=new Map([
@@ -112,6 +113,9 @@ function onPlay(card,kind){
  if(kind==='remImpactDraw')return [{op:'buffNamedImpactDraw',name:'レム',bp:1000,impactPlus:1,draw:1}];
  if(kind==='candidateApSearch')return [{op:'searchTopTraitOrEventAp',count:5,trait:'王選候補者'}];
  if(kind==='handRevealRetire')return [{op:'retireOppFrontAtLeastBp',bp:4500}];
+ if(kind==='cruschRetireHandBp')return [
+  {op:'retireOppFrontAtMostBp',bp:5000},
+  {op:'grantHandCharacterBpMay',amount:1000}];
  if(kind==='garfielEntry')return [{op:'enemyBpDown',bp:2500,optional:true,zone:'front'}];
  if(kind==='sanctuaryRecover')return [{op:'payHandOrRestForNamed',name:TRIAL_NAME}];
  if(kind==='frontDown2500')return [{op:'enemyBpDown',bp:2000,optional:true,minBp:2500,zone:'front'}];
@@ -160,7 +164,7 @@ export function rezeroPackCard(card){
   throw Error(card.id+' rest trigger is not this print');
  if(triggerEffect?.op==='bounceOppFrontUnderBp'&&!bouncePrint)
   throw Error(card.id+' return trigger is not this print');
- const specialPrint=kind==='remRetire'||kind==='emiliaRetire'||kind==='minaRetire';
+ const specialPrint=kind==='remRetire'||kind==='emiliaRetire'||kind==='minaRetire'||kind==='cruschRetireHandBp';
  if(specialPrint&&triggerEffect?.op!=='retireOppFront')
   throw Error(card.id+' special trigger is not the printed retirement');
  if(triggerEffect?.op==='retireOppFront'&&!specialPrint)
@@ -210,6 +214,7 @@ export function rezeroPackCard(card){
    op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,requireOwnEffectRest:true,
    then:[{op:'discountNextNamedHandEnergy',name:'エミリア',color:'purple',amount:1}]}}:{}),
   ...(kind==='handRevealRetire'?{handRevealCharacterBp:4000}:{}),
+  ...(kind==='cruschRetireHandBp'?{playRequiresOwnName:'クルシュ・カルステン'}:{}),
   ...(kind==='feltTurnBp'?{passiveBonuses:[{
    condition:{kind:'ownNameExists',turn:'own',zone:'field',excludeSelf:false,name:'フェルト'},
    bp:1000}]}:{}),
