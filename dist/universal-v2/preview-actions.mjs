@@ -36,6 +36,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-add-named':'將場外的指定卡加入手牌',
  'effect-reveal-bottom':'公開 1 張手牌並放到牌底',
  'effect-hand-top':'將 1 張手牌放到牌組上面',
+ 'effect-rest-front-ap':'可休息 1 張前線活動角色，之後恢復 AP',
  'effect-once-choice':'是否發動本回合一次能力',
  'effect-choice-mode':'選擇一項效果',
  'recovered-self-entry':'回收後可 REST 登場至能源線',
@@ -194,6 +195,7 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseAddNamed':return '將 '+name()+' 加入手牌';
   case 'chooseRevealBottom':return '公開 '+name()+' 並放到牌底';
   case 'chooseHandTop':return '將 '+name()+' 放到牌組上面';
+  case 'chooseRestFrontAp':return action.uid===null?'不休息前線':'休息 '+name()+'，之後可恢復 1 張 AP';
   case 'chooseOwnBuff':case 'chooseMainBuff':case 'chooseTraitBuff':case 'chooseRestBp':
   case 'chooseRetireBp':case 'chooseTargetMany':return action.uid===null?'完成目標選擇':'選擇第 '+(state?.pending?.selected?.length+1||1)+' 個角色';
   case 'chooseFrontEnergyGrant':return action.uid===null?

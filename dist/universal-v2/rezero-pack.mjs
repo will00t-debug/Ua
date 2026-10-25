@@ -51,6 +51,7 @@ export function rezeroEngineKind(effectJa){
  if(e==='このキャラはアクティブで場に登場させる。【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、【インパクト】を失う）【登場時】相手のフロントLのキャラを1枚まで選び、このターン中、BP-2500。【起動メイン】【フロントLにある場合】 【ターン1】このキャラをアクティブにする。')return 'garfielEntry';
  if(e==='【登場時】自分の手札を1枚場外に置くか、自分のフロントLのアクティブのキャラを1枚レストにしてもよい。そうした場合、自分の場外から〈'+TRIAL_NAME+'〉を1枚手札に加える。')return 'sanctuaryRecover';
  if(e==='【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、【インパクト】を失う）【起動メイン】【フロントLにある場合】 【ターン1】自分の手札を1枚自分の山札の上に置く。そうした場合、このキャラはこのターン中、BP+1000。')return 'beatriceHandTop';
+ if(e==='カードを2枚引き、自分の手札を1枚場外に置く。その後、自分のフロントLのアクティブのキャラを1枚レストにしてもよい。そうした場合、自分のAPカードを1枚まで選び、アクティブにする。')return 'trialRestAp';
  return null;
 }
 const TOP_OUTSIDE=new Map([
@@ -114,6 +115,8 @@ function onPlay(card,kind){
  if(kind==='drawThenEventAp')return [{op:'draw',count:1},{op:'recoverAp',count:1,require:'ownEventUsed'}];
  if(kind==='searchName7')return [{op:'searchTopOneBottomDiscard',count:7,
   filter:{field:'name',value:TRIAL_NAME}}];
+ if(kind==='trialRestAp')return [{op:'drawDiscard',count:2,discardCount:1},
+  {op:'optionalRestFrontRecoverAp'}];
  return null;
 }
 export function rezeroPackCard(card){
@@ -147,7 +150,7 @@ export function rezeroPackCard(card){
   throw Error(card.id+' special trigger is not the printed retirement');
  if(triggerEffect?.op==='retireOppFront'&&!specialPrint)
   throw Error(card.id+' retirement trigger is not this print');
- const colorDeploy=kind==='beatriceHandTop';
+ const colorDeploy=kind==='beatriceHandTop'||kind==='trialRestAp';
  if(colorDeploy&&!(triggerEffect?.op==='deployOutsideCharacter'&&triggerEffect.color==='purple'&&
   triggerEffect.maxEnergy===2&&triggerEffect.ap===1&&triggerEffect.frontOnly===true))
   throw Error(card.id+' color trigger is not the printed outside deployment');

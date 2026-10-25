@@ -67,9 +67,9 @@ test('UA40BT and UA40ST share one catalogue and keep parallel art out',()=>{
  }
 });
 
-test('seventy-two whole prints enter the V2 pack and the other forty-one stay out',()=>{
- assert.equal(REZERO_ENGINE_IDS.length,72);
- assert.equal(Object.keys(pack.cards).length,72);
+test('seventy-three whole prints enter the V2 pack and the other forty stay out',()=>{
+ assert.equal(REZERO_ENGINE_IDS.length,73);
+ assert.equal(Object.keys(pack.cards).length,73);
  assert.equal(pack.cards['REZ-1-001'],undefined);
  assert.equal(pack.cards['REZ-1-008'].step,true);
  assert.equal(pack.cards['REZ-1-008'].implementation,'vanilla');
@@ -129,7 +129,6 @@ test('seventy-two whole prints enter the V2 pack and the other forty-one stay ou
  assert.deepEqual(pack.cards['REZ-1-091'].effects.onPlay,[{
   op:'searchTopOneBottomDiscard',count:7,
   filter:{field:'name',value:REZERO_BY_ID['REZ-1-098'].nameJa}}]);
- assert.equal(pack.cards['REZ-1-098'],undefined);
  assert.deepEqual(pack.cards['REZ-1-021'].mainAbility,{
   op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,requireAllNames:['ラム','レム'],
   then:[{op:'drawDiscard',count:1}]});
@@ -155,7 +154,6 @@ test('seventy-two whole prints enter the V2 pack and the other forty-one stay ou
  assert.deepEqual(pack.cards['REZ-1-087'].effects.onPlay,[{
   op:'removeNamedOutsideActive',name:REZERO_BY_ID['REZ-1-098'].nameJa}]);
  assert.equal(pack.cards['REZ-1-087'].ownTurnBp,1000);
- assert.equal(pack.cards['REZ-1-098'],undefined);
  assert.deepEqual(pack.cards['REZ-1-031'].effects.onPlay,[{
   op:'retireOppFrontUnderBp',bp:3000,bonusName:'レム',bonusBp:5000}]);
  assert.deepEqual(pack.cards['REZ-1-031'].triggerEffect,{op:'retireOppFront'});
@@ -188,7 +186,11 @@ test('seventy-two whole prints enter the V2 pack and the other forty-one stay ou
   op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,
   then:[{op:'handTopBuffSelf',bp:1000}]});
  assert.equal(pack.cards['REZ-1-076'].effects.onPlay,undefined);
- assert.equal(pack.cards['REZ-1-098'],undefined);
+ assert.equal(pack.cards['REZ-1-098'].type,'event');
+ assert.equal(pack.cards['REZ-1-098'].trigger,'color');
+ assert.deepEqual(pack.cards['REZ-1-098'].triggerEffect,pack.cards['REZ-1-076'].triggerEffect);
+ assert.deepEqual(pack.cards['REZ-1-098'].effects.onPlay,[
+  {op:'drawDiscard',count:2,discardCount:1},{op:'optionalRestFrontRecoverAp'}]);
  assert.equal(pack.cards['REZ-1-101'],undefined);
  assert.deepEqual(validateUniversalDeck(pack,counts),[]);
  const s=fresh();
@@ -2066,4 +2068,119 @@ test('Beatrice color trigger deploys one matching purple character from outside,
  assert.equal(skipped.players[0].outside.some(c=>c.uid===match.uid),true);
  assert.equal(skipped.players[0].front.some(c=>c?.uid===match.uid),false);
  assert.equal(assertUniversalMatch(packs,skipped),true);
+});
+
+const trialCounts={
+ ...Object.fromEntries(['REZ-1-098','REZ-1-086','REZ-1-068','REZ-1-069','REZ-1-072',
+  'REZ-1-073','REZ-1-075','REZ-1-079','REZ-1-080','REZ-1-081','REZ-1-091','REZ-1-092'].map(id=>[id,4])),
+ 'REZ-1-082':1,'REZ-1-113':1
+};
+const trial=seed=>newUniversalMatch(packs,{decks:[trialCounts,trialCounts],first:0,seed});
+test('the sanctuary trial draws two, discards one, then may rest a front character to recover one AP',()=>{
+ assert.equal(Object.values(trialCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(pack,trialCounts),[]);
+ const shell={id:'REST',name:'Rest',color:'purple',type:'event',energy:2,ap:1,bp:0,gen:0,
+  traits:[],trigger:null,implementation:'dsl',effects:{}};
+ assert.throws(()=>createUniversalPack({id:'bad-rest',cards:[{...shell,effects:{onPlay:[
+  {op:'optionalRestFrontRecoverAp',count:1}]}}]}),/invalid optional front rest/);
+ assert.throws(()=>createUniversalPack({id:'bad-rest',cards:[{...shell,type:'character',bp:3000,effects:{onPlay:[
+  {op:'optionalRestFrontRecoverAp'}]}}]}),/event onPlay/);
+ let s=trial(5501);
+ fuel(s,['REZ-1-086','REZ-1-086','REZ-1-086','REZ-1-086']);
+ s=reach(s,'main');
+ assert.equal(universalEnergyByColor(packs,s,0).purple,4);
+ const ready=pull(s,0,'REZ-1-072');
+ ready.ready=true;
+ const rested=pull(s,0,'REZ-1-068');
+ rested.ready=false;
+ s.players[0].front[0]=ready;
+ s.players[0].front[1]=rested;
+ const drawn=setTop(s,0,['REZ-1-075','REZ-1-081']);
+ const event=pull(s,0,'REZ-1-098');
+ s.players[0].hand.push(event);
+ const deckAtPlay=s.players[0].deck.length;
+ const dump=s.players[0].hand.find(c=>c.uid!==event.uid);
+ assert.ok(dump);
+ s=dispatchUniversalAction(packs,s,
+  legalUniversalActions(packs,s).find(a=>a.type==='event'&&a.uid===event.uid));
+ assert.equal(s.pending.kind,'effect-discard');
+ assert.equal(s.players[0].deck.length,deckAtPlay-2);
+ assert.ok(s.players[0].hand.some(c=>c.uid===drawn[0].uid));
+ assert.ok(s.players[0].hand.some(c=>c.uid===drawn[1].uid));
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.uid===null),false);
+ assert.ok(s.players[0].outside.some(c=>c.uid===event.uid));
+ s=dispatchUniversalAction(packs,s,{type:'chooseDiscard',uid:dump.uid});
+ assert.ok(s.players[0].outside.some(c=>c.uid===dump.uid));
+ assert.equal(s.zoneMoveEvents.filter(e=>e.uid===dump.uid).at(-1).reason,'own-effect');
+ assert.equal(s.zoneMoveEvents.filter(e=>e.uid===event.uid).at(-1).reason,'rule');
+ assert.equal(s.pending.kind,'effect-rest-front-ap');
+ assert.equal(s.pending.optional,true);
+ assert.deepEqual(s.pending.choices,[ready.uid]);
+ const restLegal=legalUniversalActions(packs,s);
+ assert.ok(restLegal.some(a=>a.type==='chooseRestFrontAp'&&a.uid===null));
+ assert.ok(restLegal.some(a=>a.uid===ready.uid));
+ assert.equal(restLegal.some(a=>a.uid===rested.uid),false);
+ assert.equal(restLegal.some(a=>s.players[0].energy.some(c=>c?.uid===a.uid)),false);
+ assert.equal(uiActionLabel({type:'chooseRestFrontAp',uid:null},{pack,state:s}),'不休息前線');
+ const branched=structuredClone(s);
+ const skipped=dispatchUniversalAction(packs,branched,{type:'chooseRestFrontAp',uid:null});
+ assert.equal(skipped.pending,null);
+ assert.equal(at(skipped,0,ready.uid).ready,true);
+ assert.equal(skipped.players[0].apCards.filter(c=>c.ready).length,0);
+ assert.equal(assertUniversalMatch(packs,skipped),true);
+ s=dispatchUniversalAction(packs,s,{type:'chooseRestFrontAp',uid:ready.uid});
+ assert.equal(at(s,0,ready.uid).ready,false);
+ assert.equal(at(s,0,rested.uid).ready,false);
+ assert.equal(s.pending.kind,'effect-recover-ap');
+ assert.equal(s.pending.remaining,1);
+ const spent=s.players[0].apCards.find(c=>c.inPlay&&!c.ready);
+ assert.ok(legalUniversalActions(packs,s).some(a=>a.type==='chooseApRecovery'&&a.uid===null));
+ assert.ok(legalUniversalActions(packs,s).some(a=>a.uid===spent.uid));
+ const held=dispatchUniversalAction(packs,structuredClone(s),{type:'chooseApRecovery',uid:null});
+ assert.equal(held.pending,null);
+ assert.equal(held.players[0].apCards.filter(c=>c.ready).length,0);
+ s=dispatchUniversalAction(packs,s,{type:'chooseApRecovery',uid:spent.uid});
+ assert.equal(s.pending,null);
+ assert.equal(s.players[0].apCards.find(c=>c.uid===spent.uid).ready,true);
+ assert.equal(assertUniversalMatch(packs,s),true);
+
+ let quiet=trial(5502);
+ fuel(quiet,['REZ-1-086','REZ-1-086','REZ-1-086','REZ-1-086']);
+ quiet=reach(quiet,'main');
+ const asleep=pull(quiet,0,'REZ-1-072');
+ asleep.ready=false;
+ quiet.players[0].front[0]=asleep;
+ const spare=quiet.players[0].hand[0];
+ [quiet]=castEvent(quiet,'REZ-1-098');
+ quiet=dispatchUniversalAction(packs,quiet,{type:'chooseDiscard',uid:spare.uid});
+ assert.equal(quiet.pending,null);
+ assert.equal(at(quiet,0,asleep.uid).ready,false);
+ assert.equal(quiet.players[0].apCards.filter(c=>c.ready).length,0);
+ assert.equal(assertUniversalMatch(packs,quiet),true);
+});
+
+test('the sanctuary trial color trigger deploys the same purple outside characters',()=>{
+ let s=newUniversalMatch(packs,{decks:[trialCounts,trialCounts],first:1,seed:5503});
+ const attacker=pull(s,1,'REZ-1-072');
+ attacker.ready=true;
+ s.players[1].front[0]=attacker;
+ const match=pull(s,0,'REZ-1-072');
+ const edge=pull(s,0,'REZ-1-086');
+ const tall=pull(s,0,'REZ-1-113');
+ const eventCopy=pull(s,0,'REZ-1-098');
+ s.players[0].outside.push(match,edge,tall,eventCopy);
+ const trigger=armLife(s,0,'REZ-1-098');
+ s=reach(s,'attack');
+ s=dispatchUniversalAction(packs,s,{type:'attack',uid:attacker.uid},{actor:1});
+ s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:null},{actor:0});
+ assert.equal(s.pending?.trigger,'color');
+ const legal=legalUniversalActions(packs,s);
+ assert.ok(legal.some(a=>a.mode==='colorOutside'&&a.uid===match.uid));
+ assert.ok(legal.some(a=>a.mode==='colorOutside'&&a.uid===edge.uid));
+ assert.equal(legal.some(a=>a.uid===tall.uid||a.uid===eventCopy.uid),false);
+ const play=legal.find(a=>a.mode==='colorOutside'&&a.uid===match.uid&&a.replaceUid===undefined);
+ const deployed=dispatchUniversalAction(packs,s,play,{actor:0});
+ assert.equal(deployed.players[0].front.some(c=>c?.uid===match.uid&&c.ready),true);
+ assert.ok(deployed.players[0].outside.some(c=>c.uid===trigger.uid));
+ assert.equal(assertUniversalMatch(packs,deployed),true);
 });
