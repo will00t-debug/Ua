@@ -74,9 +74,14 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 //   The attribute cell is 星十字騎士団／バンビーズ. The catalogue stores that
 //   as one string, and only this exact string is split into audited components.
 //   邦比小隊 is a different token. A miss sends all three outside with no discard.
+// BLC-1-060 UA08BT: [登場時]必要エナジーの数を1つ指定する。自分の山札の上から2枚公開する。
+//   その中からこの効果で指定した数と同じ必要エナジーのキャラカードを1枚まで手札に加え、
+//   残りを場外に置く。 The number is chosen before the reveal. Fields and events
+//   with the same energy are not characters. Taking a card does not discard.
+//   ACTIVE is the generic sentence. Required energy alt is 紫3. Generated energy alt is 紫.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -147,12 +152,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers thirty-five whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,471);
- assert.equal(EXPECTED_V2_COUNTS.bleach,195);
+test('C29 registers thirty-six whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,472);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,196);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,195);
+ assert.equal(Object.keys(bleach.cards).length,196);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -2447,4 +2452,121 @@ test('BLC-2-011 reveals three cards, takes one Bambies trait or Bambi name, and 
  assert.equal(assertUniversalMatch(named.opened.packs,gotName),true);
  assert.equal(assertUniversalMatch(dry.packs,quiet),true);
  assert.equal(assertUniversalMatch(both,labPlayed),true);
+});
+
+test('BLC-1-060 names a printed energy, reveals two cards, and puts the rest outside without discarding',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-1-060');
+ assert.equal(printed.effect,'登場：指定 1 個需求能源數值，公開己方牌堆頂 2 張；可將其中最多 1 張需求能源等於該數值的角色卡加入手牌，其餘送至場外。');
+ assert.equal(printed.traits,'零番隊');
+ assert.equal(printed.energy,3);
+ assert.equal(printed.gen,1);
+ assert.equal(printed.trigger,'active');
+ const card=bleach.cards['BLC-1-060'];
+ assert.deepEqual(card.traits,['零番隊']);
+ assert.equal(card.gen,1);
+ assert.equal(card.triggerEffect,null);
+ assert.deepEqual(card.effects.onPlay,[{op:'chooseEnergyRevealOutside',count:2}]);
+ const bare={id:'BAD',name:'BAD',color:'purple',type:'character',energy:0,ap:1,bp:1000,gen:1,traits:[],trigger:null,implementation:'dsl',effects:{}};
+ assert.throws(()=>createUniversalPack({id:'bad-energy-window',cards:[{...bare,effects:{onPlay:[{op:'chooseEnergyRevealOutside',count:2,rest:'outside'}]}}]}),/invalid printed-energy reveal/);
+ assert.throws(()=>createUniversalPack({id:'bad-energy-count',cards:[{...bare,effects:{onPlay:[{op:'chooseEnergyRevealOutside',count:5}]}}]}),/invalid printed-energy reveal/);
+ const deck=realDeck(['BLC-1-060','BLC-1-034','BLC-1-039','BLC-1-045','BLC-1-036','BLC-1-108','BLC-1-062','BLC-2-052','BLC-1-057','BLC-1-035','BLC-2-053','BLC-1-059','BLC-1-048'],'purple');
+ function open(seed,tops){
+  const opened=main(deck,seed);
+  put(opened.s,0,'BLC-1-034','energy',0);
+  put(opened.s,0,'BLC-1-039','energy',1);
+  put(opened.s,0,'BLC-1-045','energy',2);
+  const window=tops?setTop(opened.s,0,tops):[];
+  const self=take(opened.s,0,'BLC-1-060');
+  opened.s.players[0].hand.push(self);
+  const play=legalUniversalActions(opened.packs,opened.s).find(a=>a.type==='play'&&a.uid===self.uid&&a.line==='front');
+  assert.ok(play);
+  const played=dispatchUniversalAction(opened.packs,opened.s,play);
+  assert.equal(played.players[0].front.find(c=>c?.uid===self.uid).ready,false);
+  return {opened,window,self,played};
+ }
+ const first=open(29060,['BLC-1-036','BLC-1-108']);
+ assert.equal(first.played.pending.kind,'effect-choose-printed-energy');
+ assert.equal(first.played.publicReveals.some(r=>first.window.some(c=>c.uid===r.uid)),false);
+ assert.equal(universalPublicView(first.opened.packs,first.played,1).players[0].deckCount,first.played.players[0].deck.length);
+ assert.equal(universalPrivateChoices(first.opened.packs,first.played,0),null);
+ assert.equal(universalPrivateChoices(first.opened.packs,first.played,1),null);
+ const numbers=legalUniversalActions(first.opened.packs,first.played);
+ assert.equal(numbers[0].value,0);
+ assert.equal(numbers.some(a=>a.type==='choosePrintedEnergy'&&a.value===2),true);
+ assert.equal(numbers.some(a=>a.value===30),true);
+ const named=dispatchUniversalAction(first.opened.packs,first.played,numbers.find(a=>a.value===2));
+ assert.equal(named.pending.kind,'effect-top-filter-choice');
+ assert.equal(named.pending.rest,'outside');
+ assert.equal(named.pending.discard,false);
+ assert.deepEqual(named.pending.filter,{field:'printedEnergy',value:2});
+ for(const viewer of [0,1]){
+  const pub=universalPublicView(first.opened.packs,named,viewer);
+  assert.deepEqual(pub.publicReveals.filter(r=>r.kind==='revealed-window').map(r=>r.cardId),['BLC-1-036','BLC-1-108']);
+ }
+ const picks=legalUniversalActions(first.opened.packs,named);
+ assert.equal(picks.some(a=>a.uid===first.window[0].uid),true);
+ assert.equal(picks.some(a=>a.uid===first.window[1].uid),false);
+ const took=dispatchUniversalAction(first.opened.packs,named,picks.find(a=>a.uid===first.window[0].uid));
+ assert.equal(took.pending,null);
+ assert.equal(took.players[0].hand.some(c=>c.uid===first.window[0].uid),true);
+ assert.equal(took.players[0].outside.some(c=>c.uid===first.window[1].uid),true);
+ assert.equal(took.players[0].deck.some(c=>first.window.some(x=>x.uid===c.uid)),false);
+ assert.equal(took.players[0].removed.some(c=>first.window.some(x=>x.uid===c.uid)),false);
+ const missed=dispatchUniversalAction(first.opened.packs,first.played,numbers.find(a=>a.value===0));
+ assert.equal(missed.pending,null);
+ assert.deepEqual(missed.players[0].outside.slice(-2).map(c=>c.uid),first.window.map(c=>c.uid));
+ assert.equal(missed.publicReveals.filter(r=>r.kind==='revealed-window').length,2);
+ const zero=open(290601,['BLC-1-048','BLC-1-062']);
+ const zeroNumbers=legalUniversalActions(zero.opened.packs,zero.played);
+ const zeroHit=dispatchUniversalAction(zero.opened.packs,zero.played,zeroNumbers.find(a=>a.value===0));
+ assert.equal(zeroHit.pending.choices.length,1);
+ assert.equal(zeroHit.players[0].deck[0].cardId,'BLC-1-048');
+ const zeroTaken=dispatchUniversalAction(zero.opened.packs,zeroHit,legalUniversalActions(zero.opened.packs,zeroHit).find(a=>a.uid===zero.window[0].uid));
+ assert.equal(zeroTaken.pending,null);
+ assert.equal(zeroTaken.players[0].hand.some(c=>c.uid===zero.window[0].uid),true);
+ assert.equal(zeroTaken.players[0].outside.some(c=>c.uid===zero.window[1].uid),true);
+ const eventOnly=dispatchUniversalAction(zero.opened.packs,zero.played,zeroNumbers.find(a=>a.value===2));
+ assert.equal(eventOnly.pending,null);
+ assert.deepEqual(eventOnly.players[0].outside.slice(-2).map(c=>c.cardId),['BLC-1-048','BLC-1-062']);
+ const dry=main(deck,290602);
+ put(dry.s,0,'BLC-1-034','energy',0);
+ put(dry.s,0,'BLC-1-039','energy',1);
+ put(dry.s,0,'BLC-1-045','energy',2);
+ const lonely=take(dry.s,0,'BLC-1-060');
+ dry.s.players[0].outside.push(...dry.s.players[0].deck.splice(0));
+ dry.s.players[0].hand.push(lonely);
+ const quiet=dispatchUniversalAction(dry.packs,dry.s,legalUniversalActions(dry.packs,dry.s).find(a=>a.type==='play'&&a.uid===lonely.uid&&a.line==='front'));
+ assert.equal(quiet.pending,null);
+ assert.equal(quiet.players[0].deck.length,0);
+ assert.equal(quiet.players[0].front.find(c=>c?.uid===lonely.uid).ready,false);
+ const life=main(deck,290603);
+ const ally=put(life.s,1,'BLC-1-035','front',0,false);
+ const trigger=take(life.s,1,'BLC-1-060');
+ const buried=life.s.players[1].life[0];
+ life.s.players[1].life[0]=trigger;
+ life.s.players[1].deck.push(buried);
+ const attacker=put(life.s,0,'BLC-1-034','front',0,true);
+ let revealed=life.s;
+ for(let n=0;n<6&&revealed.phase!=='attack';n++)
+  revealed=dispatchUniversalAction(life.packs,revealed,{type:'next'});
+ revealed=dispatchUniversalAction(life.packs,revealed,{type:'attack',uid:attacker.uid});
+ if(revealed.pending?.kind==='block')
+  revealed=dispatchUniversalAction(life.packs,revealed,{type:'chooseBlock',uid:null},{actor:1});
+ assert.equal(revealed.pending.trigger,'active');
+ const ready=legalUniversalActions(life.packs,revealed).find(a=>a.mode==='active'&&a.uid===ally.uid);
+ assert.ok(ready);
+ const woken=dispatchUniversalAction(life.packs,revealed,ready,{actor:1});
+ const woke=woken.players[1].front.find(c=>c?.uid===ally.uid);
+ assert.equal(woke.ready,true);
+ assert.equal(universalBp(life.packs,woken,woke),bleach.cards['BLC-1-035'].bp+3000);
+ aiOk(first.opened.packs,first.played);
+ aiOk(first.opened.packs,named);
+ assert.equal(assertUniversalMatch(first.opened.packs,first.played),true);
+ assert.equal(assertUniversalMatch(first.opened.packs,named),true);
+ assert.equal(assertUniversalMatch(first.opened.packs,took),true);
+ assert.equal(assertUniversalMatch(first.opened.packs,missed),true);
+ assert.equal(assertUniversalMatch(zero.opened.packs,zeroTaken),true);
+ assert.equal(assertUniversalMatch(zero.opened.packs,eventOnly),true);
+ assert.equal(assertUniversalMatch(dry.packs,quiet),true);
+ assert.equal(assertUniversalMatch(life.packs,woken),true);
 });
