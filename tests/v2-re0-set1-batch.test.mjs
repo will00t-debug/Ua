@@ -70,9 +70,9 @@ test('UA40BT and UA40ST share one catalogue and keep parallel art out',()=>{
  }
 });
 
-test('eighty-two whole prints enter the V2 pack and the other thirty-one stay out',()=>{
- assert.equal(REZERO_ENGINE_IDS.length,82);
- assert.equal(Object.keys(pack.cards).length,82);
+test('eighty-three whole prints enter the V2 pack and the other thirty stay out',()=>{
+ assert.equal(REZERO_ENGINE_IDS.length,83);
+ assert.equal(Object.keys(pack.cards).length,83);
  assert.equal(pack.cards['REZ-1-001'],undefined);
  assert.equal(pack.cards['REZ-1-008'].step,true);
  assert.equal(pack.cards['REZ-1-008'].implementation,'vanilla');
@@ -219,6 +219,15 @@ test('eighty-two whole prints enter the V2 pack and the other thirty-one stay ou
  assert.deepEqual(pack.cards['REZ-1-066'].effects.onPlay,[
   {op:'retireOppFrontAtMostBp',bp:5000},
   {op:'grantHandCharacterBpMay',amount:1000}]);
+ assert.equal(pack.cards['REZ-1-034'].trigger,'active');
+ assert.equal(pack.cards['REZ-1-034'].triggerEffect,null);
+ assert.equal(pack.cards['REZ-1-034'].color,'blue');
+ assert.equal(pack.cards['REZ-1-034'].energy,4);
+ assert.deepEqual(pack.cards['REZ-1-034'].effects.onPlay,[{
+  op:'optionalPayApThen',ap:1,optional:true,ownTurn:true,
+  then:[{op:'retireOppFrontAtLeastBp',bp:4500,optional:true}]}]);
+ assert.deepEqual(pack.cards['REZ-1-034'].mainAbility,{
+  op:'revealHandBottomImpact',oncePerTurn:true,minPrintedBp:4000,impact:1});
  assert.equal(pack.cards['REZ-1-067'].enterAlwaysActive,true);
  assert.equal(pack.cards['REZ-1-067'].impactNull,true);
  assert.equal(pack.cards['REZ-1-067'].trigger,'active');
@@ -3141,4 +3150,127 @@ test('Hundred-Man Slash requires Crusch, retires BP 5000 or less, and may add 10
  assert.equal(accepted.pending,null);
  assert.equal(universalBp(packs,accepted,at(accepted,0,reader.uid)),1500);
  assert.equal(assertUniversalMatch(packs,accepted),true);
+});
+
+const swordCounts={
+ ...Object.fromEntries(['REZ-1-034','REZ-1-043','REZ-1-066','REZ-1-055','REZ-1-008',
+  'REZ-1-014','REZ-1-012','REZ-1-065','REZ-1-075','REZ-1-007','REZ-1-022','REZ-1-024'].map(id=>[id,4])),
+ 'REZ-1-029':2
+};
+const sword=seed=>newUniversalMatch(packs,{decks:[swordCounts,swordCounts],first:0,seed});
+function revealImpact(s,uid){
+ return legalUniversalActions(packs,s).find(a=>a.type==='activate'&&a.mode==='revealBottomImpact'&&a.uid===uid);
+}
+test('Wilhelm may pay one AP on his turn to retire BP 4500, and gains impact from a revealed 4000 character',()=>{
+ assert.equal(Object.values(swordCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(pack,swordCounts),[]);
+ const shell={id:'SWORD',name:'Gate',color:'blue',type:'character',energy:4,ap:1,bp:4000,gen:0,
+  traits:[],trigger:'active',implementation:'dsl',effects:{}};
+ assert.throws(()=>createUniversalPack({id:'bad-sword',cards:[{...shell,effects:{onPlay:[
+  {op:'retireOppFrontAtLeastBp',bp:4500,optional:true}]}}]}),/paid follow-up/);
+ assert.throws(()=>createUniversalPack({id:'bad-sword',cards:[{...shell,effects:{onPlay:[
+  {op:'optionalPayApThen',ap:1,optional:true,ownTurn:false,then:[
+   {op:'retireOppFrontAtLeastBp',bp:4500,optional:true}]}]}}]}),/optional AP payment/);
+ assert.throws(()=>createUniversalPack({id:'bad-sword',cards:[{...shell,mainAbility:{
+  op:'revealHandBottomImpact',oncePerTurn:true,minPrintedBp:4000,impact:2}}]}),/unsupported main/);
+
+ let skipped=sword(6501);
+ fuel(skipped,['REZ-1-043','REZ-1-043','REZ-1-043','REZ-1-043']);
+ skipped=ownMain(skipped,2);
+ const wall=pull(skipped,1,'REZ-1-075');
+ wall.buffs=[{bp:500,untilTurn:skipped.turn}];
+ skipped.players[1].front[0]=wall;
+ let wilhelm;
+ [skipped,wilhelm]=playFront(skipped,'REZ-1-034');
+ assert.equal(skipped.pending.kind,'effect-optional-pay-ap');
+ assert.equal(skipped.players[0].apCards.filter(c=>c.ready).length,1);
+ skipped=dispatchUniversalAction(packs,skipped,{type:'chooseOptionalPayAp',mode:'skip'});
+ assert.equal(skipped.pending,null);
+ assert.equal(skipped.players[1].front[0]?.uid,wall.uid);
+ assert.equal(skipped.players[0].apCards.filter(c=>c.ready).length,1);
+
+ let empty=sword(6502);
+ fuel(empty,['REZ-1-043','REZ-1-043','REZ-1-043','REZ-1-043']);
+ empty=ownMain(empty,2);
+ [empty]=playFront(empty,'REZ-1-034');
+ empty=dispatchUniversalAction(packs,empty,{type:'chooseOptionalPayAp',mode:'pay'});
+ assert.equal(empty.pending,null);
+ assert.equal(empty.players[0].apCards.filter(c=>c.ready).length,0);
+ assert.equal(assertUniversalMatch(packs,empty),true);
+
+ let paid=sword(6503);
+ fuel(paid,['REZ-1-043','REZ-1-043','REZ-1-043','REZ-1-043']);
+ paid=ownMain(paid,2);
+ const tall=pull(paid,1,'REZ-1-075');
+ tall.buffs=[{bp:500,untilTurn:paid.turn}];
+ const short=pull(paid,1,'REZ-1-014');
+ paid.players[1].front[0]=tall;
+ paid.players[1].front[1]=short;
+ [paid]=playFront(paid,'REZ-1-034');
+ paid=dispatchUniversalAction(packs,paid,{type:'chooseOptionalPayAp',mode:'pay'});
+ assert.equal(paid.pending.kind,'effect-retire-at-least');
+ assert.equal(paid.pending.optional,true);
+ assert.deepEqual(paid.pending.choices,[tall.uid]);
+ assert.equal(uiActionLabel(legalUniversalActions(packs,paid).find(a=>a.uid===null),{pack,state:paid}),'不使角色退場');
+ const declined=dispatchUniversalAction(packs,structuredClone(paid),{type:'chooseRetireAtLeast',uid:null});
+ assert.equal(declined.players[1].front[0]?.uid,tall.uid);
+ const forged=structuredClone(paid);
+ forged.pending.floor=4000;
+ assert.throws(()=>assertUniversalMatch(packs,forged),/Invalid minimum-BP retirement pending/);
+ paid=dispatchUniversalAction(packs,paid,{type:'chooseRetireAtLeast',uid:tall.uid});
+ assert.ok(paid.players[1].outside.some(c=>c.uid===tall.uid));
+ assert.equal(paid.players[1].front[1]?.uid,short.uid);
+ assert.equal(assertUniversalMatch(packs,paid),true);
+
+ let referenced=sword(6504);
+ fuel(referenced,['REZ-1-043','REZ-1-043','REZ-1-043','REZ-1-043']);
+ referenced=ownMain(referenced,2);
+ const lady=pull(referenced,0,'REZ-1-055');
+ referenced.players[0].front[0]=lady;
+ const victim=pull(referenced,1,'REZ-1-012');
+ referenced.players[1].front[0]=victim;
+ [referenced]=castEvent(referenced,'REZ-1-066');
+ referenced=dispatchUniversalAction(packs,referenced,{type:'chooseRetireAtMost',uid:victim.uid});
+ let actor;
+ [referenced,actor]=playFront(referenced,'REZ-1-034');
+ assert.equal(referenced.pending,null);
+ const border=pull(referenced,0,'REZ-1-008');
+ referenced.players[0].hand.push(border);
+ referenced=dispatchUniversalAction(packs,referenced,revealImpact(referenced,actor.uid));
+ referenced=dispatchUniversalAction(packs,referenced,{type:'chooseRevealBottom',uid:border.uid});
+ assert.equal(referenced.pending.kind,'effect-hand-bp-may');
+ assert.equal(referenced.pending.impact,1);
+ referenced=dispatchUniversalAction(packs,referenced,{type:'chooseHandBpMay',mode:'accept'});
+ assert.equal(universalImpact(packs,referenced,at(referenced,0,actor.uid)),1);
+ referenced=ownMain(referenced,3);
+ assert.equal(universalImpact(packs,referenced,at(referenced,0,actor.uid)),0);
+ assert.equal(assertUniversalMatch(packs,referenced),true);
+
+ let plain=sword(6505);
+ plain=ownMain(plain,2);
+ const quiet=stamp(plain,pull(plain,0,'REZ-1-034'));
+ plain.players[0].front[0]=quiet;
+ const low=pull(plain,0,'REZ-1-008');
+ plain.players[0].hand.push(low);
+ plain=dispatchUniversalAction(packs,plain,revealImpact(plain,quiet.uid));
+ plain=dispatchUniversalAction(packs,plain,{type:'chooseRevealBottom',uid:low.uid});
+ assert.equal(plain.pending,null);
+ assert.equal(universalImpact(packs,plain,at(plain,0,quiet.uid)),0);
+ plain=ownMain(plain,3);
+ const mid=pull(plain,0,'REZ-1-014');
+ plain.players[0].hand.push(mid);
+ plain=dispatchUniversalAction(packs,plain,revealImpact(plain,quiet.uid));
+ plain=dispatchUniversalAction(packs,plain,{type:'chooseRevealBottom',uid:mid.uid});
+ assert.equal(universalImpact(packs,plain,at(plain,0,quiet.uid)),0);
+ plain=ownMain(plain,4);
+ const monster=pull(plain,0,'REZ-1-065');
+ plain.players[0].hand.push(monster);
+ plain=dispatchUniversalAction(packs,plain,revealImpact(plain,quiet.uid));
+ plain=dispatchUniversalAction(packs,plain,{type:'chooseRevealBottom',uid:monster.uid});
+ assert.equal(plain.pending,null);
+ assert.equal(universalImpact(packs,plain,at(plain,0,quiet.uid)),1);
+ assert.equal(revealImpact(plain,quiet.uid),undefined);
+ plain=ownMain(plain,5);
+ assert.equal(universalImpact(packs,plain,at(plain,0,quiet.uid)),0);
+ assert.equal(assertUniversalMatch(packs,plain),true);
 });

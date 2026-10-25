@@ -220,7 +220,8 @@ export function uiActionLabel(action,{pack,state}={}){
    '將 '+name()+' 放到場外，並使這張場域活動';
   case 'chooseNamedImpact':return '選擇 '+name()+'，本回合 BP+1000 並獲得衝擊+1';
   case 'chooseOwnBuff':case 'chooseMainBuff':case 'chooseTraitBuff':case 'chooseRestBp':
-  case 'chooseRetireAtLeast':case 'chooseRetireAtMost':return '使 '+name()+' 退場';
+  case 'chooseRetireAtMost':return '使 '+name()+' 退場';
+  case 'chooseRetireAtLeast':return action.uid===null?'不使角色退場':'使 '+name()+' 退場';
   case 'chooseHandBpMay':return action.mode==='accept'?'視為 BP+1000':'維持原本 BP';
   case 'chooseRetireBp':case 'chooseTargetMany':return action.uid===null?'完成目標選擇':'選擇第 '+(state?.pending?.selected?.length+1||1)+' 個角色';
   case 'chooseFrontEnergyGrant':return action.uid===null?

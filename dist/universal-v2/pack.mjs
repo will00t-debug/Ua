@@ -327,10 +327,13 @@ function verifyProgram(program,path){
    e.count!==5||e.trait!=='王選候補者'||Object.keys(e).length!==3||
    Object.keys(e).some(k=>!['op','count','trait'].includes(k))))
    throw Error(path+'['+i+'] unsupported trait or event search');
-  if(e.op==='retireOppFrontAtLeastBp'&&(
-   e.bp!==4500||Object.keys(e).length!==2||
-   Object.keys(e).some(k=>!['op','bp'].includes(k))))
-   throw Error(path+'['+i+'] unsupported minimum front retirement');
+  if(e.op==='retireOppFrontAtLeastBp'){
+   const plain=e.bp===4500&&Object.keys(e).length===2&&
+    Object.keys(e).every(k=>['op','bp'].includes(k));
+   const paid=e.bp===4500&&e.optional===true&&Object.keys(e).length===3&&
+    Object.keys(e).every(k=>['op','bp','optional'].includes(k));
+   if(!(plain||paid))throw Error(path+'['+i+'] unsupported minimum front retirement');
+  }
   if(e.op==='retireOppFrontAtMostBp'&&(
    e.bp!==5000||Object.keys(e).length!==2||
    Object.keys(e).some(k=>!['op','bp'].includes(k))))
@@ -401,11 +404,14 @@ function verifyProgram(program,path){
    }
    if(e.op==='optionalPayApThen'){
     if(e.when!==undefined)assertLiveCondition(e.when,path+'['+i+'].when');
-    if(e.ap!==1||e.optional!==true||!Array.isArray(e.then)||
+    const paidRetire=x=>x?.op==='retireOppFrontAtLeastBp'&&x.bp===4500&&x.optional===true;
+    if((e.ownTurn!==undefined&&e.ownTurn!==true)||
+     e.ap!==1||e.optional!==true||!Array.isArray(e.then)||
      e.then.length<1||e.then.length>3||
-     Object.keys(e).length!==4+Number(e.when!==undefined)||
-     Object.keys(e).some(k=>!['op','ap','optional','then','when'].includes(k))||
-     e.then.some(x=>!['draw','deployOwnHandRestOrRaid','deployOutsideNameRest'].includes(x?.op)))
+     Object.keys(e).length!==4+Number(e.when!==undefined)+Number(e.ownTurn===true)||
+     Object.keys(e).some(k=>!['op','ap','optional','then','when','ownTurn'].includes(k))||
+     e.then.some(x=>!['draw','deployOwnHandRestOrRaid','deployOutsideNameRest'].includes(x?.op)&&
+      !paidRetire(x)))
      throw Error(path+'['+i+'] invalid optional AP payment');
     verifyProgram(e.then,path+'['+i+'].then');
    }
@@ -1096,6 +1102,11 @@ function normalize(card,packId){
   integer(mainAbility.bp,1)&&mainAbility.bp<=5000&&
   Object.keys(mainAbility).length===4&&
   Object.keys(mainAbility).every(k=>['op','oncePerTurn','minPrintedBp','bp'].includes(k));
+ const mainRevealImpact=mainAbility?.op==='revealHandBottomImpact'&&
+  card.type==='character'&&mainAbility.oncePerTurn===true&&
+  mainAbility.minPrintedBp===4000&&mainAbility.impact===1&&
+  Object.keys(mainAbility).length===4&&
+  Object.keys(mainAbility).every(k=>['op','oncePerTurn','minPrintedBp','impact'].includes(k));
  const frontProgram=mainAbility?.then;
  const frontGate=frontProgram?.[0]?.op==='discardGate'?frontProgram[0]:null;
  // A front once-per-turn ability may be a source-complete DSL program,
@@ -1207,7 +1218,7 @@ function normalize(card,packId){
   Object.keys(mainAbility).every(k=>['op','frontOnly','oncePerTurn','requireOwnEffectRest','then'].includes(k));
  if(mainNamedEnergy)verifyProgram(mainAbility.then,card.id+'.mainAbility.then');
  if(mainAbility!==null&&
-  (!['character','field'].includes(card.type)||!(fieldDualMain||fieldRestRetireThen||fieldPeek||fieldRestDrawTop||card.type==='character'&&(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainRestBuff||mainPayAp||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainRestDiscardRetire||mainFrontProgram||mainNameDrawDiscard||mainOwnEffectRest||mainNamedEnergy||mainFieldOnceBuff||mainEntryProtect||mainRestRetireUnder||mainRestTwoMove||mainOncePay||mainRevealBottom))))
+  (!['character','field'].includes(card.type)||!(fieldDualMain||fieldRestRetireThen||fieldPeek||fieldRestDrawTop||card.type==='character'&&(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainRestBuff||mainPayAp||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainRestDiscardRetire||mainFrontProgram||mainNameDrawDiscard||mainOwnEffectRest||mainNamedEnergy||mainFieldOnceBuff||mainEntryProtect||mainRestRetireUnder||mainRestTwoMove||mainOncePay||mainRevealBottom||mainRevealImpact))))
   throw Error(card.id+' unsupported main action ability');
  const passiveBonuses=validatePassiveBonuses(card);
  const implemented=card.implementation;
@@ -1473,6 +1484,8 @@ function normalize(card,packId){
    throw Error(card.id+' trait or event search is an event onPlay effect');
   if(program.some(e=>e.op==='discountNextNamedHandEnergy'))
    throw Error(card.id+' next named hand energy is a front main ability');
+  if(program.some(e=>e.op==='retireOppFrontAtLeastBp'&&e.optional===true))
+   throw Error(card.id+' optional minimum front retirement is only a paid follow-up');
   if(program.some(e=>e.op==='retireOppFrontAtLeastBp')&&
    (card.type!=='event'||name!=='onPlay'))
    throw Error(card.id+' minimum front retirement is an event onPlay effect');

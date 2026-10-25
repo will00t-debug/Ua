@@ -891,9 +891,10 @@ function continueEffectQueue(pack,s){
    }else if(job.op==='optionalPayApThen'){
     // No ready AP means the printed payment cannot be made. Do not open a
     // choice and do not run the gated program. A printed field condition
-    // that misses does not offer the payment.
-    const gate=!job.when||matchesV2LiveCondition(s,owner,job.sourceUid,job.when,
-     c=>card(pack,c),()=>calcEnergy(pack,s,owner),c=>bp(pack,s,c));
+    // that misses does not offer the payment. ownTurn is 自分のターン中.
+    const ownOk=job.ownTurn!==true||s.active===owner;
+    const gate=ownOk&&(!job.when||matchesV2LiveCondition(s,owner,job.sourceUid,job.when,
+     c=>card(pack,c),()=>calcEnergy(pack,s,owner),c=>bp(pack,s,c)));
     if(gate&&pl.apCards.some(c=>c.ready))s.pending={kind:'effect-optional-pay-ap',
      player:owner,sourceUid:job.sourceUid,sourceName:job.sourceName,
      ap:job.ap,then:job.then.map(e=>({...e}))};
@@ -1102,9 +1103,11 @@ function continueEffectQueue(pack,s){
   }else if(job.op==='retireOppFrontAtLeastBp'){
    const choices=s.players[1-owner].front.filter(c=>c&&bp(pack,s,c)>=job.bp&&
     cardEffectTargetPayable(pack,s,owner,c.uid,0,job.sourceUid)).map(c=>c.uid);
-   if(!choices.length)throw Error('At-least front retirement lost its mandatory target');
-   s.pending={kind:'effect-retire-at-least',player:owner,sourceUid:job.sourceUid,
-    choices,floor:job.bp};
+   if(!choices.length){
+    if(job.optional===true){/* 1枚まで: paying AP does not invent a target. */}
+    else throw Error('At-least front retirement lost its mandatory target');
+   }else s.pending={kind:'effect-retire-at-least',player:owner,sourceUid:job.sourceUid,
+    choices,floor:job.bp,...(job.optional===true?{optional:true}:{})};
   }else if(job.op==='retireOppFrontAtMostBp'){
    const choices=s.players[1-owner].front.filter(c=>c&&bp(pack,s,c)<=job.bp&&
     cardEffectTargetPayable(pack,s,owner,c.uid,0,job.sourceUid)).map(c=>c.uid);
@@ -2083,12 +2086,12 @@ function resolveChoice(s,a,pack){
   if(bonus&&baseMeets!==boostedMeets){
    s.pending={kind:'effect-hand-bp-may',player:q.player,sourceUid:q.sourceUid,
     sourceStamp:q.sourceStamp,revealedUid:physical.uid,minPrintedBp:q.minPrintedBp,
-    bp:q.bp,baseBp:shown.bp,amount:1000};
+    baseBp:shown.bp,amount:1000,...(q.impact===1?{impact:1}:{bp:q.bp})};
    return;
   }
   if(baseMeets){
-   source.buffs??=[];
-   source.buffs.push({bp:q.bp,untilTurn:s.turn});
+   if(q.impact===1)source.impactGranted={turn:s.turn,stamp:source.fieldEntryStamp,amount:1};
+   else{source.buffs??=[];source.buffs.push({bp:q.bp,untilTurn:s.turn});}
   }
   s.pending=null;
   return;
@@ -2103,8 +2106,8 @@ function resolveChoice(s,a,pack){
    throw Error('Hand BP option lost its source or revealed card');
   const used=a.mode==='accept'?q.baseBp+q.amount:q.baseBp;
   if(used>=q.minPrintedBp){
-   source.buffs??=[];
-   source.buffs.push({bp:q.bp,untilTurn:s.turn});
+   if(q.impact===1)source.impactGranted={turn:s.turn,stamp:source.fieldEntryStamp,amount:1};
+   else{source.buffs??=[];source.buffs.push({bp:q.bp,untilTurn:s.turn});}
   }
   s.pending=null;
   return;
@@ -3404,6 +3407,7 @@ function resolveChoice(s,a,pack){
   continueEffectQueue(pack,s);return;
  }
  if(q.kind==='effect-retire-at-least'){
+  if(a.uid===null&&q.optional===true){s.pending=null;continueEffectQueue(pack,s);return;}
   const opponent=1-q.player,slot=s.players[opponent].front.findIndex(c=>c?.uid===a.uid);
   if(slot<0||!q.choices.includes(a.uid)||bp(pack,s,s.players[opponent].front[slot])<q.floor)
    throw Error('Illegal minimum-BP retirement target');
@@ -4142,7 +4146,9 @@ function legalPending(pack,s){
   ];
   if(q.kind==='effect-named-outside-bounce-retire')
    return q.choices.map(uid=>({type:'chooseNamedOutsideBounceRetire',uid}));
-  if(q.kind==='effect-retire-at-least')return q.choices.map(uid=>({type:'chooseRetireAtLeast',uid}));
+  if(q.kind==='effect-retire-at-least')return [
+   ...q.choices.map(uid=>({type:'chooseRetireAtLeast',uid})),
+   ...(q.optional===true?[{type:'chooseRetireAtLeast',uid:null}]:[])];
   if(q.kind==='effect-retire-at-most')return q.choices.map(uid=>({type:'chooseRetireAtMost',uid}));
   if(q.kind==='effect-hand-bp-may')return [
    {type:'chooseHandBpMay',mode:'accept'},{type:'chooseHandBpMay',mode:'decline'}];
@@ -4482,6 +4488,9 @@ export function legalUniversalActions(pack,s){
    if(ability?.op==='revealHandBottomBuff'&&pl.hand.length>0&&
     !s.mainAbilityUsedUids.includes(c.uid))
     out.push({type:'activate',uid:c.uid,mode:'revealBottomBuff'});
+   if(ability?.op==='revealHandBottomImpact'&&pl.hand.length>0&&
+    !s.mainAbilityUsedUids.includes(c.uid))
+    out.push({type:'activate',uid:c.uid,mode:'revealBottomImpact'});
    if(ability?.op==='oncePayProgram'&&!s.mainAbilityUsedUids.includes(c.uid)){
     const onFront=pl.front.some(x=>x?.uid===c.uid);
     const placed=onFront||pl.energy.some(x=>x?.uid===c.uid);
@@ -4942,6 +4951,17 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
     s.pending={kind:'effect-reveal-bottom',player:p,sourceUid:selected.uid,
      sourceStamp:selected.fieldEntryStamp,choices:pl.hand.map(c=>c.uid),
      minPrintedBp:ability.minPrintedBp,bp:ability.bp};
+    break;
+   }
+   if(ability.op==='revealHandBottomImpact'){
+    if(action.mode!=='revealBottomImpact'||!pl.hand.length||
+     s.mainAbilityUsedUids.includes(selected.uid)||
+     !Number.isInteger(selected.fieldEntryStamp)||selected.fieldEntryStamp<1)
+     throw Error('Reveal-to-bottom MAIN requires an unused source and one hand card');
+    s.mainAbilityUsedUids.push(selected.uid);
+    s.pending={kind:'effect-reveal-bottom',player:p,sourceUid:selected.uid,
+     sourceStamp:selected.fieldEntryStamp,choices:pl.hand.map(c=>c.uid),
+     minPrintedBp:ability.minPrintedBp,impact:ability.impact};
     break;
    }
    if(ability.op==='discardHandBuffSelf'){
@@ -5703,18 +5723,31 @@ export function assertUniversalMatch(pack,s){
  }
  if(s.pending?.kind==='effect-retire-at-least'){
   const q=s.pending;
-  const source=s.players[q.player].outside.find(c=>c.uid===q.sourceUid);
-  const effect=source&&card(pack,source).effects?.onPlay?.find(e=>
-   e.op==='retireOppFrontAtLeastBp'&&e.bp===4500);
-  const moved=s.zoneMoveEvents.some(e=>e.turn===s.turn&&e.owner===q.player&&
-   e.uid===q.sourceUid&&e.from==='hand'&&e.to==='outside'&&e.reason==='rule');
   const choices=s.players[1-q.player].front.filter(c=>c&&bp(pack,s,c)>=4500&&
    cardEffectTargetPayable(pack,s,q.player,c.uid,0,q.sourceUid)).map(c=>c.uid);
-  if(!effect||card(pack,source).type!=='event'||q.floor!==4500||!moved||
-   !choices.length||!same(q.choices,choices)||
-   Object.keys(q).length!==5||
-   Object.keys(q).some(k=>!['kind','player','sourceUid','choices','floor'].includes(k)))
-   throw Error('Invalid minimum-BP retirement pending');
+  if(q.optional===true){
+   const source=field(s.players[q.player]).find(c=>c.uid===q.sourceUid);
+   const pay=source&&card(pack,source).effects?.onPlay?.find(e=>
+    e.op==='optionalPayApThen'&&e.ap===1&&e.optional===true&&e.ownTurn===true&&
+    e.then?.some(x=>x.op==='retireOppFrontAtLeastBp'&&x.bp===4500&&x.optional===true));
+   const paid=(s.effectApPaidColors?.[q.player]||[]).includes(source&&card(pack,source).color);
+   if(!pay||card(pack,source).type!=='character'||q.floor!==4500||!paid||
+    !choices.length||!same(q.choices,choices)||
+    Object.keys(q).length!==6||
+    Object.keys(q).some(k=>!['kind','player','sourceUid','choices','floor','optional'].includes(k)))
+    throw Error('Invalid minimum-BP retirement pending');
+  }else{
+   const source=s.players[q.player].outside.find(c=>c.uid===q.sourceUid);
+   const effect=source&&card(pack,source).effects?.onPlay?.find(e=>
+    e.op==='retireOppFrontAtLeastBp'&&e.bp===4500&&e.optional===undefined);
+   const moved=s.zoneMoveEvents.some(e=>e.turn===s.turn&&e.owner===q.player&&
+    e.uid===q.sourceUid&&e.from==='hand'&&e.to==='outside'&&e.reason==='rule');
+   if(!effect||card(pack,source).type!=='event'||q.floor!==4500||!moved||
+    !choices.length||!same(q.choices,choices)||
+    Object.keys(q).length!==5||
+    Object.keys(q).some(k=>!['kind','player','sourceUid','choices','floor'].includes(k)))
+    throw Error('Invalid minimum-BP retirement pending');
+  }
  }
  if(s.pending?.kind==='effect-retire-at-most'){
   const q=s.pending;
@@ -5740,15 +5773,18 @@ export function assertUniversalMatch(pack,s){
   const flag=pl.handCharacterBpMay;
   const moved=s.zoneMoveEvents.some(e=>e.turn===s.turn&&e.owner===q.player&&
    e.uid===q.revealedUid&&e.from==='hand'&&e.to==='deck'&&e.reason==='own-effect');
-  if(!source||source.fieldEntryStamp!==q.sourceStamp||
-   ability?.op!=='revealHandBottomBuff'||ability.minPrintedBp!==q.minPrintedBp||
-   ability.bp!==q.bp||!s.mainAbilityUsedUids.includes(q.sourceUid)||
+  const impact=q.impact===1&&q.bp===undefined;
+  const rewardOk=impact?ability?.op==='revealHandBottomImpact'&&ability.impact===1:
+   q.impact===undefined&&ability?.op==='revealHandBottomBuff'&&ability.bp===q.bp;
+  const rewardKey=impact?'impact':'bp';
+  if(!source||source.fieldEntryStamp!==q.sourceStamp||!rewardOk||
+   ability.minPrintedBp!==q.minPrintedBp||!s.mainAbilityUsedUids.includes(q.sourceUid)||
    !shown||shown.type!=='character'||shown.bp!==q.baseBp||q.amount!==1000||
    !(q.baseBp<q.minPrintedBp&&q.baseBp+q.amount>=q.minPrintedBp)||
    !flag||flag.turn!==s.turn||flag.amount!==1000||!moved||
    Object.keys(q).length!==9||
    Object.keys(q).some(k=>!['kind','player','sourceUid','sourceStamp','revealedUid',
-    'minPrintedBp','bp','baseBp','amount'].includes(k)))
+    'minPrintedBp',rewardKey,'baseBp','amount'].includes(k)))
    throw Error('Invalid hand character BP option pending');
  }
  if(s.pending?.kind==='effect-top-trait-event'){
@@ -5834,12 +5870,15 @@ export function assertUniversalMatch(pack,s){
  if(s.pending?.kind==='effect-reveal-bottom'){
   const q=s.pending,src=field(s.players[q.player]).find(c=>c.uid===q.sourceUid);
   const printed=src&&card(pack,src),ab=printed?.mainAbility;
-  if(!src||src.fieldEntryStamp!==q.sourceStamp||ab?.op!=='revealHandBottomBuff'||
-   ab.minPrintedBp!==q.minPrintedBp||ab.bp!==q.bp||
+  const impact=ab?.op==='revealHandBottomImpact'&&q.impact===1&&q.bp===undefined&&ab.impact===1;
+  const buff=ab?.op==='revealHandBottomBuff'&&q.impact===undefined&&ab.bp===q.bp;
+  const rewardKey=impact?'impact':'bp';
+  if(!src||src.fieldEntryStamp!==q.sourceStamp||!(impact||buff)||
+   ab.minPrintedBp!==q.minPrintedBp||
    !s.mainAbilityUsedUids.includes(q.sourceUid)||
    !Array.isArray(q.choices)||!same(q.choices,s.players[q.player].hand.map(c=>c.uid))||
    Object.keys(q).length!==7||
-   Object.keys(q).some(k=>!['kind','player','sourceUid','sourceStamp','choices','minPrintedBp','bp'].includes(k)))
+   Object.keys(q).some(k=>!['kind','player','sourceUid','sourceStamp','choices','minPrintedBp',rewardKey].includes(k)))
    throw Error('Invalid reveal-to-bottom pending');
  }
  if(s.pending?.kind==='effect-rest-front-ap'){

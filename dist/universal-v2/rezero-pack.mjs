@@ -61,6 +61,7 @@ export function rezeroEngineKind(effectJa){
  if(e==='自分の効果で自分の手札から公開しているこのカードは元々のBPが4000のキャラカードとしても扱う。BP4500以上の相手のフロントLのキャラを1枚選び、退場させる。')return 'handRevealRetire';
  if(e==='このキャラはアクティブで場に登場させる。【登場時】BP1500以上の相手のフロントLのキャラを2枚まで選び、このターン中、BP-1000。【アタック時】相手のフロントLに元々のBPよりBPが低いキャラがある場合、カードを1枚引く。')return 'activeFrontDownDraw';
  if(e==='このカードは自分の場に〈クルシュ・カルステン〉がある場合のみ使用できる。BP5000以下の相手のフロントLのキャラを1枚選び、退場させる。このターン中、自分の効果で自分の手札のキャラカードのBPを参照する場合、BP+1000されたものとして扱ってもよい。')return 'cruschRetireHandBp';
+ if(e==='【登場時】自分のターン中の場合、APを1支払ってもよい。そうした場合、BP4500以上の相手のフロントLのキャラを1枚まで選び、退場させる。【起動メイン】【ターン1】自分の手札を1枚公開し、自分の山札の下に置く。公開したカードがBP4000以上のキャラカードの場合、このキャラはこのターン中、【インパクト（1）】を得る。')return 'wilhelmPayImpact';
  return null;
 }
 const TOP_OUTSIDE=new Map([
@@ -116,6 +117,8 @@ function onPlay(card,kind){
  if(kind==='cruschRetireHandBp')return [
   {op:'retireOppFrontAtMostBp',bp:5000},
   {op:'grantHandCharacterBpMay',amount:1000}];
+ if(kind==='wilhelmPayImpact')return [{op:'optionalPayApThen',ap:1,optional:true,ownTurn:true,
+  then:[{op:'retireOppFrontAtLeastBp',bp:4500,optional:true}]}];
  if(kind==='garfielEntry')return [{op:'enemyBpDown',bp:2500,optional:true,zone:'front'}];
  if(kind==='sanctuaryRecover')return [{op:'payHandOrRestForNamed',name:TRIAL_NAME}];
  if(kind==='frontDown2500')return [{op:'enemyBpDown',bp:2000,optional:true,minBp:2500,zone:'front'}];
@@ -215,6 +218,8 @@ export function rezeroPackCard(card){
    then:[{op:'discountNextNamedHandEnergy',name:'エミリア',color:'purple',amount:1}]}}:{}),
   ...(kind==='handRevealRetire'?{handRevealCharacterBp:4000}:{}),
   ...(kind==='cruschRetireHandBp'?{playRequiresOwnName:'クルシュ・カルステン'}:{}),
+  ...(kind==='wilhelmPayImpact'?{mainAbility:{
+   op:'revealHandBottomImpact',oncePerTurn:true,minPrintedBp:4000,impact:1}}:{}),
   ...(kind==='feltTurnBp'?{passiveBonuses:[{
    condition:{kind:'ownNameExists',turn:'own',zone:'field',excludeSelf:false,name:'フェルト'},
    bp:1000}]}:{}),
