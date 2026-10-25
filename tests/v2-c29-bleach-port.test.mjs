@@ -48,9 +48,14 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 //   相手のフロントLのキャラを1枚まで選び、レストにする。 ACTIVE is generic.
 //   The attribute cell is one composite, 護廷十三隊／ゾンビ. Generated energy alt is 黄.
 //   Paid play, an event, and a field do not open the REST. A character effect does.
+// BLC-2-006 EX07BT: [登場時]このキャラが自分のキャラの効果で登場していた場合、カードを1枚引く。
+//   [起動メイン][APを1支払う][ターン1]このキャラはこのターン中、[インパクト（1）]を得る。
+//   COLOR is the standard rest-and-skip-next-active sentence. The attribute cell
+//   is one composite, 星十字騎士団／ゾンビ. Generated energy alt is 黄. The activate
+//   has no フロントL restriction and does not REST this character.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -121,12 +126,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers thirty whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,466);
- assert.equal(EXPECTED_V2_COUNTS.bleach,190);
+test('C29 registers thirty-one whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,467);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,191);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,190);
+ assert.equal(Object.keys(bleach.cards).length,191);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -1735,4 +1740,193 @@ test('BLC-2-005 rests an opposing front character only after a character effect 
  assert.equal(assertUniversalMatch(both,byEvent.entered),true);
  assert.equal(assertUniversalMatch(both,byField.entered),true);
  assert.equal(assertUniversalMatch(both,seated),true);
+});
+
+test('BLC-2-006 draws only after a character effect, then pays 1 AP for this-turn Impact 1',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-2-006');
+ assert.equal(printed.effect,'登場：若透過己方角色的效果登場，抽 1 張。主要階段・每回合 1 次：支付 1 AP，使此角色本回合獲得 Impact 1。');
+ assert.equal(printed.traits,'星十字騎士團／殭屍');
+ assert.equal(printed.energy,4);
+ assert.equal(printed.gen,1);
+ assert.equal(printed.trigger,'color');
+ const card=bleach.cards['BLC-2-006'];
+ assert.deepEqual(card.traits,['星十字騎士團／殭屍']);
+ assert.deepEqual(card.effects.onPlay,[{op:'draw',count:1,entry:'ownCharacter'}]);
+ assert.deepEqual(card.mainAbility,{op:'oncePayProgram',oncePerTurn:true,frontOnly:false,raidOnly:false,payAp:1,requiresOwnName:null,then:[{op:'grantSelfImpactThisTurn',amount:1}]});
+ assert.deepEqual(card.triggerEffect,{op:'restOppFrontSkipNextActive'});
+ assert.equal(card.printedImpact||0,0);
+ const bare={id:'BAD',name:'BAD',color:'yellow',type:'character',energy:0,ap:1,bp:1000,gen:1,traits:[],trigger:null,implementation:'dsl',effects:{}};
+ assert.throws(()=>createUniversalPack({id:'bad-draw-entry',cards:[{...bare,effects:{onPlay:[{op:'draw',count:1,entry:'paidPlay'}]}}]}),/invalid own-effect draw gate/);
+ assert.throws(()=>createUniversalPack({id:'bad-draw-event',cards:[{...bare,type:'event',bp:0,gen:0,effects:{onPlay:[{op:'draw',count:1,entry:'ownCharacter'}]}}]}),/only a character onPlay/);
+ assert.throws(()=>createUniversalPack({id:'bad-impact-amount',cards:[{...bare,mainAbility:{op:'oncePayProgram',oncePerTurn:true,frontOnly:false,raidOnly:false,payAp:1,requiresOwnName:null,then:[{op:'grantSelfImpactThisTurn',amount:2}]}}]}),/invalid this-turn impact/);
+ const deck=realDeck(['BLC-2-006','BLC-1-002','BLC-1-012','BLC-1-018','BLC-1-021','BLC-1-001','BLC-4-001','BLC-1-006','BLC-1-023','BLC-1-032','BLC-2-003','BLC-1-008','BLC-1-016'],'yellow');
+ const paidMatch=main(deck,29006);
+ put(paidMatch.s,0,'BLC-1-002','energy',0);
+ put(paidMatch.s,0,'BLC-1-012','energy',1);
+ put(paidMatch.s,0,'BLC-1-018','energy',2);
+ put(paidMatch.s,0,'BLC-1-021','energy',3);
+ const self=take(paidMatch.s,0,'BLC-2-006');
+ const top=paidMatch.s.players[0].deck[0].uid;
+ const handBefore=paidMatch.s.players[0].hand.length;
+ paidMatch.s.players[0].hand.push(self);
+ const paid=dispatchUniversalAction(paidMatch.packs,paidMatch.s,legalUniversalActions(paidMatch.packs,paidMatch.s).find(a=>a.type==='play'&&a.uid===self.uid&&a.line==='front'));
+ assert.equal(paid.pending,null);
+ assert.equal(paid.players[0].deck[0].uid,top);
+ assert.equal(paid.players[0].hand.length,handBefore);
+ assert.equal(paid.players[0].front.find(c=>c?.uid===self.uid).ready,false);
+ assert.equal(universalImpact(paidMatch.packs,paid,paid.players[0].front.find(c=>c?.uid===self.uid)),0);
+ assert.equal(legalUniversalActions(paidMatch.packs,paid).some(a=>a.type==='activate'&&a.uid===self.uid),false);
+ paid.players[0].apCards[0].ready=true;
+ const act={type:'activate',uid:self.uid,mode:'oncePay'};
+ const granted=dispatchUniversalAction(paidMatch.packs,paid,act);
+ const body=granted.players[0].front.find(c=>c?.uid===self.uid);
+ assert.equal(universalImpact(paidMatch.packs,granted,body),1);
+ assert.equal(body.ready,false);
+ assert.equal(body.impactGranted.turn,granted.turn);
+ assert.equal(granted.players[0].apCards.filter(c=>c.ready).length,0);
+ assert.equal(legalUniversalActions(paidMatch.packs,granted).some(a=>a.uid===self.uid&&a.mode==='oncePay'),false);
+ assert.throws(()=>dispatchUniversalAction(paidMatch.packs,granted,act),/not currently legal/);
+ const energyMatch=main(deck,290061);
+ const lined=put(energyMatch.s,0,'BLC-2-006','energy',0,true);
+ const deckBefore=energyMatch.s.players[0].deck.length;
+ const fromEnergy=dispatchUniversalAction(energyMatch.packs,energyMatch.s,{type:'activate',uid:lined.uid,mode:'oncePay'});
+ const stayed=fromEnergy.players[0].energy.find(c=>c?.uid===lined.uid);
+ assert.equal(universalImpact(energyMatch.packs,fromEnergy,stayed),1);
+ assert.equal(stayed.ready,true);
+ assert.equal(fromEnergy.players[0].deck.length,deckBefore);
+ assert.equal(fromEnergy.players[0].apCards.filter(c=>c.ready).length,0);
+ let later=fromEnergy;
+ for(let n=0;n<8&&universalImpact(energyMatch.packs,later,later.players[0].energy.find(c=>c?.uid===lined.uid))===1;n++)
+  later=dispatchUniversalAction(energyMatch.packs,later,{type:'next'});
+ assert.equal(universalImpact(energyMatch.packs,later,later.players[0].energy.find(c=>c?.uid===lined.uid)),0);
+ const broke=main(deck,290062);
+ const resting=put(broke.s,0,'BLC-2-006','front',0,false);
+ for(const ap of broke.s.players[0].apCards)ap.ready=false;
+ assert.equal(legalUniversalActions(broke.packs,broke.s).some(a=>a.mode==='oncePay'),false);
+ assert.throws(()=>dispatchUniversalAction(broke.packs,broke.s,{type:'activate',uid:resting.uid,mode:'oncePay'}),/not currently legal/);
+ broke.s.players[0].apCards[0].inPlay=true;
+ broke.s.players[0].apCards[0].ready=true;
+ const fromRest=dispatchUniversalAction(broke.packs,broke.s,{type:'activate',uid:resting.uid,mode:'oncePay'});
+ assert.equal(fromRest.players[0].front.find(c=>c?.uid===resting.uid).ready,false);
+ assert.equal(universalImpact(broke.packs,fromRest,fromRest.players[0].front.find(c=>c?.uid===resting.uid)),1);
+ const hit={id:card.id,name:card.name,color:card.color,type:card.type,energy:card.energy,
+  ap:card.ap,bp:card.bp,gen:card.gen,traits:[...card.traits],trigger:card.trigger,
+  triggerEffect:card.triggerEffect,mainAbility:card.mainAbility,implementation:'dsl',effects:card.effects};
+ const deploy={op:'deployOwnHandRest',type:'character',color:'yellow',energy:4,ap:1,max:1};
+ const unit=(id,extra)=>({id,name:id,color:'yellow',type:'character',energy:0,ap:1,bp:2000,
+  gen:1,traits:[],trigger:null,implementation:'dsl',effects:{},...extra});
+ const lab=createUniversalPack({id:'c29-own-character-draw',cards:[
+  hit,unit('SRC',{effects:{onPlay:[deploy]}}),
+  unit('EVT',{type:'event',bp:0,gen:0,effects:{onPlay:[deploy]}}),
+  unit('FLD',{type:'field',bp:0,effects:{onPlay:[deploy]}}),
+  ...['A','B','C','D','E','F','G','H','I'].map(id=>unit(id,{implementation:'vanilla'}))
+ ]});
+ const ids=['BLC-2-006','SRC','EVT','FLD','A','B','C','D','E','F','G','H','I'];
+ const counts=Object.fromEntries(ids.map((id,i)=>[id,i===12?2:4]));
+ assert.deepEqual(validateUniversalDeck(lab,counts),[]);
+ const both=[lab,lab];
+ function boot(seed){
+  let state=newUniversalMatch(both,{decks:[counts,counts],seed,first:0});
+  for(let n=0;n<8&&state.phase!=='main';n++)
+   state=dispatchUniversalAction(both,state,{type:'next'});
+  return state;
+ }
+ function lift(state,p,id){
+  for(const zone of ['hand','deck','life','outside','removed']){
+   const list=state.players[p][zone],i=list.findIndex(c=>c.cardId===id);
+   if(i>=0)return list.splice(i,1)[0];
+  }
+  throw Error('Missing '+id);
+ }
+ function enter(seed,sourceId){
+  let state=boot(seed);
+  const child=lift(state,0,'BLC-2-006');
+  const source=lift(state,0,sourceId);
+  state.players[0].hand.push(child,source);
+  const action=legalUniversalActions(both,state).find(a=>a.uid===source.uid&&!a.replaceUid&&
+   (sourceId==='EVT'?a.type==='event':a.type==='play'&&a.line===(sourceId==='FLD'?'energy':'front')));
+  assert.ok(action,sourceId);
+  const opened=dispatchUniversalAction(both,state,action);
+  assert.equal(opened.pending.kind,'effect-hand-rest');
+  const seat=legalUniversalActions(both,opened).find(a=>a.type==='chooseHandRest'&&a.uid===child.uid&&a.line==='front');
+  const beforeDeck=opened.players[0].deck.length;
+  const drawn=opened.players[0].deck[0]?.uid||null;
+  const beforeHand=opened.players[0].hand.length;
+  const entered=dispatchUniversalAction(both,opened,seat);
+  return {entered,child,beforeDeck,beforeHand,drawn};
+ }
+ const byCharacter=enter(290063,'SRC');
+ assert.equal(byCharacter.entered.pending,null);
+ assert.equal(byCharacter.entered.players[0].deck.length,byCharacter.beforeDeck-1);
+ assert.equal(byCharacter.entered.players[0].hand.length,byCharacter.beforeHand);
+ assert.equal(byCharacter.entered.players[0].hand.some(c=>c.uid===byCharacter.drawn),true);
+ assert.equal(universalPublicView(both,byCharacter.entered,1).players[0].hand,null);
+ assert.equal(universalImpact(both,byCharacter.entered,byCharacter.entered.players[0].front.find(c=>c?.uid===byCharacter.child.uid)),0);
+ assert.equal(byCharacter.entered.mainAbilityUsedUids.includes(byCharacter.child.uid),false);
+ assert.equal(legalUniversalActions(both,byCharacter.entered).some(a=>a.mode==='oncePay'&&a.uid===byCharacter.child.uid),false);
+ byCharacter.entered.players[0].apCards[0].inPlay=true;
+ byCharacter.entered.players[0].apCards[0].ready=true;
+ const linked=dispatchUniversalAction(both,byCharacter.entered,{type:'activate',uid:byCharacter.child.uid,mode:'oncePay'});
+ assert.equal(linked.players[0].deck.length,byCharacter.entered.players[0].deck.length);
+ assert.equal(universalImpact(both,linked,linked.players[0].front.find(c=>c?.uid===byCharacter.child.uid)),1);
+ assert.equal(legalUniversalActions(both,linked).some(a=>a.mode==='oncePay'&&a.uid===byCharacter.child.uid),false);
+ const byEvent=enter(290064,'EVT');
+ assert.equal(byEvent.entered.pending,null);
+ assert.equal(byEvent.entered.players[0].deck.length,byEvent.beforeDeck);
+ assert.equal(byEvent.entered.players[0].hand.length,byEvent.beforeHand-1);
+ assert.equal(byEvent.entered.players[0].front.some(c=>c?.uid===byEvent.child.uid),true);
+ const byField=enter(290065,'FLD');
+ assert.equal(byField.entered.pending,null);
+ assert.equal(byField.entered.players[0].deck.length,byField.beforeDeck);
+ assert.equal(byField.entered.players[0].hand.length,byField.beforeHand-1);
+ let quiet=boot(290066);
+ const lonely=lift(quiet,0,'BLC-2-006');
+ const source=lift(quiet,0,'SRC');
+ quiet.players[0].outside.push(...quiet.players[0].deck.splice(0));
+ quiet.players[0].hand.push(lonely,source);
+ const opened=dispatchUniversalAction(both,quiet,legalUniversalActions(both,quiet).find(a=>a.type==='play'&&a.uid===source.uid&&a.line==='front'));
+ const seated=dispatchUniversalAction(both,opened,legalUniversalActions(both,opened).find(a=>a.type==='chooseHandRest'&&a.uid===lonely.uid&&a.line==='front'));
+ assert.equal(seated.pending,null);
+ assert.equal(seated.players[0].deck.length,0);
+ assert.equal(seated.players[0].front.some(c=>c?.uid===lonely.uid),true);
+ const color=main(deck,290067);
+ const attacker=put(color.s,0,'BLC-1-001','front',0,true);
+ put(color.s,1,'BLC-1-002','front',0,true);
+ const trigger=take(color.s,1,'BLC-2-006');
+ const buried=color.s.players[1].life[0];
+ color.s.players[1].life[0]=trigger;
+ color.s.players[1].deck.push(buried);
+ let revealed=color.s;
+ for(let n=0;n<6&&revealed.phase!=='attack';n++)
+  revealed=dispatchUniversalAction(color.packs,revealed,{type:'next'});
+ assert.equal(revealed.phase,'attack');
+ revealed=dispatchUniversalAction(color.packs,revealed,{type:'attack',uid:attacker.uid});
+ if(revealed.pending?.kind==='block')
+  revealed=dispatchUniversalAction(color.packs,revealed,{type:'chooseBlock',uid:null},{actor:1});
+ assert.equal(revealed.pending.trigger,'color');
+ const choices=legalUniversalActions(color.packs,revealed);
+ assert.equal(choices.some(a=>a.mode==='skip'),true);
+ assert.equal(choices.some(a=>a.mode==='colorRestSkip'&&a.uid===attacker.uid),true);
+ assert.equal(choices.some(a=>a.mode==='color'),false);
+ assert.equal(choices.some(a=>a.uid===color.s.players[1].front[0].uid),false);
+ const skipped=dispatchUniversalAction(color.packs,revealed,{type:'chooseTrigger',mode:'skip'},{actor:1});
+ assert.equal(skipped.players[0].front.find(c=>c?.uid===attacker.uid).ready,false);
+ assert.equal(skipped.players[1].outside.some(c=>c.uid===trigger.uid),true);
+ assert.equal(universalImpact(color.packs,skipped,skipped.players[0].front.find(c=>c?.uid===attacker.uid)),0);
+ let again=color.s;
+ again=dispatchUniversalAction(color.packs,structuredClone(revealed),{type:'chooseTrigger',mode:'colorRestSkip',uid:attacker.uid},{actor:1});
+ assert.equal(again.players[0].front.find(c=>c?.uid===attacker.uid).ready,false);
+ assert.deepEqual(universalPublicView(color.packs,again,1).players[0].front.find(c=>c?.uid===attacker.uid).restrictions,[{kind:'skipNextActive',until:null}]);
+ assert.equal(again.players[1].hand.some(c=>c.uid===trigger.uid),false);
+ assert.equal(again.players[1].outside.some(c=>c.uid===trigger.uid),true);
+ aiOk(paidMatch.packs,paid);
+ aiOk(color.packs,revealed);
+ assert.equal(assertUniversalMatch(paidMatch.packs,granted),true);
+ assert.equal(assertUniversalMatch(energyMatch.packs,later),true);
+ assert.equal(assertUniversalMatch(broke.packs,fromRest),true);
+ assert.equal(assertUniversalMatch(both,linked),true);
+ assert.equal(assertUniversalMatch(both,byEvent.entered),true);
+ assert.equal(assertUniversalMatch(both,byField.entered),true);
+ assert.equal(assertUniversalMatch(both,seated),true);
+ assert.equal(assertUniversalMatch(color.packs,again),true);
 });

@@ -102,7 +102,9 @@ function verifyProgram(program,path){
    throw Error(path+'['+i+'] invalid this-turn source-stamped attack-end swap');
   if(e.op==='draw'){
    if(!integer(e.count,1)||e.count>10)throw Error(path+'['+i+'] invalid count');
-   if((e.entry!==undefined&&e.entry!=='ownEffect')||
+   // ownEffect is 「自分の効果」. ownCharacter is 「自分のキャラの効果」.
+   // The two gates are not interchangeable. Any other entry stays illegal.
+   if((e.entry!==undefined&&e.entry!=='ownEffect'&&e.entry!=='ownCharacter')||
     Object.keys(e).some(k=>!['op','count','entry'].includes(k)))
     throw Error(path+'['+i+'] invalid own-effect draw gate');
   }
@@ -1160,7 +1162,7 @@ function normalize(card,packId){
   (mainAbility.requiresOwnName===null||typeof mainAbility.requiresOwnName==='string'&&
    !!mainAbility.requiresOwnName.trim()&&mainAbility.requiresOwnName.length<=80)&&
   Array.isArray(mainAbility.then)&&mainAbility.then.length>=1&&mainAbility.then.length<=2&&
-  mainAbility.then.every(x=>['grantSelfAttackDamageThisTurn','chooseOne','discardGate'].includes(x?.op))&&
+  mainAbility.then.every(x=>['grantSelfAttackDamageThisTurn','chooseOne','discardGate','grantSelfImpactThisTurn'].includes(x?.op))&&
   Object.keys(mainAbility).length===7&&
   Object.keys(mainAbility).every(k=>['op','oncePerTurn','frontOnly','raidOnly','payAp','requiresOwnName','then'].includes(k));
  if(mainOncePay)verifyProgram(mainAbility.then,card.id+'.mainAbility.then');
@@ -1447,7 +1449,7 @@ function normalize(card,packId){
    throw Error(card.id+' conditional ACTIVE is only a character onPlay effect');
   if(program.some(e=>e.op==='draw'&&e.entry!==undefined)&&
    (card.type!=='character'||name!=='onPlay'))
-   throw Error(card.id+' own-effect draw gate is only a character onPlay effect');
+   throw Error(card.id+' own-effect or own-character draw gate is only a character onPlay effect');
   if(program.some(e=>['moveOtherAcrossOrRemove','raidBaseEnergyThen','restOppFrontLockActive'].includes(e.op))&&
    (card.type!=='character'||name!=='onPlay'))
    throw Error(card.id+' line move, raid-base gate and rest lock are character onPlay effects');

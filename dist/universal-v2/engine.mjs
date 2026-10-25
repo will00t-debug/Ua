@@ -602,12 +602,16 @@ function continueEffectQueue(pack,s){
    else throw Error('No legally selectable mandatory printed mode');
   }
   else if(job.op==='draw'){
-   // A printed 「自分の効果で登場」gate uses the entry cause already stamped
-   // on this on-play job. Paid play, paid Raid, and life triggers do not draw.
-   // An absent gate keeps every existing draw unchanged.
+   // 「自分の効果で登場」uses the stamped entry cause. 「自分のキャラの効果で
+   // 登場」uses the deploying card's printed type. Paid play, paid Raid, life
+   // triggers, events, and fields do not draw. An absent gate stays unconditional.
    const gated=job.entry==='ownEffect';
-   if(job.entry!==undefined&&!gated)throw Error('Invalid draw entry gate');
-   if(!gated||OWN_EFFECT_ENTRY.has(job.entryCause))draw(pack,s,owner,job.count,{reason:'own-effect',sourceUid:job.sourceUid});
+   const byCharacter=job.entry==='ownCharacter';
+   if(job.entry!==undefined&&!gated&&!byCharacter)throw Error('Invalid draw entry gate');
+   const allowed=job.entry===undefined||
+    (gated&&OWN_EFFECT_ENTRY.has(job.entryCause))||
+    (byCharacter&&job.entrySourceType==='character');
+   if(allowed)draw(pack,s,owner,job.count,{reason:'own-effect',sourceUid:job.sourceUid});
   }
   else if(job.op==='drawIfOwnEnergyAtLeast'){
    // Printed generated-energy threshold is checked at resolution, after the
