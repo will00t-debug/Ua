@@ -54,6 +54,7 @@ export function rezeroEngineKind(effectJa){
  if(e==='カードを2枚引き、自分の手札を1枚場外に置く。その後、自分のフロントLのアクティブのキャラを1枚レストにしてもよい。そうした場合、自分のAPカードを1枚まで選び、アクティブにする。')return 'trialRestAp';
  if(e==='【登場時】自分の手札を1枚場外に置いてもよい。そうした場合、このフィールドをアクティブにする。【起動メイン】【レストにする】 【ターン1】カードを1枚引き、自分の手札を1枚自分の山札の上に置く。')return 'libraryField';
  if(e==='【起動メイン】【フロントLにある場合】 【ターン1】このターン中にこのキャラが自分の効果でアクティブからレストになったことがある場合のみ発動できる。このキャラをアクティブにし、このキャラは次の自分のターン開始時まで、BP+1000。')return 'emiliaRestActive';
+ if(e==='『BP3000以下』の相手のフロントLのキャラを1枚選び、退場させる。自分の場に〈ベアトリス〉がある場合、『BP4000以下』に代わる。自分の場に〈ベアトリス〉と〈ナツキ・スバル〉がある場合、『BP5000以下』に代わる。')return 'minaRetire';
  return null;
 }
 const TOP_OUTSIDE=new Map([
@@ -100,6 +101,9 @@ function onPlay(card,kind){
  if(kind==='trialRemoveActive')return [{op:'removeNamedOutsideActive',name:TRIAL_NAME}];
  if(kind==='remRetire')return [{op:'retireOppFrontUnderBp',bp:3000,bonusName:'レム',bonusBp:5000}];
  if(kind==='emiliaRetire')return [{op:'retireOppFrontUnderBp',bp:3000,bonusName:'エミリア',bonusBp:5000}];
+ if(kind==='minaRetire')return [{op:'retireOppFrontTiered',bp:3000,tiers:[
+  {names:['ベアトリス'],bp:4000},
+  {names:['ベアトリス','ナツキ・スバル'],bp:5000}]}];
  if(kind==='garfielEntry')return [{op:'enemyBpDown',bp:2500,optional:true,zone:'front'}];
  if(kind==='sanctuaryRecover')return [{op:'payHandOrRestForNamed',name:TRIAL_NAME}];
  if(kind==='frontDown2500')return [{op:'enemyBpDown',bp:2000,optional:true,minBp:2500,zone:'front'}];
@@ -148,7 +152,7 @@ export function rezeroPackCard(card){
   throw Error(card.id+' rest trigger is not this print');
  if(triggerEffect?.op==='bounceOppFrontUnderBp'&&!bouncePrint)
   throw Error(card.id+' return trigger is not this print');
- const specialPrint=kind==='remRetire'||kind==='emiliaRetire';
+ const specialPrint=kind==='remRetire'||kind==='emiliaRetire'||kind==='minaRetire';
  if(specialPrint&&triggerEffect?.op!=='retireOppFront')
   throw Error(card.id+' special trigger is not the printed retirement');
  if(triggerEffect?.op==='retireOppFront'&&!specialPrint)

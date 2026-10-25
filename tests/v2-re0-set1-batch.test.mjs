@@ -67,9 +67,9 @@ test('UA40BT and UA40ST share one catalogue and keep parallel art out',()=>{
  }
 });
 
-test('seventy-five whole prints enter the V2 pack and the other thirty-eight stay out',()=>{
- assert.equal(REZERO_ENGINE_IDS.length,75);
- assert.equal(Object.keys(pack.cards).length,75);
+test('seventy-six whole prints enter the V2 pack and the other thirty-seven stay out',()=>{
+ assert.equal(REZERO_ENGINE_IDS.length,76);
+ assert.equal(Object.keys(pack.cards).length,76);
  assert.equal(pack.cards['REZ-1-001'],undefined);
  assert.equal(pack.cards['REZ-1-008'].step,true);
  assert.equal(pack.cards['REZ-1-008'].implementation,'vanilla');
@@ -165,7 +165,13 @@ test('seventy-five whole prints enter the V2 pack and the other thirty-eight sta
   op:'retireOppFrontUnderBp',bp:3000,bonusName:'エミリア',bonusBp:5000}]);
  assert.deepEqual(pack.cards['REZ-1-100'].triggerEffect,{op:'retireOppFront'});
  assert.equal(pack.cards['REZ-1-100'].color,'purple');
- assert.equal(pack.cards['REZ-1-096'],undefined);
+ assert.equal(pack.cards['REZ-1-096'].type,'event');
+ assert.equal(pack.cards['REZ-1-096'].trigger,'special');
+ assert.deepEqual(pack.cards['REZ-1-096'].triggerEffect,{op:'retireOppFront'});
+ assert.deepEqual(pack.cards['REZ-1-096'].effects.onPlay,[{
+  op:'retireOppFrontTiered',bp:3000,tiers:[
+   {names:['ベアトリス'],bp:4000},
+   {names:['ベアトリス','ナツキ・スバル'],bp:5000}]}]);
  assert.equal(pack.cards['REZ-1-067'].enterAlwaysActive,true);
  assert.equal(pack.cards['REZ-1-067'].impactNull,true);
  assert.equal(pack.cards['REZ-1-067'].trigger,'active');
@@ -2355,4 +2361,100 @@ test('Emilia readies and gains BP only after an own effect rested her from activ
  assert.equal(quiet.ownEffectRests[0].length,0);
  assert.equal(frontOnce(quiet,emilia.uid),false);
  assert.equal(assertUniversalMatch(packs,quiet),true);
+});
+
+const minaCounts={
+ ...Object.fromEntries(['REZ-1-096','REZ-1-076','REZ-1-068','REZ-1-086','REZ-1-088',
+  'REZ-1-072','REZ-1-073','REZ-1-075','REZ-1-079','REZ-1-080','REZ-1-091','REZ-1-081'].map(id=>[id,4])),
+ 'REZ-1-092':2
+};
+const mina=seed=>newUniversalMatch(packs,{decks:[minaCounts,minaCounts],first:0,seed});
+test('El Minya retires 3000, 4000 with Beatrice, or 5000 with Beatrice and Subaru',()=>{
+ assert.equal(Object.values(minaCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(pack,minaCounts),[]);
+ const shell={id:'MINA',name:'Mina',color:'purple',type:'event',energy:3,ap:1,bp:0,gen:0,
+  traits:[],trigger:'special',implementation:'dsl',triggerEffect:{op:'retireOppFront'},effects:{}};
+ assert.throws(()=>createUniversalPack({id:'bad-mina',cards:[{...shell,type:'character',bp:3000,effects:{onPlay:[
+  {op:'retireOppFrontTiered',bp:3000,tiers:[
+   {names:['ベアトリス'],bp:4000},{names:['ベアトリス','ナツキ・スバル'],bp:5000}]}]}}]}),
+  /event onPlay/);
+ assert.throws(()=>createUniversalPack({id:'bad-mina',cards:[{...shell,effects:{onPlay:[
+  {op:'retireOppFrontTiered',bp:3000,tiers:[{names:['レム'],bp:5000}]}]}}]}),
+  /tiered front retirement/);
+ let bare=mina(5801);
+ fuel(bare,['REZ-1-086','REZ-1-086','REZ-1-086']);
+ bare=reach(bare,'main');
+ const low=pull(bare,1,'REZ-1-068');
+ const at3=pull(bare,1,'REZ-1-088');
+ const at4=pull(bare,1,'REZ-1-088');
+ at4.buffs=[{bp:1000,untilTurn:bare.turn}];
+ const at5=pull(bare,1,'REZ-1-088');
+ at5.buffs=[{bp:2000,untilTurn:bare.turn}];
+ placeFront(bare,1,[low,at3,at4,at5]);
+ const handBeatrice=pull(bare,0,'REZ-1-076');
+ bare.players[0].hand.push(handBeatrice);
+ const subaruOnly=pull(bare,0,'REZ-1-068');
+ bare.players[0].energy[3]=subaruOnly;
+ let spell;
+ [bare,spell]=castEvent(bare,'REZ-1-096');
+ assert.equal(bare.pending.kind,'effect-retire-bp');
+ assert.equal(bare.pending.limit,3000);
+ assert.deepEqual(legalUniversalActions(packs,bare).map(a=>a.uid).sort(),[low.uid,at3.uid].sort());
+ assert.equal(legalUniversalActions(packs,bare).some(a=>a.uid===null),false);
+ bare=dispatchUniversalAction(packs,bare,{type:'chooseRetireBp',uid:at3.uid});
+ assert.equal(bare.players[1].front[1],null);
+ assert.ok(bare.players[1].outside.some(c=>c.uid===at3.uid));
+ assert.equal(bare.players[0].outside.some(c=>c.uid===spell.uid),true);
+ assert.equal(assertUniversalMatch(packs,bare),true);
+
+ let beatrice=mina(5802);
+ fuel(beatrice,['REZ-1-086','REZ-1-086','REZ-1-086']);
+ beatrice=reach(beatrice,'main');
+ const beat=pull(beatrice,0,'REZ-1-076');
+ beatrice.players[0].front[0]=beat;
+ const outsideSubaru=pull(beatrice,0,'REZ-1-068');
+ beatrice.players[0].outside.push(outsideSubaru);
+ const mid=pull(beatrice,1,'REZ-1-088');
+ mid.buffs=[{bp:1000,untilTurn:beatrice.turn}];
+ const over4=pull(beatrice,1,'REZ-1-088');
+ over4.buffs=[{bp:1500,untilTurn:beatrice.turn}];
+ placeFront(beatrice,1,[mid,over4]);
+ [beatrice]=castEvent(beatrice,'REZ-1-096');
+ assert.equal(beatrice.pending.limit,4000);
+ assert.deepEqual(legalUniversalActions(packs,beatrice).map(a=>a.uid),[mid.uid]);
+ beatrice=dispatchUniversalAction(packs,beatrice,{type:'chooseRetireBp',uid:mid.uid});
+ assert.equal(beatrice.players[1].front[0],null);
+ assert.equal(beatrice.players[1].front[1]?.uid,over4.uid);
+ assert.equal(assertUniversalMatch(packs,beatrice),true);
+
+ let both=mina(5803);
+ fuel(both,['REZ-1-086','REZ-1-086','REZ-1-086']);
+ both=reach(both,'main');
+ const beat2=pull(both,0,'REZ-1-076');
+ const sub=pull(both,0,'REZ-1-068');
+ both.players[0].energy[3]=beat2;
+ both.players[0].front[0]=sub;
+ const cap=pull(both,1,'REZ-1-088');
+ cap.buffs=[{bp:2000,untilTurn:both.turn}];
+ const over5=pull(both,1,'REZ-1-088');
+ over5.buffs=[{bp:2001,untilTurn:both.turn}];
+ placeFront(both,1,[cap,over5]);
+ [both]=castEvent(both,'REZ-1-096');
+ assert.equal(both.pending.limit,5000);
+ assert.deepEqual(legalUniversalActions(packs,both).map(a=>a.uid),[cap.uid]);
+ both=dispatchUniversalAction(packs,both,{type:'chooseRetireBp',uid:cap.uid});
+ assert.equal(both.players[1].front[0],null);
+ assert.equal(both.players[1].front[1]?.uid,over5.uid);
+ assert.equal(assertUniversalMatch(packs,both),true);
+
+ let blocked=mina(5804);
+ fuel(blocked,['REZ-1-086','REZ-1-086','REZ-1-086']);
+ blocked=reach(blocked,'main');
+ const huge=pull(blocked,1,'REZ-1-088');
+ huge.buffs=[{bp:3000,untilTurn:blocked.turn}];
+ blocked.players[1].front[0]=huge;
+ const card=pull(blocked,0,'REZ-1-096');
+ blocked.players[0].hand.push(card);
+ assert.equal(legalUniversalActions(packs,blocked).some(a=>a.type==='event'&&a.uid===card.uid),false);
+ assert.equal(assertUniversalMatch(packs,blocked),true);
 });
