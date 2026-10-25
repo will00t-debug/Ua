@@ -63,6 +63,7 @@ export function rezeroEngineKind(effectJa){
  if(e==='このカードは自分の場に〈クルシュ・カルステン〉がある場合のみ使用できる。BP5000以下の相手のフロントLのキャラを1枚選び、退場させる。このターン中、自分の効果で自分の手札のキャラカードのBPを参照する場合、BP+1000されたものとして扱ってもよい。')return 'cruschRetireHandBp';
  if(e==='【登場時】自分のターン中の場合、APを1支払ってもよい。そうした場合、BP4500以上の相手のフロントLのキャラを1枚まで選び、退場させる。【起動メイン】【ターン1】自分の手札を1枚公開し、自分の山札の下に置く。公開したカードがBP4000以上のキャラカードの場合、このキャラはこのターン中、【インパクト（1）】を得る。')return 'wilhelmPayImpact';
  if(e==='【起動メイン】【APを1支払う】このカードが自分の手札にあり、必要エナジーを満たす場合のみ発動できる。このカードを公開し、BPが4000以上の場合、自分の場にこのカードをレストで登場させ、自分の場の他のキャラを1枚まで選び、アクティブにする。')return 'handPayRevealDeploy';
+ if(e==='【レイド】〈エキドナ〉アクティブにし、フロントLに移動できる【登場時】カードを1枚引く。【起動メイン】【フロントLにある場合】 【ターン1】自分のフロントLのアクティブのキャラを1枚レストにする。そうした場合、カードを1枚引く。')return 'raidFrontRestDraw';
  return null;
 }
 const TOP_OUTSIDE=new Map([
@@ -120,6 +121,7 @@ function onPlay(card,kind){
   {op:'grantHandCharacterBpMay',amount:1000}];
  if(kind==='wilhelmPayImpact')return [{op:'optionalPayApThen',ap:1,optional:true,ownTurn:true,
   then:[{op:'retireOppFrontAtLeastBp',bp:4500,optional:true}]}];
+ if(kind==='raidFrontRestDraw')return [{op:'draw',count:1}];
  if(kind==='garfielEntry')return [{op:'enemyBpDown',bp:2500,optional:true,zone:'front'}];
  if(kind==='sanctuaryRecover')return [{op:'payHandOrRestForNamed',name:TRIAL_NAME}];
  if(kind==='frontDown2500')return [{op:'enemyBpDown',bp:2000,optional:true,minBp:2500,zone:'front'}];
@@ -223,6 +225,9 @@ export function rezeroPackCard(card){
    op:'revealHandBottomImpact',oncePerTurn:true,minPrintedBp:4000,impact:1}}:{}),
   ...(kind==='handPayRevealDeploy'?{mainAbility:{
    op:'handPayRevealDeploy',payAp:1,minReferencedBp:4000}}:{}),
+  ...(kind==='raidFrontRestDraw'?{raidName:'エキドナ',mainAbility:{
+   op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,
+   then:[{op:'restOwnActiveFrontDraw'}]}}:{}),
   ...(kind==='feltTurnBp'?{passiveBonuses:[{
    condition:{kind:'ownNameExists',turn:'own',zone:'field',excludeSelf:false,name:'フェルト'},
    bp:1000}]}:{}),

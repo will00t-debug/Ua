@@ -70,9 +70,9 @@ test('UA40BT and UA40ST share one catalogue and keep parallel art out',()=>{
  }
 });
 
-test('eighty-four whole prints enter the V2 pack and the other twenty-nine stay out',()=>{
- assert.equal(REZERO_ENGINE_IDS.length,84);
- assert.equal(Object.keys(pack.cards).length,84);
+test('eighty-five whole prints enter the V2 pack and the other twenty-eight stay out',()=>{
+ assert.equal(REZERO_ENGINE_IDS.length,85);
+ assert.equal(Object.keys(pack.cards).length,85);
  assert.equal(pack.cards['REZ-1-001'],undefined);
  assert.equal(pack.cards['REZ-1-008'].step,true);
  assert.equal(pack.cards['REZ-1-008'].implementation,'vanilla');
@@ -237,6 +237,16 @@ test('eighty-four whole prints enter the V2 pack and the other twenty-nine stay 
  assert.equal(pack.cards['REZ-1-047'].effects.onPlay,undefined);
  assert.deepEqual(pack.cards['REZ-1-047'].mainAbility,{
   op:'handPayRevealDeploy',payAp:1,minReferencedBp:4000});
+ assert.equal(pack.cards['REZ-1-093'].trigger,'raid');
+ assert.equal(pack.cards['REZ-1-093'].triggerEffect,null);
+ assert.equal(pack.cards['REZ-1-093'].color,'purple');
+ assert.equal(pack.cards['REZ-1-093'].energy,4);
+ assert.equal(pack.cards['REZ-1-093'].raidName,'エキドナ');
+ assert.deepEqual(pack.cards['REZ-1-093'].effects.onPlay,[{op:'draw',count:1}]);
+ assert.deepEqual(pack.cards['REZ-1-093'].mainAbility,{
+  op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,
+  then:[{op:'restOwnActiveFrontDraw'}]});
+ assert.equal(pack.cards['REZ-1-091'].raidName,null);
  assert.equal(pack.cards['REZ-1-067'].enterAlwaysActive,true);
  assert.equal(pack.cards['REZ-1-067'].impactNull,true);
  assert.equal(pack.cards['REZ-1-067'].trigger,'active');
@@ -3439,4 +3449,145 @@ test('Ricardo pays one AP from hand, and rests into play only when the reference
  assert.ok(offered.zoneMoveEvents.some(e=>e.uid===card.uid&&e.from==='hand'&&e.to==='front'&&e.reason==='own-effect'));
  assert.equal(assertUniversalMatch(packs,offered),true);
  assert.equal(assertUniversalMatch(packs,skipped),true);
+});
+
+const witchCounts={
+ ...Object.fromEntries(['REZ-1-093','REZ-1-091','REZ-1-086','REZ-1-082','REZ-1-075','REZ-1-081',
+  'REZ-1-007','REZ-1-008','REZ-1-012','REZ-1-014','REZ-1-022','REZ-1-043'].map(id=>[id,4])),
+ 'REZ-1-029':2
+};
+const witch=seed=>newUniversalMatch(packs,{decks:[witchCounts,witchCounts],first:0,seed});
+test('Echidna raids onto Echidna, draws on entry, then rests one active front character to draw',()=>{
+ assert.equal(Object.values(witchCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(pack,witchCounts),[]);
+ const shell={id:'WITCH',name:'エキドナ',color:'purple',type:'character',energy:4,ap:1,bp:4000,gen:0,
+  traits:['魔女'],trigger:null,implementation:'dsl',effects:{}};
+ assert.throws(()=>createUniversalPack({id:'bad-witch',cards:[{...shell,effects:{onPlay:[
+  {op:'restOwnActiveFrontDraw'}]}}]}),/front main ability/);
+ assert.throws(()=>createUniversalPack({id:'bad-witch',cards:[{...shell,trigger:'raid',raidName:'エキドナ',
+  mainAbility:{op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,
+   then:[{op:'restOwnActiveFrontDraw',count:1}]}}]}),/active front rest draw/);
+ assert.equal(V2_PENDING_LABELS['effect-rest-own-front-draw'],'選擇 1 張自己的活動前線角色並使其休息');
+
+ let live=witch(6701);
+ [0,1,2].forEach(i=>{
+  const gen=pull(live,0,'REZ-1-086');
+  gen.ready=true;
+  live.players[0].energy[i]=gen;
+ });
+ const base=pull(live,0,'REZ-1-091');
+ live.players[0].energy[3]=base;
+ const decoy=pull(live,0,'REZ-1-093');
+ live.players[0].front[0]=decoy;
+ const stranger=pull(live,0,'REZ-1-007');
+ live.players[0].front[1]=stranger;
+ live=ownMain(live,2);
+ live.players[0].energy[3].ready=false;
+ live.players[0].front[0].ready=false;
+ live.players[0].front[1].ready=false;
+ assert.equal(universalEnergyByColor(packs,live,0).purple,3);
+ const waiting=pull(live,0,'REZ-1-093');
+ live.players[0].hand.push(waiting);
+ assert.equal(legalUniversalActions(packs,live).some(a=>a.type==='raid'&&a.uid===waiting.uid),false);
+ live.players[0].energy[0].buffs=[{energy:1,untilTurn:live.turn}];
+ assert.equal(universalEnergyByColor(packs,live,0).purple,4);
+ assert.equal(legalUniversalActions(packs,live).some(a=>a.type==='raid'&&a.baseUid===decoy.uid),false);
+ assert.equal(legalUniversalActions(packs,live).some(a=>a.type==='raid'&&a.baseUid===stranger.uid),false);
+ const raid=legalUniversalActions(packs,live).find(a=>a.type==='raid'&&a.uid===waiting.uid&&a.baseUid===base.uid);
+ assert.ok(raid);
+ assert.equal(raid.line,undefined);
+ const before=live.players[0].deck.length;
+ live=dispatchUniversalAction(packs,live,raid);
+ const top=at(live,0,waiting.uid);
+ assert.equal(top.ready,true);
+ assert.equal(top.stack[0].uid,base.uid);
+ assert.equal(top.stack[0].ready,false);
+ assert.equal(live.players[0].energy[3],null);
+ assert.equal(live.players[0].front.some(c=>c?.uid===waiting.uid),true);
+ assert.equal(live.players[0].hand.some(c=>c.uid===waiting.uid),false);
+ assert.equal(live.players[0].deck.length,before-1);
+ assert.equal(live.pending,null);
+ const quiet=structuredClone(live);
+ at(quiet,0,waiting.uid).ready=false;
+ assert.equal(frontOnce(quiet,waiting.uid),false);
+ const other=stamp(live,pull(live,0,'REZ-1-081'));
+ const open=live.players[0].front.findIndex(c=>!c);
+ live.players[0].front[open]=other;
+ const act=legalUniversalActions(packs,live).find(a=>a.type==='activate'&&a.mode==='frontOnce'&&a.uid===waiting.uid);
+ assert.ok(act);
+ const drawn=live.players[0].deck.length;
+ live=dispatchUniversalAction(packs,live,act);
+ assert.equal(live.pending.kind,'effect-rest-own-front-draw');
+ assert.deepEqual(live.pending.choices,[waiting.uid,other.uid]);
+ assert.equal(uiActionLabel(legalUniversalActions(packs,live).find(a=>a.uid===waiting.uid),{pack,state:live}),'休息 エキドナ，然後抽 1 張');
+ assert.ok([waiting.uid,other.uid].includes(chooseUniversalAiAction(packs,live).uid));
+ const forged=structuredClone(live);
+ forged.pending.choices=[waiting.uid];
+ assert.throws(()=>assertUniversalMatch(packs,forged),/Invalid own active front rest pending/);
+ const restedOther=dispatchUniversalAction(packs,structuredClone(live),{type:'chooseRestOwnFrontDraw',uid:other.uid});
+ assert.equal(at(restedOther,0,other.uid).ready,false);
+ assert.equal(at(restedOther,0,waiting.uid).ready,true);
+ assert.equal(restedOther.players[0].deck.length,drawn-1);
+ assert.equal(frontOnce(restedOther,waiting.uid),false);
+ assert.ok(restedOther.ownEffectRests[0].some(n=>n.uid===other.uid&&n.turn===restedOther.turn));
+ live=dispatchUniversalAction(packs,live,{type:'chooseRestOwnFrontDraw',uid:waiting.uid});
+ assert.equal(live.pending,null);
+ assert.equal(at(live,0,waiting.uid).ready,false);
+ assert.equal(at(live,0,other.uid).ready,true);
+ assert.equal(at(live,0,waiting.uid).stack[0].ready,false);
+ assert.equal(live.players[0].deck.length,drawn-1);
+ assert.equal(frontOnce(live,waiting.uid),false);
+ assert.ok(live.ownEffectRests[0].some(n=>n.uid===waiting.uid&&n.stamp===at(live,0,waiting.uid).fieldEntryStamp));
+ assert.equal(assertUniversalMatch(packs,live),true);
+ assert.equal(assertUniversalMatch(packs,restedOther),true);
+
+ let revealed=witch(6702);
+ const attacker=pull(revealed,0,'REZ-1-007');
+ attacker.ready=true;
+ revealed.players[0].front[0]=attacker;
+ [0,1,2,3].forEach(i=>{
+  const gen=pull(revealed,1,'REZ-1-086');
+  gen.ready=true;
+  revealed.players[1].energy[i]=gen;
+ });
+ const buried=pull(revealed,1,'REZ-1-091');
+ buried.ready=false;
+ revealed.players[1].front[0]=buried;
+ revealed.players[1].deck.push(revealed.players[1].life.pop());
+ const trigger=pull(revealed,1,'REZ-1-093');
+ revealed.players[1].life.unshift(trigger);
+ revealed=ownMain(revealed,1);
+ revealed=dispatchUniversalAction(packs,revealed,legalUniversalActions(packs,revealed).find(a=>a.type==='next'));
+ assert.equal(revealed.phase,'attack');
+ revealed=dispatchUniversalAction(packs,revealed,{type:'attack',uid:attacker.uid});
+ assert.equal(revealed.pending.kind,'block');
+ revealed=dispatchUniversalAction(packs,revealed,{type:'chooseBlock',uid:null},{actor:1});
+ assert.equal(revealed.pending.kind,'life-trigger');
+ assert.equal(revealed.pending.trigger,'raid');
+ const lifeActs=legalUniversalActions(packs,revealed);
+ assert.ok(lifeActs.some(a=>a.mode==='get'));
+ const lifeRaid=lifeActs.find(a=>a.mode==='raid'&&a.baseUid===buried.uid&&a.line==='front'&&a.slot===0);
+ assert.ok(lifeRaid);
+ const poor=structuredClone(revealed);
+ poor.players[1].energy[0].ready=false;
+ assert.equal(legalUniversalActions(packs,poor).some(a=>a.mode==='raid'),false);
+ assert.ok(legalUniversalActions(packs,poor).some(a=>a.mode==='get'));
+ const apBefore=revealed.players[1].apCards.map(c=>c.ready);
+ const lifeDeck=revealed.players[1].deck.length;
+ const gained=dispatchUniversalAction(packs,structuredClone(revealed),{type:'chooseTrigger',mode:'get'},{actor:1});
+ assert.ok(gained.players[1].hand.some(c=>c.uid===trigger.uid));
+ assert.equal(gained.players[1].front[0].uid,buried.uid);
+ assert.equal(gained.players[1].deck.length,lifeDeck);
+ const skippedLife=dispatchUniversalAction(packs,structuredClone(revealed),{type:'chooseTrigger',mode:'skip'},{actor:1});
+ assert.ok(skippedLife.players[1].outside.some(c=>c.uid===trigger.uid));
+ revealed=dispatchUniversalAction(packs,revealed,lifeRaid,{actor:1});
+ assert.equal(revealed.players[1].front[0].uid,trigger.uid);
+ assert.equal(revealed.players[1].front[0].ready,true);
+ assert.equal(revealed.players[1].front[0].stack[0].uid,buried.uid);
+ assert.equal(revealed.players[1].deck.length,lifeDeck-1);
+ assert.deepEqual(revealed.players[1].apCards.map(c=>c.ready),apBefore);
+ assert.equal(frontOnce(revealed,trigger.uid),false);
+ assert.equal(assertUniversalMatch(packs,revealed),true);
+ assert.equal(assertUniversalMatch(packs,gained),true);
+ assert.equal(assertUniversalMatch(packs,skippedLife),true);
 });

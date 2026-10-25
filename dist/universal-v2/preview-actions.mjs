@@ -51,6 +51,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-hand-deploy-may':'這次參照手牌角色 BP 時，是否視為 +1000 並休息登場',
  'effect-hand-rest-entry':'選擇休息登場的位置',
  'effect-active-other':'選擇最多 1 張其他己方角色並使其活動',
+ 'effect-rest-own-front-draw':'選擇 1 張自己的活動前線角色並使其休息',
  'effect-grant-front-energy':'讓另一張己方前線指定特徵角色本回合也能產生能源',
  'effect-rest-bp':'選擇敵方 REST','effect-grant-ap-tax':'讓另一張己方 DFN 角色獲得指定時的 AP 加價保護','effect-attack-ban':'指定禁止攻擊的對手前線角色',
  'effect-buff-trait':'選擇己方 BP 加成',
@@ -230,6 +231,7 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseHandDeployMay':return action.mode==='accept'?'視為 BP+1000 並休息登場':'維持原本 BP，留在手牌';
   case 'chooseHandRestEntry':return '休息登場';
   case 'chooseActiveOther':return action.uid===null?'不使其他角色活動':'使 '+name()+' 活動';
+  case 'chooseRestOwnFrontDraw':return '休息 '+name()+'，然後抽 1 張';
   case 'chooseRetireBp':case 'chooseTargetMany':return action.uid===null?'完成目標選擇':'選擇第 '+(state?.pending?.selected?.length+1||1)+' 個角色';
   case 'chooseFrontEnergyGrant':return action.uid===null?
    '不指定暫時 FRONT 產能對象':'讓 '+name()+' 本回合在前線也能產生能源';
