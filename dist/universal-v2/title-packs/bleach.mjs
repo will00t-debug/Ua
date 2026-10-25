@@ -128,7 +128,10 @@ const testForKind=Object.freeze({
  optionalEnergyBounce:'tests/v2-c29-bleach-port.test.mjs',
  stepOnceFrontOr:'tests/v2-c29-bleach-port.test.mjs',
  askinEmptyRetire:'tests/v2-c29-askin-soifon.test.mjs',
- soifonNameActive:'tests/v2-c29-askin-soifon.test.mjs'
+ soifonNameActive:'tests/v2-c29-askin-soifon.test.mjs',
+ nellielEntryReplay:'tests/v2-c29-nelliel-pernida-loyd.test.mjs',
+ pernidaFieldDown:'tests/v2-c29-nelliel-pernida-loyd.test.mjs',
+ loydRaidBase:'tests/v2-c29-nelliel-pernida-loyd.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -138,7 +141,7 @@ function contributedEntry(profile){
  // The legacy gen=2 for EX15BT/BLC-4-014 describes the ACTIVE total, not
  // the printed REST base. SourceRecord is the normalized printed card record;
  // retain original.gen separately and require the profile fingerprint above.
- const normalized=['BLC-4-014','BLC-4-042','BLC-4-074','BLC-4-024','BLC-4-063','BLC-4-071'].includes(profile.id);
+ const normalized=['BLC-4-014','BLC-4-042','BLC-4-074','BLC-4-024','BLC-4-063','BLC-4-071','BLC-4-037'].includes(profile.id);
  const sourceRecord=Object.freeze(normalized?
   {...original,gen:definition.gen,legacyImportedGen:original.gen}: {...original});
  const vanilla=['plain','plainAlt','step'].includes(profile.kind);
@@ -160,6 +163,8 @@ function contributedEntry(profile){
       'EX15BT/BLC-4-063 official generated energy is 緑緑=2. Catalogue gen=3 is the sprite index. sourceRecord.gen=2, legacyImportedGen=3. On-play BP+1000 becomes BP+2000 for the four printed names.':
     profile.id==='BLC-4-071'?
       'EX15BT/BLC-4-071 official generated energy is 緑緑=2. Catalogue gen=3 is the sprite index. sourceRecord.gen=2, legacyImportedGen=3. Step, on-play draw 1 then one hand card outside, and 起動メイン ACTIVE shared once per printed name (Q2340, 2026-09-04).':
+    profile.id==='BLC-4-037'?
+      'EX15BT/BLC-4-037 official generated energy is 青青=2. Catalogue gen=3 is the sprite index. sourceRecord.gen=2, legacyImportedGen=3. On-play chooses up to one opposing front character at BP 1500 or more for BP-1000 this turn. 起動メイン pays 1 AP, once per this physical card, and activates that same on-play effect from either line.':
       'EX15BT/BLC-4-042 printed base BLUE BLUE=2 but legacy gen=3; audited sourceRecord.gen=2 retains legacyImportedGen=3; official Q2323 and full three-mode tests.':
     'Official printed '+profile.number+'; profile '+profile.kind+
      '; fingerprint matched source text and printed stats. V2 program/trigger tests exist; NOT per-card complete FAQ acceptance.',

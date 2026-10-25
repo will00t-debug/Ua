@@ -1611,10 +1611,29 @@ function applyEffects(pack,s,cardOnField,timing,owner,entryCause,entrySourceUid)
   s.effectQueue.unshift(...complete);
  continueEffectQueue(pack,s);
 }
+function discardWhenOpen(pack,s,owner,sourceUid,step){
+ if(step?.op!=='discardGate'||step.when===undefined)return true;
+ return matchesV2LiveCondition(s,owner,sourceUid,step.when,
+  c=>card(pack,c),()=>calcEnergy(pack,s,owner),c=>bp(pack,s,c));
+}
+function mandatoryDebuffReady(pack,s,owner,job){
+ if(job?.op!=='enemyBpDown'||job.optional===true)return true;
+ const foe=1-owner;
+ const zones=job.zone==='field'
+  ?[...s.players[foe].front,...s.players[foe].energy]:s.players[foe].front;
+ return zones.some(c=>c&&
+  (job.zone!=='field'||card(pack,c).type==='character')&&
+  (job.minBp===undefined||bp(pack,s,c)>=job.minBp)&&
+  (job.maxBp===undefined||bp(pack,s,c)<=job.maxBp));
+}
 function validRaidBase(pack,s,owner,base,top){
  if(!base||!top.raidName||
   !top.raidRequiresNames.every(n=>raidNamePresent(pack,s,owner,n)))return false;
  const b=card(pack,base),names=top.raidBaseNames;
+ // The visible card, not a buried layer, is the printed open Raid base.
+ // Silence removes that continuous permission. A stacked Raid does not inherit it.
+ if(b.raidAcceptsAny===true&&!b.raidName&&!(base.stack?.length)&&
+  !originalEffectsDisabled(s,base))return true;
  const accepts=list=>list.some(n=>cardHasName(b,n,originalEffectsDisabled(s,base)));
  if(base.stack?.length){
   const bottom=base.stack[0];
@@ -4378,7 +4397,8 @@ export function legalUniversalActions(pack,s){
     const apOk=!ability.payAp||pl.apCards.some(x=>x.ready);
     const nameOk=!ability.requiresOwnName||ownFieldHasPrintedName(pack,s,p,ability.requiresOwnName);
     const payOk=ability.then[0]?.op!=='discardGate'||pl.hand.length>0;
-    if(lineOk&&raidOk&&apOk&&nameOk&&payOk)
+    const debuffOk=mandatoryDebuffReady(pack,s,p,ability.then[0]);
+    if(lineOk&&raidOk&&apOk&&nameOk&&payOk&&debuffOk)
      out.push({type:'activate',uid:c.uid,mode:'oncePay'});
    }
   }
@@ -4416,7 +4436,9 @@ export function legalUniversalActions(pack,s){
    if(ability?.op==='frontOnceProgram'&&ability.frontOnly===false&&
     !s.mainAbilityUsedUids.includes(c.uid)){
     const step=ability.then[0];
-    if(!(step.op==='discardGate'&&!payableHand(pack,s,p,step.payment).length))
+    const unpaid=step.op==='discardGate'&&!payableHand(pack,s,p,step.payment).length;
+    const closed=step.op==='discardGate'&&!discardWhenOpen(pack,s,p,c.uid,step);
+    if(!unpaid&&!closed)
      out.push({type:'activate',uid:c.uid,mode:'frontOnce'});
    }
   }
@@ -4518,7 +4540,8 @@ export function legalUniversalActions(pack,s){
      out.push({type:'activate',uid:c.uid,mode:'frontOnce'});
      continue;
     }
-    if(step.op==='discardGate'&&!payableHand(pack,s,p,step.payment).length)continue;
+    if(step.op==='discardGate'&&(!payableHand(pack,s,p,step.payment).length||
+     !discardWhenOpen(pack,s,p,c.uid,step)))continue;
     const debuff=step.op==='discardGate'
      ?step.then.find(e=>e.op==='enemyBpDown'):step;
     // A named-payment MAIN may draw/buff/grant without an enemy target.
@@ -4952,7 +4975,8 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
      (ability.raidOnly&&!(selected.stack||[]).length)||
      (ability.payAp&&!pl.apCards.some(c=>c.ready))||
      (ability.requiresOwnName&&!ownFieldHasPrintedName(pack,s,p,ability.requiresOwnName))||
-     (ability.then[0]?.op==='discardGate'&&!pl.hand.length))
+     (ability.then[0]?.op==='discardGate'&&!pl.hand.length)||
+     !mandatoryDebuffReady(pack,s,p,ability.then[0]))
      throw Error('Once-pay program is not legal');
     if(ability.payAp){
      spendAp(pl,ability.payAp);
@@ -4974,6 +4998,8 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
     const step=ability.then[0];
     if(step.op==='discardGate'&&!payableHand(pack,s,p,step.payment).length)
      throw Error('Front once-per-turn program requires a matching hand payment');
+    if(step.op==='discardGate'&&!discardWhenOpen(pack,s,p,selected.uid,step))
+     throw Error('Front once-per-turn program requires its printed condition');
     s.mainAbilityUsedUids.push(selected.uid);
     s.effectQueue.push(...ability.then.map(e=>({...e,owner:p,
      sourceUid:selected.uid,sourceName:d.name})),
