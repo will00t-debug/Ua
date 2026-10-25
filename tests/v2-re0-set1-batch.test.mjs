@@ -6,6 +6,7 @@ import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  assertUniversalMatch,universalEnergyByColor,universalBp,effectiveHandRequiredEnergy
 } from '../dist/universal-v2/engine.mjs';
+import {cardHasName} from '../dist/universal-v2/field-conditions.mjs';
 
 const pack=createRezeroV2Pack(),packs=[pack,pack];
 const fours=['REZ-1-007','REZ-1-008','REZ-1-012','REZ-1-013','REZ-1-014',
@@ -65,9 +66,9 @@ test('UA40BT and UA40ST share one catalogue and keep parallel art out',()=>{
  }
 });
 
-test('forty-four whole prints enter the V2 pack and the other sixty-nine stay out',()=>{
- assert.equal(REZERO_ENGINE_IDS.length,44);
- assert.equal(Object.keys(pack.cards).length,44);
+test('fifty-four whole prints enter the V2 pack and the other fifty-nine stay out',()=>{
+ assert.equal(REZERO_ENGINE_IDS.length,54);
+ assert.equal(Object.keys(pack.cards).length,54);
  assert.equal(pack.cards['REZ-1-001'],undefined);
  assert.equal(pack.cards['REZ-1-008'].step,true);
  assert.equal(pack.cards['REZ-1-008'].implementation,'vanilla');
@@ -93,6 +94,32 @@ test('forty-four whole prints enter the V2 pack and the other sixty-nine stay ou
  assert.deepEqual(pack.cards['REZ-1-110'].passiveBonuses,[{
   condition:{kind:'ownNameExists',turn:'any',zone:'front',excludeSelf:false,name:'ナツキ・スバル'},
   extraEnergy:1}]);
+ assert.deepEqual(pack.cards['REZ-1-005'].effects.onPlay,[{
+  op:'buffOwnField',filter:{field:'type',value:'character'},bp:1000,optional:true,excludeSelf:true}]);
+ assert.deepEqual(pack.cards['REZ-1-018'].effects.onPlay,[{
+  op:'enemyBpDown',bp:2000,optional:true,minBp:2500,zone:'front'}]);
+ assert.deepEqual(pack.cards['REZ-1-018'].triggerEffect,{op:'restOppFrontSkipNextActive'});
+ assert.deepEqual(pack.cards['REZ-1-025'].effects.onPlay,[{
+  op:'inspectTopArrange',count:3,toOutside:true,rest:'top'}]);
+ assert.deepEqual(pack.cards['REZ-1-083'].effects.onPlay,[{
+  op:'inspectTopArrange',count:2,toOutside:true,rest:'top'}]);
+ assert.deepEqual(pack.cards['REZ-1-050'].effects.onPlay,[{
+  op:'inspectTopAnyOutside',count:2,rest:'top'}]);
+ assert.deepEqual(pack.cards['REZ-1-050'].triggerEffect,{op:'bounceOppFrontUnderBp',bp:3500});
+ assert.deepEqual(pack.cards['REZ-1-111'].nameAliases,['クルシュ・カルステン','フェリス']);
+ assert.equal(pack.cards['REZ-1-111'].name,'クルシュ＆フェリス');
+ assert.equal(pack.cards['REZ-1-111'].triggerEffect,null);
+ assert.deepEqual(pack.cards['REZ-1-009'].effects.onPlay,[{
+  op:'searchTopOneBottomDiscard',count:3,logic:'any',filters:[
+   {field:'name',value:'ラム'},{field:'name',value:'レム'},
+   {field:'name',value:'ロズワール・L・メイザース'}]}]);
+ assert.equal(pack.cards['REZ-1-049'].effects.onPlay[0].count,3);
+ assert.equal(pack.cards['REZ-1-049'].effects.onPlay[0].filters.length,2);
+ assert.equal(pack.cards['REZ-1-069'].effects.onPlay[0].filters[2].value,'禁書庫');
+ assert.equal(pack.cards['REZ-1-057'].effects.onPlay[0].count,4);
+ assert.deepEqual(pack.cards['REZ-1-057'].triggerEffect,{op:'bounceOppFrontUnderBp',bp:3500});
+ assert.equal(pack.cards['REZ-1-042'],undefined);
+ assert.equal(pack.cards['REZ-1-101'],undefined);
  assert.deepEqual(validateUniversalDeck(pack,counts),[]);
  const s=fresh();
  assert.equal(assertUniversalMatch(packs,s),true);
@@ -317,4 +344,230 @@ test('empty-field Step, rest energy, Felt, events and front Subaru resolve',()=>
  s.players[0].front[0]=null;
  s.players[0].energy[1]=subaru;
  assert.equal(universalEnergyByColor(packs,s,0).blue||0,0);
+});
+
+const thirdCounts={
+ ...Object.fromEntries(['REZ-1-007','REZ-1-008','REZ-1-012','REZ-1-014','REZ-1-022',
+  'REZ-1-043','REZ-1-068','REZ-1-072','REZ-1-086'].map(id=>[id,4])),
+ ...Object.fromEntries(['REZ-1-005','REZ-1-009','REZ-1-025','REZ-1-083'].map(id=>[id,2])),
+ ...Object.fromEntries(['REZ-1-018','REZ-1-049','REZ-1-050','REZ-1-057','REZ-1-069','REZ-1-111'].map(id=>[id,1]))
+};
+const third=seed=>newUniversalMatch(packs,{decks:[thirdCounts,thirdCounts],first:0,seed});
+function fuel(s,ids){
+ ids.forEach((id,i)=>{
+  const card=pull(s,0,id);
+  card.ready=true;
+  s.players[0].energy[i]=card;
+ });
+}
+function playHand(s,id){
+ const card=pull(s,0,id);
+ s.players[0].hand.push(card);
+ const action=legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===card.uid);
+ assert.ok(action,id);
+ return [dispatchUniversalAction(packs,s,action),card];
+}
+function setTop(s,p,ids){
+ const pl=s.players[p];
+ const cards=ids.map(id=>{
+  let index=pl.deck.findIndex(c=>c.cardId===id);
+  if(index<0){
+   for(const zone of ['hand','life','outside']){
+    const atZone=pl[zone].findIndex(c=>c.cardId===id);
+    if(atZone<0)continue;
+    const swap=pl.deck.findIndex(c=>!ids.includes(c.cardId));
+    const moved=pl[zone][atZone];
+    pl[zone][atZone]=pl.deck[swap];
+    pl.deck[swap]=moved;
+    index=swap;
+    break;
+   }
+  }
+  if(index<0)throw Error('deck missing '+id);
+  return pl.deck.splice(index,1)[0];
+ });
+ pl.deck.unshift(...cards);
+ return cards;
+}
+function order(s,uids){
+ for(const uid of uids){
+  assert.equal(s.pending.kind,'effect-top-order');
+  s=dispatchUniversalAction(packs,s,{type:'chooseTopOrder',uid});
+ }
+ return s;
+}
+
+test('buffs, top windows, name search and the Crusch alias resolve',()=>{
+ assert.deepEqual(validateUniversalDeck(pack,thirdCounts),[]);
+ let s=third(4201);
+ const ally=pull(s,0,'REZ-1-007');
+ s.players[0].front[0]=ally;
+ s=reach(s,'main');
+ let [buffed,petra]=playHand(s,'REZ-1-005');
+ assert.equal(buffed.pending.kind,'effect-buff-own');
+ assert.ok(buffed.pending.choices.includes(ally.uid));
+ assert.equal(buffed.pending.choices.includes(petra.uid),false);
+ buffed=dispatchUniversalAction(packs,buffed,{type:'chooseOwnBuff',uid:ally.uid});
+ assert.equal(universalBp(packs,buffed,at(buffed,0,ally.uid)),3000);
+ let skipped=third(4202);
+ const other=pull(skipped,0,'REZ-1-007');
+ skipped.players[0].front[0]=other;
+ skipped=reach(skipped,'main');
+ [skipped]=playHand(skipped,'REZ-1-005');
+ skipped=dispatchUniversalAction(packs,skipped,{type:'chooseOwnBuff',uid:null});
+ assert.equal(universalBp(packs,skipped,at(skipped,0,other.uid)),2000);
+ let alone=third(4203);
+ alone=reach(alone,'main');
+ [alone,petra]=playHand(alone,'REZ-1-005');
+ assert.equal(alone.pending,null);
+ assert.equal(universalBp(packs,alone,at(alone,0,petra.uid)),500);
+
+ s=third(4204);
+ fuel(s,['REZ-1-007','REZ-1-008','REZ-1-012']);
+ const low=pull(s,1,'REZ-1-007'),high=pull(s,1,'REZ-1-014');
+ s.players[1].front[0]=low;
+ s.players[1].front[1]=high;
+ s=reach(s,'main');
+ [s]=playHand(s,'REZ-1-018');
+ assert.equal(s.pending.kind,'effect-target');
+ assert.deepEqual(s.pending.choices,[high.uid]);
+ s=dispatchUniversalAction(packs,s,{type:'chooseTarget',uid:high.uid});
+ assert.equal(universalBp(packs,s,at(s,1,high.uid)),500);
+ assert.equal(universalBp(packs,s,at(s,1,low.uid)),2000);
+ let passed=third(4205);
+ fuel(passed,['REZ-1-007','REZ-1-008','REZ-1-012']);
+ const wall=pull(passed,1,'REZ-1-014');
+ passed.players[1].front[0]=wall;
+ passed=reach(passed,'main');
+ [passed]=playHand(passed,'REZ-1-018');
+ passed=dispatchUniversalAction(packs,passed,{type:'chooseTarget',uid:null});
+ assert.equal(universalBp(packs,passed,at(passed,1,wall.uid)),2500);
+
+ s=third(4206);
+ fuel(s,['REZ-1-007']);
+ const window=setTop(s,0,['REZ-1-022','REZ-1-043','REZ-1-068']);
+ s=reach(s,'main');
+ [s]=playHand(s,'REZ-1-025');
+ assert.equal(s.pending.kind,'effect-top-inspect');
+ s=dispatchUniversalAction(packs,s,{type:'chooseInspectedOutside',uid:window[0].uid});
+ s=order(s,[window[2].uid,window[1].uid]);
+ assert.equal(s.pending,null);
+ assert.equal(s.players[0].outside.some(c=>c.uid===window[0].uid),true);
+ assert.deepEqual(s.players[0].deck.slice(0,2).map(c=>c.uid),[window[2].uid,window[1].uid]);
+ let kept=third(4207);
+ fuel(kept,['REZ-1-007']);
+ const all=setTop(kept,0,['REZ-1-022','REZ-1-068','REZ-1-072']);
+ kept=reach(kept,'main');
+ [kept]=playHand(kept,'REZ-1-025');
+ kept=dispatchUniversalAction(packs,kept,{type:'chooseInspectedOutside',uid:null});
+ kept=order(kept,[all[1].uid,all[0].uid,all[2].uid]);
+ assert.equal(kept.players[0].outside.some(c=>all.some(card=>card.uid===c.uid)),false);
+ assert.deepEqual(kept.players[0].deck.slice(0,3).map(c=>c.uid),[all[1].uid,all[0].uid,all[2].uid]);
+
+ s=third(4208);
+ s=reach(s,'main');
+ const pair=setTop(s,0,['REZ-1-022','REZ-1-068']);
+ [s]=playHand(s,'REZ-1-083');
+ assert.equal(s.pending.kind,'effect-top-inspect');
+ assert.equal(s.pending.uids.length,2);
+ s=dispatchUniversalAction(packs,s,{type:'chooseInspectedOutside',uid:pair[1].uid});
+ s=order(s,[pair[0].uid]);
+ assert.equal(s.players[0].deck[0].uid,pair[0].uid);
+ assert.equal(s.players[0].outside.some(c=>c.uid===pair[1].uid),true);
+
+ s=third(4209);
+ fuel(s,['REZ-1-043','REZ-1-043','REZ-1-043']);
+ const seen=setTop(s,0,['REZ-1-022','REZ-1-068']);
+ s=reach(s,'main');
+ [s]=playHand(s,'REZ-1-050');
+ assert.equal(s.pending.kind,'effect-top-inspect-many');
+ s=dispatchUniversalAction(packs,s,{type:'chooseInspectedOutside',uid:seen[0].uid});
+ s=dispatchUniversalAction(packs,s,{type:'chooseInspectedOutside',uid:null});
+ s=order(s,[seen[1].uid]);
+ assert.equal(s.players[0].outside.some(c=>c.uid===seen[0].uid),true);
+ assert.equal(s.players[0].deck[0].uid,seen[1].uid);
+ let both=third(4210);
+ fuel(both,['REZ-1-043','REZ-1-043','REZ-1-043']);
+ const gone=setTop(both,0,['REZ-1-022','REZ-1-072']);
+ both=reach(both,'main');
+ [both]=playHand(both,'REZ-1-050');
+ both=dispatchUniversalAction(packs,both,{type:'chooseInspectedOutside',uid:gone[0].uid});
+ both=dispatchUniversalAction(packs,both,{type:'chooseInspectedOutside',uid:gone[1].uid});
+ assert.equal(both.pending,null);
+ assert.equal(both.players[0].outside.filter(c=>gone.some(card=>card.uid===c.uid)).length,2);
+
+ s=third(4211);
+ fuel(s,['REZ-1-043']);
+ const alias=pack.cards['REZ-1-111'];
+ assert.equal(cardHasName(alias,'クルシュ・カルステン'),true);
+ assert.equal(cardHasName(alias,'フェリス'),true);
+ assert.equal(cardHasName(alias,'ラム'),false);
+ const top=setTop(s,0,['REZ-1-022','REZ-1-068']);
+ s=reach(s,'main');
+ let crusch;
+ [s,crusch]=playHand(s,'REZ-1-111');
+ assert.equal(s.pending.kind,'effect-top-inspect-many');
+ s=dispatchUniversalAction(packs,s,{type:'chooseInspectedOutside',uid:null});
+ s=order(s,[top[1].uid,top[0].uid]);
+ assert.equal(at(s,0,crusch.uid).cardId,'REZ-1-111');
+ assert.deepEqual(s.players[0].deck.slice(0,2).map(c=>c.uid),[top[1].uid,top[0].uid]);
+
+ s=third(4212);
+ fuel(s,['REZ-1-014']);
+ const names=setTop(s,0,['REZ-1-007','REZ-1-022','REZ-1-043']);
+ s=reach(s,'main');
+ [s]=playHand(s,'REZ-1-009');
+ assert.equal(s.pending.kind,'effect-top-filter-choice');
+ assert.deepEqual(s.pending.choices,[names[0].uid]);
+ s=dispatchUniversalAction(packs,s,{type:'chooseTopFiltered',uid:null});
+ s=order(s,[names[2].uid,names[1].uid,names[0].uid]);
+ assert.equal(s.pending,null);
+ assert.equal(s.players[0].hand.some(c=>c.uid===names[0].uid),false);
+ assert.deepEqual(s.players[0].deck.slice(-3).map(c=>c.uid),[names[2].uid,names[1].uid,names[0].uid]);
+ let added=third(4213);
+ fuel(added,['REZ-1-014']);
+ const found=setTop(added,0,['REZ-1-022','REZ-1-007','REZ-1-043']);
+ added=reach(added,'main');
+ [added]=playHand(added,'REZ-1-009');
+ added=dispatchUniversalAction(packs,added,{type:'chooseTopFiltered',uid:found[1].uid});
+ added=order(added,[found[0].uid,found[2].uid]);
+ assert.equal(added.pending.kind,'effect-discard');
+ assert.equal(added.publicReveals.at(-1).cardId,'REZ-1-007');
+ const dumped=added.players[0].hand.find(c=>c.uid!==found[1].uid);
+ added=dispatchUniversalAction(packs,added,{type:'chooseDiscard',uid:dumped.uid});
+ assert.equal(added.players[0].hand.some(c=>c.uid===found[1].uid),true);
+ assert.equal(added.players[0].outside.some(c=>c.uid===dumped.uid),true);
+
+ s=third(4214);
+ fuel(s,['REZ-1-043']);
+ const rem=setTop(s,0,['REZ-1-068','REZ-1-022','REZ-1-012']);
+ s=reach(s,'main');
+ [s]=playHand(s,'REZ-1-049');
+ assert.deepEqual(s.pending.choices.slice().sort(),[rem[0].uid,rem[2].uid].sort());
+ s=dispatchUniversalAction(packs,s,{type:'chooseTopFiltered',uid:rem[2].uid});
+ s=order(s,[rem[1].uid,rem[0].uid]);
+ assert.equal(s.pending.kind,'effect-discard');
+
+ s=third(4215);
+ fuel(s,['REZ-1-086']);
+ const library=setTop(s,0,['REZ-1-072','REZ-1-022','REZ-1-068']);
+ s=reach(s,'main');
+ [s]=playHand(s,'REZ-1-069');
+ assert.deepEqual(s.pending.choices.slice().sort(),[library[0].uid,library[2].uid].sort());
+ s=dispatchUniversalAction(packs,s,{type:'chooseTopFiltered',uid:null});
+ s=order(s,[library[1].uid,library[0].uid,library[2].uid]);
+ assert.equal(s.pending,null);
+
+ s=third(4216);
+ fuel(s,['REZ-1-043','REZ-1-043','REZ-1-043']);
+ const aliasWindow=setTop(s,0,['REZ-1-111','REZ-1-043','REZ-1-022','REZ-1-007']);
+ s=reach(s,'main');
+ [s]=playHand(s,'REZ-1-057');
+ assert.equal(s.pending.kind,'effect-top-filter-choice');
+ assert.deepEqual(s.pending.choices.slice().sort(),[aliasWindow[0].uid,aliasWindow[1].uid].sort());
+ s=dispatchUniversalAction(packs,s,{type:'chooseTopFiltered',uid:aliasWindow[0].uid});
+ assert.equal(s.publicReveals.at(-1).cardId,'REZ-1-111');
+ s=order(s,[aliasWindow[3].uid,aliasWindow[2].uid,aliasWindow[1].uid]);
+ assert.equal(s.pending.kind,'effect-discard');
+ assert.equal(s.players[0].hand.some(c=>c.uid===aliasWindow[0].uid),true);
 });

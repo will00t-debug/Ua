@@ -210,7 +210,7 @@ export const REZERO_CARDS=[
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-005.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA40BT%2FREZ-1-005",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "buffOther",
   "handDiscount": null,
   "altNames": []
  },
@@ -373,7 +373,7 @@ export const REZERO_CARDS=[
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-009.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA40BT%2FREZ-1-009",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "searchNames",
   "handDiscount": null,
   "altNames": []
  },
@@ -738,7 +738,7 @@ export const REZERO_CARDS=[
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-018.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA40BT%2FREZ-1-018",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "frontDown2500",
   "handDiscount": null,
   "altNames": []
  },
@@ -1033,7 +1033,7 @@ export const REZERO_CARDS=[
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-025.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA40BT%2FREZ-1-025",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "topOutside",
   "handDiscount": null,
   "altNames": []
  },
@@ -1998,7 +1998,7 @@ export const REZERO_CARDS=[
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-049.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA40BT%2FREZ-1-049",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "searchNames",
   "handDiscount": null,
   "altNames": []
  },
@@ -2037,7 +2037,7 @@ export const REZERO_CARDS=[
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-050.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA40BT%2FREZ-1-050",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "topKeep",
   "handDiscount": null,
   "altNames": []
  },
@@ -2318,7 +2318,7 @@ export const REZERO_CARDS=[
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-057.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA40BT%2FREZ-1-057",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "searchNames",
   "handDiscount": null,
   "altNames": []
  },
@@ -2796,7 +2796,7 @@ export const REZERO_CARDS=[
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-069.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA40BT%2FREZ-1-069",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "searchNames",
   "handDiscount": null,
   "altNames": []
  },
@@ -3354,7 +3354,7 @@ export const REZERO_CARDS=[
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-083.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA40BT%2FREZ-1-083",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "topOutside",
   "handDiscount": null,
   "altNames": []
  },
@@ -4474,7 +4474,7 @@ export const REZERO_CARDS=[
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40ST_REZ-1-111.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA40ST%2FREZ-1-111",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "aliasTopKeep",
   "handDiscount": null,
   "altNames": []
  },
