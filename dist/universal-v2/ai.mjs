@@ -67,13 +67,19 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='effect-top-trait-outside')
   return difficulty==='easy'?legal.find(a=>a.uid===null)||legal[0]:
    legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-active-energy-names')
+  return difficulty==='easy'?legal.find(a=>a.uid===null)||legal[0]:
+   legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-named-grant-mode')
+  return difficulty==='easy'?legal.find(a=>a.uid===null)||legal[0]:
+   legal.find(a=>a.mode==='impact')||legal[0];
  if(s.pending?.kind==='effect-optional-mill')
   return difficulty==='easy'?legal.find(a=>a.mode==='skip')||legal[0]:
    legal.find(a=>a.mode==='mill')||legal[0];
  if(s.pending?.kind==='effect-pay-ap-deploy')
   return difficulty==='easy'?legal.find(a=>a.mode==='skip')||legal[0]:
    legal.find(a=>a.mode==='pay')||legal[0];
- if(s.pending?.kind==='effect-top-order')return legal[0];
+ if(s.pending?.kind==='effect-top-hand-outside'||s.pending?.kind==='effect-top-order')return legal[0];
  if(['effect-discard-cost','effect-discard-gate'].includes(s.pending?.kind)){
   // An optional cost may be declined; tougher bots pay with a lower-value
   // hand card, using only the actor's own registered title pack.
@@ -109,7 +115,7 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
    legal.find(a=>a.mode==='activate')||legal[0];
  if(s.pending?.kind==='effect-buff-own')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-buff-trait')return legal.find(a=>a.uid!==null)||legal[0];
- if(s.pending?.kind==='main-discard-buff'){
+ if(s.pending?.kind==='main-discard-buff'||s.pending?.kind==='main-discard-block-ceiling'){
   // The payment is mandatory once activated. Choose a low-cost OWN hand
   // card, not a forged or opponent target; all candidates are exact legal.
   const catalog=packsOf(pack)[s.pending.player].cards;
@@ -227,7 +233,8 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  }
  if(difficulty==='hard'&&raids.length)return raids[0];
  const foeReady=s.players[1-s.active].front.some(c=>c?.ready);
- const activate=legal.find(a=>a.type==='activate'&&a.mode==='retireReady')||
+ const activate=legal.find(a=>a.type==='activate'&&a.mode==='readyOncePerName')||
+  legal.find(a=>a.type==='activate'&&a.mode==='retireReady')||
   legal.find(a=>a.type==='activate'&&a.mode==='retireFieldThen')||
   legal.find(a=>a.type==='activate'&&a.mode==='readyAndBuff')||
   legal.find(a=>a.type==='activate'&&a.mode==='buff')||

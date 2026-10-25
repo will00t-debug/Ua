@@ -8,7 +8,7 @@ import {uiActionLabel} from './preview-actions.mjs';
 export const UNIVERSAL_PREVIEW_REPLAY_VERSION=1;
 const privateActions=new Set([
  'chooseDeckSearch','chooseDeckSearchMulti','chooseInspectedOutside',
- 'chooseTopOrder','chooseTopCard','chooseDiscardCost','chooseDiscardGate',
+ 'chooseTopOrder','chooseTopHandOutside','chooseTopCard','chooseDiscardCost','chooseDiscardGate',
  'chooseDiscard','chooseHandLimit','chooseLeaveReplacement'
 ]);
 const numeric=v=>Number.isSafeInteger(v)&&v>=0;

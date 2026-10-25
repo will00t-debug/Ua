@@ -20,13 +20,17 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-search-deck':'搜尋牌庫', 'effect-search-deck-multi':'依序搜尋牌庫',
  'effect-top-inspect':'查看牌庫頂','effect-top-inspect-many':'任意張卡送場外',
  'effect-top-filter-choice':'查看牌頂，選擇符合特徵的角色／卡','effect-top-trait-outside':'查看牌頂，將符合特徵的卡送場外',
- 'effect-top-order':'排列牌庫頂或底','effect-optional-mill':'可將牌庫頂 1 張送場外',
+ 'effect-top-order':'排列牌庫頂或底',
+ 'effect-top-hand-outside':'查看牌頂：1 張入手、1 張出場外',
+ 'effect-optional-mill':'可將牌庫頂 1 張送場外',
  'effect-optional-draw':'攻擊時可抽 0 或 1 張',
  'effect-pay-ap-deploy':'可支付 1 AP，從場外 REST 登場',
  'effect-optional-pay-ap':'可支付 1 AP，然後結算後續效果',
  'effect-hand-rest':'從己方手牌免費 REST 登場',
  'effect-hand-rest-or-raid':'從己方手牌 REST 登場或合法 Raid',
  'effect-active-own-named':'可將最多 1 個己方指定名稱角色轉為 ACTIVE',
+ 'effect-active-energy-names':'可將能量線的指定名稱卡改為 ACTIVE',
+ 'effect-named-grant-mode':'選擇 Impact +1 或 Damage +1',
  'effect-bounce-own':'選擇返回手牌的己方角色',
  'effect-buff-own':'選擇己方角色增加本回合 BP',
  'effect-once-choice':'是否發動本回合一次能力',
@@ -38,6 +42,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-buff-trait':'選擇己方 BP 加成',
  'main-two-buff':'主要能力選擇 BP 對象',
  'main-discard-buff':'支付一張手牌，讓自身 BP 增加',
+ 'main-discard-block-ceiling':'支付一張手牌，本回合不被 BP 4000 以上角色阻擋',
  'effect-grant-attack':'授予己方角色攻擊時能力','granted-attack-draw':'攻擊時是否抽一張',
  'effect-target':'指定角色','effect-target-many':'最多選擇兩名不同敵方角色','raid-effect-order':'突襲能力結算順序',
  'effect-move-order':'選擇同時取得的移動觸發處理順序',
@@ -107,7 +112,11 @@ export function uiActionLabel(action,{pack,state}={}){
     action.mode==='restFrontGainEnergy'?'起動主要：REST 自身，再 REST 一張己方前線，本回合產能＋1':
     action.mode==='selfRestEnemy'?'主要能力：REST 自身，指定敵方前線角色':
     action.mode==='ready'?'主要能力：ACTIVE':
-    action.mode==='buff'?'主要能力：BP 加成':'主要能力：ACTIVE ＋ BP 加成';
+    action.mode==='buff'?'主要能力：BP 加成':
+    action.mode==='restPayNameActiveRest'?'起動主要：支付 1 AP，將此 Rest 的前線角色改為 ACTIVE':
+    action.mode==='restRetireNamedMode'?'起動主要：REST 並退場，可授予指定名稱 Impact +1 或 Damage +1':
+    action.mode==='discardBlockCeiling'?'起動主要：將 1 張手牌送至場外，本回合不被 BP 4000 以上角色阻擋':
+    '主要能力：ACTIVE ＋ BP 加成';
   case 'chooseBlock':return action.uid===null?'不阻擋':'使用 '+name()+' 阻擋';
   case 'chooseTrigger':
    if(action.mode==='skip')return '不使用此觸發';
@@ -162,10 +171,14 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseOptionalPayAp':return action.mode==='pay'?'支付 1 AP，然後結算後續效果':'不支付 AP';
   case 'chooseHandRest':return action.uid===null?'不特殊登場':'免費 REST 登場 '+name()+suffix();
   case 'chooseActiveOwnNamed':return action.uid===null?'不將指定名稱角色轉為 ACTIVE':'將 '+name()+' 轉為 ACTIVE';
+  case 'chooseActiveEnergyNames':return action.uid===null?'不將能量線的卡改為 ACTIVE':'將能量線的 '+name()+' 改為 ACTIVE';
+  case 'chooseNamedGrant':return action.uid===null?'不授予 Impact 或 Damage':
+   (action.mode==='damage'?'Damage +1：':'Impact +1：')+name();
   case 'chooseHandRestOrRaid':return action.uid===null?'不從手牌登場':
    (action.mode==='raid'?'從手牌 Raid ':'從手牌 REST 登場 ')+name()+suffix();
    case 'chooseOutsideNameRest':return action.uid===null?'不從場外登場':'REST 登場 '+name()+suffix();
   case 'chooseTopFiltered':return action.uid===null?'不加入手牌，將其餘卡排列至底部':'加入手牌：'+name();
+  case 'chooseTopHandOutside':return (action.place==='outside'?'送至場外：':'加入手牌：')+name();
   case 'chooseTopOrder':return '依序放回：'+name();
   case 'chooseRestFrontEnergy':return 'REST '+name()+'，本回合產能＋1';
   case 'chooseOwnBuff':case 'chooseMainBuff':case 'chooseTraitBuff':case 'chooseRestBp':

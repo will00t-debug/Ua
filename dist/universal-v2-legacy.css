@@ -95,6 +95,15 @@ body{margin:0;background:#f2f3f5;color:#272b31;font:14px/1.5 system-ui,-apple-sy
 .v2-shell .history{max-height:320px;overflow-y:auto;font-size:11px;color:#596579}
 .v2-shell .overlay{position:fixed;inset:0;z-index:500;background:#2833429c;display:grid;place-items:center;padding:10px;backdrop-filter:blur(3px)}
 .v2-shell .dialog{max-height:90vh;overflow:auto;width:min(620px,100%);border-radius:8px;box-shadow:0 14px 45px #2631422b}
+.v2-shell .dialog.look-wide{width:min(920px,100%)}
+.v2-shell .look-grid{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;padding:8px 0 4px}
+.v2-shell .look-card{width:148px;max-width:100%;display:flex;flex-direction:column;gap:6px;align-items:stretch;background:#fffdf8;border:1px solid #d7dee8;border-radius:8px;padding:8px;color:#303747;text-align:center}
+.v2-shell button.look-card{font:inherit;cursor:pointer}
+.v2-shell .look-card img{width:100%;height:auto;aspect-ratio:63/88;object-fit:contain;background:#f4f1ea;border-radius:4px;pointer-events:none}
+.v2-shell .look-name{font-size:12px;line-height:1.35}
+.v2-shell .look-actions{display:flex;gap:6px}
+.v2-shell .look-actions button{flex:1;min-height:32px}
+@media(max-width:620px){.v2-shell .look-card{width:calc(50% - 10px)}}
 .v2-shell .action-list{display:grid;gap:7px;max-height:55vh;overflow:auto;padding:8px 0}
 .v2-shell .action-list button{min-height:38px;background:#fafbfd;color:#4c586a;border:1px solid #d7dee8;border-radius:5px;padding:8px 10px;text-align:left}
 .v2-shell .action-list button.recommended{border-color:#ae3f48}

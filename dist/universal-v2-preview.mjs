@@ -215,6 +215,18 @@ function choices(legal){
   ...app.history.slice(0,28).map(x=>el('li',{text:x}))));
  side.append(log);return side;
 }
+function lookInstruction(pending){
+ if(pending.kind==='effect-top-hand-outside')return pending.step==='hand'?
+  '從查看的牌選 1 張加入手牌。對手看不到這些卡。':'再選 1 張送至場外。';
+ if(pending.split===true)return '每張牌選擇放回牌頂或牌底。同一側先點的比較靠近上方。';
+ if(pending.rest==='bottom')return '先點的比較靠近上方，最後點的在最底。';
+ return '依序放回查看的牌。先點的在最上方。';
+}
+function lookArt(cardId,name){
+ const pic=el('img',{src:imgUrl(0,cardId),alt:name,loading:'lazy',decoding:'async'});
+ pic.onerror=()=>{if(!pic.src.endsWith('/assets/mark.svg'))pic.src='assets/mark.svg';};
+ return pic;
+}
 function pendingDialog(legal){
  const s=app.state;
  if(!s?.pending||uiActor(s)!==0||app.busy)return null;
@@ -228,6 +240,45 @@ function pendingDialog(legal){
  dialog.append(el('div',{class:'headline'},el('h2',{text:title}),
   el('span',{class:'tag',text:'玩家操作'})),
   el('p',{class:'note',text:'請完成這個選擇後，對戰才會繼續。選牌只會顯示給目前的控制者。'}));
+ const look=s.pending.kind==='effect-top-hand-outside'||s.pending.kind==='effect-top-order';
+ const cards=(privateChoices?.options||[]).filter(x=>x.card&&x.action.uid!==null);
+ if(look&&cards.length){
+  dialog.classList.add('look-wide');
+  dialog.append(el('p',{class:'note look-note',text:lookInstruction(s.pending)}));
+  const grid=el('div',{class:'look-grid'});
+  if(s.pending.split===true){
+   const byUid=new Map();
+   for(const option of cards){
+    const row=byUid.get(option.action.uid)||{card:option.card,actions:[]};
+    row.actions.push(option.action);
+    byUid.set(option.action.uid,row);
+   }
+   for(const row of byUid.values()){
+    const box=el('div',{class:'look-card'});
+    box.append(lookArt(row.card.cardId,row.card.name),
+     el('span',{class:'look-name',text:row.card.name}));
+    const actions=el('div',{class:'look-actions'});
+    for(const action of row.actions)actions.append(btn(action.place==='bottom'?'放牌底':'放牌頂',
+     ()=>applyAction(action),'recommended'));
+    box.append(actions);
+    grid.append(box);
+   }
+  }else{
+   const seen=new Set();
+   for(const option of cards){
+    if(seen.has(option.action.uid))continue;
+    seen.add(option.action.uid);
+    const label=uiActionLabel(option.action,{pack:app.packs,state:s})+'｜'+option.card.name;
+    const box=el('button',{type:'button',class:'look-card',onClick:()=>applyAction(option.action),
+     'aria-label':label});
+    box.append(lookArt(option.card.cardId,option.card.name),
+     el('span',{class:'look-name',text:option.card.name}));
+    grid.append(box);
+   }
+  }
+  dialog.append(grid);
+  overlay.append(dialog);return overlay;
+ }
  const list=el('div',{class:'action-list'});
  for(const a of legal){
   const named=cardNameByUid.get(a.uid);
