@@ -70,9 +70,9 @@ test('UA40BT and UA40ST share one catalogue and keep parallel art out',()=>{
  }
 });
 
-test('eighty-eight whole prints enter the V2 pack and the other twenty-five stay out',()=>{
- assert.equal(REZERO_ENGINE_IDS.length,88);
- assert.equal(Object.keys(pack.cards).length,88);
+test('eighty-nine whole prints enter the V2 pack and the other twenty-four stay out',()=>{
+ assert.equal(REZERO_ENGINE_IDS.length,89);
+ assert.equal(Object.keys(pack.cards).length,89);
  assert.equal(pack.cards['REZ-1-001'],undefined);
  assert.equal(pack.cards['REZ-1-008'].step,true);
  assert.equal(pack.cards['REZ-1-008'].implementation,'vanilla');
@@ -268,6 +268,18 @@ test('eighty-eight whole prints enter the V2 pack and the other twenty-five stay
   {op:'peekTopOne'},{op:'drawIfOwnEventUsed',count:1}]);
  assert.deepEqual(pack.cards['REZ-1-106'].passiveBonuses,[{
   impact:1,condition:{kind:'ownOutsideEventCountAtLeast',turn:'any',min:6}}]);
+ assert.equal(pack.cards['REZ-1-078'].trigger,'raid');
+ assert.equal(pack.cards['REZ-1-078'].triggerEffect,null);
+ assert.equal(pack.cards['REZ-1-078'].color,'purple');
+ assert.equal(pack.cards['REZ-1-078'].energy,4);
+ assert.equal(pack.cards['REZ-1-078'].raidName,'ベアトリス');
+ assert.equal(pack.cards['REZ-1-072'].raidName,null);
+ assert.deepEqual(pack.cards['REZ-1-078'].effects.onPlay,[
+  {op:'activeOwnNamed',name:'ナツキ・スバル',max:1,optional:true},
+  {op:'draw',count:1,entry:'ownEffect'}]);
+ assert.deepEqual(pack.cards['REZ-1-078'].passiveBonuses,[{
+  impact:1,condition:{kind:'ownNameExists',turn:'any',zone:'field',excludeSelf:false,
+   name:'ナツキ・スバル'}}]);
  assert.deepEqual(pack.cards['REZ-1-093'].mainAbility,{
   op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,
   then:[{op:'restOwnActiveFrontDraw'}]});
@@ -3987,4 +3999,128 @@ test('Emilia raids onto Emilia, gains impact from six outside events, and peeks 
  assert.equal(cast.pending.kind,'block');
  cast=dispatchUniversalAction(packs,cast,{type:'chooseBlock',uid:null},{actor:1});
  assert.equal(assertUniversalMatch(packs,cast),true);
+});
+
+const beaCounts={
+ ...Object.fromEntries(['REZ-1-078','REZ-1-072','REZ-1-068','REZ-1-086','REZ-1-014','REZ-1-043',
+  'REZ-1-016','REZ-1-024','REZ-1-091','REZ-1-081','REZ-1-003','REZ-1-109'].map(id=>[id,4])),
+ 'REZ-1-029':2
+};
+const bea=seed=>newUniversalMatch(packs,{decks:[beaCounts,beaCounts],first:0,seed});
+test('Beatrice raids onto Beatrice, gains impact from Subaru, and draws only after an own-effect entry',()=>{
+ assert.equal(Object.values(beaCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(pack,beaCounts),[]);
+ const shell={id:'BEA',name:'ベアトリス',color:'purple',type:'character',energy:4,ap:1,bp:4000,gen:0,
+  traits:[],trigger:'raid',raidName:'ベアトリス',implementation:'dsl',effects:{}};
+ assert.throws(()=>createUniversalPack({id:'bad-bea',cards:[{...shell,type:'event',bp:0,gen:0,raidName:null,trigger:null,effects:{onPlay:[
+  {op:'activeOwnNamed',name:'ナツキ・スバル',max:1,optional:true}]}}]}),/onPlay/);
+ assert.throws(()=>createUniversalPack({id:'bad-bea',cards:[{...shell,effects:{onAttack:[
+  {op:'draw',count:1,entry:'ownEffect'}]}}]}),/onPlay/);
+
+ let live=bea(7101);
+ fuel(live,['REZ-1-086','REZ-1-086','REZ-1-086','REZ-1-086']);
+ const base=pull(live,0,'REZ-1-072');
+ live.players[0].front[0]=base;
+ const stranger=pull(live,0,'REZ-1-081');
+ live.players[0].front[1]=stranger;
+ const decoy=pull(live,0,'REZ-1-078');
+ live.players[0].front[2]=decoy;
+ const subaru=pull(live,0,'REZ-1-068');
+ subaru.ready=false;
+ live.players[0].front[3]=subaru;
+ live=ownMain(live,2);
+ for(const card of live.players[0].front)if(card)card.ready=false;
+ assert.equal(universalEnergyByColor(packs,live,0).purple,4);
+ const waiting=pull(live,0,'REZ-1-078');
+ live.players[0].hand.push(waiting);
+ assert.equal(legalUniversalActions(packs,live).some(a=>a.type==='raid'&&a.baseUid===stranger.uid),false);
+ assert.equal(legalUniversalActions(packs,live).some(a=>a.type==='raid'&&a.baseUid===decoy.uid),false);
+ const raid=legalUniversalActions(packs,live).find(a=>a.type==='raid'&&a.uid===waiting.uid&&a.baseUid===base.uid);
+ assert.ok(raid);
+ const before=live.players[0].deck.length;
+ let quiet=bea(7102);
+ fuel(quiet,['REZ-1-086','REZ-1-086','REZ-1-086','REZ-1-086']);
+ const quietBase=pull(quiet,0,'REZ-1-072');
+ quiet.players[0].front[0]=quietBase;
+ quiet=ownMain(quiet,2);
+ quiet.players[0].front[0].ready=false;
+ const quietTop=pull(quiet,0,'REZ-1-078');
+ quiet.players[0].hand.push(quietTop);
+ const quietDeck=quiet.players[0].deck.length;
+ quiet=dispatchUniversalAction(packs,quiet,legalUniversalActions(packs,quiet).find(a=>a.type==='raid'&&a.uid===quietTop.uid&&a.baseUid===quietBase.uid));
+ assert.equal(quiet.pending,null);
+ assert.equal(quiet.players[0].deck.length,quietDeck);
+ assert.equal(universalImpact(pack,quiet,at(quiet,0,quietTop.uid)),0);
+ const parked=quiet.players[0].energy[0];
+ quiet.players[0].deck.push(parked);
+ const later=pull(quiet,0,'REZ-1-068');
+ later.ready=true;
+ quiet.players[0].energy[0]=later;
+ assert.equal(universalImpact(pack,quiet,at(quiet,0,quietTop.uid)),1);
+
+ live=dispatchUniversalAction(packs,live,raid);
+ assert.equal(at(live,0,waiting.uid).ready,true);
+ assert.equal(at(live,0,waiting.uid).stack[0].uid,base.uid);
+ assert.equal(live.players[0].deck.length,before);
+ assert.equal(universalImpact(pack,live,at(live,0,waiting.uid)),1);
+ assert.equal(live.pending.kind,'effect-active-own-named');
+ let skipped=structuredClone(live);
+ const deckNow=live.players[0].deck.length;
+ live=dispatchUniversalAction(packs,live,{type:'chooseActiveOwnNamed',uid:subaru.uid});
+ assert.equal(at(live,0,subaru.uid).ready,true);
+ assert.equal(live.players[0].deck.length,deckNow);
+ assert.equal(live.pending,null);
+ skipped=dispatchUniversalAction(packs,skipped,{type:'chooseActiveOwnNamed',uid:null});
+ assert.equal(at(skipped,0,subaru.uid).ready,false);
+ assert.equal(skipped.players[0].deck.length,deckNow);
+ assert.equal(assertUniversalMatch(packs,live),true);
+ assert.equal(assertUniversalMatch(packs,skipped),true);
+ assert.equal(assertUniversalMatch(packs,quiet),true);
+
+ const lab=(id,color)=>({id,name:id,color,type:'character',energy:0,ap:1,bp:1000,gen:1,
+  traits:[],trigger:null,implementation:'vanilla',effects:{}});
+ const fixture=createUniversalPack({id:'beatrice-entry-lab',cards:[
+  rezeroPackCard(REZERO_BY_ID['REZ-1-078']),
+  rezeroPackCard(REZERO_BY_ID['REZ-1-072']),
+  {id:'LAB-SUB',name:'ナツキ・スバル',color:'purple',type:'character',energy:0,ap:1,bp:1500,gen:0,
+   traits:[],trigger:null,implementation:'vanilla',effects:{}},
+  {id:'LAB-DEPLOY-BEA',name:'Deploy Beatrice',color:'purple',type:'event',energy:0,ap:1,bp:0,gen:0,
+   trigger:null,implementation:'dsl',effects:{onPlay:[{op:'deployOwnHandRestOrRaid',type:'character',
+    color:'purple',maxEnergy:4,ap:1,max:1,optional:true,names:['ベアトリス']}]}},
+  ...['LAB-A','LAB-B','LAB-C','LAB-D','LAB-E','LAB-F','LAB-G','LAB-H','LAB-I'].map(id=>lab(id,'purple'))
+ ]});
+ const fixtureCounts={
+  'REZ-1-078':4,'REZ-1-072':4,'LAB-SUB':4,'LAB-DEPLOY-BEA':4,
+  'LAB-A':4,'LAB-B':4,'LAB-C':4,'LAB-D':4,'LAB-E':4,'LAB-F':4,'LAB-G':4,'LAB-H':4,
+  'LAB-I':2
+ };
+ assert.deepEqual(validateUniversalDeck(fixture,fixtureCounts),[]);
+ const fp=[fixture,fixture];
+ let own=newUniversalMatch(fp,{decks:[fixtureCounts,fixtureCounts],first:0,seed:7103});
+ const home=pull(own,0,'REZ-1-072');
+ own.players[0].front[0]=home;
+ const named=pull(own,0,'LAB-SUB');
+ named.ready=false;
+ own.players[0].front[1]=named;
+ own=dispatchUniversalAction(fp,own,{type:'next'});
+ own=dispatchUniversalAction(fp,own,{type:'next'});
+ assert.equal(own.phase,'main');
+ const top=pull(own,0,'REZ-1-078');
+ own.players[0].hand.push(top);
+ const caster=pull(own,0,'LAB-DEPLOY-BEA');
+ own.players[0].hand.push(caster);
+ own=dispatchUniversalAction(fp,own,{type:'event',uid:caster.uid});
+ assert.equal(own.pending.kind,'effect-hand-rest-or-raid');
+ const played=legalUniversalActions(fp,own).find(a=>a.type==='chooseHandRestOrRaid'&&
+  a.mode==='raid'&&a.uid===top.uid&&a.baseUid===home.uid);
+ assert.ok(played);
+ own=dispatchUniversalAction(fp,own,played);
+ assert.equal(own.pending.kind,'effect-active-own-named');
+ assert.equal(at(own,0,top.uid).ready,false);
+ const drawn=own.players[0].deck.length;
+ own=dispatchUniversalAction(fp,own,{type:'chooseActiveOwnNamed',uid:named.uid});
+ assert.equal(at(own,0,named.uid).ready,true);
+ assert.equal(own.players[0].deck.length,drawn-1);
+ assert.equal(at(own,0,top.uid).stack[0].uid,home.uid);
+ assert.equal(assertUniversalMatch(fp,own),true);
 });

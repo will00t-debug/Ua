@@ -3147,7 +3147,7 @@ export const REZERO_CARDS=[
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-078.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA40BT%2FREZ-1-078",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "raidSubaruImpactActive",
   "handDiscount": null,
   "altNames": []
  },
