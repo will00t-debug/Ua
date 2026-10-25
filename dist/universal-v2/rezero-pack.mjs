@@ -45,6 +45,7 @@ export function rezeroEngineKind(effectJa){
  if(e==='【起動メイン】【レストにする】 【ターン1】自分の山札の上から1枚見る。そのカードを山札の上か下に置く。')return 'fieldPeek';
  if(e==='【起動メイン】【ターン1】自分の手札を1枚公開し、自分の山札の下に置く。公開したカードがBP4000以上のキャラカードの場合、このキャラはこのターン中、BP+2500。')return 'revealBottom2500';
  if(e==='【登場時】自分の場の必要エナジーが0の青の〈ナツキ・スバル〉を1枚手札に戻してもよい。そうした場合、このキャラをアクティブにし、このターン中、BP+1000。')return 'returnPrintedActive';
+ if(e==='【自分のターン中】このキャラはBP+1000。【登場時】自分の場外の〈'+TRIAL_NAME+'〉を1枚リムーブエリアに置いてもよい。そうした場合、このキャラをアクティブにする。')return 'trialRemoveActive';
  return null;
 }
 const TOP_OUTSIDE=new Map([
@@ -83,6 +84,7 @@ function onPlay(card,kind){
  if(kind==='buffEither')return [{op:'buffEitherOther',bp:1000,optional:true}];
  if(kind==='returnPrintedActive')return [{op:'returnPrintedActiveBuff',
   name:'ナツキ・スバル',color:'blue',energy:0,bp:1000}];
+ if(kind==='trialRemoveActive')return [{op:'removeNamedOutsideActive',name:TRIAL_NAME}];
  if(kind==='frontDown2500')return [{op:'enemyBpDown',bp:2000,optional:true,minBp:2500,zone:'front'}];
  if(kind==='topOutside')return [{op:'inspectTopArrange',count:TOP_OUTSIDE.get(card.effectJa),toOutside:true,rest:'top'}];
  if(kind==='topKeep'||kind==='aliasTopKeep')return [{op:'inspectTopAnyOutside',count:2,rest:'top'}];
@@ -156,6 +158,7 @@ export function rezeroPackCard(card){
   ...(kind==='subaruFrontEnergy'?{passiveBonuses:[{
    condition:{kind:'ownNameExists',turn:'any',zone:'front',excludeSelf:false,name:'ナツキ・スバル'},
    extraEnergy:1}]}:{}),
+  ...(kind==='trialRemoveActive'?{ownTurnBp:1000}:{}),
   ...(kind==='subaruZeroBlueBp'?{passiveBonuses:[{
    condition:{kind:'ownPrintedCharacter',turn:'own',zone:'front',excludeSelf:false,
     name:'ナツキ・スバル',color:'blue',energy:0},bp:1000}]}:{}),

@@ -31,6 +31,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-buff-own':'選擇己方角色增加本回合 BP',
  'effect-buff-either':'選擇自己或對手的其他角色，本回合 BP+1000',
  'effect-return-printed':'可將符合印刷條件的己方角色放回手牌',
+ 'effect-remove-named':'可將場外的指定卡移入移除區',
  'effect-reveal-bottom':'公開 1 張手牌並放到牌底',
  'effect-once-choice':'是否發動本回合一次能力',
  'effect-choice-mode':'選擇一項效果',
@@ -175,6 +176,7 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseRestFrontEnergy':return 'REST '+name()+'，本回合產能＋1';
   case 'chooseEitherBuff':return action.uid===null?'不指定其他角色':'選擇 '+name()+'，本回合 BP+1000';
   case 'chooseReturnPrinted':return action.uid===null?'不放回手牌':'將 '+name()+' 放回手牌，並使這張角色活動且本回合 BP 增加';
+  case 'chooseRemoveNamed':return action.uid===null?'不移入移除區':'將 '+name()+' 移入移除區，並使這張角色活動';
   case 'chooseRevealBottom':return '公開 '+name()+' 並放到牌底';
   case 'chooseOwnBuff':case 'chooseMainBuff':case 'chooseTraitBuff':case 'chooseRestBp':
   case 'chooseRetireBp':case 'chooseTargetMany':return action.uid===null?'完成目標選擇':'選擇第 '+(state?.pending?.selected?.length+1||1)+' 個角色';

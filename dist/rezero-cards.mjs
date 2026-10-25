@@ -3518,7 +3518,7 @@ export const REZERO_CARDS=[
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-087.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA40BT%2FREZ-1-087",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "trialRemoveActive",
   "handDiscount": null,
   "altNames": []
  },

@@ -66,9 +66,9 @@ test('UA40BT and UA40ST share one catalogue and keep parallel art out',()=>{
  }
 });
 
-test('sixty-five whole prints enter the V2 pack and the other forty-eight stay out',()=>{
- assert.equal(REZERO_ENGINE_IDS.length,65);
- assert.equal(Object.keys(pack.cards).length,65);
+test('sixty-six whole prints enter the V2 pack and the other forty-seven stay out',()=>{
+ assert.equal(REZERO_ENGINE_IDS.length,66);
+ assert.equal(Object.keys(pack.cards).length,66);
  assert.equal(pack.cards['REZ-1-001'],undefined);
  assert.equal(pack.cards['REZ-1-008'].step,true);
  assert.equal(pack.cards['REZ-1-008'].implementation,'vanilla');
@@ -151,6 +151,10 @@ test('sixty-five whole prints enter the V2 pack and the other forty-eight stay o
   op:'returnPrintedActiveBuff',name:'ナツキ・スバル',color:'blue',energy:0,bp:1000}]);
  assert.equal(pack.cards['REZ-1-046'].trigger,null);
  assert.equal(pack.cards['REZ-1-052'],undefined);
+ assert.deepEqual(pack.cards['REZ-1-087'].effects.onPlay,[{
+  op:'removeNamedOutsideActive',name:REZERO_BY_ID['REZ-1-098'].nameJa}]);
+ assert.equal(pack.cards['REZ-1-087'].ownTurnBp,1000);
+ assert.equal(pack.cards['REZ-1-098'],undefined);
  assert.equal(pack.cards['REZ-1-101'],undefined);
  assert.deepEqual(validateUniversalDeck(pack,counts),[]);
  const s=fresh();
@@ -1323,4 +1327,111 @@ test('Julius may return one blue zero-cost Subaru, then readies and gains 1000 B
  assert.equal(alias.players[0].energy.some(c=>c?.uid===named.uid),false);
  assert.equal(at(alias,0,juliusCard.uid).ready,true);
  assert.equal(universalBp(fp,alias,at(alias,0,juliusCard.uid)),4000);
+});
+
+const emiliaCounts={
+ ...Object.fromEntries(['REZ-1-087','REZ-1-086','REZ-1-007','REZ-1-008','REZ-1-012',
+  'REZ-1-014','REZ-1-022','REZ-1-036','REZ-1-043','REZ-1-037','REZ-1-068','REZ-1-042'].map(id=>[id,4])),
+ 'REZ-1-046':2
+};
+const emilia=seed=>newUniversalMatch(packs,{decks:[emiliaCounts,emiliaCounts],first:0,seed});
+test('Emilia gains 1000 BP on her turn and readies only after removing the sanctuary trial',()=>{
+ assert.equal(Object.values(emiliaCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(pack,emiliaCounts),[]);
+ const shell={id:'REMOVE',name:'Gate',color:'purple',type:'character',energy:0,ap:1,bp:1000,gen:1,
+  traits:[],trigger:null,implementation:'dsl',effects:{}};
+ assert.throws(()=>createUniversalPack({id:'bad-remove',cards:[{...shell,effects:{onPlay:[
+  {op:'removeNamedOutsideActive'}]}}]}),/invalid named outside/);
+ assert.throws(()=>createUniversalPack({id:'bad-remove',cards:[{...shell,type:'event',bp:0,effects:{onPlay:[
+  {op:'removeNamedOutsideActive',name:'”聖域”の”試練”'}]}}]}),/character onPlay/);
+
+ let bare=emilia(5001);
+ fuel(bare,['REZ-1-086','REZ-1-086','REZ-1-086','REZ-1-086']);
+ bare=reach(bare,'main');
+ let actor;
+ [bare,actor]=playFront(bare,'REZ-1-087');
+ assert.equal(bare.pending,null);
+ assert.equal(at(bare,0,actor.uid).ready,false);
+ assert.equal(universalBp(packs,bare,at(bare,0,actor.uid)),4000);
+ const generator=bare.players[0].energy[3];
+ bare.players[0].outside.push(generator);
+ bare.players[0].energy[3]=bare.players[0].front.find(c=>c?.uid===actor.uid);
+ bare.players[0].front[bare.players[0].front.findIndex(c=>c?.uid===actor.uid)]=null;
+ assert.equal(universalBp(packs,bare,at(bare,0,actor.uid)),4000);
+ bare.active=1;
+ assert.equal(universalBp(packs,bare,at(bare,0,actor.uid)),3000);
+
+ const trialName=REZERO_BY_ID['REZ-1-098'].nameJa;
+ const labs=['LAB-A','LAB-B','LAB-C','LAB-D','LAB-E','LAB-F','LAB-G','LAB-H'];
+ const lab=(id)=>({id,name:id,color:'purple',type:'character',energy:0,ap:1,bp:1000,gen:1,
+  traits:[],trigger:null,implementation:'vanilla',effects:{}});
+ const event=(id,name,extra)=>({id,name,color:'purple',type:'event',energy:3,ap:1,bp:0,gen:0,
+  traits:[],trigger:null,implementation:extra?.nameAliases?'dsl':'vanilla',effects:{},...extra});
+ const fixture=createUniversalPack({id:'rezero-trial-lab',cards:[
+  rezeroPackCard(REZERO_BY_ID['REZ-1-087']),
+  rezeroPackCard(REZERO_BY_ID['REZ-1-086']),
+  event('LAB-TRIAL',trialName),
+  event('LAB-OTHER','別イベント'),
+  event('LAB-ALIAS','別名',{nameAliases:[trialName]}),
+  ...labs.map(lab)
+ ]});
+ const fixtureCounts={'REZ-1-087':4,'REZ-1-086':4,'LAB-TRIAL':4,'LAB-OTHER':2,'LAB-ALIAS':4,
+  ...Object.fromEntries(labs.map(id=>[id,4]))};
+ assert.equal(Object.values(fixtureCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(fixture,fixtureCounts),[]);
+ const fp=[fixture,fixture];
+ function open(seed){
+  let s=newUniversalMatch(fp,{decks:[fixtureCounts,fixtureCounts],first:0,seed});
+  ['REZ-1-086','REZ-1-086','REZ-1-086','REZ-1-086'].forEach((id,i)=>{
+   const card=pull(s,0,id);card.ready=true;s.players[0].energy[i]=card;
+  });
+  s=dispatchUniversalAction(fp,s,{type:'next'});
+  s=dispatchUniversalAction(fp,s,{type:'next'});
+  assert.equal(s.phase,'main');
+  return s;
+ }
+ let moved=open(5002);
+ const trial=pull(moved,0,'LAB-TRIAL');
+ const other=pull(moved,0,'LAB-OTHER');
+ const alias=pull(moved,0,'LAB-ALIAS');
+ const handed=pull(moved,0,'LAB-TRIAL');
+ const foeTrial=pull(moved,1,'LAB-TRIAL');
+ moved.players[0].outside.push(trial,other,alias);
+ moved.players[0].hand.push(handed);
+ moved.players[1].outside.push(foeTrial);
+ const printed=pull(moved,0,'REZ-1-087');
+ moved.players[0].hand.push(printed);
+ const play=legalUniversalActions(fp,moved).find(a=>a.type==='play'&&a.uid===printed.uid&&a.line==='front');
+ assert.ok(play);
+ moved=dispatchUniversalAction(fp,moved,play);
+ assert.equal(moved.pending.kind,'effect-remove-named');
+ assert.equal(moved.pending.optional,true);
+ assert.deepEqual(moved.pending.choices.slice().sort(),[trial.uid,alias.uid].sort());
+ for(const uid of [other.uid,handed.uid,foeTrial.uid,printed.uid])
+  assert.equal(moved.pending.choices.includes(uid),false,uid);
+ assert.throws(()=>dispatchUniversalAction(fp,moved,{type:'chooseRemoveNamed',uid:other.uid}),
+  /not currently legal/);
+ moved=dispatchUniversalAction(fp,moved,{type:'chooseRemoveNamed',uid:trial.uid});
+ assert.equal(moved.pending,null);
+ assert.equal(moved.players[0].removed.some(c=>c.uid===trial.uid),true);
+ assert.equal(moved.players[0].outside.some(c=>c.uid===trial.uid),false);
+ assert.equal(moved.players[0].outside.some(c=>c.uid===alias.uid),true);
+ assert.ok(moved.zoneMoveEvents.some(e=>e.uid===trial.uid&&e.from==='outside'&&
+  e.to==='removed'&&e.reason==='own-effect'));
+ assert.equal(at(moved,0,printed.uid).ready,true);
+ assert.equal(universalBp(fp,moved,at(moved,0,printed.uid)),4000);
+
+ let skipped=open(5003);
+ const kept=pull(skipped,0,'LAB-TRIAL');
+ skipped.players[0].outside.push(kept);
+ const skippedCard=pull(skipped,0,'REZ-1-087');
+ skipped.players[0].hand.push(skippedCard);
+ const skipPlay=legalUniversalActions(fp,skipped).find(a=>a.type==='play'&&a.uid===skippedCard.uid&&a.line==='front');
+ skipped=dispatchUniversalAction(fp,skipped,skipPlay);
+ skipped=dispatchUniversalAction(fp,skipped,{type:'chooseRemoveNamed',uid:null});
+ assert.equal(skipped.pending,null);
+ assert.equal(skipped.players[0].outside.some(c=>c.uid===kept.uid),true);
+ assert.equal(skipped.players[0].removed.some(c=>c.uid===kept.uid),false);
+ assert.equal(at(skipped,0,skippedCard.uid).ready,false);
+ assert.equal(universalBp(fp,skipped,at(skipped,0,skippedCard.uid)),4000);
 });
