@@ -66,9 +66,9 @@ test('UA40BT and UA40ST share one catalogue and keep parallel art out',()=>{
  }
 });
 
-test('fifty-seven whole prints enter the V2 pack and the other fifty-six stay out',()=>{
- assert.equal(REZERO_ENGINE_IDS.length,57);
- assert.equal(Object.keys(pack.cards).length,57);
+test('fifty-nine whole prints enter the V2 pack and the other fifty-four stay out',()=>{
+ assert.equal(REZERO_ENGINE_IDS.length,59);
+ assert.equal(Object.keys(pack.cards).length,59);
  assert.equal(pack.cards['REZ-1-001'],undefined);
  assert.equal(pack.cards['REZ-1-008'].step,true);
  assert.equal(pack.cards['REZ-1-008'].implementation,'vanilla');
@@ -123,6 +123,12 @@ test('fifty-seven whole prints enter the V2 pack and the other fifty-six stay ou
  assert.deepEqual(pack.cards['REZ-1-026'].effects.onPlay,[{op:'drawIfOwnEventUsed',count:1}]);
  assert.deepEqual(pack.cards['REZ-1-026'].triggerEffect,{op:'restOppFrontSkipNextActive'});
  assert.deepEqual(pack.cards['REZ-1-075'].effects.onPlay,[{op:'draw',count:1,entry:'ownEffect'}]);
+ assert.deepEqual(pack.cards['REZ-1-004'].effects.onPlay,[
+  {op:'draw',count:1},{op:'recoverAp',count:1,require:'ownEventUsed'}]);
+ assert.deepEqual(pack.cards['REZ-1-091'].effects.onPlay,[{
+  op:'searchTopOneBottomDiscard',count:7,
+  filter:{field:'name',value:REZERO_BY_ID['REZ-1-098'].nameJa}}]);
+ assert.equal(pack.cards['REZ-1-098'],undefined);
  assert.equal(pack.cards['REZ-1-042'],undefined);
  assert.equal(pack.cards['REZ-1-101'],undefined);
  assert.deepEqual(validateUniversalDeck(pack,counts),[]);
@@ -682,4 +688,129 @@ test('name union, event-used draw and own-effect entry draw resolve',()=>{
  assert.ok(play);
  named=dispatchUniversalAction(fp,named,play);
  assert.equal(named.players[0].deck.length,namedDeck-2);
+});
+
+const apCounts={
+ ...Object.fromEntries(['REZ-1-007','REZ-1-008','REZ-1-012','REZ-1-014','REZ-1-022',
+  'REZ-1-036','REZ-1-043','REZ-1-068','REZ-1-072','REZ-1-086','REZ-1-010'].map(id=>[id,4])),
+ 'REZ-1-004':4,'REZ-1-029':2
+};
+const apDeck=seed=>newUniversalMatch(packs,{decks:[apCounts,apCounts],first:0,seed});
+function ownMain(s,turn){
+ let guard=0;
+ while(!(s.active===0&&s.players[0].ownTurns>=turn&&s.phase==='main'&&!s.pending)){
+  if(s.pending?.kind==='end-hand-limit'){
+   const hand=s.players[s.pending.player].hand[0];
+   s=dispatchUniversalAction(packs,s,{type:'chooseHandLimit',uid:hand.uid});
+  }else{
+   const next=legalUniversalActions(packs,s).find(a=>a.type==='next');
+   assert.ok(next,'stuck '+(s.pending?.kind||s.phase));
+   s=dispatchUniversalAction(packs,s,next);
+  }
+  assert.ok(++guard<48,'turn did not reach main');
+ }
+ return s;
+}
+test('draw plus event-gated AP recovery resolves only after an event',()=>{
+ assert.equal(Object.values(apCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(pack,apCounts),[]);
+ const shell={id:'AP-GATE',name:'Gate',color:'yellow',type:'character',energy:0,ap:1,bp:1000,gen:1,
+  traits:[],trigger:null,implementation:'dsl',effects:{}};
+ assert.throws(()=>createUniversalPack({id:'bad-ap',cards:[{...shell,effects:{onPlay:[
+  {op:'recoverAp',count:2,require:'ownEventUsed'}]}}]}),/invalid AP recovery/);
+ assert.throws(()=>createUniversalPack({id:'bad-ap',cards:[{...shell,type:'event',bp:0,effects:{onPlay:[
+  {op:'recoverAp',count:1,require:'ownEventUsed'}]}}]}),/character onPlay/);
+ assert.throws(()=>createUniversalPack({id:'bad-top',cards:[{...shell,effects:{onPlay:[
+  {op:'searchTopOneBottomDiscard',count:8,filter:{field:'name',value:'x'}}]}}]}),/invalid top-N/);
+
+ let quiet=apDeck(4401);
+ fuel(quiet,['REZ-1-007','REZ-1-008','REZ-1-012','REZ-1-014']);
+ quiet=ownMain(quiet,3);
+ assert.equal(quiet.players[0].apCards.filter(c=>c.ready).length,3);
+ const before=quiet.players[0].deck.length;
+ let beatrice;
+ [quiet,beatrice]=playHand(quiet,'REZ-1-004');
+ assert.equal(quiet.pending,null);
+ assert.equal(quiet.players[0].deck.length,before-2);
+ assert.equal(at(quiet,0,beatrice.uid).ready,false);
+
+ let used=apDeck(4402);
+ fuel(used,['REZ-1-007','REZ-1-008','REZ-1-012','REZ-1-014']);
+ used=ownMain(used,3);
+ const event=pull(used,0,'REZ-1-029');
+ used.players[0].hand.push(event);
+ used=dispatchUniversalAction(packs,used,legalUniversalActions(packs,used).find(a=>a.type==='event'&&a.uid===event.uid));
+ assert.equal(used.pending.kind,'effect-recover-ap');
+ assert.equal(used.pending.remaining,2);
+ used=dispatchUniversalAction(packs,used,{type:'chooseApRecovery',uid:null});
+ assert.equal(used.players[0].apCards.filter(c=>c.ready).length,2);
+ const drawn=used.players[0].deck.length;
+ [used]=playHand(used,'REZ-1-004');
+ assert.equal(used.pending.kind,'effect-recover-ap');
+ assert.equal(used.pending.remaining,1);
+ assert.equal(used.players[0].deck.length,drawn-2);
+ const rested=used.players[0].apCards.find(c=>c.inPlay&&!c.ready);
+ used=dispatchUniversalAction(packs,used,{type:'chooseApRecovery',uid:rested.uid});
+ assert.equal(used.pending,null);
+ assert.equal(used.players[0].apCards.find(c=>c.uid===rested.uid).ready,true);
+});
+
+const sevenCounts={
+ ...Object.fromEntries(['REZ-1-007','REZ-1-008','REZ-1-012','REZ-1-014','REZ-1-022',
+  'REZ-1-036','REZ-1-043','REZ-1-068','REZ-1-072','REZ-1-086'].map(id=>[id,4])),
+ 'REZ-1-091':4,'REZ-1-010':4,'REZ-1-075':2
+};
+const seven=seed=>newUniversalMatch(packs,{decks:[sevenCounts,sevenCounts],first:0,seed});
+test('top seven name search orders a miss and takes the printed trial name',()=>{
+ assert.equal(Object.values(sevenCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(pack,sevenCounts),[]);
+ let s=seven(4411);
+ const missed=setTop(s,0,['REZ-1-007','REZ-1-008','REZ-1-012','REZ-1-036','REZ-1-043','REZ-1-068','REZ-1-072']);
+ s=reach(s,'main');
+ const top=s.players[0].deck.slice(0,7).map(c=>c.uid);
+ [s]=playHand(s,'REZ-1-091');
+ assert.equal(s.pending.kind,'effect-top-order');
+ assert.deepEqual(s.pending.uids,top);
+ assert.deepEqual(missed.map(c=>c.uid),top);
+ s=order(s,top);
+ assert.equal(s.pending,null);
+ assert.deepEqual(s.players[0].deck.slice(-7).map(c=>c.uid),top);
+
+ const trialName=REZERO_BY_ID['REZ-1-098'].nameJa;
+ const lab=(id,color)=>({id,name:id,color,type:'character',energy:0,ap:1,bp:1000,gen:1,
+  traits:[],trigger:null,implementation:'vanilla',effects:{}});
+ const labs=['LAB-A','LAB-B','LAB-C','LAB-D','LAB-E','LAB-F','LAB-G','LAB-H','LAB-I','LAB-J','LAB-K'];
+ const fixture=createUniversalPack({id:'rezero-trial-lab',cards:[
+  rezeroPackCard(REZERO_BY_ID['REZ-1-091']),
+  {id:'LAB-TRIAL',name:trialName,color:'purple',type:'event',energy:2,ap:1,bp:0,gen:0,
+   traits:[],trigger:'draw',implementation:'vanilla',effects:{}},
+  ...labs.map(id=>lab(id,'purple'))
+ ]});
+ const fixtureCounts={'REZ-1-091':4,'LAB-TRIAL':4,
+  ...Object.fromEntries(labs.slice(0,10).map(id=>[id,4])),'LAB-K':2};
+ assert.deepEqual(validateUniversalDeck(fixture,fixtureCounts),[]);
+ const fp=[fixture,fixture];
+ let hit=newUniversalMatch(fp,{decks:[fixtureCounts,fixtureCounts],first:0,seed:4412});
+ const found=setTop(hit,0,['LAB-TRIAL','LAB-A','LAB-B','LAB-C','LAB-D','LAB-E','LAB-F']);
+ hit=dispatchUniversalAction(fp,hit,{type:'next'});
+ hit=dispatchUniversalAction(fp,hit,{type:'next'});
+ assert.equal(hit.phase,'main');
+ const echidna=pull(hit,0,'REZ-1-091');
+ hit.players[0].hand.push(echidna);
+ const play=legalUniversalActions(fp,hit).find(a=>a.type==='play'&&a.uid===echidna.uid);
+ assert.ok(play);
+ hit=dispatchUniversalAction(fp,hit,play);
+ assert.equal(hit.pending.kind,'effect-top-filter-choice');
+ assert.deepEqual(hit.pending.choices,[found[0].uid]);
+ hit=dispatchUniversalAction(fp,hit,{type:'chooseTopFiltered',uid:found[0].uid});
+ assert.equal(hit.publicReveals.at(-1).cardId,'LAB-TRIAL');
+ for(const card of found.slice(1)){
+  assert.equal(hit.pending.kind,'effect-top-order');
+  hit=dispatchUniversalAction(fp,hit,{type:'chooseTopOrder',uid:card.uid});
+ }
+ assert.equal(hit.pending.kind,'effect-discard');
+ const dumped=hit.players[0].hand.find(c=>c.uid!==found[0].uid);
+ hit=dispatchUniversalAction(fp,hit,{type:'chooseDiscard',uid:dumped.uid});
+ assert.equal(hit.players[0].hand.some(c=>c.uid===found[0].uid),true);
+ assert.equal(hit.players[0].outside.some(c=>c.uid===dumped.uid),true);
 });

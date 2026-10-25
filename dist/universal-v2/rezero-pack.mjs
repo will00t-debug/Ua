@@ -37,6 +37,8 @@ export function rezeroEngineKind(effectJa){
  if(e==='【登場時】自分の場に〈レム〉か〈ロズワール・L・メイザース〉がある場合、カードを1枚引く。')return 'drawIfRemOrRoswaal';
  if(e==='【登場時】このターン中に自分がイベントカードを使用している場合、カードを1枚引く。')return 'drawIfEvent';
  if(e==='【登場時】このキャラが自分の効果で登場していた場合、カードを1枚引く。')return 'drawIfOwnEffect';
+ if(e==='【登場時】カードを1枚引く。このターン中に自分がイベントカードを使用している場合、自分のAPカードを1枚まで選び、アクティブにする。')return 'drawThenEventAp';
+ if(e===SEARCH_SEVEN)return 'searchName7';
  return null;
 }
 const TOP_OUTSIDE=new Map([
@@ -44,6 +46,8 @@ const TOP_OUTSIDE=new Map([
  ['【登場時】自分の山札の上から2枚見る。その中から1枚まで場外に置き、残りを望む順で山札の上に置く。',2]
 ]);
 const TOP_KEEP='【登場時】自分の山札の上から2枚見る。その中から望む枚数を望む順で山札の上に置き、残りを場外に置く。';
+const TRIAL_NAME=REZERO_CARDS.find(c=>c.id==='REZ-1-098').nameJa;
+const SEARCH_SEVEN='【登場時】自分の山札の上から7枚見る。その中から〈'+TRIAL_NAME+'〉を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。';
 const ALIAS_PREFIX='このカードは〈クルシュ・カルステン〉としても〈フェリス〉としても扱う。';
 const REST_SKIP='【カラー】相手のフロントLのキャラを1枚選び、レストにする。それは次の1回アクティブにならない。';
 const BOUNCE_3500='【カラー】BP3500以下の相手のフロントLのキャラを1枚選び、手札に戻す。';
@@ -82,6 +86,9 @@ function onPlay(card,kind){
   names:['レム','ロズワール・L・メイザース']}];
  if(kind==='drawIfEvent')return [{op:'drawIfOwnEventUsed',count:1}];
  if(kind==='drawIfOwnEffect')return [{op:'draw',count:1,entry:'ownEffect'}];
+ if(kind==='drawThenEventAp')return [{op:'draw',count:1},{op:'recoverAp',count:1,require:'ownEventUsed'}];
+ if(kind==='searchName7')return [{op:'searchTopOneBottomDiscard',count:7,
+  filter:{field:'name',value:TRIAL_NAME}}];
  return null;
 }
 export function rezeroPackCard(card){

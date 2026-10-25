@@ -771,7 +771,13 @@ function continueEffectQueue(pack,s){
   }else if(job.op==='peekTopOrBottom'){
     if(pl.deck.length)s.pending={kind:'private-top-place',player:owner,sourceUid:job.sourceUid};
    }else if(job.op==='recoverAp'){
-   if(pl.apCards.some(c=>c.inPlay&&!c.ready))
+   // Missing `require` is the existing unconditional recovery, including the
+   // internal count-1 unshift. The event gate uses the same ledger as the
+   // event-used draw and is not locked to 自分のターン. The key is not `when`:
+   // pack freeze spreads that key as a live-condition object.
+   const open=job.require!=='ownEventUsed'||matchesV2LiveCondition(s,owner,job.sourceUid,
+    {kind:'ownEventUsedThisTurn',turn:'any'},c=>card(pack,c));
+   if(open&&pl.apCards.some(c=>c.inPlay&&!c.ready))
     s.pending={kind:'effect-recover-ap',player:owner,sourceUid:job.sourceUid,remaining:job.count};
   }else if(job.op==='searchDeckOne'){
    const matches=filteredChoices(pack,s,pl.deck,job.filter);

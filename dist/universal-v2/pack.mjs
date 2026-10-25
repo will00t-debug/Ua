@@ -309,7 +309,8 @@ function verifyProgram(program,path){
     new Set(e.filters.map(f=>f.field+':'+f.value)).size===e.filters.length&&
     ['any','all'].includes(e.logic)&&
     Object.keys(e).every(k=>['op','count','filters','logic'].includes(k));
-   if(!integer(e.count,1)||e.count>5||!(single||compound))
+   // Printed windows stop at 7. REZ-1-091 looks at seven cards; eight is rejected.
+   if(!integer(e.count,1)||e.count>7||!(single||compound))
     throw Error(path+'['+i+'] invalid top-N filtered bottom/discard profile');
   }
   if(e.op==='searchTopUpToTwoBottom'){
@@ -675,7 +676,14 @@ function verifyProgram(program,path){
     throw Error(path+'['+i+'] unsupported printed BP retirement profile');
   }
   if(e.op==='peekTopOne'&&Object.keys(e).some(key=>key!=='op'))throw Error(path+'['+i+'] unsupported private peek options');
-  if(e.op==='recoverAp'&&(!integer(e.count,1)||e.count>3))throw Error(path+'['+i+'] invalid AP recovery count');
+  if(e.op==='recoverAp'){
+   const keys=Object.keys(e);
+   const plain=!own(e,'require')&&integer(e.count,1)&&e.count<=3&&
+    keys.every(k=>k==='op'||k==='count');
+   const gated=e.require==='ownEventUsed'&&e.count===1&&
+    keys.every(k=>k==='op'||k==='count'||k==='require');
+   if(!(plain||gated))throw Error(path+'['+i+'] invalid AP recovery count');
+  }
   if(e.op==='drawDiscard'&&(
    (e.discardCount===undefined&&e.count!==1)||
    (e.discardCount!==undefined&&(!integer(e.discardCount,1)||e.discardCount>10))||
@@ -1287,6 +1295,9 @@ function normalize(card,packId){
   if(program.some(e=>e.op==='drawIfOwnEventUsed'||(e.op==='drawIfOwnName'&&e.names))&&
    (card.type!=='character'||name!=='onPlay'))
    throw Error(card.id+' named-union and event-used draws are character onPlay effects');
+  if(program.some(e=>e.op==='recoverAp'&&e.require!==undefined)&&
+   (card.type!=='character'||name!=='onPlay'))
+   throw Error(card.id+' event-used AP recovery is a character onPlay effect');
   if(program.some(e=>['moveOtherAcrossOrRemove','raidBaseEnergyThen','restOppFrontLockActive'].includes(e.op))&&
    (card.type!=='character'||name!=='onPlay'))
    throw Error(card.id+' line move, raid-base gate and rest lock are character onPlay effects');
