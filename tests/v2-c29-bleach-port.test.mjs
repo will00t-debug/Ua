@@ -84,9 +84,17 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 //   accept-or-skip for the whole three, not one card at a time. Skipping does
 //   not open the recovery. A shorter deck still mills what remains. No trigger.
 //   Required energy alt is 紫3. Generated energy alt is 紫. Printed AP is 2.
+// BLC-2-014 EX07BT: [登場時]必要エナジーが2以下の自分の場のキャラを1枚手札に戻してもよい。
+//   そうした場合、自分の場外から必要エナジーが2以下のカードを1枚まで手札に加える。
+//   The source is a legal target when its own printed energy is 2 or less.
+//   This print is energy 3, so it is not. Fields are not characters.
+//   Skipping, or having no legal character, does not open the recovery.
+//   Recovery accepts any card type at printed energy 2 or less.
+//   COLOR: BP3500以下の相手のフロントのキャラを1枚手札に戻す。
+//   Required energy alt is 青3. Generated energy alt is 青青, so gen stays 2.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -157,12 +165,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers thirty-seven whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,473);
- assert.equal(EXPECTED_V2_COUNTS.bleach,197);
+test('C29 registers thirty-eight whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,474);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,198);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,197);
+ assert.equal(Object.keys(bleach.cards).length,198);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -2675,4 +2683,168 @@ test('BLC-1-038 may mill three cards at once, then recover one purple character'
  assert.equal(assertUniversalMatch(first.packs,declined),true);
  assert.equal(assertUniversalMatch(short.packs,shortMill),true);
  assert.equal(assertUniversalMatch(dry.packs,quiet),true);
+});
+
+test('BLC-2-014 may bounce one own character at energy 2 or less, then recover one such card',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-2-014');
+ assert.equal(printed.effect,'登場：可將 1 個己方場上需求能源 2 以下角色返回手牌；成功時可從己方場外將最多 1 張需求能源 2 以下的卡加入手牌。');
+ assert.equal(printed.triggerEffect,'【COLOR】將 1 個敵方前線 BP 3500 以下角色返回手牌。');
+ assert.equal(printed.traits,'無');
+ assert.equal(printed.energy,3);
+ assert.equal(printed.ap,1);
+ assert.equal(printed.gen,2);
+ assert.equal(printed.trigger,'color');
+ const recover={op:'recoverOutsideUnderEnergy',energy:2,optional:true};
+ const card=bleach.cards['BLC-2-014'];
+ assert.deepEqual(card.traits,[]);
+ assert.equal(card.gen,2);
+ assert.deepEqual(card.triggerEffect,{op:'bounceOppFrontUnderBp',bp:3500});
+ assert.deepEqual(card.effects.onPlay,[{op:'bounceOwnOtherUnderEnergy',optional:true,energy:2,then:[recover]}]);
+ const bare={id:'BAD',name:'BAD',color:'blue',type:'character',energy:0,ap:1,bp:1000,gen:1,traits:[],trigger:null,implementation:'dsl',effects:{}};
+ assert.throws(()=>createUniversalPack({id:'bad-energy-bounce',cards:[{...bare,effects:{onPlay:[{op:'bounceOwnOtherUnderEnergy',optional:true,energy:2}]}}]}),/optional energy bounce follow-up must recover one card at that energy/);
+ assert.throws(()=>createUniversalPack({id:'bad-energy-follow',cards:[{...bare,effects:{onPlay:[{op:'bounceOwnOtherUnderEnergy',optional:true,energy:2,then:[{op:'draw',count:1}]}]}}]}),/optional energy bounce follow-up must recover one card at that energy/);
+ const deck=realDeck(['BLC-2-014','BLC-2-016','BLC-2-021','BLC-2-022','BLC-2-015','BLC-2-026','BLC-2-032','BLC-2-033','BLC-2-047','BLC-2-044','BLC-2-018','BLC-2-025','BLC-2-031'],'blue');
+ function open(seed){
+  const opened=main(deck,seed);
+  put(opened.s,0,'BLC-2-016','energy',0);
+  put(opened.s,0,'BLC-2-021','energy',1);
+  put(opened.s,0,'BLC-2-022','energy',2);
+  return opened;
+ }
+ const first=open(29214);
+ const low=put(first.s,0,'BLC-2-015','front',0);
+ const high=put(first.s,0,'BLC-2-033','front',1);
+ const mid=put(first.s,0,'BLC-2-026','front',2);
+ const field=put(first.s,0,'BLC-2-044','energy',3);
+ const event=take(first.s,0,'BLC-2-047');
+ const outsideChar=take(first.s,0,'BLC-2-032');
+ const huge=take(first.s,0,'BLC-2-018');
+ first.s.players[0].outside.push(event,outsideChar,huge);
+ const self=take(first.s,0,'BLC-2-014');
+ first.s.players[0].hand.push(self);
+ const play=legalUniversalActions(first.packs,first.s).find(a=>a.type==='play'&&a.uid===self.uid&&a.line==='front');
+ assert.ok(play);
+ const played=dispatchUniversalAction(first.packs,first.s,play);
+ assert.equal(played.players[0].front.find(c=>c?.uid===self.uid).ready,false);
+ assert.equal(played.pending.kind,'effect-bounce-own');
+ assert.equal(played.pending.energy,2);
+ const bounceIds=played.pending.choices.map(uid=>{
+  const c=[...played.players[0].front,...played.players[0].energy].find(x=>x?.uid===uid);
+  return c.cardId;
+ });
+ assert.deepEqual(bounceIds,['BLC-2-015','BLC-2-026','BLC-2-016','BLC-2-021','BLC-2-022']);
+ assert.equal(played.pending.choices.includes(self.uid),false);
+ assert.equal(played.pending.choices.includes(high.uid),false);
+ assert.equal(played.pending.choices.includes(field.uid),false);
+ assert.equal(universalPrivateChoices(first.packs,played,1),null);
+ assert.equal(universalPrivateChoices(first.packs,played,0).options.some(o=>o.card?.cardId==='BLC-2-026'),true);
+ const skipped=dispatchUniversalAction(first.packs,played,{type:'chooseOwnBounce',uid:null});
+ assert.equal(skipped.pending,null);
+ assert.equal(skipped.players[0].front.some(c=>c?.uid===mid.uid),true);
+ assert.equal(skipped.players[0].outside.some(c=>c.uid===event.uid),true);
+ const bounced=dispatchUniversalAction(first.packs,played,{type:'chooseOwnBounce',uid:mid.uid});
+ assert.equal(bounced.pending.kind,'effect-recover-outside');
+ assert.equal(bounced.pending.printedEnergyMax,2);
+ assert.equal(bounced.players[0].hand.some(c=>c.uid===mid.uid),true);
+ assert.equal(bounced.players[0].front.some(c=>c?.uid===mid.uid),false);
+ assert.deepEqual(bounced.pending.choices.slice().sort(),[event.uid,outsideChar.uid].sort());
+ assert.equal(bounced.pending.choices.includes(huge.uid),false);
+ assert.equal(bounced.pending.choices.includes(mid.uid),false);
+ const recoveries=legalUniversalActions(first.packs,bounced);
+ const took=dispatchUniversalAction(first.packs,bounced,recoveries.find(a=>a.uid===event.uid));
+ assert.equal(took.pending,null);
+ assert.equal(took.players[0].hand.some(c=>c.uid===event.uid),true);
+ assert.equal(took.players[0].outside.some(c=>c.uid===outsideChar.uid),true);
+ const declined=dispatchUniversalAction(first.packs,bounced,recoveries.find(a=>a.uid===null));
+ assert.equal(declined.pending,null);
+ assert.equal(declined.players[0].outside.some(c=>c.uid===event.uid),true);
+ assert.equal(declined.players[0].hand.some(c=>c.uid===event.uid),false);
+ const bareField=main(deck,29215);
+ put(bareField.s,0,'BLC-2-044','energy',0);
+ put(bareField.s,0,'BLC-2-044','energy',1);
+ put(bareField.s,0,'BLC-2-044','energy',2);
+ const onlyHigh=put(bareField.s,0,'BLC-2-033','front',0);
+ const over=put(bareField.s,0,'BLC-2-018','front',1);
+ const lonely=take(bareField.s,0,'BLC-2-014');
+ bareField.s.players[0].hand.push(lonely);
+ const quiet=dispatchUniversalAction(bareField.packs,bareField.s,legalUniversalActions(bareField.packs,bareField.s).find(a=>a.type==='play'&&a.uid===lonely.uid&&a.line==='front'));
+ assert.equal(quiet.pending,null);
+ assert.equal(quiet.players[0].front.some(c=>c?.uid===onlyHigh.uid),true);
+ assert.equal(quiet.players[0].front.some(c=>c?.uid===over.uid),true);
+ assert.equal(quiet.players[0].front.find(c=>c?.uid===lonely.uid).ready,false);
+ const emptyOutside=open(29216);
+ const target=put(emptyOutside.s,0,'BLC-2-015','front',0);
+ const actor=take(emptyOutside.s,0,'BLC-2-014');
+ emptyOutside.s.players[0].hand.push(actor);
+ emptyOutside.s.players[0].removed.push(...emptyOutside.s.players[0].deck.splice(0),...emptyOutside.s.players[0].outside.splice(0));
+ const sent=dispatchUniversalAction(emptyOutside.packs,emptyOutside.s,legalUniversalActions(emptyOutside.packs,emptyOutside.s).find(a=>a.type==='play'&&a.uid===actor.uid&&a.line==='front'));
+ const returned=dispatchUniversalAction(emptyOutside.packs,sent,{type:'chooseOwnBounce',uid:target.uid});
+ assert.equal(returned.pending,null);
+ assert.equal(returned.players[0].hand.some(c=>c.uid===target.uid),true);
+ assert.equal(returned.players[0].outside.length,0);
+ const life=open(29217);
+ const victim=put(life.s,0,'BLC-2-033','front',0,true);
+ const tall=put(life.s,0,'BLC-2-018','front',1,true);
+ life.s.players[1].deck.push(...life.s.players[1].life.splice(0));
+ life.s.players[1].life.push(take(life.s,1,'BLC-2-014'));
+ let revealed=life.s;
+ for(let n=0;n<6&&revealed.phase!=='attack';n++)
+  revealed=dispatchUniversalAction(life.packs,revealed,{type:'next'});
+ revealed=dispatchUniversalAction(life.packs,revealed,{type:'attack',uid:victim.uid});
+ if(revealed.pending?.kind==='block')
+  revealed=dispatchUniversalAction(life.packs,revealed,{type:'chooseBlock',uid:null},{actor:1});
+ assert.equal(revealed.pending.trigger,'color');
+ const legal=legalUniversalActions(life.packs,revealed);
+ assert.equal(legal.some(a=>a.mode==='colorBounce'&&a.uid===victim.uid),true);
+ assert.equal(legal.some(a=>a.uid===tall.uid),false);
+ const woken=dispatchUniversalAction(life.packs,revealed,legal.find(a=>a.mode==='colorBounce'&&a.uid===victim.uid),{actor:1});
+ assert.equal(woken.players[0].hand.some(c=>c.uid===victim.uid),true);
+ assert.equal(woken.players[0].front.some(c=>c?.uid===tall.uid),true);
+ const filler=id=>({id,name:id,color:'blue',type:'character',energy:0,ap:1,bp:1000,gen:1,traits:[],trigger:null,implementation:'vanilla'});
+ const lab=createUniversalPack({id:'c29-energy-bounce',cards:[
+  {id:'SELF',name:'SELF',color:'blue',type:'character',energy:2,ap:1,bp:1000,gen:1,traits:[],trigger:null,implementation:'dsl',effects:{onPlay:[{op:'bounceOwnOtherUnderEnergy',optional:true,energy:2,then:[recover]}]}},
+  {id:'FIELD',name:'FIELD',color:'blue',type:'field',energy:2,ap:1,bp:0,gen:1,traits:[],trigger:null,implementation:'vanilla'},
+  {id:'BIG',name:'BIG',color:'blue',type:'event',energy:3,ap:1,bp:0,gen:0,traits:[],trigger:null,implementation:'vanilla'},
+  filler('A'),filler('B'),filler('C'),filler('D'),filler('E'),filler('F'),filler('G'),filler('H'),filler('I'),filler('J')
+ ]});
+ const counts={SELF:4,FIELD:4,BIG:4,A:4,B:4,C:4,D:4,E:4,F:4,G:4,H:4,I:4,J:2};
+ assert.deepEqual(validateUniversalDeck(lab,counts),[]);
+ const both=[lab,lab];
+ let labState=newUniversalMatch(both,{decks:[counts,counts],seed:29218,first:0});
+ for(let n=0;n<8&&labState.phase!=='main';n++)
+  labState=dispatchUniversalAction(both,labState,{type:'next'});
+ function lift(id){
+  for(const zone of ['hand','deck','life','outside','removed']){
+   const list=labState.players[0][zone],i=list.findIndex(c=>c.cardId===id);
+   if(i>=0)return list.splice(i,1)[0];
+  }
+  throw Error('lab '+id);
+ }
+ for(const [id,slot] of [['A',0],['B',1]]){
+  const pay=lift(id);pay.ready=true;pay.fieldEntryStamp=labState.nextFieldEntryStamp++;
+  labState.players[0].energy[slot]=pay;
+ }
+ const smallField=lift('FIELD'),bigEvent=lift('BIG');
+ labState.players[0].outside.push(smallField,bigEvent);
+ const ego=lift('SELF');
+ labState.players[0].hand.push(ego);
+ const labPlayed=dispatchUniversalAction(both,labState,legalUniversalActions(both,labState).find(a=>a.type==='play'&&a.uid===ego.uid&&a.line==='front'));
+ assert.equal(labPlayed.pending.choices.includes(ego.uid),true);
+ const labBounced=dispatchUniversalAction(both,labPlayed,{type:'chooseOwnBounce',uid:ego.uid});
+ assert.equal(labBounced.players[0].hand.some(c=>c.uid===ego.uid),true);
+ assert.equal(labBounced.pending.kind,'effect-recover-outside');
+ assert.equal(labBounced.pending.choices.includes(smallField.uid),true);
+ assert.equal(labBounced.pending.choices.includes(bigEvent.uid),false);
+ aiOk(first.packs,played);
+ aiOk(first.packs,bounced);
+ assert.equal(assertUniversalMatch(first.packs,played),true);
+ assert.equal(assertUniversalMatch(first.packs,skipped),true);
+ assert.equal(assertUniversalMatch(first.packs,bounced),true);
+ assert.equal(assertUniversalMatch(first.packs,took),true);
+ assert.equal(assertUniversalMatch(first.packs,declined),true);
+ assert.equal(assertUniversalMatch(bareField.packs,quiet),true);
+ assert.equal(assertUniversalMatch(emptyOutside.packs,returned),true);
+ assert.equal(assertUniversalMatch(life.packs,woken),true);
+ assert.equal(assertUniversalMatch(both,labPlayed),true);
+ assert.equal(assertUniversalMatch(both,labBounced),true);
 });

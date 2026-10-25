@@ -124,7 +124,8 @@ const testForKind=Object.freeze({
  revealOppTop:'tests/v2-c29-bleach-port.test.mjs',
  revealTraitOrNameOutside:'tests/v2-c29-bleach-port.test.mjs',
  chooseEnergyRevealOutside:'tests/v2-c29-bleach-port.test.mjs',
- optionalMillPurple:'tests/v2-c29-bleach-port.test.mjs'
+ optionalMillPurple:'tests/v2-c29-bleach-port.test.mjs',
+ optionalEnergyBounce:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
