@@ -40,6 +40,7 @@ export function rezeroEngineKind(effectJa){
  if(e==='【登場時】カードを1枚引く。このターン中に自分がイベントカードを使用している場合、自分のAPカードを1枚まで選び、アクティブにする。')return 'drawThenEventAp';
  if(e===SEARCH_SEVEN)return 'searchName7';
  if(e==='【起動メイン】【フロントLにある場合】 【ターン1】自分の場に〈ラム〉と〈レム〉がある場合のみ発動できる。カードを1枚引き、自分の手札を1枚場外に置く。')return 'namesDrawDiscard';
+ if(e==='【起動メイン】【レストにする】 【ターン1】自分の山札の上から1枚見る。そのカードを山札の上か下に置く。')return 'fieldPeek';
  return null;
 }
 const TOP_OUTSIDE=new Map([
@@ -136,6 +137,8 @@ export function rezeroPackCard(card){
   ...(kind==='namesDrawDiscard'?{mainAbility:{
    op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,requireAllNames:['ラム','レム'],
    then:[{op:'drawDiscard',count:1}]}}:{}),
+  ...(kind==='fieldPeek'?{mainAbility:{
+   op:'restSelfThen',frontOnly:false,oncePerTurn:true,then:[{op:'peekTopOrBottom'}]}}:{}),
   ...(kind==='feltTurnBp'?{passiveBonuses:[{
    condition:{kind:'ownNameExists',turn:'own',zone:'field',excludeSelf:false,name:'フェルト'},
    bp:1000}]}:{}),

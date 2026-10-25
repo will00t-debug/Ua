@@ -66,9 +66,9 @@ test('UA40BT and UA40ST share one catalogue and keep parallel art out',()=>{
  }
 });
 
-test('sixty whole prints enter the V2 pack and the other fifty-three stay out',()=>{
- assert.equal(REZERO_ENGINE_IDS.length,60);
- assert.equal(Object.keys(pack.cards).length,60);
+test('sixty-one whole prints enter the V2 pack and the other fifty-two stay out',()=>{
+ assert.equal(REZERO_ENGINE_IDS.length,61);
+ assert.equal(Object.keys(pack.cards).length,61);
  assert.equal(pack.cards['REZ-1-001'],undefined);
  assert.equal(pack.cards['REZ-1-008'].step,true);
  assert.equal(pack.cards['REZ-1-008'].implementation,'vanilla');
@@ -132,6 +132,9 @@ test('sixty whole prints enter the V2 pack and the other fifty-three stay out',(
  assert.deepEqual(pack.cards['REZ-1-021'].mainAbility,{
   op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,requireAllNames:['ラム','レム'],
   then:[{op:'drawDiscard',count:1}]});
+ assert.equal(pack.cards['REZ-1-108'].type,'field');
+ assert.deepEqual(pack.cards['REZ-1-108'].mainAbility,{
+  op:'restSelfThen',frontOnly:false,oncePerTurn:true,then:[{op:'peekTopOrBottom'}]});
  assert.equal(pack.cards['REZ-1-042'],undefined);
  assert.equal(pack.cards['REZ-1-101'],undefined);
  assert.deepEqual(validateUniversalDeck(pack,counts),[]);
@@ -875,4 +878,71 @@ test('Roswaal draws and discards only while Ram and Rem are both on the field',(
  foe=reach(foe,'main');
  [foe,roswaal]=playFront(foe,'REZ-1-021');
  assert.equal(frontOnce(foe,roswaal.uid),false);
+});
+
+const manorCounts={
+ ...Object.fromEntries(['REZ-1-007','REZ-1-008','REZ-1-012','REZ-1-014','REZ-1-022',
+  'REZ-1-036','REZ-1-043','REZ-1-068','REZ-1-072','REZ-1-086','REZ-1-108'].map(id=>[id,4])),
+ 'REZ-1-010':4,'REZ-1-075':2
+};
+const manor=seed=>newUniversalMatch(packs,{decks:[manorCounts,manorCounts],first:0,seed});
+function playEnergy(s,id){
+ const card=pull(s,0,id);
+ s.players[0].hand.push(card);
+ const action=legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===card.uid&&a.line==='energy');
+ assert.ok(action,id+' energy');
+ return [dispatchUniversalAction(packs,s,action),card];
+}
+test('Roswaal mansion rests once and places the top card on top or bottom',()=>{
+ assert.equal(Object.values(manorCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(pack,manorCounts),[]);
+ let s=manor(4601);
+ fuel(s,['REZ-1-007','REZ-1-008','REZ-1-022']);
+ s=reach(s,'main');
+ let house;
+ [s,house]=playEnergy(s,'REZ-1-108');
+ assert.equal(s.players[0].energy.some(c=>c?.uid===house.uid),true);
+ assert.equal(s.players[0].front.some(c=>c?.uid===house.uid),false);
+ assert.equal(at(s,0,house.uid).ready,false);
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='activate'&&a.uid===house.uid),false);
+ s=ownMain(s,2);
+ assert.equal(at(s,0,house.uid).ready,true);
+ const seen=s.players[0].deck[0].uid;
+ const next=s.players[0].deck[1].uid;
+ const act=legalUniversalActions(packs,s).find(a=>a.type==='activate'&&a.uid===house.uid&&a.mode==='selfRestThen');
+ assert.ok(act);
+ s=dispatchUniversalAction(packs,s,act);
+ assert.equal(at(s,0,house.uid).ready,false);
+ assert.equal(s.pending.kind,'private-top-place');
+ s=dispatchUniversalAction(packs,s,{type:'chooseTopCard',mode:'top'});
+ assert.equal(s.pending,null);
+ assert.equal(s.players[0].deck[0].uid,seen);
+ assert.equal(s.players[0].deck[1].uid,next);
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='activate'&&a.uid===house.uid),false);
+ at(s,0,house.uid).ready=true;
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='activate'&&a.uid===house.uid),false);
+
+ let bottom=manor(4602);
+ fuel(bottom,['REZ-1-007','REZ-1-008','REZ-1-022']);
+ bottom=reach(bottom,'main');
+ [bottom,house]=playEnergy(bottom,'REZ-1-108');
+ bottom=ownMain(bottom,2);
+ const first=bottom.players[0].deck[0].uid;
+ bottom=dispatchUniversalAction(packs,bottom,{type:'activate',uid:house.uid,mode:'selfRestThen'});
+ assert.equal(bottom.pending.kind,'private-top-place');
+ const before=bottom.players[0].deck.map(c=>c.uid);
+ bottom=dispatchUniversalAction(packs,bottom,{type:'chooseTopCard',mode:'bottom'});
+ assert.equal(bottom.pending,null);
+ assert.equal(bottom.players[0].deck.at(-1).uid,first);
+ assert.deepEqual(bottom.players[0].deck.map(c=>c.uid),[...before.slice(1),before[0]]);
+
+ let empty=manor(4603);
+ fuel(empty,['REZ-1-007','REZ-1-008','REZ-1-022']);
+ empty=reach(empty,'main');
+ [empty,house]=playEnergy(empty,'REZ-1-108');
+ empty=ownMain(empty,2);
+ empty.players[0].outside.push(...empty.players[0].deck.splice(0));
+ empty=dispatchUniversalAction(packs,empty,{type:'activate',uid:house.uid,mode:'selfRestThen'});
+ assert.equal(empty.pending,null);
+ assert.equal(at(empty,0,house.uid).ready,false);
 });
