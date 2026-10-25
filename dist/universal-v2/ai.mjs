@@ -109,6 +109,7 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
    legal.find(a=>a.mode==='activate')||legal[0];
  if(s.pending?.kind==='effect-buff-own')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-buff-either')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-return-printed')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-reveal-bottom'){
   const catalog=packsOf(pack)[s.pending.player].cards;
   const hand=s.players[s.pending.player].hand;

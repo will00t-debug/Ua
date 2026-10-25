@@ -44,6 +44,7 @@ export function rezeroEngineKind(effectJa){
  if(e==='【起動メイン】【フロントLにある場合】 【ターン1】自分の場に〈ラム〉と〈レム〉がある場合のみ発動できる。カードを1枚引き、自分の手札を1枚場外に置く。')return 'namesDrawDiscard';
  if(e==='【起動メイン】【レストにする】 【ターン1】自分の山札の上から1枚見る。そのカードを山札の上か下に置く。')return 'fieldPeek';
  if(e==='【起動メイン】【ターン1】自分の手札を1枚公開し、自分の山札の下に置く。公開したカードがBP4000以上のキャラカードの場合、このキャラはこのターン中、BP+2500。')return 'revealBottom2500';
+ if(e==='【登場時】自分の場の必要エナジーが0の青の〈ナツキ・スバル〉を1枚手札に戻してもよい。そうした場合、このキャラをアクティブにし、このターン中、BP+1000。')return 'returnPrintedActive';
  return null;
 }
 const TOP_OUTSIDE=new Map([
@@ -80,6 +81,8 @@ function onPlay(card,kind){
  if(kind==='recoverAp2')return [{op:'recoverAp',count:2}];
  if(kind==='buffOther')return [{op:'buffOwnField',filter:{field:'type',value:'character'},bp:1000,optional:true,excludeSelf:true}];
  if(kind==='buffEither')return [{op:'buffEitherOther',bp:1000,optional:true}];
+ if(kind==='returnPrintedActive')return [{op:'returnPrintedActiveBuff',
+  name:'ナツキ・スバル',color:'blue',energy:0,bp:1000}];
  if(kind==='frontDown2500')return [{op:'enemyBpDown',bp:2000,optional:true,minBp:2500,zone:'front'}];
  if(kind==='topOutside')return [{op:'inspectTopArrange',count:TOP_OUTSIDE.get(card.effectJa),toOutside:true,rest:'top'}];
  if(kind==='topKeep'||kind==='aliasTopKeep')return [{op:'inspectTopAnyOutside',count:2,rest:'top'}];

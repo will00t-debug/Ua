@@ -66,9 +66,9 @@ test('UA40BT and UA40ST share one catalogue and keep parallel art out',()=>{
  }
 });
 
-test('sixty-four whole prints enter the V2 pack and the other forty-nine stay out',()=>{
- assert.equal(REZERO_ENGINE_IDS.length,64);
- assert.equal(Object.keys(pack.cards).length,64);
+test('sixty-five whole prints enter the V2 pack and the other forty-eight stay out',()=>{
+ assert.equal(REZERO_ENGINE_IDS.length,65);
+ assert.equal(Object.keys(pack.cards).length,65);
  assert.equal(pack.cards['REZ-1-001'],undefined);
  assert.equal(pack.cards['REZ-1-008'].step,true);
  assert.equal(pack.cards['REZ-1-008'].implementation,'vanilla');
@@ -147,6 +147,10 @@ test('sixty-four whole prints enter the V2 pack and the other forty-nine stay ou
   op:'revealHandBottomBuff',oncePerTurn:true,minPrintedBp:4000,bp:2500});
  assert.equal(pack.cards['REZ-1-045'].trigger,'active');
  assert.equal(pack.cards['REZ-1-045'].triggerEffect,null);
+ assert.deepEqual(pack.cards['REZ-1-046'].effects.onPlay,[{
+  op:'returnPrintedActiveBuff',name:'ナツキ・スバル',color:'blue',energy:0,bp:1000}]);
+ assert.equal(pack.cards['REZ-1-046'].trigger,null);
+ assert.equal(pack.cards['REZ-1-052'],undefined);
  assert.equal(pack.cards['REZ-1-101'],undefined);
  assert.deepEqual(validateUniversalDeck(pack,counts),[]);
  const s=fresh();
@@ -1178,4 +1182,145 @@ test('Mimi reveals one hand card to the bottom and buffs only a 4000 character',
  [empty,actor]=playFront(empty,'REZ-1-045');
  empty.players[0].outside.push(...empty.players[0].hand.splice(0));
  assert.equal(revealAct(empty,actor.uid),undefined);
+});
+
+const juliusCounts={
+ ...Object.fromEntries(['REZ-1-046','REZ-1-037','REZ-1-038','REZ-1-039','REZ-1-068',
+  'REZ-1-042','REZ-1-043','REZ-1-007','REZ-1-008','REZ-1-012','REZ-1-014'].map(id=>[id,4])),
+ 'REZ-1-022':2,'REZ-1-108':2,'REZ-1-036':2
+};
+const julius=seed=>newUniversalMatch(packs,{decks:[juliusCounts,juliusCounts],first:0,seed});
+test('Julius may return one blue zero-cost Subaru, then readies and gains 1000 BP',()=>{
+ assert.equal(Object.values(juliusCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(pack,juliusCounts),[]);
+ const shell={id:'RETURN',name:'Gate',color:'blue',type:'character',energy:0,ap:1,bp:1000,gen:1,
+  traits:[],trigger:null,implementation:'dsl',effects:{}};
+ assert.throws(()=>createUniversalPack({id:'bad-return',cards:[{...shell,effects:{onPlay:[
+  {op:'returnPrintedActiveBuff',name:'ナツキ・スバル',color:'blue',energy:0}]}}]}),
+  /invalid printed return/);
+ assert.throws(()=>createUniversalPack({id:'bad-return',cards:[{...shell,type:'event',bp:0,effects:{onPlay:[
+  {op:'returnPrintedActiveBuff',name:'ナツキ・スバル',color:'blue',energy:0,bp:1000}]}}]}),
+  /character onPlay/);
+
+ let none=julius(4901);
+ fuel(none,['REZ-1-043','REZ-1-043','REZ-1-043']);
+ none=reach(none,'main');
+ let actor;
+ [none,actor]=playFront(none,'REZ-1-046');
+ assert.equal(none.pending,null);
+ assert.equal(at(none,0,actor.uid).ready,false);
+ assert.equal(universalBp(packs,none,at(none,0,actor.uid)),3000);
+ assert.equal(none.turnRetireEvents.length,0);
+
+ let mixed=julius(4902);
+ fuel(mixed,['REZ-1-043','REZ-1-043','REZ-1-043']);
+ const frontSubaru=pull(mixed,0,'REZ-1-037');
+ const energySubaru=pull(mixed,0,'REZ-1-038');
+ const purple=pull(mixed,0,'REZ-1-068');
+ const felix=pull(mixed,0,'REZ-1-042');
+ const buried=pull(mixed,0,'REZ-1-039');
+ const handed=pull(mixed,0,'REZ-1-037');
+ const foe=pull(mixed,1,'REZ-1-037');
+ const house=pull(mixed,0,'REZ-1-108');
+ felix.stack=[buried];
+ mixed.players[0].front[0]=frontSubaru;
+ mixed.players[0].front[1]=purple;
+ mixed.players[0].front[2]=felix;
+ mixed.players[0].energy[3]=energySubaru;
+ mixed.players[0].hand.push(handed,house);
+ mixed.players[1].front[0]=foe;
+ mixed=reach(mixed,'main');
+ [mixed,actor]=playFront(mixed,'REZ-1-046');
+ const deckBefore=mixed.players[0].deck.length;
+ assert.equal(mixed.pending.kind,'effect-return-printed');
+ assert.equal(mixed.pending.optional,true);
+ assert.equal(mixed.pending.energy,0);
+ assert.equal(mixed.pending.color,'blue');
+ assert.deepEqual(mixed.pending.choices.slice().sort(),[frontSubaru.uid,energySubaru.uid].sort());
+ for(const uid of [purple.uid,felix.uid,buried.uid,handed.uid,foe.uid,house.uid,actor.uid])
+  assert.equal(mixed.pending.choices.includes(uid),false,uid);
+ assert.throws(()=>dispatchUniversalAction(packs,mixed,{type:'chooseReturnPrinted',uid:felix.uid}),
+  /not currently legal/);
+ at(mixed,0,actor.uid).ready=false;
+ const retireBefore=mixed.turnRetireEvents.length;
+ mixed=dispatchUniversalAction(packs,mixed,{type:'chooseReturnPrinted',uid:energySubaru.uid});
+ assert.equal(mixed.pending,null);
+ assert.equal(mixed.players[0].hand.some(c=>c.uid===energySubaru.uid),true);
+ assert.equal(mixed.players[0].energy.some(c=>c?.uid===energySubaru.uid),false);
+ assert.equal(mixed.players[0].outside.some(c=>c.uid===energySubaru.uid),false);
+ assert.equal(mixed.players[0].front.some(c=>c?.uid===frontSubaru.uid),true);
+ assert.equal(mixed.players[0].deck.length,deckBefore);
+ assert.equal(mixed.turnRetireEvents.length,retireBefore);
+ assert.ok(mixed.zoneMoveEvents.some(e=>e.uid===energySubaru.uid&&e.from==='energy'&&
+  e.to==='hand'&&e.reason==='own-effect'));
+ assert.equal(at(mixed,0,actor.uid).ready,true);
+ assert.equal(universalBp(packs,mixed,at(mixed,0,actor.uid)),4000);
+ mixed=ownMain(mixed,2);
+ assert.equal(universalBp(packs,mixed,at(mixed,0,actor.uid)),3000);
+
+ let skipped=julius(4903);
+ fuel(skipped,['REZ-1-043','REZ-1-043','REZ-1-043']);
+ const kept=pull(skipped,0,'REZ-1-037');
+ skipped.players[0].front[0]=kept;
+ skipped=reach(skipped,'main');
+ [skipped,actor]=playFront(skipped,'REZ-1-046');
+ at(skipped,0,actor.uid).ready=false;
+ skipped=dispatchUniversalAction(packs,skipped,{type:'chooseReturnPrinted',uid:null});
+ assert.equal(skipped.pending,null);
+ assert.equal(skipped.players[0].front.some(c=>c?.uid===kept.uid),true);
+ assert.equal(at(skipped,0,actor.uid).ready,false);
+ assert.equal(universalBp(packs,skipped,at(skipped,0,actor.uid)),3000);
+
+ const labs=['LAB-A','LAB-B','LAB-C','LAB-D','LAB-E','LAB-F','LAB-G','LAB-H','LAB-I'];
+ const lab=(id,color)=>({id,name:id,color,type:'character',energy:0,ap:1,bp:1000,gen:1,
+  traits:[],trigger:null,implementation:'vanilla',effects:{}});
+ const fixture=createUniversalPack({id:'rezero-return-lab',cards:[
+  rezeroPackCard(REZERO_BY_ID['REZ-1-046']),
+  rezeroPackCard(REZERO_BY_ID['REZ-1-043']),
+  {id:'LAB-HEAVY',name:'ナツキ・スバル',color:'blue',type:'character',energy:1,ap:1,bp:1000,gen:0,
+   traits:[],trigger:null,implementation:'vanilla',effects:{}},
+  {id:'LAB-ALIAS',name:'別スバル',color:'blue',type:'character',energy:0,ap:1,bp:1000,gen:0,
+   traits:[],trigger:null,implementation:'dsl',effects:{},nameAliases:['ナツキ・スバル']},
+  ...labs.map(id=>lab(id,'blue'))
+ ]});
+ const fixtureCounts={'REZ-1-046':4,'REZ-1-043':4,'LAB-HEAVY':4,'LAB-ALIAS':2,
+  ...Object.fromEntries(labs.map(id=>[id,4]))};
+ assert.equal(Object.values(fixtureCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(fixture,fixtureCounts),[]);
+ const fp=[fixture,fixture];
+ function open(seed){
+  let s=newUniversalMatch(fp,{decks:[fixtureCounts,fixtureCounts],first:0,seed});
+  ['REZ-1-043','REZ-1-043','REZ-1-043'].forEach((id,i)=>{
+   const card=pull(s,0,id);card.ready=true;s.players[0].energy[i]=card;
+  });
+  s=dispatchUniversalAction(fp,s,{type:'next'});
+  s=dispatchUniversalAction(fp,s,{type:'next'});
+  assert.equal(s.phase,'main');
+  return s;
+ }
+ let heavy=open(4904);
+ const costOne=pull(heavy,0,'LAB-HEAVY');
+ heavy.players[0].front[0]=costOne;
+ const printed=pull(heavy,0,'REZ-1-046');
+ heavy.players[0].hand.push(printed);
+ const play=legalUniversalActions(fp,heavy).find(a=>a.type==='play'&&a.uid===printed.uid&&a.line==='front');
+ assert.ok(play);
+ heavy=dispatchUniversalAction(fp,heavy,play);
+ assert.equal(heavy.pending,null);
+ assert.equal(universalBp(fp,heavy,at(heavy,0,printed.uid)),3000);
+
+ let alias=open(4905);
+ const named=pull(alias,0,'LAB-ALIAS');
+ alias.players[0].energy[3]=named;
+ const juliusCard=pull(alias,0,'REZ-1-046');
+ alias.players[0].hand.push(juliusCard);
+ const aliasPlay=legalUniversalActions(fp,alias).find(a=>a.type==='play'&&a.uid===juliusCard.uid&&a.line==='front');
+ alias=dispatchUniversalAction(fp,alias,aliasPlay);
+ assert.ok(alias.pending.choices.includes(named.uid));
+ alias.players[0].front.find(c=>c?.uid===juliusCard.uid).ready=false;
+ alias=dispatchUniversalAction(fp,alias,{type:'chooseReturnPrinted',uid:named.uid});
+ assert.equal(alias.players[0].hand.some(c=>c.uid===named.uid),true);
+ assert.equal(alias.players[0].energy.some(c=>c?.uid===named.uid),false);
+ assert.equal(at(alias,0,juliusCard.uid).ready,true);
+ assert.equal(universalBp(fp,alias,at(alias,0,juliusCard.uid)),4000);
 });
