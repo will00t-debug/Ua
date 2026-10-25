@@ -18,7 +18,7 @@ const own=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
 function assertLiveCondition(q,label){
  if(!q||typeof q!=='object'||Array.isArray(q)||
   !['own','opponent','any'].includes(q.turn)||
-  !['outsideCount','ownNameExists','ownNameAbsent','ownFieldHasAllNames','ownTraitCount','ownCardTraitCount','ownEnergyAtLeast','ownHandCountAtLeast','ownLifeAtMost','ownEffectHandOutsideOrRecovery','ownEventUsedThisTurn','ownRetiredThisTurn','retireCountThisTurn','ownOutsideNamedCountAtLeast','ownRestPrintedBpAtMost','oppCharacterBpAtLeast','oppCharacterCurrentBpCount','oppRestCharacter','oppRestCharacterCount','ownPrintedApAtLeast','ownHandToOutsideThisTurn','ownHandFewerThanOpponent','ownEffectApPaidColor'].includes(q.kind))
+  !['outsideCount','ownNameExists','ownNameAbsent','ownFieldHasAllNames','ownTraitCount','ownCardTraitCount','ownEnergyAtLeast','ownHandCountAtLeast','ownLifeAtMost','ownEffectHandOutsideOrRecovery','ownEventUsedThisTurn','ownRetiredThisTurn','retireCountThisTurn','ownOutsideNamedCountAtLeast','ownRestPrintedBpAtMost','oppCharacterBpAtLeast','oppCharacterCurrentBpCount','oppRestCharacter','oppRestCharacterCount','ownPrintedApAtLeast','ownHandToOutsideThisTurn','ownHandFewerThanOpponent','ownEffectApPaidColor','ownFrontNoOtherCharacter'].includes(q.kind))
   throw Error(label+' invalid passive condition');
  if(q.kind==='ownEventUsedThisTurn'&&q.turn!=='own')
   throw Error(label+' event-use predicate requires own turn');
@@ -99,7 +99,7 @@ function verifyProgram(program,path){
    throw Error(path+'['+i+'] invalid this-turn source-stamped attack-end swap');
   if(e.op==='draw'){
    if(!integer(e.count,1)||e.count>10)throw Error(path+'['+i+'] invalid count');
-   if((e.entry!==undefined&&e.entry!=='ownEffect')||
+   if((e.entry!==undefined&&e.entry!=='ownEffect'&&e.entry!=='ownCharacter')||
     Object.keys(e).some(k=>!['op','count','entry'].includes(k)))
     throw Error(path+'['+i+'] invalid own-effect draw gate');
   }
@@ -295,7 +295,7 @@ function verifyProgram(program,path){
    const single=isFilter(e.filter)&&e.filters===undefined&&e.logic===undefined&&
     Object.keys(e).every(k=>['op','count','filter'].includes(k));
    const compound=e.filter===undefined&&Array.isArray(e.filters)&&
-    e.filters.length>=2&&e.filters.length<=3&&e.filters.every(isFilter)&&
+    e.filters.length>=2&&e.filters.length<=4&&e.filters.every(isFilter)&&
     new Set(e.filters.map(f=>f.field+':'+f.value)).size===e.filters.length&&
     ['any','all'].includes(e.logic)&&
     Object.keys(e).every(k=>['op','count','filters','logic'].includes(k));
@@ -534,7 +534,8 @@ function verifyProgram(program,path){
     (f.field==='type'&&!V2_CARD_TYPES.includes(f.value))||
     !integer(e.bp,1)||e.bp>5000||
     typeof e.optional!=='boolean'||typeof e.excludeSelf!=='boolean'||
-    Object.keys(e).some(k=>!['op','filter','bp','optional','excludeSelf'].includes(k)))
+    (e.color!==undefined&&!['blue','yellow','green','purple','red'].includes(e.color))||
+    Object.keys(e).some(k=>!['op','filter','bp','optional','excludeSelf','color'].includes(k)))
     throw Error(path+'['+i+'] invalid own-field BP choice');
   }
   if(e.op==='buffOwnTrait'&&(
@@ -636,7 +637,8 @@ function verifyProgram(program,path){
   if(e.op==='restOppFrontOne'&&(
    typeof e.optional!=='boolean'||
    (e.skipNextActive!==undefined&&e.skipNextActive!==true)||
-   Object.keys(e).some(k=>!['op','optional','skipNextActive'].includes(k))
+   (e.entry!==undefined&&e.entry!=='ownCharacter')||
+   Object.keys(e).some(k=>!['op','optional','skipNextActive','entry'].includes(k))
   ))throw Error(path+'['+i+'] invalid uncapped opponent REST target');
   if(e.op==='restOppFrontUnderBp'&&(
    !integer(e.bp,1)||e.bp>50000||typeof e.optional!=='boolean'||
@@ -1006,7 +1008,7 @@ function normalize(card,packId){
   (mainAbility.requiresOwnName===null||typeof mainAbility.requiresOwnName==='string'&&
    !!mainAbility.requiresOwnName.trim()&&mainAbility.requiresOwnName.length<=80)&&
   Array.isArray(mainAbility.then)&&mainAbility.then.length>=1&&mainAbility.then.length<=2&&
-  mainAbility.then.every(x=>['grantSelfAttackDamageThisTurn','chooseOne','discardGate'].includes(x?.op))&&
+  mainAbility.then.every(x=>['grantSelfAttackDamageThisTurn','chooseOne','discardGate','grantSelfImpactThisTurn'].includes(x?.op))&&
   Object.keys(mainAbility).length===7&&
   Object.keys(mainAbility).every(k=>['op','oncePerTurn','frontOnly','raidOnly','payAp','requiresOwnName','then'].includes(k));
  if(mainOncePay)verifyProgram(mainAbility.then,card.id+'.mainAbility.then');

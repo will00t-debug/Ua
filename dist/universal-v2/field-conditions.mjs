@@ -139,6 +139,12 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   }
   return false;
  }
+ if(condition.kind==='ownFrontNoOtherCharacter'){
+  // 他のキャラ is another character on this player's front line. Energy-line
+  // cards and fields are a different zone. This card does not count itself.
+  return !s.players[owner].front.some(c=>c&&c.uid!==sourceUid&&
+   printed(c).type==='character');
+ }
  if(condition.kind==='ownHandToOutsideThisTurn'){
   // 自分の手札を場外に置いている: the owner placed that hand card.
   // An event play is a rule move. A payment or own effect also counts.

@@ -89,7 +89,17 @@ const testForKind=Object.freeze({
  renjiPayDeploy:'tests/v2-c25-purple-shared.test.mjs',
  topSplitEnergyDraw:'tests/v2-c25-purple-shared.test.mjs',
  emptyRaidPeek:'tests/v2-c25-purple-shared.test.mjs',
- renjiEventRetire:'tests/v2-c25-purple-shared.test.mjs'
+ renjiEventRetire:'tests/v2-c25-purple-shared.test.mjs',
+ ownTurnImmune:'tests/v2-c26-bleach-batch.test.mjs',
+ chooseBuffOrDown:'tests/v2-c26-bleach-batch.test.mjs',
+ namedColorBuff:'tests/v2-c26-bleach-batch.test.mjs',
+ restFrontEnergy:'tests/v2-c26-bleach-batch.test.mjs',
+ frontEmptyAlias:'tests/v2-c26-bleach-batch.test.mjs',
+ traitTopDiscard:'tests/v2-c26-bleach-batch.test.mjs',
+ aliasNameTop:'tests/v2-c26-bleach-batch.test.mjs',
+ fourNameTop:'tests/v2-c26-bleach-batch.test.mjs',
+ ownEffectRest:'tests/v2-c26-bleach-batch.test.mjs',
+ ownEffectDrawPayImpact:'tests/v2-c26-bleach-batch.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.

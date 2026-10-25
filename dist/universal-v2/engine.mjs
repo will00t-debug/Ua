@@ -54,6 +54,22 @@ const same=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 // (REST or a legal Raid). They are not the older deployOwnHandRest cause,
 // which remains the literal string 'ownEffect' and stays outside this set.
 const OWN_EFFECT_ENTRY=new Set(['outsideEffect','outsideEffectRaid','recoveredEffect','handEffect','handEffectRaid']);
+// 「自分のキャラの効果で登場」 is narrower than 自分の効果. The latest completed
+// move of this physical card onto a field line must be an own effect, and the
+// source snapshotted on that move must be one of this player's characters.
+// A missing source, a field, an event, a paid play, or a life trigger fails closed.
+function enteredByOwnCharacter(pack,s,owner,uid){
+ const events=(s.zoneMoveEvents||[]).filter(e=>e.uid===uid&&e.owner===owner&&
+  e.controller===owner&&e.reason==='own-effect'&&(e.to==='front'||e.to==='energy'));
+ const latest=events.length?events[events.length-1]:null;
+ if(!latest||typeof latest.sourceUid!=='string'||typeof latest.sourceCardId!=='string')return false;
+ if(Number(String(latest.sourceUid).split('-')[0])!==owner)return false;
+ return playerPacks(pack)[owner].cards[latest.sourceCardId]?.type==='character';
+}
+function matchesBuffTarget(pack,s,physical,spec){
+ if(spec.color&&card(pack,physical).color!==spec.color)return false;
+ return matchesFilter(pack,s,physical,spec.filter);
+}
 function matchesHandRestOrRaid(pack,s,physical,spec){
  const d=card(pack,physical);
  if(!(d.type===spec.type&&d.color===spec.color&&d.ap===spec.ap&&
@@ -573,7 +589,7 @@ function continueEffectQueue(pack,s){
     }
     if(child.op==='buffOwnField'&&!child.optional)
      return field(pl).some(c=>card(pack,c).type==='character'&&
-      (!child.excludeSelf||c.uid!==job.sourceUid)&&matchesFilter(pack,s,c,child.filter));
+      (!child.excludeSelf||c.uid!==job.sourceUid)&&matchesBuffTarget(pack,s,c,child));
     if(child.op==='recoverOutsideOne'&&!child.optional)
      return pl.outside.some(c=>matchesFilter(pack,s,c,child.filter));
     if(child.op==='recoverOutsideTraitlessUnderEnergy'&&!child.optional)
@@ -590,9 +606,13 @@ function continueEffectQueue(pack,s){
    // A printed 「自分の効果で登場」gate uses the entry cause already stamped
    // on this on-play job. Paid play, paid Raid, and life triggers do not draw.
    // An absent gate keeps every existing draw unchanged.
+   if(job.entry!==undefined&&job.entry!=='ownEffect'&&job.entry!=='ownCharacter')
+    throw Error('Invalid draw entry gate');
+   const characterEntry=job.entry==='ownCharacter'&&
+    enteredByOwnCharacter(pack,s,owner,job.sourceUid);
    const gated=job.entry==='ownEffect';
-   if(job.entry!==undefined&&!gated)throw Error('Invalid draw entry gate');
-   if(!gated||OWN_EFFECT_ENTRY.has(job.entryCause))draw(pack,s,owner,job.count,{reason:'own-effect',sourceUid:job.sourceUid});
+   if(characterEntry||!job.entry||gated&&OWN_EFFECT_ENTRY.has(job.entryCause))
+    draw(pack,s,owner,job.count,{reason:'own-effect',sourceUid:job.sourceUid});
   }
   else if(job.op==='drawIfOwnEnergyAtLeast'){
    // Printed generated-energy threshold is checked at resolution, after the
@@ -1138,6 +1158,8 @@ function continueEffectQueue(pack,s){
     s.pending={kind:'effect-rest-lock',player:owner,sourceUid:job.sourceUid,
      choices,optional:true,upgrade:{...job.upgrade}};
   }else if(job.op==='restOppFrontOne'){
+   if(job.entry==='ownCharacter'&&!enteredByOwnCharacter(pack,s,owner,job.sourceUid))continue;
+   if(job.entry!==undefined&&job.entry!=='ownCharacter')throw Error('Invalid REST entry gate');
    const choices=s.players[1-owner].front.filter(c=>c&&
      cardEffectTargetPayable(pack,s,owner,c.uid,0,job.sourceUid)).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-rest-bp',player:owner,
@@ -1152,9 +1174,10 @@ function continueEffectQueue(pack,s){
   }else if(job.op==='buffOwnField'){
    const choices=field(pl).filter(c=>card(pack,c).type==='character'&&
     (!job.excludeSelf||c.uid!==job.sourceUid)&&
-    matchesFilter(pack,s,c,job.filter)).map(c=>c.uid);
+    matchesBuffTarget(pack,s,c,job)).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-buff-own',player:owner,
     sourceUid:job.sourceUid,choices,filter:job.filter,
+    ...(job.color?{color:job.color}:{}),
     bp:job.bp,optional:job.optional,excludeSelf:job.excludeSelf};
   }else if(job.op==='buffOwnTrait'){
    const choices=field(pl).filter(c=>cardHasTrait(card(pack,c),job.trait)).map(c=>c.uid);
@@ -2754,6 +2777,7 @@ function resolveChoice(s,a,pack){
   const target=field(p).find(c=>c.uid===a.uid);
   if(!target||!q.choices.includes(a.uid)||
    (target.uid===q.sourceUid&&q.excludeSelf)||
+   (q.color&&card(pack,target).color!==q.color)||
    card(pack,target).type!=='character'||!matchesFilter(pack,s,target,q.filter))
    throw Error('Illegal own field BP target');
   target.buffs??=[];target.buffs.push({bp:q.bp,untilTurn:s.turn});
