@@ -48,6 +48,9 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-retire-at-least':'選擇 BP 4500 以上的對手前線並使其退場',
  'effect-retire-at-most':'選擇 BP 5000 以下的對手前線並使其退場',
  'effect-hand-bp-may':'這次參照手牌角色 BP 時，是否視為 +1000',
+ 'effect-hand-deploy-may':'這次參照手牌角色 BP 時，是否視為 +1000 並休息登場',
+ 'effect-hand-rest-entry':'選擇休息登場的位置',
+ 'effect-active-other':'選擇最多 1 張其他己方角色並使其活動',
  'effect-grant-front-energy':'讓另一張己方前線指定特徵角色本回合也能產生能源',
  'effect-rest-bp':'選擇敵方 REST','effect-grant-ap-tax':'讓另一張己方 DFN 角色獲得指定時的 AP 加價保護','effect-attack-ban':'指定禁止攻擊的對手前線角色',
  'effect-buff-trait':'選擇己方 BP 加成',
@@ -223,6 +226,10 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseRetireAtMost':return '使 '+name()+' 退場';
   case 'chooseRetireAtLeast':return action.uid===null?'不使角色退場':'使 '+name()+' 退場';
   case 'chooseHandBpMay':return action.mode==='accept'?'視為 BP+1000':'維持原本 BP';
+  case 'handActivate':return '支付 1 AP，公開這張手牌';
+  case 'chooseHandDeployMay':return action.mode==='accept'?'視為 BP+1000 並休息登場':'維持原本 BP，留在手牌';
+  case 'chooseHandRestEntry':return '休息登場';
+  case 'chooseActiveOther':return action.uid===null?'不使其他角色活動':'使 '+name()+' 活動';
   case 'chooseRetireBp':case 'chooseTargetMany':return action.uid===null?'完成目標選擇':'選擇第 '+(state?.pending?.selected?.length+1||1)+' 個角色';
   case 'chooseFrontEnergyGrant':return action.uid===null?
    '不指定暫時 FRONT 產能對象':'讓 '+name()+' 本回合在前線也能產生能源';
@@ -242,6 +249,6 @@ export function visibleActionsForCard(legal,uid){
 }
 export function uiActionGroup(action){
  if(action.type==='next'||action.type==='extraDraw')return 'phase';
- if(['play','raid','event','move','step','attack','activate'].includes(action.type))return 'card';
+ if(['play','raid','event','move','step','attack','activate','handActivate'].includes(action.type))return 'card';
  return 'pending';
 }

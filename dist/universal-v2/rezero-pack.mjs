@@ -62,6 +62,7 @@ export function rezeroEngineKind(effectJa){
  if(e==='このキャラはアクティブで場に登場させる。【登場時】BP1500以上の相手のフロントLのキャラを2枚まで選び、このターン中、BP-1000。【アタック時】相手のフロントLに元々のBPよりBPが低いキャラがある場合、カードを1枚引く。')return 'activeFrontDownDraw';
  if(e==='このカードは自分の場に〈クルシュ・カルステン〉がある場合のみ使用できる。BP5000以下の相手のフロントLのキャラを1枚選び、退場させる。このターン中、自分の効果で自分の手札のキャラカードのBPを参照する場合、BP+1000されたものとして扱ってもよい。')return 'cruschRetireHandBp';
  if(e==='【登場時】自分のターン中の場合、APを1支払ってもよい。そうした場合、BP4500以上の相手のフロントLのキャラを1枚まで選び、退場させる。【起動メイン】【ターン1】自分の手札を1枚公開し、自分の山札の下に置く。公開したカードがBP4000以上のキャラカードの場合、このキャラはこのターン中、【インパクト（1）】を得る。')return 'wilhelmPayImpact';
+ if(e==='【起動メイン】【APを1支払う】このカードが自分の手札にあり、必要エナジーを満たす場合のみ発動できる。このカードを公開し、BPが4000以上の場合、自分の場にこのカードをレストで登場させ、自分の場の他のキャラを1枚まで選び、アクティブにする。')return 'handPayRevealDeploy';
  return null;
 }
 const TOP_OUTSIDE=new Map([
@@ -220,6 +221,8 @@ export function rezeroPackCard(card){
   ...(kind==='cruschRetireHandBp'?{playRequiresOwnName:'クルシュ・カルステン'}:{}),
   ...(kind==='wilhelmPayImpact'?{mainAbility:{
    op:'revealHandBottomImpact',oncePerTurn:true,minPrintedBp:4000,impact:1}}:{}),
+  ...(kind==='handPayRevealDeploy'?{mainAbility:{
+   op:'handPayRevealDeploy',payAp:1,minReferencedBp:4000}}:{}),
   ...(kind==='feltTurnBp'?{passiveBonuses:[{
    condition:{kind:'ownNameExists',turn:'own',zone:'field',excludeSelf:false,name:'フェルト'},
    bp:1000}]}:{}),

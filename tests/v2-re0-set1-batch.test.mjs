@@ -70,9 +70,9 @@ test('UA40BT and UA40ST share one catalogue and keep parallel art out',()=>{
  }
 });
 
-test('eighty-three whole prints enter the V2 pack and the other thirty stay out',()=>{
- assert.equal(REZERO_ENGINE_IDS.length,83);
- assert.equal(Object.keys(pack.cards).length,83);
+test('eighty-four whole prints enter the V2 pack and the other twenty-nine stay out',()=>{
+ assert.equal(REZERO_ENGINE_IDS.length,84);
+ assert.equal(Object.keys(pack.cards).length,84);
  assert.equal(pack.cards['REZ-1-001'],undefined);
  assert.equal(pack.cards['REZ-1-008'].step,true);
  assert.equal(pack.cards['REZ-1-008'].implementation,'vanilla');
@@ -228,6 +228,15 @@ test('eighty-three whole prints enter the V2 pack and the other thirty stay out'
   then:[{op:'retireOppFrontAtLeastBp',bp:4500,optional:true}]}]);
  assert.deepEqual(pack.cards['REZ-1-034'].mainAbility,{
   op:'revealHandBottomImpact',oncePerTurn:true,minPrintedBp:4000,impact:1});
+ assert.equal(pack.cards['REZ-1-047'].trigger,'active');
+ assert.equal(pack.cards['REZ-1-047'].triggerEffect,null);
+ assert.equal(pack.cards['REZ-1-047'].color,'blue');
+ assert.equal(pack.cards['REZ-1-047'].energy,3);
+ assert.equal(pack.cards['REZ-1-047'].bp,3000);
+ assert.equal(pack.cards['REZ-1-047'].ap,1);
+ assert.equal(pack.cards['REZ-1-047'].effects.onPlay,undefined);
+ assert.deepEqual(pack.cards['REZ-1-047'].mainAbility,{
+  op:'handPayRevealDeploy',payAp:1,minReferencedBp:4000});
  assert.equal(pack.cards['REZ-1-067'].enterAlwaysActive,true);
  assert.equal(pack.cards['REZ-1-067'].impactNull,true);
  assert.equal(pack.cards['REZ-1-067'].trigger,'active');
@@ -3273,4 +3282,161 @@ test('Wilhelm may pay one AP on his turn to retire BP 4500, and gains impact fro
  plain=ownMain(plain,5);
  assert.equal(universalImpact(packs,plain,at(plain,0,quiet.uid)),0);
  assert.equal(assertUniversalMatch(packs,plain),true);
+});
+
+const rickCounts={
+ ...Object.fromEntries(['REZ-1-047','REZ-1-043','REZ-1-066','REZ-1-055','REZ-1-012','REZ-1-007',
+  'REZ-1-008','REZ-1-014','REZ-1-022','REZ-1-024','REZ-1-075','REZ-1-065'].map(id=>[id,4])),
+ 'REZ-1-029':2
+};
+const rick=seed=>newUniversalMatch(packs,{decks:[rickCounts,rickCounts],first:0,seed});
+function handPay(s,uid){
+ return legalUniversalActions(packs,s).find(a=>a.type==='handActivate'&&a.mode==='handPayReveal'&&a.uid===uid);
+}
+test('Ricardo pays one AP from hand, and rests into play only when the referenced BP reaches 4000',()=>{
+ assert.equal(Object.values(rickCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(pack,rickCounts),[]);
+ const shell={id:'RICK',name:'Gate',color:'blue',type:'character',energy:3,ap:1,bp:3000,gen:0,
+  traits:[],trigger:'active',implementation:'dsl',effects:{}};
+ assert.throws(()=>createUniversalPack({id:'bad-rick',cards:[{...shell,mainAbility:{
+  op:'handPayRevealDeploy',payAp:2,minReferencedBp:4000}}]}),/unsupported main/);
+ assert.throws(()=>createUniversalPack({id:'bad-rick',cards:[{...shell,mainAbility:{
+  op:'handPayRevealDeploy',payAp:1,minReferencedBp:3000}}]}),/unsupported main/);
+ assert.equal(V2_PENDING_LABELS['effect-hand-deploy-may'],'這次參照手牌角色 BP 時，是否視為 +1000 並休息登場');
+ assert.equal(V2_PENDING_LABELS['effect-hand-rest-entry'],'選擇休息登場的位置');
+ assert.equal(V2_PENDING_LABELS['effect-active-other'],'選擇最多 1 張其他己方角色並使其活動');
+
+ let short=rick(6601);
+ fuel(short,['REZ-1-043','REZ-1-043']);
+ short=ownMain(short,1);
+ const shortCard=pull(short,0,'REZ-1-047');
+ short.players[0].hand.push(shortCard);
+ assert.equal(universalEnergyByColor(packs,short,0).blue,2);
+ assert.equal(handPay(short,shortCard.uid),undefined);
+
+ let quiet=rick(6602);
+ fuel(quiet,['REZ-1-043','REZ-1-043','REZ-1-043']);
+ quiet=ownMain(quiet,1);
+ const held=pull(quiet,0,'REZ-1-047');
+ quiet.players[0].hand.push(held);
+ assert.equal(quiet.players[0].apCards.filter(c=>c.ready).length,1);
+ const pay=handPay(quiet,held.uid);
+ assert.ok(pay);
+ assert.equal(uiActionLabel(pay,{pack,state:quiet}),'支付 1 AP，公開這張手牌');
+ const noAp=structuredClone(quiet);
+ noAp.players[0].apCards.forEach(c=>{c.ready=false;});
+ assert.equal(handPay(noAp,held.uid),undefined);
+ quiet=dispatchUniversalAction(packs,quiet,pay);
+ assert.equal(quiet.pending,null);
+ assert.ok(quiet.players[0].hand.some(c=>c.uid===held.uid));
+ assert.equal(quiet.players[0].apCards.filter(c=>c.ready).length,0);
+ assert.equal(quiet.publicReveals.at(-1).kind,'hand-activate');
+ assert.equal(quiet.publicReveals.at(-1).cardId,'REZ-1-047');
+ assert.ok(quiet.effectApPaidColors[0].includes('blue'));
+ assert.equal(handPay(quiet,held.uid),undefined);
+ assert.equal(assertUniversalMatch(packs,quiet),true);
+
+ let twice=rick(6603);
+ fuel(twice,['REZ-1-043','REZ-1-043','REZ-1-043']);
+ twice=ownMain(twice,2);
+ const repeat=pull(twice,0,'REZ-1-047');
+ twice.players[0].hand.push(repeat);
+ assert.equal(twice.players[0].apCards.filter(c=>c.ready).length,2);
+ twice=dispatchUniversalAction(packs,twice,handPay(twice,repeat.uid));
+ assert.equal(twice.pending,null);
+ assert.ok(twice.players[0].hand.some(c=>c.uid===repeat.uid));
+ assert.equal(twice.players[0].apCards.filter(c=>c.ready).length,1);
+ twice=dispatchUniversalAction(packs,twice,handPay(twice,repeat.uid));
+ assert.equal(twice.pending,null);
+ assert.ok(twice.players[0].hand.some(c=>c.uid===repeat.uid));
+ assert.equal(twice.players[0].apCards.filter(c=>c.ready).length,0);
+ assert.equal(twice.publicReveals.filter(r=>r.kind==='hand-activate'&&r.cardId==='REZ-1-047').length,2);
+ assert.equal(assertUniversalMatch(packs,twice),true);
+
+ let crowded=rick(6604);
+ fuel(crowded,['REZ-1-043','REZ-1-043','REZ-1-043','REZ-1-022']);
+ crowded=ownMain(crowded,1);
+ placeFront(crowded,0,[0,1,2,3].map(()=>pull(crowded,0,'REZ-1-007')));
+ const boxed=pull(crowded,0,'REZ-1-047');
+ crowded.players[0].hand.push(boxed);
+ assert.ok(handPay(crowded,boxed.uid));
+ crowded=dispatchUniversalAction(packs,crowded,handPay(crowded,boxed.uid));
+ assert.equal(crowded.pending,null);
+ assert.ok(crowded.players[0].hand.some(c=>c.uid===boxed.uid));
+ assert.equal(crowded.players[0].front.filter(Boolean).length,4);
+ assert.equal(assertUniversalMatch(packs,crowded),true);
+
+ let offered=rick(6605);
+ fuel(offered,['REZ-1-043','REZ-1-043','REZ-1-043','REZ-1-043']);
+ offered=ownMain(offered,2);
+ const lady=pull(offered,0,'REZ-1-055');
+ lady.ready=false;
+ offered.players[0].front[0]=lady;
+ const victim=pull(offered,1,'REZ-1-012');
+ offered.players[1].front[0]=victim;
+ assert.equal(offered.players[0].apCards.filter(c=>c.ready).length,2);
+ [offered]=castEvent(offered,'REZ-1-066');
+ offered=dispatchUniversalAction(packs,offered,{type:'chooseRetireAtMost',uid:victim.uid});
+ assert.equal(offered.players[0].handCharacterBpMay.amount,1000);
+ assert.equal(offered.players[0].apCards.filter(c=>c.ready).length,1);
+ const card=pull(offered,0,'REZ-1-047');
+ offered.players[0].hand.push(card);
+ const act=handPay(offered,card.uid);
+ assert.ok(act);
+ offered=dispatchUniversalAction(packs,offered,act);
+ assert.equal(offered.pending.kind,'effect-hand-deploy-may');
+ assert.equal(offered.pending.baseBp,3000);
+ assert.equal(offered.pending.amount,1000);
+ assert.equal(offered.pending.minBp,4000);
+ assert.equal(offered.players[0].apCards.filter(c=>c.ready).length,0);
+ assert.equal(uiActionLabel(legalUniversalActions(packs,offered).find(a=>a.mode==='decline'),{pack,state:offered}),'維持原本 BP，留在手牌');
+ assert.equal(uiActionLabel(legalUniversalActions(packs,offered).find(a=>a.mode==='accept'),{pack,state:offered}),'視為 BP+1000 並休息登場');
+ assert.equal(chooseUniversalAiAction(packs,offered).mode,'accept');
+ const forgedMay=structuredClone(offered);
+ forgedMay.pending.baseBp=2000;
+ assert.throws(()=>assertUniversalMatch(packs,forgedMay),/Invalid hand deployment option pending/);
+ const declined=dispatchUniversalAction(packs,structuredClone(offered),{type:'chooseHandDeployMay',mode:'decline'});
+ assert.equal(declined.pending,null);
+ assert.ok(declined.players[0].hand.some(c=>c.uid===card.uid));
+ assert.equal(declined.players[0].front.some(c=>c?.uid===card.uid),false);
+ assert.equal(handPay(declined,card.uid),undefined);
+ offered=dispatchUniversalAction(packs,offered,{type:'chooseHandDeployMay',mode:'accept'});
+ assert.equal(offered.pending.kind,'effect-hand-rest-entry');
+ assert.equal(offered.pending.minBp,4000);
+ const seats=legalUniversalActions(packs,offered);
+ assert.ok(seats.some(a=>a.line==='front'&&a.replaceUid===undefined));
+ assert.ok(seats.some(a=>a.line==='energy'&&a.replaceUid));
+ assert.equal(uiActionLabel(seats[0],{pack,state:offered}),'休息登場');
+ assert.equal(chooseUniversalAiAction(packs,offered).type,'chooseHandRestEntry');
+ const forgedEntry=structuredClone(offered);
+ forgedEntry.pending.minBp=3000;
+ assert.throws(()=>assertUniversalMatch(packs,forgedEntry),/Invalid hand REST entry pending/);
+ const seat=seats.find(a=>a.line==='front'&&a.replaceUid===undefined);
+ offered=dispatchUniversalAction(packs,offered,seat);
+ const entered=at(offered,0,card.uid);
+ assert.equal(entered.ready,false);
+ assert.ok(offered.players[0].front.some(c=>c?.uid===card.uid));
+ assert.equal(offered.players[0].hand.some(c=>c.uid===card.uid),false);
+ assert.equal(offered.pending.kind,'effect-active-other');
+ assert.equal(offered.pending.optional,true);
+ assert.equal(offered.pending.choices.includes(card.uid),false);
+ assert.ok(offered.pending.choices.includes(lady.uid));
+ assert.ok(offered.pending.choices.every(uid=>offered.players[0].energy.some(c=>c?.uid===uid)||uid===lady.uid));
+ assert.equal(uiActionLabel(legalUniversalActions(packs,offered).find(a=>a.uid===null),{pack,state:offered}),'不使其他角色活動');
+ assert.equal(uiActionLabel(legalUniversalActions(packs,offered).find(a=>a.uid===lady.uid),{pack,state:offered}),'使 クルシュ・カルステン 活動');
+ assert.notEqual(chooseUniversalAiAction(packs,offered).uid,null);
+ const forgedOther=structuredClone(offered);
+ forgedOther.pending.optional=false;
+ assert.throws(()=>assertUniversalMatch(packs,forgedOther),/Invalid other-character ACTIVE pending/);
+ const skipped=dispatchUniversalAction(packs,structuredClone(offered),{type:'chooseActiveOther',uid:null});
+ assert.equal(skipped.pending,null);
+ assert.equal(at(skipped,0,lady.uid).ready,false);
+ assert.equal(at(skipped,0,card.uid).ready,false);
+ offered=dispatchUniversalAction(packs,offered,{type:'chooseActiveOther',uid:lady.uid});
+ assert.equal(offered.pending,null);
+ assert.equal(at(offered,0,lady.uid).ready,true);
+ assert.equal(at(offered,0,card.uid).ready,false);
+ assert.ok(offered.zoneMoveEvents.some(e=>e.uid===card.uid&&e.from==='hand'&&e.to==='front'&&e.reason==='own-effect'));
+ assert.equal(assertUniversalMatch(packs,offered),true);
+ assert.equal(assertUniversalMatch(packs,skipped),true);
 });
