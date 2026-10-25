@@ -64,6 +64,17 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='private-top-place')return legal[0];
  if(s.pending?.kind==='effect-top-inspect-many')return legal.find(x=>x.uid===null)||legal[0];
  if(s.pending?.kind==='effect-top-filter-choice')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-top-trait-event'){
+  const catalog=packsOf(pack)[s.pending.player].cards;
+  const deck=s.players[s.pending.player].deck;
+  const score=uid=>{
+   if(uid===null)return 0;
+   const printed=catalog[deck.find(c=>c.uid===uid)?.cardId];
+   if(printed?.traits?.includes(s.pending.trait)||printed?.traitComponents?.includes(s.pending.trait))return 2;
+   return printed?.type==='event'?1:0;
+  };
+  return [...legal].sort((a,b)=>score(b.uid)-score(a.uid))[0];
+ }
  if(s.pending?.kind==='effect-top-trait-outside')
   return difficulty==='easy'?legal.find(a=>a.uid===null)||legal[0]:
    legal.find(a=>a.uid!==null)||legal[0];

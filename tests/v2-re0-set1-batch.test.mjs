@@ -70,9 +70,9 @@ test('UA40BT and UA40ST share one catalogue and keep parallel art out',()=>{
  }
 });
 
-test('seventy-seven whole prints enter the V2 pack and the other thirty-six stay out',()=>{
- assert.equal(REZERO_ENGINE_IDS.length,77);
- assert.equal(Object.keys(pack.cards).length,77);
+test('seventy-eight whole prints enter the V2 pack and the other thirty-five stay out',()=>{
+ assert.equal(REZERO_ENGINE_IDS.length,78);
+ assert.equal(Object.keys(pack.cards).length,78);
  assert.equal(pack.cards['REZ-1-001'],undefined);
  assert.equal(pack.cards['REZ-1-008'].step,true);
  assert.equal(pack.cards['REZ-1-008'].implementation,'vanilla');
@@ -181,6 +181,12 @@ test('seventy-seven whole prints enter the V2 pack and the other thirty-six stay
  assert.equal(pack.cards['REZ-1-062'].triggerEffect,null);
  assert.deepEqual(pack.cards['REZ-1-062'].effects.onPlay,[{
   op:'buffNamedImpactDraw',name:'レム',bp:1000,impactPlus:1,draw:1}]);
+ assert.equal(pack.cards['REZ-1-109'].type,'event');
+ assert.equal(pack.cards['REZ-1-109'].color,'yellow');
+ assert.equal(pack.cards['REZ-1-109'].trigger,null);
+ assert.equal(pack.cards['REZ-1-109'].triggerEffect,null);
+ assert.deepEqual(pack.cards['REZ-1-109'].effects.onPlay,[{
+  op:'searchTopTraitOrEventAp',count:5,trait:'王選候補者'}]);
  assert.equal(pack.cards['REZ-1-067'].enterAlwaysActive,true);
  assert.equal(pack.cards['REZ-1-067'].impactNull,true);
  assert.equal(pack.cards['REZ-1-067'].trigger,'active');
@@ -2595,4 +2601,89 @@ test('Testimony gives one field Rem BP and impact +1, then draws',()=>{
  assert.equal(doubled.publicReveals.length,2);
  assert.equal(doubled.effectQueue.some(e=>e.op==='additionalBattleDamage'),false);
  assert.equal(assertUniversalMatch(packs,doubled),true);
+});
+
+const badgeCounts={
+ ...Object.fromEntries(['REZ-1-109','REZ-1-016','REZ-1-022','REZ-1-062','REZ-1-007',
+  'REZ-1-008','REZ-1-012','REZ-1-013','REZ-1-014','REZ-1-023','REZ-1-024','REZ-1-043'].map(id=>[id,4])),
+ 'REZ-1-056':2
+};
+const badge=seed=>newUniversalMatch(packs,{decks:[badgeCounts,badgeCounts],first:0,seed});
+test('the candidate insignia takes one trait or event, then readies AP only for the trait',()=>{
+ assert.equal(Object.values(badgeCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(pack,badgeCounts),[]);
+ const shell={id:'BADGE',name:'Badge',color:'yellow',type:'event',energy:2,ap:1,bp:0,gen:0,
+  traits:[],trigger:null,implementation:'dsl',effects:{}};
+ assert.throws(()=>createUniversalPack({id:'bad-badge',cards:[{...shell,type:'character',bp:1000,effects:{onPlay:[
+  {op:'searchTopTraitOrEventAp',count:5,trait:'王選候補者'}]}}]}),/event onPlay/);
+ assert.throws(()=>createUniversalPack({id:'bad-badge',cards:[{...shell,effects:{onPlay:[
+  {op:'searchTopTraitOrEventAp',count:5,trait:'ラム'}]}}]}),/trait or event search/);
+
+ let none=badge(6001);
+ fuel(none,['REZ-1-016','REZ-1-016']);
+ none=reach(none,'main');
+ const plain=setTop(none,0,['REZ-1-007','REZ-1-008','REZ-1-012','REZ-1-013','REZ-1-014']);
+ const handBefore=none.players[0].hand.length;
+ [none]=castEvent(none,'REZ-1-109');
+ assert.equal(none.pending.kind,'effect-top-order');
+ assert.equal(none.pending.recoverApAfter,undefined);
+ none=order(none,plain.map(c=>c.uid));
+ assert.equal(none.pending,null);
+ assert.equal(none.players[0].hand.length,handBefore);
+ assert.deepEqual(none.players[0].deck.slice(-5).map(c=>c.uid),plain.map(c=>c.uid));
+ assert.equal(none.players[0].apCards.filter(c=>c.ready).length,0);
+ assert.equal(assertUniversalMatch(packs,none),true);
+
+ let spellOnly=badge(6002);
+ fuel(spellOnly,['REZ-1-016','REZ-1-016']);
+ spellOnly=reach(spellOnly,'main');
+ const windowEvent=setTop(spellOnly,0,['REZ-1-062','REZ-1-007','REZ-1-008','REZ-1-012','REZ-1-013']);
+ [spellOnly]=castEvent(spellOnly,'REZ-1-109');
+ assert.equal(spellOnly.pending.kind,'effect-top-trait-event');
+ assert.deepEqual(spellOnly.pending.choices,[windowEvent[0].uid]);
+ const skip=legalUniversalActions(packs,spellOnly).find(a=>a.type==='chooseTopTraitEvent'&&a.uid===null);
+ assert.equal(uiActionLabel(skip,{pack,state:spellOnly}),'不加入手牌，將其餘卡排列至底部');
+ spellOnly=dispatchUniversalAction(packs,spellOnly,{type:'chooseTopTraitEvent',uid:windowEvent[0].uid});
+ assert.equal(spellOnly.pending.kind,'effect-top-order');
+ assert.equal(spellOnly.pending.recoverApAfter,undefined);
+ assert.ok(spellOnly.players[0].hand.some(c=>c.uid===windowEvent[0].uid));
+ assert.equal(spellOnly.publicReveals.at(-1).uid,windowEvent[0].uid);
+ spellOnly=order(spellOnly,windowEvent.slice(1).map(c=>c.uid));
+ assert.equal(spellOnly.pending,null);
+ assert.equal(spellOnly.players[0].apCards.filter(c=>c.ready).length,0);
+ assert.equal(assertUniversalMatch(packs,spellOnly),true);
+
+ let trait=badge(6003);
+ fuel(trait,['REZ-1-016','REZ-1-016']);
+ trait=reach(trait,'main');
+ const windowTrait=setTop(trait,0,['REZ-1-022','REZ-1-062','REZ-1-007','REZ-1-008','REZ-1-012']);
+ [trait]=castEvent(trait,'REZ-1-109');
+ assert.deepEqual(trait.pending.choices.map(uid=>uid).sort(),[windowTrait[0].uid,windowTrait[1].uid].sort());
+ const take=legalUniversalActions(packs,trait).find(a=>a.uid===windowTrait[0].uid);
+ assert.match(uiActionLabel(take,{pack,state:trait}),/公開 .+ 並加入手牌/);
+ assert.equal(chooseUniversalAiAction(packs,trait,'normal').uid,windowTrait[0].uid);
+ trait=dispatchUniversalAction(packs,trait,take);
+ assert.equal(trait.pending.recoverApAfter,true);
+ trait=order(trait,windowTrait.slice(1).map(c=>c.uid));
+ assert.equal(trait.pending.kind,'effect-recover-ap');
+ const ap=trait.players[0].apCards.find(c=>c.inPlay&&!c.ready);
+ trait=dispatchUniversalAction(packs,trait,{type:'chooseApRecovery',uid:ap.uid});
+ assert.equal(trait.pending,null);
+ assert.equal(trait.players[0].apCards.find(c=>c.uid===ap.uid).ready,true);
+ assert.equal(trait.players[0].deck.slice(-4).map(c=>c.uid).join(),windowTrait.slice(1).map(c=>c.uid).join());
+ assert.equal(assertUniversalMatch(packs,trait),true);
+
+ let declined=badge(6004);
+ fuel(declined,['REZ-1-016','REZ-1-016']);
+ declined=reach(declined,'main');
+ const offered=setTop(declined,0,['REZ-1-022','REZ-1-007','REZ-1-008','REZ-1-012','REZ-1-013']);
+ [declined]=castEvent(declined,'REZ-1-109');
+ declined=dispatchUniversalAction(packs,declined,{type:'chooseTopTraitEvent',uid:null});
+ assert.equal(declined.pending.kind,'effect-top-order');
+ assert.equal(declined.pending.recoverApAfter,undefined);
+ declined=order(declined,offered.map(c=>c.uid));
+ assert.equal(declined.pending,null);
+ assert.equal(declined.players[0].hand.some(c=>c.uid===offered[0].uid),false);
+ assert.equal(declined.players[0].apCards.filter(c=>c.ready).length,0);
+ assert.equal(assertUniversalMatch(packs,declined),true);
 });

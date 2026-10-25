@@ -56,6 +56,7 @@ export function rezeroEngineKind(effectJa){
  if(e==='【起動メイン】【フロントLにある場合】 【ターン1】このターン中にこのキャラが自分の効果でアクティブからレストになったことがある場合のみ発動できる。このキャラをアクティブにし、このキャラは次の自分のターン開始時まで、BP+1000。')return 'emiliaRestActive';
  if(e==='『BP3000以下』の相手のフロントLのキャラを1枚選び、退場させる。自分の場に〈ベアトリス〉がある場合、『BP4000以下』に代わる。自分の場に〈ベアトリス〉と〈ナツキ・スバル〉がある場合、『BP5000以下』に代わる。')return 'minaRetire';
  if(e==='自分の場の〈レム〉を1枚選び、このターン中、BP+1000と【インパクト（+1）】（インパクトの与えるダメージが+1され、インパクトを持たない場合、【インパクト（1）】を得る）を与え、カードを1枚引く。')return 'remImpactDraw';
+ if(e==='自分の山札の上から5枚見る。その中から［特徴：王選候補者］かイベントカードを1枚まで公開し手札に加える。残りを望む順で山札の下に置く。公開したカードが［特徴：王選候補者］の場合、自分のAPカードを1枚まで選び、アクティブにする。')return 'candidateApSearch';
  return null;
 }
 const TOP_OUTSIDE=new Map([
@@ -106,6 +107,7 @@ function onPlay(card,kind){
   {names:['ベアトリス'],bp:4000},
   {names:['ベアトリス','ナツキ・スバル'],bp:5000}]}];
  if(kind==='remImpactDraw')return [{op:'buffNamedImpactDraw',name:'レム',bp:1000,impactPlus:1,draw:1}];
+ if(kind==='candidateApSearch')return [{op:'searchTopTraitOrEventAp',count:5,trait:'王選候補者'}];
  if(kind==='garfielEntry')return [{op:'enemyBpDown',bp:2500,optional:true,zone:'front'}];
  if(kind==='sanctuaryRecover')return [{op:'payHandOrRestForNamed',name:TRIAL_NAME}];
  if(kind==='frontDown2500')return [{op:'enemyBpDown',bp:2000,optional:true,minBp:2500,zone:'front'}];
