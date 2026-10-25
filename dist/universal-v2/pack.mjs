@@ -355,7 +355,21 @@ function verifyProgram(program,path){
     new Set(e.filters.map(f=>f.field+':'+f.value)).size===e.filters.length&&
     ['any','all'].includes(e.logic)&&
     Object.keys(e).every(k=>['op','count','filters','logic'].includes(k));
-   if(!integer(e.count,1)||e.count>5||!(single||compound))
+   // Each group is AND. The card matches when any group matches. This is the
+   // printed 「緑のイベントカードか緑のフィールドカード」 shape. It does not
+   // combine with a flat filter, and two identical groups are rejected.
+   const groupOk=g=>g&&typeof g==='object'&&!Array.isArray(g)&&
+    g.logic==='all'&&Array.isArray(g.filters)&&g.filters.length>=2&&
+    g.filters.length<=3&&g.filters.every(isFilter)&&
+    new Set(g.filters.map(f=>f.field+':'+f.value)).size===g.filters.length&&
+    Object.keys(g).length===2&&Object.keys(g).every(k=>k==='logic'||k==='filters');
+   const groupSig=g=>g.filters.map(f=>f.field+':'+f.value).sort().join('&');
+   const grouped=e.filter===undefined&&e.filters===undefined&&e.logic===undefined&&
+    e.excludeRaid===undefined&&Array.isArray(e.groups)&&e.groups.length>=2&&
+    e.groups.length<=4&&e.groups.every(groupOk)&&
+    new Set(e.groups.map(groupSig)).size===e.groups.length&&
+    Object.keys(e).every(k=>['op','count','groups'].includes(k));
+   if(!integer(e.count,1)||e.count>5||!(single||compound||grouped))
     throw Error(path+'['+i+'] invalid top-N filtered bottom/discard profile');
   }
   if(e.op==='searchTopUpToTwoBottom'){

@@ -330,6 +330,9 @@ function filteredChoices(pack,s,cards,filter){
 function matchesSearch(pack,s,physical,query){
  // Printed レイドを持たない. Absent excludeRaid still accepts a Raid character.
  if(query.excludeRaid===true&&card(pack,physical).raidName)return false;
+ // Groups are AND inside and OR across. Absent groups keeps flat filters.
+ if(Array.isArray(query.groups))
+  return query.groups.some(g=>matchesSearch(pack,s,physical,{filters:g.filters,logic:g.logic}));
  if(!query.filters)return matchesFilter(pack,s,physical,query.filter);
  const result=query.filters.map(f=>matchesFilter(pack,s,physical,f));
  return query.logic==='all'?result.every(Boolean):result.some(Boolean);
@@ -809,7 +812,9 @@ function continueEffectQueue(pack,s){
      // One shared ordered TOP-N window, with either a single printed filter
      // or a strict composite ANY/ALL filter. No full-deck search or shuffle.
      const choices=searchChoices(pack,s,inspected,job);
-     const predicate=job.filters?{filters:job.filters.map(f=>({...f})),logic:job.logic}:
+     const predicate=job.groups?{groups:job.groups.map(g=>({logic:g.logic,
+      filters:g.filters.map(f=>({...f}))}))}:
+      job.filters?{filters:job.filters.map(f=>({...f})),logic:job.logic}:
       {filter:{...job.filter}};
      // With no valid match, ALL inspected cards must still be ordered below.
      s.pending=choices.length?{kind:'effect-top-filter-choice',player:owner,
@@ -5116,6 +5121,23 @@ export function assertUniversalMatch(pack,s){
    Object.keys(q).length!==7||
    Object.keys(q).some(k=>!['kind','player','sourceUid','choices','optional','after','excludeSelf'].includes(k)))
    throw Error('Invalid saved other-character retirement continuation');
+ }
+ if(s.pending?.kind==='effect-top-filter-choice'&&Array.isArray(s.pending.groups)){
+  const q=s.pending,pl=s.players[q.player];
+  const owned=[...field(pl),...pl.outside,...pl.hand,...pl.deck,...pl.life,
+   ...pl.lifeRevealed,...(pl.removed||[])];
+  const source=owned.find(c=>c.uid===q.sourceUid);
+  const printed=source&&card(pack,source);
+  const earned=printed?.effects?.onPlay?.some(e=>e.op==='searchTopOneBottomDiscard'&&
+   e.count>=q.uids?.length&&same(e.groups,q.groups));
+  const window=Array.isArray(q.uids)?pl.deck.slice(0,q.uids.length):[];
+  const expected=window.filter(c=>matchesSearch(pack,s,c,q)).map(c=>c.uid);
+  if(!earned||!q.sourceUid.startsWith(q.player+'-')||!Array.isArray(q.uids)||
+   q.uids.length<1||q.uids.length>5||new Set(q.uids).size!==q.uids.length||
+   !same(window.map(c=>c.uid),q.uids)||!Array.isArray(q.choices)||
+   !same(q.choices,expected)||Object.keys(q).length!==6||
+   Object.keys(q).some(k=>!['kind','player','sourceUid','uids','choices','groups'].includes(k)))
+   throw Error('Invalid grouped top-filter pending');
  }
  if(s.pending?.kind==='effect-top-filter-many-choice'){
   const q=s.pending,pl=s.players[q.player];
