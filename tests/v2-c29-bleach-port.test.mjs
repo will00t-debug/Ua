@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {CARDS} from '../dist/cards.mjs';
 import {createUniversalPack,validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {registeredV2TitlePack} from '../dist/universal-v2/title-packs/registry.mjs';
-import {cardHasName} from '../dist/universal-v2/field-conditions.mjs';
+import {cardHasName,cardHasTrait} from '../dist/universal-v2/field-conditions.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  assertUniversalMatch,universalBp,universalImpact,universalEnergyByColor,
  universalPublicView,universalPrivateChoices} from '../dist/universal-v2/engine.mjs';
@@ -67,9 +67,16 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 //   公開されたカードを相手の山札の上か場外に置く。 COLOR is the standard
 //   rest-and-skip-next-active sentence. Required energy alt is 黄3.
 //   Generated energy alt is 黄黄. An empty opposing deck reveals nothing.
+// BLC-2-011 EX07BT: [登場時]自分の山札の上から3枚を公開する。その中から
+//   ［特徴：バンビーズ］か〈バンビエッタ・バスターバイン〉を1枚まで手札に加える。
+//   残りを自分の場外に置く。手札に加えた場合、自分の手札を1枚場外に置く。
+//   No trigger. Required energy alt is 黄1. Generated energy alt is 黄.
+//   The attribute cell is 星十字騎士団／バンビーズ. The catalogue stores that
+//   as one string, and only this exact string is split into audited components.
+//   邦比小隊 is a different token. A miss sends all three outside with no discard.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -140,12 +147,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers thirty-four whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,470);
- assert.equal(EXPECTED_V2_COUNTS.bleach,194);
+test('C29 registers thirty-five whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,471);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,195);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,194);
+ assert.equal(Object.keys(bleach.cards).length,195);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -2282,4 +2289,162 @@ test('BLC-1-022 reveals the opponent top card, then puts it back or outside',()=
  assert.equal(assertUniversalMatch(opened.packs,sent),true);
  assert.equal(assertUniversalMatch(quiet.packs,empty),true);
  assert.equal(assertUniversalMatch(color.packs,rested),true);
+});
+
+test('BLC-2-011 reveals three cards, takes one Bambies trait or Bambi name, and puts the rest outside',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-2-011');
+ assert.equal(printed.effect,'登場：公開己方牌堆頂 3 張，可將其中最多 1 張具有「邦比愛塔親衛隊」特徵或名為〈邦比愛塔・芭絲塔拜茵〉的卡加入手牌，其餘送至場外。若有卡加入手牌，再將 1 張手牌送至場外。');
+ assert.equal(printed.traits,'星十字騎士團／邦比愛塔親衛隊');
+ assert.equal(printed.energy,1);
+ assert.equal(printed.gen,1);
+ assert.equal(printed.trigger,null);
+ const filters=[
+  {field:'trait',value:'邦比愛塔親衛隊'},
+  {field:'name',value:'バンビエッタ・バスターバイン'}
+ ];
+ const card=bleach.cards['BLC-2-011'];
+ assert.deepEqual(card.traits,['星十字騎士團／邦比愛塔親衛隊']);
+ assert.deepEqual(card.traitComponents,['星十字騎士團','邦比愛塔親衛隊']);
+ assert.equal(card.gen,1);
+ assert.equal(card.triggerEffect,null);
+ assert.deepEqual(card.effects.onPlay,[{op:'searchTopOneBottomDiscard',count:3,rest:'outside',filters,logic:'any'}]);
+ for(const id of ['BLC-2-007','BLC-2-008','BLC-2-010']){
+  assert.deepEqual(bleach.cards[id].traitComponents,['星十字騎士團','邦比愛塔親衛隊']);
+  assert.equal(cardHasTrait(bleach.cards[id],'邦比愛塔親衛隊'),true);
+  assert.equal(cardHasTrait(bleach.cards[id],'星十字騎士團'),true);
+ }
+ assert.equal(bleach.cards['BLC-2-041'].traitComponents,undefined);
+ assert.deepEqual(bleach.cards['BLC-2-006'].traits,['星十字騎士團／殭屍']);
+ assert.equal(bleach.cards['BLC-2-006'].traitComponents,undefined);
+ assert.equal(cardHasTrait(bleach.cards['BLC-2-006'],'邦比愛塔親衛隊'),false);
+ assert.equal(cardHasName(bleach.cards['BLC-2-006'],'バンビエッタ・バスターバイン'),true);
+ assert.equal(cardHasTrait(bleach.cards['BLC-4-009'],'邦比愛塔親衛隊'),false);
+ assert.equal(cardHasName(bleach.cards['BLC-4-009'],'バンビエッタ・バスターバイン'),true);
+ assert.equal(cardHasTrait({traits:['星十字騎士團','邦比小隊']},'邦比愛塔親衛隊'),false);
+ assert.equal(bleach.cards['BLC-4-064'].effects.onPlay[0].rest,undefined);
+ const bare={id:'BAD',name:'BAD',color:'yellow',type:'character',energy:0,ap:1,bp:1000,gen:1,traits:[],trigger:null,implementation:'dsl',effects:{}};
+ const bad=rest=>createUniversalPack({id:'bad-window-'+rest,cards:[{...bare,effects:{onPlay:[{op:'searchTopOneBottomDiscard',count:3,rest,filters,logic:'any'}]}}]});
+ assert.throws(()=>bad('bottom'),/invalid top-N filtered bottom\/discard profile/);
+ assert.throws(()=>bad('deck'),/invalid top-N filtered bottom\/discard profile/);
+ const deck=realDeck(['BLC-2-011','BLC-1-002','BLC-2-010','BLC-4-009','BLC-2-006','BLC-2-008','BLC-1-001','BLC-1-018','BLC-4-001','BLC-1-012','BLC-1-016','BLC-1-021','BLC-2-003'],'yellow');
+ function open(seed,tops){
+  const opened=main(deck,seed);
+  put(opened.s,0,'BLC-1-002','energy',0);
+  const window=tops?setTop(opened.s,0,tops):[];
+  const self=take(opened.s,0,'BLC-2-011');
+  opened.s.players[0].hand.push(self);
+  const play=legalUniversalActions(opened.packs,opened.s).find(a=>a.type==='play'&&a.uid===self.uid&&a.line==='front');
+  assert.ok(play);
+  return {opened,window,self,played:dispatchUniversalAction(opened.packs,opened.s,play)};
+ }
+ const first=open(29011,['BLC-2-010','BLC-4-009','BLC-1-018']);
+ const [traitCard,nameCard,plain]=first.window;
+ assert.equal(first.played.players[0].front.find(c=>c?.uid===first.self.uid).ready,false);
+ assert.equal(first.played.pending.kind,'effect-top-filter-choice');
+ assert.equal(first.played.pending.rest,'outside');
+ assert.deepEqual(first.played.pending.filters,filters);
+ assert.equal(first.played.pending.logic,'any');
+ const shownIds=[traitCard.cardId,nameCard.cardId,plain.cardId];
+ for(const viewer of [0,1]){
+  const pub=universalPublicView(first.opened.packs,first.played,viewer);
+  assert.deepEqual(pub.pending,{kind:'effect-top-filter-choice',player:0});
+  assert.deepEqual(pub.publicReveals.filter(r=>r.kind==='revealed-window').map(r=>r.cardId),shownIds);
+  assert.equal(pub.players[0].deckCount,first.played.players[0].deck.length);
+ }
+ assert.equal(universalPrivateChoices(first.opened.packs,first.played,1),null);
+ const privateIds=universalPrivateChoices(first.opened.packs,first.played,0).options.filter(o=>o.card).map(o=>o.card.cardId);
+ assert.deepEqual(privateIds.sort(),['BLC-2-010','BLC-4-009'].sort());
+ const choices=legalUniversalActions(first.opened.packs,first.played);
+ const chosen=uid=>choices.some(a=>a.type==='chooseTopFiltered'&&a.uid===uid);
+ assert.equal(chosen(null),true);
+ assert.equal(chosen(traitCard.uid),true);
+ assert.equal(chosen(nameCard.uid),true);
+ assert.equal(chosen(plain.uid),false);
+ const tookTrait=dispatchUniversalAction(first.opened.packs,first.played,choices.find(a=>a.uid===traitCard.uid));
+ assert.equal(tookTrait.pending.kind,'effect-discard');
+ assert.equal(tookTrait.players[0].hand.some(c=>c.uid===traitCard.uid),true);
+ assert.deepEqual(tookTrait.players[0].outside.slice(-2).map(c=>c.uid),[nameCard.uid,plain.uid]);
+ assert.equal(tookTrait.players[0].deck.some(c=>[nameCard.uid,plain.uid,traitCard.uid].includes(c.uid)),false);
+ assert.equal(tookTrait.players[0].removed.some(c=>[nameCard.uid,plain.uid].includes(c.uid)),false);
+ const spare=tookTrait.players[0].hand.find(c=>c.uid!==traitCard.uid);
+ const dumped=dispatchUniversalAction(first.opened.packs,tookTrait,{type:'chooseDiscard',uid:spare.uid});
+ assert.equal(dumped.pending,null);
+ assert.equal(dumped.players[0].hand.some(c=>c.uid===traitCard.uid),true);
+ assert.equal(dumped.players[0].outside.some(c=>c.uid===spare.uid),true);
+ assert.equal(dumped.players[0].removed.some(c=>c.uid===spare.uid),false);
+ const tossed=dispatchUniversalAction(first.opened.packs,tookTrait,{type:'chooseDiscard',uid:traitCard.uid});
+ assert.equal(tossed.players[0].outside.some(c=>c.uid===traitCard.uid),true);
+ assert.equal(tossed.players[0].hand.some(c=>c.uid===traitCard.uid),false);
+ assert.equal(tossed.players[0].removed.some(c=>c.uid===traitCard.uid),false);
+ const tookName=dispatchUniversalAction(first.opened.packs,first.played,choices.find(a=>a.uid===nameCard.uid));
+ assert.equal(tookName.players[0].hand.some(c=>c.uid===nameCard.uid),true);
+ assert.deepEqual(tookName.players[0].outside.slice(-2).map(c=>c.uid),[traitCard.uid,plain.uid]);
+ assert.equal(tookName.pending.kind,'effect-discard');
+ const skipped=dispatchUniversalAction(first.opened.packs,first.played,{type:'chooseTopFiltered',uid:null});
+ assert.equal(skipped.pending,null);
+ assert.deepEqual(skipped.players[0].outside.slice(-3).map(c=>c.uid),[traitCard.uid,nameCard.uid,plain.uid]);
+ assert.equal(skipped.players[0].hand.some(c=>[traitCard.uid,nameCard.uid,plain.uid].includes(c.uid)),false);
+ assert.equal(skipped.publicReveals.some(r=>r.kind==='searched-to-hand'),false);
+ const missed=open(290111,['BLC-1-001','BLC-1-018','BLC-4-001']);
+ assert.equal(missed.played.pending,null);
+ assert.deepEqual(missed.played.players[0].outside.slice(-3).map(c=>c.cardId),['BLC-1-001','BLC-1-018','BLC-4-001']);
+ assert.equal(missed.played.players[0].deck.some(c=>missed.window.some(x=>x.uid===c.uid)),false);
+ assert.equal(missed.played.publicReveals.filter(r=>r.kind==='revealed-window').length,3);
+ const named=open(290112,['BLC-2-006','BLC-1-018','BLC-1-001']);
+ const nameOnly=legalUniversalActions(named.opened.packs,named.played);
+ assert.equal(nameOnly.some(a=>a.uid===named.window[0].uid),true);
+ assert.equal(nameOnly.some(a=>a.uid===named.window[1].uid),false);
+ assert.equal(nameOnly.some(a=>a.uid===named.window[2].uid),false);
+ const gotName=dispatchUniversalAction(named.opened.packs,named.played,nameOnly.find(a=>a.uid===named.window[0].uid));
+ assert.equal(gotName.players[0].hand.some(c=>c.cardId==='BLC-2-006'&&c.uid===named.window[0].uid),true);
+ assert.deepEqual(gotName.players[0].outside.slice(-2).map(c=>c.uid),[named.window[1].uid,named.window[2].uid]);
+ const dry=main(deck,290113);
+ put(dry.s,0,'BLC-1-002','energy',0);
+ const lonely=take(dry.s,0,'BLC-2-011');
+ dry.s.players[0].outside.push(...dry.s.players[0].deck.splice(0));
+ dry.s.players[0].hand.push(lonely);
+ const quiet=dispatchUniversalAction(dry.packs,dry.s,legalUniversalActions(dry.packs,dry.s).find(a=>a.type==='play'&&a.uid===lonely.uid&&a.line==='front'));
+ assert.equal(quiet.pending,null);
+ assert.equal(quiet.players[0].deck.length,0);
+ assert.equal(quiet.players[0].front.find(c=>c?.uid===lonely.uid).ready,false);
+ const filler=(id)=>({id,name:id,color:'yellow',type:'character',energy:0,ap:1,bp:1000,gen:1,traits:['星十字騎士團'],trigger:null,implementation:'vanilla'});
+ const lab=createUniversalPack({id:'c29-bambies-outside',cards:[
+  {id:'ACT',name:'リルトット',color:'yellow',type:'character',energy:0,ap:1,bp:1000,gen:1,traits:[],trigger:null,implementation:'dsl',effects:{onPlay:[{op:'searchTopOneBottomDiscard',count:3,rest:'outside',filters,logic:'any'}]}},
+  {id:'TRAIT',name:'ジゼル',color:'yellow',type:'character',energy:0,ap:1,bp:1000,gen:1,traits:['星十字騎士團／邦比愛塔親衛隊'],traitComponents:['星十字騎士團','邦比愛塔親衛隊'],trigger:null,implementation:'vanilla'},
+  {id:'NAME',name:'バンビエッタ・バスターバイン',color:'yellow',type:'character',energy:0,ap:1,bp:1000,gen:1,traits:['星十字騎士團'],trigger:null,implementation:'vanilla'},
+  {id:'SQUAD',name:'リルトット・ランパード',color:'yellow',type:'character',energy:0,ap:1,bp:1000,gen:1,traits:['星十字騎士團','邦比小隊'],trigger:null,implementation:'vanilla'},
+  filler('PLAIN'),...Array.from({length:8},(_,i)=>filler('F'+i))
+ ]});
+ const counts={ACT:4,TRAIT:4,NAME:4,SQUAD:4,PLAIN:4,F0:4,F1:4,F2:4,F3:4,F4:4,F5:4,F6:4,F7:2};
+ assert.deepEqual(validateUniversalDeck(lab,counts),[]);
+ const both=[lab,lab];
+ let labState=newUniversalMatch(both,{decks:[counts,counts],seed:290115,first:0});
+ for(let n=0;n<8&&labState.phase!=='main';n++)
+  labState=dispatchUniversalAction(both,labState,{type:'next'});
+ function lift(id){
+  for(const zone of ['hand','deck','life','outside','removed']){
+   const list=labState.players[0][zone],i=list.findIndex(c=>c.cardId===id);
+   if(i>=0)return list.splice(i,1)[0];
+  }
+  throw Error('lab '+id);
+ }
+ const squad=lift('SQUAD'),bambi=lift('NAME'),member=lift('TRAIT');
+ labState.players[0].deck.unshift(member,bambi,squad);
+ const actor=lift('ACT');
+ labState.players[0].hand.push(actor);
+ const labPlayed=dispatchUniversalAction(both,labState,legalUniversalActions(both,labState).find(a=>a.type==='play'&&a.uid===actor.uid&&a.line==='front'));
+ const labLegal=legalUniversalActions(both,labPlayed);
+ assert.equal(labLegal.some(a=>a.uid===member.uid),true);
+ assert.equal(labLegal.some(a=>a.uid===bambi.uid),true);
+ assert.equal(labLegal.some(a=>a.uid===squad.uid),false);
+ aiOk(first.opened.packs,first.played);
+ assert.equal(assertUniversalMatch(first.opened.packs,first.played),true);
+ assert.equal(assertUniversalMatch(first.opened.packs,dumped),true);
+ assert.equal(assertUniversalMatch(first.opened.packs,tossed),true);
+ assert.equal(assertUniversalMatch(first.opened.packs,tookName),true);
+ assert.equal(assertUniversalMatch(first.opened.packs,skipped),true);
+ assert.equal(assertUniversalMatch(missed.opened.packs,missed.played),true);
+ assert.equal(assertUniversalMatch(named.opened.packs,gotName),true);
+ assert.equal(assertUniversalMatch(dry.packs,quiet),true);
+ assert.equal(assertUniversalMatch(both,labPlayed),true);
 });

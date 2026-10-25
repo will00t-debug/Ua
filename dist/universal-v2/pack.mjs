@@ -364,17 +364,21 @@ function verifyProgram(program,path){
      (f.field!=='type'||V2_CARD_TYPES.includes(f.value)));
    // Absent excludeRaid keeps every older traitless window, including a
    // printed Raid character. True is only the レイドを持たない sentence.
+   // Absent rest keeps the printed bottom order. outside is the only
+   // closed alternative: the remainder goes straight to outside.
+   const restOutside=e.rest==='outside';
+   const restKey=restOutside?['rest']:[];
    const excludeRaid=e.excludeRaid===true&&e.filter?.field==='traitlessCharacter'&&
     e.filters===undefined&&e.logic===undefined;
    const single=isFilter(e.filter)&&e.filters===undefined&&e.logic===undefined&&
-    (e.excludeRaid===undefined||excludeRaid)&&
-    Object.keys(e).every(k=>['op','count','filter',...(e.excludeRaid===true?['excludeRaid']:[])].includes(k));
+    (e.excludeRaid===undefined||excludeRaid)&&(e.rest===undefined||restOutside)&&
+    Object.keys(e).every(k=>['op','count','filter',...(e.excludeRaid===true?['excludeRaid']:[]),...restKey].includes(k));
    // Four is the printed か chain on BLC-3-002. Five remains invalid.
    const compound=e.filter===undefined&&Array.isArray(e.filters)&&
     e.filters.length>=2&&e.filters.length<=4&&e.filters.every(isFilter)&&
     new Set(e.filters.map(f=>f.field+':'+f.value)).size===e.filters.length&&
-    ['any','all'].includes(e.logic)&&
-    Object.keys(e).every(k=>['op','count','filters','logic'].includes(k));
+    ['any','all'].includes(e.logic)&&(e.rest===undefined||restOutside)&&
+    Object.keys(e).every(k=>['op','count','filters','logic',...restKey].includes(k));
    // Each group is AND. The card matches when any group matches. This is the
    // printed 「緑のイベントカードか緑のフィールドカード」 shape. It does not
    // combine with a flat filter, and two identical groups are rejected.
@@ -388,7 +392,8 @@ function verifyProgram(program,path){
     e.excludeRaid===undefined&&Array.isArray(e.groups)&&e.groups.length>=2&&
     e.groups.length<=4&&e.groups.every(groupOk)&&
     new Set(e.groups.map(groupSig)).size===e.groups.length&&
-    Object.keys(e).every(k=>['op','count','groups'].includes(k));
+    (e.rest===undefined||restOutside)&&
+    Object.keys(e).every(k=>['op','count','groups',...restKey].includes(k));
    if(!integer(e.count,1)||e.count>5||!(single||compound||grouped))
     throw Error(path+'['+i+'] invalid top-N filtered bottom/discard profile');
   }

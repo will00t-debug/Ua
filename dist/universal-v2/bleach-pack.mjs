@@ -1129,7 +1129,8 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 ,
 {"id":"BLC-2-033","kind":"drawOrPrintedApDraw","number":"EX07BT/BLC-2-033","name":"朽木 ルキア","color":"blue","energy":3,"ap":1,"bp":3000,"gen":2,"trigger":null,"type":"character","effect":"登場：抽 1 張，再將 1 張手牌送至場外；若己方前線有原始 AP 消耗 2 以上角色，可改為只抽 1 張。"}
 ,
-{"id":"BLC-1-022","kind":"revealOppTop","number":"UA08BT/BLC-1-022","name":"ユーハバッハ","color":"yellow","energy":3,"ap":1,"bp":3000,"gen":2,"trigger":"color","type":"character","effect":"登場：敵方公開牌堆頂 1 張；由己方選擇將該卡放回敵方牌堆頂或送至場外。"}
+{"id":"BLC-1-022","kind":"revealOppTop","number":"UA08BT/BLC-1-022","name":"ユーハバッハ","color":"yellow","energy":3,"ap":1,"bp":3000,"gen":2,"trigger":"color","type":"character","effect":"登場：敵方公開牌堆頂 1 張；由己方選擇將該卡放回敵方牌堆頂或送至場外。"},
+{"id":"BLC-2-011","kind":"revealTraitOrNameOutside","number":"EX07BT/BLC-2-011","name":"リルトット・ランパード","color":"yellow","energy":1,"ap":1,"bp":1500,"gen":1,"trigger":null,"type":"character","effect":"登場：公開己方牌堆頂 3 張，可將其中最多 1 張具有「邦比愛塔親衛隊」特徵或名為〈邦比愛塔・芭絲塔拜茵〉的卡加入手牌，其餘送至場外。若有卡加入手牌，再將 1 張手牌送至場外。"}
 ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1256,6 +1257,7 @@ export function checkedBleachAddonDefinition(p){
  const isPeekAttack=p.kind==='peekAttackRemove';
  const isDrawInstead=p.kind==='drawOrPrintedApDraw';
  const isRevealOppTop=p.kind==='revealOppTop';
+ const isRevealWindow=p.kind==='revealTraitOrNameOutside';
  const topDiscard={
   'BLC-3-007':{count:3,filter:{field:'trait',value:'護廷十三隊'}},
   'BLC-3-002':{count:3,filters:[
@@ -1289,13 +1291,14 @@ export function checkedBleachAddonDefinition(p){
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest||isOwnCharacterDraw||isPeekAttack||isDrawInstead||isRevealOppTop;
+ const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest||isOwnCharacterDraw||isPeekAttack||isDrawInstead||isRevealOppTop||isRevealWindow;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
   id:p.id,name:c.nameJa,color:c.color,type:c.type,energy:c.energy,ap:c.ap,
   bp:c.bp,gen:v2BaseGen,trigger:c.trigger??null,
   traits:Array.isArray(c.traits)?c.traits:(c.traits&&c.traits!=='無'?[c.traits]:[]),
+  ...(c.traits==='星十字騎士團／邦比愛塔親衛隊'?{traitComponents:['星十字騎士團','邦比愛塔親衛隊']}:{}),
   implementation:p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'?'vanilla':'dsl',
   ...(p.kind==='step'||p.kind==='stepAttackTraitBuff'?{step:true}:{}),
    ...(isKyoraku?{raidName:'京楽 春水',
@@ -1520,7 +1523,9 @@ export function checkedBleachAddonDefinition(p){
    isOwnCharacterDraw?{onPlay:[{op:'draw',count:1,entry:'ownCharacter'}]}:
    isPeekAttack?{onPlay:[{op:'peekTopOrBottom'}],onAttack:[{op:'optionalRemoveHandThen',zone:'removed',filter:{field:'trait',value:'零番隊'},then:[{op:'buffSelf',bp:2000}]}]}:
    isDrawInstead?{onPlay:[{op:'drawDiscard',count:1,discardCount:1,instead:{op:'draw',count:1,when:{kind:'ownPrintedApAtLeast',turn:'any',zone:'front',excludeSelf:false,minAp:2}}}]}:
-   isRevealOppTop?{onPlay:[{op:'revealOppTopPlace'}]}:{}})
+   isRevealOppTop?{onPlay:[{op:'revealOppTopPlace'}]}:
+   isRevealWindow?{onPlay:[{op:'searchTopOneBottomDiscard',count:3,rest:'outside',filters:[
+    {field:'trait',value:'邦比愛塔親衛隊'},{field:'name',value:'バンビエッタ・バスターバイン'}],logic:'any'}]}:{}})
  };
 }
 export function bleachV2PortedCards(){

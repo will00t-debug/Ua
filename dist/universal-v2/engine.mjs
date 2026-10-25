@@ -837,12 +837,24 @@ function continueEffectQueue(pack,s){
       filters:g.filters.map(f=>({...f}))}))}:
       job.filters?{filters:job.filters.map(f=>({...f})),logic:job.logic}:
       {filter:{...job.filter}};
-     // With no valid match, ALL inspected cards must still be ordered below.
-     s.pending=choices.length?{kind:'effect-top-filter-choice',player:owner,
-      sourceUid:job.sourceUid,uids,choices,...predicate,
-      ...(job.excludeRaid===true?{excludeRaid:true}:{})}:
-      {kind:'effect-top-order',player:owner,sourceUid:job.sourceUid,
-       uids,order:[],rest:'bottom'};
+     const raid=job.excludeRaid===true?{excludeRaid:true}:{};
+     if(job.rest==='outside'){
+      // 公開する covers every inspected card, not only the one added to hand.
+      for(const physical of inspected)s.publicReveals.push({kind:'revealed-window',
+       owner,title:titleOf(pack,owner),cardId:physical.cardId,uid:physical.uid,
+       trigger:null,turn:s.turn});
+      if(s.publicReveals.length>12)s.publicReveals.splice(0,s.publicReveals.length-12);
+      if(choices.length)s.pending={kind:'effect-top-filter-choice',player:owner,
+       sourceUid:job.sourceUid,uids,choices,...predicate,rest:'outside',...raid};
+      else for(let n=0;n<uids.length;n++)moveOwnedLinear(pack,s,{owner,from:'deck',
+       to:'outside',index:0,reason:'own-effect',sourceUid:job.sourceUid});
+     }else{
+      // With no valid match, ALL inspected cards must still be ordered below.
+      s.pending=choices.length?{kind:'effect-top-filter-choice',player:owner,
+       sourceUid:job.sourceUid,uids,choices,...predicate,...raid}:
+       {kind:'effect-top-order',player:owner,sourceUid:job.sourceUid,
+        uids,order:[],rest:'bottom'};
+     }
     }
    }else if(job.op==='deployOwnHandRest'||job.op==='deployOwnHandSpecial'){
     // Current hand is recomputed AFTER earlier optional outside recovery.
@@ -2295,13 +2307,25 @@ function resolveChoice(s,a,pack){
    if(i<0||i>=q.uids.length)throw Error('Selected physical UID outside top window');
    moveOwnedLinear(pack,s,{owner:q.player,from:'deck',to:'hand',index:i,
     reason:'own-effect',sourceUid:q.sourceUid});
-   // Printed 「公開し手札に加える」: expose ONLY the physical selected card
-   // through the existing bounded publicReveals. Never expose the full
-   // privately inspected window or leak private zoneMoveEvents.
+   // Printed 「公開し手札に加える」: this entry is only the selected card.
+   // A rest:'outside' window is already public as revealed-window. Absent
+   // rest keeps every other inspected card private.
    s.publicReveals.push({kind:'searched-to-hand',owner:q.player,
     title:titleOf(pack,q.player),cardId:chosen.cardId,uid:chosen.uid,
     trigger:null,turn:s.turn});
    if(s.publicReveals.length>12)s.publicReveals.splice(0,s.publicReveals.length-12);
+  }
+  if(q.rest==='outside'){
+   const remaining=q.uids.filter(uid=>uid!==a.uid);
+   const prefix=p.deck.slice(0,remaining.length);
+   if(prefix.length!==remaining.length||prefix.some((c,i)=>c.uid!==remaining[i]))
+    throw Error('Revealed remainder left the top window');
+   for(let n=0;n<remaining.length;n++)moveOwnedLinear(pack,s,{owner:q.player,
+    from:'deck',to:'outside',index:0,reason:'own-effect',sourceUid:q.sourceUid});
+   if(a.uid!==null&&p.hand.length)s.pending={kind:'effect-discard',player:q.player,
+    sourceUid:q.sourceUid};
+   else{s.pending=null;continueEffectQueue(pack,s);}
+   return;
   }
   const remaining=q.uids.filter(uid=>uid!==a.uid);
   if(remaining.length)s.pending={kind:'effect-top-order',player:q.player,
@@ -5286,15 +5310,19 @@ export function assertUniversalMatch(pack,s){
    ...pl.lifeRevealed,...(pl.removed||[])];
   const source=owned.find(c=>c.uid===q.sourceUid);
   const printed=source&&card(pack,source);
+  const restOutside=q.rest==='outside';
   const earned=printed?.effects?.onPlay?.some(e=>e.op==='searchTopOneBottomDiscard'&&
-   e.count>=q.uids?.length&&same(e.groups,q.groups));
+   e.count>=q.uids?.length&&same(e.groups,q.groups)&&
+   (restOutside?e.rest==='outside':e.rest===undefined));
   const window=Array.isArray(q.uids)?pl.deck.slice(0,q.uids.length):[];
   const expected=window.filter(c=>matchesSearch(pack,s,c,q)).map(c=>c.uid);
   if(!earned||!q.sourceUid.startsWith(q.player+'-')||!Array.isArray(q.uids)||
    q.uids.length<1||q.uids.length>5||new Set(q.uids).size!==q.uids.length||
    !same(window.map(c=>c.uid),q.uids)||!Array.isArray(q.choices)||
-   !same(q.choices,expected)||Object.keys(q).length!==6||
-   Object.keys(q).some(k=>!['kind','player','sourceUid','uids','choices','groups'].includes(k)))
+   !same(q.choices,expected)||(q.rest!==undefined&&!restOutside)||
+   Object.keys(q).length!==(restOutside?7:6)||
+   Object.keys(q).some(k=>!['kind','player','sourceUid','uids','choices','groups',
+    ...(restOutside?['rest']:[])].includes(k)))
    throw Error('Invalid grouped top-filter pending');
  }
  if(s.pending?.kind==='effect-top-filter-many-choice'){
