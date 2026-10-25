@@ -64,6 +64,7 @@ export function rezeroEngineKind(effectJa){
  if(e==='【登場時】自分のターン中の場合、APを1支払ってもよい。そうした場合、BP4500以上の相手のフロントLのキャラを1枚まで選び、退場させる。【起動メイン】【ターン1】自分の手札を1枚公開し、自分の山札の下に置く。公開したカードがBP4000以上のキャラカードの場合、このキャラはこのターン中、【インパクト（1）】を得る。')return 'wilhelmPayImpact';
  if(e==='【起動メイン】【APを1支払う】このカードが自分の手札にあり、必要エナジーを満たす場合のみ発動できる。このカードを公開し、BPが4000以上の場合、自分の場にこのカードをレストで登場させ、自分の場の他のキャラを1枚まで選び、アクティブにする。')return 'handPayRevealDeploy';
  if(e==='【レイド】〈エキドナ〉アクティブにし、フロントLに移動できる【登場時】カードを1枚引く。【起動メイン】【フロントLにある場合】 【ターン1】自分のフロントLのアクティブのキャラを1枚レストにする。そうした場合、カードを1枚引く。')return 'raidFrontRestDraw';
+ if(e==='【レイド】〈ナツキ・スバル〉アクティブにし、フロントLに移動できる【登場時】カードを1枚引く。【退場時】このキャラのレイド元のカードを1枚まで自分の場にレストで登場させる。')return 'raidRetireBase';
  return null;
 }
 const TOP_OUTSIDE=new Map([
@@ -190,7 +191,10 @@ export function rezeroPackCard(card){
   implementation:kind==='plain'||kind==='step'?'vanilla':'dsl',
   effects:kind==='activeFrontDownDraw'?{
    onPlay:[{op:'enemyBpDown',bp:1000,optional:true,minBp:1500,maxTargets:2,zone:'front'}],
-   onAttack:[{op:'drawIfOppFrontBelowPrinted',count:1}]}:ops?{onPlay:ops}:{},
+   onAttack:[{op:'drawIfOppFrontBelowPrinted',count:1}]}:
+   kind==='raidRetireBase'?{
+    onPlay:[{op:'draw',count:1}],
+    onRetire:[{op:'deployOwnRaidBaseRest',optional:true}]}:ops?{onPlay:ops}:{},
   ...(kind==='step'||kind==='emptyFieldStep'?{step:true}:{}),
   ...(kind==='impactNull'?{impactNull:true}:{}),
   ...(kind==='activeEnergy'?{activeExtraEnergy:1}:{}),
@@ -225,6 +229,7 @@ export function rezeroPackCard(card){
    op:'revealHandBottomImpact',oncePerTurn:true,minPrintedBp:4000,impact:1}}:{}),
   ...(kind==='handPayRevealDeploy'?{mainAbility:{
    op:'handPayRevealDeploy',payAp:1,minReferencedBp:4000}}:{}),
+  ...(kind==='raidRetireBase'?{raidName:'ナツキ・スバル'}:{}),
   ...(kind==='raidFrontRestDraw'?{raidName:'エキドナ',mainAbility:{
    op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,
    then:[{op:'restOwnActiveFrontDraw'}]}}:{}),

@@ -70,9 +70,9 @@ test('UA40BT and UA40ST share one catalogue and keep parallel art out',()=>{
  }
 });
 
-test('eighty-five whole prints enter the V2 pack and the other twenty-eight stay out',()=>{
- assert.equal(REZERO_ENGINE_IDS.length,85);
- assert.equal(Object.keys(pack.cards).length,85);
+test('eighty-six whole prints enter the V2 pack and the other twenty-seven stay out',()=>{
+ assert.equal(REZERO_ENGINE_IDS.length,86);
+ assert.equal(Object.keys(pack.cards).length,86);
  assert.equal(pack.cards['REZ-1-001'],undefined);
  assert.equal(pack.cards['REZ-1-008'].step,true);
  assert.equal(pack.cards['REZ-1-008'].implementation,'vanilla');
@@ -243,6 +243,14 @@ test('eighty-five whole prints enter the V2 pack and the other twenty-eight stay
  assert.equal(pack.cards['REZ-1-093'].energy,4);
  assert.equal(pack.cards['REZ-1-093'].raidName,'エキドナ');
  assert.deepEqual(pack.cards['REZ-1-093'].effects.onPlay,[{op:'draw',count:1}]);
+ assert.equal(pack.cards['REZ-1-040'].trigger,'raid');
+ assert.equal(pack.cards['REZ-1-040'].triggerEffect,null);
+ assert.equal(pack.cards['REZ-1-040'].color,'blue');
+ assert.equal(pack.cards['REZ-1-040'].energy,4);
+ assert.equal(pack.cards['REZ-1-040'].raidName,'ナツキ・スバル');
+ assert.equal(pack.cards['REZ-1-068'].raidName,null);
+ assert.deepEqual(pack.cards['REZ-1-040'].effects.onPlay,[{op:'draw',count:1}]);
+ assert.deepEqual(pack.cards['REZ-1-040'].effects.onRetire,[{op:'deployOwnRaidBaseRest',optional:true}]);
  assert.deepEqual(pack.cards['REZ-1-093'].mainAbility,{
   op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,
   then:[{op:'restOwnActiveFrontDraw'}]});
@@ -3590,4 +3598,135 @@ test('Echidna raids onto Echidna, draws on entry, then rests one active front ch
  assert.equal(assertUniversalMatch(packs,revealed),true);
  assert.equal(assertUniversalMatch(packs,gained),true);
  assert.equal(assertUniversalMatch(packs,skippedLife),true);
+});
+
+function toAttack(s,player){
+ let guard=0;
+ while(!(s.active===player&&s.phase==='attack'&&!s.pending)){
+  if(s.pending?.kind==='end-hand-limit'){
+   const hand=s.players[s.pending.player].hand[0];
+   s=dispatchUniversalAction(packs,s,{type:'chooseHandLimit',uid:hand.uid});
+  }else{
+   const next=legalUniversalActions(packs,s).find(a=>a.type==='next');
+   assert.ok(next,'stuck '+(s.pending?.kind||s.phase));
+   s=dispatchUniversalAction(packs,s,next);
+  }
+  assert.ok(++guard<64,'attack did not open');
+ }
+ return s;
+}
+const subaruCounts={
+ ...Object.fromEntries(['REZ-1-040','REZ-1-068','REZ-1-043','REZ-1-038','REZ-1-017','REZ-1-007',
+  'REZ-1-012','REZ-1-014','REZ-1-022','REZ-1-008'].map(id=>[id,4])),
+ 'REZ-1-029':2,'REZ-1-016':4,'REZ-1-024':4
+};
+const subaru=seed=>newUniversalMatch(packs,{decks:[subaruCounts,subaruCounts],first:0,seed});
+test('Subaru raids onto Subaru, draws, then may REST the raid base after retirement',()=>{
+ assert.equal(Object.values(subaruCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(pack,subaruCounts),[]);
+ const shell={id:'SUBARU',name:'ナツキ・スバル',color:'blue',type:'character',energy:4,ap:1,bp:4000,gen:0,
+  traits:[],trigger:'raid',raidName:'ナツキ・スバル',implementation:'dsl',effects:{}};
+ assert.throws(()=>createUniversalPack({id:'bad-subaru',cards:[{...shell,effects:{onPlay:[
+  {op:'deployOwnRaidBaseRest',optional:true}]}}]}),/character onRetire/);
+ assert.throws(()=>createUniversalPack({id:'bad-subaru',cards:[{...shell,effects:{onRetire:[
+  {op:'deployOwnRaidBaseRest'}]}}]}),/unsupported raid-base rest entry/);
+ assert.equal(V2_PENDING_LABELS['effect-raid-base-rest'],'選擇是否將突襲來源以休息狀態登場');
+
+ let live=subaru(6801);
+ [0,1,2,3].forEach(i=>{
+  const gen=pull(live,0,'REZ-1-043');
+  gen.ready=true;
+  live.players[0].energy[i]=gen;
+ });
+ const base=pull(live,0,'REZ-1-038');
+ live.players[0].front[0]=base;
+ const decoy=pull(live,0,'REZ-1-040');
+ live.players[0].front[1]=decoy;
+ const stranger=pull(live,0,'REZ-1-007');
+ live.players[0].front[2]=stranger;
+ const attacker=pull(live,1,'REZ-1-017');
+ attacker.ready=true;
+ live.players[1].front[0]=attacker;
+ live=ownMain(live,2);
+ live.players[0].front[0].ready=false;
+ live.players[0].front[1].ready=false;
+ live.players[0].front[2].ready=false;
+ assert.equal(universalEnergyByColor(packs,live,0).blue,4);
+ const waiting=pull(live,0,'REZ-1-040');
+ live.players[0].hand.push(waiting);
+ assert.equal(legalUniversalActions(packs,live).some(a=>a.type==='raid'&&a.baseUid===decoy.uid),false);
+ assert.equal(legalUniversalActions(packs,live).some(a=>a.type==='raid'&&a.baseUid===stranger.uid),false);
+ const raid=legalUniversalActions(packs,live).find(a=>a.type==='raid'&&a.uid===waiting.uid&&a.baseUid===base.uid);
+ assert.ok(raid);
+ assert.equal(raid.line,undefined);
+ const before=live.players[0].deck.length;
+ live=dispatchUniversalAction(packs,live,raid);
+ assert.equal(at(live,0,waiting.uid).ready,true);
+ assert.equal(at(live,0,waiting.uid).stack[0].uid,base.uid);
+ assert.equal(at(live,0,waiting.uid).stack[0].ready,false);
+ assert.equal(live.players[0].deck.length,before-1);
+ assert.equal(live.pending,null);
+ live=toAttack(live,1);
+ live=dispatchUniversalAction(packs,live,{type:'attack',uid:attacker.uid});
+ assert.equal(live.pending.kind,'block');
+ live=dispatchUniversalAction(packs,live,{type:'chooseBlock',uid:waiting.uid});
+ assert.equal(live.pending.kind,'effect-raid-base-rest');
+ assert.equal(live.pending.player,0);
+ assert.equal(live.pending.baseUid,base.uid);
+ assert.equal(live.pending.sourceUid,waiting.uid);
+ const acts=legalUniversalActions(packs,live);
+ assert.equal(uiActionLabel(acts.find(a=>a.uid===null),{pack,state:live}),'不使突襲來源登場');
+ const deploy=acts.find(a=>a.type==='chooseRaidBaseRest'&&a.uid===base.uid&&a.line==='front'&&a.replaceUid===undefined);
+ assert.ok(deploy);
+ assert.equal(uiActionLabel(deploy,{pack,state:live}),'將 ナツキ・スバル 以休息狀態放到前線 '+(deploy.slot+1));
+ assert.notEqual(chooseUniversalAiAction(packs,live).uid,null);
+ const forged=structuredClone(live);
+ forged.pending.baseUid=waiting.uid;
+ assert.throws(()=>assertUniversalMatch(packs,forged),/Invalid raid-base REST pending/);
+ const skipped=dispatchUniversalAction(packs,structuredClone(live),{type:'chooseRaidBaseRest',uid:null});
+ assert.equal(skipped.pending,null);
+ assert.ok(skipped.players[0].outside.some(c=>c.uid===base.uid));
+ assert.ok(skipped.players[0].outside.some(c=>c.uid===waiting.uid));
+ assert.equal(at(skipped,0,base.uid).ready,false);
+ const drawn=live.players[0].deck.length;
+ live=dispatchUniversalAction(packs,live,deploy);
+ assert.equal(live.pending.kind,'effect-discard');
+ assert.equal(live.pending.sourceUid,base.uid);
+ assert.equal(at(live,0,base.uid).ready,false);
+ assert.equal(live.players[0].front.some(c=>c?.uid===base.uid),true);
+ assert.equal(live.players[0].deck.length,drawn-1);
+ assert.ok(live.zoneMoveEvents.some(e=>e.uid===base.uid&&e.from==='outside'&&e.to==='front'&&e.reason==='own-effect'));
+ const handCard=live.players[0].hand[0];
+ live=dispatchUniversalAction(packs,live,{type:'chooseDiscard',uid:handCard.uid});
+ assert.equal(live.pending,null);
+ assert.ok(live.players[0].outside.some(c=>c.uid===handCard.uid));
+ assert.equal(assertUniversalMatch(packs,live),true);
+ assert.equal(assertUniversalMatch(packs,skipped),true);
+
+ let plain=subaru(6802);
+ [0,1,2,3].forEach(i=>{
+  const gen=pull(plain,0,'REZ-1-043');
+  gen.ready=true;
+  plain.players[0].energy[i]=gen;
+ });
+ const rival=pull(plain,1,'REZ-1-017');
+ rival.ready=true;
+ plain.players[1].front[0]=rival;
+ plain=ownMain(plain,2);
+ const played=pull(plain,0,'REZ-1-040');
+ plain.players[0].hand.push(played);
+ const play=legalUniversalActions(packs,plain).find(a=>a.type==='play'&&a.uid===played.uid&&a.line==='front');
+ assert.ok(play);
+ const deck=plain.players[0].deck.length;
+ plain=dispatchUniversalAction(packs,plain,play);
+ assert.equal(plain.players[0].deck.length,deck-1);
+ assert.equal(at(plain,0,played.uid).ready,false);
+ assert.equal(at(plain,0,played.uid).stack.length,0);
+ at(plain,0,played.uid).ready=true;
+ plain=toAttack(plain,1);
+ plain=dispatchUniversalAction(packs,plain,{type:'attack',uid:rival.uid});
+ plain=dispatchUniversalAction(packs,plain,{type:'chooseBlock',uid:played.uid});
+ assert.notEqual(plain.pending?.kind,'effect-raid-base-rest');
+ assert.ok(plain.players[0].outside.some(c=>c.uid===played.uid));
+ assert.equal(assertUniversalMatch(packs,plain),true);
 });
