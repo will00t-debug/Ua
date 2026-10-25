@@ -1775,7 +1775,9 @@ function impactFlag(value){
  return false;
 }
 function impactHitCount(value){
- if(value===true||value===1)return 1;
+ // A saved one-hit job has no amount. Only an explicit count above 1
+ // adds further life checks; false and zero stay no damage.
+ if(value===undefined||value===true||value===1)return 1;
  if(Number.isInteger(value)&&value>1)return value;
  return 0;
 }
