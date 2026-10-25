@@ -325,6 +325,10 @@ function matchesFilter(pack,s,physical,filter){
   printed.type==='character'&&!(printed.traits||[]).length;
  if(filter.field==='printedRequiredEnergyAtMost')return matchesPrintedRequiredEnergyAtMost(printed,filter.value);
  if(filter.field==='printedApAtLeast')return printed.ap>=filter.value;
+ if(filter.field==='colorAndType'){
+  const [color,type]=String(filter.value).split(':');
+  return printed.color===color&&printed.type===type;
+ }
  // Name filters see the alias everywhere this predicate is asked, except a
  // live field card whose original text is negated. Callers pass deck,
  // outside, or visible field cards. They do not pass buried Raid layers.
@@ -803,6 +807,9 @@ function continueEffectQueue(pack,s){
     }
    }else if(job.op==='deployOwnHandRest'||job.op==='deployOwnHandSpecial'){
     // Current hand is recomputed AFTER earlier optional outside recovery.
+    // A printed name gate is read now. A miss does not open an empty choice.
+    if(job.when&&!matchesV2LiveCondition(s,owner,job.sourceUid,job.when,
+     c=>card(pack,c),()=>calcEnergy(pack,s,owner),c=>bp(pack,s,c)))continue;
     const special=job.op==='deployOwnHandSpecial';
     const choices=pl.hand.filter(c=>{
      const d=card(pack,c);

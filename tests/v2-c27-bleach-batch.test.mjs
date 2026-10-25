@@ -111,9 +111,9 @@ function battle(s,attackerUid,blockerUid){
 }
 
 test('C27 registers three whole prints and leaves the conflicting per-count card out',()=>{
- assert.equal(EXPECTED_V2_COUNTS.bleach,177);
- assert.equal(EXPECTED_V2_TOTAL,429);
- assert.equal(Object.keys(bleach.cards).length,177);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,180);
+ assert.equal(EXPECTED_V2_TOTAL,432);
+ assert.equal(Object.keys(bleach.cards).length,180);
  for(const id of IDS){
   const entry=contribution.entries.find(x=>x.id===id);
   assert.ok(entry,id);

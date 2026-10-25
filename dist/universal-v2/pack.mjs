@@ -286,9 +286,11 @@ function verifyProgram(program,path){
    Object.keys(e).some(k=>!['op','count','toOutside','rest'].includes(k))
   ))throw Error(path+'['+i+'] invalid top inspect/arrange');
   if(e.op==='searchTopOneBottomDiscard'){
+   const colorAndType=/^(blue|yellow|green|purple|red):(event|field)$/;
    const isFilter=f=>f&&typeof f==='object'&&!Array.isArray(f)&&
     Object.keys(f).length===2&&(
      f.field==='traitlessCharacter'?f.value===true:
+     f.field==='colorAndType'?colorAndType.test(f.value):
      ['name','trait','color','type'].includes(f.field)&&
      typeof f.value==='string'&&!!f.value.trim()&&
      (f.field!=='type'||V2_CARD_TYPES.includes(f.value)));
@@ -318,10 +320,16 @@ function verifyProgram(program,path){
     throw Error(path+'['+i+'] invalid TOP-N two-card hand search');
   }
   if(e.op==='deployOwnHandRest'){
+   const gated=e.when!==undefined;
+   if(gated){
+    assertLiveCondition(e.when,path+'['+i+'].when');
+    if(e.when.kind!=='ownNameExists'||e.when.zone!=='field'||e.when.turn!=='any'||e.max!==1)
+     throw Error(path+'['+i+'] hand REST name gate must be one field name');
+   }
    if(!['character','field'].includes(e.type)||!['blue','yellow','green','purple','red'].includes(e.color)||
     !integer(e.energy)||e.energy>30||!integer(e.ap,1)||e.ap>3||
-    !integer(e.max,1)||e.max>4||Object.keys(e).length!==6||
-    Object.keys(e).some(k=>!['op','type','color','energy','ap','max'].includes(k)))
+    !integer(e.max,1)||e.max>4||Object.keys(e).length!==(gated?7:6)||
+    Object.keys(e).some(k=>!['op','type','color','energy','ap','max',...(gated?['when']:[])].includes(k)))
     throw Error(path+'['+i+'] invalid hand REST entry');
   }
   if(e.op==='deployOwnHandSpecial'){
@@ -1243,8 +1251,15 @@ function normalize(card,packId){
    throw Error(card.id+' targeting AP tax grant requires character onPlay');
   if(name!=='onPlay'&&program.some(e=>e.op==='forbidAttackOppFrontOne'))
    throw Error(card.id+' attack prohibition may be granted only onPlay');
-  if(name!=='onRaided'&&program.some(e=>['buffOwnTrait','drawIfRaidUnderFacedown'].includes(e.op)))
+  if(name!=='onRaided'&&program.some(e=>e.op==='drawIfRaidUnderFacedown'))
    throw Error(card.id+' Raid-base effects require onRaided timing');
+  // BLC-1-078 attacks and chooses one own field card with the printed trait.
+  // The same optional trait choice remains legal on a Raid base.
+  if(program.some(e=>e.op==='buffOwnTrait')&&name!=='onRaided'&&name!=='onAttack')
+   throw Error(card.id+' trait BP choice requires onRaided or onAttack');
+  if(name==='onAttack'&&program.some(e=>e.op==='buffOwnTrait')&&
+   (card.type!=='character'||program.length!==1))
+   throw Error(card.id+' onAttack trait BP is one character choice');
   if(name==='onRaided'&&program.some(e=>!['buffOwnTrait','drawIfRaidUnderFacedown','chooseOne'].includes(e.op)))
    throw Error(card.id+' unsupported Raid-base timing effect');
   if(name!=='onPlay'&&program.some(e=>e.op==='discardOppHand'))

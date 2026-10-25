@@ -106,7 +106,10 @@ const testForKind=Object.freeze({
  buffThenAp:'tests/v2-c28-bleach-batch.test.mjs',
  restUntilNextOwn:'tests/v2-c28-bleach-batch.test.mjs',
  replayFrontDown:'tests/v2-c28-bleach-batch.test.mjs',
- printedApTop:'tests/v2-c28-bleach-batch.test.mjs'
+ printedApTop:'tests/v2-c28-bleach-batch.test.mjs',
+ attackTraitBuff:'tests/v2-c29-bleach-batch.test.mjs',
+ hitsugayaHandRest:'tests/v2-c29-bleach-batch.test.mjs',
+ greenEventOrFieldTop:'tests/v2-c29-bleach-batch.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.

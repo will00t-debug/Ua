@@ -1096,6 +1096,12 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-4-037","kind":"replayFrontDown","number":"EX15BT/BLC-4-037","name":"ネリエル・トゥ・オーデルシュヴァンク","color":"blue","energy":3,"ap":1,"bp":2000,"gen":3,"trigger":"draw","type":"character","effect":"登場時：最多選1個對方前線BP1500以上的角色，本回合BP−1000。啟動・主要〔支付1 AP／每回合1次〕：發動此角色的登場時效果。"}
 ,
 {"id":"BLC-2-032","kind":"printedApTop","number":"UAPR/BLC-2-032","name":"朽木 ルキア","color":"blue","energy":2,"ap":1,"bp":2000,"gen":1,"trigger":null,"type":"character","effect":"登場：查看己方牌堆頂 5 張，可公開其中最多 1 張原始 AP 消耗 2 以上的卡並加入手牌，其餘以任意順序放至牌堆底。"}
+,
+{"id":"BLC-1-078","kind":"attackTraitBuff","number":"UA08BT/BLC-1-078","name":"狛村 左陣","color":"green","energy":3,"ap":1,"bp":3000,"gen":2,"trigger":"active","type":"character","effect":"Step：己方移動階段可由前線移至能源線。攻擊時：可使最多 1 個己方場上具有「護廷十三隊」特徵的角色本回合 BP +500。"}
+,
+{"id":"BLC-2-072","kind":"hitsugayaHandRest","number":"EX07BT/BLC-2-072","name":"松本 乱菊","color":"green","energy":3,"ap":1,"bp":3000,"gen":1,"trigger":"draw","type":"character","effect":"登場：己方場上有〈日番谷冬獅郎〉時，可從手牌將最多 1 張需求能源 2 以下、AP 消耗 1 的綠色角色卡，以 REST 登場於己方場上。"}
+,
+{"id":"BLC-4-064","kind":"greenEventOrFieldTop","number":"EX15BT/BLC-4-064","name":"伊勢 七緒","color":"green","energy":0,"ap":1,"bp":1000,"gen":1,"trigger":null,"type":"character","effect":"登場時：查看牌庫頂3張，最多公開1張綠色事件卡或綠色場地卡加入手牌，其餘依任意順序放回牌庫底；若有加入手牌，將1張手牌送至場外。"}
 ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1193,6 +1199,7 @@ export function checkedBleachAddonDefinition(p){
  const isC26=['ownTurnImmune','chooseBuffOrDown','namedColorBuff','restFrontEnergy','frontEmptyAlias','traitTopDiscard','aliasNameTop','fourNameTop','ownEffectRest','ownEffectDrawPayImpact'].includes(p.kind);
  const isC27=['oppFrontBelowPrinted','raidFrontRestUnder','otherRetiredBp'].includes(p.kind);
  const isC28=['buffThenAp','restUntilNextOwn','replayFrontDown','printedApTop'].includes(p.kind);
+ const isC29=['attackTraitBuff','hitsugayaHandRest','greenEventOrFieldTop'].includes(p.kind);
  const renjiName='阿散井 恋次',rukiaName='朽木 ルキア';
  const slashPay={zone:'hand',field:'name',match:'containsAny',values:['斬月','月牙']};
  const causedBy=(sourceName,sourceColor)=>({from:'hand',to:'outside',sourceName,
@@ -1215,7 +1222,7 @@ export function checkedBleachAddonDefinition(p){
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isC26||isC27||isC28;
+ const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isC26||isC27||isC28||isC29;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1223,7 +1230,7 @@ export function checkedBleachAddonDefinition(p){
   bp:c.bp,gen:v2BaseGen,trigger:c.trigger??null,
   traits:Array.isArray(c.traits)?c.traits:(c.traits&&c.traits!=='無'?[c.traits]:[]),
   implementation:p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'?'vanilla':'dsl',
-  ...(p.kind==='step'?{step:true}:{}),
+  ...(p.kind==='step'||p.kind==='attackTraitBuff'?{step:true}:{}),
    ...(isKyoraku?{raidName:'京楽 春水',
     attackEndSwap:{color:'green',types:['event','field'],minDistinctNames:4}}:{}),
    ...(isRestRetireField?{mainAbility:{op:'fieldRestRetireThen',then:[
@@ -1407,6 +1414,9 @@ export function checkedBleachAddonDefinition(p){
    p.kind==='buffThenAp'?{onPlay:[{op:'buffOwnField',filter:{field:'type',value:'character'},bp:1000,optional:false,excludeSelf:false},{op:'recoverAp',count:1}]}:
    p.kind==='replayFrontDown'?{onPlay:[{op:'enemyBpDown',bp:1000,optional:true,minBp:1500}]}:
    p.kind==='printedApTop'?{onPlay:[{op:'searchTopUpToTwoBottom',count:5,max:1,rest:'bottom',logic:'all',filters:[{field:'printedApAtLeast',value:2}]}]}:
+   p.kind==='attackTraitBuff'?{onAttack:[{op:'buffOwnTrait',trait:'護廷十三隊',bp:500,optional:true}]}:
+   p.kind==='hitsugayaHandRest'?{onPlay:[{op:'deployOwnHandRest',type:'character',color:'green',energy:2,ap:1,max:1,when:{kind:'ownNameExists',turn:'any',zone:'field',excludeSelf:false,name:'日番谷 冬獅郎'}}]}:
+   p.kind==='greenEventOrFieldTop'?{onPlay:[{op:'searchTopOneBottomDiscard',count:3,logic:'any',filters:[{field:'colorAndType',value:'green:event'},{field:'colorAndType',value:'green:field'}]}]}:
    isStripDual?{onPlay:[{op:'chooseOne',optional:false,options:[
     {id:'strip',label:'Strip opponent RAID top',turn:'any',
      then:[{op:'stripOppRaidTop',optional:true}]},
