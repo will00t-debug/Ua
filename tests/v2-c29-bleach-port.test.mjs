@@ -92,9 +92,16 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 //   Recovery accepts any card type at printed energy 2 or less.
 //   COLOR: BP3500以下の相手のフロントのキャラを1枚手札に戻す。
 //   Required energy alt is 青3. Generated energy alt is 青青, so gen stays 2.
+// BLC-2-001 EX07BT: （自分の移動フェイズにフロントLからエナジーLへ移動できる）
+//   [起動メイン][ターン1] 相手のフロントLに元々のBPよりBPが低いキャラか
+//   レストのキャラがある場合、このキャラはこのターン中、BP+1000。
+//   The printed BP cell is 3000+. That plus is the Step marker; BP stays 3000.
+//   No trigger. Required energy alt is 黄3. Generated energy alt is 黄黄.
+//   Front only. A rested energy-line character does not qualify.
+//   The activation does not rest this card and works from either own line.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -165,12 +172,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers thirty-eight whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,474);
- assert.equal(EXPECTED_V2_COUNTS.bleach,198);
+test('C29 registers thirty-nine whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,475);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,199);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,198);
+ assert.equal(Object.keys(bleach.cards).length,199);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -2847,4 +2854,106 @@ test('BLC-2-014 may bounce one own character at energy 2 or less, then recover o
  assert.equal(assertUniversalMatch(life.packs,woken),true);
  assert.equal(assertUniversalMatch(both,labPlayed),true);
  assert.equal(assertUniversalMatch(both,labBounced),true);
+});
+
+test('BLC-2-001 steps to energy and buffs once while the opponent front is reduced or rested',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-2-001');
+ assert.equal(printed.effect,'Step：己方移動階段可由前線移至能源線。主要階段・每回合 1 次：敵方前線有 BP 低於原始 BP 的角色，或有 REST 角色時，此角色本回合 BP +1000。');
+ assert.equal(printed.traits,'星十字騎士團');
+ assert.equal(printed.energy,3);
+ assert.equal(printed.ap,1);
+ assert.equal(printed.bp,3000);
+ assert.equal(printed.gen,2);
+ assert.equal(printed.trigger,null);
+ const when={logic:'any',checks:[
+  {kind:'oppFrontLiveBpBelowPrinted',turn:'any'},
+  {kind:'oppRestCharacter',turn:'any',zone:'front'}]};
+ const card=bleach.cards['BLC-2-001'];
+ assert.equal(card.step,true);
+ assert.equal(card.gen,2);
+ assert.equal(card.triggerEffect,null);
+ assert.deepEqual(card.traits,['星十字騎士團']);
+ assert.equal(card.traitComponents,undefined);
+ assert.deepEqual(card.mainAbility,{op:'onceBuffSelfWhen',oncePerTurn:true,bp:1000,when});
+ const bare={id:'BAD',name:'BAD',color:'yellow',type:'character',energy:0,ap:1,bp:1000,gen:1,traits:[],trigger:null,implementation:'dsl',effects:{},mainAbility:{op:'onceBuffSelfWhen',oncePerTurn:true,bp:1000,when:{logic:'any',checks:[{kind:'oppRestCharacter',turn:'any',zone:'field'}]}}};
+ assert.throws(()=>createUniversalPack({id:'bad-step-or',cards:[bare]}),/unsupported main action ability/);
+ const deck=realDeck(['BLC-2-001','BLC-1-001','BLC-1-002','BLC-1-012','BLC-1-018','BLC-1-021','BLC-2-003'],'yellow');
+ const first=main(deck,29301);
+ put(first.s,0,'BLC-1-002','energy',0);
+ put(first.s,0,'BLC-1-012','energy',1);
+ put(first.s,0,'BLC-1-018','energy',2);
+ const rested=put(first.s,1,'BLC-1-001','front',0,false);
+ const full=put(first.s,1,'BLC-1-021','front',1,true);
+ const bench=put(first.s,1,'BLC-2-003','energy',0,false);
+ const self=take(first.s,0,'BLC-2-001');
+ first.s.players[0].hand.push(self);
+ const play=legalUniversalActions(first.packs,first.s).find(a=>a.type==='play'&&a.uid===self.uid&&a.line==='front');
+ assert.ok(play);
+ let played=dispatchUniversalAction(first.packs,first.s,play);
+ const body=played.players[0].front.find(c=>c?.uid===self.uid);
+ assert.equal(body.ready,false);
+ assert.equal(universalBp(first.packs,played,body),3000);
+ const act=legalUniversalActions(first.packs,played).find(a=>a.type==='activate'&&a.mode==='onceBuffSelf'&&a.uid===self.uid);
+ assert.ok(act);
+ played=dispatchUniversalAction(first.packs,played,act);
+ const boosted=played.players[0].front.find(c=>c?.uid===self.uid);
+ assert.equal(boosted.ready,false);
+ assert.equal(universalBp(first.packs,played,boosted),4000);
+ assert.equal(legalUniversalActions(first.packs,played).some(a=>a.mode==='onceBuffSelf'),false);
+ const quiet=main(deck,29302);
+ put(quiet.s,0,'BLC-1-002','energy',0);
+ put(quiet.s,0,'BLC-1-012','energy',1);
+ put(quiet.s,0,'BLC-1-018','energy',2);
+ put(quiet.s,1,'BLC-1-001','front',0,true);
+ put(quiet.s,1,'BLC-2-003','energy',0,false);
+ const quietSelf=take(quiet.s,0,'BLC-2-001');
+ quiet.s.players[0].hand.push(quietSelf);
+ const quietPlay=dispatchUniversalAction(quiet.packs,quiet.s,legalUniversalActions(quiet.packs,quiet.s).find(a=>a.type==='play'&&a.uid===quietSelf.uid&&a.line==='front'));
+ assert.equal(legalUniversalActions(quiet.packs,quietPlay).some(a=>a.mode==='onceBuffSelf'),false);
+ const lowered=main(deck,29303);
+ put(lowered.s,0,'BLC-1-002','energy',0);
+ put(lowered.s,0,'BLC-1-012','energy',1);
+ put(lowered.s,0,'BLC-1-018','energy',2);
+ const victim=put(lowered.s,1,'BLC-1-001','front',0,true);
+ victim.buffs=[{bp:-1000,untilTurn:lowered.s.turn}];
+ assert.equal(universalBp(lowered.packs,lowered.s,victim),1000);
+ const lowSelf=take(lowered.s,0,'BLC-2-001');
+ lowered.s.players[0].hand.push(lowSelf);
+ let lowPlayed=dispatchUniversalAction(lowered.packs,lowered.s,legalUniversalActions(lowered.packs,lowered.s).find(a=>a.type==='play'&&a.uid===lowSelf.uid&&a.line==='front'));
+ const lowAct=legalUniversalActions(lowered.packs,lowPlayed).find(a=>a.mode==='onceBuffSelf'&&a.uid===lowSelf.uid);
+ assert.ok(lowAct);
+ lowPlayed=dispatchUniversalAction(lowered.packs,lowPlayed,lowAct);
+ assert.equal(universalBp(lowered.packs,lowPlayed,lowPlayed.players[0].front.find(c=>c?.uid===lowSelf.uid)),4000);
+ let stepped=played;
+ for(let n=0;n<30&&!(stepped.active===0&&stepped.phase==='move'&&stepped.players[0].ownTurns===2);n++){
+  const step=legalUniversalActions(first.packs,stepped).find(a=>a.type==='next');
+  assert.ok(step);
+  stepped=dispatchUniversalAction(first.packs,stepped,step);
+ }
+ const shift=legalUniversalActions(first.packs,stepped).find(a=>a.type==='step'&&a.uid===self.uid);
+ assert.ok(shift);
+ stepped=dispatchUniversalAction(first.packs,stepped,shift);
+ assert.equal(stepped.players[0].energy.some(c=>c?.uid===self.uid),true);
+ stepped.players[1].front.find(c=>c?.cardId==='BLC-1-001').ready=false;
+ for(let n=0;n<8&&!(stepped.active===0&&stepped.phase==='main');n++)
+  stepped=dispatchUniversalAction(first.packs,stepped,{type:'next'});
+ const again=legalUniversalActions(first.packs,stepped).find(a=>a.type==='activate'&&a.mode==='onceBuffSelf'&&a.uid===self.uid);
+ assert.ok(again);
+ stepped=dispatchUniversalAction(first.packs,stepped,again);
+ const moved=stepped.players[0].energy.find(c=>c?.uid===self.uid);
+ assert.equal(universalBp(first.packs,stepped,moved),4000);
+ for(let n=0;n<20&&stepped.active===0;n++){
+  const step=legalUniversalActions(first.packs,stepped).find(a=>a.type==='next');
+  assert.ok(step);
+  stepped=dispatchUniversalAction(first.packs,stepped,step);
+ }
+ assert.equal(universalBp(first.packs,stepped,stepped.players[0].energy.find(c=>c?.uid===self.uid)),3000);
+ assert.equal(rested.ready,false);
+ assert.equal(full.ready,true);
+ assert.equal(bench.ready,false);
+ aiOk(first.packs,played);
+ assert.equal(assertUniversalMatch(first.packs,played),true);
+ assert.equal(assertUniversalMatch(quiet.packs,quietPlay),true);
+ assert.equal(assertUniversalMatch(lowered.packs,lowPlayed),true);
+ assert.equal(assertUniversalMatch(first.packs,stepped),true);
 });

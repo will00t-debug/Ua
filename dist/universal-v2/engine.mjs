@@ -4292,6 +4292,11 @@ function cardEffectTargetPayable(pack,s,selector,uid,reservedAp=0,
   return false;
  return apTax<=availableAp(s,selector)-reservedAp;
 }
+function oppFrontReducedOrRest(pack,s,owner,sourceUid,when){
+ return when?.logic==='any'&&Array.isArray(when.checks)&&when.checks.some(q=>
+  matchesV2LiveCondition(s,owner,sourceUid,q,c=>card(pack,c),
+   ()=>calcEnergy(pack,s,owner),c=>bp(pack,s,c)));
+}
 export function legalUniversalActions(pack,s){
  assertUniversalMatch(pack,s);
  if(s.status!=='playing')return [];
@@ -4383,6 +4388,9 @@ export function legalUniversalActions(pack,s){
    if(ability?.op==='restOnceBuffSelfUntilNextOwnStart'&&c.ready&&
     !s.mainAbilityUsedUids.includes(c.uid))
     out.push({type:'activate',uid:c.uid,mode:'restOnceSelfBuff'});
+   if(ability?.op==='onceBuffSelfWhen'&&!s.mainAbilityUsedUids.includes(c.uid)&&
+    oppFrontReducedOrRest(pack,s,p,c.uid,ability.when))
+    out.push({type:'activate',uid:c.uid,mode:'onceBuffSelf'});
    if(ability?.op==='payApDrawGainEnergy'&&
     !s.mainAbilityUsedUids.includes(c.uid)&&pl.apCards.some(x=>x.ready))
     out.push({type:'activate',uid:c.uid,mode:'payApDrawEnergy'});
@@ -4437,6 +4445,12 @@ export function legalUniversalActions(pack,s){
    if(ability.op==='restOnceBuffSelfUntilNextOwnStart'){
     if(c.ready&&!s.mainAbilityUsedUids.includes(c.uid))
      out.push({type:'activate',uid:c.uid,mode:'restOnceSelfBuff'});
+    continue;
+   }
+   if(ability.op==='onceBuffSelfWhen'){
+    if(!s.mainAbilityUsedUids.includes(c.uid)&&
+     oppFrontReducedOrRest(pack,s,p,c.uid,ability.when))
+     out.push({type:'activate',uid:c.uid,mode:'onceBuffSelf'});
     continue;
    }
    if(ability.op==='restSelfBuffOther'){
@@ -4882,6 +4896,15 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
      sourceUid:selected.uid,sourceName:d.name});
     s.pending={kind:'effect-buff-own',player:p,sourceUid:selected.uid,choices,
      filter:{field:'type',value:'character'},bp:ability.bp,optional:false,excludeSelf:true};
+    break;
+   }
+   if(ability.op==='onceBuffSelfWhen'){
+    if(action.mode!=='onceBuffSelf'||s.mainAbilityUsedUids.includes(selected.uid)||
+     !oppFrontReducedOrRest(pack,s,p,selected.uid,ability.when))
+     throw Error('Once self buff needs the printed front condition');
+    s.mainAbilityUsedUids.push(selected.uid);
+    selected.buffs??=[];
+    selected.buffs.push({bp:ability.bp,untilTurn:s.turn});
     break;
    }
    if(ability.op==='restOnceBuffSelfUntilNextOwnStart'){

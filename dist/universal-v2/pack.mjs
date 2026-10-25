@@ -1286,6 +1286,23 @@ function normalize(card,packId){
   integer(mainAbility.extraEnergy,1)&&mainAbility.extraEnergy<=3&&
   Object.keys(mainAbility).length===4&&
   Object.keys(mainAbility).every(k=>['op','oncePerTurn','draw','extraEnergy'].includes(k));
+ const mainOnceBuffWhen=mainAbility?.op==='onceBuffSelfWhen'&&
+  mainAbility.oncePerTurn===true&&mainAbility.bp===1000&&
+  mainAbility.when?.logic==='any'&&
+  Array.isArray(mainAbility.when.checks)&&mainAbility.when.checks.length===2&&
+  mainAbility.when.checks[0]?.kind==='oppFrontLiveBpBelowPrinted'&&
+  mainAbility.when.checks[0].turn==='any'&&
+  Object.keys(mainAbility.when.checks[0]).length===2&&
+  mainAbility.when.checks[1]?.kind==='oppRestCharacter'&&
+  mainAbility.when.checks[1].turn==='any'&&
+  mainAbility.when.checks[1].zone==='front'&&
+  Object.keys(mainAbility.when.checks[1]).length===3&&
+  Object.keys(mainAbility.when).length===2&&
+  Object.keys(mainAbility.when).every(k=>['logic','checks'].includes(k))&&
+  Object.keys(mainAbility).length===4&&
+  Object.keys(mainAbility).every(k=>['op','oncePerTurn','bp','when'].includes(k));
+ if(mainOnceBuffWhen)for(const q of mainAbility.when.checks)
+  assertLiveCondition(q,card.id+' once buff');
  const mainRestOnceSelf=mainAbility?.op==='restOnceBuffSelfUntilNextOwnStart'&&
   mainAbility.oncePerTurn===true&&
   integer(mainAbility.bp,1)&&mainAbility.bp<=5000&&
@@ -1305,7 +1322,7 @@ function normalize(card,packId){
   Object.keys(mainAbility.then[0]).every(k=>['op','count'].includes(k));
  if(mainRestProgram)verifyProgram(mainAbility.then,card.id+'.mainAbility.then');
  if(mainAbility!==null&&
-  (!['character','field'].includes(card.type)||!(fieldDualMain||fieldRestRetireThen||card.type==='character'&&(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainRestBuff||mainRestRetireRecover||mainRestOnceBuffReturn||mainRestOnceSelf||mainPayAp||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainRestDiscardRetire||mainFrontProgram||mainFieldOnceBuff||mainEntryProtect||mainRestRetireUnder||mainRestTwoMove||mainOncePay))))
+  (!['character','field'].includes(card.type)||!(fieldDualMain||fieldRestRetireThen||card.type==='character'&&(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainRestBuff||mainRestRetireRecover||mainRestOnceBuffReturn||mainRestOnceSelf||mainOnceBuffWhen||mainPayAp||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainRestDiscardRetire||mainFrontProgram||mainFieldOnceBuff||mainEntryProtect||mainRestRetireUnder||mainRestTwoMove||mainOncePay))))
   throw Error(card.id+' unsupported main action ability');
  const passiveBonuses=validatePassiveBonuses(card);
  const implemented=card.implementation;

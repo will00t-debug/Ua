@@ -1133,7 +1133,8 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-2-011","kind":"revealTraitOrNameOutside","number":"EX07BT/BLC-2-011","name":"リルトット・ランパード","color":"yellow","energy":1,"ap":1,"bp":1500,"gen":1,"trigger":null,"type":"character","effect":"登場：公開己方牌堆頂 3 張，可將其中最多 1 張具有「邦比愛塔親衛隊」特徵或名為〈邦比愛塔・芭絲塔拜茵〉的卡加入手牌，其餘送至場外。若有卡加入手牌，再將 1 張手牌送至場外。"},
 {"id":"BLC-1-060","kind":"chooseEnergyRevealOutside","number":"UA08BT/BLC-1-060","name":"兵主部 一兵衛","color":"purple","energy":3,"ap":1,"bp":2500,"gen":1,"trigger":"active","type":"character","effect":"登場：指定 1 個需求能源數值，公開己方牌堆頂 2 張；可將其中最多 1 張需求能源等於該數值的角色卡加入手牌，其餘送至場外。"},
 {"id":"BLC-1-038","kind":"optionalMillPurple","number":"UA08BT/BLC-1-038","name":"浦原 喜助","color":"purple","energy":3,"ap":2,"bp":3500,"gen":1,"trigger":null,"type":"character","effect":"登場：可將己方牌堆頂 3 張送至場外；成功時可從己方場外將最多 1 張紫色角色卡加入手牌。"},
-{"id":"BLC-2-014","kind":"optionalEnergyBounce","number":"EX07BT/BLC-2-014","name":"井上 織姫","color":"blue","energy":3,"ap":1,"bp":3000,"gen":2,"trigger":"color","type":"character","effect":"登場：可將 1 個己方場上需求能源 2 以下角色返回手牌；成功時可從己方場外將最多 1 張需求能源 2 以下的卡加入手牌。"}
+{"id":"BLC-2-014","kind":"optionalEnergyBounce","number":"EX07BT/BLC-2-014","name":"井上 織姫","color":"blue","energy":3,"ap":1,"bp":3000,"gen":2,"trigger":"color","type":"character","effect":"登場：可將 1 個己方場上需求能源 2 以下角色返回手牌；成功時可從己方場外將最多 1 張需求能源 2 以下的卡加入手牌。"},
+{"id":"BLC-2-001","kind":"stepOnceFrontOr","number":"EX07BT/BLC-2-001","name":"アスキン・ナックルヴァール","color":"yellow","energy":3,"ap":1,"bp":3000,"gen":2,"trigger":null,"type":"character","effect":"Step：己方移動階段可由前線移至能源線。主要階段・每回合 1 次：敵方前線有 BP 低於原始 BP 的角色，或有 REST 角色時，此角色本回合 BP +1000。"}
  ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1264,6 +1265,7 @@ export function checkedBleachAddonDefinition(p){
  const isEnergyWindow=p.kind==='chooseEnergyRevealOutside';
  const isMillPurple=p.kind==='optionalMillPurple';
  const isEnergyBounce=p.kind==='optionalEnergyBounce';
+ const isStepOr=p.kind==='stepOnceFrontOr';
  const topDiscard={
   'BLC-3-007':{count:3,filter:{field:'trait',value:'護廷十三隊'}},
   'BLC-3-002':{count:3,filters:[
@@ -1297,7 +1299,7 @@ export function checkedBleachAddonDefinition(p){
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest||isOwnCharacterDraw||isPeekAttack||isDrawInstead||isRevealOppTop||isRevealWindow||isEnergyWindow||isMillPurple||isEnergyBounce;
+ const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest||isOwnCharacterDraw||isPeekAttack||isDrawInstead||isRevealOppTop||isRevealWindow||isEnergyWindow||isMillPurple||isEnergyBounce||isStepOr;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1306,7 +1308,10 @@ export function checkedBleachAddonDefinition(p){
   traits:Array.isArray(c.traits)?c.traits:(c.traits&&c.traits!=='無'?[c.traits]:[]),
   ...(c.traits==='星十字騎士團／邦比愛塔親衛隊'?{traitComponents:['星十字騎士團','邦比愛塔親衛隊']}:{}),
   implementation:p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'?'vanilla':'dsl',
-  ...(p.kind==='step'||p.kind==='stepAttackTraitBuff'?{step:true}:{}),
+  ...(p.kind==='step'||p.kind==='stepAttackTraitBuff'||isStepOr?{step:true}:{}),
+  ...(isStepOr?{mainAbility:{op:'onceBuffSelfWhen',oncePerTurn:true,bp:1000,when:{logic:'any',checks:[
+   {kind:'oppFrontLiveBpBelowPrinted',turn:'any'},
+   {kind:'oppRestCharacter',turn:'any',zone:'front'}]}}}:{}),
    ...(isKyoraku?{raidName:'京楽 春水',
     attackEndSwap:{color:'green',types:['event','field'],minDistinctNames:4}}:{}),
    ...(isRestRetireField?{mainAbility:{op:'fieldRestRetireThen',then:[
