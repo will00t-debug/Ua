@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {REZERO_CARDS,REZERO_BY_ID} from '../dist/rezero-cards.mjs';
-import {createRezeroV2Pack,REZERO_ENGINE_IDS,rezeroEngineKind} from '../dist/universal-v2/rezero-pack.mjs';
-import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
+import {createRezeroV2Pack,REZERO_ENGINE_IDS,rezeroEngineKind,rezeroPackCard} from '../dist/universal-v2/rezero-pack.mjs';
+import {createUniversalPack,validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  assertUniversalMatch,universalEnergyByColor,universalBp,effectiveHandRequiredEnergy
 } from '../dist/universal-v2/engine.mjs';
@@ -66,9 +66,9 @@ test('UA40BT and UA40ST share one catalogue and keep parallel art out',()=>{
  }
 });
 
-test('fifty-four whole prints enter the V2 pack and the other fifty-nine stay out',()=>{
- assert.equal(REZERO_ENGINE_IDS.length,54);
- assert.equal(Object.keys(pack.cards).length,54);
+test('fifty-seven whole prints enter the V2 pack and the other fifty-six stay out',()=>{
+ assert.equal(REZERO_ENGINE_IDS.length,57);
+ assert.equal(Object.keys(pack.cards).length,57);
  assert.equal(pack.cards['REZ-1-001'],undefined);
  assert.equal(pack.cards['REZ-1-008'].step,true);
  assert.equal(pack.cards['REZ-1-008'].implementation,'vanilla');
@@ -118,6 +118,11 @@ test('fifty-four whole prints enter the V2 pack and the other fifty-nine stay ou
  assert.equal(pack.cards['REZ-1-069'].effects.onPlay[0].filters[2].value,'禁書庫');
  assert.equal(pack.cards['REZ-1-057'].effects.onPlay[0].count,4);
  assert.deepEqual(pack.cards['REZ-1-057'].triggerEffect,{op:'bounceOppFrontUnderBp',bp:3500});
+ assert.deepEqual(pack.cards['REZ-1-010'].effects.onPlay,[{op:'drawIfOwnName',count:1,
+  names:['レム','ロズワール・L・メイザース']}]);
+ assert.deepEqual(pack.cards['REZ-1-026'].effects.onPlay,[{op:'drawIfOwnEventUsed',count:1}]);
+ assert.deepEqual(pack.cards['REZ-1-026'].triggerEffect,{op:'restOppFrontSkipNextActive'});
+ assert.deepEqual(pack.cards['REZ-1-075'].effects.onPlay,[{op:'draw',count:1,entry:'ownEffect'}]);
  assert.equal(pack.cards['REZ-1-042'],undefined);
  assert.equal(pack.cards['REZ-1-101'],undefined);
  assert.deepEqual(validateUniversalDeck(pack,counts),[]);
@@ -570,4 +575,111 @@ test('buffs, top windows, name search and the Crusch alias resolve',()=>{
  s=order(s,[aliasWindow[3].uid,aliasWindow[2].uid,aliasWindow[1].uid]);
  assert.equal(s.pending.kind,'effect-discard');
  assert.equal(s.players[0].hand.some(c=>c.uid===aliasWindow[0].uid),true);
+});
+
+const gateCounts={
+ ...Object.fromEntries(['REZ-1-007','REZ-1-008','REZ-1-012','REZ-1-014','REZ-1-022',
+  'REZ-1-036','REZ-1-043','REZ-1-068','REZ-1-072','REZ-1-086','REZ-1-010','REZ-1-075'].map(id=>[id,4])),
+ 'REZ-1-026':1,'REZ-1-029':1
+};
+const gate=seed=>newUniversalMatch(packs,{decks:[gateCounts,gateCounts],first:0,seed});
+test('name union, event-used draw and own-effect entry draw resolve',()=>{
+ assert.equal(Object.values(gateCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(pack,gateCounts),[]);
+ let s=gate(4301);
+ fuel(s,['REZ-1-007','REZ-1-008','REZ-1-022']);
+ const rem=pull(s,0,'REZ-1-012');
+ s.players[0].front[0]=rem;
+ s=reach(s,'main');
+ const deck=s.players[0].deck.length;
+ [s]=playHand(s,'REZ-1-010');
+ assert.equal(s.pending,null);
+ assert.equal(s.players[0].deck.length,deck-2);
+ let quiet=gate(4302);
+ fuel(quiet,['REZ-1-007','REZ-1-008','REZ-1-022']);
+ quiet.players[0].front[0]=pull(quiet,0,'REZ-1-036');
+ quiet=reach(quiet,'main');
+ const quietDeck=quiet.players[0].deck.length;
+ [quiet]=playHand(quiet,'REZ-1-010');
+ assert.equal(quiet.players[0].deck.length,quietDeck-1);
+
+ s=gate(4303);
+ fuel(s,['REZ-1-007','REZ-1-008','REZ-1-022']);
+ s=reach(s,'main');
+ const beforeEvent=s.players[0].deck.length;
+ [s]=playHand(s,'REZ-1-026');
+ assert.equal(s.players[0].deck.length,beforeEvent-1);
+ let used=gate(4304);
+ fuel(used,['REZ-1-007','REZ-1-008','REZ-1-022']);
+ used=reach(used,'main');
+ const event=pull(used,0,'REZ-1-029');
+ used.players[0].hand.push(event);
+ used=dispatchUniversalAction(packs,used,legalUniversalActions(packs,used).find(a=>a.type==='event'&&a.uid===event.uid));
+ if(used.pending?.kind==='effect-recover-ap'){
+  const rested=used.players[0].apCards.find(c=>c.inPlay&&!c.ready);
+  used=dispatchUniversalAction(packs,used,{type:'chooseApRecovery',uid:rested.uid});
+ }
+ const afterEvent=used.players[0].deck.length;
+ [used]=playHand(used,'REZ-1-026');
+ assert.equal(used.pending,null);
+ assert.equal(used.players[0].deck.length,afterEvent-2);
+
+ s=gate(4305);
+ fuel(s,['REZ-1-086','REZ-1-086','REZ-1-086','REZ-1-086']);
+ s=reach(s,'main');
+ const paidDeck=s.players[0].deck.length;
+ let beatrice;
+ [s,beatrice]=playHand(s,'REZ-1-075');
+ assert.equal(s.pending,null);
+ assert.equal(s.players[0].deck.length,paidDeck-1);
+ assert.equal(at(s,0,beatrice.uid).ready,false);
+
+ const lab=(id,color)=>({id,name:id,color,type:'character',energy:0,ap:1,bp:1000,gen:1,
+  traits:[],trigger:null,implementation:'vanilla',effects:{}});
+ const fixture=createUniversalPack({id:'rezero-entry-lab',cards:[
+  rezeroPackCard(REZERO_BY_ID['REZ-1-010']),
+  rezeroPackCard(REZERO_BY_ID['REZ-1-075']),
+  lab('LAB-YEL','yellow'),lab('LAB-PUR','purple'),
+  {id:'LAB-ROS',name:'ロズワール・L・メイザース',color:'yellow',type:'character',energy:0,ap:1,bp:1000,gen:1,
+   traits:[],trigger:null,implementation:'vanilla',effects:{}},
+  {id:'LAB-DEPLOY-BEA',name:'Deploy Beatrice',color:'purple',type:'event',energy:0,ap:1,bp:0,gen:0,
+   trigger:null,implementation:'dsl',effects:{onPlay:[{op:'deployOutsideRest',name:'ベアトリス',color:'purple',energy:4,ap:1,optional:true}]}},
+  ...['LAB-A','LAB-B','LAB-C','LAB-D','LAB-E','LAB-F','LAB-G'].map(id=>lab(id,'yellow'))
+ ]});
+ const fixtureCounts={
+  'REZ-1-010':4,'REZ-1-075':4,'LAB-YEL':4,'LAB-PUR':4,'LAB-ROS':4,'LAB-DEPLOY-BEA':4,
+  'LAB-A':4,'LAB-B':4,'LAB-C':4,'LAB-D':4,'LAB-E':4,'LAB-F':4,'LAB-G':2
+ };
+ assert.deepEqual(validateUniversalDeck(fixture,fixtureCounts),[]);
+ const fp=[fixture,fixture];
+ let own=newUniversalMatch(fp,{decks:[fixtureCounts,fixtureCounts],first:0,seed:4306});
+ const outside=pull(own,0,'REZ-1-075');
+ own.players[0].outside.push(outside);
+ own=dispatchUniversalAction(fp,own,{type:'next'});
+ own=dispatchUniversalAction(fp,own,{type:'next'});
+ assert.equal(own.phase,'main');
+ const caster=pull(own,0,'LAB-DEPLOY-BEA');
+ own.players[0].hand.push(caster);
+ const ownDeck=own.players[0].deck.length;
+ own=dispatchUniversalAction(fp,own,{type:'event',uid:caster.uid});
+ assert.equal(own.pending.kind,'effect-outside-rest');
+ own=dispatchUniversalAction(fp,own,{type:'chooseOutsideRest',uid:outside.uid,line:'energy',slot:0});
+ assert.equal(own.players[0].energy.some(c=>c?.uid===outside.uid),true);
+ assert.equal(own.players[0].deck.length,ownDeck-1);
+
+ let named=newUniversalMatch(fp,{decks:[fixtureCounts,fixtureCounts],first:0,seed:4307});
+ const yellows=['LAB-YEL','LAB-YEL','LAB-A'].map(id=>pull(named,0,id));
+ yellows.forEach((card,i)=>{card.ready=true;named.players[0].energy[i]=card;});
+ const roswaal=pull(named,0,'LAB-ROS');
+ named.players[0].front[0]=roswaal;
+ named=dispatchUniversalAction(fp,named,{type:'next'});
+ named=dispatchUniversalAction(fp,named,{type:'next'});
+ assert.equal(named.phase,'main');
+ const namedDeck=named.players[0].deck.length;
+ const ram=pull(named,0,'REZ-1-010');
+ named.players[0].hand.push(ram);
+ const play=legalUniversalActions(fp,named).find(a=>a.type==='play'&&a.uid===ram.uid);
+ assert.ok(play);
+ named=dispatchUniversalAction(fp,named,play);
+ assert.equal(named.players[0].deck.length,namedDeck-2);
 });

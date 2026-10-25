@@ -419,7 +419,7 @@ export const REZERO_CARDS=[
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-010.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA40BT%2FREZ-1-010",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "drawIfRemOrRoswaal",
   "handDiscount": null,
   "altNames": []
  },
@@ -1074,7 +1074,7 @@ export const REZERO_CARDS=[
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-026.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA40BT%2FREZ-1-026",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "drawIfEvent",
   "handDiscount": null,
   "altNames": []
  },
@@ -3030,7 +3030,7 @@ export const REZERO_CARDS=[
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-075.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA40BT%2FREZ-1-075",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "drawIfOwnEffect",
   "handDiscount": null,
   "altNames": []
  },

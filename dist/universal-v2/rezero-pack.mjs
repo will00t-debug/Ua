@@ -34,6 +34,9 @@ export function rezeroEngineKind(effectJa){
  if(e===TOP_KEEP)return 'topKeep';
  if(e===ALIAS_PREFIX+TOP_KEEP)return 'aliasTopKeep';
  if(SEARCHES.some(s=>s.ja===e))return 'searchNames';
+ if(e==='【登場時】自分の場に〈レム〉か〈ロズワール・L・メイザース〉がある場合、カードを1枚引く。')return 'drawIfRemOrRoswaal';
+ if(e==='【登場時】このターン中に自分がイベントカードを使用している場合、カードを1枚引く。')return 'drawIfEvent';
+ if(e==='【登場時】このキャラが自分の効果で登場していた場合、カードを1枚引く。')return 'drawIfOwnEffect';
  return null;
 }
 const TOP_OUTSIDE=new Map([
@@ -75,6 +78,10 @@ function onPlay(card,kind){
   return [{op:'searchTopOneBottomDiscard',count:spec.count,logic:'any',
    filters:spec.names.map(value=>({field:'name',value}))}];
  }
+ if(kind==='drawIfRemOrRoswaal')return [{op:'drawIfOwnName',count:1,
+  names:['レム','ロズワール・L・メイザース']}];
+ if(kind==='drawIfEvent')return [{op:'drawIfOwnEventUsed',count:1}];
+ if(kind==='drawIfOwnEffect')return [{op:'draw',count:1,entry:'ownEffect'}];
  return null;
 }
 export function rezeroPackCard(card){
@@ -94,11 +101,12 @@ export function rezeroPackCard(card){
  const ops=onPlay(card,kind);
  const triggerEffect=colorTrigger(card);
  const bouncePrint=kind==='topKeep'||(kind==='searchNames'&&card.effectJa.includes('ヴィルヘルム'));
- if(kind==='frontDown2500'&&triggerEffect?.op!=='restOppFrontSkipNextActive')
+ const restPrint=kind==='frontDown2500'||kind==='drawIfEvent';
+ if(restPrint&&triggerEffect?.op!=='restOppFrontSkipNextActive')
   throw Error(card.id+' color trigger is not the printed rest');
  if(bouncePrint&&triggerEffect?.op!=='bounceOppFrontUnderBp')
   throw Error(card.id+' color trigger is not the printed return');
- if(triggerEffect?.op==='restOppFrontSkipNextActive'&&kind!=='frontDown2500')
+ if(triggerEffect?.op==='restOppFrontSkipNextActive'&&!restPrint)
   throw Error(card.id+' rest trigger is not this print');
  if(triggerEffect?.op==='bounceOppFrontUnderBp'&&!bouncePrint)
   throw Error(card.id+' return trigger is not this print');
