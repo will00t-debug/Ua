@@ -1289,7 +1289,7 @@ export const REZERO_CARDS=[
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-031.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA40BT%2FREZ-1-031",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "remRetire",
   "handDiscount": null,
   "altNames": []
  },
@@ -2562,7 +2562,7 @@ export const REZERO_CARDS=[
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-063.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA40BT%2FREZ-1-063",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "remRetire",
   "handDiscount": null,
   "altNames": []
  },
@@ -4037,7 +4037,7 @@ export const REZERO_CARDS=[
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-100.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA40BT%2FREZ-1-100",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "emiliaRetire",
   "handDiscount": null,
   "altNames": []
  },

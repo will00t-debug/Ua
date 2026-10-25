@@ -46,6 +46,8 @@ export function rezeroEngineKind(effectJa){
  if(e==='【起動メイン】【ターン1】自分の手札を1枚公開し、自分の山札の下に置く。公開したカードがBP4000以上のキャラカードの場合、このキャラはこのターン中、BP+2500。')return 'revealBottom2500';
  if(e==='【登場時】自分の場の必要エナジーが0の青の〈ナツキ・スバル〉を1枚手札に戻してもよい。そうした場合、このキャラをアクティブにし、このターン中、BP+1000。')return 'returnPrintedActive';
  if(e==='【自分のターン中】このキャラはBP+1000。【登場時】自分の場外の〈'+TRIAL_NAME+'〉を1枚リムーブエリアに置いてもよい。そうした場合、このキャラをアクティブにする。')return 'trialRemoveActive';
+ if(e==='『BP3000以下』の相手のフロントLのキャラを1枚選び、退場させる。自分の場に〈レム〉がある場合、『BP5000以下』に代わる。')return 'remRetire';
+ if(e==='『BP3000以下』の相手のフロントLのキャラを1枚選び、退場させる。自分の場に〈エミリア〉がある場合、『BP5000以下』に代わる。')return 'emiliaRetire';
  return null;
 }
 const TOP_OUTSIDE=new Map([
@@ -58,6 +60,7 @@ const SEARCH_SEVEN='【登場時】自分の山札の上から7枚見る。そ�
 const ALIAS_PREFIX='このカードは〈クルシュ・カルステン〉としても〈フェリス〉としても扱う。';
 const REST_SKIP='【カラー】相手のフロントLのキャラを1枚選び、レストにする。それは次の1回アクティブにならない。';
 const BOUNCE_3500='【カラー】BP3500以下の相手のフロントLのキャラを1枚選び、手札に戻す。';
+const SPECIAL_RETIRE='【スペシャル】相手のフロントLのキャラを1枚選び、退場させる。';
 const SEARCHES=Object.freeze([
  {ja:'【登場時】自分の山札の上から3枚見る。その中から〈ラム〉か〈レム〉か〈ロズワール・L・メイザース〉を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。',
   count:3,names:['ラム','レム','ロズワール・L・メイザース']},
@@ -71,6 +74,7 @@ const SEARCHES=Object.freeze([
 function colorTrigger(card){
  if(card.trigger==='color'&&card.triggerTextJa===REST_SKIP)return {op:'restOppFrontSkipNextActive'};
  if(card.trigger==='color'&&card.triggerTextJa===BOUNCE_3500)return {op:'bounceOppFrontUnderBp',bp:3500};
+ if(card.trigger==='special'&&card.triggerTextJa===SPECIAL_RETIRE)return {op:'retireOppFront'};
  if(card.trigger==='color'||card.trigger==='special')
   throw Error(card.id+' trigger is not part of the registered whole print');
  return null;
@@ -85,6 +89,8 @@ function onPlay(card,kind){
  if(kind==='returnPrintedActive')return [{op:'returnPrintedActiveBuff',
   name:'ナツキ・スバル',color:'blue',energy:0,bp:1000}];
  if(kind==='trialRemoveActive')return [{op:'removeNamedOutsideActive',name:TRIAL_NAME}];
+ if(kind==='remRetire')return [{op:'retireOppFrontUnderBp',bp:3000,bonusName:'レム',bonusBp:5000}];
+ if(kind==='emiliaRetire')return [{op:'retireOppFrontUnderBp',bp:3000,bonusName:'エミリア',bonusBp:5000}];
  if(kind==='frontDown2500')return [{op:'enemyBpDown',bp:2000,optional:true,minBp:2500,zone:'front'}];
  if(kind==='topOutside')return [{op:'inspectTopArrange',count:TOP_OUTSIDE.get(card.effectJa),toOutside:true,rest:'top'}];
  if(kind==='topKeep'||kind==='aliasTopKeep')return [{op:'inspectTopAnyOutside',count:2,rest:'top'}];
@@ -128,6 +134,11 @@ export function rezeroPackCard(card){
   throw Error(card.id+' rest trigger is not this print');
  if(triggerEffect?.op==='bounceOppFrontUnderBp'&&!bouncePrint)
   throw Error(card.id+' return trigger is not this print');
+ const specialPrint=kind==='remRetire'||kind==='emiliaRetire';
+ if(specialPrint&&triggerEffect?.op!=='retireOppFront')
+  throw Error(card.id+' special trigger is not the printed retirement');
+ if(triggerEffect?.op==='retireOppFront'&&!specialPrint)
+  throw Error(card.id+' retirement trigger is not this print');
  if(kind==='aliasTopKeep'&&(card.trigger!=null||triggerEffect))
   throw Error(card.id+' alias print has no trigger');
  return {

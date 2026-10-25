@@ -66,9 +66,9 @@ test('UA40BT and UA40ST share one catalogue and keep parallel art out',()=>{
  }
 });
 
-test('sixty-six whole prints enter the V2 pack and the other forty-seven stay out',()=>{
- assert.equal(REZERO_ENGINE_IDS.length,66);
- assert.equal(Object.keys(pack.cards).length,66);
+test('sixty-nine whole prints enter the V2 pack and the other forty-four stay out',()=>{
+ assert.equal(REZERO_ENGINE_IDS.length,69);
+ assert.equal(Object.keys(pack.cards).length,69);
  assert.equal(pack.cards['REZ-1-001'],undefined);
  assert.equal(pack.cards['REZ-1-008'].step,true);
  assert.equal(pack.cards['REZ-1-008'].implementation,'vanilla');
@@ -155,6 +155,18 @@ test('sixty-six whole prints enter the V2 pack and the other forty-seven stay ou
   op:'removeNamedOutsideActive',name:REZERO_BY_ID['REZ-1-098'].nameJa}]);
  assert.equal(pack.cards['REZ-1-087'].ownTurnBp,1000);
  assert.equal(pack.cards['REZ-1-098'],undefined);
+ assert.deepEqual(pack.cards['REZ-1-031'].effects.onPlay,[{
+  op:'retireOppFrontUnderBp',bp:3000,bonusName:'レム',bonusBp:5000}]);
+ assert.deepEqual(pack.cards['REZ-1-031'].triggerEffect,{op:'retireOppFront'});
+ assert.equal(pack.cards['REZ-1-031'].type,'event');
+ assert.deepEqual(pack.cards['REZ-1-063'].effects.onPlay,pack.cards['REZ-1-031'].effects.onPlay);
+ assert.deepEqual(pack.cards['REZ-1-063'].triggerEffect,{op:'retireOppFront'});
+ assert.equal(pack.cards['REZ-1-063'].color,'blue');
+ assert.deepEqual(pack.cards['REZ-1-100'].effects.onPlay,[{
+  op:'retireOppFrontUnderBp',bp:3000,bonusName:'エミリア',bonusBp:5000}]);
+ assert.deepEqual(pack.cards['REZ-1-100'].triggerEffect,{op:'retireOppFront'});
+ assert.equal(pack.cards['REZ-1-100'].color,'purple');
+ assert.equal(pack.cards['REZ-1-096'],undefined);
  assert.equal(pack.cards['REZ-1-101'],undefined);
  assert.deepEqual(validateUniversalDeck(pack,counts),[]);
  const s=fresh();
@@ -1434,4 +1446,261 @@ test('Emilia gains 1000 BP on her turn and readies only after removing the sanct
  assert.equal(skipped.players[0].removed.some(c=>c.uid===kept.uid),false);
  assert.equal(at(skipped,0,skippedCard.uid).ready,false);
  assert.equal(universalBp(fp,skipped,at(skipped,0,skippedCard.uid)),4000);
+});
+
+const ghostCounts={
+ 'REZ-1-031':2,'REZ-1-063':2,
+ ...Object.fromEntries(['REZ-1-007','REZ-1-008','REZ-1-009','REZ-1-022','REZ-1-012',
+  'REZ-1-017','REZ-1-014','REZ-1-013','REZ-1-043','REZ-1-005','REZ-1-103'].map(id=>[id,4])),
+ 'REZ-1-028':2
+};
+const ghost=seed=>newUniversalMatch(packs,{decks:[ghostCounts,ghostCounts],first:0,seed});
+function castEvent(s,id){
+ const card=pull(s,0,id);
+ s.players[0].hand.push(card);
+ const action=legalUniversalActions(packs,s).find(a=>a.type==='event'&&a.uid===card.uid);
+ assert.ok(action,id+' event');
+ return [dispatchUniversalAction(packs,s,action),card];
+}
+function placeFront(s,owner,cards){
+ cards.forEach((card,i)=>{s.players[owner].front[i]=card;});
+}
+test('Oni Power and Rem privilege retire BP 3000, or 5000 while Rem is on the field',()=>{
+ assert.equal(Object.values(ghostCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(pack,ghostCounts),[]);
+ let bare=ghost(5101);
+ fuel(bare,['REZ-1-007','REZ-1-008','REZ-1-009','REZ-1-022']);
+ bare=reach(bare,'main');
+ assert.equal(universalEnergyByColor(packs,bare,0).yellow,4);
+ const low=pull(bare,1,'REZ-1-012');
+ const exact=pull(bare,1,'REZ-1-008');
+ const mid=pull(bare,1,'REZ-1-017');
+ const over=pull(bare,1,'REZ-1-017');
+ over.buffs=[{bp:2000,untilTurn:bare.turn}];
+ placeFront(bare,1,[low,exact,mid,over]);
+ const foeRem=pull(bare,1,'REZ-1-014');
+ bare.players[1].energy[0]=foeRem;
+ const handRem=pull(bare,0,'REZ-1-012');
+ bare.players[0].hand.push(handRem);
+ const outsideRem=pull(bare,0,'REZ-1-014');
+ bare.players[0].outside.push(outsideRem);
+ let spell;
+ [bare,spell]=castEvent(bare,'REZ-1-031');
+ assert.equal(bare.players[0].outside.some(c=>c.uid===spell.uid),true);
+ assert.ok(bare.zoneMoveEvents.some(e=>e.uid===spell.uid&&e.from==='hand'&&
+  e.to==='outside'&&e.reason==='rule'));
+ assert.equal(bare.pending.kind,'effect-retire-bp');
+ assert.equal(bare.pending.limit,3000);
+ assert.equal(bare.pending.optional,undefined);
+ assert.deepEqual(legalUniversalActions(packs,bare).map(a=>a.uid).sort(),
+  [low.uid,exact.uid].sort());
+ assert.equal(legalUniversalActions(packs,bare).some(a=>a.uid===null),false);
+ assert.throws(()=>dispatchUniversalAction(packs,bare,{type:'chooseRetireBp',uid:mid.uid}),
+  /not currently legal/);
+ bare=dispatchUniversalAction(packs,bare,{type:'chooseRetireBp',uid:exact.uid});
+ assert.equal(bare.pending,null);
+ assert.equal(bare.players[1].front[1],null);
+ assert.ok(bare.players[1].outside.some(c=>c.uid===exact.uid));
+ assert.equal(bare.players[1].front[0]?.uid,low.uid);
+ assert.equal(bare.players[1].front[2]?.uid,mid.uid);
+ assert.equal(assertUniversalMatch(packs,bare),true);
+
+ let named=ghost(5102);
+ fuel(named,['REZ-1-007','REZ-1-008','REZ-1-009','REZ-1-022']);
+ named=reach(named,'main');
+ const rem=pull(named,0,'REZ-1-012');
+ named.players[0].front[0]=rem;
+ const low2=pull(named,1,'REZ-1-005');
+ const mid2=pull(named,1,'REZ-1-017');
+ const cap=pull(named,1,'REZ-1-017');
+ cap.buffs=[{bp:1000,untilTurn:named.turn}];
+ const over2=pull(named,1,'REZ-1-017');
+ over2.buffs=[{bp:1001,untilTurn:named.turn}];
+ placeFront(named,1,[low2,mid2,cap,over2]);
+ [named,spell]=castEvent(named,'REZ-1-031');
+ assert.equal(named.pending.limit,5000);
+ const namedChoices=legalUniversalActions(packs,named).map(a=>a.uid);
+ assert.deepEqual(namedChoices.slice().sort(),[low2.uid,mid2.uid,cap.uid].sort());
+ assert.equal(namedChoices.includes(over2.uid),false);
+ assert.equal(namedChoices.includes(null),false);
+ named=dispatchUniversalAction(packs,named,{type:'chooseRetireBp',uid:cap.uid});
+ assert.equal(named.players[1].front[2],null);
+ assert.ok(named.players[1].outside.some(c=>c.uid===cap.uid));
+ assert.equal(named.players[1].front[3]?.uid,over2.uid);
+ assert.equal(assertUniversalMatch(packs,named),true);
+
+ let lined=ghost(5103);
+ fuel(lined,['REZ-1-007','REZ-1-008','REZ-1-009']);
+ const energyRem=pull(lined,0,'REZ-1-012');
+ energyRem.ready=true;
+ lined.players[0].energy[3]=energyRem;
+ lined=reach(lined,'main');
+ assert.equal(universalEnergyByColor(packs,lined,0).yellow,4);
+ const mid3=pull(lined,1,'REZ-1-017');
+ lined.players[1].front[0]=mid3;
+ [lined]=castEvent(lined,'REZ-1-031');
+ assert.equal(lined.pending.limit,5000);
+ assert.deepEqual(legalUniversalActions(packs,lined),[{type:'chooseRetireBp',uid:mid3.uid}]);
+ lined=dispatchUniversalAction(packs,lined,{type:'chooseRetireBp',uid:mid3.uid});
+ assert.equal(lined.players[1].front[0],null);
+ assert.equal(assertUniversalMatch(packs,lined),true);
+
+ let blue=ghost(5104);
+ fuel(blue,['REZ-1-043','REZ-1-043','REZ-1-043','REZ-1-043']);
+ blue=reach(blue,'main');
+ assert.equal(universalEnergyByColor(packs,blue,0).blue,4);
+ const blueMid=pull(blue,1,'REZ-1-017');
+ const blueLow=pull(blue,1,'REZ-1-012');
+ placeFront(blue,1,[blueLow,blueMid]);
+ [blue]=castEvent(blue,'REZ-1-063');
+ assert.equal(blue.pending.limit,3000);
+ assert.deepEqual(legalUniversalActions(packs,blue).map(a=>a.uid),[blueLow.uid]);
+ assert.equal(assertUniversalMatch(packs,blue),true);
+
+ let raised=ghost(5114);
+ fuel(raised,['REZ-1-043','REZ-1-043','REZ-1-043','REZ-1-043']);
+ raised=reach(raised,'main');
+ const raisedMid=pull(raised,1,'REZ-1-017');
+ raised.players[1].front[0]=raisedMid;
+ const blueRem=pull(raised,0,'REZ-1-013');
+ raised.players[0].front[0]=blueRem;
+ [raised]=castEvent(raised,'REZ-1-063');
+ assert.equal(raised.pending.limit,5000);
+ assert.deepEqual(legalUniversalActions(packs,raised),[{type:'chooseRetireBp',uid:raisedMid.uid}]);
+ assert.equal(assertUniversalMatch(packs,raised),true);
+});
+
+function armLife(s,owner,id){
+ const trigger=pull(s,owner,id);
+ if(s.players[owner].life.length===7){
+  s.players[owner].deck.push(s.players[owner].life.shift());
+ }
+ s.players[owner].life.unshift(trigger);
+ assert.equal(s.players[owner].life.length,7);
+ return trigger;
+}
+test('the printed special trigger retires any front character and can be declined',()=>{
+ let s=newUniversalMatch(packs,{decks:[ghostCounts,ghostCounts],first:1,seed:5105});
+ const attacker=pull(s,1,'REZ-1-007');
+ attacker.ready=true;
+ const high=pull(s,1,'REZ-1-017');
+ s.players[1].front[0]=attacker;
+ s.players[1].front[1]=high;
+ const trigger=armLife(s,0,'REZ-1-031');
+ s=reach(s,'attack');
+ s.players[1].front[1].buffs=[{bp:3000,untilTurn:s.turn}];
+ s=dispatchUniversalAction(packs,s,{type:'attack',uid:attacker.uid},{actor:1});
+ s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:null},{actor:0});
+ assert.equal(s.pending?.kind,'life-trigger');
+ assert.equal(s.pending?.trigger,'special');
+ const legal=legalUniversalActions(packs,s);
+ assert.ok(legal.some(a=>a.type==='chooseTrigger'&&a.mode==='special'&&a.uid===high.uid));
+ assert.ok(legal.some(a=>a.type==='chooseTrigger'&&a.mode==='skip'));
+ const apBefore=s.players[0].apCards.filter(c=>c.ready).length;
+ const retired=dispatchUniversalAction(packs,s,
+  {type:'chooseTrigger',mode:'special',uid:high.uid},{actor:0});
+ assert.equal(retired.players[1].front[1],null);
+ assert.ok(retired.players[1].outside.some(c=>c.uid===high.uid));
+ assert.ok(retired.players[0].outside.some(c=>c.uid===trigger.uid));
+ assert.equal(retired.players[0].apCards.filter(c=>c.ready).length,apBefore);
+ assert.equal(assertUniversalMatch(packs,retired),true);
+ const skipped=dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'skip'},{actor:0});
+ assert.equal(skipped.players[1].front[1]?.uid,high.uid);
+ assert.equal(assertUniversalMatch(packs,skipped),true);
+});
+
+const holdCounts={
+ ...Object.fromEntries(['REZ-1-100','REZ-1-086','REZ-1-087','REZ-1-075','REZ-1-072',
+  'REZ-1-068','REZ-1-081','REZ-1-091','REZ-1-092','REZ-1-073','REZ-1-079','REZ-1-082'].map(id=>[id,4])),
+ 'REZ-1-083':2
+};
+const hold=seed=>newUniversalMatch(packs,{decks:[holdCounts,holdCounts],first:0,seed});
+test('Emilia hold retires BP 5000 only while Emilia is on the field',()=>{
+ assert.equal(Object.values(holdCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(pack,holdCounts),[]);
+ let s=hold(5106);
+ fuel(s,['REZ-1-086','REZ-1-086','REZ-1-086','REZ-1-086']);
+ s=reach(s,'main');
+ assert.equal(universalEnergyByColor(packs,s,0).purple,4);
+ const low=pull(s,1,'REZ-1-072');
+ const mid=pull(s,1,'REZ-1-075');
+ const cap=pull(s,1,'REZ-1-075');
+ cap.buffs=[{bp:1000,untilTurn:s.turn}];
+ const over=pull(s,1,'REZ-1-075');
+ over.buffs=[{bp:1001,untilTurn:s.turn}];
+ placeFront(s,1,[low,mid,cap,over]);
+ const handEmilia=pull(s,0,'REZ-1-081');
+ s.players[0].hand.push(handEmilia);
+ [s]=castEvent(s,'REZ-1-100');
+ assert.equal(s.pending.limit,5000);
+ const choices=legalUniversalActions(packs,s).map(a=>a.uid);
+ assert.deepEqual(choices.slice().sort(),[low.uid,mid.uid,cap.uid].sort());
+ assert.equal(choices.includes(over.uid),false);
+ s=dispatchUniversalAction(packs,s,{type:'chooseRetireBp',uid:mid.uid});
+ assert.ok(s.players[1].outside.some(c=>c.uid===mid.uid));
+ assert.equal(s.players[1].front[3]?.uid,over.uid);
+ assert.equal(assertUniversalMatch(packs,s),true);
+
+ const labs=['LAB-A','LAB-B','LAB-C','LAB-D','LAB-E','LAB-F','LAB-G','LAB-H'];
+ const gen=(id)=>({id,name:'燃料',color:'purple',type:'character',energy:0,ap:1,bp:1000,gen:1,
+  traits:[],trigger:null,implementation:'vanilla',effects:{}});
+ const fixture=createUniversalPack({id:'rezero-hold-lab',cards:[
+  rezeroPackCard(REZERO_BY_ID['REZ-1-100']),
+  rezeroPackCard(REZERO_BY_ID['REZ-1-087']),
+  {id:'LAB-ALIAS',name:'別名',color:'purple',type:'character',energy:0,ap:1,bp:4000,gen:0,
+   traits:[],trigger:null,implementation:'dsl',effects:{},nameAliases:['エミリア']},
+  {id:'LAB-TALL',name:'高昂',color:'purple',type:'character',energy:0,ap:1,bp:4000,gen:0,
+   traits:[],trigger:null,implementation:'vanilla',effects:{}},
+  {id:'LAB-SHORT',name:'低昂',color:'purple',type:'character',energy:0,ap:1,bp:3000,gen:0,
+   traits:[],trigger:null,implementation:'vanilla',effects:{}},
+  ...labs.map(gen)
+ ]});
+ const fixtureCounts={'REZ-1-100':4,'REZ-1-087':2,'LAB-ALIAS':4,'LAB-TALL':4,'LAB-SHORT':4,
+  ...Object.fromEntries(labs.map(id=>[id,4]))};
+ assert.equal(Object.values(fixtureCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(fixture,fixtureCounts),[]);
+ const fp=[fixture,fixture];
+ function open(seed){
+  let state=newUniversalMatch(fp,{decks:[fixtureCounts,fixtureCounts],first:0,seed});
+  ['LAB-A','LAB-B','LAB-C','LAB-D'].forEach((id,i)=>{
+   const card=pull(state,0,id);card.ready=true;state.players[0].energy[i]=card;
+  });
+  state=dispatchUniversalAction(fp,state,{type:'next'});
+  state=dispatchUniversalAction(fp,state,{type:'next'});
+  assert.equal(state.phase,'main');
+  return state;
+ }
+ let missed=open(5107);
+ const tall=pull(missed,1,'LAB-TALL');
+ const short=pull(missed,1,'LAB-SHORT');
+ const foe=pull(missed,1,'REZ-1-087');
+ missed.players[1].front[0]=tall;
+ missed.players[1].front[1]=short;
+ missed.players[1].front[2]=foe;
+ const handed=pull(missed,0,'REZ-1-087');
+ missed.players[0].hand.push(handed);
+ const event=pull(missed,0,'REZ-1-100');
+ missed.players[0].hand.push(event);
+ missed=dispatchUniversalAction(fp,missed,
+  legalUniversalActions(fp,missed).find(a=>a.type==='event'&&a.uid===event.uid));
+ assert.equal(missed.pending.limit,3000);
+ assert.deepEqual(legalUniversalActions(fp,missed).map(a=>a.uid).sort(),
+  [short.uid,foe.uid].sort());
+ assert.equal(legalUniversalActions(fp,missed).some(a=>a.uid===tall.uid),false);
+ assert.equal(assertUniversalMatch(fp,missed),true);
+
+ let alias=open(5108);
+ const body=pull(alias,1,'LAB-TALL');
+ alias.players[1].front[0]=body;
+ const standIn=pull(alias,0,'LAB-ALIAS');
+ alias.players[0].front[0]=standIn;
+ const cast=pull(alias,0,'REZ-1-100');
+ alias.players[0].hand.push(cast);
+ alias=dispatchUniversalAction(fp,alias,
+  legalUniversalActions(fp,alias).find(a=>a.type==='event'&&a.uid===cast.uid));
+ assert.equal(alias.pending.limit,5000);
+ assert.deepEqual(legalUniversalActions(fp,alias),[{type:'chooseRetireBp',uid:body.uid}]);
+ alias=dispatchUniversalAction(fp,alias,{type:'chooseRetireBp',uid:body.uid});
+ assert.equal(alias.players[1].front[0],null);
+ assert.equal(assertUniversalMatch(fp,alias),true);
 });
