@@ -70,9 +70,9 @@ test('UA40BT and UA40ST share one catalogue and keep parallel art out',()=>{
  }
 });
 
-test('ninety whole prints enter the V2 pack and the other twenty-three stay out',()=>{
- assert.equal(REZERO_ENGINE_IDS.length,90);
- assert.equal(Object.keys(pack.cards).length,90);
+test('ninety-one whole prints enter the V2 pack and the other twenty-two stay out',()=>{
+ assert.equal(REZERO_ENGINE_IDS.length,91);
+ assert.equal(Object.keys(pack.cards).length,91);
  assert.equal(pack.cards['REZ-1-001'],undefined);
  assert.equal(pack.cards['REZ-1-008'].step,true);
  assert.equal(pack.cards['REZ-1-008'].implementation,'vanilla');
@@ -289,6 +289,15 @@ test('ninety whole prints enter the V2 pack and the other twenty-three stay out'
  assert.deepEqual(pack.cards['REZ-1-051'].effects.onPlay,[{
   op:'retireOppFrontScaledBp',base:1000,step:1000,name:'ナツキ・スバル',
   color:'blue',energy:0,optional:true}]);
+ assert.equal(pack.cards['REZ-1-027'].trigger,'raid');
+ assert.equal(pack.cards['REZ-1-027'].triggerEffect,null);
+ assert.equal(pack.cards['REZ-1-027'].color,'yellow');
+ assert.equal(pack.cards['REZ-1-027'].energy,5);
+ assert.equal(pack.cards['REZ-1-027'].raidName,'エミリア');
+ assert.equal(pack.cards['REZ-1-022'].raidName,null);
+ assert.deepEqual(pack.cards['REZ-1-027'].effects.onPlay,[
+  {op:'nextEligibleHandPlayApDiscount',filter:{cardType:'event',printedRequiredEnergyAtMost:3}},
+  {op:'restOppFrontByOutsideEvents',min:4,skipMin:8,optional:true}]);
  assert.deepEqual(pack.cards['REZ-1-093'].mainAbility,{
   op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,
   then:[{op:'restOwnActiveFrontDraw'}]});
@@ -4238,4 +4247,139 @@ test('Rem raids onto Rem and retires one front scaled by blue zero-cost Subaru',
  assert.equal(retired.players[0].deck.length,before);
  assert.equal(assertUniversalMatch(packs,skipped),true);
  assert.equal(assertUniversalMatch(packs,retired),true);
+});
+
+const emiliaRaidCounts={
+ ...Object.fromEntries(['REZ-1-027','REZ-1-022','REZ-1-007','REZ-1-029','REZ-1-033','REZ-1-109',
+  'REZ-1-014','REZ-1-043','REZ-1-016','REZ-1-003','REZ-1-054','REZ-1-091'].map(id=>[id,4])),
+ 'REZ-1-086':2
+};
+const emiliaRaid=seed=>newUniversalMatch(packs,{decks:[emiliaRaidCounts,emiliaRaidCounts],first:0,seed});
+function reachStart(s,player,turn){
+ let guard=0;
+ while(!(s.active===player&&s.players[player].ownTurns>=turn&&s.phase==='start'&&!s.pending)){
+  if(s.pending?.kind==='end-hand-limit'){
+   const hand=s.players[s.pending.player].hand[0];
+   s=dispatchUniversalAction(packs,s,{type:'chooseHandLimit',uid:hand.uid});
+  }else if(s.pending)throw Error('unexpected pending '+s.pending.kind);
+  else{
+   const next=legalUniversalActions(packs,s).find(a=>a.type==='next');
+   assert.ok(next,'stuck before start');
+   s=dispatchUniversalAction(packs,s,next);
+  }
+  assert.ok(++guard<48,'did not reach the next start');
+ }
+ return s;
+}
+test('Emilia raids onto Emilia, discounts the next cheap event, and rests from outside events',()=>{
+ assert.equal(Object.values(emiliaRaidCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(pack,emiliaRaidCounts),[]);
+ const shell={id:'EMI',name:'エミリア',color:'yellow',type:'character',energy:5,ap:1,bp:4000,gen:1,
+  traits:['王選候補者'],trigger:'raid',raidName:'エミリア',implementation:'dsl',effects:{}};
+ const rest={op:'restOppFrontByOutsideEvents',min:4,skipMin:8,optional:true};
+ assert.throws(()=>createUniversalPack({id:'bad-emi',cards:[{...shell,type:'event',bp:0,gen:0,raidName:null,trigger:null,effects:{onPlay:[rest]}}]}),/onPlay/);
+ assert.throws(()=>createUniversalPack({id:'bad-emi',cards:[{...shell,effects:{onPlay:[{...rest,optional:undefined}]}}]}),/outside-event/);
+ const discount=s=>s.continuousStates.find(e=>e.kind==='nextEligibleHandPlayApDiscount');
+ const skipOn=(s,uid)=>s.continuousStates.some(e=>e.kind==='skipNextActive'&&e.targetUid===uid&&!e.consumed);
+ function prepare(seed,eventIds,extraId){
+  let s=emiliaRaid(seed);
+  fuel(s,['REZ-1-007','REZ-1-007','REZ-1-007','REZ-1-007']);
+  const base=pull(s,0,'REZ-1-022');
+  s.players[0].front[0]=base;
+  const stranger=pull(s,0,'REZ-1-014');
+  s.players[0].front[1]=stranger;
+  const decoy=pull(s,0,'REZ-1-027');
+  s.players[0].front[2]=decoy;
+  const victim=pull(s,1,'REZ-1-014');
+  victim.ready=true;
+  s.players[1].front[0]=victim;
+  const aside=pull(s,1,'REZ-1-043');
+  s.players[1].energy[0]=aside;
+  for(const id of eventIds)s.players[0].outside.push(pull(s,0,id));
+  if(extraId)s.players[0].outside.push(pull(s,0,extraId));
+  s=ownMain(s,2);
+  s.players[0].energy[0].buffs=[{energy:1,untilTurn:s.turn}];
+  return {s,base,stranger,decoy,victim,aside};
+ }
+ function raidOnto(prepared){
+  const top=pull(prepared.s,0,'REZ-1-027');
+  prepared.s.players[0].hand.push(top);
+  const action=legalUniversalActions(packs,prepared.s).find(a=>a.type==='raid'&&a.uid===top.uid&&a.baseUid===prepared.base.uid);
+  assert.ok(action);
+  assert.equal(action.line,undefined);
+  const deck=prepared.s.players[0].deck.length;
+  prepared.s=dispatchUniversalAction(packs,prepared.s,action);
+  assert.equal(prepared.s.players[0].deck.length,deck);
+  assert.equal(at(prepared.s,0,top.uid).ready,true);
+  assert.equal(at(prepared.s,0,top.uid).stack[0].uid,prepared.base.uid);
+  return prepared.s;
+ }
+
+ let low=prepare(7301,['REZ-1-029','REZ-1-029','REZ-1-029'],'REZ-1-014');
+ assert.equal(universalEnergyByColor(packs,low.s,0).yellow,5);
+ const waiting=pull(low.s,0,'REZ-1-027');
+ low.s.players[0].hand.push(waiting);
+ assert.equal(legalUniversalActions(packs,low.s).some(a=>a.type==='raid'&&a.uid===waiting.uid&&a.baseUid===low.stranger.uid),false);
+ assert.equal(legalUniversalActions(packs,low.s).some(a=>a.type==='raid'&&a.uid===waiting.uid&&a.baseUid===low.decoy.uid),false);
+ low.s.players[0].hand.pop();
+ low.s.players[0].deck.push(waiting);
+ low.s=raidOnto(low);
+ assert.equal(low.s.pending,null);
+ assert.equal(low.s.players[0].outside.filter(c=>pack.cards[c.cardId].type==='event').length,3);
+ assert.deepEqual(discount(low.s).filter,{cardType:'event',printedRequiredEnergyAtMost:3});
+ let priced=structuredClone(low.s);
+ for(const ap of priced.players[0].apCards)ap.ready=false;
+ const cheap=pull(priced,0,'REZ-1-109');
+ priced.players[0].hand.push(cheap);
+ const pricey=pull(priced,0,'REZ-1-033');
+ priced.players[0].hand.push(pricey);
+ assert.equal(legalUniversalActions(packs,priced).some(a=>a.type==='event'&&a.uid===cheap.uid),true);
+ assert.equal(legalUniversalActions(packs,priced).some(a=>a.type==='event'&&a.uid===pricey.uid),false);
+ const afforded=structuredClone(priced);
+ afforded.players[0].apCards.find(c=>c.inPlay).ready=true;
+ assert.equal(legalUniversalActions(packs,afforded).some(a=>a.type==='event'&&a.uid===pricey.uid),true);
+ priced=dispatchUniversalAction(packs,priced,{type:'event',uid:cheap.uid});
+ assert.equal(discount(priced),undefined);
+ assert.equal(assertUniversalMatch(packs,priced),true);
+
+ let mid=prepare(7302,['REZ-1-029','REZ-1-029','REZ-1-029','REZ-1-029']);
+ mid.s=raidOnto(mid);
+ assert.equal(mid.s.pending.kind,'effect-rest-outside-events');
+ assert.equal(mid.s.pending.min,4);
+ assert.equal(mid.s.pending.skipMin,8);
+ assert.equal(Object.keys(mid.s.pending).length,7);
+ assert.deepEqual(mid.s.pending.choices,[mid.victim.uid]);
+ assert.equal(V2_PENDING_LABELS['effect-rest-outside-events'],'選擇是否使對手前線休息');
+ assert.equal(uiActionLabel({type:'chooseRestOutsideEvents',uid:null},{pack,state:mid.s}),'不使角色休息');
+ assert.equal(uiActionLabel({type:'chooseRestOutsideEvents',uid:mid.victim.uid},{pack,state:mid.s}),'使 レム 休息');
+ assert.equal(chooseUniversalAiAction(packs,mid.s).uid,mid.victim.uid);
+ let declined=structuredClone(mid.s);
+ let faded=structuredClone(mid.s);
+ declined=dispatchUniversalAction(packs,declined,{type:'chooseRestOutsideEvents',uid:null});
+ assert.equal(at(declined,1,mid.victim.uid).ready,true);
+ assert.equal(skipOn(declined,mid.victim.uid),false);
+ faded.players[0].deck.push(...faded.players[0].outside.splice(0));
+ faded=dispatchUniversalAction(packs,faded,{type:'chooseRestOutsideEvents',uid:mid.victim.uid});
+ assert.equal(at(faded,1,mid.victim.uid).ready,true);
+ assert.equal(skipOn(faded,mid.victim.uid),false);
+ mid.s=dispatchUniversalAction(packs,mid.s,{type:'chooseRestOutsideEvents',uid:mid.victim.uid});
+ assert.equal(at(mid.s,1,mid.victim.uid).ready,false);
+ assert.equal(skipOn(mid.s,mid.victim.uid),false);
+ mid.s=reachStart(mid.s,1,2);
+ assert.equal(at(mid.s,1,mid.victim.uid).ready,true);
+ assert.equal(assertUniversalMatch(packs,mid.s),true);
+ assert.equal(assertUniversalMatch(packs,declined),true);
+ assert.equal(assertUniversalMatch(packs,faded),true);
+
+ let high=prepare(7303,[...Array(4).fill('REZ-1-029'),...Array(4).fill('REZ-1-109')]);
+ high.s=raidOnto(high);
+ assert.equal(high.s.players[0].outside.filter(c=>pack.cards[c.cardId].type==='event').length,8);
+ high.s=dispatchUniversalAction(packs,high.s,{type:'chooseRestOutsideEvents',uid:high.victim.uid});
+ assert.equal(at(high.s,1,high.victim.uid).ready,false);
+ assert.equal(skipOn(high.s,high.victim.uid),true);
+ high.s=reachStart(high.s,1,2);
+ assert.equal(at(high.s,1,high.victim.uid).ready,false);
+ assert.equal(skipOn(high.s,high.victim.uid),false);
+ assert.equal(assertUniversalMatch(packs,high.s),true);
+ assert.equal(assertUniversalMatch(packs,low.s),true);
 });
