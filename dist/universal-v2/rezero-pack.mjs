@@ -49,6 +49,7 @@ export function rezeroEngineKind(effectJa){
  if(e==='『BP3000以下』の相手のフロントLのキャラを1枚選び、退場させる。自分の場に〈レム〉がある場合、『BP5000以下』に代わる。')return 'remRetire';
  if(e==='『BP3000以下』の相手のフロントLのキャラを1枚選び、退場させる。自分の場に〈エミリア〉がある場合、『BP5000以下』に代わる。')return 'emiliaRetire';
  if(e==='このキャラはアクティブで場に登場させる。【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、【インパクト】を失う）【登場時】相手のフロントLのキャラを1枚まで選び、このターン中、BP-2500。【起動メイン】【フロントLにある場合】 【ターン1】このキャラをアクティブにする。')return 'garfielEntry';
+ if(e==='【登場時】自分の手札を1枚場外に置くか、自分のフロントLのアクティブのキャラを1枚レストにしてもよい。そうした場合、自分の場外から〈'+TRIAL_NAME+'〉を1枚手札に加える。')return 'sanctuaryRecover';
  return null;
 }
 const TOP_OUTSIDE=new Map([
@@ -93,6 +94,7 @@ function onPlay(card,kind){
  if(kind==='remRetire')return [{op:'retireOppFrontUnderBp',bp:3000,bonusName:'レム',bonusBp:5000}];
  if(kind==='emiliaRetire')return [{op:'retireOppFrontUnderBp',bp:3000,bonusName:'エミリア',bonusBp:5000}];
  if(kind==='garfielEntry')return [{op:'enemyBpDown',bp:2500,optional:true,zone:'front'}];
+ if(kind==='sanctuaryRecover')return [{op:'payHandOrRestForNamed',name:TRIAL_NAME}];
  if(kind==='frontDown2500')return [{op:'enemyBpDown',bp:2000,optional:true,minBp:2500,zone:'front'}];
  if(kind==='topOutside')return [{op:'inspectTopArrange',count:TOP_OUTSIDE.get(card.effectJa),toOutside:true,rest:'top'}];
  if(kind==='topKeep'||kind==='aliasTopKeep')return [{op:'inspectTopAnyOutside',count:2,rest:'top'}];

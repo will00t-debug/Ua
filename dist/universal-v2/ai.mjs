@@ -111,6 +111,9 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='effect-buff-either')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-return-printed')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-remove-named')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-pay-named')return legal.find(a=>a.mode==='hand')||
+  legal.find(a=>a.mode==='rest')||legal[0];
+ if(s.pending?.kind==='effect-add-named')return legal.find(a=>a.uid)||legal[0];
  if(s.pending?.kind==='effect-reveal-bottom'){
   const catalog=packsOf(pack)[s.pending.player].cards;
   const hand=s.players[s.pending.player].hand;

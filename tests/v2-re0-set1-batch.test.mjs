@@ -67,9 +67,9 @@ test('UA40BT and UA40ST share one catalogue and keep parallel art out',()=>{
  }
 });
 
-test('seventy whole prints enter the V2 pack and the other forty-three stay out',()=>{
- assert.equal(REZERO_ENGINE_IDS.length,70);
- assert.equal(Object.keys(pack.cards).length,70);
+test('seventy-one whole prints enter the V2 pack and the other forty-two stay out',()=>{
+ assert.equal(REZERO_ENGINE_IDS.length,71);
+ assert.equal(Object.keys(pack.cards).length,71);
  assert.equal(pack.cards['REZ-1-001'],undefined);
  assert.equal(pack.cards['REZ-1-008'].step,true);
  assert.equal(pack.cards['REZ-1-008'].implementation,'vanilla');
@@ -176,6 +176,11 @@ test('seventy whole prints enter the V2 pack and the other forty-three stay out'
   op:'enemyBpDown',bp:2500,optional:true,zone:'front'}]);
  assert.deepEqual(pack.cards['REZ-1-067'].mainAbility,{
   op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,then:[{op:'activeSelf'}]});
+ assert.deepEqual(pack.cards['REZ-1-113'].effects.onPlay,[{
+  op:'payHandOrRestForNamed',name:REZERO_BY_ID['REZ-1-098'].nameJa}]);
+ assert.equal(pack.cards['REZ-1-113'].color,'purple');
+ assert.equal(pack.cards['REZ-1-113'].trigger,'draw');
+ assert.equal(pack.cards['REZ-1-098'],undefined);
  assert.equal(pack.cards['REZ-1-101'],undefined);
  assert.deepEqual(validateUniversalDeck(pack,counts),[]);
  const s=fresh();
@@ -1775,4 +1780,169 @@ test('Garfiel enters active, may reduce one front character, and readies once fr
  open=dispatchUniversalAction(packs,open,{type:'activate',uid:lone.uid,mode:'frontOnce'});
  assert.equal(at(open,0,lone.uid).ready,true);
  assert.equal(assertUniversalMatch(packs,open),true);
+});
+
+test('Echidna may discard or rest, then adds one sanctuary trial from outside',()=>{
+ const trialName=REZERO_BY_ID['REZ-1-098'].nameJa;
+ const shell={id:'PAY',name:'Gate',color:'purple',type:'character',energy:0,ap:1,bp:1000,gen:1,
+  traits:[],trigger:null,implementation:'dsl',effects:{}};
+ assert.throws(()=>createUniversalPack({id:'bad-pay',cards:[{...shell,effects:{onPlay:[
+  {op:'payHandOrRestForNamed'}]}}]}),/invalid hand-or-rest/);
+ assert.throws(()=>createUniversalPack({id:'bad-pay',cards:[{...shell,type:'event',bp:0,effects:{onPlay:[
+  {op:'payHandOrRestForNamed',name:trialName}]}}]}),/character onPlay/);
+ const labs=['LAB-A','LAB-B','LAB-C','LAB-D','LAB-E','LAB-F','LAB-G','LAB-H'];
+ const gen=(id)=>({id,name:'燃料',color:'purple',type:'character',energy:0,ap:1,bp:1000,gen:1,
+  traits:[],trigger:null,implementation:'vanilla',effects:{}});
+ const event=(id,name,extra)=>({id,name,color:'purple',type:'event',energy:2,ap:1,bp:0,gen:0,
+  traits:[],trigger:null,implementation:extra?.nameAliases?'dsl':'vanilla',effects:{},...extra});
+ const fixture=createUniversalPack({id:'rezero-echidna-lab',cards:[
+  rezeroPackCard(REZERO_BY_ID['REZ-1-113']),
+  event('LAB-TRIAL',trialName),
+  event('LAB-OTHER','別イベント'),
+  event('LAB-ALIAS','別名',{nameAliases:[trialName]}),
+  {id:'LAB-FRONT',name:'前線',color:'purple',type:'character',energy:0,ap:1,bp:2000,gen:0,
+   traits:[],trigger:null,implementation:'vanilla',effects:{}},
+  ...labs.map(gen)
+ ]});
+ const fixtureCounts={'REZ-1-113':4,'LAB-TRIAL':4,'LAB-OTHER':2,'LAB-ALIAS':4,'LAB-FRONT':4,
+  ...Object.fromEntries(labs.map(id=>[id,4]))};
+ assert.equal(Object.values(fixtureCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(fixture,fixtureCounts),[]);
+ const fp=[fixture,fixture];
+ function open(seed){
+  let s=newUniversalMatch(fp,{decks:[fixtureCounts,fixtureCounts],first:0,seed});
+  ['LAB-A','LAB-B','LAB-C'].forEach((id,i)=>{
+   const card=pull(s,0,id);card.ready=true;s.players[0].energy[i]=card;
+  });
+  s=dispatchUniversalAction(fp,s,{type:'next'});
+  s=dispatchUniversalAction(fp,s,{type:'next'});
+  assert.equal(s.phase,'main');
+  assert.equal(universalEnergyByColor(fp,s,0).purple,3);
+  return s;
+ }
+ function play(s){
+  const card=pull(s,0,'REZ-1-113');
+  s.players[0].hand.push(card);
+  const action=legalUniversalActions(fp,s).find(a=>a.type==='play'&&a.uid===card.uid&&a.line==='front');
+  assert.ok(action);
+  return [dispatchUniversalAction(fp,s,action),card];
+ }
+ let bare=open(5301);
+ let actor;
+ [bare,actor]=play(bare);
+ assert.equal(bare.pending,null);
+ assert.equal(at(bare,0,actor.uid).ready,false);
+ assert.equal(assertUniversalMatch(fp,bare),true);
+
+ let missed=open(5302);
+ const onlyHand=pull(missed,0,'LAB-TRIAL');
+ missed.players[0].hand.push(onlyHand);
+ const foeTrial=pull(missed,1,'LAB-TRIAL');
+ missed.players[1].outside.push(foeTrial);
+ [missed,actor]=play(missed);
+ assert.equal(missed.pending,null);
+ assert.equal(missed.players[0].hand.some(c=>c.uid===onlyHand.uid),true);
+ assert.equal(missed.players[1].outside.some(c=>c.uid===foeTrial.uid),true);
+
+ let paid=open(5303);
+ const trial=pull(paid,0,'LAB-TRIAL');
+ const other=pull(paid,0,'LAB-OTHER');
+ paid.players[0].outside.push(trial);
+ paid.players[0].hand.push(other);
+ const front=pull(paid,0,'LAB-FRONT');
+ front.ready=true;
+ paid.players[0].front[0]=front;
+ const rested=pull(paid,0,'LAB-FRONT');
+ rested.ready=false;
+ paid.players[0].front[1]=rested;
+ const energyBody=paid.players[0].energy[0];
+ [paid,actor]=play(paid);
+ assert.equal(paid.pending.kind,'effect-pay-named');
+ assert.equal(paid.pending.optional,true);
+ assert.equal(Object.keys(paid.pending).includes('hand'),false);
+ const actions=legalUniversalActions(fp,paid);
+ assert.ok(actions.some(a=>a.mode==='skip'));
+ assert.ok(actions.some(a=>a.mode==='hand'&&a.uid===other.uid));
+ assert.ok(actions.some(a=>a.mode==='rest'&&a.uid===front.uid));
+ assert.equal(actions.some(a=>a.uid===actor.uid),false);
+ assert.equal(actions.some(a=>a.uid===rested.uid),false);
+ assert.equal(actions.some(a=>a.uid===energyBody.uid),false);
+ assert.equal(actions.some(a=>a.uid===trial.uid),false);
+ assert.throws(()=>dispatchUniversalAction(fp,paid,{type:'choosePayNamed',mode:'rest',uid:energyBody.uid}),
+  /not currently legal/);
+ const label=uiActionLabel(actions.find(a=>a.mode==='hand'&&a.uid===other.uid),{pack:fixture,state:paid});
+ assert.equal(label,'將 別イベント 放到場外，並回收指定卡');
+ paid=dispatchUniversalAction(fp,paid,{type:'choosePayNamed',mode:'hand',uid:other.uid});
+ assert.equal(paid.pending,null);
+ assert.equal(paid.players[0].outside.some(c=>c.uid===other.uid),true);
+ assert.equal(paid.players[0].hand.some(c=>c.uid===trial.uid),true);
+ assert.equal(paid.players[0].outside.some(c=>c.uid===trial.uid),false);
+ assert.equal(at(paid,0,front.uid).ready,true);
+ assert.ok(paid.zoneMoveEvents.some(e=>e.uid===other.uid&&e.from==='hand'&&
+  e.to==='outside'&&e.reason==='own-effect'));
+ assert.ok(paid.zoneMoveEvents.some(e=>e.uid===trial.uid&&e.from==='outside'&&
+  e.to==='hand'&&e.reason==='own-effect'));
+ assert.equal(assertUniversalMatch(fp,paid),true);
+
+ let restedPay=open(5304);
+ const kept=pull(restedPay,0,'LAB-ALIAS');
+ restedPay.players[0].outside.push(kept);
+ const stand=pull(restedPay,0,'LAB-FRONT');
+ stand.ready=true;
+ restedPay.players[0].front[0]=stand;
+ [restedPay,actor]=play(restedPay);
+ restedPay=dispatchUniversalAction(fp,restedPay,{type:'choosePayNamed',mode:'rest',uid:stand.uid});
+ assert.equal(restedPay.pending,null);
+ assert.equal(at(restedPay,0,stand.uid).ready,false);
+ assert.equal(restedPay.players[0].hand.some(c=>c.uid===kept.uid),true);
+ assert.equal(assertUniversalMatch(fp,restedPay),true);
+
+ let skipped=open(5305);
+ const stays=pull(skipped,0,'LAB-TRIAL');
+ skipped.players[0].outside.push(stays);
+ const quiet=pull(skipped,0,'LAB-FRONT');
+ quiet.ready=true;
+ skipped.players[0].front[0]=quiet;
+ const dumped=pull(skipped,0,'LAB-OTHER');
+ skipped.players[0].hand.push(dumped);
+ [skipped]=play(skipped);
+ skipped=dispatchUniversalAction(fp,skipped,{type:'choosePayNamed',mode:'skip'});
+ assert.equal(skipped.pending,null);
+ assert.equal(skipped.players[0].outside.some(c=>c.uid===stays.uid),true);
+ assert.equal(skipped.players[0].hand.some(c=>c.uid===dumped.uid),true);
+ assert.equal(at(skipped,0,quiet.uid).ready,true);
+
+ let many=open(5306);
+ const first=pull(many,0,'LAB-TRIAL');
+ const second=pull(many,0,'LAB-ALIAS');
+ const payment=pull(many,0,'LAB-OTHER');
+ many.players[0].outside.push(first,second);
+ many.players[0].hand.push(payment);
+ [many]=play(many);
+ many=dispatchUniversalAction(fp,many,{type:'choosePayNamed',mode:'hand',uid:payment.uid});
+ assert.equal(many.pending.kind,'effect-add-named');
+ assert.equal(many.pending.optional,undefined);
+ assert.deepEqual(many.pending.choices.slice().sort(),[first.uid,second.uid].sort());
+ assert.equal(legalUniversalActions(fp,many).some(a=>a.uid===null),false);
+ assert.throws(()=>dispatchUniversalAction(fp,many,{type:'chooseAddNamed',uid:payment.uid}),
+  /not currently legal/);
+ many=dispatchUniversalAction(fp,many,{type:'chooseAddNamed',uid:second.uid});
+ assert.equal(many.pending,null);
+ assert.equal(many.players[0].hand.some(c=>c.uid===second.uid),true);
+ assert.equal(many.players[0].outside.some(c=>c.uid===first.uid),true);
+ assert.equal(many.players[0].outside.some(c=>c.uid===payment.uid),true);
+ assert.equal(assertUniversalMatch(fp,many),true);
+
+ let unpaid=open(5307);
+ unpaid.players[0].outside.push(...unpaid.players[0].hand.splice(0));
+ const lonely=pull(unpaid,0,'LAB-TRIAL');
+ unpaid.players[0].outside.push(lonely);
+ const last=pull(unpaid,0,'REZ-1-113');
+ unpaid.players[0].hand.push(last);
+ unpaid=dispatchUniversalAction(fp,unpaid,
+  legalUniversalActions(fp,unpaid).find(a=>a.type==='play'&&a.uid===last.uid&&a.line==='front'));
+ assert.equal(unpaid.pending,null);
+ assert.equal(unpaid.players[0].outside.some(c=>c.uid===lonely.uid),true);
+ assert.equal(unpaid.players[0].hand.length,0);
+ assert.equal(assertUniversalMatch(fp,unpaid),true);
 });
