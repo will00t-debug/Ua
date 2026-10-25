@@ -70,9 +70,9 @@ test('UA40BT and UA40ST share one catalogue and keep parallel art out',()=>{
  }
 });
 
-test('eighty-seven whole prints enter the V2 pack and the other twenty-six stay out',()=>{
- assert.equal(REZERO_ENGINE_IDS.length,87);
- assert.equal(Object.keys(pack.cards).length,87);
+test('eighty-eight whole prints enter the V2 pack and the other twenty-five stay out',()=>{
+ assert.equal(REZERO_ENGINE_IDS.length,88);
+ assert.equal(Object.keys(pack.cards).length,88);
  assert.equal(pack.cards['REZ-1-001'],undefined);
  assert.equal(pack.cards['REZ-1-008'].step,true);
  assert.equal(pack.cards['REZ-1-008'].implementation,'vanilla');
@@ -258,6 +258,16 @@ test('eighty-seven whole prints enter the V2 pack and the other twenty-six stay 
  assert.deepEqual(pack.cards['REZ-1-033'].effects.onPlay,[
   {op:'restOrRetireFrontAtMost',bp:5000,retireIfName:'エミリア'},
   {op:'peekTopOneIfFieldNames',names:['エミリア','パック']}]);
+ assert.equal(pack.cards['REZ-1-106'].trigger,'raid');
+ assert.equal(pack.cards['REZ-1-106'].triggerEffect,null);
+ assert.equal(pack.cards['REZ-1-106'].color,'yellow');
+ assert.equal(pack.cards['REZ-1-106'].energy,4);
+ assert.equal(pack.cards['REZ-1-106'].raidName,'エミリア');
+ assert.equal(pack.cards['REZ-1-022'].raidName,null);
+ assert.deepEqual(pack.cards['REZ-1-106'].effects.onAttack,[
+  {op:'peekTopOne'},{op:'drawIfOwnEventUsed',count:1}]);
+ assert.deepEqual(pack.cards['REZ-1-106'].passiveBonuses,[{
+  impact:1,condition:{kind:'ownOutsideEventCountAtLeast',turn:'any',min:6}}]);
  assert.deepEqual(pack.cards['REZ-1-093'].mainAbility,{
   op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,
   then:[{op:'restOwnActiveFrontDraw'}]});
@@ -3865,4 +3875,116 @@ test('Spirit Arts rests BP 5000, retires that character while Emilia is on the f
  assert.ok(both.players[0].outside.some(c=>c.uid===marker.uid));
  assert.equal(assertUniversalMatch(fp,both),true);
  assert.equal(assertUniversalMatch(fp,keptTop),true);
+});
+
+const maidCounts={
+ ...Object.fromEntries(['REZ-1-106','REZ-1-022','REZ-1-007','REZ-1-033','REZ-1-017','REZ-1-012',
+  'REZ-1-008','REZ-1-014','REZ-1-043','REZ-1-016','REZ-1-024','REZ-1-081'].map(id=>[id,4])),
+ 'REZ-1-029':2
+};
+const maid=seed=>newUniversalMatch(packs,{decks:[maidCounts,maidCounts],first:0,seed});
+test('Emilia raids onto Emilia, gains impact from six outside events, and peeks then draws after an event',()=>{
+ assert.equal(Object.values(maidCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(pack,maidCounts),[]);
+ const shell={id:'MAID',name:'エミリア',color:'yellow',type:'character',energy:4,ap:1,bp:4000,gen:1,
+  traits:[],trigger:'raid',raidName:'エミリア',implementation:'dsl',effects:{}};
+ assert.throws(()=>createUniversalPack({id:'bad-maid',cards:[{...shell,type:'event',bp:0,gen:0,raidName:null,trigger:null,effects:{onPlay:[
+  {op:'drawIfOwnEventUsed',count:1}]}}]}),/onAttack/);
+ assert.throws(()=>createUniversalPack({id:'bad-maid',cards:[{...shell,passiveBonuses:[{
+  impact:1,condition:{kind:'ownOutsideEventCountAtLeast',turn:'any'}}]}]}),/passive condition/);
+
+ let live=maid(7001);
+ fuel(live,['REZ-1-007','REZ-1-007','REZ-1-007','REZ-1-007']);
+ const base=pull(live,0,'REZ-1-022');
+ live.players[0].front[0]=base;
+ const stranger=pull(live,0,'REZ-1-008');
+ live.players[0].front[1]=stranger;
+ const decoy=pull(live,0,'REZ-1-106');
+ live.players[0].front[2]=decoy;
+ const blocker=pull(live,1,'REZ-1-012');
+ blocker.ready=true;
+ live.players[1].front[0]=blocker;
+ live=ownMain(live,2);
+ live.players[0].front[0].ready=false;
+ live.players[0].front[1].ready=false;
+ live.players[0].front[2].ready=false;
+ assert.equal(universalEnergyByColor(packs,live,0).yellow,4);
+ const waiting=pull(live,0,'REZ-1-106');
+ live.players[0].hand.push(waiting);
+ assert.equal(legalUniversalActions(packs,live).some(a=>a.type==='raid'&&a.baseUid===stranger.uid),false);
+ assert.equal(legalUniversalActions(packs,live).some(a=>a.type==='raid'&&a.baseUid===decoy.uid),false);
+ const raid=legalUniversalActions(packs,live).find(a=>a.type==='raid'&&a.uid===waiting.uid&&a.baseUid===base.uid);
+ assert.ok(raid);
+ assert.equal(raid.line,undefined);
+ const before=live.players[0].deck.length;
+ live=dispatchUniversalAction(packs,live,raid);
+ assert.equal(at(live,0,waiting.uid).ready,true);
+ assert.equal(at(live,0,waiting.uid).stack[0].uid,base.uid);
+ assert.equal(live.players[0].deck.length,before);
+ assert.equal(universalImpact(pack,live,at(live,0,waiting.uid)),0);
+ for(const id of ['REZ-1-033','REZ-1-033','REZ-1-033','REZ-1-033','REZ-1-029'])
+  live.players[0].outside.push(pull(live,0,id));
+ const bystander=pull(live,0,'REZ-1-017');
+ live.players[0].outside.push(bystander);
+ assert.equal(universalImpact(pack,live,at(live,0,waiting.uid)),0);
+ let five=structuredClone(live);
+ const sixth=pull(live,0,'REZ-1-029');
+ live.players[0].outside.push(sixth);
+ assert.equal(universalImpact(pack,live,at(live,0,waiting.uid)),1);
+ assert.equal(universalImpact(pack,five,at(five,0,waiting.uid)),0);
+ const blankFive=pull(five,1,'REZ-1-014');
+ five.players[1].life.unshift(blankFive);
+ const blankSix=pull(live,1,'REZ-1-014');
+ live.players[1].life.unshift(blankSix);
+ five=toAttack(five,0);
+ live=toAttack(live,0);
+ const lifeFive=five.players[1].life.length;
+ const deckFive=five.players[0].deck.length;
+ five=dispatchUniversalAction(packs,five,{type:'attack',uid:waiting.uid});
+ assert.equal(five.pending.kind,'private-top-choice');
+ five=dispatchUniversalAction(packs,five,{type:'chooseTopCard',mode:'top'});
+ assert.equal(five.pending.kind,'block');
+ assert.equal(five.players[0].deck.length,deckFive);
+ five=dispatchUniversalAction(packs,five,{type:'chooseBlock',uid:blocker.uid},{actor:1});
+ assert.ok(five.players[1].outside.some(c=>c.uid===blocker.uid));
+ assert.equal(five.players[1].life.length,lifeFive);
+ const lifeSix=live.players[1].life.length;
+ live=dispatchUniversalAction(packs,live,{type:'attack',uid:waiting.uid});
+ assert.equal(live.pending.kind,'private-top-choice');
+ const marker=live.players[0].deck[0];
+ live=dispatchUniversalAction(packs,live,{type:'chooseTopCard',mode:'outside'});
+ assert.ok(live.players[0].outside.some(c=>c.uid===marker.uid));
+ assert.equal(live.pending.kind,'block');
+ live=dispatchUniversalAction(packs,live,{type:'chooseBlock',uid:blocker.uid},{actor:1});
+ assert.equal(live.players[1].life.length,lifeSix-1);
+ assert.equal(live.pending,null);
+ assert.equal(assertUniversalMatch(packs,live),true);
+ assert.equal(assertUniversalMatch(packs,five),true);
+
+ let cast=maid(7002);
+ fuel(cast,['REZ-1-007','REZ-1-007','REZ-1-007','REZ-1-007']);
+ const home=pull(cast,0,'REZ-1-081');
+ cast.players[0].front[0]=home;
+ cast=ownMain(cast,2);
+ cast.players[0].front[0].ready=false;
+ const event=pull(cast,0,'REZ-1-029');
+ cast.players[0].hand.push(event);
+ cast=dispatchUniversalAction(packs,cast,legalUniversalActions(packs,cast).find(a=>a.type==='event'&&a.uid===event.uid));
+ if(cast.pending?.kind==='effect-recover-ap')
+  cast=dispatchUniversalAction(packs,cast,{type:'chooseApRecovery',uid:null});
+ assert.ok(cast.players[0].outside.some(c=>c.uid===event.uid));
+ const topCard=pull(cast,0,'REZ-1-106');
+ cast.players[0].hand.push(topCard);
+ const played=legalUniversalActions(packs,cast).find(a=>a.type==='raid'&&a.uid===topCard.uid&&a.baseUid===home.uid);
+ assert.ok(played);
+ cast=dispatchUniversalAction(packs,cast,played);
+ cast=toAttack(cast,0);
+ const deck=cast.players[0].deck.length;
+ cast=dispatchUniversalAction(packs,cast,{type:'attack',uid:topCard.uid});
+ assert.equal(cast.pending.kind,'private-top-choice');
+ cast=dispatchUniversalAction(packs,cast,{type:'chooseTopCard',mode:'top'});
+ assert.equal(cast.players[0].deck.length,deck-1);
+ assert.equal(cast.pending.kind,'block');
+ cast=dispatchUniversalAction(packs,cast,{type:'chooseBlock',uid:null},{actor:1});
+ assert.equal(assertUniversalMatch(packs,cast),true);
 });

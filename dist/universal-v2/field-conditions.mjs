@@ -79,6 +79,8 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   return s.players[owner].hand.length>=condition.min;
  if(condition.kind==='outsideCount')
   return s.players[owner].outside.length>=condition.min;
+ if(condition.kind==='ownOutsideEventCountAtLeast')
+  return s.players[owner].outside.filter(c=>printed(c).type==='event').length>=condition.min;
  if(condition.kind==='ownOutsideNamedCountAtLeast'){
   // Printed names are a union, not distinct-name kinds: each physical card
   // in OWN OUTSIDE counts ONCE, even when it has multiple audited aliases.

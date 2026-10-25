@@ -66,6 +66,7 @@ export function rezeroEngineKind(effectJa){
  if(e==='【レイド】〈エキドナ〉アクティブにし、フロントLに移動できる【登場時】カードを1枚引く。【起動メイン】【フロントLにある場合】 【ターン1】自分のフロントLのアクティブのキャラを1枚レストにする。そうした場合、カードを1枚引く。')return 'raidFrontRestDraw';
  if(e==='【レイド】〈ナツキ・スバル〉アクティブにし、フロントLに移動できる【登場時】カードを1枚引く。【退場時】このキャラのレイド元のカードを1枚まで自分の場にレストで登場させる。')return 'raidRetireBase';
  if(e==='BP5000以下の相手のフロントLのキャラを1枚選び、『レストにする』。自分の場に〈エミリア〉がある場合、『退場させる』に代わる。その後、自分の場に〈エミリア〉と〈パック〉がある場合、自分の山札の上から1枚見る。そのカードを山札の上か場外に置く。')return 'spiritRestPeek';
+ if(e==='【レイド】〈エミリア〉アクティブにし、フロントLに移動できる自分の場外にイベントカードが6枚以上ある場合、このキャラは【インパクト（1）】（アタックしてバトルに勝利した時、相手プレイヤーに1ダメージ）を得る。【アタック時】自分の山札の上から1枚見る。そのカードを山札の上か場外に置く。このターン中に自分がイベントカードを使用している場合、カードを1枚引く。')return 'raidEventImpactPeek';
  return null;
 }
 const TOP_OUTSIDE=new Map([
@@ -198,7 +199,9 @@ export function rezeroPackCard(card){
    onAttack:[{op:'drawIfOppFrontBelowPrinted',count:1}]}:
    kind==='raidRetireBase'?{
     onPlay:[{op:'draw',count:1}],
-    onRetire:[{op:'deployOwnRaidBaseRest',optional:true}]}:ops?{onPlay:ops}:{},
+    onRetire:[{op:'deployOwnRaidBaseRest',optional:true}]}:
+   kind==='raidEventImpactPeek'?{onAttack:[
+    {op:'peekTopOne'},{op:'drawIfOwnEventUsed',count:1}]}:ops?{onPlay:ops}:{},
   ...(kind==='step'||kind==='emptyFieldStep'?{step:true}:{}),
   ...(kind==='impactNull'?{impactNull:true}:{}),
   ...(kind==='activeEnergy'?{activeExtraEnergy:1}:{}),
@@ -234,6 +237,8 @@ export function rezeroPackCard(card){
   ...(kind==='handPayRevealDeploy'?{mainAbility:{
    op:'handPayRevealDeploy',payAp:1,minReferencedBp:4000}}:{}),
   ...(kind==='raidRetireBase'?{raidName:'ナツキ・スバル'}:{}),
+  ...(kind==='raidEventImpactPeek'?{raidName:'エミリア',passiveBonuses:[{
+   impact:1,condition:{kind:'ownOutsideEventCountAtLeast',turn:'any',min:6}}]}:{}),
   ...(kind==='raidFrontRestDraw'?{raidName:'エキドナ',mainAbility:{
    op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,
    then:[{op:'restOwnActiveFrontDraw'}]}}:{}),
