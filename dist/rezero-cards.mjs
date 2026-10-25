@@ -249,7 +249,7 @@ export const REZERO_CARDS=[
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-006.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA40BT%2FREZ-1-006",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "restEnergyRetire",
   "handDiscount": null,
   "altNames": []
  },
@@ -1163,7 +1163,7 @@ export const REZERO_CARDS=[
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-028.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA40BT%2FREZ-1-028",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "emptyFieldStep",
   "handDiscount": null,
   "altNames": []
  },
@@ -1530,7 +1530,7 @@ export const REZERO_CARDS=[
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-037.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA40BT%2FREZ-1-037",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "restEnergyRetire",
   "handDiscount": null,
   "altNames": []
  },
@@ -3313,7 +3313,7 @@ export const REZERO_CARDS=[
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-082.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA40BT%2FREZ-1-082",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "restEnergyRetire",
   "handDiscount": null,
   "altNames": []
  },
@@ -4115,7 +4115,7 @@ export const REZERO_CARDS=[
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40ST_REZ-1-102.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA40ST%2FREZ-1-102",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "feltTurnBp",
   "handDiscount": null,
   "altNames": []
  },
@@ -4234,7 +4234,7 @@ export const REZERO_CARDS=[
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40ST_REZ-1-105.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA40ST%2FREZ-1-105",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "eventTurnBp",
   "handDiscount": null,
   "altNames": []
  },
@@ -4433,7 +4433,7 @@ export const REZERO_CARDS=[
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40ST_REZ-1-110.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA40ST%2FREZ-1-110",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "subaruFrontEnergy",
   "handDiscount": null,
   "altNames": []
  },

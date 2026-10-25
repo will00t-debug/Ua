@@ -19,6 +19,15 @@ export function rezeroEngineKind(effectJa){
  if(e==='自分のAPカードを2枚まで選び、アクティブにする。')return 'recoverAp2';
  if(/^相手の場に.+か.+のカードがある場合、手札にあるこのカードの必要エナジーを【.+×1】減らす。$/.test(e))
   return 'handDiscount';
+ if(e==='自分の場にカードが1枚もない場合、手札にあるこのカードの必要エナジーを【黄×2】減らす。【ステップ】（自分の移動フェイズにフロントLからエナジーLへ移動できる）')
+  return 'emptyFieldStep';
+ if(e==='【起動メイン】【レストにする】 【ターン1】このキャラはこのターン中、発生エナジー+【黄】と「メインフェイズ終了時、このキャラを退場させる。」を得る。'||
+  e==='【起動メイン】【レストにする】 【ターン1】このキャラはこのターン中、発生エナジー+【青】と「メインフェイズ終了時、このキャラを退場させる。」を得る。'||
+  e==='【起動メイン】【レストにする】 【ターン1】このキャラはこのターン中、発生エナジー+【紫】と「メインフェイズ終了時、このキャラを退場させる。」を得る。')
+  return 'restEnergyRetire';
+ if(e==='【自分のターン中】自分の場に〈フェルト〉がある場合、このキャラはBP+1000。')return 'feltTurnBp';
+ if(e==='【自分のターン中】このターン中に自分がイベントカードを使用している場合、このキャラはBP+1000。')return 'eventTurnBp';
+ if(e==='自分のフロントLに〈ナツキ・スバル〉がある場合、このキャラの発生エナジー+【青】。')return 'subaruFrontEnergy';
  return null;
 }
 function effectsFor(kind){
@@ -35,16 +44,34 @@ export function rezeroPackCard(card){
  if(kind==='handDiscount'&&(
   !card.handDiscount||card.handDiscount.amount!==1||card.handDiscount.colors?.length!==2))
   throw Error(card.id+' hand discount is not two opposing colors');
+ const pip={yellow:'黄',blue:'青',purple:'紫'}[card.color];
+ if(kind==='restEnergyRetire'&&!card.effectJa.includes('発生エナジー+【'+pip+'】'))
+  throw Error(card.id+' generated color does not match the printed pip');
+ if(kind==='emptyFieldStep'&&(card.energy<2||card.color!=='yellow'))
+  throw Error(card.id+' empty-field discount is not yellow 2');
+ if(kind==='subaruFrontEnergy'&&card.color!=='blue')
+  throw Error(card.id+' Subaru energy is not blue');
  return {
   id:card.id,name:card.nameJa,color:card.color,type:card.type,
   energy:card.energy,ap:card.ap,bp:card.bp,gen:card.gen,trigger:card.trigger,
   traits:card.traits,
   implementation:kind==='plain'||kind==='step'?'vanilla':'dsl',
   effects:effectsFor(kind),
-  ...(kind==='step'?{step:true}:{}),
+  ...(kind==='step'||kind==='emptyFieldStep'?{step:true}:{}),
   ...(kind==='impactNull'?{impactNull:true}:{}),
   ...(kind==='activeEnergy'?{activeExtraEnergy:1}:{}),
-  ...(kind==='handDiscount'?{opponentFieldColorsHandEnergyDiscount:card.handDiscount}:{})
+  ...(kind==='handDiscount'?{opponentFieldColorsHandEnergyDiscount:card.handDiscount}:{}),
+  ...(kind==='emptyFieldStep'?{emptyOwnFieldHandEnergyDiscount:2}:{}),
+  ...(kind==='restEnergyRetire'?{mainAbility:{
+   op:'restSelfGainEnergyRetireEndMain',lines:'field',oncePerTurn:true,extraEnergy:1}}:{}),
+  ...(kind==='feltTurnBp'?{passiveBonuses:[{
+   condition:{kind:'ownNameExists',turn:'own',zone:'field',excludeSelf:false,name:'フェルト'},
+   bp:1000}]}:{}),
+  ...(kind==='eventTurnBp'?{passiveBonuses:[{
+   condition:{kind:'ownEventUsedThisTurn',turn:'own'},bp:1000}]}:{}),
+  ...(kind==='subaruFrontEnergy'?{passiveBonuses:[{
+   condition:{kind:'ownNameExists',turn:'any',zone:'front',excludeSelf:false,name:'ナツキ・スバル'},
+   extraEnergy:1}]}:{})
  };
 }
 export const REZERO_ENGINE_IDS=Object.freeze(
