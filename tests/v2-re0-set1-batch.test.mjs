@@ -70,9 +70,9 @@ test('UA40BT and UA40ST share one catalogue and keep parallel art out',()=>{
  }
 });
 
-test('eighty whole prints enter the V2 pack and the other thirty-three stay out',()=>{
- assert.equal(REZERO_ENGINE_IDS.length,80);
- assert.equal(Object.keys(pack.cards).length,80);
+test('eighty-one whole prints enter the V2 pack and the other thirty-two stay out',()=>{
+ assert.equal(REZERO_ENGINE_IDS.length,81);
+ assert.equal(Object.keys(pack.cards).length,81);
  assert.equal(pack.cards['REZ-1-001'],undefined);
  assert.equal(pack.cards['REZ-1-008'].step,true);
  assert.equal(pack.cards['REZ-1-008'].implementation,'vanilla');
@@ -202,6 +202,14 @@ test('eighty whole prints enter the V2 pack and the other thirty-three stay out'
  assert.equal(pack.cards['REZ-1-065'].handRevealCharacterBp,4000);
  assert.deepEqual(pack.cards['REZ-1-065'].effects.onPlay,[{
   op:'retireOppFrontAtLeastBp',bp:4500}]);
+ assert.equal(pack.cards['REZ-1-104'].enterAlwaysActive,true);
+ assert.equal(pack.cards['REZ-1-104'].trigger,'active');
+ assert.equal(pack.cards['REZ-1-104'].triggerEffect,null);
+ assert.equal(pack.cards['REZ-1-104'].ap,2);
+ assert.deepEqual(pack.cards['REZ-1-104'].effects.onPlay,[{
+  op:'enemyBpDown',bp:1000,optional:true,minBp:1500,maxTargets:2,zone:'front'}]);
+ assert.deepEqual(pack.cards['REZ-1-104'].effects.onAttack,[{
+  op:'drawIfOppFrontBelowPrinted',count:1}]);
  assert.equal(pack.cards['REZ-1-067'].enterAlwaysActive,true);
  assert.equal(pack.cards['REZ-1-067'].impactNull,true);
  assert.equal(pack.cards['REZ-1-067'].trigger,'active');
@@ -2898,4 +2906,100 @@ test('a revealed monster event counts as BP 4000 and retires only a front charac
  assert.ok(paid.zoneMoveEvents.some(e=>e.cardId==='REZ-1-065'&&e.from==='hand'&&
   e.to==='outside'&&e.reason==='rule'));
  assert.equal(assertUniversalMatch(packs,paid),true);
+});
+
+const remFrontCounts={
+ ...Object.fromEntries(['REZ-1-104','REZ-1-007','REZ-1-005','REZ-1-012','REZ-1-014',
+  'REZ-1-008','REZ-1-009','REZ-1-013','REZ-1-022','REZ-1-023','REZ-1-028','REZ-1-103'].map(id=>[id,4])),
+ 'REZ-1-024':2
+};
+const remFront=seed=>newUniversalMatch(packs,{decks:[remFrontCounts,remFrontCounts],first:0,seed});
+test('Rem enters active, lowers up to two fronts of at least 1500, and draws when a front is below its printed BP',()=>{
+ assert.equal(Object.values(remFrontCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(pack,remFrontCounts),[]);
+ const shell={id:'REM104',name:'Gate',color:'yellow',type:'character',energy:4,ap:2,bp:4000,gen:1,
+  traits:[],trigger:'active',implementation:'dsl',effects:{}};
+ assert.throws(()=>createUniversalPack({id:'bad-rem',cards:[{...shell,effects:{onPlay:[
+  {op:'drawIfOppFrontBelowPrinted',count:1}]}}]}),/onAttack/);
+ assert.throws(()=>createUniversalPack({id:'bad-rem',cards:[{...shell,effects:{onAttack:[
+  {op:'drawIfOppFrontBelowPrinted',count:2}]}}]}),/front printed-BP/);
+ assert.equal(pack.cards['REZ-1-005'].bp,500);
+ assert.equal(pack.cards['REZ-1-012'].bp,1500);
+ assert.equal(pack.cards['REZ-1-014'].bp,2500);
+
+ let live=remFront(6301);
+ fuel(live,['REZ-1-007','REZ-1-007','REZ-1-007','REZ-1-007']);
+ live=ownMain(live,2);
+ assert.equal(universalEnergyByColor(packs,live,0).yellow,4);
+ assert.equal(live.players[0].apCards.filter(c=>c.ready).length,2);
+ const small=pull(live,1,'REZ-1-005');
+ const mid=pull(live,1,'REZ-1-012');
+ const tall=pull(live,1,'REZ-1-014');
+ const parked=pull(live,1,'REZ-1-014');
+ mid.ready=true;
+ live.players[1].front[0]=small;
+ live.players[1].front[1]=mid;
+ live.players[1].front[2]=tall;
+ live.players[1].energy[0]=parked;
+ let rem;
+ [live,rem]=playFront(live,'REZ-1-104');
+ assert.equal(at(live,0,rem.uid).ready,true);
+ assert.equal(live.pending.kind,'effect-target-many');
+ assert.equal(live.pending.maxTargets,2);
+ assert.equal(live.pending.zone,'front');
+ assert.deepEqual(live.pending.choices.slice().sort(),[mid.uid,tall.uid].sort());
+ assert.equal(legalUniversalActions(packs,live).some(a=>a.uid===small.uid||a.uid===parked.uid),false);
+ live=dispatchUniversalAction(packs,live,{type:'chooseTargetMany',uid:mid.uid});
+ assert.equal(live.pending.kind,'effect-target-many');
+ assert.deepEqual(live.pending.selected,[mid.uid]);
+ live=dispatchUniversalAction(packs,live,{type:'chooseTargetMany',uid:tall.uid});
+ assert.equal(live.pending,null);
+ assert.equal(universalBp(packs,live,at(live,1,mid.uid)),500);
+ assert.equal(universalBp(packs,live,at(live,1,tall.uid)),1500);
+ assert.equal(universalBp(packs,live,at(live,1,small.uid)),500);
+ assert.equal(universalBp(packs,live,parked),2500);
+ const drawn=live.players[0].deck.length;
+ live=dispatchUniversalAction(packs,live,legalUniversalActions(packs,live).find(a=>a.type==='next'));
+ assert.equal(live.phase,'attack');
+ live=dispatchUniversalAction(packs,live,{type:'attack',uid:rem.uid});
+ assert.equal(live.pending.kind,'block');
+ assert.equal(live.players[0].deck.length,drawn-1);
+ live=dispatchUniversalAction(packs,live,{type:'chooseBlock',uid:mid.uid},{actor:1});
+ assert.equal(assertUniversalMatch(packs,live),true);
+
+ let skipped=remFront(6302);
+ fuel(skipped,['REZ-1-007','REZ-1-007','REZ-1-007','REZ-1-007']);
+ skipped=ownMain(skipped,2);
+ const printed=pull(skipped,1,'REZ-1-014');
+ const line=pull(skipped,1,'REZ-1-012');
+ line.buffs=[{bp:-500,untilTurn:skipped.turn}];
+ skipped.players[1].front[0]=printed;
+ skipped.players[1].energy[0]=line;
+ let quiet;
+ [skipped,quiet]=playFront(skipped,'REZ-1-104');
+ assert.equal(at(skipped,0,quiet.uid).ready,true);
+ assert.equal(skipped.pending.kind,'effect-target-many');
+ assert.deepEqual(skipped.pending.choices,[printed.uid]);
+ skipped=dispatchUniversalAction(packs,skipped,{type:'chooseTargetMany',uid:null});
+ assert.equal(skipped.pending,null);
+ assert.equal(universalBp(packs,skipped,printed),2500);
+ assert.equal(universalBp(packs,skipped,line),1000);
+ const still=skipped.players[0].deck.length;
+ skipped=dispatchUniversalAction(packs,skipped,legalUniversalActions(packs,skipped).find(a=>a.type==='next'));
+ skipped=dispatchUniversalAction(packs,skipped,{type:'attack',uid:quiet.uid});
+ assert.equal(skipped.pending.kind,'block');
+ assert.equal(skipped.players[0].deck.length,still);
+ skipped=dispatchUniversalAction(packs,skipped,{type:'chooseBlock',uid:null},{actor:1});
+ assert.equal(assertUniversalMatch(packs,skipped),true);
+
+ let empty=remFront(6303);
+ fuel(empty,['REZ-1-007','REZ-1-007','REZ-1-007','REZ-1-007']);
+ empty=ownMain(empty,2);
+ const under=pull(empty,1,'REZ-1-005');
+ empty.players[1].front[0]=under;
+ let alone;
+ [empty,alone]=playFront(empty,'REZ-1-104');
+ assert.equal(at(empty,0,alone.uid).ready,true);
+ assert.equal(empty.pending,null);
+ assert.equal(assertUniversalMatch(packs,empty),true);
 });

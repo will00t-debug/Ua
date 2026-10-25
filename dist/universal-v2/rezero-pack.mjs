@@ -59,6 +59,7 @@ export function rezeroEngineKind(effectJa){
  if(e==='自分の山札の上から5枚見る。その中から［特徴：王選候補者］かイベントカードを1枚まで公開し手札に加える。残りを望む順で山札の下に置く。公開したカードが［特徴：王選候補者］の場合、自分のAPカードを1枚まで選び、アクティブにする。')return 'candidateApSearch';
  if(e==='【起動メイン】【フロントLにある場合】 【ターン1】このターン中にこのキャラが自分の効果でアクティブからレストになったことがある場合のみ発動できる。このターン中、次に手札から使用する〈エミリア〉の必要エナジーを【紫×1】減らす。')return 'emiliaHandEnergy';
  if(e==='自分の効果で自分の手札から公開しているこのカードは元々のBPが4000のキャラカードとしても扱う。BP4500以上の相手のフロントLのキャラを1枚選び、退場させる。')return 'handRevealRetire';
+ if(e==='このキャラはアクティブで場に登場させる。【登場時】BP1500以上の相手のフロントLのキャラを2枚まで選び、このターン中、BP-1000。【アタック時】相手のフロントLに元々のBPよりBPが低いキャラがある場合、カードを1枚引く。')return 'activeFrontDownDraw';
  return null;
 }
 const TOP_OUTSIDE=new Map([
@@ -177,7 +178,9 @@ export function rezeroPackCard(card){
   energy:card.energy,ap:card.ap,bp:card.bp,gen:card.gen,trigger:card.trigger,
   traits:card.traits,
   implementation:kind==='plain'||kind==='step'?'vanilla':'dsl',
-  effects:ops?{onPlay:ops}:{},
+  effects:kind==='activeFrontDownDraw'?{
+   onPlay:[{op:'enemyBpDown',bp:1000,optional:true,minBp:1500,maxTargets:2,zone:'front'}],
+   onAttack:[{op:'drawIfOppFrontBelowPrinted',count:1}]}:ops?{onPlay:ops}:{},
   ...(kind==='step'||kind==='emptyFieldStep'?{step:true}:{}),
   ...(kind==='impactNull'?{impactNull:true}:{}),
   ...(kind==='activeEnergy'?{activeExtraEnergy:1}:{}),
@@ -192,6 +195,7 @@ export function rezeroPackCard(card){
    op:'restSelfThen',frontOnly:false,oncePerTurn:true,then:[{op:'peekTopOrBottom'}]}}:{}),
   ...(kind==='revealBottom2500'?{mainAbility:{
    op:'revealHandBottomBuff',oncePerTurn:true,minPrintedBp:4000,bp:2500}}:{}),
+  ...(kind==='activeFrontDownDraw'?{enterAlwaysActive:true}:{}),
   ...(kind==='garfielEntry'?{enterAlwaysActive:true,impactNull:true,mainAbility:{
    op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,then:[{op:'activeSelf'}]}}:{}),
   ...(kind==='beatriceHandTop'?{impactNull:true,mainAbility:{
