@@ -50,6 +50,7 @@ export function rezeroEngineKind(effectJa){
  if(e==='『BP3000以下』の相手のフロントLのキャラを1枚選び、退場させる。自分の場に〈エミリア〉がある場合、『BP5000以下』に代わる。')return 'emiliaRetire';
  if(e==='このキャラはアクティブで場に登場させる。【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、【インパクト】を失う）【登場時】相手のフロントLのキャラを1枚まで選び、このターン中、BP-2500。【起動メイン】【フロントLにある場合】 【ターン1】このキャラをアクティブにする。')return 'garfielEntry';
  if(e==='【登場時】自分の手札を1枚場外に置くか、自分のフロントLのアクティブのキャラを1枚レストにしてもよい。そうした場合、自分の場外から〈'+TRIAL_NAME+'〉を1枚手札に加える。')return 'sanctuaryRecover';
+ if(e==='【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、【インパクト】を失う）【起動メイン】【フロントLにある場合】 【ターン1】自分の手札を1枚自分の山札の上に置く。そうした場合、このキャラはこのターン中、BP+1000。')return 'beatriceHandTop';
  return null;
 }
 const TOP_OUTSIDE=new Map([
@@ -63,6 +64,7 @@ const ALIAS_PREFIX='このカードは〈クルシュ・カルステン〉とし
 const REST_SKIP='【カラー】相手のフロントLのキャラを1枚選び、レストにする。それは次の1回アクティブにならない。';
 const BOUNCE_3500='【カラー】BP3500以下の相手のフロントLのキャラを1枚選び、手札に戻す。';
 const SPECIAL_RETIRE='【スペシャル】相手のフロントLのキャラを1枚選び、退場させる。';
+const COLOR_DEPLOY='【カラー】自分の場外から必要エナジーが2以下で消費APが1の紫のキャラカードを1枚自分のフロントLにアクティブで登場させる。';
 const SEARCHES=Object.freeze([
  {ja:'【登場時】自分の山札の上から3枚見る。その中から〈ラム〉か〈レム〉か〈ロズワール・L・メイザース〉を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。',
   count:3,names:['ラム','レム','ロズワール・L・メイザース']},
@@ -77,6 +79,8 @@ function colorTrigger(card){
  if(card.trigger==='color'&&card.triggerTextJa===REST_SKIP)return {op:'restOppFrontSkipNextActive'};
  if(card.trigger==='color'&&card.triggerTextJa===BOUNCE_3500)return {op:'bounceOppFrontUnderBp',bp:3500};
  if(card.trigger==='special'&&card.triggerTextJa===SPECIAL_RETIRE)return {op:'retireOppFront'};
+ if(card.trigger==='color'&&card.triggerTextJa===COLOR_DEPLOY)
+  return {op:'deployOutsideCharacter',color:'purple',maxEnergy:2,ap:1,frontOnly:true};
  if(card.trigger==='color'||card.trigger==='special')
   throw Error(card.id+' trigger is not part of the registered whole print');
  return null;
@@ -143,6 +147,12 @@ export function rezeroPackCard(card){
   throw Error(card.id+' special trigger is not the printed retirement');
  if(triggerEffect?.op==='retireOppFront'&&!specialPrint)
   throw Error(card.id+' retirement trigger is not this print');
+ const colorDeploy=kind==='beatriceHandTop';
+ if(colorDeploy&&!(triggerEffect?.op==='deployOutsideCharacter'&&triggerEffect.color==='purple'&&
+  triggerEffect.maxEnergy===2&&triggerEffect.ap===1&&triggerEffect.frontOnly===true))
+  throw Error(card.id+' color trigger is not the printed outside deployment');
+ if(triggerEffect?.op==='deployOutsideCharacter'&&!colorDeploy)
+  throw Error(card.id+' outside deployment trigger is not this print');
  if(kind==='aliasTopKeep'&&(card.trigger!=null||triggerEffect))
   throw Error(card.id+' alias print has no trigger');
  return {
@@ -167,6 +177,9 @@ export function rezeroPackCard(card){
    op:'revealHandBottomBuff',oncePerTurn:true,minPrintedBp:4000,bp:2500}}:{}),
   ...(kind==='garfielEntry'?{enterAlwaysActive:true,impactNull:true,mainAbility:{
    op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,then:[{op:'activeSelf'}]}}:{}),
+  ...(kind==='beatriceHandTop'?{impactNull:true,mainAbility:{
+   op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,
+   then:[{op:'handTopBuffSelf',bp:1000}]}}:{}),
   ...(kind==='feltTurnBp'?{passiveBonuses:[{
    condition:{kind:'ownNameExists',turn:'own',zone:'field',excludeSelf:false,name:'フェルト'},
    bp:1000}]}:{}),
