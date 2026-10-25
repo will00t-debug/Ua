@@ -29,6 +29,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-active-own-named':'可將最多 1 個己方指定名稱角色轉為 ACTIVE',
  'effect-bounce-own':'選擇返回手牌的己方角色',
  'effect-buff-own':'選擇己方角色增加本回合 BP',
+ 'effect-named-impact':'選擇己方雷姆，本回合 BP+1000 並獲得衝擊+1',
  'effect-buff-either':'選擇自己或對手的其他角色，本回合 BP+1000',
  'effect-return-printed':'可將符合印刷條件的己方角色放回手牌',
  'effect-remove-named':'可將場外的指定卡移入移除區',
@@ -207,6 +208,7 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseRestFrontAp':return action.uid===null?'不休息前線':'休息 '+name()+'，之後可恢復 1 張 AP';
   case 'chooseDiscardActive':return action.uid===null?'不棄牌，場域維持休息':
    '將 '+name()+' 放到場外，並使這張場域活動';
+  case 'chooseNamedImpact':return '選擇 '+name()+'，本回合 BP+1000 並獲得衝擊+1';
   case 'chooseOwnBuff':case 'chooseMainBuff':case 'chooseTraitBuff':case 'chooseRestBp':
   case 'chooseRetireBp':case 'chooseTargetMany':return action.uid===null?'完成目標選擇':'選擇第 '+(state?.pending?.selected?.length+1||1)+' 個角色';
   case 'chooseFrontEnergyGrant':return action.uid===null?

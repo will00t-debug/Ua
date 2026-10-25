@@ -4,10 +4,13 @@ import {REZERO_CARDS,REZERO_BY_ID} from '../dist/rezero-cards.mjs';
 import {createRezeroV2Pack,REZERO_ENGINE_IDS,rezeroEngineKind,rezeroPackCard} from '../dist/universal-v2/rezero-pack.mjs';
 import {createUniversalPack,validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
- assertUniversalMatch,universalEnergyByColor,universalBp,effectiveHandRequiredEnergy
+ assertUniversalMatch,universalEnergyByColor,universalBp,universalImpact,
+ effectiveHandRequiredEnergy
 } from '../dist/universal-v2/engine.mjs';
+import {grantContinuousState} from '../dist/universal-v2/continuous-states.mjs';
 import {cardHasName} from '../dist/universal-v2/field-conditions.mjs';
 import {uiActionLabel} from '../dist/universal-v2/preview-actions.mjs';
+import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
 
 const pack=createRezeroV2Pack(),packs=[pack,pack];
 const fours=['REZ-1-007','REZ-1-008','REZ-1-012','REZ-1-013','REZ-1-014',
@@ -67,9 +70,9 @@ test('UA40BT and UA40ST share one catalogue and keep parallel art out',()=>{
  }
 });
 
-test('seventy-six whole prints enter the V2 pack and the other thirty-seven stay out',()=>{
- assert.equal(REZERO_ENGINE_IDS.length,76);
- assert.equal(Object.keys(pack.cards).length,76);
+test('seventy-seven whole prints enter the V2 pack and the other thirty-six stay out',()=>{
+ assert.equal(REZERO_ENGINE_IDS.length,77);
+ assert.equal(Object.keys(pack.cards).length,77);
  assert.equal(pack.cards['REZ-1-001'],undefined);
  assert.equal(pack.cards['REZ-1-008'].step,true);
  assert.equal(pack.cards['REZ-1-008'].implementation,'vanilla');
@@ -172,6 +175,12 @@ test('seventy-six whole prints enter the V2 pack and the other thirty-seven stay
   op:'retireOppFrontTiered',bp:3000,tiers:[
    {names:['ベアトリス'],bp:4000},
    {names:['ベアトリス','ナツキ・スバル'],bp:5000}]}]);
+ assert.equal(pack.cards['REZ-1-062'].type,'event');
+ assert.equal(pack.cards['REZ-1-062'].color,'blue');
+ assert.equal(pack.cards['REZ-1-062'].trigger,'active');
+ assert.equal(pack.cards['REZ-1-062'].triggerEffect,null);
+ assert.deepEqual(pack.cards['REZ-1-062'].effects.onPlay,[{
+  op:'buffNamedImpactDraw',name:'レム',bp:1000,impactPlus:1,draw:1}]);
  assert.equal(pack.cards['REZ-1-067'].enterAlwaysActive,true);
  assert.equal(pack.cards['REZ-1-067'].impactNull,true);
  assert.equal(pack.cards['REZ-1-067'].trigger,'active');
@@ -2457,4 +2466,133 @@ test('El Minya retires 3000, 4000 with Beatrice, or 5000 with Beatrice and Subar
  blocked.players[0].hand.push(card);
  assert.equal(legalUniversalActions(packs,blocked).some(a=>a.type==='event'&&a.uid===card.uid),false);
  assert.equal(assertUniversalMatch(packs,blocked),true);
+});
+
+const oathCounts={
+ ...Object.fromEntries(['REZ-1-062','REZ-1-016','REZ-1-043','REZ-1-007','REZ-1-008',
+  'REZ-1-012','REZ-1-013','REZ-1-014','REZ-1-022','REZ-1-023','REZ-1-024','REZ-1-056'].map(id=>[id,4])),
+ 'REZ-1-029':2
+};
+const oath=seed=>newUniversalMatch(packs,{decks:[oathCounts,oathCounts],first:0,seed});
+function stamp(s,card){
+ card.fieldEntryStamp=s.nextFieldEntryStamp++;
+ card.ready=true;
+ return card;
+}
+function quietLife(s){
+ const first=pull(s,1,'REZ-1-016'),second=pull(s,1,'REZ-1-016');
+ while(s.players[1].life.length>5)s.players[1].deck.push(s.players[1].life.pop());
+ s.players[1].life.unshift(first,second);
+}
+test('Testimony gives one field Rem BP and impact +1, then draws',()=>{
+ assert.equal(Object.values(oathCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(pack,oathCounts),[]);
+ const shell={id:'OATH',name:'Oath',color:'blue',type:'event',energy:2,ap:1,bp:0,gen:0,
+  traits:[],trigger:'active',implementation:'dsl',effects:{}};
+ const printed={op:'buffNamedImpactDraw',name:'レム',bp:1000,impactPlus:1,draw:1};
+ assert.throws(()=>createUniversalPack({id:'bad-oath',cards:[{...shell,type:'character',bp:2500,effects:{onPlay:[printed]}}]}),
+  /event onPlay/);
+ assert.throws(()=>createUniversalPack({id:'bad-oath',cards:[{...shell,effects:{onPlay:[
+  {...printed,name:'ラム'}]}}]}),/named impact draw/);
+
+ let missing=oath(5901);
+ fuel(missing,['REZ-1-043','REZ-1-043']);
+ missing=reach(missing,'main');
+ const held=pull(missing,0,'REZ-1-016');
+ missing.players[0].hand.push(held);
+ const parked=pull(missing,0,'REZ-1-016');
+ missing.players[0].outside.push(parked);
+ const foe=stamp(missing,pull(missing,1,'REZ-1-016'));
+ missing.players[1].front[0]=foe;
+ const absent=pull(missing,0,'REZ-1-062');
+ missing.players[0].hand.push(absent);
+ assert.equal(legalUniversalActions(packs,missing).some(a=>a.type==='event'&&a.uid===absent.uid),false);
+
+ let live=oath(5902);
+ fuel(live,['REZ-1-043','REZ-1-043']);
+ live=reach(live,'main');
+ const front=stamp(live,pull(live,0,'REZ-1-016'));
+ const energyRem=stamp(live,pull(live,0,'REZ-1-016'));
+ live.players[0].front[0]=front;
+ live.players[0].energy[2]=energyRem;
+ const bystander=pull(live,0,'REZ-1-007');
+ live.players[0].front[1]=bystander;
+ const handRem=pull(live,0,'REZ-1-016');
+ live.players[0].hand.push(handRem);
+ const spell=pull(live,0,'REZ-1-062');
+ live.players[0].hand.push(spell);
+ const deckAtPlay=live.players[0].deck.length;
+ live=dispatchUniversalAction(packs,live,legalUniversalActions(packs,live).find(a=>a.type==='event'&&a.uid===spell.uid));
+ assert.equal(live.pending.kind,'effect-named-impact');
+ assert.equal(live.pending.optional,undefined);
+ assert.deepEqual(legalUniversalActions(packs,live).map(a=>a.uid).sort(),[front.uid,energyRem.uid].sort());
+ assert.equal(legalUniversalActions(packs,live).some(a=>a.uid===null||a.uid===handRem.uid||a.uid===bystander.uid),false);
+ const choice=legalUniversalActions(packs,live).find(a=>a.uid===front.uid);
+ assert.match(uiActionLabel(choice,{pack,state:live}),/本回合 BP\+1000 並獲得衝擊\+1/);
+ const ai=chooseUniversalAiAction(packs,live,{difficulty:'normal'});
+ assert.equal(ai.type,'chooseNamedImpact');
+ assert.ok([front.uid,energyRem.uid].includes(ai.uid));
+ live=dispatchUniversalAction(packs,live,choice);
+ assert.equal(live.pending,null);
+ assert.equal(live.players[0].deck.length,deckAtPlay-1);
+ assert.equal(universalBp(packs,live,at(live,0,front.uid)),3500);
+ assert.equal(universalImpact(packs,live,at(live,0,front.uid)),1);
+ assert.deepEqual(at(live,0,front.uid).impactPlus,{turn:live.turn,stamp:front.fieldEntryStamp,amount:1});
+ assert.equal(at(live,0,energyRem.uid).impactPlus,undefined);
+ assert.equal(live.players[0].outside.some(c=>c.uid===spell.uid),true);
+ assert.ok(live.zoneMoveEvents.some(e=>e.uid===spell.uid&&e.from==='hand'&&
+  e.to==='outside'&&e.reason==='rule'));
+ assert.ok(live.zoneMoveEvents.some(e=>e.from==='deck'&&e.to==='hand'&&
+  e.reason==='own-effect'&&e.sourceUid===spell.uid));
+ const silenced=structuredClone(live);
+ const silencedRem=at(silenced,0,front.uid);
+ grantContinuousState(silenced,{kind:'originalEffectsDisabled',controller:0,
+  sourceUid:silencedRem.uid,targetUid:silencedRem.uid,sourceLinked:false,
+  until:{player:0,phase:'attack',edge:'end'}});
+ assert.equal(universalImpact(packs,silenced,silencedRem),0);
+ silencedRem.impactGranted={turn:silenced.turn,stamp:silencedRem.fieldEntryStamp,amount:1};
+ assert.equal(universalImpact(packs,silenced,silencedRem),1);
+ quietLife(live);
+ const oneLife=live.players[1].life.length;
+ const wall=stamp(live,pull(live,1,'REZ-1-043'));
+ live.players[1].front[0]=wall;
+ live=dispatchUniversalAction(packs,live,legalUniversalActions(packs,live).find(a=>a.type==='next'));
+ assert.equal(live.phase,'attack');
+ live=dispatchUniversalAction(packs,live,{type:'attack',uid:front.uid});
+ live=dispatchUniversalAction(packs,live,{type:'chooseBlock',uid:wall.uid},{actor:1});
+ assert.equal(live.players[1].life.length,oneLife-1);
+ assert.equal(live.pending,null);
+ assert.equal(live.effectQueue.some(e=>e.op==='additionalBattleDamage'),false);
+ assert.equal(live.publicReveals.length,1);
+ live=ownMain(live,2);
+ assert.equal(universalBp(packs,live,at(live,0,front.uid)),2500);
+ assert.equal(at(live,0,front.uid).impactPlus,undefined);
+ assert.equal(universalImpact(packs,live,at(live,0,front.uid)),0);
+ assert.equal(assertUniversalMatch(packs,live),true);
+
+ let doubled=oath(5903);
+ fuel(doubled,['REZ-1-043','REZ-1-043']);
+ doubled=reach(doubled,'main');
+ const striker=stamp(doubled,pull(doubled,0,'REZ-1-016'));
+ doubled.players[0].front[0]=striker;
+ const oathCard=pull(doubled,0,'REZ-1-062');
+ doubled.players[0].hand.push(oathCard);
+ doubled=dispatchUniversalAction(packs,doubled,legalUniversalActions(packs,doubled).find(a=>a.type==='event'&&a.uid===oathCard.uid));
+ doubled=dispatchUniversalAction(packs,doubled,{type:'chooseNamedImpact',uid:striker.uid});
+ const body=at(doubled,0,striker.uid);
+ body.impactGranted={turn:doubled.turn,stamp:body.fieldEntryStamp,amount:1};
+ assert.equal(universalImpact(packs,doubled,body),2);
+ quietLife(doubled);
+ const twoLife=doubled.players[1].life.length;
+ const weak=stamp(doubled,pull(doubled,1,'REZ-1-043'));
+ doubled.players[1].front[0]=weak;
+ doubled=dispatchUniversalAction(packs,doubled,legalUniversalActions(packs,doubled).find(a=>a.type==='next'));
+ doubled=dispatchUniversalAction(packs,doubled,{type:'attack',uid:striker.uid});
+ doubled=dispatchUniversalAction(packs,doubled,{type:'chooseBlock',uid:weak.uid},{actor:1});
+ assert.ok(doubled.players[1].outside.some(c=>c.uid===weak.uid));
+ assert.equal(doubled.players[1].life.length,twoLife-2);
+ assert.equal(doubled.pending,null);
+ assert.equal(doubled.publicReveals.length,2);
+ assert.equal(doubled.effectQueue.some(e=>e.op==='additionalBattleDamage'),false);
+ assert.equal(assertUniversalMatch(packs,doubled),true);
 });
