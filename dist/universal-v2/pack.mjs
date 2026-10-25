@@ -906,11 +906,12 @@ function verifyProgram(program,path){
    (e.maxTargets!==undefined&&(
     e.maxTargets!==2||e.optional!==true||e.zone==='field'))||
    (e.optional!==undefined&&typeof e.optional!=='boolean')||
+   (e.ownTurnOnly!==undefined&&e.ownTurnOnly!==true)||
    (e.minBp!==undefined&&(!integer(e.minBp,0)||e.minBp>50000))||
    (e.maxBp!==undefined&&(!integer(e.maxBp,0)||e.maxBp>50000))||
    (e.minBp!==undefined&&e.maxBp!==undefined&&e.minBp>e.maxBp)||
    (e.zone!==undefined&&e.zone!=='front'&&e.zone!=='field')||
-   Object.keys(e).some(k=>!['op','bp','optional','minBp','maxBp','zone','maxTargets'].includes(k))
+   Object.keys(e).some(k=>!['op','bp','optional','minBp','maxBp','zone','maxTargets','ownTurnOnly'].includes(k))
   ))throw Error(path+'['+i+'] invalid optional targeting flag');
   if(e.op==='activeSelfIf'&&(
    (e.when===undefined&&e.entry===undefined&&e.line===undefined)||
@@ -1321,8 +1322,13 @@ function normalize(card,packId){
   mainAbility.then[0]?.op==='millTop'&&
   Object.keys(mainAbility.then[0]).every(k=>['op','count'].includes(k));
  if(mainRestProgram)verifyProgram(mainAbility.then,card.id+'.mainAbility.then');
+ // Printed 〈name〉のこの効果は1ターンに1回. Every copy of that printed
+ // name shares one ACTIVE attempt. It is not a per-UID counter.
+ const mainReadyName=mainAbility?.op==='readyOncePerName'&&
+  Object.keys(mainAbility).length===1&&
+  Object.keys(mainAbility).every(k=>k==='op');
  if(mainAbility!==null&&
-  (!['character','field'].includes(card.type)||!(fieldDualMain||fieldRestRetireThen||card.type==='character'&&(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainRestBuff||mainRestRetireRecover||mainRestOnceBuffReturn||mainRestOnceSelf||mainOnceBuffWhen||mainPayAp||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainRestDiscardRetire||mainFrontProgram||mainFieldOnceBuff||mainEntryProtect||mainRestRetireUnder||mainRestTwoMove||mainOncePay))))
+  (!['character','field'].includes(card.type)||!(fieldDualMain||fieldRestRetireThen||card.type==='character'&&(mainRaid||mainRetireField||mainRetireReady||mainReadyName||mainSelfRest||mainRestProgram||mainRestBuff||mainRestRetireRecover||mainRestOnceBuffReturn||mainRestOnceSelf||mainOnceBuffWhen||mainPayAp||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainRestDiscardRetire||mainFrontProgram||mainFieldOnceBuff||mainEntryProtect||mainRestRetireUnder||mainRestTwoMove||mainOncePay))))
   throw Error(card.id+' unsupported main action ability');
  const passiveBonuses=validatePassiveBonuses(card);
  const implemented=card.implementation;
@@ -1554,7 +1560,7 @@ function normalize(card,packId){
   if(program.some(e=>e.op==='grantSelfAttackDamageThisTurn')&&name!=='onPlay')
    throw Error(card.id+' earned attack damage is only an onPlay effect');
   if(name==='onRetire'&&
-   (!['character','field'].includes(card.type)||program.some(e=>!['draw','millTop','drawIfOwnFieldExists','chooseOne','deployOutsideTraitlessRestOrRaid','retireOppFrontOneUnderBp','restOppFrontUnderBp','buffOwnField','deployNamedFromZones','oncePerTurnGate','returnRetiredToHand'].includes(e.op))))
+   (!['character','field'].includes(card.type)||program.some(e=>!['draw','millTop','drawIfOwnFieldExists','chooseOne','deployOutsideTraitlessRestOrRaid','retireOppFrontOneUnderBp','restOppFrontUnderBp','buffOwnField','deployNamedFromZones','oncePerTurnGate','returnRetiredToHand','enemyBpDown'].includes(e.op))))
    throw Error(card.id+' unsupported onRetire ability program');
   if(name==='onRetire'&&program.some(e=>e.op==='deployNamedFromZones')&&
    (card.type!=='character'||program.length!==1||

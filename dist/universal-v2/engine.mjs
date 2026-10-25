@@ -1530,6 +1530,8 @@ function continueEffectQueue(pack,s){
      movers:movers.map(c=>c.uid),slots};
    }
   }else if(job.op==='enemyBpDown'){
+   // 自分のターン中の場合. A miss does not open a target.
+   if(!(job.ownTurnOnly===true&&s.active!==owner)){
    const foe=1-owner;
    // The printed BP window is read once, when the choice opens. Applying the
    // reduction must not rebuild the set, or a card that falls under the floor
@@ -1548,6 +1550,7 @@ function continueEffectQueue(pack,s){
      maxTargets:2,zone:'front'};
     else s.pending={kind:'effect-target',player:owner,sourceUid:job.sourceUid,
      bp:job.bp,optional:job.optional===true,choices:targetUids,zone:job.zone||'front'};
+   }
    }
   }else throw Error('Unimplemented effect op');
  }
@@ -4339,6 +4342,9 @@ export function legalUniversalActions(pack,s){
   // regardless of source REST state; it does NOT require spending AP.
   for(const c of field(pl)){
    const d=card(pack,c),ability=originalEffectsDisabled(s,c)?null:d.mainAbility;
+   if(ability?.op==='readyOncePerName'&&
+    !s.mainReadyOnceByName[p].includes(d.name+'|readyOncePerName'))
+    out.push({type:'activate',uid:c.uid,mode:'readyOncePerName'});
    if(ability?.op==='readySelfIfOwnRetiredThisTurn'&&
     retiredThisTurn(s,p,ability.cardType)&&
     !s.mainReadyOnceByName[p].includes(d.name+'|readySelfIfOwnRetiredThisTurn'))
@@ -4790,6 +4796,14 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
     s.pending={kind:'effect-buff-own',player:p,sourceUid:selected.uid,
      choices,filter:{field:'type',value:'character'},
      bp:ability.bp,optional:false,excludeSelf:true};
+    break;
+   }
+   if(ability.op==='readyOncePerName'){
+    const key=d.name+'|readyOncePerName';
+    if(action.mode!=='readyOncePerName'||s.mainReadyOnceByName[p].includes(key))
+     throw Error('Printed name-wide ACTIVE already used');
+    s.mainReadyOnceByName[p].push(key);
+    attemptFieldActive(s,p,selected);
     break;
    }
    if(ability.op==='readySelfIfOwnRetiredThisTurn'){

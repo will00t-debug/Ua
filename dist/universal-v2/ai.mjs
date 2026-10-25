@@ -227,7 +227,8 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  }
  if(difficulty==='hard'&&raids.length)return raids[0];
  const foeReady=s.players[1-s.active].front.some(c=>c?.ready);
- const activate=legal.find(a=>a.type==='activate'&&a.mode==='retireReady')||
+ const activate=legal.find(a=>a.type==='activate'&&a.mode==='readyOncePerName')||
+  legal.find(a=>a.type==='activate'&&a.mode==='retireReady')||
   legal.find(a=>a.type==='activate'&&a.mode==='retireFieldThen')||
   legal.find(a=>a.type==='activate'&&a.mode==='readyAndBuff')||
   legal.find(a=>a.type==='activate'&&a.mode==='buff')||

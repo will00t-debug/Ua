@@ -1135,6 +1135,10 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-1-038","kind":"optionalMillPurple","number":"UA08BT/BLC-1-038","name":"浦原 喜助","color":"purple","energy":3,"ap":2,"bp":3500,"gen":1,"trigger":null,"type":"character","effect":"登場：可將己方牌堆頂 3 張送至場外；成功時可從己方場外將最多 1 張紫色角色卡加入手牌。"},
 {"id":"BLC-2-014","kind":"optionalEnergyBounce","number":"EX07BT/BLC-2-014","name":"井上 織姫","color":"blue","energy":3,"ap":1,"bp":3000,"gen":2,"trigger":"color","type":"character","effect":"登場：可將 1 個己方場上需求能源 2 以下角色返回手牌；成功時可從己方場外將最多 1 張需求能源 2 以下的卡加入手牌。"},
 {"id":"BLC-2-001","kind":"stepOnceFrontOr","number":"EX07BT/BLC-2-001","name":"アスキン・ナックルヴァール","color":"yellow","energy":3,"ap":1,"bp":3000,"gen":2,"trigger":null,"type":"character","effect":"Step：己方移動階段可由前線移至能源線。主要階段・每回合 1 次：敵方前線有 BP 低於原始 BP 的角色，或有 REST 角色時，此角色本回合 BP +1000。"}
+,
+{"id":"BLC-4-003","kind":"askinEmptyRetire","number":"EX15BT/BLC-4-003","name":"アスキン・ナックルヴァール","color":"yellow","energy":2,"ap":1,"bp":2000,"gen":1,"trigger":"active","type":"character","effect":"自己場上沒有任何卡片時，手牌中的此卡所需黃色能量減少2。Step：移動階段可從前線移至能量線。退場時：若為自己的回合，最多選1個對方前線BP1500以上的角色，本回合BP−1000。"}
+,
+{"id":"BLC-4-071","kind":"soifonNameActive","number":"EX15BT/BLC-4-071","name":"砕蜂","color":"green","energy":4,"ap":1,"bp":2000,"gen":3,"trigger":"draw","type":"character","effect":"Step：移動階段可從前線移至能量線。登場時：抽1張牌，再將1張手牌送至場外。啟動・主要：將此角色改為Active；所有《碎蜂》的此效果合計每回合僅限1次。"}
  ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1192,8 +1196,9 @@ export function checkedBleachAddonDefinition(p){
  // encoded the ACTIVE total; V2 needs the printed REST base (1) plus an ACTIVE +1.
  // EX15BT/BLC-4-074 prints 緑+. That plus is the activate ability, so the REST
  // base is 1. Keep p.gen=2 only as a legacy-source fingerprint.
+ // EX15BT/BLC-4-071 prints two green energy symbols. The catalogue stores 3.
  const v2BaseGen=p.id==='BLC-4-014'||p.id==='BLC-4-074'?1:
-  p.id==='BLC-4-042'||p.id==='BLC-4-024'||p.id==='BLC-4-063'?2:c.gen;
+  p.id==='BLC-4-042'||p.id==='BLC-4-024'||p.id==='BLC-4-063'||p.id==='BLC-4-071'?2:c.gen;
  const isKyoraku=p.kind==='kyorakuAttackEnd';
  const isRestRetireField=p.kind==='fieldRestRetireNamed';
  const isFieldDual=p.kind==='fieldDualMain';
@@ -1266,6 +1271,8 @@ export function checkedBleachAddonDefinition(p){
  const isMillPurple=p.kind==='optionalMillPurple';
  const isEnergyBounce=p.kind==='optionalEnergyBounce';
  const isStepOr=p.kind==='stepOnceFrontOr';
+ const isAskin=p.kind==='askinEmptyRetire';
+ const isSoifon=p.kind==='soifonNameActive';
  const topDiscard={
   'BLC-3-007':{count:3,filter:{field:'trait',value:'護廷十三隊'}},
   'BLC-3-002':{count:3,filters:[
@@ -1299,7 +1306,7 @@ export function checkedBleachAddonDefinition(p){
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest||isOwnCharacterDraw||isPeekAttack||isDrawInstead||isRevealOppTop||isRevealWindow||isEnergyWindow||isMillPurple||isEnergyBounce||isStepOr;
+ const special=isAskin||isSoifon||isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest||isOwnCharacterDraw||isPeekAttack||isDrawInstead||isRevealOppTop||isRevealWindow||isEnergyWindow||isMillPurple||isEnergyBounce||isStepOr;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1308,7 +1315,9 @@ export function checkedBleachAddonDefinition(p){
   traits:Array.isArray(c.traits)?c.traits:(c.traits&&c.traits!=='無'?[c.traits]:[]),
   ...(c.traits==='星十字騎士團／邦比愛塔親衛隊'?{traitComponents:['星十字騎士團','邦比愛塔親衛隊']}:{}),
   implementation:p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'?'vanilla':'dsl',
-  ...(p.kind==='step'||p.kind==='stepAttackTraitBuff'||isStepOr?{step:true}:{}),
+  ...(p.kind==='step'||p.kind==='stepAttackTraitBuff'||isStepOr||isAskin||isSoifon?{step:true}:{}),
+  ...(isAskin?{emptyOwnFieldHandEnergyDiscount:2}:{}),
+  ...(isSoifon?{mainAbility:{op:'readyOncePerName'}}:{}),
   ...(isStepOr?{mainAbility:{op:'onceBuffSelfWhen',oncePerTurn:true,bp:1000,when:{logic:'any',checks:[
    {kind:'oppFrontLiveBpBelowPrinted',turn:'any'},
    {kind:'oppRestCharacter',turn:'any',zone:'front'}]}}}:{}),
@@ -1541,7 +1550,9 @@ export function checkedBleachAddonDefinition(p){
    isMillPurple?{onPlay:[{op:'millTop',count:3,optional:true,then:[{op:'recoverOutsideOne',optional:true,logic:'all',filters:[
     {field:'color',value:'purple'},{field:'type',value:'character'}]}]}]}:
    isEnergyBounce?{onPlay:[{op:'bounceOwnOtherUnderEnergy',optional:true,energy:2,then:[
-    {op:'recoverOutsideUnderEnergy',energy:2,optional:true}]}]}:{}})
+    {op:'recoverOutsideUnderEnergy',energy:2,optional:true}]}]}:
+   isAskin?{onRetire:[{op:'enemyBpDown',bp:1000,optional:true,minBp:1500,ownTurnOnly:true}]}:
+   isSoifon?{onPlay:[{op:'drawDiscard',count:1,discardCount:1}]}:{}})
  };
 }
 export function bleachV2PortedCards(){
