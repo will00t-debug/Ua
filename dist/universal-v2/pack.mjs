@@ -742,7 +742,8 @@ function verifyProgram(program,path){
   if(e.op==='restOppFrontOne'&&(
    typeof e.optional!=='boolean'||
    (e.skipNextActive!==undefined&&e.skipNextActive!==true)||
-   Object.keys(e).some(k=>!['op','optional','skipNextActive'].includes(k))
+   (e.entry!==undefined&&e.entry!=='ownCharacter')||
+   Object.keys(e).some(k=>!['op','optional','skipNextActive','entry'].includes(k))
   ))throw Error(path+'['+i+'] invalid uncapped opponent REST target');
   if(e.op==='restOppFrontUnderBp'&&(
    !integer(e.bp,1)||e.bp>50000||typeof e.optional!=='boolean'||

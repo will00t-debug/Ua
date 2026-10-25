@@ -1226,6 +1226,9 @@ function continueEffectQueue(pack,s){
     s.pending={kind:'effect-rest-lock',player:owner,sourceUid:job.sourceUid,
      choices,optional:true,upgrade:{...job.upgrade}};
   }else if(job.op==='restOppFrontOne'){
+   // 自分のキャラの効果で登場していた場合. Events, fields, life triggers
+   // and paid plays do not open this choice. Absent entry keeps older prints.
+   if(job.entry==='ownCharacter'&&job.entrySourceType!=='character')continue;
    const choices=s.players[1-owner].front.filter(c=>c&&
      cardEffectTargetPayable(pack,s,owner,c.uid,0,job.sourceUid)).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-rest-bp',player:owner,
@@ -1481,12 +1484,40 @@ function continueEffectQueue(pack,s){
   }else throw Error('Unimplemented effect op');
  }
 }
-function programJobs(pack,s,physical,timing,owner,raidUid,entryCause){
+function printedOwnerType(pack,s,owner,uid){
+ // Snapshot the deploying card's printed type while that physical card still
+ // exists. Life triggers and paid plays do not pass a source, so they stay
+ // outside 自分のキャラの効果.
+ if(!playerIndex(owner)||typeof uid!=='string'||!uid.startsWith(owner+'-'))return undefined;
+ const pl=s.players[owner];
+ const walk=c=>{
+  if(!c)return null;
+  if(c.uid===uid)return c;
+  for(const layer of [...(c.stack||[]),...(c.under||[])]){
+   const hit=walk(layer);if(hit)return hit;
+  }
+  return null;
+ };
+ const piles=[...pl.front,...pl.energy,...(pl.hand||[]),...(pl.deck||[]),
+  ...(pl.life||[]),...(pl.lifeRevealed||[]),...(pl.outside||[]),
+  ...(pl.removed||[]),...(pl.resolvingEvents||[])];
+ for(const c of piles){
+  const hit=walk(c);
+  if(!hit)continue;
+  const type=card(pack,hit).type;
+  return type==='character'||type==='event'||type==='field'?type:undefined;
+ }
+ return undefined;
+}
+function programJobs(pack,s,physical,timing,owner,raidUid,entryCause,entrySourceType){
  // Q2220: printed leave triggers are lost before true retirement.
  return (originalEffectsDisabled(s,physical)?[]:card(pack,physical).effects[timing]||[])
   .map(e=>({...e,owner,sourceUid:physical.uid,
    sourceName:card(pack,physical).name,...(raidUid?{raidUid}:{}),
-   ...(timing==='onPlay'&&entryCause?{entryCause}:{})}));
+   ...(timing==='onPlay'&&entryCause?{entryCause}:{}),
+   ...(timing==='onPlay'&&e.entry==='ownCharacter'&&
+    (entrySourceType==='character'||entrySourceType==='event'||entrySourceType==='field')
+    ?{entrySourceType}:{})}));
 }
 // Q38: enqueue a complete earned entry program on the EXISTING batch step.
 // Never split a printed program at a draw/cost/target pending boundary.
@@ -1500,9 +1531,10 @@ function deferLifeEntry(s,owner,sourceUid,jobs){
  step.entries.push({key,sourceUid,jobs});
  return true;
 }
-function applyEffects(pack,s,cardOnField,timing,owner,entryCause){
+function applyEffects(pack,s,cardOnField,timing,owner,entryCause,entrySourceUid){
  // Entry/trigger effects interrupt the suspended continuation (e.g. DAMAGE2).
- const jobs=programJobs(pack,s,cardOnField,timing,owner,undefined,entryCause);
+ const entrySourceType=timing==='onPlay'?printedOwnerType(pack,s,owner,entrySourceUid):undefined;
+ const jobs=programJobs(pack,s,cardOnField,timing,owner,undefined,entryCause,entrySourceType);
  const complete=jobs.length?[...jobs,...sourceMoveBoundary(pack,s,owner,cardOnField.uid)]:[];
  if(!(timing==='onPlay'&&deferLifeEntry(s,owner,cardOnField.uid,complete)))
   s.effectQueue.unshift(...complete);
@@ -1565,7 +1597,9 @@ function performRaid(pack,s,p,cardOnTop,baseUid,line,slot,replaceUid,{entryReady
    entryCause==='paidRaid'?'rule':'own-effect',sourceUid:effectSourceUid});
  s.raidedThisTurn[p]=true;
  const baseJobs=s.active===p&&!baseOriginalSilenced?programJobs(pack,s,effectiveBase,'onRaided',p,cardOnTop.uid):[];
- const entryJobs=programJobs(pack,s,cardOnTop,'onPlay',p,undefined,entryCause);
+ const entrySourceType=entryCause==='paidRaid'||entryCause==='lifeRaid'?undefined:
+  printedOwnerType(pack,s,p,effectSourceUid);
+ const entryJobs=programJobs(pack,s,cardOnTop,'onPlay',p,undefined,entryCause,entrySourceType);
  const raidJobs=programJobs(pack,s,cardOnTop,'onRaid',p);
  // Keep the legal base/entry ordering choice. onPlay and onRaid share the
  // new Raid-top source UID, and use ONE completed-move trigger boundary.
@@ -1962,7 +1996,7 @@ function resolveChoice(s,a,pack){
   recordCompletedMove(pack,s,{physical,owner:q.player,from:'outside',to:a.line,
    reason:'own-effect',sourceUid:physical.uid});
   s.pending=null;
-  applyEffects(pack,s,physical,'onPlay',q.player,'outsideEffect');
+  applyEffects(pack,s,physical,'onPlay',q.player,'outsideEffect',physical.uid);
   return;
  }
  if(q.kind==='effect-outside-hand-or-rest'){
@@ -1989,7 +2023,7 @@ function resolveChoice(s,a,pack){
   recordCompletedMove(pack,s,{physical,owner:q.player,from:'outside',to:a.line,
    reason:'own-effect',sourceUid:q.sourceUid});
   s.pending=null;
-  applyEffects(pack,s,physical,'onPlay',q.player,'outsideEffect');
+  applyEffects(pack,s,physical,'onPlay',q.player,'outsideEffect',q.sourceUid);
   return;
  }
  if(q.kind==='effect-recover-under'){
@@ -2483,7 +2517,8 @@ function resolveChoice(s,a,pack){
    p[a.line][a.slot]=physical;
    recordCompletedMove(pack,s,{physical,owner:q.player,from:'outside',to:a.line,
     reason:'own-effect',sourceUid:q.sourceUid});s.pending=null;
-   s.effectQueue.unshift(...programJobs(pack,s,physical,'onPlay',q.player,undefined,'outsideEffect'));
+   s.effectQueue.unshift(...programJobs(pack,s,physical,'onPlay',q.player,undefined,'outsideEffect',
+    printedOwnerType(pack,s,q.player,q.sourceUid)));
    continueEffectQueue(pack,s);return;
   }
   if(q.kind==='effect-outside-name-rest'){
@@ -2505,7 +2540,8 @@ function resolveChoice(s,a,pack){
    recordCompletedMove(pack,s,{physical,owner:q.player,from:'outside',to:a.line,
     reason:'own-effect',sourceUid:q.sourceUid});
    s.pending=null;
-   s.effectQueue.unshift(...programJobs(pack,s,physical,'onPlay',q.player,undefined,'outsideEffect'));
+   s.effectQueue.unshift(...programJobs(pack,s,physical,'onPlay',q.player,undefined,'outsideEffect',
+    printedOwnerType(pack,s,q.player,q.sourceUid)));
    continueEffectQueue(pack,s);return;
   }
   if(q.kind==='effect-named-zone-entry'){
@@ -2528,7 +2564,7 @@ function resolveChoice(s,a,pack){
    recordCompletedMove(pack,s,{physical,owner:q.player,from:a.zone,to:a.line,
     reason:'own-effect',sourceUid:q.sourceUid});
    s.pending=null;
-   applyEffects(pack,s,physical,'onPlay',q.player,a.zone==='outside'?'outsideEffect':'ownEffect');
+   applyEffects(pack,s,physical,'onPlay',q.player,a.zone==='outside'?'outsideEffect':'ownEffect',q.sourceUid);
    return;
   }
   if(q.kind==='effect-hand-rest'){
@@ -2561,7 +2597,7 @@ function resolveChoice(s,a,pack){
     ...(q.when?{when:q.when}:{}),
     ...(q.special?{trait:q.trait,maxEnergy:q.maxEnergy,ready:q.ready,
      protectionScope:q.protectionScope}:{energy:q.energy})});
-   applyEffects(pack,s,physical,'onPlay',q.player,'ownEffect');
+   applyEffects(pack,s,physical,'onPlay',q.player,'ownEffect',q.sourceUid);
    return;
   }
   if(q.kind==='effect-optional-pay-ap'){
@@ -2602,7 +2638,7 @@ function resolveChoice(s,a,pack){
     reason:'own-effect',sourceUid:q.sourceUid});
    s.pending=null;
    if(q.max>1)s.effectQueue.unshift(handRestOrRaidContinuation(q));
-   applyEffects(pack,s,physical,'onPlay',q.player,'handEffect');
+   applyEffects(pack,s,physical,'onPlay',q.player,'handEffect',q.sourceUid);
    return;
   }
   if(q.kind==='effect-outside-rest'){
@@ -2621,7 +2657,8 @@ function resolveChoice(s,a,pack){
    recordCompletedMove(pack,s,{physical,owner:q.player,from:'outside',to:a.line,
     reason:'own-effect',sourceUid:q.sourceUid});
    s.pending=null;
-   s.effectQueue.unshift(...programJobs(pack,s,physical,'onPlay',q.player,undefined,'outsideEffect'));
+   s.effectQueue.unshift(...programJobs(pack,s,physical,'onPlay',q.player,undefined,'outsideEffect',
+    printedOwnerType(pack,s,q.player,q.sourceUid)));
    continueEffectQueue(pack,s);return;
   }
   if(q.kind==='effect-recover-outside'){
@@ -2663,7 +2700,8 @@ function resolveChoice(s,a,pack){
    to:'energy',reason:'own-effect',sourceUid:entrant.uid});
   s.pending=null;
   // This is entry via an effect, so onPlay executes with no additional AP.
-  s.effectQueue.unshift(...programJobs(pack,s,entrant,'onPlay',q.player,undefined,'recoveredEffect'));
+  s.effectQueue.unshift(...programJobs(pack,s,entrant,'onPlay',q.player,undefined,'recoveredEffect',
+   printedOwnerType(pack,s,q.player,entrant.uid)));
   continueEffectQueue(pack,s);return;
  }
  if(q.kind==='effect-selection-hand-payment'){

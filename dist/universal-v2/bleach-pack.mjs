@@ -1120,6 +1120,8 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-4-063","kind":"namedBonusBuff","number":"EX15BT/BLC-4-063","name":"綾瀬川 弓親","color":"green","energy":3,"ap":1,"bp":2000,"gen":3,"trigger":"draw","type":"character","effect":"登場時：最多選自己場上另1個角色，本回合BP+1000；若所選角色為《更木劍八》、《草鹿八千流》、《斑目一角》或《綾瀨川弓親》，改為BP+2000。"}
 ,
 {"id":"BLC-4-064","kind":"groupedTopDiscard","number":"EX15BT/BLC-4-064","name":"伊勢 七緒","color":"green","energy":0,"ap":1,"bp":1000,"gen":1,"trigger":null,"type":"character","effect":"登場時：查看牌庫頂3張，最多公開1張綠色事件卡或綠色場地卡加入手牌，其餘依任意順序放回牌庫底；若有加入手牌，將1張手牌送至場外。"}
+,
+{"id":"BLC-2-005","kind":"ownCharacterFrontRest","number":"EX07BT/BLC-2-005","name":"日番谷 冬獅郎","color":"yellow","energy":3,"ap":1,"bp":3500,"gen":1,"trigger":"active","type":"character","effect":"登場：若透過己方角色的效果登場，可將最多 1 個敵方前線角色轉為 REST。"}
 ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1241,6 +1243,7 @@ export function checkedBleachAddonDefinition(p){
  const isFrontMill=p.kind==='frontMillBuffOther';
  const isNamedBonus=p.kind==='namedBonusBuff';
  const isGroupedTop=p.kind==='groupedTopDiscard';
+ const isOwnCharacterRest=p.kind==='ownCharacterFrontRest';
  const topDiscard={
   'BLC-3-007':{count:3,filter:{field:'trait',value:'護廷十三隊'}},
   'BLC-3-002':{count:3,filters:[
@@ -1274,7 +1277,7 @@ export function checkedBleachAddonDefinition(p){
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop;
+ const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1498,7 +1501,8 @@ export function checkedBleachAddonDefinition(p){
    isGroupedTop?{onPlay:[{op:'searchTopOneBottomDiscard',count:3,groups:[
     {logic:'all',filters:[{field:'color',value:'green'},{field:'type',value:'event'}]},
     {logic:'all',filters:[{field:'color',value:'green'},{field:'type',value:'field'}]}
-   ]}]}:{}})
+   ]}]}:
+   isOwnCharacterRest?{onPlay:[{op:'restOppFrontOne',optional:true,entry:'ownCharacter'}]}:{}})
  };
 }
 export function bleachV2PortedCards(){

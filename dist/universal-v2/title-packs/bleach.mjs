@@ -116,7 +116,8 @@ const testForKind=Object.freeze({
  raidImpactFrontRest:'tests/v2-c29-bleach-port.test.mjs',
  frontMillBuffOther:'tests/v2-c29-bleach-port.test.mjs',
  namedBonusBuff:'tests/v2-c29-bleach-port.test.mjs',
- groupedTopDiscard:'tests/v2-c29-bleach-port.test.mjs'
+ groupedTopDiscard:'tests/v2-c29-bleach-port.test.mjs',
+ ownCharacterFrontRest:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.

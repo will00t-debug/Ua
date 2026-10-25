@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {CARDS} from '../dist/cards.mjs';
-import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
+import {createUniversalPack,validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {registeredV2TitlePack} from '../dist/universal-v2/title-packs/registry.mjs';
 import {cardHasName} from '../dist/universal-v2/field-conditions.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
@@ -44,9 +44,13 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 //   1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、
 //   自分の手札を1枚場外に置く。 Each か group is color AND type. A green character
 //   matches neither group. No trigger. Generated energy alt is 緑.
+// BLC-2-005 EX07BT: [登場時]このキャラが自分のキャラの効果で登場していた場合、
+//   相手のフロントLのキャラを1枚まで選び、レストにする。 ACTIVE is generic.
+//   The attribute cell is one composite, 護廷十三隊／ゾンビ. Generated energy alt is 黄.
+//   Paid play, an event, and a field do not open the REST. A character effect does.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -117,12 +121,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers twenty-nine whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,465);
- assert.equal(EXPECTED_V2_COUNTS.bleach,189);
+test('C29 registers thirty whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,466);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,190);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,189);
+ assert.equal(Object.keys(bleach.cards).length,190);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -1623,4 +1627,112 @@ test('BLC-4-064 reveals one green event or one green field from the top three',(
  assert.equal(assertUniversalMatch(again.packs,finished),true);
  assert.equal(assertUniversalMatch(none.packs,closed),true);
  assert.equal(assertUniversalMatch(dry.packs,quietPlay),true);
+});
+
+test('BLC-2-005 rests an opposing front character only after a character effect enters it',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-2-005');
+ assert.equal(printed.effect,'登場：若透過己方角色的效果登場，可將最多 1 個敵方前線角色轉為 REST。');
+ assert.equal(printed.traits,'護廷十三隊／殭屍');
+ assert.equal(printed.energy,3);
+ assert.equal(printed.gen,1);
+ assert.equal(printed.trigger,'active');
+ const card=bleach.cards['BLC-2-005'];
+ assert.equal(card.triggerEffect,null);
+ assert.deepEqual(card.traits,['護廷十三隊／殭屍']);
+ assert.deepEqual(card.effects.onPlay,[{op:'restOppFrontOne',optional:true,entry:'ownCharacter'}]);
+ const deck=realDeck(['BLC-2-005','BLC-1-002','BLC-1-012','BLC-1-018','BLC-1-001','BLC-1-021','BLC-4-001','BLC-1-006','BLC-1-023','BLC-1-032','BLC-2-003','BLC-1-008','BLC-1-016'],'yellow');
+ const {packs,s}=main(deck,29005);
+ put(s,0,'BLC-1-002','energy',0);
+ put(s,0,'BLC-1-012','energy',1);
+ put(s,0,'BLC-1-018','energy',2);
+ const foe=put(s,1,'BLC-1-001','front',0,true);
+ const self=take(s,0,'BLC-2-005');
+ s.players[0].hand.push(self);
+ const paid=dispatchUniversalAction(packs,s,legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===self.uid&&a.line==='front'));
+ assert.equal(paid.pending,null);
+ assert.equal(paid.players[1].front.find(c=>c?.uid===foe.uid).ready,true);
+ assert.equal(paid.players[0].front.find(c=>c?.uid===self.uid).ready,false);
+ const hit={id:card.id,name:card.name,color:card.color,type:card.type,energy:card.energy,
+  ap:card.ap,bp:card.bp,gen:card.gen,traits:[...card.traits],trigger:card.trigger,
+  implementation:'dsl',effects:card.effects};
+ const deploy={op:'deployOwnHandRest',type:'character',color:'yellow',energy:3,ap:1,max:1};
+ const unit=(id,extra)=>({id,name:id,color:'yellow',type:'character',energy:0,ap:1,bp:2000,
+  gen:1,traits:[],trigger:null,implementation:'dsl',effects:{},...extra});
+ const lab=createUniversalPack({id:'c29-own-character',cards:[
+  hit,unit('SRC',{effects:{onPlay:[deploy]}}),
+  unit('EVT',{type:'event',bp:0,gen:0,effects:{onPlay:[deploy]}}),
+  unit('FLD',{type:'field',bp:0,effects:{onPlay:[deploy]}}),
+  unit('FOE',{implementation:'vanilla'}),
+  ...['A','B','C','D','E','F','G','H'].map(id=>unit(id,{implementation:'vanilla'}))
+ ]});
+ const ids=['BLC-2-005','SRC','EVT','FLD','FOE','A','B','C','D','E','F','G','H'];
+ const counts=Object.fromEntries(ids.map((id,i)=>[id,i===12?2:4]));
+ assert.deepEqual(validateUniversalDeck(lab,counts),[]);
+ const both=[lab,lab];
+ function boot(seed){
+  let state=newUniversalMatch(both,{decks:[counts,counts],seed,first:0});
+  for(let n=0;n<8&&state.phase!=='main';n++)
+   state=dispatchUniversalAction(both,state,{type:'next'});
+  return state;
+ }
+ function lift(state,p,id){
+  for(const zone of ['hand','deck','life','outside','removed']){
+   const list=state.players[p][zone],i=list.findIndex(c=>c.cardId===id);
+   if(i>=0)return list.splice(i,1)[0];
+  }
+  throw Error('Missing '+id);
+ }
+ function enter(seed,sourceId){
+  let state=boot(seed);
+  const rival=lift(state,1,'FOE');
+  rival.ready=true;rival.fieldEntryStamp=state.nextFieldEntryStamp++;
+  state.players[1].front[0]=rival;
+  const child=lift(state,0,'BLC-2-005');
+  const source=lift(state,0,sourceId);
+  state.players[0].hand.push(child,source);
+  const action=legalUniversalActions(both,state).find(a=>a.uid===source.uid&&!a.replaceUid&&
+   (sourceId==='EVT'?a.type==='event':a.type==='play'&&a.line===(sourceId==='FLD'?'energy':'front')));
+  assert.ok(action,sourceId);
+  const opened=dispatchUniversalAction(both,state,action);
+  assert.equal(opened.pending.kind,'effect-hand-rest');
+  const seat=legalUniversalActions(both,opened).find(a=>a.type==='chooseHandRest'&&a.uid===child.uid&&a.line==='front');
+  assert.ok(seat,sourceId);
+  const entered=dispatchUniversalAction(both,opened,seat);
+  return {entered,rival,child};
+ }
+ const byCharacter=enter(290051,'SRC');
+ assert.equal(byCharacter.entered.pending.kind,'effect-rest-bp');
+ assert.deepEqual(universalPublicView(both,byCharacter.entered,1).pending,{kind:'effect-rest-bp',player:0});
+ const restLegal=legalUniversalActions(both,byCharacter.entered);
+ assert.equal(restLegal.some(a=>a.type==='chooseRestBp'&&a.uid===null),true);
+ assert.equal(restLegal.some(a=>a.type==='chooseRestBp'&&a.uid===byCharacter.rival.uid),true);
+ const skipped=dispatchUniversalAction(both,byCharacter.entered,restLegal.find(a=>a.uid===null));
+ assert.equal(skipped.pending,null);
+ assert.equal(skipped.players[1].front[0].ready,true);
+ const again=enter(290052,'SRC');
+ const rested=dispatchUniversalAction(both,again.entered,legalUniversalActions(both,again.entered).find(a=>a.type==='chooseRestBp'&&a.uid===again.rival.uid));
+ assert.equal(rested.pending,null);
+ assert.equal(rested.players[1].front.find(c=>c?.uid===again.rival.uid).ready,false);
+ assert.equal(rested.players[0].front.find(c=>c?.uid===again.child.uid).ready,false);
+ const byEvent=enter(290053,'EVT');
+ assert.equal(byEvent.entered.pending,null);
+ assert.equal(byEvent.entered.players[1].front[0].ready,true);
+ assert.equal(byEvent.entered.players[0].front.some(c=>c?.uid===byEvent.child.uid),true);
+ const byField=enter(290054,'FLD');
+ assert.equal(byField.entered.pending,null);
+ assert.equal(byField.entered.players[1].front[0].ready,true);
+ let quiet=boot(290055);
+ const lonely=lift(quiet,0,'BLC-2-005');
+ const source=lift(quiet,0,'SRC');
+ quiet.players[0].hand.push(lonely,source);
+ const played=dispatchUniversalAction(both,quiet,legalUniversalActions(both,quiet).find(a=>a.type==='play'&&a.uid===source.uid&&a.line==='front'));
+ const seated=dispatchUniversalAction(both,played,legalUniversalActions(both,played).find(a=>a.type==='chooseHandRest'&&a.uid===lonely.uid&&a.line==='front'));
+ assert.equal(seated.pending,null);
+ assert.equal(seated.players[0].front.some(c=>c?.uid===lonely.uid),true);
+ aiOk(both,byCharacter.entered);
+ assert.equal(assertUniversalMatch(packs,paid),true);
+ assert.equal(assertUniversalMatch(both,rested),true);
+ assert.equal(assertUniversalMatch(both,byEvent.entered),true);
+ assert.equal(assertUniversalMatch(both,byField.entered),true);
+ assert.equal(assertUniversalMatch(both,seated),true);
 });
