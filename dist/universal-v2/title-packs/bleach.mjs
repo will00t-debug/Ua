@@ -135,7 +135,8 @@ const testForKind=Object.freeze({
  konRestRetireIchigo:'tests/v2-c29-kon-bazz.test.mjs',
  bazzDiscardGrants:'tests/v2-c29-kon-bazz.test.mjs',
  bambiettaRestRetire:'tests/v2-c29-bambietta-hyorin.test.mjs',
- hyorinmaruNameRetire:'tests/v2-c29-bambietta-hyorin.test.mjs'
+ hyorinmaruNameRetire:'tests/v2-c29-bambietta-hyorin.test.mjs',
+ fearNameRestDraw:'tests/v2-c29-fear.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.

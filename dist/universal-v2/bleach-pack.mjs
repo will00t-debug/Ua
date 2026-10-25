@@ -1153,6 +1153,8 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-1-014","kind":"bambiettaRestRetire","number":"UA08BT/BLC-1-014","name":"バンビエッタ・バスターバイン","color":"yellow","energy":4,"ap":1,"bp":4000,"gen":1,"trigger":"raid","type":"character","effect":"Raid〈邦比愛塔・芭絲塔拜茵〉：轉為 ACTIVE，可移至前線。登場：若現在是己方回合，可使最多 1 個敵方前線的 REST 角色退場。"}
 ,
 {"id":"BLC-1-096","kind":"hyorinmaruNameRetire","number":"UA08BT/BLC-1-096","name":"大紅蓮氷輪丸","color":"green","energy":4,"ap":1,"bp":0,"gen":0,"trigger":"special","type":"event","effect":"選 1 個敵方前線 BP 5000 以下角色，將其轉為 REST，並使其跳過下一次轉為 ACTIVE；己方場上有〈日番谷冬獅郎〉時，改為使該角色退場。"}
+,
+{"id":"BLC-1-031","kind":"fearNameRestDraw","number":"UA08BT/BLC-1-031","name":"The Fear","color":"yellow","energy":3,"ap":1,"bp":0,"gen":0,"trigger":"special","type":"event","effect":"可選最多 1 個敵方前線角色，將其轉為 REST；己方場上有〈艾斯・諾特〉時，改為將其轉為 REST、使其跳過下一次轉為 ACTIVE，並抽 1 張。"}
  ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1295,6 +1297,7 @@ export function checkedBleachAddonDefinition(p){
  const isBazz=p.kind==='bazzDiscardGrants';
  const isBambietta=p.kind==='bambiettaRestRetire';
  const isHyorin=p.kind==='hyorinmaruNameRetire';
+ const isFear=p.kind==='fearNameRestDraw';
  const topDiscard={
   'BLC-3-007':{count:3,filter:{field:'trait',value:'護廷十三隊'}},
   'BLC-3-002':{count:3,filters:[
@@ -1328,7 +1331,7 @@ export function checkedBleachAddonDefinition(p){
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isAskin||isSoifon||isNelliel||isPernida||isLoyd||isKon||isBazz||isBambietta||isHyorin||isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest||isOwnCharacterDraw||isPeekAttack||isDrawInstead||isRevealOppTop||isRevealWindow||isEnergyWindow||isMillPurple||isEnergyBounce||isStepOr;
+ const special=isAskin||isSoifon||isNelliel||isPernida||isLoyd||isKon||isBazz||isBambietta||isHyorin||isFear||isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest||isOwnCharacterDraw||isPeekAttack||isDrawInstead||isRevealOppTop||isRevealWindow||isEnergyWindow||isMillPurple||isEnergyBounce||isStepOr;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1346,7 +1349,7 @@ export function checkedBleachAddonDefinition(p){
   ...(isKon?{mainAbility:{op:'restRetireDeployOutside',then:[{op:'deployOutsideEnergyRest',name:'黒崎 一護',color:'purple',maxEnergy:0,optional:true,anyAp:true}]}}:{}),
   ...(isBazz?{mainAbility:{op:'discardGrantProgram',frontOnly:false,then:[{op:'discardGate',optional:false,then:[{op:'grantSelfAttackDamageThisTurn',amount:2},{op:'grantSelfAttackWinDrawThisTurn'}]}]}}:{}),
   ...(isBambietta?{raidName:'バンビエッタ・バスターバイン'}:{}),
-  ...(isHyorin?{triggerEffect:{op:'retireOppFront'}}:{}),
+  ...(isHyorin||isFear?{triggerEffect:{op:'retireOppFront'}}:{}),
   ...(isStepOr?{mainAbility:{op:'onceBuffSelfWhen',oncePerTurn:true,bp:1000,when:{logic:'any',checks:[
    {kind:'oppFrontLiveBpBelowPrinted',turn:'any'},
    {kind:'oppRestCharacter',turn:'any',zone:'front'}]}}}:{}),
@@ -1584,7 +1587,8 @@ export function checkedBleachAddonDefinition(p){
    isSoifon?{onPlay:[{op:'drawDiscard',count:1,discardCount:1}]}:
    isNelliel?{onPlay:[{op:'enemyBpDown',bp:1000,optional:true,minBp:1500}]}:
    isBambietta?{onPlay:[{op:'retireOppRestFront',optional:true,ownTurnOnly:true}]}:
-   isHyorin?{onPlay:[{op:'restOrRetireOppFrontByOwnName',bp:5000,optional:false,name:'日番谷 冬獅郎'}]}:{}})
+   isHyorin?{onPlay:[{op:'restOrRetireOppFrontByOwnName',bp:5000,optional:false,name:'日番谷 冬獅郎'}]}:
+   isFear?{onPlay:[{op:'restOrRestSkipDrawByOwnName',optional:true,name:'エス・ノト',draw:1}]}:{}})
  };
 }
 export function bleachV2PortedCards(){
