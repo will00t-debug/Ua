@@ -1,6 +1,6 @@
 // Cross-title Universal v2 AI baseline. Uses only the native legal-action
 // list; no work-specific card-ID shortcuts and no mutation of match state.
-import {legalUniversalActions,dispatchUniversalAction,universalBp,universalEnergy,universalEnergyByColor,universalCardEnergy} from './engine.mjs';
+import {legalUniversalActions,dispatchUniversalAction,universalBp,universalEnergy,universalEnergyByColor,universalCardEnergy,handRevealIdentity} from './engine.mjs';
 export const UNIVERSAL_AI_LEVELS=Object.freeze(['easy','normal','hard']);
 const packsOf=pack=>Array.isArray(pack)?pack:[pack,pack];
 const option=(list,type)=>list.find(x=>x.type===type);
@@ -140,7 +140,9 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   return [...legal].sort((a,b)=>{
    const score=uid=>{
     const printed=catalog[hand.find(c=>c.uid===uid)?.cardId];
-    return printed?.type==='character'&&printed.bp>=s.pending.minPrintedBp?printed.bp:0;
+    const shown=handRevealIdentity(printed);
+    return shown.type==='character'&&Number.isInteger(shown.bp)&&
+     shown.bp>=s.pending.minPrintedBp?shown.bp:0;
    };
    return score(b.uid)-score(a.uid);
   })[0];
@@ -169,6 +171,7 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
    legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-strip-raid-top')
   return difficulty==='easy'?legal[0]:legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-retire-at-least')return legal[0];
  if(s.pending?.kind==='effect-retire-bp'){
   // A printed "up to one" retirement presents SKIP first; normal/hard AI
   // should choose an eligible enemy unless there is none.

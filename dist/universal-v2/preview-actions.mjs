@@ -45,6 +45,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-choice-mode':'選擇一項效果',
  'recovered-self-entry':'回收後可 REST 登場至能源線',
  'effect-recover-outside':'從場外回收','effect-retire-bp':'選擇敵方退場',
+ 'effect-retire-at-least':'選擇 BP 4500 以上的對手前線並使其退場',
  'effect-grant-front-energy':'讓另一張己方前線指定特徵角色本回合也能產生能源',
  'effect-rest-bp':'選擇敵方 REST','effect-grant-ap-tax':'讓另一張己方 DFN 角色獲得指定時的 AP 加價保護','effect-attack-ban':'指定禁止攻擊的對手前線角色',
  'effect-buff-trait':'選擇己方 BP 加成',
@@ -217,6 +218,7 @@ export function uiActionLabel(action,{pack,state}={}){
    '將 '+name()+' 放到場外，並使這張場域活動';
   case 'chooseNamedImpact':return '選擇 '+name()+'，本回合 BP+1000 並獲得衝擊+1';
   case 'chooseOwnBuff':case 'chooseMainBuff':case 'chooseTraitBuff':case 'chooseRestBp':
+  case 'chooseRetireAtLeast':return '使 '+name()+' 退場';
   case 'chooseRetireBp':case 'chooseTargetMany':return action.uid===null?'完成目標選擇':'選擇第 '+(state?.pending?.selected?.length+1||1)+' 個角色';
   case 'chooseFrontEnergyGrant':return action.uid===null?
    '不指定暫時 FRONT 產能對象':'讓 '+name()+' 本回合在前線也能產生能源';

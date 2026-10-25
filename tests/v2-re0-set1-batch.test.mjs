@@ -9,7 +9,7 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
 } from '../dist/universal-v2/engine.mjs';
 import {grantContinuousState} from '../dist/universal-v2/continuous-states.mjs';
 import {cardHasName} from '../dist/universal-v2/field-conditions.mjs';
-import {uiActionLabel} from '../dist/universal-v2/preview-actions.mjs';
+import {uiActionLabel,V2_PENDING_LABELS} from '../dist/universal-v2/preview-actions.mjs';
 import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
 
 const pack=createRezeroV2Pack(),packs=[pack,pack];
@@ -70,9 +70,9 @@ test('UA40BT and UA40ST share one catalogue and keep parallel art out',()=>{
  }
 });
 
-test('seventy-nine whole prints enter the V2 pack and the other thirty-four stay out',()=>{
- assert.equal(REZERO_ENGINE_IDS.length,79);
- assert.equal(Object.keys(pack.cards).length,79);
+test('eighty whole prints enter the V2 pack and the other thirty-three stay out',()=>{
+ assert.equal(REZERO_ENGINE_IDS.length,80);
+ assert.equal(Object.keys(pack.cards).length,80);
  assert.equal(pack.cards['REZ-1-001'],undefined);
  assert.equal(pack.cards['REZ-1-008'].step,true);
  assert.equal(pack.cards['REZ-1-008'].implementation,'vanilla');
@@ -194,6 +194,14 @@ test('seventy-nine whole prints enter the V2 pack and the other thirty-four stay
  assert.deepEqual(pack.cards['REZ-1-085'].mainAbility,{
   op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,requireOwnEffectRest:true,
   then:[{op:'discountNextNamedHandEnergy',name:'エミリア',color:'purple',amount:1}]});
+ assert.equal(pack.cards['REZ-1-065'].type,'event');
+ assert.equal(pack.cards['REZ-1-065'].color,'blue');
+ assert.equal(pack.cards['REZ-1-065'].energy,4);
+ assert.equal(pack.cards['REZ-1-065'].trigger,'draw');
+ assert.equal(pack.cards['REZ-1-065'].triggerEffect,null);
+ assert.equal(pack.cards['REZ-1-065'].handRevealCharacterBp,4000);
+ assert.deepEqual(pack.cards['REZ-1-065'].effects.onPlay,[{
+  op:'retireOppFrontAtLeastBp',bp:4500}]);
  assert.equal(pack.cards['REZ-1-067'].enterAlwaysActive,true);
  assert.equal(pack.cards['REZ-1-067'].impactNull,true);
  assert.equal(pack.cards['REZ-1-067'].trigger,'active');
@@ -2808,4 +2816,86 @@ test('Emilia discounts the next hand Emilia by one purple only after her own eff
  expired.players[0].energy[2]=parked;
  assert.equal(frontOnce(expired,timed.uid),false);
  assert.equal(assertUniversalMatch(packs,expired),true);
+});
+
+const monsterCounts={
+ ...Object.fromEntries(['REZ-1-065','REZ-1-045','REZ-1-043','REZ-1-014','REZ-1-007',
+  'REZ-1-008','REZ-1-012','REZ-1-022','REZ-1-036','REZ-1-056','REZ-1-024'].map(id=>[id,4])),
+ 'REZ-1-017':2,'REZ-1-029':2,'REZ-1-075':2
+};
+const monster=seed=>newUniversalMatch(packs,{decks:[monsterCounts,monsterCounts],first:0,seed});
+test('a revealed monster event counts as BP 4000 and retires only a front character of at least 4500',()=>{
+ assert.equal(Object.values(monsterCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(pack,monsterCounts),[]);
+ const shell={id:'MIN',name:'Gate',color:'blue',type:'event',energy:4,ap:1,bp:0,gen:0,
+  traits:[],trigger:'draw',implementation:'dsl',effects:{}};
+ assert.throws(()=>createUniversalPack({id:'bad-min',cards:[{...shell,type:'character',bp:1000,effects:{onPlay:[
+  {op:'retireOppFrontAtLeastBp',bp:4500}]}}]}),/event onPlay/);
+ assert.throws(()=>createUniversalPack({id:'bad-min',cards:[{...shell,effects:{onPlay:[
+  {op:'retireOppFrontAtLeastBp',bp:3000}]}}]}),/unsupported minimum front retirement/);
+ assert.equal(V2_PENDING_LABELS['effect-retire-at-least'],'選擇 BP 4500 以上的對手前線並使其退場');
+
+ let shown=monster(6201);
+ shown=reach(shown,'main');
+ let actor;
+ [shown,actor]=playFront(shown,'REZ-1-045');
+ const revealed=pull(shown,0,'REZ-1-065');
+ const small=pull(shown,0,'REZ-1-014');
+ const kept=shown.players[0].hand.filter(c=>c.uid!==revealed.uid&&c.uid!==small.uid);
+ shown.players[0].outside.push(...kept);
+ shown.players[0].hand=[revealed,small];
+ shown=dispatchUniversalAction(packs,shown,revealAct(shown,actor.uid));
+ assert.equal(chooseUniversalAiAction(packs,shown).uid,revealed.uid);
+ shown=dispatchUniversalAction(packs,shown,{type:'chooseRevealBottom',uid:revealed.uid});
+ assert.equal(shown.players[0].deck.at(-1).uid,revealed.uid);
+ assert.equal(shown.publicReveals.at(-1).cardId,'REZ-1-065');
+ assert.equal(universalBp(packs,shown,at(shown,0,actor.uid)),4000);
+ assert.equal(assertUniversalMatch(packs,shown),true);
+
+ let plain=monster(6202);
+ plain=reach(plain,'main');
+ [plain,actor]=playFront(plain,'REZ-1-045');
+ const spell=pull(plain,0,'REZ-1-029');
+ plain.players[0].hand.push(spell);
+ plain=dispatchUniversalAction(packs,plain,revealAct(plain,actor.uid));
+ plain=dispatchUniversalAction(packs,plain,{type:'chooseRevealBottom',uid:spell.uid});
+ assert.equal(plain.players[0].deck.at(-1).cardId,'REZ-1-029');
+ assert.equal(universalBp(packs,plain,at(plain,0,actor.uid)),1500);
+
+ let short=monster(6203);
+ fuel(short,['REZ-1-043','REZ-1-043','REZ-1-043','REZ-1-043']);
+ short=reach(short,'main');
+ assert.equal(universalEnergyByColor(packs,short,0).blue,4);
+ const low=pull(short,1,'REZ-1-017');
+ short.players[1].front[0]=low;
+ const waiting=pull(short,0,'REZ-1-065');
+ short.players[0].hand.push(waiting);
+ assert.equal(legalUniversalActions(packs,short).some(a=>a.type==='event'&&a.uid===waiting.uid),false);
+ low.buffs=[{bp:500,untilTurn:short.turn}];
+ assert.equal(universalBp(packs,short,low),4500);
+ const side=pull(short,1,'REZ-1-075');
+ short.players[1].front[1]=side;
+ assert.equal(universalBp(packs,short,side),4000);
+ assert.ok(legalUniversalActions(packs,short).some(a=>a.type==='event'&&a.uid===waiting.uid));
+ let paid;
+ [paid]=castEvent(short,'REZ-1-065');
+ assert.equal(paid.pending.kind,'effect-retire-at-least');
+ assert.equal(paid.pending.floor,4500);
+ assert.deepEqual(paid.pending.choices,[low.uid]);
+ const choices=legalUniversalActions(packs,paid);
+ assert.equal(choices.some(a=>a.uid===null),false);
+ assert.equal(choices.length,1);
+ const take=choices[0];
+ assert.equal(uiActionLabel(take,{pack,state:paid}),'使 レム 退場');
+ const forged=structuredClone(paid);
+ forged.pending.floor=4000;
+ assert.throws(()=>assertUniversalMatch(packs,forged),/Invalid minimum-BP retirement pending/);
+ paid=dispatchUniversalAction(packs,paid,take);
+ assert.equal(paid.pending,null);
+ assert.ok(paid.players[1].outside.some(c=>c.uid===low.uid));
+ assert.equal(paid.players[1].front[1]?.uid,side.uid);
+ assert.ok(paid.players[0].outside.some(c=>c.cardId==='REZ-1-065'));
+ assert.ok(paid.zoneMoveEvents.some(e=>e.cardId==='REZ-1-065'&&e.from==='hand'&&
+  e.to==='outside'&&e.reason==='rule'));
+ assert.equal(assertUniversalMatch(packs,paid),true);
 });

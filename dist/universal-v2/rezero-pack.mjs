@@ -58,6 +58,7 @@ export function rezeroEngineKind(effectJa){
  if(e==='自分の場の〈レム〉を1枚選び、このターン中、BP+1000と【インパクト（+1）】（インパクトの与えるダメージが+1され、インパクトを持たない場合、【インパクト（1）】を得る）を与え、カードを1枚引く。')return 'remImpactDraw';
  if(e==='自分の山札の上から5枚見る。その中から［特徴：王選候補者］かイベントカードを1枚まで公開し手札に加える。残りを望む順で山札の下に置く。公開したカードが［特徴：王選候補者］の場合、自分のAPカードを1枚まで選び、アクティブにする。')return 'candidateApSearch';
  if(e==='【起動メイン】【フロントLにある場合】 【ターン1】このターン中にこのキャラが自分の効果でアクティブからレストになったことがある場合のみ発動できる。このターン中、次に手札から使用する〈エミリア〉の必要エナジーを【紫×1】減らす。')return 'emiliaHandEnergy';
+ if(e==='自分の効果で自分の手札から公開しているこのカードは元々のBPが4000のキャラカードとしても扱う。BP4500以上の相手のフロントLのキャラを1枚選び、退場させる。')return 'handRevealRetire';
  return null;
 }
 const TOP_OUTSIDE=new Map([
@@ -109,6 +110,7 @@ function onPlay(card,kind){
   {names:['ベアトリス','ナツキ・スバル'],bp:5000}]}];
  if(kind==='remImpactDraw')return [{op:'buffNamedImpactDraw',name:'レム',bp:1000,impactPlus:1,draw:1}];
  if(kind==='candidateApSearch')return [{op:'searchTopTraitOrEventAp',count:5,trait:'王選候補者'}];
+ if(kind==='handRevealRetire')return [{op:'retireOppFrontAtLeastBp',bp:4500}];
  if(kind==='garfielEntry')return [{op:'enemyBpDown',bp:2500,optional:true,zone:'front'}];
  if(kind==='sanctuaryRecover')return [{op:'payHandOrRestForNamed',name:TRIAL_NAME}];
  if(kind==='frontDown2500')return [{op:'enemyBpDown',bp:2000,optional:true,minBp:2500,zone:'front'}];
@@ -203,6 +205,7 @@ export function rezeroPackCard(card){
   ...(kind==='emiliaHandEnergy'?{mainAbility:{
    op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,requireOwnEffectRest:true,
    then:[{op:'discountNextNamedHandEnergy',name:'エミリア',color:'purple',amount:1}]}}:{}),
+  ...(kind==='handRevealRetire'?{handRevealCharacterBp:4000}:{}),
   ...(kind==='feltTurnBp'?{passiveBonuses:[{
    condition:{kind:'ownNameExists',turn:'own',zone:'field',excludeSelf:false,name:'フェルト'},
    bp:1000}]}:{}),
