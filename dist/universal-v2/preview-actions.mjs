@@ -42,6 +42,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-buff-trait':'選擇己方 BP 加成',
  'main-two-buff':'主要能力選擇 BP 對象',
  'main-discard-buff':'支付一張手牌，讓自身 BP 增加',
+ 'main-discard-block-ceiling':'支付一張手牌，本回合不被 BP 4000 以上角色阻擋',
  'effect-grant-attack':'授予己方角色攻擊時能力','granted-attack-draw':'攻擊時是否抽一張',
  'effect-target':'指定角色','effect-target-many':'最多選擇兩名不同敵方角色','raid-effect-order':'突襲能力結算順序',
  'effect-move-order':'選擇同時取得的移動觸發處理順序',
@@ -114,6 +115,7 @@ export function uiActionLabel(action,{pack,state}={}){
     action.mode==='buff'?'主要能力：BP 加成':
     action.mode==='restPayNameActiveRest'?'起動主要：支付 1 AP，將此 Rest 的前線角色改為 ACTIVE':
     action.mode==='restRetireNamedMode'?'起動主要：REST 並退場，可授予指定名稱 Impact +1 或 Damage +1':
+    action.mode==='discardBlockCeiling'?'起動主要：將 1 張手牌送至場外，本回合不被 BP 4000 以上角色阻擋':
     '主要能力：ACTIVE ＋ BP 加成';
   case 'chooseBlock':return action.uid===null?'不阻擋':'使用 '+name()+' 阻擋';
   case 'chooseTrigger':

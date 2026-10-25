@@ -1455,8 +1455,18 @@ function normalize(card,packId){
   Object.keys(mainAbility).length===3&&
   Object.keys(mainAbility).every(k=>['op','frontOnly','then'].includes(k));
  if(mainDiscardGrant)verifyProgram(mainAbility.then,card.id+'.mainAbility.then',true);
+ // 【ターン1】【手札を1枚場外に置く】 then this character cannot be blocked
+ // by a character whose live BP is at least the printed ceiling. The ceiling
+ // is 4000. A different number is a different print.
+ const mainDiscardCeiling=mainAbility?.op==='discardOnceSelfBlockAtLeast'&&
+  mainAbility.oncePerTurn===true&&mainAbility.discardCount===1&&
+  mainAbility.bp===4000&&
+  Object.keys(mainAbility).length===4&&
+  Object.keys(mainAbility).every(k=>['op','oncePerTurn','discardCount','bp'].includes(k));
+ if(mainAbility?.op==='discardOnceSelfBlockAtLeast'&&!mainDiscardCeiling)
+  throw Error(card.id+' invalid once discard block ceiling');
  if(mainAbility!==null&&
-  (!['character','field'].includes(card.type)||!(fieldDualMain||fieldRestRetireThen||card.type==='character'&&(mainRaid||mainRetireField||mainRetireReady||mainReadyName||mainSelfRest||mainRestProgram||mainRestBuff||mainRestRetireRecover||mainRestOnceBuffReturn||mainRestOnceSelf||mainOnceBuffWhen||mainPayAp||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainRestDiscardRetire||mainFrontProgram||mainFieldOnceBuff||mainEntryProtect||mainRestRetireUnder||mainRestTwoMove||mainOncePay||mainRestRetireDeploy||mainRestPayName||mainRestRetireNamed||mainDiscardGrant))))
+  (!['character','field'].includes(card.type)||!(fieldDualMain||fieldRestRetireThen||card.type==='character'&&(mainRaid||mainRetireField||mainRetireReady||mainReadyName||mainSelfRest||mainRestProgram||mainRestBuff||mainRestRetireRecover||mainRestOnceBuffReturn||mainRestOnceSelf||mainOnceBuffWhen||mainPayAp||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainRestDiscardRetire||mainFrontProgram||mainFieldOnceBuff||mainEntryProtect||mainRestRetireUnder||mainRestTwoMove||mainOncePay||mainRestRetireDeploy||mainRestPayName||mainRestRetireNamed||mainDiscardGrant||mainDiscardCeiling))))
   throw Error(card.id+' unsupported main action ability');
  const passiveBonuses=validatePassiveBonuses(card);
  const implemented=card.implementation;

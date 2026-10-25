@@ -1167,6 +1167,8 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-4-068","kind":"shunsuiRestPay","number":"EX15BT/BLC-4-068","name":"京楽 春水","color":"green","energy":4,"ap":1,"bp":4000,"gen":1,"trigger":"active","type":"character","effect":"Impact無效。啟動・主要〔前線／支付1 AP〕：僅在此角色為Rest時可發動；將此角色改為Active，並最多選1個對方前線角色改為Rest。所有《京樂春水》的此效果合計每回合僅限1次。"}
 ,
 {"id":"BLC-2-064","kind":"yachiruRestGrant","number":"EX07BT/BLC-2-064","name":"草鹿 やちる","color":"green","energy":1,"ap":1,"bp":1500,"gen":1,"trigger":"draw","type":"character","effect":"主要階段：REST 並退場自己，可選最多 1 個己方場上的〈更木劍八〉，使其本回合獲得 Impact +1 或 Damage +1；沒有 Impact 的角色獲得 Impact 1，Damage +1 則令直接攻擊傷害增加 1。"}
+,
+{"id":"BLC-2-017","kind":"ichigoBlockCeiling","number":"EX07BT/BLC-2-017","name":"黒崎 一護","color":"blue","energy":2,"ap":1,"bp":3000,"gen":1,"trigger":null,"type":"character","effect":"主要階段・每回合 1 次：將 1 張手牌送至場外，使此角色本回合不能被 BP 4000 以上角色阻擋。"}
  ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1316,6 +1318,7 @@ export function checkedBleachAddonDefinition(p){
  const isBurning=p.kind==='burningBazzBuff';
  const isShunsuiRest=p.kind==='shunsuiRestPay';
  const isYachiruGrant=p.kind==='yachiruRestGrant';
+ const isIchigoCeiling=p.kind==='ichigoBlockCeiling';
  const topDiscard={
   'BLC-3-007':{count:3,filter:{field:'trait',value:'護廷十三隊'}},
   'BLC-3-002':{count:3,filters:[
@@ -1349,7 +1352,7 @@ export function checkedBleachAddonDefinition(p){
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isAskin||isSoifon||isNelliel||isPernida||isLoyd||isKon||isBazz||isBambietta||isHyorin||isFear||isTech||isNemuri||isKaten||isBurning||isShunsuiRest||isYachiruGrant||isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest||isOwnCharacterDraw||isPeekAttack||isDrawInstead||isRevealOppTop||isRevealWindow||isEnergyWindow||isMillPurple||isEnergyBounce||isStepOr;
+ const special=isAskin||isSoifon||isNelliel||isPernida||isLoyd||isKon||isBazz||isBambietta||isHyorin||isFear||isTech||isNemuri||isKaten||isBurning||isShunsuiRest||isYachiruGrant||isIchigoCeiling||isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest||isOwnCharacterDraw||isPeekAttack||isDrawInstead||isRevealOppTop||isRevealWindow||isEnergyWindow||isMillPurple||isEnergyBounce||isStepOr;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1373,6 +1376,7 @@ export function checkedBleachAddonDefinition(p){
   ...(isBurning?{playRequiresOwnName:'バズビー'}:{}),
   ...(isShunsuiRest?{impactNull:true,mainAbility:{op:'restPayNameActiveRest',payAp:1,frontOnly:true,onlyWhileRest:true}}:{}),
   ...(isYachiruGrant?{mainAbility:{op:'restRetireNamedMode',name:'更木 剣八',optional:true}}:{}),
+  ...(isIchigoCeiling?{mainAbility:{op:'discardOnceSelfBlockAtLeast',oncePerTurn:true,discardCount:1,bp:4000}}:{}),
   ...(isStepOr?{mainAbility:{op:'onceBuffSelfWhen',oncePerTurn:true,bp:1000,when:{logic:'any',checks:[
    {kind:'oppFrontLiveBpBelowPrinted',turn:'any'},
    {kind:'oppRestCharacter',turn:'any',zone:'front'}]}}}:{}),

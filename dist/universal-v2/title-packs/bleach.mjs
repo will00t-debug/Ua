@@ -142,7 +142,8 @@ const testForKind=Object.freeze({
  katenRetireActive:'tests/v2-c29-choice-batch.test.mjs',
  burningBazzBuff:'tests/v2-c29-choice-batch.test.mjs',
  shunsuiRestPay:'tests/v2-c29-choice-batch.test.mjs',
- yachiruRestGrant:'tests/v2-c29-choice-batch.test.mjs'
+ yachiruRestGrant:'tests/v2-c29-choice-batch.test.mjs',
+ ichigoBlockCeiling:'tests/v2-c29-ichigo-ceiling.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.

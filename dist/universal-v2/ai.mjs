@@ -115,7 +115,7 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
    legal.find(a=>a.mode==='activate')||legal[0];
  if(s.pending?.kind==='effect-buff-own')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-buff-trait')return legal.find(a=>a.uid!==null)||legal[0];
- if(s.pending?.kind==='main-discard-buff'){
+ if(s.pending?.kind==='main-discard-buff'||s.pending?.kind==='main-discard-block-ceiling'){
   // The payment is mandatory once activated. Choose a low-cost OWN hand
   // card, not a forged or opponent target; all candidates are exact legal.
   const catalog=packsOf(pack)[s.pending.player].cards;
