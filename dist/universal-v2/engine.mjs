@@ -4067,6 +4067,13 @@ export function legalUniversalActions(pack,s){
    }
    if(ability.op==='frontOnceProgram'){
     if(s.mainAbilityUsedUids.includes(c.uid))continue;
+    // 〈A〉と〈B〉がある場合のみ. Both names are own field characters.
+    if(Array.isArray(ability.requireAllNames)){
+     if(matchesV2LiveCondition(s,p,c.uid,{kind:'ownFieldHasAllNames',turn:'any',
+      zone:'field',excludeSelf:false,names:ability.requireAllNames},x=>card(pack,x)))
+      out.push({type:'activate',uid:c.uid,mode:'frontOnce'});
+     continue;
+    }
     // Non-attack FRONT ability never requires an opponent target to activate.
     if(ability.then.length===2&&ability.then[0].op==='drawDiscard'&&
      ability.then[1].op==='grantFrontEnergyOwnOtherFrontTrait'){
@@ -4477,6 +4484,10 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
     if(action.mode!=='frontOnce'||s.mainAbilityUsedUids.includes(selected.uid)||
      !(ability.frontOnly===false?onFront||onEnergy:onFront))
      throw Error('Front once-per-turn program is not legal');
+    if(Array.isArray(ability.requireAllNames)&&!matchesV2LiveCondition(s,p,selected.uid,{
+     kind:'ownFieldHasAllNames',turn:'any',zone:'field',excludeSelf:false,
+     names:ability.requireAllNames},x=>card(pack,x)))
+     throw Error('Front once-per-turn program requires every printed name');
     const step=ability.then[0];
     if(step.op==='discardGate'&&!payableHand(pack,s,p,step.payment).length)
      throw Error('Front once-per-turn program requires a matching hand payment');

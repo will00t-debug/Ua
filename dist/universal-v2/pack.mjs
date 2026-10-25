@@ -1019,6 +1019,17 @@ function normalize(card,packId){
   )&&Object.keys(mainAbility).length===4&&
   Object.keys(mainAbility).every(k=>['op','frontOnly','oncePerTurn','then'].includes(k));
  if(mainFrontProgram)verifyProgram(mainAbility.then,card.id+'.mainAbility.then');
+ const mainNameDrawDiscard=mainAbility?.op==='frontOnceProgram'&&
+  mainAbility.frontOnly===true&&mainAbility.oncePerTurn===true&&
+  Array.isArray(mainAbility.requireAllNames)&&mainAbility.requireAllNames.length===2&&
+  mainAbility.requireAllNames.every(n=>typeof n==='string'&&!!n.trim()&&n.length<=80)&&
+  new Set(mainAbility.requireAllNames).size===2&&
+  Array.isArray(frontProgram)&&frontProgram.length===1&&
+  frontProgram[0]?.op==='drawDiscard'&&frontProgram[0].count===1&&
+  Object.keys(frontProgram[0]).length===2&&
+  Object.keys(mainAbility).length===5&&
+  Object.keys(mainAbility).every(k=>['op','frontOnly','oncePerTurn','then','requireAllNames'].includes(k));
+ if(mainNameDrawDiscard)verifyProgram(mainAbility.then,card.id+'.mainAbility.then');
  const mainEntryProtect=mainAbility?.op==='entryTurnProtect'&&
   mainAbility.oncePerTurn===true&&mainAbility.selectionScope==='any'&&
   Object.keys(mainAbility).length===3&&
@@ -1068,7 +1079,7 @@ function normalize(card,packId){
   Object.keys(mainAbility).every(k=>['op','frontOnly','oncePerTurn','then'].includes(k));
  if(mainRestProgram)verifyProgram(mainAbility.then,card.id+'.mainAbility.then');
  if(mainAbility!==null&&
-  (!['character','field'].includes(card.type)||!(fieldDualMain||fieldRestRetireThen||card.type==='character'&&(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainRestBuff||mainPayAp||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainRestDiscardRetire||mainFrontProgram||mainFieldOnceBuff||mainEntryProtect||mainRestRetireUnder||mainRestTwoMove||mainOncePay))))
+  (!['character','field'].includes(card.type)||!(fieldDualMain||fieldRestRetireThen||card.type==='character'&&(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainRestBuff||mainPayAp||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainRestDiscardRetire||mainFrontProgram||mainNameDrawDiscard||mainFieldOnceBuff||mainEntryProtect||mainRestRetireUnder||mainRestTwoMove||mainOncePay))))
   throw Error(card.id+' unsupported main action ability');
  const passiveBonuses=validatePassiveBonuses(card);
  const implemented=card.implementation;

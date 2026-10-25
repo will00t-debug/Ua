@@ -66,9 +66,9 @@ test('UA40BT and UA40ST share one catalogue and keep parallel art out',()=>{
  }
 });
 
-test('fifty-nine whole prints enter the V2 pack and the other fifty-four stay out',()=>{
- assert.equal(REZERO_ENGINE_IDS.length,59);
- assert.equal(Object.keys(pack.cards).length,59);
+test('sixty whole prints enter the V2 pack and the other fifty-three stay out',()=>{
+ assert.equal(REZERO_ENGINE_IDS.length,60);
+ assert.equal(Object.keys(pack.cards).length,60);
  assert.equal(pack.cards['REZ-1-001'],undefined);
  assert.equal(pack.cards['REZ-1-008'].step,true);
  assert.equal(pack.cards['REZ-1-008'].implementation,'vanilla');
@@ -129,6 +129,9 @@ test('fifty-nine whole prints enter the V2 pack and the other fifty-four stay ou
   op:'searchTopOneBottomDiscard',count:7,
   filter:{field:'name',value:REZERO_BY_ID['REZ-1-098'].nameJa}}]);
  assert.equal(pack.cards['REZ-1-098'],undefined);
+ assert.deepEqual(pack.cards['REZ-1-021'].mainAbility,{
+  op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,requireAllNames:['ラム','レム'],
+  then:[{op:'drawDiscard',count:1}]});
  assert.equal(pack.cards['REZ-1-042'],undefined);
  assert.equal(pack.cards['REZ-1-101'],undefined);
  assert.deepEqual(validateUniversalDeck(pack,counts),[]);
@@ -813,4 +816,63 @@ test('top seven name search orders a miss and takes the printed trial name',()=>
  hit=dispatchUniversalAction(fp,hit,{type:'chooseDiscard',uid:dumped.uid});
  assert.equal(hit.players[0].hand.some(c=>c.uid===found[0].uid),true);
  assert.equal(hit.players[0].outside.some(c=>c.uid===dumped.uid),true);
+});
+
+const pairCounts={
+ ...Object.fromEntries(['REZ-1-007','REZ-1-008','REZ-1-012','REZ-1-014','REZ-1-022',
+  'REZ-1-036','REZ-1-043','REZ-1-068','REZ-1-072','REZ-1-086','REZ-1-021'].map(id=>[id,4])),
+ 'REZ-1-010':4,'REZ-1-075':2
+};
+const pair=seed=>newUniversalMatch(packs,{decks:[pairCounts,pairCounts],first:0,seed});
+function frontOnce(s,uid){
+ return legalUniversalActions(packs,s).some(a=>a.type==='activate'&&a.mode==='frontOnce'&&a.uid===uid);
+}
+function playFront(s,id){
+ const card=pull(s,0,id);
+ s.players[0].hand.push(card);
+ const action=legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===card.uid&&a.line==='front');
+ assert.ok(action,id+' front');
+ return [dispatchUniversalAction(packs,s,action),card];
+}
+test('Roswaal draws and discards only while Ram and Rem are both on the field',()=>{
+ assert.equal(Object.values(pairCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(pack,pairCounts),[]);
+ let onlyRem=pair(4501);
+ fuel(onlyRem,['REZ-1-014','REZ-1-022','REZ-1-022','REZ-1-036']);
+ onlyRem=reach(onlyRem,'main');
+ let roswaal;
+ [onlyRem,roswaal]=playFront(onlyRem,'REZ-1-021');
+ assert.equal(at(onlyRem,0,roswaal.uid)&&onlyRem.players[0].front.some(c=>c?.uid===roswaal.uid),true);
+ assert.equal(frontOnce(onlyRem,roswaal.uid),false);
+ const ram=pull(onlyRem,0,'REZ-1-007');
+ onlyRem.players[0].front[1]=ram;
+ assert.equal(frontOnce(onlyRem,roswaal.uid),true);
+
+ let onlyRam=pair(4502);
+ fuel(onlyRam,['REZ-1-007','REZ-1-008','REZ-1-022','REZ-1-022']);
+ onlyRam=reach(onlyRam,'main');
+ [onlyRam,roswaal]=playFront(onlyRam,'REZ-1-021');
+ assert.equal(frontOnce(onlyRam,roswaal.uid),false);
+
+ let both=pair(4503);
+ fuel(both,['REZ-1-014','REZ-1-007','REZ-1-022','REZ-1-008']);
+ both=reach(both,'main');
+ const deck=both.players[0].deck.length;
+ [both,roswaal]=playFront(both,'REZ-1-021');
+ assert.equal(frontOnce(both,roswaal.uid),true);
+ both=dispatchUniversalAction(packs,both,{type:'activate',uid:roswaal.uid,mode:'frontOnce'});
+ assert.equal(both.pending.kind,'effect-discard');
+ assert.equal(both.players[0].deck.length,deck-2);
+ const dumped=both.players[0].hand[0];
+ both=dispatchUniversalAction(packs,both,{type:'chooseDiscard',uid:dumped.uid});
+ assert.equal(both.pending,null);
+ assert.equal(both.players[0].outside.some(c=>c.uid===dumped.uid),true);
+ assert.equal(frontOnce(both,roswaal.uid),false);
+
+ let foe=pair(4504);
+ fuel(foe,['REZ-1-014','REZ-1-022','REZ-1-022','REZ-1-036']);
+ foe.players[1].front[0]=pull(foe,1,'REZ-1-007');
+ foe=reach(foe,'main');
+ [foe,roswaal]=playFront(foe,'REZ-1-021');
+ assert.equal(frontOnce(foe,roswaal.uid),false);
 });
