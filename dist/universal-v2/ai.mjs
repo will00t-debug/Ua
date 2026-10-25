@@ -67,6 +67,12 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='effect-top-trait-outside')
   return difficulty==='easy'?legal.find(a=>a.uid===null)||legal[0]:
    legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-active-energy-names')
+  return difficulty==='easy'?legal.find(a=>a.uid===null)||legal[0]:
+   legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-named-grant-mode')
+  return difficulty==='easy'?legal.find(a=>a.uid===null)||legal[0]:
+   legal.find(a=>a.mode==='impact')||legal[0];
  if(s.pending?.kind==='effect-optional-mill')
   return difficulty==='easy'?legal.find(a=>a.mode==='skip')||legal[0]:
    legal.find(a=>a.mode==='mill')||legal[0];

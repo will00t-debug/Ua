@@ -29,6 +29,8 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-hand-rest':'從己方手牌免費 REST 登場',
  'effect-hand-rest-or-raid':'從己方手牌 REST 登場或合法 Raid',
  'effect-active-own-named':'可將最多 1 個己方指定名稱角色轉為 ACTIVE',
+ 'effect-active-energy-names':'可將能量線的指定名稱卡改為 ACTIVE',
+ 'effect-named-grant-mode':'選擇 Impact +1 或 Damage +1',
  'effect-bounce-own':'選擇返回手牌的己方角色',
  'effect-buff-own':'選擇己方角色增加本回合 BP',
  'effect-once-choice':'是否發動本回合一次能力',
@@ -109,7 +111,10 @@ export function uiActionLabel(action,{pack,state}={}){
     action.mode==='restFrontGainEnergy'?'起動主要：REST 自身，再 REST 一張己方前線，本回合產能＋1':
     action.mode==='selfRestEnemy'?'主要能力：REST 自身，指定敵方前線角色':
     action.mode==='ready'?'主要能力：ACTIVE':
-    action.mode==='buff'?'主要能力：BP 加成':'主要能力：ACTIVE ＋ BP 加成';
+    action.mode==='buff'?'主要能力：BP 加成':
+    action.mode==='restPayNameActiveRest'?'起動主要：支付 1 AP，將此 Rest 的前線角色改為 ACTIVE':
+    action.mode==='restRetireNamedMode'?'起動主要：REST 並退場，可授予指定名稱 Impact +1 或 Damage +1':
+    '主要能力：ACTIVE ＋ BP 加成';
   case 'chooseBlock':return action.uid===null?'不阻擋':'使用 '+name()+' 阻擋';
   case 'chooseTrigger':
    if(action.mode==='skip')return '不使用此觸發';
@@ -164,6 +169,9 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseOptionalPayAp':return action.mode==='pay'?'支付 1 AP，然後結算後續效果':'不支付 AP';
   case 'chooseHandRest':return action.uid===null?'不特殊登場':'免費 REST 登場 '+name()+suffix();
   case 'chooseActiveOwnNamed':return action.uid===null?'不將指定名稱角色轉為 ACTIVE':'將 '+name()+' 轉為 ACTIVE';
+  case 'chooseActiveEnergyNames':return action.uid===null?'不將能量線的卡改為 ACTIVE':'將能量線的 '+name()+' 改為 ACTIVE';
+  case 'chooseNamedGrant':return action.uid===null?'不授予 Impact 或 Damage':
+   (action.mode==='damage'?'Damage +1：':'Impact +1：')+name();
   case 'chooseHandRestOrRaid':return action.uid===null?'不從手牌登場':
    (action.mode==='raid'?'從手牌 Raid ':'從手牌 REST 登場 ')+name()+suffix();
    case 'chooseOutsideNameRest':return action.uid===null?'不從場外登場':'REST 登場 '+name()+suffix();

@@ -9,8 +9,8 @@ export const V2_PHASES=Object.freeze(['start','move','main','attack']);
 export const V2_CARD_TYPES=Object.freeze(['character','event','field']);
 export const V2_TRIGGERS=Object.freeze(['draw','get','final','active','special','color','raid']);
 export const V2_EFFECT_TIMINGS=Object.freeze(['onPlay','onRaid','onAttack','onRaided','onRetire','onOutsideRecover']);
-export const V2_EFFECT_OPS=Object.freeze(['nextEligibleHandPlayApDiscount','draw','drawIfOwnName','drawIfOwnTraitCount','drawIfOwnOutsideNamedCountAtLeast','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','drawIfSelfBpAtLeast','returnRetiredToHand','drawIfOppRestCharacter','drawIfOppCharacterBpAtLeast','drawIfOwnNameAndHandFewer','activeOwnNamed','grantSelfSniperThisTurn','grantSelfAttackWinDrawThisTurn','grantSelfMustBlockThisTurn','buffSelfUntilNextOwnStart','grantSelfAttackEndSwapThisTurn','millTop','buffSelf','buffSelfPerOwnOutsideGroups','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','revealOppTopPlace','chooseEnergyRevealOutside','optionalRemoveHandThen','retireOppFrontUnderBp','retireOppFrontOneUnderBp','bounceOppFrontOneUnderBp','conditionalBounceOrRetireByOwnOutsideNames','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','skipNextActiveOppRest','forbidAttackOppFrontOne','restOrRetireOppFrontByLife','restOrRetireOppFrontByOwnName','restOrRestSkipDrawByOwnName','retireOppRestFront','restSilenceOppFrontIfOwnOutsideField','retireOwnFieldOne','retireOwnCharacterOne','optionalRetireThenProgram','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw','searchDeckMany','discardGate','removeOutsideThen','searchDeckWhere','inspectTopArrange','inspectTopHandOutsideBottom','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopUpToTwoBottom','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
- 'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideUnderEnergy','recoverOutsideColorUnderEnergy','recoverOutsideTraitlessUnderEnergy','deployOutsideTraitlessRestOrRaid','deployOutsideRest','deployOutsideEnergyRest','deployOutsideNameRest','deployNamedFromZones','payApDeployNamedRest','inspectTopTraitOutside','buffOwnField','oncePerTurnGate','chooseOne','deployOwnHandRest','deployOwnHandSpecial','deployOwnHandRestOrRaid','optionalPayApThen','discardOppHand','retireSourceOnPhaseEnd','activeSelfIf','grantOnAttack','grantSelectionApTaxOwnOtherTrait','grantFrontEnergyOwnOtherFrontTrait','grantOwnFrontChoiceProtection','grantCauseBlockAtMost','handBottomGrantDoubleAttack','payApDeployMovedActive','noteEntryTurn','grantSelfEnergyMoveOnAttackStart','grantSelfTriggerUnchosen','outsideColorEnergyHandOrRest','moveOtherAcrossOrRemove','raidBaseEnergyThen','grantSelfAttackDamageThisTurn','restOppFrontLockActive','removeAnyOutsideScale','inspectTopColoredNamesOutside','drawDiscardIfEffectApPaid','activeSelf','grantSelfImpactThisTurn','grantOtherImpactThisTurn','returnSourceToHand','optionalOwnLifeToHandThenDraw','grantOwnNameBlockAtLeast']);
+export const V2_EFFECT_OPS=Object.freeze(['nextEligibleHandPlayApDiscount','draw','drawIfOwnName','drawIfOwnTraitCount','drawIfOwnOutsideNamedCountAtLeast','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','drawIfSelfBpAtLeast','returnRetiredToHand','drawIfOppRestCharacter','drawIfOppCharacterBpAtLeast','drawIfOwnNameAndHandFewer','activeOwnNamed','activeEnergyOneOfNames','grantSelfSniperThisTurn','grantSelfAttackWinDrawThisTurn','grantSelfMustBlockThisTurn','buffSelfUntilNextOwnStart','grantSelfAttackEndSwapThisTurn','millTop','buffSelf','buffSelfPerOwnOutsideGroups','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','revealOppTopPlace','chooseEnergyRevealOutside','optionalRemoveHandThen','retireOppFrontUnderBp','retireOppFrontOneUnderBp','retireOppFrontOneMandatory','bounceOppFrontOneUnderBp','conditionalBounceOrRetireByOwnOutsideNames','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','skipNextActiveOppRest','forbidAttackOppFrontOne','restOrRetireOppFrontByLife','restOrRetireOppFrontByOwnName','restOrRestSkipDrawByOwnName','retireOppRestFront','restSilenceOppFrontIfOwnOutsideField','retireOwnFieldOne','retireOwnCharacterOne','optionalRetireThenProgram','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw','searchDeckMany','discardGate','removeOutsideThen','searchDeckWhere','inspectTopArrange','inspectTopHandOutsideBottom','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopUpToTwoBottom','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
+ 'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideUnderEnergy','recoverOutsideColorUnderEnergy','recoverOutsideTraitlessUnderEnergy','deployOutsideTraitlessRestOrRaid','deployOutsideRest','deployOutsideEnergyRest','deployOutsideNameRest','deployNamedFromZones','payApDeployNamedRest','inspectTopTraitOutside','buffOwnField','buffOwnNameIfEnergyAtLeast','oncePerTurnGate','chooseOne','deployOwnHandRest','deployOwnHandSpecial','deployOwnHandRestOrRaid','optionalPayApThen','discardOppHand','retireSourceOnPhaseEnd','activeSelfIf','grantOnAttack','grantSelectionApTaxOwnOtherTrait','grantFrontEnergyOwnOtherFrontTrait','grantOwnFrontChoiceProtection','grantCauseBlockAtMost','handBottomGrantDoubleAttack','payApDeployMovedActive','noteEntryTurn','grantSelfEnergyMoveOnAttackStart','grantSelfTriggerUnchosen','outsideColorEnergyHandOrRest','moveOtherAcrossOrRemove','raidBaseEnergyThen','grantSelfAttackDamageThisTurn','restOppFrontLockActive','removeAnyOutsideScale','inspectTopColoredNamesOutside','inspectTopOrMatchOutside','drawDiscardIfEffectApPaid','activeSelf','grantSelfImpactThisTurn','grantOtherImpactThisTurn','returnSourceToHand','optionalOwnLifeToHandThenDraw','grantOwnNameBlockAtLeast']);
 const integer=(v,low=0)=>Number.isInteger(v)&&v>=low;
 const own=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
 // Shared board predicate used by passive bonuses and on-play ACTIVE.
@@ -216,6 +216,14 @@ function verifyProgram(program,path,allowDiscardBattleGrants=false){
    e.max!==1||e.optional!==true||Object.keys(e).length!==4||
    Object.keys(e).some(k=>!['op','name','max','optional'].includes(k))
   ))throw Error(path+'['+i+'] invalid named own ACTIVE');
+  if(e.op==='activeEnergyOneOfNames'){
+   const names=e.names;
+   if(!Array.isArray(names)||names.length!==2||new Set(names).size!==2||
+    names.some(n=>typeof n!=='string'||!n.trim()||n.length>80)||
+    e.optional!==true||e.max!==1||Object.keys(e).length!==4||
+    Object.keys(e).some(k=>!['op','names','optional','max'].includes(k)))
+    throw Error(path+'['+i+'] invalid energy-line named ACTIVE');
+  }
   if(e.op==='recoverOutsideOne'&&e.filters){
    const valid=f=>f&&typeof f==='object'&&!Array.isArray(f)&&
     Object.keys(f).length===2&&['name','trait','color','type'].includes(f.field)&&
@@ -601,6 +609,24 @@ function verifyProgram(program,path,allowDiscardBattleGrants=false){
     Object.keys(e).some(k=>!['op','count','rest','max','color','names'].includes(k)))
     throw Error(path+'['+i+'] invalid colored-name top outside');
   }
+  if(e.op==='inspectTopOrMatchOutside'){
+   const colorName=m=>m&&typeof m==='object'&&!Array.isArray(m)&&
+    ['blue','yellow','green','purple','red'].includes(m.color)&&
+    typeof m.name==='string'&&!!m.name.trim()&&m.name.length<=80&&
+    Object.keys(m).length===2;
+   const onlyName=m=>m&&typeof m==='object'&&!Array.isArray(m)&&
+    typeof m.name==='string'&&!!m.name.trim()&&m.name.length<=80&&
+    Object.keys(m).length===1;
+   const onlyTrait=m=>m&&typeof m==='object'&&!Array.isArray(m)&&
+    typeof m.trait==='string'&&!!m.trait.trim()&&m.trait.length<=80&&
+    Object.keys(m).length===1;
+   if(e.count!==2||e.rest!=='top'||e.max!==1||
+    !Array.isArray(e.matches)||e.matches.length!==3||
+    !colorName(e.matches[0])||!onlyName(e.matches[1])||!onlyTrait(e.matches[2])||
+    Object.keys(e).length!==5||
+    Object.keys(e).some(k=>!['op','count','rest','max','matches'].includes(k)))
+    throw Error(path+'['+i+'] invalid top or-match outside');
+  }
   if(e.op==='drawDiscardIfEffectApPaid'){
    if(!['blue','yellow','green','purple','red'].includes(e.color)||e.discardCount!==1||
     Object.keys(e).length!==3||
@@ -730,6 +756,12 @@ function verifyProgram(program,path,allowDiscardBattleGrants=false){
    !integer(e.bp,1)||e.bp>5000||e.optional!==true||
    Object.keys(e).some(k=>!['op','trait','bp','optional'].includes(k))
   ))throw Error(path+'['+i+'] invalid optional trait BP boost');
+  if(e.op==='buffOwnNameIfEnergyAtLeast'&&(
+   typeof e.name!=='string'||!e.name.trim()||e.name.length>80||
+   e.minPrintedEnergy!==5||e.bp!==1000||e.optional!==true||
+   Object.keys(e).length!==5||
+   Object.keys(e).some(k=>!['op','name','minPrintedEnergy','bp','optional'].includes(k))
+  ))throw Error(path+'['+i+'] invalid printed-energy name buff');
   if(e.op==='drawIfRaidUnderFacedown'&&Object.keys(e).some(k=>k!=='op'))
    throw Error(path+'['+i+'] unsupported conditional Raid draw options');
   if(e.op==='retireOppFrontIfFacedown'&&(
@@ -749,6 +781,11 @@ function verifyProgram(program,path,allowDiscardBattleGrants=false){
    Object.keys(e).length!==3||
    Object.keys(e).some(k=>!['op','bp','optional'].includes(k))
   ))throw Error(path+'['+i+'] invalid optional BP-limited opponent retirement');
+  if(e.op==='retireOppFrontOneMandatory'&&(
+   !integer(e.bp,1)||e.bp>50000||e.optional!==false||
+   Object.keys(e).length!==3||
+   Object.keys(e).some(k=>!['op','bp','optional'].includes(k))
+  ))throw Error(path+'['+i+'] invalid mandatory BP-limited opponent retirement');
   // Up to one opposing FRONT character at or below a live BP. Return uses
   // the shared Q62 bounce, so it is not a retirement profile.
   if(e.op==='bounceOppFrontOneUnderBp'&&(
@@ -1388,6 +1425,19 @@ function normalize(card,packId){
   Object.keys(mainAbility).length===2&&
   Object.keys(mainAbility).every(k=>['op','then'].includes(k));
  if(mainRestRetireDeploy)verifyProgram(mainAbility.then,card.id+'.mainAbility.then');
+ // Front, REST, pay 1 AP, then one printed-name use. The optional opposing
+ // REST is part of this main and is not a separate once.
+ const mainRestPayName=mainAbility?.op==='restPayNameActiveRest'&&
+  mainAbility.payAp===1&&mainAbility.frontOnly===true&&
+  mainAbility.onlyWhileRest===true&&
+  Object.keys(mainAbility).length===4&&
+  Object.keys(mainAbility).every(k=>['op','payAp','frontOnly','onlyWhileRest'].includes(k));
+ const mainRestRetireNamed=mainAbility?.op==='restRetireNamedMode'&&
+  mainAbility.optional===true&&
+  typeof mainAbility.name==='string'&&!!mainAbility.name.trim()&&
+  mainAbility.name.length<=80&&
+  Object.keys(mainAbility).length===3&&
+  Object.keys(mainAbility).every(k=>['op','name','optional'].includes(k));
  // Repeatable 【起動メイン】: one hand card, then this-turn DAMAGE(2) and
  // the attacking battle-win draw. No ターン1 and no front restriction.
  const battleGrantThen=x=>Array.isArray(x)&&x.length===2&&
@@ -1406,7 +1456,7 @@ function normalize(card,packId){
   Object.keys(mainAbility).every(k=>['op','frontOnly','then'].includes(k));
  if(mainDiscardGrant)verifyProgram(mainAbility.then,card.id+'.mainAbility.then',true);
  if(mainAbility!==null&&
-  (!['character','field'].includes(card.type)||!(fieldDualMain||fieldRestRetireThen||card.type==='character'&&(mainRaid||mainRetireField||mainRetireReady||mainReadyName||mainSelfRest||mainRestProgram||mainRestBuff||mainRestRetireRecover||mainRestOnceBuffReturn||mainRestOnceSelf||mainOnceBuffWhen||mainPayAp||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainRestDiscardRetire||mainFrontProgram||mainFieldOnceBuff||mainEntryProtect||mainRestRetireUnder||mainRestTwoMove||mainOncePay||mainRestRetireDeploy||mainDiscardGrant))))
+  (!['character','field'].includes(card.type)||!(fieldDualMain||fieldRestRetireThen||card.type==='character'&&(mainRaid||mainRetireField||mainRetireReady||mainReadyName||mainSelfRest||mainRestProgram||mainRestBuff||mainRestRetireRecover||mainRestOnceBuffReturn||mainRestOnceSelf||mainOnceBuffWhen||mainPayAp||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainRestDiscardRetire||mainFrontProgram||mainFieldOnceBuff||mainEntryProtect||mainRestRetireUnder||mainRestTwoMove||mainOncePay||mainRestRetireDeploy||mainRestPayName||mainRestRetireNamed||mainDiscardGrant))))
   throw Error(card.id+' unsupported main action ability');
  const passiveBonuses=validatePassiveBonuses(card);
  const implemented=card.implementation;
@@ -1644,6 +1694,18 @@ function normalize(card,packId){
   if(program.some(e=>e.op==='inspectTopHandOutsideBottom')&&
    (card.type!=='event'||name!=='onPlay'))
    throw Error(card.id+' top hand-and-outside split is only an event onPlay effect');
+  if(program.some(e=>e.op==='inspectTopOrMatchOutside')&&
+   (card.type!=='character'||name!=='onPlay'))
+   throw Error(card.id+' top or-match outside is only a character onPlay effect');
+  if(program.some(e=>e.op==='retireOppFrontOneMandatory')&&
+   (card.type!=='event'||name!=='onPlay'))
+   throw Error(card.id+' mandatory BP retirement is only an event onPlay effect');
+  if(program.some(e=>e.op==='activeEnergyOneOfNames')&&
+   (card.type!=='event'||name!=='onPlay'))
+   throw Error(card.id+' energy-line named ACTIVE is only an event onPlay effect');
+  if(program.some(e=>e.op==='buffOwnNameIfEnergyAtLeast')&&
+   (card.type!=='event'||name!=='onPlay'))
+   throw Error(card.id+' printed-energy name buff is only an event onPlay effect');
   if(program.some(e=>e.op==='bounceOppFrontOneUnderBp')&&
    (card.type!=='character'||name!=='onPlay'))
    throw Error(card.id+' BP-limited return is only a character onPlay effect');
