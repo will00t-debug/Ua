@@ -70,9 +70,9 @@ test('UA40BT and UA40ST share one catalogue and keep parallel art out',()=>{
  }
 });
 
-test('eighty-nine whole prints enter the V2 pack and the other twenty-four stay out',()=>{
- assert.equal(REZERO_ENGINE_IDS.length,89);
- assert.equal(Object.keys(pack.cards).length,89);
+test('ninety whole prints enter the V2 pack and the other twenty-three stay out',()=>{
+ assert.equal(REZERO_ENGINE_IDS.length,90);
+ assert.equal(Object.keys(pack.cards).length,90);
  assert.equal(pack.cards['REZ-1-001'],undefined);
  assert.equal(pack.cards['REZ-1-008'].step,true);
  assert.equal(pack.cards['REZ-1-008'].implementation,'vanilla');
@@ -280,6 +280,15 @@ test('eighty-nine whole prints enter the V2 pack and the other twenty-four stay 
  assert.deepEqual(pack.cards['REZ-1-078'].passiveBonuses,[{
   impact:1,condition:{kind:'ownNameExists',turn:'any',zone:'field',excludeSelf:false,
    name:'ナツキ・スバル'}}]);
+ assert.equal(pack.cards['REZ-1-051'].trigger,'get');
+ assert.equal(pack.cards['REZ-1-051'].triggerEffect,null);
+ assert.equal(pack.cards['REZ-1-051'].color,'blue');
+ assert.equal(pack.cards['REZ-1-051'].energy,5);
+ assert.equal(pack.cards['REZ-1-051'].raidName,'レム');
+ assert.equal(pack.cards['REZ-1-014'].raidName,null);
+ assert.deepEqual(pack.cards['REZ-1-051'].effects.onPlay,[{
+  op:'retireOppFrontScaledBp',base:1000,step:1000,name:'ナツキ・スバル',
+  color:'blue',energy:0,optional:true}]);
  assert.deepEqual(pack.cards['REZ-1-093'].mainAbility,{
   op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,
   then:[{op:'restOwnActiveFrontDraw'}]});
@@ -4123,4 +4132,110 @@ test('Beatrice raids onto Beatrice, gains impact from Subaru, and draws only aft
  assert.equal(own.players[0].deck.length,drawn-1);
  assert.equal(at(own,0,top.uid).stack[0].uid,home.uid);
  assert.equal(assertUniversalMatch(fp,own),true);
+});
+
+const remCounts={
+ ...Object.fromEntries(['REZ-1-051','REZ-1-014','REZ-1-038','REZ-1-068','REZ-1-040','REZ-1-043',
+  'REZ-1-003','REZ-1-016','REZ-1-024','REZ-1-054','REZ-1-086','REZ-1-091'].map(id=>[id,4])),
+ 'REZ-1-029':2
+};
+const rem=seed=>newUniversalMatch(packs,{decks:[remCounts,remCounts],first:0,seed});
+test('Rem raids onto Rem and retires one front scaled by blue zero-cost Subaru',()=>{
+ assert.equal(Object.values(remCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(pack,remCounts),[]);
+ const shell={id:'REM',name:'レム',color:'blue',type:'character',energy:5,ap:1,bp:4000,gen:0,
+  traits:[],trigger:'get',raidName:'レム',implementation:'dsl',effects:{}};
+ const scaled={op:'retireOppFrontScaledBp',base:1000,step:1000,name:'ナツキ・スバル',
+  color:'blue',energy:0,optional:true};
+ assert.throws(()=>createUniversalPack({id:'bad-rem',cards:[{...shell,type:'event',bp:0,gen:0,raidName:null,trigger:null,effects:{onPlay:[scaled]}}]}),/onPlay/);
+ assert.throws(()=>createUniversalPack({id:'bad-rem',cards:[{...shell,effects:{onPlay:[{...scaled,optional:undefined}]}}]}),/scaled front/);
+
+ let quiet=rem(7202);
+ fuel(quiet,['REZ-1-043','REZ-1-043','REZ-1-043','REZ-1-043']);
+ const quietBase=pull(quiet,0,'REZ-1-014');
+ quiet.players[0].front[0]=quietBase;
+ const purple=pull(quiet,0,'REZ-1-068');
+ quiet.players[0].front[1]=purple;
+ const costly=pull(quiet,0,'REZ-1-040');
+ quiet.players[0].front[2]=costly;
+ const decoy=pull(quiet,0,'REZ-1-051');
+ quiet.players[0].front[3]=decoy;
+ const low=pull(quiet,1,'REZ-1-038');
+ quiet.players[1].front[0]=low;
+ quiet=ownMain(quiet,2);
+ quiet.players[0].energy[0].buffs=[{energy:1,untilTurn:quiet.turn}];
+ assert.equal(universalEnergyByColor(packs,quiet,0).blue,5);
+ const quietTop=pull(quiet,0,'REZ-1-051');
+ quiet.players[0].hand.push(quietTop);
+ assert.equal(legalUniversalActions(packs,quiet).some(a=>a.type==='raid'&&a.uid===quietTop.uid&&a.baseUid===purple.uid),false);
+ assert.equal(legalUniversalActions(packs,quiet).some(a=>a.type==='raid'&&a.uid===quietTop.uid&&a.baseUid===costly.uid),false);
+ assert.equal(legalUniversalActions(packs,quiet).some(a=>a.type==='raid'&&a.uid===quietTop.uid&&a.baseUid===decoy.uid),false);
+ const quietDeck=quiet.players[0].deck.length;
+ quiet=dispatchUniversalAction(packs,quiet,legalUniversalActions(packs,quiet).find(a=>a.type==='raid'&&a.uid===quietTop.uid&&a.baseUid===quietBase.uid));
+ assert.equal(quiet.pending,null);
+ assert.equal(quiet.players[0].deck.length,quietDeck);
+ assert.equal(at(quiet,1,low.uid).uid,low.uid);
+ assert.equal(assertUniversalMatch(packs,quiet),true);
+
+ let live=rem(7201);
+ fuel(live,['REZ-1-043','REZ-1-043','REZ-1-043','REZ-1-043']);
+ const base=pull(live,0,'REZ-1-014');
+ live.players[0].front[0]=base;
+ const qualifier=pull(live,0,'REZ-1-038');
+ live.players[0].front[1]=qualifier;
+ const exact=pull(live,1,'REZ-1-038');
+ live.players[1].front[0]=exact;
+ const over=pull(live,1,'REZ-1-038');
+ live.players[1].front[1]=over;
+ const tall=pull(live,1,'REZ-1-014');
+ live.players[1].front[2]=tall;
+ const aside=pull(live,1,'REZ-1-068');
+ live.players[1].energy[0]=aside;
+ live=ownMain(live,2);
+ const liveExact=at(live,1,exact.uid);
+ const liveOver=at(live,1,over.uid);
+ live.players[0].energy[0].buffs=[{energy:1,untilTurn:live.turn}];
+ liveExact.buffs=[{bp:500,untilTurn:live.turn}];
+ liveOver.buffs=[{bp:1000,untilTurn:live.turn}];
+ assert.equal(universalBp(pack,live,liveExact),2000);
+ assert.equal(universalBp(pack,live,liveOver),2500);
+ assert.equal(universalEnergyByColor(packs,live,0).blue,5);
+ const waiting=pull(live,0,'REZ-1-051');
+ live.players[0].hand.push(waiting);
+ const raid=legalUniversalActions(packs,live).find(a=>a.type==='raid'&&a.uid===waiting.uid&&a.baseUid===base.uid);
+ assert.ok(raid);
+ assert.equal(raid.line,undefined);
+ const before=live.players[0].deck.length;
+ live=dispatchUniversalAction(packs,live,raid);
+ assert.equal(at(live,0,waiting.uid).ready,true);
+ assert.equal(at(live,0,waiting.uid).stack[0].uid,base.uid);
+ assert.equal(live.players[0].deck.length,before);
+ assert.equal(live.pending.kind,'effect-retire-scaled');
+ assert.equal(live.pending.ceiling,2000);
+ assert.equal(live.pending.optional,true);
+ assert.equal(Object.keys(live.pending).length,6);
+ assert.deepEqual(live.pending.choices,[exact.uid]);
+ assert.equal(V2_PENDING_LABELS['effect-retire-scaled'],'選擇是否使對手前線退場');
+ assert.equal(uiActionLabel({type:'chooseRetireScaled',uid:null},{pack,state:live}),'不使角色退場');
+ assert.equal(uiActionLabel({type:'chooseRetireScaled',uid:exact.uid},{pack,state:live}),'使 ナツキ・スバル 退場');
+ assert.equal(chooseUniversalAiAction(packs,live).uid,exact.uid);
+ let skipped=structuredClone(live);
+ let retired=structuredClone(live);
+ const stale=structuredClone(live);
+ const slot=stale.players[0].front.findIndex(c=>c?.uid===qualifier.uid);
+ stale.players[0].outside.push(stale.players[0].front[slot]);
+ stale.players[0].front[slot]=null;
+ assert.throws(()=>legalUniversalActions(packs,stale),/Invalid scaled front retirement pending/);
+ skipped=dispatchUniversalAction(packs,skipped,{type:'chooseRetireScaled',uid:null});
+ assert.equal(skipped.pending,null);
+ assert.equal(at(skipped,1,exact.uid).uid,exact.uid);
+ assert.equal(skipped.players[0].deck.length,before);
+ retired=dispatchUniversalAction(packs,retired,{type:'chooseRetireScaled',uid:exact.uid});
+ assert.equal(retired.pending,null);
+ assert.equal(at(retired,1,exact.uid).uid,exact.uid);
+ assert.ok(retired.players[1].outside.some(c=>c.uid===exact.uid));
+ assert.equal(retired.players[1].front[0],null);
+ assert.equal(retired.players[0].deck.length,before);
+ assert.equal(assertUniversalMatch(packs,skipped),true);
+ assert.equal(assertUniversalMatch(packs,retired),true);
 });

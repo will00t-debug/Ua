@@ -176,6 +176,7 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   return difficulty==='easy'?legal[0]:legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-retire-at-least')return legal[0];
  if(s.pending?.kind==='effect-retire-at-most')return legal[0];
+ if(s.pending?.kind==='effect-retire-scaled')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-hand-bp-may')return legal.find(a=>a.mode==='accept')||legal[0];
  if(s.pending?.kind==='effect-hand-deploy-may')return legal.find(a=>a.mode==='accept')||legal[0];
  if(s.pending?.kind==='effect-hand-rest-entry')return legal[0];

@@ -68,6 +68,7 @@ export function rezeroEngineKind(effectJa){
  if(e==='BP5000以下の相手のフロントLのキャラを1枚選び、『レストにする』。自分の場に〈エミリア〉がある場合、『退場させる』に代わる。その後、自分の場に〈エミリア〉と〈パック〉がある場合、自分の山札の上から1枚見る。そのカードを山札の上か場外に置く。')return 'spiritRestPeek';
  if(e==='【レイド】〈エミリア〉アクティブにし、フロントLに移動できる自分の場外にイベントカードが6枚以上ある場合、このキャラは【インパクト（1）】（アタックしてバトルに勝利した時、相手プレイヤーに1ダメージ）を得る。【アタック時】自分の山札の上から1枚見る。そのカードを山札の上か場外に置く。このターン中に自分がイベントカードを使用している場合、カードを1枚引く。')return 'raidEventImpactPeek';
  if(e==='【レイド】〈ベアトリス〉アクティブにし、フロントLに移動できる自分の場に〈ナツキ・スバル〉がある場合、このキャラは【インパクト（1）】を得る。【登場時】自分の場の〈ナツキ・スバル〉を1枚まで選び、アクティブにする。このキャラが自分の効果で登場していた場合、カードを1枚引く。')return 'raidSubaruImpactActive';
+ if(e==='【レイド】〈レム〉アクティブにし、フロントLに移動できる【登場時】『BP1000』以下の相手のフロントLのキャラを1枚まで選び、退場させる。自分の場の必要エナジーが0の青の〈ナツキ・スバル〉1枚につき、この効果で選べるキャラのBPの範囲+1000。')return 'raidRemScaledRetire';
  return null;
 }
 const TOP_OUTSIDE=new Map([
@@ -132,6 +133,8 @@ function onPlay(card,kind){
  if(kind==='raidSubaruImpactActive')return [
   {op:'activeOwnNamed',name:'ナツキ・スバル',max:1,optional:true},
   {op:'draw',count:1,entry:'ownEffect'}];
+ if(kind==='raidRemScaledRetire')return [{op:'retireOppFrontScaledBp',base:1000,step:1000,
+  name:'ナツキ・スバル',color:'blue',energy:0,optional:true}];
  if(kind==='garfielEntry')return [{op:'enemyBpDown',bp:2500,optional:true,zone:'front'}];
  if(kind==='sanctuaryRecover')return [{op:'payHandOrRestForNamed',name:TRIAL_NAME}];
  if(kind==='frontDown2500')return [{op:'enemyBpDown',bp:2000,optional:true,minBp:2500,zone:'front'}];
@@ -246,6 +249,7 @@ export function rezeroPackCard(card){
   ...(kind==='raidSubaruImpactActive'?{raidName:'ベアトリス',passiveBonuses:[{
    impact:1,condition:{kind:'ownNameExists',turn:'any',zone:'field',excludeSelf:false,
     name:'ナツキ・スバル'}}]}:{}),
+  ...(kind==='raidRemScaledRetire'?{raidName:'レム'}:{}),
   ...(kind==='raidFrontRestDraw'?{raidName:'エキドナ',mainAbility:{
    op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,
    then:[{op:'restOwnActiveFrontDraw'}]}}:{}),

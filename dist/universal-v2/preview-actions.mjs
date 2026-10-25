@@ -47,6 +47,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-recover-outside':'從場外回收','effect-retire-bp':'選擇敵方退場',
  'effect-retire-at-least':'選擇 BP 4500 以上的對手前線並使其退場',
  'effect-retire-at-most':'選擇 BP 5000 以下的對手前線並使其退場',
+ 'effect-retire-scaled':'選擇是否使對手前線退場',
  'effect-hand-bp-may':'這次參照手牌角色 BP 時，是否視為 +1000',
  'effect-hand-deploy-may':'這次參照手牌角色 BP 時，是否視為 +1000 並休息登場',
  'effect-hand-rest-entry':'選擇休息登場的位置',
@@ -227,7 +228,7 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseNamedImpact':return '選擇 '+name()+'，本回合 BP+1000 並獲得衝擊+1';
   case 'chooseOwnBuff':case 'chooseMainBuff':case 'chooseTraitBuff':case 'chooseRestBp':
   case 'chooseRetireAtMost':return '使 '+name()+' 退場';
-  case 'chooseRetireAtLeast':return action.uid===null?'不使角色退場':'使 '+name()+' 退場';
+  case 'chooseRetireAtLeast':case 'chooseRetireScaled':return action.uid===null?'不使角色退場':'使 '+name()+' 退場';
   case 'chooseHandBpMay':return action.mode==='accept'?'視為 BP+1000':'維持原本 BP';
   case 'handActivate':return '支付 1 AP，公開這張手牌';
   case 'chooseHandDeployMay':return action.mode==='accept'?'視為 BP+1000 並休息登場':'維持原本 BP，留在手牌';
