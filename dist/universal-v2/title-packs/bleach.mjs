@@ -102,7 +102,11 @@ const testForKind=Object.freeze({
  ownEffectDrawPayImpact:'tests/v2-c26-bleach-batch.test.mjs',
  oppFrontBelowPrinted:'tests/v2-c27-bleach-batch.test.mjs',
  raidFrontRestUnder:'tests/v2-c27-bleach-batch.test.mjs',
- otherRetiredBp:'tests/v2-c27-bleach-batch.test.mjs'
+ otherRetiredBp:'tests/v2-c27-bleach-batch.test.mjs',
+ buffThenAp:'tests/v2-c28-bleach-batch.test.mjs',
+ restUntilNextOwn:'tests/v2-c28-bleach-batch.test.mjs',
+ replayFrontDown:'tests/v2-c28-bleach-batch.test.mjs',
+ printedApTop:'tests/v2-c28-bleach-batch.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.

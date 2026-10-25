@@ -113,9 +113,9 @@ function orderBottom(s){
 }
 
 test('C26 registers the ten whole prints on the independent manifest',()=>{
- assert.equal(EXPECTED_V2_COUNTS.bleach,173);
- assert.equal(EXPECTED_V2_TOTAL,425);
- assert.equal(Object.keys(bleach.cards).length,173);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,177);
+ assert.equal(EXPECTED_V2_TOTAL,429);
+ assert.equal(Object.keys(bleach.cards).length,177);
  for(const id of IDS){
   const entry=contribution.entries.find(x=>x.id===id);
   assert.ok(entry,id);

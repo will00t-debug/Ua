@@ -304,9 +304,10 @@ function verifyProgram(program,path){
   }
   if(e.op==='searchTopUpToTwoBottom'){
    const valid=f=>f&&typeof f==='object'&&!Array.isArray(f)&&Object.keys(f).length===2&&
-    ['name','trait','color','type','printedRequiredEnergyAtMost','traitlessCharacterOrField'].includes(f.field)&&
+    ['name','trait','color','type','printedRequiredEnergyAtMost','printedApAtLeast','traitlessCharacterOrField'].includes(f.field)&&
     (f.field==='traitlessCharacterOrField'?f.value===true:
       f.field==='printedRequiredEnergyAtMost'?integer(f.value)&&f.value<=30:
+      f.field==='printedApAtLeast'?integer(f.value,1)&&f.value<=3:
      typeof f.value==='string'&&!!f.value.trim()&&f.value.length<=80&&
       (f.field!=='type'||V2_CARD_TYPES.includes(f.value)));
    if(!integer(e.count,1)||e.count>5||![1,2].includes(e.max)||e.rest!=='bottom'||
@@ -1009,7 +1010,7 @@ function normalize(card,packId){
   (mainAbility.requiresOwnName===null||typeof mainAbility.requiresOwnName==='string'&&
    !!mainAbility.requiresOwnName.trim()&&mainAbility.requiresOwnName.length<=80)&&
   Array.isArray(mainAbility.then)&&mainAbility.then.length>=1&&mainAbility.then.length<=2&&
-  mainAbility.then.every(x=>['grantSelfAttackDamageThisTurn','chooseOne','discardGate','grantSelfImpactThisTurn'].includes(x?.op))&&
+  mainAbility.then.every(x=>['grantSelfAttackDamageThisTurn','chooseOne','discardGate','grantSelfImpactThisTurn','enemyBpDown'].includes(x?.op))&&
   Object.keys(mainAbility).length===7&&
   Object.keys(mainAbility).every(k=>['op','oncePerTurn','frontOnly','raidOnly','payAp','requiresOwnName','then'].includes(k));
  if(mainOncePay)verifyProgram(mainAbility.then,card.id+'.mainAbility.then');
@@ -1033,12 +1034,14 @@ function normalize(card,packId){
   Object.keys(mainAbility).length===3&&
   Object.keys(mainAbility).every(k=>['op','oncePerTurn','extraEnergy'].includes(k));
  const mainRestProgram=mainAbility?.op==='restSelfThen'&&
-  mainAbility.frontOnly===true&&
-  Object.keys(mainAbility).length===3&&
-  Object.keys(mainAbility).every(k=>['op','frontOnly','then'].includes(k))&&
   Array.isArray(mainAbility.then)&&mainAbility.then.length===1&&
-  mainAbility.then[0]?.op==='millTop'&&
-  Object.keys(mainAbility.then[0]).every(k=>['op','count'].includes(k));
+  ((mainAbility.frontOnly===true&&mainAbility.oncePerTurn===undefined&&
+    Object.keys(mainAbility).length===3&&mainAbility.then[0]?.op==='millTop'&&
+    Object.keys(mainAbility.then[0]).every(k=>['op','count'].includes(k)))||
+   (mainAbility.frontOnly===false&&mainAbility.oncePerTurn===true&&
+    Object.keys(mainAbility).length===4&&
+    mainAbility.then[0]?.op==='buffSelfUntilNextOwnStart'))&&
+  Object.keys(mainAbility).every(k=>['op','frontOnly','oncePerTurn','then'].includes(k));
  if(mainRestProgram)verifyProgram(mainAbility.then,card.id+'.mainAbility.then');
  if(mainAbility!==null&&
   (!['character','field'].includes(card.type)||!(fieldDualMain||fieldRestRetireThen||card.type==='character'&&(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainRestBuff||mainPayAp||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainRestDiscardRetire||mainFrontProgram||mainFieldOnceBuff||mainEntryProtect||mainRestRetireUnder||mainRestTwoMove||mainOncePay))))

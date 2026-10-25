@@ -324,6 +324,7 @@ function matchesFilter(pack,s,physical,filter){
  if(filter.field==='traitlessCharacter')return filter.value===true&&
   printed.type==='character'&&!(printed.traits||[]).length;
  if(filter.field==='printedRequiredEnergyAtMost')return matchesPrintedRequiredEnergyAtMost(printed,filter.value);
+ if(filter.field==='printedApAtLeast')return printed.ap>=filter.value;
  // Name filters see the alias everywhere this predicate is asked, except a
  // live field card whose original text is negated. Callers pass deck,
  // outside, or visible field cards. They do not pass buried Raid layers.
@@ -3763,6 +3764,15 @@ function retireOppFrontLimit(pack,s,owner,job){
  const hasOutside=!!job.bonusOutsideName&&pl.outside.some(c=>matchesName(c,job.bonusOutsideName,false));
  return hasField||hasOutside?job.bonusBp:job.bp;
 }
+function enemyDownAvailable(pack,s,owner,step,sourceUid){
+ const foe=s.players[1-owner];
+ const zones=step.zone==='field'?[...foe.front,...foe.energy]:foe.front;
+ return zones.some(x=>x&&
+  (step.zone!=='field'||card(pack,x).type==='character')&&
+  (step.minBp===undefined||bp(pack,s,x)>=step.minBp)&&
+  (step.maxBp===undefined||bp(pack,s,x)<=step.maxBp)&&
+  cardEffectTargetPayable(pack,s,owner,x.uid,0,sourceUid));
+}
 function eventMandatoryTargetsAvailable(pack,s,owner,d,reservedAp=d.ap,reservedHandUid=null){
  const enemy=s.players[1-owner];
  return (d.effects?.onPlay||[]).every(job=>{
@@ -3781,6 +3791,9 @@ function eventMandatoryTargetsAvailable(pack,s,owner,d,reservedAp=d.ap,reservedH
    return enemy.front.some(c=>c&&bp(pack,s,c)<=job.bp&&
     !effectChoiceProtected(s,owner,c.uid,'event')&&
     cardEffectTargetPayable(pack,s,owner,c.uid,reservedAp,null,'event',reservedHandUid));
+  if(job.op==='buffOwnField')
+   return field(s.players[owner]).some(c=>c&&card(pack,c).type==='character'&&
+    (!job.excludeSelf||c.uid!==job.sourceUid)&&matchesBuffTarget(pack,s,c,job));
   return true;
  });
 }
@@ -3928,7 +3941,9 @@ export function legalUniversalActions(pack,s){
     const apOk=!ability.payAp||pl.apCards.some(x=>x.ready);
     const nameOk=!ability.requiresOwnName||ownFieldHasPrintedName(pack,s,p,ability.requiresOwnName);
     const payOk=ability.then[0]?.op!=='discardGate'||pl.hand.length>0;
-    if(lineOk&&raidOk&&apOk&&nameOk&&payOk)
+    const downOk=ability.then[0]?.op!=='enemyBpDown'||
+     enemyDownAvailable(pack,s,p,ability.then[0],c.uid);
+    if(lineOk&&raidOk&&apOk&&nameOk&&payOk&&downOk)
      out.push({type:'activate',uid:c.uid,mode:'oncePay'});
    }
   }
@@ -3957,6 +3972,9 @@ export function legalUniversalActions(pack,s){
     pl.front.filter(x=>x?.ready&&card(pack,x).type==='character').length>=2&&
     pl.front.some(x=>!x))
     out.push({type:'activate',uid:c.uid,mode:'restTwoMove'});
+   if(ability?.op==='restSelfThen'&&ability.frontOnly===false&&c.ready&&
+    !(ability.oncePerTurn&&s.mainAbilityUsedUids.includes(c.uid)))
+    out.push({type:'activate',uid:c.uid,mode:'selfRestThen'});
    if(ability?.op==='frontOnceProgram'&&ability.frontOnly===false&&
     !s.mainAbilityUsedUids.includes(c.uid)){
     const step=ability.then[0];
@@ -3990,8 +4008,10 @@ export function legalUniversalActions(pack,s){
     continue;
    }
    if(ability.op==='restSelfThen'){
-    // A READY own FRONT source pays its actual REST cost before any effect.
-    if(c.ready)out.push({type:'activate',uid:c.uid,mode:'selfRestThen'});
+    // A READY source pays its REST cost first. oncePerTurn is the printed
+    // ターン1. frontOnly false may also be paid from the energy line.
+    if(c.ready&&!(ability.oncePerTurn&&s.mainAbilityUsedUids.includes(c.uid)))
+     out.push({type:'activate',uid:c.uid,mode:'selfRestThen'});
     continue;
    }
    if(ability.op==='restSelfBuffOther'){
@@ -4392,9 +4412,14 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
     break;
    }
    if(ability.op==='restSelfThen'){
-    if(action.mode!=='selfRestThen'||!selected.ready)
-     throw Error('REST main action requires READY front character');
+    const onFront=pl.front.some(c=>c?.uid===selected.uid);
+    const placed=onFront||pl.energy.some(c=>c?.uid===selected.uid);
+    if(action.mode!=='selfRestThen'||!selected.ready||
+     !(ability.frontOnly===false?placed:onFront)||
+     (ability.oncePerTurn&&s.mainAbilityUsedUids.includes(selected.uid)))
+     throw Error('REST main action requires a READY source');
     selected.ready=false;
+    if(ability.oncePerTurn)s.mainAbilityUsedUids.push(selected.uid);
     // Use only the existing common queue; title adapters never execute effects.
     s.effectQueue.push(...ability.then.map(e=>({...e,owner:p,
      sourceUid:selected.uid,sourceName:d.name})),
@@ -4410,7 +4435,8 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
      (ability.raidOnly&&!(selected.stack||[]).length)||
      (ability.payAp&&!pl.apCards.some(c=>c.ready))||
      (ability.requiresOwnName&&!ownFieldHasPrintedName(pack,s,p,ability.requiresOwnName))||
-     (ability.then[0]?.op==='discardGate'&&!pl.hand.length))
+     (ability.then[0]?.op==='discardGate'&&!pl.hand.length)||
+     (ability.then[0]?.op==='enemyBpDown'&&!enemyDownAvailable(pack,s,p,ability.then[0],selected.uid)))
      throw Error('Once-pay program is not legal');
     if(ability.payAp){
      spendAp(pl,ability.payAp);
@@ -4721,15 +4747,23 @@ export function assertUniversalMatch(pack,s){
     e.entry==='ownEffect'&&e.options.some(o=>o.then.some(t=>
      t.op==='grantSelfAttackEndSwapThisTurn')))))
    throw Error('Forged physical attack-end grant');
-  for(const buff of physical.buffs||[])if(buff.untilOwnTurnStart!==undefined&&(
-   !Number.isInteger(buff.untilOwnTurnStart)||
-   buff.untilOwnTurnStart!==s.players[owner].ownTurns+1||
-   !Number.isInteger(buff.bp)||buff.bp<1||buff.bp>5000||
-   Object.keys(buff).length!==2||
-   Object.keys(buff).some(k=>!['bp','untilOwnTurnStart'].includes(k))||
-   !card(pack,physical).effects.onPlay?.some(e=>e.op==='chooseOne'&&e.entry==='ownEffect'&&
-    e.options.some(o=>o.then.some(t=>t.op==='buffSelfUntilNextOwnStart'&&t.bp===buff.bp)))))
-   throw Error('Forged next-own-start physical BP modifier');
+  for(const buff of physical.buffs||[])if(buff.untilOwnTurnStart!==undefined){
+   const printed=card(pack,physical);
+   const fromOnPlay=printed.effects.onPlay?.some(e=>e.op==='chooseOne'&&e.entry==='ownEffect'&&
+    e.options.some(o=>o.then.some(t=>t.op==='buffSelfUntilNextOwnStart'&&t.bp===buff.bp)));
+   // EX15BT/BLC-4-028 pays Rest once per turn and grants the same timed buff
+   // from mainAbility. It is not an on-play chooseOne.
+   const fromRestMain=printed.mainAbility?.op==='restSelfThen'&&
+    printed.mainAbility.oncePerTurn===true&&
+    printed.mainAbility.then?.some(t=>t.op==='buffSelfUntilNextOwnStart'&&t.bp===buff.bp);
+   if(!Number.isInteger(buff.untilOwnTurnStart)||
+    buff.untilOwnTurnStart!==s.players[owner].ownTurns+1||
+    !Number.isInteger(buff.bp)||buff.bp<1||buff.bp>5000||
+    Object.keys(buff).length!==2||
+    Object.keys(buff).some(k=>!['bp','untilOwnTurnStart'].includes(k))||
+    !(fromOnPlay||fromRestMain))
+    throw Error('Forged next-own-start physical BP modifier');
+  }
  }
  if(s.pending?.kind==='effect-optional-draw'){
   const q=s.pending,src=s.players[q.player].front.find(c=>c?.uid===q.sourceUid);

@@ -1088,6 +1088,14 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-1-004","kind":"raidFrontRestUnder","number":"UA08BT/BLC-1-004","name":"エス・ノト","color":"yellow","energy":4,"ap":1,"bp":4000,"gen":1,"trigger":"raid","type":"character","effect":"Raid〈艾斯・諾特〉：轉為 ACTIVE，可移至前線。Impact 1。主要階段・位於前線・每回合 1 次：可選最多 1 個敵方前線 BP 3000 以下角色，將其轉為 REST。"}
 ,
 {"id":"BLC-2-041","kind":"otherRetiredBp","number":"EX07BT/BLC-2-041","name":"ドルドーニ・アレッサンドロ・デル・ソカッチオ","color":"blue","energy":1,"ap":1,"bp":2000,"gen":1,"trigger":"active","type":"character","effect":"己方回合中，若本回合已有其他己方場上角色退場，此角色 BP +1000。"}
+,
+{"id":"BLC-1-062","kind":"buffThenAp","number":"UA08BT/BLC-1-062","name":"おいしいパン","color":"purple","energy":2,"ap":1,"bp":0,"gen":0,"trigger":"active","type":"event","effect":"一個己方角色本回合 BP +1000，可回復 1 AP。"}
+,
+{"id":"BLC-4-028","kind":"restUntilNextOwn","number":"EX15BT/BLC-4-028","name":"茶渡 泰虎","color":"blue","energy":4,"ap":1,"bp":4000,"gen":1,"trigger":"draw","type":"character","effect":"啟動・主要〔改為Rest／每回合1次〕：此角色到自己下次回合開始前BP+1000。"}
+,
+{"id":"BLC-4-037","kind":"replayFrontDown","number":"EX15BT/BLC-4-037","name":"ネリエル・トゥ・オーデルシュヴァンク","color":"blue","energy":3,"ap":1,"bp":2000,"gen":3,"trigger":"draw","type":"character","effect":"登場時：最多選1個對方前線BP1500以上的角色，本回合BP−1000。啟動・主要〔支付1 AP／每回合1次〕：發動此角色的登場時效果。"}
+,
+{"id":"BLC-2-032","kind":"printedApTop","number":"UAPR/BLC-2-032","name":"朽木 ルキア","color":"blue","energy":2,"ap":1,"bp":2000,"gen":1,"trigger":null,"type":"character","effect":"登場：查看己方牌堆頂 5 張，可公開其中最多 1 張原始 AP 消耗 2 以上的卡並加入手牌，其餘以任意順序放至牌堆底。"}
 ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1184,6 +1192,7 @@ export function checkedBleachAddonDefinition(p){
  const isPurpleShared=['millRemoveScale','payDamageRemoveFour','purpleNamesTop','purpleApBpChoice','raidApDiscountChoice','raidDrawDiscardBuff','renjiPayDeploy','topSplitEnergyDraw','emptyRaidPeek','renjiEventRetire'].includes(p.kind);
  const isC26=['ownTurnImmune','chooseBuffOrDown','namedColorBuff','restFrontEnergy','frontEmptyAlias','traitTopDiscard','aliasNameTop','fourNameTop','ownEffectRest','ownEffectDrawPayImpact'].includes(p.kind);
  const isC27=['oppFrontBelowPrinted','raidFrontRestUnder','otherRetiredBp'].includes(p.kind);
+ const isC28=['buffThenAp','restUntilNextOwn','replayFrontDown','printedApTop'].includes(p.kind);
  const renjiName='阿散井 恋次',rukiaName='朽木 ルキア';
  const slashPay={zone:'hand',field:'name',match:'containsAny',values:['斬月','月牙']};
  const causedBy=(sourceName,sourceColor)=>({from:'hand',to:'outside',sourceName,
@@ -1206,7 +1215,7 @@ export function checkedBleachAddonDefinition(p){
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isC26||isC27;
+ const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isC26||isC27||isC28;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1306,6 +1315,8 @@ export function checkedBleachAddonDefinition(p){
   ...(p.kind==='oppFrontBelowPrinted'?{passiveBonuses:[{condition:{kind:'oppFrontCurrentBpBelowPrinted',turn:'any'},bp:1500}]}:{}),
   ...(p.kind==='otherRetiredBp'?{passiveBonuses:[{condition:{kind:'otherOwnCharacterRetiredThisTurn',turn:'any'},bp:1000}]}:{}),
   ...(p.kind==='raidFrontRestUnder'?{raidName:'エス・ノト',printedImpact:1,mainAbility:{op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,then:[{op:'restOppFrontUnderBp',bp:3000,optional:true}]}}:{}),
+  ...(p.kind==='restUntilNextOwn'?{mainAbility:{op:'restSelfThen',frontOnly:false,oncePerTurn:true,then:[{op:'buffSelfUntilNextOwnStart',bp:1000}]}}:{}),
+  ...(p.kind==='replayFrontDown'?{mainAbility:{op:'oncePayProgram',oncePerTurn:true,frontOnly:false,raidOnly:false,payAp:1,requiresOwnName:null,then:[{op:'enemyBpDown',bp:1000,optional:true,minBp:1500}]}}:{}),
   ...(p.kind==='enemyBpDown500Color'?{triggerEffect:{op:'deployOutsideCharacter',color:'purple',maxEnergy:2,ap:1,frontOnly:true}}:{}),
   ...(p.kind==='drawPlayColorHand'?{triggerEffect:{op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1}}:{}),
   ...(!special?{templateEffects:abilities[p.kind]}:{effects:
@@ -1393,6 +1404,9 @@ export function checkedBleachAddonDefinition(p){
     {field:'name',value:'朽木 ルキア'},{field:'name',value:'朽木 白哉'}]}]}:
    p.kind==='ownEffectRest'?{onPlay:[{op:'restOppFrontOne',optional:true,entry:'ownCharacter'}]}:
    p.kind==='ownEffectDrawPayImpact'?{onPlay:[{op:'draw',count:1,entry:'ownCharacter'}]}:
+   p.kind==='buffThenAp'?{onPlay:[{op:'buffOwnField',filter:{field:'type',value:'character'},bp:1000,optional:false,excludeSelf:false},{op:'recoverAp',count:1}]}:
+   p.kind==='replayFrontDown'?{onPlay:[{op:'enemyBpDown',bp:1000,optional:true,minBp:1500}]}:
+   p.kind==='printedApTop'?{onPlay:[{op:'searchTopUpToTwoBottom',count:5,max:1,rest:'bottom',logic:'all',filters:[{field:'printedApAtLeast',value:2}]}]}:
    isStripDual?{onPlay:[{op:'chooseOne',optional:false,options:[
     {id:'strip',label:'Strip opponent RAID top',turn:'any',
      then:[{op:'stripOppRaidTop',optional:true}]},
