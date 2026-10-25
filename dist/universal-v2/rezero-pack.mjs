@@ -48,6 +48,7 @@ export function rezeroEngineKind(effectJa){
  if(e==='【自分のターン中】このキャラはBP+1000。【登場時】自分の場外の〈'+TRIAL_NAME+'〉を1枚リムーブエリアに置いてもよい。そうした場合、このキャラをアクティブにする。')return 'trialRemoveActive';
  if(e==='『BP3000以下』の相手のフロントLのキャラを1枚選び、退場させる。自分の場に〈レム〉がある場合、『BP5000以下』に代わる。')return 'remRetire';
  if(e==='『BP3000以下』の相手のフロントLのキャラを1枚選び、退場させる。自分の場に〈エミリア〉がある場合、『BP5000以下』に代わる。')return 'emiliaRetire';
+ if(e==='このキャラはアクティブで場に登場させる。【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、【インパクト】を失う）【登場時】相手のフロントLのキャラを1枚まで選び、このターン中、BP-2500。【起動メイン】【フロントLにある場合】 【ターン1】このキャラをアクティブにする。')return 'garfielEntry';
  return null;
 }
 const TOP_OUTSIDE=new Map([
@@ -91,6 +92,7 @@ function onPlay(card,kind){
  if(kind==='trialRemoveActive')return [{op:'removeNamedOutsideActive',name:TRIAL_NAME}];
  if(kind==='remRetire')return [{op:'retireOppFrontUnderBp',bp:3000,bonusName:'レム',bonusBp:5000}];
  if(kind==='emiliaRetire')return [{op:'retireOppFrontUnderBp',bp:3000,bonusName:'エミリア',bonusBp:5000}];
+ if(kind==='garfielEntry')return [{op:'enemyBpDown',bp:2500,optional:true,zone:'front'}];
  if(kind==='frontDown2500')return [{op:'enemyBpDown',bp:2000,optional:true,minBp:2500,zone:'front'}];
  if(kind==='topOutside')return [{op:'inspectTopArrange',count:TOP_OUTSIDE.get(card.effectJa),toOutside:true,rest:'top'}];
  if(kind==='topKeep'||kind==='aliasTopKeep')return [{op:'inspectTopAnyOutside',count:2,rest:'top'}];
@@ -161,6 +163,8 @@ export function rezeroPackCard(card){
    op:'restSelfThen',frontOnly:false,oncePerTurn:true,then:[{op:'peekTopOrBottom'}]}}:{}),
   ...(kind==='revealBottom2500'?{mainAbility:{
    op:'revealHandBottomBuff',oncePerTurn:true,minPrintedBp:4000,bp:2500}}:{}),
+  ...(kind==='garfielEntry'?{enterAlwaysActive:true,impactNull:true,mainAbility:{
+   op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,then:[{op:'activeSelf'}]}}:{}),
   ...(kind==='feltTurnBp'?{passiveBonuses:[{
    condition:{kind:'ownNameExists',turn:'own',zone:'field',excludeSelf:false,name:'フェルト'},
    bp:1000}]}:{}),

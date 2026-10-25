@@ -1045,6 +1045,8 @@ function normalize(card,packId){
   Array.isArray(frontProgram)&&(
    (frontProgram.length===1&&(frontProgram[0]?.op==='enemyBpDown'||
     frontProgram[0]?.op==='restOppFrontUnderBp'||
+    frontProgram[0]?.op==='activeSelf'&&mainAbility.frontOnly===true&&
+     Object.keys(frontProgram[0]).length===1||
     frontGate&&Array.isArray(frontGate.then)&&frontGate.then.length>=1&&
     frontGate.then.length<=6&&frontEffects.every(e=>
      ['enemyBpDown','draw','buffSelf','grantOnAttack',

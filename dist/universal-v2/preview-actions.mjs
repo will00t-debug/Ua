@@ -112,6 +112,10 @@ export function uiActionLabel(action,{pack,state}={}){
     action.mode==='payApDrawEnergy'?'起動主要：支付 1 AP，抽 1 張，本回合產能＋1':
     action.mode==='restFrontGainEnergy'?'起動主要：REST 自身，再 REST 一張己方前線，本回合產能＋1':
     action.mode==='selfRestEnemy'?'主要能力：REST 自身，指定敵方前線角色':
+    action.mode==='frontOnce'&&pack?.cards&&state?.players?.some(p=>
+     [...p.front,...p.energy].some(c=>c?.uid===action.uid&&
+      pack.cards[c.cardId]?.mainAbility?.then?.[0]?.op==='activeSelf'))
+     ?'起動主要：將這張角色置為活動':
     action.mode==='ready'?'主要能力：ACTIVE':
     action.mode==='buff'?'主要能力：BP 加成':'主要能力：ACTIVE ＋ BP 加成';
   case 'chooseBlock':return action.uid===null?'不阻擋':'使用 '+name()+' 阻擋';

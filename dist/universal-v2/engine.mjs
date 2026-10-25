@@ -4194,6 +4194,10 @@ export function legalUniversalActions(pack,s){
      out.push({type:'activate',uid:c.uid,mode:'frontOnce'});continue;
     }
     const step=ability.then[0];
+    if(step.op==='activeSelf'){
+     out.push({type:'activate',uid:c.uid,mode:'frontOnce'});
+     continue;
+    }
     if(step.op==='discardGate'&&!payableHand(pack,s,p,step.payment).length)continue;
     if(step.op==='restOppFrontUnderBp'){
      const ok=s.players[1-p].front.some(x=>x&&bp(pack,s,x)<=step.bp&&

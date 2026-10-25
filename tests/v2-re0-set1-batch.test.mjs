@@ -7,6 +7,7 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  assertUniversalMatch,universalEnergyByColor,universalBp,effectiveHandRequiredEnergy
 } from '../dist/universal-v2/engine.mjs';
 import {cardHasName} from '../dist/universal-v2/field-conditions.mjs';
+import {uiActionLabel} from '../dist/universal-v2/preview-actions.mjs';
 
 const pack=createRezeroV2Pack(),packs=[pack,pack];
 const fours=['REZ-1-007','REZ-1-008','REZ-1-012','REZ-1-013','REZ-1-014',
@@ -66,9 +67,9 @@ test('UA40BT and UA40ST share one catalogue and keep parallel art out',()=>{
  }
 });
 
-test('sixty-nine whole prints enter the V2 pack and the other forty-four stay out',()=>{
- assert.equal(REZERO_ENGINE_IDS.length,69);
- assert.equal(Object.keys(pack.cards).length,69);
+test('seventy whole prints enter the V2 pack and the other forty-three stay out',()=>{
+ assert.equal(REZERO_ENGINE_IDS.length,70);
+ assert.equal(Object.keys(pack.cards).length,70);
  assert.equal(pack.cards['REZ-1-001'],undefined);
  assert.equal(pack.cards['REZ-1-008'].step,true);
  assert.equal(pack.cards['REZ-1-008'].implementation,'vanilla');
@@ -167,6 +168,14 @@ test('sixty-nine whole prints enter the V2 pack and the other forty-four stay ou
  assert.deepEqual(pack.cards['REZ-1-100'].triggerEffect,{op:'retireOppFront'});
  assert.equal(pack.cards['REZ-1-100'].color,'purple');
  assert.equal(pack.cards['REZ-1-096'],undefined);
+ assert.equal(pack.cards['REZ-1-067'].enterAlwaysActive,true);
+ assert.equal(pack.cards['REZ-1-067'].impactNull,true);
+ assert.equal(pack.cards['REZ-1-067'].trigger,'active');
+ assert.equal(pack.cards['REZ-1-067'].triggerEffect,null);
+ assert.deepEqual(pack.cards['REZ-1-067'].effects.onPlay,[{
+  op:'enemyBpDown',bp:2500,optional:true,zone:'front'}]);
+ assert.deepEqual(pack.cards['REZ-1-067'].mainAbility,{
+  op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,then:[{op:'activeSelf'}]});
  assert.equal(pack.cards['REZ-1-101'],undefined);
  assert.deepEqual(validateUniversalDeck(pack,counts),[]);
  const s=fresh();
@@ -1703,4 +1712,67 @@ test('Emilia hold retires BP 5000 only while Emilia is on the field',()=>{
  alias=dispatchUniversalAction(fp,alias,{type:'chooseRetireBp',uid:body.uid});
  assert.equal(alias.players[1].front[0],null);
  assert.equal(assertUniversalMatch(fp,alias),true);
+});
+
+const garfielCounts={
+ ...Object.fromEntries(['REZ-1-067','REZ-1-086','REZ-1-068','REZ-1-069','REZ-1-072',
+  'REZ-1-073','REZ-1-075','REZ-1-079','REZ-1-080','REZ-1-081','REZ-1-091','REZ-1-092'].map(id=>[id,4])),
+ 'REZ-1-082':2
+};
+const garfiel=seed=>newUniversalMatch(packs,{decks:[garfielCounts,garfielCounts],first:0,seed});
+test('Garfiel enters active, may reduce one front character, and readies once from the front',()=>{
+ assert.equal(Object.values(garfielCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(pack,garfielCounts),[]);
+ let s=garfiel(5201);
+ fuel(s,['REZ-1-086','REZ-1-086','REZ-1-086','REZ-1-086']);
+ s=ownMain(s,2);
+ assert.equal(universalEnergyByColor(packs,s,0).purple,4);
+ const victim=pull(s,1,'REZ-1-075');
+ const parked=pull(s,1,'REZ-1-072');
+ s.players[1].front[0]=victim;
+ s.players[1].energy[0]=parked;
+ let actor;
+ [s,actor]=playFront(s,'REZ-1-067');
+ assert.equal(at(s,0,actor.uid).ready,true);
+ assert.equal(s.pending.kind,'effect-target');
+ assert.equal(s.pending.optional,true);
+ assert.deepEqual(s.pending.choices,[victim.uid]);
+ assert.ok(legalUniversalActions(packs,s).some(a=>a.type==='chooseTarget'&&a.uid===null));
+ assert.throws(()=>dispatchUniversalAction(packs,s,{type:'chooseTarget',uid:parked.uid}),
+  /not currently legal/);
+ s=dispatchUniversalAction(packs,s,{type:'chooseTarget',uid:victim.uid});
+ assert.equal(universalBp(packs,s,at(s,1,victim.uid)),1500);
+ at(s,0,actor.uid).ready=false;
+ const ready=legalUniversalActions(packs,s).find(a=>a.type==='activate'&&a.mode==='frontOnce'&&a.uid===actor.uid);
+ assert.ok(ready);
+ assert.equal(uiActionLabel(ready,{pack,state:s}),'起動主要：將這張角色置為活動');
+ s=dispatchUniversalAction(packs,s,ready);
+ assert.equal(at(s,0,actor.uid).ready,true);
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='activate'&&a.uid===actor.uid),false);
+ s=ownMain(s,3);
+ assert.equal(universalBp(packs,s,at(s,1,victim.uid)),4000);
+ assert.equal(assertUniversalMatch(packs,s),true);
+
+ let lined=garfiel(5202);
+ fuel(lined,['REZ-1-086','REZ-1-086','REZ-1-086','REZ-1-086']);
+ lined=ownMain(lined,2);
+ let energyCard;
+ [lined,energyCard]=playEnergy(lined,'REZ-1-067');
+ assert.equal(lined.pending,null);
+ assert.equal(at(lined,0,energyCard.uid).ready,true);
+ at(lined,0,energyCard.uid).ready=false;
+ assert.equal(legalUniversalActions(packs,lined).some(a=>a.uid===energyCard.uid&&a.type==='activate'),false);
+ assert.equal(assertUniversalMatch(packs,lined),true);
+
+ let open=garfiel(5203);
+ fuel(open,['REZ-1-086','REZ-1-086','REZ-1-086','REZ-1-086']);
+ open=ownMain(open,2);
+ let lone;
+ [open,lone]=playFront(open,'REZ-1-067');
+ assert.equal(open.pending,null);
+ assert.equal(at(open,0,lone.uid).ready,true);
+ at(open,0,lone.uid).ready=false;
+ open=dispatchUniversalAction(packs,open,{type:'activate',uid:lone.uid,mode:'frontOnce'});
+ assert.equal(at(open,0,lone.uid).ready,true);
+ assert.equal(assertUniversalMatch(packs,open),true);
 });
