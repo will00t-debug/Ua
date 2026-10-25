@@ -9,7 +9,7 @@ export const V2_PHASES=Object.freeze(['start','move','main','attack']);
 export const V2_CARD_TYPES=Object.freeze(['character','event','field']);
 export const V2_TRIGGERS=Object.freeze(['draw','get','final','active','special','color','raid']);
 export const V2_EFFECT_TIMINGS=Object.freeze(['onPlay','onRaid','onAttack','onRaided','onRetire','onOutsideRecover']);
-export const V2_EFFECT_OPS=Object.freeze(['nextEligibleHandPlayApDiscount','draw','drawIfOwnName','drawIfOwnTraitCount','drawIfOwnOutsideNamedCountAtLeast','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','drawIfSelfBpAtLeast','returnRetiredToHand','drawIfOppRestCharacter','drawIfOppCharacterBpAtLeast','drawIfOwnNameAndHandFewer','activeOwnNamed','grantSelfSniperThisTurn','grantSelfAttackWinDrawThisTurn','grantSelfMustBlockThisTurn','buffSelfUntilNextOwnStart','grantSelfAttackEndSwapThisTurn','millTop','buffSelf','buffSelfPerOwnOutsideGroups','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','bounceOppFrontOneUnderBp','conditionalBounceOrRetireByOwnOutsideNames','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','skipNextActiveOppRest','forbidAttackOppFrontOne','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','retireOwnFieldOne','retireOwnCharacterOne','optionalRetireThenProgram','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw','searchDeckMany','discardGate','removeOutsideThen','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopUpToTwoBottom','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
+export const V2_EFFECT_OPS=Object.freeze(['nextEligibleHandPlayApDiscount','draw','drawIfOwnName','drawIfOwnTraitCount','drawIfOwnOutsideNamedCountAtLeast','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','drawIfSelfBpAtLeast','returnRetiredToHand','drawIfOppRestCharacter','drawIfOppCharacterBpAtLeast','drawIfOwnNameAndHandFewer','activeOwnNamed','grantSelfSniperThisTurn','grantSelfAttackWinDrawThisTurn','grantSelfMustBlockThisTurn','buffSelfUntilNextOwnStart','grantSelfAttackEndSwapThisTurn','millTop','buffSelf','buffSelfPerOwnOutsideGroups','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','optionalRemoveHandThen','retireOppFrontUnderBp','retireOppFrontOneUnderBp','bounceOppFrontOneUnderBp','conditionalBounceOrRetireByOwnOutsideNames','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','skipNextActiveOppRest','forbidAttackOppFrontOne','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','retireOwnFieldOne','retireOwnCharacterOne','optionalRetireThenProgram','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw','searchDeckMany','discardGate','removeOutsideThen','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopUpToTwoBottom','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
  'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideColorUnderEnergy','recoverOutsideTraitlessUnderEnergy','deployOutsideTraitlessRestOrRaid','deployOutsideRest','deployOutsideNameRest','deployNamedFromZones','payApDeployNamedRest','inspectTopTraitOutside','buffOwnField','oncePerTurnGate','chooseOne','deployOwnHandRest','deployOwnHandSpecial','deployOwnHandRestOrRaid','optionalPayApThen','discardOppHand','retireSourceOnPhaseEnd','activeSelfIf','grantOnAttack','grantSelectionApTaxOwnOtherTrait','grantFrontEnergyOwnOtherFrontTrait','grantOwnFrontChoiceProtection','grantCauseBlockAtMost','handBottomGrantDoubleAttack','payApDeployMovedActive','noteEntryTurn','grantSelfEnergyMoveOnAttackStart','grantSelfTriggerUnchosen','outsideColorEnergyHandOrRest','moveOtherAcrossOrRemove','raidBaseEnergyThen','grantSelfAttackDamageThisTurn','restOppFrontLockActive','removeAnyOutsideScale','inspectTopColoredNamesOutside','drawDiscardIfEffectApPaid','activeSelf','grantSelfImpactThisTurn','grantOtherImpactThisTurn','returnSourceToHand','optionalOwnLifeToHandThenDraw','grantOwnNameBlockAtLeast']);
 const integer=(v,low=0)=>Number.isInteger(v)&&v>=low;
 const own=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
@@ -321,6 +321,21 @@ function verifyProgram(program,path){
   }
   if(e.op==='peekTopOrBottom'&&Object.keys(e).some(k=>k!=='op'))
    throw Error(path+'['+i+'] invalid top-or-bottom');
+  // 手札を1枚リムーブエリアに置いてもよい。そうした場合 runs then.
+  // Skip, or no matching hand card, does not run then. Zone is removed only.
+  if(e.op==='optionalRemoveHandThen'){
+   const f=e.filter,follow=e.then?.[0];
+   if(e.zone!=='removed'||!f||typeof f!=='object'||Array.isArray(f)||
+    Object.keys(f).length!==2||f.field!=='trait'||
+    typeof f.value!=='string'||!f.value.trim()||f.value.length>80||
+    !Array.isArray(e.then)||e.then.length!==1||follow?.op!=='buffSelf'||
+    !integer(follow.bp,1)||follow.bp>5000||Object.keys(follow).length!==2||
+    Object.keys(follow).some(k=>!['op','bp'].includes(k))||
+    Object.keys(e).length!==4||
+    Object.keys(e).some(k=>!['op','zone','filter','then'].includes(k)))
+    throw Error(path+'['+i+'] invalid optional hand removal');
+   verifyProgram(e.then,path+'['+i+'].then');
+  }
   if(e.op==='inspectTopAnyOutside'&&(
    !integer(e.count,2)||e.count>4||!['top','bottom'].includes(e.rest)||
    (e.drawIfOutsideEnergyAtLeast!==undefined&&
@@ -1515,6 +1530,9 @@ function normalize(card,packId){
    !program.some(e=>e.op==='chooseOne'&&e.entry==='ownEffect'))
    throw Error(card.id+' timed self grants require own-effect-entry gated mode');
   if(name==='onAttack'&&card.type!=='character')throw Error(card.id+' noncharacter cannot attack');
+  if(program.some(e=>e.op==='optionalRemoveHandThen')&&
+   (card.type!=='character'||name!=='onAttack'||program.length!==1))
+   throw Error(card.id+' optional hand removal is only a lone character onAttack effect');
   if(card.type==='event'&&program.some(e=>e.op==='buffSelf'))
    throw Error(card.id+' event cannot buff itself on field');
  }
