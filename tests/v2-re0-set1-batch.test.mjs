@@ -70,9 +70,9 @@ test('UA40BT and UA40ST share one catalogue and keep parallel art out',()=>{
  }
 });
 
-test('eighty-six whole prints enter the V2 pack and the other twenty-seven stay out',()=>{
- assert.equal(REZERO_ENGINE_IDS.length,86);
- assert.equal(Object.keys(pack.cards).length,86);
+test('eighty-seven whole prints enter the V2 pack and the other twenty-six stay out',()=>{
+ assert.equal(REZERO_ENGINE_IDS.length,87);
+ assert.equal(Object.keys(pack.cards).length,87);
  assert.equal(pack.cards['REZ-1-001'],undefined);
  assert.equal(pack.cards['REZ-1-008'].step,true);
  assert.equal(pack.cards['REZ-1-008'].implementation,'vanilla');
@@ -251,6 +251,13 @@ test('eighty-six whole prints enter the V2 pack and the other twenty-seven stay 
  assert.equal(pack.cards['REZ-1-068'].raidName,null);
  assert.deepEqual(pack.cards['REZ-1-040'].effects.onPlay,[{op:'draw',count:1}]);
  assert.deepEqual(pack.cards['REZ-1-040'].effects.onRetire,[{op:'deployOwnRaidBaseRest',optional:true}]);
+ assert.equal(pack.cards['REZ-1-033'].trigger,'special');
+ assert.equal(pack.cards['REZ-1-033'].color,'yellow');
+ assert.equal(pack.cards['REZ-1-033'].energy,4);
+ assert.deepEqual(pack.cards['REZ-1-033'].triggerEffect,{op:'retireOppFront'});
+ assert.deepEqual(pack.cards['REZ-1-033'].effects.onPlay,[
+  {op:'restOrRetireFrontAtMost',bp:5000,retireIfName:'エミリア'},
+  {op:'peekTopOneIfFieldNames',names:['エミリア','パック']}]);
  assert.deepEqual(pack.cards['REZ-1-093'].mainAbility,{
   op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,
   then:[{op:'restOwnActiveFrontDraw'}]});
@@ -3729,4 +3736,133 @@ test('Subaru raids onto Subaru, draws, then may REST the raid base after retirem
  assert.notEqual(plain.pending?.kind,'effect-raid-base-rest');
  assert.ok(plain.players[0].outside.some(c=>c.uid===played.uid));
  assert.equal(assertUniversalMatch(packs,plain),true);
+});
+
+const spiritCounts={
+ ...Object.fromEntries(['REZ-1-033','REZ-1-007','REZ-1-022','REZ-1-017','REZ-1-008','REZ-1-012',
+  'REZ-1-014','REZ-1-043','REZ-1-016','REZ-1-024','REZ-1-105','REZ-1-081'].map(id=>[id,4])),
+ 'REZ-1-029':2
+};
+const spirit=seed=>newUniversalMatch(packs,{decks:[spiritCounts,spiritCounts],first:0,seed});
+test('Spirit Arts rests BP 5000, retires that character while Emilia is on the field, and peeks only with Emilia and Puck',()=>{
+ assert.equal(Object.values(spiritCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(pack,spiritCounts),[]);
+ const shell={id:'SPELL',name:'精霊術師',color:'yellow',type:'event',energy:4,ap:1,bp:0,gen:0,
+  traits:[],trigger:null,implementation:'dsl',effects:{}};
+ assert.throws(()=>createUniversalPack({id:'bad-spell',cards:[{...shell,type:'character',bp:2000,gen:1,effects:{onPlay:[
+  {op:'restOrRetireFrontAtMost',bp:5000,retireIfName:'エミリア'}]}}]}),/event onPlay/);
+ assert.throws(()=>createUniversalPack({id:'bad-spell',cards:[{...shell,effects:{onPlay:[
+  {op:'restOrRetireFrontAtMost',bp:3000,retireIfName:'エミリア'}]}}]}),/rest-or-retire front/);
+ assert.throws(()=>createUniversalPack({id:'bad-spell',cards:[{...shell,effects:{onPlay:[
+  {op:'peekTopOneIfFieldNames',names:['エミリア','レム']}]}}]}),/named top peek/);
+ assert.equal(V2_PENDING_LABELS['effect-rest-or-retire'],'選擇 1 張 BP 5000 以下的對手前線');
+
+ let live=spirit(6901);
+ fuel(live,['REZ-1-007','REZ-1-007','REZ-1-007','REZ-1-007']);
+ live=reach(live,'main');
+ assert.equal(universalEnergyByColor(packs,live,0).yellow,4);
+ const exact=pull(live,1,'REZ-1-017');
+ const over=pull(live,1,'REZ-1-017');
+ over.buffs=[{bp:1500,untilTurn:live.turn}];
+ const side=pull(live,1,'REZ-1-008');
+ live.players[1].front[0]=exact;
+ live.players[1].front[1]=over;
+ live.players[1].energy[0]=side;
+ const blocked=structuredClone(live);
+ blocked.players[1].outside.push(blocked.players[1].front[0]);
+ blocked.players[1].front[0]=null;
+ const hidden=pull(blocked,0,'REZ-1-033');
+ blocked.players[0].hand.push(hidden);
+ assert.equal(legalUniversalActions(packs,blocked).some(a=>a.type==='event'&&a.uid===hidden.uid),false);
+ const spell=pull(live,0,'REZ-1-033');
+ live.players[0].hand.push(spell);
+ const top=live.players[0].deck[0].uid;
+ live=dispatchUniversalAction(packs,live,legalUniversalActions(packs,live).find(a=>a.type==='event'&&a.uid===spell.uid));
+ assert.equal(live.pending.kind,'effect-rest-or-retire');
+ assert.equal(live.pending.mode,'rest');
+ assert.ok(live.pending.choices.includes(exact.uid));
+ assert.equal(live.pending.choices.includes(over.uid),false);
+ assert.equal(live.pending.choices.includes(side.uid),false);
+ assert.equal(uiActionLabel(legalUniversalActions(packs,live).find(a=>a.uid===exact.uid),{pack,state:live}),'使 レム 休息');
+ assert.equal(chooseUniversalAiAction(packs,live).type,'chooseRestOrRetire');
+ const forged=structuredClone(live);
+ forged.pending.mode='retire';
+ assert.throws(()=>assertUniversalMatch(packs,forged),/Invalid rest-or-retire pending/);
+ live=dispatchUniversalAction(packs,live,{type:'chooseRestOrRetire',uid:exact.uid});
+ assert.equal(live.pending,null);
+ assert.equal(at(live,1,exact.uid).ready,false);
+ assert.equal(live.players[1].front.some(c=>c?.uid===exact.uid),true);
+ assert.equal(live.players[0].deck[0].uid,top);
+ assert.equal(assertUniversalMatch(packs,live),true);
+
+ let named=spirit(6902);
+ fuel(named,['REZ-1-007','REZ-1-007','REZ-1-007','REZ-1-007']);
+ const emilia=pull(named,0,'REZ-1-022');
+ named.players[0].front[0]=emilia;
+ named=reach(named,'main');
+ const victim=pull(named,1,'REZ-1-017');
+ victim.buffs=[{bp:1000,untilTurn:named.turn}];
+ named.players[1].front[0]=victim;
+ const cast=pull(named,0,'REZ-1-033');
+ named.players[0].hand.push(cast);
+ const kept=named.players[0].deck[0].uid;
+ named=dispatchUniversalAction(packs,named,legalUniversalActions(packs,named).find(a=>a.type==='event'&&a.uid===cast.uid));
+ assert.equal(named.pending.mode,'retire');
+ assert.ok(named.pending.choices.includes(victim.uid));
+ assert.equal(uiActionLabel(legalUniversalActions(packs,named).find(a=>a.uid===victim.uid),{pack,state:named}),'使 レム 退場');
+ named=dispatchUniversalAction(packs,named,{type:'chooseRestOrRetire',uid:victim.uid});
+ assert.equal(named.pending,null);
+ assert.ok(named.players[1].outside.some(c=>c.uid===victim.uid));
+ assert.equal(named.players[0].deck[0].uid,kept);
+ assert.equal(assertUniversalMatch(packs,named),true);
+
+ const unit=(id,name,extra)=>({id,name,color:'yellow',type:'character',energy:0,ap:1,bp:2000,gen:1,
+  traits:[],trigger:null,implementation:'vanilla',effects:{},...extra});
+ const fixture=createUniversalPack({id:'spirit-lab',cards:[
+  {id:'LAB-SPELL',name:'精霊術師',color:'yellow',type:'event',energy:4,ap:1,bp:0,gen:0,
+   traits:[],trigger:null,implementation:'dsl',effects:{onPlay:[
+    {op:'restOrRetireFrontAtMost',bp:5000,retireIfName:'エミリア'},
+    {op:'peekTopOneIfFieldNames',names:['エミリア','パック']}]}},
+  unit('LAB-EMI','エミリア',{gen:0,bp:1500}),
+  unit('LAB-PUCK','パック',{gen:0,bp:2000}),
+  unit('LAB-FOE','標的',{gen:0,bp:2000}),
+  ...['LAB-A','LAB-B','LAB-C','LAB-D','LAB-E','LAB-F','LAB-G','LAB-H','LAB-I'].map(id=>unit(id,id))
+ ]});
+ const fixtureCounts={
+  'LAB-SPELL':4,'LAB-EMI':4,'LAB-PUCK':4,'LAB-FOE':4,
+  ...Object.fromEntries(['LAB-A','LAB-B','LAB-C','LAB-D','LAB-E','LAB-F','LAB-G','LAB-H'].map(id=>[id,4])),
+  'LAB-I':2
+ };
+ assert.equal(Object.values(fixtureCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(fixture,fixtureCounts),[]);
+ const fp=[fixture,fixture];
+ let both=newUniversalMatch(fp,{decks:[fixtureCounts,fixtureCounts],first:0,seed:6903});
+ ['LAB-A','LAB-B','LAB-C','LAB-D'].forEach((id,i)=>{
+  const gen=pull(both,0,id);gen.ready=true;both.players[0].energy[i]=gen;
+ });
+ const lady=pull(both,0,'LAB-EMI');
+ const puck=pull(both,0,'LAB-PUCK');
+ both.players[0].front[0]=lady;
+ both.players[0].front[1]=puck;
+ const foe=pull(both,1,'LAB-FOE');
+ both.players[1].front[0]=foe;
+ both=dispatchUniversalAction(fp,both,{type:'next'});
+ both=dispatchUniversalAction(fp,both,{type:'next'});
+ assert.equal(both.phase,'main');
+ const marker=pull(both,0,'LAB-I');
+ both.players[0].deck.unshift(marker);
+ const mage=pull(both,0,'LAB-SPELL');
+ both.players[0].hand.push(mage);
+ both=dispatchUniversalAction(fp,both,{type:'event',uid:mage.uid});
+ assert.equal(both.pending.mode,'retire');
+ both=dispatchUniversalAction(fp,both,{type:'chooseRestOrRetire',uid:foe.uid});
+ assert.equal(both.pending.kind,'private-top-choice');
+ const keptTop=dispatchUniversalAction(fp,structuredClone(both),{type:'chooseTopCard',mode:'top'});
+ assert.equal(keptTop.pending,null);
+ assert.equal(keptTop.players[0].deck[0].uid,marker.uid);
+ both=dispatchUniversalAction(fp,both,{type:'chooseTopCard',mode:'outside'});
+ assert.equal(both.pending,null);
+ assert.ok(both.players[0].outside.some(c=>c.uid===marker.uid));
+ assert.equal(assertUniversalMatch(fp,both),true);
+ assert.equal(assertUniversalMatch(fp,keptTop),true);
 });

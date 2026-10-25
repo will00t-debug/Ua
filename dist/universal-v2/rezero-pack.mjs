@@ -65,6 +65,7 @@ export function rezeroEngineKind(effectJa){
  if(e==='【起動メイン】【APを1支払う】このカードが自分の手札にあり、必要エナジーを満たす場合のみ発動できる。このカードを公開し、BPが4000以上の場合、自分の場にこのカードをレストで登場させ、自分の場の他のキャラを1枚まで選び、アクティブにする。')return 'handPayRevealDeploy';
  if(e==='【レイド】〈エキドナ〉アクティブにし、フロントLに移動できる【登場時】カードを1枚引く。【起動メイン】【フロントLにある場合】 【ターン1】自分のフロントLのアクティブのキャラを1枚レストにする。そうした場合、カードを1枚引く。')return 'raidFrontRestDraw';
  if(e==='【レイド】〈ナツキ・スバル〉アクティブにし、フロントLに移動できる【登場時】カードを1枚引く。【退場時】このキャラのレイド元のカードを1枚まで自分の場にレストで登場させる。')return 'raidRetireBase';
+ if(e==='BP5000以下の相手のフロントLのキャラを1枚選び、『レストにする』。自分の場に〈エミリア〉がある場合、『退場させる』に代わる。その後、自分の場に〈エミリア〉と〈パック〉がある場合、自分の山札の上から1枚見る。そのカードを山札の上か場外に置く。')return 'spiritRestPeek';
  return null;
 }
 const TOP_OUTSIDE=new Map([
@@ -123,6 +124,9 @@ function onPlay(card,kind){
  if(kind==='wilhelmPayImpact')return [{op:'optionalPayApThen',ap:1,optional:true,ownTurn:true,
   then:[{op:'retireOppFrontAtLeastBp',bp:4500,optional:true}]}];
  if(kind==='raidFrontRestDraw')return [{op:'draw',count:1}];
+ if(kind==='spiritRestPeek')return [
+  {op:'restOrRetireFrontAtMost',bp:5000,retireIfName:'エミリア'},
+  {op:'peekTopOneIfFieldNames',names:['エミリア','パック']}];
  if(kind==='garfielEntry')return [{op:'enemyBpDown',bp:2500,optional:true,zone:'front'}];
  if(kind==='sanctuaryRecover')return [{op:'payHandOrRestForNamed',name:TRIAL_NAME}];
  if(kind==='frontDown2500')return [{op:'enemyBpDown',bp:2000,optional:true,minBp:2500,zone:'front'}];
@@ -171,7 +175,7 @@ export function rezeroPackCard(card){
   throw Error(card.id+' rest trigger is not this print');
  if(triggerEffect?.op==='bounceOppFrontUnderBp'&&!bouncePrint)
   throw Error(card.id+' return trigger is not this print');
- const specialPrint=kind==='remRetire'||kind==='emiliaRetire'||kind==='minaRetire'||kind==='cruschRetireHandBp';
+ const specialPrint=kind==='remRetire'||kind==='emiliaRetire'||kind==='minaRetire'||kind==='cruschRetireHandBp'||kind==='spiritRestPeek';
  if(specialPrint&&triggerEffect?.op!=='retireOppFront')
   throw Error(card.id+' special trigger is not the printed retirement');
  if(triggerEffect?.op==='retireOppFront'&&!specialPrint)
