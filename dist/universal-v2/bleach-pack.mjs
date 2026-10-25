@@ -1131,7 +1131,8 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 ,
 {"id":"BLC-1-022","kind":"revealOppTop","number":"UA08BT/BLC-1-022","name":"ユーハバッハ","color":"yellow","energy":3,"ap":1,"bp":3000,"gen":2,"trigger":"color","type":"character","effect":"登場：敵方公開牌堆頂 1 張；由己方選擇將該卡放回敵方牌堆頂或送至場外。"},
 {"id":"BLC-2-011","kind":"revealTraitOrNameOutside","number":"EX07BT/BLC-2-011","name":"リルトット・ランパード","color":"yellow","energy":1,"ap":1,"bp":1500,"gen":1,"trigger":null,"type":"character","effect":"登場：公開己方牌堆頂 3 張，可將其中最多 1 張具有「邦比愛塔親衛隊」特徵或名為〈邦比愛塔・芭絲塔拜茵〉的卡加入手牌，其餘送至場外。若有卡加入手牌，再將 1 張手牌送至場外。"},
-{"id":"BLC-1-060","kind":"chooseEnergyRevealOutside","number":"UA08BT/BLC-1-060","name":"兵主部 一兵衛","color":"purple","energy":3,"ap":1,"bp":2500,"gen":1,"trigger":"active","type":"character","effect":"登場：指定 1 個需求能源數值，公開己方牌堆頂 2 張；可將其中最多 1 張需求能源等於該數值的角色卡加入手牌，其餘送至場外。"}
+{"id":"BLC-1-060","kind":"chooseEnergyRevealOutside","number":"UA08BT/BLC-1-060","name":"兵主部 一兵衛","color":"purple","energy":3,"ap":1,"bp":2500,"gen":1,"trigger":"active","type":"character","effect":"登場：指定 1 個需求能源數值，公開己方牌堆頂 2 張；可將其中最多 1 張需求能源等於該數值的角色卡加入手牌，其餘送至場外。"},
+{"id":"BLC-1-038","kind":"optionalMillPurple","number":"UA08BT/BLC-1-038","name":"浦原 喜助","color":"purple","energy":3,"ap":2,"bp":3500,"gen":1,"trigger":null,"type":"character","effect":"登場：可將己方牌堆頂 3 張送至場外；成功時可從己方場外將最多 1 張紫色角色卡加入手牌。"}
 ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1260,6 +1261,7 @@ export function checkedBleachAddonDefinition(p){
  const isRevealOppTop=p.kind==='revealOppTop';
  const isRevealWindow=p.kind==='revealTraitOrNameOutside';
  const isEnergyWindow=p.kind==='chooseEnergyRevealOutside';
+ const isMillPurple=p.kind==='optionalMillPurple';
  const topDiscard={
   'BLC-3-007':{count:3,filter:{field:'trait',value:'護廷十三隊'}},
   'BLC-3-002':{count:3,filters:[
@@ -1293,7 +1295,7 @@ export function checkedBleachAddonDefinition(p){
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest||isOwnCharacterDraw||isPeekAttack||isDrawInstead||isRevealOppTop||isRevealWindow||isEnergyWindow;
+ const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest||isOwnCharacterDraw||isPeekAttack||isDrawInstead||isRevealOppTop||isRevealWindow||isEnergyWindow||isMillPurple;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1528,7 +1530,9 @@ export function checkedBleachAddonDefinition(p){
    isRevealOppTop?{onPlay:[{op:'revealOppTopPlace'}]}:
    isRevealWindow?{onPlay:[{op:'searchTopOneBottomDiscard',count:3,rest:'outside',filters:[
     {field:'trait',value:'邦比愛塔親衛隊'},{field:'name',value:'バンビエッタ・バスターバイン'}],logic:'any'}]}:
-   isEnergyWindow?{onPlay:[{op:'chooseEnergyRevealOutside',count:2}]}:{}})
+   isEnergyWindow?{onPlay:[{op:'chooseEnergyRevealOutside',count:2}]}:
+   isMillPurple?{onPlay:[{op:'millTop',count:3,optional:true,then:[{op:'recoverOutsideOne',optional:true,logic:'all',filters:[
+    {field:'color',value:'purple'},{field:'type',value:'character'}]}]}]}:{}})
  };
 }
 export function bleachV2PortedCards(){

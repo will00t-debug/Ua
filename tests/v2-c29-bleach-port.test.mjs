@@ -79,9 +79,14 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 //   残りを場外に置く。 The number is chosen before the reveal. Fields and events
 //   with the same energy are not characters. Taking a card does not discard.
 //   ACTIVE is the generic sentence. Required energy alt is 紫3. Generated energy alt is 紫.
+// BLC-1-038 UA08BT: [登場時]自分の山札の上から3枚を場外に置いてもよい。そうした場合、
+//   自分の場外から紫のキャラカードを1枚まで手札に加える。 The mill is one
+//   accept-or-skip for the whole three, not one card at a time. Skipping does
+//   not open the recovery. A shorter deck still mills what remains. No trigger.
+//   Required energy alt is 紫3. Generated energy alt is 紫. Printed AP is 2.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -152,12 +157,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers thirty-six whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,472);
- assert.equal(EXPECTED_V2_COUNTS.bleach,196);
+test('C29 registers thirty-seven whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,473);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,197);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,196);
+ assert.equal(Object.keys(bleach.cards).length,197);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -2569,4 +2574,105 @@ test('BLC-1-060 names a printed energy, reveals two cards, and puts the rest out
  assert.equal(assertUniversalMatch(zero.opened.packs,eventOnly),true);
  assert.equal(assertUniversalMatch(dry.packs,quiet),true);
  assert.equal(assertUniversalMatch(life.packs,woken),true);
+});
+
+test('BLC-1-038 may mill three cards at once, then recover one purple character',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-1-038');
+ assert.equal(printed.effect,'登場：可將己方牌堆頂 3 張送至場外；成功時可從己方場外將最多 1 張紫色角色卡加入手牌。');
+ assert.equal(printed.traits,'無');
+ assert.equal(printed.energy,3);
+ assert.equal(printed.ap,2);
+ assert.equal(printed.gen,1);
+ assert.equal(printed.trigger,null);
+ const recover={op:'recoverOutsideOne',optional:true,logic:'all',filters:[
+  {field:'color',value:'purple'},{field:'type',value:'character'}]};
+ const card=bleach.cards['BLC-1-038'];
+ assert.deepEqual(card.traits,[]);
+ assert.equal(card.gen,1);
+ assert.equal(card.triggerEffect,null);
+ assert.deepEqual(card.effects.onPlay,[{op:'millTop',count:3,optional:true,then:[recover]}]);
+ const bare={id:'BAD',name:'BAD',color:'purple',type:'character',energy:0,ap:1,bp:1000,gen:1,traits:[],trigger:null,implementation:'dsl',effects:{}};
+ assert.throws(()=>createUniversalPack({id:'bad-mill-three',cards:[{...bare,effects:{onPlay:[{op:'millTop',count:3,optional:true}]}}]}),/optional mill is one or two cards/);
+ assert.throws(()=>createUniversalPack({id:'bad-mill-follow',cards:[{...bare,effects:{onPlay:[{op:'millTop',count:3,optional:true,then:[{op:'draw',count:1}]}]}}]}),/optional mill follow-up must recover one purple character/);
+ const deck=realDeck(['BLC-1-038','BLC-1-034','BLC-1-039','BLC-1-045','BLC-1-057','BLC-1-062','BLC-1-108','BLC-1-035','BLC-2-052','BLC-1-036','BLC-2-053','BLC-1-059','BLC-1-048'],'purple');
+ function second(seed){
+  const opened=main(deck,seed);
+  for(let n=0;n<40&&!(opened.s.active===0&&opened.s.phase==='main'&&opened.s.players[0].ownTurns===2);n++){
+   const step=legalUniversalActions(opened.packs,opened.s).find(a=>a.type==='next');
+   assert.ok(step);
+   opened.s=dispatchUniversalAction(opened.packs,opened.s,step);
+  }
+  assert.equal(opened.s.players[0].ownTurns,2);
+  put(opened.s,0,'BLC-1-034','energy',0);
+  put(opened.s,0,'BLC-1-039','energy',1);
+  put(opened.s,0,'BLC-1-045','energy',2);
+  return opened;
+ }
+ const first=second(29038);
+ const window=setTop(first.s,0,['BLC-1-057','BLC-1-062','BLC-1-108']);
+ const waiting=take(first.s,0,'BLC-1-035');
+ first.s.players[0].outside.push(waiting);
+ const self=take(first.s,0,'BLC-1-038');
+ first.s.players[0].hand.push(self);
+ const play=legalUniversalActions(first.packs,first.s).find(a=>a.type==='play'&&a.uid===self.uid&&a.line==='front');
+ assert.ok(play);
+ const played=dispatchUniversalAction(first.packs,first.s,play);
+ assert.equal(played.players[0].front.find(c=>c?.uid===self.uid).ready,false);
+ assert.equal(played.pending.kind,'effect-optional-mill');
+ assert.equal(played.pending.batch,3);
+ assert.equal(played.publicReveals.some(r=>window.some(c=>c.uid===r.uid)),false);
+ assert.equal(universalPrivateChoices(first.packs,played,0),null);
+ assert.deepEqual(legalUniversalActions(first.packs,played).map(a=>a.mode),['skip','mill']);
+ const skipped=dispatchUniversalAction(first.packs,played,{type:'chooseOptionalMill',mode:'skip'});
+ assert.equal(skipped.pending,null);
+ assert.deepEqual(skipped.players[0].deck.slice(0,3).map(c=>c.uid),window.map(c=>c.uid));
+ assert.equal(skipped.players[0].outside.some(c=>c.uid===waiting.uid),true);
+ assert.equal(skipped.players[0].hand.some(c=>c.uid===waiting.uid),false);
+ const milled=dispatchUniversalAction(first.packs,played,{type:'chooseOptionalMill',mode:'mill'});
+ assert.equal(milled.pending.kind,'effect-recover-outside');
+ assert.deepEqual(milled.players[0].outside.slice(-3).map(c=>c.uid),window.map(c=>c.uid));
+ assert.equal(milled.players[0].deck.some(c=>window.some(x=>x.uid===c.uid)),false);
+ const choices=legalUniversalActions(first.packs,milled);
+ assert.equal(choices.some(a=>a.uid===null),true);
+ assert.equal(choices.some(a=>a.uid===window[0].uid),true);
+ assert.equal(choices.some(a=>a.uid===waiting.uid),true);
+ assert.equal(choices.some(a=>a.uid===window[1].uid),false);
+ assert.equal(choices.some(a=>a.uid===window[2].uid),false);
+ const took=dispatchUniversalAction(first.packs,milled,choices.find(a=>a.uid===window[0].uid));
+ assert.equal(took.pending,null);
+ assert.equal(took.players[0].hand.some(c=>c.uid===window[0].uid),true);
+ assert.equal(took.players[0].outside.some(c=>c.uid===waiting.uid),true);
+ assert.equal(took.players[0].outside.some(c=>c.uid===window[1].uid),true);
+ const declined=dispatchUniversalAction(first.packs,milled,choices.find(a=>a.uid===null));
+ assert.equal(declined.pending,null);
+ assert.equal(declined.players[0].hand.some(c=>window.some(x=>x.uid===c.uid)),false);
+ assert.equal(declined.players[0].outside.some(c=>c.uid===window[0].uid),true);
+ const short=second(290381);
+ const only=setTop(short.s,0,['BLC-1-057']);
+ short.s.players[0].outside.push(...short.s.players[0].deck.splice(1));
+ const shortSelf=take(short.s,0,'BLC-1-038');
+ short.s.players[0].hand.push(shortSelf);
+ const shortPlay=dispatchUniversalAction(short.packs,short.s,legalUniversalActions(short.packs,short.s).find(a=>a.type==='play'&&a.uid===shortSelf.uid&&a.line==='front'));
+ assert.equal(shortPlay.pending.batch,3);
+ const shortMill=dispatchUniversalAction(short.packs,shortPlay,{type:'chooseOptionalMill',mode:'mill'});
+ assert.equal(shortMill.pending.kind,'effect-recover-outside');
+ assert.equal(shortMill.players[0].deck.length,0);
+ assert.equal(shortMill.players[0].outside.some(c=>c.uid===only[0].uid),true);
+ const dry=second(290382);
+ dry.s.players[0].outside.push(...dry.s.players[0].deck.splice(0));
+ const lonely=take(dry.s,0,'BLC-1-038');
+ dry.s.players[0].hand.push(lonely);
+ const quiet=dispatchUniversalAction(dry.packs,dry.s,legalUniversalActions(dry.packs,dry.s).find(a=>a.type==='play'&&a.uid===lonely.uid&&a.line==='front'));
+ assert.equal(quiet.pending,null);
+ assert.equal(quiet.players[0].deck.length,0);
+ assert.equal(quiet.players[0].front.find(c=>c?.uid===lonely.uid).ready,false);
+ aiOk(first.packs,played);
+ aiOk(first.packs,milled);
+ assert.equal(assertUniversalMatch(first.packs,played),true);
+ assert.equal(assertUniversalMatch(first.packs,skipped),true);
+ assert.equal(assertUniversalMatch(first.packs,milled),true);
+ assert.equal(assertUniversalMatch(first.packs,took),true);
+ assert.equal(assertUniversalMatch(first.packs,declined),true);
+ assert.equal(assertUniversalMatch(short.packs,shortMill),true);
+ assert.equal(assertUniversalMatch(dry.packs,quiet),true);
 });

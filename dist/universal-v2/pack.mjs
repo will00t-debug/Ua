@@ -121,13 +121,28 @@ function verifyProgram(program,path){
   // the existing mandatory mill. Optional is rejected for any other count.
   // 「N枚まで」is zero through N blind mills. Count 1 stays the older
   // single choice. Count 2 is the same choice repeated, and a skip stops.
-  if(e.op==='millTop'&&e.optional!==undefined&&(
+  // 「3枚を置いてもよい。そうした場合」is one accept-or-skip for the whole
+  // window, then one optional purple-character recovery. Bare count 3 stays illegal.
+  const purpleRecover=e.op==='millTop'&&e.optional===true&&e.count===3&&
+   Array.isArray(e.then)&&e.then.length===1&&e.then[0]?.op==='recoverOutsideOne'&&
+   e.then[0].optional===true&&e.then[0].logic==='all'&&
+   Array.isArray(e.then[0].filters)&&e.then[0].filters.length===2&&
+   e.then[0].filters[0]?.field==='color'&&e.then[0].filters[0]?.value==='purple'&&
+   e.then[0].filters[1]?.field==='type'&&e.then[0].filters[1]?.value==='character'&&
+   Object.keys(e.then[0]).length===4&&
+   Object.keys(e.then[0]).every(k=>['op','filters','logic','optional'].includes(k))&&
+   Object.keys(e).length===4&&
+   Object.keys(e).every(k=>['op','count','optional','then'].includes(k));
+  if(e.op==='millTop'&&e.optional===true&&e.then!==undefined&&!purpleRecover)
+   throw Error(path+'['+i+'] optional mill follow-up must recover one purple character');
+  if(e.op==='millTop'&&e.optional!==undefined&&!purpleRecover&&(
    e.optional!==true||![1,2].includes(e.count)||
    Object.keys(e).some(k=>!['op','count','optional'].includes(k))
   ))throw Error(path+'['+i+'] optional mill is one or two cards');
+  if(purpleRecover)verifyProgram(e.then,path+'['+i+'].then');
   // そうした場合: the follow-up exists only after this mandatory mill
   // actually moved a card. It is one other own character, BP+500.
-  if(e.op==='millTop'&&e.then!==undefined){
+  if(e.op==='millTop'&&e.then!==undefined&&e.optional===undefined){
    const follow=e.then?.[0];
    const buff=follow?.op==='buffOwnField'&&follow.optional===true&&
     follow.excludeSelf===true&&follow.bp===500&&follow.also===undefined&&

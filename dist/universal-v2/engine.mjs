@@ -707,9 +707,16 @@ function continueEffectQueue(pack,s){
    // the controller accepts, and a skip stops the rest. Mandatory mills
    // keep the previous loop.
    if(job.optional===true){
-    if(![1,2].includes(job.count))throw Error('Optional mill is one or two cards');
-    if(pl.deck.length)s.pending={kind:'effect-optional-mill',player:owner,
-     sourceUid:job.sourceUid,remaining:job.count};
+    if(job.then){
+     if(job.count!==3)throw Error('Optional mill follow-up is three cards');
+     if(pl.deck.length)s.pending={kind:'effect-optional-mill',player:owner,
+      sourceUid:job.sourceUid,sourceName:job.sourceName,batch:job.count,
+      then:job.then.map(e=>({...e,filters:e.filters.map(f=>({...f}))}))};
+    }else{
+     if(![1,2].includes(job.count))throw Error('Optional mill is one or two cards');
+     if(pl.deck.length)s.pending={kind:'effect-optional-mill',player:owner,
+      sourceUid:job.sourceUid,remaining:job.count};
+    }
    }else{
     const before=pl.deck.length;
     for(let i=0;i<job.count&&pl.deck.length;i++)moveOwnedLinear(pack,s,{
@@ -2477,6 +2484,17 @@ function resolveChoice(s,a,pack){
   s.pending=null;continueEffectQueue(pack,s);return;
  }
  if(q.kind==='effect-optional-mill'){
+  if(Number.isInteger(q.batch)){
+   if(a.mode==='mill'){
+    if(!p.deck.length)throw Error('Optional mill has no deck card');
+    const moved=Math.min(q.batch,p.deck.length);
+    for(let n=0;n<moved;n++)moveOwnedLinear(pack,s,{owner:q.player,from:'deck',
+     to:'outside',index:0,reason:'own-effect',sourceUid:q.sourceUid});
+    if(moved>0&&Array.isArray(q.then))s.effectQueue.unshift(...q.then.map(e=>({...e,
+     owner:q.player,sourceUid:q.sourceUid,sourceName:q.sourceName})));
+   }else if(a.mode!=='skip')throw Error('Invalid optional mill');
+   s.pending=null;continueEffectQueue(pack,s);return;
+  }
   if(a.mode==='mill'){
    if(!p.deck.length)throw Error('Optional mill has no deck card');
    moveOwnedLinear(pack,s,{owner:q.player,from:'deck',to:'outside',index:0,
@@ -5353,6 +5371,18 @@ export function assertUniversalMatch(pack,s){
    Object.keys(q).some(k=>!['kind','player','sourceUid','uids','choices','groups',
     ...(restOutside?['rest']:[])].includes(k)))
    throw Error('Invalid grouped top-filter pending');
+ }
+ if(s.pending?.kind==='effect-optional-mill'&&Number.isInteger(s.pending.batch)){
+  const q=s.pending,pl=s.players[q.player];
+  const src=field(pl).find(c=>c.uid===q.sourceUid);
+  const printed=src&&card(pack,src);
+  const earned=printed?.effects?.onPlay?.find(e=>e.op==='millTop'&&e.optional===true&&
+   e.count===3&&e.count===q.batch&&Array.isArray(e.then)&&same(e.then,q.then));
+  if(!earned||q.sourceName!==printed.name||!q.sourceUid.startsWith(q.player+'-')||
+   q.batch!==3||pl.deck.length<1||!Array.isArray(q.then)||q.then.length!==1||
+   Object.keys(q).length!==6||
+   Object.keys(q).some(k=>!['kind','player','sourceUid','sourceName','batch','then'].includes(k)))
+   throw Error('Forged optional three-card mill');
  }
  if(s.pending?.kind==='effect-choose-printed-energy'){
   const q=s.pending,pl=s.players[q.player];
