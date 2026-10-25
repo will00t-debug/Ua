@@ -53,6 +53,7 @@ export function rezeroEngineKind(effectJa){
  if(e==='【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、【インパクト】を失う）【起動メイン】【フロントLにある場合】 【ターン1】自分の手札を1枚自分の山札の上に置く。そうした場合、このキャラはこのターン中、BP+1000。')return 'beatriceHandTop';
  if(e==='カードを2枚引き、自分の手札を1枚場外に置く。その後、自分のフロントLのアクティブのキャラを1枚レストにしてもよい。そうした場合、自分のAPカードを1枚まで選び、アクティブにする。')return 'trialRestAp';
  if(e==='【登場時】自分の手札を1枚場外に置いてもよい。そうした場合、このフィールドをアクティブにする。【起動メイン】【レストにする】 【ターン1】カードを1枚引き、自分の手札を1枚自分の山札の上に置く。')return 'libraryField';
+ if(e==='【起動メイン】【フロントLにある場合】 【ターン1】このターン中にこのキャラが自分の効果でアクティブからレストになったことがある場合のみ発動できる。このキャラをアクティブにし、このキャラは次の自分のターン開始時まで、BP+1000。')return 'emiliaRestActive';
  return null;
 }
 const TOP_OUTSIDE=new Map([
@@ -187,6 +188,9 @@ export function rezeroPackCard(card){
    then:[{op:'handTopBuffSelf',bp:1000}]}}:{}),
   ...(kind==='libraryField'?{mainAbility:{
    op:'restSelfThen',frontOnly:false,oncePerTurn:true,then:[{op:'drawHandTop'}]}}:{}),
+  ...(kind==='emiliaRestActive'?{mainAbility:{
+   op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,requireOwnEffectRest:true,
+   then:[{op:'activeSelf'},{op:'buffSelfUntilNextOwnStart',bp:1000}]}}:{}),
   ...(kind==='feltTurnBp'?{passiveBonuses:[{
    condition:{kind:'ownNameExists',turn:'own',zone:'field',excludeSelf:false,name:'フェルト'},
    bp:1000}]}:{}),

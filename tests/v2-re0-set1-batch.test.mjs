@@ -67,9 +67,9 @@ test('UA40BT and UA40ST share one catalogue and keep parallel art out',()=>{
  }
 });
 
-test('seventy-four whole prints enter the V2 pack and the other thirty-nine stay out',()=>{
- assert.equal(REZERO_ENGINE_IDS.length,74);
- assert.equal(Object.keys(pack.cards).length,74);
+test('seventy-five whole prints enter the V2 pack and the other thirty-eight stay out',()=>{
+ assert.equal(REZERO_ENGINE_IDS.length,75);
+ assert.equal(Object.keys(pack.cards).length,75);
  assert.equal(pack.cards['REZ-1-001'],undefined);
  assert.equal(pack.cards['REZ-1-008'].step,true);
  assert.equal(pack.cards['REZ-1-008'].implementation,'vanilla');
@@ -197,6 +197,12 @@ test('seventy-four whole prints enter the V2 pack and the other thirty-nine stay
  assert.deepEqual(pack.cards['REZ-1-094'].effects.onPlay,[{op:'optionalDiscardActiveSelf'}]);
  assert.deepEqual(pack.cards['REZ-1-094'].mainAbility,{
   op:'restSelfThen',frontOnly:false,oncePerTurn:true,then:[{op:'drawHandTop'}]});
+ assert.equal(pack.cards['REZ-1-088'].trigger,'active');
+ assert.equal(pack.cards['REZ-1-088'].triggerEffect,null);
+ assert.equal(pack.cards['REZ-1-088'].effects.onPlay,undefined);
+ assert.deepEqual(pack.cards['REZ-1-088'].mainAbility,{
+  op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,requireOwnEffectRest:true,
+  then:[{op:'activeSelf'},{op:'buffSelfUntilNextOwnStart',bp:1000}]});
  assert.equal(pack.cards['REZ-1-101'],undefined);
  assert.deepEqual(validateUniversalDeck(pack,counts),[]);
  const s=fresh();
@@ -2285,4 +2291,68 @@ test('Forbidden Library may discard to enter active, then rests to draw and top 
  assert.equal(at(bare,0,quiet.uid).ready,false);
  assert.equal(bare.players[0].deck.length,0);
  assert.equal(assertUniversalMatch(packs,bare),true);
+});
+
+const emiliaRestCounts={
+ ...Object.fromEntries(['REZ-1-088','REZ-1-098','REZ-1-086','REZ-1-068','REZ-1-069',
+  'REZ-1-072','REZ-1-073','REZ-1-075','REZ-1-079','REZ-1-080','REZ-1-081'].map(id=>[id,4])),
+ 'REZ-1-091':4,'REZ-1-092':2
+};
+const emiliaRest=seed=>newUniversalMatch(packs,{decks:[emiliaRestCounts,emiliaRestCounts],first:0,seed});
+test('Emilia readies and gains BP only after an own effect rested her from active',()=>{
+ assert.equal(Object.values(emiliaRestCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(pack,emiliaRestCounts),[]);
+ const shell={id:'EM',name:'Emilia',color:'purple',type:'character',energy:3,ap:1,bp:3000,gen:0,
+  traits:[],trigger:null,implementation:'dsl',effects:{}};
+ assert.throws(()=>createUniversalPack({id:'bad-em',cards:[{...shell,mainAbility:{
+  op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,requireOwnEffectRest:true,
+  then:[{op:'activeSelf'}]}}]}),/unsupported main action/);
+ let quiet=emiliaRest(5701);
+ fuel(quiet,['REZ-1-086','REZ-1-086','REZ-1-086']);
+ quiet=ownMain(quiet,2);
+ let emilia;
+ [quiet,emilia]=playFront(quiet,'REZ-1-088');
+ assert.equal(at(quiet,0,emilia.uid).ready,false);
+ assert.equal(frontOnce(quiet,emilia.uid),false);
+ at(quiet,0,emilia.uid).ready=true;
+ assert.equal(frontOnce(quiet,emilia.uid),false);
+ at(quiet,0,emilia.uid).ready=false;
+ assert.equal(quiet.ownEffectRests[0].length,0);
+ assert.equal(frontOnce(quiet,emilia.uid),false);
+ at(quiet,0,emilia.uid).ready=true;
+ const trial=pull(quiet,0,'REZ-1-098');
+ quiet.players[0].hand.push(trial);
+ const deckAtPlay=quiet.players[0].deck.length;
+ quiet=dispatchUniversalAction(packs,quiet,legalUniversalActions(packs,quiet).find(a=>a.type==='event'&&a.uid===trial.uid));
+ assert.equal(quiet.players[0].deck.length,deckAtPlay-2);
+ assert.equal(quiet.pending.kind,'effect-discard');
+ const dumped=quiet.players[0].hand[0];
+ quiet=dispatchUniversalAction(packs,quiet,{type:'chooseDiscard',uid:dumped.uid});
+ assert.equal(quiet.pending.kind,'effect-rest-front-ap');
+ assert.ok(quiet.pending.choices.includes(emilia.uid));
+ quiet=dispatchUniversalAction(packs,quiet,{type:'chooseRestFrontAp',uid:emilia.uid});
+ if(quiet.pending?.kind==='effect-recover-ap')
+  quiet=dispatchUniversalAction(packs,quiet,{type:'chooseApRecovery',uid:null});
+ assert.equal(at(quiet,0,emilia.uid).ready,false);
+ assert.ok(quiet.ownEffectRests[0].some(n=>n.uid===emilia.uid&&n.stamp===at(quiet,0,emilia.uid).fieldEntryStamp&&n.turn===quiet.turn));
+ const slot=quiet.players[0].front.findIndex(c=>c?.uid===emilia.uid);
+ const parked=quiet.players[0].front[slot];
+ quiet.players[0].front[slot]=null;
+ quiet.players[0].energy[3]=parked;
+ assert.equal(frontOnce(quiet,emilia.uid),false);
+ quiet.players[0].energy[3]=null;
+ quiet.players[0].front[slot]=parked;
+ const act=legalUniversalActions(packs,quiet).find(a=>a.type==='activate'&&a.uid===emilia.uid);
+ assert.equal(act.mode,'frontOnce');
+ assert.equal(uiActionLabel(act,{pack,state:quiet}),'起動主要：將這張角色置為活動，直到下一個我方回合開始前 BP+1000');
+ quiet=dispatchUniversalAction(packs,quiet,act);
+ assert.equal(quiet.pending,null);
+ assert.equal(at(quiet,0,emilia.uid).ready,true);
+ assert.equal(universalBp(packs,quiet,at(quiet,0,emilia.uid)),4000);
+ assert.equal(frontOnce(quiet,emilia.uid),false);
+ quiet=ownMain(quiet,3);
+ assert.equal(universalBp(packs,quiet,at(quiet,0,emilia.uid)),3000);
+ assert.equal(quiet.ownEffectRests[0].length,0);
+ assert.equal(frontOnce(quiet,emilia.uid),false);
+ assert.equal(assertUniversalMatch(packs,quiet),true);
 });

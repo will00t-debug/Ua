@@ -429,6 +429,16 @@ function queuePhaseBoundary(pack,s,phase,edge,turnPlayer){
   if(entries.length)s.effectQueue.push({op:'phaseOrder',owner,entries});
  }
 }
+// 「自分の効果でアクティブからレスト」. Attack, block, and a rested entry
+// are rules, not this ledger. The note is the physical field incarnation.
+function noteOwnEffectRest(s,owner,card){
+ if(!card||card.ready!==true||!Number.isInteger(card.fieldEntryStamp)||card.fieldEntryStamp<1)return;
+ s.ownEffectRests[owner].push({uid:card.uid,stamp:card.fieldEntryStamp,turn:s.turn});
+}
+function restedByOwnEffectThisTurn(s,owner,card){
+ return !!card&&s.ownEffectRests[owner].some(n=>
+  n.uid===card.uid&&n.stamp===card.fieldEntryStamp&&n.turn===s.turn);
+}
 function startTurn(pack,s){
  const p=s.active,pl=s.players[p];
  pl.ownTurns++;s.turn++;s.phase='start';s.extraDrawn=false;s.moved=false;s.movedUids=[];s.pending=null;s.attacksThisTurn=0;
@@ -441,6 +451,7 @@ function startTurn(pack,s){
  // A NEW turn resets both players' previous turn-scoped movement history.
  s.turnEffectZoneMoves=[{handToOutside:false,outsideToHand:false},
   {handToOutside:false,outsideToHand:false}];
+ s.ownEffectRests=[[],[]];
  s.turnRetireEvents=[]; // Turn boundary clears history for both controllers.
  s.zoneMoveEvents=[]; // Per-turn internal provenance; ordinal monotonic across turns.
  for(const side of s.players)for(const unit of field(side)){
@@ -1911,6 +1922,7 @@ function resolveChoice(s,a,pack){
    if(!watcher||watcher.c.fieldEntryStamp!==q.sourceStamp||
     !watcher.c.ready||(watcher.c.under||[]).some(x=>x.faceDown===true))
     throw Error('Invalid earned REST field watcher');
+   noteOwnEffectRest(s,q.player,watcher.c);
    watcher.c.ready=false;
    s.pending={kind:'effect-tuck-moved',player:q.player,
     sourceUid:q.sourceUid,sourceStamp:q.sourceStamp,movedUid:q.movedUid};
@@ -1983,6 +1995,7 @@ function resolveChoice(s,a,pack){
   if(!target||!target.ready||!q.choices.includes(a.uid)||
    card(pack,target).type!=='character')
    throw Error('Illegal optional front rest');
+  noteOwnEffectRest(s,q.player,target);
   target.ready=false;
   if(p.apCards.some(c=>c.inPlay&&!c.ready))
    s.pending={kind:'effect-recover-ap',player:q.player,sourceUid:q.sourceUid,remaining:1};
@@ -2993,6 +3006,7 @@ function resolveChoice(s,a,pack){
    const target=p.front.find(c=>c?.uid===a.uid);
    if(!target||target.ready!==true||card(pack,target).type!=='character')
     throw Error('Illegal front rest payment');
+   noteOwnEffectRest(s,q.player,target);
    target.ready=false;
   }else throw Error('Illegal named recovery payment');
   const matches=p.outside.filter(c=>cardHasName(card(pack,c),q.name,
@@ -3034,6 +3048,7 @@ function resolveChoice(s,a,pack){
   if(!source||!target||!target.ready||!q.choices.includes(a.uid)||
    card(pack,target).type!=='character')
    throw Error('Front REST energy needs the chosen ACTIVE front character');
+  noteOwnEffectRest(s,q.player,target);
   target.ready=false;
   source.buffs??=[];
   source.buffs.push({energy:q.extraEnergy,untilTurn:s.turn});
@@ -3419,7 +3434,11 @@ function resolveChoice(s,a,pack){
    throw Error('Illegal ready front character');
   q.selected.push(a.uid);
   if(q.selected.length<2)return;
-  for(const uid of q.selected)p.front.find(c=>c?.uid===uid).ready=false;
+  for(const uid of q.selected){
+   const rested=p.front.find(c=>c?.uid===uid);
+   noteOwnEffectRest(s,q.player,rested);
+   rested.ready=false;
+  }
   s.pending={kind:'effect-self-front',player:q.player,sourceUid:q.sourceUid};
   return;
  }
@@ -3489,7 +3508,8 @@ export function newUniversalMatch(pack,{decks,seed=1,first=0}={}){
   raidedThisTurn:[false,false],mainAbilityUsedUids:[],mainReadyOnceByName:[[],[]],
   onceEffectUses:[[],[]],
   turnEffectZoneMoves:[{handToOutside:false,outsideToHand:false},
-   {handToOutside:false,outsideToHand:false}],turnRetireEvents:[],zoneMoveEvents:[],nextZoneMoveOrder:1,
+   {handToOutside:false,outsideToHand:false}],ownEffectRests:[[],[]],
+  turnRetireEvents:[],zoneMoveEvents:[],nextZoneMoveOrder:1,
   initialCounts:decks.map(d=>Object.fromEntries(Object.entries(d).filter(([,n])=>n>0)))
  };
  for(let p=0;p<2;p++){
@@ -4328,6 +4348,12 @@ export function legalUniversalActions(pack,s){
       out.push({type:'activate',uid:c.uid,mode:'frontOnce'});
      continue;
     }
+    // 自分の効果でアクティブからレストになったことがある場合のみ.
+    if(ability.requireOwnEffectRest===true){
+     if(restedByOwnEffectThisTurn(s,p,c))
+      out.push({type:'activate',uid:c.uid,mode:'frontOnce'});
+     continue;
+    }
     // Non-attack FRONT ability never requires an opponent target to activate.
     if(ability.then.length===2&&ability.then[0].op==='drawDiscard'&&
      ability.then[1].op==='grantFrontEnergyOwnOtherFrontTrait'){
@@ -4537,6 +4563,7 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
      throw Error('Under recovery requires an ACTIVE source');
     const pos=location(s,p,selected.uid);
     const buried=(selected.under||[]).filter(x=>x.faceDown===true).map(x=>x.uid);
+    noteOwnEffectRest(s,p,selected);
     selected.ready=false;
     const paused=retire(pack,s,p,pos.line,pos.slot);
     const outside=buried.filter(uid=>pl.outside.some(c=>c.uid===uid));
@@ -4559,6 +4586,7 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
     if(action.mode!=='fieldRestTrueRetireDeploy'||!selected.ready||
      !pl.energy.some(c=>c?.uid===selected.uid)||d.type!=='field')
      throw Error('FIELD REST+true-retire MAIN requires ACTIVE own ENERGY FIELD');
+    noteOwnEffectRest(s,p,selected);
     selected.ready=false;
     // True retirement resolves first; only then does the named outside entry
     // reach the existing queue, retaining original source UID/name provenance.
@@ -4586,6 +4614,7 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
      if(!selected.ready||s.mainReadyOnceByName[p].includes(buffKey)||
       !retiredThisTurn(s,p,'character'))
       throw Error('Dual MAIN buff requires true own retirement and ACTIVE FIELD');
+     noteOwnEffectRest(s,p,selected);
      selected.ready=false;s.mainReadyOnceByName[p].push(buffKey);
      for(const target of field(pl).filter(c=>card(pack,c).type==='character'&&
       (card(pack,c).name===ability.buffName||
@@ -4609,6 +4638,7 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
     if(action.mode!=='restDiscardRetire'||!selected.ready||!pl.hand.length||
      !Number.isInteger(selected.fieldEntryStamp))
      throw Error('Printed REST+hand+retire MAIN prerequisites missing');
+    noteOwnEffectRest(s,p,selected);
     selected.ready=false;
     s.pending={kind:'main-discard-self-retire',player:p,
      sourceUid:selected.uid,sourceStamp:selected.fieldEntryStamp,
@@ -4669,6 +4699,7 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
      throw Error('Delayed energy requires a READY source on a printed line, once per turn');
     if(!Number.isInteger(selected.fieldEntryStamp)||selected.fieldEntryStamp<1)
      selected.fieldEntryStamp=s.nextFieldEntryStamp++;
+    noteOwnEffectRest(s,p,selected);
     selected.ready=false;
     s.mainAbilityUsedUids.push(selected.uid);
     selected.buffs??=[];
@@ -4685,6 +4716,7 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
     if(action.mode!=='restFrontGainEnergy'||!selected.ready||
      s.mainAbilityUsedUids.includes(selected.uid)||!choices.length)
      throw Error('Front REST energy requires a READY unused source and another ACTIVE front');
+    noteOwnEffectRest(s,p,selected);
     selected.ready=false;
     s.mainAbilityUsedUids.push(selected.uid);
     s.pending={kind:'main-rest-front-energy',player:p,sourceUid:selected.uid,
@@ -4708,6 +4740,7 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
      .map(c=>c.uid);
     if(action.mode!=='selfRestBuff'||!selected.ready||!choices.length)
      throw Error('REST buff requires a READY source and another own character');
+    noteOwnEffectRest(s,p,selected);
     selected.ready=false;
     s.pending={kind:'effect-buff-own',player:p,sourceUid:selected.uid,choices,
      filter:{field:'type',value:'character'},bp:ability.bp,optional:false,excludeSelf:true};
@@ -4720,6 +4753,7 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
      !(ability.frontOnly===false?placed:onFront)||
      (ability.oncePerTurn&&s.mainAbilityUsedUids.includes(selected.uid)))
      throw Error('REST main action requires a READY source');
+    noteOwnEffectRest(s,p,selected);
     selected.ready=false;
     if(ability.oncePerTurn)s.mainAbilityUsedUids.push(selected.uid);
     // Use only the existing common queue; title adapters never execute effects.
@@ -4766,6 +4800,8 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
      throw Error('Front once-per-turn program requires a matching hand payment');
     if(step.op==='handTopBuffSelf'&&!pl.hand.length)
      throw Error('Front once-per-turn program requires one hand card');
+    if(ability.requireOwnEffectRest===true&&!restedByOwnEffectThisTurn(s,p,selected))
+     throw Error('Front once-per-turn program requires an own-effect rest');
     s.mainAbilityUsedUids.push(selected.uid);
     s.effectQueue.push(...ability.then.map(e=>({...e,owner:p,
      sourceUid:selected.uid,sourceName:d.name})),
@@ -4779,6 +4815,7 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
      throw Error('Main self-REST requires READY front source and legal opposing front target');
     // Pay precisely the source's REST cost, before entering the mandatory
     // shared opponent-target choice. No AP and no invented once-per-turn flag.
+    noteOwnEffectRest(s,p,selected);
     selected.ready=false;
     s.pending={kind:'effect-rest-bp',player:p,sourceUid:selected.uid,
      choices:targets,limit:null,optional:false};
@@ -4945,6 +4982,13 @@ export function assertUniversalMatch(pack,s){
    Object.keys(x).length!==2||typeof x.handToOutside!=='boolean'||
    typeof x.outsideToHand!=='boolean'))
   throw Error('Invalid own-effect movement ledger');
+ if(!Array.isArray(s.ownEffectRests)||s.ownEffectRests.length!==2||
+  s.ownEffectRests.some((side,owner)=>!Array.isArray(side)||side.some(n=>
+   !n||typeof n!=='object'||Array.isArray(n)||typeof n.uid!=='string'||
+   !n.uid.startsWith(owner+'-')||!Number.isInteger(n.stamp)||n.stamp<1||
+   n.turn!==s.turn||Object.keys(n).length!==3||
+   Object.keys(n).some(k=>!['uid','stamp','turn'].includes(k)))))
+  throw Error('Invalid own-effect rest ledger');
  if(!Array.isArray(s.zoneMoveEvents)||!Number.isInteger(s.nextZoneMoveOrder)||
   s.nextZoneMoveOrder<1||s.zoneMoveEvents.some((e,i,a)=>
    !e||!Number.isInteger(e.order)||e.order<1||
@@ -5064,12 +5108,18 @@ export function assertUniversalMatch(pack,s){
    const fromRestMain=printed.mainAbility?.op==='restSelfThen'&&
     printed.mainAbility.oncePerTurn===true&&
     printed.mainAbility.then?.some(t=>t.op==='buffSelfUntilNextOwnStart'&&t.bp===buff.bp);
+   // REZ-1-088 prints the same timed buff. The rest ledger is cleared when the
+   // opponent's turn starts, while this buff stays until the owner's next start.
+   const fromOwnEffectRest=printed.mainAbility?.op==='frontOnceProgram'&&
+    printed.mainAbility.requireOwnEffectRest===true&&
+    printed.mainAbility.oncePerTurn===true&&printed.mainAbility.frontOnly===true&&
+    printed.mainAbility.then?.some(t=>t.op==='buffSelfUntilNextOwnStart'&&t.bp===buff.bp);
    if(!Number.isInteger(buff.untilOwnTurnStart)||
     buff.untilOwnTurnStart!==s.players[owner].ownTurns+1||
     !Number.isInteger(buff.bp)||buff.bp<1||buff.bp>5000||
     Object.keys(buff).length!==2||
     Object.keys(buff).some(k=>!['bp','untilOwnTurnStart'].includes(k))||
-    !(fromOnPlay||fromRestMain))
+    !(fromOnPlay||fromRestMain||fromOwnEffectRest))
     throw Error('Forged next-own-start physical BP modifier');
   }
  }

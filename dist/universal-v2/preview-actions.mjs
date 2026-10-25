@@ -127,6 +127,10 @@ export function uiActionLabel(action,{pack,state}={}){
      ?'起動主要：將 1 張手牌放到牌組上面，本回合 BP+1000':
     action.mode==='frontOnce'&&pack?.cards&&state?.players?.some(p=>
      [...p.front,...p.energy].some(c=>c?.uid===action.uid&&
+      pack.cards[c.cardId]?.mainAbility?.requireOwnEffectRest===true))
+     ?'起動主要：將這張角色置為活動，直到下一個我方回合開始前 BP+1000':
+    action.mode==='frontOnce'&&pack?.cards&&state?.players?.some(p=>
+     [...p.front,...p.energy].some(c=>c?.uid===action.uid&&
       pack.cards[c.cardId]?.mainAbility?.then?.[0]?.op==='activeSelf'))
      ?'起動主要：將這張角色置為活動':
     action.mode==='ready'?'主要能力：ACTIVE':
