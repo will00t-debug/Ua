@@ -67,9 +67,9 @@ test('UA40BT and UA40ST share one catalogue and keep parallel art out',()=>{
  }
 });
 
-test('seventy-three whole prints enter the V2 pack and the other forty stay out',()=>{
- assert.equal(REZERO_ENGINE_IDS.length,73);
- assert.equal(Object.keys(pack.cards).length,73);
+test('seventy-four whole prints enter the V2 pack and the other thirty-nine stay out',()=>{
+ assert.equal(REZERO_ENGINE_IDS.length,74);
+ assert.equal(Object.keys(pack.cards).length,74);
  assert.equal(pack.cards['REZ-1-001'],undefined);
  assert.equal(pack.cards['REZ-1-008'].step,true);
  assert.equal(pack.cards['REZ-1-008'].implementation,'vanilla');
@@ -191,6 +191,12 @@ test('seventy-three whole prints enter the V2 pack and the other forty stay out'
  assert.deepEqual(pack.cards['REZ-1-098'].triggerEffect,pack.cards['REZ-1-076'].triggerEffect);
  assert.deepEqual(pack.cards['REZ-1-098'].effects.onPlay,[
   {op:'drawDiscard',count:2,discardCount:1},{op:'optionalRestFrontRecoverAp'}]);
+ assert.equal(pack.cards['REZ-1-094'].type,'field');
+ assert.equal(pack.cards['REZ-1-094'].trigger,'get');
+ assert.equal(pack.cards['REZ-1-094'].triggerEffect,null);
+ assert.deepEqual(pack.cards['REZ-1-094'].effects.onPlay,[{op:'optionalDiscardActiveSelf'}]);
+ assert.deepEqual(pack.cards['REZ-1-094'].mainAbility,{
+  op:'restSelfThen',frontOnly:false,oncePerTurn:true,then:[{op:'drawHandTop'}]});
  assert.equal(pack.cards['REZ-1-101'],undefined);
  assert.deepEqual(validateUniversalDeck(pack,counts),[]);
  const s=fresh();
@@ -2183,4 +2189,100 @@ test('the sanctuary trial color trigger deploys the same purple outside characte
  assert.equal(deployed.players[0].front.some(c=>c?.uid===match.uid&&c.ready),true);
  assert.ok(deployed.players[0].outside.some(c=>c.uid===trigger.uid));
  assert.equal(assertUniversalMatch(packs,deployed),true);
+});
+
+const libraryCounts={
+ ...Object.fromEntries(['REZ-1-094','REZ-1-086','REZ-1-068','REZ-1-069','REZ-1-072',
+  'REZ-1-073','REZ-1-075','REZ-1-079','REZ-1-080','REZ-1-081','REZ-1-091','REZ-1-092'].map(id=>[id,4])),
+ 'REZ-1-082':2
+};
+const library=seed=>newUniversalMatch(packs,{decks:[libraryCounts,libraryCounts],first:0,seed});
+test('Forbidden Library may discard to enter active, then rests to draw and top a hand card',()=>{
+ assert.equal(Object.values(libraryCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(pack,libraryCounts),[]);
+ const shell={id:'LIB',name:'Library',color:'purple',type:'field',energy:3,ap:1,bp:0,gen:0,
+  traits:[],trigger:'get',implementation:'dsl',effects:{}};
+ assert.throws(()=>createUniversalPack({id:'bad-lib',cards:[{...shell,type:'character',bp:3000,effects:{onPlay:[
+  {op:'optionalDiscardActiveSelf'}]}}]}),/field onPlay/);
+ assert.throws(()=>createUniversalPack({id:'bad-lib',cards:[{...shell,effects:{onPlay:[
+  {op:'drawHandTop'}]}}]}),/field main ability/);
+ let blocked=library(5601);
+ fuel(blocked,['REZ-1-086','REZ-1-086','REZ-1-086','REZ-1-086']);
+ blocked=reach(blocked,'main');
+ const frontOnly=pull(blocked,0,'REZ-1-094');
+ blocked.players[0].hand.push(frontOnly);
+ assert.equal(legalUniversalActions(packs,blocked).some(a=>a.type==='play'&&a.uid===frontOnly.uid&&a.line==='front'),false);
+ assert.ok(legalUniversalActions(packs,blocked).some(a=>a.type==='play'&&a.uid===frontOnly.uid&&a.line==='energy'));
+
+ let s=library(5602);
+ fuel(s,['REZ-1-086','REZ-1-086','REZ-1-086','REZ-1-086']);
+ s=reach(s,'main');
+ assert.equal(universalEnergyByColor(packs,s,0).purple,4);
+ const payment=pull(s,0,'REZ-1-072');
+ const placed=pull(s,0,'REZ-1-068');
+ s.players[0].hand.push(payment,placed);
+ let field;
+ [s,field]=playEnergy(s,'REZ-1-094');
+ assert.equal(at(s,0,field.uid).ready,false);
+ assert.equal(s.players[0].energy.some(c=>c?.uid===field.uid),true);
+ assert.equal(s.pending.kind,'effect-discard-active');
+ assert.equal(s.pending.optional,true);
+ assert.equal(Object.hasOwn(s.pending,'choices'),false);
+ const payLegal=legalUniversalActions(packs,s);
+ assert.ok(payLegal.some(a=>a.type==='chooseDiscardActive'&&a.uid===null));
+ assert.ok(payLegal.some(a=>a.uid===payment.uid));
+ assert.equal(payLegal.some(a=>a.uid===field.uid),false);
+ assert.equal(uiActionLabel({type:'chooseDiscardActive',uid:null},{pack,state:s}),'不棄牌，場域維持休息');
+ const declined=dispatchUniversalAction(packs,structuredClone(s),{type:'chooseDiscardActive',uid:null});
+ assert.equal(declined.pending,null);
+ assert.equal(at(declined,0,field.uid).ready,false);
+ assert.equal(declined.players[0].hand.some(c=>c.uid===payment.uid),true);
+ assert.equal(legalUniversalActions(packs,declined).some(a=>a.type==='activate'&&a.uid===field.uid),false);
+ assert.equal(assertUniversalMatch(packs,declined),true);
+ s=dispatchUniversalAction(packs,s,{type:'chooseDiscardActive',uid:payment.uid});
+ assert.equal(s.pending,null);
+ assert.equal(at(s,0,field.uid).ready,true);
+ assert.ok(s.players[0].outside.some(c=>c.uid===payment.uid));
+ assert.equal(s.zoneMoveEvents.filter(e=>e.uid===payment.uid).at(-1).reason,'own-effect');
+ const act=legalUniversalActions(packs,s).find(a=>a.type==='activate'&&a.uid===field.uid);
+ assert.equal(act.mode,'selfRestThen');
+ assert.equal(uiActionLabel(act,{pack,state:s}),'起動主要：休息這張場域，抽 1 張並將 1 張手牌放到牌組上面');
+ const topBefore=s.players[0].deck[0];
+ const second=s.players[0].deck[1];
+ s=dispatchUniversalAction(packs,s,act);
+ assert.equal(at(s,0,field.uid).ready,false);
+ assert.equal(s.pending.kind,'effect-hand-top');
+ assert.equal(s.pending.bp,undefined);
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.uid===null),false);
+ assert.ok(s.players[0].hand.some(c=>c.uid===topBefore.uid));
+ assert.ok(legalUniversalActions(packs,s).some(a=>a.type==='chooseHandTop'&&a.uid===placed.uid));
+ s=dispatchUniversalAction(packs,s,{type:'chooseHandTop',uid:placed.uid});
+ assert.equal(s.pending,null);
+ assert.equal(s.players[0].deck[0].uid,placed.uid);
+ assert.equal(s.players[0].deck[1].uid,second.uid);
+ assert.equal(s.players[0].hand.some(c=>c.uid===topBefore.uid),true);
+ assert.equal(s.zoneMoveEvents.filter(e=>e.uid===placed.uid).at(-1).to,'deck');
+ assert.equal(s.publicReveals.some(r=>r.uid===placed.uid),false);
+ at(s,0,field.uid).ready=true;
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='activate'&&a.uid===field.uid),false);
+ s=ownMain(s,2);
+ assert.equal(at(s,0,field.uid).ready,true);
+ assert.ok(legalUniversalActions(packs,s).some(a=>a.type==='activate'&&a.mode==='selfRestThen'&&a.uid===field.uid));
+ assert.equal(assertUniversalMatch(packs,s),true);
+
+ let bare=library(5603);
+ fuel(bare,['REZ-1-086','REZ-1-086','REZ-1-086','REZ-1-086']);
+ bare=reach(bare,'main');
+ bare.players[0].outside.push(...bare.players[0].hand.splice(0));
+ let quiet;
+ [bare,quiet]=playEnergy(bare,'REZ-1-094');
+ assert.equal(bare.pending,null);
+ assert.equal(at(bare,0,quiet.uid).ready,false);
+ at(bare,0,quiet.uid).ready=true;
+ bare.players[0].outside.push(...bare.players[0].hand.splice(0),...bare.players[0].deck.splice(0));
+ bare=dispatchUniversalAction(packs,bare,{type:'activate',uid:quiet.uid,mode:'selfRestThen'});
+ assert.equal(bare.pending,null);
+ assert.equal(at(bare,0,quiet.uid).ready,false);
+ assert.equal(bare.players[0].deck.length,0);
+ assert.equal(assertUniversalMatch(packs,bare),true);
 });

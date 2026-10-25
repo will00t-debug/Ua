@@ -37,6 +37,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-reveal-bottom':'公開 1 張手牌並放到牌底',
  'effect-hand-top':'將 1 張手牌放到牌組上面',
  'effect-rest-front-ap':'可休息 1 張前線活動角色，之後恢復 AP',
+ 'effect-discard-active':'可將 1 張手牌放到場外，使這張場域活動',
  'effect-once-choice':'是否發動本回合一次能力',
  'effect-choice-mode':'選擇一項效果',
  'recovered-self-entry':'回收後可 REST 登場至能源線',
@@ -111,6 +112,10 @@ export function uiActionLabel(action,{pack,state}={}){
       pack.cards[c.cardId]?.mainAbility?.end==='hand'))
      ?'起動主要：REST 自身，產能＋1，主要階段結束回手'
      :'起動主要：REST 自身，產能＋1，主要階段結束退場'):
+    action.mode==='selfRestThen'&&pack?.cards&&state?.players?.some(p=>
+     [...p.front,...p.energy].some(c=>c?.uid===action.uid&&
+      pack.cards[c.cardId]?.mainAbility?.then?.[0]?.op==='drawHandTop'))
+     ?'起動主要：休息這張場域，抽 1 張並將 1 張手牌放到牌組上面':
     action.mode==='selfRestThen'?'主要能力：REST 自身，執行效果':
     action.mode==='selfRestBuff'?'主要能力：REST 自身，指定另一張己方角色本回合 BP 加成':
     action.mode==='payApDrawEnergy'?'起動主要：支付 1 AP，抽 1 張，本回合產能＋1':
@@ -196,6 +201,8 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseRevealBottom':return '公開 '+name()+' 並放到牌底';
   case 'chooseHandTop':return '將 '+name()+' 放到牌組上面';
   case 'chooseRestFrontAp':return action.uid===null?'不休息前線':'休息 '+name()+'，之後可恢復 1 張 AP';
+  case 'chooseDiscardActive':return action.uid===null?'不棄牌，場域維持休息':
+   '將 '+name()+' 放到場外，並使這張場域活動';
   case 'chooseOwnBuff':case 'chooseMainBuff':case 'chooseTraitBuff':case 'chooseRestBp':
   case 'chooseRetireBp':case 'chooseTargetMany':return action.uid===null?'完成目標選擇':'選擇第 '+(state?.pending?.selected?.length+1||1)+' 個角色';
   case 'chooseFrontEnergyGrant':return action.uid===null?

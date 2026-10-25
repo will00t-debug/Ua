@@ -52,6 +52,7 @@ export function rezeroEngineKind(effectJa){
  if(e==='【登場時】自分の手札を1枚場外に置くか、自分のフロントLのアクティブのキャラを1枚レストにしてもよい。そうした場合、自分の場外から〈'+TRIAL_NAME+'〉を1枚手札に加える。')return 'sanctuaryRecover';
  if(e==='【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、【インパクト】を失う）【起動メイン】【フロントLにある場合】 【ターン1】自分の手札を1枚自分の山札の上に置く。そうした場合、このキャラはこのターン中、BP+1000。')return 'beatriceHandTop';
  if(e==='カードを2枚引き、自分の手札を1枚場外に置く。その後、自分のフロントLのアクティブのキャラを1枚レストにしてもよい。そうした場合、自分のAPカードを1枚まで選び、アクティブにする。')return 'trialRestAp';
+ if(e==='【登場時】自分の手札を1枚場外に置いてもよい。そうした場合、このフィールドをアクティブにする。【起動メイン】【レストにする】 【ターン1】カードを1枚引き、自分の手札を1枚自分の山札の上に置く。')return 'libraryField';
  return null;
 }
 const TOP_OUTSIDE=new Map([
@@ -117,6 +118,7 @@ function onPlay(card,kind){
   filter:{field:'name',value:TRIAL_NAME}}];
  if(kind==='trialRestAp')return [{op:'drawDiscard',count:2,discardCount:1},
   {op:'optionalRestFrontRecoverAp'}];
+ if(kind==='libraryField')return [{op:'optionalDiscardActiveSelf'}];
  return null;
 }
 export function rezeroPackCard(card){
@@ -183,6 +185,8 @@ export function rezeroPackCard(card){
   ...(kind==='beatriceHandTop'?{impactNull:true,mainAbility:{
    op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,
    then:[{op:'handTopBuffSelf',bp:1000}]}}:{}),
+  ...(kind==='libraryField'?{mainAbility:{
+   op:'restSelfThen',frontOnly:false,oncePerTurn:true,then:[{op:'drawHandTop'}]}}:{}),
   ...(kind==='feltTurnBp'?{passiveBonuses:[{
    condition:{kind:'ownNameExists',turn:'own',zone:'field',excludeSelf:false,name:'フェルト'},
    bp:1000}]}:{}),
