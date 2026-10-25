@@ -73,7 +73,7 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='effect-pay-ap-deploy')
   return difficulty==='easy'?legal.find(a=>a.mode==='skip')||legal[0]:
    legal.find(a=>a.mode==='pay')||legal[0];
- if(s.pending?.kind==='effect-top-order')return legal[0];
+ if(s.pending?.kind==='effect-top-hand-outside'||s.pending?.kind==='effect-top-order')return legal[0];
  if(['effect-discard-cost','effect-discard-gate'].includes(s.pending?.kind)){
   // An optional cost may be declined; tougher bots pay with a lower-value
   // hand card, using only the actor's own registered title pack.

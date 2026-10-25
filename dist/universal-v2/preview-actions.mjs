@@ -20,7 +20,9 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-search-deck':'搜尋牌庫', 'effect-search-deck-multi':'依序搜尋牌庫',
  'effect-top-inspect':'查看牌庫頂','effect-top-inspect-many':'任意張卡送場外',
  'effect-top-filter-choice':'查看牌頂，選擇符合特徵的角色／卡','effect-top-trait-outside':'查看牌頂，將符合特徵的卡送場外',
- 'effect-top-order':'排列牌庫頂或底','effect-optional-mill':'可將牌庫頂 1 張送場外',
+ 'effect-top-order':'排列牌庫頂或底',
+ 'effect-top-hand-outside':'查看牌頂：1 張入手、1 張出場外',
+ 'effect-optional-mill':'可將牌庫頂 1 張送場外',
  'effect-optional-draw':'攻擊時可抽 0 或 1 張',
  'effect-pay-ap-deploy':'可支付 1 AP，從場外 REST 登場',
  'effect-optional-pay-ap':'可支付 1 AP，然後結算後續效果',
@@ -166,6 +168,7 @@ export function uiActionLabel(action,{pack,state}={}){
    (action.mode==='raid'?'從手牌 Raid ':'從手牌 REST 登場 ')+name()+suffix();
    case 'chooseOutsideNameRest':return action.uid===null?'不從場外登場':'REST 登場 '+name()+suffix();
   case 'chooseTopFiltered':return action.uid===null?'不加入手牌，將其餘卡排列至底部':'加入手牌：'+name();
+  case 'chooseTopHandOutside':return (action.place==='outside'?'送至場外：':'加入手牌：')+name();
   case 'chooseTopOrder':return '依序放回：'+name();
   case 'chooseRestFrontEnergy':return 'REST '+name()+'，本回合產能＋1';
   case 'chooseOwnBuff':case 'chooseMainBuff':case 'chooseTraitBuff':case 'chooseRestBp':
