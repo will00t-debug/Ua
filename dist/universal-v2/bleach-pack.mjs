@@ -1126,6 +1126,8 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-2-006","kind":"ownCharacterDrawImpact","number":"EX07BT/BLC-2-006","name":"バンビエッタ・バスターバイン","color":"yellow","energy":4,"ap":1,"bp":4000,"gen":1,"trigger":"color","type":"character","effect":"登場：若透過己方角色的效果登場，抽 1 張。主要階段・每回合 1 次：支付 1 AP，使此角色本回合獲得 Impact 1。"}
 ,
 {"id":"BLC-2-058","kind":"peekAttackRemove","number":"EX07BT/BLC-2-058","name":"二枚屋 王悦","color":"purple","energy":3,"ap":1,"bp":2000,"gen":2,"trigger":"active","type":"character","effect":"登場：查看己方牌堆頂 1 張，將其放至牌堆頂或牌堆底。攻擊時：可將手牌中 1 張具有「零番隊」特徵的卡除外；成功時此角色本回合 BP +2000。"}
+,
+{"id":"BLC-2-033","kind":"drawOrPrintedApDraw","number":"EX07BT/BLC-2-033","name":"朽木 ルキア","color":"blue","energy":3,"ap":1,"bp":3000,"gen":2,"trigger":null,"type":"character","effect":"登場：抽 1 張，再將 1 張手牌送至場外；若己方前線有原始 AP 消耗 2 以上角色，可改為只抽 1 張。"}
 ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1250,6 +1252,7 @@ export function checkedBleachAddonDefinition(p){
  const isOwnCharacterRest=p.kind==='ownCharacterFrontRest';
  const isOwnCharacterDraw=p.kind==='ownCharacterDrawImpact';
  const isPeekAttack=p.kind==='peekAttackRemove';
+ const isDrawInstead=p.kind==='drawOrPrintedApDraw';
  const topDiscard={
   'BLC-3-007':{count:3,filter:{field:'trait',value:'護廷十三隊'}},
   'BLC-3-002':{count:3,filters:[
@@ -1283,7 +1286,7 @@ export function checkedBleachAddonDefinition(p){
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest||isOwnCharacterDraw||isPeekAttack;
+ const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest||isOwnCharacterDraw||isPeekAttack||isDrawInstead;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1511,7 +1514,8 @@ export function checkedBleachAddonDefinition(p){
    ]}]}:
    isOwnCharacterRest?{onPlay:[{op:'restOppFrontOne',optional:true,entry:'ownCharacter'}]}:
    isOwnCharacterDraw?{onPlay:[{op:'draw',count:1,entry:'ownCharacter'}]}:
-   isPeekAttack?{onPlay:[{op:'peekTopOrBottom'}],onAttack:[{op:'optionalRemoveHandThen',zone:'removed',filter:{field:'trait',value:'零番隊'},then:[{op:'buffSelf',bp:2000}]}]}:{}})
+   isPeekAttack?{onPlay:[{op:'peekTopOrBottom'}],onAttack:[{op:'optionalRemoveHandThen',zone:'removed',filter:{field:'trait',value:'零番隊'},then:[{op:'buffSelf',bp:2000}]}]}:
+   isDrawInstead?{onPlay:[{op:'drawDiscard',count:1,discardCount:1,instead:{op:'draw',count:1,when:{kind:'ownPrintedApAtLeast',turn:'any',zone:'front',excludeSelf:false,minAp:2}}}]}:{}})
  };
 }
 export function bleachV2PortedCards(){

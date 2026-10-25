@@ -1094,9 +1094,17 @@ function continueEffectQueue(pack,s){
    if(s.players[foe].hand.length)
     s.pending={kind:'effect-discard',player:foe,sourceUid:job.sourceUid};
   }else if(job.op==='drawDiscard'){
-   draw(pack,s,owner,job.count,{reason:'own-effect',sourceUid:job.sourceUid});
-   if(pl.hand.length)s.pending={kind:'effect-discard',player:owner,sourceUid:job.sourceUid,
-     ...(job.discardCount>1?{remaining:Math.min(job.discardCount,pl.hand.length)}:{})};
+   const live=c=>card(pack,c);
+   const replace=job.instead&&matchesV2LiveCondition(s,owner,job.sourceUid,job.instead.when,
+    live,()=>calcEnergy(pack,s,owner),c=>bp(pack,s,c));
+   if(replace)s.pending={kind:'effect-draw-instead',player:owner,sourceUid:job.sourceUid,
+    sourceName:job.sourceName,count:job.count,discardCount:job.discardCount,
+    when:{...job.instead.when}};
+   else{
+    draw(pack,s,owner,job.count,{reason:'own-effect',sourceUid:job.sourceUid});
+    if(pl.hand.length)s.pending={kind:'effect-discard',player:owner,sourceUid:job.sourceUid,
+      ...(job.discardCount>1?{remaining:Math.min(job.discardCount,pl.hand.length)}:{})};
+   }
   }else if(job.op==='retireOppFrontUnderBp'){
    const limit=retireOppFrontLimit(pack,s,owner,job);
    const choices=s.players[1-owner].front.filter(c=>c&&bp(pack,s,c)<=limit).map(c=>c.uid);
@@ -2948,6 +2956,20 @@ function resolveChoice(s,a,pack){
   target.blockAtLeastGranted={turn:s.turn,stamp:target.fieldEntryStamp,bp:q.bp};
   s.pending=null;continueEffectQueue(pack,s);return;
  }
+ if(q.kind==='effect-draw-instead'){
+  if(a.type!=='chooseDrawInstead'||!['draw','discard'].includes(a.mode))
+   throw Error('Illegal draw replacement');
+  const still=matchesV2LiveCondition(s,q.player,q.sourceUid,q.when,c=>card(pack,c),
+   ()=>calcEnergy(pack,s,q.player),c=>bp(pack,s,c));
+  if(a.mode==='draw'&&!still)throw Error('Draw replacement is not legal');
+  draw(pack,s,q.player,q.count,{reason:'own-effect',sourceUid:q.sourceUid});
+  s.pending=null;
+  if(a.mode==='discard'&&p.hand.length)
+   s.pending={kind:'effect-discard',player:q.player,sourceUid:q.sourceUid,
+    ...(q.discardCount>1?{remaining:Math.min(q.discardCount,p.hand.length)}:{})};
+  else continueEffectQueue(pack,s);
+  return;
+ }
  if(q.kind==='effect-may-draw-discard'){
   if(a.mode==='draw'){
    if(!p.deck.length)throw Error('Optional draw has no deck card');
@@ -3838,6 +3860,16 @@ function legalPending(pack,s){
    cardHasName(card(pack,c),q.name,originalEffectsDisabled(s,c))).map(c=>c.uid);
   return [...(q.optional?[{type:'chooseGrantBlockAtLeast',uid:null}]:[]),
    ...choices.map(uid=>({type:'chooseGrantBlockAtLeast',uid}))];
+ }
+ if(q.kind==='effect-draw-instead'){
+  // The printed default stays legal after the gate closes. Only the
+  // replacement draw is live, so a departed AP character cannot be chosen.
+  const still=matchesV2LiveCondition(s,q.player,q.sourceUid,q.when,c=>card(pack,c),
+   ()=>calcEnergy(pack,s,q.player),c=>bp(pack,s,c));
+  return [
+   {type:'chooseDrawInstead',mode:'discard'},
+   ...(still?[{type:'chooseDrawInstead',mode:'draw'}]:[])
+  ];
  }
  if(q.kind==='effect-may-draw-discard')return [
   {type:'chooseMayDrawDiscard',mode:'skip'},
@@ -4943,7 +4975,7 @@ export function assertUniversalMatch(pack,s){
    !Array.isArray(s.initialCounts)||s.initialCounts.length!==2||
    s.players?.length!==2||!playerIndex(s.active)||
    !['playing','finished'].includes(s.status))throw Error('Incorrect pack/version or match state');
- if(s.pending&&(!playerIndex(s.pending.player)||!['phase-order','retirement-order','effect-move-order','effect-rest-tuck','effect-tuck-moved','effect-grant-cause','effect-hand-bottom','effect-pay-deploy-self','effect-deploy-self-active','effect-outside-hand-or-rest','effect-recover-under','effect-energy-front','effect-entry-protect','block','life-batch-order','life-trigger','effect-target','effect-target-many','effect-grant-attack','granted-attack-draw','effect-discard','effect-remove-hand','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-bounce-bp','effect-named-outside-bounce-retire','effect-optional-draw','effect-return-retired','effect-strip-raid-top','effect-retire-own-field','effect-retire-own-character','main-field-trait-retire','effect-rest-bp','effect-attack-ban','effect-own-front-protect','effect-grant-ap-tax','effect-grant-front-energy','raid-effect-order','effect-buff-trait','effect-buff-own','effect-active-own-named','effect-once-choice','main-two-buff','main-discard-buff','main-discard-self-retire','main-rest-front-energy','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-filter-many-choice','effect-top-order','effect-recover-outside','effect-outside-rest','effect-outside-name-rest','effect-outside-traitless-rest','effect-named-zone-entry','effect-hand-rest','effect-hand-rest-or-raid','effect-optional-pay-ap','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-remove-outside','effect-selection-hand-payment','attack-end-swap','effect-choice-mode','recovered-self-entry','effect-optional-mill','effect-pay-ap-deploy','effect-top-trait-outside','effect-line-move','effect-line-slot','effect-rest-two','effect-self-front','effect-raid-leave','effect-rest-lock','effect-grant-block-at-least','effect-may-draw-discard','effect-grant-impact','effect-life-to-hand'].includes(s.pending.kind)))
+ if(s.pending&&(!playerIndex(s.pending.player)||!['phase-order','retirement-order','effect-move-order','effect-rest-tuck','effect-tuck-moved','effect-grant-cause','effect-hand-bottom','effect-pay-deploy-self','effect-deploy-self-active','effect-outside-hand-or-rest','effect-recover-under','effect-energy-front','effect-entry-protect','block','life-batch-order','life-trigger','effect-target','effect-target-many','effect-grant-attack','granted-attack-draw','effect-discard','effect-remove-hand','effect-draw-instead','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-bounce-bp','effect-named-outside-bounce-retire','effect-optional-draw','effect-return-retired','effect-strip-raid-top','effect-retire-own-field','effect-retire-own-character','main-field-trait-retire','effect-rest-bp','effect-attack-ban','effect-own-front-protect','effect-grant-ap-tax','effect-grant-front-energy','raid-effect-order','effect-buff-trait','effect-buff-own','effect-active-own-named','effect-once-choice','main-two-buff','main-discard-buff','main-discard-self-retire','main-rest-front-energy','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-filter-many-choice','effect-top-order','effect-recover-outside','effect-outside-rest','effect-outside-name-rest','effect-outside-traitless-rest','effect-named-zone-entry','effect-hand-rest','effect-hand-rest-or-raid','effect-optional-pay-ap','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-remove-outside','effect-selection-hand-payment','attack-end-swap','effect-choice-mode','recovered-self-entry','effect-optional-mill','effect-pay-ap-deploy','effect-top-trait-outside','effect-line-move','effect-line-slot','effect-rest-two','effect-self-front','effect-raid-leave','effect-rest-lock','effect-grant-block-at-least','effect-may-draw-discard','effect-grant-impact','effect-life-to-hand'].includes(s.pending.kind)))
   throw Error('Invalid pending controller');
  if(!Array.isArray(s.raidedThisTurn)||s.raidedThisTurn.length!==2||
    s.raidedThisTurn.some(x=>typeof x!=='boolean')||
@@ -5135,6 +5167,18 @@ export function assertUniversalMatch(pack,s){
    Object.keys(q).some(k=>!['kind','player','sourceUid','originPending',
     'targetAction','targetUid','targetStamp','sourceType'].includes(k)))
    throw Error('Invalid resumed selection hand-payment');
+ }
+ if(s.pending?.kind==='effect-draw-instead'){
+  const q=s.pending,pl=s.players[q.player];
+  const source=[...field(pl),...(pl.resolvingEvents||[]),...pl.outside].find(c=>c.uid===q.sourceUid);
+  const printed=source&&card(pack,source);
+  const effect=printed&&[...(printed.effects.onPlay||[]),...(printed.effects.onAttack||[]),
+   ...(printed.mainAbility?.then||[])].find(e=>e.op==='drawDiscard'&&e.instead&&
+   e.count===q.count&&e.discardCount===q.discardCount&&same(e.instead.when,q.when));
+  if(!effect||q.sourceName!==printed.name||!q.sourceUid.startsWith(q.player+'-')||
+   Object.keys(q).length!==7||
+   Object.keys(q).some(k=>!['kind','player','sourceUid','sourceName','count','discardCount','when'].includes(k)))
+   throw Error('Forged draw replacement');
  }
  if(s.pending?.kind==='effect-remove-hand'){
   const q=s.pending,pl=s.players[q.player];

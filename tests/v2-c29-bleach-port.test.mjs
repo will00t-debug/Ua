@@ -57,9 +57,15 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 //   [アタック時]自分の手札の［特徴：零番隊］を1枚リムーブエリアに置いてもよい。
 //   そうした場合、このキャラはこのターン中、BP+2000。 ACTIVE is generic.
 //   Generated energy alt is 紫紫. A non-零番隊 hand card is not a payment.
+// BLC-2-033 EX07BT: [登場時]『カードを1枚引き、自分の手札を1枚場外に置く』。
+//   自分のフロントLに元々の消費APが2以上のキャラがある場合、『カードを1枚引く』に代えてもよい。
+//   No trigger. Required energy alt is 青3. Generated energy alt is 青青.
+//   The replacement is chosen before either sentence. Energy-line cards do not
+//   count. This card's own printed AP is 1, so it does not open its own gate.
+//   A printed AP of 2 on this same sentence does count, because the text has no 他の.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -130,12 +136,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers thirty-two whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,468);
- assert.equal(EXPECTED_V2_COUNTS.bleach,192);
+test('C29 registers thirty-three whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,469);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,193);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,192);
+ assert.equal(Object.keys(bleach.cards).length,193);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -2020,4 +2026,170 @@ test('BLC-2-058 peeks the top card, then may remove one Squad Zero hand card for
  assert.equal(assertUniversalMatch(opened.packs,skipped),true);
  assert.equal(assertUniversalMatch(opened.packs,again),true);
  assert.equal(assertUniversalMatch(quiet.packs,noPay),true);
+});
+
+test('BLC-2-033 draws and discards, or only draws when a front character has printed AP 2',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-2-033');
+ assert.equal(printed.effect,'登場：抽 1 張，再將 1 張手牌送至場外；若己方前線有原始 AP 消耗 2 以上角色，可改為只抽 1 張。');
+ assert.equal(printed.traits,'護廷十三隊');
+ assert.equal(printed.energy,3);
+ assert.equal(printed.ap,1);
+ assert.equal(printed.gen,2);
+ assert.equal(printed.trigger,null);
+ const card=bleach.cards['BLC-2-033'];
+ assert.deepEqual(card.traits,['護廷十三隊']);
+ assert.equal(card.gen,2);
+ assert.equal(card.trigger,null);
+ assert.equal(card.triggerEffect,null);
+ const when={kind:'ownPrintedApAtLeast',turn:'any',zone:'front',excludeSelf:false,minAp:2};
+ assert.deepEqual(card.effects.onPlay,[{op:'drawDiscard',count:1,discardCount:1,instead:{op:'draw',count:1,when}}]);
+ assert.equal(bleach.cards['BLC-2-018'].mainAbility.then[0].instead,undefined);
+ const bare={id:'BAD',name:'BAD',color:'blue',type:'character',energy:0,ap:1,bp:1000,gen:1,traits:[],trigger:null,implementation:'dsl',effects:{}};
+ const onPlay=[{op:'drawDiscard',count:1,discardCount:1,instead:{op:'draw',count:1,when}}];
+ assert.throws(()=>createUniversalPack({id:'bad-instead-count',cards:[{...bare,effects:{onPlay:[{op:'drawDiscard',count:1,discardCount:1,instead:{op:'draw',count:2,when}}]}}]}),/invalid mandatory draw\/discard profile/);
+ assert.throws(()=>createUniversalPack({id:'bad-instead-when',cards:[{...bare,effects:{onPlay:[{op:'drawDiscard',count:1,discardCount:1,instead:{op:'draw',count:1}}]}}]}),/invalid mandatory draw\/discard profile/);
+ const deck=realDeck(['BLC-2-033','BLC-2-025','BLC-2-031','BLC-2-036','BLC-4-022','BLC-2-018','BLC-2-016','BLC-4-023','BLC-2-022','BLC-2-040','BLC-2-042','BLC-4-035','BLC-2-021'],'blue');
+ function pay(s){
+  put(s,0,'BLC-2-025','energy',0);
+  put(s,0,'BLC-2-031','energy',1);
+  put(s,0,'BLC-2-036','energy',2);
+ }
+ function play(match){
+  const self=take(match.s,0,'BLC-2-033');
+  const top=match.s.players[0].deck[0];
+  match.s.players[0].hand.push(self);
+  const beforeHand=match.s.players[0].hand.length;
+  const beforeDeck=match.s.players[0].deck.length;
+  const played=dispatchUniversalAction(match.packs,match.s,legalUniversalActions(match.packs,match.s).find(a=>a.type==='play'&&a.uid===self.uid&&a.line==='front'));
+  assert.equal(played.players[0].front.find(c=>c?.uid===self.uid).ready,false);
+  return {self,top,beforeHand,beforeDeck,played};
+ }
+ function discardTop(packs,played,top){
+  assert.equal(played.pending.kind,'effect-discard');
+  assert.equal(played.players[0].hand.some(c=>c.uid===top.uid),true);
+  const done=dispatchUniversalAction(packs,played,legalUniversalActions(packs,played).find(a=>a.type==='chooseDiscard'&&a.uid===top.uid));
+  assert.equal(done.pending,null);
+  assert.equal(done.players[0].outside.some(c=>c.uid===top.uid),true);
+  assert.equal(done.players[0].removed.some(c=>c.uid===top.uid),false);
+  assert.equal(done.players[0].hand.some(c=>c.uid===top.uid),false);
+  return done;
+ }
+ const alone=main(deck,29033);
+ pay(alone.s);
+ const closed=play(alone);
+ assert.equal(closed.played.pending.kind,'effect-discard');
+ assert.equal(closed.played.players[0].deck.length,closed.beforeDeck-1);
+ assert.equal(closed.played.players[0].hand.length,closed.beforeHand);
+ const closedDone=discardTop(alone.packs,closed.played,closed.top);
+ assert.equal(closedDone.players[0].hand.length,closed.beforeHand-1);
+ const energyGate=main(deck,290331);
+ pay(energyGate.s);
+ put(energyGate.s,0,'BLC-4-022','energy',3,false);
+ const fromEnergy=play(energyGate);
+ assert.equal(fromEnergy.played.pending.kind,'effect-discard');
+ const lowFront=main(deck,290332);
+ pay(lowFront.s);
+ const mate=put(lowFront.s,0,'BLC-2-016','front',0,true);
+ mate.buffs=[{bp:9000,untilTurn:lowFront.s.turn}];
+ assert.equal(universalBp(lowFront.packs,lowFront.s,mate),bleach.cards['BLC-2-016'].bp+9000);
+ const buffed=play(lowFront);
+ assert.equal(buffed.played.pending.kind,'effect-discard');
+ const open=main(deck,290333);
+ pay(open.s);
+ const heavy=put(open.s,0,'BLC-4-022','front',0,false);
+ assert.equal(heavy.ready,false);
+ const choice=play(open);
+ assert.equal(choice.played.pending.kind,'effect-draw-instead');
+ assert.equal(choice.played.players[0].deck[0].uid,choice.top.uid);
+ assert.equal(choice.played.players[0].hand.some(c=>c.uid===choice.top.uid),false);
+ assert.equal(choice.played.players[0].hand.length,choice.beforeHand-1);
+ assert.deepEqual(universalPublicView(open.packs,choice.played,1).pending,{kind:'effect-draw-instead',player:0});
+ assert.equal(universalPrivateChoices(open.packs,choice.played,0),null);
+ assert.equal(universalPrivateChoices(open.packs,choice.played,1),null);
+ const modes=legalUniversalActions(open.packs,choice.played);
+ assert.deepEqual(modes.map(a=>a.mode),['discard','draw']);
+ const drew=dispatchUniversalAction(open.packs,structuredClone(choice.played),modes.find(a=>a.mode==='draw'));
+ assert.equal(drew.pending,null);
+ assert.equal(drew.players[0].hand.some(c=>c.uid===choice.top.uid),true);
+ assert.equal(drew.players[0].outside.some(c=>c.uid===choice.top.uid),false);
+ assert.equal(drew.players[0].deck.length,choice.beforeDeck-1);
+ assert.equal(drew.players[0].hand.length,choice.beforeHand);
+ const mid=dispatchUniversalAction(open.packs,structuredClone(choice.played),modes.find(a=>a.mode==='discard'));
+ assert.equal(mid.pending.kind,'effect-discard');
+ assert.equal(mid.players[0].hand.some(c=>c.uid===choice.top.uid),true);
+ const tossed=dispatchUniversalAction(open.packs,mid,legalUniversalActions(open.packs,mid).find(a=>a.type==='chooseDiscard'&&a.uid===choice.top.uid));
+ assert.equal(tossed.players[0].outside.some(c=>c.uid===choice.top.uid),true);
+ assert.equal(tossed.players[0].removed.some(c=>c.uid===choice.top.uid),false);
+ assert.equal(tossed.players[0].hand.length,choice.beforeHand-1);
+ const emptyDraw=structuredClone(choice.played);
+ emptyDraw.players[0].outside.push(...emptyDraw.players[0].deck.splice(0));
+ const nothing=dispatchUniversalAction(open.packs,emptyDraw,legalUniversalActions(open.packs,emptyDraw).find(a=>a.mode==='draw'));
+ assert.equal(nothing.pending,null);
+ assert.equal(nothing.players[0].deck.length,0);
+ assert.equal(nothing.players[0].hand.length,choice.beforeHand-1);
+ assert.equal(nothing.players[0].hand.some(c=>c.uid===choice.top.uid),false);
+ const emptyDiscard=structuredClone(choice.played);
+ emptyDiscard.players[0].outside.push(...emptyDiscard.players[0].deck.splice(0));
+ const stillDiscard=dispatchUniversalAction(open.packs,emptyDiscard,legalUniversalActions(open.packs,emptyDiscard).find(a=>a.mode==='discard'));
+ assert.equal(stillDiscard.pending.kind,'effect-discard');
+ assert.equal(stillDiscard.players[0].deck.length,0);
+ assert.equal(stillDiscard.players[0].hand.length,choice.beforeHand-1);
+ const held=stillDiscard.players[0].hand[0];
+ const emptied=dispatchUniversalAction(open.packs,stillDiscard,legalUniversalActions(open.packs,stillDiscard).find(a=>a.type==='chooseDiscard'&&a.uid===held.uid));
+ assert.equal(emptied.players[0].outside.some(c=>c.uid===held.uid),true);
+ assert.equal(emptied.players[0].deck.length,0);
+ const dropped=structuredClone(choice.played);
+ const gone=dropped.players[0].front.find(c=>c?.cardId==='BLC-4-022');
+ dropped.players[0].front[dropped.players[0].front.findIndex(c=>c?.uid===gone.uid)]=null;
+ dropped.players[0].outside.push(gone);
+ assert.equal(assertUniversalMatch(open.packs,dropped),true);
+ const only=legalUniversalActions(open.packs,dropped);
+ assert.equal(only.some(a=>a.mode==='draw'),false);
+ assert.equal(only.some(a=>a.mode==='discard'),true);
+ assert.throws(()=>dispatchUniversalAction(open.packs,dropped,{type:'chooseDrawInstead',mode:'draw'}),/not currently legal/);
+ const unit=(id,extra)=>({id,name:id,color:'blue',type:'character',energy:0,ap:1,bp:2000,gen:1,traits:[],trigger:null,implementation:'vanilla',effects:{},...extra});
+ const lab=createUniversalPack({id:'c29-draw-instead',cards:[
+  unit('AP2',{ap:2,implementation:'dsl',effects:{onPlay}}),
+  unit('AP1',{implementation:'dsl',effects:{onPlay}}),
+  ...['A','B','C','D','E','F','G','H','I','J','K'].map(id=>unit(id))
+ ]});
+ const ids=['AP2','AP1','A','B','C','D','E','F','G','H','I','J','K'];
+ const counts=Object.fromEntries(ids.map((id,i)=>[id,i===12?2:4]));
+ assert.deepEqual(validateUniversalDeck(lab,counts),[]);
+ const both=[lab,lab];
+ let selfGate=newUniversalMatch(both,{decks:[counts,counts],seed:290334,first:0});
+ for(let n=0;n<8&&selfGate.phase!=='main';n++)
+  selfGate=dispatchUniversalAction(both,selfGate,{type:'next'});
+ function lift(state,id){
+  for(const zone of ['hand','deck','life','outside','removed']){
+   const list=state.players[0][zone],i=list.findIndex(c=>c.cardId===id);
+   if(i>=0)return list.splice(i,1)[0];
+  }
+  throw Error('Missing '+id);
+ }
+ const ap2=lift(selfGate,'AP2');
+ selfGate.players[0].hand.push(ap2);
+ selfGate.players[0].apCards[1].inPlay=true;
+ selfGate.players[0].apCards[1].ready=true;
+ const openedSelf=dispatchUniversalAction(both,selfGate,legalUniversalActions(both,selfGate).find(a=>a.type==='play'&&a.uid===ap2.uid&&a.line==='front'));
+ assert.equal(openedSelf.pending.kind,'effect-draw-instead');
+ assert.equal(openedSelf.players[0].front.filter(Boolean).length,1);
+ let lowSelf=newUniversalMatch(both,{decks:[counts,counts],seed:290335,first:0});
+ for(let n=0;n<8&&lowSelf.phase!=='main';n++)
+  lowSelf=dispatchUniversalAction(both,lowSelf,{type:'next'});
+ const ap1=lift(lowSelf,'AP1');
+ lowSelf.players[0].hand.push(ap1);
+ const openedLow=dispatchUniversalAction(both,lowSelf,legalUniversalActions(both,lowSelf).find(a=>a.type==='play'&&a.uid===ap1.uid&&a.line==='front'));
+ assert.equal(openedLow.pending.kind,'effect-discard');
+ aiOk(open.packs,choice.played);
+ assert.equal(assertUniversalMatch(alone.packs,closedDone),true);
+ assert.equal(assertUniversalMatch(energyGate.packs,fromEnergy.played),true);
+ assert.equal(assertUniversalMatch(lowFront.packs,buffed.played),true);
+ assert.equal(assertUniversalMatch(open.packs,choice.played),true);
+ assert.equal(assertUniversalMatch(open.packs,drew),true);
+ assert.equal(assertUniversalMatch(open.packs,tossed),true);
+ assert.equal(assertUniversalMatch(open.packs,nothing),true);
+ assert.equal(assertUniversalMatch(open.packs,emptied),true);
+ assert.equal(assertUniversalMatch(both,openedSelf),true);
+ assert.equal(assertUniversalMatch(both,openedLow),true);
 });

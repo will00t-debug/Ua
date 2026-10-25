@@ -791,11 +791,26 @@ function verifyProgram(program,path){
   }
   if(e.op==='peekTopOne'&&Object.keys(e).some(key=>key!=='op'))throw Error(path+'['+i+'] unsupported private peek options');
   if(e.op==='recoverAp'&&(!integer(e.count,1)||e.count>3))throw Error(path+'['+i+'] invalid AP recovery count');
-  if(e.op==='drawDiscard'&&(
-   (e.discardCount===undefined&&e.count!==1)||
-   (e.discardCount!==undefined&&(!integer(e.discardCount,1)||e.discardCount>10))||
-   Object.keys(e).some(k=>!['op','count','discardCount'].includes(k))
-  ))throw Error(path+'['+i+'] invalid mandatory draw/discard profile');
+  if(e.op==='drawDiscard'){
+   const keys=Object.keys(e);
+   const base=integer(e.count,1)&&e.count<=10&&
+    (e.discardCount===undefined?e.count===1:integer(e.discardCount,1)&&e.discardCount<=10);
+   const plain=e.instead===undefined&&base&&
+    keys.every(k=>['op','count','discardCount'].includes(k));
+   const alt=e.instead;
+   // 『抽って場外』を『引く』に代えてもよい. The replacement is the same
+   // draw count and only exists while its printed live condition holds.
+   // An absent instead keeps every older mandatory draw/discard.
+   const replaced=base&&e.count===1&&e.discardCount===1&&
+    alt&&typeof alt==='object'&&!Array.isArray(alt)&&
+    alt.op==='draw'&&alt.count===1&&alt.when&&typeof alt.when==='object'&&
+    !Array.isArray(alt.when)&&keys.length===4&&
+    keys.every(k=>['op','count','discardCount','instead'].includes(k))&&
+    Object.keys(alt).length===3&&
+    Object.keys(alt).every(k=>['op','count','when'].includes(k));
+   if(!plain&&!replaced)throw Error(path+'['+i+'] invalid mandatory draw/discard profile');
+   if(replaced)assertLiveCondition(alt.when,path+'['+i+'].instead.when');
+  }
   if(['buffSelf','enemyBpDown'].includes(e.op)&&(!integer(e.bp,1)||e.bp>5000))throw Error(path+'['+i+'] invalid temporary BP');
   if(e.op==='moveOtherAcrossOrRemove'){
    const keys=Object.keys(e);
