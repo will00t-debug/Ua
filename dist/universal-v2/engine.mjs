@@ -3960,8 +3960,10 @@ export function legalUniversalActions(pack,s){
    if(ability?.op==='frontOnceProgram'&&ability.frontOnly===false&&
     !s.mainAbilityUsedUids.includes(c.uid)){
     const step=ability.then[0];
-    if(!(step.op==='discardGate'&&!payableHand(pack,s,p,step.payment).length))
-     out.push({type:'activate',uid:c.uid,mode:'frontOnce'});
+    if(step.op==='discardGate'&&!payableHand(pack,s,p,step.payment).length)continue;
+    if(step.op==='restOppFrontUnderBp'&&!s.players[1-p].front.some(x=>x&&
+     bp(pack,s,x)<=step.bp&&cardEffectTargetPayable(pack,s,p,x.uid,0,c.uid)))continue;
+    out.push({type:'activate',uid:c.uid,mode:'frontOnce'});
    }
   }
   for(const c of pl.front.filter(Boolean)){
@@ -4030,6 +4032,12 @@ export function legalUniversalActions(pack,s){
     }
     const step=ability.then[0];
     if(step.op==='discardGate'&&!payableHand(pack,s,p,step.payment).length)continue;
+    if(step.op==='restOppFrontUnderBp'){
+     const ok=s.players[1-p].front.some(x=>x&&bp(pack,s,x)<=step.bp&&
+      cardEffectTargetPayable(pack,s,p,x.uid,0,c.uid));
+     if(ok)out.push({type:'activate',uid:c.uid,mode:'frontOnce'});
+     continue;
+    }
     const debuff=step.op==='discardGate'
      ?step.then.find(e=>e.op==='enemyBpDown'):step;
     // A named-payment MAIN may draw/buff/grant without an enemy target.

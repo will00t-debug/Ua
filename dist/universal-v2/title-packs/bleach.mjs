@@ -99,7 +99,10 @@ const testForKind=Object.freeze({
  aliasNameTop:'tests/v2-c26-bleach-batch.test.mjs',
  fourNameTop:'tests/v2-c26-bleach-batch.test.mjs',
  ownEffectRest:'tests/v2-c26-bleach-batch.test.mjs',
- ownEffectDrawPayImpact:'tests/v2-c26-bleach-batch.test.mjs'
+ ownEffectDrawPayImpact:'tests/v2-c26-bleach-batch.test.mjs',
+ oppFrontBelowPrinted:'tests/v2-c27-bleach-batch.test.mjs',
+ raidFrontRestUnder:'tests/v2-c27-bleach-batch.test.mjs',
+ otherRetiredBp:'tests/v2-c27-bleach-batch.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
