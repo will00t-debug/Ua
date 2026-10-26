@@ -55,3 +55,12 @@ Registered:
 - UA51BT/SLG-1-067 カナ. Official trait token `DFN／第四次架南島レイド`. OnPlay, when at least three own DFN characters are on the field including this card, draw 1, set this card ACTIVE, and BP+1000 this turn. The printed name shares that entry once per turn. `oncePerTurnGate` now accepts a `when` condition, and a miss does not spend the name. `activeSelf` is a legal follow-up. The catalogue does not say 自己的回合 for the count. The catalogue also omits the color life sentence. The attached profile deploys one green AP 1 character of energy 2 or less from hand, matching the in-repo life fixture. That energy cap was not re-read from the official page.
 
 Official pages were not re-read. Not a full FAQ certification.
+
+## Batch 7 — two field mains
+
+Registered:
+
+- UA51BT/SLG-1-035 スキル：君主の領域. Enters ACTIVE. Main REST gives every own 影の軍団 character BP+500 this turn, or BP+1000 when at least five own field cards have that trait. The field itself has the trait and is included in the count. Only characters receive the BP. Official trait is 影の軍団. New shared field main `restScaleTrait`. `enterAlwaysActive` now also applies to fields.
+- UA51BT/SLG-1-075 デイリークエスト. It does not enter ACTIVE, so the REST mains are not legal on the turn it is paid from hand. One main RESTs and, while an own character named 水篠 旬 is on the field, puts the top deck card facedown under this field. The other RESTs, discards one hand card, may send one facedown card from under an own card outside, and only after that send may recover one own outside character named 水篠 旬 with energy 0 or less. New shared field mains `restTuckTopIfName` and `restDiscardFacedownRecover`.
+
+Official pages were not re-read. GET life stays on the shared handler. Not a full FAQ certification.

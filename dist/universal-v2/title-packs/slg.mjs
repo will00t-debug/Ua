@@ -33,6 +33,8 @@ const proof=Object.freeze({
  '020':['登場時抽1張，然後可將1張手牌送場外','UA51BT/SLG-1-020 水篠 旬 purple4/AP1/BP4000/gen1 RAID life separate. Raid name 水篠 旬. OnPlay draws 1, then may discard 1 hand card to recover up to one own outside character other than 水篠 旬 with printed BP 3000 or less. OnAttack draws 1 and discards 1, and gains BP+500 this turn for each 5 own outside cards. Official page was not re-read. Not a full FAQ certification.'],
  '049':['自己的回合中藉己方效果登場時，可使對方前線最多1張角色退場','UA51BT/SLG-1-049 水篠 旬 green6/AP1/BP4000/gen1 RAID life separate. Raid name 水篠 旬. Printed Impact 1. Catalogue BP+500 has no 自己的回合 limit, so both turns gain 500. OnPlay may retire one opponent front character only when this card entered by an own effect on its controller turn. Paid play does not offer that retirement. No registered host deploys this green energy-6 character from outside, so the positive own-effect entry is untested. OnAttack draws 1, then one hand card is placed facedown under this character. Official page was not re-read. Not a full FAQ certification.'],
  '067':['登場時若己方有3張以上DFN，抽1張，將此角色ACTIVE並使本回合BP+1000','UA51BT/SLG-1-067 カナ green4/AP1/BP3000/gen1 COLOR life separate. OnPlay, if own field has at least 3 DFN characters including this card, draw 1, set this card ACTIVE, and BP+1000 this turn. The same printed name shares that entry once per turn, and a miss does not spend the use. Catalogue does not say 自己的回合 for the count, so the check is either turn. Official trait is one token DFN／第四次架南島レイド. The catalogue omits the color life sentence. The attached hand deploy is green, energy at most 2, AP 1, matching the in-repo life fixture, and was not re-read from the official page. Not a full FAQ certification.'],
+ '035':['場域以ACTIVE登場；主要階段REST，己方所有影之軍團本回合BP+500','UA51BT/SLG-1-035 スキル：君主の領域 purple field energy3/AP1/gen2 GET life separate. Enters ACTIVE. Main REST gives every own 影の軍団 character BP+500 this turn, or BP+1000 when at least 5 own field cards have that trait. The field itself has the trait and is counted, and only characters receive BP. Official trait is 影の軍団. Official page was not re-read. Not a full FAQ certification.'],
+ '075':['場域主要階段REST，己方有水篠旬時將牌庫頂1張裏向放在此卡下','UA51BT/SLG-1-075 デイリークエスト green field energy1/AP1/gen1 GET life separate. It does not enter ACTIVE. One main RESTs and, when an own character named 水篠 旬 is on the field, puts the top deck card facedown under this field. The other main RESTs and discards one hand card, may send one facedown card from under an own card outside, and only then may recover one own outside character named 水篠 旬 with energy 0 or less. Official page was not re-read. Not a full FAQ certification.'],
 
  '042':['主要階段每回合一次REST自己，額外產生1綠能源，主要階段結束時退場。','Official UA51BT/SLG-1-042 2026-04-17 errata-aware source: 馬渕 勲 GREEN0/AP1/BP1000/gen1 no life; rest OWN READY ENERGY source MAIN once per turn, current-turn GREEN+1, mandatory source retirement at MAIN end. Reuses native delayed-retire V2 primitive from SLG-1-013, TTG-1-063, BLEACH-1-069; old Japanese source name corrected in original official errata. No full FAQ certification.'],
 
@@ -71,7 +73,7 @@ const proof=Object.freeze({
 });
 export default Object.freeze({
  title:'solo-leveling',
- version:'v2-c-slg-20261026-b6',
+ version:'v2-c-slg-20261026-b7',
  entries:Object.freeze(verifiedSlgV2Cards().map(def=>{
   const record=records[def.id],suffix=def.id.slice(-3),review=proof[suffix];
   if(!record||!review||!record.effect.includes(review[0]))
@@ -116,7 +118,8 @@ export default Object.freeze({
      ...(['SLG-1-003','SLG-1-024'].includes(def.id)?['tests/v2-slg-eight-b3.test.mjs']:[]),
      ...(['SLG-1-029','SLG-1-031'].includes(def.id)?['tests/v2-slg-eight-b4.test.mjs']:[]),
      ...(['SLG-1-020'].includes(def.id)?['tests/v2-slg-eight-b5.test.mjs']:[]),
-     ...(['SLG-1-049','SLG-1-067'].includes(def.id)?['tests/v2-slg-eight-b6.test.mjs']:[])],
+     ...(['SLG-1-049','SLG-1-067'].includes(def.id)?['tests/v2-slg-eight-b6.test.mjs']:[]),
+     ...(['SLG-1-035','SLG-1-075'].includes(def.id)?['tests/v2-slg-eight-b7.test.mjs']:[])],
     ...(def.implementation==='vanilla'?{verifiedNoExtraEffects:true}:{})}
   });
  }))

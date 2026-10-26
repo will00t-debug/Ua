@@ -765,6 +765,25 @@ const authored=[
   "officialTraits":["DFN／第四次架南島レイド"],
   "traitComponents":["DFN","第四次架南島レイド"],
   "catalogueTraits":["DFN","第四次架南島Raid"]
+},
+{
+  "id":"SLG-1-035","name":"スキル：君主の領域","color":"purple","energy":3,
+  "ap":1,"bp":0,"gen":2,"trigger":"get","type":"field",
+  "textAnchor":"場域以ACTIVE登場；主要階段REST，己方所有影之軍團本回合BP+500",
+  "implementation":"dsl","effects":{},"enterAlwaysActive":true,
+  "officialTraits":["影の軍団"],"catalogueTraits":["影之軍團"],
+  "fieldMains":[{"id":"scale","op":"restScaleTrait","trait":"影の軍団",
+   "bp":500,"scaledBp":1000,"min":5}]
+},
+{
+  "id":"SLG-1-075","name":"デイリークエスト","color":"green","energy":1,
+  "ap":1,"bp":0,"gen":1,"trigger":"get","type":"field",
+  "textAnchor":"場域主要階段REST，己方有水篠旬時將牌庫頂1張裏向放在此卡下",
+  "implementation":"dsl","effects":{},
+  "fieldMains":[
+   {"id":"tuck","op":"restTuckTopIfName","name":"水篠 旬"},
+   {"id":"recover","op":"restDiscardFacedownRecover","name":"水篠 旬","energy":0}
+  ]
 }
 ];
 export const SLG_V2_VERIFIED_IDS=Object.freeze(authored.map(c=>c.id));

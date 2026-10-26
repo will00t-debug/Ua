@@ -52,6 +52,8 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-ally-attack-order':'選擇哪張 ACTIVE 角色 REST 並支援這次攻擊',
  'effect-ally-attack-rest':'REST 此角色並選擇一項攻擊支援',
  'effect-tuck-hand':'將 1 張手牌裏向放在此角色下方',
+ 'effect-field-discard-facedown':'棄 1 張手牌，支付場域主要能力',
+ 'effect-send-facedown':'可將 1 張裏向卡送出場外',
  'effect-once-choice':'是否發動本回合一次能力',
  'effect-choice-mode':'選擇一項效果',
  'recovered-self-entry':'回收後可 REST 登場至能源線',
@@ -146,6 +148,9 @@ export function uiActionLabel(action,{pack,state}={}){
     action.mode==='payApDrawEnergy'?'起動主要：支付 1 AP，抽 1 張，本回合產能＋1':
     action.mode==='restFrontGainEnergy'?'起動主要：REST 自身，再 REST 一張己方前線，本回合產能＋1':
     action.mode==='selfRestEnemy'?'主要能力：REST 自身，指定敵方前線角色':
+    action.mode==='scale'?'主要能力：REST 此場域，影之軍團本回合 BP 增加':
+    action.mode==='tuck'?'主要能力：REST 此場域，將牌庫頂 1 張裏向放在此卡下':
+    action.mode==='recover'?'主要能力：REST 此場域並棄 1 張手牌，可送出裏向卡並回收水篠旬':
     action.mode==='ready'?'主要能力：ACTIVE':
     action.mode==='buff'?'主要能力：BP 加成':'主要能力：ACTIVE ＋ BP 加成';
   case 'chooseBlock':return action.uid===null?'不阻擋':'使用 '+name()+' 阻擋';
@@ -188,6 +193,8 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseHandLimit':return '超過上限，移除 '+name();
   case 'chooseDiscard':return '棄 '+name();
   case 'chooseTuckHand':return '將 '+name()+' 裏向放在此角色下方';
+  case 'chooseFieldDiscard':return '棄 '+name()+' 支付成本';
+  case 'chooseSendFacedown':return action.uid===null?'不送出裏向卡':'將 '+name()+' 送出場外';
   case 'chooseMainDiscard':return '支付起動成本：將 '+name()+' 送至場外';
   case 'chooseOutsideRecovery':return action.uid===null?'不回收／完成':'回收 '+name()+' 至手牌';
   case 'chooseRecoveredEntry':return action.mode==='skip'?'保留在手牌':

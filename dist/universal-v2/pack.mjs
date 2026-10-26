@@ -1067,7 +1067,7 @@ function normalize(card,packId){
     (card.type!=='character'||card.enterActiveIfOpponentRest!==true))
    throw Error(card.id+' invalid conditional ACTIVE entry');
   if(card.enterAlwaysActive!==undefined&&
-    (card.type!=='character'||card.enterAlwaysActive!==true||
+    (!['character','field'].includes(card.type)||card.enterAlwaysActive!==true||
      card.enterActiveIfOpponentRest===true))
    throw Error(card.id+' invalid unconditional ACTIVE entry');
   if(card.frontForbidden!==undefined&&(card.type!=='character'||card.frontForbidden!==true))
@@ -1296,6 +1296,28 @@ function normalize(card,packId){
     throw Error(card.id+' invalid printed main mode');
   }
  }
+ const fieldMains=card.fieldMains??null;
+ if(fieldMains!==null){
+  if(card.type!=='field'||mainAbility||!Array.isArray(fieldMains)||
+   fieldMains.length<1||fieldMains.length>2||
+   new Set(fieldMains.map(m=>m?.id)).size!==fieldMains.length)
+   throw Error(card.id+' invalid field mains');
+  for(const m of fieldMains){
+   const idOk=m&&typeof m.id==='string'&&/^[a-z][a-z0-9]{0,15}$/.test(m.id);
+   const scale=m?.op==='restScaleTrait'&&typeof m.trait==='string'&&!!m.trait.trim()&&
+    m.trait.length<=80&&integer(m.bp,500)&&m.bp<=5000&&m.bp%500===0&&
+    integer(m.scaledBp,500)&&m.scaledBp<=5000&&m.scaledBp%500===0&&m.scaledBp>m.bp&&
+    integer(m.min,2)&&m.min<=8&&Object.keys(m).length===6&&
+    ['bp','id','min','op','scaledBp','trait'].every(k=>Object.hasOwn(m,k));
+   const tuck=m?.op==='restTuckTopIfName'&&typeof m.name==='string'&&!!m.name.trim()&&
+    m.name.length<=80&&Object.keys(m).length===3&&
+    ['id','name','op'].every(k=>Object.hasOwn(m,k));
+   const recover=m?.op==='restDiscardFacedownRecover'&&typeof m.name==='string'&&
+    !!m.name.trim()&&m.name.length<=80&&integer(m.energy,0)&&m.energy<=10&&
+    Object.keys(m).length===4&&['energy','id','name','op'].every(k=>Object.hasOwn(m,k));
+   if(!idOk||!(scale||tuck||recover))throw Error(card.id+' invalid field main mode');
+  }
+ }
  const unblockedAttack=card.unblockedAttack??null;
  if(unblockedAttack!==null){
   if(card.type!=='character'||unblockedAttack.optional!==true||
@@ -1511,14 +1533,14 @@ function normalize(card,packId){
  if(implemented==='vanilla'&&(Object.keys(effects).length||card.effectText||
   mainAbility||phaseEffects.length||moveTriggers.length||moveObserver||card.enterActiveIfOpponentRest||card.enterAlwaysActive||card.activeExtraEnergy||card.conditionalTraitEnergy||passiveBonuses||card.impactNull||
   card.printedImpact||card.printedAttackDamage||card.readyOnAttackCount||card.readyOnBlockCount||
-  card.frontGeneratesEnergy||ownOutsideRecovery||colorTriggerFieldSubstitution||card.frontForbidden||card.ownTurnBp||card.opponentTurnBp||nameAliases||selectionHandDiscardTax||card.otherOwnBattleWonDamageTwo||attackEndSwap||blockBpRestriction||attackWinRecover||card.conditionalImpactBpAtLeast||emptyOwnFieldHandEnergyDiscount||opponentFieldColorsHandEnergyDiscount||card.mustBlock||card.bpDownImmune||card.printedHandEnergyDiscount||card.raidHandLeaveReplace||  card.raidTrait||card.attackEnergyMin||card.blockEnergyMin||unblockedAttack||printedMains||
+  card.frontGeneratesEnergy||ownOutsideRecovery||colorTriggerFieldSubstitution||card.frontForbidden||card.ownTurnBp||card.opponentTurnBp||nameAliases||selectionHandDiscardTax||card.otherOwnBattleWonDamageTwo||attackEndSwap||blockBpRestriction||attackWinRecover||card.conditionalImpactBpAtLeast||emptyOwnFieldHandEnergyDiscount||opponentFieldColorsHandEnergyDiscount||card.mustBlock||card.bpDownImmune||card.printedHandEnergyDiscount||card.raidHandLeaveReplace||  card.raidTrait||card.attackEnergyMin||card.blockEnergyMin||unblockedAttack||printedMains||fieldMains||
   card.playRequiresNameOrRaidBase||card.handUseOncePerName||card.removeUnlessUsed||card.removedMain||card.bpPerOwnRaid||card.extraRaidHost||card.mutualPlayBan||card.handFieldEnergyAura||
   card.chainRaidOnly||card.chainRaidNoSameTurn||card.chainRaidUnique||card.oppEffectUntargetable||card.energyLineForbidden||card.attackDeckAtMost||card.attackRequiresName||card.ownTurnImpact||card.noOwnFieldTypeHandDiscount||card.facedownUnderEnergy||card.retireCapture||card.raidAttach||card.raidWitness||allyAttackRest))
   throw Error(card.id+' claims vanilla despite printed/declared effects');
  if(implemented==='dsl'&&!Object.keys(effects).length&&!phaseEffects.length&&!moveTriggers.length&&!mainAbility&&!moveObserver&&!card.enterActiveIfOpponentRest&&!card.enterAlwaysActive&&
   !card.activeExtraEnergy&&!card.conditionalTraitEnergy&&!passiveBonuses&&!card.impactNull&&
   !card.printedImpact&&!card.printedAttackDamage&&!card.readyOnAttackCount&&!card.readyOnBlockCount&&
-  !card.frontGeneratesEnergy&&!ownOutsideRecovery&&!colorTriggerFieldSubstitution&&!card.frontForbidden&&!card.ownTurnBp&&!card.opponentTurnBp&&!nameAliases&&!selectionHandDiscardTax&&!card.otherOwnBattleWonDamageTwo&&!attackEndSwap&&!blockBpRestriction&&!attackWinRecover&&!card.conditionalImpactBpAtLeast&&!emptyOwnFieldHandEnergyDiscount&&!opponentFieldColorsHandEnergyDiscount&&!card.mustBlock&&!card.bpDownImmune&&!card.printedHandEnergyDiscount&&!card.raidHandLeaveReplace&&!card.raidTrait&&!card.attackEnergyMin&&!card.blockEnergyMin&&!unblockedAttack&&!printedMains&&
+  !card.frontGeneratesEnergy&&!ownOutsideRecovery&&!colorTriggerFieldSubstitution&&!card.frontForbidden&&!card.ownTurnBp&&!card.opponentTurnBp&&!nameAliases&&!selectionHandDiscardTax&&!card.otherOwnBattleWonDamageTwo&&!attackEndSwap&&!blockBpRestriction&&!attackWinRecover&&!card.conditionalImpactBpAtLeast&&!emptyOwnFieldHandEnergyDiscount&&!opponentFieldColorsHandEnergyDiscount&&!card.mustBlock&&!card.bpDownImmune&&!card.printedHandEnergyDiscount&&!card.raidHandLeaveReplace&&!card.raidTrait&&!card.attackEnergyMin&&!card.blockEnergyMin&&!unblockedAttack&&!printedMains&&!fieldMains&&
   !card.playRequiresNameOrRaidBase&&!card.handUseOncePerName&&!card.removeUnlessUsed&&!card.removedMain&&!card.bpPerOwnRaid&&!card.extraRaidHost&&
   !card.mutualPlayBan&&!card.handFieldEnergyAura&&!card.chainRaidOnly&&!card.oppEffectUntargetable&&!card.energyLineForbidden&&!card.attackDeckAtMost&&!card.attackRequiresName&&!card.ownTurnImpact&&!card.noOwnFieldTypeHandDiscount&&!card.facedownUnderEnergy&&!card.retireCapture&&!card.raidAttach&&!card.raidWitness&&!allyAttackRest)
   throw Error(card.id+' declares dsl without effects');
@@ -1881,6 +1903,7 @@ function normalize(card,packId){
   triggerEffect:triggerEffect?Object.freeze({...triggerEffect}):null,
   mainAbility:mainAbility?Object.freeze({...mainAbility}):null,
   printedMains:Object.freeze((printedMains||[]).map(m=>Object.freeze({...m}))),
+  fieldMains:Object.freeze((fieldMains||[]).map(m=>Object.freeze({...m}))),
   unblockedAttack:unblockedAttack?Object.freeze({optional:true,
    then:Object.freeze(unblockedAttack.then.map(op=>Object.freeze({
     ...op,...(op.filter?{filter:Object.freeze({...op.filter})}:{})})))}):null,
