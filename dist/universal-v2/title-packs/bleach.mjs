@@ -137,7 +137,8 @@ const testForKind=Object.freeze({
  impactDiscardApActive:'tests/v2-c29-bleach-port.test.mjs',
  aliasColorTopOutside:'tests/v2-c29-bleach-port.test.mjs',
  entryTurnChooseDraw:'tests/v2-c29-bleach-port.test.mjs',
- restFrontNameOnce:'tests/v2-c29-bleach-port.test.mjs'
+ restFrontNameOnce:'tests/v2-c29-bleach-port.test.mjs',
+ frontDiscardFieldDown:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -156,7 +157,9 @@ function contributedEntry(profile){
   definition:Object.freeze(definition),
   evidence:Object.freeze({
    printedTextFragments:Object.freeze([profile.effect]),
-   reviewNote:profile.id==='BLC-4-068'?
+   reviewNote:profile.id==='BLC-4-010'?
+    'EX15BT/BLC-4-010 official iframe 2026-10-26. [起動メイン][フロントLにある場合][手札を1枚場外に置く][ターン1]: only while an own field character is named ユーハバッハ. Discard one hand card, then choose one opposing character on the front or energy line whose live BP is at least 1500 and give it BP-1000 this turn. The choice is mandatory when such a character exists. [ターン1] is this physical card. Generated energy is 黄. DRAW is generic. No card FAQ.':
+   profile.id==='BLC-4-068'?
     'EX15BT/BLC-4-068 official iframe 2026-10-26. Impact null. Front only, pay 1 AP, and only while this character is REST: set it ACTIVE, then up to one opposing front character becomes REST. Q2336 (2026-09-04): two copies share one activate. Generated energy is 緑. ACTIVE is generic.':
    profile.id==='BLC-4-082'||profile.id==='BLC-4-083'?
     'Catalogue source for '+profile.number+' is a shop page, not unionarena-tcg.com. Number, Japanese name, stats and stored effect matched that record. No official URL was invented. Tested in tests/v2-c25-purple-shared.test.mjs.':
