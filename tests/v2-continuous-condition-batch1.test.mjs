@@ -47,7 +47,10 @@ test('registered official SLG 001/010 immutable source pinned, exact ongoing pre
   assert.deepEqual(c.effects,{});
   assert.ok(Object.isFrozen(c.passiveBonuses));
  }
- assert.ok(!p.cards['SLG-1-003'],'multi-effect card not falsely counted as implemented');
+ const rin=p.cards['SLG-1-003'];
+ assert.equal(rin.passiveBonuses[0].extraEnergy,1);
+ assert.equal(rin.effects.onOutsideRecover[0].op,'buffOwnField');
+ assert.ok(!p.cards['SLG-1-011'],'partial multi-clause cards stay unregistered');
 });
 test('SLG-001 own turn outside five exactly; opponent turn and fourth card both disable',()=>{
  const s=fresh(),c=field(s,0,'SLG-1-001','front',0);

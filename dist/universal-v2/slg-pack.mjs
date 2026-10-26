@@ -701,6 +701,102 @@ const authored=[
    "bp":500,"scaledMin":5,"scaledBp":1000},
   "officialTraits":["影の軍団"],
   "catalogueTraits":["影之軍團"]
+},
+{
+  "id":"SLG-1-024","name":"道門 泰星","color":"purple","energy":1,
+  "ap":1,"bp":2500,"gen":1,"trigger":null,"type":"character",
+  "textAnchor":"本角色不會被BP4000以上角色阻擋",
+  "implementation":"dsl",
+  "blockBpRestriction":{"relation":"atLeast","bp":4000,"condition":null},
+  "effects":{"onRetire":[{"op":"grantOppBlockAtLeast","bp":4000,"optional":true}]}
+},
+{
+  "id":"SLG-1-067","name":"カナ","color":"green","energy":4,
+  "ap":1,"bp":3000,"gen":1,"trigger":"color","type":"character",
+  "textAnchor":"登場時若己方有3張以上DFN",
+  "implementation":"dsl",
+  "triggerEffect":{"op":"deployHandCharacter","color":"green","maxEnergy":2,"ap":1},
+  "officialTraits":["DFN／第四次架南島レイド"],
+  "traitComponents":["DFN","第四次架南島レイド"],
+  "catalogueTraits":["DFN","第四次架南島Raid"],
+  "effects":{"onPlay":[{"op":"oncePerTurnGate","scope":"name","optional":false,
+    "when":{"kind":"ownCardTraitCount","turn":"any","min":3,"zone":"field",
+     "excludeSelf":false,"trait":"DFN"},
+    "then":[{"op":"draw","count":1},{"op":"activeSelf"},{"op":"buffSelf","bp":1000}]}]}
+},
+{
+  "id":"SLG-1-057","name":"向坂 雫","color":"green","energy":4,
+  "ap":1,"bp":4000,"gen":1,"trigger":"color","type":"character",
+  "textAnchor":"登場時若己方場上有5張以上第四次架南島Raid卡",
+  "implementation":"dsl",
+  "triggerEffect":{"op":"deployHandCharacter","color":"green","maxEnergy":2,"ap":1},
+  "officialTraits":["第四次架南島レイド"],
+  "catalogueTraits":["第四次架南島Raid"],
+  "effects":{"onPlay":[{"op":"oncePerTurnGate","scope":"name","optional":false,
+    "when":{"kind":"ownCardTraitCount","turn":"any","min":5,"zone":"field",
+     "excludeSelf":false,"trait":"第四次架南島レイド"},
+    "then":[{"op":"activeSelf"},{"op":"grantSelfAttackSkipThisTurn"}]}]}
+},
+{
+  "id":"SLG-1-003","name":"朝比奈 りん","color":"purple","energy":2,
+  "ap":1,"bp":3000,"gen":1,"trigger":"active","type":"character",
+  "textAnchor":"經自己的效果從場外加入手牌時",
+  "implementation":"dsl",
+  "passiveBonuses":[{"condition":{"kind":"outsideCount","turn":"any","min":10},"extraEnergy":1}],
+  "effects":{"onOutsideRecover":[{"op":"buffOwnField",
+    "filter":{"field":"type","value":"character"},
+    "bp":1000,"optional":true,"excludeSelf":false}]}
+},
+{
+  "id":"SLG-1-039","name":"影の君主","color":"purple","energy":5,
+  "ap":1,"bp":0,"gen":0,"trigger":"special","type":"event",
+  "textAnchor":"事件二選一",
+  "implementation":"dsl",
+  "triggerEffect":{"op":"retireOppFront"},
+  "effects":{"onPlay":[{"op":"chooseOne","optional":false,"options":[
+    {"id":"activeOne","label":"場外影の軍団最多1張ACTIVE登場","turn":"any",
+     "then":[{"op":"deployOutsideFiltered","trait":"影の軍団","count":1,
+      "ready":true,"optional":true}]},
+    {"id":"restTwo","label":"場外能源3以下影の軍団最多2張REST登場","turn":"any",
+     "then":[{"op":"deployOutsideFiltered","trait":"影の軍団","maxEnergy":3,
+      "count":2,"ready":false,"optional":true}]}
+  ]}]}
+},
+{
+  "id":"SLG-1-077","name":"架南島レイド攻略開始","color":"green","energy":4,
+  "ap":1,"bp":0,"gen":0,"trigger":"special","type":"event",
+  "textAnchor":"事件：選1張敵方前線BP2000以下角色退場",
+  "implementation":"dsl",
+  "triggerEffect":{"op":"retireOppFront"},
+  "effects":{"onPlay":[
+    {"op":"retireOppFrontUnderBp","bp":2000,"scaleTrait":"第四次架南島レイド",
+     "scaleMin":5,"scaleBp":5000},
+    {"op":"ifLiveThen","when":{"kind":"ownDistinctTraitNames","turn":"any","min":5,
+      "zone":"field","excludeSelf":false,"trait":"第四次架南島レイド"},
+     "then":[{"op":"buffOwnField","filter":{"field":"type","value":"character"},
+      "bp":1000,"optional":true,"excludeSelf":false}]}
+  ]}
+},
+{
+  "id":"SLG-1-019","name":"水篠 旬","color":"purple","energy":1,
+  "ap":1,"bp":1500,"gen":1,"trigger":null,"type":"character",
+  "textAnchor":"在場外的主要階段能力",
+  "implementation":"dsl",
+  "mainAbility":{"op":"outsideDiscardTraitToHand","trait":"影の軍団",
+   "oncePerTurn":true,"scope":"name"},
+  "effects":{"onPlay":[{"op":"discardGate","optional":true,
+    "payment":{"zone":"hand","field":"trait","value":"影の軍団"},
+    "then":[{"op":"draw","count":1}]}]}
+},
+{
+  "id":"SLG-1-060","name":"町田 堂玄","color":"green","energy":3,
+  "ap":1,"bp":3000,"gen":2,"trigger":null,"type":"character",
+  "textAnchor":"Impact無效",
+  "implementation":"dsl","impactNull":true,"effects":{},
+  "officialTraits":["第四次架南島レイド"],
+  "catalogueTraits":["第四次架南島Raid"],
+  "phaseEffects":[{"phase":"attack","edge":"end","turn":"own",
+    "then":[{"op":"swapEnergyWithFrontSkip"}]}]
 }
 ];
 export const SLG_V2_VERIFIED_IDS=Object.freeze(authored.map(c=>c.id));

@@ -39,6 +39,10 @@ export const V2_PENDING_LABELS=Object.freeze({
  'main-two-buff':'主要能力選擇 BP 對象',
  'main-discard-buff':'支付一張手牌，讓自身 BP 增加',
  'effect-grant-attack':'授予己方角色攻擊時能力','granted-attack-draw':'攻擊時是否抽一張',
+ 'effect-grant-opp-block':'對手選擇一名角色，本回合不被高 BP 阻擋',
+ 'effect-deploy-outside':'從場外選擇角色登場',
+ 'effect-energy-skip-swap':'能源線與下次不 ACTIVE 的前線角色交換',
+ 'effect-outside-cost-hand':'棄一張指定特徵手牌，將場外的此卡加入手牌',
  'effect-target':'指定角色','effect-target-many':'最多選擇兩名不同敵方角色','raid-effect-order':'突襲能力結算順序',
  'effect-move-order':'選擇同時取得的移動觸發處理順序',
  'effect-rest-tuck':'是否 REST 角色，放置剛送至場外的手牌',
@@ -94,7 +98,9 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'attack':return action.targetUid?
    '狙擊攻擊：'+name()+' → '+uiCardLabel(pack,state,action.targetUid):
    '宣告攻擊：'+name();
-  case 'activate':return action.mode==='discardSelfBuff'?
+  case 'activate':return action.mode==='outsideTraitHand'?
+    '起動主要：從場外棄一張指定特徵手牌，將此卡加入手牌':
+    action.mode==='discardSelfBuff'?
     '起動主要：棄一張手牌，本回合自身 BP＋1500（每回合一次）':
     action.mode==='selfRestEnergyRetire'?
     (pack?.cards&&state?.players?.some(p=>[...p.front,...p.energy].some(c=>c?.uid===action.uid&&
@@ -180,6 +186,10 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseAttackBan':return action.uid===null?'不指定攻擊禁止對象':
    '令 '+name()+' 至下個己方回合開始前不能攻擊';
   case 'chooseGrantAttack':return '授予 '+name()+' 本回合攻擊時抽牌';
+  case 'chooseOppBlock':return action.uid===null?'不賦予阻擋限制':'讓 '+name()+' 本回合不被 BP 以上角色阻擋';
+  case 'chooseDeployOutside':return action.uid===null?'不從場外登場':'從場外登場 '+name()+suffix();
+  case 'chooseEnergySkipSwap':return action.uid===null?'不交換位置':'與 '+name()+' 交換前線與能源線';
+  case 'chooseOutsideCostHand':return '棄 '+name()+'，將場外的此卡加入手牌';
   case 'chooseGrantedDraw':return action.mode==='draw'?'使用獲得的攻擊時抽 1 張':'不抽牌';
   case 'chooseTarget':
    return action.uid===null?'不指定／完成':'指定 '+name();
