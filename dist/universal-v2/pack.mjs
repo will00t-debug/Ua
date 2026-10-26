@@ -1511,13 +1511,17 @@ function normalize(card,packId){
   mainAbility.then[0]?.op==='millTop'&&
   Object.keys(mainAbility.then[0]).every(k=>['op','count'].includes(k));
  if(mainRestProgram)verifyProgram(mainAbility.then,card.id+'.mainAbility.then');
+ const mainRestRetireActive=mainAbility?.op==='fieldRestRetireActiveBuff'&&
+  card.type==='field'&&integer(mainAbility.bp,1)&&mainAbility.bp<=5000&&
+  Object.keys(mainAbility).length===2&&
+  Object.keys(mainAbility).every(k=>['op','bp'].includes(k));
  const mainRestTopTrait=mainAbility?.op==='restSelfTopTraitHand'&&
   card.type==='field'&&
   typeof mainAbility.trait==='string'&&!!mainAbility.trait.trim()&&mainAbility.trait.length<=80&&
   Object.keys(mainAbility).length===2&&
   Object.keys(mainAbility).every(k=>['op','trait'].includes(k));
  if(mainAbility!==null&&
-  (!['character','field'].includes(card.type)||!(fieldDualMain||fieldRestRetireThen||mainRestTopTrait||card.type==='character'&&(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainRestBuff||mainRestBuffAp||mainRestRetireRecover||mainRestOnceBuffReturn||mainRestOnceSelf||mainOnceBuffWhen||mainPayAp||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainRestDiscardRetire||mainFrontProgram||mainFieldOnceBuff||mainEntryProtect||mainRestRetireUnder||mainRestTwoMove||mainOncePay||nameOnceActive||mainCardOnce||mainRestFrontName||mainRestRetireExact))))
+  (!['character','field'].includes(card.type)||!(fieldDualMain||fieldRestRetireThen||mainRestTopTrait||mainRestRetireActive||card.type==='character'&&(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainRestBuff||mainRestBuffAp||mainRestRetireRecover||mainRestOnceBuffReturn||mainRestOnceSelf||mainOnceBuffWhen||mainPayAp||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainRestDiscardRetire||mainFrontProgram||mainFieldOnceBuff||mainEntryProtect||mainRestRetireUnder||mainRestTwoMove||mainOncePay||nameOnceActive||mainCardOnce||mainRestFrontName||mainRestRetireExact))))
   throw Error(card.id+' unsupported main action ability');
  const passiveBonuses=validatePassiveBonuses(card);
  const implemented=card.implementation;

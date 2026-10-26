@@ -155,7 +155,8 @@ const testForKind=Object.freeze({
  kenpachiEnergyFront:'tests/v2-c29-bleach-port.test.mjs',
  mayuriTraitRetire:'tests/v2-c29-bleach-port.test.mjs',
  nemSquadActivePair:'tests/v2-c29-bleach-port.test.mjs',
- soulPalaceTop:'tests/v2-c29-bleach-port.test.mjs'
+ soulPalaceTop:'tests/v2-c29-bleach-port.test.mjs',
+ kyokotsuField:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -165,7 +166,7 @@ function contributedEntry(profile){
  // The legacy gen=2 for EX15BT/BLC-4-014 describes the ACTIVE total, not
  // the printed REST base. SourceRecord is the normalized printed card record;
  // retain original.gen separately and require the profile fingerprint above.
- const normalized=['BLC-4-014','BLC-4-042','BLC-4-074','BLC-4-024','BLC-4-063','BLC-4-037','BLC-4-071','BLC-4-006','BLC-4-051'].includes(profile.id);
+ const normalized=['BLC-4-014','BLC-4-042','BLC-4-074','BLC-4-024','BLC-4-063','BLC-4-037','BLC-4-071','BLC-4-006','BLC-4-051','BLC-4-077'].includes(profile.id);
  const sourceRecord=Object.freeze(normalized?
   {...original,gen:definition.gen,legacyImportedGen:original.gen}: {...original});
  const vanilla=['plain','plainAlt','step'].includes(profile.kind);
@@ -174,7 +175,9 @@ function contributedEntry(profile){
   definition:Object.freeze(definition),
   evidence:Object.freeze({
    printedTextFragments:Object.freeze([profile.effect]),
-   reviewNote:profile.id==='BLC-1-061'?
+   reviewNote:profile.id==='BLC-4-077'?
+    'EX15BT/BLC-4-077 official iframe 2026-10-26. On play, up to one own outside 神剣・八鏡剣 may be added to hand. Main cost is REST and true retirement of this field; the field is gone before the choices. Then up to one remaining own field card, character or field, becomes ACTIVE, and up to one own character gains BP+1000 this turn. The same character may receive both. Declining either choice is legal. Catalogue gen=3 is the green3 sprite; official generated energy is 緑緑, so definition.gen=2 and legacyImportedGen=3. DRAW is generic. No card FAQ.':
+   profile.id==='BLC-1-061'?
     'UA08BT/BLC-1-061 official iframe 2026-10-26. This field enters ACTIVE. Main: REST this field, look at the top card of your deck. If it has trait 零番隊, you may reveal it and add it to hand. Q566 (2023-09-25): はい、できます — even a Squad Zero card may be refused. A card that is not added returns to the top or goes outside, without a reveal. No Squad Zero trait cannot be added. The REST is the only use limit; becoming ACTIVE again allows another use. GET is generic. Generated energy is 紫.':
    profile.id==='BLC-2-045'?
     'EX07BT/BLC-2-045 official iframe 2026-10-26. Mandatory: retire one own field character with trait 涅骸部隊. Zero legal characters makes the event unplayable. On success, draw 1, then up to two own outside characters may enter ACTIVE on front or energy. Each must be blue, printed AP 1, have its required energy satisfied, and be named 涅 ネム or have trait 涅骸部隊. The just-retired character is outside and can be chosen. Declining a deployment stops the rest. A field is not a character. An audited alias of 涅 ネム counts while the card is outside. SPECIAL retires one opposing front character. Generated energy is none. No card FAQ.':

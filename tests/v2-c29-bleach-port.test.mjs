@@ -205,9 +205,12 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 // BLC-1-061 UA08BT: this field enters ACTIVE. REST it, look at the top
 //   card. Squad Zero may be revealed to hand. Q566 (2023-09-25) allows
 //   refusing that add. Otherwise the card returns to the top or outside.
+// BLC-4-077 EX15BT: optional outside 神剣・八鏡剣 to hand. Main REST-retires
+//   this field, then may ACTIVE one remaining field card and give one
+//   character BP+1000. Catalogue gen 3 normalizes to generated 緑緑.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -278,12 +281,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers sixty-eight whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,504);
- assert.equal(EXPECTED_V2_COUNTS.bleach,228);
+test('C29 registers sixty-nine whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,505);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,229);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,228);
+ assert.equal(Object.keys(bleach.cards).length,229);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -6364,6 +6367,92 @@ test('BLC-1-061 enters ACTIVE, rests, and may reveal only a Squad Zero top card'
  assert.equal(assertUniversalMatch(opened.packs,plain),true);
  assert.equal(assertUniversalMatch(dry.packs,empty),true);
  assert.equal(assertUniversalMatch(quiet.packs,silenced),true);
+});
+
+test('BLC-4-077 may recover one sword, then REST-retires and actives plus buffs',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-4-077');
+ assert.equal(printed.effect,'登場時：可從場外將最多1張《神劍・八鏡劍》加入手牌。啟動・主要〔改為Rest，並使此卡退場〕：最多選自己場上1張卡改為Active；再最多選自己場上1個角色，本回合BP+1000。');
+ assert.equal(printed.nameJa,'狂骨');
+ assert.equal(printed.number,'EX15BT/BLC-4-077');
+ assert.equal(printed.type,'field');
+ assert.equal(printed.gen,3);
+ assert.equal(printed.trigger,'draw');
+ assert.equal(printed.energy,3);
+ assert.equal(printed.color,'green');
+ const card=bleach.cards['BLC-4-077'];
+ assert.equal(card.gen,2);
+ assert.equal(card.triggerEffect,null);
+ assert.deepEqual(card.traits,['花天狂骨']);
+ assert.deepEqual(card.effects.onPlay,[{op:'recoverOutsideOne',optional:true,filter:{field:'name',value:'神剣・八鏡剣'}}]);
+ assert.deepEqual(card.mainAbility,{op:'fieldRestRetireActiveBuff',bp:1000});
+ const deck=realDeck(['BLC-4-077','BLC-1-080','BLC-1-069','BLC-1-091','BLC-1-083'],'green');
+ const opened=main(deck,31001);
+ ['BLC-1-069','BLC-1-091','BLC-1-083'].forEach((id,i)=>put(opened.s,0,id,'energy',i));
+ const ken=put(opened.s,0,'BLC-1-080','front',0,false);
+ const bone=take(opened.s,0,'BLC-4-077');
+ opened.s.players[0].hand.push(bone);
+ assert.equal(universalEnergyByColor(opened.packs,opened.s,0).green>=3,true);
+ let s=dispatchUniversalAction(opened.packs,opened.s,legalUniversalActions(opened.packs,opened.s).find(a=>a.type==='play'&&a.uid===bone.uid&&a.line==='energy'));
+ assert.equal(s.pending,null);
+ const live=s.players[0].energy.find(c=>c?.uid===bone.uid);
+ assert.equal(live.ready,false);
+ assert.equal(legalUniversalActions(opened.packs,s).some(a=>a.type==='activate'&&a.uid===bone.uid),false);
+ live.ready=true;
+ const before=universalBp(opened.packs,s,ken);
+ const act=legalUniversalActions(opened.packs,s).find(a=>a.type==='activate'&&a.uid===bone.uid&&a.mode==='fieldRestRetireActiveBuff');
+ let used=dispatchUniversalAction(opened.packs,s,act);
+ assert.equal(used.players[0].energy.some(c=>c?.uid===bone.uid),false);
+ assert.equal(used.players[0].outside.some(c=>c.uid===bone.uid),true);
+ assert.equal(used.pending.kind,'effect-active-any');
+ assert.equal(used.pending.choices.includes(ken.uid),true);
+ assert.equal(used.pending.choices.includes(bone.uid),false);
+ const skipped=dispatchUniversalAction(opened.packs,structuredClone(used),{type:'chooseActiveAny',uid:null});
+ assert.equal(skipped.pending.kind,'effect-buff-own');
+ assert.equal(skipped.players[0].front.find(c=>c?.uid===ken.uid).ready,false);
+ const quiet=dispatchUniversalAction(opened.packs,skipped,{type:'chooseOwnBuff',uid:null});
+ assert.equal(quiet.pending,null);
+ assert.equal(universalBp(opened.packs,quiet,quiet.players[0].front.find(c=>c?.uid===ken.uid)),before);
+ used=dispatchUniversalAction(opened.packs,used,{type:'chooseActiveAny',uid:ken.uid});
+ assert.equal(used.players[0].front.find(c=>c?.uid===ken.uid).ready,true);
+ assert.equal(used.pending.kind,'effect-buff-own');
+ assert.equal(used.pending.choices.includes(ken.uid),true);
+ used=dispatchUniversalAction(opened.packs,used,{type:'chooseOwnBuff',uid:ken.uid});
+ assert.equal(used.pending,null);
+ assert.equal(universalBp(opened.packs,used,used.players[0].front.find(c=>c?.uid===ken.uid)),before+1000);
+ const unit=(id,extra)=>({id,name:id,color:'green',type:'character',energy:0,ap:1,bp:2000,gen:1,traits:[],trigger:null,implementation:'vanilla',effects:{},...extra});
+ const lab=createUniversalPack({id:'c29-kyokotsu',cards:[
+  unit('FLD',{name:'狂骨',type:'field',bp:0,implementation:'dsl',effects:card.effects,mainAbility:card.mainAbility}),
+  unit('SWORD',{name:'神剣・八鏡剣',type:'event',bp:0,gen:0}),
+  unit('OTHER',{name:'花天',type:'event',bp:0,gen:0}),
+  ...['A','B','C','D','E','F','G','H','I','J'].map(id=>unit(id))
+ ]});
+ const ids=['FLD','SWORD','OTHER','A','B','C','D','E','F','G','H','I','J'];
+ const counts=Object.fromEntries(ids.map((id,i)=>[id,i===12?2:4]));
+ assert.deepEqual(validateUniversalDeck(lab,counts),[]);
+ const packs=[lab,lab];
+ let labState=newUniversalMatch(packs,{decks:[counts,counts],seed:31002,first:0});
+ for(let n=0;n<8&&labState.phase!=='main';n++)labState=dispatchUniversalAction(packs,labState,{type:'next'});
+ function lift(id){
+  for(const zone of ['hand','deck','life','outside','removed']){
+   const list=labState.players[0][zone],i=list.findIndex(c=>c.cardId===id);
+   if(i>=0)return list.splice(i,1)[0];
+  }
+  throw Error('Missing '+id);
+ }
+ const sword=lift('SWORD'),other=lift('OTHER'),fld=lift('FLD');
+ labState.players[0].outside.push(sword,other);
+ labState.players[0].hand.push(fld);
+ labState=dispatchUniversalAction(packs,labState,legalUniversalActions(packs,labState).find(a=>a.type==='play'&&a.uid===fld.uid&&a.line==='energy'));
+ assert.equal(labState.pending.kind,'effect-recover-outside');
+ assert.equal(labState.pending.choices.includes(sword.uid),true);
+ assert.equal(labState.pending.choices.includes(other.uid),false);
+ labState=dispatchUniversalAction(packs,labState,{type:'chooseOutsideRecovery',uid:sword.uid});
+ assert.equal(labState.pending,null);
+ assert.equal(labState.players[0].hand.some(c=>c.uid===sword.uid),true);
+ aiOk(opened.packs,used);
+ assert.equal(assertUniversalMatch(opened.packs,used),true);
+ assert.equal(assertUniversalMatch(opened.packs,quiet),true);
+ assert.equal(assertUniversalMatch(packs,labState),true);
 });
 
 function fieldCount(s,p){
