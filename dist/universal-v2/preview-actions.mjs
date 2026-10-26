@@ -47,6 +47,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-active-own-named':'可將最多 1 個己方指定名稱角色轉為 ACTIVE',
  'effect-bounce-own':'選擇返回手牌的己方角色',
  'effect-buff-own':'選擇己方角色增加本回合 BP',
+ 'effect-grant-other-impact':'選擇另一己方角色，本回合獲得 Impact',
  'effect-once-choice':'是否發動本回合一次能力',
  'effect-choice-mode':'選擇一項效果',
  'recovered-self-entry':'回收後可 REST 登場至能源線',
@@ -132,6 +133,8 @@ export function uiActionLabel(action,{pack,state}={}){
     action.mode==='selfRestThen'?'主要能力：REST 自身，執行效果':
     action.mode==='selfRestBuff'?'主要能力：REST 自身，指定另一張己方角色本回合 BP 加成':
     action.mode==='restRetireTrait'?'主要能力：REST 並退場自己，從場外回收 1 張指定特徵卡':
+    action.mode==='restRetireName'?'主要能力：REST 並退場自己，可從場外回收 1 張指定名稱角色':
+    action.mode==='restBuffHand'?'主要能力：REST 自己，指定另一己方角色本回合 BP 加成後返回手牌':
     action.mode==='gunmenModes'?('主要能力：依顏面張數選擇不同效果：'+
      (action.effects||[]).map(effect=>({bp:'本回合 BP＋1000',
       impactNull:'下次己方回合開始前 IMPACT 無效',
@@ -223,6 +226,7 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseRestFrontEnergy':return 'REST '+name()+'，本回合產能＋1';
   case 'chooseFacedownFront':return action.mode==='skip'?'不從能源線移到前線':
    '從能源線移到前線 '+(action.slot+1)+(action.replaceUid?'，並將原前線卡除外':'')+'，本回合 BP＋1000';
+  case 'chooseOtherImpact':return action.uid===null?'不給予 Impact':'讓 '+name()+' 本回合獲得 Impact';
   case 'chooseOwnBuff':case 'chooseMainBuff':case 'chooseTraitBuff':case 'chooseRestBp':
   case 'chooseRetireBp':case 'chooseTargetMany':return action.uid===null?'完成目標選擇':'選擇第 '+(state?.pending?.selected?.length+1||1)+' 個角色';
   case 'chooseFrontEnergyGrant':return action.uid===null?

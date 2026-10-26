@@ -625,6 +625,42 @@ const authored=[
     "zone":"field","excludeSelf":false,"trait":"影の軍団","maxPrintedBp":2500},"bpEach":500}],
   "officialTraits":["影の軍団"],
   "catalogueTraits":["影之軍團"]
+},
+{
+  "id":"SLG-1-017","name":"水篠 旬","color":"purple","energy":2,
+  "ap":1,"bp":2000,"gen":1,"trigger":"active","type":"character",
+  "textAnchor":"若己方場上沒有任何卡，手牌中需求能源減少紫2。登場時查看牌庫頂1張",
+  "implementation":"dsl",
+  "templateEffects":{"onPlay":[{"template":"peekTopOne"}]},
+  "emptyOwnFieldHandEnergyDiscount":2
+},
+{
+  "id":"SLG-1-074","name":"ルノー","color":"green","energy":2,
+  "ap":1,"bp":3000,"gen":1,"trigger":"draw","type":"character",
+  "textAnchor":"登場時令另一己方DFN角色最多1張本回合獲Impact1。",
+  "implementation":"dsl","effects":{
+   "onPlay":[{"op":"grantOtherImpactThisTurn","trait":"DFN","amount":1,"optional":true}]
+  },
+  "officialTraits":["DFN／第四次架南島レイド"],
+  "traitComponents":["DFN","第四次架南島レイド"],
+  "catalogueTraits":["DFN","第四次架南島Raid"]
+},
+{
+  "id":"SLG-1-050","name":"観月 絵里","color":"green","energy":0,
+  "ap":1,"bp":500,"gen":1,"trigger":null,"type":"character",
+  "textAnchor":"主要階段REST並退場此角色，可從己方場外回收最多1張水篠旬。",
+  "implementation":"dsl","effects":{},
+  "mainAbility":{"op":"restRetireRecoverName","name":"水篠 旬","optional":true}
+},
+{
+  "id":"SLG-1-071","name":"マリー","color":"green","energy":0,
+  "ap":1,"bp":1500,"gen":1,"trigger":"draw","type":"character",
+  "textAnchor":"主要階段每回合一次：REST自己，使另一己方角色本回合BP+1000並將自身返回手牌。",
+  "implementation":"dsl","effects":{},
+  "mainAbility":{"op":"restBuffOtherThenHand","oncePerTurn":true,"bp":1000},
+  "officialTraits":["DFN／第四次架南島レイド"],
+  "traitComponents":["DFN","第四次架南島レイド"],
+  "catalogueTraits":["DFN","第四次架南島Raid"]
 }
 ];
 export const SLG_V2_VERIFIED_IDS=Object.freeze(authored.map(c=>c.id));

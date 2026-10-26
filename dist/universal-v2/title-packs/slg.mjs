@@ -20,6 +20,10 @@ const proof=Object.freeze({
  '072':['登場時若己方有3張以上DFN，抽1張。','Official UA51BT/SLG-1-072 ミズア GREEN3/AP1/BP2000/gen2, no LIFE; onPlay draw 1 if own field has at least 3 cards with DFN trait including this entering character. The printed trait is one token DFN／第四次架南島レイド; components are independently source-audited, never inferred by splitting arbitrary slash text. Official https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-072; full FAQ acceptance remains outstanding.'],
  '065':['己方回合手牌5張以上時BP+1000並獲Impact1。','Official UA51BT/SLG-1-065 アーシー green4/AP1/BP4000/gen1 DRAW. Printed BP is 4000+. Own turn and own hand of at least 5 give both BP+1000 and impact 1. Generated energy alt is 緑, so gen is 1. Official trait is one token DFN／第四次架南島レイド. Page checked 2026-10-22; no FAQ block; not a full FAQ certification.'],
  '027':['原本BP2500以下且REST的己方影之軍團角色，BP+500','Official UA51BT/SLG-1-027 アイアン purple2/AP1/BP3000+/gen1, no trigger. Generated alt is 紫, so gen is 1. Own turn: each REST own-field character whose printed BP is 2500 or less and whose trait token is exactly 影の軍団 gives BP+500. Q2030: 元々のBP is the printed number. Q2070: a field has no BP and is not counted. The catalogue trait 影之軍團 is not registered. Page checked 2026-10-22; not a full FAQ certification.'],
+ '017':['若己方場上沒有任何卡，手牌中需求能源減少紫2。登場時查看牌庫頂1張','UA51BT/SLG-1-017 水篠 旬 purple2/AP1/BP2000/gen1 ACTIVE life separate. Hand required energy is reduced by 2 only while both own lines are empty; the card is purple, so the shared empty-field discount matches the printed purple-2 reduction. OnPlay peeks the top card and may put it outside. Official page was not re-read in this batch; the catalogue Chinese is the text anchor. Not a full FAQ certification. https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-017'],
+ '074':['登場時令另一己方DFN角色最多1張本回合獲Impact1。','UA51BT/SLG-1-074 ルノー green2/AP1/BP3000/gen1 DRAW life separate. OnPlay may grant Impact 1 this turn to up to one other own character with the DFN component. Official trait is one token DFN／第四次架南島レイド; the catalogue split is not registered. Official page was not re-read in this batch. Not a full FAQ certification. https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-074'],
+ '050':['主要階段REST並退場此角色，可從己方場外回收最多1張水篠旬。','UA51BT/SLG-1-050 観月 絵里 green0/AP1/BP500/gen1, no trigger. Main: REST this ready character, true-retire it, then optionally recover one own outside character named 水篠 旬. Official page was not re-read in this batch. Not a full FAQ certification. https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-050'],
+ '071':['主要階段每回合一次：REST自己，使另一己方角色本回合BP+1000並將自身返回手牌。','UA51BT/SLG-1-071 マリー green0/AP1/BP1500/gen1 DRAW life separate. Main once per physical card this turn: REST, give another own character BP+1000 this turn, then return this card to hand. Official trait is one token DFN／第四次架南島レイド. Official page was not re-read in this batch. Not a full FAQ certification. https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-071'],
 
  '042':['主要階段每回合一次REST自己，額外產生1綠能源，主要階段結束時退場。','Official UA51BT/SLG-1-042 2026-04-17 errata-aware source: 馬渕 勲 GREEN0/AP1/BP1000/gen1 no life; rest OWN READY ENERGY source MAIN once per turn, current-turn GREEN+1, mandatory source retirement at MAIN end. Reuses native delayed-retire V2 primitive from SLG-1-013, TTG-1-063, BLEACH-1-069; old Japanese source name corrected in original official errata. No full FAQ certification.'],
 
@@ -58,7 +62,7 @@ const proof=Object.freeze({
 });
 export default Object.freeze({
  title:'solo-leveling',
- version:'v2-c-slg-20261015',
+ version:'v2-c-slg-20261026-b1',
  entries:Object.freeze(verifiedSlgV2Cards().map(def=>{
   const record=records[def.id],suffix=def.id.slice(-3),review=proof[suffix];
   if(!record||!review||!record.effect.includes(review[0]))
@@ -97,7 +101,8 @@ export default Object.freeze({
      ...(def.id==='SLG-1-030'?['tests/v2-r42-slg030-official.test.mjs']:[]),
      ...(def.id==='SLG-1-028'?['tests/v2-r42-slg028-030-official.test.mjs']:[]),
      ...(def.id==='SLG-1-070'?['tests/v2-r33-slg070-official.test.mjs']:[]),
-     ...(def.id==='SLG-1-072'?['tests/v2-slg-072-dfn-draw-gpt.test.mjs']:[])],
+     ...(def.id==='SLG-1-072'?['tests/v2-slg-072-dfn-draw-gpt.test.mjs']:[]),
+     ...(['SLG-1-017','SLG-1-074','SLG-1-050','SLG-1-071'].includes(def.id)?['tests/v2-slg-eight-b1.test.mjs']:[])],
     ...(def.implementation==='vanilla'?{verifiedNoExtraEffects:true}:{})}
   });
  }))
