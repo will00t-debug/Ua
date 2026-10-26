@@ -16,6 +16,9 @@
 // other character. Front once per turn: until next own start, BP+1000 and
 // characters of BP 4000 or more cannot block her; or grant one other
 // character front-line energy generation this turn.
+// Batch 57 adds 025: this-turn player aura that taxes an effect choosing
+// a field Subaru, then either draw if Subaru is on the field or ready
+// one AP at this turn's attack-phase start. Q2409.
 // Batch 56 adds 024: empty-field purple energy −2, and a once-per-turn
 // main that pays 1 AP, puts one hand card on top of the deck, then
 // gives this character BP+2000 and readies one AP at attack-phase start.
@@ -258,13 +261,20 @@ const PROFILES={
    triggerOnce:'name',handColor:'green'}},
  'REZ-2-024':{implementation:'dsl',effects:{},emptyOwnFieldHandEnergyDiscount:2,
   mainAbility:{op:'payApHandTopBuffAttackAp',oncePerTurn:true,payAp:1,
-   bp:2000,recoverAp:1}}
+   bp:2000,recoverAp:1}},
+ 'REZ-2-025':{implementation:'dsl',effects:{onPlay:[
+  {op:'grantSubaruHandTaxThisTurn'},
+  {op:'chooseOne',optional:false,options:[
+   {id:'draw',label:'draw if Subaru',turn:'any',then:[
+    {op:'drawIfOwnName',name:'ナツキ・スバル',count:1}]},
+   {id:'ap',label:'ready one AP at attack',turn:'any',then:[
+    {op:'scheduleAttackStartAp',count:1}]}]}]}}
 };
 
 export const REZ_V2_IMPLEMENTED_IDS=Object.freeze(Object.keys(PROFILES));
 
 export function createRezV2Pack(){
  const cards=REZ_V2_IMPLEMENTED_IDS.map(id=>({...shell(id),...PROFILES[id]}));
- return createUniversalPack({id:'rezero',version:'0.23.0',cards});
+ return createUniversalPack({id:'rezero',version:'0.24.0',cards});
 
 }

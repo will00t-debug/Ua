@@ -863,6 +863,13 @@ function continueEffectQueue(pack,s){
    if(pl.apCards.some(c=>c.inPlay&&!c.ready))
     s.pending={kind:'effect-recover-ap',player:owner,sourceUid:job.sourceUid,
      remaining:job.count,...(job.optional===false?{optional:false}:{})};
+  }else if(job.op==='grantSubaruHandTaxThisTurn'){
+   const current=pl.subaruHandTaxAura;
+   if(!current||current.untilTurn!==s.turn)
+    pl.subaruHandTaxAura={name:'ナツキ・スバル',untilTurn:s.turn,sourceUid:job.sourceUid};
+  }else if(job.op==='scheduleAttackStartAp'){
+   s.delayedEffects.push({op:'recoverApAtAttackStart',owner,sourceUid:job.sourceUid,
+    turn:s.turn,count:job.count});
   }else if(job.op==='searchDeckOne'){
    const matches=filteredChoices(pack,s,pl.deck,job.filter);
    if(matches.length)s.pending={kind:'effect-search-deck',player:owner,
@@ -4527,16 +4534,28 @@ function sourceTypeFromUid(pack,s,uid){
   ...pl.hand].find(c=>c.uid===uid);
  return physical?card(pack,physical).type:'unknown';
 }
+function auraHandTax(pack,s,selector,uid){
+ const victim=1-selector,aura=s.players[victim]?.subaruHandTaxAura;
+ if(!aura||aura.untilTurn!==s.turn||aura.name!=='ナツキ・スバル')return null;
+ const target=field(s.players[victim]).find(c=>c.uid===uid);
+ if(!target||card(pack,target).type!=='character'||
+  !cardHasName(card(pack,target),aura.name,false))return null;
+ return {cost:1,payable:s.players[selector].hand.length>=1,blocked:false,
+  sourceUids:[aura.sourceUid]};
+}
 function selectionHandTax(pack,s,selector,uid,sourceType){
  const evalType=type=>selectionHandDiscardTaxPlan(pack,s,selector,uid,type,{
   isSuppressed:(state,src)=>originalEffectsDisabled(state,src)});
+ let base;
  if(sourceType==='unknown'){
   const ev=evalType('event'),ch=evalType('character');
-  if(ev.cost||ch.cost||ev.blocked||ch.blocked)
-   return {cost:0,payable:false,blocked:true};
-  return {cost:0,payable:true,blocked:false};
- }
- return evalType(sourceType);
+  base=(ev.cost||ch.cost||ev.blocked||ch.blocked)?
+   {cost:0,payable:false,blocked:true}:{cost:0,payable:true,blocked:false};
+ }else base=evalType(sourceType);
+ const aura=auraHandTax(pack,s,selector,uid);
+ if(!aura)return base;
+ if(base.blocked||base.cost)return {cost:0,payable:false,blocked:true};
+ return aura;
 }
 function effectSelectionHandTax(pack,s,a){
  const q=s.pending;
@@ -4920,12 +4939,15 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
    throw Error('Unsupported compound selection cost');
   if(tax.cost){
    const q=s.pending,target=field(s.players[1-p]).find(c=>c.uid===action.uid);
+   const lifeChoice=q.kind==='life-trigger'&&action.type==='chooseTrigger'&&
+    TARGETING_LIFE_MODES.has(action.mode);
+   const sourceUid=lifeChoice?q.uid:q.sourceUid;
    if(!target||!Number.isInteger(target.fieldEntryStamp)||target.fieldEntryStamp<1||
-    !q.sourceUid||!TARGETING_CARD_EFFECT_CHOICES.has(action.type))
+    !sourceUid||!(TARGETING_CARD_EFFECT_CHOICES.has(action.type)||lifeChoice))
     throw Error('Invalid selection payment source');
    const sourceType=effectChoiceProvenance(pack,s);
    s.pending={kind:'effect-selection-hand-payment',player:p,
-    sourceUid:q.sourceUid,originPending:q,targetAction:{...action},
+    sourceUid,originPending:q,targetAction:{...action},
     targetUid:target.uid,targetStamp:target.fieldEntryStamp,sourceType};
   }else{
    if(surcharge)spendAp(s.players[p],surcharge);
@@ -5803,12 +5825,14 @@ export function assertUniversalMatch(pack,s){
   const target=field(s.players[1-q.player]).find(c=>c.uid===q.targetUid);
   const inner={...s,pending:orig};
   const plan=selectionHandTax(pack,inner,q.player,q.targetUid,q.sourceType);
+  const lifeChoice=orig?.kind==='life-trigger'&&q.targetAction?.type==='chooseTrigger'&&
+   TARGETING_LIFE_MODES.has(q.targetAction?.mode);
   if(!orig||typeof orig!=='object'||orig.player!==q.player||
-   orig.sourceUid!==q.sourceUid||q.player!==s.active||
+   (lifeChoice?orig.uid:orig.sourceUid)!==q.sourceUid||(q.player!==s.active&&!lifeChoice)||
    q.targetAction?.uid!==q.targetUid||
-   !TARGETING_CARD_EFFECT_CHOICES.has(q.targetAction?.type)||
+   !(TARGETING_CARD_EFFECT_CHOICES.has(q.targetAction?.type)||lifeChoice)||
    orig.kind==='effect-target-many'||
-   q.sourceType!==sourceTypeFromUid(pack,s,q.sourceUid)||
+   q.sourceType!==(lifeChoice?'trigger':sourceTypeFromUid(pack,s,q.sourceUid))||
    !target||target.fieldEntryStamp!==q.targetStamp||
    !Number.isInteger(q.targetStamp)||q.targetStamp<1||
    plan.blocked||!plan.payable||plan.cost!==1||
@@ -6062,14 +6086,51 @@ export function assertUniversalMatch(pack,s){
     const keys=x&&typeof x==='object'?Object.keys(x):[];
     const allowed=attackAp?['op','owner','sourceUid','turn','count']:
      ['op','owner','sourceUid','fieldEntryStamp','turn','destination'];
+    let earnedAp=true;
+    if(attackAp&&playerIndex(x.owner)&&typeof x.sourceUid==='string'){
+     const pl=s.players[x.owner];
+     const piles=[...field(pl),...pl.hand,...pl.deck,...pl.life,...(pl.lifeRevealed||[]),
+      ...pl.outside,...(pl.removed||[])];
+     let physical=null;
+     const todo=piles.filter(Boolean);
+     while(todo.length&&!physical){
+      const c=todo.pop();
+      if(c.uid===x.sourceUid)physical=c;
+      else todo.push(...(c.stack||[]),...(c.under||[]));
+     }
+     const printed=physical&&card(pack,physical);
+     earnedAp=!!printed&&(printed.mainAbility?.op==='payApHandTopBuffAttackAp'||
+      printed.effects?.onPlay?.some(e=>e.op==='chooseOne'&&e.options?.some(o=>
+       o.then?.some(t=>t.op==='scheduleAttackStartAp'&&t.count===1))));
+    }
     return !(retire||hand||attackAp)||!playerIndex(x.owner)||
      typeof x.sourceUid!=='string'||!x.sourceUid.startsWith(x.owner+'-')||
      !Number.isInteger(x.turn)||
-     (attackAp?x.count!==1:!Number.isInteger(x.fieldEntryStamp)||x.fieldEntryStamp<1)||
+     (attackAp?x.count!==1||!earnedAp:!Number.isInteger(x.fieldEntryStamp)||x.fieldEntryStamp<1)||
      keys.some(k=>!allowed.includes(k))||
      (retire&&keys.includes('destination'));
    }))
   throw Error('Invalid delayed effect instances');
+ for(const [owner,pl] of s.players.entries()){
+  const aura=pl.subaruHandTaxAura;
+  if(aura==null)continue;
+  const piles=[...field(pl),...pl.hand,...pl.deck,...pl.life,...(pl.lifeRevealed||[]),
+   ...pl.outside,...(pl.removed||[])];
+  let physical=null;
+  const todo=piles.filter(Boolean);
+  while(todo.length&&!physical){
+   const c=todo.pop();
+   if(c.uid===aura.sourceUid)physical=c;
+   else todo.push(...(c.stack||[]),...(c.under||[]));
+  }
+  const printed=physical&&card(pack,physical);
+  if(aura.name!=='ナツキ・スバル'||!Number.isInteger(aura.untilTurn)||
+   aura.untilTurn>s.turn||typeof aura.sourceUid!=='string'||
+   !aura.sourceUid.startsWith(owner+'-')||
+   Object.keys(aura).length!==3||
+   !printed?.effects?.onPlay?.some(e=>e.op==='grantSubaruHandTaxThisTurn'))
+   throw Error('Invalid Subaru hand-tax aura');
+ }
  if(s.retirementBatch!==null){
   const batch=s.retirementBatch;
   if(!Array.isArray(batch)||batch.some(e=>!e||!playerIndex(e.owner)||
@@ -6244,7 +6305,7 @@ export function assertUniversalMatch(pack,s){
    typeof e.key!=='string'||!Array.isArray(e.jobs))))
   throw Error('Invalid retirement order');
  if(!Array.isArray(s.effectQueue)||[...s.effectQueue,...lifeEntries.flatMap(e=>e.jobs)].some(e=>!playerIndex(e.owner)||
-   !['grantedAttackDraw','grantOnAttack','grantSelfSniperThisTurn','grantSelfAttackWinDrawThisTurn','grantSelfMustBlockThisTurn','buffSelfUntilNextOwnStart','grantSelfAttackEndSwapThisTurn','resolveAttackWinRecovery','draw','drawIfOwnName','drawIfAllOwnFieldNamed','drawIfOwnOutsideNamedCountAtLeast','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','drawIfOppRestCharacter','drawIfOppCharacterBpAtLeast','drawIfOwnNameAndHandFewer','activeOwnNamed','millTop','buffSelf','buffSelfPerOwnOutsideGroups','enemyBpDown','drawDiscard','chooseOne','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOne','retireOppFrontOneUnderBp','conditionalBounceOrRetireByOwnOutsideNames','completeResolvingEvent','stripOppRaidTop','restOppFrontUnderBp','restOppFrontBpAtLeast','restOppFrontOne','restOwnFrontOne','forbidAttackOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopDistinctBottomDiscard','buffOwnOthersFixed','grantSelfDoubleAttackThisTurn','grantSelfUnchosenThisTurn','activeOwnOther','grantSelfBlockAtLeastUntilNextOwnStart','grantOtherFieldFrontEnergyThisTurn','resolveAttackEndRestPrinted','searchTopUpToTwoBottom','deployOwnHandRest','deployOwnHandSpecial','deployOwnHandRestOrRaid','optionalPayApThen','optionalRetireThenProgram','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
+   !['grantedAttackDraw','grantOnAttack','grantSelfSniperThisTurn','grantSelfAttackWinDrawThisTurn','grantSelfMustBlockThisTurn','buffSelfUntilNextOwnStart','grantSelfAttackEndSwapThisTurn','resolveAttackWinRecovery','draw','drawIfOwnName','drawIfAllOwnFieldNamed','drawIfOwnOutsideNamedCountAtLeast','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','drawIfOppRestCharacter','drawIfOppCharacterBpAtLeast','drawIfOwnNameAndHandFewer','activeOwnNamed','millTop','buffSelf','buffSelfPerOwnOutsideGroups','enemyBpDown','drawDiscard','chooseOne','recoverAp','grantSubaruHandTaxThisTurn','scheduleAttackStartAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOne','retireOppFrontOneUnderBp','conditionalBounceOrRetireByOwnOutsideNames','completeResolvingEvent','stripOppRaidTop','restOppFrontUnderBp','restOppFrontBpAtLeast','restOppFrontOne','restOwnFrontOne','forbidAttackOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopDistinctBottomDiscard','buffOwnOthersFixed','grantSelfDoubleAttackThisTurn','grantSelfUnchosenThisTurn','activeOwnOther','grantSelfBlockAtLeastUntilNextOwnStart','grantOtherFieldFrontEnergyThisTurn','resolveAttackEndRestPrinted','searchTopUpToTwoBottom','deployOwnHandRest','deployOwnHandSpecial','deployOwnHandRestOrRaid','optionalPayApThen','optionalRetireThenProgram','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
     'discardGate','removeOutsideThen','enemyFrontAllBpDown','retireOppFrontAllUnderBp',
     'nextEligibleHandPlayApDiscount','nextScaledEventApDiscount','allNamedEnergyBounce','grantFrontEnergyOwnOtherFrontTrait','buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
     'recoverOutsideColorUnderEnergy','deployOutsideRest','deployOutsidePrinted','deployOutsideNameRest','deployNamedFromZones','payApDeployNamedRest','inspectTopTraitOutside','deployOutsideTraitlessRestOrRaid','buffOwnField','buffOwnOthersUpTo','buffEnergyNamedIfRaidedFront','buffOwnIfAbovePrinted','oncePerTurnGate','retireBatchOne','retireAtMainEnd','retireSourceOnPhaseEnd','moveAtMainEnd','retireOwnFieldOne','retireOwnCharacterOne','openBlock','resolveSniperBattle','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','resolveAttackEndSwap','phaseOrder','effectMoveOrder','restSelfTuckMovedFaceDown','sourceResolutionBoundary','lifeBatchStep','lifeRelease','advanceAfterAttack','additionalBattleDamage','openRetirementBatch','closeRetirementBatch','retirementOrder','battleImpactDamage','discardOppHand','activeSelfIf','openEnergyMoveGrants','moveOtherAcrossOrRemove','raidBaseEnergyThen','grantSelfAttackDamageThisTurn','restOppFrontLockActive','removeAnyOutsideScale','inspectTopColoredNamesOutside','inspectTopNamesOutside','drawIfNameOrDistinctColorNames','drawDiscardIfEffectApPaid','activeSelf','grantSelfImpactThisTurn','grantOwnNameBlockAtLeast','recoverOutsideNameColor','drawDiscardOrDrawIfBelowPrinted','chooseOneIfBelowPrinted','grantNamedReadyOnAttack','grantNamedBuffSniper','banSelfAttackThisTurn','deployOwnHandFreshName','deployOutsideNameColorEnergy','grantSelfAttackDrawThisTurn','recoverPlainEvent','buffAnyCharacter','revealHandBottom','deployOutsidePrintedExcept','activeEitherEntered'].includes(e.op)))
