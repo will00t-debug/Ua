@@ -15,7 +15,7 @@ function sit(s,p,id,line,slot){
 test('REZ-2-069 rests up to two green AP1 BP2500 characters, and the AP2 branch is empty in this pack',()=>{
  assert.match(REZERO_VOL2_BY_ID['REZ-2-069'].effectJa,/消費APが2/);
  assert.match(REZERO_VOL2_BY_ID['REZ-2-069'].effectJa,/消費APが1/);
- assert.equal(REZERO_VOL2_BY_ID['REZ-2-039'].engineImplemented,false);
+ assert.equal(REZERO_VOL2_BY_ID['REZ-2-039'].engineImplemented,true);
  assert.equal(rez.cards['REZ-2-069'].triggerEffect.op,'retireOppFront');
  assert.throws(()=>createUniversalPack({id:'rez-069-bad',cards:[{
   id:'X',name:'選択',color:'green',type:'event',energy:1,ap:1,bp:0,gen:0,trigger:'special',

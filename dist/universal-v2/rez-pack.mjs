@@ -6,6 +6,9 @@
 // Batches 35–44 add 007, 019, 021, 027, 051, 053, 057, 069, 072 and 073.
 // Batch 45 adds 010 and 011: a name-locked hand AP discount, scaled by
 // outside events for Emilia and armed by an all-Rem bounce for Rem.
+// Batch 49 adds 039: COLOR may use printed BP 2500 instead of energy 2,
+// and onPlay rests one other green printed-BP 2500 character, then actives
+// that character or this one. Q2414 is an OR. Q2415 uses the printed BP.
 import {REZERO_VOL2_BY_ID} from '../rezero-vol2.mjs';
 import {createUniversalPack} from './pack.mjs';
 
@@ -180,6 +183,24 @@ const PROFILES={
    maxEnergy:3,ready:true,max:1,protectionScope:null,name:'ナツキ・スバル'},
   {op:'buffOwnField',filter:{field:'name',value:'ナツキ・スバル'},bp:1000,
    optional:true,excludeSelf:false}]}},
+ 'REZ-2-039':{implementation:'dsl',impactNull:true,
+  triggerEffect:{op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1,
+   alternatePrintedBp:2500},effects:{onPlay:[
+  {op:'deployOutsidePrintedExcept',color:'green',printedBp:2500,
+   excludeName:'ナツキ・スバル',optional:true}]}},
+ 'REZ-2-016':{implementation:'dsl',effects:{onPlay:[
+  {op:'activeSelfIf',line:'energy',when:{kind:'ownNameExists',turn:'any',zone:'field',
+   excludeSelf:false,name:'クルシュ・カルステン'}}]},
+ mainAbility:{op:'restSelfChoose',then:[{op:'chooseOne',optional:false,options:[
+  {id:'buff',label:'bp plus 1000',turn:'any',then:[
+   {op:'buffAnyCharacter',bp:1000,optional:false,excludeSelf:true}]},
+  {id:'bottom',label:'reveal to bottom',turn:'any',then:[
+   {op:'revealHandBottom',thenBuffBp:2000,thenBuffOptional:true,
+    excludeSelf:true,drawIfPrintedBp:4000}]}]}]}},
+ 'REZ-2-020':{implementation:'dsl',frontForbidden:true,effects:{onRaided:[
+  {op:'draw',count:1}]},moveTriggers:[{
+  when:{from:'hand',to:'deck',reasons:['own-effect'],deckPosition:'bottom',revealed:true},
+  then:[{op:'buffAnyCharacter',bp:1000,optional:true,excludeSelf:false}]}]},
  'REZ-2-073':{implementation:'dsl',triggerEffect:{op:'retireOppFront'},
  effects:{onPlay:[{op:'retireOppFrontOne'}]},moveTriggers:[
   {when:{from:'hand',to:'outside',reasons:['own-effect'],sourceOnField:true,
@@ -191,6 +212,6 @@ export const REZ_V2_IMPLEMENTED_IDS=Object.freeze(Object.keys(PROFILES));
 
 export function createRezV2Pack(){
  const cards=REZ_V2_IMPLEMENTED_IDS.map(id=>({...shell(id),...PROFILES[id]}));
- return createUniversalPack({id:'rezero',version:'0.14.0',cards});
+ return createUniversalPack({id:'rezero',version:'0.16.0',cards});
 
 }
