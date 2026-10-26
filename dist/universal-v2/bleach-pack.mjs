@@ -1194,6 +1194,8 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-4-008","kind":"bazzSacrificeChain","number":"EX15BT/BLC-4-008","name":"バズビー","color":"yellow","energy":4,"ap":1,"bp":4000,"gen":1,"trigger":"get","type":"character","effect":"登場時：若自己場外沒有《友哈巴赫》，可使自己場上另1個《巴茲比》退場；如此則最多選1個對方前線、BP不超過被退場角色所需能量×1000的角色使其退場，並將此角色改為Active。若以此效果使所需能量5以上的己方角色退場，此角色本回合獲得Impact(1)。"}
 ,
 {"id":"BLC-4-065","kind":"nanaoStepEventActive","number":"EX15BT/BLC-4-065","name":"伊勢 七緒","color":"green","energy":3,"ap":1,"bp":2500,"gen":3,"trigger":"color","type":"character","effect":"Step：移動階段可從前線移至能量線。自己的回合中：若自己的能量線有《京樂春水》，此角色BP+1500。啟動・主要：僅在本回合已使用《神劍・八鏡劍》時可發動；將此角色改為Active。所有《伊勢七緒》的此效果合計每回合僅限1次。"}
+,
+{"id":"BLC-2-051","kind":"removedKeywordIchigo","number":"EX07BT/BLC-2-051","name":"黒崎 一護","color":"purple","energy":4,"ap":1,"bp":4000,"gen":1,"trigger":"get","type":"character","effect":"Impact 無效。己方除外區有至少 10 張卡，或有至少 2 種不同卡名、具有「零番隊」特徵的卡時，此角色獲得 Damage 2；己方除外區有至少 4 種不同卡名、具有「零番隊」特徵的卡時，再獲得 Impact 1。"}
  ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
