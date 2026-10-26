@@ -7637,11 +7637,49 @@ export function assertUniversalMatch(pack,s){
    typeof e.key!=='string'||!Array.isArray(e.jobs))))
   throw Error('Invalid retirement order');
  if(!Array.isArray(s.effectQueue)||[...s.effectQueue,...lifeEntries.flatMap(e=>e.jobs)].some(e=>!playerIndex(e.owner)||
-   !['grantedAttackDraw','grantOnAttack','grantSelfSniperThisTurn','grantSelfAttackWinDrawThisTurn','grantSelfMustBlockThisTurn','buffSelfUntilNextOwnStart','grantSelfAttackEndSwapThisTurn','resolveAttackWinRecovery','draw','drawIfOwnName','drawIfOwnEventUsed','drawIfOwnOutsideNamedCountAtLeast','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','drawIfOppRestCharacter','drawIfOppCharacterBpAtLeast','drawIfOppFrontBelowPrinted','drawIfOwnNameAndHandFewer','activeOwnNamed','millTop','buffSelf','buffSelfPerOwnOutsideGroups','enemyBpDown','drawDiscard','drawDiscardIfEveryOwnCharacterNamed','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontTiered','retireOppFrontOneUnderBp','conditionalBounceOrRetireByOwnOutsideNames','completeResolvingEvent','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','restOppFrontByOutsideEvents','forbidAttackOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopTraitOrEventAp','discountNextNamedHandEnergy','retireOppFrontAtLeastBp','retireOppFrontAtMostBp','retireOppFrontScaledBp','grantHandCharacterBpMay','searchTopUpToTwoBottom','deployOwnHandRest','deployOwnHandSpecial','deployOwnHandRestOrRaid','deployOwnHandNamedRest','optionalPayApThen','optionalRetireThenProgram','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
+   !['grantedAttackDraw','grantOnAttack','grantSelfSniperThisTurn','grantSelfAttackWinDrawThisTurn','grantSelfMustBlockThisTurn','buffSelfUntilNextOwnStart','grantSelfAttackEndSwapThisTurn','resolveAttackWinRecovery','draw','drawIfOwnName','drawIfOwnEventUsed','drawIfOwnOutsideNamedCountAtLeast','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','drawIfOppRestCharacter','drawIfOppCharacterBpAtLeast','drawIfOppFrontBelowPrinted','drawIfOwnNameAndHandFewer','activeOwnNamed','millTop','buffSelf','buffSelfPerOwnOutsideGroups','enemyBpDown','drawDiscard','drawDiscardIfEveryOwnCharacterNamed','chooseOne','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontTiered','retireOppFrontOneUnderBp','conditionalBounceOrRetireByOwnOutsideNames','completeResolvingEvent','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','restOppFrontByOutsideEvents','forbidAttackOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopTraitOrEventAp','discountNextNamedHandEnergy','retireOppFrontAtLeastBp','retireOppFrontAtMostBp','retireOppFrontScaledBp','grantHandCharacterBpMay','searchTopUpToTwoBottom','deployOwnHandRest','deployOwnHandSpecial','deployOwnHandRestOrRaid','deployOwnHandNamedRest','optionalPayApThen','optionalRetireThenProgram','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
     'discardGate','removeOutsideThen','enemyFrontAllBpDown','retireOppFrontAllUnderBp',
     'nextEligibleHandPlayApDiscount','grantFrontEnergyOwnOtherFrontTrait','buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
     'recoverOutsideColorUnderEnergy','deployOutsideRest','deployOutsideNameRest','deployNamedFromZones','payApDeployNamedRest','inspectTopTraitOutside','deployOutsideTraitlessRestOrRaid','buffOwnField','buffEitherOther','returnPrintedActiveBuff','removeNamedOutsideActive','payHandOrRestForNamed','handTopBuffSelf','optionalRestFrontRecoverAp','drawHandTop','optionalDiscardActiveSelf','oncePerTurnGate','retireBatchOne','retireAtMainEnd','retireSourceOnPhaseEnd','moveAtMainEnd','retireOwnFieldOne','retireOwnCharacterOne','openBlock','resolveSniperBattle','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','resolveAttackEndSwap','resolveUnblockedRest','phaseOrder','effectMoveOrder','restSelfTuckMovedFaceDown','sourceResolutionBoundary','lifeBatchStep','lifeRelease','advanceAfterAttack','additionalBattleDamage','openRetirementBatch','closeRetirementBatch','retirementOrder','battleImpactDamage','discardOppHand','activeSelfIf','openEnergyMoveGrants','moveOtherAcrossOrRemove','raidBaseEnergyThen','grantSelfAttackDamageThisTurn','restOppFrontLockActive','removeAnyOutsideScale','inspectTopColoredNamesOutside','drawDiscardIfEffectApPaid','activeSelf','restOwnActiveFrontDraw','deployOwnRaidBaseRest','restOrRetireFrontAtMost','peekTopOneIfFieldNames','grantSelfImpactThisTurn','buffNamedImpactDraw','grantOwnNameBlockAtLeast','deployOutsidePrintedRest','grantPrintedBlockAtLeast','moveOppFrontToEnergy','optionalHandOutsideActiveIf','buffNamedImpactDuration','takeTopHandRestOutside','buffEitherField','revealHandBottomOutsideCharacter','revealTopHandOrAffordableNamed','drawThenPlaceHand'].includes(e.op)))
   throw Error('Invalid queued effects');
+ // A printed choose-one may wait behind an earlier raid choice, such as
+ // BLC-1-053's draw/discard when the player resolves entry before the
+ // BLC-4-083 on-raided mode. The suspended job must still be that
+ // physical card's own printed program, not an invented branch.
+ const chooseRuntime=new Set(['owner','sourceUid','sourceName','raidUid','entryCause']);
+ const chooseJobs=[...s.effectQueue,...lifeEntries.flatMap(e=>e.jobs)].filter(e=>e.op==='chooseOne');
+ for(const job of chooseJobs){
+  const pl=s.players[job.owner];
+  const todo=[...pl.hand,...pl.deck,...pl.life,...pl.lifeRevealed,...pl.outside,
+   ...pl.removed,...pl.resolvingEvents,...pl.front,...pl.energy];
+  let physical=null;
+  while(todo.length){
+   const c=todo.pop();
+   if(!c)continue;
+   if(c.uid===job.sourceUid){physical=c;break;}
+   todo.push(...(c.stack||[]),...(c.under||[]));
+  }
+  const printed=physical&&card(pack,physical);
+  const lists=[printed?.effects?.onPlay,printed?.effects?.onRaided,printed?.effects?.onRaid,
+   printed?.effects?.onRetire,printed?.effects?.onAttack,printed?.mainAbility?.then]
+   .filter(Array.isArray);
+  const programs=[];
+  const walk=nodes=>{
+   for(const effect of nodes||[]){
+    if(!effect||typeof effect!=='object')continue;
+    if(effect.op==='chooseOne')programs.push(effect);
+    if(Array.isArray(effect.then))walk(effect.then);
+    if(Array.isArray(effect.options))for(const option of effect.options)walk(option.then);
+   }
+  };
+  for(const list of lists)walk(list);
+  const body=JSON.stringify(Object.fromEntries(Object.entries(job)
+   .filter(([key])=>!chooseRuntime.has(key))));
+  if(!printed||job.sourceName!==printed.name||!programs.some(effect=>JSON.stringify(effect)===body)||
+   (job.raidUid!==undefined&&(typeof job.raidUid!=='string'||!job.raidUid.startsWith(job.owner+'-')))||
+   (job.entryCause!==undefined&&typeof job.entryCause!=='string'))
+   throw Error('Unproven queued choose-one');
+ }
  const energyMoves=s.effectQueue.filter(e=>e.op==='openEnergyMoveGrants');
  if(energyMoves.length>1||energyMoves.some(j=>j.owner!==s.active||s.phase!=='attack'||
   Object.keys(j).length!==2||Object.keys(j).some(k=>!['op','owner'].includes(k))))
