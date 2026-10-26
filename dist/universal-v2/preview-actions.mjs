@@ -14,7 +14,9 @@ export const V2_PENDING_LABELS=Object.freeze({
  'life-batch-order':'選擇 LIFE／登場效果結算順序',
  'leave-replacement':'角色離場保護','private-top-choice':'查看牌庫頂','private-top-place':'選擇牌頂或牌底',
  'effect-recover-ap':'恢復 AP','effect-hand-top':'將 1 張手牌放到牌庫頂',
- 'effect-grant-lose-ready':'給能源 0 的指定角色本回合落敗時 ACTIVE','end-hand-limit':'手牌上限',
+ 'effect-grant-lose-ready':'給能源 0 的指定角色本回合落敗時 ACTIVE',
+ 'effect-trait-ban-move':'給有特徵的角色本回合不能攻擊，並移到另一條線',
+ 'effect-entry-rest-front':'將前線 ACTIVE 角色轉為 REST','end-hand-limit':'手牌上限',
  'effect-discard':'選擇棄牌','effect-discard-cost':'支付棄牌成本',
  'effect-discard-gate':'是否支付棄牌成本',
  'effect-remove-outside':'可將己方場外卡移入移除區',
@@ -146,6 +148,9 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseHandTop':return '將 '+name()+' 放到自己的牌庫頂';
   case 'chooseLoseBattleReady':return action.uid===null?
    '不給予落敗時 ACTIVE':'給 '+name()+' 本回合落敗時 ACTIVE';
+  case 'chooseTraitBanMove':return action.uid===null?
+   '不選擇角色':'使 '+name()+' 本回合不能攻擊並換線';
+  case 'chooseEntryRest':return '將 '+name()+' 轉為 REST';
   case 'chooseDiscardGate':return action.uid===null?'不支付成本':'棄 '+name()+' 支付成本';
   case 'chooseRemoveOutside':return action.mode==='skip'?'不將場外卡移入移除區':
    action.mode==='all'?'將目前場外的可選卡全部移入移除區，不結算後續':'將 '+name()+' 移入移除區';

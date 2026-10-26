@@ -16,6 +16,11 @@
 // other character. Front once per turn: until next own start, BP+1000 and
 // characters of BP 4000 or more cannot block her; or grant one other
 // character front-line energy generation this turn.
+// Batch 59 adds 030: on play, up to one own character with a trait cannot
+// attack this turn and moves to the other line. Q2410 removes one card
+// when that line is full. The main rests one active front character only
+// on the turn this character entered, then lowers one enemy front of
+// BP 2000 or more by 1500, or raises one other own character by 2000.
 // Batch 58 adds 018: a name-locked onPlay choice shared by the printed
 // name レム. One branch rests a blue energy-0 Subaru from outside and
 // retires that entry when this main phase ends. The other grants one
@@ -282,12 +287,23 @@ const PROFILES={
    {id:'lose',label:'lose-battle ready',turn:'any',then:[
     {op:'grantNamedLoseBattleReady',name:'ナツキ・スバル',color:'blue',
      maxEnergy:0,optional:true}]}]}]}}
+,
+ 'REZ-2-030':{implementation:'dsl',effects:{onPlay:[
+  {op:'noteEntryTurn'},
+  {op:'banAttackMoveOtherLine',optional:true}]},
+ mainAbility:{op:'entryTurnRestFrontChoose',oncePerTurn:true,then:[
+  {op:'chooseOne',optional:false,options:[
+   {id:'down',label:'enemy bp down',turn:'any',then:[
+    {op:'enemyBpDown',bp:1500,optional:true,minBp:2000,zone:'front'}]},
+   {id:'up',label:'other bp up',turn:'any',then:[
+    {op:'buffOwnField',filter:{field:'type',value:'character'},bp:2000,
+     optional:true,excludeSelf:true}]}]}]}}
 };
 
 export const REZ_V2_IMPLEMENTED_IDS=Object.freeze(Object.keys(PROFILES));
 
 export function createRezV2Pack(){
  const cards=REZ_V2_IMPLEMENTED_IDS.map(id=>({...shell(id),...PROFILES[id]}));
- return createUniversalPack({id:'rezero',version:'0.25.0',cards});
+ return createUniversalPack({id:'rezero',version:'0.26.0',cards});
 
 }
