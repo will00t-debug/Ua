@@ -1014,11 +1014,10 @@ function continueEffectQueue(pack,s){
    if(choices.length)s.pending={kind:'effect-recover-outside',player:owner,
     sourceUid:job.sourceUid,...q,choices,optional:true};
   }else if(job.op==='recoverOutsidePrintedBp'){
-   const choices=pl.outside.filter(c=>matchesOutsideRecovery(pack,s,c,
-    {printedBpLimit:job.bp})).map(c=>c.uid);
+   const query={printedBpLimit:job.bp,...(job.excludeName?{excludeName:job.excludeName}:{})};
+   const choices=pl.outside.filter(c=>matchesOutsideRecovery(pack,s,c,query)).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-recover-outside',player:owner,
-    sourceUid:job.sourceUid,printedBpLimit:job.bp,
-    choices,optional:job.optional};
+    sourceUid:job.sourceUid,...query,choices,optional:job.optional};
   }else if(job.op==='recoverOutsideTraitlessUnderEnergy'){
    const choices=pl.outside.filter(c=>matchesOutsideRecovery(pack,s,c,
     {traitlessEnergyLimit:job.energy})).map(c=>c.uid);

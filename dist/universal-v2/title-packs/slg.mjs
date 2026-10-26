@@ -30,6 +30,7 @@ const proof=Object.freeze({
  '024':['本角色不會被BP4000以上角色阻擋','UA51BT/SLG-1-024 道門 泰星 purple1/AP1/BP2500/gen1 no trigger. Cannot be blocked by BP 4000 or higher. On retire the opponent may give one of their field characters the same this-turn ceiling. Official page was not re-read in this batch. Not a full FAQ certification.'],
  '029':['己方原本BP2000以下的影之軍團角色攻擊時','UA51BT/SLG-1-029 カイセル purple3/AP1/BP2500/gen2 ACTIVE life separate. When an own 影の軍団 character of printed BP 2000 or less attacks, this READY card may REST and choose one mode: the attacker cannot be blocked by BP 4000 or higher this turn, or it cannot be chosen by opponent effects until this controller next START. Each mode is once per printed name this turn. The catalogue does not put 本回合 on the untargetable clause, and the shared protection status only expires at the next own START. Official page was not re-read. Not a full FAQ certification.'],
  '031':['己方原本BP2000以下影之軍團攻擊時','UA51BT/SLG-1-031 キバ purple3/AP1/BP2500/gen2 ACTIVE life separate. The same attack window may REST this card and either give the attacker BP+1500 this turn or draw 1 then discard 1. Each mode is once per printed name this turn. Official trait is 影の軍団. Official page was not re-read. Not a full FAQ certification.'],
+ '020':['登場時抽1張，然後可將1張手牌送場外','UA51BT/SLG-1-020 水篠 旬 purple4/AP1/BP4000/gen1 RAID life separate. Raid name 水篠 旬. OnPlay draws 1, then may discard 1 hand card to recover up to one own outside character other than 水篠 旬 with printed BP 3000 or less. OnAttack draws 1 and discards 1, and gains BP+500 this turn for each 5 own outside cards. Official page was not re-read. Not a full FAQ certification.'],
 
  '042':['主要階段每回合一次REST自己，額外產生1綠能源，主要階段結束時退場。','Official UA51BT/SLG-1-042 2026-04-17 errata-aware source: 馬渕 勲 GREEN0/AP1/BP1000/gen1 no life; rest OWN READY ENERGY source MAIN once per turn, current-turn GREEN+1, mandatory source retirement at MAIN end. Reuses native delayed-retire V2 primitive from SLG-1-013, TTG-1-063, BLEACH-1-069; old Japanese source name corrected in original official errata. No full FAQ certification.'],
 
@@ -68,7 +69,7 @@ const proof=Object.freeze({
 });
 export default Object.freeze({
  title:'solo-leveling',
- version:'v2-c-slg-20261026-b4',
+ version:'v2-c-slg-20261026-b5',
  entries:Object.freeze(verifiedSlgV2Cards().map(def=>{
   const record=records[def.id],suffix=def.id.slice(-3),review=proof[suffix];
   if(!record||!review||!record.effect.includes(review[0]))
@@ -111,7 +112,8 @@ export default Object.freeze({
      ...(['SLG-1-017','SLG-1-074','SLG-1-050','SLG-1-071'].includes(def.id)?['tests/v2-slg-eight-b1.test.mjs']:[]),
      ...(['SLG-1-063','SLG-1-054'].includes(def.id)?['tests/v2-slg-eight-b2.test.mjs']:[]),
      ...(['SLG-1-003','SLG-1-024'].includes(def.id)?['tests/v2-slg-eight-b3.test.mjs']:[]),
-     ...(['SLG-1-029','SLG-1-031'].includes(def.id)?['tests/v2-slg-eight-b4.test.mjs']:[])],
+     ...(['SLG-1-029','SLG-1-031'].includes(def.id)?['tests/v2-slg-eight-b4.test.mjs']:[]),
+     ...(['SLG-1-020'].includes(def.id)?['tests/v2-slg-eight-b5.test.mjs']:[])],
     ...(def.implementation==='vanilla'?{verifiedNoExtraEffects:true}:{})}
   });
  }))

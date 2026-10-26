@@ -42,3 +42,7 @@ Registered:
 - UA51BT/SLG-1-031 キバ. The same window may give the attacker BP+1500 this turn, or draw 1 and discard 1. Each mode is once per printed name.
 
 The catalogue does not put 本回合 on 029's untargetable clause. The shared protection status expires at that controller's next START, which is the only legal expiry for that status. Official pages were not re-read. The catalogue trait 影之軍團 is not the registered token 影の軍団.
+
+## Batch 5 — 水篠 旬 raid
+
+Registered UA51BT/SLG-1-020. Raid name 水篠 旬. OnPlay draws 1, then may discard 1 hand card to recover up to one own outside character other than 水篠 旬 whose printed BP is 3000 or less. `recoverOutsidePrintedBp` now accepts that printed-name exclusion. OnAttack draws 1, discards 1, and gains BP+500 this turn for each 5 own outside cards. Official page was not re-read. Not a full FAQ certification.

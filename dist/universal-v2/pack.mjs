@@ -198,7 +198,9 @@ function verifyProgram(program,path){
   }
   if(e.op==='recoverOutsidePrintedBp'&&(
    !integer(e.bp,1)||e.bp>50000||typeof e.optional!=='boolean'||
-   Object.keys(e).some(k=>!['op','bp','optional'].includes(k))
+   (e.excludeName!==undefined&&(typeof e.excludeName!=='string'||!e.excludeName.trim()||
+    e.excludeName.length>80))||
+   Object.keys(e).some(k=>!['op','bp','optional','excludeName'].includes(k))
   ))throw Error(path+'['+i+'] invalid printed-BP outside recovery');
   // Printed no-trait CHARACTER only; never infer 'traitless' from a generic filter.
   if(e.op==='recoverOutsideTraitlessUnderEnergy'&&(
@@ -428,7 +430,7 @@ function verifyProgram(program,path){
     Object.keys(e).some(k=>!['op','optional','then','payment','count','when'].includes(k))||
     e.then.some(x=>!['draw','millTop','peekTopOne','searchDeckOne',
      'searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside',
-      'peekTopOrBottom','recoverOutsideOne','deployOutsideRest',
+      'peekTopOrBottom','recoverOutsideOne','recoverOutsidePrintedBp','deployOutsideRest',
      'enemyBpDown','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
      'recoverOutsideColorUnderEnergy','buffOwnField',
      'restOppFrontUnderBp','restOppFrontOne','buffSelf','grantOnAttack',

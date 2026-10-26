@@ -722,6 +722,24 @@ const authored=[
     {"id":"buff","kind":"bp","bp":1500},
     {"id":"draw","kind":"drawDiscard","draw":1,"discard":1}
   ]}
+},
+{
+  "id":"SLG-1-020","name":"水篠 旬","color":"purple","energy":4,
+  "ap":1,"bp":4000,"gen":1,"trigger":"raid","type":"character",
+  "raidName":"水篠 旬",
+  "textAnchor":"登場時抽1張，然後可將1張手牌送場外",
+  "implementation":"dsl","effects":{
+   "onPlay":[
+    {"op":"draw","count":1},
+    {"op":"discardGate","optional":true,"then":[
+     {"op":"recoverOutsidePrintedBp","bp":3000,"optional":true,"excludeName":"水篠 旬"}
+    ]}
+   ],
+   "onAttack":[
+    {"op":"drawDiscard","count":1},
+    {"op":"buffSelfPerOwnOutsideGroups","unit":5,"bpPerGroup":500}
+   ]
+  }
 }
 ];
 export const SLG_V2_VERIFIED_IDS=Object.freeze(authored.map(c=>c.id));
