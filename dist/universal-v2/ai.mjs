@@ -128,6 +128,9 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   return legal.find(a=>a.uid!==null&&foe.find(c=>c?.uid===a.uid)?.ready)||
    legal.find(a=>a.uid!==null)||legal[0];
  }
+ if(s.pending?.kind==='effect-retire-own-trait')
+  return difficulty==='easy'?legal.find(a=>a.uid===null)||legal[0]:
+   legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-retire-own-field')
   return difficulty==='easy'?legal.find(a=>a.uid===null)||legal[0]:
    legal.find(a=>a.uid!==null)||legal[0];

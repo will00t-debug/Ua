@@ -1176,6 +1176,8 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-2-012","kind":"bambiesPerBp","number":"EX07BT/BLC-2-012","name":"聖隷","color":"yellow","energy":4,"ap":1,"bp":0,"gen":0,"trigger":"special","type":"event","effect":"使 1 個敵方前線角色退場；其 BP 必須不高於「己方場上具有『邦比愛塔親衛隊』特徵及名為〈邦比愛塔・芭絲塔拜茵〉的卡片合計數量 ×1000」。"}
 ,
 {"id":"BLC-1-081","kind":"kenpachiEnergyFront","number":"UA08BT/BLC-1-081","name":"更木 剣八","color":"green","energy":4,"ap":2,"bp":4000,"gen":0,"trigger":"draw","type":"character","effect":"此卡不能登場於能源線，也不能移至能源線。Impact 1。登場：可使最多 1 個敵方前線 BP 2000 以下角色退場；己方場上有至少 6 張其他具有「護廷十三隊」特徵的卡時，BP 上限改為 4000。"}
+,
+{"id":"BLC-2-037","kind":"mayuriTraitRetire","number":"EX07BT/BLC-2-037","name":"涅 マユリ","color":"blue","energy":4,"ap":1,"bp":4000,"gen":1,"trigger":null,"type":"character","effect":"登場：可使 1 個己方場上具有「涅骸部隊」特徵的角色退場；成功時，可使最多 1 個敵方前線角色退場，其 BP 必須不高於該己方角色的 BP，然後抽 1 張。"}
  ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1333,6 +1335,7 @@ export function checkedBleachAddonDefinition(p){
  const isKatenActive=p.kind==='katenEnergyActive';
  const isBambiesPer=p.kind==='bambiesPerBp';
  const isKenpachi=p.kind==='kenpachiEnergyFront';
+ const isMayuriTrait=p.kind==='mayuriTraitRetire';
  const topDiscard={
   'BLC-3-007':{count:3,filter:{field:'trait',value:'護廷十三隊'}},
   'BLC-3-002':{count:3,filters:[
@@ -1366,14 +1369,16 @@ export function checkedBleachAddonDefinition(p){
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest||isOwnCharacterDraw||isPeekAttack||isDrawInstead||isRevealOppTop||isRevealWindow||isEnergyWindow||isMillPurple||isEnergyBounce||isStepOr||isReplayDown||isStepName||isReducedActive||isOutsideName||isZeroIchigo||isDiscardBlock||isEmptyStep||isApActive||isAliasTop||isEntryChoose||isRestFrontName||isFrontFieldDown||isHandOutside||isEnergyAp||isAttackEnd||isDiscardVisored||isRaidHost||isBlockRaid||isRaidOrName||isRestOrDraw||isRestOrRetire||isHandApNamed||isBazzBurn||isKatenActive||isBambiesPer||isKenpachi;
+ const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest||isOwnCharacterDraw||isPeekAttack||isDrawInstead||isRevealOppTop||isRevealWindow||isEnergyWindow||isMillPurple||isEnergyBounce||isStepOr||isReplayDown||isStepName||isReducedActive||isOutsideName||isZeroIchigo||isDiscardBlock||isEmptyStep||isApActive||isAliasTop||isEntryChoose||isRestFrontName||isFrontFieldDown||isHandOutside||isEnergyAp||isAttackEnd||isDiscardVisored||isRaidHost||isBlockRaid||isRaidOrName||isRestOrDraw||isRestOrRetire||isHandApNamed||isBazzBurn||isKatenActive||isBambiesPer||isKenpachi||isMayuriTrait;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
   id:p.id,name:c.nameJa,color:c.color,type:c.type,energy:c.energy,ap:c.ap,
   bp:c.bp,gen:v2BaseGen,trigger:c.trigger??null,
   traits:Array.isArray(c.traits)?c.traits:(c.traits&&c.traits!=='無'?[c.traits]:[]),
-  ...(c.traits==='星十字騎士團／邦比愛塔親衛隊'?{traitComponents:['星十字騎士團','邦比愛塔親衛隊']}:{}),
+  ...(c.traits==='星十字騎士團／邦比愛塔親衛隊'?{traitComponents:['星十字騎士團','邦比愛塔親衛隊']}:
+   c.traits==='破面／涅骸部隊'?{traitComponents:['破面','涅骸部隊']}:
+   c.traits==='護廷十三隊／涅骸部隊'?{traitComponents:['護廷十三隊','涅骸部隊']}:{}),
   implementation:p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'?'vanilla':'dsl',
   ...(p.kind==='step'||p.kind==='stepAttackTraitBuff'||isStepOr||isStepName||isEmptyStep?{step:true}:{}),
   ...(isStepOr?{mainAbility:{op:'onceBuffSelfWhen',oncePerTurn:true,bp:1000,when:{logic:'any',checks:[
@@ -1658,7 +1663,8 @@ export function checkedBleachAddonDefinition(p){
    isBazzBurn?{onPlay:[{op:'retireOppFrontUnderBp',bp:5000,optional:false},{op:'buffOwnNameIfPrintedEnergy',name:'バズビー',minEnergy:5,bp:1000}]}:
    isKatenActive?{onPlay:[{op:'retireOppFrontUnderBp',bp:5000,optional:false},{op:'activeEnergyNamed',names:['花天','狂骨'],optional:true}]}:
    isBambiesPer?{onPlay:[{op:'retireOppFrontUnderBp',optional:false,nameOrTraitPerBp:{trait:'邦比愛塔親衛隊',name:'バンビエッタ・バスターバイン',per:1000}}]}:
-   isKenpachi?{onPlay:[{op:'retireOppFrontUnderBp',bp:2000,optional:true,traitCountBonus:{trait:'護廷十三隊',min:6,excludeSelf:true,bonusBp:4000}}]}:{}})
+   isKenpachi?{onPlay:[{op:'retireOppFrontUnderBp',bp:2000,optional:true,traitCountBonus:{trait:'護廷十三隊',min:6,excludeSelf:true,bonusBp:4000}}]}:
+   isMayuriTrait?{onPlay:[{op:'retireOwnTraitFollow',optional:true,trait:'涅骸部隊',follow:{kind:'underBpDraw',draw:1}}]}:{}})
  };
 }
 export function bleachV2PortedCards(){

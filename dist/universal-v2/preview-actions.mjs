@@ -34,6 +34,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-choice-mode':'選擇一項效果',
  'recovered-self-entry':'回收後可 REST 登場至能源線',
  'effect-recover-outside':'從場外回收','effect-retire-bp':'選擇敵方退場',
+ 'effect-retire-own-trait':'可退場 1 個己方指定特徵角色',
  'effect-grant-front-energy':'讓另一張己方前線指定特徵角色本回合也能產生能源',
  'effect-rest-bp':'選擇敵方 REST','effect-grant-ap-tax':'讓另一張己方 DFN 角色獲得指定時的 AP 加價保護','effect-attack-ban':'指定禁止攻擊的對手前線角色',
  'effect-buff-trait':'選擇己方 BP 加成',

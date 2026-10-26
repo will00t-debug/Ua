@@ -152,7 +152,8 @@ const testForKind=Object.freeze({
  bazzBurnRetire:'tests/v2-c29-bleach-port.test.mjs',
  katenEnergyActive:'tests/v2-c29-bleach-port.test.mjs',
  bambiesPerBp:'tests/v2-c29-bleach-port.test.mjs',
- kenpachiEnergyFront:'tests/v2-c29-bleach-port.test.mjs'
+ kenpachiEnergyFront:'tests/v2-c29-bleach-port.test.mjs',
+ mayuriTraitRetire:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -171,7 +172,9 @@ function contributedEntry(profile){
   definition:Object.freeze(definition),
   evidence:Object.freeze({
    printedTextFragments:Object.freeze([profile.effect]),
-   reviewNote:profile.id==='BLC-1-081'?
+   reviewNote:profile.id==='BLC-2-037'?
+    'EX07BT/BLC-2-037 official iframe 2026-10-26. On play, you may retire one own field character with trait 涅骸部隊. If that retirement happens, you may retire one opposing front character whose live BP is at most that character\'s live BP, then draw 1. Declining the own retirement stops the rest. Declining the opposing retirement still draws. A field with the trait is not a character. Silence does not remove the trait. The printed composites 破面／涅骸部隊 and 護廷十三隊／涅骸部隊 are audited trait components, so each token counts. Generated energy is 青. No trigger. No card FAQ.':
+   profile.id==='BLC-1-081'?
     'UA08BT/BLC-1-081 official iframe 2026-10-26. This character cannot enter the energy line and cannot move there. Q568 (2023-09-25): いいえ、できません. Move effects and position swaps cannot move it from front to energy, and there is no own-effect exception. Impact 1. On play, up to one opposing front character of BP 2000 or less retires. Six or more other own field cards with trait 護廷十三隊 replace that cap with 4000. This character does not count toward the six. Silence does not remove the trait. Declining the retirement is legal. DRAW is generic. No generated energy.':
    profile.id==='BLC-2-012'?
     'EX07BT/BLC-2-012 official iframe 2026-10-26. Retire one opposing front character whose live BP is at most 1000 times the number of own field cards that have trait 邦比愛塔親衛隊 or the printed name バンビエッタ・バスターバイン. A card with both counts once. The catalogue token is the audited split of official バンビーズ; 邦比小隊 is a different token. Silence does not remove the trait or the printed name. The choice is mandatory. A count of zero leaves no legal character. SPECIAL retires one opposing front character. No generated energy. No card FAQ.':
