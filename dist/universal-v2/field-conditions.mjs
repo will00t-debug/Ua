@@ -20,6 +20,12 @@ export function cardHasTrait(definition,trait){
  return (definition?.traits||[]).includes(trait)||
   (definition?.traitComponents||[]).includes(trait);
 }
+// 「全ての場所でイベントカードとしても扱う」adds an event identity.
+// The printed type stays character, so play, front, and energy rules do not
+// change. Effects that count or search for an event card include it.
+export function cardCountsAsEvent(definition){
+ return definition?.type==='event'||definition?.alsoEvent===true;
+}
 export const V2_TRAIT_ZONES=Object.freeze(['field','front','energy']);
 export const V2_TRAIT_SUBJECTS=Object.freeze(['character','card']);
 export function ownFieldTraitKinds(s,owner,sourceUid,profile,printed){
@@ -80,7 +86,14 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
  if(condition.kind==='outsideCount')
   return s.players[owner].outside.length>=condition.min;
  if(condition.kind==='ownOutsideEventCountAtLeast')
-  return s.players[owner].outside.filter(c=>printed(c).type==='event').length>=condition.min;
+  return s.players[owner].outside.filter(c=>cardCountsAsEvent(printed(c))).length>=condition.min;
+ // 「山札からキャラカードを登場させるかレイド」. The ledger is cleared at
+ // the next turn start. A paid hand play, a life trigger, and an opponent
+ // effect do not qualify. The moved card must be a character.
+ if(condition.kind==='ownDeckCharacterEntryThisTurn')
+  return (s.zoneMoveEvents||[]).some(e=>e.owner===owner&&e.controller===owner&&
+   e.from==='deck'&&(e.to==='front'||e.to==='energy')&&e.reason==='own-effect'&&
+   printed({uid:e.uid,cardId:e.cardId})?.type==='character');
  if(condition.kind==='ownOutsideNamedCountAtLeast'){
   // Printed names are a union, not distinct-name kinds: each physical card
   // in OWN OUTSIDE counts ONCE, even when it has multiple audited aliases.

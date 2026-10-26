@@ -1,6 +1,7 @@
 // Cross-title Universal v2 AI baseline. Uses only the native legal-action
 // list; no work-specific card-ID shortcuts and no mutation of match state.
 import {legalUniversalActions,dispatchUniversalAction,universalBp,universalEnergy,universalEnergyByColor,universalCardEnergy,handRevealIdentity} from './engine.mjs';
+import {cardCountsAsEvent} from './field-conditions.mjs';
 export const UNIVERSAL_AI_LEVELS=Object.freeze(['easy','normal','hard']);
 const packsOf=pack=>Array.isArray(pack)?pack:[pack,pack];
 const option=(list,type)=>list.find(x=>x.type===type);
@@ -71,7 +72,7 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
    if(uid===null)return 0;
    const printed=catalog[deck.find(c=>c.uid===uid)?.cardId];
    if(printed?.traits?.includes(s.pending.trait)||printed?.traitComponents?.includes(s.pending.trait))return 2;
-   return printed?.type==='event'?1:0;
+   return cardCountsAsEvent(printed)?1:0;
   };
   return [...legal].sort((a,b)=>score(b.uid)-score(a.uid))[0];
  }
@@ -84,6 +85,18 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='effect-pay-ap-deploy')
   return difficulty==='easy'?legal.find(a=>a.mode==='skip')||legal[0]:
    legal.find(a=>a.mode==='pay')||legal[0];
+ if(s.pending?.kind==='effect-deck-named-play')
+  return difficulty==='easy'?legal.find(a=>a.mode==='hand')||legal[0]:
+   legal.find(a=>a.mode==='raid'&&!a.replaceUid)||
+   legal.find(a=>a.mode==='enter'&&!a.replaceUid)||
+   legal.find(a=>a.mode==='hand')||legal[0];
+ if(s.pending?.kind==='effect-place-hand'){
+  const catalog=packsOf(pack)[s.pending.player].cards;
+  const hand=s.players[s.pending.player].hand;
+  const outside=legal.filter(a=>a.mode==='outside');
+  return [...outside].sort((a,b)=>(catalog[hand.find(c=>c.uid===a.uid)?.cardId]?.energy||0)-
+   (catalog[hand.find(c=>c.uid===b.uid)?.cardId]?.energy||0))[0]||legal[0];
+ }
  if(s.pending?.kind==='effect-top-order')return legal[0];
  if(['effect-discard-cost','effect-discard-gate'].includes(s.pending?.kind)){
   // An optional cost may be declined; tougher bots pay with a lower-value

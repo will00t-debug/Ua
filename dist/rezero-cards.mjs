@@ -46,7 +46,7 @@ export const REZERO_CARDS=[
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-001.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA40BT%2FREZ-1-001",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "alsoEvent",
   "handDiscount": null,
   "altNames": [
    "卡包"
@@ -2835,7 +2835,7 @@ export const REZERO_CARDS=[
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-070.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA40BT%2FREZ-1-070",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "drawOrBeatriceReveal",
   "handDiscount": null,
   "altNames": []
  },
@@ -2874,7 +2874,7 @@ export const REZERO_CARDS=[
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-071.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA40BT%2FREZ-1-071",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "raidPeekBeatriceReveal",
   "handDiscount": null,
   "altNames": []
  },
@@ -3920,7 +3920,7 @@ export const REZERO_CARDS=[
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-097.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA40BT%2FREZ-1-097",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "topKeepNamedReveal",
   "handDiscount": null,
   "altNames": []
  },
@@ -4513,7 +4513,7 @@ export const REZERO_CARDS=[
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40ST_REZ-1-112.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA40ST%2FREZ-1-112",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "deckCharacterEntryActive",
   "handDiscount": null,
   "altNames": []
  },

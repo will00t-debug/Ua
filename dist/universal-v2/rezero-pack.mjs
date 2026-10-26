@@ -76,6 +76,11 @@ export function rezeroEngineKind(effectJa){
  if(e==='【レイド】〈レム〉アクティブにし、フロントLに移動できる【インパクト（1）】（アタックしてバトルに勝利した時、相手プレイヤーに1ダメージ）【登場時】自分の場外から必要エナジーが0の青の〈ナツキ・スバル〉を1枚まで自分の場にレストで登場させる。【アタック時】自分の場の必要エナジーが0の青の〈ナツキ・スバル〉を1枚まで選び、このターン中、「このキャラはBP4000以上のキャラにブロックされない。」を与える。')return 'raidRemImpactSubaruBlock';
  if(e==='【レイド】〈ベアトリス〉アクティブにし、フロントLに移動できる【自分のターン中】自分の場に〈ナツキ・スバル〉がある場合、このキャラはBP+500。【登場時】相手のフロントLのキャラを1枚まで選び、エナジーLに移動させる。このキャラが自分の効果で登場していた場合、選んだキャラに次の自分のターン開始時まで、「このキャラは移動できない。」を与える。')return 'raidBeatriceMoveLock';
  if(e==='【レイド】〈エミリア〉アクティブにし、フロントLに移動できる【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、【インパクト】を失う）このキャラはBP2000以下のキャラにブロックされない。このキャラがアタックしてブロックされなかった時、相手のフロントLのキャラを1枚まで選び、レストにする。【起動メイン】【エナジーLにある場合】 【ターン1】自分のフロントLのキャラを1枚選び、このキャラと位置を入れ替える。')return 'raidEmiliaBlockRestSwap';
+ if(e===TOP_KEEP_NAMED)return 'topKeepNamedReveal';
+ if(e===DRAW_OR_BEATRICE)return 'drawOrBeatriceReveal';
+ if(e===RAID_PEEK_BEATRICE)return 'raidPeekBeatriceReveal';
+ if(e===DECK_ENTRY_ACTIVE)return 'deckCharacterEntryActive';
+ if(e===ALSO_EVENT)return 'alsoEvent';
  return null;
 }
 const TOP_OUTSIDE=new Map([
@@ -83,6 +88,13 @@ const TOP_OUTSIDE=new Map([
  ['【登場時】自分の山札の上から2枚見る。その中から1枚まで場外に置き、残りを望む順で山札の上に置く。',2]
 ]);
 const TOP_KEEP='【登場時】自分の山札の上から2枚見る。その中から望む枚数を望む順で山札の上に置き、残りを場外に置く。';
+const NAMED_REVEAL='自分の山札の上から1枚公開し、『手札に加える』。公開したカードが必要エナジーを満たす';
+const REST_OR_RAID='の場合、『自分の場にレストで登場させるかレイドさせる』に代えてもよい。';
+const TOP_KEEP_NAMED='自分の山札の上から3枚見る。その中から望む枚数を望む順で山札の上に置き、残りを場外に置く。その後、'+NAMED_REVEAL+'〔〈ナツキ・スバル〉か〈ベアトリス〉〕'+REST_OR_RAID;
+const DRAW_OR_BEATRICE='【登場時】以下から1つ選ぶ。・カードを1枚引き、自分の手札を1枚自分の山札の上か場外に置く。・APを1支払ってもよい。そうした場合、'+NAMED_REVEAL+'〈ベアトリス〉'+REST_OR_RAID;
+const RAID_PEEK_BEATRICE='【レイド】〈ナツキ・スバル〉アクティブにし、フロントLに移動できる【登場時】自分の山札の上から2枚見る。その中から1枚まで場外に置く。残りを望む順で山札の上に置く。カードを1枚引く。【アタック時】【ターン1】APを1支払ってもよい。そうした場合、'+NAMED_REVEAL+'〈ベアトリス〉'+REST_OR_RAID;
+const DECK_ENTRY_ACTIVE='【自分のターン中】このターン中に自分が山札からキャラカードを登場させるかレイドさせている場合、このキャラはBP+500。【登場時】このキャラが自分の効果で登場していた場合、このキャラをアクティブにする。';
+const ALSO_EVENT='このカードは全ての場所でイベントカードとしても扱う。【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、【インパクト】を失う）';
 const TRIAL_NAME=REZERO_CARDS.find(c=>c.id==='REZ-1-098').nameJa;
 const SEARCH_SEVEN='【登場時】自分の山札の上から7枚見る。その中から〈'+TRIAL_NAME+'〉を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。';
 const ALIAS_PREFIX='このカードは〈クルシュ・カルステン〉としても〈フェリス〉としても扱う。';
@@ -233,9 +245,27 @@ export function rezeroPackCard(card){
    kind==='raidRemImpactSubaruBlock'?{
     onPlay:[{op:'deployOutsidePrintedRest',name:'ナツキ・スバル',color:'blue',energy:0,optional:true}],
     onAttack:[{op:'grantPrintedBlockAtLeast',name:'ナツキ・スバル',color:'blue',energy:0,bp:4000,optional:true}]}:
+   kind==='topKeepNamedReveal'?{onPlay:[
+    {op:'inspectTopAnyOutside',count:3,rest:'top'},
+    {op:'revealTopHandOrAffordableNamed',names:['ナツキ・スバル','ベアトリス']}]}:
+   kind==='drawOrBeatriceReveal'?{onPlay:[{op:'chooseOne',optional:false,options:[
+    {id:'drawPlace',label:'抽1張，再將1張手牌放到牌頂或場外',turn:'any',
+     then:[{op:'drawThenPlaceHand'}]},
+    {id:'revealBeatrice',label:'可支付1AP，公開牌頂的碧翠絲',turn:'any',then:[
+     {op:'optionalPayApThen',ap:1,optional:true,then:[
+      {op:'revealTopHandOrAffordableNamed',names:['ベアトリス']}]}]}
+   ]}]}:
+   kind==='raidPeekBeatriceReveal'?{
+    onPlay:[
+     {op:'inspectTopArrange',count:2,toOutside:true,rest:'top'},
+     {op:'draw',count:1}],
+    onAttack:[{op:'optionalPayApThen',ap:1,optional:true,oncePerAttackTurn:true,then:[
+     {op:'revealTopHandOrAffordableNamed',names:['ベアトリス']}]}]}:
+   kind==='deckCharacterEntryActive'?{onPlay:[{op:'activeSelfIf',entry:'ownEffect'}]}:
    ops?{onPlay:ops}:{},
   ...(kind==='step'||kind==='emptyFieldStep'?{step:true}:{}),
-  ...(kind==='impactNull'?{impactNull:true}:{}),
+  ...(kind==='impactNull'||kind==='alsoEvent'?{impactNull:true}:{}),
+  ...(kind==='alsoEvent'?{alsoEvent:true}:{}),
   ...(kind==='activeEnergy'?{activeExtraEnergy:1}:{}),
   ...(kind==='handDiscount'?{opponentFieldColorsHandEnergyDiscount:card.handDiscount}:{}),
   ...(kind==='emptyFieldStep'?{emptyOwnFieldHandEnergyDiscount:2}:{}),
@@ -288,6 +318,9 @@ export function rezeroPackCard(card){
   ...(kind==='raidBeatriceMoveLock'?{raidName:'ベアトリス',passiveBonuses:[{
    bp:500,condition:{kind:'ownNameExists',turn:'own',zone:'field',excludeSelf:false,
     name:'ナツキ・スバル'}}]}:{}),
+  ...(kind==='raidPeekBeatriceReveal'?{raidName:'ナツキ・スバル'}:{}),
+  ...(kind==='deckCharacterEntryActive'?{passiveBonuses:[{
+   bp:500,condition:{kind:'ownDeckCharacterEntryThisTurn',turn:'own'}}]}:{}),
   ...(kind==='raidEmiliaBlockRestSwap'?{raidName:'エミリア',impactNull:true,
    unblockedRestFront:true,
    blockBpRestriction:{relation:'atMost',bp:2000,condition:null},

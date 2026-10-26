@@ -26,6 +26,8 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-optional-draw':'攻擊時可抽 0 或 1 張',
  'effect-pay-ap-deploy':'可支付 1 AP，從場外 REST 登場',
  'effect-optional-pay-ap':'可支付 1 AP，然後結算後續效果',
+ 'effect-deck-named-play':'公開的卡片可加入手牌、休息登場或突襲',
+ 'effect-place-hand':'將1張手牌放到牌頂或場外',
  'effect-hand-rest':'從己方手牌免費 REST 登場',
  'effect-hand-rest-or-raid':'從己方手牌 REST 登場或合法 Raid',
  'effect-active-own-named':'可將最多 1 個己方指定名稱角色轉為 ACTIVE',
@@ -214,6 +216,10 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseOptionalMill':return action.mode==='mill'?'將牌庫頂 1 張送場外':'不送場外';
   case 'choosePayApDeploy':return action.mode==='pay'?'支付 1 AP，接著選擇場外角色':'不支付 AP';
   case 'chooseOptionalPayAp':return action.mode==='pay'?'支付 1 AP，然後結算後續效果':'不支付 AP';
+  case 'chooseDeckNamedPlay':return action.mode==='hand'?'將公開的卡片加入手牌':
+   action.mode==='raid'?'以突襲登場：'+name()+suffix():'以休息狀態登場：'+name()+suffix();
+  case 'choosePlaceHand':return action.mode==='deck'?
+   '將 '+name()+' 放到牌組上面':'將 '+name()+' 放到場外';
   case 'chooseHandRest':return action.uid===null?'不特殊登場':'免費 REST 登場 '+name()+suffix();
   case 'chooseActiveOwnNamed':return action.uid===null?'不將指定名稱角色轉為 ACTIVE':'將 '+name()+' 轉為 ACTIVE';
   case 'chooseHandRestOrRaid':return action.uid===null?'不從手牌登場':
