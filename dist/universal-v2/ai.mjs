@@ -92,6 +92,23 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   const onFront=s.players[s.pending.player].front.some(c=>c?.uid===s.pending.sourceUid);
   return legal.find(a=>a.mode===(onFront?'front':'plus'))||legal[0];
  }
+ if(s.pending?.kind==='effect-may-then')
+  return legal.find(a=>a.mode===(difficulty==='easy'?'skip':'do'))||legal[0];
+ if(s.pending?.kind==='effect-max-bp-impact')return legal[0];
+ if(s.pending?.kind==='effect-outside-or-rest')
+  return difficulty==='easy'?legal.find(a=>a.mode==='skip')||legal[0]:
+   legal.find(a=>a.mode==='hand')||legal[0];
+ if(s.pending?.kind==='effect-replay-base')
+  return difficulty==='easy'?legal.find(a=>a.mode==='skip')||legal[0]:
+   legal.find(a=>a.mode===(s.pending.canActive?'active':'rest'))||legal[0];
+ if(s.pending?.kind==='effect-named-energy'||s.pending?.kind==='effect-active-one-ap')
+  return legal[0];
+ if(s.pending?.kind==='effect-mode-discard'){
+  const catalog=packsOf(pack)[s.pending.player].cards;
+  const hand=s.players[s.pending.player].hand;
+  return [...legal].sort((a,b)=>(catalog[hand.find(c=>c.uid===a.uid)?.cardId]?.energy||0)-
+   (catalog[hand.find(c=>c.uid===b.uid)?.cardId]?.energy||0))[0];
+ }
  if(s.pending?.kind==='effect-pay-ap-deploy')
   return difficulty==='easy'?legal.find(a=>a.mode==='skip')||legal[0]:
    legal.find(a=>a.mode==='pay')||legal[0];

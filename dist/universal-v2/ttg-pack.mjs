@@ -128,7 +128,47 @@ const additions=[
  {id:'TTG-1-076',name:'ラガン',energy:2,ap:1,bp:3000,gen:1,color:'red',
   type:'character',trigger:'raid',raidName:'シモン',implementation:'dsl',
   effects:{onPlay:[{op:'searchTopAddOneMillRest',count:2},{op:'drawDiscard',count:1}]},
-  match:'牌庫頂2張'}
+  match:'牌庫頂2張'},
+ {id:'TTG-1-008',name:'グラパール',energy:4,ap:1,bp:4000,gen:1,color:'green',
+  type:'character',trigger:'get',raidTrait:'大グレン団',implementation:'dsl',
+  effects:{onPlay:[{op:'draw',count:1},{op:'raidBaseNameThen',branches:[
+   {name:'ギミー',then:[{op:'grantSelfImpactThisTurn',amount:1}]},
+   {name:'ダリー',then:[{op:'grantUnblockedDrawThisTurn'}]}]}]},
+  match:'大紅蓮團'},
+ {id:'TTG-1-025',name:'ロージェノム',energy:2,ap:1,bp:4000,gen:1,color:'green',
+  type:'character',trigger:null,implementation:'dsl',
+  attackEnergyMin:6,blockEnergyMin:6,
+  mainAbility:{op:'buffNamedEnergyActiveAp',minEnergy:6,name:'シモン',extraEnergy:3,activeAp:1},
+  effects:{},match:'能源6以上'},
+ {id:'TTG-1-030',name:'スペースキングキタン',energy:4,ap:1,bp:4000,gen:1,color:'green',
+  type:'character',trigger:'get',raidName:'キタン',impactNull:true,implementation:'dsl',
+  effects:{onRetire:[{op:'replayRaidBase',optional:true,activeEnergy:6}]},
+  match:'底板'},
+ {id:'TTG-1-039',name:'ラガンインパクト',energy:6,ap:1,bp:0,gen:0,color:'green',
+  type:'event',trigger:'active',implementation:'dsl',
+  effects:{onPlay:[{op:'buffMaxOwnBpImpact',optional:false,contains:'ラガン',name:'シモン',impact:1}]},
+  match:'最高 BP'},
+ {id:'TTG-1-044',name:'カミナ',energy:3,ap:1,bp:3500,gen:1,color:'red',
+  type:'character',trigger:null,implementation:'dsl',
+  passiveBonuses:[{condition:{kind:'ownNameOrRaidBase',turn:'any',zone:'field',
+   excludeSelf:false,name:'シモン'},bp:500}],
+  unblockedAttack:{optional:true,then:[{op:'searchTopOneBottomDiscard',count:7,
+   filter:{field:'name',value:'グレン'}}]},
+  effects:{},match:'查看牌庫頂7張'},
+ {id:'TTG-1-050',name:'キヨウ＆キノン＆キヤル',energy:3,ap:1,bp:3000,gen:1,color:'red',
+  type:'character',trigger:null,implementation:'dsl',
+  effects:{onPlay:[{op:'drawIfOwnNameOrRaidBase',name:'キタン',count:1}]},
+  printedMains:[
+   {id:'active',op:'discardHandThenActive',discard:1},
+   {id:'energy',op:'restSelfEnergy',energy:1},
+   {id:'bp',op:'discardHandBuff',discard:1,bp:1000}],
+  match:'基坦'},
+ {id:'TTG-1-029',name:'グレンラガン',energy:5,ap:1,bp:4000,gen:1,color:'green',
+  type:'character',trigger:'raid',raidName:'シモン',raidBaseNames:['シモン','ヴィラル'],
+  implementation:'dsl',
+  effects:{onPlay:[{op:'outsideRecoverOrRestPlay',optional:true,color:'green',
+   trait:'大グレン団',maxEnergy:3,ap:1,restPlayEnergy:6}]},
+  match:'需求能源3'}
 ];
 export const TTG_V2_ADDITION_IDS=Object.freeze(additions.map(x=>x.id));
 export function verifiedTtgV2Additions(){
@@ -139,12 +179,14 @@ export function verifiedTtgV2Additions(){
    const observed=key==='name'?(c.nameJa||c.name):(c[key]??null);
    if(observed!==(spec[key]??null))throw Error('TTG printed '+key+' changed: '+spec.id);
   }
-  // Older UA56BT entries print traits as separate tokens; TTG-077 uses
-  // one official slash-composite field. Normalize ONLY this proved card
-  // to the same V2 trait keys; sourceRecord remains untouched.
-  if(spec.id==='TTG-1-077'&&JSON.stringify(c.traits)!=='["大グレン団／ガンメン"]')
-   throw Error('TTG-077 official Gunmen traits changed; re-review required');
-  return {...spec,traits:spec.id==='TTG-1-077'?['大グレン団','ガンメン']:(c.traits||[])};
+  // Older UA56BT entries print traits as separate tokens. TTG-077 and
+  // TTG-029 use one official slash-composite field. Normalize ONLY these
+  // proved cards to the same V2 trait keys; sourceRecord remains untouched.
+  if((spec.id==='TTG-1-077'||spec.id==='TTG-1-029')&&
+   JSON.stringify(c.traits)!=='["大グレン団／ガンメン"]')
+   throw Error(spec.id+' official Gunmen traits changed; re-review required');
+  return {...spec,traits:spec.id==='TTG-1-077'||spec.id==='TTG-1-029'?
+   ['大グレン団','ガンメン']:(c.traits||[])};
  });
 }
 export function createTtgV2Pack(){return createUniversalPack({id:'gurren-lagann',version:'v2-c-20261015',cards:[...verifiedPilotCards('gurren-lagann'),...verifiedTtgV2Additions()]});}

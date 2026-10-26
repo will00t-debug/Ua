@@ -104,6 +104,24 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
    return condition.names.some(name=>cardHasName(d,name));
   }).length>=condition.min;
  }
+ if(condition.kind==='ownNameOrRaidBase'){
+  // 〈名前〉 on an own field character, or that character's レイド元.
+  // The buried layer keeps its original printed name only (Q50).
+  const pl=s.players[owner];
+  const zones=condition.zone==='front'?[pl.front]:
+   condition.zone==='energy'?[pl.energy]:[pl.front,pl.energy];
+  for(const zone of zones)for(const c of zone){
+   if(!c)continue;
+   const d=printed(c);
+   if(d.type!=='character')continue;
+   const silenced=originalEffectsDisabled(s,c);
+   if(!(condition.excludeSelf&&c.uid===sourceUid)&&
+    cardHasName(d,condition.name,silenced))return true;
+   const base=c.stack?.[0];
+   if(base&&printed(base).name===condition.name)return true;
+  }
+  return false;
+ }
  if(condition.kind==='ownEnergyAtLeast')
   return energy()>=condition.min;
  if(condition.kind==='oppCharacterBpAtLeast'){
