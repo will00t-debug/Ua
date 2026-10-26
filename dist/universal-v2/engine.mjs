@@ -4468,6 +4468,11 @@ export function legalUniversalActions(pack,s){
     matchesV2LiveCondition(s,p,c.uid,ability.when,
      x=>card(pack,x),()=>calcEnergy(pack,s,p),x=>bp(pack,s,x)))
     out.push({type:'activate',uid:c.uid,mode:'cardOnceActive'});
+   if(ability?.op==='restFrontNameOnce'&&!c.ready&&
+    pl.front.some(x=>x?.uid===c.uid)&&
+    !s.mainReadyOnceByName[p].includes(d.name+'|restFrontNameOnce')&&
+    pl.apCards.some(x=>x.ready))
+    out.push({type:'activate',uid:c.uid,mode:'restFrontNameOnce'});
    if(ability?.op==='oncePayProgram'&&!s.mainAbilityUsedUids.includes(c.uid)){
     const onFront=pl.front.some(x=>x?.uid===c.uid);
     const placed=onFront||pl.energy.some(x=>x?.uid===c.uid);
@@ -5065,6 +5070,21 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
      throw Error('Card-once ACTIVE is not legal');
     s.mainAbilityUsedUids.push(selected.uid);
     attemptFieldActive(s,p,selected);
+    break;
+   }
+   if(ability.op==='restFrontNameOnce'){
+    const key=d.name+'|restFrontNameOnce';
+    const onFront=pl.front.some(c=>c?.uid===selected.uid);
+    if(action.mode!=='restFrontNameOnce'||!onFront||selected.ready!==false||
+     s.mainReadyOnceByName[p].includes(key)||!pl.apCards.some(c=>c.ready))
+     throw Error('REST-only front name activate is not legal');
+    spendAp(pl,ability.payAp);
+    noteEffectApPaid(pack,s,p,selected.uid);
+    s.mainReadyOnceByName[p].push(key);
+    attemptFieldActive(s,p,selected);
+    s.effectQueue.push({op:'restOppFrontOne',optional:true,owner:p,
+     sourceUid:selected.uid,sourceName:d.name});
+    continueEffectQueue(pack,s);
     break;
    }
    if(ability.op==='oncePayProgram'){
