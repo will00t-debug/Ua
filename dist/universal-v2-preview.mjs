@@ -7,9 +7,11 @@ import {validateUniversalDeck} from './universal-v2/pack.mjs';
 import {V2_ABILITY_TEMPLATE_IDS} from './universal-v2/ability-templates.mjs';
 import {listRegisteredV2Titles} from './universal-v2/title-packs/registry.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
- universalPublicView,universalPrivateChoices,assertUniversalMatch} from './universal-v2/engine.mjs';
+ universalPublicView,universalPrivateChoices,assertUniversalMatch,universalEnergy} from './universal-v2/engine.mjs';
 import {chooseUniversalAiAction} from './universal-v2/ai.mjs';
 import {chooseProgressSafeAiAction,AI_ACTIONS_PER_FRAME} from './universal-v2/ai-driver-safety.mjs';
+import {chooseUniversalLearnAction,universalLearnFeatures} from './universal-v2/ai-learn.mjs';
+import {UNIVERSAL_STORE_KEY,beginTrace,observeTrace,settleMatch,effectiveWeights,matchFingerprint,learnSummary,emptyStore,loadBrowserStore,saveBrowserStore} from './ai-learn.mjs';
 import {ttgArtSource,ttgArtErrorFallback} from './ttg-art.mjs';
 import {CARDS} from './cards.mjs?v=9.1.0';
 import {SOLO_LEVELING_CARDS} from './solo-leveling.mjs';
@@ -55,7 +57,7 @@ $('v2-coverage').textContent=
  v2Entries.reduce((sum,item)=>sum+item.totalV2Cards,0)+' 張真卡 Pilot';
 const app={state:null,packs:null,selectedUid:null,
  selectedSide:null,history:[],busy:false,aiTimer:null,error:'',
- undo:null,replay:null,targetChoices:null,aiDifficulty:'normal',sequence:0,allActions:false, maxAuto:4500,autoMoves:0,aiPhaseKey:null,aiPhaseCount:0,aiFallbacks:0,aiCompletedSteps:0,lastAiProgress:'未啟動'};
+ undo:null,replay:null,targetChoices:null,aiDifficulty:'normal',sequence:0,allActions:false, maxAuto:4500,autoMoves:0,aiPhaseKey:null,aiPhaseCount:0,aiFallbacks:0,aiCompletedSteps:0,lastAiProgress:'未啟動',learnStore:loadBrowserStore(UNIVERSAL_STORE_KEY),learnTrace:null};
 const phases=V2_PHASE_LABELS;
 const CLIENT_RELEASE='AI 修復 R2 · 2026-10-24';
 const btn=(label,fn,cls='')=>el('button',{type:'button',class:cls,text:label,onClick:fn});
@@ -449,13 +451,16 @@ function applyAction(a){
   assertUniversalMatch(app.packs,app.state);
   app.replay=appendUniversalReplay(app.replay,a,0);
   pushHistory(publicPreviewActionLabel(app.packs,previous,app.state,a,0));
-  app.selectedUid=null;app.targetChoices=null;app.error='';app.allActions=false;render();driveAi();
+  app.selectedUid=null;app.targetChoices=null;app.error='';app.allActions=false;
+  settleUniversalLearn();render();driveAi();
  }catch(e){alertText(e?.message||String(e));}
 }
 function undoMove(){
  if(!app.undo||app.busy)return;
  app.state=app.undo.state;app.history=app.undo.history;app.replay=app.undo.replay;
- app.undo=null;app.error='';app.selectedUid=null;render();
+ app.undo=null;app.error='';app.selectedUid=null;
+ if(app.learnTrace)app.learnTrace=beginTrace(matchFingerprint(app.state,1));
+ render();
  if(uiActor(app.state)===1)driveAi();
 }
 // Fully synchronous, one-click rescue. No browser timers or AI chooser.
@@ -488,6 +493,26 @@ function manualAiStep(){
   }
  }
 }
+function refreshLearnStatus(){
+ const node=$('learn-status');
+ if(!node)return;
+ const fingerprint=app.state?matchFingerprint(app.state,1):'';
+ const summary=learnSummary(app.learnStore,fingerprint);
+ const voice=Math.round(summary.scale*100);
+ const learning=app.aiDifficulty==='learn'||$('ai-level')?.value==='learn';
+ node.textContent=learning
+  ?`已記錄 ${summary.recordedGames} 局候選。這副電腦牌組 ${summary.deckGames} 局，專屬打法發言權 ${voice}%。${summary.adopted?'已採用殘差會影響主要階段裡接近的選擇。':'已採用權重仍是 0，走法與困難相同。'}候選要等檢查通過才會改對戰。`
+  :'學習模式會記下公開局面。已採用權重為 0 時，走法與困難相同。';
+}
+function settleUniversalLearn(){
+ if(app.aiDifficulty!=='learn'||!app.learnTrace||app.learnTrace.settled||app.state?.status!=='finished')return;
+ const settled=settleMatch(app.learnStore,app.learnTrace,{
+  winner:app.state.winner,aiSeat:1,turn:app.state.turn,status:app.state.status
+ });
+ app.learnStore=settled.store;
+ saveBrowserStore(UNIVERSAL_STORE_KEY,app.learnStore);
+ refreshLearnStatus();
+}
 function driveAi(){
  if(!app.state||app.busy||app.state.status!=='playing'||uiActor(app.state)!==1)return;
  app.busy=true;app.autoMoves=0;app.sequence++;
@@ -503,8 +528,22 @@ function driveAi(){
     if(++app.autoMoves>limit)throw Error('電腦操作已達安全上限，請下載重播檔供除錯。');
     const key=app.state.turn+'|'+app.state.active+'|'+app.state.phase;
     if(app.aiPhaseKey!==key){app.aiPhaseKey=key;app.aiPhaseCount=0;}
-    const {action:choice,reason}=chooseProgressSafeAiAction(app.packs,app.state,
-     {difficulty:app.aiDifficulty,actionsInPhase:app.aiPhaseCount});
+    const learning=app.aiDifficulty==='learn';
+    if(learning){
+     const fingerprint=matchFingerprint(app.state,1);
+     if(!app.learnTrace||app.learnTrace.settled||app.learnTrace.fingerprint!==fingerprint)
+      app.learnTrace=beginTrace(fingerprint);
+     if(!app.state.pending&&(app.state.phase==='main'||app.state.phase==='move'))
+      observeTrace(app.learnTrace,universalLearnFeatures(app.packs,app.state,1),{
+       turn:app.state.turn,energy:universalEnergy(app.packs,app.state,1)
+      });
+    }
+    const weights=learning?effectiveWeights(app.learnStore,app.learnTrace.fingerprint):null;
+    const {action:choice,reason}=chooseProgressSafeAiAction(app.packs,app.state,{
+     difficulty:app.aiDifficulty==='learn'?'hard':app.aiDifficulty,
+     actionsInPhase:app.aiPhaseCount,
+     choose:learning?(pack,state)=>chooseUniversalLearnAction(pack,state,{weights}):chooseUniversalAiAction
+    });
     const previous=app.state;
     // The chosen action is copied from this state's legal list, never made up.
     app.state=dispatchUniversalAction(app.packs,app.state,choice,{actor:1});
@@ -526,6 +565,7 @@ function driveAi(){
     app.aiTimer=setTimeout(chunk,16);
    }else{
     app.busy=false;app.aiTimer=null;app.error='';
+    settleUniversalLearn();
     render();
    }
   }catch(e){
@@ -616,7 +656,7 @@ function importClassicLobbyDecks(){
   $(key).append(el('option',{value,text:'從舊版匯入｜'+(side==='mine'?'你的牌組':'對手牌組')}));
   $(key).value=value;
  }
- if(['easy','normal','hard'].includes(raw.aiDifficulty))$('ai-level').value=raw.aiDifficulty;
+ if(['easy','normal','hard','learn'].includes(raw.aiDifficulty))$('ai-level').value=raw.aiDifficulty;
  if(raw.first==='0'||raw.first==='1')$('first-player').value=raw.first==='1'?'ai':'human';
  if(notices.length)$('restart-notice').textContent=notices.join(' ');
 }
@@ -637,6 +677,8 @@ function startGame(){
   assertUniversalMatch(app.packs,app.state);
   app.error='';app.selectedUid=null;app.undo=null;app.allActions=false;app.aiFallbacks=0;app.aiCompletedSteps=0;app.lastAiProgress='新對局';
   app.aiDifficulty=$('ai-level').value;
+  app.learnTrace=app.aiDifficulty==='learn'?beginTrace(matchFingerprint(app.state,1)):null;
+  refreshLearnStatus();
   app.history=['新對局：'+(mine.label||fmtTitle(myTitle))+' vs '+(foe.label||fmtTitle(foeTitle))+
    '｜先手 '+(first===0?'你':'電腦')+'｜種子 '+seed];
   app.replay=makeUniversalPreviewReplay(app.packs,{
@@ -665,9 +707,17 @@ function downloadReplay(){
 }
 for(const id of ['my-title','ai-title','ai-level','first-player','match-seed']){
  $(id).addEventListener('change',()=>{
+  if(id==='ai-level')refreshLearnStatus();
   if(app.state) $('restart-notice').textContent='更改設定後，按「開始新對局」才會套用。';
  });
 }
+$('reset-learn').addEventListener('click',()=>{
+ app.learnStore=emptyStore();app.learnTrace=null;
+ saveBrowserStore(UNIVERSAL_STORE_KEY,app.learnStore);
+ refreshLearnStatus();
+ $('restart-notice').textContent='已清除學習權重。下一局學習模式回到困難的走法。';
+});
+refreshLearnStatus();
 $('start-game').addEventListener('click',startGame);
 $('match-seed').value='20261015';
 render();

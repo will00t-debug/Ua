@@ -14,7 +14,7 @@ const runtimes=Object.freeze({
  bleach:Object.freeze({
   title:'bleach',corePlayable:true,beta:false,
   newMatch:newGame,deckIssues:deckIssuesForBleach,assert:assertState,
-  legalActions,dispatch,actor:controller,botAction:(state,{difficulty='normal'}={})=>chooseAiAction(state,{difficulty}),
+  legalActions,dispatch,actor:controller,botAction:(state,options={})=>chooseAiAction(state,options),
  }),
  'gurren-lagann':Object.freeze({
   title:'gurren-lagann',corePlayable:false,beta:true,

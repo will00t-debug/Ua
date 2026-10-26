@@ -24,6 +24,9 @@ test('V2 standalone preview is never injected into existing production index and
  assert.match(script,/uiActor\(app.state\)===1/);
  assert.match(script,/universalPrivateChoices\(app.packs,s,0\)/);
  assert.ok(!page.includes('apiKey'));
+ assert.match(page,/學習 · 沿用困難並累積殘差/);
+ assert.match(page,/id="reset-learn"/);
+ assert.match(page,/id="learn-status"/);
 });
 test('UI presenter only allows actions copied from real per-turn legal options',()=>{
  const s=fresh(),legal=legalUniversalActions(packs,s);
