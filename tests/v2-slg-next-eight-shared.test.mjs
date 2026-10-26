@@ -98,7 +98,7 @@ test('eight further official SLG prints are registered on the shared engine',()=
  assert.equal(slg.cards['SLG-1-003'].passiveBonuses[0].extraEnergy,1);
  assert.equal(slg.cards['SLG-1-060'].impactNull,true);
  assert.equal(slg.cards['SLG-1-060'].phaseEffects[0].then[0].op,'swapEnergyWithFrontSkip');
- assert.equal(EXPECTED_V2_IDS['solo-leveling'].length,74);
+ assert.equal(EXPECTED_V2_IDS['solo-leveling'].length,80);
 });
 
 test('024 is not blocked by current BP 4000, and a lost block lets the opponent grant that rule',()=>{

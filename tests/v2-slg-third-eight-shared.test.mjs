@@ -143,7 +143,7 @@ test('eight more official SLG prints are registered on the shared engine',()=>{
  assert.equal(slg.cards['SLG-1-059'].effects.onAttack[0].skipSelfIfAdded,true);
  assert.equal(slg.cards['SLG-1-061'].phaseEffects[0].then[0].then[0].op,'activeOwnTrait');
  assert.equal(slg.cards['SLG-1-020'].raidName,'水篠 旬');
- assert.equal(EXPECTED_V2_IDS['solo-leveling'].length,74);
+ assert.equal(EXPECTED_V2_IDS['solo-leveling'].length,80);
  assert.equal(slg.cards['SLG-1-047'].phaseEffects[0].then[0].op,'chainRaidHand');
  assert.match(V2_PENDING_LABELS['effect-attack-aid'],/協助/);
  assert.match(V2_PENDING_LABELS['effect-tuck-damage'],/裏向/);
