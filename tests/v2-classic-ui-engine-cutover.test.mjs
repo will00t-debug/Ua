@@ -13,11 +13,11 @@ test('official root uses V2 while the editor never boots any legacy battle engin
  const config=JSON.parse(read('../vercel.json'));
  assert.deepEqual(config.rewrites,[{source:'/',destination:'/universal-v2-preview.html'}]);
  const root=read('../dist/index.html');
- assert.match(root,/src="v2-deck-editor\\.mjs/);
- assert.doesNotMatch(root,/src="app\\.mjs/);
+ assert.ok(root.includes('src="v2-deck-editor.mjs'));
+ assert.equal(root.includes('src="app.mjs'),false);
  const editor=read('../dist/v2-deck-editor.mjs');
- assert.doesNotMatch(editor,/from ['\"]\\.\\/engine\\.mjs/);
- assert.doesNotMatch(editor,/from ['\"]\\.\\/match-runtime\\.mjs/);
+ assert.equal(editor.includes("from './engine.mjs'"),false);
+ assert.equal(editor.includes("from './match-runtime.mjs'"),false);
  assert.doesNotMatch(root,/src="universal-v2-preview.mjs/);
  assert.match(read('../dist/universal-v2-preview.html'),/src="universal-v2-preview.mjs"/);
 });
