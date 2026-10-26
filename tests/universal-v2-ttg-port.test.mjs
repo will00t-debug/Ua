@@ -29,7 +29,7 @@ function main(s){
 }
 test('TTG additive pack preserves all 20 original V2 pilots, the registered additions, and a real 50-card mixed-title deck',()=>{
  const old=verifiedPilotPack('gurren-lagann');
- assert.deepEqual(TTG_V2_ADDITION_IDS,['TTG-1-020','TTG-1-067','TTG-1-028','TTG-1-006','TTG-1-005','TTG-1-014','TTG-1-019','TTG-1-010','TTG-1-023','TTG-1-018','TTG-1-063','TTG-1-053','TTG-1-077','TTG-1-022','TTG-1-015','TTG-1-002','TTG-1-007','TTG-1-013','TTG-1-057','TTG-1-071','TTG-1-054','TTG-1-055','TTG-1-026','TTG-1-081','TTG-1-011','TTG-1-016','TTG-1-035','TTG-1-041','TTG-1-048','TTG-1-076','TTG-1-008','TTG-1-025','TTG-1-030','TTG-1-039','TTG-1-044','TTG-1-050','TTG-1-029']);
+ assert.deepEqual(TTG_V2_ADDITION_IDS,['TTG-1-020','TTG-1-067','TTG-1-028','TTG-1-006','TTG-1-005','TTG-1-014','TTG-1-019','TTG-1-010','TTG-1-023','TTG-1-018','TTG-1-063','TTG-1-053','TTG-1-077','TTG-1-022','TTG-1-015','TTG-1-002','TTG-1-007','TTG-1-013','TTG-1-057','TTG-1-071','TTG-1-054','TTG-1-055','TTG-1-026','TTG-1-081','TTG-1-011','TTG-1-016','TTG-1-035','TTG-1-041','TTG-1-048','TTG-1-076','TTG-1-008','TTG-1-025','TTG-1-030','TTG-1-039','TTG-1-044','TTG-1-050','TTG-1-029','TTG-1-003','TTG-1-017','TTG-1-040','TTG-1-068','TTG-1-070','TTG-1-080']);
  assert.equal(Object.keys(old.cards).length,20);
  assert.equal(Object.keys(ttg.cards).length,EXPECTED_V2_COUNTS['gurren-lagann']);
  for(const [id,c] of Object.entries(old.cards))assert.deepEqual(ttg.cards[id].effects,c.effects);
@@ -187,9 +187,9 @@ test('TTG-077 is registered with a source-locked exact Gunmen feature; other unp
  assert.deepEqual(pack.cards['TTG-1-077'].effects.onPlay,[{
   op:'recoverOutsideOne',filter:{field:'trait',value:'ガンメン'},optional:true
  }]);
- const invalid={...ttgDeck,'TTG-1-001':3,'TTG-1-003':1};
+ const invalid={...ttgDeck,'TTG-1-001':3,'TTG-1-033':1};
  assert.equal(Object.values(invalid).reduce((n,k)=>n+k,0),50);
- assert.match(validateUniversalDeck(pack,invalid).join(';'),/Unregistered\/unsupported card: TTG-1-003/);
+ assert.match(validateUniversalDeck(pack,invalid).join(';'),/Unregistered\/unsupported card: TTG-1-033/);
 });
 
 test('TTG-1-077 official onPlay recovers 0..1 Gunmen ONLY from own outside (red4, AP1, no life trigger)',()=>{

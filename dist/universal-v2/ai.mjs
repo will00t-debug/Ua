@@ -103,6 +103,10 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
    legal.find(a=>a.mode===(s.pending.canActive?'active':'rest'))||legal[0];
  if(s.pending?.kind==='effect-named-energy'||s.pending?.kind==='effect-active-one-ap')
   return legal[0];
+ if(s.pending?.kind==='effect-outside-deck-top'||s.pending?.kind==='effect-outside-names')
+  return difficulty==='easy'?legal.find(a=>a.uid===null)||legal[0]:
+   legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-active-character')return legal[0];
  if(s.pending?.kind==='effect-mode-discard'){
   const catalog=packsOf(pack)[s.pending.player].cards;
   const hand=s.players[s.pending.player].hand;
