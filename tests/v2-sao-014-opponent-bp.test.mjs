@@ -81,13 +81,14 @@ for(const owner of [0,1]){
   });
  }
 }
-test('generic opponentTurnBp schema: explicit positive integer only, no event/unknown modifiers',()=>{
+test('generic opponentTurnBp schema: nonzero multiples of 500 within 5000, no event/unknown modifiers',()=>{
  const base={id:'QA-014',name:'Synthetic',color:'yellow',energy:1,ap:1,bp:2500,gen:1,
   type:'character',implementation:'dsl',effects:{}};
  const make=card=>createUniversalPack({id:'strict-opponent-turn',cards:[card]});
  assert.equal(make({...base,opponentTurnBp:1000}).cards['QA-014'].opponentTurnBp,1000);
+ assert.equal(make({...base,opponentTurnBp:-1500}).cards['QA-014'].opponentTurnBp,-1500);
  assert.equal(make({...base,implementation:'vanilla'}).cards['QA-014'].opponentTurnBp,0);
- for(const value of [0,-1,1.5,5001,'1000',null]){
+ for(const value of [0,-1,1.5,5001,-5001,250,'1000',null]){
   assert.throws(()=>make({...base,opponentTurnBp:value}),/invalid opponent-turn BP/);
  }
  assert.throws(()=>make({...base,type:'event',bp:0,gen:0,opponentTurnBp:1000}),
