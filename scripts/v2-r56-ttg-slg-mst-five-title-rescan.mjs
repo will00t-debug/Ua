@@ -34,8 +34,8 @@ const PRIORITY=Object.freeze([
   reason:'evaluate whether reusable shared combat atoms cover all printed clauses'},
  {id:'SAO-1-097',owner:'Cursor',status:'REVIEW PENDING',faq:null,
   reason:'re-audit optional source effect and physical UID; GPT does not migrate'},
- {id:'SLG-1-022',owner:'GPT',status:'ENGINE BLOCKED',faq:'Q2029',
-  reason:'energy-line attack-end swap and contingent source-qualified attack-end event'}
+ {id:'SLG-1-022',owner:'GPT',status:'REGISTERED',faq:'Q2029',
+  reason:'shared energy discount, life raid, dual-line ACTIVE, sniper and Q2029 energy-line swap; not a full FAQ certification'}
 ]);
 export function r56TtgSlgMstRescan(){
  const inv=v2AllTitleInventory(),index=capabilityIndex(inv);

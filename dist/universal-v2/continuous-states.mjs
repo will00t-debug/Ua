@@ -137,6 +137,12 @@ export function effectChoiceProtected(s,selector,targetUid,sourceType){
  const triggerImmune=target.card.triggerUnchosenGranted;
  if(sourceType==='trigger'&&triggerImmune&&triggerImmune.turn===s.turn&&
   triggerImmune.stamp===target.card.fieldEntryStamp)return true;
+ // 「このターン中、相手の効果で選ばれない」. Combat never calls this helper.
+ // The flag is cleared at the next turn start, which is shorter than the
+ // continuous cannotBeChosenByOppEffect expiry of the controller's next start.
+ const turnImmune=target.card.oppChoiceImmuneGranted;
+ if(turnImmune&&selector!==target.owner&&turnImmune.turn===s.turn&&
+  turnImmune.stamp===target.card.fieldEntryStamp)return true;
  if(target.owner===selector)return false;
  return s.continuousStates.some(e=>
   e.kind==='cannotBeChosenByOppEffect'&&!e.consumed&&

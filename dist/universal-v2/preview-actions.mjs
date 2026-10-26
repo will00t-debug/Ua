@@ -107,6 +107,25 @@ export const V2_PENDING_LABELS=Object.freeze({
  'main-two-buff':'主要能力選擇 BP 對象',
  'main-discard-buff':'支付一張手牌，讓自身 BP 增加',
  'effect-grant-attack':'授予己方角色攻擊時能力','granted-attack-draw':'攻擊時是否抽一張',
+ 'effect-grant-opp-block':'對手選擇一名角色，本回合不被高 BP 阻擋',
+ 'effect-deploy-outside':'從場外選擇角色登場',
+ 'effect-energy-skip-swap':'能源線與下次不 ACTIVE 的前線角色交換',
+ 'effect-energy-trait-swap':'能源線與前線指定特徵角色交換',
+ 'effect-active-lines':'選擇己方前線或能源線的指定特徵角色 ACTIVE',
+ 'effect-active-skip-pair':'選擇下次不 ACTIVE 的前線角色並執行 ACTIVE',
+ 'effect-pay-hand-outside':'將 1 張手牌送至場外',
+ 'effect-play-outside-event':'可從場外支付 AP 使用指定事件',
+ 'effect-release-facedown':'可將 1 張裏向卡送至場外',
+ 'effect-outside-cost-hand':'棄一張指定特徵手牌，將場外的此卡加入手牌',
+ 'effect-attack-aid':'攻擊時可 REST 並選擇一項協助',
+ 'effect-attack-aid-grant':'選擇本次攻擊的協助對象',
+ 'effect-tuck-damage':'將牌庫頂裏向放在指定角色下並使傷害+1',
+ 'effect-active-own-trait':'選擇己方指定特徵角色轉為 ACTIVE',
+ 'effect-tuck-hand-under':'抽牌後將1張手牌裏向放在此角色下方',
+ 'effect-chain-raid-facedown':'可支付裏向卡，準備再次 Raid',
+ 'effect-chain-raid-hand':'可從手牌再 Raid 於原底板',
+ 'effect-chain-discard':'支付1AP後將1張手牌送場外',
+ 'effect-outside-named-raid':'可從場外 Raid 符合條件的角色',
  'effect-target':'指定角色','effect-target-many':'最多選擇兩名不同敵方角色','raid-effect-order':'突襲能力結算順序',
  'effect-move-order':'選擇同時取得的移動觸發處理順序',
  'effect-rest-tuck':'是否 REST 角色，放置剛送至場外的手牌',
@@ -174,6 +193,8 @@ export function uiActionLabel(action,{pack,state}={}){
     action.mode==='bp'?'起動主要：棄 1 張手牌，本回合 BP＋1000':
     action.mode==='revealBottomBuff'?
    '起動主要：公開 1 張手牌放到牌底':
+    action.mode==='outsideTraitHand'?
+    '起動主要：從場外棄一張指定特徵手牌，將此卡加入手牌':
     action.mode==='discardSelfBuff'?
     '起動主要：棄一張手牌，本回合自身 BP＋1500（每回合一次）':
     action.mode==='selfRestEnergyRetire'?
@@ -192,6 +213,9 @@ export function uiActionLabel(action,{pack,state}={}){
      (action.effects||[]).map(effect=>({bp:'本回合 BP＋1000',
       impactNull:'下次己方回合開始前 IMPACT 無效',
       doubleBlock:'下次己方回合開始前可再阻擋'}[effect]||effect)).join('、')):
+    action.mode==='selfRestBuffHand'?'起動主要：REST 自身，指定另一張己方角色 BP＋1000，自身回手':
+    action.mode==='restRetireNamed'?'起動主要：REST 並退場，從場外回收指定名稱':
+    action.mode==='restTraitBuff'?'起動主要：REST 場域，己方指定特徵本回合 BP 加成':
     action.mode==='payApDrawEnergy'?'起動主要：支付 1 AP，抽 1 張，本回合產能＋1':
     action.mode==='restFrontGainEnergy'?'起動主要：REST 自身，再 REST 一張己方前線，本回合產能＋1':
     action.mode==='selfRestEnemy'?'主要能力：REST 自身，指定敵方前線角色':
@@ -219,6 +243,12 @@ export function uiActionLabel(action,{pack,state}={}){
     action.mode==='handBlock'?'起動主要：將 1 張手牌放到場外，本回合不被 BP4000 以上的角色阻擋':
     action.mode==='energySwap'?'起動主要：與 1 張己方前線角色交換位置':
     action.mode==='ready'?'主要能力：ACTIVE':
+    action.mode==='restTuckDamage'?
+    '起動主要：REST 自身，將牌庫頂裏向放在指定角色下並使直接傷害變為 2':
+    action.mode==='fieldMill'?'起動主要：REST 場域，將牌庫頂 1 張送場外':
+    action.mode==='fieldOutsideEvent'?'起動主要：REST 場域，將手牌 1 張送場外後可使用場外事件':
+    action.mode==='fieldTuck'?'起動主要：REST 場域，將牌庫頂 1 張裏向放在此卡下':
+    action.mode==='fieldRelease'?'起動主要：REST 場域，將手牌 1 張送場外後可放出裏向卡':
     action.mode==='buff'?'主要能力：BP 加成':'主要能力：ACTIVE ＋ BP 加成';
   case 'chooseBlock':return action.uid===null?'不阻擋':'使用 '+name()+' 阻擋';
   case 'chooseTrigger':
@@ -261,8 +291,10 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseDiscard':return '棄 '+name();
   case 'chooseMainDiscard':return '支付起動成本：將 '+name()+' 送至場外';
   case 'chooseOutsideRecovery':return action.uid===null?'不回收／完成':'回收 '+name()+' 至手牌';
-  case 'chooseRecoveredEntry':return action.mode==='skip'?'保留在手牌':
-   '回收後免費 REST 登場至能源線 '+(action.slot+1);
+  case 'chooseRecoveredEntry':
+   if(action.mode==='skip')return '保留在手牌';
+   return '回收後以 '+(state?.pending?.ready===true?'ACTIVE':'REST')+
+    ' 登場至'+(action.line==='front'?'前線':'能源線')+' '+(action.slot+1);
   case 'chooseOwnBounce':return '將 '+name()+' 返回手牌';
   case 'chooseDeckSearch':case 'chooseDeckSearchMulti':
    return action.uid===null?'結束搜尋':'將 '+name()+' 加入手牌';
@@ -375,6 +407,26 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseAttackBan':return action.uid===null?'不指定攻擊禁止對象':
    '令 '+name()+' 至下個己方回合開始前不能攻擊';
   case 'chooseGrantAttack':return '授予 '+name()+' 本回合攻擊時抽牌';
+  case 'chooseOppBlock':return action.uid===null?'不賦予阻擋限制':'讓 '+name()+' 本回合不被 BP 以上角色阻擋';
+  case 'chooseDeployOutside':return action.uid===null?'不從場外登場':'從場外登場 '+name()+suffix();
+  case 'chooseEnergySkipSwap':return action.uid===null?'不交換位置':'與 '+name()+' 交換前線與能源線';
+  case 'chooseEnergyTraitSwap':return action.uid===null?'不與這張能源角色交換':'與 '+name()+' 交換前線與能源線';
+  case 'chooseActiveLines':return action.uid===null?'不 ACTIVE 這條線的角色':'將 '+name()+' 轉為 ACTIVE';
+  case 'chooseActiveSkipPair':return action.uid===null?'只對自身執行 ACTIVE':'對 '+name()+' 與自身執行 ACTIVE';
+  case 'choosePayHandOutside':return '將 '+name()+' 送至場外';
+  case 'choosePlayOutsideEvent':return action.uid===null?'不使用場外事件':'支付 AP 使用 '+name();
+  case 'chooseReleaseFacedown':return action.uid===null?'不放出裏向卡':'將裏向的 '+name()+' 送至場外';
+  case 'chooseOutsideCostHand':return '棄 '+name()+'，將場外的此卡加入手牌';
+  case 'chooseAttackAid':return action.mode==='skip'?'不協助':
+   (state?.pending?.options?.find(o=>o.id===action.mode)?.label||'選擇協助');
+  case 'chooseAttackAidGrant':return action.uid===null?'不指定本次攻擊的協助對象':'協助 '+name();
+  case 'chooseTuckDamage':return '將牌庫頂裏向放在 '+name()+' 下方';
+  case 'chooseActiveOwnTrait':return action.uid===null?'不將角色轉為 ACTIVE':'將 '+name()+' 轉為 ACTIVE';
+  case 'chooseTuckHand':return '將 '+name()+' 裏向放在此角色下方';
+  case 'chooseChainFacedown':return action.uid===null?'不支付裏向卡':'支付裏向卡 '+name();
+  case 'chooseChainRaid':return action.uid===null?'只送走頂卡，不再 Raid':'從手牌再 Raid '+name();
+  case 'chooseChainDiscard':return '將 '+name()+' 送場外';
+  case 'chooseOutsideRaid':return action.uid===null?'不從場外 Raid':'從場外 Raid '+name()+suffix();
   case 'chooseGrantedDraw':return action.mode==='draw'?'使用獲得的攻擊時抽 1 張':'不抽牌';
   case 'chooseTarget':
    return action.uid===null?'不指定／完成':'指定 '+name();

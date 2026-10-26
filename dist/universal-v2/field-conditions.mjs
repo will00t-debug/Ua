@@ -132,6 +132,14 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   return (s.zoneMoveEvents||[]).some(e=>e.owner===owner&&e.controller===owner&&
    e.from==='deck'&&(e.to==='front'||e.to==='energy')&&e.reason==='own-effect'&&
    printed({uid:e.uid,cardId:e.cardId})?.type==='character');
+ // 「このキャラはBP+…」while the physical card is a visible own field card.
+ // Hand, outside, and a buried Raid layer do not receive the bonus.
+ if(condition.kind==='selfOnField'){
+  const area=s.players[owner];
+  return area.front.some(c=>c?.uid===sourceUid)||area.energy.some(c=>c?.uid===sourceUid);
+ }
+ if(condition.kind==='ownRestPrintedBpCount')
+  return ownRestPrintedBpCount(s,owner,sourceUid,condition,printed)>=condition.min;
  if(condition.kind==='ownOutsideNamedCountAtLeast'){
   // Printed names are a union, not distinct-name kinds: each physical card
   // in OWN OUTSIDE counts ONCE, even when it has multiple audited aliases.
@@ -250,18 +258,24 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
    e.controller===owner&&e.from==='hand'&&e.to==='outside'&&
    ['rule','payment','own-effect'].includes(e.reason));
  }
- if(condition.kind==='ownCardTraitCount'){
+ if(condition.kind==='ownCardTraitCount'||condition.kind==='ownDistinctTraitNames'){
   // 枚 counts every own field card with the printed trait, including a
   // field. It is not the character-only ownTraitCount predicate.
+  // カード名がN種類 counts distinct printed names among those cards.
   const pl=s.players[owner];
   const zones=condition.zone==='front'?[pl.front]:
    condition.zone==='energy'?[pl.energy]:[pl.front,pl.energy];
+  const names=new Set();
   let found=0;
   for(const zone of zones)for(const c of zone){
    if(!c||(condition.excludeSelf&&c.uid===sourceUid))continue;
-   if(cardHasTrait(printed(c),condition.trait))found++;
+   const d=printed(c);
+   if(!cardHasTrait(d,condition.trait))continue;
+   found++;
+   if(typeof d.name==='string'&&d.name.trim())names.add(d.name);
   }
-  return found>=condition.min;
+  return condition.kind==='ownDistinctTraitNames'?names.size>=condition.min:
+   found>=condition.min;
  }
  if(condition.kind==='ownNameOrDistinctPrintedColorNames'){
   // 〈名前〉 is the usual name check, including an audited alias. The
