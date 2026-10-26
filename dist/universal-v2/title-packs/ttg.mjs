@@ -22,11 +22,17 @@ const proof=Object.freeze({
  'TTG-1-015':['支付1 AP','Official UA56BT/TTG-1-015 ニア, checked 2026-10-22: cost 緑- (energy 0), AP1, BP500, trait 大グレン団, generated 緑+ (one green pip, gen 1), DRAW. Activate MAIN pays 1 AP, once per turn: draw 1 and this character gains generated energy +1 this turn. The payment does not rest the source. A front character still generates 0. No card FAQ.'],
  'TTG-1-002':['產生的綠色能源+1','Official UA56BT/TTG-1-002 ヴィラル, checked 2026-10-22: cost 緑1, AP1, BP1500, trait 大グレン団, generated 緑+ (one green pip, gen 1), ACTIVE life. Activate MAIN rests this card, once per turn, then rests one other ACTIVE own front character. Only that success gives generated energy +green this turn. Same resolved profile as MST-1-056. A front character still generates 0. No card FAQ.'],
  'TTG-1-007':['場上有達莉時 BP+1000','Official UA56BT/TTG-1-007 ギミー, checked 2026-10-22: cost 緑- (energy 0), AP1, BP1500+, trait 大グレン団, generated 緑 (gen 1), ACTIVE life. While 〈ダリー〉 is on this card\'s own field, BP+1000 on either turn. On play from hand, the controller may pay 1 AP and then REST-play up to one outside 〈ダリー〉 whose required energy that color currently meets. Life and effect entries do not offer the payment. No card FAQ.'],
- 'TTG-1-013':['場上有吉米時 BP+1000','Official UA56BT/TTG-1-013 ダリー, checked 2026-10-22: cost 緑- (energy 0), AP1, BP1500+, trait 大グレン団, generated 緑 (gen 1), DRAW life. While 〈ギミー〉 is on this card\'s own field, BP+1000 on either turn. On play from hand, the controller may pay 1 AP and then REST-play up to one outside 〈ギミー〉 whose required energy that color currently meets. No card FAQ.']
+ 'TTG-1-013':['場上有吉米時 BP+1000','Official UA56BT/TTG-1-013 ダリー, checked 2026-10-22: cost 緑- (energy 0), AP1, BP1500+, trait 大グレン団, generated 緑 (gen 1), DRAW life. While 〈ギミー〉 is on this card\'s own field, BP+1000 on either turn. On play from hand, the controller may pay 1 AP and then REST-play up to one outside 〈ギミー〉 whose required energy that color currently meets. No card FAQ.'],
+ 'TTG-1-057':['給予 IMPACT 無效','UA56BT/TTG-1-057 ダヤッカ red3/AP1/BP3000/gen2/no life, trait 大グレン団. Printed IMPACT null suppresses the attacker impact when this card is the blocker. On play, choose up to one other own character and grant IMPACT null until the next start of this controller turn. The grant is stamped to that field entry and survives silence; leaving the field clears it. Scenario tests in tests/v2-ttg-six-batches.test.mjs. Not full official FAQ certification.'],
+ 'TTG-1-071':['第一次攻擊','UA56BT/TTG-1-071 キングキタンDX red4/AP1/BP4000/gen1/RAID on キタン, traits 大グレン団 and ガンメン. Paid Raid enters ACTIVE by the shared Raid rule, not enterAlwaysActive. Printed IMPACT null. On the first own-character attack this turn, choose up to one other own character and give BP+2000 this turn. A later attack the same turn does not offer the buff. Not full official FAQ certification.'],
+ 'TTG-1-054':['牌庫20張以下','UA56BT/TTG-1-054 シモン red2/AP1/BP2500/gen1/no life. While an own field character is named ニア and the own deck has 20 or fewer cards, during this controller turn BP+1500 and IMPACT null. On play, may mill the top card. Own-turn impact null is not observable as a defender in the normal attack window; the shared suppressor is tested through TTG-1-057. Not full official FAQ certification.'],
+ 'TTG-1-055':['至多2張送場外','UA56BT/TTG-1-055 シモン red1/AP1/BP2000/gen1/no life. On play, mill up to 2 top cards. Then may discard 1 hand card; if a card was discarded, add up to 1 of those milled cards from outside back to hand. Stop, empty deck, and empty hand end the chain. Not full official FAQ certification.'],
+ 'TTG-1-026':['アークグレン','UA56BT/TTG-1-026 ロシウ green2/AP1/BP2000/gen1/DRAW. On play choose one: look at the top 7, add up to one card named アークグレン, order the rest to the bottom; or add up to one アークグレン from outside. No registered card is named アークグレン, so the top mode orders every inspected card to the bottom and the outside mode adds nothing. TTG-1-033 remains unregistered. DRAW life is the shared handler. Not full official FAQ certification.'],
+ 'TTG-1-081':['BP5000以下','UA56BT/TTG-1-081 ギガドリルブレイク red4/AP1 event/gen0/SPECIAL. Retire one opponent front character of BP 3000 or less, or 5000 or less when an own field character or that character raid base (stack[0]) is named シモン or カミナ. Q1119 blocks the play when no payable target exists. SPECIAL life remains the shared retireOppFront handler and is not a BP-limited reprint of the event. Not full official FAQ certification.']
 });
 export default Object.freeze({
  title:'gurren-lagann',
- version:'v2-c-ttg-20261021-batch3',
+ version:'v2-c-ttg-20261026-batch6',
  entries:Object.freeze(verifiedTtgV2Additions().map(def=>{
   const record=TTG_BY_ID[def.id],review=proof[def.id];
   if(!record||!review)throw Error('TTG independent V2 evidence missing: '+def.id);
@@ -45,7 +51,8 @@ export default Object.freeze({
       ...(def.id==='TTG-1-022'?['tests/v2-ttg-022-return-hand.test.mjs']:[]),
       ...(def.id==='TTG-1-015'?['tests/v2-ttg-015-pay-ap.test.mjs']:[]),
       ...(def.id==='TTG-1-002'?['tests/v2-ttg-002-rest-front-energy.test.mjs']:[]),
-      ...(def.id==='TTG-1-007'||def.id==='TTG-1-013'?['tests/v2-ttg-partner-ap-deploy-round18.test.mjs']:[])]}
+      ...(def.id==='TTG-1-007'||def.id==='TTG-1-013'?['tests/v2-ttg-partner-ap-deploy-round18.test.mjs']:[]),
+      ...(['TTG-1-057','TTG-1-071','TTG-1-054','TTG-1-055','TTG-1-026','TTG-1-081'].includes(def.id)?['tests/v2-ttg-six-batches.test.mjs']:[])]}
   });
  }))
 });

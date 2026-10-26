@@ -77,6 +77,22 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   return s.players[owner].life.length<=condition.max;
  if(condition.kind==='ownHandCountAtLeast')
   return s.players[owner].hand.length>=condition.min;
+ if(condition.kind==='ownNameAndDeckAtMost'){
+  // Printed deck size is the current OWN deck, not hand, life, or outside.
+  // The name is an own field character, including this card when excludeSelf
+  // is false. Raid under-cards are not the field.
+  if(s.players[owner].deck.length>condition.max)return false;
+  const areas=condition.zone==='front'?[s.players[owner].front]:
+   condition.zone==='energy'?[s.players[owner].energy]:
+   [s.players[owner].front,s.players[owner].energy];
+  for(const area of areas)for(const c of area){
+   if(!c||(condition.excludeSelf&&c.uid===sourceUid))continue;
+   const d=printed(c);
+   if(d.type==='character'&&cardHasName(d,condition.name,originalEffectsDisabled(s,c)))
+    return true;
+  }
+  return false;
+ }
  if(condition.kind==='outsideCount')
   return s.players[owner].outside.length>=condition.min;
  if(condition.kind==='ownOutsideNamedCountAtLeast'){
