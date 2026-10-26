@@ -3,6 +3,7 @@
 import {TITLES} from './title-registry.mjs';
 import {PRESETS} from './cards.mjs';
 import {makeVisualDeckModel,renderVisualDeckBuilder} from './visual-deck-builder.mjs';
+import {BUILTIN_BLEACH_V2_DECKS,builtinBleachDeck,renderBuiltinBleachPanel} from './v2-bleach-builtins.mjs';
 import {LEGACY_DECK_KEYS,V2_EDITOR_TRANSFER_KEY,normalizeEditorCounts,editorV2Status}
  from './v2-editor-compat.mjs';
 
@@ -48,6 +49,16 @@ function persist(){
  if(state.title==='bleach')write(metaKey,{...bleachMeta,name:state.names.bleach});
 }
 function status(){return editorV2Status(state.title,state.counts[state.title]);}
+function useDesignatedBleachPreset(id){
+ const preset=builtinBleachDeck(id);
+ if(!preset)return false;
+ // Only replace the working draft; never silently overwrite a player's saved deck.
+ state.title='bleach';state.ready=true;state.tab='overview';state.search='';
+ state.type=state.color=state.energy='all';
+ state.counts.bleach={...preset.counts};state.names.bleach=preset.displayName;
+ state.selectedSaved.bleach=null;persist();
+ return true;
+}
 function showDetail(id){
  const card=TITLES.find(t=>t.id===state.title)?.cards.find(c=>c.id===id);
  if(!card)return;
@@ -58,17 +69,18 @@ function showDetail(id){
 function render(){
  const t=TITLES.find(t=>t.id===state.title)||TITLES[0],info=status();
  const countAll=t.cards.length;
+ const designatedPanel=state.ready&&state.title==='bleach'?renderBuiltinBleachPanel(escapeHtml):'';
  const infoBanner=state.ready?`<section class="v2e-coverage" role="status"><strong>Universal V2 · ${info.registered} / ${countAll} 張已登錄</strong><span>組卡可以使用完整卡表，但只有整副 50 張全部符合 V2 規則才可開始對戰。舊引擎不再參與判定。</span></section>`:'';
  const editor=renderVisualDeckBuilder({
   titles:TITLES,titleId:state.title,ready:state.ready,tab:state.tab,search:state.search,type:state.type,color:state.color,energy:state.energy,
   counts:state.counts[state.title],name:state.names[state.title],nameId:'v2DeckName',savedId:'v2SavedSelect',
-  savedOptions:savedData[state.title].map((d,i)=>({value:String(i),label:d.name})),
+  savedOptions:[...(state.title==='bleach'?BUILTIN_BLEACH_V2_DECKS.map(d=>({value:'builtin:'+d.id,label:'指定牌組｜'+d.displayName+'（50 張）'})):[]),...savedData[state.title].map((d,i)=>({value:String(i),label:d.name}))],
   saveAction:'saveDeck',newAction:'newDeck',issues:info.issues,
   v2SupportedIds:state.ready?info.supported:null,v2Ready:info.ready
  });
  const modal=state.inspection?showDetail(state.inspection):state.exportText!==null?
   `<div class="v2e-modal-backdrop"><section class="v2e-modal" role="dialog" aria-modal="true" aria-label="複製牌組"><button class="v2e-x" data-action="dismiss">關閉 ×</button><h2>牌組清單</h2><textarea id="v2Export" rows="17" readonly>${escapeHtml(state.exportText)}</textarea><button class="v2e-primary" data-action="copyDeck">複製至剪貼簿</button></section></div>`:'';
- $('#app').innerHTML=`<div class="v2e-shell"><header class="v2e-header"><a href="/" class="v2e-logo">UNION ARENA <b>V2</b></a><nav><a href="/">V2 正式對戰</a><a href="/index.html" aria-current="page">卡片圖鑑／組卡</a></nav></header><main class="v2e-main"><div class="v2e-heading"><div><span class="vdb-eyebrow">OFFICIAL V2 ENGINE ONLY</span><h1>牌組構築</h1></div><a class="v2e-primary" href="/">前往 V2 對戰</a></div>${infoBanner}${editor}</main><footer class="v2e-footer">所有對戰均使用 Universal V2。可保留以前的牌組草稿，但舊版引擎、Beta 引擎和舊版 auto 標籤不再使用。</footer>${modal||''}</div>`;
+ $('#app').innerHTML=`<div class="v2e-shell"><header class="v2e-header"><a href="/" class="v2e-logo">UNION ARENA <b>V2</b></a><nav><a href="/">V2 正式對戰</a><a href="/index.html" aria-current="page">卡片圖鑑／組卡</a></nav></header><main class="v2e-main"><div class="v2e-heading"><div><span class="vdb-eyebrow">OFFICIAL V2 ENGINE ONLY</span><h1>牌組構築</h1></div><a class="v2e-primary" href="/">前往 V2 對戰</a></div>${infoBanner}${designatedPanel}${editor}</main><footer class="v2e-footer">所有對戰均使用 Universal V2。可保留以前的牌組草稿，但舊版引擎、Beta 引擎和舊版 auto 標籤不再使用。</footer>${modal||''}</div>`;
  bind();
 }
 function bind(){
@@ -76,6 +88,7 @@ function bind(){
   const el=e.target.closest('button');
   if(!el||el.disabled)return;
   const data=el.dataset;
+  if(data.designatedPreset){if(useDesignatedBleachPreset(data.designatedPreset)){render();notify('已載入 '+state.names.bleach+'；可以查看、修改或另存。');}return;}
   if(data.title){state.title=data.title;state.ready=true;state.tab='pick';state.search='';state.type=state.color=state.energy='all';render();return;}
   if(data.builderReselect!==undefined){state.ready=false;state.search='';render();return;}
   if(data.builderTab){state.tab=data.builderTab;render();return;}
@@ -137,6 +150,7 @@ function bind(){
  const saved=$('#v2SavedSelect');
  if(saved)saved.onchange=()=>{
   if(saved.value==='')return;
+  if(saved.value.startsWith('builtin:')){if(useDesignatedBleachPreset(saved.value.slice(8))){render();notify('已載入 '+state.names.bleach);}return;}
   const item=savedData[state.title][Number(saved.value)];
   if(!item)return;
   state.counts[state.title]={...item.counts};state.names[state.title]=item.name;state.selectedSaved[state.title]=item.id;
@@ -144,4 +158,7 @@ function bind(){
  };
 }
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&(state.inspection||state.exportText!==null)){state.inspection=null;state.exportText=null;render();}});
+// Direct links from the V2 lobby explicitly load the requested built-in list.
+const requestedDeck=new URLSearchParams(typeof window!=='undefined'?window.location?.search||'':'').get('bleachPreset');
+if(requestedDeck)useDesignatedBleachPreset(requestedDeck);
 render();
