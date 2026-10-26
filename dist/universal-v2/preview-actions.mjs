@@ -29,6 +29,13 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-top-add-one':'查看牌頂，將其中 1 張加入手牌',
  'effect-distinct-trait-buff':'選擇不同卡名的己方角色',
  'effect-energy-mode':'選擇至下次己方回合開始的產能方式',
+ 'effect-may-then':'未被阻擋時，是否查看牌庫',
+ 'effect-max-bp-impact':'選擇己方角色，加上場上最高 BP 並獲得 IMPACT',
+ 'effect-outside-or-rest':'從場外加入手牌，或在能源足夠時 REST 登場',
+ 'effect-replay-base':'將突襲底板重新登場',
+ 'effect-named-energy':'選擇要增加產能的角色',
+ 'effect-active-one-ap':'選擇 1 張 AP 轉為 ACTIVE',
+ 'effect-mode-discard':'支付手牌以起動主要能力',
  'effect-optional-draw':'攻擊時可抽 0 或 1 張',
  'effect-pay-ap-deploy':'可支付 1 AP，從場外 REST 登場',
  'effect-optional-pay-ap':'可支付 1 AP，然後結算後續效果',
@@ -102,7 +109,12 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'attack':return action.targetUid?
    '狙擊攻擊：'+name()+' → '+uiCardLabel(pack,state,action.targetUid):
    '宣告攻擊：'+name();
-  case 'activate':return action.mode==='discardSelfBuff'?
+  case 'activate':return action.mode==='namedEnergyAp'?
+    '起動主要：指定西蒙，本回合產能增加並 ACTIVE 1 張 AP':
+    action.mode==='active'?'起動主要：棄 1 張手牌，使此角色 ACTIVE':
+    action.mode==='energy'?'起動主要：REST 此角色，本回合產能＋1':
+    action.mode==='bp'?'起動主要：棄 1 張手牌，本回合 BP＋1000':
+    action.mode==='discardSelfBuff'?
     '起動主要：棄一張手牌，本回合自身 BP＋1500（每回合一次）':
     action.mode==='selfRestEnergyRetire'?
     (pack?.cards&&state?.players?.some(p=>[...p.front,...p.energy].some(c=>c?.uid===action.uid&&
@@ -174,6 +186,15 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseTopAddOne':return '將 '+name()+' 加入手牌，其餘送場外';
   case 'chooseDistinctTrait':return action.uid===null?'結束選擇並結算 BP':'選擇 '+name();
   case 'chooseEnergyMode':return action.mode==='plus'?'產生能源 +1':'前線也能產生能源';
+  case 'chooseMayThen':return action.mode==='do'?'查看牌庫頂':'不查看';
+  case 'chooseMaxBpImpact':return '讓 '+name()+' 加上場上最高 BP 並獲得 IMPACT';
+  case 'chooseOutsideOrRest':return action.mode==='skip'?'不回收':
+   action.mode==='hand'?'將 '+name()+' 加入手牌':'REST 登場 '+name()+suffix();
+  case 'chooseReplayBase':return action.mode==='skip'?'不將底板重新登場':
+   (action.mode==='active'?'ACTIVE 登場底板':'REST 登場底板')+suffix();
+  case 'chooseNamedEnergy':return '讓 '+name()+' 本回合產能增加';
+  case 'chooseActiveAp':return '將此 AP 轉為 ACTIVE';
+  case 'chooseModeDiscard':return '支付 '+name();
   case 'choosePayApDeploy':return action.mode==='pay'?'支付 1 AP，接著選擇場外角色':'不支付 AP';
   case 'chooseOptionalPayAp':return action.mode==='pay'?'支付 1 AP，然後結算後續效果':'不支付 AP';
   case 'chooseHandRest':return action.uid===null?'不特殊登場':'免費 REST 登場 '+name()+suffix();
