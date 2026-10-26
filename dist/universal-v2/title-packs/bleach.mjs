@@ -169,7 +169,8 @@ const testForKind=Object.freeze({
  giselleRestRetireDouble:'tests/v2-c29-bleach-port.test.mjs',
  sternritterCastleReplay:'tests/v2-c29-bleach-port.test.mjs',
  uryuSwapOrBuff:'tests/v2-c29-bleach-port.test.mjs',
- yoruichiEnergySwap:'tests/v2-c29-bleach-port.test.mjs'
+ yoruichiEnergySwap:'tests/v2-c29-bleach-port.test.mjs',
+ bazzDiscardBattleKit:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -188,7 +189,9 @@ function contributedEntry(profile){
   definition:Object.freeze(definition),
   evidence:Object.freeze({
    printedTextFragments:Object.freeze([profile.effect]),
-   reviewNote:profile.id==='BLC-4-032'?
+   reviewNote:profile.id==='BLC-1-011'?
+    'UA08BT/BLC-1-011 official iframe 2026-10-26. [起動メイン][手札を1枚場外に置く]. No [ターン1]. The discard is mandatory and this physical card may pay it again the same turn. Success grants Damage 2 and a battle-win draw for this turn. Q537 (2023-09-25): a battle win is an attack against a character whose BP is less than or equal to the attacker. A direct attack deals the Damage 2 and does not draw. Declining the discard is illegal. An empty hand makes the activate illegal. The energy line is legal. Silence before activation removes the ability. Later silence removes the unfired battle-win draw. The resolved Damage 2 remains. DRAW is generic. Generated energy is 黄. No extra card FAQ.':
+   profile.id==='BLC-4-032'?
     'EX15BT/BLC-4-032 official iframe 2026-10-26. On its own turn, BP+1000 while own field has 黒崎 一護 or 浦原 喜助. Silence removes that bonus and keeps both printed names. [エナジーLにある場合][ターン1]: when an own character\'s attack ends, this energy-line character may swap with one own front character that has not attacked this turn. Q2314 (2026-09-04): after the battle, and after a life-damage trigger check. Declining is legal and uses this physical card\'s once. The attacker is not a choice. A character that cannot enter the energy line is not a choice. A front-line copy does not offer the swap. Silence before the window removes it. [ターン1] is this physical card, so another copy can still swap. Catalogue gen=3 is the blue3 sprite; official generated energy is 青青, so definition.gen=2 and legacyImportedGen=3. COLOR returns one opposing front character of BP 3500 or less to hand. No card FAQ beyond Q2314.':
    profile.id==='BLC-2-002'?
     'EX07BT/BLC-2-002 official iframe 2026-10-26. [起動メイン][手札を1枚場外に置く][ターン1]. The discard is a mandatory cost. Then choose one: swap one own front character with one own energy character, or this character gets BP+1000 this turn. While own field has ユーハバッハ, both may be chosen, and choosing only one stays legal. [ターン1] is this physical card. This character may be one side of the swap. A character that cannot enter the destination line is not a choice. Fields are not characters. Silence before activation removes the ability. The earned BP remains after later silence. Silence keeps ユーハバッハ\'s printed name. DRAW is generic. Generated energy is 黄黄, so gen stays 2. No card FAQ.':

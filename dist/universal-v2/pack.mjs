@@ -598,6 +598,7 @@ function verifyProgram(program,path){
      'enemyBpDown','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
      'recoverOutsideColorUnderEnergy','buffOwnField',
      'restOppFrontUnderBp','restOppFrontOne','buffSelf','swapOrBuff','grantOnAttack',
+     'grantSelfAttackDamageThisTurn','grantSelfAttackWinDrawThisTurn',
      'grantSelfEnergyMoveOnAttackStart','grantSelfTriggerUnchosen',
      'outsideColorEnergyHandOrRest','grantSelfBlockAtLeast','recoverAp'].includes(x?.op)))
     throw Error(path+'['+i+'] invalid gated payment');
@@ -1445,6 +1446,8 @@ function normalize(card,packId){
  const mainRestTwoMove=mainAbility?.op==='restTwoActiveFrontMoveSelf'&&
   mainAbility.line==='energy'&&Object.keys(mainAbility).length===2&&
   Object.keys(mainAbility).every(k=>['op','line'].includes(k));
+ const mainRepeatDiscard=mainAbility?.op==='repeatDiscardBattleKit'&&
+  card.type==='character'&&Object.keys(mainAbility).length===1;
  const mainOncePay=mainAbility?.op==='oncePayProgram'&&
   mainAbility.oncePerTurn===true&&typeof mainAbility.frontOnly==='boolean'&&
   typeof mainAbility.raidOnly==='boolean'&&(mainAbility.payAp===0||mainAbility.payAp===1)&&
@@ -1600,7 +1603,7 @@ function normalize(card,packId){
   Object.keys(mainAbility).length===2&&
   Object.keys(mainAbility).every(k=>['op','trait'].includes(k));
  if(mainAbility!==null&&
-  (!['character','field'].includes(card.type)||!(fieldDualMain||fieldRestRetireThen||mainFieldReplay||mainRestTopTrait||mainRestRetireActive||card.type==='character'&&(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainRestBuff||mainRestBuffAp||mainRestRetireRecover||mainRestOnceBuffReturn||mainRestOnceSelf||mainOnceBuffWhen||mainPayAp||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainRestDiscardRetire||mainFrontProgram||mainFieldOnceBuff||mainEntryProtect||mainEntrySacrifice||mainNamedDouble||mainRestRetireUnder||mainRestTwoMove||mainOncePay||nameOnceActive||nameOnceEvent||mainCardOnce||mainRestFrontName||mainRestRetireExact||mainRestRetireNamed))))
+  (!['character','field'].includes(card.type)||!(fieldDualMain||fieldRestRetireThen||mainFieldReplay||mainRestTopTrait||mainRestRetireActive||card.type==='character'&&(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainRestBuff||mainRestBuffAp||mainRestRetireRecover||mainRestOnceBuffReturn||mainRestOnceSelf||mainOnceBuffWhen||mainPayAp||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainRestDiscardRetire||mainFrontProgram||mainFieldOnceBuff||mainEntryProtect||mainEntrySacrifice||mainNamedDouble||mainRestRetireUnder||mainRestTwoMove||mainOncePay||mainRepeatDiscard||nameOnceActive||nameOnceEvent||mainCardOnce||mainRestFrontName||mainRestRetireExact||mainRestRetireNamed))))
   throw Error(card.id+' unsupported main action ability');
  const passiveBonuses=validatePassiveBonuses(card);
  const implemented=card.implementation;

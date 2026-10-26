@@ -1494,7 +1494,8 @@ function continueEffectQueue(pack,s){
    const earned=printed?.effects.onPlay?.some(e=>e.op==='raidBaseEnergyThen'&&
     e.then.some(x=>x.op==='grantSelfAttackDamageThisTurn'&&x.amount===job.amount))||
     printed?.mainAbility?.op==='oncePayProgram'&&
-    printed.mainAbility.then.some(e=>e.op==='grantSelfAttackDamageThisTurn'&&e.amount===job.amount);
+    printed.mainAbility.then.some(e=>e.op==='grantSelfAttackDamageThisTurn'&&e.amount===job.amount)||
+    printed?.mainAbility?.op==='repeatDiscardBattleKit'&&job.amount===2;
    if(!source||!earned||!Number.isInteger(source.fieldEntryStamp))
     throw Error('Unproven this-turn attack damage');
    source.attackDamageGranted={turn:s.turn,stamp:source.fieldEntryStamp,amount:2};
@@ -5360,6 +5361,8 @@ export function legalUniversalActions(pack,s){
     !s.mainReadyOnceByName[p].includes(d.name+'|restFrontNameOnce')&&
     pl.apCards.some(x=>x.ready))
     out.push({type:'activate',uid:c.uid,mode:'restFrontNameOnce'});
+   if(ability?.op==='repeatDiscardBattleKit'&&pl.hand.length)
+    out.push({type:'activate',uid:c.uid,mode:'repeatDiscardBattle'});
    if(ability?.op==='oncePayProgram'&&!s.mainAbilityUsedUids.includes(c.uid)){
     const onFront=pl.front.some(x=>x?.uid===c.uid);
     const placed=onFront||pl.energy.some(x=>x?.uid===c.uid);
@@ -6087,6 +6090,18 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
     continueEffectQueue(pack,s);
     break;
    }
+   if(ability.op==='repeatDiscardBattleKit'){
+    const placed=pl.front.some(c=>c?.uid===selected.uid)||
+     pl.energy.some(c=>c?.uid===selected.uid);
+    if(action.mode!=='repeatDiscardBattle'||!placed||!pl.hand.length)
+     throw Error('Repeatable discard battle kit needs a hand card');
+    s.effectQueue.push({op:'discardGate',optional:false,owner:p,
+     sourceUid:selected.uid,sourceName:d.name,then:[
+      {op:'grantSelfAttackDamageThisTurn',amount:2},
+      {op:'grantSelfAttackWinDrawThisTurn'}]});
+    continueEffectQueue(pack,s);
+    break;
+   }
    if(ability.op==='oncePayProgram'){
     const onFront=pl.front.some(c=>c?.uid===selected.uid);
     const placed=onFront||pl.energy.some(c=>c?.uid===selected.uid);
@@ -6367,11 +6382,17 @@ export function assertUniversalMatch(pack,s){
    ['mustBlockGranted','grantSelfMustBlockThisTurn']]){
    const g=physical[key];
    if(g===undefined)continue;
+   const printedBattle=card(pack,physical).effects.onPlay?.some(x=>x.op===op);
+   const paidWinDraw=op==='grantSelfAttackWinDrawThisTurn'&&
+    card(pack,physical).mainAbility?.op==='repeatDiscardBattleKit'&&
+    (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.owner===owner&&
+     e.from==='hand'&&e.to==='outside'&&e.reason==='payment'&&
+     e.sourceUid===physical.uid);
    if(!g||typeof g!=='object'||Array.isArray(g)||
     !Number.isInteger(g.turn)||g.turn<0||g.turn>s.turn||
     !Number.isInteger(g.stamp)||g.stamp<1||g.stamp>=s.nextFieldEntryStamp||
     Object.keys(g).length!==2||Object.keys(g).some(k=>!['turn','stamp'].includes(k))||
-    !card(pack,physical).effects.onPlay?.some(x=>x.op===op))
+    !(printedBattle||paidWinDraw))
     throw Error('Forged temporary physical battle grant');
   }
   const kit=physical.firstAttackKit;

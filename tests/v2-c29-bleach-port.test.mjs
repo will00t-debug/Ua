@@ -245,9 +245,13 @@ import bleachContribution from '../dist/universal-v2/title-packs/bleach.mjs';
 //   attack end may swap with one front character that has not attacked.
 //   Q2314 (2026-09-04): after the battle and after a life trigger check.
 //   Catalogue gen 3 normalizes to 青青.
+// BLC-1-011 UA08BT: [起動メイン][手札を1枚場外に置く]. No turn-once.
+//   Success grants Damage 2 and a battle-win draw this turn.
+//   Q537 (2023-09-25): battle win is attacker BP >= the character it battles.
+//   A direct attack does not draw. Generated energy is 黄.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008','BLC-4-065','BLC-2-051','BLC-1-092','BLC-4-044','BLC-4-016','BLC-4-017','BLC-1-028','BLC-2-002','BLC-4-032'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008','BLC-4-065','BLC-2-051','BLC-1-092','BLC-4-044','BLC-4-016','BLC-4-017','BLC-1-028','BLC-2-002','BLC-4-032','BLC-1-011'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -318,12 +322,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers eighty-two whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,518);
- assert.equal(EXPECTED_V2_COUNTS.bleach,242);
+test('C29 registers eighty-three whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,519);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,243);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,242);
+ assert.equal(Object.keys(bleach.cards).length,243);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -8059,6 +8063,124 @@ test('BLC-4-032 gains BP from Ichigo or Urahara and may swap from the energy lin
  assert.equal(assertUniversalMatch(fronted.packs,frontAttack),true);
  assert.equal(assertUniversalMatch(missed.packs,missedAttack),true);
  assert.equal(assertUniversalMatch(hushed.packs,quietAttack),true);
+});
+
+test('BLC-1-011 discards one hand card for Damage 2 and a battle-win draw',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-1-011');
+ assert.equal(printed.number,'UA08BT/BLC-1-011');
+ assert.equal(printed.nameJa,'バズビー');
+ assert.equal(printed.effect,'主要階段：將 1 張手牌送至場外，使此角色本回合獲得 Damage 2，以及「攻擊並贏得戰鬥時，抽 1 張」。');
+ assert.equal(printed.traits,'星十字騎士團');
+ assert.equal(printed.energy,5);
+ assert.equal(printed.gen,1);
+ assert.equal(printed.trigger,'draw');
+ const card=bleach.cards['BLC-1-011'];
+ assert.equal(card.gen,1);
+ assert.equal(card.triggerEffect,null);
+ assert.deepEqual(card.traits,['星十字騎士團']);
+ assert.deepEqual(card.mainAbility,{op:'repeatDiscardBattleKit'});
+ const bare={id:'BAD',name:'BAD',color:'yellow',type:'character',energy:0,ap:1,bp:1000,gen:1,traits:[],trigger:null,implementation:'dsl',effects:{}};
+ assert.throws(()=>createUniversalPack({id:'bad-bazz-kit',cards:[{...bare,mainAbility:{op:'repeatDiscardBattleKit',oncePerTurn:true}}]}),/unsupported main action ability/);
+ const deck=realDeck(['BLC-1-011','BLC-1-001','BLC-1-016','BLC-1-018','BLC-1-006','BLC-2-002'],'yellow');
+ function finishLife(packs,s){
+  for(let n=0;n<8&&s.pending&&['life-batch-order','life-trigger'].includes(s.pending.kind);n++){
+   const actor={actor:s.pending.player};
+   if(s.pending.kind==='life-batch-order'){
+    const order=legalUniversalActions(packs,s).find(a=>a.type==='chooseLifeOrder');
+    s=dispatchUniversalAction(packs,s,order,actor);
+   }else{
+    const skip=legalUniversalActions(packs,s).find(a=>a.type==='chooseTrigger'&&a.mode==='skip')
+     ||legalUniversalActions(packs,s)[0];
+    s=dispatchUniversalAction(packs,s,skip,actor);
+   }
+  }
+  return s;
+ }
+ const empty=main(deck,29111);
+ const quiet=put(empty.s,0,'BLC-1-011','front',0,true);
+ empty.s.players[0].deck.push(...empty.s.players[0].hand);
+ empty.s.players[0].hand=[];
+ assert.equal(legalUniversalActions(empty.packs,empty.s).some(a=>a.type==='activate'&&a.uid===quiet.uid),false);
+ empty.s.players[0].hand.push(empty.s.players[0].deck.pop());
+ const opened=dispatchUniversalAction(empty.packs,empty.s,{type:'activate',uid:quiet.uid,mode:'repeatDiscardBattle'});
+ assert.equal(opened.pending.kind,'effect-discard-gate');
+ assert.equal(opened.pending.optional,false);
+ assert.equal(legalUniversalActions(empty.packs,opened).some(a=>a.uid===null),false);
+ assert.throws(()=>dispatchUniversalAction(empty.packs,opened,{type:'chooseDiscardGate',uid:null}),/Action not currently legal/);
+ aiOk(empty.packs,opened);
+ const payment=opened.players[0].hand[0];
+ const paid=dispatchUniversalAction(empty.packs,opened,{type:'chooseDiscardGate',uid:payment.uid});
+ assert.equal(paid.pending,null);
+ assert.equal(paid.players[0].outside.some(c=>c.uid===payment.uid),true);
+ const bazz=live(paid,0,quiet.uid);
+ assert.equal(universalAttackDamage(empty.packs,paid,bazz),2);
+ assert.equal(bazz.attackWinDrawGranted.turn,paid.turn);
+ assert.equal(paid.mainAbilityUsedUids.includes(bazz.uid),false);
+ paid.players[0].hand.push(paid.players[0].deck.pop());
+ const again=dispatchUniversalAction(empty.packs,paid,{type:'activate',uid:bazz.uid,mode:'repeatDiscardBattle'});
+ assert.equal(again.pending.kind,'effect-discard-gate');
+ const lined=main(deck,29112);
+ const energyCopy=put(lined.s,0,'BLC-1-011','energy',0,true);
+ assert.equal(legalUniversalActions(lined.packs,lined.s).some(a=>a.type==='activate'&&a.uid===energyCopy.uid&&a.mode==='repeatDiscardBattle'),true);
+ const hushed=main(deck,29113);
+ const silenced=put(hushed.s,0,'BLC-1-011','front',0,true);
+ grantContinuousState(hushed.s,{kind:'originalEffectsDisabled',controller:1,sourceUid:silenced.uid,
+  targetUid:silenced.uid,sourceLinked:false,until:{player:0,phase:'attack',edge:'end'}});
+ assert.equal(legalUniversalActions(hushed.packs,hushed.s).some(a=>a.uid===silenced.uid&&a.type==='activate'),false);
+ const direct=main(deck,29114);
+ const striker=put(direct.s,0,'BLC-1-011','front',0,true);
+ for(let n=0;n<2;n++)direct.s.players[1].life.unshift(take(direct.s,1,'BLC-1-001'));
+ const cost=direct.s.players[0].hand[0];
+ let armed=dispatchUniversalAction(direct.packs,direct.s,{type:'activate',uid:striker.uid,mode:'repeatDiscardBattle'});
+ armed=dispatchUniversalAction(direct.packs,armed,{type:'chooseDiscardGate',uid:cost.uid});
+ const handBefore=armed.players[0].hand.length;
+ const lifeBefore=armed.players[1].life.length;
+ let struck=armed;
+ for(let n=0;n<6&&struck.phase!=='attack';n++)
+  struck=dispatchUniversalAction(direct.packs,struck,{type:'next'});
+ struck=dispatchUniversalAction(direct.packs,struck,{type:'attack',uid:striker.uid});
+ struck=dispatchUniversalAction(direct.packs,struck,{type:'chooseBlock',uid:null},{actor:1});
+ assert.equal(struck.players[1].life.length,lifeBefore-2);
+ assert.equal(struck.players[0].hand.length,handBefore);
+ assert.equal(struck.pending.kind,'life-batch-order');
+ struck=finishLife(direct.packs,struck);
+ assert.equal(struck.pending,null);
+ const battle=main(deck,29115);
+ const winner=put(battle.s,0,'BLC-1-011','front',0,true);
+ const fee=battle.s.players[0].hand[0];
+ let ready=dispatchUniversalAction(battle.packs,battle.s,{type:'activate',uid:winner.uid,mode:'repeatDiscardBattle'});
+ ready=dispatchUniversalAction(battle.packs,ready,{type:'chooseDiscardGate',uid:fee.uid});
+ const wall=put(ready,1,'BLC-1-016','front',0,true);
+ const beforeWin=ready.players[0].hand.length;
+ const lifeWin=ready.players[1].life.length;
+ let won=ready;
+ for(let n=0;n<6&&won.phase!=='attack';n++)
+  won=dispatchUniversalAction(battle.packs,won,{type:'next'});
+ won=dispatchUniversalAction(battle.packs,won,{type:'attack',uid:winner.uid});
+ won=dispatchUniversalAction(battle.packs,won,{type:'chooseBlock',uid:wall.uid},{actor:1});
+ assert.equal(won.players[1].outside.some(c=>c.uid===wall.uid),true);
+ assert.equal(won.players[0].hand.length,beforeWin+1);
+ assert.equal(won.players[1].life.length,lifeWin);
+ assert.equal(won.pending,null);
+ const lost=main(deck,29116);
+ const loser=put(lost.s,0,'BLC-1-011','front',0,true);
+ const toll=lost.s.players[0].hand[0];
+ let tall=dispatchUniversalAction(lost.packs,lost.s,{type:'activate',uid:loser.uid,mode:'repeatDiscardBattle'});
+ tall=dispatchUniversalAction(lost.packs,tall,{type:'chooseDiscardGate',uid:toll.uid});
+ const tower=put(tall,1,'BLC-1-016','front',0,true);
+ tower.buffs.push({bp:5000,untilTurn:tall.turn});
+ const beforeLoss=tall.players[0].hand.length;
+ let beaten=tall;
+ for(let n=0;n<6&&beaten.phase!=='attack';n++)
+  beaten=dispatchUniversalAction(lost.packs,beaten,{type:'next'});
+ beaten=dispatchUniversalAction(lost.packs,beaten,{type:'attack',uid:loser.uid});
+ beaten=dispatchUniversalAction(lost.packs,beaten,{type:'chooseBlock',uid:tower.uid},{actor:1});
+ assert.equal(beaten.players[0].outside.some(c=>c.uid===loser.uid),true);
+ assert.equal(beaten.players[0].hand.length,beforeLoss);
+ assert.equal(assertUniversalMatch(empty.packs,paid),true);
+ assert.equal(assertUniversalMatch(direct.packs,struck),true);
+ assert.equal(assertUniversalMatch(battle.packs,won),true);
+ assert.equal(assertUniversalMatch(lost.packs,beaten),true);
 });
 
 function fieldCount(s,p){
