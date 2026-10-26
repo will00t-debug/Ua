@@ -5,7 +5,7 @@ import {createUniversalPack,validateUniversalDeck} from '../dist/universal-v2/pa
 import {registeredV2TitlePack} from '../dist/universal-v2/title-packs/registry.mjs';
 import {cardHasName,cardHasTrait} from '../dist/universal-v2/field-conditions.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
- assertUniversalMatch,universalBp,universalImpact,universalEnergyByColor,universalCardEnergy,
+ assertUniversalMatch,universalBp,universalImpact,universalAttackDamage,universalEnergyByColor,universalCardEnergy,
  universalPublicView,universalPrivateChoices,effectiveHandRequiredEnergy} from '../dist/universal-v2/engine.mjs';
 import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
 import {V2_PENDING_LABELS} from '../dist/universal-v2/preview-actions.mjs';
@@ -211,9 +211,11 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 // BLC-4-079 EX15BT: choose draw 1, or up to one 伊勢 七緒 gets BP+3000
 //   and Impact 1. Then may REST one ACTIVE 京楽 春水 or 伊勢 七緒 to
 //   ready one AP card. That AP recovery cannot be declined.
+// BLC-2-064 EX07BT: REST and retire, then up to one 更木 剣八 gains
+//   Impact +1 or direct-attack Damage +1 this turn.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -284,12 +286,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers seventy whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,506);
- assert.equal(EXPECTED_V2_COUNTS.bleach,230);
+test('C29 registers seventy-one whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,507);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,231);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,230);
+ assert.equal(Object.keys(bleach.cards).length,231);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -6552,6 +6554,72 @@ test('BLC-4-079 chooses a draw or Nanao Impact, then may rest Kyoraku or Nanao t
  assert.equal(assertUniversalMatch(packs,skipped),true);
  assert.equal(assertUniversalMatch(packs,readied),true);
  assert.equal(assertUniversalMatch(packs,bare),true);
+});
+
+test('BLC-2-064 rests and retires, then may give Kenpachi Impact +1 or Damage +1',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-2-064');
+ assert.equal(printed.number,'EX07BT/BLC-2-064');
+ assert.equal(printed.nameJa,'草鹿 やちる');
+ assert.equal(printed.effect,'主要階段：REST 並退場自己，可選最多 1 個己方場上的〈更木劍八〉，使其本回合獲得 Impact +1 或 Damage +1；沒有 Impact 的角色獲得 Impact 1，Damage +1 則令直接攻擊傷害增加 1。');
+ assert.equal(printed.trigger,'draw');
+ const card=bleach.cards['BLC-2-064'];
+ assert.equal(card.triggerEffect,null);
+ assert.equal(card.mainAbility.op,'restRetireNamedGrant');
+ assert.equal(card.mainAbility.name,'更木 剣八');
+ assert.deepEqual(card.traits,['護廷十三隊']);
+ const deck=realDeck(['BLC-2-064','BLC-1-080','BLC-1-081','BLC-1-091'],'green');
+ function seat(seed){
+  const opened=main(deck,seed);
+  const yachiru=put(opened.s,0,'BLC-2-064','front',0);
+  const plain=put(opened.s,0,'BLC-1-080','front',1);
+  const impact=put(opened.s,0,'BLC-1-081','front',2);
+  const other=put(opened.s,0,'BLC-1-091','energy',0);
+  return {opened,yachiru,plain,impact,other};
+ }
+ const first=seat(29064);
+ const {packs}=first.opened;
+ assert.equal(legalUniversalActions(packs,first.opened.s).some(a=>
+  a.type==='activate'&&a.uid===first.yachiru.uid&&a.mode==='restRetireNamed'),true);
+ let used=dispatchUniversalAction(packs,first.opened.s,{type:'activate',uid:first.yachiru.uid,mode:'restRetireNamed'});
+ assert.equal(used.players[0].front.some(c=>c?.uid===first.yachiru.uid),false);
+ assert.equal(used.players[0].outside.some(c=>c.uid===first.yachiru.uid),true);
+ assert.equal(used.pending.kind,'effect-named-keyword');
+ assert.equal(V2_PENDING_LABELS[used.pending.kind],'可選 1 個指定名稱角色，賦予本回合 Impact 或直接攻擊傷害');
+ const choices=legalUniversalActions(packs,used);
+ assert.equal(choices.some(a=>a.type==='chooseNamedKeyword'&&a.uid===null),true);
+ assert.equal(choices.some(a=>a.uid===first.plain.uid),true);
+ assert.equal(choices.some(a=>a.uid===first.impact.uid),true);
+ assert.equal(choices.some(a=>a.uid===first.other.uid),false);
+ const skipped=dispatchUniversalAction(packs,used,{type:'chooseNamedKeyword',uid:null});
+ assert.equal(skipped.pending,null);
+ assert.equal(universalImpact(packs,skipped,live(skipped,0,first.plain.uid)),0);
+ assert.equal(universalAttackDamage(packs,skipped,live(skipped,0,first.plain.uid)),1);
+ const second=seat(29065);
+ let aimed=dispatchUniversalAction(packs,second.opened.s,{type:'activate',uid:second.yachiru.uid,mode:'restRetireNamed'});
+ aimed=dispatchUniversalAction(packs,aimed,{type:'chooseNamedKeyword',uid:second.plain.uid});
+ assert.equal(aimed.pending.kind,'effect-keyword-mode');
+ assert.deepEqual(legalUniversalActions(packs,aimed).map(a=>a.mode).sort(),['damage','impact']);
+ assert.throws(()=>dispatchUniversalAction(packs,aimed,{type:'chooseKeywordMode',mode:'skip'}),/not currently legal/);
+ const impacted=dispatchUniversalAction(packs,aimed,{type:'chooseKeywordMode',mode:'impact'});
+ assert.equal(universalImpact(packs,impacted,live(impacted,0,second.plain.uid)),1);
+ assert.equal(universalAttackDamage(packs,impacted,live(impacted,0,second.plain.uid)),1);
+ const third=seat(29066);
+ let hurt=dispatchUniversalAction(packs,third.opened.s,{type:'activate',uid:third.yachiru.uid,mode:'restRetireNamed'});
+ const boosted=live(hurt,0,third.impact.uid);
+ boosted.attackDamageGranted={turn:hurt.turn,stamp:boosted.fieldEntryStamp,amount:2};
+ hurt=dispatchUniversalAction(packs,hurt,{type:'chooseNamedKeyword',uid:third.impact.uid});
+ aiOk(packs,hurt);
+ hurt=dispatchUniversalAction(packs,hurt,{type:'chooseKeywordMode',mode:'damage'});
+ const ken=live(hurt,0,third.impact.uid);
+ assert.equal(universalImpact(packs,hurt,ken),1);
+ assert.equal(universalAttackDamage(packs,hurt,ken),3);
+ const resting=seat(29067);
+ resting.yachiru.ready=false;
+ assert.equal(legalUniversalActions(packs,resting.opened.s).some(a=>
+  a.type==='activate'&&a.uid===resting.yachiru.uid),false);
+ assert.equal(assertUniversalMatch(packs,skipped),true);
+ assert.equal(assertUniversalMatch(packs,impacted),true);
+ assert.equal(assertUniversalMatch(packs,hurt),true);
 });
 
 function fieldCount(s,p){

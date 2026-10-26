@@ -157,7 +157,8 @@ const testForKind=Object.freeze({
  nemSquadActivePair:'tests/v2-c29-bleach-port.test.mjs',
  soulPalaceTop:'tests/v2-c29-bleach-port.test.mjs',
  kyokotsuField:'tests/v2-c29-bleach-port.test.mjs',
- hakkokenChoose:'tests/v2-c29-bleach-port.test.mjs'
+ hakkokenChoose:'tests/v2-c29-bleach-port.test.mjs',
+ yachiruNamedGrant:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -176,7 +177,9 @@ function contributedEntry(profile){
   definition:Object.freeze(definition),
   evidence:Object.freeze({
    printedTextFragments:Object.freeze([profile.effect]),
-   reviewNote:profile.id==='BLC-4-079'?
+   reviewNote:profile.id==='BLC-2-064'?
+    'EX07BT/BLC-2-064 official iframe 2026-10-26. Main: REST this character and retire it. Then up to one own 更木 剣八 may gain Impact +1 or direct-attack Damage +1 this turn. A character with no Impact receives Impact 1; an existing Impact increases by 1. Damage +1 adds 1 to the direct attack, including a character that already has Damage 2. Declining the Kenpachi choice is legal, and the retirement still happens. A field is not a character. Silence on Yachiru removes the ability. Silence on Kenpachi keeps the printed name. DRAW is generic. Generated energy is 緑. No card FAQ.':
+   profile.id==='BLC-4-079'?
     'EX15BT/BLC-4-079 official iframe 2026-10-26. Choose one: draw 1, or give up to one own 伊勢 七緒 BP+3000 and Impact 1 this turn. Declining the Nanao choice is legal, and a missing Nanao skips that choice. After the chosen effect, you may REST one own ACTIVE 京楽 春水 or 伊勢 七緒. Doing so readies one own REST AP card, and that recovery cannot be declined while a REST AP card exists. Skipping the REST readies nothing. A field is not a character. Silence keeps the printed name. No trigger. No generated energy. No card FAQ.':
    profile.id==='BLC-4-077'?
     'EX15BT/BLC-4-077 official iframe 2026-10-26. On play, up to one own outside 神剣・八鏡剣 may be added to hand. Main cost is REST and true retirement of this field; the field is gone before the choices. Then up to one remaining own field card, character or field, becomes ACTIVE, and up to one own character gains BP+1000 this turn. The same character may receive both. Declining either choice is legal. Catalogue gen=3 is the green3 sprite; official generated energy is 緑緑, so definition.gen=2 and legacyImportedGen=3. DRAW is generic. No card FAQ.':

@@ -1472,6 +1472,10 @@ function normalize(card,packId){
  // 【レストにする】【このカードを退場させる】, then up to one outside character
  // of an exact printed energy and color. AP is not printed. Raid cards enter
  // REST as ordinary characters; this is not a Raid action.
+ const mainRestRetireNamed=mainAbility?.op==='restRetireNamedGrant'&&
+  typeof mainAbility.name==='string'&&!!mainAbility.name.trim()&&
+  mainAbility.name.length<=80&&Object.keys(mainAbility).length===2&&
+  Object.keys(mainAbility).every(k=>['op','name'].includes(k));
  const mainRestRetireExact=mainAbility?.op==='restRetireExactOutside'&&
   typeof mainAbility.name==='string'&&!!mainAbility.name.trim()&&
   mainAbility.name.length<=80&&
@@ -1535,7 +1539,7 @@ function normalize(card,packId){
   Object.keys(mainAbility).length===2&&
   Object.keys(mainAbility).every(k=>['op','trait'].includes(k));
  if(mainAbility!==null&&
-  (!['character','field'].includes(card.type)||!(fieldDualMain||fieldRestRetireThen||mainRestTopTrait||mainRestRetireActive||card.type==='character'&&(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainRestBuff||mainRestBuffAp||mainRestRetireRecover||mainRestOnceBuffReturn||mainRestOnceSelf||mainOnceBuffWhen||mainPayAp||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainRestDiscardRetire||mainFrontProgram||mainFieldOnceBuff||mainEntryProtect||mainRestRetireUnder||mainRestTwoMove||mainOncePay||nameOnceActive||mainCardOnce||mainRestFrontName||mainRestRetireExact))))
+  (!['character','field'].includes(card.type)||!(fieldDualMain||fieldRestRetireThen||mainRestTopTrait||mainRestRetireActive||card.type==='character'&&(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainRestBuff||mainRestBuffAp||mainRestRetireRecover||mainRestOnceBuffReturn||mainRestOnceSelf||mainOnceBuffWhen||mainPayAp||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainRestDiscardRetire||mainFrontProgram||mainFieldOnceBuff||mainEntryProtect||mainRestRetireUnder||mainRestTwoMove||mainOncePay||nameOnceActive||mainCardOnce||mainRestFrontName||mainRestRetireExact||mainRestRetireNamed))))
   throw Error(card.id+' unsupported main action ability');
  const passiveBonuses=validatePassiveBonuses(card);
  const implemented=card.implementation;
