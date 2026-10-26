@@ -65,3 +65,31 @@ test('visual builder marks V2 status instead of legacy auto and guards play butt
  assert.match(readyHtml,/data-action="v2Play"/);
  assert.doesNotMatch(readyHtml,/data-action="v2Play" disabled/);
 });
+
+test('standalone browser editor boots without legacy runtime and preserves TTG drafts',async()=>{
+ const memory=new Map([['bleach-arena-deck-v1',JSON.stringify({'034':4})]]);
+ const app={innerHTML:'',onclick:null},toast={textContent:'',classList:{add(){},remove(){}}};
+ const bySel={'#app':app,'#toast':toast};
+ const originalTimer=globalThis.setTimeout;
+ globalThis.document={querySelector:s=>bySel[s]||null,addEventListener(){}};
+ globalThis.localStorage={getItem:k=>memory.get(k)||null,setItem:(k,v)=>memory.set(k,v)};
+ globalThis.sessionStorage={getItem:k=>memory.get(k)||null,setItem:(k,v)=>memory.set(k,v),removeItem:k=>memory.delete(k)};
+ globalThis.window={location:{assign(){}},scrollTo(){}};
+ globalThis.setTimeout=()=>0;
+ try{
+  await import('../dist/v2-deck-editor.mjs?run-browser-smoke');
+  assert.match(app.innerHTML,/先選擇卡牌作品/);
+  const click=dataset=>app.onclick({target:{closest:()=>({dataset,disabled:false})}});
+  click({title:'gurren-lagann'});
+  assert.match(app.innerHTML,/Universal V2/);
+  assert.match(app.innerHTML,/data-builder-count="TTG-1-/);
+  click({builderCount:'TTG-1-001',delta:'1'});
+  assert.equal(JSON.parse(memory.get('ua-ttg-draft-v1'))['TTG-1-001'],1);
+  click({builderTab:'overview'});
+  assert.match(app.innerHTML,/vdb-count-badge">×1/);
+  assert.equal(JSON.parse(memory.get('bleach-arena-deck-v1'))['034'],4);
+ }finally{
+  globalThis.setTimeout=originalTimer;
+  delete globalThis.document;delete globalThis.localStorage;delete globalThis.sessionStorage;delete globalThis.window;
+ }
+});
