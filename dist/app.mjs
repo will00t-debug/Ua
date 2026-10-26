@@ -142,7 +142,8 @@ function visualDeckLibrary(){
   'gurren-lagann':{counts:ttgDeck,name:ttgName,nameId:'ttgDeckName',savedId:'ttgSavedSelect',savedOptions:ttgSaved.map((d,i)=>({value:String(i),label:d.name})),saveAction:'ttgSave',newAction:'ttgNew',issues:ttgDeckIssues(ttgDeck)},
   'sword-art-online':{counts:saoDeck,name:saoName,nameId:'saoDeckName',savedId:'saoSavedSelect',savedOptions:saoSaved.map((d,i)=>({value:String(i),label:d.name})),saveAction:'saoSave',newAction:'saoNew',issues:saoDeckIssues(saoDeck)},
   'solo-leveling':{counts:soloDeck,name:soloName,nameId:'soloDeckName',savedId:'soloSavedSelect',savedOptions:soloSaved.map((d,i)=>({value:String(i),label:d.name})),saveAction:'soloSave',newAction:'soloNew',issues:soloDeckIssues(soloDeck)},
-  'mushoku-tensei':{counts:mstDeck,name:mstName,nameId:'mstDeckName',savedId:'mstSavedSelect',savedOptions:mstSaved.map((d,i)=>({value:String(i),label:d.name})),saveAction:'mstSave',newAction:'mstNew',issues:mstDeckIssues(mstDeck)}
+  'mushoku-tensei':{counts:mstDeck,name:mstName,nameId:'mstDeckName',savedId:'mstSavedSelect',savedOptions:mstSaved.map((d,i)=>({value:String(i),label:d.name})),saveAction:'mstSave',newAction:'mstNew',issues:mstDeckIssues(mstDeck)},
+   rezero:{counts:rezDeck,name:rezName,nameId:'rezDeckName',savedId:'rezSavedSelect',savedOptions:rezSaved.map((d,i)=>({value:String(i),label:d.name})),saveAction:'rezSave',newAction:'rezNew',issues:rezDeckIssues(rezDeck)}
  };
  const data=optionsByTitle[ui.title]||optionsByTitle.bleach;
  return renderVisualDeckBuilder({
@@ -533,7 +534,7 @@ function bind(){
     if(el.dataset.builderCount){
      const c=TITLES.find(t=>t.id===ui.title)?.cards.find(c=>c.id===el.dataset.builderCount);
      if(!c||['ap','action-point','action_point'].includes(c.type)||(ui.title==='mushoku-tensei'&&!c.verified))return;
-     const counts=ui.title==='bleach'?deck:ui.title==='gurren-lagann'?ttgDeck:ui.title==='sword-art-online'?saoDeck:ui.title==='solo-leveling'?soloDeck:mstDeck;
+     const counts=ui.title==='bleach'?deck:ui.title==='gurren-lagann'?ttgDeck:ui.title==='sword-art-online'?saoDeck:ui.title==='solo-leveling'?soloDeck:ui.title==='rezero'?rezDeck:mstDeck;
      const delta=Number(el.dataset.delta);
      if(![-1,1].includes(delta))return;
      if(delta>0&&Object.values(counts).reduce((n,x)=>n+(Number(x)||0),0)>=50){toast('牌組最多 50 張，請先移除其他卡片。');return;}
@@ -542,6 +543,7 @@ function bind(){
      else if(ui.title==='gurren-lagann')persistTtg();
      else if(ui.title==='sword-art-online')save(SAO_DRAFT_KEY,saoDeck);
      else if(ui.title==='solo-leveling')persistSolo();
+     else if(ui.title==='rezero')persistRez();
      else persistMst();
      render();return;
     }
@@ -614,8 +616,8 @@ function bind(){
    case 'deckCode':ui.modal={type:'deckCode'};render();break;
     case 'visualExport':{
      const t=TITLES.find(t=>t.id===ui.title)||TITLES[0];
-     const counts=ui.title==='bleach'?deck:ui.title==='gurren-lagann'?ttgDeck:ui.title==='sword-art-online'?saoDeck:ui.title==='solo-leveling'?soloDeck:mstDeck;
-     const name=ui.title==='bleach'?deckName:ui.title==='gurren-lagann'?ttgName:ui.title==='sword-art-online'?saoName:ui.title==='solo-leveling'?soloName:mstName;
+     const counts=ui.title==='bleach'?deck:ui.title==='gurren-lagann'?ttgDeck:ui.title==='sword-art-online'?saoDeck:ui.title==='solo-leveling'?soloDeck:ui.title==='rezero'?rezDeck:mstDeck;
+     const name=ui.title==='bleach'?deckName:ui.title==='gurren-lagann'?ttgName:ui.title==='sword-art-online'?saoName:ui.title==='solo-leveling'?soloName:ui.title==='rezero'?rezName:mstName;
      const list=t.cards.filter(c=>counts[c.id]>0).map(c=>String(counts[c.id])+'x'+(c.number||c.id));
      ui.modal={type:'visualExport',text:'# '+name+'\n'+list.join('\n')};render();break;
     }
