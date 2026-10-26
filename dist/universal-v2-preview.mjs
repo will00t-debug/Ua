@@ -570,6 +570,7 @@ function renderDesignatedDecks(){
    list.append(item);
   }
   article.append(list);
+  article.append(el('a',{href:'/index.html?bleachPreset='+encodeURIComponent(row.key),class:'small',text:'在 V2 組卡介面開啟這副牌組／查看卡圖'}));
   root.append(article);
   if(!row.playable){
    const gap=document.createElement('p');
