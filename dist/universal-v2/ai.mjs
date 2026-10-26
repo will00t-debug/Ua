@@ -71,6 +71,14 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
    legal.find(a=>a.uid!==null&&!a.replaceUid)||legal[0];
  if(s.pending?.kind==='effect-energy-skip-swap')
   return difficulty==='easy'?legal[0]:legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-attack-aid')
+  return difficulty==='easy'?legal.find(a=>a.mode==='skip')||legal[0]:
+   legal.find(a=>a.mode!=='skip')||legal[0];
+ if(s.pending?.kind==='effect-attack-aid-grant'||s.pending?.kind==='effect-tuck-damage')
+  return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-active-own-trait')
+  return difficulty==='easy'?legal.find(a=>a.uid===null)||legal[0]:
+   legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-outside-cost-hand'){
   const catalog=packsOf(pack)[s.pending.player].cards;
   const hand=s.players[s.pending.player].hand;
