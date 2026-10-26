@@ -18,6 +18,9 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-discard-gate':'是否支付棄牌成本',
  'effect-remove-outside':'可將己方場外卡移入移除區',
  'effect-remove-hand-scale':'可將任意張手牌中具有指定特徵的卡除外，再依張數提高敵方前線退場的 BP 上限',
+ 'effect-name-energy-reveal':'指定 1 個需求能源數值，再公開牌堆頂',
+ 'effect-revealed-energy-hand':'需求能源相符時，可將公開的卡加入手牌',
+ 'effect-mandatory-hand-remove':'將 1 張手牌除外',
  'effect-search-deck':'搜尋牌庫', 'effect-search-deck-multi':'依序搜尋牌庫',
  'effect-top-inspect':'查看牌庫頂','effect-top-inspect-many':'任意張卡送場外',
  'effect-top-filter-choice':'查看牌頂，選擇符合特徵的角色／卡','effect-top-trait-outside':'查看牌頂，將符合特徵的卡送場外',
@@ -207,6 +210,9 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseTopFiltered':return action.uid===null?'不加入手牌，將其餘卡排列至底部':'加入手牌：'+name();
   case 'chooseTopHandOutside':return action.step==='outside'?'將 '+name()+' 送至場外':'將 '+name()+' 加入手牌';
   case 'chooseEnergyTraitFront':return action.uid===null?'不移動其餘能源線角色':'將 '+name()+' 移至前線 '+(action.slot+1);
+  case 'chooseNamedRequiredEnergy':return '指定需求能源 '+action.value;
+  case 'chooseRevealedEnergyHand':return action.mode==='hand'?'將公開的卡加入手牌':'將公開的卡放回牌堆頂';
+  case 'chooseMandatoryHandRemove':return '將 '+name()+' 除外';
   case 'chooseTopOrder':return '依序放回：'+name();
   case 'chooseRestFrontEnergy':return 'REST '+name()+'，本回合產能＋1';
   case 'chooseOwnBuff':case 'chooseMainBuff':case 'chooseTraitBuff':case 'chooseRestBp':

@@ -54,6 +54,16 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='effect-remove-hand-scale')
   return difficulty==='easy'?legal.find(a=>a.mode==='done')||legal[0]:
    legal.find(a=>a.mode==='pick')||legal.find(a=>a.mode==='done')||legal[0];
+ if(s.pending?.kind==='effect-name-energy-reveal'){
+  if(difficulty==='easy')return legal[0];
+  const top=s.players[s.pending.player].deck[0];
+  const energy=top?packsOf(pack)[s.pending.player].cards[top.cardId]?.energy:null;
+  return legal.find(a=>a.value===energy)||legal[0];
+ }
+ if(s.pending?.kind==='effect-revealed-energy-hand')
+  return difficulty==='easy'?legal.find(a=>a.mode==='top')||legal[0]:
+   legal.find(a=>a.mode==='hand')||legal[0];
+ if(s.pending?.kind==='effect-mandatory-hand-remove')return legal[0];
  if(s.pending?.kind==='life-trigger')
   return legal.find(a=>['final','raid','special','colorRetire','colorRestSkip','colorField','color','active','draw','get'].includes(a.mode))||legal[0];
  if(s.pending?.kind==='effect-recover-ap')return legal.find(a=>a.uid!==null)||legal[0];

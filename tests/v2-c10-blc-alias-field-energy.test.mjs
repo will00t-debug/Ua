@@ -77,10 +77,10 @@ function aiOk(s){
 test('C10 registers only the whole-print alias and field energy retirement',()=>{
  const x=c10BlcAliasFieldEnergy();
  assert.deepEqual(x.registered,[ID]);
- assert.equal(x.report.bleach,257);
+ assert.equal(x.report.bleach,258);
  assert.equal(x.report.mst,60);
- assert.equal(x.report.registered,533);
- assert.equal(x.report.bleachUnported,19);
+ assert.equal(x.report.registered,534);
+ assert.equal(x.report.bleachUnported,18);
  assert.equal(x.report.readyFromKeywords,0);
  assert.equal(EXPECTED_V2_IDS.bleach.includes(ID),true);
 });

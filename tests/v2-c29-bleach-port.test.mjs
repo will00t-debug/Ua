@@ -299,9 +299,13 @@ import bleachContribution from '../dist/universal-v2/title-packs/bleach.mjs';
 // BLC-2-057 EX07BT: 紫4 / 紫. Raid onto 修多羅 千手丸. On play, remove any
 //   number of hand 零番隊, then retire one opposing front. The BP cap
 //   starts at 2500 and rises by 1000 per card removed. RAID is generic.
+// BLC-2-060 EX07BT: 紫4 / 紫. On play, look at the top 4 and return them
+//   to the top in any order. On attack, name a required-energy number,
+//   reveal the top card, and a match may be added to hand. Adding it
+//   removes one hand card. COLOR is the generic outside ACTIVE sentence.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008','BLC-4-065','BLC-2-051','BLC-1-092','BLC-4-044','BLC-4-016','BLC-4-017','BLC-1-028','BLC-2-002','BLC-4-032','BLC-1-011','BLC-1-104','BLC-1-014','BLC-1-020','BLC-1-050','BLC-1-055','BLC-1-063','BLC-1-093','BLC-2-009','BLC-2-013','BLC-2-030','BLC-2-034','BLC-2-035','BLC-2-038','BLC-2-057'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008','BLC-4-065','BLC-2-051','BLC-1-092','BLC-4-044','BLC-4-016','BLC-4-017','BLC-1-028','BLC-2-002','BLC-4-032','BLC-1-011','BLC-1-104','BLC-1-014','BLC-1-020','BLC-1-050','BLC-1-055','BLC-1-063','BLC-1-093','BLC-2-009','BLC-2-013','BLC-2-030','BLC-2-034','BLC-2-035','BLC-2-038','BLC-2-057','BLC-2-060'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -372,12 +376,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers ninety-seven whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,533);
- assert.equal(EXPECTED_V2_COUNTS.bleach,257);
+test('C29 registers ninety-eight whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,534);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,258);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,257);
+ assert.equal(Object.keys(bleach.cards).length,258);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -10487,6 +10491,205 @@ test('BLC-2-057 removes any number of hand Zero Squad cards and raises the retir
  assert.equal(assertUniversalMatch(zero.packs,declined),true);
  assert.equal(assertUniversalMatch(one.packs,scaled),true);
  assert.equal(assertUniversalMatch(two.packs,raised),true);
+});
+
+test('BLC-2-060 looks at four, names required energy on attack, and COLOR-plays from outside',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-2-060');
+ assert.equal(printed.number,'EX07BT/BLC-2-060');
+ assert.equal(printed.nameJa,'兵主部 一兵衛');
+ assert.equal(printed.effect,'登場：查看己方牌堆頂 4 張，以任意順序放回牌堆頂。攻擊時：指定 1 個需求能源數值，公開己方牌堆頂 1 張；若其需求能源等於指定數值，可將該卡加入手牌，並將 1 張手牌除外；若未加入手牌，將公開的卡放回牌堆頂。');
+ assert.equal(printed.traits,'零番隊');
+ assert.equal(printed.trigger,'color');
+ assert.equal(printed.gen,1);
+ assert.equal(printed.energy,4);
+ const card=bleach.cards['BLC-2-060'];
+ assert.equal(card.name,'兵主部 一兵衛');
+ assert.equal(card.gen,1);
+ assert.deepEqual(card.traits,['零番隊']);
+ assert.deepEqual(card.effects.onPlay,[{op:'inspectTopArrange',count:4,toOutside:false,rest:'top'}]);
+ assert.deepEqual(card.effects.onAttack,[{op:'nameEnergyRevealHandRemove'}]);
+ assert.deepEqual(card.triggerEffect,{op:'deployOutsideCharacter',color:'purple',maxEnergy:2,ap:1,frontOnly:true});
+ const deck=realDeck(['BLC-2-060','BLC-2-056','BLC-1-039','BLC-1-037','BLC-1-046','BLC-1-038','BLC-1-108','BLC-1-042','BLC-1-056','BLC-4-052','BLC-3-004','BLC-1-035','BLC-1-041'],'purple');
+ const hold=(s,p,id)=>{const c=take(s,p,id);s.players[p].hand.push(c);return c;};
+ function fuel(s){for(let i=0;i<4;i++)put(s,0,'BLC-2-056','energy',i);}
+ function order(packs,s,uids){
+  for(const uid of uids){
+   s=dispatchUniversalAction(packs,s,{type:'chooseTopOrder',uid});
+  }
+  return s;
+ }
+ const looked=main(deck,29851);
+ fuel(looked.s);
+ const window=setTop(looked.s,0,['BLC-1-042','BLC-1-056','BLC-1-037','BLC-1-046']);
+ const actor=hold(looked.s,0,'BLC-2-060');
+ assert.equal(universalEnergyByColor(looked.packs,looked.s,0).purple,4);
+ let arranged=dispatchUniversalAction(looked.packs,looked.s,{type:'play',uid:actor.uid,line:'front',slot:0});
+ assert.equal(arranged.pending.kind,'effect-top-order');
+ assert.equal(arranged.pending.rest,'top');
+ assert.deepEqual(arranged.pending.uids,window.map(c=>c.uid));
+ assert.equal(universalPrivateChoices(looked.packs,arranged,1),null);
+ assert.ok(universalPrivateChoices(looked.packs,arranged,0));
+ assert.deepEqual(universalPublicView(looked.packs,arranged,1).pending,{kind:'effect-top-order',player:0});
+ assert.equal(V2_PENDING_LABELS[arranged.pending.kind],'排列牌庫頂或底');
+ aiOk(looked.packs,arranged);
+ arranged=order(looked.packs,arranged,[...window].reverse().map(c=>c.uid));
+ assert.equal(arranged.pending,null);
+ assert.deepEqual(arranged.players[0].deck.slice(0,4).map(c=>c.uid),[...window].reverse().map(c=>c.uid));
+ assert.equal(arranged.players[0].front[0].uid,actor.uid);
+ const energyLook=main(deck,29852);
+ put(energyLook.s,0,'BLC-1-035','energy',0);
+ put(energyLook.s,0,'BLC-1-035','energy',1);
+ setTop(energyLook.s,0,['BLC-1-042','BLC-1-056']);
+ energyLook.s.players[0].removed.push(...energyLook.s.players[0].deck.splice(2));
+ const lined=hold(energyLook.s,0,'BLC-2-060');
+ assert.equal(universalEnergyByColor(energyLook.packs,energyLook.s,0).purple,4);
+ let short=dispatchUniversalAction(energyLook.packs,energyLook.s,{type:'play',uid:lined.uid,line:'energy',slot:2});
+ assert.equal(short.pending.kind,'effect-top-order');
+ assert.equal(short.pending.uids.length,2);
+ const bare=main(deck,29853);
+ fuel(bare.s);
+ bare.s.players[0].removed.push(...bare.s.players[0].deck.splice(0));
+ const quiet=hold(bare.s,0,'BLC-2-060');
+ const none=dispatchUniversalAction(bare.packs,bare.s,{type:'play',uid:quiet.uid,line:'front',slot:0});
+ assert.equal(none.pending,null);
+ const attack=main(deck,29854);
+ const fighter=put(attack.s,0,'BLC-2-060','front',0);
+ put(attack.s,1,'BLC-1-042','front',0,true);
+ attack.s=dispatchUniversalAction(attack.packs,attack.s,{type:'next'});
+ assert.equal(attack.s.phase,'attack');
+ const shown=setTop(attack.s,0,['BLC-1-039'])[0];
+ const kept=hold(attack.s,0,'BLC-1-056');
+ let named=dispatchUniversalAction(attack.packs,attack.s,{type:'attack',uid:fighter.uid});
+ assert.equal(named.pending.kind,'effect-name-energy-reveal');
+ assert.equal(named.pending.min,0);
+ assert.equal(named.pending.max,30);
+ assert.equal(V2_PENDING_LABELS[named.pending.kind],'指定 1 個需求能源數值，再公開牌堆頂');
+ assert.equal(legalUniversalActions(attack.packs,named).some(a=>a.value===0),true);
+ assert.equal(legalUniversalActions(attack.packs,named).some(a=>a.value===30),true);
+ assert.equal(legalUniversalActions(attack.packs,named).some(a=>a.value===31),false);
+ assert.equal(universalPrivateChoices(attack.packs,named,0),null);
+ assert.equal(universalPrivateChoices(attack.packs,named,1),null);
+ aiOk(attack.packs,named);
+ assert.throws(()=>dispatchUniversalAction(attack.packs,named,{type:'chooseNamedRequiredEnergy',value:31}),/Action not currently legal/);
+ let missed=dispatchUniversalAction(attack.packs,named,{type:'chooseNamedRequiredEnergy',value:4});
+ assert.equal(missed.players[0].deck[0].uid,shown.uid);
+ assert.equal(missed.players[0].hand.some(c=>c.uid===shown.uid),false);
+ assert.equal(missed.publicReveals.some(r=>r.uid===shown.uid&&r.kind==='revealed-window'),true);
+ assert.equal(missed.pending.kind,'block');
+ const matched=main(deck,29855);
+ const ready=put(matched.s,0,'BLC-2-060','front',0);
+ put(matched.s,1,'BLC-1-042','front',0,true);
+ matched.s=dispatchUniversalAction(matched.packs,matched.s,{type:'next'});
+ const top=setTop(matched.s,0,['BLC-1-037'])[0];
+ const other=hold(matched.s,0,'BLC-1-056');
+ let hit=dispatchUniversalAction(matched.packs,matched.s,{type:'attack',uid:ready.uid});
+ aiOk(matched.packs,hit);
+ hit=dispatchUniversalAction(matched.packs,hit,{type:'chooseNamedRequiredEnergy',value:2});
+ assert.equal(hit.pending.kind,'effect-revealed-energy-hand');
+ assert.equal(hit.pending.energy,2);
+ assert.equal(hit.pending.uid,top.uid);
+ assert.equal(V2_PENDING_LABELS[hit.pending.kind],'需求能源相符時，可將公開的卡加入手牌');
+ aiOk(matched.packs,hit);
+ let declined=dispatchUniversalAction(matched.packs,hit,{type:'chooseRevealedEnergyHand',mode:'top'});
+ assert.equal(declined.players[0].deck[0].uid,top.uid);
+ assert.equal(declined.players[0].hand.some(c=>c.uid===other.uid),true);
+ assert.equal(declined.pending.kind,'block');
+ const taken=main(deck,29856);
+ const striker=put(taken.s,0,'BLC-2-060','front',0);
+ put(taken.s,1,'BLC-1-046','front',0,true);
+ taken.s=dispatchUniversalAction(taken.packs,taken.s,{type:'next'});
+ const added=setTop(taken.s,0,['BLC-1-039'])[0];
+ const spare=hold(taken.s,0,'BLC-1-056');
+ const aside=put(taken.s,0,'BLC-1-042','energy',0);
+ let grabbed=dispatchUniversalAction(taken.packs,taken.s,{type:'attack',uid:striker.uid});
+ grabbed=dispatchUniversalAction(taken.packs,grabbed,{type:'chooseNamedRequiredEnergy',value:0});
+ grabbed=dispatchUniversalAction(taken.packs,grabbed,{type:'chooseRevealedEnergyHand',mode:'hand'});
+ assert.equal(grabbed.pending.kind,'effect-mandatory-hand-remove');
+ assert.equal(V2_PENDING_LABELS[grabbed.pending.kind],'將 1 張手牌除外');
+ assert.equal(grabbed.pending.choices.includes(added.uid),true);
+ assert.equal(grabbed.pending.choices.includes(spare.uid),true);
+ assert.equal(grabbed.pending.choices.includes(striker.uid),false);
+ assert.equal(grabbed.pending.choices.includes(aside.uid),false);
+ assert.equal(legalUniversalActions(taken.packs,grabbed).some(a=>a.uid===null),false);
+ assert.equal(universalPrivateChoices(taken.packs,grabbed,1),null);
+ assert.ok(universalPrivateChoices(taken.packs,grabbed,0));
+ aiOk(taken.packs,grabbed);
+ assert.throws(()=>dispatchUniversalAction(taken.packs,grabbed,{type:'chooseMandatoryHandRemove',uid:null}),/Action not currently legal/);
+ let removedOther=dispatchUniversalAction(taken.packs,grabbed,{type:'chooseMandatoryHandRemove',uid:spare.uid});
+ assert.equal(removedOther.players[0].hand.some(c=>c.uid===added.uid),true);
+ assert.equal(removedOther.players[0].removed.some(c=>c.uid===spare.uid),true);
+ assert.equal(removedOther.pending.kind,'block');
+ const selfRemove=main(deck,29857);
+ const second=put(selfRemove.s,0,'BLC-2-060','front',0);
+ selfRemove.s=dispatchUniversalAction(selfRemove.packs,selfRemove.s,{type:'next'});
+ const own=setTop(selfRemove.s,0,['BLC-1-042'])[0];
+ let only=dispatchUniversalAction(selfRemove.packs,selfRemove.s,{type:'attack',uid:second.uid});
+ only=dispatchUniversalAction(selfRemove.packs,only,{type:'chooseNamedRequiredEnergy',value:0});
+ only=dispatchUniversalAction(selfRemove.packs,only,{type:'chooseRevealedEnergyHand',mode:'hand'});
+ only=dispatchUniversalAction(selfRemove.packs,only,{type:'chooseMandatoryHandRemove',uid:own.uid});
+ assert.equal(only.players[0].removed.some(c=>c.uid===own.uid),true);
+ assert.equal(only.players[0].hand.some(c=>c.uid===own.uid),false);
+ assert.equal(only.pending.kind,'block');
+ const empty=main(deck,29858);
+ const waiting=put(empty.s,0,'BLC-2-060','front',0);
+ empty.s=dispatchUniversalAction(empty.packs,empty.s,{type:'next'});
+ empty.s.players[0].removed.push(...empty.s.players[0].deck.splice(0));
+ let blank=dispatchUniversalAction(empty.packs,empty.s,{type:'attack',uid:waiting.uid});
+ assert.equal(blank.pending.kind,'block');
+ const silenced=main(deck,29859);
+ const quietFighter=put(silenced.s,0,'BLC-2-060','front',0);
+ silenced.s=dispatchUniversalAction(silenced.packs,silenced.s,{type:'next'});
+ setTop(silenced.s,0,['BLC-1-039']);
+ grantContinuousState(silenced.s,{kind:'originalEffectsDisabled',controller:0,sourceUid:quietFighter.uid,
+  targetUid:quietFighter.uid,sourceLinked:false,until:{player:0,phase:'attack',edge:'end'}});
+ let mute=dispatchUniversalAction(silenced.packs,silenced.s,{type:'attack',uid:quietFighter.uid});
+ assert.equal(mute.pending.kind,'block');
+ const energyLine=main(deck,29860);
+ const parked=put(energyLine.s,0,'BLC-2-060','energy',0);
+ energyLine.s=dispatchUniversalAction(energyLine.packs,energyLine.s,{type:'next'});
+ assert.equal(legalUniversalActions(energyLine.packs,energyLine.s).some(a=>a.type==='attack'&&a.uid===parked.uid),false);
+ const color=main(deck,29861);
+ const vanilla=put(color.s,0,'BLC-2-056','front',0);
+ color.s=dispatchUniversalAction(color.packs,color.s,{type:'next'});
+ const life=take(color.s,1,'BLC-2-060');
+ color.s.players[1].deck.push(...color.s.players[1].life.splice(0));
+ color.s.players[1].life.push(life);
+ const legalOutside=take(color.s,1,'BLC-1-039');
+ const exact=take(color.s,1,'BLC-1-037');
+ const costly=take(color.s,1,'BLC-1-046');
+ const apTwo=take(color.s,1,'BLC-1-038');
+ const field=take(color.s,1,'BLC-1-108');
+ color.s.players[1].outside.push(legalOutside,exact,costly,apTwo,field);
+ let revealed=dispatchUniversalAction(color.packs,color.s,{type:'attack',uid:vanilla.uid});
+ revealed=dispatchUniversalAction(color.packs,revealed,{type:'chooseBlock',uid:null});
+ assert.equal(revealed.pending.kind,'life-trigger');
+ assert.equal(revealed.pending.trigger,'color');
+ const modes=legalUniversalActions(color.packs,revealed).filter(a=>a.type==='chooseTrigger');
+ assert.equal(modes.some(a=>a.mode==='colorOutside'&&a.uid===legalOutside.uid&&a.line==='front'),true);
+ assert.equal(modes.some(a=>a.mode==='colorOutside'&&a.uid===exact.uid&&a.line==='front'),true);
+ assert.equal(modes.some(a=>a.uid===costly.uid),false);
+ assert.equal(modes.some(a=>a.uid===apTwo.uid),false);
+ assert.equal(modes.some(a=>a.uid===field.uid),false);
+ assert.equal(modes.some(a=>a.mode==='colorOutside'&&a.line!=='front'),false);
+ aiOk(color.packs,revealed);
+ const dest=modes.find(a=>a.mode==='colorOutside'&&a.uid===legalOutside.uid&&a.slot===0&&!a.replaceUid);
+ assert.ok(dest);
+ revealed=dispatchUniversalAction(color.packs,revealed,dest);
+ const entered=revealed.players[1].front.find(c=>c?.uid===legalOutside.uid);
+ assert.ok(entered);
+ assert.equal(entered.ready,true);
+ assert.equal(revealed.players[1].outside.some(c=>c.uid===legalOutside.uid),false);
+ assert.equal(assertUniversalMatch(looked.packs,arranged),true);
+ assert.equal(assertUniversalMatch(energyLook.packs,short),true);
+ assert.equal(assertUniversalMatch(bare.packs,none),true);
+ assert.equal(assertUniversalMatch(attack.packs,missed),true);
+ assert.equal(assertUniversalMatch(matched.packs,declined),true);
+ assert.equal(assertUniversalMatch(taken.packs,removedOther),true);
+ assert.equal(assertUniversalMatch(selfRemove.packs,only),true);
+ assert.equal(assertUniversalMatch(empty.packs,blank),true);
+ assert.equal(assertUniversalMatch(silenced.packs,mute),true);
+ assert.equal(assertUniversalMatch(energyLine.packs,energyLine.s),true);
+ assert.equal(assertUniversalMatch(color.packs,revealed),true);
 });
 
 function locationLine(s,uid){

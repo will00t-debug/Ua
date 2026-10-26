@@ -184,7 +184,8 @@ const testForKind=Object.freeze({
  rukiaFrontApRestLock:'tests/v2-c29-bleach-port.test.mjs',
  nemSquadLook:'tests/v2-c29-bleach-port.test.mjs',
  mayuriNemSquadRest:'tests/v2-c29-bleach-port.test.mjs',
- shutaraHandScale:'tests/v2-c29-bleach-port.test.mjs'
+ shutaraHandScale:'tests/v2-c29-bleach-port.test.mjs',
+ ichibeEnergyReveal:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -203,7 +204,9 @@ function contributedEntry(profile){
   definition:Object.freeze(definition),
   evidence:Object.freeze({
    printedTextFragments:Object.freeze([profile.effect]),
-   reviewNote:profile.id==='BLC-2-057'?
+   reviewNote:profile.id==='BLC-2-060'?
+    'EX07BT/BLC-2-060 official page 2026-10-27. Required energy 紫4, generated energy 紫. On play, look at the top 4 of the own deck and put them back on top in any order. The look is private. Fewer than 4 cards orders only the cards that exist. An empty deck looks at nothing. Playing onto the energy line still looks. On attack, name one required-energy number from 0 through 30, then reveal the own top card. The number is chosen before the reveal. If the printed required energy matches, the card may be added to hand. Adding it then puts one own hand card into the removed area, and that removal is mandatory. The added card is a legal removal. Declining the hand add puts the revealed card back on top. A mismatch also leaves the revealed card on top and does not remove a hand card. An energy-line card is not the top of the deck. An empty deck names nothing. Silence before the attack removes the attack text. COLOR ACTIVE-plays one own outside purple character of required energy 2 or less and AP 1 onto the own front. A field is not a character. Required energy 3 does not match. AP 2 does not match. The energy line is not a destination. The entered character resolves its on-play. COLOR is the generic sentence. No card FAQ. Trait 零番隊.':
+   profile.id==='BLC-2-057'?
     'EX07BT/BLC-2-057 official page 2026-10-27. Required energy 紫4, generated energy 紫. Raid onto 修多羅 千手丸, become ACTIVE, and may move to the front. On play, put any number of own hand cards with trait 零番隊 into the removed area, including zero. Then retire up to one opposing front character. The BP cap starts at 2500 and increases by 1000 for each card this effect removed. A card without that trait cannot be removed. An energy-line card is not in hand. Choosing zero still opens the 2500 retirement. Declining the retirement leaves the removed cards removed. An energy-line character is not a front character. A field is not a character. No matching hand card skips the removal and opens the 2500 retirement. RAID is the generic sentence. No card FAQ. Trait 零番隊.':
    profile.id==='BLC-2-038'?
     'EX07BT/BLC-2-038 official page 2026-10-27. Required energy 青4, generated energy 青. Raid onto 涅 マユリ, become ACTIVE, and may move to the front. On play, up to one own field character that is 涅 ネム or has trait 涅骸部隊 gets BP+1000 and Impact 1 this turn. Declining grants nothing. This character is 護廷十三隊 named 涅 マユリ, so it is not its own target. A field is not a character. An energy-line character is a legal target. Zero targets open nothing. A card that matches both the name and the trait is still one card. [起動メイン][フロントLにある場合][ターン1] only after an own character retired this turn. Then REST-play one outside blue AP-1 character that is 涅 ネム or has 涅骸部隊. Required energy is not a filter. A printed Raid name still enters REST. Declining that entry is illegal. Zero outside targets do not offer the activate, so the once is not consumed. The energy line cannot activate. [ターン1] is this physical card and is spent when the activate resolves, before the entry finishes. A second copy can still activate. Silence before the activate removes it. The entered character resolves its on-play as an own character effect. RAID is the generic sentence. No card FAQ. Trait 護廷十三隊.':
