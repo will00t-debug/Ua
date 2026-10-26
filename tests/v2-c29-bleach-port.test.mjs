@@ -223,9 +223,11 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 //   this turn. Q2335: every 伊勢 七緒 shares that one activate.
 // BLC-2-051 EX07BT: Impact null. Damage 2 from 10 removed cards or 2
 //   distinct 零番隊 names. Four such names also grant Impact 1.
+// BLC-1-092 UA08BT: front line also generates energy. Q572: a battle
+//   loser is removed instead of retiring, and 退場時 does not fire.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008','BLC-4-065','BLC-2-051'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008','BLC-4-065','BLC-2-051','BLC-1-092'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -296,12 +298,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers seventy-five whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,511);
- assert.equal(EXPECTED_V2_COUNTS.bleach,235);
+test('C29 registers seventy-six whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,512);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,236);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,235);
+ assert.equal(Object.keys(bleach.cards).length,236);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -7150,6 +7152,119 @@ test('BLC-2-051 nulls Impact and gains Damage 2 or Impact 1 from the removed are
  assert.equal(assertUniversalMatch(named.packs,opp),true);
  assert.equal(assertUniversalMatch(muted.packs,muted.s),true);
  assert.equal(assertUniversalMatch(nulled.packs,clash),true);
+});
+
+test('BLC-1-092 generates energy on the front and removes a battle loser without retiring it',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-1-092');
+ assert.equal(printed.number,'UA08BT/BLC-1-092');
+ assert.equal(printed.nameJa,'山本 元柳斎 重國');
+ assert.equal(printed.effect,'此角色位於前線時亦產生能源。己方回合中，與此角色戰鬥並敗北的敵方角色改為除外，且不視為退場。');
+ assert.equal(printed.traits,'護廷十三隊');
+ assert.equal(printed.gen,1);
+ assert.equal(printed.trigger,'color');
+ const card=bleach.cards['BLC-1-092'];
+ assert.equal(card.frontGeneratesEnergy,true);
+ assert.equal(card.battleRemoveInstead,true);
+ assert.equal(card.gen,1);
+ assert.deepEqual(card.traits,['護廷十三隊']);
+ assert.deepEqual(card.triggerEffect,{op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1});
+ const ids=['BLC-1-092','BLC-2-040','BLC-4-064','BLC-4-061','BLC-1-083','BLC-1-091','BLC-1-080','BLC-1-078','BLC-4-062','BLC-1-087','BLC-2-067','BLC-4-060','BLC-1-079'];
+ const deck=Object.fromEntries(ids.map((id,i)=>[id,i===12?2:4]));
+ assert.deepEqual(validateUniversalDeck(bleach,deck),[]);
+ const energy=main(deck,29092);
+ const front=put(energy.s,0,'BLC-1-092','front',0,false);
+ assert.equal(universalCardEnergy(energy.packs,energy.s,0,front),1);
+ assert.equal(universalEnergyByColor(energy.packs,energy.s,0).green,1);
+ const lined=main(deck,29093);
+ const bench=put(lined.s,0,'BLC-1-080','front',0,true);
+ assert.equal(universalCardEnergy(lined.packs,lined.s,0,bench),0);
+ const hushed=main(deck,29094);
+ const quiet=put(hushed.s,0,'BLC-1-092','front',0,true);
+ grantContinuousState(hushed.s,{kind:'originalEffectsDisabled',controller:1,
+  sourceUid:quiet.uid,targetUid:quiet.uid,sourceLinked:false,
+  until:{player:0,phase:'attack',edge:'end'}});
+ assert.equal(universalCardEnergy(hushed.packs,hushed.s,0,quiet),0);
+ const won=main(deck,29095);
+ const yama=put(won.s,0,'BLC-1-092','front',0,true);
+ yama.impactGranted={turn:won.s.turn,stamp:yama.fieldEntryStamp,amount:1};
+ const wall=put(won.s,1,'BLC-2-040','front',0,true);
+ const layer=take(won.s,1,'BLC-4-064');
+ wall.stack=[layer];
+ const plain=take(won.s,1,'BLC-1-079');
+ won.s.players[1].life.unshift(plain);
+ const deckBefore=won.s.players[1].deck.length;
+ const handBefore=won.s.players[1].hand.length;
+ const lives=won.s.players[1].life.length;
+ let battle=won.s;
+ for(let n=0;n<6&&battle.phase!=='attack';n++)
+  battle=dispatchUniversalAction(won.packs,battle,{type:'next'});
+ battle=dispatchUniversalAction(won.packs,battle,{type:'attack',uid:yama.uid});
+ battle=dispatchUniversalAction(won.packs,battle,{type:'chooseBlock',uid:wall.uid},{actor:1});
+ assert.equal(battle.players[1].removed.some(c=>c.uid===wall.uid),true);
+ assert.equal(battle.players[1].outside.some(c=>c.uid===wall.uid),false);
+ assert.equal(battle.players[1].outside.some(c=>c.uid===layer.uid),true);
+ assert.equal(battle.turnRetireEvents.some(e=>e.uid===wall.uid),false);
+ assert.equal(battle.players[1].deck.length,deckBefore);
+ assert.equal(battle.players[1].hand.length,handBefore);
+ assert.equal(battle.players[1].life.length,lives-1);
+ assert.equal(battle.pending,null);
+ const other=main(deck,29096);
+ const attacker=put(other.s,0,'BLC-2-040','front',0,true);
+ const blocker=put(other.s,1,'BLC-1-092','front',0,true);
+ const beforeDeck=other.s.players[0].deck.length;
+ const beforeHand=other.s.players[0].hand.length;
+ let blocked=other.s;
+ for(let n=0;n<6&&blocked.phase!=='attack';n++)
+  blocked=dispatchUniversalAction(other.packs,blocked,{type:'next'});
+ blocked=dispatchUniversalAction(other.packs,blocked,{type:'attack',uid:attacker.uid});
+ blocked=dispatchUniversalAction(other.packs,blocked,{type:'chooseBlock',uid:blocker.uid},{actor:1});
+ assert.equal(blocked.players[0].outside.some(c=>c.uid===attacker.uid),true);
+ assert.equal(blocked.players[0].removed.some(c=>c.uid===attacker.uid),false);
+ assert.equal(blocked.players[0].deck.length,beforeDeck-1);
+ assert.equal(blocked.players[0].hand.length,beforeHand+1);
+ assert.equal(blocked.turnRetireEvents.some(e=>e.uid===attacker.uid),true);
+ const silenced=main(deck,29097);
+ const muted=put(silenced.s,0,'BLC-1-092','front',0,true);
+ const victim=put(silenced.s,1,'BLC-2-040','front',0,true);
+ grantContinuousState(silenced.s,{kind:'originalEffectsDisabled',controller:1,
+  sourceUid:muted.uid,targetUid:muted.uid,sourceLinked:false,
+  until:{player:0,phase:'attack',edge:'end'}});
+ const muteDeck=silenced.s.players[1].deck.length;
+ let ordinary=silenced.s;
+ for(let n=0;n<6&&ordinary.phase!=='attack';n++)
+  ordinary=dispatchUniversalAction(silenced.packs,ordinary,{type:'next'});
+ ordinary=dispatchUniversalAction(silenced.packs,ordinary,{type:'attack',uid:muted.uid});
+ ordinary=dispatchUniversalAction(silenced.packs,ordinary,{type:'chooseBlock',uid:victim.uid},{actor:1});
+ assert.equal(ordinary.players[1].outside.some(c=>c.uid===victim.uid),true);
+ assert.equal(ordinary.players[1].removed.some(c=>c.uid===victim.uid),false);
+ assert.equal(ordinary.players[1].deck.length,muteDeck-1);
+ const color=main(deck,29098);
+ const striker=put(color.s,0,'BLC-1-080','front',0,true);
+ const trigger=take(color.s,1,'BLC-1-092');
+ const buriedLife=color.s.players[1].life[0];
+ color.s.players[1].life[0]=trigger;
+ color.s.players[1].deck.push(buriedLife);
+ const cheap=take(color.s,1,'BLC-4-064');
+ const heavy=take(color.s,1,'BLC-1-080');
+ color.s.players[1].hand.push(cheap,heavy);
+ let revealed=color.s;
+ for(let n=0;n<6&&revealed.phase!=='attack';n++)
+  revealed=dispatchUniversalAction(color.packs,revealed,{type:'next'});
+ revealed=dispatchUniversalAction(color.packs,revealed,{type:'attack',uid:striker.uid});
+ if(revealed.pending?.kind==='block')
+  revealed=dispatchUniversalAction(color.packs,revealed,{type:'chooseBlock',uid:null},{actor:1});
+ assert.equal(revealed.pending.trigger,'color');
+ const choices=legalUniversalActions(color.packs,revealed);
+ assert.equal(choices.some(a=>a.mode==='color'&&a.uid===cheap.uid),true);
+ assert.equal(choices.some(a=>a.uid===heavy.uid),false);
+ const deployed=dispatchUniversalAction(color.packs,revealed,{type:'chooseTrigger',mode:'color',uid:cheap.uid,line:'energy',slot:0},{actor:1});
+ assert.equal(deployed.players[1].energy.find(c=>c?.uid===cheap.uid).ready,true);
+ aiOk(energy.packs,energy.s);
+ assert.equal(assertUniversalMatch(energy.packs,energy.s),true);
+ assert.equal(assertUniversalMatch(won.packs,battle),true);
+ assert.equal(assertUniversalMatch(other.packs,blocked),true);
+ assert.equal(assertUniversalMatch(silenced.packs,ordinary),true);
+ assert.equal(assertUniversalMatch(color.packs,deployed),true);
 });
 
 function fieldCount(s,p){
