@@ -870,6 +870,15 @@ function verifyProgram(program,path){
      Object.keys(scale).length!==2||Object.keys(scale).some(k=>!['trait','per'].includes(k))||
      Object.keys(e).length!==2||Object.keys(e).some(k=>!['op','traitPerBp'].includes(k)))
      throw Error(path+'['+i+'] unsupported trait-scaled BP retirement');
+   }else if(e.raidOrName!==undefined){
+    const bonus=e.raidOrName;
+    if(e.bonusName!==undefined||e.bonusOutsideName!==undefined||
+     !integer(e.bp,1)||e.bp>50000||!integer(e.bonusBp,e.bp+1)||e.bonusBp>50000||
+     !bonus||typeof bonus!=='object'||Array.isArray(bonus)||
+     typeof bonus.name!=='string'||!bonus.name.trim()||bonus.name.length>80||
+     Object.keys(bonus).length!==1||Object.keys(bonus).some(k=>k!=='name')||
+     Object.keys(e).some(k=>!['op','bp','bonusBp','raidOrName'].includes(k)))
+     throw Error(path+'['+i+'] unsupported raid-or-name BP retirement');
    }else{
    const plain=e.bonusName===undefined&&e.bonusBp===undefined&&e.bonusOutsideName===undefined;
    if(plain){

@@ -144,7 +144,8 @@ const testForKind=Object.freeze({
  chooseBuffOrAttackEndRetire:'tests/v2-c29-bleach-port.test.mjs',
  discardVisoredRest:'tests/v2-c29-bleach-port.test.mjs',
  raidHostAny:'tests/v2-c29-bleach-port.test.mjs',
- blockRaidBp:'tests/v2-c29-bleach-port.test.mjs'
+ blockRaidBp:'tests/v2-c29-bleach-port.test.mjs',
+ raidOrNameRetire:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -163,7 +164,9 @@ function contributedEntry(profile){
   definition:Object.freeze(definition),
   evidence:Object.freeze({
    printedTextFragments:Object.freeze([profile.effect]),
-   reviewNote:profile.id==='BLC-1-025'?
+   reviewNote:profile.id==='BLC-1-033'?
+    'UA08BT/BLC-1-033 official iframe 2026-10-26. Choose one opposing front character of live BP 3000 or less and retire it. Q555 (2023-09-25) uses the Q552 raid-state definition. An opposing front or energy character in raid state, or an own field character named ユーハバッハ, raises that cap to 5000. The choice is mandatory when a legal target exists, and the event cannot be played otherwise. SPECIAL retires one opposing front character. No generated energy.':
+   profile.id==='BLC-1-025'?
     'UA08BT/BLC-1-025 official iframe 2026-10-26. On block, this character gets BP-1000 this turn. Q552 (2023-09-25): if the attacking character has 【レイド】 and a face-up card underneath, the shift is BP+1000 instead. A Raid name with an empty stack, or only face-down undercards, stays the plain shift. The shift is applied before the battle BP comparison and stacks on each block. Silence skips it. Generated energy is 黄. No trigger.':
    profile.id==='BLC-1-026'?
     'UA08BT/BLC-1-026 official iframe 2026-10-26. Any own character with 【レイド】 may Raid onto this character. Q553 (2023-09-25): the conditions written to the right of 【レイド】 are waived, and so is the named base. A buried copy is not the visible host. Silence removes the permission and ordinary name matching applies. Generated energy is 黄. No trigger.':

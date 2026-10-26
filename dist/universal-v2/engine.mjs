@@ -4349,6 +4349,15 @@ function retireOppFrontLimit(pack,s,owner,job){
   const count=field(s.players[owner]).filter(c=>cardHasTrait(card(pack,c),job.traitPerBp.trait)).length;
   return count*job.traitPerBp.per;
  }
+ if(job.raidOrName){
+  // Q552/Q555 (2023-09-25): raid state is 【レイド】 plus a face-up undercard.
+  // The printed name still counts while that character is silenced.
+  const raidState=c=>!!card(pack,c).raidName&&(c.stack||[]).some(x=>x.faceDown!==true);
+  const oppRaid=field(s.players[1-owner]).some(raidState);
+  const ownName=field(s.players[owner]).some(c=>cardHasName(card(pack,c),
+   job.raidOrName.name,originalEffectsDisabled(s,c)));
+  return oppRaid||ownName?job.bonusBp:job.bp;
+ }
  if(!job.bonusName)return job.bp;
  const pl=s.players[owner];
  const same=name=>String(name).replace(/\s+/g,'');
@@ -4370,6 +4379,12 @@ function eventMandatoryTargetsAvailable(pack,s,owner,d,reservedAp=d.ap,reservedH
     bp(pack,s,c)<=job.bp&&
     !effectChoiceProtected(s,owner,c.uid,'event')&&
     cardEffectTargetPayable(pack,s,owner,c.uid,reservedAp,null,'event',reservedHandUid));
+  if(job.op==='retireOppFrontUnderBp'&&job.raidOrName){
+   const limit=retireOppFrontLimit(pack,s,owner,job);
+   return enemy.front.some(c=>c&&bp(pack,s,c)<=limit&&
+    !effectChoiceProtected(s,owner,c.uid,'event')&&
+    cardEffectTargetPayable(pack,s,owner,c.uid,reservedAp,null,'event',reservedHandUid));
+  }
   if(job.optional!==false)return true;
   if(job.op==='restOppFrontOne')
    return enemy.front.some(c=>c&&!effectChoiceProtected(s,owner,c.uid,'event')&&

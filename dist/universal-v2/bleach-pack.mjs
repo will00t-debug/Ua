@@ -1160,6 +1160,8 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-1-026","kind":"raidHostAny","number":"UA08BT/BLC-1-026","name":"ロイド・ロイド（R）","color":"yellow","energy":1,"ap":1,"bp":2000,"gen":1,"trigger":null,"type":"character","effect":"己方具有 Raid 的角色卡可在此角色上 Raid。"}
 ,
 {"id":"BLC-1-025","kind":"blockRaidBp","number":"UA08BT/BLC-1-025","name":"ロイド・ロイド（L）","color":"yellow","energy":3,"ap":1,"bp":3500,"gen":1,"trigger":null,"type":"character","effect":"阻擋時：此角色本回合 BP −1000；若攻擊中的敵方角色處於 Raid 狀態，改為 BP +1000。"}
+,
+{"id":"BLC-1-033","kind":"raidOrNameRetire","number":"UA08BT/BLC-1-033","name":"星章化","color":"yellow","energy":5,"ap":1,"bp":0,"gen":0,"trigger":"special","type":"event","effect":"使 1 個敵方前線 BP 3000 以下角色退場；若敵方場上有 Raid 角色，或己方場上有〈友哈巴赫〉，BP 上限改為 5000。"}
  ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1309,6 +1311,7 @@ export function checkedBleachAddonDefinition(p){
  const isDiscardVisored=p.kind==='discardVisoredRest';
  const isRaidHost=p.kind==='raidHostAny';
  const isBlockRaid=p.kind==='blockRaidBp';
+ const isRaidOrName=p.kind==='raidOrNameRetire';
  const topDiscard={
   'BLC-3-007':{count:3,filter:{field:'trait',value:'護廷十三隊'}},
   'BLC-3-002':{count:3,filters:[
@@ -1342,7 +1345,7 @@ export function checkedBleachAddonDefinition(p){
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest||isOwnCharacterDraw||isPeekAttack||isDrawInstead||isRevealOppTop||isRevealWindow||isEnergyWindow||isMillPurple||isEnergyBounce||isStepOr||isReplayDown||isStepName||isReducedActive||isOutsideName||isZeroIchigo||isDiscardBlock||isEmptyStep||isApActive||isAliasTop||isEntryChoose||isRestFrontName||isFrontFieldDown||isHandOutside||isEnergyAp||isAttackEnd||isDiscardVisored||isRaidHost||isBlockRaid;
+ const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest||isOwnCharacterDraw||isPeekAttack||isDrawInstead||isRevealOppTop||isRevealWindow||isEnergyWindow||isMillPurple||isEnergyBounce||isStepOr||isReplayDown||isStepName||isReducedActive||isOutsideName||isZeroIchigo||isDiscardBlock||isEmptyStep||isApActive||isAliasTop||isEntryChoose||isRestFrontName||isFrontFieldDown||isHandOutside||isEnergyAp||isAttackEnd||isDiscardVisored||isRaidHost||isBlockRaid||isRaidOrName;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1486,6 +1489,7 @@ export function checkedBleachAddonDefinition(p){
   ...(isRevealOppTop?{triggerEffect:{op:'restOppFrontSkipNextActive'}}:{}),
   ...(isRaidHost?{raidHostAny:true}:{}),
   ...(isBlockRaid?{blockRaidBp:{plain:-1000,raid:1000}}:{}),
+  ...(isRaidOrName?{triggerEffect:{op:'retireOppFront'}}:{}),
   ...(!special?{templateEffects:abilities[p.kind]}:{effects:
    isPrintedApTop?{onPlay:[{op:'searchTopUpToTwoBottom',count:5,max:1,rest:'bottom',
     logic:'all',filters:[{field:'printedApAtLeast',value:2}]}]}:
@@ -1618,7 +1622,8 @@ export function checkedBleachAddonDefinition(p){
     {id:'small',label:'BP+1000',turn:'any',then:[{op:'buffOwnField',filter:{field:'type',value:'character'},bp:1000,optional:true,excludeSelf:true}]},
     {id:'retire',label:'BP+3000後退場',turn:'any',then:[{op:'buffOwnField',filter:{field:'type',value:'character'},bp:3000,optional:true,excludeSelf:true,attackEndRetire:true}]}
    ]}]}:
-   isDiscardVisored?{onPlay:[{op:'discardGate',optional:true,then:[{op:'deployOutsideTraitApRest',trait:'假面軍勢',ap:1,optional:true,requireAffordableEnergy:true}]}]}:{}})
+   isDiscardVisored?{onPlay:[{op:'discardGate',optional:true,then:[{op:'deployOutsideTraitApRest',trait:'假面軍勢',ap:1,optional:true,requireAffordableEnergy:true}]}]}:
+   isRaidOrName?{onPlay:[{op:'retireOppFrontUnderBp',bp:3000,bonusBp:5000,raidOrName:{name:'ユーハバッハ'}}]}:{}})
  };
 }
 export function bleachV2PortedCards(){
