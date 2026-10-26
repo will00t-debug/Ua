@@ -29,6 +29,14 @@ python3 -m http.server 8000 --directory dist
 
 接著打開 `http://localhost:8000`。由於使用 ES Modules，建議 HTTP 伺服器，不要直接用 `file://` 開啟未打包的模組版本。
 
+若要使用帳號、依使用者保存牌組和線上對戰，改啟動 Node 伺服器：
+
+```sh
+npm run server
+```
+
+預設網址是 `http://localhost:8787`。註冊後的牌組存在伺服器的 `data/`（已列入 `.gitignore`）。線上對戰由伺服器執行 Universal V2，回應裡只有該玩家看得到的手牌與公開場面。只部署靜態 `dist/` 時，這兩項功能不會出現；原本的本機牌組與電腦對戰仍然可用。
+
 測試（需 Node.js 18 以上）：
 
 ```sh

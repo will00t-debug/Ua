@@ -80,8 +80,16 @@ function render(){
  });
  const modal=state.inspection?showDetail(state.inspection):state.exportText!==null?
   `<div class="v2e-modal-backdrop"><section class="v2e-modal" role="dialog" aria-modal="true" aria-label="複製牌組"><button class="v2e-x" data-action="dismiss">關閉 ×</button><h2>牌組清單</h2><textarea id="v2Export" rows="17" readonly>${escapeHtml(state.exportText)}</textarea><button class="v2e-primary" data-action="copyDeck">複製至剪貼簿</button></section></div>`:'';
- $('#app').innerHTML=`<div class="v2e-shell"><header class="v2e-header"><a href="/" class="v2e-logo">UNION ARENA <b>V2</b></a><nav><a href="/">V2 正式對戰</a><a href="/index.html" aria-current="page">卡片圖鑑／組卡</a></nav></header><main class="v2e-main"><div class="v2e-heading"><div><span class="vdb-eyebrow">OFFICIAL V2 ENGINE ONLY</span><h1>牌組構築</h1></div><a class="v2e-primary" href="/">前往 V2 對戰</a></div>${infoBanner}${designatedPanel}${editor}</main><footer class="v2e-footer">所有對戰均使用 Universal V2。可保留以前的牌組草稿，但舊版引擎、Beta 引擎和舊版 auto 標籤不再使用。</footer>${modal||''}</div>`;
+ $('#app').innerHTML=`<div class="v2e-shell"><header class="v2e-header"><a href="/" class="v2e-logo">UNION ARENA <b>V2</b></a><nav><a href="/">V2 正式對戰</a><a href="/online.html">帳號／線上對戰</a><a href="/index.html" aria-current="page">卡片圖鑑／組卡</a></nav></header><main class="v2e-main"><div class="v2e-heading"><div><span class="vdb-eyebrow">OFFICIAL V2 ENGINE ONLY</span><h1>牌組構築</h1></div><a class="v2e-primary" href="/">前往 V2 對戰</a></div>${infoBanner}${designatedPanel}${editor}</main><footer class="v2e-footer">所有對戰均使用 Universal V2。可保留以前的牌組草稿，但舊版引擎、Beta 引擎和舊版 auto 標籤不再使用。</footer>${modal||''}</div>`;
  bind();
+}
+function mirrorCloudDeck(title,entry){
+ if(typeof fetch!=='function')return;
+ const localId=typeof entry.id==='string'&&/^[A-Za-z0-9:_-]{1,80}$/.test(entry.id)?entry.id:undefined;
+ fetch('/api/decks',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},
+  body:JSON.stringify({name:entry.name,title,counts:entry.counts,localId})})
+  .then(response=>{if(response.ok)notify('已儲存，並同步到登入帳號');})
+  .catch(()=>{});
 }
 function bind(){
  $('#app').onclick=e=>{
@@ -116,7 +124,7 @@ function bind(){
    const entry={id:old?.id||'v2-'+Date.now()+'-'+Math.random().toString(36).slice(2),name,counts,updatedAt:new Date().toISOString()};
    if(old)records[records.indexOf(old)]=entry;else records.push(entry);
    state.selectedSaved[title]=entry.id;
-   try{write(LEGACY_DECK_KEYS[title][1],records);persist();notify('已儲存牌組草稿');render();}
+   try{write(LEGACY_DECK_KEYS[title][1],records);persist();notify('已儲存牌組草稿');mirrorCloudDeck(title,entry);render();}
    catch(e){notify('儲存失敗：'+e.message);}return;
   }
   if(data.action==='visualExport'){
