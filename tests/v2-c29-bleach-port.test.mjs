@@ -124,9 +124,12 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 //   Step. On retire during its own turn, up to one opposing front character
 //   of live BP 1500+ gets BP-1000. Official iframe 2026-10-26. Generated 黄.
 //   ACTIVE is generic. No card FAQ.
+// BLC-2-028 EX07BT: Impact null. On play may discard one, then may ACTIVE
+//   one own AP. [ターン1] sets this physical card ACTIVE only while another
+//   own front character has printed AP 2+. Q1036 (2024-07-19). Generated 青.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -197,12 +200,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers forty-six whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,482);
- assert.equal(EXPECTED_V2_COUNTS.bleach,206);
+test('C29 registers forty-seven whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,483);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,207);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,206);
+ assert.equal(Object.keys(bleach.cards).length,207);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -3598,4 +3601,78 @@ test('BLC-4-003 discounts an empty field, steps, and cuts BP only on its own ret
  assert.equal(assertUniversalMatch(packs,moving),true);
  assert.equal(assertUniversalMatch(own.packs,battle),true);
  assert.equal(assertUniversalMatch(packs,theirs),true);
+});
+
+test('BLC-2-028 may discard into an AP active and actives once per card',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-2-028');
+ assert.equal(printed.effect,'Impact 無效。登場：可將 1 張手牌送至場外；成功時可將最多 1 張己方 AP 卡轉為 ACTIVE。主要階段・每回合 1 次：己方前線有其他原始 AP 消耗 2 以上角色時，將此角色轉為 ACTIVE。');
+ assert.equal(printed.traits,'護廷十三隊');
+ const card=bleach.cards['BLC-2-028'];
+ assert.equal(card.impactNull,true);
+ assert.equal(card.ap,2);
+ assert.equal(card.energy,3);
+ assert.equal(card.trigger,'get');
+ assert.equal(card.triggerEffect,null);
+ assert.deepEqual(card.traits,['護廷十三隊']);
+ assert.equal(card.mainAbility.op,'cardOnceActive');
+ assert.equal(card.effects.onPlay[0].optional,true);
+ const deck=realDeck(['BLC-2-028','BLC-2-018','BLC-2-031','BLC-2-016','BLC-4-022'],'blue');
+ const played=main(deck,30028);
+ for(let i=0;i<3;i++)put(played.s,0,'BLC-2-031','energy',i,true);
+ for(const ap of played.s.players[0].apCards.slice(0,2)){ap.inPlay=true;ap.ready=true;}
+ const handCard=take(played.s,0,'BLC-2-028');
+ played.s.players[0].hand.push(handCard);
+ let entry=dispatchUniversalAction(played.packs,played.s,{type:'play',uid:handCard.uid,line:'front',slot:0});
+ assert.equal(entry.pending.kind,'effect-discard-gate');
+ assert.equal(legalUniversalActions(played.packs,entry).some(a=>a.type==='chooseDiscardGate'&&a.uid===null),true);
+ entry=dispatchUniversalAction(played.packs,entry,{type:'chooseDiscardGate',uid:null});
+ assert.equal(entry.pending,null);
+ assert.equal(entry.players[0].apCards[0].ready,false);
+ played.s=entry;
+ for(const ap of played.s.players[0].apCards.slice(0,2)){ap.inPlay=true;ap.ready=true;}
+ const second=take(played.s,0,'BLC-2-028');
+ played.s.players[0].hand.push(second);
+ const dumped=played.s.players[0].hand.find(c=>c.uid!==second.uid);
+ let paid=dispatchUniversalAction(played.packs,played.s,{type:'play',uid:second.uid,line:'front',slot:1});
+ paid=dispatchUniversalAction(played.packs,paid,{type:'chooseDiscardGate',uid:dumped.uid});
+ assert.equal(paid.pending.kind,'effect-recover-ap');
+ const rested=paid.players[0].apCards.find(c=>c.inPlay&&!c.ready);
+ paid=dispatchUniversalAction(played.packs,paid,{type:'chooseApRecovery',uid:rested.uid});
+ assert.equal(paid.players[0].apCards.find(c=>c.uid===rested.uid).ready,true);
+ const gated=main(deck,30029);
+ const self=put(gated.s,0,'BLC-2-028','front',0,false);
+ const small=put(gated.s,0,'BLC-2-031','front',1,true);
+ assert.equal(bleach.cards['BLC-2-031'].ap<2,true);
+ assert.equal(legalUniversalActions(gated.packs,gated.s).some(a=>a.mode==='cardOnceActive'),false);
+ const parked=put(gated.s,0,'BLC-2-018','energy',0,true);
+ assert.equal(legalUniversalActions(gated.packs,gated.s).some(a=>a.mode==='cardOnceActive'),false);
+ gated.s.players[0].energy[0]=null;
+ gated.s.players[0].front[2]=parked;
+ assert.equal(legalUniversalActions(gated.packs,gated.s).some(a=>a.uid===self.uid&&a.mode==='cardOnceActive'),true);
+ let stood=dispatchUniversalAction(gated.packs,gated.s,{type:'activate',uid:self.uid,mode:'cardOnceActive'});
+ assert.equal(live(stood,0,self.uid).ready,true);
+ assert.equal(legalUniversalActions(gated.packs,stood).some(a=>a.uid===self.uid&&a.mode==='cardOnceActive'),false);
+ const copy=put(stood,0,'BLC-2-028','energy',0,false);
+ assert.equal(legalUniversalActions(gated.packs,stood).some(a=>a.uid===copy.uid&&a.mode==='cardOnceActive'),true);
+ grantContinuousState(stood,{kind:'originalEffectsDisabled',controller:1,sourceUid:parked.uid,
+  targetUid:copy.uid,sourceLinked:false,until:{player:0,phase:'main',edge:'end'}});
+ assert.equal(legalUniversalActions(gated.packs,stood).some(a=>a.uid===copy.uid&&a.mode==='cardOnceActive'),false);
+ const fight=main(deck,30030);
+ const striker=put(fight.s,0,'BLC-2-018','front',0,true);
+ striker.impactGranted={turn:fight.s.turn,stamp:striker.fieldEntryStamp,amount:1};
+ const wall=put(fight.s,1,'BLC-2-028','front',0,true);
+ const life=fight.s.players[1].life.length;
+ let battle=fight.s;
+ for(let n=0;n<6&&battle.phase!=='attack';n++)
+  battle=dispatchUniversalAction(fight.packs,battle,{type:'next'});
+ live(battle,0,striker.uid).ready=true;
+ battle=dispatchUniversalAction(fight.packs,battle,{type:'attack',uid:striker.uid});
+ assert.ok(universalImpact(fight.packs,battle,live(battle,0,striker.uid))>0);
+ battle=dispatchUniversalAction(fight.packs,battle,{type:'chooseBlock',uid:wall.uid},{actor:1});
+ assert.equal(battle.players[1].outside.some(c=>c.uid===wall.uid),true);
+ assert.equal(battle.players[1].life.length,life);
+ aiOk(played.packs,paid);
+ assert.equal(assertUniversalMatch(played.packs,paid),true);
+ assert.equal(assertUniversalMatch(gated.packs,stood),true);
+ assert.equal(assertUniversalMatch(fight.packs,battle),true);
 });

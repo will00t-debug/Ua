@@ -133,7 +133,8 @@ const testForKind=Object.freeze({
  outsideAbsentFieldNameBp:'tests/v2-c29-bleach-port.test.mjs',
  restRetireZeroIchigo:'tests/v2-c29-bleach-port.test.mjs',
  discardBlockAtLeast:'tests/v2-c29-bleach-port.test.mjs',
- emptyStepRetireDown:'tests/v2-c29-bleach-port.test.mjs'
+ emptyStepRetireDown:'tests/v2-c29-bleach-port.test.mjs',
+ impactDiscardApActive:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -173,6 +174,8 @@ function contributedEntry(profile){
       'EX07BT/BLC-2-017 official iframe 2026-10-26. [起動メイン][手札を1枚場外に置く][ターン1]: this physical card discards one hand card, then cannot be blocked by BP 4000 or higher this turn. Q1032 (2024-07-19): discarding 斬月 this way triggers 斬月. No generated-energy normalization.':
     profile.id==='BLC-4-003'?
       'EX15BT/BLC-4-003 official iframe 2026-10-26. Empty own field reduces this hand card by yellow×2, which equals its printed yellow 2. Step. On retire during its own turn, up to one opposing front character of live BP 1500 or more gets BP-1000. Generated energy is 黄. ACTIVE is generic. No card FAQ.':
+    profile.id==='BLC-2-028'?
+      'EX07BT/BLC-2-028 official iframe 2026-10-26. Impact null. On play may discard one hand card, then may set one own AP card ACTIVE. [ターン1] sets this physical card ACTIVE only while another own front character has printed AP 2 or more. Q1036 (2024-07-19): 元々の消費AP is the printed AP. Generated energy is 青. GET is generic.':
       'EX15BT/BLC-4-042 printed base BLUE BLUE=2 but legacy gen=3; audited sourceRecord.gen=2 retains legacyImportedGen=3; official Q2323 and full three-mode tests.':
     'Official printed '+profile.number+'; profile '+profile.kind+
      '; fingerprint matched source text and printed stats. V2 program/trigger tests exist; NOT per-card complete FAQ acceptance.',

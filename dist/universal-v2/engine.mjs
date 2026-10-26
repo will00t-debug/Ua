@@ -4437,6 +4437,11 @@ export function legalUniversalActions(pack,s){
     out.push({type:'activate',uid:c.uid,mode:'discardSelfBuff'});
    if(nameOnceActiveLegal(pack,s,p,c,ability))
     out.push({type:'activate',uid:c.uid,mode:'nameOnceActive'});
+   if(ability?.op==='cardOnceActive'&&ability.scope==='card'&&
+    !s.mainAbilityUsedUids.includes(c.uid)&&
+    matchesV2LiveCondition(s,p,c.uid,ability.when,
+     x=>card(pack,x),()=>calcEnergy(pack,s,p),x=>bp(pack,s,x)))
+    out.push({type:'activate',uid:c.uid,mode:'cardOnceActive'});
    if(ability?.op==='oncePayProgram'&&!s.mainAbilityUsedUids.includes(c.uid)){
     const onFront=pl.front.some(x=>x?.uid===c.uid);
     const placed=onFront||pl.energy.some(x=>x?.uid===c.uid);
@@ -5023,6 +5028,15 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
       x=>card(pack,x),()=>calcEnergy(pack,s,p),x=>bp(pack,s,x))))
      throw Error('Name-once ACTIVE is not legal');
     s.mainReadyOnceByName[p].push(key);
+    attemptFieldActive(s,p,selected);
+    break;
+   }
+   if(ability.op==='cardOnceActive'){
+    if(action.mode!=='cardOnceActive'||s.mainAbilityUsedUids.includes(selected.uid)||
+     !matchesV2LiveCondition(s,p,selected.uid,ability.when,
+      x=>card(pack,x),()=>calcEnergy(pack,s,p),x=>bp(pack,s,x)))
+     throw Error('Card-once ACTIVE is not legal');
+    s.mainAbilityUsedUids.push(selected.uid);
     attemptFieldActive(s,p,selected);
     break;
    }
