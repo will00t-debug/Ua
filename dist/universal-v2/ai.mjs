@@ -179,6 +179,8 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='effect-retire-scaled')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-rest-outside-events')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-rested-retire-impact')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-hand-named-rest')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-grant-named-impact')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-hand-bp-may')return legal.find(a=>a.mode==='accept')||legal[0];
  if(s.pending?.kind==='effect-hand-deploy-may')return legal.find(a=>a.mode==='accept')||legal[0];
  if(s.pending?.kind==='effect-hand-rest-entry')return legal[0];

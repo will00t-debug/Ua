@@ -70,9 +70,9 @@ test('UA40BT and UA40ST share one catalogue and keep parallel art out',()=>{
  }
 });
 
-test('ninety-three whole prints enter the V2 pack and the other twenty stay out',()=>{
- assert.equal(REZERO_ENGINE_IDS.length,93);
- assert.equal(Object.keys(pack.cards).length,93);
+test('ninety-four whole prints enter the V2 pack and the other nineteen stay out',()=>{
+ assert.equal(REZERO_ENGINE_IDS.length,94);
+ assert.equal(Object.keys(pack.cards).length,94);
  assert.equal(pack.cards['REZ-1-001'],undefined);
  assert.equal(pack.cards['REZ-1-008'].step,true);
  assert.equal(pack.cards['REZ-1-008'].implementation,'vanilla');
@@ -4632,4 +4632,132 @@ test('Emilia raids onto Emilia, may drop one front by 3500, and retires only whi
  assert.equal(assertUniversalMatch(packs,declined),true);
  assert.equal(assertUniversalMatch(packs,lowered),true);
  assert.equal(assertUniversalMatch(packs,bare),true);
+});
+
+const remHandCounts={
+ ...Object.fromEntries(['REZ-1-019','REZ-1-014','REZ-1-008','REZ-1-080','REZ-1-024',
+  'REZ-1-079','REZ-1-003','REZ-1-043','REZ-1-086','REZ-1-091','REZ-1-054'].map(id=>[id,4])),
+ 'REZ-1-007':3,'REZ-1-017':1,'REZ-1-016':1,'REZ-1-033':1
+};
+const remHand=seed=>newUniversalMatch(packs,{decks:[remHandCounts,remHandCounts],first:0,seed});
+function grantMain(s,uid){
+ return legalUniversalActions(packs,s).some(a=>a.type==='activate'&&a.mode==='grantNamedImpact'&&a.uid===uid);
+}
+test('Rem raids onto Rem, rests one cheap yellow Ram or Rem, and grants impact to another',()=>{
+ assert.equal(Object.values(remHandCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(pack,remHandCounts),[]);
+ const printed=pack.cards['REZ-1-019'];
+ assert.equal(printed.raidName,'レム');
+ assert.equal(printed.energy,4);
+ assert.deepEqual(printed.effects.onPlay,[{op:'deployOwnHandNamedRest',color:'yellow',
+  maxEnergy:3,ap:1,names:['ラム','レム'],max:1,optional:true}]);
+ assert.deepEqual(printed.mainAbility,{op:'frontOnceGrantImpactNamed',frontOnly:true,
+  oncePerTurn:true,excludeSelf:true,names:['ラム','レム']});
+ const named={op:'deployOwnHandNamedRest',color:'yellow',maxEnergy:3,ap:1,
+  names:['ラム','レム'],max:1,optional:true};
+ const shell={id:'REM19',name:'レム',color:'yellow',type:'character',energy:4,ap:1,bp:4000,gen:1,
+  traits:[],trigger:'raid',raidName:'レム',implementation:'dsl',effects:{onPlay:[named]},
+  mainAbility:{op:'frontOnceGrantImpactNamed',frontOnly:true,oncePerTurn:true,
+   excludeSelf:false,names:['ラム','レム']}};
+ assert.throws(()=>createUniversalPack({id:'bad-rem19',cards:[shell]}),/named impact/);
+ assert.throws(()=>createUniversalPack({id:'bad-rem19',cards:[{...shell,type:'event',bp:0,gen:0,
+  raidName:null,trigger:null,mainAbility:null,effects:{onPlay:[named]}}]}),/onPlay/);
+
+ let live=remHand(7601);
+ fuel(live,['REZ-1-007','REZ-1-007','REZ-1-007','REZ-1-016']);
+ const base=pull(live,0,'REZ-1-014');
+ live.players[0].front[0]=base;
+ const stranger=pull(live,0,'REZ-1-003');
+ live.players[0].front[1]=stranger;
+ const decoy=pull(live,0,'REZ-1-019');
+ live.players[0].front[2]=decoy;
+ live=ownMain(live,2);
+ assert.equal(universalEnergyByColor(packs,live,0).yellow,4);
+ const waiting=pull(live,0,'REZ-1-019');
+ const ram=pull(live,0,'REZ-1-008');
+ const other=pull(live,0,'REZ-1-014');
+ const expensive=pull(live,0,'REZ-1-017');
+ const purple=pull(live,0,'REZ-1-080');
+ const emilia=pull(live,0,'REZ-1-024');
+ live.players[0].hand.push(waiting,ram,other,expensive,purple,emilia);
+ assert.equal(legalUniversalActions(packs,live).some(a=>a.type==='raid'&&a.uid===waiting.uid&&a.baseUid===stranger.uid),false);
+ assert.equal(legalUniversalActions(packs,live).some(a=>a.type==='raid'&&a.uid===waiting.uid&&a.baseUid===decoy.uid),false);
+ const raid=legalUniversalActions(packs,live).find(a=>a.type==='raid'&&a.uid===waiting.uid&&a.baseUid===base.uid);
+ assert.ok(raid);
+ live=dispatchUniversalAction(packs,live,raid);
+ assert.equal(at(live,0,waiting.uid).stack[0].uid,base.uid);
+ assert.equal(live.pending.kind,'effect-hand-named-rest');
+ assert.equal(live.pending.optional,true);
+ assert.ok(live.pending.choices.includes(ram.uid));
+ assert.ok(live.pending.choices.includes(other.uid));
+ assert.equal(live.pending.choices.includes(expensive.uid),false);
+ assert.equal(live.pending.choices.includes(purple.uid),false);
+ assert.equal(live.pending.choices.includes(emilia.uid),false);
+ for(const uid of live.pending.choices){
+  const printedChoice=pack.cards[live.players[0].hand.find(c=>c.uid===uid).cardId];
+  assert.equal(printedChoice.color,'yellow');
+  assert.ok(printedChoice.energy<=3);
+  assert.equal(printedChoice.ap,1);
+  assert.ok(printedChoice.name==='ラム'||printedChoice.name==='レム');
+ }
+ assert.equal(legalUniversalActions(packs,live).some(a=>a.mode==='raid'),false);
+ assert.equal(legalUniversalActions(packs,live).some(a=>a.uid===expensive.uid||a.uid===purple.uid||a.uid===emilia.uid),false);
+ assert.equal(V2_PENDING_LABELS['effect-hand-named-rest'],'選擇是否以休息狀態登場');
+ assert.equal(uiActionLabel({type:'chooseHandNamedRest',uid:null},{pack,state:live}),'不登場');
+ assert.equal(uiActionLabel({type:'chooseHandNamedRest',uid:ram.uid},{pack,state:live}),'使 ラム 以休息狀態登場');
+ assert.notEqual(chooseUniversalAiAction(packs,live).uid,null);
+ let skipped=structuredClone(live);
+ skipped=dispatchUniversalAction(packs,skipped,{type:'chooseHandNamedRest',uid:null});
+ assert.equal(skipped.pending,null);
+ assert.ok(skipped.players[0].hand.some(c=>c.uid===ram.uid));
+ const enter=legalUniversalActions(packs,live).find(a=>a.type==='chooseHandNamedRest'&&a.uid===ram.uid&&a.line==='front');
+ assert.ok(enter);
+ live=dispatchUniversalAction(packs,live,enter);
+ assert.equal(live.pending,null);
+ assert.equal(at(live,0,ram.uid).ready,false);
+ assert.equal(live.players[0].front[enter.slot].uid,ram.uid);
+ parkLine(live,0,stranger.uid);
+ const handOther=live.players[0].hand.findIndex(c=>c.uid===other.uid);
+ live.players[0].front[1]=live.players[0].hand.splice(handOther,1)[0];
+ const held=live.players[0].energy[3];
+ live.players[0].outside.push(held);
+ const handPurple=live.players[0].hand.findIndex(c=>c.uid===purple.uid);
+ live.players[0].energy[3]=live.players[0].hand.splice(handPurple,1)[0];
+ for(const gen of live.players[0].energy.slice(0,3).filter(Boolean))parkLine(live,0,gen.uid);
+ assert.equal(grantMain(live,waiting.uid),true);
+ const parked=structuredClone(live);
+ const from=parked.players[0].front.findIndex(c=>c?.uid===waiting.uid);
+ const swap=parked.players[0].energy[0];
+ parked.players[0].energy[0]=parked.players[0].front[from];
+ parked.players[0].front[from]=swap;
+ assert.equal(grantMain(parked,waiting.uid),false);
+ const lonely=structuredClone(live);
+ for(const uid of [other.uid,decoy.uid,ram.uid,purple.uid])parkLine(lonely,0,uid);
+ assert.equal(grantMain(lonely,waiting.uid),false);
+ live=dispatchUniversalAction(packs,live,{type:'activate',uid:waiting.uid,mode:'grantNamedImpact'});
+ assert.equal(live.pending.kind,'effect-grant-named-impact');
+ assert.equal(live.pending.optional,true);
+ assert.equal(Object.keys(live.pending).length,7);
+ assert.deepEqual(live.pending.choices,[other.uid,decoy.uid,ram.uid,purple.uid]);
+ assert.equal(V2_PENDING_LABELS['effect-grant-named-impact'],'選擇是否賦予衝擊');
+ assert.equal(uiActionLabel({type:'chooseGrantNamedImpact',uid:null},{pack,state:live}),'不賦予衝擊');
+ assert.equal(uiActionLabel({type:'chooseGrantNamedImpact',uid:purple.uid},{pack,state:live}),'使 ラム 獲得衝擊 1');
+ assert.equal(chooseUniversalAiAction(packs,live).uid,other.uid);
+ const stale=structuredClone(live);
+ parkLine(stale,0,purple.uid);
+ assert.throws(()=>legalUniversalActions(packs,stale),/Invalid named impact grant pending/);
+ let declined=structuredClone(live);
+ declined=dispatchUniversalAction(packs,declined,{type:'chooseGrantNamedImpact',uid:null});
+ assert.equal(universalImpact(pack,declined,at(declined,0,purple.uid)),0);
+ assert.equal(universalImpact(pack,declined,at(declined,0,waiting.uid)),0);
+ assert.equal(grantMain(declined,waiting.uid),false);
+ live=dispatchUniversalAction(packs,live,{type:'chooseGrantNamedImpact',uid:purple.uid});
+ assert.equal(live.pending,null);
+ assert.equal(universalImpact(pack,live,at(live,0,purple.uid)),1);
+ assert.equal(universalImpact(pack,live,at(live,0,waiting.uid)),0);
+ live=reachStart(live,0,3);
+ assert.equal(universalImpact(pack,live,at(live,0,purple.uid)),0);
+ assert.equal(assertUniversalMatch(packs,live),true);
+ assert.equal(assertUniversalMatch(packs,declined),true);
+ assert.equal(assertUniversalMatch(packs,skipped),true);
 });

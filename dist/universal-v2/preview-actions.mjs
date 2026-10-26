@@ -50,6 +50,8 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-retire-scaled':'選擇是否使對手前線退場',
  'effect-rest-outside-events':'選擇是否使對手前線休息',
  'effect-rested-retire-impact':'選擇是否使對手前線退場',
+ 'effect-hand-named-rest':'選擇是否以休息狀態登場',
+ 'effect-grant-named-impact':'選擇是否賦予衝擊',
  'effect-hand-bp-may':'這次參照手牌角色 BP 時，是否視為 +1000',
  'effect-hand-deploy-may':'這次參照手牌角色 BP 時，是否視為 +1000 並休息登場',
  'effect-hand-rest-entry':'選擇休息登場的位置',
@@ -233,6 +235,8 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseRetireAtLeast':case 'chooseRetireScaled':return action.uid===null?'不使角色退場':'使 '+name()+' 退場';
   case 'chooseRestOutsideEvents':return action.uid===null?'不使角色休息':'使 '+name()+' 休息';
   case 'chooseRestedRetire':return action.uid===null?'不使角色退場':'使 '+name()+' 退場';
+  case 'chooseHandNamedRest':return action.uid===null?'不登場':'使 '+name()+' 以休息狀態登場';
+  case 'chooseGrantNamedImpact':return action.uid===null?'不賦予衝擊':'使 '+name()+' 獲得衝擊 1';
   case 'chooseHandBpMay':return action.mode==='accept'?'視為 BP+1000':'維持原本 BP';
   case 'handActivate':return '支付 1 AP，公開這張手牌';
   case 'chooseHandDeployMay':return action.mode==='accept'?'視為 BP+1000 並休息登場':'維持原本 BP，留在手牌';
