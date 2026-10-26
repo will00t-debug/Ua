@@ -9,7 +9,7 @@ export const V2_PHASES=Object.freeze(['start','move','main','attack']);
 export const V2_CARD_TYPES=Object.freeze(['character','event','field']);
 export const V2_TRIGGERS=Object.freeze(['draw','get','final','active','special','color','raid']);
 export const V2_EFFECT_TIMINGS=Object.freeze(['onPlay','onRaid','onAttack','onRaided','onRetire','onOutsideRecover']);
-export const V2_EFFECT_OPS=Object.freeze(['nextEligibleHandPlayApDiscount','nextScaledEventApDiscount','allNamedEnergyBounce','draw','drawIfOwnName','drawIfAllOwnFieldNamed','drawIfOwnTraitCount','drawIfOwnOutsideNamedCountAtLeast','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','drawIfOppRestCharacter','drawIfOppCharacterBpAtLeast','drawIfOwnNameAndHandFewer','activeOwnNamed','grantSelfSniperThisTurn','grantSelfAttackWinDrawThisTurn','grantSelfMustBlockThisTurn','buffSelfUntilNextOwnStart','grantSelfAttackEndSwapThisTurn','millTop','buffSelf','buffSelfPerOwnOutsideGroups','enemyBpDown','drawDiscard','recoverAp','grantSubaruHandTaxThisTurn','scheduleAttackStartAp','deployOutsideNamedRestRetireEnd','grantNamedLoseBattleReady','banAttackMoveOtherLine','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','retireOppFrontOne','conditionalBounceOrRetireByOwnOutsideNames','stripOppRaidTop','restOppFrontUnderBp','restOppFrontBpAtLeast','restOppFrontOne','restOwnFrontOne','skipNextActiveOppRest','forbidAttackOppFrontOne','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','retireOwnFieldOne','retireOwnCharacterOne','optionalRetireThenProgram','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw','searchDeckMany','discardGate','removeOutsideThen','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopDistinctBottomDiscard','buffOwnOthersFixed','grantSelfDoubleAttackThisTurn','grantSelfUnchosenThisTurn','activeOwnOther','grantSelfBlockAtLeastUntilNextOwnStart','grantOtherFieldFrontEnergyThisTurn','searchTopUpToTwoBottom','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
+export const V2_EFFECT_OPS=Object.freeze(['nextEligibleHandPlayApDiscount','nextScaledEventApDiscount','allNamedEnergyBounce','draw','drawIfOwnName','drawIfAllOwnFieldNamed','drawIfOwnTraitCount','drawIfOwnOutsideNamedCountAtLeast','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','drawIfOppRestCharacter','drawIfOppCharacterBpAtLeast','drawIfOwnNameAndHandFewer','activeOwnNamed','grantSelfSniperThisTurn','grantSelfAttackWinDrawThisTurn','grantSelfMustBlockThisTurn','buffSelfUntilNextOwnStart','grantSelfAttackEndSwapThisTurn','millTop','buffSelf','buffSelfPerOwnOutsideGroups','enemyBpDown','drawDiscard','recoverAp','grantSubaruHandTaxThisTurn','scheduleAttackStartAp','deployOutsideNamedRestRetireEnd','grantNamedLoseBattleReady','banAttackMoveOtherLine','optionalRetireExceptNamesTuckActive','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','retireOppFrontOne','conditionalBounceOrRetireByOwnOutsideNames','stripOppRaidTop','restOppFrontUnderBp','restOppFrontBpAtLeast','restOppFrontOne','restOwnFrontOne','skipNextActiveOppRest','forbidAttackOppFrontOne','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','retireOwnFieldOne','retireOwnCharacterOne','optionalRetireThenProgram','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw','searchDeckMany','discardGate','removeOutsideThen','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopDistinctBottomDiscard','buffOwnOthersFixed','grantSelfDoubleAttackThisTurn','grantSelfUnchosenThisTurn','activeOwnOther','grantSelfBlockAtLeastUntilNextOwnStart','grantOtherFieldFrontEnergyThisTurn','searchTopUpToTwoBottom','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
  'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideColorUnderEnergy','recoverOutsideTraitlessUnderEnergy','deployOutsideTraitlessRestOrRaid','deployOutsideRest','deployOutsidePrinted','deployOutsideNameRest','deployNamedFromZones','payApDeployNamedRest','inspectTopTraitOutside','buffOwnField','buffOwnOthersUpTo','buffEnergyNamedIfRaidedFront','buffOwnIfAbovePrinted','oncePerTurnGate','chooseOne','deployOwnHandRest','deployOwnHandSpecial','deployOwnHandRestOrRaid','optionalPayApThen','discardOppHand','retireSourceOnPhaseEnd','activeSelfIf','grantOnAttack','grantSelectionApTaxOwnOtherTrait','grantFrontEnergyOwnOtherFrontTrait','grantOwnFrontChoiceProtection','grantCauseBlockAtMost','handBottomGrantDoubleAttack','payApDeployMovedActive','noteEntryTurn','grantSelfEnergyMoveOnAttackStart','grantSelfTriggerUnchosen','outsideColorEnergyHandOrRest','moveOtherAcrossOrRemove','raidBaseEnergyThen','grantSelfAttackDamageThisTurn','restOppFrontLockActive','removeAnyOutsideScale','inspectTopColoredNamesOutside','drawDiscardIfEffectApPaid','activeSelf','grantSelfImpactThisTurn','grantOwnNameBlockAtLeast','drawIfNameOrDistinctColorNames','inspectTopNamesOutside','recoverOutsideNameColor','drawDiscardOrDrawIfBelowPrinted','chooseOneIfBelowPrinted','grantNamedReadyOnAttack','grantNamedBuffSniper','banSelfAttackThisTurn','deployOwnHandFreshName','deployOutsideNameColorEnergy','grantSelfAttackDrawThisTurn','buffAnyCharacter','revealHandBottom','deployOutsidePrintedExcept']);
 const integer=(v,low=0)=>Number.isInteger(v)&&v>=low;
 const own=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
@@ -874,6 +874,14 @@ function verifyProgram(program,path){
   if(e.op==='banAttackMoveOtherLine'&&(e.optional!==true||Object.keys(e).length!==2||
    Object.keys(e).some(k=>!['op','optional'].includes(k))))
    throw Error(path+'['+i+'] invalid trait attack-ban line move');
+  if(e.op==='optionalRetireExceptNamesTuckActive'&&(
+   e.optional!==true||typeof e.requiresName!=='string'||!e.requiresName.trim()||
+   e.requiresName.length>80||!Array.isArray(e.exceptNames)||e.exceptNames.length!==2||
+   new Set(e.exceptNames).size!==2||!e.exceptNames.includes(e.requiresName)||
+   e.exceptNames.some(n=>typeof n!=='string'||!n.trim()||n.length>80)||
+   Object.keys(e).length!==4||
+   Object.keys(e).some(k=>!['op','optional','requiresName','exceptNames'].includes(k))))
+   throw Error(path+'['+i+'] invalid named retirement tuck');
   if((e.op==='deployOutsideNamedRestRetireEnd'||e.op==='grantNamedLoseBattleReady')&&(
    typeof e.name!=='string'||!e.name.trim()||e.name.length>80||
    !['red','blue','yellow','green','purple'].includes(e.color)||
@@ -1052,6 +1060,18 @@ function normalize(card,packId){
   !integer(underProfile.leaveReplacementMinBp,1)||underProfile.leaveReplacementMinBp>5000||
   Object.keys(underProfile).some(k=>!['bp','impact','leaveReplacementMinBp'].includes(k))
  ))throw Error(card.id+' unsupported facedown under-card profile');
+ const standing=card.facedownUnderStanding??null;
+ // A non-Raid character can print BP, Impact null, and a BP-threshold leave
+ // replacement that spends one facedown under-card. It does not grant Impact.
+ if(standing!==null&&(
+  card.type!=='character'||!!card.raidName||underProfile||
+  card.impactNull===true||card.printedImpact!==undefined||
+  !integer(standing.bp,500)||standing.bp>5000||standing.bp%500!==0||
+  standing.impactNull!==true||
+  !integer(standing.leaveReplacementMinBp,1)||standing.leaveReplacementMinBp>5000||
+  Object.keys(standing).length!==3||
+  Object.keys(standing).some(k=>!['bp','impactNull','leaveReplacementMinBp'].includes(k))
+ ))throw Error(card.id+' unsupported facedown standing');
  if(card.raidFromRaid!==undefined&&(
   !card.raidName||card.type!=='character'||
   !Array.isArray(card.raidFromRaid)||!card.raidFromRaid.length||
@@ -1592,12 +1612,12 @@ function normalize(card,packId){
  if(implemented==='vanilla'&&(Object.keys(effects).length||card.effectText||
   mainAbility||phaseEffects.length||moveTriggers.length||moveObserver||card.enterActiveIfOpponentRest||card.enterAlwaysActive||card.activeExtraEnergy||card.conditionalTraitEnergy||passiveBonuses||card.impactNull||
   card.printedImpact||card.printedAttackDamage||card.readyOnAttackCount||card.readyOnBlockCount||
-  card.frontGeneratesEnergy||ownOutsideRecovery||colorTriggerFieldSubstitution||card.frontForbidden||card.ownTurnBp||card.opponentTurnBp||nameAliases||selectionHandDiscardTax||card.otherOwnBattleWonDamageTwo||attackEndSwap||blockBpRestriction||attackWinRecover||attackWinDraw||  card.conditionalImpactBpAtLeast||emptyOwnFieldHandEnergyDiscount||outsideEventHandEnergyDiscount||opponentFieldColorsHandEnergyDiscount||card.mustBlock||card.bpDownImmune||card.printedHandEnergyDiscount||card.raidHandLeaveReplace||card.alsoEvent))
+  card.frontGeneratesEnergy||ownOutsideRecovery||colorTriggerFieldSubstitution||card.frontForbidden||card.ownTurnBp||card.opponentTurnBp||nameAliases||selectionHandDiscardTax||card.otherOwnBattleWonDamageTwo||attackEndSwap||blockBpRestriction||attackWinRecover||attackWinDraw||  card.conditionalImpactBpAtLeast||emptyOwnFieldHandEnergyDiscount||outsideEventHandEnergyDiscount||opponentFieldColorsHandEnergyDiscount||card.mustBlock||card.bpDownImmune||card.printedHandEnergyDiscount||card.raidHandLeaveReplace||card.alsoEvent||card.facedownUnderStanding))
   throw Error(card.id+' claims vanilla despite printed/declared effects');
  if(implemented==='dsl'&&!Object.keys(effects).length&&!phaseEffects.length&&!moveTriggers.length&&!mainAbility&&!moveObserver&&!card.enterActiveIfOpponentRest&&!card.enterAlwaysActive&&
   !card.activeExtraEnergy&&!card.conditionalTraitEnergy&&!passiveBonuses&&!card.impactNull&&
   !card.printedImpact&&!card.printedAttackDamage&&!card.readyOnAttackCount&&!card.readyOnBlockCount&&
-  !card.frontGeneratesEnergy&&!ownOutsideRecovery&&!colorTriggerFieldSubstitution&&!card.frontForbidden&&!card.ownTurnBp&&!card.opponentTurnBp&&!nameAliases&&!selectionHandDiscardTax&&!card.otherOwnBattleWonDamageTwo&&!attackEndSwap&&!blockBpRestriction&&!attackWinRecover&&!attackWinDraw&&  !card.conditionalImpactBpAtLeast&&!emptyOwnFieldHandEnergyDiscount&&!outsideEventHandEnergyDiscount&&!opponentFieldColorsHandEnergyDiscount&&!card.mustBlock&&!card.bpDownImmune&&!card.printedHandEnergyDiscount&&!card.raidHandLeaveReplace&&!card.alsoEvent)
+  !card.frontGeneratesEnergy&&!ownOutsideRecovery&&!colorTriggerFieldSubstitution&&!card.frontForbidden&&!card.ownTurnBp&&!card.opponentTurnBp&&!nameAliases&&!selectionHandDiscardTax&&!card.otherOwnBattleWonDamageTwo&&!attackEndSwap&&!blockBpRestriction&&!attackWinRecover&&!attackWinDraw&&  !card.conditionalImpactBpAtLeast&&!emptyOwnFieldHandEnergyDiscount&&!outsideEventHandEnergyDiscount&&!opponentFieldColorsHandEnergyDiscount&&!card.mustBlock&&!card.bpDownImmune&&!card.printedHandEnergyDiscount&&!card.raidHandLeaveReplace&&!card.alsoEvent&&!card.facedownUnderStanding)
   throw Error(card.id+' declares dsl without effects');
  for(const [name,program] of Object.entries(effects)){
   if(program.some(x=>x.op==='retireSourceOnPhaseEnd'))throw Error(card.id+' invalid phase-only self retirement');
@@ -1696,6 +1716,9 @@ function normalize(card,packId){
   if(program.some(e=>e.op==='banSelfAttackThisTurn'||e.op==='banAttackMoveOtherLine')&&
    (card.type!=='character'||name!=='onPlay'))
    throw Error(card.id+' this-turn attack ban is a character onPlay effect');
+  if(program.some(e=>e.op==='optionalRetireExceptNamesTuckActive')&&
+   (card.type!=='character'||name!=='onPlay'))
+   throw Error(card.id+' named retirement tuck is a character onPlay effect');
   if(program.some(e=>e.op==='revealHandBottom')&&name!=='onPlay')
    throw Error(card.id+' revealed deck-bottom is an onPlay effect');
   if(program.some(e=>e.op==='deployOutsidePrintedExcept')&&
@@ -1876,6 +1899,7 @@ function normalize(card,packId){
   raidBaseNames:Object.freeze([...(card.raidBaseNames||[card.raidName].filter(Boolean))]),
   raidRequiresNames:Object.freeze([...(card.raidRequiresNames||[])]),
   conditionalUnderFaceDown:underProfile?Object.freeze({...underProfile}):null,
+  facedownUnderStanding:standing?Object.freeze({...standing}):null,
   triggerEffect:triggerEffect?Object.freeze({...triggerEffect}):null,
   mainAbility:mainAbility?Object.freeze({...mainAbility}):null,
   ownOutsideRecovery:ownOutsideRecovery?Object.freeze({...ownOutsideRecovery}):null,

@@ -16,6 +16,12 @@
 // other character. Front once per turn: until next own start, BP+1000 and
 // characters of BP 4000 or more cannot block her; or grant one other
 // character front-line energy generation this turn.
+// Batch 60 adds 032: a facedown under-card gives BP+500, Impact null, and a
+// BP 500 leave replacement that sends one under-card outside. On play, if
+// Priscilla is on the field, one other character who is neither Priscilla
+// nor Al may retire; only that card goes facedown underneath, then this
+// character becomes active. Q2411 leaves Raid subordinates outside. Q2412
+// lets only the controller see those facedown cards.
 // Batch 59 adds 030: on play, up to one own character with a trait cannot
 // attack this turn and moves to the other line. Q2410 removes one card
 // when that line is full. The main rests one active front character only
@@ -298,12 +304,19 @@ const PROFILES={
    {id:'up',label:'other bp up',turn:'any',then:[
     {op:'buffOwnField',filter:{field:'type',value:'character'},bp:2000,
      optional:true,excludeSelf:true}]}]}]}}
+,
+ 'REZ-2-032':{implementation:'dsl',
+  facedownUnderStanding:{bp:500,impactNull:true,leaveReplacementMinBp:500},
+  effects:{onPlay:[
+   {op:'optionalRetireExceptNamesTuckActive',optional:true,
+    requiresName:'プリシラ・バーリエル',
+    exceptNames:['プリシラ・バーリエル','アル']}]}}
 };
 
 export const REZ_V2_IMPLEMENTED_IDS=Object.freeze(Object.keys(PROFILES));
 
 export function createRezV2Pack(){
  const cards=REZ_V2_IMPLEMENTED_IDS.map(id=>({...shell(id),...PROFILES[id]}));
- return createUniversalPack({id:'rezero',version:'0.26.0',cards});
+ return createUniversalPack({id:'rezero',version:'0.27.0',cards});
 
 }
