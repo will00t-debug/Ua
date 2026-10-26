@@ -36,6 +36,9 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-named-energy':'選擇要增加產能的角色',
  'effect-active-one-ap':'選擇 1 張 AP 轉為 ACTIVE',
  'effect-mode-discard':'支付手牌以起動主要能力',
+ 'effect-outside-deck-top':'從場外將至多 1 張放回牌庫頂',
+ 'effect-outside-names':'從場外將至多 1 張指定卡名加入手牌',
+ 'effect-active-character':'選擇 1 張己方角色轉為 ACTIVE',
  'effect-optional-draw':'攻擊時可抽 0 或 1 張',
  'effect-pay-ap-deploy':'可支付 1 AP，從場外 REST 登場',
  'effect-optional-pay-ap':'可支付 1 AP，然後結算後續效果',
@@ -109,7 +112,12 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'attack':return action.targetUid?
    '狙擊攻擊：'+name()+' → '+uiCardLabel(pack,state,action.targetUid):
    '宣告攻擊：'+name();
-  case 'activate':return action.mode==='namedEnergyAp'?
+  case 'activateRemoved':return '起動移除區主要：本回合產生能源變為 2 倍';
+  case 'activate':return action.mode==='front'?
+    '起動主要：前線也能產生能源':
+    action.mode==='ready20'?'起動主要：將 1 張己方角色轉為 ACTIVE':
+    action.mode==='line'?'起動主要：棄 1 張手牌，本回合可從能源線攻擊':
+    action.mode==='namedEnergyAp'?
     '起動主要：指定西蒙，本回合產能增加並 ACTIVE 1 張 AP':
     action.mode==='active'?'起動主要：棄 1 張手牌，使此角色 ACTIVE':
     action.mode==='energy'?'起動主要：REST 此角色，本回合產能＋1':
@@ -188,6 +196,9 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseEnergyMode':return action.mode==='plus'?'產生能源 +1':'前線也能產生能源';
   case 'chooseMayThen':return action.mode==='do'?'查看牌庫頂':'不查看';
   case 'chooseMaxBpImpact':return '讓 '+name()+' 加上場上最高 BP 並獲得 IMPACT';
+  case 'chooseOutsideDeckTop':return action.uid===null?'不放回牌庫頂':'放到牌庫頂：'+name();
+  case 'chooseOutsideName':return action.uid===null?'不加入手牌':'加入手牌：'+name();
+  case 'chooseActiveCharacter':return '使 '+name()+' ACTIVE';
   case 'chooseOutsideOrRest':return action.mode==='skip'?'不回收':
    action.mode==='hand'?'將 '+name()+' 加入手牌':'REST 登場 '+name()+suffix();
   case 'chooseReplayBase':return action.mode==='skip'?'不將底板重新登場':

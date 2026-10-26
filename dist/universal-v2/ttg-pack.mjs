@@ -168,7 +168,46 @@ const additions=[
   implementation:'dsl',
   effects:{onPlay:[{op:'outsideRecoverOrRestPlay',optional:true,color:'green',
    trait:'大グレン団',maxEnergy:3,ap:1,restPlayEnergy:6}]},
-  match:'需求能源3'}
+  match:'需求能源3'},
+ {id:'TTG-1-003',name:'ヴィラル',energy:5,ap:1,bp:4000,gen:1,color:'green',
+  type:'character',trigger:'draw',implementation:'dsl',effects:{},
+  printedMains:[
+   {id:'front',op:'frontEnergyEscalation',minEnergy:6,highEnergy:8},
+   {id:'ready20',op:'activeOneIfEnergy',minEnergy:20,once:'name'}],
+  match:'能源6以上'},
+ {id:'TTG-1-017',name:'ニア',energy:3,ap:1,bp:2000,gen:2,color:'green',
+  type:'character',trigger:'color',implementation:'dsl',
+  triggerEffect:{op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1},
+  effects:{onPlay:[
+   {op:'chooseOne',optional:false,options:[
+    {id:'top',label:'查看牌頂4張',turn:'any',then:[{op:'searchTopOneBottomDiscard',count:4,
+     filters:[{field:'name',value:'シモン'},
+      {field:'printedRequiredEnergyAtLeast',value:8}],logic:'any'}]},
+    {id:'outside',label:'場外放牌頂',turn:'any',then:[{op:'outsideToDeckTop',optional:true,
+     filters:[{field:'name',value:'シモン'},
+      {field:'printedRequiredEnergyAtLeast',value:8}],logic:'any'}]}]},
+   {op:'gainSelfEnergyIfAtLeast',min:8,amount:2}]},
+  match:'需求能源8以上'},
+ {id:'TTG-1-040',name:'俺達を誰だと思っていやがる!!',energy:8,ap:1,bp:0,gen:0,
+  color:'green',type:'event',trigger:'get',implementation:'dsl',
+  handUseOncePerName:true,removeUnlessUsed:true,useToRemoved:true,
+  removedMain:{id:'double',op:'doubleGeneratedEnergy',minEnergy:8},
+  effects:{onPlay:[{op:'draw',count:2},{op:'grantAllFrontEnergyThisTurn'}]},
+  match:'產能本回合加倍'},
+ {id:'TTG-1-068',name:'ヨーコ',energy:3,ap:1,bp:2000,gen:2,color:'red',
+  type:'character',trigger:'draw',implementation:'dsl',bpPerOwnRaid:1000,
+  printedMains:[{id:'line',op:'energyLineAttackCap',discard:1,attackCap:4,once:'name'}],
+  effects:{},match:'Raid'},
+ {id:'TTG-1-070',name:'ロシウ',energy:1,ap:1,bp:2000,gen:1,color:'red',
+  type:'character',trigger:'draw',implementation:'dsl',effects:{},
+  extraRaidHost:{names:['グレン','グレンラガン'],blockedByName:'カミナ'},
+  match:'カミナ'},
+ {id:'TTG-1-080',name:'俺を誰だと思っていやがる!!',energy:3,ap:1,bp:0,gen:0,
+  color:'red',type:'event',trigger:null,implementation:'dsl',
+  playRequiresNameOrRaidBase:'カミナ',
+  effects:{onPlay:[{op:'recoverNamesThenHandRaidDiscount',optional:true,
+   names:['ラガン','グレン','グレンラガン'],amount:1}]},
+  match:'カミナ'}
 ];
 export const TTG_V2_ADDITION_IDS=Object.freeze(additions.map(x=>x.id));
 export function verifiedTtgV2Additions(){

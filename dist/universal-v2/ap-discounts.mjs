@@ -57,7 +57,10 @@ export function handPlayApPlan(s,owner,d,{raid=false,uid=null}={}){
    e.turn===s.turn&&e.owner===owner&&e.uid!==uid&&cardHasName(d,e.name));
   if(!voided)raidCut=rule.amount;
  }
- return {cost:Math.max(0,d.ap-ids.length-raidCut),ids};
+ let nameCut=0;
+ if(raid)for(const cut of s.handRaidCuts?.[owner]||[])
+  if(cut.names.includes(d.name))nameCut+=cut.amount;
+ return {cost:Math.max(0,d.ap-ids.length-raidCut-nameCut),ids};
 }
 export function definitionGrantsDiscount(value,filter){
  if(!value||typeof value!=='object')return false;
