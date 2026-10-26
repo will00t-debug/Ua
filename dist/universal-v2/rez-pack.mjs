@@ -9,6 +9,9 @@
 // Batch 51 adds 054: look at one top card per distinct green printed name,
 // add up to one character of energy 5 or less, bottom the rest and discard,
 // or give up to two other characters BP+500.
+// Batch 53 adds 058: Raid Emilia, this-turn double attack and selection
+// immunity, once-per-turn attack BP+1000, and an attack-end rest of one
+// own front ACTIVE character with printed BP 2500 to set her ACTIVE.
 // Batch 49 adds 039: COLOR may use printed BP 2500 instead of energy 2,
 // and onPlay rests one other green printed-BP 2500 character, then actives
 // that character or this one. Q2414 is an OR. Q2415 uses the printed BP.
@@ -220,13 +223,20 @@ const PROFILES={
   {id:'kinds',label:'top green kinds',turn:'any',then:[
    {op:'searchTopDistinctBottomDiscard',color:'green',maxEnergy:5}]},
   {id:'buff',label:'two others bp 500',turn:'any',then:[
-   {op:'buffOwnOthersFixed',bp:500,count:2}]}]}]}}
+   {op:'buffOwnOthersFixed',bp:500,count:2}]}]}]}},
+ 'REZ-2-058':{implementation:'dsl',raidName:'エミリア',attackEndRestPrintedBp:2500,
+  effects:{
+   onPlay:[
+    {op:'grantSelfDoubleAttackThisTurn'},
+    {op:'grantSelfUnchosenThisTurn'}],
+   onAttack:[{op:'oncePerTurnGate',scope:'card',optional:false,then:[{op:'buffSelf',bp:1000}]}]
+  }}
 };
 
 export const REZ_V2_IMPLEMENTED_IDS=Object.freeze(Object.keys(PROFILES));
 
 export function createRezV2Pack(){
  const cards=REZ_V2_IMPLEMENTED_IDS.map(id=>({...shell(id),...PROFILES[id]}));
- return createUniversalPack({id:'rezero',version:'0.19.0',cards});
+ return createUniversalPack({id:'rezero',version:'0.20.0',cards});
 
 }
