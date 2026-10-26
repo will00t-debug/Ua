@@ -74,12 +74,34 @@ const PROFILES={
   {op:'bounceOwnOtherUnderEnergy',energy:1}]}},
  'REZ-2-061':{implementation:'dsl',effects:{onPlay:[
   {op:'buffOwnField',filter:{field:'bp',value:2500},bp:1500,
-   optional:true,excludeSelf:false}]}}
+   optional:true,excludeSelf:false}]}},
+ 'REZ-2-002':{implementation:'dsl',effects:{onPlay:[
+  {op:'activeSelfIf',line:'energy',when:{kind:'ownEventUsedThisTurn',turn:'own'}}]},
+  mainAbility:{op:'restSelfBuffOther',bp:1000}},
+ 'REZ-2-028':{implementation:'dsl',effects:{},templateEffects:{onPlay:[
+  {template:'drawIfOwnTraitCount',trait:'魔女',zone:'field',excludeSelf:false,min:1,count:1}]},
+  mainAbility:{op:'discardHandGainEnergy',oncePerTurn:true,discardCount:1,extraEnergy:1}},
+ 'REZ-2-029':{implementation:'dsl',effects:{},templateEffects:{onPlay:[
+  {template:'payDiscardThen',optional:true,then:[
+   {template:'peekTopOrBottom'},{template:'draw',count:1}]}]}},
+ 'REZ-2-034':{implementation:'dsl',effects:{},attackWinDraw:{count:1,condition:{
+  kind:'ownDistinctPrintedColorNames',turn:'any',zone:'field',color:'green',min:4}}},
+ 'REZ-2-036':{implementation:'dsl',effects:{},mainAbility:{
+  op:'frontOnceActiveNamed',frontOnly:true,oncePerTurn:true,name:'リリアナ・マスカレード'}},
+ 'REZ-2-037':{implementation:'dsl',effects:{onPlay:[
+  {op:'buffOwnOthersUpTo',bp:500,count:1,upgradeName:'プリシラ・バーリエル',upgradeCount:2}]}},
+ 'REZ-2-052':{implementation:'dsl',effects:{},mainAbility:{
+  op:'restSelfGainEnergyRetireEndMain',lines:'field',oncePerTurn:true,extraEnergy:1}},
+ 'REZ-2-064':{implementation:'dsl',triggerEffect:{
+  op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1},effects:{onPlay:[
+  {op:'inspectTopArrange',count:2,toOutside:true,rest:'top',
+   whenDistinct:{color:'green',min:4,count:4}}]}}
 };
 
 export const REZ_V2_IMPLEMENTED_IDS=Object.freeze(Object.keys(PROFILES));
 
 export function createRezV2Pack(){
  const cards=REZ_V2_IMPLEMENTED_IDS.map(id=>({...shell(id),...PROFILES[id]}));
- return createUniversalPack({id:'rezero',version:'0.9.0',cards});
+ return createUniversalPack({id:'rezero',version:'0.10.0',cards});
+
 }
