@@ -6,6 +6,9 @@
 // Batches 35–44 add 007, 019, 021, 027, 051, 053, 057, 069, 072 and 073.
 // Batch 45 adds 010 and 011: a name-locked hand AP discount, scaled by
 // outside events for Emilia and armed by an all-Rem bounce for Rem.
+// Batch 51 adds 054: look at one top card per distinct green printed name,
+// add up to one character of energy 5 or less, bottom the rest and discard,
+// or give up to two other characters BP+500.
 // Batch 49 adds 039: COLOR may use printed BP 2500 instead of energy 2,
 // and onPlay rests one other green printed-BP 2500 character, then actives
 // that character or this one. Q2414 is an OR. Q2415 uses the printed BP.
@@ -207,14 +210,23 @@ const PROFILES={
  'REZ-2-073':{implementation:'dsl',triggerEffect:{op:'retireOppFront'},
  effects:{onPlay:[{op:'retireOppFrontOne'}]},moveTriggers:[
   {when:{from:'hand',to:'outside',reasons:['own-effect'],sourceOnField:true,
-    sourceName:'ラインハルト・ヴァン・アストレア',sourceColor:'green'},
-   then:[{op:'activeOwnNamed',name:'ラインハルト・ヴァン・アストレア',max:1,optional:true}]}]}
+   sourceName:'ラインハルト・ヴァン・アストレア',sourceColor:'green'},
+   then:[{op:'activeOwnNamed',name:'ラインハルト・ヴァン・アストレア',max:1,optional:true}]}]},
+ 'REZ-2-065':{implementation:'dsl',raidName:'プリシラ・バーリエル',ownTurnBp:1000,
+  effects:{onAttack:[{op:'draw',count:1}]},
+  mainAbility:{op:'onceAbovePrintedKeywords',oncePerTurn:true,
+   damageAt:3,damage:2,impactAt:5,impact:1}},
+ 'REZ-2-054':{implementation:'dsl',effects:{onPlay:[{op:'chooseOne',optional:false,options:[
+  {id:'kinds',label:'top green kinds',turn:'any',then:[
+   {op:'searchTopDistinctBottomDiscard',color:'green',maxEnergy:5}]},
+  {id:'buff',label:'two others bp 500',turn:'any',then:[
+   {op:'buffOwnOthersFixed',bp:500,count:2}]}]}]}}
 };
 
 export const REZ_V2_IMPLEMENTED_IDS=Object.freeze(Object.keys(PROFILES));
 
 export function createRezV2Pack(){
  const cards=REZ_V2_IMPLEMENTED_IDS.map(id=>({...shell(id),...PROFILES[id]}));
- return createUniversalPack({id:'rezero',version:'0.17.0',cards});
+ return createUniversalPack({id:'rezero',version:'0.19.0',cards});
 
 }
