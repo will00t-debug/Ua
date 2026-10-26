@@ -191,9 +191,12 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 //   Retire one opposing front character of BP 5000 or less. Mandatory.
 //   Then up to one own energy-line 花天 or 狂骨 becomes ACTIVE.
 //   Front copies are not choices. No card FAQ.
+// BLC-2-012 EX07BT: retire one opposing front character whose BP is at
+//   most 1000 times the own-field count of 邦比愛塔親衛隊 or
+//   バンビエッタ・バスターバイン. A card with both counts once. Mandatory.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -264,12 +267,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers sixty-three whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,499);
- assert.equal(EXPECTED_V2_COUNTS.bleach,223);
+test('C29 registers sixty-four whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,500);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,224);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,223);
+ assert.equal(Object.keys(bleach.cards).length,224);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -5756,4 +5759,138 @@ test('BLC-4-081 retires BP 5000 or less beside Kyōraku, then may ACTIVE an ener
  assert.equal(assertUniversalMatch(labPacks,stayed),true);
  assert.equal(assertUniversalMatch(labPacks,rested),true);
  assert.equal(assertUniversalMatch(labPacks,named),true);
+});
+
+test('BLC-2-012 retires by the combined Bambies trait and Bambietta count',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-2-012');
+ assert.equal(printed.effect,'使 1 個敵方前線角色退場；其 BP 必須不高於「己方場上具有『邦比愛塔親衛隊』特徵及名為〈邦比愛塔・芭絲塔拜茵〉的卡片合計數量 ×1000」。');
+ assert.equal(printed.nameJa,'聖隷');
+ assert.equal(printed.number,'EX07BT/BLC-2-012');
+ assert.equal(printed.traits,'無');
+ assert.equal(printed.type,'event');
+ assert.equal(printed.energy,4);
+ assert.equal(printed.ap,1);
+ assert.equal(printed.gen,0);
+ assert.equal(printed.trigger,'special');
+ assert.equal(printed.color,'yellow');
+ const scale={trait:'邦比愛塔親衛隊',name:'バンビエッタ・バスターバイン',per:1000};
+ const card=bleach.cards['BLC-2-012'];
+ assert.equal(card.name,'聖隷');
+ assert.deepEqual(card.triggerEffect,{op:'retireOppFront'});
+ assert.deepEqual(card.traits,[]);
+ assert.deepEqual(card.effects.onPlay,[{op:'retireOppFrontUnderBp',optional:false,nameOrTraitPerBp:scale}]);
+ assert.equal(cardHasTrait(bleach.cards['BLC-2-008'],scale.trait),true);
+ assert.equal(cardHasTrait(bleach.cards['BLC-1-012'],scale.trait),false);
+ assert.equal(cardHasName(bleach.cards['BLC-1-012'],scale.name,true),true);
+ assert.equal(cardHasTrait(bleach.cards['BLC-2-006'],scale.trait),false);
+ assert.equal(cardHasName(bleach.cards['BLC-2-006'],scale.name,true),true);
+ const evt={id:'BAD',name:'隷',color:'yellow',type:'event',energy:0,ap:1,bp:0,gen:0,traits:[],trigger:'special',implementation:'dsl',triggerEffect:{op:'retireOppFront'},effects:{onPlay:[{op:'draw',count:1}]}};
+ assert.throws(()=>createUniversalPack({id:'bad-bambies-per',cards:[{...evt,effects:{onPlay:[{op:'retireOppFrontUnderBp',optional:false,nameOrTraitPerBp:{...scale,per:500}}]}}]}),/unsupported name-or-trait BP retirement/);
+ assert.throws(()=>createUniversalPack({id:'bad-bambies-bp',cards:[{...evt,effects:{onPlay:[{op:'retireOppFrontUnderBp',bp:1000,optional:false,nameOrTraitPerBp:scale}]}}]}),/unsupported name-or-trait BP retirement/);
+ const deck=realDeck(['BLC-2-012','BLC-2-007','BLC-2-008','BLC-2-010','BLC-2-011','BLC-1-012','BLC-1-013','BLC-2-006','BLC-4-009','BLC-1-007','BLC-1-001','BLC-1-018'],'yellow');
+ const playable=(packs,s,uid)=>legalUniversalActions(packs,s).some(a=>a.type==='event'&&a.uid===uid);
+ function hold(s){
+  const event=take(s,0,'BLC-2-012');
+  s.players[0].hand.push(event);
+  return event;
+ }
+ const empty=main(deck,30651);
+ put(empty.s,0,'BLC-1-007','energy',0);
+ put(empty.s,0,'BLC-1-001','energy',1);
+ put(empty.s,0,'BLC-1-018','energy',2);
+ const emptyEvent=hold(empty.s);
+ put(empty.s,1,'BLC-1-012','front',0,true);
+ assert.equal(universalEnergyByColor(empty.packs,empty.s,0).yellow,4);
+ assert.equal(playable(empty.packs,empty.s,emptyEvent.uid),false);
+ const one=main(deck,30652);
+ put(one.s,0,'BLC-1-007','energy',0);
+ put(one.s,0,'BLC-1-001','energy',1);
+ const trait=put(one.s,0,'BLC-2-008','energy',2);
+ const oneEvent=hold(one.s);
+ const small=put(one.s,1,'BLC-4-009','front',0,true);
+ const mid=put(one.s,1,'BLC-1-012','front',1,true);
+ assert.equal(universalBp(one.packs,one.s,small),1000);
+ assert.equal(universalBp(one.packs,one.s,mid),1500);
+ assert.equal(playable(one.packs,one.s,oneEvent.uid),true);
+ let played=dispatchUniversalAction(one.packs,one.s,{type:'event',uid:oneEvent.uid});
+ assert.equal(played.pending.kind,'effect-retire-bp');
+ assert.equal(played.pending.limit,1000);
+ assert.equal(played.pending.choices.includes(small.uid),true);
+ assert.equal(played.pending.choices.includes(mid.uid),false);
+ assert.equal(legalUniversalActions(one.packs,played).some(a=>a.type==='chooseRetireBp'&&a.uid===null),false);
+ aiOk(one.packs,played);
+ played=dispatchUniversalAction(one.packs,played,{type:'chooseRetireBp',uid:small.uid});
+ assert.equal(played.pending,null);
+ assert.equal(played.players[1].outside.some(c=>c.uid===small.uid),true);
+ const names=main(deck,30653);
+ put(names.s,0,'BLC-1-007','energy',0);
+ put(names.s,0,'BLC-1-012','energy',1);
+ put(names.s,0,'BLC-1-013','energy',2);
+ const namesEvent=hold(names.s);
+ const cap=put(names.s,1,'BLC-2-010','front',0,true);
+ const over=put(names.s,1,'BLC-2-007','front',1,true);
+ assert.equal(universalBp(names.packs,names.s,cap),2000);
+ assert.equal(universalBp(names.packs,names.s,over),2500);
+ let doubled=dispatchUniversalAction(names.packs,names.s,{type:'event',uid:namesEvent.uid});
+ assert.equal(doubled.pending.limit,2000);
+ assert.equal(doubled.pending.choices.includes(cap.uid),true);
+ assert.equal(doubled.pending.choices.includes(over.uid),false);
+ doubled=dispatchUniversalAction(names.packs,doubled,{type:'chooseRetireBp',uid:cap.uid});
+ assert.equal(doubled.pending,null);
+ const zombie=main(deck,30654);
+ put(zombie.s,0,'BLC-1-007','energy',0);
+ put(zombie.s,0,'BLC-1-001','energy',1);
+ put(zombie.s,0,'BLC-1-018','energy',2);
+ put(zombie.s,0,'BLC-2-006','energy',3);
+ const zombieEvent=hold(zombie.s);
+ const zombieSmall=put(zombie.s,1,'BLC-4-009','front',0,true);
+ const zombieMid=put(zombie.s,1,'BLC-1-018','front',1,true);
+ let zombiePlay=dispatchUniversalAction(zombie.packs,zombie.s,{type:'event',uid:zombieEvent.uid});
+ assert.equal(zombiePlay.pending.limit,1000);
+ assert.equal(zombiePlay.pending.choices.includes(zombieSmall.uid),true);
+ assert.equal(zombiePlay.pending.choices.includes(zombieMid.uid),false);
+ const silenced=main(deck,30655);
+ put(silenced.s,0,'BLC-1-007','energy',0);
+ put(silenced.s,0,'BLC-1-001','energy',1);
+ const silencedTrait=put(silenced.s,0,'BLC-2-008','energy',2);
+ const silencedName=put(silenced.s,0,'BLC-1-012','front',0);
+ const silencedEvent=hold(silenced.s);
+ const silencedCap=put(silenced.s,1,'BLC-1-013','front',0,true);
+ grantContinuousState(silenced.s,{kind:'originalEffectsDisabled',controller:1,sourceUid:silencedCap.uid,
+  targetUid:silencedTrait.uid,until:{player:0,phase:'main',edge:'end'}});
+ grantContinuousState(silenced.s,{kind:'originalEffectsDisabled',controller:1,sourceUid:silencedCap.uid,
+  targetUid:silencedName.uid,until:{player:0,phase:'main',edge:'end'}});
+ let silencedPlay=dispatchUniversalAction(silenced.packs,silenced.s,{type:'event',uid:silencedEvent.uid});
+ assert.equal(silencedPlay.pending.limit,2000);
+ assert.equal(silencedPlay.pending.choices.includes(silencedCap.uid),true);
+ const both={id:'BOTH',name:'バンビエッタ・バスターバイン',color:'yellow',type:'character',energy:0,ap:1,bp:2000,gen:1,traits:['邦比愛塔親衛隊'],trigger:null,implementation:'vanilla'};
+ const plainUnit=(id,name,bp)=>({id,name,color:'yellow',type:'character',energy:0,ap:1,bp,gen:1,traits:[],trigger:null,implementation:'vanilla'});
+ const fillers=Array.from({length:9},(_,i)=>plainUnit('F'+i,'余'+i,1000));
+ const labEvent={id:'EVT',name:'聖隷',color:'yellow',type:'event',energy:0,ap:1,bp:0,gen:0,traits:[],trigger:'special',implementation:'dsl',triggerEffect:{op:'retireOppFront'},effects:{onPlay:[{op:'retireOppFrontUnderBp',optional:false,nameOrTraitPerBp:scale}]}};
+ const lab=createUniversalPack({id:'lab-bambies',cards:[labEvent,both,plainUnit('LOW','低',1000),plainUnit('HIGH','高',2000),...fillers]});
+ const labIds=['EVT','BOTH','LOW','HIGH',...fillers.map(c=>c.id)];
+ assert.equal(labIds.length,13);
+ const labCounts=Object.fromEntries(labIds.map((id,i)=>[id,i===labIds.length-1?2:4]));
+ assert.deepEqual(validateUniversalDeck(lab,labCounts),[]);
+ const labPacks=[lab,lab];
+ let union=newUniversalMatch(labPacks,{decks:[labCounts,labCounts],seed:30661,first:0});
+ for(let n=0;n<8&&union.phase!=='main';n++)union=dispatchUniversalAction(labPacks,union,{type:'next'});
+ const unionCard=put(union,0,'BOTH','front',0);
+ put(union,0,'F0','energy',0);
+ const unionLow=put(union,1,'LOW','front',0);
+ const unionHigh=put(union,1,'HIGH','front',1);
+ const unionEvent=take(union,0,'EVT');
+ union.players[0].hand.push(unionEvent);
+ let unionPlay=dispatchUniversalAction(labPacks,union,{type:'event',uid:unionEvent.uid});
+ assert.equal(unionPlay.pending.limit,1000);
+ assert.equal(unionPlay.pending.choices.includes(unionLow.uid),true);
+ assert.equal(unionPlay.pending.choices.includes(unionHigh.uid),false);
+ assert.equal(unionPlay.pending.choices.includes(unionCard.uid),false);
+ aiOk(one.packs,played);
+ assert.equal(assertUniversalMatch(one.packs,played),true);
+ assert.equal(assertUniversalMatch(empty.packs,empty.s),true);
+ assert.equal(assertUniversalMatch(names.packs,doubled),true);
+ assert.equal(assertUniversalMatch(zombie.packs,zombiePlay),true);
+ assert.equal(assertUniversalMatch(silenced.packs,silencedPlay),true);
+ assert.equal(assertUniversalMatch(labPacks,unionPlay),true);
 });

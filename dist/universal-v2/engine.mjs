@@ -4400,6 +4400,17 @@ function legalPending(pack,s){
 // This check is performed BEFORE spending AP or moving the event outside.
 // Optional "up to one" choices remain playable with zero targets.
 function retireOppFrontLimit(pack,s,owner,job){
+ if(job.nameOrTraitPerBp){
+  // One physical card with both the trait and the printed name counts once.
+  // Silence removes neither the trait nor the printed name.
+  const scale=job.nameOrTraitPerBp;
+  const count=field(s.players[owner]).filter(c=>{
+   const silenced=originalEffectsDisabled(s,c);
+   const d=card(pack,c);
+   return cardHasTrait(d,scale.trait)||cardHasName(d,scale.name,silenced);
+  }).length;
+  return count*scale.per;
+ }
  if(job.traitPerBp){
   const count=field(s.players[owner]).filter(c=>cardHasTrait(card(pack,c),job.traitPerBp.trait)).length;
   return count*job.traitPerBp.per;

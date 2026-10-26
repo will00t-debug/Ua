@@ -903,6 +903,17 @@ function verifyProgram(program,path){
      Object.keys(bonus).length!==1||Object.keys(bonus).some(k=>k!=='name')||
      Object.keys(e).some(k=>!['op','bp','bonusBp','raidOrName'].includes(k)))
      throw Error(path+'['+i+'] unsupported raid-or-name BP retirement');
+   }else if(e.nameOrTraitPerBp!==undefined){
+    const scale=e.nameOrTraitPerBp;
+    if(e.bp!==undefined||e.bonusName!==undefined||e.bonusBp!==undefined||e.bonusOutsideName!==undefined||
+     e.traitPerBp!==undefined||e.raidOrName!==undefined||e.optional!==false||
+     !scale||typeof scale!=='object'||Array.isArray(scale)||
+     typeof scale.trait!=='string'||!scale.trait.trim()||scale.trait.length>80||
+     typeof scale.name!=='string'||!scale.name.trim()||scale.name.length>80||
+     scale.per!==1000||
+     Object.keys(scale).length!==3||Object.keys(scale).some(k=>!['trait','name','per'].includes(k))||
+     Object.keys(e).length!==3||Object.keys(e).some(k=>!['op','optional','nameOrTraitPerBp'].includes(k)))
+     throw Error(path+'['+i+'] unsupported name-or-trait BP retirement');
    }else{
    const plain=e.bonusName===undefined&&e.bonusBp===undefined&&e.bonusOutsideName===undefined;
    if(plain){
