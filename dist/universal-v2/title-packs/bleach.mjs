@@ -181,7 +181,8 @@ const testForKind=Object.freeze({
  giselleFieldCountActive:'tests/v2-c29-bleach-port.test.mjs',
  orihimeIchigoProtect:'tests/v2-c29-bleach-port.test.mjs',
  byakuyaRukiaApChoice:'tests/v2-c29-bleach-port.test.mjs',
- rukiaFrontApRestLock:'tests/v2-c29-bleach-port.test.mjs'
+ rukiaFrontApRestLock:'tests/v2-c29-bleach-port.test.mjs',
+ nemSquadLook:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -200,7 +201,9 @@ function contributedEntry(profile){
   definition:Object.freeze(definition),
   evidence:Object.freeze({
    printedTextFragments:Object.freeze([profile.effect]),
-   reviewNote:profile.id==='BLC-2-034'?
+   reviewNote:profile.id==='BLC-2-035'?
+    'EX07BT/BLC-2-035 official page 2026-10-27. Required energy 青3, generated energy 青青. [起動メイン][ターン1]: retire one own character with trait 涅骸部隊. The retirement is mandatory. This character trait is 護廷十三隊, so it is not its own target. A field with that trait is not a character. An energy-line character is a legal target. The energy line may activate. Zero matching characters do not offer the activate, so the once is not consumed. On success, look at the top 4 of the own deck. Up to one of 涅 マユリ, 涅 ネム, or trait 涅骸部隊 may be revealed and added to hand. A card that matches more than one of those is still one card. Declining the hand add is legal. The rest go to the bottom in any order. A window with no match goes straight to that order. An empty deck looks at nothing. The look is private. The card added to hand is public. The unordered window stays private. [ターン1] is this physical card and is spent when the activate resolves, before the look finishes. A second copy can still activate. Silence before the activate removes it. No trigger. No card FAQ. Trait 護廷十三隊.':
+   profile.id==='BLC-2-034'?
     'EX07BT/BLC-2-034 official page 2026-10-27. Required energy 青4, generated energy 青. Raid onto 朽木 ルキア, become ACTIVE, and may move to the front. On play, only while this character is on the front, choose up to one opposing front character and REST it. Q1040 (2024-07-19): a Raid on-play is checked after the Raid has become ACTIVE and, if chosen, moved to the front. Staying on the energy line does not open the REST. Playing onto the energy line does not open it. Q1039 (2024-07-19): 元々の消費AP is the printed AP. During this character controller turn, if the own front has a character whose printed AP is 2 or more, the chosen character also cannot become ACTIVE until this character leaves the front. This character printed AP is 1, so it does not satisfy that gate by itself. An energy-line character does not count. A printed AP of 1 does not count. Declining rests nothing. The lock remains after this character loses its original effects. Moving this character from the front to the energy line ends the lock. The opponent turn, including a life Raid, rests without the lock. RAID is the generic sentence. Trait 護廷十三隊.':
    profile.id==='BLC-2-030'?
     'EX07BT/BLC-2-030 official page 2026-10-27. Required energy 青4, generated energy 青. On play, choose one. Mode 1: if a 朽木 ルキア entered the controller field this turn, up to one own AP card may become ACTIVE. A Rukia placed without entering does not open it. Choosing the mode with no such entry readies nothing. Declining the AP card is legal. Mode 2: the next 朽木 ルキア played from hand this turn has AP-1. Playing a different card does not consume it. The discount ends at the end of this attack phase. On attack, draw 1. COLOR returns one opposing front character of BP 3500 or less to hand. No card FAQ. Trait 護廷十三隊.':

@@ -83,9 +83,9 @@ function find(s,p,uid){
 }
 
 test('three green prints complete the white-sword deck without joining the seven presets',()=>{
- assert.equal(Object.keys(pack.cards).length,254);
- assert.equal(EXPECTED_V2_COUNTS.bleach,254);
- assert.equal(EXPECTED_V2_TOTAL,530);
+ assert.equal(Object.keys(pack.cards).length,255);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,255);
+ assert.equal(EXPECTED_V2_TOTAL,531);
  assert.equal(white.playable,true);
  assert.equal(white.registeredKinds,13);
  assert.deepEqual(white.missing,[]);

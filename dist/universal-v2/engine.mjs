@@ -1694,6 +1694,11 @@ function continueEffectQueue(pack,s){
      s.effectQueue.unshift({op:'openActivePair',owner,sourceUid:job.sourceUid,
       sourceName:job.sourceName,remaining:job.follow.max,color:job.follow.color,
       ap:job.follow.ap,name:job.follow.name,trait:job.follow.trait,draw:1});
+    }else if(job.follow?.kind==='searchTop'){
+     s.effectQueue.unshift({op:'searchTopUpToTwoBottom',count:job.follow.count,
+      max:job.follow.max,rest:job.follow.rest,logic:job.follow.logic,
+      filters:job.follow.filters.map(f=>({...f})),owner,sourceUid:job.sourceUid,
+      sourceName:job.sourceName});
     }else throw Error('Unsupported trait retirement follow-up');
   }else if(job.op==='openFieldActiveBuff'){
     const choices=field(pl).map(c=>c.uid);
@@ -5576,6 +5581,11 @@ function handApPlan(pack,s,owner,d,opts={}){
  const nameOnField=!!rule&&ownFieldHasPrintedName(pack,s,owner,rule.name);
  return handPlayApPlan(s,owner,d,{...opts,nameOnField});
 }
+function oncePayMandatoryReady(pack,s,owner,ability){
+ return (ability?.then||[]).every(step=>step.op!=='retireOwnTraitFollow'||
+  step.optional!==false||field(s.players[owner]).some(c=>
+   card(pack,c).type==='character'&&cardHasTrait(card(pack,c),step.trait)));
+}
 export function legalUniversalActions(pack,s){
  assertUniversalMatch(pack,s);
  if(s.status!=='playing')return [];
@@ -5691,7 +5701,8 @@ export function legalUniversalActions(pack,s){
     const nameOk=!ability.requiresOwnName||ownFieldHasPrintedName(pack,s,p,ability.requiresOwnName);
     const payOk=ability.then[0]?.op!=='discardGate'||pl.hand.length>0;
     const entryOk=ability.entryTurnOnly!==true||c.entryTurn===s.turn;
-    if(lineOk&&raidOk&&apOk&&nameOk&&payOk&&entryOk)
+    const retireOk=oncePayMandatoryReady(pack,s,p,ability);
+    if(lineOk&&raidOk&&apOk&&nameOk&&payOk&&entryOk&&retireOk)
      out.push({type:'activate',uid:c.uid,mode:'oncePay'});
    }
   }
@@ -6430,7 +6441,8 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
      (ability.payAp&&!pl.apCards.some(c=>c.ready))||
      (ability.requiresOwnName&&!ownFieldHasPrintedName(pack,s,p,ability.requiresOwnName))||
      (ability.entryTurnOnly===true&&selected.entryTurn!==s.turn)||
-     (ability.then[0]?.op==='discardGate'&&!pl.hand.length))
+     (ability.then[0]?.op==='discardGate'&&!pl.hand.length)||
+     !oncePayMandatoryReady(pack,s,p,ability))
      throw Error('Once-pay program is not legal');
     if(ability.payAp){
      spendAp(pl,ability.payAp);
@@ -7044,7 +7056,9 @@ export function assertUniversalMatch(pack,s){
   const q=s.pending,pl=s.players[q.player];
   const owned=[...field(pl),...pl.outside,...pl.hand,...pl.resolvingEvents,...(pl.removed||[])];
   const source=owned.find(c=>c.uid===q.sourceUid),printed=source&&card(pack,source);
-  const effect=[...(printed?.effects?.onPlay||[])].find(e=>e.op==='retireOwnTraitFollow'&&
+  const effect=[...(printed?.effects?.onPlay||[]),
+   ...(printed?.mainAbility?.op==='oncePayProgram'?printed.mainAbility.then||[]:[])
+  ].find(e=>e.op==='retireOwnTraitFollow'&&
    e.trait===q.trait&&e.optional===q.optional&&same(e.follow,q.follow));
   const choices=field(pl).filter(c=>card(pack,c).type==='character'&&
    cardHasTrait(card(pack,c),q.trait)).map(c=>c.uid);
@@ -7459,12 +7473,17 @@ export function assertUniversalMatch(pack,s){
   const q=s.pending,pl=s.players[q.player];
   const rest=q.uids?.filter(uid=>!q.selected?.includes(uid));
   const source=[...pl.outside,...field(pl)].find(c=>c.uid===q.sourceUid);
-  const printed=source&&card(pack,source).effects?.onPlay
-   ?.flatMap(e=>e.op==='chooseOne'?e.options.flatMap(o=>o.then):
-    e.op==='optionalRetireThenProgram'?e.after:[e])
-   .some(e=>e.op==='searchTopUpToTwoBottom'&&e.max===q.max&&
-    e.rest==='bottom'&&e.count>=q.uids?.length&&
-    same(e.filters,q.filters)&&e.logic===q.logic);
+  const definition=source&&card(pack,source);
+  const fromPlay=(definition?.effects?.onPlay||[])
+   .flatMap(e=>e.op==='chooseOne'?e.options.flatMap(o=>o.then):
+    e.op==='optionalRetireThenProgram'?e.after:[e]);
+  const fromPay=definition?.mainAbility?.op==='oncePayProgram'?
+   (definition.mainAbility.then||[]).flatMap(e=>e.op==='retireOwnTraitFollow'&&
+    e.follow?.kind==='searchTop'?[{op:'searchTopUpToTwoBottom',count:e.follow.count,
+     max:e.follow.max,rest:e.follow.rest,filters:e.follow.filters,logic:e.follow.logic}]:[]):[];
+  const printed=[...fromPlay,...fromPay].some(e=>e.op==='searchTopUpToTwoBottom'&&
+   e.max===q.max&&e.rest==='bottom'&&e.count>=q.uids?.length&&
+   same(e.filters,q.filters)&&e.logic===q.logic);
   if(!printed||![1,2].includes(q.max)||!Array.isArray(q.uids)||q.uids.length<1||q.uids.length>5||
    new Set(q.uids).size!==q.uids.length||!Array.isArray(q.choices)||
    !Array.isArray(q.selected)||q.selected.length>=q.max||

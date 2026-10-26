@@ -12,6 +12,15 @@ export const V2_EFFECT_TIMINGS=Object.freeze(['onPlay','onRaid','onAttack','onRa
 export const V2_EFFECT_OPS=Object.freeze(['nextEligibleHandPlayApDiscount','activeApIfNameEntered','draw','drawIfOwnName','drawIfOwnTraitCount','drawIfOwnOutsideNamedCountAtLeast','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','drawIfOppFrontBelowPrinted','drawIfSelfBpAtLeast','returnRetiredToHand','drawIfOppRestCharacter','drawIfOppCharacterBpAtLeast','drawIfOwnNameAndHandFewer','activeOwnNamed','activeEnergyNamed','grantSelfSniperThisTurn','grantFirstAttackKit','grantSelfAttackWinDrawThisTurn','grantSelfMustBlockThisTurn','buffSelfUntilNextOwnStart','grantSelfAttackEndSwapThisTurn','millTop','buffSelf','swapOrBuff','buffSelfPerOwnOutsideGroups','enemyBpDown','drawDiscard','frontOppTriggerDrawDiscard','recoverAp','peekTopOne','peekTopOrBottom','revealOppTopPlace','chooseEnergyRevealOutside','optionalRemoveHandThen','retireOppFrontUnderBp','retireOppFrontOneUnderBp','retireOppFrontRest','markOppFrontRetireNextStart','bounceOppFrontOneUnderBp','conditionalBounceOrRetireByOwnOutsideNames','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','oppFrontRestBranch','skipNextActiveOppRest','forbidAttackOppFrontOne','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','retireOwnFieldOne','retireOwnCharacterOne','retireOwnTraitFollow','optionalRetireThenProgram','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw','searchDeckMany','discardGate','removeOutsideThen','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','lookTopHandOutsideBottom','drawDiscardIfFieldAny','retireOwnMissingTraitThen','deployOutsideColorTraitActive','searchTopUpToTwoBottom','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
  'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideUnderEnergy','recoverOutsideColorUnderEnergy','recoverOutsideTraitlessUnderEnergy','deployOutsideTraitlessRestOrRaid','deployOutsideRest','deployOutsideNameRest','deployOutsideExactRest','deployOutsideTraitApRest','deployNamedFromZones','payApDeployNamedRest','inspectTopTraitOutside','buffOwnField','oncePerTurnGate','buffNamedImpact','restActiveNamedReadyAp','readyNameOrTrait','protectNameOrTrait','sacrificeNamedChain','chooseOne','deployOwnHandRest','deployOwnHandSpecial','deployOwnHandRestOrRaid','optionalPayApThen','discardOppHand','discardOppHandIfFewer','retireSourceOnPhaseEnd','activeSelfIf','grantOnAttack','grantSelectionApTaxOwnOtherTrait','grantFrontEnergyOwnOtherFrontTrait','grantOwnFrontChoiceProtection','grantNamedFieldProtection','grantCauseBlockAtMost','handBottomGrantDoubleAttack','payApDeployMovedActive','noteEntryTurn','grantSelfEnergyMoveOnAttackStart','grantSelfTriggerUnchosen','outsideColorEnergyHandOrRest','moveOtherAcrossOrRemove','moveEnergyTraitToFront','raidBaseEnergyThen','grantSelfAttackDamageThisTurn','restOppFrontLockActive','restOppFrontApLock','removeAnyOutsideScale','inspectTopColoredNamesOutside','drawDiscardIfEffectApPaid','activeSelf','grantSelfImpactThisTurn','grantOtherImpactThisTurn','returnSourceToHand','optionalOwnLifeToHandThenDraw','grantOwnNameBlockAtLeast','grantSelfBlockAtLeast','inspectTopColorAnyOutside','buffOwnNameIfPrintedEnergy']);
 const integer=(v,low=0)=>Number.isInteger(v)&&v>=low;
+function validPrintedLookFilter(f){
+ return f&&typeof f==='object'&&!Array.isArray(f)&&Object.keys(f).length===2&&
+  ['name','trait','color','type','printedRequiredEnergyAtMost','printedApAtLeast','traitlessCharacterOrField'].includes(f.field)&&
+  (f.field==='traitlessCharacterOrField'?f.value===true:
+   f.field==='printedRequiredEnergyAtMost'?integer(f.value)&&f.value<=30:
+   f.field==='printedApAtLeast'?f.value===2:
+   typeof f.value==='string'&&!!f.value.trim()&&f.value.length<=80&&
+    (f.field!=='type'||V2_CARD_TYPES.includes(f.value)));
+}
 const own=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
 // Shared board predicate used by passive bonuses and on-play ACTIVE.
 // The shape is the printed query, never a title-specific reducer.
@@ -496,16 +505,9 @@ function verifyProgram(program,path){
    Object.keys(e).some(k=>!['op','color','trait'].includes(k))
   ))throw Error(path+'['+i+'] invalid color-trait ACTIVE deployment');
   if(e.op==='searchTopUpToTwoBottom'){
-   const valid=f=>f&&typeof f==='object'&&!Array.isArray(f)&&Object.keys(f).length===2&&
-    ['name','trait','color','type','printedRequiredEnergyAtMost','printedApAtLeast','traitlessCharacterOrField'].includes(f.field)&&
-    (f.field==='traitlessCharacterOrField'?f.value===true:
-      f.field==='printedRequiredEnergyAtMost'?integer(f.value)&&f.value<=30:
-      f.field==='printedApAtLeast'?f.value===2:
-     typeof f.value==='string'&&!!f.value.trim()&&f.value.length<=80&&
-      (f.field!=='type'||V2_CARD_TYPES.includes(f.value)));
    if(!integer(e.count,1)||e.count>5||![1,2].includes(e.max)||e.rest!=='bottom'||
     !Array.isArray(e.filters)||e.filters.length<1||e.filters.length>3||
-    !e.filters.every(valid)||new Set(e.filters.map(f=>f.field+':'+f.value)).size!==e.filters.length||
+    !e.filters.every(validPrintedLookFilter)||new Set(e.filters.map(f=>f.field+':'+f.value)).size!==e.filters.length||
     !['any','all'].includes(e.logic)||Object.keys(e).length!==6||
     Object.keys(e).some(k=>!['op','count','max','rest','filters','logic'].includes(k)))
     throw Error(path+'['+i+'] invalid TOP-N two-card hand search');
@@ -936,7 +938,15 @@ function verifyProgram(program,path){
     typeof follow.trait==='string'&&!!follow.trait.trim()&&follow.trait.length<=80&&
     Object.keys(follow).length===7&&
     Object.keys(follow).every(k=>['kind','draw','max','ap','color','name','trait'].includes(k));
-   if(typeof e.optional!=='boolean'||!traitOk||!(under||pair)||
+   const search=!!follow&&follow.kind==='searchTop'&&
+    integer(follow.count,1)&&follow.count<=5&&[1,2].includes(follow.max)&&
+    follow.rest==='bottom'&&['any','all'].includes(follow.logic)&&
+    Array.isArray(follow.filters)&&follow.filters.length>=1&&follow.filters.length<=3&&
+    follow.filters.every(validPrintedLookFilter)&&
+    new Set(follow.filters.map(f=>f.field+':'+f.value)).size===follow.filters.length&&
+    Object.keys(follow).length===6&&
+    Object.keys(follow).every(k=>['kind','count','max','rest','logic','filters'].includes(k));
+   if(typeof e.optional!=='boolean'||!traitOk||!(under||pair||search)||
     Object.keys(e).length!==4||
     Object.keys(e).some(k=>!['op','optional','trait','follow'].includes(k)))
     throw Error(path+'['+i+'] invalid trait retirement follow-up');
@@ -1526,7 +1536,7 @@ function normalize(card,packId){
   (mainAbility.requiresOwnName===null||typeof mainAbility.requiresOwnName==='string'&&
    !!mainAbility.requiresOwnName.trim()&&mainAbility.requiresOwnName.length<=80)&&
   Array.isArray(mainAbility.then)&&mainAbility.then.length>=1&&mainAbility.then.length<=2&&
-  mainAbility.then.every(x=>['grantSelfAttackDamageThisTurn','chooseOne','discardGate','grantSelfImpactThisTurn','enemyBpDown','removeOutsideThen','markOppFrontRetireNextStart','retireOwnMissingTraitThen'].includes(x?.op))&&
+  mainAbility.then.every(x=>['grantSelfAttackDamageThisTurn','chooseOne','discardGate','grantSelfImpactThisTurn','enemyBpDown','removeOutsideThen','markOppFrontRetireNextStart','retireOwnMissingTraitThen','retireOwnTraitFollow'].includes(x?.op))&&
   (mainAbility.entryTurnOnly===undefined||mainAbility.entryTurnOnly===true)&&
   Object.keys(mainAbility).length===7+Number(mainAbility.entryTurnOnly!==undefined)&&
   Object.keys(mainAbility).every(k=>['op','oncePerTurn','frontOnly','raidOnly','payAp','requiresOwnName','then','entryTurnOnly'].includes(k));
