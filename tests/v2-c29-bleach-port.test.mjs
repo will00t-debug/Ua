@@ -194,9 +194,12 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 // BLC-2-012 EX07BT: retire one opposing front character whose BP is at
 //   most 1000 times the own-field count of 邦比愛塔親衛隊 or
 //   バンビエッタ・バスターバイン. A card with both counts once. Mandatory.
+// BLC-1-081 UA08BT: cannot enter or move to the energy line. Q568
+//   (2023-09-25). Impact 1. On play, up to one opposing front character
+//   of BP 2000 or less retires; six other 護廷十三隊 cards raise it to 4000.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -267,12 +270,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers sixty-four whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,500);
- assert.equal(EXPECTED_V2_COUNTS.bleach,224);
+test('C29 registers sixty-five whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,501);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,225);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,224);
+ assert.equal(Object.keys(bleach.cards).length,225);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -5894,3 +5897,155 @@ test('BLC-2-012 retires by the combined Bambies trait and Bambietta count',()=>{
  assert.equal(assertUniversalMatch(silenced.packs,silencedPlay),true);
  assert.equal(assertUniversalMatch(labPacks,unionPlay),true);
 });
+
+test('BLC-1-081 cannot enter or move to energy, and raises its retirement cap at six other Squad cards',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-1-081');
+ assert.equal(printed.effect,'此卡不能登場於能源線，也不能移至能源線。Impact 1。登場：可使最多 1 個敵方前線 BP 2000 以下角色退場；己方場上有至少 6 張其他具有「護廷十三隊」特徵的卡時，BP 上限改為 4000。');
+ assert.equal(printed.nameJa,'更木 剣八');
+ assert.equal(printed.number,'UA08BT/BLC-1-081');
+ assert.equal(printed.traits,'護廷十三隊');
+ assert.equal(printed.type,'character');
+ assert.equal(printed.energy,4);
+ assert.equal(printed.ap,2);
+ assert.equal(printed.bp,4000);
+ assert.equal(printed.gen,0);
+ assert.equal(printed.trigger,'draw');
+ assert.equal(printed.color,'green');
+ const bonus={trait:'護廷十三隊',min:6,excludeSelf:true,bonusBp:4000};
+ const card=bleach.cards['BLC-1-081'];
+ assert.equal(card.name,'更木 剣八');
+ assert.equal(card.energyForbidden,true);
+ assert.equal(card.frontForbidden,false);
+ assert.equal(card.printedImpact,1);
+ assert.equal(card.step,false);
+ assert.equal(card.trigger,'draw');
+ assert.equal(card.triggerEffect,null);
+ assert.deepEqual(card.traits,['護廷十三隊']);
+ assert.deepEqual(card.effects.onPlay,[{op:'retireOppFrontUnderBp',bp:2000,optional:true,traitCountBonus:bonus}]);
+ const bare={id:'BAD',name:'剣',color:'green',type:'character',energy:4,ap:2,bp:4000,gen:0,traits:['護廷十三隊'],trigger:null,implementation:'dsl',effects:{}};
+ assert.throws(()=>createUniversalPack({id:'bad-energy-event',cards:[{...bare,type:'event',bp:0,energyForbidden:true}]}),/invalid energy-line restriction/);
+ assert.throws(()=>createUniversalPack({id:'bad-both-lines',cards:[{...bare,frontForbidden:true,energyForbidden:true}]}),/invalid energy-line restriction/);
+ assert.throws(()=>createUniversalPack({id:'bad-cap',cards:[{...bare,effects:{onPlay:[{op:'retireOppFrontUnderBp',bp:2000,optional:false,traitCountBonus:bonus}]}}]}),/unsupported trait-count BP retirement/);
+ const deck=realDeck(['BLC-1-081','BLC-4-067','BLC-3-007','BLC-4-068','BLC-1-083','BLC-1-079','BLC-1-080','BLC-4-061','BLC-4-062','BLC-4-060'],'green');
+ const playable=(packs,s,uid,line)=>legalUniversalActions(packs,s).some(a=>a.type==='play'&&a.uid===uid&&a.line===line);
+ function hold(s){
+  const unit=take(s,0,'BLC-1-081');
+  s.players[0].hand.push(unit);
+  return unit;
+ }
+ function ownSecond(packs,s){
+  for(let n=0;n<40&&!(s.active===0&&s.phase==='main'&&s.players[0].ownTurns===2);n++){
+   const step=legalUniversalActions(packs,s).find(a=>a.type==='next');
+   assert.ok(step);
+   s=dispatchUniversalAction(packs,s,step);
+  }
+  return s;
+ }
+ const early=main(deck,30671);
+ ['BLC-4-067','BLC-3-007','BLC-4-068','BLC-1-083'].forEach((id,i)=>put(early.s,0,id,'energy',i));
+ const earlyKen=hold(early.s);
+ assert.equal(universalEnergyByColor(early.packs,early.s,0).green,4);
+ assert.equal(early.s.players[0].apCards.filter(c=>c.ready).length,1);
+ assert.equal(playable(early.packs,early.s,earlyKen.uid,'front'),false);
+ assert.equal(playable(early.packs,early.s,earlyKen.uid,'energy'),false);
+ const low=main(deck,30672);
+ ['BLC-4-067','BLC-3-007','BLC-4-068','BLC-1-083'].forEach((id,i)=>put(low.s,0,id,'energy',i));
+ put(low.s,0,'BLC-1-079','front',0);
+ const lowKen=hold(low.s);
+ const lowSmall=put(low.s,1,'BLC-4-061','front',0,true);
+ const lowTall=put(low.s,1,'BLC-4-062','front',1,true);
+ low.s=ownSecond(low.packs,low.s);
+ assert.equal(low.s.players[0].apCards.filter(c=>c.ready).length,2);
+ assert.equal(playable(low.packs,low.s,lowKen.uid,'energy'),false);
+ assert.equal(playable(low.packs,low.s,lowKen.uid,'front'),true);
+ const frontPlay=legalUniversalActions(low.packs,low.s).find(a=>a.type==='play'&&a.uid===lowKen.uid&&a.line==='front'&&a.replaceUid===undefined);
+ assert.ok(frontPlay);
+ let played=dispatchUniversalAction(low.packs,low.s,frontPlay);
+ assert.equal(played.players[0].front.some(c=>c?.uid===lowKen.uid),true);
+ assert.equal(played.pending.kind,'effect-retire-bp');
+ assert.equal(played.pending.limit,2000);
+ assert.equal(played.pending.optional,true);
+ assert.equal(played.pending.choices.includes(lowSmall.uid),true);
+ assert.equal(played.pending.choices.includes(lowTall.uid),false);
+ assert.equal(fieldCount(played,0),6);
+ assert.equal(legalUniversalActions(low.packs,played).some(a=>a.type==='chooseRetireBp'&&a.uid===null),true);
+ const declined=dispatchUniversalAction(low.packs,played,{type:'chooseRetireBp',uid:null});
+ assert.equal(declined.pending,null);
+ assert.equal(declined.players[1].front.some(c=>c?.uid===lowSmall.uid),true);
+ assert.equal(universalImpact(low.packs,declined,live(declined,0,lowKen.uid)),1);
+ const high=main(deck,30673);
+ ['BLC-4-067','BLC-3-007','BLC-4-068','BLC-1-083'].forEach((id,i)=>put(high.s,0,id,'energy',i));
+ const sixth=put(high.s,0,'BLC-1-079','front',0);
+ put(high.s,0,'BLC-1-080','front',1);
+ const highKen=hold(high.s);
+ const highTall=put(high.s,1,'BLC-4-062','front',0,true);
+ high.s=ownSecond(high.packs,high.s);
+ grantContinuousState(high.s,{kind:'originalEffectsDisabled',controller:1,sourceUid:highTall.uid,
+  targetUid:sixth.uid,until:{player:0,phase:'main',edge:'end'}});
+ assert.equal(high.s.continuousStates.some(e=>e.kind==='originalEffectsDisabled'&&e.targetUid===sixth.uid&&!e.consumed),true);
+ const highPlay=legalUniversalActions(high.packs,high.s).find(a=>a.type==='play'&&a.uid===highKen.uid&&a.line==='front'&&a.replaceUid===undefined);
+ let raised=dispatchUniversalAction(high.packs,high.s,highPlay);
+ assert.equal(raised.continuousStates.some(e=>e.kind==='originalEffectsDisabled'&&e.targetUid===sixth.uid&&!e.consumed),true);
+ assert.equal(raised.pending.limit,4000);
+ assert.equal(raised.pending.choices.includes(highTall.uid),true);
+ aiOk(high.packs,raised);
+ raised=dispatchUniversalAction(high.packs,raised,{type:'chooseRetireBp',uid:highTall.uid});
+ assert.equal(raised.pending,null);
+ assert.equal(raised.players[1].outside.some(c=>c.uid===highTall.uid),true);
+ const parked=main(deck,30674);
+ const illegal=hold(parked.s);
+ put(parked.s,0,'BLC-1-081','energy',0);
+ assert.throws(()=>assertUniversalMatch(parked.packs,parked.s),/energy-forbidden/);
+ const moved=main(deck,30675);
+ ['BLC-4-067','BLC-3-007','BLC-1-083'].forEach((id,i)=>put(moved.s,0,id,'energy',i));
+ const kenpachi=put(moved.s,0,'BLC-1-081','front',0);
+ const other=put(moved.s,0,'BLC-4-061','front',1);
+ const aizen=take(moved.s,0,'BLC-4-060');
+ moved.s.players[0].hand.push(aizen);
+ assert.equal(universalEnergyByColor(moved.packs,moved.s,0).green,3);
+ const aizenPlay=legalUniversalActions(moved.packs,moved.s).find(a=>a.type==='play'&&a.uid===aizen.uid&&a.line==='energy');
+ assert.ok(aizenPlay);
+ assert.equal(legalUniversalActions(moved.packs,moved.s).some(a=>a.type==='play'&&a.uid===aizen.uid&&a.line==='front'),false);
+ let shifting=dispatchUniversalAction(moved.packs,moved.s,aizenPlay);
+ assert.equal(shifting.pending.kind,'effect-line-move');
+ assert.equal(shifting.pending.choices.includes(kenpachi.uid),false);
+ assert.equal(shifting.pending.choices.includes(other.uid),true);
+ assert.throws(()=>dispatchUniversalAction(moved.packs,shifting,{type:'chooseLineMove',uid:kenpachi.uid}),/Action not currently legal/);
+ shifting=dispatchUniversalAction(moved.packs,shifting,{type:'chooseLineMove',uid:null});
+ assert.equal(shifting.pending,null);
+ assert.equal(shifting.players[0].front.some(c=>c?.uid===kenpachi.uid),true);
+ const stepPackCards=id=>({id,name:'歩'+id,color:'green',type:'character',energy:0,ap:1,bp:1000,gen:1,traits:[],trigger:null});
+ const fillers=Array.from({length:11},(_,i)=>stepPackCards('F'+i));
+ const lab=createUniversalPack({id:'lab-ken-step',cards:[
+  {...stepPackCards('STEP'),implementation:'vanilla',step:true},
+  {...stepPackCards('LOCKED'),implementation:'dsl',energyForbidden:true,step:true,effects:{}},
+  ...fillers.map(c=>({...c,implementation:'vanilla'}))
+ ]});
+ const labIds=['STEP','LOCKED',...fillers.map(c=>c.id)];
+ assert.equal(labIds.length,13);
+ const labCounts=Object.fromEntries(labIds.map((id,i)=>[id,i===labIds.length-1?2:4]));
+ assert.deepEqual(validateUniversalDeck(lab,labCounts),[]);
+ const labPacks=[lab,lab];
+ let walking=newUniversalMatch(labPacks,{decks:[labCounts,labCounts],seed:30681,first:0});
+ for(let n=0;n<6&&walking.phase!=='move';n++)walking=dispatchUniversalAction(labPacks,walking,{type:'next'});
+ assert.equal(walking.phase,'move');
+ const stepper=put(walking,0,'STEP','front',0);
+ const locked=put(walking,0,'LOCKED','front',1);
+ assert.equal(legalUniversalActions(labPacks,walking).some(a=>a.type==='step'&&a.uid===stepper.uid),true);
+ assert.equal(legalUniversalActions(labPacks,walking).some(a=>a.type==='step'&&a.uid===locked.uid),false);
+ walking=dispatchUniversalAction(labPacks,walking,{type:'next'});
+ assert.equal(walking.phase,'main');
+ const lockedHand=take(walking,0,'LOCKED');
+ walking.players[0].hand.push(lockedHand);
+ assert.equal(legalUniversalActions(labPacks,walking).some(a=>a.type==='play'&&a.uid===lockedHand.uid&&a.line==='energy'),false);
+ assert.equal(legalUniversalActions(labPacks,walking).some(a=>a.type==='play'&&a.uid===lockedHand.uid&&a.line==='front'),true);
+ aiOk(low.packs,declined);
+ assert.equal(assertUniversalMatch(low.packs,declined),true);
+ assert.equal(assertUniversalMatch(high.packs,raised),true);
+ assert.equal(assertUniversalMatch(moved.packs,shifting),true);
+ assert.equal(assertUniversalMatch(labPacks,walking),true);
+});
+
+function fieldCount(s,p){
+ return [...s.players[p].front,...s.players[p].energy].filter(c=>c&&cardHasTrait(bleach.cards[c.cardId],'護廷十三隊')).length;
+}

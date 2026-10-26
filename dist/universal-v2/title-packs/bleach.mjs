@@ -151,7 +151,8 @@ const testForKind=Object.freeze({
  handApWhileByakuya:'tests/v2-c29-bleach-port.test.mjs',
  bazzBurnRetire:'tests/v2-c29-bleach-port.test.mjs',
  katenEnergyActive:'tests/v2-c29-bleach-port.test.mjs',
- bambiesPerBp:'tests/v2-c29-bleach-port.test.mjs'
+ bambiesPerBp:'tests/v2-c29-bleach-port.test.mjs',
+ kenpachiEnergyFront:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -170,7 +171,9 @@ function contributedEntry(profile){
   definition:Object.freeze(definition),
   evidence:Object.freeze({
    printedTextFragments:Object.freeze([profile.effect]),
-   reviewNote:profile.id==='BLC-2-012'?
+   reviewNote:profile.id==='BLC-1-081'?
+    'UA08BT/BLC-1-081 official iframe 2026-10-26. This character cannot enter the energy line and cannot move there. Q568 (2023-09-25): いいえ、できません. Move effects and position swaps cannot move it from front to energy, and there is no own-effect exception. Impact 1. On play, up to one opposing front character of BP 2000 or less retires. Six or more other own field cards with trait 護廷十三隊 replace that cap with 4000. This character does not count toward the six. Silence does not remove the trait. Declining the retirement is legal. DRAW is generic. No generated energy.':
+   profile.id==='BLC-2-012'?
     'EX07BT/BLC-2-012 official iframe 2026-10-26. Retire one opposing front character whose live BP is at most 1000 times the number of own field cards that have trait 邦比愛塔親衛隊 or the printed name バンビエッタ・バスターバイン. A card with both counts once. The catalogue token is the audited split of official バンビーズ; 邦比小隊 is a different token. Silence does not remove the trait or the printed name. The choice is mandatory. A count of zero leaves no legal character. SPECIAL retires one opposing front character. No generated energy. No card FAQ.':
    profile.id==='BLC-4-081'?
     'EX15BT/BLC-4-081 official iframe 2026-10-26. Playable only while own field has 京楽 春水. Silence removes an alias and keeps the printed name. Choose one opposing front character of live BP 5000 or less and retire it. The choice is mandatory. Then up to one own energy-line 花天 or 狂骨, character or field, becomes ACTIVE. A front copy is not a choice. An already ACTIVE card stays ACTIVE. A skip-next-ACTIVE lock consumes one attempt and the card stays REST. Declining the ACTIVE is legal. SPECIAL retires one opposing front character. No generated energy. No card FAQ. 狂骨 is not yet a ported print.':

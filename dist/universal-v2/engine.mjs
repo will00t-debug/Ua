@@ -1233,7 +1233,8 @@ function continueEffectQueue(pack,s){
   }else if(job.op==='retireOppFrontUnderBp'){
    const limit=retireOppFrontLimit(pack,s,owner,job);
    const choices=s.players[1-owner].front.filter(c=>c&&bp(pack,s,c)<=limit).map(c=>c.uid);
-   if(choices.length)s.pending={kind:'effect-retire-bp',player:owner,sourceUid:job.sourceUid,choices,limit};
+   if(choices.length)s.pending={kind:'effect-retire-bp',player:owner,sourceUid:job.sourceUid,choices,limit,
+    ...(job.optional===true?{optional:true}:{})};
   }else if(job.op==='conditionalBounceOrRetireByOwnOutsideNames'){
    const choices=s.players[1-owner].front.filter(c=>c&&
     card(pack,c).type==='character'&&bp(pack,s,c)<=job.bp&&
@@ -1333,6 +1334,7 @@ function continueEffectQueue(pack,s){
     const printed=card(pack,c);
     return (includeSelf||c.uid!==job.sourceUid)&&
      printed.type==='character'&&
+     !(printed.energyForbidden&&pl.front.includes(c))&&
      !(traitless&&printed.traits.length!==0)&&
      !(job.excludeName&&cardHasName(printed,job.excludeName,originalEffectsDisabled(s,c)));
    }).map(c=>c.uid):[];
@@ -1985,6 +1987,8 @@ function effectMoveTo(pack,s,p,moverUid,destLine,slot,replaceUid,sourceUid){
  if(replaceUid)commitDestination(pack,s,p,destLine,slot,replaceUid);
  else if(s.players[p][destLine][slot])throw Error('Destination occupied');
  const moving=from.c;
+ if(destLine==='energy'&&card(pack,moving).energyForbidden)
+  throw Error('This character cannot move to the energy line');
  s.players[p][from.line][from.slot]=null;
  s.players[p][destLine][slot]=moving;
  if(destLine==='front'&&card(pack,moving).frontForbidden)moving.ownEffectFront=true;
@@ -3735,6 +3739,8 @@ function resolveChoice(s,a,pack){
    (q.excludeName&&cardHasName(card(pack,from.c),q.excludeName,originalEffectsDisabled(s,from.c))))
    throw Error('Illegal line-move character');
   const line=from.line==='front'?'energy':'front';
+  if(line==='energy'&&card(pack,from.c).energyForbidden)
+   throw Error('This character cannot move to the energy line');
   s.pending={kind:'effect-line-slot',player:q.player,sourceUid:q.sourceUid,
    moverUid:a.uid,line};
   return;
@@ -4400,6 +4406,13 @@ function legalPending(pack,s){
 // This check is performed BEFORE spending AP or moving the event outside.
 // Optional "up to one" choices remain playable with zero targets.
 function retireOppFrontLimit(pack,s,owner,job){
+ if(job.traitCountBonus){
+  const bonus=job.traitCountBonus;
+  const count=field(s.players[owner]).filter(c=>
+   !(bonus.excludeSelf&&c.uid===job.sourceUid)&&
+   cardHasTrait(card(pack,c),bonus.trait)).length;
+  return count>=bonus.min?bonus.bonusBp:job.bp;
+ }
  if(job.nameOrTraitPerBp){
   // One physical card with both the trait and the printed name counts once.
   // Silence removes neither the trait nor the printed name.
@@ -4605,7 +4618,7 @@ export function legalUniversalActions(pack,s){
   for(const c of pl.energy.filter(c=>c&&!s.movedUids.includes(c.uid)&&
   card(pack,c).type==='character'&&!card(pack,c).frontForbidden))
    for(const choice of legalDestinations(pl,'front'))out.push({type:'move',uid:c.uid,...choice});
-  for(const c of pl.front.filter(c=>c&&!s.movedUids.includes(c.uid)&&card(pack,c).step&&!originalEffectsDisabled(s,c)))
+  for(const c of pl.front.filter(c=>c&&!s.movedUids.includes(c.uid)&&card(pack,c).step&&!card(pack,c).energyForbidden&&!originalEffectsDisabled(s,c)))
    for(const choice of legalDestinations(pl,'energy'))out.push({type:'step',uid:c.uid,...choice});
  }
  if(s.phase==='main'){
@@ -4859,6 +4872,7 @@ export function legalUniversalActions(pack,s){
    }
    else for(const line of ['energy','front']){
     if(line==='front'&&(d.type!=='character'||d.frontForbidden))continue;
+    if(line==='energy'&&d.energyForbidden)continue;
     for(const choice of legalDestinations(pl,line))
      out.push({type:'play',uid:c.uid,line,...choice});
    }
@@ -5378,7 +5392,7 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
   }
   case 'step':{
    const l=location(s,p,action.uid);
-   if(!l||l.line!=='front')throw Error('Invalid STEP');
+   if(!l||l.line!=='front'||card(pack,l.c).energyForbidden)throw Error('Invalid STEP');
    commitDestination(pack,s,p,'energy',action.slot,action.replaceUid);
    pl.front[l.slot]=null;pl.energy[action.slot]=l.c;
    recordCompletedMove(pack,s,{physical:l.c,owner:p,from:'front',to:'energy',reason:'rule'});
@@ -5392,6 +5406,8 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
    if(action.type==='event'&&d.playRequiresOwnName&&
     !ownFieldHasPrintedName(pack,s,p,d.playRequiresOwnName))
     throw Error('Event requires the printed own character');
+   if(action.type==='play'&&action.line==='energy'&&d.energyForbidden)
+    throw Error('This character cannot enter the energy line');
    spendAp(pl,payment.cost);
    s.continuousStates=s.continuousStates.filter(e=>!payment.ids.includes(e.id));
    if((action.type==='play'||action.type==='raid')&&payment.cost===0)
@@ -6455,6 +6471,8 @@ export function assertUniversalMatch(pack,s){
    throw Error('Front line must contain only characters');
   if(pl.energy.some(c=>c&&card(pack,c).type==='event'))
    throw Error('Event cannot remain in energy line');
+  if(pl.energy.some(c=>c&&card(pack,c).energyForbidden===true))
+   throw Error('Energy line cannot contain an energy-forbidden character');
  }
  return true;
 }

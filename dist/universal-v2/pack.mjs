@@ -914,6 +914,20 @@ function verifyProgram(program,path){
      Object.keys(scale).length!==3||Object.keys(scale).some(k=>!['trait','name','per'].includes(k))||
      Object.keys(e).length!==3||Object.keys(e).some(k=>!['op','optional','nameOrTraitPerBp'].includes(k)))
      throw Error(path+'['+i+'] unsupported name-or-trait BP retirement');
+   }else if(e.traitCountBonus!==undefined){
+    const bonus=e.traitCountBonus;
+    if(e.bonusName!==undefined||e.bonusBp!==undefined||e.bonusOutsideName!==undefined||
+     e.traitPerBp!==undefined||e.raidOrName!==undefined||e.nameOrTraitPerBp!==undefined||
+     e.optional!==true||!integer(e.bp,1)||e.bp>50000||
+     !bonus||typeof bonus!=='object'||Array.isArray(bonus)||
+     typeof bonus.trait!=='string'||!bonus.trait.trim()||bonus.trait.length>80||
+     !integer(bonus.min,1)||bonus.min>12||bonus.excludeSelf!==true||
+     !integer(bonus.bonusBp,e.bp+1)||bonus.bonusBp>50000||
+     Object.keys(bonus).length!==4||
+     Object.keys(bonus).some(k=>!['trait','min','excludeSelf','bonusBp'].includes(k))||
+     Object.keys(e).length!==4||
+     Object.keys(e).some(k=>!['op','bp','optional','traitCountBonus'].includes(k)))
+     throw Error(path+'['+i+'] unsupported trait-count BP retirement');
    }else{
    const plain=e.bonusName===undefined&&e.bonusBp===undefined&&e.bonusOutsideName===undefined;
    if(plain){
@@ -1205,6 +1219,8 @@ function normalize(card,packId){
    throw Error(card.id+' invalid unconditional ACTIVE entry');
   if(card.frontForbidden!==undefined&&(card.type!=='character'||card.frontForbidden!==true))
   throw Error(card.id+' invalid front-line restriction');
+ if(card.energyForbidden!==undefined&&(card.type!=='character'||card.energyForbidden!==true||card.frontForbidden===true))
+  throw Error(card.id+' invalid energy-line restriction');
  const colorTriggerFieldSubstitution=card.colorTriggerFieldSubstitution??null;
  if(colorTriggerFieldSubstitution!==null&&
   (card.type!=='character'||card.color!==colorTriggerFieldSubstitution||
@@ -1651,12 +1667,12 @@ function normalize(card,packId){
  if(implemented==='vanilla'&&(Object.keys(effects).length||card.effectText||
   mainAbility||phaseEffects.length||moveTriggers.length||moveObserver||card.enterActiveIfOpponentRest||card.enterAlwaysActive||card.activeExtraEnergy||card.conditionalTraitEnergy||passiveBonuses||card.impactNull||
   card.printedImpact||card.printedAttackDamage||card.readyOnAttackCount||card.readyOnBlockCount||
-  card.frontGeneratesEnergy||ownOutsideRecovery||colorTriggerFieldSubstitution||card.frontForbidden||card.ownTurnBp||card.opponentTurnBp||nameAliases||selectionHandDiscardTax||  card.otherOwnBattleWonDamageTwo||attackEndSwap||blockBpRestriction||attackWinRecover||card.conditionalImpactBpAtLeast||emptyOwnFieldHandEnergyDiscount||opponentFieldColorsHandEnergyDiscount||card.mustBlock||card.bpDownImmune||  card.printedHandEnergyDiscount||card.raidHandLeaveReplace||card.raidHostAny||card.blockRaidBp||card.handApDiscountWhileName))
+  card.frontGeneratesEnergy||ownOutsideRecovery||colorTriggerFieldSubstitution||card.frontForbidden||card.energyForbidden||card.ownTurnBp||card.opponentTurnBp||nameAliases||selectionHandDiscardTax||  card.otherOwnBattleWonDamageTwo||attackEndSwap||blockBpRestriction||attackWinRecover||card.conditionalImpactBpAtLeast||emptyOwnFieldHandEnergyDiscount||opponentFieldColorsHandEnergyDiscount||card.mustBlock||card.bpDownImmune||  card.printedHandEnergyDiscount||card.raidHandLeaveReplace||card.raidHostAny||card.blockRaidBp||card.handApDiscountWhileName))
   throw Error(card.id+' claims vanilla despite printed/declared effects');
  if(implemented==='dsl'&&!Object.keys(effects).length&&!phaseEffects.length&&!moveTriggers.length&&!mainAbility&&!moveObserver&&!card.enterActiveIfOpponentRest&&!card.enterAlwaysActive&&
   !card.activeExtraEnergy&&!card.conditionalTraitEnergy&&!passiveBonuses&&!card.impactNull&&
   !card.printedImpact&&!card.printedAttackDamage&&!card.readyOnAttackCount&&!card.readyOnBlockCount&&
-  !card.frontGeneratesEnergy&&!ownOutsideRecovery&&!colorTriggerFieldSubstitution&&!card.frontForbidden&&!card.ownTurnBp&&!card.opponentTurnBp&&!nameAliases&&!selectionHandDiscardTax&&!card.otherOwnBattleWonDamageTwo&&!attackEndSwap&&!blockBpRestriction&&!attackWinRecover&&!card.conditionalImpactBpAtLeast&&!emptyOwnFieldHandEnergyDiscount&&!opponentFieldColorsHandEnergyDiscount&&!card.mustBlock&&!card.bpDownImmune&&  !card.printedHandEnergyDiscount&&!card.raidHandLeaveReplace&&!card.raidHostAny&&!card.blockRaidBp&&!card.handApDiscountWhileName)
+  !card.frontGeneratesEnergy&&!ownOutsideRecovery&&!colorTriggerFieldSubstitution&&!card.frontForbidden&&!card.energyForbidden&&!card.ownTurnBp&&!card.opponentTurnBp&&!nameAliases&&!selectionHandDiscardTax&&!card.otherOwnBattleWonDamageTwo&&!attackEndSwap&&!blockBpRestriction&&!attackWinRecover&&!card.conditionalImpactBpAtLeast&&!emptyOwnFieldHandEnergyDiscount&&!opponentFieldColorsHandEnergyDiscount&&!card.mustBlock&&!card.bpDownImmune&&  !card.printedHandEnergyDiscount&&!card.raidHandLeaveReplace&&!card.raidHostAny&&!card.blockRaidBp&&!card.handApDiscountWhileName)
   throw Error(card.id+' declares dsl without effects');
  for(const [name,program] of Object.entries(effects)){
   if(program.some(x=>x.op==='retireSourceOnPhaseEnd'))throw Error(card.id+' invalid phase-only self retirement');
@@ -1902,6 +1918,7 @@ function normalize(card,packId){
   enterActiveIfOpponentRest:card.enterActiveIfOpponentRest===true,
    enterAlwaysActive:card.enterAlwaysActive===true,
    frontForbidden:card.frontForbidden===true,
+   energyForbidden:card.energyForbidden===true,
   step:card.step===true,ownTurnBp:card.ownTurnBp||0,
   opponentTurnBp:card.opponentTurnBp||0,
   emptyOwnFieldHandEnergyDiscount,
