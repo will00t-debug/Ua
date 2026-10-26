@@ -66,8 +66,15 @@ test('all 3 original lists load from preset buttons; existing saved user data re
    assert.match(app.innerHTML,/牌組總覽/);
    assert.ok(app.innerHTML.includes('vdb-count-badge'));
    assert.ok(app.innerHTML.includes(preset.name));
+   click({action:'visualExport'});
+   for(const source of preset.sources)assert.ok(app.innerHTML.includes(source.copies+'x'+source.source),'Original printed card code missing: '+source.source);
+   click({action:'dismiss'});
    assert.equal(storage.get('bleach-arena-saved-decks-v1'),originalSaved);
   }
+  globalThis.window.location.search='?bleachPreset=white-sword';
+  await import('../dist/v2-deck-editor.mjs?test-direct-white-sword-link');
+  assert.deepEqual(Object.fromEntries(Object.entries(JSON.parse(storage.get('bleach-arena-deck-v1'))).filter(([,n])=>n)),builtinBleachDeck('white-sword').counts);
+  assert.equal(storage.get('bleach-arena-saved-decks-v1'),originalSaved);
  }finally{
   globalThis.setTimeout=oldTimer;
   delete globalThis.document;delete globalThis.localStorage;delete globalThis.sessionStorage;delete globalThis.window;
