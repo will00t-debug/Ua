@@ -625,6 +625,82 @@ const authored=[
     "zone":"field","excludeSelf":false,"trait":"影の軍団","maxPrintedBp":2500},"bpEach":500}],
   "officialTraits":["影の軍団"],
   "catalogueTraits":["影之軍團"]
+},
+{
+  "id":"SLG-1-063","name":"最上 真","color":"green","energy":1,
+  "ap":1,"bp":1500,"gen":1,"trigger":"draw","type":"character",
+  "textAnchor":"登場時查看牌庫頂3張",
+  "implementation":"dsl",
+  "templateEffects":{"onPlay":[{"template":"searchTopOneBottomDiscard","count":3,
+    "filter":{"field":"trait","value":"第四次架南島レイド"}}]},
+  "officialTraits":["第四次架南島レイド"],
+  "catalogueTraits":["第四次架南島Raid"]
+},
+{
+  "id":"SLG-1-054","name":"黒須 圭介","color":"green","energy":0,
+  "ap":1,"bp":1500,"gen":1,"trigger":"active","type":"character",
+  "textAnchor":"登場時查看牌庫頂2張",
+  "implementation":"dsl",
+  "effects":{"onPlay":[{"op":"inspectTopTraitOutside","count":2,
+    "trait":"第四次架南島レイド","rest":"top"}]},
+  "officialTraits":["第四次架南島レイド"],
+  "catalogueTraits":["第四次架南島Raid"]
+},
+{
+  "id":"SLG-1-017","name":"水篠 旬","color":"purple","energy":2,
+  "ap":1,"bp":2000,"gen":1,"trigger":"active","type":"character",
+  "textAnchor":"若己方場上沒有任何卡",
+  "implementation":"dsl","emptyOwnFieldHandEnergyDiscount":2,
+  "templateEffects":{"onPlay":[{"template":"peekTopOne"}]}
+},
+{
+  "id":"SLG-1-074","name":"ルノー","color":"green","energy":2,
+  "ap":1,"bp":3000,"gen":1,"trigger":"draw","type":"character",
+  "textAnchor":"本回合獲Impact1",
+  "implementation":"dsl",
+  "effects":{"onPlay":[{"op":"grantOwnOtherTraitImpact","trait":"DFN",
+    "amount":1,"optional":true}]},
+  "officialTraits":["DFN／第四次架南島レイド"],
+  "traitComponents":["DFN","第四次架南島レイド"],
+  "catalogueTraits":["DFN","第四次架南島Raid"]
+},
+{
+  "id":"SLG-1-071","name":"マリー","color":"green","energy":0,
+  "ap":1,"bp":1500,"gen":1,"trigger":"draw","type":"character",
+  "textAnchor":"主要階段每回合一次",
+  "implementation":"dsl",
+  "mainAbility":{"op":"restSelfBuffOtherThenHand","oncePerTurn":true,"bp":1000},
+  "officialTraits":["DFN／第四次架南島レイド"],
+  "traitComponents":["DFN","第四次架南島レイド"],
+  "catalogueTraits":["DFN","第四次架南島Raid"]
+},
+{
+  "id":"SLG-1-050","name":"観月 絵里","color":"green","energy":0,
+  "ap":1,"bp":500,"gen":1,"trigger":null,"type":"character",
+  "textAnchor":"主要階段REST並退場此角色",
+  "implementation":"dsl","effects":{},
+  "mainAbility":{"op":"restRetireRecoverNamed","name":"水篠 旬"}
+},
+{
+  "id":"SLG-1-080","name":"舞姫","color":"green","energy":2,
+  "ap":1,"bp":0,"gen":0,"trigger":"draw","type":"event",
+  "textAnchor":"事件：抽1張",
+  "implementation":"dsl",
+  "effects":{"onPlay":[
+    {"op":"draw","count":1},
+    {"op":"grantOnAttack","target":"ownCharacter","name":"向坂 雫",
+     "optional":true,"until":"endOfTurn","then":[{"op":"draw","count":1}]}
+  ]}
+},
+{
+  "id":"SLG-1-035","name":"スキル：君主の領域","color":"purple","energy":3,
+  "ap":1,"bp":0,"gen":2,"trigger":"get","type":"field",
+  "textAnchor":"場域以ACTIVE登場",
+  "implementation":"dsl","enterAlwaysActive":true,"effects":{},
+  "mainAbility":{"op":"restBuffOwnTraitScaled","trait":"影の軍団",
+   "bp":500,"scaledMin":5,"scaledBp":1000},
+  "officialTraits":["影の軍団"],
+  "catalogueTraits":["影之軍團"]
 }
 ];
 export const SLG_V2_VERIFIED_IDS=Object.freeze(authored.map(c=>c.id));

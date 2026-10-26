@@ -103,6 +103,9 @@ export function uiActionLabel(action,{pack,state}={}){
      :'起動主要：REST 自身，產能＋1，主要階段結束退場'):
     action.mode==='selfRestThen'?'主要能力：REST 自身，執行效果':
     action.mode==='selfRestBuff'?'主要能力：REST 自身，指定另一張己方角色本回合 BP 加成':
+    action.mode==='selfRestBuffHand'?'起動主要：REST 自身，指定另一張己方角色 BP＋1000，自身回手':
+    action.mode==='restRetireNamed'?'起動主要：REST 並退場，從場外回收指定名稱':
+    action.mode==='restTraitBuff'?'起動主要：REST 場域，己方指定特徵本回合 BP 加成':
     action.mode==='payApDrawEnergy'?'起動主要：支付 1 AP，抽 1 張，本回合產能＋1':
     action.mode==='restFrontGainEnergy'?'起動主要：REST 自身，再 REST 一張己方前線，本回合產能＋1':
     action.mode==='selfRestEnemy'?'主要能力：REST 自身，指定敵方前線角色':

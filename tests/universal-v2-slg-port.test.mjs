@@ -304,7 +304,7 @@ test('V2-C card-by-card evidence CSV remains complete, disjoint and tracks the r
    if(body==='existing_v2_pilot'){
     assert.equal(scope[1],'pr70_baseline_pilot');pilots.push(id);
    }else if(body.startsWith('v2_batch')){
-    assert.equal(scope[1],(['TTG-1-020','TTG-1-067','TTG-1-028','TTG-1-007','TTG-1-013','TTG-1-002','TTG-1-015','TTG-1-022','TTG-1-018','TTG-1-006','TTG-1-077','TTG-1-010','TTG-1-023','TTG-1-053','TTG-1-063','SLG-1-021','SLG-1-070','SLG-1-036','SLG-1-037','SLG-1-018','SLG-1-012','SLG-1-001','SLG-1-010','SLG-1-002','SLG-1-007','SLG-1-013','SLG-1-014','SLG-1-008','SLG-1-009','SLG-1-004','SLG-1-042','SLG-1-053','SLG-1-025','SLG-1-023','SLG-1-056','SLG-1-069','SLG-1-062','SLG-1-065','SLG-1-027','SLG-1-072','SLG-1-046','SLG-1-030','SLG-1-028'].includes(id))?'codex_integrated_contribution':'pr70_integrated_contribution');added.push(id);
+    assert.equal(scope[1],(['TTG-1-020','TTG-1-067','TTG-1-028','TTG-1-007','TTG-1-013','TTG-1-002','TTG-1-015','TTG-1-022','TTG-1-018','TTG-1-006','TTG-1-077','TTG-1-010','TTG-1-023','TTG-1-053','TTG-1-063','SLG-1-021','SLG-1-070','SLG-1-036','SLG-1-037','SLG-1-018','SLG-1-012','SLG-1-001','SLG-1-010','SLG-1-002','SLG-1-007','SLG-1-013','SLG-1-014','SLG-1-008','SLG-1-009','SLG-1-004','SLG-1-042','SLG-1-053','SLG-1-025','SLG-1-023','SLG-1-056','SLG-1-069','SLG-1-062','SLG-1-065','SLG-1-027','SLG-1-072','SLG-1-046','SLG-1-030','SLG-1-028','SLG-1-063','SLG-1-054','SLG-1-017','SLG-1-074','SLG-1-071','SLG-1-050','SLG-1-080','SLG-1-035'].includes(id))?'codex_integrated_contribution':'pr70_integrated_contribution');added.push(id);
    }else{
     assert.equal(body,'not_ported');assert.equal(scope[1],'not_implemented_any_branch');
     assert.equal(life,trigger==='none'?'not_applicable':'not_registered');

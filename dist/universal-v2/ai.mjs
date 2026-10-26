@@ -61,7 +61,9 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='effect-top-inspect')
   return difficulty==='easy'?legal.find(a=>a.uid===null)||legal[0]:
    legal.find(a=>a.uid!==null)||legal[0];
- if(s.pending?.kind==='private-top-place')return legal[0];
+ if(s.pending?.kind==='private-top-place'||s.pending?.kind==='private-top-choice')return legal[0];
+ if(s.pending?.kind==='effect-grant-impact')
+  return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-top-inspect-many')return legal.find(x=>x.uid===null)||legal[0];
  if(s.pending?.kind==='effect-top-filter-choice')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-top-trait-outside')
@@ -235,6 +237,8 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   (foeReady?legal.find(a=>a.type==='activate'&&a.mode==='selfRestEnemy'):null)||
   legal.find(a=>a.type==='activate'&&a.mode==='selfRestThen')||
   legal.find(a=>a.type==='activate'&&a.mode==='selfRestBuff')||
+  legal.find(a=>a.type==='activate'&&a.mode==='selfRestBuffHand')||
+  legal.find(a=>a.type==='activate'&&a.mode==='restTraitBuff')||
   legal.find(a=>a.type==='activate'&&a.mode==='payApDrawEnergy')||
   legal.find(a=>a.type==='activate'&&a.mode==='restFrontGainEnergy')||
   legal.find(a=>a.type==='activate'&&a.mode==='selfRestEnergyRetire')||
