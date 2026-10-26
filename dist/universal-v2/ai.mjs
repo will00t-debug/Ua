@@ -100,7 +100,7 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  }
  if(s.pending?.kind==='effect-hand-rest')return difficulty==='easy'?legal[0]:
    legal.find(x=>x.uid!==null&&!x.replaceUid)||legal[0];
-  if(['effect-outside-rest','effect-outside-traitless-rest','effect-outside-exact-rest','effect-outside-trait-ap-rest'].includes(s.pending?.kind))
+  if(['effect-outside-rest','effect-outside-traitless-rest','effect-outside-exact-rest','effect-outside-trait-ap-rest','effect-outside-active-pair'].includes(s.pending?.kind))
   return difficulty==='easy'?legal[0]:
    legal.find(x=>x.mode==='raid'&&!x.replaceUid)||
    legal.find(x=>x.uid!==null&&!x.replaceUid)||legal[0];

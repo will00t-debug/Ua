@@ -153,7 +153,8 @@ const testForKind=Object.freeze({
  katenEnergyActive:'tests/v2-c29-bleach-port.test.mjs',
  bambiesPerBp:'tests/v2-c29-bleach-port.test.mjs',
  kenpachiEnergyFront:'tests/v2-c29-bleach-port.test.mjs',
- mayuriTraitRetire:'tests/v2-c29-bleach-port.test.mjs'
+ mayuriTraitRetire:'tests/v2-c29-bleach-port.test.mjs',
+ nemSquadActivePair:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -172,7 +173,9 @@ function contributedEntry(profile){
   definition:Object.freeze(definition),
   evidence:Object.freeze({
    printedTextFragments:Object.freeze([profile.effect]),
-   reviewNote:profile.id==='BLC-2-037'?
+   reviewNote:profile.id==='BLC-2-045'?
+    'EX07BT/BLC-2-045 official iframe 2026-10-26. Mandatory: retire one own field character with trait 涅骸部隊. Zero legal characters makes the event unplayable. On success, draw 1, then up to two own outside characters may enter ACTIVE on front or energy. Each must be blue, printed AP 1, have its required energy satisfied, and be named 涅 ネム or have trait 涅骸部隊. The just-retired character is outside and can be chosen. Declining a deployment stops the rest. A field is not a character. An audited alias of 涅 ネム counts while the card is outside. SPECIAL retires one opposing front character. Generated energy is none. No card FAQ.':
+   profile.id==='BLC-2-037'?
     'EX07BT/BLC-2-037 official iframe 2026-10-26. On play, you may retire one own field character with trait 涅骸部隊. If that retirement happens, you may retire one opposing front character whose live BP is at most that character\'s live BP, then draw 1. Declining the own retirement stops the rest. Declining the opposing retirement still draws. A field with the trait is not a character. Silence does not remove the trait. The printed composites 破面／涅骸部隊 and 護廷十三隊／涅骸部隊 are audited trait components, so each token counts. Generated energy is 青. No trigger. No card FAQ.':
    profile.id==='BLC-1-081'?
     'UA08BT/BLC-1-081 official iframe 2026-10-26. This character cannot enter the energy line and cannot move there. Q568 (2023-09-25): いいえ、できません. Move effects and position swaps cannot move it from front to energy, and there is no own-effect exception. Impact 1. On play, up to one opposing front character of BP 2000 or less retires. Six or more other own field cards with trait 護廷十三隊 replace that cap with 4000. This character does not count toward the six. Silence does not remove the trait. Declining the retirement is legal. DRAW is generic. No generated energy.':

@@ -822,7 +822,14 @@ function verifyProgram(program,path){
    const traitOk=typeof e.trait==='string'&&!!e.trait.trim()&&e.trait.length<=80;
    const under=!!follow&&follow.kind==='underBpDraw'&&follow.draw===1&&
     Object.keys(follow).length===2&&Object.keys(follow).every(k=>['kind','draw'].includes(k));
-   if(typeof e.optional!=='boolean'||!traitOk||!under||
+   const pair=!!follow&&follow.kind==='drawActivePair'&&follow.draw===1&&follow.max===2&&
+    integer(follow.ap)&&follow.ap<=3&&
+    ['red','blue','yellow','green','purple'].includes(follow.color)&&
+    typeof follow.name==='string'&&!!follow.name.trim()&&follow.name.length<=80&&
+    typeof follow.trait==='string'&&!!follow.trait.trim()&&follow.trait.length<=80&&
+    Object.keys(follow).length===7&&
+    Object.keys(follow).every(k=>['kind','draw','max','ap','color','name','trait'].includes(k));
+   if(typeof e.optional!=='boolean'||!traitOk||!(under||pair)||
     Object.keys(e).length!==4||
     Object.keys(e).some(k=>!['op','optional','trait','follow'].includes(k)))
     throw Error(path+'['+i+'] invalid trait retirement follow-up');
