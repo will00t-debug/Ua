@@ -156,7 +156,8 @@ const testForKind=Object.freeze({
  mayuriTraitRetire:'tests/v2-c29-bleach-port.test.mjs',
  nemSquadActivePair:'tests/v2-c29-bleach-port.test.mjs',
  soulPalaceTop:'tests/v2-c29-bleach-port.test.mjs',
- kyokotsuField:'tests/v2-c29-bleach-port.test.mjs'
+ kyokotsuField:'tests/v2-c29-bleach-port.test.mjs',
+ hakkokenChoose:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -175,7 +176,9 @@ function contributedEntry(profile){
   definition:Object.freeze(definition),
   evidence:Object.freeze({
    printedTextFragments:Object.freeze([profile.effect]),
-   reviewNote:profile.id==='BLC-4-077'?
+   reviewNote:profile.id==='BLC-4-079'?
+    'EX15BT/BLC-4-079 official iframe 2026-10-26. Choose one: draw 1, or give up to one own 伊勢 七緒 BP+3000 and Impact 1 this turn. Declining the Nanao choice is legal, and a missing Nanao skips that choice. After the chosen effect, you may REST one own ACTIVE 京楽 春水 or 伊勢 七緒. Doing so readies one own REST AP card, and that recovery cannot be declined while a REST AP card exists. Skipping the REST readies nothing. A field is not a character. Silence keeps the printed name. No trigger. No generated energy. No card FAQ.':
+   profile.id==='BLC-4-077'?
     'EX15BT/BLC-4-077 official iframe 2026-10-26. On play, up to one own outside 神剣・八鏡剣 may be added to hand. Main cost is REST and true retirement of this field; the field is gone before the choices. Then up to one remaining own field card, character or field, becomes ACTIVE, and up to one own character gains BP+1000 this turn. The same character may receive both. Declining either choice is legal. Catalogue gen=3 is the green3 sprite; official generated energy is 緑緑, so definition.gen=2 and legacyImportedGen=3. DRAW is generic. No card FAQ.':
    profile.id==='BLC-1-061'?
     'UA08BT/BLC-1-061 official iframe 2026-10-26. This field enters ACTIVE. Main: REST this field, look at the top card of your deck. If it has trait 零番隊, you may reveal it and add it to hand. Q566 (2023-09-25): はい、できます — even a Squad Zero card may be refused. A card that is not added returns to the top or goes outside, without a reveal. No Squad Zero trait cannot be added. The REST is the only use limit; becoming ACTIVE again allows another use. GET is generic. Generated energy is 紫.':

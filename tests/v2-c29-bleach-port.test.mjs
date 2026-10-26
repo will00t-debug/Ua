@@ -208,9 +208,12 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 // BLC-4-077 EX15BT: optional outside 神剣・八鏡剣 to hand. Main REST-retires
 //   this field, then may ACTIVE one remaining field card and give one
 //   character BP+1000. Catalogue gen 3 normalizes to generated 緑緑.
+// BLC-4-079 EX15BT: choose draw 1, or up to one 伊勢 七緒 gets BP+3000
+//   and Impact 1. Then may REST one ACTIVE 京楽 春水 or 伊勢 七緒 to
+//   ready one AP card. That AP recovery cannot be declined.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -281,12 +284,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers sixty-nine whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,505);
- assert.equal(EXPECTED_V2_COUNTS.bleach,229);
+test('C29 registers seventy whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,506);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,230);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,229);
+ assert.equal(Object.keys(bleach.cards).length,230);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -6453,6 +6456,102 @@ test('BLC-4-077 may recover one sword, then REST-retires and actives plus buffs'
  assert.equal(assertUniversalMatch(opened.packs,used),true);
  assert.equal(assertUniversalMatch(opened.packs,quiet),true);
  assert.equal(assertUniversalMatch(packs,labState),true);
+});
+
+test('BLC-4-079 chooses a draw or Nanao Impact, then may rest Kyoraku or Nanao to ready an AP',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-4-079');
+ assert.equal(printed.number,'EX15BT/BLC-4-079');
+ assert.equal(printed.nameJa,'神剣・八鏡剣');
+ assert.equal(printed.effect,'選1項：①抽1張牌。②最多選自己場上1個《伊勢七緒》，本回合賦予BP+3000及Impact(1)。完成所選效果後，可將自己場上1個Active的《京樂春水》或《伊勢七緒》改為Rest；如此則將自己的1張AP卡改為Active。');
+ assert.equal(printed.gen,0);
+ assert.equal(printed.trigger,null);
+ const card=bleach.cards['BLC-4-079'];
+ assert.equal(card.trigger,null);
+ assert.equal(card.triggerEffect,null);
+ assert.equal(card.gen,0);
+ assert.equal(card.effects.onPlay[0].op,'chooseOne');
+ assert.equal(card.effects.onPlay[1].op,'restActiveNamedReadyAp');
+ const deck=realDeck(['BLC-4-079','BLC-4-064','BLC-4-068','BLC-1-080','BLC-1-091','BLC-1-070','BLC-1-083','BLC-4-062'],'green');
+ function board(seed){
+  const opened=main(deck,seed);
+  const sword=take(opened.s,0,'BLC-4-079');
+  opened.s.players[0].hand.push(sword);
+  const nanao=put(opened.s,0,'BLC-4-064','front',0);
+  const kyoraku=put(opened.s,0,'BLC-4-068','front',1);
+  const other=put(opened.s,0,'BLC-1-080','front',2);
+  put(opened.s,0,'BLC-1-070','energy',0);
+  put(opened.s,0,'BLC-1-083','energy',1);
+  put(opened.s,0,'BLC-4-062','energy',2);
+  return {opened,sword,nanao,kyoraku,other};
+ }
+ const drawBoard=board(29079);
+ const {packs}=drawBoard.opened;
+ assert.equal(legalUniversalActions(packs,drawBoard.opened.s).some(a=>a.type==='event'&&a.uid===drawBoard.sword.uid),true);
+ let played=dispatchUniversalAction(packs,drawBoard.opened.s,{type:'event',uid:drawBoard.sword.uid});
+ assert.equal(played.pending.kind,'effect-choice-mode');
+ assert.equal(V2_PENDING_LABELS[played.pending.kind],'選擇一項效果');
+ assert.deepEqual(legalUniversalActions(packs,played).map(a=>a.mode).sort(),['draw','nanao']);
+ const before=played.players[0].deck.length;
+ const handBefore=played.players[0].hand.length;
+ let drawn=dispatchUniversalAction(packs,played,{type:'chooseEffectMode',mode:'draw'});
+ assert.equal(drawn.players[0].hand.length,handBefore+1);
+ assert.equal(drawn.players[0].deck.length,before-1);
+ assert.equal(drawn.pending.kind,'effect-named-rest-ready');
+ assert.equal(V2_PENDING_LABELS[drawn.pending.kind],'可橫置 1 個 Active 的指定名稱角色，然後啟動 1 張 AP 卡');
+ const rests=legalUniversalActions(packs,drawn);
+ assert.equal(rests.some(a=>a.type==='chooseNamedRestReady'&&a.uid===null),true);
+ assert.equal(rests.some(a=>a.uid===drawBoard.nanao.uid),true);
+ assert.equal(rests.some(a=>a.uid===drawBoard.kyoraku.uid),true);
+ assert.equal(rests.some(a=>a.uid===drawBoard.other.uid),false);
+ const skipped=dispatchUniversalAction(packs,drawn,{type:'chooseNamedRestReady',uid:null});
+ assert.equal(skipped.pending,null);
+ assert.equal(live(skipped,0,drawBoard.kyoraku.uid).ready,true);
+ assert.equal(skipped.players[0].apCards.filter(c=>c.inPlay&&!c.ready).length,1);
+ const grantBoard=board(29081);
+ let second=dispatchUniversalAction(packs,grantBoard.opened.s,{type:'event',uid:grantBoard.sword.uid});
+ second=dispatchUniversalAction(packs,second,{type:'chooseEffectMode',mode:'nanao'});
+ assert.equal(second.pending.kind,'effect-named-impact');
+ assert.equal(V2_PENDING_LABELS[second.pending.kind],'可選 1 個指定名稱角色，本回合 BP 上升並獲得 Impact');
+ const impacts=legalUniversalActions(packs,second);
+ assert.equal(impacts.some(a=>a.type==='chooseNamedImpact'&&a.uid===null),true);
+ assert.equal(impacts.some(a=>a.uid===grantBoard.nanao.uid),true);
+ assert.equal(impacts.some(a=>a.uid===grantBoard.kyoraku.uid),false);
+ assert.throws(()=>dispatchUniversalAction(packs,second,{type:'chooseNamedImpact',uid:grantBoard.kyoraku.uid}),/not currently legal/);
+ aiOk(packs,second);
+ let granted=dispatchUniversalAction(packs,second,{type:'chooseNamedImpact',uid:grantBoard.nanao.uid});
+ const boosted=live(granted,0,grantBoard.nanao.uid);
+ assert.equal(universalBp(packs,granted,boosted),4000);
+ assert.equal(universalImpact(packs,granted,boosted),1);
+ assert.equal(granted.pending.kind,'effect-named-rest-ready');
+ assert.equal(live(granted,0,grantBoard.kyoraku.uid).ready,true);
+ let rested=dispatchUniversalAction(packs,granted,{type:'chooseNamedRestReady',uid:grantBoard.kyoraku.uid});
+ assert.equal(live(rested,0,grantBoard.kyoraku.uid).ready,false);
+ assert.equal(live(rested,0,grantBoard.nanao.uid).ready,true);
+ assert.equal(universalImpact(packs,rested,live(rested,0,grantBoard.nanao.uid)),1);
+ assert.equal(rested.pending.kind,'effect-recover-ap');
+ assert.equal(rested.pending.optional,false);
+ const ap=rested.players[0].apCards.filter(c=>c.inPlay&&!c.ready);
+ assert.equal(ap.length,1);
+ assert.equal(legalUniversalActions(packs,rested).some(a=>a.type==='chooseApRecovery'&&a.uid===null),false);
+ assert.throws(()=>dispatchUniversalAction(packs,rested,{type:'chooseApRecovery',uid:null}),/not currently legal/);
+ const readied=dispatchUniversalAction(packs,rested,{type:'chooseApRecovery',uid:ap[0].uid});
+ assert.equal(readied.pending,null);
+ assert.equal(readied.players[0].apCards.find(c=>c.uid===ap[0].uid).ready,true);
+ assert.equal(readied.players[0].outside.some(c=>c.uid===grantBoard.sword.uid),true);
+ const quiet=main(deck,29080);
+ const lone=take(quiet.s,0,'BLC-4-079');
+ quiet.s.players[0].hand.push(lone);
+ put(quiet.s,0,'BLC-1-070','energy',0);
+ put(quiet.s,0,'BLC-1-083','energy',1);
+ put(quiet.s,0,'BLC-4-062','energy',2);
+ const parked=put(quiet.s,0,'BLC-4-068','front',0,false);
+ let bare=dispatchUniversalAction(packs,quiet.s,{type:'event',uid:lone.uid});
+ bare=dispatchUniversalAction(packs,bare,{type:'chooseEffectMode',mode:'nanao'});
+ assert.equal(bare.pending,null);
+ assert.equal(live(bare,0,parked.uid).ready,false);
+ assert.equal(assertUniversalMatch(packs,skipped),true);
+ assert.equal(assertUniversalMatch(packs,readied),true);
+ assert.equal(assertUniversalMatch(packs,bare),true);
 });
 
 function fieldCount(s,p){
