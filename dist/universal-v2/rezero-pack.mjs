@@ -74,6 +74,7 @@ export function rezeroEngineKind(effectJa){
  if(e==='【レイド】〈エミリア〉アクティブにし、フロントLに移動できる【登場時】相手のフロントLのキャラを1枚まで選び、このターン中、BP-3500。【起動メイン】【フロントLにある場合】 【ターン1】このキャラがレストの場合のみ発動できる。BP1500以下の相手のフロントLのキャラを1枚まで選び、退場させる。このキャラをアクティブにし、このターン中、【インパクト（1）】を得る。')return 'raidEmiliaDownRestedRetire';
  if(e==='【レイド】〈レム〉アクティブにし、フロントLに移動できる【登場時】自分の手札から必要エナジーが3以下で消費APが1の黄の〔〈ラム〉か〈レム〉〕を1枚まで自分の場にレストで登場させる。【起動メイン】【フロントLにある場合】 【ターン1】自分の場の〈ラム〉か他の〈レム〉を1枚まで選び、このターン中、【インパクト（1）】を与える。')return 'raidRemHandImpact';
  if(e==='【レイド】〈レム〉アクティブにし、フロントLに移動できる【インパクト（1）】（アタックしてバトルに勝利した時、相手プレイヤーに1ダメージ）【登場時】自分の場外から必要エナジーが0の青の〈ナツキ・スバル〉を1枚まで自分の場にレストで登場させる。【アタック時】自分の場の必要エナジーが0の青の〈ナツキ・スバル〉を1枚まで選び、このターン中、「このキャラはBP4000以上のキャラにブロックされない。」を与える。')return 'raidRemImpactSubaruBlock';
+ if(e==='【レイド】〈ベアトリス〉アクティブにし、フロントLに移動できる【自分のターン中】自分の場に〈ナツキ・スバル〉がある場合、このキャラはBP+500。【登場時】相手のフロントLのキャラを1枚まで選び、エナジーLに移動させる。このキャラが自分の効果で登場していた場合、選んだキャラに次の自分のターン開始時まで、「このキャラは移動できない。」を与える。')return 'raidBeatriceMoveLock';
  return null;
 }
 const TOP_OUTSIDE=new Map([
@@ -150,6 +151,7 @@ function onPlay(card,kind){
   maxEnergy:3,ap:1,names:['ラム','レム'],max:1,optional:true}];
  if(kind==='raidRemImpactSubaruBlock')return [{op:'deployOutsidePrintedRest',
   name:'ナツキ・スバル',color:'blue',energy:0,optional:true}];
+ if(kind==='raidBeatriceMoveLock')return [{op:'moveOppFrontToEnergy',optional:true,lockIfEntry:'ownEffect'}];
  if(kind==='garfielEntry')return [{op:'enemyBpDown',bp:2500,optional:true,zone:'front'}];
  if(kind==='sanctuaryRecover')return [{op:'payHandOrRestForNamed',name:TRIAL_NAME}];
  if(kind==='frontDown2500')return [{op:'enemyBpDown',bp:2000,optional:true,minBp:2500,zone:'front'}];
@@ -282,6 +284,9 @@ export function rezeroPackCard(card){
    op:'frontOnceGrantImpactNamed',frontOnly:true,oncePerTurn:true,excludeSelf:true,
    names:['ラム','レム']}}:{}),
   ...(kind==='raidRemImpactSubaruBlock'?{raidName:'レム',printedImpact:1}:{}),
+  ...(kind==='raidBeatriceMoveLock'?{raidName:'ベアトリス',passiveBonuses:[{
+   bp:500,condition:{kind:'ownNameExists',turn:'own',zone:'field',excludeSelf:false,
+    name:'ナツキ・スバル'}}]}:{}),
   ...(kind==='raidFrontRestDraw'?{raidName:'エキドナ',mainAbility:{
    op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,
    then:[{op:'restOwnActiveFrontDraw'}]}}:{}),

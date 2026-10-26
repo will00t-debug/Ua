@@ -70,9 +70,9 @@ test('UA40BT and UA40ST share one catalogue and keep parallel art out',()=>{
  }
 });
 
-test('ninety-five whole prints enter the V2 pack and the other eighteen stay out',()=>{
- assert.equal(REZERO_ENGINE_IDS.length,95);
- assert.equal(Object.keys(pack.cards).length,95);
+test('ninety-six whole prints enter the V2 pack and the other seventeen stay out',()=>{
+ assert.equal(REZERO_ENGINE_IDS.length,96);
+ assert.equal(Object.keys(pack.cards).length,96);
  assert.equal(pack.cards['REZ-1-001'],undefined);
  assert.equal(pack.cards['REZ-1-008'].step,true);
  assert.equal(pack.cards['REZ-1-008'].implementation,'vanilla');
@@ -4912,4 +4912,179 @@ test('Rem raids onto Rem, rests a blue zero-cost Subaru, and grants a 4000 block
  assert.equal(assertUniversalMatch(packs,skippedDeploy),true);
  assert.equal(assertUniversalMatch(packs,opened),true);
  assert.equal(assertUniversalMatch(packs,direct),true);
+});
+
+const beatriceMoveCounts={
+ ...Object.fromEntries(['REZ-1-077','REZ-1-072','REZ-1-086','REZ-1-068','REZ-1-014','REZ-1-006',
+  'REZ-1-016','REZ-1-024','REZ-1-043','REZ-1-091','REZ-1-003','REZ-1-054'].map(id=>[id,4])),
+ 'REZ-1-029':2
+};
+const beatriceMove=seed=>newUniversalMatch(packs,{decks:[beatriceMoveCounts,beatriceMoveCounts],first:0,seed});
+function untilPhase(bundle,s,player,phase){
+ let guard=0;
+ while(!(s.active===player&&s.phase===phase&&!s.pending)){
+  if(s.pending?.kind==='end-hand-limit'){
+   const hand=s.players[s.pending.player].hand[0];
+   s=dispatchUniversalAction(bundle,s,{type:'chooseHandLimit',uid:hand.uid});
+  }else if(s.pending)throw Error('unexpected pending '+s.pending.kind);
+  else{
+   const next=legalUniversalActions(bundle,s).find(a=>a.type==='next');
+   assert.ok(next,'stuck before '+phase);
+   s=dispatchUniversalAction(bundle,s,next);
+  }
+  assert.ok(++guard<64,'did not reach '+phase);
+ }
+ return s;
+}
+test('Beatrice raids onto Beatrice, moves one front to energy, and locks movement only after an own-effect entry',()=>{
+ assert.equal(Object.values(beatriceMoveCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(pack,beatriceMoveCounts),[]);
+ const printed=pack.cards['REZ-1-077'];
+ assert.equal(printed.raidName,'ベアトリス');
+ assert.equal(printed.energy,3);
+ assert.equal(printed.bp,3500);
+ assert.deepEqual(printed.effects.onPlay,[{op:'moveOppFrontToEnergy',optional:true,lockIfEntry:'ownEffect'}]);
+ assert.deepEqual(printed.passiveBonuses,[{bp:500,condition:{kind:'ownNameExists',turn:'own',
+  zone:'field',excludeSelf:false,name:'ナツキ・スバル'}}]);
+ const move={op:'moveOppFrontToEnergy',optional:true,lockIfEntry:'ownEffect'};
+ const shell={id:'BEA77',name:'ベアトリス',color:'purple',type:'character',energy:3,ap:1,bp:3500,gen:0,
+  traits:[],trigger:'raid',raidName:'ベアトリス',implementation:'dsl',effects:{onPlay:[move]}};
+ assert.throws(()=>createUniversalPack({id:'bad-bea77',cards:[{...shell,effects:{onPlay:[
+  {...move,optional:undefined}]}}]}),/front move/);
+ assert.throws(()=>createUniversalPack({id:'bad-bea77',cards:[{...shell,type:'event',bp:0,gen:0,
+  raidName:null,trigger:null,effects:{onPlay:[move]}}]}),/onPlay/);
+
+ let live=beatriceMove(7801);
+ fuel(live,['REZ-1-086','REZ-1-086','REZ-1-086']);
+ const base=pull(live,0,'REZ-1-072');
+ live.players[0].front[0]=base;
+ const decoy=pull(live,0,'REZ-1-077');
+ live.players[0].front[1]=decoy;
+ live=ownMain(live,2);
+ assert.equal(universalEnergyByColor(packs,live,0).purple,3);
+ const subaru=pull(live,0,'REZ-1-068');
+ subaru.ready=true;
+ live.players[0].energy[3]=subaru;
+ const waiting=pull(live,0,'REZ-1-077');
+ live.players[0].hand.push(waiting);
+ const victim=stamp(live,pull(live,1,'REZ-1-014'));
+ const aside=stamp(live,pull(live,1,'REZ-1-006'));
+ live.players[1].front[0]=victim;
+ live.players[1].energy[0]=aside;
+ assert.equal(legalUniversalActions(packs,live).some(a=>a.type==='raid'&&a.uid===waiting.uid&&a.baseUid===decoy.uid),false);
+ assert.equal(legalUniversalActions(packs,live).some(a=>a.type==='raid'&&a.uid===waiting.uid&&a.baseUid===subaru.uid),false);
+ const empty=structuredClone(live);
+ empty.players[1].deck.push(empty.players[1].front[0]);
+ empty.players[1].front[0]=null;
+ const emptyRaid=legalUniversalActions(packs,empty).find(a=>a.type==='raid'&&a.uid===waiting.uid&&a.baseUid===base.uid);
+ const emptied=dispatchUniversalAction(packs,empty,emptyRaid);
+ assert.equal(emptied.pending,null);
+ assert.equal(universalBp(pack,emptied,at(emptied,0,waiting.uid)),4000);
+ const raid=legalUniversalActions(packs,live).find(a=>a.type==='raid'&&a.uid===waiting.uid&&a.baseUid===base.uid);
+ assert.ok(raid);
+ live=dispatchUniversalAction(packs,live,raid);
+ assert.equal(at(live,0,waiting.uid).stack[0].uid,base.uid);
+ assert.equal(universalBp(pack,live,at(live,0,waiting.uid)),4000);
+ const side=live.active;
+ live.active=1;
+ assert.equal(universalBp(pack,live,at(live,0,waiting.uid)),3500);
+ live.active=side;
+ assert.equal(live.pending.kind,'effect-move-opp-front');
+ assert.equal(live.pending.optional,true);
+ assert.equal(live.pending.lock,false);
+ assert.equal(Object.keys(live.pending).length,6);
+ assert.deepEqual(live.pending.choices,[victim.uid]);
+ assert.equal(V2_PENDING_LABELS['effect-move-opp-front'],'選擇是否將對手前線移至能源線');
+ assert.equal(uiActionLabel({type:'chooseMoveOppFront',uid:null},{pack,state:live}),'不移動');
+ assert.equal(uiActionLabel({type:'chooseMoveOppFront',uid:victim.uid},{pack,state:live}),'將 レム 移至能源線');
+ assert.notEqual(chooseUniversalAiAction(packs,live).uid,null);
+ const stale=structuredClone(live);
+ stale.players[1].deck.push(stale.players[1].front[0]);
+ stale.players[1].front[0]=null;
+ assert.throws(()=>legalUniversalActions(packs,stale),/Invalid opponent front move pending/);
+ let skipped=structuredClone(live);
+ skipped=dispatchUniversalAction(packs,skipped,{type:'chooseMoveOppFront',uid:null});
+ assert.equal(skipped.pending,null);
+ assert.equal(at(skipped,1,victim.uid),skipped.players[1].front.find(c=>c?.uid===victim.uid));
+ assert.equal(skipped.continuousStates.some(e=>e.kind==='cannotMove'),false);
+ const shift=legalUniversalActions(packs,live).find(a=>a.type==='chooseMoveOppFront'&&
+  a.uid===victim.uid&&a.replaceUid===undefined);
+ assert.ok(shift);
+ live=dispatchUniversalAction(packs,live,shift);
+ assert.equal(live.pending,null);
+ assert.equal(live.players[1].energy[shift.slot].uid,victim.uid);
+ assert.equal(live.players[1].front[0],null);
+ assert.equal(live.continuousStates.some(e=>e.kind==='cannotMove'),false);
+ const host=at(live,0,waiting.uid);
+ const buriedSlot=live.players[0].energy.findIndex(c=>c?.uid===subaru.uid);
+ const buried=live.players[0].energy[buriedSlot];
+ live.players[0].energy[buriedSlot]=null;
+ host.stack.push(buried);
+ assert.equal(universalBp(pack,live,host),3500);
+ live=untilPhase(packs,live,1,'move');
+ assert.equal(legalUniversalActions(packs,live).some(a=>a.type==='move'&&a.uid===victim.uid),true);
+ assert.equal(assertUniversalMatch(packs,live),true);
+ assert.equal(assertUniversalMatch(packs,skipped),true);
+ assert.equal(assertUniversalMatch(packs,emptied),true);
+
+ const lab=(id,color)=>({id,name:id,color,type:'character',energy:0,ap:1,bp:1000,gen:0,
+  traits:[],trigger:null,implementation:'vanilla',effects:{}});
+ const fixture=createUniversalPack({id:'beatrice-move-lab',cards:[
+  rezeroPackCard(REZERO_BY_ID['REZ-1-077']),
+  rezeroPackCard(REZERO_BY_ID['REZ-1-072']),
+  {id:'LAB-STEP',name:'Step',color:'purple',type:'character',energy:0,ap:1,bp:2000,gen:0,
+   traits:[],trigger:null,step:true,implementation:'vanilla',effects:{}},
+  {id:'LAB-DEPLOY-BEA',name:'Deploy Beatrice',color:'purple',type:'event',energy:0,ap:1,bp:0,gen:0,
+   trigger:null,implementation:'dsl',effects:{onPlay:[{op:'deployOwnHandRestOrRaid',type:'character',
+    color:'purple',maxEnergy:4,ap:1,max:1,optional:true,names:['ベアトリス']}]}},
+  ...['LAB-A','LAB-B','LAB-C','LAB-D','LAB-E','LAB-F','LAB-G','LAB-H'].map(id=>lab(id,'purple')),
+  lab('LAB-I','purple')
+ ]});
+ const fixtureCounts={
+  'REZ-1-077':4,'REZ-1-072':4,'LAB-STEP':4,'LAB-DEPLOY-BEA':4,
+  'LAB-A':4,'LAB-B':4,'LAB-C':4,'LAB-D':4,'LAB-E':4,'LAB-F':4,'LAB-G':4,'LAB-H':4,'LAB-I':2
+ };
+ assert.equal(Object.values(fixtureCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(fixture,fixtureCounts),[]);
+ const fp=[fixture,fixture];
+ let own=newUniversalMatch(fp,{decks:[fixtureCounts,fixtureCounts],first:0,seed:7802});
+ const home=pull(own,0,'REZ-1-072');
+ own.players[0].front[0]=home;
+ const locked=pull(own,1,'LAB-STEP');
+ locked.ready=true;
+ own.players[1].front[0]=locked;
+ own=dispatchUniversalAction(fp,own,{type:'next'});
+ own=dispatchUniversalAction(fp,own,{type:'next'});
+ assert.equal(own.phase,'main');
+ const top=pull(own,0,'REZ-1-077');
+ own.players[0].hand.push(top);
+ const caster=pull(own,0,'LAB-DEPLOY-BEA');
+ own.players[0].hand.push(caster);
+ own=dispatchUniversalAction(fp,own,{type:'event',uid:caster.uid});
+ assert.equal(own.pending.kind,'effect-hand-rest-or-raid');
+ const played=legalUniversalActions(fp,own).find(a=>a.type==='chooseHandRestOrRaid'&&
+  a.mode==='raid'&&a.uid===top.uid&&a.baseUid===home.uid);
+ assert.ok(played);
+ own=dispatchUniversalAction(fp,own,played);
+ assert.equal(own.pending.kind,'effect-move-opp-front');
+ assert.equal(own.pending.lock,true);
+ assert.deepEqual(own.pending.choices,[locked.uid]);
+ const moved=legalUniversalActions(fp,own).find(a=>a.type==='chooseMoveOppFront'&&
+  a.uid===locked.uid&&a.slot===0);
+ assert.ok(moved);
+ own=dispatchUniversalAction(fp,own,moved);
+ assert.equal(own.pending,null);
+ assert.equal(own.players[1].energy[0].uid,locked.uid);
+ assert.equal(own.continuousStates.some(e=>e.kind==='cannotMove'&&e.targetUid===locked.uid&&
+  e.until.player===0&&e.until.phase==='start'),true);
+ own=untilPhase(fp,own,1,'move');
+ assert.equal(legalUniversalActions(fp,own).some(a=>a.type==='move'&&a.uid===locked.uid),false);
+ const held=own.players[1].energy[0];
+ own.players[1].energy[0]=null;
+ own.players[1].front[0]=held;
+ assert.equal(legalUniversalActions(fp,own).some(a=>a.type==='step'&&a.uid===locked.uid),false);
+ own=untilPhase(fp,own,0,'start');
+ assert.equal(own.players[0].ownTurns,2);
+ assert.equal(own.continuousStates.some(e=>e.kind==='cannotMove'),false);
+ assert.equal(assertUniversalMatch(fp,own),true);
 });
