@@ -2,6 +2,7 @@ const PUBLIC_EDITOR_ONLY = typeof window !== 'undefined' && typeof window.locati
 import {CARDS,BY_ID,PRESETS,TYPE_NAMES,TRIGGER_NAMES,validateDeck,SETS,COLOR_NAMES,pendingCards,deckColors} from './cards.mjs?v=9.1.0';
 import {normalizeCounts,emptyDeck,parseDeck,formatDeck,readSavedDecks,sameCounts} from './decks.mjs?v=8';
 import {TITLES} from './title-registry.mjs';
+import {renderVisualDeckBuilder} from './visual-deck-builder.mjs';
 import {SAO_CARDS,SAO_BY_ID,saoDeckIssues} from './sao-cards.mjs';
 import {SOLO_LEVELING_CARDS} from './solo-leveling.mjs';
 import {SOLO_ART_CREDIT,SOLO_RUGIA_SEARCH,soloArtErrorFallback} from './solo-art.mjs';
@@ -52,6 +53,7 @@ const deckMeta=safeRead(DECK_META_KEY)||{};
 let deckName=typeof deckMeta.name==='string'?deckMeta.name.slice(0,40):(PRESETS.find(p=>sameCounts(p.counts,deck))?.name||'自訂 BLEACH 牌組');
 let selectedDeckId=savedDecks.some(d=>d.id===deckMeta.savedId)?deckMeta.savedId:null;
 const ui={ttgSelected:null,ttgKind:'all',ttgVisible:90,ttg012:{discardUids:[],mode:'readyAP',apUid:null,targetUid:null},ttg012Search:{takeUid:null,orderUids:[]},soloSelected:null,saoSet:'all',title:'bleach',view:'lobby',mode:'solo',aiDifficulty:['easy','normal','hard'].includes(safeRead(AI_KEY))?safeRead(AI_KEY):'normal',first:'0',preset:[0,1].includes(deckMeta.preset)?deckMeta.preset:0,opponentSource:'preset:1',filter:'all',search:'',selected:null,line:'energy',deployment:'normal',sideTab:'card',raidFlow:null,modal:null,choiceIds:[],handoff:false,lastController:null,privatePeekOpen:false};
+ui.builderReady=false;ui.builderTab='pick';ui.builderType='all';ui.builderColor='all';ui.builderEnergy='all';
 if(deckMeta.opponentSource==='current'||/^preset:[01]$/.test(deckMeta.opponentSource||'')||savedDecks.some(d=>'saved:'+d.id===deckMeta.opponentSource))ui.opponentSource=deckMeta.opponentSource;
 let botTimer=null,toastTimer=null;
 function safeRead(k){try{return JSON.parse(localStorage.getItem(k)||'null');}catch{return null;}}
@@ -127,7 +129,25 @@ function lobby(){
   const currentPreset=PRESETS[ui.preset];const custom=!sameCounts(deck,currentPreset.counts);
  return `<section class="lobbyIntro"><h1>BLEACH <span>ARENA</span></h1><p>構築牌組，開始你的 UNION ARENA 對局。</p><p class="introMeta">第一～三彈／卡冊／書卡／高級預組 · ${CARDS.length} 種卡片</p>${game&&game.status!=='finished'?'<button class="btn resumeMatch" data-view="arena">繼續上次對局 →</button>':''}</section><div class="lobbySetup"><section class="panel" aria-label="UNION ARENA V2 官方規則測試入口" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;padding:18px 20px;margin-bottom:18px;border:1px solid #c8d7d3;background:#f3faf6"><div style="min-width:220px;flex:1"><strong style="font-size:17px;color:#24634a">UNION ARENA V2 · 新版對戰測試</strong><p style="margin:5px 0 0;color:#495f57;font-size:13px">BLEACH「我拒絕」藍色 ×「白劍」綠色，原始 50 張牌組、官方 FAQ 規則測試。舊版對戰功能仍保留。</p></div><a class="btn primary" href="/universal-v2-preview.html" style="display:inline-flex;align-items:center;justify-content:center;min-height:42px;white-space:nowrap;text-decoration:none">進入 V2 測試對戰 →</a></section><div class="sectionTitle"><h2>準備對局</h2><span>50 張牌組 · 7 張起始生命</span></div><div class="lobbyGrid"><section class="panel"><div class="sectionTitle"><h2 style="font-size:14px">對戰模式</h2></div><div class="modeCards">${[['solo','電腦練習','隨時開局，熟悉牌組節奏'],['hotseat','同裝置雙人','輪流操作，切換時隱藏手牌']].map(([v,n,d])=>`<button class="modeCard ${ui.mode===v?'selected':''}" data-mode="${v}" aria-pressed="${ui.mode===v}"><span class="check"></span><b>${n}</b><small>${d}</small></button>`).join('')}</div>${ui.mode==='solo'?`<label class="setupRow"><span>電腦難度</span><select id="aiDifficultySelect" aria-label="選擇電腦難度"><option value="easy" ${ui.aiDifficulty==='easy'?'selected':''}>簡單 · 原版 AI</option><option value="normal" ${ui.aiDifficulty==='normal'?'selected':''}>普通 · 局面評估</option><option value="hard" ${ui.aiDifficulty==='hard'?'selected':''}>困難 · 多步搜尋</option></select></label>`:''}<label class="setupRow"><span>先後手</span><select id="firstSelect"><option value="0" ${ui.first==='0'?'selected':''}>${ui.mode==='solo'?'你':'玩家一'}先攻</option><option value="1" ${ui.first==='1'?'selected':''}>${ui.mode==='solo'?'練習對手':'玩家二'}先攻</option><option value="random" ${ui.first==='random'?'selected':''}>隨機決定</option></select></label><label class="setupRow"><span>${ui.mode==='solo'?'練習對手牌組':'玩家二牌組'}</span><select id="opponentDeckSelect" aria-label="選擇對手牌組">${deckOptions(ui.opponentSource)}</select></label><button class="btn primary startMatch" data-action="start">${ui.mode==='solo'?'開始練習':'開始雙人對戰'} →</button><p class="note">兩種模式皆自動結算規則。目前提供單機與同裝置對戰。</p></section><section class="panel"><div class="sectionTitle"><h2 style="font-size:14px">使用牌組</h2><button class="subtleButton" data-view="builder">編輯 →</button></div><div class="deckChoice"><img class="deckThumb" src="assets/cards/${ui.preset===0?'104':'105'}.png" alt="${ui.preset===0?'黑崎一護':'阿散井戀次'}"><div><b>${esc(deckName||'未命名牌組')}</b><p>${custom?'使用你在牌組構築頁設定的卡片。':currentPreset.description}</p><select id="playerDeckSelect" aria-label="選擇你的牌組">${deckOptions()}</select></div></div><div class="deckStats"><div><b>${total()}</b><span>牌組張數</span></div><div><b>${Object.values(deck).filter(Boolean).length}</b><span>使用卡種</span></div><div><b>7</b><span>起始生命</span></div></div>${supportNote(deck)}<p class="note">可選預設或已儲存的牌組。你的編輯草稿會保存在此瀏覽器。</p></section></div></div>`;
 }
+
+function visualDeckLibrary(){
+ const optionsByTitle={
+  bleach:{counts:deck,name:deckName,nameId:'deckName',savedId:'deckSourceSelect',savedOptions:[...PRESETS.map((d,i)=>({value:'preset:'+i,label:'預設：'+d.name})),...savedDecks.map(d=>({value:'saved:'+d.id,label:d.name}))],saveAction:'saveDeck',newAction:'newDeck',issues:validateDeck(deck)},
+  'gurren-lagann':{counts:ttgDeck,name:ttgName,nameId:'ttgDeckName',savedId:'ttgSavedSelect',savedOptions:ttgSaved.map((d,i)=>({value:String(i),label:d.name})),saveAction:'ttgSave',newAction:'ttgNew',issues:ttgDeckIssues(ttgDeck)},
+  'sword-art-online':{counts:saoDeck,name:saoName,nameId:'saoDeckName',savedId:'saoSavedSelect',savedOptions:saoSaved.map((d,i)=>({value:String(i),label:d.name})),saveAction:'saoSave',newAction:'saoNew',issues:saoDeckIssues(saoDeck)},
+  'solo-leveling':{counts:soloDeck,name:soloName,nameId:'soloDeckName',savedId:'soloSavedSelect',savedOptions:soloSaved.map((d,i)=>({value:String(i),label:d.name})),saveAction:'soloSave',newAction:'soloNew',issues:soloDeckIssues(soloDeck)},
+  'mushoku-tensei':{counts:mstDeck,name:mstName,nameId:'mstDeckName',savedId:'mstSavedSelect',savedOptions:mstSaved.map((d,i)=>({value:String(i),label:d.name})),saveAction:'mstSave',newAction:'mstNew',issues:mstDeckIssues(mstDeck)}
+ };
+ const data=optionsByTitle[ui.title]||optionsByTitle.bleach;
+ return renderVisualDeckBuilder({
+  titles:TITLES,titleId:ui.title,ready:ui.builderReady,tab:ui.builderTab,
+  search:ui.search,type:ui.builderType,color:ui.builderColor,energy:ui.builderEnergy,
+  ...data
+ });
+}
+
 function library(){
+ if(ui.view==='builder'&&PUBLIC_EDITOR_ONLY)return visualDeckLibrary();
  if(ui.title==='gurren-lagann')return ttgLibrary();
  if(ui.title==='sword-art-online')return saoLibrary();
  if(ui.title==='solo-leveling')return soloLibrary();
@@ -255,7 +275,8 @@ function modalContent(){
  if(m.type==='pile'){const pl=game.players[m.p],cards=pl[m.pile];title=`${pl.name}的${m.pile==='outside'?'場外':'除外'}區 · ${cards.length} 張`;body=cards.length?`<div class="publicCards">${cards.map(c=>`<button data-inspect="${c.cardId}"><img src="${cardOf(c).onlineImage||cardOf(c).image}" onerror="this.onerror=null;this.src='${cardOf(c).image}'" alt="${cardOf(c).name}">${cardOf(c).name}<br>${c.cardId}</button>`).join('')}</div>`:'<p>這個區域目前沒有卡片。</p>';}
  if(m.type==='triggerHistory'){title='公開生命翻牌紀錄（最近 60 次）';const items=publicTriggerEntries().reverse();body=items.length?`<div class="publicTriggerHistory">${items.map(publicTriggerCard).join('')}</div>`:'<p class="note">尚無生命卡翻開。</p>';}
  if(m.type==='log'){title='對局紀錄';body=logList();}
- if(m.type==='deckCode'){title='匯入／複製牌組';body=`<p>每行使用「張數 卡號」，例如 <code>4 UA08ST/BLC-1-104</code>。也接受 BLC 完整卡號或 JSON；原 UA08ST 牌組的三位卡號仍可匯入。匯入清單須正好 50 張，且每卡最多 4 張。</p><textarea class="deckCode" id="deckCode" aria-label="牌組代碼">${esc(formatDeck(deck,deckName))}</textarea>`;actions='<button class="btn" data-action="copyDeck">複製清單</button><button class="btn primary" data-action="importDeck">匯入牌組</button>'; }
+ if(m.type==='visualExport'){title='複製牌組清單';body=`<p class="note">以下清單包含你目前選擇的卡號及張數。</p><textarea class="deckCode" id="deckCode" aria-label="牌組清單">${esc(m.text)}</textarea>`;actions='<button class="btn primary" data-action="copyDeck">複製清單</button>';}
+  if(m.type==='deckCode'){title='匯入／複製牌組';body=`<p>每行使用「張數 卡號」，例如 <code>4 UA08ST/BLC-1-104</code>。也接受 BLC 完整卡號或 JSON；原 UA08ST 牌組的三位卡號仍可匯入。匯入清單須正好 50 張，且每卡最多 4 張。</p><textarea class="deckCode" id="deckCode" aria-label="牌組代碼">${esc(formatDeck(deck,deckName))}</textarea>`;actions='<button class="btn" data-action="copyDeck">複製清單</button><button class="btn primary" data-action="importDeck">匯入牌組</button>'; }
  if(m.type==='newMatch'){title='開始新的對局';body='<p>目前的對局會被新對局取代。使用現在的牌組與先後手設定。</p>';actions='<button class="btn" data-action="closeModal">保留目前對局</button><button class="btn primary" data-action="start">開始新對局</button>';}
  return `<div class="modalBackdrop"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="modalHead"><h2 id="modalTitle">${title}</h2><button class="closeButton" data-action="closeModal" aria-label="關閉視窗">×</button></div>${body}${actions?`<div class="modalActions">${actions}</div>`:''}</section></div>`;
 }
@@ -481,7 +502,30 @@ function bind(){
    // Historic editors may retain saved decks, but never start legacy / independent Beta battles.
    if(PUBLIC_EDITOR_ONLY&&['start','soloTrainingStartShadow','soloTrainingStartCustom','soloTrainingStart','ttgBetaStartGreen','ttgBetaStartRed','ttgBetaStartDeck'].includes(el.dataset.action)){window.location.assign('/');return;}
   if(el.dataset.view){chooseView(el.dataset.view);return;}
-  if(el.dataset.title){ui.title=el.dataset.title;ui.set='all';ui.color='all';ui.search='';ui.selected=null;render();return;}
+  if(el.dataset.title){ui.title=el.dataset.title;ui.set='all';ui.color='all';ui.search='';ui.selected=null;if(ui.view==='builder'){ui.builderReady=true;ui.builderTab='pick';ui.builderType='all';ui.builderColor='all';ui.builderEnergy='all';}render();return;}
+   if(ui.view==='builder'&&PUBLIC_EDITOR_ONLY){
+    if(el.dataset.builderReselect!==undefined){ui.builderReady=false;ui.search='';render();return;}
+    if(el.dataset.builderTab){ui.builderTab=el.dataset.builderTab;render();return;}
+    if(el.dataset.builderType){ui.builderType=el.dataset.builderType;render();return;}
+    if(el.dataset.builderColor){ui.builderColor=el.dataset.builderColor;render();return;}
+    if(el.dataset.builderEnergy){ui.builderEnergy=el.dataset.builderEnergy;render();return;}
+    if(el.dataset.builderClear!==undefined){ui.builderType='all';ui.builderColor='all';ui.builderEnergy='all';ui.search='';render();return;}
+    if(el.dataset.builderCount){
+     const c=TITLES.find(t=>t.id===ui.title)?.cards.find(c=>c.id===el.dataset.builderCount);
+     if(!c||['ap','action-point','action_point'].includes(c.type)||(ui.title==='mushoku-tensei'&&!c.verified))return;
+     const counts=ui.title==='bleach'?deck:ui.title==='gurren-lagann'?ttgDeck:ui.title==='sword-art-online'?saoDeck:ui.title==='solo-leveling'?soloDeck:mstDeck;
+     const delta=Number(el.dataset.delta);
+     if(![-1,1].includes(delta))return;
+     if(delta>0&&Object.values(counts).reduce((n,x)=>n+(Number(x)||0),0)>=50){toast('牌組最多 50 張，請先移除其他卡片。');return;}
+     counts[c.id]=Math.max(0,Math.min(c.maxCopies||4,(counts[c.id]||0)+delta));
+     if(ui.title==='bleach')persistDraft();
+     else if(ui.title==='gurren-lagann')persistTtg();
+     else if(ui.title==='sword-art-online')save(SAO_DRAFT_KEY,saoDeck);
+     else if(ui.title==='solo-leveling')persistSolo();
+     else persistMst();
+     render();return;
+    }
+   }
   if(el.dataset.ttg012Take!==undefined&&ui.view==='ttgArena'&&ttgGame?.pending?.kind==='green012Search'){ui.ttg012Search.takeUid=el.dataset.ttg012Take||null;ui.ttg012Search.orderUids=[];render();return;}
   if((el.dataset.ttg012Up!==undefined||el.dataset.ttg012Down!==undefined)&&ui.view==='ttgArena'&&ttgGame?.pending?.kind==='green012Search'){
    const rule=matchLegalActions('gurren-lagann',ttgGame,{templates:true}).find(a=>a.type==='green012Search');
@@ -544,6 +588,13 @@ function bind(){
    case 'newDeck':deck=emptyDeck();deckName='新的 BLEACH 牌組';selectedDeckId=null;persistDraft();render();break;
    case 'saveDeck':case 'copySavedDeck':try{saveCurrentDeck(el.dataset.action==='copySavedDeck');}catch(e){toast(e.message);}break;
    case 'deckCode':ui.modal={type:'deckCode'};render();break;
+    case 'visualExport':{
+     const t=TITLES.find(t=>t.id===ui.title)||TITLES[0];
+     const counts=ui.title==='bleach'?deck:ui.title==='gurren-lagann'?ttgDeck:ui.title==='sword-art-online'?saoDeck:ui.title==='solo-leveling'?soloDeck:mstDeck;
+     const name=ui.title==='bleach'?deckName:ui.title==='gurren-lagann'?ttgName:ui.title==='sword-art-online'?saoName:ui.title==='solo-leveling'?soloName:mstName;
+     const list=t.cards.filter(c=>counts[c.id]>0).map(c=>String(counts[c.id])+'x'+(c.number||c.id));
+     ui.modal={type:'visualExport',text:'# '+name+'\n'+list.join('\n')};render();break;
+    }
    case 'copyDeck':{const t=$('#deckCode');if(navigator.clipboard?.writeText)navigator.clipboard.writeText(t.value).then(()=>toast('牌組清單已複製。')).catch(()=>{t.select();toast('已選取清單，可以手動複製。');});else{t.select();toast('已選取清單，可以手動複製。');}break;}
    case 'importDeck':{try{const parsed=parseDeck($('#deckCode').value);deck=parsed.counts;if(parsed.name)deckName=parsed.name;selectedDeckId=null;persistDraft();ui.modal=null;ui.view='builder';render();toast('牌組已匯入，可以命名儲存。');}catch(e){toast(e.message||'清單格式不正確。');}break;}
    case 'handoff':ui.handoff=false;ui.privatePeekOpen=false;render();break;
