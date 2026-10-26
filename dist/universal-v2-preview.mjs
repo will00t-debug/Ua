@@ -689,7 +689,7 @@ function importSavedLobbyDecks(){
   for(const side of ['my-title','ai-title']){
    const title=side==='my-title'?'我的收藏｜':'收藏牌組｜';
    $(side).append(el('option',{
-    value:row.key,disabled:!row.ready,
+    value:row.key,disabled:row.ready?null:true,
     text:title+row.name+(row.ready?'':'（V2 尚未完整支援）')
    }));
   }
