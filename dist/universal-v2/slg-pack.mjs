@@ -735,7 +735,7 @@ const authored=[
   "effects":{"onPlay":[{"op":"oncePerTurnGate","scope":"name","optional":false,
     "when":{"kind":"ownCardTraitCount","turn":"any","min":5,"zone":"field",
      "excludeSelf":false,"trait":"第四次架南島レイド"},
-    "then":[{"op":"activeSelf"},{"op":"grantSelfAttackSkipThisTurn"}]}]}
+    "then":[{"op":"activeSelf"},{"op":"grantSelfSkipNextActive"}]}]}
 },
 {
   "id":"SLG-1-003","name":"朝比奈 りん","color":"purple","energy":2,

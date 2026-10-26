@@ -502,6 +502,7 @@ function verifyProgram(program,path){
     e.then.some(x=>!['draw','millTop','peekTopOne','enemyBpDown',
      'restOppFrontUnderBp','restOppFrontOne','buffOwnField','searchDeckOne',
      'recoverOutsideOne','buffSelf','activeSelf','grantSelfAttackSkipThisTurn',
+     'grantSelfSkipNextActive',
      'optionalPayApThen','deployOwnHandRestOrRaid','discardGate','ifLiveThen'].includes(x?.op)))
     throw Error(path+'['+i+'] invalid once-per-turn gate');
    verifyProgram(e.then,path+'['+i+'].then');

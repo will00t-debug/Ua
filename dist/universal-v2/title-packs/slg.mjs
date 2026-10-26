@@ -136,7 +136,8 @@ export default Object.freeze({
      ...(['SLG-1-024','SLG-1-067','SLG-1-057','SLG-1-003','SLG-1-039','SLG-1-077','SLG-1-019','SLG-1-060'].includes(def.id)?['tests/v2-slg-next-eight-shared.test.mjs']:[]),
      ...(['SLG-1-033','SLG-1-029','SLG-1-031','SLG-1-011','SLG-1-044','SLG-1-059','SLG-1-061','SLG-1-020'].includes(def.id)?['tests/v2-slg-third-eight-shared.test.mjs']:[]),
      ...(['SLG-1-047','SLG-1-048','SLG-1-049','SLG-1-051'].includes(def.id)?['tests/v2-slg-chain-raid-shared.test.mjs']:[]),
-     ...(['SLG-1-022','SLG-1-034','SLG-1-058','SLG-1-064','SLG-1-073','SLG-1-075'].includes(def.id)?['tests/v2-slg-final-shared.test.mjs']:[]),],
+     ...(['SLG-1-022','SLG-1-034','SLG-1-058','SLG-1-064','SLG-1-073','SLG-1-075'].includes(def.id)?['tests/v2-slg-final-shared.test.mjs']:[]),
+     ...(['SLG-1-019','SLG-1-020','SLG-1-029','SLG-1-031','SLG-1-033','SLG-1-035','SLG-1-044','SLG-1-047','SLG-1-057','SLG-1-058','SLG-1-059','SLG-1-060','SLG-1-064'].includes(def.id)?['tests/v2-slg-official-faq.test.mjs']:[]),],
     ...(def.implementation==='vanilla'?{verifiedNoExtraEffects:true}:{})}
   });
  }))
