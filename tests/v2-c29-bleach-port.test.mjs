@@ -202,9 +202,12 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 // BLC-2-045 EX07BT: must retire one own 涅骸部隊 character. Success draws 1,
 //   then up to two affordable blue AP-1 涅 ネム or 涅骸部隊 characters
 //   enter ACTIVE from outside. SPECIAL retires one opposing front.
+// BLC-1-061 UA08BT: this field enters ACTIVE. REST it, look at the top
+//   card. Squad Zero may be revealed to hand. Q566 (2023-09-25) allows
+//   refusing that add. Otherwise the card returns to the top or outside.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -275,12 +278,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers sixty-seven whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,503);
- assert.equal(EXPECTED_V2_COUNTS.bleach,227);
+test('C29 registers sixty-eight whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,504);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,228);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,227);
+ assert.equal(Object.keys(bleach.cards).length,228);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -6268,6 +6271,99 @@ test('BLC-2-045 must retire one Nem squad character, draws, then may ACTIVE two 
  assert.equal(assertUniversalMatch(live.packs,skipped),true);
  assert.equal(assertUniversalMatch(live.packs,naming),true);
  assert.equal(assertUniversalMatch(blocked.packs,blocked.s),true);
+});
+
+test('BLC-1-061 enters ACTIVE, rests, and may reveal only a Squad Zero top card',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-1-061');
+ assert.equal(printed.effect,'此場域以 ACTIVE 登場。主要階段：REST 此場域，查看己方牌堆頂 1 張；若具有「零番隊」特徵，可公開並加入手牌；若未加入手牌，將其放回牌堆頂或送至場外。');
+ assert.equal(printed.nameJa,'霊王宮');
+ assert.equal(printed.number,'UA08BT/BLC-1-061');
+ assert.equal(printed.type,'field');
+ assert.equal(printed.trigger,'get');
+ assert.equal(printed.energy,2);
+ assert.equal(printed.gen,1);
+ assert.equal(printed.color,'purple');
+ const card=bleach.cards['BLC-1-061'];
+ assert.equal(card.enterAlwaysActive,true);
+ assert.equal(card.triggerEffect,null);
+ assert.deepEqual(card.mainAbility,{op:'restSelfTopTraitHand',trait:'零番隊'});
+ assert.equal(cardHasTrait(bleach.cards['BLC-1-057'],'零番隊'),true);
+ assert.equal(cardHasTrait(bleach.cards['BLC-1-062'],'零番隊'),false);
+ assert.equal(V2_PENDING_LABELS['effect-top-trait-hand'],'查看牌頂，符合特徵可加入手牌，否則放回牌頂或場外');
+ const deck=realDeck(['BLC-1-061','BLC-1-057','BLC-2-056','BLC-2-059','BLC-1-062'],'purple');
+ const opened=main(deck,30901);
+ put(opened.s,0,'BLC-2-056','energy',0);
+ put(opened.s,0,'BLC-2-059','energy',1);
+ const palace=take(opened.s,0,'BLC-1-061');
+ opened.s.players[0].hand.push(palace);
+ assert.equal(universalEnergyByColor(opened.packs,opened.s,0).purple,2);
+ const play=legalUniversalActions(opened.packs,opened.s).find(a=>a.type==='play'&&a.uid===palace.uid&&a.line==='energy');
+ let s=dispatchUniversalAction(opened.packs,opened.s,play);
+ const live=s.players[0].energy.find(c=>c?.uid===palace.uid);
+ assert.equal(live.ready,true);
+ assert.equal(legalUniversalActions(opened.packs,s).some(a=>a.type==='play'&&a.line==='front'&&a.uid===palace.uid),false);
+ const zero=setTop(s,0,['BLC-1-057'])[0];
+ const act=legalUniversalActions(opened.packs,s).find(a=>a.type==='activate'&&a.uid===palace.uid&&a.mode==='restTopTraitHand');
+ s=dispatchUniversalAction(opened.packs,s,act);
+ assert.equal(s.players[0].energy.find(c=>c?.uid===palace.uid).ready,false);
+ assert.equal(s.pending.kind,'effect-top-trait-hand');
+ assert.equal(s.pending.mayHand,true);
+ assert.equal(s.pending.uid,zero.uid);
+ assert.equal(legalUniversalActions(opened.packs,s).some(a=>a.type==='activate'),false);
+ const pub=universalPublicView(opened.packs,s,1);
+ assert.deepEqual(pub.pending,{kind:'effect-top-trait-hand',player:0});
+ assert.equal(JSON.stringify(pub.pending).includes(zero.uid),false);
+ const seen=universalPrivateChoices(opened.packs,s,0);
+ assert.equal(seen.options.some(o=>o.card?.cardId==='BLC-1-057'&&o.action.mode==='hand'),true);
+ assert.equal(universalPrivateChoices(opened.packs,s,1),null);
+ const modes=legalUniversalActions(opened.packs,s).filter(a=>a.type==='chooseTopTraitHand').map(a=>a.mode).sort();
+ assert.deepEqual(modes,['hand','outside','top']);
+ const refused=dispatchUniversalAction(opened.packs,structuredClone(s),{type:'chooseTopTraitHand',mode:'top'});
+ assert.equal(refused.pending,null);
+ assert.equal(refused.players[0].deck[0].uid,zero.uid);
+ assert.equal(refused.publicReveals.some(r=>r.uid===zero.uid),false);
+ const revealed=dispatchUniversalAction(opened.packs,structuredClone(s),{type:'chooseTopTraitHand',mode:'hand'});
+ assert.equal(revealed.players[0].hand.some(c=>c.uid===zero.uid),true);
+ assert.equal(revealed.publicReveals.some(r=>r.kind==='searched-to-hand'&&r.uid===zero.uid),true);
+ const sent=dispatchUniversalAction(opened.packs,s,{type:'chooseTopTraitHand',mode:'outside'});
+ assert.equal(sent.players[0].outside.some(c=>c.uid===zero.uid),true);
+ assert.equal(sent.publicReveals.some(r=>r.uid===zero.uid),false);
+ const other=setTop(sent,0,['BLC-1-062'])[0];
+ sent.players[0].energy.find(c=>c?.uid===palace.uid).ready=true;
+ assert.equal(sent.mainAbilityUsedUids.includes(palace.uid),false);
+ const again=legalUniversalActions(opened.packs,sent).find(a=>a.type==='activate'&&a.uid===palace.uid);
+ let plain=dispatchUniversalAction(opened.packs,sent,again);
+ assert.equal(plain.pending.mayHand,false);
+ assert.equal(legalUniversalActions(opened.packs,plain).some(a=>a.mode==='hand'),false);
+ plain=dispatchUniversalAction(opened.packs,plain,{type:'chooseTopTraitHand',mode:'top'});
+ assert.equal(plain.players[0].deck[0].uid,other.uid);
+ const dry=main(deck,30902);
+ put(dry.s,0,'BLC-2-056','energy',0);
+ put(dry.s,0,'BLC-2-059','energy',1);
+ const bare=take(dry.s,0,'BLC-1-061');
+ dry.s.players[0].hand.push(bare);
+ let empty=dispatchUniversalAction(dry.packs,dry.s,legalUniversalActions(dry.packs,dry.s).find(a=>a.type==='play'&&a.uid===bare.uid&&a.line==='energy'));
+ empty.players[0].outside.push(...empty.players[0].deck.splice(0));
+ empty=dispatchUniversalAction(dry.packs,empty,legalUniversalActions(dry.packs,empty).find(a=>a.type==='activate'&&a.uid===bare.uid));
+ assert.equal(empty.pending,null);
+ assert.equal(empty.players[0].energy.find(c=>c?.uid===bare.uid).ready,false);
+ const quiet=main(deck,30903);
+ put(quiet.s,0,'BLC-2-056','energy',0);
+ put(quiet.s,0,'BLC-2-059','energy',1);
+ const hushed=take(quiet.s,0,'BLC-1-061');
+ quiet.s.players[0].hand.push(hushed);
+ const foe=put(quiet.s,1,'BLC-1-057','front',0,true);
+ let silenced=dispatchUniversalAction(quiet.packs,quiet.s,legalUniversalActions(quiet.packs,quiet.s).find(a=>a.type==='play'&&a.uid===hushed.uid&&a.line==='energy'));
+ grantContinuousState(silenced,{kind:'originalEffectsDisabled',controller:1,sourceUid:foe.uid,
+  targetUid:hushed.uid,until:{player:0,phase:'main',edge:'end'}});
+ assert.equal(legalUniversalActions(quiet.packs,silenced).some(a=>a.type==='activate'&&a.uid===hushed.uid),false);
+ aiOk(opened.packs,s);
+ assert.equal(assertUniversalMatch(opened.packs,refused),true);
+ assert.equal(assertUniversalMatch(opened.packs,revealed),true);
+ assert.equal(assertUniversalMatch(opened.packs,sent),true);
+ assert.equal(assertUniversalMatch(opened.packs,plain),true);
+ assert.equal(assertUniversalMatch(dry.packs,empty),true);
+ assert.equal(assertUniversalMatch(quiet.packs,silenced),true);
 });
 
 function fieldCount(s,p){

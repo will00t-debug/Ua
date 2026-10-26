@@ -62,6 +62,9 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   return difficulty==='easy'?legal.find(a=>a.uid===null)||legal[0]:
    legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='private-top-place')return legal[0];
+ if(s.pending?.kind==='effect-top-trait-hand')
+  return difficulty==='easy'?legal.find(a=>a.mode==='top')||legal[0]:
+   legal.find(a=>a.mode==='hand')||legal.find(a=>a.mode==='top')||legal[0];
  if(s.pending?.kind==='effect-top-inspect-many')return legal.find(x=>x.uid===null)||legal[0];
  if(s.pending?.kind==='effect-top-filter-choice')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-top-trait-outside')

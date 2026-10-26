@@ -154,7 +154,8 @@ const testForKind=Object.freeze({
  bambiesPerBp:'tests/v2-c29-bleach-port.test.mjs',
  kenpachiEnergyFront:'tests/v2-c29-bleach-port.test.mjs',
  mayuriTraitRetire:'tests/v2-c29-bleach-port.test.mjs',
- nemSquadActivePair:'tests/v2-c29-bleach-port.test.mjs'
+ nemSquadActivePair:'tests/v2-c29-bleach-port.test.mjs',
+ soulPalaceTop:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -173,7 +174,9 @@ function contributedEntry(profile){
   definition:Object.freeze(definition),
   evidence:Object.freeze({
    printedTextFragments:Object.freeze([profile.effect]),
-   reviewNote:profile.id==='BLC-2-045'?
+   reviewNote:profile.id==='BLC-1-061'?
+    'UA08BT/BLC-1-061 official iframe 2026-10-26. This field enters ACTIVE. Main: REST this field, look at the top card of your deck. If it has trait 零番隊, you may reveal it and add it to hand. Q566 (2023-09-25): はい、できます — even a Squad Zero card may be refused. A card that is not added returns to the top or goes outside, without a reveal. No Squad Zero trait cannot be added. The REST is the only use limit; becoming ACTIVE again allows another use. GET is generic. Generated energy is 紫.':
+   profile.id==='BLC-2-045'?
     'EX07BT/BLC-2-045 official iframe 2026-10-26. Mandatory: retire one own field character with trait 涅骸部隊. Zero legal characters makes the event unplayable. On success, draw 1, then up to two own outside characters may enter ACTIVE on front or energy. Each must be blue, printed AP 1, have its required energy satisfied, and be named 涅 ネム or have trait 涅骸部隊. The just-retired character is outside and can be chosen. Declining a deployment stops the rest. A field is not a character. An audited alias of 涅 ネム counts while the card is outside. SPECIAL retires one opposing front character. Generated energy is none. No card FAQ.':
    profile.id==='BLC-2-037'?
     'EX07BT/BLC-2-037 official iframe 2026-10-26. On play, you may retire one own field character with trait 涅骸部隊. If that retirement happens, you may retire one opposing front character whose live BP is at most that character\'s live BP, then draw 1. Declining the own retirement stops the rest. Declining the opposing retirement still draws. A field with the trait is not a character. Silence does not remove the trait. The printed composites 破面／涅骸部隊 and 護廷十三隊／涅骸部隊 are audited trait components, so each token counts. Generated energy is 青. No trigger. No card FAQ.':
