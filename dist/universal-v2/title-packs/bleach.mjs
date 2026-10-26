@@ -148,7 +148,8 @@ const testForKind=Object.freeze({
  raidOrNameRetire:'tests/v2-c29-bleach-port.test.mjs',
  frontRestOrSkipDraw:'tests/v2-c29-bleach-port.test.mjs',
  frontRestSkipOrRetire:'tests/v2-c29-bleach-port.test.mjs',
- handApWhileByakuya:'tests/v2-c29-bleach-port.test.mjs'
+ handApWhileByakuya:'tests/v2-c29-bleach-port.test.mjs',
+ bazzBurnRetire:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -167,7 +168,9 @@ function contributedEntry(profile){
   definition:Object.freeze(definition),
   evidence:Object.freeze({
    printedTextFragments:Object.freeze([profile.effect]),
-   reviewNote:profile.id==='BLC-1-065'?
+   reviewNote:profile.id==='BLC-4-021'?
+    'EX15BT/BLC-4-021 official iframe 2026-10-26. Playable only while own field has バズビー. An alias counts; silence removes the alias and keeps a printed name. Choose one opposing front character of live BP 5000 or less and retire it. The choice is mandatory. When own field has a バズビー whose printed required energy is 5 or more, up to one own バズビー, including one below that energy, gets BP+1000 this turn. The gate reads printed energy, not generated energy. Silence does not remove the printed name or that number. No ported Bazz-B has printed energy 5. SPECIAL retires one opposing front character. No generated energy. No card FAQ.':
+   profile.id==='BLC-1-065'?
     'UA08BT/BLC-1-065 official iframe 2026-10-26. While own field has 朽木 白哉, this hand card costs 1 less AP. The reduction is once, not once per copy, and a silenced Byakuya still counts because the printed name remains. Then up to one opposing front character gets BP-3000 this turn, and up to one opposing front character gets BP-1000. Q567 (2023-09-25): the two choices may be the same character or two different characters. Declining either choice is legal. SPECIAL retires one opposing front character. No generated energy.':
    profile.id==='BLC-1-096'?
     'UA08BT/BLC-1-096 official iframe 2026-10-26. Choose one opposing front character of live BP 5000 or less, REST it, and skip its next ACTIVE. Q573 (2023-09-25) uses the same skip ruling as Q554. Own field 日番谷 冬獅郎 replaces that resolution with retirement of the same BP-capped character. The choice is mandatory when a legal target exists. SPECIAL retires one opposing front character. No generated energy. No draw.':

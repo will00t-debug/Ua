@@ -182,9 +182,13 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 //   1 less AP. Then up to one opposing front character gets BP-3000,
 //   and up to one gets BP-1000. Q567 (2023-09-25): same or different
 //   characters are both legal. SPECIAL retires one front character.
+// BLC-4-021 EX15BT: playable only while own field has バズビー.
+//   Retire one opposing front character of BP 5000 or less. Mandatory.
+//   A バズビー of printed energy 5+ may then give up to one own
+//   バズビー BP+1000. Printed energy, not generated energy. No card FAQ.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -255,12 +259,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers sixty-one whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,497);
- assert.equal(EXPECTED_V2_COUNTS.bleach,221);
+test('C29 registers sixty-two whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,498);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,222);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,221);
+ assert.equal(Object.keys(bleach.cards).length,222);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -5327,4 +5331,201 @@ test('BLC-1-065 reduces its hand AP while Byakuya is on the field, then cuts BP 
  assert.equal(assertUniversalMatch(split.packs,branched),true);
  assert.equal(assertUniversalMatch(split.packs,split.s),true);
  assert.equal(assertUniversalMatch(absent.packs,paid),true);
+});
+
+test('BLC-4-021 retires BP 5000 or less only while Bazz-B is present, and buffs only at printed energy 5',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-4-021');
+ assert.equal(printed.effect,'僅在自己場上有《巴茲比》時可使用。選1個對方前線BP5000以下的角色使其退場；若自己場上有至少1個所需能量5以上的《巴茲比》，可再最多選自己的1個《巴茲比》，本回合BP+1000。');
+ assert.equal(printed.nameJa,'バーニング・フル・フィンガーズ');
+ assert.equal(printed.number,'EX15BT/BLC-4-021');
+ assert.deepEqual(printed.traits,[]);
+ assert.equal(printed.type,'event');
+ assert.equal(printed.energy,4);
+ assert.equal(printed.ap,1);
+ assert.equal(printed.gen,0);
+ assert.equal(printed.trigger,'special');
+ assert.equal(printed.color,'yellow');
+ const card=bleach.cards['BLC-4-021'];
+ assert.equal(card.name,'バーニング・フル・フィンガーズ');
+ assert.equal(card.playRequiresOwnName,'バズビー');
+ assert.deepEqual(card.triggerEffect,{op:'retireOppFront'});
+ assert.deepEqual(card.traits,[]);
+ assert.deepEqual(card.effects.onPlay,[
+  {op:'retireOppFrontUnderBp',bp:5000,optional:false},
+  {op:'buffOwnNameIfPrintedEnergy',name:'バズビー',minEnergy:5,bp:1000}
+ ]);
+ assert.equal(bleach.cards['BLC-2-003'].name,'バズビー');
+ assert.equal(bleach.cards['BLC-2-003'].energy,2);
+ assert.equal(bleach.cards['BLC-4-006'].name,'バズビー');
+ assert.equal(bleach.cards['BLC-4-006'].energy,3);
+ assert.equal(bleach.cards['BLC-4-006'].gen,2);
+ assert.equal(bleach.cards['BLC-4-001'].nameAliases.includes('バズビー'),true);
+ const evt={id:'BAD',name:'指',color:'yellow',type:'event',energy:0,ap:1,bp:0,gen:0,traits:[],trigger:'special',implementation:'dsl',playRequiresOwnName:'バズビー',triggerEffect:{op:'retireOppFront'},effects:{onPlay:[{op:'draw',count:1}]}};
+ assert.throws(()=>createUniversalPack({id:'bad-burn-energy',cards:[{...evt,effects:{onPlay:[{op:'buffOwnNameIfPrintedEnergy',name:'バズビー',minEnergy:0,bp:1000}]}}]}),/invalid printed-energy name buff/);
+ assert.throws(()=>createUniversalPack({id:'bad-burn-opt',cards:[{...evt,effects:{onPlay:[{op:'retireOppFrontUnderBp',bp:5000,optional:true}]}}]}),/unsupported printed BP retirement profile/);
+ const deck=realDeck(['BLC-4-021','BLC-2-003','BLC-4-006','BLC-4-001','BLC-1-001','BLC-1-012','BLC-1-018','BLC-4-009','BLC-1-007','BLC-1-006'],'yellow');
+ const playable=(packs,s,uid)=>legalUniversalActions(packs,s).some(a=>a.type==='event'&&a.uid===uid);
+ function hold(s){
+  const event=take(s,0,'BLC-4-021');
+  s.players[0].hand.push(event);
+  return event;
+ }
+ const low=main(deck,30611);
+ put(low.s,0,'BLC-4-006','energy',0);
+ put(low.s,0,'BLC-2-003','energy',1);
+ put(low.s,0,'BLC-1-001','energy',2);
+ const event=hold(low.s);
+ assert.equal(universalEnergyByColor(low.packs,low.s,0).yellow,4);
+ const legalFoe=put(low.s,1,'BLC-1-007','front',0,true);
+ const tall=put(low.s,1,'BLC-1-006','front',1,true);
+ tall.buffs.push({bp:2000,untilTurn:low.s.turn});
+ assert.equal(universalBp(low.packs,low.s,legalFoe),3000);
+ assert.equal(universalBp(low.packs,low.s,tall),6000);
+ assert.equal(playable(low.packs,low.s,event.uid),true);
+ let played=dispatchUniversalAction(low.packs,low.s,{type:'event',uid:event.uid});
+ assert.equal(played.pending.kind,'effect-retire-bp');
+ assert.equal(played.pending.limit,5000);
+ assert.equal(played.pending.optional,undefined);
+ assert.equal(played.pending.choices.includes(legalFoe.uid),true);
+ assert.equal(played.pending.choices.includes(tall.uid),false);
+ assert.equal(legalUniversalActions(low.packs,played).some(a=>a.type==='chooseRetireBp'&&a.uid===null),false);
+ aiOk(low.packs,played);
+ played=dispatchUniversalAction(low.packs,played,{type:'chooseRetireBp',uid:legalFoe.uid});
+ assert.equal(played.pending,null);
+ assert.equal(played.players[1].outside.some(c=>c.uid===legalFoe.uid),true);
+ assert.equal(played.players[1].front.some(c=>c?.uid===tall.uid),true);
+ assert.equal(universalBp(low.packs,played,live(played,0,low.s.players[0].energy[0].uid)),universalBp(low.packs,low.s,low.s.players[0].energy[0]));
+ const blocked=main(deck,30612);
+ put(blocked.s,0,'BLC-4-006','energy',0);
+ put(blocked.s,0,'BLC-2-003','energy',1);
+ put(blocked.s,0,'BLC-1-001','energy',2);
+ const blockedEvent=hold(blocked.s);
+ const onlyTall=put(blocked.s,1,'BLC-1-006','front',0,true);
+ onlyTall.buffs.push({bp:2000,untilTurn:blocked.s.turn});
+ assert.equal(playable(blocked.packs,blocked.s,blockedEvent.uid),false);
+ const unnamed=main(deck,30613);
+ put(unnamed.s,0,'BLC-1-001','energy',0);
+ put(unnamed.s,0,'BLC-1-012','energy',1);
+ put(unnamed.s,0,'BLC-1-018','energy',2);
+ put(unnamed.s,0,'BLC-4-009','energy',3);
+ const unnamedEvent=hold(unnamed.s);
+ put(unnamed.s,1,'BLC-1-007','front',0,true);
+ assert.equal(universalEnergyByColor(unnamed.packs,unnamed.s,0).yellow,4);
+ assert.equal(playable(unnamed.packs,unnamed.s,unnamedEvent.uid),false);
+ const alias=main(deck,30614);
+ const aliasCard=put(alias.s,0,'BLC-4-001','front',0);
+ put(alias.s,0,'BLC-1-001','energy',0);
+ put(alias.s,0,'BLC-1-012','energy',1);
+ put(alias.s,0,'BLC-1-018','energy',2);
+ put(alias.s,0,'BLC-4-009','energy',3);
+ const aliasEvent=hold(alias.s);
+ put(alias.s,1,'BLC-1-007','front',0,true);
+ assert.equal(playable(alias.packs,alias.s,aliasEvent.uid),true);
+ const foe=alias.s.players[1].front[0];
+ grantContinuousState(alias.s,{kind:'originalEffectsDisabled',controller:1,sourceUid:foe.uid,
+  targetUid:aliasCard.uid,until:{player:0,phase:'main',edge:'end'}});
+ assert.equal(playable(alias.packs,alias.s,aliasEvent.uid),false);
+ const printedName=main(deck,30615);
+ const bazz=put(printedName.s,0,'BLC-2-003','front',0);
+ put(printedName.s,0,'BLC-1-001','energy',0);
+ put(printedName.s,0,'BLC-1-012','energy',1);
+ put(printedName.s,0,'BLC-1-018','energy',2);
+ put(printedName.s,0,'BLC-4-009','energy',3);
+ const namedEvent=hold(printedName.s);
+ const namedFoe=put(printedName.s,1,'BLC-1-007','front',0,true);
+ grantContinuousState(printedName.s,{kind:'originalEffectsDisabled',controller:1,sourceUid:namedFoe.uid,
+  targetUid:bazz.uid,until:{player:0,phase:'main',edge:'end'}});
+ assert.equal(playable(printedName.packs,printedName.s,namedEvent.uid),true);
+ const unit=(id,name,energy,bp)=>({id,name,color:'yellow',type:'character',energy,ap:1,bp,gen:1,traits:[],trigger:null,implementation:'vanilla'});
+ const fillers=Array.from({length:9},(_,i)=>unit('F'+i,'余'+i,0,1000));
+ const labEvent={id:'EVT',name:'バーニング・フル・フィンガーズ',color:'yellow',type:'event',energy:0,ap:1,bp:0,gen:0,traits:[],trigger:'special',implementation:'dsl',playRequiresOwnName:'バズビー',triggerEffect:{op:'retireOppFront'},effects:{onPlay:[
+  {op:'retireOppFrontUnderBp',bp:5000,optional:false},
+  {op:'buffOwnNameIfPrintedEnergy',name:'バズビー',minEnergy:5,bp:1000}
+ ]}};
+ const lab=createUniversalPack({id:'lab-bazz-burn',cards:[
+  labEvent,
+  unit('HIGH','バズビー',5,4000),
+  unit('LOW','バズビー',2,2000),
+  unit('FOE','相手',0,3000),
+  ...fillers
+ ]});
+ const labIds=['EVT','HIGH','LOW','FOE',...fillers.map(c=>c.id)];
+ const labCounts=Object.fromEntries(labIds.map((id,i)=>[id,i===labIds.length-1?2:4]));
+ assert.deepEqual(validateUniversalDeck(lab,labCounts),[]);
+ const labPacks=[lab,lab];
+ function open(seed){
+  let s=newUniversalMatch(labPacks,{decks:[labCounts,labCounts],seed,first:0});
+  for(let n=0;n<8&&s.phase!=='main';n++)s=dispatchUniversalAction(labPacks,s,{type:'next'});
+  return s;
+ }
+ function labHold(s){
+  const held=take(s,0,'EVT');
+  s.players[0].hand.push(held);
+  return held;
+ }
+ const gated=open(30621);
+ const high=put(gated,0,'HIGH','front',0);
+ const small=put(gated,0,'LOW','energy',0);
+ const victim=put(gated,1,'FOE','front',0);
+ const held=labHold(gated);
+ assert.equal(universalCardEnergy(labPacks,gated,0,high),0);
+ assert.equal(cardHasName(lab.cards.HIGH,'バズビー',false),true);
+ assert.equal(playable(labPacks,gated,held.uid),true);
+ let burned=dispatchUniversalAction(labPacks,gated,{type:'event',uid:held.uid});
+ assert.equal(burned.pending.kind,'effect-retire-bp');
+ burned=dispatchUniversalAction(labPacks,burned,{type:'chooseRetireBp',uid:victim.uid});
+ assert.equal(burned.pending.kind,'effect-buff-own');
+ assert.equal(burned.pending.optional,true);
+ assert.equal(burned.pending.bp,1000);
+ assert.equal(burned.pending.choices.includes(high.uid),true);
+ assert.equal(burned.pending.choices.includes(small.uid),true);
+ aiOk(labPacks,burned);
+ const beforeHigh=universalBp(labPacks,burned,high);
+ const beforeLow=universalBp(labPacks,burned,small);
+ burned=dispatchUniversalAction(labPacks,burned,{type:'chooseOwnBuff',uid:small.uid});
+ assert.equal(burned.pending,null);
+ assert.equal(universalBp(labPacks,burned,live(burned,0,small.uid)),beforeLow+1000);
+ assert.equal(universalBp(labPacks,burned,live(burned,0,high.uid)),beforeHigh);
+ const missed=open(30622);
+ put(missed,0,'LOW','front',0);
+ const missedFoe=put(missed,1,'FOE','front',0);
+ const missedEvent=labHold(missed);
+ let quiet=dispatchUniversalAction(labPacks,missed,{type:'event',uid:missedEvent.uid});
+ quiet=dispatchUniversalAction(labPacks,quiet,{type:'chooseRetireBp',uid:missedFoe.uid});
+ assert.equal(quiet.pending,null);
+ const declined=open(30623);
+ const declinedHigh=put(declined,0,'HIGH','energy',0);
+ const declinedLow=put(declined,0,'LOW','energy',1);
+ const declinedFoe=put(declined,1,'FOE','front',0);
+ const declinedEvent=labHold(declined);
+ let passed=dispatchUniversalAction(labPacks,declined,{type:'event',uid:declinedEvent.uid});
+ passed=dispatchUniversalAction(labPacks,passed,{type:'chooseRetireBp',uid:declinedFoe.uid});
+ assert.equal(legalUniversalActions(labPacks,passed).some(a=>a.type==='chooseOwnBuff'&&a.uid===null),true);
+ const lowBefore=universalBp(labPacks,passed,declinedLow);
+ const highBefore=universalBp(labPacks,passed,declinedHigh);
+ passed=dispatchUniversalAction(labPacks,passed,{type:'chooseOwnBuff',uid:null});
+ assert.equal(passed.pending,null);
+ assert.equal(universalBp(labPacks,passed,live(passed,0,declinedLow.uid)),lowBefore);
+ assert.equal(universalBp(labPacks,passed,live(passed,0,declinedHigh.uid)),highBefore);
+ const silenced=open(30624);
+ const silencedHigh=put(silenced,0,'HIGH','front',0);
+ put(silenced,0,'LOW','energy',0);
+ const silencedFoe=put(silenced,1,'FOE','front',0);
+ grantContinuousState(silenced,{kind:'originalEffectsDisabled',controller:1,sourceUid:silencedFoe.uid,
+  targetUid:silencedHigh.uid,until:{player:0,phase:'main',edge:'end'}});
+ const silencedEvent=labHold(silenced);
+ let kept=dispatchUniversalAction(labPacks,silenced,{type:'event',uid:silencedEvent.uid});
+ kept=dispatchUniversalAction(labPacks,kept,{type:'chooseRetireBp',uid:silencedFoe.uid});
+ assert.equal(kept.pending.kind,'effect-buff-own');
+ assert.equal(kept.pending.choices.includes(silencedHigh.uid),true);
+ aiOk(low.packs,played);
+ assert.equal(assertUniversalMatch(low.packs,played),true);
+ assert.equal(assertUniversalMatch(blocked.packs,blocked.s),true);
+ assert.equal(assertUniversalMatch(unnamed.packs,unnamed.s),true);
+ assert.equal(assertUniversalMatch(alias.packs,alias.s),true);
+ assert.equal(assertUniversalMatch(printedName.packs,printedName.s),true);
+ assert.equal(assertUniversalMatch(labPacks,burned),true);
+ assert.equal(assertUniversalMatch(labPacks,quiet),true);
+ assert.equal(assertUniversalMatch(labPacks,passed),true);
+ assert.equal(assertUniversalMatch(labPacks,kept),true);
 });

@@ -1168,6 +1168,8 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-1-096","kind":"frontRestSkipOrRetire","number":"UA08BT/BLC-1-096","name":"大紅蓮氷輪丸","color":"green","energy":4,"ap":1,"bp":0,"gen":0,"trigger":"special","type":"event","effect":"選 1 個敵方前線 BP 5000 以下角色，將其轉為 REST，並使其跳過下一次轉為 ACTIVE；己方場上有〈日番谷冬獅郎〉時，改為使該角色退場。"}
 ,
 {"id":"BLC-1-065","kind":"handApWhileByakuya","number":"UA08BT/BLC-1-065","name":"千本桜景厳","color":"purple","energy":4,"ap":2,"bp":0,"gen":0,"trigger":"special","type":"event","effect":"己方場上有〈朽木白哉〉時，手牌中此卡的 AP 消耗減少 1。可使最多 1 個敵方前線角色本回合 BP −3000，再可使最多 1 個敵方前線角色本回合 BP −1000。"}
+,
+{"id":"BLC-4-021","kind":"bazzBurnRetire","number":"EX15BT/BLC-4-021","name":"バーニング・フル・フィンガーズ","color":"yellow","energy":4,"ap":1,"bp":0,"gen":0,"trigger":"special","type":"event","effect":"僅在自己場上有《巴茲比》時可使用。選1個對方前線BP5000以下的角色使其退場；若自己場上有至少1個所需能量5以上的《巴茲比》，可再最多選自己的1個《巴茲比》，本回合BP+1000。"}
  ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1321,6 +1323,7 @@ export function checkedBleachAddonDefinition(p){
  const isRestOrDraw=p.kind==='frontRestOrSkipDraw';
  const isRestOrRetire=p.kind==='frontRestSkipOrRetire';
  const isHandApNamed=p.kind==='handApWhileByakuya';
+ const isBazzBurn=p.kind==='bazzBurnRetire';
  const topDiscard={
   'BLC-3-007':{count:3,filter:{field:'trait',value:'護廷十三隊'}},
   'BLC-3-002':{count:3,filters:[
@@ -1354,7 +1357,7 @@ export function checkedBleachAddonDefinition(p){
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest||isOwnCharacterDraw||isPeekAttack||isDrawInstead||isRevealOppTop||isRevealWindow||isEnergyWindow||isMillPurple||isEnergyBounce||isStepOr||isReplayDown||isStepName||isReducedActive||isOutsideName||isZeroIchigo||isDiscardBlock||isEmptyStep||isApActive||isAliasTop||isEntryChoose||isRestFrontName||isFrontFieldDown||isHandOutside||isEnergyAp||isAttackEnd||isDiscardVisored||isRaidHost||isBlockRaid||isRaidOrName||isRestOrDraw||isRestOrRetire||isHandApNamed;
+ const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest||isOwnCharacterDraw||isPeekAttack||isDrawInstead||isRevealOppTop||isRevealWindow||isEnergyWindow||isMillPurple||isEnergyBounce||isStepOr||isReplayDown||isStepName||isReducedActive||isOutsideName||isZeroIchigo||isDiscardBlock||isEmptyStep||isApActive||isAliasTop||isEntryChoose||isRestFrontName||isFrontFieldDown||isHandOutside||isEnergyAp||isAttackEnd||isDiscardVisored||isRaidHost||isBlockRaid||isRaidOrName||isRestOrDraw||isRestOrRetire||isHandApNamed||isBazzBurn;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1502,6 +1505,7 @@ export function checkedBleachAddonDefinition(p){
   ...(isRestOrDraw?{triggerEffect:{op:'retireOppFront'}}:{}),
   ...(isRestOrRetire?{triggerEffect:{op:'retireOppFront'}}:{}),
   ...(isHandApNamed?{handApDiscountWhileName:{name:'朽木 白哉',amount:1},triggerEffect:{op:'retireOppFront'}}:{}),
+  ...(isBazzBurn?{playRequiresOwnName:'バズビー',triggerEffect:{op:'retireOppFront'}}:{}),
   ...(!special?{templateEffects:abilities[p.kind]}:{effects:
    isPrintedApTop?{onPlay:[{op:'searchTopUpToTwoBottom',count:5,max:1,rest:'bottom',
     logic:'all',filters:[{field:'printedApAtLeast',value:2}]}]}:
@@ -1638,7 +1642,8 @@ export function checkedBleachAddonDefinition(p){
    isRaidOrName?{onPlay:[{op:'retireOppFrontUnderBp',bp:3000,bonusBp:5000,raidOrName:{name:'ユーハバッハ'}}]}:
    isRestOrDraw?{onPlay:[{op:'oppFrontRestBranch',optional:true,name:'エス・ノト',base:'rest',instead:'restSkipDraw'}]}:
    isRestOrRetire?{onPlay:[{op:'oppFrontRestBranch',optional:false,bp:5000,name:'日番谷 冬獅郎',base:'restSkip',instead:'retire'}]}:
-   isHandApNamed?{onPlay:[{op:'enemyBpDown',bp:3000,optional:true},{op:'enemyBpDown',bp:1000,optional:true}]}:{}})
+   isHandApNamed?{onPlay:[{op:'enemyBpDown',bp:3000,optional:true},{op:'enemyBpDown',bp:1000,optional:true}]}:
+   isBazzBurn?{onPlay:[{op:'retireOppFrontUnderBp',bp:5000,optional:false},{op:'buffOwnNameIfPrintedEnergy',name:'バズビー',minEnergy:5,bp:1000}]}:{}})
  };
 }
 export function bleachV2PortedCards(){
