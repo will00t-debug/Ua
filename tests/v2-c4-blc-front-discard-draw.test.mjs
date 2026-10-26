@@ -59,9 +59,9 @@ function aiOk(s){
 test('C4 registers only the whole-print front discard draw',()=>{
  const x=c4BlcFrontDiscardDraw();
  assert.deepEqual(x.registered,['BLC-4-025']);
- assert.equal(x.report.bleach,249);
+ assert.equal(x.report.bleach,250);
  assert.equal(x.report.mst,60);
- assert.equal(x.report.registered,525);
+ assert.equal(x.report.registered,526);
  assert.equal(x.report.readyFromKeywords,0);
  assert.equal(EXPECTED_V2_IDS.bleach.includes('BLC-4-025'),true);
 });

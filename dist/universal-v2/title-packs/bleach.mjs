@@ -176,7 +176,8 @@ const testForKind=Object.freeze({
  jugramTriggerEnd:'tests/v2-c29-bleach-port.test.mjs',
  byakuyaOutsideRemove:'tests/v2-c29-bleach-port.test.mjs',
  soiFonNextStartRetire:'tests/v2-c29-bleach-port.test.mjs',
- techLookHandOutside:'tests/v2-c29-bleach-port.test.mjs'
+ techLookHandOutside:'tests/v2-c29-bleach-port.test.mjs',
+ yamamotoSquadShift:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -195,7 +196,9 @@ function contributedEntry(profile){
   definition:Object.freeze(definition),
   evidence:Object.freeze({
    printedTextFragments:Object.freeze([profile.effect]),
-   reviewNote:profile.id==='BLC-1-063'?
+   reviewNote:profile.id==='BLC-1-093'?
+    'UA08BT/BLC-1-093 official page 2026-10-27. Required energy 緑7, generated energy 緑. Raid onto 山本 元柳斎 重國, become ACTIVE, and may move to the front. Impact 1. On play, move any number of own energy-line cards with trait 護廷十三隊 to the front. Zero is legal. A field cannot enter the front line. A full front line cannot receive them. Declining leaves every energy-line card where it is. A moved character keeps its ready state. On attack, every other own field card with trait 護廷十三隊 gets BP+2000 this turn. This character is not included. An energy-line character is included. Silence removes the printed Impact and the attack buff. RAID is the generic sentence. No card FAQ. Trait 護廷十三隊.':
+   profile.id==='BLC-1-063'?
     'UA08BT/BLC-1-063 official page 2026-10-27. Required energy 紫2. Generated energy is a dash, so gen stays 0. Look at the top 5 of your deck. Add 1 to hand and put 1 outside. Put the rest on the bottom in any order. The look is private. The card added to hand is not revealed. Both selections are mandatory while a card remains. One inspected card goes to hand and does not go outside. Two inspected cards go one to hand and one outside, with nothing left to order. An empty deck does nothing. Cards under the window stay above the ordered remainder. DRAW is the generic sentence. No card FAQ. Trait 無.':
    profile.id==='BLC-1-055'?
     'UA08BT/BLC-1-055 official iframe 2026-10-26. Required energy 紫4, generated energy 紫. [起動メイン][フロントLにある場合][APを1支払う][ターン1]: choose up to one opposing front character of BP 3500 or less. At the next opponent turn start, retire that character, then REST this character and move it to the energy line. Q564 (2023-09-25): if the chosen character left during the turn it was chosen, this character still rests and moves. Q565 (2023-09-25): if another card raided onto the chosen character during that turn, the Raid top does not retire, and this character still rests and moves. Declining the choice pays the AP and schedules nothing. No legal target schedules nothing. [ターン1] is this physical card. The energy line cannot activate. A field is not a character. Later silence does not cancel a choice already made. DRAW is the generic sentence. Trait 護廷十三隊.':
