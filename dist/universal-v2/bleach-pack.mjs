@@ -1152,6 +1152,8 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-2-024","kind":"handOutsideTraitlessRest","number":"EX07BT/BLC-2-024","name":"四楓院 夜一","color":"blue","energy":4,"ap":1,"bp":3500,"gen":1,"trigger":"active","type":"character","effect":"己方回合中，此角色 BP +500。登場：若本回合己方曾將手牌送至場外，可從手牌將最多 1 張需求能源 1 以下、AP 消耗 1、且不具有特徵的藍色角色卡，以 REST 登場於己方場上。"}
 ,
 {"id":"BLC-4-039","kind":"energyApRestBuff","number":"EX15BT/BLC-4-039","name":"朽木 ルキア","color":"blue","energy":2,"ap":1,"bp":1500,"gen":1,"trigger":"draw","type":"character","effect":"登場時〔能量線〕：若自己的前線有印刷消費AP為2以上的角色，將此角色改為Active。啟動・主要〔改為Rest〕：選自己場上另1個角色，本回合BP+1000；若所選角色的印刷消費AP為2以上，可將1張手牌送至場外，如此則將所選角色改為Active。"}
+,
+{"id":"BLC-3-003","kind":"chooseBuffOrAttackEndRetire","number":"UA04NC/BLC-3-003","name":"涅 マユリ","color":"blue","energy":1,"ap":1,"bp":1500,"gen":1,"trigger":"active","type":"character","effect":"【登場時】選擇以下一項：\n・可以選擇最多 1 張自己場上的其他角色，在本回合中 BP＋1000。\n・可以選擇最多 1 張自己場上的其他角色，在本回合中 BP＋3000，並賦予「此角色的攻擊結束時，將此角色退場」。"}
  ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1297,6 +1299,7 @@ export function checkedBleachAddonDefinition(p){
  const isFrontFieldDown=p.kind==='frontDiscardFieldDown';
  const isHandOutside=p.kind==='handOutsideTraitlessRest';
  const isEnergyAp=p.kind==='energyApRestBuff';
+ const isAttackEnd=p.kind==='chooseBuffOrAttackEndRetire';
  const topDiscard={
   'BLC-3-007':{count:3,filter:{field:'trait',value:'護廷十三隊'}},
   'BLC-3-002':{count:3,filters:[
@@ -1330,7 +1333,7 @@ export function checkedBleachAddonDefinition(p){
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest||isOwnCharacterDraw||isPeekAttack||isDrawInstead||isRevealOppTop||isRevealWindow||isEnergyWindow||isMillPurple||isEnergyBounce||isStepOr||isReplayDown||isStepName||isReducedActive||isOutsideName||isZeroIchigo||isDiscardBlock||isEmptyStep||isApActive||isAliasTop||isEntryChoose||isRestFrontName||isFrontFieldDown||isHandOutside||isEnergyAp;
+ const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest||isOwnCharacterDraw||isPeekAttack||isDrawInstead||isRevealOppTop||isRevealWindow||isEnergyWindow||isMillPurple||isEnergyBounce||isStepOr||isReplayDown||isStepName||isReducedActive||isOutsideName||isZeroIchigo||isDiscardBlock||isEmptyStep||isApActive||isAliasTop||isEntryChoose||isRestFrontName||isFrontFieldDown||isHandOutside||isEnergyAp||isAttackEnd;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1599,7 +1602,11 @@ export function checkedBleachAddonDefinition(p){
    isAliasTop?{onPlay:[{op:'inspectTopColorAnyOutside',count:2,rest:'top',color:'blue',names:['涅 マユリ','涅 ネム'],trait:'涅骸部隊'}]}:
    isEntryChoose?{onPlay:[{op:'noteEntryTurn'}]}:
    isHandOutside?{onPlay:[{op:'deployOwnHandRest',type:'character',color:'blue',energy:1,ap:1,max:1,traitless:true,when:{kind:'ownHandToOutsideThisTurn',turn:'any'}}]}:
-   isEnergyAp?{onPlay:[{op:'activeSelfIf',line:'energy',when:{kind:'ownPrintedApAtLeast',turn:'any',zone:'front',excludeSelf:false,minAp:2}}]}:{}})
+   isEnergyAp?{onPlay:[{op:'activeSelfIf',line:'energy',when:{kind:'ownPrintedApAtLeast',turn:'any',zone:'front',excludeSelf:false,minAp:2}}]}:
+   isAttackEnd?{onPlay:[{op:'chooseOne',optional:false,options:[
+    {id:'small',label:'BP+1000',turn:'any',then:[{op:'buffOwnField',filter:{field:'type',value:'character'},bp:1000,optional:true,excludeSelf:true}]},
+    {id:'retire',label:'BP+3000後退場',turn:'any',then:[{op:'buffOwnField',filter:{field:'type',value:'character'},bp:3000,optional:true,excludeSelf:true,attackEndRetire:true}]}
+   ]}]}:{}})
  };
 }
 export function bleachV2PortedCards(){

@@ -154,9 +154,12 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 //   chooses another own character on either line for BP+1000. Printed AP 2+
 //   may discard one hand card to set that character ACTIVE. Q2320 (2026-09-04).
 //   Official iframe 2026-10-26. Required 青2. Generated 青. DRAW is generic.
+// BLC-3-003 UA04NC: on play choose one. Up to one other own character gets
+//   BP+1000, or BP+3000 and retires when its attack ends. Official iframe
+//   2026-10-26. Required 青1. Generated 青. ACTIVE is generic. No card FAQ.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -227,12 +230,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers fifty-three whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,489);
- assert.equal(EXPECTED_V2_COUNTS.bleach,213);
+test('C29 registers fifty-four whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,490);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,214);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,213);
+ assert.equal(Object.keys(bleach.cards).length,214);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -4253,4 +4256,142 @@ test('BLC-4-039 actives from the energy line and may discard to active a printed
  assert.equal(assertUniversalMatch(played.packs,paid),true);
  assert.equal(assertUniversalMatch(empty.packs,quiet),true);
  assert.equal(assertUniversalMatch(solo.packs,solo.s),true);
+});
+
+test('BLC-3-003 chooses BP+1000 or BP+3000 that retires at attack end',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-3-003');
+ assert.equal(printed.effect,'【登場時】選擇以下一項：\n・可以選擇最多 1 張自己場上的其他角色，在本回合中 BP＋1000。\n・可以選擇最多 1 張自己場上的其他角色，在本回合中 BP＋3000，並賦予「此角色的攻擊結束時，將此角色退場」。');
+ assert.deepEqual(printed.traits,['護廷十三隊']);
+ const card=bleach.cards['BLC-3-003'];
+ assert.equal(card.name,'涅 マユリ');
+ assert.equal(card.energy,1);
+ assert.equal(card.gen,1);
+ assert.equal(card.trigger,'active');
+ assert.equal(card.triggerEffect,null);
+ assert.equal(card.effects.onPlay[0].op,'chooseOne');
+ const deck=realDeck(['BLC-3-003','BLC-2-016','BLC-2-023','BLC-2-022','BLC-2-018','BLC-2-044'],'blue');
+ const fuel=s=>{
+  put(s,0,'BLC-2-016','energy',0,true);
+  s.players[0].apCards[0].inPlay=true;
+  s.players[0].apCards[0].ready=true;
+ };
+ const finishAttack=(packs,s,attacker)=>{
+  let battle=s;
+  for(let n=0;n<6&&battle.phase!=='attack';n++)
+   battle=dispatchUniversalAction(packs,battle,{type:'next'});
+  live(battle,0,attacker).ready=true;
+  const life=battle.players[1].life.length;
+  battle=dispatchUniversalAction(packs,battle,{type:'attack',uid:attacker});
+  if(battle.pending?.kind==='block')
+   battle=dispatchUniversalAction(packs,battle,{type:'chooseBlock',uid:null},{actor:1});
+  while(battle.pending?.kind==='life-trigger')
+   battle=dispatchUniversalAction(packs,battle,{type:'chooseTrigger',mode:'skip'},{actor:1});
+  return {battle,life};
+ };
+ const played=main(deck,30440);
+ fuel(played.s);
+ const ally=put(played.s,0,'BLC-2-023','front',1,true);
+ const actor=take(played.s,0,'BLC-3-003');
+ played.s.players[0].hand.push(actor);
+ let entered=dispatchUniversalAction(played.packs,played.s,{type:'play',uid:actor.uid,line:'front',slot:0});
+ assert.equal(entered.pending.kind,'effect-choice-mode');
+ const modes=legalUniversalActions(played.packs,entered).filter(a=>a.type==='chooseEffectMode').map(a=>a.mode);
+ assert.deepEqual(modes.sort(),['retire','small']);
+ aiOk(played.packs,entered);
+ entered=dispatchUniversalAction(played.packs,entered,{type:'chooseEffectMode',mode:'retire'});
+ assert.equal(entered.pending.kind,'effect-buff-own');
+ const choices=legalUniversalActions(played.packs,entered).filter(a=>a.type==='chooseOwnBuff').map(a=>a.uid);
+ assert.equal(choices.includes(ally.uid),true);
+ assert.equal(choices.includes(actor.uid),false);
+ assert.equal(choices.includes(null),true);
+ entered=dispatchUniversalAction(played.packs,entered,{type:'chooseOwnBuff',uid:ally.uid});
+ const granted=live(entered,0,ally.uid);
+ assert.equal(universalBp(played.packs,entered,granted),bleach.cards['BLC-2-023'].bp+3000);
+ assert.equal(granted.attackEndRetireGranted.turn,entered.turn);
+ assert.equal(granted.attackEndRetireGranted.stamp,granted.fieldEntryStamp);
+ assert.equal(granted.attackEndRetireGranted.sourceUid,actor.uid);
+ grantContinuousState(entered,{kind:'originalEffectsDisabled',controller:1,sourceUid:actor.uid,
+  targetUid:ally.uid,sourceLinked:false,until:{player:0,phase:'main',edge:'end'}});
+ assert.equal(live(entered,0,ally.uid).attackEndRetireGranted.stamp,granted.fieldEntryStamp);
+ const direct=finishAttack(played.packs,entered,ally.uid);
+ assert.equal(direct.battle.players[0].outside.some(c=>c.uid===ally.uid),true);
+ assert.equal(direct.battle.players[1].life.length,direct.life-1);
+ assert.equal(direct.battle.pending,null);
+ const small=main(deck,30441);
+ fuel(small.s);
+ const mild=put(small.s,0,'BLC-2-023','front',1,true);
+ const self=take(small.s,0,'BLC-3-003');
+ small.s.players[0].hand.push(self);
+ let mildPlay=dispatchUniversalAction(small.packs,small.s,{type:'play',uid:self.uid,line:'front',slot:0});
+ mildPlay=dispatchUniversalAction(small.packs,mildPlay,{type:'chooseEffectMode',mode:'small'});
+ mildPlay=dispatchUniversalAction(small.packs,mildPlay,{type:'chooseOwnBuff',uid:mild.uid});
+ assert.equal(universalBp(small.packs,mildPlay,live(mildPlay,0,mild.uid)),bleach.cards['BLC-2-023'].bp+1000);
+ assert.equal(live(mildPlay,0,mild.uid).attackEndRetireGranted,undefined);
+ const stayed=finishAttack(small.packs,mildPlay,mild.uid);
+ assert.equal(live(stayed.battle,0,mild.uid).uid,mild.uid);
+ assert.equal(stayed.battle.players[0].front.some(c=>c?.uid===mild.uid),true);
+ const skipped=main(deck,30442);
+ fuel(skipped.s);
+ const other=put(skipped.s,0,'BLC-2-023','front',1,true);
+ const source=take(skipped.s,0,'BLC-3-003');
+ skipped.s.players[0].hand.push(source);
+ let declined=dispatchUniversalAction(skipped.packs,skipped.s,{type:'play',uid:source.uid,line:'front',slot:0});
+ declined=dispatchUniversalAction(skipped.packs,declined,{type:'chooseEffectMode',mode:'retire'});
+ declined=dispatchUniversalAction(skipped.packs,declined,{type:'chooseOwnBuff',uid:null});
+ assert.equal(declined.pending,null);
+ assert.equal(live(declined,0,other.uid).attackEndRetireGranted,undefined);
+ assert.equal(universalBp(skipped.packs,declined,live(declined,0,other.uid)),bleach.cards['BLC-2-023'].bp);
+ const alone=main(deck,30443);
+ put(alone.s,0,'BLC-2-044','energy',0,true);
+ alone.s.players[0].apCards[0].inPlay=true;
+ alone.s.players[0].apCards[0].ready=true;
+ const lone=take(alone.s,0,'BLC-3-003');
+ alone.s.players[0].hand.push(lone);
+ let empty=dispatchUniversalAction(alone.packs,alone.s,{type:'play',uid:lone.uid,line:'front',slot:0});
+ empty=dispatchUniversalAction(alone.packs,empty,{type:'chooseEffectMode',mode:'small'});
+ assert.equal(empty.pending,null);
+ const won=main(deck,30444);
+ fuel(won.s);
+ const striker=put(won.s,0,'BLC-2-023','front',1,true);
+ const wall=put(won.s,1,'BLC-2-022','front',0,true);
+ const giver=take(won.s,0,'BLC-3-003');
+ won.s.players[0].hand.push(giver);
+ let armed=dispatchUniversalAction(won.packs,won.s,{type:'play',uid:giver.uid,line:'front',slot:0});
+ armed=dispatchUniversalAction(won.packs,armed,{type:'chooseEffectMode',mode:'retire'});
+ armed=dispatchUniversalAction(won.packs,armed,{type:'chooseOwnBuff',uid:striker.uid});
+ let clash=armed;
+ for(let n=0;n<6&&clash.phase!=='attack';n++)
+  clash=dispatchUniversalAction(won.packs,clash,{type:'next'});
+ live(clash,0,striker.uid).ready=true;
+ const lives=clash.players[1].life.length;
+ clash=dispatchUniversalAction(won.packs,clash,{type:'attack',uid:striker.uid});
+ assert.equal(clash.pending.kind,'block');
+ clash=dispatchUniversalAction(won.packs,clash,{type:'chooseBlock',uid:wall.uid},{actor:1});
+ while(clash.pending?.kind==='life-trigger')
+  clash=dispatchUniversalAction(won.packs,clash,{type:'chooseTrigger',mode:'skip'},{actor:1});
+ assert.equal(clash.players[1].outside.some(c=>c.uid===wall.uid),true);
+ assert.equal(clash.players[0].outside.some(c=>c.uid===striker.uid),true);
+ assert.equal(clash.players[1].life.length,lives);
+ const held=main(deck,30445);
+ fuel(held.s);
+ const parked=put(held.s,0,'BLC-2-023','front',1,true);
+ const mayuri=take(held.s,0,'BLC-3-003');
+ held.s.players[0].hand.push(mayuri);
+ let marked=dispatchUniversalAction(held.packs,held.s,{type:'play',uid:mayuri.uid,line:'front',slot:0});
+ marked=dispatchUniversalAction(held.packs,marked,{type:'chooseEffectMode',mode:'retire'});
+ marked=dispatchUniversalAction(held.packs,marked,{type:'chooseOwnBuff',uid:parked.uid});
+ let later=marked;
+ for(let n=0;n<12&&later.active===0;n++)
+  later=dispatchUniversalAction(held.packs,later,{type:'next'});
+ assert.equal(later.active,1);
+ assert.equal(live(later,0,parked.uid).attackEndRetireGranted,undefined);
+ assert.equal(universalBp(held.packs,later,live(later,0,parked.uid)),bleach.cards['BLC-2-023'].bp);
+ aiOk(small.packs,mildPlay);
+ aiOk(skipped.packs,declined);
+ assert.equal(assertUniversalMatch(played.packs,direct.battle),true);
+ assert.equal(assertUniversalMatch(small.packs,stayed.battle),true);
+ assert.equal(assertUniversalMatch(skipped.packs,declined),true);
+ assert.equal(assertUniversalMatch(alone.packs,empty),true);
+ assert.equal(assertUniversalMatch(won.packs,clash),true);
+ assert.equal(assertUniversalMatch(held.packs,later),true);
 });

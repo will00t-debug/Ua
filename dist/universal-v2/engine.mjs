@@ -451,6 +451,7 @@ function startTurn(pack,s){
   delete unit.blockFloorGranted;delete unit.blockAtLeastGranted;delete unit.readyOnAttackGranted;
   delete unit.impactGranted;
   delete unit.energyMoveOnAttackGranted;delete unit.triggerUnchosenGranted;
+  delete unit.attackEndRetireGranted;
   if(unit.attackDamageGranted&&unit.attackDamageGranted.turn!==s.turn)
    delete unit.attackDamageGranted;
  }
@@ -1370,7 +1371,8 @@ function continueEffectQueue(pack,s){
     sourceUid:job.sourceUid,choices,filter:job.filter,
     ...(job.also?{also:job.also}:{}),
     bp:job.bp,optional:job.optional,excludeSelf:job.excludeSelf,
-    ...(job.bonusNames?{bonusNames:job.bonusNames,bonusBp:job.bonusBp}:{})};
+    ...(job.bonusNames?{bonusNames:job.bonusNames,bonusBp:job.bonusBp}:{}),
+    ...(job.attackEndRetire===true?{attackEndRetire:true}:{})};
   }else if(job.op==='buffOwnTrait'){
    const choices=field(pl).filter(c=>cardHasTrait(card(pack,c),job.trait)).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-buff-trait',player:owner,sourceUid:job.sourceUid,
@@ -1468,6 +1470,18 @@ function continueEffectQueue(pack,s){
    const under=c=>(c.under||[]).some(x=>x.faceDown===true||under(x))||
     (c.stack||[]).some(x=>x.faceDown===true||under(x));
    if(under(raid))draw(pack,s,owner,1,{reason:'own-effect',sourceUid:job.sourceUid});
+  }else if(job.op==='retireAttackEndGranted'){
+   // アタック終了時. Direct attacks and attacker wins still retire after
+   // the battle's life continuation. A lost attacker has already left.
+   const pos=location(s,owner,job.sourceUid);
+   const live=pos?.line==='front'?pos.c:null;
+   const grant=live?.attackEndRetireGranted;
+   if(live&&live.fieldEntryStamp===job.sourceStamp&&grant&&
+    grant.turn===s.turn&&grant.stamp===live.fieldEntryStamp&&
+    grant.sourceUid===job.grantSourceUid){
+    delete live.attackEndRetireGranted;
+    retire(pack,s,owner,'front',pos.slot);
+   }
   }else if(job.op==='resolveAttackEndSwap'){
    const src=pl.front.find(c=>c?.uid===job.sourceUid);
    if(src&&src.fieldEntryStamp===job.sourceStamp&&attackEndSwapAvailable(pack,s,src)){
@@ -2226,6 +2240,11 @@ function resolveChoice(s,a,pack){
    s.effectQueue.push({op:'resolveAttackEndSwap',owner:s.active,
     sourceUid:attacker.uid,sourceStamp:attacker.fieldEntryStamp});
   }
+  const endRetire=attacker.attackEndRetireGranted;
+  if(endRetire&&endRetire.turn===s.turn&&endRetire.stamp===attacker.fieldEntryStamp)
+   s.effectQueue.push({op:'retireAttackEndGranted',owner:s.active,
+    sourceUid:attacker.uid,sourceStamp:attacker.fieldEntryStamp,
+    grantSourceUid:endRetire.sourceUid});
   if(a.uid===null){
     const count=universalAttackDamage(pack,s,attacker);
     if(count>1)revealLifeBatch(pack,s,q.player,count);
@@ -3203,6 +3222,8 @@ function resolveChoice(s,a,pack){
    if(!effect)throw Error('Unproven named BP bonus');
   }
   target.buffs??=[];target.buffs.push({bp:named?q.bonusBp:q.bp,untilTurn:s.turn});
+  if(q.attackEndRetire===true&&Number.isInteger(target.fieldEntryStamp))
+   target.attackEndRetireGranted={turn:s.turn,stamp:target.fieldEntryStamp,sourceUid:q.sourceUid};
   if(Number.isInteger(q.thenApActive)&&card(pack,target).ap>=q.thenApActive&&p.hand.length){
    s.pending={kind:'effect-discard-gate',player:q.player,sourceUid:q.sourceUid,
     optional:true,then:[{op:'activeChosen',targetUid:target.uid}]};
@@ -5458,6 +5479,19 @@ export function assertUniversalMatch(pack,s){
     e.entry==='ownEffect'&&e.options.some(o=>o.then.some(t=>
      t.op==='grantSelfAttackEndSwapThisTurn')))))
    throw Error('Forged physical attack-end grant');
+  const retireGrant=physical.attackEndRetireGranted;
+  if(retireGrant!==undefined){
+   const source=field(s.players[owner]).find(c=>c.uid===retireGrant.sourceUid);
+   const earned=source&&card(pack,source).effects.onPlay?.some(e=>e.op==='chooseOne'&&
+    e.options?.some(o=>o.then?.some(t=>t.op==='buffOwnField'&&t.attackEndRetire===true)));
+   if(!retireGrant||typeof retireGrant!=='object'||Array.isArray(retireGrant)||
+    retireGrant.turn!==s.turn||retireGrant.stamp!==physical.fieldEntryStamp||
+    typeof retireGrant.sourceUid!=='string'||
+    !retireGrant.sourceUid.startsWith(owner+'-')||!earned||
+    Object.keys(retireGrant).length!==3||
+    Object.keys(retireGrant).some(k=>!['turn','stamp','sourceUid'].includes(k)))
+    throw Error('Forged attack-end retire grant');
+  }
   for(const buff of physical.buffs||[])if(buff.untilOwnTurnStart!==undefined&&(
    !Number.isInteger(buff.untilOwnTurnStart)||
    buff.untilOwnTurnStart!==s.players[owner].ownTurns+1||
@@ -6040,7 +6074,7 @@ export function assertUniversalMatch(pack,s){
    !['grantedAttackDraw','grantOnAttack','grantSelfSniperThisTurn','grantSelfAttackWinDrawThisTurn','grantSelfMustBlockThisTurn','buffSelfUntilNextOwnStart','grantSelfAttackEndSwapThisTurn','resolveAttackWinRecovery','draw','drawIfOwnName','drawIfOwnOutsideNamedCountAtLeast','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','drawIfOppFrontBelowPrinted','drawIfSelfBpAtLeast','returnRetiredToHand','drawIfOppRestCharacter','drawIfOppCharacterBpAtLeast','drawIfOwnNameAndHandFewer','activeOwnNamed','millTop','buffSelf','buffSelfPerOwnOutsideGroups','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','revealOppTopPlace','chooseEnergyRevealOutside','optionalRemoveHandThen','retireOppFrontUnderBp','retireOppFrontOneUnderBp','bounceOppFrontOneUnderBp','conditionalBounceOrRetireByOwnOutsideNames','completeResolvingEvent','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','forbidAttackOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopUpToTwoBottom','deployOwnHandRest','deployOwnHandSpecial','deployOwnHandRestOrRaid','optionalPayApThen','optionalRetireThenProgram','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
     'discardGate','removeOutsideThen','enemyFrontAllBpDown','retireOppFrontAllUnderBp',
     'nextEligibleHandPlayApDiscount','grantFrontEnergyOwnOtherFrontTrait','buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
-    'recoverOutsideUnderEnergy','recoverOutsideColorUnderEnergy','deployOutsideRest','deployOutsideNameRest','deployOutsideExactRest','deployNamedFromZones','payApDeployNamedRest','inspectTopTraitOutside','deployOutsideTraitlessRestOrRaid','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','retireSourceOnPhaseEnd','moveAtMainEnd','retireOwnFieldOne','retireOwnCharacterOne','openBlock','resolveSniperBattle','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','resolveAttackEndSwap','phaseOrder','effectMoveOrder','restSelfTuckMovedFaceDown','sourceResolutionBoundary','lifeBatchStep','lifeRelease','advanceAfterAttack','additionalBattleDamage','openRetirementBatch','closeRetirementBatch','retirementOrder','battleImpactDamage','discardOppHand','activeSelfIf','activeChosen','openEnergyMoveGrants','moveOtherAcrossOrRemove','raidBaseEnergyThen','grantSelfAttackDamageThisTurn','restOppFrontLockActive','removeAnyOutsideScale','inspectTopColoredNamesOutside','drawDiscardIfEffectApPaid','activeSelf','grantSelfImpactThisTurn','grantOtherImpactThisTurn','returnSourceToHand','optionalOwnLifeToHandThenDraw','grantOwnNameBlockAtLeast','grantSelfBlockAtLeast','inspectTopColorAnyOutside'].includes(e.op)))
+    'recoverOutsideUnderEnergy','recoverOutsideColorUnderEnergy','deployOutsideRest','deployOutsideNameRest','deployOutsideExactRest','deployNamedFromZones','payApDeployNamedRest','inspectTopTraitOutside','deployOutsideTraitlessRestOrRaid','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','retireSourceOnPhaseEnd','moveAtMainEnd','retireOwnFieldOne','retireOwnCharacterOne','openBlock','resolveSniperBattle','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','resolveAttackEndSwap','retireAttackEndGranted','phaseOrder','effectMoveOrder','restSelfTuckMovedFaceDown','sourceResolutionBoundary','lifeBatchStep','lifeRelease','advanceAfterAttack','additionalBattleDamage','openRetirementBatch','closeRetirementBatch','retirementOrder','battleImpactDamage','discardOppHand','activeSelfIf','activeChosen','openEnergyMoveGrants','moveOtherAcrossOrRemove','raidBaseEnergyThen','grantSelfAttackDamageThisTurn','restOppFrontLockActive','removeAnyOutsideScale','inspectTopColoredNamesOutside','drawDiscardIfEffectApPaid','activeSelf','grantSelfImpactThisTurn','grantOtherImpactThisTurn','returnSourceToHand','optionalOwnLifeToHandThenDraw','grantOwnNameBlockAtLeast','grantSelfBlockAtLeast','inspectTopColorAnyOutside'].includes(e.op)))
   throw Error('Invalid queued effects');
  const energyMoves=s.effectQueue.filter(e=>e.op==='openEnergyMoveGrants');
  if(energyMoves.length>1||energyMoves.some(j=>j.owner!==s.active||s.phase!=='attack'||
@@ -6069,6 +6103,20 @@ export function assertUniversalMatch(pack,s){
    Object.keys(j).length!==4||
    Object.keys(j).some(k=>!['op','owner','sourceUid','sourceStamp'].includes(k)))
    throw Error('Invalid earned attack-end swap continuation');
+ }
+ for(const j of s.effectQueue.filter(e=>e.op==='retireAttackEndGranted')){
+  const pl=s.players[j.owner];
+  const src=pl?.front.find(c=>c?.uid===j.sourceUid);
+  const grant=src?.attackEndRetireGranted;
+  const giver=src&&field(pl).find(c=>c.uid===j.grantSourceUid);
+  const earned=giver&&card(pack,giver).effects.onPlay?.some(e=>e.op==='chooseOne'&&
+   e.options?.some(o=>o.then?.some(t=>t.op==='buffOwnField'&&t.attackEndRetire===true)));
+  if(j.owner!==s.active||s.phase!=='attack'||!src||!grant||!earned||
+   grant.turn!==s.turn||grant.stamp!==j.sourceStamp||grant.sourceUid!==j.grantSourceUid||
+   src.fieldEntryStamp!==j.sourceStamp||!(s.attacksByUid[j.sourceUid]>=1)||
+   Object.keys(j).length!==5||
+   Object.keys(j).some(k=>!['op','owner','sourceUid','sourceStamp','grantSourceUid'].includes(k)))
+   throw Error('Forged attack-end retire continuation');
  }
  for(const j of s.effectQueue.filter(e=>e.op==='resolveAttackWinRecovery')){
   if(j.owner!==s.active||s.phase!=='attack'||!Number.isInteger(j.sourceStamp)||

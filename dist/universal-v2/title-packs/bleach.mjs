@@ -140,7 +140,8 @@ const testForKind=Object.freeze({
  restFrontNameOnce:'tests/v2-c29-bleach-port.test.mjs',
  frontDiscardFieldDown:'tests/v2-c29-bleach-port.test.mjs',
  handOutsideTraitlessRest:'tests/v2-c29-bleach-port.test.mjs',
- energyApRestBuff:'tests/v2-c29-bleach-port.test.mjs'
+ energyApRestBuff:'tests/v2-c29-bleach-port.test.mjs',
+ chooseBuffOrAttackEndRetire:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -159,7 +160,9 @@ function contributedEntry(profile){
   definition:Object.freeze(definition),
   evidence:Object.freeze({
    printedTextFragments:Object.freeze([profile.effect]),
-   reviewNote:profile.id==='BLC-4-039'?
+   reviewNote:profile.id==='BLC-3-003'?
+    'UA04NC/BLC-3-003 official iframe 2026-10-26. On play, choose one: up to one other own character gets BP+1000 this turn, or up to one other own character gets BP+3000 and retires at the end of its attack. The retirement follows a direct attack and an attacker win, after that attack\'s life continuation. A lost attacker has already left. Silence on the chosen character does not remove the grant. The grant ends when the next turn starts. ACTIVE is generic. No card FAQ.':
+   profile.id==='BLC-4-039'?
     'EX15BT/BLC-4-039 official iframe 2026-10-26. On play from the energy line, become ACTIVE only when an own front character has printed AP 2 or more. Q2320 (2026-09-04): 元々の消費AP is the printed AP. [起動メイン][レストにする]: choose another own character on either line, BP+1000 this turn. If that character\'s printed AP is 2 or more, may put one hand card outside to set it ACTIVE. No ターン1. Generated energy is 青. DRAW is generic.':
    profile.id==='BLC-2-024'?
     'EX07BT/BLC-2-024 official iframe 2026-10-26. Printed BP stays 3500. 自分のターン中 adds BP+500, and silence removes that bonus. On play, if this player has already placed a hand card outside this turn by a rule, payment, or own effect, may REST one traitless blue character from hand whose printed energy is 1 or less and whose printed AP is 1. Generated energy is 青. ACTIVE is the generic sentence, so triggerEffect stays null. No card FAQ.':
