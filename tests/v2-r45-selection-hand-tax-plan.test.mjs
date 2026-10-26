@@ -32,6 +32,8 @@ test('Q1208 FRONT aura costs exactly ONE for CHARACTER or EVENT selection',()=>{
    cost:1,payable:true,blocked:false,sourceUids:['0-1']});
  }
  assert.equal(plan(pack,s,'0-2','trigger').cost,0);
+ assert.equal(plan(pack,s,'0-2','field').cost,0);
+ assert.equal(plan(pack,s,'0-2','field').blocked,false);
  assert.equal(plan(pack,s,'0-2','unknown').blocked,false);
 });
 test('Q1208 two copies of the same source do NOT stack',()=>{
@@ -85,6 +87,8 @@ test('Unresolved combination of independent tax groups fails closed',()=>{
  const p=plan(pack,s,'0-2','event');
  assert.equal(p.blocked,true);assert.equal(p.payable,false);
  assert.deepEqual(p.sourceUids,['0-1','0-3']);
+ assert.equal(plan(pack,s,'0-2','field').cost,0);
+ assert.equal(plan(pack,s,'0-2','field').blocked,false);
 });
 test('Reject malformed scopes/counts/source types and forged physical stamps',()=>{
  for(const bad of [

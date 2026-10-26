@@ -19,20 +19,68 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-remove-outside':'可將己方場外卡移入移除區',
  'effect-search-deck':'搜尋牌庫', 'effect-search-deck-multi':'依序搜尋牌庫',
  'effect-top-inspect':'查看牌庫頂','effect-top-inspect-many':'任意張卡送場外',
- 'effect-top-filter-choice':'查看牌頂，選擇符合特徵的角色／卡','effect-top-trait-outside':'查看牌頂，將符合特徵的卡送場外',
+ 'effect-top-filter-choice':'查看牌頂，選擇符合特徵的角色／卡',
+ 'effect-top-trait-event':'查看牌頂，公開王選候補者或事件',
+ 'effect-top-trait-outside':'查看牌頂，將符合特徵的卡送場外',
  'effect-top-order':'排列牌庫頂或底','effect-optional-mill':'可將牌庫頂 1 張送場外',
  'effect-optional-draw':'攻擊時可抽 0 或 1 張',
  'effect-pay-ap-deploy':'可支付 1 AP，從場外 REST 登場',
  'effect-optional-pay-ap':'可支付 1 AP，然後結算後續效果',
+ 'effect-deck-named-play':'公開的卡片可加入手牌、休息登場或突襲',
+ 'effect-place-hand':'將1張手牌放到牌頂或場外',
  'effect-hand-rest':'從己方手牌免費 REST 登場',
  'effect-hand-rest-or-raid':'從己方手牌 REST 登場或合法 Raid',
  'effect-active-own-named':'可將最多 1 個己方指定名稱角色轉為 ACTIVE',
  'effect-bounce-own':'選擇返回手牌的己方角色',
  'effect-buff-own':'選擇己方角色增加本回合 BP',
+ 'effect-named-impact':'選擇己方雷姆，本回合 BP+1000 並獲得衝擊+1',
+ 'effect-buff-either':'選擇自己或對手的其他角色，本回合 BP+1000',
+ 'effect-return-printed':'可將符合印刷條件的己方角色放回手牌',
+ 'effect-remove-named':'可將場外的指定卡移入移除區',
+ 'effect-pay-named':'可棄 1 張手牌或休息 1 張前線，以回收場外的指定卡',
+ 'effect-add-named':'將場外的指定卡加入手牌',
+ 'effect-reveal-bottom':'公開 1 張手牌並放到牌底',
+ 'effect-hand-top':'將 1 張手牌放到牌組上面',
+ 'effect-rest-front-ap':'可休息 1 張前線活動角色，之後恢復 AP',
+ 'effect-discard-active':'可將 1 張手牌放到場外，使這張場域活動',
  'effect-once-choice':'是否發動本回合一次能力',
  'effect-choice-mode':'選擇一項效果',
  'recovered-self-entry':'回收後可 REST 登場至能源線',
  'effect-recover-outside':'從場外回收','effect-retire-bp':'選擇敵方退場',
+ 'effect-retire-at-least':'選擇 BP 4500 以上的對手前線並使其退場',
+ 'effect-retire-at-most':'選擇 BP 5000 以下的對手前線並使其退場',
+ 'effect-retire-scaled':'選擇是否使對手前線退場',
+ 'effect-rest-outside-events':'選擇是否使對手前線休息',
+ 'effect-rested-retire-impact':'選擇是否使對手前線退場',
+ 'effect-hand-named-rest':'選擇是否以休息狀態登場',
+ 'effect-outside-printed-rest':'選擇是否以休息狀態登場',
+ 'effect-grant-printed-block':'選擇是否賦予防禦下限',
+ 'effect-move-opp-front':'選擇是否將對手前線移至能源線',
+ 'effect-unblocked-rest':'選擇是否使對手前線休息',
+ 'effect-energy-swap':'選擇要交換位置的己方前線',
+ 'effect-grant-named-impact':'選擇是否賦予衝擊',
+ 'effect-hand-bp-may':'這次參照手牌角色 BP 時，是否視為 +1000',
+ 'effect-hand-outside-active':'可將 1 張手牌放到場外，使這張角色活動',
+ 'effect-named-duration':'選擇最多 1 張帕克，給予 BP+2000 與衝擊 1',
+ 'effect-top-take-one':'從查看的牌中選 1 張加入手牌，其餘放到場外',
+ 'effect-reveal-optional':'可公開 1 張手牌並放到牌底',
+ 'effect-referenced-bp':'這次參照公開角色的 BP 時，是否視為增加',
+ 'effect-outside-referenced':'從場外選擇符合公開 BP 的藍色角色',
+ 'effect-reveal-retire':'公開 1 張手牌並放到牌底',
+ 'effect-retire-referenced':'可選擇公開 BP 以下的對手前線並使其退場',
+ 'effect-hand-block':'將 1 張手牌放到場外，本回合不被 BP4000 以上的角色阻擋',
+ 'effect-substitute-retire':'可改由前線的拉姆代替雷姆退場',
+ 'effect-outside-printed-active':'可讓場外能源 0 的藍色菜月昴以活動狀態登場',
+ 'effect-bounce-include-self':'可將 1 張自己場上的角色放回手牌',
+ 'effect-outside-rest-or-raid':'可讓場外的藍色菜月昴休息登場或突襲',
+ 'effect-grant-bounce-instead':'可指定 1 張菜月昴，對手效果退場時改回手牌',
+ 'effect-hand-reenter-under':'可將 1 張手牌放到場外，讓菜月昴休息回到前線',
+ 'effect-hand-deploy-may':'這次參照手牌角色 BP 時，是否視為 +1000 並休息登場',
+ 'effect-hand-rest-entry':'選擇休息登場的位置',
+ 'effect-active-other':'選擇最多 1 張其他己方角色並使其活動',
+ 'effect-rest-own-front-draw':'選擇 1 張自己的活動前線角色並使其休息',
+ 'effect-raid-base-rest':'選擇是否將突襲來源以休息狀態登場',
+ 'effect-rest-or-retire':'選擇 1 張 BP 5000 以下的對手前線',
  'effect-grant-front-energy':'讓另一張己方前線指定特徵角色本回合也能產生能源',
  'effect-rest-bp':'選擇敵方 REST','effect-grant-ap-tax':'讓另一張己方 DFN 角色獲得指定時的 AP 加價保護','effect-attack-ban':'指定禁止攻擊的對手前線角色',
  'effect-buff-trait':'選擇己方 BP 加成',
@@ -94,18 +142,47 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'attack':return action.targetUid?
    '狙擊攻擊：'+name()+' → '+uiCardLabel(pack,state,action.targetUid):
    '宣告攻擊：'+name();
-  case 'activate':return action.mode==='discardSelfBuff'?
+  case 'activate':return action.mode==='revealBottomBuff'?
+   '起動主要：公開 1 張手牌放到牌底':
+   action.mode==='discardSelfBuff'?
     '起動主要：棄一張手牌，本回合自身 BP＋1500（每回合一次）':
     action.mode==='selfRestEnergyRetire'?
     (pack?.cards&&state?.players?.some(p=>[...p.front,...p.energy].some(c=>c?.uid===action.uid&&
       pack.cards[c.cardId]?.mainAbility?.end==='hand'))
      ?'起動主要：REST 自身，產能＋1，主要階段結束回手'
      :'起動主要：REST 自身，產能＋1，主要階段結束退場'):
+    action.mode==='selfRestThen'&&pack?.cards&&state?.players?.some(p=>
+     [...p.front,...p.energy].some(c=>c?.uid===action.uid&&
+      pack.cards[c.cardId]?.mainAbility?.then?.[0]?.op==='drawHandTop'))
+     ?'起動主要：休息這張場域，抽 1 張並將 1 張手牌放到牌組上面':
     action.mode==='selfRestThen'?'主要能力：REST 自身，執行效果':
     action.mode==='selfRestBuff'?'主要能力：REST 自身，指定另一張己方角色本回合 BP 加成':
     action.mode==='payApDrawEnergy'?'起動主要：支付 1 AP，抽 1 張，本回合產能＋1':
     action.mode==='restFrontGainEnergy'?'起動主要：REST 自身，再 REST 一張己方前線，本回合產能＋1':
     action.mode==='selfRestEnemy'?'主要能力：REST 自身，指定敵方前線角色':
+    action.mode==='frontOnce'&&pack?.cards&&state?.players?.some(p=>
+     [...p.front,...p.energy].some(c=>c?.uid===action.uid&&
+      pack.cards[c.cardId]?.mainAbility?.then?.[0]?.op==='handTopBuffSelf'))
+     ?'起動主要：將 1 張手牌放到牌組上面，本回合 BP+1000':
+    action.mode==='frontOnce'&&pack?.cards&&state?.players?.some(p=>
+     [...p.front,...p.energy].some(c=>c?.uid===action.uid&&
+      pack.cards[c.cardId]?.mainAbility?.then?.[0]?.op==='discountNextNamedHandEnergy'))
+     ?'起動主要：下一張從手牌使用的愛蜜莉雅，能源需求減少紫 1':
+    action.mode==='frontOnce'&&pack?.cards&&state?.players?.some(p=>
+     [...p.front,...p.energy].some(c=>c?.uid===action.uid&&
+      pack.cards[c.cardId]?.mainAbility?.requireOwnEffectRest===true))
+     ?'起動主要：將這張角色置為活動，直到下一個我方回合開始前 BP+1000':
+    action.mode==='frontOnce'&&pack?.cards&&state?.players?.some(p=>
+     [...p.front,...p.energy].some(c=>c?.uid===action.uid&&
+      pack.cards[c.cardId]?.mainAbility?.then?.[0]?.op==='activeSelf'))
+     ?'起動主要：將這張角色置為活動':
+    action.mode==='frontOnce'&&pack?.cards&&state?.players?.some(p=>
+     [...p.front,...p.energy].some(c=>c?.uid===action.uid&&
+      pack.cards[c.cardId]?.mainAbility?.then?.[0]?.op==='buffEitherField'))
+     ?'起動主要：選擇最多 1 張場上角色，本回合 BP+1000':
+    action.mode==='restLeaveReveal'?'起動主要：休息並退場，公開 1 張手牌放到牌底':
+    action.mode==='handBlock'?'起動主要：將 1 張手牌放到場外，本回合不被 BP4000 以上的角色阻擋':
+    action.mode==='energySwap'?'起動主要：與 1 張己方前線角色交換位置':
     action.mode==='ready'?'主要能力：ACTIVE':
     action.mode==='buff'?'主要能力：BP 加成':'主要能力：ACTIVE ＋ BP 加成';
   case 'chooseBlock':return action.uid===null?'不阻擋':'使用 '+name()+' 阻擋';
@@ -160,15 +237,78 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseOptionalMill':return action.mode==='mill'?'將牌庫頂 1 張送場外':'不送場外';
   case 'choosePayApDeploy':return action.mode==='pay'?'支付 1 AP，接著選擇場外角色':'不支付 AP';
   case 'chooseOptionalPayAp':return action.mode==='pay'?'支付 1 AP，然後結算後續效果':'不支付 AP';
+  case 'chooseDeckNamedPlay':return action.mode==='hand'?'將公開的卡片加入手牌':
+   action.mode==='raid'?'以突襲登場：'+name()+suffix():'以休息狀態登場：'+name()+suffix();
+  case 'choosePlaceHand':return action.mode==='deck'?
+   '將 '+name()+' 放到牌組上面':'將 '+name()+' 放到場外';
   case 'chooseHandRest':return action.uid===null?'不特殊登場':'免費 REST 登場 '+name()+suffix();
   case 'chooseActiveOwnNamed':return action.uid===null?'不將指定名稱角色轉為 ACTIVE':'將 '+name()+' 轉為 ACTIVE';
   case 'chooseHandRestOrRaid':return action.uid===null?'不從手牌登場':
    (action.mode==='raid'?'從手牌 Raid ':'從手牌 REST 登場 ')+name()+suffix();
    case 'chooseOutsideNameRest':return action.uid===null?'不從場外登場':'REST 登場 '+name()+suffix();
   case 'chooseTopFiltered':return action.uid===null?'不加入手牌，將其餘卡排列至底部':'加入手牌：'+name();
+  case 'chooseTopTraitEvent':return action.uid===null?'不加入手牌，將其餘卡排列至底部':'公開 '+name()+' 並加入手牌';
   case 'chooseTopOrder':return '依序放回：'+name();
   case 'chooseRestFrontEnergy':return 'REST '+name()+'，本回合產能＋1';
+  case 'chooseEitherBuff':return action.uid===null?
+   (state?.pending?.includeSelf?'不指定角色':'不指定其他角色'):'選擇 '+name()+'，本回合 BP+1000';
+  case 'chooseHandOutsideActive':return action.uid===null?'不將手牌放到場外':
+   '將 '+name()+' 放到場外，並使這張角色活動';
+  case 'chooseNamedDuration':return action.uid===null?'不指定帕克':
+   '選擇 '+name()+'，給予 BP+2000 與衝擊 1';
+  case 'chooseTopTakeOne':return '將 '+name()+' 加入手牌，其餘放到場外';
+  case 'chooseRevealOptional':return action.uid===null?'不公開手牌':'公開 '+name()+' 並放到牌底';
+  case 'chooseReferencedBp':return action.mode==='accept'?'視為 BP 增加':'維持原本 BP';
+  case 'chooseOutsideReferenced':return action.mode==='hand'?'將 '+name()+' 加入手牌':
+   '使 '+name()+' 以休息狀態登場';
+  case 'chooseRevealRetire':return '公開 '+name()+' 並放到牌底';
+  case 'chooseRetireReferenced':return action.uid===null?'不使角色退場':'使 '+name()+' 退場';
+  case 'chooseHandBlock':return '將 '+name()+' 放到場外';
+  case 'chooseSubstituteRetire':return action.uid===null?'不代替，讓原本的角色退場':
+   '改由 '+name()+' 退場';
+  case 'chooseOutsidePrintedActive':return action.uid===null?'不登場':
+   '使 '+name()+' 以活動狀態登場';
+  case 'chooseBounceIncludeSelf':return action.uid===null?'不放回手牌':
+   '將 '+name()+' 放回手牌';
+  case 'chooseOutsideRestOrRaid':return action.uid===null?'不登場':
+   (action.mode==='raid'?'以突襲登場：':'以休息狀態登場：')+name();
+  case 'chooseGrantBounceInstead':return action.uid===null?'不指定菜月昴':
+   '指定 '+name()+'，直到下一次自己的回合開始';
+  case 'chooseHandReenterUnder':return action.uid===null?'不將手牌放到場外':
+   '將 '+name()+' 放到場外，並讓這張角色休息回到前線';
+  case 'chooseReturnPrinted':return action.uid===null?'不放回手牌':'將 '+name()+' 放回手牌，並使這張角色活動且本回合 BP 增加';
+  case 'chooseRemoveNamed':return action.uid===null?'不移入移除區':'將 '+name()+' 移入移除區，並使這張角色活動';
+  case 'choosePayNamed':return action.mode==='skip'?'不支付，不回收':
+   action.mode==='hand'?'將 '+name()+' 放到場外，並回收指定卡':
+   '休息 '+name()+'，並回收指定卡';
+  case 'chooseAddNamed':return '將 '+name()+' 加入手牌';
+  case 'chooseRevealBottom':return '公開 '+name()+' 並放到牌底';
+  case 'chooseHandTop':return '將 '+name()+' 放到牌組上面';
+  case 'chooseRestFrontAp':return action.uid===null?'不休息前線':'休息 '+name()+'，之後可恢復 1 張 AP';
+  case 'chooseDiscardActive':return action.uid===null?'不棄牌，場域維持休息':
+   '將 '+name()+' 放到場外，並使這張場域活動';
+  case 'chooseNamedImpact':return '選擇 '+name()+'，本回合 BP+1000 並獲得衝擊+1';
   case 'chooseOwnBuff':case 'chooseMainBuff':case 'chooseTraitBuff':case 'chooseRestBp':
+  case 'chooseRetireAtMost':return '使 '+name()+' 退場';
+  case 'chooseRetireAtLeast':case 'chooseRetireScaled':return action.uid===null?'不使角色退場':'使 '+name()+' 退場';
+  case 'chooseRestOutsideEvents':return action.uid===null?'不使角色休息':'使 '+name()+' 休息';
+  case 'chooseRestedRetire':return action.uid===null?'不使角色退場':'使 '+name()+' 退場';
+  case 'chooseHandNamedRest':return action.uid===null?'不登場':'使 '+name()+' 以休息狀態登場';
+  case 'chooseOutsidePrintedRest':return action.uid===null?'不登場':'使 '+name()+' 以休息狀態登場';
+  case 'chooseGrantPrintedBlock':return action.uid===null?'不賦予防禦下限':'使 '+name()+' 不會被 BP4000 以上的角色阻擋';
+  case 'chooseMoveOppFront':return action.uid===null?'不移動':'將 '+name()+' 移至能源線';
+  case 'chooseUnblockedRest':return action.uid===null?'不使角色休息':'使 '+name()+' 休息';
+  case 'chooseEnergySwap':return '與 '+name()+' 交換位置';
+  case 'chooseGrantNamedImpact':return action.uid===null?'不賦予衝擊':'使 '+name()+' 獲得衝擊 1';
+  case 'chooseHandBpMay':return action.mode==='accept'?'視為 BP+1000':'維持原本 BP';
+  case 'handActivate':return '支付 1 AP，公開這張手牌';
+  case 'chooseHandDeployMay':return action.mode==='accept'?'視為 BP+1000 並休息登場':'維持原本 BP，留在手牌';
+  case 'chooseHandRestEntry':return '休息登場';
+  case 'chooseActiveOther':return action.uid===null?'不使其他角色活動':'使 '+name()+' 活動';
+  case 'chooseRestOwnFrontDraw':return '休息 '+name()+'，然後抽 1 張';
+  case 'chooseRaidBaseRest':return action.uid===null?'不使突襲來源登場':
+   '將 '+name()+' 以休息狀態放到'+destination()+' '+(action.slot+1);
+  case 'chooseRestOrRetire':return state?.pending?.mode==='retire'?'使 '+name()+' 退場':'使 '+name()+' 休息';
   case 'chooseRetireBp':case 'chooseTargetMany':return action.uid===null?'完成目標選擇':'選擇第 '+(state?.pending?.selected?.length+1||1)+' 個角色';
   case 'chooseFrontEnergyGrant':return action.uid===null?
    '不指定暫時 FRONT 產能對象':'讓 '+name()+' 本回合在前線也能產生能源';
@@ -188,6 +328,6 @@ export function visibleActionsForCard(legal,uid){
 }
 export function uiActionGroup(action){
  if(action.type==='next'||action.type==='extraDraw')return 'phase';
- if(['play','raid','event','move','step','attack','activate'].includes(action.type))return 'card';
+ if(['play','raid','event','move','step','attack','activate','handActivate'].includes(action.type))return 'card';
  return 'pending';
 }
