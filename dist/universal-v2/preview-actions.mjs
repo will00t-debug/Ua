@@ -235,6 +235,23 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseGrantedDraw':return action.mode==='draw'?'使用獲得的攻擊時抽 1 張':'不抽牌';
   case 'chooseTarget':
    return action.uid===null?'不指定／完成':'指定 '+name();
+  case 'chooseRaidWitness':return action.when==='now'?'先結算突襲見證':
+   action.when==='later'?'稍後結算突襲見證':'不使用突襲見證';
+  case 'chooseRaidAttach':return action.uid===null?'不放入突襲角色下':'將 '+name()+' 裏向放在突襲角色下';
+  case 'chooseRaidWitnessMove':return action.mode==='move'?'把此卡裏向放在突襲角色下':'不移動此卡';
+  case 'chooseLookTake':return action.uid===null?'不加入手牌':'加入手牌：'+name();
+  case 'chooseLookOrder':return '依序放回牌庫底：'+name();
+  case 'chooseDiscardPay':return action.uid===null?(action.mode==='activeAp'?'ACTIVE 1 張 AP':
+   action.mode==='retire'?'改為退場敵方前線':'停止棄牌'):'棄掉 '+name();
+  case 'chooseFacedownScale':return (action.retireUid?'退場 1 張敵方前線':'不退場')+
+   (action.activeAp?'，並 ACTIVE 1 張 AP':'');
+  case 'chooseSpendFacedown':return action.uids?.length?'送出 2 張裏向卡'+(action.targetUid?'並退場敵方前線':'') :'不送出裏向卡';
+  case 'chooseAbsorbFront':return action.uids?.length?'把所選前線角色裏向放在自己下':'不吸收前線角色';
+  case 'chooseSimonLow':return action.mode==='recover'?(action.uid===null?'不回收西蒙':'回收 '+name()):
+   (action.uid===null?'不讓西蒙登場':'ACTIVE 登場 '+name());
+  case 'chooseReplayEntry':return action.uid===null?'不重新發動登場效果':'重新發動 '+name()+' 的登場效果';
+  case 'chooseAttackEndRaid':return action.uid===null?'不在攻擊結束時突襲':'從手牌突襲 '+name();
+  case 'chooseRetireCapture':return action.uid===null?'不將退場角色放在場域下':'把退場角色裏向放在此場域下';
   default:return '執行 '+action.type;
  }
 }

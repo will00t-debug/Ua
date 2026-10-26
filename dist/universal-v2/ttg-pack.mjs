@@ -242,7 +242,81 @@ const additions=[
   phaseEffects:[{phase:'attack',edge:'start',turn:'own',then:[
    {op:'mayStepFrontFromEnergy',optional:true,bp:1000,once:'name',
     nameContains:'グレンラガン'}]}],
-  effects:{},match:'STEP'}
+  effects:{},match:'STEP'},
+ {id:'TTG-1-004',name:'ヴィラル',energy:4,ap:1,bp:4000,gen:1,color:'green',
+  type:'character',trigger:'get',implementation:'dsl',impactNull:true,
+  raidAttach:{line:'front',nameContains:'グレンラガン',baseNames:['シモン','ヴィラル'],
+   once:'name',drawIfHand:1},
+  effects:{},match:'IMPACT'},
+ {id:'TTG-1-012',name:'シモン',energy:6,ap:2,bp:4000,gen:1,color:'green',
+  type:'character',trigger:'get',implementation:'dsl',enterAlwaysActive:true,
+  energyLineForbidden:true,
+  mainAbility:{op:'doubleEnergyIfNotEntry',minEnergy:8,once:'name'},
+  effects:{onPlay:[{op:'noteEntryTurn'},{op:'lookTakeOrdered',count:6,
+   takeName:'ニア',takeEnergy:8,discardMin:1,retireEnergySum:15}]},
+  match:'ACTIVE'},
+ {id:'TTG-1-027',name:'アークグレンラガン',energy:7,ap:1,bp:4000,gen:1,color:'green',
+  type:'character',trigger:'raid',implementation:'dsl',raidName:'シモン',
+  raidBaseNames:['シモン','ヴィラル'],raidFromRaid:['グレンラガン'],printedImpact:1,
+  passiveBonuses:[{condition:{kind:'ownCardTraitCount',turn:'any',zone:'field',
+   excludeSelf:false,trait:'ガンメン',min:1},bp:1000}],
+  effects:{onPlay:[{op:'facedownEntryScale',retireAt:1,retireBp:5000,activeApAt:3}],
+   onAttack:[{op:'maySpendFacedown',count:2,damage:2}]},
+  match:'IMPACT'},
+ {id:'TTG-1-031',name:'超銀河グレンラガン',energy:10,ap:1,bp:4000,gen:1,color:'green',
+  type:'character',trigger:'raid',implementation:'dsl',raidName:'シモン',
+  raidBaseNames:['シモン','ヴィラル'],raidFromRaid:['アークグレンラガン'],
+  printedAttackDamage:2,
+  passiveBonuses:[{condition:{kind:'ownCardTraitCount',turn:'any',zone:'field',
+   excludeSelf:false,trait:'ガンメン',min:1},bp:1000}],
+  effects:{onPlay:[{op:'galaxyBurstEntry',bp:5000,apEnergy:20,drawEnergy:50,
+   draw:2,once:'name'}]},
+  match:'DAMAGE'},
+ {id:'TTG-1-032',name:'天元突破グレンラガン',energy:100,ap:1,bp:50000,gen:1,
+  color:'green',type:'character',trigger:'special',implementation:'dsl',
+  raidName:'シモン',raidBaseNames:['シモン','ヴィラル'],
+  raidFromRaid:['超銀河グレンラガン'],chainRaidOnly:true,chainRaidNoSameTurn:true,
+  chainRaidUnique:true,oppEffectUntargetable:true,ownTurnImpact:4,
+  triggerEffect:{op:'retireOppFront'},
+  passiveBonuses:[{condition:{kind:'ownCardTraitCount',turn:'own',zone:'field',
+   excludeSelf:false,trait:'ガンメン',min:1},extraDamage:6}],
+  effects:{onPlay:[{op:'mayAbsorbFront'}],
+   onAttack:[{op:'maySpendFacedown',count:2,retire:true}]},
+  match:'IMPACT'},
+ {id:'TTG-1-033',name:'アークグレン',energy:2,ap:1,bp:0,gen:1,color:'green',
+  type:'field',trigger:'color',implementation:'dsl',activeExtraEnergy:1,
+  raidWitness:{name:'アークグレンラガン',once:'name',draw:2},
+  triggerEffect:{op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1},
+  effects:{},match:'突襲'},
+ {id:'TTG-1-034',name:'超銀河ダイグレン',energy:8,ap:1,bp:0,gen:2,color:'green',
+  type:'field',trigger:'get',implementation:'dsl',noOwnFieldTypeHandDiscount:3,
+  facedownUnderEnergy:1,retireCapture:true,
+  raidWitness:{name:'超銀河グレンラガン',returnUnderToHand:true},
+  effects:{},match:'裏向'},
+ {id:'TTG-1-056',name:'シモン',energy:3,ap:1,bp:4000,gen:1,color:'red',
+  type:'character',trigger:'get',implementation:'dsl',attackDeckAtMost:20,
+  attackRequiresName:'ニア',
+  phaseEffects:[{phase:'attack',edge:'end',turn:'own',then:[
+   {op:'mayRaidOntoSelf',names:['ラガン','グレンラガン'],color:'red',bp:1000}]}],
+  effects:{onPlay:[{op:'drawDiscard',count:1}]},
+  match:'ニア'},
+ {id:'TTG-1-061',name:'ニア',energy:3,ap:2,bp:2000,gen:2,color:'red',
+  type:'character',trigger:'draw',implementation:'dsl',mutualPlayBan:'カミナ',
+  effects:{onPlay:[{op:'simonLowEntry',name:'シモン',maxEnergy:2,color:'red',
+   deckAtMost:20}]},
+  match:'カミナ'},
+ {id:'TTG-1-062',name:'ニア',energy:3,ap:1,bp:2500,gen:2,color:'red',
+  type:'character',trigger:'color',implementation:'dsl',mutualPlayBan:'カミナ',
+  mainAbility:{op:'restBuffMayDiscardActive',deckAtMost:20,bp:1000,
+   name:'シモン',raidBase:true},
+  triggerEffect:{op:'retireOppFrontUnderBp',bp:2500},
+  effects:{onPlay:[{op:'replayNamedEntry',name:'シモン',maxEnergy:3}]},
+  match:'REST'},
+ {id:'TTG-1-074',name:'グレンラガン',energy:4,ap:1,bp:4000,gen:1,color:'red',
+  type:'character',trigger:'raid',implementation:'dsl',raidName:'シモン',
+  raidRequiresNames:['ニア'],raidFromRaid:['ラガン','グレン'],printedImpact:1,
+  effects:{onPlay:[{op:'lagannEntryLadder'}]},
+  match:'IMPACT'}
 ];
 export const TTG_V2_ADDITION_IDS=Object.freeze(additions.map(x=>x.id));
 export function verifiedTtgV2Additions(){
@@ -253,14 +327,14 @@ export function verifiedTtgV2Additions(){
    const observed=key==='name'?(c.nameJa||c.name):(c[key]??null);
    if(observed!==(spec[key]??null))throw Error('TTG printed '+key+' changed: '+spec.id);
   }
-  // Older UA56BT entries print traits as separate tokens. TTG-077 and
-  // TTG-029 use one official slash-composite field. Normalize ONLY these
-  // proved cards to the same V2 trait keys; sourceRecord remains untouched.
-  if((spec.id==='TTG-1-077'||spec.id==='TTG-1-029')&&
-   JSON.stringify(c.traits)!=='["大グレン団／ガンメン"]')
+  // Older UA56BT entries print traits as separate tokens. TTG-077, TTG-029,
+  // TTG-027 and TTG-074 use one official slash-composite field. Normalize
+  // ONLY these proved cards; sourceRecord remains untouched.
+  const slash=spec.id==='TTG-1-077'||spec.id==='TTG-1-029'||
+   spec.id==='TTG-1-027'||spec.id==='TTG-1-074';
+  if(slash&&JSON.stringify(c.traits)!=='["大グレン団／ガンメン"]')
    throw Error(spec.id+' official Gunmen traits changed; re-review required');
-  return {...spec,traits:spec.id==='TTG-1-077'||spec.id==='TTG-1-029'?
-   ['大グレン団','ガンメン']:(c.traits||[])};
+  return {...spec,traits:slash?['大グレン団','ガンメン']:(c.traits||[])};
  });
 }
 export function createTtgV2Pack(){return createUniversalPack({id:'gurren-lagann',version:'v2-c-20261015',cards:[...verifiedPilotCards('gurren-lagann'),...verifiedTtgV2Additions()]});}
