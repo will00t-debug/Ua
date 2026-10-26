@@ -16,6 +16,11 @@
 // other character. Front once per turn: until next own start, BP+1000 and
 // characters of BP 4000 or more cannot block her; or grant one other
 // character front-line energy generation this turn.
+// Batch 58 adds 018: a name-locked onPlay choice shared by the printed
+// name レム. One branch rests a blue energy-0 Subaru from outside and
+// retires that entry when this main phase ends. The other grants one
+// field copy a this-turn ready that applies only if that character is
+// still present after losing a battle.
 // Batch 57 adds 025: this-turn player aura that taxes an effect choosing
 // a field Subaru, then either draw if Subaru is on the field or ready
 // one AP at this turn's attack-phase start. Q2409.
@@ -268,13 +273,21 @@ const PROFILES={
    {id:'draw',label:'draw if Subaru',turn:'any',then:[
     {op:'drawIfOwnName',name:'ナツキ・スバル',count:1}]},
    {id:'ap',label:'ready one AP at attack',turn:'any',then:[
-    {op:'scheduleAttackStartAp',count:1}]}]}]}}
+    {op:'scheduleAttackStartAp',count:1}]}]}]}},
+ 'REZ-2-018':{implementation:'dsl',effects:{onPlay:[
+  {op:'chooseOne',optional:false,nameLock:'レム',options:[
+   {id:'enter',label:'rest a zero-energy blue Subaru',turn:'any',then:[
+    {op:'deployOutsideNamedRestRetireEnd',name:'ナツキ・スバル',color:'blue',
+     maxEnergy:0,optional:true}]},
+   {id:'lose',label:'lose-battle ready',turn:'any',then:[
+    {op:'grantNamedLoseBattleReady',name:'ナツキ・スバル',color:'blue',
+     maxEnergy:0,optional:true}]}]}]}}
 };
 
 export const REZ_V2_IMPLEMENTED_IDS=Object.freeze(Object.keys(PROFILES));
 
 export function createRezV2Pack(){
  const cards=REZ_V2_IMPLEMENTED_IDS.map(id=>({...shell(id),...PROFILES[id]}));
- return createUniversalPack({id:'rezero',version:'0.24.0',cards});
+ return createUniversalPack({id:'rezero',version:'0.25.0',cards});
 
 }
