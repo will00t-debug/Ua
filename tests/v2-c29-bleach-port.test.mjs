@@ -253,9 +253,12 @@ import bleachContribution from '../dist/universal-v2/title-packs/bleach.mjs';
 //   [起動メイン][ターン1] removes 4 own outside cards. That exact count draws 1
 //   and grants Impact 1 this turn. Q574 (2023-09-25): 3 cards still leave, and
 //   the draw and Impact do not. The removal is not optional. Generated energy is 紫.
+// BLC-1-014 UA08BT: 黄4 / 黄. Raid onto バンビエッタ・バスターバイン.
+//   On play, during your turn, retire up to one opposing front REST character.
+//   A life Raid is the opponent's turn, so that clause does not start.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008','BLC-4-065','BLC-2-051','BLC-1-092','BLC-4-044','BLC-4-016','BLC-4-017','BLC-1-028','BLC-2-002','BLC-4-032','BLC-1-011','BLC-1-104'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008','BLC-4-065','BLC-2-051','BLC-1-092','BLC-4-044','BLC-4-016','BLC-4-017','BLC-1-028','BLC-2-002','BLC-4-032','BLC-1-011','BLC-1-104','BLC-1-014'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -326,12 +329,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers eighty-four whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,520);
- assert.equal(EXPECTED_V2_COUNTS.bleach,244);
+test('C29 registers eighty-five whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,521);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,245);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,244);
+ assert.equal(Object.keys(bleach.cards).length,245);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -8333,6 +8336,121 @@ test('BLC-1-104 removes four outside cards for a draw and Impact 1',()=>{
  assert.equal(assertUniversalMatch(full.packs,paying),true);
  assert.equal(assertUniversalMatch(hushed.packs,hushed.s),true);
  assert.equal(assertUniversalMatch(raid.packs,stacked),true);
+});
+
+test('BLC-1-014 retires one opposing front REST character only on its own turn',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-1-014');
+ assert.equal(printed.number,'UA08BT/BLC-1-014');
+ assert.equal(printed.nameJa,'バンビエッタ・バスターバイン');
+ assert.equal(printed.effect,'Raid〈邦比愛塔・芭絲塔拜茵〉：轉為 ACTIVE，可移至前線。登場：若現在是己方回合，可使最多 1 個敵方前線的 REST 角色退場。');
+ assert.equal(printed.traits,'星十字騎士團');
+ assert.equal(printed.energy,4);
+ assert.equal(printed.gen,1);
+ assert.equal(printed.trigger,'raid');
+ const card=bleach.cards['BLC-1-014'];
+ assert.equal(card.name,'バンビエッタ・バスターバイン');
+ assert.equal(card.gen,1);
+ assert.equal(card.raidName,'バンビエッタ・バスターバイン');
+ assert.equal(card.trigger,'raid');
+ assert.equal(card.triggerEffect,null);
+ assert.deepEqual(card.traits,['星十字騎士團']);
+ assert.deepEqual(card.effects.onPlay,[{op:'retireOppFrontRest',optional:true,ownTurnOnly:true}]);
+ assert.equal(bleach.cards['BLC-1-012'].raidName??null,null);
+ assert.equal(bleach.cards['BLC-1-012'].name,'バンビエッタ・バスターバイン');
+ const bare={id:'BAD',name:'BAD',color:'yellow',type:'character',energy:0,ap:1,bp:1000,gen:1,traits:[],trigger:null,implementation:'dsl',effects:{}};
+ assert.throws(()=>createUniversalPack({id:'bad-bambi-rest',cards:[{...bare,raidName:'バンビエッタ・バスターバイン',effects:{onPlay:[{op:'retireOppFrontRest',optional:false,ownTurnOnly:true}]}}]}),/invalid rested front retirement/);
+ const deck=realDeck(['BLC-1-014','BLC-1-012','BLC-1-001','BLC-1-002','BLC-1-016','BLC-1-018'],'yellow');
+ function fuel(s){
+  for(const [i,id] of ['BLC-1-001','BLC-1-002','BLC-1-012','BLC-1-018'].entries())
+   put(s,0,id,'energy',i);
+ }
+ const board=main(deck,29131);
+ fuel(board.s);
+ const rested=put(board.s,1,'BLC-1-016','front',0,false);
+ const awake=put(board.s,1,'BLC-1-018','front',1,true);
+ const parked=put(board.s,1,'BLC-1-001','energy',0,false);
+ const bambi=take(board.s,0,'BLC-1-014');
+ board.s.players[0].hand.push(bambi);
+ assert.ok(universalEnergyByColor(board.packs,board.s,0).yellow>=4);
+ const played=dispatchUniversalAction(board.packs,board.s,{type:'play',uid:bambi.uid,line:'front',slot:0});
+ assert.equal(live(played,0,bambi.uid).ready,false);
+ assert.equal(played.pending.kind,'effect-retire-bp');
+ assert.equal(played.pending.optional,true);
+ assert.equal(played.pending.onlyRest,true);
+ const choices=legalUniversalActions(board.packs,played);
+ assert.equal(choices.some(a=>a.type==='chooseRetireBp'&&a.uid===null),true);
+ assert.equal(choices.some(a=>a.uid===rested.uid),true);
+ assert.equal(choices.some(a=>a.uid===awake.uid),false);
+ assert.equal(choices.some(a=>a.uid===parked.uid),false);
+ aiOk(board.packs,played);
+ const skipped=dispatchUniversalAction(board.packs,played,{type:'chooseRetireBp',uid:null});
+ assert.equal(skipped.pending,null);
+ assert.equal(live(skipped,1,rested.uid).cardId,'BLC-1-016');
+ const again=main(deck,29132);
+ fuel(again.s);
+ const victim=put(again.s,1,'BLC-1-016','front',0,false);
+ put(again.s,1,'BLC-1-018','front',1,true);
+ const rider=take(again.s,0,'BLC-1-014');
+ again.s.players[0].hand.push(rider);
+ let retiring=dispatchUniversalAction(again.packs,again.s,{type:'play',uid:rider.uid,line:'front',slot:0});
+ retiring=dispatchUniversalAction(again.packs,retiring,{type:'chooseRetireBp',uid:victim.uid});
+ assert.equal(retiring.pending,null);
+ assert.equal(retiring.players[1].outside.some(c=>c.uid===victim.uid),true);
+ assert.equal(retiring.players[1].front.some(c=>c?.uid===victim.uid),false);
+ const quiet=main(deck,29133);
+ fuel(quiet.s);
+ put(quiet.s,1,'BLC-1-016','front',0,true);
+ const lone=take(quiet.s,0,'BLC-1-014');
+ quiet.s.players[0].hand.push(lone);
+ const none=dispatchUniversalAction(quiet.packs,quiet.s,{type:'play',uid:lone.uid,line:'front',slot:0});
+ assert.equal(none.pending,null);
+ assert.equal(live(none,0,lone.uid).ready,false);
+ const hostBoard=main(deck,29134);
+ for(const [i,id] of ['BLC-1-001','BLC-1-002','BLC-1-016','BLC-1-018'].entries())
+  put(hostBoard.s,0,id,'energy',i);
+ const host=put(hostBoard.s,0,'BLC-1-012','front',0,true);
+ const raider=take(hostBoard.s,0,'BLC-1-014');
+ hostBoard.s.players[0].hand.push(raider);
+ const raids=legalUniversalActions(hostBoard.packs,hostBoard.s).filter(a=>a.type==='raid'&&a.uid===raider.uid);
+ assert.equal(raids.some(a=>a.baseUid===host.uid&&a.slot===0),true);
+ const stacked=dispatchUniversalAction(hostBoard.packs,hostBoard.s,{type:'raid',uid:raider.uid,baseUid:host.uid,slot:0});
+ assert.equal(stacked.players[0].front[0].cardId,'BLC-1-014');
+ assert.equal(stacked.players[0].front[0].ready,true);
+ assert.equal(stacked.players[0].front[0].stack[0].uid,host.uid);
+ assert.equal(stacked.pending,null);
+ const packs=[bleach,bleach];
+ let life=newUniversalMatch(packs,{decks:[deck,deck],seed:29135,first:1});
+ for(let n=0;n<8&&life.phase!=='attack';n++)life=dispatchUniversalAction(packs,life,{type:'next'});
+ for(const [i,id] of ['BLC-1-001','BLC-1-002','BLC-1-016','BLC-1-018'].entries())
+  put(life,0,id,'energy',i);
+ const lifeHost=put(life,0,'BLC-1-012','front',0,true);
+ const attacker=put(life,1,'BLC-1-016','front',0,true);
+ const revealed=life.players[0].life[0];
+ const trigger=take(life,0,'BLC-1-014');
+ life.players[0].life[0]=trigger;
+ life.players[0].deck.push(revealed);
+ life=dispatchUniversalAction(packs,life,{type:'attack',uid:attacker.uid});
+ life=dispatchUniversalAction(packs,life,{type:'chooseBlock',uid:null},{actor:0});
+ const lifeRaid=legalUniversalActions(packs,life).find(a=>a.type==='chooseTrigger'&&a.mode==='raid'&&a.baseUid===lifeHost.uid);
+ assert.ok(lifeRaid);
+ life=dispatchUniversalAction(packs,life,lifeRaid,{actor:0});
+ assert.notEqual(life.pending?.kind,'effect-retire-bp');
+ assert.equal(life.players[0].front.some(c=>c?.cardId==='BLC-1-014'&&c.stack?.[0]?.uid===lifeHost.uid),true);
+ assert.equal(life.players[1].front.some(c=>c?.uid===attacker.uid),true);
+ for(let n=0;n<8&&life.pending;n++){
+  assert.notEqual(life.pending.kind,'effect-retire-bp');
+  const actor={actor:life.pending.player};
+  const action=legalUniversalActions(packs,life).find(a=>a.type==='chooseLifeOrder')||
+   legalUniversalActions(packs,life).find(a=>a.type==='chooseTrigger'&&a.mode==='skip')||
+   legalUniversalActions(packs,life)[0];
+  life=dispatchUniversalAction(packs,life,action,actor);
+ }
+ assert.equal(life.pending,null);
+ assert.equal(assertUniversalMatch(board.packs,skipped),true);
+ assert.equal(assertUniversalMatch(again.packs,retiring),true);
+ assert.equal(assertUniversalMatch(quiet.packs,none),true);
+ assert.equal(assertUniversalMatch(hostBoard.packs,stacked),true);
+ assert.equal(assertUniversalMatch(packs,life),true);
 });
 
 function fieldCount(s,p){

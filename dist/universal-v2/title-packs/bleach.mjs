@@ -171,7 +171,8 @@ const testForKind=Object.freeze({
  uryuSwapOrBuff:'tests/v2-c29-bleach-port.test.mjs',
  yoruichiEnergySwap:'tests/v2-c29-bleach-port.test.mjs',
  bazzDiscardBattleKit:'tests/v2-c29-bleach-port.test.mjs',
- ichigoRemoveFourImpact:'tests/v2-c29-bleach-port.test.mjs'
+ ichigoRemoveFourImpact:'tests/v2-c29-bleach-port.test.mjs',
+ bambiettaRestRetire:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -190,7 +191,9 @@ function contributedEntry(profile){
   definition:Object.freeze(definition),
   evidence:Object.freeze({
    printedTextFragments:Object.freeze([profile.effect]),
-   reviewNote:profile.id==='BLC-1-104'?
+   reviewNote:profile.id==='BLC-1-014'?
+    'UA08BT/BLC-1-014 official iframe 2026-10-26. Required energy 黄4, generated energy 黄. Raid onto バンビエッタ・バスターバイン, become ACTIVE, and may move to the front. On play, during your turn, retire up to one opposing front character that is REST. An ACTIVE front character, an energy-line character, and a field are not targets. Declining is legal. The clause does not start on the opponent turn, including a life Raid. Silence before the on-play is queued removes it. RAID is the generic sentence. No card FAQ.':
+   profile.id==='BLC-1-104'?
     'UA08ST/BLC-1-104 official iframe 2026-10-26. Raid onto 黒崎 一護, become ACTIVE, and may move to the front. [起動メイン][ターン1]: place 4 own outside cards into the removed area. On that exact count, draw 1 and gain Impact 1 this turn. Q574 (2023-09-25): activating with only 3 still removes those 3, and the draw and Impact do not happen. The removal is not optional. [ターン1] is this physical card. Silence before activation removes the ability. The earned Impact remains after later silence. Generated energy is 紫. RAID is the generic sentence. No extra card FAQ.':
    profile.id==='BLC-1-011'?
     'UA08BT/BLC-1-011 official iframe 2026-10-26. [起動メイン][手札を1枚場外に置く]. No [ターン1]. The discard is mandatory and this physical card may pay it again the same turn. Success grants Damage 2 and a battle-win draw for this turn. Q537 (2023-09-25): a battle win is an attack against a character whose BP is less than or equal to the attacker. A direct attack deals the Damage 2 and does not draw. Declining the discard is illegal. An empty hand makes the activate illegal. The energy line is legal. Silence before activation removes the ability. Later silence removes the unfired battle-win draw. The resolved Damage 2 remains. DRAW is generic. Generated energy is 黄. No extra card FAQ.':
