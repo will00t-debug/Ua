@@ -225,9 +225,11 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 //   distinct 零番隊 names. Four such names also grant Impact 1.
 // BLC-1-092 UA08BT: front line also generates energy. Q572: a battle
 //   loser is removed instead of retiring, and 退場時 does not fire.
+// BLC-4-044 EX15BT: one own 四楓院 夜一 gets BP+2000. Her first attack
+//   this turn gains Impact 1 and sniper until that attack ends.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008','BLC-4-065','BLC-2-051','BLC-1-092'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008','BLC-4-065','BLC-2-051','BLC-1-092','BLC-4-044'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -298,12 +300,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers seventy-six whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,512);
- assert.equal(EXPECTED_V2_COUNTS.bleach,236);
+test('C29 registers seventy-seven whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,513);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,237);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,236);
+ assert.equal(Object.keys(bleach.cards).length,237);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -7265,6 +7267,89 @@ test('BLC-1-092 generates energy on the front and removes a battle loser without
  assert.equal(assertUniversalMatch(other.packs,blocked),true);
  assert.equal(assertUniversalMatch(silenced.packs,ordinary),true);
  assert.equal(assertUniversalMatch(color.packs,deployed),true);
+});
+
+test('BLC-4-044 gives Yoruichi BP+2000 and Impact plus sniper on her first attack',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-4-044');
+ assert.equal(printed.number,'EX15BT/BLC-4-044');
+ assert.equal(printed.nameJa,'瞬閧・雷神戦形');
+ assert.equal(printed.effect,'選自己場上1個《四楓院夜一》，本回合賦予BP+2000，以及「此角色於本回合進行第一次攻擊時，直到該次攻擊結束，獲得Impact(1)與狙擊（可指定對方前線角色為攻擊對象，該次攻擊不會被阻擋）」。');
+ assert.equal(printed.trigger,'special');
+ assert.equal(printed.gen,0);
+ assert.deepEqual(printed.traits,[]);
+ const card=bleach.cards['BLC-4-044'];
+ assert.equal(card.gen,0);
+ assert.equal(card.triggerEffect.op,'retireOppFront');
+ assert.deepEqual(card.effects.onPlay,[{op:'grantFirstAttackKit',name:'四楓院 夜一',bp:2000}]);
+ const bare={id:'BAD',name:'BAD',color:'blue',type:'event',energy:0,ap:1,bp:0,gen:0,traits:[],trigger:'special',implementation:'dsl',triggerEffect:{op:'retireOppFront'},effects:{onPlay:[{op:'grantFirstAttackKit',name:'',bp:2000}]}};
+ assert.throws(()=>createUniversalPack({id:'bad-kit',cards:[bare]}),/invalid first-attack kit/);
+ const deck=realDeck(['BLC-4-044','BLC-2-024','BLC-2-031','BLC-3-002','BLC-2-015','BLC-2-016','BLC-2-026'],'blue');
+ const quiet=main(deck,29044);
+ put(quiet.s,0,'BLC-2-031','energy',0);
+ put(quiet.s,0,'BLC-3-002','energy',1);
+ put(quiet.s,0,'BLC-2-015','energy',2);
+ put(quiet.s,0,'BLC-2-016','energy',3);
+ const other=put(quiet.s,0,'BLC-2-026','front',0,true);
+ const event=take(quiet.s,0,'BLC-4-044');
+ quiet.s.players[0].hand.push(event);
+ assert.equal(universalEnergyByColor(quiet.packs,quiet.s,0).blue>=4,true);
+ assert.equal(legalUniversalActions(quiet.packs,quiet.s).some(a=>a.type==='event'&&a.uid===event.uid),false);
+ const first=main(deck,29045);
+ put(first.s,0,'BLC-2-031','energy',0);
+ put(first.s,0,'BLC-3-002','energy',1);
+ put(first.s,0,'BLC-2-015','energy',2);
+ put(first.s,0,'BLC-2-016','energy',3);
+ const yoru=put(first.s,0,'BLC-2-024','front',0,true);
+ const bystander=put(first.s,0,'BLC-2-026','front',1,true);
+ const wall=put(first.s,1,'BLC-2-016','front',0,true);
+ const secondWall=put(first.s,1,'BLC-2-026','front',1,true);
+ const form=take(first.s,0,'BLC-4-044');
+ first.s.players[0].hand.push(form);
+ assert.equal(legalUniversalActions(first.packs,first.s).some(a=>a.type==='event'&&a.uid===form.uid),true);
+ let played=dispatchUniversalAction(first.packs,first.s,{type:'event',uid:form.uid});
+ assert.equal(played.pending.kind,'effect-first-attack-kit');
+ assert.equal(V2_PENDING_LABELS[played.pending.kind],'選 1 個指定名稱角色，本回合 BP 上升，第一次攻擊獲得 Impact 與狙擊');
+ const choices=legalUniversalActions(first.packs,played);
+ assert.equal(choices.some(a=>a.type==='chooseFirstAttackKit'&&a.uid===yoru.uid),true);
+ assert.equal(choices.some(a=>a.uid===bystander.uid),false);
+ assert.equal(choices.some(a=>a.uid===null),false);
+ assert.throws(()=>dispatchUniversalAction(first.packs,played,{type:'chooseFirstAttackKit',uid:null}),/not currently legal/);
+ aiOk(first.packs,played);
+ played=dispatchUniversalAction(first.packs,played,{type:'chooseFirstAttackKit',uid:yoru.uid});
+ assert.equal(played.pending,null);
+ const boosted=live(played,0,yoru.uid);
+ assert.equal(universalBp(first.packs,played,boosted),6000);
+ assert.equal(universalImpact(first.packs,played,boosted),0);
+ grantContinuousState(played,{kind:'originalEffectsDisabled',controller:1,
+  sourceUid:bystander.uid,targetUid:yoru.uid,sourceLinked:false,
+  until:{player:0,phase:'attack',edge:'end'}});
+ assert.equal(universalBp(first.packs,played,live(played,0,yoru.uid)),5500);
+ let battle=played;
+ for(let n=0;n<6&&battle.phase!=='attack';n++)
+  battle=dispatchUniversalAction(first.packs,battle,{type:'next'});
+ const quietLife=Object.keys(deck).find(id=>!bleach.cards[id].trigger);
+ battle.players[1].life.unshift(take(battle,1,quietLife));
+ const aimed=legalUniversalActions(first.packs,battle).find(a=>a.type==='attack'&&a.uid===yoru.uid&&a.targetUid===wall.uid);
+ assert.ok(aimed);
+ const lives=battle.players[1].life.length;
+ battle=dispatchUniversalAction(first.packs,battle,aimed);
+ assert.equal(battle.pending,null);
+ assert.equal(battle.players[1].outside.some(c=>c.uid===wall.uid),true);
+ assert.equal(battle.players[1].life.length,lives-1);
+ assert.equal(universalImpact(first.packs,battle,live(battle,0,yoru.uid)),0);
+ live(battle,0,yoru.uid).ready=true;
+ assert.equal(legalUniversalActions(first.packs,battle).some(a=>a.type==='attack'&&a.uid===yoru.uid&&a.targetUid),false);
+ const again=legalUniversalActions(first.packs,battle).find(a=>a.type==='attack'&&a.uid===yoru.uid&&!a.targetUid);
+ assert.ok(again);
+ const before=battle.players[1].life.length;
+ battle=dispatchUniversalAction(first.packs,battle,again);
+ battle=dispatchUniversalAction(first.packs,battle,{type:'chooseBlock',uid:secondWall.uid},{actor:1});
+ assert.equal(battle.players[1].outside.some(c=>c.uid===secondWall.uid),true);
+ assert.equal(battle.players[1].life.length,before);
+ assert.equal(universalBp(first.packs,battle,live(battle,0,yoru.uid)),5500);
+ aiOk(quiet.packs,quiet.s);
+ assert.equal(assertUniversalMatch(quiet.packs,quiet.s),true);
+ assert.equal(assertUniversalMatch(first.packs,battle),true);
 });
 
 function fieldCount(s,p){

@@ -1198,6 +1198,8 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-2-051","kind":"removedKeywordIchigo","number":"EX07BT/BLC-2-051","name":"黒崎 一護","color":"purple","energy":4,"ap":1,"bp":4000,"gen":1,"trigger":"get","type":"character","effect":"Impact 無效。己方除外區有至少 10 張卡，或有至少 2 種不同卡名、具有「零番隊」特徵的卡時，此角色獲得 Damage 2；己方除外區有至少 4 種不同卡名、具有「零番隊」特徵的卡時，再獲得 Impact 1。"}
 ,
 {"id":"BLC-1-092","kind":"frontEnergyBattleRemove","number":"UA08BT/BLC-1-092","name":"山本 元柳斎 重國","color":"green","energy":5,"ap":1,"bp":4000,"gen":1,"trigger":"color","type":"character","effect":"此角色位於前線時亦產生能源。己方回合中，與此角色戰鬥並敗北的敵方角色改為除外，且不視為退場。"}
+,
+{"id":"BLC-4-044","kind":"yoruichiFirstAttack","number":"EX15BT/BLC-4-044","name":"瞬閧・雷神戦形","color":"blue","energy":4,"ap":1,"bp":0,"gen":0,"trigger":"special","type":"event","effect":"選自己場上1個《四楓院夜一》，本回合賦予BP+2000，以及「此角色於本回合進行第一次攻擊時，直到該次攻擊結束，獲得Impact(1)與狙擊（可指定對方前線角色為攻擊對象，該次攻擊不會被阻擋）」。"}
  ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1366,6 +1368,7 @@ export function checkedBleachAddonDefinition(p){
  const isNanaoEvent=p.kind==='nanaoStepEventActive';
  const isRemovedKeywords=p.kind==='removedKeywordIchigo';
  const isFrontRemove=p.kind==='frontEnergyBattleRemove';
+ const isThunderKit=p.kind==='yoruichiFirstAttack';
  const topDiscard={
   'BLC-3-007':{count:3,filter:{field:'trait',value:'護廷十三隊'}},
   'BLC-3-002':{count:3,filters:[
@@ -1399,7 +1402,7 @@ export function checkedBleachAddonDefinition(p){
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest||isOwnCharacterDraw||isPeekAttack||isDrawInstead||isRevealOppTop||isRevealWindow||isEnergyWindow||isMillPurple||isEnergyBounce||isStepOr||isReplayDown||isStepName||isReducedActive||isOutsideName||isZeroIchigo||isDiscardBlock||isEmptyStep||isApActive||isAliasTop||isEntryChoose||isRestFrontName||isFrontFieldDown||isHandOutside||isEnergyAp||isAttackEnd||isDiscardVisored||isRaidHost||isBlockRaid||isRaidOrName||isRestOrDraw||isRestOrRetire||isHandApNamed||isBazzBurn||isKatenActive||isBambiesPer||isKenpachi||isMayuriTrait||isNemPair||isSoulPalace||isKyokotsu||isHakkoken||isYachiru||isLilotto||isBazzChain||isNanaoEvent||isRemovedKeywords||isFrontRemove;
+ const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest||isOwnCharacterDraw||isPeekAttack||isDrawInstead||isRevealOppTop||isRevealWindow||isEnergyWindow||isMillPurple||isEnergyBounce||isStepOr||isReplayDown||isStepName||isReducedActive||isOutsideName||isZeroIchigo||isDiscardBlock||isEmptyStep||isApActive||isAliasTop||isEntryChoose||isRestFrontName||isFrontFieldDown||isHandOutside||isEnergyAp||isAttackEnd||isDiscardVisored||isRaidHost||isBlockRaid||isRaidOrName||isRestOrDraw||isRestOrRetire||isHandApNamed||isBazzBurn||isKatenActive||isBambiesPer||isKenpachi||isMayuriTrait||isNemPair||isSoulPalace||isKyokotsu||isHakkoken||isYachiru||isLilotto||isBazzChain||isNanaoEvent||isRemovedKeywords||isFrontRemove||isThunderKit;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1567,6 +1570,7 @@ export function checkedBleachAddonDefinition(p){
    {condition:{kind:'ownRemovedDistinctTrait',turn:'any',trait:'零番隊',min:4},impact:1}]}:{}),
   ...(isFrontRemove?{frontGeneratesEnergy:true,battleRemoveInstead:true,
    triggerEffect:{op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1}}:{}),
+  ...(isThunderKit?{triggerEffect:{op:'retireOppFront'}}:{}),
   ...(!special?{templateEffects:abilities[p.kind]}:{effects:
    isPrintedApTop?{onPlay:[{op:'searchTopUpToTwoBottom',count:5,max:1,rest:'bottom',
     logic:'all',filters:[{field:'printedApAtLeast',value:2}]}]}:
@@ -1726,6 +1730,7 @@ export function checkedBleachAddonDefinition(p){
      {op:'protectNameOrTrait',name:'バンビエッタ・バスターバイン',trait:'邦比小隊',scope:'any',until:'nextOwnStart',optional:true,upTo:1},
      {op:'enemyFrontAllBpDown',bp:500,minBp:1000}]}
    ]}]}:
+   isThunderKit?{onPlay:[{op:'grantFirstAttackKit',name:'四楓院 夜一',bp:2000}]}:
    isBazzChain?{onPlay:[{op:'sacrificeNamedChain',name:'バズビー',optional:true,per:1000,impactMinEnergy:5,when:{kind:'ownNameAbsent',turn:'any',zone:'outside',excludeSelf:false,name:'ユーハバッハ'}}]}:{}})
  };
 }

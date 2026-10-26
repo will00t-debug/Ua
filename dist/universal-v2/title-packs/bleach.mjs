@@ -163,7 +163,8 @@ const testForKind=Object.freeze({
  bazzSacrificeChain:'tests/v2-c29-bleach-port.test.mjs',
  nanaoStepEventActive:'tests/v2-c29-bleach-port.test.mjs',
  removedKeywordIchigo:'tests/v2-c29-bleach-port.test.mjs',
- frontEnergyBattleRemove:'tests/v2-c29-bleach-port.test.mjs'
+ frontEnergyBattleRemove:'tests/v2-c29-bleach-port.test.mjs',
+ yoruichiFirstAttack:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -182,7 +183,9 @@ function contributedEntry(profile){
   definition:Object.freeze(definition),
   evidence:Object.freeze({
    printedTextFragments:Object.freeze([profile.effect]),
-   reviewNote:profile.id==='BLC-1-092'?
+   reviewNote:profile.id==='BLC-4-044'?
+    'EX15BT/BLC-4-044 official iframe 2026-10-26. Choose one own field 四楓院 夜一. This turn that character gets BP+2000. On its first attack this turn, until that attack ends, it gains Impact 1 and sniper. The choice is mandatory. Silence keeps the printed name. The kit is an earned grant and remains after later silence. SPECIAL retires one opposing front character. No generated energy. No card FAQ.':
+   profile.id==='BLC-1-092'?
     'UA08BT/BLC-1-092 official iframe 2026-10-26. This character also generates energy from the front line. Q572 (2023-09-25): on its controller\'s turn, an opposing character that loses a battle to it is placed in the removed area instead of retiring, and its leave trigger does not fire. Silence removes both clauses. COLOR deploys one green hand character of required energy 2 or less and printed AP 1, ACTIVE. Generated energy is 緑.':
    profile.id==='BLC-2-051'?
     'EX07BT/BLC-2-051 official iframe 2026-10-26. Impact null. Damage 2 while own removed area has 10 or more cards, or at least 2 different printed names with trait 零番隊. Four or more such names also grant Impact 1. Neither clause has a turn icon. Silence removes them. GET is generic. Generated energy is 紫. No card FAQ.':
