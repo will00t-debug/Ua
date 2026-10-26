@@ -172,7 +172,8 @@ const testForKind=Object.freeze({
  yoruichiEnergySwap:'tests/v2-c29-bleach-port.test.mjs',
  bazzDiscardBattleKit:'tests/v2-c29-bleach-port.test.mjs',
  ichigoRemoveFourImpact:'tests/v2-c29-bleach-port.test.mjs',
- bambiettaRestRetire:'tests/v2-c29-bleach-port.test.mjs'
+ bambiettaRestRetire:'tests/v2-c29-bleach-port.test.mjs',
+ jugramTriggerEnd:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -191,7 +192,9 @@ function contributedEntry(profile){
   definition:Object.freeze(definition),
   evidence:Object.freeze({
    printedTextFragments:Object.freeze([profile.effect]),
-   reviewNote:profile.id==='BLC-1-014'?
+   reviewNote:profile.id==='BLC-1-020'?
+    'UA08BT/BLC-1-020 official iframe 2026-10-26. Required energy 黄5, generated energy 黄. Raid onto ユーグラム・ハッシュヴァルト, become ACTIVE, and may move to the front. Impact 1. While on the front, at the end of your attack phase, if the opponent activated a trigger effect this turn, draw 2 and put one hand card outside. Q538 (2023-09-25): declining a revealed trigger does not count. Q539 (2023-09-25): two front copies both resolve. Q540 (2023-09-25): a copy that left the front, including one retired by a SPECIAL trigger, does not resolve. An energy-line copy is queued and does nothing. Silence before the attack-end window removes it. On play, if your hand has fewer cards than the opponent, the opponent puts one hand card outside. Q541 (2023-09-25): equal hand counts do not discard. A larger hand does not discard. The comparison is after this card has left the hand. The opponent discard is mandatory. RAID is the generic sentence. No extra card FAQ.':
+   profile.id==='BLC-1-014'?
     'UA08BT/BLC-1-014 official iframe 2026-10-26. Required energy 黄4, generated energy 黄. Raid onto バンビエッタ・バスターバイン, become ACTIVE, and may move to the front. On play, during your turn, retire up to one opposing front character that is REST. An ACTIVE front character, an energy-line character, and a field are not targets. Declining is legal. The clause does not start on the opponent turn, including a life Raid. Silence before the on-play is queued removes it. RAID is the generic sentence. No card FAQ.':
    profile.id==='BLC-1-104'?
     'UA08ST/BLC-1-104 official iframe 2026-10-26. Raid onto 黒崎 一護, become ACTIVE, and may move to the front. [起動メイン][ターン1]: place 4 own outside cards into the removed area. On that exact count, draw 1 and gain Impact 1 this turn. Q574 (2023-09-25): activating with only 3 still removes those 3, and the draw and Impact do not happen. The removal is not optional. [ターン1] is this physical card. Silence before activation removes the ability. The earned Impact remains after later silence. Generated energy is 紫. RAID is the generic sentence. No extra card FAQ.':
