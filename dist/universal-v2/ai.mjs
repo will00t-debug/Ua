@@ -54,6 +54,9 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='effect-remove-hand-scale')
   return difficulty==='easy'?legal.find(a=>a.mode==='done')||legal[0]:
    legal.find(a=>a.mode==='pick')||legal.find(a=>a.mode==='done')||legal[0];
+ if(s.pending?.kind==='effect-remove-hand-cap')
+  return difficulty==='easy'?legal.find(a=>a.mode==='done')||legal[0]:
+   legal.find(a=>a.mode==='pick')||legal.find(a=>a.mode==='done')||legal[0];
  if(s.pending?.kind==='effect-name-energy-reveal'){
   if(difficulty==='easy')return legal[0];
   const top=s.players[s.pending.player].deck[0];

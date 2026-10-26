@@ -303,9 +303,12 @@ import bleachContribution from '../dist/universal-v2/title-packs/bleach.mjs';
 //   to the top in any order. On attack, name a required-energy number,
 //   reveal the top card, and a match may be added to hand. Adding it
 //   removes one hand card. COLOR is the generic outside ACTIVE sentence.
+// BLC-2-061 EX07BT: 紫4 / dash. Up to 3 hand 零番隊 are removed, then one
+//   opposing front retires. The cap starts at 3000 and rises by 1000.
+//   Draw 1 per removed card. SPECIAL is the generic retirement.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008','BLC-4-065','BLC-2-051','BLC-1-092','BLC-4-044','BLC-4-016','BLC-4-017','BLC-1-028','BLC-2-002','BLC-4-032','BLC-1-011','BLC-1-104','BLC-1-014','BLC-1-020','BLC-1-050','BLC-1-055','BLC-1-063','BLC-1-093','BLC-2-009','BLC-2-013','BLC-2-030','BLC-2-034','BLC-2-035','BLC-2-038','BLC-2-057','BLC-2-060'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008','BLC-4-065','BLC-2-051','BLC-1-092','BLC-4-044','BLC-4-016','BLC-4-017','BLC-1-028','BLC-2-002','BLC-4-032','BLC-1-011','BLC-1-104','BLC-1-014','BLC-1-020','BLC-1-050','BLC-1-055','BLC-1-063','BLC-1-093','BLC-2-009','BLC-2-013','BLC-2-030','BLC-2-034','BLC-2-035','BLC-2-038','BLC-2-057','BLC-2-060','BLC-2-061'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -376,12 +379,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers ninety-eight whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,534);
- assert.equal(EXPECTED_V2_COUNTS.bleach,258);
+test('C29 registers ninety-nine whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,535);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,259);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,258);
+ assert.equal(Object.keys(bleach.cards).length,259);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -10689,6 +10692,162 @@ test('BLC-2-060 looks at four, names required energy on attack, and COLOR-plays 
  assert.equal(assertUniversalMatch(empty.packs,blank),true);
  assert.equal(assertUniversalMatch(silenced.packs,mute),true);
  assert.equal(assertUniversalMatch(energyLine.packs,energyLine.s),true);
+ assert.equal(assertUniversalMatch(color.packs,revealed),true);
+});
+
+test('BLC-2-061 removes up to three hand Zero Squad cards, retires, then draws',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-2-061');
+ assert.equal(printed.number,'EX07BT/BLC-2-061');
+ assert.equal(printed.nameJa,'娑闥迦羅骸刺絡辻');
+ assert.equal(printed.effect,'可將手牌中最多 3 張具有「零番隊」特徵的卡除外，再使 1 個敵方前線角色退場；BP 上限原為 3000，每以此效果從手牌除外 1 張，上限增加 1000。之後，每以此效果從手牌除外 1 張，抽 1 張。');
+ assert.equal(printed.traits,'無');
+ assert.equal(printed.trigger,'special');
+ assert.equal(printed.gen,0);
+ assert.equal(printed.type,'event');
+ const card=bleach.cards['BLC-2-061'];
+ assert.equal(card.name,'娑闥迦羅骸刺絡辻');
+ assert.equal(card.gen,0);
+ assert.deepEqual(card.traits,[]);
+ assert.deepEqual(card.effects.onPlay,[{op:'removeHandTraitCapScale',trait:'零番隊',max:3,baseBp:3000,per:1000,draw:true}]);
+ assert.deepEqual(card.triggerEffect,{op:'retireOppFront'});
+ const deck=realDeck(['BLC-2-061','BLC-2-056','BLC-2-058','BLC-2-059','BLC-1-056','BLC-1-058','BLC-1-046','BLC-1-041','BLC-1-035','BLC-1-039','BLC-1-042','BLC-4-052','BLC-3-004'],'purple');
+ const hold=(s,p,id)=>{const c=take(s,p,id);s.players[p].hand.push(c);return c;};
+ function fuel(s){for(let i=0;i<4;i++)put(s,0,'BLC-2-056','energy',i);}
+ function strip(s){
+  const kept=[],moved=[];
+  for(const c of s.players[0].hand)
+   (cardHasTrait(bleach.cards[c.cardId],'零番隊')?moved:kept).push(c);
+  s.players[0].hand=kept;s.players[0].deck.push(...moved);
+ }
+ const zero=main(deck,29871);
+ const low=put(zero.s,1,'BLC-1-058','front',0,true);
+ const mid=put(zero.s,1,'BLC-1-046','front',1,true);
+ const high=put(zero.s,1,'BLC-1-041','front',2,true);
+ const aside=put(zero.s,1,'BLC-1-035','energy',0,true);
+ assert.equal(universalBp(zero.packs,zero.s,low),2500);
+ assert.equal(universalBp(zero.packs,zero.s,mid),3500);
+ assert.equal(universalBp(zero.packs,zero.s,high),4000);
+ fuel(zero.s);strip(zero.s);
+ const event=hold(zero.s,0,'BLC-2-061');
+ const plain=hold(zero.s,0,'BLC-1-035');
+ assert.equal(legalUniversalActions(zero.packs,zero.s).some(a=>a.type==='event'&&a.uid===event.uid),true);
+ let opened=dispatchUniversalAction(zero.packs,zero.s,{type:'event',uid:event.uid});
+ assert.equal(opened.players[0].outside.some(c=>c.uid===event.uid),true);
+ assert.equal(opened.pending.kind,'effect-retire-bp');
+ assert.equal(opened.pending.limit,3000);
+ assert.equal(opened.pending.optional,undefined);
+ assert.equal(opened.pending.choices.includes(low.uid),true);
+ assert.equal(opened.pending.choices.includes(mid.uid),false);
+ assert.equal(opened.pending.choices.includes(high.uid),false);
+ assert.equal(opened.pending.choices.includes(aside.uid),false);
+ assert.equal(legalUniversalActions(zero.packs,opened).some(a=>a.uid===null),false);
+ const before=opened.players[0].deck.length;
+ aiOk(zero.packs,opened);
+ assert.throws(()=>dispatchUniversalAction(zero.packs,opened,{type:'chooseRetireBp',uid:null}),/Action not currently legal/);
+ opened=dispatchUniversalAction(zero.packs,opened,{type:'chooseRetireBp',uid:low.uid});
+ assert.equal(opened.pending,null);
+ assert.equal(opened.players[1].front.some(c=>c?.uid===low.uid),false);
+ assert.equal(opened.players[0].deck.length,before);
+ assert.equal(opened.players[0].hand.some(c=>c.uid===plain.uid),true);
+ const one=main(deck,29872);
+ const exact=put(one.s,1,'BLC-1-046','front',0,true);
+ const top=put(one.s,1,'BLC-1-041','front',1,true);
+ const small=put(one.s,1,'BLC-1-058','front',2,true);
+ put(one.s,1,'BLC-1-035','energy',0,true);
+ put(one.s,0,'BLC-1-035','energy',0);
+ put(one.s,0,'BLC-2-056','energy',1);
+ put(one.s,0,'BLC-2-056','energy',2);
+ const lined=put(one.s,0,'BLC-1-056','energy',3);
+ strip(one.s);
+ const squad=hold(one.s,0,'BLC-2-058');
+ const other=hold(one.s,0,'BLC-1-039');
+ const actor=hold(one.s,0,'BLC-2-061');
+ let scaled=dispatchUniversalAction(one.packs,one.s,{type:'event',uid:actor.uid});
+ assert.equal(scaled.pending.kind,'effect-remove-hand-cap');
+ assert.equal(scaled.pending.max,3);
+ assert.equal(V2_PENDING_LABELS[scaled.pending.kind],'可將手牌中最多 3 張具有指定特徵的卡除外，再依張數提高強制退場的 BP 上限並抽等量牌');
+ assert.equal(scaled.pending.choices.includes(squad.uid),true);
+ assert.equal(scaled.pending.choices.includes(other.uid),false);
+ assert.equal(scaled.pending.choices.includes(actor.uid),false);
+ assert.equal(scaled.pending.choices.includes(lined.uid),false);
+ assert.equal(universalPrivateChoices(one.packs,scaled,1),null);
+ assert.ok(universalPrivateChoices(one.packs,scaled,0));
+ aiOk(one.packs,scaled);
+ const deckBefore=scaled.players[0].deck.length;
+ scaled=dispatchUniversalAction(one.packs,scaled,{type:'chooseRemoveHandCap',mode:'done'});
+ assert.equal(scaled.pending.kind,'effect-retire-bp');
+ assert.equal(scaled.pending.limit,3000);
+ assert.equal(scaled.players[0].hand.some(c=>c.uid===squad.uid),true);
+ assert.equal(scaled.pending.choices.includes(small.uid),true);
+ assert.equal(scaled.pending.choices.includes(exact.uid),false);
+ assert.equal(scaled.pending.choices.includes(top.uid),false);
+ scaled=dispatchUniversalAction(one.packs,scaled,{type:'chooseRetireBp',uid:scaled.pending.choices[0]});
+ assert.equal(scaled.pending,null);
+ assert.equal(scaled.players[0].deck.length,deckBefore);
+ const paid=main(deck,29873);
+ const legalMid=put(paid.s,1,'BLC-1-046','front',0,true);
+ const legalHigh=put(paid.s,1,'BLC-1-041','front',1,true);
+ fuel(paid.s);strip(paid.s);
+ const removed=hold(paid.s,0,'BLC-2-059');
+ const spell=hold(paid.s,0,'BLC-2-061');
+ let raised=dispatchUniversalAction(paid.packs,paid.s,{type:'event',uid:spell.uid});
+ raised=dispatchUniversalAction(paid.packs,raised,{type:'chooseRemoveHandCap',mode:'pick',uid:removed.uid});
+ raised=dispatchUniversalAction(paid.packs,raised,{type:'chooseRemoveHandCap',mode:'done'});
+ assert.equal(raised.players[0].removed.some(c=>c.uid===removed.uid),true);
+ assert.equal(raised.pending.limit,4000);
+ assert.equal(raised.pending.choices.includes(legalMid.uid),true);
+ assert.equal(raised.pending.choices.includes(legalHigh.uid),true);
+ const drewFrom=raised.players[0].deck.length;
+ raised=dispatchUniversalAction(paid.packs,raised,{type:'chooseRetireBp',uid:legalHigh.uid});
+ assert.equal(raised.pending,null);
+ assert.equal(raised.players[1].front.some(c=>c?.uid===legalHigh.uid),false);
+ assert.equal(raised.players[0].deck.length,drewFrom-1);
+ const capped=main(deck,29874);
+ put(capped.s,1,'BLC-1-041','front',0,true);
+ fuel(capped.s);strip(capped.s);
+ const first=hold(capped.s,0,'BLC-2-058');
+ const second=hold(capped.s,0,'BLC-2-059');
+ const third=hold(capped.s,0,'BLC-1-056');
+ const fourth=hold(capped.s,0,'BLC-1-058');
+ const closer=hold(capped.s,0,'BLC-2-061');
+ let full=dispatchUniversalAction(capped.packs,capped.s,{type:'event',uid:closer.uid});
+ full=dispatchUniversalAction(capped.packs,full,{type:'chooseRemoveHandCap',mode:'pick',uid:first.uid});
+ full=dispatchUniversalAction(capped.packs,full,{type:'chooseRemoveHandCap',mode:'pick',uid:second.uid});
+ assert.equal(full.pending.kind,'effect-remove-hand-cap');
+ assert.equal(legalUniversalActions(capped.packs,full).some(a=>a.uid===fourth.uid),true);
+ assert.equal(legalUniversalActions(capped.packs,full).some(a=>a.uid===first.uid),false);
+ const threeFrom=full.players[0].deck.length;
+ full=dispatchUniversalAction(capped.packs,full,{type:'chooseRemoveHandCap',mode:'pick',uid:third.uid});
+ assert.equal(full.pending.kind,'effect-retire-bp');
+ assert.equal(full.pending.limit,6000);
+ assert.equal(full.players[0].hand.some(c=>c.uid===fourth.uid),true);
+ assert.equal(full.players[0].removed.some(c=>c.uid===first.uid),true);
+ assert.equal(full.players[0].removed.some(c=>c.uid===second.uid),true);
+ assert.equal(full.players[0].removed.some(c=>c.uid===third.uid),true);
+ full=dispatchUniversalAction(capped.packs,full,{type:'chooseRetireBp',uid:full.pending.choices[0]});
+ assert.equal(full.pending,null);
+ assert.equal(full.players[0].deck.length,threeFrom-3);
+ const color=main(deck,29875);
+ const vanilla=put(color.s,0,'BLC-2-056','front',0);
+ const victim=put(color.s,0,'BLC-1-041','front',1);
+ color.s=dispatchUniversalAction(color.packs,color.s,{type:'next'});
+ const life=take(color.s,1,'BLC-2-061');
+ color.s.players[1].deck.push(...color.s.players[1].life.splice(0));
+ color.s.players[1].life.push(life);
+ let revealed=dispatchUniversalAction(color.packs,color.s,{type:'attack',uid:vanilla.uid});
+ revealed=dispatchUniversalAction(color.packs,revealed,{type:'chooseBlock',uid:null});
+ assert.equal(revealed.pending.kind,'life-trigger');
+ assert.equal(revealed.pending.trigger,'special');
+ assert.equal(legalUniversalActions(color.packs,revealed).some(a=>a.type==='chooseTrigger'&&a.mode==='special'&&a.uid===victim.uid),true);
+ assert.equal(legalUniversalActions(color.packs,revealed).some(a=>a.type==='chooseTrigger'&&a.mode==='special'&&a.uid===vanilla.uid),true);
+ aiOk(color.packs,revealed);
+ revealed=dispatchUniversalAction(color.packs,revealed,{type:'chooseTrigger',mode:'special',uid:victim.uid});
+ assert.equal(revealed.players[0].front.some(c=>c?.uid===victim.uid),false);
+ assert.equal(revealed.players[0].outside.some(c=>c.uid===victim.uid),true);
+ assert.equal(assertUniversalMatch(zero.packs,opened),true);
+ assert.equal(assertUniversalMatch(one.packs,scaled),true);
+ assert.equal(assertUniversalMatch(paid.packs,raised),true);
+ assert.equal(assertUniversalMatch(capped.packs,full),true);
  assert.equal(assertUniversalMatch(color.packs,revealed),true);
 });
 

@@ -18,6 +18,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-discard-gate':'是否支付棄牌成本',
  'effect-remove-outside':'可將己方場外卡移入移除區',
  'effect-remove-hand-scale':'可將任意張手牌中具有指定特徵的卡除外，再依張數提高敵方前線退場的 BP 上限',
+ 'effect-remove-hand-cap':'可將手牌中最多 3 張具有指定特徵的卡除外，再依張數提高強制退場的 BP 上限並抽等量牌',
  'effect-name-energy-reveal':'指定 1 個需求能源數值，再公開牌堆頂',
  'effect-revealed-energy-hand':'需求能源相符時，可將公開的卡加入手牌',
  'effect-mandatory-hand-remove':'將 1 張手牌除外',
@@ -210,6 +211,7 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseTopFiltered':return action.uid===null?'不加入手牌，將其餘卡排列至底部':'加入手牌：'+name();
   case 'chooseTopHandOutside':return action.step==='outside'?'將 '+name()+' 送至場外':'將 '+name()+' 加入手牌';
   case 'chooseEnergyTraitFront':return action.uid===null?'不移動其餘能源線角色':'將 '+name()+' 移至前線 '+(action.slot+1);
+  case 'chooseRemoveHandCap':return action.mode==='done'?'結束除外並退場':'將 '+name()+' 除外';
   case 'chooseNamedRequiredEnergy':return '指定需求能源 '+action.value;
   case 'chooseRevealedEnergyHand':return action.mode==='hand'?'將公開的卡加入手牌':'將公開的卡放回牌堆頂';
   case 'chooseMandatoryHandRemove':return '將 '+name()+' 除外';
