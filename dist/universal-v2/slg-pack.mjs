@@ -797,6 +797,101 @@ const authored=[
   "catalogueTraits":["第四次架南島Raid"],
   "phaseEffects":[{"phase":"attack","edge":"end","turn":"own",
     "then":[{"op":"swapEnergyWithFrontSkip"}]}]
+},
+{
+  "id":"SLG-1-033","name":"ベル","color":"purple","energy":5,
+  "ap":1,"bp":4000,"gen":1,"trigger":null,"type":"character",
+  "textAnchor":"原本BP3000以下且REST的影之軍團",
+  "implementation":"dsl",
+  "officialTraits":["影の軍団"],"catalogueTraits":["影之軍團"],
+  "effects":{"onAttack":[{"op":"discardGate","optional":true,"scope":"name",
+    "when":{"kind":"ownRestPrintedBpCount","turn":"any","min":4,"zone":"field",
+     "excludeSelf":false,"trait":"影の軍団","maxPrintedBp":3000},
+    "then":[{"op":"activeSelf"}]}]}
+},
+{
+  "id":"SLG-1-029","name":"カイセル","color":"purple","energy":3,
+  "ap":1,"bp":2500,"gen":2,"trigger":"active","type":"character",
+  "textAnchor":"原本BP2000以下的影之軍團",
+  "implementation":"dsl","effects":{},
+  "officialTraits":["影の軍団"],"catalogueTraits":["影之軍團"],
+  "attackAid":{"trait":"影の軍団","maxPrintedBp":2000,"options":[
+    {"id":"ceiling","label":"不被BP4000以上阻擋","grant":"blockAtLeast","bp":4000},
+    {"id":"immune","label":"不會被敵方效果選取","grant":"oppChoiceImmune"}
+  ]}
+},
+{
+  "id":"SLG-1-031","name":"キバ","color":"purple","energy":3,
+  "ap":1,"bp":2500,"gen":2,"trigger":"active","type":"character",
+  "textAnchor":"原本BP2000以下影之軍團",
+  "implementation":"dsl","effects":{},
+  "officialTraits":["影の軍団"],"catalogueTraits":["影之軍團"],
+  "attackAid":{"trait":"影の軍団","maxPrintedBp":2000,"options":[
+    {"id":"bp","label":"攻擊角色BP+1500","grant":"bp","bp":1500},
+    {"id":"draw","label":"抽1張並棄1張","grant":"drawDiscard"}
+  ]}
+},
+{
+  "id":"SLG-1-011","name":"向坂 雫","color":"purple","energy":4,
+  "ap":1,"bp":4000,"gen":1,"trigger":"color","type":"character",
+  "textAnchor":"經自己的效果從場外加入手牌時",
+  "implementation":"dsl",
+  "triggerEffect":{"op":"deployOutsideCharacter","color":"purple","maxEnergy":2,"ap":1,"frontOnly":true},
+  "blockBpRestriction":{"relation":"atLeast","bp":4000,
+   "condition":{"kind":"outsideCount","turn":"any","min":10}},
+  "ownOutsideRecovery":{"op":"playSelfMeetEnergy","optional":true,"activeSourceName":"水篠 旬"},
+  "effects":{"onPlay":[{"op":"millTop","count":1,"optional":true}]}
+},
+{
+  "id":"SLG-1-044","name":"水篠 葵","color":"green","energy":2,
+  "ap":1,"bp":2500,"gen":1,"trigger":"color","type":"character",
+  "textAnchor":"登場時：抽1張並棄1張",
+  "implementation":"dsl",
+  "triggerEffect":{"op":"deployHandCharacter","color":"green","maxEnergy":2,"ap":1},
+  "mainAbility":{"op":"restTuckTopDamage","frontOnly":true,"name":"水篠 旬"},
+  "effects":{"onPlay":[{"op":"drawDiscard","count":1}]}
+},
+{
+  "id":"SLG-1-059","name":"白川 大虎","color":"green","energy":4,
+  "ap":2,"bp":4000,"gen":1,"trigger":"get","type":"character",
+  "textAnchor":"登場時可送手牌1張至場外",
+  "implementation":"dsl",
+  "officialTraits":["第四次架南島レイド"],"catalogueTraits":["第四次架南島Raid"],
+  "effects":{
+   "onPlay":[{"op":"discardGate","optional":true,"then":[
+     {"op":"activeSelf"},{"op":"buffSelf","bp":1000}]}],
+   "onAttack":[{"op":"searchTopUpToTwoBottom","count":4,"max":2,"rest":"bottom",
+     "filters":[{"field":"trait","value":"第四次架南島レイド"}],"logic":"any",
+     "skipSelfIfAdded":true}]
+  }
+},
+{
+  "id":"SLG-1-061","name":"美濃部 剛","color":"green","energy":3,
+  "ap":1,"bp":2000,"gen":2,"trigger":"active","type":"character",
+  "textAnchor":"己方攻擊階段結束時可送1張手牌場外",
+  "implementation":"dsl",
+  "officialTraits":["第四次架南島レイド"],"catalogueTraits":["第四次架南島Raid"],
+  "phaseEffects":[{"phase":"attack","edge":"end","turn":"own","then":[
+    {"op":"discardGate","optional":true,"then":[
+     {"op":"activeOwnTrait","trait":"第四次架南島レイド","optional":true,"max":1}]}]}],
+  "effects":{"onPlay":[{"op":"buffOwnField","filter":{"field":"trait","value":"第四次架南島レイド"},
+    "bp":1000,"optional":true,"excludeSelf":true,"untilName":"白川 大虎"}]}
+},
+{
+  "id":"SLG-1-020","name":"水篠 旬","color":"purple","energy":4,
+  "ap":1,"bp":4000,"gen":1,"trigger":"raid","type":"character",
+  "textAnchor":"登場時抽1張",
+  "implementation":"dsl","raidName":"水篠 旬","effects":{
+   "onPlay":[
+    {"op":"draw","count":1},
+    {"op":"discardGate","optional":true,"then":[
+     {"op":"recoverOutsidePrintedBp","bp":3000,"optional":true,"excludeName":"水篠 旬"}]}
+   ],
+   "onAttack":[
+    {"op":"drawDiscard","count":1},
+    {"op":"buffSelfPerOwnOutsideGroups","unit":5,"bpPerGroup":500}
+   ]
+  }
 }
 ];
 export const SLG_V2_VERIFIED_IDS=Object.freeze(authored.map(c=>c.id));

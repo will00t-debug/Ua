@@ -12,18 +12,15 @@ test('R37 TOP-N scans every unported physical card ID across five independently 
  assert.equal(new Set([...report.candidates.map(x=>x.id),...report.unportedNoTopCandidate]).size,
   live.totals.blocked);
  assert.deepEqual(report.sourceVerifiedNowRegistered.map(x=>[x.id,x.registered]),[
-  ['SAO-1-031',true],['SAO-1-066',true],['MST-1-080',true],['MST-1-060',true],['SAO-1-056',true],['SAO-2-056',true],['MST-1-049',true]]);
+  ['SAO-1-031',true],['SAO-1-066',true],['MST-1-080',true],['MST-1-060',true],['SAO-1-056',true],['SLG-1-059',true],['SAO-2-056',true],['MST-1-049',true]]);
  assert.equal(report.stats.readyUnported,0);
 });
 test('R37 no keyword is mistaken for complete official legality; retirement prerequisites remain missing',()=>{
  const rows=r37TopNCandidateReport().candidates;
  assert.equal(rows.some(c=>c.id==='SAO-1-056'),false);
  assert.ok(r37TopNCandidateReport().sourceVerifiedNowRegistered.some(c=>c.id==='SAO-1-056'&&c.registered));
- for(const id of ['SLG-1-059']){
-  const c=rows.find(c=>c.id===id);
-  assert.ok(c);assert.equal(c.status,'PARTIAL');
-  assert.ok(c.reviewEvidence.missing.length>=2);
- }
+ assert.equal(rows.some(c=>c.id==='SLG-1-059'),false);
+ assert.ok(r37TopNCandidateReport().sourceVerifiedNowRegistered.some(c=>c.id==='SLG-1-059'&&c.registered));
  assert.ok(rows.every(x=>x.status!=='READY'||x.reviewEvidence!==null));
 });
 test('R37 actual Japanese text distinguishes double hand search, single and outside effects',()=>{
