@@ -625,6 +625,203 @@ const authored=[
     "zone":"field","excludeSelf":false,"trait":"影の軍団","maxPrintedBp":2500},"bpEach":500}],
   "officialTraits":["影の軍団"],
   "catalogueTraits":["影之軍團"]
+},
+{
+  "id":"SLG-1-017","name":"水篠 旬","color":"purple","energy":2,
+  "ap":1,"bp":2000,"gen":1,"trigger":"active","type":"character",
+  "textAnchor":"若己方場上沒有任何卡，手牌中需求能源減少紫2。登場時查看牌庫頂1張",
+  "implementation":"dsl",
+  "templateEffects":{"onPlay":[{"template":"peekTopOne"}]},
+  "emptyOwnFieldHandEnergyDiscount":2
+},
+{
+  "id":"SLG-1-074","name":"ルノー","color":"green","energy":2,
+  "ap":1,"bp":3000,"gen":1,"trigger":"draw","type":"character",
+  "textAnchor":"登場時令另一己方DFN角色最多1張本回合獲Impact1。",
+  "implementation":"dsl","effects":{
+   "onPlay":[{"op":"grantOtherImpactThisTurn","trait":"DFN","amount":1,"optional":true}]
+  },
+  "officialTraits":["DFN／第四次架南島レイド"],
+  "traitComponents":["DFN","第四次架南島レイド"],
+  "catalogueTraits":["DFN","第四次架南島Raid"]
+},
+{
+  "id":"SLG-1-050","name":"観月 絵里","color":"green","energy":0,
+  "ap":1,"bp":500,"gen":1,"trigger":null,"type":"character",
+  "textAnchor":"主要階段REST並退場此角色，可從己方場外回收最多1張水篠旬。",
+  "implementation":"dsl","effects":{},
+  "mainAbility":{"op":"restRetireRecoverName","name":"水篠 旬","optional":true}
+},
+{
+  "id":"SLG-1-071","name":"マリー","color":"green","energy":0,
+  "ap":1,"bp":1500,"gen":1,"trigger":"draw","type":"character",
+  "textAnchor":"主要階段每回合一次：REST自己，使另一己方角色本回合BP+1000並將自身返回手牌。",
+  "implementation":"dsl","effects":{},
+  "mainAbility":{"op":"restBuffOtherThenHand","oncePerTurn":true,"bp":1000},
+  "officialTraits":["DFN／第四次架南島レイド"],
+  "traitComponents":["DFN","第四次架南島レイド"],
+  "catalogueTraits":["DFN","第四次架南島Raid"]
+},
+{
+  "id":"SLG-1-063","name":"最上 真","color":"green","energy":1,
+  "ap":1,"bp":1500,"gen":1,"trigger":"draw","type":"character",
+  "textAnchor":"登場時查看牌庫頂3張，可公開最多1張第四次架南島Raid卡加入手牌",
+  "implementation":"dsl","effects":{"onPlay":[{
+   "op":"searchTopOneBottomDiscard","count":3,
+   "filter":{"field":"trait","value":"第四次架南島レイド"}}]},
+  "officialTraits":["第四次架南島レイド"],
+  "catalogueTraits":["第四次架南島Raid"]
+},
+{
+  "id":"SLG-1-054","name":"黒須 圭介","color":"green","energy":0,
+  "ap":1,"bp":1500,"gen":1,"trigger":"active","type":"character",
+  "textAnchor":"登場時查看牌庫頂2張，可把其中最多1張具有第四次架南島Raid特徵的卡送場外",
+  "implementation":"dsl","effects":{"onPlay":[{
+   "op":"inspectTopTraitOutside","count":2,"trait":"第四次架南島レイド","rest":"top"}]},
+  "officialTraits":["第四次架南島レイド"],
+  "catalogueTraits":["第四次架南島Raid"]
+},
+{
+  "id":"SLG-1-003","name":"朝比奈 りん","color":"purple","energy":2,
+  "ap":1,"bp":3000,"gen":1,"trigger":"active","type":"character",
+  "textAnchor":"經自己的效果從場外加入手牌時，可讓己方1個角色本回合BP+1000",
+  "implementation":"dsl","effects":{
+   "onOutsideRecover":[{"op":"buffOwnField","filter":{"field":"type","value":"character"},
+    "bp":1000,"optional":true,"excludeSelf":false}],
+   "onAttack":[{"op":"peekTopOne"}]
+  },
+  "passiveBonuses":[{"condition":{"kind":"outsideCount","turn":"any","min":10},"extraEnergy":1}]
+},
+{
+  "id":"SLG-1-024","name":"道門 泰星","color":"purple","energy":1,
+  "ap":1,"bp":2500,"gen":1,"trigger":null,"type":"character",
+  "textAnchor":"本角色不會被BP4000以上角色阻擋",
+  "implementation":"dsl","effects":{
+   "onRetire":[{"op":"grantOppBlockAtLeast","bp":4000,"optional":true}]
+  },
+  "blockBpRestriction":{"relation":"atLeast","bp":4000,"condition":null}
+},
+{
+  "id":"SLG-1-029","name":"カイセル","color":"purple","energy":3,
+  "ap":1,"bp":2500,"gen":2,"trigger":"active","type":"character",
+  "textAnchor":"己方原本BP2000以下的影之軍團角色攻擊時",
+  "implementation":"dsl","effects":{},
+  "officialTraits":["影の軍団"],"catalogueTraits":["影之軍團"],
+  "allyAttackRest":{"trait":"影の軍団","maxPrintedBp":2000,"modes":[
+    {"id":"ceiling","kind":"blockAtLeast","bp":4000},
+    {"id":"protect","kind":"cannotBeChosen"}
+  ]}
+},
+{
+  "id":"SLG-1-031","name":"キバ","color":"purple","energy":3,
+  "ap":1,"bp":2500,"gen":2,"trigger":"active","type":"character",
+  "textAnchor":"己方原本BP2000以下影之軍團攻擊時",
+  "implementation":"dsl","effects":{},
+  "officialTraits":["影の軍団"],"catalogueTraits":["影之軍團"],
+  "allyAttackRest":{"trait":"影の軍団","maxPrintedBp":2000,"modes":[
+    {"id":"buff","kind":"bp","bp":1500},
+    {"id":"draw","kind":"drawDiscard","draw":1,"discard":1}
+  ]}
+},
+{
+  "id":"SLG-1-020","name":"水篠 旬","color":"purple","energy":4,
+  "ap":1,"bp":4000,"gen":1,"trigger":"raid","type":"character",
+  "raidName":"水篠 旬",
+  "textAnchor":"登場時抽1張，然後可將1張手牌送場外",
+  "implementation":"dsl","effects":{
+   "onPlay":[
+    {"op":"draw","count":1},
+    {"op":"discardGate","optional":true,"then":[
+     {"op":"recoverOutsidePrintedBp","bp":3000,"optional":true,"excludeName":"水篠 旬"}
+    ]}
+   ],
+   "onAttack":[
+    {"op":"drawDiscard","count":1},
+    {"op":"buffSelfPerOwnOutsideGroups","unit":5,"bpPerGroup":500}
+   ]
+  }
+},
+{
+  "id":"SLG-1-049","name":"水篠 旬","color":"green","energy":6,
+  "ap":1,"bp":4000,"gen":1,"trigger":"raid","type":"character",
+  "raidName":"水篠 旬",
+  "textAnchor":"自己的回合中藉己方效果登場時，可使對方前線最多1張角色退場",
+  "implementation":"dsl","effects":{
+   "onPlay":[{"op":"retireOppFrontOne","optional":true,"entry":"ownEffect","ownTurn":true}],
+   "onAttack":[{"op":"draw","count":1},{"op":"tuckHandFaceDown"}]
+  },
+  "printedImpact":1,"ownTurnBp":500,"opponentTurnBp":500
+},
+{
+  "id":"SLG-1-067","name":"カナ","color":"green","energy":4,
+  "ap":1,"bp":3000,"gen":1,"trigger":"color","type":"character",
+  "textAnchor":"登場時若己方有3張以上DFN，抽1張，將此角色ACTIVE並使本回合BP+1000",
+  "implementation":"dsl","effects":{
+   "onPlay":[{"op":"oncePerTurnGate","scope":"name","optional":false,
+    "when":{"kind":"ownTraitCount","turn":"any","zone":"field","excludeSelf":false,"trait":"DFN","min":3},
+    "then":[{"op":"draw","count":1},{"op":"activeSelf"},{"op":"buffSelf","bp":1000}]}]
+  },
+  "triggerEffect":{"op":"deployHandCharacter","color":"green","maxEnergy":2,"ap":1},
+  "officialTraits":["DFN／第四次架南島レイド"],
+  "traitComponents":["DFN","第四次架南島レイド"],
+  "catalogueTraits":["DFN","第四次架南島Raid"]
+},
+{
+  "id":"SLG-1-035","name":"スキル：君主の領域","color":"purple","energy":3,
+  "ap":1,"bp":0,"gen":2,"trigger":"get","type":"field",
+  "textAnchor":"場域以ACTIVE登場；主要階段REST，己方所有影之軍團本回合BP+500",
+  "implementation":"dsl","effects":{},"enterAlwaysActive":true,
+  "officialTraits":["影の軍団"],"catalogueTraits":["影之軍團"],
+  "fieldMains":[{"id":"scale","op":"restScaleTrait","trait":"影の軍団",
+   "bp":500,"scaledBp":1000,"min":5}]
+},
+{
+  "id":"SLG-1-075","name":"デイリークエスト","color":"green","energy":1,
+  "ap":1,"bp":0,"gen":1,"trigger":"get","type":"field",
+  "textAnchor":"場域主要階段REST，己方有水篠旬時將牌庫頂1張裏向放在此卡下",
+  "implementation":"dsl","effects":{},
+  "fieldMains":[
+   {"id":"tuck","op":"restTuckTopIfName","name":"水篠 旬"},
+   {"id":"recover","op":"restDiscardFacedownRecover","name":"水篠 旬","energy":0}
+  ]
+},
+{
+  "id":"SLG-1-077","name":"架南島レイド攻略開始","color":"green","energy":4,
+  "ap":1,"bp":0,"gen":0,"trigger":"special","type":"event",
+  "textAnchor":"選1張敵方前線BP2000以下角色退場",
+  "implementation":"dsl",
+  "triggerEffect":{"op":"retireOppFront"},
+  "effects":{"onPlay":[
+   {"op":"retireOppFrontUnderBp","bp":2000,"bonusTrait":"第四次架南島レイド",
+    "bonusMin":5,"bonusBp":5000},
+   {"op":"buffOwnIfDistinctTrait","trait":"第四次架南島レイド","min":5,
+    "bp":1000,"optional":true}
+  ]}
+},
+{
+  "id":"SLG-1-080","name":"舞姫","color":"green","energy":2,
+  "ap":1,"bp":0,"gen":0,"trigger":"draw","type":"event",
+  "textAnchor":"最多選己方1張向坂雫",
+  "implementation":"dsl","effects":{"onPlay":[
+   {"op":"draw","count":1},
+   {"op":"grantOnAttack","target":"ownCharacter","optional":true,
+    "until":"endOfTurn","name":"向坂 雫","then":[{"op":"draw","count":1}]}
+  ]}
+},
+{
+  "id":"SLG-1-039","name":"影の君主","color":"purple","energy":5,
+  "ap":1,"bp":0,"gen":0,"trigger":"special","type":"event",
+  "textAnchor":"從場外將最多1張影之軍團角色以ACTIVE登場",
+  "implementation":"dsl",
+  "triggerEffect":{"op":"retireOppFront"},
+  "effects":{"onPlay":[{"op":"chooseOne","optional":false,"options":[
+   {"id":"active","label":"場外最多1張影之軍團以ACTIVE登場","turn":"any",
+    "then":[{"op":"deployOutsideTrait","trait":"影の軍団","count":1,
+     "ready":true,"optional":true}]},
+   {"id":"rest","label":"場外最多2張能源3以下影之軍團以REST登場","turn":"any",
+    "then":[{"op":"deployOutsideTrait","trait":"影の軍団","count":2,
+     "ready":false,"optional":true,"maxEnergy":3}]}
+  ]}]}
 }
 ];
 export const SLG_V2_VERIFIED_IDS=Object.freeze(authored.map(c=>c.id));
