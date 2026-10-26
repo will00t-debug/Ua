@@ -10,7 +10,7 @@ const byId=id=>REZERO_VOL2_BY_ID[id];
 test('EX17BT catalogue is the official 73-card Vol.2 list and stays unplayable',()=>{
  const title=TITLES.find(item=>item.id==='rezero');
  assert.equal(title.playable,false);
- assert.equal(title.cards.length,73);
+ assert.equal(title.cards.length,186); // 113 Vol.1 plus 73 Vol.2; Vol.2 identity checks below remain set-scoped.
  assert.equal(REZERO_VOL2_SET.regularCount,73);
  assert.equal(REZERO_VOL2_SET.release,'2026-10-30');
  assert.deepEqual(REZERO_VOL2_CARDS.map(card=>card.id),Array.from({length:73},(_,index)=>'REZ-2-'+String(index+1).padStart(3,'0')));
