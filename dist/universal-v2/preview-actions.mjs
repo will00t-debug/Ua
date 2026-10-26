@@ -25,6 +25,10 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-mill-recover-discard':'可棄 1 張手牌以回收剛才送出場外的卡',
  'effect-mill-recover':'從剛才送出場外的卡回收至多 1 張',
  'effect-grant-impact-null':'選擇至多 1 張其他己方角色，給予 IMPACT 無效',
+ 'effect-discard-up-to':'可將至多指定張手牌送場外，再抽同數',
+ 'effect-top-add-one':'查看牌頂，將其中 1 張加入手牌',
+ 'effect-distinct-trait-buff':'選擇不同卡名的己方角色',
+ 'effect-energy-mode':'選擇至下次己方回合開始的產能方式',
  'effect-optional-draw':'攻擊時可抽 0 或 1 張',
  'effect-pay-ap-deploy':'可支付 1 AP，從場外 REST 登場',
  'effect-optional-pay-ap':'可支付 1 AP，然後結算後續效果',
@@ -166,6 +170,10 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseMillDiscard':return action.uid===null?'不棄手牌，不回收':'棄掉 '+name()+'，接著回收';
   case 'chooseMillRecover':return action.uid===null?'不回收':'回收 '+name()+' 到手牌';
   case 'chooseImpactNullGrant':return action.uid===null?'不給予 IMPACT 無效':'給予 '+name()+' IMPACT 無效';
+  case 'chooseDiscardUpTo':return action.uid===null?'停止棄牌並抽同數':'將 '+name()+' 送場外';
+  case 'chooseTopAddOne':return '將 '+name()+' 加入手牌，其餘送場外';
+  case 'chooseDistinctTrait':return action.uid===null?'結束選擇並結算 BP':'選擇 '+name();
+  case 'chooseEnergyMode':return action.mode==='plus'?'產生能源 +1':'前線也能產生能源';
   case 'choosePayApDeploy':return action.mode==='pay'?'支付 1 AP，接著選擇場外角色':'不支付 AP';
   case 'chooseOptionalPayAp':return action.mode==='pay'?'支付 1 AP，然後結算後續效果':'不支付 AP';
   case 'chooseHandRest':return action.uid===null?'不特殊登場':'免費 REST 登場 '+name()+suffix();
