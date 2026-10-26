@@ -9,7 +9,7 @@ import {editorV2Status,toV2Counts} from '../dist/v2-editor-compat.mjs';
 test('user blue, green, purple lists are imported with exact original print identities and quantities',()=>{
  assert.deepEqual(BUILTIN_BLEACH_V2_DECKS.map(d=>d.id),['reject-blue','white-sword','renruki']);
  assert.deepEqual(BUILTIN_BLEACH_V2_DECKS.map(d=>d.displayName),['藍色「我拒絕」','綠色「白劍」','紫色「戀露」']);
- const catalogue=new Set(TITLES.find(t=>t.id==='bleach').cards.map(c=>c.id));
+ const catalogue=new Map(TITLES.find(t=>t.id==='bleach').cards.map(c=>[c.identity||c.id,c]));
  for(const [index,d] of BUILTIN_BLEACH_V2_DECKS.entries()){
   const original=DESIGNATED_BLEACH_DECKS[index];
   assert.equal(d.name,original.name);
@@ -17,8 +17,8 @@ test('user blue, green, purple lists are imported with exact original print iden
   assert.equal(d.kinds,13);
   assert.equal(Object.values(d.counts).reduce((n,c)=>n+c,0),50);
   assert.deepEqual(d.sources,original.entries.map(e=>({id:e.cardId,source:e.source,copies:e.copies})));
-  assert.ok(d.sources.every(c=>c.source.endsWith('/'+c.id)&&catalogue.has(c.id)&&d.counts[c.id]===c.copies));
-  assert.deepEqual(toV2Counts('bleach',d.counts),d.counts);
+  assert.ok(d.sources.every(e=>{const c=catalogue.get(e.id);return c&&e.source.endsWith('/'+e.id)&&d.counts[c.id]===e.copies;}));
+  assert.deepEqual(toV2Counts('bleach',d.counts),Object.fromEntries(original.entries.map(e=>[e.cardId,e.copies])));
   assert.equal(d.ready,editorV2Status('bleach',d.counts).ready);
   assert.equal(d.missingIds.length,d.kinds-d.registeredKinds);
   assert.equal(builtinBleachDeck(d.id),d);
