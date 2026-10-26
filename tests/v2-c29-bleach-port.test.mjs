@@ -172,9 +172,12 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 // BLC-1-033 UA08BT: retire one opposing front character of BP 3000 or less.
 //   Q555 (2023-09-25): an opposing raid-state character, or own ユーハバッハ,
 //   raises the cap to 5000. Mandatory. SPECIAL is retire one front character.
+// BLC-1-031 UA08BT: up to one opposing front character becomes REST.
+//   Q554 (2023-09-25): own エス・ノト instead rests it, skips its next
+//   ACTIVE, and draws 1. Declining draws nothing. No BP cap.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -245,12 +248,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers fifty-eight whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,494);
- assert.equal(EXPECTED_V2_COUNTS.bleach,218);
+test('C29 registers fifty-nine whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,495);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,219);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,218);
+ assert.equal(Object.keys(bleach.cards).length,219);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -4993,4 +4996,104 @@ test('BLC-1-033 retires one front character and raises the cap for raid state or
  assert.equal(assertUniversalMatch(ownRaid.packs,ownRaid.s),true);
  assert.equal(assertUniversalMatch(emptyRaid.packs,emptyRaid.s),true);
  assert.equal(assertUniversalMatch(down.packs,down.s),true);
+});
+
+test('BLC-1-031 rests one front character, and Es Nott adds skip and a draw',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-1-031');
+ assert.equal(printed.effect,'可選最多 1 個敵方前線角色，將其轉為 REST；己方場上有〈艾斯・諾特〉時，改為將其轉為 REST、使其跳過下一次轉為 ACTIVE，並抽 1 張。');
+ assert.equal(printed.nameJa,'The Fear');
+ assert.equal(printed.number,'UA08BT/BLC-1-031');
+ assert.equal(printed.traits,'無');
+ assert.equal(printed.type,'event');
+ assert.equal(printed.energy,3);
+ assert.equal(printed.gen,0);
+ assert.equal(printed.trigger,'special');
+ const card=bleach.cards['BLC-1-031'];
+ assert.equal(card.name,'The Fear');
+ assert.deepEqual(card.triggerEffect,{op:'retireOppFront'});
+ assert.deepEqual(card.traits,[]);
+ assert.deepEqual(card.effects.onPlay,[{op:'oppFrontRestBranch',optional:true,name:'エス・ノト',base:'rest',instead:'restSkipDraw'}]);
+ const bare={id:'BAD',name:'Fear',color:'yellow',type:'event',energy:0,ap:1,bp:0,gen:0,traits:[],trigger:'special',implementation:'dsl',triggerEffect:{op:'retireOppFront'},effects:{}};
+ const branch={op:'oppFrontRestBranch',optional:true,name:'エス・ノト',base:'rest',instead:'restSkipDraw'};
+ assert.throws(()=>createUniversalPack({id:'bad-branch',cards:[{...bare,effects:{onPlay:[{...branch,base:'restSkip'}]}}]}),/invalid front rest branch/);
+ assert.throws(()=>createUniversalPack({id:'bad-branch-bp',cards:[{...bare,effects:{onPlay:[{...branch,bp:1000}]}}]}),/invalid front rest branch/);
+ const deck=realDeck(['BLC-1-031','BLC-1-001','BLC-1-012','BLC-1-018','BLC-1-002','BLC-1-007'],'yellow');
+ function fuel(s){
+  for(const [i,id] of ['BLC-1-001','BLC-1-012','BLC-1-018'].entries())put(s,0,id,'energy',i);
+ }
+ function hold(s){
+  const event=take(s,0,'BLC-1-031');
+  s.players[0].hand.push(event);
+  return event;
+ }
+ const plain=main(deck,30531);
+ fuel(plain.s);
+ const event=hold(plain.s);
+ assert.equal(legalUniversalActions(plain.packs,plain.s).some(a=>a.type==='event'&&a.uid===event.uid),true);
+ const deckBefore=plain.s.players[0].deck.length;
+ let quiet=dispatchUniversalAction(plain.packs,plain.s,{type:'event',uid:event.uid});
+ assert.equal(quiet.pending,null);
+ assert.equal(quiet.players[0].deck.length,deckBefore);
+ const aimed=main(deck,30551);
+ fuel(aimed.s);
+ const fear=hold(aimed.s);
+ const foe=put(aimed.s,1,'BLC-1-007','front',0,true);
+ let rested=dispatchUniversalAction(aimed.packs,aimed.s,{type:'event',uid:fear.uid});
+ assert.equal(rested.pending.kind,'effect-rest-bp');
+ assert.equal(rested.pending.optional,true);
+ assert.equal(rested.pending.skipNextActive,false);
+ assert.equal(rested.pending.thenDraw,undefined);
+ assert.equal(legalUniversalActions(aimed.packs,rested).some(a=>a.type==='chooseRestBp'&&a.uid===null),true);
+ const before=rested.players[0].deck.length;
+ const declined=dispatchUniversalAction(aimed.packs,rested,{type:'chooseRestBp',uid:null});
+ assert.equal(declined.pending,null);
+ assert.equal(live(declined,1,foe.uid).ready,true);
+ assert.equal(declined.players[0].deck.length,before);
+ rested=dispatchUniversalAction(aimed.packs,rested,{type:'chooseRestBp',uid:foe.uid});
+ assert.equal(live(rested,1,foe.uid).ready,false);
+ assert.equal(rested.continuousStates.some(e=>e.kind==='skipNextActive'),false);
+ assert.equal(rested.players[0].deck.length,before);
+ const upgraded=main(deck,30552);
+ for(const [i,id] of ['BLC-1-001','BLC-1-012'].entries())put(upgraded.s,0,id,'energy',i);
+ const es=put(upgraded.s,0,'BLC-1-002','energy',2);
+ const marked=hold(upgraded.s);
+ const victim=put(upgraded.s,1,'BLC-1-007','front',0,true);
+ let branchPlay=dispatchUniversalAction(upgraded.packs,upgraded.s,{type:'event',uid:marked.uid});
+ assert.equal(branchPlay.pending.skipNextActive,true);
+ assert.equal(branchPlay.pending.thenDraw,1);
+ const cards=branchPlay.players[0].deck.length;
+ const passed=dispatchUniversalAction(upgraded.packs,branchPlay,{type:'chooseRestBp',uid:null});
+ assert.equal(live(passed,1,victim.uid).ready,true);
+ assert.equal(passed.players[0].deck.length,cards);
+ assert.equal(passed.continuousStates.some(e=>e.kind==='skipNextActive'),false);
+ branchPlay=dispatchUniversalAction(upgraded.packs,branchPlay,{type:'chooseRestBp',uid:victim.uid});
+ assert.equal(live(branchPlay,1,victim.uid).ready,false);
+ assert.equal(branchPlay.continuousStates.some(e=>e.kind==='skipNextActive'&&e.targetUid===victim.uid),true);
+ assert.equal(branchPlay.players[0].deck.length,cards-1);
+ grantContinuousState(upgraded.s,{kind:'originalEffectsDisabled',controller:1,sourceUid:victim.uid,
+  targetUid:es.uid,until:{player:0,phase:'main',edge:'end'}});
+ const again=take(upgraded.s,0,'BLC-1-031');
+ upgraded.s.players[0].hand.push(again);
+ upgraded.s.players[0].apCards.forEach(c=>{if(c.inPlay)c.ready=true;});
+ let silenced=dispatchUniversalAction(upgraded.packs,upgraded.s,{type:'event',uid:again.uid});
+ assert.equal(silenced.pending.thenDraw,1);
+ const parked=main(deck,30553);
+ fuel(parked.s);
+ const away=take(parked.s,0,'BLC-1-002');
+ parked.s.players[0].outside.push(away);
+ const lone=hold(parked.s);
+ const standing=put(parked.s,1,'BLC-1-007','front',0,true);
+ let outsideName=dispatchUniversalAction(parked.packs,parked.s,{type:'event',uid:lone.uid});
+ assert.equal(outsideName.pending.thenDraw,undefined);
+ outsideName=dispatchUniversalAction(parked.packs,outsideName,{type:'chooseRestBp',uid:standing.uid});
+ assert.equal(live(outsideName,1,standing.uid).ready,false);
+ assert.equal(outsideName.continuousStates.some(e=>e.kind==='skipNextActive'),false);
+ aiOk(aimed.packs,rested);
+ assert.equal(assertUniversalMatch(plain.packs,quiet),true);
+ assert.equal(assertUniversalMatch(aimed.packs,rested),true);
+ assert.equal(assertUniversalMatch(aimed.packs,declined),true);
+ assert.equal(assertUniversalMatch(upgraded.packs,branchPlay),true);
+ assert.equal(assertUniversalMatch(upgraded.packs,passed),true);
+ assert.equal(assertUniversalMatch(upgraded.packs,silenced),true);
+ assert.equal(assertUniversalMatch(parked.packs,outsideName),true);
 });
