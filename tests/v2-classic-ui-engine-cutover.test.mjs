@@ -9,11 +9,15 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,assertUn
 
 const read=path=>readFileSync(new URL(path,import.meta.url),'utf8');
 
-test('official root uses V2 while classic builder remains a separate legacy document',()=>{
+test('official root uses V2 while the editor never boots any legacy battle engine',()=>{
  const config=JSON.parse(read('../vercel.json'));
  assert.deepEqual(config.rewrites,[{source:'/',destination:'/universal-v2-preview.html'}]);
  const root=read('../dist/index.html');
- assert.match(root,/src="app.mjs/);
+ assert.ok(root.includes('src="v2-deck-editor.mjs'));
+ assert.equal(root.includes('src="app.mjs'),false);
+ const editor=read('../dist/v2-deck-editor.mjs');
+ assert.equal(editor.includes("from './engine.mjs'"),false);
+ assert.equal(editor.includes("from './match-runtime.mjs'"),false);
  assert.doesNotMatch(root,/src="universal-v2-preview.mjs/);
  assert.match(read('../dist/universal-v2-preview.html'),/src="universal-v2-preview.mjs"/);
 });
@@ -34,8 +38,8 @@ test('battle UI is classic BLEACH Arena, but every action uses V2 legal reducer'
  assert.doesNotMatch(js,/from '\.\/engine\.mjs'/);
 });
 
-test('browser entry modules and classic page parse as JavaScript',()=>{
- for(const path of ['dist/app.mjs','dist/universal-v2-preview.mjs']){
+test('production V2 browser modules parse as JavaScript',()=>{
+ for(const path of ['dist/v2-deck-editor.mjs','dist/v2-editor-compat.mjs','dist/universal-v2-preview.mjs']){
   const res=spawnSync(process.execPath,['--check',path],{encoding:'utf8'});
   assert.equal(res.status,0,path+': '+res.stderr);
  }

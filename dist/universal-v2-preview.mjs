@@ -2,12 +2,13 @@
 // This entrypoint is intentionally NOT linked from the production index.html.
 // All game transitions pass through legalUniversalActions/dispatchUniversalAction.
 import {createAllV2PreviewRealDecks} from './universal-v2/preview-real-decks.mjs';
-import {rezeroSet1PracticeDeck,v2DeckReport} from './universal-v2/official-entry.mjs';
+import {officialV2Pack,rezeroSet1PracticeDeck,v2DeckReport} from './universal-v2/official-entry.mjs';
 import {REZERO_ALL_CARDS} from './rezero-builder.mjs';
 import {summarizeDesignatedDecks,designatedPlayableCounts} from './universal-v2/bleach-designated-decks.mjs';
 import {validateUniversalDeck} from './universal-v2/pack.mjs';
 import {V2_ABILITY_TEMPLATE_IDS} from './universal-v2/ability-templates.mjs';
-import {listRegisteredV2Titles} from './universal-v2/title-packs/registry.mjs';
+import {listRegisteredV2Titles,registeredV2TitlePack} from './universal-v2/title-packs/registry.mjs';
+import {V2_EDITOR_TRANSFER_KEY} from './v2-editor-compat.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  universalPublicView,universalPrivateChoices,assertUniversalMatch} from './universal-v2/engine.mjs';
 import {chooseUniversalAiAction} from './universal-v2/ai.mjs';
@@ -627,6 +628,10 @@ function importClassicLobbyDecks(){
  if(notices.length)$('restart-notice').textContent=notices.join(' ');
 }
 importClassicLobbyDecks();
+function selectBuiltOpponent(title){
+ if(decks['rezero-set1']&&title==='rezero')$('ai-title').value='rezero-set1';
+ if(decks['gurren-lagann-red']&&title==='gurren-lagann')$('ai-title').value='gurren-lagann-red';
+}
 function importBuiltTitleDeck(){
  let raw=null;
  try{
@@ -646,11 +651,33 @@ function importBuiltTitleDeck(){
   $(id).append(el('option',{value,text:(id==='my-title'?'你的組卡｜':'同一組卡｜')+label}));
  }
  $('my-title').value=value;
- if(decks['rezero-set1']&&raw.title==='rezero')$('ai-title').value='rezero-set1';
- if(decks['gurren-lagann-red']&&raw.title==='gurren-lagann')$('ai-title').value='gurren-lagann-red';
+ selectBuiltOpponent(raw.title);
  if(['easy','normal','hard'].includes(raw.aiDifficulty))$('ai-level').value=raw.aiDifficulty;
 }
 importBuiltTitleDeck();
+// V2-only editor handoff: validate title, complete-card registry and printed deck rules.
+// Never use legacy auto flags or a legacy battle reducer.
+function importV2EditorDeck(){
+ let raw=null;
+ try{raw=JSON.parse(sessionStorage.getItem(V2_EDITOR_TRANSFER_KEY)||'null');
+  sessionStorage.removeItem(V2_EDITOR_TRANSFER_KEY);}catch{return;}
+ if(!raw||typeof raw!=='object')return;
+ const reject=message=>{$('restart-notice').textContent='組卡頁的牌組無法進入 V2：'+message;};
+ const pack=raw.title==='rezero'?officialV2Pack('rezero'):(typeof raw.title==='string'?registeredV2TitlePack(raw.title):null);
+ if(!pack){reject('該作品尚未開放正式 V2 卡包');return;}
+ const counts=raw.counts;
+ if(!counts||typeof counts!=='object'||Array.isArray(counts)){reject('牌組格式錯誤');return;}
+ const errors=validateUniversalDeck(pack,counts);
+ if(errors.length){reject(errors.slice(0,2).join('；'));return;}
+ const value='editor-v2-mine';
+ const name=typeof raw.name==='string'&&raw.name.trim()?raw.name.trim().slice(0,40):'自訂 V2 牌組';
+ designatedReady.set(value,{pack,counts:Object.freeze({...counts}),label:name});
+ $('my-title').append(el('option',{value,text:'我的 V2 牌組｜'+name}));
+ $('my-title').value=value;
+ selectBuiltOpponent(raw.title);
+ $('restart-notice').textContent='已載入 V2 組卡頁的 50 張牌組：'+name+'。可以直接開始與 AI 對戰。';
+}
+importV2EditorDeck();
 function startGame(){
  resetAi();
  try{
