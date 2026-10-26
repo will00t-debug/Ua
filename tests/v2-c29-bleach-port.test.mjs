@@ -240,9 +240,14 @@ import bleachContribution from '../dist/universal-v2/title-packs/bleach.mjs';
 // BLC-2-002 EX07BT: discard one, then swap one front character with one
 //   energy character, or BP+1000. ユーハバッハ may allow both. [ターン1]
 //   is this physical card. Generated energy stays 黄黄.
+// BLC-4-032 EX15BT: own turn BP+1000 while 黒崎 一護 or 浦原 喜助 is on
+//   the field. From the energy line, once per physical card, an own
+//   attack end may swap with one front character that has not attacked.
+//   Q2314 (2026-09-04): after the battle and after a life trigger check.
+//   Catalogue gen 3 normalizes to 青青.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008','BLC-4-065','BLC-2-051','BLC-1-092','BLC-4-044','BLC-4-016','BLC-4-017','BLC-1-028','BLC-2-002'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008','BLC-4-065','BLC-2-051','BLC-1-092','BLC-4-044','BLC-4-016','BLC-4-017','BLC-1-028','BLC-2-002','BLC-4-032'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -313,12 +318,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers eighty-one whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,517);
- assert.equal(EXPECTED_V2_COUNTS.bleach,241);
+test('C29 registers eighty-two whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,518);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,242);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,241);
+ assert.equal(Object.keys(bleach.cards).length,242);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -7871,6 +7876,188 @@ test('BLC-2-002 discards one card, then swaps lines or gains BP, and Yhwach may 
  assert.equal(assertUniversalMatch(locked.packs,lockedUsed),true);
  assert.equal(assertUniversalMatch(empty.packs,empty.s),true);
  assert.equal(assertUniversalMatch(muted.packs,muted.s),true);
+});
+
+test('BLC-4-032 gains BP from Ichigo or Urahara and may swap from the energy line after an attack',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-4-032');
+ assert.equal(printed.number,'EX15BT/BLC-4-032');
+ assert.equal(printed.nameJa,'四楓院 夜一');
+ assert.equal(printed.effect,'自己的回合中：若自己場上有《黑崎一護》或《浦原喜助》，此角色BP+1000。〔能量線／每回合1次〕自己的角色攻擊結束時，選自己前線1個本回合尚未攻擊的角色，可將其與此角色交換位置；戰鬥後或傷害的Trigger檢查結束後處理此效果。');
+ assert.equal(printed.trigger,'color');
+ assert.equal(printed.gen,3);
+ assert.deepEqual(printed.traits,[]);
+ const card=bleach.cards['BLC-4-032'];
+ assert.equal(card.gen,2);
+ assert.equal(card.energyLineAttackEndSwap,true);
+ assert.deepEqual(card.traits,[]);
+ assert.deepEqual(card.triggerEffect,{op:'bounceOppFrontUnderBp',bp:3500});
+ assert.deepEqual(card.passiveBonuses,[{condition:{logic:'any',turn:'own',checks:[
+  {kind:'ownNameExists',turn:'own',zone:'field',excludeSelf:false,name:'黒崎 一護'},
+  {kind:'ownNameExists',turn:'own',zone:'field',excludeSelf:false,name:'浦原 喜助'}]},bp:1000}]);
+ const entry=bleachContribution.entries.find(x=>x.id==='BLC-4-032');
+ assert.equal(entry.definition.gen,2);
+ assert.equal(entry.sourceRecord.gen,2);
+ assert.equal(entry.sourceRecord.legacyImportedGen,3);
+ const bare={id:'BAD',name:'BAD',color:'blue',type:'character',energy:3,ap:1,bp:3000,gen:2,traits:[],trigger:'color',implementation:'dsl',effects:{},energyLineAttackEndSwap:false,triggerEffect:{op:'bounceOppFrontUnderBp',bp:3500}};
+ assert.throws(()=>createUniversalPack({id:'bad-yoruichi',cards:[bare]}),/invalid energy-line attack-end swap/);
+ const ids=['BLC-4-032','BLC-4-025','BLC-2-015','BLC-1-081','BLC-2-031','BLC-2-029','BLC-4-023'];
+ const rest=Object.values(bleach.cards).filter(c=>c.maxCopies===4&&!ids.includes(c.id)&&
+  !['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
+ const built=[...ids,...rest.slice(0,13-ids.length)];
+ const deck=Object.fromEntries(built.map((id,i)=>[id,i===12?2:4]));
+ assert.deepEqual(validateUniversalDeck(bleach,deck),[]);
+ const board=main(deck,29050);
+ const self=put(board.s,0,'BLC-4-032','front',0);
+ assert.equal(universalBp(board.packs,board.s,self),3000);
+ const ichigo=put(board.s,0,'BLC-4-025','energy',0);
+ assert.equal(universalBp(board.packs,board.s,self),4000);
+ const away=structuredClone(board.s);
+ let opp=away;
+ for(let n=0;n<16&&opp.active===0;n++){
+  if(opp.pending?.kind==='end-hand-limit'){
+   const drop=legalUniversalActions(board.packs,opp).find(a=>a.type==='chooseHandLimit');
+   opp=dispatchUniversalAction(board.packs,opp,drop);
+  }else opp=dispatchUniversalAction(board.packs,opp,{type:'next'});
+ }
+ assert.equal(opp.active,1);
+ assert.equal(universalBp(board.packs,opp,live(opp,0,self.uid)),3000);
+ const gone=structuredClone(board.s);
+ const goneIchigo=gone.players[0].energy[0];
+ gone.players[0].energy[0]=null;gone.players[0].hand.push(goneIchigo);
+ assert.equal(universalBp(board.packs,gone,live(gone,0,self.uid)),3000);
+ put(gone,0,'BLC-2-015','front',1);
+ assert.equal(universalBp(board.packs,gone,live(gone,0,self.uid)),4000);
+ grantContinuousState(board.s,{kind:'originalEffectsDisabled',controller:1,
+  sourceUid:self.uid,targetUid:ichigo.uid,sourceLinked:false,
+  until:{player:0,phase:'attack',edge:'end'}});
+ assert.equal(universalBp(board.packs,board.s,self),4000);
+ grantContinuousState(board.s,{kind:'originalEffectsDisabled',controller:1,
+  sourceUid:ichigo.uid,targetUid:self.uid,sourceLinked:false,
+  until:{player:0,phase:'attack',edge:'end'}});
+ assert.equal(universalBp(board.packs,board.s,self),3000);
+ const fronted=main(deck,29051);
+ const standing=put(fronted.s,0,'BLC-4-032','front',0,false);
+ const striker=put(fronted.s,0,'BLC-2-031','front',1,true);
+ put(fronted.s,0,'BLC-2-029','front',2,true);
+ const quietLife=take(fronted.s,1,'BLC-4-025');
+ fronted.s.players[1].life.unshift(quietLife);
+ let frontAttack=fronted.s;
+ for(let n=0;n<6&&frontAttack.phase!=='attack';n++)
+  frontAttack=dispatchUniversalAction(fronted.packs,frontAttack,{type:'next'});
+ frontAttack=dispatchUniversalAction(fronted.packs,frontAttack,{type:'attack',uid:striker.uid});
+ assert.equal(frontAttack.pending.kind,'block');
+ frontAttack=dispatchUniversalAction(fronted.packs,frontAttack,{type:'chooseBlock',uid:null});
+ assert.equal(frontAttack.pending,null);
+ assert.equal(live(frontAttack,0,standing.uid).energyLineAttackEndSwapUsedTurn,undefined);
+ const missed=main(deck,29052);
+ const waiting=put(missed.s,0,'BLC-4-032','energy',0,true);
+ const firstStriker=put(missed.s,0,'BLC-2-031','front',0,true);
+ put(missed.s,0,'BLC-1-081','front',1,true);
+ const nullLife=take(missed.s,1,'BLC-4-025');
+ missed.s.players[1].life.unshift(nullLife);
+ let missedAttack=missed.s;
+ for(let n=0;n<6&&missedAttack.phase!=='attack';n++)
+  missedAttack=dispatchUniversalAction(missed.packs,missedAttack,{type:'next'});
+ missedAttack=dispatchUniversalAction(missed.packs,missedAttack,{type:'attack',uid:firstStriker.uid});
+ missedAttack=dispatchUniversalAction(missed.packs,missedAttack,{type:'chooseBlock',uid:null});
+ assert.equal(missedAttack.pending,null);
+ assert.equal(live(missedAttack,0,waiting.uid).energyLineAttackEndSwapUsedTurn,undefined);
+ const laterAlly=put(missedAttack,0,'BLC-2-029','front',2,true);
+ live(missedAttack,0,firstStriker.uid).ready=true;
+ const secondNull=take(missedAttack,1,'BLC-4-025');
+ missedAttack.players[1].life.unshift(secondNull);
+ missedAttack=dispatchUniversalAction(missed.packs,missedAttack,{type:'attack',uid:firstStriker.uid});
+ missedAttack=dispatchUniversalAction(missed.packs,missedAttack,{type:'chooseBlock',uid:null});
+ assert.equal(missedAttack.pending.kind,'energy-line-attack-end-swap');
+ assert.equal(legalUniversalActions(missed.packs,missedAttack).some(a=>a.uid===laterAlly.uid),true);
+ assert.equal(legalUniversalActions(missed.packs,missedAttack).some(a=>a.uid===firstStriker.uid),false);
+ const hushed=main(deck,29053);
+ const quiet=put(hushed.s,0,'BLC-4-032','energy',0,true);
+ const quietStriker=put(hushed.s,0,'BLC-2-031','front',0,true);
+ const quietAlly=put(hushed.s,0,'BLC-2-029','front',1,true);
+ grantContinuousState(hushed.s,{kind:'originalEffectsDisabled',controller:1,
+  sourceUid:quietAlly.uid,targetUid:quiet.uid,sourceLinked:false,
+  until:{player:0,phase:'attack',edge:'end'}});
+ hushed.s.players[1].life.unshift(take(hushed.s,1,'BLC-4-025'));
+ let quietAttack=hushed.s;
+ for(let n=0;n<6&&quietAttack.phase!=='attack';n++)
+  quietAttack=dispatchUniversalAction(hushed.packs,quietAttack,{type:'next'});
+ quietAttack=dispatchUniversalAction(hushed.packs,quietAttack,{type:'attack',uid:quietStriker.uid});
+ quietAttack=dispatchUniversalAction(hushed.packs,quietAttack,{type:'chooseBlock',uid:null});
+ assert.equal(quietAttack.pending,null);
+ const first=main(deck,29054);
+ const yoruichi=put(first.s,0,'BLC-4-032','energy',0,true);
+ const attacker=put(first.s,0,'BLC-2-031','front',0,true);
+ const ally=put(first.s,0,'BLC-2-029','front',1,true);
+ const ken=put(first.s,0,'BLC-1-081','front',2,true);
+ const drawn=take(first.s,1,'BLC-2-015');
+ first.s.players[1].life.unshift(drawn);
+ let fought=first.s;
+ for(let n=0;n<6&&fought.phase!=='attack';n++)
+  fought=dispatchUniversalAction(first.packs,fought,{type:'next'});
+ fought=dispatchUniversalAction(first.packs,fought,{type:'attack',uid:attacker.uid});
+ assert.equal(fought.pending.kind,'block');
+ fought=dispatchUniversalAction(first.packs,fought,{type:'chooseBlock',uid:null});
+ assert.equal(fought.pending.kind,'life-trigger');
+ assert.equal(fought.pending.trigger,'draw');
+ assert.equal(fought.pending.player,1);
+ fought=dispatchUniversalAction(first.packs,fought,{type:'chooseTrigger',mode:'skip'});
+ assert.equal(fought.pending.kind,'energy-line-attack-end-swap');
+ assert.equal(fought.pending.player,0);
+ assert.equal(fought.pending.sourceUid,yoruichi.uid);
+ assert.equal(V2_PENDING_LABELS[fought.pending.kind],'可選 1 個本回合尚未攻擊的前線角色，與此角色交換位置');
+ const choices=legalUniversalActions(first.packs,fought);
+ assert.equal(choices.some(a=>a.type==='chooseEnergyLineAttackEndSwap'&&a.uid===ally.uid),true);
+ assert.equal(choices.some(a=>a.uid===attacker.uid),false);
+ assert.equal(choices.some(a=>a.uid===ken.uid),false);
+ assert.equal(choices.some(a=>a.uid===yoruichi.uid),false);
+ assert.equal(choices.some(a=>a.uid===null),true);
+ assert.throws(()=>dispatchUniversalAction(first.packs,fought,{type:'chooseEnergyLineAttackEndSwap',uid:attacker.uid}),/not currently legal/);
+ assert.throws(()=>dispatchUniversalAction(first.packs,fought,{type:'chooseEnergyLineAttackEndSwap',uid:ken.uid}),/not currently legal/);
+ aiOk(first.packs,fought);
+ const declined=dispatchUniversalAction(first.packs,structuredClone(fought),{type:'chooseEnergyLineAttackEndSwap',uid:null});
+ assert.equal(declined.pending,null);
+ assert.equal(declined.players[0].energy.some(c=>c?.uid===yoruichi.uid),true);
+ assert.equal(declined.players[0].front.some(c=>c?.uid===ally.uid),true);
+ assert.equal(live(declined,0,yoruichi.uid).energyLineAttackEndSwapUsedTurn,declined.turn);
+ live(declined,0,attacker.uid).ready=true;
+ const copy=put(declined,0,'BLC-4-032','energy',1,true);
+ const other=put(declined,0,'BLC-4-032','energy',2,true);
+ const wall=put(declined,1,'BLC-4-023','front',0,true);
+ let blocked=dispatchUniversalAction(first.packs,declined,{type:'attack',uid:attacker.uid});
+ assert.equal(blocked.pending.kind,'block');
+ blocked=dispatchUniversalAction(first.packs,blocked,{type:'chooseBlock',uid:wall.uid});
+ assert.equal(blocked.players[1].outside.some(c=>c.uid===wall.uid),true);
+ assert.equal(blocked.pending.kind,'phase-order');
+ assert.equal(blocked.pending.entries.length,2);
+ aiOk(first.packs,blocked);
+ const firstKey=blocked.pending.entries[0].key;
+ blocked=dispatchUniversalAction(first.packs,blocked,{type:'choosePhaseOrder',key:firstKey});
+ assert.equal(blocked.pending.kind,'energy-line-attack-end-swap');
+ assert.equal(blocked.pending.sourceUid,firstKey);
+ assert.equal(legalUniversalActions(first.packs,blocked).some(a=>a.uid===yoruichi.uid),false);
+ blocked=dispatchUniversalAction(first.packs,blocked,{type:'chooseEnergyLineAttackEndSwap',uid:null});
+ assert.equal(blocked.pending.kind,'energy-line-attack-end-swap');
+ assert.equal(blocked.pending.sourceUid===copy.uid||blocked.pending.sourceUid===other.uid,true);
+ assert.notEqual(blocked.pending.sourceUid,firstKey);
+ blocked=dispatchUniversalAction(first.packs,blocked,{type:'chooseEnergyLineAttackEndSwap',uid:null});
+ assert.equal(blocked.pending,null);
+ let swapped=dispatchUniversalAction(first.packs,fought,{type:'chooseEnergyLineAttackEndSwap',uid:ally.uid});
+ assert.equal(swapped.pending,null);
+ assert.equal(swapped.players[0].front.some(c=>c?.uid===yoruichi.uid),true);
+ assert.equal(swapped.players[0].energy.some(c=>c?.uid===ally.uid),true);
+ assert.equal(universalBp(first.packs,swapped,live(swapped,0,yoruichi.uid)),3000);
+ assert.equal(live(swapped,0,yoruichi.uid).energyLineAttackEndSwapUsedTurn,swapped.turn);
+ aiOk(first.packs,swapped);
+ assert.equal(assertUniversalMatch(first.packs,swapped),true);
+ assert.equal(assertUniversalMatch(first.packs,declined),true);
+ assert.equal(assertUniversalMatch(first.packs,blocked),true);
+ assert.equal(assertUniversalMatch(board.packs,board.s),true);
+ assert.equal(assertUniversalMatch(board.packs,opp),true);
+ assert.equal(assertUniversalMatch(board.packs,gone),true);
+ assert.equal(assertUniversalMatch(fronted.packs,frontAttack),true);
+ assert.equal(assertUniversalMatch(missed.packs,missedAttack),true);
+ assert.equal(assertUniversalMatch(hushed.packs,quietAttack),true);
 });
 
 function fieldCount(s,p){

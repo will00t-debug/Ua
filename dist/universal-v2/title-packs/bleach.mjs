@@ -168,7 +168,8 @@ const testForKind=Object.freeze({
  lilleEntrySacrifice:'tests/v2-c29-bleach-port.test.mjs',
  giselleRestRetireDouble:'tests/v2-c29-bleach-port.test.mjs',
  sternritterCastleReplay:'tests/v2-c29-bleach-port.test.mjs',
- uryuSwapOrBuff:'tests/v2-c29-bleach-port.test.mjs'
+ uryuSwapOrBuff:'tests/v2-c29-bleach-port.test.mjs',
+ yoruichiEnergySwap:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -178,7 +179,7 @@ function contributedEntry(profile){
  // The legacy gen=2 for EX15BT/BLC-4-014 describes the ACTIVE total, not
  // the printed REST base. SourceRecord is the normalized printed card record;
  // retain original.gen separately and require the profile fingerprint above.
- const normalized=['BLC-4-014','BLC-4-042','BLC-4-074','BLC-4-024','BLC-4-063','BLC-4-037','BLC-4-071','BLC-4-006','BLC-4-051','BLC-4-077','BLC-4-065','BLC-4-016','BLC-4-017'].includes(profile.id);
+ const normalized=['BLC-4-014','BLC-4-042','BLC-4-074','BLC-4-024','BLC-4-063','BLC-4-037','BLC-4-071','BLC-4-006','BLC-4-051','BLC-4-077','BLC-4-065','BLC-4-016','BLC-4-017','BLC-4-032'].includes(profile.id);
  const sourceRecord=Object.freeze(normalized?
   {...original,gen:definition.gen,legacyImportedGen:original.gen}: {...original});
  const vanilla=['plain','plainAlt','step'].includes(profile.kind);
@@ -187,7 +188,9 @@ function contributedEntry(profile){
   definition:Object.freeze(definition),
   evidence:Object.freeze({
    printedTextFragments:Object.freeze([profile.effect]),
-   reviewNote:profile.id==='BLC-2-002'?
+   reviewNote:profile.id==='BLC-4-032'?
+    'EX15BT/BLC-4-032 official iframe 2026-10-26. On its own turn, BP+1000 while own field has 黒崎 一護 or 浦原 喜助. Silence removes that bonus and keeps both printed names. [エナジーLにある場合][ターン1]: when an own character\'s attack ends, this energy-line character may swap with one own front character that has not attacked this turn. Q2314 (2026-09-04): after the battle, and after a life-damage trigger check. Declining is legal and uses this physical card\'s once. The attacker is not a choice. A character that cannot enter the energy line is not a choice. A front-line copy does not offer the swap. Silence before the window removes it. [ターン1] is this physical card, so another copy can still swap. Catalogue gen=3 is the blue3 sprite; official generated energy is 青青, so definition.gen=2 and legacyImportedGen=3. COLOR returns one opposing front character of BP 3500 or less to hand. No card FAQ beyond Q2314.':
+   profile.id==='BLC-2-002'?
     'EX07BT/BLC-2-002 official iframe 2026-10-26. [起動メイン][手札を1枚場外に置く][ターン1]. The discard is a mandatory cost. Then choose one: swap one own front character with one own energy character, or this character gets BP+1000 this turn. While own field has ユーハバッハ, both may be chosen, and choosing only one stays legal. [ターン1] is this physical card. This character may be one side of the swap. A character that cannot enter the destination line is not a choice. Fields are not characters. Silence before activation removes the ability. The earned BP remains after later silence. Silence keeps ユーハバッハ\'s printed name. DRAW is generic. Generated energy is 黄黄, so gen stays 2. No card FAQ.':
    profile.id==='BLC-1-028'?
     'UA08BT/BLC-1-028 official iframe 2026-10-26. On play, look at the top 3. Up to one card with trait 星十字騎士團 may be revealed and added to hand. The rest go to the bottom in any order. Taking a card does not discard. [起動メイン][レストにする]: this field stays and becomes REST. Retire one other own character. That retirement is mandatory, and with no other character the activate is illegal. On success, activate this field\'s 登場時 again. Silence before activation removes the ability. Silence before the replay removes the on-play. The field is not a legal sacrifice. GET is the generic add-to-hand sentence. Generated energy is 黄. No card FAQ.':

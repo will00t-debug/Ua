@@ -1723,6 +1723,9 @@ function normalize(card,packId){
   JSON.stringify(attackEndSwap.types)!==JSON.stringify(['event','field'])||
   attackEndSwap.minDistinctNames!==4||Object.keys(attackEndSwap).length!==3))
   throw Error(card.id+' invalid source-pinned Q2337 attack-end swap');
+ if(card.energyLineAttackEndSwap!==undefined&&
+  (card.type!=='character'||card.energyLineAttackEndSwap!==true||implemented!=='dsl'||attackEndSwap))
+  throw Error(card.id+' invalid energy-line attack-end swap');
  const blockBpRestriction=card.blockBpRestriction??null;
  if(blockBpRestriction!==null){
   if(card.type!=='character'||card.implementation!=='dsl'||
@@ -1772,12 +1775,12 @@ function normalize(card,packId){
  if(implemented==='vanilla'&&(Object.keys(effects).length||card.effectText||
   mainAbility||phaseEffects.length||moveTriggers.length||moveObserver||card.enterActiveIfOpponentRest||card.enterAlwaysActive||card.activeExtraEnergy||card.conditionalTraitEnergy||passiveBonuses||card.impactNull||
   card.printedImpact||card.printedAttackDamage||card.readyOnAttackCount||card.readyOnBlockCount||
-  card.frontGeneratesEnergy||card.battleRemoveInstead||ownOutsideRecovery||colorTriggerFieldSubstitution||card.frontForbidden||card.energyForbidden||card.ownTurnBp||card.opponentTurnBp||nameAliases||selectionHandDiscardTax||  card.otherOwnBattleWonDamageTwo||attackEndSwap||blockBpRestriction||attackWinRecover||card.conditionalImpactBpAtLeast||emptyOwnFieldHandEnergyDiscount||opponentFieldColorsHandEnergyDiscount||card.mustBlock||card.bpDownImmune||  card.printedHandEnergyDiscount||card.raidHandLeaveReplace||card.raidHostAny||card.blockRaidBp||card.handApDiscountWhileName))
+  card.frontGeneratesEnergy||card.battleRemoveInstead||ownOutsideRecovery||colorTriggerFieldSubstitution||card.frontForbidden||card.energyForbidden||card.ownTurnBp||card.opponentTurnBp||nameAliases||selectionHandDiscardTax||  card.otherOwnBattleWonDamageTwo||attackEndSwap||blockBpRestriction||attackWinRecover||card.conditionalImpactBpAtLeast||emptyOwnFieldHandEnergyDiscount||opponentFieldColorsHandEnergyDiscount||card.mustBlock||card.bpDownImmune||  card.printedHandEnergyDiscount||card.raidHandLeaveReplace||card.raidHostAny||card.blockRaidBp||card.handApDiscountWhileName||card.energyLineAttackEndSwap))
   throw Error(card.id+' claims vanilla despite printed/declared effects');
  if(implemented==='dsl'&&!Object.keys(effects).length&&!phaseEffects.length&&!moveTriggers.length&&!mainAbility&&!moveObserver&&!card.enterActiveIfOpponentRest&&!card.enterAlwaysActive&&
   !card.activeExtraEnergy&&!card.conditionalTraitEnergy&&!passiveBonuses&&!card.impactNull&&
   !card.printedImpact&&!card.printedAttackDamage&&!card.readyOnAttackCount&&!card.readyOnBlockCount&&
-  !card.frontGeneratesEnergy&&!card.battleRemoveInstead&&!ownOutsideRecovery&&!colorTriggerFieldSubstitution&&!card.frontForbidden&&!card.energyForbidden&&!card.ownTurnBp&&!card.opponentTurnBp&&!nameAliases&&!selectionHandDiscardTax&&!card.otherOwnBattleWonDamageTwo&&!attackEndSwap&&!blockBpRestriction&&!attackWinRecover&&!card.conditionalImpactBpAtLeast&&!emptyOwnFieldHandEnergyDiscount&&!opponentFieldColorsHandEnergyDiscount&&!card.mustBlock&&!card.bpDownImmune&&  !card.printedHandEnergyDiscount&&!card.raidHandLeaveReplace&&!card.raidHostAny&&!card.blockRaidBp&&!card.handApDiscountWhileName)
+  !card.frontGeneratesEnergy&&!card.battleRemoveInstead&&!ownOutsideRecovery&&!colorTriggerFieldSubstitution&&!card.frontForbidden&&!card.energyForbidden&&!card.ownTurnBp&&!card.opponentTurnBp&&!nameAliases&&!selectionHandDiscardTax&&!card.otherOwnBattleWonDamageTwo&&!attackEndSwap&&!blockBpRestriction&&!attackWinRecover&&!card.conditionalImpactBpAtLeast&&!emptyOwnFieldHandEnergyDiscount&&!opponentFieldColorsHandEnergyDiscount&&!card.mustBlock&&!card.bpDownImmune&&  !card.printedHandEnergyDiscount&&!card.raidHandLeaveReplace&&!card.raidHostAny&&!card.blockRaidBp&&!card.handApDiscountWhileName&&!card.energyLineAttackEndSwap)
   throw Error(card.id+' declares dsl without effects');
  for(const [name,program] of Object.entries(effects)){
   if(program.some(x=>x.op==='retireSourceOnPhaseEnd'))throw Error(card.id+' invalid phase-only self retirement');
@@ -2038,6 +2041,7 @@ function normalize(card,packId){
   activeExtraEnergy:card.activeExtraEnergy||0,
   frontGeneratesEnergy:card.frontGeneratesEnergy===true,
   battleRemoveInstead:card.battleRemoveInstead===true,
+  energyLineAttackEndSwap:card.energyLineAttackEndSwap===true,
   colorTriggerFieldSubstitution,
   conditionalTraitEnergy:conditionalTraitEnergy?Object.freeze({...conditionalTraitEnergy}):null,
   passiveBonuses:passiveBonuses||Object.freeze([]),

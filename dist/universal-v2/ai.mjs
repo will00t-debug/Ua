@@ -36,7 +36,7 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(!UNIVERSAL_AI_LEVELS.includes(difficulty))throw Error('Unknown universal AI difficulty');
  const legal=legalUniversalActions(pack,s);
  if(!legal.length)return null;
- if(s.pending?.kind==='effect-move-order')return legal[0];
+ if(s.pending?.kind==='effect-move-order'||s.pending?.kind==='phase-order')return legal[0];
  if(s.pending?.kind==='effect-rest-tuck')return
   legal.find(x=>x.mode===(difficulty==='easy'?'skip':'rest'))||legal[0];
  if(s.pending?.kind==='effect-tuck-moved')return
@@ -95,7 +95,7 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='effect-swap-or-buff')
   return legal.find(a=>a.mode==='both')||legal.find(a=>a.mode==='swap')||
    legal.find(a=>a.mode==='bp')||legal[0];
- if(s.pending?.kind==='effect-swap-pair')
+ if(s.pending?.kind==='effect-swap-pair'||s.pending?.kind==='energy-line-attack-end-swap')
   return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-choice-mode'){
   // Entirely generic printed-mode selection; inspect only public enemy FRONT

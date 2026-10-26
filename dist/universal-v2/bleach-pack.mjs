@@ -1208,6 +1208,8 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-1-028","kind":"sternritterCastleReplay","number":"UA08BT/BLC-1-028","name":"銀架城","color":"yellow","energy":3,"ap":1,"bp":0,"gen":1,"trigger":"get","type":"field","effect":"登場：查看己方牌堆頂 3 張，可公開其中最多 1 張具有「星十字騎士團」特徵的卡並加入手牌，其餘以任意順序放至牌堆底。主要階段：REST 此場域，使 1 個己方場上角色退場；成功時發動此場域的登場效果。"}
 ,
 {"id":"BLC-2-002","kind":"uryuSwapOrBuff","number":"EX07BT/BLC-2-002","name":"石田 雨竜","color":"yellow","energy":3,"ap":1,"bp":3000,"gen":2,"trigger":"draw","type":"character","effect":"主要階段・每回合 1 次：將 1 張手牌送至場外，選一項：①各選 1 個己方前線與能源線角色，交換其位置；②此角色本回合 BP +1000。己方場上有〈友哈巴赫〉時，可改為執行兩項。"}
+,
+{"id":"BLC-4-032","kind":"yoruichiEnergySwap","number":"EX15BT/BLC-4-032","name":"四楓院 夜一","color":"blue","energy":3,"ap":1,"bp":3000,"gen":3,"trigger":"color","type":"character","effect":"自己的回合中：若自己場上有《黑崎一護》或《浦原喜助》，此角色BP+1000。〔能量線／每回合1次〕自己的角色攻擊結束時，選自己前線1個本回合尚未攻擊的角色，可將其與此角色交換位置；戰鬥後或傷害的Trigger檢查結束後處理此效果。"}
  ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1266,7 +1268,7 @@ export function checkedBleachAddonDefinition(p){
  // EX15BT/BLC-4-074 prints 緑+. That plus is the activate ability, so the REST
  // base is 1. Keep p.gen=2 only as a legacy-source fingerprint.
  const v2BaseGen=p.id==='BLC-4-014'||p.id==='BLC-4-074'?1:
-  p.id==='BLC-4-042'||p.id==='BLC-4-024'||p.id==='BLC-4-063'||p.id==='BLC-4-037'||p.id==='BLC-4-071'||p.id==='BLC-4-006'||p.id==='BLC-4-051'||p.id==='BLC-4-077'||p.id==='BLC-4-065'||p.id==='BLC-4-016'||p.id==='BLC-4-017'?2:c.gen;
+  p.id==='BLC-4-042'||p.id==='BLC-4-024'||p.id==='BLC-4-063'||p.id==='BLC-4-037'||p.id==='BLC-4-071'||p.id==='BLC-4-006'||p.id==='BLC-4-051'||p.id==='BLC-4-077'||p.id==='BLC-4-065'||p.id==='BLC-4-016'||p.id==='BLC-4-017'||p.id==='BLC-4-032'?2:c.gen;
  const isKyoraku=p.kind==='kyorakuAttackEnd';
  const isRestRetireField=p.kind==='fieldRestRetireNamed';
  const isFieldDual=p.kind==='fieldDualMain';
@@ -1381,6 +1383,7 @@ export function checkedBleachAddonDefinition(p){
  const isGiselle=p.kind==='giselleRestRetireDouble';
  const isCastle=p.kind==='sternritterCastleReplay';
  const isUryu=p.kind==='uryuSwapOrBuff';
+ const isYoruichiSwap=p.kind==='yoruichiEnergySwap';
  const topDiscard={
   'BLC-3-007':{count:3,filter:{field:'trait',value:'護廷十三隊'}},
   'BLC-3-002':{count:3,filters:[
@@ -1414,7 +1417,7 @@ export function checkedBleachAddonDefinition(p){
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest||isOwnCharacterDraw||isPeekAttack||isDrawInstead||isRevealOppTop||isRevealWindow||isEnergyWindow||isMillPurple||isEnergyBounce||isStepOr||isReplayDown||isStepName||isReducedActive||isOutsideName||isZeroIchigo||isDiscardBlock||isEmptyStep||isApActive||isAliasTop||isEntryChoose||isRestFrontName||isFrontFieldDown||isHandOutside||isEnergyAp||isAttackEnd||isDiscardVisored||isRaidHost||isBlockRaid||isRaidOrName||isRestOrDraw||isRestOrRetire||isHandApNamed||isBazzBurn||isKatenActive||isBambiesPer||isKenpachi||isMayuriTrait||isNemPair||isSoulPalace||isKyokotsu||isHakkoken||isYachiru||isLilotto||isBazzChain||isNanaoEvent||isRemovedKeywords||isFrontRemove||isThunderKit||isLille||isGiselle||isCastle||isUryu;
+ const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest||isOwnCharacterDraw||isPeekAttack||isDrawInstead||isRevealOppTop||isRevealWindow||isEnergyWindow||isMillPurple||isEnergyBounce||isStepOr||isReplayDown||isStepName||isReducedActive||isOutsideName||isZeroIchigo||isDiscardBlock||isEmptyStep||isApActive||isAliasTop||isEntryChoose||isRestFrontName||isFrontFieldDown||isHandOutside||isEnergyAp||isAttackEnd||isDiscardVisored||isRaidHost||isBlockRaid||isRaidOrName||isRestOrDraw||isRestOrRetire||isHandApNamed||isBazzBurn||isKatenActive||isBambiesPer||isKenpachi||isMayuriTrait||isNemPair||isSoulPalace||isKyokotsu||isHakkoken||isYachiru||isLilotto||isBazzChain||isNanaoEvent||isRemovedKeywords||isFrontRemove||isThunderKit||isLille||isGiselle||isCastle||isUryu||isYoruichiSwap;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1446,6 +1449,10 @@ export function checkedBleachAddonDefinition(p){
   ...(isGiselle?{mainAbility:{op:'nameOnceRestRetireDouble',scope:'name',trait:'殭屍'}}:{}),
   ...(isCastle?{mainAbility:{op:'fieldRestSacrificeReplay'}}:{}),
   ...(isUryu?{mainAbility:{op:'oncePayProgram',oncePerTurn:true,frontOnly:false,raidOnly:false,payAp:0,requiresOwnName:null,then:[{op:'discardGate',optional:false,then:[{op:'swapOrBuff',bp:1000,allName:'ユーハバッハ'}]}]}}:{}),
+  ...(isYoruichiSwap?{energyLineAttackEndSwap:true,triggerEffect:{op:'bounceOppFrontUnderBp',bp:3500},
+   passiveBonuses:[{condition:{logic:'any',turn:'own',checks:[
+    {kind:'ownNameExists',turn:'own',zone:'field',excludeSelf:false,name:'黒崎 一護'},
+    {kind:'ownNameExists',turn:'own',zone:'field',excludeSelf:false,name:'浦原 喜助'}]},bp:1000}]}:{}),
   ...(isEntryChoose?{mainAbility:{op:'oncePayProgram',oncePerTurn:true,frontOnly:false,raidOnly:false,payAp:0,requiresOwnName:null,entryTurnOnly:true,then:[{op:'chooseOne',optional:false,options:[
    {id:'discard',label:'抽1再棄1',turn:'any',then:[{op:'drawDiscard',count:1,discardCount:1}]},
    {id:'below',label:'低BP時抽1',turn:'any',then:[{op:'drawIfOppFrontBelowPrinted',count:1}]}
