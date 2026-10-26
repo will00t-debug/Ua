@@ -291,7 +291,7 @@ import bleachContribution from '../dist/universal-v2/title-packs/bleach.mjs';
 //   start. Q1030 and Q1031 are both 2024-07-19. DRAW is generic.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008','BLC-4-065','BLC-2-051','BLC-1-092','BLC-4-044','BLC-4-016','BLC-4-017','BLC-1-028','BLC-2-002','BLC-4-032','BLC-1-011','BLC-1-104','BLC-1-014','BLC-1-020','BLC-1-050','BLC-1-055','BLC-1-063','BLC-1-093','BLC-2-009','BLC-2-013','BLC-2-030'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008','BLC-4-065','BLC-2-051','BLC-1-092','BLC-4-044','BLC-4-016','BLC-4-017','BLC-1-028','BLC-2-002','BLC-4-032','BLC-1-011','BLC-1-104','BLC-1-014','BLC-1-020','BLC-1-050','BLC-1-055','BLC-1-063','BLC-1-093','BLC-2-009','BLC-2-013','BLC-2-030','BLC-2-034'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -362,12 +362,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers ninety-three whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,529);
- assert.equal(EXPECTED_V2_COUNTS.bleach,253);
+test('C29 registers ninety-four whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,530);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,254);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,253);
+ assert.equal(Object.keys(bleach.cards).length,254);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -9877,6 +9877,170 @@ test('BLC-2-030 chooses a Rukia entry AP recovery or the next Rukia AP discount'
  assert.equal(assertUniversalMatch(attacker.packs,battle),true);
  assert.equal(assertUniversalMatch(life.packs,color),true);
  void handBefore;
+});
+
+test('BLC-2-034 rests one front character and locks ACTIVE only while it stays on the front',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-2-034');
+ assert.equal(printed.number,'EX07BT/BLC-2-034');
+ assert.equal(printed.nameJa,'朽木 ルキア');
+ assert.equal(printed.effect,'Raid〈朽木露琪亞〉：轉為 ACTIVE，可移至前線。登場・位於前線：可選最多 1 個敵方前線角色並轉為 REST；若現在是己方回合，且己方前線有原始 AP 消耗 2 以上角色，則所選角色直到此角色離開前線前均不能轉為 ACTIVE。');
+ assert.equal(printed.traits,'護廷十三隊');
+ assert.equal(printed.trigger,'raid');
+ assert.equal(printed.gen,1);
+ assert.equal(printed.ap,1);
+ const card=bleach.cards['BLC-2-034'];
+ assert.equal(card.name,'朽木 ルキア');
+ assert.equal(card.raidName,'朽木 ルキア');
+ assert.equal(card.triggerEffect,null);
+ assert.deepEqual(card.traits,['護廷十三隊']);
+ assert.deepEqual(card.effects.onPlay,[{op:'restOppFrontApLock',optional:true,line:'front',minPrintedAp:2,lockWhile:'sourceOnFront'}]);
+ const deck=realDeck(['BLC-2-034','BLC-2-031','BLC-2-030','BLC-2-016','BLC-4-042','BLC-4-030','BLC-4-026','BLC-1-039','BLC-2-018','BLC-2-017','BLC-2-013','BLC-1-004'],'blue');
+ const hold=(s,p,id)=>{const c=take(s,p,id);s.players[p].hand.push(c);return c;};
+ function readyAp(s,n){
+  for(let i=0;i<3;i++){s.players[0].apCards[i].inPlay=i<n;s.players[0].apCards[i].ready=i<n;}
+ }
+ function fuel(s,p=0,slots=4){
+  for(let i=0;i<slots;i++)put(s,p,'BLC-2-016','energy',i);
+ }
+ const locked=(s,uid)=>s.continuousStates.some(e=>e.kind==='cannotActive'&&e.targetUid===uid&&
+  e.whileSourceFront===true&&e.sourceLinked===true&&e.until===null);
+ function advance(packs,s,pred){
+  for(let i=0;i<40&&!pred(s);i++){
+   if(s.pending){
+    const a=legalUniversalActions(packs,s)[0];
+    s=dispatchUniversalAction(packs,s,a,{actor:s.pending.player});
+   }else s=dispatchUniversalAction(packs,s,{type:'next'});
+  }
+  assert.equal(pred(s),true);
+  return s;
+ }
+ const board=main(deck,29531);
+ fuel(board.s);readyAp(board.s,2);
+ put(board.s,0,'BLC-2-030','front',0,true);
+ const foe=put(board.s,1,'BLC-2-016','front',0,true);
+ const rukia=hold(board.s,0,'BLC-2-034');
+ let s=dispatchUniversalAction(board.packs,board.s,{type:'play',uid:rukia.uid,line:'front',slot:1});
+ assert.equal(s.pending.kind,'effect-rest-ap-lock');
+ assert.equal(s.pending.choices.includes(foe.uid),true);
+ assert.equal(chooseUniversalAiAction(board.packs,s,{difficulty:'easy'}).uid,null);
+ s=dispatchUniversalAction(board.packs,s,{type:'chooseRestApLock',uid:foe.uid});
+ assert.equal(s.players[1].front[0].ready,false);
+ assert.equal(locked(s,foe.uid),true);
+ grantContinuousState(s,{kind:'originalEffectsDisabled',controller:1,sourceUid:rukia.uid,
+  targetUid:rukia.uid,sourceLinked:false,until:{player:0,phase:'attack',edge:'end'}});
+ assert.equal(locked(s,foe.uid),true);
+ const firstTurn=s.turn;
+ s=advance(board.packs,s,x=>x.active===1&&x.phase==='start'&&x.turn>firstTurn);
+ assert.equal(s.players[1].front.find(c=>c?.uid===foe.uid).ready,false);
+ assert.equal(locked(s,foe.uid),true);
+ const opponentTurn=s.turn;
+ s=advance(board.packs,s,x=>x.active===0&&x.phase==='main'&&x.turn>opponentTurn);
+ const mayuri=hold(s,0,'BLC-4-042');
+ const mayuriPlay=legalUniversalActions(board.packs,s).find(a=>a.type==='play'&&a.uid===mayuri.uid&&a.line==='front');
+ assert.ok(mayuriPlay);
+ s=dispatchUniversalAction(board.packs,s,mayuriPlay);
+ assert.equal(s.pending.kind,'effect-choice-mode');
+ s=dispatchUniversalAction(board.packs,s,{type:'chooseEffectMode',mode:'field'});
+ assert.equal(s.pending.kind,'effect-retire-own-character');
+ assert.equal(s.pending.choices.includes(rukia.uid),true);
+ s=dispatchUniversalAction(board.packs,s,{type:'chooseOwnCharacterRetire',uid:rukia.uid});
+ if(s.pending?.kind==='effect-named-zone-entry')
+  s=dispatchUniversalAction(board.packs,s,{type:'chooseNamedZoneDeploy',uid:null});
+ assert.equal(s.players[0].front.some(c=>c?.uid===rukia.uid),false);
+ assert.equal(locked(s,foe.uid),false);
+ assert.equal(s.players[1].front.find(c=>c?.uid===foe.uid).ready,false);
+ const leftTurn=s.turn;
+ s=advance(board.packs,s,x=>x.active===1&&x.phase==='start'&&x.turn>leftTurn);
+ assert.equal(s.players[1].front.find(c=>c?.uid===foe.uid).ready,true);
+ const energyPlay=main(deck,29532);
+ fuel(energyPlay.s);readyAp(energyPlay.s,2);
+ const stayed=put(energyPlay.s,1,'BLC-2-016','front',0,true);
+ const energyCard=hold(energyPlay.s,0,'BLC-2-034');
+ let energy=dispatchUniversalAction(energyPlay.packs,energyPlay.s,{type:'play',uid:energyCard.uid,line:'energy',slot:0,replaceUid:energyPlay.s.players[0].energy[0].uid});
+ assert.equal(energy.pending,null);
+ assert.equal(energy.players[1].front[0].ready,true);
+ assert.equal(energy.players[1].front[0].uid,stayed.uid);
+ const short=main(deck,29533);
+ fuel(short.s,0,3);readyAp(short.s,2);
+ put(short.s,0,'BLC-2-030','energy',3,true);
+ put(short.s,0,'BLC-2-016','front',0,true);
+ const shortFoe=put(short.s,1,'BLC-2-016','front',0,true);
+ const shortCard=hold(short.s,0,'BLC-2-034');
+ let plain=dispatchUniversalAction(short.packs,short.s,{type:'play',uid:shortCard.uid,line:'front',slot:1});
+ assert.equal(plain.pending.kind,'effect-rest-ap-lock');
+ plain=dispatchUniversalAction(short.packs,plain,{type:'chooseRestApLock',uid:shortFoe.uid});
+ assert.equal(plain.players[1].front[0].ready,false);
+ assert.equal(locked(plain,shortFoe.uid),false);
+ const declined=main(deck,29534);
+ fuel(declined.s);readyAp(declined.s,2);
+ put(declined.s,0,'BLC-2-030','front',0,true);
+ const declineFoe=put(declined.s,1,'BLC-2-016','front',0,true);
+ const declineCard=hold(declined.s,0,'BLC-2-034');
+ let skip=dispatchUniversalAction(declined.packs,declined.s,{type:'play',uid:declineCard.uid,line:'front',slot:1});
+ skip=dispatchUniversalAction(declined.packs,skip,{type:'chooseRestApLock',uid:null});
+ assert.equal(skip.players[1].front.find(c=>c?.uid===declineFoe.uid).ready,true);
+ assert.equal(locked(skip,declineFoe.uid),false);
+ const empty=main(deck,29535);
+ fuel(empty.s);readyAp(empty.s,2);
+ const emptyCard=hold(empty.s,0,'BLC-2-034');
+ const none=dispatchUniversalAction(empty.packs,empty.s,{type:'play',uid:emptyCard.uid,line:'front',slot:0});
+ assert.equal(none.pending,null);
+ const raided=main(deck,29536);
+ put(raided.s,0,'BLC-2-031','energy',0,true);
+ for(let i=1;i<4;i++)put(raided.s,0,'BLC-2-016','energy',i);
+ readyAp(raided.s,2);
+ put(raided.s,0,'BLC-2-030','front',0,true);
+ const raidFoe=put(raided.s,1,'BLC-2-016','front',0,true);
+ const raider=hold(raided.s,0,'BLC-2-034');
+ const raid=legalUniversalActions(raided.packs,raided.s).find(a=>a.type==='raid'&&a.uid===raider.uid&&a.slot===1);
+ assert.ok(raid);
+ let moved=dispatchUniversalAction(raided.packs,raided.s,raid);
+ assert.equal(moved.players[0].front[1].uid,raider.uid);
+ assert.equal(moved.players[0].front[1].ready,true);
+ assert.equal(moved.pending.kind,'effect-rest-ap-lock');
+ moved=dispatchUniversalAction(raided.packs,moved,{type:'chooseRestApLock',uid:raidFoe.uid});
+ assert.equal(moved.players[1].front[0].ready,false);
+ assert.equal(locked(moved,raidFoe.uid),true);
+ function lifeBoard(seed){
+  const packs=[bleach,bleach];
+  let life=newUniversalMatch(packs,{decks:[deck,deck],seed,first:0});
+  for(let n=0;n<8&&life.phase!=='attack';n++)life=dispatchUniversalAction(packs,life,{type:'next'});
+  const swinger=put(life,0,'BLC-4-030','front',0,true);
+  const bystander=put(life,0,'BLC-2-016','front',1,true);
+  put(life,1,'BLC-2-031','energy',0,true);
+  for(let i=1;i<4;i++)put(life,1,'BLC-2-016','energy',i);
+  const revealed=take(life,1,'BLC-2-034');
+  life.players[1].deck.push(...life.players[1].life.splice(0));
+  life.players[1].life.unshift(revealed);
+  life=dispatchUniversalAction(packs,life,{type:'attack',uid:swinger.uid});
+  life=dispatchUniversalAction(packs,life,{type:'chooseBlock',uid:null},{actor:1});
+  assert.equal(life.pending.kind,'life-trigger');
+  return {packs,life,bystander};
+ }
+ const stayedLife=lifeBoard(29537);
+ const stay=legalUniversalActions(stayedLife.packs,stayedLife.life).find(a=>a.type==='chooseTrigger'&&a.mode==='raid'&&a.line==='energy');
+ assert.ok(stay);
+ let stayedMatch=dispatchUniversalAction(stayedLife.packs,stayedLife.life,stay,{actor:1});
+ assert.equal(stayedMatch.pending,null);
+ assert.equal(stayedMatch.players[0].front.find(c=>c?.uid===stayedLife.bystander.uid).ready,true);
+ const movedLife=lifeBoard(29538);
+ put(movedLife.life,1,'BLC-2-030','front',0,true);
+ const shift=legalUniversalActions(movedLife.packs,movedLife.life).find(a=>a.type==='chooseTrigger'&&a.mode==='raid'&&a.line==='front'&&a.slot===1);
+ assert.ok(shift);
+ let shifted=dispatchUniversalAction(movedLife.packs,movedLife.life,shift,{actor:1});
+ assert.equal(shifted.pending.kind,'effect-rest-ap-lock');
+ assert.equal(shifted.pending.player,1);
+ shifted=dispatchUniversalAction(movedLife.packs,shifted,{type:'chooseRestApLock',uid:movedLife.bystander.uid},{actor:1});
+ assert.equal(shifted.players[0].front.find(c=>c?.uid===movedLife.bystander.uid).ready,false);
+ assert.equal(locked(shifted,movedLife.bystander.uid),false);
+ assert.equal(assertUniversalMatch(board.packs,s),true);
+ assert.equal(assertUniversalMatch(energyPlay.packs,energy),true);
+ assert.equal(assertUniversalMatch(short.packs,plain),true);
+ assert.equal(assertUniversalMatch(declined.packs,skip),true);
+ assert.equal(assertUniversalMatch(empty.packs,none),true);
+ assert.equal(assertUniversalMatch(raided.packs,moved),true);
+ assert.equal(assertUniversalMatch(stayedLife.packs,stayedMatch),true);
+ assert.equal(assertUniversalMatch(movedLife.packs,shifted),true);
 });
 
 function locationLine(s,uid){

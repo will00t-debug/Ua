@@ -75,6 +75,12 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='effect-named-field-protect')
   return difficulty==='easy'?legal.find(a=>a.uid===null)||legal[0]:
    legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-rest-ap-lock'){
+  const foe=s.players[1-s.pending.player].front;
+  if(difficulty==='easy')return legal.find(a=>a.uid===null)||legal[0];
+  return legal.find(a=>a.uid!==null&&foe.find(c=>c?.uid===a.uid)?.ready)||
+   legal.find(a=>a.uid!==null)||legal[0];
+ }
  if(s.pending?.kind==='effect-energy-trait-front')
   return difficulty==='easy'?legal.find(a=>a.uid===null)||legal[0]:
    legal.find(a=>a.uid!==null)||legal[0];

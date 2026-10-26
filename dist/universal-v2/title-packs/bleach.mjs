@@ -180,7 +180,8 @@ const testForKind=Object.freeze({
  yamamotoSquadShift:'tests/v2-c29-bleach-port.test.mjs',
  giselleFieldCountActive:'tests/v2-c29-bleach-port.test.mjs',
  orihimeIchigoProtect:'tests/v2-c29-bleach-port.test.mjs',
- byakuyaRukiaApChoice:'tests/v2-c29-bleach-port.test.mjs'
+ byakuyaRukiaApChoice:'tests/v2-c29-bleach-port.test.mjs',
+ rukiaFrontApRestLock:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -199,7 +200,9 @@ function contributedEntry(profile){
   definition:Object.freeze(definition),
   evidence:Object.freeze({
    printedTextFragments:Object.freeze([profile.effect]),
-   reviewNote:profile.id==='BLC-2-030'?
+   reviewNote:profile.id==='BLC-2-034'?
+    'EX07BT/BLC-2-034 official page 2026-10-27. Required energy 青4, generated energy 青. Raid onto 朽木 ルキア, become ACTIVE, and may move to the front. On play, only while this character is on the front, choose up to one opposing front character and REST it. Q1040 (2024-07-19): a Raid on-play is checked after the Raid has become ACTIVE and, if chosen, moved to the front. Staying on the energy line does not open the REST. Playing onto the energy line does not open it. Q1039 (2024-07-19): 元々の消費AP is the printed AP. During this character controller turn, if the own front has a character whose printed AP is 2 or more, the chosen character also cannot become ACTIVE until this character leaves the front. This character printed AP is 1, so it does not satisfy that gate by itself. An energy-line character does not count. A printed AP of 1 does not count. Declining rests nothing. The lock remains after this character loses its original effects. Moving this character from the front to the energy line ends the lock. The opponent turn, including a life Raid, rests without the lock. RAID is the generic sentence. Trait 護廷十三隊.':
+   profile.id==='BLC-2-030'?
     'EX07BT/BLC-2-030 official page 2026-10-27. Required energy 青4, generated energy 青. On play, choose one. Mode 1: if a 朽木 ルキア entered the controller field this turn, up to one own AP card may become ACTIVE. A Rukia placed without entering does not open it. Choosing the mode with no such entry readies nothing. Declining the AP card is legal. Mode 2: the next 朽木 ルキア played from hand this turn has AP-1. Playing a different card does not consume it. The discount ends at the end of this attack phase. On attack, draw 1. COLOR returns one opposing front character of BP 3500 or less to hand. No card FAQ. Trait 護廷十三隊.':
    profile.id==='BLC-2-013'?
     'EX07BT/BLC-2-013 official page 2026-10-27. Required energy 青2, generated energy 青. When a blue 黒崎 一護 on the controller field puts this card from hand to outside by that character effect, the controller may choose up to one own field 黒崎 一護. Until the next own turn start, opposing character effects and trigger effects that choose a target cannot select it. Q1030 (2024-07-19): an effect written with 選び cannot select the protected character. Q1031 (2024-07-19): the when-put-outside effect still starts when the required energy to play this card is not met, because the move is not a play. Declining the choice grants nothing. An energy-line 黒崎 一護 is a legal target. A character with another name is not. A blue character that is not 黒崎 一護 does not cause it. A yellow character that is not 黒崎 一護 does not cause it. The source may already be in outside when the grant resolves. An opposing event effect can still select the protected character. The protection ends at the controller next own start. DRAW is the generic sentence. Trait 無.':

@@ -1231,6 +1231,8 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-2-013","kind":"orihimeIchigoProtect","number":"EX07BT/BLC-2-013","name":"井上 織姫","color":"blue","energy":2,"ap":1,"bp":3000,"gen":1,"trigger":"draw","type":"character","effect":"此卡因己方場上藍色〈黑崎一護〉的效果從手牌送至場外時，可選最多 1 個己方場上的〈黑崎一護〉；直到下一個己方回合開始前，使其不會被敵方角色或 Trigger 的效果選為對象。"}
 ,
 {"id":"BLC-2-030","kind":"byakuyaRukiaApChoice","number":"EX07BT/BLC-2-030","name":"朽木 白哉","color":"blue","energy":4,"ap":2,"bp":4000,"gen":1,"trigger":"color","type":"character","effect":"登場：選一項：①若本回合己方場上曾有〈朽木露琪亞〉登場，可將最多 1 張己方 AP 卡轉為 ACTIVE；②本回合下一張從手牌使用的〈朽木露琪亞〉，AP 消耗減少 1。攻擊時：抽 1 張。"}
+,
+{"id":"BLC-2-034","kind":"rukiaFrontApRestLock","number":"EX07BT/BLC-2-034","name":"朽木 ルキア","color":"blue","energy":4,"ap":1,"bp":4000,"gen":1,"trigger":"raid","type":"character","effect":"Raid〈朽木露琪亞〉：轉為 ACTIVE，可移至前線。登場・位於前線：可選最多 1 個敵方前線角色並轉為 REST；若現在是己方回合，且己方前線有原始 AP 消耗 2 以上角色，則所選角色直到此角色離開前線前均不能轉為 ACTIVE。"}
  ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1416,6 +1418,7 @@ export function checkedBleachAddonDefinition(p){
  const isGiselleField=p.kind==='giselleFieldCountActive';
  const isOrihime=p.kind==='orihimeIchigoProtect';
  const isByakuyaRukia=p.kind==='byakuyaRukiaApChoice';
+ const isRukiaFront=p.kind==='rukiaFrontApRestLock';
  const topDiscard={
   'BLC-3-007':{count:3,filter:{field:'trait',value:'護廷十三隊'}},
   'BLC-3-002':{count:3,filters:[
@@ -1449,7 +1452,7 @@ export function checkedBleachAddonDefinition(p){
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest||isOwnCharacterDraw||isPeekAttack||isDrawInstead||isRevealOppTop||isRevealWindow||isEnergyWindow||isMillPurple||isEnergyBounce||isStepOr||isReplayDown||isStepName||isReducedActive||isOutsideName||isZeroIchigo||isDiscardBlock||isEmptyStep||isApActive||isAliasTop||isEntryChoose||isRestFrontName||isFrontFieldDown||isHandOutside||isEnergyAp||isAttackEnd||isDiscardVisored||isRaidHost||isBlockRaid||isRaidOrName||isRestOrDraw||isRestOrRetire||isHandApNamed||isBazzBurn||isKatenActive||isBambiesPer||isKenpachi||isMayuriTrait||isNemPair||isSoulPalace||isKyokotsu||isHakkoken||isYachiru||isLilotto||isBazzChain||isNanaoEvent||isRemovedKeywords||isFrontRemove||isThunderKit||isLille||isGiselle||isCastle||isUryu||isYoruichiSwap||isBazzKit||isIchigoFour||isBambiettaRest||isJugram||isByakuya||isSoiFon||isTech||isYamamoto||isGiselleField||isOrihime||isByakuyaRukia;
+ const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest||isOwnCharacterDraw||isPeekAttack||isDrawInstead||isRevealOppTop||isRevealWindow||isEnergyWindow||isMillPurple||isEnergyBounce||isStepOr||isReplayDown||isStepName||isReducedActive||isOutsideName||isZeroIchigo||isDiscardBlock||isEmptyStep||isApActive||isAliasTop||isEntryChoose||isRestFrontName||isFrontFieldDown||isHandOutside||isEnergyAp||isAttackEnd||isDiscardVisored||isRaidHost||isBlockRaid||isRaidOrName||isRestOrDraw||isRestOrRetire||isHandApNamed||isBazzBurn||isKatenActive||isBambiesPer||isKenpachi||isMayuriTrait||isNemPair||isSoulPalace||isKyokotsu||isHakkoken||isYachiru||isLilotto||isBazzChain||isNanaoEvent||isRemovedKeywords||isFrontRemove||isThunderKit||isLille||isGiselle||isCastle||isUryu||isYoruichiSwap||isBazzKit||isIchigoFour||isBambiettaRest||isJugram||isByakuya||isSoiFon||isTech||isYamamoto||isGiselleField||isOrihime||isByakuyaRukia||isRukiaFront;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1599,6 +1602,7 @@ export function checkedBleachAddonDefinition(p){
   ...(p.kind==='zangetsuDraw'?{moveTriggers:[{when:causedBy('黒崎 一護','blue'),then:[{op:'draw',count:1}]}]}:{}),
   ...(isOrihime?{moveTriggers:[{when:causedBy('黒崎 一護','blue'),then:[{op:'grantNamedFieldProtection',name:'黒崎 一護',scope:'characterOrTrigger',optional:true,until:'nextOwnStart'}]}]}:{}),
   ...(isByakuyaRukia?{triggerEffect:{op:'bounceOppFrontUnderBp',bp:3500}}:{}),
+  ...(isRukiaFront?{raidName:'朽木 ルキア'}:{}),
   ...(p.kind==='aizenEnergyFront'?{frontForbidden:true,mainAbility:{op:'restTwoActiveFrontMoveSelf',line:'energy'}}:{}),
   ...(p.kind==='raidBaseLeaveDamage'?{raidName:'更木 剣八',bpDownImmune:true,printedImpact:1,
    raidHandLeaveReplace:{minBaseEnergy:4}}:{}),
@@ -1816,7 +1820,8 @@ export function checkedBleachAddonDefinition(p){
    isByakuyaRukia?{onPlay:[{op:'chooseOne',optional:false,options:[
     {id:'ap',label:'露琪亞登場後啟動AP',turn:'any',then:[{op:'activeApIfNameEntered',name:'朽木 ルキア'}]},
     {id:'discount',label:'下一張露琪亞AP減1',turn:'any',then:[{op:'nextEligibleHandPlayApDiscount',filter:{name:'朽木 ルキア'}}]}
-   ]}],onAttack:[{op:'draw',count:1}]}:{}})
+   ]}],onAttack:[{op:'draw',count:1}]}:
+   isRukiaFront?{onPlay:[{op:'restOppFrontApLock',optional:true,line:'front',minPrintedAp:2,lockWhile:'sourceOnFront'}]}:{}})
  };
 }
 export function bleachV2PortedCards(){
