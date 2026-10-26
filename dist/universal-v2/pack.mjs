@@ -9,7 +9,7 @@ export const V2_PHASES=Object.freeze(['start','move','main','attack']);
 export const V2_CARD_TYPES=Object.freeze(['character','event','field']);
 export const V2_TRIGGERS=Object.freeze(['draw','get','final','active','special','color','raid']);
 export const V2_EFFECT_TIMINGS=Object.freeze(['onPlay','onRaid','onAttack','onRaided','onRetire','onOutsideRecover']);
-export const V2_EFFECT_OPS=Object.freeze(['nextEligibleHandPlayApDiscount','draw','drawIfOwnName','drawIfAllOwnFieldNamed','drawIfOwnTraitCount','drawIfOwnOutsideNamedCountAtLeast','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','drawIfOppRestCharacter','drawIfOppCharacterBpAtLeast','drawIfOwnNameAndHandFewer','activeOwnNamed','grantSelfSniperThisTurn','grantSelfAttackWinDrawThisTurn','grantSelfMustBlockThisTurn','buffSelfUntilNextOwnStart','grantSelfAttackEndSwapThisTurn','millTop','buffSelf','buffSelfPerOwnOutsideGroups','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','retireOppFrontOne','conditionalBounceOrRetireByOwnOutsideNames','stripOppRaidTop','restOppFrontUnderBp','restOppFrontBpAtLeast','restOppFrontOne','restOwnFrontOne','skipNextActiveOppRest','forbidAttackOppFrontOne','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','retireOwnFieldOne','retireOwnCharacterOne','optionalRetireThenProgram','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw','searchDeckMany','discardGate','removeOutsideThen','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopUpToTwoBottom','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
+export const V2_EFFECT_OPS=Object.freeze(['nextEligibleHandPlayApDiscount','nextScaledEventApDiscount','allNamedEnergyBounce','draw','drawIfOwnName','drawIfAllOwnFieldNamed','drawIfOwnTraitCount','drawIfOwnOutsideNamedCountAtLeast','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','drawIfOppRestCharacter','drawIfOppCharacterBpAtLeast','drawIfOwnNameAndHandFewer','activeOwnNamed','grantSelfSniperThisTurn','grantSelfAttackWinDrawThisTurn','grantSelfMustBlockThisTurn','buffSelfUntilNextOwnStart','grantSelfAttackEndSwapThisTurn','millTop','buffSelf','buffSelfPerOwnOutsideGroups','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','retireOppFrontOne','conditionalBounceOrRetireByOwnOutsideNames','stripOppRaidTop','restOppFrontUnderBp','restOppFrontBpAtLeast','restOppFrontOne','restOwnFrontOne','skipNextActiveOppRest','forbidAttackOppFrontOne','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','retireOwnFieldOne','retireOwnCharacterOne','optionalRetireThenProgram','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw','searchDeckMany','discardGate','removeOutsideThen','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopUpToTwoBottom','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
  'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideColorUnderEnergy','recoverOutsideTraitlessUnderEnergy','deployOutsideTraitlessRestOrRaid','deployOutsideRest','deployOutsidePrinted','deployOutsideNameRest','deployNamedFromZones','payApDeployNamedRest','inspectTopTraitOutside','buffOwnField','buffOwnOthersUpTo','buffEnergyNamedIfRaidedFront','buffOwnIfAbovePrinted','oncePerTurnGate','chooseOne','deployOwnHandRest','deployOwnHandSpecial','deployOwnHandRestOrRaid','optionalPayApThen','discardOppHand','retireSourceOnPhaseEnd','activeSelfIf','grantOnAttack','grantSelectionApTaxOwnOtherTrait','grantFrontEnergyOwnOtherFrontTrait','grantOwnFrontChoiceProtection','grantCauseBlockAtMost','handBottomGrantDoubleAttack','payApDeployMovedActive','noteEntryTurn','grantSelfEnergyMoveOnAttackStart','grantSelfTriggerUnchosen','outsideColorEnergyHandOrRest','moveOtherAcrossOrRemove','raidBaseEnergyThen','grantSelfAttackDamageThisTurn','restOppFrontLockActive','removeAnyOutsideScale','inspectTopColoredNamesOutside','drawDiscardIfEffectApPaid','activeSelf','grantSelfImpactThisTurn','grantOwnNameBlockAtLeast','drawIfNameOrDistinctColorNames','inspectTopNamesOutside','recoverOutsideNameColor','drawDiscardOrDrawIfBelowPrinted','chooseOneIfBelowPrinted','grantNamedReadyOnAttack','grantNamedBuffSniper','banSelfAttackThisTurn','deployOwnHandFreshName','deployOutsideNameColorEnergy','grantSelfAttackDrawThisTurn']);
 const integer=(v,low=0)=>Number.isInteger(v)&&v>=low;
 const own=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
@@ -749,6 +749,26 @@ function verifyProgram(program,path){
    if(Object.keys(e).length!==2||!Object.hasOwn(e,'filter'))throw Error('Invalid hand discount operation');
    validatePrintedPlayFilter(e.filter);
   }
+  // The threshold is fixed when the effect resolves. Later outside events
+  // do not reopen it. Q2404. once:'name' is 〈エミリア〉のこの効果 1 turn.
+  if(e.op==='nextScaledEventApDiscount'&&(
+   e.once!=='name'||e.cardType!=='event'||
+   !integer(e.baseEnergy,0)||e.baseEnergy>10||
+   !integer(e.perOutsideEvents,1)||e.perOutsideEvents>8||
+   Object.keys(e).length!==5||
+   Object.keys(e).some(k=>!['op','once','cardType','baseEnergy','perOutsideEvents'].includes(k))))
+   throw Error(path+'['+i+'] invalid scaled event AP discount');
+  // All own characters share one printed name, then up to one of them with
+  // required energy at most N may return to hand. Doing so arms the next
+  // hand play. Declining does not arm it. Q2403.
+  if(e.op==='allNamedEnergyBounce'&&(
+   typeof e.name!=='string'||!e.name.trim()||e.name.length>80||
+   typeof e.discountName!=='string'||!e.discountName.trim()||e.discountName.length>80||
+   !integer(e.maxEnergy,0)||e.maxEnergy>30||
+   e.once!=='name'||e.discountNoRaid!==true||
+   Object.keys(e).length!==6||
+   Object.keys(e).some(k=>!['op','name','maxEnergy','once','discountName','discountNoRaid'].includes(k))))
+   throw Error(path+'['+i+'] invalid all-named energy bounce');
   if(e.op==='grantFrontEnergyOwnOtherFrontTrait'&&(
     e.optional!==true||e.until!=='thisTurn'||
     typeof e.trait!=='string'||!e.trait.trim()||e.trait.length>80||
@@ -1484,6 +1504,9 @@ function normalize(card,packId){
   if(program.some(e=>e.op==='activeSelfIf')&&
    (card.type!=='character'||name!=='onPlay'))
    throw Error(card.id+' conditional ACTIVE is only a character onPlay effect');
+  if(program.some(e=>['nextScaledEventApDiscount','allNamedEnergyBounce'].includes(e.op))&&
+   (card.type!=='character'||name!=='onPlay'))
+   throw Error(card.id+' scaled AP discount and named bounce are character onPlay effects');
   if(program.some(e=>e.op==='draw'&&e.entry!==undefined)&&
    (card.type!=='character'||name!=='onPlay'))
    throw Error(card.id+' own-effect draw gate is only a character onPlay effect');

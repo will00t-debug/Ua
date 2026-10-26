@@ -4,6 +4,8 @@
 // five-title 700-card census, and auto stays false in the catalogue.
 // Batches 25–34 add the printed bodies for 003, 006, 008, 013, 023, 026, 038, 044, 068 and 070.
 // Batches 35–44 add 007, 019, 021, 027, 051, 053, 057, 069, 072 and 073.
+// Batch 45 adds 010 and 011: a name-locked hand AP discount, scaled by
+// outside events for Emilia and armed by an all-Rem bounce for Rem.
 import {REZERO_VOL2_BY_ID} from '../rezero-vol2.mjs';
 import {createUniversalPack} from './pack.mjs';
 
@@ -165,6 +167,12 @@ const PROFILES={
  triggerEffect:{op:'retireOppFront'},effects:{onPlay:[
   {op:'retireOppFrontUnderBp',bp:5000},
   {op:'buffOwnIfAbovePrinted',min:4,bp:1000,optional:true}]}},
+ 'REZ-2-010':{implementation:'dsl',effects:{onPlay:[
+  {op:'allNamedEnergyBounce',name:'レム',maxEnergy:3,once:'name',
+   discountName:'レム',discountNoRaid:true}]}},
+ 'REZ-2-011':{implementation:'dsl',step:true,effects:{onPlay:[
+  {op:'nextScaledEventApDiscount',once:'name',cardType:'event',
+   baseEnergy:1,perOutsideEvents:2}]}},
  'REZ-2-073':{implementation:'dsl',triggerEffect:{op:'retireOppFront'},
  effects:{onPlay:[{op:'retireOppFrontOne'}]},moveTriggers:[
   {when:{from:'hand',to:'outside',reasons:['own-effect'],sourceOnField:true,
@@ -176,6 +184,6 @@ export const REZ_V2_IMPLEMENTED_IDS=Object.freeze(Object.keys(PROFILES));
 
 export function createRezV2Pack(){
  const cards=REZ_V2_IMPLEMENTED_IDS.map(id=>({...shell(id),...PROFILES[id]}));
- return createUniversalPack({id:'rezero',version:'0.12.0',cards});
+ return createUniversalPack({id:'rezero',version:'0.13.0',cards});
 
 }
