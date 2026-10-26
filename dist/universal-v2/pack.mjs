@@ -10,7 +10,7 @@ export const V2_CARD_TYPES=Object.freeze(['character','event','field']);
 export const V2_TRIGGERS=Object.freeze(['draw','get','final','active','special','color','raid']);
 export const V2_EFFECT_TIMINGS=Object.freeze(['onPlay','onRaid','onAttack','onRaided','onRetire','onOutsideRecover']);
 export const V2_EFFECT_OPS=Object.freeze(['nextEligibleHandPlayApDiscount','draw','drawIfOwnName','drawIfOwnTraitCount','drawIfOwnOutsideNamedCountAtLeast','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','drawIfOppRestCharacter','drawIfOppCharacterBpAtLeast','drawIfOwnNameAndHandFewer','activeOwnNamed','grantSelfSniperThisTurn','grantSelfAttackWinDrawThisTurn','grantSelfMustBlockThisTurn','buffSelfUntilNextOwnStart','grantSelfAttackEndSwapThisTurn','millTop','buffSelf','buffSelfPerOwnOutsideGroups','enemyBpDown','drawDiscard','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','conditionalBounceOrRetireByOwnOutsideNames','stripOppRaidTop','restOppFrontUnderBp','restOppFrontBpAtLeast','restOppFrontOne','skipNextActiveOppRest','forbidAttackOppFrontOne','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','retireOwnFieldOne','retireOwnCharacterOne','optionalRetireThenProgram','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw','searchDeckMany','discardGate','removeOutsideThen','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopUpToTwoBottom','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
- 'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideColorUnderEnergy','recoverOutsideTraitlessUnderEnergy','deployOutsideTraitlessRestOrRaid','deployOutsideRest','deployOutsideNameRest','deployNamedFromZones','payApDeployNamedRest','inspectTopTraitOutside','buffOwnField','buffOwnOthersUpTo','oncePerTurnGate','chooseOne','deployOwnHandRest','deployOwnHandSpecial','deployOwnHandRestOrRaid','optionalPayApThen','discardOppHand','retireSourceOnPhaseEnd','activeSelfIf','grantOnAttack','grantSelectionApTaxOwnOtherTrait','grantFrontEnergyOwnOtherFrontTrait','grantOwnFrontChoiceProtection','grantCauseBlockAtMost','handBottomGrantDoubleAttack','payApDeployMovedActive','noteEntryTurn','grantSelfEnergyMoveOnAttackStart','grantSelfTriggerUnchosen','outsideColorEnergyHandOrRest','moveOtherAcrossOrRemove','raidBaseEnergyThen','grantSelfAttackDamageThisTurn','restOppFrontLockActive','removeAnyOutsideScale','inspectTopColoredNamesOutside','drawDiscardIfEffectApPaid','activeSelf','grantSelfImpactThisTurn','grantOwnNameBlockAtLeast','drawIfNameOrDistinctColorNames','inspectTopNamesOutside']);
+ 'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideColorUnderEnergy','recoverOutsideTraitlessUnderEnergy','deployOutsideTraitlessRestOrRaid','deployOutsideRest','deployOutsideNameRest','deployNamedFromZones','payApDeployNamedRest','inspectTopTraitOutside','buffOwnField','buffOwnOthersUpTo','oncePerTurnGate','chooseOne','deployOwnHandRest','deployOwnHandSpecial','deployOwnHandRestOrRaid','optionalPayApThen','discardOppHand','retireSourceOnPhaseEnd','activeSelfIf','grantOnAttack','grantSelectionApTaxOwnOtherTrait','grantFrontEnergyOwnOtherFrontTrait','grantOwnFrontChoiceProtection','grantCauseBlockAtMost','handBottomGrantDoubleAttack','payApDeployMovedActive','noteEntryTurn','grantSelfEnergyMoveOnAttackStart','grantSelfTriggerUnchosen','outsideColorEnergyHandOrRest','moveOtherAcrossOrRemove','raidBaseEnergyThen','grantSelfAttackDamageThisTurn','restOppFrontLockActive','removeAnyOutsideScale','inspectTopColoredNamesOutside','drawDiscardIfEffectApPaid','activeSelf','grantSelfImpactThisTurn','grantOwnNameBlockAtLeast','drawIfNameOrDistinctColorNames','inspectTopNamesOutside','recoverOutsideNameColor','drawDiscardOrDrawIfBelowPrinted','chooseOneIfBelowPrinted','grantNamedReadyOnAttack','grantNamedBuffSniper','banSelfAttackThisTurn','deployOwnHandFreshName','deployOutsideNameColorEnergy','grantSelfAttackDrawThisTurn']);
 const integer=(v,low=0)=>Number.isInteger(v)&&v>=low;
 const own=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
 // Shared board predicate used by passive bonuses and on-play ACTIVE.
@@ -257,6 +257,58 @@ function verifyProgram(program,path){
    e.optional!==true||Object.keys(e).length!==3||
    Object.keys(e).some(k=>!['op','name','optional'].includes(k))
   ))throw Error(path+'['+i+'] invalid name-only outside REST');
+  if(e.op==='recoverOutsideNameColor'&&(
+   typeof e.name!=='string'||!e.name.trim()||e.name.length>80||
+   !['red','blue','yellow','green','purple'].includes(e.color)||
+   e.optional!==true||Object.keys(e).length!==4||
+   Object.keys(e).some(k=>!['op','name','color','optional'].includes(k))))
+   throw Error(path+'['+i+'] invalid named-color outside recovery');
+  if(e.op==='drawDiscardOrDrawIfBelowPrinted'&&(
+   e.count!==1||Object.keys(e).length!==2||
+   Object.keys(e).some(k=>!['op','count'].includes(k))))
+   throw Error(path+'['+i+'] invalid replaceable draw-discard');
+  if(e.op==='chooseOneIfBelowPrinted'){
+   const ids=Array.isArray(e.options)?e.options.map(o=>o?.id):[];
+   const draw=e.options?.find(o=>o?.then?.[0]?.op==='draw');
+   const buff=e.options?.find(o=>o?.then?.[0]?.op==='buffSelf');
+   if(!Array.isArray(e.options)||e.options.length!==2||new Set(ids).size!==2||
+    !draw||!buff||draw.then.length!==1||buff.then.length!==1||
+    draw.then[0].count!==1||Object.keys(draw.then[0]).length!==2||
+    !integer(buff.then[0].bp,500)||buff.then[0].bp>5000||buff.then[0].bp%500!==0||
+    Object.keys(buff.then[0]).length!==2||
+    e.options.some(o=>!o||typeof o.id!=='string'||!/^[a-zA-Z][a-zA-Z0-9]{0,32}$/.test(o.id)||
+     typeof o.label!=='string'||!o.label.trim()||o.label.length>64||o.turn!=='any'||
+     !Array.isArray(o.then)||Object.keys(o).length!==4)||
+    Object.keys(e).length!==2||Object.keys(e).some(k=>!['op','options'].includes(k)))
+    throw Error(path+'['+i+'] invalid below-printed attack choice');
+   verifyProgram(e.options.flatMap(o=>o.then),path+'['+i+'].belowPrinted');
+  }
+  if(e.op==='grantNamedReadyOnAttack'&&(
+   typeof e.name!=='string'||!e.name.trim()||e.name.length>80||
+   Object.keys(e).length!==2||Object.keys(e).some(k=>!['op','name'].includes(k))))
+   throw Error(path+'['+i+'] invalid named double-attack grant');
+  if(e.op==='grantNamedBuffSniper'&&(
+   typeof e.name!=='string'||!e.name.trim()||e.name.length>80||
+   !integer(e.bp,500)||e.bp>5000||e.bp%500!==0||
+   Object.keys(e).length!==3||Object.keys(e).some(k=>!['op','name','bp'].includes(k))))
+   throw Error(path+'['+i+'] invalid named sniper buff');
+  if(e.op==='banSelfAttackThisTurn'&&(Object.keys(e).length!==1||e.op!=='banSelfAttackThisTurn'))
+   throw Error(path+'['+i+'] invalid this-turn attack ban');
+  if(e.op==='grantSelfAttackDrawThisTurn'&&Object.keys(e).length!==1)
+   throw Error(path+'['+i+'] invalid this-turn attack draw');
+  if(e.op==='deployOwnHandFreshName'&&(
+   e.type!=='character'||!['red','blue','yellow','green','purple'].includes(e.color)||
+   !integer(e.energy)||e.energy>30||!integer(e.ap,1)||e.ap>3||e.max!==1||
+   Object.keys(e).length!==6||
+   Object.keys(e).some(k=>!['op','type','color','energy','ap','max'].includes(k))))
+   throw Error(path+'['+i+'] invalid fresh-name hand entry');
+  if(e.op==='deployOutsideNameColorEnergy'&&(
+   typeof e.name!=='string'||!e.name.trim()||e.name.length>80||
+   !['red','blue','yellow','green','purple'].includes(e.color)||
+   !integer(e.maxEnergy)||e.maxEnergy>30||e.line!=='energy'||e.optional!==true||
+   Object.keys(e).length!==6||
+   Object.keys(e).some(k=>!['op','name','color','maxEnergy','line','optional'].includes(k))))
+   throw Error(path+'['+i+'] invalid colored energy-line entry');
   // Hand entry, then an optional 1 AP payment, then up to one named character
   // whose required energy the controller currently meets. Color is the card's
   // own color. The payment is not the character's play cost.
@@ -424,7 +476,7 @@ function verifyProgram(program,path){
       'recoverOutsideOne','recoverOutsideTraitlessUnderEnergy','buffSelf',
        'inspectTopAnyOutside','retireOwnCharacterOne',
        'stripOppRaidTop','retireOppFrontOneUnderBp','discardGate',
-       'grantFrontEnergyOwnOtherFrontTrait','bounceOwnOtherUnderEnergy','nextEligibleHandPlayApDiscount','searchTopUpToTwoBottom','deployOwnHandRest','buffSelfUntilNextOwnStart','grantSelfAttackEndSwapThisTurn','oncePerTurnGate','deployOwnHandRestOrRaid','enemyBpDown','activeSelf','grantSelfImpactThisTurn','peekTopOne','grantOwnNameBlockAtLeast'].includes(x?.op)))
+       'grantFrontEnergyOwnOtherFrontTrait','bounceOwnOtherUnderEnergy','nextEligibleHandPlayApDiscount','searchTopUpToTwoBottom','deployOwnHandRest','buffSelfUntilNextOwnStart','grantSelfAttackEndSwapThisTurn','oncePerTurnGate','deployOwnHandRestOrRaid','enemyBpDown','activeSelf','grantSelfImpactThisTurn','peekTopOne','grantOwnNameBlockAtLeast','recoverOutsideNameColor','grantSelfAttackDrawThisTurn'].includes(x?.op)))
      throw Error(path+'['+i+'] invalid choose-one option');
     seen.add(o.id);
     // Reuse established nested effect verification AND reject stray fields
@@ -469,7 +521,7 @@ function verifyProgram(program,path){
      'recoverOutsideColorUnderEnergy','buffOwnField',
      'restOppFrontUnderBp','restOppFrontOne','buffSelf','grantOnAttack',
      'grantSelfEnergyMoveOnAttackStart','grantSelfTriggerUnchosen',
-     'outsideColorEnergyHandOrRest'].includes(x?.op)))
+     'outsideColorEnergyHandOrRest','deployOutsideNameColorEnergy'].includes(x?.op)))
     throw Error(path+'['+i+'] invalid gated payment');
    verifyProgram(e.then,path+'['+i+'].then');
   }
@@ -1089,6 +1141,34 @@ function normalize(card,packId){
   Object.keys(mainAbility).length===7&&
   Object.keys(mainAbility).every(k=>['op','oncePerTurn','frontOnly','raidOnly','payAp','requiresOwnName','then'].includes(k));
  if(mainOncePay)verifyProgram(mainAbility.then,card.id+'.mainAbility.then');
+ const mainOnceActive=mainAbility?.op==='onceActiveSelfGate'&&
+  mainAbility.oncePerTurn===true&&
+  typeof mainAbility.requiresName==='string'&&!!mainAbility.requiresName.trim()&&
+  mainAbility.requiresName.length<=80&&
+  integer(mainAbility.selfBp,500)&&mainAbility.selfBp<=50000&&mainAbility.selfBp%500===0&&
+  integer(mainAbility.oppFrontBp,500)&&mainAbility.oppFrontBp<=50000&&
+  mainAbility.oppFrontBp%500===0&&
+  Object.keys(mainAbility).length===5&&
+  Object.keys(mainAbility).every(k=>['op','oncePerTurn','requiresName','selfBp','oppFrontBp'].includes(k));
+ const mainRestRetireEvent=mainAbility?.op==='restRetireRecoverPlainEvent'&&
+  Array.isArray(mainAbility.names)&&mainAbility.names.length>=1&&mainAbility.names.length<=4&&
+  new Set(mainAbility.names).size===mainAbility.names.length&&
+  mainAbility.names.every(n=>typeof n==='string'&&!!n.trim()&&n.length<=80)&&
+  ['red','blue','yellow','green','purple'].includes(mainAbility.color)&&
+  integer(mainAbility.maxEnergy)&&mainAbility.maxEnergy<=30&&
+  Object.keys(mainAbility).length===4&&
+  Object.keys(mainAbility).every(k=>['op','names','color','maxEnergy'].includes(k));
+ const mainOnceChoose=mainAbility?.op==='onceChooseProgram'&&
+  mainAbility.oncePerTurn===true&&mainAbility.when&&typeof mainAbility.when==='object'&&
+  !Array.isArray(mainAbility.when)&&
+  Array.isArray(mainAbility.then)&&mainAbility.then.length===1&&
+  mainAbility.then[0]?.op==='chooseOne'&&mainAbility.then[0]?.optional===false&&
+  Object.keys(mainAbility).length===4&&
+  Object.keys(mainAbility).every(k=>['op','oncePerTurn','when','then'].includes(k));
+ if(mainOnceChoose){
+  assertLiveCondition(mainAbility.when,card.id+'.mainAbility.when');
+  verifyProgram(mainAbility.then,card.id+'.mainAbility.then');
+ }
  const mainFieldOnceBuff=mainAbility?.op==='fieldOnceBuffOther'&&
   mainAbility.lines==='field'&&mainAbility.oncePerTurn===true&&
   integer(mainAbility.bp,1)&&mainAbility.bp<=5000&&
@@ -1117,7 +1197,7 @@ function normalize(card,packId){
   Object.keys(mainAbility.then[0]).every(k=>['op','count'].includes(k));
  if(mainRestProgram)verifyProgram(mainAbility.then,card.id+'.mainAbility.then');
  if(mainAbility!==null&&
-  (!['character','field'].includes(card.type)||!(fieldDualMain||fieldRestRetireThen||card.type==='character'&&(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainRestBuff||mainPayAp||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainDiscardEnergy||mainActiveNamed||mainRestDiscardRetire||mainFrontProgram||mainFieldOnceBuff||mainEntryProtect||mainRestRetireUnder||mainRestTwoMove||mainOncePay))))
+  (!['character','field'].includes(card.type)||!(fieldDualMain||fieldRestRetireThen||card.type==='character'&&(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainRestBuff||mainPayAp||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainDiscardEnergy||mainActiveNamed||mainRestDiscardRetire||mainFrontProgram||mainFieldOnceBuff||mainEntryProtect||mainRestRetireUnder||mainRestTwoMove||mainOncePay||mainOnceActive||mainRestRetireEvent||mainOnceChoose))))
   throw Error(card.id+' unsupported main action ability');
  const passiveBonuses=validatePassiveBonuses(card);
  const implemented=card.implementation;
@@ -1354,8 +1434,12 @@ function normalize(card,packId){
   if(program.some(e=>e.op==='grantSelfAttackDamageThisTurn')&&name!=='onPlay')
    throw Error(card.id+' earned attack damage is only an onPlay effect');
   if(name==='onRetire'&&
-   (!['character','field'].includes(card.type)||program.some(e=>!['draw','millTop','drawIfOwnFieldExists','chooseOne','deployOutsideTraitlessRestOrRaid','retireOppFrontOneUnderBp','restOppFrontUnderBp','restOppFrontBpAtLeast','buffOwnField','deployNamedFromZones','oncePerTurnGate','drawIfNameOrDistinctColorNames'].includes(e.op))))
+   (!['character','field'].includes(card.type)||program.some(e=>!['draw','millTop','drawIfOwnFieldExists','chooseOne','deployOutsideTraitlessRestOrRaid','retireOppFrontOneUnderBp','restOppFrontUnderBp','restOppFrontBpAtLeast','buffOwnField','deployNamedFromZones','oncePerTurnGate','drawIfNameOrDistinctColorNames','discardGate'].includes(e.op))))
    throw Error(card.id+' unsupported onRetire ability program');
+  if(name==='onRetire'&&program.some(e=>e.op==='discardGate'&&(
+   program.length!==1||e.optional!==true||e.payment!==undefined||e.count!==undefined||
+   e.when!==undefined||e.then?.length!==1||e.then[0]?.op!=='deployOutsideNameColorEnergy')))
+   throw Error(card.id+' retirement discard may only deploy one colored energy-line character');
   if(name!=='onRetire'&&program.some(e=>e.op==='restOppFrontBpAtLeast'))
    throw Error(card.id+' BP-at-least REST is an onRetire effect');
   if(name!=='onRetire'&&program.some(e=>e.op==='drawIfNameOrDistinctColorNames'))
@@ -1365,6 +1449,27 @@ function normalize(card,packId){
   if(program.some(e=>e.op==='drawIfOwnName'&&e.minSelfBp!==undefined)&&
    (name!=='onAttack'||card.type!=='character'))
    throw Error(card.id+' self-BP named draw is an onAttack character effect');
+  if(program.some(e=>['grantNamedReadyOnAttack','grantNamedBuffSniper'].includes(e.op))&&
+   (card.type!=='event'||name!=='onPlay'))
+   throw Error(card.id+' named battle grant is an event onPlay effect');
+  if(program.some(e=>e.op==='banSelfAttackThisTurn')&&
+   (card.type!=='character'||name!=='onPlay'))
+   throw Error(card.id+' this-turn attack ban is a character onPlay effect');
+  if(program.some(e=>e.op==='drawDiscardOrDrawIfBelowPrinted')&&
+   (card.type!=='character'||name!=='onPlay'))
+   throw Error(card.id+' replaceable draw-discard is a character onPlay effect');
+  if(program.some(e=>e.op==='chooseOneIfBelowPrinted')&&
+   (card.type!=='character'||name!=='onAttack'))
+   throw Error(card.id+' below-printed choice is a character onAttack effect');
+  if(program.some(e=>e.op==='deployOwnHandFreshName')&&
+   (card.type!=='character'||name!=='onPlay'))
+   throw Error(card.id+' fresh-name hand entry is a character onPlay effect');
+  if(program.some(e=>e.op==='recoverOutsideNameColor')&&name!=='onPlay')
+   throw Error(card.id+' named-color recovery is an onPlay effect');
+  if(program.some(e=>e.op==='grantSelfAttackDrawThisTurn'))
+   throw Error(card.id+' attack-draw grant belongs inside a main choice');
+  if(program.some(e=>e.op==='deployOutsideNameColorEnergy')&&name!=='onPlay')
+   throw Error(card.id+' colored energy-line entry is nested or an onPlay effect');
   if(name==='onRetire'&&program.some(e=>e.op==='deployNamedFromZones')&&
    (card.type!=='character'||program.length!==1||
     program[0].zones.length!==1||program[0].zones[0]!=='hand'||

@@ -2,6 +2,7 @@
 // Only cards whose entire printed body is covered are registered.
 // Japanese nameJa is the rules identity. This pack is not part of the
 // five-title 700-card census, and auto stays false in the catalogue.
+// Batches 25–34 add the printed bodies for 003, 006, 008, 013, 023, 026, 038, 044, 068 and 070.
 import {REZERO_VOL2_BY_ID} from '../rezero-vol2.mjs';
 import {createUniversalPack} from './pack.mjs';
 
@@ -95,13 +96,47 @@ const PROFILES={
  'REZ-2-064':{implementation:'dsl',triggerEffect:{
   op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1},effects:{onPlay:[
   {op:'inspectTopArrange',count:2,toOutside:true,rest:'top',
-   whenDistinct:{color:'green',min:4,count:4}}]}}
+   whenDistinct:{color:'green',min:4,count:4}}]}},
+ 'REZ-2-003':{implementation:'dsl',effects:{onPlay:[{op:'chooseOne',optional:false,options:[
+  {id:'drawDiscard',label:'draw and put one hand card outside',turn:'any',
+   then:[{op:'drawDiscard',count:1}]},
+  {id:'subaru',label:'yellow Subaru from outside',turn:'any',then:[
+   {op:'recoverOutsideNameColor',name:'ナツキ・スバル',color:'yellow',optional:true}]}]}]}},
+ 'REZ-2-006':{implementation:'dsl',effects:{
+  onPlay:[{op:'enemyBpDown',bp:1000,optional:true,minBp:1500,zone:'front'}],
+  onAttack:[{op:'chooseOneIfBelowPrinted',options:[
+   {id:'draw',label:'draw one',turn:'any',then:[{op:'draw',count:1}]},
+   {id:'buff',label:'bp plus 1000',turn:'any',then:[{op:'buffSelf',bp:1000}]}]}]}},
+ 'REZ-2-008':{implementation:'dsl',effects:{onPlay:[
+  {op:'drawDiscardOrDrawIfBelowPrinted',count:1}]}},
+ 'REZ-2-013':{implementation:'dsl',effects:{},impactNull:true,mainAbility:{
+  op:'onceActiveSelfGate',oncePerTurn:true,requiresName:'クルシュ・カルステン',
+  selfBp:5000,oppFrontBp:4500}},
+ 'REZ-2-023':{implementation:'dsl',effects:{
+  onPlay:[{op:'activeSelf'},{op:'banSelfAttackThisTurn'}],
+  onRetire:[{op:'discardGate',optional:true,then:[
+   {op:'deployOutsideNameColorEnergy',name:'エミリア',color:'purple',
+    maxEnergy:0,line:'energy',optional:true}]}]}},
+ 'REZ-2-026':{implementation:'dsl',effects:{},mainAbility:{
+  op:'restRetireRecoverPlainEvent',names:['エキドナ','ベアトリス'],
+  color:'purple',maxEnergy:3}},
+ 'REZ-2-038':{implementation:'dsl',effects:{onPlay:[
+  {op:'deployOwnHandFreshName',type:'character',color:'green',energy:3,ap:1,max:1}]}},
+ 'REZ-2-044':{implementation:'dsl',effects:{},mainAbility:{
+  op:'onceChooseProgram',oncePerTurn:true,when:{...ANASTASIA_OR_FOUR_GREEN},
+  then:[{op:'chooseOne',optional:false,options:[
+   {id:'attackDraw',label:'draw on attack',turn:'any',then:[{op:'grantSelfAttackDrawThisTurn'}]},
+   {id:'buff',label:'bp plus 500',turn:'any',then:[{op:'buffSelf',bp:500}]}]}]}},
+ 'REZ-2-068':{implementation:'dsl',effects:{onPlay:[
+  {op:'grantNamedReadyOnAttack',name:'エミリア'}]}},
+ 'REZ-2-070':{implementation:'dsl',effects:{onPlay:[
+  {op:'grantNamedBuffSniper',name:'ガーフィール・ティンゼル',bp:3000}]}}
 };
 
 export const REZ_V2_IMPLEMENTED_IDS=Object.freeze(Object.keys(PROFILES));
 
 export function createRezV2Pack(){
  const cards=REZ_V2_IMPLEMENTED_IDS.map(id=>({...shell(id),...PROFILES[id]}));
- return createUniversalPack({id:'rezero',version:'0.10.0',cards});
+ return createUniversalPack({id:'rezero',version:'0.11.0',cards});
 
 }
