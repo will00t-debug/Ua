@@ -700,6 +700,28 @@ const authored=[
    "onRetire":[{"op":"grantOppBlockAtLeast","bp":4000,"optional":true}]
   },
   "blockBpRestriction":{"relation":"atLeast","bp":4000,"condition":null}
+},
+{
+  "id":"SLG-1-029","name":"カイセル","color":"purple","energy":3,
+  "ap":1,"bp":2500,"gen":2,"trigger":"active","type":"character",
+  "textAnchor":"己方原本BP2000以下的影之軍團角色攻擊時",
+  "implementation":"dsl","effects":{},
+  "officialTraits":["影の軍団"],"catalogueTraits":["影之軍團"],
+  "allyAttackRest":{"trait":"影の軍団","maxPrintedBp":2000,"modes":[
+    {"id":"ceiling","kind":"blockAtLeast","bp":4000},
+    {"id":"protect","kind":"cannotBeChosen"}
+  ]}
+},
+{
+  "id":"SLG-1-031","name":"キバ","color":"purple","energy":3,
+  "ap":1,"bp":2500,"gen":2,"trigger":"active","type":"character",
+  "textAnchor":"己方原本BP2000以下影之軍團攻擊時",
+  "implementation":"dsl","effects":{},
+  "officialTraits":["影の軍団"],"catalogueTraits":["影之軍團"],
+  "allyAttackRest":{"trait":"影の軍団","maxPrintedBp":2000,"modes":[
+    {"id":"buff","kind":"bp","bp":1500},
+    {"id":"draw","kind":"drawDiscard","draw":1,"discard":1}
+  ]}
 }
 ];
 export const SLG_V2_VERIFIED_IDS=Object.freeze(authored.map(c=>c.id));

@@ -33,3 +33,12 @@ Registered:
 - UA51BT/SLG-1-024 道門 泰星. Printed blocker ceiling: characters of BP 4000 or higher cannot block it. On retire the opponent may give one of their field characters the same this-turn ceiling. New shared onRetire op `grantOppBlockAtLeast`.
 
 Official pages were not re-read. The catalogue Chinese is the text anchor. Not a full FAQ certification.
+
+## Batch 4 — attack-time REST modes
+
+Registered:
+
+- UA51BT/SLG-1-029 カイセル. When an own 影の軍団 character of printed BP 2000 or less attacks, this READY card may REST and choose one mode. The attacker cannot be blocked by BP 4000 or higher this turn, or it cannot be chosen by opponent effects. Each mode is once per printed name this turn. New shared profile `allyAttackRest`.
+- UA51BT/SLG-1-031 キバ. The same window may give the attacker BP+1500 this turn, or draw 1 and discard 1. Each mode is once per printed name.
+
+The catalogue does not put 本回合 on 029's untargetable clause. The shared protection status expires at that controller's next START, which is the only legal expiry for that status. Official pages were not re-read. The catalogue trait 影之軍團 is not the registered token 影の軍団.

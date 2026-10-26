@@ -49,6 +49,8 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-buff-own':'選擇己方角色增加本回合 BP',
  'effect-grant-other-impact':'選擇另一己方角色，本回合獲得 Impact',
  'effect-grant-opp-block':'對手選擇 1 個角色，本回合不會被高 BP 阻擋',
+ 'effect-ally-attack-order':'選擇哪張 ACTIVE 角色 REST 並支援這次攻擊',
+ 'effect-ally-attack-rest':'REST 此角色並選擇一項攻擊支援',
  'effect-once-choice':'是否發動本回合一次能力',
  'effect-choice-mode':'選擇一項效果',
  'recovered-self-entry':'回收後可 REST 登場至能源線',
@@ -229,6 +231,22 @@ export function uiActionLabel(action,{pack,state}={}){
    '從能源線移到前線 '+(action.slot+1)+(action.replaceUid?'，並將原前線卡除外':'')+'，本回合 BP＋1000';
   case 'chooseOtherImpact':return action.uid===null?'不給予 Impact':'讓 '+name()+' 本回合獲得 Impact';
   case 'chooseOppBlock':return action.uid===null?'不指定阻擋限制':'讓 '+name()+' 本回合不會被指定 BP 以上角色阻擋';
+  case 'chooseAllyAttackOrder':return action.uid===null?'這次攻擊不使用 REST 支援':'由 '+name()+' 支援這次攻擊';
+  case 'chooseAllyAttackMode':{
+   if(action.mode==='skip')return '不 REST';
+   const sourceUid=state?.pending?.sourceUid;
+   const owner=Number(String(sourceUid||'').split('-')[0]);
+   const sourcePack=Array.isArray(pack)?pack[owner]:pack;
+   const physical=[...(state?.players?.[owner]?.front||[]),...(state?.players?.[owner]?.energy||[])]
+    .find(c=>c?.uid===sourceUid);
+   const mode=sourcePack?.cards?.[physical?.cardId]?.allyAttackRest?.modes
+    ?.find(m=>m.id===action.mode);
+   if(mode?.kind==='blockAtLeast')return '攻擊角色本回合不會被 BP'+mode.bp+' 以上角色阻擋';
+   if(mode?.kind==='cannotBeChosen')return '攻擊角色不會被敵方效果選取';
+   if(mode?.kind==='bp')return '攻擊角色本回合 BP＋'+mode.bp;
+   if(mode?.kind==='drawDiscard')return '抽 '+mode.draw+' 張並棄 '+mode.discard+' 張';
+   return '選擇此項';
+  }
   case 'chooseOwnBuff':case 'chooseMainBuff':case 'chooseTraitBuff':case 'chooseRestBp':
   case 'chooseRetireBp':case 'chooseTargetMany':return action.uid===null?'完成目標選擇':'選擇第 '+(state?.pending?.selected?.length+1||1)+' 個角色';
   case 'chooseFrontEnergyGrant':return action.uid===null?
