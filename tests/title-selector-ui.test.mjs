@@ -9,15 +9,15 @@ import {SAO_CARDS} from '../dist/sao-cards.mjs';
 import {SOLO_LEVELING_CARDS} from '../dist/solo-leveling.mjs';
 import {MST_CARDS} from '../dist/mst-builder.mjs';
 const app=readFileSync(new URL('../dist/app.mjs',import.meta.url),'utf8');
-test('five distinct titles and verified card inventory are available in deck builders',()=>{
- assert.deepEqual(TITLES.map(t=>t.id),['bleach','gurren-lagann','sword-art-online','solo-leveling','mushoku-tensei']);
+test('six catalogue titles and verified card inventory are available in deck builders',()=>{
+ assert.deepEqual(TITLES.map(t=>t.id),['bleach','gurren-lagann','sword-art-online','solo-leveling','mushoku-tensei','rezero']);
  assert.equal(CARDS.length,276);
  assert.equal(TTG_CARDS.length,81);
  assert.equal(TTG_PENDING_CARDS.length,0);
  assert.equal(SAO_CARDS.length,183);
  assert.equal(SOLO_LEVELING_CARDS.length,80);
  assert.equal(MST_CARDS.length,80);
- assert.deepEqual(TITLES.map(t=>t.playable),[true,false,false,false,false]);
+ assert.deepEqual(TITLES.map(t=>t.playable),[true,false,false,false,false,false]);
 });
 test('four new editors and source-link inspection exist while BLEACH Raid is preserved',()=>{
  assert.match(app,/data-title=/);

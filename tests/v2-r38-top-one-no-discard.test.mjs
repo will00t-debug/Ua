@@ -99,7 +99,7 @@ test('templates cannot silently override raw ops, authorize vanilla effects or b
  })),/Raid-only effects but no Raid target/);
  assert.throws(()=>checked(character({
   implementation:'dsl',templateEffects:{onPlay:[{template:'buffOwnTrait',trait:'A',bp:1000,optional:true}]}
- })),/require onRaided timing/);
+ })),/trait BP choice requires onRaided or onAttack/);
  assert.throws(()=>checked(character({
   type:'event',gen:0,bp:0,energy:1,implementation:'dsl',
   templateEffects:{onPlay:[{template:'buffSelf',bp:1000}]}
