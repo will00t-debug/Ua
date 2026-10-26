@@ -30,8 +30,6 @@ const PRIORITY=Object.freeze([
   reason:'C27 registered the whole print: MAIN REST, true self-retire, then mandatory own OUTSIDE trait ガンメン to hand. Official Japanese has no まで'},
  {id:'TTG-1-081',owner:'GPT',status:'RULE BLOCKED',faq:null,
   reason:'official BP3000/5000 erratum, own field or buried Raid-base name predicate not yet safely certified'},
- {id:'BLC-4-044',owner:'Cursor',status:'REVIEW PENDING',faq:null,
-  reason:'evaluate whether reusable shared combat atoms cover all printed clauses'},
  {id:'SAO-1-097',owner:'Cursor',status:'REVIEW PENDING',faq:null,
   reason:'re-audit optional source effect and physical UID; GPT does not migrate'},
  {id:'SLG-1-022',owner:'GPT',status:'ENGINE BLOCKED',faq:'Q2029',

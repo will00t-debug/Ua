@@ -2490,7 +2490,8 @@ test('BLC-2-011 reveals three cards, takes one Bambies trait or Bambi name, and 
  assert.equal(cardHasTrait(bleach.cards['BLC-2-041'],'涅骸部隊'),true);
  assert.deepEqual(bleach.cards['BLC-2-043'].traitComponents,['護廷十三隊','涅骸部隊']);
  assert.deepEqual(bleach.cards['BLC-2-006'].traits,['星十字騎士團／殭屍']);
- assert.equal(bleach.cards['BLC-2-006'].traitComponents,undefined);
+ assert.deepEqual(bleach.cards['BLC-2-006'].traitComponents,['星十字騎士團','殭屍']);
+ assert.equal(cardHasTrait(bleach.cards['BLC-2-006'],'殭屍'),true);
  assert.equal(cardHasTrait(bleach.cards['BLC-2-006'],'邦比愛塔親衛隊'),false);
  assert.equal(cardHasName(bleach.cards['BLC-2-006'],'バンビエッタ・バスターバイン'),true);
  assert.equal(cardHasTrait(bleach.cards['BLC-4-009'],'邦比愛塔親衛隊'),false);
