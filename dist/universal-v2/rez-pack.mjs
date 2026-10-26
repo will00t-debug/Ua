@@ -12,6 +12,10 @@
 // Batch 53 adds 058: Raid Emilia, this-turn double attack and selection
 // immunity, once-per-turn attack BP+1000, and an attack-end rest of one
 // own front ACTIVE character with printed BP 2500 to set her ACTIVE.
+// Batch 54 adds 062: Raid Felt. On play, draw one or activate up to one
+// other character. Front once per turn: until next own start, BP+1000 and
+// characters of BP 4000 or more cannot block her; or grant one other
+// character front-line energy generation this turn.
 // Batch 49 adds 039: COLOR may use printed BP 2500 instead of energy 2,
 // and onPlay rests one other green printed-BP 2500 character, then actives
 // that character or this one. Q2414 is an OR. Q2415 uses the printed BP.
@@ -230,13 +234,25 @@ const PROFILES={
     {op:'grantSelfDoubleAttackThisTurn'},
     {op:'grantSelfUnchosenThisTurn'}],
    onAttack:[{op:'oncePerTurnGate',scope:'card',optional:false,then:[{op:'buffSelf',bp:1000}]}]
-  }}
+  }},
+ 'REZ-2-062':{implementation:'dsl',raidName:'フェルト',effects:{onPlay:[
+  {op:'chooseOne',optional:false,options:[
+   {id:'draw',label:'draw one',turn:'any',then:[{op:'draw',count:1}]},
+   {id:'active',label:'active one other',turn:'any',then:[
+    {op:'activeOwnOther',optional:true}]}]}]},
+  mainAbility:{op:'onceFrontChoose',oncePerTurn:true,frontOnly:true,then:[
+   {op:'chooseOne',optional:false,options:[
+    {id:'keywords',label:'bp and block ceiling',turn:'any',then:[
+     {op:'buffSelfUntilNextOwnStart',bp:1000},
+     {op:'grantSelfBlockAtLeastUntilNextOwnStart',bp:4000}]},
+    {id:'energy',label:'other generates on front',turn:'any',then:[
+     {op:'grantOtherFieldFrontEnergyThisTurn',optional:false}]}]}]}}
 };
 
 export const REZ_V2_IMPLEMENTED_IDS=Object.freeze(Object.keys(PROFILES));
 
 export function createRezV2Pack(){
  const cards=REZ_V2_IMPLEMENTED_IDS.map(id=>({...shell(id),...PROFILES[id]}));
- return createUniversalPack({id:'rezero',version:'0.20.0',cards});
+ return createUniversalPack({id:'rezero',version:'0.21.0',cards});
 
 }
