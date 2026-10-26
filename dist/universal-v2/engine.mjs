@@ -644,6 +644,15 @@ function continueEffectQueue(pack,s){
    if(named&&selfOk)
     draw(pack,s,owner,job.count,{reason:'own-effect',sourceUid:job.sourceUid});
   }
+  else if(job.op==='drawIfNameOrDistinctColorNames'){
+   // Resolved after the source has left the field, so 「他の」 is the
+   // remaining board. The name clause still uses 〈カード名〉, aliases included.
+   // Distinct kinds stay printed names of that color. No turn icon on 退場時.
+   const q={kind:'ownNameOrDistinctPrintedColorNames',turn:'any',zone:'field',
+    name:job.name,color:job.color,min:job.min};
+   if(matchesV2LiveCondition(s,owner,job.sourceUid,q,x=>card(pack,x)))
+    draw(pack,s,owner,job.count,{reason:'own-effect',sourceUid:job.sourceUid});
+  }
   else if(job.op==='drawIfOppRestCharacter'){
    const q={kind:'oppRestCharacter',turn:'any',zone:'field'};
    if(matchesV2LiveCondition(s,owner,job.sourceUid,q,x=>card(pack,x)))
@@ -973,6 +982,16 @@ function continueEffectQueue(pack,s){
     }).map(c=>c.uid);
     s.pending=choices.length?{kind:'effect-top-trait-outside',player:owner,
      sourceUid:job.sourceUid,uids,choices,names:[...job.names],color:job.color}:
+     {kind:'effect-top-order',player:owner,sourceUid:job.sourceUid,
+      uids,order:[],rest:'top'};
+   }
+  }else if(job.op==='inspectTopNamesOutside'){
+   const uids=pl.deck.slice(0,job.count).map(c=>c.uid);
+   if(uids.length){
+    const window=pl.deck.slice(0,uids.length);
+    const choices=window.filter(c=>job.names.some(n=>cardHasName(card(pack,c),n))).map(c=>c.uid);
+    s.pending=choices.length?{kind:'effect-top-trait-outside',player:owner,
+     sourceUid:job.sourceUid,uids,choices,names:[...job.names]}:
      {kind:'effect-top-order',player:owner,sourceUid:job.sourceUid,
       uids,order:[],rest:'top'};
    }
@@ -2225,8 +2244,9 @@ function resolveChoice(s,a,pack){
   if(a.uid!==null){
    const chosen=window.find(c=>c.uid===a.uid);
    const printed=card(pack,chosen);
-   const named=Array.isArray(q.names)&&printed.type==='character'&&
-    printed.color===q.color&&q.names.some(n=>cardHasName(printed,n));
+   const byName=Array.isArray(q.names)&&q.names.some(n=>cardHasName(printed,n));
+   const named=q.color===undefined?byName&&q.trait===undefined:
+    byName&&printed.type==='character'&&printed.color===q.color;
    if(!chosen||!q.choices.includes(a.uid)||!(named||cardHasTrait(printed,q.trait)||
      (q.orName&&cardHasName(printed,q.orName))))
     throw Error('Trait top choice is not an inspected exact-token match');
@@ -5167,7 +5187,7 @@ export function assertUniversalMatch(pack,s){
    !['grantedAttackDraw','grantOnAttack','grantSelfSniperThisTurn','grantSelfAttackWinDrawThisTurn','grantSelfMustBlockThisTurn','buffSelfUntilNextOwnStart','grantSelfAttackEndSwapThisTurn','resolveAttackWinRecovery','draw','drawIfOwnName','drawIfOwnOutsideNamedCountAtLeast','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','drawIfOppRestCharacter','drawIfOppCharacterBpAtLeast','drawIfOwnNameAndHandFewer','activeOwnNamed','millTop','buffSelf','buffSelfPerOwnOutsideGroups','enemyBpDown','drawDiscard','chooseOne','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','conditionalBounceOrRetireByOwnOutsideNames','completeResolvingEvent','stripOppRaidTop','restOppFrontUnderBp','restOppFrontBpAtLeast','restOppFrontOne','forbidAttackOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopUpToTwoBottom','deployOwnHandRest','deployOwnHandSpecial','deployOwnHandRestOrRaid','optionalPayApThen','optionalRetireThenProgram','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
     'discardGate','removeOutsideThen','enemyFrontAllBpDown','retireOppFrontAllUnderBp',
     'nextEligibleHandPlayApDiscount','grantFrontEnergyOwnOtherFrontTrait','buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
-    'recoverOutsideColorUnderEnergy','deployOutsideRest','deployOutsideNameRest','deployNamedFromZones','payApDeployNamedRest','inspectTopTraitOutside','deployOutsideTraitlessRestOrRaid','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','retireSourceOnPhaseEnd','moveAtMainEnd','retireOwnFieldOne','retireOwnCharacterOne','openBlock','resolveSniperBattle','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','resolveAttackEndSwap','phaseOrder','effectMoveOrder','restSelfTuckMovedFaceDown','sourceResolutionBoundary','lifeBatchStep','lifeRelease','advanceAfterAttack','additionalBattleDamage','openRetirementBatch','closeRetirementBatch','retirementOrder','battleImpactDamage','discardOppHand','activeSelfIf','openEnergyMoveGrants','moveOtherAcrossOrRemove','raidBaseEnergyThen','grantSelfAttackDamageThisTurn','restOppFrontLockActive','removeAnyOutsideScale','inspectTopColoredNamesOutside','drawDiscardIfEffectApPaid','activeSelf','grantSelfImpactThisTurn','grantOwnNameBlockAtLeast'].includes(e.op)))
+    'recoverOutsideColorUnderEnergy','deployOutsideRest','deployOutsideNameRest','deployNamedFromZones','payApDeployNamedRest','inspectTopTraitOutside','deployOutsideTraitlessRestOrRaid','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','retireSourceOnPhaseEnd','moveAtMainEnd','retireOwnFieldOne','retireOwnCharacterOne','openBlock','resolveSniperBattle','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','resolveAttackEndSwap','phaseOrder','effectMoveOrder','restSelfTuckMovedFaceDown','sourceResolutionBoundary','lifeBatchStep','lifeRelease','advanceAfterAttack','additionalBattleDamage','openRetirementBatch','closeRetirementBatch','retirementOrder','battleImpactDamage','discardOppHand','activeSelfIf','openEnergyMoveGrants','moveOtherAcrossOrRemove','raidBaseEnergyThen','grantSelfAttackDamageThisTurn','restOppFrontLockActive','removeAnyOutsideScale','inspectTopColoredNamesOutside','inspectTopNamesOutside','drawIfNameOrDistinctColorNames','drawDiscardIfEffectApPaid','activeSelf','grantSelfImpactThisTurn','grantOwnNameBlockAtLeast'].includes(e.op)))
   throw Error('Invalid queued effects');
  // A printed choose-one may wait behind an earlier raid choice, such as
  // BLC-1-053's draw/discard when the player resolves entry before the

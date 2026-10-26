@@ -16,7 +16,7 @@ const checked=card=>createUniversalPack({id:'template-validation-fixture',cards:
 
 test('template registry is finite, audited and rejects unknown behaviors instead of guessing from prose',()=>{
  assert.deepEqual(V2_ABILITY_TEMPLATE_IDS,[
-  'draw','drawIfOwnEnergyAtLeast','drawIfOwnTraitCount','drawIfOwnName','drawIfOwnNameMinSelfBp','millTop','drawDiscardOne','drawDiscardMany','peekTopOne','peekTopOrBottom','recoverAp','buffSelf',
+  'draw','drawIfOwnEnergyAtLeast','drawIfOwnTraitCount','drawIfOwnName','drawIfOwnNameMinSelfBp','drawIfNameOrDistinctColorNames','millTop','drawDiscardOne','drawDiscardMany','peekTopOne','peekTopOrBottom','recoverAp','buffSelf',
   'enemyBpDown','retireEnemyUnderBp','restEnemyUnderBp','restEnemyFrontBpAtLeast','restEnemyFrontOne',
    'restEnemyFrontSkipNextActive','restEnemyUnderBpSkipNextActive','skipNextActiveOppRest',
    'restSilenceOppFrontIfOwnOutsideField',
@@ -24,8 +24,8 @@ test('template registry is finite, audited and rejects unknown behaviors instead
   'retireEnemyIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown',
   'searchDeckOne','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
   'searchDeckMany','enemyFrontAllBpDown','enemyFrontBpDownInRange','retireEnemyFrontAllUnderBp',
-  'buffOwnTraitAllTurn','buffOwnField','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
-  'recoverOutsideColorUnderEnergy','oncePerTurnThen','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopOneBottomDiscardWhere','searchTopUpToTwoBottom','deployOwnHandRest','searchTopUpToOneBottom','payDiscardThen'
+  'buffOwnTraitAllTurn','buffOwnField','buffOwnPrintedBp','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
+  'recoverOutsideColorUnderEnergy','oncePerTurnThen','searchDeckWhere','inspectTopArrange','inspectTopNamesOutside','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopOneBottomDiscardWhere','searchTopUpToTwoBottom','deployOwnHandRest','searchTopUpToOneBottom','payDiscardThen'
  ]);
  assert.throws(()=>checked(character({
   implementation:'dsl',templateEffects:{onPlay:[{template:'drawEnemyDeck',count:1}]}

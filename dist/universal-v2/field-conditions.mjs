@@ -90,6 +90,18 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
  }
  if(condition.kind==='ownEnergyAtLeast')
   return energy()>=condition.min;
+ if(condition.kind==='oppFrontCurrentBpBelowPrinted'){
+  // 元々のBPよりBPが低い: that front character's current BP is below its
+  // own printed BP. Energy, hand, and the measuring card's own front do
+  // not qualify. A mutual lookup stops at the card already being measured.
+  if(typeof cardBp!=='function')throw Error('Printed-BP gap needs a live BP reader');
+  for(const c of s.players[1-owner].front){
+   if(!c||printed(c).type!=='character')continue;
+   const base=printed(c).bp;
+   if(Number.isInteger(base)&&cardBp(c)<base)return true;
+  }
+  return false;
+ }
  if(condition.kind==='oppCharacterBpAtLeast'){
   // Q749: an effect that raises current BP counts. Printed BP alone is not
   // the check. Mutual current-BP lookups stop at the card already being
@@ -191,6 +203,8 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   if(d.type!=='character')continue;
   const silenced=originalEffectsDisabled(s,c);
   if(condition.kind==='ownNameExists'&&cardHasName(d,condition.name,silenced))return true;
+  if(condition.kind==='ownAnyNameExists'&&
+   condition.names.some(n=>cardHasName(d,n,silenced)))return true;
   // 〈名前〉がない is the same character-name check, inverted. Hand, deck,
   // outside, and Raid under-cards are not the field. Silence drops an alias
   // and keeps the printed name, matching ownNameExists.

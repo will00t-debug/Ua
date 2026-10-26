@@ -5,6 +5,12 @@
 import {REZERO_VOL2_BY_ID} from '../rezero-vol2.mjs';
 import {createUniversalPack} from './pack.mjs';
 
+const REM_OR_ROSWAAL={
+ kind:'ownAnyNameExists',turn:'own',zone:'field',excludeSelf:false,
+ names:['レム','ロズワール・L・メイザース']
+};
+const BELOW_PRINTED={kind:'oppFrontCurrentBpBelowPrinted',turn:'own'};
+
 const ANASTASIA_OR_FOUR_GREEN={
  kind:'ownNameOrDistinctPrintedColorNames',turn:'own',zone:'field',
  name:'アナスタシア・ホーシン',color:'green',min:4
@@ -48,12 +54,32 @@ const PROFILES={
  'REZ-2-063':{implementation:'vanilla',effects:{}},
  'REZ-2-066':{implementation:'dsl',templateEffects:{onPlay:[{template:'draw',count:1}]}},
  'REZ-2-067':{implementation:'dsl',templateEffects:{onPlay:[{template:'recoverAp',count:2}]}},
- 'REZ-2-071':{implementation:'dsl',templateEffects:{onPlay:[{template:'recoverAp',count:2}]}}
+ 'REZ-2-071':{implementation:'dsl',templateEffects:{onPlay:[{template:'recoverAp',count:2}]}},
+ 'REZ-2-004':{implementation:'dsl',effects:{},passiveBonuses:[
+  {condition:{...BELOW_PRINTED},bp:1500}]},
+ 'REZ-2-005':{implementation:'dsl',effects:{},impactNull:true,passiveBonuses:[
+  {condition:{...REM_OR_ROSWAAL,names:[...REM_OR_ROSWAAL.names]},bp:1000}]},
+ 'REZ-2-009':{implementation:'dsl',effects:{onPlay:[{op:'peekTopOne'}]},
+  emptyOwnFieldHandEnergyDiscount:2},
+ 'REZ-2-017':{implementation:'dsl',effects:{onPlay:[
+  {op:'inspectTopNamesOutside',count:2,rest:'top',max:1,
+   names:['ナツキ・スバル','レム']}]}},
+ 'REZ-2-022':{implementation:'dsl',effects:{onPlay:[
+  {op:'inspectTopNamesOutside',count:2,rest:'top',max:1,
+   names:['ナツキ・スバル','ベアトリス','禁書庫']}]}},
+ 'REZ-2-045':{implementation:'dsl',effects:{onRetire:[
+  {op:'drawIfNameOrDistinctColorNames',name:'アナスタシア・ホーシン',
+   color:'green',min:4,count:1}]}},
+ 'REZ-2-048':{implementation:'dsl',effects:{onPlay:[
+  {op:'bounceOwnOtherUnderEnergy',energy:1}]}},
+ 'REZ-2-061':{implementation:'dsl',effects:{onPlay:[
+  {op:'buffOwnField',filter:{field:'bp',value:2500},bp:1500,
+   optional:true,excludeSelf:false}]}}
 };
 
 export const REZ_V2_IMPLEMENTED_IDS=Object.freeze(Object.keys(PROFILES));
 
 export function createRezV2Pack(){
  const cards=REZ_V2_IMPLEMENTED_IDS.map(id=>({...shell(id),...PROFILES[id]}));
- return createUniversalPack({id:'rezero',version:'0.8.0',cards});
+ return createUniversalPack({id:'rezero',version:'0.9.0',cards});
 }
