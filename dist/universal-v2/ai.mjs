@@ -151,6 +151,9 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   return difficulty==='easy'?legal.find(a=>a.mode==='skip')||legal[0]:
    legal.find(a=>a.mode==='activate')||legal[0];
  if(s.pending?.kind==='effect-buff-own')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-facedown-front')
+  return legal.find(a=>a.mode==='move'&&!a.replaceUid)||
+   legal.find(a=>a.mode==='move')||legal[0];
  if(s.pending?.kind==='effect-buff-trait')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='main-discard-buff'){
   // The payment is mandatory once activated. Choose a low-cost OWN hand
@@ -278,6 +281,8 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   (foeReady?legal.find(a=>a.type==='activate'&&a.mode==='selfRestEnemy'):null)||
   legal.find(a=>a.type==='activate'&&a.mode==='selfRestThen')||
   legal.find(a=>a.type==='activate'&&a.mode==='selfRestBuff')||
+  legal.find(a=>a.type==='activate'&&a.mode==='gunmenModes'&&a.effects?.includes('bp'))||
+  legal.find(a=>a.type==='activate'&&a.mode==='restRetireTrait')||
   legal.find(a=>a.type==='activate'&&a.mode==='payApDrawEnergy')||
   legal.find(a=>a.type==='activate'&&a.mode==='restFrontGainEnergy')||
   legal.find(a=>a.type==='activate'&&a.mode==='selfRestEnergyRetire')||

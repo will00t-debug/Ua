@@ -23,9 +23,9 @@ const SIX=Object.freeze({
   missing:'C2 registered after normalizing generated energy from imported 3 to official 緑緑 = 2'}
 });
 const PRIORITY=Object.freeze({
- 'TTG-1-069':{status:'ENGINE BLOCKED',owner:'GPT',
+ 'TTG-1-069':{status:'READY',owner:'GPT',
   source:'https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-069',
-  missing:'MAIN REST and actual self-retire as cost must atomically precede mandatory own OUTSIDE ガンメン retrieval'},
+  missing:'V2 registered MAIN REST and true self-retire, then one outside ガンメン card to hand. The action requires that target. Scenario tests exist. Not full official FAQ certification.'},
  'TTG-1-057':{status:'READY',owner:'GPT',
   source:'https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-057',
   missing:'V2 registered printed IMPACT null plus on-play grant until next own start. Scenario tests exist. Not full official FAQ certification.'},

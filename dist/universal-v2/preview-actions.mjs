@@ -131,6 +131,11 @@ export function uiActionLabel(action,{pack,state}={}){
      :'起動主要：REST 自身，產能＋1，主要階段結束退場'):
     action.mode==='selfRestThen'?'主要能力：REST 自身，執行效果':
     action.mode==='selfRestBuff'?'主要能力：REST 自身，指定另一張己方角色本回合 BP 加成':
+    action.mode==='restRetireTrait'?'主要能力：REST 並退場自己，從場外回收 1 張指定特徵卡':
+    action.mode==='gunmenModes'?('主要能力：依顏面張數選擇不同效果：'+
+     (action.effects||[]).map(effect=>({bp:'本回合 BP＋1000',
+      impactNull:'下次己方回合開始前 IMPACT 無效',
+      doubleBlock:'下次己方回合開始前可再阻擋'}[effect]||effect)).join('、')):
     action.mode==='payApDrawEnergy'?'起動主要：支付 1 AP，抽 1 張，本回合產能＋1':
     action.mode==='restFrontGainEnergy'?'起動主要：REST 自身，再 REST 一張己方前線，本回合產能＋1':
     action.mode==='selfRestEnemy'?'主要能力：REST 自身，指定敵方前線角色':
@@ -216,6 +221,8 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseTopFiltered':return action.uid===null?'不加入手牌，將其餘卡排列至底部':'加入手牌：'+name();
   case 'chooseTopOrder':return '依序放回：'+name();
   case 'chooseRestFrontEnergy':return 'REST '+name()+'，本回合產能＋1';
+  case 'chooseFacedownFront':return action.mode==='skip'?'不從能源線移到前線':
+   '從能源線移到前線 '+(action.slot+1)+(action.replaceUid?'，並將原前線卡除外':'')+'，本回合 BP＋1000';
   case 'chooseOwnBuff':case 'chooseMainBuff':case 'chooseTraitBuff':case 'chooseRestBp':
   case 'chooseRetireBp':case 'chooseTargetMany':return action.uid===null?'完成目標選擇':'選擇第 '+(state?.pending?.selected?.length+1||1)+' 個角色';
   case 'chooseFrontEnergyGrant':return action.uid===null?
