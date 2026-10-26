@@ -88,8 +88,13 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   options.sort((a,b)=>(a.printed?.energy||0)-(b.printed?.energy||0));
   return options[0]?.action||legal[0];
  }
- if(s.pending?.kind==='effect-remove-outside')
+ if(s.pending?.kind==='effect-remove-outside'){
+  // Optional payments stay declinable. A required payment has no skip, so
+  // the short set moves together and a full set pays one card.
+  const decline=legal.find(a=>a.mode==='skip');
+  if(decline)return decline;
   return legal.find(a=>a.mode==='all'||a.mode==='pick')||legal[0];
+ }
  if(s.pending?.kind==='raid-effect-order')return legal.find(a=>a.mode==='entryFirst')||legal[0];
  if(s.pending?.kind==='effect-first-attack-kit'||s.pending?.kind==='effect-entry-sacrifice'||
   s.pending?.kind==='effect-named-double'||s.pending?.kind==='effect-field-sacrifice-replay')
