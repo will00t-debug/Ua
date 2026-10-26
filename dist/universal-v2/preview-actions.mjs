@@ -37,6 +37,8 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-entry-sacrifice':'選另 1 個自己的角色退場，成功後此角色額外產生黃色能量並選 1 項',
  'effect-named-double':'選 1 個具有指定特徵的角色，本回合獲得 2 次攻擊',
  'effect-field-sacrifice-replay':'選 1 個自己的角色退場，成功後重播此場域的登場效果',
+ 'effect-swap-or-buff':'選交換位置、本回合 BP+1000，或在指定角色在場時兩項都做',
+ 'effect-swap-pair':'選 1 個要交換位置的角色',
  'effect-named-rest-ready':'可橫置 1 個 Active 的指定名稱角色，然後啟動 1 張 AP 卡',
  'effect-named-keyword':'可選 1 個指定名稱角色，賦予本回合 Impact 或直接攻擊傷害',
  'effect-keyword-mode':'選擇 Impact +1 或 Damage +1',

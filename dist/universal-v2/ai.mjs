@@ -92,6 +92,11 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='effect-first-attack-kit'||s.pending?.kind==='effect-entry-sacrifice'||
   s.pending?.kind==='effect-named-double'||s.pending?.kind==='effect-field-sacrifice-replay')
   return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-swap-or-buff')
+  return legal.find(a=>a.mode==='both')||legal.find(a=>a.mode==='swap')||
+   legal.find(a=>a.mode==='bp')||legal[0];
+ if(s.pending?.kind==='effect-swap-pair')
+  return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-choice-mode'){
   // Entirely generic printed-mode selection; inspect only public enemy FRONT
   // and the validated program profile, never hard-code a title/card ID.

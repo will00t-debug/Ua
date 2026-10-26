@@ -237,9 +237,12 @@ import bleachContribution from '../dist/universal-v2/title-packs/bleach.mjs';
 // BLC-1-028 UA08BT: look at the top 3 and may reveal one 星十字騎士團
 //   card to hand. The rest go to the bottom. No hand discard. Main REST
 //   stays on the field, retires one other character, then replays 登場時.
+// BLC-2-002 EX07BT: discard one, then swap one front character with one
+//   energy character, or BP+1000. ユーハバッハ may allow both. [ターン1]
+//   is this physical card. Generated energy stays 黄黄.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008','BLC-4-065','BLC-2-051','BLC-1-092','BLC-4-044','BLC-4-016','BLC-4-017','BLC-1-028'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008','BLC-4-065','BLC-2-051','BLC-1-092','BLC-4-044','BLC-4-016','BLC-4-017','BLC-1-028','BLC-2-002'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -310,12 +313,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers eighty whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,516);
- assert.equal(EXPECTED_V2_COUNTS.bleach,240);
+test('C29 registers eighty-one whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,517);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,241);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,240);
+ assert.equal(Object.keys(bleach.cards).length,241);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -7746,6 +7749,127 @@ test('BLC-1-028 looks at three cards without discarding, then replays that look 
  assert.equal(assertUniversalMatch(first.packs,skipped),true);
  assert.equal(assertUniversalMatch(silenced.packs,quiet),true);
  assert.equal(assertUniversalMatch(lone.packs,lone.s),true);
+ assert.equal(assertUniversalMatch(muted.packs,muted.s),true);
+});
+
+test('BLC-2-002 discards one card, then swaps lines or gains BP, and Yhwach may do both',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-2-002');
+ assert.equal(printed.number,'EX07BT/BLC-2-002');
+ assert.equal(printed.nameJa,'石田 雨竜');
+ assert.equal(printed.effect,'主要階段・每回合 1 次：將 1 張手牌送至場外，選一項：①各選 1 個己方前線與能源線角色，交換其位置；②此角色本回合 BP +1000。己方場上有〈友哈巴赫〉時，可改為執行兩項。');
+ assert.equal(printed.trigger,'draw');
+ assert.equal(printed.gen,2);
+ assert.equal(printed.traits,'星十字騎士團');
+ const card=bleach.cards['BLC-2-002'];
+ assert.equal(card.gen,2);
+ assert.equal(card.triggerEffect,null);
+ assert.deepEqual(card.traits,['星十字騎士團']);
+ assert.deepEqual(card.mainAbility,{op:'oncePayProgram',oncePerTurn:true,frontOnly:false,raidOnly:false,payAp:0,requiresOwnName:null,then:[{op:'discardGate',optional:false,then:[{op:'swapOrBuff',bp:1000,allName:'ユーハバッハ'}]}]});
+ const bare={id:'BAD',name:'BAD',color:'yellow',type:'character',energy:3,ap:1,bp:3000,gen:2,traits:['星十字騎士團'],trigger:'draw',implementation:'dsl',effects:{},mainAbility:{op:'oncePayProgram',oncePerTurn:true,frontOnly:false,raidOnly:false,payAp:0,requiresOwnName:null,then:[{op:'discardGate',optional:false,then:[{op:'swapOrBuff',bp:2000,allName:'ユーハバッハ'}]}]}};
+ assert.throws(()=>createUniversalPack({id:'bad-uryu',cards:[bare]}),/invalid swap or self BP/);
+ const ids=['BLC-2-002','BLC-1-021','BLC-1-016','BLC-1-018','BLC-1-002','BLC-1-081'];
+ const rest=Object.values(bleach.cards).filter(c=>c.maxCopies===4&&!ids.includes(c.id)&&
+  !['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
+ const built=[...ids,...rest.slice(0,13-ids.length)];
+ const deck=Object.fromEntries(built.map((id,i)=>[id,i===12?2:4]));
+ assert.deepEqual(validateUniversalDeck(bleach,deck),[]);
+ const empty=main(deck,29040);
+ const lonely=put(empty.s,0,'BLC-2-002','energy',0,true);
+ empty.s.players[0].outside.push(...empty.s.players[0].hand.splice(0));
+ assert.equal(legalUniversalActions(empty.packs,empty.s).some(a=>a.type==='activate'&&a.uid===lonely.uid),false);
+ const muted=main(deck,29041);
+ const hushed=put(muted.s,0,'BLC-2-002','energy',0,true);
+ const bystander=put(muted.s,0,'BLC-1-016','front',0,true);
+ grantContinuousState(muted.s,{kind:'originalEffectsDisabled',controller:1,
+  sourceUid:bystander.uid,targetUid:hushed.uid,sourceLinked:false,
+  until:{player:0,phase:'attack',edge:'end'}});
+ assert.equal(legalUniversalActions(muted.packs,muted.s).some(a=>a.type==='activate'&&a.uid===hushed.uid),false);
+ const locked=main(deck,29042);
+ const blocked=put(locked.s,0,'BLC-2-002','energy',0,true);
+ put(locked.s,0,'BLC-1-081','front',0,true);
+ assert.ok(locked.s.players[0].hand.length);
+ const lockedAct=legalUniversalActions(locked.packs,locked.s).find(a=>a.type==='activate'&&a.uid===blocked.uid&&a.mode==='oncePay');
+ assert.ok(lockedAct);
+ let lockedUsed=dispatchUniversalAction(locked.packs,locked.s,lockedAct);
+ assert.equal(lockedUsed.pending.kind,'effect-discard-gate');
+ assert.equal(legalUniversalActions(locked.packs,lockedUsed).some(a=>a.uid===null),false);
+ const lockedDrop=legalUniversalActions(locked.packs,lockedUsed).find(a=>a.type==='chooseDiscardGate');
+ lockedUsed=dispatchUniversalAction(locked.packs,lockedUsed,lockedDrop);
+ assert.equal(lockedUsed.pending.kind,'effect-swap-or-buff');
+ assert.deepEqual(lockedUsed.pending.options,['bp']);
+ const first=main(deck,29043);
+ const uryu=put(first.s,0,'BLC-2-002','energy',0,true);
+ const front=put(first.s,0,'BLC-1-002','front',0,true);
+ const ken=put(first.s,0,'BLC-1-081','front',1,true);
+ const act=legalUniversalActions(first.packs,first.s).find(a=>a.type==='activate'&&a.uid===uryu.uid&&a.mode==='oncePay');
+ assert.ok(act);
+ let used=dispatchUniversalAction(first.packs,first.s,act);
+ assert.equal(used.pending.kind,'effect-discard-gate');
+ assert.throws(()=>dispatchUniversalAction(first.packs,used,{type:'chooseDiscardGate',uid:null}),/not currently legal/);
+ const drop=legalUniversalActions(first.packs,used).find(a=>a.type==='chooseDiscardGate');
+ const handBefore=used.players[0].hand.length;
+ used=dispatchUniversalAction(first.packs,used,drop);
+ assert.equal(used.players[0].hand.length,handBefore-1);
+ assert.equal(used.pending.kind,'effect-swap-or-buff');
+ assert.equal(V2_PENDING_LABELS[used.pending.kind],'選交換位置、本回合 BP+1000，或在指定角色在場時兩項都做');
+ assert.deepEqual(used.pending.options,['swap','bp']);
+ const bpOnly=dispatchUniversalAction(first.packs,structuredClone(used),{type:'chooseSwapMode',mode:'bp'});
+ assert.equal(bpOnly.pending,null);
+ assert.equal(universalBp(first.packs,bpOnly,live(bpOnly,0,uryu.uid)),4000);
+ assert.equal(live(bpOnly,0,uryu.uid).cardId==='BLC-2-002'&&bpOnly.players[0].energy.some(c=>c?.uid===uryu.uid),true);
+ grantContinuousState(bpOnly,{kind:'originalEffectsDisabled',controller:1,
+  sourceUid:front.uid,targetUid:uryu.uid,sourceLinked:false,
+  until:{player:0,phase:'attack',edge:'end'}});
+ assert.equal(universalBp(first.packs,bpOnly,live(bpOnly,0,uryu.uid)),4000);
+ assert.equal(legalUniversalActions(first.packs,bpOnly).some(a=>a.type==='activate'&&a.uid===uryu.uid),false);
+ const copy=put(bpOnly,0,'BLC-2-002','energy',1,true);
+ assert.equal(legalUniversalActions(first.packs,bpOnly).some(a=>a.type==='activate'&&a.uid===copy.uid&&a.mode==='oncePay'),true);
+ used=dispatchUniversalAction(first.packs,used,{type:'chooseSwapMode',mode:'swap'});
+ assert.equal(used.pending.kind,'effect-swap-pair');
+ assert.equal(used.pending.step,'front');
+ const frontChoices=legalUniversalActions(first.packs,used);
+ assert.equal(frontChoices.some(a=>a.type==='chooseSwapPair'&&a.uid===front.uid),true);
+ assert.equal(frontChoices.some(a=>a.uid===ken.uid),false);
+ assert.equal(frontChoices.some(a=>a.uid===null),false);
+ assert.throws(()=>dispatchUniversalAction(first.packs,used,{type:'chooseSwapPair',uid:ken.uid}),/not currently legal/);
+ used=dispatchUniversalAction(first.packs,used,{type:'chooseSwapPair',uid:front.uid});
+ assert.equal(used.pending.step,'energy');
+ const energyChoices=legalUniversalActions(first.packs,used);
+ assert.equal(energyChoices.some(a=>a.type==='chooseSwapPair'&&a.uid===uryu.uid),true);
+ used=dispatchUniversalAction(first.packs,used,{type:'chooseSwapPair',uid:uryu.uid});
+ assert.equal(used.pending,null);
+ assert.equal(used.players[0].front.find(c=>c?.uid===uryu.uid)!==undefined,true);
+ assert.equal(used.players[0].energy.find(c=>c?.uid===front.uid)!==undefined,true);
+ assert.equal(universalBp(first.packs,used,live(used,0,uryu.uid)),3000);
+ const withKing=main(deck,29044);
+ const body=put(withKing.s,0,'BLC-2-002','energy',0,true);
+ const king=put(withKing.s,0,'BLC-1-021','front',0,true);
+ grantContinuousState(withKing.s,{kind:'originalEffectsDisabled',controller:1,
+  sourceUid:body.uid,targetUid:king.uid,sourceLinked:false,
+  until:{player:0,phase:'attack',edge:'end'}});
+ const kingAct=legalUniversalActions(withKing.packs,withKing.s).find(a=>a.type==='activate'&&a.uid===body.uid);
+ let kingUsed=dispatchUniversalAction(withKing.packs,withKing.s,kingAct);
+ kingUsed=dispatchUniversalAction(withKing.packs,kingUsed,legalUniversalActions(withKing.packs,kingUsed).find(a=>a.type==='chooseDiscardGate'));
+ assert.deepEqual(kingUsed.pending.options,['swap','bp','both']);
+ const onlyBp=dispatchUniversalAction(withKing.packs,structuredClone(kingUsed),{type:'chooseSwapMode',mode:'bp'});
+ assert.equal(onlyBp.players[0].energy.some(c=>c?.uid===body.uid),true);
+ assert.equal(onlyBp.players[0].front.some(c=>c?.uid===king.uid),true);
+ assert.equal(universalBp(withKing.packs,onlyBp,live(onlyBp,0,body.uid)),4000);
+ aiOk(withKing.packs,kingUsed);
+ kingUsed=dispatchUniversalAction(withKing.packs,kingUsed,{type:'chooseSwapMode',mode:'both'});
+ kingUsed=dispatchUniversalAction(withKing.packs,kingUsed,{type:'chooseSwapPair',uid:king.uid});
+ kingUsed=dispatchUniversalAction(withKing.packs,kingUsed,{type:'chooseSwapPair',uid:body.uid});
+ assert.equal(kingUsed.pending,null);
+ assert.equal(kingUsed.players[0].front.some(c=>c?.uid===body.uid),true);
+ assert.equal(kingUsed.players[0].energy.some(c=>c?.uid===king.uid),true);
+ assert.equal(universalBp(withKing.packs,kingUsed,live(kingUsed,0,body.uid)),4000);
+ aiOk(first.packs,used);
+ assert.equal(assertUniversalMatch(first.packs,used),true);
+ assert.equal(assertUniversalMatch(first.packs,bpOnly),true);
+ assert.equal(assertUniversalMatch(withKing.packs,kingUsed),true);
+ assert.equal(assertUniversalMatch(withKing.packs,onlyBp),true);
+ assert.equal(assertUniversalMatch(locked.packs,lockedUsed),true);
+ assert.equal(assertUniversalMatch(empty.packs,empty.s),true);
  assert.equal(assertUniversalMatch(muted.packs,muted.s),true);
 });
 
