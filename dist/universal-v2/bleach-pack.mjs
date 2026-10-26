@@ -1148,6 +1148,8 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-4-068","kind":"restFrontNameOnce","number":"EX15BT/BLC-4-068","name":"京楽 春水","color":"green","energy":4,"ap":1,"bp":4000,"gen":1,"trigger":"active","type":"character","effect":"Impact無效。啟動・主要〔前線／支付1 AP〕：僅在此角色為Rest時可發動；將此角色改為Active，並最多選1個對方前線角色改為Rest。所有《京樂春水》的此效果合計每回合僅限1次。"}
 ,
 {"id":"BLC-4-010","kind":"frontDiscardFieldDown","number":"EX15BT/BLC-4-010","name":"ペルニダ・パルンカジャス","color":"yellow","energy":4,"ap":1,"bp":4000,"gen":1,"trigger":"draw","type":"character","effect":"啟動・主要〔前線／每回合1次／將1張手牌送至場外〕：僅在自己場上有《友哈巴赫》時可發動；選1個對方場上BP1500以上的角色，本回合BP−1000。"}
+,
+{"id":"BLC-2-024","kind":"handOutsideTraitlessRest","number":"EX07BT/BLC-2-024","name":"四楓院 夜一","color":"blue","energy":4,"ap":1,"bp":3500,"gen":1,"trigger":"active","type":"character","effect":"己方回合中，此角色 BP +500。登場：若本回合己方曾將手牌送至場外，可從手牌將最多 1 張需求能源 1 以下、AP 消耗 1、且不具有特徵的藍色角色卡，以 REST 登場於己方場上。"}
  ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1291,6 +1293,7 @@ export function checkedBleachAddonDefinition(p){
  const isEntryChoose=p.kind==='entryTurnChooseDraw';
  const isRestFrontName=p.kind==='restFrontNameOnce';
  const isFrontFieldDown=p.kind==='frontDiscardFieldDown';
+ const isHandOutside=p.kind==='handOutsideTraitlessRest';
  const topDiscard={
   'BLC-3-007':{count:3,filter:{field:'trait',value:'護廷十三隊'}},
   'BLC-3-002':{count:3,filters:[
@@ -1324,7 +1327,7 @@ export function checkedBleachAddonDefinition(p){
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest||isOwnCharacterDraw||isPeekAttack||isDrawInstead||isRevealOppTop||isRevealWindow||isEnergyWindow||isMillPurple||isEnergyBounce||isStepOr||isReplayDown||isStepName||isReducedActive||isOutsideName||isZeroIchigo||isDiscardBlock||isEmptyStep||isApActive||isAliasTop||isEntryChoose||isRestFrontName||isFrontFieldDown;
+ const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest||isOwnCharacterDraw||isPeekAttack||isDrawInstead||isRevealOppTop||isRevealWindow||isEnergyWindow||isMillPurple||isEnergyBounce||isStepOr||isReplayDown||isStepName||isReducedActive||isOutsideName||isZeroIchigo||isDiscardBlock||isEmptyStep||isApActive||isAliasTop||isEntryChoose||isRestFrontName||isFrontFieldDown||isHandOutside;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1354,6 +1357,7 @@ export function checkedBleachAddonDefinition(p){
   ]}]}}:{}),
   ...(isRestFrontName?{impactNull:true,mainAbility:{op:'restFrontNameOnce',scope:'name',payAp:1}}:{}),
   ...(isFrontFieldDown?{mainAbility:{op:'oncePayProgram',oncePerTurn:true,frontOnly:true,raidOnly:false,payAp:0,requiresOwnName:'ユーハバッハ',then:[{op:'discardGate',optional:false,then:[{op:'enemyBpDown',bp:1000,optional:false,minBp:1500,zone:'field'}]}]}}:{}),
+  ...(isHandOutside?{ownTurnBp:500}:{}),
    ...(isKyoraku?{raidName:'京楽 春水',
     attackEndSwap:{color:'green',types:['event','field'],minDistinctNames:4}}:{}),
    ...(isRestRetireField?{mainAbility:{op:'fieldRestRetireThen',then:[
@@ -1589,7 +1593,8 @@ export function checkedBleachAddonDefinition(p){
    isEmptyStep?{onRetire:[{op:'enemyBpDown',bp:1000,optional:true,minBp:1500,ownTurnOnly:true}]}:
    isApActive?{onPlay:[{op:'discardGate',optional:true,then:[{op:'recoverAp',count:1}]}]}:
    isAliasTop?{onPlay:[{op:'inspectTopColorAnyOutside',count:2,rest:'top',color:'blue',names:['涅 マユリ','涅 ネム'],trait:'涅骸部隊'}]}:
-   isEntryChoose?{onPlay:[{op:'noteEntryTurn'}]}:{}})
+   isEntryChoose?{onPlay:[{op:'noteEntryTurn'}]}:
+   isHandOutside?{onPlay:[{op:'deployOwnHandRest',type:'character',color:'blue',energy:1,ap:1,max:1,traitless:true,when:{kind:'ownHandToOutsideThisTurn',turn:'any'}}]}:{}})
  };
 }
 export function bleachV2PortedCards(){

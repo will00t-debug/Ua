@@ -138,7 +138,8 @@ const testForKind=Object.freeze({
  aliasColorTopOutside:'tests/v2-c29-bleach-port.test.mjs',
  entryTurnChooseDraw:'tests/v2-c29-bleach-port.test.mjs',
  restFrontNameOnce:'tests/v2-c29-bleach-port.test.mjs',
- frontDiscardFieldDown:'tests/v2-c29-bleach-port.test.mjs'
+ frontDiscardFieldDown:'tests/v2-c29-bleach-port.test.mjs',
+ handOutsideTraitlessRest:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -157,7 +158,9 @@ function contributedEntry(profile){
   definition:Object.freeze(definition),
   evidence:Object.freeze({
    printedTextFragments:Object.freeze([profile.effect]),
-   reviewNote:profile.id==='BLC-4-010'?
+   reviewNote:profile.id==='BLC-2-024'?
+    'EX07BT/BLC-2-024 official iframe 2026-10-26. Printed BP stays 3500. 自分のターン中 adds BP+500, and silence removes that bonus. On play, if this player has already placed a hand card outside this turn by a rule, payment, or own effect, may REST one traitless blue character from hand whose printed energy is 1 or less and whose printed AP is 1. Generated energy is 青. ACTIVE is the generic sentence, so triggerEffect stays null. No card FAQ.':
+   profile.id==='BLC-4-010'?
     'EX15BT/BLC-4-010 official iframe 2026-10-26. [起動メイン][フロントLにある場合][手札を1枚場外に置く][ターン1]: only while an own field character is named ユーハバッハ. Discard one hand card, then choose one opposing character on the front or energy line whose live BP is at least 1500 and give it BP-1000 this turn. The choice is mandatory when such a character exists. [ターン1] is this physical card. Generated energy is 黄. DRAW is generic. No card FAQ.':
    profile.id==='BLC-4-068'?
     'EX15BT/BLC-4-068 official iframe 2026-10-26. Impact null. Front only, pay 1 AP, and only while this character is REST: set it ACTIVE, then up to one opposing front character becomes REST. Q2336 (2026-09-04): two copies share one activate. Generated energy is 緑. ACTIVE is generic.':

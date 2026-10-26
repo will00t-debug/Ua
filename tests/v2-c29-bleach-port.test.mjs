@@ -144,9 +144,14 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 //   on the front or energy line with live BP 1500+, then BP-1000 this turn.
 //   Official iframe 2026-10-26. Required 黄4. Generated 黄. DRAW is generic.
 //   No card FAQ. [ターン1] is this physical card.
+// BLC-2-024 EX07BT: 自分のターン中 BP+500. Printed BP stays 3500.
+//   On play, if this player already placed a hand card outside this turn,
+//   may REST one traitless blue character of printed energy 1 or less and
+//   printed AP 1. Official iframe 2026-10-26. Required 青4. Generated 青.
+//   ACTIVE is generic. No card FAQ.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -217,12 +222,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers fifty-one whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,487);
- assert.equal(EXPECTED_V2_COUNTS.bleach,211);
+test('C29 registers fifty-two whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,488);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,212);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,211);
+ assert.equal(Object.keys(bleach.cards).length,212);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -4040,4 +4045,94 @@ test('BLC-4-010 discards from the front only while Yhwach is on the field',()=>{
  assert.equal(assertUniversalMatch(played.packs,again),true);
  assert.equal(assertUniversalMatch(absent.packs,closed),true);
  assert.equal(assertUniversalMatch(empty.packs,none),true);
+});
+
+test('BLC-2-024 gains 500 on its turn and REST-plays one traitless blue character',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-2-024');
+ assert.equal(printed.effect,'己方回合中，此角色 BP +500。登場：若本回合己方曾將手牌送至場外，可從手牌將最多 1 張需求能源 1 以下、AP 消耗 1、且不具有特徵的藍色角色卡，以 REST 登場於己方場上。');
+ assert.equal(printed.traits,'無');
+ assert.equal(printed.bp,3500);
+ const card=bleach.cards['BLC-2-024'];
+ assert.equal(card.name,'四楓院 夜一');
+ assert.equal(card.bp,3500);
+ assert.equal(card.ownTurnBp,500);
+ assert.equal(card.energy,4);
+ assert.equal(card.gen,1);
+ assert.equal(card.trigger,'active');
+ assert.equal(card.triggerEffect,null);
+ assert.deepEqual(card.traits,[]);
+ assert.equal(card.effects.onPlay[0].traitless,true);
+ const deck=realDeck(['BLC-2-024','BLC-2-017','BLC-2-016','BLC-2-031','BLC-2-022','BLC-4-030','BLC-2-025','BLC-2-023','BLC-4-022','BLC-2-018'],'blue');
+ const fuel=(s)=>{
+  for(const [i,id] of ['BLC-2-016','BLC-2-031','BLC-2-022','BLC-4-030'].entries())
+   put(s,0,id,'energy',i,true);
+  s.players[0].apCards[0].inPlay=true;
+  s.players[0].apCards[0].ready=true;
+ };
+ const quiet=main(deck,30420);
+ fuel(quiet.s);
+ const bare=take(quiet.s,0,'BLC-2-024');
+ const cheap=take(quiet.s,0,'BLC-2-016');
+ quiet.s.players[0].hand.push(bare,cheap);
+ let closed=dispatchUniversalAction(quiet.packs,quiet.s,{type:'play',uid:bare.uid,line:'front',slot:0});
+ assert.equal(closed.pending,null);
+ assert.equal(universalBp(quiet.packs,closed,live(closed,0,bare.uid)),4000);
+ grantContinuousState(closed,{kind:'originalEffectsDisabled',controller:1,sourceUid:cheap.uid,
+  targetUid:bare.uid,sourceLinked:false,until:{player:0,phase:'main',edge:'end'}});
+ assert.equal(universalBp(quiet.packs,closed,live(closed,0,bare.uid)),3500);
+ const played=main(deck,30421);
+ fuel(played.s);
+ const payer=put(played.s,0,'BLC-2-017','front',1,false);
+ const dumped=take(played.s,0,'BLC-2-025');
+ const legal=take(played.s,0,'BLC-2-023');
+ const traited=take(played.s,0,'BLC-2-025');
+ const costly=take(played.s,0,'BLC-2-018');
+ const heavy=take(played.s,0,'BLC-4-022');
+ const actor=take(played.s,0,'BLC-2-024');
+ played.s.players[0].hand.push(dumped,legal,traited,costly,heavy,actor);
+ assert.equal(legalUniversalActions(played.packs,played.s).some(a=>a.uid===payer.uid&&a.mode==='oncePay'),true);
+ let paid=dispatchUniversalAction(played.packs,played.s,{type:'activate',uid:payer.uid,mode:'oncePay'});
+ paid=dispatchUniversalAction(played.packs,paid,{type:'chooseDiscardGate',uid:dumped.uid});
+ assert.equal(paid.players[0].outside.some(c=>c.uid===dumped.uid),true);
+ let entered=dispatchUniversalAction(played.packs,paid,{type:'play',uid:actor.uid,line:'front',slot:0});
+ assert.equal(universalBp(played.packs,entered,live(entered,0,actor.uid)),4000);
+ assert.equal(entered.pending.kind,'effect-hand-rest');
+ const choices=legalUniversalActions(played.packs,entered).filter(a=>a.type==='chooseHandRest');
+ const ids=uid=>choices.some(a=>a.uid===uid);
+ assert.equal(ids(legal.uid),true);
+ assert.equal(ids(traited.uid),false);
+ assert.equal(ids(costly.uid),false);
+ assert.equal(ids(heavy.uid),false);
+ assert.equal(ids(null),true);
+ aiOk(played.packs,entered);
+ const skipped=dispatchUniversalAction(played.packs,entered,{type:'chooseHandRest',uid:null});
+ assert.equal(skipped.pending,null);
+ assert.equal(skipped.players[0].hand.some(c=>c.uid===legal.uid),true);
+ const again=main(deck,30422);
+ fuel(again.s);
+ const gate=put(again.s,0,'BLC-2-017','front',1,false);
+ const pay=take(again.s,0,'BLC-2-025');
+ const seat=take(again.s,0,'BLC-2-023');
+ const self=take(again.s,0,'BLC-2-024');
+ again.s.players[0].hand.push(pay,seat,self);
+ let open=dispatchUniversalAction(again.packs,again.s,{type:'activate',uid:gate.uid,mode:'oncePay'});
+ open=dispatchUniversalAction(again.packs,open,{type:'chooseDiscardGate',uid:pay.uid});
+ open=dispatchUniversalAction(again.packs,open,{type:'play',uid:self.uid,line:'front',slot:0});
+ const action=legalUniversalActions(again.packs,open).find(a=>a.type==='chooseHandRest'&&a.uid===seat.uid&&a.line==='front');
+ assert.ok(action);
+ open=dispatchUniversalAction(again.packs,open,action);
+ const rested=live(open,0,seat.uid);
+ assert.equal(rested.ready,false);
+ assert.equal(open.players[0].front.some(c=>c?.uid===seat.uid),true);
+ assert.equal(open.pending,null);
+ let opp=open;
+ for(let n=0;n<12&&opp.active===0;n++)
+  opp=dispatchUniversalAction(again.packs,opp,{type:'next'});
+ assert.equal(opp.active,1);
+ assert.equal(universalBp(again.packs,opp,live(opp,0,self.uid)),3500);
+ aiOk(quiet.packs,closed);
+ aiOk(again.packs,open);
+ assert.equal(assertUniversalMatch(quiet.packs,closed),true);
+ assert.equal(assertUniversalMatch(played.packs,skipped),true);
+ assert.equal(assertUniversalMatch(again.packs,opp),true);
 });

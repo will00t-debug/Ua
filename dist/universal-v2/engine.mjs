@@ -897,13 +897,15 @@ function continueEffectQueue(pack,s){
      const d=card(pack,c);
      return d.type===job.type&&(job.color===null||d.color===job.color)&&d.ap===job.ap&&
       (special?(job.maxEnergy===null||d.energy<=job.maxEnergy)&&
-       (job.trait===null||cardHasTrait(d,job.trait)):d.energy<=job.energy);
+       (job.trait===null||cardHasTrait(d,job.trait)):
+       d.energy<=job.energy&&(job.traitless!==true||(d.traits||[]).length===0));
     }).map(c=>c.uid);
     if(choices.length)s.pending={kind:'effect-hand-rest',player:owner,
      sourceUid:job.sourceUid,sourceName:job.sourceName,choices,
      type:job.type,color:job.color,ap:job.ap,max:job.max,
      ...(special?{special:true,trait:job.trait,maxEnergy:job.maxEnergy,
-      ready:job.ready,protectionScope:job.protectionScope}:{energy:job.energy})};
+      ready:job.ready,protectionScope:job.protectionScope}:
+      {energy:job.energy,...(job.traitless===true?{traitless:true}:{})})};
    }else if(job.op==='deployOwnHandRestOrRaid'){
     const choices=pl.hand.filter(c=>matchesHandRestOrRaid(pack,s,c,job)).map(c=>c.uid);
     if(choices.length)s.pending={kind:'effect-hand-rest-or-raid',player:owner,
@@ -2782,7 +2784,8 @@ function resolveChoice(s,a,pack){
    const physical=p.hand[i],d=card(pack,physical);
    if(d.type!==q.type||(q.color!==null&&d.color!==q.color)||d.ap!==q.ap||
     (q.special?(q.maxEnergy!==null&&d.energy>q.maxEnergy)||
-      (q.trait!==null&&!cardHasTrait(d,q.trait)):d.energy>q.energy)||
+      (q.trait!==null&&!cardHasTrait(d,q.trait)):
+      d.energy>q.energy||(q.traitless===true&&(d.traits||[]).length!==0))||
     (a.line==='front'&&(d.type!=='character'||d.frontForbidden)))
     throw Error('Hand effect entry printed condition changed');
    commitDestination(pack,s,q.player,a.line,a.slot,a.replaceUid);
@@ -2803,7 +2806,8 @@ function resolveChoice(s,a,pack){
     type:q.type,color:q.color,ap:q.ap,max:q.max-1,
     ...(q.when?{when:q.when}:{}),
     ...(q.special?{trait:q.trait,maxEnergy:q.maxEnergy,ready:q.ready,
-     protectionScope:q.protectionScope}:{energy:q.energy})});
+     protectionScope:q.protectionScope}:{energy:q.energy,
+     ...(q.traitless===true?{traitless:true}:{})})});
    applyEffects(pack,s,physical,'onPlay',q.player,'ownEffect',q.sourceUid);
    return;
   }

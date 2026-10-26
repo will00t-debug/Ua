@@ -449,10 +449,15 @@ function verifyProgram(program,path){
   }
   if(e.op==='deployOwnHandRest'){
    if(e.when!==undefined)assertLiveCondition(e.when,path+'['+i+'].when');
+   // 特徴を持たない is an empty printed trait list. It is optional so older
+   // hand REST profiles stay six keys plus an optional when.
+   if(e.traitless!==undefined&&e.traitless!==true)
+    throw Error(path+'['+i+'] invalid traitless hand REST flag');
    if(!['character','field'].includes(e.type)||!['blue','yellow','green','purple','red'].includes(e.color)||
     !integer(e.energy)||e.energy>30||!integer(e.ap,1)||e.ap>3||
-    !integer(e.max,1)||e.max>4||Object.keys(e).length!==6+Number(e.when!==undefined)||
-    Object.keys(e).some(k=>!['op','type','color','energy','ap','max','when'].includes(k)))
+    !integer(e.max,1)||e.max>4||
+    Object.keys(e).length!==6+Number(e.when!==undefined)+Number(e.traitless===true)||
+    Object.keys(e).some(k=>!['op','type','color','energy','ap','max','when','traitless'].includes(k)))
     throw Error(path+'['+i+'] invalid hand REST entry');
   }
   if(e.op==='deployOwnHandSpecial'){
