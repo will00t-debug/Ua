@@ -54,7 +54,10 @@ export function v2DeckReport(title,counts){
   '。這些卡不能進入 V2 對戰，效果也不會被略過。'
  ]:[];
  const issues=[...warnings];
- if(!unsupported.length)issues.push(...validateUniversalDeck(pack,counts));
+ // Catalogue drafts store every card at 0. A zero is not in the deck, so an
+ // unimplemented Vol.2 id must not block a legal set-1 list.
+ const listed=Object.fromEntries(positiveCounts(counts));
+ if(!unsupported.length)issues.push(...validateUniversalDeck(pack,listed));
  else issues.push('包含尚未支援的卡片，目前不能開始對戰。');
  const playable={};
  for(const [id,n] of positiveCounts(counts))if(pack.cards[id])playable[id]=n;

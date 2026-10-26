@@ -8,6 +8,7 @@ import {createTtgV2Pack} from '../dist/universal-v2/ttg-pack.mjs';
 import {createRezeroV2Pack,REZERO_ENGINE_IDS} from '../dist/universal-v2/rezero-pack.mjs';
 import {createRezV2Pack,REZ_V2_IMPLEMENTED_IDS} from '../dist/universal-v2/rez-pack.mjs';
 import {officialV2Pack,rezeroSet1PracticeDeck,practiceDeck,v2DeckReport,createRezeroBattlePack} from '../dist/universal-v2/official-entry.mjs';
+import {emptyRezDeck} from '../dist/rezero-builder.mjs';
 import {createAllV2PreviewRealDecks} from '../dist/universal-v2/preview-real-decks.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,assertUniversalMatch,universalPublicView} from '../dist/universal-v2/engine.mjs';
 import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
@@ -36,6 +37,10 @@ test('a legal 50-card TTG or set-1 deck can enter V2, and an unsupported Vol.2 c
  const set1=rezeroSet1PracticeDeck();
  assert.equal(v2DeckReport('rezero',set1.counts).ok,true);
  assert.equal(Object.keys(set1.counts).some(id=>id.startsWith('REZ-2-')),false);
+ const drafted=emptyRezDeck();
+ for(const [id,n] of Object.entries(set1.counts))drafted[id]=n;
+ const draftedReport=v2DeckReport('rezero',drafted);
+ assert.equal(draftedReport.ok,true,draftedReport.issues.join('; '));
  const blocked={'REZ-1-001':4,'REZ-2-001':4};
  const report=v2DeckReport('rezero',blocked);
  assert.equal(report.ok,false);

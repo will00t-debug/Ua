@@ -148,7 +148,13 @@ function visualDeckLibrary(){
  };
  const data=optionsByTitle[ui.title]||optionsByTitle.bleach;
  const report=v2DeckReport(ui.title,data.counts);
- const extra=(report.warnings||[]).filter(w=>!(data.issues||[]).includes(w));
+ const joined=(data.issues||[]).join(' ');
+ const extra=(report.issues||[]).filter(issue=>{
+  if(joined.includes(issue))return false;
+  const ids=issue.match(/[A-Z]{2,}-\d+-\d+/g)||[];
+  if(ids.length)return ids.some(id=>!joined.includes(id));
+  return !joined.includes('不能開始對戰');
+ });
  return renderVisualDeckBuilder({
   titles:TITLES,titleId:ui.title,ready:ui.builderReady,tab:ui.builderTab,
   search:ui.search,type:ui.builderType,color:ui.builderColor,energy:ui.builderEnergy,
