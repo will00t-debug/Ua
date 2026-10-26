@@ -142,7 +142,8 @@ const testForKind=Object.freeze({
  handOutsideTraitlessRest:'tests/v2-c29-bleach-port.test.mjs',
  energyApRestBuff:'tests/v2-c29-bleach-port.test.mjs',
  chooseBuffOrAttackEndRetire:'tests/v2-c29-bleach-port.test.mjs',
- discardVisoredRest:'tests/v2-c29-bleach-port.test.mjs'
+ discardVisoredRest:'tests/v2-c29-bleach-port.test.mjs',
+ raidHostAny:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -161,7 +162,9 @@ function contributedEntry(profile){
   definition:Object.freeze(definition),
   evidence:Object.freeze({
    printedTextFragments:Object.freeze([profile.effect]),
-   reviewNote:profile.id==='BLC-4-072'?
+   reviewNote:profile.id==='BLC-1-026'?
+    'UA08BT/BLC-1-026 official iframe 2026-10-26. Any own character with 【レイド】 may Raid onto this character. Q553 (2023-09-25): the conditions written to the right of 【レイド】 are waived, and so is the named base. A buried copy is not the visible host. Silence removes the permission and ordinary name matching applies. Generated energy is 黄. No trigger.':
+   profile.id==='BLC-4-072'?
     'EX15BT/BLC-4-072 official iframe 2026-10-26. On play, may put one hand card outside. If that payment happens, may REST up to one own outside character whose printed AP is 1, whose trait is the catalogue token 假面軍勢 (official 仮面の軍勢), and whose required energy the controller currently meets. Q2341 (2026-09-04): the card just sent outside may be the one that enters. A Raid name still enters as an ordinary REST character. Generated energy is 緑. No trigger.':
    profile.id==='BLC-3-003'?
     'UA04NC/BLC-3-003 official iframe 2026-10-26. On play, choose one: up to one other own character gets BP+1000 this turn, or up to one other own character gets BP+3000 and retires at the end of its attack. The retirement follows a direct attack and an attacker win, after that attack\'s life continuation. A lost attacker has already left. Silence on the chosen character does not remove the grant. The grant ends when the next turn starts. ACTIVE is generic. No card FAQ.':

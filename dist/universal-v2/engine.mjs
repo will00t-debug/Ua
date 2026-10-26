@@ -1697,9 +1697,15 @@ function applyEffects(pack,s,cardOnField,timing,owner,entryCause,entrySourceUid)
  continueEffectQueue(pack,s);
 }
 function validRaidBase(pack,s,owner,base,top){
- if(!base||!top.raidName||
-  !top.raidRequiresNames.every(n=>raidNamePresent(pack,s,owner,n)))return false;
- const b=card(pack,base),names=top.raidBaseNames;
+ if(!base||!top.raidName)return false;
+ const b=card(pack,base);
+ // Q553 (2023-09-25): a printed Raid host waives the named base and every
+ // condition written to the right of 【レイド】. The buried layer is not the
+ // visible card, and silence removes the permission.
+ if(b.raidHostAny&&!originalEffectsDisabled(s,base)&&!b.raidName&&!(base.stack?.length))
+  return true;
+ if(!top.raidRequiresNames.every(n=>raidNamePresent(pack,s,owner,n)))return false;
+ const names=top.raidBaseNames;
  const accepts=list=>list.some(n=>cardHasName(b,n,originalEffectsDisabled(s,base)));
  if(base.stack?.length){
   const bottom=base.stack[0];

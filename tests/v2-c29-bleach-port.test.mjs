@@ -162,9 +162,12 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 //   trait 假面軍勢 whose required energy is currently met. Q2341 (2026-09-04):
 //   the card just sent outside may be that character. Official iframe
 //   2026-10-26. Required 緑4. Generated 緑. No trigger.
+// BLC-1-026 UA08BT: 自分の【レイド】を持つキャラカードはこのキャラにレイドできる。
+//   Q553 (2023-09-25) waives the named base and the conditions to the right
+//   of 【レイド】. Silence and a buried host do not. Generated energy is 黄.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -235,12 +238,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers fifty-five whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,491);
- assert.equal(EXPECTED_V2_COUNTS.bleach,215);
+test('C29 registers fifty-six whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,492);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,216);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,215);
+ assert.equal(Object.keys(bleach.cards).length,216);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -4596,4 +4599,127 @@ test('BLC-4-072 may discard one hand card and REST an affordable AP 1 visored ch
  assert.equal(assertUniversalMatch(miss.packs,none),true);
  assert.equal(assertUniversalMatch(labPacks,opened),true);
  assert.equal(assertUniversalMatch(labPacks,narrow),true);
+});
+
+test('BLC-1-026 lets any own Raid character raid onto it and waives printed conditions',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-1-026');
+ assert.equal(printed.effect,'己方具有 Raid 的角色卡可在此角色上 Raid。');
+ assert.equal(printed.nameJa,'ロイド・ロイド（R）');
+ assert.equal(printed.number,'UA08BT/BLC-1-026');
+ assert.equal(printed.traits,'星十字騎士團');
+ assert.equal(printed.energy,1);
+ assert.equal(printed.ap,1);
+ assert.equal(printed.bp,2000);
+ assert.equal(printed.gen,1);
+ assert.equal(printed.trigger,null);
+ assert.equal(printed.color,'yellow');
+ const card=bleach.cards['BLC-1-026'];
+ assert.equal(card.name,'ロイド・ロイド（R）');
+ assert.equal(card.raidHostAny,true);
+ assert.equal(card.raidName,null);
+ assert.equal(card.gen,1);
+ assert.equal(card.trigger,null);
+ assert.equal(card.triggerEffect,null);
+ assert.deepEqual(card.effects,{});
+ assert.deepEqual(card.traits,['星十字騎士團']);
+ const bare={id:'BAD',name:'宿主',color:'yellow',type:'character',energy:0,ap:1,bp:1000,gen:1,traits:[],trigger:null,implementation:'dsl',effects:{},raidHostAny:true};
+ assert.throws(()=>createUniversalPack({id:'bad-host-event',cards:[{...bare,id:'EV',type:'event',bp:0}]}),/invalid Raid host/);
+ assert.throws(()=>createUniversalPack({id:'bad-host-flag',cards:[{...bare,id:'FL',raidHostAny:false,effects:{onPlay:[{op:'draw',count:1}]}}]}),/invalid Raid host/);
+ assert.throws(()=>createUniversalPack({id:'bad-host-raid',cards:[{...bare,id:'RD',raidName:'標的'}]}),/invalid Raid host/);
+ assert.throws(()=>createUniversalPack({id:'bad-host-vanilla',cards:[{...bare,id:'VA',implementation:'vanilla'}]}),/claims vanilla despite printed\/declared effects/);
+ const deck=realDeck(['BLC-1-026','BLC-1-004','BLC-1-002','BLC-1-001','BLC-1-012','BLC-1-018','BLC-1-021'],'yellow');
+ const wrong=plainId(deck,3000,['BLC-1-026','BLC-1-004','BLC-1-002','BLC-1-001','BLC-1-012','BLC-1-018','BLC-1-021']);
+ function fuel(s){
+  for(const [i,id] of ['BLC-1-001','BLC-1-012','BLC-1-018','BLC-1-021'].entries())
+   put(s,0,id,'energy',i);
+ }
+ const first=main(deck,30526);
+ fuel(first.s);
+ const host=put(first.s,0,'BLC-1-026','front',0);
+ const named=put(first.s,0,'BLC-1-002','front',1);
+ const other=put(first.s,0,wrong,'front',2);
+ const rider=take(first.s,0,'BLC-1-004');
+ const second=take(first.s,0,'BLC-1-004');
+ first.s.players[0].hand.push(rider,second);
+ const raids=()=>legalUniversalActions(first.packs,first.s).filter(a=>a.type==='raid');
+ assert.equal(raids().some(a=>a.uid===rider.uid&&a.baseUid===host.uid&&a.slot===0),true);
+ assert.equal(raids().some(a=>a.uid===rider.uid&&a.baseUid===host.uid&&a.slot!==0),false);
+ assert.equal(raids().some(a=>a.uid===rider.uid&&a.baseUid===named.uid&&a.slot===1),true);
+ assert.equal(raids().some(a=>a.uid===rider.uid&&a.baseUid===other.uid),false);
+ assert.equal(raids().some(a=>a.uid===second.uid&&a.baseUid===host.uid),true);
+ grantContinuousState(first.s,{kind:'originalEffectsDisabled',controller:1,sourceUid:other.uid,
+  targetUid:host.uid,until:{player:0,phase:'main',edge:'end'}});
+ assert.equal(raids().some(a=>a.baseUid===host.uid),false);
+ assert.equal(raids().some(a=>a.uid===rider.uid&&a.baseUid===named.uid),true);
+ assert.equal(raids().some(a=>a.baseUid===other.uid),false);
+ first.s.continuousStates=[];
+ let stacked=dispatchUniversalAction(first.packs,first.s,{type:'raid',uid:rider.uid,baseUid:host.uid,slot:0});
+ assert.equal(stacked.pending,null);
+ const top=stacked.players[0].front[0];
+ assert.equal(top.cardId,'BLC-1-004');
+ assert.equal(top.ready,true);
+ assert.equal(top.stack.length,1);
+ assert.equal(top.stack[0].cardId,'BLC-1-026');
+ assert.equal(top.stack[0].uid,host.uid);
+ assert.equal(top.stack[0].faceDown,undefined);
+ assert.equal(stacked.players[0].front[1].cardId,'BLC-1-002');
+ stacked.players[0].apCards.forEach(c=>{if(c.inPlay)c.ready=true;});
+ const after=legalUniversalActions(first.packs,stacked).filter(a=>a.type==='raid');
+ assert.equal(after.some(a=>a.uid===second.uid&&a.baseUid===top.uid),false);
+ assert.equal(after.some(a=>a.uid===second.uid&&a.baseUid===named.uid&&a.slot===1),true);
+ assert.equal(after.some(a=>a.baseUid===host.uid),false);
+ const lined=main(deck,30527);
+ for(const [i,id] of ['BLC-1-001','BLC-1-012','BLC-1-018'].entries())
+  put(lined.s,0,id,'energy',i);
+ const energyHost=put(lined.s,0,'BLC-1-026','energy',3);
+ const stillNamed=put(lined.s,0,'BLC-1-002','front',0);
+ const energyRider=take(lined.s,0,'BLC-1-004');
+ lined.s.players[0].hand.push(energyRider);
+ const energyRaids=legalUniversalActions(lined.packs,lined.s).filter(a=>a.type==='raid'&&a.uid===energyRider.uid);
+ assert.equal(energyRaids.some(a=>a.baseUid===energyHost.uid&&a.slot===1),true);
+ assert.equal(energyRaids.some(a=>a.baseUid===stillNamed.uid&&a.slot===0),true);
+ let moved=dispatchUniversalAction(lined.packs,lined.s,{type:'raid',uid:energyRider.uid,baseUid:energyHost.uid,slot:1});
+ assert.equal(moved.players[0].energy[3],null);
+ assert.equal(moved.players[0].front[1].cardId,'BLC-1-004');
+ assert.equal(moved.players[0].front[1].stack[0].uid,energyHost.uid);
+ assert.equal(moved.players[0].front[0].cardId,'BLC-1-002');
+ const unit=(id,extra)=>({id,name:id,color:'yellow',type:'character',energy:0,ap:1,bp:1000,gen:1,traits:[],trigger:null,implementation:'vanilla',effects:{},...extra});
+ const fillers=Array.from({length:9},(_,i)=>unit('F'+i));
+ const lab=createUniversalPack({id:'lab-raid-host',cards:[
+  unit('HOST',{implementation:'dsl',raidHostAny:true,name:'ロイド・ロイド（R）'}),
+  unit('NEED',{implementation:'dsl',raidName:'標的',raidRequiresNames:['不在場'],name:'條件突襲',effects:{onPlay:[{op:'draw',count:1}]}}),
+  unit('NAMED',{name:'標的'}),
+  unit('GATE',{name:'不在場'}),
+  ...fillers]});
+ const labIds=['HOST','NEED','NAMED','GATE',...fillers.map(c=>c.id)];
+ const labCounts=Object.fromEntries(labIds.map((id,i)=>[id,i===labIds.length-1?2:4]));
+ assert.deepEqual(validateUniversalDeck(lab,labCounts),[]);
+ const labPacks=[lab,lab];
+ let board=newUniversalMatch(labPacks,{decks:[labCounts,labCounts],seed:30528,first:0});
+ for(let n=0;n<8&&board.phase!=='main';n++)
+  board=dispatchUniversalAction(labPacks,board,{type:'next'});
+ const labHost=put(board,0,'HOST','front',0);
+ const labNamed=put(board,0,'NAMED','front',1);
+ const need=take(board,0,'NEED');
+ board.players[0].hand.push(need);
+ const labRaids=()=>legalUniversalActions(labPacks,board).filter(a=>a.type==='raid'&&a.uid===need.uid);
+ assert.equal(labRaids().some(a=>a.baseUid===labHost.uid),true);
+ assert.equal(labRaids().some(a=>a.baseUid===labNamed.uid),false);
+ const gate=put(board,0,'GATE','front',2);
+ assert.equal(labRaids().some(a=>a.baseUid===labNamed.uid&&a.slot===1),true);
+ assert.equal(labRaids().some(a=>a.baseUid===labHost.uid),true);
+ grantContinuousState(board,{kind:'originalEffectsDisabled',controller:1,sourceUid:gate.uid,
+  targetUid:labHost.uid,until:{player:0,phase:'main',edge:'end'}});
+ assert.equal(labRaids().some(a=>a.baseUid===labHost.uid),false);
+ assert.equal(labRaids().some(a=>a.baseUid===labNamed.uid),true);
+ board.continuousStates=[];
+ const deckBefore=board.players[0].deck.length;
+ let waived=dispatchUniversalAction(labPacks,board,{type:'raid',uid:need.uid,baseUid:labHost.uid,slot:0});
+ assert.equal(waived.players[0].front[0].cardId,'NEED');
+ assert.equal(waived.players[0].front[0].stack[0].uid,labHost.uid);
+ assert.equal(waived.players[0].deck.length,deckBefore-1);
+ aiOk(first.packs,stacked);
+ assert.equal(assertUniversalMatch(first.packs,stacked),true);
+ assert.equal(assertUniversalMatch(lined.packs,moved),true);
+ assert.equal(assertUniversalMatch(labPacks,waived),true);
 });
