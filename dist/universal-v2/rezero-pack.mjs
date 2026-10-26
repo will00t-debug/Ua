@@ -73,6 +73,7 @@ export function rezeroEngineKind(effectJa){
  if(e==='【レイド】〈レム〉アクティブにし、フロントLに移動できる【自分のターン中】このキャラはBP+500。【登場時】カードを1枚引き、自分の手札を1枚場外に置く。【起動メイン】【フロントLにある場合】 【ターン1】BP1500以上の相手のフロントLのキャラを1枚選び、このターン中、BP-1000。【アタック時】自分の場にあるキャラが全て〈レム〉の場合、カードを1枚引き、自分の手札を1枚場外に置く。')return 'raidRemTurnBpDraw';
  if(e==='【レイド】〈エミリア〉アクティブにし、フロントLに移動できる【登場時】相手のフロントLのキャラを1枚まで選び、このターン中、BP-3500。【起動メイン】【フロントLにある場合】 【ターン1】このキャラがレストの場合のみ発動できる。BP1500以下の相手のフロントLのキャラを1枚まで選び、退場させる。このキャラをアクティブにし、このターン中、【インパクト（1）】を得る。')return 'raidEmiliaDownRestedRetire';
  if(e==='【レイド】〈レム〉アクティブにし、フロントLに移動できる【登場時】自分の手札から必要エナジーが3以下で消費APが1の黄の〔〈ラム〉か〈レム〉〕を1枚まで自分の場にレストで登場させる。【起動メイン】【フロントLにある場合】 【ターン1】自分の場の〈ラム〉か他の〈レム〉を1枚まで選び、このターン中、【インパクト（1）】を与える。')return 'raidRemHandImpact';
+ if(e==='【レイド】〈レム〉アクティブにし、フロントLに移動できる【インパクト（1）】（アタックしてバトルに勝利した時、相手プレイヤーに1ダメージ）【登場時】自分の場外から必要エナジーが0の青の〈ナツキ・スバル〉を1枚まで自分の場にレストで登場させる。【アタック時】自分の場の必要エナジーが0の青の〈ナツキ・スバル〉を1枚まで選び、このターン中、「このキャラはBP4000以上のキャラにブロックされない。」を与える。')return 'raidRemImpactSubaruBlock';
  return null;
 }
 const TOP_OUTSIDE=new Map([
@@ -147,6 +148,8 @@ function onPlay(card,kind){
   {op:'enemyBpDown',bp:3500,optional:true,zone:'front'}];
  if(kind==='raidRemHandImpact')return [{op:'deployOwnHandNamedRest',color:'yellow',
   maxEnergy:3,ap:1,names:['ラム','レム'],max:1,optional:true}];
+ if(kind==='raidRemImpactSubaruBlock')return [{op:'deployOutsidePrintedRest',
+  name:'ナツキ・スバル',color:'blue',energy:0,optional:true}];
  if(kind==='garfielEntry')return [{op:'enemyBpDown',bp:2500,optional:true,zone:'front'}];
  if(kind==='sanctuaryRecover')return [{op:'payHandOrRestForNamed',name:TRIAL_NAME}];
  if(kind==='frontDown2500')return [{op:'enemyBpDown',bp:2000,optional:true,minBp:2500,zone:'front'}];
@@ -223,7 +226,11 @@ export function rezeroPackCard(card){
     {op:'peekTopOne'},{op:'drawIfOwnEventUsed',count:1}]}:
    kind==='raidRemTurnBpDraw'?{
     onPlay:[{op:'drawDiscard',count:1}],
-    onAttack:[{op:'drawDiscardIfEveryOwnCharacterNamed',count:1,name:'レム'}]}:ops?{onPlay:ops}:{},
+    onAttack:[{op:'drawDiscardIfEveryOwnCharacterNamed',count:1,name:'レム'}]}:
+   kind==='raidRemImpactSubaruBlock'?{
+    onPlay:[{op:'deployOutsidePrintedRest',name:'ナツキ・スバル',color:'blue',energy:0,optional:true}],
+    onAttack:[{op:'grantPrintedBlockAtLeast',name:'ナツキ・スバル',color:'blue',energy:0,bp:4000,optional:true}]}:
+   ops?{onPlay:ops}:{},
   ...(kind==='step'||kind==='emptyFieldStep'?{step:true}:{}),
   ...(kind==='impactNull'?{impactNull:true}:{}),
   ...(kind==='activeEnergy'?{activeExtraEnergy:1}:{}),
@@ -274,6 +281,7 @@ export function rezeroPackCard(card){
   ...(kind==='raidRemHandImpact'?{raidName:'レム',mainAbility:{
    op:'frontOnceGrantImpactNamed',frontOnly:true,oncePerTurn:true,excludeSelf:true,
    names:['ラム','レム']}}:{}),
+  ...(kind==='raidRemImpactSubaruBlock'?{raidName:'レム',printedImpact:1}:{}),
   ...(kind==='raidFrontRestDraw'?{raidName:'エキドナ',mainAbility:{
    op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,
    then:[{op:'restOwnActiveFrontDraw'}]}}:{}),

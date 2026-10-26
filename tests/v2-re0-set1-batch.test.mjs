@@ -70,9 +70,9 @@ test('UA40BT and UA40ST share one catalogue and keep parallel art out',()=>{
  }
 });
 
-test('ninety-four whole prints enter the V2 pack and the other nineteen stay out',()=>{
- assert.equal(REZERO_ENGINE_IDS.length,94);
- assert.equal(Object.keys(pack.cards).length,94);
+test('ninety-five whole prints enter the V2 pack and the other eighteen stay out',()=>{
+ assert.equal(REZERO_ENGINE_IDS.length,95);
+ assert.equal(Object.keys(pack.cards).length,95);
  assert.equal(pack.cards['REZ-1-001'],undefined);
  assert.equal(pack.cards['REZ-1-008'].step,true);
  assert.equal(pack.cards['REZ-1-008'].implementation,'vanilla');
@@ -4760,4 +4760,156 @@ test('Rem raids onto Rem, rests one cheap yellow Ram or Rem, and grants impact t
  assert.equal(assertUniversalMatch(packs,live),true);
  assert.equal(assertUniversalMatch(packs,declined),true);
  assert.equal(assertUniversalMatch(packs,skipped),true);
+});
+
+const remImpactCounts={
+ ...Object.fromEntries(['REZ-1-014','REZ-1-043','REZ-1-037','REZ-1-068','REZ-1-086',
+  'REZ-1-016','REZ-1-024','REZ-1-091','REZ-1-006','REZ-1-003','REZ-1-054'].map(id=>[id,4])),
+ 'REZ-1-053':3,'REZ-1-040':1,'REZ-1-029':2
+};
+const remImpact=seed=>newUniversalMatch(packs,{decks:[remImpactCounts,remImpactCounts],first:0,seed});
+test('Rem raids onto Rem, rests a blue zero-cost Subaru, and grants a 4000 block ceiling',()=>{
+ assert.equal(Object.values(remImpactCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(pack,remImpactCounts),[]);
+ const printed=pack.cards['REZ-1-053'];
+ assert.equal(printed.raidName,'レム');
+ assert.equal(printed.energy,5);
+ assert.equal(printed.printedImpact,1);
+ assert.deepEqual(printed.effects.onPlay,[{op:'deployOutsidePrintedRest',name:'ナツキ・スバル',
+  color:'blue',energy:0,optional:true}]);
+ assert.deepEqual(printed.effects.onAttack,[{op:'grantPrintedBlockAtLeast',name:'ナツキ・スバル',
+  color:'blue',energy:0,bp:4000,optional:true}]);
+ const rest={op:'deployOutsidePrintedRest',name:'ナツキ・スバル',color:'blue',energy:0,optional:true};
+ const ceiling={op:'grantPrintedBlockAtLeast',name:'ナツキ・スバル',color:'blue',energy:0,bp:4000,optional:true};
+ const shell={id:'REM53',name:'レム',color:'blue',type:'character',energy:5,ap:1,bp:4000,gen:0,
+  traits:[],trigger:'raid',raidName:'レム',printedImpact:1,implementation:'dsl',
+  effects:{onPlay:[rest],onAttack:[ceiling]}};
+ assert.throws(()=>createUniversalPack({id:'bad-rem53',cards:[{...shell,effects:{
+  onPlay:[{...rest,energy:1}],onAttack:[ceiling]}}]}),/exact outside/);
+ assert.throws(()=>createUniversalPack({id:'bad-rem53',cards:[{...shell,effects:{onPlay:[ceiling]}}]}),/onAttack/);
+ assert.throws(()=>createUniversalPack({id:'bad-rem53',cards:[{...shell,type:'event',bp:0,gen:0,
+  raidName:null,trigger:null,printedImpact:undefined,effects:{onPlay:[rest]}}]}),/onPlay/);
+
+ let live=remImpact(7701);
+ fuel(live,['REZ-1-043','REZ-1-043','REZ-1-043','REZ-1-043']);
+ const base=pull(live,0,'REZ-1-014');
+ live.players[0].front[0]=base;
+ const stranger=pull(live,0,'REZ-1-003');
+ live.players[0].front[1]=stranger;
+ live=ownMain(live,2);
+ live.players[0].energy[0].buffs=[{energy:1,untilTurn:live.turn}];
+ assert.equal(universalEnergyByColor(packs,live,0).blue,5);
+ const waiting=pull(live,0,'REZ-1-053');
+ const cheap=pull(live,0,'REZ-1-037');
+ const costly=pull(live,0,'REZ-1-040');
+ const purple=pull(live,0,'REZ-1-068');
+ const readySubaru=stamp(live,pull(live,0,'REZ-1-037'));
+ live.players[0].hand.push(waiting);
+ live.players[0].outside.push(cheap,costly);
+ live.players[0].front[2]=purple;
+ live.players[0].front[3]=readySubaru;
+ const small=stamp(live,pull(live,1,'REZ-1-006'));
+ const mid=stamp(live,pull(live,1,'REZ-1-024'));
+ const tall=stamp(live,pull(live,1,'REZ-1-040'));
+ live.players[1].front[0]=small;
+ live.players[1].front[1]=mid;
+ live.players[1].front[2]=tall;
+ quietLife(live);
+ assert.equal(legalUniversalActions(packs,live).some(a=>a.type==='raid'&&a.uid===waiting.uid&&a.baseUid===stranger.uid),false);
+ assert.equal(legalUniversalActions(packs,live).some(a=>a.type==='raid'&&a.uid===waiting.uid&&a.baseUid===purple.uid),false);
+ const raid=legalUniversalActions(packs,live).find(a=>a.type==='raid'&&a.uid===waiting.uid&&a.baseUid===base.uid);
+ assert.ok(raid);
+ live=dispatchUniversalAction(packs,live,raid);
+ assert.equal(at(live,0,waiting.uid).stack[0].uid,base.uid);
+ assert.equal(universalImpact(pack,live,at(live,0,waiting.uid)),1);
+ assert.equal(live.pending.kind,'effect-outside-printed-rest');
+ assert.equal(live.pending.optional,true);
+ assert.equal(live.pending.energy,0);
+ assert.equal(Object.keys(live.pending).length,8);
+ assert.ok(live.pending.choices.includes(cheap.uid));
+ assert.equal(live.pending.choices.includes(costly.uid),false);
+ assert.equal(live.pending.choices.includes(purple.uid),false);
+ assert.equal(live.pending.choices.includes(readySubaru.uid),false);
+ for(const uid of live.pending.choices){
+  const choice=pack.cards[live.players[0].outside.find(c=>c.uid===uid).cardId];
+  assert.equal(choice.color,'blue');
+  assert.equal(choice.energy,0);
+  assert.equal(choice.name,'ナツキ・スバル');
+ }
+ assert.equal(V2_PENDING_LABELS['effect-outside-printed-rest'],'選擇是否以休息狀態登場');
+ assert.equal(uiActionLabel({type:'chooseOutsidePrintedRest',uid:null},{pack,state:live}),'不登場');
+ assert.equal(uiActionLabel({type:'chooseOutsidePrintedRest',uid:cheap.uid},{pack,state:live}),'使 ナツキ・スバル 以休息狀態登場');
+ assert.notEqual(chooseUniversalAiAction(packs,live).uid,null);
+ const staleDeploy=structuredClone(live);
+ const outsideAt=staleDeploy.players[0].outside.findIndex(c=>c.uid===cheap.uid);
+ staleDeploy.players[0].deck.push(staleDeploy.players[0].outside.splice(outsideAt,1)[0]);
+ assert.throws(()=>legalUniversalActions(packs,staleDeploy),/Invalid exact outside REST pending/);
+ let skippedDeploy=structuredClone(live);
+ skippedDeploy=dispatchUniversalAction(packs,skippedDeploy,{type:'chooseOutsidePrintedRest',uid:null});
+ assert.equal(skippedDeploy.pending,null);
+ assert.ok(skippedDeploy.players[0].outside.some(c=>c.uid===cheap.uid));
+ parkLine(live,0,stranger.uid);
+ const enter=legalUniversalActions(packs,live).find(a=>a.type==='chooseOutsidePrintedRest'&&
+  a.uid===cheap.uid&&a.line==='front'&&a.replaceUid===undefined);
+ assert.ok(enter);
+ live=dispatchUniversalAction(packs,live,enter);
+ assert.equal(live.pending,null);
+ assert.equal(at(live,0,cheap.uid).ready,false);
+ assert.equal(live.players[0].front[enter.slot].uid,cheap.uid);
+ live=toAttack(live,0);
+ const bare=structuredClone(live);
+ const bareSwing=legalUniversalActions(packs,bare).find(a=>a.type==='attack'&&a.uid===readySubaru.uid);
+ assert.ok(bareSwing);
+ const opened=dispatchUniversalAction(packs,bare,bareSwing);
+ assert.equal(opened.pending.kind,'block');
+ assert.equal(legalUniversalActions(packs,opened).some(a=>a.type==='chooseBlock'&&a.uid===tall.uid),true);
+ const quiet=structuredClone(live);
+ parkLine(quiet,0,readySubaru.uid);
+ parkLine(quiet,0,cheap.uid);
+ const direct=dispatchUniversalAction(packs,quiet,{type:'attack',uid:waiting.uid});
+ assert.equal(direct.pending.kind,'block');
+ const lifeBefore=live.players[1].life.length;
+ live=dispatchUniversalAction(packs,live,{type:'attack',uid:waiting.uid});
+ assert.equal(live.pending.kind,'effect-grant-printed-block');
+ assert.equal(live.pending.optional,true);
+ assert.equal(live.pending.bp,4000);
+ assert.equal(Object.keys(live.pending).length,9);
+ assert.ok(live.pending.choices.includes(readySubaru.uid));
+ assert.ok(live.pending.choices.includes(cheap.uid));
+ assert.equal(live.pending.choices.includes(purple.uid),false);
+ assert.equal(live.pending.choices.includes(costly.uid),false);
+ assert.equal(V2_PENDING_LABELS['effect-grant-printed-block'],'選擇是否賦予防禦下限');
+ assert.equal(uiActionLabel({type:'chooseGrantPrintedBlock',uid:null},{pack,state:live}),'不賦予防禦下限');
+ assert.equal(uiActionLabel({type:'chooseGrantPrintedBlock',uid:readySubaru.uid},{pack,state:live}),
+  '使 ナツキ・スバル 不會被 BP4000 以上的角色阻擋');
+ assert.notEqual(chooseUniversalAiAction(packs,live).uid,null);
+ const staleGrant=structuredClone(live);
+ parkLine(staleGrant,0,readySubaru.uid);
+ assert.throws(()=>legalUniversalActions(packs,staleGrant),/Invalid printed blocker ceiling pending/);
+ let skipped=structuredClone(live);
+ skipped=dispatchUniversalAction(packs,skipped,{type:'chooseGrantPrintedBlock',uid:null});
+ assert.equal(skipped.pending.kind,'block');
+ assert.equal(at(skipped,0,readySubaru.uid).blockAtLeastGranted,undefined);
+ live=dispatchUniversalAction(packs,live,{type:'chooseGrantPrintedBlock',uid:readySubaru.uid});
+ assert.equal(live.pending.kind,'block');
+ assert.equal(at(live,0,readySubaru.uid).blockAtLeastGranted.bp,4000);
+ assert.equal(at(live,0,cheap.uid).blockAtLeastGranted,undefined);
+ assert.equal(legalUniversalActions(packs,live).some(a=>a.type==='chooseBlock'&&a.uid===tall.uid),true);
+ live=dispatchUniversalAction(packs,live,{type:'chooseBlock',uid:small.uid});
+ assert.equal(live.pending,null);
+ assert.ok(live.players[1].outside.some(c=>c.uid===small.uid));
+ assert.equal(live.players[1].life.length,lifeBefore-1);
+ const second=legalUniversalActions(packs,live).find(a=>a.type==='attack'&&a.uid===readySubaru.uid);
+ assert.ok(second);
+ live=dispatchUniversalAction(packs,live,second);
+ assert.equal(live.pending.kind,'block');
+ const blocks=legalUniversalActions(packs,live).filter(a=>a.type==='chooseBlock');
+ assert.equal(blocks.some(a=>a.uid===tall.uid),false);
+ assert.equal(blocks.some(a=>a.uid===mid.uid),true);
+ assert.equal(blocks.some(a=>a.uid===null),true);
+ assert.equal(assertUniversalMatch(packs,live),true);
+ assert.equal(assertUniversalMatch(packs,skipped),true);
+ assert.equal(assertUniversalMatch(packs,skippedDeploy),true);
+ assert.equal(assertUniversalMatch(packs,opened),true);
+ assert.equal(assertUniversalMatch(packs,direct),true);
 });

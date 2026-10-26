@@ -998,6 +998,15 @@ function continueEffectQueue(pack,s){
     if(choices.length)s.pending={kind:'effect-outside-rest',player:owner,
      sourceUid:job.sourceUid,choices,name:job.name,color:job.color,
      energy:job.energy,ap:job.ap,optional:true};
+   }else if(job.op==='deployOutsidePrintedRest'){
+    const choices=pl.outside.filter(c=>{
+     const d=card(pack,c);
+     return d.type==='character'&&d.color===job.color&&d.energy===job.energy&&
+      cardHasName(d,job.name,originalEffectsDisabled(s,c));
+    }).map(c=>c.uid);
+    if(choices.length)s.pending={kind:'effect-outside-printed-rest',player:owner,
+     sourceUid:job.sourceUid,choices,name:job.name,color:job.color,
+     energy:job.energy,optional:true};
    }else if(job.op==='resolveAttackWinRecovery'){
    const printed=card(pack,{uid:job.sourceUid,cardId:job.sourceCardId});
    const profile=printed.attackWinRecover;
@@ -1133,6 +1142,15 @@ function continueEffectQueue(pack,s){
     cardHasName(card(pack,c),job.name,originalEffectsDisabled(s,c))).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-grant-block-at-least',player:owner,
     sourceUid:job.sourceUid,choices,name:job.name,bp:job.bp,optional:true};
+  }else if(job.op==='grantPrintedBlockAtLeast'){
+   const choices=field(pl).filter(c=>{
+    const d=card(pack,c);
+    return d.type==='character'&&d.color===job.color&&d.energy===job.energy&&
+     cardHasName(d,job.name,originalEffectsDisabled(s,c));
+   }).map(c=>c.uid);
+   if(choices.length)s.pending={kind:'effect-grant-printed-block',player:owner,
+    sourceUid:job.sourceUid,choices,name:job.name,color:job.color,
+    energy:job.energy,bp:job.bp,optional:true};
   }else if(job.op==='recoverOutsideColorUnderEnergy'){
    const choices=pl.outside.filter(c=>matchesOutsideRecovery(pack,s,c,job)).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-recover-outside',player:owner,
@@ -3044,6 +3062,25 @@ function resolveChoice(s,a,pack){
    s.effectQueue.unshift(...programJobs(pack,s,physical,'onPlay',q.player,undefined,'outsideEffect'));
    continueEffectQueue(pack,s);return;
   }
+  if(q.kind==='effect-outside-printed-rest'){
+   if(a.uid===null){s.pending=null;continueEffectQueue(pack,s);return;}
+   const i=p.outside.findIndex(c=>c.uid===a.uid);
+   if(i<0||!q.choices.includes(a.uid)||!['front','energy'].includes(a.line))
+    throw Error('Outside printed REST needs eligible own UID and line');
+   const physical=p.outside[i],d=card(pack,physical);
+   if(d.type!=='character'||d.color!==q.color||d.energy!==q.energy||
+    !cardHasName(d,q.name,originalEffectsDisabled(s,physical)))
+    throw Error('Outside printed REST filters changed');
+   commitDestination(pack,s,q.player,a.line,a.slot,a.replaceUid);
+   p.outside.splice(i,1);physical.ready=false;
+   physical.fieldEntryStamp=s.nextFieldEntryStamp++;
+   p[a.line][a.slot]=physical;
+   recordCompletedMove(pack,s,{physical,owner:q.player,from:'outside',to:a.line,
+    reason:'own-effect',sourceUid:q.sourceUid});
+   s.pending=null;
+   s.effectQueue.unshift(...programJobs(pack,s,physical,'onPlay',q.player,undefined,'outsideEffect'));
+   continueEffectQueue(pack,s);return;
+  }
   if(q.kind==='effect-recover-outside'){
   if(a.uid!==null){
    const index=p.outside.findIndex(c=>c.uid===a.uid);
@@ -3295,6 +3332,20 @@ function resolveChoice(s,a,pack){
   if(!target||!q.choices.includes(a.uid)||!Number.isInteger(target.fieldEntryStamp)||
    !cardHasName(card(pack,target),q.name,originalEffectsDisabled(s,target)))
    throw Error('Illegal blocker-ceiling target');
+  target.blockAtLeastGranted={turn:s.turn,stamp:target.fieldEntryStamp,bp:q.bp};
+  s.pending=null;continueEffectQueue(pack,s);return;
+ }
+ if(q.kind==='effect-grant-printed-block'){
+  if(a.uid===null){
+   if(!q.optional)throw Error('Printed blocker ceiling cannot be skipped');
+   s.pending=null;continueEffectQueue(pack,s);return;
+  }
+  const target=field(p).find(c=>c.uid===a.uid);
+  const d=target&&card(pack,target);
+  if(!target||!q.choices.includes(a.uid)||!Number.isInteger(target.fieldEntryStamp)||
+   d.type!=='character'||d.color!==q.color||d.energy!==q.energy||
+   !cardHasName(d,q.name,originalEffectsDisabled(s,target)))
+   throw Error('Illegal printed blocker-ceiling target');
   target.blockAtLeastGranted={turn:s.turn,stamp:target.fieldEntryStamp,bp:q.bp};
   s.pending=null;continueEffectQueue(pack,s);return;
  }
@@ -4278,6 +4329,15 @@ function legalPending(pack,s){
     ['front','energy'].flatMap(line=>legalDestinations(p,line)
      .map(dest=>({type:'chooseOutsideRest',uid:c.uid,line,...dest}))))
   ];
+  if(q.kind==='effect-outside-printed-rest')return [
+   {type:'chooseOutsidePrintedRest',uid:null},
+   ...p.outside.filter(c=>q.choices.includes(c.uid)).flatMap(c=>{
+    const d=card(pack,c);
+    return ['front','energy'].filter(line=>line!=='front'||!d.frontForbidden)
+     .flatMap(line=>legalDestinations(p,line).map(dest=>({
+      type:'chooseOutsidePrintedRest',uid:c.uid,line,...dest})));
+   })
+  ];
   if(q.kind==='effect-recover-outside')return [
   ...(q.optional?[{type:'chooseOutsideRecovery',uid:null}]:[]),
   ...p.outside.filter(c=>q.choices.includes(c.uid)&&matchesOutsideRecovery(pack,s,c,q))
@@ -4352,6 +4412,16 @@ function legalPending(pack,s){
    cardHasName(card(pack,c),q.name,originalEffectsDisabled(s,c))).map(c=>c.uid);
   return [...(q.optional?[{type:'chooseGrantBlockAtLeast',uid:null}]:[]),
    ...choices.map(uid=>({type:'chooseGrantBlockAtLeast',uid}))];
+ }
+ if(q.kind==='effect-grant-printed-block'){
+  const choices=field(p).filter(c=>{
+   if(!q.choices.includes(c.uid))return false;
+   const d=card(pack,c);
+   return d.type==='character'&&d.color===q.color&&d.energy===q.energy&&
+    cardHasName(d,q.name,originalEffectsDisabled(s,c));
+  }).map(c=>c.uid);
+  return [{type:'chooseGrantPrintedBlock',uid:null},
+   ...choices.map(uid=>({type:'chooseGrantPrintedBlock',uid}))];
  }
  if(q.kind==='effect-may-draw-discard')return [
   {type:'chooseMayDrawDiscard',mode:'skip'},
@@ -5664,7 +5734,7 @@ export function assertUniversalMatch(pack,s){
    !Array.isArray(s.initialCounts)||s.initialCounts.length!==2||
    s.players?.length!==2||!playerIndex(s.active)||
    !['playing','finished'].includes(s.status))throw Error('Incorrect pack/version or match state');
- if(s.pending&&(!playerIndex(s.pending.player)||!['phase-order','retirement-order','effect-move-order','effect-rest-tuck','effect-tuck-moved','effect-grant-cause','effect-hand-bottom','effect-pay-deploy-self','effect-deploy-self-active','effect-outside-hand-or-rest','effect-recover-under','effect-energy-front','effect-entry-protect','block','life-batch-order','life-trigger','effect-target','effect-target-many','effect-grant-attack','granted-attack-draw','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-retire-at-least','effect-retire-at-most','effect-retire-scaled','effect-hand-bp-may','effect-hand-deploy-may','effect-hand-rest-entry','effect-active-other','effect-rest-own-front-draw','effect-raid-base-rest','effect-rest-or-retire','effect-named-outside-bounce-retire','effect-optional-draw','effect-strip-raid-top','effect-retire-own-field','effect-retire-own-character','main-field-trait-retire','effect-rest-bp','effect-rest-outside-events','effect-rested-retire-impact','effect-hand-named-rest','effect-grant-named-impact','effect-attack-ban','effect-own-front-protect','effect-grant-ap-tax','effect-grant-front-energy','raid-effect-order','effect-buff-trait','effect-buff-own','effect-named-impact','effect-top-trait-event','effect-buff-either','effect-return-printed','effect-remove-named','effect-pay-named','effect-add-named','effect-reveal-bottom','effect-hand-top','effect-rest-front-ap','effect-discard-active','effect-active-own-named','effect-once-choice','main-two-buff','main-discard-buff','main-discard-self-retire','main-rest-front-energy','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-filter-many-choice','effect-top-order','effect-recover-outside','effect-outside-rest','effect-outside-name-rest','effect-outside-traitless-rest','effect-named-zone-entry','effect-hand-rest','effect-hand-rest-or-raid','effect-optional-pay-ap','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-remove-outside','effect-selection-hand-payment','attack-end-swap','effect-choice-mode','recovered-self-entry','effect-optional-mill','effect-pay-ap-deploy','effect-top-trait-outside','effect-line-move','effect-line-slot','effect-rest-two','effect-self-front','effect-raid-leave','effect-rest-lock','effect-grant-block-at-least','effect-may-draw-discard'].includes(s.pending.kind)))
+ if(s.pending&&(!playerIndex(s.pending.player)||!['phase-order','retirement-order','effect-move-order','effect-rest-tuck','effect-tuck-moved','effect-grant-cause','effect-hand-bottom','effect-pay-deploy-self','effect-deploy-self-active','effect-outside-hand-or-rest','effect-recover-under','effect-energy-front','effect-entry-protect','block','life-batch-order','life-trigger','effect-target','effect-target-many','effect-grant-attack','granted-attack-draw','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-retire-at-least','effect-retire-at-most','effect-retire-scaled','effect-hand-bp-may','effect-hand-deploy-may','effect-hand-rest-entry','effect-active-other','effect-rest-own-front-draw','effect-raid-base-rest','effect-rest-or-retire','effect-named-outside-bounce-retire','effect-optional-draw','effect-strip-raid-top','effect-retire-own-field','effect-retire-own-character','main-field-trait-retire','effect-rest-bp','effect-rest-outside-events','effect-rested-retire-impact','effect-hand-named-rest','effect-grant-named-impact','effect-attack-ban','effect-own-front-protect','effect-grant-ap-tax','effect-grant-front-energy','raid-effect-order','effect-buff-trait','effect-buff-own','effect-named-impact','effect-top-trait-event','effect-buff-either','effect-return-printed','effect-remove-named','effect-pay-named','effect-add-named','effect-reveal-bottom','effect-hand-top','effect-rest-front-ap','effect-discard-active','effect-active-own-named','effect-once-choice','main-two-buff','main-discard-buff','main-discard-self-retire','main-rest-front-energy','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-filter-many-choice','effect-top-order','effect-recover-outside','effect-outside-rest','effect-outside-name-rest','effect-outside-traitless-rest','effect-named-zone-entry','effect-hand-rest','effect-hand-rest-or-raid','effect-optional-pay-ap','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-remove-outside','effect-selection-hand-payment','attack-end-swap','effect-choice-mode','recovered-self-entry','effect-optional-mill','effect-pay-ap-deploy','effect-top-trait-outside','effect-line-move','effect-line-slot','effect-rest-two','effect-self-front','effect-raid-leave','effect-rest-lock','effect-grant-block-at-least','effect-outside-printed-rest','effect-grant-printed-block','effect-may-draw-discard'].includes(s.pending.kind)))
   throw Error('Invalid pending controller');
  if(!Array.isArray(s.raidedThisTurn)||s.raidedThisTurn.length!==2||
    s.raidedThisTurn.some(x=>typeof x!=='boolean')||
@@ -6211,6 +6281,39 @@ export function assertUniversalMatch(pack,s){
    Object.keys(q).some(k=>!['kind','player','sourceUid','choices','color','maxEnergy','ap','names','optional'].includes(k)))
    throw Error('Invalid named hand REST pending');
  }
+ if(s.pending?.kind==='effect-outside-printed-rest'){
+  const q=s.pending,pl=s.players[q.player];
+  const source=field(pl).find(c=>c.uid===q.sourceUid);
+  const effect=source&&card(pack,source).effects?.onPlay?.find(e=>
+   e.op==='deployOutsidePrintedRest'&&e.name===q.name&&e.color===q.color&&
+   e.energy===q.energy&&e.optional===true);
+  const choices=pl.outside.filter(c=>{
+   const d=card(pack,c);
+   return d.type==='character'&&d.color===q.color&&d.energy===q.energy&&
+    cardHasName(d,q.name,originalEffectsDisabled(s,c));
+  }).map(c=>c.uid);
+  if(!effect||q.optional!==true||q.name!=='ナツキ・スバル'||q.color!=='blue'||q.energy!==0||
+   !choices.length||!same(q.choices,choices)||Object.keys(q).length!==8||
+   Object.keys(q).some(k=>!['kind','player','sourceUid','choices','name','color','energy','optional'].includes(k)))
+   throw Error('Invalid exact outside REST pending');
+ }
+ if(s.pending?.kind==='effect-grant-printed-block'){
+  const q=s.pending,pl=s.players[q.player];
+  const source=field(pl).find(c=>c.uid===q.sourceUid);
+  const effect=source&&card(pack,source).effects?.onAttack?.find(e=>
+   e.op==='grantPrintedBlockAtLeast'&&e.name===q.name&&e.color===q.color&&
+   e.energy===q.energy&&e.bp===q.bp&&e.optional===true);
+  const choices=field(pl).filter(c=>{
+   const d=card(pack,c);
+   return d.type==='character'&&d.color===q.color&&d.energy===q.energy&&
+    cardHasName(d,q.name,originalEffectsDisabled(s,c));
+  }).map(c=>c.uid);
+  if(!effect||q.optional!==true||q.name!=='ナツキ・スバル'||q.color!=='blue'||
+   q.energy!==0||q.bp!==4000||!choices.length||!same(q.choices,choices)||
+   Object.keys(q).length!==9||
+   Object.keys(q).some(k=>!['kind','player','sourceUid','choices','name','color','energy','bp','optional'].includes(k)))
+   throw Error('Invalid printed blocker ceiling pending');
+ }
  if(s.pending?.kind==='effect-grant-named-impact'){
   const q=s.pending,pl=s.players[q.player];
   const source=pl.front.find(c=>c?.uid===q.sourceUid);
@@ -6704,7 +6807,7 @@ export function assertUniversalMatch(pack,s){
    !['grantedAttackDraw','grantOnAttack','grantSelfSniperThisTurn','grantSelfAttackWinDrawThisTurn','grantSelfMustBlockThisTurn','buffSelfUntilNextOwnStart','grantSelfAttackEndSwapThisTurn','resolveAttackWinRecovery','draw','drawIfOwnName','drawIfOwnEventUsed','drawIfOwnOutsideNamedCountAtLeast','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','drawIfOppRestCharacter','drawIfOppCharacterBpAtLeast','drawIfOppFrontBelowPrinted','drawIfOwnNameAndHandFewer','activeOwnNamed','millTop','buffSelf','buffSelfPerOwnOutsideGroups','enemyBpDown','drawDiscard','drawDiscardIfEveryOwnCharacterNamed','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontTiered','retireOppFrontOneUnderBp','conditionalBounceOrRetireByOwnOutsideNames','completeResolvingEvent','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','restOppFrontByOutsideEvents','forbidAttackOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopTraitOrEventAp','discountNextNamedHandEnergy','retireOppFrontAtLeastBp','retireOppFrontAtMostBp','retireOppFrontScaledBp','grantHandCharacterBpMay','searchTopUpToTwoBottom','deployOwnHandRest','deployOwnHandSpecial','deployOwnHandRestOrRaid','deployOwnHandNamedRest','optionalPayApThen','optionalRetireThenProgram','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
     'discardGate','removeOutsideThen','enemyFrontAllBpDown','retireOppFrontAllUnderBp',
     'nextEligibleHandPlayApDiscount','grantFrontEnergyOwnOtherFrontTrait','buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
-    'recoverOutsideColorUnderEnergy','deployOutsideRest','deployOutsideNameRest','deployNamedFromZones','payApDeployNamedRest','inspectTopTraitOutside','deployOutsideTraitlessRestOrRaid','buffOwnField','buffEitherOther','returnPrintedActiveBuff','removeNamedOutsideActive','payHandOrRestForNamed','handTopBuffSelf','optionalRestFrontRecoverAp','drawHandTop','optionalDiscardActiveSelf','oncePerTurnGate','retireBatchOne','retireAtMainEnd','retireSourceOnPhaseEnd','moveAtMainEnd','retireOwnFieldOne','retireOwnCharacterOne','openBlock','resolveSniperBattle','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','resolveAttackEndSwap','phaseOrder','effectMoveOrder','restSelfTuckMovedFaceDown','sourceResolutionBoundary','lifeBatchStep','lifeRelease','advanceAfterAttack','additionalBattleDamage','openRetirementBatch','closeRetirementBatch','retirementOrder','battleImpactDamage','discardOppHand','activeSelfIf','openEnergyMoveGrants','moveOtherAcrossOrRemove','raidBaseEnergyThen','grantSelfAttackDamageThisTurn','restOppFrontLockActive','removeAnyOutsideScale','inspectTopColoredNamesOutside','drawDiscardIfEffectApPaid','activeSelf','restOwnActiveFrontDraw','deployOwnRaidBaseRest','restOrRetireFrontAtMost','peekTopOneIfFieldNames','grantSelfImpactThisTurn','buffNamedImpactDraw','grantOwnNameBlockAtLeast'].includes(e.op)))
+    'recoverOutsideColorUnderEnergy','deployOutsideRest','deployOutsideNameRest','deployNamedFromZones','payApDeployNamedRest','inspectTopTraitOutside','deployOutsideTraitlessRestOrRaid','buffOwnField','buffEitherOther','returnPrintedActiveBuff','removeNamedOutsideActive','payHandOrRestForNamed','handTopBuffSelf','optionalRestFrontRecoverAp','drawHandTop','optionalDiscardActiveSelf','oncePerTurnGate','retireBatchOne','retireAtMainEnd','retireSourceOnPhaseEnd','moveAtMainEnd','retireOwnFieldOne','retireOwnCharacterOne','openBlock','resolveSniperBattle','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','resolveAttackEndSwap','phaseOrder','effectMoveOrder','restSelfTuckMovedFaceDown','sourceResolutionBoundary','lifeBatchStep','lifeRelease','advanceAfterAttack','additionalBattleDamage','openRetirementBatch','closeRetirementBatch','retirementOrder','battleImpactDamage','discardOppHand','activeSelfIf','openEnergyMoveGrants','moveOtherAcrossOrRemove','raidBaseEnergyThen','grantSelfAttackDamageThisTurn','restOppFrontLockActive','removeAnyOutsideScale','inspectTopColoredNamesOutside','drawDiscardIfEffectApPaid','activeSelf','restOwnActiveFrontDraw','deployOwnRaidBaseRest','restOrRetireFrontAtMost','peekTopOneIfFieldNames','grantSelfImpactThisTurn','buffNamedImpactDraw','grantOwnNameBlockAtLeast','deployOutsidePrintedRest','grantPrintedBlockAtLeast'].includes(e.op)))
   throw Error('Invalid queued effects');
  const energyMoves=s.effectQueue.filter(e=>e.op==='openEnergyMoveGrants');
  if(energyMoves.length>1||energyMoves.some(j=>j.owner!==s.active||s.phase!=='attack'||
@@ -6931,11 +7034,11 @@ export function universalPrivateChoices(pack,s,viewer){
      color:card(pack,c).color}:null};
    })};
   if(!q||q.player!==viewer||
-  !['effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-filter-many-choice','effect-top-trait-event','effect-top-order','effect-top-trait-outside','effect-recover-outside','effect-outside-rest','effect-outside-name-rest','effect-outside-traitless-rest','effect-named-zone-entry','effect-hand-rest','effect-hand-named-rest','effect-hand-rest-or-raid','effect-active-own-named','effect-grant-block-at-least','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-selection-hand-payment','effect-hand-bottom','effect-hand-top','effect-discard-active','effect-outside-hand-or-rest','effect-recover-under'].includes(q.kind))
+  !['effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-filter-many-choice','effect-top-trait-event','effect-top-order','effect-top-trait-outside','effect-recover-outside','effect-outside-rest','effect-outside-name-rest','effect-outside-traitless-rest','effect-named-zone-entry','effect-hand-rest','effect-hand-named-rest','effect-hand-rest-or-raid','effect-active-own-named','effect-grant-block-at-least','effect-outside-printed-rest','effect-grant-printed-block','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-selection-hand-payment','effect-hand-bottom','effect-hand-top','effect-discard-active','effect-outside-hand-or-rest','effect-recover-under'].includes(q.kind))
   return null;
  const zone=['effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-filter-many-choice','effect-top-trait-event','effect-top-order','effect-top-trait-outside'].includes(q.kind)?'deck':
-  q.kind==='effect-recover-outside'||q.kind==='effect-outside-rest'||q.kind==='effect-outside-name-rest'||q.kind==='effect-outside-traitless-rest'||q.kind==='effect-outside-hand-or-rest'||q.kind==='effect-recover-under'?'outside':
-  q.kind==='effect-bounce-own'||q.kind==='effect-active-own-named'||q.kind==='effect-grant-block-at-least'?'field':'hand';
+  q.kind==='effect-recover-outside'||q.kind==='effect-outside-rest'||q.kind==='effect-outside-printed-rest'||q.kind==='effect-outside-name-rest'||q.kind==='effect-outside-traitless-rest'||q.kind==='effect-outside-hand-or-rest'||q.kind==='effect-recover-under'?'outside':
+  q.kind==='effect-bounce-own'||q.kind==='effect-active-own-named'||q.kind==='effect-grant-block-at-least'||q.kind==='effect-grant-printed-block'?'field':'hand';
  return {kind:q.kind,player:viewer,options:legalPending(pack,s).map(action=>{
   const physical=action.uid===null?null:
    (zone==='field'?field(s.players[viewer]):s.players[viewer][zone])
