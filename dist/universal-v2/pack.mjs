@@ -1240,7 +1240,7 @@ function normalize(card,packId){
   (mainAbility.requiresOwnName===null||typeof mainAbility.requiresOwnName==='string'&&
    !!mainAbility.requiresOwnName.trim()&&mainAbility.requiresOwnName.length<=80)&&
   Array.isArray(mainAbility.then)&&mainAbility.then.length>=1&&mainAbility.then.length<=2&&
-  mainAbility.then.every(x=>['grantSelfAttackDamageThisTurn','chooseOne','discardGate','grantSelfImpactThisTurn'].includes(x?.op))&&
+  mainAbility.then.every(x=>['grantSelfAttackDamageThisTurn','chooseOne','discardGate','grantSelfImpactThisTurn','enemyBpDown'].includes(x?.op))&&
   Object.keys(mainAbility).length===7&&
   Object.keys(mainAbility).every(k=>['op','oncePerTurn','frontOnly','raidOnly','payAp','requiresOwnName','then'].includes(k));
  if(mainOncePay)verifyProgram(mainAbility.then,card.id+'.mainAbility.then');
