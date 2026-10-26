@@ -87,7 +87,7 @@ export const REZERO_CARDS=[
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-002.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA40BT%2FREZ-1-002",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "alsoEmiliaActive",
   "handDiscount": null,
   "altNames": []
  },
@@ -1328,7 +1328,7 @@ export const REZERO_CARDS=[
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-032.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA40BT%2FREZ-1-032",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "puckImpactDuration",
   "handDiscount": null,
   "altNames": []
  },
@@ -1803,7 +1803,7 @@ export const REZERO_CARDS=[
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-044.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA40BT%2FREZ-1-044",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "ferrisBottomOutside",
   "handDiscount": null,
   "altNames": []
  },
@@ -2359,7 +2359,7 @@ export const REZERO_CARDS=[
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-058.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA40BT%2FREZ-1-058",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "cruschHandBp",
   "handDiscount": null,
   "altNames": []
  },
@@ -2445,7 +2445,7 @@ export const REZERO_CARDS=[
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-060.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA40BT%2FREZ-1-060",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "flugelRevealRetire",
   "handDiscount": null,
   "altNames": []
  },
@@ -4316,7 +4316,7 @@ export const REZERO_CARDS=[
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40ST_REZ-1-107.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA40ST%2FREZ-1-107",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "feltPayBlock",
   "handDiscount": null,
   "altNames": []
  },

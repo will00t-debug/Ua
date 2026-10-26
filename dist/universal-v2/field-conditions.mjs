@@ -87,6 +87,19 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   return s.players[owner].outside.length>=condition.min;
  if(condition.kind==='ownOutsideEventCountAtLeast')
   return s.players[owner].outside.filter(c=>cardCountsAsEvent(printed(c))).length>=condition.min;
+ // 〈エミリア〉があり、場外にイベントが N 枚以上. Both are required.
+ // The named card is an own field character. Outside events include a
+ // character that is also treated as an event. Hand and deck do not count.
+ if(condition.kind==='ownNameAndOutsideEvents'){
+  const events=s.players[owner].outside.filter(c=>cardCountsAsEvent(printed(c))).length;
+  if(events<condition.min)return false;
+  const areas=[s.players[owner].front,s.players[owner].energy];
+  for(const area of areas)for(const c of area){
+   if(!c||printed(c).type!=='character')continue;
+   if(cardHasName(printed(c),condition.name,originalEffectsDisabled(s,c)))return true;
+  }
+  return false;
+ }
  // 「山札からキャラカードを登場させるかレイド」. The ledger is cleared at
  // the next turn start. A paid hand play, a life trigger, and an opponent
  // effect do not qualify. The moved card must be a character.

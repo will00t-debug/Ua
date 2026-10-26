@@ -60,6 +60,15 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-energy-swap':'選擇要交換位置的己方前線',
  'effect-grant-named-impact':'選擇是否賦予衝擊',
  'effect-hand-bp-may':'這次參照手牌角色 BP 時，是否視為 +1000',
+ 'effect-hand-outside-active':'可將 1 張手牌放到場外，使這張角色活動',
+ 'effect-named-duration':'選擇最多 1 張帕克，給予 BP+2000 與衝擊 1',
+ 'effect-top-take-one':'從查看的牌中選 1 張加入手牌，其餘放到場外',
+ 'effect-reveal-optional':'可公開 1 張手牌並放到牌底',
+ 'effect-referenced-bp':'這次參照公開角色的 BP 時，是否視為增加',
+ 'effect-outside-referenced':'從場外選擇符合公開 BP 的藍色角色',
+ 'effect-reveal-retire':'公開 1 張手牌並放到牌底',
+ 'effect-retire-referenced':'可選擇公開 BP 以下的對手前線並使其退場',
+ 'effect-hand-block':'將 1 張手牌放到場外，本回合不被 BP4000 以上的角色阻擋',
  'effect-hand-deploy-may':'這次參照手牌角色 BP 時，是否視為 +1000 並休息登場',
  'effect-hand-rest-entry':'選擇休息登場的位置',
  'effect-active-other':'選擇最多 1 張其他己方角色並使其活動',
@@ -161,6 +170,12 @@ export function uiActionLabel(action,{pack,state}={}){
      [...p.front,...p.energy].some(c=>c?.uid===action.uid&&
       pack.cards[c.cardId]?.mainAbility?.then?.[0]?.op==='activeSelf'))
      ?'起動主要：將這張角色置為活動':
+    action.mode==='frontOnce'&&pack?.cards&&state?.players?.some(p=>
+     [...p.front,...p.energy].some(c=>c?.uid===action.uid&&
+      pack.cards[c.cardId]?.mainAbility?.then?.[0]?.op==='buffEitherField'))
+     ?'起動主要：選擇最多 1 張場上角色，本回合 BP+1000':
+    action.mode==='restLeaveReveal'?'起動主要：休息並退場，公開 1 張手牌放到牌底':
+    action.mode==='handBlock'?'起動主要：將 1 張手牌放到場外，本回合不被 BP4000 以上的角色阻擋':
     action.mode==='energySwap'?'起動主要：與 1 張己方前線角色交換位置':
     action.mode==='ready'?'主要能力：ACTIVE':
     action.mode==='buff'?'主要能力：BP 加成':'主要能力：ACTIVE ＋ BP 加成';
@@ -229,7 +244,20 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseTopTraitEvent':return action.uid===null?'不加入手牌，將其餘卡排列至底部':'公開 '+name()+' 並加入手牌';
   case 'chooseTopOrder':return '依序放回：'+name();
   case 'chooseRestFrontEnergy':return 'REST '+name()+'，本回合產能＋1';
-  case 'chooseEitherBuff':return action.uid===null?'不指定其他角色':'選擇 '+name()+'，本回合 BP+1000';
+  case 'chooseEitherBuff':return action.uid===null?
+   (state?.pending?.includeSelf?'不指定角色':'不指定其他角色'):'選擇 '+name()+'，本回合 BP+1000';
+  case 'chooseHandOutsideActive':return action.uid===null?'不將手牌放到場外':
+   '將 '+name()+' 放到場外，並使這張角色活動';
+  case 'chooseNamedDuration':return action.uid===null?'不指定帕克':
+   '選擇 '+name()+'，給予 BP+2000 與衝擊 1';
+  case 'chooseTopTakeOne':return '將 '+name()+' 加入手牌，其餘放到場外';
+  case 'chooseRevealOptional':return action.uid===null?'不公開手牌':'公開 '+name()+' 並放到牌底';
+  case 'chooseReferencedBp':return action.mode==='accept'?'視為 BP 增加':'維持原本 BP';
+  case 'chooseOutsideReferenced':return action.mode==='hand'?'將 '+name()+' 加入手牌':
+   '使 '+name()+' 以休息狀態登場';
+  case 'chooseRevealRetire':return '公開 '+name()+' 並放到牌底';
+  case 'chooseRetireReferenced':return action.uid===null?'不使角色退場':'使 '+name()+' 退場';
+  case 'chooseHandBlock':return '將 '+name()+' 放到場外';
   case 'chooseReturnPrinted':return action.uid===null?'不放回手牌':'將 '+name()+' 放回手牌，並使這張角色活動且本回合 BP 增加';
   case 'chooseRemoveNamed':return action.uid===null?'不移入移除區':'將 '+name()+' 移入移除區，並使這張角色活動';
   case 'choosePayNamed':return action.mode==='skip'?'不支付，不回收':

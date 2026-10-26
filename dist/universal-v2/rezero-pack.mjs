@@ -81,6 +81,12 @@ export function rezeroEngineKind(effectJa){
  if(e===RAID_PEEK_BEATRICE)return 'raidPeekBeatriceReveal';
  if(e===DECK_ENTRY_ACTIVE)return 'deckCharacterEntryActive';
  if(e===ALSO_EVENT)return 'alsoEvent';
+ if(e===ALSO_EMILIA_ACTIVE)return 'alsoEmiliaActive';
+ if(e===PUCK_IMPACT_DURATION)return 'puckImpactDuration';
+ if(e===CRUSCH_HAND_BP)return 'cruschHandBp';
+ if(e===FERRIS_BOTTOM_OUTSIDE)return 'ferrisBottomOutside';
+ if(e===FLUGEL_REVEAL_RETIRE)return 'flugelRevealRetire';
+ if(e===FELT_PAY_BLOCK)return 'feltPayBlock';
  return null;
 }
 const TOP_OUTSIDE=new Map([
@@ -95,6 +101,12 @@ const DRAW_OR_BEATRICE='【登場時】以下から1つ選ぶ。・カードを1
 const RAID_PEEK_BEATRICE='【レイド】〈ナツキ・スバル〉アクティブにし、フロントLに移動できる【登場時】自分の山札の上から2枚見る。その中から1枚まで場外に置く。残りを望む順で山札の上に置く。カードを1枚引く。【アタック時】【ターン1】APを1支払ってもよい。そうした場合、'+NAMED_REVEAL+'〈ベアトリス〉'+REST_OR_RAID;
 const DECK_ENTRY_ACTIVE='【自分のターン中】このターン中に自分が山札からキャラカードを登場させるかレイドさせている場合、このキャラはBP+500。【登場時】このキャラが自分の効果で登場していた場合、このキャラをアクティブにする。';
 const ALSO_EVENT='このカードは全ての場所でイベントカードとしても扱う。【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、【インパクト】を失う）';
+const ALSO_EMILIA_ACTIVE='このカードは全ての場所でイベントカードとしても扱う。【自分のターン中】自分の場に〈エミリア〉があり、自分の場外にイベントカードが4枚以上ある場合、このキャラはBP+1000。【登場時】自分の場に〈エミリア〉があり、自分の場外にイベントカードが6枚以上ある場合、自分の手札を1枚場外に置いてもよい。そうした場合、このキャラをアクティブにする。';
+const PUCK_IMPACT_DURATION='自分の場の〈パック〉を1枚まで選び、『このターン中』、BP+2000と【インパクト（1）】（アタックしてバトルに勝利した時、相手プレイヤーに1ダメージ）を与える。自分の場外に他のイベントカードが6枚以上ある場合、『次の自分のターン開始時まで』に代わる。';
+const FERRIS_BOTTOM_OUTSIDE='【レイド】〈フェリス〉アクティブにし、フロントLに移動できる【登場時】自分の手札を1枚まで公開し、自分の山札の下に置く。公開したカードがキャラカードの場合、自分の場外から、〈フェリス〉以外の消費APが1で公開したカードのBP以下の青のキャラカードを1枚手札に加えるか自分の場にレストで登場させる。';
+const CRUSCH_HAND_BP='【レイド】〈クルシュ・カルステン〉アクティブにし、フロントLに移動できる【フロントLにある場合】自分の効果で自分の手札のキャラカードのBPを参照する場合、BP+1000されたものとして扱ってもよい。【登場時】自分の山札の上から2枚見る。その中からカードを1枚手札に加え、残りを場外に置く。【起動メイン】【フロントLにある場合】 【ターン1】自分か相手の場のキャラを1枚まで選び、このターン中、BP+1000。';
+const FLUGEL_REVEAL_RETIRE='【起動メイン】【レストにする】 【このカードを退場させる】自分の手札を1枚公開し、自分の山札の下に置く。公開したカードがキャラカードの場合、公開したカードのBP以下の相手のフロントLのキャラを1枚まで選び、退場させる。〈フリューゲルの大樹〉のこの効果は1ターンに1回のみ発動できる。';
+const FELT_PAY_BLOCK='【登場時】APを1支払ってもよい。そうした場合、以下から1つ選ぶ。・相手は自身の手札を1枚場外に置き、自分はカードを1枚引く。・このキャラをアクティブにし、自分の場外から〈徽章〉を1枚まで手札に加える。【起動メイン】【手札を1枚場外に置く】 【ターン1】このキャラはこのターン中、「このキャラはBP4000以上のキャラにブロックされない。」を得る。';
 const TRIAL_NAME=REZERO_CARDS.find(c=>c.id==='REZ-1-098').nameJa;
 const SEARCH_SEVEN='【登場時】自分の山札の上から7枚見る。その中から〈'+TRIAL_NAME+'〉を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。';
 const ALIAS_PREFIX='このカードは〈クルシュ・カルステン〉としても〈フェリス〉としても扱う。';
@@ -185,6 +197,16 @@ function onPlay(card,kind){
  if(kind==='trialRestAp')return [{op:'drawDiscard',count:2,discardCount:1},
   {op:'optionalRestFrontRecoverAp'}];
  if(kind==='libraryField')return [{op:'optionalDiscardActiveSelf'}];
+ if(kind==='alsoEmiliaActive')return [{op:'optionalHandOutsideActiveIf',name:'エミリア',minEvents:6}];
+ if(kind==='puckImpactDuration')return [{op:'buffNamedImpactDuration',name:'パック',bp:2000,impact:1,optional:true,otherOutsideEvents:6}];
+ if(kind==='cruschHandBp')return [{op:'takeTopHandRestOutside',count:2}];
+ if(kind==='ferrisBottomOutside')return [{op:'revealHandBottomOutsideCharacter',optional:true,excludeName:'フェリス',color:'blue',ap:1}];
+ if(kind==='feltPayBlock')return [{op:'optionalPayApThen',ap:1,optional:true,then:[{op:'chooseOne',optional:false,options:[
+  {id:'oppDiscardDraw',label:'對手將1張手牌放到場外，自己抽1張',turn:'any',
+   then:[{op:'discardOppHand',count:1},{op:'draw',count:1}]},
+  {id:'activeBadge',label:'使這張角色活動，並將場外徽章加入手牌',turn:'any',
+   then:[{op:'activeSelf'},{op:'recoverOutsideOne',filter:{field:'name',value:'徽章'},optional:true}]}
+ ]}]}];
  return null;
 }
 export function rezeroPackCard(card){
@@ -341,6 +363,14 @@ export function rezeroPackCard(card){
    condition:{kind:'ownPrintedCharacter',turn:'own',zone:'front',excludeSelf:false,
     name:'ナツキ・スバル',color:'blue',energy:0},bp:1000}]}:{}),
   ...(kind==='aliasTopKeep'?{nameAliases:['クルシュ・カルステン','フェリス']}:{}),
+  ...(kind==='alsoEmiliaActive'?{alsoEvent:true,passiveBonuses:[{
+   bp:1000,condition:{kind:'ownNameAndOutsideEvents',turn:'own',name:'エミリア',min:4}}]}:{}),
+  ...(kind==='cruschHandBp'?{raidName:'クルシュ・カルステン',handBpMayWhileFront:1000,mainAbility:{
+   op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,
+   then:[{op:'buffEitherField',bp:1000,optional:true}]}}:{}),
+  ...(kind==='ferrisBottomOutside'?{raidName:'フェリス'}:{}),
+  ...(kind==='flugelRevealRetire'?{mainAbility:{op:'restLeaveRevealRetire',oncePerName:true}}:{}),
+  ...(kind==='feltPayBlock'?{mainAbility:{op:'handOutsideBlockAtLeast',oncePerTurn:true,bp:4000}}:{}),
   ...(triggerEffect?{triggerEffect}:{})
  };
 }

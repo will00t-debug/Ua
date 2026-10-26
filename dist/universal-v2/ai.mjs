@@ -1,6 +1,6 @@
 // Cross-title Universal v2 AI baseline. Uses only the native legal-action
 // list; no work-specific card-ID shortcuts and no mutation of match state.
-import {legalUniversalActions,dispatchUniversalAction,universalBp,universalEnergy,universalEnergyByColor,universalCardEnergy,handRevealIdentity} from './engine.mjs';
+import {legalUniversalActions,dispatchUniversalAction,universalBp,universalEnergy,universalEnergyByColor,universalCardEnergy,handRevealIdentity,handCharacterBpMayAmount} from './engine.mjs';
 import {cardCountsAsEvent} from './field-conditions.mjs';
 export const UNIVERSAL_AI_LEVELS=Object.freeze(['easy','normal','hard']);
 const packsOf=pack=>Array.isArray(pack)?pack:[pack,pack];
@@ -134,6 +134,41 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='effect-buff-own')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-named-impact')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-buff-either')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-hand-outside-active')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-named-duration')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-top-take-one')return legal[0];
+ if(s.pending?.kind==='effect-reveal-optional'){
+  const catalog=packsOf(pack)[s.pending.player].cards;
+  const hand=s.players[s.pending.player].hand;
+  return [...legal].sort((a,b)=>{
+   const score=uid=>{
+    if(uid===null)return -1;
+    const printed=catalog[hand.find(c=>c.uid===uid)?.cardId];
+    return printed?.type==='character'&&Number.isInteger(printed.bp)?printed.bp:0;
+   };
+   return score(b.uid)-score(a.uid);
+  })[0];
+ }
+ if(s.pending?.kind==='effect-referenced-bp')return legal.find(a=>a.mode==='accept')||legal[0];
+ if(s.pending?.kind==='effect-outside-referenced')return legal.find(a=>a.mode==='hand')||legal[0];
+ if(s.pending?.kind==='effect-reveal-retire'){
+  const catalog=packsOf(pack)[s.pending.player].cards;
+  const hand=s.players[s.pending.player].hand;
+  return [...legal].sort((a,b)=>{
+   const score=uid=>{
+    const printed=catalog[hand.find(c=>c.uid===uid)?.cardId];
+    return printed?.type==='character'&&Number.isInteger(printed.bp)?printed.bp:0;
+   };
+   return score(b.uid)-score(a.uid);
+  })[0];
+ }
+ if(s.pending?.kind==='effect-retire-referenced')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-hand-block'){
+  const catalog=packsOf(pack)[s.pending.player].cards;
+  const hand=s.players[s.pending.player].hand;
+  return [...legal].sort((a,b)=>(catalog[hand.find(c=>c.uid===a.uid)?.cardId]?.energy||0)-
+   (catalog[hand.find(c=>c.uid===b.uid)?.cardId]?.energy||0))[0];
+ }
  if(s.pending?.kind==='effect-return-printed')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-remove-named')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-pay-named')return legal.find(a=>a.mode==='hand')||
@@ -154,9 +189,7 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
    const score=uid=>{
     const printed=catalog[hand.find(c=>c.uid===uid)?.cardId];
     const shown=handRevealIdentity(printed);
-    const may=s.players[s.pending.player].handCharacterBpMay;
-    const bonus=may&&may.turn===s.turn&&may.amount===1000&&
-     shown.type==='character'?1000:0;
+    const bonus=shown.type==='character'?handCharacterBpMayAmount(pack,s,s.pending.player):0;
     const referenced=Number.isInteger(shown.bp)?shown.bp+bonus:null;
     return shown.type==='character'&&referenced>=s.pending.minPrintedBp?referenced:0;
    };
