@@ -2282,6 +2282,15 @@ function resolveChoice(s,a,pack){
   const blockKeyword=card(pack,blocker).readyOnBlockCount;
   if(blockKeyword&&blocked===blockKeyword&&!originalEffectsDisabled(s,blocker))
    attemptFieldActive(s,q.player,blocker);
+  // Q552 (2023-09-25): レイド状態 is a 【レイド】 card with a face-up card
+  // underneath. The printed replacement is applied before this battle's BP
+  // comparison, and each block applies it again.
+  const blockShift=card(pack,blocker).blockRaidBp;
+  if(blockShift&&!originalEffectsDisabled(s,blocker)){
+   const raidState=!!card(pack,attacker).raidName&&
+    (attacker.stack||[]).some(x=>x.faceDown!==true);
+   blocker.buffs.push({bp:raidState?blockShift.raid:blockShift.plain,untilTurn:s.turn});
+  }
   if(bp(pack,s,attacker)>=bp(pack,s,blocker)){
    grantBattleWinToOtherOwn(pack,s,s.active,attacker,'attacker');
    const impact=impactOnBattleWin(pack,s,attacker)>0&&

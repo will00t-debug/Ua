@@ -165,9 +165,13 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 // BLC-1-026 UA08BT: 自分の【レイド】を持つキャラカードはこのキャラにレイドできる。
 //   Q553 (2023-09-25) waives the named base and the conditions to the right
 //   of 【レイド】. Silence and a buried host do not. Generated energy is 黄.
+// BLC-1-025 UA08BT: ブロック時 this character gets BP-1000 this turn. Q552
+//   (2023-09-25): a 【レイド】 attacker with a face-up card underneath
+//   replaces that with BP+1000. Applied before the battle comparison.
+//   Generated energy is 黄. No trigger.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -238,12 +242,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers fifty-six whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,492);
- assert.equal(EXPECTED_V2_COUNTS.bleach,216);
+test('C29 registers fifty-seven whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,493);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,217);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,216);
+ assert.equal(Object.keys(bleach.cards).length,217);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -4722,4 +4726,138 @@ test('BLC-1-026 lets any own Raid character raid onto it and waives printed cond
  assert.equal(assertUniversalMatch(first.packs,stacked),true);
  assert.equal(assertUniversalMatch(lined.packs,moved),true);
  assert.equal(assertUniversalMatch(labPacks,waived),true);
+});
+
+test('BLC-1-025 replaces its block BP before the battle comparison',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-1-025');
+ assert.equal(printed.effect,'阻擋時：此角色本回合 BP −1000；若攻擊中的敵方角色處於 Raid 狀態，改為 BP +1000。');
+ assert.equal(printed.nameJa,'ロイド・ロイド（L）');
+ assert.equal(printed.number,'UA08BT/BLC-1-025');
+ assert.equal(printed.traits,'星十字騎士團');
+ assert.equal(printed.energy,3);
+ assert.equal(printed.ap,1);
+ assert.equal(printed.bp,3500);
+ assert.equal(printed.gen,1);
+ assert.equal(printed.trigger,null);
+ assert.equal(printed.color,'yellow');
+ const card=bleach.cards['BLC-1-025'];
+ assert.equal(card.name,'ロイド・ロイド（L）');
+ assert.deepEqual(card.blockRaidBp,{plain:-1000,raid:1000});
+ assert.equal(card.gen,1);
+ assert.equal(card.trigger,null);
+ assert.equal(card.triggerEffect,null);
+ assert.deepEqual(card.effects,{});
+ assert.deepEqual(card.traits,['星十字騎士團']);
+ const bare={id:'BAD',name:'阻擋',color:'yellow',type:'character',energy:0,ap:1,bp:3500,gen:1,traits:[],trigger:null,implementation:'dsl',effects:{},blockRaidBp:{plain:-1000,raid:1000}};
+ assert.throws(()=>createUniversalPack({id:'bad-block-event',cards:[{...bare,type:'event',bp:0}]}),/invalid block Raid BP shift/);
+ assert.throws(()=>createUniversalPack({id:'bad-block-zero',cards:[{...bare,blockRaidBp:{plain:0,raid:1000}}]}),/invalid block Raid BP shift/);
+ assert.throws(()=>createUniversalPack({id:'bad-block-same',cards:[{...bare,blockRaidBp:{plain:-1000,raid:-1000}}]}),/invalid block Raid BP shift/);
+ assert.throws(()=>createUniversalPack({id:'bad-block-key',cards:[{...bare,blockRaidBp:{plain:-1000,raid:1000,extra:1}}]}),/invalid block Raid BP shift/);
+ assert.throws(()=>createUniversalPack({id:'bad-block-vanilla',cards:[{...bare,implementation:'vanilla'}]}),/claims vanilla despite printed\/declared effects/);
+ const deck=realDeck(['BLC-1-025','BLC-1-001','BLC-1-007','BLC-1-004','BLC-1-002','BLC-1-012','BLC-1-018','BLC-1-021'],'yellow');
+ function fight(packs,s,attackerUid,blockerUid){
+  for(let n=0;n<6&&s.phase!=='attack';n++)
+   s=dispatchUniversalAction(packs,s,{type:'next'});
+  live(s,0,attackerUid).ready=true;
+  live(s,1,blockerUid).ready=true;
+  s=dispatchUniversalAction(packs,s,{type:'attack',uid:attackerUid});
+  assert.equal(s.pending?.kind,'block');
+  s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:blockerUid},{actor:1});
+  while(s.pending?.kind==='life-trigger')
+   s=dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'skip'},{actor:s.pending.player});
+  return s;
+ }
+ const cut=main(deck,30525);
+ const ordinary=put(cut.s,0,'BLC-1-007','front',0,true);
+ const wall=put(cut.s,1,'BLC-1-025','front',0,true);
+ let reduced=fight(cut.packs,cut.s,ordinary.uid,wall.uid);
+ assert.equal(reduced.players[0].front.some(c=>c?.uid===ordinary.uid),true);
+ assert.equal(reduced.players[1].outside.some(c=>c.uid===wall.uid),true);
+ const quiet=main(deck,30535);
+ const loud=put(quiet.s,0,'BLC-1-007','front',0,true);
+ const silenced=put(quiet.s,1,'BLC-1-025','front',0,true);
+ let held=quiet.s;
+ for(let n=0;n<6&&held.phase!=='attack';n++)
+  held=dispatchUniversalAction(quiet.packs,held,{type:'next'});
+ grantContinuousState(held,{kind:'originalEffectsDisabled',controller:1,sourceUid:loud.uid,
+  targetUid:silenced.uid,until:{player:0,phase:'attack',edge:'end'}});
+ live(held,0,loud.uid).ready=true;
+ live(held,1,silenced.uid).ready=true;
+ held=dispatchUniversalAction(quiet.packs,held,{type:'attack',uid:loud.uid});
+ held=dispatchUniversalAction(quiet.packs,held,{type:'chooseBlock',uid:silenced.uid},{actor:1});
+ assert.equal(held.players[0].outside.some(c=>c.uid===loud.uid),true);
+ const stood=live(held,1,silenced.uid);
+ assert.equal(universalBp(quiet.packs,held,stood),3500);
+ assert.equal((stood.buffs||[]).some(b=>b.bp),false);
+ const doubled=main(deck,30536);
+ const firstHit=put(doubled.s,0,'BLC-1-001','front',0,true);
+ const secondHit=put(doubled.s,0,'BLC-1-001','front',1,true);
+ const twice=put(doubled.s,1,'BLC-1-025','front',0,true);
+ let once=doubled.s;
+ for(let n=0;n<6&&once.phase!=='attack';n++)
+  once=dispatchUniversalAction(doubled.packs,once,{type:'next'});
+ live(once,0,firstHit.uid).ready=true;
+ live(once,1,twice.uid).ready=true;
+ once=dispatchUniversalAction(doubled.packs,once,{type:'attack',uid:firstHit.uid});
+ once=dispatchUniversalAction(doubled.packs,once,{type:'chooseBlock',uid:twice.uid},{actor:1});
+ const shifted=live(once,1,twice.uid);
+ assert.equal(universalBp(doubled.packs,once,shifted),2500);
+ assert.deepEqual(shifted.buffs.map(b=>b.bp),[-1000]);
+ assert.equal(once.players[0].outside.some(c=>c.uid===firstHit.uid),true);
+ shifted.ready=true;
+ live(once,0,secondHit.uid).ready=true;
+ once=dispatchUniversalAction(doubled.packs,once,{type:'attack',uid:secondHit.uid});
+ once=dispatchUniversalAction(doubled.packs,once,{type:'chooseBlock',uid:twice.uid},{actor:1});
+ assert.equal(once.players[1].outside.some(c=>c.uid===twice.uid),true);
+ assert.equal(once.players[0].front.some(c=>c?.uid===secondHit.uid),true);
+ const fading=main(deck,30537);
+ const small=put(fading.s,0,'BLC-1-001','front',0,true);
+ const lasting=put(fading.s,1,'BLC-1-025','front',0,true);
+ let stayed=fight(fading.packs,fading.s,small.uid,lasting.uid);
+ assert.equal(universalBp(fading.packs,stayed,live(stayed,1,lasting.uid)),2500);
+ for(let n=0;n<12&&stayed.active===0;n++)
+  stayed=dispatchUniversalAction(fading.packs,stayed,{type:'next'});
+ assert.equal(stayed.active,1);
+ assert.equal(universalBp(fading.packs,stayed,live(stayed,1,lasting.uid)),3500);
+ const raided=main(deck,30538);
+ for(const [i,id] of ['BLC-1-012','BLC-1-018','BLC-1-021','BLC-1-001'].entries())
+  put(raided.s,0,id,'energy',i);
+ const base=put(raided.s,0,'BLC-1-002','front',0);
+ const rider=take(raided.s,0,'BLC-1-004');
+ raided.s.players[0].hand.push(rider);
+ let topped=dispatchUniversalAction(raided.packs,raided.s,{type:'raid',uid:rider.uid,baseUid:base.uid,slot:0});
+ assert.equal(topped.pending,null);
+ assert.equal(topped.players[0].front[0].stack[0].faceDown,undefined);
+ const raidWall=put(topped,1,'BLC-1-025','front',0,true);
+ let favored=fight(raided.packs,topped,rider.uid,raidWall.uid);
+ assert.equal(favored.players[0].outside.some(c=>c.uid===rider.uid),true);
+ const boosted=live(favored,1,raidWall.uid);
+ assert.equal(universalBp(raided.packs,favored,boosted),4500);
+ assert.deepEqual(boosted.buffs.map(b=>b.bp),[1000]);
+ const namedOnly=main(deck,30539);
+ const bareRider=put(namedOnly.s,0,'BLC-1-004','front',0,true);
+ const plainWall=put(namedOnly.s,1,'BLC-1-025','front',0,true);
+ let missed=fight(namedOnly.packs,namedOnly.s,bareRider.uid,plainWall.uid);
+ assert.equal(missed.players[1].outside.some(c=>c.uid===plainWall.uid),true);
+ assert.equal(missed.players[0].front.some(c=>c?.uid===bareRider.uid),true);
+ const hidden=main(deck,30540);
+ const buried=take(hidden.s,0,'BLC-1-002');
+ buried.faceDown=true;
+ const covered=take(hidden.s,0,'BLC-1-004');
+ covered.stack=[buried];
+ covered.ready=true;
+ covered.fieldEntryStamp=hidden.s.nextFieldEntryStamp++;
+ hidden.s.players[0].front[0]=covered;
+ const blind=put(hidden.s,1,'BLC-1-025','front',0,true);
+ let facedown=fight(hidden.packs,hidden.s,covered.uid,blind.uid);
+ assert.equal(facedown.players[1].outside.some(c=>c.uid===blind.uid),true);
+ assert.equal(facedown.players[0].front.some(c=>c?.uid===covered.uid),true);
+ aiOk(cut.packs,reduced);
+ assert.equal(assertUniversalMatch(cut.packs,reduced),true);
+ assert.equal(assertUniversalMatch(quiet.packs,held),true);
+ assert.equal(assertUniversalMatch(doubled.packs,once),true);
+ assert.equal(assertUniversalMatch(fading.packs,stayed),true);
+ assert.equal(assertUniversalMatch(raided.packs,favored),true);
+ assert.equal(assertUniversalMatch(namedOnly.packs,missed),true);
+ assert.equal(assertUniversalMatch(hidden.packs,facedown),true);
 });

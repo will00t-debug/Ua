@@ -143,7 +143,8 @@ const testForKind=Object.freeze({
  energyApRestBuff:'tests/v2-c29-bleach-port.test.mjs',
  chooseBuffOrAttackEndRetire:'tests/v2-c29-bleach-port.test.mjs',
  discardVisoredRest:'tests/v2-c29-bleach-port.test.mjs',
- raidHostAny:'tests/v2-c29-bleach-port.test.mjs'
+ raidHostAny:'tests/v2-c29-bleach-port.test.mjs',
+ blockRaidBp:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -162,7 +163,9 @@ function contributedEntry(profile){
   definition:Object.freeze(definition),
   evidence:Object.freeze({
    printedTextFragments:Object.freeze([profile.effect]),
-   reviewNote:profile.id==='BLC-1-026'?
+   reviewNote:profile.id==='BLC-1-025'?
+    'UA08BT/BLC-1-025 official iframe 2026-10-26. On block, this character gets BP-1000 this turn. Q552 (2023-09-25): if the attacking character has 【レイド】 and a face-up card underneath, the shift is BP+1000 instead. A Raid name with an empty stack, or only face-down undercards, stays the plain shift. The shift is applied before the battle BP comparison and stacks on each block. Silence skips it. Generated energy is 黄. No trigger.':
+   profile.id==='BLC-1-026'?
     'UA08BT/BLC-1-026 official iframe 2026-10-26. Any own character with 【レイド】 may Raid onto this character. Q553 (2023-09-25): the conditions written to the right of 【レイド】 are waived, and so is the named base. A buried copy is not the visible host. Silence removes the permission and ordinary name matching applies. Generated energy is 黄. No trigger.':
    profile.id==='BLC-4-072'?
     'EX15BT/BLC-4-072 official iframe 2026-10-26. On play, may put one hand card outside. If that payment happens, may REST up to one own outside character whose printed AP is 1, whose trait is the catalogue token 假面軍勢 (official 仮面の軍勢), and whose required energy the controller currently meets. Q2341 (2026-09-04): the card just sent outside may be the one that enters. A Raid name still enters as an ordinary REST character. Generated energy is 緑. No trigger.':
