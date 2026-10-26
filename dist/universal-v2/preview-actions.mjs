@@ -64,6 +64,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'main-two-buff':'主要能力選擇 BP 對象',
  'main-discard-buff':'支付一張手牌，讓自身 BP 增加',
  'effect-grant-attack':'授予己方角色攻擊時能力','granted-attack-draw':'攻擊時是否抽一張',
+ 'effect-outside-trait-entry':'從場外將指定特徵角色登場',
  'effect-target':'指定角色','effect-target-many':'最多選擇兩名不同敵方角色','raid-effect-order':'突襲能力結算順序',
  'effect-move-order':'選擇同時取得的移動觸發處理順序',
  'effect-rest-tuck':'是否 REST 角色，放置剛送至場外的手牌',
@@ -264,7 +265,9 @@ export function uiActionLabel(action,{pack,state}={}){
    '不指定 AP 加價保護角色':'令 '+name()+' 於對手下一回合被卡牌效果指定時，對手須額外支付 1 AP';
   case 'chooseAttackBan':return action.uid===null?'不指定攻擊禁止對象':
    '令 '+name()+' 至下個己方回合開始前不能攻擊';
-  case 'chooseGrantAttack':return '授予 '+name()+' 本回合攻擊時抽牌';
+  case 'chooseGrantAttack':return action.uid===null?'不授予攻擊時抽牌':'授予 '+name()+' 本回合攻擊時抽牌';
+  case 'chooseOutsideTrait':return action.uid===null?'不從場外登場':
+   ((state?.pending?.ready?'ACTIVE 登場 ':'REST 登場 ')+name()+suffix());
   case 'chooseGrantedDraw':return action.mode==='draw'?'使用獲得的攻擊時抽 1 張':'不抽牌';
   case 'chooseTarget':
    return action.uid===null?'不指定／完成':'指定 '+name();

@@ -64,3 +64,13 @@ Registered:
 - UA51BT/SLG-1-075 デイリークエスト. It does not enter ACTIVE, so the REST mains are not legal on the turn it is paid from hand. One main RESTs and, while an own character named 水篠 旬 is on the field, puts the top deck card facedown under this field. The other RESTs, discards one hand card, may send one facedown card from under an own card outside, and only after that send may recover one own outside character named 水篠 旬 with energy 0 or less. New shared field mains `restTuckTopIfName` and `restDiscardFacedownRecover`.
 
 Official pages were not re-read. GET life stays on the shared handler. Not a full FAQ certification.
+
+## Batch 8 — three events
+
+Registered:
+
+- UA51BT/SLG-1-077 架南島レイド攻略開始. Retires one opponent front character of BP 2000 or less. Five or more own field cards with 第四次架南島レイド raise that ceiling to 5000. `retireOppFrontUnderBp` now accepts that trait count. Five or more distinct printed names of the same trait may give one own character, including a character without the trait, BP+1000 this turn. New shared op `buffOwnIfDistinctTrait`. The catalogue says 張, so fields are counted with characters. No registered field has this trait, so the scenarios use characters. Five copies of one name do not open the BP choice. SPECIAL life is the shared unconditional front retirement, separate from the printed ceiling.
+- UA51BT/SLG-1-080 舞姫. Draws 1, then may give one own character named 向坂 雫 an attack-time draw of up to one card this turn. `grantOnAttack` accepts that printed name, and an event that has already moved outside remains a legal source. The catalogue body does not restate the DRAW life icon. DRAW life stays on the shared handler.
+- UA51BT/SLG-1-039 影の君主. Choose one: up to one own outside 影の軍団 character enters ACTIVE, or up to two own outside 影の軍団 characters of energy 3 or less enter REST. New shared op `deployOutsideTrait`. The catalogue trait list is empty; the token is taken from the effect sentence. An energy-4 影の軍団 character is legal only in the ACTIVE mode. SPECIAL life is the shared unconditional front retirement.
+
+Official pages were not re-read. Not a full FAQ certification.

@@ -143,7 +143,7 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  }
  if(s.pending?.kind==='effect-hand-rest')return difficulty==='easy'?legal[0]:
    legal.find(x=>x.uid!==null&&!x.replaceUid)||legal[0];
-  if(['effect-outside-rest','effect-outside-traitless-rest'].includes(s.pending?.kind))
+  if(['effect-outside-rest','effect-outside-traitless-rest','effect-outside-trait-entry'].includes(s.pending?.kind))
   return difficulty==='easy'?legal[0]:
    legal.find(x=>x.mode==='raid'&&!x.replaceUid)||
    legal.find(x=>x.uid!==null&&!x.replaceUid)||legal[0];
@@ -224,7 +224,9 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  }
  if(s.pending?.kind==='block')return chooseBlock(pack,s,legal,difficulty);
  if(s.pending?.kind==='granted-attack-draw')return legal.find(x=>x.mode==='draw')||legal[0];
- if(s.pending?.kind==='effect-grant-attack')return legal[0];
+ if(s.pending?.kind==='effect-grant-attack')
+  return difficulty==='easy'?legal.find(a=>a.uid===null)||legal[0]:
+   legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-target-many')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-target'){
   const choices=legal.filter(a=>a.uid!==null).map(a=>({

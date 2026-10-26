@@ -784,6 +784,44 @@ const authored=[
    {"id":"tuck","op":"restTuckTopIfName","name":"水篠 旬"},
    {"id":"recover","op":"restDiscardFacedownRecover","name":"水篠 旬","energy":0}
   ]
+},
+{
+  "id":"SLG-1-077","name":"架南島レイド攻略開始","color":"green","energy":4,
+  "ap":1,"bp":0,"gen":0,"trigger":"special","type":"event",
+  "textAnchor":"選1張敵方前線BP2000以下角色退場",
+  "implementation":"dsl",
+  "triggerEffect":{"op":"retireOppFront"},
+  "effects":{"onPlay":[
+   {"op":"retireOppFrontUnderBp","bp":2000,"bonusTrait":"第四次架南島レイド",
+    "bonusMin":5,"bonusBp":5000},
+   {"op":"buffOwnIfDistinctTrait","trait":"第四次架南島レイド","min":5,
+    "bp":1000,"optional":true}
+  ]}
+},
+{
+  "id":"SLG-1-080","name":"舞姫","color":"green","energy":2,
+  "ap":1,"bp":0,"gen":0,"trigger":"draw","type":"event",
+  "textAnchor":"最多選己方1張向坂雫",
+  "implementation":"dsl","effects":{"onPlay":[
+   {"op":"draw","count":1},
+   {"op":"grantOnAttack","target":"ownCharacter","optional":true,
+    "until":"endOfTurn","name":"向坂 雫","then":[{"op":"draw","count":1}]}
+  ]}
+},
+{
+  "id":"SLG-1-039","name":"影の君主","color":"purple","energy":5,
+  "ap":1,"bp":0,"gen":0,"trigger":"special","type":"event",
+  "textAnchor":"從場外將最多1張影之軍團角色以ACTIVE登場",
+  "implementation":"dsl",
+  "triggerEffect":{"op":"retireOppFront"},
+  "effects":{"onPlay":[{"op":"chooseOne","optional":false,"options":[
+   {"id":"active","label":"場外最多1張影之軍團以ACTIVE登場","turn":"any",
+    "then":[{"op":"deployOutsideTrait","trait":"影の軍団","count":1,
+     "ready":true,"optional":true}]},
+   {"id":"rest","label":"場外最多2張能源3以下影之軍團以REST登場","turn":"any",
+    "then":[{"op":"deployOutsideTrait","trait":"影の軍団","count":2,
+     "ready":false,"optional":true,"maxEnergy":3}]}
+  ]}]}
 }
 ];
 export const SLG_V2_VERIFIED_IDS=Object.freeze(authored.map(c=>c.id));
