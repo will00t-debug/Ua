@@ -1253,8 +1253,14 @@ function normalize(card,packId){
   Object.keys(mainAbility).length===5&&
   Object.keys(mainAbility).every(k=>['op','frontOnly','oncePerTurn','requireOwnEffectRest','then'].includes(k));
  if(mainNamedEnergy)verifyProgram(mainAbility.then,card.id+'.mainAbility.then');
+ const mainRestedRetireImpact=mainAbility?.op==='restedFrontRetireReadyImpact'&&
+  card.type==='character'&&mainAbility.frontOnly===true&&mainAbility.oncePerTurn===true&&
+  mainAbility.bp===1500&&Object.keys(mainAbility).length===4&&
+  Object.keys(mainAbility).every(k=>['op','frontOnly','oncePerTurn','bp'].includes(k));
+ if(mainAbility?.op==='restedFrontRetireReadyImpact'&&!mainRestedRetireImpact)
+  throw Error(card.id+' unsupported rested front retirement');
  if(mainAbility!==null&&
-  (!['character','field'].includes(card.type)||!(fieldDualMain||fieldRestRetireThen||fieldPeek||fieldRestDrawTop||card.type==='character'&&(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainRestBuff||mainPayAp||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainRestDiscardRetire||mainFrontProgram||mainNameDrawDiscard||mainOwnEffectRest||mainNamedEnergy||mainFieldOnceBuff||mainEntryProtect||mainRestRetireUnder||mainRestTwoMove||mainOncePay||mainRevealBottom||mainRevealImpact||mainHandPayReveal||mainRestActiveFrontDraw))))
+  (!['character','field'].includes(card.type)||!(fieldDualMain||fieldRestRetireThen||fieldPeek||fieldRestDrawTop||card.type==='character'&&(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainRestBuff||mainPayAp||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainRestDiscardRetire||mainFrontProgram||mainNameDrawDiscard||mainOwnEffectRest||mainNamedEnergy||mainFieldOnceBuff||mainEntryProtect||mainRestRetireUnder||mainRestTwoMove||mainOncePay||mainRevealBottom||mainRevealImpact||mainHandPayReveal||mainRestActiveFrontDraw||mainRestedRetireImpact))))
   throw Error(card.id+' unsupported main action ability');
  const passiveBonuses=validatePassiveBonuses(card);
  const implemented=card.implementation;

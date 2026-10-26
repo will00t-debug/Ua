@@ -3605,6 +3605,27 @@ function resolveChoice(s,a,pack){
   if(!retire(pack,s,opponent,'front',slot,{by:'opponent'}))continueEffectQueue(pack,s);
   return;
  }
+ if(q.kind==='effect-rested-retire-impact'){
+  const source=p.front.find(c=>c?.uid===q.sourceUid&&c.fieldEntryStamp===q.sourceStamp);
+  const ability=source&&card(pack,source).mainAbility;
+  if(!source||source.ready!==false||ability?.op!=='restedFrontRetireReadyImpact'||
+   ability.bp!==1500||!s.mainAbilityUsedUids.includes(source.uid))
+   throw Error('Illegal rested front retirement');
+  let slot=-1;
+  if(a.uid!==null){
+   const foe=1-q.player;
+   slot=s.players[foe].front.findIndex(c=>c?.uid===a.uid);
+   if(slot<0||!q.choices.includes(a.uid)||bp(pack,s,s.players[foe].front[slot])>q.ceiling)
+    throw Error('Illegal rested front retirement target');
+  }
+  s.pending=null;
+  source.ready=true;
+  source.impactGranted={turn:s.turn,stamp:source.fieldEntryStamp,amount:1};
+  if(a.uid!==null&&!retire(pack,s,1-q.player,'front',slot,{by:'opponent'}))
+   continueEffectQueue(pack,s);
+  else if(a.uid===null)continueEffectQueue(pack,s);
+  return;
+ }
  if(q.kind==='effect-rest-outside-events'){
   if(a.uid===null){s.pending=null;continueEffectQueue(pack,s);return;}
   const source=field(p).find(c=>c.uid===q.sourceUid);
@@ -4357,6 +4378,10 @@ function legalPending(pack,s){
    {type:'chooseRestOutsideEvents',uid:null},
    ...q.choices.map(uid=>({type:'chooseRestOutsideEvents',uid}))
   ];
+  if(q.kind==='effect-rested-retire-impact')return [
+   {type:'chooseRestedRetire',uid:null},
+   ...q.choices.map(uid=>({type:'chooseRestedRetire',uid}))
+  ];
   if(q.kind==='effect-hand-bp-may')return [
    {type:'chooseHandBpMay',mode:'accept'},{type:'chooseHandBpMay',mode:'decline'}];
   if(q.kind==='effect-hand-deploy-may')return [
@@ -4585,7 +4610,7 @@ function eventMandatoryTargetsAvailable(pack,s,owner,d,reservedAp=d.ap,reservedH
 // not a cost of playing a card, attacking or blocking.
 // The existing pending action is the exact resolution boundary; no new queue.
 const TARGETING_CARD_EFFECT_CHOICES=new Set([
- 'chooseRetireBp','chooseRetireAtLeast','chooseRetireAtMost','chooseRetireScaled','chooseRestOrRetire','chooseRestBp','chooseRestOutsideEvents','chooseTarget','chooseTargetMany','chooseNamedOutsideBounceRetire',
+ 'chooseRetireBp','chooseRetireAtLeast','chooseRetireAtMost','chooseRetireScaled','chooseRestOrRetire','chooseRestBp','chooseRestOutsideEvents','chooseRestedRetire','chooseTarget','chooseTargetMany','chooseNamedOutsideBounceRetire',
  'chooseRaidTopStrip','chooseAttackBan','chooseRestLock','chooseEitherBuff'
 ]);
 const TARGETING_LIFE_MODES=new Set([
@@ -4831,6 +4856,11 @@ export function legalUniversalActions(pack,s){
     // required before the controller can pay the activation cost.
     if(c.ready&&s.players[1-p].front.some(Boolean))
      out.push({type:'activate',uid:c.uid,mode:'selfRestEnemy'});
+    continue;
+   }
+   if(ability.op==='restedFrontRetireReadyImpact'){
+    if(!c.ready&&!s.mainAbilityUsedUids.includes(c.uid))
+     out.push({type:'activate',uid:c.uid,mode:'restedRetireImpact'});
     continue;
    }
    if(ability.op==='frontOnceProgram'){
@@ -5323,6 +5353,24 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
     continueEffectQueue(pack,s);
     break;
    }
+   if(ability.op==='restedFrontRetireReadyImpact'){
+    const onFront=pl.front.some(c=>c?.uid===selected.uid);
+    if(action.mode!=='restedRetireImpact'||!onFront||selected.ready!==false||
+     s.mainAbilityUsedUids.includes(selected.uid)||ability.frontOnly!==true||
+     ability.oncePerTurn!==true||ability.bp!==1500)
+     throw Error('Rested front retirement is not legal');
+    s.mainAbilityUsedUids.push(selected.uid);
+    const choices=s.players[1-p].front.filter(c=>c&&bp(pack,s,c)<=ability.bp&&
+     cardEffectTargetPayable(pack,s,p,c.uid,0,selected.uid)).map(c=>c.uid);
+    if(choices.length)s.pending={kind:'effect-rested-retire-impact',player:p,
+     sourceUid:selected.uid,sourceStamp:selected.fieldEntryStamp,choices,
+     ceiling:ability.bp,optional:true};
+    else{
+     selected.ready=true;
+     selected.impactGranted={turn:s.turn,stamp:selected.fieldEntryStamp,amount:1};
+    }
+    break;
+   }
    if(ability.op==='frontOnceProgram'){
     const onFront=pl.front.some(c=>c?.uid===selected.uid);
     const onEnergy=pl.energy.some(c=>c?.uid===selected.uid);
@@ -5536,7 +5584,7 @@ export function assertUniversalMatch(pack,s){
    !Array.isArray(s.initialCounts)||s.initialCounts.length!==2||
    s.players?.length!==2||!playerIndex(s.active)||
    !['playing','finished'].includes(s.status))throw Error('Incorrect pack/version or match state');
- if(s.pending&&(!playerIndex(s.pending.player)||!['phase-order','retirement-order','effect-move-order','effect-rest-tuck','effect-tuck-moved','effect-grant-cause','effect-hand-bottom','effect-pay-deploy-self','effect-deploy-self-active','effect-outside-hand-or-rest','effect-recover-under','effect-energy-front','effect-entry-protect','block','life-batch-order','life-trigger','effect-target','effect-target-many','effect-grant-attack','granted-attack-draw','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-retire-at-least','effect-retire-at-most','effect-retire-scaled','effect-hand-bp-may','effect-hand-deploy-may','effect-hand-rest-entry','effect-active-other','effect-rest-own-front-draw','effect-raid-base-rest','effect-rest-or-retire','effect-named-outside-bounce-retire','effect-optional-draw','effect-strip-raid-top','effect-retire-own-field','effect-retire-own-character','main-field-trait-retire','effect-rest-bp','effect-rest-outside-events','effect-attack-ban','effect-own-front-protect','effect-grant-ap-tax','effect-grant-front-energy','raid-effect-order','effect-buff-trait','effect-buff-own','effect-named-impact','effect-top-trait-event','effect-buff-either','effect-return-printed','effect-remove-named','effect-pay-named','effect-add-named','effect-reveal-bottom','effect-hand-top','effect-rest-front-ap','effect-discard-active','effect-active-own-named','effect-once-choice','main-two-buff','main-discard-buff','main-discard-self-retire','main-rest-front-energy','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-filter-many-choice','effect-top-order','effect-recover-outside','effect-outside-rest','effect-outside-name-rest','effect-outside-traitless-rest','effect-named-zone-entry','effect-hand-rest','effect-hand-rest-or-raid','effect-optional-pay-ap','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-remove-outside','effect-selection-hand-payment','attack-end-swap','effect-choice-mode','recovered-self-entry','effect-optional-mill','effect-pay-ap-deploy','effect-top-trait-outside','effect-line-move','effect-line-slot','effect-rest-two','effect-self-front','effect-raid-leave','effect-rest-lock','effect-grant-block-at-least','effect-may-draw-discard'].includes(s.pending.kind)))
+ if(s.pending&&(!playerIndex(s.pending.player)||!['phase-order','retirement-order','effect-move-order','effect-rest-tuck','effect-tuck-moved','effect-grant-cause','effect-hand-bottom','effect-pay-deploy-self','effect-deploy-self-active','effect-outside-hand-or-rest','effect-recover-under','effect-energy-front','effect-entry-protect','block','life-batch-order','life-trigger','effect-target','effect-target-many','effect-grant-attack','granted-attack-draw','effect-discard','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-retire-bp','effect-retire-at-least','effect-retire-at-most','effect-retire-scaled','effect-hand-bp-may','effect-hand-deploy-may','effect-hand-rest-entry','effect-active-other','effect-rest-own-front-draw','effect-raid-base-rest','effect-rest-or-retire','effect-named-outside-bounce-retire','effect-optional-draw','effect-strip-raid-top','effect-retire-own-field','effect-retire-own-character','main-field-trait-retire','effect-rest-bp','effect-rest-outside-events','effect-rested-retire-impact','effect-attack-ban','effect-own-front-protect','effect-grant-ap-tax','effect-grant-front-energy','raid-effect-order','effect-buff-trait','effect-buff-own','effect-named-impact','effect-top-trait-event','effect-buff-either','effect-return-printed','effect-remove-named','effect-pay-named','effect-add-named','effect-reveal-bottom','effect-hand-top','effect-rest-front-ap','effect-discard-active','effect-active-own-named','effect-once-choice','main-two-buff','main-discard-buff','main-discard-self-retire','main-rest-front-energy','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-filter-many-choice','effect-top-order','effect-recover-outside','effect-outside-rest','effect-outside-name-rest','effect-outside-traitless-rest','effect-named-zone-entry','effect-hand-rest','effect-hand-rest-or-raid','effect-optional-pay-ap','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-remove-outside','effect-selection-hand-payment','attack-end-swap','effect-choice-mode','recovered-self-entry','effect-optional-mill','effect-pay-ap-deploy','effect-top-trait-outside','effect-line-move','effect-line-slot','effect-rest-two','effect-self-front','effect-raid-leave','effect-rest-lock','effect-grant-block-at-least','effect-may-draw-discard'].includes(s.pending.kind)))
   throw Error('Invalid pending controller');
  if(!Array.isArray(s.raidedThisTurn)||s.raidedThisTurn.length!==2||
    s.raidedThisTurn.some(x=>typeof x!=='boolean')||
@@ -6065,6 +6113,20 @@ export function assertUniversalMatch(pack,s){
    Object.keys(q).length!==6||
    Object.keys(q).some(k=>!['kind','player','sourceUid','choices','ceiling','optional'].includes(k)))
    throw Error('Invalid scaled front retirement pending');
+ }
+ if(s.pending?.kind==='effect-rested-retire-impact'){
+  const q=s.pending,pl=s.players[q.player];
+  const source=pl.front.find(c=>c?.uid===q.sourceUid);
+  const ability=source&&card(pack,source).mainAbility;
+  const choices=s.players[1-q.player].front.filter(c=>c&&bp(pack,s,c)<=1500&&
+   cardEffectTargetPayable(pack,s,q.player,c.uid,0,q.sourceUid)).map(c=>c.uid);
+  if(!source||source.ready!==false||source.fieldEntryStamp!==q.sourceStamp||
+   ability?.op!=='restedFrontRetireReadyImpact'||ability.frontOnly!==true||
+   ability.oncePerTurn!==true||ability.bp!==1500||
+   !s.mainAbilityUsedUids.includes(source.uid)||q.optional!==true||q.ceiling!==1500||
+   !choices.length||!same(q.choices,choices)||Object.keys(q).length!==7||
+   Object.keys(q).some(k=>!['kind','player','sourceUid','sourceStamp','choices','ceiling','optional'].includes(k)))
+   throw Error('Invalid rested front retirement pending');
  }
  if(s.pending?.kind==='effect-rest-outside-events'){
   const q=s.pending;

@@ -70,9 +70,9 @@ test('UA40BT and UA40ST share one catalogue and keep parallel art out',()=>{
  }
 });
 
-test('ninety-two whole prints enter the V2 pack and the other twenty-one stay out',()=>{
- assert.equal(REZERO_ENGINE_IDS.length,92);
- assert.equal(Object.keys(pack.cards).length,92);
+test('ninety-three whole prints enter the V2 pack and the other twenty stay out',()=>{
+ assert.equal(REZERO_ENGINE_IDS.length,93);
+ assert.equal(Object.keys(pack.cards).length,93);
  assert.equal(pack.cards['REZ-1-001'],undefined);
  assert.equal(pack.cards['REZ-1-008'].step,true);
  assert.equal(pack.cards['REZ-1-008'].implementation,'vanilla');
@@ -4508,4 +4508,128 @@ test('Rem raids onto Rem, gains 500 BP on her turn, and draws on attack only whe
  assert.equal(assertUniversalMatch(packs,live),true);
  assert.equal(assertUniversalMatch(packs,mixed),true);
  assert.equal(assertUniversalMatch(packs,kept),true);
+});
+
+const emiliaDownCounts={
+ ...Object.fromEntries(['REZ-1-090','REZ-1-081','REZ-1-086','REZ-1-067','REZ-1-024',
+  'REZ-1-014','REZ-1-006','REZ-1-016','REZ-1-043','REZ-1-003','REZ-1-091','REZ-1-033'].map(id=>[id,4])),
+ 'REZ-1-054':2
+};
+const emiliaDown=seed=>newUniversalMatch(packs,{decks:[emiliaDownCounts,emiliaDownCounts],first:0,seed});
+function restedMain(s,uid){
+ return legalUniversalActions(packs,s).some(a=>a.type==='activate'&&a.mode==='restedRetireImpact'&&a.uid===uid);
+}
+test('Emilia raids onto Emilia, may drop one front by 3500, and retires only while rested',()=>{
+ assert.equal(Object.values(emiliaDownCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(pack,emiliaDownCounts),[]);
+ const printed=pack.cards['REZ-1-090'];
+ assert.equal(printed.raidName,'エミリア');
+ assert.equal(printed.energy,6);
+ assert.equal(printed.trigger,'raid');
+ assert.deepEqual(printed.effects.onPlay,[{op:'enemyBpDown',bp:3500,optional:true,zone:'front'}]);
+ assert.deepEqual(printed.mainAbility,{
+  op:'restedFrontRetireReadyImpact',frontOnly:true,oncePerTurn:true,bp:1500});
+ const shell={id:'EMI90',name:'エミリア',color:'purple',type:'character',energy:6,ap:1,bp:4000,gen:0,
+  traits:['王選候補者'],trigger:'raid',raidName:'エミリア',implementation:'dsl',
+  effects:{onPlay:[{op:'enemyBpDown',bp:3500,optional:true,zone:'front'}]},
+  mainAbility:{op:'restedFrontRetireReadyImpact',frontOnly:true,oncePerTurn:true,bp:1000}};
+ assert.throws(()=>createUniversalPack({id:'bad-emi90',cards:[shell]}),/rested front/);
+
+ let live=emiliaDown(7501);
+ fuel(live,['REZ-1-086','REZ-1-086','REZ-1-086','REZ-1-086']);
+ const base=pull(live,0,'REZ-1-081');
+ live.players[0].front[0]=base;
+ const stranger=pull(live,0,'REZ-1-014');
+ live.players[0].front[1]=stranger;
+ const decoy=pull(live,0,'REZ-1-090');
+ live.players[0].front[2]=decoy;
+ const tall=pull(live,1,'REZ-1-067');
+ live.players[1].front[0]=tall;
+ const exact=pull(live,1,'REZ-1-024');
+ live.players[1].front[1]=exact;
+ const over=pull(live,1,'REZ-1-014');
+ live.players[1].front[2]=over;
+ live=ownMain(live,2);
+ live.players[0].energy[0].buffs=[{energy:1,untilTurn:live.turn}];
+ live.players[0].energy[1].buffs=[{energy:1,untilTurn:live.turn}];
+ assert.equal(universalEnergyByColor(packs,live,0).purple,6);
+ const waiting=pull(live,0,'REZ-1-090');
+ live.players[0].hand.push(waiting);
+ assert.equal(legalUniversalActions(packs,live).some(a=>a.type==='raid'&&a.uid===waiting.uid&&a.baseUid===stranger.uid),false);
+ assert.equal(legalUniversalActions(packs,live).some(a=>a.type==='raid'&&a.uid===waiting.uid&&a.baseUid===decoy.uid),false);
+ const raid=legalUniversalActions(packs,live).find(a=>a.type==='raid'&&a.uid===waiting.uid&&a.baseUid===base.uid);
+ assert.ok(raid);
+ assert.equal(raid.line,undefined);
+ const before=live.players[0].deck.length;
+ live=dispatchUniversalAction(packs,live,raid);
+ assert.equal(at(live,0,waiting.uid).ready,true);
+ assert.equal(at(live,0,waiting.uid).stack[0].uid,base.uid);
+ assert.equal(live.players[0].deck.length,before);
+ assert.equal(live.pending.kind,'effect-target');
+ assert.equal(live.pending.optional,true);
+ assert.equal(live.pending.bp,3500);
+ assert.deepEqual(live.pending.choices,[tall.uid,exact.uid,over.uid]);
+ let skipped=structuredClone(live);
+ skipped=dispatchUniversalAction(packs,skipped,{type:'chooseTarget',uid:null});
+ assert.equal(universalBp(pack,skipped,at(skipped,1,tall.uid)),4000);
+ let lowered=structuredClone(live);
+ lowered=dispatchUniversalAction(packs,lowered,{type:'chooseTarget',uid:tall.uid});
+ assert.equal(lowered.pending,null);
+ assert.equal(universalBp(pack,lowered,at(lowered,1,tall.uid)),500);
+ assert.equal(at(lowered,1,tall.uid).uid,tall.uid);
+ live=skipped;
+ assert.equal(restedMain(live,waiting.uid),false);
+ at(live,0,waiting.uid).ready=false;
+ const parked=structuredClone(live);
+ const from=parked.players[0].front.findIndex(c=>c?.uid===waiting.uid);
+ const held=parked.players[0].front[from];
+ const displaced=parked.players[0].energy[3];
+ parked.players[0].front[from]=displaced;
+ parked.players[0].energy[3]=held;
+ assert.equal(restedMain(parked,waiting.uid),false);
+ let bare=structuredClone(live);
+ const foe=bare.players[1].front.findIndex(c=>c?.uid===exact.uid);
+ bare.players[1].deck.push(bare.players[1].front[foe]);
+ bare.players[1].front[foe]=null;
+ assert.equal(restedMain(bare,waiting.uid),true);
+ bare=dispatchUniversalAction(packs,bare,{type:'activate',uid:waiting.uid,mode:'restedRetireImpact'});
+ assert.equal(bare.pending,null);
+ assert.equal(at(bare,0,waiting.uid).ready,true);
+ assert.equal(universalImpact(pack,bare,at(bare,0,waiting.uid)),1);
+ assert.equal(restedMain(live,waiting.uid),true);
+ live=dispatchUniversalAction(packs,live,{type:'activate',uid:waiting.uid,mode:'restedRetireImpact'});
+ assert.equal(live.pending.kind,'effect-rested-retire-impact');
+ assert.equal(live.pending.optional,true);
+ assert.equal(live.pending.ceiling,1500);
+ assert.equal(Object.keys(live.pending).length,7);
+ assert.deepEqual(live.pending.choices,[exact.uid]);
+ assert.equal(V2_PENDING_LABELS['effect-rested-retire-impact'],'選擇是否使對手前線退場');
+ assert.equal(uiActionLabel({type:'chooseRestedRetire',uid:null},{pack,state:live}),'不使角色退場');
+ assert.equal(uiActionLabel({type:'chooseRestedRetire',uid:exact.uid},{pack,state:live}),'使 エミリア 退場');
+ assert.equal(chooseUniversalAiAction(packs,live).uid,exact.uid);
+ const stale=structuredClone(live);
+ const slot=stale.players[1].front.findIndex(c=>c?.uid===exact.uid);
+ stale.players[1].deck.push(stale.players[1].front[slot]);
+ stale.players[1].front[slot]=null;
+ assert.throws(()=>legalUniversalActions(packs,stale),/Invalid rested front retirement pending/);
+ let declined=structuredClone(live);
+ declined=dispatchUniversalAction(packs,declined,{type:'chooseRestedRetire',uid:null});
+ assert.equal(declined.pending,null);
+ assert.equal(at(declined,1,exact.uid).uid,exact.uid);
+ assert.equal(at(declined,0,waiting.uid).ready,true);
+ assert.equal(universalImpact(pack,declined,at(declined,0,waiting.uid)),1);
+ at(declined,0,waiting.uid).ready=false;
+ assert.equal(restedMain(declined,waiting.uid),false);
+ live=dispatchUniversalAction(packs,live,{type:'chooseRestedRetire',uid:exact.uid});
+ assert.equal(live.pending,null);
+ assert.ok(live.players[1].outside.some(c=>c.uid===exact.uid));
+ assert.equal(live.players[1].front[1],null);
+ assert.equal(at(live,0,waiting.uid).ready,true);
+ assert.equal(universalImpact(pack,live,at(live,0,waiting.uid)),1);
+ live=reachStart(live,0,3);
+ assert.equal(universalImpact(pack,live,at(live,0,waiting.uid)),0);
+ assert.equal(assertUniversalMatch(packs,live),true);
+ assert.equal(assertUniversalMatch(packs,declined),true);
+ assert.equal(assertUniversalMatch(packs,lowered),true);
+ assert.equal(assertUniversalMatch(packs,bare),true);
 });

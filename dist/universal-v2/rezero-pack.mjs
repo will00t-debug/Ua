@@ -71,6 +71,7 @@ export function rezeroEngineKind(effectJa){
  if(e==='【レイド】〈レム〉アクティブにし、フロントLに移動できる【登場時】『BP1000』以下の相手のフロントLのキャラを1枚まで選び、退場させる。自分の場の必要エナジーが0の青の〈ナツキ・スバル〉1枚につき、この効果で選べるキャラのBPの範囲+1000。')return 'raidRemScaledRetire';
  if(e==='【レイド】〈エミリア〉アクティブにし、フロントLに移動できる【登場時】このターン中、次に手札から使用する必要エナジーが3以下のイベントカードの消費APを-1する。自分の場外にイベントカードが4枚以上ある場合、相手のフロントLのキャラを1枚まで選び、レストにする。自分の場外にイベントカードが8枚以上あるなら、選んだキャラは次の1回アクティブにならない。')return 'raidEmiliaDiscountRest';
  if(e==='【レイド】〈レム〉アクティブにし、フロントLに移動できる【自分のターン中】このキャラはBP+500。【登場時】カードを1枚引き、自分の手札を1枚場外に置く。【起動メイン】【フロントLにある場合】 【ターン1】BP1500以上の相手のフロントLのキャラを1枚選び、このターン中、BP-1000。【アタック時】自分の場にあるキャラが全て〈レム〉の場合、カードを1枚引き、自分の手札を1枚場外に置く。')return 'raidRemTurnBpDraw';
+ if(e==='【レイド】〈エミリア〉アクティブにし、フロントLに移動できる【登場時】相手のフロントLのキャラを1枚まで選び、このターン中、BP-3500。【起動メイン】【フロントLにある場合】 【ターン1】このキャラがレストの場合のみ発動できる。BP1500以下の相手のフロントLのキャラを1枚まで選び、退場させる。このキャラをアクティブにし、このターン中、【インパクト（1）】を得る。')return 'raidEmiliaDownRestedRetire';
  return null;
 }
 const TOP_OUTSIDE=new Map([
@@ -141,6 +142,8 @@ function onPlay(card,kind){
   {op:'nextEligibleHandPlayApDiscount',filter:{cardType:'event',printedRequiredEnergyAtMost:3}},
   {op:'restOppFrontByOutsideEvents',min:4,skipMin:8,optional:true}];
  if(kind==='raidRemTurnBpDraw')return [{op:'drawDiscard',count:1}];
+ if(kind==='raidEmiliaDownRestedRetire')return [
+  {op:'enemyBpDown',bp:3500,optional:true,zone:'front'}];
  if(kind==='garfielEntry')return [{op:'enemyBpDown',bp:2500,optional:true,zone:'front'}];
  if(kind==='sanctuaryRecover')return [{op:'payHandOrRestForNamed',name:TRIAL_NAME}];
  if(kind==='frontDown2500')return [{op:'enemyBpDown',bp:2000,optional:true,minBp:2500,zone:'front'}];
@@ -263,6 +266,8 @@ export function rezeroPackCard(card){
   ...(kind==='raidRemTurnBpDraw'?{raidName:'レム',ownTurnBp:500,mainAbility:{
    op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,
    then:[{op:'enemyBpDown',bp:1000,minBp:1500,zone:'front'}]}}:{}),
+  ...(kind==='raidEmiliaDownRestedRetire'?{raidName:'エミリア',mainAbility:{
+   op:'restedFrontRetireReadyImpact',frontOnly:true,oncePerTurn:true,bp:1500}}:{}),
   ...(kind==='raidFrontRestDraw'?{raidName:'エキドナ',mainAbility:{
    op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,
    then:[{op:'restOwnActiveFrontDraw'}]}}:{}),
