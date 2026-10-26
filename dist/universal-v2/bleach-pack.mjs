@@ -1136,7 +1136,8 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-2-014","kind":"optionalEnergyBounce","number":"EX07BT/BLC-2-014","name":"井上 織姫","color":"blue","energy":3,"ap":1,"bp":3000,"gen":2,"trigger":"color","type":"character","effect":"登場：可將 1 個己方場上需求能源 2 以下角色返回手牌；成功時可從己方場外將最多 1 張需求能源 2 以下的卡加入手牌。"},
 {"id":"BLC-2-001","kind":"stepOnceFrontOr","number":"EX07BT/BLC-2-001","name":"アスキン・ナックルヴァール","color":"yellow","energy":3,"ap":1,"bp":3000,"gen":2,"trigger":null,"type":"character","effect":"Step：己方移動階段可由前線移至能源線。主要階段・每回合 1 次：敵方前線有 BP 低於原始 BP 的角色，或有 REST 角色時，此角色本回合 BP +1000。"},
 {"id":"BLC-4-037","kind":"replayOnPlayDown","number":"EX15BT/BLC-4-037","name":"ネリエル・トゥ・オーデルシュヴァンク","color":"blue","energy":3,"ap":1,"bp":2000,"gen":3,"trigger":"draw","type":"character","effect":"登場時：最多選1個對方前線BP1500以上的角色，本回合BP−1000。啟動・主要〔支付1 AP／每回合1次〕：發動此角色的登場時效果。"},
-{"id":"BLC-4-071","kind":"stepDrawNameActive","number":"EX15BT/BLC-4-071","name":"砕蜂","color":"green","energy":4,"ap":1,"bp":2000,"gen":3,"trigger":"draw","type":"character","effect":"Step：移動階段可從前線移至能量線。登場時：抽1張牌，再將1張手牌送至場外。啟動・主要：將此角色改為Active；所有《碎蜂》的此效果合計每回合僅限1次。"}
+{"id":"BLC-4-071","kind":"stepDrawNameActive","number":"EX15BT/BLC-4-071","name":"砕蜂","color":"green","energy":4,"ap":1,"bp":2000,"gen":3,"trigger":"draw","type":"character","effect":"Step：移動階段可從前線移至能量線。登場時：抽1張牌，再將1張手牌送至場外。啟動・主要：將此角色改為Active；所有《碎蜂》的此效果合計每回合僅限1次。"},
+{"id":"BLC-3-005","kind":"reducedFrontNameActive","number":"UA04NC/BLC-3-005","name":"阿散井 恋次","color":"purple","energy":5,"ap":1,"bp":4000,"gen":1,"trigger":"active","type":"character","effect":"【無效化 Impact】與此角色戰鬥的角色，在該次戰鬥中失去 Impact。\n【啟動主要】只有對手前線有目前 BP 低於原本 BP 的角色時才能發動。將此角色轉為 Active。〈阿散井戀次〉的此效果每回合只能發動一次。"}
  ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1270,6 +1271,7 @@ export function checkedBleachAddonDefinition(p){
  const isStepOr=p.kind==='stepOnceFrontOr';
  const isReplayDown=p.kind==='replayOnPlayDown';
  const isStepName=p.kind==='stepDrawNameActive';
+ const isReducedActive=p.kind==='reducedFrontNameActive';
  const topDiscard={
   'BLC-3-007':{count:3,filter:{field:'trait',value:'護廷十三隊'}},
   'BLC-3-002':{count:3,filters:[
@@ -1303,7 +1305,7 @@ export function checkedBleachAddonDefinition(p){
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest||isOwnCharacterDraw||isPeekAttack||isDrawInstead||isRevealOppTop||isRevealWindow||isEnergyWindow||isMillPurple||isEnergyBounce||isStepOr||isReplayDown||isStepName;
+ const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest||isOwnCharacterDraw||isPeekAttack||isDrawInstead||isRevealOppTop||isRevealWindow||isEnergyWindow||isMillPurple||isEnergyBounce||isStepOr||isReplayDown||isStepName||isReducedActive;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1318,6 +1320,7 @@ export function checkedBleachAddonDefinition(p){
    {kind:'oppRestCharacter',turn:'any',zone:'front'}]}}}:{}),
   ...(isReplayDown?{mainAbility:{op:'oncePayProgram',oncePerTurn:true,frontOnly:false,raidOnly:false,payAp:1,requiresOwnName:null,then:[{op:'enemyBpDown',bp:1000,optional:true,minBp:1500}]}}:{}),
   ...(isStepName?{mainAbility:{op:'nameOnceActive',scope:'name',when:null}}:{}),
+  ...(isReducedActive?{impactNull:true,mainAbility:{op:'nameOnceActive',scope:'name',when:{kind:'oppFrontLiveBpBelowPrinted',turn:'any'}}}:{}),
    ...(isKyoraku?{raidName:'京楽 春水',
     attackEndSwap:{color:'green',types:['event','field'],minDistinctNames:4}}:{}),
    ...(isRestRetireField?{mainAbility:{op:'fieldRestRetireThen',then:[

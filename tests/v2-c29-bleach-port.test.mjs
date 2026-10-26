@@ -99,9 +99,17 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 //   No trigger. Required energy alt is 黄3. Generated energy alt is 黄黄.
 //   Front only. A rested energy-line character does not qualify.
 //   The activation does not rest this card and works from either own line.
+// BLC-3-005 UA04NC: [インパクト無効]. The battling character loses Impact for
+//   that battle. [起動メイン] only when an opposing front character's live BP
+//   is below its printed BP (official Q1583: 元々のBP is the
+//   printed lower-left BP). Set this character ACTIVE.
+//   「〈阿散井 恋次〉のこの効果は1ターンに1回のみ」(Q1584: two copies, only one
+//   of them may activate this effect that turn). ACTIVE is the generic
+//   sentence. Required energy is 紫5. Generated energy is 紫. An energy-line
+//   reduced character does not open the activate.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -172,12 +180,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers forty-one whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,477);
- assert.equal(EXPECTED_V2_COUNTS.bleach,201);
+test('C29 registers forty-two whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,478);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,202);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,201);
+ assert.equal(Object.keys(bleach.cards).length,202);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -3117,4 +3125,83 @@ test('BLC-4-071 draws and discards, steps, and shares one ACTIVE among every Soi
  assert.equal(assertUniversalMatch(first.packs,played),true);
  assert.equal(assertUniversalMatch(fromEnergy.packs,woken),true);
  assert.equal(assertUniversalMatch(first.packs,stepped),true);
+});
+
+test('BLC-3-005 nulls the battling character impact and actives once per Renji name',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-3-005');
+ assert.equal(printed.effect,'【無效化 Impact】與此角色戰鬥的角色，在該次戰鬥中失去 Impact。\n【啟動主要】只有對手前線有目前 BP 低於原本 BP 的角色時才能發動。將此角色轉為 Active。〈阿散井戀次〉的此效果每回合只能發動一次。');
+ assert.deepEqual(printed.traits,['護廷十三隊']);
+ assert.equal(printed.energy,5);
+ assert.equal(printed.gen,1);
+ assert.equal(printed.trigger,'active');
+ const when={kind:'oppFrontLiveBpBelowPrinted',turn:'any'};
+ const card=bleach.cards['BLC-3-005'];
+ assert.equal(card.impactNull,true);
+ assert.equal(card.gen,1);
+ assert.equal(card.trigger,'active');
+ assert.equal(card.triggerEffect,null);
+ assert.deepEqual(card.traits,['護廷十三隊']);
+ assert.deepEqual(card.effects,{});
+ assert.deepEqual(card.mainAbility,{op:'nameOnceActive',scope:'name',when});
+ const deck=realDeck(['BLC-3-005','BLC-1-041','BLC-1-102','BLC-1-103','BLC-1-034','BLC-1-039'],'purple');
+ const first=main(deck,29505);
+ put(first.s,0,'BLC-1-102','energy',0);
+ put(first.s,0,'BLC-1-103','energy',1);
+ put(first.s,0,'BLC-1-034','energy',2);
+ assert.ok(universalEnergyByColor(first.packs,first.s,0).purple>=5);
+ const self=put(first.s,0,'BLC-3-005','front',0,false);
+ const copy=put(first.s,0,'BLC-3-005','energy',3,false);
+ const quiet=put(first.s,1,'BLC-1-041','front',0,true);
+ assert.equal(universalBp(first.packs,first.s,quiet),4000);
+ assert.equal(legalUniversalActions(first.packs,first.s).some(a=>a.mode==='nameOnceActive'),false);
+ quiet.buffs=[{bp:-1000,untilTurn:first.s.turn}];
+ assert.equal(universalBp(first.packs,first.s,quiet),3000);
+ const act=legalUniversalActions(first.packs,first.s).find(a=>a.type==='activate'&&a.mode==='nameOnceActive'&&a.uid===self.uid);
+ assert.ok(act);
+ let played=dispatchUniversalAction(first.packs,first.s,act);
+ assert.equal(played.players[0].front.find(c=>c?.uid===self.uid).ready,true);
+ assert.equal(legalUniversalActions(first.packs,played).some(a=>a.mode==='nameOnceActive'),false);
+ assert.throws(()=>dispatchUniversalAction(first.packs,played,{type:'activate',uid:copy.uid,mode:'nameOnceActive'}),/not currently legal/);
+ const benchOnly=main(deck,29506);
+ const benched=put(benchOnly.s,1,'BLC-1-034','energy',0,true);
+ benched.buffs=[{bp:-500,untilTurn:benchOnly.s.turn}];
+ const waiting=put(benchOnly.s,0,'BLC-3-005','front',0,false);
+ assert.equal(universalBp(benchOnly.packs,benchOnly.s,benched),1000);
+ assert.equal(legalUniversalActions(benchOnly.packs,benchOnly.s).some(a=>a.mode==='nameOnceActive'&&a.uid===waiting.uid),false);
+ const fought=main(deck,29507);
+ const attacker=put(fought.s,0,'BLC-1-041','front',0,true);
+ attacker.impactGranted={turn:fought.s.turn,stamp:attacker.fieldEntryStamp,amount:1};
+ const wall=put(fought.s,1,'BLC-3-005','front',0,true);
+ assert.equal(universalBp(fought.packs,fought.s,attacker),4000);
+ assert.equal(universalBp(fought.packs,fought.s,wall),4000);
+ assert.equal(universalImpact(fought.packs,fought.s,attacker),1);
+ const lifeBefore=fought.s.players[1].life.length;
+ let battle=fought.s;
+ for(let n=0;n<6&&battle.phase!=='attack';n++)
+  battle=dispatchUniversalAction(fought.packs,battle,{type:'next'});
+ battle=dispatchUniversalAction(fought.packs,battle,{type:'attack',uid:attacker.uid});
+ assert.equal(battle.pending?.kind,'block');
+ battle=dispatchUniversalAction(fought.packs,battle,{type:'chooseBlock',uid:wall.uid},{actor:1});
+ assert.equal(battle.players[0].front.some(c=>c?.uid===attacker.uid),true);
+ assert.equal(battle.players[1].front.some(c=>c?.uid===wall.uid),false);
+ assert.equal(battle.players[1].outside.some(c=>c.uid===wall.uid),true);
+ assert.equal(battle.players[1].life.length,lifeBefore);
+ assert.equal(battle.pending,null);
+ const control=main(deck,29508);
+ const striker=put(control.s,0,'BLC-1-041','front',0,true);
+ striker.impactGranted={turn:control.s.turn,stamp:striker.fieldEntryStamp,amount:1};
+ const plain=put(control.s,1,'BLC-1-103','front',0,true);
+ assert.equal(universalImpact(control.packs,control.s,striker),1);
+ const controlLife=control.s.players[1].life.length;
+ let open=control.s;
+ for(let n=0;n<6&&open.phase!=='attack';n++)
+  open=dispatchUniversalAction(control.packs,open,{type:'next'});
+ open=dispatchUniversalAction(control.packs,open,{type:'attack',uid:striker.uid});
+ open=dispatchUniversalAction(control.packs,open,{type:'chooseBlock',uid:plain.uid},{actor:1});
+ assert.equal(open.players[1].life.length,controlLife-1);
+ aiOk(first.packs,played);
+ assert.equal(assertUniversalMatch(first.packs,played),true);
+ assert.equal(assertUniversalMatch(benchOnly.packs,benchOnly.s),true);
+ assert.equal(assertUniversalMatch(fought.packs,battle),true);
+ assert.equal(assertUniversalMatch(control.packs,open),true);
 });
