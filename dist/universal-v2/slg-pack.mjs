@@ -661,6 +661,25 @@ const authored=[
   "officialTraits":["DFN／第四次架南島レイド"],
   "traitComponents":["DFN","第四次架南島レイド"],
   "catalogueTraits":["DFN","第四次架南島Raid"]
+},
+{
+  "id":"SLG-1-063","name":"最上 真","color":"green","energy":1,
+  "ap":1,"bp":1500,"gen":1,"trigger":"draw","type":"character",
+  "textAnchor":"登場時查看牌庫頂3張，可公開最多1張第四次架南島Raid卡加入手牌",
+  "implementation":"dsl","effects":{"onPlay":[{
+   "op":"searchTopOneBottomDiscard","count":3,
+   "filter":{"field":"trait","value":"第四次架南島レイド"}}]},
+  "officialTraits":["第四次架南島レイド"],
+  "catalogueTraits":["第四次架南島Raid"]
+},
+{
+  "id":"SLG-1-054","name":"黒須 圭介","color":"green","energy":0,
+  "ap":1,"bp":1500,"gen":1,"trigger":"active","type":"character",
+  "textAnchor":"登場時查看牌庫頂2張，可把其中最多1張具有第四次架南島Raid特徵的卡送場外",
+  "implementation":"dsl","effects":{"onPlay":[{
+   "op":"inspectTopTraitOutside","count":2,"trait":"第四次架南島レイド","rest":"top"}]},
+  "officialTraits":["第四次架南島レイド"],
+  "catalogueTraits":["第四次架南島Raid"]
 }
 ];
 export const SLG_V2_VERIFIED_IDS=Object.freeze(authored.map(c=>c.id));

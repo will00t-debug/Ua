@@ -15,3 +15,12 @@ Registered:
 
 Official trait token for 074 and 071 is `DFN／第四次架南島レイド`. The catalogue split is not registered.
 ACTIVE and DRAW life texts stay on the shared life handler.
+
+## Batch 2 — top windows
+
+Registered with existing shared top-window ops:
+
+- UA51BT/SLG-1-063 最上 真. Top 3, up to one official trait 第四次架南島レイド to hand, the rest to the bottom in chosen order, discard 1 only if a card was added.
+- UA51BT/SLG-1-054 黒須 圭介. Top 2, up to one card with that trait to outside, the rest back to the top.
+
+The catalogue label 第四次架南島Raid is not the registered token.
