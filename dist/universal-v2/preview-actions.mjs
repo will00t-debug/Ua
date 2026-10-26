@@ -27,6 +27,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-hand-rest':'從己方手牌免費 REST 登場',
  'effect-hand-rest-or-raid':'從己方手牌 REST 登場或合法 Raid',
  'effect-active-own-named':'可將最多 1 個己方指定名稱角色轉為 ACTIVE',
+ 'effect-active-energy-named':'可將最多 1 張己方能量線指定名稱卡轉為 ACTIVE',
  'effect-bounce-own':'選擇返回手牌的己方角色',
  'effect-buff-own':'選擇己方角色增加本回合 BP',
  'effect-once-choice':'是否發動本回合一次能力',
@@ -162,6 +163,7 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseOptionalPayAp':return action.mode==='pay'?'支付 1 AP，然後結算後續效果':'不支付 AP';
   case 'chooseHandRest':return action.uid===null?'不特殊登場':'免費 REST 登場 '+name()+suffix();
   case 'chooseActiveOwnNamed':return action.uid===null?'不將指定名稱角色轉為 ACTIVE':'將 '+name()+' 轉為 ACTIVE';
+  case 'chooseActiveEnergyNamed':return action.uid===null?'不將能量線指定名稱卡轉為 ACTIVE':'將能量線的 '+name()+' 轉為 ACTIVE';
   case 'chooseHandRestOrRaid':return action.uid===null?'不從手牌登場':
    (action.mode==='raid'?'從手牌 Raid ':'從手牌 REST 登場 ')+name()+suffix();
    case 'chooseOutsideNameRest':return action.uid===null?'不從場外登場':'REST 登場 '+name()+suffix();

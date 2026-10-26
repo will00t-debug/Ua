@@ -108,6 +108,7 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   return difficulty==='easy'?legal.find(a=>a.mode==='skip')||legal[0]:
    legal.find(a=>a.mode==='activate')||legal[0];
  if(s.pending?.kind==='effect-buff-own')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-active-energy-named')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-buff-trait')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='main-discard-buff'){
   // The payment is mandatory once activated. Choose a low-cost OWN hand

@@ -8,6 +8,7 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  assertUniversalMatch,universalBp,universalImpact,universalEnergyByColor,universalCardEnergy,
  universalPublicView,universalPrivateChoices,effectiveHandRequiredEnergy} from '../dist/universal-v2/engine.mjs';
 import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
+import {V2_PENDING_LABELS} from '../dist/universal-v2/preview-actions.mjs';
 import {grantContinuousState} from '../dist/universal-v2/continuous-states.mjs';
 import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v2-integrated-id-manifest.mjs';
 
@@ -186,9 +187,13 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 //   Retire one opposing front character of BP 5000 or less. Mandatory.
 //   A バズビー of printed energy 5+ may then give up to one own
 //   バズビー BP+1000. Printed energy, not generated energy. No card FAQ.
+// BLC-4-081 EX15BT: playable only while own field has 京楽 春水.
+//   Retire one opposing front character of BP 5000 or less. Mandatory.
+//   Then up to one own energy-line 花天 or 狂骨 becomes ACTIVE.
+//   Front copies are not choices. No card FAQ.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -259,12 +264,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers sixty-two whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,498);
- assert.equal(EXPECTED_V2_COUNTS.bleach,222);
+test('C29 registers sixty-three whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,499);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,223);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,222);
+ assert.equal(Object.keys(bleach.cards).length,223);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -5528,4 +5533,227 @@ test('BLC-4-021 retires BP 5000 or less only while Bazz-B is present, and buffs 
  assert.equal(assertUniversalMatch(labPacks,quiet),true);
  assert.equal(assertUniversalMatch(labPacks,passed),true);
  assert.equal(assertUniversalMatch(labPacks,kept),true);
+});
+
+test('BLC-4-081 retires BP 5000 or less beside Kyōraku, then may ACTIVE an energy-line Katen or Kotsu',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-4-081');
+ assert.equal(printed.effect,'僅在自己場上有《京樂春水》時可使用。選1個對方前線BP5000以下的角色使其退場；最多選自己能量線1張《花天》或《狂骨》改為Active。');
+ assert.equal(printed.nameJa,'花天狂骨枯松心中');
+ assert.equal(printed.number,'EX15BT/BLC-4-081');
+ assert.deepEqual(printed.traits,['花天狂骨']);
+ assert.equal(printed.type,'event');
+ assert.equal(printed.energy,4);
+ assert.equal(printed.ap,1);
+ assert.equal(printed.gen,0);
+ assert.equal(printed.trigger,'special');
+ assert.equal(printed.color,'green');
+ const card=bleach.cards['BLC-4-081'];
+ assert.equal(card.name,'花天狂骨枯松心中');
+ assert.equal(card.playRequiresOwnName,'京楽 春水');
+ assert.deepEqual(card.triggerEffect,{op:'retireOppFront'});
+ assert.deepEqual(card.effects.onPlay,[
+  {op:'retireOppFrontUnderBp',bp:5000,optional:false},
+  {op:'activeEnergyNamed',names:['花天','狂骨'],optional:true}
+ ]);
+ assert.equal(bleach.cards['BLC-4-076'].name,'花天');
+ assert.equal(bleach.cards['BLC-4-076'].type,'field');
+ assert.equal(bleach.cards['BLC-4-067'].name,'京楽 春水');
+ const evt={id:'BAD',name:'花',color:'green',type:'event',energy:0,ap:1,bp:0,gen:0,traits:[],trigger:'special',implementation:'dsl',playRequiresOwnName:'京楽 春水',triggerEffect:{op:'retireOppFront'},effects:{onPlay:[{op:'draw',count:1}]}};
+ const active={op:'activeEnergyNamed',names:['花天','狂骨'],optional:true};
+ assert.throws(()=>createUniversalPack({id:'bad-katen-one',cards:[{...evt,effects:{onPlay:[{...active,names:['花天']}]}}]}),/invalid energy-line named ACTIVE/);
+ assert.throws(()=>createUniversalPack({id:'bad-katen-opt',cards:[{...evt,effects:{onPlay:[{...active,optional:false}]}}]}),/invalid energy-line named ACTIVE/);
+ const deck=realDeck(['BLC-4-081','BLC-4-067','BLC-1-074','BLC-3-007','BLC-2-063','BLC-4-068','BLC-4-076','BLC-4-061','BLC-1-083','BLC-1-079','BLC-4-062','BLC-1-080'],'green');
+ const playable=(packs,s,uid)=>legalUniversalActions(packs,s).some(a=>a.type==='event'&&a.uid===uid);
+ function hold(s){
+  const event=take(s,0,'BLC-4-081');
+  s.players[0].hand.push(event);
+  return event;
+ }
+ const opened=main(deck,30631);
+ put(opened.s,0,'BLC-4-067','energy',0);
+ put(opened.s,0,'BLC-1-074','energy',1);
+ put(opened.s,0,'BLC-3-007','energy',2);
+ const katen=put(opened.s,0,'BLC-4-076','energy',3,false);
+ const event=hold(opened.s);
+ assert.equal(universalEnergyByColor(opened.packs,opened.s,0).green>=4,true);
+ const legalFoe=put(opened.s,1,'BLC-1-079','front',0,true);
+ const tall=put(opened.s,1,'BLC-1-080','front',1,true);
+ tall.buffs.push({bp:2000,untilTurn:opened.s.turn});
+ assert.equal(universalBp(opened.packs,opened.s,tall),6000);
+ assert.equal(playable(opened.packs,opened.s,event.uid),true);
+ let played=dispatchUniversalAction(opened.packs,opened.s,{type:'event',uid:event.uid});
+ assert.equal(played.pending.kind,'effect-retire-bp');
+ assert.equal(played.pending.limit,5000);
+ assert.equal(played.pending.choices.includes(legalFoe.uid),true);
+ assert.equal(played.pending.choices.includes(tall.uid),false);
+ assert.equal(legalUniversalActions(opened.packs,played).some(a=>a.type==='chooseRetireBp'&&a.uid===null),false);
+ played=dispatchUniversalAction(opened.packs,played,{type:'chooseRetireBp',uid:legalFoe.uid});
+ assert.equal(played.pending.kind,'effect-active-energy-named');
+ assert.equal(V2_PENDING_LABELS[played.pending.kind],'可將最多 1 張己方能量線指定名稱卡轉為 ACTIVE');
+ assert.equal(played.pending.optional,true);
+ assert.deepEqual(played.pending.names,['花天','狂骨']);
+ assert.deepEqual(played.pending.choices,[katen.uid]);
+ assert.equal(legalUniversalActions(opened.packs,played).some(a=>a.type==='chooseActiveEnergyNamed'&&a.uid===null),true);
+ aiOk(opened.packs,played);
+ played=dispatchUniversalAction(opened.packs,played,{type:'chooseActiveEnergyNamed',uid:katen.uid});
+ assert.equal(played.pending,null);
+ assert.equal(live(played,0,katen.uid).ready,true);
+ const blocked=main(deck,30632);
+ put(blocked.s,0,'BLC-4-067','energy',0);
+ put(blocked.s,0,'BLC-1-074','energy',1);
+ put(blocked.s,0,'BLC-3-007','energy',2);
+ const blockedEvent=hold(blocked.s);
+ const onlyTall=put(blocked.s,1,'BLC-1-080','front',0,true);
+ onlyTall.buffs.push({bp:2000,untilTurn:blocked.s.turn});
+ assert.equal(playable(blocked.packs,blocked.s,blockedEvent.uid),false);
+ const unnamed=main(deck,30633);
+ put(unnamed.s,0,'BLC-4-061','energy',0);
+ put(unnamed.s,0,'BLC-1-083','energy',1);
+ put(unnamed.s,0,'BLC-1-079','energy',2);
+ put(unnamed.s,0,'BLC-4-062','energy',3);
+ const unnamedEvent=hold(unnamed.s);
+ put(unnamed.s,1,'BLC-1-080','front',0,true);
+ assert.equal(universalEnergyByColor(unnamed.packs,unnamed.s,0).green,4);
+ assert.equal(playable(unnamed.packs,unnamed.s,unnamedEvent.uid),false);
+ const silenced=main(deck,30634);
+ const kyoraku=put(silenced.s,0,'BLC-4-067','front',0);
+ put(silenced.s,0,'BLC-4-061','energy',0);
+ put(silenced.s,0,'BLC-1-083','energy',1);
+ put(silenced.s,0,'BLC-4-062','energy',2);
+ const quietKaten=put(silenced.s,0,'BLC-4-076','energy',3,false);
+ const silencedEvent=hold(silenced.s);
+ const silencedFoe=put(silenced.s,1,'BLC-1-079','front',0,true);
+ grantContinuousState(silenced.s,{kind:'originalEffectsDisabled',controller:1,sourceUid:silencedFoe.uid,
+  targetUid:kyoraku.uid,until:{player:0,phase:'main',edge:'end'}});
+ grantContinuousState(silenced.s,{kind:'originalEffectsDisabled',controller:1,sourceUid:silencedFoe.uid,
+  targetUid:quietKaten.uid,until:{player:0,phase:'main',edge:'end'}});
+ assert.equal(playable(silenced.packs,silenced.s,silencedEvent.uid),true);
+ let kept=dispatchUniversalAction(silenced.packs,silenced.s,{type:'event',uid:silencedEvent.uid});
+ kept=dispatchUniversalAction(silenced.packs,kept,{type:'chooseRetireBp',uid:silencedFoe.uid});
+ assert.equal(kept.pending.choices.includes(quietKaten.uid),true);
+ const bare=main(deck,30635);
+ put(bare.s,0,'BLC-4-067','energy',0);
+ put(bare.s,0,'BLC-1-074','energy',1);
+ put(bare.s,0,'BLC-3-007','energy',2);
+ const bareEvent=hold(bare.s);
+ const bareFoe=put(bare.s,1,'BLC-1-079','front',0,true);
+ let empty=dispatchUniversalAction(bare.packs,bare.s,{type:'event',uid:bareEvent.uid});
+ empty=dispatchUniversalAction(bare.packs,empty,{type:'chooseRetireBp',uid:bareFoe.uid});
+ assert.equal(empty.pending,null);
+ const skipped=main(deck,30636);
+ put(skipped.s,0,'BLC-4-067','energy',0);
+ put(skipped.s,0,'BLC-1-074','energy',1);
+ put(skipped.s,0,'BLC-3-007','energy',2);
+ const locked=put(skipped.s,0,'BLC-4-076','energy',3,false);
+ const skipEvent=hold(skipped.s);
+ const skipFoe=put(skipped.s,1,'BLC-1-079','front',0,true);
+ grantContinuousState(skipped.s,{kind:'skipNextActive',controller:0,sourceUid:skipped.s.players[0].energy[0].uid,
+  targetUid:locked.uid});
+ let lockedPlay=dispatchUniversalAction(skipped.packs,skipped.s,{type:'event',uid:skipEvent.uid});
+ lockedPlay=dispatchUniversalAction(skipped.packs,lockedPlay,{type:'chooseRetireBp',uid:skipFoe.uid});
+ lockedPlay=dispatchUniversalAction(skipped.packs,lockedPlay,{type:'chooseActiveEnergyNamed',uid:locked.uid});
+ assert.equal(live(lockedPlay,0,locked.uid).ready,false);
+ assert.equal(lockedPlay.continuousStates.some(e=>e.kind==='skipNextActive'&&!e.consumed),false);
+ const unit=(id,name,type,bp)=>({id,name,color:'green',type,energy:0,ap:1,bp,gen:1,traits:[],trigger:null,implementation:'vanilla'});
+ const fillers=Array.from({length:5},(_,i)=>unit('F'+i,'余'+i,'character',1000));
+ const labEvent={id:'EVT',name:'花天狂骨枯松心中',color:'green',type:'event',energy:0,ap:1,bp:0,gen:0,traits:['花天狂骨'],trigger:'special',implementation:'dsl',playRequiresOwnName:'京楽 春水',triggerEffect:{op:'retireOppFront'},effects:{onPlay:[
+  {op:'retireOppFrontUnderBp',bp:5000,optional:false},active]}};
+ const lab=createUniversalPack({id:'lab-katen',cards:[
+  labEvent,
+  unit('KYO','京楽 春水','character',1500),
+  unit('KATEN','花天','field',0),
+  unit('FRONT','花天','character',2000),
+  unit('KOTSU','狂骨','field',0),
+  {...unit('ALIAS','別名','field',0),nameAliases:['花天'],implementation:'dsl',effects:{}},
+  unit('OTHER','別','character',1000),
+  unit('FOE','相手','character',3000),
+  ...fillers
+ ]});
+ const labIds=['EVT','KYO','KATEN','FRONT','KOTSU','ALIAS','OTHER','FOE',...fillers.map(c=>c.id)];
+ assert.equal(labIds.length,13);
+ const labCounts=Object.fromEntries(labIds.map((id,i)=>[id,i===labIds.length-1?2:4]));
+ assert.deepEqual(validateUniversalDeck(lab,labCounts),[]);
+ const labPacks=[lab,lab];
+ function open(seed){
+  let s=newUniversalMatch(labPacks,{decks:[labCounts,labCounts],seed,first:0});
+  for(let n=0;n<8&&s.phase!=='main';n++)s=dispatchUniversalAction(labPacks,s,{type:'next'});
+  return s;
+ }
+ function labHold(s){
+  const held=take(s,0,'EVT');
+  s.players[0].hand.push(held);
+  return held;
+ }
+ const gated=open(30641);
+ put(gated,0,'KYO','front',0);
+ const energyKaten=put(gated,0,'KATEN','energy',0,false);
+ const frontKaten=put(gated,0,'FRONT','front',1,false);
+ const kotsu=put(gated,0,'KOTSU','energy',1,false);
+ const other=put(gated,0,'OTHER','energy',2,false);
+ const alias=put(gated,0,'ALIAS','energy',3,false);
+ const victim=put(gated,1,'FOE','front',0);
+ const held=labHold(gated);
+ let burned=dispatchUniversalAction(labPacks,gated,{type:'event',uid:held.uid});
+ burned=dispatchUniversalAction(labPacks,burned,{type:'chooseRetireBp',uid:victim.uid});
+ assert.equal(burned.pending.kind,'effect-active-energy-named');
+ assert.equal(burned.pending.choices.includes(energyKaten.uid),true);
+ assert.equal(burned.pending.choices.includes(kotsu.uid),true);
+ assert.equal(burned.pending.choices.includes(alias.uid),true);
+ assert.equal(burned.pending.choices.includes(frontKaten.uid),false);
+ assert.equal(burned.pending.choices.includes(other.uid),false);
+ aiOk(labPacks,burned);
+ const declined=dispatchUniversalAction(labPacks,burned,{type:'chooseActiveEnergyNamed',uid:null});
+ assert.equal(declined.pending,null);
+ assert.equal(live(declined,0,energyKaten.uid).ready,false);
+ assert.equal(live(declined,0,kotsu.uid).ready,false);
+ const chosen=open(30642);
+ put(chosen,0,'KYO','front',0);
+ const readyField=put(chosen,0,'KATEN','energy',0,true);
+ const restedBone=put(chosen,0,'KOTSU','energy',1,false);
+ const chosenFoe=put(chosen,1,'FOE','front',0);
+ grantContinuousState(chosen,{kind:'skipNextActive',controller:0,sourceUid:chosen.players[0].front[0].uid,
+  targetUid:readyField.uid});
+ const chosenEvent=labHold(chosen);
+ let stayed=dispatchUniversalAction(labPacks,chosen,{type:'event',uid:chosenEvent.uid});
+ stayed=dispatchUniversalAction(labPacks,stayed,{type:'chooseRetireBp',uid:chosenFoe.uid});
+ stayed=dispatchUniversalAction(labPacks,stayed,{type:'chooseActiveEnergyNamed',uid:readyField.uid});
+ assert.equal(live(stayed,0,readyField.uid).ready,true);
+ assert.equal(stayed.continuousStates.some(e=>e.kind==='skipNextActive'&&e.targetUid===readyField.uid),true);
+ const bone=open(30643);
+ put(bone,0,'KYO','energy',0);
+ const boneField=put(bone,0,'KOTSU','energy',1,false);
+ const boneFoe=put(bone,1,'FOE','front',0);
+ grantContinuousState(bone,{kind:'skipNextActive',controller:0,sourceUid:bone.players[0].energy[0].uid,
+  targetUid:boneField.uid});
+ const boneEvent=labHold(bone);
+ let rested=dispatchUniversalAction(labPacks,bone,{type:'event',uid:boneEvent.uid});
+ rested=dispatchUniversalAction(labPacks,rested,{type:'chooseRetireBp',uid:boneFoe.uid});
+ rested=dispatchUniversalAction(labPacks,rested,{type:'chooseActiveEnergyNamed',uid:boneField.uid});
+ assert.equal(live(rested,0,boneField.uid).ready,false);
+ assert.equal(rested.continuousStates.some(e=>e.kind==='skipNextActive'),false);
+ const aliasBoard=open(30644);
+ put(aliasBoard,0,'KYO','front',0);
+ const aliasField=put(aliasBoard,0,'ALIAS','energy',0,false);
+ const printedField=put(aliasBoard,0,'KATEN','energy',1,false);
+ const aliasFoe=put(aliasBoard,1,'FOE','front',0);
+ grantContinuousState(aliasBoard,{kind:'originalEffectsDisabled',controller:1,sourceUid:aliasFoe.uid,
+  targetUid:aliasField.uid,until:{player:0,phase:'main',edge:'end'}});
+ grantContinuousState(aliasBoard,{kind:'originalEffectsDisabled',controller:1,sourceUid:aliasFoe.uid,
+  targetUid:printedField.uid,until:{player:0,phase:'main',edge:'end'}});
+ const aliasEvent=labHold(aliasBoard);
+ let named=dispatchUniversalAction(labPacks,aliasBoard,{type:'event',uid:aliasEvent.uid});
+ named=dispatchUniversalAction(labPacks,named,{type:'chooseRetireBp',uid:aliasFoe.uid});
+ assert.equal(named.pending.choices.includes(aliasField.uid),false);
+ assert.equal(named.pending.choices.includes(printedField.uid),true);
+ aiOk(opened.packs,played);
+ assert.equal(assertUniversalMatch(opened.packs,played),true);
+ assert.equal(assertUniversalMatch(blocked.packs,blocked.s),true);
+ assert.equal(assertUniversalMatch(unnamed.packs,unnamed.s),true);
+ assert.equal(assertUniversalMatch(silenced.packs,kept),true);
+ assert.equal(assertUniversalMatch(bare.packs,empty),true);
+ assert.equal(assertUniversalMatch(skipped.packs,lockedPlay),true);
+ assert.equal(assertUniversalMatch(labPacks,declined),true);
+ assert.equal(assertUniversalMatch(labPacks,stayed),true);
+ assert.equal(assertUniversalMatch(labPacks,rested),true);
+ assert.equal(assertUniversalMatch(labPacks,named),true);
 });
