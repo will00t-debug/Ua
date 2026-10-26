@@ -9,7 +9,7 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  universalPublicView,universalPrivateChoices,effectiveHandRequiredEnergy} from '../dist/universal-v2/engine.mjs';
 import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
 import {V2_PENDING_LABELS} from '../dist/universal-v2/preview-actions.mjs';
-import {grantContinuousState} from '../dist/universal-v2/continuous-states.mjs';
+import {grantContinuousState,effectChoiceProtected} from '../dist/universal-v2/continuous-states.mjs';
 import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v2-integrated-id-manifest.mjs';
 
 // Official iframes fetched 2026-10-24.
@@ -213,9 +213,11 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 //   ready one AP card. That AP recovery cannot be declined.
 // BLC-2-064 EX07BT: REST and retire, then up to one 更木 剣八 gains
 //   Impact +1 or direct-attack Damage +1 this turn.
+// BLC-4-018 EX15BT: own-turn retirement chooses ACTIVE, or protection
+//   plus a live-BP-1000 front cut. Opponent-turn retirement is silent.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -286,12 +288,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers seventy-one whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,507);
- assert.equal(EXPECTED_V2_COUNTS.bleach,231);
+test('C29 registers seventy-two whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,508);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,232);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,231);
+ assert.equal(Object.keys(bleach.cards).length,232);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -6620,6 +6622,124 @@ test('BLC-2-064 rests and retires, then may give Kenpachi Impact +1 or Damage +1
  assert.equal(assertUniversalMatch(packs,skipped),true);
  assert.equal(assertUniversalMatch(packs,impacted),true);
  assert.equal(assertUniversalMatch(packs,hurt),true);
+});
+
+test('BLC-4-018 chooses on its own turn to ready or protect a Bambies card, then cuts tall fronts',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-4-018');
+ assert.equal(printed.number,'EX15BT/BLC-4-018');
+ assert.equal(printed.nameJa,'リルトット・ランパード');
+ assert.equal(printed.effect,'退場時：若為自己的回合，選1項。①最多選自己場上另1個具有「邦比小隊」特徵的角色或《邦比愛塔・芭絲塔拜因》，將其改為Active。②最多選自己場上另1個具有「邦比小隊」特徵的角色或《邦比愛塔・芭絲塔拜因》，到自己下次回合開始前賦予「不會被對方效果選擇」；對方前線所有BP1000以上的角色本回合BP−500。');
+ assert.equal(printed.trigger,null);
+ const card=bleach.cards['BLC-4-018'];
+ assert.equal(card.triggerEffect,null);
+ assert.equal(card.gen,1);
+ assert.deepEqual(card.traits,['星十字騎士團','邦比小隊']);
+ assert.equal(card.effects.onRetire[0].ownTurnOnly,true);
+ const deck=realDeck(['BLC-4-018','BLC-2-006','BLC-1-018','BLC-1-016','BLC-1-001','BLC-4-010'],'yellow');
+ function seat(seed){
+  const opened=main(deck,seed);
+  const lilotto=put(opened.s,0,'BLC-4-018','front',0);
+  const named=put(opened.s,0,'BLC-2-006','energy',0,false);
+  const squad=put(opened.s,0,'BLC-4-018','energy',1,false);
+  const other=put(opened.s,0,'BLC-1-018','energy',2,false);
+  const wall=put(opened.s,1,'BLC-4-010','front',0);
+  const tall=put(opened.s,1,'BLC-1-018','front',1);
+  const short=put(opened.s,1,'BLC-1-016','front',2);
+  short.buffs=[{bp:-500,untilTurn:opened.s.turn}];
+  const bench=put(opened.s,1,'BLC-1-001','energy',0);
+  return {opened,lilotto,named,squad,other,wall,tall,short,bench};
+ }
+ function ownLoss(seat){
+  const {packs}=seat.opened;
+  let s=seat.opened.s;
+  for(let n=0;n<6&&s.phase!=='attack';n++)
+   s=dispatchUniversalAction(packs,s,{type:'next'});
+  s=dispatchUniversalAction(packs,s,{type:'attack',uid:seat.lilotto.uid});
+  s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:seat.wall.uid},{actor:1});
+  return s;
+ }
+ const first=seat(29018);
+ const {packs}=first.opened;
+ assert.equal(universalBp(packs,first.opened.s,first.short),500);
+ let lost=ownLoss(first);
+ assert.equal(lost.players[0].front.some(c=>c?.uid===first.lilotto.uid),false);
+ assert.equal(lost.players[0].outside.some(c=>c.uid===first.lilotto.uid),true);
+ assert.equal(lost.pending.kind,'effect-choice-mode');
+ assert.equal(V2_PENDING_LABELS[lost.pending.kind],'選擇一項效果');
+ assert.deepEqual(legalUniversalActions(packs,lost).map(a=>a.mode).sort(),['protect','ready']);
+ aiOk(packs,lost);
+ const readied=dispatchUniversalAction(packs,lost,{type:'chooseEffectMode',mode:'ready'});
+ assert.equal(readied.pending.kind,'effect-name-or-trait-ready');
+ assert.equal(V2_PENDING_LABELS[readied.pending.kind],'可將 1 個指定名稱或特徵角色改為 ACTIVE');
+ const readyChoices=legalUniversalActions(packs,readied);
+ assert.equal(readyChoices.some(a=>a.type==='chooseNameOrTraitReady'&&a.uid===null),true);
+ assert.equal(readyChoices.some(a=>a.uid===first.named.uid),true);
+ assert.equal(readyChoices.some(a=>a.uid===first.squad.uid),true);
+ assert.equal(readyChoices.some(a=>a.uid===first.other.uid),false);
+ aiOk(packs,readied);
+ const stood=dispatchUniversalAction(packs,readied,{type:'chooseNameOrTraitReady',uid:first.named.uid});
+ assert.equal(stood.pending,null);
+ assert.equal(live(stood,0,first.named.uid).ready,true);
+ assert.equal(live(stood,0,first.squad.uid).ready,false);
+ const second=seat(29019);
+ let guarded=ownLoss(second);
+ guarded=dispatchUniversalAction(packs,guarded,{type:'chooseEffectMode',mode:'protect'});
+ assert.equal(guarded.pending.kind,'effect-name-or-trait-protect');
+ aiOk(packs,guarded);
+ guarded=dispatchUniversalAction(packs,guarded,{type:'chooseNameOrTraitProtect',uid:second.squad.uid});
+ assert.equal(guarded.pending,null);
+ assert.equal(effectChoiceProtected(guarded,1,second.squad.uid,'character'),true);
+ assert.equal(effectChoiceProtected(guarded,1,second.squad.uid,'event'),true);
+ assert.equal(effectChoiceProtected(guarded,0,second.squad.uid,'character'),false);
+ const shield=guarded.continuousStates.find(e=>e.kind==='cannotBeChosenByOppEffect'&&e.targetUid===second.squad.uid);
+ assert.equal(shield.selectionScope,'any');
+ assert.deepEqual(shield.until,{player:0,phase:'start',edge:'start'});
+ assert.equal(shield.sourceLinked,false);
+ assert.equal(universalBp(packs,guarded,live(guarded,1,second.wall.uid)),3500);
+ assert.equal(universalBp(packs,guarded,live(guarded,1,second.tall.uid)),1000);
+ assert.equal(universalBp(packs,guarded,live(guarded,1,second.short.uid)),500);
+ assert.equal(universalBp(packs,guarded,live(guarded,1,second.bench.uid)),2000);
+ let later=guarded;
+ for(let n=0;n<16&&later.active===0;n++)
+  later=dispatchUniversalAction(packs,later,{type:'next'});
+ assert.equal(later.active,1);
+ assert.equal(effectChoiceProtected(later,1,second.squad.uid,'character'),true);
+ for(let n=0;n<16&&later.active===1;n++)
+  later=dispatchUniversalAction(packs,later,{type:'next'});
+ assert.equal(later.active,0);
+ assert.equal(effectChoiceProtected(later,1,second.squad.uid,'character'),false);
+ const third=seat(29020);
+ let skipped=ownLoss(third);
+ skipped=dispatchUniversalAction(packs,skipped,{type:'chooseEffectMode',mode:'protect'});
+ skipped=dispatchUniversalAction(packs,skipped,{type:'chooseNameOrTraitProtect',uid:null});
+ assert.equal(skipped.pending,null);
+ assert.equal(skipped.continuousStates.some(e=>e.kind==='cannotBeChosenByOppEffect'),false);
+ assert.equal(universalBp(packs,skipped,live(skipped,1,third.tall.uid)),1000);
+ assert.equal(universalBp(packs,skipped,live(skipped,1,third.short.uid)),500);
+ const quiet=seat(29021);
+ grantContinuousState(quiet.opened.s,{kind:'originalEffectsDisabled',controller:1,
+  sourceUid:quiet.wall.uid,targetUid:quiet.lilotto.uid,sourceLinked:false,
+  until:{player:0,phase:'start',edge:'start'}});
+ const silenced=ownLoss(quiet);
+ assert.equal(silenced.pending,null);
+ assert.equal(silenced.players[0].outside.some(c=>c.uid===quiet.lilotto.uid),true);
+ const foe=seat(29022);
+ let theirs=foe.opened.s;
+ for(let n=0;n<16&&theirs.active===0;n++)
+  theirs=dispatchUniversalAction(packs,theirs,{type:'next'});
+ assert.equal(theirs.active,1);
+ for(let n=0;n<6&&theirs.phase!=='attack';n++)
+  theirs=dispatchUniversalAction(packs,theirs,{type:'next'});
+ theirs=dispatchUniversalAction(packs,theirs,{type:'attack',uid:foe.wall.uid});
+ theirs=dispatchUniversalAction(packs,theirs,{type:'chooseBlock',uid:foe.lilotto.uid},{actor:0});
+ assert.equal(theirs.pending,null);
+ assert.equal(theirs.players[0].outside.some(c=>c.uid===foe.lilotto.uid),true);
+ assert.equal(assertUniversalMatch(packs,stood),true);
+ assert.equal(assertUniversalMatch(packs,guarded),true);
+ assert.equal(assertUniversalMatch(packs,skipped),true);
+ assert.equal(assertUniversalMatch(packs,silenced),true);
+ assert.equal(assertUniversalMatch(packs,theirs),true);
+ assert.equal(assertUniversalMatch(packs,later),true);
 });
 
 function fieldCount(s,p){

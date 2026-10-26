@@ -158,7 +158,8 @@ const testForKind=Object.freeze({
  soulPalaceTop:'tests/v2-c29-bleach-port.test.mjs',
  kyokotsuField:'tests/v2-c29-bleach-port.test.mjs',
  hakkokenChoose:'tests/v2-c29-bleach-port.test.mjs',
- yachiruNamedGrant:'tests/v2-c29-bleach-port.test.mjs'
+ yachiruNamedGrant:'tests/v2-c29-bleach-port.test.mjs',
+ lilottoRetireChoice:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -177,7 +178,9 @@ function contributedEntry(profile){
   definition:Object.freeze(definition),
   evidence:Object.freeze({
    printedTextFragments:Object.freeze([profile.effect]),
-   reviewNote:profile.id==='BLC-2-064'?
+   reviewNote:profile.id==='BLC-4-018'?
+    'EX15BT/BLC-4-018 official iframe 2026-10-26. On retire, only during your turn, choose one. Mode 1: up to one other own character named バンビエッタ・バスターバイン or with trait 邦比小隊 becomes ACTIVE. Mode 2: up to one such character cannot be chosen by opposing effects until your next own START, and every opposing front character whose live BP is 1000 or more gets BP-500 this turn. Skipping the protection target still applies the BP cut. Declining either up-to-one choice is legal. An opponent-turn retirement does not open the choice. Silence removes the ability. Trait 邦比小隊 stays under silence. Generated energy is 黄. No trigger. No card FAQ.':
+   profile.id==='BLC-2-064'?
     'EX07BT/BLC-2-064 official iframe 2026-10-26. Main: REST this character and retire it. Then up to one own 更木 剣八 may gain Impact +1 or direct-attack Damage +1 this turn. A character with no Impact receives Impact 1; an existing Impact increases by 1. Damage +1 adds 1 to the direct attack, including a character that already has Damage 2. Declining the Kenpachi choice is legal, and the retirement still happens. A field is not a character. Silence on Yachiru removes the ability. Silence on Kenpachi keeps the printed name. DRAW is generic. Generated energy is 緑. No card FAQ.':
    profile.id==='BLC-4-079'?
     'EX15BT/BLC-4-079 official iframe 2026-10-26. Choose one: draw 1, or give up to one own 伊勢 七緒 BP+3000 and Impact 1 this turn. Declining the Nanao choice is legal, and a missing Nanao skips that choice. After the chosen effect, you may REST one own ACTIVE 京楽 春水 or 伊勢 七緒. Doing so readies one own REST AP card, and that recovery cannot be declined while a REST AP card exists. Skipping the REST readies nothing. A field is not a character. Silence keeps the printed name. No trigger. No generated energy. No card FAQ.':
