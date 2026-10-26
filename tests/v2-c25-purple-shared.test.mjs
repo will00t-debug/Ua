@@ -444,6 +444,30 @@ test('BLC-4-083 discounts an empty field by 2 and can stop a BP 4000 block',()=>
  assert.equal(blocks.includes(null),true);
 });
 
+test('BLC-1-053 entry-first raid keeps BLC-4-083 choose-one behind the discard',()=>{
+ let raid=phase(fresh(2586),'main');
+ fuel(raid);
+ readyAp(raid,0,1);
+ const base=place(raid,0,'BLC-4-083','front',0);
+ const topCard=hold(raid,0,'BLC-1-053');
+ raid=play(raid,a=>a.type==='raid'&&a.uid===topCard.uid&&a.baseUid===base.uid);
+ assert.equal(raid.pending.kind,'raid-effect-order');
+ raid=play(raid,a=>a.type==='chooseRaidOrder'&&a.mode==='entryFirst');
+ assert.equal(raid.pending.kind,'effect-discard');
+ assert.equal(raid.pending.remaining,2);
+ assert.equal(raid.effectQueue.some(e=>e.op==='chooseOne'&&e.sourceUid===base.uid),true);
+ const forged=structuredClone(raid);
+ const job=forged.effectQueue.find(e=>e.op==='chooseOne');
+ job.options=[{id:'forged',label:'forged',turn:'any',then:[{op:'draw',count:1}]}];
+ assert.throws(()=>assertUniversalMatch(packs,forged),/Unproven queued choose-one/);
+ const dumped=[raid.players[0].hand[0],raid.players[0].hand[1]];
+ raid=play(raid,a=>a.type==='chooseDiscard'&&a.uid===dumped[0].uid);
+ raid=play(raid,a=>a.type==='chooseDiscard'&&a.uid===dumped[1].uid);
+ assert.equal(raid.pending.kind,'effect-choice-mode');
+ assert.equal(raid.pending.options.some(o=>o.id==='block'),true);
+ assert.equal(raid.effectQueue.some(e=>e.op==='chooseOne'),false);
+});
+
 test('BLC-4-058 needs Renji and BP 5000, then draws only after purple effect AP',()=>{
  let closed=phase(fresh(2558),'main');
  fuel(closed);
