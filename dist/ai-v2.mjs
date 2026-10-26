@@ -5,6 +5,7 @@ import {
   botAction as legacyBotAction, legalActions, dispatch, controller,
   cardOf, bp, energy, generated, locate
 } from './engine.mjs';
+import {featuresFromSnapshot, dot, hasResidual} from './ai-learn.mjs';
 
 export const AI_LEVELS = Object.freeze(['easy', 'normal', 'hard']);
 const isCharacter = c => c && cardOf(c)?.type === 'character';
@@ -41,10 +42,44 @@ function fieldWorth(s, p) {
   return value;
 }
 
+function attackPressure(s, p) {
+  const attackers = s.players[p].front.filter(c => c?.ready);
+  const blockers = s.players[1 - p].front.filter(c => c?.ready);
+  return attackers.some(a => blockers.every(b => bp(s, b) < bp(s, a))) ? 1 : 0;
+}
+
+// Public snapshot for the residual. Opponent hand contributes only its count.
+export function classicLearnSnapshot(s, p, knownUids = new Set(s.players[p].hand.map(c => c.uid))) {
+  const own = s.players[p], opp = s.players[1 - p];
+  return {
+    lifeOwn: own.life.length,
+    lifeOpp: opp.life.length,
+    fieldOwn: fieldWorth(s, p),
+    fieldOpp: fieldWorth(s, 1 - p),
+    energyOwn: energy(s, p),
+    energyTarget: plannedEnergy(s, p).target,
+    readyOwn: own.front.filter(c => c?.ready).length,
+    readyOpp: opp.front.filter(c => c?.ready).length,
+    knownHand: own.hand.filter(c => knownUids.has(c.uid)).length,
+    oppHand: opp.hand.length,
+    ap: own.ap || 0,
+    apActive: s.active === p && s.phase === 'main' ? 1 : 0,
+    raidOwn: [...own.front, ...own.energy].reduce((n, c) => n + (c?.stack?.length || 0), 0),
+    pressure: attackPressure(s, p),
+    first: s.first === p ? 1 : 0
+  };
+}
+
+export function classicLearnFeatures(s, p, knownUids) {
+  return featuresFromSnapshot(classicLearnSnapshot(s, p, knownUids));
+}
+
 // Viewpoint score uses own known hand and *only counts* for enemy hidden zones.
 // knownUids is frozen at the start of a decision; newly drawn unknown cards
 // cannot receive extra credit because the simulated engine saw their identity.
-export function evaluatePosition(s, p, knownUids = new Set(s.players[p].hand.map(c => c.uid))) {
+// weights is the learn-mode residual. Omitted or all-zero weights reproduce
+// the historical score exactly.
+export function evaluatePosition(s, p, knownUids = new Set(s.players[p].hand.map(c => c.uid)), weights = null) {
   if (s.status === 'finished') return s.winner === p ? 10000 : -10000;
   const own = s.players[p], opp = s.players[1 - p];
   const ownLife = own.life.length, oppLife = opp.life.length;
@@ -52,11 +87,13 @@ export function evaluatePosition(s, p, knownUids = new Set(s.players[p].hand.map
   const knownHand = own.hand.filter(c => knownUids.has(c.uid));
   const handValue = knownHand.reduce((sum, c) => sum + Math.min(5, cardWorth(s, c)), 0) * 0.24;
   const newHandCount = own.hand.length - knownHand.length;
-  return life(ownLife) - life(oppLife)
+  const base = life(ownLife) - life(oppLife)
     + fieldWorth(s, p) - fieldWorth(s, 1 - p) * 1.03
     + handValue + Math.max(0, newHandCount) * 0.65
     - opp.hand.length * 0.5
     + (own.ap || 0) * (s.active === p && s.phase === 'main' ? 0.36 : 0.08);
+  if (!hasResidual(weights)) return base;
+  return base + dot(classicLearnFeatures(s, p, knownUids), weights);
 }
 
 function targetValue(s, id) {
@@ -348,10 +385,10 @@ function candidates(s) {
   return result.sort((a, b) => estimateAction(s, b) - estimateAction(s, a));
 }
 
-function searchGain(s, p, known, depth, beam, budget) {
+function searchGain(s, p, known, depth, beam, budget, weights = null) {
   if (!depth || s.status !== 'playing' || controller(s) !== p ||
       s.pending || (s.phase !== 'main' && s.phase !== 'move')) return 0;
-  const start = evaluatePosition(s, p, known);
+  const start = evaluatePosition(s, p, known, weights);
   let best = 0; // Ending this decision chain remains an option.
   for (const a of candidates(s).slice(0, beam)) {
     if (budget.left-- <= 0) break;
@@ -361,17 +398,20 @@ function searchGain(s, p, known, depth, beam, budget) {
       const secret = crossesHiddenBoundary(s, after);
       const immediate = secret
         ? estimateAction(s, a) * 0.52 + genericEffectBonus(s, a, after)
-        : evaluatePosition(after, p, known) - start + genericEffectBonus(s, a, after)
+        : evaluatePosition(after, p, known, weights) - start + genericEffectBonus(s, a, after)
           + moveBias(s, a) * 0.35;
-      const future = secret ? 0 : 0.8 * searchGain(after, p, known, depth - 1, beam, budget);
+      const future = secret ? 0 : 0.8 * searchGain(after, p, known, depth - 1, beam, budget, weights);
       best = Math.max(best, immediate + future);
     } catch { /* A complex resolution may require human choice; skip this branch. */ }
   }
   return best;
 }
 
-export function chooseAiAction(s, {difficulty = 'normal'} = {}) {
-  if (!AI_LEVELS.includes(difficulty)) difficulty = 'normal';
+export function chooseAiAction(s, {difficulty = 'normal', weights = null} = {}) {
+  const learning = difficulty === 'learn';
+  if (learning) difficulty = 'hard';
+  else if (!AI_LEVELS.includes(difficulty)) difficulty = 'normal';
+  const residual = learning && hasResidual(weights) ? weights : null;
   if (difficulty === 'easy') return legacyBotAction(s);
   if (s.status === 'finished') return null;
   if (s.pending) return choosePending(s);
@@ -392,7 +432,7 @@ export function chooseAiAction(s, {difficulty = 'normal'} = {}) {
     return all.find(a => a.type === 'next') || all[0];
   }
   const p = controller(s), known = new Set(s.players[p].hand.map(c => c.uid));
-  const current = evaluatePosition(s, p, known);
+  const current = evaluatePosition(s, p, known, residual);
   const level = difficulty === 'hard' ? {depth: 3, beam: 6, nodes: 85} : {depth: 1, beam: 0, nodes: 24};
   const budget = {left: level.nodes};
   let bestAction = all.find(a => a.type === 'next') || all[0];
@@ -406,10 +446,10 @@ export function chooseAiAction(s, {difficulty = 'normal'} = {}) {
       const secret = crossesHiddenBoundary(s, after);
       score = secret
         ? estimateAction(s, a) * 0.52 + genericEffectBonus(s, a, after)
-        : evaluatePosition(after, p, known) - current + genericEffectBonus(s, a, after)
+        : evaluatePosition(after, p, known, residual) - current + genericEffectBonus(s, a, after)
           + moveBias(s, a) * 0.35;
       if (!secret && level.depth > 1)
-        score += 0.8 * searchGain(after, p, known, level.depth - 1, level.beam, budget);
+        score += 0.8 * searchGain(after, p, known, level.depth - 1, level.beam, budget, residual);
       if (a.type === 'play') score += energyDevelopmentBias(s, a);
       if (a.type === 'move') score += moveBias(s, a) * 2.5;
       // Playing an affordable card and retaining AP has situational value, not

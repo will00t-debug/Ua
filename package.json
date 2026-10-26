@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "test": "node --test tests/*.test.mjs",
-    "benchmark:ai": "node scripts/benchmark-ai.mjs"
+    "benchmark:ai": "node scripts/benchmark-ai.mjs",
+    "learn:gate": "node scripts/ai-learn-gate.mjs"
   }
 }

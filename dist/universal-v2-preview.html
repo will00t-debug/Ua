@@ -43,7 +43,10 @@
     </div>
     <div class="field"><label for="ai-level">AI 難度</label>
      <select id="ai-level"><option value="easy">簡單</option>
-     <option value="normal" selected>普通</option><option value="hard">困難</option></select>
+     <option value="normal" selected>普通</option><option value="hard">困難</option>
+     <option value="learn">學習 · 沿用困難並累積殘差</option></select>
+     <p id="learn-status" class="small">學習模式會記下公開局面。已採用權重為 0 時，走法與困難相同。</p>
+     <button id="reset-learn" type="button">重置學習權重</button>
     </div>
     <div class="field"><label for="first-player">先手玩家</label>
      <select id="first-player"><option value="human">你先手</option>
