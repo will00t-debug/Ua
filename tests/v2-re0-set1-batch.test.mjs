@@ -70,9 +70,9 @@ test('UA40BT and UA40ST share one catalogue and keep parallel art out',()=>{
  }
 });
 
-test('ninety-one whole prints enter the V2 pack and the other twenty-two stay out',()=>{
- assert.equal(REZERO_ENGINE_IDS.length,91);
- assert.equal(Object.keys(pack.cards).length,91);
+test('ninety-two whole prints enter the V2 pack and the other twenty-one stay out',()=>{
+ assert.equal(REZERO_ENGINE_IDS.length,92);
+ assert.equal(Object.keys(pack.cards).length,92);
  assert.equal(pack.cards['REZ-1-001'],undefined);
  assert.equal(pack.cards['REZ-1-008'].step,true);
  assert.equal(pack.cards['REZ-1-008'].implementation,'vanilla');
@@ -4382,4 +4382,130 @@ test('Emilia raids onto Emilia, discounts the next cheap event, and rests from o
  assert.equal(skipOn(high.s,high.victim.uid),false);
  assert.equal(assertUniversalMatch(packs,high.s),true);
  assert.equal(assertUniversalMatch(packs,low.s),true);
+});
+
+const remTurnCounts={
+ ...Object.fromEntries(['REZ-1-015','REZ-1-014','REZ-1-007','REZ-1-006','REZ-1-024',
+  'REZ-1-016','REZ-1-043','REZ-1-086','REZ-1-003','REZ-1-091','REZ-1-054','REZ-1-029'].map(id=>[id,4])),
+ 'REZ-1-033':2
+};
+const remTurn=seed=>newUniversalMatch(packs,{decks:[remTurnCounts,remTurnCounts],first:0,seed});
+function parkLine(s,player,uid){
+ const pl=s.players[player];
+ for(const line of ['front','energy']){
+  const index=pl[line].findIndex(c=>c?.uid===uid);
+  if(index<0)continue;
+  pl.outside.push(pl[line][index]);
+  pl[line][index]=null;
+  return;
+ }
+ throw Error('missing field card '+uid);
+}
+test('Rem raids onto Rem, gains 500 BP on her turn, and draws on attack only when every character is Rem',()=>{
+ assert.equal(Object.values(remTurnCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(pack,remTurnCounts),[]);
+ const printed=pack.cards['REZ-1-015'];
+ assert.equal(printed.raidName,'レム');
+ assert.equal(printed.ownTurnBp,500);
+ assert.equal(printed.trigger,'get');
+ assert.deepEqual(printed.effects,{
+  onPlay:[{op:'drawDiscard',count:1}],
+  onAttack:[{op:'drawDiscardIfEveryOwnCharacterNamed',count:1,name:'レム'}]});
+ assert.deepEqual(printed.mainAbility,{
+  op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,
+  then:[{op:'enemyBpDown',bp:1000,minBp:1500,zone:'front'}]});
+ const shell={id:'REM15',name:'レム',color:'yellow',type:'character',energy:3,ap:1,bp:3500,gen:1,
+  traits:[],trigger:'get',raidName:'レム',ownTurnBp:500,implementation:'dsl',effects:{}};
+ const named={op:'drawDiscardIfEveryOwnCharacterNamed',count:1,name:'レム'};
+ assert.throws(()=>createUniversalPack({id:'bad-rem',cards:[{...shell,effects:{onPlay:[named]}}]}),/onAttack/);
+ assert.throws(()=>createUniversalPack({id:'bad-rem',cards:[{...shell,type:'event',bp:0,gen:0,raidName:null,trigger:null,ownTurnBp:undefined,effects:{onAttack:[named]}}]}),/onAttack/);
+
+ let live=remTurn(7401);
+ fuel(live,['REZ-1-007','REZ-1-007','REZ-1-007']);
+ const base=pull(live,0,'REZ-1-014');
+ live.players[0].front[0]=base;
+ const stranger=pull(live,0,'REZ-1-024');
+ live.players[0].front[1]=stranger;
+ const decoy=pull(live,0,'REZ-1-015');
+ live.players[0].front[2]=decoy;
+ const exact=pull(live,1,'REZ-1-024');
+ live.players[1].front[0]=exact;
+ const small=pull(live,1,'REZ-1-006');
+ live.players[1].front[1]=small;
+ live=ownMain(live,2);
+ assert.equal(universalEnergyByColor(packs,live,0).yellow,3);
+ const waiting=pull(live,0,'REZ-1-015');
+ live.players[0].hand.push(waiting);
+ assert.equal(legalUniversalActions(packs,live).some(a=>a.type==='raid'&&a.uid===waiting.uid&&a.baseUid===stranger.uid),false);
+ assert.equal(legalUniversalActions(packs,live).some(a=>a.type==='raid'&&a.uid===waiting.uid&&a.baseUid===decoy.uid),false);
+ const raid=legalUniversalActions(packs,live).find(a=>a.type==='raid'&&a.uid===waiting.uid&&a.baseUid===base.uid);
+ assert.ok(raid);
+ assert.equal(raid.line,undefined);
+ const before=live.players[0].deck.length;
+ live=dispatchUniversalAction(packs,live,raid);
+ assert.equal(at(live,0,waiting.uid).ready,true);
+ assert.equal(at(live,0,waiting.uid).stack[0].uid,base.uid);
+ assert.equal(live.players[0].deck.length,before-1);
+ assert.equal(live.pending.kind,'effect-discard');
+ assert.equal(universalBp(pack,live,at(live,0,waiting.uid)),4000);
+ live.active=1;
+ assert.equal(universalBp(pack,live,at(live,0,waiting.uid)),3500);
+ live.active=0;
+ const dumped=live.players[0].hand.find(c=>c.uid!==waiting.uid);
+ live=dispatchUniversalAction(packs,live,{type:'chooseDiscard',uid:dumped.uid});
+ assert.equal(live.pending,null);
+ assert.ok(live.players[0].outside.some(c=>c.uid===dumped.uid));
+
+ const parked=structuredClone(live);
+ const from=parked.players[0].front.findIndex(c=>c?.uid===waiting.uid);
+ parked.players[0].energy[3]=parked.players[0].front[from];
+ parked.players[0].front[from]=null;
+ assert.equal(frontOnce(parked,waiting.uid),false);
+ const bare=structuredClone(live);
+ const foe=bare.players[1].front.findIndex(c=>c?.uid===exact.uid);
+ bare.players[1].deck.push(bare.players[1].front[foe]);
+ bare.players[1].front[foe]=null;
+ assert.equal(frontOnce(bare,waiting.uid),false);
+ assert.equal(frontOnce(live,waiting.uid),true);
+ live=dispatchUniversalAction(packs,live,{type:'activate',uid:waiting.uid,mode:'frontOnce'});
+ assert.equal(live.pending.kind,'effect-target');
+ assert.equal(live.pending.optional,false);
+ assert.equal(live.pending.bp,1000);
+ assert.deepEqual(live.pending.choices,[exact.uid]);
+ assert.equal(legalUniversalActions(packs,live).some(a=>a.type==='chooseTarget'&&a.uid===null),false);
+ live=dispatchUniversalAction(packs,live,{type:'chooseTarget',uid:exact.uid});
+ assert.equal(live.pending,null);
+ assert.equal(universalBp(pack,live,at(live,1,exact.uid)),500);
+ assert.equal(universalBp(pack,live,at(live,1,small.uid)),1000);
+ assert.equal(frontOnce(live,waiting.uid),false);
+
+ for(const card of live.players[0].energy.filter(Boolean))parkLine(live,0,card.uid);
+ parkLine(live,0,stranger.uid);
+ const buried=pull(live,0,'REZ-1-006');
+ at(live,0,waiting.uid).stack.push(buried);
+ assert.equal(at(live,0,waiting.uid).stack.some(c=>c.uid===buried.uid),true);
+ assert.equal(assertUniversalMatch(packs,live),true);
+ let mixed=structuredClone(live);
+ const ram=pull(mixed,0,'REZ-1-007');
+ mixed.players[0].energy[0]=ram;
+ const cleanDeck=live.players[0].deck.length;
+ const mixedDeck=mixed.players[0].deck.length;
+ live=toAttack(live,0);
+ live=dispatchUniversalAction(packs,live,{type:'attack',uid:waiting.uid});
+ assert.equal(live.pending.kind,'effect-discard');
+ assert.equal(live.pending.player,0);
+ assert.equal(live.players[0].deck.length,cleanDeck-1);
+ let kept=structuredClone(mixed);
+ kept.players[0].energy[0]=null;
+ kept.players[0].deck.push(ram);
+ kept=toAttack(kept,0);
+ kept=dispatchUniversalAction(packs,kept,{type:'attack',uid:waiting.uid});
+ assert.equal(kept.pending.kind,'effect-discard');
+ mixed=toAttack(mixed,0);
+ mixed=dispatchUniversalAction(packs,mixed,{type:'attack',uid:waiting.uid});
+ assert.equal(mixed.pending.kind,'block');
+ assert.equal(mixed.players[0].deck.length,mixedDeck);
+ assert.equal(assertUniversalMatch(packs,live),true);
+ assert.equal(assertUniversalMatch(packs,mixed),true);
+ assert.equal(assertUniversalMatch(packs,kept),true);
 });
