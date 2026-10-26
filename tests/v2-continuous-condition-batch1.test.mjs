@@ -47,7 +47,7 @@ test('registered official SLG 001/010 immutable source pinned, exact ongoing pre
   assert.deepEqual(c.effects,{});
   assert.ok(Object.isFrozen(c.passiveBonuses));
  }
- assert.ok(!p.cards['SLG-1-003'],'multi-effect card not falsely counted as implemented');
+ assert.ok(!p.cards['SLG-1-022'],'blocked multi-effect card is not registered');
 });
 test('SLG-001 own turn outside five exactly; opponent turn and fourth card both disable',()=>{
  const s=fresh(),c=field(s,0,'SLG-1-001','front',0);
