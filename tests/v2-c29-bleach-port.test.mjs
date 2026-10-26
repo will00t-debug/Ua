@@ -280,9 +280,14 @@ import bleachContribution from '../dist/universal-v2/title-packs/bleach.mjs';
 //   On play, any number of own energy-line 護廷十三隊 characters may move
 //   to an empty front slot. On attack, every other own field 護廷十三隊
 //   gets BP+2000 this turn. No card FAQ.
+// BLC-2-009 EX07BT: 黄4 / 黄. Other field cards with バンビーズ, ゾンビ, or
+//   the name バンビエッタ・バスターバイン must total 3 before the draw 2
+//   and discard 2. Each card counts once. This character does not.
+//   Front [ターン1] retires one own character without ゾンビ, then may
+//   ACTIVE-play one outside yellow ゾンビ. GET is generic. No card FAQ.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008','BLC-4-065','BLC-2-051','BLC-1-092','BLC-4-044','BLC-4-016','BLC-4-017','BLC-1-028','BLC-2-002','BLC-4-032','BLC-1-011','BLC-1-104','BLC-1-014','BLC-1-020','BLC-1-050','BLC-1-055','BLC-1-063','BLC-1-093'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008','BLC-4-065','BLC-2-051','BLC-1-092','BLC-4-044','BLC-4-016','BLC-4-017','BLC-1-028','BLC-2-002','BLC-4-032','BLC-1-011','BLC-1-104','BLC-1-014','BLC-1-020','BLC-1-050','BLC-1-055','BLC-1-063','BLC-1-093','BLC-2-009'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -353,12 +358,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers ninety whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,526);
- assert.equal(EXPECTED_V2_COUNTS.bleach,250);
+test('C29 registers ninety-one whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,527);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,251);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,250);
+ assert.equal(Object.keys(bleach.cards).length,251);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -9428,6 +9433,167 @@ test('BLC-1-093 moves Squad characters forward and buffs the others',()=>{
  assert.equal(assertUniversalMatch(crowded.packs,full),true);
  assert.equal(assertUniversalMatch(quiet.packs,silenced),true);
  assert.equal(assertUniversalMatch(shift.packs,shifted),true);
+ assert.equal(assertUniversalMatch(mirror,life),true);
+});
+
+test('BLC-2-009 draws at three other cards and revives a yellow zombie',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-2-009');
+ assert.equal(printed.number,'EX07BT/BLC-2-009');
+ assert.equal(printed.nameJa,'ジゼル・ジュエル');
+ assert.equal(printed.effect,'登場：己方場上其他具有「邦比愛塔親衛隊」特徵、「殭屍」特徵或名為〈邦比愛塔・芭絲塔拜茵〉的卡，合計至少 3 張時，抽 2 張，再將 2 張手牌送至場外。主要階段・位於前線・每回合 1 次：使 1 個己方場上不具有「殭屍」特徵的角色退場；成功時可從己方場外將最多 1 張具有「殭屍」特徵的黃色角色卡以 ACTIVE 登場於己方場上。');
+ assert.equal(printed.traits,'星十字騎士團／邦比愛塔親衛隊');
+ assert.equal(printed.trigger,'get');
+ assert.equal(printed.gen,1);
+ const card=bleach.cards['BLC-2-009'];
+ assert.equal(card.name,'ジゼル・ジュエル');
+ assert.equal(card.triggerEffect,null);
+ assert.deepEqual(card.traitComponents,['星十字騎士團','邦比愛塔親衛隊']);
+ assert.deepEqual([card.color,card.energy,card.ap,card.bp,card.gen,card.trigger,card.type],
+  ['yellow',4,2,4000,1,'get','character']);
+ assert.deepEqual(card.effects.onPlay,[{op:'drawDiscardIfFieldAny',count:2,discardCount:2,min:3,excludeSelf:true,traits:['邦比愛塔親衛隊','殭屍'],names:['バンビエッタ・バスターバイン']}]);
+ assert.equal(card.mainAbility.frontOnly,true);
+ assert.equal(card.mainAbility.payAp,0);
+ assert.deepEqual(card.mainAbility.then[0],{op:'retireOwnMissingTraitThen',trait:'殭屍',then:[{op:'deployOutsideColorTraitActive',color:'yellow',trait:'殭屍'}]});
+ assert.equal(V2_PENDING_LABELS['effect-retire-missing-trait'],'使 1 個不具有指定特徵的己方角色退場');
+ assert.equal(V2_PENDING_LABELS['effect-outside-color-trait-active'],'可從場外將 1 張指定顏色與特徵的角色以 ACTIVE 登場');
+ const bare={id:'BAD',name:'BAD',color:'yellow',type:'character',energy:4,ap:2,bp:4000,gen:1,traits:['星十字騎士團'],trigger:'get',implementation:'dsl'};
+ const look={op:'drawDiscardIfFieldAny',count:2,discardCount:2,min:3,excludeSelf:true,traits:['邦比愛塔親衛隊','殭屍'],names:['バンビエッタ・バスターバイン']};
+ assert.throws(()=>createUniversalPack({id:'bad-field-any',cards:[{...bare,effects:{onPlay:[{...look,min:0}]}}]}),/invalid field-any draw\/discard/);
+ assert.throws(()=>createUniversalPack({id:'bad-field-key',cards:[{...bare,effects:{onPlay:[{...look,zone:'front'}]}}]}),/invalid field-any draw\/discard/);
+ assert.doesNotThrow(()=>createUniversalPack({id:'ok-field-any',cards:[{...bare,effects:{onPlay:[look]},mainAbility:{op:'oncePayProgram',oncePerTurn:true,frontOnly:true,raidOnly:false,payAp:0,requiresOwnName:null,then:[{op:'retireOwnMissingTraitThen',trait:'殭屍',then:[{op:'deployOutsideColorTraitActive',color:'yellow',trait:'殭屍'}]}]}}]}));
+ const deck=realDeck(['BLC-2-009','BLC-2-005','BLC-2-006','BLC-2-011','BLC-1-014','BLC-1-018','BLC-4-017','BLC-1-032','BLC-1-006','BLC-2-003','BLC-4-001'],'yellow');
+ function readyAp(s,n){
+  for(let i=0;i<3;i++){
+   s.players[0].apCards[i].inPlay=i<n;
+   s.players[0].apCards[i].ready=i<n;
+  }
+ }
+ function fuel(s){
+  put(s,0,'BLC-1-018','energy',1);
+  put(s,0,'BLC-2-003','energy',2);
+  put(s,0,'BLC-4-001','energy',3);
+ }
+ function playGiselle(seed){
+  const board=main(deck,seed);
+  put(board.s,0,'BLC-1-006','energy',0);
+  fuel(board.s);
+  readyAp(board.s,2);
+  const held=take(board.s,0,'BLC-2-009');
+  board.s.players[0].hand.push(held);
+  assert.ok(universalEnergyByColor(board.packs,board.s,0).yellow>=4);
+  const before=board.s.players[0].hand.length;
+  const played=dispatchUniversalAction(board.packs,board.s,{type:'play',uid:held.uid,line:'front',slot:0});
+  assert.equal(played.players[0].front[0].uid,held.uid);
+  assert.equal(played.players[0].front[0].ready,false);
+  return {board,held,played,before};
+ }
+ const short=main(deck,29201);
+ fuel(short.s);
+ put(short.s,0,'BLC-2-011','energy',0);
+ put(short.s,0,'BLC-2-006','front',1);
+ readyAp(short.s,2);
+ const shortHeld=take(short.s,0,'BLC-2-009');
+ short.s.players[0].hand.push(shortHeld);
+ const shortPlayed=dispatchUniversalAction(short.packs,short.s,{type:'play',uid:shortHeld.uid,line:'front',slot:0});
+ assert.equal(shortPlayed.pending,null);
+ const opened=main(deck,29202);
+ fuel(opened.s);
+ const squad=put(opened.s,0,'BLC-2-011','energy',0);
+ const zombie=put(opened.s,0,'BLC-2-005','front',1);
+ const named=put(opened.s,0,'BLC-1-014','front',2);
+ readyAp(opened.s,2);
+ const held=take(opened.s,0,'BLC-2-009');
+ opened.s.players[0].hand.push(held);
+ const before=opened.s.players[0].hand.length;
+ let played=dispatchUniversalAction(opened.packs,opened.s,{type:'play',uid:held.uid,line:'front',slot:0});
+ assert.equal(played.pending.kind,'effect-discard');
+ assert.equal(played.pending.remaining,2);
+ assert.equal(played.players[0].hand.length,before-1+2);
+ const firstDiscard=legalUniversalActions(opened.packs,played).find(a=>a.type==='chooseDiscard');
+ played=dispatchUniversalAction(opened.packs,played,firstDiscard);
+ const secondDiscard=legalUniversalActions(opened.packs,played).find(a=>a.type==='chooseDiscard');
+ played=dispatchUniversalAction(opened.packs,played,secondDiscard);
+ assert.equal(played.pending,null);
+ assert.equal(played.players[0].hand.length,before-1);
+ assert.equal(live(played,0,squad.uid).cardId,'BLC-2-011');
+ assert.equal(live(played,0,zombie.uid).cardId,'BLC-2-005');
+ assert.equal(live(played,0,named.uid).cardId,'BLC-1-014');
+ const used=playGiselle(29203);
+ put(used.played,0,'BLC-2-005','front',1);
+ const legalOther=put(used.played,0,'BLC-1-014','front',2);
+ const outsideZombie=take(used.played,0,'BLC-2-005');
+ const plainOutside=take(used.played,0,'BLC-4-017');
+ const eventOutside=take(used.played,0,'BLC-1-032');
+ used.played.players[0].outside.push(outsideZombie,plainOutside,eventOutside);
+ let marked=dispatchUniversalAction(used.board.packs,used.played,legalUniversalActions(used.board.packs,used.played).find(a=>a.type==='activate'&&a.mode==='oncePay'&&a.uid===used.held.uid));
+ assert.equal(marked.pending.kind,'effect-retire-missing-trait');
+ assert.equal(marked.pending.trait,'殭屍');
+ assert.equal(marked.pending.choices.includes(used.held.uid),true);
+ assert.equal(marked.pending.choices.includes(legalOther.uid),true);
+ assert.equal(marked.pending.choices.some(uid=>live(marked,0,uid)?.cardId==='BLC-2-005'),false);
+ assert.equal(legalUniversalActions(used.board.packs,marked).some(a=>a.uid===null),false);
+ assert.equal(marked.mainAbilityUsedUids.includes(used.held.uid),true);
+ aiOk(used.board.packs,marked);
+ marked=dispatchUniversalAction(used.board.packs,marked,{type:'chooseMissingTraitRetire',uid:legalOther.uid});
+ assert.equal(marked.players[0].outside.some(c=>c.uid===legalOther.uid),true);
+ assert.equal(marked.pending.kind,'effect-outside-color-trait-active');
+ assert.deepEqual(marked.pending.choices,[outsideZombie.uid]);
+ assert.equal(chooseUniversalAiAction(used.board.packs,marked,{difficulty:'easy'}).uid,null);
+ const accepted=chooseUniversalAiAction(used.board.packs,marked,{difficulty:'hard'});
+ assert.equal(accepted.uid,outsideZombie.uid);
+ assert.equal(accepted.line!==undefined,true);
+ const seen=universalPrivateChoices(used.board.packs,marked,0);
+ assert.equal(seen.options.some(o=>o.card?.cardId==='BLC-2-005'),true);
+ assert.equal(universalPrivateChoices(used.board.packs,marked,1),null);
+ marked=dispatchUniversalAction(used.board.packs,marked,{type:'chooseOutsideColorTraitActive',uid:null});
+ assert.equal(marked.pending,null);
+ assert.equal(marked.players[0].outside.some(c=>c.uid===outsideZombie.uid),true);
+ assert.equal(legalUniversalActions(used.board.packs,marked).some(a=>a.type==='activate'&&a.uid===used.held.uid),false);
+ const second=put(marked,0,'BLC-2-009','front',3);
+ const energyCopy=take(marked,0,'BLC-2-009');
+ const displaced=marked.players[0].energy[1];
+ marked.players[0].energy[1]=null;
+ marked.players[0].outside.push(displaced);
+ energyCopy.ready=true;energyCopy.fieldEntryStamp=marked.nextFieldEntryStamp++;
+ marked.players[0].energy[1]=energyCopy;
+ put(marked,1,'BLC-1-018','front',0,true);
+ assert.equal(legalUniversalActions(used.board.packs,marked).some(a=>a.type==='activate'&&a.uid===energyCopy.uid),false);
+ let revived=dispatchUniversalAction(used.board.packs,marked,legalUniversalActions(used.board.packs,marked).find(a=>a.type==='activate'&&a.mode==='oncePay'&&a.uid===second.uid));
+ assert.equal(revived.pending.choices.includes(second.uid),true);
+ revived=dispatchUniversalAction(used.board.packs,revived,{type:'chooseMissingTraitRetire',uid:second.uid});
+ assert.equal(revived.players[0].outside.some(c=>c.uid===second.uid),true);
+ assert.equal(revived.pending.kind,'effect-outside-color-trait-active');
+ const enter=legalUniversalActions(used.board.packs,revived).find(a=>a.uid===outsideZombie.uid&&a.line==='front'&&!a.replaceUid);
+ revived=dispatchUniversalAction(used.board.packs,revived,enter);
+ assert.equal(live(revived,0,outsideZombie.uid).ready,true);
+ assert.equal(locationLine(revived,outsideZombie.uid),'front');
+ assert.equal(revived.pending.kind,'effect-rest-bp');
+ revived=dispatchUniversalAction(used.board.packs,revived,{type:'chooseRestBp',uid:null});
+ assert.equal(revived.pending,null);
+ const quiet=playGiselle(29204);
+ grantContinuousState(quiet.played,{kind:'originalEffectsDisabled',controller:0,sourceUid:quiet.held.uid,
+  targetUid:quiet.held.uid,until:{player:0,phase:'attack',edge:'end'},sourceLinked:false});
+ assert.equal(legalUniversalActions(quiet.board.packs,quiet.played).some(a=>a.type==='activate'&&a.uid===quiet.held.uid),false);
+ const mirror=[bleach,bleach];
+ let life=newUniversalMatch(mirror,{decks:[deck,deck],seed:29205,first:0});
+ for(let n=0;n<8&&life.phase!=='attack';n++)life=dispatchUniversalAction(mirror,life,{type:'next'});
+ const attacker=put(life,0,'BLC-1-018','front',0,true);
+ const revealed=take(life,1,'BLC-2-009');
+ life.players[1].deck.push(...life.players[1].life.splice(0));
+ life.players[1].life.push(revealed);
+ const handBefore=life.players[1].hand.length;
+ life=dispatchUniversalAction(mirror,life,{type:'attack',uid:attacker.uid});
+ life=dispatchUniversalAction(mirror,life,{type:'chooseBlock',uid:null},{actor:1});
+ assert.equal(life.pending.kind,'life-trigger');
+ assert.equal(life.pending.trigger,'get');
+ life=dispatchUniversalAction(mirror,life,{type:'chooseTrigger',mode:'get'},{actor:1});
+ assert.equal(life.players[1].hand.some(c=>c.uid===revealed.uid),true);
+ assert.equal(life.players[1].hand.length,handBefore+1);
+ assert.equal(life.triggerActivated[1],true);
+ assert.equal(assertUniversalMatch(short.packs,shortPlayed),true);
+ assert.equal(assertUniversalMatch(opened.packs,played),true);
+ assert.equal(assertUniversalMatch(used.board.packs,revived),true);
+ assert.equal(assertUniversalMatch(quiet.board.packs,quiet.played),true);
  assert.equal(assertUniversalMatch(mirror,life),true);
 });
 

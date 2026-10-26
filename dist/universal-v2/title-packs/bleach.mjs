@@ -177,7 +177,8 @@ const testForKind=Object.freeze({
  byakuyaOutsideRemove:'tests/v2-c29-bleach-port.test.mjs',
  soiFonNextStartRetire:'tests/v2-c29-bleach-port.test.mjs',
  techLookHandOutside:'tests/v2-c29-bleach-port.test.mjs',
- yamamotoSquadShift:'tests/v2-c29-bleach-port.test.mjs'
+ yamamotoSquadShift:'tests/v2-c29-bleach-port.test.mjs',
+ giselleFieldCountActive:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -196,7 +197,9 @@ function contributedEntry(profile){
   definition:Object.freeze(definition),
   evidence:Object.freeze({
    printedTextFragments:Object.freeze([profile.effect]),
-   reviewNote:profile.id==='BLC-1-093'?
+   reviewNote:profile.id==='BLC-2-009'?
+    'EX07BT/BLC-2-009 official page 2026-10-27. Required energy 黄4, generated energy 黄. On play, if other own field cards with trait バンビーズ, trait ゾンビ, or the name バンビエッタ・バスターバイン total at least 3, draw 2 and put 2 hand cards outside. Each other card counts once. This character does not count. A field card counts. Two other cards do not draw. [起動メイン][フロントLにある場合][ターン1]: retire one own character that does not have ゾンビ. The retirement is mandatory. This character is a legal target. A character with ゾンビ is not. A field is not. On success, up to one own outside yellow character with ゾンビ may enter ACTIVE. Declining that entry is legal. No such outside card opens nothing. [ターン1] is this physical card. The energy line cannot activate. The entered character resolves its on-play as an own character effect. GET is the generic sentence. No card FAQ. Trait 星十字騎士団／バンビーズ.':
+   profile.id==='BLC-1-093'?
     'UA08BT/BLC-1-093 official page 2026-10-27. Required energy 緑7, generated energy 緑. Raid onto 山本 元柳斎 重國, become ACTIVE, and may move to the front. Impact 1. On play, move any number of own energy-line cards with trait 護廷十三隊 to the front. Zero is legal. A field cannot enter the front line. A full front line cannot receive them. Declining leaves every energy-line card where it is. A moved character keeps its ready state. On attack, every other own field card with trait 護廷十三隊 gets BP+2000 this turn. This character is not included. An energy-line character is included. Silence removes the printed Impact and the attack buff. RAID is the generic sentence. No card FAQ. Trait 護廷十三隊.':
    profile.id==='BLC-1-063'?
     'UA08BT/BLC-1-063 official page 2026-10-27. Required energy 紫2. Generated energy is a dash, so gen stays 0. Look at the top 5 of your deck. Add 1 to hand and put 1 outside. Put the rest on the bottom in any order. The look is private. The card added to hand is not revealed. Both selections are mandatory while a card remains. One inspected card goes to hand and does not go outside. Two inspected cards go one to hand and one outside, with nothing left to order. An empty deck does nothing. Cards under the window stay above the ordered remainder. DRAW is the generic sentence. No card FAQ. Trait 無.':
