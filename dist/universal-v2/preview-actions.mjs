@@ -74,6 +74,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-bounce-include-self':'可將 1 張自己場上的角色放回手牌',
  'effect-outside-rest-or-raid':'可讓場外的藍色菜月昴休息登場或突襲',
  'effect-grant-bounce-instead':'可指定 1 張菜月昴，對手效果退場時改回手牌',
+ 'effect-remove-opp-field':'選擇 1 張對手場上角色，放入移除區',
  'effect-hand-reenter-under':'可將 1 張手牌放到場外，讓菜月昴休息回到前線',
  'effect-hand-deploy-may':'這次參照手牌角色 BP 時，是否視為 +1000 並休息登場',
  'effect-hand-rest-entry':'選擇休息登場的位置',
@@ -298,6 +299,7 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseGrantPrintedBlock':return action.uid===null?'不賦予防禦下限':'使 '+name()+' 不會被 BP4000 以上的角色阻擋';
   case 'chooseMoveOppFront':return action.uid===null?'不移動':'將 '+name()+' 移至能源線';
   case 'chooseUnblockedRest':return action.uid===null?'不使角色休息':'使 '+name()+' 休息';
+  case 'chooseRemoveOppField':return '將 '+name()+' 放入移除區';
   case 'chooseEnergySwap':return '與 '+name()+' 交換位置';
   case 'chooseGrantNamedImpact':return action.uid===null?'不賦予衝擊':'使 '+name()+' 獲得衝擊 1';
   case 'chooseHandBpMay':return action.mode==='accept'?'視為 BP+1000':'維持原本 BP';
