@@ -892,6 +892,56 @@ const authored=[
     {"op":"buffSelfPerOwnOutsideGroups","unit":5,"bpPerGroup":500}
    ]
   }
+},
+{
+  "id":"SLG-1-047","name":"水篠 旬","color":"green","energy":4,
+  "ap":1,"bp":4000,"gen":1,"trigger":"get","type":"character",
+  "textAnchor":"再Raid於原底板",
+  "implementation":"dsl","raidName":"水篠 旬",
+  "phaseEffects":[{"phase":"attack","edge":"end","turn":"own","then":[
+    {"op":"chainRaidHand","optional":true,"facedown":2,"color":"green","energy":5,"name":"水篠 旬"}]}],
+  "effects":{
+   "onPlay":[{"op":"draw","count":1}],
+   "onAttack":[{"op":"drawTuckHandUnder","count":1}]
+  }
+},
+{
+  "id":"SLG-1-048","name":"水篠 旬","color":"green","energy":5,
+  "ap":1,"bp":4000,"gen":1,"trigger":"raid","type":"character",
+  "textAnchor":"綠色需求能源6",
+  "implementation":"dsl","raidName":"水篠 旬",
+  "phaseEffects":[{"phase":"attack","edge":"end","turn":"own","then":[
+    {"op":"chainRaidHand","optional":true,"facedown":3,"color":"green","energy":6,"name":"水篠 旬"}]}],
+  "effects":{
+   "onPlay":[
+    {"op":"deployOwnHandRest","type":"character","color":"green","energy":3,"ap":1,"max":1},
+    {"op":"draw","count":1,"entry":"ownEffect"}
+   ],
+   "onAttack":[{"op":"drawTuckHandUnder","count":1}]
+  }
+},
+{
+  "id":"SLG-1-049","name":"水篠 旬","color":"green","energy":6,
+  "ap":1,"bp":4000,"gen":1,"trigger":"raid","type":"character",
+  "textAnchor":"BP+500",
+  "implementation":"dsl","raidName":"水篠 旬","printedImpact":1,
+  "passiveBonuses":[{"condition":{"kind":"selfOnField","turn":"any"},"bp":500}],
+  "effects":{
+   "onPlay":[{"op":"retireOppFrontOne","optional":true,"entry":"ownEffect"}],
+   "onAttack":[{"op":"drawTuckHandUnder","count":1}]
+  }
+},
+{
+  "id":"SLG-1-051","name":"観月 絵里","color":"green","energy":3,
+  "ap":1,"bp":2000,"gen":2,"trigger":"active","type":"character",
+  "textAnchor":"額外支付1AP",
+  "implementation":"dsl",
+  "effects":{"onPlay":[{"op":"chooseOne","optional":false,"options":[
+    {"id":"recover","label":"從場外回收能源2以下角色","turn":"any","then":[
+     {"op":"recoverOutsideCharacterUnderEnergy","energy":2,"optional":true}]},
+    {"id":"raid","label":"支付1AP並由場外Raid","turn":"any","then":[
+     {"op":"payApDiscardOutsideRaid","ap":1,"color":"green","energy":4,"name":"水篠 旬"}]}
+  ]}]}
 }
 ];
 export const SLG_V2_VERIFIED_IDS=Object.freeze(authored.map(c=>c.id));

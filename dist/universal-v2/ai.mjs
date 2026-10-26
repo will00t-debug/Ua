@@ -79,6 +79,18 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='effect-active-own-trait')
   return difficulty==='easy'?legal.find(a=>a.uid===null)||legal[0]:
    legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-tuck-hand-under'||s.pending?.kind==='effect-chain-discard'){
+  const catalog=packsOf(pack)[s.pending.player].cards;
+  const hand=s.players[s.pending.player].hand;
+  return [...legal].sort((a,b)=>(catalog[hand.find(c=>c.uid===a.uid)?.cardId]?.energy||0)-
+   (catalog[hand.find(c=>c.uid===b.uid)?.cardId]?.energy||0))[0];
+ }
+ if(s.pending?.kind==='effect-chain-raid-facedown')
+  return difficulty==='easy'&&!s.pending.selected?.length?
+   legal.find(a=>a.uid===null)||legal[0]:legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-chain-raid-hand'||s.pending?.kind==='effect-outside-named-raid')
+  return difficulty==='easy'?legal.find(a=>a.uid===null)||legal[0]:
+   legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-outside-cost-hand'){
   const catalog=packsOf(pack)[s.pending.player].cards;
   const hand=s.players[s.pending.player].hand;
