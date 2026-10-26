@@ -215,9 +215,12 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 //   Impact +1 or direct-attack Damage +1 this turn.
 // BLC-4-018 EX15BT: own-turn retirement chooses ACTIVE, or protection
 //   plus a live-BP-1000 front cut. Opponent-turn retirement is silent.
+// BLC-4-008 EX15BT: on play, with no outside ユーハバッハ, may retire
+//   another バズビー. The cap is that card's printed energy times 1000.
+//   Declining the opposing retire still readies this character.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -288,12 +291,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers seventy-two whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,508);
- assert.equal(EXPECTED_V2_COUNTS.bleach,232);
+test('C29 registers seventy-three whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,509);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,233);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,232);
+ assert.equal(Object.keys(bleach.cards).length,233);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -6740,6 +6743,121 @@ test('BLC-4-018 chooses on its own turn to ready or protect a Bambies card, then
  assert.equal(assertUniversalMatch(packs,silenced),true);
  assert.equal(assertUniversalMatch(packs,theirs),true);
  assert.equal(assertUniversalMatch(packs,later),true);
+});
+
+test('BLC-4-008 may retire another Bazz-B, then an opposing front within that printed energy',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-4-008');
+ assert.equal(printed.number,'EX15BT/BLC-4-008');
+ assert.equal(printed.nameJa,'バズビー');
+ assert.equal(printed.effect,'登場時：若自己場外沒有《友哈巴赫》，可使自己場上另1個《巴茲比》退場；如此則最多選1個對方前線、BP不超過被退場角色所需能量×1000的角色使其退場，並將此角色改為Active。若以此效果使所需能量5以上的己方角色退場，此角色本回合獲得Impact(1)。');
+ assert.equal(printed.trigger,'get');
+ const card=bleach.cards['BLC-4-008'];
+ assert.equal(card.triggerEffect,null);
+ assert.equal(card.gen,1);
+ assert.equal(card.effects.onPlay[0].op,'sacrificeNamedChain');
+ assert.equal(card.effects.onPlay[0].impactMinEnergy,5);
+ assert.equal(Object.values(bleach.cards).some(c=>c.energy>=5&&cardHasName(c,'バズビー',true)),false);
+ const deck=realDeck(['BLC-4-008','BLC-2-003','BLC-4-001','BLC-1-018','BLC-1-016','BLC-4-010','BLC-1-021'],'yellow');
+ function seat(seed){
+  const opened=main(deck,seed);
+  const other=put(opened.s,0,'BLC-4-008','front',1);
+  const small=put(opened.s,0,'BLC-2-003','energy',0);
+  const plain=put(opened.s,0,'BLC-1-018','energy',1);
+  const fuel=put(opened.s,0,'BLC-1-016','energy',2);
+  const alias=put(opened.s,0,'BLC-4-001','energy',3);
+  const wall=put(opened.s,1,'BLC-4-010','front',0);
+  const mid=put(opened.s,1,'BLC-2-003','front',1);
+  const low=put(opened.s,1,'BLC-1-016','front',2);
+  const tall=put(opened.s,1,'BLC-1-018','front',3);
+  tall.buffs=[{bp:4000,untilTurn:opened.s.turn}];
+  const bazz=take(opened.s,0,'BLC-4-008');
+  opened.s.players[0].hand.push(bazz);
+  return {opened,other,small,plain,fuel,alias,wall,mid,low,tall,bazz};
+ }
+ const first=seat(29008);
+ const {packs}=first.opened;
+ assert.equal(universalEnergyByColor(packs,first.opened.s,0).yellow>=4,true);
+ assert.equal(universalBp(packs,first.opened.s,first.tall),5500);
+ assert.equal(legalUniversalActions(packs,first.opened.s).some(a=>
+  a.type==='play'&&a.uid===first.bazz.uid&&a.line==='front'&&a.slot===0),true);
+ let played=dispatchUniversalAction(packs,first.opened.s,{type:'play',uid:first.bazz.uid,line:'front',slot:0});
+ assert.equal(live(played,0,first.bazz.uid).ready,false);
+ assert.equal(played.pending.kind,'effect-sacrifice-named');
+ assert.equal(V2_PENDING_LABELS[played.pending.kind],'可退場另 1 個指定名稱角色');
+ const sacrifice=legalUniversalActions(packs,played);
+ assert.equal(sacrifice.some(a=>a.type==='chooseSacrificeNamed'&&a.uid===null),true);
+ assert.equal(sacrifice.some(a=>a.uid===first.other.uid),true);
+ assert.equal(sacrifice.some(a=>a.uid===first.small.uid),true);
+ assert.equal(sacrifice.some(a=>a.uid===first.alias.uid),true);
+ assert.equal(sacrifice.some(a=>a.uid===first.plain.uid),false);
+ assert.equal(sacrifice.some(a=>a.uid===first.bazz.uid),false);
+ aiOk(packs,played);
+ const declined=dispatchUniversalAction(packs,played,{type:'chooseSacrificeNamed',uid:null});
+ assert.equal(declined.pending,null);
+ assert.equal(live(declined,0,first.bazz.uid).ready,false);
+ assert.equal(universalImpact(packs,declined,live(declined,0,first.bazz.uid)),0);
+ assert.equal(live(declined,1,first.wall.uid).cardId,'BLC-4-010');
+ const second=seat(29009);
+ let capped=dispatchUniversalAction(packs,second.opened.s,{type:'play',uid:second.bazz.uid,line:'front',slot:0});
+ capped=dispatchUniversalAction(packs,capped,{type:'chooseSacrificeNamed',uid:second.other.uid});
+ assert.equal(capped.players[0].outside.some(c=>c.uid===second.other.uid),true);
+ assert.equal(capped.pending.kind,'effect-retire-bp');
+ assert.equal(capped.pending.limit,4000);
+ const victims=legalUniversalActions(packs,capped);
+ assert.equal(victims.some(a=>a.type==='chooseRetireBp'&&a.uid===null),true);
+ assert.equal(victims.some(a=>a.uid===second.wall.uid),true);
+ assert.equal(victims.some(a=>a.uid===second.mid.uid),true);
+ assert.equal(victims.some(a=>a.uid===second.low.uid),true);
+ assert.equal(victims.some(a=>a.uid===second.tall.uid),false);
+ aiOk(packs,capped);
+ const stood=dispatchUniversalAction(packs,capped,{type:'chooseRetireBp',uid:null});
+ assert.equal(stood.pending,null);
+ assert.equal(live(stood,0,second.bazz.uid).ready,true);
+ assert.equal(universalImpact(packs,stood,live(stood,0,second.bazz.uid)),0);
+ assert.equal(live(stood,1,second.wall.uid).cardId,'BLC-4-010');
+ const third=seat(29010);
+ let narrow=dispatchUniversalAction(packs,third.opened.s,{type:'play',uid:third.bazz.uid,line:'front',slot:0});
+ narrow=dispatchUniversalAction(packs,narrow,{type:'chooseSacrificeNamed',uid:third.small.uid});
+ assert.equal(narrow.pending.limit,2000);
+ const narrowChoices=legalUniversalActions(packs,narrow);
+ assert.equal(narrowChoices.some(a=>a.uid===third.low.uid),true);
+ assert.equal(narrowChoices.some(a=>a.uid===third.mid.uid),false);
+ assert.equal(narrowChoices.some(a=>a.uid===third.wall.uid),false);
+ const removed=dispatchUniversalAction(packs,narrow,{type:'chooseRetireBp',uid:third.low.uid});
+ assert.equal(removed.pending,null);
+ assert.equal(removed.players[1].front.some(c=>c?.uid===third.low.uid),false);
+ assert.equal(removed.players[1].outside.some(c=>c.uid===third.low.uid),true);
+ assert.equal(live(removed,0,third.bazz.uid).ready,true);
+ assert.equal(universalImpact(packs,removed,live(removed,0,third.bazz.uid)),0);
+ const quiet=seat(29011);
+ const yhwach=take(quiet.opened.s,0,'BLC-1-021');
+ quiet.opened.s.players[0].outside.push(yhwach);
+ const blocked=dispatchUniversalAction(packs,quiet.opened.s,{type:'play',uid:quiet.bazz.uid,line:'front',slot:0});
+ assert.equal(blocked.pending,null);
+ assert.equal(live(blocked,0,quiet.bazz.uid).ready,false);
+ const muted=seat(29012);
+ grantContinuousState(muted.opened.s,{kind:'originalEffectsDisabled',controller:1,
+  sourceUid:muted.bazz.uid,targetUid:muted.alias.uid,sourceLinked:false,
+  until:{player:0,phase:'start',edge:'start'}});
+ const hushed=dispatchUniversalAction(packs,muted.opened.s,{type:'play',uid:muted.bazz.uid,line:'front',slot:0});
+ assert.equal(legalUniversalActions(packs,hushed).some(a=>a.uid===muted.alias.uid),false);
+ assert.equal(legalUniversalActions(packs,hushed).some(a=>a.uid===muted.small.uid),true);
+ const lone=main(deck,29013);
+ put(lone.s,0,'BLC-1-018','energy',0);
+ put(lone.s,0,'BLC-1-016','energy',1);
+ put(lone.s,0,'BLC-4-010','energy',2);
+ put(lone.s,0,'BLC-1-021','energy',3);
+ const only=take(lone.s,0,'BLC-4-008');
+ lone.s.players[0].hand.push(only);
+ const alone=dispatchUniversalAction(packs,lone.s,{type:'play',uid:only.uid,line:'front',slot:0});
+ assert.equal(alone.pending,null);
+ assert.equal(live(alone,0,only.uid).ready,false);
+ assert.equal(assertUniversalMatch(packs,declined),true);
+ assert.equal(assertUniversalMatch(packs,stood),true);
+ assert.equal(assertUniversalMatch(packs,removed),true);
+ assert.equal(assertUniversalMatch(packs,blocked),true);
+ assert.equal(assertUniversalMatch(packs,hushed),true);
+ assert.equal(assertUniversalMatch(packs,alone),true);
 });
 
 function fieldCount(s,p){

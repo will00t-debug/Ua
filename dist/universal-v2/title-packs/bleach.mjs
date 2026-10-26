@@ -159,7 +159,8 @@ const testForKind=Object.freeze({
  kyokotsuField:'tests/v2-c29-bleach-port.test.mjs',
  hakkokenChoose:'tests/v2-c29-bleach-port.test.mjs',
  yachiruNamedGrant:'tests/v2-c29-bleach-port.test.mjs',
- lilottoRetireChoice:'tests/v2-c29-bleach-port.test.mjs'
+ lilottoRetireChoice:'tests/v2-c29-bleach-port.test.mjs',
+ bazzSacrificeChain:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -178,7 +179,9 @@ function contributedEntry(profile){
   definition:Object.freeze(definition),
   evidence:Object.freeze({
    printedTextFragments:Object.freeze([profile.effect]),
-   reviewNote:profile.id==='BLC-4-018'?
+   reviewNote:profile.id==='BLC-4-008'?
+    'EX15BT/BLC-4-008 official iframe 2026-10-26. On play, while own outside has no ユーハバッハ, you may retire one other own バズビー. An audited alias counts; silence drops the alias and keeps a printed name. Declining the sacrifice stops the rest, and this character stays as it entered. After a sacrifice, up to one opposing front character whose live BP is at most the sacrificed card printed required energy times 1000 may be retired. Declining that retirement still readies this character. If the sacrificed card printed energy is 5 or more, this character gains Impact 1 this turn. No ported バズビー has printed energy 5, so that Impact clause is implemented and not reached by a current print. GET is generic. Generated energy is 黄. No card FAQ.':
+   profile.id==='BLC-4-018'?
     'EX15BT/BLC-4-018 official iframe 2026-10-26. On retire, only during your turn, choose one. Mode 1: up to one other own character named バンビエッタ・バスターバイン or with trait 邦比小隊 becomes ACTIVE. Mode 2: up to one such character cannot be chosen by opposing effects until your next own START, and every opposing front character whose live BP is 1000 or more gets BP-500 this turn. Skipping the protection target still applies the BP cut. Declining either up-to-one choice is legal. An opponent-turn retirement does not open the choice. Silence removes the ability. Trait 邦比小隊 stays under silence. Generated energy is 黄. No trigger. No card FAQ.':
    profile.id==='BLC-2-064'?
     'EX07BT/BLC-2-064 official iframe 2026-10-26. Main: REST this character and retire it. Then up to one own 更木 剣八 may gain Impact +1 or direct-attack Damage +1 this turn. A character with no Impact receives Impact 1; an existing Impact increases by 1. Damage +1 adds 1 to the direct attack, including a character that already has Damage 2. Declining the Kenpachi choice is legal, and the retirement still happens. A field is not a character. Silence on Yachiru removes the ability. Silence on Kenpachi keeps the printed name. DRAW is generic. Generated energy is 緑. No card FAQ.':

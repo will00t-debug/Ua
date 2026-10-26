@@ -38,6 +38,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-keyword-mode':'選擇 Impact +1 或 Damage +1',
  'effect-name-or-trait-ready':'可將 1 個指定名稱或特徵角色改為 ACTIVE',
  'effect-name-or-trait-protect':'可讓 1 個指定名稱或特徵角色不被對方效果選擇',
+ 'effect-sacrifice-named':'可退場另 1 個指定名稱角色',
  'recovered-self-entry':'回收後可 REST 登場至能源線',
  'effect-recover-outside':'從場外回收','effect-retire-bp':'選擇敵方退場',
  'effect-retire-own-trait':'可退場 1 個己方指定特徵角色',
@@ -132,6 +133,7 @@ export function uiActionLabel(action,{pack,state}={}){
    if(action.mode==='active')return '使 '+name()+' ACTIVE';
    if(action.mode==='special')return '使 '+name()+' 退場';
    return '生命觸發：'+action.mode;
+  case 'chooseSacrificeNamed':return action.uid===null?'不退場指定名稱角色':'退場 '+name();
   case 'chooseNameOrTraitReady':return action.uid===null?'不改為 ACTIVE':'將 '+name()+' 改為 ACTIVE';
   case 'chooseNameOrTraitProtect':return action.uid===null?'不賦予選擇保護':'令 '+name()+' 不被對方效果選擇';
   case 'chooseNamedKeyword':return action.uid===null?'不賦予指定名稱角色':'選擇 '+name();
