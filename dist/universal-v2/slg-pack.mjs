@@ -735,7 +735,7 @@ const authored=[
   "effects":{"onPlay":[{"op":"oncePerTurnGate","scope":"name","optional":false,
     "when":{"kind":"ownCardTraitCount","turn":"any","min":5,"zone":"field",
      "excludeSelf":false,"trait":"第四次架南島レイド"},
-    "then":[{"op":"activeSelf"},{"op":"grantSelfAttackSkipThisTurn"}]}]}
+    "then":[{"op":"activeSelf"},{"op":"grantSelfSkipNextActive"}]}]}
 },
 {
   "id":"SLG-1-003","name":"朝比奈 りん","color":"purple","energy":2,
@@ -942,6 +942,84 @@ const authored=[
     {"id":"raid","label":"支付1AP並由場外Raid","turn":"any","then":[
      {"op":"payApDiscardOutsideRaid","ap":1,"color":"green","energy":4,"name":"水篠 旬"}]}
   ]}]}
+},
+{
+  "id":"SLG-1-022","name":"水篠 旬","color":"purple","energy":12,
+  "ap":1,"bp":5000,"gen":1,"trigger":"raid","type":"character",
+  "textAnchor":"需求能源減少1",
+  "implementation":"dsl","raidName":"水篠 旬","printedImpact":1,
+  "fieldTraitEnergyDiscount":{"trait":"影の軍団","per":1},
+  "energyAttackSwap":{"trait":"影の軍団"},
+  "effects":{"onPlay":[
+    {"op":"activeOwnTraitLines","trait":"影の軍団","frontMax":1,"energyMax":1},
+    {"op":"grantSelfSniperThisTurn"}
+  ]}
+},
+{
+  "id":"SLG-1-034","name":"悪魔の城","color":"purple","energy":3,
+  "ap":1,"bp":0,"gen":2,"trigger":"get","type":"field",
+  "textAnchor":"命之神水",
+  "implementation":"dsl","enterAlwaysActive":true,
+  "mainAbility":{"op":"fieldRestMillOrOutsideEvent","outsideMin":20,"eventName":"命の神水"},
+  "effects":{}
+},
+{
+  "id":"SLG-1-058","name":"向坂 雫","color":"green","energy":4,
+  "ap":1,"bp":4000,"gen":1,"trigger":"raid","type":"character",
+  "textAnchor":"下次不ACTIVE",
+  "implementation":"dsl","raidName":"向坂 雫",
+  "officialTraits":["第四次架南島レイド"],"catalogueTraits":["第四次架南島Raid"],
+  "effects":{
+   "onPlay":[{"op":"buffSelf","bp":1000}],
+   "onAttack":[{"op":"oncePerTurnGate","scope":"card","optional":true,
+    "when":{"kind":"ownHandCountAtLeast","turn":"any","min":1},
+    "then":[{"op":"discardGate","optional":false,"then":[{"op":"activeSkipPair"}]}]}]
+  }
+},
+{
+  "id":"SLG-1-064","name":"最上 真","color":"green","energy":4,
+  "ap":1,"bp":4000,"gen":1,"trigger":"raid","type":"character",
+  "textAnchor":"BP1500以上",
+  "implementation":"dsl","raidName":"最上 真",
+  "officialTraits":["第四次架南島レイド"],"catalogueTraits":["第四次架南島Raid"],
+  "effects":{
+   "onPlay":[{"op":"ifLiveThen","when":{"kind":"ownCardTraitCount","turn":"any","min":5,
+    "zone":"field","excludeSelf":false,"trait":"第四次架南島レイド"},
+    "then":[{"op":"enemyFrontAllBpDown","bp":1000,"minBp":1500}]}],
+   "onAttack":[{"op":"chooseOne","optional":true,"options":[
+    {"id":"replay","label":"重複此登場能力並跳過下次ACTIVE","turn":"any","then":[
+     {"op":"grantSelfSkipNextActive"},{"op":"replayOnPlay"}]},
+    {"id":"retire","label":"令BP2000以下對手前線退場並跳過下次ACTIVE","turn":"any","then":[
+     {"op":"grantSelfSkipNextActive"},
+     {"op":"retireOppFrontOneUnderBp","bp":2000,"optional":true}]}
+   ]}]
+  }
+},
+{
+  "id":"SLG-1-073","name":"リュー","color":"green","energy":4,
+  "ap":2,"bp":4000,"gen":1,"trigger":"get","type":"character",
+  "textAnchor":"同名卡此登場能力每回合合計一次",
+  "implementation":"dsl","enterAlwaysActive":true,
+  "officialTraits":["DFN／第四次架南島レイド"],
+  "traitComponents":["DFN","第四次架南島レイド"],
+  "catalogueTraits":["DFN","第四次架南島Raid"],
+  "frontRetireHandGrant":{"line":"front","retiredTrait":"第四次架南島レイド",
+   "retiredLacks":"DFN","grantTrait":"DFN"},
+  "effects":{"onPlay":[{"op":"oncePerTurnGate","scope":"name","optional":false,"then":[
+    {"op":"buffOwnField","filter":{"field":"type","value":"character"},
+     "bp":1000,"optional":true,"excludeSelf":false},
+    {"op":"ifLiveThen","when":{"kind":"ownHandCountAtLeast","turn":"any","min":7},
+     "then":[{"op":"recoverAp","count":2}]}
+  ]}]}
+},
+{
+  "id":"SLG-1-075","name":"デイリークエスト","color":"green","energy":1,
+  "ap":1,"bp":0,"gen":1,"trigger":"get","type":"field",
+  "textAnchor":"需求能源0水篠旬",
+  "implementation":"dsl",
+  "mainAbility":{"op":"fieldRestTuckOrRelease","requiresName":"水篠 旬",
+   "recoverName":"水篠 旬","recoverEnergy":0},
+  "effects":{}
 }
 ];
 export const SLG_V2_VERIFIED_IDS=Object.freeze(authored.map(c=>c.id));

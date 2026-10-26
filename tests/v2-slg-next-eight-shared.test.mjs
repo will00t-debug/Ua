@@ -98,7 +98,7 @@ test('eight further official SLG prints are registered on the shared engine',()=
  assert.equal(slg.cards['SLG-1-003'].passiveBonuses[0].extraEnergy,1);
  assert.equal(slg.cards['SLG-1-060'].impactNull,true);
  assert.equal(slg.cards['SLG-1-060'].phaseEffects[0].then[0].op,'swapEnergyWithFrontSkip');
- assert.equal(EXPECTED_V2_IDS['solo-leveling'].length,74);
+ assert.equal(EXPECTED_V2_IDS['solo-leveling'].length,80);
 });
 
 test('024 is not blocked by current BP 4000, and a lost block lets the opponent grant that rule',()=>{
@@ -183,7 +183,7 @@ test('067 draws, readies and gains BP only when three DFN cards are present, onc
  assert.equal(universalBp(packs,miss,live(miss,later)),4000);
 });
 
-test('057 readies and stores the attack skip only at five island-raid cards, then applies it on attack',()=>{
+test('057 readies and gains the next-ACTIVE skip immediately at five island-raid cards',()=>{
  const counts=countsFor(['SLG-1-057','SLG-1-062','SLG-1-054','SLG-1-063','SLG-1-056']);
  let s=toPhase(counts,1057,'main');
  put(s,0,'SLG-1-062','energy',0);put(s,0,'SLG-1-054','energy',1);
@@ -191,8 +191,8 @@ test('057 readies and stores the attack skip only at five island-raid cards, the
  const actor=take(s,0,'SLG-1-057');s.players[0].hand.push(actor);
  s=play(s,actor.uid,'front',0);
  assert.equal(live(s,actor).ready,true);
- assert.equal(live(s,actor).attackSkipGranted.turn,s.turn);
- assert.equal(s.continuousStates.some(e=>e.kind==='skipNextActive'&&e.targetUid===actor.uid),false);
+ assert.equal(live(s,actor).attackSkipGranted,undefined);
+ assert.ok(s.continuousStates.some(e=>e.kind==='skipNextActive'&&!e.consumed&&e.targetUid===actor.uid));
  s=use(s,{type:'next'});
  assert.equal(s.phase,'attack');
  s=use(s,{type:'attack',uid:actor.uid});
@@ -213,6 +213,7 @@ test('057 readies and stores the attack skip only at five island-raid cards, the
  again=play(again,two.uid,'front',1);
  assert.equal(live(again,two).ready,false);
  assert.equal(live(again,two).attackSkipGranted,undefined);
+ assert.equal(again.continuousStates.some(e=>e.kind==='skipNextActive'&&e.targetUid===two.uid),false);
 });
 
 test('003 generates an extra energy at ten outside cards and buffs when recovered by an own effect',()=>{

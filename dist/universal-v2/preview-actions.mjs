@@ -42,6 +42,12 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-grant-opp-block':'對手選擇一名角色，本回合不被高 BP 阻擋',
  'effect-deploy-outside':'從場外選擇角色登場',
  'effect-energy-skip-swap':'能源線與下次不 ACTIVE 的前線角色交換',
+ 'effect-energy-trait-swap':'能源線與前線指定特徵角色交換',
+ 'effect-active-lines':'選擇己方前線或能源線的指定特徵角色 ACTIVE',
+ 'effect-active-skip-pair':'選擇下次不 ACTIVE 的前線角色並執行 ACTIVE',
+ 'effect-pay-hand-outside':'將 1 張手牌送至場外',
+ 'effect-play-outside-event':'可從場外支付 AP 使用指定事件',
+ 'effect-release-facedown':'可將 1 張裏向卡送至場外',
  'effect-outside-cost-hand':'棄一張指定特徵手牌，將場外的此卡加入手牌',
  'effect-attack-aid':'攻擊時可 REST 並選擇一項協助',
  'effect-attack-aid-grant':'選擇本次攻擊的協助對象',
@@ -127,6 +133,10 @@ export function uiActionLabel(action,{pack,state}={}){
     action.mode==='ready'?'主要能力：ACTIVE':
     action.mode==='restTuckDamage'?
     '起動主要：REST 自身，將牌庫頂裏向放在指定角色下並使直接傷害變為 2':
+    action.mode==='fieldMill'?'起動主要：REST 場域，將牌庫頂 1 張送場外':
+    action.mode==='fieldOutsideEvent'?'起動主要：REST 場域，將手牌 1 張送場外後可使用場外事件':
+    action.mode==='fieldTuck'?'起動主要：REST 場域，將牌庫頂 1 張裏向放在此卡下':
+    action.mode==='fieldRelease'?'起動主要：REST 場域，將手牌 1 張送場外後可放出裏向卡':
     action.mode==='buff'?'主要能力：BP 加成':'主要能力：ACTIVE ＋ BP 加成';
   case 'chooseBlock':return action.uid===null?'不阻擋':'使用 '+name()+' 阻擋';
   case 'chooseTrigger':
@@ -202,6 +212,12 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseOppBlock':return action.uid===null?'不賦予阻擋限制':'讓 '+name()+' 本回合不被 BP 以上角色阻擋';
   case 'chooseDeployOutside':return action.uid===null?'不從場外登場':'從場外登場 '+name()+suffix();
   case 'chooseEnergySkipSwap':return action.uid===null?'不交換位置':'與 '+name()+' 交換前線與能源線';
+  case 'chooseEnergyTraitSwap':return action.uid===null?'不與這張能源角色交換':'與 '+name()+' 交換前線與能源線';
+  case 'chooseActiveLines':return action.uid===null?'不 ACTIVE 這條線的角色':'將 '+name()+' 轉為 ACTIVE';
+  case 'chooseActiveSkipPair':return action.uid===null?'只對自身執行 ACTIVE':'對 '+name()+' 與自身執行 ACTIVE';
+  case 'choosePayHandOutside':return '將 '+name()+' 送至場外';
+  case 'choosePlayOutsideEvent':return action.uid===null?'不使用場外事件':'支付 AP 使用 '+name();
+  case 'chooseReleaseFacedown':return action.uid===null?'不放出裏向卡':'將裏向的 '+name()+' 送至場外';
   case 'chooseOutsideCostHand':return '棄 '+name()+'，將場外的此卡加入手牌';
   case 'chooseAttackAid':return action.mode==='skip'?'不協助':
    (state?.pending?.options?.find(o=>o.id===action.mode)?.label||'選擇協助');

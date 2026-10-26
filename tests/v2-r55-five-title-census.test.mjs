@@ -14,8 +14,9 @@ test('R55 same authoritative registry scans ALL five unported title identities, 
  assert.equal(report.independentFaqCertified,0);
  assert.ok(focus.some(x=>x.id==='TTG-1-067'&&x.status==='REGISTERED'&&x.faq.includes('Q2295')));
  assert.ok(focus.some(x=>x.id==='SAO-1-071'&&x.status==='REGISTERED'));
- for(const id of ['BLC-4-044','SLG-1-022','SAO-1-097'])
+ for(const id of ['BLC-4-044','SAO-1-097'])
   assert.ok(focus.some(x=>x.id===id&&x.status==='REVIEW PENDING'));
+ assert.ok(focus.some(x=>x.id==='SLG-1-022'&&x.status==='REGISTERED'));
  assert.ok(focus.some(f=>f.id==='SLG-1-021'&&f.status==='REGISTERED'));
  assert.ok(focus.some(x=>x.id==='MST-1-009'&&x.status==='REGISTERED'));
  for(const candidates of Object.values(searchGroups)){
