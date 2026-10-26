@@ -218,9 +218,12 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 // BLC-4-008 EX15BT: on play, with no outside ユーハバッハ, may retire
 //   another バズビー. The cap is that card's printed energy times 1000.
 //   Declining the opposing retire still readies this character.
+// BLC-4-065 EX15BT: Step. Own turn BP+1500 while 京楽 春水 is on the energy
+//   line. Main sets this character ACTIVE only after 神剣・八鏡剣 was used
+//   this turn. Q2335: every 伊勢 七緒 shares that one activate.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008','BLC-4-065'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -291,12 +294,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers seventy-three whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,509);
- assert.equal(EXPECTED_V2_COUNTS.bleach,233);
+test('C29 registers seventy-four whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,510);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,234);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,233);
+ assert.equal(Object.keys(bleach.cards).length,234);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -6858,6 +6861,156 @@ test('BLC-4-008 may retire another Bazz-B, then an opposing front within that pr
  assert.equal(assertUniversalMatch(packs,blocked),true);
  assert.equal(assertUniversalMatch(packs,hushed),true);
  assert.equal(assertUniversalMatch(packs,alone),true);
+});
+
+test('BLC-4-065 steps, gains BP from energy-line Kyoraku, and actives once after the mirror sword',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-4-065');
+ assert.equal(printed.number,'EX15BT/BLC-4-065');
+ assert.equal(printed.nameJa,'伊勢 七緒');
+ assert.equal(printed.effect,'Step：移動階段可從前線移至能量線。自己的回合中：若自己的能量線有《京樂春水》，此角色BP+1500。啟動・主要：僅在本回合已使用《神劍・八鏡劍》時可發動；將此角色改為Active。所有《伊勢七緒》的此效果合計每回合僅限1次。');
+ assert.equal(printed.gen,3);
+ assert.equal(printed.trigger,'color');
+ assert.deepEqual(printed.traits,['護廷十三隊']);
+ const card=bleach.cards['BLC-4-065'];
+ assert.equal(card.gen,2);
+ assert.equal(card.step,true);
+ assert.equal(card.name,'伊勢 七緒');
+ assert.deepEqual(card.traits,['護廷十三隊']);
+ assert.deepEqual(card.passiveBonuses,[{condition:{kind:'ownNameExists',turn:'own',zone:'energy',excludeSelf:false,name:'京楽 春水'},bp:1500}]);
+ assert.deepEqual(card.mainAbility,{op:'nameOnceActiveIfEvent',scope:'name',eventName:'神剣・八鏡剣'});
+ assert.deepEqual(card.triggerEffect,{op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1});
+ const otherNanao=bleach.cards['BLC-4-064'];
+ assert.equal(otherNanao.name,'伊勢 七緒');
+ assert.equal(otherNanao.mainAbility?.op==='nameOnceActiveIfEvent',false);
+ const bare={id:'BAD',name:'BAD',color:'green',type:'character',energy:0,ap:1,bp:1000,gen:1,traits:[],trigger:null,implementation:'dsl',effects:{}};
+ assert.throws(()=>createUniversalPack({id:'bad-nanao-event',cards:[{...bare,mainAbility:{op:'nameOnceActiveIfEvent',scope:'card',eventName:'神剣・八鏡剣'}}]}),/unsupported main action ability/);
+ const deck=realDeck(['BLC-4-065','BLC-4-079','BLC-1-098','BLC-1-074','BLC-4-068','BLC-4-064','BLC-1-078','BLC-4-062','BLC-1-083','BLC-1-080','BLC-1-091'],'green');
+ function seat(seed){
+  const opened=main(deck,seed);
+  const self=put(opened.s,0,'BLC-4-065','front',0,false);
+  const copy=put(opened.s,0,'BLC-4-065','front',1,false);
+  const earlier=put(opened.s,0,'BLC-4-064','front',2,false);
+  const kyoraku=put(opened.s,0,'BLC-1-074','energy',0);
+  put(opened.s,0,'BLC-1-078','energy',1);
+  put(opened.s,0,'BLC-4-062','energy',2);
+  put(opened.s,0,'BLC-1-083','energy',3);
+  const funeral=take(opened.s,0,'BLC-1-098');
+  const sword=take(opened.s,0,'BLC-4-079');
+  opened.s.players[0].hand.push(funeral,sword);
+  return {opened,self,copy,earlier,kyoraku,funeral,sword};
+ }
+ const first=seat(29065);
+ const {packs}=first.opened;
+ assert.equal(universalEnergyByColor(packs,first.opened.s,0).green>=4,true);
+ assert.equal(universalBp(packs,first.opened.s,first.self),4000);
+ const frontOnly=main(deck,29066);
+ const parked=put(frontOnly.s,0,'BLC-4-065','front',0,false);
+ put(frontOnly.s,0,'BLC-1-074','front',1);
+ assert.equal(universalBp(frontOnly.packs,frontOnly.s,parked),2500);
+ const alias=main(deck,29067);
+ const aliased=put(alias.s,0,'BLC-4-065','front',0,false);
+ put(alias.s,0,'BLC-4-068','energy',0);
+ assert.equal(universalBp(alias.packs,alias.s,aliased),4000);
+ let opp=structuredClone(first.opened.s);
+ for(let n=0;n<16&&opp.active===0;n++)opp=dispatchUniversalAction(packs,opp,{type:'next'});
+ assert.equal(opp.active,1);
+ assert.equal(universalBp(packs,opp,live(opp,0,first.self.uid)),2500);
+ assert.equal(legalUniversalActions(packs,first.opened.s).some(a=>a.mode==='nameOnceEventActive'),false);
+ assert.equal(legalUniversalActions(packs,first.opened.s).some(a=>a.type==='event'&&a.uid===first.funeral.uid),true);
+ let wrong=dispatchUniversalAction(packs,first.opened.s,{type:'event',uid:first.funeral.uid});
+ assert.equal(wrong.pending,null);
+ assert.equal(wrong.players[0].outside.some(c=>c.uid===first.funeral.uid),true);
+ assert.equal(legalUniversalActions(packs,wrong).some(a=>a.mode==='nameOnceEventActive'),false);
+ wrong.players[0].apCards.find(c=>c.inPlay).ready=true;
+ assert.equal(legalUniversalActions(packs,wrong).some(a=>a.type==='event'&&a.uid===first.sword.uid),true);
+ let played=dispatchUniversalAction(packs,wrong,{type:'event',uid:first.sword.uid});
+ assert.equal(played.pending.kind,'effect-choice-mode');
+ played=dispatchUniversalAction(packs,played,{type:'chooseEffectMode',mode:'draw'});
+ assert.equal(played.pending.kind,'effect-named-rest-ready');
+ played=dispatchUniversalAction(packs,played,{type:'chooseNamedRestReady',uid:null});
+ assert.equal(played.pending,null);
+ assert.equal(played.players[0].outside.some(c=>c.uid===first.sword.uid),true);
+ const act=legalUniversalActions(packs,played).find(a=>a.type==='activate'&&a.mode==='nameOnceEventActive'&&a.uid===first.self.uid);
+ assert.ok(act);
+ played=dispatchUniversalAction(packs,played,act);
+ assert.equal(live(played,0,first.self.uid).ready,true);
+ assert.equal(legalUniversalActions(packs,played).some(a=>a.mode==='nameOnceEventActive'),false);
+ assert.throws(()=>dispatchUniversalAction(packs,played,{type:'activate',uid:first.copy.uid,mode:'nameOnceEventActive'}),/not currently legal/);
+ assert.throws(()=>dispatchUniversalAction(packs,played,{type:'activate',uid:first.earlier.uid,mode:'nameOnceEventActive'}),/not currently legal/);
+ const hushed=seat(29068);
+ grantContinuousState(hushed.opened.s,{kind:'originalEffectsDisabled',controller:1,
+  sourceUid:hushed.kyoraku.uid,targetUid:hushed.self.uid,sourceLinked:false,
+  until:{player:0,phase:'main',edge:'start'}});
+ assert.equal(universalBp(hushed.opened.packs,hushed.opened.s,hushed.self),2500);
+ let silenced=dispatchUniversalAction(hushed.opened.packs,hushed.opened.s,{type:'event',uid:hushed.funeral.uid});
+ assert.equal(silenced.pending,null);
+ silenced.players[0].apCards.find(c=>c.inPlay).ready=true;
+ silenced=dispatchUniversalAction(hushed.opened.packs,silenced,{type:'event',uid:hushed.sword.uid});
+ silenced=dispatchUniversalAction(hushed.opened.packs,silenced,{type:'chooseEffectMode',mode:'draw'});
+ silenced=dispatchUniversalAction(hushed.opened.packs,silenced,{type:'chooseNamedRestReady',uid:null});
+ assert.equal(universalBp(hushed.opened.packs,silenced,live(silenced,0,hushed.self.uid)),2500);
+ assert.equal(universalBp(hushed.opened.packs,silenced,live(silenced,0,hushed.copy.uid)),4000);
+ const hushedActs=legalUniversalActions(hushed.opened.packs,silenced);
+ assert.equal(hushedActs.some(a=>a.mode==='nameOnceEventActive'&&a.uid===hushed.self.uid),false);
+ assert.equal(hushedActs.some(a=>a.mode==='nameOnceEventActive'&&a.uid===hushed.copy.uid),true);
+ let stepped=played;
+ for(let n=0;n<30&&!(stepped.active===0&&stepped.phase==='move'&&stepped.players[0].ownTurns===2);n++)
+  stepped=dispatchUniversalAction(packs,stepped,{type:'next'});
+ const shift=legalUniversalActions(packs,stepped).find(a=>a.type==='step'&&a.uid===first.self.uid);
+ assert.ok(shift);
+ stepped=dispatchUniversalAction(packs,stepped,shift);
+ assert.equal(stepped.players[0].energy.some(c=>c?.uid===first.self.uid),true);
+ assert.equal(legalUniversalActions(packs,stepped).some(a=>a.mode==='nameOnceEventActive'),false);
+ const quietStep=main(deck,29069);
+ const mover=put(quietStep.s,0,'BLC-4-065','front',0,true);
+ put(quietStep.s,0,'BLC-1-083','energy',0);
+ grantContinuousState(quietStep.s,{kind:'originalEffectsDisabled',controller:1,
+  sourceUid:mover.uid,targetUid:mover.uid,sourceLinked:false,
+  until:{player:0,phase:'main',edge:'start'}});
+ let locked=quietStep.s;
+ for(let n=0;n<30&&!(locked.active===0&&locked.phase==='move'&&locked.players[0].ownTurns===2);n++)
+  locked=dispatchUniversalAction(quietStep.packs,locked,{type:'next'});
+ assert.equal(legalUniversalActions(quietStep.packs,locked).some(a=>a.type==='step'&&a.uid===mover.uid),false);
+ const color=main(deck,29070);
+ const attacker=put(color.s,0,'BLC-1-080','front',0,true);
+ const trigger=take(color.s,1,'BLC-4-065');
+ const buried=color.s.players[1].life[0];
+ color.s.players[1].life[0]=trigger;
+ color.s.players[1].deck.push(buried);
+ const cheap=take(color.s,1,'BLC-1-091');
+ const zero=take(color.s,1,'BLC-4-064');
+ const mid=take(color.s,1,'BLC-4-062');
+ const heavy=take(color.s,1,'BLC-1-080');
+ const costly=take(color.s,1,'BLC-4-065');
+ const eventCard=take(color.s,1,'BLC-4-079');
+ color.s.players[1].hand.push(cheap,zero,mid,heavy,costly,eventCard);
+ let revealed=color.s;
+ for(let n=0;n<6&&revealed.phase!=='attack';n++)
+  revealed=dispatchUniversalAction(color.packs,revealed,{type:'next'});
+ revealed=dispatchUniversalAction(color.packs,revealed,{type:'attack',uid:attacker.uid});
+ if(revealed.pending?.kind==='block')
+  revealed=dispatchUniversalAction(color.packs,revealed,{type:'chooseBlock',uid:null},{actor:1});
+ assert.equal(revealed.pending.trigger,'color');
+ const choices=legalUniversalActions(color.packs,revealed);
+ assert.equal(choices.some(a=>a.mode==='color'&&a.uid===cheap.uid),true);
+ assert.equal(choices.some(a=>a.mode==='color'&&a.uid===zero.uid),true);
+ assert.equal(choices.some(a=>a.mode==='color'&&a.uid===mid.uid),true);
+ assert.equal(choices.some(a=>a.uid===heavy.uid),false);
+ assert.equal(choices.some(a=>a.uid===costly.uid),false);
+ assert.equal(choices.some(a=>a.uid===eventCard.uid),false);
+ aiOk(color.packs,revealed);
+ const deployed=dispatchUniversalAction(color.packs,revealed,{type:'chooseTrigger',mode:'color',uid:cheap.uid,line:'front',slot:0},{actor:1});
+ const entered=deployed.players[1].front.find(c=>c?.uid===cheap.uid);
+ assert.equal(entered.ready,true);
+ assert.equal(deployed.players[1].outside.some(c=>c.uid===trigger.uid),true);
+ aiOk(packs,played);
+ assert.equal(assertUniversalMatch(packs,played),true);
+ assert.equal(assertUniversalMatch(packs,stepped),true);
+ assert.equal(assertUniversalMatch(frontOnly.packs,frontOnly.s),true);
+ assert.equal(assertUniversalMatch(alias.packs,alias.s),true);
+ assert.equal(assertUniversalMatch(hushed.opened.packs,silenced),true);
+ assert.equal(assertUniversalMatch(quietStep.packs,locked),true);
+ assert.equal(assertUniversalMatch(color.packs,deployed),true);
 });
 
 function fieldCount(s,p){

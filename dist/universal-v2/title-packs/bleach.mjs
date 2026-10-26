@@ -160,7 +160,10 @@ const testForKind=Object.freeze({
  hakkokenChoose:'tests/v2-c29-bleach-port.test.mjs',
  yachiruNamedGrant:'tests/v2-c29-bleach-port.test.mjs',
  lilottoRetireChoice:'tests/v2-c29-bleach-port.test.mjs',
- bazzSacrificeChain:'tests/v2-c29-bleach-port.test.mjs'
+ bazzSacrificeChain:'tests/v2-c29-bleach-port.test.mjs',
+ nanaoStepEventActive:'tests/v2-c29-bleach-port.test.mjs',
+ removedKeywordIchigo:'tests/v2-c29-bleach-port.test.mjs',
+ frontEnergyBattleRemove:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -170,7 +173,7 @@ function contributedEntry(profile){
  // The legacy gen=2 for EX15BT/BLC-4-014 describes the ACTIVE total, not
  // the printed REST base. SourceRecord is the normalized printed card record;
  // retain original.gen separately and require the profile fingerprint above.
- const normalized=['BLC-4-014','BLC-4-042','BLC-4-074','BLC-4-024','BLC-4-063','BLC-4-037','BLC-4-071','BLC-4-006','BLC-4-051','BLC-4-077'].includes(profile.id);
+ const normalized=['BLC-4-014','BLC-4-042','BLC-4-074','BLC-4-024','BLC-4-063','BLC-4-037','BLC-4-071','BLC-4-006','BLC-4-051','BLC-4-077','BLC-4-065'].includes(profile.id);
  const sourceRecord=Object.freeze(normalized?
   {...original,gen:definition.gen,legacyImportedGen:original.gen}: {...original});
  const vanilla=['plain','plainAlt','step'].includes(profile.kind);
@@ -179,7 +182,13 @@ function contributedEntry(profile){
   definition:Object.freeze(definition),
   evidence:Object.freeze({
    printedTextFragments:Object.freeze([profile.effect]),
-   reviewNote:profile.id==='BLC-4-008'?
+   reviewNote:profile.id==='BLC-1-092'?
+    'UA08BT/BLC-1-092 official iframe 2026-10-26. This character also generates energy from the front line. Q572 (2023-09-25): on its controller\'s turn, an opposing character that loses a battle to it is placed in the removed area instead of retiring, and its leave trigger does not fire. Silence removes both clauses. COLOR deploys one green hand character of required energy 2 or less and printed AP 1, ACTIVE. Generated energy is 緑.':
+   profile.id==='BLC-2-051'?
+    'EX07BT/BLC-2-051 official iframe 2026-10-26. Impact null. Damage 2 while own removed area has 10 or more cards, or at least 2 different printed names with trait 零番隊. Four or more such names also grant Impact 1. Neither clause has a turn icon. Silence removes them. GET is generic. Generated energy is 紫. No card FAQ.':
+   profile.id==='BLC-4-065'?
+    'EX15BT/BLC-4-065 official iframe 2026-10-26. Step. On its own turn, BP+1500 while own energy line has 京楽 春水. Main sets this character ACTIVE only after 神剣・八鏡剣 was used this turn. Q2335 (2026-09-04): two copies share that one activate. Catalogue gen=3 is the green3 sprite; official generated energy is 緑緑, so definition.gen=2 and legacyImportedGen=3. COLOR deploys one green hand character of required energy 2 or less and printed AP 1, ACTIVE.':
+   profile.id==='BLC-4-008'?
     'EX15BT/BLC-4-008 official iframe 2026-10-26. On play, while own outside has no ユーハバッハ, you may retire one other own バズビー. An audited alias counts; silence drops the alias and keeps a printed name. Declining the sacrifice stops the rest, and this character stays as it entered. After a sacrifice, up to one opposing front character whose live BP is at most the sacrificed card printed required energy times 1000 may be retired. Declining that retirement still readies this character. If the sacrificed card printed energy is 5 or more, this character gains Impact 1 this turn. No ported バズビー has printed energy 5, so that Impact clause is implemented and not reached by a current print. GET is generic. Generated energy is 黄. No card FAQ.':
    profile.id==='BLC-4-018'?
     'EX15BT/BLC-4-018 official iframe 2026-10-26. On retire, only during your turn, choose one. Mode 1: up to one other own character named バンビエッタ・バスターバイン or with trait 邦比小隊 becomes ACTIVE. Mode 2: up to one such character cannot be chosen by opposing effects until your next own START, and every opposing front character whose live BP is 1000 or more gets BP-500 this turn. Skipping the protection target still applies the BP cut. Declining either up-to-one choice is legal. An opponent-turn retirement does not open the choice. Silence removes the ability. Trait 邦比小隊 stays under silence. Generated energy is 黄. No trigger. No card FAQ.':

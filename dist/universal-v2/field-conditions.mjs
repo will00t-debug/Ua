@@ -51,10 +51,11 @@ export function matchesOwnDistinctTraits(s,owner,sourceUid,profile,printed){
 export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energy,cardBp){
  // A printed 「かつ」 is one bonus with every clause true. The outer turn
  // is the printed turn icon. Each clause keeps its own closed predicate.
- if(condition?.logic==='all'){
+ if(condition?.logic==='all'||condition?.logic==='any'){
   if(condition.turn==='own'&&s.active!==owner)return false;
   if(condition.turn==='opponent'&&s.active===owner)return false;
-  return condition.checks.every(q=>matchesV2LiveCondition(s,owner,sourceUid,q,printed,energy,cardBp));
+  const hit=q=>matchesV2LiveCondition(s,owner,sourceUid,q,printed,energy,cardBp);
+  return condition.logic==='any'?condition.checks.some(hit):condition.checks.every(hit);
  }
  if(condition.turn==='own'&&s.active!==owner)return false;
  if(condition.turn==='opponent'&&s.active===owner)return false;
@@ -125,6 +126,17 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
    if(cardBp(c)>=condition.minBp)return true;
   }
   return false;
+ }
+ if(condition.kind==='ownRemovedCountAtLeast')
+  return (s.players[owner].removed||[]).length>=condition.min;
+ if(condition.kind==='ownRemovedDistinctTrait'){
+  // 異なるカード名 is the printed name. Removed cards are not silenced.
+  const names=new Set();
+  for(const c of s.players[owner].removed||[]){
+   const d=printed(c);
+   if(cardHasTrait(d,condition.trait))names.add(d.name);
+  }
+  return names.size>=condition.min;
  }
  if(condition.kind==='ownHandFewerThanOpponent')
   return s.players[owner].hand.length<s.players[1-owner].hand.length;

@@ -200,9 +200,12 @@ export function universalAttackDamage(pack,s,c){
  // temporary replacement keyword. It does not invent Impact or extra LIFE.
  const gained=c.otherOwnBattleWinDamage2;
  // 【ダメージ（2）】 replaces the 1 direct-attack damage. It is not Impact.
+ const passiveKeyword=d.passiveBonuses.reduce((n,p)=>Math.max(n,
+  p.attackDamage&&matchesV2LiveCondition(s,owner,c.uid,p.condition,x=>card(pack,x),
+   ()=>calcEnergy(pack,s,owner),x=>bp(pack,s,x))?p.attackDamage:0),0);
  const base=Math.max(d.printedAttackDamage||1,earned,
   gained&&gained.turn===s.turn&&
-   gained.stamp===c.fieldEntryStamp?2:1);
+   gained.stamp===c.fieldEntryStamp?2:1,passiveKeyword);
  return base+plus+d.passiveBonuses.reduce((n,p)=>n+(p.extraDamage&&
   matchesV2LiveCondition(s,owner,c.uid,p.condition,x=>card(pack,x),
    ()=>calcEnergy(pack,s,owner),x=>bp(pack,s,x))?p.extraDamage:0),0);
@@ -1654,7 +1657,9 @@ function continueEffectQueue(pack,s){
     const defenderSlot=s.players[1-owner].front.findIndex(c=>c?.uid===job.targetUid);
     const impact=impactOnBattleWin(pack,s,attacker)>0&&
      !card(pack,defender).impactNull;
-    const replacement=retire(pack,s,1-owner,'front',defenderSlot,{postImpact:impact,by:'battle'});
+    const replacement=battleRemovesLoser(pack,s,attacker,1-owner)?
+     removeBattleLoser(pack,s,1-owner,'front',defenderSlot):
+     retire(pack,s,1-owner,'front',defenderSlot,{postImpact:impact,by:'battle'});
     // An earned draw belongs to the real attacking victor, never direct
     // LIFE. Preserve the existing onRetire-before-followup effect ordering.
     if(hasDraw)s.effectQueue.splice(retirementJobsInserted,0,
@@ -2029,6 +2034,21 @@ function raidLeaveOffer(pack,s,p,c){
  if(!rule||!strippableRaidTop(pack,c))return false;
  if((card(pack,c.stack[0]).energy||0)<rule.minBaseEnergy)return false;
  return s.players[p].hand.length>0;
+}
+function battleRemovesLoser(pack,s,winner,loserOwner){
+ // Q572 (2023-09-25): 退場する代わりにリムーブ. Only the winner's own turn,
+ // and only the opposing character that lost the battle. Silence removes it.
+ if(!winner||originalEffectsDisabled(s,winner)||!card(pack,winner).battleRemoveInstead)
+  return false;
+ const winnerOwner=Number(String(winner.uid).split('-')[0]);
+ return s.active===winnerOwner&&loserOwner!==winnerOwner;
+}
+function removeBattleLoser(pack,s,p,line,slot){
+ const c=s.players[p][line][slot];
+ if(!c)throw Error('Cannot remove empty field');
+ vacate(pack,s,p,line,slot,'removed');
+ recordCompletedMove(pack,s,{physical:c,owner:p,from:line,to:'removed',reason:'rule'});
+ return false;
 }
 function retire(pack,s,p,line,slot,{postImpact=false,by,skipReplacement=false}={}){
  const c=s.players[p][line][slot];
@@ -2438,7 +2458,9 @@ function resolveChoice(s,a,pack){
    const impact=impactOnBattleWin(pack,s,attacker)>0&&
     !card(pack,blocker).impactNull;
    const earnedSelfDraw=hasCurrentBattleGrant(s,attacker,'attackWinDrawGranted');
-   const replacement=retire(pack,s,q.player,'front',slot,{postImpact:impact,by:'battle'});
+   const replacement=battleRemovesLoser(pack,s,attacker,q.player)?
+    removeBattleLoser(pack,s,q.player,'front',slot):
+    retire(pack,s,q.player,'front',slot,{postImpact:impact,by:'battle'});
    if(earnedSelfDraw)s.effectQueue.splice(retirementJobsInserted,0,
     {op:'draw',owner:s.active,count:1,sourceUid:attacker.uid});
    queueAttackWinRecovery(pack,s,s.active,attacker);
@@ -2450,7 +2472,9 @@ function resolveChoice(s,a,pack){
    grantBattleWinToOtherOwn(pack,s,q.player,blocker,'blocker');
    const attackerSlot=s.players[s.active].front.findIndex(c=>c?.uid===attacker.uid);
    if(attackerSlot<0)throw Error('Attacker left before the lost battle');
-   retire(pack,s,s.active,'front',attackerSlot,{by:'battle'});
+   if(battleRemovesLoser(pack,s,blocker,s.active))
+    removeBattleLoser(pack,s,s.active,'front',attackerSlot);
+   else retire(pack,s,s.active,'front',attackerSlot,{by:'battle'});
   }
   if(!s.pending)continueEffectQueue(pack,s);
   return;
@@ -4921,6 +4945,23 @@ function nameOnceActiveLegal(pack,s,owner,c,ability){
  return !ability.when||matchesV2LiveCondition(s,owner,c.uid,ability.when,
   x=>card(pack,x),()=>calcEnergy(pack,s,owner),x=>bp(pack,s,x));
 }
+function namedEventUsedThisTurn(pack,s,owner,eventName){
+ return (s.zoneMoveEvents||[]).some(e=>{
+  if(e.turn!==s.turn||e.owner!==owner||e.controller!==owner||
+   e.from!=='hand'||e.to!=='outside'||e.reason!=='rule')return false;
+  const d=card(pack,{uid:e.uid,cardId:e.cardId});
+  return d.type==='event'&&d.name===eventName;
+ });
+}
+function nameOnceEventActiveKey(definition,ability){
+ return definition.name+'|nameOnceActiveIfEvent|'+ability.eventName;
+}
+function nameOnceEventActiveLegal(pack,s,owner,c,ability){
+ if(ability?.op!=='nameOnceActiveIfEvent')return false;
+ if(s.mainReadyOnceByName[owner].includes(nameOnceEventActiveKey(card(pack,c),ability)))
+  return false;
+ return namedEventUsedThisTurn(pack,s,owner,ability.eventName);
+}
 function handApPlan(pack,s,owner,d,opts={}){
  const rule=d.handApDiscountWhileName;
  const nameOnField=!!rule&&ownFieldHasPrintedName(pack,s,owner,rule.name);
@@ -5003,6 +5044,8 @@ export function legalUniversalActions(pack,s){
     out.push({type:'activate',uid:c.uid,mode:'discardSelfBuff'});
    if(nameOnceActiveLegal(pack,s,p,c,ability))
     out.push({type:'activate',uid:c.uid,mode:'nameOnceActive'});
+   if(nameOnceEventActiveLegal(pack,s,p,c,ability))
+    out.push({type:'activate',uid:c.uid,mode:'nameOnceEventActive'});
    if(ability?.op==='cardOnceActive'&&ability.scope==='card'&&
     !s.mainAbilityUsedUids.includes(c.uid)&&
     matchesV2LiveCondition(s,p,c.uid,ability.when,
@@ -5658,6 +5701,15 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
      (ability.when&&!matchesV2LiveCondition(s,p,selected.uid,ability.when,
       x=>card(pack,x),()=>calcEnergy(pack,s,p),x=>bp(pack,s,x))))
      throw Error('Name-once ACTIVE is not legal');
+    s.mainReadyOnceByName[p].push(key);
+    attemptFieldActive(s,p,selected);
+    break;
+   }
+   if(ability.op==='nameOnceActiveIfEvent'){
+    const key=nameOnceEventActiveKey(d,ability);
+    if(action.mode!=='nameOnceEventActive'||s.mainReadyOnceByName[p].includes(key)||
+     !namedEventUsedThisTurn(pack,s,p,ability.eventName))
+     throw Error('Named-event ACTIVE is not legal');
     s.mainReadyOnceByName[p].push(key);
     attemptFieldActive(s,p,selected);
     break;
