@@ -16,6 +16,9 @@
 // other character. Front once per turn: until next own start, BP+1000 and
 // characters of BP 4000 or more cannot block her; or grant one other
 // character front-line energy generation this turn.
+// Batch 55 adds 047: printed Impact 1, a per-card front draw, and a
+// name-shared front main that puts one green hand card outside and may
+// activate that card's existing trigger. Q2418 shares the second main.
 // Batch 49 adds 039: COLOR may use printed BP 2500 instead of energy 2,
 // and onPlay rests one other green printed-BP 2500 character, then actives
 // that character or this one. Q2414 is an OR. Q2415 uses the printed BP.
@@ -246,13 +249,16 @@ const PROFILES={
      {op:'buffSelfUntilNextOwnStart',bp:1000},
      {op:'grantSelfBlockAtLeastUntilNextOwnStart',bp:4000}]},
     {id:'energy',label:'other generates on front',turn:'any',then:[
-     {op:'grantOtherFieldFrontEnergyThisTurn',optional:false}]}]}]}}
+     {op:'grantOtherFieldFrontEnergyThisTurn',optional:false}]}]}]}},
+ 'REZ-2-047':{implementation:'dsl',printedImpact:1,effects:{},
+  mainAbility:{op:'frontDrawOrHandTrigger',frontOnly:true,drawOnce:'card',
+   triggerOnce:'name',handColor:'green'}}
 };
 
 export const REZ_V2_IMPLEMENTED_IDS=Object.freeze(Object.keys(PROFILES));
 
 export function createRezV2Pack(){
  const cards=REZ_V2_IMPLEMENTED_IDS.map(id=>({...shell(id),...PROFILES[id]}));
- return createUniversalPack({id:'rezero',version:'0.21.0',cards});
+ return createUniversalPack({id:'rezero',version:'0.22.0',cards});
 
 }
