@@ -121,7 +121,16 @@ function bind(){
   }
   if(data.action==='visualExport'){
    const t=TITLES.find(t=>t.id===state.title);
-   state.exportText='# '+state.names[state.title]+'\n'+t.cards.filter(c=>state.counts[state.title][c.id]>0).map(c=>state.counts[state.title][c.id]+'x'+(c.number||c.id)).join('\n');
+   const activeCounts=state.counts[state.title];
+   // A designated print may differ from the catalogue's default art/number.
+   // Preserve the user's EXACT previously supplied source codes on export.
+   const pinned=state.title==='bleach'?BUILTIN_BLEACH_V2_DECKS.find(p=>{
+    const ids=new Set([...Object.keys(p.counts),...Object.keys(activeCounts)]);
+    return [...ids].every(id=>(p.counts[id]||0)===(activeCounts[id]||0));
+   }):null;
+   const lines=pinned?pinned.sources.map(c=>c.copies+'x'+c.source):
+    t.cards.filter(c=>activeCounts[c.id]>0).map(c=>activeCounts[c.id]+'x'+(c.number||c.id));
+   state.exportText='# '+state.names[state.title]+'\n'+lines.join('\n');
    render();return;
   }
   if(data.action==='copyDeck'){
