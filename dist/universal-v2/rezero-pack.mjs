@@ -75,6 +75,7 @@ export function rezeroEngineKind(effectJa){
  if(e==='【レイド】〈レム〉アクティブにし、フロントLに移動できる【登場時】自分の手札から必要エナジーが3以下で消費APが1の黄の〔〈ラム〉か〈レム〉〕を1枚まで自分の場にレストで登場させる。【起動メイン】【フロントLにある場合】 【ターン1】自分の場の〈ラム〉か他の〈レム〉を1枚まで選び、このターン中、【インパクト（1）】を与える。')return 'raidRemHandImpact';
  if(e==='【レイド】〈レム〉アクティブにし、フロントLに移動できる【インパクト（1）】（アタックしてバトルに勝利した時、相手プレイヤーに1ダメージ）【登場時】自分の場外から必要エナジーが0の青の〈ナツキ・スバル〉を1枚まで自分の場にレストで登場させる。【アタック時】自分の場の必要エナジーが0の青の〈ナツキ・スバル〉を1枚まで選び、このターン中、「このキャラはBP4000以上のキャラにブロックされない。」を与える。')return 'raidRemImpactSubaruBlock';
  if(e==='【レイド】〈ベアトリス〉アクティブにし、フロントLに移動できる【自分のターン中】自分の場に〈ナツキ・スバル〉がある場合、このキャラはBP+500。【登場時】相手のフロントLのキャラを1枚まで選び、エナジーLに移動させる。このキャラが自分の効果で登場していた場合、選んだキャラに次の自分のターン開始時まで、「このキャラは移動できない。」を与える。')return 'raidBeatriceMoveLock';
+ if(e==='【レイド】〈エミリア〉アクティブにし、フロントLに移動できる【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、【インパクト】を失う）このキャラはBP2000以下のキャラにブロックされない。このキャラがアタックしてブロックされなかった時、相手のフロントLのキャラを1枚まで選び、レストにする。【起動メイン】【エナジーLにある場合】 【ターン1】自分のフロントLのキャラを1枚選び、このキャラと位置を入れ替える。')return 'raidEmiliaBlockRestSwap';
  return null;
 }
 const TOP_OUTSIDE=new Map([
@@ -287,6 +288,10 @@ export function rezeroPackCard(card){
   ...(kind==='raidBeatriceMoveLock'?{raidName:'ベアトリス',passiveBonuses:[{
    bp:500,condition:{kind:'ownNameExists',turn:'own',zone:'field',excludeSelf:false,
     name:'ナツキ・スバル'}}]}:{}),
+  ...(kind==='raidEmiliaBlockRestSwap'?{raidName:'エミリア',impactNull:true,
+   unblockedRestFront:true,
+   blockBpRestriction:{relation:'atMost',bp:2000,condition:null},
+   mainAbility:{op:'energySwapOwnFront',line:'energy',oncePerTurn:true}}:{}),
   ...(kind==='raidFrontRestDraw'?{raidName:'エキドナ',mainAbility:{
    op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,
    then:[{op:'restOwnActiveFrontDraw'}]}}:{}),

@@ -54,6 +54,8 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-outside-printed-rest':'選擇是否以休息狀態登場',
  'effect-grant-printed-block':'選擇是否賦予防禦下限',
  'effect-move-opp-front':'選擇是否將對手前線移至能源線',
+ 'effect-unblocked-rest':'選擇是否使對手前線休息',
+ 'effect-energy-swap':'選擇要交換位置的己方前線',
  'effect-grant-named-impact':'選擇是否賦予衝擊',
  'effect-hand-bp-may':'這次參照手牌角色 BP 時，是否視為 +1000',
  'effect-hand-deploy-may':'這次參照手牌角色 BP 時，是否視為 +1000 並休息登場',
@@ -157,6 +159,7 @@ export function uiActionLabel(action,{pack,state}={}){
      [...p.front,...p.energy].some(c=>c?.uid===action.uid&&
       pack.cards[c.cardId]?.mainAbility?.then?.[0]?.op==='activeSelf'))
      ?'起動主要：將這張角色置為活動':
+    action.mode==='energySwap'?'起動主要：與 1 張己方前線角色交換位置':
     action.mode==='ready'?'主要能力：ACTIVE':
     action.mode==='buff'?'主要能力：BP 加成':'主要能力：ACTIVE ＋ BP 加成';
   case 'chooseBlock':return action.uid===null?'不阻擋':'使用 '+name()+' 阻擋';
@@ -242,6 +245,8 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseOutsidePrintedRest':return action.uid===null?'不登場':'使 '+name()+' 以休息狀態登場';
   case 'chooseGrantPrintedBlock':return action.uid===null?'不賦予防禦下限':'使 '+name()+' 不會被 BP4000 以上的角色阻擋';
   case 'chooseMoveOppFront':return action.uid===null?'不移動':'將 '+name()+' 移至能源線';
+  case 'chooseUnblockedRest':return action.uid===null?'不使角色休息':'使 '+name()+' 休息';
+  case 'chooseEnergySwap':return '與 '+name()+' 交換位置';
   case 'chooseGrantNamedImpact':return action.uid===null?'不賦予衝擊':'使 '+name()+' 獲得衝擊 1';
   case 'chooseHandBpMay':return action.mode==='accept'?'視為 BP+1000':'維持原本 BP';
   case 'handActivate':return '支付 1 AP，公開這張手牌';

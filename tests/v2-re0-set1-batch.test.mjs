@@ -70,9 +70,9 @@ test('UA40BT and UA40ST share one catalogue and keep parallel art out',()=>{
  }
 });
 
-test('ninety-six whole prints enter the V2 pack and the other seventeen stay out',()=>{
- assert.equal(REZERO_ENGINE_IDS.length,96);
- assert.equal(Object.keys(pack.cards).length,96);
+test('ninety-seven whole prints enter the V2 pack and the other sixteen stay out',()=>{
+ assert.equal(REZERO_ENGINE_IDS.length,97);
+ assert.equal(Object.keys(pack.cards).length,97);
  assert.equal(pack.cards['REZ-1-001'],undefined);
  assert.equal(pack.cards['REZ-1-008'].step,true);
  assert.equal(pack.cards['REZ-1-008'].implementation,'vanilla');
@@ -5087,4 +5087,209 @@ test('Beatrice raids onto Beatrice, moves one front to energy, and locks movemen
  assert.equal(own.players[0].ownTurns,2);
  assert.equal(own.continuousStates.some(e=>e.kind==='cannotMove'),false);
  assert.equal(assertUniversalMatch(fp,own),true);
+});
+
+const emiliaSwapCounts={
+ ...Object.fromEntries(['REZ-1-081','REZ-1-086','REZ-1-068','REZ-1-014','REZ-1-006',
+  'REZ-1-016','REZ-1-024','REZ-1-091','REZ-1-003','REZ-1-054','REZ-1-043'].map(id=>[id,4])),
+ 'REZ-1-089':3,'REZ-1-053':1,'REZ-1-029':2
+};
+const emiliaSwap=seed=>newUniversalMatch(packs,{decks:[emiliaSwapCounts,emiliaSwapCounts],first:0,seed});
+function energySwap(s,uid){
+ return legalUniversalActions(packs,s).some(a=>a.type==='activate'&&a.mode==='energySwap'&&a.uid===uid);
+}
+test('Emilia raids onto Emilia, blocks low BP, rests an unblocked front, and swaps from energy',()=>{
+ assert.equal(Object.values(emiliaSwapCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(pack,emiliaSwapCounts),[]);
+ const printed=pack.cards['REZ-1-089'];
+ assert.equal(printed.raidName,'エミリア');
+ assert.equal(printed.energy,5);
+ assert.equal(printed.bp,4000);
+ assert.equal(printed.impactNull,true);
+ assert.equal(printed.unblockedRestFront,true);
+ assert.deepEqual(printed.blockBpRestriction,{relation:'atMost',bp:2000,condition:null});
+ assert.deepEqual(printed.mainAbility,{op:'energySwapOwnFront',line:'energy',oncePerTurn:true});
+ assert.deepEqual(printed.effects,{});
+ const shell={id:'EMI89',name:'エミリア',color:'purple',type:'character',energy:5,ap:1,bp:4000,gen:0,
+  traits:['王選候補者'],trigger:'raid',raidName:'エミリア',implementation:'dsl',impactNull:true,
+  unblockedRestFront:true,blockBpRestriction:{relation:'atMost',bp:2000,condition:null},
+  mainAbility:{op:'energySwapOwnFront',line:'energy',oncePerTurn:true},effects:{}};
+ assert.throws(()=>createUniversalPack({id:'bad-emi89',cards:[{...shell,mainAbility:{
+  op:'energySwapOwnFront',line:'front',oncePerTurn:true}}]}),/energy-line swap/);
+ assert.throws(()=>createUniversalPack({id:'bad-emi89',cards:[{...shell,unblockedRestFront:false}]}),
+  /unblocked front rest/);
+ assert.throws(()=>createUniversalPack({id:'bad-emi89',cards:[{...shell,type:'event',bp:0,gen:0,
+  raidName:null,trigger:null,mainAbility:null,impactNull:undefined,blockBpRestriction:null}]}),
+  /unblocked front rest/);
+
+ let live=emiliaSwap(7901);
+ fuel(live,['REZ-1-086','REZ-1-086','REZ-1-086','REZ-1-086']);
+ const base=pull(live,0,'REZ-1-081');
+ live.players[0].front[0]=base;
+ const decoy=pull(live,0,'REZ-1-089');
+ live.players[0].front[1]=decoy;
+ const stranger=pull(live,0,'REZ-1-003');
+ live.players[0].front[2]=stranger;
+ live=ownMain(live,2);
+ live.players[0].energy[0].buffs=[{energy:1,untilTurn:live.turn}];
+ assert.equal(universalEnergyByColor(packs,live,0).purple,5);
+ const waiting=pull(live,0,'REZ-1-089');
+ live.players[0].hand.push(waiting);
+ const partner=stamp(live,pull(live,0,'REZ-1-068'));
+ live.players[0].front[3]=partner;
+ const low=stamp(live,pull(live,1,'REZ-1-006'));
+ const even=stamp(live,pull(live,1,'REZ-1-068'));
+ const tall=stamp(live,pull(live,1,'REZ-1-014'));
+ live.players[1].front[0]=low;
+ live.players[1].front[1]=even;
+ live.players[1].front[2]=tall;
+ quietLife(live);
+ assert.equal(legalUniversalActions(packs,live).some(a=>a.type==='raid'&&a.uid===waiting.uid&&a.baseUid===decoy.uid),false);
+ assert.equal(legalUniversalActions(packs,live).some(a=>a.type==='raid'&&a.uid===waiting.uid&&a.baseUid===stranger.uid),false);
+ const raid=legalUniversalActions(packs,live).find(a=>a.type==='raid'&&a.uid===waiting.uid&&a.baseUid===base.uid);
+ assert.ok(raid);
+ assert.equal(raid.line,undefined);
+ live=dispatchUniversalAction(packs,live,raid);
+ assert.equal(live.pending,null);
+ assert.equal(at(live,0,waiting.uid).ready,true);
+ assert.equal(at(live,0,waiting.uid).stack[0].uid,base.uid);
+ assert.equal(energySwap(live,waiting.uid),false);
+ const onFront=structuredClone(live);
+
+ let impact=structuredClone(live);
+ const hitter=stamp(impact,pull(impact,1,'REZ-1-053'));
+ impact.players[1].front[3]=hitter;
+ const shield=pull(impact,0,'REZ-1-016');
+ while(impact.players[0].life.length>5)impact.players[0].deck.push(impact.players[0].life.pop());
+ impact.players[0].life.unshift(shield);
+ impact=toAttack(impact,1);
+ const ownLife=impact.players[0].life.length;
+ impact=dispatchUniversalAction(packs,impact,{type:'attack',uid:hitter.uid});
+ assert.equal(impact.pending.kind,'block');
+ let nulled=structuredClone(impact);
+ nulled=dispatchUniversalAction(packs,nulled,{type:'chooseBlock',uid:waiting.uid});
+ assert.equal(nulled.pending,null);
+ assert.equal(nulled.players[0].life.length,ownLife);
+ assert.ok(nulled.players[0].outside.some(c=>c.uid===waiting.uid));
+ assert.ok(nulled.players[0].outside.some(c=>c.uid===base.uid));
+ let plain=structuredClone(impact);
+ plain=dispatchUniversalAction(packs,plain,{type:'chooseBlock',uid:partner.uid});
+ assert.equal(plain.pending,null);
+ assert.equal(plain.players[0].life.length,ownLife-1);
+ assert.ok(plain.players[0].outside.some(c=>c.uid===partner.uid));
+ assert.equal(at(plain,0,waiting.uid).uid,waiting.uid);
+
+ live=toAttack(live,0);
+ const swing=dispatchUniversalAction(packs,live,{type:'attack',uid:waiting.uid});
+ assert.equal(swing.pending.kind,'block');
+ const blocks=legalUniversalActions(packs,swing).filter(a=>a.type==='chooseBlock');
+ assert.equal(blocks.some(a=>a.uid===low.uid),false);
+ assert.equal(blocks.some(a=>a.uid===even.uid),false);
+ assert.equal(blocks.some(a=>a.uid===tall.uid),true);
+ assert.equal(blocks.some(a=>a.uid===null),true);
+ const boosted=structuredClone(swing);
+ boosted.players[1].front[0].buffs=[{bp:1500,untilTurn:boosted.turn}];
+ assert.equal(universalBp(pack,boosted,boosted.players[1].front[0]),2500);
+ assert.equal(legalUniversalActions(packs,boosted).some(a=>a.type==='chooseBlock'&&a.uid===low.uid),true);
+ const shortened=structuredClone(swing);
+ shortened.players[1].front[2].buffs=[{bp:-1000,untilTurn:shortened.turn}];
+ assert.equal(legalUniversalActions(packs,shortened).some(a=>a.type==='chooseBlock'&&a.uid===tall.uid),false);
+ const emptyFront=structuredClone(swing);
+ for(const card of emptyFront.players[1].front.filter(Boolean))
+  emptyFront.players[1].deck.push(card);
+ emptyFront.players[1].front=[null,null,null,null];
+ const emptied=dispatchUniversalAction(packs,emptyFront,{type:'chooseBlock',uid:null});
+ assert.equal(emptied.pending,null);
+ assert.equal(emptied.players[1].life.length,swing.players[1].life.length-1);
+ let blocked=structuredClone(swing);
+ const lifeBefore=blocked.players[1].life.length;
+ blocked=dispatchUniversalAction(packs,blocked,{type:'chooseBlock',uid:tall.uid});
+ assert.equal(blocked.pending,null);
+ assert.equal(blocked.players[1].life.length,lifeBefore);
+ assert.ok(blocked.players[1].outside.some(c=>c.uid===tall.uid));
+ assert.equal(at(blocked,1,low.uid).ready,true);
+ assert.equal(at(blocked,1,even.uid).ready,true);
+ let open=structuredClone(swing);
+ open=dispatchUniversalAction(packs,open,{type:'chooseBlock',uid:null});
+ assert.equal(open.pending.kind,'effect-unblocked-rest');
+ assert.equal(open.pending.optional,true);
+ assert.equal(Object.keys(open.pending).length,6);
+ assert.deepEqual(open.pending.choices,[low.uid,even.uid,tall.uid]);
+ assert.equal(open.players[1].life.length,lifeBefore-1);
+ assert.equal(V2_PENDING_LABELS['effect-unblocked-rest'],'選擇是否使對手前線休息');
+ assert.equal(uiActionLabel({type:'chooseUnblockedRest',uid:null},{pack,state:open}),'不使角色休息');
+ assert.equal(uiActionLabel({type:'chooseUnblockedRest',uid:low.uid},{pack,state:open}),'使 ラム 休息');
+ assert.notEqual(chooseUniversalAiAction(packs,open).uid,null);
+ const stale=structuredClone(open);
+ stale.players[1].deck.push(stale.players[1].front[0]);
+ stale.players[1].front[0]=null;
+ assert.throws(()=>legalUniversalActions(packs,stale),/Invalid unblocked front rest pending/);
+ let skipped=structuredClone(open);
+ skipped=dispatchUniversalAction(packs,skipped,{type:'chooseUnblockedRest',uid:null});
+ assert.equal(skipped.pending,null);
+ assert.equal(at(skipped,1,low.uid).ready,true);
+ open=dispatchUniversalAction(packs,open,{type:'chooseUnblockedRest',uid:low.uid});
+ assert.equal(open.pending,null);
+ assert.equal(at(open,1,low.uid).ready,false);
+ assert.equal(at(open,1,even.uid).ready,true);
+ assert.equal(at(open,1,tall.uid).ready,true);
+
+ const lined=structuredClone(onFront);
+ assert.equal(energySwap(lined,waiting.uid),false);
+ const from=lined.players[0].front.findIndex(c=>c?.uid===waiting.uid);
+ const held=lined.players[0].front[from];
+ const displaced=lined.players[0].energy[0];
+ lined.players[0].front[from]=displaced;
+ lined.players[0].energy[0]=held;
+ assert.equal(energySwap(lined,waiting.uid),true);
+ const bare=structuredClone(lined);
+ for(const card of bare.players[0].front.filter(Boolean))bare.players[0].deck.push(card);
+ bare.players[0].front=[null,null,null,null];
+ assert.equal(energySwap(bare,waiting.uid),false);
+ lined.players[0].energy[0].buffs=[{energy:1,untilTurn:lined.turn}];
+ let swapping=dispatchUniversalAction(packs,lined,{type:'activate',uid:waiting.uid,mode:'energySwap'});
+ assert.equal(swapping.pending.kind,'effect-energy-swap');
+ assert.equal(Object.keys(swapping.pending).length,5);
+ assert.ok(swapping.pending.choices.includes(partner.uid));
+ assert.ok(swapping.pending.choices.includes(displaced.uid));
+ assert.equal(swapping.pending.choices.includes(waiting.uid),false);
+ assert.equal(swapping.pending.choices.includes(base.uid),false);
+ assert.equal(V2_PENDING_LABELS['effect-energy-swap'],'選擇要交換位置的己方前線');
+ assert.equal(uiActionLabel({type:'chooseEnergySwap',uid:partner.uid},{pack,state:swapping}),
+  '與 ナツキ・スバル 交換位置');
+ assert.equal(uiActionLabel({type:'activate',uid:waiting.uid,mode:'energySwap'},{pack,state:lined}),
+  '起動主要：與 1 張己方前線角色交換位置');
+ assert.equal(chooseUniversalAiAction(packs,swapping).type,'chooseEnergySwap');
+ const staleSwap=structuredClone(swapping);
+ parkLine(staleSwap,0,partner.uid);
+ assert.throws(()=>legalUniversalActions(packs,staleSwap),/Invalid energy-line swap pending/);
+ const energySlot=swapping.players[0].energy.findIndex(c=>c?.uid===waiting.uid);
+ swapping=dispatchUniversalAction(packs,swapping,{type:'chooseEnergySwap',uid:partner.uid});
+ assert.equal(swapping.pending,null);
+ assert.equal(swapping.players[0].front[3].uid,waiting.uid);
+ assert.equal(swapping.players[0].energy[energySlot].uid,partner.uid);
+ assert.equal(at(swapping,0,waiting.uid).stack[0].uid,base.uid);
+ assert.equal(energySwap(swapping,waiting.uid),false);
+ const backFrom=swapping.players[0].front.findIndex(c=>c?.uid===waiting.uid);
+ const backHeld=swapping.players[0].front[backFrom];
+ const backEnergy=swapping.players[0].energy.findIndex(c=>c?.uid===partner.uid);
+ const backDisplaced=swapping.players[0].energy[backEnergy];
+ swapping.players[0].front[backFrom]=backDisplaced;
+ swapping.players[0].energy[backEnergy]=backHeld;
+ assert.equal(energySwap(swapping,waiting.uid),false);
+ swapping=untilPhase(packs,swapping,1,'move');
+ swapping=untilPhase(packs,swapping,0,'main');
+ assert.equal(swapping.players[0].ownTurns,3);
+ assert.equal(energySwap(swapping,waiting.uid),true);
+ assert.equal(assertUniversalMatch(packs,live),true);
+ assert.equal(assertUniversalMatch(packs,swing),true);
+ assert.equal(assertUniversalMatch(packs,boosted),true);
+ assert.equal(assertUniversalMatch(packs,shortened),true);
+ assert.equal(assertUniversalMatch(packs,emptied),true);
+ assert.equal(assertUniversalMatch(packs,blocked),true);
+ assert.equal(assertUniversalMatch(packs,skipped),true);
+ assert.equal(assertUniversalMatch(packs,open),true);
+ assert.equal(assertUniversalMatch(packs,nulled),true);
+ assert.equal(assertUniversalMatch(packs,plain),true);
+ assert.equal(assertUniversalMatch(packs,swapping),true);
 });
