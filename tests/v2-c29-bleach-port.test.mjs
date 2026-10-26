@@ -291,7 +291,7 @@ import bleachContribution from '../dist/universal-v2/title-packs/bleach.mjs';
 //   start. Q1030 and Q1031 are both 2024-07-19. DRAW is generic.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008','BLC-4-065','BLC-2-051','BLC-1-092','BLC-4-044','BLC-4-016','BLC-4-017','BLC-1-028','BLC-2-002','BLC-4-032','BLC-1-011','BLC-1-104','BLC-1-014','BLC-1-020','BLC-1-050','BLC-1-055','BLC-1-063','BLC-1-093','BLC-2-009','BLC-2-013'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008','BLC-4-065','BLC-2-051','BLC-1-092','BLC-4-044','BLC-4-016','BLC-4-017','BLC-1-028','BLC-2-002','BLC-4-032','BLC-1-011','BLC-1-104','BLC-1-014','BLC-1-020','BLC-1-050','BLC-1-055','BLC-1-063','BLC-1-093','BLC-2-009','BLC-2-013','BLC-2-030'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -362,12 +362,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers ninety-two whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,528);
- assert.equal(EXPECTED_V2_COUNTS.bleach,252);
+test('C29 registers ninety-three whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,529);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,253);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,252);
+ assert.equal(Object.keys(bleach.cards).length,253);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -9767,6 +9767,116 @@ test('BLC-2-013 protects one field Ichigo after a blue Ichigo puts her outside',
  assert.equal(assertUniversalMatch(yellowMiss.packs,bazzDone),true);
  assert.equal(assertUniversalMatch(declined.board.packs,skipped),true);
  assert.equal(assertUniversalMatch(energyGrant.board.packs,grantedEnergy),true);
+});
+
+test('BLC-2-030 chooses a Rukia entry AP recovery or the next Rukia AP discount',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-2-030');
+ assert.equal(printed.number,'EX07BT/BLC-2-030');
+ assert.equal(printed.nameJa,'朽木 白哉');
+ assert.equal(printed.effect,'登場：選一項：①若本回合己方場上曾有〈朽木露琪亞〉登場，可將最多 1 張己方 AP 卡轉為 ACTIVE；②本回合下一張從手牌使用的〈朽木露琪亞〉，AP 消耗減少 1。攻擊時：抽 1 張。');
+ assert.equal(printed.traits,'護廷十三隊');
+ assert.equal(printed.trigger,'color');
+ assert.equal(printed.gen,1);
+ const card=bleach.cards['BLC-2-030'];
+ assert.equal(card.name,'朽木 白哉');
+ assert.deepEqual(card.triggerEffect,{op:'bounceOppFrontUnderBp',bp:3500});
+ assert.deepEqual(card.traits,['護廷十三隊']);
+ assert.deepEqual(card.effects.onAttack,[{op:'draw',count:1}]);
+ assert.equal(card.effects.onPlay[0].op,'chooseOne');
+ assert.equal(card.effects.onPlay[0].options[0].then[0].name,'朽木 ルキア');
+ assert.deepEqual(card.effects.onPlay[0].options[1].then[0].filter,{name:'朽木 ルキア'});
+ const deck=realDeck(['BLC-2-030','BLC-2-031','BLC-2-016','BLC-4-030','BLC-4-026','BLC-1-039','BLC-2-018','BLC-2-017','BLC-2-013','BLC-1-004','BLC-2-046'],'blue');
+ const hold=(s,p,id)=>{const c=take(s,p,id);s.players[p].hand.push(c);return c;};
+ function readyAp(s,n){
+  for(let i=0;i<3;i++){s.players[0].apCards[i].inPlay=i<n;s.players[0].apCards[i].ready=i<n;}
+ }
+ function fuel(s){
+  for(let i=0;i<4;i++)put(s,0,'BLC-2-016','energy',i);
+ }
+ function playByakuya(seed){
+  const board=main(deck,seed);
+  fuel(board.s);readyAp(board.s,3);
+  const byakuya=hold(board.s,0,'BLC-2-030');
+  assert.ok(universalEnergyByColor(board.packs,board.s,0).blue>=4);
+  const played=dispatchUniversalAction(board.packs,board.s,{type:'play',uid:byakuya.uid,line:'front',slot:1});
+  assert.equal(played.pending.kind,'effect-choice-mode');
+  return {board,byakuya,played};
+ }
+ const missed=playByakuya(29421);
+ const noEntry=dispatchUniversalAction(missed.board.packs,missed.played,{type:'chooseEffectMode',mode:'ap'});
+ assert.equal(noEntry.pending,null);
+ assert.equal(noEntry.players[0].apCards.filter(c=>c.ready).length,1);
+ const entered=main(deck,29422);
+ fuel(entered.s);readyAp(entered.s,3);
+ const rukia=hold(entered.s,0,'BLC-2-031');
+ const byakuya=hold(entered.s,0,'BLC-2-030');
+ let s=dispatchUniversalAction(entered.packs,entered.s,{type:'play',uid:rukia.uid,line:'front',slot:0});
+ s=dispatchUniversalAction(entered.packs,s,{type:'play',uid:byakuya.uid,line:'front',slot:1});
+ assert.equal(s.pending.kind,'effect-choice-mode');
+ s=dispatchUniversalAction(entered.packs,s,{type:'chooseEffectMode',mode:'ap'});
+ assert.equal(s.pending.kind,'effect-recover-ap');
+ const rested=s.players[0].apCards.find(c=>c.inPlay&&!c.ready);
+ s=dispatchUniversalAction(entered.packs,s,{type:'chooseApRecovery',uid:rested.uid});
+ assert.equal(s.players[0].apCards.filter(c=>c.ready).length,1);
+ const discount=playByakuya(29423);
+ let cut=dispatchUniversalAction(discount.board.packs,discount.played,{type:'chooseEffectMode',mode:'discount'});
+ assert.equal(cut.pending,null);
+ assert.equal(cut.continuousStates.some(e=>e.kind==='nextEligibleHandPlayApDiscount'&&e.filter.name==='朽木 ルキア'&&!e.consumed),true);
+ const other=hold(cut,0,'BLC-4-030');
+ const otherPlay=legalUniversalActions(discount.board.packs,cut).find(a=>a.type==='play'&&a.uid===other.uid);
+ assert.ok(otherPlay);
+ cut=dispatchUniversalAction(discount.board.packs,cut,otherPlay);
+ if(cut.pending?.kind==='effect-discard-gate')
+  cut=dispatchUniversalAction(discount.board.packs,cut,{type:'chooseDiscardGate',uid:null});
+ assert.equal(cut.continuousStates.some(e=>e.kind==='nextEligibleHandPlayApDiscount'&&!e.consumed),true);
+ const nextRukia=hold(cut,0,'BLC-2-031');
+ assert.equal(cut.players[0].apCards.filter(c=>c.ready).length,0);
+ const rukiaPlay=legalUniversalActions(discount.board.packs,cut).find(a=>a.type==='play'&&a.uid===nextRukia.uid&&a.line==='front');
+ assert.ok(rukiaPlay);
+ const yoruLeft=cut.players[0].hand.find(c=>c.cardId==='BLC-4-030');
+ if(yoruLeft)assert.equal(legalUniversalActions(discount.board.packs,cut).some(a=>a.type==='play'&&a.uid===yoruLeft.uid),false);
+ cut=dispatchUniversalAction(discount.board.packs,cut,rukiaPlay);
+ assert.equal(cut.players[0].front.some(c=>c?.uid===nextRukia.uid),true);
+ assert.equal(cut.continuousStates.some(e=>e.kind==='nextEligibleHandPlayApDiscount'&&!e.consumed),false);
+ const attacker=main(deck,29424);
+ fuel(attacker.s);readyAp(attacker.s,2);
+ const fighter=hold(attacker.s,0,'BLC-2-030');
+ let battle=dispatchUniversalAction(attacker.packs,attacker.s,{type:'play',uid:fighter.uid,line:'front',slot:0});
+ battle=dispatchUniversalAction(attacker.packs,battle,{type:'chooseEffectMode',mode:'ap'});
+ const handBefore=battle.players[0].hand.length;
+ for(let i=0;i<20&&!(battle.active===0&&battle.turn>attacker.s.turn&&battle.phase==='attack'&&!battle.pending);i++){
+  if(battle.pending){
+   const a=legalUniversalActions(attacker.packs,battle)[0];
+   battle=dispatchUniversalAction(attacker.packs,battle,a,{actor:battle.pending.player});
+  }else battle=dispatchUniversalAction(attacker.packs,battle,{type:'next'});
+ }
+ assert.equal(battle.players[0].front.find(c=>c?.uid===fighter.uid).ready,true);
+ const drawn=battle.players[0].hand.length;
+ battle=dispatchUniversalAction(attacker.packs,battle,{type:'attack',uid:fighter.uid});
+ assert.equal(battle.players[0].hand.length,drawn+1);
+ assert.equal(battle.pending.kind,'block');
+ const life=main(deck,29425);
+ const bounced=put(life.s,0,'BLC-2-031','front',0,true);
+ put(life.s,0,'BLC-2-030','front',1,true);
+ const reveal=take(life.s,1,'BLC-2-030');
+ life.s.players[1].life.unshift(reveal);
+ const striker=put(life.s,0,'BLC-4-030','front',2,true);
+ let color=life.s;
+ for(let i=0;i<6&&color.phase!=='attack';i++)color=dispatchUniversalAction(life.packs,color,{type:'next'});
+ color=dispatchUniversalAction(life.packs,color,{type:'attack',uid:striker.uid});
+ color=dispatchUniversalAction(life.packs,color,{type:'chooseBlock',uid:null},{actor:1});
+ assert.equal(color.pending.trigger,'color');
+ const bounces=legalUniversalActions(life.packs,color).filter(a=>a.mode==='colorBounce');
+ assert.equal(bounces.some(a=>a.uid===bounced.uid),true);
+ assert.equal(bounces.some(a=>a.uid===life.s.players[0].front[1].uid),false);
+ color=dispatchUniversalAction(life.packs,color,{type:'chooseTrigger',mode:'colorBounce',uid:bounced.uid},{actor:1});
+ assert.equal(color.players[0].hand.some(c=>c.uid===bounced.uid),true);
+ assert.equal(assertUniversalMatch(missed.board.packs,noEntry),true);
+ assert.equal(assertUniversalMatch(entered.packs,s),true);
+ assert.equal(assertUniversalMatch(discount.board.packs,cut),true);
+ assert.equal(assertUniversalMatch(attacker.packs,battle),true);
+ assert.equal(assertUniversalMatch(life.packs,color),true);
+ void handBefore;
 });
 
 function locationLine(s,uid){
