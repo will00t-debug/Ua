@@ -20,45 +20,80 @@
    <div class="status"><span class="tag">V2 正式引擎</span><span class="tag">真卡 50 vs 50</span>
    <span class="tag">沿用 BLEACH Arena 對戰介面</span><a class="tag" href="/index.html">牌組編輯／卡片圖鑑 ↗</a></div>
   </header>
-  <section class="panel setup" aria-label="對局設定">
-   <div class="headline"><h2>建立新對局</h2><span id="v2-coverage" class="small">正在讀取 V2 卡包覆蓋率…</span></div>
-   <div class="setup-grid">
-    <div class="field"><label for="my-title">你的作品</label>
-     <select id="my-title"><option value="gurren-lagann-red">天元突破｜紅色</option>
-     <option value="bleach-purple">BLEACH｜紫色</option>
-     <option value="bleach-green">BLEACH｜綠色</option>
-     <option value="solo-leveling">我獨自升級｜已驗證卡牌組</option>
-     <option value="sword-art-online">刀劍神域｜已驗證卡牌組</option>
-     <option value="mushoku-tensei">無職轉生｜已驗證卡牌組</option>
-     <option value="mushoku-tensei-roxy-field">無職轉生｜洛琪希・迷宮都市拉潘</option>
-     <option value="rezero-set1">Re:Zero 第一彈｜已支援黃色練習組</option></select>
-    </div>
-    <div class="field"><label for="ai-title">電腦作品</label>
-     <select id="ai-title"><option value="bleach-purple">BLEACH｜紫色</option>
-     <option value="gurren-lagann-red">天元突破｜紅色</option>
-     <option value="bleach-green">BLEACH｜綠色</option>
-     <option value="solo-leveling">我獨自升級｜已驗證卡牌組</option>
-     <option value="sword-art-online">刀劍神域｜已驗證卡牌組</option>
-     <option value="mushoku-tensei">無職轉生｜已驗證卡牌組</option>
-     <option value="mushoku-tensei-roxy-field">無職轉生｜洛琪希・迷宮都市拉潘</option>
-     <option value="rezero-set1">Re:Zero 第一彈｜已支援黃色練習組</option></select>
-    </div>
-    <div class="field"><label for="ai-level">AI 難度</label>
-     <select id="ai-level"><option value="easy">簡單</option>
-     <option value="normal" selected>普通</option><option value="hard">困難</option></select>
-    </div>
-    <div class="field"><label for="first-player">先手玩家</label>
-     <select id="first-player"><option value="human">你先手</option>
-     <option value="ai">電腦先手</option></select>
-    </div>
-    <div class="field"><label for="match-seed">牌序種子（可重現）</label>
-     <input id="match-seed" type="number" min="1" max="999999999" step="1" inputmode="numeric" value="20261015">
-    </div>
+  <section class="panel setup v2-setup-v3" aria-label="V2 對局設定">
+   <div class="setup-intro">
+    <div><span class="setup-kicker">MATCH SETUP · V2</span><h2>準備開始對戰</h2>
+     <p>選好你的牌組、電腦的牌組及難度，就可以開始。</p></div>
+    <span id="v2-coverage" class="small">正在讀取 V2 卡包覆蓋率…</span>
    </div>
-   <div class="setup-actions"><button id="start-game" type="button" class="primary">開始新對局</button>
-   <span id="restart-notice" class="small" aria-live="polite"></span></div>
-   <div id="designated-decks" class="designated" aria-label="指定 BLEACH 牌組"></div>
-   <p class="note">這是正式網站的 V2 對戰入口，使用者可與電腦對打。對局在瀏覽器執行，不會將對局紀錄上傳至伺服器。此入口以 V2 規則引擎處理對局，提供 BLEACH 藍綠指定牌組及五作品已登錄的 50 張牌組。下方三副是使用者指定構築；標成不可完整對局的牌組不能開始對戰。V2 仍在持續補充卡牌與驗收規則，不代表所有官方卡牌及 FAQ 都已完成認證。</p>
+   <div class="matchup-picker">
+    <section class="matchup-side" aria-label="選擇自己的牌組">
+     <div class="matchup-title"><span class="matchup-step">01</span><div><h3>你的牌組</h3><p>使用已匯入的牌組，或選擇其他 V2 牌組</p></div></div>
+     <label class="matchup-select-label" for="my-title">選擇牌組</label>
+     <select id="my-title" class="matchup-select">
+      <option value="gurren-lagann-red">天元突破｜紅色</option>
+      <option value="bleach-purple">BLEACH｜紫色</option>
+      <option value="bleach-green">BLEACH｜綠色</option>
+      <option value="solo-leveling">我獨自升級｜已驗證卡牌組</option>
+      <option value="sword-art-online">刀劍神域｜已驗證卡牌組</option>
+      <option value="mushoku-tensei">無職轉生｜已驗證卡牌組</option>
+      <option value="mushoku-tensei-roxy-field">無職轉生｜洛琪希・迷宮都市拉潘</option>
+      <option value="rezero-set1">Re:Zero 第一彈｜已支援黃色練習組</option>
+     </select>
+     <div class="featured-decks" role="group" aria-label="快速選擇自己的 BLEACH 牌組">
+      <button type="button" class="deck-quick-pick blue" data-deck-side="my-title" data-deck-key="reject-blue" aria-pressed="false">藍 · 我拒絕</button>
+      <button type="button" class="deck-quick-pick green" data-deck-side="my-title" data-deck-key="white-sword" aria-pressed="false">綠 · 白劍</button>
+      <button type="button" class="deck-quick-pick purple" data-deck-side="my-title" data-deck-key="renruki" aria-pressed="false">紫 · 戀露</button>
+     </div>
+     <p id="my-deck-description" class="chosen-deck-meta" aria-live="polite"></p>
+    </section>
+    <div class="matchup-vs" aria-hidden="true">VS</div>
+    <section class="matchup-side" aria-label="選擇電腦牌組">
+     <div class="matchup-title"><span class="matchup-step">02</span><div><h3>電腦牌組</h3><p>可以選和你相同，或不同作品的牌組</p></div></div>
+     <label class="matchup-select-label" for="ai-title">選擇電腦使用的牌組</label>
+     <select id="ai-title" class="matchup-select">
+      <option value="bleach-purple">BLEACH｜紫色</option>
+      <option value="gurren-lagann-red">天元突破｜紅色</option>
+      <option value="bleach-green">BLEACH｜綠色</option>
+      <option value="solo-leveling">我獨自升級｜已驗證卡牌組</option>
+      <option value="sword-art-online">刀劍神域｜已驗證卡牌組</option>
+      <option value="mushoku-tensei">無職轉生｜已驗證卡牌組</option>
+      <option value="mushoku-tensei-roxy-field">無職轉生｜洛琪希・迷宮都市拉潘</option>
+      <option value="rezero-set1">Re:Zero 第一彈｜已支援黃色練習組</option>
+     </select>
+     <div class="featured-decks" role="group" aria-label="快速選擇電腦的 BLEACH 牌組">
+      <button type="button" class="deck-quick-pick blue" data-deck-side="ai-title" data-deck-key="reject-blue" aria-pressed="false">藍 · 我拒絕</button>
+      <button type="button" class="deck-quick-pick green" data-deck-side="ai-title" data-deck-key="white-sword" aria-pressed="false">綠 · 白劍</button>
+      <button type="button" class="deck-quick-pick purple" data-deck-side="ai-title" data-deck-key="renruki" aria-pressed="false">紫 · 戀露</button>
+     </div>
+     <p id="ai-deck-description" class="chosen-deck-meta" aria-live="polite"></p>
+    </section>
+   </div>
+   <section class="difficulty-picker" aria-label="選擇電腦難度">
+    <div class="difficulty-header"><div><span class="matchup-step">03</span><h3>電腦難度</h3></div><p>選一個你想挑戰的程度</p></div>
+    <div class="difficulty-options" role="group" aria-label="AI 難度選擇">
+     <button type="button" class="difficulty-choice" data-ai-difficulty="easy" aria-pressed="false"><strong>簡單</strong><span>入門練習</span></button>
+     <button type="button" class="difficulty-choice" data-ai-difficulty="normal" aria-pressed="true"><strong>普通</strong><span>平衡對戰</span></button>
+     <button type="button" class="difficulty-choice" data-ai-difficulty="hard" aria-pressed="false"><strong>困難</strong><span>策略挑戰</span></button>
+    </div>
+    <select id="ai-level" hidden aria-hidden="true" tabindex="-1"><option value="easy">簡單</option><option value="normal" selected>普通</option><option value="hard">困難</option></select>
+   </section>
+   <div class="setup-bottom">
+    <details class="match-advanced"><summary>進階設定：先手與牌序</summary>
+     <div class="advanced-fields">
+      <div class="field"><label for="first-player">先手玩家</label>
+       <select id="first-player"><option value="human">你先手</option><option value="ai">電腦先手</option></select></div>
+      <div class="field"><label for="match-seed">牌序種子（可重現）</label>
+       <input id="match-seed" type="number" min="1" max="999999999" step="1" inputmode="numeric" value="20261015"></div>
+     </div>
+    </details>
+    <div class="setup-actions"><button id="start-game" type="button" class="primary">開始 V2 對戰</button>
+     <span id="restart-notice" class="small" aria-live="polite"></span></div>
+   </div>
+   <details class="designated-details"><summary>查看藍色「我拒絕」、綠色「白劍」、紫色「戀露」完整清單</summary>
+    <div id="designated-decks" class="designated" aria-label="指定 BLEACH 牌組"></div>
+   </details>
+   <p class="note">本頁只使用 Universal V2 引擎；不會載入舊版對戰核心。三副指定牌組、其他已完成 V2 效果的牌組，以及符合規則的個人收藏皆可用於對戰。尚未完成的牌組不能開局。</p>
   </section>
   <main id="match-view" aria-live="off"></main>
   <footer class="foot">
