@@ -65,6 +65,7 @@ test('public editor lets player choose a title, add a card, and review after sav
   click({view:'builder'});
   assert.match(app.innerHTML,/先選擇卡牌作品/);
   click({title:'sword-art-online'});
+  assert.match(app.innerHTML,/進入 V2 對戰/);
   assert.match(app.innerHTML,/data-builder-count="SAO-1-/);
   const {SAO_CARDS}=await import('../dist/sao-cards.mjs');
   click({builderCount:SAO_CARDS[0].id,delta:'1'});

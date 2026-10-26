@@ -23,14 +23,15 @@ const SIX=Object.freeze({
   missing:'C2 registered after normalizing generated energy from imported 3 to official 緑緑 = 2'}
 });
 const PRIORITY=Object.freeze({
- 'TTG-1-069':{status:'ENGINE BLOCKED',owner:'GPT',
+ 'TTG-1-069':{status:'READY',owner:'GPT',
   source:'https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-069',
-  missing:'MAIN REST and actual self-retire as cost must atomically precede mandatory own OUTSIDE ガンメン retrieval'},
- 'TTG-1-057':{status:'RULE BLOCKED',owner:'GPT',
-  missing:'complete current official source and source-granted opponent IMPACT null / timing not fully certified'},
- 'TTG-1-081':{status:'RULE BLOCKED',owner:'GPT',
-  source:'https://www.unionarena-tcg.com/tc/news/033.php',
-  missing:'2026-08-28 erratum target opponent FRONT, BP3000/5000 threshold plus true Raid-under original Simon/Kamina name'},
+  missing:'V2 registered MAIN REST and true self-retire, then one outside ガンメン card to hand. The action requires that target. Scenario tests exist. Not full official FAQ certification.'},
+ 'TTG-1-057':{status:'READY',owner:'GPT',
+  source:'https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-057',
+  missing:'V2 registered printed IMPACT null plus on-play grant until next own start. Scenario tests exist. Not full official FAQ certification.'},
+ 'TTG-1-081':{status:'READY',owner:'GPT',
+  source:'https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-081',
+  missing:'V2 registered 2026-08-28 erratum: retire one opponent FRONT at BP3000, or BP5000 when own field or raid base is Simon or Kamina. Scenario tests exist. Not full official FAQ certification.'},
  'SLG-1-022':{status:'ENGINE BLOCKED',owner:'GPT',
   source:'https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-022',
   missing:'hand required energy -own Shadow Army field count outside field/outside, Raid, on-play dual-zone ACTIVE/SNIPE and energy-line attack-end swap at correct Q2029 timing'},

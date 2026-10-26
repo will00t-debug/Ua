@@ -220,7 +220,10 @@ export function legalTtgCoreActions(s){
   actions.push(...legalTtgRuleActions(s,p));
  }
  if(s.phase==='attack'&&pl.turnCount>1){
-  if(pl.red068AttackCapTurn!==s.turn||pl.characterAttacksThisTurn<(pl.red068AttackCap||4)){
+  // Q2296: paying 068's Main opens a normal energy-line attack. The four-attack
+  // cap counts only attacks already declared this turn; an unset counter is zero.
+  const attacksThisTurn=pl.attackTurn===s.turn?(pl.characterAttacksThisTurn||0):0;
+  if(pl.red068AttackCapTurn!==s.turn||attacksThisTurn<(pl.red068AttackCap||4)){
    for(const c of pl.front.filter(c=>c?.ready&&greenTtgCanAttackOrBlock(s,p,c)&&canTtgGreen028Attack(s,p,c)&&red056CanAttack(s,p,c))) {
     actions.push({type:'attack',uid:c.uid});
     if(c.cardId==='TTG-1-067'&&c.red067SniperUntilTurn===s.turn){

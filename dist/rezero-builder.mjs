@@ -1,5 +1,6 @@
 import {REZERO_VOL2_BY_ID,REZERO_VOL2_CARDS} from './rezero-vol2.mjs';
 import {REZERO_CARDS,REZERO_BY_ID} from './rezero-cards.mjs';
+import {v2UnsupportedIds} from './universal-v2/official-entry.mjs';
 export const REZERO_ALL_CARDS=[...REZERO_CARDS,...REZERO_VOL2_CARDS];
 export const REZERO_ALL_BY_ID=Object.freeze({...REZERO_BY_ID,...REZERO_VOL2_BY_ID});
 
@@ -26,9 +27,9 @@ export function rezDeckIssues(counts){
  try{deck=normalizeRezCounts(counts);}catch(error){return [error.message];}
  const total=Object.values(deck).reduce((n,x)=>n+x,0);
  const errors=[];
- if(total!==50)errors.push('目前 '+total+'/50 張，正式牌組需要 50 張。');
- if(REZERO_ALL_CARDS.some(card=>deck[card.id]&&card.auto!==true))
-  errors.push('包含尚未實作自動判定的卡片，目前不能開始對戰。');
+ if(total!==50)errors.push('目前 '+total+'/50 張，正式牌組需要 50 張。目前不能開始對戰。');
+ const unsupported=v2UnsupportedIds('rezero',deck);
+ if(unsupported.length)errors.push('包含尚未支援 V2 效果的卡片：'+unsupported.slice(0,8).join('、')+'。目前不能開始對戰。這些效果不會被略過。');
  return errors;
 }
 

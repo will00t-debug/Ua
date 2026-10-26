@@ -79,7 +79,9 @@ const PROFILES={
 
 export const REZ_V2_IMPLEMENTED_IDS=Object.freeze(Object.keys(PROFILES));
 
+export function rezV2RawCards(){
+ return REZ_V2_IMPLEMENTED_IDS.map(id=>({...shell(id),...PROFILES[id]}));
+}
 export function createRezV2Pack(){
- const cards=REZ_V2_IMPLEMENTED_IDS.map(id=>({...shell(id),...PROFILES[id]}));
- return createUniversalPack({id:'rezero',version:'0.9.0',cards});
+ return createUniversalPack({id:'rezero',version:'0.9.0',cards:rezV2RawCards()});
 }

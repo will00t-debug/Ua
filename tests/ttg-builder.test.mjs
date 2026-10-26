@@ -20,7 +20,7 @@ test('unfinished partial drafts are savable but cannot be played',()=>{
  const draft=normalizeTtgCounts({[TTG_CARDS[0].id]:2});
  assert.equal(ttgCount(draft),2);
  assert.ok(ttgDeckIssues(draft).some(x=>x.includes('50 張')));
- assert.ok(ttgDeckIssues(draft).some(x=>x.includes('自動判定')));
+ assert.equal(ttgDeckIssues(draft).some(x=>x.includes('自動判定')),false);
  const saved=readTtgSaved([{id:'draft',name:'測試草稿',counts:draft},{id:'invalid',name:'不合法',counts:{bleach:1}}]);
  assert.equal(saved.length,1);
  assert.deepEqual(saved[0].counts,draft);

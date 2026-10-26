@@ -2,6 +2,7 @@
 import {TITLES} from './title-registry.mjs';
 import {registeredV2TitlePack} from './universal-v2/title-packs/registry.mjs';
 import {validateUniversalDeck} from './universal-v2/pack.mjs';
+import {officialV2Pack} from './universal-v2/official-entry.mjs';
 
 export const LEGACY_DECK_KEYS=Object.freeze({
  bleach:['bleach-arena-deck-v1','bleach-arena-saved-decks-v1'],
@@ -14,8 +15,10 @@ export const LEGACY_DECK_KEYS=Object.freeze({
 export const V2_EDITOR_TRANSFER_KEY='ua-v2-editor-deck-v1';
 export const titleCatalogue=id=>TITLES.find(t=>t.id===id)||null;
 export function registeredPackForEditor(title){
- // Re:Zero set packs are not part of the production multi-title V2 registry yet.
- if(!titleCatalogue(title)||title==='rezero')return null;
+ if(!titleCatalogue(title))return null;
+ // Re:Zero stays outside the five-title census. Set 1 plus the integrated
+ // Vol.2 profiles share one battle pack; unimplemented Vol.2 ids are absent.
+ if(title==='rezero')return officialV2Pack('rezero');
  return registeredV2TitlePack(title);
 }
 export function normalizeEditorCounts(title,input){

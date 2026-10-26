@@ -2,6 +2,8 @@
 // This entrypoint is intentionally NOT linked from the production index.html.
 // All game transitions pass through legalUniversalActions/dispatchUniversalAction.
 import {createAllV2PreviewRealDecks} from './universal-v2/preview-real-decks.mjs';
+import {officialV2Pack,rezeroSet1PracticeDeck,v2DeckReport} from './universal-v2/official-entry.mjs';
+import {REZERO_ALL_CARDS} from './rezero-builder.mjs';
 import {summarizeDesignatedDecks,designatedPlayableCounts} from './universal-v2/bleach-designated-decks.mjs';
 import {validateUniversalDeck} from './universal-v2/pack.mjs';
 import {V2_ABILITY_TEMPLATE_IDS} from './universal-v2/ability-templates.mjs';
@@ -21,13 +23,17 @@ import {V2_PHASE_LABELS,V2_TITLE_LABELS,V2_PENDING_LABELS,
 import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalReplay,
  publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
 
-const decks=createAllV2PreviewRealDecks();
+const rezeroPractice=rezeroSet1PracticeDeck();
+const decks={...createAllV2PreviewRealDecks(),
+ 'rezero-set1':{pack:rezeroPractice.pack,counts:rezeroPractice.counts,
+  label:'Re:Zero 第一彈｜黃色練習組'}};
 const designatedReady=new Map();
 const allArt=Object.freeze({
  bleach:new Map(CARDS.map(c=>[c.identity,c.image||null])),
  'solo-leveling':new Map(SOLO_LEVELING_CARDS.map(c=>[c.id,c.image||null])),
  'sword-art-online':new Map(SAO_CARDS.map(c=>[c.id,c.image||null])),
- 'mushoku-tensei':new Map(MST_V2_OFFICIAL_CATALOGUE.map(c=>[c.id,c.image||null]))
+ 'mushoku-tensei':new Map(MST_V2_OFFICIAL_CATALOGUE.map(c=>[c.id,c.image||null])),
+ rezero:new Map(REZERO_ALL_CARDS.map(c=>[c.id,c.image||null]))
 });
 const v2Entries=listRegisteredV2Titles();
 const el=(tag,props={},...contents)=>{
@@ -622,6 +628,33 @@ function importClassicLobbyDecks(){
  if(notices.length)$('restart-notice').textContent=notices.join(' ');
 }
 importClassicLobbyDecks();
+function selectBuiltOpponent(title){
+ if(decks['rezero-set1']&&title==='rezero')$('ai-title').value='rezero-set1';
+ if(decks['gurren-lagann-red']&&title==='gurren-lagann')$('ai-title').value='gurren-lagann-red';
+}
+function importBuiltTitleDeck(){
+ let raw=null;
+ try{
+  raw=JSON.parse(sessionStorage.getItem('ua-v2-title-entry-v1')||'null');
+  sessionStorage.removeItem('ua-v2-title-entry-v1');
+ }catch{raw=null;}
+ if(!raw||typeof raw!=='object')return;
+ const report=v2DeckReport(raw.title,raw.counts);
+ if(!report.ok||!report.pack){
+  $('restart-notice').textContent=(report.issues[0]||'組卡牌組不能進入 V2')+' 已保留可玩的預設牌組。';
+  return;
+ }
+ const value='builder-'+String(raw.title);
+ const label=typeof raw.name==='string'&&raw.name.trim()?raw.name.trim().slice(0,40):'組卡牌組';
+ decks[value]={pack:report.pack,counts:Object.freeze({...report.counts}),label};
+ for(const id of ['my-title','ai-title']){
+  $(id).append(el('option',{value,text:(id==='my-title'?'你的組卡｜':'同一組卡｜')+label}));
+ }
+ $('my-title').value=value;
+ selectBuiltOpponent(raw.title);
+ if(['easy','normal','hard'].includes(raw.aiDifficulty))$('ai-level').value=raw.aiDifficulty;
+}
+importBuiltTitleDeck();
 // V2-only editor handoff: validate title, complete-card registry and printed deck rules.
 // Never use legacy auto flags or a legacy battle reducer.
 function importV2EditorDeck(){
@@ -630,7 +663,7 @@ function importV2EditorDeck(){
   sessionStorage.removeItem(V2_EDITOR_TRANSFER_KEY);}catch{return;}
  if(!raw||typeof raw!=='object')return;
  const reject=message=>{$('restart-notice').textContent='組卡頁的牌組無法進入 V2：'+message;};
- const pack=typeof raw.title==='string'?registeredV2TitlePack(raw.title):null;
+ const pack=raw.title==='rezero'?officialV2Pack('rezero'):(typeof raw.title==='string'?registeredV2TitlePack(raw.title):null);
  if(!pack){reject('該作品尚未開放正式 V2 卡包');return;}
  const counts=raw.counts;
  if(!counts||typeof counts!=='object'||Array.isArray(counts)){reject('牌組格式錯誤');return;}
@@ -641,6 +674,7 @@ function importV2EditorDeck(){
  designatedReady.set(value,{pack,counts:Object.freeze({...counts}),label:name});
  $('my-title').append(el('option',{value,text:'我的 V2 牌組｜'+name}));
  $('my-title').value=value;
+ selectBuiltOpponent(raw.title);
  $('restart-notice').textContent='已載入 V2 組卡頁的 50 張牌組：'+name+'。可以直接開始與 AI 對戰。';
 }
 importV2EditorDeck();

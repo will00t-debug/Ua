@@ -1103,3 +1103,85 @@ test('facdown substitute with an attached nested undercard sidelines all nested 
  assert.ok(result.players[1].outside.some(c=>c.uid===child.uid));
  assert.equal(assertUniversalMatch(packs,result),true);
 });
+
+function real045Chain(seed=2286){
+ const packs=[bleach.pack,red.pack];let s=fresh(red,seed);
+ const base=take(s,1,'TTG-1-045');
+ s.players[1].front[0]=base;
+ for(const [i,id] of ['TTG-1-042','TTG-1-051','TTG-1-064','TTG-1-065'].entries())
+  s.players[1].energy[i]=take(s,1,id);
+ const first=take(s,1,'TTG-1-072'),second=take(s,1,'TTG-1-073');
+ s.players[1].hand.push(first,second);
+ const low=take(s,0,'BLC-1-039');low.ready=true;s.players[0].front[0]=low;
+ for(let i=0;i<4;i++)s=dispatchUniversalAction(packs,s,{type:'next'});
+ s=advanceToMain(packs,s);
+ assert.equal(s.active,1);
+ assert.equal(universalEnergyByColor(packs,s,1).red,4);
+ const raid=legalUniversalActions(packs,s).find(a=>a.type==='raid'&&a.uid===first.uid&&a.baseUid===base.uid);
+ assert.ok(raid,'TTG072 raids the printed Kamina TTG045');
+ const deckAtRaid=s.players[1].deck.length;
+ s=dispatchUniversalAction(packs,s,raid,{actor:1});
+ assert.equal(s.pending?.kind,'raid-effect-order');
+ assert.equal(s.players[1].deck.length,deckAtRaid,'045 has no facedown yet, so its draw waits');
+ s=dispatchUniversalAction(packs,s,{type:'chooseRaidOrder',mode:'baseFirst'},{actor:1});
+ assert.equal(s.pending?.kind,'effect-buff-trait');
+ s=dispatchUniversalAction(packs,s,{type:'chooseTraitBuff',uid:null},{actor:1});
+ assert.equal(s.pending?.kind,'effect-rest-bp');
+ assert.equal(s.players[1].deck.length,deckAtRaid-1,'072 on-play draw only');
+ s=dispatchUniversalAction(packs,s,{type:'chooseRestBp',uid:null},{actor:1});
+ assert.equal(s.pending,null);
+ return {packs,s,base,first,second,deckAtChain:s.players[1].deck.length};
+}
+test('official Q2286 TTG045 onRaided still activates when TTG073 chains over raided TTG072',()=>{
+ const {packs,s:ready,base,first,second,deckAtChain}=real045Chain(2286);
+ const chain=legalUniversalActions(packs,ready).find(a=>a.type==='raid'&&a.uid===second.uid&&a.baseUid===first.uid);
+ assert.ok(chain);
+ let s=dispatchUniversalAction(packs,ready,chain,{actor:1});
+ assert.equal(s.pending?.kind,'raid-effect-order','Q2286: 045 when-raided is queued again');
+ assert.deepEqual(legalUniversalActions(packs,s).map(a=>a.mode),['baseFirst','entryFirst']);
+ assert.equal(s.players[1].front[0].stack[0].uid,base.uid);
+ assert.equal(s.players[1].front[0].stack[0].under[0].uid,first.uid);
+ assert.equal(s.players[1].front[0].stack[0].under[0].faceDown,true);
+ const entryFirst=dispatchUniversalAction(packs,s,{type:'chooseRaidOrder',mode:'entryFirst'},{actor:1});
+ assert.equal(entryFirst.pending?.kind,'effect-retire-bp');
+ const afterEntry=dispatchUniversalAction(packs,entryFirst,{type:'chooseRetireBp',uid:null},{actor:1});
+ assert.equal(afterEntry.pending?.kind,'effect-buff-trait','entry-first still reaches 045');
+ s=dispatchUniversalAction(packs,s,{type:'chooseRaidOrder',mode:'baseFirst'},{actor:1});
+ assert.equal(s.pending?.kind,'effect-buff-trait');
+ assert.equal(s.players[1].deck.length,deckAtChain);
+ s=dispatchUniversalAction(packs,s,{type:'chooseTraitBuff',uid:null},{actor:1});
+ assert.equal(s.players[1].deck.length,deckAtChain-1,'facedown under the original base satisfies 045 draw');
+ assert.equal(s.pending?.kind,'effect-retire-bp');
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
+test('official Q2287 owner sees the facedown under TTG045 and the opponent does not',()=>{
+ const {packs,s:ready,first,second}=real045Chain(2287);
+ let s=dispatchUniversalAction(packs,ready,
+  legalUniversalActions(packs,ready).find(a=>a.type==='raid'&&a.uid===second.uid&&a.baseUid===first.uid),{actor:1});
+ const opponent=universalPublicView(packs,s,0);
+ const owner=universalPublicView(packs,s,1);
+ assert.deepEqual(opponent.players[1].front[0].raidLayers[0].under[0],{faceDown:true});
+ assert.equal(owner.players[1].front[0].raidLayers[0].under[0].cardId,'TTG-1-072');
+ assert.equal(owner.players[1].front[0].raidLayers[0].under[0].uid,first.uid);
+ assert.ok(!JSON.stringify(opponent).includes(first.uid));
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
+test('official Q2396 TTG073 chains onto a Gurren whose buried base is Simon, and rejects any other buried name',()=>{
+ const packs=[bleach.pack,red.pack];let s=fresh(red,2396);
+ const simon=take(s,1,'TTG-1-051'),kamina=take(s,1,'TTG-1-042'),kitten=take(s,1,'TTG-1-047');
+ const onSimon=take(s,1,'TTG-1-072'),onKitten=take(s,1,'TTG-1-072'),lagann=take(s,1,'TTG-1-073');
+ onSimon.stack=[simon];onSimon.ready=true;
+ onKitten.stack=[kitten];onKitten.ready=true;
+ s.players[1].front[0]=onSimon;
+ s.players[1].front[1]=onKitten;
+ s.players[1].energy[0]=kamina;
+ for(const [i,id] of ['TTG-1-045','TTG-1-064','TTG-1-065'].entries())
+  s.players[1].energy[i+1]=take(s,1,id);
+ s.players[1].hand.push(lagann);
+ for(let i=0;i<4;i++)s=dispatchUniversalAction(packs,s,{type:'next'});
+ s=advanceToMain(packs,s);
+ const raids=legalUniversalActions(packs,s).filter(a=>a.type==='raid'&&a.uid===lagann.uid);
+ assert.ok(raids.some(a=>a.baseUid===onSimon.uid),'Simon buried under Gurren is a Q2396 chain base');
+ assert.ok(!raids.some(a=>a.baseUid===onKitten.uid),'another buried name stays illegal while Simon and Kamina exist elsewhere');
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
