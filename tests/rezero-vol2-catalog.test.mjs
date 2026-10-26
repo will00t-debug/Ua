@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {TITLES,titleOfCard,validateTitleMembership} from '../dist/title-registry.mjs';
 import {REZERO_VOL2_AP,REZERO_VOL2_BY_ID,REZERO_VOL2_CARDS,REZERO_VOL2_SET} from '../dist/rezero-vol2.mjs';
 import {rezDeckIssues,normalizeRezCounts} from '../dist/rezero-builder.mjs';
+import {REZ_V2_IMPLEMENTED_IDS} from '../dist/universal-v2/rez-pack.mjs';
 
 const byId=id=>REZERO_VOL2_BY_ID[id];
 
@@ -18,7 +19,11 @@ test('EX17BT catalogue is the official 73-card Vol.2 list and stays unplayable',
  for(const card of REZERO_VOL2_CARDS)rarity[card.rarity]=(rarity[card.rarity]||0)+1;
  assert.deepEqual(rarity,REZERO_VOL2_SET.rarity);
  assert.equal(REZERO_VOL2_AP.length,8);
- assert.ok(REZERO_VOL2_CARDS.every(card=>card.auto===false&&card.engineImplemented===false&&titleOfCard(card)==='rezero'));
+ const implemented=new Set(REZ_V2_IMPLEMENTED_IDS);
+ assert.equal(implemented.size,20);
+ assert.ok(REZERO_VOL2_CARDS.every(card=>card.auto===false&&titleOfCard(card)==='rezero'));
+ assert.ok(REZERO_VOL2_CARDS.every(card=>card.engineImplemented===implemented.has(card.id)));
+ assert.ok(REZERO_VOL2_AP.every(card=>card.engineImplemented!==true));
  assert.ok(REZERO_VOL2_CARDS.every(card=>card.type!=='action-point'));
  assert.deepEqual(REZERO_VOL2_SET.packedVol1Parallel,['EX17BT/REZ-1-029_p1']);
  assert.equal(byId('REZ-1-029'),undefined);

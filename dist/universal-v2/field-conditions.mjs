@@ -160,6 +160,24 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   }
   return found>=condition.min;
  }
+ if(condition.kind==='ownNameOrDistinctPrintedColorNames'){
+  // 〈名前〉 is the usual name check, including an audited alias. The
+  // distinct-kind half counts original printed names only. Q2416/Q2417:
+  // REZ-2-041 is also 〈シルフィ〉 and still one kind; two copies stay one.
+  // Hand, deck, outside, opponent cards, fields and Raid layers are out.
+  const board=s.players[owner];
+  const areas=condition.zone==='front'?[board.front]:
+   condition.zone==='energy'?[board.energy]:[board.front,board.energy];
+  const kinds=new Set();
+  for(const area of areas)for(const c of area){
+   if(!c)continue;
+   const d=printed(c);
+   if(d.type!=='character')continue;
+   if(cardHasName(d,condition.name,originalEffectsDisabled(s,c)))return true;
+   if(d.color===condition.color)kinds.add(d.name);
+  }
+  return kinds.size>=condition.min;
+ }
  const pl=s.players[owner];
  const zones=condition.zone==='front'?[pl.front]:
   condition.zone==='energy'?[pl.energy]:[pl.front,pl.energy];

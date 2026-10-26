@@ -37,6 +37,13 @@ const registry=Object.freeze({
   args:{name:named,count:v=>integer(v,1,5)},
   build:v=>[{op:'drawIfOwnName',name:v.name,count:v.count}]
  },
+ // onAttack draw that also requires this character's current BP. Absent
+ // minSelfBp stays on drawIfOwnName so older cards do not grow a new key.
+ drawIfOwnNameMinSelfBp:{
+  args:{name:named,count:v=>integer(v,1,5),
+   minSelfBp:v=>integer(v,500,50000)&&v%500===0},
+  build:v=>[{op:'drawIfOwnName',name:v.name,count:v.count,minSelfBp:v.minSelfBp}]
+ },
  millTop:{
   args:{count:v=>integer(v,1,10)},build:v=>[{op:'millTop',count:v.count}]
  },
@@ -74,6 +81,11 @@ const registry=Object.freeze({
   // "skip" decision by reusing the originally optional variant.
   args:{bp:threshold,optional:yesNo},
   build:v=>[{op:'restOppFrontUnderBp',bp:v.bp,optional:v.optional}]
+ },
+ // Current BP >= N on the opponent front. Do not reuse the <= op.
+ restEnemyFrontBpAtLeast:{
+  args:{bp:v=>integer(v,500,50000)&&v%500===0,optional:requiredTrue},
+  build:v=>[{op:'restOppFrontBpAtLeast',bp:v.bp,optional:true}]
  },
  // Printed text with NO BP cap (e.g. UA08BT/BLC-1-030). Never approximate
  // an unbounded target with a giant numeric cap: temporary BP may exceed it.
