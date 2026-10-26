@@ -46,10 +46,10 @@ test('73 official standalone BLEACH profiles extend rather than replace 15 exist
   assert.ok(c&&old&&(old.source.includes('unionarena-tcg.com/jp/cardlist/')||recordedShop),p.id);
   for(const field of ['energy','ap','bp','color','trigger','type'])
    assert.equal(c[field],p[field],p.id+' '+field);
-  assert.equal(c.gen,p.id==='BLC-4-014'||p.id==='BLC-4-074'?1:p.id==='BLC-4-042'||p.id==='BLC-4-024'||p.id==='BLC-4-063'||p.id==='BLC-4-037'||p.id==='BLC-4-071'||p.id==='BLC-4-006'?2:p.gen,p.id+' printed base energy');
+  assert.equal(c.gen,p.id==='BLC-4-014'||p.id==='BLC-4-074'?1:p.id==='BLC-4-042'||p.id==='BLC-4-024'||p.id==='BLC-4-063'||p.id==='BLC-4-037'||p.id==='BLC-4-071'||p.id==='BLC-4-006'||p.id==='BLC-4-051'?2:p.gen,p.id+' printed base energy');
   assert.ok(!Object.hasOwn(c,'auto'));
   assert.equal(c.title,'bleach');
-  assert.equal(c.step,p.kind==='step'||p.kind==='stepAttackTraitBuff'||p.kind==='stepOnceFrontOr'||p.kind==='stepDrawNameActive');
+  assert.equal(c.step,p.kind==='step'||p.kind==='stepAttackTraitBuff'||p.kind==='stepOnceFrontOr'||p.kind==='stepDrawNameActive'||p.kind==='emptyStepRetireDown');
   if(p.kind==='bounce')
    assert.deepEqual(c.effects.onPlay,[{op:'bounceOwnOtherUnderEnergy',energy:1}]);
   if(p.kind==='drawPlay')assert.deepEqual(c.effects.onPlay,[{op:'draw',count:1}]);

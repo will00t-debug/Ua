@@ -1143,7 +1143,8 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-2-017","kind":"discardBlockAtLeast","number":"EX07BT/BLC-2-017","name":"黒崎 一護","color":"blue","energy":2,"ap":1,"bp":3000,"gen":1,"trigger":null,"type":"character","effect":"主要階段・每回合 1 次：將 1 張手牌送至場外，使此角色本回合不能被 BP 4000 以上角色阻擋。"},
 {"id":"BLC-4-003","kind":"emptyStepRetireDown","number":"EX15BT/BLC-4-003","name":"アスキン・ナックルヴァール","color":"yellow","energy":2,"ap":1,"bp":2000,"gen":1,"trigger":"active","type":"character","effect":"自己場上沒有任何卡片時，手牌中的此卡所需黃色能量減少2。Step：移動階段可從前線移至能量線。退場時：若為自己的回合，最多選1個對方前線BP1500以上的角色，本回合BP−1000。"},
 {"id":"BLC-2-028","kind":"impactDiscardApActive","number":"EX07BT/BLC-2-028","name":"阿散井 恋次","color":"blue","energy":3,"ap":2,"bp":4000,"gen":1,"trigger":"get","type":"character","effect":"Impact 無效。登場：可將 1 張手牌送至場外；成功時可將最多 1 張己方 AP 卡轉為 ACTIVE。主要階段・每回合 1 次：己方前線有其他原始 AP 消耗 2 以上角色時，將此角色轉為 ACTIVE。"},
-{"id":"BLC-4-043","kind":"aliasColorTopOutside","number":"EX15BT/BLC-4-043","name":"眠七號","color":"blue","energy":0,"ap":1,"bp":1500,"gen":1,"trigger":"draw","type":"character","effect":"此卡也視為《涅音夢》。登場時：查看牌庫頂2張，可將最多1張藍色《涅繭利》、《涅音夢》或具有「涅骸部隊」特徵的卡送至場外，其餘依任意順序放回牌庫頂。"}
+{"id":"BLC-4-043","kind":"aliasColorTopOutside","number":"EX15BT/BLC-4-043","name":"眠七號","color":"blue","energy":0,"ap":1,"bp":1500,"gen":1,"trigger":"draw","type":"character","effect":"此卡也視為《涅音夢》。登場時：查看牌庫頂2張，可將最多1張藍色《涅繭利》、《涅音夢》或具有「涅骸部隊」特徵的卡送至場外，其餘依任意順序放回牌庫頂。"},
+{"id":"BLC-4-051","kind":"entryTurnChooseDraw","number":"EX15BT/BLC-4-051","name":"朽木 白哉","color":"purple","energy":3,"ap":1,"bp":2000,"gen":3,"trigger":"draw","type":"character","effect":"啟動・主要〔每回合1次〕：僅可在此角色登場的回合發動，選1項。①抽1張牌，再將1張手牌送至場外。②若對方前線有BP低於印刷BP的角色，抽1張牌。"}
  ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1202,7 +1203,7 @@ export function checkedBleachAddonDefinition(p){
  // EX15BT/BLC-4-074 prints 緑+. That plus is the activate ability, so the REST
  // base is 1. Keep p.gen=2 only as a legacy-source fingerprint.
  const v2BaseGen=p.id==='BLC-4-014'||p.id==='BLC-4-074'?1:
-  p.id==='BLC-4-042'||p.id==='BLC-4-024'||p.id==='BLC-4-063'||p.id==='BLC-4-037'||p.id==='BLC-4-071'||p.id==='BLC-4-006'?2:c.gen;
+  p.id==='BLC-4-042'||p.id==='BLC-4-024'||p.id==='BLC-4-063'||p.id==='BLC-4-037'||p.id==='BLC-4-071'||p.id==='BLC-4-006'||p.id==='BLC-4-051'?2:c.gen;
  const isKyoraku=p.kind==='kyorakuAttackEnd';
  const isRestRetireField=p.kind==='fieldRestRetireNamed';
  const isFieldDual=p.kind==='fieldDualMain';
@@ -1284,6 +1285,7 @@ export function checkedBleachAddonDefinition(p){
  const isEmptyStep=p.kind==='emptyStepRetireDown';
  const isApActive=p.kind==='impactDiscardApActive';
  const isAliasTop=p.kind==='aliasColorTopOutside';
+ const isEntryChoose=p.kind==='entryTurnChooseDraw';
  const topDiscard={
   'BLC-3-007':{count:3,filter:{field:'trait',value:'護廷十三隊'}},
   'BLC-3-002':{count:3,filters:[
@@ -1317,7 +1319,7 @@ export function checkedBleachAddonDefinition(p){
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest||isOwnCharacterDraw||isPeekAttack||isDrawInstead||isRevealOppTop||isRevealWindow||isEnergyWindow||isMillPurple||isEnergyBounce||isStepOr||isReplayDown||isStepName||isReducedActive||isOutsideName||isZeroIchigo||isDiscardBlock||isEmptyStep||isApActive||isAliasTop;
+ const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest||isOwnCharacterDraw||isPeekAttack||isDrawInstead||isRevealOppTop||isRevealWindow||isEnergyWindow||isMillPurple||isEnergyBounce||isStepOr||isReplayDown||isStepName||isReducedActive||isOutsideName||isZeroIchigo||isDiscardBlock||isEmptyStep||isApActive||isAliasTop||isEntryChoose;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1341,6 +1343,10 @@ export function checkedBleachAddonDefinition(p){
   ...(isEmptyStep?{emptyOwnFieldHandEnergyDiscount:2}:{}),
   ...(isApActive?{impactNull:true,mainAbility:{op:'cardOnceActive',scope:'card',when:{kind:'ownPrintedApAtLeast',turn:'any',zone:'front',excludeSelf:true,minAp:2}}}:{}),
   ...(isAliasTop?{nameAliases:['涅 ネム']}:{}),
+  ...(isEntryChoose?{mainAbility:{op:'oncePayProgram',oncePerTurn:true,frontOnly:false,raidOnly:false,payAp:0,requiresOwnName:null,entryTurnOnly:true,then:[{op:'chooseOne',optional:false,options:[
+   {id:'discard',label:'抽1再棄1',turn:'any',then:[{op:'drawDiscard',count:1,discardCount:1}]},
+   {id:'below',label:'低BP時抽1',turn:'any',then:[{op:'drawIfOppFrontBelowPrinted',count:1}]}
+  ]}]}}:{}),
    ...(isKyoraku?{raidName:'京楽 春水',
     attackEndSwap:{color:'green',types:['event','field'],minDistinctNames:4}}:{}),
    ...(isRestRetireField?{mainAbility:{op:'fieldRestRetireThen',then:[
@@ -1575,7 +1581,8 @@ export function checkedBleachAddonDefinition(p){
    isStepName?{onPlay:[{op:'drawDiscard',count:1,discardCount:1}]}:
    isEmptyStep?{onRetire:[{op:'enemyBpDown',bp:1000,optional:true,minBp:1500,ownTurnOnly:true}]}:
    isApActive?{onPlay:[{op:'discardGate',optional:true,then:[{op:'recoverAp',count:1}]}]}:
-   isAliasTop?{onPlay:[{op:'inspectTopColorAnyOutside',count:2,rest:'top',color:'blue',names:['涅 マユリ','涅 ネム'],trait:'涅骸部隊'}]}:{}})
+   isAliasTop?{onPlay:[{op:'inspectTopColorAnyOutside',count:2,rest:'top',color:'blue',names:['涅 マユリ','涅 ネム'],trait:'涅骸部隊'}]}:
+   isEntryChoose?{onPlay:[{op:'noteEntryTurn'}]}:{}})
  };
 }
 export function bleachV2PortedCards(){

@@ -135,7 +135,8 @@ const testForKind=Object.freeze({
  discardBlockAtLeast:'tests/v2-c29-bleach-port.test.mjs',
  emptyStepRetireDown:'tests/v2-c29-bleach-port.test.mjs',
  impactDiscardApActive:'tests/v2-c29-bleach-port.test.mjs',
- aliasColorTopOutside:'tests/v2-c29-bleach-port.test.mjs'
+ aliasColorTopOutside:'tests/v2-c29-bleach-port.test.mjs',
+ entryTurnChooseDraw:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -145,7 +146,7 @@ function contributedEntry(profile){
  // The legacy gen=2 for EX15BT/BLC-4-014 describes the ACTIVE total, not
  // the printed REST base. SourceRecord is the normalized printed card record;
  // retain original.gen separately and require the profile fingerprint above.
- const normalized=['BLC-4-014','BLC-4-042','BLC-4-074','BLC-4-024','BLC-4-063','BLC-4-037','BLC-4-071','BLC-4-006'].includes(profile.id);
+ const normalized=['BLC-4-014','BLC-4-042','BLC-4-074','BLC-4-024','BLC-4-063','BLC-4-037','BLC-4-071','BLC-4-006','BLC-4-051'].includes(profile.id);
  const sourceRecord=Object.freeze(normalized?
   {...original,gen:definition.gen,legacyImportedGen:original.gen}: {...original});
  const vanilla=['plain','plainAlt','step'].includes(profile.kind);
@@ -171,6 +172,8 @@ function contributedEntry(profile){
       'EX15BT/BLC-4-071 official generated energy is 緑緑=2. Catalogue gen=3 is the sprite index. sourceRecord.gen=2, legacyImportedGen=3. Official Q2340: two copies share one activate per turn.':
     profile.id==='BLC-4-006'?
       'EX15BT/BLC-4-006 official generated energy is 黄黄=2. Catalogue gen=3 is the sprite index. sourceRecord.gen=2, legacyImportedGen=3. Impact null. On its own turn, BP+1000 only when own outside has no ユーハバッハ and own field has ユーグラム・ハッシュヴァルト. No card FAQ on the official page.':
+    profile.id==='BLC-4-051'?
+      'EX15BT/BLC-4-051 official iframe 2026-10-26. Generated energy is 紫紫=2. Catalogue gen=3 is the sprite index. sourceRecord.gen=2, legacyImportedGen=3. [起動メイン][ターン1] only on the turn this character entered. Choose one: draw 1 then put one hand card outside, or draw 1 only when an opposing front character has live BP below its printed BP. Q2324 (2026-09-04): 元々のBP is the printed lower-left BP. DRAW is generic.':
     profile.id==='BLC-2-017'?
       'EX07BT/BLC-2-017 official iframe 2026-10-26. [起動メイン][手札を1枚場外に置く][ターン1]: this physical card discards one hand card, then cannot be blocked by BP 4000 or higher this turn. Q1032 (2024-07-19): discarding 斬月 this way triggers 斬月. No generated-energy normalization.':
     profile.id==='BLC-4-003'?
