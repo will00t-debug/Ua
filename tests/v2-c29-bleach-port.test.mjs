@@ -178,9 +178,13 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 // BLC-1-096 UA08BT: one opposing front character of BP 5000 or less is
 //   rested and skips its next ACTIVE. Q573 (2023-09-25). Own
 //   日番谷 冬獅郎 retires that same character instead. Mandatory.
+// BLC-1-065 UA08BT: while own field has 朽木 白哉, this hand card costs
+//   1 less AP. Then up to one opposing front character gets BP-3000,
+//   and up to one gets BP-1000. Q567 (2023-09-25): same or different
+//   characters are both legal. SPECIAL retires one front character.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -251,12 +255,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers sixty whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,496);
- assert.equal(EXPECTED_V2_COUNTS.bleach,220);
+test('C29 registers sixty-one whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,497);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,221);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,220);
+ assert.equal(Object.keys(bleach.cards).length,221);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -5204,4 +5208,123 @@ test('BLC-1-096 rests and skips under BP 5000, or retires when Hitsugaya is on t
  assert.equal(assertUniversalMatch(retired.packs,gone),true);
  assert.equal(assertUniversalMatch(away.packs,outsideName),true);
  assert.equal(assertUniversalMatch(quiet.packs,silenced),true);
+});
+
+test('BLC-1-065 reduces its hand AP while Byakuya is on the field, then cuts BP twice',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-1-065');
+ assert.equal(printed.effect,'己方場上有〈朽木白哉〉時，手牌中此卡的 AP 消耗減少 1。可使最多 1 個敵方前線角色本回合 BP −3000，再可使最多 1 個敵方前線角色本回合 BP −1000。');
+ assert.equal(printed.nameJa,'千本桜景厳');
+ assert.equal(printed.number,'UA08BT/BLC-1-065');
+ assert.equal(printed.traits,'無');
+ assert.equal(printed.type,'event');
+ assert.equal(printed.energy,4);
+ assert.equal(printed.ap,2);
+ assert.equal(printed.gen,0);
+ assert.equal(printed.trigger,'special');
+ assert.equal(printed.color,'purple');
+ const card=bleach.cards['BLC-1-065'];
+ assert.equal(card.name,'千本桜景厳');
+ assert.deepEqual(card.handApDiscountWhileName,{name:'朽木 白哉',amount:1});
+ assert.deepEqual(card.triggerEffect,{op:'retireOppFront'});
+ assert.deepEqual(card.traits,[]);
+ assert.deepEqual(card.effects.onPlay,[
+  {op:'enemyBpDown',bp:3000,optional:true},
+  {op:'enemyBpDown',bp:1000,optional:true}
+ ]);
+ assert.equal(bleach.cards['BLC-1-048'].name,'朽木 白哉');
+ const bare={id:'BAD',name:'桜',color:'purple',type:'event',energy:0,ap:2,bp:0,gen:0,traits:[],trigger:'special',implementation:'dsl',triggerEffect:{op:'retireOppFront'},effects:{onPlay:[{op:'draw',count:1}]}};
+ assert.throws(()=>createUniversalPack({id:'bad-sakura',cards:[{...bare,handApDiscountWhileName:{name:'朽木 白哉',amount:2}}]}),/invalid named hand AP discount/);
+ assert.throws(()=>createUniversalPack({id:'bad-sakura-char',cards:[{...bare,type:'character',bp:1000,handApDiscountWhileName:{name:'朽木 白哉',amount:1}}]}),/invalid named hand AP discount/);
+ const deck=realDeck(['BLC-1-065','BLC-1-048','BLC-1-051','BLC-1-045','BLC-1-034','BLC-1-039','BLC-1-054','BLC-1-042'],'purple');
+ const withByakuya=['BLC-1-051','BLC-1-034','BLC-1-039','BLC-1-048'];
+ const withoutByakuya=['BLC-1-051','BLC-1-034','BLC-1-039','BLC-1-042'];
+ function fuel(s,ids=withByakuya){
+  ids.forEach((id,i)=>put(s,0,id,'energy',i));
+ }
+ function hold(s){
+  const event=take(s,0,'BLC-1-065');
+  s.players[0].hand.push(event);
+  return event;
+ }
+ const playable=(packs,s,uid)=>legalUniversalActions(packs,s).some(a=>a.type==='event'&&a.uid===uid);
+ const named=main(deck,30601);
+ fuel(named.s);
+ const event=hold(named.s);
+ assert.equal(universalEnergyByColor(named.packs,named.s,0).purple,4);
+ assert.equal(named.s.players[0].apCards.filter(c=>c.ready).length,1);
+ assert.equal(playable(named.packs,named.s,event.uid),true);
+ const first=put(named.s,1,'BLC-1-054','front',0,true);
+ first.buffs.push({bp:2000,untilTurn:named.s.turn});
+ const second=put(named.s,1,'BLC-1-045','front',1,true);
+ const before=universalBp(named.packs,named.s,first);
+ let played=dispatchUniversalAction(named.packs,named.s,{type:'event',uid:event.uid});
+ assert.equal(played.pending.kind,'effect-target');
+ assert.equal(played.pending.bp,3000);
+ assert.equal(played.pending.optional,true);
+ assert.equal(legalUniversalActions(named.packs,played).some(a=>a.type==='chooseTarget'&&a.uid===null),true);
+ const declined=dispatchUniversalAction(named.packs,played,{type:'chooseTarget',uid:null});
+ assert.equal(declined.pending.kind,'effect-target');
+ assert.equal(declined.pending.bp,1000);
+ const skipped=dispatchUniversalAction(named.packs,declined,{type:'chooseTarget',uid:null});
+ assert.equal(skipped.pending,null);
+ assert.equal(universalBp(named.packs,skipped,live(skipped,1,first.uid)),before);
+ played=dispatchUniversalAction(named.packs,played,{type:'chooseTarget',uid:first.uid});
+ assert.equal(played.pending.bp,1000);
+ assert.equal(played.pending.choices.includes(first.uid),true);
+ assert.equal(played.pending.choices.includes(second.uid),true);
+ played=dispatchUniversalAction(named.packs,played,{type:'chooseTarget',uid:first.uid});
+ assert.equal(played.pending,null);
+ assert.equal(universalBp(named.packs,played,live(played,1,first.uid)),before-4000);
+ assert.equal(universalBp(named.packs,played,live(played,1,second.uid)),universalBp(named.packs,named.s,second));
+ assert.equal(played.players[0].outside.some(c=>c.uid===event.uid),true);
+ const split=main(deck,30602);
+ fuel(split.s);
+ const again=hold(split.s);
+ const left=put(split.s,1,'BLC-1-054','front',0,true);
+ left.buffs.push({bp:2000,untilTurn:split.s.turn});
+ const right=put(split.s,1,'BLC-1-045','front',1,true);
+ const leftBp=universalBp(split.packs,split.s,left);
+ const rightBp=universalBp(split.packs,split.s,right);
+ let branched=dispatchUniversalAction(split.packs,split.s,{type:'event',uid:again.uid});
+ branched=dispatchUniversalAction(split.packs,branched,{type:'chooseTarget',uid:left.uid});
+ branched=dispatchUniversalAction(split.packs,branched,{type:'chooseTarget',uid:right.uid});
+ assert.equal(universalBp(split.packs,branched,live(branched,1,left.uid)),leftBp-3000);
+ assert.equal(universalBp(split.packs,branched,live(branched,1,right.uid)),rightBp-1000);
+ const byakuya=split.s.players[0].energy.find(c=>c?.cardId==='BLC-1-048');
+ grantContinuousState(split.s,{kind:'originalEffectsDisabled',controller:1,sourceUid:left.uid,
+  targetUid:byakuya.uid,until:{player:0,phase:'main',edge:'end'}});
+ const silencedEvent=take(split.s,0,'BLC-1-065');
+ split.s.players[0].hand.push(silencedEvent);
+ split.s.players[0].apCards.forEach(c=>{if(c.inPlay)c.ready=true;});
+ assert.equal(playable(split.packs,split.s,silencedEvent.uid),true);
+ const absent=main(deck,30603);
+ fuel(absent.s,withoutByakuya);
+ const parked=take(absent.s,0,'BLC-1-048');
+ absent.s.players[0].outside.push(parked);
+ const full=hold(absent.s);
+ assert.equal(universalEnergyByColor(absent.packs,absent.s,0).purple,4);
+ assert.equal(playable(absent.packs,absent.s,full.uid),false);
+ for(let n=0;n<40&&!(absent.s.active===0&&absent.s.phase==='main'&&absent.s.players[0].ownTurns===2);n++){
+  const step=legalUniversalActions(absent.packs,absent.s).find(a=>a.type==='next');
+  assert.ok(step);
+  absent.s=dispatchUniversalAction(absent.packs,absent.s,step);
+ }
+ const later=take(absent.s,0,'BLC-1-065');
+ absent.s.players[0].hand.push(later);
+ assert.equal(universalEnergyByColor(absent.packs,absent.s,0).purple,4);
+ assert.equal(absent.s.players[0].apCards.filter(c=>c.ready).length,2);
+ assert.equal(playable(absent.packs,absent.s,later.uid),true);
+ put(absent.s,1,'BLC-1-054','front',0,true);
+ let paid=dispatchUniversalAction(absent.packs,absent.s,{type:'event',uid:later.uid});
+ assert.equal(absent.s.players[0].apCards.filter(c=>c.ready).length-paid.players[0].apCards.filter(c=>c.ready).length,2);
+ assert.equal(paid.pending.kind,'effect-target');
+ assert.equal(paid.pending.bp,3000);
+ paid=dispatchUniversalAction(absent.packs,paid,{type:'chooseTarget',uid:null});
+ paid=dispatchUniversalAction(absent.packs,paid,{type:'chooseTarget',uid:null});
+ aiOk(named.packs,played);
+ assert.equal(assertUniversalMatch(named.packs,played),true);
+ assert.equal(assertUniversalMatch(named.packs,skipped),true);
+ assert.equal(assertUniversalMatch(split.packs,branched),true);
+ assert.equal(assertUniversalMatch(split.packs,split.s),true);
+ assert.equal(assertUniversalMatch(absent.packs,paid),true);
 });

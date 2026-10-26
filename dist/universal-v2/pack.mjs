@@ -1622,12 +1622,12 @@ function normalize(card,packId){
  if(implemented==='vanilla'&&(Object.keys(effects).length||card.effectText||
   mainAbility||phaseEffects.length||moveTriggers.length||moveObserver||card.enterActiveIfOpponentRest||card.enterAlwaysActive||card.activeExtraEnergy||card.conditionalTraitEnergy||passiveBonuses||card.impactNull||
   card.printedImpact||card.printedAttackDamage||card.readyOnAttackCount||card.readyOnBlockCount||
-  card.frontGeneratesEnergy||ownOutsideRecovery||colorTriggerFieldSubstitution||card.frontForbidden||card.ownTurnBp||card.opponentTurnBp||nameAliases||selectionHandDiscardTax||  card.otherOwnBattleWonDamageTwo||attackEndSwap||blockBpRestriction||attackWinRecover||card.conditionalImpactBpAtLeast||emptyOwnFieldHandEnergyDiscount||opponentFieldColorsHandEnergyDiscount||card.mustBlock||card.bpDownImmune||card.printedHandEnergyDiscount||card.raidHandLeaveReplace||card.raidHostAny||card.blockRaidBp))
+  card.frontGeneratesEnergy||ownOutsideRecovery||colorTriggerFieldSubstitution||card.frontForbidden||card.ownTurnBp||card.opponentTurnBp||nameAliases||selectionHandDiscardTax||  card.otherOwnBattleWonDamageTwo||attackEndSwap||blockBpRestriction||attackWinRecover||card.conditionalImpactBpAtLeast||emptyOwnFieldHandEnergyDiscount||opponentFieldColorsHandEnergyDiscount||card.mustBlock||card.bpDownImmune||  card.printedHandEnergyDiscount||card.raidHandLeaveReplace||card.raidHostAny||card.blockRaidBp||card.handApDiscountWhileName))
   throw Error(card.id+' claims vanilla despite printed/declared effects');
  if(implemented==='dsl'&&!Object.keys(effects).length&&!phaseEffects.length&&!moveTriggers.length&&!mainAbility&&!moveObserver&&!card.enterActiveIfOpponentRest&&!card.enterAlwaysActive&&
   !card.activeExtraEnergy&&!card.conditionalTraitEnergy&&!passiveBonuses&&!card.impactNull&&
   !card.printedImpact&&!card.printedAttackDamage&&!card.readyOnAttackCount&&!card.readyOnBlockCount&&
-  !card.frontGeneratesEnergy&&!ownOutsideRecovery&&!colorTriggerFieldSubstitution&&!card.frontForbidden&&!card.ownTurnBp&&!card.opponentTurnBp&&!nameAliases&&!selectionHandDiscardTax&&!card.otherOwnBattleWonDamageTwo&&!attackEndSwap&&!blockBpRestriction&&!attackWinRecover&&!card.conditionalImpactBpAtLeast&&!emptyOwnFieldHandEnergyDiscount&&!opponentFieldColorsHandEnergyDiscount&&!card.mustBlock&&!card.bpDownImmune&&!card.printedHandEnergyDiscount&&!card.raidHandLeaveReplace&&!card.raidHostAny&&!card.blockRaidBp)
+  !card.frontGeneratesEnergy&&!ownOutsideRecovery&&!colorTriggerFieldSubstitution&&!card.frontForbidden&&!card.ownTurnBp&&!card.opponentTurnBp&&!nameAliases&&!selectionHandDiscardTax&&!card.otherOwnBattleWonDamageTwo&&!attackEndSwap&&!blockBpRestriction&&!attackWinRecover&&!card.conditionalImpactBpAtLeast&&!emptyOwnFieldHandEnergyDiscount&&!opponentFieldColorsHandEnergyDiscount&&!card.mustBlock&&!card.bpDownImmune&&  !card.printedHandEnergyDiscount&&!card.raidHandLeaveReplace&&!card.raidHostAny&&!card.blockRaidBp&&!card.handApDiscountWhileName)
   throw Error(card.id+' declares dsl without effects');
  for(const [name,program] of Object.entries(effects)){
   if(program.some(x=>x.op==='retireSourceOnPhaseEnd'))throw Error(card.id+' invalid phase-only self retirement');
@@ -1803,6 +1803,15 @@ function normalize(card,packId){
   Object.keys(raidHandApDiscount).length!==3||
   Object.keys(raidHandApDiscount).some(k=>!['amount','requiresEffectApColor','voidIfOtherZeroApHandName'].includes(k))))
   throw Error(card.id+' invalid raid hand AP discount');
+ const handApDiscountWhileName=card.handApDiscountWhileName??null;
+ if(handApDiscountWhileName!==null&&(
+  card.type!=='event'||implemented!=='dsl'||
+  handApDiscountWhileName.amount!==1||
+  typeof handApDiscountWhileName.name!=='string'||!handApDiscountWhileName.name.trim()||
+  handApDiscountWhileName.name.length>80||
+  Object.keys(handApDiscountWhileName).length!==2||
+  Object.keys(handApDiscountWhileName).some(k=>!['name','amount'].includes(k))))
+  throw Error(card.id+' invalid named hand AP discount');
  const playRequiresOwnName=card.playRequiresOwnName??null;
  if(playRequiresOwnName!==null&&(
   card.type!=='event'||implemented!=='dsl'||
@@ -1898,6 +1907,7 @@ function normalize(card,packId){
   raidHandLeaveReplace:raidHandLeaveReplace?Object.freeze({...raidHandLeaveReplace}):null,
   raidHandApDiscount:raidHandApDiscount?Object.freeze({...raidHandApDiscount}):null,
   playRequiresOwnName,
+  handApDiscountWhileName:handApDiscountWhileName?Object.freeze({...handApDiscountWhileName}):null,
   printedImpact:card.printedImpact===1?1:0,
   printedAttackDamage:card.printedAttackDamage===2?2:1,
   readyOnAttackCount:card.readyOnAttackCount===1?1:0,

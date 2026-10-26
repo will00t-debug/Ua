@@ -147,7 +147,8 @@ const testForKind=Object.freeze({
  blockRaidBp:'tests/v2-c29-bleach-port.test.mjs',
  raidOrNameRetire:'tests/v2-c29-bleach-port.test.mjs',
  frontRestOrSkipDraw:'tests/v2-c29-bleach-port.test.mjs',
- frontRestSkipOrRetire:'tests/v2-c29-bleach-port.test.mjs'
+ frontRestSkipOrRetire:'tests/v2-c29-bleach-port.test.mjs',
+ handApWhileByakuya:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -166,7 +167,9 @@ function contributedEntry(profile){
   definition:Object.freeze(definition),
   evidence:Object.freeze({
    printedTextFragments:Object.freeze([profile.effect]),
-   reviewNote:profile.id==='BLC-1-096'?
+   reviewNote:profile.id==='BLC-1-065'?
+    'UA08BT/BLC-1-065 official iframe 2026-10-26. While own field has 朽木 白哉, this hand card costs 1 less AP. The reduction is once, not once per copy, and a silenced Byakuya still counts because the printed name remains. Then up to one opposing front character gets BP-3000 this turn, and up to one opposing front character gets BP-1000. Q567 (2023-09-25): the two choices may be the same character or two different characters. Declining either choice is legal. SPECIAL retires one opposing front character. No generated energy.':
+   profile.id==='BLC-1-096'?
     'UA08BT/BLC-1-096 official iframe 2026-10-26. Choose one opposing front character of live BP 5000 or less, REST it, and skip its next ACTIVE. Q573 (2023-09-25) uses the same skip ruling as Q554. Own field 日番谷 冬獅郎 replaces that resolution with retirement of the same BP-capped character. The choice is mandatory when a legal target exists. SPECIAL retires one opposing front character. No generated energy. No draw.':
    profile.id==='BLC-1-031'?
     'UA08BT/BLC-1-031 official iframe 2026-10-26. Up to one opposing front character becomes REST. Q554 (2023-09-25): when own field has エス・ノト, that character is also skipped the next time it would become ACTIVE, and the player draws one card. Declining draws nothing. Silence does not remove the printed name. SPECIAL retires one opposing front character. No generated energy. No BP cap.':

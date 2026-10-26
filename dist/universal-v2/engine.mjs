@@ -4523,6 +4523,11 @@ function nameOnceActiveLegal(pack,s,owner,c,ability){
  return !ability.when||matchesV2LiveCondition(s,owner,c.uid,ability.when,
   x=>card(pack,x),()=>calcEnergy(pack,s,owner),x=>bp(pack,s,x));
 }
+function handApPlan(pack,s,owner,d,opts={}){
+ const rule=d.handApDiscountWhileName;
+ const nameOnField=!!rule&&ownFieldHasPrintedName(pack,s,owner,rule.name);
+ return handPlayApPlan(s,owner,d,{...opts,nameOnField});
+}
 export function legalUniversalActions(pack,s){
  assertUniversalMatch(pack,s);
  if(s.status!=='playing')return [];
@@ -4784,8 +4789,8 @@ export function legalUniversalActions(pack,s){
   const produced=universalEnergyByColor(pack,s,p);
   for(const c of pl.hand){
    const d=card(pack,c);
-   const payment=handPlayApPlan(s,p,d);
-   const raidPayment=d.raidName?handPlayApPlan(s,p,d,{raid:true,uid:c.uid}):null;
+   const payment=handApPlan(pack,s,p,d);
+   const raidPayment=d.raidName?handApPlan(pack,s,p,d,{raid:true,uid:c.uid}):null;
    const requiredEnergy=effectiveHandRequiredEnergy(pack,s,p,d);
    const energyOk=requiredEnergy<=(produced[d.color]||0);
    if(energyOk&&payment.cost<=ap){
@@ -5325,7 +5330,7 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
    const index=pl.hand.findIndex(c=>c.uid===action.uid);
    if(index<0)throw Error('Card not in hand');
    const current=pl.hand[index],d=card(pack,current);
-   const payment=handPlayApPlan(s,p,d,{raid:action.type==='raid',uid:current.uid});
+   const payment=handApPlan(pack,s,p,d,{raid:action.type==='raid',uid:current.uid});
    if(action.type==='event'&&d.playRequiresOwnName&&
     !ownFieldHasPrintedName(pack,s,p,d.playRequiresOwnName))
     throw Error('Event requires the printed own character');
