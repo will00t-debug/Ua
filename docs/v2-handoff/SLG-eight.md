@@ -46,3 +46,12 @@ The catalogue does not put 本回合 on 029's untargetable clause. The shared pr
 ## Batch 5 — 水篠 旬 raid
 
 Registered UA51BT/SLG-1-020. Raid name 水篠 旬. OnPlay draws 1, then may discard 1 hand card to recover up to one own outside character other than 水篠 旬 whose printed BP is 3000 or less. `recoverOutsidePrintedBp` now accepts that printed-name exclusion. OnAttack draws 1, discards 1, and gains BP+500 this turn for each 5 own outside cards. Official page was not re-read. Not a full FAQ certification.
+
+## Batch 6 — own-effect retirement and a shared name gate
+
+Registered:
+
+- UA51BT/SLG-1-049 水篠 旬. Raid name 水篠 旬. Printed Impact 1. The catalogue BP+500 sentence has no 自己的回合 limit, so the bonus applies on both turns. OnPlay may retire one opponent front character only when this card entered by an own effect during its controller's turn. Paid play does not open that choice. New shared op `retireOppFrontOne`; a null retirement limit is uncapped, and `bp > null` is not used. No registered host can put this green energy-6 character onto the field from outside, so the positive own-effect entry is untested. OnAttack draws 1, then one hand card is placed facedown under this character. New shared op `tuckHandFaceDown`.
+- UA51BT/SLG-1-067 カナ. Official trait token `DFN／第四次架南島レイド`. OnPlay, when at least three own DFN characters are on the field including this card, draw 1, set this card ACTIVE, and BP+1000 this turn. The printed name shares that entry once per turn. `oncePerTurnGate` now accepts a `when` condition, and a miss does not spend the name. `activeSelf` is a legal follow-up. The catalogue does not say 自己的回合 for the count. The catalogue also omits the color life sentence. The attached profile deploys one green AP 1 character of energy 2 or less from hand, matching the in-repo life fixture. That energy cap was not re-read from the official page.
+
+Official pages were not re-read. Not a full FAQ certification.

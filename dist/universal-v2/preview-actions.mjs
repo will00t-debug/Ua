@@ -51,6 +51,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-grant-opp-block':'對手選擇 1 個角色，本回合不會被高 BP 阻擋',
  'effect-ally-attack-order':'選擇哪張 ACTIVE 角色 REST 並支援這次攻擊',
  'effect-ally-attack-rest':'REST 此角色並選擇一項攻擊支援',
+ 'effect-tuck-hand':'將 1 張手牌裏向放在此角色下方',
  'effect-once-choice':'是否發動本回合一次能力',
  'effect-choice-mode':'選擇一項效果',
  'recovered-self-entry':'回收後可 REST 登場至能源線',
@@ -186,6 +187,7 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseDiscardCost':return action.uid===null?'不支付成本':'棄 '+name()+' 支付成本';
   case 'chooseHandLimit':return '超過上限，移除 '+name();
   case 'chooseDiscard':return '棄 '+name();
+  case 'chooseTuckHand':return '將 '+name()+' 裏向放在此角色下方';
   case 'chooseMainDiscard':return '支付起動成本：將 '+name()+' 送至場外';
   case 'chooseOutsideRecovery':return action.uid===null?'不回收／完成':'回收 '+name()+' 至手牌';
   case 'chooseRecoveredEntry':return action.mode==='skip'?'保留在手牌':

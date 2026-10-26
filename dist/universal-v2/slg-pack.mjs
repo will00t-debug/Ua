@@ -740,6 +740,31 @@ const authored=[
     {"op":"buffSelfPerOwnOutsideGroups","unit":5,"bpPerGroup":500}
    ]
   }
+},
+{
+  "id":"SLG-1-049","name":"水篠 旬","color":"green","energy":6,
+  "ap":1,"bp":4000,"gen":1,"trigger":"raid","type":"character",
+  "raidName":"水篠 旬",
+  "textAnchor":"自己的回合中藉己方效果登場時，可使對方前線最多1張角色退場",
+  "implementation":"dsl","effects":{
+   "onPlay":[{"op":"retireOppFrontOne","optional":true,"entry":"ownEffect","ownTurn":true}],
+   "onAttack":[{"op":"draw","count":1},{"op":"tuckHandFaceDown"}]
+  },
+  "printedImpact":1,"ownTurnBp":500,"opponentTurnBp":500
+},
+{
+  "id":"SLG-1-067","name":"カナ","color":"green","energy":4,
+  "ap":1,"bp":3000,"gen":1,"trigger":"color","type":"character",
+  "textAnchor":"登場時若己方有3張以上DFN，抽1張，將此角色ACTIVE並使本回合BP+1000",
+  "implementation":"dsl","effects":{
+   "onPlay":[{"op":"oncePerTurnGate","scope":"name","optional":false,
+    "when":{"kind":"ownTraitCount","turn":"any","zone":"field","excludeSelf":false,"trait":"DFN","min":3},
+    "then":[{"op":"draw","count":1},{"op":"activeSelf"},{"op":"buffSelf","bp":1000}]}]
+  },
+  "triggerEffect":{"op":"deployHandCharacter","color":"green","maxEnergy":2,"ap":1},
+  "officialTraits":["DFN／第四次架南島レイド"],
+  "traitComponents":["DFN","第四次架南島レイド"],
+  "catalogueTraits":["DFN","第四次架南島Raid"]
 }
 ];
 export const SLG_V2_VERIFIED_IDS=Object.freeze(authored.map(c=>c.id));
