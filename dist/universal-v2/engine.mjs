@@ -1235,7 +1235,7 @@ function continueEffectQueue(pack,s){
     .map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-remove-outside',player:owner,
     sourceUid:job.sourceUid,sourceName:job.sourceName,choices,selected:[],
-    count:job.count,short:choices.length<job.count,optional:true,
+    count:job.count,short:choices.length<job.count,optional:job.optional,
     cardType:job.cardType,then:job.then.map(e=>({...e}))};
   }else if(job.op==='removeAnyOutsideScale'){
    const choices=pl.outside.map(c=>c.uid);

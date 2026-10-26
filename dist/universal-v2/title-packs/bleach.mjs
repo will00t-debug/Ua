@@ -170,7 +170,8 @@ const testForKind=Object.freeze({
  sternritterCastleReplay:'tests/v2-c29-bleach-port.test.mjs',
  uryuSwapOrBuff:'tests/v2-c29-bleach-port.test.mjs',
  yoruichiEnergySwap:'tests/v2-c29-bleach-port.test.mjs',
- bazzDiscardBattleKit:'tests/v2-c29-bleach-port.test.mjs'
+ bazzDiscardBattleKit:'tests/v2-c29-bleach-port.test.mjs',
+ ichigoRemoveFourImpact:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -189,7 +190,9 @@ function contributedEntry(profile){
   definition:Object.freeze(definition),
   evidence:Object.freeze({
    printedTextFragments:Object.freeze([profile.effect]),
-   reviewNote:profile.id==='BLC-1-011'?
+   reviewNote:profile.id==='BLC-1-104'?
+    'UA08ST/BLC-1-104 official iframe 2026-10-26. Raid onto 黒崎 一護, become ACTIVE, and may move to the front. [起動メイン][ターン1]: place 4 own outside cards into the removed area. On that exact count, draw 1 and gain Impact 1 this turn. Q574 (2023-09-25): activating with only 3 still removes those 3, and the draw and Impact do not happen. The removal is not optional. [ターン1] is this physical card. Silence before activation removes the ability. The earned Impact remains after later silence. Generated energy is 紫. RAID is the generic sentence. No extra card FAQ.':
+   profile.id==='BLC-1-011'?
     'UA08BT/BLC-1-011 official iframe 2026-10-26. [起動メイン][手札を1枚場外に置く]. No [ターン1]. The discard is mandatory and this physical card may pay it again the same turn. Success grants Damage 2 and a battle-win draw for this turn. Q537 (2023-09-25): a battle win is an attack against a character whose BP is less than or equal to the attacker. A direct attack deals the Damage 2 and does not draw. Declining the discard is illegal. An empty hand makes the activate illegal. The energy line is legal. Silence before activation removes the ability. Later silence removes the unfired battle-win draw. The resolved Damage 2 remains. DRAW is generic. Generated energy is 黄. No extra card FAQ.':
    profile.id==='BLC-4-032'?
     'EX15BT/BLC-4-032 official iframe 2026-10-26. On its own turn, BP+1000 while own field has 黒崎 一護 or 浦原 喜助. Silence removes that bonus and keeps both printed names. [エナジーLにある場合][ターン1]: when an own character\'s attack ends, this energy-line character may swap with one own front character that has not attacked this turn. Q2314 (2026-09-04): after the battle, and after a life-damage trigger check. Declining is legal and uses this physical card\'s once. The attacker is not a choice. A character that cannot enter the energy line is not a choice. A front-line copy does not offer the swap. Silence before the window removes it. [ターン1] is this physical card, so another copy can still swap. Catalogue gen=3 is the blue3 sprite; official generated energy is 青青, so definition.gen=2 and legacyImportedGen=3. COLOR returns one opposing front character of BP 3500 or less to hand. No card FAQ beyond Q2314.':
@@ -210,7 +213,7 @@ function contributedEntry(profile){
    profile.id==='BLC-4-065'?
     'EX15BT/BLC-4-065 official iframe 2026-10-26. Step. On its own turn, BP+1500 while own energy line has 京楽 春水. Main sets this character ACTIVE only after 神剣・八鏡剣 was used this turn. Q2335 (2026-09-04): two copies share that one activate. Catalogue gen=3 is the green3 sprite; official generated energy is 緑緑, so definition.gen=2 and legacyImportedGen=3. COLOR deploys one green hand character of required energy 2 or less and printed AP 1, ACTIVE.':
    profile.id==='BLC-4-008'?
-    'EX15BT/BLC-4-008 official iframe 2026-10-26. On play, while own outside has no ユーハバッハ, you may retire one other own バズビー. An audited alias counts; silence drops the alias and keeps a printed name. Declining the sacrifice stops the rest, and this character stays as it entered. After a sacrifice, up to one opposing front character whose live BP is at most the sacrificed card printed required energy times 1000 may be retired. Declining that retirement still readies this character. If the sacrificed card printed energy is 5 or more, this character gains Impact 1 this turn. No ported バズビー has printed energy 5, so that Impact clause is implemented and not reached by a current print. GET is generic. Generated energy is 黄. No card FAQ.':
+    'EX15BT/BLC-4-008 official iframe 2026-10-26. On play, while own outside has no ユーハバッハ, you may retire one other own バズビー. An audited alias counts; silence drops the alias and keeps a printed name. Declining the sacrifice stops the rest, and this character stays as it entered. After a sacrifice, up to one opposing front character whose live BP is at most the sacrificed card printed required energy times 1000 may be retired. Declining that retirement still readies this character. If the sacrificed card printed energy is 5 or more, this character gains Impact 1 this turn. BLC-1-011 is a printed バズビー with required energy 5, so sacrificing it sets the retirement cap at 5000 and grants Impact 1. The earned Impact remains after later silence. GET is generic. Generated energy is 黄. No card FAQ.':
    profile.id==='BLC-4-018'?
     'EX15BT/BLC-4-018 official iframe 2026-10-26. On retire, only during your turn, choose one. Mode 1: up to one other own character named バンビエッタ・バスターバイン or with trait 邦比小隊 becomes ACTIVE. Mode 2: up to one such character cannot be chosen by opposing effects until your next own START, and every opposing front character whose live BP is 1000 or more gets BP-500 this turn. Skipping the protection target still applies the BP cut. Declining either up-to-one choice is legal. An opponent-turn retirement does not open the choice. Silence removes the ability. Trait 邦比小隊 stays under silence. Generated energy is 黄. No trigger. No card FAQ.':
    profile.id==='BLC-2-064'?

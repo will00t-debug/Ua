@@ -17,7 +17,7 @@ const STARTER = [
   {id:'101',name:'井上織姬',nameJa:'井上 織姫',key:'orihime',energy:2,ap:1,bp:3000,gen:1,type:'character',tag:'兩次阻擋',effect:'本回合第一次阻擋時，立即轉為 ACTIVE。',trigger:'active',doubleBlock:true},
   {id:'102',name:'浦原喜助',key:'urahara',energy:3,ap:1,bp:3000,gen:2,type:'character',tag:'雙能源',effect:'產生 2 紫能源。',trigger:'active'},
   {id:'103',name:'黑崎一護',key:'ichigo',energy:3,ap:1,bp:3000,gen:2,type:'character',tag:'攻擊強化',effect:'攻擊時，本回合 BP +1000。',trigger:null},
-  {id:'104',name:'黑崎一護',key:'ichigo',energy:4,ap:1,bp:4000,gen:1,type:'character',tag:'Raid・Impact',effect:'Raid 一護：轉為 ACTIVE，可移到前線。每回合 1 次：場外 4 張除外，成功時抽 1 張並獲得 Impact 1。',trigger:'raid',raid:'ichigo'},
+  {id:'104',name:'黑崎一護',nameJa:'黒崎 一護',key:'ichigo',energy:4,ap:1,bp:4000,gen:1,type:'character',tag:'Raid・Impact',effect:'Raid 一護：轉為 ACTIVE，可移到前線。每回合 1 次：場外 4 張除外，成功時抽 1 張並獲得 Impact 1。',trigger:'raid',raid:'ichigo'},
   {id:'105',name:'阿散井戀次',key:'renji',energy:5,ap:2,bp:4000,gen:1,type:'character',tag:'BP 壓制',effect:'登場：可讓一個敵方前線角色本回合 BP −3000。',trigger:'active'},
   {id:'106',name:'朽木露琪亞',nameJa:'朽木 ルキア',traits:'護廷十三隊',key:'rukia',energy:4,ap:2,bp:4000,gen:1,type:'character',tag:'補充手牌',effect:'登場：可將場外 3 張除外；成功時抽 2 張。',trigger:'get'},
   {id:'107',name:'斑目志乃＆行木龍之介',key:'shino',energy:0,ap:1,bp:2000,gen:1,type:'character',tag:'基礎角色',effect:'0 能源的基礎角色。',trigger:null},

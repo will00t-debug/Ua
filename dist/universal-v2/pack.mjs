@@ -613,13 +613,13 @@ function verifyProgram(program,path){
    // Own outside only. A short set may move, but the follow-up waits for
    // the printed count. Q575: two cards can leave, and the draw does not.
    // Q560: three cards can leave when four are printed, and the follow-up does not.
-   if(!integer(e.count,1)||e.count>4||e.optional!==true||
+   if(!integer(e.count,1)||e.count>4||(e.optional!==true&&e.optional!==false)||
     !['character','any'].includes(e.cardType)||
     e.zone!=='outside'||e.controller!=='own'||
     !Array.isArray(e.then)||e.then.length<1||e.then.length>3||
     Object.keys(e).length!==7||
     Object.keys(e).some(k=>!['op','count','optional','cardType','zone','controller','then'].includes(k))||
-    e.then.some(x=>!['draw','millTop','buffSelf','enemyBpDown'].includes(x?.op)))
+    e.then.some(x=>!['draw','millTop','buffSelf','enemyBpDown','grantSelfImpactThisTurn'].includes(x?.op)))
     throw Error(path+'['+i+'] invalid outside removal payment');
    verifyProgram(e.then,path+'['+i+'].then');
   }
@@ -1454,7 +1454,7 @@ function normalize(card,packId){
   (mainAbility.requiresOwnName===null||typeof mainAbility.requiresOwnName==='string'&&
    !!mainAbility.requiresOwnName.trim()&&mainAbility.requiresOwnName.length<=80)&&
   Array.isArray(mainAbility.then)&&mainAbility.then.length>=1&&mainAbility.then.length<=2&&
-  mainAbility.then.every(x=>['grantSelfAttackDamageThisTurn','chooseOne','discardGate','grantSelfImpactThisTurn','enemyBpDown'].includes(x?.op))&&
+  mainAbility.then.every(x=>['grantSelfAttackDamageThisTurn','chooseOne','discardGate','grantSelfImpactThisTurn','enemyBpDown','removeOutsideThen'].includes(x?.op))&&
   (mainAbility.entryTurnOnly===undefined||mainAbility.entryTurnOnly===true)&&
   Object.keys(mainAbility).length===7+Number(mainAbility.entryTurnOnly!==undefined)&&
   Object.keys(mainAbility).every(k=>['op','oncePerTurn','frontOnly','raidOnly','payAp','requiresOwnName','then','entryTurnOnly'].includes(k));
