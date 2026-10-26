@@ -292,9 +292,13 @@ import bleachContribution from '../dist/universal-v2/title-packs/bleach.mjs';
 // BLC-2-035 EX07BT: 青3 / 青青. Main once retires one own 涅骸部隊 character,
 //   then looks at the top 4. Up to one 涅 マユリ, 涅 ネム, or 涅骸部隊
 //   is revealed to hand. The rest go to the bottom. No trigger. No card FAQ.
+// BLC-2-038 EX07BT: 青4 / 青. Raid onto 涅 マユリ. On play, up to one own
+//   field 涅 ネム or 涅骸部隊 gets BP+1000 and Impact 1 this turn.
+//   Front [ターン1] REST-plays one outside blue AP-1 涅 ネム or 涅骸部隊
+//   only after an own character retired this turn. RAID is generic. No card FAQ.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008','BLC-4-065','BLC-2-051','BLC-1-092','BLC-4-044','BLC-4-016','BLC-4-017','BLC-1-028','BLC-2-002','BLC-4-032','BLC-1-011','BLC-1-104','BLC-1-014','BLC-1-020','BLC-1-050','BLC-1-055','BLC-1-063','BLC-1-093','BLC-2-009','BLC-2-013','BLC-2-030','BLC-2-034','BLC-2-035'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008','BLC-4-065','BLC-2-051','BLC-1-092','BLC-4-044','BLC-4-016','BLC-4-017','BLC-1-028','BLC-2-002','BLC-4-032','BLC-1-011','BLC-1-104','BLC-1-014','BLC-1-020','BLC-1-050','BLC-1-055','BLC-1-063','BLC-1-093','BLC-2-009','BLC-2-013','BLC-2-030','BLC-2-034','BLC-2-035','BLC-2-038'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -365,12 +369,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers ninety-five whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,531);
- assert.equal(EXPECTED_V2_COUNTS.bleach,255);
+test('C29 registers ninety-six whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,532);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,256);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,255);
+ assert.equal(Object.keys(bleach.cards).length,256);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -10193,6 +10197,182 @@ test('BLC-2-035 retires one squad character and looks at the top four',()=>{
  assert.equal(assertUniversalMatch(silenced.packs,silenced.s),true);
  assert.equal(assertUniversalMatch(empty.packs,bare),true);
  assert.equal(assertUniversalMatch(missed.packs,closed),true);
+});
+
+test('BLC-2-038 grants Impact to Nem or the squad and REST-plays one from outside',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-2-038');
+ assert.equal(printed.number,'EX07BT/BLC-2-038');
+ assert.equal(printed.nameJa,'涅 マユリ');
+ assert.equal(printed.effect,'Raid〈涅繭利〉：轉為 ACTIVE，可移至前線。登場：可使最多 1 個己方場上的〈涅音夢〉或具有「涅骸部隊」特徵的角色，本回合 BP +1000 並獲得 Impact 1。主要階段・位於前線・每回合 1 次：僅在本回合有己方場上角色退場後可發動，從己方場外將 1 張 AP 消耗 1 的藍色〈涅音夢〉或具有「涅骸部隊」特徵的角色卡，以 REST 登場於己方場上。');
+ assert.equal(printed.traits,'護廷十三隊');
+ assert.equal(printed.trigger,'raid');
+ assert.equal(printed.gen,1);
+ assert.equal(printed.energy,4);
+ assert.equal(printed.ap,1);
+ const card=bleach.cards['BLC-2-038'];
+ assert.equal(card.name,'涅 マユリ');
+ assert.equal(card.raidName,'涅 マユリ');
+ assert.equal(card.gen,1);
+ assert.equal(card.trigger,'raid');
+ assert.equal(card.triggerEffect,null);
+ assert.equal(card.mainAbility.op,'oncePayProgram');
+ assert.equal(card.mainAbility.frontOnly,true);
+ assert.equal(card.mainAbility.payAp,0);
+ assert.equal(card.mainAbility.requiresOwnCharacterRetired,true);
+ assert.deepEqual(card.traits,['護廷十三隊']);
+ assert.equal(cardHasTrait(card,'涅骸部隊'),false);
+ assert.equal(cardHasName(card,'涅 ネム'),false);
+ assert.deepEqual(card.effects.onPlay,[{op:'buffNameOrTraitImpact',name:'涅 ネム',trait:'涅骸部隊',bp:1000,impact:1,duration:'turn',upTo:1,optional:true}]);
+ assert.deepEqual(card.mainAbility.then,[{op:'deployOutsideColorApNameOrTraitRest',color:'blue',ap:1,name:'涅 ネム',trait:'涅骸部隊',optional:false}]);
+ const deck=realDeck(['BLC-2-038','BLC-2-041','BLC-2-035','BLC-4-040','BLC-2-043','BLC-2-044','BLC-2-016','BLC-2-036','BLC-2-028','BLC-2-031','BLC-2-034','BLC-4-042','BLC-2-040'],'blue');
+ const hold=(s,p,id)=>{const c=take(s,p,id);s.players[p].hand.push(c);return c;};
+ const park=(s,id)=>{const c=take(s,0,id);s.players[0].outside.push(c);return c;};
+ function fuel(s,slots=4){for(let i=0;i<slots;i++)put(s,0,'BLC-2-016','energy',i);}
+ function retireSquad(packs,s,nemUid,squadUid){
+  let next=dispatchUniversalAction(packs,s,legalUniversalActions(packs,s).find(a=>a.type==='activate'&&a.uid===nemUid&&a.mode==='oncePay'));
+  assert.equal(next.pending.kind,'effect-retire-own-trait');
+  next=dispatchUniversalAction(packs,next,{type:'chooseOwnTraitRetire',uid:squadUid});
+  if(next.pending?.kind==='effect-top-filter-many-choice')
+   next=dispatchUniversalAction(packs,next,{type:'chooseTopFilteredMany',uid:null});
+  return orderBottom(packs,next);
+ }
+ const declined=main(deck,29741);
+ put(declined.s,0,'BLC-2-016','energy',0);
+ put(declined.s,0,'BLC-2-016','energy',1);
+ const energySquad=put(declined.s,0,'BLC-2-041','energy',2);
+ const fieldCard=put(declined.s,0,'BLC-2-044','energy',3);
+ const dual=put(declined.s,0,'BLC-2-043','front',0);
+ const named=put(declined.s,0,'BLC-4-040','front',1);
+ const otherMayuri=put(declined.s,0,'BLC-2-036','front',2);
+ const handCard=hold(declined.s,0,'BLC-2-038');
+ assert.equal(universalEnergyByColor(declined.packs,declined.s,0).blue,4);
+ let skip=dispatchUniversalAction(declined.packs,declined.s,{type:'play',uid:handCard.uid,line:'front',slot:3});
+ assert.equal(skip.pending.kind,'effect-name-or-trait-impact');
+ assert.equal(skip.pending.optional,true);
+ assert.equal(V2_PENDING_LABELS[skip.pending.kind],'可選最多 1 個己方場上指定名稱或特徵角色，本回合 BP+1000 並獲得 Impact 1');
+ assert.deepEqual(skip.pending.choices.slice().sort(),[energySquad.uid,dual.uid,named.uid].sort());
+ assert.equal(skip.pending.choices.includes(handCard.uid),false);
+ assert.equal(skip.pending.choices.includes(otherMayuri.uid),false);
+ assert.equal(skip.pending.choices.includes(fieldCard.uid),false);
+ assert.equal(skip.pending.choices.filter(uid=>uid===dual.uid).length,1);
+ aiOk(declined.packs,skip);
+ skip=dispatchUniversalAction(declined.packs,skip,{type:'chooseNameOrTraitImpact',uid:null});
+ assert.equal(skip.pending,null);
+ assert.equal(universalImpact(declined.packs,skip,energySquad),0);
+ assert.equal(universalBp(declined.packs,skip,energySquad),2000);
+ const granted=main(deck,29742);
+ put(granted.s,0,'BLC-2-016','energy',0);
+ put(granted.s,0,'BLC-2-016','energy',1);
+ const target=put(granted.s,0,'BLC-2-041','energy',2);
+ put(granted.s,0,'BLC-2-044','energy',3);
+ put(granted.s,0,'BLC-2-043','front',0);
+ put(granted.s,0,'BLC-4-040','front',1);
+ const actor=hold(granted.s,0,'BLC-2-038');
+ let buffed=dispatchUniversalAction(granted.packs,granted.s,{type:'play',uid:actor.uid,line:'front',slot:2});
+ assert.equal(buffed.pending.choices.includes(actor.uid),false);
+ aiOk(granted.packs,buffed);
+ buffed=dispatchUniversalAction(granted.packs,buffed,{type:'chooseNameOrTraitImpact',uid:target.uid});
+ assert.equal(buffed.pending,null);
+ const boosted=live(buffed,0,target.uid);
+ assert.equal(universalBp(granted.packs,buffed,boosted),3000);
+ assert.equal(universalImpact(granted.packs,buffed,boosted),1);
+ assert.equal(boosted.impactGranted.amount,1);
+ assert.equal(boosted.impactGranted.plus,undefined);
+ assert.equal(boosted.buffs.some(b=>b.bp===1000&&b.untilTurn===buffed.turn),true);
+ grantContinuousState(buffed,{kind:'originalEffectsDisabled',controller:0,sourceUid:actor.uid,
+  targetUid:actor.uid,sourceLinked:false,until:{player:0,phase:'attack',edge:'end'}});
+ assert.equal(universalImpact(granted.packs,buffed,live(buffed,0,target.uid)),1);
+ const quiet=main(deck,29743);
+ fuel(quiet.s,3);
+ put(quiet.s,0,'BLC-2-044','energy',3);
+ put(quiet.s,0,'BLC-2-036','front',0);
+ const bare=hold(quiet.s,0,'BLC-2-038');
+ const none=dispatchUniversalAction(quiet.packs,quiet.s,{type:'play',uid:bare.uid,line:'front',slot:1});
+ assert.equal(none.pending,null);
+ assert.equal(none.players[0].front[1].uid,bare.uid);
+ assert.equal(none.players[0].front[1].ready,false);
+ const gate=main(deck,29744);
+ const mayuri=put(gate.s,0,'BLC-2-038','front',0);
+ const nem=put(gate.s,0,'BLC-2-035','front',1);
+ const squad=put(gate.s,0,'BLC-2-041','front',2);
+ const outsideNem=park(gate.s,'BLC-2-035');
+ const apTwo=park(gate.s,'BLC-2-028');
+ const outsideField=park(gate.s,'BLC-2-044');
+ const vanilla=park(gate.s,'BLC-2-036');
+ const raider=park(gate.s,'BLC-2-034');
+ assert.equal(bleach.cards['BLC-2-034'].raidName,'朽木 ルキア');
+ assert.equal(universalEnergyByColor(gate.packs,gate.s,0).blue||0,0);
+ assert.equal(legalUniversalActions(gate.packs,gate.s).some(a=>a.type==='activate'&&a.uid===mayuri.uid),false);
+ assert.throws(()=>dispatchUniversalAction(gate.packs,gate.s,{type:'activate',uid:mayuri.uid,mode:'oncePay'}),/Action not currently legal/);
+ let opened=retireSquad(gate.packs,gate.s,nem.uid,squad.uid);
+ assert.equal(opened.players[0].outside.some(c=>c.uid===squad.uid),true);
+ assert.equal(opened.mainAbilityUsedUids.includes(mayuri.uid),false);
+ const act=legalUniversalActions(gate.packs,opened).find(a=>a.type==='activate'&&a.uid===mayuri.uid&&a.mode==='oncePay');
+ assert.ok(act);
+ opened=dispatchUniversalAction(gate.packs,opened,act);
+ assert.equal(opened.pending.kind,'effect-outside-color-ap-rest');
+ assert.equal(opened.pending.optional,false);
+ assert.equal(V2_PENDING_LABELS[opened.pending.kind],'從場外將 1 張指定顏色、AP、名稱或特徵的角色以 REST 登場');
+ assert.equal(opened.mainAbilityUsedUids.includes(mayuri.uid),true);
+ assert.equal(legalUniversalActions(gate.packs,opened).some(a=>a.uid===null),false);
+ assert.equal(opened.pending.choices.includes(outsideNem.uid),true);
+ assert.equal(opened.pending.choices.includes(squad.uid),true);
+ assert.equal(opened.pending.choices.includes(apTwo.uid),false);
+ assert.equal(opened.pending.choices.includes(outsideField.uid),false);
+ assert.equal(opened.pending.choices.includes(vanilla.uid),false);
+ assert.equal(opened.pending.choices.includes(raider.uid),false);
+ assert.throws(()=>dispatchUniversalAction(gate.packs,opened,{type:'chooseOutsideColorApRest',uid:null}),/Action not currently legal/);
+ aiOk(gate.packs,opened);
+ assert.equal(universalEnergyByColor(gate.packs,opened,0).blue||0,0);
+ const dest=legalUniversalActions(gate.packs,opened).find(a=>a.type==='chooseOutsideColorApRest'&&a.uid===outsideNem.uid&&a.line==='energy'&&!a.replaceUid);
+ assert.ok(dest);
+ opened=dispatchUniversalAction(gate.packs,opened,dest);
+ assert.equal(opened.pending,null);
+ const entered=opened.players[0].energy.find(c=>c?.uid===outsideNem.uid);
+ assert.ok(entered);
+ assert.equal(entered.ready,false);
+ assert.equal(bleach.cards[entered.cardId].energy,3);
+ const copy=put(opened,0,'BLC-2-038','front',3);
+ assert.equal(legalUniversalActions(gate.packs,opened).some(a=>a.type==='activate'&&a.uid===mayuri.uid),false);
+ assert.ok(legalUniversalActions(gate.packs,opened).some(a=>a.type==='activate'&&a.uid===copy.uid&&a.mode==='oncePay'));
+ const lined=main(deck,29745);
+ const energyCopy=put(lined.s,0,'BLC-2-038','energy',0);
+ const lineNem=put(lined.s,0,'BLC-2-035','front',0);
+ const lineSquad=put(lined.s,0,'BLC-2-041','front',1);
+ park(lined.s,'BLC-2-035');
+ let linedState=retireSquad(lined.packs,lined.s,lineNem.uid,lineSquad.uid);
+ assert.equal(legalUniversalActions(lined.packs,linedState).some(a=>a.type==='activate'&&a.uid===energyCopy.uid),false);
+ assert.throws(()=>dispatchUniversalAction(lined.packs,linedState,{type:'activate',uid:energyCopy.uid,mode:'oncePay'}),/Action not currently legal/);
+ const silenced=main(deck,29746);
+ const gated=put(silenced.s,0,'BLC-2-038','front',0);
+ const silentNem=put(silenced.s,0,'BLC-2-035','front',1);
+ const silentSquad=put(silenced.s,0,'BLC-2-041','front',2);
+ park(silenced.s,'BLC-2-041');
+ grantContinuousState(silenced.s,{kind:'originalEffectsDisabled',controller:0,sourceUid:gated.uid,
+  targetUid:gated.uid,sourceLinked:false,until:{player:0,phase:'attack',edge:'end'}});
+ let silent=retireSquad(silenced.packs,silenced.s,silentNem.uid,silentSquad.uid);
+ assert.equal(legalUniversalActions(silenced.packs,silent).some(a=>a.type==='activate'&&a.uid===gated.uid),false);
+ assert.equal(silent.mainAbilityUsedUids.includes(gated.uid),false);
+ const emptyOutside=main(deck,29747);
+ const waiting=put(emptyOutside.s,0,'BLC-2-038','front',0);
+ const emptyNem=put(emptyOutside.s,0,'BLC-2-035','front',1);
+ const emptySquad=put(emptyOutside.s,0,'BLC-2-041','front',2);
+ let hidden=retireSquad(emptyOutside.packs,emptyOutside.s,emptyNem.uid,emptySquad.uid);
+ const retiredIndex=hidden.players[0].outside.findIndex(c=>c.uid===emptySquad.uid);
+ assert.ok(retiredIndex>=0);
+ hidden.players[0].removed.push(hidden.players[0].outside.splice(retiredIndex,1)[0]);
+ assert.equal(legalUniversalActions(emptyOutside.packs,hidden).some(a=>a.type==='activate'&&a.uid===waiting.uid),false);
+ assert.throws(()=>dispatchUniversalAction(emptyOutside.packs,hidden,{type:'activate',uid:waiting.uid,mode:'oncePay'}),/Action not currently legal/);
+ assert.equal(hidden.mainAbilityUsedUids.includes(waiting.uid),false);
+ hidden.players[0].outside.push(hidden.players[0].removed.pop());
+ assert.ok(legalUniversalActions(emptyOutside.packs,hidden).some(a=>a.type==='activate'&&a.uid===waiting.uid&&a.mode==='oncePay'));
+ assert.equal(assertUniversalMatch(declined.packs,skip),true);
+ assert.equal(assertUniversalMatch(granted.packs,buffed),true);
+ assert.equal(assertUniversalMatch(quiet.packs,none),true);
+ assert.equal(assertUniversalMatch(gate.packs,opened),true);
+ assert.equal(assertUniversalMatch(lined.packs,linedState),true);
+ assert.equal(assertUniversalMatch(silenced.packs,silent),true);
+ assert.equal(assertUniversalMatch(emptyOutside.packs,hidden),true);
 });
 
 function locationLine(s,uid){

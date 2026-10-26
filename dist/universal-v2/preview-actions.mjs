@@ -36,6 +36,8 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-once-choice':'是否發動本回合一次能力',
  'effect-choice-mode':'選擇一項效果',
  'effect-named-impact':'可選 1 個指定名稱角色，本回合 BP 上升並獲得 Impact',
+ 'effect-name-or-trait-impact':'可選最多 1 個己方場上指定名稱或特徵角色，本回合 BP+1000 並獲得 Impact 1',
+ 'effect-outside-color-ap-rest':'從場外將 1 張指定顏色、AP、名稱或特徵的角色以 REST 登場',
  'effect-first-attack-kit':'選 1 個指定名稱角色，本回合 BP 上升，第一次攻擊獲得 Impact 與狙擊',
  'effect-entry-sacrifice':'選另 1 個自己的角色退場，成功後此角色額外產生黃色能量並選 1 項',
  'effect-named-double':'選 1 個具有指定特徵的角色，本回合獲得 2 次攻擊',

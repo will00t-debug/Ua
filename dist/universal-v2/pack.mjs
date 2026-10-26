@@ -10,7 +10,7 @@ export const V2_CARD_TYPES=Object.freeze(['character','event','field']);
 export const V2_TRIGGERS=Object.freeze(['draw','get','final','active','special','color','raid']);
 export const V2_EFFECT_TIMINGS=Object.freeze(['onPlay','onRaid','onAttack','onRaided','onRetire','onOutsideRecover']);
 export const V2_EFFECT_OPS=Object.freeze(['nextEligibleHandPlayApDiscount','activeApIfNameEntered','draw','drawIfOwnName','drawIfOwnTraitCount','drawIfOwnOutsideNamedCountAtLeast','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','drawIfOppFrontBelowPrinted','drawIfSelfBpAtLeast','returnRetiredToHand','drawIfOppRestCharacter','drawIfOppCharacterBpAtLeast','drawIfOwnNameAndHandFewer','activeOwnNamed','activeEnergyNamed','grantSelfSniperThisTurn','grantFirstAttackKit','grantSelfAttackWinDrawThisTurn','grantSelfMustBlockThisTurn','buffSelfUntilNextOwnStart','grantSelfAttackEndSwapThisTurn','millTop','buffSelf','swapOrBuff','buffSelfPerOwnOutsideGroups','enemyBpDown','drawDiscard','frontOppTriggerDrawDiscard','recoverAp','peekTopOne','peekTopOrBottom','revealOppTopPlace','chooseEnergyRevealOutside','optionalRemoveHandThen','retireOppFrontUnderBp','retireOppFrontOneUnderBp','retireOppFrontRest','markOppFrontRetireNextStart','bounceOppFrontOneUnderBp','conditionalBounceOrRetireByOwnOutsideNames','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','oppFrontRestBranch','skipNextActiveOppRest','forbidAttackOppFrontOne','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','retireOwnFieldOne','retireOwnCharacterOne','retireOwnTraitFollow','optionalRetireThenProgram','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw','searchDeckMany','discardGate','removeOutsideThen','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','lookTopHandOutsideBottom','drawDiscardIfFieldAny','retireOwnMissingTraitThen','deployOutsideColorTraitActive','searchTopUpToTwoBottom','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
- 'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideUnderEnergy','recoverOutsideColorUnderEnergy','recoverOutsideTraitlessUnderEnergy','deployOutsideTraitlessRestOrRaid','deployOutsideRest','deployOutsideNameRest','deployOutsideExactRest','deployOutsideTraitApRest','deployNamedFromZones','payApDeployNamedRest','inspectTopTraitOutside','buffOwnField','oncePerTurnGate','buffNamedImpact','restActiveNamedReadyAp','readyNameOrTrait','protectNameOrTrait','sacrificeNamedChain','chooseOne','deployOwnHandRest','deployOwnHandSpecial','deployOwnHandRestOrRaid','optionalPayApThen','discardOppHand','discardOppHandIfFewer','retireSourceOnPhaseEnd','activeSelfIf','grantOnAttack','grantSelectionApTaxOwnOtherTrait','grantFrontEnergyOwnOtherFrontTrait','grantOwnFrontChoiceProtection','grantNamedFieldProtection','grantCauseBlockAtMost','handBottomGrantDoubleAttack','payApDeployMovedActive','noteEntryTurn','grantSelfEnergyMoveOnAttackStart','grantSelfTriggerUnchosen','outsideColorEnergyHandOrRest','moveOtherAcrossOrRemove','moveEnergyTraitToFront','raidBaseEnergyThen','grantSelfAttackDamageThisTurn','restOppFrontLockActive','restOppFrontApLock','removeAnyOutsideScale','inspectTopColoredNamesOutside','drawDiscardIfEffectApPaid','activeSelf','grantSelfImpactThisTurn','grantOtherImpactThisTurn','returnSourceToHand','optionalOwnLifeToHandThenDraw','grantOwnNameBlockAtLeast','grantSelfBlockAtLeast','inspectTopColorAnyOutside','buffOwnNameIfPrintedEnergy']);
+ 'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideUnderEnergy','recoverOutsideColorUnderEnergy','recoverOutsideTraitlessUnderEnergy','deployOutsideTraitlessRestOrRaid','deployOutsideRest','deployOutsideNameRest','deployOutsideExactRest','deployOutsideTraitApRest','deployOutsideColorApNameOrTraitRest','deployNamedFromZones','payApDeployNamedRest','inspectTopTraitOutside','buffOwnField','oncePerTurnGate','buffNamedImpact','buffNameOrTraitImpact','restActiveNamedReadyAp','readyNameOrTrait','protectNameOrTrait','sacrificeNamedChain','chooseOne','deployOwnHandRest','deployOwnHandSpecial','deployOwnHandRestOrRaid','optionalPayApThen','discardOppHand','discardOppHandIfFewer','retireSourceOnPhaseEnd','activeSelfIf','grantOnAttack','grantSelectionApTaxOwnOtherTrait','grantFrontEnergyOwnOtherFrontTrait','grantOwnFrontChoiceProtection','grantNamedFieldProtection','grantCauseBlockAtMost','handBottomGrantDoubleAttack','payApDeployMovedActive','noteEntryTurn','grantSelfEnergyMoveOnAttackStart','grantSelfTriggerUnchosen','outsideColorEnergyHandOrRest','moveOtherAcrossOrRemove','moveEnergyTraitToFront','raidBaseEnergyThen','grantSelfAttackDamageThisTurn','restOppFrontLockActive','restOppFrontApLock','removeAnyOutsideScale','inspectTopColoredNamesOutside','drawDiscardIfEffectApPaid','activeSelf','grantSelfImpactThisTurn','grantOtherImpactThisTurn','returnSourceToHand','optionalOwnLifeToHandThenDraw','grantOwnNameBlockAtLeast','grantSelfBlockAtLeast','inspectTopColorAnyOutside','buffOwnNameIfPrintedEnergy']);
 const integer=(v,low=0)=>Number.isInteger(v)&&v>=low;
 function validPrintedLookFilter(f){
  return f&&typeof f==='object'&&!Array.isArray(f)&&Object.keys(f).length===2&&
@@ -334,6 +334,16 @@ function verifyProgram(program,path){
    Object.keys(e).length!==5||
    Object.keys(e).some(k=>!['op','trait','ap','optional','requireAffordableEnergy'].includes(k))
   ))throw Error(path+'['+i+'] invalid trait AP outside REST');
+  // Color and printed AP are equality. The bracket covers the name and the
+  // trait. Required energy is not a filter. A Raid name still enters REST.
+  if(e.op==='deployOutsideColorApNameOrTraitRest'&&(
+   !['yellow','green','blue','purple','red'].includes(e.color)||
+   !integer(e.ap,1)||e.ap>3||
+   typeof e.name!=='string'||!e.name.trim()||e.name.length>80||
+   typeof e.trait!=='string'||!e.trait.trim()||e.trait.length>80||
+   e.optional!==false||Object.keys(e).length!==6||
+   Object.keys(e).some(k=>!['op','color','ap','name','trait','optional'].includes(k))
+  ))throw Error(path+'['+i+'] invalid color AP name-or-trait REST');
   // Hand entry, then an optional 1 AP payment, then up to one named character
   // whose required energy the controller currently meets. Color is the card's
   // own color. The payment is not the character's play cost.
@@ -763,6 +773,14 @@ function verifyProgram(program,path){
    Object.keys(e).length!==6||
    Object.keys(e).some(k=>!['op','name','bp','impact','duration','upTo'].includes(k))))
    throw Error(path+'['+i+'] invalid named impact buff');
+  if(e.op==='buffNameOrTraitImpact'&&(
+   typeof e.name!=='string'||!e.name.trim()||e.name.length>80||
+   typeof e.trait!=='string'||!e.trait.trim()||e.trait.length>80||
+   !integer(e.bp,1000)||e.bp>5000||e.bp%1000!==0||
+   e.impact!==1||e.duration!=='turn'||e.upTo!==1||e.optional!==true||
+   Object.keys(e).length!==8||
+   Object.keys(e).some(k=>!['op','name','trait','bp','impact','duration','upTo','optional'].includes(k))))
+   throw Error(path+'['+i+'] invalid name-or-trait impact buff');
   if(e.op==='restActiveNamedReadyAp'&&(
    !Array.isArray(e.names)||e.names.length<1||e.names.length>2||
    !e.names.every(x=>typeof x==='string'&&!!x.trim()&&x.length<=80)||
@@ -1536,10 +1554,11 @@ function normalize(card,packId){
   (mainAbility.requiresOwnName===null||typeof mainAbility.requiresOwnName==='string'&&
    !!mainAbility.requiresOwnName.trim()&&mainAbility.requiresOwnName.length<=80)&&
   Array.isArray(mainAbility.then)&&mainAbility.then.length>=1&&mainAbility.then.length<=2&&
-  mainAbility.then.every(x=>['grantSelfAttackDamageThisTurn','chooseOne','discardGate','grantSelfImpactThisTurn','enemyBpDown','removeOutsideThen','markOppFrontRetireNextStart','retireOwnMissingTraitThen','retireOwnTraitFollow'].includes(x?.op))&&
+  mainAbility.then.every(x=>['grantSelfAttackDamageThisTurn','chooseOne','discardGate','grantSelfImpactThisTurn','enemyBpDown','removeOutsideThen','markOppFrontRetireNextStart','retireOwnMissingTraitThen','retireOwnTraitFollow','deployOutsideColorApNameOrTraitRest'].includes(x?.op))&&
   (mainAbility.entryTurnOnly===undefined||mainAbility.entryTurnOnly===true)&&
-  Object.keys(mainAbility).length===7+Number(mainAbility.entryTurnOnly!==undefined)&&
-  Object.keys(mainAbility).every(k=>['op','oncePerTurn','frontOnly','raidOnly','payAp','requiresOwnName','then','entryTurnOnly'].includes(k));
+  (mainAbility.requiresOwnCharacterRetired===undefined||mainAbility.requiresOwnCharacterRetired===true)&&
+  Object.keys(mainAbility).length===7+Number(mainAbility.entryTurnOnly!==undefined)+Number(mainAbility.requiresOwnCharacterRetired===true)&&
+  Object.keys(mainAbility).every(k=>['op','oncePerTurn','frontOnly','raidOnly','payAp','requiresOwnName','then','entryTurnOnly','requiresOwnCharacterRetired'].includes(k));
  if(mainOncePay)verifyProgram(mainAbility.then,card.id+'.mainAbility.then');
  // 【起動メイン】このキャラをアクティブにする。Name scope is the printed
  // 「〈名前〉のこの効果は1ターンに1回」. when:null has no extra gate.
