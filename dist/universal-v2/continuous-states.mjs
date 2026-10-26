@@ -135,6 +135,9 @@ export function effectChoiceProtected(s,selector,targetUid,sourceType){
  if(sourceType==='trigger'&&triggerImmune&&triggerImmune.turn===s.turn&&
   triggerImmune.stamp===target.card.fieldEntryStamp)return true;
  if(target.owner===selector)return false;
+ const earnedUnchosen=target.card.unchosenGranted;
+ if(earnedUnchosen&&earnedUnchosen.turn===s.turn&&
+  earnedUnchosen.stamp===target.card.fieldEntryStamp)return true;
  return s.continuousStates.some(e=>
   e.kind==='cannotBeChosenByOppEffect'&&!e.consumed&&
   e.controller===target.owner&&e.targetOwner===target.owner&&

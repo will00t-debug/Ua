@@ -61,7 +61,7 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   return (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&
    e.owner===owner&&e.controller===owner&&e.from==='hand'&&
    e.to==='outside'&&e.reason==='rule'&&
-   printed({uid:e.uid,cardId:e.cardId})?.type==='event');
+   (d=>d?.type==='event'||d?.alsoEvent===true)(printed({uid:e.uid,cardId:e.cardId})));
  if(condition.kind==='ownEffectHandOutsideOrRecovery'){
   // Same-turn factual records, never inferred from deck/hand counts or
   // the printed contents of any card. Own turn check is enforced above.
@@ -171,6 +171,22 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
    if(cardHasTrait(printed(c),condition.trait))found++;
   }
   return found>=condition.min;
+ }
+ if(condition.kind==='ownDistinctPrintedColorNames'){
+  // Distinct kinds are original printed names of that color. An alias does
+  // not add a kind, and two copies stay one. Q2416/Q2417. The measuring
+  // character counts. Hand, deck, outside, opponent cards, fields and Raid
+  // layers do not.
+  const board=s.players[owner];
+  const areas=condition.zone==='front'?[board.front]:
+   condition.zone==='energy'?[board.energy]:[board.front,board.energy];
+  const kinds=new Set();
+  for(const area of areas)for(const c of area){
+   if(!c)continue;
+   const d=printed(c);
+   if(d.type==='character'&&d.color===condition.color)kinds.add(d.name);
+  }
+  return kinds.size>=condition.min;
  }
  if(condition.kind==='ownNameOrDistinctPrintedColorNames'){
   // 〈名前〉 is the usual name check, including an audited alias. The

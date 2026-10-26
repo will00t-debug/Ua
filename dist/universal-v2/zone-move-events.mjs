@@ -7,7 +7,7 @@ export const V2_MOVE_ZONES=Object.freeze(['hand','deck','life','lifeRevealed','o
 export function appendCompletedMove(s,move){
  const {uid,cardId,owner,controller,from,to,reason,sourceUid=null,
   sourceCardId=null,sourceName=null,sourceColor=null,sourceOnField=false,
-  attachedToUid=null,wasFaceDown=false}=move;
+  attachedToUid=null,wasFaceDown=false,deckPosition=null,revealed=false}=move;
  if(![0,1].includes(owner)||![0,1].includes(controller)||
   typeof uid!=='string'||!uid.startsWith(owner+'-')||
   typeof cardId!=='string'||!cardId||
@@ -20,6 +20,9 @@ export function appendCompletedMove(s,move){
   typeof sourceOnField!=='boolean'||typeof wasFaceDown!=='boolean'||
   (attachedToUid!==null&&(typeof attachedToUid!=='string'||
    !attachedToUid.startsWith(owner+'-')||attachedToUid===uid||from!=='raid-under'))||
+  (to==='deck'&&deckPosition!=='bottom'&&deckPosition!=='top')||
+  (to==='deck'&&typeof revealed!=='boolean')||
+  (to!=='deck'&&(deckPosition!==null||revealed!==false))||
   !Array.isArray(s.zoneMoveEvents)||!Number.isInteger(s.nextZoneMoveOrder))
   throw Error('Invalid V2 zone move provenance');
  const pl=s.players[owner];
@@ -33,6 +36,7 @@ export function appendCompletedMove(s,move){
   throw Error('Zone provenance must follow an actual completed destination');
  const e={order:s.nextZoneMoveOrder++,turn:s.turn,uid,cardId,owner,controller,
   from,to,reason,sourceUid,sourceCardId,sourceName,sourceColor,sourceOnField,
+  ...(to==='deck'?{deckPosition,revealed}:{}),
   ...(attachedToUid!==null?{attachedToUid,wasFaceDown,
    identityViewersBefore:wasFaceDown?[owner]:[0,1]}:{})};
  s.zoneMoveEvents.push(e);
@@ -43,7 +47,8 @@ export function appendCompletedMove(s,move){
 // Data-driven source filter, not permission to enqueue unreviewed official
 // triggers. Source card identity refers to the cause's FIELD top at move time.
 const FILTER_KEYS=Object.freeze(['owner','controller','from','to','reason','reasons',
- 'sourceUid','sourceCardId','sourceName','sourceColor','sourceOnField','cardId']);
+ 'sourceUid','sourceCardId','sourceName','sourceColor','sourceOnField','cardId',
+ 'deckPosition','revealed']);
 export function validateCompletedMoveCondition(condition){
  if(!condition||typeof condition!=='object'||Array.isArray(condition)||
   Object.keys(condition).length===0||
@@ -62,12 +67,17 @@ export function validateCompletedMoveCondition(condition){
     new Set(value).size!==value.length||
     value.some(r=>!V2_MOVE_REASONS.includes(r)))
     throw Error('Invalid zone move reasons');
-  }else if(key==='sourceOnField'){
+  }else if(key==='sourceOnField'||key==='revealed'){
    if(typeof value!=='boolean')throw Error('Invalid source residency condition');
+  }else if(key==='deckPosition'){
+   if(value!=='bottom'&&value!=='top')throw Error('Invalid deck position');
   }else if(typeof value!=='string'||!value.trim()){
    throw Error('Invalid zone move identity filter');
   }
  }
+ if((condition.deckPosition!==undefined||condition.revealed!==undefined)&&
+  condition.to!=='deck')
+  throw Error('Deck position belongs on a deck move');
  if(condition.from!==undefined&&condition.to!==undefined&&condition.from===condition.to)
   throw Error('Invalid no-op zone move condition');
  return Object.freeze({...condition,...(condition.reasons?{reasons:Object.freeze([...condition.reasons])}:{})});
