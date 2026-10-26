@@ -234,9 +234,12 @@ import bleachContribution from '../dist/universal-v2/title-packs/bleach.mjs';
 //   [起動メイン] rests this character and retires it, then one other own
 //   殭屍 gains 2回アタック. Q79 (2023-03-17). Q2308 (2026-09-04): the
 //   activate is shared by the name. Catalogue gen 3 normalizes to 黄黄.
+// BLC-1-028 UA08BT: look at the top 3 and may reveal one 星十字騎士團
+//   card to hand. The rest go to the bottom. No hand discard. Main REST
+//   stays on the field, retires one other character, then replays 登場時.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008','BLC-4-065','BLC-2-051','BLC-1-092','BLC-4-044','BLC-4-016','BLC-4-017'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008','BLC-4-065','BLC-2-051','BLC-1-092','BLC-4-044','BLC-4-016','BLC-4-017','BLC-1-028'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -307,12 +310,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers seventy-nine whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,515);
- assert.equal(EXPECTED_V2_COUNTS.bleach,239);
+test('C29 registers eighty whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,516);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,240);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,239);
+ assert.equal(Object.keys(bleach.cards).length,240);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -7616,6 +7619,134 @@ test('BLC-4-017 draws on entry, then rests and retires to grant one zombie a dou
  assert.equal(assertUniversalMatch(empty.packs,empty.s),true);
  assert.equal(assertUniversalMatch(muted.packs,muted.s),true);
  assert.equal(lonely.cardId,'BLC-4-017');
+});
+
+test('BLC-1-028 looks at three cards without discarding, then replays that look after a sacrifice',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-1-028');
+ assert.equal(printed.number,'UA08BT/BLC-1-028');
+ assert.equal(printed.nameJa,'銀架城');
+ assert.equal(printed.effect,'登場：查看己方牌堆頂 3 張，可公開其中最多 1 張具有「星十字騎士團」特徵的卡並加入手牌，其餘以任意順序放至牌堆底。主要階段：REST 此場域，使 1 個己方場上角色退場；成功時發動此場域的登場效果。');
+ assert.equal(printed.trigger,'get');
+ assert.equal(printed.gen,1);
+ assert.equal(printed.traits,'無');
+ assert.equal(printed.type,'field');
+ const card=bleach.cards['BLC-1-028'];
+ assert.equal(card.gen,1);
+ assert.equal(card.triggerEffect,null);
+ assert.deepEqual(card.traits,[]);
+ assert.equal(card.type,'field');
+ assert.deepEqual(card.effects.onPlay,[{op:'searchTopOneBottomDiscard',count:3,noHandDiscard:true,filter:{field:'trait',value:'星十字騎士團'}}]);
+ assert.deepEqual(card.mainAbility,{op:'fieldRestSacrificeReplay'});
+ const bare={id:'BAD',name:'BAD',color:'yellow',type:'field',energy:3,ap:1,bp:0,gen:1,traits:[],trigger:'get',implementation:'dsl',effects:{onPlay:[{op:'searchTopOneBottomDiscard',count:5,noHandDiscard:true,filter:{field:'trait',value:'星十字騎士團'}}]},mainAbility:{op:'fieldRestSacrificeReplay'}};
+ assert.throws(()=>createUniversalPack({id:'bad-castle',cards:[bare]}),/invalid top-N filtered bottom\/discard profile/);
+ const deck=realDeck(['BLC-1-028','BLC-1-002','BLC-4-001','BLC-2-005','BLC-1-016','BLC-1-018','BLC-1-006','BLC-1-026'],'yellow');
+ const lone=main(deck,29028);
+ const only=put(lone.s,0,'BLC-1-028','energy',0,true);
+ assert.equal(legalUniversalActions(lone.packs,lone.s).some(a=>a.type==='activate'&&a.mode==='fieldRestSacrificeReplay'),false);
+ const rested=main(deck,29029);
+ const down=put(rested.s,0,'BLC-1-028','energy',0,false);
+ put(rested.s,0,'BLC-1-016','front',0,true);
+ assert.equal(legalUniversalActions(rested.packs,rested.s).some(a=>a.type==='activate'&&a.uid===down.uid),false);
+ const muted=main(deck,29030);
+ const hushed=put(muted.s,0,'BLC-1-028','energy',0,true);
+ const mutedVictim=put(muted.s,0,'BLC-1-016','front',0,true);
+ grantContinuousState(muted.s,{kind:'originalEffectsDisabled',controller:1,
+  sourceUid:mutedVictim.uid,targetUid:hushed.uid,sourceLinked:false,
+  until:{player:0,phase:'attack',edge:'end'}});
+ assert.equal(legalUniversalActions(muted.packs,muted.s).some(a=>a.type==='activate'&&a.mode==='fieldRestSacrificeReplay'),false);
+ const first=main(deck,29031);
+ put(first.s,0,'BLC-1-016','energy',0);
+ put(first.s,0,'BLC-1-018','energy',1);
+ put(first.s,0,'BLC-1-006','energy',2);
+ const castle=take(first.s,0,'BLC-1-028');
+ first.s.players[0].hand.push(castle);
+ const tops=setTop(first.s,0,['BLC-1-002','BLC-4-001','BLC-2-005']);
+ assert.equal(universalEnergyByColor(first.packs,first.s,0).yellow,3);
+ const play=legalUniversalActions(first.packs,first.s).find(a=>a.type==='play'&&a.uid===castle.uid&&a.line==='energy');
+ assert.ok(play);
+ let opened=dispatchUniversalAction(first.packs,first.s,play);
+ assert.equal(opened.pending.kind,'effect-top-filter-choice');
+ assert.equal(opened.pending.noHandDiscard,true);
+ const looks=legalUniversalActions(first.packs,opened);
+ assert.equal(looks.some(a=>a.type==='chooseTopFiltered'&&a.uid===tops[0].uid),true);
+ assert.equal(looks.some(a=>a.uid===tops[1].uid),false);
+ assert.equal(looks.some(a=>a.uid===tops[2].uid),false);
+ assert.equal(looks.some(a=>a.type==='chooseTopFiltered'&&a.uid===null),true);
+ assert.throws(()=>dispatchUniversalAction(first.packs,opened,{type:'chooseTopFiltered',uid:tops[1].uid}),/not currently legal/);
+ aiOk(first.packs,opened);
+ const skippedState=structuredClone(opened);
+ let skipped=dispatchUniversalAction(first.packs,skippedState,{type:'chooseTopFiltered',uid:null});
+ assert.equal(skipped.pending.kind,'effect-top-order');
+ assert.equal(skipped.pending.discardAfter,undefined);
+ assert.deepEqual(skipped.pending.uids,tops.map(c=>c.uid));
+ for(const uid of [...skipped.pending.uids])
+  skipped=dispatchUniversalAction(first.packs,skipped,{type:'chooseTopOrder',uid});
+ assert.equal(skipped.pending,null);
+ assert.deepEqual(skipped.players[0].deck.slice(-3).map(c=>c.uid),tops.map(c=>c.uid));
+ assert.equal(skipped.players[0].hand.some(c=>tops.some(t=>t.uid===c.uid)),false);
+ assert.equal(skipped.players[0].energy.find(c=>c?.uid===castle.uid).ready,false);
+ let taken=dispatchUniversalAction(first.packs,opened,{type:'chooseTopFiltered',uid:tops[0].uid});
+ assert.equal(taken.pending.kind,'effect-top-order');
+ assert.equal(taken.pending.discardAfter,undefined);
+ assert.equal(taken.players[0].hand.some(c=>c.uid===tops[0].uid),true);
+ const rest=[...taken.pending.uids];
+ for(const uid of rest)
+  taken=dispatchUniversalAction(first.packs,taken,{type:'chooseTopOrder',uid});
+ assert.equal(taken.pending,null);
+ assert.deepEqual(taken.players[0].deck.slice(-2).map(c=>c.uid),rest);
+ const body=taken.players[0].energy.find(c=>c?.uid===castle.uid);
+ assert.equal(body.ready,false);
+ assert.equal(taken.players[0].outside.some(c=>c.uid===castle.uid),false);
+ body.ready=true;
+ setTop(taken,0,['BLC-1-026','BLC-4-001','BLC-2-005']);
+ const act=legalUniversalActions(first.packs,taken).find(a=>a.type==='activate'&&a.uid===castle.uid&&a.mode==='fieldRestSacrificeReplay');
+ assert.ok(act);
+ let used=dispatchUniversalAction(first.packs,taken,act);
+ assert.equal(used.pending.kind,'effect-field-sacrifice-replay');
+ assert.equal(V2_PENDING_LABELS[used.pending.kind],'選 1 個自己的角色退場，成功後重播此場域的登場效果');
+ assert.equal(live(used,0,castle.uid).ready,false);
+ const sacrifices=legalUniversalActions(first.packs,used);
+ const victim=used.players[0].energy.find(c=>c?.cardId==='BLC-1-016');
+ assert.equal(sacrifices.some(a=>a.type==='chooseFieldSacrifice'&&a.uid===victim.uid),true);
+ assert.equal(sacrifices.some(a=>a.uid===castle.uid),false);
+ assert.equal(sacrifices.some(a=>a.uid===null),false);
+ assert.throws(()=>dispatchUniversalAction(first.packs,used,{type:'chooseFieldSacrifice',uid:null}),/not currently legal/);
+ aiOk(first.packs,used);
+ used=dispatchUniversalAction(first.packs,used,{type:'chooseFieldSacrifice',uid:victim.uid});
+ assert.equal(used.players[0].outside.some(c=>c.uid===victim.uid),true);
+ assert.equal(live(used,0,castle.uid).cardId,'BLC-1-028');
+ assert.equal(live(used,0,castle.uid).ready,false);
+ assert.equal(used.pending.kind,'effect-top-filter-choice');
+ assert.equal(used.pending.noHandDiscard,true);
+ const replay=legalUniversalActions(first.packs,used);
+ const again=used.players[0].deck[0];
+ assert.equal(again.cardId,'BLC-1-026');
+ assert.equal(replay.some(a=>a.type==='chooseTopFiltered'&&a.uid===again.uid),true);
+ assert.equal(replay.some(a=>a.uid===used.players[0].deck[1].uid),false);
+ used=dispatchUniversalAction(first.packs,used,{type:'chooseTopFiltered',uid:null});
+ for(const uid of [...used.pending.uids])
+  used=dispatchUniversalAction(first.packs,used,{type:'chooseTopOrder',uid});
+ assert.equal(used.pending,null);
+ assert.equal(used.players[0].hand.some(c=>c.uid===again.uid),false);
+ live(used,0,castle.uid).ready=true;
+ assert.equal(legalUniversalActions(first.packs,used).some(a=>a.type==='activate'&&a.uid===castle.uid&&a.mode==='fieldRestSacrificeReplay'),true);
+ const silenced=main(deck,29032);
+ const quietField=put(silenced.s,0,'BLC-1-028','energy',0,true);
+ const quietVictim=put(silenced.s,0,'BLC-1-016','front',0,true);
+ let quiet=dispatchUniversalAction(silenced.packs,silenced.s,legalUniversalActions(silenced.packs,silenced.s).find(a=>a.type==='activate'&&a.uid===quietField.uid));
+ grantContinuousState(quiet,{kind:'originalEffectsDisabled',controller:1,
+  sourceUid:quietVictim.uid,targetUid:quietField.uid,sourceLinked:false,
+  until:{player:0,phase:'attack',edge:'end'}});
+ quiet=dispatchUniversalAction(silenced.packs,quiet,{type:'chooseFieldSacrifice',uid:quietVictim.uid});
+ assert.equal(quiet.pending,null);
+ assert.equal(quiet.players[0].outside.some(c=>c.uid===quietVictim.uid),true);
+ assert.equal(live(quiet,0,quietField.uid).ready,false);
+ aiOk(first.packs,used);
+ assert.equal(assertUniversalMatch(first.packs,used),true);
+ assert.equal(assertUniversalMatch(first.packs,skipped),true);
+ assert.equal(assertUniversalMatch(silenced.packs,quiet),true);
+ assert.equal(assertUniversalMatch(lone.packs,lone.s),true);
+ assert.equal(assertUniversalMatch(muted.packs,muted.s),true);
 });
 
 function fieldCount(s,p){

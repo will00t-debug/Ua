@@ -434,9 +434,13 @@ function verifyProgram(program,path){
    const restKey=restOutside?['rest']:[];
    const excludeRaid=e.excludeRaid===true&&e.filter?.field==='traitlessCharacter'&&
     e.filters===undefined&&e.logic===undefined;
+   const noHandDiscard=e.noHandDiscard===true&&e.count===3&&
+    e.filter?.field==='trait'&&e.rest===undefined&&e.excludeRaid===undefined&&
+    e.filters===undefined&&e.groups===undefined&&e.logic===undefined;
    const single=isFilter(e.filter)&&e.filters===undefined&&e.logic===undefined&&
     (e.excludeRaid===undefined||excludeRaid)&&(e.rest===undefined||restOutside)&&
-    Object.keys(e).every(k=>['op','count','filter',...(e.excludeRaid===true?['excludeRaid']:[]),...restKey].includes(k));
+    (e.noHandDiscard===undefined||noHandDiscard)&&
+    Object.keys(e).every(k=>['op','count','filter',...(e.excludeRaid===true?['excludeRaid']:[]),...restKey,...(e.noHandDiscard===true?['noHandDiscard']:[])].includes(k));
    // Four is the printed か chain on BLC-3-002. Five remains invalid.
    const compound=e.filter===undefined&&Array.isArray(e.filters)&&
     e.filters.length>=2&&e.filters.length<=4&&e.filters.every(isFilter)&&
@@ -1309,6 +1313,8 @@ function normalize(card,packId){
   card.type==='field'&&Object.keys(mainAbility).length===2&&
   Array.isArray(fieldThen)&&fieldThen.length===1&&(fieldDeploy||fieldDraw);
  if(fieldRestRetireThen)verifyProgram(mainAbility.then,card.id+'.mainAbility.then');
+ const mainFieldReplay=mainAbility?.op==='fieldRestSacrificeReplay'&&
+  card.type==='field'&&Object.keys(mainAbility).length===1;
  // Two independently printed MAIN 「ターン1」 on the same FIELD source.
  // Name-shared once accounting lives in the engine, not title-specific cases.
  const fieldDualMain=mainAbility?.op==='fieldDualMain'&&
@@ -1589,7 +1595,7 @@ function normalize(card,packId){
   Object.keys(mainAbility).length===2&&
   Object.keys(mainAbility).every(k=>['op','trait'].includes(k));
  if(mainAbility!==null&&
-  (!['character','field'].includes(card.type)||!(fieldDualMain||fieldRestRetireThen||mainRestTopTrait||mainRestRetireActive||card.type==='character'&&(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainRestBuff||mainRestBuffAp||mainRestRetireRecover||mainRestOnceBuffReturn||mainRestOnceSelf||mainOnceBuffWhen||mainPayAp||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainRestDiscardRetire||mainFrontProgram||mainFieldOnceBuff||mainEntryProtect||mainEntrySacrifice||mainNamedDouble||mainRestRetireUnder||mainRestTwoMove||mainOncePay||nameOnceActive||nameOnceEvent||mainCardOnce||mainRestFrontName||mainRestRetireExact||mainRestRetireNamed))))
+  (!['character','field'].includes(card.type)||!(fieldDualMain||fieldRestRetireThen||mainFieldReplay||mainRestTopTrait||mainRestRetireActive||card.type==='character'&&(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainRestBuff||mainRestBuffAp||mainRestRetireRecover||mainRestOnceBuffReturn||mainRestOnceSelf||mainOnceBuffWhen||mainPayAp||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainRestDiscardRetire||mainFrontProgram||mainFieldOnceBuff||mainEntryProtect||mainEntrySacrifice||mainNamedDouble||mainRestRetireUnder||mainRestTwoMove||mainOncePay||nameOnceActive||nameOnceEvent||mainCardOnce||mainRestFrontName||mainRestRetireExact||mainRestRetireNamed))))
   throw Error(card.id+' unsupported main action ability');
  const passiveBonuses=validatePassiveBonuses(card);
  const implemented=card.implementation;

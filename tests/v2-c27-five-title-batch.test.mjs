@@ -84,7 +84,7 @@ function play(s,uid,line='front',slot=0,use=packs){
 }
 
 test('C27 class A registers three SLG prints on existing deck and discount DSL',()=>{
- assert.equal(EXPECTED_V2_TOTAL,515);
+ assert.equal(EXPECTED_V2_TOTAL,516);
  assert.equal(EXPECTED_V2_COUNTS['solo-leveling'],52);
  assert.equal(EXPECTED_V2_COUNTS['gurren-lagann'],39);
  for(const id of ['SLG-1-017','SLG-1-054','SLG-1-063']){
