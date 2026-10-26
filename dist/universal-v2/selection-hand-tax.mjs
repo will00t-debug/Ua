@@ -57,12 +57,15 @@ validateSelectionHandTaxProfile(SAO_Q1208_ASUNA_AURA);
 export function selectionHandDiscardTaxPlan(pack,s,selector,targetUid,sourceType,
  {isSuppressed=()=>false}={}){
  if(![0,1].includes(selector)||typeof targetUid!=='string'||
-  !['character','event','trigger','unknown'].includes(sourceType)||
+  !['character','event','trigger','field','unknown'].includes(sourceType)||
   !s||![0,1].includes(s.active)||!Array.isArray(s.players)||s.players.length!==2)
   throw Error('Invalid selection tax context');
  const victim=1-selector;
  const target=board(s.players[victim]).find(c=>c.uid===targetUid);
- if(!target||sourceType==='trigger')return {cost:0,payable:true,blocked:false,sourceUids:[]};
+ // Q978 and Q1208 name character and event selections. A trigger is a timing,
+ // and a field is its own printed type, so neither pays this hand tax.
+ if(!target||sourceType==='trigger'||sourceType==='field')
+  return {cost:0,payable:true,blocked:false,sourceUids:[]};
  const live=board(s.players[victim]),sources=[];
  for(const source of live){
   const d=printed(pack,source),rule=d?.selectionHandDiscardTax;

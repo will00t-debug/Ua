@@ -20,6 +20,12 @@ export function cardHasTrait(definition,trait){
  return (definition?.traits||[]).includes(trait)||
   (definition?.traitComponents||[]).includes(trait);
 }
+// 「全ての場所でイベントカードとしても扱う」adds an event identity.
+// The printed type stays character, so play, front, and energy rules do not
+// change. Effects that count or search for an event card include it.
+export function cardCountsAsEvent(definition){
+ return definition?.type==='event'||definition?.alsoEvent===true;
+}
 export const V2_TRAIT_ZONES=Object.freeze(['field','front','energy']);
 export const V2_TRAIT_SUBJECTS=Object.freeze(['character','card']);
 export function ownFieldTraitKinds(s,owner,sourceUid,profile,printed){
@@ -50,6 +56,15 @@ export function matchesOwnDistinctTraits(s,owner,sourceUid,profile,printed){
 export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energy,cardBp){
  if(condition.turn==='own'&&s.active!==owner)return false;
  if(condition.turn==='opponent'&&s.active===owner)return false;
+ // 「自分のターン中」かつ「このキャラの下に裏向きのカード」. The physical
+ // field card is the one being measured. A buried layer is not itself.
+ if(condition.kind==='ownTurnFacedownUnder'){
+  const areas=[s.players[owner].front,s.players[owner].energy];
+  const physical=areas.flat().find(c=>c?.uid===sourceUid);
+  const facedown=c=>!!c&&((c.under||[]).some(v=>v.faceDown===true||facedown(v))||
+   (c.stack||[]).some(v=>v.faceDown===true||facedown(v)));
+  return facedown(physical);
+ }
  // Printed 「このターン中」 with no 自分のターン icon. The ledger is effect
  // AP only; paying AP to play a card does not qualify.
  if(condition.kind==='ownEffectApPaidColor')
@@ -77,8 +92,46 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   return s.players[owner].life.length<=condition.max;
  if(condition.kind==='ownHandCountAtLeast')
   return s.players[owner].hand.length>=condition.min;
+ if(condition.kind==='ownNameAndDeckAtMost'){
+  // Printed deck size is the current OWN deck, not hand, life, or outside.
+  // The name is an own field character, including this card when excludeSelf
+  // is false. Raid under-cards are not the field.
+  if(s.players[owner].deck.length>condition.max)return false;
+  const areas=condition.zone==='front'?[s.players[owner].front]:
+   condition.zone==='energy'?[s.players[owner].energy]:
+   [s.players[owner].front,s.players[owner].energy];
+  for(const area of areas)for(const c of area){
+   if(!c||(condition.excludeSelf&&c.uid===sourceUid))continue;
+   const d=printed(c);
+   if(d.type==='character'&&cardHasName(d,condition.name,originalEffectsDisabled(s,c)))
+    return true;
+  }
+  return false;
+ }
  if(condition.kind==='outsideCount')
   return s.players[owner].outside.length>=condition.min;
+ if(condition.kind==='ownOutsideEventCountAtLeast')
+  return s.players[owner].outside.filter(c=>cardCountsAsEvent(printed(c))).length>=condition.min;
+ // 〈エミリア〉があり、場外にイベントが N 枚以上. Both are required.
+ // The named card is an own field character. Outside events include a
+ // character that is also treated as an event. Hand and deck do not count.
+ if(condition.kind==='ownNameAndOutsideEvents'){
+  const events=s.players[owner].outside.filter(c=>cardCountsAsEvent(printed(c))).length;
+  if(events<condition.min)return false;
+  const areas=[s.players[owner].front,s.players[owner].energy];
+  for(const area of areas)for(const c of area){
+   if(!c||printed(c).type!=='character')continue;
+   if(cardHasName(printed(c),condition.name,originalEffectsDisabled(s,c)))return true;
+  }
+  return false;
+ }
+ // 「山札からキャラカードを登場させるかレイド」. The ledger is cleared at
+ // the next turn start. A paid hand play, a life trigger, and an opponent
+ // effect do not qualify. The moved card must be a character.
+ if(condition.kind==='ownDeckCharacterEntryThisTurn')
+  return (s.zoneMoveEvents||[]).some(e=>e.owner===owner&&e.controller===owner&&
+   e.from==='deck'&&(e.to==='front'||e.to==='energy')&&e.reason==='own-effect'&&
+   printed({uid:e.uid,cardId:e.cardId})?.type==='character');
  if(condition.kind==='ownOutsideNamedCountAtLeast'){
   // Printed names are a union, not distinct-name kinds: each physical card
   // in OWN OUTSIDE counts ONCE, even when it has multiple audited aliases.
@@ -87,6 +140,24 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
    const d=printed(c);
    return condition.names.some(name=>cardHasName(d,name));
   }).length>=condition.min;
+ }
+ if(condition.kind==='ownNameOrRaidBase'){
+  // 〈名前〉 on an own field character, or that character's レイド元.
+  // The buried layer keeps its original printed name only (Q50).
+  const pl=s.players[owner];
+  const zones=condition.zone==='front'?[pl.front]:
+   condition.zone==='energy'?[pl.energy]:[pl.front,pl.energy];
+  for(const zone of zones)for(const c of zone){
+   if(!c)continue;
+   const d=printed(c);
+   if(d.type!=='character')continue;
+   const silenced=originalEffectsDisabled(s,c);
+   if(!(condition.excludeSelf&&c.uid===sourceUid)&&
+    cardHasName(d,condition.name,silenced))return true;
+   const base=c.stack?.[0];
+   if(base&&printed(base).name===condition.name)return true;
+  }
+  return false;
  }
  if(condition.kind==='ownEnergyAtLeast')
   return energy()>=condition.min;
@@ -151,6 +222,26 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   }
   return false;
  }
+ if(condition.kind==='ownFrontNoOtherCharacter'){
+  // 他のキャラ is another character on this player's front line. Energy-line
+  // cards and fields are a different zone. This card does not count itself.
+  return !s.players[owner].front.some(c=>c&&c.uid!==sourceUid&&
+   printed(c).type==='character');
+ }
+ if(condition.kind==='oppFrontCurrentBpBelowPrinted'){
+  // 元々のBP is the number printed at the lower left (Q2325). The live total
+  // is read now. Energy-line cards and fields are not the opponent's front.
+  // A card sitting exactly at its printed BP does not qualify.
+  if(typeof cardBp!=='function')throw Error('Printed BP comparison needs a live BP reader');
+  return s.players[1-owner].front.some(c=>c&&printed(c).type==='character'&&
+   cardBp(c)<printed(c).bp);
+ }
+ if(condition.kind==='otherOwnCharacterRetiredThisTurn'){
+  // このターン中、自分の場の他のキャラ. Front and energy are both 場.
+  // A field is not a character. This physical card does not count itself.
+  return (s.turnRetireEvents||[]).some(e=>e.turn===s.turn&&
+   e.controller===owner&&e.cardType==='character'&&e.uid!==sourceUid);
+ }
  if(condition.kind==='ownHandToOutsideThisTurn'){
   // 自分の手札を場外に置いている: the owner placed that hand card.
   // An event play is a rule move. A payment or own effect also counts.
@@ -189,6 +280,21 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
    if(d.color===condition.color)kinds.add(d.name);
   }
   return kinds.size>=condition.min;
+ }
+ if(condition.kind==='ownPrintedCharacter'){
+  // 必要エナジー and 青 are the printed cost and printed color. Current
+  // energy, a generated pip, and a color change are not this sentence.
+  // Hand, deck, outside, the opponent, and a Raid under-card are not 場.
+  const pl=s.players[owner];
+  const zones=condition.zone==='front'?[pl.front]:
+   condition.zone==='energy'?[pl.energy]:[pl.front,pl.energy];
+  for(const zone of zones)for(const c of zone){
+   if(!c||(condition.excludeSelf&&c.uid===sourceUid))continue;
+   const d=printed(c);
+   if(d.type!=='character'||d.color!==condition.color||d.energy!==condition.energy)continue;
+   if(cardHasName(d,condition.name,originalEffectsDisabled(s,c)))return true;
+  }
+  return false;
  }
  const pl=s.players[owner];
  const zones=condition.zone==='front'?[pl.front]:

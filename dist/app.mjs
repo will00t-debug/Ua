@@ -3,6 +3,7 @@ import {CARDS,BY_ID,PRESETS,TYPE_NAMES,TRIGGER_NAMES,validateDeck,SETS,COLOR_NAM
 import {normalizeCounts,emptyDeck,parseDeck,formatDeck,readSavedDecks,sameCounts} from './decks.mjs?v=8';
 import {TITLES} from './title-registry.mjs';
 import {renderVisualDeckBuilder} from './visual-deck-builder.mjs';
+import {v2DeckReport} from './universal-v2/official-entry.mjs';
 import {SAO_CARDS,SAO_BY_ID,saoDeckIssues} from './sao-cards.mjs';
 import {SOLO_LEVELING_CARDS} from './solo-leveling.mjs';
 import {SOLO_ART_CREDIT,SOLO_RUGIA_SEARCH,soloArtErrorFallback} from './solo-art.mjs';
@@ -146,10 +147,12 @@ function visualDeckLibrary(){
    rezero:{counts:rezDeck,name:rezName,nameId:'rezDeckName',savedId:'rezSavedSelect',savedOptions:rezSaved.map((d,i)=>({value:String(i),label:d.name})),saveAction:'rezSave',newAction:'rezNew',issues:rezDeckIssues(rezDeck)}
  };
  const data=optionsByTitle[ui.title]||optionsByTitle.bleach;
+ const report=v2DeckReport(ui.title,data.counts);
+ const extra=(report.warnings||[]).filter(w=>!(data.issues||[]).includes(w));
  return renderVisualDeckBuilder({
   titles:TITLES,titleId:ui.title,ready:ui.builderReady,tab:ui.builderTab,
   search:ui.search,type:ui.builderType,color:ui.builderColor,energy:ui.builderEnergy,
-  ...data
+  ...data,issues:[...(data.issues||[]),...extra],v2Ready:report.ok
  });
 }
 
@@ -614,6 +617,18 @@ function bind(){
    case 'newDeck':deck=emptyDeck();deckName='新的 BLEACH 牌組';selectedDeckId=null;persistDraft();render();break;
    case 'saveDeck':case 'copySavedDeck':try{saveCurrentDeck(el.dataset.action==='copySavedDeck');}catch(e){toast(e.message);}break;
    case 'deckCode':ui.modal={type:'deckCode'};render();break;
+    case 'enterV2Battle':{
+     const title=ui.title;
+     const counts=title==='bleach'?deck:title==='gurren-lagann'?ttgDeck:title==='sword-art-online'?saoDeck:title==='solo-leveling'?soloDeck:title==='rezero'?rezDeck:mstDeck;
+     const name=title==='bleach'?deckName:title==='gurren-lagann'?ttgName:title==='sword-art-online'?saoName:title==='solo-leveling'?soloName:title==='rezero'?rezName:mstName;
+     const report=v2DeckReport(title,counts);
+     if(!report.ok){toast(report.issues[0]||'這副牌組還不能進入 V2。');break;}
+     const slim=Object.fromEntries(Object.entries(counts).filter(([,n])=>Number(n)>0));
+     try{sessionStorage.setItem('ua-v2-title-entry-v1',JSON.stringify({title,name,counts:slim,aiDifficulty:ui.aiDifficulty||'normal'}));}
+     catch(e){toast('無法暫存牌組：'+e.message);break;}
+     window.location.assign('/');
+     break;
+    }
     case 'visualExport':{
      const t=TITLES.find(t=>t.id===ui.title)||TITLES[0];
      const counts=ui.title==='bleach'?deck:ui.title==='gurren-lagann'?ttgDeck:ui.title==='sword-art-online'?saoDeck:ui.title==='solo-leveling'?soloDeck:ui.title==='rezero'?rezDeck:mstDeck;

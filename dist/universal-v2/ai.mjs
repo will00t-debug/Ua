@@ -1,6 +1,7 @@
 // Cross-title Universal v2 AI baseline. Uses only the native legal-action
 // list; no work-specific card-ID shortcuts and no mutation of match state.
-import {legalUniversalActions,dispatchUniversalAction,universalBp,universalEnergy,universalEnergyByColor,universalCardEnergy} from './engine.mjs';
+import {legalUniversalActions,dispatchUniversalAction,universalBp,universalEnergy,universalEnergyByColor,universalCardEnergy,handRevealIdentity,handCharacterBpMayAmount} from './engine.mjs';
+import {cardCountsAsEvent} from './field-conditions.mjs';
 export const UNIVERSAL_AI_LEVELS=Object.freeze(['easy','normal','hard']);
 const packsOf=pack=>Array.isArray(pack)?pack:[pack,pack];
 const option=(list,type)=>list.find(x=>x.type===type);
@@ -64,15 +65,81 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='private-top-place')return legal[0];
  if(s.pending?.kind==='effect-top-inspect-many')return legal.find(x=>x.uid===null)||legal[0];
  if(s.pending?.kind==='effect-top-filter-choice')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-top-trait-event'){
+  const catalog=packsOf(pack)[s.pending.player].cards;
+  const deck=s.players[s.pending.player].deck;
+  const score=uid=>{
+   if(uid===null)return 0;
+   const printed=catalog[deck.find(c=>c.uid===uid)?.cardId];
+   if(printed?.traits?.includes(s.pending.trait)||printed?.traitComponents?.includes(s.pending.trait))return 2;
+   return cardCountsAsEvent(printed)?1:0;
+  };
+  return [...legal].sort((a,b)=>score(b.uid)-score(a.uid))[0];
+ }
  if(s.pending?.kind==='effect-top-trait-outside')
   return difficulty==='easy'?legal.find(a=>a.uid===null)||legal[0]:
    legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-optional-mill')
   return difficulty==='easy'?legal.find(a=>a.mode==='skip')||legal[0]:
    legal.find(a=>a.mode==='mill')||legal[0];
+ if(s.pending?.kind==='effect-mill-up-to')
+  return difficulty==='easy'?legal.find(a=>a.mode==='stop')||legal[0]:
+   legal.find(a=>a.mode==='mill')||legal[0];
+ if(s.pending?.kind==='effect-mill-recover-discard')
+  return difficulty==='easy'?legal.find(a=>a.uid===null)||legal[0]:
+   legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-mill-recover')
+  return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-grant-impact-null')
+  return difficulty==='easy'?legal.find(a=>a.uid===null)||legal[0]:
+   legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-discard-up-to')
+  return difficulty==='easy'?legal.find(a=>a.uid===null)||legal[0]:
+   legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-top-add-one')return legal[0];
+ if(s.pending?.kind==='effect-distinct-trait-buff')
+  return difficulty==='easy'?legal.find(a=>a.uid===null)||legal[0]:
+   legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-energy-mode'){
+  const onFront=s.players[s.pending.player].front.some(c=>c?.uid===s.pending.sourceUid);
+  return legal.find(a=>a.mode===(onFront?'front':'plus'))||legal[0];
+ }
+ if(s.pending?.kind==='effect-may-then')
+  return legal.find(a=>a.mode===(difficulty==='easy'?'skip':'do'))||legal[0];
+ if(s.pending?.kind==='effect-max-bp-impact')return legal[0];
+ if(s.pending?.kind==='effect-outside-or-rest')
+  return difficulty==='easy'?legal.find(a=>a.mode==='skip')||legal[0]:
+   legal.find(a=>a.mode==='hand')||legal[0];
+ if(s.pending?.kind==='effect-replay-base')
+  return difficulty==='easy'?legal.find(a=>a.mode==='skip')||legal[0]:
+   legal.find(a=>a.mode===(s.pending.canActive?'active':'rest'))||legal[0];
+ if(s.pending?.kind==='effect-named-energy'||s.pending?.kind==='effect-active-one-ap')
+  return legal[0];
+ if(s.pending?.kind==='effect-outside-deck-top'||s.pending?.kind==='effect-outside-names')
+  return difficulty==='easy'?legal.find(a=>a.uid===null)||legal[0]:
+   legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-active-character')return legal[0];
+ if(s.pending?.kind==='effect-mode-discard'){
+  const catalog=packsOf(pack)[s.pending.player].cards;
+  const hand=s.players[s.pending.player].hand;
+  return [...legal].sort((a,b)=>(catalog[hand.find(c=>c.uid===a.uid)?.cardId]?.energy||0)-
+   (catalog[hand.find(c=>c.uid===b.uid)?.cardId]?.energy||0))[0];
+ }
  if(s.pending?.kind==='effect-pay-ap-deploy')
   return difficulty==='easy'?legal.find(a=>a.mode==='skip')||legal[0]:
    legal.find(a=>a.mode==='pay')||legal[0];
+ if(s.pending?.kind==='effect-deck-named-play')
+  return difficulty==='easy'?legal.find(a=>a.mode==='hand')||legal[0]:
+   legal.find(a=>a.mode==='raid'&&!a.replaceUid)||
+   legal.find(a=>a.mode==='enter'&&!a.replaceUid)||
+   legal.find(a=>a.mode==='hand')||legal[0];
+ if(s.pending?.kind==='effect-place-hand'){
+  const catalog=packsOf(pack)[s.pending.player].cards;
+  const hand=s.players[s.pending.player].hand;
+  const outside=legal.filter(a=>a.mode==='outside');
+  return [...outside].sort((a,b)=>(catalog[hand.find(c=>c.uid===a.uid)?.cardId]?.energy||0)-
+   (catalog[hand.find(c=>c.uid===b.uid)?.cardId]?.energy||0))[0]||legal[0];
+ }
  if(s.pending?.kind==='effect-top-order')return legal[0];
  if(['effect-discard-cost','effect-discard-gate'].includes(s.pending?.kind)){
   // An optional cost may be declined; tougher bots pay with a lower-value
@@ -108,6 +175,83 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   return difficulty==='easy'?legal.find(a=>a.mode==='skip')||legal[0]:
    legal.find(a=>a.mode==='activate')||legal[0];
  if(s.pending?.kind==='effect-buff-own')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-facedown-front')
+  return legal.find(a=>a.mode==='move'&&!a.replaceUid)||
+   legal.find(a=>a.mode==='move')||legal[0];
+ if(s.pending?.kind==='effect-named-impact')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-buff-either')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-hand-outside-active')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-named-duration')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-top-take-one')return legal[0];
+ if(s.pending?.kind==='effect-reveal-optional'){
+  const catalog=packsOf(pack)[s.pending.player].cards;
+  const hand=s.players[s.pending.player].hand;
+  return [...legal].sort((a,b)=>{
+   const score=uid=>{
+    if(uid===null)return -1;
+    const printed=catalog[hand.find(c=>c.uid===uid)?.cardId];
+    return printed?.type==='character'&&Number.isInteger(printed.bp)?printed.bp:0;
+   };
+   return score(b.uid)-score(a.uid);
+  })[0];
+ }
+ if(s.pending?.kind==='effect-referenced-bp')return legal.find(a=>a.mode==='accept')||legal[0];
+ if(s.pending?.kind==='effect-outside-referenced')return legal.find(a=>a.mode==='hand')||legal[0];
+ if(s.pending?.kind==='effect-reveal-retire'){
+  const catalog=packsOf(pack)[s.pending.player].cards;
+  const hand=s.players[s.pending.player].hand;
+  return [...legal].sort((a,b)=>{
+   const score=uid=>{
+    const printed=catalog[hand.find(c=>c.uid===uid)?.cardId];
+    return printed?.type==='character'&&Number.isInteger(printed.bp)?printed.bp:0;
+   };
+   return score(b.uid)-score(a.uid);
+  })[0];
+ }
+ if(s.pending?.kind==='effect-retire-referenced')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-hand-block'){
+  const catalog=packsOf(pack)[s.pending.player].cards;
+  const hand=s.players[s.pending.player].hand;
+  return [...legal].sort((a,b)=>(catalog[hand.find(c=>c.uid===a.uid)?.cardId]?.energy||0)-
+   (catalog[hand.find(c=>c.uid===b.uid)?.cardId]?.energy||0))[0];
+ }
+ if(s.pending?.kind==='effect-substitute-retire')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-outside-printed-active')return legal.find(a=>a.uid!==null&&!a.replaceUid)||legal[0];
+ if(s.pending?.kind==='effect-bounce-include-self')
+  return legal.find(a=>a.uid!==null&&a.uid!==s.pending.sourceUid)||
+   legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-outside-rest-or-raid')
+  return legal.find(a=>a.mode==='enter'&&!a.replaceUid)||
+   legal.find(a=>a.mode==='raid'&&!a.replaceUid)||legal[0];
+ if(s.pending?.kind==='effect-grant-bounce-instead')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-hand-reenter-under')return legal.find(a=>a.uid!==null&&!a.replaceUid)||legal[0];
+ if(s.pending?.kind==='effect-return-printed')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-remove-named')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-pay-named')return legal.find(a=>a.mode==='hand')||
+  legal.find(a=>a.mode==='rest')||legal[0];
+ if(s.pending?.kind==='effect-add-named')return legal.find(a=>a.uid)||legal[0];
+ if(s.pending?.kind==='effect-rest-front-ap')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-discard-active')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-hand-top'){
+  const catalog=packsOf(pack)[s.pending.player].cards;
+  const hand=s.players[s.pending.player].hand;
+  return [...legal].sort((a,b)=>(catalog[hand.find(c=>c.uid===a.uid)?.cardId]?.energy||0)-
+   (catalog[hand.find(c=>c.uid===b.uid)?.cardId]?.energy||0))[0];
+ }
+ if(s.pending?.kind==='effect-reveal-bottom'){
+  const catalog=packsOf(pack)[s.pending.player].cards;
+  const hand=s.players[s.pending.player].hand;
+  return [...legal].sort((a,b)=>{
+   const score=uid=>{
+    const printed=catalog[hand.find(c=>c.uid===uid)?.cardId];
+    const shown=handRevealIdentity(printed);
+    const bonus=shown.type==='character'?handCharacterBpMayAmount(pack,s,s.pending.player):0;
+    const referenced=Number.isInteger(shown.bp)?shown.bp+bonus:null;
+    return shown.type==='character'&&referenced>=s.pending.minPrintedBp?referenced:0;
+   };
+   return score(b.uid)-score(a.uid);
+  })[0];
+ }
  if(s.pending?.kind==='effect-buff-trait')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='main-discard-buff'){
   // The payment is mandatory once activated. Choose a low-cost OWN hand
@@ -132,6 +276,26 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
    legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-strip-raid-top')
   return difficulty==='easy'?legal[0]:legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-retire-at-least')return legal[0];
+ if(s.pending?.kind==='effect-retire-at-most')return legal[0];
+ if(s.pending?.kind==='effect-retire-scaled')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-rest-outside-events')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-rested-retire-impact')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-hand-named-rest')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-grant-named-impact')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-outside-printed-rest')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-grant-printed-block')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-move-opp-front')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-unblocked-rest')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-remove-opp-field')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-energy-swap')return legal[0];
+ if(s.pending?.kind==='effect-hand-bp-may')return legal.find(a=>a.mode==='accept')||legal[0];
+ if(s.pending?.kind==='effect-hand-deploy-may')return legal.find(a=>a.mode==='accept')||legal[0];
+ if(s.pending?.kind==='effect-hand-rest-entry')return legal[0];
+ if(s.pending?.kind==='effect-active-other')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-rest-own-front-draw')return legal[0];
+ if(s.pending?.kind==='effect-raid-base-rest')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-rest-or-retire')return legal[0];
  if(s.pending?.kind==='effect-retire-bp'){
   // A printed "up to one" retirement presents SKIP first; normal/hard AI
   // should choose an eligible enemy unless there is none.
@@ -175,6 +339,8 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   // candidate targets, never AI text parsing.
   return choices[0]?.a||legal[0];
  }
+ if(['effect-raid-witness-order','effect-raid-attach','effect-raid-witness-move','effect-look-take','effect-discard-mode','effect-facedown-scale','effect-spend-facedown','effect-absorb-front','effect-simon-low','effect-replay-entry','effect-attack-end-raid','effect-retire-capture'].includes(s.pending?.kind))
+  return legal.find(a=>a.uid===null||a.when==='skip'||a.mode==='skip'||a.uids?.length===0)||legal[0];
  const next=option(legal,'next')||legal[0];
  if(s.phase==='start')return next;
  if(s.phase==='move'){
@@ -235,6 +401,8 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   (foeReady?legal.find(a=>a.type==='activate'&&a.mode==='selfRestEnemy'):null)||
   legal.find(a=>a.type==='activate'&&a.mode==='selfRestThen')||
   legal.find(a=>a.type==='activate'&&a.mode==='selfRestBuff')||
+  legal.find(a=>a.type==='activate'&&a.mode==='gunmenModes'&&a.effects?.includes('bp'))||
+  legal.find(a=>a.type==='activate'&&a.mode==='restRetireTrait')||
   legal.find(a=>a.type==='activate'&&a.mode==='payApDrawEnergy')||
   legal.find(a=>a.type==='activate'&&a.mode==='restFrontGainEnergy')||
   legal.find(a=>a.type==='activate'&&a.mode==='selfRestEnergyRetire')||
