@@ -49,13 +49,15 @@ function assertLiveCondition(q,label){
  const oppRest=q.kind==='oppRestCharacter'||q.kind==='oppRestCharacterCount';
  const printedAp=q.kind==='ownPrintedApAtLeast';
  const field=['ownNameExists','ownNameAbsent','ownFieldHasAllNames','ownTraitCount','ownCardTraitCount','ownRestPrintedBpAtMost'].includes(q.kind);
+ // ownNameAbsent may name 場外. Presence checks stay on the field lines.
+ const nameZones=q.kind==='ownNameAbsent'?['field','front','energy','outside']:['field','front','energy'];
  if((count&&(!integer(q.min,1)||q.min>200))||
   (namedOutside&&(!integer(q.min,1)||q.min>200||
    !Array.isArray(q.names)||q.names.length<1||q.names.length>8||
    q.names.some(n=>typeof n!=='string'||!n.trim()||n.length>80)||
    new Set(q.names).size!==q.names.length))||
   (atMost&&(!integer(q.max)||q.max>10))||
-  (field&&(!['field','front','energy'].includes(q.zone)||
+  (field&&(!nameZones.includes(q.zone)||
    typeof q.excludeSelf!=='boolean'))||
   ((q.kind==='ownFrontNoOtherCharacter'||q.kind==='oppFrontLiveBpBelowPrinted')&&Object.keys(q).length!==2)||
   ((q.kind==='ownNameExists'||q.kind==='ownNameAbsent')&&(!q.name||typeof q.name!=='string'||!q.name.trim()))||
@@ -974,7 +976,19 @@ function validatePassiveBonuses(card){
   const q=p.condition;
   if(p.extraDamage!==undefined&&(card.type!=='character'||q.turn!=='own'))
    throw Error(card.id+' extra damage must be printed own-turn character bonus');
-  assertLiveCondition(q,card.id);
+  if(q.logic==='all'){
+   if(!['own','opponent','any'].includes(q.turn)||!Array.isArray(q.checks)||
+    q.checks.length<2||q.checks.length>3||
+    q.checks.some(c=>!c||typeof c!=='object'||Array.isArray(c))||
+    Object.keys(q).some(k=>!['logic','turn','checks'].includes(k)))
+    throw Error(card.id+' invalid or cyclic passive condition');
+   for(const check of q.checks)assertLiveCondition(check,card.id);
+   // Absence alone stays a penalty. A positive bonus needs another clause.
+   if(q.checks.every(c=>c.kind==='ownNameAbsent')&&
+    (p.bp===undefined||p.bp>=0||p.extraEnergy!==undefined||
+     p.extraDamage!==undefined||p.impact!==undefined||p.bpEach!==undefined))
+    throw Error(card.id+' name-absence penalty is BP only');
+  }else assertLiveCondition(q,card.id);
   if(q.kind==='ownNameAbsent'&&(p.bp===undefined||p.extraEnergy!==undefined||
    p.extraDamage!==undefined||p.impact!==undefined||p.bpEach!==undefined))
    throw Error(card.id+' name-absence penalty is BP only');
@@ -987,7 +1001,9 @@ function validatePassiveBonuses(card){
  }
  return Object.freeze(entries.map(p=>Object.freeze({...p,
   condition:Object.freeze({...p.condition,
-   ...(p.condition.kind==='ownFieldHasAllNames'?{names:Object.freeze([...p.condition.names])}:{})})})));
+   ...(p.condition.kind==='ownFieldHasAllNames'?{names:Object.freeze([...p.condition.names])}:{}),
+   ...(p.condition.logic==='all'?{checks:Object.freeze(p.condition.checks.map(c=>Object.freeze({...c,
+    ...(Array.isArray(c.names)?{names:Object.freeze([...c.names])}:{})})))}:{})})})));
 }
 function normalize(card,packId){
  if(!card||typeof card!=='object'||Array.isArray(card)||typeof card.id!=='string'||!card.id.trim())

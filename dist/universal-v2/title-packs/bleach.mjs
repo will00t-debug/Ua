@@ -129,7 +129,8 @@ const testForKind=Object.freeze({
  stepOnceFrontOr:'tests/v2-c29-bleach-port.test.mjs',
  replayOnPlayDown:'tests/v2-c29-bleach-port.test.mjs',
  stepDrawNameActive:'tests/v2-c29-bleach-port.test.mjs',
- reducedFrontNameActive:'tests/v2-c29-bleach-port.test.mjs'
+ reducedFrontNameActive:'tests/v2-c29-bleach-port.test.mjs',
+ outsideAbsentFieldNameBp:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -139,7 +140,7 @@ function contributedEntry(profile){
  // The legacy gen=2 for EX15BT/BLC-4-014 describes the ACTIVE total, not
  // the printed REST base. SourceRecord is the normalized printed card record;
  // retain original.gen separately and require the profile fingerprint above.
- const normalized=['BLC-4-014','BLC-4-042','BLC-4-074','BLC-4-024','BLC-4-063','BLC-4-037','BLC-4-071'].includes(profile.id);
+ const normalized=['BLC-4-014','BLC-4-042','BLC-4-074','BLC-4-024','BLC-4-063','BLC-4-037','BLC-4-071','BLC-4-006'].includes(profile.id);
  const sourceRecord=Object.freeze(normalized?
   {...original,gen:definition.gen,legacyImportedGen:original.gen}: {...original});
  const vanilla=['plain','plainAlt','step'].includes(profile.kind);
@@ -163,6 +164,8 @@ function contributedEntry(profile){
       'EX15BT/BLC-4-037 official generated energy is 青青=2. Catalogue gen=3 is the sprite index. sourceRecord.gen=2, legacyImportedGen=3. On-play and the 1 AP [ターン1] replay both choose one opposing front character whose live BP is at least 1500.':
     profile.id==='BLC-4-071'?
       'EX15BT/BLC-4-071 official generated energy is 緑緑=2. Catalogue gen=3 is the sprite index. sourceRecord.gen=2, legacyImportedGen=3. Official Q2340: two copies share one activate per turn.':
+    profile.id==='BLC-4-006'?
+      'EX15BT/BLC-4-006 official generated energy is 黄黄=2. Catalogue gen=3 is the sprite index. sourceRecord.gen=2, legacyImportedGen=3. Impact null. On its own turn, BP+1000 only when own outside has no ユーハバッハ and own field has ユーグラム・ハッシュヴァルト. No card FAQ on the official page.':
       'EX15BT/BLC-4-042 printed base BLUE BLUE=2 but legacy gen=3; audited sourceRecord.gen=2 retains legacyImportedGen=3; official Q2323 and full three-mode tests.':
     'Official printed '+profile.number+'; profile '+profile.kind+
      '; fingerprint matched source text and printed stats. V2 program/trigger tests exist; NOT per-card complete FAQ acceptance.',

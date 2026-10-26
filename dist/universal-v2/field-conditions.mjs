@@ -46,8 +46,16 @@ export function matchesOwnDistinctTraits(s,owner,sourceUid,profile,printed){
 // Small immutable predicate family for PRINTED persistent bonuses.
 // Each condition is evaluated from the current match on every BP/energy read,
 // not when a card is played. This is distinct from once-resolved turn buffs.
-// Strictly use the physical controller's fields: never hand/outside/underlayers.
+// Field predicates use this controller's front and energy. Hand, deck,
+// removed, and Raid under-cards stay out unless a clause names 場外.
 export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energy,cardBp){
+ // A printed 「かつ」 is one bonus with every clause true. The outer turn
+ // is the printed turn icon. Each clause keeps its own closed predicate.
+ if(condition?.logic==='all'){
+  if(condition.turn==='own'&&s.active!==owner)return false;
+  if(condition.turn==='opponent'&&s.active===owner)return false;
+  return condition.checks.every(q=>matchesV2LiveCondition(s,owner,sourceUid,q,printed,energy,cardBp));
+ }
  if(condition.turn==='own'&&s.active!==owner)return false;
  if(condition.turn==='opponent'&&s.active===owner)return false;
  // Printed 「このターン中」 with no 自分のターン icon. The ledger is effect
@@ -173,6 +181,14 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
    if(cardHasTrait(printed(c),condition.trait))found++;
   }
   return found>=condition.min;
+ }
+ if(condition.kind==='ownNameAbsent'&&condition.zone==='outside'){
+  // 自分の場外に〈名前〉がない. Hand, deck, removed, the field, and the
+  // opponent's outside are not this zone. Raid under-cards are not outside.
+  // An outside card is not silenced, so an audited alias still matches.
+  return !s.players[owner].outside.some(c=>
+   !(condition.excludeSelf&&c.uid===sourceUid)&&
+   cardHasName(printed(c),condition.name,false));
  }
  const pl=s.players[owner];
  const zones=condition.zone==='front'?[pl.front]:

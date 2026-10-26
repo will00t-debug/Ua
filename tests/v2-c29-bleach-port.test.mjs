@@ -5,9 +5,10 @@ import {createUniversalPack,validateUniversalDeck} from '../dist/universal-v2/pa
 import {registeredV2TitlePack} from '../dist/universal-v2/title-packs/registry.mjs';
 import {cardHasName,cardHasTrait} from '../dist/universal-v2/field-conditions.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
- assertUniversalMatch,universalBp,universalImpact,universalEnergyByColor,
+ assertUniversalMatch,universalBp,universalImpact,universalEnergyByColor,universalCardEnergy,
  universalPublicView,universalPrivateChoices} from '../dist/universal-v2/engine.mjs';
 import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
+import {grantContinuousState} from '../dist/universal-v2/continuous-states.mjs';
 import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v2-integrated-id-manifest.mjs';
 
 // Official iframes fetched 2026-10-24.
@@ -107,9 +108,13 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 //   of them may activate this effect that turn). ACTIVE is the generic
 //   sentence. Required energy is 紫5. Generated energy is 紫. An energy-line
 //   reduced character does not open the activate.
+// BLC-4-006 EX15BT: [インパクト無効]. [自分のターン中] BP+1000 only when own
+//   outside has no 〈ユーハバッハ〉 and own field has 〈ユーグラム・ハッシュヴァルト〉.
+//   Official iframe 2026-10-26: required 黄3, generated 黄黄, BP 3000+, no trigger,
+//   no card FAQ. Catalogue gen=3 is the sprite index.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -180,12 +185,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers forty-two whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,478);
- assert.equal(EXPECTED_V2_COUNTS.bleach,202);
+test('C29 registers forty-three whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,479);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,203);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,202);
+ assert.equal(Object.keys(bleach.cards).length,203);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -3204,4 +3209,131 @@ test('BLC-3-005 nulls the battling character impact and actives once per Renji n
  assert.equal(assertUniversalMatch(benchOnly.packs,benchOnly.s),true);
  assert.equal(assertUniversalMatch(fought.packs,battle),true);
  assert.equal(assertUniversalMatch(control.packs,open),true);
+});
+
+test('BLC-4-006 gains 1000 on its turn when Haschwalth is on the field and Yhwach is not outside',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-4-006');
+ assert.equal(printed.effect,'Impact無效。自己的回合中：若自己場外沒有《友哈巴赫》，且自己場上有《雨葛蘭・哈斯沃德》，此角色BP+1000。');
+ assert.deepEqual(printed.traits,['星十字騎士團']);
+ assert.equal(printed.energy,3);
+ assert.equal(printed.bp,3000);
+ assert.equal(printed.gen,3);
+ assert.equal(printed.trigger,null);
+ const absent={kind:'ownNameAbsent',turn:'own',zone:'outside',excludeSelf:false,name:'ユーハバッハ'};
+ const present={kind:'ownNameExists',turn:'own',zone:'field',excludeSelf:false,name:'ユーグラム・ハッシュヴァルト'};
+ const condition={logic:'all',turn:'own',checks:[absent,present]};
+ const card=bleach.cards['BLC-4-006'];
+ assert.equal(card.impactNull,true);
+ assert.equal(card.gen,2);
+ assert.equal(card.trigger,null);
+ assert.equal(card.triggerEffect,null);
+ assert.deepEqual(card.traits,['星十字騎士團']);
+ assert.deepEqual(card.effects,{});
+ assert.deepEqual(card.passiveBonuses,[{condition,bp:1000}]);
+ const bare={id:'BAD',name:'BAD',color:'yellow',type:'character',energy:0,ap:1,bp:3000,gen:1,traits:[],trigger:null,implementation:'dsl',effects:{}};
+ assert.throws(()=>createUniversalPack({id:'bad-plus',cards:[{...bare,passiveBonuses:[{condition:absent,bp:1000}]}]}),/invalid passive bonus/);
+ assert.throws(()=>createUniversalPack({id:'bad-wrap',cards:[{...bare,passiveBonuses:[{condition:{logic:'all',turn:'own',checks:[absent,{...absent,name:'別'}]},bp:1000}]}]}),/name-absence/);
+ assert.throws(()=>createUniversalPack({id:'bad-zone',cards:[{...bare,passiveBonuses:[{condition:{...absent,zone:'hand'},bp:-1000}]}]}),/invalid or cyclic passive/);
+ const deck=realDeck(['BLC-4-006','BLC-1-018','BLC-1-021','BLC-1-023'],'yellow');
+ const first=main(deck,29606);
+ const self=put(first.s,0,'BLC-4-006','front',0);
+ assert.equal(universalBp(first.packs,first.s,self),3000);
+ const jugram=put(first.s,0,'BLC-1-018','energy',0);
+ assert.equal(universalBp(first.packs,first.s,self),4000);
+ first.s.players[0].energy[0]=null;
+ first.s.players[0].hand.push(jugram);
+ assert.equal(universalBp(first.packs,first.s,self),3000);
+ put(first.s,0,'BLC-1-018','front',1);
+ assert.equal(universalBp(first.packs,first.s,self),4000);
+ const held=take(first.s,0,'BLC-1-021');
+ first.s.players[0].hand.push(held);
+ assert.equal(universalBp(first.packs,first.s,self),4000);
+ const handIndex=first.s.players[0].hand.findIndex(c=>c.uid===held.uid);
+ first.s.players[0].hand.splice(handIndex,1);
+ first.s.players[0].outside.push(held);
+ assert.equal(universalBp(first.packs,first.s,self),3000);
+ first.s.players[0].outside.splice(first.s.players[0].outside.findIndex(c=>c.uid===held.uid),1);
+ held.ready=true;held.fieldEntryStamp=first.s.nextFieldEntryStamp++;
+ first.s.players[0].energy[0]=held;
+ assert.equal(universalBp(first.packs,first.s,self),4000);
+ const oppOutside=take(first.s,1,'BLC-1-021');
+ first.s.players[1].outside.push(oppOutside);
+ assert.equal(universalBp(first.packs,first.s,self),4000);
+ const ownJugram=first.s.players[0].front[1];
+ first.s.players[0].front[1]=null;
+ first.s.players[0].hand.push(ownJugram);
+ put(first.s,1,'BLC-1-018','front',0);
+ assert.equal(universalBp(first.packs,first.s,self),3000);
+ put(first.s,0,'BLC-1-018','front',1);
+ assert.equal(universalBp(first.packs,first.s,self),4000);
+ const enemy=structuredClone(first.s);enemy.active=1;
+ assert.equal(universalBp(first.packs,enemy,enemy.players[0].front[0]),3000);
+ grantContinuousState(first.s,{kind:'originalEffectsDisabled',controller:1,sourceUid:self.uid,
+  targetUid:self.uid,sourceLinked:false,until:{player:0,phase:'main',edge:'end'}});
+ assert.equal(universalBp(first.packs,first.s,first.s.players[0].front[0]),3000);
+ const lined=main(deck,29607);
+ const energyCopy=put(lined.s,0,'BLC-4-006','energy',0,false);
+ assert.equal(universalCardEnergy(lined.packs,lined.s,0,energyCopy),2);
+ energyCopy.ready=true;
+ assert.equal(universalCardEnergy(lined.packs,lined.s,0,energyCopy),2);
+ assert.equal(universalEnergyByColor(lined.packs,lined.s,0).yellow,2);
+ const fought=main(deck,29608);
+ const attacker=put(fought.s,0,'BLC-1-023','front',0,true);
+ attacker.impactGranted={turn:fought.s.turn,stamp:attacker.fieldEntryStamp,amount:1};
+ const wall=put(fought.s,1,'BLC-4-006','front',0,true);
+ put(fought.s,1,'BLC-1-018','energy',0);
+ assert.equal(universalBp(fought.packs,fought.s,attacker),4000);
+ // The BP clause is own-turn only, so it is off while this character blocks.
+ assert.equal(universalBp(fought.packs,fought.s,wall),3000);
+ assert.equal(universalImpact(fought.packs,fought.s,attacker),1);
+ const lifeBefore=fought.s.players[1].life.length;
+ let battle=fought.s;
+ for(let n=0;n<6&&battle.phase!=='attack';n++)
+  battle=dispatchUniversalAction(fought.packs,battle,{type:'next'});
+ battle=dispatchUniversalAction(fought.packs,battle,{type:'attack',uid:attacker.uid});
+ assert.equal(battle.pending?.kind,'block');
+ battle=dispatchUniversalAction(fought.packs,battle,{type:'chooseBlock',uid:wall.uid},{actor:1});
+ assert.equal(battle.players[0].front.some(c=>c?.uid===attacker.uid),true);
+ assert.equal(battle.players[1].outside.some(c=>c.uid===wall.uid),true);
+ assert.equal(battle.players[1].life.length,lifeBefore);
+ assert.equal(battle.pending,null);
+ const control=main(deck,29609);
+ const striker=put(control.s,0,'BLC-1-023','front',0,true);
+ striker.impactGranted={turn:control.s.turn,stamp:striker.fieldEntryStamp,amount:1};
+ const plain=put(control.s,1,'BLC-1-018','front',0,true);
+ const controlLife=control.s.players[1].life.length;
+ let hit=control.s;
+ for(let n=0;n<6&&hit.phase!=='attack';n++)
+  hit=dispatchUniversalAction(control.packs,hit,{type:'next'});
+ hit=dispatchUniversalAction(control.packs,hit,{type:'attack',uid:striker.uid});
+ hit=dispatchUniversalAction(control.packs,hit,{type:'chooseBlock',uid:plain.uid},{actor:1});
+ assert.equal(hit.players[1].life.length,controlLife-1);
+ const base={...bare,implementation:'vanilla'};
+ const fillers=Array.from({length:9},(_,i)=>({...base,id:'F'+i,name:'余'+i}));
+ const lab=createUniversalPack({id:'lab-bazz',cards:[
+  {...bare,id:'BAZZ',name:'バズビー',impactNull:true,passiveBonuses:[{condition,bp:1000}]},
+  {...base,id:'YH',name:'ユーハバッハ',bp:1500},
+  {...bare,id:'AL',name:'別名義',nameAliases:['ユーハバッハ'],bp:1500},
+  {...base,id:'JU',name:'ユーグラム・ハッシュヴァルト',bp:1500},
+  ...fillers]});
+ const labIds=['BAZZ','YH','AL','JU',...fillers.map(c=>c.id)];
+ const labCounts=Object.fromEntries(labIds.map((id,i)=>[id,i===labIds.length-1?2:4]));
+ assert.deepEqual(validateUniversalDeck(lab,labCounts),[]);
+ const labPacks=[lab,lab];
+ let aliasBoard=newUniversalMatch(labPacks,{decks:[labCounts,labCounts],seed:29610,first:0});
+ const aliasSelf=put(aliasBoard,0,'BAZZ','front',0);
+ put(aliasBoard,0,'JU','energy',0);
+ assert.equal(universalBp(labPacks,aliasBoard,aliasSelf),4000);
+ const alias=take(aliasBoard,0,'AL');
+ aliasBoard.players[0].outside.push(alias);
+ assert.equal(universalBp(labPacks,aliasBoard,aliasSelf),3000);
+ aliasBoard.players[0].outside.pop();
+ aliasBoard.players[0].hand.push(alias);
+ assert.equal(universalBp(labPacks,aliasBoard,aliasSelf),4000);
+ aiOk(first.packs,first.s);
+ assert.equal(assertUniversalMatch(first.packs,first.s),true);
+ assert.equal(assertUniversalMatch(lined.packs,lined.s),true);
+ assert.equal(assertUniversalMatch(fought.packs,battle),true);
+ assert.equal(assertUniversalMatch(control.packs,hit),true);
+ assert.equal(assertUniversalMatch(labPacks,aliasBoard),true);
 });
