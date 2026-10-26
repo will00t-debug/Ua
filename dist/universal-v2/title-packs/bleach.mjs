@@ -132,7 +132,8 @@ const testForKind=Object.freeze({
  reducedFrontNameActive:'tests/v2-c29-bleach-port.test.mjs',
  outsideAbsentFieldNameBp:'tests/v2-c29-bleach-port.test.mjs',
  restRetireZeroIchigo:'tests/v2-c29-bleach-port.test.mjs',
- discardBlockAtLeast:'tests/v2-c29-bleach-port.test.mjs'
+ discardBlockAtLeast:'tests/v2-c29-bleach-port.test.mjs',
+ emptyStepRetireDown:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -170,6 +171,8 @@ function contributedEntry(profile){
       'EX15BT/BLC-4-006 official generated energy is 黄黄=2. Catalogue gen=3 is the sprite index. sourceRecord.gen=2, legacyImportedGen=3. Impact null. On its own turn, BP+1000 only when own outside has no ユーハバッハ and own field has ユーグラム・ハッシュヴァルト. No card FAQ on the official page.':
     profile.id==='BLC-2-017'?
       'EX07BT/BLC-2-017 official iframe 2026-10-26. [起動メイン][手札を1枚場外に置く][ターン1]: this physical card discards one hand card, then cannot be blocked by BP 4000 or higher this turn. Q1032 (2024-07-19): discarding 斬月 this way triggers 斬月. No generated-energy normalization.':
+    profile.id==='BLC-4-003'?
+      'EX15BT/BLC-4-003 official iframe 2026-10-26. Empty own field reduces this hand card by yellow×2, which equals its printed yellow 2. Step. On retire during its own turn, up to one opposing front character of live BP 1500 or more gets BP-1000. Generated energy is 黄. ACTIVE is generic. No card FAQ.':
       'EX15BT/BLC-4-042 printed base BLUE BLUE=2 but legacy gen=3; audited sourceRecord.gen=2 retains legacyImportedGen=3; official Q2323 and full three-mode tests.':
     'Official printed '+profile.number+'; profile '+profile.kind+
      '; fingerprint matched source text and printed stats. V2 program/trigger tests exist; NOT per-card complete FAQ acceptance.',

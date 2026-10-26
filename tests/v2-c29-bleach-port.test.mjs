@@ -6,7 +6,7 @@ import {registeredV2TitlePack} from '../dist/universal-v2/title-packs/registry.m
 import {cardHasName,cardHasTrait} from '../dist/universal-v2/field-conditions.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  assertUniversalMatch,universalBp,universalImpact,universalEnergyByColor,universalCardEnergy,
- universalPublicView,universalPrivateChoices} from '../dist/universal-v2/engine.mjs';
+ universalPublicView,universalPrivateChoices,effectiveHandRequiredEnergy} from '../dist/universal-v2/engine.mjs';
 import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
 import {grantContinuousState} from '../dist/universal-v2/continuous-states.mjs';
 import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v2-integrated-id-manifest.mjs';
@@ -120,9 +120,13 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 //   card sends one hand card outside, then cannot be blocked by BP 4000+.
 //   Official iframe 2026-10-26. Q1032 (2024-07-19): discarding 斬月 triggers it.
 //   Generated energy is 青. No traits.
+// BLC-4-003 EX15BT: empty own field reduces this hand card by 黄×2.
+//   Step. On retire during its own turn, up to one opposing front character
+//   of live BP 1500+ gets BP-1000. Official iframe 2026-10-26. Generated 黄.
+//   ACTIVE is generic. No card FAQ.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -193,12 +197,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers forty-five whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,481);
- assert.equal(EXPECTED_V2_COUNTS.bleach,205);
+test('C29 registers forty-six whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,482);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,206);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,205);
+ assert.equal(Object.keys(bleach.cards).length,206);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -3528,4 +3532,70 @@ test('BLC-2-017 discards one hand card and cannot be blocked by BP 4000+',()=>{
  assert.equal(assertUniversalMatch(first.packs,battle),true);
  assert.equal(assertUniversalMatch(again.packs,once),true);
  assert.equal(assertUniversalMatch(quiet.packs,quiet.s),true);
+});
+
+test('BLC-4-003 discounts an empty field, steps, and cuts BP only on its own retire turn',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-4-003');
+ assert.equal(printed.effect,'自己場上沒有任何卡片時，手牌中的此卡所需黃色能量減少2。Step：移動階段可從前線移至能量線。退場時：若為自己的回合，最多選1個對方前線BP1500以上的角色，本回合BP−1000。');
+ assert.deepEqual(printed.traits,['星十字騎士團']);
+ assert.equal(printed.gen,1);
+ const card=bleach.cards['BLC-4-003'];
+ assert.equal(card.energy,2);
+ assert.equal(card.gen,1);
+ assert.equal(card.step,true);
+ assert.equal(card.emptyOwnFieldHandEnergyDiscount,2);
+ assert.equal(card.trigger,'active');
+ assert.equal(card.triggerEffect,null);
+ assert.equal(card.effects.onRetire[0].ownTurnOnly,true);
+ assert.equal(card.effects.onRetire[0].minBp,1500);
+ const deck=realDeck(['BLC-4-003','BLC-1-023','BLC-1-018','BLC-1-012','BLC-1-002'],'yellow');
+ const cost=main(deck,29903);
+ assert.equal(effectiveHandRequiredEnergy(cost.packs,cost.s,0,card),0);
+ put(cost.s,0,'BLC-1-002','front',0);
+ assert.equal(effectiveHandRequiredEnergy(cost.packs,cost.s,0,card),2);
+ const packs=[bleach,bleach];
+ let moving=newUniversalMatch(packs,{decks:[deck,deck],seed:29904,first:0});
+ for(let n=0;n<8&&moving.phase!=='move';n++)
+  moving=dispatchUniversalAction(packs,moving,{type:'next'});
+ const stepper=put(moving,0,'BLC-4-003','front',0,true);
+ const step=legalUniversalActions(packs,moving).find(a=>a.type==='step'&&a.uid===stepper.uid);
+ assert.ok(step);
+ moving=dispatchUniversalAction(packs,moving,step);
+ assert.equal(moving.players[0].energy.some(c=>c?.uid===stepper.uid),true);
+ const own=main(deck,29905);
+ const self=put(own.s,0,'BLC-4-003','front',0,true);
+ const wall=put(own.s,1,'BLC-1-023','front',0,true);
+ const edge=put(own.s,1,'BLC-1-018','front',1,true);
+ const low=put(own.s,1,'BLC-1-012','front',2,true);
+ low.buffs=[{bp:-500,untilTurn:own.s.turn}];
+ assert.equal(universalBp(own.packs,own.s,low),1000);
+ let battle=own.s;
+ for(let n=0;n<6&&battle.phase!=='attack';n++)
+  battle=dispatchUniversalAction(own.packs,battle,{type:'next'});
+ live(battle,0,self.uid).ready=true;
+ battle=dispatchUniversalAction(own.packs,battle,{type:'attack',uid:self.uid});
+ battle=dispatchUniversalAction(own.packs,battle,{type:'chooseBlock',uid:wall.uid},{actor:1});
+ assert.equal(battle.players[0].front.some(c=>c?.uid===self.uid),false);
+ assert.equal(battle.pending.kind,'effect-target');
+ const targets=legalUniversalActions(own.packs,battle).filter(a=>a.type==='chooseTarget').map(a=>a.uid);
+ assert.equal(targets.includes(wall.uid),true);
+ assert.equal(targets.includes(edge.uid),true);
+ assert.equal(targets.includes(low.uid),false);
+ assert.equal(targets.includes(null),true);
+ battle=dispatchUniversalAction(own.packs,battle,{type:'chooseTarget',uid:wall.uid});
+ assert.equal(universalBp(own.packs,battle,live(battle,1,wall.uid)),3000);
+ let theirs=newUniversalMatch(packs,{decks:[deck,deck],seed:29906,first:1});
+ for(let n=0;n<8&&theirs.phase!=='attack';n++)
+  theirs=dispatchUniversalAction(packs,theirs,{type:'next'});
+ const attacker=put(theirs,1,'BLC-1-023','front',0,true);
+ const blocker=put(theirs,0,'BLC-4-003','front',0,true);
+ theirs=dispatchUniversalAction(packs,theirs,{type:'attack',uid:attacker.uid});
+ theirs=dispatchUniversalAction(packs,theirs,{type:'chooseBlock',uid:blocker.uid},{actor:0});
+ assert.equal(theirs.players[0].outside.some(c=>c.uid===blocker.uid),true);
+ assert.equal(theirs.pending,null);
+ aiOk(own.packs,battle);
+ assert.equal(assertUniversalMatch(cost.packs,cost.s),true);
+ assert.equal(assertUniversalMatch(packs,moving),true);
+ assert.equal(assertUniversalMatch(own.packs,battle),true);
+ assert.equal(assertUniversalMatch(packs,theirs),true);
 });

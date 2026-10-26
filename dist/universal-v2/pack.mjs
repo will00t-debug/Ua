@@ -928,7 +928,8 @@ function verifyProgram(program,path){
    (e.maxBp!==undefined&&(!integer(e.maxBp,0)||e.maxBp>50000))||
    (e.minBp!==undefined&&e.maxBp!==undefined&&e.minBp>e.maxBp)||
    (e.zone!==undefined&&e.zone!=='front'&&e.zone!=='field')||
-   Object.keys(e).some(k=>!['op','bp','optional','minBp','maxBp','zone','maxTargets'].includes(k))
+   (e.ownTurnOnly!==undefined&&e.ownTurnOnly!==true)||
+   Object.keys(e).some(k=>!['op','bp','optional','minBp','maxBp','zone','maxTargets','ownTurnOnly'].includes(k))
   ))throw Error(path+'['+i+'] invalid optional targeting flag');
   if(e.op==='activeSelfIf'&&(
    (e.when===undefined&&e.entry===undefined&&e.line===undefined)||
@@ -1607,7 +1608,7 @@ function normalize(card,packId){
   if(program.some(e=>e.op==='grantSelfAttackDamageThisTurn')&&name!=='onPlay')
    throw Error(card.id+' earned attack damage is only an onPlay effect');
   if(name==='onRetire'&&
-   (!['character','field'].includes(card.type)||program.some(e=>!['draw','millTop','drawIfOwnFieldExists','chooseOne','deployOutsideTraitlessRestOrRaid','retireOppFrontOneUnderBp','restOppFrontUnderBp','buffOwnField','deployNamedFromZones','oncePerTurnGate','returnRetiredToHand'].includes(e.op))))
+   (!['character','field'].includes(card.type)||program.some(e=>!['draw','millTop','drawIfOwnFieldExists','chooseOne','deployOutsideTraitlessRestOrRaid','retireOppFrontOneUnderBp','restOppFrontUnderBp','buffOwnField','deployNamedFromZones','oncePerTurnGate','returnRetiredToHand','enemyBpDown'].includes(e.op))))
    throw Error(card.id+' unsupported onRetire ability program');
   if(name==='onRetire'&&program.some(e=>e.op==='deployNamedFromZones')&&
    (card.type!=='character'||program.length!==1||

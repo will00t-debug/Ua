@@ -1557,6 +1557,8 @@ function continueEffectQueue(pack,s){
      movers:movers.map(c=>c.uid),slots};
    }
   }else if(job.op==='enemyBpDown'){
+   // 自分のターン中の場合. An opponent-turn retirement does not open the choice.
+   if(job.ownTurnOnly===true&&s.active!==owner)continue;
    const foe=1-owner;
    // The printed BP window is read once, when the choice opens. Applying the
    // reduction must not rebuild the set, or a card that falls under the floor
