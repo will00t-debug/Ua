@@ -87,7 +87,7 @@ function keepHand(s,p,cards){
 }
 
 test('C26 registers nine whole prints and reads the bonus name from the sentence',()=>{
- assert.equal(EXPECTED_V2_TOTAL,480);
+ assert.equal(EXPECTED_V2_TOTAL,481);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  assert.equal(EXPECTED_V2_COUNTS['mushoku-tensei'],60);
  assert.equal(parseNamedFieldRetireBonus(

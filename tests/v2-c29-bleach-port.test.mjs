@@ -116,9 +116,13 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 //   one purple 〈黒崎 一護〉 of required energy exactly 0 from own outside,
 //   REST, onto own field. Official iframe 2026-10-26: 紫-, generated 紫,
 //   AP1, BP500, DRAW, no traits, no card FAQ. AP is not a filter.
+// BLC-2-017 EX07BT: [起動メイン][手札を1枚場外に置く][ターン1]. This physical
+//   card sends one hand card outside, then cannot be blocked by BP 4000+.
+//   Official iframe 2026-10-26. Q1032 (2024-07-19): discarding 斬月 triggers it.
+//   Generated energy is 青. No traits.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -189,12 +193,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers forty-four whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,480);
- assert.equal(EXPECTED_V2_COUNTS.bleach,204);
+test('C29 registers forty-five whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,481);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,205);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,204);
+ assert.equal(Object.keys(bleach.cards).length,205);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -3451,4 +3455,77 @@ test('BLC-4-047 rests, retires, and may REST-play one energy-0 purple Ichigo',()
  assert.equal(assertUniversalMatch(empty.packs,spent),true);
  assert.equal(assertUniversalMatch(resting.packs,resting.s),true);
  assert.equal(assertUniversalMatch(labPacks,raidPlay),true);
+});
+
+test('BLC-2-017 discards one hand card and cannot be blocked by BP 4000+',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-2-017');
+ assert.equal(printed.effect,'主要階段・每回合 1 次：將 1 張手牌送至場外，使此角色本回合不能被 BP 4000 以上角色阻擋。');
+ assert.equal(printed.traits,'無');
+ assert.equal(printed.gen,1);
+ const card=bleach.cards['BLC-2-017'];
+ assert.equal(card.energy,2);
+ assert.equal(card.ap,1);
+ assert.equal(card.bp,3000);
+ assert.equal(card.gen,1);
+ assert.equal(card.trigger,null);
+ assert.deepEqual(card.traits,[]);
+ assert.equal(card.mainAbility.op,'oncePayProgram');
+ assert.equal(card.mainAbility.payAp,0);
+ assert.equal(card.mainAbility.then[0].then[0].op,'grantSelfBlockAtLeast');
+ assert.equal(card.mainAbility.then[0].then[0].bp,4000);
+ const deck=realDeck(['BLC-2-017','BLC-2-021','BLC-2-031','BLC-2-016','BLC-2-026'],'blue');
+ const first=main(deck,29817);
+ const self=put(first.s,0,'BLC-2-017','front',0,true);
+ const sword=take(first.s,0,'BLC-2-021');
+ first.s.players[0].hand.push(sword);
+ assert.equal(legalUniversalActions(first.packs,first.s).some(a=>a.type==='chooseDiscardGate'&&a.uid===null),false);
+ let paid=dispatchUniversalAction(first.packs,first.s,{type:'activate',uid:self.uid,mode:'oncePay'});
+ assert.equal(paid.pending.kind,'effect-discard-gate');
+ assert.equal(legalUniversalActions(first.packs,paid).some(a=>a.uid===null),false);
+ aiOk(first.packs,paid);
+ paid=dispatchUniversalAction(first.packs,paid,{type:'chooseDiscardGate',uid:sword.uid});
+ assert.equal(paid.pending.kind,'effect-grant-cause');
+ assert.equal(live(paid,0,self.uid).blockAtLeastGranted.bp,4000);
+ paid=dispatchUniversalAction(first.packs,paid,{type:'chooseGrantCause',mode:'grant'});
+ assert.equal(live(paid,0,self.uid).blockFloorGranted.bp,3000);
+ const huge=put(paid,1,'BLC-2-026','front',0,true);
+ huge.buffs=[{bp:1000,untilTurn:paid.turn}];
+ const mid=put(paid,1,'BLC-2-031','front',1,true);
+ mid.buffs=[{bp:2000,untilTurn:paid.turn}];
+ const small=put(paid,1,'BLC-2-016','front',2,true);
+ assert.equal(universalBp(first.packs,paid,huge)>=4000,true);
+ assert.equal(universalBp(first.packs,paid,mid),3500);
+ let battle=paid;
+ for(let n=0;n<6&&battle.phase!=='attack';n++)
+  battle=dispatchUniversalAction(first.packs,battle,{type:'next'});
+ live(battle,0,self.uid).ready=true;
+ battle=dispatchUniversalAction(first.packs,battle,{type:'attack',uid:self.uid});
+ assert.equal(battle.pending.kind,'block');
+ const blocks=legalUniversalActions(first.packs,battle).filter(a=>a.type==='chooseBlock').map(a=>a.uid);
+ assert.equal(blocks.includes(huge.uid),false);
+ assert.equal(blocks.includes(mid.uid),true);
+ assert.equal(blocks.includes(small.uid),false);
+ assert.equal(blocks.includes(null),true);
+ const again=main(deck,29818);
+ const used=put(again.s,0,'BLC-2-017','front',0,true);
+ const other=put(again.s,0,'BLC-2-017','energy',0,true);
+ const spare=take(again.s,0,'BLC-2-031');
+ again.s.players[0].hand.push(spare);
+ let once=dispatchUniversalAction(again.packs,again.s,{type:'activate',uid:used.uid,mode:'oncePay'});
+ const dumped=again.s.players[0].hand[0];
+ once=dispatchUniversalAction(again.packs,once,{type:'chooseDiscardGate',uid:dumped.uid});
+ assert.equal(once.pending,null);
+ assert.equal(legalUniversalActions(again.packs,once).some(a=>a.uid===used.uid&&a.mode==='oncePay'),false);
+ assert.equal(legalUniversalActions(again.packs,once).some(a=>a.uid===other.uid&&a.mode==='oncePay'),true);
+ const quiet=main(deck,29819);
+ const lined=put(quiet.s,0,'BLC-2-017','energy',0,false);
+ const emptyHand=quiet.s.players[0].hand.splice(0);
+ quiet.s.players[0].outside.push(...emptyHand);
+ assert.equal(legalUniversalActions(quiet.packs,quiet.s).some(a=>a.mode==='oncePay'),false);
+ quiet.s.players[0].hand.push(quiet.s.players[0].outside.pop());
+ assert.equal(legalUniversalActions(quiet.packs,quiet.s).some(a=>a.uid===lined.uid&&a.mode==='oncePay'),true);
+ aiOk(first.packs,battle);
+ assert.equal(assertUniversalMatch(first.packs,battle),true);
+ assert.equal(assertUniversalMatch(again.packs,once),true);
+ assert.equal(assertUniversalMatch(quiet.packs,quiet.s),true);
 });
