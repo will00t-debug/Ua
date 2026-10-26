@@ -112,9 +112,13 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 //   outside has no 〈ユーハバッハ〉 and own field has 〈ユーグラム・ハッシュヴァルト〉.
 //   Official iframe 2026-10-26: required 黄3, generated 黄黄, BP 3000+, no trigger,
 //   no card FAQ. Catalogue gen=3 is the sprite index.
+// BLC-4-047 EX15BT: [起動メイン][レストにする][このカードを退場させる], then up to
+//   one purple 〈黒崎 一護〉 of required energy exactly 0 from own outside,
+//   REST, onto own field. Official iframe 2026-10-26: 紫-, generated 紫,
+//   AP1, BP500, DRAW, no traits, no card FAQ. AP is not a filter.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -185,12 +189,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers forty-three whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,479);
- assert.equal(EXPECTED_V2_COUNTS.bleach,203);
+test('C29 registers forty-four whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,480);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,204);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,203);
+ assert.equal(Object.keys(bleach.cards).length,204);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -3336,4 +3340,115 @@ test('BLC-4-006 gains 1000 on its turn when Haschwalth is on the field and Yhwac
  assert.equal(assertUniversalMatch(fought.packs,battle),true);
  assert.equal(assertUniversalMatch(control.packs,hit),true);
  assert.equal(assertUniversalMatch(labPacks,aliasBoard),true);
+});
+
+test('BLC-4-047 rests, retires, and may REST-play one energy-0 purple Ichigo',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-4-047');
+ assert.equal(printed.effect,'啟動・主要〔改為Rest，並使此卡退場〕：可從自己場外將最多1張所需能量0的紫色《黑崎一護》以Rest登場。');
+ assert.deepEqual(printed.traits,[]);
+ assert.equal(printed.energy,0);
+ assert.equal(printed.ap,1);
+ assert.equal(printed.bp,500);
+ assert.equal(printed.gen,1);
+ assert.equal(printed.trigger,'draw');
+ const ability={op:'restRetireExactOutside',name:'黒崎 一護',color:'purple',energy:0,optional:true};
+ const card=bleach.cards['BLC-4-047'];
+ assert.equal(card.gen,1);
+ assert.equal(card.trigger,'draw');
+ assert.equal(card.triggerEffect,null);
+ assert.deepEqual(card.traits,[]);
+ assert.deepEqual(card.effects,{});
+ assert.deepEqual(card.mainAbility,ability);
+ const bare={id:'BAD',name:'BAD',color:'purple',type:'character',energy:0,ap:1,bp:500,gen:1,traits:[],trigger:null,implementation:'dsl',effects:{}};
+ assert.throws(()=>createUniversalPack({id:'bad-ap',cards:[{...bare,mainAbility:{...ability,ap:1}}]}),/unsupported main action ability/);
+ assert.throws(()=>createUniversalPack({id:'old-rest',cards:[{...bare,effects:{onPlay:[{op:'deployOutsideRest',name:'黒崎 一護',color:'purple',energy:0,optional:true}]}}]}),/invalid outside-to-REST/);
+ const deck=realDeck(['BLC-4-047','BLC-1-039','BLC-1-040','BLC-1-034'],'purple');
+ const first=main(deck,29747);
+ const self=put(first.s,0,'BLC-4-047','front',0,true);
+ const ichigo=take(first.s,0,'BLC-1-039');
+ const costly=take(first.s,0,'BLC-1-040');
+ const other=take(first.s,0,'BLC-1-034');
+ first.s.players[0].outside.push(ichigo,costly,other);
+ const act=legalUniversalActions(first.packs,first.s).find(a=>a.type==='activate'&&a.mode==='restRetireExact'&&a.uid===self.uid);
+ assert.ok(act);
+ let played=dispatchUniversalAction(first.packs,first.s,act);
+ assert.equal(played.pending.kind,'effect-outside-exact-rest');
+ assert.deepEqual(played.pending.choices,[ichigo.uid]);
+ assert.equal(played.players[0].front.some(c=>c?.uid===self.uid),false);
+ assert.equal(played.players[0].outside.some(c=>c.uid===self.uid),true);
+ aiOk(first.packs,played);
+ played=dispatchUniversalAction(first.packs,played,{type:'chooseOutsideExactRest',uid:null});
+ assert.equal(played.pending,null);
+ assert.equal(played.players[0].outside.some(c=>c.uid===ichigo.uid),true);
+ const entered=main(deck,29748);
+ const kon=put(entered.s,0,'BLC-4-047','front',0,true);
+ const body=take(entered.s,0,'BLC-1-039');
+ entered.s.players[0].outside.push(body);
+ const beforeDeck=entered.s.players[0].deck.length;
+ let landed=dispatchUniversalAction(entered.packs,entered.s,{type:'activate',uid:kon.uid,mode:'restRetireExact'});
+ const choice=legalUniversalActions(entered.packs,landed).find(a=>a.type==='chooseOutsideExactRest'&&a.uid===body.uid&&a.line==='front'&&a.replaceUid===undefined);
+ assert.ok(choice);
+ landed=dispatchUniversalAction(entered.packs,landed,choice);
+ assert.equal(landed.players[0].front.find(c=>c?.uid===body.uid).ready,false);
+ assert.equal(landed.players[0].outside.some(c=>c.uid===kon.uid),true);
+ assert.equal(landed.players[0].deck.length,beforeDeck);
+ const again=put(landed,0,'BLC-4-047','front',1,true);
+ assert.ok(legalUniversalActions(entered.packs,landed).some(a=>a.mode==='restRetireExact'&&a.uid===again.uid));
+ const fromEnergy=main(deck,29749);
+ const lined=put(fromEnergy.s,0,'BLC-4-047','energy',0,true);
+ const moved=take(fromEnergy.s,0,'BLC-1-039');
+ fromEnergy.s.players[0].outside.push(moved);
+ let energyPlay=dispatchUniversalAction(fromEnergy.packs,fromEnergy.s,{type:'activate',uid:lined.uid,mode:'restRetireExact'});
+ const energyChoice=legalUniversalActions(fromEnergy.packs,energyPlay).find(a=>a.type==='chooseOutsideExactRest'&&a.uid===moved.uid&&a.line==='energy');
+ assert.ok(energyChoice);
+ energyPlay=dispatchUniversalAction(fromEnergy.packs,energyPlay,energyChoice);
+ assert.equal(energyPlay.players[0].energy.find(c=>c?.uid===moved.uid).ready,false);
+ const empty=main(deck,29750);
+ const lonely=put(empty.s,0,'BLC-4-047','front',0,true);
+ let spent=dispatchUniversalAction(empty.packs,empty.s,{type:'activate',uid:lonely.uid,mode:'restRetireExact'});
+ assert.equal(spent.pending,null);
+ assert.equal(spent.players[0].outside.some(c=>c.uid===lonely.uid),true);
+ const resting=main(deck,29751);
+ const asleep=put(resting.s,0,'BLC-4-047','front',0,false);
+ assert.equal(legalUniversalActions(resting.packs,resting.s).some(a=>a.mode==='restRetireExact'),false);
+ const vanilla={...bare,implementation:'vanilla',effects:{}};
+ const fillers=Array.from({length:8},(_,i)=>({...vanilla,id:'F'+i,name:'余'+i}));
+ const lab=createUniversalPack({id:'lab-kon',cards:[
+  {...bare,id:'KON',name:'コン',mainAbility:ability},
+  {...bare,id:'RAID',name:'黒崎 一護',ap:2,raidName:'黒崎 一護',effects:{onPlay:[{op:'draw',count:1}]}},
+  {...vanilla,id:'ONE',name:'黒崎 一護',energy:1},
+  {...vanilla,id:'BLUE',name:'黒崎 一護',color:'blue'},
+  {...vanilla,id:'OTHER',name:'浦原 喜助'},
+  ...fillers]});
+ const labIds=['KON','RAID','ONE','BLUE','OTHER',...fillers.map(c=>c.id)];
+ const labCounts=Object.fromEntries(labIds.map((id,i)=>[id,i===labIds.length-1?2:4]));
+ assert.deepEqual(validateUniversalDeck(lab,labCounts),[]);
+ const labPacks=[lab,lab];
+ let board=newUniversalMatch(labPacks,{decks:[labCounts,labCounts],seed:29752,first:0});
+ for(let n=0;n<8&&board.phase!=='main';n++)
+  board=dispatchUniversalAction(labPacks,board,{type:'next'});
+ const source=put(board,0,'KON','front',0,true);
+ const raid=take(board,0,'RAID');
+ const one=take(board,0,'ONE');
+ const blue=take(board,0,'BLUE');
+ const named=take(board,0,'OTHER');
+ board.players[0].outside.push(raid,one,blue,named);
+ const deckBefore=board.players[0].deck.length;
+ let raidPlay=dispatchUniversalAction(labPacks,board,{type:'activate',uid:source.uid,mode:'restRetireExact'});
+ const uids=legalUniversalActions(labPacks,raidPlay).filter(a=>a.type==='chooseOutsideExactRest'&&a.uid).map(a=>a.uid);
+ assert.deepEqual([...new Set(uids)],[raid.uid]);
+ const raidChoice=legalUniversalActions(labPacks,raidPlay).find(a=>a.uid===raid.uid&&a.line==='front'&&a.mode===undefined);
+ assert.ok(raidChoice);
+ raidPlay=dispatchUniversalAction(labPacks,raidPlay,raidChoice);
+ const arrived=raidPlay.players[0].front.find(c=>c?.uid===raid.uid);
+ assert.equal(arrived.ready,false);
+ assert.equal(arrived.stack?.length||0,0);
+ assert.equal(raidPlay.players[0].deck.length,deckBefore-1);
+ aiOk(empty.packs,spent);
+ assert.equal(assertUniversalMatch(first.packs,played),true);
+ assert.equal(assertUniversalMatch(entered.packs,landed),true);
+ assert.equal(assertUniversalMatch(fromEnergy.packs,energyPlay),true);
+ assert.equal(assertUniversalMatch(empty.packs,spent),true);
+ assert.equal(assertUniversalMatch(resting.packs,resting.s),true);
+ assert.equal(assertUniversalMatch(labPacks,raidPlay),true);
 });

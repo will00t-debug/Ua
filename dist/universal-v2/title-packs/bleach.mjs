@@ -130,7 +130,8 @@ const testForKind=Object.freeze({
  replayOnPlayDown:'tests/v2-c29-bleach-port.test.mjs',
  stepDrawNameActive:'tests/v2-c29-bleach-port.test.mjs',
  reducedFrontNameActive:'tests/v2-c29-bleach-port.test.mjs',
- outsideAbsentFieldNameBp:'tests/v2-c29-bleach-port.test.mjs'
+ outsideAbsentFieldNameBp:'tests/v2-c29-bleach-port.test.mjs',
+ restRetireZeroIchigo:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
