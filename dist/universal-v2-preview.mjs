@@ -5,7 +5,8 @@ import {createAllV2PreviewRealDecks} from './universal-v2/preview-real-decks.mjs
 import {summarizeDesignatedDecks,designatedPlayableCounts} from './universal-v2/bleach-designated-decks.mjs';
 import {validateUniversalDeck} from './universal-v2/pack.mjs';
 import {V2_ABILITY_TEMPLATE_IDS} from './universal-v2/ability-templates.mjs';
-import {listRegisteredV2Titles} from './universal-v2/title-packs/registry.mjs';
+import {listRegisteredV2Titles,registeredV2TitlePack} from './universal-v2/title-packs/registry.mjs';
+import {V2_EDITOR_TRANSFER_KEY} from './v2-editor-compat.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  universalPublicView,universalPrivateChoices,assertUniversalMatch} from './universal-v2/engine.mjs';
 import {chooseUniversalAiAction} from './universal-v2/ai.mjs';
@@ -621,6 +622,28 @@ function importClassicLobbyDecks(){
  if(notices.length)$('restart-notice').textContent=notices.join(' ');
 }
 importClassicLobbyDecks();
+// V2-only editor handoff: validate title, complete-card registry and printed deck rules.
+// Never use legacy auto flags or a legacy battle reducer.
+function importV2EditorDeck(){
+ let raw=null;
+ try{raw=JSON.parse(sessionStorage.getItem(V2_EDITOR_TRANSFER_KEY)||'null');
+  sessionStorage.removeItem(V2_EDITOR_TRANSFER_KEY);}catch{return;}
+ if(!raw||typeof raw!=='object')return;
+ const reject=message=>{$('restart-notice').textContent='組卡頁的牌組無法進入 V2：'+message;};
+ const pack=typeof raw.title==='string'?registeredV2TitlePack(raw.title):null;
+ if(!pack){reject('該作品尚未開放正式 V2 卡包');return;}
+ const counts=raw.counts;
+ if(!counts||typeof counts!=='object'||Array.isArray(counts)){reject('牌組格式錯誤');return;}
+ const errors=validateUniversalDeck(pack,counts);
+ if(errors.length){reject(errors.slice(0,2).join('；'));return;}
+ const value='editor-v2-mine';
+ const name=typeof raw.name==='string'&&raw.name.trim()?raw.name.trim().slice(0,40):'自訂 V2 牌組';
+ designatedReady.set(value,{pack,counts:Object.freeze({...counts}),label:name});
+ $('my-title').append(el('option',{value,text:'我的 V2 牌組｜'+name}));
+ $('my-title').value=value;
+ $('restart-notice').textContent='已載入 V2 組卡頁的 50 張牌組：'+name+'。可以直接開始與 AI 對戰。';
+}
+importV2EditorDeck();
 function startGame(){
  resetAi();
  try{
