@@ -458,7 +458,7 @@ export const REZERO_CARDS=[
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-011.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA40BT%2FREZ-1-011",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "ramSubstituteDown",
   "handDiscount": null,
   "altNames": []
  },
@@ -816,7 +816,7 @@ export const REZERO_CARDS=[
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-020.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA40BT%2FREZ-1-020",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "remTraitlessSniper",
   "handDiscount": null,
   "altNames": []
  },
@@ -2115,7 +2115,7 @@ export const REZERO_CARDS=[
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-052.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA40BT%2FREZ-1-052",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "remSubaruEntryChoice",
   "handDiscount": null,
   "altNames": []
  },
@@ -2991,7 +2991,7 @@ export const REZERO_CARDS=[
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40BT_REZ-1-074.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA40BT%2FREZ-1-074",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "beatriceBounceInstead",
   "handDiscount": null,
   "altNames": []
  },
@@ -4076,7 +4076,7 @@ export const REZERO_CARDS=[
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA40ST_REZ-1-101.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA40ST%2FREZ-1-101",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "subaruFacedownReturn",
   "handDiscount": null,
   "altNames": []
  },

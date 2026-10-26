@@ -87,6 +87,11 @@ export function rezeroEngineKind(effectJa){
  if(e===FERRIS_BOTTOM_OUTSIDE)return 'ferrisBottomOutside';
  if(e===FLUGEL_REVEAL_RETIRE)return 'flugelRevealRetire';
  if(e===FELT_PAY_BLOCK)return 'feltPayBlock';
+ if(e===RAM_SUBSTITUTE_DOWN)return 'ramSubstituteDown';
+ if(e===REM_TRAITLESS_SNIPER)return 'remTraitlessSniper';
+ if(e===REM_SUBARU_ENTRY)return 'remSubaruEntryChoice';
+ if(e===BEATRICE_BOUNCE_INSTEAD)return 'beatriceBounceInstead';
+ if(e===SUBARU_FACEDOWN_RETURN)return 'subaruFacedownReturn';
  return null;
 }
 const TOP_OUTSIDE=new Map([
@@ -107,6 +112,11 @@ const FERRIS_BOTTOM_OUTSIDE='【レイド】〈フェリス〉アクティブに
 const CRUSCH_HAND_BP='【レイド】〈クルシュ・カルステン〉アクティブにし、フロントLに移動できる【フロントLにある場合】自分の効果で自分の手札のキャラカードのBPを参照する場合、BP+1000されたものとして扱ってもよい。【登場時】自分の山札の上から2枚見る。その中からカードを1枚手札に加え、残りを場外に置く。【起動メイン】【フロントLにある場合】 【ターン1】自分か相手の場のキャラを1枚まで選び、このターン中、BP+1000。';
 const FLUGEL_REVEAL_RETIRE='【起動メイン】【レストにする】 【このカードを退場させる】自分の手札を1枚公開し、自分の山札の下に置く。公開したカードがキャラカードの場合、公開したカードのBP以下の相手のフロントLのキャラを1枚まで選び、退場させる。〈フリューゲルの大樹〉のこの効果は1ターンに1回のみ発動できる。';
 const FELT_PAY_BLOCK='【登場時】APを1支払ってもよい。そうした場合、以下から1つ選ぶ。・相手は自身の手札を1枚場外に置き、自分はカードを1枚引く。・このキャラをアクティブにし、自分の場外から〈徽章〉を1枚まで手札に加える。【起動メイン】【手札を1枚場外に置く】 【ターン1】このキャラはこのターン中、「このキャラはBP4000以上のキャラにブロックされない。」を得る。';
+const RAM_SUBSTITUTE_DOWN='【レイド】〈ラム〉アクティブにし、フロントLに移動できる【相手のターン中】【フロントLにある場合】自分の場の〈レム〉が相手の効果で退場する場合、代わりにこのキャラを退場させてもよい。【登場時】以下から1つ選ぶ。・BP1500以上の相手のフロントLのキャラ全ては、このターン中、BP-1000。・BP2500以上の相手のフロントLのキャラを1枚まで選び、このターン中、BP-2000。';
+const REM_TRAITLESS_SNIPER='【レイド】〈レム〉アクティブにし、フロントLに移動できる【登場時】自分の場にあるキャラが全て特徴を持たない場合、このキャラはこのターン中、【インパクト（1）】を得る。【起動メイン】【ターン1】このキャラはこのターン中、【狙い撃ち】（相手のフロントLのキャラを指定してアタックでき、指定した場合、相手はブロックできない）と「このキャラはBP4000以上のキャラを【狙い撃ち】で指定できない。」を得る。このキャラのレイド元のカードを1枚場外に置く。';
+const REM_SUBARU_ENTRY='【登場時】以下から1つ選ぶ。・自分の場外から必要エナジーが0の青の〈ナツキ・スバル〉を1枚まで自分の場にアクティブで登場させる。・自分の場のキャラを1枚手札に戻してもよい。そうした場合、このキャラをアクティブにし、自分の場外から必要エナジーを満たし消費APが1の青の〈ナツキ・スバル〉を1枚まで自分の場にレストで登場させるかレイドさせる。';
+const BEATRICE_BOUNCE_INSTEAD='【登場時】自分の場の〈ナツキ・スバル〉を1枚まで選び、次の自分のターン開始時まで、「このキャラが手札に戻す効果以外の相手の効果で場を離れる場合、代わりに手札に戻す。」を与える。';
+const SUBARU_FACEDOWN_RETURN='【自分のターン中】このキャラの下に裏向きのカードがある場合、このキャラはBP+1000。【退場時】自分の場に〈エミリア〉があり、このキャラの下に裏向きのカードがない場合、自分の手札を1枚場外に置いてもよい。そうした場合、このキャラを自分のフロントLにレストで登場させ、この効果で場外に置いたカードを裏向きでこのキャラの下に置く。';
 const TRIAL_NAME=REZERO_CARDS.find(c=>c.id==='REZ-1-098').nameJa;
 const SEARCH_SEVEN='【登場時】自分の山札の上から7枚見る。その中から〈'+TRIAL_NAME+'〉を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。';
 const ALIAS_PREFIX='このカードは〈クルシュ・カルステン〉としても〈フェリス〉としても扱う。';
@@ -207,6 +217,20 @@ function onPlay(card,kind){
   {id:'activeBadge',label:'使這張角色活動，並將場外徽章加入手牌',turn:'any',
    then:[{op:'activeSelf'},{op:'recoverOutsideOne',filter:{field:'name',value:'徽章'},optional:true}]}
  ]}]}];
+ if(kind==='ramSubstituteDown')return [{op:'chooseOne',optional:false,options:[
+  {id:'allDown',label:'所有對手前線BP1500以上本回合BP-1000',turn:'any',
+   then:[{op:'enemyFrontAllBpDown',bp:1000,minBp:1500}]},
+  {id:'oneDown',label:'最多1張對手前線BP2500以上本回合BP-2000',turn:'any',
+   then:[{op:'enemyBpDown',bp:2000,optional:true,minBp:2500,zone:'front'}]}
+ ]}];
+ if(kind==='remTraitlessSniper')return [{op:'impactIfEveryOwnTraitless'}];
+ if(kind==='remSubaruEntryChoice')return [{op:'chooseOne',optional:false,options:[
+  {id:'activeZero',label:'使場外能源0的藍色菜月昴以活動狀態登場',turn:'any',
+   then:[{op:'deployOutsidePrintedActive',name:'ナツキ・スバル',color:'blue',energy:0,optional:true}]},
+  {id:'bounceRaid',label:'可將1張場上角色放回手牌，再休息登場或突襲菜月昴',turn:'any',
+   then:[{op:'bounceThenAffordableSubaru',name:'ナツキ・スバル',color:'blue',ap:1}]}
+ ]}];
+ if(kind==='beatriceBounceInstead')return [{op:'grantBounceInstead',name:'ナツキ・スバル',optional:true}];
  return null;
 }
 export function rezeroPackCard(card){
@@ -284,6 +308,7 @@ export function rezeroPackCard(card){
     onAttack:[{op:'optionalPayApThen',ap:1,optional:true,oncePerAttackTurn:true,then:[
      {op:'revealTopHandOrAffordableNamed',names:['ベアトリス']}]}]}:
    kind==='deckCharacterEntryActive'?{onPlay:[{op:'activeSelfIf',entry:'ownEffect'}]}:
+   kind==='subaruFacedownReturn'?{onRetire:[{op:'handOutsideReenterFaceDown',name:'エミリア'}]}:
    ops?{onPlay:ops}:{},
   ...(kind==='step'||kind==='emptyFieldStep'?{step:true}:{}),
   ...(kind==='impactNull'||kind==='alsoEvent'?{impactNull:true}:{}),
@@ -371,6 +396,11 @@ export function rezeroPackCard(card){
   ...(kind==='ferrisBottomOutside'?{raidName:'フェリス'}:{}),
   ...(kind==='flugelRevealRetire'?{mainAbility:{op:'restLeaveRevealRetire',oncePerName:true}}:{}),
   ...(kind==='feltPayBlock'?{mainAbility:{op:'handOutsideBlockAtLeast',oncePerTurn:true,bp:4000}}:{}),
+  ...(kind==='ramSubstituteDown'?{raidName:'ラム',substituteOppRetire:{name:'レム'}}:{}),
+  ...(kind==='remTraitlessSniper'?{raidName:'レム',mainAbility:{
+   op:'sniperThenRaidBaseOutside',oncePerTurn:true,maxBp:4000}}:{}),
+  ...(kind==='subaruFacedownReturn'?{passiveBonuses:[{
+   bp:1000,condition:{kind:'ownTurnFacedownUnder',turn:'own'}}]}:{}),
   ...(triggerEffect?{triggerEffect}:{})
  };
 }

@@ -5,7 +5,8 @@ import {createRezeroV2Pack,REZERO_ENGINE_IDS,rezeroEngineKind,rezeroPackCard} fr
 import {createUniversalPack,validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  assertUniversalMatch,universalEnergyByColor,universalBp,universalImpact,
- effectiveHandRequiredEnergy,universalPrivateChoices,handCharacterBpMayAmount
+ effectiveHandRequiredEnergy,universalPrivateChoices,handCharacterBpMayAmount,
+ universalPublicView
 } from '../dist/universal-v2/engine.mjs';
 import {grantContinuousState} from '../dist/universal-v2/continuous-states.mjs';
 import {cardHasName} from '../dist/universal-v2/field-conditions.mjs';
@@ -70,10 +71,10 @@ test('UA40BT and UA40ST share one catalogue and keep parallel art out',()=>{
  }
 });
 
-test('one hundred eight whole prints enter the V2 pack and the other five stay out',()=>{
- assert.equal(REZERO_ENGINE_IDS.length,108);
- assert.equal(Object.keys(pack.cards).length,108);
- assert.equal(REZERO_CARDS.filter(c=>!c.engineKind).length,5);
+test('all one hundred thirteen whole prints enter the V2 pack',()=>{
+ assert.equal(REZERO_ENGINE_IDS.length,113);
+ assert.equal(Object.keys(pack.cards).length,113);
+ assert.equal(REZERO_CARDS.filter(c=>!c.engineKind).length,0);
  assert.equal(pack.cards['REZ-1-001'].alsoEvent,true);
  assert.equal(pack.cards['REZ-1-001'].impactNull,true);
  assert.equal(pack.cards['REZ-1-001'].name,'パック');
@@ -211,9 +212,37 @@ test('one hundred eight whole prints enter the V2 pack and the other five stay o
  assert.deepEqual(pack.cards['REZ-1-046'].effects.onPlay,[{
   op:'returnPrintedActiveBuff',name:'ナツキ・スバル',color:'blue',energy:0,bp:1000}]);
  assert.equal(pack.cards['REZ-1-046'].trigger,null);
- assert.equal(pack.cards['REZ-1-052'],undefined);
- for(const id of ['REZ-1-011','REZ-1-020','REZ-1-074','REZ-1-101'])
-  assert.equal(pack.cards[id],undefined);
+ assert.equal(pack.cards['REZ-1-011'].raidName,'ラム');
+ assert.equal(pack.cards['REZ-1-011'].trigger,'raid');
+ assert.deepEqual(pack.cards['REZ-1-011'].substituteOppRetire,{name:'レム'});
+ assert.deepEqual(pack.cards['REZ-1-011'].effects.onPlay,[{op:'chooseOne',optional:false,options:[
+  {id:'allDown',label:'所有對手前線BP1500以上本回合BP-1000',turn:'any',
+   then:[{op:'enemyFrontAllBpDown',bp:1000,minBp:1500}]},
+  {id:'oneDown',label:'最多1張對手前線BP2500以上本回合BP-2000',turn:'any',
+   then:[{op:'enemyBpDown',bp:2000,optional:true,minBp:2500,zone:'front'}]}
+ ]}]);
+ assert.equal(pack.cards['REZ-1-020'].raidName,'レム');
+ assert.deepEqual(pack.cards['REZ-1-020'].effects.onPlay,[{op:'impactIfEveryOwnTraitless'}]);
+ assert.deepEqual(pack.cards['REZ-1-020'].mainAbility,{
+  op:'sniperThenRaidBaseOutside',oncePerTurn:true,maxBp:4000});
+ assert.equal(pack.cards['REZ-1-052'].ap,2);
+ assert.equal(pack.cards['REZ-1-052'].trigger,'get');
+ assert.deepEqual(pack.cards['REZ-1-052'].effects.onPlay,[{op:'chooseOne',optional:false,options:[
+  {id:'activeZero',label:'使場外能源0的藍色菜月昴以活動狀態登場',turn:'any',
+   then:[{op:'deployOutsidePrintedActive',name:'ナツキ・スバル',color:'blue',energy:0,optional:true}]},
+  {id:'bounceRaid',label:'可將1張場上角色放回手牌，再休息登場或突襲菜月昴',turn:'any',
+   then:[{op:'bounceThenAffordableSubaru',name:'ナツキ・スバル',color:'blue',ap:1}]}
+ ]}]);
+ assert.equal(pack.cards['REZ-1-074'].trigger,'active');
+ assert.equal(pack.cards['REZ-1-074'].triggerEffect,null);
+ assert.deepEqual(pack.cards['REZ-1-074'].effects.onPlay,[{
+  op:'grantBounceInstead',name:'ナツキ・スバル',optional:true}]);
+ assert.equal(pack.cards['REZ-1-101'].trigger,'get');
+ assert.equal(pack.cards['REZ-1-101'].effects.onPlay,undefined);
+ assert.deepEqual(pack.cards['REZ-1-101'].effects.onRetire,[{
+  op:'handOutsideReenterFaceDown',name:'エミリア'}]);
+ assert.deepEqual(pack.cards['REZ-1-101'].passiveBonuses,[{
+  bp:1000,condition:{kind:'ownTurnFacedownUnder',turn:'own'}}]);
  assert.deepEqual(pack.cards['REZ-1-087'].effects.onPlay,[{
   op:'removeNamedOutsideActive',name:REZERO_BY_ID['REZ-1-098'].nameJa}]);
  assert.equal(pack.cards['REZ-1-087'].ownTurnBp,1000);
@@ -399,7 +428,7 @@ test('one hundred eight whole prints enter the V2 pack and the other five stay o
  assert.deepEqual(pack.cards['REZ-1-088'].mainAbility,{
   op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,requireOwnEffectRest:true,
   then:[{op:'activeSelf'},{op:'buffSelfUntilNextOwnStart',bp:1000}]});
- assert.equal(pack.cards['REZ-1-101'],undefined);
+ assert.equal(pack.cards['REZ-1-101'].name,'ナツキ・スバル');
  assert.deepEqual(validateUniversalDeck(pack,counts),[]);
  const s=fresh();
  assert.equal(assertUniversalMatch(packs,s),true);
@@ -6514,4 +6543,754 @@ test('Felt pays 1 AP for one branch, then a hand card stops BP 4000 blockers',()
  assert.equal(assertUniversalMatch(packs,missing),true);
  assert.equal(assertUniversalMatch(packs,guard),true);
  assert.equal(assertUniversalMatch(packs,quiet),true);
+});
+
+const fiveCounts={
+ 'REZ-1-016':4,'REZ-1-043':4,'REZ-1-086':2,'REZ-1-081':2,'REZ-1-012':2,
+ 'REZ-1-007':4,'REZ-1-037':2,'REZ-1-040':1,'REZ-1-068':2,'REZ-1-031':2,
+ 'REZ-1-011':2,'REZ-1-020':2,'REZ-1-052':2,'REZ-1-074':2,'REZ-1-101':2,
+ 'REZ-1-008':4,'REZ-1-014':3,'REZ-1-022':3,'REZ-1-056':2,'REZ-1-050':1,
+ 'REZ-1-013':2
+};
+const five=seed=>newUniversalMatch(packs,{decks:[fiveCounts,fiveCounts],first:0,seed});
+function lineEnergy(s,p,ids){
+ ids.forEach((id,i)=>{
+  const card=pull(s,p,id);
+  card.ready=true;
+  s.players[p].energy[i]=card;
+ });
+}
+function put(s,p,id,line,slot){
+ const card=stamp(s,pull(s,p,id));
+ s.players[p][line][slot]=card;
+ return card;
+}
+function castActive(s,id){
+ const card=pull(s,s.active,id);
+ s.players[s.active].hand.push(card);
+ const action=legalUniversalActions(packs,s).find(a=>a.type==='event'&&a.uid===card.uid);
+ assert.ok(action,id+' for the active player');
+ return [dispatchUniversalAction(packs,s,action),card];
+}
+function raidFront(s,id,baseUid,slot=0){
+ const card=pull(s,0,id);
+ s.players[0].hand.push(card);
+ return [act(s,'raid',{uid:card.uid,baseUid,slot}),card];
+}
+function silence(s,uid,untilPlayer){
+ grantContinuousState(s,{kind:'originalEffectsDisabled',controller:0,sourceUid:uid,
+  targetUid:uid,sourceLinked:false,until:{player:untilPlayer,phase:'attack',edge:'end'}});
+}
+// 016 is レム. Four of them on the caster would raise 鬼の力 from 3000 to 5000.
+const ramFuel=['REZ-1-007','REZ-1-007','REZ-1-007','REZ-1-007'];
+
+test('Ram substitutes for Rem and lowers every qualifying front line',()=>{
+ assert.equal(Object.values(fiveCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(pack,fiveCounts),[]);
+ const shell={id:'FIVE',name:'Five',color:'yellow',type:'character',energy:1,ap:1,bp:2000,gen:0,
+  traits:[],trigger:null,implementation:'dsl',effects:{}};
+ assert.throws(()=>createUniversalPack({id:'bad-traitless',cards:[{...shell,id:'BAD-T',type:'event',bp:0,
+  effects:{onPlay:[{op:'impactIfEveryOwnTraitless'}]}}]}),/character onPlay/);
+ assert.throws(()=>createUniversalPack({id:'bad-sniper',cards:[{...shell,id:'BAD-S',mainAbility:{
+  op:'sniperThenRaidBaseOutside',oncePerTurn:true,maxBp:3000}}]}),/unsupported main/);
+ assert.throws(()=>createUniversalPack({id:'bad-face',cards:[{...shell,id:'BAD-F',effects:{onPlay:[
+  {op:'handOutsideReenterFaceDown',name:'エミリア'}]}}]}),/facedown reenter/);
+ assert.throws(()=>createUniversalPack({id:'bad-sub',cards:[{...shell,id:'BAD-R',
+  substituteOppRetire:{name:''}}]}),/invalid substitute retirement/);
+ assert.throws(()=>createUniversalPack({id:'bad-under',cards:[{...shell,id:'BAD-P',passiveBonuses:[
+  {bp:1000,condition:{kind:'ownTurnFacedownUnder',turn:'any'}}]}]}),/facedown under/);
+
+ let down=five(8701);
+ fuel(down,['REZ-1-016','REZ-1-016','REZ-1-016','REZ-1-016']);
+ down=reach(down,'main');
+ assert.equal(universalEnergyByColor(packs,down,0).yellow,4);
+ const small=put(down,1,'REZ-1-037','front',0);
+ const mid=put(down,1,'REZ-1-012','front',1);
+ const tall=put(down,1,'REZ-1-016','front',2);
+ [down]=playFront(down,'REZ-1-011');
+ assert.equal(down.pending.kind,'effect-choice-mode');
+ assert.equal(legalUniversalActions(packs,down).some(a=>a.mode==='skip'),false);
+ assert.equal(chooseUniversalAiAction(packs,down).mode,'allDown');
+ assert.match(uiActionLabel({type:'chooseEffectMode',mode:'allDown'},{pack,state:down}),/BP1500以上/);
+ let one=structuredClone(down);
+ down=dispatchUniversalAction(packs,down,{type:'chooseEffectMode',mode:'allDown'});
+ assert.equal(down.pending,null);
+ assert.equal(universalBp(packs,down,at(down,1,small.uid)),1000);
+ assert.equal(universalBp(packs,down,at(down,1,mid.uid)),500);
+ assert.equal(universalBp(packs,down,at(down,1,tall.uid)),1500);
+ one=dispatchUniversalAction(packs,one,{type:'chooseEffectMode',mode:'oneDown'});
+ assert.equal(one.pending.kind,'effect-target');
+ assert.equal(one.pending.optional,true);
+ assert.deepEqual(one.pending.choices,[tall.uid]);
+ assert.equal(legalUniversalActions(packs,one).some(a=>a.uid===null),true);
+ const kept=dispatchUniversalAction(packs,structuredClone(one),{type:'chooseTarget',uid:null});
+ assert.equal(kept.pending,null);
+ assert.equal(universalBp(packs,kept,at(kept,1,tall.uid)),2500);
+ one=dispatchUniversalAction(packs,one,{type:'chooseTarget',uid:tall.uid});
+ assert.equal(one.pending,null);
+ assert.equal(universalBp(packs,one,at(one,1,tall.uid)),500);
+ assert.equal(universalBp(packs,one,at(one,1,mid.uid)),1500);
+ assert.equal(universalBp(packs,one,at(one,1,small.uid)),1000);
+ down=untilPhase(packs,down,1,'main');
+ assert.equal(universalBp(packs,down,at(down,1,small.uid)),1000);
+ assert.equal(universalBp(packs,down,at(down,1,mid.uid)),1500);
+ assert.equal(universalBp(packs,down,at(down,1,tall.uid)),2500);
+
+ let gate=five(8702);
+ const gateRam=put(gate,0,'REZ-1-011','front',0);
+ const gateRem=put(gate,0,'REZ-1-012','front',1);
+ gate=reach(gate,'attack');
+ armLife(gate,1,'REZ-1-031');
+ gate=act(gate,'attack',{uid:gateRam.uid});
+ gate=dispatchUniversalAction(packs,gate,{type:'chooseBlock',uid:null});
+ assert.equal(gate.pending.kind,'life-trigger');
+ assert.equal(gate.pending.trigger,'special');
+ gate=dispatchUniversalAction(packs,gate,{type:'chooseTrigger',mode:'special',uid:gateRem.uid});
+ assert.equal(gate.pending,null);
+ assert.equal(gate.players[0].outside.some(c=>c.uid===gateRem.uid),true);
+ assert.equal(gate.players[0].front.some(c=>c?.uid===gateRam.uid),true);
+
+ let swap=five(8703);
+ lineEnergy(swap,1,ramFuel);
+ const rem=put(swap,0,'REZ-1-012','front',0);
+ const ramA=put(swap,0,'REZ-1-011','front',1);
+ const ramB=put(swap,0,'REZ-1-011','front',2);
+ swap=untilPhase(packs,swap,1,'main');
+ assert.equal(universalEnergyByColor(packs,swap,1).yellow,4);
+ [swap]=castActive(swap,'REZ-1-031');
+ assert.equal(swap.pending.kind,'effect-retire-bp');
+ assert.equal(swap.pending.limit,3000);
+ assert.deepEqual(swap.pending.choices,[rem.uid]);
+ swap=dispatchUniversalAction(packs,swap,{type:'chooseRetireBp',uid:rem.uid});
+ assert.equal(swap.pending.kind,'effect-substitute-retire');
+ assert.equal(swap.pending.optional,true);
+ assert.equal(swap.pending.by,'opponent');
+ assert.equal(swap.pending.name,'レム');
+ assert.equal(Object.keys(swap.pending).length,10);
+ assert.notEqual(swap.active,swap.pending.player);
+ assert.deepEqual(swap.pending.choices.slice().sort(),[ramA.uid,ramB.uid].sort());
+ assert.equal(V2_PENDING_LABELS['effect-substitute-retire'],'可改由前線的拉姆代替雷姆退場');
+ assert.match(uiActionLabel({type:'chooseSubstituteRetire',uid:null},{pack,state:swap}),
+  /不代替，讓原本的角色退場/);
+ assert.notEqual(chooseUniversalAiAction(packs,swap).uid,null);
+ const declined=dispatchUniversalAction(packs,structuredClone(swap),{type:'chooseSubstituteRetire',uid:null});
+ assert.equal(declined.pending,null);
+ assert.equal(declined.players[0].outside.some(c=>c.uid===rem.uid),true);
+ assert.equal(declined.players[0].front.some(c=>c?.uid===ramA.uid),true);
+ assert.equal(declined.players[0].front.some(c=>c?.uid===ramB.uid),true);
+ assert.equal(declined.turnRetireEvents.some(e=>e.uid===rem.uid),true);
+ assert.equal(declined.turnRetireEvents.some(e=>e.uid===ramA.uid||e.uid===ramB.uid),false);
+ swap=dispatchUniversalAction(packs,swap,{type:'chooseSubstituteRetire',uid:ramA.uid});
+ assert.equal(swap.pending,null);
+ assert.equal(swap.players[0].outside.some(c=>c.uid===ramA.uid),true);
+ assert.equal(swap.players[0].front.some(c=>c?.uid===rem.uid),true);
+ assert.equal(swap.players[0].front.some(c=>c?.uid===ramB.uid),true);
+ assert.equal(swap.turnRetireEvents.some(e=>e.uid===ramA.uid),true);
+ assert.equal(swap.turnRetireEvents.some(e=>e.uid===rem.uid),false);
+
+ let energyRam=five(8704);
+ lineEnergy(energyRam,1,ramFuel);
+ const energyRem=put(energyRam,0,'REZ-1-012','front',0);
+ const parked=put(energyRam,0,'REZ-1-011','energy',0);
+ energyRam=untilPhase(packs,energyRam,1,'main');
+ [energyRam]=castActive(energyRam,'REZ-1-031');
+ assert.equal(energyRam.pending.limit,3000);
+ energyRam=dispatchUniversalAction(packs,energyRam,{type:'chooseRetireBp',uid:energyRem.uid});
+ assert.equal(energyRam.pending,null);
+ assert.equal(energyRam.players[0].outside.some(c=>c.uid===energyRem.uid),true);
+ assert.equal(energyRam.players[0].energy.some(c=>c?.uid===parked.uid),true);
+
+ let quietRam=five(8705);
+ lineEnergy(quietRam,1,ramFuel);
+ const quietRem=put(quietRam,0,'REZ-1-012','front',0);
+ const quiet=put(quietRam,0,'REZ-1-011','front',1);
+ quietRam=untilPhase(packs,quietRam,1,'main');
+ silence(quietRam,quiet.uid,1);
+ [quietRam]=castActive(quietRam,'REZ-1-031');
+ quietRam=dispatchUniversalAction(packs,quietRam,{type:'chooseRetireBp',uid:quietRem.uid});
+ assert.equal(quietRam.pending,null);
+ assert.equal(quietRam.players[0].outside.some(c=>c.uid===quietRem.uid),true);
+ assert.equal(quietRam.players[0].front.some(c=>c?.uid===quiet.uid),true);
+
+ let battle=five(8706);
+ const blocker=put(battle,0,'REZ-1-012','front',0);
+ const watcher=put(battle,0,'REZ-1-011','front',1);
+ const attacker=put(battle,1,'REZ-1-040','front',0);
+ battle=untilPhase(packs,battle,1,'attack');
+ battle=act(battle,'attack',{uid:attacker.uid});
+ assert.equal(battle.pending.kind,'block');
+ battle=dispatchUniversalAction(packs,battle,{type:'chooseBlock',uid:blocker.uid});
+ assert.equal(battle.pending,null);
+ assert.equal(battle.players[0].outside.some(c=>c.uid===blocker.uid),true);
+ assert.equal(battle.players[0].front.some(c=>c?.uid===watcher.uid),true);
+ assert.equal(battle.turnRetireEvents.some(e=>e.uid===blocker.uid),true);
+ assert.equal(battle.turnRetireEvents.some(e=>e.uid===watcher.uid),false);
+
+ let bounced=five(8707);
+ const homeRam=put(bounced,0,'REZ-1-011','front',0);
+ const homeRem=put(bounced,0,'REZ-1-012','front',1);
+ bounced=reach(bounced,'attack');
+ armLife(bounced,1,'REZ-1-050');
+ bounced=act(bounced,'attack',{uid:homeRam.uid});
+ bounced=dispatchUniversalAction(packs,bounced,{type:'chooseBlock',uid:null});
+ assert.equal(bounced.pending.kind,'life-trigger');
+ assert.equal(bounced.pending.trigger,'color');
+ const returns=legalUniversalActions(packs,bounced).filter(a=>a.mode==='colorBounce');
+ assert.equal(returns.some(a=>a.uid===homeRem.uid),true);
+ assert.equal(returns.some(a=>a.uid===homeRam.uid),false);
+ bounced=dispatchUniversalAction(packs,bounced,{type:'chooseTrigger',mode:'colorBounce',uid:homeRem.uid});
+ assert.equal(bounced.pending,null);
+ assert.equal(bounced.players[0].hand.some(c=>c.uid===homeRem.uid),true);
+ assert.equal(bounced.players[0].front.some(c=>c?.uid===homeRam.uid),true);
+ assert.equal(bounced.turnRetireEvents.some(e=>e.uid===homeRem.uid),false);
+
+ let other=five(8708);
+ lineEnergy(other,1,ramFuel);
+ const otherRam=put(other,0,'REZ-1-011','front',0);
+ const otherCard=put(other,0,'REZ-1-007','front',1);
+ other=untilPhase(packs,other,1,'main');
+ [other]=castActive(other,'REZ-1-031');
+ assert.equal(other.pending.limit,3000);
+ assert.deepEqual(other.pending.choices,[otherCard.uid]);
+ other=dispatchUniversalAction(packs,other,{type:'chooseRetireBp',uid:otherCard.uid});
+ assert.equal(other.pending,null);
+ assert.equal(other.players[0].outside.some(c=>c.uid===otherCard.uid),true);
+ assert.equal(other.players[0].front.some(c=>c?.uid===otherRam.uid),true);
+ assert.equal(assertUniversalMatch(packs,down),true);
+ assert.equal(assertUniversalMatch(packs,one),true);
+ assert.equal(assertUniversalMatch(packs,kept),true);
+ assert.equal(assertUniversalMatch(packs,gate),true);
+ assert.equal(assertUniversalMatch(packs,swap),true);
+ assert.equal(assertUniversalMatch(packs,declined),true);
+ assert.equal(assertUniversalMatch(packs,energyRam),true);
+ assert.equal(assertUniversalMatch(packs,quietRam),true);
+ assert.equal(assertUniversalMatch(packs,battle),true);
+ assert.equal(assertUniversalMatch(packs,bounced),true);
+ assert.equal(assertUniversalMatch(packs,other),true);
+});
+
+test('traitless Rem gains this-turn impact and a sniper that cannot name BP 4000',()=>{
+ let live=five(8711);
+ lineEnergy(live,0,['REZ-1-016','REZ-1-016','REZ-1-016','REZ-1-101']);
+ const base=put(live,0,'REZ-1-012','front',0);
+ live=ownMain(live,2);
+ assert.equal(universalEnergyByColor(packs,live,0).yellow,5);
+ assert.equal(live.players[0].apCards.filter(c=>c.ready).length,2);
+ let top;
+ [live,top]=raidFront(live,'REZ-1-020',base.uid,0);
+ assert.equal(live.pending,null);
+ assert.equal(at(live,0,top.uid).ready,true);
+ assert.equal(at(live,0,top.uid).stack[0].uid,base.uid);
+ assert.equal(universalImpact(packs,live,at(live,0,top.uid)),1);
+ const second=pull(live,0,'REZ-1-020');
+ live.players[0].hand.push(second);
+ const fuelRem=live.players[0].energy.find(c=>c?.cardId==='REZ-1-016');
+ assert.equal(legalUniversalActions(packs,live).some(a=>a.type==='raid'&&a.uid===second.uid&&
+  a.baseUid===fuelRem.uid),true);
+ assert.equal(legalUniversalActions(packs,live).some(a=>a.type==='raid'&&a.uid===second.uid&&
+  a.baseUid===top.uid),false);
+ live.players[0].deck.push(live.players[0].hand.pop());
+ live=act(live,'activate',{uid:top.uid,mode:'sniperRaidBase'});
+ assert.equal(at(live,0,top.uid).stack.length,0);
+ assert.equal(at(live,0,top.uid).sniperGranted.maxBp,4000);
+ assert.equal(live.players[0].outside.some(c=>c.uid===base.uid),true);
+ assert.ok(live.zoneMoveEvents.some(e=>e.uid===base.uid&&e.from==='raid-under'&&
+  e.to==='outside'&&e.reason==='own-effect'&&e.sourceUid===top.uid));
+ assert.equal(legalUniversalActions(packs,live).some(a=>a.mode==='sniperRaidBase'),false);
+ const prey=put(live,1,'REZ-1-013','front',0);
+ const wall=put(live,1,'REZ-1-011','front',1);
+ live=reach(live,'attack');
+ const shots=legalUniversalActions(packs,live).filter(a=>a.type==='attack'&&a.uid===top.uid);
+ assert.equal(shots.some(a=>a.targetUid===prey.uid),true);
+ assert.equal(shots.some(a=>a.targetUid===wall.uid),false);
+ assert.match(uiActionLabel(shots.find(a=>a.targetUid===prey.uid),{pack,state:live}),/狙擊攻擊/);
+ const life=live.players[1].life.length;
+ live=dispatchUniversalAction(packs,live,shots.find(a=>a.targetUid===prey.uid));
+ assert.equal(live.pending,null);
+ assert.equal(live.players[1].life.length,life);
+ assert.equal(live.players[1].outside.some(c=>c.uid===prey.uid),true);
+ assert.equal(live.players[1].front.some(c=>c?.uid===wall.uid),true);
+ live=untilPhase(packs,live,1,'main');
+ assert.equal(universalImpact(packs,live,at(live,0,top.uid)),0);
+
+ let marked=five(8712);
+ lineEnergy(marked,0,['REZ-1-016','REZ-1-016','REZ-1-016','REZ-1-101']);
+ put(marked,0,'REZ-1-086','front',1);
+ const plain=put(marked,0,'REZ-1-012','front',0);
+ marked=reach(marked,'main');
+ let traited;
+ [marked,traited]=raidFront(marked,'REZ-1-020',plain.uid,0);
+ assert.equal(universalImpact(packs,marked,at(marked,0,traited.uid)),0);
+
+ let bare=five(8713);
+ fuel(bare,['REZ-1-016','REZ-1-016','REZ-1-016','REZ-1-016']);
+ bare=reach(bare,'main');
+ assert.equal(universalEnergyByColor(packs,bare,0).yellow,4);
+ const costly=pull(bare,0,'REZ-1-020');
+ bare.players[0].hand.push(costly);
+ assert.equal(legalUniversalActions(packs,bare).some(a=>a.uid===costly.uid&&
+  (a.type==='play'||a.type==='raid')),false);
+ let open=five(8714);
+ lineEnergy(open,0,['REZ-1-016','REZ-1-016','REZ-1-016','REZ-1-101']);
+ open=reach(open,'main');
+ let played;
+ [open,played]=playFront(open,'REZ-1-020');
+ assert.equal(open.pending,null);
+ assert.equal(at(open,0,played.uid).ready,false);
+ assert.equal(universalImpact(packs,open,at(open,0,played.uid)),1);
+ open=act(open,'activate',{uid:played.uid,mode:'sniperRaidBase'});
+ assert.equal(at(open,0,played.uid).stack.length,0);
+ assert.equal(at(open,0,played.uid).sniperGranted.maxBp,4000);
+ at(open,0,played.uid).ready=true;
+ const low=put(open,1,'REZ-1-013','front',0);
+ const high=put(open,1,'REZ-1-040','front',1);
+ open=reach(open,'attack');
+ const aimed=legalUniversalActions(packs,open).filter(a=>a.type==='attack'&&a.uid===played.uid);
+ assert.equal(aimed.some(a=>a.targetUid===low.uid),true);
+ assert.equal(aimed.some(a=>a.targetUid===high.uid),false);
+
+ let hidden=five(8715);
+ lineEnergy(hidden,0,['REZ-1-016','REZ-1-016','REZ-1-016','REZ-1-101']);
+ const host=put(hidden,0,'REZ-1-012','front',0);
+ const buried=pull(hidden,0,'REZ-1-008');
+ buried.faceDown=true;buried.ready=false;buried.fieldEntryStamp=null;
+ buried.stack=[];buried.under=[];buried.buffs=[];
+ host.under=[buried];
+ hidden=reach(hidden,'main');
+ let cover;
+ [hidden,cover]=raidFront(hidden,'REZ-1-020',host.uid,0);
+ hidden=act(hidden,'activate',{uid:cover.uid,mode:'sniperRaidBase'});
+ assert.equal(at(hidden,0,cover.uid).stack.length,1);
+ assert.equal(at(hidden,0,cover.uid).stack[0].under[0].uid,buried.uid);
+ assert.equal(at(hidden,0,cover.uid).stack[0].under[0].faceDown,true);
+ assert.equal(hidden.players[0].outside.some(c=>c.uid===host.uid),false);
+ assert.equal(at(hidden,0,cover.uid).sniperGranted.maxBp,4000);
+ assert.equal(assertUniversalMatch(packs,live),true);
+ assert.equal(assertUniversalMatch(packs,marked),true);
+ assert.equal(assertUniversalMatch(packs,bare),true);
+ assert.equal(assertUniversalMatch(packs,open),true);
+ assert.equal(assertUniversalMatch(packs,hidden),true);
+});
+
+test('Rem chooses an active zero-energy Subaru or a bounce then a rested Subaru',()=>{
+ let active=five(8721);
+ fuel(active,['REZ-1-043','REZ-1-043','REZ-1-043','REZ-1-043']);
+ const zero=pull(active,0,'REZ-1-037');
+ const purple=pull(active,0,'REZ-1-068');
+ active.players[0].outside.push(zero,purple);
+ active=ownMain(active,2);
+ assert.equal(universalEnergyByColor(packs,active,0).blue,4);
+ assert.equal(active.players[0].apCards.filter(c=>c.ready).length,2);
+ let rem;
+ [active,rem]=playFront(active,'REZ-1-052');
+ assert.equal(active.pending.kind,'effect-choice-mode');
+ active=dispatchUniversalAction(packs,active,{type:'chooseEffectMode',mode:'activeZero'});
+ assert.equal(active.pending.kind,'effect-outside-printed-active');
+ assert.deepEqual(active.pending.choices,[zero.uid]);
+ const ai=chooseUniversalAiAction(packs,active);
+ assert.notEqual(ai.uid,null);
+ assert.equal(ai.replaceUid,undefined);
+ const skipped=dispatchUniversalAction(packs,structuredClone(active),
+  {type:'chooseOutsidePrintedActive',uid:null});
+ assert.equal(skipped.pending,null);
+ assert.equal(skipped.players[0].outside.some(c=>c.uid===zero.uid),true);
+ const entry=legalUniversalActions(packs,active).find(a=>a.type==='chooseOutsidePrintedActive'&&
+  a.uid===zero.uid&&a.line==='front'&&a.replaceUid===undefined);
+ active=dispatchUniversalAction(packs,active,entry);
+ assert.equal(active.pending,null);
+ assert.equal(at(active,0,zero.uid).ready,true);
+ assert.equal(Number.isInteger(at(active,0,zero.uid).fieldEntryStamp),true);
+ assert.equal(at(active,0,rem.uid).ready,false);
+
+ let empty=five(8722);
+ fuel(empty,['REZ-1-043','REZ-1-043','REZ-1-043','REZ-1-043']);
+ empty=ownMain(empty,2);
+ [empty]=playFront(empty,'REZ-1-052');
+ empty=dispatchUniversalAction(packs,empty,{type:'chooseEffectMode',mode:'activeZero'});
+ assert.equal(empty.pending,null);
+
+ let raid=five(8723);
+ fuel(raid,['REZ-1-043','REZ-1-043','REZ-1-043','REZ-1-043']);
+ const base=put(raid,0,'REZ-1-037','front',0);
+ const other=put(raid,0,'REZ-1-007','front',1);
+ const big=pull(raid,0,'REZ-1-040');
+ raid.players[0].outside.push(big);
+ raid=ownMain(raid,2);
+ let source;
+ [raid,source]=playFront(raid,'REZ-1-052');
+ raid=dispatchUniversalAction(packs,raid,{type:'chooseEffectMode',mode:'bounceRaid'});
+ assert.equal(raid.pending.kind,'effect-bounce-include-self');
+ const energyUids=raid.players[0].energy.filter(Boolean).map(c=>c.uid);
+ assert.deepEqual(raid.pending.choices.slice().sort(),
+  [source.uid,base.uid,other.uid,...energyUids].sort());
+ const left=dispatchUniversalAction(packs,structuredClone(raid),{type:'chooseBounceIncludeSelf',uid:null});
+ assert.equal(left.pending,null);
+ assert.equal(at(left,0,source.uid).ready,false);
+ assert.equal(left.players[0].outside.some(c=>c.uid===big.uid),true);
+ raid=dispatchUniversalAction(packs,raid,{type:'chooseBounceIncludeSelf',uid:other.uid});
+ assert.equal(at(raid,0,source.uid).ready,true);
+ assert.equal(raid.players[0].hand.some(c=>c.uid===other.uid),true);
+ assert.equal(raid.pending.kind,'effect-outside-rest-or-raid');
+ assert.ok(raid.pending.choices.includes(big.uid));
+ const deck=raid.players[0].deck.length;
+ const raidAction=legalUniversalActions(packs,raid).find(a=>a.type==='chooseOutsideRestOrRaid'&&
+  a.mode==='raid'&&a.uid===big.uid&&a.baseUid===base.uid);
+ raid=dispatchUniversalAction(packs,raid,raidAction);
+ assert.equal(raid.pending,null);
+ assert.equal(at(raid,0,big.uid).ready,false);
+ assert.equal(at(raid,0,big.uid).stack[0].uid,base.uid);
+ assert.equal(raid.players[0].deck.length,deck-1);
+
+ let self=five(8724);
+ fuel(self,['REZ-1-043','REZ-1-043','REZ-1-043','REZ-1-043']);
+ const rested=pull(self,0,'REZ-1-040');
+ self.players[0].outside.push(rested);
+ self=ownMain(self,2);
+ let mirror;
+ [self,mirror]=playFront(self,'REZ-1-052');
+ self=dispatchUniversalAction(packs,self,{type:'chooseEffectMode',mode:'bounceRaid'});
+ self=dispatchUniversalAction(packs,self,{type:'chooseBounceIncludeSelf',uid:mirror.uid});
+ assert.equal(self.players[0].hand.some(c=>c.uid===mirror.uid),true);
+ assert.equal(self.players[0].front.some(c=>c?.uid===mirror.uid),false);
+ assert.equal(self.pending.kind,'effect-outside-rest-or-raid');
+ const restEntry=legalUniversalActions(packs,self).find(a=>a.type==='chooseOutsideRestOrRaid'&&
+  a.mode==='enter'&&a.uid===rested.uid&&a.line==='front'&&a.replaceUid===undefined);
+ self=dispatchUniversalAction(packs,self,restEntry);
+ assert.equal(self.pending,null);
+ assert.equal(at(self,0,rested.uid).ready,false);
+ assert.equal(self.players[0].front.some(c=>c?.uid===mirror.uid),false);
+
+ let gated=five(8725);
+ fuel(gated,['REZ-1-043','REZ-1-043','REZ-1-043','REZ-1-043']);
+ const cheap=pull(gated,0,'REZ-1-037');
+ const expensive=pull(gated,0,'REZ-1-040');
+ gated.players[0].outside.push(cheap,expensive);
+ gated=ownMain(gated,2);
+ [gated]=playFront(gated,'REZ-1-052');
+ gated=dispatchUniversalAction(packs,gated,{type:'chooseEffectMode',mode:'bounceRaid'});
+ gated.players[0].energy.filter(c=>c?.cardId==='REZ-1-043').slice(0,2).forEach(c=>{c.ready=false;});
+ assert.equal(universalEnergyByColor(packs,gated,0).blue,2);
+ const bouncedSelf=gated.players[0].front.find(c=>c?.cardId==='REZ-1-052');
+ gated=dispatchUniversalAction(packs,gated,{type:'chooseBounceIncludeSelf',uid:bouncedSelf.uid});
+ assert.equal(gated.pending.kind,'effect-outside-rest-or-raid');
+ assert.ok(gated.pending.choices.includes(cheap.uid));
+ assert.equal(gated.pending.choices.includes(expensive.uid),false);
+ assert.throws(()=>dispatchUniversalAction(packs,gated,{type:'chooseOutsideRestOrRaid',mode:'enter',
+  uid:expensive.uid,line:'front',slot:1}),/not currently legal/);
+ const cheapEntry=legalUniversalActions(packs,gated).find(a=>a.type==='chooseOutsideRestOrRaid'&&
+  a.mode==='enter'&&a.uid===cheap.uid&&a.replaceUid===undefined);
+ gated=dispatchUniversalAction(packs,gated,cheapEntry);
+ assert.equal(at(gated,0,cheap.uid).ready,false);
+ assert.equal(gated.players[0].outside.some(c=>c.uid===expensive.uid),true);
+ assert.equal(assertUniversalMatch(packs,active),true);
+ assert.equal(assertUniversalMatch(packs,skipped),true);
+ assert.equal(assertUniversalMatch(packs,empty),true);
+ assert.equal(assertUniversalMatch(packs,raid),true);
+ assert.equal(assertUniversalMatch(packs,left),true);
+ assert.equal(assertUniversalMatch(packs,self),true);
+ assert.equal(assertUniversalMatch(packs,gated),true);
+});
+
+test('Beatrice makes one Subaru return to hand instead of an opponent retirement',()=>{
+ let live=five(8731);
+ fuel(live,['REZ-1-086']);
+ const subaru=put(live,0,'REZ-1-068','front',0);
+ put(live,0,'REZ-1-007','front',1);
+ live=reach(live,'main');
+ assert.equal(universalEnergyByColor(packs,live,0).purple,1);
+ let beatrice;
+ [live,beatrice]=playFront(live,'REZ-1-074');
+ assert.equal(live.pending.kind,'effect-grant-bounce-instead');
+ assert.deepEqual(live.pending.choices,[subaru.uid]);
+ assert.equal(V2_PENDING_LABELS['effect-grant-bounce-instead'],
+  '可指定 1 張菜月昴，對手效果退場時改回手牌');
+ const skipped=dispatchUniversalAction(packs,structuredClone(live),
+  {type:'chooseGrantBounceInstead',uid:null});
+ assert.equal(skipped.pending,null);
+ assert.equal(at(skipped,0,subaru.uid).bounceInsteadGranted,undefined);
+ live=dispatchUniversalAction(packs,live,{type:'chooseGrantBounceInstead',uid:subaru.uid});
+ assert.equal(live.pending,null);
+ const grant=at(live,0,subaru.uid).bounceInsteadGranted;
+ assert.deepEqual(Object.keys(grant).sort(),['sourceUid','stamp','untilOwnTurnStart']);
+ assert.equal(grant.untilOwnTurnStart,live.players[0].ownTurns+1);
+ assert.equal(grant.stamp,at(live,0,subaru.uid).fieldEntryStamp);
+ assert.equal(grant.sourceUid,beatrice.uid);
+ let lasting=structuredClone(live);
+ lasting=untilPhase(packs,lasting,1,'main');
+ assert.equal(at(lasting,0,subaru.uid).bounceInsteadGranted.untilOwnTurnStart,2);
+ lasting=untilPhase(packs,lasting,0,'main');
+ assert.equal(at(lasting,0,subaru.uid).bounceInsteadGranted,undefined);
+
+ let none=five(8732);
+ fuel(none,['REZ-1-086']);
+ put(none,0,'REZ-1-007','front',0);
+ none=reach(none,'main');
+ [none]=playFront(none,'REZ-1-074');
+ assert.equal(none.pending,null);
+
+ let retired=five(8733);
+ fuel(retired,['REZ-1-086']);
+ lineEnergy(retired,1,ramFuel);
+ const target=put(retired,0,'REZ-1-068','front',0);
+ put(retired,0,'REZ-1-007','front',1);
+ retired=reach(retired,'main');
+ [retired]=playFront(retired,'REZ-1-074');
+ retired=dispatchUniversalAction(packs,retired,{type:'chooseGrantBounceInstead',uid:target.uid});
+ retired=untilPhase(packs,retired,1,'main');
+ [retired]=castActive(retired,'REZ-1-031');
+ assert.equal(retired.pending.limit,3000);
+ assert.ok(retired.pending.choices.includes(target.uid));
+ retired=dispatchUniversalAction(packs,retired,{type:'chooseRetireBp',uid:target.uid});
+ assert.equal(retired.pending,null);
+ assert.equal(retired.players[0].hand.some(c=>c.uid===target.uid),true);
+ assert.equal(retired.players[0].outside.some(c=>c.uid===target.uid),false);
+ assert.equal(retired.turnRetireEvents.some(e=>e.uid===target.uid),false);
+ assert.ok(retired.zoneMoveEvents.some(e=>e.uid===target.uid&&e.to==='hand'&&
+  e.reason==='opponent-effect'));
+
+ let fight=five(8734);
+ fuel(fight,['REZ-1-086']);
+ const guard=put(fight,0,'REZ-1-037','front',0);
+ const foe=put(fight,1,'REZ-1-011','front',0);
+ fight=reach(fight,'main');
+ [fight]=playFront(fight,'REZ-1-074');
+ fight=dispatchUniversalAction(packs,fight,{type:'chooseGrantBounceInstead',uid:guard.uid});
+ fight=untilPhase(packs,fight,1,'attack');
+ fight=act(fight,'attack',{uid:foe.uid});
+ fight=dispatchUniversalAction(packs,fight,{type:'chooseBlock',uid:guard.uid});
+ assert.equal(fight.pending,null);
+ assert.equal(fight.players[0].outside.some(c=>c.uid===guard.uid),true);
+ assert.equal(fight.players[0].hand.some(c=>c.uid===guard.uid),false);
+ assert.equal(fight.turnRetireEvents.some(e=>e.uid===guard.uid),true);
+
+ let hushed=five(8735);
+ fuel(hushed,['REZ-1-086']);
+ lineEnergy(hushed,1,ramFuel);
+ const quiet=put(hushed,0,'REZ-1-068','front',0);
+ hushed=reach(hushed,'main');
+ [hushed]=playFront(hushed,'REZ-1-074');
+ hushed=dispatchUniversalAction(packs,hushed,{type:'chooseGrantBounceInstead',uid:quiet.uid});
+ hushed=untilPhase(packs,hushed,1,'main');
+ silence(hushed,quiet.uid,1);
+ [hushed]=castActive(hushed,'REZ-1-031');
+ hushed=dispatchUniversalAction(packs,hushed,{type:'chooseRetireBp',uid:quiet.uid});
+ assert.equal(hushed.pending,null);
+ assert.equal(hushed.players[0].outside.some(c=>c.uid===quiet.uid),true);
+ assert.equal(hushed.players[0].hand.some(c=>c.uid===quiet.uid),false);
+
+ let sourceQuiet=five(8736);
+ fuel(sourceQuiet,['REZ-1-086']);
+ lineEnergy(sourceQuiet,1,ramFuel);
+ const named=put(sourceQuiet,0,'REZ-1-068','front',0);
+ sourceQuiet=reach(sourceQuiet,'main');
+ let sourceCard;
+ [sourceQuiet,sourceCard]=playFront(sourceQuiet,'REZ-1-074');
+ sourceQuiet=dispatchUniversalAction(packs,sourceQuiet,{type:'chooseGrantBounceInstead',uid:named.uid});
+ sourceQuiet=untilPhase(packs,sourceQuiet,1,'main');
+ silence(sourceQuiet,sourceCard.uid,1);
+ [sourceQuiet]=castActive(sourceQuiet,'REZ-1-031');
+ sourceQuiet=dispatchUniversalAction(packs,sourceQuiet,{type:'chooseRetireBp',uid:named.uid});
+ assert.equal(sourceQuiet.players[0].hand.some(c=>c.uid===named.uid),true);
+ assert.equal(sourceQuiet.turnRetireEvents.some(e=>e.uid===named.uid),false);
+ assert.equal(assertUniversalMatch(packs,live),true);
+ assert.equal(assertUniversalMatch(packs,skipped),true);
+ assert.equal(assertUniversalMatch(packs,lasting),true);
+ assert.equal(assertUniversalMatch(packs,none),true);
+ assert.equal(assertUniversalMatch(packs,retired),true);
+ assert.equal(assertUniversalMatch(packs,fight),true);
+ assert.equal(assertUniversalMatch(packs,hushed),true);
+ assert.equal(assertUniversalMatch(packs,sourceQuiet),true);
+});
+
+test('Subaru reenters rested with the paid hand card facedown underneath',()=>{
+ let live=five(8741);
+ fuel(live,['REZ-1-016','REZ-1-016','REZ-1-016']);
+ lineEnergy(live,1,ramFuel);
+ const emilia=put(live,0,'REZ-1-081','front',0);
+ live=reach(live,'main');
+ assert.equal(universalEnergyByColor(packs,live,0).yellow,3);
+ let subaru;
+ [live,subaru]=playFront(live,'REZ-1-101');
+ assert.equal(live.pending,null);
+ assert.equal(at(live,0,subaru.uid).ready,false);
+ assert.equal(universalBp(packs,live,at(live,0,subaru.uid)),3000);
+ live=untilPhase(packs,live,1,'main');
+ [live]=castActive(live,'REZ-1-031');
+ assert.equal(live.pending.limit,3000);
+ assert.ok(live.pending.choices.includes(subaru.uid));
+ live=dispatchUniversalAction(packs,live,{type:'chooseRetireBp',uid:subaru.uid});
+ assert.equal(live.pending.kind,'effect-hand-reenter-under');
+ assert.equal(live.pending.optional,true);
+ assert.equal(live.pending.name,'エミリア');
+ assert.equal(Object.keys(live.pending).length,6);
+ const handCard=live.players[0].hand[0];
+ const seen=universalPrivateChoices(packs,live,0);
+ assert.equal(seen.kind,'effect-hand-reenter-under');
+ assert.ok(seen.options.some(o=>o.card&&o.card.cardId===handCard.cardId));
+ assert.equal(universalPrivateChoices(packs,live,1),null);
+ assert.equal(V2_PENDING_LABELS['effect-hand-reenter-under'],
+  '可將 1 張手牌放到場外，讓菜月昴休息回到前線');
+ assert.match(uiActionLabel({type:'chooseHandReenterUnder',uid:null},{pack,state:live}),
+  /不將手牌放到場外/);
+ const ai=chooseUniversalAiAction(packs,live);
+ assert.notEqual(ai.uid,null);
+ assert.equal(ai.replaceUid,undefined);
+ const handBefore=live.players[0].hand.length;
+ const declined=dispatchUniversalAction(packs,structuredClone(live),
+  {type:'chooseHandReenterUnder',uid:null});
+ assert.equal(declined.pending,null);
+ assert.equal(declined.players[0].outside.some(c=>c.uid===subaru.uid),true);
+ assert.equal(declined.players[0].hand.length,handBefore);
+ const back=legalUniversalActions(packs,live).find(a=>a.type==='chooseHandReenterUnder'&&
+  a.uid===handCard.uid&&a.replaceUid===undefined);
+ live=dispatchUniversalAction(packs,live,back);
+ assert.equal(live.pending,null);
+ const returned=at(live,0,subaru.uid);
+ assert.equal(returned.ready,false);
+ assert.equal(Number.isInteger(returned.fieldEntryStamp),true);
+ assert.equal(returned.under.length,1);
+ assert.equal(returned.under[0].uid,handCard.uid);
+ assert.equal(returned.under[0].faceDown,true);
+ assert.equal(live.players[0].hand.some(c=>c.uid===handCard.uid),false);
+ assert.equal(live.players[0].outside.some(c=>c.uid===handCard.uid),false);
+ assert.ok(live.zoneMoveEvents.some(e=>e.uid===handCard.uid&&e.from==='hand'&&
+  e.to==='outside'&&e.reason==='own-effect'&&e.sourceUid===subaru.uid));
+ assert.ok(live.zoneMoveEvents.some(e=>e.uid===handCard.uid&&e.from==='outside'&&
+  e.to==='raid-under'&&e.reason==='own-effect'&&e.sourceUid===subaru.uid));
+ assert.ok(live.zoneMoveEvents.some(e=>e.uid===subaru.uid&&e.from==='outside'&&
+  e.to==='front'&&e.reason==='own-effect'));
+ assert.equal(universalBp(packs,live,returned),3000);
+ const ownerView=universalPublicView(packs,live,0).players[0].front.find(c=>c?.uid===subaru.uid);
+ const foeView=universalPublicView(packs,live,1).players[0].front.find(c=>c?.uid===subaru.uid);
+ assert.equal(ownerView.underLayers[0].cardId,handCard.cardId);
+ assert.equal(ownerView.underLayers[0].faceDown,true);
+ assert.deepEqual(foeView.underLayers[0],{faceDown:true});
+ assert.equal(live.players[0].front.some(c=>c?.uid===emilia.uid),true);
+ live=untilPhase(packs,live,0,'main');
+ assert.equal(universalBp(packs,live,at(live,0,subaru.uid)),4000);
+ silence(live,subaru.uid,0);
+ assert.equal(universalBp(packs,live,at(live,0,subaru.uid)),3000);
+ live=untilPhase(packs,live,1,'main');
+ [live]=castActive(live,'REZ-1-031');
+ assert.equal(live.pending.limit,3000);
+ live=dispatchUniversalAction(packs,live,{type:'chooseRetireBp',uid:subaru.uid});
+ assert.equal(live.pending,null);
+ assert.equal(live.players[0].outside.some(c=>c.uid===subaru.uid),true);
+ assert.equal(live.players[0].outside.some(c=>c.uid===handCard.uid),true);
+
+ let bareHand=five(8742);
+ fuel(bareHand,['REZ-1-016','REZ-1-016','REZ-1-016']);
+ lineEnergy(bareHand,1,ramFuel);
+ put(bareHand,0,'REZ-1-081','front',0);
+ bareHand=reach(bareHand,'main');
+ let lonely;
+ [bareHand,lonely]=playFront(bareHand,'REZ-1-101');
+ bareHand=untilPhase(packs,bareHand,1,'main');
+ parkHand(bareHand,0);
+ [bareHand]=castActive(bareHand,'REZ-1-031');
+ bareHand=dispatchUniversalAction(packs,bareHand,{type:'chooseRetireBp',uid:lonely.uid});
+ assert.equal(bareHand.pending,null);
+ assert.equal(bareHand.players[0].outside.some(c=>c.uid===lonely.uid),true);
+
+ let unnamed=five(8743);
+ fuel(unnamed,['REZ-1-016','REZ-1-016','REZ-1-016']);
+ lineEnergy(unnamed,1,ramFuel);
+ unnamed=reach(unnamed,'main');
+ let plain;
+ [unnamed,plain]=playFront(unnamed,'REZ-1-101');
+ unnamed=untilPhase(packs,unnamed,1,'main');
+ [unnamed]=castActive(unnamed,'REZ-1-031');
+ unnamed=dispatchUniversalAction(packs,unnamed,{type:'chooseRetireBp',uid:plain.uid});
+ assert.equal(unnamed.pending,null);
+ assert.equal(unnamed.players[0].outside.some(c=>c.uid===plain.uid),true);
+
+ let energyEmilia=five(8744);
+ fuel(energyEmilia,['REZ-1-016','REZ-1-016','REZ-1-016']);
+ lineEnergy(energyEmilia,1,ramFuel);
+ put(energyEmilia,0,'REZ-1-081','energy',3);
+ energyEmilia=reach(energyEmilia,'main');
+ let fromEnergy;
+ [energyEmilia,fromEnergy]=playFront(energyEmilia,'REZ-1-101');
+ energyEmilia=untilPhase(packs,energyEmilia,1,'main');
+ [energyEmilia]=castActive(energyEmilia,'REZ-1-031');
+ energyEmilia=dispatchUniversalAction(packs,energyEmilia,{type:'chooseRetireBp',uid:fromEnergy.uid});
+ assert.equal(energyEmilia.pending.kind,'effect-hand-reenter-under');
+ energyEmilia=dispatchUniversalAction(packs,energyEmilia,{type:'chooseHandReenterUnder',uid:null});
+ assert.equal(energyEmilia.players[0].outside.some(c=>c.uid===fromEnergy.uid),true);
+
+ let covered=five(8745);
+ fuel(covered,['REZ-1-016','REZ-1-016','REZ-1-016']);
+ lineEnergy(covered,1,ramFuel);
+ put(covered,0,'REZ-1-081','front',0);
+ covered=reach(covered,'main');
+ let already;
+ [covered,already]=playFront(covered,'REZ-1-101');
+ const prior=pull(covered,0,'REZ-1-008');
+ prior.faceDown=true;prior.ready=false;prior.fieldEntryStamp=null;
+ prior.stack=[];prior.under=[];prior.buffs=[];
+ at(covered,0,already.uid).under=[prior];
+ covered=untilPhase(packs,covered,1,'main');
+ [covered]=castActive(covered,'REZ-1-031');
+ covered=dispatchUniversalAction(packs,covered,{type:'chooseRetireBp',uid:already.uid});
+ assert.equal(covered.pending,null);
+ assert.equal(covered.players[0].outside.some(c=>c.uid===already.uid),true);
+ assert.equal(covered.players[0].outside.some(c=>c.uid===prior.uid),true);
+
+ let crowded=five(8746);
+ fuel(crowded,['REZ-1-016','REZ-1-016','REZ-1-016']);
+ lineEnergy(crowded,1,ramFuel);
+ const firstEmilia=put(crowded,0,'REZ-1-081','front',0);
+ const secondEmilia=put(crowded,0,'REZ-1-081','front',1);
+ put(crowded,0,'REZ-1-007','front',2);
+ crowded=reach(crowded,'main');
+ let crowdedSubaru;
+ [crowded,crowdedSubaru]=playFront(crowded,'REZ-1-101');
+ crowded=untilPhase(packs,crowded,1,'main');
+ [crowded]=castActive(crowded,'REZ-1-031');
+ crowded=dispatchUniversalAction(packs,crowded,{type:'chooseRetireBp',uid:crowdedSubaru.uid});
+ assert.equal(crowded.pending.kind,'effect-hand-reenter-under');
+ const hole=crowded.players[0].front.findIndex(c=>!c);
+ put(crowded,0,'REZ-1-012', 'front', hole);
+ const tucked=crowded.players[0].hand[0];
+ const replaced=legalUniversalActions(packs,crowded).find(a=>a.type==='chooseHandReenterUnder'&&
+  a.uid===tucked.uid&&a.replaceUid===firstEmilia.uid);
+ crowded=dispatchUniversalAction(packs,crowded,replaced);
+ assert.equal(crowded.pending,null);
+ assert.equal(crowded.players[0].removed.some(c=>c.uid===firstEmilia.uid),true);
+ assert.equal(crowded.players[0].front.some(c=>c?.uid===secondEmilia.uid),true);
+ assert.equal(at(crowded,0,crowdedSubaru.uid).under[0].uid,tucked.uid);
+ assert.equal(at(crowded,0,crowdedSubaru.uid).under[0].faceDown,true);
+ assert.ok(crowded.zoneMoveEvents.some(e=>e.uid===firstEmilia.uid&&e.to==='removed'&&e.reason==='rule'));
+
+ let only=five(8747);
+ fuel(only,['REZ-1-016','REZ-1-016','REZ-1-016']);
+ lineEnergy(only,1,ramFuel);
+ const sole=put(only,0,'REZ-1-081','front',0);
+ put(only,0,'REZ-1-007','front',1);
+ put(only,0,'REZ-1-012','front',2);
+ only=reach(only,'main');
+ let onlySubaru;
+ [only,onlySubaru]=playFront(only,'REZ-1-101');
+ only=untilPhase(packs,only,1,'main');
+ [only]=castActive(only,'REZ-1-031');
+ only=dispatchUniversalAction(packs,only,{type:'chooseRetireBp',uid:onlySubaru.uid});
+ const opened=only.players[0].front.findIndex(c=>!c);
+ put(only,0,'REZ-1-008','front',opened);
+ const payment=only.players[0].hand[0];
+ const illegal=legalUniversalActions(packs,only).find(a=>a.type==='chooseHandReenterUnder'&&
+  a.uid===payment.uid&&a.replaceUid===sole.uid);
+ assert.ok(illegal);
+ assert.throws(()=>dispatchUniversalAction(packs,only,illegal),/Emilia left/);
+ assert.equal(only.pending.kind,'effect-hand-reenter-under');
+ assert.equal(only.players[0].front.some(c=>c?.uid===sole.uid),true);
+ only=dispatchUniversalAction(packs,only,{type:'chooseHandReenterUnder',uid:null});
+ assert.equal(only.players[0].outside.some(c=>c.uid===onlySubaru.uid),true);
+ assert.equal(assertUniversalMatch(packs,live),true);
+ assert.equal(assertUniversalMatch(packs,declined),true);
+ assert.equal(assertUniversalMatch(packs,bareHand),true);
+ assert.equal(assertUniversalMatch(packs,unnamed),true);
+ assert.equal(assertUniversalMatch(packs,energyEmilia),true);
+ assert.equal(assertUniversalMatch(packs,covered),true);
+ assert.equal(assertUniversalMatch(packs,crowded),true);
+ assert.equal(assertUniversalMatch(packs,only),true);
 });

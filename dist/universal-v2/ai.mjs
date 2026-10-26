@@ -169,6 +169,16 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   return [...legal].sort((a,b)=>(catalog[hand.find(c=>c.uid===a.uid)?.cardId]?.energy||0)-
    (catalog[hand.find(c=>c.uid===b.uid)?.cardId]?.energy||0))[0];
  }
+ if(s.pending?.kind==='effect-substitute-retire')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-outside-printed-active')return legal.find(a=>a.uid!==null&&!a.replaceUid)||legal[0];
+ if(s.pending?.kind==='effect-bounce-include-self')
+  return legal.find(a=>a.uid!==null&&a.uid!==s.pending.sourceUid)||
+   legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-outside-rest-or-raid')
+  return legal.find(a=>a.mode==='enter'&&!a.replaceUid)||
+   legal.find(a=>a.mode==='raid'&&!a.replaceUid)||legal[0];
+ if(s.pending?.kind==='effect-grant-bounce-instead')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-hand-reenter-under')return legal.find(a=>a.uid!==null&&!a.replaceUid)||legal[0];
  if(s.pending?.kind==='effect-return-printed')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-remove-named')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-pay-named')return legal.find(a=>a.mode==='hand')||

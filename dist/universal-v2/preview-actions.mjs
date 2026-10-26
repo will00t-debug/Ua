@@ -69,6 +69,12 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-reveal-retire':'公開 1 張手牌並放到牌底',
  'effect-retire-referenced':'可選擇公開 BP 以下的對手前線並使其退場',
  'effect-hand-block':'將 1 張手牌放到場外，本回合不被 BP4000 以上的角色阻擋',
+ 'effect-substitute-retire':'可改由前線的拉姆代替雷姆退場',
+ 'effect-outside-printed-active':'可讓場外能源 0 的藍色菜月昴以活動狀態登場',
+ 'effect-bounce-include-self':'可將 1 張自己場上的角色放回手牌',
+ 'effect-outside-rest-or-raid':'可讓場外的藍色菜月昴休息登場或突襲',
+ 'effect-grant-bounce-instead':'可指定 1 張菜月昴，對手效果退場時改回手牌',
+ 'effect-hand-reenter-under':'可將 1 張手牌放到場外，讓菜月昴休息回到前線',
  'effect-hand-deploy-may':'這次參照手牌角色 BP 時，是否視為 +1000 並休息登場',
  'effect-hand-rest-entry':'選擇休息登場的位置',
  'effect-active-other':'選擇最多 1 張其他己方角色並使其活動',
@@ -258,6 +264,18 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseRevealRetire':return '公開 '+name()+' 並放到牌底';
   case 'chooseRetireReferenced':return action.uid===null?'不使角色退場':'使 '+name()+' 退場';
   case 'chooseHandBlock':return '將 '+name()+' 放到場外';
+  case 'chooseSubstituteRetire':return action.uid===null?'不代替，讓原本的角色退場':
+   '改由 '+name()+' 退場';
+  case 'chooseOutsidePrintedActive':return action.uid===null?'不登場':
+   '使 '+name()+' 以活動狀態登場';
+  case 'chooseBounceIncludeSelf':return action.uid===null?'不放回手牌':
+   '將 '+name()+' 放回手牌';
+  case 'chooseOutsideRestOrRaid':return action.uid===null?'不登場':
+   (action.mode==='raid'?'以突襲登場：':'以休息狀態登場：')+name();
+  case 'chooseGrantBounceInstead':return action.uid===null?'不指定菜月昴':
+   '指定 '+name()+'，直到下一次自己的回合開始';
+  case 'chooseHandReenterUnder':return action.uid===null?'不將手牌放到場外':
+   '將 '+name()+' 放到場外，並讓這張角色休息回到前線';
   case 'chooseReturnPrinted':return action.uid===null?'不放回手牌':'將 '+name()+' 放回手牌，並使這張角色活動且本回合 BP 增加';
   case 'chooseRemoveNamed':return action.uid===null?'不移入移除區':'將 '+name()+' 移入移除區，並使這張角色活動';
   case 'choosePayNamed':return action.mode==='skip'?'不支付，不回收':

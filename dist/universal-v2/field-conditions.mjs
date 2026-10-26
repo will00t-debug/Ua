@@ -56,6 +56,15 @@ export function matchesOwnDistinctTraits(s,owner,sourceUid,profile,printed){
 export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energy,cardBp){
  if(condition.turn==='own'&&s.active!==owner)return false;
  if(condition.turn==='opponent'&&s.active===owner)return false;
+ // 「自分のターン中」かつ「このキャラの下に裏向きのカード」. The physical
+ // field card is the one being measured. A buried layer is not itself.
+ if(condition.kind==='ownTurnFacedownUnder'){
+  const areas=[s.players[owner].front,s.players[owner].energy];
+  const physical=areas.flat().find(c=>c?.uid===sourceUid);
+  const facedown=c=>!!c&&((c.under||[]).some(v=>v.faceDown===true||facedown(v))||
+   (c.stack||[]).some(v=>v.faceDown===true||facedown(v)));
+  return facedown(physical);
+ }
  // Printed 「このターン中」 with no 自分のターン icon. The ledger is effect
  // AP only; paying AP to play a card does not qualify.
  if(condition.kind==='ownEffectApPaidColor')
