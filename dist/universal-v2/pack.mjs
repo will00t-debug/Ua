@@ -1334,6 +1334,11 @@ function normalize(card,packId){
   mainAbility.impactAt===5&&mainAbility.impact===1&&
   Object.keys(mainAbility).length===6&&
   Object.keys(mainAbility).every(k=>['op','oncePerTurn','damageAt','damage','impactAt','impact'].includes(k));
+ const mainHandTop=mainAbility?.op==='payApHandTopBuffAttackAp'&&
+  mainAbility.oncePerTurn===true&&mainAbility.payAp===1&&
+  mainAbility.bp===2000&&mainAbility.recoverAp===1&&
+  Object.keys(mainAbility).length===5&&
+  Object.keys(mainAbility).every(k=>['op','oncePerTurn','payAp','bp','recoverAp'].includes(k));
  const mainDrawTrigger=mainAbility?.op==='frontDrawOrHandTrigger'&&
   mainAbility.frontOnly===true&&mainAbility.drawOnce==='card'&&
   mainAbility.triggerOnce==='name'&&
@@ -1359,7 +1364,7 @@ function normalize(card,packId){
   Object.keys(mainAbility).length===3&&
   Object.keys(mainAbility).every(k=>['op','active','rest'].includes(k));
  if(mainAbility!==null&&
-  (!['character','field'].includes(card.type)||!(fieldDualMain||fieldRestRetireThen||mainEnergyRestRetire||card.type==='character'&&(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainRestBuff||mainRestChoose||mainPayAp||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainDiscardEnergy||mainActiveNamed||mainRestDiscardRetire||mainFrontProgram||mainFieldOnceBuff||mainEntryProtect||mainRestRetireUnder||mainRestTwoMove||mainOncePay||mainOnceActive||mainRestRetireEvent||mainOnceChoose||mainGrantBlock||mainOwnRestActive||mainEnteredDiscard||mainDualCharacter||mainAbovePrinted||mainFrontChoose||mainDrawTrigger))))
+  (!['character','field'].includes(card.type)||!(fieldDualMain||fieldRestRetireThen||mainEnergyRestRetire||card.type==='character'&&(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainRestBuff||mainRestChoose||mainPayAp||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainDiscardEnergy||mainActiveNamed||mainRestDiscardRetire||mainFrontProgram||mainFieldOnceBuff||mainEntryProtect||mainRestRetireUnder||mainRestTwoMove||mainOncePay||mainOnceActive||mainRestRetireEvent||mainOnceChoose||mainGrantBlock||mainOwnRestActive||mainEnteredDiscard||mainDualCharacter||mainAbovePrinted||mainFrontChoose||mainDrawTrigger||mainHandTop))))
   throw Error(card.id+' unsupported main action ability');
  const passiveBonuses=validatePassiveBonuses(card);
  const implemented=card.implementation;

@@ -20,7 +20,7 @@ test('EX17BT catalogue is the official 73-card Vol.2 list and stays unplayable',
  assert.deepEqual(rarity,REZERO_VOL2_SET.rarity);
  assert.equal(REZERO_VOL2_AP.length,8);
  const implemented=new Set(REZ_V2_IMPLEMENTED_IDS);
- assert.equal(implemented.size,68);
+ assert.equal(implemented.size,69);
  assert.ok(REZERO_VOL2_CARDS.every(card=>card.auto===false&&titleOfCard(card)==='rezero'));
  assert.ok(REZERO_VOL2_CARDS.every(card=>card.engineImplemented===implemented.has(card.id)));
  assert.ok(REZERO_VOL2_AP.every(card=>card.engineImplemented!==true));

@@ -16,6 +16,9 @@
 // other character. Front once per turn: until next own start, BP+1000 and
 // characters of BP 4000 or more cannot block her; or grant one other
 // character front-line energy generation this turn.
+// Batch 56 adds 024: empty-field purple energy −2, and a once-per-turn
+// main that pays 1 AP, puts one hand card on top of the deck, then
+// gives this character BP+2000 and readies one AP at attack-phase start.
 // Batch 55 adds 047: printed Impact 1, a per-card front draw, and a
 // name-shared front main that puts one green hand card outside and may
 // activate that card's existing trigger. Q2418 shares the second main.
@@ -252,13 +255,16 @@ const PROFILES={
      {op:'grantOtherFieldFrontEnergyThisTurn',optional:false}]}]}]}},
  'REZ-2-047':{implementation:'dsl',printedImpact:1,effects:{},
   mainAbility:{op:'frontDrawOrHandTrigger',frontOnly:true,drawOnce:'card',
-   triggerOnce:'name',handColor:'green'}}
+   triggerOnce:'name',handColor:'green'}},
+ 'REZ-2-024':{implementation:'dsl',effects:{},emptyOwnFieldHandEnergyDiscount:2,
+  mainAbility:{op:'payApHandTopBuffAttackAp',oncePerTurn:true,payAp:1,
+   bp:2000,recoverAp:1}}
 };
 
 export const REZ_V2_IMPLEMENTED_IDS=Object.freeze(Object.keys(PROFILES));
 
 export function createRezV2Pack(){
  const cards=REZ_V2_IMPLEMENTED_IDS.map(id=>({...shell(id),...PROFILES[id]}));
- return createUniversalPack({id:'rezero',version:'0.22.0',cards});
+ return createUniversalPack({id:'rezero',version:'0.23.0',cards});
 
 }

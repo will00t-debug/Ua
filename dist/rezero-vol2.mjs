@@ -923,7 +923,7 @@ export const REZERO_VOL2_CARDS = [
   ],
   "maxCopies": 4,
   "auto": false,
-  "engineImplemented": false,
+  "engineImplemented": true,
   "color": "purple",
   "energy": 2,
   "ap": 1,
