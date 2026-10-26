@@ -51,6 +51,9 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   return difficulty==='easy'?legal[0]:legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-discard')
   return legal.find(a=>a.type==='chooseDiscard')||legal[0];
+ if(s.pending?.kind==='effect-remove-hand-scale')
+  return difficulty==='easy'?legal.find(a=>a.mode==='done')||legal[0]:
+   legal.find(a=>a.mode==='pick')||legal.find(a=>a.mode==='done')||legal[0];
  if(s.pending?.kind==='life-trigger')
   return legal.find(a=>['final','raid','special','colorRetire','colorRestSkip','colorField','color','active','draw','get'].includes(a.mode))||legal[0];
  if(s.pending?.kind==='effect-recover-ap')return legal.find(a=>a.uid!==null)||legal[0];

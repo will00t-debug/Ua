@@ -183,7 +183,8 @@ const testForKind=Object.freeze({
  byakuyaRukiaApChoice:'tests/v2-c29-bleach-port.test.mjs',
  rukiaFrontApRestLock:'tests/v2-c29-bleach-port.test.mjs',
  nemSquadLook:'tests/v2-c29-bleach-port.test.mjs',
- mayuriNemSquadRest:'tests/v2-c29-bleach-port.test.mjs'
+ mayuriNemSquadRest:'tests/v2-c29-bleach-port.test.mjs',
+ shutaraHandScale:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -202,7 +203,9 @@ function contributedEntry(profile){
   definition:Object.freeze(definition),
   evidence:Object.freeze({
    printedTextFragments:Object.freeze([profile.effect]),
-   reviewNote:profile.id==='BLC-2-038'?
+   reviewNote:profile.id==='BLC-2-057'?
+    'EX07BT/BLC-2-057 official page 2026-10-27. Required energy 紫4, generated energy 紫. Raid onto 修多羅 千手丸, become ACTIVE, and may move to the front. On play, put any number of own hand cards with trait 零番隊 into the removed area, including zero. Then retire up to one opposing front character. The BP cap starts at 2500 and increases by 1000 for each card this effect removed. A card without that trait cannot be removed. An energy-line card is not in hand. Choosing zero still opens the 2500 retirement. Declining the retirement leaves the removed cards removed. An energy-line character is not a front character. A field is not a character. No matching hand card skips the removal and opens the 2500 retirement. RAID is the generic sentence. No card FAQ. Trait 零番隊.':
+   profile.id==='BLC-2-038'?
     'EX07BT/BLC-2-038 official page 2026-10-27. Required energy 青4, generated energy 青. Raid onto 涅 マユリ, become ACTIVE, and may move to the front. On play, up to one own field character that is 涅 ネム or has trait 涅骸部隊 gets BP+1000 and Impact 1 this turn. Declining grants nothing. This character is 護廷十三隊 named 涅 マユリ, so it is not its own target. A field is not a character. An energy-line character is a legal target. Zero targets open nothing. A card that matches both the name and the trait is still one card. [起動メイン][フロントLにある場合][ターン1] only after an own character retired this turn. Then REST-play one outside blue AP-1 character that is 涅 ネム or has 涅骸部隊. Required energy is not a filter. A printed Raid name still enters REST. Declining that entry is illegal. Zero outside targets do not offer the activate, so the once is not consumed. The energy line cannot activate. [ターン1] is this physical card and is spent when the activate resolves, before the entry finishes. A second copy can still activate. Silence before the activate removes it. The entered character resolves its on-play as an own character effect. RAID is the generic sentence. No card FAQ. Trait 護廷十三隊.':
    profile.id==='BLC-2-035'?
     'EX07BT/BLC-2-035 official page 2026-10-27. Required energy 青3, generated energy 青青. [起動メイン][ターン1]: retire one own character with trait 涅骸部隊. The retirement is mandatory. This character trait is 護廷十三隊, so it is not its own target. A field with that trait is not a character. An energy-line character is a legal target. The energy line may activate. Zero matching characters do not offer the activate, so the once is not consumed. On success, look at the top 4 of the own deck. Up to one of 涅 マユリ, 涅 ネム, or trait 涅骸部隊 may be revealed and added to hand. A card that matches more than one of those is still one card. Declining the hand add is legal. The rest go to the bottom in any order. A window with no match goes straight to that order. An empty deck looks at nothing. The look is private. The card added to hand is public. The unordered window stays private. [ターン1] is this physical card and is spent when the activate resolves, before the look finishes. A second copy can still activate. Silence before the activate removes it. No trigger. No card FAQ. Trait 護廷十三隊.':
