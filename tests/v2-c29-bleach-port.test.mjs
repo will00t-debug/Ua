@@ -157,9 +157,14 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 // BLC-3-003 UA04NC: on play choose one. Up to one other own character gets
 //   BP+1000, or BP+3000 and retires when its attack ends. Official iframe
 //   2026-10-26. Required 青1. Generated 青. ACTIVE is generic. No card FAQ.
+// BLC-4-072 EX15BT: on play, may put one hand card outside. If that payment
+//   happens, may REST up to one own outside character of printed AP 1 with
+//   trait 假面軍勢 whose required energy is currently met. Q2341 (2026-09-04):
+//   the card just sent outside may be that character. Official iframe
+//   2026-10-26. Required 緑4. Generated 緑. No trigger.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -230,12 +235,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers fifty-four whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,490);
- assert.equal(EXPECTED_V2_COUNTS.bleach,214);
+test('C29 registers fifty-five whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,491);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,215);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,214);
+ assert.equal(Object.keys(bleach.cards).length,215);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -4394,4 +4399,201 @@ test('BLC-3-003 chooses BP+1000 or BP+3000 that retires at attack end',()=>{
  assert.equal(assertUniversalMatch(alone.packs,empty),true);
  assert.equal(assertUniversalMatch(won.packs,clash),true);
  assert.equal(assertUniversalMatch(held.packs,later),true);
+});
+
+test('BLC-4-072 may discard one hand card and REST an affordable AP 1 visored character',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-4-072');
+ assert.equal(printed.effect,'登場時：可將1張手牌送至場外；如此則可從場外將最多1張能量需求已滿足、消費AP1且具有「假面軍勢」特徵的卡以Rest登場（可選剛丟棄的卡）。');
+ assert.equal(printed.nameJa,'平子 真子');
+ assert.equal(printed.number,'EX15BT/BLC-4-072');
+ assert.deepEqual(printed.traits,['護廷十三隊']);
+ assert.equal(printed.energy,4);
+ assert.equal(printed.ap,1);
+ assert.equal(printed.bp,4000);
+ assert.equal(printed.gen,1);
+ assert.equal(printed.trigger,null);
+ assert.equal(printed.color,'green');
+ const card=bleach.cards['BLC-4-072'];
+ assert.equal(card.name,'平子 真子');
+ assert.equal(card.gen,1);
+ assert.equal(card.trigger,null);
+ assert.equal(card.triggerEffect,null);
+ assert.deepEqual(card.traits,['護廷十三隊']);
+ assert.equal(cardHasTrait(card,'假面軍勢'),false);
+ assert.equal(cardHasTrait(bleach.cards['BLC-4-061'],'假面軍勢'),true);
+ assert.equal(cardHasTrait(bleach.cards['BLC-4-062'],'假面軍勢'),true);
+ const program=[{op:'discardGate',optional:true,then:[{op:'deployOutsideTraitApRest',trait:'假面軍勢',ap:1,optional:true,requireAffordableEnergy:true}]}];
+ assert.deepEqual(card.effects.onPlay,program);
+ assert.equal(card.mainAbility,null);
+ const bare={id:'BAD',name:'平子 真子',color:'green',type:'character',energy:0,ap:1,bp:1000,gen:1,traits:['假面軍勢'],trigger:null,implementation:'dsl',effects:{}};
+ const visoredOp={op:'deployOutsideTraitApRest',trait:'假面軍勢',ap:1,optional:true,requireAffordableEnergy:true};
+ assert.throws(()=>createUniversalPack({id:'bad-ap',cards:[{...bare,effects:{onPlay:[{...visoredOp,ap:4}]}}]}),/invalid trait AP outside REST/);
+ assert.throws(()=>createUniversalPack({id:'bad-zero',cards:[{...bare,effects:{onPlay:[{...visoredOp,ap:0}]}}]}),/invalid trait AP outside REST/);
+ assert.throws(()=>createUniversalPack({id:'bad-opt',cards:[{...bare,effects:{onPlay:[{...visoredOp,optional:false}]}}]}),/invalid trait AP outside REST/);
+ assert.throws(()=>createUniversalPack({id:'bad-energy',cards:[{...bare,effects:{onPlay:[{op:'deployOutsideTraitApRest',trait:'假面軍勢',ap:1,optional:true}]}}]}),/invalid trait AP outside REST/);
+ const deck=realDeck(['BLC-4-072','BLC-4-061','BLC-4-062','BLC-1-071','BLC-1-083','BLC-2-066','BLC-1-089','BLC-1-080'],'green');
+ function fuel(s){
+  for(const [i,id] of ['BLC-1-071','BLC-1-083','BLC-2-066','BLC-1-089'].entries())
+   put(s,0,id,'energy',i);
+ }
+ const first=main(deck,30472);
+ fuel(first.s);
+ const lisa=take(first.s,0,'BLC-4-062');
+ const kenpachi=take(first.s,0,'BLC-1-080');
+ first.s.players[0].outside.push(lisa,kenpachi);
+ const hiyori=take(first.s,0,'BLC-4-061');
+ first.s.players[0].hand.push(hiyori);
+ const hirako=take(first.s,0,'BLC-4-072');
+ first.s.players[0].hand.push(hirako);
+ let played=dispatchUniversalAction(first.packs,first.s,{type:'play',uid:hirako.uid,line:'front',slot:0});
+ assert.equal(played.players[0].front.find(c=>c?.uid===hirako.uid).ready,false);
+ assert.equal(played.pending.kind,'effect-discard-gate');
+ assert.equal(played.pending.optional,true);
+ aiOk(first.packs,played);
+ played=dispatchUniversalAction(first.packs,played,{type:'chooseDiscardGate',uid:hiyori.uid});
+ assert.equal(played.pending.kind,'effect-outside-trait-ap-rest');
+ assert.deepEqual([...played.pending.choices].sort(),[hiyori.uid,lisa.uid].sort());
+ assert.equal(played.pending.choices.includes(kenpachi.uid),false);
+ const shown=[...new Set(universalPrivateChoices(first.packs,played,0).options.filter(o=>o.card).map(o=>o.card.cardId))].sort();
+ assert.deepEqual(shown,['BLC-4-061','BLC-4-062']);
+ assert.equal(universalPrivateChoices(first.packs,played,1),null);
+ const legal=legalUniversalActions(first.packs,played);
+ assert.equal(legal.some(a=>a.type==='chooseOutsideTraitApRest'&&a.uid===null),true);
+ assert.equal(legal.some(a=>a.mode==='raid'),false);
+ assert.equal(legal.some(a=>a.uid===kenpachi.uid),false);
+ aiOk(first.packs,played);
+ const seat=legal.find(a=>a.type==='chooseOutsideTraitApRest'&&a.uid===hiyori.uid&&a.line==='front'&&a.replaceUid===undefined);
+ assert.ok(seat);
+ played=dispatchUniversalAction(first.packs,played,seat);
+ assert.equal(played.pending,null);
+ assert.equal(played.players[0].front.find(c=>c?.uid===hiyori.uid).ready,false);
+ assert.equal(played.players[0].outside.some(c=>c.uid===lisa.uid),true);
+ assert.equal(played.players[0].outside.some(c=>c.uid===hiyori.uid),false);
+ const skipped=main(deck,30473);
+ fuel(skipped.s);
+ const parked=take(skipped.s,0,'BLC-4-062');
+ skipped.s.players[0].outside.push(parked);
+ const actor=take(skipped.s,0,'BLC-4-072');
+ skipped.s.players[0].hand.push(actor);
+ let declined=dispatchUniversalAction(skipped.packs,skipped.s,{type:'play',uid:actor.uid,line:'front',slot:0});
+ declined=dispatchUniversalAction(skipped.packs,declined,{type:'chooseDiscardGate',uid:null});
+ assert.equal(declined.pending,null);
+ assert.equal(declined.players[0].outside.some(c=>c.uid===parked.uid),true);
+ const gated=main(deck,30474);
+ fuel(gated.s);
+ const needTwo=take(gated.s,0,'BLC-4-062');
+ gated.s.players[0].outside.push(needTwo);
+ const cheap=take(gated.s,0,'BLC-4-061');
+ gated.s.players[0].hand.push(cheap);
+ const payer=take(gated.s,0,'BLC-4-072');
+ gated.s.players[0].hand.push(payer);
+ let gate=dispatchUniversalAction(gated.packs,gated.s,{type:'play',uid:payer.uid,line:'front',slot:0});
+ for(const slot of [1,2,3]){
+  const held=gate.players[0].energy[slot];
+  gate.players[0].energy[slot]=null;
+  gate.players[0].deck.push(held);
+ }
+ assert.equal(universalEnergyByColor(gated.packs,gate,0).green,1);
+ assert.equal(effectiveHandRequiredEnergy(gated.packs,gate,0,bleach.cards['BLC-4-062']),2);
+ gate=dispatchUniversalAction(gated.packs,gate,{type:'chooseDiscardGate',uid:cheap.uid});
+ assert.deepEqual(gate.pending.choices,[cheap.uid]);
+ const energySeat=legalUniversalActions(gated.packs,gate).find(a=>a.type==='chooseOutsideTraitApRest'&&a.uid===cheap.uid&&a.line==='energy'&&a.replaceUid===undefined);
+ assert.ok(energySeat);
+ gate=dispatchUniversalAction(gated.packs,gate,energySeat);
+ assert.equal(gate.players[0].energy.find(c=>c?.uid===cheap.uid).ready,false);
+ assert.equal(gate.players[0].outside.some(c=>c.uid===needTwo.uid),true);
+ const quietBoard=main(deck,30475);
+ fuel(quietBoard.s);
+ const solo=take(quietBoard.s,0,'BLC-4-072');
+ const waiting=take(quietBoard.s,0,'BLC-4-061');
+ quietBoard.s.players[0].deck.push(...quietBoard.s.players[0].hand.splice(0));
+ quietBoard.s.players[0].hand.push(solo);
+ quietBoard.s.players[0].outside.push(waiting);
+ let quiet=dispatchUniversalAction(quietBoard.packs,quietBoard.s,{type:'play',uid:solo.uid,line:'front',slot:0});
+ assert.equal(quiet.pending,null);
+ assert.equal(quiet.players[0].outside.some(c=>c.uid===waiting.uid),true);
+ const miss=main(deck,30476);
+ fuel(miss.s);
+ const plain=take(miss.s,0,'BLC-1-080');
+ miss.s.players[0].hand.push(plain);
+ const source=take(miss.s,0,'BLC-4-072');
+ miss.s.players[0].hand.push(source);
+ let none=dispatchUniversalAction(miss.packs,miss.s,{type:'play',uid:source.uid,line:'front',slot:0});
+ none=dispatchUniversalAction(miss.packs,none,{type:'chooseDiscardGate',uid:plain.uid});
+ assert.equal(none.pending,null);
+ assert.equal(none.players[0].outside.some(c=>c.uid===plain.uid),true);
+ const vanilla={...bare,implementation:'vanilla',effects:{},traits:[]};
+ const fillers=Array.from({length:6},(_,i)=>({...vanilla,id:'F'+i,name:'余'+i}));
+ const lab=createUniversalPack({id:'lab-hirako',cards:[
+  {...bare,id:'SRC',traits:[],effects:{onPlay:program}},
+  {...vanilla,id:'VIS',name:'猿柿',traits:['假面軍勢']},
+  {...vanilla,id:'COST',name:'リサ',energy:2,traits:['假面軍勢']},
+  {...vanilla,id:'AP2',name:'高AP',ap:2,traits:['假面軍勢']},
+  {...bare,id:'BAN',name:'前線禁止',frontForbidden:true,traits:['假面軍勢'],effects:{onPlay:[{op:'draw',count:1}]}},
+  {...bare,id:'RAID',name:'レイド',raidName:'レイド',traits:['假面軍勢'],effects:{onPlay:[{op:'draw',count:1}]}},
+  {...vanilla,id:'BASE',name:'レイド',gen:1},
+  ...fillers]});
+ const labIds=['SRC','VIS','COST','AP2','BAN','RAID','BASE',...fillers.map(c=>c.id)];
+ const labCounts=Object.fromEntries(labIds.map((id,i)=>[id,i===labIds.length-1?2:4]));
+ assert.deepEqual(validateUniversalDeck(lab,labCounts),[]);
+ const labPacks=[lab,lab];
+ let board=newUniversalMatch(labPacks,{decks:[labCounts,labCounts],seed:30477,first:0});
+ for(let n=0;n<8&&board.phase!=='main';n++)
+  board=dispatchUniversalAction(labPacks,board,{type:'next'});
+ put(board,0,'BASE','energy',0);
+ put(board,0,'BASE','energy',1);
+ const vis=take(board,0,'VIS');
+ const cost=take(board,0,'COST');
+ const ap2=take(board,0,'AP2');
+ const ban=take(board,0,'BAN');
+ const raid=take(board,0,'RAID');
+ board.players[0].outside.push(vis,cost,ap2,ban,raid);
+ const pay=take(board,0,'F0');
+ board.players[0].hand.push(pay);
+ const src=take(board,0,'SRC');
+ board.players[0].hand.push(src);
+ let opened=dispatchUniversalAction(labPacks,board,{type:'play',uid:src.uid,line:'front',slot:0});
+ opened=dispatchUniversalAction(labPacks,opened,{type:'chooseDiscardGate',uid:pay.uid});
+ assert.deepEqual([...opened.pending.choices].sort(),[vis.uid,cost.uid,ban.uid,raid.uid].sort());
+ const openedLegal=legalUniversalActions(labPacks,opened);
+ assert.equal(openedLegal.some(a=>a.mode==='raid'),false);
+ assert.equal(openedLegal.some(a=>a.uid===ban.uid&&a.line==='front'),false);
+ assert.equal(openedLegal.some(a=>a.uid===ban.uid&&a.line==='energy'),true);
+ assert.equal(openedLegal.some(a=>a.uid===raid.uid&&a.line==='front'),true);
+ assert.equal(openedLegal.some(a=>a.uid===ap2.uid),false);
+ const deckBefore=opened.players[0].deck.length;
+ const raidSeat=openedLegal.find(a=>a.type==='chooseOutsideTraitApRest'&&a.uid===raid.uid&&a.line==='front'&&a.replaceUid===undefined);
+ opened=dispatchUniversalAction(labPacks,opened,raidSeat);
+ assert.equal(opened.pending,null);
+ assert.equal(opened.players[0].front.find(c=>c?.uid===raid.uid).ready,false);
+ assert.equal(opened.players[0].deck.length,deckBefore-1);
+ let banned=newUniversalMatch(labPacks,{decks:[labCounts,labCounts],seed:30478,first:0});
+ for(let n=0;n<8&&banned.phase!=='main';n++)
+  banned=dispatchUniversalAction(labPacks,banned,{type:'next'});
+ put(banned,0,'BASE','energy',0);
+ const blocked=take(banned,0,'BAN');
+ const pricey=take(banned,0,'COST');
+ banned.players[0].outside.push(blocked,pricey);
+ const toll=take(banned,0,'F0');
+ banned.players[0].hand.push(toll);
+ const again=take(banned,0,'SRC');
+ banned.players[0].hand.push(again);
+ let narrow=dispatchUniversalAction(labPacks,banned,{type:'play',uid:again.uid,line:'front',slot:0});
+ narrow=dispatchUniversalAction(labPacks,narrow,{type:'chooseDiscardGate',uid:toll.uid});
+ assert.deepEqual(narrow.pending.choices,[blocked.uid]);
+ const banSeat=legalUniversalActions(labPacks,narrow).find(a=>a.type==='chooseOutsideTraitApRest'&&a.uid===blocked.uid&&a.line==='energy'&&a.replaceUid===undefined);
+ assert.ok(banSeat);
+ narrow=dispatchUniversalAction(labPacks,narrow,banSeat);
+ assert.equal(narrow.pending,null);
+ assert.equal(narrow.players[0].energy.find(c=>c?.uid===blocked.uid).ready,false);
+ assert.equal(narrow.players[0].front.some(c=>c?.uid===blocked.uid),false);
+ assert.equal(narrow.players[0].outside.some(c=>c.uid===pricey.uid),true);
+ aiOk(first.packs,played);
+ assert.equal(assertUniversalMatch(first.packs,played),true);
+ assert.equal(assertUniversalMatch(skipped.packs,declined),true);
+ assert.equal(assertUniversalMatch(gated.packs,gate),true);
+ assert.equal(assertUniversalMatch(quietBoard.packs,quiet),true);
+ assert.equal(assertUniversalMatch(miss.packs,none),true);
+ assert.equal(assertUniversalMatch(labPacks,opened),true);
+ assert.equal(assertUniversalMatch(labPacks,narrow),true);
 });

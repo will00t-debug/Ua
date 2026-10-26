@@ -141,7 +141,8 @@ const testForKind=Object.freeze({
  frontDiscardFieldDown:'tests/v2-c29-bleach-port.test.mjs',
  handOutsideTraitlessRest:'tests/v2-c29-bleach-port.test.mjs',
  energyApRestBuff:'tests/v2-c29-bleach-port.test.mjs',
- chooseBuffOrAttackEndRetire:'tests/v2-c29-bleach-port.test.mjs'
+ chooseBuffOrAttackEndRetire:'tests/v2-c29-bleach-port.test.mjs',
+ discardVisoredRest:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -160,7 +161,9 @@ function contributedEntry(profile){
   definition:Object.freeze(definition),
   evidence:Object.freeze({
    printedTextFragments:Object.freeze([profile.effect]),
-   reviewNote:profile.id==='BLC-3-003'?
+   reviewNote:profile.id==='BLC-4-072'?
+    'EX15BT/BLC-4-072 official iframe 2026-10-26. On play, may put one hand card outside. If that payment happens, may REST up to one own outside character whose printed AP is 1, whose trait is the catalogue token 假面軍勢 (official 仮面の軍勢), and whose required energy the controller currently meets. Q2341 (2026-09-04): the card just sent outside may be the one that enters. A Raid name still enters as an ordinary REST character. Generated energy is 緑. No trigger.':
+   profile.id==='BLC-3-003'?
     'UA04NC/BLC-3-003 official iframe 2026-10-26. On play, choose one: up to one other own character gets BP+1000 this turn, or up to one other own character gets BP+3000 and retires at the end of its attack. The retirement follows a direct attack and an attacker win, after that attack\'s life continuation. A lost attacker has already left. Silence on the chosen character does not remove the grant. The grant ends when the next turn starts. ACTIVE is generic. No card FAQ.':
    profile.id==='BLC-4-039'?
     'EX15BT/BLC-4-039 official iframe 2026-10-26. On play from the energy line, become ACTIVE only when an own front character has printed AP 2 or more. Q2320 (2026-09-04): 元々の消費AP is the printed AP. [起動メイン][レストにする]: choose another own character on either line, BP+1000 this turn. If that character\'s printed AP is 2 or more, may put one hand card outside to set it ACTIVE. No ターン1. Generated energy is 青. DRAW is generic.':
