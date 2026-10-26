@@ -48,6 +48,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-bounce-own':'選擇返回手牌的己方角色',
  'effect-buff-own':'選擇己方角色增加本回合 BP',
  'effect-grant-other-impact':'選擇另一己方角色，本回合獲得 Impact',
+ 'effect-grant-opp-block':'對手選擇 1 個角色，本回合不會被高 BP 阻擋',
  'effect-once-choice':'是否發動本回合一次能力',
  'effect-choice-mode':'選擇一項效果',
  'recovered-self-entry':'回收後可 REST 登場至能源線',
@@ -227,6 +228,7 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseFacedownFront':return action.mode==='skip'?'不從能源線移到前線':
    '從能源線移到前線 '+(action.slot+1)+(action.replaceUid?'，並將原前線卡除外':'')+'，本回合 BP＋1000';
   case 'chooseOtherImpact':return action.uid===null?'不給予 Impact':'讓 '+name()+' 本回合獲得 Impact';
+  case 'chooseOppBlock':return action.uid===null?'不指定阻擋限制':'讓 '+name()+' 本回合不會被指定 BP 以上角色阻擋';
   case 'chooseOwnBuff':case 'chooseMainBuff':case 'chooseTraitBuff':case 'chooseRestBp':
   case 'chooseRetireBp':case 'chooseTargetMany':return action.uid===null?'完成目標選擇':'選擇第 '+(state?.pending?.selected?.length+1||1)+' 個角色';
   case 'chooseFrontEnergyGrant':return action.uid===null?

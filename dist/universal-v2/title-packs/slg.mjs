@@ -26,6 +26,8 @@ const proof=Object.freeze({
  '071':['主要階段每回合一次：REST自己，使另一己方角色本回合BP+1000並將自身返回手牌。','UA51BT/SLG-1-071 マリー green0/AP1/BP1500/gen1 DRAW life separate. Main once per physical card this turn: REST, give another own character BP+1000 this turn, then return this card to hand. Official trait is one token DFN／第四次架南島レイド. Official page was not re-read in this batch. Not a full FAQ certification. https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA51BT%2FSLG-1-071'],
  '063':['登場時查看牌庫頂3張，可公開最多1張第四次架南島Raid卡加入手牌','UA51BT/SLG-1-063 最上 真 green1/AP1/BP1500/gen1 DRAW life separate. OnPlay inspects top 3, may add one card with official trait 第四次架南島レイド to hand, orders the rest to the bottom, and discards one hand card only if a card was added. Catalogue token 第四次架南島Raid is not registered. Official page was not re-read in this batch. Not a full FAQ certification.'],
  '054':['登場時查看牌庫頂2張，可把其中最多1張具有第四次架南島Raid特徵的卡送場外','UA51BT/SLG-1-054 黒須 圭介 green0/AP1/BP1500/gen1 ACTIVE life separate. OnPlay inspects top 2, may send one official trait 第四次架南島レイド card outside, and returns the rest to the top in chosen order. Official page was not re-read in this batch. Not a full FAQ certification.'],
+ '003':['經自己的效果從場外加入手牌時，可讓己方1個角色本回合BP+1000','UA51BT/SLG-1-003 朝比奈 りん purple2/AP1/BP3000/gen1 ACTIVE life separate. Own-effect outside-to-hand may give one own character BP+1000 this turn. Ten or more own outside cards generate one extra purple energy on either turn. OnAttack peeks one top card. This recover buff is not the SLG-014 energy entry. Official page was not re-read in this batch. Not a full FAQ certification.'],
+ '024':['本角色不會被BP4000以上角色阻擋','UA51BT/SLG-1-024 道門 泰星 purple1/AP1/BP2500/gen1 no trigger. Cannot be blocked by BP 4000 or higher. On retire the opponent may give one of their field characters the same this-turn ceiling. Official page was not re-read in this batch. Not a full FAQ certification.'],
 
  '042':['主要階段每回合一次REST自己，額外產生1綠能源，主要階段結束時退場。','Official UA51BT/SLG-1-042 2026-04-17 errata-aware source: 馬渕 勲 GREEN0/AP1/BP1000/gen1 no life; rest OWN READY ENERGY source MAIN once per turn, current-turn GREEN+1, mandatory source retirement at MAIN end. Reuses native delayed-retire V2 primitive from SLG-1-013, TTG-1-063, BLEACH-1-069; old Japanese source name corrected in original official errata. No full FAQ certification.'],
 
@@ -64,7 +66,7 @@ const proof=Object.freeze({
 });
 export default Object.freeze({
  title:'solo-leveling',
- version:'v2-c-slg-20261026-b2',
+ version:'v2-c-slg-20261026-b3',
  entries:Object.freeze(verifiedSlgV2Cards().map(def=>{
   const record=records[def.id],suffix=def.id.slice(-3),review=proof[suffix];
   if(!record||!review||!record.effect.includes(review[0]))
@@ -105,7 +107,8 @@ export default Object.freeze({
      ...(def.id==='SLG-1-070'?['tests/v2-r33-slg070-official.test.mjs']:[]),
      ...(def.id==='SLG-1-072'?['tests/v2-slg-072-dfn-draw-gpt.test.mjs']:[]),
      ...(['SLG-1-017','SLG-1-074','SLG-1-050','SLG-1-071'].includes(def.id)?['tests/v2-slg-eight-b1.test.mjs']:[]),
-     ...(['SLG-1-063','SLG-1-054'].includes(def.id)?['tests/v2-slg-eight-b2.test.mjs']:[])],
+     ...(['SLG-1-063','SLG-1-054'].includes(def.id)?['tests/v2-slg-eight-b2.test.mjs']:[]),
+     ...(['SLG-1-003','SLG-1-024'].includes(def.id)?['tests/v2-slg-eight-b3.test.mjs']:[])],
     ...(def.implementation==='vanilla'?{verifiedNoExtraEffects:true}:{})}
   });
  }))

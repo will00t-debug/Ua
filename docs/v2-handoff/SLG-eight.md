@@ -24,3 +24,12 @@ Registered with existing shared top-window ops:
 - UA51BT/SLG-1-054 黒須 圭介. Top 2, up to one card with that trait to outside, the rest back to the top.
 
 The catalogue label 第四次架南島Raid is not the registered token.
+
+## Batch 3 — outside recovery buff and opponent blocker ceiling
+
+Registered:
+
+- UA51BT/SLG-1-003 朝比奈 りん. When an own effect moves this card from outside to hand, it may give one own character BP+1000 this turn, including itself. Ten or more own outside cards add one purple energy on either turn. OnAttack peeks one top card. The shared `onOutsideRecover` buff is the existing optional own-field BP choice, not the SLG-014 energy entry.
+- UA51BT/SLG-1-024 道門 泰星. Printed blocker ceiling: characters of BP 4000 or higher cannot block it. On retire the opponent may give one of their field characters the same this-turn ceiling. New shared onRetire op `grantOppBlockAtLeast`.
+
+Official pages were not re-read. The catalogue Chinese is the text anchor. Not a full FAQ certification.

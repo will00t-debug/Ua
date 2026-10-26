@@ -680,6 +680,26 @@ const authored=[
    "op":"inspectTopTraitOutside","count":2,"trait":"第四次架南島レイド","rest":"top"}]},
   "officialTraits":["第四次架南島レイド"],
   "catalogueTraits":["第四次架南島Raid"]
+},
+{
+  "id":"SLG-1-003","name":"朝比奈 りん","color":"purple","energy":2,
+  "ap":1,"bp":3000,"gen":1,"trigger":"active","type":"character",
+  "textAnchor":"經自己的效果從場外加入手牌時，可讓己方1個角色本回合BP+1000",
+  "implementation":"dsl","effects":{
+   "onOutsideRecover":[{"op":"buffOwnField","filter":{"field":"type","value":"character"},
+    "bp":1000,"optional":true,"excludeSelf":false}],
+   "onAttack":[{"op":"peekTopOne"}]
+  },
+  "passiveBonuses":[{"condition":{"kind":"outsideCount","turn":"any","min":10},"extraEnergy":1}]
+},
+{
+  "id":"SLG-1-024","name":"道門 泰星","color":"purple","energy":1,
+  "ap":1,"bp":2500,"gen":1,"trigger":null,"type":"character",
+  "textAnchor":"本角色不會被BP4000以上角色阻擋",
+  "implementation":"dsl","effects":{
+   "onRetire":[{"op":"grantOppBlockAtLeast","bp":4000,"optional":true}]
+  },
+  "blockBpRestriction":{"relation":"atLeast","bp":4000,"condition":null}
 }
 ];
 export const SLG_V2_VERIFIED_IDS=Object.freeze(authored.map(c=>c.id));
