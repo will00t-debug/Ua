@@ -37,6 +37,19 @@ const registry=Object.freeze({
   args:{name:named,count:v=>integer(v,1,5)},
   build:v=>[{op:'drawIfOwnName',name:v.name,count:v.count}]
  },
+ // onAttack draw that also requires this character's current BP. Absent
+ // minSelfBp stays on drawIfOwnName so older cards do not grow a new key.
+ drawIfOwnNameMinSelfBp:{
+  args:{name:named,count:v=>integer(v,1,5),
+   minSelfBp:v=>integer(v,500,50000)&&v%500===0},
+  build:v=>[{op:'drawIfOwnName',name:v.name,count:v.count,minSelfBp:v.minSelfBp}]
+ },
+ drawIfNameOrDistinctColorNames:{
+  args:{name:named,color:v=>['red','blue','yellow','green','purple'].includes(v),
+   min:v=>integer(v,2,8),count:v=>integer(v,1,5)},
+  build:v=>[{op:'drawIfNameOrDistinctColorNames',name:v.name,color:v.color,
+   min:v.min,count:v.count}]
+ },
  millTop:{
   args:{count:v=>integer(v,1,10)},build:v=>[{op:'millTop',count:v.count}]
  },
@@ -74,6 +87,11 @@ const registry=Object.freeze({
   // "skip" decision by reusing the originally optional variant.
   args:{bp:threshold,optional:yesNo},
   build:v=>[{op:'restOppFrontUnderBp',bp:v.bp,optional:v.optional}]
+ },
+ // Current BP >= N on the opponent front. Do not reuse the <= op.
+ restEnemyFrontBpAtLeast:{
+  args:{bp:v=>integer(v,500,50000)&&v%500===0,optional:requiredTrue},
+  build:v=>[{op:'restOppFrontBpAtLeast',bp:v.bp,optional:true}]
  },
  // Printed text with NO BP cap (e.g. UA08BT/BLC-1-030). Never approximate
  // an unbounded target with a giant numeric cap: temporary BP may exceed it.
@@ -179,6 +197,14 @@ const registry=Object.freeze({
   build:v=>[{op:'buffOwnField',filter:{...v.filter},bp:v.bp,
    optional:v.optional,excludeSelf:v.excludeSelf}]
  },
+ // 元々のBP. The amount is a this-turn bonus. excludeSelf false includes
+ // the source when its printed BP matches.
+ buffOwnPrintedBp:{
+  args:{printedBp:v=>integer(v,0,50000)&&v%500===0,
+   bp:v=>integer(v,500,5000)&&v%500===0,optional:yesNo,excludeSelf:yesNo},
+  build:v=>[{op:'buffOwnField',filter:{field:'bp',value:v.printedBp},bp:v.bp,
+   optional:v.optional,excludeSelf:v.excludeSelf}]
+ },
  // Triggered only by the controller's FIRST declared character attack.
  buffSelfIfFirstAttack:{
   args:{bp:positiveBp},build:v=>[{op:'buffSelfIfFirstAttack',bp:v.bp}]
@@ -223,6 +249,14 @@ const registry=Object.freeze({
   args:{count:v=>integer(v,2,4),toOutside:yesNo,
    rest:v=>v==='top'||v==='bottom'},
   build:v=>[{op:'inspectTopArrange',count:v.count,toOutside:v.toOutside,rest:v.rest}]
+ },
+ // Top N, at most one card whose name is in the printed list, rest on top.
+ // No color. Aliases count. This is not the unfiltered arrange op.
+ inspectTopNamesOutside:{
+  args:{count:v=>integer(v,2,4),
+   names:v=>Array.isArray(v)&&v.length>=2&&v.length<=3&&new Set(v).size===v.length&&
+    v.every(n=>typeof n==='string'&&!!n.trim()&&n.length<=80)},
+  build:v=>[{op:'inspectTopNamesOutside',count:v.count,rest:'top',max:1,names:[...v.names]}]
  },
  // Choose 0..N cards outside, then order every remaining inspected card.
  inspectTopAnyOutside:{

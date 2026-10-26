@@ -90,6 +90,18 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
  }
  if(condition.kind==='ownEnergyAtLeast')
   return energy()>=condition.min;
+ if(condition.kind==='oppFrontCurrentBpBelowPrinted'){
+  // 元々のBPよりBPが低い: that front character's current BP is below its
+  // own printed BP. Energy, hand, and the measuring card's own front do
+  // not qualify. A mutual lookup stops at the card already being measured.
+  if(typeof cardBp!=='function')throw Error('Printed-BP gap needs a live BP reader');
+  for(const c of s.players[1-owner].front){
+   if(!c||printed(c).type!=='character')continue;
+   const base=printed(c).bp;
+   if(Number.isInteger(base)&&cardBp(c)<base)return true;
+  }
+  return false;
+ }
  if(condition.kind==='oppCharacterBpAtLeast'){
   // Q749: an effect that raises current BP counts. Printed BP alone is not
   // the check. Mutual current-BP lookups stop at the card already being
@@ -160,6 +172,24 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   }
   return found>=condition.min;
  }
+ if(condition.kind==='ownNameOrDistinctPrintedColorNames'){
+  // 〈名前〉 is the usual name check, including an audited alias. The
+  // distinct-kind half counts original printed names only. Q2416/Q2417:
+  // REZ-2-041 is also 〈シルフィ〉 and still one kind; two copies stay one.
+  // Hand, deck, outside, opponent cards, fields and Raid layers are out.
+  const board=s.players[owner];
+  const areas=condition.zone==='front'?[board.front]:
+   condition.zone==='energy'?[board.energy]:[board.front,board.energy];
+  const kinds=new Set();
+  for(const area of areas)for(const c of area){
+   if(!c)continue;
+   const d=printed(c);
+   if(d.type!=='character')continue;
+   if(cardHasName(d,condition.name,originalEffectsDisabled(s,c)))return true;
+   if(d.color===condition.color)kinds.add(d.name);
+  }
+  return kinds.size>=condition.min;
+ }
  const pl=s.players[owner];
  const zones=condition.zone==='front'?[pl.front]:
   condition.zone==='energy'?[pl.energy]:[pl.front,pl.energy];
@@ -173,6 +203,8 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   if(d.type!=='character')continue;
   const silenced=originalEffectsDisabled(s,c);
   if(condition.kind==='ownNameExists'&&cardHasName(d,condition.name,silenced))return true;
+  if(condition.kind==='ownAnyNameExists'&&
+   condition.names.some(n=>cardHasName(d,n,silenced)))return true;
   // 〈名前〉がない is the same character-name check, inverted. Hand, deck,
   // outside, and Raid under-cards are not the field. Silence drops an alias
   // and keeps the printed name, matching ownNameExists.
