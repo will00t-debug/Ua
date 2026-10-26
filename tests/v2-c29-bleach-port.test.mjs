@@ -101,7 +101,7 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 //   The activation does not rest this card and works from either own line.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -172,12 +172,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers forty whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,476);
- assert.equal(EXPECTED_V2_COUNTS.bleach,200);
+test('C29 registers forty-one whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,477);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,201);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,200);
+ assert.equal(Object.keys(bleach.cards).length,201);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -3052,4 +3052,69 @@ test('BLC-4-037 reduces one front character at BP 1500 or higher, then replays t
  assert.equal(assertUniversalMatch(first.packs,played),true);
  assert.equal(assertUniversalMatch(quiet.packs,quietPlay),true);
  assert.equal(assertUniversalMatch(broke.packs,paid),true);
+});
+
+test('BLC-4-071 draws and discards, steps, and shares one ACTIVE among every Soi Fon',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-4-071');
+ assert.equal(printed.effect,'Step：移動階段可從前線移至能量線。登場時：抽1張牌，再將1張手牌送至場外。啟動・主要：將此角色改為Active；所有《碎蜂》的此效果合計每回合僅限1次。');
+ assert.deepEqual(printed.traits,['護廷十三隊']);
+ assert.equal(printed.energy,4);
+ assert.equal(printed.gen,3);
+ assert.equal(printed.trigger,'draw');
+ const card=bleach.cards['BLC-4-071'];
+ assert.equal(card.step,true);
+ assert.equal(card.gen,2);
+ assert.equal(card.triggerEffect,null);
+ assert.deepEqual(card.traits,['護廷十三隊']);
+ assert.deepEqual(card.effects.onPlay,[{op:'drawDiscard',count:1,discardCount:1}]);
+ assert.deepEqual(card.mainAbility,{op:'nameOnceActive',scope:'name',when:null});
+ const bare={id:'BAD',name:'BAD',color:'green',type:'character',energy:0,ap:1,bp:1000,gen:1,traits:[],trigger:null,implementation:'dsl',effects:{}};
+ assert.throws(()=>createUniversalPack({id:'bad-name-once',cards:[{...bare,mainAbility:{op:'nameOnceActive',scope:'card',when:null}}]}),/unsupported main action ability/);
+ const deck=realDeck(['BLC-4-071','BLC-1-091','BLC-1-078','BLC-4-060','BLC-1-087','BLC-4-062','BLC-1-079'],'green');
+ const first=main(deck,29471);
+ put(first.s,0,'BLC-1-078','energy',0);
+ put(first.s,0,'BLC-4-060','energy',1);
+ assert.ok(universalEnergyByColor(first.packs,first.s,0).green>=4);
+ const self=take(first.s,0,'BLC-4-071');
+ const beforeDeck=first.s.players[0].deck.length;
+ const beforeHand=first.s.players[0].hand.length;
+ first.s.players[0].hand.push(self);
+ let played=dispatchUniversalAction(first.packs,first.s,legalUniversalActions(first.packs,first.s).find(a=>a.type==='play'&&a.uid===self.uid&&a.line==='front'));
+ assert.equal(played.pending.kind,'effect-discard');
+ assert.equal(played.players[0].deck.length,beforeDeck-1);
+ assert.equal(played.players[0].hand.length,beforeHand+1);
+ const discard=played.players[0].hand.find(c=>c.uid!==self.uid);
+ played=dispatchUniversalAction(first.packs,played,{type:'chooseDiscard',uid:discard.uid});
+ assert.equal(played.pending,null);
+ assert.equal(played.players[0].outside.some(c=>c.uid===discard.uid),true);
+ assert.equal(played.players[0].front.find(c=>c?.uid===self.uid).ready,false);
+ const other=put(played,0,'BLC-4-071','energy',2,false);
+ const act=legalUniversalActions(first.packs,played).find(a=>a.type==='activate'&&a.mode==='nameOnceActive'&&a.uid===self.uid);
+ assert.ok(act);
+ played=dispatchUniversalAction(first.packs,played,act);
+ assert.equal(played.players[0].front.find(c=>c?.uid===self.uid).ready,true);
+ assert.equal(legalUniversalActions(first.packs,played).some(a=>a.mode==='nameOnceActive'),false);
+ assert.throws(()=>dispatchUniversalAction(first.packs,played,{type:'activate',uid:other.uid,mode:'nameOnceActive'}),/not currently legal/);
+ const fromEnergy=main(deck,29472);
+ const lined=put(fromEnergy.s,0,'BLC-4-071','energy',0,false);
+ const woken=dispatchUniversalAction(fromEnergy.packs,fromEnergy.s,{type:'activate',uid:lined.uid,mode:'nameOnceActive'});
+ assert.equal(woken.players[0].energy.find(c=>c?.uid===lined.uid).ready,true);
+ let stepped=played;
+ for(let n=0;n<30&&!(stepped.active===0&&stepped.phase==='move'&&stepped.players[0].ownTurns===2);n++)
+  stepped=dispatchUniversalAction(first.packs,stepped,{type:'next'});
+ const shift=legalUniversalActions(first.packs,stepped).find(a=>a.type==='step'&&a.uid===self.uid);
+ assert.ok(shift);
+ stepped=dispatchUniversalAction(first.packs,stepped,shift);
+ assert.equal(stepped.players[0].energy.some(c=>c?.uid===self.uid),true);
+ for(let n=0;n<8&&!(stepped.active===0&&stepped.phase==='main');n++)
+  stepped=dispatchUniversalAction(first.packs,stepped,{type:'next'});
+ const again=legalUniversalActions(first.packs,stepped).find(a=>a.mode==='nameOnceActive'&&a.uid===self.uid);
+ assert.ok(again);
+ stepped=dispatchUniversalAction(first.packs,stepped,again);
+ assert.equal(stepped.players[0].energy.find(c=>c?.uid===self.uid).ready,true);
+ assert.equal(legalUniversalActions(first.packs,stepped).some(a=>a.mode==='nameOnceActive'&&a.uid===other.uid),false);
+ aiOk(first.packs,played);
+ assert.equal(assertUniversalMatch(first.packs,played),true);
+ assert.equal(assertUniversalMatch(fromEnergy.packs,woken),true);
+ assert.equal(assertUniversalMatch(first.packs,stepped),true);
 });

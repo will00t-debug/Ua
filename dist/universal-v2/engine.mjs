@@ -4297,6 +4297,17 @@ function oppFrontReducedOrRest(pack,s,owner,sourceUid,when){
   matchesV2LiveCondition(s,owner,sourceUid,q,c=>card(pack,c),
    ()=>calcEnergy(pack,s,owner),c=>bp(pack,s,c)));
 }
+function nameOnceActiveKey(definition,ability){
+ // The printed name sentence covers this effect, not every ability of the name.
+ return definition.name+'|nameOnceActive|'+(ability.when?.kind||'plain');
+}
+function nameOnceActiveLegal(pack,s,owner,c,ability){
+ if(ability?.op!=='nameOnceActive')return false;
+ const name=nameOnceActiveKey(card(pack,c),ability);
+ if(s.mainReadyOnceByName[owner].includes(name))return false;
+ return !ability.when||matchesV2LiveCondition(s,owner,c.uid,ability.when,
+  x=>card(pack,x),()=>calcEnergy(pack,s,owner),x=>bp(pack,s,x));
+}
 export function legalUniversalActions(pack,s){
  assertUniversalMatch(pack,s);
  if(s.status!=='playing')return [];
@@ -4364,6 +4375,8 @@ export function legalUniversalActions(pack,s){
    if(ability?.op==='discardHandBuffSelf'&&pl.hand.length>0&&
     !s.mainAbilityUsedUids.includes(c.uid))
     out.push({type:'activate',uid:c.uid,mode:'discardSelfBuff'});
+   if(nameOnceActiveLegal(pack,s,p,c,ability))
+    out.push({type:'activate',uid:c.uid,mode:'nameOnceActive'});
    if(ability?.op==='oncePayProgram'&&!s.mainAbilityUsedUids.includes(c.uid)){
     const onFront=pl.front.some(x=>x?.uid===c.uid);
     const placed=onFront||pl.energy.some(x=>x?.uid===c.uid);
@@ -4928,6 +4941,16 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
      sourceUid:selected.uid,sourceName:d.name})),
      ...sourceMoveBoundary(pack,s,p,selected.uid));
     continueEffectQueue(pack,s);
+    break;
+   }
+   if(ability.op==='nameOnceActive'){
+    const key=nameOnceActiveKey(d,ability);
+    if(action.mode!=='nameOnceActive'||s.mainReadyOnceByName[p].includes(key)||
+     (ability.when&&!matchesV2LiveCondition(s,p,selected.uid,ability.when,
+      x=>card(pack,x),()=>calcEnergy(pack,s,p),x=>bp(pack,s,x))))
+     throw Error('Name-once ACTIVE is not legal');
+    s.mainReadyOnceByName[p].push(key);
+    attemptFieldActive(s,p,selected);
     break;
    }
    if(ability.op==='oncePayProgram'){

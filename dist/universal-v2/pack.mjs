@@ -1244,6 +1244,17 @@ function normalize(card,packId){
   Object.keys(mainAbility).length===7&&
   Object.keys(mainAbility).every(k=>['op','oncePerTurn','frontOnly','raidOnly','payAp','requiresOwnName','then'].includes(k));
  if(mainOncePay)verifyProgram(mainAbility.then,card.id+'.mainAbility.then');
+ // 【起動メイン】このキャラをアクティブにする。Name scope is the printed
+ // 「〈名前〉のこの効果は1ターンに1回」. when:null has no extra gate.
+ // A single live check is the printed 「場合のみ」.
+ const nameOnceActive=mainAbility?.op==='nameOnceActive'&&
+  mainAbility.scope==='name'&&
+  (mainAbility.when===null||(
+   mainAbility.when?.kind==='oppFrontLiveBpBelowPrinted'&&
+   mainAbility.when.turn==='any'&&Object.keys(mainAbility.when).length===2))&&
+  Object.keys(mainAbility).length===3&&
+  Object.keys(mainAbility).every(k=>['op','scope','when'].includes(k));
+ if(nameOnceActive&&mainAbility.when)assertLiveCondition(mainAbility.when,card.id+' name once');
  const mainFieldOnceBuff=mainAbility?.op==='fieldOnceBuffOther'&&
   mainAbility.lines==='field'&&mainAbility.oncePerTurn===true&&
   integer(mainAbility.bp,1)&&mainAbility.bp<=5000&&
@@ -1322,7 +1333,7 @@ function normalize(card,packId){
   Object.keys(mainAbility.then[0]).every(k=>['op','count'].includes(k));
  if(mainRestProgram)verifyProgram(mainAbility.then,card.id+'.mainAbility.then');
  if(mainAbility!==null&&
-  (!['character','field'].includes(card.type)||!(fieldDualMain||fieldRestRetireThen||card.type==='character'&&(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainRestBuff||mainRestRetireRecover||mainRestOnceBuffReturn||mainRestOnceSelf||mainOnceBuffWhen||mainPayAp||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainRestDiscardRetire||mainFrontProgram||mainFieldOnceBuff||mainEntryProtect||mainRestRetireUnder||mainRestTwoMove||mainOncePay))))
+  (!['character','field'].includes(card.type)||!(fieldDualMain||fieldRestRetireThen||card.type==='character'&&(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainRestBuff||mainRestRetireRecover||mainRestOnceBuffReturn||mainRestOnceSelf||mainOnceBuffWhen||mainPayAp||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainRestDiscardRetire||mainFrontProgram||mainFieldOnceBuff||mainEntryProtect||mainRestRetireUnder||mainRestTwoMove||mainOncePay||nameOnceActive))))
   throw Error(card.id+' unsupported main action ability');
  const passiveBonuses=validatePassiveBonuses(card);
  const implemented=card.implementation;
