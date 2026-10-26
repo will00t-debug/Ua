@@ -64,6 +64,19 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='private-top-place'||s.pending?.kind==='private-top-choice')return legal[0];
  if(s.pending?.kind==='effect-grant-impact')
   return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-grant-opp-block')
+  return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-deploy-outside')
+  return difficulty==='easy'?legal[0]:
+   legal.find(a=>a.uid!==null&&!a.replaceUid)||legal[0];
+ if(s.pending?.kind==='effect-energy-skip-swap')
+  return difficulty==='easy'?legal[0]:legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-outside-cost-hand'){
+  const catalog=packsOf(pack)[s.pending.player].cards;
+  const hand=s.players[s.pending.player].hand;
+  return [...legal].sort((a,b)=>(catalog[hand.find(c=>c.uid===a.uid)?.cardId]?.energy||0)-
+   (catalog[hand.find(c=>c.uid===b.uid)?.cardId]?.energy||0))[0];
+ }
  if(s.pending?.kind==='effect-top-inspect-many')return legal.find(x=>x.uid===null)||legal[0];
  if(s.pending?.kind==='effect-top-filter-choice')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-top-trait-outside')
