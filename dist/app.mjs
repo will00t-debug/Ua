@@ -327,7 +327,7 @@ function rezLibrary(){
  const issues=rezDeckIssues(rezDeck),count=rezCount(rezDeck);
  const printedBp=c=>c.bp==null?'—':String(c.bp)+(c.bpMark||'');
  const printedGen=c=>String(c.gen)+(c.genMark||'');
- return `<header class="pageHeading"><div><h1>Re:從零開始的異世界生活 · 第一彈＋Vol.2</h1><p>UA40BT／UA40ST 113 種＋EX17BT 73 種，共 ${REZERO_ALL_CARDS.length} 種一般卡。AP 卡不計入主牌組。</p></div><button class="btn" data-view="lobby">返回大廳</button></header>
+ return `<header class="pageHeading"><div><h1>Re:從零開始的異世界生活 · Vol.2 ＋ 第一彈</h1><p>UA40BT／UA40ST 113 種＋EX17BT 73 種，共 ${REZERO_ALL_CARDS.length} 種一般卡。AP 卡不計入主牌組。</p></div><button class="btn" data-view="lobby">返回大廳</button></header>
  <div class="titlePicker" role="group" aria-label="選擇作品">${TITLES.map(t=>`<button type="button" data-title="${t.id}" aria-pressed="${ui.title===t.id}" class="btn ${ui.title===t.id?'primary':'outline'}">${esc(t.label)} · ${t.cards.length} 種</button>`).join('')}</div>
  <div class="supportNote"><b>Re:從零 Vol.2 尚未開放對戰</b><span>目前第一彈 113 張、Vol.2 73 張已收錄並可構築草稿。繁中效果為練習譯文；第一彈共用引擎完整移植、FAQ 驗收以及 Vol.2 部分效果仍分開驗證。這裡不會把登錄數當成正式對戰認證。異圖和 AP 卡不另佔主牌組位置。</span></div>
  <div class="deckEditor"><label>牌組名稱<input id="rezDeckName" maxlength="40" value="${esc(rezName)}"></label><label>已儲存牌組<select id="rezSavedSelect"><option value="">選擇草稿</option>${rezSaved.map((d,i)=>`<option value="${i}">${esc(d.name)}</option>`).join('')}</select></label><div class="deckEditorActions"><button class="btn primary" data-action="rezSave">儲存 Re:Zero 草稿</button><button class="btn outline" data-action="rezNew">新建空白草稿</button></div><span class="deckSaveStatus">已儲存 ${rezSaved.length} 副草稿</span></div>
