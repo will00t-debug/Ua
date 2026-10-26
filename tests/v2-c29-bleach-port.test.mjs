@@ -8,7 +8,7 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  assertUniversalMatch,universalBp,universalImpact,universalAttackDamage,universalEnergyByColor,universalCardEnergy,
  universalPublicView,universalPrivateChoices,effectiveHandRequiredEnergy} from '../dist/universal-v2/engine.mjs';
 import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
-import {V2_PENDING_LABELS} from '../dist/universal-v2/preview-actions.mjs';
+import {uiActionLabel,V2_PENDING_LABELS} from '../dist/universal-v2/preview-actions.mjs';
 import {grantContinuousState,effectChoiceProtected} from '../dist/universal-v2/continuous-states.mjs';
 import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v2-integrated-id-manifest.mjs';
 import bleachContribution from '../dist/universal-v2/title-packs/bleach.mjs';
@@ -272,9 +272,13 @@ import bleachContribution from '../dist/universal-v2/title-packs/bleach.mjs';
 //   and move it to the energy line. Q564 (2023-09-25): a chosen character
 //   that already left still leaves this character to rest and move.
 //   Q565 (2023-09-25): a Raid top that covered the chosen character stays.
+// BLC-1-063 UA08BT: 紫2. Generated energy is a dash. Look at the top 5.
+//   Add 1 to hand, put 1 outside, and order the rest on the bottom.
+//   見る stays private. Both picks are mandatory while a card remains.
+//   DRAW is the generic sentence. No card FAQ.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008','BLC-4-065','BLC-2-051','BLC-1-092','BLC-4-044','BLC-4-016','BLC-4-017','BLC-1-028','BLC-2-002','BLC-4-032','BLC-1-011','BLC-1-104','BLC-1-014','BLC-1-020','BLC-1-050','BLC-1-055'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008','BLC-4-065','BLC-2-051','BLC-1-092','BLC-4-044','BLC-4-016','BLC-4-017','BLC-1-028','BLC-2-002','BLC-4-032','BLC-1-011','BLC-1-104','BLC-1-014','BLC-1-020','BLC-1-050','BLC-1-055','BLC-1-063'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -345,12 +349,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers eighty-eight whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,524);
- assert.equal(EXPECTED_V2_COUNTS.bleach,248);
+test('C29 registers eighty-nine whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,525);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,249);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,248);
+ assert.equal(Object.keys(bleach.cards).length,249);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -9140,6 +9144,138 @@ test('BLC-1-055 rests and moves at the next opponent turn start',()=>{
  assert.equal(assertUniversalMatch(blocked.board.packs,battle),true);
  assert.equal(assertUniversalMatch(covered.board.packs,raid),true);
  assert.equal(assertUniversalMatch(crowded.board.packs,full),true);
+ assert.equal(assertUniversalMatch(mirror,draw),true);
+});
+
+test('BLC-1-063 looks at five cards, adds one, and puts one outside',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-1-063');
+ assert.equal(printed.number,'UA08BT/BLC-1-063');
+ assert.equal(printed.nameJa,'技術開発局');
+ assert.equal(printed.effect,'查看己方牌堆頂 5 張，其中 1 張加入手牌、1 張送至場外，其餘以任意順序放至牌堆底。');
+ assert.equal(printed.traits,'無');
+ assert.equal(printed.gen,0);
+ assert.equal(printed.energy,2);
+ assert.equal(printed.type,'event');
+ assert.equal(printed.trigger,'draw');
+ const card=bleach.cards['BLC-1-063'];
+ assert.equal(card.name,'技術開発局');
+ assert.equal(card.triggerEffect,null);
+ assert.deepEqual(card.traits,[]);
+ assert.deepEqual(card.effects.onPlay,[{op:'lookTopHandOutsideBottom',count:5}]);
+ assert.equal(V2_PENDING_LABELS['effect-top-hand-outside'],'查看牌頂，1 張加入手牌、1 張送至場外');
+ const bare={id:'BAD',name:'BAD',color:'purple',type:'event',energy:2,ap:1,bp:0,gen:0,traits:[],trigger:'draw',implementation:'dsl'};
+ assert.throws(()=>createUniversalPack({id:'bad-look-count',cards:[{...bare,effects:{onPlay:[{op:'lookTopHandOutsideBottom',count:4}]}}]}),/invalid look-hand-outside-bottom window/);
+ assert.throws(()=>createUniversalPack({id:'bad-look-key',cards:[{...bare,effects:{onPlay:[{op:'lookTopHandOutsideBottom',count:5,rest:'bottom'}]}}]}),/invalid look-hand-outside-bottom window/);
+ assert.doesNotThrow(()=>createUniversalPack({id:'ok-look',cards:[{...bare,effects:{onPlay:[{op:'lookTopHandOutsideBottom',count:5}]}}]}));
+ assert.doesNotThrow(()=>createUniversalPack({id:'ok-look-character',cards:[{...bare,id:'WHO',type:'character',bp:2000,gen:1,trigger:null,effects:{onPlay:[{op:'lookTopHandOutsideBottom',count:5}]}}]}));
+ const deck=realDeck(['BLC-1-063','BLC-1-035','BLC-1-103','BLC-1-039','BLC-4-046','BLC-1-041','BLC-1-048','BLC-2-050'],'purple');
+ const board=main(deck,29181);
+ const event=take(board.s,0,'BLC-1-063');
+ board.s.players[0].hand.push(event);
+ assert.equal(legalUniversalActions(board.packs,board.s).some(a=>a.type==='event'&&a.uid===event.uid),false);
+ put(board.s,0,'BLC-1-035','energy',0);
+ const window=setTop(board.s,0,['BLC-1-103','BLC-1-039','BLC-4-046','BLC-1-041','BLC-1-048','BLC-2-050']);
+ const under=window[5];
+ assert.equal(legalUniversalActions(board.packs,board.s).some(a=>a.type==='event'&&a.uid===event.uid),true);
+ let played=dispatchUniversalAction(board.packs,board.s,{type:'event',uid:event.uid});
+ assert.equal(played.players[0].outside.some(c=>c.uid===event.uid),true);
+ assert.equal(played.pending.kind,'effect-top-hand-outside');
+ assert.equal(played.pending.step,'hand');
+ assert.deepEqual(played.pending.uids,window.slice(0,5).map(c=>c.uid));
+ const handChoices=legalUniversalActions(board.packs,played);
+ assert.equal(handChoices.some(a=>a.uid===null),false);
+ assert.equal(handChoices.some(a=>a.uid===under.uid),false);
+ assert.deepEqual(handChoices.map(a=>a.uid),window.slice(0,5).map(c=>c.uid));
+ assert.equal(uiActionLabel(handChoices[0],{pack:board.packs,state:played}).includes('加入手牌'),true);
+ const mine=universalPrivateChoices(board.packs,played,0);
+ assert.equal(mine.kind,'effect-top-hand-outside');
+ assert.deepEqual(mine.options.map(o=>o.card.cardId),window.slice(0,5).map(c=>c.cardId));
+ assert.equal(universalPrivateChoices(board.packs,played,1),null);
+ const hidden=JSON.stringify(universalPublicView(board.packs,played,1));
+ for(const c of window.slice(0,5))assert.equal(hidden.includes(c.uid),false);
+ assert.equal(played.publicReveals.length,0);
+ aiOk(board.packs,played);
+ assert.throws(()=>dispatchUniversalAction(board.packs,played,{type:'chooseTopHandOutside',uid:null,step:'hand'}),/not currently legal/);
+ assert.throws(()=>dispatchUniversalAction(board.packs,played,{type:'chooseTopHandOutside',uid:under.uid,step:'hand'}),/not currently legal/);
+ const forged=structuredClone(played);
+ forged.players[0].deck.push(forged.players[0].deck.shift());
+ assert.throws(()=>assertUniversalMatch(board.packs,forged),/Invalid looked hand and outside window/);
+ const taken=window[0];
+ played=dispatchUniversalAction(board.packs,played,{type:'chooseTopHandOutside',uid:taken.uid,step:'hand'});
+ assert.equal(played.players[0].hand.some(c=>c.uid===taken.uid),true);
+ assert.equal(played.publicReveals.length,0);
+ assert.equal(JSON.stringify(universalPublicView(board.packs,played,1)).includes(taken.uid),false);
+ assert.equal(played.pending.kind,'effect-top-hand-outside');
+ assert.equal(played.pending.step,'outside');
+ assert.deepEqual(played.pending.uids,window.slice(1,5).map(c=>c.uid));
+ assert.equal(uiActionLabel(legalUniversalActions(board.packs,played)[0],{pack:board.packs,state:played}).includes('送至場外'),true);
+ aiOk(board.packs,played);
+ const parked=window[1];
+ played=dispatchUniversalAction(board.packs,played,{type:'chooseTopHandOutside',uid:parked.uid,step:'outside'});
+ assert.equal(played.players[0].outside.some(c=>c.uid===parked.uid),true);
+ assert.equal(played.pending.kind,'effect-top-order');
+ assert.deepEqual(played.pending.uids,window.slice(2,5).map(c=>c.uid));
+ assert.equal(played.pending.rest,'bottom');
+ const order=[window[4].uid,window[2].uid,window[3].uid];
+ for(const uid of order)
+  played=dispatchUniversalAction(board.packs,played,{type:'chooseTopOrder',uid});
+ assert.equal(played.pending,null);
+ assert.equal(played.players[0].deck[0].uid,under.uid);
+ assert.deepEqual(played.players[0].deck.slice(-3).map(c=>c.uid),order);
+ assert.equal(played.publicReveals.length,0);
+ const one=main(deck,29182);
+ const oneEvent=take(one.s,0,'BLC-1-063');
+ one.s.players[0].hand.push(oneEvent);
+ put(one.s,0,'BLC-1-035','energy',0);
+ const lone=one.s.players[0].deck[0];
+ one.s.players[0].removed.push(...one.s.players[0].deck.splice(1));
+ let single=dispatchUniversalAction(one.packs,one.s,{type:'event',uid:oneEvent.uid});
+ assert.deepEqual(legalUniversalActions(one.packs,single).map(a=>a.uid),[lone.uid]);
+ single=dispatchUniversalAction(one.packs,single,{type:'chooseTopHandOutside',uid:lone.uid,step:'hand'});
+ assert.equal(single.pending,null);
+ assert.equal(single.players[0].hand.some(c=>c.uid===lone.uid),true);
+ assert.equal(single.players[0].outside.some(c=>c.uid===lone.uid),false);
+ const pair=main(deck,29183);
+ const pairEvent=take(pair.s,0,'BLC-1-063');
+ pair.s.players[0].hand.push(pairEvent);
+ put(pair.s,0,'BLC-1-035','energy',0);
+ const two=pair.s.players[0].deck.slice(0,2);
+ pair.s.players[0].removed.push(...pair.s.players[0].deck.splice(2));
+ let both=dispatchUniversalAction(pair.packs,pair.s,{type:'event',uid:pairEvent.uid});
+ both=dispatchUniversalAction(pair.packs,both,{type:'chooseTopHandOutside',uid:two[0].uid,step:'hand'});
+ assert.equal(both.pending.step,'outside');
+ assert.deepEqual(both.pending.uids,[two[1].uid]);
+ both=dispatchUniversalAction(pair.packs,both,{type:'chooseTopHandOutside',uid:two[1].uid,step:'outside'});
+ assert.equal(both.pending,null);
+ assert.equal(both.players[0].hand.some(c=>c.uid===two[0].uid),true);
+ assert.equal(both.players[0].outside.some(c=>c.uid===two[1].uid),true);
+ const empty=main(deck,29184);
+ const emptyEvent=take(empty.s,0,'BLC-1-063');
+ empty.s.players[0].hand.push(emptyEvent);
+ put(empty.s,0,'BLC-1-035','energy',0);
+ empty.s.players[0].removed.push(...empty.s.players[0].deck.splice(0));
+ const quiet=dispatchUniversalAction(empty.packs,empty.s,{type:'event',uid:emptyEvent.uid});
+ assert.equal(quiet.pending,null);
+ assert.equal(quiet.players[0].outside.some(c=>c.uid===emptyEvent.uid),true);
+ const mirror=[bleach,bleach];
+ let draw=newUniversalMatch(mirror,{decks:[deck,deck],seed:29185,first:0});
+ for(let n=0;n<8&&draw.phase!=='attack';n++)draw=dispatchUniversalAction(mirror,draw,{type:'next'});
+ const drawAttacker=put(draw,0,'BLC-1-041','front',0,true);
+ const revealed=take(draw,1,'BLC-1-063');
+ draw.players[1].deck.push(...draw.players[1].life.splice(0));
+ draw.players[1].life.push(revealed);
+ const before=draw.players[1].hand.length;
+ draw=dispatchUniversalAction(mirror,draw,{type:'attack',uid:drawAttacker.uid});
+ draw=dispatchUniversalAction(mirror,draw,{type:'chooseBlock',uid:null},{actor:1});
+ assert.equal(draw.pending.kind,'life-trigger');
+ assert.equal(draw.pending.trigger,'draw');
+ draw=dispatchUniversalAction(mirror,draw,{type:'chooseTrigger',mode:'draw'},{actor:1});
+ assert.equal(draw.players[1].hand.length,before+1);
+ assert.equal(draw.triggerActivated[1],true);
+ assert.equal(assertUniversalMatch(board.packs,played),true);
+ assert.equal(assertUniversalMatch(one.packs,single),true);
+ assert.equal(assertUniversalMatch(pair.packs,both),true);
+ assert.equal(assertUniversalMatch(empty.packs,quiet),true);
  assert.equal(assertUniversalMatch(mirror,draw),true);
 });
 

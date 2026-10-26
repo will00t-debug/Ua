@@ -175,7 +175,8 @@ const testForKind=Object.freeze({
  bambiettaRestRetire:'tests/v2-c29-bleach-port.test.mjs',
  jugramTriggerEnd:'tests/v2-c29-bleach-port.test.mjs',
  byakuyaOutsideRemove:'tests/v2-c29-bleach-port.test.mjs',
- soiFonNextStartRetire:'tests/v2-c29-bleach-port.test.mjs'
+ soiFonNextStartRetire:'tests/v2-c29-bleach-port.test.mjs',
+ techLookHandOutside:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -194,7 +195,9 @@ function contributedEntry(profile){
   definition:Object.freeze(definition),
   evidence:Object.freeze({
    printedTextFragments:Object.freeze([profile.effect]),
-   reviewNote:profile.id==='BLC-1-055'?
+   reviewNote:profile.id==='BLC-1-063'?
+    'UA08BT/BLC-1-063 official page 2026-10-27. Required energy 紫2. Generated energy is a dash, so gen stays 0. Look at the top 5 of your deck. Add 1 to hand and put 1 outside. Put the rest on the bottom in any order. The look is private. The card added to hand is not revealed. Both selections are mandatory while a card remains. One inspected card goes to hand and does not go outside. Two inspected cards go one to hand and one outside, with nothing left to order. An empty deck does nothing. Cards under the window stay above the ordered remainder. DRAW is the generic sentence. No card FAQ. Trait 無.':
+   profile.id==='BLC-1-055'?
     'UA08BT/BLC-1-055 official iframe 2026-10-26. Required energy 紫4, generated energy 紫. [起動メイン][フロントLにある場合][APを1支払う][ターン1]: choose up to one opposing front character of BP 3500 or less. At the next opponent turn start, retire that character, then REST this character and move it to the energy line. Q564 (2023-09-25): if the chosen character left during the turn it was chosen, this character still rests and moves. Q565 (2023-09-25): if another card raided onto the chosen character during that turn, the Raid top does not retire, and this character still rests and moves. Declining the choice pays the AP and schedules nothing. No legal target schedules nothing. [ターン1] is this physical card. The energy line cannot activate. A field is not a character. Later silence does not cancel a choice already made. DRAW is the generic sentence. Trait 護廷十三隊.':
    profile.id==='BLC-1-050'?
     'UA08BT/BLC-1-050 official iframe 2026-10-26. Required energy 紫5, generated energy 紫. Raid onto 朽木 白哉, become ACTIVE, and may move to the front. On play, you may remove 2 own outside cards. If you do, every opposing front character gets BP-1000 this turn. Q561 (2023-09-25): with only 1, that card can still be removed, and the BP cut does not happen. Declining removes nothing. An energy-line character is not cut. A character reduced to 0 BP or less leaves. [起動メイン][ターン1]: remove 3 own outside cards. That exact count grants Impact 1 this turn. Q562 (2023-09-25): activating with only 2 still removes those 2, and Impact does not happen. The main removal is not optional. [ターン1] is this physical card. The earned Impact remains after later silence. On attack, you may remove 1 own outside card. If you do, up to one opposing front character gets BP-1000 this turn. Declining the removal or the target is legal. Silence before the attack removes that clause. RAID is the generic sentence. Trait 護廷十三隊.':
