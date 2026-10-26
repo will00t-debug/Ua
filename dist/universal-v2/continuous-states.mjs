@@ -2,7 +2,7 @@ import {DISCOUNT_KIND,validateHandDiscount} from './ap-discounts.mjs';
 // Reusable V2 physical-field continuous statuses, never inferred from card prose.
 const field=p=>[...p.front,...p.energy].filter(Boolean);
 const player=n=>n===0||n===1;
-const protectionScope=v=>['any','character','trigger'].includes(v);
+const protectionScope=v=>['any','character','trigger','characterOrTrigger'].includes(v);
 // A grant can outlive its source's FIELD incarnation, but the physical source
 // still belongs to the granting controller, possibly now beneath a Raid.
 function ownedSource(s,owner,uid){
@@ -126,7 +126,9 @@ export function refreshFieldActive(s,owner){
  for(const c of field(s.players[owner]))attemptFieldActive(s,owner,c);
 }
 // Only explicit card/Trigger EFFECT choice is restricted, never combat.
-// Unknown opposing effect provenance fails closed for character-only protection.
+// Unknown opposing effect provenance fails closed for character-only and
+// combined character-or-trigger protection. An explicit event or field
+// source stays selectable under the combined scope.
 export function effectChoiceProtected(s,selector,targetUid,sourceType){
  if(!player(selector)||typeof targetUid!=='string')return false;
  const target=fieldInstance(s,targetUid);
@@ -141,7 +143,9 @@ export function effectChoiceProtected(s,selector,targetUid,sourceType){
   e.targetUid===targetUid&&e.targetStamp===target.card.fieldEntryStamp&&
   (e.selectionScope==='any'||(e.selectionScope==='character'&&
    (sourceType==='character'||sourceType==='unknown'))||
-   (e.selectionScope==='trigger'&&sourceType==='trigger')));
+   (e.selectionScope==='trigger'&&sourceType==='trigger')||
+   (e.selectionScope==='characterOrTrigger'&&
+    (sourceType==='character'||sourceType==='trigger'||sourceType==='unknown'))));
 }
 // A card-effect selection tax is not a combat attacker/blocker restriction.
 export function selectionApSurcharge(s,selector,targetUid){

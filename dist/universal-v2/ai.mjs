@@ -72,6 +72,9 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='effect-outside-color-trait-active')
   return difficulty==='easy'?legal.find(x=>x.uid===null)||legal[0]:
    legal.find(x=>x.uid!==null&&!x.replaceUid)||legal[0];
+ if(s.pending?.kind==='effect-named-field-protect')
+  return difficulty==='easy'?legal.find(a=>a.uid===null)||legal[0]:
+   legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-energy-trait-front')
   return difficulty==='easy'?legal.find(a=>a.uid===null)||legal[0]:
    legal.find(a=>a.uid!==null)||legal[0];

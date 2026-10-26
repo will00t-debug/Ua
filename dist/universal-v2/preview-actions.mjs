@@ -54,6 +54,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-retire-own-trait':'可退場 1 個己方指定特徵角色',
  'effect-retire-missing-trait':'使 1 個不具有指定特徵的己方角色退場',
  'effect-outside-color-trait-active':'可從場外將 1 張指定顏色與特徵的角色以 ACTIVE 登場',
+ 'effect-named-field-protect':'可選最多 1 個己方場上指定名稱角色，直到下一個己方回合開始前不受敵方角色或 Trigger 效果選擇',
  'effect-outside-active-pair':'可從場外將符合條件的角色以 ACTIVE 登場',
  'effect-top-trait-hand':'查看牌頂，符合特徵可加入手牌，否則放回牌頂或場外',
  'effect-active-any':'可將 1 張己方場上卡改為 ACTIVE',

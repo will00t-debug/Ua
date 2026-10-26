@@ -1227,6 +1227,8 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-1-093","kind":"yamamotoSquadShift","number":"UA08BT/BLC-1-093","name":"山本 元柳斎 重國","color":"green","energy":7,"ap":1,"bp":5000,"gen":1,"trigger":"raid","type":"character","effect":"Raid〈山本元柳齋重國〉：轉為 ACTIVE，可移至前線。Impact 1。登場：可將己方能源線任意數量、具有「護廷十三隊」特徵的卡移至前線。攻擊時：所有其他己方場上具有「護廷十三隊」特徵的卡，本回合 BP +2000。"}
 ,
 {"id":"BLC-2-009","kind":"giselleFieldCountActive","number":"EX07BT/BLC-2-009","name":"ジゼル・ジュエル","color":"yellow","energy":4,"ap":2,"bp":4000,"gen":1,"trigger":"get","type":"character","effect":"登場：己方場上其他具有「邦比愛塔親衛隊」特徵、「殭屍」特徵或名為〈邦比愛塔・芭絲塔拜茵〉的卡，合計至少 3 張時，抽 2 張，再將 2 張手牌送至場外。主要階段・位於前線・每回合 1 次：使 1 個己方場上不具有「殭屍」特徵的角色退場；成功時可從己方場外將最多 1 張具有「殭屍」特徵的黃色角色卡以 ACTIVE 登場於己方場上。"}
+,
+{"id":"BLC-2-013","kind":"orihimeIchigoProtect","number":"EX07BT/BLC-2-013","name":"井上 織姫","color":"blue","energy":2,"ap":1,"bp":3000,"gen":1,"trigger":"draw","type":"character","effect":"此卡因己方場上藍色〈黑崎一護〉的效果從手牌送至場外時，可選最多 1 個己方場上的〈黑崎一護〉；直到下一個己方回合開始前，使其不會被敵方角色或 Trigger 的效果選為對象。"}
  ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1410,6 +1412,7 @@ export function checkedBleachAddonDefinition(p){
  const isTech=p.kind==='techLookHandOutside';
  const isYamamoto=p.kind==='yamamotoSquadShift';
  const isGiselleField=p.kind==='giselleFieldCountActive';
+ const isOrihime=p.kind==='orihimeIchigoProtect';
  const topDiscard={
   'BLC-3-007':{count:3,filter:{field:'trait',value:'護廷十三隊'}},
   'BLC-3-002':{count:3,filters:[
@@ -1443,7 +1446,7 @@ export function checkedBleachAddonDefinition(p){
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest||isOwnCharacterDraw||isPeekAttack||isDrawInstead||isRevealOppTop||isRevealWindow||isEnergyWindow||isMillPurple||isEnergyBounce||isStepOr||isReplayDown||isStepName||isReducedActive||isOutsideName||isZeroIchigo||isDiscardBlock||isEmptyStep||isApActive||isAliasTop||isEntryChoose||isRestFrontName||isFrontFieldDown||isHandOutside||isEnergyAp||isAttackEnd||isDiscardVisored||isRaidHost||isBlockRaid||isRaidOrName||isRestOrDraw||isRestOrRetire||isHandApNamed||isBazzBurn||isKatenActive||isBambiesPer||isKenpachi||isMayuriTrait||isNemPair||isSoulPalace||isKyokotsu||isHakkoken||isYachiru||isLilotto||isBazzChain||isNanaoEvent||isRemovedKeywords||isFrontRemove||isThunderKit||isLille||isGiselle||isCastle||isUryu||isYoruichiSwap||isBazzKit||isIchigoFour||isBambiettaRest||isJugram||isByakuya||isSoiFon||isTech||isYamamoto||isGiselleField;
+ const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest||isOwnCharacterDraw||isPeekAttack||isDrawInstead||isRevealOppTop||isRevealWindow||isEnergyWindow||isMillPurple||isEnergyBounce||isStepOr||isReplayDown||isStepName||isReducedActive||isOutsideName||isZeroIchigo||isDiscardBlock||isEmptyStep||isApActive||isAliasTop||isEntryChoose||isRestFrontName||isFrontFieldDown||isHandOutside||isEnergyAp||isAttackEnd||isDiscardVisored||isRaidHost||isBlockRaid||isRaidOrName||isRestOrDraw||isRestOrRetire||isHandApNamed||isBazzBurn||isKatenActive||isBambiesPer||isKenpachi||isMayuriTrait||isNemPair||isSoulPalace||isKyokotsu||isHakkoken||isYachiru||isLilotto||isBazzChain||isNanaoEvent||isRemovedKeywords||isFrontRemove||isThunderKit||isLille||isGiselle||isCastle||isUryu||isYoruichiSwap||isBazzKit||isIchigoFour||isBambiettaRest||isJugram||isByakuya||isSoiFon||isTech||isYamamoto||isGiselleField||isOrihime;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1591,6 +1594,7 @@ export function checkedBleachAddonDefinition(p){
   ...(p.kind==='getsugaRetire'?{triggerEffect:{op:'retireOppFront'},moveTriggers:[{when:causedBy('黒崎 一護','blue'),
    then:[{op:'handBottomGrantDoubleAttack',optional:true}]}]}:{}),
   ...(p.kind==='zangetsuDraw'?{moveTriggers:[{when:causedBy('黒崎 一護','blue'),then:[{op:'draw',count:1}]}]}:{}),
+  ...(isOrihime?{moveTriggers:[{when:causedBy('黒崎 一護','blue'),then:[{op:'grantNamedFieldProtection',name:'黒崎 一護',scope:'characterOrTrigger',optional:true,until:'nextOwnStart'}]}]}:{}),
   ...(p.kind==='aizenEnergyFront'?{frontForbidden:true,mainAbility:{op:'restTwoActiveFrontMoveSelf',line:'energy'}}:{}),
   ...(p.kind==='raidBaseLeaveDamage'?{raidName:'更木 剣八',bpDownImmune:true,printedImpact:1,
    raidHandLeaveReplace:{minBaseEnergy:4}}:{}),

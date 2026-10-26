@@ -285,9 +285,13 @@ import bleachContribution from '../dist/universal-v2/title-packs/bleach.mjs';
 //   and discard 2. Each card counts once. This character does not.
 //   Front [ターン1] retires one own character without ゾンビ, then may
 //   ACTIVE-play one outside yellow ゾンビ. GET is generic. No card FAQ.
+// BLC-2-013 EX07BT: 青2 / 青. When a blue 黒崎 一護 on the field puts this
+//   card from hand to outside, up to one own field 黒崎 一護 cannot be
+//   chosen by opposing character or trigger effects until the next own
+//   start. Q1030 and Q1031 are both 2024-07-19. DRAW is generic.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008','BLC-4-065','BLC-2-051','BLC-1-092','BLC-4-044','BLC-4-016','BLC-4-017','BLC-1-028','BLC-2-002','BLC-4-032','BLC-1-011','BLC-1-104','BLC-1-014','BLC-1-020','BLC-1-050','BLC-1-055','BLC-1-063','BLC-1-093','BLC-2-009'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008','BLC-4-065','BLC-2-051','BLC-1-092','BLC-4-044','BLC-4-016','BLC-4-017','BLC-1-028','BLC-2-002','BLC-4-032','BLC-1-011','BLC-1-104','BLC-1-014','BLC-1-020','BLC-1-050','BLC-1-055','BLC-1-063','BLC-1-093','BLC-2-009','BLC-2-013'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -358,12 +362,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers ninety-one whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,527);
- assert.equal(EXPECTED_V2_COUNTS.bleach,251);
+test('C29 registers ninety-two whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,528);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,252);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,251);
+ assert.equal(Object.keys(bleach.cards).length,252);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -9595,6 +9599,174 @@ test('BLC-2-009 draws at three other cards and revives a yellow zombie',()=>{
  assert.equal(assertUniversalMatch(used.board.packs,revived),true);
  assert.equal(assertUniversalMatch(quiet.board.packs,quiet.played),true);
  assert.equal(assertUniversalMatch(mirror,life),true);
+});
+
+test('BLC-2-013 protects one field Ichigo after a blue Ichigo puts her outside',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-2-013');
+ assert.equal(printed.number,'EX07BT/BLC-2-013');
+ assert.equal(printed.nameJa,'井上 織姫');
+ assert.equal(printed.effect,'此卡因己方場上藍色〈黑崎一護〉的效果從手牌送至場外時，可選最多 1 個己方場上的〈黑崎一護〉；直到下一個己方回合開始前，使其不會被敵方角色或 Trigger 的效果選為對象。');
+ assert.equal(printed.traits,'無');
+ assert.equal(printed.trigger,'draw');
+ assert.equal(printed.gen,1);
+ const card=bleach.cards['BLC-2-013'];
+ assert.equal(card.name,'井上 織姫');
+ assert.equal(card.triggerEffect,null);
+ assert.equal(card.traits.length,0);
+ assert.deepEqual([card.color,card.energy,card.ap,card.bp,card.gen,card.trigger,card.type],
+  ['blue',2,1,3000,1,'draw','character']);
+ assert.equal(card.mainAbility,null);
+ assert.deepEqual(card.moveTriggers,[{when:{from:'hand',to:'outside',sourceName:'黒崎 一護',
+  sourceColor:'blue',sourceOnField:true,reasons:['payment','own-effect']},
+  then:[{op:'grantNamedFieldProtection',name:'黒崎 一護',scope:'characterOrTrigger',
+   optional:true,until:'nextOwnStart'}]}]);
+ assert.equal(V2_PENDING_LABELS['effect-named-field-protect'],
+  '可選最多 1 個己方場上指定名稱角色，直到下一個己方回合開始前不受敵方角色或 Trigger 效果選擇');
+ const bare={id:'BAD',name:'井上 織姫',color:'blue',type:'character',energy:2,ap:1,bp:3000,gen:1,
+  traits:[],trigger:'draw',implementation:'dsl',effects:{}};
+ const when={from:'hand',to:'outside',sourceName:'黒崎 一護',sourceColor:'blue',sourceOnField:true,
+  reasons:['payment','own-effect']};
+ const grant={op:'grantNamedFieldProtection',name:'黒崎 一護',scope:'characterOrTrigger',
+  optional:true,until:'nextOwnStart'};
+ assert.throws(()=>createUniversalPack({id:'bad-named-scope',cards:[{...bare,
+  moveTriggers:[{when,then:[{...grant,scope:'any'}]}]}]}),/invalid named field protection/);
+ assert.throws(()=>createUniversalPack({id:'bad-named-front',cards:[{...bare,
+  effects:{onPlay:[grant]}}]}),/named field protection resolves from a moved-card trigger/);
+ assert.doesNotThrow(()=>createUniversalPack({id:'ok-named-protect',cards:[{...bare,
+  moveTriggers:[{when,then:[grant]}]}]}));
+ const deck=realDeck(['BLC-2-013','BLC-2-016','BLC-1-039','BLC-4-030','BLC-2-003','BLC-1-004','BLC-1-030','BLC-2-046','BLC-2-017','BLC-2-018','BLC-4-025'],'blue');
+ const hold=(s,p,id)=>{const c=take(s,p,id);s.players[p].hand.push(c);return c;};
+ const protect=(s,uid,type)=>effectChoiceProtected(s,1,uid,type);
+ function caused(seed){
+  const board=main(deck,seed);
+  const purple=put(board.s,0,'BLC-1-039','energy',0);
+  const yoru=put(board.s,0,'BLC-4-030','front',1,true);
+  const orihime=hold(board.s,0,'BLC-2-013');
+  const ichigo=hold(board.s,0,'BLC-2-016');
+  assert.equal(universalEnergyByColor(board.packs,board.s,0).blue||0,0);
+  const played=dispatchUniversalAction(board.packs,board.s,{type:'play',uid:ichigo.uid,line:'front',slot:0});
+  assert.equal(played.pending.kind,'effect-discard');
+  const discarded=dispatchUniversalAction(board.packs,played,{type:'chooseDiscard',uid:orihime.uid});
+  assert.equal(discarded.pending.kind,'effect-named-field-protect');
+  assert.equal(universalEnergyByColor(board.packs,discarded,0).blue||0,0);
+  assert.equal(discarded.players[0].outside.some(c=>c.uid===orihime.uid),true);
+  const moved=discarded.zoneMoveEvents.find(e=>e.uid===orihime.uid&&e.to==='outside');
+  assert.equal(moved.sourceName,'黒崎 一護');
+  assert.equal(moved.sourceColor,'blue');
+  assert.equal(moved.sourceOnField,true);
+  assert.equal(moved.reason,'own-effect');
+  const legal=legalUniversalActions(board.packs,discarded);
+  assert.ok(legal.some(a=>a.type==='chooseNamedFieldProtect'&&a.uid===ichigo.uid));
+  assert.ok(legal.some(a=>a.type==='chooseNamedFieldProtect'&&a.uid===purple.uid));
+  assert.equal(legal.some(a=>a.uid===yoru.uid),false);
+  assert.ok(legal.some(a=>a.type==='chooseNamedFieldProtect'&&a.uid===null));
+  aiOk(board.packs,discarded);
+  assert.equal(chooseUniversalAiAction(board.packs,discarded,{difficulty:'easy'}).uid,null);
+  assert.ok(chooseUniversalAiAction(board.packs,discarded,{difficulty:'hard'}).uid);
+  return {board,played:discarded,ichigo,purple,yoru,orihime};
+ }
+ const declined=caused(29311);
+ const skipped=dispatchUniversalAction(declined.board.packs,declined.played,
+  {type:'chooseNamedFieldProtect',uid:null});
+ assert.equal(skipped.pending,null);
+ assert.equal(skipped.continuousStates.some(e=>e.kind==='cannotBeChosenByOppEffect'),false);
+ const energyGrant=caused(29312);
+ const grantedEnergy=dispatchUniversalAction(energyGrant.board.packs,energyGrant.played,
+  {type:'chooseNamedFieldProtect',uid:energyGrant.purple.uid});
+ assert.equal(protect(grantedEnergy,energyGrant.purple.uid,'character'),true);
+ assert.equal(protect(grantedEnergy,energyGrant.ichigo.uid,'character'),false);
+ assert.equal(grantedEnergy.continuousStates.find(e=>e.kind==='cannotBeChosenByOppEffect').sourceLinked,false);
+ const opened=caused(29313);
+ let s=dispatchUniversalAction(opened.board.packs,opened.played,
+  {type:'chooseNamedFieldProtect',uid:opened.ichigo.uid});
+ const packs=opened.board.packs;
+ assert.equal(protect(s,opened.ichigo.uid,'character'),true);
+ assert.equal(protect(s,opened.ichigo.uid,'trigger'),true);
+ assert.equal(protect(s,opened.ichigo.uid,'unknown'),true);
+ assert.equal(protect(s,opened.ichigo.uid,'event'),false);
+ assert.equal(protect(s,opened.ichigo.uid,'field'),false);
+ assert.equal(s.players[0].outside.some(c=>c.uid===opened.orihime.uid),true);
+ const special=take(s,1,'BLC-2-046');
+ s.players[1].life.unshift(special);
+ put(s,1,'BLC-1-004','front',0,true);
+ put(s,1,'BLC-2-003','energy',0);
+ put(s,1,'BLC-2-003','energy',1);
+ const jail=hold(s,1,'BLC-1-030');
+ for(let i=0;i<6&&!(s.phase==='attack'&&!s.pending);i++)
+  s=dispatchUniversalAction(packs,s,{type:'next'});
+ assert.equal(s.phase,'attack');
+ s=dispatchUniversalAction(packs,s,{type:'attack',uid:opened.yoru.uid});
+ s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:null},{actor:1});
+ assert.equal(s.pending.kind,'life-trigger');
+ assert.equal(s.pending.trigger,'special');
+ const triggerChoices=legalUniversalActions(packs,s).filter(a=>a.mode==='special');
+ assert.equal(triggerChoices.some(a=>a.uid===opened.ichigo.uid),false);
+ assert.equal(triggerChoices.some(a=>a.uid===opened.yoru.uid),true);
+ s=dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'skip'},{actor:1});
+ const begun=s.turn;
+ for(let i=0;i<12&&!(s.active===1&&s.phase==='main'&&!s.pending);i++){
+  if(s.pending){
+   const a=legalUniversalActions(packs,s)[0];
+   s=dispatchUniversalAction(packs,s,a,{actor:s.pending.player});
+  }else s=dispatchUniversalAction(packs,s,{type:'next'});
+ }
+ assert.equal(s.active,1);
+ assert.equal(s.phase,'main');
+ assert.equal(protect(s,opened.ichigo.uid,'character'),true);
+ const activated=dispatchUniversalAction(packs,s,{type:'activate',uid:s.players[1].front[0].uid,mode:'frontOnce'});
+ const rest=legalUniversalActions(packs,activated).filter(a=>a.type==='chooseRestBp');
+ assert.equal(rest.some(a=>a.uid===opened.ichigo.uid),false);
+ assert.equal(rest.some(a=>a.uid===opened.yoru.uid),true);
+ s=dispatchUniversalAction(packs,activated,{type:'chooseRestBp',uid:null},{actor:1});
+ assert.ok(universalEnergyByColor(packs,s,1).yellow>=2);
+ const cast=dispatchUniversalAction(packs,s,{type:'event',uid:jail.uid},{actor:1});
+ const eventRest=legalUniversalActions(packs,cast).filter(a=>a.type==='chooseRestBp');
+ assert.equal(eventRest.some(a=>a.uid===opened.ichigo.uid),true);
+ s=dispatchUniversalAction(packs,cast,{type:'chooseRestBp',uid:opened.ichigo.uid},{actor:1});
+ assert.equal(s.players[0].front.find(c=>c?.uid===opened.ichigo.uid).ready,false);
+ assert.equal(protect(s,opened.ichigo.uid,'character'),true);
+ for(let i=0;i<16&&!(s.active===0&&s.turn>begun&&!s.pending);i++){
+  if(s.pending){
+   const a=legalUniversalActions(packs,s)[0];
+   s=dispatchUniversalAction(packs,s,a,{actor:s.pending.player});
+  }else s=dispatchUniversalAction(packs,s,{type:'next'});
+ }
+ assert.equal(s.active,0);
+ assert.equal(protect(s,opened.ichigo.uid,'character'),false);
+ function drain(start){
+  let cur=start;
+  for(let i=0;i<12&&cur.pending;i++){
+   assert.notEqual(cur.pending.kind,'effect-named-field-protect');
+   const a=legalUniversalActions(packs,cur)[0];
+   cur=dispatchUniversalAction(packs,cur,a,{actor:cur.pending.player});
+  }
+  assert.equal(cur.pending,null);
+  assert.equal(cur.continuousStates.some(e=>e.kind==='cannotBeChosenByOppEffect'),false);
+  return cur;
+ }
+ const blueMiss=main(deck,29314);
+ put(blueMiss.s,0,'BLC-1-039','energy',0);
+ const missedOrihime=hold(blueMiss.s,0,'BLC-2-013');
+ const yoruichi=hold(blueMiss.s,0,'BLC-4-030');
+ const yoruPlayed=dispatchUniversalAction(blueMiss.packs,blueMiss.s,{type:'play',uid:yoruichi.uid,line:'front',slot:0});
+ assert.equal(yoruPlayed.pending.kind,'effect-discard-gate');
+ const yoruPaid=dispatchUniversalAction(blueMiss.packs,yoruPlayed,{type:'chooseDiscardGate',uid:missedOrihime.uid});
+ const yoruDone=drain(yoruPaid);
+ assert.equal(yoruDone.players[0].outside.some(c=>c.uid===missedOrihime.uid),true);
+ const yellowMiss=main(deck,29315);
+ const bazz=put(yellowMiss.s,0,'BLC-2-003','front',0,true);
+ put(yellowMiss.s,1,'BLC-4-030','front',0,true);
+ const yellowOrihime=hold(yellowMiss.s,0,'BLC-2-013');
+ const bazzPlayed=dispatchUniversalAction(yellowMiss.packs,yellowMiss.s,{type:'activate',uid:bazz.uid,mode:'frontOnce'});
+ assert.equal(bazzPlayed.pending.kind,'effect-discard-gate');
+ const bazzPaid=dispatchUniversalAction(yellowMiss.packs,bazzPlayed,{type:'chooseDiscardGate',uid:yellowOrihime.uid});
+ const bazzDone=drain(bazzPaid);
+ assert.equal(bazzDone.players[0].outside.some(c=>c.uid===yellowOrihime.uid),true);
+ assert.equal(assertUniversalMatch(packs,s),true);
+ assert.equal(assertUniversalMatch(blueMiss.packs,yoruDone),true);
+ assert.equal(assertUniversalMatch(yellowMiss.packs,bazzDone),true);
+ assert.equal(assertUniversalMatch(declined.board.packs,skipped),true);
+ assert.equal(assertUniversalMatch(energyGrant.board.packs,grantedEnergy),true);
 });
 
 function locationLine(s,uid){
