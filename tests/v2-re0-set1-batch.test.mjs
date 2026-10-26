@@ -5304,7 +5304,7 @@ test('Emilia raids onto Emilia, blocks low BP, rests an unblocked front, and swa
  assert.equal(open.pending.optional,true);
  assert.equal(Object.keys(open.pending).length,6);
  assert.deepEqual(open.pending.choices,[low.uid,even.uid,tall.uid]);
- assert.equal(open.players[1].life.length,lifeBefore-1);
+ assert.equal(open.players[1].life.length,lifeBefore);
  assert.equal(V2_PENDING_LABELS['effect-unblocked-rest'],'選擇是否使對手前線休息');
  assert.equal(uiActionLabel({type:'chooseUnblockedRest',uid:null},{pack,state:open}),'不使角色休息');
  assert.equal(uiActionLabel({type:'chooseUnblockedRest',uid:low.uid},{pack,state:open}),'使 ラム 休息');
@@ -5316,9 +5316,11 @@ test('Emilia raids onto Emilia, blocks low BP, rests an unblocked front, and swa
  let skipped=structuredClone(open);
  skipped=dispatchUniversalAction(packs,skipped,{type:'chooseUnblockedRest',uid:null});
  assert.equal(skipped.pending,null);
+ assert.equal(skipped.players[1].life.length,lifeBefore-1);
  assert.equal(at(skipped,1,low.uid).ready,true);
  open=dispatchUniversalAction(packs,open,{type:'chooseUnblockedRest',uid:low.uid});
  assert.equal(open.pending,null);
+ assert.equal(open.players[1].life.length,lifeBefore-1);
  assert.equal(at(open,1,low.uid).ready,false);
  assert.equal(at(open,1,even.uid).ready,true);
  assert.equal(at(open,1,tall.uid).ready,true);

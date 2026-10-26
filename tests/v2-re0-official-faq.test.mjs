@@ -4,13 +4,16 @@
 // These fourteen rulings are not a certification of all 113 prints, and Vol.2 is out of scope.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createRezeroV2Pack} from '../dist/universal-v2/rezero-pack.mjs';
-import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
+import {REZERO_BY_ID} from '../dist/rezero-cards.mjs';
+import {createRezeroV2Pack,rezeroPackCard} from '../dist/universal-v2/rezero-pack.mjs';
+import {createUniversalPack,validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  assertUniversalMatch,universalEnergyByColor,universalBp,
  effectiveHandRequiredEnergy,universalPrivateChoices,universalPublicView
 } from '../dist/universal-v2/engine.mjs';
 import {grantContinuousState} from '../dist/universal-v2/continuous-states.mjs';
+import {uiActionLabel,V2_PENDING_LABELS} from '../dist/universal-v2/preview-actions.mjs';
+import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
 
 const pack=createRezeroV2Pack(),packs=[pack,pack];
 function makeCounts(fours,twos=[]){
@@ -377,6 +380,148 @@ test('Q1575 Beatrice replaces an opponent retirement with a return to hand',()=>
  assert.equal(assertUniversalMatch(packs,fought),true);
 });
 
+test('Q1575 an opponent remove-area effect returns the granted character to hand',()=>{
+ const lab=(id,color)=>({id,name:id,color,type:'character',energy:0,ap:1,bp:1000,gen:1,
+  traits:[],trigger:null,implementation:'vanilla',effects:{}});
+ const removal={id:'LAB-REMOVE',name:'Remove',color:'purple',type:'event',energy:0,ap:1,bp:0,gen:0,
+  traits:[],trigger:null,implementation:'dsl',effects:{onPlay:[{op:'removeOppFieldOne'}]}};
+ assert.throws(()=>createUniversalPack({id:'bad-remove',cards:[{...removal,effects:{onPlay:[
+  {op:'removeOppFieldOne',optional:true}]}}]}),/opponent field removal/);
+ assert.throws(()=>createUniversalPack({id:'bad-remove-character',cards:[{...lab('X','purple'),
+  implementation:'dsl',effects:{onPlay:[{op:'removeOppFieldOne'}]}}]}),/lone event onPlay/);
+ const fixture=createUniversalPack({id:'q1575-remove-lab',cards:[
+  rezeroPackCard(REZERO_BY_ID['REZ-1-074']),
+  rezeroPackCard(REZERO_BY_ID['REZ-1-068']),
+  rezeroPackCard(REZERO_BY_ID['REZ-1-086']),
+  rezeroPackCard(REZERO_BY_ID['REZ-1-077']),
+  rezeroPackCard(REZERO_BY_ID['REZ-1-072']),
+  removal,
+  {id:'LAB-FIELD',name:'Field',color:'purple',type:'field',energy:0,ap:1,bp:0,gen:0,
+   traits:[],trigger:null,implementation:'vanilla',effects:{}},
+  ...['LAB-A','LAB-B','LAB-C','LAB-D','LAB-E'].map(id=>lab(id,'purple')),
+  lab('LAB-F','purple')
+ ]});
+ const counts={
+  'REZ-1-074':4,'REZ-1-068':4,'REZ-1-086':4,'REZ-1-077':4,'REZ-1-072':4,
+  'LAB-REMOVE':4,'LAB-FIELD':4,'LAB-A':4,'LAB-B':4,'LAB-C':4,'LAB-D':4,'LAB-E':4,'LAB-F':2
+ };
+ assert.equal(Object.values(counts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(fixture,counts),[]);
+ const fp=[fixture,fixture];
+ const pullHere=(s,p,id)=>{
+  for(const zone of ['deck','hand','life','outside']){
+   const cards=s.players[p][zone],index=cards.findIndex(c=>c.cardId===id);
+   if(index>=0)return cards.splice(index,1)[0];
+  }
+  throw Error('Missing '+id);
+ };
+ const place=(s,p,id,line,slot)=>{
+  const card=pullHere(s,p,id);
+  card.ready=true;card.fieldEntryStamp=s.nextFieldEntryStamp++;
+  s.players[p][line][slot]=card;return card;
+ };
+ const walkTo=(s,done)=>{
+  let guard=0;
+  while(!done(s)){
+   while(s.pending?.kind==='end-hand-limit'){
+    const hand=s.players[s.pending.player].hand[0];
+    s=dispatchUniversalAction(fp,s,{type:'chooseHandLimit',uid:hand.uid});
+   }
+   if(done(s))return s;
+   if(s.pending)throw Error('unexpected pending '+s.pending.kind);
+   const next=legalUniversalActions(fp,s).find(a=>a.type==='next');
+   assert.ok(next,'stuck '+s.phase);
+   s=dispatchUniversalAction(fp,s,next);
+   assert.ok(++guard<64,'walk exceeded');
+  }
+  return s;
+ };
+ const playEvent=(s)=>{
+  const event=pullHere(s,1,'LAB-REMOVE');
+  s.players[1].hand.push(event);
+  const action=legalUniversalActions(fp,s).find(a=>a.type==='event'&&a.uid===event.uid);
+  assert.ok(action);
+  return dispatchUniversalAction(fp,s,action);
+ };
+
+ let plain=newUniversalMatch(fp,{decks:[counts,counts],first:0,seed:9150});
+ place(plain,0,'LAB-FIELD','energy',0);
+ plain=walkTo(plain,x=>x.active===1&&x.phase==='main');
+ const hidden=pullHere(plain,1,'LAB-REMOVE');
+ plain.players[1].hand.push(hidden);
+ assert.equal(legalUniversalActions(fp,plain).some(a=>a.type==='event'&&a.uid===hidden.uid),false);
+ plain.players[1].hand.splice(plain.players[1].hand.findIndex(c=>c.uid===hidden.uid),1);
+ plain.players[1].deck.push(hidden);
+ const bare=place(plain,0,'REZ-1-068','front',0);
+ plain=playEvent(plain);
+ assert.equal(plain.pending.kind,'effect-remove-opp-field');
+ assert.deepEqual(plain.pending.choices,[bare.uid]);
+ assert.equal(V2_PENDING_LABELS['effect-remove-opp-field'],'選擇 1 張對手場上角色，放入移除區');
+ assert.equal(uiActionLabel({type:'chooseRemoveOppField',uid:bare.uid},{pack:fp,state:plain}),
+  '將 ナツキ・スバル 放入移除區');
+ assert.equal(chooseUniversalAiAction(fp,plain).uid,bare.uid);
+ plain=dispatchUniversalAction(fp,plain,{type:'chooseRemoveOppField',uid:bare.uid});
+ assert.ok(plain.players[0].removed.some(c=>c.uid===bare.uid));
+ assert.equal(plain.players[0].hand.some(c=>c.uid===bare.uid),false);
+ assert.equal(plain.players[0].outside.some(c=>c.uid===bare.uid),false);
+ assert.equal(plain.turnRetireEvents.some(e=>e.uid===bare.uid),false);
+ assert.ok(plain.zoneMoveEvents.some(e=>e.uid===bare.uid&&e.from==='front'&&
+  e.to==='removed'&&e.reason==='opponent-effect'));
+
+ let granted=newUniversalMatch(fp,{decks:[counts,counts],first:0,seed:9151});
+ place(granted,0,'REZ-1-086','energy',0);
+ const subaru=place(granted,0,'REZ-1-068','front',0);
+ granted=walkTo(granted,x=>x.active===0&&x.phase==='main');
+ assert.equal(universalEnergyByColor(fp,granted,0).purple,1);
+ const beatrice=pullHere(granted,0,'REZ-1-074');
+ granted.players[0].hand.push(beatrice);
+ granted=dispatchUniversalAction(fp,granted,legalUniversalActions(fp,granted).find(a=>
+  a.type==='play'&&a.uid===beatrice.uid&&a.line==='front'));
+ assert.equal(granted.pending.kind,'effect-grant-bounce-instead');
+ granted=dispatchUniversalAction(fp,granted,{type:'chooseGrantBounceInstead',uid:subaru.uid});
+ const replaced=walkTo(structuredClone(granted),x=>x.active===1&&x.phase==='main');
+ let bounced=playEvent(replaced);
+ assert.ok(bounced.pending.choices.includes(subaru.uid));
+ bounced=dispatchUniversalAction(fp,bounced,{type:'chooseRemoveOppField',uid:subaru.uid});
+ assert.ok(bounced.players[0].hand.some(c=>c.uid===subaru.uid));
+ assert.equal(bounced.players[0].removed.some(c=>c.uid===subaru.uid),false);
+ assert.equal(bounced.players[0].outside.some(c=>c.uid===subaru.uid),false);
+ assert.equal(bounced.turnRetireEvents.some(e=>e.uid===subaru.uid),false);
+ assert.ok(bounced.zoneMoveEvents.some(e=>e.uid===subaru.uid&&e.to==='hand'&&
+  e.reason==='opponent-effect'));
+
+ const ruled=structuredClone(granted);
+ const held=ruled.players[0].front.find(c=>c?.uid===subaru.uid);
+ const from=ruled.players[0].front.findIndex(c=>c?.uid===subaru.uid);
+ const fuelCard=ruled.players[0].energy[0];
+ ruled.players[0].front[from]=null;
+ ruled.players[0].deck.push(fuelCard);
+ ruled.players[0].energy[0]=held;
+ for(const [slot,id] of [[1,'LAB-A'],[2,'LAB-B'],[3,'LAB-C']])place(ruled,0,id,'energy',slot);
+ const victim=place(ruled,0,'LAB-D','front',0);
+ for(let slot=0;slot<3;slot++)place(ruled,1,'REZ-1-086','energy',slot);
+ const base=place(ruled,1,'REZ-1-072','front',0);
+ let shifted=walkTo(ruled,x=>x.active===1&&x.phase==='main');
+ assert.equal(universalEnergyByColor(fp,shifted,1).purple,3);
+ const top=pullHere(shifted,1,'REZ-1-077');
+ shifted.players[1].hand.push(top);
+ const raid=legalUniversalActions(fp,shifted).find(a=>a.type==='raid'&&a.uid===top.uid&&a.baseUid===base.uid);
+ assert.ok(raid);
+ shifted=dispatchUniversalAction(fp,shifted,raid);
+ assert.equal(shifted.pending.kind,'effect-move-opp-front');
+ const move=legalUniversalActions(fp,shifted).find(a=>a.type==='chooseMoveOppFront'&&
+  a.uid===victim.uid&&a.replaceUid===subaru.uid);
+ assert.ok(move);
+ shifted=dispatchUniversalAction(fp,shifted,move);
+ assert.ok(shifted.players[0].removed.some(c=>c.uid===subaru.uid));
+ assert.equal(shifted.players[0].hand.some(c=>c.uid===subaru.uid),false);
+ assert.equal(shifted.players[0].energy.some(c=>c?.uid===victim.uid),true);
+ assert.ok(shifted.zoneMoveEvents.some(e=>e.uid===subaru.uid&&e.to==='removed'&&e.reason==='rule'));
+ assert.equal(assertUniversalMatch(fp,plain),true);
+ assert.equal(assertUniversalMatch(fp,bounced),true);
+ assert.equal(assertUniversalMatch(fp,shifted),true);
+});
+
 test('Q1576 a full energy line removes one card before the front character moves',()=>{
  let s=moved(9117);
  fuel(s,0,['REZ-1-086','REZ-1-086','REZ-1-086']);
@@ -466,7 +611,7 @@ test('Q1578 Emilia keeps the next-hand discount after a different card is played
  assert.equal(assertUniversalMatch(packs,s),true);
 });
 
-test('Q1579 an unblocked Emilia opens after the block choice, and a life trigger is resolved first',()=>{
+test('Q1579 an unblocked Emilia rests before life damage',()=>{
  let quiet=raid(9120);
  const emilia=put(quiet,0,'REZ-1-089','front',0);
  const blocker=put(quiet,1,'REZ-1-014','front',0);
@@ -480,6 +625,10 @@ test('Q1579 an unblocked Emilia opens after the block choice, and a life trigger
  assert.equal(blocked.players[1].life.length,life);
  let open=dispatchUniversalAction(packs,structuredClone(quiet),{type:'chooseBlock',uid:null});
  assert.equal(open.pending.kind,'effect-unblocked-rest');
+ assert.equal(open.players[1].life.length,life);
+ assert.ok(open.effectQueue.some(e=>e.op==='unblockedLifeDamage'));
+ open=dispatchUniversalAction(packs,open,{type:'chooseUnblockedRest',uid:null});
+ assert.equal(open.pending,null);
  assert.equal(open.players[1].life.length,life-1);
 
  let triggered=raid(9121);
@@ -490,11 +639,14 @@ test('Q1579 an unblocked Emilia opens after the block choice, and a life trigger
  triggered=act(triggered,'attack',{uid:raider.uid});
  const before=triggered.players[1].life.length;
  triggered=dispatchUniversalAction(packs,triggered,{type:'chooseBlock',uid:null});
+ assert.equal(triggered.pending.kind,'effect-unblocked-rest');
+ assert.equal(triggered.players[1].life.length,before);
+ triggered=dispatchUniversalAction(packs,triggered,{type:'chooseUnblockedRest',uid:null});
  assert.equal(triggered.pending.kind,'life-trigger');
  assert.equal(triggered.pending.trigger,'draw');
  assert.equal(triggered.players[1].life.length,before-1);
  triggered=dispatchUniversalAction(packs,triggered,{type:'chooseTrigger',mode:'skip'});
- assert.equal(triggered.pending.kind,'effect-unblocked-rest');
+ assert.equal(triggered.pending,null);
  assert.equal(assertUniversalMatch(packs,blocked),true);
  assert.equal(assertUniversalMatch(packs,open),true);
  assert.equal(assertUniversalMatch(packs,triggered),true);
