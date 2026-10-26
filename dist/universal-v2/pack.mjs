@@ -622,7 +622,7 @@ function verifyProgram(program,path){
     !Array.isArray(e.then)||e.then.length<1||e.then.length>3||
     Object.keys(e).length!==7||
     Object.keys(e).some(k=>!['op','count','optional','cardType','zone','controller','then'].includes(k))||
-    e.then.some(x=>!['draw','millTop','buffSelf','enemyBpDown','grantSelfImpactThisTurn'].includes(x?.op)))
+    e.then.some(x=>!['draw','millTop','buffSelf','enemyBpDown','enemyFrontAllBpDown','grantSelfImpactThisTurn'].includes(x?.op)))
     throw Error(path+'['+i+'] invalid outside removal payment');
    verifyProgram(e.then,path+'['+i+'].then');
   }
