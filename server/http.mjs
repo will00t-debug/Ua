@@ -2,7 +2,7 @@ import {createReadStream} from 'node:fs';
 import {stat} from 'node:fs/promises';
 import {extname,resolve,sep} from 'node:path';
 import {ApiError,createService} from './domain.mjs';
-import {openJsonStore} from './store.mjs';
+import {openDatabase} from './sqlite.mjs';
 
 const TYPES={
  '.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8',
@@ -105,16 +105,16 @@ function serveStatic(req,res,root,urlPath){
 }
 
 export async function createHandler({dataFile,staticRoot=null}){
- const store=await openJsonStore(dataFile);
- const service=createService({store});
- return async function handle(req,res){
+ const sql=openDatabase(dataFile);
+ const service=createService({sql});
+ async function handle(req,res){
   try{
    const url=new URL(req.url||'/', 'http://localhost');
    const path=url.pathname;
    const method=req.method||'GET';
    const secure=req.headers['x-forwarded-proto']==='https';
    const meta={ip:clientIp(req)};
-   if(method==='GET'&&path==='/api/health')return send(res,200,{ok:true,service:'ua-accounts'});
+   if(method==='GET'&&path==='/api/health')return send(res,200,{ok:true,service:'ua-accounts',storage:'sqlite'});
    if(path.startsWith('/api/')){
     const token=sessionToken(req);
     if(method==='POST'&&path==='/api/register'){
@@ -159,5 +159,7 @@ export async function createHandler({dataFile,staticRoot=null}){
    if(!(error instanceof ApiError))console.error(error);
    send(res,status,{error:message});
   }
- };
+ }
+ handle.close=()=>sql.close();
+ return handle;
 }

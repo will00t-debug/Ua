@@ -1,0 +1,20 @@
+{
+  "name": "ua-arena",
+  "main": "worker/dist/index.mjs",
+  "compatibility_date": "2026-10-27",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "run_worker_first": true
+  },
+  "durable_objects": {
+    "bindings": [
+      {"name": "ACCOUNTS", "class_name": "AccountBook"},
+      {"name": "ROOMS", "class_name": "MatchRoom"}
+    ]
+  },
+  "exports": {
+    "AccountBook": {"type": "durable-object", "storage": "sqlite"},
+    "MatchRoom": {"type": "durable-object", "storage": "sqlite"}
+  }
+}

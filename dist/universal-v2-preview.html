@@ -58,7 +58,7 @@
    <div class="setup-actions"><button id="start-game" type="button" class="primary">開始新對局</button>
    <span id="restart-notice" class="small" aria-live="polite"></span></div>
    <div id="designated-decks" class="designated" aria-label="指定 BLEACH 牌組"></div>
-   <p class="note">這是正式網站的 V2 對戰入口，使用者可與電腦對打。這裡的電腦對局在瀏覽器執行，不會將對局紀錄上傳至伺服器。帳號、跨裝置牌組與玩家對戰請使用「帳號／線上對戰」；該模式由伺服器主持牌局。此入口以 V2 規則引擎處理對局，提供 BLEACH 藍綠指定牌組及五作品已登錄的 50 張牌組。下方三副是使用者指定構築；標成不可完整對局的牌組不能開始對戰。V2 仍在持續補充卡牌與驗收規則，不代表所有官方卡牌及 FAQ 都已完成認證。</p>
+   <p class="note">這是正式網站的 V2 對戰入口，使用者可與電腦對打。這裡的電腦對局在瀏覽器執行，不會將對局紀錄上傳至伺服器。帳號、跨裝置牌組與玩家對戰請使用「帳號／線上對戰」。帳號、牌組和未結束的對戰會寫進資料庫；部署到 Cloudflare Durable Objects 後，主持對戰的電腦不用一直開著。此入口以 V2 規則引擎處理對局，提供 BLEACH 藍綠指定牌組及五作品已登錄的 50 張牌組。下方三副是使用者指定構築；標成不可完整對局的牌組不能開始對戰。V2 仍在持續補充卡牌與驗收規則，不代表所有官方卡牌及 FAQ 都已完成認證。</p>
   </section>
   <main id="match-view" aria-live="off"></main>
   <footer class="foot">

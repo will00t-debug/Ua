@@ -202,8 +202,8 @@ function matchView(){
 function render(){
  const root=document.querySelector('#app');
  const view=app.offline?shell(el('section',{class:'panel'},
-  el('h1',{text:'帳號伺服器沒有啟動'}),
-  el('p',{text:'這個頁面需要和網站同一位址的 Node 伺服器。請在專案目錄執行 npm run server，再開啟它顯示的網址。'}),
+  el('h1',{text:'帳號服務沒有啟動'}),
+  el('p',{text:'這個頁面要和帳號服務放在同一個網址。本機請執行 npm start。公開使用時，把網站部署到 Cloudflare，帳號和每一場對戰會留在 Durable Objects，你的電腦不用一直開著。'}),
   el('p',{class:'muted',text:'只部署靜態檔案時，牌組仍留在這台瀏覽器，也不會有線上對戰。'}))):
   app.room?matchView():app.user?homeView():authView();
  root.replaceChildren(view);

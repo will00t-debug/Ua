@@ -6,12 +6,19 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {readFileSync} from 'node:fs';
+import {DatabaseSync} from 'node:sqlite';
 import {BLEACH_PURPLE_V2_PILOT_COUNTS} from '../dist/universal-v2/verified-real-decks.mjs';
 import {createHandler} from '../server/http.mjs';
 
 const root=fileURLToPath(new URL('..', import.meta.url));
 const password='correct-horse-1';
 let ctx;
+
+function storedUsers(file){
+ const db=new DatabaseSync(file,{readOnly:true});
+ try{return db.prepare('SELECT password_hash,password_salt,password_n FROM users').all();}
+ finally{db.close();}
+}
 
 function rawGet(port,path){
  return new Promise((resolve,reject)=>{
@@ -52,12 +59,27 @@ test('account and online entry points are linked without loading a battle engine
 describe('account server',{concurrency:1,timeout:180000},()=>{
  before(async()=>{
   const dir=await mkdtemp(join(tmpdir(),'ua-acct-'));
-  const dataFile=join(dir,'store.json');
-  const handler=await createHandler({dataFile,staticRoot:join(root,'dist')});
-  const server=createServer(handler);
-  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
-  ctx={port:server.address().port,dataFile,base:'http://127.0.0.1:'+server.address().port,
-   close:()=>new Promise((resolve,reject)=>server.close(error=>error?reject(error):resolve())).then(()=>rm(dir,{recursive:true,force:true}))};
+  const dataFile=join(dir,'store.sqlite');
+  const staticRoot=join(root,'dist');
+  async function listen(handler){
+   const server=createServer(handler);
+   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+   ctx.server=server;
+   ctx.handler=handler;
+   ctx.port=server.address().port;
+   ctx.base='http://127.0.0.1:'+ctx.port;
+  }
+  ctx={dataFile,async reopen(){
+   await new Promise((resolve,reject)=>ctx.server.close(error=>error?reject(error):resolve()));
+   ctx.handler.close();
+   await listen(await createHandler({dataFile,staticRoot}));
+  }};
+  await listen(await createHandler({dataFile,staticRoot}));
+  ctx.close=async()=>{
+   if(ctx.server.listening)await new Promise((resolve,reject)=>ctx.server.close(error=>error?reject(error):resolve()));
+   try{ctx.handler.close();}catch{/* The restart test may already have closed it. */}
+   await rm(dir,{recursive:true,force:true});
+  };
  });
  after(async()=>{if(ctx)await ctx.close();});
 
@@ -83,10 +105,14 @@ describe('account server',{concurrency:1,timeout:180000},()=>{
   assert.match(cookie,/ua_session=[a-f0-9]{64}/);
   assert.match(cookie,/HttpOnly/);
   assert.match(cookie,/SameSite=Lax/);
-  const stored=await readFile(ctx.dataFile,'utf8');
+  const stored=await readFile(ctx.dataFile);
   assert.equal(stored.includes(password),false);
   assert.equal(stored.includes(created.data.token),false);
-  assert.match(stored,/"hash":"[a-f0-9]+"/);
+  const users=storedUsers(ctx.dataFile);
+  assert.equal(users.length>=1,true);
+  assert.match(users[0].password_hash,/^[a-f0-9]{64}$/);
+  assert.match(users[0].password_salt,/^[a-f0-9]{32}$/);
+  assert.equal(users[0].password_n,16384);
   const me=await api('/api/me',{cookie:cookie.split(';')[0]});
   assert.equal(me.status,200);
   assert.equal(me.data.username,'玩家甲');
@@ -182,5 +208,34 @@ describe('account server',{concurrency:1,timeout:180000},()=>{
   assert.equal((await api('/api/rooms/'+second.data.code+'/cancel',{method:'POST',token:guest.data.token})).status,404);
   assert.equal((await api('/api/rooms/'+second.data.code+'/cancel',{method:'POST',token:host.data.token})).status,200);
   assert.equal((await api('/api/rooms/'+second.data.code,{token:host.data.token})).status,404);
+ });
+
+ test('accounts and an unfinished match survive a server restart',async()=>{
+  const host=await api('/api/login',{method:'POST',body:{username:'host_red',password}});
+  const guest=await api('/api/login',{method:'POST',body:{username:'guest_red',password}});
+  const hostDeck=(await api('/api/decks',{token:host.data.token})).data.decks.find(deck=>deck.localId==='host-purple');
+  const guestDeck=(await api('/api/decks',{token:guest.data.token})).data.decks.find(deck=>deck.localId==='guest-purple');
+  const created=await api('/api/rooms',{method:'POST',token:host.data.token,body:{deckId:hostDeck.id,first:'me'}});
+  assert.equal(created.status,201,JSON.stringify(created.data));
+  await ctx.reopen();
+  const waiting=await api('/api/rooms/'+created.data.code,{token:host.data.token});
+  assert.equal(waiting.status,200,JSON.stringify(waiting.data));
+  assert.equal(waiting.data.status,'waiting');
+  assert.equal(JSON.stringify(waiting.data).includes('BLC-1-034'),false);
+  const joined=await api('/api/rooms/'+created.data.code+'/join',{method:'POST',token:guest.data.token,body:{deckId:guestDeck.id}});
+  assert.equal(joined.status,200,JSON.stringify(joined.data));
+  assert.equal(joined.data.view.players[0].hand,null);
+  assert.equal(joined.data.view.players[1].hand.length,7);
+  await ctx.reopen();
+  const again=await api('/api/rooms/'+created.data.code,{token:guest.data.token});
+  assert.equal(again.status,200,JSON.stringify(again.data));
+  assert.equal(again.data.status,'playing');
+  assert.equal(again.data.view.players[1].hand.length,7);
+  assert.equal(again.data.view.players[0].hand,null);
+  assert.equal(JSON.stringify(again.data).includes('"uid":"0-"'),false);
+  assert.equal(JSON.stringify(again.data).includes('initialCounts'),false);
+  const me=await api('/api/me',{token:host.data.token});
+  assert.equal(me.status,200);
+  assert.equal(me.data.username,'HOST_RED');
  });
 });
