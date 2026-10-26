@@ -29,3 +29,11 @@ function verifiedPreset(row){
 
 export const BUILTIN_BLEACH_V2_DECKS=Object.freeze(DESIGNATED_BLEACH_DECKS.map(verifiedPreset));
 export function builtinBleachDeck(id){return BUILTIN_BLEACH_V2_DECKS.find(row=>row.id===id)||null;}
+
+export function renderBuiltinBleachPanel(escapeHtml){
+ const cards=BUILTIN_BLEACH_V2_DECKS.map(d=>{
+  const status=d.ready?'✓ 可以在 V2 正式對戰':'V2 已登錄 '+d.registeredKinds+'/'+d.kinds+' 種，尚缺 '+d.missingIds.length+' 種效果';
+  return `<article class="v2e-designated-card ${d.color}"><small>${escapeHtml(d.colorLabel)}色 · ${d.total} 張 · ${d.kinds} 種</small><h3>${escapeHtml(d.name)}</h3><p class="${d.ready?'v2e-okay':'v2e-pending'}">${escapeHtml(status)}</p><button type="button" data-designated-preset="${escapeHtml(d.id)}">載入這副牌組</button></article>`;
+ }).join('');
+ return `<section class="v2e-designated" aria-label="BLEACH 三副指定牌組"><div class="v2e-designated-head"><h2>你之前提供的三副牌組</h2><p>原始 50 張卡號與數量完整保留。載入後可查看卡圖、修改與另存。</p></div><div class="v2e-designated-grid">${cards}</div></section>`;
+}
