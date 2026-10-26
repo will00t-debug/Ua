@@ -1719,7 +1719,6 @@ function extraRaidHostAccepts(pack,s,owner,base,top){
   cardHasName(card(pack,c),host.blockedByName,originalEffectsDisabled(s,c)));
 }
 function validRaidBase(pack,s,owner,base,top){
- if(top?.name&&(s.onceEffectUses?.[owner]||[]).includes('raidName:'+top.name))return false;
  if(base&&extraRaidHostAccepts(pack,s,owner,base,top))return true;
  if(top?.raidTrait){
   if(!base||top.raidName||base.stack?.length)return false;
@@ -1787,8 +1786,6 @@ function performRaid(pack,s,p,cardOnTop,baseUid,line,slot,replaceUid,{entryReady
  s.raidedThisTurn[p]=true;
  s.raidCount[p]=(s.raidCount[p]||0)+1;
  cardOnTop.raidedTurn=s.turn;
- const raidKey='raidName:'+top.name;
- if(!s.onceEffectUses[p].includes(raidKey))s.onceEffectUses[p].push(raidKey);
  const baseJobs=s.active===p&&!baseOriginalSilenced?programJobs(pack,s,effectiveBase,'onRaided',p,cardOnTop.uid):[];
  const entryJobs=programJobs(pack,s,cardOnTop,'onPlay',p,undefined,entryCause);
  const raidJobs=programJobs(pack,s,cardOnTop,'onRaid',p);

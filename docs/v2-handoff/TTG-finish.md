@@ -24,6 +24,6 @@ Catalog disagreements kept in the proof:
 - 056's attack-end raid follows the catalog: any red ラガン or グレンラガン. The legacy list TTG-1-073/074/076 is not the limit.
 - 061 lets the player pick either unused mode. The legacy resolver forced recover, then deploy.
 - COLOR and SPECIAL life sentences that are missing from the Chinese effect text use the shared handlers: 032 SPECIAL `retireOppFront`, 033 COLOR deploy green energy 2 or less and AP 1, 062 COLOR retire an opponent front of BP 2500 or less.
-- The same printed name cannot raid twice in one turn. That rule is global, so a second グレンラガン raid in `tests/v2-ttg-six-more.test.mjs` is closed as well.
+- A second raid of the same printed name stays legal. Official BLEACH raids already do that in one turn. TTG-1-032 uses its own chain flags instead of a global name ban. The catalog sentence on TTG-1-056 is not applied as that global ban.
 - 032 may still be played normally. The chain flags gate Raid only.
 - A played character without `enterAlwaysActive` enters REST. 012 is the exception.

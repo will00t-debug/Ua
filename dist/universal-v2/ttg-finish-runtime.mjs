@@ -359,8 +359,7 @@ export function legalFinishPending(pack,s){
   const out=[{type:'chooseAttackEndRaid',uid:null}];
   for(const c of p.hand){
    const d=card(pack,c);
-   if(d.color!==q.color||!q.names.some(n=>n===d.name)||
-    (s.onceEffectUses[q.player]||[]).includes('raidName:'+d.name))continue;
+   if(d.color!==q.color||!q.names.some(n=>n===d.name))continue;
    if(!api.validRaidBase(pack,s,q.player,source,d))continue;
    for(const dest of dests)out.push({type:'chooseAttackEndRaid',uid:c.uid,...dest});
   }

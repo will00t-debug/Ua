@@ -118,7 +118,7 @@ test('the last eleven TTG cards keep official prints and a legal 50-card deck',(
  assert.equal(ttg.cards['TTG-1-074'].raidRequiresNames[0],'ニア');
 });
 
-test('chain raid tucks the previous top and enforces 032 restrictions plus the same-name turn rule',()=>{
+test('chain raid tucks the previous top and enforces the 032 raid restrictions',()=>{
  let s=fresh(9001);
  s=endTurn(s);
  fuel(s,1,4,40);
@@ -140,7 +140,10 @@ test('chain raid tucks the previous top and enforces 032 restrictions plus the s
  assert.equal(universalBp(ttg,s,top),5000);
  assert.equal(universalImpact(ttg,s,top),1);
  const again=hold(s,1,'TTG-1-029');
- assert.equal(legalUniversalActions(ttg,s).some(a=>a.type==='raid'&&a.uid===again.uid),false);
+ s.players[1].apCards.find(c=>c.inPlay).ready=true;
+ const follow=legalUniversalActions(ttg,s).filter(a=>a.type==='raid'&&a.uid===again.uid);
+ assert.equal(follow.some(a=>a.baseUid===top.uid),false);
+ assert.ok(follow.some(a=>s.players[1].energy.some(c=>c?.uid===a.baseUid)));
  assertUniversalMatch(ttg,s);
 
  let closed=fresh(9002);

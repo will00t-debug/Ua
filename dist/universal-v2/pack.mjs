@@ -909,7 +909,8 @@ function validatePassiveBonuses(card){
      ?(!Number.isInteger(p.bp)||p.bp>=0||p.bp<-5000||p.bp%500!==0)
      :(!integer(p.bp,1)||p.bp>5000)))||
    (p.extraEnergy!==undefined&&(!integer(p.extraEnergy,1)||p.extraEnergy>3))||
-   (p.extraDamage!==undefined&&(!integer(p.extraDamage,1)||p.extraDamage>6))||
+   (p.extraDamage!==undefined&&(!integer(p.extraDamage,1)||
+    (p.extraDamage!==1&&p.extraDamage!==2&&p.extraDamage!==6)))||
    (p.impact!==undefined&&p.impact!==1)||
    (p.impactNull!==undefined&&p.impactNull!==true)||
    (p.bpEach!==undefined&&(!integer(p.bpEach,1)||p.bpEach>5000||p.bpEach%500!==0||
