@@ -186,7 +186,8 @@ const testForKind=Object.freeze({
  mayuriNemSquadRest:'tests/v2-c29-bleach-port.test.mjs',
  shutaraHandScale:'tests/v2-c29-bleach-port.test.mjs',
  ichibeEnergyReveal:'tests/v2-c29-bleach-port.test.mjs',
- shatatsuHandCap:'tests/v2-c29-bleach-port.test.mjs'
+ shatatsuHandCap:'tests/v2-c29-bleach-port.test.mjs',
+ shirafudeLock:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -205,7 +206,9 @@ function contributedEntry(profile){
   definition:Object.freeze(definition),
   evidence:Object.freeze({
    printedTextFragments:Object.freeze([profile.effect]),
-   reviewNote:profile.id==='BLC-2-061'?
+   reviewNote:profile.id==='BLC-4-057'?
+    'EX15BT/BLC-4-057 official iframe 2026-10-27. Up to one opposing front character, until the controller next own turn start, loses every printed effect and cannot attack or block. Q2329 (2026-09-04): 元々の効果 is the text printed on that card. Q2330 (2026-09-04): Raid state remains, and the text enclosed by the Raid is negated. Q2331 (2026-09-04): a double block gained from another card remains. Q2332 (2026-09-04): effects already gained remain, including a this-turn BP modifier; a printed continuous reference is lost. Q2333 (2026-09-04): a printed leave trigger does not fire. Declining the character is legal. An energy-line character is not a choice. A field is not a character. If own field or the removed area has 兵主部 一兵衛, draw 2 and put one hand card into the removed area. That removal is mandatory. Silence keeps the printed name. No such card skips the draw. SPECIAL retires one opposing front character. No generated energy.':
+   profile.id==='BLC-2-061'?
     'EX07BT/BLC-2-061 official page 2026-10-27. Required energy 紫4. Generated energy is a dash, so gen stays 0. Put up to 3 own hand cards with trait 零番隊 into the removed area, including zero. Then retire one opposing front character. The choice is mandatory while a legal character exists. The BP cap starts at 3000 and increases by 1000 for each card this effect removed. Then draw 1 for each card this effect removed. Zero removed cards do not draw. A card without that trait cannot be removed. An energy-line card is not in hand. Choosing zero still opens the 3000 retirement. Declining that retirement is illegal. An energy-line character is not a front character. A field is not a character. No matching hand card skips the removal and opens the 3000 retirement. The fourth matching hand card cannot be removed. SPECIAL retires one opposing front character with no BP cap. No card FAQ. Trait 無.':
    profile.id==='BLC-2-060'?
     'EX07BT/BLC-2-060 official page 2026-10-27. Required energy 紫4, generated energy 紫. On play, look at the top 4 of the own deck and put them back on top in any order. The look is private. Fewer than 4 cards orders only the cards that exist. An empty deck looks at nothing. Playing onto the energy line still looks. On attack, name one required-energy number from 0 through 30, then reveal the own top card. The number is chosen before the reveal. If the printed required energy matches, the card may be added to hand. Adding it then puts one own hand card into the removed area, and that removal is mandatory. The added card is a legal removal. Declining the hand add puts the revealed card back on top. A mismatch also leaves the revealed card on top and does not remove a hand card. An energy-line card is not the top of the deck. An empty deck names nothing. Silence before the attack removes the attack text. COLOR ACTIVE-plays one own outside purple character of required energy 2 or less and AP 1 onto the own front. A field is not a character. Required energy 3 does not match. AP 2 does not match. The energy line is not a destination. The entered character resolves its on-play. COLOR is the generic sentence. No card FAQ. Trait 零番隊.':

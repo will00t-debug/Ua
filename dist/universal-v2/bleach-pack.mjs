@@ -1243,6 +1243,8 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-2-060","kind":"ichibeEnergyReveal","number":"EX07BT/BLC-2-060","name":"兵主部 一兵衛","color":"purple","energy":4,"ap":1,"bp":4000,"gen":1,"trigger":"color","type":"character","effect":"登場：查看己方牌堆頂 4 張，以任意順序放回牌堆頂。攻擊時：指定 1 個需求能源數值，公開己方牌堆頂 1 張；若其需求能源等於指定數值，可將該卡加入手牌，並將 1 張手牌除外；若未加入手牌，將公開的卡放回牌堆頂。"}
 ,
 {"id":"BLC-2-061","kind":"shatatsuHandCap","number":"EX07BT/BLC-2-061","name":"娑闥迦羅骸刺絡辻","color":"purple","energy":4,"ap":1,"bp":0,"gen":0,"trigger":"special","type":"event","effect":"可將手牌中最多 3 張具有「零番隊」特徵的卡除外，再使 1 個敵方前線角色退場；BP 上限原為 3000，每以此效果從手牌除外 1 張，上限增加 1000。之後，每以此效果從手牌除外 1 張，抽 1 張。"}
+,
+{"id":"BLC-4-057","kind":"shirafudeLock","number":"EX15BT/BLC-4-057","name":"“真打”『しら筆一文字』","color":"purple","energy":4,"ap":1,"bp":0,"gen":0,"trigger":"special","type":"event","effect":"最多選1個對方前線角色，到自己下次回合開始前賦予「失去所有原有效果，且不能攻擊或阻擋」。若自己的場上或除外區有《兵主部一兵衛》，抽2張牌，再將1張手牌除外。失去印刷效果不會取消突襲狀態，也不會清除已得到的限時效果，但會取消持續參照的原有效果，且原本的離場觸發也不再發動。"}
  ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1434,6 +1436,7 @@ export function checkedBleachAddonDefinition(p){
  const isShutara=p.kind==='shutaraHandScale';
  const isIchibe=p.kind==='ichibeEnergyReveal';
  const isShatatsu=p.kind==='shatatsuHandCap';
+ const isBrush=p.kind==='shirafudeLock';
  const topDiscard={
   'BLC-3-007':{count:3,filter:{field:'trait',value:'護廷十三隊'}},
   'BLC-3-002':{count:3,filters:[
@@ -1467,7 +1470,7 @@ export function checkedBleachAddonDefinition(p){
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest||isOwnCharacterDraw||isPeekAttack||isDrawInstead||isRevealOppTop||isRevealWindow||isEnergyWindow||isMillPurple||isEnergyBounce||isStepOr||isReplayDown||isStepName||isReducedActive||isOutsideName||isZeroIchigo||isDiscardBlock||isEmptyStep||isApActive||isAliasTop||isEntryChoose||isRestFrontName||isFrontFieldDown||isHandOutside||isEnergyAp||isAttackEnd||isDiscardVisored||isRaidHost||isBlockRaid||isRaidOrName||isRestOrDraw||isRestOrRetire||isHandApNamed||isBazzBurn||isKatenActive||isBambiesPer||isKenpachi||isMayuriTrait||isNemPair||isSoulPalace||isKyokotsu||isHakkoken||isYachiru||isLilotto||isBazzChain||isNanaoEvent||isRemovedKeywords||isFrontRemove||isThunderKit||isLille||isGiselle||isCastle||isUryu||isYoruichiSwap||isBazzKit||isIchigoFour||isBambiettaRest||isJugram||isByakuya||isSoiFon||isTech||isYamamoto||isGiselleField||isOrihime||isByakuyaRukia||isRukiaFront||isNemSquad||isMayuriNem||isShutara||isIchibe||isShatatsu;
+ const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest||isOwnCharacterDraw||isPeekAttack||isDrawInstead||isRevealOppTop||isRevealWindow||isEnergyWindow||isMillPurple||isEnergyBounce||isStepOr||isReplayDown||isStepName||isReducedActive||isOutsideName||isZeroIchigo||isDiscardBlock||isEmptyStep||isApActive||isAliasTop||isEntryChoose||isRestFrontName||isFrontFieldDown||isHandOutside||isEnergyAp||isAttackEnd||isDiscardVisored||isRaidHost||isBlockRaid||isRaidOrName||isRestOrDraw||isRestOrRetire||isHandApNamed||isBazzBurn||isKatenActive||isBambiesPer||isKenpachi||isMayuriTrait||isNemPair||isSoulPalace||isKyokotsu||isHakkoken||isYachiru||isLilotto||isBazzChain||isNanaoEvent||isRemovedKeywords||isFrontRemove||isThunderKit||isLille||isGiselle||isCastle||isUryu||isYoruichiSwap||isBazzKit||isIchigoFour||isBambiettaRest||isJugram||isByakuya||isSoiFon||isTech||isYamamoto||isGiselleField||isOrihime||isByakuyaRukia||isRukiaFront||isNemSquad||isMayuriNem||isShutara||isIchibe||isShatatsu||isBrush;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1513,7 +1516,7 @@ export function checkedBleachAddonDefinition(p){
   ...(isMayuriNem?{raidName:'涅 マユリ',mainAbility:{op:'oncePayProgram',oncePerTurn:true,frontOnly:true,raidOnly:false,payAp:0,requiresOwnName:null,requiresOwnCharacterRetired:true,then:[{op:'deployOutsideColorApNameOrTraitRest',color:'blue',ap:1,name:'涅 ネム',trait:'涅骸部隊',optional:false}]}}:{}),
   ...(isShutara?{raidName:'修多羅 千手丸'}:{}),
   ...(isIchibe?{triggerEffect:{op:'deployOutsideCharacter',color:'purple',maxEnergy:2,ap:1,frontOnly:true}}:{}),
-  ...(isShatatsu?{triggerEffect:{op:'retireOppFront'}}:{}),
+  ...(isShatatsu||isBrush?{triggerEffect:{op:'retireOppFront'}}:{}),
   ...(isYoruichiSwap?{energyLineAttackEndSwap:true,triggerEffect:{op:'bounceOppFrontUnderBp',bp:3500},
    passiveBonuses:[{condition:{logic:'any',turn:'own',checks:[
     {kind:'ownNameExists',turn:'own',zone:'field',excludeSelf:false,name:'黒崎 一護'},
@@ -1846,7 +1849,11 @@ export function checkedBleachAddonDefinition(p){
     onAttack:[{op:'nameEnergyRevealHandRemove'}]}:
    isShutara?{onPlay:[{op:'removeHandTraitScaleRetire',trait:'零番隊',baseBp:2500,per:1000}]}:
    isMayuriNem?{onPlay:[{op:'buffNameOrTraitImpact',name:'涅 ネム',trait:'涅骸部隊',bp:1000,impact:1,duration:'turn',upTo:1,optional:true}]}:
-   isRukiaFront?{onPlay:[{op:'restOppFrontApLock',optional:true,line:'front',minPrintedAp:2,lockWhile:'sourceOnFront'}]}:{}})
+   isRukiaFront?{onPlay:[{op:'restOppFrontApLock',optional:true,line:'front',minPrintedAp:2,lockWhile:'sourceOnFront'}]}:
+   isBrush?{onPlay:[
+    {op:'grantPrintedLock',optional:true,until:'nextOwnTurnStart'},
+    {op:'drawRemoveIfName',name:'兵主部 一兵衛',draw:2,zones:['field','removed']}
+   ]}:{}})
  };
 }
 export function bleachV2PortedCards(){

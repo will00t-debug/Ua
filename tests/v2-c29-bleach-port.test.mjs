@@ -9,7 +9,7 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  universalPublicView,universalPrivateChoices,effectiveHandRequiredEnergy} from '../dist/universal-v2/engine.mjs';
 import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
 import {uiActionLabel,V2_PENDING_LABELS} from '../dist/universal-v2/preview-actions.mjs';
-import {grantContinuousState,effectChoiceProtected} from '../dist/universal-v2/continuous-states.mjs';
+import {grantContinuousState,effectChoiceProtected,originalEffectsDisabled,fieldRestrictions} from '../dist/universal-v2/continuous-states.mjs';
 import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v2-integrated-id-manifest.mjs';
 import bleachContribution from '../dist/universal-v2/title-packs/bleach.mjs';
 
@@ -306,9 +306,14 @@ import bleachContribution from '../dist/universal-v2/title-packs/bleach.mjs';
 // BLC-2-061 EX07BT: 紫4 / dash. Up to 3 hand 零番隊 are removed, then one
 //   opposing front retires. The cap starts at 3000 and rises by 1000.
 //   Draw 1 per removed card. SPECIAL is the generic retirement.
+// BLC-4-057 EX15BT: 紫4 / dash. Up to one opposing front character loses
+//   printed effects and cannot attack or block until the controller's next
+//   own start. A this-turn BP modifier already gained stays. If 兵主部 一兵衛
+//   is on the own field or in the removed area, draw 2 and remove 1 hand card.
+//   SPECIAL is the generic retirement.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008','BLC-4-065','BLC-2-051','BLC-1-092','BLC-4-044','BLC-4-016','BLC-4-017','BLC-1-028','BLC-2-002','BLC-4-032','BLC-1-011','BLC-1-104','BLC-1-014','BLC-1-020','BLC-1-050','BLC-1-055','BLC-1-063','BLC-1-093','BLC-2-009','BLC-2-013','BLC-2-030','BLC-2-034','BLC-2-035','BLC-2-038','BLC-2-057','BLC-2-060','BLC-2-061'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008','BLC-4-065','BLC-2-051','BLC-1-092','BLC-4-044','BLC-4-016','BLC-4-017','BLC-1-028','BLC-2-002','BLC-4-032','BLC-1-011','BLC-1-104','BLC-1-014','BLC-1-020','BLC-1-050','BLC-1-055','BLC-1-063','BLC-1-093','BLC-2-009','BLC-2-013','BLC-2-030','BLC-2-034','BLC-2-035','BLC-2-038','BLC-2-057','BLC-2-060','BLC-2-061','BLC-4-057'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -379,12 +384,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers ninety-nine whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,535);
- assert.equal(EXPECTED_V2_COUNTS.bleach,259);
+test('C29 registers one-hundred whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,536);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,260);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,259);
+ assert.equal(Object.keys(bleach.cards).length,260);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -10849,6 +10854,210 @@ test('BLC-2-061 removes up to three hand Zero Squad cards, retires, then draws',
  assert.equal(assertUniversalMatch(paid.packs,raised),true);
  assert.equal(assertUniversalMatch(capped.packs,full),true);
  assert.equal(assertUniversalMatch(color.packs,revealed),true);
+});
+
+test('BLC-4-057 locks printed text, attack, and block until the next own start',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-4-057');
+ assert.equal(printed.number,'EX15BT/BLC-4-057');
+ assert.equal(printed.nameJa,'“真打”『しら筆一文字』');
+ assert.equal(printed.effect,'最多選1個對方前線角色，到自己下次回合開始前賦予「失去所有原有效果，且不能攻擊或阻擋」。若自己的場上或除外區有《兵主部一兵衛》，抽2張牌，再將1張手牌除外。失去印刷效果不會取消突襲狀態，也不會清除已得到的限時效果，但會取消持續參照的原有效果，且原本的離場觸發也不再發動。');
+ assert.deepEqual(printed.traits,[]);
+ assert.equal(printed.trigger,'special');
+ assert.equal(printed.gen,0);
+ assert.equal(printed.type,'event');
+ const card=bleach.cards['BLC-4-057'];
+ assert.equal(card.name,'“真打”『しら筆一文字』');
+ assert.equal(card.gen,0);
+ assert.deepEqual(card.traits,[]);
+ assert.deepEqual(card.triggerEffect,{op:'retireOppFront'});
+ assert.deepEqual(card.effects.onPlay,[
+  {op:'grantPrintedLock',optional:true,until:'nextOwnTurnStart'},
+  {op:'drawRemoveIfName',name:'兵主部 一兵衛',draw:2,zones:['field','removed']}
+ ]);
+ assert.equal(bleach.cards['BLC-2-024'].ownTurnBp,500);
+ assert.deepEqual(bleach.cards['BLC-2-040'].effects.onRetire,[{op:'draw',count:1}]);
+ const bare={id:'BLC-4-057',name:card.name,color:'purple',type:'event',energy:4,ap:1,bp:0,gen:0,
+  traits:[],trigger:'special',triggerEffect:{op:'retireOppFront'},implementation:'dsl'};
+ assert.throws(()=>createUniversalPack({id:'bad-printed-lock',cards:[{
+  ...bare,effects:{onPlay:[{op:'grantPrintedLock',optional:false,until:'nextOwnTurnStart'}]}
+ }]}),/invalid printed lock/);
+ assert.throws(()=>createUniversalPack({id:'bad-named-draw',cards:[{
+  ...bare,effects:{onPlay:[{op:'drawRemoveIfName',name:'兵主部 一兵衛',draw:1,zones:['field','removed']}]}
+ }]}),/invalid named draw removal/);
+ const four=['BLC-2-056','BLC-2-060','BLC-2-040','BLC-2-024','BLC-1-035','BLC-1-046','BLC-4-052','BLC-3-004','BLC-1-042','BLC-1-039','BLC-1-108'];
+ const deck=Object.fromEntries(four.map(id=>[id,4]));
+ deck['BLC-1-041']=2;deck['BLC-4-057']=2;deck['BLC-2-061']=2;
+ assert.deepEqual(validateUniversalDeck(bleach,deck),[]);
+ const hold=(s,p,id)=>{const c=take(s,p,id);s.players[p].hand.push(c);return c;};
+ function fuel(s){for(let i=0;i<4;i++)put(s,0,'BLC-2-056','energy',i);}
+ function dropTrait(s,p,trait){
+  const kept=[],moved=[];
+  for(const c of s.players[p].hand)
+   (cardHasTrait(bleach.cards[c.cardId],trait)?moved:kept).push(c);
+  s.players[p].hand=kept;s.players[p].deck.push(...moved);
+ }
+ function march(packs,s,player,phase,own){
+  for(let n=0;n<80&&!(s.active===player&&s.phase===phase&&s.players[0].ownTurns===own);n++){
+   if(s.pending?.kind==='end-hand-limit'){
+    const drop=legalUniversalActions(packs,s).find(a=>a.type==='chooseHandLimit');
+    s=dispatchUniversalAction(packs,s,drop);continue;
+   }
+   if(s.pending?.kind==='life-trigger'){
+    s=dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'skip'},{actor:s.pending.player});continue;
+   }
+   if(s.pending?.kind==='block'){
+    s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:null});continue;
+   }
+   const step=legalUniversalActions(packs,s).find(a=>a.type==='next');
+   assert.ok(step,JSON.stringify(s.pending));
+   s=dispatchUniversalAction(packs,s,step);
+  }
+  assert.equal(s.active,player);
+  assert.equal(s.phase,phase);
+  assert.equal(s.players[0].ownTurns,own);
+  return s;
+ }
+ const board=main(deck,29881);
+ fuel(board.s);
+ const yoruichi=put(board.s,1,'BLC-2-024','front',0,true);
+ const sidelined=put(board.s,1,'BLC-1-046','energy',0,true);
+ const room=put(board.s,1,'BLC-1-108','energy',1,true);
+ const quiet=take(board.s,1,'BLC-1-035');
+ board.s.players[1].life.unshift(quiet);
+ const attacker=put(board.s,0,'BLC-1-035','front',0,true);
+ const event=hold(board.s,0,'BLC-4-057');
+ assert.equal(universalEnergyByColor(board.packs,board.s,0).purple,4);
+ assert.equal(legalUniversalActions(board.packs,board.s).some(a=>a.type==='event'&&a.uid===event.uid),true);
+ const handAtPlay=board.s.players[0].hand.length;
+ let opened=dispatchUniversalAction(board.packs,board.s,{type:'event',uid:event.uid});
+ assert.equal(opened.players[0].outside.some(c=>c.uid===event.uid),true);
+ assert.equal(opened.pending.kind,'effect-printed-lock');
+ assert.equal(opened.pending.optional,true);
+ assert.equal(opened.pending.sourceName,'“真打”『しら筆一文字』');
+ assert.equal(V2_PENDING_LABELS[opened.pending.kind],'可選 1 個對方前線角色，到自己下次回合開始前失去原有效果且不能攻擊或阻擋');
+ assert.deepEqual(opened.pending.choices.map(c=>c.uid),[yoruichi.uid]);
+ assert.equal(opened.pending.choices.some(c=>c.uid===sidelined.uid),false);
+ assert.equal(opened.pending.choices.some(c=>c.uid===room.uid),false);
+ assert.equal(legalUniversalActions(board.packs,opened).some(a=>a.type==='choosePrintedLock'&&a.uid===null),true);
+ assert.equal(legalUniversalActions(board.packs,opened).some(a=>a.type==='choosePrintedLock'&&a.uid===yoruichi.uid),true);
+ assert.equal(universalPrivateChoices(board.packs,opened,0),null);
+ assert.equal(universalPrivateChoices(board.packs,opened,1),null);
+ aiOk(board.packs,opened);
+ assert.throws(()=>dispatchUniversalAction(board.packs,opened,{type:'choosePrintedLock',uid:sidelined.uid}),/not currently legal/);
+ const declined=dispatchUniversalAction(board.packs,structuredClone(opened),{type:'choosePrintedLock',uid:null});
+ assert.equal(declined.pending,null);
+ assert.equal(declined.continuousStates.length,0);
+ assert.equal(declined.players[0].hand.length,handAtPlay-1);
+ let locked=dispatchUniversalAction(board.packs,opened,{type:'choosePrintedLock',uid:yoruichi.uid});
+ assert.equal(locked.pending,null);
+ assert.equal(locked.players[0].hand.length,handAtPlay-1);
+ const body=locked.players[1].front.find(c=>c.uid===yoruichi.uid);
+ assert.equal(originalEffectsDisabled(locked,body),true);
+ assert.deepEqual(fieldRestrictions(locked,1,body).map(r=>r.kind).sort(),
+  ['cannotAttack','cannotBlock','originalEffectsDisabled']);
+ for(const state of locked.continuousStates)
+  assert.deepEqual(state.until,{player:0,phase:'start',edge:'start'});
+ assert.equal(universalBp(board.packs,locked,body),3500);
+ body.buffs.push({bp:1000,untilTurn:locked.turn});
+ assert.equal(universalBp(board.packs,locked,body),4500);
+ locked=dispatchUniversalAction(board.packs,locked,{type:'next'});
+ assert.equal(locked.phase,'attack');
+ let fought=dispatchUniversalAction(board.packs,locked,{type:'attack',uid:attacker.uid});
+ assert.equal(fought.pending.kind,'block');
+ const blocks=legalUniversalActions(board.packs,fought);
+ assert.equal(blocks.some(a=>a.type==='chooseBlock'&&a.uid===yoruichi.uid),false);
+ assert.equal(blocks.some(a=>a.type==='chooseBlock'&&a.uid===null),true);
+ fought=dispatchUniversalAction(board.packs,fought,{type:'chooseBlock',uid:null});
+ assert.equal(fought.pending,null);
+ let hers=march(board.packs,fought,1,'attack',1);
+ const silenced=hers.players[1].front.find(c=>c.uid===yoruichi.uid);
+ assert.equal(universalBp(board.packs,hers,silenced),3500);
+ assert.equal(legalUniversalActions(board.packs,hers).some(a=>a.type==='attack'&&a.uid===yoruichi.uid),false);
+ const openedAgain=march(board.packs,hers,0,'start',2);
+ assert.equal(openedAgain.continuousStates.some(e=>e.targetUid===yoruichi.uid),false);
+ let restored=march(board.packs,openedAgain,1,'attack',2);
+ const free=restored.players[1].front.find(c=>c.uid===yoruichi.uid);
+ assert.equal(universalBp(board.packs,restored,free),4000);
+ assert.equal(legalUniversalActions(board.packs,restored).some(a=>a.type==='attack'&&a.uid===yoruichi.uid),true);
+ const named=main(deck,29882);
+ for(let i=0;i<3;i++)put(named.s,0,'BLC-2-056','energy',i);
+ const ichibe=put(named.s,0,'BLC-2-060','energy',3);
+ grantContinuousState(named.s,{kind:'originalEffectsDisabled',controller:0,
+  sourceUid:ichibe.uid,targetUid:ichibe.uid,sourceLinked:false,
+  until:{player:0,phase:'attack',edge:'end'}});
+ assert.equal(originalEffectsDisabled(named.s,ichibe),true);
+ const front=put(named.s,1,'BLC-1-046','front',0,true);
+ const brush=hold(named.s,0,'BLC-4-057');
+ const namedHand=named.s.players[0].hand.length;
+ let asked=dispatchUniversalAction(named.packs,named.s,{type:'event',uid:brush.uid});
+ assert.equal(asked.pending.kind,'effect-printed-lock');
+ asked=dispatchUniversalAction(named.packs,asked,{type:'choosePrintedLock',uid:null});
+ assert.equal(asked.pending.kind,'effect-name-hand-remove');
+ assert.equal(asked.pending.name,'兵主部 一兵衛');
+ assert.equal(asked.pending.draw,2);
+ assert.equal(V2_PENDING_LABELS[asked.pending.kind],'將 1 張手牌除外');
+ assert.equal(asked.players[0].hand.length,namedHand-1+2);
+ assert.equal(legalUniversalActions(named.packs,asked).some(a=>a.uid===null),false);
+ assert.equal(universalPrivateChoices(named.packs,asked,1),null);
+ assert.equal(universalPrivateChoices(named.packs,asked,0).options.length,asked.players[0].hand.length);
+ aiOk(named.packs,asked);
+ assert.throws(()=>dispatchUniversalAction(named.packs,asked,{type:'chooseNameHandRemove',uid:null}),/not currently legal/);
+ const removedHand=asked.players[0].hand[0];
+ let removed=dispatchUniversalAction(named.packs,asked,{type:'chooseNameHandRemove',uid:removedHand.uid});
+ assert.equal(removed.pending,null);
+ assert.equal(removed.players[0].hand.length,namedHand-1+1);
+ assert.equal(removed.players[0].removed.some(c=>c.uid===removedHand.uid),true);
+ assert.equal(removed.players[1].front.some(c=>c?.uid===front.uid),true);
+ const stored=main(deck,29883);
+ fuel(stored.s);
+ const buried=take(stored.s,0,'BLC-2-060');
+ stored.s.players[0].removed.push(buried);
+ const spell=hold(stored.s,0,'BLC-4-057');
+ const storedHand=stored.s.players[0].hand.length;
+ let drawn=dispatchUniversalAction(stored.packs,stored.s,{type:'event',uid:spell.uid});
+ assert.equal(drawn.pending.kind,'effect-name-hand-remove');
+ assert.equal(drawn.players[0].hand.length,storedHand-1+2);
+ const absent=main(deck,29884);
+ fuel(absent.s);
+ const parked=take(absent.s,0,'BLC-2-060');
+ absent.s.players[0].outside.push(parked);
+ const quietEvent=hold(absent.s,0,'BLC-4-057');
+ const absentHand=absent.s.players[0].hand.length;
+ let skipped=dispatchUniversalAction(absent.packs,absent.s,{type:'event',uid:quietEvent.uid});
+ assert.equal(skipped.pending,null);
+ assert.equal(skipped.players[0].hand.length,absentHand-1);
+ assert.equal(skipped.players[0].removed.some(c=>c.cardId==='BLC-2-060'),false);
+ const leave=main(deck,29885);
+ fuel(leave.s);
+ const witch=put(leave.s,1,'BLC-2-040','front',0,true);
+ dropTrait(leave.s,0,'零番隊');
+ const closer=hold(leave.s,0,'BLC-4-057');
+ let sealed=dispatchUniversalAction(leave.packs,leave.s,{type:'event',uid:closer.uid});
+ assert.equal(sealed.pending.kind,'effect-printed-lock');
+ sealed=dispatchUniversalAction(leave.packs,sealed,{type:'choosePrintedLock',uid:witch.uid});
+ assert.equal(sealed.pending,null);
+ const ownerHand=sealed.players[1].hand.length;
+ sealed.players[0].apCards[0].ready=true;
+ dropTrait(sealed,0,'零番隊');
+ const actorHand=sealed.players[0].hand.length;
+ const finisher=hold(sealed,0,'BLC-2-061');
+ let cut=dispatchUniversalAction(leave.packs,sealed,{type:'event',uid:finisher.uid});
+ assert.equal(cut.pending.kind,'effect-retire-bp');
+ assert.equal(cut.pending.limit,3000);
+ assert.equal(cut.pending.choices.includes(witch.uid),true);
+ cut=dispatchUniversalAction(leave.packs,cut,{type:'chooseRetireBp',uid:witch.uid});
+ assert.equal(cut.pending,null);
+ assert.equal(cut.players[1].front.some(c=>c?.uid===witch.uid),false);
+ assert.equal(cut.players[1].outside.some(c=>c.uid===witch.uid),true);
+ assert.equal(cut.players[1].hand.length,ownerHand);
+ assert.equal(cut.players[0].hand.length,actorHand);
+ assert.equal(assertUniversalMatch(board.packs,fought),true);
+ assert.equal(assertUniversalMatch(board.packs,hers),true);
+ assert.equal(assertUniversalMatch(board.packs,restored),true);
+ assert.equal(assertUniversalMatch(named.packs,removed),true);
+ assert.equal(assertUniversalMatch(stored.packs,drawn),true);
+ assert.equal(assertUniversalMatch(absent.packs,skipped),true);
+ assert.equal(assertUniversalMatch(leave.packs,cut),true);
 });
 
 function locationLine(s,uid){

@@ -31,7 +31,7 @@ export function stampFieldInstance(s,c){
  return c.fieldEntryStamp;
 }
 export function grantContinuousState(s,{kind,controller,sourceUid,targetUid,until=null,sourceLinked=false,program=null,optional=false,selectionScope=null,releaseBeforeRefresh=false,whileSourceFront=false}){
- if(!['skipNextActive','cannotActive','cannotAttack','selectionApTax','frontEnergyPermission','originalEffectsDisabled','grantedOnAttack','cannotBeChosenByOppEffect'].includes(kind)||!player(controller)||
+ if(!['skipNextActive','cannotActive','cannotAttack','cannotBlock','selectionApTax','frontEnergyPermission','originalEffectsDisabled','grantedOnAttack','cannotBeChosenByOppEffect'].includes(kind)||!player(controller)||
   typeof sourceUid!=='string'||typeof targetUid!=='string'||typeof sourceLinked!=='boolean')
   throw Error('Invalid continuous-state descriptor');
  const target=fieldInstance(s,targetUid),source=fieldInstance(s,sourceUid);
@@ -64,7 +64,7 @@ export function grantContinuousState(s,{kind,controller,sourceUid,targetUid,unti
   Object.keys(until).length!==3))
   throw Error('FRONT energy permission requires own live target and current turn end');
  // Only the controller's next own START may expire a temporary attack ban.
- if(kind==='cannotAttack'&&(sourceLinked||until?.player!==controller||
+ if((kind==='cannotAttack'||kind==='cannotBlock')&&(sourceLinked||until?.player!==controller||
   until?.phase!=='start'||until?.edge!=='start'))
   throw Error('Attack ban must expire on granting controller next own start');
  if(releaseBeforeRefresh!==false&&(releaseBeforeRefresh!==true||kind!=='cannotActive'||sourceLinked))
@@ -75,7 +75,7 @@ export function grantContinuousState(s,{kind,controller,sourceUid,targetUid,unti
   !sourceLinked||until!==null||releaseBeforeRefresh!==false||
   !s.players[controller].front.some(c=>c?.uid===sourceUid)))
   throw Error('Front-linked active lock needs its source on the front and no phase expiry');
- if(!(kind==='cannotActive'&&whileSourceFront)&&['cannotActive','cannotAttack','selectionApTax','frontEnergyPermission','originalEffectsDisabled','grantedOnAttack','cannotBeChosenByOppEffect'].includes(kind)&&(!until||!player(until.player)||
+ if(!(kind==='cannotActive'&&whileSourceFront)&&['cannotActive','cannotAttack','cannotBlock','selectionApTax','frontEnergyPermission','originalEffectsDisabled','grantedOnAttack','cannotBeChosenByOppEffect'].includes(kind)&&(!until||!player(until.player)||
   !['start','move','main','attack'].includes(until.phase)||!['start','end'].includes(until.edge)||
   Object.keys(until).some(k=>!['player','phase','edge',...(kind==='selectionApTax'?['ownTurn']:[])].includes(k))))
   throw Error('Invalid status expiration phase');
@@ -183,12 +183,12 @@ export function validateContinuousStates(s){
  if(!Array.isArray(s.continuousStates)||!Number.isInteger(s.nextContinuousStateId)||
   s.nextContinuousStateId<1||new Set(s.continuousStates.map(e=>e.id)).size!==s.continuousStates.length||
   s.continuousStates.some(e=>e.kind===DISCOUNT_KIND ? !validateHandDiscount(s,e) : !Number.isInteger(e.id)||e.id<1||
-   !['skipNextActive','cannotActive','cannotAttack','selectionApTax','frontEnergyPermission','originalEffectsDisabled','grantedOnAttack','cannotBeChosenByOppEffect'].includes(e.kind)||!player(e.controller)||
+   !['skipNextActive','cannotActive','cannotAttack','cannotBlock','selectionApTax','frontEnergyPermission','originalEffectsDisabled','grantedOnAttack','cannotBeChosenByOppEffect'].includes(e.kind)||!player(e.controller)||
    !player(e.targetOwner)||typeof e.sourceUid!=='string'||typeof e.targetUid!=='string'||
    !Number.isInteger(e.targetStamp)||e.targetStamp<1||typeof e.consumed!=='boolean'||
    typeof e.sourceLinked!=='boolean'||(e.sourceLinked&&(!Number.isInteger(e.sourceStamp)||e.sourceStamp<1))||
    (e.kind==='skipNextActive'&&e.until!==null)||
-   (e.kind==='cannotAttack'&&(e.sourceLinked||e.until?.player!==e.controller||
+   ((e.kind==='cannotAttack'||e.kind==='cannotBlock')&&(e.sourceLinked||e.until?.player!==e.controller||
     e.until?.phase!=='start'||e.until?.edge!=='start'))||
    (e.kind==='frontEnergyPermission'&&(e.sourceLinked||e.targetOwner!==e.controller||
     e.sourceStamp!==null||e.until?.phase!=='attack'||e.until?.edge!=='end'||
@@ -220,7 +220,7 @@ export function validateContinuousStates(s){
     e.sourceLinked&&e.until===null&&e.releaseBeforeRefresh===undefined&&
     s.players[e.controller].front.some(c=>c?.uid===e.sourceUid&&c.fieldEntryStamp===e.sourceStamp)))||
    (e.releaseBeforeRefresh!==undefined&&(e.kind!=='cannotActive'||e.releaseBeforeRefresh!==true||e.sourceLinked))||
-   (e.whileSourceFront!==true&&['cannotActive','cannotAttack','selectionApTax','frontEnergyPermission','originalEffectsDisabled','grantedOnAttack','cannotBeChosenByOppEffect'].includes(e.kind)&&(!e.until||!player(e.until.player)||
+   (e.whileSourceFront!==true&&['cannotActive','cannotAttack','cannotBlock','selectionApTax','frontEnergyPermission','originalEffectsDisabled','grantedOnAttack','cannotBeChosenByOppEffect'].includes(e.kind)&&(!e.until||!player(e.until.player)||
     !['start','move','main','attack'].includes(e.until.phase)||!['start','end'].includes(e.until.edge)))))
   throw Error('Invalid continuous-state accounting');
  return true;

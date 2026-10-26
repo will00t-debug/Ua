@@ -47,8 +47,9 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   return difficulty==='easy'?legal[0]:legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-grant-ap-tax')
   return difficulty==='easy'?legal[0]:legal.find(a=>a.uid!==null)||legal[0];
- if(s.pending?.kind==='effect-attack-ban')
+ if(s.pending?.kind==='effect-attack-ban'||s.pending?.kind==='effect-printed-lock')
   return difficulty==='easy'?legal[0]:legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-name-hand-remove')return legal[0];
  if(s.pending?.kind==='effect-discard')
   return legal.find(a=>a.type==='chooseDiscard')||legal[0];
  if(s.pending?.kind==='effect-remove-hand-scale')

@@ -67,7 +67,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-top-trait-hand':'查看牌頂，符合特徵可加入手牌，否則放回牌頂或場外',
  'effect-active-any':'可將 1 張己方場上卡改為 ACTIVE',
  'effect-grant-front-energy':'讓另一張己方前線指定特徵角色本回合也能產生能源',
- 'effect-rest-bp':'選擇敵方 REST','effect-grant-ap-tax':'讓另一張己方 DFN 角色獲得指定時的 AP 加價保護','effect-attack-ban':'指定禁止攻擊的對手前線角色',
+ 'effect-rest-bp':'選擇敵方 REST','effect-grant-ap-tax':'讓另一張己方 DFN 角色獲得指定時的 AP 加價保護','effect-attack-ban':'指定禁止攻擊的對手前線角色','effect-printed-lock':'可選 1 個對方前線角色，到自己下次回合開始前失去原有效果且不能攻擊或阻擋','effect-name-hand-remove':'將 1 張手牌除外',
  'effect-buff-trait':'選擇己方 BP 加成',
  'main-two-buff':'主要能力選擇 BP 對象',
  'main-discard-buff':'支付一張手牌，讓自身 BP 增加',
