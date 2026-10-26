@@ -127,9 +127,12 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 // BLC-2-028 EX07BT: Impact null. On play may discard one, then may ACTIVE
 //   one own AP. [ターン1] sets this physical card ACTIVE only while another
 //   own front character has printed AP 2+. Q1036 (2024-07-19). Generated 青.
+// BLC-4-043 EX15BT: also 〈涅 ネム〉. On play look at the top 2 and may put
+//   one blue 〈涅 マユリ〉, 〈涅 ネム〉, or 涅骸部隊 card outside. Rest return
+//   to the top. Official iframe 2026-10-26. Required 青-. Generated 青.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -200,12 +203,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers forty-seven whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,483);
- assert.equal(EXPECTED_V2_COUNTS.bleach,207);
+test('C29 registers forty-eight whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,484);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,208);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,207);
+ assert.equal(Object.keys(bleach.cards).length,208);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -3675,4 +3678,57 @@ test('BLC-2-028 may discard into an AP active and actives once per card',()=>{
  assert.equal(assertUniversalMatch(played.packs,paid),true);
  assert.equal(assertUniversalMatch(gated.packs,stood),true);
  assert.equal(assertUniversalMatch(fight.packs,battle),true);
+});
+
+test('BLC-4-043 is also Nem and may put one blue squad card outside',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-4-043');
+ assert.equal(printed.effect,'此卡也視為《涅音夢》。登場時：查看牌庫頂2張，可將最多1張藍色《涅繭利》、《涅音夢》或具有「涅骸部隊」特徵的卡送至場外，其餘依任意順序放回牌庫頂。');
+ assert.deepEqual(printed.traits,['護廷十三隊']);
+ const card=bleach.cards['BLC-4-043'];
+ assert.deepEqual(card.nameAliases,['涅 ネム']);
+ assert.equal(card.energy,0);
+ assert.equal(card.gen,1);
+ assert.equal(card.trigger,'draw');
+ assert.equal(cardHasName(card,'涅 ネム'),true);
+ const ids=['BLC-4-043','BLC-4-040','BLC-2-044','BLC-1-054','BLC-2-031','BLC-2-016','BLC-2-015','BLC-2-026','BLC-2-019','BLC-2-032','BLC-4-022','BLC-2-018','BLC-4-036'];
+ const deck=Object.fromEntries(ids.map((id,i)=>[id,i===ids.length-1?2:4]));
+ assert.deepEqual(validateUniversalDeck(bleach,deck),[]);
+ const packs=[bleach,bleach];
+ const playTop=(seed,topIds)=>{
+  let s=newUniversalMatch(packs,{decks:[deck,deck],seed,first:0});
+  for(let n=0;n<8&&s.phase!=='main';n++)s=dispatchUniversalAction(packs,s,{type:'next'});
+  s.players[0].apCards[0].inPlay=true;s.players[0].apCards[0].ready=true;
+  const actor=take(s,0,'BLC-4-043');
+  const tops=setTop(s,0,topIds);
+  s.players[0].hand.push(actor);
+  const played=dispatchUniversalAction(packs,s,{type:'play',uid:actor.uid,line:'front',slot:0});
+  return {played,tops};
+ };
+ const miss=playTop(30143,['BLC-1-054','BLC-2-031']);
+ assert.equal(miss.played.pending.kind,'effect-top-order');
+ assert.equal(miss.played.players[0].outside.some(c=>miss.tops.some(t=>t.uid===c.uid)),false);
+ const named=playTop(30144,['BLC-4-040','BLC-2-031']);
+ assert.equal(named.played.pending.kind,'effect-top-trait-outside');
+ const namedChoices=legalUniversalActions(packs,named.played).filter(a=>a.type==='chooseTopTraitOutside').map(a=>a.uid);
+ assert.equal(namedChoices.includes(named.tops[0].uid),true);
+ assert.equal(namedChoices.includes(named.tops[1].uid),false);
+ assert.equal(namedChoices.includes(null),true);
+ let kept=dispatchUniversalAction(packs,named.played,{type:'chooseTopTraitOutside',uid:named.tops[0].uid});
+ assert.equal(kept.players[0].outside.some(c=>c.uid===named.tops[0].uid),true);
+ kept=dispatchUniversalAction(packs,kept,legalUniversalActions(packs,kept).find(a=>a.type==='chooseTopOrder'));
+ assert.equal(kept.players[0].deck[0].uid,named.tops[1].uid);
+ const traited=playTop(30145,['BLC-2-044','BLC-1-054']);
+ const traitChoices=legalUniversalActions(packs,traited.played).filter(a=>a.type==='chooseTopTraitOutside').map(a=>a.uid);
+ assert.equal(traitChoices.includes(traited.tops[0].uid),true);
+ assert.equal(traitChoices.includes(traited.tops[1].uid),false);
+ const alias=playTop(30146,['BLC-4-043','BLC-2-031']);
+ const aliasChoices=legalUniversalActions(packs,alias.played).filter(a=>a.type==='chooseTopTraitOutside').map(a=>a.uid);
+ assert.equal(aliasChoices.includes(alias.tops[0].uid),true);
+ let skipped=dispatchUniversalAction(packs,alias.played,{type:'chooseTopTraitOutside',uid:null});
+ assert.equal(skipped.players[0].outside.some(c=>c.uid===alias.tops[0].uid),false);
+ assert.equal(skipped.pending.kind,'effect-top-order');
+ aiOk(packs,named.played);
+ assert.equal(assertUniversalMatch(packs,kept),true);
+ assert.equal(assertUniversalMatch(packs,traited.played),true);
+ assert.equal(assertUniversalMatch(packs,skipped),true);
 });
