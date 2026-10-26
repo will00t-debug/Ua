@@ -77,6 +77,12 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   return s.players[owner].life.length<=condition.max;
  if(condition.kind==='ownHandCountAtLeast')
   return s.players[owner].hand.length>=condition.min;
+ // 「このキャラはBP+…」while the physical card is a visible own field card.
+ // Hand, outside, and a buried Raid layer do not receive the bonus.
+ if(condition.kind==='selfOnField'){
+  const area=s.players[owner];
+  return area.front.some(c=>c?.uid===sourceUid)||area.energy.some(c=>c?.uid===sourceUid);
+ }
  if(condition.kind==='outsideCount')
   return s.players[owner].outside.length>=condition.min;
  if(condition.kind==='ownRestPrintedBpCount')

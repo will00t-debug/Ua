@@ -47,6 +47,11 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-attack-aid-grant':'選擇本次攻擊的協助對象',
  'effect-tuck-damage':'將牌庫頂裏向放在指定角色下並使傷害+1',
  'effect-active-own-trait':'選擇己方指定特徵角色轉為 ACTIVE',
+ 'effect-tuck-hand-under':'抽牌後將1張手牌裏向放在此角色下方',
+ 'effect-chain-raid-facedown':'可支付裏向卡，準備再次 Raid',
+ 'effect-chain-raid-hand':'可從手牌再 Raid 於原底板',
+ 'effect-chain-discard':'支付1AP後將1張手牌送場外',
+ 'effect-outside-named-raid':'可從場外 Raid 符合條件的角色',
  'effect-target':'指定角色','effect-target-many':'最多選擇兩名不同敵方角色','raid-effect-order':'突襲能力結算順序',
  'effect-move-order':'選擇同時取得的移動觸發處理順序',
  'effect-rest-tuck':'是否 REST 角色，放置剛送至場外的手牌',
@@ -203,6 +208,11 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseAttackAidGrant':return action.uid===null?'不指定本次攻擊的協助對象':'協助 '+name();
   case 'chooseTuckDamage':return '將牌庫頂裏向放在 '+name()+' 下方';
   case 'chooseActiveOwnTrait':return action.uid===null?'不將角色轉為 ACTIVE':'將 '+name()+' 轉為 ACTIVE';
+  case 'chooseTuckHand':return '將 '+name()+' 裏向放在此角色下方';
+  case 'chooseChainFacedown':return action.uid===null?'不支付裏向卡':'支付裏向卡 '+name();
+  case 'chooseChainRaid':return action.uid===null?'只送走頂卡，不再 Raid':'從手牌再 Raid '+name();
+  case 'chooseChainDiscard':return '將 '+name()+' 送場外';
+  case 'chooseOutsideRaid':return action.uid===null?'不從場外 Raid':'從場外 Raid '+name()+suffix();
   case 'chooseGrantedDraw':return action.mode==='draw'?'使用獲得的攻擊時抽 1 張':'不抽牌';
   case 'chooseTarget':
    return action.uid===null?'不指定／完成':'指定 '+name();
