@@ -230,9 +230,13 @@ import bleachContribution from '../dist/universal-v2/title-packs/bleach.mjs';
 //   this turn gains Impact 1 and sniper until that attack ends.
 // BLC-4-016 EX15BT: 黄黄+. The plus is extra yellow after an entry-turn
 //   sacrifice, lasting until the next own turn start.
+// BLC-4-017 EX15BT: on play, draw 1 then put one hand card outside.
+//   [起動メイン] rests this character and retires it, then one other own
+//   殭屍 gains 2回アタック. Q79 (2023-03-17). Q2308 (2026-09-04): the
+//   activate is shared by the name. Catalogue gen 3 normalizes to 黄黄.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008','BLC-4-065','BLC-2-051','BLC-1-092','BLC-4-044','BLC-4-016'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008','BLC-4-065','BLC-2-051','BLC-1-092','BLC-4-044','BLC-4-016','BLC-4-017'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -303,12 +307,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers seventy-eight whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,514);
- assert.equal(EXPECTED_V2_COUNTS.bleach,238);
+test('C29 registers seventy-nine whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,515);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,239);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,238);
+ assert.equal(Object.keys(bleach.cards).length,239);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -7488,6 +7492,130 @@ test('BLC-4-016 sacrifices another character on its entry turn, then generates y
  assert.equal(assertUniversalMatch(first.packs,cut),true);
  assert.equal(assertUniversalMatch(first.packs,later),true);
  assert.equal(assertUniversalMatch(solo.packs,solo.s),true);
+});
+
+test('BLC-4-017 draws on entry, then rests and retires to grant one zombie a double attack',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-4-017');
+ assert.equal(printed.number,'EX15BT/BLC-4-017');
+ assert.equal(printed.nameJa,'ジゼル・ジュエル');
+ assert.equal(printed.effect,'登場時：抽1張牌，再將1張手牌送至場外。啟動・主要〔將此角色改為Rest，並使此卡退場〕：選自己場上1個具有「殭屍」特徵的角色，本回合賦予「2次攻擊」（本回合首次攻擊時將該角色改為Active）。所有《吉賽爾・朱艾兒》的此效果合計每回合僅限1次。');
+ assert.equal(printed.trigger,'active');
+ assert.equal(printed.gen,3);
+ assert.deepEqual(printed.traits,['星十字騎士團','邦比小隊']);
+ const card=bleach.cards['BLC-4-017'];
+ assert.equal(card.gen,2);
+ assert.equal(card.triggerEffect,null);
+ assert.deepEqual(card.traits,['星十字騎士團','邦比小隊']);
+ assert.deepEqual(card.effects.onPlay,[{op:'drawDiscard',count:1,discardCount:1}]);
+ assert.deepEqual(card.mainAbility,{op:'nameOnceRestRetireDouble',scope:'name',trait:'殭屍'});
+ assert.equal(cardHasTrait(card,'殭屍'),false);
+ assert.equal(cardHasTrait(bleach.cards['BLC-2-005'],'殭屍'),true);
+ assert.equal(cardHasTrait(bleach.cards['BLC-2-006'],'殭屍'),true);
+ const entry=bleachContribution.entries.find(x=>x.id==='BLC-4-017');
+ assert.equal(entry.sourceRecord.gen,2);
+ assert.equal(entry.sourceRecord.legacyImportedGen,3);
+ assert.equal(entry.definition.gen,2);
+ const bare={id:'BAD',name:'BAD',color:'yellow',type:'character',energy:3,ap:1,bp:2500,gen:2,traits:['星十字騎士團'],trigger:'active',implementation:'dsl',effects:{onPlay:[{op:'drawDiscard',count:1,discardCount:1}]},mainAbility:{op:'nameOnceRestRetireDouble',scope:'name',trait:'護廷十三隊'}};
+ assert.throws(()=>createUniversalPack({id:'bad-giselle',cards:[bare]}),/unsupported main action ability/);
+ const deck=realDeck(['BLC-4-017','BLC-2-005','BLC-2-006','BLC-1-016','BLC-1-018','BLC-1-006','BLC-1-002'],'yellow');
+ const quietLife=Object.keys(deck).find(id=>!bleach.cards[id].trigger);
+ const empty=main(deck,29018);
+ const lonely=put(empty.s,0,'BLC-4-017','energy',0,true);
+ assert.equal(legalUniversalActions(empty.packs,empty.s).some(a=>a.type==='activate'&&a.mode==='nameOnceRestRetire'),false);
+ const rested=main(deck,29019);
+ const down=put(rested.s,0,'BLC-4-017','energy',0,false);
+ put(rested.s,0,'BLC-2-005','front',0,true);
+ assert.equal(legalUniversalActions(rested.packs,rested.s).some(a=>a.type==='activate'&&a.uid===down.uid),false);
+ const muted=main(deck,29020);
+ const hushed=put(muted.s,0,'BLC-4-017','energy',0,true);
+ const mutedZombie=put(muted.s,0,'BLC-2-005','front',0,true);
+ grantContinuousState(muted.s,{kind:'originalEffectsDisabled',controller:1,
+  sourceUid:mutedZombie.uid,targetUid:hushed.uid,sourceLinked:false,
+  until:{player:0,phase:'attack',edge:'end'}});
+ assert.equal(legalUniversalActions(muted.packs,muted.s).some(a=>a.type==='activate'&&a.mode==='nameOnceRestRetire'),false);
+ const paid=main(deck,29021);
+ put(paid.s,0,'BLC-1-016','energy',0);
+ put(paid.s,0,'BLC-1-018','energy',1);
+ put(paid.s,0,'BLC-1-006','energy',2);
+ const giselle=take(paid.s,0,'BLC-4-017');
+ const handBefore=paid.s.players[0].hand.length;
+ paid.s.players[0].hand.push(giselle);
+ const play=legalUniversalActions(paid.packs,paid.s).find(a=>a.type==='play'&&a.uid===giselle.uid&&a.line==='energy');
+ assert.ok(play);
+ let entered=dispatchUniversalAction(paid.packs,paid.s,play);
+ assert.equal(entered.pending.kind,'effect-discard');
+ assert.equal(entered.players[0].hand.length,handBefore+1);
+ assert.equal(entered.players[0].energy.find(c=>c?.uid===giselle.uid).ready,false);
+ const discard=legalUniversalActions(paid.packs,entered).find(a=>a.type==='chooseDiscard');
+ assert.ok(discard);
+ entered=dispatchUniversalAction(paid.packs,entered,discard);
+ assert.equal(entered.pending,null);
+ assert.equal(entered.players[0].hand.length,handBefore);
+ assert.equal(entered.players[0].energy.find(c=>c?.uid===giselle.uid).ready,false);
+ assert.equal(legalUniversalActions(paid.packs,entered).some(a=>a.type==='activate'&&a.uid===giselle.uid&&a.mode==='nameOnceRestRetire'),false);
+ const first=main(deck,29022);
+ const body=put(first.s,0,'BLC-4-017','energy',0,true);
+ const zombie=put(first.s,0,'BLC-2-005','front',0,true);
+ const other=put(first.s,0,'BLC-1-002','front',1,true);
+ const act=legalUniversalActions(first.packs,first.s).find(a=>a.type==='activate'&&a.uid===body.uid&&a.mode==='nameOnceRestRetire');
+ assert.ok(act);
+ aiOk(first.packs,first.s);
+ let used=dispatchUniversalAction(first.packs,first.s,act);
+ assert.equal(used.pending.kind,'effect-named-double');
+ assert.equal(V2_PENDING_LABELS[used.pending.kind],'選 1 個具有指定特徵的角色，本回合獲得 2 次攻擊');
+ const choices=legalUniversalActions(first.packs,used);
+ assert.equal(choices.some(a=>a.type==='chooseNamedDouble'&&a.uid===zombie.uid),true);
+ assert.equal(choices.some(a=>a.uid===other.uid),false);
+ assert.equal(choices.some(a=>a.uid===body.uid),false);
+ assert.equal(choices.some(a=>a.uid===null),false);
+ assert.throws(()=>dispatchUniversalAction(first.packs,used,{type:'chooseNamedDouble',uid:null}),/not currently legal/);
+ assert.throws(()=>dispatchUniversalAction(first.packs,used,{type:'chooseNamedDouble',uid:other.uid}),/not currently legal/);
+ aiOk(first.packs,used);
+ used=dispatchUniversalAction(first.packs,used,{type:'chooseNamedDouble',uid:zombie.uid});
+ assert.equal(used.pending,null);
+ assert.equal(used.players[0].outside.some(c=>c.uid===body.uid),true);
+ const granted=live(used,0,zombie.uid);
+ assert.equal(granted.ready,true);
+ assert.deepEqual(Object.keys(granted.readyOnAttackGranted).sort(),['sourceUid','stamp','turn']);
+ assert.equal(granted.readyOnAttackGranted.sourceUid,body.uid);
+ assert.equal(granted.readyOnAttackGranted.turn,used.turn);
+ const copy=put(used,0,'BLC-4-017','front',2,true);
+ assert.equal(legalUniversalActions(first.packs,used).some(a=>a.type==='activate'&&a.uid===copy.uid&&a.mode==='nameOnceRestRetire'),false);
+ grantContinuousState(used,{kind:'originalEffectsDisabled',controller:1,
+  sourceUid:other.uid,targetUid:zombie.uid,sourceLinked:false,
+  until:{player:0,phase:'attack',edge:'end'}});
+ const quiet=take(used,1,quietLife);
+ used.players[1].life.unshift(quiet);
+ for(let n=0;n<6&&used.phase!=='attack';n++)
+  used=dispatchUniversalAction(first.packs,used,{type:'next'});
+ assert.equal(used.phase,'attack');
+ const lifeBefore=used.players[1].life.length;
+ used=dispatchUniversalAction(first.packs,used,{type:'attack',uid:zombie.uid});
+ assert.equal(used.pending.kind,'block');
+ used=dispatchUniversalAction(first.packs,used,{type:'chooseBlock',uid:null},{actor:1});
+ assert.equal(used.pending,null);
+ assert.equal(used.players[1].life.length,lifeBefore-1);
+ assert.equal(used.players[1].outside.some(c=>c.uid===quiet.uid),true);
+ const once=live(used,0,zombie.uid);
+ assert.equal(once.ready,true);
+ assert.equal(used.attacksByUid[zombie.uid],1);
+ const againQuiet=take(used,1,quietLife);
+ used.players[1].life.unshift(againQuiet);
+ const lifeMid=used.players[1].life.length;
+ used=dispatchUniversalAction(first.packs,used,{type:'attack',uid:zombie.uid});
+ used=dispatchUniversalAction(first.packs,used,{type:'chooseBlock',uid:null},{actor:1});
+ assert.equal(used.pending,null);
+ assert.equal(used.players[1].life.length,lifeMid-1);
+ const twice=live(used,0,zombie.uid);
+ assert.equal(twice.ready,false);
+ assert.equal(used.attacksByUid[zombie.uid],2);
+ assert.equal(legalUniversalActions(first.packs,used).some(a=>a.type==='attack'&&a.uid===zombie.uid),false);
+ aiOk(first.packs,used);
+ assert.equal(assertUniversalMatch(first.packs,used),true);
+ assert.equal(assertUniversalMatch(paid.packs,entered),true);
+ assert.equal(assertUniversalMatch(empty.packs,empty.s),true);
+ assert.equal(assertUniversalMatch(muted.packs,muted.s),true);
+ assert.equal(lonely.cardId,'BLC-4-017');
 });
 
 function fieldCount(s,p){

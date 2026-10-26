@@ -165,7 +165,8 @@ const testForKind=Object.freeze({
  removedKeywordIchigo:'tests/v2-c29-bleach-port.test.mjs',
  frontEnergyBattleRemove:'tests/v2-c29-bleach-port.test.mjs',
  yoruichiFirstAttack:'tests/v2-c29-bleach-port.test.mjs',
- lilleEntrySacrifice:'tests/v2-c29-bleach-port.test.mjs'
+ lilleEntrySacrifice:'tests/v2-c29-bleach-port.test.mjs',
+ giselleRestRetireDouble:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -175,7 +176,7 @@ function contributedEntry(profile){
  // The legacy gen=2 for EX15BT/BLC-4-014 describes the ACTIVE total, not
  // the printed REST base. SourceRecord is the normalized printed card record;
  // retain original.gen separately and require the profile fingerprint above.
- const normalized=['BLC-4-014','BLC-4-042','BLC-4-074','BLC-4-024','BLC-4-063','BLC-4-037','BLC-4-071','BLC-4-006','BLC-4-051','BLC-4-077','BLC-4-065','BLC-4-016'].includes(profile.id);
+ const normalized=['BLC-4-014','BLC-4-042','BLC-4-074','BLC-4-024','BLC-4-063','BLC-4-037','BLC-4-071','BLC-4-006','BLC-4-051','BLC-4-077','BLC-4-065','BLC-4-016','BLC-4-017'].includes(profile.id);
  const sourceRecord=Object.freeze(normalized?
   {...original,gen:definition.gen,legacyImportedGen:original.gen}: {...original});
  const vanilla=['plain','plainAlt','step'].includes(profile.kind);
@@ -184,7 +185,9 @@ function contributedEntry(profile){
   definition:Object.freeze(definition),
   evidence:Object.freeze({
    printedTextFragments:Object.freeze([profile.effect]),
-   reviewNote:profile.id==='BLC-4-016'?
+   reviewNote:profile.id==='BLC-4-017'?
+    'EX15BT/BLC-4-017 official iframe 2026-10-26. On play, draw 1 then put one hand card outside. [起動メイン][レストにする][このカードを退場させる]: choose one other own character with trait 殭屍 and grant 2回アタック this turn. Q79 (2023-03-17): the first attack rests the character, then sets it ACTIVE. Q2308 (2026-09-04): two copies share that one activate. Catalogue gen=3 is the yellow3 sprite; official generated energy is 黄黄, so definition.gen=2 and legacyImportedGen=3. The printed composites 護廷十三隊／殭屍 and 星十字騎士團／殭屍 are audited trait components, so 殭屍 counts. Giselle herself is not 殭屍. The target must still be on the field after she leaves. Declining is illegal. Silence on Giselle removes the ability. The earned double attack remains after later silence on the chosen character. ACTIVE is generic. No extra card FAQ.':
+   profile.id==='BLC-4-016'?
     'EX15BT/BLC-4-016 official iframe 2026-10-26. Official generated energy is 黄黄+. The plus is this ability\'s extra yellow, not a third resting pip. Catalogue gen=4; definition.gen=2 and legacyImportedGen=4. [起動メイン][ターン1] only on the turn this character entered. Retire one other own character. That retirement is mandatory. On success, this character generates one extra yellow until the next own turn start, then choose one: draw 1, or up to one opposing front character whose live BP is 1500 or more gets BP-1000 this turn. Choosing the BP mode and then declining the target is legal, and the energy still happens. [ターン1] is this physical card. Silence before activation removes the ability. The earned energy remains after later silence. The extra yellow is produced while this character is generating. ACTIVE is generic. Trait 星十字騎士團. No card FAQ.':
    profile.id==='BLC-4-044'?
     'EX15BT/BLC-4-044 official iframe 2026-10-26. Choose one own field 四楓院 夜一. This turn that character gets BP+2000. On its first attack this turn, until that attack ends, it gains Impact 1 and sniper. The choice is mandatory. Silence keeps the printed name. The kit is an earned grant and remains after later silence. SPECIAL retires one opposing front character. No generated energy. No card FAQ.':
