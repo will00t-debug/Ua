@@ -3,6 +3,7 @@
 // Japanese nameJa is the rules identity. This pack is not part of the
 // five-title 700-card census, and auto stays false in the catalogue.
 // Batches 25–34 add the printed bodies for 003, 006, 008, 013, 023, 026, 038, 044, 068 and 070.
+// Batches 35–44 add 007, 019, 021, 027, 051, 053, 057, 069, 072 and 073.
 import {REZERO_VOL2_BY_ID} from '../rezero-vol2.mjs';
 import {createUniversalPack} from './pack.mjs';
 
@@ -130,13 +131,51 @@ const PROFILES={
  'REZ-2-068':{implementation:'dsl',effects:{onPlay:[
   {op:'grantNamedReadyOnAttack',name:'エミリア'}]}},
  'REZ-2-070':{implementation:'dsl',effects:{onPlay:[
-  {op:'grantNamedBuffSniper',name:'ガーフィール・ティンゼル',bp:3000}]}}
+  {op:'grantNamedBuffSniper',name:'ガーフィール・ティンゼル',bp:3000}]}},
+ 'REZ-2-007':{implementation:'dsl',effects:{onRaided:[
+  {op:'drawIfAllOwnFieldNamed',name:'レム',count:1}]}},
+ 'REZ-2-019':{implementation:'dsl',effects:{},mainAbility:{
+  op:'onceGrantBlockImpact',oncePerTurn:true,minBp:5000}},
+ 'REZ-2-021':{implementation:'dsl',playRequiresAllNames:['ナツキ・スバル','レム'],
+ triggerEffect:{op:'retireOppFront'},effects:{onPlay:[
+  {op:'retireOppFrontUnderBp',bp:5000},
+  {op:'buffEnergyNamedIfRaidedFront',name:'ナツキ・スバル',raidedName:'レム',
+   energy:0,bp:1500,optional:true}]}},
+ 'REZ-2-027':{implementation:'dsl',effects:{},mainAbility:{
+  op:'onceActiveIfOwnEffectRested',oncePerTurn:true,frontOnly:true}},
+ 'REZ-2-051':{implementation:'dsl',effects:{},passiveBonuses:[
+  {condition:{kind:'ownDistinctPrintedColorNames',turn:'any',zone:'field',color:'green',min:4},
+   extraEnergy:1}],mainAbility:{op:'characterDualMain',
+  active:{op:'energyOnceActiveIfKinds',oncePerTurn:true,energyOnly:true,color:'green',min:6},
+  rest:{op:'restSelfBuffOther',bp:500}}},
+ 'REZ-2-053':{implementation:'dsl',effects:{},frontForbidden:true,mainAbility:{
+  op:'onceDiscardDrawIfEntered',oncePerTurn:true,name:'ナツキ・スバル',discard:1,draw:1}},
+ 'REZ-2-057':{implementation:'dsl',effects:{onPlay:[
+  {op:'searchTopOneBottomDiscard',count:3,logic:'any',filters:[
+   {field:'name',value:'エミリア'},
+   {field:'name',value:'水門都市 プリステラ'},
+   {field:'printedBp',value:2500}]}]}},
+ 'REZ-2-069':{implementation:'dsl',triggerEffect:{op:'retireOppFront'},effects:{onPlay:[
+  {op:'chooseOne',optional:false,options:[
+   {id:'oneAp2',label:'one AP2',turn:'any',then:[
+    {op:'deployOutsidePrinted',color:'green',printedBp:2500,ap:2,max:1,ready:false}]},
+   {id:'twoAp1',label:'two AP1',turn:'any',then:[
+    {op:'deployOutsidePrinted',color:'green',printedBp:2500,ap:1,max:2,ready:false}]}]}]}},
+ 'REZ-2-072':{implementation:'dsl',playRequiresOwnName:'プリシラ・バーリエル',
+ triggerEffect:{op:'retireOppFront'},effects:{onPlay:[
+  {op:'retireOppFrontUnderBp',bp:5000},
+  {op:'buffOwnIfAbovePrinted',min:4,bp:1000,optional:true}]}},
+ 'REZ-2-073':{implementation:'dsl',triggerEffect:{op:'retireOppFront'},
+ effects:{onPlay:[{op:'retireOppFrontOne'}]},moveTriggers:[
+  {when:{from:'hand',to:'outside',reasons:['own-effect'],sourceOnField:true,
+    sourceName:'ラインハルト・ヴァン・アストレア',sourceColor:'green'},
+   then:[{op:'activeOwnNamed',name:'ラインハルト・ヴァン・アストレア',max:1,optional:true}]}]}
 };
 
 export const REZ_V2_IMPLEMENTED_IDS=Object.freeze(Object.keys(PROFILES));
 
 export function createRezV2Pack(){
  const cards=REZ_V2_IMPLEMENTED_IDS.map(id=>({...shell(id),...PROFILES[id]}));
- return createUniversalPack({id:'rezero',version:'0.11.0',cards});
+ return createUniversalPack({id:'rezero',version:'0.12.0',cards});
 
 }
