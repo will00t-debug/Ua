@@ -61,7 +61,7 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   return (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&
    e.owner===owner&&e.controller===owner&&e.from==='hand'&&
    e.to==='outside'&&e.reason==='rule'&&
-   printed({uid:e.uid,cardId:e.cardId})?.type==='event');
+   (d=>d?.type==='event'||d?.alsoEvent===true)(printed({uid:e.uid,cardId:e.cardId})));
  if(condition.kind==='ownEffectHandOutsideOrRecovery'){
   // Same-turn factual records, never inferred from deck/hand counts or
   // the printed contents of any card. Own turn check is enforced above.

@@ -183,6 +183,9 @@ const PROFILES={
    maxEnergy:3,ready:true,max:1,protectionScope:null,name:'ナツキ・スバル'},
   {op:'buffOwnField',filter:{field:'name',value:'ナツキ・スバル'},bp:1000,
    optional:true,excludeSelf:false}]}},
+ 'REZ-2-001':{implementation:'dsl',alsoEvent:true,effects:{},mainAbility:{
+  op:'energyRestRetireThen',then:[{op:'deployOutsideNameColorEnergy',name:'エミリア',
+   color:'yellow',maxEnergy:0,line:'energy',optional:true}]}},
  'REZ-2-039':{implementation:'dsl',impactNull:true,
   triggerEffect:{op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1,
    alternatePrintedBp:2500},effects:{onPlay:[
@@ -212,6 +215,6 @@ export const REZ_V2_IMPLEMENTED_IDS=Object.freeze(Object.keys(PROFILES));
 
 export function createRezV2Pack(){
  const cards=REZ_V2_IMPLEMENTED_IDS.map(id=>({...shell(id),...PROFILES[id]}));
- return createUniversalPack({id:'rezero',version:'0.16.0',cards});
+ return createUniversalPack({id:'rezero',version:'0.17.0',cards});
 
 }

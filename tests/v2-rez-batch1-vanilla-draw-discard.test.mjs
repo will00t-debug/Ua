@@ -9,7 +9,8 @@ import {REZ_BASE_IDS,fresh,rez,rezBaseDeck,rezPacks,take,toPhase} from './helper
 
 test('batch 1 keeps Re:Zero outside the 700 census and pins vanilla plus draw-discard prints',()=>{
  assert.ok(!V2_TITLE_IDS.includes('rezero'));
- assert.equal(rez.cards['REZ-2-001'],undefined);
+ assert.equal(rez.cards['REZ-2-001'].type,'character');
+ assert.equal(rez.cards['REZ-2-001'].alsoEvent,true);
  assert.deepEqual(validateUniversalDeck(rez,rezBaseDeck),[]);
  const subaru=rez.cards['REZ-2-014'],priscilla=rez.cards['REZ-2-063'];
  assert.equal(REZERO_VOL2_BY_ID['REZ-2-014'].effectJa,'-');

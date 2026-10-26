@@ -340,6 +340,8 @@ function matchesFilter(pack,s,physical,filter){
  if(filter.field==='printedBp')return printed.type==='character'&&printed.bp===filter.value;
  if(filter.field==='name')return cardHasName(printed,filter.value,originalEffectsDisabled(s,physical));
  if(filter.field==='printedNameAny')return filter.values.includes(printed.name);
+ if(filter.field==='type'&&filter.value==='event')
+  return printed.type==='event'||printed.alsoEvent===true;
  return printed[filter.field]===filter.value;
 }
 function filteredChoices(pack,s,cards,filter){
@@ -362,7 +364,7 @@ function matchesOutsideRecovery(pack,s,c,q){
  if(q.traitlessEnergyLimit!==undefined)
   return d.type==='character'&&d.traits.length===0&&d.energy<=q.traitlessEnergyLimit;
  if(q.plainEventEnergy!==undefined)
-  return d.type==='event'&&d.color===q.color&&d.energy<=q.plainEventEnergy&&
+  return (d.type==='event'||d.alsoEvent===true)&&d.color===q.color&&d.energy<=q.plainEventEnergy&&
    d.trigger!=='special'&&d.trigger!=='final';
  if(typeof q.nameColor==='string')
   return d.color===q.color&&cardHasName(d,q.nameColor);
@@ -1272,7 +1274,7 @@ function continueEffectQueue(pack,s){
    const key='name:'+job.sourceName+':nextScaledEventApDiscount';
    if(s.onceEffectUses[owner].includes(key))return;
    s.onceEffectUses[owner].push(key);
-   const outsideEvents=pl.outside.filter(c=>card(pack,c).type==='event').length;
+   const outsideEvents=pl.outside.filter(c=>card(pack,c).type==='event'||card(pack,c).alsoEvent===true).length;
    const max=job.baseEnergy+Math.floor(outsideEvents/job.perOutsideEvents);
    grantHandDiscount(s,owner,source,{cardType:'event',printedRequiredEnergyAtMost:max});
   }else if(job.op==='allNamedEnergyBounce'){
@@ -4473,6 +4475,8 @@ export function legalUniversalActions(pack,s){
     (bp(pack,s,c)>=ability.selfBp||
      s.players[1-p].front.some(x=>x&&bp(pack,s,x)>=ability.oppFrontBp)))
     out.push({type:'activate',uid:c.uid,mode:'onceActiveGate'});
+   if(ability?.op==='energyRestRetireThen'&&c.ready&&pl.energy.some(x=>x?.uid===c.uid))
+    out.push({type:'activate',uid:c.uid,mode:'energyRestRetire'});
    if(ability?.op==='restRetireRecoverPlainEvent'&&c.ready&&
     ability.names.some(name=>ownFieldHasPrintedName(pack,s,p,name)))
     out.push({type:'activate',uid:c.uid,mode:'restRetireEvent'});
@@ -4686,7 +4690,7 @@ export function effectiveHandRequiredEnergy(pack,s,p,d){
  const matchingOpponent=!!profile&&field(s.players[1-p]).some(c=>
   profile.colors.includes(card(pack,c).color));
  const outsideRule=d.outsideEventHandEnergyDiscount;
- const outsideEvents=s.players[p].outside.filter(c=>card(pack,c).type==='event').length;
+ const outsideEvents=s.players[p].outside.filter(c=>card(pack,c).type==='event'||card(pack,c).alsoEvent===true).length;
  return Math.max(0,d.energy-
   (ownEmpty?d.emptyOwnFieldHandEnergyDiscount:0)-
   (matchingOpponent?profile.amount:0)-
@@ -4902,6 +4906,18 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
     if(!choices.length)throw Error('Entry-turn protection has no character');
     s.mainAbilityUsedUids.push(selected.uid);
     s.pending={kind:'effect-entry-protect',player:p,sourceUid:selected.uid,choices};
+    break;
+   }
+   if(ability.op==='energyRestRetireThen'){
+    if(action.mode!=='energyRestRetire'||!selected.ready||
+     !pl.energy.some(c=>c?.uid===selected.uid)||d.type!=='character')
+     throw Error('Energy REST+retire requires an ACTIVE own energy character');
+    noteOwnEffectRest(s,p,selected);selected.ready=false;
+    s.effectQueue.unshift(...ability.then.map(x=>({...x,owner:p,
+     sourceUid:selected.uid,sourceName:d.name})));
+    const pos=location(s,p,selected.uid);
+    const paused=retire(pack,s,p,pos.line,pos.slot);
+    if(!paused)continueEffectQueue(pack,s);
     break;
    }
    if(ability.op==='fieldRestRetireThen'){
