@@ -877,6 +877,7 @@ function continueEffectQueue(pack,s){
     const choices=pl.hand.filter(c=>{
      const d=card(pack,c);
      return d.type===job.type&&d.color===job.color&&d.ap===job.ap&&
+      (job.name===undefined||cardHasName(d,job.name))&&
       (special?(job.maxEnergy===null||d.energy<=job.maxEnergy)&&
        (job.trait===null||cardHasTrait(d,job.trait)):d.energy<=job.energy);
     }).map(c=>c.uid);
@@ -884,7 +885,8 @@ function continueEffectQueue(pack,s){
      sourceUid:job.sourceUid,sourceName:job.sourceName,choices,
      type:job.type,color:job.color,ap:job.ap,max:job.max,
      ...(special?{special:true,trait:job.trait,maxEnergy:job.maxEnergy,
-      ready:job.ready,protectionScope:job.protectionScope}:{energy:job.energy})};
+      ready:job.ready,protectionScope:job.protectionScope,
+      ...(job.name!==undefined?{name:job.name}:{})}:{energy:job.energy})};
    }else if(job.op==='deployOwnHandRestOrRaid'){
     const choices=pl.hand.filter(c=>matchesHandRestOrRaid(pack,s,c,job)).map(c=>c.uid);
     if(choices.length)s.pending={kind:'effect-hand-rest-or-raid',player:owner,
@@ -2668,6 +2670,7 @@ function resolveChoice(s,a,pack){
     throw Error('Hand effect entry requires eligible own UID');
    const physical=p.hand[i],d=card(pack,physical);
    if(d.type!==q.type||d.color!==q.color||d.ap!==q.ap||
+    (q.name!==undefined&&!cardHasName(d,q.name))||
     (q.special?(q.maxEnergy!==null&&d.energy>q.maxEnergy)||
       (q.trait!==null&&!cardHasTrait(d,q.trait)):d.energy>q.energy)||
     (a.line==='front'&&(d.type!=='character'||d.frontForbidden)))
@@ -2689,7 +2692,7 @@ function resolveChoice(s,a,pack){
     owner:q.player,sourceUid:q.sourceUid,sourceName:q.sourceName,
     type:q.type,color:q.color,ap:q.ap,max:q.max-1,
     ...(q.special?{trait:q.trait,maxEnergy:q.maxEnergy,ready:q.ready,
-     protectionScope:q.protectionScope}:{energy:q.energy})});
+     protectionScope:q.protectionScope,...(q.name!==undefined?{name:q.name}:{})}:{energy:q.energy})});
    applyEffects(pack,s,physical,'onPlay',q.player,'ownEffect');
    return;
   }
@@ -4538,9 +4541,12 @@ export function effectiveHandRequiredEnergy(pack,s,p,d){
  const profile=d.opponentFieldColorsHandEnergyDiscount;
  const matchingOpponent=!!profile&&field(s.players[1-p]).some(c=>
   profile.colors.includes(card(pack,c).color));
+ const outsideRule=d.outsideEventHandEnergyDiscount;
+ const outsideEvents=s.players[p].outside.filter(c=>card(pack,c).type==='event').length;
  return Math.max(0,d.energy-
   (ownEmpty?d.emptyOwnFieldHandEnergyDiscount:0)-
   (matchingOpponent?profile.amount:0)-
+  (outsideRule&&outsideEvents>=outsideRule.min?outsideRule.amount:0)-
   (d.printedHandEnergyDiscount||0));
 }
 function spendAp(pl,n){
@@ -5545,20 +5551,24 @@ export function assertUniversalMatch(pack,s){
    return (x.op==='deployOwnHandSpecial'&&x.type===q.type&&x.color===q.color&&
     x.ap===q.ap&&x.trait===q.trait&&x.maxEnergy===q.maxEnergy&&
     x.ready===q.ready&&x.protectionScope===q.protectionScope&&
+    (q.name===undefined?x.name===undefined:x.name===q.name)&&
     Number.isInteger(q.max)&&q.max>=1&&q.max<=x.max)||
     Object.values(x).some(findOp);
   };
   const expected=pl.hand.filter(c=>{
    const d=card(pack,c);
    return d.type===q.type&&d.color===q.color&&d.ap===q.ap&&
+    (q.name===undefined||cardHasName(d,q.name))&&
     (q.maxEnergy===null||d.energy<=q.maxEnergy)&&
     (q.trait===null||cardHasTrait(d,q.trait));
   }).map(c=>c.uid);
+  const named=q.name!==undefined;
   if(!printed||q.sourceName!==printed.name||!findOp(printed.effects)||
    !Array.isArray(q.choices)||!same(q.choices,expected)||
-   Object.keys(q).length!==14||Object.keys(q).some(k=>![
+   Object.keys(q).length!==(named?15:14)||Object.keys(q).some(k=>![
     'kind','player','sourceUid','sourceName','choices','type','color','ap',
-    'max','special','trait','maxEnergy','ready','protectionScope'].includes(k)))
+    'max','special','trait','maxEnergy','ready','protectionScope','name'].includes(k))||
+   (named!==Object.hasOwn(q,'name')))
    throw Error('Invalid special hand entry pending provenance');
  }
  // R42: saved cross-zone free-entry selection must be earned by an actual

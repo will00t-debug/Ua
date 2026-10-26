@@ -441,8 +441,9 @@ function verifyProgram(program,path){
      typeof e.ready!=='boolean'||
      !(e.protectionScope===null||['any','character','trigger'].includes(e.protectionScope))||
      (e.protectionScope!==null&&(e.type!=='character'||e.max!==1))||
-     Object.keys(e).length!==9||
-     Object.keys(e).some(k=>!['op','type','color','ap','trait','maxEnergy','ready','max','protectionScope'].includes(k)))
+     (e.name!==undefined&&(typeof e.name!=='string'||!e.name.trim()||e.name.length>80))||
+     Object.keys(e).length!==(e.name===undefined?9:10)||
+     Object.keys(e).some(k=>!['op','type','color','ap','trait','maxEnergy','ready','max','protectionScope','name'].includes(k)))
      throw Error(path+'['+i+'] invalid special hand entry');
    }
    if(e.op==='deployOwnHandRestOrRaid'){
@@ -1425,6 +1426,16 @@ function normalize(card,packId){
  }
  // Printed hand-only required energy discount, never a free cost bypass
  // when any owned FRONT/ENERGY field object exists.
+ const outsideEventHandEnergyDiscount=card.outsideEventHandEnergyDiscount??null;
+ if(outsideEventHandEnergyDiscount!==null&&(
+  !['event','character'].includes(card.type)||card.implementation!=='dsl'||
+  !integer(outsideEventHandEnergyDiscount.min,1)||outsideEventHandEnergyDiscount.min>20||
+  !integer(outsideEventHandEnergyDiscount.amount,1)||
+  outsideEventHandEnergyDiscount.amount>card.energy||
+  outsideEventHandEnergyDiscount.amount>5||
+  Object.keys(outsideEventHandEnergyDiscount).length!==2||
+  Object.keys(outsideEventHandEnergyDiscount).some(k=>!['min','amount'].includes(k))))
+  throw Error(card.id+' invalid outside-event hand energy discount');
  const emptyOwnFieldHandEnergyDiscount=card.emptyOwnFieldHandEnergyDiscount??0;
  if(emptyOwnFieldHandEnergyDiscount!==0&&(
   card.type!=='character'||card.implementation!=='dsl'||card.raidName||
@@ -1457,12 +1468,12 @@ function normalize(card,packId){
  if(implemented==='vanilla'&&(Object.keys(effects).length||card.effectText||
   mainAbility||phaseEffects.length||moveTriggers.length||moveObserver||card.enterActiveIfOpponentRest||card.enterAlwaysActive||card.activeExtraEnergy||card.conditionalTraitEnergy||passiveBonuses||card.impactNull||
   card.printedImpact||card.printedAttackDamage||card.readyOnAttackCount||card.readyOnBlockCount||
-  card.frontGeneratesEnergy||ownOutsideRecovery||colorTriggerFieldSubstitution||card.frontForbidden||card.ownTurnBp||card.opponentTurnBp||nameAliases||selectionHandDiscardTax||card.otherOwnBattleWonDamageTwo||attackEndSwap||blockBpRestriction||attackWinRecover||attackWinDraw||card.conditionalImpactBpAtLeast||emptyOwnFieldHandEnergyDiscount||opponentFieldColorsHandEnergyDiscount||card.mustBlock||card.bpDownImmune||card.printedHandEnergyDiscount||card.raidHandLeaveReplace))
+  card.frontGeneratesEnergy||ownOutsideRecovery||colorTriggerFieldSubstitution||card.frontForbidden||card.ownTurnBp||card.opponentTurnBp||nameAliases||selectionHandDiscardTax||card.otherOwnBattleWonDamageTwo||attackEndSwap||blockBpRestriction||attackWinRecover||attackWinDraw||  card.conditionalImpactBpAtLeast||emptyOwnFieldHandEnergyDiscount||outsideEventHandEnergyDiscount||opponentFieldColorsHandEnergyDiscount||card.mustBlock||card.bpDownImmune||card.printedHandEnergyDiscount||card.raidHandLeaveReplace))
   throw Error(card.id+' claims vanilla despite printed/declared effects');
  if(implemented==='dsl'&&!Object.keys(effects).length&&!phaseEffects.length&&!moveTriggers.length&&!mainAbility&&!moveObserver&&!card.enterActiveIfOpponentRest&&!card.enterAlwaysActive&&
   !card.activeExtraEnergy&&!card.conditionalTraitEnergy&&!passiveBonuses&&!card.impactNull&&
   !card.printedImpact&&!card.printedAttackDamage&&!card.readyOnAttackCount&&!card.readyOnBlockCount&&
-  !card.frontGeneratesEnergy&&!ownOutsideRecovery&&!colorTriggerFieldSubstitution&&!card.frontForbidden&&!card.ownTurnBp&&!card.opponentTurnBp&&!nameAliases&&!selectionHandDiscardTax&&!card.otherOwnBattleWonDamageTwo&&!attackEndSwap&&!blockBpRestriction&&!attackWinRecover&&!attackWinDraw&&!card.conditionalImpactBpAtLeast&&!emptyOwnFieldHandEnergyDiscount&&!opponentFieldColorsHandEnergyDiscount&&!card.mustBlock&&!card.bpDownImmune&&!card.printedHandEnergyDiscount&&!card.raidHandLeaveReplace)
+  !card.frontGeneratesEnergy&&!ownOutsideRecovery&&!colorTriggerFieldSubstitution&&!card.frontForbidden&&!card.ownTurnBp&&!card.opponentTurnBp&&!nameAliases&&!selectionHandDiscardTax&&!card.otherOwnBattleWonDamageTwo&&!attackEndSwap&&!blockBpRestriction&&!attackWinRecover&&!attackWinDraw&&  !card.conditionalImpactBpAtLeast&&!emptyOwnFieldHandEnergyDiscount&&!outsideEventHandEnergyDiscount&&!opponentFieldColorsHandEnergyDiscount&&!card.mustBlock&&!card.bpDownImmune&&!card.printedHandEnergyDiscount&&!card.raidHandLeaveReplace)
   throw Error(card.id+' declares dsl without effects');
  for(const [name,program] of Object.entries(effects)){
   if(program.some(x=>x.op==='retireSourceOnPhaseEnd'))throw Error(card.id+' invalid phase-only self retirement');
@@ -1721,6 +1732,7 @@ function normalize(card,packId){
   step:card.step===true,ownTurnBp:card.ownTurnBp||0,
   opponentTurnBp:card.opponentTurnBp||0,
   emptyOwnFieldHandEnergyDiscount,
+  outsideEventHandEnergyDiscount:outsideEventHandEnergyDiscount?Object.freeze({...outsideEventHandEnergyDiscount}):null,
   printedHandEnergyDiscount,
   opponentFieldColorsHandEnergyDiscount:opponentFieldColorsHandEnergyDiscount?Object.freeze({
    amount:opponentFieldColorsHandEnergyDiscount.amount,

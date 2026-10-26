@@ -173,6 +173,13 @@ const PROFILES={
  'REZ-2-011':{implementation:'dsl',step:true,effects:{onPlay:[
   {op:'nextScaledEventApDiscount',once:'name',cardType:'event',
    baseEnergy:1,perOutsideEvents:2}]}},
+ 'REZ-2-012':{implementation:'dsl',playRequiresOwnName:'エミリア',
+  outsideEventHandEnergyDiscount:{min:4,amount:1},effects:{onPlay:[
+  {op:'draw',count:2},
+  {op:'deployOwnHandSpecial',type:'character',color:'yellow',ap:1,trait:null,
+   maxEnergy:3,ready:true,max:1,protectionScope:null,name:'ナツキ・スバル'},
+  {op:'buffOwnField',filter:{field:'name',value:'ナツキ・スバル'},bp:1000,
+   optional:true,excludeSelf:false}]}},
  'REZ-2-073':{implementation:'dsl',triggerEffect:{op:'retireOppFront'},
  effects:{onPlay:[{op:'retireOppFrontOne'}]},moveTriggers:[
   {when:{from:'hand',to:'outside',reasons:['own-effect'],sourceOnField:true,
@@ -184,6 +191,6 @@ export const REZ_V2_IMPLEMENTED_IDS=Object.freeze(Object.keys(PROFILES));
 
 export function createRezV2Pack(){
  const cards=REZ_V2_IMPLEMENTED_IDS.map(id=>({...shell(id),...PROFILES[id]}));
- return createUniversalPack({id:'rezero',version:'0.13.0',cards});
+ return createUniversalPack({id:'rezero',version:'0.14.0',cards});
 
 }
