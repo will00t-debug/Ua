@@ -89,7 +89,7 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   return options[0]?.action||legal[0];
  }
  if(s.pending?.kind==='raid-effect-order')return legal.find(a=>a.mode==='entryFirst')||legal[0];
- if(s.pending?.kind==='effect-first-attack-kit')
+ if(s.pending?.kind==='effect-first-attack-kit'||s.pending?.kind==='effect-entry-sacrifice')
   return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-choice-mode'){
   // Entirely generic printed-mode selection; inspect only public enemy FRONT

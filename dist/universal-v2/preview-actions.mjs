@@ -34,6 +34,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-choice-mode':'選擇一項效果',
  'effect-named-impact':'可選 1 個指定名稱角色，本回合 BP 上升並獲得 Impact',
  'effect-first-attack-kit':'選 1 個指定名稱角色，本回合 BP 上升，第一次攻擊獲得 Impact 與狙擊',
+ 'effect-entry-sacrifice':'選另 1 個自己的角色退場，成功後此角色額外產生黃色能量並選 1 項',
  'effect-named-rest-ready':'可橫置 1 個 Active 的指定名稱角色，然後啟動 1 張 AP 卡',
  'effect-named-keyword':'可選 1 個指定名稱角色，賦予本回合 Impact 或直接攻擊傷害',
  'effect-keyword-mode':'選擇 Impact +1 或 Damage +1',

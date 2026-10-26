@@ -164,7 +164,8 @@ const testForKind=Object.freeze({
  nanaoStepEventActive:'tests/v2-c29-bleach-port.test.mjs',
  removedKeywordIchigo:'tests/v2-c29-bleach-port.test.mjs',
  frontEnergyBattleRemove:'tests/v2-c29-bleach-port.test.mjs',
- yoruichiFirstAttack:'tests/v2-c29-bleach-port.test.mjs'
+ yoruichiFirstAttack:'tests/v2-c29-bleach-port.test.mjs',
+ lilleEntrySacrifice:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -174,7 +175,7 @@ function contributedEntry(profile){
  // The legacy gen=2 for EX15BT/BLC-4-014 describes the ACTIVE total, not
  // the printed REST base. SourceRecord is the normalized printed card record;
  // retain original.gen separately and require the profile fingerprint above.
- const normalized=['BLC-4-014','BLC-4-042','BLC-4-074','BLC-4-024','BLC-4-063','BLC-4-037','BLC-4-071','BLC-4-006','BLC-4-051','BLC-4-077','BLC-4-065'].includes(profile.id);
+ const normalized=['BLC-4-014','BLC-4-042','BLC-4-074','BLC-4-024','BLC-4-063','BLC-4-037','BLC-4-071','BLC-4-006','BLC-4-051','BLC-4-077','BLC-4-065','BLC-4-016'].includes(profile.id);
  const sourceRecord=Object.freeze(normalized?
   {...original,gen:definition.gen,legacyImportedGen:original.gen}: {...original});
  const vanilla=['plain','plainAlt','step'].includes(profile.kind);
@@ -183,7 +184,9 @@ function contributedEntry(profile){
   definition:Object.freeze(definition),
   evidence:Object.freeze({
    printedTextFragments:Object.freeze([profile.effect]),
-   reviewNote:profile.id==='BLC-4-044'?
+   reviewNote:profile.id==='BLC-4-016'?
+    'EX15BT/BLC-4-016 official iframe 2026-10-26. Official generated energy is 黄黄+. The plus is this ability\'s extra yellow, not a third resting pip. Catalogue gen=4; definition.gen=2 and legacyImportedGen=4. [起動メイン][ターン1] only on the turn this character entered. Retire one other own character. That retirement is mandatory. On success, this character generates one extra yellow until the next own turn start, then choose one: draw 1, or up to one opposing front character whose live BP is 1500 or more gets BP-1000 this turn. Choosing the BP mode and then declining the target is legal, and the energy still happens. [ターン1] is this physical card. Silence before activation removes the ability. The earned energy remains after later silence. The extra yellow is produced while this character is generating. ACTIVE is generic. Trait 星十字騎士團. No card FAQ.':
+   profile.id==='BLC-4-044'?
     'EX15BT/BLC-4-044 official iframe 2026-10-26. Choose one own field 四楓院 夜一. This turn that character gets BP+2000. On its first attack this turn, until that attack ends, it gains Impact 1 and sniper. The choice is mandatory. Silence keeps the printed name. The kit is an earned grant and remains after later silence. SPECIAL retires one opposing front character. No generated energy. No card FAQ.':
    profile.id==='BLC-1-092'?
     'UA08BT/BLC-1-092 official iframe 2026-10-26. This character also generates energy from the front line. Q572 (2023-09-25): on its controller\'s turn, an opposing character that loses a battle to it is placed in the removed area instead of retiring, and its leave trigger does not fire. Silence removes both clauses. COLOR deploys one green hand character of required energy 2 or less and printed AP 1, ACTIVE. Generated energy is 緑.':

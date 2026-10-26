@@ -11,6 +11,7 @@ import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
 import {V2_PENDING_LABELS} from '../dist/universal-v2/preview-actions.mjs';
 import {grantContinuousState,effectChoiceProtected} from '../dist/universal-v2/continuous-states.mjs';
 import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v2-integrated-id-manifest.mjs';
+import bleachContribution from '../dist/universal-v2/title-packs/bleach.mjs';
 
 // Official iframes fetched 2026-10-24.
 // BLC-1-080 UA08BT: このキャラはBPをマイナスする効果を受けない。
@@ -227,9 +228,11 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL} from './fixtures/v
 //   loser is removed instead of retiring, and 退場時 does not fire.
 // BLC-4-044 EX15BT: one own 四楓院 夜一 gets BP+2000. Her first attack
 //   this turn gains Impact 1 and sniper until that attack ends.
+// BLC-4-016 EX15BT: 黄黄+. The plus is extra yellow after an entry-turn
+//   sacrifice, lasting until the next own turn start.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008','BLC-4-065','BLC-2-051','BLC-1-092','BLC-4-044'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008','BLC-4-065','BLC-2-051','BLC-1-092','BLC-4-044','BLC-4-016'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -300,12 +303,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers seventy-seven whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,513);
- assert.equal(EXPECTED_V2_COUNTS.bleach,237);
+test('C29 registers seventy-eight whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,514);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,238);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,237);
+ assert.equal(Object.keys(bleach.cards).length,238);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -7350,6 +7353,141 @@ test('BLC-4-044 gives Yoruichi BP+2000 and Impact plus sniper on her first attac
  aiOk(quiet.packs,quiet.s);
  assert.equal(assertUniversalMatch(quiet.packs,quiet.s),true);
  assert.equal(assertUniversalMatch(first.packs,battle),true);
+});
+
+test('BLC-4-016 sacrifices another character on its entry turn, then generates yellow and chooses',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-4-016');
+ assert.equal(printed.number,'EX15BT/BLC-4-016');
+ assert.equal(printed.nameJa,'リジェ・バロ');
+ assert.equal(printed.effect,'啟動・主要〔每回合1次〕：僅可在此角色登場的回合發動；使自己場上另1個角色退場，如此則此角色到自己下次回合開始前額外產生1個黃色能量，並選1項：①抽1張牌。②最多選1個對方前線BP1500以上的角色，本回合BP−1000。');
+ assert.equal(printed.trigger,'active');
+ assert.equal(printed.gen,4);
+ assert.deepEqual(printed.traits,['星十字騎士團']);
+ const card=bleach.cards['BLC-4-016'];
+ assert.equal(card.gen,2);
+ assert.equal(card.triggerEffect,null);
+ assert.deepEqual(card.traits,['星十字騎士團']);
+ assert.deepEqual(card.effects.onPlay,[{op:'noteEntryTurn'}]);
+ assert.deepEqual(card.mainAbility,{op:'entryTurnSacrificeChoice',oncePerTurn:true,energy:1,color:'yellow',minBp:1500,down:1000});
+ const entry=bleachContribution.entries.find(x=>x.id==='BLC-4-016');
+ assert.equal(entry.sourceRecord.gen,2);
+ assert.equal(entry.sourceRecord.legacyImportedGen,4);
+ assert.equal(entry.definition.gen,2);
+ const bare={id:'BAD',name:'BAD',color:'yellow',type:'character',energy:3,ap:1,bp:2500,gen:2,traits:['星十字騎士團'],trigger:'active',implementation:'dsl',effects:{onPlay:[{op:'noteEntryTurn'}]},mainAbility:{op:'entryTurnSacrificeChoice',oncePerTurn:true,energy:2,color:'yellow',minBp:1500,down:1000}};
+ assert.throws(()=>createUniversalPack({id:'bad-lille',cards:[bare]}),/unsupported main action ability/);
+ const deck=realDeck(['BLC-4-016','BLC-1-016','BLC-1-018','BLC-1-026','BLC-1-006','BLC-1-002'],'yellow');
+ const solo=main(deck,29016);
+ const only=put(solo.s,0,'BLC-4-016','energy',0,false);
+ only.entryTurn=solo.s.turn;
+ assert.equal(legalUniversalActions(solo.packs,solo.s).some(a=>a.type==='activate'&&a.mode==='entrySacrifice'),false);
+ const fodder=put(solo.s,0,'BLC-1-026','front',0,true);
+ assert.equal(legalUniversalActions(solo.packs,solo.s).some(a=>a.type==='activate'&&a.uid===only.uid&&a.mode==='entrySacrifice'),true);
+ delete only.entryTurn;
+ assert.equal(legalUniversalActions(solo.packs,solo.s).some(a=>a.type==='activate'&&a.mode==='entrySacrifice'),false);
+ only.entryTurn=solo.s.turn;
+ grantContinuousState(solo.s,{kind:'originalEffectsDisabled',controller:1,
+  sourceUid:fodder.uid,targetUid:only.uid,sourceLinked:false,
+  until:{player:0,phase:'attack',edge:'end'}});
+ assert.equal(legalUniversalActions(solo.packs,solo.s).some(a=>a.type==='activate'&&a.mode==='entrySacrifice'),false);
+ const first=main(deck,29017);
+ put(first.s,0,'BLC-1-016','energy',0);
+ put(first.s,0,'BLC-1-018','energy',1);
+ put(first.s,0,'BLC-1-006','energy',2);
+ const victim=put(first.s,0,'BLC-1-026','front',0,true);
+ const low=put(first.s,1,'BLC-1-016','front',0,true);
+ const mark=put(first.s,1,'BLC-1-018','front',1,true);
+ const lille=take(first.s,0,'BLC-4-016');
+ first.s.players[0].hand.push(lille);
+ assert.equal(universalEnergyByColor(first.packs,first.s,0).yellow,3);
+ const play=legalUniversalActions(first.packs,first.s).find(a=>a.type==='play'&&a.uid===lille.uid&&a.line==='energy');
+ assert.ok(play);
+ let played=dispatchUniversalAction(first.packs,first.s,play);
+ assert.equal(played.pending,null);
+ const body=played.players[0].energy.find(c=>c?.uid===lille.uid);
+ assert.equal(body.ready,false);
+ assert.equal(body.entryTurn,played.turn);
+ assert.equal(universalEnergyByColor(first.packs,played,0).yellow,5);
+ const act=legalUniversalActions(first.packs,played).find(a=>a.type==='activate'&&a.uid===lille.uid&&a.mode==='entrySacrifice');
+ assert.ok(act);
+ aiOk(first.packs,played);
+ played=dispatchUniversalAction(first.packs,played,act);
+ assert.equal(played.pending.kind,'effect-entry-sacrifice');
+ assert.equal(V2_PENDING_LABELS[played.pending.kind],'選另 1 個自己的角色退場，成功後此角色額外產生黃色能量並選 1 項');
+ const sacrifices=legalUniversalActions(first.packs,played);
+ assert.equal(sacrifices.some(a=>a.type==='chooseEntrySacrifice'&&a.uid===victim.uid),true);
+ assert.equal(sacrifices.some(a=>a.uid===lille.uid),false);
+ assert.equal(sacrifices.some(a=>a.uid===null),false);
+ assert.throws(()=>dispatchUniversalAction(first.packs,played,{type:'chooseEntrySacrifice',uid:null}),/not currently legal/);
+ const drawState=structuredClone(played);
+ const cutState=structuredClone(played);
+ const hand=drawState.players[0].hand.length;
+ let drawn=dispatchUniversalAction(first.packs,drawState,{type:'chooseEntrySacrifice',uid:victim.uid});
+ assert.equal(drawn.pending.kind,'effect-choice-mode');
+ assert.equal(drawn.players[0].outside.some(c=>c.uid===victim.uid),true);
+ assert.equal(universalEnergyByColor(first.packs,drawn,0).yellow,6);
+ drawn=dispatchUniversalAction(first.packs,drawn,{type:'chooseEffectMode',mode:'draw'});
+ assert.equal(drawn.pending,null);
+ assert.equal(drawn.players[0].hand.length,hand+1);
+ grantContinuousState(drawn,{kind:'originalEffectsDisabled',controller:1,
+  sourceUid:low.uid,targetUid:lille.uid,sourceLinked:false,
+  until:{player:0,phase:'attack',edge:'end'}});
+ assert.equal(universalEnergyByColor(first.packs,drawn,0).yellow,6);
+ const quietLife=Object.keys(deck).find(id=>!bleach.cards[id].trigger);
+ function march(s,player,phase,own){
+  for(let n=0;n<60&&!(s.active===player&&s.phase===phase&&s.players[0].ownTurns===own);n++){
+   if(s.pending?.kind==='end-hand-limit'){
+    const drop=legalUniversalActions(first.packs,s).find(a=>a.type==='chooseHandLimit');
+    s=dispatchUniversalAction(first.packs,s,drop);continue;
+   }
+   if(s.pending?.kind==='life-trigger'){
+    s=dispatchUniversalAction(first.packs,s,{type:'chooseTrigger',mode:'skip'},{actor:s.pending.player});continue;
+   }
+   const step=legalUniversalActions(first.packs,s).find(a=>a.type==='next');
+   assert.ok(step,JSON.stringify(s.pending));
+   s=dispatchUniversalAction(first.packs,s,step);
+  }
+  assert.equal(s.players[0].ownTurns,own);
+  assert.equal(s.phase,phase);
+  return s;
+ }
+ let later=structuredClone(drawn);
+ later.players[1].life.unshift(take(later,1,quietLife));
+ later=march(later,1,'main',1);
+ assert.equal(universalEnergyByColor(first.packs,later,0).yellow,6);
+ later=march(later,0,'main',2);
+ assert.equal(universalEnergyByColor(first.packs,later,0).yellow,5);
+ let cut=dispatchUniversalAction(first.packs,cutState,{type:'chooseEntrySacrifice',uid:victim.uid});
+ assert.equal(universalEnergyByColor(first.packs,cut,0).yellow,6);
+ cut=dispatchUniversalAction(first.packs,cut,{type:'chooseEffectMode',mode:'cut'});
+ assert.equal(cut.pending.kind,'effect-target');
+ const targets=legalUniversalActions(first.packs,cut);
+ assert.equal(targets.some(a=>a.type==='chooseTarget'&&a.uid===mark.uid),true);
+ assert.equal(targets.some(a=>a.uid===low.uid),false);
+ assert.equal(targets.some(a=>a.type==='chooseTarget'&&a.uid===null),true);
+ const skipped=dispatchUniversalAction(first.packs,structuredClone(cut),{type:'chooseTarget',uid:null});
+ assert.equal(skipped.pending,null);
+ assert.equal(universalBp(first.packs,skipped,live(skipped,1,mark.uid)),1500);
+ assert.equal(universalEnergyByColor(first.packs,skipped,0).yellow,6);
+ const slot=skipped.players[0].energy.findIndex(c=>c?.uid===lille.uid);
+ const moved=skipped.players[0].energy[slot];
+ skipped.players[0].energy[slot]=null;
+ skipped.players[0].front[2]=moved;
+ assert.equal(universalEnergyByColor(first.packs,skipped,0).yellow,3);
+ skipped.players[0].front[2]=null;
+ skipped.players[0].energy[slot]=moved;
+ cut=dispatchUniversalAction(first.packs,cut,{type:'chooseTarget',uid:mark.uid});
+ assert.equal(cut.pending,null);
+ assert.equal(universalBp(first.packs,cut,live(cut,1,mark.uid)),500);
+ assert.equal(universalEnergyByColor(first.packs,cut,0).yellow,6);
+ const copy=put(cut,0,'BLC-4-016','front',0,false);
+ assert.equal(legalUniversalActions(first.packs,cut).some(a=>a.type==='activate'&&a.uid===copy.uid),false);
+ copy.entryTurn=cut.turn;
+ assert.equal(legalUniversalActions(first.packs,cut).some(a=>a.type==='activate'&&a.uid===copy.uid&&a.mode==='entrySacrifice'),true);
+ assert.equal(legalUniversalActions(first.packs,cut).some(a=>a.type==='activate'&&a.uid===lille.uid),false);
+ aiOk(first.packs,cut);
+ assert.equal(assertUniversalMatch(first.packs,cut),true);
+ assert.equal(assertUniversalMatch(first.packs,later),true);
+ assert.equal(assertUniversalMatch(solo.packs,solo.s),true);
 });
 
 function fieldCount(s,p){
