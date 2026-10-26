@@ -174,7 +174,8 @@ const testForKind=Object.freeze({
  ichigoRemoveFourImpact:'tests/v2-c29-bleach-port.test.mjs',
  bambiettaRestRetire:'tests/v2-c29-bleach-port.test.mjs',
  jugramTriggerEnd:'tests/v2-c29-bleach-port.test.mjs',
- byakuyaOutsideRemove:'tests/v2-c29-bleach-port.test.mjs'
+ byakuyaOutsideRemove:'tests/v2-c29-bleach-port.test.mjs',
+ soiFonNextStartRetire:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -193,7 +194,9 @@ function contributedEntry(profile){
   definition:Object.freeze(definition),
   evidence:Object.freeze({
    printedTextFragments:Object.freeze([profile.effect]),
-   reviewNote:profile.id==='BLC-1-050'?
+   reviewNote:profile.id==='BLC-1-055'?
+    'UA08BT/BLC-1-055 official iframe 2026-10-26. Required energy 紫4, generated energy 紫. [起動メイン][フロントLにある場合][APを1支払う][ターン1]: choose up to one opposing front character of BP 3500 or less. At the next opponent turn start, retire that character, then REST this character and move it to the energy line. Q564 (2023-09-25): if the chosen character left during the turn it was chosen, this character still rests and moves. Q565 (2023-09-25): if another card raided onto the chosen character during that turn, the Raid top does not retire, and this character still rests and moves. Declining the choice pays the AP and schedules nothing. No legal target schedules nothing. [ターン1] is this physical card. The energy line cannot activate. A field is not a character. Later silence does not cancel a choice already made. DRAW is the generic sentence. Trait 護廷十三隊.':
+   profile.id==='BLC-1-050'?
     'UA08BT/BLC-1-050 official iframe 2026-10-26. Required energy 紫5, generated energy 紫. Raid onto 朽木 白哉, become ACTIVE, and may move to the front. On play, you may remove 2 own outside cards. If you do, every opposing front character gets BP-1000 this turn. Q561 (2023-09-25): with only 1, that card can still be removed, and the BP cut does not happen. Declining removes nothing. An energy-line character is not cut. A character reduced to 0 BP or less leaves. [起動メイン][ターン1]: remove 3 own outside cards. That exact count grants Impact 1 this turn. Q562 (2023-09-25): activating with only 2 still removes those 2, and Impact does not happen. The main removal is not optional. [ターン1] is this physical card. The earned Impact remains after later silence. On attack, you may remove 1 own outside card. If you do, up to one opposing front character gets BP-1000 this turn. Declining the removal or the target is legal. Silence before the attack removes that clause. RAID is the generic sentence. Trait 護廷十三隊.':
    profile.id==='BLC-1-020'?
     'UA08BT/BLC-1-020 official iframe 2026-10-26. Required energy 黄5, generated energy 黄. Raid onto ユーグラム・ハッシュヴァルト, become ACTIVE, and may move to the front. Impact 1. While on the front, at the end of your attack phase, if the opponent activated a trigger effect this turn, draw 2 and put one hand card outside. Q538 (2023-09-25): declining a revealed trigger does not count. Q539 (2023-09-25): two front copies both resolve. Q540 (2023-09-25): a copy that left the front, including one retired by a SPECIAL trigger, does not resolve. An energy-line copy is queued and does nothing. Silence before the attack-end window removes it. On play, if your hand has fewer cards than the opponent, the opponent puts one hand card outside. Q541 (2023-09-25): equal hand counts do not discard. A larger hand does not discard. The comparison is after this card has left the hand. The opponent discard is mandatory. RAID is the generic sentence. No extra card FAQ.':

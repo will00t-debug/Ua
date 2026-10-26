@@ -187,6 +187,10 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='granted-attack-draw')return legal.find(x=>x.mode==='draw')||legal[0];
  if(s.pending?.kind==='effect-grant-attack')return legal[0];
  if(s.pending?.kind==='effect-target-many')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-line-slot')return legal[0];
+ if(s.pending?.kind==='effect-mark-opp-start')
+  return difficulty==='easy'?legal.find(a=>a.uid===null)||legal[0]:
+   legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-target'){
   const choices=legal.filter(a=>a.uid!==null).map(a=>({
    a,character:s.players[1-s.pending.player].front.find(c=>c?.uid===a.uid)

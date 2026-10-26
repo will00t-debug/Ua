@@ -58,7 +58,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'main-two-buff':'主要能力選擇 BP 對象',
  'main-discard-buff':'支付一張手牌，讓自身 BP 增加',
  'effect-grant-attack':'授予己方角色攻擊時能力','granted-attack-draw':'攻擊時是否抽一張',
- 'effect-target':'指定角色','effect-target-many':'最多選擇兩名不同敵方角色','raid-effect-order':'突襲能力結算順序',
+ 'effect-target':'指定角色','effect-mark-opp-start':'可選 1 個敵方前線角色，下一個敵方回合開始時退場','effect-target-many':'最多選擇兩名不同敵方角色','raid-effect-order':'突襲能力結算順序',
  'effect-move-order':'選擇同時取得的移動觸發處理順序',
  'effect-rest-tuck':'是否 REST 角色，放置剛送至場外的手牌',
  'effect-tuck-moved':'可將該場外卡裏向放在自身下方',
@@ -168,6 +168,8 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'choosePhaseOrder':return '先結算此階段效果';
   case 'chooseApRecovery':return action.uid===null?'完成恢復 AP':'恢復 AP 卡';
   case 'chooseDiscardGate':return action.uid===null?'不支付成本':'棄 '+name()+' 支付成本';
+  case 'chooseMarkOppStart':return action.uid===null?'不選擇敵方前線角色':'指定 '+name()+'，下一個敵方回合開始時退場';
+  case 'chooseLineSlot':return '移至能源線 '+(action.slot+1);
   case 'chooseRemoveOutside':return action.mode==='skip'?'不將場外卡移入移除區':
    action.mode==='all'?'將目前場外的可選卡全部移入移除區，不結算後續':'將 '+name()+' 移入移除區';
   case 'chooseDiscardCost':return action.uid===null?'不支付成本':'棄 '+name()+' 支付成本';
