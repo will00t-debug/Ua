@@ -435,7 +435,9 @@ test('TTG-070 hosts Gurren Lagann only while Kamina is absent, and chain raid st
  assert.equal(s.pending,null);
  const follow=legalUniversalActions(ttg,s).filter(a=>a.type==='raid'&&a.uid===second.uid);
  assert.equal(follow.some(a=>a.baseUid===top.uid),false);
- assert.ok(follow.some(a=>a.baseUid===spare.uid));
+ // The same printed name グレンラガン cannot raid twice in one turn, so the
+ // spare TTG-1-070 host is closed as well. Chain raid onto the new top stays closed.
+ assert.equal(follow.length,0);
  assertUniversalMatch(ttg,s);
 
  let lagann=fresh(8071);

@@ -21,4 +21,6 @@ Catalog disagreements kept in the proof:
 - 075 does not offer the empty selection that the legacy resolver treated as spending the use. Activating is optional. A taken activation picks 1 to min(count, 3) distinct modes. The count uses top-card traits.
 - 021 sends the chosen full front pile, including its stack and facedown undercards, to the remove area. That follows Q2269–Q2271. The shared full-line replacement still sends subordinate layers outside. Declining does not spend the once-per-name use.
 
-Chain Raid onto a card that itself has `raidName` stays illegal. TTG-1-004, 012, 027, 031, 032, 033, 034, 056, 061, 062, and 074 stay unregistered.
+Chain Raid onto a card that itself has `raidName` stays illegal. TTG-1-004, 012, 027, 031, 032, 033, 034, 056, 061, 062, and 074 stay unregistered on this 70-card line.
+
+2026-10-26 (Asia/Taipei): those eleven cards are registered on `cursor/ttg-finish-593a`. See `docs/v2-handoff/TTG-finish.md`. This file stays the record of the 70-card line. That later registration is still scenario tests, not full official FAQ certification.
