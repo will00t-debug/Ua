@@ -103,3 +103,64 @@ body{margin:0;background:#f2f3f5;color:#272b31;font:14px/1.5 system-ui,-apple-sy
 .v2-shell .foot a{color:#ae3f48}
 @media(max-width:850px){.v2-shell .setup-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.v2-shell .designated{grid-template-columns:1fr}.v2-shell{padding-inline:12px}.v2-shell>.topbar{margin-inline:-12px}.v2-shell .slots{gap:9px}}
 @media(max-width:620px){.v2-shell .setup-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.v2-shell .setup-grid .field:last-child{grid-column:span 2}.v2-shell .playerArea{padding:8px 6px}.v2-shell .lineGroup{grid-template-columns:48px minmax(0,1fr) 42px;gap:4px}.v2-shell .slots{grid-template-columns:repeat(4,minmax(0,1fr));gap:4px}.v2-shell .lineLabel{font-size:8px}.v2-shell .pile{font-size:7px;padding:2px}.v2-shell .hand{gap:4px}.v2-shell .handCard .handName{font-size:7px}.v2-shell .slotFace .slotBp{font-size:7px}.v2-shell .phaseAction{padding:10px}.v2-shell .playerResources{font-size:9px}.v2-shell .v2-legal-buttons button{font-size:10px}.v2-shell>.topbar{padding:10px}.v2-shell h1{font-size:16px}}
+
+/* V2 match lobby: classic two-player deck selection with prominent AI difficulty.
+   These are presentation styles only; all plays still use the universal V2 reducer. */
+.v2-shell .v2-setup-v3{padding:22px 24px 18px;gap:18px;background:linear-gradient(145deg,#fff 0%,#fff 76%,#f8f9fc 100%);border-color:#d7dfe8}
+.v2-shell .setup-intro{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.v2-shell .setup-kicker{font-size:10px;color:#a34b57;font-weight:800;letter-spacing:1.4px}
+.v2-shell .setup-intro h2{font-size:25px;font-weight:800;letter-spacing:-.025em;margin-top:3px}
+.v2-shell .setup-intro p{color:#788293;margin:4px 0 0;font-size:12px}
+.v2-shell .matchup-picker{display:grid;grid-template-columns:minmax(0,1fr) 52px minmax(0,1fr);align-items:center;gap:12px}
+.v2-shell .matchup-side{display:flex;flex-direction:column;min-width:0;gap:12px;background:#fbfcfe;border:1px solid #dfe5ec;border-radius:13px;padding:17px 18px;min-height:190px}
+.v2-shell .matchup-title,.v2-shell .difficulty-header>div{display:flex;align-items:center;gap:10px}
+.v2-shell .matchup-title h3,.v2-shell .difficulty-header h3{font-size:17px;margin:0}
+.v2-shell .matchup-title p{font-size:11px;color:#758395;margin:2px 0 0}
+.v2-shell .matchup-step{display:inline-grid;place-items:center;width:30px;height:30px;flex-shrink:0;background:#f4e4e7;color:#a34550;font-size:12px;font-weight:850;border-radius:9px}
+.v2-shell .matchup-select-label{font-size:12px;font-weight:750;color:#44566c}
+.v2-shell .matchup-select{font:inherit;background:#fff;width:100%;min-width:0;min-height:46px;border:1px solid #c6d1dd;border-radius:9px;padding:10px;color:#293d54;font-size:13px;box-shadow:0 1px 3px #1b31490c}
+.v2-shell .matchup-select:focus-visible{outline:3px solid #b0c8ed;outline-offset:2px}
+.v2-shell .matchup-vs{color:#bc818b;text-align:center;font-size:18px;font-weight:900;letter-spacing:1px}
+.v2-shell .featured-decks{display:flex;flex-wrap:wrap;gap:6px}
+.v2-shell .deck-quick-pick{flex:1 1 auto;white-space:nowrap;border:1px solid #cbd8e7;background:#fff;border-radius:8px;font-size:11px;font-weight:700;padding:9px 7px;color:#526579}
+.v2-shell .deck-quick-pick.blue{--deck-accent:#3b83c8}
+.v2-shell .deck-quick-pick.green{--deck-accent:#2d9466}
+.v2-shell .deck-quick-pick.purple{--deck-accent:#8963bb}
+.v2-shell .deck-quick-pick[aria-pressed="true"]{color:var(--deck-accent);border-color:var(--deck-accent);box-shadow:inset 0 0 0 1px var(--deck-accent);background:#fff}
+.v2-shell .deck-quick-pick:disabled{cursor:not-allowed;opacity:.45}
+.v2-shell .chosen-deck-meta{color:#448368;font-size:11px;margin:0;min-height:26px}
+.v2-shell .difficulty-picker{background:#fafbfc;border:1px solid #e1e6ed;border-radius:13px;padding:14px 17px;display:grid;gap:12px}
+.v2-shell .difficulty-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:9px}
+.v2-shell .difficulty-header p{margin:0;color:#798597;font-size:11px}
+.v2-shell .difficulty-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.v2-shell .difficulty-choice{background:#fff;border:1px solid #d7dfe8;display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:12px 16px;border-radius:10px;color:#596675;text-align:left}
+.v2-shell .difficulty-choice strong{font-size:16px;color:#343f4e}
+.v2-shell .difficulty-choice span{font-size:11px;color:#8a95a4}
+.v2-shell .difficulty-choice[aria-pressed="true"]{border-color:#ae4854;background:#fff7f8;box-shadow:inset 0 0 0 1px #ae4854}
+.v2-shell .difficulty-choice[aria-pressed="true"] strong{color:#a23e4b}
+.v2-shell .difficulty-choice:focus-visible,.v2-shell .deck-quick-pick:focus-visible{outline:3px solid #b0c8ed;outline-offset:2px}
+.v2-shell .setup-bottom{display:flex;justify-content:space-between;align-items:flex-start;gap:15px;flex-wrap:wrap}
+.v2-shell .match-advanced{min-width:200px;max-width:100%}
+.v2-shell .match-advanced summary,.v2-shell .designated-details>summary{cursor:pointer;color:#667589;font-size:12px;font-weight:650}
+.v2-shell .advanced-fields{display:flex;flex-wrap:wrap;gap:12px;padding:12px 0}
+.v2-shell .advanced-fields .field{min-width:150px}
+.v2-shell .setup-actions{display:flex;align-items:center;gap:12px}
+.v2-shell .setup-actions #start-game{font-size:15px;font-weight:800;border-radius:10px;padding:13px 26px;min-height:48px;box-shadow:0 7px 14px #ad49552b}
+.v2-shell .setup-actions #start-game:hover{background:#982f3c}
+.v2-shell .setup-actions #restart-notice{max-width:330px}
+.v2-shell .designated-details{border-top:1px solid #e5e9ee;padding-top:12px}
+.v2-shell .designated-details>summary{margin:0 0 8px}
+.v2-shell .designated{margin-top:8px}
+.v2-shell .v2-setup-v3>.note{margin:0}
+@media(max-width:920px){.v2-shell .matchup-picker{grid-template-columns:minmax(0,1fr) 32px minmax(0,1fr);gap:8px}.v2-shell .matchup-side{padding:12px}.v2-shell .featured-decks{gap:5px}.v2-shell .deck-quick-pick{padding:8px 5px}}
+@media(max-width:680px){
+ .v2-shell .v2-setup-v3{padding:17px 12px}
+ .v2-shell .matchup-picker{grid-template-columns:1fr;gap:8px}
+ .v2-shell .matchup-vs{padding:2px}
+ .v2-shell .matchup-side{min-height:auto}
+ .v2-shell .difficulty-options{gap:6px}
+ .v2-shell .difficulty-choice{padding:12px 9px}
+ .v2-shell .setup-bottom{display:grid;grid-template-columns:1fr;gap:12px}
+ .v2-shell .setup-actions{flex-direction:column;align-items:stretch}
+ .v2-shell .setup-actions #start-game{width:100%}
+}

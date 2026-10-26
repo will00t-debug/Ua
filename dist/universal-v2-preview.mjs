@@ -9,6 +9,7 @@ import {validateUniversalDeck} from './universal-v2/pack.mjs';
 import {V2_ABILITY_TEMPLATE_IDS} from './universal-v2/ability-templates.mjs';
 import {listRegisteredV2Titles,registeredV2TitlePack} from './universal-v2/title-packs/registry.mjs';
 import {V2_EDITOR_TRANSFER_KEY} from './v2-editor-compat.mjs';
+import {collectSavedV2LobbyDecks,validatedLobbyChoice,V2_MATCH_SETUP_STORAGE_KEY} from './universal-v2/lobby-saved-decks.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  universalPublicView,universalPrivateChoices,assertUniversalMatch} from './universal-v2/engine.mjs';
 import {chooseUniversalAiAction} from './universal-v2/ai.mjs';
@@ -384,7 +385,7 @@ function render(){
  const target=$('match-view');if(!target)return;
  target.replaceChildren();
  if(!app.state){
-  target.append(el('div',{class:'panel v2-empty',text:'在上方選擇牌組並按「開始新對局」。所有卡牌結算交給 UNION ARENA V2 規則引擎。'}));
+  target.append(el('div',{class:'panel v2-empty',text:'在上方選擇你的牌組、電腦牌組及 AI 難度，再按「開始 V2 對戰」。所有卡牌結算交給 UNION ARENA V2 規則引擎。'}));
   return;
  }
  const s=app.state,v=universalPublicView(app.packs,s,0),legal=legalUniversalActions(app.packs,s);
@@ -679,6 +680,22 @@ function importV2EditorDeck(){
  $('restart-notice').textContent='已載入 V2 組卡頁的 50 張牌組：'+name+'。可以直接開始與 AI 對戰。';
 }
 importV2EditorDeck();
+
+// Saved decks remain browser-local, and are revalidated against the CURRENT
+// V2 rule pack. Unsupported decks are shown as unavailable, never auto-enabled.
+function importSavedLobbyDecks(){
+ for(const row of collectSavedV2LobbyDecks(localStorage)){
+  if(row.ready)decks[row.key]={pack:row.pack,counts:row.counts,label:row.name};
+  for(const side of ['my-title','ai-title']){
+   const title=side==='my-title'?'我的收藏｜':'收藏牌組｜';
+   $(side).append(el('option',{
+    value:row.key,disabled:row.ready?null:true,
+    text:title+row.name+(row.ready?'':'（V2 尚未完整支援）')
+   }));
+  }
+ }
+}
+importSavedLobbyDecks();
 function startGame(){
  resetAi();
  try{
@@ -721,11 +738,78 @@ function downloadReplay(){
  downloadBlob(JSON.stringify(app.replay,null,2)+'\n',
   'application/json;charset=utf-8','ua-v2-preview-debug-replay.json');
 }
-for(const id of ['my-title','ai-title','ai-level','first-player','match-seed']){
- $(id).addEventListener('change',()=>{
-  if(app.state) $('restart-notice').textContent='更改設定後，按「開始新對局」才會套用。';
+// The original selects remain the authoritative match settings. The three
+// BLEACH quick picks and difficulty buttons are only controls for those selects.
+function syncMatchLobby(){
+ for(const button of document.querySelectorAll('[data-deck-side]')){
+  const select=$(button.dataset.deckSide),value=button.dataset.deckKey;
+  const option=[...select.options].find(o=>o.value===value);
+  const unavailable=!option||option.disabled;
+  button.disabled=unavailable;
+  button.setAttribute('aria-pressed',String(!unavailable&&select.value===value));
+  button.title=unavailable?'尚未完成 V2 整卡移植，不能開始對戰':'使用這副 50 張牌組';
+ }
+ for(const button of document.querySelectorAll('[data-ai-difficulty]'))
+  button.setAttribute('aria-pressed',String($('ai-level').value===button.dataset.aiDifficulty));
+ for(const [side,target] of [['my-title','my-deck-description'],['ai-title','ai-deck-description']]){
+  const selector=$(side),deck=validatedLobbyChoice(selector,decks,designatedReady);
+  const note=$(target);
+  if(!note)continue;
+  const count=deck?Object.values(deck.counts||{}).reduce((n,v)=>n+v,0):0;
+  const name=selector.selectedOptions?.[0]?.textContent||selector.value;
+  note.textContent=deck?'✓ '+name+' · '+count+' 張 · V2 可用':'此牌組尚未支援 V2，請改選其他牌組。';
+ }
+}
+function markLobbyChanged(){
+ if(app.state)$('restart-notice').textContent='設定已更改；按「開始 V2 對戰」建立新對局。';
+}
+function rememberMatchLobby(){
+ try{localStorage.setItem(V2_MATCH_SETUP_STORAGE_KEY,JSON.stringify({
+  mine:$('my-title').value,opponent:$('ai-title').value,
+  difficulty:$('ai-level').value,first:$('first-player').value
+ }));}catch{/* Browser may disable storage; match setup still works. */}
+}
+function restoreMatchLobby(){
+ let saved=null;
+ try{saved=JSON.parse(localStorage.getItem(V2_MATCH_SETUP_STORAGE_KEY)||'null');}catch{}
+ if(!saved||typeof saved!=='object')return;
+ const mine=$('my-title'),opponent=$('ai-title');
+ // The user just followed an editor-to-match transfer: never replace it with
+ // an older stored selection.
+ const imported=['editor-v2-mine'].includes(mine.value)||
+  mine.value.startsWith('builder-')||mine.value.startsWith('classic-');
+ const has=(select,value)=>[...select.options].some(x=>x.value===value&&!x.disabled);
+ if(!imported&&has(mine,saved.mine))mine.value=saved.mine;
+ if(has(opponent,saved.opponent))opponent.value=saved.opponent;
+ if(['easy','normal','hard'].includes(saved.difficulty))$('ai-level').value=saved.difficulty;
+ if(['human','ai'].includes(saved.first))$('first-player').value=saved.first;
+}
+restoreMatchLobby();
+for(const button of document.querySelectorAll('[data-deck-side]')){
+ button.addEventListener('click',()=>{
+  const select=$(button.dataset.deckSide),key=button.dataset.deckKey;
+  if(button.disabled||![...select.options].some(o=>o.value===key&&!o.disabled))return;
+  select.value=key;
+  syncMatchLobby();markLobbyChanged();rememberMatchLobby();
  });
 }
-$('start-game').addEventListener('click',startGame);
+for(const button of document.querySelectorAll('[data-ai-difficulty]')){
+ button.addEventListener('click',()=>{
+  const difficulty=button.dataset.aiDifficulty;
+  if(!['easy','normal','hard'].includes(difficulty))return;
+  $('ai-level').value=difficulty;
+  syncMatchLobby();markLobbyChanged();rememberMatchLobby();
+ });
+}
+for(const id of ['my-title','ai-title','ai-level','first-player','match-seed']){
+ $(id).addEventListener('change',()=>{
+  syncMatchLobby();markLobbyChanged();rememberMatchLobby();
+ });
+}
+$('start-game').addEventListener('click',()=>{
+ rememberMatchLobby();
+ startGame();
+});
 $('match-seed').value='20261015';
+syncMatchLobby();
 render();
