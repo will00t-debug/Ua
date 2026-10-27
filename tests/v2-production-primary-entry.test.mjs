@@ -4,9 +4,9 @@ import {readFileSync} from 'node:fs';
 
 const read = path => readFileSync(new URL('../' + path, import.meta.url), 'utf8');
 
-test('production root exclusively resolves to the V2 entry point', () => {
+test('production root resolves to account entry and preserves V2 battle', () => {
   const routes = JSON.parse(read('vercel.json'));
-  assert.ok(routes.rewrites.some(route => route.source === '/' && route.destination === '/universal-v2-preview.html'));
+  assert.ok(routes.rewrites.some(route => route.source === '/' && route.destination === '/online.html'));
   const entry = read('dist/universal-v2-preview.html');
   assert.match(entry, /<script type="module" src="universal-v2-preview\.mjs"/);
   assert.match(entry, /UNION ARENA V2 正式對戰/);
