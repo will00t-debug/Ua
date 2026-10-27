@@ -164,3 +164,69 @@ body{margin:0;background:#f2f3f5;color:#272b31;font:14px/1.5 system-ui,-apple-sy
  .v2-shell .setup-actions{flex-direction:column;align-items:stretch}
  .v2-shell .setup-actions #start-game{width:100%}
 }
+
+
+/* Classic tabletop R1 — visual-only layer. The V2 legal action pipeline is unchanged. */
+.v2-shell #match-view{--table-felt:#294c43;--table-border:#16362f;--table-gold:#d9c29b}
+.v2-shell #match-view .matchHeader{background:#172b2a;color:#f4efe3;padding:13px 17px;border:1px solid #314f47;border-radius:12px 12px 0 0;margin:0}
+.v2-shell #match-view .matchHeader h1{color:#f4efe3}
+.v2-shell #match-view .matchControls button{background:#f5f0e5;color:#253c35;border:1px solid #b9ad94;font-weight:650}
+.v2-shell #match-view .arena{border:7px solid var(--table-border);border-radius:0 0 18px 18px;background:var(--table-felt);box-shadow:0 16px 34px #132c2940;overflow:hidden}
+.v2-shell #match-view .phaseBar{justify-content:center;background:#1b3934;border-color:#42655b;color:#c4d8d0;padding:9px}
+.v2-shell #match-view .phaseBar span{color:#b8cfc4}
+.v2-shell #match-view .phaseBar span.current{color:#fff1cb;background:#436b58;border-color:#c5ac78}
+.v2-shell #match-view .playerArea{padding:16px 24px;background:transparent;color:#f4f2e9}
+.v2-shell #match-view .playerArea.opponent{background:#23463e}
+.v2-shell #match-view .playerInfo{padding:8px 12px;background:#102c28a6;border:1px solid #52766a;border-radius:9px}
+.v2-shell #match-view .playerName,.v2-shell #match-view .playerResources{color:#f4f2e9}
+.v2-shell #match-view .playerName small{color:#b7d0c5}
+.v2-shell #match-view .avatar{background:#e8ddc8;color:#385548;border-color:#c9b793}
+.v2-shell #match-view .lineLabel{color:#d6e7d9;font-size:11px;font-weight:750}
+.v2-shell #match-view .lineGroup{max-width:880px;grid-template-columns:90px minmax(0,1fr) 76px;gap:12px;margin:10px auto}
+.v2-shell #match-view .slots{max-width:480px;grid-template-columns:repeat(4,minmax(0,88px));gap:14px}
+.v2-shell #match-view .slot{background:#122e294d;border:1px dashed #8caa98;border-radius:7px}
+.v2-shell #match-view .slot.occupied{background:transparent;border-color:transparent}
+.v2-shell #match-view .slotFace{border:2px solid #e1d6c0;border-radius:6px;box-shadow:0 3px 9px #10241d7a}
+.v2-shell #match-view .slot.selected .slotFace{border:3px solid #f7d37a;box-shadow:0 0 0 3px #ffe6a15c}
+.v2-shell #match-view .slot.destination{border:2px solid #f7d37a;background:#f4d57c2a}
+.v2-shell #match-view .slot.destination:after{background:#f9efcf;color:#554121}
+.v2-shell #match-view .slotIndex{color:#a4c2af}
+.v2-shell #match-view .pile{background:#183b34;border:1px solid #729184;color:#d1e1d7;border-radius:6px}
+.v2-shell #match-view .pile b{color:#fff0cf}
+.v2-shell #match-view .lifeRow{background:#1c3d36;padding:10px}
+.v2-shell #match-view .lifeText{color:#f2e7ce;font-weight:750}
+.v2-shell #match-view .lifeCard{background:#c8b68d;color:#263c32;border-color:#e9dbb7}
+.v2-shell #match-view .centerLine{background:#16352f;color:#f2e2b8;border-block:1px solid #628273;font-weight:800;letter-spacing:2px}
+.v2-shell #match-view .handArea{background:#1b3b34;border-top:2px solid #769280;padding:16px 20px}
+.v2-shell #match-view .handTitle{color:#f1e9d6;font-weight:750;font-size:12px}
+.v2-shell #match-view .hand{max-width:calc(var(--hand-wide,7)*112px - 7px);gap:9px}
+.v2-shell #match-view .handCard{max-width:110px;border:2px solid #e3d7bd;border-radius:6px;box-shadow:0 5px 12px #10241d80;transition:transform .14s ease,box-shadow .14s ease}
+.v2-shell #match-view .handCard.playable{border-color:#edc779}
+.v2-shell #match-view .handCard.selected{border:3px solid #ffdb7d;transform:translateY(-9px);box-shadow:0 0 0 3px #ffe6a16b,0 10px 18px #0b251caa}
+.v2-shell #match-view .handCard:focus-visible,.v2-shell #match-view .slot:focus-visible{outline:3px solid #ffe09a;outline-offset:3px}
+@media(hover:hover){.v2-shell #match-view .handCard:hover{transform:translateY(-6px)}.v2-shell #match-view .handCard.selected:hover{transform:translateY(-9px)}}
+.v2-shell #match-view .selectionBar{background:#f6f0e3;border:1px solid #d7c9ac;border-radius:10px;margin:12px;padding:14px}
+.v2-shell #match-view .selectionBar b{color:#4d493c}
+.v2-shell #match-view .v2-legal-buttons button{min-height:42px;background:#fff;border:1px solid #bcb6a8;color:#344c42;font-size:12px;font-weight:650}
+.v2-shell #match-view .v2-legal-buttons button:focus-visible{outline:3px solid #d9a84e;outline-offset:2px}
+.v2-shell #match-view .phaseAction{background:#f5f0e6;border-color:#d8cab0;padding:14px 18px}
+.v2-shell #match-view .phaseAction p{color:#5b665d}
+.v2-shell #match-view .resultBanner{background:#fff3d5;color:#483d2b}
+.v2-shell #match-view .overlay{background:#0c2019ba}
+.v2-shell #match-view .dialog{background:#fffdf7;border:2px solid #d9c49c}
+@media(max-width:700px){
+ .v2-shell #match-view .arena{border-width:4px;border-radius:0 0 12px 12px}
+ .v2-shell #match-view .playerArea{padding:10px 6px}
+ .v2-shell #match-view .lineGroup{grid-template-columns:52px minmax(0,1fr) 43px;gap:4px;margin:8px auto}
+ .v2-shell #match-view .slots{grid-template-columns:repeat(4,minmax(0,1fr));gap:5px}
+ .v2-shell #match-view .lineLabel{font-size:9px}
+ .v2-shell #match-view .playerInfo{padding:6px;gap:5px}
+ .v2-shell #match-view .playerResources{gap:6px;font-size:10px}
+ .v2-shell #match-view .handArea{padding:10px 5px}
+ .v2-shell #match-view .hand{gap:4px}
+ .v2-shell #match-view .handCard .handName{font-size:7px}
+ .v2-shell #match-view .selectionBar{margin:8px 4px;padding:10px}
+ .v2-shell #match-view .phaseBar{gap:2px;padding:5px}
+ .v2-shell #match-view .phaseBar span{padding:5px 7px;font-size:10px}
+}
+@media(prefers-reduced-motion:reduce){.v2-shell #match-view .handCard{transition:none}}
