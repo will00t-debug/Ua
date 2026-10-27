@@ -66,7 +66,8 @@ test('existing signed-in account deck opens original image builder; saving updat
   assert.equal(Object.values(body.counts).reduce((n,v)=>n+v,0),50);
   const after=JSON.parse(local.get('bleach-arena-saved-decks-v1'));
   assert.ok(after.some(d=>d.id===otherId),'Other local saved decks must remain');
-  assert.ok(after.some(d=>d.id==='original-green'),'Cloud source localId must remain stable');
+  assert.ok(after.some(d=>d.id==='v2-account-'+remoteId),'Account editor saves to account-specific local copy');
+  assert.equal(after.some(d=>d.id==='original-green'),false,'Never overwrite an unrelated browser account localId');
  }finally{
   globalThis.setTimeout=originalTimer;
   globalThis.fetch=originalFetch;
