@@ -10,6 +10,7 @@
     "test": "node --test tests/*.test.mjs",
     "server": "node server/index.mjs",
     "worker:build": "node scripts/build-worker.mjs",
+    "worker:preflight": "node scripts/cloudflare-deploy-preflight.mjs",
     "worker:dev": "node scripts/build-worker.mjs && npx --yes wrangler dev",
     "worker:deploy": "node scripts/build-worker.mjs && npx --yes wrangler deploy",
     "benchmark:ai": "node scripts/benchmark-ai.mjs"
