@@ -88,7 +88,19 @@ const proof=Object.freeze({
  '068':['另一己方能源需求1以下','強制回手其他低費己方角色，沒有則回自身'],
  '076':['BP3000以下','綠事件有水篠旬才把退場 BP3000 改為 BP5000；Life SPECIAL 無條件'],
  '078':['最多2張己方AP','事件至多回復二 AP，Life FINAL'],
- '079':['最多2張己方AP','事件至多回復二 AP，Life FINAL']
+ '079':['最多2張己方AP','事件至多回復二 AP，Life FINAL'],
+ '017':['若己方場上沒有任何卡，手牌中需求能源減少紫2。登場時查看牌庫頂1張，選擇放回或送場外。',
+  'Official UA51BT/SLG-1-017 水篠 旬 purple2/AP1/BP2000/gen1 ACTIVE life. While this card is in hand and both own lines are empty, required energy is reduced by purple 2. On play, look at the top card and put it back on top or outside. ACTIVE life is the generic own-character ACTIVE plus BP+3000. Page checked 2026-10-24; not a full FAQ certification.'],
+ '054':['登場時查看牌庫頂2張，可把其中最多1張具有第四次架南島Raid特徵的卡送場外；其餘按任意順序放回牌庫頂。',
+  'Official UA51BT/SLG-1-054 黒須 圭介 green0/AP1/BP1500/gen1 ACTIVE life. On play, look at the top 2 and put up to one card with exact trait 第四次架南島レイド outside; order the rest on top. Catalogue trait 第四次架南島Raid is the known wrong token. ACTIVE life is generic. Page checked 2026-10-24; not a full FAQ certification.'],
+ '071':['主要階段每回合一次：REST自己，使另一己方角色本回合BP+1000並將自身返回手牌。',
+  'Official UA51BT/SLG-1-071 マリー green0/AP1/BP1500/gen1 DRAW. Once per turn, REST this card on either line, give one other own character BP+1000 this turn, then return this card to hand. The return is not retirement. Official trait is one token DFN／第四次架南島レイド. Page checked 2026-10-24; not a full FAQ certification.'],
+ '074':['登場時令另一己方DFN角色最多1張本回合獲Impact1。',
+  'Official UA51BT/SLG-1-074 ルノー green2/AP1/BP3000/gen1 DRAW. On play, up to one other own DFN character gains Impact 1 this turn. Official trait is one token DFN／第四次架南島レイド. Page checked 2026-10-24; not a full FAQ certification.'],
+ '050':['主要階段REST並退場此角色，可從己方場外回收最多1張水篠旬。',
+  'Official UA51BT/SLG-1-050 観月 絵里 green0/AP1/BP500/gen1, no life. MAIN rests this character on either line, truly retires it, then adds up to one own outside card named 水篠 旬. The source name is not a target. Page checked 2026-10-24; not a full FAQ certification.'],
+ '063':['登場時查看牌庫頂3張，可公開最多1張第四次架南島Raid卡加入手牌，其他按任意順序置底；若加入手牌，再送1張手牌場外。',
+  'Official UA51BT/SLG-1-063 最上 真 green1/AP1/BP1500/gen1 DRAW life. On play, look at the top 3, reveal up to one exact trait 第四次架南島レイド to hand, order the rest on the bottom, and discard one hand card only after a take. DRAW life has no extra text. Page checked 2026-10-24; not a full FAQ certification.']
 });
 export default Object.freeze({
  title:'solo-leveling',
@@ -137,7 +149,8 @@ export default Object.freeze({
      ...(['SLG-1-033','SLG-1-029','SLG-1-031','SLG-1-011','SLG-1-044','SLG-1-059','SLG-1-061','SLG-1-020'].includes(def.id)?['tests/v2-slg-third-eight-shared.test.mjs']:[]),
      ...(['SLG-1-047','SLG-1-048','SLG-1-049','SLG-1-051'].includes(def.id)?['tests/v2-slg-chain-raid-shared.test.mjs']:[]),
      ...(['SLG-1-022','SLG-1-034','SLG-1-058','SLG-1-064','SLG-1-073','SLG-1-075'].includes(def.id)?['tests/v2-slg-final-shared.test.mjs']:[]),
-     ...(['SLG-1-019','SLG-1-020','SLG-1-029','SLG-1-031','SLG-1-033','SLG-1-035','SLG-1-044','SLG-1-047','SLG-1-057','SLG-1-058','SLG-1-059','SLG-1-060','SLG-1-064'].includes(def.id)?['tests/v2-slg-official-faq.test.mjs']:[]),],
+     ...(['SLG-1-019','SLG-1-020','SLG-1-029','SLG-1-031','SLG-1-033','SLG-1-035','SLG-1-044','SLG-1-047','SLG-1-057','SLG-1-058','SLG-1-059','SLG-1-060','SLG-1-064'].includes(def.id)?['tests/v2-slg-official-faq.test.mjs']:[]),
+     ...(def.id==='SLG-1-017'||def.id==='SLG-1-054'||def.id==='SLG-1-063'||def.id==='SLG-1-050'||def.id==='SLG-1-071'||def.id==='SLG-1-074'?['tests/v2-c27-five-title-batch.test.mjs']:[]),],
     ...(def.implementation==='vanilla'?{verifiedNoExtraEffects:true}:{})}
   });
  }))

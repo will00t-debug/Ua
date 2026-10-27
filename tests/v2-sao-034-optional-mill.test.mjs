@@ -51,7 +51,7 @@ function aiLegal(s){
  }
 }
 
-test('SAO-2-034 mills at most one and leaves mandatory mill unchanged',()=>{
+test('SAO-2-034 stays a one-card optional mill; shared optional mill allows two and rejects three',()=>{
  const source=SAO_OFFICIAL_CARDS.find(c=>c.id==='SAO-2-034');
  assert.equal(source.effectJa,'【アタック時】自分の山札の上から1枚まで場外に置く。');
  assert.equal(source.energy,2);
@@ -65,8 +65,10 @@ test('SAO-2-034 mills at most one and leaves mandatory mill unchanged',()=>{
  assert.ok(EXPECTED_V2_IDS['sword-art-online'].includes('SAO-2-034'));
  const base={id:'LAB',name:'Lab',color:'purple',type:'character',energy:0,ap:1,
   bp:1000,gen:1,implementation:'dsl',effects:{}};
- assert.throws(()=>createUniversalPack({id:'two',cards:[{...base,
-  effects:{onAttack:[{op:'millTop',count:2,optional:true}]}}]}),/optional mill/);
+ assert.doesNotThrow(()=>createUniversalPack({id:'two',cards:[{...base,
+  effects:{onAttack:[{op:'millTop',count:2,optional:true}]}}]}));
+ assert.throws(()=>createUniversalPack({id:'three',cards:[{...base,
+  effects:{onAttack:[{op:'millTop',count:3,optional:true}]}}]}),/optional mill/);
  assert.doesNotThrow(()=>createUniversalPack({id:'forced',cards:[{...base,
   effects:{onAttack:[{op:'millTop',count:2}]}}]}));
 });

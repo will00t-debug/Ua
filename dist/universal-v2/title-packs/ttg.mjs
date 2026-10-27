@@ -94,7 +94,8 @@ export default Object.freeze({
       ...(['TTG-1-008','TTG-1-025','TTG-1-030','TTG-1-039','TTG-1-044','TTG-1-050','TTG-1-029'].includes(def.id)?['tests/v2-ttg-seven.test.mjs']:[]),
       ...(['TTG-1-003','TTG-1-017','TTG-1-040','TTG-1-068','TTG-1-070','TTG-1-080'].includes(def.id)?['tests/v2-ttg-six-more.test.mjs']:[]),
       ...(['TTG-1-060','TTG-1-059','TTG-1-058','TTG-1-069','TTG-1-024','TTG-1-075','TTG-1-021'].includes(def.id)?['tests/v2-ttg-seven-more.test.mjs']:[]),
-      ...(['TTG-1-004','TTG-1-012','TTG-1-027','TTG-1-031','TTG-1-032','TTG-1-033','TTG-1-034','TTG-1-056','TTG-1-061','TTG-1-062','TTG-1-074'].includes(def.id)?['tests/v2-ttg-finish.test.mjs']:[])]}
+      ...(['TTG-1-004','TTG-1-012','TTG-1-027','TTG-1-031','TTG-1-032','TTG-1-033','TTG-1-034','TTG-1-056','TTG-1-061','TTG-1-062','TTG-1-074'].includes(def.id)?['tests/v2-ttg-finish.test.mjs']:[]),
+      ...(def.id==='TTG-1-069'?['tests/v2-c27-five-title-batch.test.mjs']:[])]}
   });
  }))
 });

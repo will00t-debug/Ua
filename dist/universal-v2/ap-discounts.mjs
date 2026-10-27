@@ -8,7 +8,9 @@ export function matchesPrintedRequiredEnergyAtMost(definition,max){
 export const DISCOUNT_KIND='nextEligibleHandPlayApDiscount';
 export function validatePrintedPlayFilter(f){
  if(!f||typeof f!=='object'||Array.isArray(f)||!Object.keys(f).length||
-  Object.keys(f).some(k=>!['cardType','printedBp','printedGenAtLeast','printedRequiredEnergyAtMost','trait','namesAny','name','noRaid'].includes(k))||
+  Object.keys(f).some(k=>!['cardType','printedBp','printedGenAtLeast','printedRequiredEnergyAtMost','trait','namesAny','name','noRaid','anyOfTraitOrName'].includes(k))||
+  (f.anyOfTraitOrName!==undefined&&f.anyOfTraitOrName!==true)||
+  (f.anyOfTraitOrName===true&&(typeof f.trait!=='string'||typeof f.name!=='string'))||
   (f.cardType!==undefined&&!['character','field','event'].includes(f.cardType))||
   (f.printedBp!==undefined&&(!Number.isInteger(f.printedBp)||f.printedBp<0||f.printedBp>50000))||
   (f.printedGenAtLeast!==undefined&&(!Number.isInteger(f.printedGenAtLeast)||f.printedGenAtLeast<0||f.printedGenAtLeast>50))||
@@ -26,9 +28,10 @@ export function matchesPrintedPlayFilter(d,f){
   (f.printedGenAtLeast===undefined||d.gen>=f.printedGenAtLeast)&&
   (f.printedRequiredEnergyAtMost===undefined||matchesPrintedRequiredEnergyAtMost(d,f.printedRequiredEnergyAtMost))&&
   (f.namesAny===undefined||f.namesAny.some(name=>cardHasName(d,name)))&&
-  (f.name===undefined||cardHasName(d,f.name))&&
-  (f.noRaid!==true||(d.trigger!=='raid'&&!d.raidName))&&
-  (f.trait===undefined||cardHasTrait(d,f.trait));
+  (f.anyOfTraitOrName===true?cardHasTrait(d,f.trait)||cardHasName(d,f.name):
+   (f.name===undefined||cardHasName(d,f.name))&&
+   (f.trait===undefined||cardHasTrait(d,f.trait)))&&
+  (f.noRaid!==true||(d.trigger!=='raid'&&!d.raidName));
 }
 export function validateHandDiscount(s,e){
  validatePrintedPlayFilter(e.filter);
@@ -49,7 +52,7 @@ export function grantHandDiscount(s,owner,source,filter){
  s.nextContinuousStateId++;validateHandDiscount(s,e);s.continuousStates.push(e);
 }
 // A payment plan only; spendAp remains the single AP payment implementation.
-export function handPlayApPlan(s,owner,d,{raid=false,uid=null}={}){
+export function handPlayApPlan(s,owner,d,{raid=false,uid=null,nameOnField=false}={}){
  const ids=s.continuousStates.filter(e=>e.kind===DISCOUNT_KIND&&e.controller===owner&&
   !e.consumed&&e.turn===s.turn&&matchesPrintedPlayFilter(d,e.filter)).map(e=>e.id);
  // Raid-only printed AP reduction. A zero-AP hand use of another card with
@@ -64,7 +67,10 @@ export function handPlayApPlan(s,owner,d,{raid=false,uid=null}={}){
  let nameCut=0;
  if(raid)for(const cut of s.handRaidCuts?.[owner]||[])
   if(cut.names.includes(d.name))nameCut+=cut.amount;
- return {cost:Math.max(0,d.ap-ids.length-raidCut-nameCut),ids};
+ // A printed name on the controller's own field reduces only this card,
+ // once, while that name is present. It is not a stored next-use grant.
+ const namedCut=nameOnField&&d.handApDiscountWhileName?.amount===1?1:0;
+ return {cost:Math.max(0,d.ap-ids.length-raidCut-nameCut-namedCut),ids};
 }
 export function definitionGrantsDiscount(value,filter){
  if(!value||typeof value!=='object')return false;

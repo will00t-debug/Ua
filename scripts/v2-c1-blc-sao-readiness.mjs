@@ -10,22 +10,8 @@ const FOCUS=['bleach','sword-art-online'];
 const PORTED=['BLC-1-058','BLC-1-088','BLC-1-101','BLC-4-073'];
 // Official iframe pages fetched 2026-10-24. None of these pages contained an FAQ.
 export const C1_OFFICIAL_REVIEWS=Object.freeze({
- 'BLC-1-091':{status:'PARTIAL',set:'UA08BT',
-  missing:'name alias 山本 元柳斎 重國 exists; BP while own front has no other character does not'},
- 'BLC-2-041':{status:'ENGINE BLOCKED',set:'EX07BT',
-  missing:'BP while another own character truly retired this turn; the current count includes this physical card'},
- 'SAO-1-076':{status:'ENGINE BLOCKED',set:'UA15BT',
-  missing:'on play, REST-play up to one hand character with energy at most 2, AP 1 and trait ALO; no color is printed'},
- 'SAO-1-085':{status:'ENGINE BLOCKED',set:'UA15BT',
-  missing:'on attack, draw 1 when this character current BP is at least 5000'},
- 'SAO-1-103':{status:'ENGINE BLOCKED',set:'UA15ST',
-  missing:'on play, move up to one own character to the other line; COLOR life is a printed BP3500 front bounce and is not pinned here'},
- 'SAO-2-037':{status:'ENGINE BLOCKED',set:'EX08BT',
-  missing:'on retire, optional mill of up to 2; optional mill currently accepts exactly 1'},
  'SAO-2-039':{status:'ENGINE BLOCKED',set:'EX08BT',
-  missing:'this turn BP+1000 after this player has used a 歌 card; event-use is a different ledger'},
- 'SAO-2-066':{status:'ENGINE BLOCKED',set:'EX08BT',
-  missing:'look at top 2, up to one green card with exact trait ALO to outside, order the rest on top'}
+  missing:'this turn BP+1000 after this player has used a 歌 card; event-use is a different ledger'}
 });
 export function c1BlcSaoReadiness(){
  const inv=v2AllTitleInventory(),index=capabilityIndex(inv);

@@ -52,8 +52,17 @@ export function matchesOwnDistinctTraits(s,owner,sourceUid,profile,printed){
 // Small immutable predicate family for PRINTED persistent bonuses.
 // Each condition is evaluated from the current match on every BP/energy read,
 // not when a card is played. This is distinct from once-resolved turn buffs.
-// Strictly use the physical controller's fields: never hand/outside/underlayers.
-export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energy,cardBp){
+// Field predicates use this controller's front and energy. Hand, deck,
+// removed, and Raid under-cards stay out unless a clause names 場外.
+export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energy,cardBp,requiredEnergyOf){
+ // A printed 「かつ」 is one bonus with every clause true. The outer turn
+ // is the printed turn icon. Each clause keeps its own closed predicate.
+ if(condition?.logic==='all'||condition?.logic==='any'){
+  if(condition.turn==='own'&&s.active!==owner)return false;
+  if(condition.turn==='opponent'&&s.active===owner)return false;
+  const hit=q=>matchesV2LiveCondition(s,owner,sourceUid,q,printed,energy,cardBp,requiredEnergyOf);
+  return condition.logic==='any'?condition.checks.some(hit):condition.checks.every(hit);
+ }
  if(condition.turn==='own'&&s.active!==owner)return false;
  if(condition.turn==='opponent'&&s.active===owner)return false;
  // 「自分のターン中」かつ「このキャラの下に裏向きのカード」. The physical
@@ -87,7 +96,52 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   return retiredThisTurn(s,owner,condition.cardType);
  if(condition.kind==='retireCountThisTurn')
   return countRetirementsThisTurn(s,condition.controller==='own'?owner:
-   condition.controller==='opponent'?1-owner:'any',condition.cardType)>=condition.min;
+   condition.controller==='opponent'?1-owner:'any',condition.cardType,
+   condition.excludeSelf===true?sourceUid:null)>=condition.min;
+ if(condition.kind==='oppFrontLiveBpBelowPrinted'){
+  // 元々のBPよりBPが低い is live BP against the printed number.
+  // Only the opponent's front characters count. Energy-line cards do not.
+  if(typeof cardBp!=='function')throw Error('Live BP comparison needs a BP reader');
+  return s.players[1-owner].front.some(c=>c&&printed(c).type==='character'&&
+   cardBp(c)<printed(c).bp);
+ }
+ if(condition.kind==='oppFrontBelowPrintedCount'){
+  // 3枚以上. Same live-versus-printed comparison, counted. A field has no
+  // BP. An energy-line character is not on the front line.
+  if(typeof cardBp!=='function')throw Error('Live BP comparison needs a BP reader');
+  let found=0;
+  for(const c of s.players[1-owner].front)
+   if(c&&printed(c).type==='character'&&cardBp(c)<printed(c).bp)found++;
+  return found>=condition.min;
+ }
+ if(condition.kind==='ownFrontNoOtherCharacter'){
+  // 自分のフロントLに他のキャラがない. Energy-line cards and fields are
+  // not front characters. This physical card does not count as another.
+  return !s.players[owner].front.some(c=>c&&c.uid!==sourceUid&&
+   printed(c).type==='character');
+ }
+ if(condition.kind==='selfRequiredEnergyAtLeast'){
+  // このキャラの必要エナジー. Printed required energy plus a live increase.
+  // A hand discount is not this number. The character has to be on the field.
+  if(typeof requiredEnergyOf!=='function')
+   throw Error('Required-energy condition needs a reader');
+  const pl=s.players[owner];
+  const physical=[...pl.front,...pl.energy].find(c=>c?.uid===sourceUid);
+  if(!physical||printed(physical).type!=='character')return false;
+  return requiredEnergyOf(physical)>=condition.min;
+ }
+ if(condition.kind==='ownFieldNoOtherTrait'){
+  // Every own field card has no trait other than the named one. Q2306:
+  // a traitless card satisfies it. A buried Raid layer is not on the field.
+  const pl=s.players[owner];
+  for(const zone of [pl.front,pl.energy])for(const c of zone){
+   if(!c)continue;
+   const d=printed(c);
+   const traits=d.traitComponents||d.traits||[];
+   if(traits.some(t=>t!==condition.trait))return false;
+  }
+  return true;
+ }
  if(condition.kind==='ownLifeAtMost')
   return s.players[owner].life.length<=condition.max;
  if(condition.kind==='ownHandCountAtLeast')
@@ -194,6 +248,17 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
    if(cardBp(c)>=condition.minBp)return true;
   }
   return false;
+ }
+ if(condition.kind==='ownRemovedCountAtLeast')
+  return (s.players[owner].removed||[]).length>=condition.min;
+ if(condition.kind==='ownRemovedDistinctTrait'){
+  // 異なるカード名 is the printed name. Removed cards are not silenced.
+  const names=new Set();
+  for(const c of s.players[owner].removed||[]){
+   const d=printed(c);
+   if(cardHasTrait(d,condition.trait))names.add(d.name);
+  }
+  return names.size>=condition.min;
  }
  if(condition.kind==='ownHandFewerThanOpponent')
   return s.players[owner].hand.length<s.players[1-owner].hand.length;
@@ -344,6 +409,32 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   }
   return kinds.size>=condition.min;
  }
+ if(condition.kind==='ownNameOrDistinctPrintedColorNames'){
+  // 〈名前〉 is the usual name check, including an audited alias. The
+  // distinct-kind half counts original printed names only. Q2416/Q2417:
+  // REZ-2-041 is also 〈シルフィ〉 and still one kind; two copies stay one.
+  // Hand, deck, outside, opponent cards, fields and Raid layers are out.
+  const board=s.players[owner];
+  const areas=condition.zone==='front'?[board.front]:
+   condition.zone==='energy'?[board.energy]:[board.front,board.energy];
+  const kinds=new Set();
+  for(const area of areas)for(const c of area){
+   if(!c)continue;
+   const d=printed(c);
+   if(d.type!=='character')continue;
+   if(cardHasName(d,condition.name,originalEffectsDisabled(s,c)))return true;
+   if(d.color===condition.color)kinds.add(d.name);
+  }
+  return kinds.size>=condition.min;
+ }
+ if(condition.kind==='ownNameAbsent'&&condition.zone==='outside'){
+  // 自分の場外に〈名前〉がない. Hand, deck, removed, the field, and the
+  // opponent's outside are not this zone. Raid under-cards are not outside.
+  // An outside card is not silenced, so an audited alias still matches.
+  return !s.players[owner].outside.some(c=>
+   !(condition.excludeSelf&&c.uid===sourceUid)&&
+   cardHasName(printed(c),condition.name,false));
+ }
  const pl=s.players[owner];
  const zones=condition.zone==='front'?[pl.front]:
   condition.zone==='energy'?[pl.energy]:[pl.front,pl.energy];
@@ -389,14 +480,33 @@ export function countOppRestCharacters(s,owner,condition,printed){
 }
 // A history of real field-to-OUTSIDE retirements, not current outside count.
 // This is private internal state; public snapshots do not expose the UIDs.
-export function countRetirementsThisTurn(s,controller='any',cardType='any'){
+export function countRetirementsThisTurn(s,controller='any',cardType='any',excludeUid=null){
  if(![0,1,'any'].includes(controller)||!['any','field','character'].includes(cardType))
   throw Error('Invalid true-retirement count predicate');
  // Count completed departure EVENTS, not unique UIDs or the cards currently
  // in outside. A returned/replayed physical card can retire again.
+ // excludeUid is the printed 他の: this physical card's own departure
+ // does not satisfy a sentence about another character.
  return (s.turnRetireEvents||[]).filter(e=>e.turn===s.turn&&
   (controller==='any'||e.controller===controller)&&
-  (cardType==='any'||e.cardType===cardType)).length;
+  (cardType==='any'||e.cardType===cardType)&&
+  (excludeUid==null||e.uid!==excludeUid)).length;
+}
+// 元々の消費AP count. Front and energy stay separate zones. This card
+// counts unless excludeSelf is set. The boolean predicate stays above.
+export function countOwnPrintedApAtLeast(s,owner,sourceUid,condition,printed){
+ if(condition.turn==='own'&&s.active!==owner)return 0;
+ if(condition.turn==='opponent'&&s.active===owner)return 0;
+ const pl=s.players[owner];
+ const zones=condition.zone==='front'?[pl.front]:
+  condition.zone==='energy'?[pl.energy]:[pl.front,pl.energy];
+ let found=0;
+ for(const zone of zones)for(const c of zone){
+  if(!c||(condition.excludeSelf&&c.uid===sourceUid))continue;
+  const d=printed(c);
+  if(d.type==='character'&&d.ap>=condition.minAp)found++;
+ }
+ return found;
 }
 // Q2030: 元々のBP is the number printed on the card, not the current total.
 // Q2070: a field has no BP, so it is not counted by a 元々のBP filter even

@@ -2,7 +2,7 @@ import {DISCOUNT_KIND,validateHandDiscount} from './ap-discounts.mjs';
 // Reusable V2 physical-field continuous statuses, never inferred from card prose.
 const field=p=>[...p.front,...p.energy].filter(Boolean);
 const player=n=>n===0||n===1;
-const protectionScope=v=>['any','character','trigger'].includes(v);
+const protectionScope=v=>['any','character','trigger','characterOrTrigger'].includes(v);
 // A grant can outlive its source's FIELD incarnation, but the physical source
 // still belongs to the granting controller, possibly now beneath a Raid.
 function ownedSource(s,owner,uid){
@@ -31,7 +31,7 @@ export function stampFieldInstance(s,c){
  return c.fieldEntryStamp;
 }
 export function grantContinuousState(s,{kind,controller,sourceUid,targetUid,until=null,sourceLinked=false,program=null,optional=false,selectionScope=null,releaseBeforeRefresh=false}){
- if(!['skipNextActive','cannotActive','cannotAttack','cannotMove','selectionApTax','frontEnergyPermission','originalEffectsDisabled','grantedOnAttack','cannotBeChosenByOppEffect'].includes(kind)||!player(controller)||
+ if(!['skipNextActive','cannotActive','cannotAttack','cannotMove','selectionApTax','frontEnergyPermission','originalEffectsDisabled','grantedOnAttack','cannotBeChosenByOppEffect','cannotBlock'].includes(kind)||!player(controller)||
   typeof sourceUid!=='string'||typeof targetUid!=='string'||typeof sourceLinked!=='boolean')
   throw Error('Invalid continuous-state descriptor');
  const target=fieldInstance(s,targetUid),source=fieldInstance(s,sourceUid);
@@ -64,7 +64,7 @@ export function grantContinuousState(s,{kind,controller,sourceUid,targetUid,unti
   Object.keys(until).length!==3))
   throw Error('FRONT energy permission requires own live target and current turn end');
  // Only the controller's next own START may expire a temporary attack ban.
- if(kind==='cannotAttack'&&(sourceLinked||until?.player!==controller||
+ if((kind==='cannotAttack'||kind==='cannotBlock')&&(sourceLinked||until?.player!==controller||
   until?.phase!=='start'||until?.edge!=='start'))
   throw Error('Attack ban must expire on granting controller next own start');
  if(kind==='cannotMove'&&(sourceLinked||until?.player!==controller||
@@ -72,7 +72,13 @@ export function grantContinuousState(s,{kind,controller,sourceUid,targetUid,unti
   throw Error('Move lock must expire on granting controller next own start');
  if(releaseBeforeRefresh!==false&&(releaseBeforeRefresh!==true||kind!=='cannotActive'||sourceLinked))
   throw Error('Early refresh release belongs only to a cannot-active lock');
- if(['cannotActive','cannotAttack','cannotMove','selectionApTax','frontEnergyPermission','originalEffectsDisabled','grantedOnAttack','cannotBeChosenByOppEffect'].includes(kind)&&(!until||!player(until.player)||
+ // 「このキャラがフロントLを離れるまで、アクティブにならない。」 The lock has
+ // no phase expiry. Moving the source to the energy line ends it.
+ if(whileSourceFront!==false&&(whileSourceFront!==true||kind!=='cannotActive'||
+  !sourceLinked||until!==null||releaseBeforeRefresh!==false||
+  !s.players[controller].front.some(c=>c?.uid===sourceUid)))
+  throw Error('Front-linked active lock needs its source on the front and no phase expiry');
+ if(!(kind==='cannotActive'&&whileSourceFront)&&['cannotActive','cannotAttack','cannotMove','cannotBlock','selectionApTax','frontEnergyPermission','originalEffectsDisabled','grantedOnAttack','cannotBeChosenByOppEffect'].includes(kind)&&(!until||!player(until.player)||
   !['start','move','main','attack'].includes(until.phase)||!['start','end'].includes(until.edge)||
   Object.keys(until).some(k=>!['player','phase','edge',...(kind==='selectionApTax'?['ownTurn']:[])].includes(k))))
   throw Error('Invalid status expiration phase');
@@ -82,7 +88,8 @@ export function grantContinuousState(s,{kind,controller,sourceUid,targetUid,unti
   until:until?{...until}:null,consumed:false,
   ...(kind==='grantedOnAttack'?{program:program.map(p=>({...p})),optional:true}:{}),
   ...(kind==='cannotBeChosenByOppEffect'?{selectionScope}:{}),
-  ...(releaseBeforeRefresh===true?{releaseBeforeRefresh:true}:{})};
+  ...(releaseBeforeRefresh===true?{releaseBeforeRefresh:true}:{}),
+  ...(whileSourceFront===true?{whileSourceFront:true}:{})};
  s.continuousStates.push(status);return status.id;
 }
 // Losing original rules does not remove buffs granted by another effect.
@@ -99,7 +106,9 @@ export function pruneContinuousStates(s){
   const t=fieldInstance(s,e.targetUid);
   if(!t||t.owner!==e.targetOwner||t.card.fieldEntryStamp!==e.targetStamp)return false;
   if(e.sourceLinked){const src=fieldInstance(s,e.sourceUid);
-   if(!src||src.card.fieldEntryStamp!==e.sourceStamp)return false;}
+   if(!src||src.card.fieldEntryStamp!==e.sourceStamp)return false;
+   if(e.whileSourceFront&&!s.players[e.controller].front.some(c=>
+    c?.uid===e.sourceUid&&c.fieldEntryStamp===e.sourceStamp))return false;}
   return true;
  });
 }
@@ -126,10 +135,19 @@ export function attemptFieldActive(s,owner,c){
 }
 export function refreshFieldActive(s,owner){
  pruneContinuousStates(s);
- for(const c of field(s.players[owner]))attemptFieldActive(s,owner,c);
+ for(const c of field(s.players[owner])){
+  // Q1052: a start or end refresh consumes 「次の1回アクティブにならない」
+  // even when the character is already ACTIVE and stays ACTIVE.
+  const skip=s.continuousStates.find(e=>e.kind==='skipNextActive'&&!e.consumed&&
+   e.targetOwner===owner&&e.targetUid===c.uid&&e.targetStamp===c.fieldEntryStamp);
+  if(c.ready&&skip){skip.consumed=true;pruneContinuousStates(s);continue;}
+  attemptFieldActive(s,owner,c);
+ }
 }
 // Only explicit card/Trigger EFFECT choice is restricted, never combat.
-// Unknown opposing effect provenance fails closed for character-only protection.
+// Unknown opposing effect provenance fails closed for character-only and
+// combined character-or-trigger protection. An explicit event or field
+// source stays selectable under the combined scope.
 export function effectChoiceProtected(s,selector,targetUid,sourceType){
  if(!player(selector)||typeof targetUid!=='string')return false;
  const target=fieldInstance(s,targetUid);
@@ -153,7 +171,9 @@ export function effectChoiceProtected(s,selector,targetUid,sourceType){
   e.targetUid===targetUid&&e.targetStamp===target.card.fieldEntryStamp&&
   (e.selectionScope==='any'||(e.selectionScope==='character'&&
    (sourceType==='character'||sourceType==='unknown'))||
-   (e.selectionScope==='trigger'&&sourceType==='trigger')));
+   (e.selectionScope==='trigger'&&sourceType==='trigger')||
+   (e.selectionScope==='characterOrTrigger'&&
+    (sourceType==='character'||sourceType==='trigger'||sourceType==='unknown'))));
 }
 // A card-effect selection tax is not a combat attacker/blocker restriction.
 export function selectionApSurcharge(s,selector,targetUid){
@@ -182,12 +202,12 @@ export function validateContinuousStates(s){
  if(!Array.isArray(s.continuousStates)||!Number.isInteger(s.nextContinuousStateId)||
   s.nextContinuousStateId<1||new Set(s.continuousStates.map(e=>e.id)).size!==s.continuousStates.length||
   s.continuousStates.some(e=>e.kind===DISCOUNT_KIND ? !validateHandDiscount(s,e) : !Number.isInteger(e.id)||e.id<1||
-   !['skipNextActive','cannotActive','cannotAttack','cannotMove','selectionApTax','frontEnergyPermission','originalEffectsDisabled','grantedOnAttack','cannotBeChosenByOppEffect'].includes(e.kind)||!player(e.controller)||
+   !['skipNextActive','cannotActive','cannotAttack','cannotMove','selectionApTax','frontEnergyPermission','originalEffectsDisabled','grantedOnAttack','cannotBeChosenByOppEffect','cannotBlock'].includes(e.kind)||!player(e.controller)||
    !player(e.targetOwner)||typeof e.sourceUid!=='string'||typeof e.targetUid!=='string'||
    !Number.isInteger(e.targetStamp)||e.targetStamp<1||typeof e.consumed!=='boolean'||
    typeof e.sourceLinked!=='boolean'||(e.sourceLinked&&(!Number.isInteger(e.sourceStamp)||e.sourceStamp<1))||
    (e.kind==='skipNextActive'&&e.until!==null)||
-   (e.kind==='cannotAttack'&&(e.sourceLinked||e.until?.player!==e.controller||
+   ((e.kind==='cannotAttack'||e.kind==='cannotBlock')&&(e.sourceLinked||e.until?.player!==e.controller||
     e.until?.phase!=='start'||e.until?.edge!=='start'))||
    (e.kind==='cannotMove'&&(e.sourceLinked||e.until?.player!==e.controller||
     e.until?.phase!=='start'||e.until?.edge!=='start'||Object.keys(e.until||{}).length!==3))||
@@ -217,8 +237,11 @@ export function validateContinuousStates(s){
      e.program[0]?.op!=='draw'||e.program[0]?.count!==1||Object.keys(e.program[0]).length!==2||
      e.sourceLinked||!player(e.until?.player)||e.until?.phase!=='attack'||e.until?.edge!=='end'))||
    (e.kind!=='grantedOnAttack'&&(e.program!==undefined||e.optional!==undefined))||
+   (e.whileSourceFront!==undefined&&!(e.kind==='cannotActive'&&e.whileSourceFront===true&&
+    e.sourceLinked&&e.until===null&&e.releaseBeforeRefresh===undefined&&
+    s.players[e.controller].front.some(c=>c?.uid===e.sourceUid&&c.fieldEntryStamp===e.sourceStamp)))||
    (e.releaseBeforeRefresh!==undefined&&(e.kind!=='cannotActive'||e.releaseBeforeRefresh!==true||e.sourceLinked))||
-   (['cannotActive','cannotAttack','cannotMove','selectionApTax','frontEnergyPermission','originalEffectsDisabled','grantedOnAttack','cannotBeChosenByOppEffect'].includes(e.kind)&&(!e.until||!player(e.until.player)||
+   (['cannotActive','cannotAttack','cannotMove','selectionApTax','frontEnergyPermission','originalEffectsDisabled','grantedOnAttack','cannotBeChosenByOppEffect','cannotBlock'].includes(e.kind)&&(!e.until||!player(e.until.player)||
     !['start','move','main','attack'].includes(e.until.phase)||!['start','end'].includes(e.until.edge)))))
   throw Error('Invalid continuous-state accounting');
  return true;

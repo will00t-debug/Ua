@@ -63,10 +63,9 @@ function aiOk(s,use=packs){
 test('C3 registers the two whole-print BLEACH reuses and leaves MST priority blocked',()=>{
  const x=c3BlcMstReuse();
  assert.deepEqual(x.registered,['BLC-4-029','BLC-4-031']);
- assert.equal(x.report.bleach,160);
- assert.equal(x.report.mst,57);
- assert.equal(x.report.registered,489);
- assert.equal(x.report.registered,489);
+ assert.equal(x.report.bleach,276);
+ assert.equal(x.report.mst,60);
+ assert.equal(x.report.registered,622);
  assert.equal(x.report.readyFromKeywords,0);
  assert.deepEqual(x.mstBlocked.map(c=>c.id),['MST-1-021','MST-1-033']);
  for(const id of x.registered)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);

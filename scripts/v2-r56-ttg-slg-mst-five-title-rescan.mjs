@@ -30,8 +30,6 @@ const PRIORITY=Object.freeze([
   reason:'MAIN rests and retires this card, then adds one outside ガンメン card to hand. Scenario tests exist. Full FAQ certification still pending'},
  {id:'TTG-1-081',owner:'GPT',status:'REGISTERED',faq:null,
   reason:'shared retireOppFrontUnderBp with Simon or Kamina field or raid-base bonus; Q1119; scenario tests exist; full FAQ certification still pending'},
- {id:'BLC-4-044',owner:'Cursor',status:'REVIEW PENDING',faq:null,
-  reason:'evaluate whether reusable shared combat atoms cover all printed clauses'},
  {id:'SAO-1-097',owner:'Cursor',status:'REVIEW PENDING',faq:null,
   reason:'re-audit optional source effect and physical UID; GPT does not migrate'},
  {id:'SLG-1-022',owner:'GPT',status:'REGISTERED',faq:'Q2029',
