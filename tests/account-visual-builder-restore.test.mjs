@@ -91,8 +91,8 @@ test('cloud deck PUT verifies account owner; preserves identity, local mapping, 
   return {status:res.status,data:await res.json().catch(()=>({}))};
  };
  try{
-  const a=await api('/api/register',{method:'POST',body:{username:'builder-owner',password:'safe-owner-password-123'}});
-  const b=await api('/api/register',{method:'POST',body:{username:'builder-guest',password:'safe-guest-password-123'}});
+  const a=await api('/api/register',{method:'POST',body:{username:'builder_owner',password:'safe-owner-password-123'}});
+  const b=await api('/api/register',{method:'POST',body:{username:'builder_guest',password:'safe-guest-password-123'}});
   assert.equal(a.status,201,JSON.stringify(a.data));assert.equal(b.status,201,JSON.stringify(b.data));
   const saved=await api('/api/decks',{method:'POST',token:a.data.token,body:{
    title:'bleach',name:'原始綠牌',localId:'green-old',counts:BLEACH_GREEN_V2_COUNTS}});
