@@ -37,7 +37,7 @@ npm start
 
 預設網址是 `http://localhost:8787`。帳號、牌組和未結束的對戰寫在 `data/account.sqlite`（`data/` 已列入 `.gitignore`）。程式重新啟動後，這些資料還在；這台電腦仍要開著，別人才連得上。線上對戰由伺服器執行 Universal V2，回應裡只有該玩家看得到的手牌與公開場面。
 
-要讓自己的電腦不必一直開著，把同一個網站部署到 Cloudflare。帳號放在一個 Durable Object，每一場對戰各用一個 Durable Object 保存隱藏手牌。先執行 `npm install` 和 `npm run worker:deploy`（需要先 `npx wrangler login`）。靜態 `dist/` 部署（包含目前的 Vercel）不會提供登入或線上對戰；原本的本機牌組與電腦對戰仍然可用。
+要讓自己的電腦不必一直開著，把同一個網站部署到 Cloudflare。帳號放在一個 Durable Object，每一場對戰各用一個 Durable Object 保存隱藏手牌。正式環境請用 GitHub Actions 部署既有 Worker `ua-arena`（密鑰只放在 GitHub Secrets；細節見 `docs/ops/cloudflare-github-actions-deploy.md`）。本機除錯可執行 `npm install` 和 `npm run worker:deploy`（需要先 `npx wrangler login`）。靜態 `dist/` 部署（包含目前的 Vercel）不會提供登入或線上對戰；原本的本機牌組與電腦對戰仍然可用。
 
 測試（需 Node.js 18 以上）：
 
