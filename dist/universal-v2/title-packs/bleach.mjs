@@ -191,7 +191,8 @@ const testForKind=Object.freeze({
  jugramEntryEnergy:'tests/v2-c29-bleach-port.test.mjs',
  bazzRequiredEnergyActive:'tests/v2-c29-bleach-port.test.mjs',
  jugramRaidAura:'tests/v2-c29-bleach-port.test.mjs',
- uryuHandFront:'tests/v2-c29-bleach-port.test.mjs'
+ uryuHandFront:'tests/v2-c29-bleach-port.test.mjs',
+ gerardLifeOrHand:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -210,7 +211,9 @@ function contributedEntry(profile){
   definition:Object.freeze(definition),
   evidence:Object.freeze({
    printedTextFragments:Object.freeze([profile.effect]),
-   reviewNote:profile.id==='BLC-4-004'?
+   reviewNote:profile.id==='BLC-4-005'?
+    'EX15BT/BLC-4-005 official page 2026-10-27. Required energy 黄4. Generated energy is 黄, so gen stays 1. On retire, choose up to one mode. Decline is legal. Mode one adds any one own life card to hand. Q2303 (2026-09-25): that card is not revealed and is not trigger-checked. Doing so REST-enters this card on the own field, front or energy. The entry does not pay required energy or AP, and it resolves on-play as an own character effect. Q2304 (2026-09-04): if life becomes 0, the loss is declared after this effect finishes, including the REST entry. Mode two puts exactly two own hand cards outside. Doing so adds this card to hand. Fewer than two hand cards cannot choose that mode. Zero life cards cannot choose the life mode. The opponent life and hand do not count. ACTIVE is the generic sentence. Trait 星十字騎士団.':
+   profile.id==='BLC-4-004'?
     'EX15BT/BLC-4-004 official page 2026-10-27. Required energy 黄4. Generated energy is 黄, so gen stays 1. Impact null: the character that battles this one loses Impact for that battle. Silence before the battle removes that sentence. A direct attack is not a battle. [起動メイン][APを1支払う] only while this card is in the controller hand. Pay 1 AP, then put 4 or more own removed 黒崎 一護 outside. Doing so enters this card ACTIVE on the own front. The entry does not pay required energy or a second AP, and it resolves on-play as an own character effect. Fewer than 4 still move, and the entry does not happen. Zero matching cards pay the AP and enter nothing. A card with another name stays. The opponent removed area does not count. An audited alias of the printed name counts. Q2302 (2026-09-04): two copies in hand share this one activate. A field copy cannot activate it. The energy line is not a destination. ACTIVE is the generic sentence. Trait 星十字騎士団.':
    profile.id==='BLC-4-012'?
     'EX15BT/BLC-4-012 official page 2026-10-27. Required energy 黄4. Generated energy is 黄, so gen stays 1. Raid onto ユーグラム・ハッシュヴァルト, become ACTIVE, and may move to the front. While this character is in raid state on the front, when another own character retires, you may draw 1. Q2307 (2026-09-04): two raid-state copies share that one draw. A field retirement is not a character. This character retiring is not another character. Declining the draw still uses the once. The energy line is not the front. Silence before the retirement removes the trigger. While this character is in raid state, on the front, during its own turn, every other own character\'s required energy increases by 2. Two such copies add 2 each. The increase is live: it ends when this character leaves the front, leaves raid state, is silenced, or the turn passes to the opponent. It is not the one-turn grant from BLC-4-011, and the two add together. This character is not its own target. A field is not a character. On play, if every own field card has no trait other than 星十字騎士団, you may REST-play up to one yellow character from hand with printed required energy 2 or less and AP 1. Q2306 (2026-09-04): a traitless card still satisfies that gate. A card with any other trait blocks it. Printed required energy is the hand check. Declining the entry is legal. The on-play is not limited to raid state. RAID is the generic sentence. Trait 星十字騎士団.':

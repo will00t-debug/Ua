@@ -33,6 +33,10 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-may-draw':'可抽1張牌',
  'effect-removed-name-outside':'將除外區的指定名稱卡送至場外',
  'effect-hand-front-active':'以 Active 登場於前線',
+ 'effect-retire-life-or-hand':'退場時最多選一項',
+ 'effect-hidden-life-hand':'將1張生命加入手牌',
+ 'effect-rest-reenter':'以 Rest 重新登場',
+ 'effect-hand-two-outside':'將2張手牌送至場外',
  'effect-pay-ap-deploy':'可支付 1 AP，從場外 REST 登場',
  'effect-optional-pay-ap':'可支付 1 AP，然後結算後續效果',
  'effect-hand-rest':'從己方手牌免費 REST 登場',
@@ -207,6 +211,11 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseRemovedOutside':return action.mode==='all'?'將符合名稱的除外卡全部送至場外':
    action.mode==='done'?'完成送至場外':'將 '+name()+' 送至場外';
   case 'chooseHandFrontActive':return '以 Active 登場於前線 '+(action.slot+1);
+  case 'chooseRetireLifeOrHand':return action.mode==='skip'?'不選任何退場項目':
+   action.mode==='life'?'將1張生命加入手牌':'將2張手牌送至場外';
+  case 'chooseHiddenLifeHand':return '將1張生命加入手牌';
+  case 'chooseRestReenter':return '以 Rest 登場於'+(action.line==='energy'?'能源線':'前線')+' '+(action.slot+1);
+  case 'chooseHandTwoOutside':return '將手牌送至場外';
   case 'chooseOptionalMill':return action.mode==='mill'?'將牌庫頂 1 張送場外':'不送場外';
   case 'choosePayApDeploy':return action.mode==='pay'?'支付 1 AP，接著選擇場外角色':'不支付 AP';
   case 'chooseOptionalPayAp':return action.mode==='pay'?'支付 1 AP，然後結算後續效果':'不支付 AP';
