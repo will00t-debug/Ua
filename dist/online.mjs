@@ -75,7 +75,7 @@ function shell(...body){
   el('header',{class:'top'},
    el('a',{class:'brand',href:'/'},el('span',{class:'mark',text:'UA'}),el('span',{},el('strong',{text:'UNION ARENA'}),el('div',{class:'muted',text:'帳號與線上對戰'}))),
    el('nav',{class:'row'},
-    el('a',{class:'linkish',href:'/index.html',text:'牌組構築'}),
+    el('a',{class:'linkish',href:'/index.html',text:'圖片式牌組構築'}),
     el('a',{class:'linkish',href:'/',text:'電腦對戰'}),
     app.user?el('button',{type:'button',text:'登出',onClick:logout}):null)),
   app.error?el('div',{class:'banner error',role:'alert',text:app.error}):null,
@@ -102,9 +102,25 @@ function deckList(){
    el('div',{},el('strong',{text:deck.name}),el('div',{class:'muted',text:(deck.titleLabel||deck.title)+' · '+total(deck)+' 張'+(deck.playable?'':' · '+((deck.issues||[])[0]||'還不能對戰'))})),
    el('div',{class:'row'},
     el('span',{class:'tag'+(deck.playable?' ready':''),text:deck.playable?'可對戰':'僅保存'}),
+    el('button',{type:'button',class:'primary',text:'圖片編輯',disabled:app.busy,onClick:()=>editAccountDeck(deck)}),
     el('button',{type:'button',text:'刪除',disabled:app.busy,onClick:()=>removeDeck(deck)}))));
  }
  return box;
+}
+// Only transiently transfer the logged-in user's own deck to the visual editor.
+// No credentials or hidden match information are serialized.
+function editAccountDeck(deck){
+ if(!app.user||!deck||typeof deck.title!=='string'||!deck.counts)return;
+ try{
+  sessionStorage.setItem('ua-account-visual-editor-v1',JSON.stringify({
+   title:deck.title,name:deck.name,counts:deck.counts,
+   remoteId:deck.id,localId:deck.localId||null
+  }));
+  window.location.assign('/index.html');
+ }catch(error){
+  app.error='無法開啟圖片式組卡：'+(error?.message||'瀏覽器儲存不可用');
+  render();
+ }
 }
 function deckSelect(){
  const playable=app.decks.filter(deck=>deck.playable);
@@ -116,10 +132,14 @@ function homeView(){
  return shell(el('div',{class:'grid split'},
   el('section',{class:'panel'},
    el('h1',{text:app.user.username+' 的牌組'}),
-   el('p',{class:'muted',text:'每個帳號只看得到自己的牌組。在牌組構築按儲存時，若已經登入，也會同步到這裡。'}),
+   el('div',{class:'builder-entry'},
+    el('div',{},el('strong',{text:'圖片式牌組構築'}),
+     el('p',{class:'muted',text:'回到之前的六作品卡圖組卡介面，可搜尋卡牌、調整張數並查看完整 50 張牌組。你也可以直接編輯下方帳號裡的牌組。'})),
+    el('a',{class:'builder-entry-button',href:'/index.html',text:'開啟組卡畫面'})),
+   el('p',{class:'muted',text:'每個帳號只看得到自己的雲端牌組。點選「圖片編輯」會帶入這副牌組，編輯後按儲存即可同步到自己的帳號。'}),
    el('div',{class:'row'},
     el('button',{type:'button',text:'匯入這台瀏覽器的牌組',disabled:app.busy,onClick:importLocal}),
-    el('a',{class:'linkish',href:'/index.html',text:'前往牌組構築'})),
+    el('a',{class:'linkish',href:'/index.html',text:'前往圖片式組卡'}))
    deckList(),
    el('details',{},el('summary',{text:'貼上牌表保存'}),
     el('form',{class:'grid',onSubmit:savePasted},

@@ -35,7 +35,7 @@ const label=id=>TITLES.find(t=>t.id===id)?.label||id;
 const defaults=Object.fromEntries(TITLES.map(t=>[t.id,t.id==='bleach'?(bleachMeta.name||'自訂 BLEACH 牌組'):t.id==='rezero'?'Re:Zero 自訂牌組':t.label+'自訂牌組']));
 const state={title:'bleach',ready:false,tab:'pick',search:'',type:'all',color:'all',
  energy:'all',names:Object.fromEntries(TITLES.map(t=>[t.id,String(names[t.id]||defaults[t.id]).slice(0,40)])),
- counts:draftData,selectedSaved:{},inspection:null,exportText:null};
+ counts:draftData,selectedSaved:{},inspection:null,exportText:null,cloudOrigin:null};
 let toastTimer=null;
 function notify(message){
  const el=$('#toast');if(!el)return;
@@ -56,7 +56,7 @@ function useDesignatedBleachPreset(id){
  state.title='bleach';state.ready=true;state.tab='overview';state.search='';
  state.type=state.color=state.energy='all';
  state.counts.bleach={...preset.counts};state.names.bleach=preset.displayName;
- state.selectedSaved.bleach=null;persist();
+ state.selectedSaved.bleach=null;state.cloudOrigin=null;persist();
  return true;
 }
 function showDetail(id){
@@ -70,6 +70,7 @@ function render(){
  const t=TITLES.find(t=>t.id===state.title)||TITLES[0],info=status();
  const countAll=t.cards.length;
  const designatedPanel=state.ready&&state.title==='bleach'?renderBuiltinBleachPanel(escapeHtml):'';
+ const accountBanner=state.cloudOrigin?`<section class="v2e-coverage v2e-account-edit" role="status"><strong>正在圖片編輯帳號牌組：${escapeHtml(state.names[state.title])}</strong><span>儲存時會更新原本的雲端牌組，保留原有 50 張牌組與登入帳號。</span><a href="/online.html">返回線上對戰</a></section>`:'';
  const infoBanner=state.ready?`<section class="v2e-coverage" role="status"><strong>Universal V2 · ${info.registered} / ${countAll} 張已登錄</strong><span>組卡可以使用完整卡表，但只有整副 50 張全部符合 V2 規則才可開始對戰。舊引擎不再參與判定。</span></section>`:'';
  const editor=renderVisualDeckBuilder({
   titles:TITLES,titleId:state.title,ready:state.ready,tab:state.tab,search:state.search,type:state.type,color:state.color,energy:state.energy,
@@ -80,16 +81,29 @@ function render(){
  });
  const modal=state.inspection?showDetail(state.inspection):state.exportText!==null?
   `<div class="v2e-modal-backdrop"><section class="v2e-modal" role="dialog" aria-modal="true" aria-label="複製牌組"><button class="v2e-x" data-action="dismiss">關閉 ×</button><h2>牌組清單</h2><textarea id="v2Export" rows="17" readonly>${escapeHtml(state.exportText)}</textarea><button class="v2e-primary" data-action="copyDeck">複製至剪貼簿</button></section></div>`:'';
- $('#app').innerHTML=`<div class="v2e-shell"><header class="v2e-header"><a href="/" class="v2e-logo">UNION ARENA <b>V2</b></a><nav><a href="/">V2 正式對戰</a><a href="/online.html">帳號／線上對戰</a><a href="/index.html" aria-current="page">卡片圖鑑／組卡</a></nav></header><main class="v2e-main"><div class="v2e-heading"><div><span class="vdb-eyebrow">OFFICIAL V2 ENGINE ONLY</span><h1>牌組構築</h1></div><a class="v2e-primary" href="/">前往 V2 對戰</a></div>${infoBanner}${designatedPanel}${editor}</main><footer class="v2e-footer">所有對戰均使用 Universal V2。可保留以前的牌組草稿，但舊版引擎、Beta 引擎和舊版 auto 標籤不再使用。</footer>${modal||''}</div>`;
+ $('#app').innerHTML=`<div class="v2e-shell"><header class="v2e-header"><a href="/" class="v2e-logo">UNION ARENA <b>V2</b></a><nav><a href="/">V2 正式對戰</a><a href="/online.html">帳號／線上對戰</a><a href="/index.html" aria-current="page">卡片圖鑑／組卡</a></nav></header><main class="v2e-main"><div class="v2e-heading"><div><span class="vdb-eyebrow">OFFICIAL V2 ENGINE ONLY</span><h1>牌組構築</h1></div><a class="v2e-primary" href="/">前往 V2 對戰</a></div>${accountBanner}${infoBanner}${designatedPanel}${editor}</main><footer class="v2e-footer">所有對戰均使用 Universal V2。可保留以前的牌組草稿，但舊版引擎、Beta 引擎和舊版 auto 標籤不再使用。</footer>${modal||''}</div>`;
  bind();
 }
-function mirrorCloudDeck(title,entry){
+async function mirrorCloudDeck(title,entry){
  if(typeof fetch!=='function')return;
+ const origin=state.cloudOrigin?.title===title?state.cloudOrigin:null;
  const localId=typeof entry.id==='string'&&/^[A-Za-z0-9:_-]{1,80}$/.test(entry.id)?entry.id:undefined;
- fetch('/api/decks',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json'},
-  body:JSON.stringify({name:entry.name,title,counts:entry.counts,localId})})
-  .then(response=>{if(response.ok)notify('已儲存，並同步到登入帳號');})
-  .catch(()=>{});
+ // Editing an account deck updates that SAME remote record. A new local
+ // deck uses the existing upsert-by-localId API. Both verify the logged-in
+ // account via its HttpOnly session, never via browser-stored credentials.
+ const url=origin?'/api/decks/'+encodeURIComponent(origin.remoteId):'/api/decks';
+ const method=origin?'PUT':'POST';
+ try{
+  const response=await fetch(url,{method,credentials:'same-origin',headers:{'content-type':'application/json'},
+   body:JSON.stringify({name:entry.name,title,counts:entry.counts,localId})});
+  if(response.ok){
+   notify(origin?'已更新原本的帳號牌組':'已儲存，並同步到登入帳號');
+  }else if(response.status===401||response.status===404){
+   notify('已儲存在瀏覽器；帳號沒有登入或已切換，無法更新雲端牌組。');
+  }else{
+   notify('已儲存在瀏覽器；雲端同步失敗，請返回帳號頁確認。');
+  }
+ }catch{notify('已儲存在瀏覽器；目前無法連線同步帳號。');}
 }
 function bind(){
  $('#app').onclick=e=>{
@@ -97,7 +111,7 @@ function bind(){
   if(!el||el.disabled)return;
   const data=el.dataset;
   if(data.designatedPreset){if(useDesignatedBleachPreset(data.designatedPreset)){render();notify('已載入 '+state.names.bleach+'；可以查看、修改或另存。');}return;}
-  if(data.title){state.title=data.title;state.ready=true;state.tab='pick';state.search='';state.type=state.color=state.energy='all';render();return;}
+  if(data.title){state.cloudOrigin=null;state.title=data.title;state.ready=true;state.tab='pick';state.search='';state.type=state.color=state.energy='all';render();return;}
   if(data.builderReselect!==undefined){state.ready=false;state.search='';render();return;}
   if(data.builderTab){state.tab=data.builderTab;render();return;}
   if(data.builderType){state.type=data.builderType;render();return;}
@@ -116,12 +130,12 @@ function bind(){
    persist();render();return;
   }
   if(data.action==='dismiss'){state.inspection=null;state.exportText=null;render();return;}
-  if(data.action==='newDeck'){state.counts[state.title]={};state.names[state.title]=defaults[state.title];state.selectedSaved[state.title]=null;persist();render();notify('已建立空白草稿');return;}
+  if(data.action==='newDeck'){state.cloudOrigin=null;state.counts[state.title]={};state.names[state.title]=defaults[state.title];state.selectedSaved[state.title]=null;persist();render();notify('已建立空白草稿');return;}
   if(data.action==='saveDeck'){
    const title=state.title,records=savedData[title],counts=normalizeEditorCounts(title,state.counts[title]);
-   const selected=state.selectedSaved[title],name=state.names[title].trim()||defaults[title];
+   const selected=state.selectedSaved[title]||((state.cloudOrigin?.title===title)?'v2-account-'+state.cloudOrigin.remoteId:null),name=state.names[title].trim()||defaults[title];
    const old=records.find(d=>d.id===selected);
-   const entry={id:old?.id||'v2-'+Date.now()+'-'+Math.random().toString(36).slice(2),name,counts,updatedAt:new Date().toISOString()};
+   const entry={id:old?.id||(selected&&/^[A-Za-z0-9:_-]{1,80}$/.test(selected)?selected:null)||'v2-'+Date.now()+'-'+Math.random().toString(36).slice(2),name,counts,updatedAt:new Date().toISOString()};
    if(old)records[records.indexOf(old)]=entry;else records.push(entry);
    state.selectedSaved[title]=entry.id;
    try{write(LEGACY_DECK_KEYS[title][1],records);persist();notify('已儲存牌組草稿');mirrorCloudDeck(title,entry);render();}
@@ -170,6 +184,7 @@ function bind(){
   if(saved.value.startsWith('builtin:')){if(useDesignatedBleachPreset(saved.value.slice(8))){render();notify('已載入 '+state.names.bleach);}return;}
   const item=savedData[state.title][Number(saved.value)];
   if(!item)return;
+  state.cloudOrigin=null;
   state.counts[state.title]={...item.counts};state.names[state.title]=item.name;state.selectedSaved[state.title]=item.id;
   persist();render();notify('已載入 '+item.name);
  };
@@ -178,4 +193,31 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&(state.inspection||
 // Direct links from the V2 lobby explicitly load the requested built-in list.
 const requestedDeck=new URLSearchParams(typeof window!=='undefined'?window.location?.search||'':'').get('bleachPreset');
 if(requestedDeck)useDesignatedBleachPreset(requestedDeck);
+// A signed-in user's specific saved deck was selected in /online.html.
+// Consume it once, validate the whole catalogue, and show the old picture
+// editor without clobbering local drafts or other account saved decks.
+function importAccountDeckHandoff(){
+ let payload;
+ try{
+  payload=JSON.parse(sessionStorage.getItem('ua-account-visual-editor-v1')||'null');
+  sessionStorage.removeItem('ua-account-visual-editor-v1');
+ }catch{return false;}
+ if(!payload||typeof payload!=='object'||Array.isArray(payload))return false;
+ if(typeof payload.remoteId!=='string'||!/^d[a-f0-9]{16}$/.test(payload.remoteId))return false;
+ if(!TITLES.some(t=>t.id===payload.title))return false;
+ try{
+  const counts=normalizeEditorCounts(payload.title,payload.counts);
+  const title=payload.title;
+  state.title=title;state.ready=true;state.tab='overview';state.search='';
+  state.type=state.color=state.energy='all';
+  state.counts[title]=counts;
+  state.names[title]=typeof payload.name==='string'?payload.name.trim().slice(0,40)||defaults[title]:defaults[title];
+  const localId=typeof payload.localId==='string'&&/^[A-Za-z0-9:_-]{1,80}$/.test(payload.localId)?payload.localId:null;
+  const scopedLocalId='v2-account-'+payload.remoteId;
+  state.selectedSaved[title]=savedData[title].some(x=>x.id===scopedLocalId)?scopedLocalId:null;
+  state.cloudOrigin={remoteId:payload.remoteId,title,localId};
+  return true;
+ }catch{return false;}
+}
+if(!requestedDeck)importAccountDeckHandoff();
 render();
