@@ -99,7 +99,7 @@ function arenaHeader(){
   el('a',{class:'arena-brand',href:'/online.html'},el('strong',{text:'UNION ARENA'}),el('small',{text:'V2'})),
   el('nav',{class:'arena-nav'},
    el('a',{href:'/online.html',text:'首頁'}),
-   el('a',{href:'/',text:'對戰'}),
+   el('a',{href:'/universal-v2-preview.html',text:'對戰'}),
    el('a',{href:'/index.html',text:'牌組'}),
    el('a',{href:'/index.html#cards',text:'卡牌一覽'}),
    el('a',{href:'/index.html#records',text:'排行榜'}),
