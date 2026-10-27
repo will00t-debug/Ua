@@ -106,6 +106,18 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   if(!physical||printed(physical).type!=='character')return false;
   return requiredEnergyOf(physical)>=condition.min;
  }
+ if(condition.kind==='ownFieldNoOtherTrait'){
+  // Every own field card has no trait other than the named one. Q2306:
+  // a traitless card satisfies it. A buried Raid layer is not on the field.
+  const pl=s.players[owner];
+  for(const zone of [pl.front,pl.energy])for(const c of zone){
+   if(!c)continue;
+   const d=printed(c);
+   const traits=d.traitComponents||d.traits||[];
+   if(traits.some(t=>t!==condition.trait))return false;
+  }
+  return true;
+ }
  if(condition.kind==='ownLifeAtMost')
   return s.players[owner].life.length<=condition.max;
  if(condition.kind==='ownHandCountAtLeast')

@@ -315,9 +315,14 @@ import bleachContribution from '../dist/universal-v2/title-packs/bleach.mjs';
 //   ユーハバッハ and this character's live required energy is 5 or more.
 //   Then this character becomes ACTIVE. Q2305: every バズビー shares that
 //   one activate. No trigger.
+// BLC-4-012 EX15BT: 黄4 / 黄. Raid onto ユーグラム・ハッシュヴァルト.
+//   Raid-state front: another own character retiring may draw 1, name once.
+//   Raid-state own-turn front: other characters' required energy +2.
+//   On play, while no own field card has a trait other than 星十字騎士団,
+//   REST-play up to one yellow AP1 character of printed energy 2 or less.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008','BLC-4-065','BLC-2-051','BLC-1-092','BLC-4-044','BLC-4-016','BLC-4-017','BLC-1-028','BLC-2-002','BLC-4-032','BLC-1-011','BLC-1-104','BLC-1-014','BLC-1-020','BLC-1-050','BLC-1-055','BLC-1-063','BLC-1-093','BLC-2-009','BLC-2-013','BLC-2-030','BLC-2-034','BLC-2-035','BLC-2-038','BLC-2-057','BLC-2-060','BLC-2-061','BLC-4-057','BLC-4-011','BLC-4-007'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008','BLC-4-065','BLC-2-051','BLC-1-092','BLC-4-044','BLC-4-016','BLC-4-017','BLC-1-028','BLC-2-002','BLC-4-032','BLC-1-011','BLC-1-104','BLC-1-014','BLC-1-020','BLC-1-050','BLC-1-055','BLC-1-063','BLC-1-093','BLC-2-009','BLC-2-013','BLC-2-030','BLC-2-034','BLC-2-035','BLC-2-038','BLC-2-057','BLC-2-060','BLC-2-061','BLC-4-057','BLC-4-011','BLC-4-007','BLC-4-012'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -388,12 +393,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers one-hundred-two whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,538);
- assert.equal(EXPECTED_V2_COUNTS.bleach,262);
+test('C29 registers one-hundred-three whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,539);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,263);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,262);
+ assert.equal(Object.keys(bleach.cards).length,263);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -11431,6 +11436,181 @@ test('BLC-4-007 becomes ACTIVE once the live required energy reaches 5',()=>{
  assert.equal(assertUniversalMatch(board.packs,woken),true);
  assert.equal(assertUniversalMatch(board.packs,raising),true);
  assert.equal(assertUniversalMatch(board.packs,fresh),true);
+});
+
+test('BLC-4-012 raises other required energy in raid and may draw on another retirement',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-4-012');
+ assert.equal(printed.number,'EX15BT/BLC-4-012');
+ assert.equal(printed.nameJa,'ユーグラム・ハッシュヴァルト');
+ assert.equal(printed.effect,'突襲《雨葛蘭・哈斯沃德》：改為Active，可移至前線。以下僅在突襲狀態適用：〔前線〕自己的其他角色退場時，可抽1張牌；所有《雨葛蘭・哈斯沃德》的此效果合計每回合1次。〔自己的回合／前線〕自己的其他角色所需能量皆增加2。登場時：若自己場上所有卡片皆沒有「星十字騎士團」以外的特徵，可從手牌將最多1張所需能量2以下、消費AP1的黃色角色以Rest登場。沒有特徵的卡片不妨礙此條件。');
+ assert.deepEqual(printed.traits,['星十字騎士團']);
+ assert.equal(printed.gen,1);
+ assert.equal(printed.trigger,'raid');
+ assert.equal(printed.energy,4);
+ const card=bleach.cards['BLC-4-012'];
+ assert.equal(card.name,printed.nameJa);
+ assert.equal(card.gen,1);
+ assert.equal(card.trigger,'raid');
+ assert.equal(card.triggerEffect,null);
+ assert.equal(card.raidName,'ユーグラム・ハッシュヴァルト');
+ assert.equal(card.raidFrontRequiredEnergy,2);
+ assert.equal(card.raidFrontOtherRetireDraw,1);
+ assert.deepEqual(card.effects.onPlay,[{op:'deployOwnHandRest',type:'character',color:'yellow',
+  energy:2,ap:1,max:1,when:{kind:'ownFieldNoOtherTrait',turn:'any',zone:'field',trait:'星十字騎士團'}}]);
+ const bare={id:'X',name:'n',color:'yellow',type:'character',energy:4,ap:1,bp:4000,gen:1,
+  traits:[],trigger:'raid',implementation:'dsl',raidName:'ユーグラム・ハッシュヴァルト',
+  effects:{onPlay:[{op:'draw',count:1}]}};
+ assert.throws(()=>createUniversalPack({id:'bad-raid-energy',cards:[{...bare,raidFrontRequiredEnergy:3}]}),
+  /invalid raid-front required energy/);
+ const required=['BLC-1-018','BLC-1-005','BLC-1-012','BLC-1-002','BLC-1-028','BLC-2-005','BLC-4-007'];
+ const rest=Object.values(bleach.cards).filter(c=>c.color==='yellow'&&c.maxCopies===4&&
+  !required.includes(c.id)&&c.id!=='BLC-4-012'&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
+ const built=[...required,...rest.slice(0,5),'BLC-4-012'];
+ assert.equal(built.length,13);
+ const deck=Object.fromEntries(built.map((id,i)=>[id,i===12?2:4]));
+ assert.deepEqual(validateUniversalDeck(bleach,deck),[]);
+ const hold=(s,p,id)=>{const c=take(s,p,id);s.players[p].hand.push(c);return c;};
+ const board=main(deck,29895);
+ const base=put(board.s,0,'BLC-1-018','energy',0,true);
+ put(board.s,0,'BLC-1-005','energy',1,true);
+ put(board.s,0,'BLC-1-012','energy',2,true);
+ put(board.s,0,'BLC-1-002','energy',3,true);
+ const small=put(board.s,0,'BLC-1-002','front',1,true);
+ const bazz=put(board.s,0,'BLC-4-007','front',2,false);
+ assert.equal(universalEnergyByColor(board.packs,board.s,0).yellow,4);
+ assert.equal(effectiveRequiredEnergy(board.packs,board.s,bazz),4);
+ const cheap=hold(board.s,0,'BLC-1-002');
+ const capped=hold(board.s,0,'BLC-1-005');
+ const heavy=hold(board.s,0,'BLC-2-005');
+ const rider=hold(board.s,0,'BLC-4-012');
+ const raid=legalUniversalActions(board.packs,board.s).find(a=>a.uid===rider.uid&&a.type==='raid'&&
+  a.baseUid===base.uid&&a.slot===0);
+ assert.ok(raid);
+ let entered=dispatchUniversalAction(board.packs,board.s,raid);
+ assert.equal(entered.players[0].front.find(c=>c?.uid===rider.uid).ready,true);
+ assert.equal(entered.players[0].front.find(c=>c?.uid===rider.uid).stack.length,1);
+ assert.equal(entered.pending.kind,'effect-hand-rest');
+ assert.equal(entered.pending.choices.includes(cheap.uid),true);
+ assert.equal(entered.pending.choices.includes(capped.uid),true);
+ assert.equal(entered.pending.choices.includes(heavy.uid),false);
+ assert.equal(legalUniversalActions(board.packs,entered).some(a=>a.type==='chooseHandRest'&&a.uid===null),true);
+ let stood=dispatchUniversalAction(board.packs,entered,{type:'chooseHandRest',uid:null});
+ assert.equal(stood.pending,null);
+ const liveRider=stood.players[0].front.find(c=>c?.uid===rider.uid);
+ const liveBazz=stood.players[0].front.find(c=>c?.uid===bazz.uid);
+ const liveFuel=stood.players[0].energy.find(c=>c?.cardId==='BLC-1-005');
+ assert.equal(effectiveRequiredEnergy(board.packs,stood,liveRider),4);
+ assert.equal(effectiveRequiredEnergy(board.packs,stood,liveBazz),6);
+ assert.equal(effectiveRequiredEnergy(board.packs,stood,liveFuel),4);
+ const stacked=structuredClone(stood);
+ const marked=stacked.players[0].front.find(c=>c?.uid===bazz.uid);
+ marked.buffs.push({requiredEnergy:2,untilTurn:stacked.turn});
+ assert.equal(assertUniversalMatch(board.packs,stacked),true);
+ assert.equal(effectiveRequiredEnergy(board.packs,stacked,marked),8);
+ const theirs=structuredClone(stood);
+ theirs.active=1;
+ assert.equal(effectiveRequiredEnergy(board.packs,theirs,theirs.players[0].front.find(c=>c?.uid===bazz.uid)),4);
+ const hushed=structuredClone(stood);
+ grantContinuousState(hushed,{kind:'originalEffectsDisabled',controller:1,sourceUid:rider.uid,
+  targetUid:rider.uid,sourceLinked:false,until:{player:1,phase:'start',edge:'start'}});
+ assert.equal(effectiveRequiredEnergy(board.packs,hushed,hushed.players[0].front.find(c=>c?.uid===bazz.uid)),4);
+ const sidelined=structuredClone(stood);
+ const from=sidelined.players[0].front.findIndex(c=>c?.uid===rider.uid);
+ const moved=sidelined.players[0].front[from];
+ sidelined.players[0].front[from]=null;
+ sidelined.players[0].energy[0]=moved;
+ assert.equal(assertUniversalMatch(board.packs,sidelined),true);
+ assert.equal(effectiveRequiredEnergy(board.packs,sidelined,sidelined.players[0].front.find(c=>c?.uid===bazz.uid)),4);
+ const doubled=structuredClone(stood);
+ const extraBase=take(doubled,0,'BLC-1-018');
+ const extra=take(doubled,0,'BLC-4-012');
+ extra.stack=[extraBase];
+ extra.ready=true;
+ extra.fieldEntryStamp=doubled.nextFieldEntryStamp++;
+ doubled.players[0].front[3]=extra;
+ assert.equal(assertUniversalMatch(board.packs,doubled),true);
+ assert.equal(effectiveRequiredEnergy(board.packs,doubled,doubled.players[0].front.find(c=>c?.uid===bazz.uid)),8);
+ const act=legalUniversalActions(board.packs,stood).find(a=>
+  a.type==='activate'&&a.uid===bazz.uid&&a.mode==='nameOnceActive');
+ assert.ok(act);
+ let woken=dispatchUniversalAction(board.packs,stood,act);
+ assert.equal(woken.players[0].front.find(c=>c?.uid===bazz.uid).ready,true);
+ const wall=put(woken,1,'BLC-2-005','front',0,true);
+ const secondWall=put(woken,1,'BLC-4-007','front',1,true);
+ let battle=woken;
+ for(let n=0;n<4&&battle.phase!=='attack';n++)
+  battle=dispatchUniversalAction(board.packs,battle,{type:'next'});
+ assert.equal(battle.phase,'attack');
+ battle=dispatchUniversalAction(board.packs,battle,{type:'attack',uid:small.uid});
+ assert.equal(battle.pending.kind,'block');
+ battle=dispatchUniversalAction(board.packs,battle,{type:'chooseBlock',uid:wall.uid});
+ assert.equal(battle.players[0].outside.some(c=>c.uid===small.uid),true);
+ assert.equal(battle.pending.kind,'effect-may-draw');
+ assert.equal(V2_PENDING_LABELS[battle.pending.kind],'可抽1張牌');
+ assert.equal(legalUniversalActions(board.packs,battle).some(a=>a.type==='chooseMayDraw'&&a.mode==='skip'),true);
+ assert.equal(legalUniversalActions(board.packs,battle).some(a=>a.type==='chooseMayDraw'&&a.mode==='draw'),true);
+ aiOk(board.packs,battle);
+ const before=battle.players[0].hand.length;
+ const declined=dispatchUniversalAction(board.packs,structuredClone(battle),{type:'chooseMayDraw',mode:'skip'});
+ assert.equal(declined.pending,null);
+ assert.equal(declined.players[0].hand.length,before);
+ assert.equal(declined.mainReadyOnceByName[0].includes('ユーグラム・ハッシュヴァルト|raidFrontOtherRetireDraw'),true);
+ let drawn=dispatchUniversalAction(board.packs,battle,{type:'chooseMayDraw',mode:'draw'});
+ assert.equal(drawn.pending,null);
+ assert.equal(drawn.players[0].hand.length,before+1);
+ const key='ユーグラム・ハッシュヴァルト|raidFrontOtherRetireDraw';
+ assert.equal(drawn.mainReadyOnceByName[0].includes(key),true);
+ const other=put(drawn,0,'BLC-1-012','front',3,true);
+ let again=drawn;
+ again=dispatchUniversalAction(board.packs,again,{type:'attack',uid:other.uid});
+ again=dispatchUniversalAction(board.packs,again,{type:'chooseBlock',uid:secondWall.uid});
+ assert.equal(again.players[0].outside.some(c=>c.uid===other.uid),true);
+ assert.equal(again.pending,null);
+ const blocked=main(deck,29896);
+ put(blocked.s,0,'BLC-1-018','energy',0,true);
+ put(blocked.s,0,'BLC-1-005','energy',1,true);
+ put(blocked.s,0,'BLC-1-012','energy',2,true);
+ put(blocked.s,0,'BLC-1-002','energy',3,true);
+ put(blocked.s,0,'BLC-2-005','front',1,true);
+ const foreign=hold(blocked.s,0,'BLC-4-012');
+ const foreignRaid=legalUniversalActions(blocked.packs,blocked.s).find(a=>a.type==='raid'&&
+  a.uid===foreign.uid&&a.baseUid===blocked.s.players[0].energy[0].uid&&a.slot===0);
+ assert.ok(foreignRaid);
+ const quiet=dispatchUniversalAction(blocked.packs,blocked.s,foreignRaid);
+ assert.equal(quiet.pending,null);
+ const open=main(deck,29897);
+ put(open.s,0,'BLC-1-018','energy',0,true);
+ put(open.s,0,'BLC-1-005','energy',1,true);
+ put(open.s,0,'BLC-1-012','energy',2,true);
+ const castle=put(open.s,0,'BLC-1-028','energy',3,true);
+ assert.deepEqual(bleach.cards[castle.cardId].traits,[]);
+ const plain=hold(open.s,0,'BLC-1-002');
+ const guest=hold(open.s,0,'BLC-4-012');
+ const guestRaid=legalUniversalActions(open.packs,open.s).find(a=>a.type==='raid'&&
+  a.uid===guest.uid&&a.baseUid===open.s.players[0].energy[0].uid&&a.slot===0);
+ let welcomed=dispatchUniversalAction(open.packs,open.s,guestRaid);
+ assert.equal(welcomed.pending.kind,'effect-hand-rest');
+ assert.equal(welcomed.pending.choices.includes(plain.uid),true);
+ welcomed=dispatchUniversalAction(open.packs,welcomed,{type:'chooseHandRest',uid:null});
+ const barePlay=main(deck,29898);
+ put(barePlay.s,0,'BLC-1-018','energy',0,true);
+ put(barePlay.s,0,'BLC-1-005','energy',1,true);
+ put(barePlay.s,0,'BLC-1-012','energy',2,true);
+ put(barePlay.s,0,'BLC-1-002','energy',3,true);
+ const sitting=hold(barePlay.s,0,'BLC-4-012');
+ const play=legalUniversalActions(barePlay.packs,barePlay.s).find(a=>a.type==='play'&&
+  a.uid===sitting.uid&&a.line==='front'&&a.slot===0&&a.replaceUid===undefined);
+ assert.ok(play);
+ let plainEntry=dispatchUniversalAction(barePlay.packs,barePlay.s,play);
+ assert.equal(plainEntry.pending.kind,'effect-hand-rest');
+ plainEntry=dispatchUniversalAction(barePlay.packs,plainEntry,{type:'chooseHandRest',uid:null});
+ const neighbor=put(plainEntry,0,'BLC-1-002','front',1,true);
+ assert.equal((plainEntry.players[0].front.find(c=>c?.uid===sitting.uid).stack||[]).length,0);
+ assert.equal(effectiveRequiredEnergy(barePlay.packs,plainEntry,neighbor),0);
+ assert.equal(assertUniversalMatch(board.packs,drawn),true);
+ assert.equal(assertUniversalMatch(blocked.packs,quiet),true);
+ assert.equal(assertUniversalMatch(open.packs,welcomed),true);
+ assert.equal(assertUniversalMatch(barePlay.packs,plainEntry),true);
 });
 
 function locationLine(s,uid){

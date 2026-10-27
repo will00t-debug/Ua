@@ -27,7 +27,7 @@ const own=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
 function assertLiveCondition(q,label,allowRequiredEnergy=false){
  if(!q||typeof q!=='object'||Array.isArray(q)||
   !['own','opponent','any'].includes(q.turn)||
-  !['outsideCount','ownNameExists','ownNameAbsent','ownFieldHasAllNames','ownTraitCount','ownCardTraitCount','ownEnergyAtLeast','ownHandCountAtLeast','ownLifeAtMost','ownEffectHandOutsideOrRecovery','ownEventUsedThisTurn','ownRetiredThisTurn','retireCountThisTurn','ownOutsideNamedCountAtLeast','ownRestPrintedBpAtMost','oppCharacterBpAtLeast','oppCharacterCurrentBpCount','oppRestCharacter','oppRestCharacterCount','ownPrintedApAtLeast','ownHandToOutsideThisTurn','ownHandFewerThanOpponent','ownEffectApPaidColor','ownFrontNoOtherCharacter','oppFrontLiveBpBelowPrinted','ownRemovedCountAtLeast','ownRemovedDistinctTrait','selfRequiredEnergyAtLeast'].includes(q.kind))
+  !['outsideCount','ownNameExists','ownNameAbsent','ownFieldHasAllNames','ownTraitCount','ownCardTraitCount','ownEnergyAtLeast','ownHandCountAtLeast','ownLifeAtMost','ownEffectHandOutsideOrRecovery','ownEventUsedThisTurn','ownRetiredThisTurn','retireCountThisTurn','ownOutsideNamedCountAtLeast','ownRestPrintedBpAtMost','oppCharacterBpAtLeast','oppCharacterCurrentBpCount','oppRestCharacter','oppRestCharacterCount','ownPrintedApAtLeast','ownHandToOutsideThisTurn','ownHandFewerThanOpponent','ownEffectApPaidColor','ownFrontNoOtherCharacter','oppFrontLiveBpBelowPrinted','ownRemovedCountAtLeast','ownRemovedDistinctTrait','selfRequiredEnergyAtLeast','ownFieldNoOtherTrait'].includes(q.kind))
   throw Error(label+' invalid passive condition');
  if(q.kind==='selfRequiredEnergyAtLeast'&&allowRequiredEnergy!==true)
   throw Error(label+' required-energy gate is only a name-once active');
@@ -51,6 +51,9 @@ function assertLiveCondition(q,label,allowRequiredEnergy=false){
  if(retired&&!['field','character'].includes(q.cardType))
   throw Error(label+' invalid retired-card type');
  const count=['outsideCount','ownTraitCount','ownCardTraitCount','ownEnergyAtLeast','ownHandCountAtLeast','ownRemovedCountAtLeast','ownRemovedDistinctTrait','selfRequiredEnergyAtLeast'].includes(q.kind);
+ const exclusive=q.kind==='ownFieldNoOtherTrait';
+ if(exclusive&&(q.zone!=='field'||typeof q.trait!=='string'||!q.trait.trim()||q.trait.length>40))
+  throw Error(label+' invalid exclusive-trait field');
  const paidColor=q.kind==='ownEffectApPaidColor';
  if(paidColor&&!['blue','yellow','green','purple','red'].includes(q.color))
   throw Error(label+' invalid effect-AP color');
@@ -83,11 +86,11 @@ function assertLiveCondition(q,label,allowRequiredEnergy=false){
   (oppRest&&!['field','front','energy'].includes(q.zone))||
   (printedAp&&(!['field','front','energy'].includes(q.zone)||typeof q.excludeSelf!=='boolean'||
    !integer(q.minAp,1)||q.minAp>3))||
-  Object.keys(q).length!==(2+(count?1:0)+(namedOutside?2:0)+(atMost?1:0)+(retired?1:0)+(retirementCount?3:0)+(retirementExclude?1:0)+(field?2:0)+
+  Object.keys(q).length!==(2+(count?1:0)+(namedOutside?2:0)+(atMost?1:0)+(retired?1:0)+(retirementCount?3:0)+(retirementExclude?1:0)+(field?2:0)+(exclusive?2:0)+
    (['ownNameExists','ownNameAbsent','ownFieldHasAllNames','ownTraitCount','ownCardTraitCount','ownRestPrintedBpAtMost','ownRemovedDistinctTrait'].includes(q.kind)?1:0)+
    (restEach?1:0)+(oppBp?2:0)+(oppBpCount?3:0)+(oppRest?1:0)+(printedAp?3:0)+(paidColor?1:0))||
   Object.keys(q).some(k=>!['kind','turn',
-   ...(count?['min']:[]),...(namedOutside?['min','names']:[]),...(atMost?['max']:[]),...(retired?['cardType']:[]),...(retirementCount?['controller','cardType','min']:[]),...(retirementExclude?['excludeSelf']:[]),...(field?['zone','excludeSelf']:[]),
+   ...(count?['min']:[]),...(namedOutside?['min','names']:[]),...(atMost?['max']:[]),...(retired?['cardType']:[]),...(retirementCount?['controller','cardType','min']:[]),...(retirementExclude?['excludeSelf']:[]),...(field?['zone','excludeSelf']:[]),...(exclusive?['zone','trait']:[]),
    ...(q.kind==='ownNameExists'||q.kind==='ownNameAbsent'?['name']:[]),
    ...(q.kind==='ownFieldHasAllNames'?['names']:[]),
    ...(q.kind==='ownTraitCount'||q.kind==='ownCardTraitCount'||q.kind==='ownRemovedDistinctTrait'||restEach?['trait']:[]),
@@ -2187,6 +2190,14 @@ function normalize(card,packId){
  if(card.printedAttackDamage!==undefined&&(
   card.type!=='character'||card.printedAttackDamage!==2))
   throw Error(card.id+' invalid printed attack damage');
+ if(card.raidFrontRequiredEnergy!==undefined&&(
+  card.type!=='character'||implemented!=='dsl'||!card.raidName||
+  card.raidFrontRequiredEnergy!==2))
+  throw Error(card.id+' invalid raid-front required energy');
+ if(card.raidFrontOtherRetireDraw!==undefined&&(
+  card.type!=='character'||implemented!=='dsl'||!card.raidName||
+  card.raidFrontOtherRetireDraw!==1))
+  throw Error(card.id+' invalid raid-front retire draw');
  const maxCopies=card.maxCopies===undefined?4:card.maxCopies;
  // Officially printed exceptions, including SLG-1-030, may have up to 12 copies.
  // The title contribution contract verifies the exact source deckLimit.
@@ -2201,6 +2212,8 @@ function normalize(card,packId){
   traits:Object.freeze([...(card.traits||[])]),
   ...(traitComponents?{traitComponents:Object.freeze([...traitComponents])}:{}),
   trigger:card.trigger||null,raidName:card.raidName||null,
+  ...(card.raidFrontRequiredEnergy===2?{raidFrontRequiredEnergy:2}:{}),
+  ...(card.raidFrontOtherRetireDraw===1?{raidFrontOtherRetireDraw:1}:{}),
   raidFromRaid:Object.freeze([...(card.raidFromRaid||[])]),
   raidBaseNames:Object.freeze([...(card.raidBaseNames||[card.raidName].filter(Boolean))]),
   raidRequiresNames:Object.freeze([...(card.raidRequiresNames||[])]),

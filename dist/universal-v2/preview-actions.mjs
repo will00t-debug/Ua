@@ -30,6 +30,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-energy-trait-front':'可將能源線上具有指定特徵的角色移至前線',
  'effect-optional-mill':'可將牌庫頂 1 張送場外',
  'effect-optional-draw':'攻擊時可抽 0 或 1 張',
+ 'effect-may-draw':'可抽1張牌',
  'effect-pay-ap-deploy':'可支付 1 AP，從場外 REST 登場',
  'effect-optional-pay-ap':'可支付 1 AP，然後結算後續效果',
  'effect-hand-rest':'從己方手牌免費 REST 登場',
@@ -200,6 +201,7 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseInspectedOutside':return action.uid===null?'完成選擇並排列剩餘牌':'將 '+name()+' 送場外';
   case 'chooseTopTraitOutside':return action.uid===null?'不送場外，排列剩餘牌':'將符合特徵的 '+name()+' 送場外';
   case 'chooseOptionalDraw':return action.mode==='draw'?'攻擊時抽 1 張':'不抽牌';
+  case 'chooseMayDraw':return action.mode==='draw'?'抽1張':'不抽牌';
   case 'chooseOptionalMill':return action.mode==='mill'?'將牌庫頂 1 張送場外':'不送場外';
   case 'choosePayApDeploy':return action.mode==='pay'?'支付 1 AP，接著選擇場外角色':'不支付 AP';
   case 'chooseOptionalPayAp':return action.mode==='pay'?'支付 1 AP，然後結算後續效果':'不支付 AP';
