@@ -59,16 +59,27 @@ test('all 3 original lists load from preset buttons; existing saved user data re
   await import('../dist/v2-deck-editor.mjs?test-three-bleach-decks');
   const click=dataset=>app.onclick({target:{closest:()=>({dataset,disabled:false})}});
   click({title:'bleach'});
+  assert.match(app.innerHTML,/我的牌組/);
+  assert.match(app.innerHTML,/分享列表/);
   assert.match(app.innerHTML,/你之前提供的三副牌組/);
   for(const preset of BUILTIN_BLEACH_V2_DECKS){
-   click({designatedPreset:preset.id});
-   assert.deepEqual(Object.fromEntries(Object.entries(JSON.parse(storage.get('bleach-arena-deck-v1'))).filter(([,n])=>n)),preset.counts);
-   assert.match(app.innerHTML,/牌組總覽/);
-   assert.ok(app.innerHTML.includes('vdb-count-badge'));
-   assert.ok(app.innerHTML.includes(preset.name));
+   assert.match(app.innerHTML,new RegExp('data-deck-open="builtin:'+preset.id+'"'));
+   const beforeDetail=storage.get('bleach-arena-deck-v1');
+   click({deckOpen:'builtin:'+preset.id});
+   assert.match(app.innerHTML,/牌組詳情/);
+   assert.match(app.innerHTML,/編輯牌組/);
+   assert.match(app.innerHTML,/dkg-count/);
+   assert.doesNotMatch(app.innerHTML,/data-builder-count=/);
+   assert.equal(storage.get('bleach-arena-deck-v1'),beforeDetail,'Opening a deck detail must not replace the working draft');
    click({action:'visualExport'});
    for(const source of preset.sources)assert.ok(app.innerHTML.includes(source.copies+'x'+source.source),'Original printed card code missing: '+source.source);
    click({action:'dismiss'});
+   click({action:'editDeck'});
+   assert.match(app.innerHTML,/牌組總覽/);
+   assert.ok(app.innerHTML.includes('vdb-count-badge'));
+   assert.ok(app.innerHTML.includes(preset.name));
+   assert.deepEqual(Object.fromEntries(Object.entries(JSON.parse(storage.get('bleach-arena-deck-v1'))).filter(([,n])=>n)),preset.counts);
+   click({builderReselect:'1'});
    assert.equal(storage.get('bleach-arena-saved-decks-v1'),originalSaved);
   }
   globalThis.window.location.search='?bleachPreset=white-sword';

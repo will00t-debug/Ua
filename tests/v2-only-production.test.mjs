@@ -92,6 +92,14 @@ test('standalone browser editor boots without legacy runtime and preserves TTG d
   assert.match(app.innerHTML,/先選擇卡牌作品/);
   const click=dataset=>app.onclick({target:{closest:()=>({dataset,disabled:false})}});
   click({title:'gurren-lagann'});
+  assert.match(app.innerHTML,/我的牌組/);
+  assert.match(app.innerHTML,/分享列表/);
+  assert.doesNotMatch(app.innerHTML,/data-builder-count=/);
+  click({deckOpen:'draft'});
+  assert.match(app.innerHTML,/牌組詳情/);
+  assert.match(app.innerHTML,/編輯牌組/);
+  assert.doesNotMatch(app.innerHTML,/data-builder-count=/);
+  click({action:'editDeck'});
   assert.match(app.innerHTML,/Universal V2/);
   assert.match(app.innerHTML,/data-builder-count="TTG-1-/);
   click({builderCount:'TTG-1-001',delta:'1'});
