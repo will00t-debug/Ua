@@ -35,6 +35,21 @@ function deck(requiredId){
  assert.deepEqual(validateUniversalDeck(bleach,counts),[]);
  return counts;
 }
+// The sorted 13-card window gives its last id only 2 copies. Renji is that
+// last id once enough earlier blue characters are registered, but this test
+// places three copies and plays a fourth. Keep four without changing who mills.
+function withFour(base,id){
+ const counts={...base};
+ if((counts[id]||0)>=4)return counts;
+ const donor=Object.keys(counts).find(k=>k!==id&&counts[k]>=4);
+ assert.ok(donor,'filler deck can spare four copies of '+id);
+ const have=counts[id]||0;
+ counts[donor]=have;
+ if(!counts[donor])delete counts[donor];
+ counts[id]=4;
+ assert.deepEqual(validateUniversalDeck(bleach,counts),[]);
+ return counts;
+}
 const decks=Object.fromEntries(pins.map(([id])=>[id,deck(id)]));
 const ttgIds=['TTG-1-043',...Object.values(ttg.cards).filter(c=>c.type==='character'&&
  c.color==='red'&&c.id!=='TTG-1-043'&&!['special','color','final'].includes(c.trigger))
@@ -128,7 +143,8 @@ test('playing or removing BLC-2-042 does not mill; DRAW life still draws one',()
  assert.equal(s.players[0].deck.length,before);
  assert.equal(s.players[0].energy[0].uid,source.uid);
  assert.equal(s.turnRetireEvents.length,0);
- const removed=newUniversalMatch(packs,{decks:[decks['BLC-2-042'],decks['BLC-2-042']],first:0,seed:2043});
+ const renjiDeck=withFour(decks['BLC-2-042'],'BLC-2-025');
+ const removed=newUniversalMatch(packs,{decks:[renjiDeck,renjiDeck],first:0,seed:2043});
  const occupant=take(removed,0,'BLC-2-042');occupant.ready=true;removed.players[0].energy[0]=occupant;
  const fillers=[];
  for(let slot=1;slot<4;slot++){
