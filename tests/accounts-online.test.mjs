@@ -52,7 +52,7 @@ test('account and online entry points are linked without loading a battle engine
  assert.match(editor,/\/api\/decks/);
  assert.doesNotMatch(editor,/from '\.\/engine\.mjs'/);
  assert.match(readFileSync(new URL('../dist/universal-v2-preview.html',import.meta.url),'utf8'),/href="\/online\.html"/);
- assert.match(readFileSync(new URL('../dist/online.html',import.meta.url),'utf8'),/src="online\.mjs"/);
+ assert.match(readFileSync(new URL('../dist/online.html',import.meta.url),'utf8'),/src="online\.mjs(?:\?[^\"]*)?"/);
  assert.match(readFileSync(new URL('../dist/online.mjs',import.meta.url),'utf8'),/對手手牌是隱藏的/);
 });
 
