@@ -244,7 +244,7 @@ function homeView(){
   el('div',{class:'arena-entries arena-battle-modes'},
    el('a',{class:'arena-entry arena-entry-solo',href:'/'},el('span',{class:'arena-mode-icon',text:'⚔'}),el('strong',{text:'電腦對戰'}),el('span',{text:'選擇雙方牌組與 AI 難度，開始 V2 單人對戰。'}),el('span',{class:'arena-mode-cta',text:'設定電腦對戰 →'})),
    el('a',{class:'arena-entry arena-entry-online',href:'#online-match'},el('span',{class:'arena-mode-icon',text:'◎'}),el('strong',{text:'線上對戰'}),el('span',{text:'建立房間或輸入代碼，與其他玩家對戰。'}),el('span',{class:'arena-mode-cta',text:'前往線上房間 ↓'})),
-   el('a',{class:'arena-entry arena-entry-deck',href:'/index.html'},el('span',{class:'arena-mode-icon',text:'▣'}),el('strong',{text:'牌組構築'}),el('span',{text:'搜尋卡牌、調整張數並保存牌組。'}),el('span',{class:'arena-mode-cta',text:'管理我的牌組 →'}))),
+   el('a',{class:'arena-entry arena-entry-deck',href:'/index.html'},el('span',{class:'arena-mode-icon',text:'▣'}),el('strong',{text:'牌組構築'}),el('span',{text:'圖片式牌組構築：搜尋卡牌、調整張數並保存牌組。'}),el('span',{class:'arena-mode-cta',text:'管理我的牌組 →'}))),
   el('section',{class:'panel'},
    el('h2',{text:'我的牌組'}),
    el('p',{class:'muted',text:'每個帳號只看得到自己的雲端牌組。點選卡片會先打開唯讀詳情；圖片編輯才會改牌。'}),
