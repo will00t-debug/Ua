@@ -14,7 +14,7 @@ const DRAFTS=[
 ];
 const PHASES=[['start','開始'],['move','移動'],['main','主要'],['attack','攻擊']];
 const ROOM=/^[A-HJ-NP-Z2-9]{8}$/;
-const app={offline:false,user:null,decks:[],room:null,error:'',notice:'',busy:false,mode:'login',pollToken:0,timer:0};
+const app={offline:false,user:null,decks:[],room:null,error:'',notice:'',busy:false,mode:'login',deckTab:'mine',pollToken:0,timer:0};
 
 function el(tag,props={},...children){
  const node=document.createElement(tag);
@@ -94,12 +94,62 @@ function authView(){
     el('button',{class:'primary',type:'submit',text:register?'註冊並登入':'登入',disabled:app.busy}),
     el('button',{type:'button',text:register?'已有帳號':'建立新帳號',onClick:()=>{app.mode=register?'login':'register';app.error='';render();}})))));
 }
+let coverCatalogue=null;
+function loadCovers(){
+ if(loadCovers.started)return;
+ loadCovers.started=true;
+ // Loaded only after login. The account script itself stays a classic script so
+ // the login screen can boot even when the card catalogue is unavailable.
+ try{
+  Promise.all([import('./title-registry.mjs'),import('./deck-gallery.mjs')]).then(([titles,gallery])=>{
+   coverCatalogue={titles:titles.TITLES,summarize:gallery.summarizeDeck};
+   if(app.user)render();
+  }).catch(()=>{});
+ }catch{/* catalogue is optional for the account list */}
+}
+function deckWhen(iso,publish){
+ const missing=publish?'尚未記錄發布時間':'尚未記錄更新時間';
+ const time=Date.parse(iso||'');
+ if(!Number.isFinite(time))return missing;
+ const elapsed=Math.max(0,Date.now()-time),verb=publish?'發布':'更新',day=86400000;
+ if(elapsed<60000)return '剛剛'+verb;
+ if(elapsed<3600000)return Math.floor(elapsed/60000)+' 分鐘前'+verb;
+ if(elapsed<day)return Math.floor(elapsed/3600000)+' 小時前'+verb;
+ return Math.floor(elapsed/day)+' 天前'+verb;
+}
+function readShareSet(){
+ try{
+  const raw=JSON.parse(localStorage.getItem('ua-v2-deck-shared-ids-v1')||'[]');
+  return new Set(Array.isArray(raw)?raw.filter(id=>typeof id==='string'&&id):[]);
+ }catch{return new Set();}
+}
+function deckCoverSrc(deck){
+ if(!coverCatalogue)return 'assets/mark.svg';
+ const cards=coverCatalogue.titles.find(item=>item.id===deck.title)?.cards||[];
+ const cover=coverCatalogue.summarize(cards,deck.counts).cover;
+ return cover?.onlineImage||cover?.image||'assets/mark.svg';
+}
 function deckList(){
- const box=el('div');
- if(!app.decks.length)box.append(el('p',{class:'muted',text:'這個帳號還沒有牌組。可以從本機組卡紀錄匯入，或貼上牌表。'}));
- for(const deck of app.decks){
-  box.append(el('div',{class:'deck'},
-   el('div',{},el('strong',{text:deck.name}),el('div',{class:'muted',text:(deck.titleLabel||deck.title)+' · '+total(deck)+' 張'+(deck.playable?'':' · '+((deck.issues||[])[0]||'還不能對戰'))})),
+ loadCovers();
+ const sharedIds=readShareSet();
+ const rows=app.deckTab==='shared'?app.decks.filter(deck=>sharedIds.has(deck.id)):app.decks;
+ const box=el('div',{class:'dkg dkg-account'});
+ box.append(el('div',{class:'dkg-tabs',role:'tablist','aria-label':'我的牌組與分享列表'},
+  el('button',{type:'button',role:'tab',class:app.deckTab==='mine'?'active':'','aria-selected':String(app.deckTab==='mine'),text:'我的牌組',onClick:()=>{app.deckTab='mine';render();}}),
+  el('button',{type:'button',role:'tab',class:app.deckTab==='shared'?'active':'','aria-selected':String(app.deckTab==='shared'),text:'分享列表',onClick:()=>{app.deckTab='shared';render();}})));
+ if(!rows.length)box.append(el('div',{class:'dkg-empty',text:app.deckTab==='shared'?'快來分享一個牌組吧！':'這個帳號還沒有牌組。可以從本機組卡紀錄匯入，或貼上牌表。'}));
+ for(const deck of rows){
+  const when=deckWhen(deck.updatedAt,app.deckTab==='shared');
+  const art=el('img',{src:deckCoverSrc(deck),alt:deck.name||'牌組封面',loading:'lazy',decoding:'async'});
+  art.addEventListener('error',()=>{art.src='assets/mark.svg';});
+  const open=el('button',{type:'button',class:'dkg-card',disabled:app.busy,'aria-label':'查看牌組 '+(deck.name||''),onClick:()=>viewAccountDeck(deck)},
+   el('span',{class:'dkg-card-art'},art),
+   el('span',{class:'dkg-card-copy'},
+    el('strong',{text:deck.name}),
+    el('small',{text:when}),
+    el('small',{text:(deck.titleLabel||deck.title)+' · '+total(deck)+' 張'+(deck.playable?'':' · '+((deck.issues||[])[0]||'還不能對戰'))})));
+  box.append(el('article',{class:'deck-visual'},
+   open,
    el('div',{class:'row'},
     el('span',{class:'tag'+(deck.playable?' ready':''),text:deck.playable?'可對戰':'僅保存'}),
     el('button',{type:'button',class:'primary',text:'圖片編輯',disabled:app.busy,onClick:()=>editAccountDeck(deck)}),
@@ -109,12 +159,12 @@ function deckList(){
 }
 // Only transiently transfer the logged-in user's own deck to the visual editor.
 // No credentials or hidden match information are serialized.
-function editAccountDeck(deck){
+function openAccountDeck(deck,intent){
  if(!app.user||!deck||typeof deck.title!=='string'||!deck.counts)return;
  try{
   sessionStorage.setItem('ua-account-visual-editor-v1',JSON.stringify({
    title:deck.title,name:deck.name,counts:deck.counts,
-   remoteId:deck.id,localId:deck.localId||null
+   remoteId:deck.id,localId:deck.localId||null,intent
   }));
   window.location.assign('/index.html');
  }catch(error){
@@ -122,6 +172,8 @@ function editAccountDeck(deck){
   render();
  }
 }
+function editAccountDeck(deck){openAccountDeck(deck,'edit');}
+function viewAccountDeck(deck){openAccountDeck(deck,'detail');}
 function deckSelect(){
  const playable=app.decks.filter(deck=>deck.playable);
  if(!playable.length)return el('select',{name:'deckId'},el('option',{value:'',text:'還沒有可對戰的牌組'}));
@@ -136,7 +188,7 @@ function homeView(){
     el('div',{},el('strong',{text:'圖片式牌組構築'}),
      el('p',{class:'muted',text:'回到之前的六作品卡圖組卡介面，可搜尋卡牌、調整張數並查看完整 50 張牌組。你也可以直接編輯下方帳號裡的牌組。'})),
     el('a',{class:'builder-entry-button',href:'/index.html',text:'開啟組卡畫面'})),
-   el('p',{class:'muted',text:'每個帳號只看得到自己的雲端牌組。點選「圖片編輯」會帶入這副牌組，編輯後按儲存即可同步到自己的帳號。'}),
+   el('p',{class:'muted',text:'每個帳號只看得到自己的雲端牌組。點選卡片會先打開唯讀詳情；「圖片編輯」或詳情頁的「編輯牌組」才會進入編輯器，儲存後同步回這個帳號。'}),
    el('div',{class:'row'},
     el('button',{type:'button',text:'匯入這台瀏覽器的牌組',disabled:app.busy,onClick:importLocal}),
     el('a',{class:'linkish',href:'/index.html',text:'前往圖片式組卡'})),

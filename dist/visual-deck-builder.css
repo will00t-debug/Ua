@@ -128,6 +128,61 @@
  .v2e-modal-columns{grid-template-columns:110px 1fr}
 }
 
+/* Mobile-first deck list and read-only detail. */
+.dkg{display:grid;gap:12px}
+.dkg-toolbar,.dkg-back{display:flex;align-items:center}
+.dkg-back,.dkg-create,.dkg-edit,.dkg-actions button,.dkg-tabs button,.dkg-card,.dkg-mini,.dkg-switch{font:inherit;cursor:pointer}
+.dkg-back{border:0;background:transparent;color:#4d708f;padding:4px 0;min-height:40px}
+.dkg-tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:#fff;border-radius:14px;padding:4px}
+.dkg-tabs button{border:0;background:transparent;border-radius:10px;min-height:42px;font-weight:800;color:#607086}
+.dkg-tabs button.active{background:#e7f2ff;color:#1769c8}
+.dkg-create{width:100%;min-height:72px;border:1px dashed #b7c6d6;border-radius:16px;background:#f8fbfe;color:#5d738c;font-weight:700}
+.dkg-section h2,.dkg-group h2,.dkg-triggers h2{display:flex;justify-content:space-between;gap:8px;align-items:baseline;font-size:16px;margin:4px 0 8px}
+.dkg-section h2{color:#24364c}
+.dkg-group h2 span,.dkg-hero-copy p,.dkg-card small{color:#7b8796;font-weight:500;font-size:12px}
+.dkg-cards{display:grid;gap:10px}
+.dkg-card{display:flex;gap:12px;align-items:center;width:100%;text-align:left;background:#fff;border:0;border-radius:16px;padding:12px;box-shadow:0 8px 22px #1d334814;color:inherit}
+.dkg-card-art{width:74px;height:102px;flex:none;display:grid;place-items:center;background:#eef2f6;border-radius:8px;overflow:hidden}
+.dkg-card-art img,.dkg-hero-art img{width:100%;height:100%;object-fit:contain}
+.dkg-card-copy{min-width:0;display:grid;gap:4px}
+.dkg-card-copy strong,.dkg-hero-copy h1{overflow-wrap:anywhere}
+.dkg-card-copy strong{font-size:16px;color:#1d2b3c}
+.dkg-empty{border:1px dashed #c5d0dc;border-radius:16px;padding:28px 16px;text-align:center;color:#7d8b9c;background:#f8fbfe}
+.dkg-hero{display:grid;grid-template-columns:96px minmax(0,1fr);gap:12px;align-items:center;background:#fff;border-radius:18px;padding:12px;box-shadow:0 8px 22px #1d334810}
+.dkg-hero-art{width:96px;height:132px;border-radius:8px;overflow:hidden;background:#eef2f6}
+.dkg-hero-copy{min-width:0}
+.dkg-hero-copy h1{font-size:20px;line-height:1.35;margin:0 0 4px}
+.dkg-hero-copy p,.dkg-total{margin:0}
+.dkg-total{font-size:13px;color:#3e5670;font-weight:700}
+.dkg-public{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:13px}
+.dkg-public b{font-size:13px}
+.dkg-switch{width:46px;height:28px;border:0;border-radius:99px;background:#d5dbe3;position:relative;padding:0;flex:none}
+.dkg-switch i{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;display:block}
+.dkg-switch.on{background:#35c46a}
+.dkg-switch.on i{left:21px}
+.dkg-switch:disabled{opacity:.45;cursor:not-allowed}
+.dkg-edit{width:100%;min-height:48px;border-radius:999px;border:1px solid #d5dde6;background:#fff;color:#24364c;font-weight:800}
+.dkg-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.dkg-actions button{min-height:42px;border-radius:12px;border:1px solid #d5dde6;background:#fff;color:#31465d}
+.dkg-actions button:disabled{opacity:.45;cursor:not-allowed}
+.dkg-board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.dkg-mini{position:relative;padding:0;border:0;background:transparent;min-width:0}
+.dkg-mini img{display:block;width:100%;aspect-ratio:.7;object-fit:contain;border-radius:5px;background:#f3f5f8}
+.dkg-count{position:absolute;right:3px;bottom:3px;min-width:18px;padding:1px 4px;border-radius:4px;background:#2f9e4f;color:#fff;font-size:11px;line-height:1.4;text-align:center}
+.dkg-trigger-row{display:flex;flex-wrap:wrap;gap:6px}
+.dkg-trigger{flex:none;background:#eef1f4;border-radius:8px;padding:8px 10px;font-size:12px;color:#31465c}
+.dkg-trigger.color,.dkg-trigger.special{background:#1b1b1b;color:#f3d48a}
+.dkg-trigger.final{background:#111;color:#fff}
+.dkg-triggers{background:#fff;border-radius:16px;padding:12px}
+.deck-visual{display:grid;gap:8px;background:#fff;border-radius:16px;padding:8px 8px 10px;box-shadow:0 8px 22px #1d334814}
+.deck-visual .dkg-card{box-shadow:none;padding:6px}
+.dkg-account{margin-top:8px}
+@media(min-width:800px){
+ .dkg-cards{grid-template-columns:1fr 1fr}
+ .dkg-board{grid-template-columns:repeat(8,minmax(0,1fr))}
+ .dkg-hero-copy h1{font-size:24px}
+}
+
 /* User-specified BLEACH tricolor decks, permanently available in the V2 builder. */
 .v2e-designated{margin:0 0 18px}
 .v2e-designated-head h2{font-size:18px;line-height:1.4;margin:0 0 5px;color:#20334c}
