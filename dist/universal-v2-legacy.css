@@ -230,3 +230,51 @@ body{margin:0;background:#f2f3f5;color:#272b31;font:14px/1.5 system-ui,-apple-sy
  .v2-shell #match-view .phaseBar span{padding:5px 7px;font-size:10px}
 }
 @media(prefers-reduced-motion:reduce){.v2-shell #match-view .handCard{transition:none}}
+
+
+/* V2 match setup R2 — compact arena-inspired lobby, presentation only.
+   Original select IDs, deck validity and AI difficulty controls stay authoritative. */
+.v2-shell{max-width:1500px}
+.v2-shell>.topbar{background:#fff;border-bottom:1px solid #e4e8ee}
+.v2-shell .v2-setup-v3{position:relative;overflow:hidden;padding:32px clamp(18px,3.5vw,48px) 24px;gap:23px;border:1px solid #d9e0e8;border-radius:18px;background:linear-gradient(155deg,#fff 0%,#f9fbfc 72%,#f1f6f5 100%);box-shadow:0 14px 35px #1d34450b}
+.v2-shell .v2-setup-v3:before{content:"";position:absolute;top:-155px;right:-120px;width:430px;height:320px;border-radius:50%;background:radial-gradient(circle,#d5e6e250 0%,transparent 70%);pointer-events:none}
+.v2-shell .v2-setup-v3>*{position:relative}
+.v2-shell .setup-kicker{color:#3c766b;font-size:11px;letter-spacing:2px}
+.v2-shell .setup-intro{align-items:flex-end;gap:18px}
+.v2-shell .setup-intro h2{font-size:clamp(25px,3vw,38px);line-height:1.2;color:#1d3135;margin:9px 0}
+.v2-shell .setup-intro p{font-size:13px;color:#647585}
+.v2-shell #v2-coverage{color:#536e69;background:#eaf3f0;border:1px solid #d5e5e0;border-radius:20px;padding:7px 12px}
+.v2-shell .matchup-picker{grid-template-columns:minmax(0,1fr) 64px minmax(0,1fr);gap:15px;align-items:stretch}
+.v2-shell .matchup-side{background:#fff;border:1px solid #dbe3e9;border-radius:16px;min-height:0;padding:22px;gap:14px;box-shadow:0 6px 22px #19344008;transition:border-color .15s ease,box-shadow .15s ease}
+.v2-shell .matchup-side:focus-within{border-color:#7daea3;box-shadow:0 0 0 3px #a4c9bf36}
+.v2-shell .matchup-title{padding-bottom:12px;border-bottom:1px solid #eef1f4}
+.v2-shell .matchup-title h3{font-size:18px;color:#253944}
+.v2-shell .matchup-title p{font-size:12px}
+.v2-shell .matchup-step{width:37px;height:37px;border-radius:11px;background:#e6f2ee;color:#2f7566;font-size:13px}
+.v2-shell .matchup-select-label{color:#526575;font-size:12px}
+.v2-shell .matchup-select{min-height:52px;border:1px solid #cbd8e0;background:#f9fbfc;border-radius:11px;font-weight:650;color:#263d4a;padding:12px 14px}
+.v2-shell .matchup-select:focus-visible{outline:3px solid #8fc6b6;outline-offset:2px}
+.v2-shell .matchup-vs{display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px}
+.v2-shell .matchup-vs span{display:grid;place-items:center;width:56px;height:56px;border-radius:50%;background:#223e3a;border:5px solid #e8f0ed;box-shadow:0 5px 15px #16352d24;font-weight:900;letter-spacing:1px}
+.v2-shell .featured-decks{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.v2-shell .deck-quick-pick{min-width:0;white-space:normal;min-height:43px;padding:9px 5px;border-radius:9px;background:#f9fbfd;color:#455a69;font-size:11px}
+.v2-shell .deck-quick-pick[aria-pressed="true"]{background:color-mix(in srgb,var(--deck-accent) 8%,white);box-shadow:inset 0 0 0 1px var(--deck-accent);font-weight:850}
+.v2-shell .chosen-deck-meta{min-height:20px;font-size:11px;color:#26715b}
+.v2-shell .difficulty-picker{border-radius:16px;padding:19px 22px;background:#fff;border:1px solid #dbe3e9;gap:16px}
+.v2-shell .difficulty-header h3{font-size:18px;color:#253944}
+.v2-shell .difficulty-options{gap:12px}
+.v2-shell .difficulty-choice{position:relative;min-height:76px;padding:15px 19px;background:#f9fbfc;border-radius:11px;border:1px solid #dce5ea;gap:5px}
+.v2-shell .difficulty-choice strong{font-size:16px;color:#2b3d48}
+.v2-shell .difficulty-choice span{font-size:12px}
+.v2-shell .difficulty-choice[aria-pressed="true"]{background:#eaf4f0;border-color:#3d8d78;box-shadow:inset 0 0 0 1px #3d8d78}
+.v2-shell .difficulty-choice[aria-pressed="true"] strong{color:#23634f}
+.v2-shell .difficulty-choice[aria-pressed="true"]:after{content:"✓";position:absolute;right:15px;top:13px;color:#26745e;font-weight:900}
+.v2-shell .setup-bottom{align-items:center;padding:17px 0 0;border-top:1px solid #e4e9ed}
+.v2-shell .match-advanced summary{color:#4c6672;font-size:13px}
+.v2-shell .setup-actions #start-game{background:#245c4e;border-color:#245c4e;border-radius:12px;min-height:54px;font-size:15px;box-shadow:0 8px 17px #235c4b25;padding:13px 30px}
+.v2-shell .setup-actions #start-game:hover{background:#1a493d}
+.v2-shell .setup-actions #start-game span{margin-left:10px}
+.v2-shell .designated-details{border-top:1px solid #e7ecef}
+.v2-shell .v2-setup-v3>.note{color:#8795a0;font-size:10px}
+@media(max-width:900px){.v2-shell .matchup-picker{grid-template-columns:minmax(0,1fr) 48px minmax(0,1fr);gap:8px}.v2-shell .matchup-side{padding:15px}.v2-shell .matchup-vs span{width:45px;height:45px;border-width:3px}.v2-shell .featured-decks{gap:5px}}
+@media(max-width:680px){.v2-shell .v2-setup-v3{padding:20px 13px;gap:16px;border-radius:12px}.v2-shell .setup-intro{align-items:flex-start}.v2-shell .setup-intro h2{font-size:25px}.v2-shell .matchup-picker{grid-template-columns:1fr;gap:6px}.v2-shell .matchup-vs span{width:39px;height:39px}.v2-shell .matchup-side{padding:15px}.v2-shell .difficulty-picker{padding:14px}.v2-shell .difficulty-options{gap:7px}.v2-shell .difficulty-choice{min-height:70px;padding:12px 9px}.v2-shell .difficulty-choice[aria-pressed="true"]:after{right:8px;top:5px}.v2-shell .setup-bottom{gap:15px}.v2-shell .setup-actions #start-game{width:100%}}
