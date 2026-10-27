@@ -97,7 +97,13 @@ test('own-turn BP mode: choose OTHER active field character, no draw/discard, fi
  assert.equal(universalBp(packs,s,s.players[0].front[0]),500);
  assert.equal(s.players[0].hand.length,hand);assert.equal(s.players[0].deck.length,deckCount);
  assert.equal(s.players[0].outside.length,outside);assert.equal(s.pending,null);
- s.turn++;
+ const buffTurn=s.turn;
+ for(let i=0;i<6&&s.turn===buffTurn;i++){
+  const step=legalUniversalActions(packs,s).find(a=>a.type==='next');
+  assert.ok(step,'buff expiry uses the printed turn boundary');
+  s=dispatchUniversalAction(packs,s,step);
+ }
+ assert.notEqual(s.turn,buffTurn);
  assert.equal(universalBp(packs,s,s.players[0].energy[0]),2000,
   'temporary buff expires; it is not a persistent continuous modifier');
  assert.equal(assertUniversalMatch(packs,s),true);
