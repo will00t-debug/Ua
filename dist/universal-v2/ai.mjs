@@ -127,6 +127,10 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   options.sort((a,b)=>(a.printed?.energy||0)-(b.printed?.energy||0));
   return options[0]?.action||legal[0];
  }
+ if(s.pending?.kind==='effect-removed-name-outside')
+  return legal.find(a=>a.mode==='all')||legal.find(a=>a.mode==='done')||
+   legal.find(a=>a.mode==='pick')||legal[0];
+ if(s.pending?.kind==='effect-hand-front-active')return legal[0];
  if(s.pending?.kind==='effect-remove-outside'){
   // Optional payments stay declinable. A required payment has no skip, so
   // the short set moves together and a full set pays one card.

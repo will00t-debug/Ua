@@ -1653,6 +1653,15 @@ function normalize(card,packId){
  if(mainCardOnce)assertLiveCondition(mainAbility.when,card.id+' card once');
  // [フロントLにある場合][APを1支払う] and only while this character is REST.
  // The printed name sentence is shared by every copy. Q2336.
+ // 【起動メイン】[APを1支払う] only while this card is in hand. The name
+ // sentence is this effect. 4枚以上 is the printed minimum, not an exact count.
+ const handNameOnce=mainAbility?.op==='handNameOnceRemoveNamedEnter'&&
+  card.type==='character'&&mainAbility.scope==='name'&&mainAbility.payAp===1&&
+  mainAbility.zone==='hand'&&mainAbility.min===4&&mainAbility.line==='front'&&
+  mainAbility.ready===true&&typeof mainAbility.name==='string'&&
+  !!mainAbility.name.trim()&&mainAbility.name.length<=80&&
+  Object.keys(mainAbility).length===8&&
+  Object.keys(mainAbility).every(k=>['op','scope','payAp','zone','min','name','line','ready'].includes(k));
  const mainRestFrontName=mainAbility?.op==='restFrontNameOnce'&&
   mainAbility.scope==='name'&&mainAbility.payAp===1&&
   Object.keys(mainAbility).length===3&&
@@ -1765,7 +1774,7 @@ function normalize(card,packId){
   Object.keys(mainAbility).length===2&&
   Object.keys(mainAbility).every(k=>['op','trait'].includes(k));
  if(mainAbility!==null&&
-  (!['character','field'].includes(card.type)||!(fieldDualMain||fieldRestRetireThen||mainFieldReplay||mainRestTopTrait||mainRestRetireActive||card.type==='character'&&(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainRestBuff||mainRestBuffAp||mainRestRetireRecover||mainRestOnceBuffReturn||mainRestOnceSelf||mainOnceBuffWhen||mainPayAp||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainRestDiscardRetire||mainFrontProgram||mainFieldOnceBuff||mainEntryProtect||mainEntrySacrifice||mainNamedDouble||mainRestRetireUnder||mainRestTwoMove||mainOncePay||mainRepeatDiscard||nameOnceActive||nameOnceEvent||mainCardOnce||mainRestFrontName||mainRestRetireExact||mainRestRetireNamed))))
+  (!['character','field'].includes(card.type)||!(fieldDualMain||fieldRestRetireThen||mainFieldReplay||mainRestTopTrait||mainRestRetireActive||card.type==='character'&&(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainRestBuff||mainRestBuffAp||mainRestRetireRecover||mainRestOnceBuffReturn||mainRestOnceSelf||mainOnceBuffWhen||mainPayAp||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainRestDiscardRetire||mainFrontProgram||mainFieldOnceBuff||mainEntryProtect||mainEntrySacrifice||mainNamedDouble||mainRestRetireUnder||mainRestTwoMove||mainOncePay||mainRepeatDiscard||nameOnceActive||nameOnceEvent||mainCardOnce||handNameOnce||mainRestFrontName||mainRestRetireExact||mainRestRetireNamed))))
   throw Error(card.id+' unsupported main action ability');
  const passiveBonuses=validatePassiveBonuses(card);
  const implemented=card.implementation;
