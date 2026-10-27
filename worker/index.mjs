@@ -156,6 +156,8 @@ export default {
     if(method==='GET'&&path==='/api/decks')return send(200,await callAccount({op:'listDecks',token}));
     if(method==='POST'&&path==='/api/decks')
      return send(200,await callAccount({op:'saveDeck',token,input:await readBody(request)}));
+    const deckUpdate=method==='PUT'&&/^\/api\/decks\/(d[a-f0-9]{16})$/.exec(path);
+    if(deckUpdate)return send(200,await callAccount({op:'updateDeck',token,deckId:deckUpdate[1],input:await readBody(request)}));
     const deckDelete=method==='DELETE'&&/^\/api\/decks\/(d[a-f0-9]{16})$/.exec(path);
     if(deckDelete)return send(200,await callAccount({op:'deleteDeck',token,deckId:deckDelete[1]}));
     if(method==='POST'&&path==='/api/rooms'){
