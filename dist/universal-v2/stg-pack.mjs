@@ -28,6 +28,26 @@ const INSPECT3='【登場時】自分の山札の上から3枚見て、1枚ま�
 const REST_BUFF='【起動メイン】【レストにする】自分の場の他のキャラを1枚選び、このターン中、BP+1000。';
 const OTHER_DRAW='【登場時】自分の場の他のキャラを1枚退場させてもよい。そうした場合、カードを2枚引く。';
 const SEARCH5='【登場時】自分の山札の上から3枚見て、〈阿万音 鈴羽〉か〈岡部 倫太郎〉か〈椎名 まゆり〉か〈橋田 至〉か〈牧瀬 紅莉栖〉を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。';
+const SEARCH_CHAR='【登場時】自分の山札の上から3枚見て、キャラカードを1枚まで公開し手札に加える。残りを望む順で山札の下に置く。';
+const FIELD_RETIRE='【登場時】カードを1枚引き、自分の手札を1枚場外に置く。【退場時】カードを1枚引く。';
+const CHOOSE_NAMES='【登場時】以下から1つ選ぶ。・カードを1枚引き、自分の手札を1枚場外に置く。・自分の場の〈阿万音 鈴羽〉か〈橋田 至〉を1枚まで選び、このターン中、BP+2000。';
+const COLOR_CHOOSE='【登場時】以下から1つ選ぶ。・カードを1枚引き、自分の手札を1枚場外に置く。・自分の場の他のキャラを1枚まで選び、このターン中、BP+1000。';
+const COLOR_TRIGGER='【カラー】自分の手札から必要エナジーが2以下で消費APが1の緑のキャラカードを1枚自分の場にアクティブで登場させる。';
+const REST_KURISU='自分のフロントLのアクティブの〈牧瀬 紅莉栖〉を1枚レストにする。そうした場合、カードを3枚引く。';
+const ATTACK_DRAW='【アタック時】このターン中に自分がイベントカードを使用している場合、カードを1枚引いてもよい。そうした場合、自分の手札を1枚場外に置く。';
+const EVENT_MAIN='【起動メイン】【ターン1】このターン中に自分がイベントカードを使用している場合のみ発動できる。このキャラは次の自分のターン開始時まで、BP+1000。';
+const DISCARD_IBN='【登場時】自分の手札を1枚場外に置いてもよい。そうした場合、自分の場外から〈IBN5100〉を1枚まで手札に加える。';
+const DMAIL_BUFF='【登場時】自分の場外から〈Dメール〉を1枚まで手札に加える。自分のターン中の場合、自分の場のキャラを1枚まで選び、このターン中、BP+1000。';
+const OPEN_FRONT='自分の場にカードが1枚もない場合、手札にあるこのカードの必要エナジーを【緑×2】減らす。自分のアタックフェイズ開始時、自分のフロントLに空きがある場合、このキャラはこのターン中、BP+1000。';
+const DRAW_OR_NAMES={op:'chooseOne',optional:false,options:[
+ {id:'draw',label:'抽1張並放1張手牌到場外',turn:'any',then:[{op:'drawDiscard',count:1}]},
+ {id:'names',label:'鈴羽或橋田這個回合BP+2000',turn:'any',then:[
+  {op:'buffOwnNames',names:['阿万音 鈴羽','橋田 至'],bp:2000,optional:true}]}
+]};
+const DRAW_OR_OTHER={op:'chooseOne',optional:false,options:[
+ {id:'draw',label:'抽1張並放1張手牌到場外',turn:'any',then:[{op:'drawDiscard',count:1}]},
+ {id:'other',label:'其他角色這個回合BP+1000',turn:'any',then:[{op:'buffOwnOthersFixed',bp:1000,count:1}]}
+]};
 
 export function stgEngineKind(effectJa){
  const e=String(effectJa||'');
@@ -51,6 +71,16 @@ export function stgEngineKind(effectJa){
  if(e===REST_BUFF)return 'restBuff';
  if(e===OTHER_DRAW)return 'otherRetireDraw2';
  if(e===SEARCH5)return 'searchFive';
+ if(e===SEARCH_CHAR)return 'searchCharacter';
+ if(e===FIELD_RETIRE)return 'fieldDrawRetire';
+ if(e===CHOOSE_NAMES)return 'chooseNames';
+ if(e===COLOR_CHOOSE)return 'colorOtherBuff';
+ if(e===REST_KURISU)return 'restKurisuDraw';
+ if(e===ATTACK_DRAW)return 'attackMayDraw';
+ if(e===EVENT_MAIN)return 'eventUntilBuff';
+ if(e===DISCARD_IBN)return 'discardIbn';
+ if(e===DMAIL_BUFF)return 'dmailTurnBuff';
+ if(e===OPEN_FRONT)return 'openFrontBuff';
  return null;
 }
 
@@ -67,6 +97,9 @@ export function stgPackCard(card){
  if(!kind)throw Error(card.id+' is catalogue-only');
  if(card.trigger==null){
   if(card.triggerTextJa!=='-')throw Error(card.id+' missing trigger text');
+ }else if(card.trigger==='color'){
+  if(kind!=='colorOtherBuff'||card.triggerTextJa!==COLOR_TRIGGER||card.color!=='green')
+   throw Error(card.id+' color trigger is not the printed green hand character');
  }else if(STANDARD[card.trigger]!==card.triggerTextJa)
   throw Error(card.id+' trigger is not the standard printed text');
  const pip={blue:'青',green:'緑'}[card.color];
@@ -77,6 +110,10 @@ export function stgPackCard(card){
   throw Error(card.id+' rest energy color drifted');
  if(kind==='emptyDrawDiscard'&&(card.color!=='blue'||card.energy<2))
   throw Error(card.id+' empty-field discount is not blue 2');
+ if(kind==='openFrontBuff'&&(card.color!=='green'||card.type!=='character'||card.energy<2))
+  throw Error(card.id+' open-front discount is not a green character');
+ if(kind==='restKurisuDraw'&&card.type!=='event')
+  throw Error(card.id+' named rest draw is an event');
  if((kind==='activeEnergy'||kind==='restEnergyRetire')&&card.gen!==0)
   throw Error(card.id+' plus generation is a design mark, not a printed number');
  const onPlay=kind==='drawDiscard'||kind==='emptyDrawDiscard'?[{op:'drawDiscard',count:1}]:
@@ -92,6 +129,19 @@ export function stgPackCard(card){
    after:[{op:'draw',count:2}]}]:
   kind==='searchFive'?[{op:'searchTopOneBottomDiscard',count:3,logic:'any',
    filters:LAB.map(value=>({field:'name',value}))}]:
+  kind==='searchCharacter'?[{op:'searchTopOneBottomDiscard',count:3,
+   filter:{field:'type',value:'character'},discard:false}]:
+  kind==='chooseNames'?[DRAW_OR_NAMES]:
+  kind==='colorOtherBuff'?[DRAW_OR_OTHER]:
+  kind==='restKurisuDraw'?[{op:'restNamedActiveFrontThenDraw',name:'牧瀬 紅莉栖',draw:3}]:
+  kind==='discardIbn'?[{op:'discardGate',optional:true,then:[{op:'recoverOutsideOne',
+   filter:{field:'name',value:'IBN5100'},optional:true}]}]:
+  kind==='dmailTurnBuff'?[
+   {op:'recoverOutsideOne',filter:{field:'name',value:'Dメール'},optional:true},
+   {op:'ifLiveThen',when:{kind:'controllerTurn',turn:'own'},then:[{op:'buffOwnField',
+    filter:{field:'type',value:'character'},bp:1000,optional:true,excludeSelf:false}]}
+  ]:
+  kind==='fieldDrawRetire'?[{op:'drawDiscard',count:1}]:
   null;
  return {
   id:card.id,name:card.nameJa,color:card.color,type:card.type,
@@ -99,6 +149,8 @@ export function stgPackCard(card){
   traits:card.traits,
   implementation:kind==='plain'?'vanilla':'dsl',
   effects:kind==='retireDrawOkabe'?{onRetire:[{op:'drawIfOwnName',name:'岡部 倫太郎',count:1}]}:
+   kind==='fieldDrawRetire'?{onPlay,onRetire:[{op:'draw',count:1}]}:
+   kind==='attackMayDraw'?{onAttack:[{op:'mayDrawDiscardIfOwnEvent'}]}:
    onPlay?{onPlay}:{},
   ...(kind==='impactNull'?{impactNull:true}:{}),
   ...(kind==='doubleBlock'?{readyOnBlockCount:1}:{}),
@@ -109,7 +161,14 @@ export function stgPackCard(card){
    op:'restSelfGainEnergyRetireEndMain',lines:'field',oncePerTurn:true,extraEnergy:1}}:{}),
   ...(kind==='eventTurnBp1500'?{passiveBonuses:[{
    condition:{kind:'ownEventUsedThisTurn',turn:'own'},bp:1500}]}:{}),
-  ...(kind==='restBuff'?{mainAbility:{op:'restSelfBuffOther',bp:1000}}:{})
+  ...(kind==='restBuff'?{mainAbility:{op:'restSelfBuffOther',bp:1000}}:{}),
+  ...(kind==='colorOtherBuff'?{triggerEffect:{
+   op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1}}:{}),
+  ...(kind==='eventUntilBuff'?{mainAbility:{
+   op:'frontOnceProgram',frontOnly:false,oncePerTurn:true,requireOwnEventUsed:true,
+   then:[{op:'buffSelfUntilNextOwnStart',bp:1000}]}}:{}),
+  ...(kind==='openFrontBuff'?{emptyOwnFieldHandEnergyDiscount:2,phaseEffects:[{
+   phase:'attack',edge:'start',turn:'own',then:[{op:'buffSelfIfFrontOpen',bp:1000}]}]}:{})
  };
 }
 
@@ -118,8 +177,8 @@ export const STEINS_GATE_ENGINE_IDS=Object.freeze(
 
 export function createStgV2Pack(){
  const cards=STEINS_GATE_CARDS.filter(c=>c.engineKind).map(stgPackCard);
- if(cards.length!==34)throw Error('Steins;Gate registered count drifted');
+ if(cards.length!==44)throw Error('Steins;Gate registered count drifted');
  return createUniversalPack({
-  id:'steins-gate',version:'stg-ua57-batches-1-10-20261027',cards
+  id:'steins-gate',version:'stg-ua57-batches-11-20-20261027',cards
  });
 }

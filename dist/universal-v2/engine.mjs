@@ -1269,6 +1269,12 @@ function continueEffectQueue(pack,s){
    const source=field(pl).find(c=>c.uid===job.sourceUid);
    if(!source)throw Error('buffSelf source must be on field');
    source.buffs.push({bp:job.bp,untilTurn:s.turn});
+  }else if(job.op==='buffSelfIfFrontOpen'){
+   const source=field(pl).find(c=>c.uid===job.sourceUid);
+   if(source&&s.phase==='attack'&&s.active===owner&&pl.front.some(c=>!c)){
+    source.buffs??=[];
+    source.buffs.push({bp:job.bp,untilTurn:s.turn});
+   }
   }else if(job.op==='peekTopOne'){
    // Only the effect controller can inspect this private top card. Do not
    // include its UID/cardId in pending UI or public snapshots.
@@ -1326,8 +1332,9 @@ function continueEffectQueue(pack,s){
      const predicate=job.filters?{filters:job.filters.map(f=>({...f})),logic:job.logic}:
       {filter:{...job.filter}};
      // With no valid match, ALL inspected cards must still be ordered below.
+     const keep=job.discard===false?{discard:false}:{};
      s.pending=choices.length?{kind:'effect-top-filter-choice',player:owner,
-      sourceUid:job.sourceUid,uids,choices,...predicate}:
+      sourceUid:job.sourceUid,uids,choices,...predicate,...keep}:
       {kind:'effect-top-order',player:owner,sourceUid:job.sourceUid,
        uids,order:[],rest:'bottom'};
     }
@@ -1598,6 +1605,11 @@ function continueEffectQueue(pack,s){
    if((s.effectApPaidColors?.[owner]||[]).includes(job.color)&&pl.deck.length)
     s.pending={kind:'effect-may-draw-discard',player:owner,
      sourceUid:job.sourceUid,discardCount:job.discardCount};
+  }else if(job.op==='mayDrawDiscardIfOwnEvent'){
+   const open=matchesV2LiveCondition(s,owner,job.sourceUid,
+    {kind:'ownEventUsedThisTurn',turn:'any'},c=>card(pack,c));
+   if(open&&pl.deck.length)s.pending={kind:'effect-may-draw-discard',player:owner,
+    sourceUid:job.sourceUid,discardCount:1};
   }else if(job.op==='activeSelf'){
    const loc=location(s,owner,job.sourceUid);
    if(loc)attemptFieldActive(s,owner,loc.c);
@@ -2603,6 +2615,12 @@ function continueEffectQueue(pack,s){
     if(choices.length)s.pending={kind:'effect-buff-own',player:owner,
      sourceUid:job.sourceUid,choices,filter:{field:'type',value:'character'},
      bp:job.bp,optional:true,excludeSelf:true,remaining:job.count};
+   }else if(job.op==='buffOwnNames'){
+    const choices=field(pl).filter(c=>card(pack,c).type==='character'&&
+     job.names.some(n=>cardHasName(card(pack,c),n,originalEffectsDisabled(s,c)))).map(c=>c.uid);
+    if(choices.length)s.pending={kind:'effect-buff-own',player:owner,
+     sourceUid:job.sourceUid,choices,filter:{field:'type',value:'character'},
+     bp:job.bp,optional:true,excludeSelf:false};
    }else if(job.op==='buffOwnOthersUpTo'){
    const upgraded=field(pl).some(c=>cardHasName(card(pack,c),job.upgradeName,
     originalEffectsDisabled(s,c)));
@@ -2772,6 +2790,11 @@ function continueEffectQueue(pack,s){
     .map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-rest-own',player:owner,
     sourceUid:job.sourceUid,choices,optional:true};
+  }else if(job.op==='restNamedActiveFrontThenDraw'){
+   const choices=pl.front.filter(c=>c&&c.ready&&card(pack,c).type==='character'&&
+    cardHasName(card(pack,c),job.name,originalEffectsDisabled(s,c))).map(c=>c.uid);
+   if(choices.length)s.pending={kind:'effect-rest-own',player:owner,
+    sourceUid:job.sourceUid,choices,optional:false,name:job.name,thenDraw:job.draw};
   }else if(job.op==='revealHandBottom'){
    const choices=pl.hand.map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-reveal-bottom',player:owner,
@@ -4344,10 +4367,11 @@ function resolveChoice(s,a,pack){
    if(s.publicReveals.length>12)s.publicReveals.splice(0,s.publicReveals.length-12);
   }
   const remaining=q.uids.filter(uid=>uid!==a.uid);
+  const discardAfter=a.uid!==null&&q.discard!==false;
   if(remaining.length)s.pending={kind:'effect-top-order',player:q.player,
    sourceUid:q.sourceUid,uids:remaining,order:[],rest:'bottom',
-   ...(a.uid!==null?{discardAfter:true}:{})};
-  else if(a.uid!==null)s.pending={kind:'effect-discard',player:q.player,
+   ...(discardAfter?{discardAfter:true}:{})};
+  else if(discardAfter)s.pending={kind:'effect-discard',player:q.player,
    sourceUid:q.sourceUid};
   else{s.pending=null;continueEffectQueue(pack,s);}
   return;
@@ -6856,13 +6880,19 @@ function resolveChoice(s,a,pack){
    s.pending=null;continueEffectQueue(pack,s);return;
   }
   if(q.kind==='effect-rest-own'){
-   if(a.uid===null){s.pending=null;continueEffectQueue(pack,s);return;}
+   if(a.uid===null){
+    if(q.optional===false)throw Error('Mandatory own REST cannot be skipped');
+    s.pending=null;continueEffectQueue(pack,s);return;
+   }
    const target=p.front.find(c=>c?.uid===a.uid);
-   if(!target||!target.ready||!q.choices.includes(a.uid)||card(pack,target).type!=='character')
+   if(!target||!target.ready||!q.choices.includes(a.uid)||card(pack,target).type!=='character'||
+    (q.name&&!cardHasName(card(pack,target),q.name,originalEffectsDisabled(s,target))))
     throw Error('Own-effect REST needs an ACTIVE own front character');
    noteOwnEffectRest(s,q.player,target);
    target.ready=false;
-   s.pending=null;continueEffectQueue(pack,s);return;
+   s.pending=null;
+   if(q.thenDraw)draw(pack,s,q.player,q.thenDraw,{reason:'own-effect',sourceUid:q.sourceUid});
+   continueEffectQueue(pack,s);return;
   }
  if(q.kind==='main-active-named'){
   const target=field(p).find(c=>c.uid===a.uid);
@@ -8011,8 +8041,9 @@ if(q.kind==='effect-active-either')return q.choices
    .filter(uid=>location(s,q.player,uid)&&card(pack,location(s,q.player,uid).c).type==='character')
    .map(uid=>({type:'chooseActiveEither',uid}));
 if(q.kind==='effect-rest-own')return [
-   {type:'chooseOwnFrontRest',uid:null},
-   ...q.choices.filter(uid=>p.front.some(c=>c?.uid===uid&&c.ready))
+   ...(q.optional===false?[]:[{type:'chooseOwnFrontRest',uid:null}]),
+   ...q.choices.filter(uid=>p.front.some(c=>c?.uid===uid&&c.ready&&
+    (!q.name||cardHasName(card(pack,c),q.name,originalEffectsDisabled(s,c)))))
     .map(uid=>({type:'chooseOwnFrontRest',uid}))
   ];
 if(q.kind==='main-active-named')
@@ -8549,6 +8580,8 @@ export function legalUniversalActions(pack,s){
     out.push({type:'activate',uid:c.uid,mode:'selfRestThen'});
    if(ability?.op==='frontOnceProgram'&&ability.frontOnly===false&&
     !s.mainAbilityUsedUids.includes(c.uid)){
+    if(ability.requireOwnEventUsed===true&&!matchesV2LiveCondition(s,p,c.uid,
+     {kind:'ownEventUsedThisTurn',turn:'any'},x=>card(pack,x)))continue;
     const step=ability.then[0];
     if(step.op==='discardGate'&&!payableHand(pack,s,p,step.payment).length)continue;
     if(step.op==='restOppFrontUnderBp'&&!s.players[1-p].front.some(x=>x&&
@@ -8655,6 +8688,11 @@ export function legalUniversalActions(pack,s){
    }
    if(ability.op==='frontOnceProgram'){
     if(s.mainAbilityUsedUids.includes(c.uid))continue;
+    if(ability.requireOwnEventUsed===true){
+     if(matchesV2LiveCondition(s,p,c.uid,{kind:'ownEventUsedThisTurn',turn:'any'},x=>card(pack,x)))
+      out.push({type:'activate',uid:c.uid,mode:'frontOnce'});
+     continue;
+    }
     // 〈A〉と〈B〉がある場合のみ. Both names are own field characters.
     if(Array.isArray(ability.requireAllNames)){
      if(matchesV2LiveCondition(s,p,c.uid,{kind:'ownFieldHasAllNames',turn:'any',
@@ -9686,6 +9724,9 @@ if(ability.op==='characterDualMain'){
     if(action.mode!=='frontOnce'||s.mainAbilityUsedUids.includes(selected.uid)||
      !(ability.frontOnly===false?onFront||onEnergy:onFront))
      throw Error('Front once-per-turn program is not legal');
+    if(ability.requireOwnEventUsed===true&&!matchesV2LiveCondition(s,p,selected.uid,
+     {kind:'ownEventUsedThisTurn',turn:'any'},x=>card(pack,x)))
+     throw Error('Front once-per-turn program requires an event used this turn');
     if(Array.isArray(ability.requireAllNames)&&!matchesV2LiveCondition(s,p,selected.uid,{
      kind:'ownFieldHasAllNames',turn:'any',zone:'field',excludeSelf:false,
      names:ability.requireAllNames},x=>card(pack,x)))
@@ -10493,6 +10534,11 @@ export function assertUniversalMatch(pack,s){
     printed.mainAbility.requireOwnEffectRest===true&&
     printed.mainAbility.oncePerTurn===true&&printed.mainAbility.frontOnly===true&&
     printed.mainAbility.then?.some(t=>t.op==='buffSelfUntilNextOwnStart'&&t.bp===buff.bp);
+   const fromEventUntil=selfGrant&&printed.mainAbility?.op==='frontOnceProgram'&&
+    printed.mainAbility.requireOwnEventUsed===true&&
+    printed.mainAbility.frontOnly===false&&
+    printed.mainAbility.oncePerTurn===true&&
+    printed.mainAbility.then?.some(t=>t.op==='buffSelfUntilNextOwnStart'&&t.bp===buff.bp);
    const namedGrant=Object.keys(buff).length===3&&typeof buff.sourceUid==='string'&&
     Object.keys(buff).every(k=>['bp','untilOwnTurnStart','sourceUid'].includes(k));
    const fromNamedEvent=namedGrant&&s.players[owner].outside.some(ev=>ev.uid===buff.sourceUid&&
@@ -10502,7 +10548,7 @@ export function assertUniversalMatch(pack,s){
    if(!Number.isInteger(buff.untilOwnTurnStart)||
     buff.untilOwnTurnStart!==s.players[owner].ownTurns+1||
     !Number.isInteger(buff.bp)||buff.bp<1||buff.bp>5000||
-    !(fromOnPlay||fromGalaxy||fromFirstAttack||fromRestMain||fromOwnEffectRest||fromMainChoose||fromNamedEvent||fromNamedField))
+    !(fromOnPlay||fromGalaxy||fromFirstAttack||fromRestMain||fromOwnEffectRest||fromEventUntil||fromMainChoose||fromNamedEvent||fromNamedField))
     throw Error('Forged next-own-start physical BP modifier');
   }
   const ceilingUntil=physical.blockAtLeastUntil;
@@ -12071,7 +12117,7 @@ export function assertUniversalMatch(pack,s){
    typeof e.key!=='string'||!Array.isArray(e.jobs))))
   throw Error('Invalid retirement order');
  if(!Array.isArray(s.effectQueue)||[...s.effectQueue,...lifeEntries.flatMap(e=>e.jobs)].some(e=>!playerIndex(e.owner)||
-   !['grantedAttackDraw','grantOnAttack','grantSelfSniperThisTurn','grantSelfAttackWinDrawThisTurn','grantSelfMustBlockThisTurn','buffSelfUntilNextOwnStart','grantSelfAttackEndSwapThisTurn','resolveAttackWinRecovery','draw','drawIfOwnName','drawIfOwnOutsideNamedCountAtLeast','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','drawIfOppRestCharacter','drawIfOppCharacterBpAtLeast','drawIfOwnNameAndHandFewer','activeOwnNamed','millTop','buffSelf','buffSelfPerOwnOutsideGroups','enemyBpDown','drawDiscard','chooseOne','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','conditionalBounceOrRetireByOwnOutsideNames','completeResolvingEvent','stripOppRaidTop','restOppFrontUnderBp','restOppFrontBpAtLeast','restOppFrontOne','forbidAttackOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopUpToTwoBottom','deployOwnHandRest','deployOwnHandSpecial','deployOwnHandRestOrRaid','optionalPayApThen','optionalRetireThenProgram','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw','discardGate','removeOutsideThen','enemyFrontAllBpDown','retireOppFrontAllUnderBp','nextEligibleHandPlayApDiscount','grantFrontEnergyOwnOtherFrontTrait','buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideColorUnderEnergy','deployOutsideRest','deployOutsideNameRest','deployNamedFromZones','payApDeployNamedRest','inspectTopTraitOutside','deployOutsideTraitlessRestOrRaid','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','retireSourceOnPhaseEnd','moveAtMainEnd','retireOwnFieldOne','retireOwnCharacterOne','openBlock','resolveSniperBattle','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','resolveAttackEndSwap','phaseOrder','effectMoveOrder','restSelfTuckMovedFaceDown','sourceResolutionBoundary','lifeBatchStep','lifeRelease','advanceAfterAttack','additionalBattleDamage','openRetirementBatch','closeRetirementBatch','retirementOrder','battleImpactDamage','discardOppHand','activeSelfIf','openEnergyMoveGrants','moveOtherAcrossOrRemove','raidBaseEnergyThen','grantSelfAttackDamageThisTurn','restOppFrontLockActive','removeAnyOutsideScale','inspectTopColoredNamesOutside','inspectTopNamesOutside','drawIfNameOrDistinctColorNames','drawDiscardIfEffectApPaid','activeSelf','grantSelfImpactThisTurn','grantOwnNameBlockAtLeast','grantImpactNullUntilNextOwnStart','buffOtherIfFirstAttack','millUpToThenRecover','removeOppFrontUnderBp','discardUpToThenDraw','searchTopAddOneMillRest','buffDistinctTraitNames','grantFirstAttackUntilNextOwnStart','mayThen','unblockedAttackDamage','raidBaseNameThen','grantUnblockedDrawThisTurn','drawIfOwnNameOrRaidBase','replayRaidBase','outsideRecoverOrRestPlay','buffMaxOwnBpImpact','gainSelfEnergyIfAtLeast','grantAllFrontEnergyThisTurn','outsideToDeckTop','recoverNamesThenHandRaidDiscount','lookTakeOrdered','facedownEntryScale','maySpendFacedown','galaxyBurstEntry','mayAbsorbFront','simonLowEntry','replayNamedEntry','mayRaidOntoSelf','lagannEntryLadder','openRaidOrder','openRaidWitness','resumeSimonLow','mayCaptureRetired','drawIfOwnEventUsed','drawIfOppFrontBelowPrinted','drawDiscardIfEveryOwnCharacterNamed','retireOppFrontTiered','restOppFrontByOutsideEvents','searchTopTraitOrEventAp','discountNextNamedHandEnergy','retireOppFrontAtLeastBp','retireOppFrontAtMostBp','retireOppFrontScaledBp','grantHandCharacterBpMay','deployOwnHandNamedRest','buffEitherOther','returnPrintedActiveBuff','removeNamedOutsideActive','payHandOrRestForNamed','handTopBuffSelf','optionalRestFrontRecoverAp','drawHandTop','optionalDiscardActiveSelf','resolveUnblockedRest','unblockedLifeDamage','restOwnActiveFrontDraw','deployOwnRaidBaseRest','restOrRetireFrontAtMost','peekTopOneIfFieldNames','buffNamedImpactDraw','deployOutsidePrintedRest','grantPrintedBlockAtLeast','moveOppFrontToEnergy','optionalHandOutsideActiveIf','buffNamedImpactDuration','takeTopHandRestOutside','buffEitherField','revealHandBottomOutsideCharacter','revealTopHandOrAffordableNamed','drawThenPlaceHand','impactIfEveryOwnTraitless','deployOutsidePrintedActive','bounceThenAffordableSubaru','grantBounceInstead','removeOppFieldOne','handOutsideReenterFaceDown','grantOwnOtherTraitImpact','grantOppBlockAtLeast','grantSelfAttackSkipThisTurn','deployOutsideFiltered','deployOutsideFilteredContinue','ifLiveThen','swapEnergyWithFrontSkip','attackAidOffer','activeOwnTrait','drawTuckHandUnder','chainRaidHand','retireOppFrontOne','recoverOutsideCharacterUnderEnergy','payApDiscardOutsideRaid','activeOwnTraitLines','activeSkipPair','grantSelfSkipNextActive','replayOnPlay','offerEnergyTraitSwap','activeEitherEntered','activeOwnOther','allNamedEnergyBounce','banAttackMoveOtherLine','banSelfAttackThisTurn','buffAnyCharacter','buffEnergyNamedIfRaidedFront','buffOwnIfAbovePrinted','buffOwnOthersFixed','buffOwnOthersUpTo','chooseOneIfBelowPrinted','deployOutsideNameColorEnergy','deployOutsideNamedRestRetireEnd','deployOutsidePrinted','deployOutsidePrintedExcept','deployOwnHandFreshName','drawDiscardOrDrawIfBelowPrinted','drawIfAllOwnFieldNamed','grantNamedBuffSniper','grantNamedLoseBattleReady','grantNamedReadyOnAttack','grantOtherFieldFrontEnergyThisTurn','grantSelfAttackDrawThisTurn','grantSelfBlockAtLeastUntilNextOwnStart','grantSelfDoubleAttackThisTurn','grantSelfUnchosenThisTurn','grantSubaruHandTaxThisTurn','nextScaledEventApDiscount','optionalRetireExceptNamesTuckActive','recoverOutsideNameColor','recoverPlainEvent','resolveAttackEndRestPrinted','restOwnFrontOne','revealHandBottom','scheduleAttackStartAp','searchTopDistinctBottomDiscard','tuckRetiredUnderActive'].includes(e.op)))
+   !['grantedAttackDraw','grantOnAttack','grantSelfSniperThisTurn','grantSelfAttackWinDrawThisTurn','grantSelfMustBlockThisTurn','buffSelfUntilNextOwnStart','grantSelfAttackEndSwapThisTurn','resolveAttackWinRecovery','draw','drawIfOwnName','drawIfOwnOutsideNamedCountAtLeast','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','drawIfOppRestCharacter','drawIfOppCharacterBpAtLeast','drawIfOwnNameAndHandFewer','activeOwnNamed','millTop','buffSelf','buffSelfPerOwnOutsideGroups','enemyBpDown','drawDiscard','chooseOne','recoverAp','peekTopOne','peekTopOrBottom','retireOppFrontUnderBp','retireOppFrontOneUnderBp','conditionalBounceOrRetireByOwnOutsideNames','completeResolvingEvent','stripOppRaidTop','restOppFrontUnderBp','restOppFrontBpAtLeast','restOppFrontOne','forbidAttackOppFrontOne','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','searchTopUpToTwoBottom','deployOwnHandRest','deployOwnHandSpecial','deployOwnHandRestOrRaid','optionalPayApThen','optionalRetireThenProgram','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw','discardGate','removeOutsideThen','enemyFrontAllBpDown','retireOppFrontAllUnderBp','nextEligibleHandPlayApDiscount','grantFrontEnergyOwnOtherFrontTrait','buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideColorUnderEnergy','deployOutsideRest','deployOutsideNameRest','deployNamedFromZones','payApDeployNamedRest','inspectTopTraitOutside','deployOutsideTraitlessRestOrRaid','buffOwnField','oncePerTurnGate','retireBatchOne','retireAtMainEnd','retireSourceOnPhaseEnd','moveAtMainEnd','retireOwnFieldOne','retireOwnCharacterOne','openBlock','resolveSniperBattle','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','resolveAttackEndSwap','phaseOrder','effectMoveOrder','restSelfTuckMovedFaceDown','sourceResolutionBoundary','lifeBatchStep','lifeRelease','advanceAfterAttack','additionalBattleDamage','openRetirementBatch','closeRetirementBatch','retirementOrder','battleImpactDamage','discardOppHand','activeSelfIf','openEnergyMoveGrants','moveOtherAcrossOrRemove','raidBaseEnergyThen','grantSelfAttackDamageThisTurn','restOppFrontLockActive','removeAnyOutsideScale','inspectTopColoredNamesOutside','inspectTopNamesOutside','drawIfNameOrDistinctColorNames','drawDiscardIfEffectApPaid','activeSelf','grantSelfImpactThisTurn','grantOwnNameBlockAtLeast','grantImpactNullUntilNextOwnStart','buffOtherIfFirstAttack','millUpToThenRecover','removeOppFrontUnderBp','discardUpToThenDraw','searchTopAddOneMillRest','buffDistinctTraitNames','grantFirstAttackUntilNextOwnStart','mayThen','unblockedAttackDamage','raidBaseNameThen','grantUnblockedDrawThisTurn','drawIfOwnNameOrRaidBase','replayRaidBase','outsideRecoverOrRestPlay','buffMaxOwnBpImpact','gainSelfEnergyIfAtLeast','grantAllFrontEnergyThisTurn','outsideToDeckTop','recoverNamesThenHandRaidDiscount','lookTakeOrdered','facedownEntryScale','maySpendFacedown','galaxyBurstEntry','mayAbsorbFront','simonLowEntry','replayNamedEntry','mayRaidOntoSelf','lagannEntryLadder','openRaidOrder','openRaidWitness','resumeSimonLow','mayCaptureRetired','drawIfOwnEventUsed','drawIfOppFrontBelowPrinted','drawDiscardIfEveryOwnCharacterNamed','retireOppFrontTiered','restOppFrontByOutsideEvents','searchTopTraitOrEventAp','discountNextNamedHandEnergy','retireOppFrontAtLeastBp','retireOppFrontAtMostBp','retireOppFrontScaledBp','grantHandCharacterBpMay','deployOwnHandNamedRest','buffEitherOther','returnPrintedActiveBuff','removeNamedOutsideActive','payHandOrRestForNamed','handTopBuffSelf','optionalRestFrontRecoverAp','drawHandTop','optionalDiscardActiveSelf','resolveUnblockedRest','unblockedLifeDamage','restOwnActiveFrontDraw','deployOwnRaidBaseRest','restOrRetireFrontAtMost','peekTopOneIfFieldNames','buffNamedImpactDraw','deployOutsidePrintedRest','grantPrintedBlockAtLeast','moveOppFrontToEnergy','optionalHandOutsideActiveIf','buffNamedImpactDuration','takeTopHandRestOutside','buffEitherField','revealHandBottomOutsideCharacter','revealTopHandOrAffordableNamed','drawThenPlaceHand','impactIfEveryOwnTraitless','deployOutsidePrintedActive','bounceThenAffordableSubaru','grantBounceInstead','removeOppFieldOne','handOutsideReenterFaceDown','grantOwnOtherTraitImpact','grantOppBlockAtLeast','grantSelfAttackSkipThisTurn','deployOutsideFiltered','deployOutsideFilteredContinue','ifLiveThen','swapEnergyWithFrontSkip','attackAidOffer','activeOwnTrait','drawTuckHandUnder','chainRaidHand','retireOppFrontOne','recoverOutsideCharacterUnderEnergy','payApDiscardOutsideRaid','activeOwnTraitLines','activeSkipPair','grantSelfSkipNextActive','replayOnPlay','offerEnergyTraitSwap','activeEitherEntered','activeOwnOther','allNamedEnergyBounce','banAttackMoveOtherLine','banSelfAttackThisTurn','buffAnyCharacter','buffEnergyNamedIfRaidedFront','buffOwnIfAbovePrinted','buffOwnOthersFixed','buffOwnOthersUpTo','chooseOneIfBelowPrinted','deployOutsideNameColorEnergy','deployOutsideNamedRestRetireEnd','deployOutsidePrinted','deployOutsidePrintedExcept','deployOwnHandFreshName','drawDiscardOrDrawIfBelowPrinted','drawIfAllOwnFieldNamed','grantNamedBuffSniper','grantNamedLoseBattleReady','grantNamedReadyOnAttack','grantOtherFieldFrontEnergyThisTurn','grantSelfAttackDrawThisTurn','grantSelfBlockAtLeastUntilNextOwnStart','grantSelfDoubleAttackThisTurn','grantSelfUnchosenThisTurn','grantSubaruHandTaxThisTurn','nextScaledEventApDiscount','optionalRetireExceptNamesTuckActive','recoverOutsideNameColor','recoverPlainEvent','resolveAttackEndRestPrinted','restOwnFrontOne','revealHandBottom','scheduleAttackStartAp','searchTopDistinctBottomDiscard','tuckRetiredUnderActive','buffOwnNames','restNamedActiveFrontThenDraw','mayDrawDiscardIfOwnEvent','buffSelfIfFrontOpen'].includes(e.op)))
   throw Error('Invalid queued effects');
  // A printed choose-one may wait behind an earlier raid choice, such as
  // BLC-1-053's draw/discard when the player resolves entry before the

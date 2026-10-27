@@ -689,7 +689,7 @@ export const STEINS_GATE_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-021",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-021",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "chooseNames",
   "faq": []
  },
  {
@@ -1012,7 +1012,7 @@ export const STEINS_GATE_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-031",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-031",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "searchCharacter",
   "faq": []
  },
  {
@@ -1136,7 +1136,7 @@ export const STEINS_GATE_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-035",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-035",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "restKurisuDraw",
   "faq": []
  },
  {
@@ -1403,7 +1403,7 @@ export const STEINS_GATE_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-043",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-043",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "attackMayDraw",
   "faq": []
  },
  {
@@ -1434,7 +1434,7 @@ export const STEINS_GATE_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-044",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-044",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "openFrontBuff",
   "faq": []
  },
  {
@@ -1565,7 +1565,7 @@ export const STEINS_GATE_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-048",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-048",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "eventUntilBuff",
   "faq": []
  },
  {
@@ -1751,7 +1751,7 @@ export const STEINS_GATE_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-054",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-054",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "discardIbn",
   "faq": []
  },
  {
@@ -2229,7 +2229,7 @@ export const STEINS_GATE_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-069",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-069",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "colorOtherBuff",
   "faq": []
  },
  {
@@ -2329,7 +2329,7 @@ export const STEINS_GATE_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-072",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-072",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "dmailTurnBuff",
   "faq": []
  },
  {
@@ -2360,7 +2360,7 @@ export const STEINS_GATE_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-073",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-073",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "fieldDrawRetire",
   "faq": []
  },
  {

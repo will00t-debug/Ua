@@ -72,6 +72,9 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
  // Successful EVENT usage is already recorded as an atomic physical HAND ->
  // OUTSIDE rule move. Reuse this ledger; never infer usage from event count,
  // deck inspections, cancelled plays, opponent actions or transient zones.
+ // 「自分のターン中」 with no other board fact. The turn check above
+ // already rejected the opponent's turn when turn is own.
+ if(condition.kind==='controllerTurn')return true;
  if(condition.kind==='ownEventUsedThisTurn')
   return (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&
    e.owner===owner&&e.controller===owner&&e.from==='hand'&&
