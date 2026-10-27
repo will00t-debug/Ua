@@ -48,7 +48,7 @@ test('Cloudflare /online.html login boot produces actual inputs, registration sw
  new vm.Script(source,{filename:'dist/online.mjs'}).runInContext(context);
  // boot() fetches health then session, the unauthorized response must still
  // render the authentication form rather than leave an empty #app container.
- for(let i=0;i<8&&!appRoot.children.length;i++)await Promise.resolve();
+ for(let i=0;i<30&&!appRoot.children.length;i++)await new Promise(resolve=>setImmediate(resolve));
  assert.ok(appRoot.children.length>0,'Login page is blank after /api/me returns 401');
  assert.match(texts(appRoot),/登入/);
  assert.ok(requests.includes('/api/health'));
