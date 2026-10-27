@@ -8,23 +8,36 @@
  <meta name="description" content="UNION ARENA V2 非官方練習模擬器：保留經典對戰介面，以 V2 規則引擎執行已支援牌組的對戰。">
  <link rel="icon" href="assets/mark.svg" type="image/svg+xml">
  <link rel="stylesheet" href="universal-v2-legacy.css">
+ <link rel="stylesheet" href="universal-v2-arena-setup.css?v=20261028a">
  <title>UNION ARENA V2｜正式對戰</title>
 </head>
-<body>
+<body class="v2-arena-theme">
+ <div class="arena-scene" aria-hidden="true">
+  <div class="scene-card scene-card-left scene-card-red"><span>UNION<br>ARENA</span></div>
+  <div class="scene-card scene-card-left scene-card-black"><span>UNION<br>ARENA</span></div>
+  <div class="scene-card scene-card-right scene-card-blue"><span>UNION<br>ARENA</span></div>
+  <div class="scene-card scene-card-right scene-card-yellow"><span>UNION<br>ARENA</span></div>
+  <div class="scene-card scene-card-right scene-card-purple"><span>UNION<br>ARENA</span></div>
+  <div class="scene-card scene-card-right scene-card-green"><span>UNION<br>ARENA</span></div>
+ </div>
  <div class="v2-shell">
   <header class="topbar">
-   <div class="identity">
-    <div class="logo">UA</div>
-    <div><div class="eyebrow">UNION ARENA · V2</div><h1>UNION ARENA V2 正式對戰</h1></div>
-   </div>
-   <div class="status"><span class="tag">V2 正式引擎</span><span class="tag">真卡 50 vs 50</span>
-   <span class="tag">經典卡牌桌面</span><a class="tag" href="/index.html">圖片式組卡／卡片圖鑑</a><a class="tag" href="/online.html">帳號登入／線上對戰</a></div>
+   <a class="arena-wordmark" href="/online.html" aria-label="UNION ARENA V2 正式對戰，返回競技場大廳">
+    <span class="arena-wordmark-overline">TRADING CARD GAME</span>
+    <span class="arena-wordmark-title">UNION <strong>ARENA</strong> <small>V2</small></span>
+   </a>
+   <nav class="status" aria-label="主要導覽">
+    <a class="tag current" href="/universal-v2-preview.html" aria-current="page">對戰</a>
+    <a class="tag" href="/index.html">牌組管理／卡片圖鑑</a>
+    <a class="tag" href="/online.html">帳號登入／線上對戰</a>
+   </nav>
   </header>
   <section class="panel setup v2-setup-v3" aria-label="V2 對局設定">
    <div class="setup-intro">
-    <div><span class="setup-kicker">MATCH SETUP · V2</span><h2>選擇牌組，進入競技場</h2>
-     <p>挑選雙方牌組與 AI 難度，準備你的下一場 UNION ARENA 對決。</p></div>
-    <span id="v2-coverage" class="small">正在讀取 V2 卡包覆蓋率…</span>
+    <div><span class="setup-kicker">MATCH SETUP / UNION ARENA V2</span><h2>準備開始對戰</h2>
+     <p>選擇牌組與 AI 難度，進入你的下一場對決。</p></div>
+    <div class="setup-status"><span class="engine-badge">V2 正式引擎　·　真卡 50 vs 50</span>
+     <span id="v2-coverage" class="small">正在讀取 V2 卡包覆蓋率…</span></div>
    </div>
    <div class="matchup-picker">
     <section class="matchup-side" aria-label="選擇自己的牌組">
@@ -41,13 +54,13 @@
       <option value="rezero-set1">Re:Zero 第一彈｜已支援黃色練習組</option>
      </select>
      <div class="featured-decks" role="group" aria-label="快速選擇自己的 BLEACH 牌組">
-      <button type="button" class="deck-quick-pick blue" data-deck-side="my-title" data-deck-key="reject-blue" aria-pressed="false">藍 · 我拒絕</button>
-      <button type="button" class="deck-quick-pick green" data-deck-side="my-title" data-deck-key="white-sword" aria-pressed="false">綠 · 白劍</button>
-      <button type="button" class="deck-quick-pick purple" data-deck-side="my-title" data-deck-key="renruki" aria-pressed="false">紫 · 戀露</button>
+      <button type="button" class="deck-quick-pick blue" data-deck-side="my-title" data-deck-key="reject-blue" aria-pressed="false"><span class="deck-thumb" aria-hidden="true"><span class="deck-thumb-title">UNION<br>ARENA</span></span><span class="deck-quick-meta"><strong>藍 · 我拒絕</strong><small>50 張</small></span></button>
+      <button type="button" class="deck-quick-pick green" data-deck-side="my-title" data-deck-key="white-sword" aria-pressed="false"><span class="deck-thumb" aria-hidden="true"><span class="deck-thumb-title">UNION<br>ARENA</span></span><span class="deck-quick-meta"><strong>綠 · 白劍</strong><small>50 張</small></span></button>
+      <button type="button" class="deck-quick-pick purple" data-deck-side="my-title" data-deck-key="renruki" aria-pressed="false"><span class="deck-thumb" aria-hidden="true"><span class="deck-thumb-title">UNION<br>ARENA</span></span><span class="deck-quick-meta"><strong>紫 · 戀露</strong><small>50 張</small></span></button>
      </div>
      <p id="my-deck-description" class="chosen-deck-meta" aria-live="polite"></p>
     </section>
-    <div class="matchup-vs" aria-hidden="true"><span>VS</span></div>
+    <div class="matchup-vs" aria-hidden="true"><span>VS<small>ARENA</small></span></div>
     <section class="matchup-side" aria-label="選擇電腦牌組">
      <div class="matchup-title"><span class="matchup-step">02</span><div><h3>電腦牌組</h3><p>可以選和你相同，或不同作品的牌組</p></div></div>
      <label class="matchup-select-label" for="ai-title">選擇電腦使用的牌組</label>
@@ -62,13 +75,14 @@
       <option value="rezero-set1">Re:Zero 第一彈｜已支援黃色練習組</option>
      </select>
      <div class="featured-decks" role="group" aria-label="快速選擇電腦的 BLEACH 牌組">
-      <button type="button" class="deck-quick-pick blue" data-deck-side="ai-title" data-deck-key="reject-blue" aria-pressed="false">藍 · 我拒絕</button>
-      <button type="button" class="deck-quick-pick green" data-deck-side="ai-title" data-deck-key="white-sword" aria-pressed="false">綠 · 白劍</button>
-      <button type="button" class="deck-quick-pick purple" data-deck-side="ai-title" data-deck-key="renruki" aria-pressed="false">紫 · 戀露</button>
+      <button type="button" class="deck-quick-pick blue" data-deck-side="ai-title" data-deck-key="reject-blue" aria-pressed="false"><span class="deck-thumb" aria-hidden="true"><span class="deck-thumb-title">UNION<br>ARENA</span></span><span class="deck-quick-meta"><strong>藍 · 我拒絕</strong><small>50 張</small></span></button>
+      <button type="button" class="deck-quick-pick green" data-deck-side="ai-title" data-deck-key="white-sword" aria-pressed="false"><span class="deck-thumb" aria-hidden="true"><span class="deck-thumb-title">UNION<br>ARENA</span></span><span class="deck-quick-meta"><strong>綠 · 白劍</strong><small>50 張</small></span></button>
+      <button type="button" class="deck-quick-pick purple" data-deck-side="ai-title" data-deck-key="renruki" aria-pressed="false"><span class="deck-thumb" aria-hidden="true"><span class="deck-thumb-title">UNION<br>ARENA</span></span><span class="deck-quick-meta"><strong>紫 · 戀露</strong><small>50 張</small></span></button>
      </div>
      <p id="ai-deck-description" class="chosen-deck-meta" aria-live="polite"></p>
     </section>
    </div>
+   <div class="setup-config-grid">
    <section class="difficulty-picker" aria-label="選擇電腦難度">
     <div class="difficulty-header"><div><span class="matchup-step">03</span><h3>電腦難度</h3></div><p>選一個你想挑戰的程度</p></div>
     <div class="difficulty-options" role="group" aria-label="AI 難度選擇">
@@ -78,16 +92,19 @@
     </div>
     <select id="ai-level" hidden aria-hidden="true" tabindex="-1"><option value="easy">簡單</option><option value="normal" selected>普通</option><option value="hard">困難</option></select>
    </section>
+   <section class="match-advanced" aria-label="其他設定">
+    <h3>其他設定</h3>
+    <div class="advanced-fields">
+     <div class="field"><label for="first-player">先手玩家</label>
+      <select id="first-player"><option value="human">你先手</option><option value="ai">電腦先手</option></select></div>
+     <div class="field"><label for="match-seed">牌序種子（可重現）</label>
+      <input id="match-seed" type="number" min="1" max="999999999" step="1" inputmode="numeric" value="20261015"></div>
+    </div>
+   </section>
+   </div>
    <div class="setup-bottom">
-    <details class="match-advanced"><summary>進階設定：先手與牌序</summary>
-     <div class="advanced-fields">
-      <div class="field"><label for="first-player">先手玩家</label>
-       <select id="first-player"><option value="human">你先手</option><option value="ai">電腦先手</option></select></div>
-      <div class="field"><label for="match-seed">牌序種子（可重現）</label>
-       <input id="match-seed" type="number" min="1" max="999999999" step="1" inputmode="numeric" value="20261015"></div>
-     </div>
-    </details>
-    <div class="setup-actions"><button id="start-game" type="button" class="primary">開始 V2 對戰 <span aria-hidden="true">→</span></button>
+    <div class="setup-assurance"><span>已驗證 V2 牌組才能進入對戰</span><span>官方合法操作由 V2 引擎判定</span></div>
+    <div class="setup-actions"><button id="start-game" type="button" class="primary">⚔　開始 V2 對戰 <span aria-hidden="true">→</span></button>
      <span id="restart-notice" class="small" aria-live="polite"></span></div>
    </div>
    <details class="designated-details"><summary>查看藍色「我拒絕」、綠色「白劍」、紫色「戀露」完整清單</summary>
