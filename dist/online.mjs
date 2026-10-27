@@ -242,7 +242,7 @@ function homeView(){
    el('h1',{text:'對戰大廳'}),
    el('p',{class:'muted',text:'選擇對戰方式，使用你的 V2 牌組展開對決。'})),
   el('div',{class:'arena-entries arena-battle-modes'},
-   el('a',{class:'arena-entry arena-entry-solo',href:'/'},el('span',{class:'arena-mode-icon',text:'⚔'}),el('strong',{text:'電腦對戰'}),el('span',{text:'選擇雙方牌組與 AI 難度，開始 V2 單人對戰。'}),el('span',{class:'arena-mode-cta',text:'設定電腦對戰 →'})),
+   el('a',{class:'arena-entry arena-entry-solo',href:'/universal-v2-preview.html'},el('span',{class:'arena-mode-icon',text:'⚔'}),el('strong',{text:'電腦對戰'}),el('span',{text:'選擇雙方牌組與 AI 難度，開始 V2 單人對戰。'}),el('span',{class:'arena-mode-cta',text:'設定電腦對戰 →'})),
    el('a',{class:'arena-entry arena-entry-online',href:'#online-match'},el('span',{class:'arena-mode-icon',text:'◎'}),el('strong',{text:'線上對戰'}),el('span',{text:'建立房間或輸入代碼，與其他玩家對戰。'}),el('span',{class:'arena-mode-cta',text:'前往線上房間 ↓'})),
    el('a',{class:'arena-entry arena-entry-deck',href:'/index.html'},el('span',{class:'arena-mode-icon',text:'▣'}),el('strong',{text:'牌組構築'}),el('span',{text:'圖片式牌組構築：搜尋卡牌、調整張數並保存牌組。'}),el('span',{class:'arena-mode-cta',text:'管理我的牌組 →'}))),
   el('section',{class:'panel'},
