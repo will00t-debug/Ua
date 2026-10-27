@@ -68,6 +68,8 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-named-keyword':'可選 1 個指定名稱角色，賦予本回合 Impact 或直接攻擊傷害',
  'effect-keyword-mode':'選擇 Impact +1 或 Damage +1',
  'effect-name-or-trait-ready':'可將 1 個指定名稱或特徵角色改為 ACTIVE',
+ 'effect-active-traitless':'可將另 1 個沒有特徵的角色改為 ACTIVE',
+ 'effect-raid-base-rest':'可將突襲底卡以 Rest 登場',
  'effect-name-or-trait-protect':'可讓 1 個指定名稱或特徵角色不被對方效果選擇',
  'effect-sacrifice-named':'可退場另 1 個指定名稱角色',
  'recovered-self-entry':'回收後可 REST 登場至能源線',
@@ -171,6 +173,8 @@ export function uiActionLabel(action,{pack,state}={}){
    return '生命觸發：'+action.mode;
   case 'chooseSacrificeNamed':return action.uid===null?'不退場指定名稱角色':'退場 '+name();
   case 'chooseNameOrTraitReady':return action.uid===null?'不改為 ACTIVE':'將 '+name()+' 改為 ACTIVE';
+  case 'chooseActiveTraitless':return action.uid===null?'不改為 ACTIVE':'將 '+name()+' 改為 ACTIVE';
+  case 'chooseRaidBaseRest':return action.uid===null?'不將突襲底卡以 Rest 登場':'將 '+name()+' 以 Rest 登場'+suffix();
   case 'chooseNameOrTraitProtect':return action.uid===null?'不賦予選擇保護':'令 '+name()+' 不被對方效果選擇';
   case 'chooseNamedKeyword':return action.uid===null?'不賦予指定名稱角色':'選擇 '+name();
   case 'chooseKeywordMode':return action.mode==='impact'?'本回合 Impact +1':'本回合直接攻擊傷害 +1';
