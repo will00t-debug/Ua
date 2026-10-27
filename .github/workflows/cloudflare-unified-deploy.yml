@@ -4,8 +4,13 @@ on:
   push:
     branches: [main]
     paths:
-      - 'dist/online.mjs'
-      - 'dist/online.html'
+      - 'dist/**'
+      - 'worker/**'
+      - 'server/**'
+      - 'wrangler.jsonc'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/cloudflare-unified-deploy.yml'
   workflow_dispatch:
     inputs:
       worker_name:
@@ -39,7 +44,7 @@ jobs:
           set -euo pipefail
           test -n "$CLOUDFLARE_API_TOKEN" || { echo "::error::Set CLOUDFLARE_API_TOKEN in GitHub Actions secrets first"; exit 1; }
           test -n "$CLOUDFLARE_ACCOUNT_ID" || { echo "::error::Set CLOUDFLARE_ACCOUNT_ID in GitHub Actions secrets first"; exit 1; }
-          node --input-type=module -e "import fs from 'node:fs'; const config=JSON.parse(fs.readFileSync('wrangler.jsonc'));if(config.name!=='ua-arena'||config.durable_objects?.bindings?.find(x=>x.name==='ACCOUNTS')?.class_name!=='AccountBook'||config.durable_objects?.bindings?.find(x=>x.name==='ROOMS')?.class_name!=='MatchRoom')process.exit(1)"
+          node --input-type=module -e "import fs from 'node:fs'; const config=JSON.parse(fs.readFileSync('wrangler.jsonc'));if(config.name!=='ua-arena'||config.assets?.html_handling!=='none'||config.assets?.run_worker_first!==true||config.durable_objects?.bindings?.find(x=>x.name==='ACCOUNTS')?.class_name!=='AccountBook'||config.durable_objects?.bindings?.find(x=>x.name==='ROOMS')?.class_name!=='MatchRoom')process.exit(1)"
       - name: Install and run full regressions
         run: |
           npm ci

@@ -13,5 +13,19 @@
       "source": "/",
       "destination": "/universal-v2-preview.html"
     }
+  ],
+  "redirects": [
+    {
+      "source": "/",
+      "missing": [{"type": "query", "key": "stay"}],
+      "destination": "https://ua-arena.will00t.workers.dev/",
+      "permanent": false
+    },
+    {
+      "source": "/:path*",
+      "missing": [{"type": "query", "key": "stay"}],
+      "destination": "https://ua-arena.will00t.workers.dev/:path*",
+      "permanent": false
+    }
   ]
 }
