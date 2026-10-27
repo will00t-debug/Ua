@@ -1,6 +1,11 @@
 name: Deploy unified UA V2 to existing Cloudflare Worker
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'dist/online.mjs'
+      - 'dist/online.html'
   workflow_dispatch:
     inputs:
       worker_name:
@@ -17,7 +22,7 @@ concurrency:
 
 jobs:
   deploy:
-    if: ${{ github.event.inputs.worker_name == 'ua-arena' }}
+    if: ${{ github.event_name == 'push' || github.event.inputs.worker_name == 'ua-arena' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
