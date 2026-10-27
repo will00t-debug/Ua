@@ -133,7 +133,7 @@ function bind(){
   if(data.action==='newDeck'){state.cloudOrigin=null;state.counts[state.title]={};state.names[state.title]=defaults[state.title];state.selectedSaved[state.title]=null;persist();render();notify('已建立空白草稿');return;}
   if(data.action==='saveDeck'){
    const title=state.title,records=savedData[title],counts=normalizeEditorCounts(title,state.counts[title]);
-   const selected=state.selectedSaved[title]||((state.cloudOrigin?.title===title)?state.cloudOrigin.localId:null),name=state.names[title].trim()||defaults[title];
+   const selected=state.selectedSaved[title]||((state.cloudOrigin?.title===title)?'v2-account-'+state.cloudOrigin.remoteId:null),name=state.names[title].trim()||defaults[title];
    const old=records.find(d=>d.id===selected);
    const entry={id:old?.id||(selected&&/^[A-Za-z0-9:_-]{1,80}$/.test(selected)?selected:null)||'v2-'+Date.now()+'-'+Math.random().toString(36).slice(2),name,counts,updatedAt:new Date().toISOString()};
    if(old)records[records.indexOf(old)]=entry;else records.push(entry);
@@ -213,7 +213,8 @@ function importAccountDeckHandoff(){
   state.counts[title]=counts;
   state.names[title]=typeof payload.name==='string'?payload.name.trim().slice(0,40)||defaults[title]:defaults[title];
   const localId=typeof payload.localId==='string'&&/^[A-Za-z0-9:_-]{1,80}$/.test(payload.localId)?payload.localId:null;
-  state.selectedSaved[title]=savedData[title].some(x=>x.id===localId)?localId:null;
+  const scopedLocalId='v2-account-'+payload.remoteId;
+  state.selectedSaved[title]=savedData[title].some(x=>x.id===scopedLocalId)?scopedLocalId:null;
   state.cloudOrigin={remoteId:payload.remoteId,title,localId};
   return true;
  }catch{return false;}
