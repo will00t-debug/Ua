@@ -30,7 +30,11 @@ function hashPassword(password,salt=randomBytes(16)){
  const hash=scryptSync(password,salt,32,{N:SCRYPT_N,r:8,p:1,maxmem:64*1024*1024});
  return {salt:salt.toString('hex'),hash:hash.toString('hex'),n:SCRYPT_N};
 }
-const DUMMY_PASSWORD=hashPassword('not-a-real-password');
+let dummyPassword=null;
+function dummyHash(){
+ if(!dummyPassword)dummyPassword=hashPassword('not-a-real-password');
+ return dummyPassword;
+}
 function passwordMatches(password,stored){
  const salt=Buffer.from(stored.salt,'hex');
  const expected=Buffer.from(stored.hash,'hex');
@@ -256,7 +260,7 @@ export function dispatchAccount(repos,message,now){
    const ip=String(message.ip||'local').slice(0,80);
    if(lockedOut(repos,ip,key,now))throw new ApiError(429,'嘗試次數太多，請稍後再登入。');
    const user=repos.findUserByKey(key);
-   const matches=passwordMatches(password,user?user.password:DUMMY_PASSWORD);
+   const matches=passwordMatches(password,user?user.password:dummyHash());
    if(!user||!matches){
     repos.noteFailure(ip+'\n'+key,now,LOGIN_WINDOW_MS);
     throw new ApiError(401,'帳號或密碼不正確。');
