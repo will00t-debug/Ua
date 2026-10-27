@@ -139,7 +139,7 @@ function homeView(){
    el('p',{class:'muted',text:'每個帳號只看得到自己的雲端牌組。點選「圖片編輯」會帶入這副牌組，編輯後按儲存即可同步到自己的帳號。'}),
    el('div',{class:'row'},
     el('button',{type:'button',text:'匯入這台瀏覽器的牌組',disabled:app.busy,onClick:importLocal}),
-    el('a',{class:'linkish',href:'/index.html',text:'前往圖片式組卡'}))
+    el('a',{class:'linkish',href:'/index.html',text:'前往圖片式組卡'})),
    deckList(),
    el('details',{},el('summary',{text:'貼上牌表保存'}),
     el('form',{class:'grid',onSubmit:savePasted},
