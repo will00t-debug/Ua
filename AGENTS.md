@@ -19,7 +19,7 @@ App version baseline: v9.1.1 (2026-10-12). This repository is meant for GitHub +
 - UI: `dist/app.mjs`, `dist/index.html`, `dist/styles.css`, `dist/clean.css`.
 - Tests: `tests/*.test.mjs`; run `npm test` with Node.js 22.
 - Deployment: `vercel.json` serves `dist/` directly, no compile/build step needed.
-- Cloudflare Workers (accounts / online matches / unified host): existing Worker `ua-arena` via `.github/workflows/cloudflare-unified-deploy.yml`. Read `docs/ops/cloudflare-github-actions-deploy.md` before any production deploy. Prefer GitHub Actions + Secrets; never paste Cloudflare tokens into chat, code, or logs; never delete or rename Durable Object classes/data.
+- Cloudflare Workers (accounts / online matches / unified host): existing Worker `ua-arena` via `.github/workflows/cloudflare-unified-deploy.yml`. **GPT-direct deploy:** merge a green PR into `main` (deploy paths) and Actions deploys production automatically; Secrets stay in GitHub. Read `docs/ops/cloudflare-github-actions-deploy.md`. Never paste Cloudflare tokens into chat, code, or logs; never delete or rename Durable Object classes/data.
 
 ## Modification protocol
 1. Check `README.md`, `MIGRATION_GITHUB_VERCEL.md`, `docs/ops/cloudflare-github-actions-deploy.md` (for Worker deploys) and the latest GitHub history before changes.

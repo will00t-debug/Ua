@@ -1,10 +1,12 @@
 name: Deploy unified UA V2 to existing Cloudflare Worker
 
-# Production deploy path for GPT / humans:
-# - Prefer workflow_dispatch after main is green.
-# - Push-to-main auto-deploy stays OFF unless the repository variable
-#   ENABLE_CLOUDFLARE_AUTO_DEPLOY is explicitly set to the string "true".
-# Secrets stay in GitHub Actions; never print CLOUDFLARE_* values.
+# GPT-direct production deploy (no Cursor required):
+# - Merge a green PR into main that touches Worker/site paths → this workflow
+#   runs tests, then deploys the EXISTING Worker ua-arena.
+# - Or run workflow_dispatch with worker_name=ua-arena and
+#   durable_objects_policy=preserve.
+# Secrets stay in GitHub Actions only; never print CLOUDFLARE_* values.
+# Do not delete or rename Durable Object classes/data.
 on:
   push:
     branches: [main]
@@ -39,11 +41,10 @@ concurrency:
 jobs:
   deploy:
     if: >-
+      (github.event_name == 'push') ||
       (github.event_name == 'workflow_dispatch' &&
        github.event.inputs.worker_name == 'ua-arena' &&
-       github.event.inputs.durable_objects_policy == 'preserve') ||
-      (github.event_name == 'push' &&
-       vars.ENABLE_CLOUDFLARE_AUTO_DEPLOY == 'true')
+       github.event.inputs.durable_objects_policy == 'preserve')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment: Production
