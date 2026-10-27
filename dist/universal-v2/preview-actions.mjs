@@ -30,6 +30,8 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-energy-trait-front':'可將能源線上具有指定特徵的角色移至前線',
  'effect-optional-mill':'可將牌庫頂 1 張送場外',
  'effect-optional-draw':'攻擊時可抽 0 或 1 張',
+ 'effect-optional-tuck-under':'可將牌庫頂 1 張蓋到此角色下方',
+ 'effect-facedown-outside':'選擇 1 張蓋牌放到場外',
  'effect-may-draw':'可抽1張牌',
  'effect-removed-name-outside':'將除外區的指定名稱卡送至場外',
  'effect-hand-front-active':'以 Active 登場於前線',
@@ -221,6 +223,9 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseInspectedOutside':return action.uid===null?'完成選擇並排列剩餘牌':'將 '+name()+' 送場外';
   case 'chooseTopTraitOutside':return action.uid===null?'不送場外，排列剩餘牌':'將符合特徵的 '+name()+' 送場外';
   case 'chooseOptionalDraw':return action.mode==='draw'?'攻擊時抽 1 張':'不抽牌';
+  case 'chooseOptionalTuck':return action.mode==='tuck'?'將牌庫頂 1 張蓋到此角色下方':'不蓋牌';
+  case 'chooseFacedownOutside':return '將蓋牌放到場外：'+name();
+  case 'reorderUnder':return '調整蓋牌順序';
   case 'chooseMayDraw':return action.mode==='draw'?'抽1張':'不抽牌';
   case 'chooseRemovedOutside':return action.mode==='all'?'將符合名稱的除外卡全部送至場外':
    action.mode==='done'?'完成送至場外':'將 '+name()+' 送至場外';
@@ -272,6 +277,6 @@ export function visibleActionsForCard(legal,uid){
 }
 export function uiActionGroup(action){
  if(action.type==='next'||action.type==='extraDraw')return 'phase';
- if(['play','raid','event','move','step','attack','activate'].includes(action.type))return 'card';
+ if(['play','raid','event','move','step','attack','activate','reorderUnder'].includes(action.type))return 'card';
  return 'pending';
 }

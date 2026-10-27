@@ -1269,6 +1269,7 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 ,{"id":"BLC-4-075","kind":"ukitakeFrontRaid","number":"EX15BT/BLC-4-075","name":"浮竹 十四郎","color":"green","energy":3,"ap":1,"bp":500,"gen":4,"trigger":"get","type":"character","traits":["護廷十三隊","靈王的右臂"],"effect":"此卡不能在前線登場，也不能移至前線（包含突襲時的移動）。突襲《浮竹十四郎》：改為Active。以下僅在突襲狀態適用：此角色額外產生1個綠色能量。登場時：抽1張牌。啟動・主要〔每回合1次〕：僅可在此角色登場的回合發動；選自己場上另1個具有「護廷十三隊」特徵的角色改為Active。"}
 ,{"id":"BLC-2-065","kind":"komamuraRaidStrip","number":"EX07BT/BLC-2-065","name":"狛村 左陣","color":"green","energy":4,"ap":1,"bp":4000,"gen":1,"trigger":"get","type":"character","traits":["護廷十三隊"],"effect":"Raid〈狛村左陣〉：轉為 ACTIVE，可移至前線。己方回合開始時，將此角色 Raid 狀態最上層的卡送至場外。Impact 無效。此角色不會被敵方效果轉為 REST 或返回手牌。登場：抽 2 張。"}
 ,{"id":"BLC-2-070","kind":"hirakoEntryChoice","number":"EX07BT/BLC-2-070","name":"平子 真子","color":"green","energy":4,"ap":2,"bp":4000,"gen":1,"trigger":"draw","type":"character","traits":["護廷十三隊"],"effect":"登場：可選最多一項：①此角色位於前線時，選 2 個 BP 相同且皆為 2000 以下的敵方前線角色，使兩者退場；②可選最多 1 個敵方前線 BP 3000 以上角色，將其轉為 REST，並將此角色轉為 ACTIVE。"}
+,{"id":"BLC-3-011","kind":"ukitakeFacedownEnergy","number":"UA04NC/BLC-3-011","name":"浮竹 十四郎","color":"green","energy":3,"ap":1,"bp":3000,"gen":1,"trigger":"draw","type":"character","traits":["護廷十三隊","靈王の右腕"],"effect":"此角色下方有蓋牌時，此角色產生能源＋綠 1。\n【登場時】可以將自己牌庫上方 1 張牌，以蓋牌方式放到此角色下方。\n【啟動主要】【將此角色轉為 Rest】將此角色下方的 1 張蓋牌放到場外。若如此做，此角色在本回合中產生能源＋綠 2。"}
  ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1475,6 +1476,7 @@ export function checkedBleachAddonDefinition(p){
  const isUkitakeFront=p.kind==='ukitakeFrontRaid';
  const isKomamuraRaid=p.kind==='komamuraRaidStrip';
  const isHirakoEntry=p.kind==='hirakoEntryChoice';
+ const isUkitakeUnder=p.kind==='ukitakeFacedownEnergy';
  const topDiscard={
   'BLC-3-007':{count:3,filter:{field:'trait',value:'護廷十三隊'}},
   'BLC-3-002':{count:3,filters:[
@@ -1508,7 +1510,7 @@ export function checkedBleachAddonDefinition(p){
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest||isOwnCharacterDraw||isPeekAttack||isDrawInstead||isRevealOppTop||isRevealWindow||isEnergyWindow||isMillPurple||isEnergyBounce||isStepOr||isReplayDown||isStepName||isReducedActive||isOutsideName||isZeroIchigo||isDiscardBlock||isEmptyStep||isApActive||isAliasTop||isEntryChoose||isRestFrontName||isFrontFieldDown||isHandOutside||isEnergyAp||isAttackEnd||isDiscardVisored||isRaidHost||isBlockRaid||isRaidOrName||isRestOrDraw||isRestOrRetire||isHandApNamed||isBazzBurn||isKatenActive||isBambiesPer||isKenpachi||isMayuriTrait||isNemPair||isSoulPalace||isKyokotsu||isHakkoken||isYachiru||isLilotto||isBazzChain||isNanaoEvent||isRemovedKeywords||isFrontRemove||isThunderKit||isLille||isGiselle||isCastle||isUryu||isYoruichiSwap||isBazzKit||isIchigoFour||isBambiettaRest||isJugram||isByakuya||isSoiFon||isTech||isYamamoto||isGiselleField||isOrihime||isByakuyaRukia||isRukiaFront||isNemSquad||isMayuriNem||isShutara||isIchibe||isShatatsu||isBrush||isJugramEntry||isBazzEnergy||isJugramRaid||isUryuHand||isGerard||isYhwachOutside||isIchibeRemove||isIchibeRetire||isNemuStart||isByakuyaWin||isYoruichiRaid||isUkitakeFront||isKomamuraRaid||isHirakoEntry;
+ const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest||isOwnCharacterDraw||isPeekAttack||isDrawInstead||isRevealOppTop||isRevealWindow||isEnergyWindow||isMillPurple||isEnergyBounce||isStepOr||isReplayDown||isStepName||isReducedActive||isOutsideName||isZeroIchigo||isDiscardBlock||isEmptyStep||isApActive||isAliasTop||isEntryChoose||isRestFrontName||isFrontFieldDown||isHandOutside||isEnergyAp||isAttackEnd||isDiscardVisored||isRaidHost||isBlockRaid||isRaidOrName||isRestOrDraw||isRestOrRetire||isHandApNamed||isBazzBurn||isKatenActive||isBambiesPer||isKenpachi||isMayuriTrait||isNemPair||isSoulPalace||isKyokotsu||isHakkoken||isYachiru||isLilotto||isBazzChain||isNanaoEvent||isRemovedKeywords||isFrontRemove||isThunderKit||isLille||isGiselle||isCastle||isUryu||isYoruichiSwap||isBazzKit||isIchigoFour||isBambiettaRest||isJugram||isByakuya||isSoiFon||isTech||isYamamoto||isGiselleField||isOrihime||isByakuyaRukia||isRukiaFront||isNemSquad||isMayuriNem||isShutara||isIchibe||isShatatsu||isBrush||isJugramEntry||isBazzEnergy||isJugramRaid||isUryuHand||isGerard||isYhwachOutside||isIchibeRemove||isIchibeRetire||isNemuStart||isByakuyaWin||isYoruichiRaid||isUkitakeFront||isKomamuraRaid||isHirakoEntry||isUkitakeUnder;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1727,6 +1729,8 @@ export function checkedBleachAddonDefinition(p){
     {op:'stripSelfRaidTopAtOwnStart'}]}]}:{}),
   ...(isUkitakeFront?{frontForbidden:true,raidName:'浮竹 十四郎',printedExtraEnergy:1,
    mainAbility:{op:'oncePayProgram',oncePerTurn:true,frontOnly:false,raidOnly:false,payAp:0,requiresOwnName:null,entryTurnOnly:true,then:[{op:'activeOtherTrait',trait:'護廷十三隊'}]}}:{}),
+  ...(isUkitakeUnder?{facedownUnderExtraEnergy:1,mainAbility:{
+   op:'restSelfOutsideFacedownEnergy',extraEnergy:2}}:{}),
   ...(!special?{templateEffects:abilities[p.kind]}:{effects:
    isPrintedApTop?{onPlay:[{op:'searchTopUpToTwoBottom',count:5,max:1,rest:'bottom',
     logic:'all',filters:[{field:'printedApAtLeast',value:2}]}]}:
@@ -1935,6 +1939,7 @@ export function checkedBleachAddonDefinition(p){
    isYoruichiRaid?{onPlay:[{op:'activeTraitlessOther'}],
     onRetire:[{op:'raidBaseRestIfName',name:'浦原 喜助'}]}:
    isUkitakeFront?{onPlay:[{op:'noteEntryTurn'},{op:'draw',count:1}]}:
+   isUkitakeUnder?{onPlay:[{op:'optionalTuckDeckTopUnder'}]}:
    isHirakoEntry?{onPlay:[{op:'chooseOne',optional:true,options:[
     {id:'pair',label:'退場兩名相同且2000以下',turn:'any',line:'front',then:[{op:'retireEqualFrontPair',maxBp:2000}]},
     {id:'rest',label:'REST一名3000以上並ACTIVE',turn:'any',then:[{op:'restOppFrontMinBp',minBp:3000,optional:true,thenActiveSelf:true}]}
