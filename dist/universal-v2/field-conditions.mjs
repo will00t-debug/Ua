@@ -48,13 +48,13 @@ export function matchesOwnDistinctTraits(s,owner,sourceUid,profile,printed){
 // not when a card is played. This is distinct from once-resolved turn buffs.
 // Field predicates use this controller's front and energy. Hand, deck,
 // removed, and Raid under-cards stay out unless a clause names 場外.
-export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energy,cardBp){
+export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energy,cardBp,requiredEnergyOf){
  // A printed 「かつ」 is one bonus with every clause true. The outer turn
  // is the printed turn icon. Each clause keeps its own closed predicate.
  if(condition?.logic==='all'||condition?.logic==='any'){
   if(condition.turn==='own'&&s.active!==owner)return false;
   if(condition.turn==='opponent'&&s.active===owner)return false;
-  const hit=q=>matchesV2LiveCondition(s,owner,sourceUid,q,printed,energy,cardBp);
+  const hit=q=>matchesV2LiveCondition(s,owner,sourceUid,q,printed,energy,cardBp,requiredEnergyOf);
   return condition.logic==='any'?condition.checks.some(hit):condition.checks.every(hit);
  }
  if(condition.turn==='own'&&s.active!==owner)return false;
@@ -95,6 +95,16 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   // not front characters. This physical card does not count as another.
   return !s.players[owner].front.some(c=>c&&c.uid!==sourceUid&&
    printed(c).type==='character');
+ }
+ if(condition.kind==='selfRequiredEnergyAtLeast'){
+  // このキャラの必要エナジー. Printed required energy plus a live increase.
+  // A hand discount is not this number. The character has to be on the field.
+  if(typeof requiredEnergyOf!=='function')
+   throw Error('Required-energy condition needs a reader');
+  const pl=s.players[owner];
+  const physical=[...pl.front,...pl.energy].find(c=>c?.uid===sourceUid);
+  if(!physical||printed(physical).type!=='character')return false;
+  return requiredEnergyOf(physical)>=condition.min;
  }
  if(condition.kind==='ownLifeAtMost')
   return s.players[owner].life.length<=condition.max;

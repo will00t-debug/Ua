@@ -24,11 +24,13 @@ function validPrintedLookFilter(f){
 const own=(object,key)=>Object.prototype.hasOwnProperty.call(object,key);
 // Shared board predicate used by passive bonuses and on-play ACTIVE.
 // The shape is the printed query, never a title-specific reducer.
-function assertLiveCondition(q,label){
+function assertLiveCondition(q,label,allowRequiredEnergy=false){
  if(!q||typeof q!=='object'||Array.isArray(q)||
   !['own','opponent','any'].includes(q.turn)||
-  !['outsideCount','ownNameExists','ownNameAbsent','ownFieldHasAllNames','ownTraitCount','ownCardTraitCount','ownEnergyAtLeast','ownHandCountAtLeast','ownLifeAtMost','ownEffectHandOutsideOrRecovery','ownEventUsedThisTurn','ownRetiredThisTurn','retireCountThisTurn','ownOutsideNamedCountAtLeast','ownRestPrintedBpAtMost','oppCharacterBpAtLeast','oppCharacterCurrentBpCount','oppRestCharacter','oppRestCharacterCount','ownPrintedApAtLeast','ownHandToOutsideThisTurn','ownHandFewerThanOpponent','ownEffectApPaidColor','ownFrontNoOtherCharacter','oppFrontLiveBpBelowPrinted','ownRemovedCountAtLeast','ownRemovedDistinctTrait'].includes(q.kind))
+  !['outsideCount','ownNameExists','ownNameAbsent','ownFieldHasAllNames','ownTraitCount','ownCardTraitCount','ownEnergyAtLeast','ownHandCountAtLeast','ownLifeAtMost','ownEffectHandOutsideOrRecovery','ownEventUsedThisTurn','ownRetiredThisTurn','retireCountThisTurn','ownOutsideNamedCountAtLeast','ownRestPrintedBpAtMost','oppCharacterBpAtLeast','oppCharacterCurrentBpCount','oppRestCharacter','oppRestCharacterCount','ownPrintedApAtLeast','ownHandToOutsideThisTurn','ownHandFewerThanOpponent','ownEffectApPaidColor','ownFrontNoOtherCharacter','oppFrontLiveBpBelowPrinted','ownRemovedCountAtLeast','ownRemovedDistinctTrait','selfRequiredEnergyAtLeast'].includes(q.kind))
   throw Error(label+' invalid passive condition');
+ if(q.kind==='selfRequiredEnergyAtLeast'&&allowRequiredEnergy!==true)
+  throw Error(label+' required-energy gate is only a name-once active');
  if((q.kind==='ownRemovedCountAtLeast'||q.kind==='ownRemovedDistinctTrait')&&q.turn!=='any')
   throw Error(label+' removed-zone predicate is not turn-gated');
  if(q.kind==='ownEventUsedThisTurn'&&q.turn!=='own')
@@ -48,7 +50,7 @@ function assertLiveCondition(q,label){
   throw Error(label+' invalid retirement count predicate');
  if(retired&&!['field','character'].includes(q.cardType))
   throw Error(label+' invalid retired-card type');
- const count=['outsideCount','ownTraitCount','ownCardTraitCount','ownEnergyAtLeast','ownHandCountAtLeast','ownRemovedCountAtLeast','ownRemovedDistinctTrait'].includes(q.kind);
+ const count=['outsideCount','ownTraitCount','ownCardTraitCount','ownEnergyAtLeast','ownHandCountAtLeast','ownRemovedCountAtLeast','ownRemovedDistinctTrait','selfRequiredEnergyAtLeast'].includes(q.kind);
  const paidColor=q.kind==='ownEffectApPaidColor';
  if(paidColor&&!['blue','yellow','green','purple','red'].includes(q.color))
   throw Error(label+' invalid effect-AP color');
@@ -62,7 +64,7 @@ function assertLiveCondition(q,label){
  const field=['ownNameExists','ownNameAbsent','ownFieldHasAllNames','ownTraitCount','ownCardTraitCount','ownRestPrintedBpAtMost'].includes(q.kind);
  // ownNameAbsent may name 場外. Presence checks stay on the field lines.
  const nameZones=q.kind==='ownNameAbsent'?['field','front','energy','outside']:['field','front','energy'];
- if((count&&(!integer(q.min,1)||q.min>200))||
+ if((count&&(!integer(q.min,1)||q.min>(q.kind==='selfRequiredEnergyAtLeast'?30:200)))||
   (namedOutside&&(!integer(q.min,1)||q.min>200||
    !Array.isArray(q.names)||q.names.length<1||q.names.length>8||
    q.names.some(n=>typeof n!=='string'||!n.trim()||n.length>80)||
@@ -1597,14 +1599,36 @@ function normalize(card,packId){
  // 【起動メイン】このキャラをアクティブにする。Name scope is the printed
  // 「〈名前〉のこの効果は1ターンに1回」. when:null has no extra gate.
  // A single live check is the printed 「場合のみ」.
+ // 「かつ」 is own outside missing one printed name, and this character's
+ // live required energy at or above a printed number.
+ const absentEnergy=mainAbility?.when?.logic==='all'&&mainAbility.when.turn==='any'&&
+  Array.isArray(mainAbility.when.checks)&&mainAbility.when.checks.length===2&&
+  Object.keys(mainAbility.when).length===3&&
+  Object.keys(mainAbility.when).every(k=>['logic','turn','checks'].includes(k))&&
+  mainAbility.when.checks[0]?.kind==='ownNameAbsent'&&
+  mainAbility.when.checks[0].turn==='any'&&
+  mainAbility.when.checks[0].zone==='outside'&&
+  mainAbility.when.checks[0].excludeSelf===false&&
+  typeof mainAbility.when.checks[0].name==='string'&&
+  !!mainAbility.when.checks[0].name.trim()&&
+  mainAbility.when.checks[0].name.length<=80&&
+  mainAbility.when.checks[1]?.kind==='selfRequiredEnergyAtLeast'&&
+  mainAbility.when.checks[1].turn==='any'&&
+  integer(mainAbility.when.checks[1].min,1)&&
+  mainAbility.when.checks[1].min<=30;
  const nameOnceActive=mainAbility?.op==='nameOnceActive'&&
   mainAbility.scope==='name'&&
   (mainAbility.when===null||(
    mainAbility.when?.kind==='oppFrontLiveBpBelowPrinted'&&
-   mainAbility.when.turn==='any'&&Object.keys(mainAbility.when).length===2))&&
+   mainAbility.when.turn==='any'&&Object.keys(mainAbility.when).length===2)||
+   absentEnergy)&&
   Object.keys(mainAbility).length===3&&
   Object.keys(mainAbility).every(k=>['op','scope','when'].includes(k));
- if(nameOnceActive&&mainAbility.when)assertLiveCondition(mainAbility.when,card.id+' name once');
+ if(nameOnceActive&&mainAbility.when?.kind)
+  assertLiveCondition(mainAbility.when,card.id+' name once');
+ if(nameOnceActive&&absentEnergy)
+  for(const check of mainAbility.when.checks)
+   assertLiveCondition(check,card.id+' name once',true);
  // 〈名前〉のこの効果は1ターンに1回, and only after that named event was used.
  const nameOnceEvent=mainAbility?.op==='nameOnceActiveIfEvent'&&
   mainAbility.scope==='name'&&

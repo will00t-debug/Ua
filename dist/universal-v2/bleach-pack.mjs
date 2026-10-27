@@ -1247,6 +1247,8 @@ export const BLEACH_V2_ADDON_PROFILES=Object.freeze([
 {"id":"BLC-4-057","kind":"shirafudeLock","number":"EX15BT/BLC-4-057","name":"“真打”『しら筆一文字』","color":"purple","energy":4,"ap":1,"bp":0,"gen":0,"trigger":"special","type":"event","effect":"最多選1個對方前線角色，到自己下次回合開始前賦予「失去所有原有效果，且不能攻擊或阻擋」。若自己的場上或除外區有《兵主部一兵衛》，抽2張牌，再將1張手牌除外。失去印刷效果不會取消突襲狀態，也不會清除已得到的限時效果，但會取消持續參照的原有效果，且原本的離場觸發也不再發動。"}
 ,
 {"id":"BLC-4-011","kind":"jugramEntryEnergy","number":"EX15BT/BLC-4-011","name":"ユーグラム・ハッシュヴァルト","color":"yellow","energy":3,"ap":1,"bp":2500,"gen":3,"trigger":"color","type":"character","effect":"登場時：抽1張牌，再將1張手牌送至場外。啟動・主要〔每回合1次〕：僅可在此角色登場的回合發動；選自己場上另1個角色，本回合其所需能量增加2。"}
+,
+{"id":"BLC-4-007","kind":"bazzRequiredEnergyActive","number":"EX15BT/BLC-4-007","name":"バズビー","color":"yellow","energy":4,"ap":1,"bp":4000,"gen":1,"trigger":null,"type":"character","effect":"啟動・主要：僅在自己場外沒有《友哈巴赫》，且此角色的所需能量為5以上時可發動；將此角色改為Active。所有《巴茲比》的此效果合計每回合僅限1次。"}
  ].map(x=>Object.freeze(x)));
 export const BLEACH_V2_NEW_IDS=Object.freeze(BLEACH_V2_ADDON_PROFILES.map(p=>p.id));
 
@@ -1440,6 +1442,7 @@ export function checkedBleachAddonDefinition(p){
  const isShatatsu=p.kind==='shatatsuHandCap';
  const isBrush=p.kind==='shirafudeLock';
  const isJugramEntry=p.kind==='jugramEntryEnergy';
+ const isBazzEnergy=p.kind==='bazzRequiredEnergyActive';
  const topDiscard={
   'BLC-3-007':{count:3,filter:{field:'trait',value:'護廷十三隊'}},
   'BLC-3-002':{count:3,filters:[
@@ -1473,7 +1476,7 @@ export function checkedBleachAddonDefinition(p){
  const isRaidDual=p.kind==='raidStripOrRetireDamage2';
  const isStripDual=isRaidDual||p.kind==='raidStripOrRetire2000';
  const stripRetireBp=isRaidDual?3000:2000;
- const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest||isOwnCharacterDraw||isPeekAttack||isDrawInstead||isRevealOppTop||isRevealWindow||isEnergyWindow||isMillPurple||isEnergyBounce||isStepOr||isReplayDown||isStepName||isReducedActive||isOutsideName||isZeroIchigo||isDiscardBlock||isEmptyStep||isApActive||isAliasTop||isEntryChoose||isRestFrontName||isFrontFieldDown||isHandOutside||isEnergyAp||isAttackEnd||isDiscardVisored||isRaidHost||isBlockRaid||isRaidOrName||isRestOrDraw||isRestOrRetire||isHandApNamed||isBazzBurn||isKatenActive||isBambiesPer||isKenpachi||isMayuriTrait||isNemPair||isSoulPalace||isKyokotsu||isHakkoken||isYachiru||isLilotto||isBazzChain||isNanaoEvent||isRemovedKeywords||isFrontRemove||isThunderKit||isLille||isGiselle||isCastle||isUryu||isYoruichiSwap||isBazzKit||isIchigoFour||isBambiettaRest||isJugram||isByakuya||isSoiFon||isTech||isYamamoto||isGiselleField||isOrihime||isByakuyaRukia||isRukiaFront||isNemSquad||isMayuriNem||isShutara||isIchibe||isShatatsu||isBrush||isJugramEntry;
+ const special=isKyoraku||isRestRetireField||isFieldDual||isMayuri||isTopRequired||isTopTwoGotei||p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'||isPassive||isMain||isRetireDraw||isRetireMill||isPrintedImpact||isPrintedDamage||isOppDiscard||isDrawTwo||isReadyAttack||isStripDual||isRestBuff||isReadyBlock||isNamedBp||isHandDiscount||isOwnEffectDraw||isBlockLow||isFrontDiscardDraw||isFrontDiscardDown||isOptionalPeek||isAliasEnergy||isOppRestDraw||isOppBpDraw||isActiveNamed||isNameHandDraw||isOwnTurnNameRest||isNameOncePayOutside||isOutsideRemove||isOppRestBp||isOppBpCount||isCardTraitEnergy||isCardTraitBp||isPrintedApBp||isHandOutsideBp||isHandEnergyImmune||isMustBlock||isRetireOr||isTraitDiscard||isBlockHandBp||isBlueShared||isGreenShared||isPurpleShared||isOwnTurnImmune||isFrontSolo||isOtherRetireBp||isChooseBuff||isImpactPlus||isImpactAp||isApEach||isPurpleIchigo||isRestOnceSelf||isBelowPrinted||isTopDiscard||isNamedHandRest||isPrintedApTop||isRestFrontEnergy||isDiscardGainEnergy||isNoRaidTop||isFieldDraw||isTopSplit||isBounceDraw||isPurpleOutside||isTraitlessMove||isRaidFrontRest||isFrontMill||isNamedBonus||isGroupedTop||isOwnCharacterRest||isOwnCharacterDraw||isPeekAttack||isDrawInstead||isRevealOppTop||isRevealWindow||isEnergyWindow||isMillPurple||isEnergyBounce||isStepOr||isReplayDown||isStepName||isReducedActive||isOutsideName||isZeroIchigo||isDiscardBlock||isEmptyStep||isApActive||isAliasTop||isEntryChoose||isRestFrontName||isFrontFieldDown||isHandOutside||isEnergyAp||isAttackEnd||isDiscardVisored||isRaidHost||isBlockRaid||isRaidOrName||isRestOrDraw||isRestOrRetire||isHandApNamed||isBazzBurn||isKatenActive||isBambiesPer||isKenpachi||isMayuriTrait||isNemPair||isSoulPalace||isKyokotsu||isHakkoken||isYachiru||isLilotto||isBazzChain||isNanaoEvent||isRemovedKeywords||isFrontRemove||isThunderKit||isLille||isGiselle||isCastle||isUryu||isYoruichiSwap||isBazzKit||isIchigoFour||isBambiettaRest||isJugram||isByakuya||isSoiFon||isTech||isYamamoto||isGiselleField||isOrihime||isByakuyaRukia||isRukiaFront||isNemSquad||isMayuriNem||isShutara||isIchibe||isShatatsu||isBrush||isJugramEntry||isBazzEnergy;
  if(!special&&!Object.hasOwn(abilities,p.kind))
   throw Error('Unsupported BLEACH addon profile '+p.id+'/'+p.kind);
  return {
@@ -1522,6 +1525,11 @@ export function checkedBleachAddonDefinition(p){
   ...(isShatatsu||isBrush?{triggerEffect:{op:'retireOppFront'}}:{}),
   ...(isJugramEntry?{triggerEffect:{op:'restOppFrontSkipNextActive'},
    mainAbility:{op:'oncePayProgram',oncePerTurn:true,frontOnly:false,raidOnly:false,payAp:0,requiresOwnName:null,entryTurnOnly:true,then:[{op:'grantOtherRequiredEnergyThisTurn',amount:2}]}}:{}),
+  ...(isBazzEnergy?{mainAbility:{op:'nameOnceActive',scope:'name',when:{
+   logic:'all',turn:'any',checks:[
+    {kind:'ownNameAbsent',turn:'any',zone:'outside',excludeSelf:false,name:'ユーハバッハ'},
+    {kind:'selfRequiredEnergyAtLeast',turn:'any',min:5}
+   ]}}}:{}),
   ...(isYoruichiSwap?{energyLineAttackEndSwap:true,triggerEffect:{op:'bounceOppFrontUnderBp',bp:3500},
    passiveBonuses:[{condition:{logic:'any',turn:'own',checks:[
     {kind:'ownNameExists',turn:'own',zone:'field',excludeSelf:false,name:'黒崎 一護'},

@@ -188,7 +188,8 @@ const testForKind=Object.freeze({
  ichibeEnergyReveal:'tests/v2-c29-bleach-port.test.mjs',
  shatatsuHandCap:'tests/v2-c29-bleach-port.test.mjs',
  shirafudeLock:'tests/v2-c29-bleach-port.test.mjs',
- jugramEntryEnergy:'tests/v2-c29-bleach-port.test.mjs'
+ jugramEntryEnergy:'tests/v2-c29-bleach-port.test.mjs',
+ bazzRequiredEnergyActive:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -207,7 +208,9 @@ function contributedEntry(profile){
   definition:Object.freeze(definition),
   evidence:Object.freeze({
    printedTextFragments:Object.freeze([profile.effect]),
-   reviewNote:profile.id==='BLC-4-011'?
+   reviewNote:profile.id==='BLC-4-007'?
+    'EX15BT/BLC-4-007 official page 2026-10-27. Required energy 黄4. Generated energy is 黄, so gen stays 1. [起動メイン]: only while own outside has no ユーハバッハ and this character\'s live required energy is 5 or more, set this character ACTIVE. The energy line is legal. A field is not this character. Printed energy 4 cannot activate. A this-turn increase of 2, including the one from BLC-4-011, is part of that live number. A hand discount is not. Own outside ユーハバッハ blocks the activate, and that printed name still matches. A different outside name does not. An own-field ユーハバッハ does not. The opponent\'s outside does not. Q2305 (2026-09-04): two copies share this one activate. The sentence is this effect, not every ability of the name. Silence before activation removes it. Becoming ACTIVE remains after later silence. The activate does not ask for a decline. No trigger. Trait 星十字騎士団.':
+   profile.id==='BLC-4-011'?
     'EX15BT/BLC-4-011 official page 2026-10-27. Required energy 黄3. Catalogue gen=3 is the yellow3 sprite; official generated energy is 黄黄, so definition.gen=2 and legacyImportedGen=3. On play, draw 1 and put one hand card outside. The discard is mandatory while the hand is not empty. [起動メイン][ターン1] only on the turn this physical card entered. Choose another own character; this turn its required energy increases by 2. An energy-line character is a legal target. A field is not a character. This character is not its own target. Declining is illegal. Zero other characters do not offer the activate, so the once is not consumed. [ターン1] is this physical card. Silence before activation removes the ability. The earned increase remains after later silence and after this character leaves. A different physical copy stays at its printed energy. The same physical card returned to hand this turn still carries the increase into a hand play. It ends when the turn ends. COLOR rests one opposing front character and skips its next ACTIVE. No card FAQ. Trait 星十字騎士団.':
    profile.id==='BLC-4-057'?
     'EX15BT/BLC-4-057 official iframe 2026-10-27. Up to one opposing front character, until the controller next own turn start, loses every printed effect and cannot attack or block. Q2329 (2026-09-04): 元々の効果 is the text printed on that card. Q2330 (2026-09-04): Raid state remains, and the text enclosed by the Raid is negated. Q2331 (2026-09-04): a double block gained from another card remains. Q2332 (2026-09-04): effects already gained remain, including a this-turn BP modifier; a printed continuous reference is lost. Q2333 (2026-09-04): a printed leave trigger does not fire. Declining the character is legal. An energy-line character is not a choice. A field is not a character. If own field or the removed area has 兵主部 一兵衛, draw 2 and put one hand card into the removed area. That removal is mandatory. Silence keeps the printed name. No such card skips the draw. SPECIAL retires one opposing front character. No generated energy.':

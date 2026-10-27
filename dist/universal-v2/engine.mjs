@@ -5829,14 +5829,20 @@ function oppFrontReducedOrRest(pack,s,owner,sourceUid,when){
 }
 function nameOnceActiveKey(definition,ability){
  // The printed name sentence covers this effect, not every ability of the name.
- return definition.name+'|nameOnceActive|'+(ability.when?.kind||'plain');
+ const when=ability.when;
+ const mark=when?.kind||(when?.logic==='all'?when.checks.map(c=>c.kind).join('+'):'plain');
+ return definition.name+'|nameOnceActive|'+mark;
+}
+function requiredEnergyReader(pack,s){
+ return physical=>effectiveRequiredEnergy(pack,s,physical);
 }
 function nameOnceActiveLegal(pack,s,owner,c,ability){
  if(ability?.op!=='nameOnceActive')return false;
  const name=nameOnceActiveKey(card(pack,c),ability);
  if(s.mainReadyOnceByName[owner].includes(name))return false;
  return !ability.when||matchesV2LiveCondition(s,owner,c.uid,ability.when,
-  x=>card(pack,x),()=>calcEnergy(pack,s,owner),x=>bp(pack,s,x));
+  x=>card(pack,x),()=>calcEnergy(pack,s,owner),x=>bp(pack,s,x),
+  requiredEnergyReader(pack,s));
 }
 function namedEventUsedThisTurn(pack,s,owner,eventName){
  return (s.zoneMoveEvents||[]).some(e=>{
@@ -6679,7 +6685,8 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
     const key=nameOnceActiveKey(d,ability);
     if(action.mode!=='nameOnceActive'||s.mainReadyOnceByName[p].includes(key)||
      (ability.when&&!matchesV2LiveCondition(s,p,selected.uid,ability.when,
-      x=>card(pack,x),()=>calcEnergy(pack,s,p),x=>bp(pack,s,x))))
+      x=>card(pack,x),()=>calcEnergy(pack,s,p),x=>bp(pack,s,x),
+      requiredEnergyReader(pack,s))))
      throw Error('Name-once ACTIVE is not legal');
     s.mainReadyOnceByName[p].push(key);
     attemptFieldActive(s,p,selected);
