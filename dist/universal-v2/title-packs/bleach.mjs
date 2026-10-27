@@ -192,7 +192,8 @@ const testForKind=Object.freeze({
  bazzRequiredEnergyActive:'tests/v2-c29-bleach-port.test.mjs',
  jugramRaidAura:'tests/v2-c29-bleach-port.test.mjs',
  uryuHandFront:'tests/v2-c29-bleach-port.test.mjs',
- gerardLifeOrHand:'tests/v2-c29-bleach-port.test.mjs'
+ gerardLifeOrHand:'tests/v2-c29-bleach-port.test.mjs',
+ ichibeRemoveChoice:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -202,7 +203,7 @@ function contributedEntry(profile){
  // The legacy gen=2 for EX15BT/BLC-4-014 describes the ACTIVE total, not
  // the printed REST base. SourceRecord is the normalized printed card record;
  // retain original.gen separately and require the profile fingerprint above.
- const normalized=['BLC-4-014','BLC-4-042','BLC-4-074','BLC-4-024','BLC-4-063','BLC-4-037','BLC-4-071','BLC-4-006','BLC-4-051','BLC-4-077','BLC-4-065','BLC-4-016','BLC-4-017','BLC-4-032','BLC-4-011'].includes(profile.id);
+ const normalized=['BLC-4-014','BLC-4-042','BLC-4-074','BLC-4-024','BLC-4-063','BLC-4-037','BLC-4-071','BLC-4-006','BLC-4-051','BLC-4-077','BLC-4-065','BLC-4-016','BLC-4-017','BLC-4-032','BLC-4-011','BLC-4-055'].includes(profile.id);
  const sourceRecord=Object.freeze(normalized?
   {...original,gen:definition.gen,legacyImportedGen:original.gen}: {...original});
  const vanilla=['plain','plainAlt','step'].includes(profile.kind);
@@ -211,7 +212,9 @@ function contributedEntry(profile){
   definition:Object.freeze(definition),
   evidence:Object.freeze({
    printedTextFragments:Object.freeze([profile.effect]),
-   reviewNote:profile.id==='BLC-4-015'?
+   reviewNote:profile.id==='BLC-4-055'?
+    'EX15BT/BLC-4-055 official page 2026-10-27. Required energy 紫3. Catalogue gen=3 is the purple3 sprite; official generated energy is 紫紫, so definition.gen=2 and legacyImportedGen=3. On play, you may put one other own character into the removed area. That move is removal, not retirement, so the removed character does not use its on-retire text. A field is not a character. This character is not its own target. An energy-line character is a legal target. Declining is legal, and then neither mode happens. Zero other characters do not open the choice. After a successful removal, choose one. Mode one: this turn, the next hand use of a card with trait 零番隊 or the name 霊王宮 has AP-1. Q2328 (2026-09-04): using a card that does not match does not remove the discount. The discount ends at the end of this attack phase. A field named 霊王宮 matches. Mode two: up to two other own characters with trait 零番隊 gain BP+2000 this turn. Choosing fewer than two is legal. A character without that trait is not a choice. This character is not a choice. The removed character is already gone. No trigger. Trait 零番隊.':
+   profile.id==='BLC-4-015'?
     'EX15BT/BLC-4-015 official page 2026-10-27. Required energy 黄5. Generated energy is 黄, so gen stays 1. When this card is put outside, it is placed outside and then put from outside onto the bottom of its owner deck. Q2432 (2026-10-23): that includes the field, hand, deck, life, removed area, a raid-under card, and a facedown card under a field card. Q2433 (2026-10-23): if this card had lost its original effects and was then put outside from the field, the replacement does not happen and the card stays outside. A life card whose trigger still offers a choice stays outside until that choice finishes. GET to hand does not also put it on the bottom. Skipping that trigger, or resolving a trigger that leaves the card outside, then puts it on the bottom. A life card with no trigger choice is put on the bottom immediately. [起動メイン][フロントLにある場合][ターン1]: retire one other own character. The retirement is mandatory. A field is not a character. This character is not its own target. The energy line cannot activate. Zero other characters do not offer the activate, so the once is not consumed. [ターン1] is this physical card and is spent when the activate resolves, before the retirement finishes. A second copy can still activate. Silence before the activate removes it. If the character actually leaves, set this character ACTIVE, look at the top 3 of the own deck, add one to hand, and put the rest on the bottom in any order. The look is private. One or zero remaining cards are placed without an order choice. An empty deck still ACTIVES and looks at nothing. If the retired character live required energy was 4 or more, this character gets BP+1000 until its next own turn start. That live number includes a this-turn increase. A printed energy below 4 does not grant the BP. Protecting the retirement does not ACTIVE, look, or grant the BP, and the once stays spent. GET is the generic sentence. Trait 星十字騎士団.':
    profile.id==='BLC-4-005'?
     'EX15BT/BLC-4-005 official page 2026-10-27. Required energy 黄4. Generated energy is 黄, so gen stays 1. On retire, choose up to one mode. Decline is legal. Mode one adds any one own life card to hand. Q2303 (2026-09-25): that card is not revealed and is not trigger-checked. Doing so REST-enters this card on the own field, front or energy. The entry does not pay required energy or AP, and it resolves on-play as an own character effect. Q2304 (2026-09-04): if life becomes 0, the loss is declared after this effect finishes, including the REST entry. Mode two puts exactly two own hand cards outside. Doing so adds this card to hand. Fewer than two hand cards cannot choose that mode. Zero life cards cannot choose the life mode. The opponent life and hand do not count. ACTIVE is the generic sentence. Trait 星十字騎士団.':

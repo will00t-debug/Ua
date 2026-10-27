@@ -1797,6 +1797,19 @@ function continueEffectQueue(pack,s){
      sourceUid:job.sourceUid,choices,optional:true,
      after:job.after.map(x=>({...x,owner,sourceUid:job.sourceUid,
       sourceName:job.sourceName}))};
+  }else if(job.op==='optionalRemoveOwnOtherThen'){
+    const choices=field(pl).filter(c=>c.uid!==job.sourceUid&&
+     card(pack,c).type==='character').map(c=>c.uid);
+    if(choices.length)s.pending={kind:'effect-remove-own-other',player:owner,
+     sourceUid:job.sourceUid,sourceName:job.sourceName,choices,
+     then:job.then.map(x=>({...x}))};
+  }else if(job.op==='buffOwnOtherTraitUpTo'){
+    const choices=field(pl).filter(c=>c.uid!==job.sourceUid&&
+     card(pack,c).type==='character'&&
+     cardHasTrait(card(pack,c),job.trait)).map(c=>c.uid);
+    if(choices.length)s.pending={kind:'effect-buff-other-trait',player:owner,
+     sourceUid:job.sourceUid,choices,trait:job.trait,bp:job.bp,
+     max:job.max,selected:[]};
   }else if(job.op==='retireOwnCharacterOne'){
     const choices=[...pl.front,...pl.energy].filter(c=>c&&
      card(pack,c).type==='character'&&
@@ -2390,6 +2403,14 @@ function bounceToHand(pack,s,p,uid,sourceUid=uid,{reason='own-effect',controller
 function buriedMoves(top){
  return [...(top.stack||[]),...(top.under||[])].flatMap(c=>[
   {physical:c,attachedToUid:top.uid,wasFaceDown:c.faceDown===true},...buriedMoves(c)]);
+}
+function removeOwnedField(pack,s,p,line,slot,sourceUid){
+ const c=s.players[p][line][slot];
+ if(!c)throw Error('Cannot remove empty field');
+ // リムーブエリアに置く is not 退場. onRetire does not run.
+ vacate(pack,s,p,line,slot,'removed');
+ recordCompletedMove(pack,s,{physical:c,owner:p,from:line,to:'removed',
+  reason:'own-effect',sourceUid});
 }
 function vacate(pack,s,p,line,slot,destination='outside'){
  const top=s.players[p][line][slot];if(!top)throw Error('Empty field slot');
@@ -4429,6 +4450,34 @@ function resolveChoice(s,a,pack){
    ...(q.plus===true?{plus:true}:{})};
   s.pending=null;continueEffectQueue(pack,s);return;
  }
+ if(q.kind==='effect-remove-own-other'){
+  if(a.uid===null){s.pending=null;continueEffectQueue(pack,s);return;}
+  const loc=location(s,q.player,a.uid);
+  if(!loc||!q.choices.includes(a.uid)||loc.c.uid===q.sourceUid||
+   card(pack,loc.c).type!=='character')
+   throw Error('Illegal own character removal');
+  const follow=q.then.map(step=>({...step,owner:q.player,sourceUid:q.sourceUid,
+   sourceName:q.sourceName}));
+  s.pending=null;
+  removeOwnedField(pack,s,q.player,loc.line,loc.slot,q.sourceUid);
+  s.effectQueue.unshift(...follow);
+  continueEffectQueue(pack,s);return;
+ }
+ if(q.kind==='effect-buff-other-trait'){
+  if(a.uid!==null&&(!q.choices.includes(a.uid)||q.selected.includes(a.uid)))
+   throw Error('Illegal other-trait buff target');
+  if(a.uid!==null)q.selected.push(a.uid);
+  if(a.uid===null||q.selected.length===q.max){
+   for(const uid of q.selected){
+    const target=field(p).find(c=>c.uid===uid);
+    if(!target||target.uid===q.sourceUid||!cardHasTrait(card(pack,target),q.trait))
+     throw Error('Selected other-trait buff left the field');
+    target.buffs??=[];target.buffs.push({bp:q.bp,untilTurn:s.turn});
+   }
+   s.pending=null;continueEffectQueue(pack,s);
+  }
+  return;
+ }
  if(q.kind==='effect-buff-trait'){
   if(a.uid===null){s.pending=null;continueEffectQueue(pack,s);return;}
   const target=field(p).find(c=>c.uid===a.uid);
@@ -5758,6 +5807,19 @@ function legalPending(pack,s){
  if(q.kind==='effect-buff-trait')return [
    {type:'chooseTraitBuff',uid:null},...q.choices.map(uid=>({type:'chooseTraitBuff',uid}))
   ];
+ if(q.kind==='effect-remove-own-other')return [
+  {type:'chooseRemoveOwnOther',uid:null},
+  ...q.choices.filter(uid=>{
+   const loc=location(s,q.player,uid);
+   return loc&&loc.c.uid!==q.sourceUid&&card(pack,loc.c).type==='character';
+  }).map(uid=>({type:'chooseRemoveOwnOther',uid}))
+ ];
+ if(q.kind==='effect-buff-other-trait')return [
+  {type:'chooseOtherTraitBuff',uid:null},
+  ...q.choices.filter(uid=>!q.selected.includes(uid)&&field(p).some(c=>
+   c.uid===uid&&c.uid!==q.sourceUid&&cardHasTrait(card(pack,c),q.trait)))
+   .map(uid=>({type:'chooseOtherTraitBuff',uid}))
+ ];
  if(q.kind==='main-rest-front-energy')
   return q.choices.filter(uid=>p.front.some(c=>c?.uid===uid&&c.ready))
    .map(uid=>({type:'chooseRestFrontEnergy',uid}));
@@ -7309,7 +7371,7 @@ export function assertUniversalMatch(pack,s){
    !Array.isArray(s.initialCounts)||s.initialCounts.length!==2||
    s.players?.length!==2||!playerIndex(s.active)||
    !['playing','finished'].includes(s.status))throw Error('Incorrect pack/version or match state');
- if(s.pending&&(!playerIndex(s.pending.player)||!['phase-order','retirement-order','effect-move-order','effect-rest-tuck','effect-tuck-moved','effect-grant-cause','effect-hand-bottom','effect-pay-deploy-self','effect-deploy-self-active','effect-outside-hand-or-rest','effect-recover-under','effect-energy-front','effect-energy-trait-front','effect-entry-protect','effect-entry-sacrifice','effect-named-double','effect-field-sacrifice-replay','effect-swap-or-buff','effect-swap-pair','block','life-batch-order','life-trigger','effect-target','effect-mark-opp-start','effect-target-many','effect-grant-attack','granted-attack-draw','effect-discard','effect-remove-hand','effect-remove-hand-scale','effect-remove-hand-cap','effect-name-energy-reveal','effect-revealed-energy-hand','effect-mandatory-hand-remove','effect-draw-instead','effect-reveal-opp-top','effect-choose-printed-energy','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-top-trait-hand','effect-retire-bp','effect-bounce-bp','effect-named-outside-bounce-retire','effect-optional-draw','effect-may-draw','effect-return-retired','effect-strip-raid-top','effect-retire-own-field','effect-retire-own-character','effect-retire-missing-trait','effect-outside-color-trait-active','effect-retire-own-trait','effect-active-any','main-field-trait-retire','effect-rest-bp','effect-attack-ban','effect-printed-lock','effect-name-hand-remove','effect-own-front-protect','effect-named-field-protect','effect-grant-ap-tax','effect-grant-front-energy','raid-effect-order','effect-buff-trait','effect-buff-own','effect-required-energy','effect-active-own-named','effect-active-energy-named','effect-once-choice','main-two-buff','main-discard-buff','main-discard-self-retire','main-rest-front-energy','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-filter-many-choice','effect-top-order','effect-top-hand-outside','effect-recover-outside','effect-outside-rest','effect-outside-name-rest','effect-outside-exact-rest','effect-outside-trait-ap-rest','effect-outside-color-ap-rest','effect-outside-active-pair','effect-outside-color-trait-active','effect-outside-traitless-rest','effect-named-zone-entry','effect-hand-rest','effect-hand-rest-or-raid','effect-optional-pay-ap','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-remove-outside','effect-removed-name-outside','effect-hand-front-active','effect-selection-hand-payment','attack-end-swap','energy-line-attack-end-swap','effect-choice-mode','effect-named-impact','effect-name-or-trait-impact','effect-first-attack-kit','effect-named-rest-ready','effect-named-keyword','effect-keyword-mode','effect-name-or-trait-ready','effect-name-or-trait-protect','effect-sacrifice-named','recovered-self-entry','effect-optional-mill','effect-pay-ap-deploy','effect-top-trait-outside','effect-line-move','effect-line-slot','effect-rest-two','effect-self-front','effect-raid-leave','effect-rest-lock','effect-rest-ap-lock','effect-grant-block-at-least','effect-may-draw-discard','effect-grant-impact','effect-life-to-hand','effect-retire-life-or-hand','effect-hidden-life-hand','effect-rest-reenter','effect-hand-two-outside','effect-front-retire-look','effect-top-hand-one'].includes(s.pending.kind)))
+ if(s.pending&&(!playerIndex(s.pending.player)||!['phase-order','retirement-order','effect-move-order','effect-rest-tuck','effect-tuck-moved','effect-grant-cause','effect-hand-bottom','effect-pay-deploy-self','effect-deploy-self-active','effect-outside-hand-or-rest','effect-recover-under','effect-energy-front','effect-energy-trait-front','effect-entry-protect','effect-entry-sacrifice','effect-named-double','effect-field-sacrifice-replay','effect-swap-or-buff','effect-swap-pair','block','life-batch-order','life-trigger','effect-target','effect-mark-opp-start','effect-target-many','effect-grant-attack','granted-attack-draw','effect-discard','effect-remove-hand','effect-remove-hand-scale','effect-remove-hand-cap','effect-name-energy-reveal','effect-revealed-energy-hand','effect-mandatory-hand-remove','effect-draw-instead','effect-reveal-opp-top','effect-choose-printed-energy','end-hand-limit','effect-recover-ap','private-top-choice','private-top-place','effect-top-trait-hand','effect-retire-bp','effect-bounce-bp','effect-named-outside-bounce-retire','effect-optional-draw','effect-may-draw','effect-return-retired','effect-strip-raid-top','effect-retire-own-field','effect-retire-own-character','effect-retire-missing-trait','effect-outside-color-trait-active','effect-retire-own-trait','effect-active-any','main-field-trait-retire','effect-rest-bp','effect-attack-ban','effect-printed-lock','effect-name-hand-remove','effect-own-front-protect','effect-named-field-protect','effect-grant-ap-tax','effect-grant-front-energy','raid-effect-order','effect-buff-trait','effect-buff-own','effect-required-energy','effect-active-own-named','effect-active-energy-named','effect-once-choice','main-two-buff','main-discard-buff','main-discard-self-retire','main-rest-front-energy','leave-replacement','effect-search-deck','effect-search-deck-multi','effect-top-inspect','effect-top-inspect-many','effect-top-filter-choice','effect-top-filter-many-choice','effect-top-order','effect-top-hand-outside','effect-recover-outside','effect-outside-rest','effect-outside-name-rest','effect-outside-exact-rest','effect-outside-trait-ap-rest','effect-outside-color-ap-rest','effect-outside-active-pair','effect-outside-color-trait-active','effect-outside-traitless-rest','effect-named-zone-entry','effect-hand-rest','effect-hand-rest-or-raid','effect-optional-pay-ap','effect-bounce-own','effect-discard-cost','effect-discard-gate','effect-remove-outside','effect-removed-name-outside','effect-hand-front-active','effect-selection-hand-payment','attack-end-swap','energy-line-attack-end-swap','effect-choice-mode','effect-named-impact','effect-name-or-trait-impact','effect-first-attack-kit','effect-named-rest-ready','effect-named-keyword','effect-keyword-mode','effect-name-or-trait-ready','effect-name-or-trait-protect','effect-sacrifice-named','recovered-self-entry','effect-optional-mill','effect-pay-ap-deploy','effect-top-trait-outside','effect-line-move','effect-line-slot','effect-rest-two','effect-self-front','effect-raid-leave','effect-rest-lock','effect-rest-ap-lock','effect-grant-block-at-least','effect-may-draw-discard','effect-grant-impact','effect-life-to-hand','effect-retire-life-or-hand','effect-hidden-life-hand','effect-rest-reenter','effect-hand-two-outside','effect-front-retire-look','effect-top-hand-one','effect-remove-own-other','effect-buff-other-trait'].includes(s.pending.kind)))
   throw Error('Invalid pending controller');
  if(!Array.isArray(s.triggerActivated)||s.triggerActivated.length!==2||
    s.triggerActivated.some(x=>typeof x!=='boolean'))
@@ -7615,6 +7677,36 @@ export function assertUniversalMatch(pack,s){
    Object.keys(q).length!==4||
    Object.keys(q).some(k=>!['kind','player','sourceUid','uids'].includes(k)))
    throw Error('Invalid private take-one look');
+ }
+ if(s.pending?.kind==='effect-remove-own-other'){
+  const q=s.pending,pl=s.players[q.player];
+  const src=field(pl).find(c=>c.uid===q.sourceUid);
+  const printed=src&&card(pack,src);
+  const effect=printed?.effects?.onPlay?.find(e=>e.op==='optionalRemoveOwnOtherThen');
+  const choices=field(pl).filter(c=>c.uid!==q.sourceUid&&
+   card(pack,c).type==='character').map(c=>c.uid);
+  if(!src||!effect||q.sourceName!==printed.name||!same(effect.then,q.then)||
+   !Array.isArray(q.choices)||!q.choices.length||!same(q.choices,choices)||
+   Object.keys(q).length!==6||
+   Object.keys(q).some(k=>!['kind','player','sourceUid','sourceName','choices','then'].includes(k)))
+   throw Error('Invalid optional own-character removal');
+ }
+ if(s.pending?.kind==='effect-buff-other-trait'){
+  const q=s.pending,pl=s.players[q.player];
+  const src=field(pl).find(c=>c.uid===q.sourceUid);
+  const printed=src&&card(pack,src);
+  const step=(printed?.effects?.onPlay||[]).flatMap(e=>e.op==='optionalRemoveOwnOtherThen'?
+   e.then.flatMap(x=>x.op==='chooseOne'?x.options.flatMap(o=>o.then):[]):[]).find(e=>
+   e.op==='buffOwnOtherTraitUpTo'&&e.trait===q.trait&&e.bp===q.bp&&e.max===q.max);
+  const choices=field(pl).filter(c=>c.uid!==q.sourceUid&&
+   card(pack,c).type==='character'&&cardHasTrait(card(pack,c),q.trait)).map(c=>c.uid);
+  if(!src||!step||q.max!==2||!Array.isArray(q.choices)||!q.choices.length||
+   !same(q.choices,choices)||!Array.isArray(q.selected)||q.selected.length>=q.max||
+   q.selected.some(uid=>!q.choices.includes(uid))||
+   new Set(q.selected).size!==q.selected.length||
+   Object.keys(q).length!==8||
+   Object.keys(q).some(k=>!['kind','player','sourceUid','choices','trait','bp','max','selected'].includes(k)))
+   throw Error('Invalid up-to-two other-trait buff');
  }
  if(s.pending?.kind==='effect-hand-two-outside'){
   const q=s.pending,pl=s.players[q.player];
@@ -8843,7 +8935,7 @@ export function assertUniversalMatch(pack,s){
  if(!Array.isArray(s.effectQueue)||[...s.effectQueue,...lifeEntries.flatMap(e=>e.jobs)].some(e=>!playerIndex(e.owner)||
    !['grantedAttackDraw','grantOnAttack','grantSelfSniperThisTurn','grantSelfAttackWinDrawThisTurn','grantSelfMustBlockThisTurn','buffSelfUntilNextOwnStart','grantSelfAttackEndSwapThisTurn','resolveAttackWinRecovery','draw','optionalDrawOne','drawIfOwnName','drawIfOwnOutsideNamedCountAtLeast','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','drawIfOppFrontBelowPrinted','drawIfSelfBpAtLeast','returnRetiredToHand','drawIfOppRestCharacter','drawIfOppCharacterBpAtLeast','drawIfOwnNameAndHandFewer','activeOwnNamed','activeEnergyNamed','millTop','buffSelf','buffSelfPerOwnOutsideGroups','enemyBpDown','drawDiscard','frontOppTriggerDrawDiscard','recoverAp','peekTopOne','peekTopOrBottom','revealOppTopPlace','chooseEnergyRevealOutside','optionalRemoveHandThen','removeHandTraitScaleRetire','nameEnergyRevealHandRemove','removeHandTraitCapScale','retireOppFrontUnderBp','retireOppFrontOneUnderBp','retireOppFrontRest','bounceOppFrontOneUnderBp','conditionalBounceOrRetireByOwnOutsideNames','completeResolvingEvent','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','oppFrontRestBranch','forbidAttackOppFrontOne','grantPrintedLock','grantOtherRequiredEnergyThisTurn','drawRemoveIfName','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','searchDeckMany','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','lookTopHandOutsideBottom','lookTopTakeOneBottom','grantNamedFieldProtection','activeApIfNameEntered','searchTopUpToTwoBottom','deployOwnHandRest','deployOwnHandSpecial','deployOwnHandRestOrRaid','optionalPayApThen','optionalRetireThenProgram','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw',
     'discardGate','removeOutsideThen','enemyFrontAllBpDown','retireOppFrontAllUnderBp',
-    'nextEligibleHandPlayApDiscount','grantFrontEnergyOwnOtherFrontTrait','buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
+    'nextEligibleHandPlayApDiscount','optionalRemoveOwnOtherThen','buffOwnOtherTraitUpTo','grantFrontEnergyOwnOtherFrontTrait','buffOwnTraitAllTurn','buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy',
     'recoverOutsideUnderEnergy','recoverOutsideColorUnderEnergy','deployOutsideRest','deployOutsideNameRest','deployOutsideExactRest','deployOutsideTraitApRest','deployOutsideColorApNameOrTraitRest','deployNamedFromZones','payApDeployNamedRest','inspectTopTraitOutside','deployOutsideTraitlessRestOrRaid','buffOwnField','oncePerTurnGate','buffNamedImpact','buffNameOrTraitImpact','restActiveNamedReadyAp','openNamedKeywordGrant','readyNameOrTrait','protectNameOrTrait','sacrificeNamedChain','retireOppFrontBySacrificedEnergy','retireBatchOne','retireAtMainEnd','retireSourceOnPhaseEnd','moveAtMainEnd','markOppFrontRetireNextStart','oppStartRetireRestMove','restMoveSourceToEnergy','retireOwnFieldOne','retireOwnCharacterOne','retireOwnMissingTraitThen','deployOutsideColorTraitActive','retireOwnTraitFollow','resolveTraitRetireFollow','openActivePair','openFieldActiveBuff','openBlock','resolveSniperBattle','resolveFirstAttackKit','grantFirstAttackKit','resolveEntrySacrifice','openNamedDoubleAttack','replayOnPlay','swapOrBuff','skipNextActiveOppRest','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','resolveAttackEndSwap','resolveEnergyLineAttackEndSwap','retireAttackEndGranted','phaseOrder','effectMoveOrder','restSelfTuckMovedFaceDown','sourceResolutionBoundary','lifeBatchStep','lifeRelease','advanceAfterAttack','additionalBattleDamage','openRetirementBatch','closeRetirementBatch','retirementOrder','battleImpactDamage','discardOppHand','discardOppHandIfFewer','activeSelfIf','activeChosen','openEnergyMoveGrants','moveOtherAcrossOrRemove','moveEnergyTraitToFront','raidBaseEnergyThen','grantSelfAttackDamageThisTurn','restOppFrontLockActive','restOppFrontApLock','removeAnyOutsideScale','inspectTopColoredNamesOutside','drawDiscardIfEffectApPaid','activeSelf','grantSelfImpactThisTurn','grantOtherImpactThisTurn','returnSourceToHand','optionalOwnLifeToHandThenDraw','retireLifeHandOrReturn','grantOwnNameBlockAtLeast','grantSelfBlockAtLeast','inspectTopColorAnyOutside','buffOwnNameIfPrintedEnergy'].includes(e.op)))
   throw Error('Invalid queued effects');
  const energyMoves=s.effectQueue.filter(e=>e.op==='openEnergyMoveGrants');

@@ -8,7 +8,9 @@ export function matchesPrintedRequiredEnergyAtMost(definition,max){
 export const DISCOUNT_KIND='nextEligibleHandPlayApDiscount';
 export function validatePrintedPlayFilter(f){
  if(!f||typeof f!=='object'||Array.isArray(f)||!Object.keys(f).length||
-  Object.keys(f).some(k=>!['cardType','printedBp','printedGenAtLeast','printedRequiredEnergyAtMost','trait','namesAny','name'].includes(k))||
+  Object.keys(f).some(k=>!['cardType','printedBp','printedGenAtLeast','printedRequiredEnergyAtMost','trait','namesAny','name','anyOfTraitOrName'].includes(k))||
+  (f.anyOfTraitOrName!==undefined&&f.anyOfTraitOrName!==true)||
+  (f.anyOfTraitOrName===true&&(typeof f.trait!=='string'||typeof f.name!=='string'))||
   (f.name!==undefined&&(typeof f.name!=='string'||!f.name.trim()||f.name.length>80))||
   (f.cardType!==undefined&&!['character','field','event'].includes(f.cardType))||
   (f.printedBp!==undefined&&(!Number.isInteger(f.printedBp)||f.printedBp<0||f.printedBp>50000))||
@@ -25,8 +27,9 @@ export function matchesPrintedPlayFilter(d,f){
   (f.printedGenAtLeast===undefined||d.gen>=f.printedGenAtLeast)&&
   (f.printedRequiredEnergyAtMost===undefined||matchesPrintedRequiredEnergyAtMost(d,f.printedRequiredEnergyAtMost))&&
   (f.namesAny===undefined||f.namesAny.some(name=>cardHasName(d,name)))&&
-  (f.name===undefined||cardHasName(d,f.name))&&
-  (f.trait===undefined||cardHasTrait(d,f.trait));
+  (f.anyOfTraitOrName===true?cardHasTrait(d,f.trait)||cardHasName(d,f.name):
+   (f.name===undefined||cardHasName(d,f.name))&&
+   (f.trait===undefined||cardHasTrait(d,f.trait)));
 }
 export function validateHandDiscount(s,e){
  validatePrintedPlayFilter(e.filter);

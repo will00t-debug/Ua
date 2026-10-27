@@ -35,6 +35,8 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-hand-front-active':'以 Active 登場於前線',
  'effect-front-retire-look':'使自己場上另1個角色退場',
  'effect-top-hand-one':'將查看的1張加入手牌',
+ 'effect-remove-own-other':'將自己場上另1個角色除外',
+ 'effect-buff-other-trait':'選擇其他己方角色',
  'effect-retire-life-or-hand':'退場時最多選一項',
  'effect-hidden-life-hand':'將1張生命加入手牌',
  'effect-rest-reenter':'以 Rest 重新登場',
