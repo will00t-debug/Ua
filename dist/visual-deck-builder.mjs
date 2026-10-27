@@ -1,44 +1,124 @@
-function vdbEsc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));}
+import {renderDeckRecord} from './deck-records.mjs';
 
+function vdbEsc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function vdbImage(c){return c?.onlineImage||c?.image||'assets/mark.svg';}
+function isApCard(card){return !card||['ap','action_point','action-point'].includes(card.type)||/AP\d+$/i.test(card.id||'');}
+function finite(value){const n=Number(value);return Number.isFinite(n)?n:null;}
+export function requiredEnergyKey(card){
+ const n=finite(card?.energy);
+ if(n==null)return null;
+ return n>=9?'8+':String(n);
+}
+export function generateKey(card){
+ const n=finite(card?.gen);
+ if(n==null)return null;
+ return n>=6?'6+':String(n);
+}
+function matchesEnergy(card,energy,energies){
+ if(Array.isArray(energies)){
+  if(!energies.length||energies.includes('all'))return true;
+  return energies.map(String).includes(requiredEnergyKey(card));
+ }
+ if(energy==null||energy==='all')return true;
+ if(String(energy)==='8+')return finite(card?.energy)!=null&&finite(card.energy)>=9;
+ return String(card?.energy)===String(energy);
+}
+function matchesGenerate(card,generate){
+ if(generate==null||generate==='all')return true;
+ return String(finite(card?.gen))===String(generate);
+}
+const SORTS=[['energy-asc','必要能量低 → 高'],['energy-desc','必要能量高 → 低'],['gen-asc','產能低 → 高'],['gen-desc','產能高 → 低']];
+const ENERGY_KEYS=['0','1','2','3','4','5','6','7','8','8+'];
+const GENERATE_KEYS=['0','1','2','3','4','5'];
+const TYPE_LABELS={character:'角色',field:'場地',event:'事件'};
+const COLOR_NAMES={red:'紅',blue:'藍',yellow:'黃',green:'綠',purple:'紫'};
+const COLOR_ORDER=['red','blue','yellow','green','purple'];
+const TRIGGER_NAMES={active:'激活',get:'獲得',draw:'抽牌',raid:'突襲',color:'COLOR',special:'SPECIAL',final:'FINAL',none:'無'};
+const TITLE_NAMES={rezero:'Re:從零開始的異世界生活',bleach:'BLEACH 千年血戰篇','gurren-lagann':'天元突破 紅蓮螺巖','sword-art-online':'刀劍神域','solo-leveling':'我獨自升級','mushoku-tensei':'無職轉生'};
 
-function makeVisualDeckModel({cards,counts,search='',type='all',color='all',energy='all',titleId=''}) {
- const eligible=cards.filter(c=>!['ap','action_point','action-point'].includes(c.type)&&!/AP\d+$/i.test(c.id||''));
- const amount=c=>Math.max(0,Number(counts[c.id])||0);
- const chosen=eligible.filter(c=>amount(c)>0);
- const total=chosen.reduce((n,c)=>n+amount(c),0);
- const types=[['character','角色'],['field','場地'],['event','事件']];
- const groups=types.map(([id,label])=>({id,label,cards:chosen.filter(c=>c.type===id),total:chosen.filter(c=>c.type===id).reduce((n,c)=>n+amount(c),0)}));
- const q=String(search).trim().toLocaleLowerCase();
- const results=eligible.filter(c=>(type==='all'||c.type===type)&&(color==='all'||c.color===color)&&(energy==='all'||String(c.energy)===String(energy))&&(!q||[c.name,c.nameZh,c.nameJa,c.number,c.id,c.effect,c.effectJa,c.tag,...(c.traits||[])].some(v=>String(v??'').toLocaleLowerCase().includes(q))));
- const colors=[...new Set(eligible.map(c=>c.color).filter(Boolean))];
- const energies=[...new Set(eligible.map(c=>c.energy).filter(x=>Number.isFinite(Number(x))))].sort((a,b)=>Number(a)-Number(b));
+function makeVisualDeckModel({cards,counts,search='',type='all',color='all',energy='all',energies,generate='all',sort='energy-asc',titleName=''}={}) {
+ const source=Array.isArray(cards)?cards:[];
+ const eligible=source.filter(card=>!isApCard(card));
+ const amount=card=>Math.max(0,Number(counts?.[card.id])||0);
+ const chosen=eligible.filter(card=>amount(card)>0);
+ const total=chosen.reduce((sum,card)=>sum+amount(card),0);
+ const groups=[['character','角色'],['field','場地'],['event','事件']].map(([id,label])=>{
+  const rows=chosen.filter(card=>card.type===id);
+  return {id,label,cards:rows,total:rows.reduce((sum,card)=>sum+amount(card),0)};
+ });
+ const q=String(search||'').trim().toLocaleLowerCase();
+ const results=eligible.filter(card=>{
+  if(type!=='all'&&card.type!==type)return false;
+  if(color!=='all'&&card.color!==color)return false;
+  if(!matchesEnergy(card,energy,energies))return false;
+  if(!matchesGenerate(card,generate))return false;
+  if(!q)return true;
+  return [card.name,card.nameZh,card.nameJa,card.number,card.id,card.effect,card.effectJa,card.tag,card.triggerEffect,card.triggerText,card.triggerTextJa,titleName,...(card.traits||[]),...(Array.isArray(card.faq)?card.faq:[])].some(value=>String(value??'').toLocaleLowerCase().includes(q));
+ });
+ const direction=String(sort).endsWith('desc')?-1:1;
+ const field=String(sort).startsWith('gen')?'gen':'energy';
+ results.sort((a,b)=>{
+  const av=finite(a[field]),bv=finite(b[field]);
+  const an=av==null?Number.POSITIVE_INFINITY:av,bn=bv==null?Number.POSITIVE_INFINITY:bv;
+  if(an!==bn)return (an-bn)*direction;
+  const byNumber=String(a.number||a.id).localeCompare(String(b.number||b.id),'en',{numeric:true});
+  return byNumber||String(a.id).localeCompare(String(b.id),'en');
+ });
+ const colors=[...new Set(eligible.map(card=>card.color).filter(Boolean))];
+ const energiesFound=[...new Set(eligible.map(card=>card.energy).filter(value=>Number.isFinite(Number(value))))].sort((a,b)=>Number(a)-Number(b));
  const triggerCounts={};
- for(const c of chosen){if(c.trigger)triggerCounts[c.trigger]=(triggerCounts[c.trigger]||0)+amount(c);}
- return {eligible,chosen,total,groups,results,colors,energies,triggerCounts,amount};
+ for(const card of chosen)if(card.trigger)triggerCounts[card.trigger]=(triggerCounts[card.trigger]||0)+amount(card);
+ const curve=keys=>Object.fromEntries(keys.map(key=>[key,0]));
+ const energyCurve=curve(ENERGY_KEYS),generateCurve=curve([...GENERATE_KEYS,'6+']);
+ for(const card of chosen){
+  const copies=amount(card);
+  const energyKey=requiredEnergyKey(card);
+  if(energyKey&&Object.prototype.hasOwnProperty.call(energyCurve,energyKey))energyCurve[energyKey]+=copies;
+  const produced=generateKey(card);
+  if(produced&&Object.prototype.hasOwnProperty.call(generateCurve,produced))generateCurve[produced]+=copies;
+ }
+ return {eligible,chosen,total,groups,results,colors,energies:energiesFound,triggerCounts,amount,energyCurve,generateCurve};
 }
 
-function renderVisualDeckBuilder({titles,titleId,ready,tab,search,type,color,energy,counts,name,nameId,savedId,savedOptions,saveAction,newAction,issues,allowSave=true,v2SupportedIds=null,v2Ready=false,reselectLabel='‹ 更換作品'}) {
- const title=titles.find(t=>t.id===titleId)||titles[0];
- const meta={rezero:'Re:從零開始的異世界生活',bleach:'BLEACH 千年血戰篇','gurren-lagann':'天元突破 紅蓮螺巖','sword-art-online':'刀劍神域','solo-leveling':'我獨自升級','mushoku-tensei':'無職轉生'};
- const colorNames={red:'紅',blue:'藍',yellow:'黃',green:'綠',purple:'紫'};
- const triggerNames={active:'激活',get:'獲得',draw:'抽牌',raid:'突襲',color:'COLOR',special:'SPECIAL',final:'FINAL',none:'無'};
- const model=makeVisualDeckModel({cards:title.cards,counts,search,type,color,energy,titleId});
- const img=(c,cls='')=>`<img class="${cls}" src="${vdbEsc(vdbImage(c))}" alt="${vdbEsc(c?.nameZh||c?.name||c?.number||'卡片')}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='assets/mark.svg'">`;
- const titleGrid=`<div class="vdb-title-grid">${titles.map(t=>{const pick=t.cards.find(c=>c.image||c.onlineImage)||t.cards[0];return `<button type="button" class="vdb-title-tile${ready&&t.id===titleId?' is-selected':''}" data-title="${vdbEsc(t.id)}" aria-pressed="${ready&&t.id===titleId}"><span class="vdb-tile-art">${img(pick)}</span><span class="vdb-tile-info"><strong>${vdbEsc(meta[t.id]||t.label)}</strong><small>${t.cards.length} 種已收錄卡牌</small></span></button>`}).join('')}</div>`;
- if(!ready)return `<div class="vdb"><header class="vdb-intro"><span class="vdb-eyebrow">DECK BUILDER · 01 / 03</span><h1>先選擇卡牌作品</h1><p>選好作品，再加入卡片。各作品獨立保存草稿，不會把不同系列的牌混在一起。</p></header>${titleGrid}<p class="vdb-footnote">作品卡池僅顯示已收錄資料；未經官方效果驗收的卡牌不代表能用於 V2 正式對戰。</p></div>`;
- const cardLine=c=>{const n=model.amount(c),limit=c.maxCopies??4,disabled=false;return `<article class="vdb-pool-card" data-card-id="${vdbEsc(c.id)}"><button type="button" class="vdb-card-photo" data-inspect="${vdbEsc(c.id)}" aria-label="檢視 ${vdbEsc(c.name||c.id)}">${img(c)}</button><div class="vdb-card-text"><strong>${vdbEsc(c.nameZh||c.name||c.nameJa||c.id)}</strong><small>${vdbEsc(c.number||c.id)}</small><div class="vdb-card-tags"><span>${vdbEsc(colorNames[c.color]||c.color||'待查')}</span><span>需求 ${vdbEsc(c.energy??'—')}</span><span>${vdbEsc(({character:'角色',field:'場地',event:'事件'})[c.type]||c.type)}</span></div>${v2SupportedIds?`<small class="${v2SupportedIds.has(c.id)?'vdb-supported':'vdb-card-warn'}">${v2SupportedIds.has(c.id)?'✓ V2 已登錄':'V2 尚未移植，僅可收藏組卡'}</small>`:''}</div><div class="vdb-quantity"><button type="button" data-builder-count="${vdbEsc(c.id)}" data-delta="1" aria-label="增加 ${vdbEsc(c.name||c.id)}" ${disabled||n>=limit||model.total>=50?'disabled':''}>＋</button><b>${n}</b><button type="button" data-builder-count="${vdbEsc(c.id)}" data-delta="-1" aria-label="減少 ${vdbEsc(c.name||c.id)}" ${!n?'disabled':''}>−</button></div></article>`};
- const chips=(options,active,attr)=>options.map(([id,label])=>`<button type="button" data-${attr}="${vdbEsc(id)}" class="${active===id?'active':''}" aria-pressed="${active===id}">${vdbEsc(label)}</button>`).join('');
- const titleCount=model.chosen.length;
- const summary=`<section class="vdb-stat-strip" aria-label="牌組張數與種類"><div><b>${model.total}<small>/ 50</small></b><span>主牌組張數</span></div><div><b>${titleCount}</b><span>不同卡號</span></div>${model.groups.map(g=>`<div><b>${g.total}</b><span>${g.label}</span></div>`).join('')}</section>`;
- const chosenColors=[...new Set(model.chosen.map(c=>c.color))].map(c=>colorNames[c]||c).join('／')||'尚未選卡';
- const cover=model.chosen[0]||title.cards.find(c=>c.image||c.onlineImage)||title.cards[0];
- const v2Button=v2SupportedIds!=null?'':`<button type="button" data-action="enterV2Battle" class="vdb-save" ${v2Ready?'':'disabled'}>進入 V2 對戰</button>`;
- const controls=`<div class="vdb-controls"><label>牌組名稱<input id="${vdbEsc(nameId)}" maxlength="40" value="${vdbEsc(name)}" placeholder="替自己的牌組取個名字"></label><label>已儲存的牌組<select id="${vdbEsc(savedId)}"><option value="">${titleId==='bleach'?'編輯中的牌組':'選擇儲存的牌組'}</option>${savedOptions.map(o=>`<option value="${vdbEsc(o.value)}">${vdbEsc(o.label)}</option>`).join('')}</select></label><div class="vdb-actions"><button type="button" data-action="${vdbEsc(saveAction)}" class="vdb-save" ${!allowSave?'disabled':''}>儲存牌組</button><button type="button" data-action="${vdbEsc(newAction)}">新建空白</button><button type="button" data-action="visualExport">複製牌組清單</button>${v2Button}</div><span class="deckSaveStatus">編輯內容會自動保存為此瀏覽器的草稿</span></div>`;
- const issuesBlock=`<div class="vdb-issues ${issues.length?'has-issues':'is-complete'}" role="status">${issues.length?vdbEsc(issues[0]):'✓ 牌組已符合目前的張數及規則檢查。'}${issues.length>1?`<span>${vdbEsc(issues.slice(1).join('；'))}</span>`:''}</div>`;
- const overview=`<div class="vdb-review">${model.chosen.length?model.groups.filter(g=>g.total).map(g=>`<section class="vdb-review-group"><h3>${g.label}<span>${g.total} 張</span></h3><div class="vdb-review-cards">${g.cards.map(c=>`<div class="vdb-mini-card"><button type="button" data-inspect="${vdbEsc(c.id)}" aria-label="查看 ${vdbEsc(c.name||c.id)}">${img(c)}</button><span class="vdb-count-badge">×${model.amount(c)}</span><small>${vdbEsc(c.nameZh||c.name||c.id)}</small></div>`).join('')}</div></section>`).join(''):'<div class="vdb-empty">目前沒有選擇卡片。切換「選擇卡片」開始加入吧！</div>'}<section class="vdb-trigger-panel"><h3>觸發卡統計</h3>${Object.keys(model.triggerCounts).length?`<div class="vdb-trigger-list">${Object.entries(model.triggerCounts).sort((a,b)=>b[1]-a[1]).map(([k,n])=>`<span>${vdbEsc(triggerNames[k]||k)} <b>×${n}</b></span>`).join('')}</div>`:'<p>目前尚無 Trigger 卡。</p>'}<p>AP 卡屬於額外的遊戲用品，不計入 50 張主牌組。</p></section></div>`;
- const pool=`<section class="vdb-finder" aria-label="搜尋並加入卡牌"><div class="vdb-search"><label for="search">搜尋卡片</label><input id="search" type="search" value="${vdbEsc(search)}" placeholder="輸入卡名、卡號或效果關鍵字…"></div><div class="vdb-filter-line"><b>種類</b>${chips([['all','全部'],['character','角色'],['field','場地'],['event','事件']],type,'builder-type')}</div><div class="vdb-filter-line"><b>顏色</b>${chips([['all','全部'],...model.colors.map(c=>[c,colorNames[c]||c])],color,'builder-color')}</div><div class="vdb-filter-line"><b>費用</b>${chips([['all','全部'],...model.energies.map(e=>[String(e),String(e)])],String(energy),'builder-energy')}</div><div class="vdb-pool-head"><strong>卡片列表 <small>${model.results.length} 種</small></strong><button type="button" data-builder-clear="1">清除篩選</button></div><div class="vdb-pool-grid">${model.results.length?model.results.map(cardLine).join(''):'<div class="vdb-empty">找不到符合條件的卡片，請清除篩選或更換關鍵字。</div>'}</div></section>`;
- return `<div class="vdb"><header class="vdb-workflow-head"><button type="button" class="vdb-back" data-builder-reselect="1">${vdbEsc(reselectLabel)}</button><span class="vdb-eyebrow">DECK BUILDER · ${tab==='overview'?'03':'02'} / 03</span></header><div class="vdb-hero"><div class="vdb-cover">${img(cover)}</div><div class="vdb-hero-copy"><small>${vdbEsc(meta[title.id]||title.label)}</small><h1>${vdbEsc(name||'未命名卡組')}</h1><p>${vdbEsc(chosenColors)} · ${model.total} / 50 張</p><div class="vdb-bar"><i style="width:${Math.min(100,model.total*2)}%"></i></div></div></div><nav class="vdb-tabs" aria-label="組卡步驟"><button type="button" data-builder-tab="pick" class="${tab==='pick'?'active':''}" aria-current="${tab==='pick'?'page':'false'}">① 選擇卡片</button><button type="button" data-builder-tab="overview" class="${tab==='overview'?'active':''}" aria-current="${tab==='overview'?'page':'false'}">② 牌組總覽 <span>${model.total}</span></button></nav>${summary}${controls}${issuesBlock}${tab==='overview'?overview:pool}<div class="vdb-bottom"><span>已選 ${model.total} / 50 張</span>${v2SupportedIds?`<button type="button" class="vdb-start" data-action="v2Play" ${v2Ready?'':'disabled'}>使用這副牌進入 V2 對戰</button>`:''}<button type="button" data-builder-tab="${tab==='overview'?'pick':'overview'}">${tab==='overview'?'返回選卡':'查看牌組總覽 →'}</button></div><p class="vdb-footnote">僅使用 Universal V2 共用引擎；舊版引擎已停用。未移植卡牌可保存草稿，但不能用於對戰。</p></div>`;
+function bars(bins){
+ const max=Math.max(1,...Object.values(bins));
+ return Object.entries(bins).map(([key,count])=>`<div><b>${count}</b><i style="height:${Math.max(4,Math.round(count/max*72))}px"></i><span>${vdbEsc(key)}</span></div>`).join('');
+}
+function chips(options,active,attr){
+ return options.map(([id,label])=>`<button type="button" data-${attr}="${vdbEsc(id)}" class="${active===id?'active':''}" aria-pressed="${active===id}">${vdbEsc(label)}</button>`).join('');
+}
+function energyChips(energies,energy){
+ const selected=Array.isArray(energies)?new Set(energies.map(String)):null;
+ const allOn=selected?selected.size===0||selected.has('all'):energy==='all'||energy==null;
+ const on=id=>selected?selected.has(id):String(energy)===id;
+ const button=(id,label,pressed)=>`<button type="button" data-builder-energy="${vdbEsc(id)}" class="${pressed?'active':''}" aria-pressed="${pressed}">${label}</button>`;
+ return button('all','全部',allOn)+ENERGY_KEYS.map(id=>button(id,id,!allOn&&on(id))).join('');
+}
+
+function renderVisualDeckBuilder({titles,titleId,ready,tab,search,type,color,energy,energies,generate='all',sort='energy-asc',counts,name,nameId,savedId,savedOptions,saveAction,newAction,issues,allowSave=true,v2SupportedIds=null,v2Ready=false,reselectLabel='‹ 返回牌組列表',focusCard=null,record=null,recordView='all',allowDelete=false}={}) {
+ const list=Array.isArray(titles)?titles:[];
+ const title=list.find(item=>item.id===titleId)||list[0]||{id:'',label:'',cards:[]};
+ const titleName=TITLE_NAMES[title.id]||title.label||'';
+ const model=makeVisualDeckModel({cards:title.cards,counts,search,type,color,energy,energies,generate,sort,titleName});
+ const img=(card,cls='')=>`<img class="${cls}" src="${vdbEsc(vdbImage(card))}" alt="${vdbEsc(card?.nameZh||card?.name||card?.number||'卡片')}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='assets/mark.svg'">`;
+ const titleGrid=`<div class="vdb-title-grid">${list.map(item=>{const pick=item.cards.find(card=>card.image||card.onlineImage)||item.cards[0];return `<button type="button" class="vdb-title-tile${ready&&item.id===titleId?' is-selected':''}" data-title="${vdbEsc(item.id)}" aria-pressed="${ready&&item.id===titleId}"><span class="vdb-tile-art">${img(pick)}</span><span class="vdb-tile-info"><strong>${vdbEsc(TITLE_NAMES[item.id]||item.label)}</strong><small>${item.cards.length} 種已收錄卡牌</small></span></button>`;}).join('')}</div>`;
+ if(!ready)return `<div class="vdb arena-editor"><header class="vdb-intro"><span class="vdb-eyebrow">DECK BUILDER · 01 / 03</span><h1>先選擇卡牌作品</h1><p>選好作品，再從低必要能量開始加入卡片。各作品的牌組分開保存。</p></header>${titleGrid}<p class="vdb-footnote">卡圖與效果文字來自已收錄的官方卡牌資料。未移植的卡牌可以編進牌表，但不能進入 V2 對戰。</p></div>`;
+ const cardLine=card=>{
+  const n=model.amount(card),limit=card.maxCopies??4;
+  const produced=finite(card.gen);
+  return `<article class="vdb-pool-card arena-card-row" data-card-id="${vdbEsc(card.id)}"><button type="button" class="vdb-card-photo" data-inspect="${vdbEsc(card.id)}" aria-label="檢視 ${vdbEsc(card.name||card.id)}">${img(card)}</button><div class="vdb-card-text"><strong>${vdbEsc(card.nameZh||card.name||card.nameJa||card.id)}</strong><small>${vdbEsc(card.number||card.id)}</small><div class="vdb-card-tags"><span>${vdbEsc(TYPE_LABELS[card.type]||card.type||'卡牌')}</span><span>產能 ${produced==null?'—':produced}</span><span>必要能量 ${vdbEsc(card.energy??'—')}</span><span>${vdbEsc(COLOR_NAMES[card.color]||card.color||'')}</span></div>${v2SupportedIds?`<small class="${v2SupportedIds.has(card.id)?'vdb-supported':'vdb-card-warn'}">${v2SupportedIds.has(card.id)?'✓ V2 已登錄':'V2 尚未移植，僅可收藏組卡'}</small>`:''}</div><div class="vdb-quantity"><button type="button" data-builder-count="${vdbEsc(card.id)}" data-delta="-1" aria-label="減少 ${vdbEsc(card.name||card.id)}" ${n?'':'disabled'}>−</button><b>${n}</b><button type="button" data-builder-count="${vdbEsc(card.id)}" data-delta="1" aria-label="增加 ${vdbEsc(card.name||card.id)}" ${n>=limit||model.total>=50?'disabled':''}>＋</button></div></article>`;
+ };
+ const chosenColors=[...new Set(model.chosen.map(card=>card.color))].map(item=>COLOR_NAMES[item]||item).join('／')||'尚未選色';
+ const battleButton=v2SupportedIds!=null?`<button type="button" data-action="v2Play" ${v2Ready?'':'disabled'} class="arena-battle">測試對戰</button>`:`<button type="button" data-action="enterV2Battle" ${v2Ready?'':'disabled'} class="vdb-save arena-battle">進入 V2 對戰</button>`;
+ const issuesBlock=`<div class="vdb-issues ${issues?.length?'has-issues':'is-complete'}" role="status">${issues?.length?vdbEsc(issues[0]):'✓ 牌組已符合目前的張數及規則檢查。'}${issues?.length>1?`<span>${vdbEsc(issues.slice(1).join('；'))}</span>`:''}</div>`;
+ const deckCards=model.groups.filter(group=>group.total).map(group=>`<section class="vdb-review-group"><h3>${group.label}<span>${group.total} 張</span></h3><div class="vdb-review-cards">${group.cards.map(card=>`<div class="vdb-mini-card"><button type="button" data-inspect="${vdbEsc(card.id)}" aria-label="查看 ${vdbEsc(card.name||card.id)}">${img(card)}</button><span class="vdb-count-badge">×${model.amount(card)}</span><button type="button" data-builder-count="${vdbEsc(card.id)}" data-delta="-1" aria-label="從牌組移除一張 ${vdbEsc(card.name||card.id)}">−</button><small>${vdbEsc(card.number||card.id)}</small></div>`).join('')}</div></section>`).join('')||'<div class="vdb-empty">還沒有卡片。從左側列表用＋加入，必要能量低的卡會排在前面。</div>';
+ const triggers=Object.keys(model.triggerCounts).length?Object.entries(model.triggerCounts).sort((a,b)=>b[1]-a[1]).map(([key,count])=>`<span>${vdbEsc(TRIGGER_NAMES[key]||key)} <b>×${count}</b></span>`).join(''):'<span>目前尚無 Trigger 卡。</span>';
+ const triggerBody=focusCard?[focusCard.triggerEffect,focusCard.triggerText,focusCard.triggerTextJa].find(value=>typeof value==='string'&&value.trim()):'';
+ const focus=focusCard&&!isApCard(focusCard)?`<article class="arena-focus"><button type="button" class="arena-focus-art" data-action="zoomCard" aria-label="放大 ${vdbEsc(focusCard.name||focusCard.id)}">${img(focusCard)}</button><div><h3>${vdbEsc(focusCard.nameZh||focusCard.name||focusCard.nameJa||focusCard.id)}</h3><p>${vdbEsc(focusCard.number||focusCard.id)}</p><p>${vdbEsc(titleName)} · ${vdbEsc(COLOR_NAMES[focusCard.color]||focusCard.color||'顏色未記載')} · ${vdbEsc(TYPE_LABELS[focusCard.type]||focusCard.type||'')}</p><dl><div><dt>產能</dt><dd>${finite(focusCard.gen)==null?'—':finite(focusCard.gen)}</dd></div><div><dt>必要能量</dt><dd>${vdbEsc(focusCard.energy??'—')}</dd></div><div><dt>BP</dt><dd>${focusCard.bp==null?'—':vdbEsc(focusCard.bp)}</dd></div><div><dt>AP</dt><dd>${focusCard.ap==null?'—':vdbEsc(focusCard.ap)}</dd></div><div><dt>Trigger</dt><dd>${vdbEsc(TRIGGER_NAMES[focusCard.trigger]||focusCard.trigger||'なし')}</dd></div></dl>${triggerBody?`<p class="arena-trigger">${vdbEsc(triggerBody)}</p>`:''}<p class="arena-effect">${vdbEsc(focusCard.effect||'資料庫沒有另記效果文字。')}</p>${focusCard.effectJa?`<details><summary>官方日文原文</summary><p>${vdbEsc(focusCard.effectJa)}</p></details>`:''}${Array.isArray(focusCard.faq)&&focusCard.faq.length?`<p class="arena-faq">官方 FAQ 題號：${focusCard.faq.map(vdbEsc).join('、')}</p>`:''}${focusCard.source?`<p><a href="${vdbEsc(focusCard.source)}" target="_blank" rel="noopener noreferrer">查看卡牌來源</a></p>`:''}<button type="button" data-action="zoomCard">放大卡圖</button></div></article>`:'<p class="arena-empty">點左側或牌組裡的卡圖，這裡會顯示那張卡的收錄資料。</p>';
+ const pool=`<section class="vdb-finder arena-pool" aria-label="搜尋並加入卡牌"><div class="vdb-search"><label for="search">搜尋卡片</label><input id="search" type="search" value="${vdbEsc(search||'')}" placeholder="請輸入卡名、卡號、效果或作品名稱…"></div><div class="vdb-filter-line arena-filter"><b>種類</b>${chips([['all','全部'],['character','角色'],['field','場地'],['event','事件']],type||'all','builder-type')}</div><div class="vdb-filter-line arena-filter"><b>顏色</b>${chips([['all','全部'],...COLOR_ORDER.map(id=>[id,COLOR_NAMES[id]])],color||'all','builder-color')}</div><div class="vdb-filter-line arena-filter arena-energy-row"><b>產能</b>${chips([['all','全部'],...GENERATE_KEYS.map(id=>[id,id])],String(generate||'all'),'builder-generate')}</div><div class="vdb-filter-line arena-filter arena-energy-row"><b>必要能量</b>${energyChips(energies,energy)}</div><div class="vdb-filter-line arena-filter arena-sort-row"><b>排序</b>${chips(SORTS,SORTS.some(([id])=>id===sort)?sort:'energy-asc','builder-sort')}</div><div class="vdb-pool-head"><strong>卡片列表 <small>共 ${model.results.length} 種</small></strong><button type="button" data-builder-clear="1">清空篩選</button></div><div class="vdb-pool-grid">${model.results.length?model.results.map(cardLine).join(''):'<div class="vdb-empty">找不到符合條件的卡片。清空篩選後仍可看到產能超過 5、或必要能量超過 8 的卡。</div>'}</div></section>`;
+ const deck=`<section class="arena-deck" aria-label="牌組內容"><details class="arena-deck-fold" open><summary>目前牌組 ${model.total} / 50</summary><div class="arena-deck-body"><div class="arena-deck-head"><div><small>${vdbEsc(titleName)}</small><h2 id="deckHeading">${vdbEsc(name||'未命名牌組')}</h2><p>${vdbEsc(chosenColors)} · ${model.total} / 50 張</p></div><div class="arena-deck-actions"><button type="button" data-action="visualExport">複製牌組</button>${battleButton}<button type="button" data-action="${vdbEsc(saveAction)}" class="arena-save" ${allowSave?'':'disabled'}>儲存牌組</button>${allowDelete?'<button type="button" data-action="deleteDeck">刪除牌組</button>':''}<button type="button" data-action="${vdbEsc(newAction)}">新建空白</button></div></div><nav class="vdb-tabs" aria-label="組卡步驟"><button type="button" data-builder-tab="pick" class="${tab==='pick'?'active':''}">① 選擇卡片</button><button type="button" data-builder-tab="overview" class="${tab==='overview'?'active':''}">牌組總覽 <span>${model.total}</span></button></nav><div class="arena-name-row"><label>牌組名稱<input id="${vdbEsc(nameId)}" maxlength="40" value="${vdbEsc(name||'')}" placeholder="替自己的牌組取個名字"></label><label>已儲存的牌組<select id="${vdbEsc(savedId)}"><option value="">${titleId==='bleach'?'編輯中的牌組':'選擇儲存的牌組'}</option>${(savedOptions||[]).map(option=>`<option value="${vdbEsc(option.value)}">${vdbEsc(option.label)}</option>`).join('')}</select></label></div>${issuesBlock}<div class="vdb-review arena-deck-board">${deckCards}</div><div class="arena-triggers" aria-label="觸發統計">${triggers}<p>AP 卡不計入 50 張主牌組。</p></div></div></details></section>`;
+ const info=`<aside class="arena-info" aria-label="牌組資訊"><h2>牌組資訊</h2><p class="arena-total"><strong>${model.total} / 50</strong></p><ul class="arena-type-counts">${model.groups.map(group=>`<li><span>${group.label}</span><b>${group.total}</b></li>`).join('')}</ul><h3>能量曲線</h3><div class="arena-curve" aria-label="必要能量分布">${bars(model.energyCurve)}</div><h3>產能分布</h3><div class="arena-curve arena-curve-gen" aria-label="產能分布">${bars(model.generateCurve)}</div>${renderDeckRecord({record,view:recordView})}<div class="arena-detail"><h3>卡片詳細資訊</h3>${focus}</div></aside>`;
+ return `<div class="vdb arena-editor"><div class="arena-editor-grid">${pool}${deck}${info}</div><p class="vdb-footnote">產能是卡牌放到能源區時產生的能源，必要能量是登場所需能量，兩者不是 AP。加減卡即時寫進這副牌，同卡號上限沿用各卡自己的張數限制。</p></div>`;
 }
 
 export {makeVisualDeckModel,renderVisualDeckBuilder};

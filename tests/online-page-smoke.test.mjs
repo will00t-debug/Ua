@@ -66,6 +66,7 @@ test('Cloudflare /online.html login boot produces actual inputs, registration sw
  assert.match(texts(appRoot),/註冊並登入/);
  vm.runInContext("app.mode='login';app.user={username:'test_owner'};app.decks=[];render();",context);
  assert.match(texts(appRoot),/test_owner/);
- assert.match(texts(appRoot),/圖片式牌組構築/);
+ assert.match(texts(appRoot),/牌組構築/);
+ assert.match(texts(appRoot),/單人對戰/);
  assert.match(texts(appRoot),/線上對戰/);
 });
