@@ -49,3 +49,13 @@ button:disabled{opacity:.55;cursor:not-allowed}
 .log{display:grid;gap:4px;max-height:180px;overflow:auto;font-size:13px;color:#526070}
 .side{display:grid;gap:8px}
 .side header{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+
+/* Restore the original visual deck-building workflow on account dashboards. */
+.builder-entry{display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:14px 0;padding:16px;border:1px solid #bdd9f8;border-radius:13px;background:linear-gradient(110deg,#f2f8ff,#fff)}
+.builder-entry strong{font-size:16px;color:#245582}
+.builder-entry p{margin:5px 0 0;max-width:460px;line-height:1.55}
+.builder-entry-button{background:#277ed1;border:1px solid #277ed1;color:#fff;text-decoration:none;font-size:13px;font-weight:800;padding:11px 16px;border-radius:9px;white-space:nowrap}
+.builder-entry-button:focus-visible,.builder-entry-button:hover{background:#1465b0;color:#fff}
+.deck .row{justify-content:flex-end}
+.deck .row button.primary{white-space:nowrap}
+@media(max-width:680px){.builder-entry{align-items:stretch}.builder-entry-button{width:100%;text-align:center}.deck{align-items:flex-start;flex-direction:column}.deck .row{width:100%;justify-content:flex-start}}
