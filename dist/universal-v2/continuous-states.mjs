@@ -132,7 +132,14 @@ export function attemptFieldActive(s,owner,c){
 }
 export function refreshFieldActive(s,owner){
  pruneContinuousStates(s);
- for(const c of field(s.players[owner]))attemptFieldActive(s,owner,c);
+ for(const c of field(s.players[owner])){
+  // Q1052: a start or end refresh consumes 「次の1回アクティブにならない」
+  // even when the character is already ACTIVE and stays ACTIVE.
+  const skip=s.continuousStates.find(e=>e.kind==='skipNextActive'&&!e.consumed&&
+   e.targetOwner===owner&&e.targetUid===c.uid&&e.targetStamp===c.fieldEntryStamp);
+  if(c.ready&&skip){skip.consumed=true;pruneContinuousStates(s);continue;}
+  attemptFieldActive(s,owner,c);
+ }
 }
 // Only explicit card/Trigger EFFECT choice is restricted, never combat.
 // Unknown opposing effect provenance fails closed for character-only and
