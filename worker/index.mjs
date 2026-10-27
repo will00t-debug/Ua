@@ -184,10 +184,11 @@ export default {
     }
     return send(404,{error:'找不到這個功能。'});
    }
-   // One host: / is the battle lobby, /index.html is the deck gallery, /online.html is accounts.
+   // One host: / is the account-first entry (login for guests, lobby for signed-in users).
+   // The V2 battle lobby remains available at /universal-v2-preview.html.
    // html_handling is "none", so index.html is not redirected onto / and hidden by the lobby.
    const pages={
-    '/':'/universal-v2-preview.html',
+    '/':'/online.html',
     '/universal-v2-preview':'/universal-v2-preview.html',
     '/universal-v2-preview.html':'/universal-v2-preview.html',
     '/index':'/index.html',
