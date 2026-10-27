@@ -288,7 +288,6 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseLifeEffect':return '先結算登場效果：'+uiCardLabel(pack,state,state?.pending?.entries?.find(e=>e.key===action.key)?.sourceUid);
   case 'choosePhaseOrder':return '先結算此階段效果';
   case 'chooseApRecovery':return action.uid===null?'完成恢復 AP':'恢復 AP 卡';
-  case 'chooseHandTop':return '將 '+name()+' 放到自己的牌庫頂';
   case 'chooseLoseBattleReady':return action.uid===null?
    '不給予落敗時 ACTIVE':'給 '+name()+' 本回合落敗時 ACTIVE';
   case 'chooseTraitBanMove':return action.uid===null?
