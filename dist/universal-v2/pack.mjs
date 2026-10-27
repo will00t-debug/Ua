@@ -1719,6 +1719,16 @@ function normalize(card,packId){
   typeof mainAbility.name==='string'&&!!mainAbility.name.trim()&&
   mainAbility.name.length<=80&&Object.keys(mainAbility).length===2&&
   Object.keys(mainAbility).every(k=>['op','name'].includes(k));
+ // [フロントLにある場合][ターン1]. Retire one other own character. Doing so
+ // ACTIVES this character, looks at the top 3, adds one to hand, and puts the
+ // rest on the bottom. Required energy 4 or more also grants BP until the next
+ // own turn start. The once is this physical card.
+ const mainFrontRetireLook=mainAbility?.op==='frontOnceRetireActiveLook'&&
+  card.type==='character'&&mainAbility.oncePerTurn===true&&
+  mainAbility.frontOnly===true&&mainAbility.look===3&&
+  mainAbility.minEnergy===4&&mainAbility.bp===1000&&
+  Object.keys(mainAbility).length===6&&
+  Object.keys(mainAbility).every(k=>['op','oncePerTurn','frontOnly','look','minEnergy','bp'].includes(k));
  const mainRestRetireExact=mainAbility?.op==='restRetireExactOutside'&&
   typeof mainAbility.name==='string'&&!!mainAbility.name.trim()&&
   mainAbility.name.length<=80&&
@@ -1782,7 +1792,7 @@ function normalize(card,packId){
   Object.keys(mainAbility).length===2&&
   Object.keys(mainAbility).every(k=>['op','trait'].includes(k));
  if(mainAbility!==null&&
-  (!['character','field'].includes(card.type)||!(fieldDualMain||fieldRestRetireThen||mainFieldReplay||mainRestTopTrait||mainRestRetireActive||card.type==='character'&&(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainRestBuff||mainRestBuffAp||mainRestRetireRecover||mainRestOnceBuffReturn||mainRestOnceSelf||mainOnceBuffWhen||mainPayAp||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainRestDiscardRetire||mainFrontProgram||mainFieldOnceBuff||mainEntryProtect||mainEntrySacrifice||mainNamedDouble||mainRestRetireUnder||mainRestTwoMove||mainOncePay||mainRepeatDiscard||nameOnceActive||nameOnceEvent||mainCardOnce||handNameOnce||mainRestFrontName||mainRestRetireExact||mainRestRetireNamed))))
+  (!['character','field'].includes(card.type)||!(fieldDualMain||fieldRestRetireThen||mainFieldReplay||mainRestTopTrait||mainRestRetireActive||card.type==='character'&&(mainRaid||mainRetireField||mainRetireReady||mainSelfRest||mainRestProgram||mainRestBuff||mainRestBuffAp||mainRestRetireRecover||mainRestOnceBuffReturn||mainRestOnceSelf||mainOnceBuffWhen||mainPayAp||mainRestFrontEnergy||mainEnergyRetire||mainEnergyRetireLines||mainEnergyMoveLines||mainDiscardBuff||mainRestDiscardRetire||mainFrontProgram||mainFieldOnceBuff||mainEntryProtect||mainEntrySacrifice||mainNamedDouble||mainRestRetireUnder||mainRestTwoMove||mainOncePay||mainRepeatDiscard||nameOnceActive||nameOnceEvent||mainCardOnce||handNameOnce||mainRestFrontName||mainRestRetireExact||mainRestRetireNamed||mainFrontRetireLook))))
   throw Error(card.id+' unsupported main action ability');
  const passiveBonuses=validatePassiveBonuses(card);
  const implemented=card.implementation;
@@ -2218,6 +2228,10 @@ function normalize(card,packId){
   card.type!=='character'||implemented!=='dsl'||!card.raidName||
   card.raidFrontOtherRetireDraw!==1))
   throw Error(card.id+' invalid raid-front retire draw');
+ if(card.outsideToDeckBottom!==undefined&&(
+  card.type!=='character'||implemented!=='dsl'||card.outsideToDeckBottom!==true||
+  card.mainAbility?.op!=='frontOnceRetireActiveLook'))
+  throw Error(card.id+' invalid outside-to-deck-bottom replacement');
  const maxCopies=card.maxCopies===undefined?4:card.maxCopies;
  // Officially printed exceptions, including SLG-1-030, may have up to 12 copies.
  // The title contribution contract verifies the exact source deckLimit.
@@ -2234,6 +2248,7 @@ function normalize(card,packId){
   trigger:card.trigger||null,raidName:card.raidName||null,
   ...(card.raidFrontRequiredEnergy===2?{raidFrontRequiredEnergy:2}:{}),
   ...(card.raidFrontOtherRetireDraw===1?{raidFrontOtherRetireDraw:1}:{}),
+  ...(card.outsideToDeckBottom===true?{outsideToDeckBottom:true}:{}),
   raidFromRaid:Object.freeze([...(card.raidFromRaid||[])]),
   raidBaseNames:Object.freeze([...(card.raidBaseNames||[card.raidName].filter(Boolean))]),
   raidRequiresNames:Object.freeze([...(card.raidRequiresNames||[])]),

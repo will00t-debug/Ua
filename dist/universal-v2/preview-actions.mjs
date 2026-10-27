@@ -33,6 +33,8 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-may-draw':'可抽1張牌',
  'effect-removed-name-outside':'將除外區的指定名稱卡送至場外',
  'effect-hand-front-active':'以 Active 登場於前線',
+ 'effect-front-retire-look':'使自己場上另1個角色退場',
+ 'effect-top-hand-one':'將查看的1張加入手牌',
  'effect-retire-life-or-hand':'退場時最多選一項',
  'effect-hidden-life-hand':'將1張生命加入手牌',
  'effect-rest-reenter':'以 Rest 重新登場',

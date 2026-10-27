@@ -131,6 +131,8 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   return legal.find(a=>a.mode==='all')||legal.find(a=>a.mode==='done')||
    legal.find(a=>a.mode==='pick')||legal[0];
  if(s.pending?.kind==='effect-hand-front-active')return legal[0];
+ if(s.pending?.kind==='effect-front-retire-look'||s.pending?.kind==='effect-top-hand-one')
+  return legal[0];
  if(s.pending?.kind==='effect-retire-life-or-hand')
   return difficulty==='easy'?legal.find(a=>a.mode==='skip')||legal[0]:
    legal.find(a=>a.mode==='life')||legal.find(a=>a.mode==='hand')||legal[0];
