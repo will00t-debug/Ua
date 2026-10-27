@@ -23,14 +23,14 @@ test('TTG 81 and Re:Zero set 1 113 register on the shared V2 packs',()=>{
  assert.equal(Object.keys(set1.cards).length,113);
  assert.deepEqual([...REZERO_ENGINE_IDS].sort(),Object.keys(set1.cards).sort());
  const vol2=createRezV2Pack();
- assert.equal(Object.keys(vol2.cards).length,28);
- assert.equal(REZ_V2_IMPLEMENTED_IDS.length,28);
+ assert.equal(Object.keys(vol2.cards).length,73);
+ assert.equal(REZ_V2_IMPLEMENTED_IDS.length,73);
  const battle=createRezeroBattlePack();
- assert.equal(Object.keys(battle.cards).length,141);
+ assert.equal(Object.keys(battle.cards).length,186);
  assert.equal(officialV2Pack('gurren-lagann').cards['TTG-1-081'].id,'TTG-1-081');
 });
 
-test('a legal 50-card TTG or set-1 deck can enter V2, and an unsupported Vol.2 card cannot hide',()=>{
+test('a legal 50-card TTG or set-1 deck can enter V2, and a regular Vol.2 card stays registered',()=>{
  const ttg=officialV2Pack('gurren-lagann');
  const red=practiceDeck(ttg,{color:'red'});
  assert.equal(v2DeckReport('gurren-lagann',red).ok,true);
@@ -41,11 +41,12 @@ test('a legal 50-card TTG or set-1 deck can enter V2, and an unsupported Vol.2 c
  for(const [id,n] of Object.entries(set1.counts))drafted[id]=n;
  const draftedReport=v2DeckReport('rezero',drafted);
  assert.equal(draftedReport.ok,true,draftedReport.issues.join('; '));
- const blocked={'REZ-1-001':4,'REZ-2-001':4};
- const report=v2DeckReport('rezero',blocked);
+ const mixed={'REZ-1-001':4,'REZ-2-001':4};
+ const report=v2DeckReport('rezero',mixed);
  assert.equal(report.ok,false);
- assert.ok(report.warnings.some(w=>w.includes('REZ-2-001')));
- assert.equal(report.counts['REZ-2-001'],undefined);
+ assert.equal(report.warnings.length,0);
+ assert.equal(report.counts['REZ-2-001'],4);
+ assert.ok(report.issues.every(x=>!x.includes('尚未支援')));
 });
 
 function play(name,mine,foe,seed){

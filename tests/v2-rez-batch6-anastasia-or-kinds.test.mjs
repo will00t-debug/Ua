@@ -14,7 +14,7 @@ test('REZ-2-043 and REZ-2-049 share one own-turn name-or-four-green-kinds bonus'
  assert.match(REZERO_VOL2_BY_ID['REZ-2-049'].effectJa,/BP\+1000/);
  assert.deepEqual(rez.cards['REZ-2-043'].passiveBonuses,[{condition:CONDITION,bp:1500}]);
  assert.deepEqual(rez.cards['REZ-2-049'].passiveBonuses,[{condition:CONDITION,bp:1000}]);
- assert.equal(rez.cards['REZ-2-054'],undefined);
+ assert.equal(rez.cards['REZ-2-054'].effects.onPlay[0].op,'chooseOne');
 });
 
 function place(s,player,id,line,slot){
