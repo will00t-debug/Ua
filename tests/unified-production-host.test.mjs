@@ -18,13 +18,13 @@ test('Cloudflare keeps battle, deck gallery and accounts on one host',()=>{
 
 test('the Vercel hostname redirects onto that same host unless stay=1',()=>{
  const routes=JSON.parse(read('../vercel.json'));
- assert.deepEqual(routes.rewrites,[{source:'/',destination:'/universal-v2-preview.html'}]);
+ assert.deepEqual(routes.rewrites,[{source:'/',destination:'/online.html'}]);
  assert.equal(routes.redirects.length,2);
  for(const redirect of routes.redirects){
   assert.equal(redirect.permanent,false);
   assert.deepEqual(redirect.missing,[{type:'query',key:'stay'}]);
   assert.match(redirect.destination,new RegExp('^'+CANONICAL.replace(/[.]/g,'\\.')+'/?')) ;
  }
- assert.equal(routes.redirects[0].destination,CANONICAL+'/');
+ assert.equal(routes.redirects[0].destination,CANONICAL+'/online.html');
  assert.equal(routes.redirects[1].destination,CANONICAL+'/:path*');
 });
