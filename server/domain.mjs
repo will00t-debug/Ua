@@ -483,6 +483,7 @@ export function createService({sql,now=()=>Date.now()}){
   me(token){return enqueue(()=>dispatchAccount(repos,{op:'me',token},now()));},
   listDecks(token){return enqueue(()=>dispatchAccount(repos,{op:'listDecks',token},now()));},
   saveDeck(token,input){return enqueue(()=>dispatchAccount(repos,{op:'saveDeck',token,input},now()));},
+  updateDeck(token,deckId,input){return enqueue(()=>dispatchAccount(repos,{op:'updateDeck',token,deckId,input},now()));},
   deleteDeck(token,deckId){return enqueue(()=>dispatchAccount(repos,{op:'deleteDeck',token,deckId},now()));},
   createRoom(token,input){
    return enqueue(()=>{
