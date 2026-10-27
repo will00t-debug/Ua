@@ -36,6 +36,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-front-retire-look':'使自己場上另1個角色退場',
  'effect-top-hand-one':'將查看的1張加入手牌',
  'effect-remove-own-other':'將自己場上另1個角色除外',
+ 'effect-retire-other-front-name':'可將自己場上另1個角色退場',
  'effect-buff-other-trait':'選擇其他己方角色',
  'effect-retire-life-or-hand':'退場時最多選一項',
  'effect-hidden-life-hand':'將1張生命加入手牌',
@@ -226,6 +227,7 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'choosePayApDeploy':return action.mode==='pay'?'支付 1 AP，接著選擇場外角色':'不支付 AP';
   case 'chooseOptionalPayAp':return action.mode==='pay'?'支付 1 AP，然後結算後續效果':'不支付 AP';
   case 'chooseRemoveHand':return action.uid===null?'不除外':'將 '+name()+' 除外';
+  case 'chooseRetireOtherFrontName':return action.uid===null?'不退場':'使 '+name()+' 退場';
   case 'chooseHandRest':return action.uid===null?'不特殊登場':'免費 REST 登場 '+name()+suffix();
   case 'chooseHandRestCap':return action.uid===null?'不以 Rest 登場':'以 Rest 登場 '+name()+suffix();
   case 'chooseActiveOwnNamed':return action.uid===null?'不將指定名稱角色轉為 ACTIVE':'將 '+name()+' 轉為 ACTIVE';
