@@ -44,5 +44,5 @@ test('staging keeps original V2 engine / UI entry and independently stored Re:Ze
  assert.match(app,/else if\(ui.title==='rezero'\)persistRez\(\)/);
  assert.match(app,/ua-rez-draft-v1/);
  const root=JSON.parse(readFileSync(new URL('../vercel.json',import.meta.url),'utf8'));
- assert.equal(root.rewrites[0].destination,'/universal-v2-preview.html');
+ assert.equal(root.rewrites[0].destination,'/online.html');
 });
