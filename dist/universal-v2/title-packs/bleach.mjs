@@ -187,7 +187,8 @@ const testForKind=Object.freeze({
  shutaraHandScale:'tests/v2-c29-bleach-port.test.mjs',
  ichibeEnergyReveal:'tests/v2-c29-bleach-port.test.mjs',
  shatatsuHandCap:'tests/v2-c29-bleach-port.test.mjs',
- shirafudeLock:'tests/v2-c29-bleach-port.test.mjs'
+ shirafudeLock:'tests/v2-c29-bleach-port.test.mjs',
+ jugramEntryEnergy:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -197,7 +198,7 @@ function contributedEntry(profile){
  // The legacy gen=2 for EX15BT/BLC-4-014 describes the ACTIVE total, not
  // the printed REST base. SourceRecord is the normalized printed card record;
  // retain original.gen separately and require the profile fingerprint above.
- const normalized=['BLC-4-014','BLC-4-042','BLC-4-074','BLC-4-024','BLC-4-063','BLC-4-037','BLC-4-071','BLC-4-006','BLC-4-051','BLC-4-077','BLC-4-065','BLC-4-016','BLC-4-017','BLC-4-032'].includes(profile.id);
+ const normalized=['BLC-4-014','BLC-4-042','BLC-4-074','BLC-4-024','BLC-4-063','BLC-4-037','BLC-4-071','BLC-4-006','BLC-4-051','BLC-4-077','BLC-4-065','BLC-4-016','BLC-4-017','BLC-4-032','BLC-4-011'].includes(profile.id);
  const sourceRecord=Object.freeze(normalized?
   {...original,gen:definition.gen,legacyImportedGen:original.gen}: {...original});
  const vanilla=['plain','plainAlt','step'].includes(profile.kind);
@@ -206,7 +207,9 @@ function contributedEntry(profile){
   definition:Object.freeze(definition),
   evidence:Object.freeze({
    printedTextFragments:Object.freeze([profile.effect]),
-   reviewNote:profile.id==='BLC-4-057'?
+   reviewNote:profile.id==='BLC-4-011'?
+    'EX15BT/BLC-4-011 official page 2026-10-27. Required energy 黄3. Catalogue gen=3 is the yellow3 sprite; official generated energy is 黄黄, so definition.gen=2 and legacyImportedGen=3. On play, draw 1 and put one hand card outside. The discard is mandatory while the hand is not empty. [起動メイン][ターン1] only on the turn this physical card entered. Choose another own character; this turn its required energy increases by 2. An energy-line character is a legal target. A field is not a character. This character is not its own target. Declining is illegal. Zero other characters do not offer the activate, so the once is not consumed. [ターン1] is this physical card. Silence before activation removes the ability. The earned increase remains after later silence and after this character leaves. A different physical copy stays at its printed energy. The same physical card returned to hand this turn still carries the increase into a hand play. It ends when the turn ends. COLOR rests one opposing front character and skips its next ACTIVE. No card FAQ. Trait 星十字騎士団.':
+   profile.id==='BLC-4-057'?
     'EX15BT/BLC-4-057 official iframe 2026-10-27. Up to one opposing front character, until the controller next own turn start, loses every printed effect and cannot attack or block. Q2329 (2026-09-04): 元々の効果 is the text printed on that card. Q2330 (2026-09-04): Raid state remains, and the text enclosed by the Raid is negated. Q2331 (2026-09-04): a double block gained from another card remains. Q2332 (2026-09-04): effects already gained remain, including a this-turn BP modifier; a printed continuous reference is lost. Q2333 (2026-09-04): a printed leave trigger does not fire. Declining the character is legal. An energy-line character is not a choice. A field is not a character. If own field or the removed area has 兵主部 一兵衛, draw 2 and put one hand card into the removed area. That removal is mandatory. Silence keeps the printed name. No such card skips the draw. SPECIAL retires one opposing front character. No generated energy.':
    profile.id==='BLC-2-061'?
     'EX07BT/BLC-2-061 official page 2026-10-27. Required energy 紫4. Generated energy is a dash, so gen stays 0. Put up to 3 own hand cards with trait 零番隊 into the removed area, including zero. Then retire one opposing front character. The choice is mandatory while a legal character exists. The BP cap starts at 3000 and increases by 1000 for each card this effect removed. Then draw 1 for each card this effect removed. Zero removed cards do not draw. A card without that trait cannot be removed. An energy-line card is not in hand. Choosing zero still opens the 3000 retirement. Declining that retirement is illegal. An energy-line character is not a front character. A field is not a character. No matching hand card skips the removal and opens the 3000 retirement. The fourth matching hand card cannot be removed. SPECIAL retires one opposing front character with no BP cap. No card FAQ. Trait 無.':

@@ -68,6 +68,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-active-any':'可將 1 張己方場上卡改為 ACTIVE',
  'effect-grant-front-energy':'讓另一張己方前線指定特徵角色本回合也能產生能源',
  'effect-rest-bp':'選擇敵方 REST','effect-grant-ap-tax':'讓另一張己方 DFN 角色獲得指定時的 AP 加價保護','effect-attack-ban':'指定禁止攻擊的對手前線角色','effect-printed-lock':'可選 1 個對方前線角色，到自己下次回合開始前失去原有效果且不能攻擊或阻擋','effect-name-hand-remove':'將 1 張手牌除外',
+ 'effect-required-energy':'選自己場上另1個角色，本回合其所需能量增加2',
  'effect-buff-trait':'選擇己方 BP 加成',
  'main-two-buff':'主要能力選擇 BP 對象',
  'main-discard-buff':'支付一張手牌，讓自身 BP 增加',
@@ -217,6 +218,7 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseMandatoryHandRemove':return '將 '+name()+' 除外';
   case 'chooseTopOrder':return '依序放回：'+name();
   case 'chooseRestFrontEnergy':return 'REST '+name()+'，本回合產能＋1';
+  case 'chooseRequiredEnergy':return '本回合所需能量 +2：'+name();
   case 'chooseOwnBuff':case 'chooseMainBuff':case 'chooseTraitBuff':case 'chooseRestBp':
   case 'chooseRetireBp':case 'chooseTargetMany':return action.uid===null?'完成目標選擇':'選擇第 '+(state?.pending?.selected?.length+1||1)+' 個角色';
   case 'chooseFrontEnergyGrant':return action.uid===null?

@@ -166,7 +166,8 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='effect-once-choice')
   return difficulty==='easy'?legal.find(a=>a.mode==='skip')||legal[0]:
    legal.find(a=>a.mode==='activate')||legal[0];
- if(s.pending?.kind==='effect-buff-own')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-buff-own'||s.pending?.kind==='effect-required-energy')
+  return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-active-energy-named')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-buff-trait')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='main-discard-buff'){
