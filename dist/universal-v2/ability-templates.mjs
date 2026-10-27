@@ -271,13 +271,13 @@ const registry=Object.freeze({
   args:{count:v=>integer(v,1,5),filter},
   build:v=>[{op:'searchTopOneBottomDiscard',count:v.count,filter:{...v.filter}}]
  },
- // Compose 2–3 distinct official name/trait predicates against the SAME
- // inspected private TOP-N window. Preserves the same bottom-order and
- // "discard only if a card was taken" runtime as single-filter cards.
+ // Compose 2–4 distinct official name/trait predicates against the SAME
+ // inspected private TOP-N window. Four is the printed か chain. Preserves
+ // the same bottom-order and "discard only if a card was taken" runtime.
  searchTopOneBottomDiscardWhere:{
   args:{
    count:v=>integer(v,1,5),
-   filters:v=>Array.isArray(v)&&v.length>=2&&v.length<=3&&v.every(f=>
+   filters:v=>Array.isArray(v)&&v.length>=2&&v.length<=4&&v.every(f=>
     f&&typeof f==='object'&&!Array.isArray(f)&&Object.keys(f).length===2&&
     ['name','trait','color','type'].includes(f.field)&&
     typeof f.value==='string'&&!!f.value.trim()&&
@@ -338,6 +338,17 @@ const registry=Object.freeze({
  }
 });
 export const V2_ABILITY_TEMPLATE_IDS=Object.freeze(Object.keys(registry));
+
+// Printed sentence shared by SAO and MST events. The bonus name is read from
+// the card text. A raid-base or outside clause is a different sentence and
+// must not match.
+export function parseNamedFieldRetireBonus(effectJa){
+ const m=/^『BP(\d{3,5})以下』の相手のフロントLのキャラを1枚選び、退場させる。自分の場に〈([^〉]{1,40})〉がある場合、『BP(\d{3,5})以下』に代わる。$/.exec(effectJa||'');
+ if(!m)return null;
+ const bp=Number(m[1]),bonusBp=Number(m[3]);
+ if(bonusBp<bp)return null;
+ return {bp,bonusName:m[2],bonusBp};
+}
 
 function expandOne(spec,path){
  if(!spec||typeof spec!=='object'||Array.isArray(spec)||

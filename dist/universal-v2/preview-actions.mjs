@@ -17,29 +17,82 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-discard':'選擇棄牌','effect-discard-cost':'支付棄牌成本',
  'effect-discard-gate':'是否支付棄牌成本',
  'effect-remove-outside':'可將己方場外卡移入移除區',
+ 'effect-remove-hand-scale':'可將任意張手牌中具有指定特徵的卡除外，再依張數提高敵方前線退場的 BP 上限',
+ 'effect-remove-hand-cap':'可將手牌中最多 3 張具有指定特徵的卡除外，再依張數提高強制退場的 BP 上限並抽等量牌',
+ 'effect-name-energy-reveal':'指定 1 個需求能源數值，再公開牌堆頂',
+ 'effect-revealed-energy-hand':'需求能源相符時，可將公開的卡加入手牌',
+ 'effect-mandatory-hand-remove':'將 1 張手牌除外',
  'effect-search-deck':'搜尋牌庫', 'effect-search-deck-multi':'依序搜尋牌庫',
  'effect-top-inspect':'查看牌庫頂','effect-top-inspect-many':'任意張卡送場外',
  'effect-top-filter-choice':'查看牌頂，選擇符合特徵的角色／卡','effect-top-trait-outside':'查看牌頂，將符合特徵的卡送場外',
- 'effect-top-order':'排列牌庫頂或底','effect-optional-mill':'可將牌庫頂 1 張送場外',
+ 'effect-top-order':'排列牌庫頂或底',
+ 'effect-top-hand-outside':'查看牌頂，1 張加入手牌、1 張送至場外',
+ 'effect-energy-trait-front':'可將能源線上具有指定特徵的角色移至前線',
+ 'effect-optional-mill':'可將牌庫頂 1 張送場外',
  'effect-optional-draw':'攻擊時可抽 0 或 1 張',
+ 'effect-optional-tuck-under':'可將牌庫頂 1 張蓋到此角色下方',
+ 'effect-facedown-outside':'選擇 1 張蓋牌放到場外',
+ 'effect-may-draw':'可抽1張牌',
+ 'effect-removed-name-outside':'將除外區的指定名稱卡送至場外',
+ 'effect-hand-front-active':'以 Active 登場於前線',
+ 'effect-front-retire-look':'使自己場上另1個角色退場',
+ 'effect-top-hand-one':'將查看的1張加入手牌',
+ 'effect-remove-own-other':'將自己場上另1個角色除外',
+ 'effect-retire-other-front-name':'可將自己場上另1個角色退場',
+ 'effect-buff-other-trait':'選擇其他己方角色',
+ 'effect-retire-life-or-hand':'退場時最多選一項',
+ 'effect-hidden-life-hand':'將1張生命加入手牌',
+ 'effect-rest-reenter':'以 Rest 重新登場',
+ 'effect-hand-two-outside':'將2張手牌送至場外',
  'effect-pay-ap-deploy':'可支付 1 AP，從場外 REST 登場',
  'effect-optional-pay-ap':'可支付 1 AP，然後結算後續效果',
+ 'effect-remove-hand':'可將手牌中1張具有指定特徵的卡除外',
  'effect-hand-rest':'從己方手牌免費 REST 登場',
+ 'effect-hand-rest-cap':'從手牌將符合條件的卡以 Rest 登場',
  'effect-hand-rest-or-raid':'從己方手牌 REST 登場或合法 Raid',
  'effect-active-own-named':'可將最多 1 個己方指定名稱角色轉為 ACTIVE',
+ 'effect-active-energy-named':'可將最多 1 張己方能量線指定名稱卡轉為 ACTIVE',
  'effect-bounce-own':'選擇返回手牌的己方角色',
  'effect-buff-own':'選擇己方角色增加本回合 BP',
  'effect-once-choice':'是否發動本回合一次能力',
  'effect-choice-mode':'選擇一項效果',
+ 'effect-named-impact':'可選 1 個指定名稱角色，本回合 BP 上升並獲得 Impact',
+ 'effect-name-or-trait-impact':'可選最多 1 個己方場上指定名稱或特徵角色，本回合 BP+1000 並獲得 Impact 1',
+ 'effect-outside-color-ap-rest':'從場外將 1 張指定顏色、AP、名稱或特徵的角色以 REST 登場',
+ 'effect-first-attack-kit':'選 1 個指定名稱角色，本回合 BP 上升，第一次攻擊獲得 Impact 與狙擊',
+ 'effect-entry-sacrifice':'選另 1 個自己的角色退場，成功後此角色額外產生黃色能量並選 1 項',
+ 'effect-named-double':'選 1 個具有指定特徵的角色，本回合獲得 2 次攻擊',
+ 'effect-field-sacrifice-replay':'選 1 個自己的角色退場，成功後重播此場域的登場效果',
+ 'effect-swap-or-buff':'選交換位置、本回合 BP+1000，或在指定角色在場時兩項都做',
+ 'effect-swap-pair':'選 1 個要交換位置的角色',
+ 'energy-line-attack-end-swap':'可選 1 個本回合尚未攻擊的前線角色，與此角色交換位置',
+ 'effect-named-rest-ready':'可橫置 1 個 Active 的指定名稱角色，然後啟動 1 張 AP 卡',
+ 'effect-named-keyword':'可選 1 個指定名稱角色，賦予本回合 Impact 或直接攻擊傷害',
+ 'effect-keyword-mode':'選擇 Impact +1 或 Damage +1',
+ 'effect-name-or-trait-ready':'可將 1 個指定名稱或特徵角色改為 ACTIVE',
+ 'effect-active-traitless':'可將另 1 個沒有特徵的角色改為 ACTIVE',
+ 'effect-active-other-trait':'選另 1 個指定特徵的角色改為 ACTIVE',
+ 'effect-raid-base-rest':'可將突襲底卡以 Rest 登場',
+ 'effect-name-or-trait-protect':'可讓 1 個指定名稱或特徵角色不被對方效果選擇',
+ 'effect-sacrifice-named':'可退場另 1 個指定名稱角色',
  'recovered-self-entry':'回收後可 REST 登場至能源線',
  'effect-recover-outside':'從場外回收','effect-retire-bp':'選擇敵方退場',
+ 'effect-retire-own-trait':'可退場 1 個己方指定特徵角色',
+ 'effect-retire-missing-trait':'使 1 個不具有指定特徵的己方角色退場',
+ 'effect-outside-color-trait-active':'可從場外將 1 張指定顏色與特徵的角色以 ACTIVE 登場',
+ 'effect-named-field-protect':'可選最多 1 個己方場上指定名稱角色，直到下一個己方回合開始前不受敵方角色或 Trigger 效果選擇',
+ 'effect-rest-ap-lock':'可選最多 1 個敵方前線角色轉為 REST；己方回合且己方前線有原始 AP 達標時，直到此角色離開前線前不能轉為 ACTIVE',
+ 'effect-outside-active-pair':'可從場外將符合條件的角色以 ACTIVE 登場',
+ 'effect-top-trait-hand':'查看牌頂，符合特徵可加入手牌，否則放回牌頂或場外',
+ 'effect-active-any':'可將 1 張己方場上卡改為 ACTIVE',
  'effect-grant-front-energy':'讓另一張己方前線指定特徵角色本回合也能產生能源',
- 'effect-rest-bp':'選擇敵方 REST','effect-grant-ap-tax':'讓另一張己方 DFN 角色獲得指定時的 AP 加價保護','effect-attack-ban':'指定禁止攻擊的對手前線角色',
+ 'effect-rest-bp':'選擇敵方 REST','effect-grant-ap-tax':'讓另一張己方 DFN 角色獲得指定時的 AP 加價保護','effect-attack-ban':'指定禁止攻擊的對手前線角色','effect-printed-lock':'可選 1 個對方前線角色，到自己下次回合開始前失去原有效果且不能攻擊或阻擋','effect-name-hand-remove':'將 1 張手牌除外',
+ 'effect-required-energy':'選自己場上另1個角色，本回合其所需能量增加2',
  'effect-buff-trait':'選擇己方 BP 加成',
  'main-two-buff':'主要能力選擇 BP 對象',
  'main-discard-buff':'支付一張手牌，讓自身 BP 增加',
  'effect-grant-attack':'授予己方角色攻擊時能力','granted-attack-draw':'攻擊時是否抽一張',
- 'effect-target':'指定角色','effect-target-many':'最多選擇兩名不同敵方角色','raid-effect-order':'突襲能力結算順序',
+ 'effect-target':'指定角色','effect-mark-opp-start':'可選 1 個敵方前線角色，下一個敵方回合開始時退場','effect-target-many':'最多選擇兩名不同敵方角色','raid-effect-order':'突襲能力結算順序',
  'effect-move-order':'選擇同時取得的移動觸發處理順序',
  'effect-rest-tuck':'是否 REST 角色，放置剛送至場外的手牌',
  'effect-tuck-moved':'可將該場外卡裏向放在自身下方',
@@ -121,6 +174,17 @@ export function uiActionLabel(action,{pack,state}={}){
    if(action.mode==='active')return '使 '+name()+' ACTIVE';
    if(action.mode==='special')return '使 '+name()+' 退場';
    return '生命觸發：'+action.mode;
+  case 'chooseSacrificeNamed':return action.uid===null?'不退場指定名稱角色':'退場 '+name();
+  case 'chooseNameOrTraitReady':return action.uid===null?'不改為 ACTIVE':'將 '+name()+' 改為 ACTIVE';
+  case 'chooseActiveTraitless':return action.uid===null?'不改為 ACTIVE':'將 '+name()+' 改為 ACTIVE';
+  case 'chooseActiveOtherTrait':return '將 '+name()+' 改為 ACTIVE';
+  case 'chooseRaidBaseRest':return action.uid===null?'不將突襲底卡以 Rest 登場':'將 '+name()+' 以 Rest 登場'+suffix();
+  case 'chooseNameOrTraitProtect':return action.uid===null?'不賦予選擇保護':'令 '+name()+' 不被對方效果選擇';
+  case 'chooseNamedKeyword':return action.uid===null?'不賦予指定名稱角色':'選擇 '+name();
+  case 'chooseKeywordMode':return action.mode==='impact'?'本回合 Impact +1':'本回合直接攻擊傷害 +1';
+  case 'chooseNamedImpact':return action.uid===null?'不賦予 BP 與 Impact':'賦予 '+name()+' 本回合 BP 與 Impact';
+  case 'chooseNamedRestReady':return action.uid===null?'不橫置指定角色':'橫置 '+name()+'，然後啟動 1 張 AP 卡';
+  case 'chooseEqualBpPair':return '退場 BP 相同的 '+name();
   case 'chooseEffectMode':
    return action.mode==='skip'?'不選任何效果':
     '選擇效果：'+(state?.pending?.options?.find(o=>o.id===action.mode)?.label||action.mode);
@@ -142,6 +206,8 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'choosePhaseOrder':return '先結算此階段效果';
   case 'chooseApRecovery':return action.uid===null?'完成恢復 AP':'恢復 AP 卡';
   case 'chooseDiscardGate':return action.uid===null?'不支付成本':'棄 '+name()+' 支付成本';
+  case 'chooseMarkOppStart':return action.uid===null?'不選擇敵方前線角色':'指定 '+name()+'，下一個敵方回合開始時退場';
+  case 'chooseLineSlot':return '移至能源線 '+(action.slot+1);
   case 'chooseRemoveOutside':return action.mode==='skip'?'不將場外卡移入移除區':
    action.mode==='all'?'將目前場外的可選卡全部移入移除區，不結算後續':'將 '+name()+' 移入移除區';
   case 'chooseDiscardCost':return action.uid===null?'不支付成本':'棄 '+name()+' 支付成本';
@@ -157,17 +223,40 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseInspectedOutside':return action.uid===null?'完成選擇並排列剩餘牌':'將 '+name()+' 送場外';
   case 'chooseTopTraitOutside':return action.uid===null?'不送場外，排列剩餘牌':'將符合特徵的 '+name()+' 送場外';
   case 'chooseOptionalDraw':return action.mode==='draw'?'攻擊時抽 1 張':'不抽牌';
+  case 'chooseOptionalTuck':return action.mode==='tuck'?'將牌庫頂 1 張蓋到此角色下方':'不蓋牌';
+  case 'chooseFacedownOutside':return '將蓋牌放到場外：'+name();
+  case 'reorderUnder':return '調整蓋牌順序';
+  case 'chooseMayDraw':return action.mode==='draw'?'抽1張':'不抽牌';
+  case 'chooseRemovedOutside':return action.mode==='all'?'將符合名稱的除外卡全部送至場外':
+   action.mode==='done'?'完成送至場外':'將 '+name()+' 送至場外';
+  case 'chooseHandFrontActive':return '以 Active 登場於前線 '+(action.slot+1);
+  case 'chooseRetireLifeOrHand':return action.mode==='skip'?'不選任何退場項目':
+   action.mode==='life'?'將1張生命加入手牌':'將2張手牌送至場外';
+  case 'chooseHiddenLifeHand':return '將1張生命加入手牌';
+  case 'chooseRestReenter':return '以 Rest 登場於'+(action.line==='energy'?'能源線':'前線')+' '+(action.slot+1);
+  case 'chooseHandTwoOutside':return '將手牌送至場外';
   case 'chooseOptionalMill':return action.mode==='mill'?'將牌庫頂 1 張送場外':'不送場外';
   case 'choosePayApDeploy':return action.mode==='pay'?'支付 1 AP，接著選擇場外角色':'不支付 AP';
   case 'chooseOptionalPayAp':return action.mode==='pay'?'支付 1 AP，然後結算後續效果':'不支付 AP';
+  case 'chooseRemoveHand':return action.uid===null?'不除外':'將 '+name()+' 除外';
+  case 'chooseRetireOtherFrontName':return action.uid===null?'不退場':'使 '+name()+' 退場';
   case 'chooseHandRest':return action.uid===null?'不特殊登場':'免費 REST 登場 '+name()+suffix();
+  case 'chooseHandRestCap':return action.uid===null?'不以 Rest 登場':'以 Rest 登場 '+name()+suffix();
   case 'chooseActiveOwnNamed':return action.uid===null?'不將指定名稱角色轉為 ACTIVE':'將 '+name()+' 轉為 ACTIVE';
+  case 'chooseActiveEnergyNamed':return action.uid===null?'不將能量線指定名稱卡轉為 ACTIVE':'將能量線的 '+name()+' 轉為 ACTIVE';
   case 'chooseHandRestOrRaid':return action.uid===null?'不從手牌登場':
    (action.mode==='raid'?'從手牌 Raid ':'從手牌 REST 登場 ')+name()+suffix();
    case 'chooseOutsideNameRest':return action.uid===null?'不從場外登場':'REST 登場 '+name()+suffix();
   case 'chooseTopFiltered':return action.uid===null?'不加入手牌，將其餘卡排列至底部':'加入手牌：'+name();
+  case 'chooseTopHandOutside':return action.step==='outside'?'將 '+name()+' 送至場外':'將 '+name()+' 加入手牌';
+  case 'chooseEnergyTraitFront':return action.uid===null?'不移動其餘能源線角色':'將 '+name()+' 移至前線 '+(action.slot+1);
+  case 'chooseRemoveHandCap':return action.mode==='done'?'結束除外並退場':'將 '+name()+' 除外';
+  case 'chooseNamedRequiredEnergy':return '指定需求能源 '+action.value;
+  case 'chooseRevealedEnergyHand':return action.mode==='hand'?'將公開的卡加入手牌':'將公開的卡放回牌堆頂';
+  case 'chooseMandatoryHandRemove':return '將 '+name()+' 除外';
   case 'chooseTopOrder':return '依序放回：'+name();
   case 'chooseRestFrontEnergy':return 'REST '+name()+'，本回合產能＋1';
+  case 'chooseRequiredEnergy':return '本回合所需能量 +2：'+name();
   case 'chooseOwnBuff':case 'chooseMainBuff':case 'chooseTraitBuff':case 'chooseRestBp':
   case 'chooseRetireBp':case 'chooseTargetMany':return action.uid===null?'完成目標選擇':'選擇第 '+(state?.pending?.selected?.length+1||1)+' 個角色';
   case 'chooseFrontEnergyGrant':return action.uid===null?
@@ -188,6 +277,6 @@ export function visibleActionsForCard(legal,uid){
 }
 export function uiActionGroup(action){
  if(action.type==='next'||action.type==='extraDraw')return 'phase';
- if(['play','raid','event','move','step','attack','activate'].includes(action.type))return 'card';
+ if(['play','raid','event','move','step','attack','activate','reorderUnder'].includes(action.type))return 'card';
  return 'pending';
 }

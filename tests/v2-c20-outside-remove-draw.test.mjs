@@ -28,7 +28,7 @@ function unit(id,extra){
 function accept(cards){
  return createUniversalPack({id:'c20-schema',cards});
 }
-test('outside removal accepts only an own optional payment and a short follow-up',()=>{
+test('outside removal accepts an own payment, required or optional, and a short follow-up',()=>{
  const ok=unit('OK',{effects:{onPlay:[one]}});
  assert.equal(accept([ok,unit('FILL',{implementation:'vanilla'})]).cards.OK
   .effects.onPlay[0].then[0].op,'draw');
@@ -41,8 +41,7 @@ test('outside removal accepts only an own optional payment and a short follow-up
   /invalid outside removal payment/);
  assert.throws(()=>accept([unit('BAD',{effects:{onPlay:[{...one,cardType:'event'}]}})]),
   /invalid outside removal payment/);
- assert.throws(()=>accept([unit('BAD',{effects:{onPlay:[{...one,optional:false}]}})]),
-  /invalid outside removal payment/);
+ assert.doesNotThrow(()=>accept([unit('MUST',{effects:{onPlay:[{...one,optional:false}]}})]));
  assert.throws(()=>accept([unit('BAD',{effects:{onPlay:[{...one,zone:'hand'}]}})]),
   /invalid outside removal payment/);
  assert.throws(()=>accept([unit('BAD',{effects:{onPlay:[{...one,controller:'opponent'}]}})]),
@@ -52,6 +51,43 @@ test('outside removal accepts only an own optional payment and a short follow-up
  assert.throws(()=>accept([unit('BAD',{effects:{onPlay:[{...one,
   then:[{op:'activeOwnNamed',name:'X',max:1,optional:true}]}]}})]),
   /invalid outside removal payment/);
+ const mustIds=['MUST','SHORT','PAY','A0','A1','A2','A3','A4','A5','A6','A7','A8','A9'];
+ const mustDeck=Object.fromEntries(mustIds.map(id=>[id,id==='A9'?2:4]));
+ const must=createUniversalPack({id:'c20-must',cards:[
+  unit('MUST',{effects:{onPlay:[{...one,optional:false}]}}),
+  unit('SHORT',{effects:{onPlay:[{...one,count:2,optional:false}]}}),
+  ...['PAY','A0','A1','A2','A3','A4','A5','A6','A7','A8','A9','A10'].map(id=>
+   unit(id,{implementation:'vanilla'}))
+ ]});
+ let paid=newUniversalMatch(must,{decks:[mustDeck,mustDeck],seed:2044,first:0});
+ for(let n=0;n<8&&paid.phase!=='main';n++)
+  paid=dispatchUniversalAction(must,paid,{type:'next'});
+ const pull=(state,id)=>{
+  for(const zone of ['hand','deck','life','outside','removed']){
+   const list=state.players[0][zone],i=list.findIndex(c=>c.cardId===id);
+   if(i>=0)return list.splice(i,1)[0];
+  }
+  throw Error('Missing '+id);
+ };
+ const pay=pull(paid,'PAY');paid.players[0].outside.push(pay);
+ const src=pull(paid,'MUST');paid.players[0].hand.push(src);
+ paid=dispatchUniversalAction(must,paid,legalUniversalActions(must,paid).find(a=>
+  a.uid===src.uid&&a.type==='play'&&a.line==='front'&&!a.replaceUid));
+ assert.equal(paid.pending.optional,false);
+ assert.equal(legalUniversalActions(must,paid).some(a=>a.mode==='skip'),false);
+ assert.equal(chooseUniversalAiAction(must,paid,{difficulty:'easy'}).mode,'pick');
+ assert.equal(chooseUniversalAiAction(must,paid,{difficulty:'easy'}).uid,pay.uid);
+ let short=newUniversalMatch(must,{decks:[mustDeck,mustDeck],seed:2045,first:0});
+ for(let n=0;n<8&&short.phase!=='main';n++)
+  short=dispatchUniversalAction(must,short,{type:'next'});
+ const only=pull(short,'PAY');short.players[0].outside.push(only);
+ const shortSrc=pull(short,'SHORT');short.players[0].hand.push(shortSrc);
+ short=dispatchUniversalAction(must,short,legalUniversalActions(must,short).find(a=>
+  a.uid===shortSrc.uid&&a.type==='play'&&a.line==='front'&&!a.replaceUid));
+ assert.equal(short.pending.short,true);
+ assert.equal(short.pending.optional,false);
+ assert.deepEqual(legalUniversalActions(must,short).map(a=>a.mode),['all']);
+ assert.equal(chooseUniversalAiAction(must,short,{difficulty:'easy'}).mode,'all');
 });
 
 const ids=['ONE','THREE','RETIRE','FIELD','EVENT','OTHER','F0','F1','F2','F3','F4','F5','F6'];

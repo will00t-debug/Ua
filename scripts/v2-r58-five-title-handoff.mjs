@@ -23,9 +23,9 @@ const SIX=Object.freeze({
   missing:'C2 registered after normalizing generated energy from imported 3 to official 緑緑 = 2'}
 });
 const PRIORITY=Object.freeze({
- 'TTG-1-069':{status:'ENGINE BLOCKED',owner:'GPT',
+ 'TTG-1-069':{status:'READY',owner:'Cursor',
   source:'https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA56BT%2FTTG-1-069',
-  missing:'MAIN REST and actual self-retire as cost must atomically precede mandatory own OUTSIDE ガンメン retrieval'},
+  missing:'C27 registered the whole print: MAIN REST and true self-retire, then one mandatory own OUTSIDE ガンメン. Official Japanese has no まで'},
  'TTG-1-057':{status:'RULE BLOCKED',owner:'GPT',
   missing:'complete current official source and source-granted opponent IMPACT null / timing not fully certified'},
  'TTG-1-081':{status:'RULE BLOCKED',owner:'GPT',

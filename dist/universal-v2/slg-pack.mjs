@@ -625,7 +625,61 @@ const authored=[
     "zone":"field","excludeSelf":false,"trait":"影の軍団","maxPrintedBp":2500},"bpEach":500}],
   "officialTraits":["影の軍団"],
   "catalogueTraits":["影之軍團"]
-}
+},
+// UA51BT/SLG-1-017: empty own field discounts the hand cost by purple 2,
+// then look at the top card and put it back or outside. ACTIVE life is generic.
+{"id":"SLG-1-017","name":"水篠 旬","color":"purple","energy":2,"ap":1,
+ "bp":2000,"gen":1,"trigger":"active","type":"character",
+ "textAnchor":"若己方場上沒有任何卡，手牌中需求能源減少紫2。登場時查看牌庫頂1張，選擇放回或送場外。",
+ "implementation":"dsl","emptyOwnFieldHandEnergyDiscount":2,
+ "templateEffects":{"onPlay":[{"template":"peekTopOne"}]}},
+// UA51BT/SLG-1-054: top 2, up to one exact 第四次架南島レイド to outside, rest on top.
+{"id":"SLG-1-054","name":"黒須 圭介","color":"green","energy":0,"ap":1,
+ "bp":1500,"gen":1,"trigger":"active","type":"character",
+ "textAnchor":"登場時查看牌庫頂2張，可把其中最多1張具有第四次架南島Raid特徵的卡送場外；其餘按任意順序放回牌庫頂。",
+ "implementation":"dsl",
+ "effects":{"onPlay":[{"op":"inspectTopTraitOutside","count":2,
+  "trait":"第四次架南島レイド","rest":"top"}]},
+ "officialTraits":["第四次架南島レイド"],
+ "catalogueTraits":["第四次架南島Raid"]},
+// UA51BT/SLG-1-063: top 3, up to one exact trait to hand, rest to bottom,
+// and discard one hand card only after a take. DRAW life has no extra text.
+{"id":"SLG-1-063","name":"最上 真","color":"green","energy":1,"ap":1,
+ "bp":1500,"gen":1,"trigger":"draw","type":"character",
+ "textAnchor":"登場時查看牌庫頂3張，可公開最多1張第四次架南島Raid卡加入手牌，其他按任意順序置底；若加入手牌，再送1張手牌場外。",
+ "implementation":"dsl",
+ "templateEffects":{"onPlay":[{"template":"searchTopOneBottomDiscard","count":3,
+  "filter":{"field":"trait","value":"第四次架南島レイド"}}]},
+ "officialTraits":["第四次架南島レイド"],
+ "catalogueTraits":["第四次架南島Raid"]},
+// UA51BT/SLG-1-050: MAIN rests this character, truly retires it, then adds
+// up to one own outside 〈水篠 旬〉. Either field line. No life trigger.
+{"id":"SLG-1-050","name":"観月 絵里","color":"green","energy":0,"ap":1,
+ "bp":500,"gen":1,"trigger":null,"type":"character",
+ "textAnchor":"主要階段REST並退場此角色，可從己方場外回收最多1張水篠旬。",
+ "implementation":"dsl","effects":{},
+ "mainAbility":{"op":"restRetireRecoverOutside","optional":true,
+  "filter":{"field":"name","value":"水篠 旬"}}},
+// UA51BT/SLG-1-071: once per turn, REST, buff one other character +1000,
+// then return this card to hand. The return is not retirement.
+{"id":"SLG-1-071","name":"マリー","color":"green","energy":0,"ap":1,
+ "bp":1500,"gen":1,"trigger":"draw","type":"character",
+ "textAnchor":"主要階段每回合一次：REST自己，使另一己方角色本回合BP+1000並將自身返回手牌。",
+ "implementation":"dsl","effects":{},
+ "mainAbility":{"op":"restOnceBuffReturnSelf","oncePerTurn":true,"bp":1000},
+ "officialTraits":["DFN／第四次架南島レイド"],
+ "traitComponents":["DFN","第四次架南島レイド"],
+ "catalogueTraits":["DFN","第四次架南島Raid"]},
+// UA51BT/SLG-1-074: on play, up to one other own DFN gains Impact 1 this turn.
+{"id":"SLG-1-074","name":"ルノー","color":"green","energy":2,"ap":1,
+ "bp":3000,"gen":1,"trigger":"draw","type":"character",
+ "textAnchor":"登場時令另一己方DFN角色最多1張本回合獲Impact1。",
+ "implementation":"dsl",
+ "effects":{"onPlay":[{"op":"grantOtherImpactThisTurn","trait":"DFN",
+  "amount":1,"optional":true}]},
+ "officialTraits":["DFN／第四次架南島レイド"],
+ "traitComponents":["DFN","第四次架南島レイド"],
+ "catalogueTraits":["DFN","第四次架南島Raid"]}
 ];
 export const SLG_V2_VERIFIED_IDS=Object.freeze(authored.map(c=>c.id));
 export function verifiedSlgV2Cards(){
