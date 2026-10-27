@@ -84,9 +84,9 @@ function play(s,uid,line='front',slot=0,use=packs){
 }
 
 test('C27 class A registers three SLG prints on existing deck and discount DSL',()=>{
- assert.equal(EXPECTED_V2_TOTAL,552);
- assert.equal(EXPECTED_V2_COUNTS['solo-leveling'],52);
- assert.equal(EXPECTED_V2_COUNTS['gurren-lagann'],39);
+ assert.equal(EXPECTED_V2_TOTAL,622);
+ assert.equal(EXPECTED_V2_COUNTS['solo-leveling'],80);
+ assert.equal(EXPECTED_V2_COUNTS['gurren-lagann'],81);
  for(const id of ['SLG-1-017','SLG-1-054','SLG-1-063']){
   assert.equal(EXPECTED_V2_IDS['solo-leveling'].includes(id),true);
   const source=SOLO_LEVELING_CARDS.find(c=>c.id===id);
@@ -185,16 +185,15 @@ test('SLG-1-063 adds one island-raid card from the top three and discards only a
 
 test('SLG-1-050 rests, truly retires, then may add one outside 水篠 旬',()=>{
  const card=slg.cards['SLG-1-050'];
- assert.deepEqual(card.mainAbility,{op:'restRetireRecoverOutside',optional:true,
-  filter:{field:'name',value:'水篠 旬'}});
+ assert.deepEqual(card.mainAbility,{op:'restRetireRecoverNamed',name:'水篠 旬'});
  const counts=deckOf(slg,['SLG-1-050','SLG-1-046','SLG-1-053']);
  let s=toMain(newUniversalMatch(packs,{decks:[counts,counts],first:0,seed:17050}));
  const source=place(s,0,'SLG-1-050','front',0);
  source.ready=true;
- assert.ok(legalUniversalActions(packs,s).some(a=>a.type==='activate'&&a.uid===source.uid&&a.mode==='restRetireRecover'));
+ assert.ok(legalUniversalActions(packs,s).some(a=>a.type==='activate'&&a.uid===source.uid&&a.mode==='restRetireNamed'));
  const named=take(s,0,'SLG-1-046'),other=take(s,0,'SLG-1-053');
  s.players[0].outside.push(named,other);
- s=dispatchUniversalAction(packs,s,{type:'activate',uid:source.uid,mode:'restRetireRecover'});
+ s=dispatchUniversalAction(packs,s,{type:'activate',uid:source.uid,mode:'restRetireNamed'});
  assert.ok(s.players[0].outside.some(c=>c.uid===source.uid));
  assert.equal(s.players[0].front[0],null);
  assert.equal(s.pending.kind,'effect-recover-outside');
@@ -212,8 +211,8 @@ test('TTG-1-069 requires an outside ガンメン before REST and true retirement
  const ttg=registeredV2TitlePack('gurren-lagann');
  const use=[ttg,ttg];
  const sourceCard=ttg.cards['TTG-1-069'];
- assert.equal(sourceCard.mainAbility.optional,false);
- assert.equal(sourceCard.mainAbility.filter.value,'ガンメン');
+ assert.equal(sourceCard.mainAbility.op,'restRetireRecoverTrait');
+ assert.equal(sourceCard.mainAbility.trait,'ガンメン');
  assert.match(TTG_BY_ID['TTG-1-069'].source,/UA56BT%2FTTG-1-069/);
  assert.equal(EXPECTED_V2_IDS['gurren-lagann'].includes('TTG-1-069'),true);
  const counts=deckOf(ttg,['TTG-1-069','TTG-1-028','TTG-1-010']);
@@ -229,14 +228,13 @@ test('TTG-1-069 requires an outside ガンメン before REST and true retirement
  const gunmen=take(s,0,'TTG-1-028'),notGunmen=take(s,0,'TTG-1-010');
  s.players[0].outside.push(gunmen,notGunmen);
  aiOk(s,use);
- s=dispatchUniversalAction(use,s,{type:'activate',uid:source.uid,mode:'restRetireRecover'});
+ assert.ok(legalUniversalActions(use,s).some(a=>a.type==='activate'&&a.uid===source.uid&&
+  a.mode==='restRetireTrait'&&a.recoverUid===gunmen.uid));
+ assert.equal(legalUniversalActions(use,s).some(a=>a.recoverUid===notGunmen.uid),false);
+ s=dispatchUniversalAction(use,s,{type:'activate',uid:source.uid,mode:'restRetireTrait',recoverUid:gunmen.uid});
  assert.ok(s.players[0].outside.some(c=>c.uid===source.uid));
  assert.equal(s.players[0].energy[0],null);
- assert.equal(s.pending.kind,'effect-recover-outside');
- assert.equal(s.pending.optional,false);
- assert.deepEqual(s.pending.choices,[gunmen.uid]);
- assert.equal(legalUniversalActions(use,s).some(a=>a.uid===null),false);
- s=dispatchUniversalAction(use,s,{type:'chooseOutsideRecovery',uid:gunmen.uid});
+ assert.equal(s.pending,null);
  assert.ok(s.players[0].hand.some(c=>c.uid===gunmen.uid));
  assert.ok(s.players[0].outside.some(c=>c.uid===notGunmen.uid));
  assert.ok(s.players[0].outside.some(c=>c.uid===source.uid));
@@ -246,7 +244,7 @@ test('TTG-1-069 requires an outside ガンメン before REST and true retirement
 
 test('SLG-1-071 buffs another character once, then returns itself to hand',()=>{
  assert.deepEqual(slg.cards['SLG-1-071'].mainAbility,
-  {op:'restOnceBuffReturnSelf',oncePerTurn:true,bp:1000});
+  {op:'restSelfBuffOtherThenHand',oncePerTurn:true,bp:1000});
  assert.deepEqual(slg.cards['SLG-1-071'].traits,['DFN／第四次架南島レイド']);
  const counts=deckOf(slg,['SLG-1-071','SLG-1-053']);
  let alone=toMain(newUniversalMatch(packs,{decks:[counts,counts],first:0,seed:17071}));
@@ -261,7 +259,7 @@ test('SLG-1-071 buffs another character once, then returns itself to hand',()=>{
  other.ready=true;
  const before=universalBp(packs,s,other);
  aiOk(s);
- s=dispatchUniversalAction(packs,s,{type:'activate',uid:source.uid,mode:'restOnceBuffReturn'});
+ s=dispatchUniversalAction(packs,s,{type:'activate',uid:source.uid,mode:'selfRestBuffHand'});
  assert.equal(s.players[0].front[0].ready,false);
  assert.equal(s.pending.kind,'effect-buff-own');
  assert.deepEqual(s.pending.choices,[other.uid]);
@@ -280,7 +278,7 @@ test('SLG-1-071 buffs another character once, then returns itself to hand',()=>{
 });
 
 test('SLG-1-074 gives Impact 1 to at most one other own DFN',()=>{
- assert.deepEqual(slg.cards['SLG-1-074'].effects.onPlay,[{op:'grantOtherImpactThisTurn',
+ assert.deepEqual(slg.cards['SLG-1-074'].effects.onPlay,[{op:'grantOwnOtherTraitImpact',
   trait:'DFN',amount:1,optional:true}]);
  const counts=deckOf(slg,['SLG-1-074','SLG-1-072','SLG-1-053']);
  let none=toMain(newUniversalMatch(packs,{decks:[counts,counts],first:0,seed:17074}));

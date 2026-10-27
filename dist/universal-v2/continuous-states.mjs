@@ -30,7 +30,7 @@ export function stampFieldInstance(s,c){
  if(!Number.isInteger(c.fieldEntryStamp)||c.fieldEntryStamp<1)c.fieldEntryStamp=s.nextFieldEntryStamp++;
  return c.fieldEntryStamp;
 }
-export function grantContinuousState(s,{kind,controller,sourceUid,targetUid,until=null,sourceLinked=false,program=null,optional=false,selectionScope=null,releaseBeforeRefresh=false}){
+export function grantContinuousState(s,{kind,controller,sourceUid,targetUid,until=null,sourceLinked=false,program=null,optional=false,selectionScope=null,releaseBeforeRefresh=false,whileSourceFront=false}){
  if(!['skipNextActive','cannotActive','cannotAttack','cannotMove','selectionApTax','frontEnergyPermission','originalEffectsDisabled','grantedOnAttack','cannotBeChosenByOppEffect','cannotBlock'].includes(kind)||!player(controller)||
   typeof sourceUid!=='string'||typeof targetUid!=='string'||typeof sourceLinked!=='boolean')
   throw Error('Invalid continuous-state descriptor');
@@ -241,7 +241,7 @@ export function validateContinuousStates(s){
     e.sourceLinked&&e.until===null&&e.releaseBeforeRefresh===undefined&&
     s.players[e.controller].front.some(c=>c?.uid===e.sourceUid&&c.fieldEntryStamp===e.sourceStamp)))||
    (e.releaseBeforeRefresh!==undefined&&(e.kind!=='cannotActive'||e.releaseBeforeRefresh!==true||e.sourceLinked))||
-   (['cannotActive','cannotAttack','cannotMove','selectionApTax','frontEnergyPermission','originalEffectsDisabled','grantedOnAttack','cannotBeChosenByOppEffect','cannotBlock'].includes(e.kind)&&(!e.until||!player(e.until.player)||
+   (!(e.kind==='cannotActive'&&e.whileSourceFront===true)&&['cannotActive','cannotAttack','cannotMove','selectionApTax','frontEnergyPermission','originalEffectsDisabled','grantedOnAttack','cannotBeChosenByOppEffect','cannotBlock'].includes(e.kind)&&(!e.until||!player(e.until.player)||
     !['start','move','main','attack'].includes(e.until.phase)||!['start','end'].includes(e.until.edge)))))
   throw Error('Invalid continuous-state accounting');
  return true;

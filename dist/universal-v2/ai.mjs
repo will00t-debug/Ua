@@ -454,7 +454,7 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='effect-hand-rest-entry')return legal[0];
  if(s.pending?.kind==='effect-active-other')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-rest-own-front-draw')return legal[0];
- if(s.pending?.kind==='effect-raid-base-rest')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-raid-source-rest')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-rest-or-retire')return legal[0];
  if(s.pending?.kind==='effect-retire-bp'){
   // A printed "up to one" retirement presents SKIP first; normal/hard AI

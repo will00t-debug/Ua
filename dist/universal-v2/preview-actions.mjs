@@ -81,7 +81,6 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-active-energy-named':'可將最多 1 張己方能量線指定名稱卡轉為 ACTIVE',
  'effect-bounce-own':'選擇返回手牌的己方角色',
  'effect-buff-own':'選擇己方角色增加本回合 BP',
- 'effect-named-impact':'選擇己方雷姆，本回合 BP+1000 並獲得衝擊+1',
  'effect-buff-either':'選擇自己或對手的其他角色，本回合 BP+1000',
  'effect-return-printed':'可將符合印刷條件的己方角色放回手牌',
  'effect-remove-named':'可將場外的指定卡移入移除區',
@@ -147,7 +146,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-hand-rest-entry':'選擇休息登場的位置',
  'effect-active-other':'選擇最多 1 張其他己方角色並使其活動',
  'effect-rest-own-front-draw':'選擇 1 張自己的活動前線角色並使其休息',
- 'effect-raid-base-rest':'選擇是否將突襲來源以休息狀態登場',
+ 'effect-raid-source-rest':'選擇是否將突襲來源以休息狀態登場',
  'effect-rest-or-retire':'選擇 1 張 BP 5000 以下的對手前線',
  'effect-retire-own-trait':'可退場 1 個己方指定特徵角色',
  'effect-retire-missing-trait':'使 1 個不具有指定特徵的己方角色退場',
@@ -328,11 +327,18 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseNameOrTraitReady':return action.uid===null?'不改為 ACTIVE':'將 '+name()+' 改為 ACTIVE';
   case 'chooseActiveTraitless':return action.uid===null?'不改為 ACTIVE':'將 '+name()+' 改為 ACTIVE';
   case 'chooseActiveOtherTrait':return '將 '+name()+' 改為 ACTIVE';
-  case 'chooseRaidBaseRest':return action.uid===null?'不將突襲底卡以 Rest 登場':'將 '+name()+' 以 Rest 登場'+suffix();
+  case 'chooseRaidBaseRest':
+   if(state?.pending?.kind==='effect-raid-source-rest')
+    return action.uid===null?'不使突襲來源登場':
+     '將 '+name()+' 以休息狀態放到'+destination()+' '+(action.slot+1);
+   return action.uid===null?'不將突襲底卡以 Rest 登場':'將 '+name()+' 以 Rest 登場'+suffix();
   case 'chooseNameOrTraitProtect':return action.uid===null?'不賦予選擇保護':'令 '+name()+' 不被對方效果選擇';
   case 'chooseNamedKeyword':return action.uid===null?'不賦予指定名稱角色':'選擇 '+name();
   case 'chooseKeywordMode':return action.mode==='impact'?'本回合 Impact +1':'本回合直接攻擊傷害 +1';
-  case 'chooseNamedImpact':return action.uid===null?'不賦予 BP 與 Impact':'賦予 '+name()+' 本回合 BP 與 Impact';
+  case 'chooseNamedImpact':
+   if(state?.pending?.impactPlus!==undefined)
+    return '選擇 '+name()+'，本回合 BP+1000 並獲得衝擊+1';
+   return action.uid===null?'不賦予 BP 與 Impact':'賦予 '+name()+' 本回合 BP 與 Impact';
   case 'chooseNamedRestReady':return action.uid===null?'不橫置指定角色':'橫置 '+name()+'，然後啟動 1 張 AP 卡';
   case 'chooseEqualBpPair':return '退場 BP 相同的 '+name();
   case 'chooseEffectMode':
@@ -473,7 +479,6 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseRestFrontAp':return action.uid===null?'不休息前線':'休息 '+name()+'，之後可恢復 1 張 AP';
   case 'chooseDiscardActive':return action.uid===null?'不棄牌，場域維持休息':
    '將 '+name()+' 放到場外，並使這張場域活動';
-  case 'chooseNamedImpact':return '選擇 '+name()+'，本回合 BP+1000 並獲得衝擊+1';
   case 'chooseTopHandOutside':return action.step==='outside'?'將 '+name()+' 送至場外':'將 '+name()+' 加入手牌';
   case 'chooseEnergyTraitFront':return action.uid===null?'不移動其餘能源線角色':'將 '+name()+' 移至前線 '+(action.slot+1);
   case 'chooseRemoveHandCap':return action.mode==='done'?'結束除外並退場':'將 '+name()+' 除外';
@@ -500,8 +505,6 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseHandRestEntry':return '休息登場';
   case 'chooseActiveOther':return action.uid===null?'不使其他角色活動':'使 '+name()+' 活動';
   case 'chooseRestOwnFrontDraw':return '休息 '+name()+'，然後抽 1 張';
-  case 'chooseRaidBaseRest':return action.uid===null?'不使突襲來源登場':
-   '將 '+name()+' 以休息狀態放到'+destination()+' '+(action.slot+1);
   case 'chooseRestOrRetire':return state?.pending?.mode==='retire'?'使 '+name()+' 退場':'使 '+name()+' 休息';
   case 'chooseRetireBp':case 'chooseTargetMany':return action.uid===null?'完成目標選擇':'選擇第 '+(state?.pending?.selected?.length+1||1)+' 個角色';
   case 'chooseFrontEnergyGrant':return action.uid===null?

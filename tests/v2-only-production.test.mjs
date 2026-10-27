@@ -29,14 +29,14 @@ test('real supported V2 Bleach 50-card deck can be used, unlike a legacy auto-on
  const status=editorV2Status('bleach',editor);
  assert.equal(status.total,50);
  assert.equal(status.ready,true,status.issues.join('；'));
- assert.equal(status.registered,160);
+ assert.equal(status.registered,276);
  const supported=registeredPackForEditor('bleach');
  assert.ok(supported?.cards['BLC-1-067']);
- const unsupported=TITLES.find(t=>t.id==='bleach').cards.find(c=>!status.supported.has(c.id));
- assert.ok(unsupported);
- const bad=editorV2Status('bleach',{[unsupported.id]:4});
+ const catalogue=TITLES.find(t=>t.id==='bleach').cards;
+ assert.equal(catalogue.every(c=>status.supported.has(c.id)),true);
+ const bad=editorV2Status('bleach',{'NO-SUCH':4});
  assert.equal(bad.ready,false);
- assert.ok(bad.issues.some(x=>x.includes('尚未完整移植 V2')));
+ assert.ok(bad.issues.some(x=>x.includes('卡號或張數不合法')));
 });
 test('Tengen Toppa 81 and Re:Zero set 1 can start production V2; regular Vol.2 cards are registered',()=>{
  assert.equal(TITLES.find(t=>t.id==='rezero').cards.length,186);

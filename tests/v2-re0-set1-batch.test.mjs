@@ -3766,7 +3766,7 @@ test('Subaru raids onto Subaru, draws, then may REST the raid base after retirem
   {op:'deployOwnRaidBaseRest',optional:true}]}}]}),/character onRetire/);
  assert.throws(()=>createUniversalPack({id:'bad-subaru',cards:[{...shell,effects:{onRetire:[
   {op:'deployOwnRaidBaseRest'}]}}]}),/unsupported raid-base rest entry/);
- assert.equal(V2_PENDING_LABELS['effect-raid-base-rest'],'選擇是否將突襲來源以休息狀態登場');
+ assert.equal(V2_PENDING_LABELS['effect-raid-source-rest'],'選擇是否將突襲來源以休息狀態登場');
 
  let live=subaru(6801);
  [0,1,2,3].forEach(i=>{
@@ -3806,7 +3806,7 @@ test('Subaru raids onto Subaru, draws, then may REST the raid base after retirem
  live=dispatchUniversalAction(packs,live,{type:'attack',uid:attacker.uid});
  assert.equal(live.pending.kind,'block');
  live=dispatchUniversalAction(packs,live,{type:'chooseBlock',uid:waiting.uid});
- assert.equal(live.pending.kind,'effect-raid-base-rest');
+ assert.equal(live.pending.kind,'effect-raid-source-rest');
  assert.equal(live.pending.player,0);
  assert.equal(live.pending.baseUid,base.uid);
  assert.equal(live.pending.sourceUid,waiting.uid);

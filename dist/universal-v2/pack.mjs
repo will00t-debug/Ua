@@ -246,10 +246,6 @@ function verifyProgram(program,path){
    !integer(e.count,1)||e.count>5||
    Object.keys(e).some(k=>!['op','energy','count'].includes(k))
   ))throw Error(path+'['+i+'] invalid own-energy draw profile');
-  if(e.op==='drawIfOppFrontBelowPrinted'&&(
-   e.count!==1||Object.keys(e).length!==2||
-   Object.keys(e).some(k=>!['op','count'].includes(k))
-  ))throw Error(path+'['+i+'] invalid below-printed front draw');
   if(e.op==='drawIfOwnFieldExists'&&(
    !Number.isInteger(e.count)||e.count<1||e.count>5||
    Object.keys(e).length!==2||Object.keys(e).some(k=>!['op','count'].includes(k))
@@ -2117,7 +2113,7 @@ function validatePassiveBonuses(card){
  for(const p of entries){
   if(!p||typeof p!=='object'||Array.isArray(p)||!p.condition||
    Object.keys(p).some(k=>!['condition','bp','extraEnergy','extraDamage','impact','bpEach','impactNull','attackDamage'].includes(k))||
-   (p.bp===undefined&&p.extraEnergy===undefined&&p.extraDamage===undefined&&p.impact===undefined&&p.bpEach===undefined&&p.impactNull===undefined)||
+   (p.bp===undefined&&p.extraEnergy===undefined&&p.extraDamage===undefined&&p.impact===undefined&&p.bpEach===undefined&&p.impactNull===undefined&&p.attackDamage===undefined)||
    (p.bp!==undefined&&(
     p.condition?.kind==='ownNameAbsent'
      ?(!Number.isInteger(p.bp)||p.bp>=0||p.bp<-5000||p.bp%500!==0)
