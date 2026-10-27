@@ -21,7 +21,7 @@ test('V2 lobby displays a human deck, AI deck, actual difficulty control and sam
  assert.ok(html.includes('選擇電腦牌組'));
  assert.ok(html.includes('開始 V2 對戰'));
  assert.ok(html.includes('牌組'));
- assert.match(read('../vercel.json'),/universal-v2-preview\.html/);
+ assert.match(read('../vercel.json'),/online\.html/);
  const js=read('../dist/universal-v2-preview.mjs');
  assert.ok(js.includes('newUniversalMatch(app.packs,'));
  assert.ok(js.includes('validateUniversalDeck(pack,counts)'));

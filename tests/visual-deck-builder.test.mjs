@@ -47,7 +47,7 @@ test('official builder page links new stylesheet and production deck tool retain
  const read=path=>readFileSync(new URL(path,import.meta.url),'utf8');
  assert.match(read('../dist/index.html'),/visual-deck-builder\.css/);
  assert.match(read('../dist/app.mjs'),/if\(ui\.view==='builder'&&PUBLIC_EDITOR_ONLY\)return visualDeckLibrary\(\)/);
- assert.match(read('../vercel.json'),/universal-v2-preview\.html/);
+ assert.match(read('../vercel.json'),/online\.html/);
 });
 test('public editor lets player choose a title, add a card, and review after saving draft',async()=>{
  const app={innerHTML:'',onclick:null,addEventListener(){}};

@@ -11,7 +11,7 @@ const read=path=>readFileSync(new URL(path,import.meta.url),'utf8');
 
 test('official root uses V2 while the editor never boots any legacy battle engine',()=>{
  const config=JSON.parse(read('../vercel.json'));
- assert.deepEqual(config.rewrites,[{source:'/',destination:'/universal-v2-preview.html'}]);
+ assert.deepEqual(config.rewrites,[{source:'/',destination:'/online.html'}]);
  const root=read('../dist/index.html');
  assert.ok(root.includes('src="v2-deck-editor.mjs'));
  assert.equal(root.includes('src="app.mjs'),false);

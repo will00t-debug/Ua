@@ -13,7 +13,7 @@ test('six-title production editor cannot load old battle engine or old app scrip
  assert.doesNotMatch(html,/src="app\.mjs/);
  for(const dependency of ['engine.mjs','match-runtime.mjs','ttg-core-match.mjs','solo-match.mjs','ai-v2.mjs'])
   assert.doesNotMatch(code,new RegExp("from ['\"][^'\"]*"+dependency.replace('.','\\.')+"['\"]"));
- assert.match(read('../vercel.json'),/universal-v2-preview\.html/);
+ assert.match(read('../vercel.json'),/online\.html/);
  assert.equal(TITLES.length,6);
 });
 test('old browser keys remain the backing stores, not deleted or migrated destructively',()=>{

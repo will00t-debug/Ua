@@ -11,14 +11,14 @@
   "rewrites": [
     {
       "source": "/",
-      "destination": "/universal-v2-preview.html"
+      "destination": "/online.html"
     }
   ],
   "redirects": [
     {
       "source": "/",
       "missing": [{"type": "query", "key": "stay"}],
-      "destination": "https://ua-arena.will00t.workers.dev/",
+      "destination": "https://ua-arena.will00t.workers.dev/online.html",
       "permanent": false
     },
     {
