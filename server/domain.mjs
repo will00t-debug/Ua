@@ -308,6 +308,27 @@ export function dispatchAccount(repos,message,now){
    else repos.insertDeck(user.id,record);
    return {deck:publicDeck(record)};
   }
+  case 'updateDeck':{
+   const user=requireUser(repos,message.token,now);
+   const old=ownedDeck(repos,user.id,message.deckId);
+   const input=message.input||{};
+   const title=parseTitle(input.title);
+   const name=cleanName(input.name);
+   const counts=copyCounts(input.counts);
+   let storedCounts;
+   try{storedCounts=normalizeEditorCounts(title,counts);}
+   catch(error){
+    const text=error instanceof Error&&error.message?error.message.slice(0,180):'';
+    throw new ApiError(400,text||'牌組內容無法讀取。');
+   }
+   if(Object.values(storedCounts).some(n=>!Number.isInteger(n)||n<1||n>4))
+    throw new ApiError(400,'牌組張數必須是 1–4。');
+   // Preserve remote identity and local source ID. Only the authenticated
+   // owner can change their saved deck; a different user always receives 404.
+   const record={...old,name,title,counts:storedCounts,updatedAt:new Date(now).toISOString()};
+   repos.updateDeck(user.id,record);
+   return {deck:publicDeck(record)};
+  }
   case 'deleteDeck':{
    const user=requireUser(repos,message.token,now);
    if(!repos.findDeck(user.id,message.deckId))throw new ApiError(404,'找不到這副牌組。');
