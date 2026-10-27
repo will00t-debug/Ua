@@ -2365,12 +2365,24 @@ function normalize(card,packId){
   card.facedownUnderExtraEnergy!==1||
   card.mainAbility?.op!=='restSelfOutsideFacedownEnergy'))
   throw Error(card.id+' invalid facedown under-card energy');
+ const absentFieldName=card.absentFieldName??null;
+ // A printed name longer than the alias cap. It replaces the card name in
+ // every zone while the named character is absent from the controller field.
+ if(absentFieldName!==null&&(
+  card.type!=='event'||card.implementation!=='dsl'||
+  typeof absentFieldName.absent!=='string'||!absentFieldName.absent.trim()||
+  absentFieldName.absent.length>80||
+  typeof absentFieldName.name!=='string'||absentFieldName.name.length<81||
+  absentFieldName.name.length>120||absentFieldName.name===card.name||
+  Object.keys(absentFieldName).length!==2||
+  Object.keys(absentFieldName).some(k=>!['absent','name'].includes(k))))
+  throw Error(card.id+' invalid absent-field name replacement');
  const maxCopies=card.maxCopies===undefined?4:card.maxCopies;
  // Officially printed exceptions, including SLG-1-030, may have up to 12 copies.
  // The title contribution contract verifies the exact source deckLimit.
  if(!integer(maxCopies,1)||(maxCopies>4&&maxCopies!==12))
   throw Error(card.id+' invalid deck copy cap');
- return Object.freeze({
+ const printed=Object.freeze({
   maxCopies,
   id:card.id,title:packId,name:card.name,
   ...(nameAliases?{nameAliases:Object.freeze([...nameAliases])}:{}),
@@ -2465,8 +2477,14 @@ function normalize(card,packId){
     ...(e.upgrade?{upgrade:Object.freeze({...e.upgrade})}:{}),
     ...(e.when?{when:Object.freeze({...e.when,
      ...(e.when.names?{names:Object.freeze([...e.when.names])}:{})})}:{})
-   })))])))
+   })))]))) ,
+  ...(absentFieldName?{absentFieldName:Object.freeze({
+   absent:absentFieldName.absent,name:absentFieldName.name})}:{})
  });
+ if(!absentFieldName)return printed;
+ const chantIdentity=Object.freeze({...printed,name:absentFieldName.name,
+  absentFieldName:null,chantIdentity:null});
+ return Object.freeze({...printed,chantIdentity});
 }
 export function createUniversalPack({id,cards,version='0.1.0',restrictColors=false}={}){
  if(typeof id!=='string'||!id.trim()||!Array.isArray(cards)||!cards.length)

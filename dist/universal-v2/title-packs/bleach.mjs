@@ -201,7 +201,8 @@ const testForKind=Object.freeze({
  ukitakeFrontRaid:'tests/v2-c29-bleach-port.test.mjs',
  komamuraRaidStrip:'tests/v2-c29-bleach-port.test.mjs',
  hirakoEntryChoice:'tests/v2-c29-bleach-port.test.mjs',
- ukitakeFacedownEnergy:'tests/v2-c29-bleach-port.test.mjs'
+ ukitakeFacedownEnergy:'tests/v2-c29-bleach-port.test.mjs',
+ blackCoffinName:'tests/v2-c29-bleach-port.test.mjs'
 });
 function contributedEntry(profile){
  // Fails closed for missing/changed printed source, stats, text or unknown DSL.
@@ -220,7 +221,9 @@ function contributedEntry(profile){
   definition:Object.freeze(definition),
   evidence:Object.freeze({
    printedTextFragments:Object.freeze([profile.effect]),
-   reviewNote:profile.id==='BLC-3-011'?
+   reviewNote:profile.id==='BLC-4-078'?
+    'EX15BT/BLC-4-078 official page 2026-10-27. Required energy 緑4. No generated energy. No trigger. No traits. While the controller field has no 藍染 惣右介, this card\'s name in every zone becomes 滲み出す混濁の紋章 不遜なる狂気の器 湧き上がり・否定し・痺れ・瞬き・眠りを妨げる 爬行する鉄の王女 絶えず自壊する泥の人形 結合せよ 反発せよ 地に満ち己の無力を知れ 破道の九十・黒棺. That replaces 黒棺; the card is not both names. Hand, deck, life, outside, removed, and the resolving event all use the live name. An own-field 藍染 惣右介, including a silenced one, keeps the printed name 黒棺. An opposing 藍染 惣右介 does not. The event chooses one opposing front character whose live BP is 4000 or less and retires it. The choice is mandatory. An energy-line character is not a front character. A field is not a character. A live BP above 4000 is not a choice. Zero legal characters make the event unplayable. No card FAQ is printed on that page.':
+   profile.id==='BLC-3-011'?
     'UA04NC/BLC-3-011 official iframe 2026-10-27. Required energy 緑3. Generated energy is 緑, so gen stays 1. BP is 3000. AP is 1. The plus green is the facedown sentence, not a second resting pip. While a facedown card is directly under this character, it generates +緑1. A Raid stack is not that position. The front line does not generate. Silence removes the bonus. On play, you may put the top card of your deck facedown under this character. Declining leaves the deck. An empty deck opens nothing. Q1585 (2025-09-17): the controller may look at facedown cards under own field cards and place them in any order. The opponent may not look. [起動メイン][レストにする]: put one facedown card from under this character into outside. Doing so grants +緑2 generated energy this turn. The REST is the cost. No facedown card means the activate is not offered, so the character is not rested for no effect. Two or more facedown cards require a choice. Putting the last facedown outside ends the continuous +1 and then applies the turn +2, so the energy line total is the printed 1 plus 2. A remaining facedown keeps the continuous +1 and also receives the turn +2. The turn grant remains after later silence. There is no ターン1, so becoming ACTIVE again with another facedown can pay REST again. DRAW is the generic sentence. Traits are 護廷十三隊 and 靈王の右腕.':
    profile.id==='BLC-2-070'?
     'EX07BT/BLC-2-070 official page 2026-10-27. Required energy 緑4. Generated energy is 緑, so gen stays 1. BP is 4000. AP is 2. On play, choose up to one mode. Declining both is legal. Mode one is only while this character is on the front. Choose two opposing front characters whose live BP is equal and both 2000 or lower, then retire both. A printed BP above 2000 can qualify after a reduction. A printed BP of 2000 or lower does not qualify after a raise. One qualifying character, or two characters at different live BP, does not offer the mode. An energy-line copy does not offer the mode. Mode two has no front gate. Choose up to one opposing front character whose live BP is 3000 or higher and REST it, then set this character ACTIVE. Declining the target, or having no target, still sets this character ACTIVE. The ACTIVE is not gated by a successful REST. An opponent REST immunity does not rest the target and still sets this character ACTIVE. DRAW is the generic sentence. Trait 護廷十三隊. No card FAQ.':

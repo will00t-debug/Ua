@@ -16,6 +16,6 @@ test('C1 scans every current unported BLEACH and SAO card without keyword READY'
   assert.equal(expected.includes(id),true,id);
   assert.notEqual(C1_OFFICIAL_REVIEWS[id].status,'READY');
  }
- assert.equal(x.report.byTitle.bleach.registered,275);
+ assert.equal(x.report.byTitle.bleach.registered,276);
  assert.equal(x.report.byTitle['sword-art-online'].registered,125);
 });

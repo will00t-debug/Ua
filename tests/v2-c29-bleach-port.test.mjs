@@ -323,7 +323,7 @@ import bleachContribution from '../dist/universal-v2/title-packs/bleach.mjs';
 //   REST-play up to one yellow AP1 character of printed energy 2 or less.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008','BLC-4-065','BLC-2-051','BLC-1-092','BLC-4-044','BLC-4-016','BLC-4-017','BLC-1-028','BLC-2-002','BLC-4-032','BLC-1-011','BLC-1-104','BLC-1-014','BLC-1-020','BLC-1-050','BLC-1-055','BLC-1-063','BLC-1-093','BLC-2-009','BLC-2-013','BLC-2-030','BLC-2-034','BLC-2-035','BLC-2-038','BLC-2-057','BLC-2-060','BLC-2-061','BLC-4-057','BLC-4-011','BLC-4-007','BLC-4-012','BLC-4-004','BLC-4-005','BLC-4-015','BLC-4-055','BLC-4-056','BLC-4-041','BLC-4-053','BLC-4-033','BLC-4-075','BLC-2-065','BLC-2-070','BLC-3-011'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008','BLC-4-065','BLC-2-051','BLC-1-092','BLC-4-044','BLC-4-016','BLC-4-017','BLC-1-028','BLC-2-002','BLC-4-032','BLC-1-011','BLC-1-104','BLC-1-014','BLC-1-020','BLC-1-050','BLC-1-055','BLC-1-063','BLC-1-093','BLC-2-009','BLC-2-013','BLC-2-030','BLC-2-034','BLC-2-035','BLC-2-038','BLC-2-057','BLC-2-060','BLC-2-061','BLC-4-057','BLC-4-011','BLC-4-007','BLC-4-012','BLC-4-004','BLC-4-005','BLC-4-015','BLC-4-055','BLC-4-056','BLC-4-041','BLC-4-053','BLC-4-033','BLC-4-075','BLC-2-065','BLC-2-070','BLC-3-011','BLC-4-078'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -395,11 +395,11 @@ function plainId(deck,bp,not){
 }
 
 test('C29 registers one-hundred-fourteen whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,551);
- assert.equal(EXPECTED_V2_COUNTS.bleach,275);
+ assert.equal(EXPECTED_V2_TOTAL,552);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,276);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,275);
+ assert.equal(Object.keys(bleach.cards).length,276);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -13929,6 +13929,112 @@ test('BLC-3-011 tucks a facedown under-card for green energy and can spend it',(
  assert.equal(assertUniversalMatch(front.packs,lined),true);
  assert.equal(assertUniversalMatch(quiet.packs,empty),true);
  assert.equal(assertUniversalMatch(hushed.packs,sealed),true);
+});
+
+test('BLC-4-078 takes the chant name until Aizen is on the field and retires BP 4000',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-4-078');
+ assert.equal(printed.number,'EX15BT/BLC-4-078');
+ assert.equal(printed.nameJa,'黒棺');
+ assert.equal(printed.color,'green');
+ assert.equal(printed.energy,4);
+ assert.equal(printed.ap,1);
+ assert.equal(printed.bp,0);
+ assert.equal(printed.gen,0);
+ assert.equal(printed.trigger,null);
+ assert.equal(printed.type,'event');
+ assert.equal(printed.effect,'若自己場上沒有《藍染惣右介》，此卡在所有區域的卡名改為《滲出的混濁紋章、不遜的狂氣之器；湧現、否定、麻痺、閃爍、阻礙長眠；爬行的鐵之公主、不斷自毀的泥之人偶；結合吧、反彈吧、充滿大地、知曉自身的無力。破道之九十・黑棺》。選1個對方前線BP4000以下的角色使其退場。');
+ const chant='滲み出す混濁の紋章 不遜なる狂気の器 湧き上がり・否定し・痺れ・瞬き・眠りを妨げる 爬行する鉄の王女 絶えず自壊する泥の人形 結合せよ 反発せよ 地に満ち己の無力を知れ 破道の九十・黒棺';
+ const card=bleach.cards['BLC-4-078'];
+ assert.equal(card.name,'黒棺');
+ assert.equal(card.absentFieldName.absent,'藍染 惣右介');
+ assert.equal(card.chantIdentity.name,chant);
+ assert.equal(card.effects.onPlay[0].bp,4000);
+ assert.equal(card.effects.onPlay[0].optional,false);
+ const entryNote=bleachContribution.entries.find(x=>x.id==='BLC-4-078');
+ assert.match(entryNote.evidence.reviewNote,/4000/);
+ assert.match(entryNote.evidence.reviewNote,/No card FAQ/);
+ const required=['BLC-4-078','BLC-1-078','BLC-1-067','BLC-1-093','BLC-4-060'];
+ const fillers=Object.values(bleach.cards).filter(c=>c.color==='green'&&c.maxCopies===4&&
+  !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort().slice(0,8);
+ const deck=Object.fromEntries([...required.map(id=>[id,4]),...fillers.map((id,i)=>[id,i===7?2:4])]);
+ assert.equal(Object.values(deck).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(bleach,deck),[]);
+ const hold=(s,p,id)=>{const c=take(s,p,id);s.players[p].hand.push(c);return c;};
+ function open(seed){
+  const packs=[bleach,bleach];
+  let s=newUniversalMatch(packs,{decks:[deck,deck],seed,first:1});
+  for(let n=0;n<20&&!(s.active===0&&s.phase==='main'&&!s.pending);n++){
+   const legal=legalUniversalActions(packs,s);
+   const action=s.pending?legal.find(a=>a.uid===null||a.mode==='skip')||legal[0]:legal.find(a=>a.type==='next');
+   assert.ok(action,s.pending&&s.pending.kind);
+   s=dispatchUniversalAction(packs,s,action,{actor:s.pending?s.pending.player:s.active});
+  }
+  assert.equal(s.active,0);
+  assert.equal(s.phase,'main');
+  return {packs,s};
+ }
+ function pay(board){
+  put(board.s,0,'BLC-1-078','energy',0,true);
+  put(board.s,0,'BLC-1-078','energy',1,true);
+  return hold(board.s,0,'BLC-4-078');
+ }
+ const named=open(40110);
+ const coffin=pay(named);
+ assert.equal(assertUniversalMatch(named.packs,named.s),true);
+ assert.equal(cardHasName(bleach.cards[coffin.cardId],chant),false);
+ assert.equal(named.s.players[0].hand.find(c=>c.uid===coffin.uid).chantName,chant);
+ const hidden=take(named.s,0,'BLC-4-078');
+ named.s.players[0].deck.unshift(hidden);
+ assert.equal(assertUniversalMatch(named.packs,named.s),true);
+ assert.equal(hidden.chantName,chant);
+ const away=named.s.players[0].deck.shift();
+ named.s.players[0].outside.push(away);
+ assert.equal(assertUniversalMatch(named.packs,named.s),true);
+ assert.equal(away.chantName,chant);
+ const foe=open(40111);
+ pay(foe);
+ put(foe.s,1,'BLC-4-060','energy',0,true);
+ assert.equal(assertUniversalMatch(foe.packs,foe.s),true);
+ const foeCoffin=foe.s.players[0].hand.find(c=>c.cardId==='BLC-4-078');
+ assert.equal(foeCoffin.chantName,chant);
+ const quiet=open(40112);
+ const quietCoffin=pay(quiet);
+ put(quiet.s,0,'BLC-4-060','energy',2,true);
+ assert.equal(assertUniversalMatch(quiet.packs,quiet.s),true);
+ assert.equal(quietCoffin.chantName,undefined);
+ const low=put(quiet.s,1,'BLC-1-067','front',0,true);
+ const side=put(quiet.s,1,'BLC-1-067','energy',0,true);
+ const tall=put(quiet.s,1,'BLC-1-093','front',1,true);
+ assert.equal(legalUniversalActions(quiet.packs,quiet.s).some(a=>a.type==='event'&&a.uid===quietCoffin.uid),true);
+ let played=dispatchUniversalAction(quiet.packs,quiet.s,{type:'event',uid:quietCoffin.uid});
+ assert.equal(played.pending.kind,'effect-retire-bp');
+ assert.equal(legalUniversalActions(quiet.packs,played).some(a=>a.uid===low.uid),true);
+ assert.equal(legalUniversalActions(quiet.packs,played).some(a=>a.uid===side.uid),false);
+ assert.equal(legalUniversalActions(quiet.packs,played).some(a=>a.uid===tall.uid),false);
+ aiOk(quiet.packs,played);
+ played=dispatchUniversalAction(quiet.packs,played,{type:'chooseRetireBp',uid:low.uid});
+ assert.equal(played.pending,null);
+ assert.ok(played.players[1].outside.some(c=>c.uid===low.uid));
+ assert.equal(played.players[1].front[1].uid,tall.uid);
+ assert.ok(played.players[0].outside.some(c=>c.uid===quietCoffin.uid));
+ const blocked=open(40113);
+ const blockedCoffin=pay(blocked);
+ put(blocked.s,1,'BLC-1-093','front',0,true);
+ assert.equal(legalUniversalActions(blocked.packs,blocked.s).some(a=>a.type==='event'&&a.uid===blockedCoffin.uid),false);
+ const edge=open(40114);
+ const edgeCoffin=pay(edge);
+ const marked=put(edge.s,1,'BLC-1-067','front',0,true);
+ marked.buffs.push({bp:2000,untilTurn:edge.s.turn});
+ assert.equal(universalBp(edge.packs,edge.s,marked),4000);
+ assert.equal(legalUniversalActions(edge.packs,edge.s).some(a=>a.type==='event'&&a.uid===edgeCoffin.uid),true);
+ marked.buffs[0].bp=2500;
+ assert.equal(universalBp(edge.packs,edge.s,marked),4500);
+ assert.equal(legalUniversalActions(edge.packs,edge.s).some(a=>a.type==='event'&&a.uid===edgeCoffin.uid),false);
+ assert.equal(assertUniversalMatch(named.packs,named.s),true);
+ assert.equal(assertUniversalMatch(foe.packs,foe.s),true);
+ assert.equal(assertUniversalMatch(quiet.packs,played),true);
+ assert.equal(assertUniversalMatch(blocked.packs,blocked.s),true);
+ assert.equal(assertUniversalMatch(edge.packs,edge.s),true);
 });
 
 function locationLine(s,uid){
