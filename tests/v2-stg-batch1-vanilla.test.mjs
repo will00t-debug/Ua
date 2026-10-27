@@ -12,7 +12,7 @@ const PLAIN=['STG-1-001','STG-1-002','STG-1-007','STG-1-057','STG-1-064'];
 test('batch 1 keeps Steins;Gate outside the census and pins five vanilla prints',()=>{
  assert.ok(!V2_TITLE_IDS.includes('steins-gate'));
  assert.equal(STEINS_GATE_CARDS.length,80);
- assert.equal(Object.keys(stg.cards).length,44);
+ assert.equal(Object.keys(stg.cards).length,54);
  assert.deepEqual(validateUniversalDeck(stg,stgBaseDeck),[]);
  const practice=steinsGatePracticeDeck();
  assert.equal(Object.values(practice.counts).reduce((n,x)=>n+x,0),50);

@@ -80,6 +80,12 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
    e.owner===owner&&e.controller===owner&&e.from==='hand'&&
    e.to==='outside'&&e.reason==='rule'&&
    (d=>d?.type==='event'||d?.alsoEvent===true)(printed({uid:e.uid,cardId:e.cardId})));
+ // 「このターン中に移動している」. A hand-to-field play is an entry, not a move.
+ // Front and energy swaps from a rule move or an effect both count.
+ if(condition.kind==='selfMovedThisTurn')
+  return (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.owner===owner&&
+   e.uid===sourceUid&&((e.from==='front'&&e.to==='energy')||
+    (e.from==='energy'&&e.to==='front')));
  if(condition.kind==='ownEffectHandOutsideOrRecovery'){
   // Same-turn factual records, never inferred from deck/hand counts or
   // the printed contents of any card. Own turn check is enforced above.

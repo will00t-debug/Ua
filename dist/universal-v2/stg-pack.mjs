@@ -39,6 +39,17 @@ const EVENT_MAIN='【起動メイン】【ターン1】このターン中に自�
 const DISCARD_IBN='【登場時】自分の手札を1枚場外に置いてもよい。そうした場合、自分の場外から〈IBN5100〉を1枚まで手札に加える。';
 const DMAIL_BUFF='【登場時】自分の場外から〈Dメール〉を1枚まで手札に加える。自分のターン中の場合、自分の場のキャラを1枚まで選び、このターン中、BP+1000。';
 const OPEN_FRONT='自分の場にカードが1枚もない場合、手札にあるこのカードの必要エナジーを【緑×2】減らす。自分のアタックフェイズ開始時、自分のフロントLに空きがある場合、このキャラはこのターン中、BP+1000。';
+const KURISU_RETIRE='『BP3000以下』の相手のフロントLのキャラを1枚選び、退場させる。自分の場に〈牧瀬 紅莉栖〉がある場合、『BP5000以下』に代わる。';
+const ANY_READY='自分の山札の上から5枚見て、1枚まで公開し手札に加える。残りを望む順で山札の下に置く。公開したカードが〈フェイリス・ニャンニャン〉かフィールドカードの場合、自分のAPカードを1枚アクティブにする。';
+const WIN_MOVED='このキャラがバトルに勝利した時、このキャラがこのターン中に移動している場合、カードを1枚引く。';
+const ATTACK_END_FRONT='【エナジーLにある場合】自分のアタックフェイズ終了時、自分のフロントLに空きがある場合、このキャラを自分のフロントLに移動させてもよい。';
+const MAD='自分の場のキャラ全ては、このターン中、BP+1000。自分の場の消費APが1のキャラを1枚まで選び、このターン中、【インパクト（1）】（アタックしてバトルに勝利した時、相手に1ダメージ）を与える。自分の場に〈岡部 倫太郎〉がある場合、カードを1枚引く。';
+const SUZUHA_DRAW='カードを1枚引く。自分の場の〈阿万音 鈴羽〉を1枚まで選び、このターン中、BP+1000と「【アタック時】カードを1枚引く。」を与える。';
+const DMAIL_SEARCH='自分の場にカードが1枚もない場合、手札にあるこのカードの必要エナジーを【緑×2】減らす。【登場時】自分の山札の上から4枚見て、フィールドカードか〈Dメール〉を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。';
+const DIFFERENT_FIELD='【登場時】自分の場のフィールドを1枚退場させてもよい。そうした場合、自分の場外からこの効果で退場させたフィールドと異なるカード名の緑のフィールドカードを1枚まで自分のエナジーLにレストで登場させる。';
+const FRONT_ENERGY='【起動メイン】【ターン1】このターン中に自分がイベントカードを使用している場合のみ発動できる。このキャラは次の自分のターン開始時まで、「このキャラはフロントLでもエナジーを発生させる。」を得る。';
+const GRANT_STEP='【ステップ】（自分の移動フェイズにフロントLからエナジーLへ移動できる）【自分のターン中】自分の場の他のキャラ全ては、【ステップ】を得る。';
+const SPECIAL='【スペシャル】相手のフロントLのキャラを1枚選び、退場させる。';
 const DRAW_OR_NAMES={op:'chooseOne',optional:false,options:[
  {id:'draw',label:'抽1張並放1張手牌到場外',turn:'any',then:[{op:'drawDiscard',count:1}]},
  {id:'names',label:'鈴羽或橋田這個回合BP+2000',turn:'any',then:[
@@ -81,6 +92,16 @@ export function stgEngineKind(effectJa){
  if(e===DISCARD_IBN)return 'discardIbn';
  if(e===DMAIL_BUFF)return 'dmailTurnBuff';
  if(e===OPEN_FRONT)return 'openFrontBuff';
+ if(e===KURISU_RETIRE)return 'kurisuRetire';
+ if(e===ANY_READY)return 'anyReadyAp';
+ if(e===WIN_MOVED)return 'winDrawMoved';
+ if(e===ATTACK_END_FRONT)return 'attackEndFront';
+ if(e===MAD)return 'madScientist';
+ if(e===SUZUHA_DRAW)return 'suzuhaAttackDraw';
+ if(e===DMAIL_SEARCH)return 'dmailSearch';
+ if(e===DIFFERENT_FIELD)return 'differentField';
+ if(e===FRONT_ENERGY)return 'eventFrontEnergy';
+ if(e===GRANT_STEP)return 'grantStep';
  return null;
 }
 
@@ -100,6 +121,9 @@ export function stgPackCard(card){
  }else if(card.trigger==='color'){
   if(kind!=='colorOtherBuff'||card.triggerTextJa!==COLOR_TRIGGER||card.color!=='green')
    throw Error(card.id+' color trigger is not the printed green hand character');
+ }else if(card.trigger==='special'){
+  if(kind!=='kurisuRetire'||card.triggerTextJa!==SPECIAL)
+   throw Error(card.id+' special trigger is not the printed front retirement');
  }else if(STANDARD[card.trigger]!==card.triggerTextJa)
   throw Error(card.id+' trigger is not the standard printed text');
  const pip={blue:'青',green:'緑'}[card.color];
@@ -112,6 +136,15 @@ export function stgPackCard(card){
   throw Error(card.id+' empty-field discount is not blue 2');
  if(kind==='openFrontBuff'&&(card.color!=='green'||card.type!=='character'||card.energy<2))
   throw Error(card.id+' open-front discount is not a green character');
+ if(kind==='dmailSearch'&&(card.color!=='green'||card.type!=='character'||card.energy<2))
+  throw Error(card.id+' D-mail search discount is not a green character');
+ if(kind==='kurisuRetire'&&card.type!=='event')
+  throw Error(card.id+' Kurisu retirement is an event');
+ if(kind==='differentField'&&(card.type!=='character'||card.color!=='green'))
+  throw Error(card.id+' different field entry is a green character');
+ if(['winDrawMoved','attackEndFront','eventFrontEnergy','grantStep'].includes(kind)&&
+  card.type!=='character')
+  throw Error(card.id+' this print is a character');
  if(kind==='restKurisuDraw'&&card.type!=='event')
   throw Error(card.id+' named rest draw is an event');
  if((kind==='activeEnergy'||kind==='restEnergyRetire')&&card.gen!==0)
@@ -142,6 +175,19 @@ export function stgPackCard(card){
     filter:{field:'type',value:'character'},bp:1000,optional:true,excludeSelf:false}]}
   ]:
   kind==='fieldDrawRetire'?[{op:'drawDiscard',count:1}]:
+  kind==='kurisuRetire'?[{op:'retireOppFrontUnderBp',bp:3000,bonusName:'牧瀬 紅莉栖',
+   bonusBp:5000,mandatory:true}]:
+  kind==='anyReadyAp'?[{op:'searchTopAnyReadyAp',count:5,name:'フェイリス・ニャンニャン',type:'field'}]:
+  kind==='madScientist'?[
+   {op:'buffOwnCharactersAll',bp:1000},
+   {op:'grantPrintedApImpact',ap:1,amount:1,optional:true},
+   {op:'drawIfOwnName',name:'岡部 倫太郎',count:1}]:
+  kind==='suzuhaAttackDraw'?[
+   {op:'draw',count:1},
+   {op:'grantNamedBuffAttackDraw',name:'阿万音 鈴羽',bp:1000,optional:true}]:
+  kind==='dmailSearch'?[{op:'searchTopOneBottomDiscard',count:4,logic:'any',filters:[
+   {field:'type',value:'field'},{field:'name',value:'Dメール'}]}]:
+  kind==='differentField'?[{op:'retireOwnFieldThenDifferent',color:'green'}]:
   null;
  return {
   id:card.id,name:card.nameJa,color:card.color,type:card.type,
@@ -168,7 +214,17 @@ export function stgPackCard(card){
    op:'frontOnceProgram',frontOnly:false,oncePerTurn:true,requireOwnEventUsed:true,
    then:[{op:'buffSelfUntilNextOwnStart',bp:1000}]}}:{}),
   ...(kind==='openFrontBuff'?{emptyOwnFieldHandEnergyDiscount:2,phaseEffects:[{
-   phase:'attack',edge:'start',turn:'own',then:[{op:'buffSelfIfFrontOpen',bp:1000}]}]}:{})
+   phase:'attack',edge:'start',turn:'own',then:[{op:'buffSelfIfFrontOpen',bp:1000}]}]}:{}),
+  ...(kind==='kurisuRetire'?{triggerEffect:{op:'retireOppFront'}}:{}),
+  ...(kind==='winDrawMoved'?{attackWinDraw:{count:1,sides:'either',
+   condition:{kind:'selfMovedThisTurn',turn:'any'}}}:{}),
+  ...(kind==='attackEndFront'?{phaseEffects:[{phase:'attack',edge:'end',turn:'own',
+   then:[{op:'mayMoveSelfToFront'}]}]}:{}),
+  ...(kind==='dmailSearch'?{emptyOwnFieldHandEnergyDiscount:2}:{}),
+  ...(kind==='eventFrontEnergy'?{mainAbility:{
+   op:'frontOnceProgram',frontOnly:false,oncePerTurn:true,requireOwnEventUsed:true,
+   then:[{op:'grantSelfFrontEnergyUntilNextOwnStart'}]}}:{}),
+  ...(kind==='grantStep'?{step:true,grantStepToOtherOwn:true}:{})
  };
 }
 
@@ -177,8 +233,8 @@ export const STEINS_GATE_ENGINE_IDS=Object.freeze(
 
 export function createStgV2Pack(){
  const cards=STEINS_GATE_CARDS.filter(c=>c.engineKind).map(stgPackCard);
- if(cards.length!==44)throw Error('Steins;Gate registered count drifted');
+ if(cards.length!==54)throw Error('Steins;Gate registered count drifted');
  return createUniversalPack({
-  id:'steins-gate',version:'stg-ua57-batches-11-20-20261027',cards
+  id:'steins-gate',version:'stg-ua57-batches-21-30-20261028',cards
  });
 }

@@ -245,6 +245,10 @@ export function uiActionLabel(action,{pack,state}={}){
      [...p.front,...p.energy].some(c=>c?.uid===action.uid&&
       pack.cards[c.cardId]?.mainAbility?.then?.[0]?.op==='buffEitherField'))
      ?'起動主要：選擇最多 1 張場上角色，本回合 BP+1000':
+    action.mode==='frontOnce'&&pack?.cards&&state?.players?.some(p=>
+     [...p.front,...p.energy].some(c=>c?.uid===action.uid&&
+      pack.cards[c.cardId]?.mainAbility?.then?.[0]?.op==='grantSelfFrontEnergyUntilNextOwnStart'))
+     ?'起動主要：直到下次我方回合開始，前線也能產生能源':
     action.mode==='restLeaveReveal'?'起動主要：休息並退場，公開 1 張手牌放到牌底':
     action.mode==='handBlock'?'起動主要：將 1 張手牌放到場外，本回合不被 BP4000 以上的角色阻擋':
     action.mode==='energySwap'?'起動主要：與 1 張己方前線角色交換位置':
@@ -347,6 +351,11 @@ export function uiActionLabel(action,{pack,state}={}){
    (action.mode==='raid'?'從手牌 Raid ':'從手牌 REST 登場 ')+name()+suffix();
    case 'chooseOutsideNameRest':return action.uid===null?'不從場外登場':'REST 登場 '+name()+suffix();
   case 'chooseTopFiltered':return action.uid===null?'不加入手牌，將其餘卡排列至底部':'加入手牌：'+name();
+  case 'chooseGrantNamed':return action.uid===null?'不給予這項能力':'給予 '+name()+' 這個回合的能力';
+  case 'choosePrintedApImpact':return action.uid===null?'不給予衝擊':'給予 '+name()+' 衝擊 1';
+  case 'chooseSelfFront':return action.slot===null?'不移動到前線':'移動到前線 '+(action.slot+1);
+  case 'chooseDifferentField':return action.uid===null?'不從場外登場':'以休息狀態登場 '+name()+suffix();
+  case 'chooseOwnFieldRetire':return action.uid===null?'不退場場域':'退場場域 '+name();
   case 'chooseTopTraitEvent':return action.uid===null?'不加入手牌，將其餘卡排列至底部':'公開 '+name()+' 並加入手牌';
   case 'chooseTopOrder':return '依序放回：'+name();
   case 'chooseRestFrontEnergy':return 'REST '+name()+'，本回合產能＋1';
