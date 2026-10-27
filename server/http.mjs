@@ -24,9 +24,11 @@ function send(res,status,payload){
  });
  res.end(body);
 }
-function cookie(token,secure){
- const maxAge=token?14*24*60*60:0;
- return 'ua_session='+(token||'')+'; HttpOnly; SameSite=Lax; Path=/; Max-Age='+maxAge+(secure?'; Secure':'');
+function cookie(token,secure,remember=true){
+ const base='ua_session='+(token||'')+'; HttpOnly; SameSite=Lax; Path=/'+(secure?'; Secure':'');
+ if(!token)return base+'; Max-Age=0';
+ if(remember===false)return base;
+ return base+'; Max-Age='+(14*24*60*60);
 }
 function clientIp(req){
  const remote=req.socket?.remoteAddress||'local';
@@ -120,13 +122,13 @@ export async function createHandler({dataFile,staticRoot=null}){
     if(method==='POST'&&path==='/api/register'){
      const body=await readBody(req);
      const result=await service.register(body,meta);
-     res.setHeader('set-cookie',cookie(result.token,secure));
+     res.setHeader('set-cookie',cookie(result.token,secure,body.remember!==false));
      return send(res,201,{username:result.username,token:result.token});
     }
     if(method==='POST'&&path==='/api/login'){
      const body=await readBody(req);
      const result=await service.login(body,meta);
-     res.setHeader('set-cookie',cookie(result.token,secure));
+     res.setHeader('set-cookie',cookie(result.token,secure,body.remember!==false));
      return send(res,200,{username:result.username,token:result.token});
     }
     if(method==='POST'&&path==='/api/logout'){

@@ -14,7 +14,14 @@ const DRAFTS=[
 ];
 const PHASES=[['start','開始'],['move','移動'],['main','主要'],['attack','攻擊']];
 const ROOM=/^[A-HJ-NP-Z2-9]{8}$/;
-const app={offline:false,user:null,decks:[],room:null,error:'',notice:'',busy:false,mode:'login',deckTab:'mine',pollToken:0,timer:0};
+const app={offline:false,user:null,decks:[],room:null,error:'',notice:'',busy:false,mode:'login',deckTab:'mine',pollToken:0,timer:0,showPassword:false,remember:true,recordedCode:'',draftUser:'',draftPass:''};
+function captureAuthDraft(form){
+ if(!form)return;
+ const data=new FormData(form);
+ app.draftUser=String(data.get('username')??'');
+ app.draftPass=String(data.get('password')??'');
+ if(form.elements.remember)app.remember=data.get('remember')!=null;
+}
 
 function el(tag,props={},...children){
  const node=document.createElement(tag);
@@ -64,35 +71,65 @@ function startPoll(){
  },1200);
 }
 function applyRoom(next){
+ const finished=next?.status==='finished'&&app.room?.status!=='finished'&&app.recordedCode!==next.code;
  const same=app.room&&next.revision===app.room.revision&&next.status===app.room.status&&!app.busy;
  app.room=next;app.busy=false;
+ if(finished)noteOnlineResult(next);
  if(!same)render();
+}
+function noteOnlineResult(room){
+ const deckId=room?.you?.deckId;
+ if(typeof deckId!=='string'||!deckId)return;
+ if(room.winner?.seat!==0&&room.winner?.seat!==1)return;
+ app.recordedCode=room.code;
+ const win=room.winner.seat===room.seat;
+ import('./deck-records.mjs').then(mod=>{
+  mod.recordDeckResult(localStorage,{deckId,channel:'online',win,opponent:room.opponent?.username||'對手',at:new Date().toISOString()});
+ }).catch(()=>{});
 }
 function total(deck){return Object.values(deck.counts||{}).reduce((sum,n)=>sum+Number(n||0),0);}
 function readJson(key){try{return JSON.parse(localStorage.getItem(key)||'null');}catch{return null;}}
-function shell(...body){
+function notices(){
  return el('div',{},
-  el('header',{class:'top'},
-   el('a',{class:'brand',href:'/'},el('span',{class:'mark',text:'UA'}),el('span',{},el('strong',{text:'UNION ARENA'}),el('div',{class:'muted',text:'帳號與線上對戰'}))),
-   el('nav',{class:'row'},
-    el('a',{class:'linkish',href:'/index.html',text:'圖片式牌組構築'}),
-    el('a',{class:'linkish',href:'/',text:'電腦對戰'}),
-    app.user?el('button',{type:'button',text:'登出',onClick:logout}):null)),
   app.error?el('div',{class:'banner error',role:'alert',text:app.error}):null,
-  app.notice?el('div',{class:'banner ok',role:'status',text:app.notice}):null,
-  ...body);
+  app.notice?el('div',{class:'banner ok',role:'status',text:app.notice}):null);
+}
+function arenaHeader(){
+ return el('header',{class:'arena-top'},
+  el('a',{class:'arena-brand',href:'/online.html'},el('strong',{text:'UNION ARENA'}),el('small',{text:'V2'})),
+  el('nav',{class:'arena-nav'},
+   el('a',{href:'/online.html',text:'首頁'}),
+   el('a',{href:'/',text:'對戰'}),
+   el('a',{href:'/index.html',text:'牌組'}),
+   el('a',{href:'/index.html#cards',text:'卡牌一覽'}),
+   el('a',{href:'/index.html#records',text:'排行榜'}),
+   el('a',{href:'/index.html#rules',text:'規則／FAQ'})),
+  app.user?el('div',{class:'arena-user'},el('span',{text:app.user.username}),el('button',{type:'button',text:'登出',onClick:logout})):null);
+}
+function shell(...body){
+ return el('div',{class:'arena-app'},arenaHeader(),notices(),...body);
 }
 function authView(){
  const register=app.mode==='register';
- return shell(el('section',{class:'panel'},
-  el('h1',{text:register?'建立帳號':'登入'}),
-  el('p',{class:'muted',text:'登入後，牌組會存在這個帳號。線上對戰由伺服器主持，對手看不到你的手牌、牌庫順序和生命卡。'}),
-  el('form',{id:'auth-form',class:'grid',onSubmit:submitAuth},
-   el('label',{},'帳號名稱',el('input',{name:'username',required:'',minlength:'2',maxlength:'16',autocomplete:'username'})),
-   el('label',{},'密碼',el('input',{name:'password',type:'password',required:'',minlength:'8',maxlength:'72',autocomplete:register?'new-password':'current-password'})),
-   el('div',{class:'row'},
-    el('button',{class:'primary',type:'submit',text:register?'註冊並登入':'登入',disabled:app.busy}),
-    el('button',{type:'button',text:register?'已有帳號':'建立新帳號',onClick:()=>{app.mode=register?'login':'register';app.error='';render();}})))));
+ return el('div',{class:'arena-login'},
+  el('div',{class:'arena-login-bg','aria-hidden':'true'}),
+  el('section',{class:'arena-login-card'},
+   el('div',{class:'arena-wordmark'},el('small',{text:'TRADING CARD GAME'}),el('strong',{text:'UNION ARENA'}),el('em',{text:'ユニオンアリーナ'})),
+   notices(),
+   el('form',{id:'auth-form',class:'arena-login-form',onSubmit:submitAuth},
+    el('h1',{text:register?'註冊新帳號':'歡迎回到競技場'}),
+    el('p',{class:'arena-login-sub',text:register?'建立帳號後，牌組存在這個帳號。':'登入您的帳號，開始對戰'}),
+    el('label',{class:'arena-field'},'帳號',el('input',{name:'username',value:app.draftUser,required:'',minlength:'2',maxlength:'16',autocomplete:'username',placeholder:'帳號',onInput:event=>{app.draftUser=event.target.value;}})),
+    el('label',{class:'arena-field'},'密碼',
+     el('span',{class:'arena-pass'},
+      el('input',{name:'password',value:app.draftPass,type:app.showPassword?'text':'password',required:'',minlength:'8',maxlength:'72',autocomplete:register?'new-password':'current-password',placeholder:'密碼',onInput:event=>{app.draftPass=event.target.value;}}),
+      el('button',{type:'button',class:'arena-eye',text:app.showPassword?'隱藏':'顯示','aria-pressed':String(app.showPassword),onClick:event=>{captureAuthDraft(event.currentTarget.form);app.showPassword=!app.showPassword;render();}}))),
+    el('div',{class:'arena-login-row'},
+     el('label',{class:'arena-check'},el('input',{type:'checkbox',name:'remember',checked:app.remember!==false,onChange:event=>{app.remember=event.target.checked;}}),'保持登入狀態'),
+     register?null:el('button',{type:'button',class:'arena-text-button',text:'忘記密碼？',onClick:event=>{captureAuthDraft(event.currentTarget.form);app.notice='這個站只保存密碼雜湊，沒有寄信重設。忘記密碼就無法登回原帳號，可以註冊新帳號。';render();}})),
+    el('button',{class:'arena-login-submit',type:'submit',text:register?'註冊並登入':'登入 →',disabled:app.busy}),
+    el('p',{class:'arena-or',text:'或'}),
+    el('button',{type:'button',class:'arena-login-alt',text:register?'已有帳號':'註冊新帳號',onClick:event=>{captureAuthDraft(event.currentTarget.form);app.mode=register?'login':'register';app.error='';render();}}))));
 }
 let coverCatalogue=null;
 function loadCovers(){
@@ -179,19 +216,38 @@ function deckSelect(){
  if(!playable.length)return el('select',{name:'deckId'},el('option',{value:'',text:'還沒有可對戰的牌組'}));
  return el('select',{name:'deckId',required:''},...playable.map(deck=>el('option',{value:deck.id,text:deck.name+' · '+(deck.titleLabel||deck.title)})));
 }
+function recentBattleList(){
+ const box=el('div',{class:'arena-recent'});
+ let rows=[];
+ try{
+  const raw=JSON.parse(localStorage.getItem('ua-deck-records-v1')||'{}');
+  for(const [deckId,record] of Object.entries(raw||{})){
+   for(const item of record?.recent||[])rows.push({deckId,...item});
+  }
+ }catch{rows=[];}
+ rows.sort((a,b)=>String(b.at||'').localeCompare(String(a.at||'')));
+ rows=rows.slice(0,6);
+ if(!rows.length)return el('p',{class:'muted',text:'尚無戰績'});
+ for(const row of rows){
+  const deck=app.decks.find(item=>item.id===row.deckId);
+  box.append(el('p',{},(row.result==='win'?'勝':'敗')+' · '+(row.channel==='online'?'線上對戰':'電腦對戰')+' · '+(deck?.name||row.deckId)));
+ }
+ return box;
+}
 function homeView(){
  const playable=app.decks.some(deck=>deck.playable);
- return shell(el('div',{class:'grid split'},
+ return shell(el('main',{class:'arena-lobby'},
+  el('h1',{text:'競技場'}),
+  el('div',{class:'arena-entries'},
+   el('a',{class:'arena-entry',href:'/'},el('strong',{text:'單人對戰'}),el('span',{text:'用已完成的牌組和電腦打 V2。'})),
+   el('a',{class:'arena-entry',href:'#online-match'},el('strong',{text:'線上對戰'}),el('span',{text:'和另一位登入玩家對戰。手牌不會傳給對手。'})),
+   el('a',{class:'arena-entry',href:'/index.html'},el('strong',{text:'牌組構築'}),el('span',{text:'圖片式牌組構築。用真實卡表搜尋、篩選並儲存牌組。'}))),
   el('section',{class:'panel'},
-   el('h1',{text:app.user.username+' 的牌組'}),
-   el('div',{class:'builder-entry'},
-    el('div',{},el('strong',{text:'圖片式牌組構築'}),
-     el('p',{class:'muted',text:'回到之前的六作品卡圖組卡介面，可搜尋卡牌、調整張數並查看完整 50 張牌組。你也可以直接編輯下方帳號裡的牌組。'})),
-    el('a',{class:'builder-entry-button',href:'/index.html',text:'開啟組卡畫面'})),
-   el('p',{class:'muted',text:'每個帳號只看得到自己的雲端牌組。點選卡片會先打開唯讀詳情；「圖片編輯」或詳情頁的「編輯牌組」才會進入編輯器，儲存後同步回這個帳號。'}),
+   el('h2',{text:'我的牌組'}),
+   el('p',{class:'muted',text:'每個帳號只看得到自己的雲端牌組。點選卡片會先打開唯讀詳情；圖片編輯才會改牌。'}),
    el('div',{class:'row'},
-    el('button',{type:'button',text:'匯入這台瀏覽器的牌組',disabled:app.busy,onClick:importLocal}),
-    el('a',{class:'linkish',href:'/index.html',text:'前往圖片式組卡'})),
+    el('a',{class:'primary linkish',href:'/index.html',text:'開啟組卡畫面'}),
+    el('button',{type:'button',text:'匯入這台瀏覽器的牌組',disabled:app.busy,onClick:importLocal})),
    deckList(),
    el('details',{},el('summary',{text:'貼上牌表保存'}),
     el('form',{class:'grid',onSubmit:savePasted},
@@ -199,7 +255,7 @@ function homeView(){
      el('label',{},'作品',el('select',{name:'title'},...TITLES.map(([id,label])=>el('option',{value:id,text:label})))),
      el('label',{},'牌表（每行「4 BLC-1-034」）',el('textarea',{name:'list',required:''})),
      el('button',{class:'primary',type:'submit',text:'保存到帳號',disabled:app.busy})))),
-  el('section',{class:'panel'},
+  el('section',{class:'panel',id:'online-match'},
    el('h2',{text:'線上對戰'}),
    el('p',{class:'muted',text:'雙方各用自己的帳號和一副 50 張、已完整支援 V2 的牌組。伺服器發牌，並只把你看得到的場面傳回來。'}),
    el('form',{class:'grid',onSubmit:createRoom},
@@ -210,7 +266,8 @@ function homeView(){
    el('form',{class:'grid',onSubmit:joinRoom},
     el('label',{},'房間代碼',el('input',{name:'code',maxlength:'8',autocapitalize:'characters',required:''})),
     el('label',{},'使用牌組',deckSelect()),
-    el('button',{type:'submit',text:'加入房間',disabled:app.busy||!playable})))));
+    el('button',{type:'submit',text:'加入房間',disabled:app.busy||!playable}))),
+  el('section',{class:'panel'},el('h2',{text:'最近對戰'}),recentBattleList())));
 }
 function cardBox(card){
  if(!card)return el('div',{class:'slot empty',text:'空'});
@@ -282,11 +339,13 @@ function render(){
 }
 async function submitAuth(event){
  event.preventDefault();
+ captureAuthDraft(event.currentTarget);
  const data=new FormData(event.currentTarget);
  app.busy=true;app.error='';render();
  try{
-  const result=await api(app.mode==='register'?'/api/register':'/api/login',{method:'POST',body:{username:data.get('username'),password:data.get('password')}});
+  const result=await api(app.mode==='register'?'/api/register':'/api/login',{method:'POST',body:{username:data.get('username'),password:data.get('password'),remember:data.get('remember')!=null}});
   app.user={username:result.username};
+  app.draftUser='';app.draftPass='';
   app.decks=(await api('/api/decks')).decks;
   app.notice='已登入 '+result.username+'。';
  }catch(error){app.error=error.message;}
@@ -295,7 +354,7 @@ async function submitAuth(event){
 async function logout(){
  app.busy=true;
  try{await api('/api/logout',{method:'POST'});}catch{/* The local screen still returns to the login form. */}
- stopPoll();app.user=null;app.decks=[];app.room=null;app.notice='';app.busy=false;
+ stopPoll();app.user=null;app.decks=[];app.room=null;app.mode='login';app.notice='';app.busy=false;
  history.replaceState(null,'','online.html');render();
 }
 async function refreshDecks(){app.decks=(await api('/api/decks')).decks;}

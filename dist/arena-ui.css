@@ -1,0 +1,125 @@
+/* Black esports shell shared by the account lobby and the deck editor. */
+body.arena-site{background:#07090f;color:#e8edf5}
+.arena-top{display:flex;align-items:center;gap:18px;min-height:64px;padding:0 18px;background:#05060a;border-bottom:1px solid #1c2230;position:sticky;top:0;z-index:5}
+.arena-brand{color:#fff;text-decoration:none;display:flex;flex-direction:column;line-height:1;min-width:132px}
+.arena-brand strong{font-size:15px;letter-spacing:.08em}
+.arena-brand small{color:#ff3b3b;font-weight:800;letter-spacing:.16em;margin-top:3px}
+.arena-nav{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.arena-nav a,.arena-nav button{color:#c5ceda;text-decoration:none;background:transparent;border:0;min-height:40px;padding:8px 10px;border-radius:8px;font:inherit}
+.arena-nav a:hover,.arena-nav button:hover,.arena-nav a[aria-current="page"]{color:#fff;background:#171b25}
+.arena-user{margin-left:auto;display:flex;align-items:center;gap:8px}
+.arena-user button,.arena-site .v2e-primary{background:#e11d2e;color:#fff;border:0;border-radius:8px;min-height:36px;padding:8px 12px;text-decoration:none}
+.arena-shell,.arena-app{min-height:100vh}
+.arena-site .v2e-main{max-width:1440px;margin:0 auto;padding:18px}
+.arena-site .v2e-heading h1,.arena-site h1,.arena-site h2,.arena-site h3{color:#f4f7fb}
+.arena-site .v2e-footer,.arena-site .vdb-footnote,.arena-site .muted{color:#93a0b3}
+
+.arena-login{min-height:100vh;display:grid;place-items:center;position:relative;padding:24px}
+.arena-login-bg{position:absolute;inset:0;background:
+ linear-gradient(180deg,rgba(5,6,10,.78),rgba(5,6,10,.9)),
+ url('assets/cards/UA08BT_BLC-1-001.png') 6% 18%/150px no-repeat,
+ url('assets/cards/UA08BT_BLC-1-006.png') 18% 72%/140px no-repeat,
+ url('assets/cards/EX15BT_BLC-4-034.png') 82% 16%/150px no-repeat,
+ url('assets/cards/UA08BT_BLC-1-021.png') 90% 74%/140px no-repeat,
+ #07090f}
+.arena-login-card{position:relative;width:min(420px,100%);background:#10131ae6;border:1px solid #2a3142;border-radius:18px;padding:28px 24px 22px;box-shadow:0 24px 80px #000a}
+.arena-wordmark{text-align:center;margin-bottom:18px}
+.arena-wordmark small{display:block;letter-spacing:.28em;font-size:10px;color:#9aa6b8}
+.arena-wordmark strong{display:block;font-size:34px;letter-spacing:.04em;margin:6px 0 2px}
+.arena-wordmark em{display:block;font-style:normal;color:#9aa6b8;font-size:12px}
+.arena-login-form{display:grid;gap:12px}
+.arena-login-sub{text-align:center;color:#9aa6b8;margin:0}
+.arena-field{display:grid;gap:6px;color:#c5ceda;font-size:13px}
+.arena-pass{position:relative;display:block}
+.arena-pass .arena-eye{position:absolute;right:4px;top:0;bottom:0;min-width:52px}
+.arena-field input,.arena-site input,.arena-site select,.arena-site textarea{width:100%;box-sizing:border-box;background:#0c0f16;color:#f4f7fb;border:1px solid #2c3446;border-radius:10px;min-height:44px;padding:10px 12px}
+.arena-pass input{padding-right:64px}
+.arena-login-row{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.arena-check{display:flex;align-items:center;gap:8px;color:#d5dbe6;font-size:14px}
+.arena-check input{width:18px;min-height:18px}
+.arena-text-button,.arena-eye{background:transparent;border:0;color:#7eb6ff;min-height:44px}
+.arena-login-submit{background:#2f6bff;color:#fff;border:0;border-radius:10px;min-height:48px;font-weight:800;font-size:16px}
+.arena-login-alt{background:transparent;color:#e8edf5;border:1px solid #3a4356;border-radius:10px;min-height:46px}
+.arena-or{text-align:center;color:#8b97a8;margin:0}
+.arena-site .banner.error{background:#3a1218;color:#ffd0d4;border:1px solid #6e2430}
+.arena-site .banner.ok{background:#10261c;color:#d7ffe8;border:1px solid #1f6b45}
+
+.arena-lobby{display:grid;gap:16px}
+.arena-entries{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.arena-entry{display:grid;gap:6px;padding:22px 16px;border-radius:16px;text-decoration:none;color:#fff;background:linear-gradient(180deg,#1a2030,#10141d);border:1px solid #2a3346;min-height:120px}
+.arena-entry strong{font-size:22px}
+.arena-entry span{color:#b7c2d2;font-size:13px}
+.arena-site .panel{background:#121722;border:1px solid #242b3a;color:#e8edf5}
+.arena-site .linkish.primary,.arena-site button.primary{background:#e11d2e;border-color:#e11d2e;color:#fff}
+.arena-recent p{margin:6px 0}
+
+.arena-editor.vdb{max-width:none;color:#e8edf5;margin:0}
+.arena-editor-grid{display:grid;grid-template-columns:minmax(300px,380px) minmax(0,1fr) minmax(260px,320px);gap:12px;align-items:start}
+.arena-editor .vdb-finder,.arena-deck,.arena-info,.arena-manage-list,.arena-manage-main,.arena-manage-side{background:#10141c;border:1px solid #242b3a;border-radius:16px;padding:12px;min-width:0}
+.arena-editor .vdb-pool-grid{display:flex;flex-direction:column;max-height:68vh;overflow:auto}
+.arena-editor .arena-card-row{display:grid;grid-template-columns:72px minmax(0,1fr) auto;gap:8px;align-items:center;background:#0c1018;border-color:#2a3344}
+.arena-editor .vdb-card-text,.arena-editor .vdb-card-text strong,.arena-editor .vdb-card-text small{color:#e8edf5}
+.arena-editor .vdb-card-tags span{color:#b7c3d4}
+.arena-editor .vdb-quantity{display:flex;flex-direction:row;align-items:center;gap:4px}
+.arena-editor .vdb-quantity button,.arena-energy-row button,.arena-sort-row button,.arena-filter button{box-sizing:border-box;min-width:40px;min-height:40px;padding:4px 8px}
+.arena-energy-row,.arena-sort-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.arena-energy-row b,.arena-sort-row b,.arena-filter b{color:#9aabbe}
+.arena-editor .vdb-filter-line button{background:#171d29;color:#d5deea;border-color:#2c3548;box-sizing:border-box}
+.arena-editor .vdb-filter-line button.active{background:#e11d2e;border-color:#e11d2e;color:#fff}
+.arena-deck-head,.arena-deck-actions,.arena-name-row,.arena-tool-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.arena-deck-actions button,.arena-tool-row button,.arena-save,.arena-battle{min-height:42px;border-radius:10px;border:1px solid #314056;background:#171d29;color:#fff;padding:8px 12px}
+.arena-battle:disabled{opacity:.45}
+.arena-save,.arena-battle:not(:disabled){background:#e11d2e;border-color:#e11d2e}
+.arena-deck-fold{border:0;margin:0;padding:0}
+.arena-deck-fold>summary{display:none}
+.arena-deck-board{max-height:62vh;overflow:auto}
+.arena-editor .vdb-review-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:8px}
+.arena-editor .vdb-mini-card{position:relative;color:#d5deea}
+.arena-editor .vdb-mini-card img{display:block;width:100%;aspect-ratio:.7;object-fit:contain;background:#0c1018;border-radius:6px}
+.arena-editor .vdb-count-badge{position:absolute;top:4px;right:auto;bottom:auto;left:4px;width:max-content;height:auto;background:#e11d2e;color:#fff;border-radius:4px;padding:1px 4px;font-size:12px}
+.arena-curve{display:flex;align-items:flex-end;gap:3px;min-height:96px;overflow:visible}
+.arena-curve div{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;flex:1 1 0;min-width:0;gap:3px;font-size:11px;color:#b7c3d4}
+.arena-curve i{display:block;width:16px;background:#e11d2e;border-radius:4px 4px 0 0}
+.arena-curve-gen i{background:#3d8bfd}
+.arena-type-counts{list-style:none;padding:0;display:grid;gap:4px}
+.arena-type-counts li,.arena-record-list{display:flex;justify-content:space-between;gap:8px}
+.arena-record-list{list-style:none;padding:0;margin:8px 0}
+.arena-record-views{display:flex;flex-wrap:wrap;gap:6px}
+.arena-record-views button{min-height:36px;border-radius:999px;border:1px solid #314056;background:#171d29;color:#d5deea}
+.arena-record-views button.active{background:#e11d2e;border-color:#e11d2e;color:#fff}
+.arena-rate strong{font-size:28px}
+.arena-focus{display:grid;grid-template-columns:96px minmax(0,1fr);gap:8px}
+.arena-focus img{width:100%;border-radius:6px;background:#0c1018}
+.arena-focus dl{display:grid;grid-template-columns:1fr 1fr;gap:4px 8px;margin:8px 0}
+.arena-focus dt{color:#93a0b3;font-size:12px}
+.arena-focus dd{margin:0}
+.arena-effect{white-space:pre-wrap;line-height:1.5}
+.arena-manage{display:grid;grid-template-columns:240px minmax(0,1fr) 280px;gap:12px;align-items:start}
+.arena-covers{display:flex;flex-wrap:wrap;gap:6px}
+.arena-covers button{width:52px;padding:0;border:1px solid #314056;background:#0c1018;border-radius:6px}
+.arena-covers img{width:100%;aspect-ratio:.7;object-fit:contain}
+.arena-site .dkg,.arena-site .dkg-hero,.arena-site .dkg-card,.arena-site .deck-visual{background:#10141c;color:#e8edf5}
+.arena-site .dkg-card,.arena-site .dkg-edit,.arena-site .dkg-actions button{border-color:#314056;background:#171d29;color:#e8edf5}
+.arena-site .v2e-modal{background:#121722;color:#e8edf5}
+.arena-issues,.arena-site .vdb-issues.is-complete{color:#b7f0c8}
+.arena-site .vdb-issues.has-issues{color:#ffd0d4}
+
+@media(max-width:1100px){
+ .arena-editor-grid,.arena-manage,.arena-entries{grid-template-columns:1fr}
+ .arena-editor-grid{display:flex;flex-direction:column}
+ .arena-info{order:0}
+ .arena-pool{order:1}
+ .arena-deck{order:2}
+ .arena-deck-fold>summary{display:flex;align-items:center;justify-content:space-between;min-height:44px;margin-bottom:8px;color:#fff;font-weight:800;cursor:pointer}
+ .arena-editor .vdb-pool-grid{max-height:none}
+ .arena-top{flex-wrap:wrap;height:auto;padding:8px 12px}
+ .arena-nav{width:100%}
+ .arena-energy-row,.arena-sort-row,.arena-filter{overflow:visible}
+ .arena-editor .vdb-quantity button,.arena-energy-row button,.arena-sort-row button,.arena-filter button{min-width:44px;min-height:44px}
+ .arena-energy-row button{flex:0 0 auto}
+}
+@media(max-width:720px){
+ .arena-login-card{padding:20px 14px}
+ .arena-deck-actions button,.arena-login-submit,.arena-login-alt{width:100%}
+ .arena-editor .arena-card-row{grid-template-columns:64px minmax(0,1fr) auto}
+}

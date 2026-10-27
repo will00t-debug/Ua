@@ -9,6 +9,7 @@ import {validateUniversalDeck} from './universal-v2/pack.mjs';
 import {V2_ABILITY_TEMPLATE_IDS} from './universal-v2/ability-templates.mjs';
 import {listRegisteredV2Titles,registeredV2TitlePack} from './universal-v2/title-packs/registry.mjs';
 import {V2_EDITOR_TRANSFER_KEY} from './v2-editor-compat.mjs';
+import {recordDeckResult} from './deck-records.mjs';
 import {collectSavedV2LobbyDecks,validatedLobbyChoice,V2_MATCH_SETUP_STORAGE_KEY} from './universal-v2/lobby-saved-decks.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  universalPublicView,universalPrivateChoices,assertUniversalMatch} from './universal-v2/engine.mjs';
@@ -61,7 +62,8 @@ const $=id=>document.getElementById(id);
 $('v2-coverage').textContent=
  V2_ABILITY_TEMPLATE_IDS.length+' 種能力模板 · 已移植 '+
  v2Entries.reduce((sum,item)=>sum+item.totalV2Cards,0)+' 張真卡 Pilot';
-const app={state:null,packs:null,selectedUid:null,
+let editorRecordId=null;
+const app={state:null,packs:null,selectedUid:null,recordDeckId:null,recordNoted:false,
  selectedSide:null,history:[],busy:false,aiTimer:null,error:'',
  undo:null,replay:null,targetChoices:null,aiDifficulty:'normal',sequence:0,allActions:false, maxAuto:4500,autoMoves:0,aiPhaseKey:null,aiPhaseCount:0,aiFallbacks:0,aiCompletedSteps:0,lastAiProgress:'未啟動'};
 const phases=V2_PHASE_LABELS;
@@ -381,6 +383,13 @@ function legacyCommands(legal){
  else bar.append(btn('取消選擇',()=>{app.targetChoices=null;render();},'btn small'));
  return bar;
 }
+function noteAiRecord(state){
+ if(app.recordNoted||!app.recordDeckId)return;
+ if(state.winner!==0&&state.winner!==1)return;
+ app.recordNoted=true;
+ try{recordDeckResult(localStorage,{deckId:app.recordDeckId,channel:'ai',win:state.winner===0,opponent:'電腦',at:new Date().toISOString()});}
+ catch{/* A private browser can finish the match without storing a record. */}
+}
 function render(){
  const target=$('match-view');if(!target)return;
  target.replaceChildren();
@@ -418,6 +427,7 @@ function render(){
   phasesEl.append(el('span',{class:s.phase===n?'current':'',text:name}));
  arena.append(phasesEl);
  if(s.status==='finished'){
+  noteAiRecord(s);
   arena.append(el('div',{class:'resultBanner'},el('h2',{text:s.winner===0?'你獲勝了！':'電腦獲勝'})));
  }
  arena.append(legacyPlayer(v,1,legal),
@@ -672,6 +682,7 @@ function importV2EditorDeck(){
  const errors=validateUniversalDeck(pack,counts);
  if(errors.length){reject(errors.slice(0,2).join('；'));return;}
  const value='editor-v2-mine';
+ editorRecordId=typeof raw.deckRecordId==='string'&&raw.deckRecordId.length<=80?raw.deckRecordId:null;
  const name=typeof raw.name==='string'&&raw.name.trim()?raw.name.trim().slice(0,40):'自訂 V2 牌組';
  designatedReady.set(value,{pack,counts:Object.freeze({...counts}),label:name});
  $('my-title').append(el('option',{value,text:'我的 V2 牌組｜'+name}));
@@ -708,6 +719,8 @@ function startGame(){
   if(!Number.isSafeInteger(seed)||seed<1||seed>999999999)
    throw Error('牌序種子請輸入 1～999999999。');
   const first=$('first-player').value==='ai'?1:0;
+  app.recordDeckId=$('my-title').value==='editor-v2-mine'?editorRecordId:null;
+  app.recordNoted=false;
   app.state=newUniversalMatch(app.packs,{decks:[mine.counts,foe.counts],seed,first});
   assertUniversalMatch(app.packs,app.state);
   app.error='';app.selectedUid=null;app.undo=null;app.allActions=false;app.aiFallbacks=0;app.aiCompletedSteps=0;app.lastAiProgress='新對局';

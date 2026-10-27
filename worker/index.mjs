@@ -85,9 +85,11 @@ function send(status,payload,headers={}){
   ...headers
  }});
 }
-function cookie(token,secure){
- const maxAge=token?14*24*60*60:0;
- return 'ua_session='+(token||'')+'; HttpOnly; SameSite=Lax; Path=/; Max-Age='+maxAge+(secure?'; Secure':'');
+function cookie(token,secure,remember=true){
+ const base='ua_session='+(token||'')+'; HttpOnly; SameSite=Lax; Path=/'+(secure?'; Secure':'');
+ if(!token)return base+'; Max-Age=0';
+ if(remember===false)return base;
+ return base+'; Max-Age='+(14*24*60*60);
 }
 function sessionToken(request){
  const header=request.headers.get('authorization')||'';
@@ -141,12 +143,12 @@ export default {
     if(method==='POST'&&path==='/api/register'){
      const body=await readBody(request);
      const result=await callAccount({op:'register',username:body.username,password:body.password,ip});
-     return send(201,{username:result.username,token:result.token},{'set-cookie':cookie(result.token,secure)});
+     return send(201,{username:result.username,token:result.token},{'set-cookie':cookie(result.token,secure,body.remember!==false)});
     }
     if(method==='POST'&&path==='/api/login'){
      const body=await readBody(request);
      const result=await callAccount({op:'login',username:body.username,password:body.password,ip});
-     return send(200,{username:result.username,token:result.token},{'set-cookie':cookie(result.token,secure)});
+     return send(200,{username:result.username,token:result.token},{'set-cookie':cookie(result.token,secure,body.remember!==false)});
     }
     if(method==='POST'&&path==='/api/logout'){
      await callAccount({op:'logout',token});

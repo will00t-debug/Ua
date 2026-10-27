@@ -60,7 +60,7 @@ const deckMeta=safeRead(DECK_META_KEY)||{};
 let deckName=typeof deckMeta.name==='string'?deckMeta.name.slice(0,40):(PRESETS.find(p=>sameCounts(p.counts,deck))?.name||'自訂 BLEACH 牌組');
 let selectedDeckId=savedDecks.some(d=>d.id===deckMeta.savedId)?deckMeta.savedId:null;
 const ui={ttgSelected:null,ttgKind:'all',ttgVisible:90,ttg012:{discardUids:[],mode:'readyAP',apUid:null,targetUid:null},ttg012Search:{takeUid:null,orderUids:[]},soloSelected:null,saoSet:'all',title:'bleach',view:'lobby',mode:'solo',aiDifficulty:['easy','normal','hard'].includes(safeRead(AI_KEY))?safeRead(AI_KEY):'normal',first:'0',preset:[0,1].includes(deckMeta.preset)?deckMeta.preset:0,opponentSource:'preset:1',filter:'all',search:'',selected:null,line:'energy',deployment:'normal',sideTab:'card',raidFlow:null,modal:null,choiceIds:[],handoff:false,lastController:null,privatePeekOpen:false};
-ui.builderReady=false;ui.builderTab='pick';ui.builderType='all';ui.builderColor='all';ui.builderEnergy='all';
+ui.builderReady=false;ui.builderTab='pick';ui.builderType='all';ui.builderColor='all';ui.builderEnergy='all';ui.builderGenerate='all';ui.builderSort='energy-asc';ui.recordView='all';
 if(deckMeta.opponentSource==='current'||/^preset:[01]$/.test(deckMeta.opponentSource||'')||savedDecks.some(d=>'saved:'+d.id===deckMeta.opponentSource))ui.opponentSource=deckMeta.opponentSource;
 let botTimer=null,toastTimer=null;
 function safeRead(k){try{return JSON.parse(localStorage.getItem(k)||'null');}catch{return null;}}
@@ -158,6 +158,7 @@ function visualDeckLibrary(){
  return renderVisualDeckBuilder({
   titles:TITLES,titleId:ui.title,ready:ui.builderReady,tab:ui.builderTab,
   search:ui.search,type:ui.builderType,color:ui.builderColor,energy:ui.builderEnergy,
+  generate:ui.builderGenerate,sort:ui.builderSort,recordView:ui.recordView,
   ...data,issues:[...(data.issues||[]),...extra],v2Ready:report.ok
  });
 }
@@ -539,7 +540,10 @@ function bind(){
     if(el.dataset.builderType){ui.builderType=el.dataset.builderType;render();return;}
     if(el.dataset.builderColor){ui.builderColor=el.dataset.builderColor;render();return;}
     if(el.dataset.builderEnergy){ui.builderEnergy=el.dataset.builderEnergy;render();return;}
-    if(el.dataset.builderClear!==undefined){ui.builderType='all';ui.builderColor='all';ui.builderEnergy='all';ui.search='';render();return;}
+    if(el.dataset.builderGenerate){ui.builderGenerate=el.dataset.builderGenerate;render();return;}
+    if(el.dataset.builderSort){ui.builderSort=el.dataset.builderSort;render();return;}
+    if(el.dataset.recordView){ui.recordView=el.dataset.recordView;render();return;}
+    if(el.dataset.builderClear!==undefined){ui.builderType='all';ui.builderColor='all';ui.builderEnergy='all';ui.builderGenerate='all';ui.builderSort='energy-asc';ui.search='';render();return;}
     if(el.dataset.builderCount){
      const c=TITLES.find(t=>t.id===ui.title)?.cards.find(c=>c.id===el.dataset.builderCount);
      if(!c||['ap','action-point','action_point'].includes(c.type)||(ui.title==='mushoku-tensei'&&!c.verified))return;

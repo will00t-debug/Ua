@@ -159,7 +159,7 @@ function present(room,userId){
  const mine=room.seats[seat],other=room.seats[1-seat];
  const payload={
   code:room.code,status:room.status,revision:room.revision,seat,
-  you:{username:mine.username,deckName:mine.deckName,title:mine.title,titleLabel:TITLE_LABELS[mine.title]||mine.title},
+  you:{username:mine.username,deckId:mine.deckId,deckName:mine.deckName,title:mine.title,titleLabel:TITLE_LABELS[mine.title]||mine.title},
   opponent:other?{username:other.username,deckName:other.deckName,title:other.title,titleLabel:TITLE_LABELS[other.title]||other.title}:null,
   youAreFirst:room.first==null?null:room.first===seat,
   yourTurn:false,choices:[],view:null,log:room.log.slice(-40),
