@@ -182,10 +182,21 @@ export default {
     }
     return send(404,{error:'找不到這個功能。'});
    }
-   if(path==='/'){
-    const home=new URL(request.url);
-    home.pathname='/universal-v2-preview.html';
-    return env.ASSETS.fetch(new Request(home,request));
+   // One host: / is the battle lobby, /index.html is the deck gallery, /online.html is accounts.
+   // html_handling is "none", so index.html is not redirected onto / and hidden by the lobby.
+   const pages={
+    '/':'/universal-v2-preview.html',
+    '/universal-v2-preview':'/universal-v2-preview.html',
+    '/universal-v2-preview.html':'/universal-v2-preview.html',
+    '/index':'/index.html',
+    '/index.html':'/index.html',
+    '/online':'/online.html',
+    '/online.html':'/online.html'
+   };
+   if((method==='GET'||method==='HEAD')&&pages[path]){
+    const page=new URL(request.url);
+    page.pathname=pages[path];
+    return env.ASSETS.fetch(new Request(page,request));
    }
    if(method==='GET'||method==='HEAD')return env.ASSETS.fetch(request);
    return send(404,{error:'找不到頁面。'});
