@@ -8,7 +8,8 @@ export const V2_TITLE_LABELS=Object.freeze({
  'solo-leveling':'我獨自升級',
  'sword-art-online':'刀劍神域',
  'mushoku-tensei':'無職轉生',
- rezero:'Re:Zero'
+ rezero:'Re:Zero',
+ 'steins-gate':'命運石之門'
 });
 export const V2_PENDING_LABELS=Object.freeze({
  block:'選擇是否阻擋', 'life-trigger':'生命觸發',

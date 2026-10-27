@@ -5,7 +5,7 @@ import {TITLES} from '../dist/title-registry.mjs';
 import {BLEACH_GREEN_V2_COUNTS} from '../dist/universal-v2/preview-real-decks.mjs';
 import {LEGACY_DECK_KEYS,V2_EDITOR_TRANSFER_KEY,normalizeEditorCounts,toV2Counts,editorV2Status,registeredPackForEditor}
  from '../dist/v2-editor-compat.mjs';
-import {practiceDeck,rezeroSet1PracticeDeck} from '../dist/universal-v2/official-entry.mjs';
+import {practiceDeck,rezeroSet1PracticeDeck,steinsGatePracticeDeck} from '../dist/universal-v2/official-entry.mjs';
 const read=p=>readFileSync(new URL(p,import.meta.url),'utf8');
 test('six-title production editor cannot load old battle engine or old app script',()=>{
  const html=read('../dist/index.html'),code=read('../dist/v2-deck-editor.mjs');
@@ -14,7 +14,8 @@ test('six-title production editor cannot load old battle engine or old app scrip
  for(const dependency of ['engine.mjs','match-runtime.mjs','ttg-core-match.mjs','solo-match.mjs','ai-v2.mjs'])
   assert.doesNotMatch(code,new RegExp("from ['\"][^'\"]*"+dependency.replace('.','\\.')+"['\"]"));
  assert.match(read('../vercel.json'),/universal-v2-preview\.html/);
- assert.equal(TITLES.length,6);
+ assert.equal(TITLES.length,7);
+ assert.equal(TITLES.find(t=>t.id==='steins-gate').cards.length,80);
 });
 test('old browser keys remain the backing stores, not deleted or migrated destructively',()=>{
  assert.deepEqual(LEGACY_DECK_KEYS.bleach,['bleach-arena-deck-v1','bleach-arena-saved-decks-v1']);
@@ -55,6 +56,13 @@ test('Tengen Toppa 81 and Re:Zero set 1 can start production V2; regular Vol.2 c
  assert.equal(mixed.ready,false);
  assert.equal(mixed.supported.has('REZ-2-001'),true);
  assert.ok(mixed.issues.every(x=>!x.includes('尚未完整移植')));
+ const stg=steinsGatePracticeDeck();
+ const stgReady=editorV2Status('steins-gate',stg.counts);
+ assert.equal(stgReady.ready,true,stgReady.issues.join('；'));
+ assert.equal(stgReady.registered,34);
+ const stgBlocked=editorV2Status('steins-gate',{'STG-1-003':4});
+ assert.equal(stgBlocked.ready,false);
+ assert.ok(stgBlocked.issues.some(x=>x.includes('STG-1-003')));
 });
 test('V2 match reads precise custom deck handoff and revalidates before play',()=>{
  const source=read('../dist/universal-v2-preview.mjs');

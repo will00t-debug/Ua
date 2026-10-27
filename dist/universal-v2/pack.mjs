@@ -395,8 +395,9 @@ function verifyProgram(program,path){
      (f.field!=='type'||V2_CARD_TYPES.includes(f.value)));
    const single=isFilter(e.filter)&&e.filters===undefined&&e.logic===undefined&&
     Object.keys(e).every(k=>['op','count','filter'].includes(k));
+   // Five names is the printed STG-1-068 window. Six is still rejected.
    const compound=e.filter===undefined&&Array.isArray(e.filters)&&
-    e.filters.length>=2&&e.filters.length<=4&&e.filters.every(isFilter)&&
+    e.filters.length>=2&&e.filters.length<=5&&e.filters.every(isFilter)&&
     new Set(e.filters.map(f=>f.field+':'+f.value)).size===e.filters.length&&
     ['any','all'].includes(e.logic)&&
     Object.keys(e).every(k=>['op','count','filters','logic'].includes(k));
@@ -1029,15 +1030,20 @@ function verifyProgram(program,path){
    throw Error(path+'['+i+'] invalid own-trait ACTIVE');
   if(e.op==='retireSourceOnPhaseEnd'&&Object.keys(e).length!==1)throw Error(path+'['+i+'] invalid phase self retirement');
   if(e.op==='retireOwnCharacterOne'){
-   const legacyDraw=e.after?.length===1&&e.after[0]?.op==='draw'&&
+   const drawAfter=e.after?.length===1&&e.after[0]?.op==='draw'&&
     Number.isInteger(e.after[0].count)&&e.after[0].count>=1&&e.after[0].count<=5&&
-    e.excludeSelf===undefined;
+    Object.keys(e.after[0]).every(k=>k==='op'||k==='count');
+   // Printed 「他のキャラ」 excludes the source. A plain draw follow-up stays
+   // the older profile that may select this character.
+   const legacyDraw=drawAfter&&e.excludeSelf===undefined;
+   const otherThenDraw=drawAfter&&e.excludeSelf===true;
    const otherThenField=e.excludeSelf===true&&e.after?.length===1&&
     e.after[0]?.op==='deployNamedFromZones'&&
     e.after[0].cardType==='field'&&e.after[0].line==='energy'&&
     e.after[0].ready===true;
-   if(e.optional!==true||!Array.isArray(e.after)||!legacyDraw&&!otherThenField||
-    Object.keys(e).length!==(otherThenField?4:3)||
+   if(e.optional!==true||!Array.isArray(e.after)||
+    !(legacyDraw||otherThenDraw||otherThenField)||
+    Object.keys(e).length!==((otherThenField||otherThenDraw)?4:3)||
     Object.keys(e).some(k=>!['op','optional','after','excludeSelf'].includes(k)))
     throw Error(path+'['+i+'] invalid own character retirement and follow-up');
    verifyProgram(e.after,path+'['+i+'].after');
