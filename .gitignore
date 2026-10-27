@@ -9,3 +9,6 @@ Thumbs.db
 *.log
 __pycache__/
 .pytest_cache/
+data/
+worker/dist/
+.wrangler/

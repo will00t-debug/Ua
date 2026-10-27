@@ -29,6 +29,16 @@ python3 -m http.server 8000 --directory dist
 
 接著打開 `http://localhost:8000`。由於使用 ES Modules，建議 HTTP 伺服器，不要直接用 `file://` 開啟未打包的模組版本。
 
+若要使用帳號、依使用者保存牌組和線上對戰，改啟動 Node 伺服器：
+
+```sh
+npm start
+```
+
+預設網址是 `http://localhost:8787`。帳號、牌組和未結束的對戰寫在 `data/account.sqlite`（`data/` 已列入 `.gitignore`）。程式重新啟動後，這些資料還在；這台電腦仍要開著，別人才連得上。線上對戰由伺服器執行 Universal V2，回應裡只有該玩家看得到的手牌與公開場面。
+
+要讓自己的電腦不必一直開著，把同一個網站部署到 Cloudflare。帳號放在一個 Durable Object，每一場對戰各用一個 Durable Object 保存隱藏手牌。先執行 `npm install` 和 `npm run worker:deploy`（需要先 `npx wrangler login`）。靜態 `dist/` 部署（包含目前的 Vercel）不會提供登入或線上對戰；原本的本機牌組與電腦對戰仍然可用。
+
 測試（需 Node.js 18 以上）：
 
 ```sh
