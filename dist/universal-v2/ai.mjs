@@ -199,6 +199,7 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='main-two-buff')return legal[0];
  if(s.pending?.kind==='main-rest-front-energy')
   return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-equal-bp-pair')return legal[0];
  if(s.pending?.kind==='effect-rest-bp'){
   // RESTed characters remain legal targets (official Q91), but choosing one
   // wastes the effect whenever a READY opponent is also available.

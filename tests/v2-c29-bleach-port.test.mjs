@@ -323,7 +323,7 @@ import bleachContribution from '../dist/universal-v2/title-packs/bleach.mjs';
 //   REST-play up to one yellow AP1 character of printed energy 2 or less.
 
 const bleach=registeredV2TitlePack('bleach');
-const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008','BLC-4-065','BLC-2-051','BLC-1-092','BLC-4-044','BLC-4-016','BLC-4-017','BLC-1-028','BLC-2-002','BLC-4-032','BLC-1-011','BLC-1-104','BLC-1-014','BLC-1-020','BLC-1-050','BLC-1-055','BLC-1-063','BLC-1-093','BLC-2-009','BLC-2-013','BLC-2-030','BLC-2-034','BLC-2-035','BLC-2-038','BLC-2-057','BLC-2-060','BLC-2-061','BLC-4-057','BLC-4-011','BLC-4-007','BLC-4-012','BLC-4-004','BLC-4-005','BLC-4-015','BLC-4-055','BLC-4-056','BLC-4-041','BLC-4-053','BLC-4-033','BLC-4-075','BLC-2-065'];
+const ADDED=['BLC-1-080','BLC-1-091','BLC-2-041','BLC-1-062','BLC-1-032','BLC-1-078','BLC-1-087','BLC-2-026','BLC-2-027','BLC-4-046','BLC-4-028','BLC-4-052','BLC-3-007','BLC-3-002','BLC-4-001','BLC-2-072','BLC-2-032','BLC-3-004','BLC-1-079','BLC-2-050','BLC-1-108','BLC-3-010','BLC-2-018','BLC-1-056','BLC-4-024','BLC-1-004','BLC-1-046','BLC-4-063','BLC-4-064','BLC-2-005','BLC-2-006','BLC-2-058','BLC-2-033','BLC-1-022','BLC-2-011','BLC-1-060','BLC-1-038','BLC-2-014','BLC-2-001','BLC-4-037','BLC-4-071','BLC-3-005','BLC-4-006','BLC-4-047','BLC-2-017','BLC-4-003','BLC-2-028','BLC-4-043','BLC-4-051','BLC-4-068','BLC-4-010','BLC-2-024','BLC-4-039','BLC-3-003','BLC-4-072','BLC-1-026','BLC-1-025','BLC-1-033','BLC-1-031','BLC-1-096','BLC-1-065','BLC-4-021','BLC-4-081','BLC-2-012','BLC-1-081','BLC-2-037','BLC-2-045','BLC-1-061','BLC-4-077','BLC-4-079','BLC-2-064','BLC-4-018','BLC-4-008','BLC-4-065','BLC-2-051','BLC-1-092','BLC-4-044','BLC-4-016','BLC-4-017','BLC-1-028','BLC-2-002','BLC-4-032','BLC-1-011','BLC-1-104','BLC-1-014','BLC-1-020','BLC-1-050','BLC-1-055','BLC-1-063','BLC-1-093','BLC-2-009','BLC-2-013','BLC-2-030','BLC-2-034','BLC-2-035','BLC-2-038','BLC-2-057','BLC-2-060','BLC-2-061','BLC-4-057','BLC-4-011','BLC-4-007','BLC-4-012','BLC-4-004','BLC-4-005','BLC-4-015','BLC-4-055','BLC-4-056','BLC-4-041','BLC-4-053','BLC-4-033','BLC-4-075','BLC-2-065','BLC-2-070'];
 function realDeck(required,color){
  const rest=Object.values(bleach.cards).filter(c=>c.color===color&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
@@ -394,12 +394,12 @@ function plainId(deck,bp,not){
  return id;
 }
 
-test('C29 registers one-hundred-thirteen whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,549);
- assert.equal(EXPECTED_V2_COUNTS.bleach,273);
+test('C29 registers one-hundred-fourteen whole BLEACH prints and keeps the independent census',()=>{
+ assert.equal(EXPECTED_V2_TOTAL,550);
+ assert.equal(EXPECTED_V2_COUNTS.bleach,274);
  assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
- assert.equal(Object.keys(bleach.cards).length,273);
+ assert.equal(Object.keys(bleach.cards).length,274);
 });
 
 test('BLC-1-080 ignores BP reductions and gains 1000 only on its own turn',()=>{
@@ -13629,6 +13629,152 @@ test('BLC-2-065 strips its raid top, ignores opponent REST and bounce, and still
  assert.equal(assertUniversalMatch(bounced.packs,flip),true);
  assert.equal(assertUniversalMatch(clash.packs,battle),true);
  assert.equal(assertUniversalMatch(packs,rule),true);
+});
+
+test('BLC-2-070 retires an equal low pair or rests a tall front and actives',()=>{
+ const printed=CARDS.find(c=>c.identity==='BLC-2-070');
+ assert.equal(printed.number,'EX07BT/BLC-2-070');
+ assert.equal(printed.nameJa,'平子 真子');
+ assert.equal(printed.color,'green');
+ assert.equal(printed.energy,4);
+ assert.equal(printed.ap,2);
+ assert.equal(printed.bp,4000);
+ assert.equal(printed.gen,1);
+ assert.equal(printed.trigger,'draw');
+ assert.equal(printed.traits,'護廷十三隊');
+ assert.equal(printed.effect,'登場：可選最多一項：①此角色位於前線時，選 2 個 BP 相同且皆為 2000 以下的敵方前線角色，使兩者退場；②可選最多 1 個敵方前線 BP 3000 以上角色，將其轉為 REST，並將此角色轉為 ACTIVE。');
+ const card=bleach.cards['BLC-2-070'];
+ assert.equal(card.name,'平子 真子');
+ assert.equal(card.gen,1);
+ assert.equal(card.ap,2);
+ assert.equal(card.triggerEffect,null);
+ assert.equal(card.effects.onPlay[0].op,'chooseOne');
+ assert.equal(card.effects.onPlay[0].optional,true);
+ const entryNote=bleachContribution.entries.find(x=>x.id==='BLC-2-070');
+ assert.match(entryNote.evidence.reviewNote,/2000/);
+ assert.match(entryNote.evidence.reviewNote,/3000/);
+ assert.match(entryNote.evidence.reviewNote,/No card FAQ/);
+ const bare={id:'BAD',name:'平子 真子',color:'green',type:'character',energy:0,ap:2,bp:1000,gen:1,traits:[],trigger:null,implementation:'dsl'};
+ assert.throws(()=>createUniversalPack({id:'bad-hirako',cards:[{...bare,effects:{onPlay:[{op:'chooseOne',optional:true,options:[
+  {id:'pair',label:'退場',turn:'any',line:'front',then:[{op:'retireEqualFrontPair',maxBp:0}]},
+  {id:'rest',label:'REST',turn:'any',then:[{op:'activeSelf'}]}
+ ]}]}}]}),/invalid equal-BP pair/);
+ const required=['BLC-2-070','BLC-1-078','BLC-1-067','BLC-1-073'];
+ const fillers=Object.values(bleach.cards).filter(c=>c.color==='green'&&c.maxCopies===4&&
+  !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort().slice(0,9);
+ const deck=Object.fromEntries([...required.map(id=>[id,4]),...fillers.map((id,i)=>[id,i===8?2:4])]);
+ assert.equal(Object.values(deck).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(bleach,deck),[]);
+ const hold=(s,p,id)=>{const c=take(s,p,id);s.players[p].hand.push(c);return c;};
+ function open(seed){
+  const packs=[bleach,bleach];
+  let s=newUniversalMatch(packs,{decks:[deck,deck],seed,first:1});
+  for(let n=0;n<20&&!(s.active===0&&s.phase==='main'&&!s.pending);n++){
+   const legal=legalUniversalActions(packs,s);
+   const action=s.pending?legal.find(a=>a.uid===null||a.mode==='skip')||legal[0]:legal.find(a=>a.type==='next');
+   assert.ok(action,s.pending&&s.pending.kind);
+   s=dispatchUniversalAction(packs,s,action,{actor:s.pending?s.pending.player:s.active});
+  }
+  assert.equal(s.active,0);
+  assert.equal(s.phase,'main');
+  return {packs,s};
+ }
+ function pay(board){
+  put(board.s,0,'BLC-1-078','energy',0,true);
+  put(board.s,0,'BLC-1-078','energy',1,true);
+  return hold(board.s,0,'BLC-2-070');
+ }
+ function play(board,rider,line,slot=0){
+  const action=legalUniversalActions(board.packs,board.s).find(a=>a.type==='play'&&
+   a.uid===rider.uid&&a.line===line&&a.slot===slot&&a.replaceUid===undefined);
+  assert.ok(action);
+  return dispatchUniversalAction(board.packs,board.s,action);
+ }
+ const modes=(packs,s)=>legalUniversalActions(packs,s).filter(a=>a.type==='chooseEffectMode').map(a=>a.mode).sort();
+ const paired=open(30030);
+ const lowA=put(paired.s,1,'BLC-1-067','front',0,true);
+ const lowB=put(paired.s,1,'BLC-1-067','front',1,true);
+ const rider=pay(paired);
+ let entered=play(paired,rider,'front');
+ assert.equal(entered.players[0].front[0].ready,false);
+ assert.deepEqual(modes(paired.packs,entered),['pair','rest','skip']);
+ aiOk([bleach,bleach],entered);
+ entered=dispatchUniversalAction(paired.packs,entered,{type:'chooseEffectMode',mode:'pair'});
+ assert.equal(entered.pending.kind,'effect-equal-bp-pair');
+ aiOk([bleach,bleach],entered);
+ entered=dispatchUniversalAction(paired.packs,entered,{type:'chooseEqualBpPair',uid:lowA.uid});
+ entered=dispatchUniversalAction(paired.packs,entered,{type:'chooseEqualBpPair',uid:lowB.uid});
+ assert.equal(entered.pending,null);
+ assert.equal(entered.players[0].front[0].ready,false);
+ assert.ok(entered.players[1].outside.some(c=>c.uid===lowA.uid));
+ assert.ok(entered.players[1].outside.some(c=>c.uid===lowB.uid));
+ const quiet=open(30031);
+ const quietRider=pay(quiet);
+ let energy=play(quiet,quietRider,'energy',2);
+ assert.deepEqual(modes(quiet.packs,energy),['rest','skip']);
+ energy=dispatchUniversalAction(quiet.packs,energy,{type:'chooseEffectMode',mode:'rest'});
+ assert.equal(energy.pending,null);
+ assert.equal(energy.players[0].energy[2].cardId,'BLC-2-070');
+ assert.equal(energy.players[0].energy[2].ready,true);
+ const declined=open(30032);
+ const stayA=put(declined.s,1,'BLC-1-067','front',0,true);
+ const stayB=put(declined.s,1,'BLC-1-067','front',1,true);
+ const declinedRider=pay(declined);
+ let passed=play(declined,declinedRider,'front');
+ passed=dispatchUniversalAction(declined.packs,passed,{type:'chooseEffectMode',mode:'skip'});
+ assert.equal(passed.pending,null);
+ assert.equal(passed.players[0].front[0].ready,false);
+ assert.equal(passed.players[1].front[0].uid,stayA.uid);
+ assert.equal(passed.players[1].front[1].uid,stayB.uid);
+ const tall=open(30033);
+ const marked=put(tall.s,1,'BLC-1-073','front',0,true);
+ const tallRider=pay(tall);
+ let rested=play(tall,tallRider,'front');
+ rested=dispatchUniversalAction(tall.packs,rested,{type:'chooseEffectMode',mode:'rest'});
+ assert.equal(rested.pending.kind,'effect-rest-bp');
+ assert.equal(legalUniversalActions(tall.packs,rested).some(a=>a.type==='chooseRestBp'&&a.uid===marked.uid),true);
+ rested=dispatchUniversalAction(tall.packs,rested,{type:'chooseRestBp',uid:marked.uid});
+ assert.equal(rested.players[1].front[0].ready,false);
+ assert.equal(rested.players[0].front[0].ready,true);
+ const spared=open(30034);
+ const sparedTarget=put(spared.s,1,'BLC-1-073','front',0,true);
+ const sparedRider=pay(spared);
+ let kept=play(spared,sparedRider,'front');
+ kept=dispatchUniversalAction(spared.packs,kept,{type:'chooseEffectMode',mode:'rest'});
+ kept=dispatchUniversalAction(spared.packs,kept,{type:'chooseRestBp',uid:null});
+ assert.equal(kept.players[1].front[0].uid,sparedTarget.uid);
+ assert.equal(kept.players[1].front[0].ready,true);
+ assert.equal(kept.players[0].front[0].ready,true);
+ const shifted=open(30035);
+ const cutA=put(shifted.s,1,'BLC-1-073','front',0,true);
+ const cutB=put(shifted.s,1,'BLC-1-073','front',1,true);
+ cutA.buffs.push({bp:-1000,untilTurn:shifted.s.turn});
+ cutB.buffs.push({bp:-1000,untilTurn:shifted.s.turn});
+ assert.equal(universalBp(shifted.packs,shifted.s,cutA),2000);
+ const shiftedRider=pay(shifted);
+ let lowered=play(shifted,shiftedRider,'front');
+ assert.equal(modes(shifted.packs,lowered).includes('pair'),true);
+ lowered=dispatchUniversalAction(shifted.packs,lowered,{type:'chooseEffectMode',mode:'pair'});
+ lowered=dispatchUniversalAction(shifted.packs,lowered,{type:'chooseEqualBpPair',uid:cutA.uid});
+ lowered=dispatchUniversalAction(shifted.packs,lowered,{type:'chooseEqualBpPair',uid:cutB.uid});
+ assert.ok(lowered.players[1].outside.some(c=>c.uid===cutA.uid));
+ assert.ok(lowered.players[1].outside.some(c=>c.uid===cutB.uid));
+ const raised=open(30036);
+ const plainA=put(raised.s,1,'BLC-1-067','front',0,true);
+ const plainB=put(raised.s,1,'BLC-1-067','front',1,true);
+ plainA.buffs.push({bp:1000,untilTurn:raised.s.turn});
+ const raisedRider=pay(raised);
+ const uneven=play(raised,raisedRider,'front');
+ assert.equal(modes(raised.packs,uneven).includes('pair'),false);
+ assert.equal(uneven.players[1].front[0].uid,plainA.uid);
+ assert.equal(uneven.players[1].front[1].uid,plainB.uid);
+ assert.equal(assertUniversalMatch(paired.packs,entered),true);
+ assert.equal(assertUniversalMatch(quiet.packs,energy),true);
+ assert.equal(assertUniversalMatch(declined.packs,passed),true);
+ assert.equal(assertUniversalMatch(tall.packs,rested),true);
+ assert.equal(assertUniversalMatch(spared.packs,kept),true);
+ assert.equal(assertUniversalMatch(shifted.packs,lowered),true);
+ assert.equal(assertUniversalMatch(raised.packs,uneven),true);
 });
 
 function locationLine(s,uid){

@@ -182,6 +182,7 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseKeywordMode':return action.mode==='impact'?'本回合 Impact +1':'本回合直接攻擊傷害 +1';
   case 'chooseNamedImpact':return action.uid===null?'不賦予 BP 與 Impact':'賦予 '+name()+' 本回合 BP 與 Impact';
   case 'chooseNamedRestReady':return action.uid===null?'不橫置指定角色':'橫置 '+name()+'，然後啟動 1 張 AP 卡';
+  case 'chooseEqualBpPair':return '退場 BP 相同的 '+name();
   case 'chooseEffectMode':
    return action.mode==='skip'?'不選任何效果':
     '選擇效果：'+(state?.pending?.options?.find(o=>o.id===action.mode)?.label||action.mode);
