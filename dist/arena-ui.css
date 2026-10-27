@@ -123,3 +123,25 @@ body.arena-site{background:#07090f;color:#e8edf5}
  .arena-deck-actions button,.arena-login-submit,.arena-login-alt{width:100%}
  .arena-editor .arena-card-row{grid-template-columns:64px minmax(0,1fr) auto}
 }
+
+
+/* V2 battle lobby: match the dark red deck-editor shell without changing game rules. */
+.arena-site .arena-lobby{max-width:1440px;margin:0 auto;padding:24px clamp(12px,3vw,38px) 52px}
+.arena-battle-heading{padding:32px clamp(18px,4vw,48px);margin-bottom:18px;border:1px solid #34303b;border-radius:16px;background:linear-gradient(95deg,rgba(8,10,16,.94) 25%,rgba(15,12,20,.80)),radial-gradient(ellipse at 85% 10%,#a21d35 0%,transparent 55%),#090b11}
+.arena-battle-heading h1{font-size:clamp(30px,4vw,52px);letter-spacing:.06em;margin:8px 0 10px}
+.arena-battle-heading p{margin:0}
+.arena-battle-eyebrow{font-size:12px;letter-spacing:.18em;color:#fb5262;font-weight:800}
+.arena-site .arena-battle-modes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:0 0 22px}
+.arena-site .arena-battle-modes .arena-entry{position:relative;display:flex;flex-direction:column;gap:10px;min-height:188px;padding:23px;justify-content:center;background:linear-gradient(145deg,rgba(31,36,48,.96),rgba(9,12,19,.98));border:1px solid #3a3e4b;transition:border-color .18s,transform .18s,box-shadow .18s}
+.arena-site .arena-battle-modes .arena-entry:hover,.arena-site .arena-battle-modes .arena-entry:focus-visible{transform:translateY(-2px);border-color:#f43f51;box-shadow:0 10px 34px #0009}
+.arena-site .arena-battle-modes .arena-entry-online{border-color:#c52b41;background:linear-gradient(125deg,#55111dd9,#15111b 78%)}
+.arena-mode-icon{font-size:30px;color:#fa4357}
+.arena-site .arena-battle-modes .arena-entry strong{font-size:clamp(21px,2vw,27px)}
+.arena-mode-cta{margin-top:auto;color:#ff6474!important;font-weight:700}
+.arena-site .arena-lobby>.panel{border:1px solid #303747;background:linear-gradient(145deg,#151a25,#0b0f17);border-radius:15px;padding:clamp(16px,2vw,26px);margin-bottom:18px}
+.arena-site .arena-lobby>.panel h2{margin-top:0;padding-bottom:12px;border-bottom:1px solid #2b3341}
+.arena-site .arena-lobby #online-match{scroll-margin-top:90px;border-color:#672532}
+.arena-site .arena-lobby #online-match form{background:#0b0f18;border:1px solid #2c3544;border-radius:12px;padding:18px;margin:12px 0}
+.arena-site .arena-lobby #online-match button.primary{background:#c61e32}
+.arena-site .arena-lobby :is(button,a,input,select):focus-visible{outline:2px solid #fa5367;outline-offset:2px}
+@media(max-width:760px){.arena-site .arena-lobby{padding:14px 10px 32px}.arena-battle-heading{padding:23px 18px}.arena-site .arena-battle-modes{grid-template-columns:1fr}.arena-site .arena-battle-modes .arena-entry{min-height:118px;padding:17px}.arena-site .arena-lobby #online-match form{padding:12px}}
