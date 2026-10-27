@@ -30,6 +30,7 @@ test('account portal prominently restores original picture editor and uses its e
 
 test('existing signed-in account deck opens original image builder; saving updates same remote ID without deleting other drafts',async()=>{
  const originalTimer=globalThis.setTimeout;
+ const originalFetch=globalThis.fetch;
  const app={innerHTML:'',onclick:null};
  const toast={textContent:'',classList:{add(){},remove(){}}};
  const otherId='keep-existing';
@@ -68,7 +69,8 @@ test('existing signed-in account deck opens original image builder; saving updat
   assert.ok(after.some(d=>d.id==='original-green'),'Cloud source localId must remain stable');
  }finally{
   globalThis.setTimeout=originalTimer;
-  for(const field of ['document','localStorage','sessionStorage','window','fetch'])delete globalThis[field];
+  globalThis.fetch=originalFetch;
+  for(const field of ['document','localStorage','sessionStorage','window'])delete globalThis[field];
  }
 });
 
