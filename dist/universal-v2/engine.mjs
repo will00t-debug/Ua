@@ -286,6 +286,20 @@ function grantBattleWinToOtherOwn(pack,s,owner,winner,role){
   };
  }
 }
+// アタックしてバトルに勝利した時. Q2326: this character attacked, battled an
+// opposing character, and its BP was greater than or equal. A direct attack
+// is not a battle, and winning as the blocker is not this sentence. The
+// printed name shares one resolution per turn. The once is spent when the
+// effect resolves, including when the character is already ACTIVE. Silence
+// removes the sentence before it resolves and does not spend the once.
+function applyAttackWinActiveOnce(pack,s,owner,attacker){
+ const d=card(pack,attacker);
+ if(d.attackWinActiveOnce!=='name'||originalEffectsDisabled(s,attacker))return;
+ const key=d.name+'|attackWinActive';
+ if(s.mainReadyOnceByName[owner].includes(key))return;
+ s.mainReadyOnceByName[owner].push(key);
+ attemptFieldActive(s,owner,attacker);
+}
 // Earned only at a real attacking CHARACTER-vs-CHARACTER victory, not LIFE.
 function queueAttackWinRecovery(pack,s,owner,attacker){
  const rule=card(pack,attacker).attackWinRecover;
@@ -2032,6 +2046,7 @@ function continueEffectQueue(pack,s){
    queueEnergyLineAttackEndSwaps(pack,s,owner,attacker.uid);
    if(bp(pack,s,attacker)>=bp(pack,s,defender)){
     grantBattleWinToOtherOwn(pack,s,owner,attacker,'attacker');
+    applyAttackWinActiveOnce(pack,s,owner,attacker);
     const hasDraw=hasCurrentBattleGrant(s,attacker,'attackWinDrawGranted');
     const defenderSlot=s.players[1-owner].front.findIndex(c=>c?.uid===job.targetUid);
     const impact=impactOnBattleWin(pack,s,attacker)>0&&
@@ -2058,6 +2073,7 @@ function continueEffectQueue(pack,s){
    queueEnergyLineAttackEndSwaps(pack,s,owner,attacker.uid);
    if(bp(pack,s,attacker)>=bp(pack,s,defender)){
     grantBattleWinToOtherOwn(pack,s,owner,attacker,'attacker');
+    applyAttackWinActiveOnce(pack,s,owner,attacker);
     const defenderSlot=s.players[1-owner].front.findIndex(c=>c?.uid===job.targetUid);
     const impact=impactOnBattleWin(pack,s,attacker)>0&&
      !defenderNullifiesImpact(pack,s,defender);
@@ -3019,6 +3035,7 @@ function resolveChoice(s,a,pack){
   }
   if(bp(pack,s,attacker)>=bp(pack,s,blocker)){
    grantBattleWinToOtherOwn(pack,s,s.active,attacker,'attacker');
+   applyAttackWinActiveOnce(pack,s,s.active,attacker);
    const impact=impactOnBattleWin(pack,s,attacker)>0&&
     !defenderNullifiesImpact(pack,s,blocker);
    const earnedSelfDraw=hasCurrentBattleGrant(s,attacker,'attackWinDrawGranted');

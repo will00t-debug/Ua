@@ -90,6 +90,15 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   return s.players[1-owner].front.some(c=>c&&printed(c).type==='character'&&
    cardBp(c)<printed(c).bp);
  }
+ if(condition.kind==='oppFrontBelowPrintedCount'){
+  // 3枚以上. Same live-versus-printed comparison, counted. A field has no
+  // BP. An energy-line character is not on the front line.
+  if(typeof cardBp!=='function')throw Error('Live BP comparison needs a BP reader');
+  let found=0;
+  for(const c of s.players[1-owner].front)
+   if(c&&printed(c).type==='character'&&cardBp(c)<printed(c).bp)found++;
+  return found>=condition.min;
+ }
  if(condition.kind==='ownFrontNoOtherCharacter'){
   // 自分のフロントLに他のキャラがない. Energy-line cards and fields are
   // not front characters. This physical card does not count as another.
