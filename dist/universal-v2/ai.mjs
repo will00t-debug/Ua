@@ -206,6 +206,11 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   return legal.find(a=>a.uid!==null&&foe.find(c=>c?.uid===a.uid)?.ready)||
    legal.find(a=>a.uid!==null)||legal[0];
  }
+ if(s.pending?.kind==='effect-active-other-trait'){
+  const mine=[...s.players[s.pending.player].front,...s.players[s.pending.player].energy];
+  return legal.find(a=>a.uid!==null&&mine.find(c=>c?.uid===a.uid)?.ready===false)||
+   legal.find(a=>a.uid!==null)||legal[0];
+ }
  if(s.pending?.kind==='effect-active-traitless'){
   if(difficulty==='easy')return legal.find(a=>a.uid===null)||legal[0];
   const mine=[...s.players[s.pending.player].front,...s.players[s.pending.player].energy];
