@@ -16,8 +16,8 @@ export const V2_EDITOR_TRANSFER_KEY='ua-v2-editor-deck-v1';
 export const titleCatalogue=id=>TITLES.find(t=>t.id===id)||null;
 export function registeredPackForEditor(title){
  if(!titleCatalogue(title))return null;
- // Re:Zero stays outside the five-title census. Set 1 plus the integrated
- // Vol.2 profiles share one battle pack; unimplemented Vol.2 ids are absent.
+ // Re:Zero stays outside the five-title census. All 73 regular EX17BT
+ // cards share the set-1 battle pack. AP cards are not deck cards.
  if(title==='rezero')return officialV2Pack('rezero');
  return registeredV2TitlePack(title);
 }

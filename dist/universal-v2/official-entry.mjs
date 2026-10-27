@@ -1,6 +1,7 @@
 // Official V2 battle entry for decks built in the picture deck editor.
 // A card that is not in the shared pack is reported and cannot start a match.
-// Re:Zero set 1 and the already integrated Vol.2 profiles share one pack.
+// Re:Zero set 1 and all 73 regular EX17BT Vol.2 cards share one pack.
+// AP cards are not deck cards and stay out of this pack.
 // This module does not add Re:Zero to the five-title census.
 import {requireRegisteredV2TitlePack} from './title-packs/registry.mjs';
 import {createUniversalPack,validateUniversalDeck} from './pack.mjs';
@@ -55,7 +56,7 @@ export function v2DeckReport(title,counts){
  ]:[];
  const issues=[...warnings];
  // Catalogue drafts store every card at 0. A zero is not in the deck, so an
- // unimplemented Vol.2 id must not block a legal set-1 list.
+ // A zero-count catalogue id is not in the deck and must not block a legal list.
  const listed=Object.fromEntries(positiveCounts(counts));
  if(!unsupported.length)issues.push(...validateUniversalDeck(pack,listed));
  else issues.push('包含尚未支援的卡片，目前不能開始對戰。');

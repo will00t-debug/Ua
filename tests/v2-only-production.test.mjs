@@ -38,22 +38,23 @@ test('real supported V2 Bleach 50-card deck can be used, unlike a legacy auto-on
  assert.equal(bad.ready,false);
  assert.ok(bad.issues.some(x=>x.includes('尚未完整移植 V2')));
 });
-test('Tengen Toppa 81 and Re:Zero set 1 can start production V2; unfinished Vol.2 cannot hide',()=>{
+test('Tengen Toppa 81 and Re:Zero set 1 can start production V2; regular Vol.2 cards are registered',()=>{
  assert.equal(TITLES.find(t=>t.id==='rezero').cards.length,186);
  const ttg=editorV2Status('gurren-lagann',practiceDeck(registeredPackForEditor('gurren-lagann'),{color:'red'}));
  assert.equal(ttg.registered,81);
  assert.equal(ttg.ready,true,ttg.issues.join('；'));
  const thin=editorV2Status('rezero',{'REZ-1-001':4});
  assert.equal(thin.ready,false);
- assert.equal(thin.registered,141);
+ assert.equal(thin.registered,186);
  assert.ok(thin.issues.every(x=>!x.includes('尚未接入正式 V2')));
  const set1=rezeroSet1PracticeDeck();
  const ready=editorV2Status('rezero',set1.counts);
  assert.equal(ready.ready,true,ready.issues.join('；'));
  assert.ok(Object.keys(ready.counts).every(id=>id.startsWith('REZ-1-')));
- const blocked=editorV2Status('rezero',{'REZ-1-001':46,'REZ-2-001':4});
- assert.equal(blocked.ready,false);
- assert.ok(blocked.issues.some(x=>x.includes('REZ-2-001')));
+ const mixed=editorV2Status('rezero',{'REZ-1-001':46,'REZ-2-001':4});
+ assert.equal(mixed.ready,false);
+ assert.equal(mixed.supported.has('REZ-2-001'),true);
+ assert.ok(mixed.issues.every(x=>!x.includes('尚未完整移植')));
 });
 test('V2 match reads precise custom deck handoff and revalidates before play',()=>{
  const source=read('../dist/universal-v2-preview.mjs');

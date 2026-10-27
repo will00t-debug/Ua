@@ -20,7 +20,7 @@ test('EX17BT catalogue is the official 73-card Vol.2 list and stays unplayable',
  assert.deepEqual(rarity,REZERO_VOL2_SET.rarity);
  assert.equal(REZERO_VOL2_AP.length,8);
  const implemented=new Set(REZ_V2_IMPLEMENTED_IDS);
- assert.equal(implemented.size,28);
+ assert.equal(implemented.size,73);
  assert.ok(REZERO_VOL2_CARDS.every(card=>card.auto===false&&titleOfCard(card)==='rezero'));
  assert.ok(REZERO_VOL2_CARDS.every(card=>card.engineImplemented===implemented.has(card.id)));
  assert.ok(REZERO_VOL2_AP.every(card=>card.engineImplemented!==true));
@@ -98,7 +98,7 @@ test('every regular card keeps its official source, image and non-empty Japanese
  assert.equal(REZERO_VOL2_AP.find(card=>card.id==='REZ-2-AP01').aliases[0],'EX17BT/REZ-2-AP01_p1');
 });
 
-test('Vol.2 drafts reject other titles, AP cards and fifth copies, and cannot start a match',()=>{
+test('Vol.2 drafts reject other titles, AP cards and fifth copies, and a full regular list is registered',()=>{
  assert.throws(()=>normalizeRezCounts({'REZ-2-001':5}),/4/);
  assert.throws(()=>normalizeRezCounts({'EX17BT/REZ-2-AP01':1}),/卡號不存在/);
  assert.throws(()=>normalizeRezCounts({'BLC-1-001':1}),/卡號不存在/);
@@ -108,7 +108,8 @@ test('Vol.2 drafts reject other titles, AP cards and fifth copies, and cannot st
  const picks=REZERO_VOL2_CARDS.slice(0,13);
  const full=Object.fromEntries(picks.map((card,index)=>[card.id,index===12?2:4]));
  assert.equal(Object.values(full).reduce((sum,n)=>sum+n,0),50);
- assert.ok(rezDeckIssues(full).some(issue=>issue.includes('不能開始對戰')));
+ assert.equal(rezDeckIssues(full).some(issue=>issue.includes('尚未支援')),false);
+ assert.equal(rezDeckIssues(full).some(issue=>issue.includes('不能開始對戰')),false);
  assert.equal(rezDeckIssues(full).some(issue=>issue.includes('50')),false);
  const bleach={title:'bleach',id:'039'};
  assert.equal(validateTitleMembership({'REZ-2-001':4,'039':1},{...REZERO_VOL2_BY_ID,'039':bleach}).length,1);

@@ -14,7 +14,11 @@ export const V2_PENDING_LABELS=Object.freeze({
  block:'選擇是否阻擋', 'life-trigger':'生命觸發',
  'life-batch-order':'選擇 LIFE／登場效果結算順序',
  'leave-replacement':'角色離場保護','private-top-choice':'查看牌庫頂','private-top-place':'選擇牌頂或牌底',
- 'effect-recover-ap':'恢復 AP','end-hand-limit':'手牌上限',
+ 'effect-recover-ap':'恢復 AP','effect-hand-top':'將 1 張手牌放到牌庫頂',
+ 'effect-grant-lose-ready':'給能源 0 的指定角色本回合落敗時 ACTIVE',
+ 'effect-trait-ban-move':'給有特徵的角色本回合不能攻擊，並移到另一條線',
+ 'effect-entry-rest-front':'將前線 ACTIVE 角色轉為 REST',
+ 'effect-retire-tuck-active':'可退場 1 張其他角色，裏向放在此角色下方並 ACTIVE','end-hand-limit':'手牌上限',
  'effect-discard':'選擇棄牌','effect-discard-cost':'支付棄牌成本',
  'effect-discard-gate':'是否支付棄牌成本',
  'effect-remove-outside':'可將己方場外卡移入移除區',
@@ -106,6 +110,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-buff-trait':'選擇己方 BP 加成',
  'main-two-buff':'主要能力選擇 BP 對象',
  'main-discard-buff':'支付一張手牌，讓自身 BP 增加',
+ 'main-active-named':'選擇指定卡名的己方角色並轉為 ACTIVE',
  'effect-grant-attack':'授予己方角色攻擊時能力','granted-attack-draw':'攻擊時是否抽一張',
  'effect-grant-opp-block':'對手選擇一名角色，本回合不被高 BP 阻擋',
  'effect-deploy-outside':'從場外選擇角色登場',
@@ -283,6 +288,14 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseLifeEffect':return '先結算登場效果：'+uiCardLabel(pack,state,state?.pending?.entries?.find(e=>e.key===action.key)?.sourceUid);
   case 'choosePhaseOrder':return '先結算此階段效果';
   case 'chooseApRecovery':return action.uid===null?'完成恢復 AP':'恢復 AP 卡';
+  case 'chooseHandTop':return '將 '+name()+' 放到自己的牌庫頂';
+  case 'chooseLoseBattleReady':return action.uid===null?
+   '不給予落敗時 ACTIVE':'給 '+name()+' 本回合落敗時 ACTIVE';
+  case 'chooseTraitBanMove':return action.uid===null?
+   '不選擇角色':'使 '+name()+' 本回合不能攻擊並換線';
+  case 'chooseEntryRest':return '將 '+name()+' 轉為 REST';
+  case 'chooseRetireTuck':return action.uid===null?
+   '不退場其他角色':'退場 '+name()+'，裏向放在此角色下方並 ACTIVE';
   case 'chooseDiscardGate':return action.uid===null?'不支付成本':'棄 '+name()+' 支付成本';
   case 'chooseRemoveOutside':return action.mode==='skip'?'不將場外卡移入移除區':
    action.mode==='all'?'將目前場外的可選卡全部移入移除區，不結算後續':'將 '+name()+' 移入移除區';
