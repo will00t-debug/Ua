@@ -10,7 +10,7 @@ export const V2_CARD_TYPES=Object.freeze(['character','event','field']);
 export const V2_TRIGGERS=Object.freeze(['draw','get','final','active','special','color','raid']);
 export const V2_EFFECT_TIMINGS=Object.freeze(['onPlay','onRaid','onAttack','onRaided','onRetire','onOutsideRecover']);
 export const V2_EFFECT_OPS=Object.freeze(['nextEligibleHandPlayApDiscount','activeApIfNameEntered','draw','drawIfOwnName','drawIfOwnTraitCount','drawIfOwnOutsideNamedCountAtLeast','drawIfOwnFieldExists','drawIfOwnEnergyAtLeast','drawIfOppFrontBelowPrinted','drawIfSelfBpAtLeast','returnRetiredToHand','drawIfOppRestCharacter','drawIfOppCharacterBpAtLeast','drawIfOwnNameAndHandFewer','activeOwnNamed','activeEnergyNamed','grantSelfSniperThisTurn','grantFirstAttackKit','grantSelfAttackWinDrawThisTurn','grantSelfMustBlockThisTurn','buffSelfUntilNextOwnStart','grantSelfAttackEndSwapThisTurn','millTop','buffSelf','swapOrBuff','buffSelfPerOwnOutsideGroups','enemyBpDown','drawDiscard','frontOppTriggerDrawDiscard','recoverAp','peekTopOne','peekTopOrBottom','revealOppTopPlace','chooseEnergyRevealOutside','optionalRemoveHandThen','removeHandTraitScaleRetire','nameEnergyRevealHandRemove','removeHandTraitCapScale','retireOppFrontUnderBp','retireOppFrontOneUnderBp','retireOppFrontRest','markOppFrontRetireNextStart','bounceOppFrontOneUnderBp','conditionalBounceOrRetireByOwnOutsideNames','stripOppRaidTop','restOppFrontUnderBp','restOppFrontOne','oppFrontRestBranch','skipNextActiveOppRest','forbidAttackOppFrontOne','grantPrintedLock','drawRemoveIfName','restOrRetireOppFrontByLife','restSilenceOppFrontIfOwnOutsideField','retireOwnFieldOne','retireOwnCharacterOne','retireOwnTraitFollow','optionalRetireThenProgram','retireOppFrontIfFacedown','buffOwnTrait','drawIfRaidUnderFacedown','searchDeckOne','recoverOutsideOne','recoverOutsidePrintedBp','discardToDraw','searchDeckMany','discardGate','removeOutsideThen','searchDeckWhere','inspectTopArrange','inspectTopAnyOutside','searchTopOneBottomDiscard','lookTopHandOutsideBottom','drawDiscardIfFieldAny','retireOwnMissingTraitThen','deployOutsideColorTraitActive','searchTopUpToTwoBottom','enemyFrontAllBpDown','retireOppFrontAllUnderBp','buffOwnTraitAllTurn',
- 'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideUnderEnergy','recoverOutsideColorUnderEnergy','recoverOutsideTraitlessUnderEnergy','deployOutsideTraitlessRestOrRaid','deployOutsideRest','deployOutsideNameRest','deployOutsideExactRest','deployOutsideTraitApRest','deployOutsideColorApNameOrTraitRest','deployNamedFromZones','payApDeployNamedRest','inspectTopTraitOutside','buffOwnField','oncePerTurnGate','buffNamedImpact','buffNameOrTraitImpact','restActiveNamedReadyAp','readyNameOrTrait','protectNameOrTrait','sacrificeNamedChain','chooseOne','deployOwnHandRest','deployOwnHandSpecial','deployOwnHandRestOrRaid','optionalPayApThen','discardOppHand','discardOppHandIfFewer','retireSourceOnPhaseEnd','activeSelfIf','grantOnAttack','grantSelectionApTaxOwnOtherTrait','grantFrontEnergyOwnOtherFrontTrait','grantOwnFrontChoiceProtection','grantNamedFieldProtection','grantCauseBlockAtMost','handBottomGrantDoubleAttack','payApDeployMovedActive','noteEntryTurn','grantOtherRequiredEnergyThisTurn','grantSelfEnergyMoveOnAttackStart','grantSelfTriggerUnchosen','outsideColorEnergyHandOrRest','moveOtherAcrossOrRemove','moveEnergyTraitToFront','raidBaseEnergyThen','grantSelfAttackDamageThisTurn','restOppFrontLockActive','restOppFrontApLock','removeAnyOutsideScale','inspectTopColoredNamesOutside','drawDiscardIfEffectApPaid','activeSelf','grantSelfImpactThisTurn','grantOtherImpactThisTurn','returnSourceToHand','optionalOwnLifeToHandThenDraw','grantOwnNameBlockAtLeast','grantSelfBlockAtLeast','inspectTopColorAnyOutside','buffOwnNameIfPrintedEnergy','retireLifeHandOrReturn','optionalRemoveOwnOtherThen','buffOwnOtherTraitUpTo']);
+ 'buffSelfIfFirstAttack','bounceOwnOtherUnderEnergy','recoverOutsideUnderEnergy','recoverOutsideColorUnderEnergy','recoverOutsideTraitlessUnderEnergy','deployOutsideTraitlessRestOrRaid','deployOutsideRest','deployOutsideNameRest','deployOutsideExactRest','deployOutsideTraitApRest','deployOutsideColorApNameOrTraitRest','deployNamedFromZones','payApDeployNamedRest','inspectTopTraitOutside','buffOwnField','oncePerTurnGate','buffNamedImpact','buffNameOrTraitImpact','restActiveNamedReadyAp','readyNameOrTrait','protectNameOrTrait','sacrificeNamedChain','chooseOne','deployOwnHandRest','deployOwnHandSpecial','deployOwnHandRestOrRaid','optionalPayApThen','discardOppHand','discardOppHandIfFewer','retireSourceOnPhaseEnd','activeSelfIf','grantOnAttack','grantSelectionApTaxOwnOtherTrait','grantFrontEnergyOwnOtherFrontTrait','grantOwnFrontChoiceProtection','grantNamedFieldProtection','grantCauseBlockAtMost','handBottomGrantDoubleAttack','payApDeployMovedActive','noteEntryTurn','grantOtherRequiredEnergyThisTurn','grantSelfEnergyMoveOnAttackStart','grantSelfTriggerUnchosen','outsideColorEnergyHandOrRest','moveOtherAcrossOrRemove','moveEnergyTraitToFront','raidBaseEnergyThen','grantSelfAttackDamageThisTurn','restOppFrontLockActive','restOppFrontApLock','removeAnyOutsideScale','inspectTopColoredNamesOutside','drawDiscardIfEffectApPaid','activeSelf','grantSelfImpactThisTurn','grantOtherImpactThisTurn','returnSourceToHand','optionalOwnLifeToHandThenDraw','grantOwnNameBlockAtLeast','grantSelfBlockAtLeast','inspectTopColorAnyOutside','buffOwnNameIfPrintedEnergy','retireLifeHandOrReturn','retireToRemovedHandRest','optionalRemoveOwnOtherThen','buffOwnOtherTraitUpTo']);
 const integer=(v,low=0)=>Number.isInteger(v)&&v>=low;
 function validPrintedLookFilter(f){
  return f&&typeof f==='object'&&!Array.isArray(f)&&Object.keys(f).length===2&&
@@ -416,12 +416,13 @@ function verifyProgram(program,path){
   // Skip, or no matching hand card, does not run then. Zone is removed only.
   if(e.op==='optionalRemoveHandThen'){
    const f=e.filter,follow=e.then?.[0];
+   const buff=follow?.op==='buffSelf'&&integer(follow.bp,1)&&follow.bp<=5000&&
+    Object.keys(follow).length===2&&Object.keys(follow).every(k=>['op','bp'].includes(k));
+   const active=follow?.op==='activeSelf'&&Object.keys(follow).length===1;
    if(e.zone!=='removed'||!f||typeof f!=='object'||Array.isArray(f)||
     Object.keys(f).length!==2||f.field!=='trait'||
     typeof f.value!=='string'||!f.value.trim()||f.value.length>80||
-    !Array.isArray(e.then)||e.then.length!==1||follow?.op!=='buffSelf'||
-    !integer(follow.bp,1)||follow.bp>5000||Object.keys(follow).length!==2||
-    Object.keys(follow).some(k=>!['op','bp'].includes(k))||
+    !Array.isArray(e.then)||e.then.length!==1||!(buff||active)||
     Object.keys(e).length!==4||
     Object.keys(e).some(k=>!['op','zone','filter','then'].includes(k)))
     throw Error(path+'['+i+'] invalid optional hand removal');
@@ -758,6 +759,19 @@ function verifyProgram(program,path){
    Object.keys(e).length!==4||
    Object.keys(e).some(k=>!['op','optional','life','hand'].includes(k))))
    throw Error(path+'['+i+'] invalid retirement life or hand return');
+  // Retirement puts this card into the removed area, then up to one hand
+  // card may REST-enter. The energy number is a printed filter. It starts
+  // at baseEnergy and rises by per for each distinct removed name that has
+  // the trait, including this card after it moves. Names and the trait are OR.
+  if(e.op==='retireToRemovedHandRest'){
+   const namesOk=Array.isArray(e.names)&&e.names.length===2&&
+    new Set(e.names).size===2&&e.names.every(n=>typeof n==='string'&&!!n.trim()&&n.length<=80);
+   if(e.color!=='purple'||e.ap!==1||e.baseEnergy!==0||e.per!==1||e.max!==1||
+    typeof e.trait!=='string'||!e.trait.trim()||e.trait.length>80||!namesOk||
+    Object.keys(e).length!==8||
+    Object.keys(e).some(k=>!['op','color','ap','baseEnergy','per','trait','names','max'].includes(k)))
+    throw Error(path+'['+i+'] invalid removed-area hand REST');
+  }
   if(e.op==='optionalOwnLifeToHandThenDraw'&&(
    !Array.isArray(e.then)||e.then.length!==1||e.then[0]?.op!=='draw'||e.then[0]?.count!==1||
    Object.keys(e.then[0]).some(k=>!['op','count'].includes(k))||
@@ -2056,8 +2070,11 @@ function normalize(card,packId){
   if(program.some(e=>e.op==='retireLifeHandOrReturn')&&
    (name!=='onRetire'||card.type!=='character'||program.length!==1))
    throw Error(card.id+' retirement life or hand return is only a lone character onRetire effect');
+  if(program.some(e=>e.op==='retireToRemovedHandRest')&&
+   (name!=='onRetire'||card.type!=='character'||program.length!==1))
+   throw Error(card.id+' removed-area hand REST is only a lone character onRetire effect');
   if(name==='onRetire'&&
-   (!['character','field'].includes(card.type)||program.some(e=>!['draw','millTop','drawIfOwnFieldExists','chooseOne','deployOutsideTraitlessRestOrRaid','retireOppFrontOneUnderBp','restOppFrontUnderBp','buffOwnField','deployNamedFromZones','oncePerTurnGate','returnRetiredToHand','enemyBpDown','readyNameOrTrait','protectNameOrTrait','enemyFrontAllBpDown','retireLifeHandOrReturn'].includes(e.op))))
+   (!['character','field'].includes(card.type)||program.some(e=>!['draw','millTop','drawIfOwnFieldExists','chooseOne','deployOutsideTraitlessRestOrRaid','retireOppFrontOneUnderBp','restOppFrontUnderBp','buffOwnField','deployNamedFromZones','oncePerTurnGate','returnRetiredToHand','enemyBpDown','readyNameOrTrait','protectNameOrTrait','enemyFrontAllBpDown','retireLifeHandOrReturn','retireToRemovedHandRest'].includes(e.op))))
    throw Error(card.id+' unsupported onRetire ability program');
   if(name==='onRetire'&&program.some(e=>e.op==='deployNamedFromZones')&&
    (card.type!=='character'||program.length!==1||
@@ -2114,9 +2131,19 @@ function normalize(card,packId){
    !program.some(e=>e.op==='chooseOne'&&e.entry==='ownEffect'))
    throw Error(card.id+' timed self grants require own-effect-entry gated mode');
   if(name==='onAttack'&&card.type!=='character')throw Error(card.id+' noncharacter cannot attack');
-  if(program.some(e=>e.op==='optionalRemoveHandThen')&&
-   (card.type!=='character'||name!=='onAttack'||program.length!==1))
-   throw Error(card.id+' optional hand removal is only a lone character onAttack effect');
+  if(program.some(e=>e.op==='optionalRemoveHandThen')){
+   const steps=program.filter(e=>e.op==='optionalRemoveHandThen');
+   const follow=steps[0]?.then?.[0]?.op;
+   const draws=program.filter(e=>e.op==='draw');
+   if(follow==='buffSelf'){
+    if(card.type!=='character'||name!=='onAttack'||program.length!==1)
+     throw Error(card.id+' optional hand removal is only a lone character onAttack effect');
+   }else if(follow==='activeSelf'){
+    if(card.type!=='character'||name!=='onPlay'||steps.length!==1||
+     program.length!==steps.length+draws.length||draws.length>1)
+     throw Error(card.id+' optional hand removal to active is only a character onPlay effect');
+   }else throw Error(card.id+' optional hand removal follow-up is not printed');
+  }
   if(program.some(e=>e.op==='nameEnergyRevealHandRemove')&&
    (card.type!=='character'||name!=='onAttack'||program.length!==1))
    throw Error(card.id+' named-energy reveal is only a lone character onAttack effect');
