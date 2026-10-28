@@ -131,7 +131,7 @@ function renderLibrary(){
  const sections=buildDeckLibrary({
   titles:TITLES,savedData,
   draftData:Object.fromEntries(TITLES.map(t=>[t.id,read(LEGACY_DECK_KEYS[t.id][0])||{}])),
-  names:{...state.names,...(read(namesKey)||{})},
+  names:Object.fromEntries(TITLES.map(t=>[t.id,String((read(namesKey)||{})[t.id]||defaults[t.id]).slice(0,40)])),
   cloudDecks,cloudUser,tab:state.galleryTab,sharedIds:readSharedIds(localStorage),
   builtins:BUILTIN_BLEACH_V2_DECKS,summarize:summarizeDeck,formatUpdated:formatDeckUpdated
  });
