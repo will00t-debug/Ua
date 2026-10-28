@@ -10,6 +10,7 @@ import {openDatabase} from '../server/sqlite.mjs';
 import {createRepositories} from '../server/repos.mjs';
 import {dispatchAccount} from '../server/domain.mjs';
 import {BLEACH_PURPLE_V2_PILOT_COUNTS} from '../dist/universal-v2/verified-real-decks.mjs';
+import {normalizeEditorCounts} from '../dist/v2-editor-compat.mjs';
 
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 const cards=[
@@ -83,8 +84,9 @@ test('registered account deck cover persists in SQLite and rejects foreign/absen
  const account=message=>db.transaction(()=>dispatchAccount(repos,message,Date.now()));
  try{
   const {token}=account({op:'register',username:'封面測試',password:'correct-horse-1',ip:'192.0.2.1'});
-  const first=Object.keys(BLEACH_PURPLE_V2_PILOT_COUNTS)[0];
-  const second=Object.keys(BLEACH_PURPLE_V2_PILOT_COUNTS)[1];
+  const normalized=normalizeEditorCounts('bleach',BLEACH_PURPLE_V2_PILOT_COUNTS);
+  const first=Object.keys(normalized)[0];
+  const second=Object.keys(normalized)[1];
   const created=account({op:'saveDeck',token,input:{
    title:'bleach',name:'換封面',counts:BLEACH_PURPLE_V2_PILOT_COUNTS,localId:'cover-test',coverId:first
   }}).deck;
