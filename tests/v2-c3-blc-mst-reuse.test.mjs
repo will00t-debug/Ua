@@ -64,10 +64,10 @@ test('C3 registers the two whole-print BLEACH reuses and leaves MST priority blo
  const x=c3BlcMstReuse();
  assert.deepEqual(x.registered,['BLC-4-029','BLC-4-031']);
  assert.equal(x.report.bleach,276);
- assert.equal(x.report.mst,70);
- assert.equal(x.report.registered,632);
+ assert.equal(x.report.mst,80);
+ assert.equal(x.report.registered,642);
  assert.equal(x.report.readyFromKeywords,0);
- assert.deepEqual(x.mstBlocked.map(c=>c.id),['MST-1-033']);
+ assert.deepEqual(x.mstBlocked.map(c=>c.id),[]);
  for(const id of x.registered)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
 });
 

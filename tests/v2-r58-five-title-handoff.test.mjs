@@ -42,10 +42,10 @@ test('R58 strict blockers remain unported, especially corrected TTG Q2301',()=>{
  assert.equal(R58_OFFICIAL_REVIEW['MST-1-021'].status,'READY');
  assert.equal(R58_OFFICIAL_REVIEW['MST-1-021'].owner,'Cursor');
  for(const id of ['MST-1-033']){
-  const c=records.find(c=>c.id===id);
-  assert.ok(c,id+' incorrectly auto-ported from a keyword');
-  assert.equal(c.owner,'GPT');
-  assert.ok(['RULE BLOCKED','ENGINE BLOCKED'].includes(c.status));
+  assert.ok(registered.has(id),id);
+  assert.equal(records.find(c=>c.id===id),undefined);
+  assert.equal(R58_OFFICIAL_REVIEW[id].status,'READY');
+  assert.equal(R58_OFFICIAL_REVIEW[id].owner,'Cursor');
  }
  assert.match(R58_OFFICIAL_REVIEW['TTG-1-081'].missing,/FRONT/);
 });

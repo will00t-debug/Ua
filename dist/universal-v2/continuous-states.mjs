@@ -125,6 +125,13 @@ export function expireContinuousStates(s,{player,phase,edge,onlyReleaseBeforeRef
 }
 export function attemptFieldActive(s,owner,c){
  pruneContinuousStates(s);
+ // 「自分の効果以外でアクティブにならない」: a rule refresh never calls this
+ // with a foreign controller, and an opponent effect does not match.
+ if(c?.ownEffectActiveOnly){
+  let controller=null;
+  for(const p of [0,1])if(field(s.players[p]).some(x=>x.uid===c.uid))controller=p;
+  if(controller!==owner)return false;
+ }
  const restrictions=s.continuousStates.filter(e=>e.targetOwner===owner&&e.targetUid===c.uid&&
   e.targetStamp===c.fieldEntryStamp);
  const skip=restrictions.find(e=>e.kind==='skipNextActive');
@@ -136,6 +143,8 @@ export function attemptFieldActive(s,owner,c){
 export function refreshFieldActive(s,owner){
  pruneContinuousStates(s);
  for(const c of field(s.players[owner])){
+  // A printed own-effect ACTIVE lock is not the turn refresh.
+  if(c.ownEffectActiveOnly)continue;
   // Q1052: a start or end refresh consumes 「次の1回アクティブにならない」
   // even when the character is already ACTIVE and stays ACTIVE.
   const skip=s.continuousStates.find(e=>e.kind==='skipNextActive'&&!e.consumed&&

@@ -22,6 +22,6 @@ test('R43 SAO-068 registered with actual main cost while 069 has Raid and phase-
  assert.equal(c,undefined);
  assert.equal(r.reviewed.find(c=>c.id==='SAO-2-069').status,'REGISTERED');
  assert.equal(R43_OFFICIAL_MULTI_EFFECT_AUDIT['SAO-2-069'].missing.length,5);
- assert.equal(r.reviewed.find(x=>x.id==='MST-1-067').status,'RULE BLOCKED');
- assert.ok(r.counts.officialRemainingReviews>=2);
+ assert.equal(r.reviewed.find(x=>x.id==='MST-1-067').status,'REGISTERED');
+ assert.ok(r.counts.officialRemainingReviews>=1);
 });

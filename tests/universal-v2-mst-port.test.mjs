@@ -53,7 +53,7 @@ test('MST source preserves exactly 001–080 Japanese printed regular IDs, and 4
  assert.equal(verifiedMstV2Cards().length,EXPECTED_V2_COUNTS['mushoku-tensei']);
  assert.equal(Object.keys(pack.cards).length,EXPECTED_V2_COUNTS['mushoku-tensei']);
  assert.equal(pack.cards['MST-1-051'].maxCopies,1,'2026-10-01 official restricted limit');
- assert.ok(!pack.cards['MST-1-068'],'two-mode conditional Raid is unported');
+ assert.equal(pack.cards['MST-1-068'].name,'フィッツ');
  assert.ok(!validateUniversalDeck(pack,{...deck,'MST-1-051':1}).join().includes('Unregistered'));
  assert.match(validateUniversalDeck(pack,{...deck,'MST-1-051':2}).join(),/0–1 copies/);
  for(const id of MST_V2_PILOT_IDS){

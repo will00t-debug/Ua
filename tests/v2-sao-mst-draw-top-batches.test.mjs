@@ -272,15 +272,13 @@ test('SAO-1-075 and SAO-1-089 retain BOTH STEP movement and exact top-deck onPla
 });
 
 test('blocked next-wave cards are source-locked, NOT wrongly registered with partial search or unsupported leave/Raid',()=>{
- const mst=requireRegisteredV2TitlePack('mushoku-tensei');
  // SAO-1-031 graduated only after R37 exact full-print test and separate manifest pin.
  assert.deepEqual(pack.cards['SAO-1-031'].effects.onPlay,[{op:'searchTopUpToTwoBottom',count:5,max:2,rest:'bottom',
   filters:[{field:'name',value:'キリト'},{field:'name',value:'アリス'},{field:'name',value:'ユージオ'}],logic:'any'}]);
  const pending=[
   ['SAO-2-062',/2枚引き.*2枚場外/,pack],
   ['SAO-2-018',/【退場時】.*上から5枚見る/,pack],
-  ['SAO-1-081',/自分のターン開始時.*退場/,pack],
-  ['MST-1-068',/〖レイド〗.*〈シルフィエット〉/,mst]
+  ['SAO-1-081',/自分のターン開始時.*退場/,pack]
  ];
  for(const [id,text,targetPack] of pending){
   const record=id.startsWith('SAO')?

@@ -45,6 +45,16 @@ const PRINTED_PINS=Object.freeze({
   nameJa:"パウロ",color:"green",energy:5,ap:1,bp:4000,gen:1,
   type:"character",traits:[],trigger:"active",
   effectJa:"〖登場時〗 自分の場のフィールドを1枚退場させてもよい。そうした場合、このキャラをアクティブにする。\n 〖アタック時〗 自分の場外にフィールドカードが6枚以上ある場合、自分の手札を1枚場外に置いてもよい。そうした場合、このキャラをアクティブにする。〈パウロ〉のこの効果は1ターンに1回のみ発動できる。"},
+ "MST-1-008":{"kind":"unblockedDrawLoseReady","nameJa":"エリス","color":"blue","energy":3,"ap":1,"bp":3000,"gen":1,"type":"character","traits":[],"trigger":"raid","effectJa":"〖レイド〗 〈エリス〉アクティブにし、フロントLに移動できる\nこのキャラのアタックがブロックされなかった時、カードを1枚まで引く。\n 〖ターン1〗 このキャラがアタックしてバトルに敗北した時、このキャラをアクティブにし、このキャラはこのターン中、BP+2000。"},
+ "MST-1-025":{"kind":"raidReplayOrSniperStrip","nameJa":"ルーデウス","color":"blue","energy":4,"ap":1,"bp":4000,"gen":1,"type":"character","traits":[],"trigger":"raid","effectJa":"〖レイド〗 〈ルーデウス〉アクティブにし、フロントLに移動できる\n 〖登場時〗 自分の場のキャラを1枚まで選び、このターン中、BP+1000。\n 〖起動メイン〗 〖フロントLにある場合〗 〖ターン1〗 以下から1つ選ぶ。\n・このキャラの 〖登場時〗 を発動する。\n・自分の場のレイド状態の〈エリス〉を1枚選び、このターン中、 〖狙い撃ち〗 を与え、このキャラの一番上のカードを場外に置く。"},
+ "MST-1-026":{"kind":"frontLockAttackChoice","nameJa":"ルーデウス","color":"blue","energy":3,"ap":1,"bp":4000,"gen":2,"type":"character","traits":[],"trigger":"get","effectJa":"このカードはフロントLに登場できず、自分の効果以外で移動できない。\n 〖アタック時〗 以下から1つ選ぶ。\n・自分の場の他のキャラを1枚まで選び、このターン中、BP+1000。\n・カードを1枚引く。\n・このターン中に自分が〈豪雷積層雲〉を使用している場合、このキャラはこのターン中、 〖インパクト（1）〗 を得る。"},
+ "MST-1-032":{"kind":"outsideEnergyDualFront","nameJa":"ロキシー","color":"blue","energy":4,"ap":1,"bp":4000,"gen":1,"type":"character","traits":[],"trigger":"raid","effectJa":"〖レイド〗 〈ロキシー〉アクティブにし、フロントLに移動できる\n 〖登場時〗 自分の場外から必要エナジーが2以下のカードを1枚まで手札に加える。\n 〖起動メイン〗 〖フロントLにある場合〗 〖ターン1〗 このターン中に自分がイベントカードを使用している場合のみ発動できる。自分の場の必要エナジーが3以下のキャラを1枚選び、アクティブにする。\n 〖起動メイン〗 〖フロントLにある場合〗 〖ターン1〗 自分の場の〈ルーデウス〉を1枚選び、別のラインに移動させる。"},
+ "MST-1-033":{"kind":"fieldSearchRestDeploy","nameJa":"デッドエンド","color":"blue","energy":2,"ap":1,"bp":0,"gen":1,"type":"field","traits":[],"trigger":"draw","effectJa":"〖登場時〗 自分の山札の上から3枚見て、〈ルーデウス〉か〈エリス〉か〈ルイジェルド〉を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。\n 〖起動メイン〗 〖レストにする〗 〖このカードを退場させる〗 自分の手札から必要エナジーが3以下で消費APが1の青のキャラカードを1枚自分の場にレストで登場させるかレイドさせる。"},
+ "MST-1-038":{"kind":"buffApOutsideReturn","nameJa":"師匠からのおくりもの","color":"blue","energy":2,"ap":1,"bp":0,"gen":0,"type":"event","traits":[],"trigger":"draw","effectJa":"自分の場のキャラを1枚選び、このターン中、BP+1000。自分の場に〈ロキシー〉がある場合、自分のAPカードを1枚アクティブにする。\n 〖起動メイン〗 〖場外にある場合〗 このターン中に自分の〈ルーデウス〉か〈ロキシー〉がレイドしていた場合のみ発動できる。自分の手札を1枚場外に置く。そうした場合、場外のこのカードを手札に加える。〈師匠からのおくりもの〉のこの効果は1ターンに1回のみ発動できる。"},
+ "MST-1-039":{"kind":"erisSniperOrOutsideRudeus","nameJa":"ルーデウスはすごいのよ！","color":"blue","energy":3,"ap":1,"bp":0,"gen":0,"type":"event","traits":[],"trigger":"special","effectJa":"以下から1つ選ぶ。\n・自分の場の〈エリス〉を1枚選び、このターン中、BP+500と 〖狙い撃ち〗 （相手のフロントLのキャラを指定してアタックでき、その場合ブロックされない）を与える。\n・自分の場に〈エリス〉がある場合、自分の場外から消費APが1の青の〈ルーデウス〉を1枚まで自分の場にレストで登場させるかレイドさせる。"},
+ "MST-1-067":{"kind":"aliasProtectRaidBase","nameJa":"フィッツ","color":"green","energy":4,"ap":1,"bp":4000,"gen":1,"type":"character","traits":["ラノア魔法大学"],"trigger":"raid","effectJa":"このカードは〈シルフィエット〉としても扱う。\n 〖レイド〗 〈シルフィエット〉アクティブにし、フロントLに移動できる\n 〖登場時〗 自分の場の元々の発生エナジーが1以上の［特徴：ラノア魔法大学］を1枚まで選び、次の自分のターン開始時まで、「このキャラは相手の効果で選ばれない。」を与える。\n 〖退場時〗 このキャラのレイド元のカードを1枚まで自分の場にレストで登場させるか手札に加える。"},
+ "MST-1-068":{"kind":"aliasEnergyImpactChoice","nameJa":"フィッツ","color":"green","energy":5,"ap":1,"bp":4000,"gen":2,"type":"character","traits":["ラノア魔法大学"],"trigger":"raid","effectJa":"このカードは〈シルフィエット〉としても扱う。\n 〖レイド〗 〈シルフィエット〉アクティブにし、フロントLに移動できる\n自分の発生エナジーが7以上ある場合、このキャラは 〖インパクト（1）〗 を得る。\n 〖登場時〗 以下から1つ選ぶ。\n・自分の山札の上から5枚見て、［特徴：ラノア魔法大学］を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。\n・相手のフロントLのキャラを1枚まで選び、エナジーLに移動させる。"},
+ "MST-1-073":{"kind":"energyLockNamedActive","nameJa":"ルーデウス","color":"green","energy":4,"ap":1,"bp":4000,"gen":3,"type":"character","traits":["ラノア魔法大学"],"trigger":"get","effectJa":"このカードはエナジーLに〔登場・移動〕できず、自分の効果以外でアクティブにならない。\n 〖起動メイン〗 自分の発生エナジーが7以上ある場合のみ発動できる。このキャラをアクティブにする。カードを1枚引く。自分の場のキャラを1枚まで選び、このターン中、BP+2000。このキャラはこのターン中、「自分のアタックフェイズ終了時、このキャラをアクティブにする。」を得る。〈ルーデウス〉のこの効果は1ターンに1回のみ発動できる。"},
  "MST-1-009":{kind:"onOwnEffectEntryChooseTimedSelf",
   nameJa:"エリス",color:"blue",energy:3,ap:1,bp:3500,gen:1,
   type:"character",traits:[],trigger:"raid",
@@ -961,6 +971,98 @@ export function verifiedMstV2Cards(){
      after:[{op:'activeSelf'}]}],
     onAttack:[{op:'mayDiscardActiveIfOutsideFields',min:6,once:'name'}]
    };
+  if(pin.kind==='unblockedDrawLoseReady'){
+   card.raidName='エリス';
+   card.unblockedAttack={optional:true,then:[{op:'draw',count:1}]};
+   card.attackLoseStay={bp:2000};
+  }
+  if(pin.kind==='raidReplayOrSniperStrip'){
+   card.raidName='ルーデウス';
+   card.effects={onPlay:[{op:'buffOwnField',filter:{field:'type',value:'character'},
+    bp:1000,optional:true,excludeSelf:false}]};
+   card.mainAbility={op:'onceFrontChoose',oncePerTurn:true,frontOnly:true,then:[{
+    op:'chooseOne',optional:false,options:[
+     {id:'replay',label:'Replay this character on play',turn:'own',
+      then:[{op:'replayOnPlay'}]},
+     {id:'strip',label:'Sniper a raided Eris and strip this top',turn:'own',
+      then:[{op:'sniperRaidedStripSelf',name:'エリス'}]}
+    ]}]};
+  }
+  if(pin.kind==='frontLockAttackChoice'){
+   card.frontForbidden=true;
+   card.ownEffectMoveOnly=true;
+   card.effects={onAttack:[{op:'chooseOne',optional:false,options:[
+    {id:'buff',label:'Up to one other character BP +1000',turn:'own',then:[
+     {op:'buffOwnField',filter:{field:'type',value:'character'},bp:1000,
+      optional:true,excludeSelf:true}]},
+    {id:'draw',label:'Draw one card',turn:'own',then:[{op:'draw',count:1}]},
+    {id:'impact',label:'Impact if Goraisekijun was used',turn:'own',then:[
+     {op:'grantSelfImpactIfNamedEvent',name:'豪雷積層雲',amount:1}]}
+   ]}]};
+  }
+  if(pin.kind==='outsideEnergyDualFront'){
+   card.raidName='ロキシー';
+   card.effects={onPlay:[{op:'recoverOutsideUnderEnergy',energy:2,optional:true}]};
+   card.printedMains=[
+    {id:'active',op:'frontActiveIfEvent',maxEnergy:3,oncePerTurn:true,frontOnly:true},
+    {id:'move',op:'frontMoveNamed',name:'ルーデウス',oncePerTurn:true,frontOnly:true}
+   ];
+  }
+  if(pin.kind==='fieldSearchRestDeploy'){
+   card.effects={onPlay:[{op:'searchTopOneBottomDiscard',count:3,groups:[
+    {logic:'all',filters:[{field:'name',value:'ルーデウス'}]},
+    {logic:'all',filters:[{field:'name',value:'エリス'}]},
+    {logic:'all',filters:[{field:'name',value:'ルイジェルド'}]}
+   ]}]};
+   card.mainAbility={op:'fieldRestRetireThen',then:[{
+    op:'deployOwnHandRestOrRaid',type:'character',color:'blue',maxEnergy:3,
+    ap:1,max:1,optional:false,names:null}]};
+  }
+  if(pin.kind==='buffApOutsideReturn'){
+   card.effects={onPlay:[
+    {op:'buffOwnField',filter:{field:'type',value:'character'},bp:1000,
+     optional:false,excludeSelf:false},
+    {op:'activeOwnApIfName',name:'ロキシー',count:1}
+   ]};
+   card.outsideRaidReturn={names:['ルーデウス','ロキシー'],once:'name'};
+  }
+  if(pin.kind==='erisSniperOrOutsideRudeus'){
+   card.effects={onPlay:[{op:'chooseOne',optional:false,emptyOk:true,options:[
+    {id:'sniper',label:'Grant Eris BP and sniper',turn:'any',then:[
+     {op:'grantNamedBuffSniper',name:'エリス',bp:500}]},
+    {id:'deploy',label:'Rest or raid a blue AP1 Rudeus from outside',turn:'any',then:[
+     {op:'deployOutsideNameApRestOrRaid',name:'ルーデウス',color:'blue',ap:1,
+      requiresName:'エリス',optional:true}]}
+   ]}]};
+   card.triggerEffect={op:'retireOppFront'};
+  }
+  if(pin.kind==='aliasProtectRaidBase'){
+   // Printed 「相手の効果」. Q2162's question quotes 「相手のキャラの効果」
+   // and no erratum was found. Scope stays the printed sentence. Not FAQ certified.
+   card.nameAliases=['シルフィエット'];
+   card.raidName='シルフィエット';
+   card.effects={
+    onPlay:[{op:'protectMinGenTrait',trait:'ラノア魔法大学',minGen:1,optional:true}],
+    onRetire:[{op:'raidBaseRestOrHand',optional:true}]
+   };
+  }
+  if(pin.kind==='aliasEnergyImpactChoice'){
+   card.nameAliases=['シルフィエット'];
+   card.raidName='シルフィエット';
+   card.passiveBonuses=[{condition:{kind:'ownEnergyAtLeast',turn:'any',min:7},impact:1}];
+   card.effects={onPlay:[{op:'chooseOne',optional:false,options:[
+    {id:'search',label:'Look at five for one Ranoa',turn:'any',then:[
+     {op:'searchTopOneBottomDiscard',count:5,noHandDiscard:true,
+      filter:{field:'trait',value:'ラノア魔法大学'}}]},
+    {id:'move',label:'Move up to one opposing front to energy',turn:'any',then:[
+     {op:'moveOppFrontToEnergy',optional:true}]}
+   ]}]};
+  }
+  if(pin.kind==='energyLockNamedActive'){
+   card.energyLineForbidden=true;
+   card.ownEffectActiveOnly=true;
+   card.mainAbility={op:'energyNamedSuite',once:'name',minEnergy:7,bp:2000};
+  }
   return card;
  });
 }
@@ -1033,6 +1135,11 @@ export function verifiedMstV2Entries(){
      ...(['lookTopTwoNameOrLowEventOutside','restChooseIfEventUsed',
       'roxyHandRestOrRaidDrawMove','optionalFieldRetireActiveOutsideDiscard'].includes(pin.kind)?
       ['tests/v2-mst-shared-full-print.test.mjs']:[]),
+     ...(['unblockedDrawLoseReady','raidReplayOrSniperStrip','frontLockAttackChoice',
+      'outsideEnergyDualFront','fieldSearchRestDeploy','buffApOutsideReturn',
+      'erisSniperOrOutsideRudeus','aliasProtectRaidBase','aliasEnergyImpactChoice',
+      'energyLockNamedActive'].includes(pin.kind)?
+      ['tests/v2-mst-catalog-finish.test.mjs']:[]),
      ...(['restSelfEnergyRetireEndMain','ownTurnRoxyFieldBp'].includes(pin.kind)?['tests/v2-mst-016-024-shared.test.mjs']:[])
     ]),
     ...(def.implementation==='vanilla'?{verifiedNoExtraEffects:true}:{})

@@ -78,7 +78,7 @@ function count(player){
 test('MST-1-005/014/021/028/030/035/036/040/048/058 pin the official print on shared profiles',()=>{
  assert.deepEqual(validateUniversalDeck(mst,deck),[]);
  assert.equal(Object.keys(mst.cards).length,EXPECTED_V2_COUNTS['mushoku-tensei']);
- assert.equal(EXPECTED_V2_COUNTS['mushoku-tensei'],70);
+ assert.equal(EXPECTED_V2_COUNTS['mushoku-tensei'],80);
  for(const id of ['MST-1-005','MST-1-014','MST-1-021','MST-1-028','MST-1-030','MST-1-035','MST-1-036','MST-1-040','MST-1-048','MST-1-058'])
   assert.equal(mst.cards[id].name,MST_V2_OFFICIAL_BY_ID[id].nameJa);
  assert.equal(mst.cards['MST-1-005'].impactNull,true);

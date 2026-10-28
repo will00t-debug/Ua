@@ -23,9 +23,8 @@ test('R41 official multi-effect SAO-2-069 PARTIAL and Q2162 MST-1-067 RULE BLOCK
  const sao=r.candidates.find(c=>c.id==='SAO-2-069');
  assert.equal(sao,undefined,'R44 source-complete 069 is no longer unported');
  assert.ok(R41_OFFICIAL_REVIEWS['SAO-2-069'].missing.length>=4,'historical blocker evidence retained');
- const mst=r.candidates.find(c=>c.id==='MST-1-067');
- assert.ok(mst);assert.equal(mst.status,'RULE BLOCKED');
- assert.ok(mst.missing.some(x=>x.includes('Q2162')));
+ assert.equal(r.candidates.find(c=>c.id==='MST-1-067'),undefined);
+ assert.ok(R41_OFFICIAL_REVIEWS['MST-1-067'].missing.some(x=>x.includes('Q2162')));
  for(const c of r.candidates.filter(c=>!R41_OFFICIAL_REVIEWS[c.id])){
   assert.ok(['SOURCE PENDING','REVIEW PENDING','NEAR READY','PARTIAL','RULE BLOCKED'].includes(c.status));
   assert.notEqual(c.status,'READY');
@@ -50,5 +49,5 @@ test('R41 historical reviews retain evidence as later source-pinned cards become
   assert.ok(c.sourceUrl.startsWith('https://www.unionarena-tcg.com/jp/'));
  }
  assert.equal(r.stats.byStatus['READY'],0);
- assert.equal(r.stats.byStatus['RULE BLOCKED'],1);
+ assert.equal(r.stats.byStatus['RULE BLOCKED']||0,0);
 });
