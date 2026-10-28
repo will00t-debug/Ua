@@ -190,6 +190,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-move-order':'選擇同時取得的移動觸發處理順序',
  'effect-rest-tuck':'是否 REST 角色，放置剛送至場外的手牌',
  'effect-tuck-moved':'可將該場外卡裏向放在自身下方',
+ 'opening-mulligan':'開局手牌調度（每人最多一次）',
  'retirement-order':'同時退場效果的結算順序'
 });
 export function isExactLegal(action,legal){
@@ -231,6 +232,7 @@ export function uiActionLabel(action,{pack,state}={}){
  const destination=()=>action.line==='energy'?'能源線':'前線';
  const suffix=()=>action.slot===undefined?'':' · '+destination()+' '+(action.slot+1);
  switch(action.type){
+  case 'openingMulligan':return action.mode==='redraw'?'整手重抽 7 張（僅一次）':'保留這 7 張手牌';
   case 'next':return '前進下一階段／結束回合';
   case 'extraDraw':return '支付 1 AP 額外抽牌';
   case 'play':return '普通登場：'+name()+suffix();
