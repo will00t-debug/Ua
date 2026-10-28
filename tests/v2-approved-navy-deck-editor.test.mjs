@@ -79,10 +79,10 @@ test('blue-on-navy simulator styling is active only for editor and keeps respons
  assert.match(css,/\.arena-hero-gallery/);
  assert.match(css,/\.vdb-quantity button/);
  assert.match(css,/@media\(max-width:560px\)/);
- assert.match(page,/arena-deck-mockup\.css\?v=20261028cover1/);
- assert.match(page,/v2-deck-editor\.mjs\?v=20261028cover1/);
+ assert.match(page,/arena-deck-mockup\.css\?v=20261028cardzoom1/);
+ assert.match(page,/v2-deck-editor\.mjs\?v=20261028cardzoom1/);
  const editor=read('dist/v2-deck-editor.mjs');
- assert.match(editor,/visual-deck-builder\.mjs\?v=20261028cover1/);
+ assert.match(editor,/visual-deck-builder\.mjs\?v=20261028cardzoom1/);
  assert.match(editor,/if\(data\.builderSearch!==undefined\)/);
  assert.match(editor,/if\(data\.builderTab\)/);
 });

@@ -283,3 +283,93 @@ body.arena-site .arena-editor .arena-cover-dialog-actions button:disabled{opacit
  body.arena-site .arena-editor .arena-cover-options{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
  body.arena-site .arena-editor .arena-cover-dialog-head h2{font-size:17px}
 }
+
+/* Enlarged artwork with legible printed effects; card thumbnails and card
+   names share the same dialog. The cover picker stays a separate control. */
+body.arena-site .arena-editor .vdb-card-name{
+ display:block;width:100%;padding:0;border:0;background:transparent;
+ color:#f2f7ff;text-align:left;font-size:13px;line-height:1.3;
+ font-weight:800;cursor:zoom-in;overflow-wrap:anywhere;
+}
+body.arena-site .arena-editor .vdb-card-name:focus-visible{
+ outline:2px solid #71beff;outline-offset:2px;
+}
+body.arena-site .arena-card-detail-backdrop{
+ z-index:110;background:#020711d9;backdrop-filter:blur(6px);
+ padding:12px;box-sizing:border-box;
+}
+body.arena-site .arena-card-detail-modal{
+ width:min(840px,100%);max-height:92dvh;box-sizing:border-box;
+ padding:13px 17px 20px;border:1px solid #466b98;
+ border-radius:17px;background:#0b1729;color:#eaf4ff;
+ box-shadow:0 20px 60px #000b;overflow-y:auto;overscroll-behavior:contain;
+ scrollbar-color:#40658c #0b1729;
+}
+body.arena-site .arena-card-detail-close{
+ position:sticky;top:0;z-index:1;margin:0 0 10px auto;
+ padding:9px 13px;border:1px solid #416991;border-radius:10px;
+ background:#152940;color:#f2f8ff;font-size:14px;font-weight:800;
+}
+body.arena-site .arena-card-detail-layout{
+ display:grid;grid-template-columns:minmax(220px,360px) minmax(0,1fr);
+ gap:18px;align-items:start;
+}
+body.arena-site .arena-card-detail-art{margin:0;min-width:0;text-align:center}
+body.arena-site .arena-card-detail-art img{
+ display:block;width:100%;max-height:73dvh;object-fit:contain;
+ margin:0 auto;border-radius:8px;
+}
+body.arena-site .arena-card-detail-art figcaption{
+ margin-top:7px;font-size:11px;color:#92aaca;
+}
+body.arena-site .arena-card-detail-info{min-width:0}
+body.arena-site .arena-card-detail-info h2{
+ color:#f1f8ff;font-size:20px;line-height:1.35;margin:0 0 5px;
+}
+body.arena-site .arena-card-detail-info :is(p,summary,dt,dd){
+ color:#c9d8ee;font-size:13px;line-height:1.65;
+}
+body.arena-site .arena-card-detail-info .v2e-muted{margin:0 0 12px;color:#93afd0}
+body.arena-site .arena-card-detail-info .arena-focus{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px 10px;
+ padding:10px;margin:0 0 15px;border:1px solid #284262;
+ border-radius:11px;background:#0d213b;
+}
+body.arena-site .arena-card-detail-info .arena-focus div{
+ display:flex;justify-content:space-between;gap:7px;min-width:0;
+}
+body.arena-site .arena-card-detail-info .arena-focus dt{color:#90acd1}
+body.arena-site .arena-card-detail-info .arena-focus dd{
+ margin:0;color:#ecf6ff;text-align:right;
+}
+body.arena-site .arena-card-detail-effect{
+ padding:13px;border:1px solid #31628f;border-radius:11px;background:#0c2441;
+}
+body.arena-site .arena-card-detail-effect h3{
+ margin:0 0 8px;color:#96cbff;font-size:16px;
+}
+body.arena-site .arena-card-detail-effect p{
+ margin:0 0 7px;white-space:pre-wrap;overflow-wrap:anywhere;
+ color:#edf5ff;font-size:14px;line-height:1.75;
+}
+body.arena-site .arena-card-detail-effect p:last-child{margin-bottom:0}
+body.arena-site .arena-card-detail-info details{margin-top:12px}
+body.arena-site .arena-card-detail-info a{color:#88c9ff}
+body.arena-site .arena-card-detail-info .arena-card-detail-status{
+ color:#9bb3d2;font-size:12px;
+}
+@media(max-width:680px){
+ body.arena-site .arena-card-detail-backdrop{padding:6px}
+ body.arena-site .arena-card-detail-modal{
+  max-height:95dvh;padding:10px 12px 18px;border-radius:15px;
+ }
+ body.arena-site .arena-card-detail-layout{display:flex;flex-direction:column;gap:12px}
+ body.arena-site .arena-card-detail-art{width:100%}
+ body.arena-site .arena-card-detail-art img{
+  width:min(80vw,340px);height:auto;max-height:69dvh;
+ }
+ body.arena-site .arena-card-detail-info{width:100%}
+ body.arena-site .arena-card-detail-info h2{font-size:18px}
+ body.arena-site .arena-card-detail-effect p{font-size:14px}
+ body.arena-site .arena-editor .vdb-card-name{font-size:12px}
+}

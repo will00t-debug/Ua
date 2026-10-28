@@ -2,7 +2,7 @@
 // No import from engine.mjs, match-runtime.mjs, solo-match.mjs or ttg-core-match.mjs.
 import {TITLES} from './title-registry.mjs';
 import {PRESETS} from './cards.mjs';
-import {renderVisualDeckBuilder} from './visual-deck-builder.mjs?v=20261028cover1';
+import {renderVisualDeckBuilder} from './visual-deck-builder.mjs?v=20261028cardzoom1';
 import {validDeckCoverId} from './deck-cover-selection.mjs';
 import {buildDeckLibrary} from './deck-library.mjs';
 import {summarizeDeck,formatDeckUpdated,renderDeckGallery,renderDeckDetail,readSharedIds,writeSharedFlag} from './deck-gallery.mjs';
@@ -220,10 +220,14 @@ function renderDetail(){
 }
 function showDetail(id){
  const card=TITLES.find(t=>t.id===state.title)?.cards.find(c=>c.id===id);
- if(!card)return;
+ if(!card)return '';
  const img=card.onlineImage||card.image||'assets/mark.svg';
+ const name=card.nameZh||card.name||card.nameJa||card.id;
  const v2=status().supported.has(card.id);
- const trigger=[card.triggerEffect,card.triggerText,card.triggerTextJa].find(value=>typeof value==='string'&&value.trim())||'';
+ const effect=typeof card.effect==='string'&&card.effect.trim()?card.effect.trim():null;
+ const effectJa=typeof card.effectJa==='string'&&card.effectJa.trim()?card.effectJa.trim():null;
+ const trigger=[card.triggerEffect,card.triggerText,card.triggerTextJa]
+  .find(value=>typeof value==='string'&&value.trim())||'';
  const faq=Array.isArray(card.faq)?card.faq.filter(value=>typeof value==='string'&&value.trim()):[];
  const facts=[
   ['作品',label(state.title)],
@@ -233,9 +237,29 @@ function showDetail(id){
   ['必要能量',card.energy??'—'],
   ['BP',card.bp??'—'],
   ['AP',card.ap??'—']
- ].map(([name,value])=>`<div><dt>${name}</dt><dd>${escapeHtml(value)}</dd></div>`).join('');
- return `<div class="v2e-modal-backdrop" data-dismiss="1"><section role="dialog" aria-modal="true" aria-label="卡片效果" class="v2e-modal"><button type="button" class="v2e-x" data-action="dismiss">關閉 ×</button><div class="v2e-modal-columns"><img src="${escapeHtml(img)}" alt="${escapeHtml(card.nameJa||card.name||card.id)}" onerror="this.onerror=null;this.src='assets/mark.svg'"><div><h2>${escapeHtml(card.nameZh||card.name||card.nameJa||card.id)}</h2><p class="v2e-muted">${escapeHtml(card.number||card.id)}</p><dl class="arena-focus">${facts}</dl><p><strong>${v2?'✓ V2 已登錄':'V2 尚未移植完整效果'}</strong></p><p>${escapeHtml(card.effect||'無額外印刷能力')}</p>${trigger?`<p>Trigger：${escapeHtml(trigger)}</p>`:''}${card.effectJa?`<details><summary>官方日文原文</summary><p>${escapeHtml(card.effectJa)}</p></details>`:''}${faq.length?`<p>官方 FAQ 題號：${faq.map(escapeHtml).join('、')}</p>`:''}${card.source?`<p><a href="${escapeHtml(card.source)}" target="_blank" rel="noopener noreferrer">查看卡牌來源</a></p>`:''}</div></div></section></div>`;
+ ].map(([key,value])=>`<div><dt>${key}</dt><dd>${escapeHtml(value)}</dd></div>`).join('');
+ return `<div class="v2e-modal-backdrop arena-card-detail-backdrop" data-dismiss="1">
+ <section role="dialog" aria-modal="true" aria-labelledby="arena-card-detail-title" class="v2e-modal arena-card-detail-modal">
+ <button type="button" class="v2e-x arena-card-detail-close" data-action="dismiss" aria-label="關閉卡圖">關閉 ×</button>
+ <div class="arena-card-detail-layout">
+  <figure class="arena-card-detail-art"><img src="${escapeHtml(img)}" alt="${escapeHtml(name)} 卡圖" onerror="this.onerror=null;this.src='assets/mark.svg'"><figcaption>點擊關閉可返回組牌列表</figcaption></figure>
+  <div class="arena-card-detail-info">
+   <h2 id="arena-card-detail-title">${escapeHtml(name)}</h2>
+   <p class="v2e-muted">${escapeHtml(card.number||card.id)}</p>
+   <dl class="arena-focus">${facts}</dl>
+   <section class="arena-card-detail-effect" aria-label="卡片效果"><h3>卡片效果</h3>
+    <p>${escapeHtml(effect||effectJa||'無額外印刷能力')}</p>
+    ${trigger?`<p><strong>Trigger：</strong>${escapeHtml(trigger)}</p>`:''}
+   </section>
+   ${effectJa&&effect?`<details><summary>官方日文原文</summary><p>${escapeHtml(effectJa)}</p></details>`:''}
+   ${faq.length?`<p>官方 FAQ 題號：${faq.map(escapeHtml).join('、')}</p>`:''}
+   <p class="arena-card-detail-status">${v2?'✓ V2 已登錄':'V2 尚未移植完整效果'}</p>
+   ${card.source?`<p><a href="${escapeHtml(card.source)}" target="_blank" rel="noopener noreferrer">查看卡牌來源</a></p>`:''}
+  </div>
+ </div>
+ </section></div>`;
 }
+
 function activeDeckRecordId(){
  if(state.cloudOrigin?.title===state.title&&typeof state.cloudOrigin.remoteId==='string')return state.cloudOrigin.remoteId;
  const selected=state.selectedSaved[state.title];
@@ -433,7 +457,14 @@ async function deleteCurrentDeck(){
 function bind(){
  $('#app').onclick=e=>{
   const el=e.target.closest('button');
-  if(!el||el.disabled)return;
+  if(!el||el.disabled){
+   // Only a direct backdrop click dismisses the card modal; taps on
+   // the enlarged art or rules text must not close it.
+   if(state.zoom&&e.target?.classList?.contains('arena-card-detail-backdrop')){
+    state.zoom=false;state.inspection=null;render();
+   }
+   return;
+  }
   const data=el.dataset;
   if(data.designatedPreset){if(useDesignatedBleachPreset(data.designatedPreset)){render();notify('已載入 '+state.names.bleach+'；可以先查看，再決定要不要編輯。');}return;}
   if(data.galleryTab){state.galleryTab=data.galleryTab==='shared'?'shared':'mine';state.screen=state.screen==='library'?'library':'gallery';state.detail=null;render();return;}
@@ -492,7 +523,13 @@ function bind(){
    try{persistSaved(state.title);}catch(error){notify('無法更新封面：'+error.message);return;}
    render();return;
   }
-  if(data.inspect){state.inspection=data.inspect;state.zoom=state.screen!=='editor';render();return;}
+  if(data.inspect){
+   // Always open a large card+rules dialog, including within the deck editor.
+   // The cover button itself remains dedicated to changing the deck cover.
+   state.inspection=data.inspect;state.zoom=true;render();
+   document.querySelector('.arena-card-detail-close')?.focus?.({preventScroll:true});
+   return;
+  }
   if(data.builderCount){
    const t=TITLES.find(t=>t.id===state.title),c=t.cards.find(x=>x.id===data.builderCount);
    if(!c||c.type==='ap'||c.type==='action-point'||c.type==='action_point')return;
@@ -504,7 +541,7 @@ function bind(){
    state.coverIds[state.title]=validDeckCoverId(catalogueCards(),state.counts[state.title],state.coverIds[state.title]);
    persist();render();return;
   }
-  if(data.action==='dismiss'){if(state.exportText!==null){state.exportText=null;render();return;}if(state.zoom){state.zoom=false;render();return;}state.inspection=null;render();return;}
+  if(data.action==='dismiss'){if(state.exportText!==null){state.exportText=null;render();return;}state.zoom=false;state.inspection=null;render();return;}
   if(data.action==='zoomCard'){if(state.inspection)state.zoom=true;render();return;}
   if(data.action==='duplicateDeck'){duplicateCurrentDeck();return;}
   if(data.action==='deleteDeck'){deleteCurrentDeck();return;}
@@ -588,7 +625,7 @@ function bind(){
   persist();render();notify('已載入 '+item.name);
  };
 }
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&(state.coverPicker||state.inspection||state.exportText!==null)){state.coverPicker=false;state.inspection=null;state.exportText=null;render();}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&(state.coverPicker||state.inspection||state.exportText!==null)){state.coverPicker=false;state.zoom=false;state.inspection=null;state.exportText=null;render();}});
 // Direct links from the V2 lobby explicitly load the requested built-in list.
 const requestedDeck=new URLSearchParams(typeof window!=='undefined'?window.location?.search||'':'').get('bleachPreset');
 if(requestedDeck)useDesignatedBleachPreset(requestedDeck);
