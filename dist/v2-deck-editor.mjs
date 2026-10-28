@@ -197,6 +197,7 @@ function openLibraryDeck(key){
   try{state.counts[title]=normalizeEditorCounts(title,read(LEGACY_DECK_KEYS[title][0])||{});}catch{}
   state.names[title]=String((read(namesKey)||{})[title]||state.names[title]||defaults[title]).slice(0,40);
   state.detail={source:'draft',id:'draft'};
+  state.coverIds[title]=validDeckCoverId(catalogueCards(title),state.counts[title],(read(coversKey)||{})[title]);state.coverPicker=false;
  }else if(source==='builtin'){
   let id;try{id=decodeURIComponent(parts.join(':'));}catch{return;}
   if(!builtinBleachDeck(id)){notify('找不到指定牌組。');return;}
@@ -444,7 +445,7 @@ function bind(){
    if(state.screen==='chooseTitle'){
     const existing=Object.values(state.counts[data.title]||{}).some(n=>Number(n)>0);
     if(existing&&typeof confirm==='function'&&!confirm('這個作品已有編輯中的草稿。建立新牌組會取代草稿，但不會刪除已儲存牌組。確定繼續？'))return;
-    state.counts[data.title]={};state.names[data.title]=defaults[data.title];
+    state.counts[data.title]={};state.names[data.title]=defaults[data.title];state.coverIds[data.title]=null;state.coverPicker=false;
     state.selectedSaved[data.title]=null;state.cloudOrigin=null;state.shareFlag=false;
     state.listOrigin='library';state.title=data.title;state.ready=true;state.screen='editor';state.tab='pick';
     state.galleryTab='mine';state.detail={source:'draft',id:'draft'};state.search='';
@@ -456,6 +457,21 @@ function bind(){
    state.type=state.color=state.energy='all';state.energies=[];state.generate='all';render();return;
   }
   if(data.builderReselect!==undefined){state.screen=state.listOrigin==='library'?'library':'gallery';state.detail=null;state.search='';state.inspection=null;state.zoom=false;state.exportText=null;render();return;}
+  if(data.builderCoverOpen!==undefined){
+   state.coverPicker=true;render();
+   document.querySelector('.arena-cover-dialog-head button')?.focus();return;
+  }
+  if(data.builderCoverClose!==undefined){state.coverPicker=false;render();return;}
+  if(data.builderCoverSelect!==undefined){
+   const id=validDeckCoverId(catalogueCards(),state.counts[state.title],data.builderCoverSelect);
+   if(!id){notify('只能從目前牌組已加入的卡片選擇封面。');return;}
+   state.coverIds[state.title]=id;state.coverPicker=false;persist();render();
+   notify('封面已更換，記得儲存牌組。');return;
+  }
+  if(data.builderCoverReset!==undefined){
+   state.coverIds[state.title]=null;state.coverPicker=false;persist();render();
+   notify('已改用自動封面，記得儲存牌組。');return;
+  }
   if(data.builderSearch!==undefined){$('#search')?.focus();return;}
   if(data.builderTab){state.tab=data.builderTab;render();if(state.tab==='overview')document.querySelector('.arena-deck')?.scrollIntoView({block:'start'});return;}
   if(data.builderType){state.type=data.builderType;render();return;}
@@ -485,6 +501,7 @@ function bind(){
    const n=state.counts[state.title][c.id]||0;
    if(val>0&&Object.values(state.counts[state.title]).reduce((a,b)=>a+b,0)>=50){notify('一副牌最多 50 張');return;}
    state.counts[state.title][c.id]=Math.max(0,Math.min(c.maxCopies||4,n+val));
+   state.coverIds[state.title]=validDeckCoverId(catalogueCards(),state.counts[state.title],state.coverIds[state.title]);
    persist();render();return;
   }
   if(data.action==='dismiss'){if(state.exportText!==null){state.exportText=null;render();return;}if(state.zoom){state.zoom=false;render();return;}state.inspection=null;render();return;}
@@ -566,11 +583,12 @@ function bind(){
   if(!item)return;
   releaseCloudOrigin(item.id);
   state.counts[state.title]={...item.counts};state.names[state.title]=item.name;state.selectedSaved[state.title]=item.id;state.shareFlag=item.shared===true;
+  state.coverIds[state.title]=validDeckCoverId(catalogueCards(),state.counts[state.title],item.coverId);state.coverPicker=false;
   state.detail={source:'saved',id:item.id};state.screen='editor';
   persist();render();notify('已載入 '+item.name);
  };
 }
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&(state.inspection||state.exportText!==null)){state.inspection=null;state.exportText=null;render();}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&(state.coverPicker||state.inspection||state.exportText!==null)){state.coverPicker=false;state.inspection=null;state.exportText=null;render();}});
 // Direct links from the V2 lobby explicitly load the requested built-in list.
 const requestedDeck=new URLSearchParams(typeof window!=='undefined'?window.location?.search||'':'').get('bleachPreset');
 if(requestedDeck)useDesignatedBleachPreset(requestedDeck);
