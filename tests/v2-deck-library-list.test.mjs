@@ -15,7 +15,7 @@ const kwargs={titles,summarize:summarizeDeck,formatUpdated:formatDeckUpdated,
 
 test('deck library lists a logged-in account across titles and avoids duplicate local mirrors',()=>{
  const sections=buildDeckLibrary({...kwargs,cloudUser:'userA',
-  cloudDecks:[{id:'d1234567890abcde',name:'雲端白劍',title:'bleach',counts:{b:4},
+  cloudDecks:[{id:'d01234567890abcde',name:'雲端白劍',title:'bleach',counts:{b:4},
    localId:'local-one',updatedAt:'2026-10-27T09:00:00Z',playable:true},
    {id:'dabcdefabcdefabcd',name:'刀劍收藏',title:'sword-art-online',counts:{s:3},
     localId:null,updatedAt:'2026-10-28T00:00:00Z',playable:false}],
@@ -24,14 +24,14 @@ test('deck library lists a logged-in account across titles and avoids duplicate 
  assert.equal(sections[0].title,'帳號牌組');
  assert.equal(sections[0].items.length,2);
  assert.equal(sections[0].items[0].name,'刀劍收藏');
- assert.equal(sections[0].items[1].key,'cloud:d1234567890abcde');
+ assert.equal(sections[0].items[1].key,'cloud:d01234567890abcde');
  assert.match(sections[0].items[1].meta,/V2 可對戰/);
  assert.equal(sections[1].title,'本機牌組');
  assert.deepEqual(sections[1].items.map(x=>x.name),['本機牌組']);
  assert.ok(sections.some(x=>x.title==='編輯中的草稿'));
  const view=renderDeckGallery({tab:'mine',sections,mode:'library'});
  assert.match(view,/dkg-library/);
- assert.match(view,/data-deck-open="cloud:d1234567890abcde"/);
+ assert.match(view,/data-deck-open="cloud:d01234567890abcde"/);
  assert.match(view,/data-deck-open="saved:bleach:another"/);
  assert.match(view,/data-action="pickTitle"/);
  assert.match(view,/assets\/cards\/b\.png/);
@@ -40,9 +40,9 @@ test('deck library lists a logged-in account across titles and avoids duplicate 
 
 test('shared tab shows only opted-in saved and cloud decks',()=>{
  const sections=buildDeckLibrary({...kwargs,tab:'shared',cloudUser:'userA',
-  cloudDecks:[{id:'d1234567890abcde',title:'bleach',name:'分享雲端',counts:{a:4}},
+  cloudDecks:[{id:'d01234567890abcde',title:'bleach',name:'分享雲端',counts:{a:4}},
    {id:'d222222222222222',title:'bleach',name:'私人雲端',counts:{a:1}}],
-  sharedIds:new Set(['d1234567890abcde']),
+  sharedIds:new Set(['d01234567890abcde']),
   savedData:{bleach:[{id:'public',name:'分享本機',counts:{a:3},shared:true},
    {id:'private',name:'私人本機',counts:{b:2},shared:false}]}});
  assert.deepEqual(sections.flatMap(x=>x.items.map(y=>y.name)),['分享雲端','分享本機']);
