@@ -95,16 +95,21 @@ function notices(){
   app.notice?el('div',{class:'banner ok',role:'status',text:app.notice}):null);
 }
 function arenaHeader(){
- return el('header',{class:'arena-top'},
-  el('a',{class:'arena-brand',href:'/online.html'},el('strong',{text:'UNION ARENA'}),el('small',{text:'V2'})),
-  el('nav',{class:'arena-nav'},
-   el('a',{href:'/online.html',text:'首頁'}),
+ return el('header',{class:'ua-site-header','aria-label':'UNION ARENA 主要導覽'},
+  el('a',{class:'ua-header-brand',href:'/online.html','aria-label':'UNION ARENA V2 首頁'},
+   el('span',{class:'ua-header-overline',text:'TRADING CARD GAME'}),
+   el('span',{class:'ua-header-logo'},
+    el('strong',{text:'UNION ARENA'}),el('em',{text:'V2'}))),
+  el('nav',{class:'ua-header-nav','aria-label':'主要功能'},
+   el('a',{href:'/online.html','aria-current':'page',text:'首頁'}),
    el('a',{href:'/universal-v2-preview.html',text:'對戰'}),
    el('a',{href:'/index.html',text:'牌組'}),
    el('a',{href:'/index.html#cards',text:'卡牌一覽'}),
    el('a',{href:'/index.html#records',text:'排行榜'}),
    el('a',{href:'/index.html#rules',text:'規則／FAQ'})),
-  app.user?el('div',{class:'arena-user'},el('span',{text:app.user.username}),el('button',{type:'button',text:'登出',onClick:logout})):null);
+  app.user?el('div',{class:'ua-header-account'},
+   el('span',{class:'ua-header-username',title:app.user.username,text:app.user.username}),
+   el('button',{class:'ua-header-logout',type:'button',text:'登出',onClick:logout})):null);
 }
 function shell(...body){
  return el('div',{class:'arena-app'},arenaHeader(),notices(),...body);

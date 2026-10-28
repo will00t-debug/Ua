@@ -10,6 +10,7 @@
  <link rel="stylesheet" href="universal-v2-legacy.css">
  <link rel="stylesheet" href="universal-v2-arena-setup.css?v=20261028mulligan1">
  <link rel="stylesheet" href="universal-v2-battle.css?v=20261028battle1">
+ <link rel="stylesheet" href="arena-site-header.css?v=20261028header1">
  <title>V2 對戰桌面｜UNION ARENA</title>
 </head>
 <body class="v2-arena-theme v2-battle-page" data-v2-screen="battle">
@@ -18,11 +19,25 @@
   <div class="scene-card scene-card-right scene-card-blue"><span>UNION<br>ARENA</span></div>
  </div>
  <div class="v2-shell">
-  <header class="battle-topbar" aria-label="對戰頁導覽">
-   <a id="exit-battle" class="battle-back" href="/universal-v2-preview.html">〈 返回對戰設定</a>
-   <div class="battle-brand"><strong>UNION ARENA</strong><small>V2 · SOLO MATCH</small></div>
-   <span id="battle-matchup" class="battle-matchup" aria-live="polite">經典卡牌桌面</span>
+  <header class="ua-site-header" aria-label="UNION ARENA 主要導覽">
+   <a class="ua-header-brand" href="/online.html" aria-label="UNION ARENA V2 首頁">
+    <span class="ua-header-overline">TRADING CARD GAME</span>
+    <span class="ua-header-logo"><strong>UNION ARENA</strong><em>V2</em></span>
+   </a>
+   <nav class="ua-header-nav" aria-label="主要功能">
+    <a href="/online.html">首頁</a>
+    <a href="/universal-v2-preview.html" aria-current="page">對戰</a>
+    <a href="/index.html">牌組</a>
+    <a href="/index.html#cards">卡牌一覽</a>
+    <a href="/index.html#records">排行榜</a>
+    <a href="/index.html#rules">規則／FAQ</a>
+   </nav>
+   <div class="ua-header-account"><a href="/online.html" aria-label="返回帳號與線上對戰大廳">大廳</a></div>
   </header>
+  <div class="battle-subbar">
+   <a id="exit-battle" class="battle-back" href="/universal-v2-preview.html">〈 返回對戰設定</a>
+   <span id="battle-matchup" class="battle-matchup" aria-live="polite">經典卡牌桌面</span>
+  </div>
   <main id="match-view" class="battle-stage" aria-label="獨立 V2 對戰桌面" aria-live="off"></main>
   <footer class="battle-foot">UNION ARENA V2 · 經典卡牌桌面 · 僅使用合法的 V2 引擎操作</footer>
  </div>

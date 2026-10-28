@@ -44,3 +44,8 @@ body.v2-battle-page .battle-foot{position:relative;z-index:2;color:#6983a2;font-
 @media(prefers-reduced-motion:reduce){
  body.v2-battle-page *,body.v2-battle-page *:before,body.v2-battle-page *:after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}
 }
+
+/* Shared global header above; this secondary strip belongs only to the battle. */
+body.v2-battle-page .battle-subbar{position:relative;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 14px;padding:4px 2px 11px;border-bottom:1px solid #32425a}
+body.v2-battle-page .battle-subbar .battle-matchup{flex:1;text-align:right}
+@media(max-width:600px){body.v2-battle-page .battle-subbar{margin-bottom:10px}body.v2-battle-page .battle-subbar .battle-matchup{font-size:10px}}
