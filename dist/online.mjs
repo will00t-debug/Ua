@@ -330,6 +330,14 @@ function matchView(){
    el('strong',{text:card.name||card.cardId}),
    el('small',{text:who+' · '+word+(card.checking?' · 確認中':'')})));
  }
+ if(view.battle){
+  const who=view.battle.owner===seat?'你的':'對手的';
+  const tags=[];
+  if(Number.isInteger(view.battle.bp))tags.push('BP '+view.battle.bp);
+  if(Number.isInteger(view.battle.damage))tags.push(view.battle.damage===2?'直傷2':'直傷'+view.battle.damage);
+  if(Number.isInteger(view.battle.impact))tags.push(view.battle.impact>0?'衝擊'+view.battle.impact:'無衝擊');
+  actions.append(el('p',{text:who+(view.battle.name||view.battle.cardId)+' 正在攻擊 · '+tags.join(' · ')}));
+ }
  if(room.status==='finished')actions.append(el('p',{text:(room.winner?.username||'對局')+' 獲勝。'}));
  else if(room.yourTurn){
   if(!room.choices.length)actions.append(el('p',{class:'muted',text:'正在等待可以執行的操作。'}));

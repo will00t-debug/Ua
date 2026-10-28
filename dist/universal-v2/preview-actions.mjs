@@ -649,3 +649,28 @@ export function publicLifeTriggerText(pack,before,after,action){
  }
  return '觸發 '+name+' · '+detail;
 }
+export function attackBattleTags(battle){
+ if(!battle||typeof battle!=='object')return [];
+ const tags=[];
+ if(Number.isInteger(battle.bp))tags.push('BP '+battle.bp);
+ if(Number.isInteger(battle.damage))tags.push(battle.damage===2?'直傷2':'直傷'+battle.damage);
+ if(Number.isInteger(battle.impact))tags.push(battle.impact>0?'衝擊'+battle.impact:'無衝擊');
+ return tags;
+}
+// Raid on the table is two clicks: the base, then the slot the raider enters.
+// The first click never submits an action. Play and move stay on their own slots.
+export function raidClickPlan({selectedUid,raidBaseUid,slotUid,line,slot,legal}){
+ const actions=Array.isArray(legal)?legal:[];
+ const raids=actions.filter(a=>a?.type==='raid'&&a.uid===selectedUid);
+ const isBase=!!slotUid&&raids.some(a=>a.baseUid===slotUid);
+ if(isBase&&raidBaseUid!==slotUid)return {type:'choose-base',baseUid:slotUid};
+ // The reducer treats a raid with no line as the front line. Energy raids
+ // are the only ones that carry line:'energy'.
+ const dest=raidBaseUid?raids.filter(a=>a.baseUid===raidBaseUid&&a.slot===slot&&
+  (a.line==='energy'?'energy':'front')===line):[];
+ if(dest.length)return {type:'raid',actions:dest};
+ const plays=actions.filter(a=>a?.uid===selectedUid&&a.line===line&&a.slot===slot&&
+  ['play','move','step'].includes(a.type));
+ if(plays.length)return {type:'place',actions:plays};
+ return {type:'select'};
+}

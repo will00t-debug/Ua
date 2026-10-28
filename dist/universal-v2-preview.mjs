@@ -25,7 +25,7 @@ import {SAO_CARDS} from './sao-cards.mjs';
 import {MST_V2_OFFICIAL_CATALOGUE} from './universal-v2/sources/mst-inventory.mjs';
 import {V2_PHASE_LABELS,V2_TITLE_LABELS,V2_PENDING_LABELS,
  uiActor,isExactLegal,uiCardLabel,uiActionLabel,visibleActionsForCard,
- pendingChoiceCards,pendingChoiceCaption} from './universal-v2/preview-actions.mjs';
+ pendingChoiceCards,pendingChoiceCaption,attackBattleTags,raidClickPlan} from './universal-v2/preview-actions.mjs';
 import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalReplay,
  publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
 
@@ -70,7 +70,7 @@ if(!IS_BATTLE_PAGE)$('v2-coverage').textContent=
 let editorRecordId=null;
 const app={state:null,packs:null,launch:null,selectedUid:null,recordDeckId:null,recordNoted:false,
  selectedSide:null,history:[],busy:false,aiTimer:null,error:'',
- undo:null,replay:null,targetChoices:null,aiDifficulty:'normal',sequence:0,allActions:false, maxAuto:4500,autoMoves:0,aiPhaseKey:null,aiPhaseCount:0,aiFallbacks:0,aiCompletedSteps:0,lastAiProgress:'未啟動'};
+ undo:null,replay:null,targetChoices:null,raidBaseUid:null,aiDifficulty:'normal',sequence:0,allActions:false, maxAuto:4500,autoMoves:0,aiPhaseKey:null,aiPhaseCount:0,aiFallbacks:0,aiCompletedSteps:0,lastAiProgress:'未啟動'};
 const phases=V2_PHASE_LABELS;
 const CLIENT_RELEASE='AI 修復 R2 · 2026-10-24';
 const btn=(label,fn,cls='')=>el('button',{type:'button',class:cls,text:label,onClick:fn});
@@ -312,6 +312,28 @@ function pendingChoiceControl(action,option,gallery){
  if(caption)button.append(el('span',{class:'choice-card-caption',text:caption}));
  return button;
 }
+function attackShowcase(battle){
+ const figure=el('figure',{class:'attack-showcase'});
+ const art=el('span',{class:'choice-card-art'},choicePicture(battle.cardId,battle.name,battle.owner));
+ figure.append(art,el('figcaption',{},
+  el('b',{text:battle.name||battle.cardId}),
+  el('span',{class:'attack-tags',text:attackBattleTags(battle).join(' · ')})));
+ return figure;
+}
+function blockControl(action,view){
+ if(action?.type!=='chooseBlock')return null;
+ if(action.uid===null)return btn('不阻擋',()=>applyAction(action),'quiet choice-text');
+ const card=(view.players?.[0]?.front||[]).find(c=>c?.uid===action.uid);
+ if(!card)return null;
+ const name=cardDef(0,card.cardId)?.name||card.cardId;
+ const button=el('button',{type:'button',class:'choice-card recommended',
+  'aria-label':'使用 '+name+' 阻擋 BP '+card.bp,onClick:()=>applyAction(action)});
+ button.append(el('span',{class:'choice-card-arts'},
+  el('span',{class:'choice-card-art'},choicePicture(card.cardId,name,0))),
+  el('span',{class:'choice-card-name',text:name}),
+  el('span',{class:'choice-card-caption',text:'BP '+card.bp+' · 阻擋'}));
+ return button;
+}
 function pendingDialog(legal,view){
  const s=app.state;
  if(!s?.pending||uiActor(s)!==0||app.busy)return null;
@@ -327,19 +349,27 @@ function pendingDialog(legal,view){
  const dialog=el('div',{class:'dialog panel pending'+(gallery?' pending-cards':''),
   role:'dialog','aria-modal':'true','aria-label':title});
  const triggerChoice=s.pending.kind==='life-trigger';
+ const blocking=s.pending.kind==='block'&&view.battle;
+ const blockGallery=blocking&&rows.some(row=>row.action.type==='chooseBlock'&&row.action.uid);
  const shown=triggerChoice?triggerCards(view).filter(card=>card.checking):[];
+ if(blockGallery)dialog.classList.add('pending-cards');
  dialog.append(el('div',{class:'headline'},el('h2',{text:title}),
   el('span',{class:'tag',text:'玩家操作'})),
   el('p',{class:'note',text:triggerChoice?
    '這張觸發已經公開，對手也能看到。請選擇是否使用。':
+   blocking?'對手的角色正在攻擊。先看直傷和衝擊，再選擇阻擋或不阻擋。':
    '請完成這個選擇後，對戰才會繼續。選牌只會顯示給目前的控制者。'}));
+ if(blocking)dialog.append(attackShowcase(view.battle));
  if(shown.length){
   const row=el('div',{class:'trigger-row'});
   for(const card of shown)row.append(triggerTile(card));
   dialog.append(row);
  }
- const list=el('div',{class:'action-list'+(gallery?' choice-gallery':'')});
- for(const row of rows)list.append(pendingChoiceControl(row.action,row.option,gallery));
+ const list=el('div',{class:'action-list'+((gallery||blockGallery)?' choice-gallery':'')});
+ for(const row of rows){
+  const blocker=blocking?blockControl(row.action,view):null;
+  list.append(blocker||pendingChoiceControl(row.action,row.option,gallery||blockGallery));
+ }
  dialog.append(list);
  overlay.append(dialog);
  // Mount on the shell, above the sticky header. Inside #match-view the
@@ -361,17 +391,20 @@ function legacySlot(view,side,line,index,legal){
  const v=view.players[side],c=v[line][index];
  const yours=side===0&&uiActor(app.state)===0&&!app.busy;
  const selected=!!c&&c.uid===app.selectedUid;
- const moves=yours&&app.selectedUid?legal.filter(a=>
-  a.line===line&&a.slot===index&&
-  ((a.uid===app.selectedUid&&['play','move','step','raid'].includes(a.type))||
-   (a.type==='raid'&&a.baseUid===app.selectedUid))):[];
+ const plan=yours?raidClickPlan({selectedUid:app.selectedUid,raidBaseUid:app.raidBaseUid,
+  slotUid:c?.uid||null,line,slot:index,legal}):{type:'select'};
+ const chosenBase=!!c&&c.uid===app.raidBaseUid;
+ const raidBase=plan.type==='choose-base'||(chosenBase&&plan.type!=='raid');
+ const raidDest=plan.type==='raid';
+ const place=plan.type==='place';
  const d=c?cardDef(side,c.cardId):null;
+ const placement=raidDest?'突襲登場':raidBase?(chosenBase?'已選底板':'突襲底板'):place?'放置／移動':'';
  const btnSlot=el('button',{type:'button',class:'slot'+(c?' occupied':'')+
   (c&&!c.ready?' rested':'')+(selected?' selected':'')+
-  (moves.length?' destination':''),
+  (raidBase?' raid-base':'')+(raidDest||place?' destination':''),
   'aria-label':(side===0?'你的':'對手的')+(line==='front'?'前線':'能源線')+
-   (index+1)+(d?' '+d.name:' 空位')+(moves.length?'，可執行選定操作':''),
-  'data-placement':moves.length?'放置／移動':''});
+   (index+1)+(d?' '+d.name:' 空位')+(placement?'，'+placement:''),
+  'data-placement':placement});
  if(c){
   const art=el('img',{class:'art',src:imgUrl(side,c.cardId),alt:d?.name||c.cardId,loading:'lazy'});
   art.onerror=()=>{
@@ -385,9 +418,16 @@ function legacySlot(view,side,line,index,legal){
   btnSlot.append(face);
  }else btnSlot.append(el('span',{class:'slotIndex',text:'0'+(index+1)}));
  btnSlot.addEventListener('click',()=>{
-  if(moves.length===1){applyAction(moves[0]);return;}
-  if(moves.length>1){app.targetChoices=moves;render();return;}
-  if(yours&&c){app.selectedUid=c.uid;app.selectedSide=side;app.targetChoices=null;app.allActions=false;render();}
+  if(!yours)return;
+  if(plan.type==='choose-base'){
+   app.raidBaseUid=plan.baseUid;app.targetChoices=null;render();return;
+  }
+  const acts=plan.actions||[];
+  if(acts.length===1){applyAction(acts[0]);return;}
+  if(acts.length>1){app.targetChoices=acts;render();return;}
+  if(c&&c.uid===app.raidBaseUid)return;
+  if(c){app.selectedUid=c.uid;app.selectedSide=side;app.raidBaseUid=null;
+   app.targetChoices=null;app.allActions=false;render();}
  });
  return btnSlot;
 }
@@ -439,7 +479,8 @@ function legacyHand(view,legal){
    el('span',{class:'handName',text:d.name||c.cardId}));
   card.addEventListener('click',()=>{
    if(app.busy||uiActor(app.state)!==0)return;
-   app.selectedUid=c.uid;app.selectedSide=0;app.targetChoices=null;app.allActions=false;render();
+   app.selectedUid=c.uid;app.selectedSide=0;app.raidBaseUid=null;
+   app.targetChoices=null;app.allActions=false;render();
   });
   hand.append(card);
  }
@@ -458,13 +499,20 @@ function legacyCommands(legal){
  const passive=legal.filter(a=>a.type==='extraDraw');
  const all=app.targetChoices|| (app.allActions?legal.filter(a=>a.type!=='next'):
   selected.length?[...passive,...selected]:passive);
- const list=[...new Map(all.map(a=>[JSON.stringify(a),a])).values()];
+ const list=[...new Map(all.map(a=>[JSON.stringify(a),a])).values()]
+  .filter(a=>a.type!=='raid'||app.targetChoices);
  if(app.selectedUid){
   const owner=app.selectedSide??0,d=app.packs[owner].cards[
    (s.players[owner].hand.find(x=>x.uid===app.selectedUid)||
     [...s.players[owner].front,...s.players[owner].energy].find(x=>x?.uid===app.selectedUid))?.cardId];
   if(d)bar.append(el('b',{},d.name,' · ',d.energy+' 能源 / '+(d.bp||0)+' BP'));
  }
+ const raidReady=legal.some(a=>a.type==='raid'&&a.uid===app.selectedUid);
+ if(raidReady&&!app.raidBaseUid)
+  bar.append(el('p',{class:'selectionHint',text:'突襲：先點底板，再點要登場的格子。'}));
+ else if(raidReady&&app.raidBaseUid)
+  bar.append(el('p',{class:'selectionHint',text:'已選底板。請點要登場的格子。'}),
+   btn('重選底板',()=>{app.raidBaseUid=null;render();},'btn small'));
  if(app.targetChoices)bar.append(el('b',{text:'此位置有多種合法方式，請確認：'}));
  const row=el('div',{class:'v2-legal-buttons'});
  for(const a of list.slice(0,100)){
@@ -649,7 +697,7 @@ function applyAction(a){
   app.replay=appendUniversalReplay(app.replay,a,0);
   pushHistory(publicPreviewActionLabel(app.packs,previous,app.state,a,0));
   saveBattleProgress();
-  app.selectedUid=null;app.targetChoices=null;app.error='';app.allActions=false;render();driveAi();
+  app.selectedUid=null;app.raidBaseUid=null;app.targetChoices=null;app.error='';app.allActions=false;render();driveAi();
  }catch(e){alertText(e?.message||String(e));}
 }
 function undoMove(){
