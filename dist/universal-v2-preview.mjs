@@ -694,7 +694,7 @@ function renderDesignatedDecks(){
   }
  }
 }
-renderDesignatedDecks();
+if(!IS_BATTLE_PAGE)renderDesignatedDecks();
 // Import only source-registered, complete BLEACH lists; never pretend unsupported
 // classic cards gained official V2 profiles.
 function importClassicLobbyDecks(){
@@ -724,7 +724,7 @@ function importClassicLobbyDecks(){
  if(raw.first==='0'||raw.first==='1')$('first-player').value=raw.first==='1'?'ai':'human';
  if(notices.length)$('restart-notice').textContent=notices.join(' ');
 }
-importClassicLobbyDecks();
+if(!IS_BATTLE_PAGE)importClassicLobbyDecks();
 function selectBuiltOpponent(title){
  if(decks['rezero-set1']&&title==='rezero')$('ai-title').value='rezero-set1';
  if(decks['gurren-lagann-red']&&title==='gurren-lagann')$('ai-title').value='gurren-lagann-red';
@@ -751,7 +751,7 @@ function importBuiltTitleDeck(){
  selectBuiltOpponent(raw.title);
  if(['easy','normal','hard'].includes(raw.aiDifficulty))$('ai-level').value=raw.aiDifficulty;
 }
-importBuiltTitleDeck();
+if(!IS_BATTLE_PAGE)importBuiltTitleDeck();
 // V2-only editor handoff: validate title, complete-card registry and printed deck rules.
 // Never use legacy auto flags or a legacy battle reducer.
 function importV2EditorDeck(){
@@ -775,7 +775,7 @@ function importV2EditorDeck(){
  selectBuiltOpponent(raw.title);
  $('restart-notice').textContent='已載入 V2 組卡頁的 50 張牌組：'+name+'。可以直接開始與 AI 對戰。';
 }
-importV2EditorDeck();
+if(!IS_BATTLE_PAGE)importV2EditorDeck();
 
 // Saved decks remain browser-local, and are revalidated against the CURRENT
 // V2 rule pack. Unsupported decks are shown as unavailable, never auto-enabled.
@@ -791,7 +791,7 @@ function importSavedLobbyDecks(){
   }
  }
 }
-importSavedLobbyDecks();
+if(!IS_BATTLE_PAGE)importSavedLobbyDecks();
 // On the setup route, validate the selected 50-card lists and navigate to
 // an independent URL. The live card table is never inserted below this form.
 function launchBattle(){
@@ -908,31 +908,52 @@ function restoreMatchLobby(){
  if(['easy','normal','hard'].includes(saved.difficulty))$('ai-level').value=saved.difficulty;
  if(['human','ai'].includes(saved.first))$('first-player').value=saved.first;
 }
-restoreMatchLobby();
-for(const button of document.querySelectorAll('[data-deck-side]')){
- button.addEventListener('click',()=>{
-  const select=$(button.dataset.deckSide),key=button.dataset.deckKey;
-  if(button.disabled||![...select.options].some(o=>o.value===key&&!o.disabled))return;
-  select.value=key;
-  syncMatchLobby();markLobbyChanged();rememberMatchLobby();
+if(!IS_BATTLE_PAGE){
+ restoreMatchLobby();
+ for(const button of document.querySelectorAll('[data-deck-side]')){
+  button.addEventListener('click',()=>{
+   const select=$(button.dataset.deckSide),key=button.dataset.deckKey;
+   if(button.disabled||![...select.options].some(o=>o.value===key&&!o.disabled))return;
+   select.value=key;
+   syncMatchLobby();markLobbyChanged();rememberMatchLobby();
+  });
+ }
+ for(const button of document.querySelectorAll('[data-ai-difficulty]')){
+  button.addEventListener('click',()=>{
+   const difficulty=button.dataset.aiDifficulty;
+   if(!['easy','normal','hard'].includes(difficulty))return;
+   $('ai-level').value=difficulty;
+   syncMatchLobby();markLobbyChanged();rememberMatchLobby();
+  });
+ }
+ for(const id of ['my-title','ai-title','ai-level','first-player']){
+  $(id).addEventListener('change',()=>{
+   syncMatchLobby();markLobbyChanged();rememberMatchLobby();
+  });
+ }
+ $('start-game').addEventListener('click',()=>{
+  rememberMatchLobby();
+  launchBattle();
  });
-}
-for(const button of document.querySelectorAll('[data-ai-difficulty]')){
- button.addEventListener('click',()=>{
-  const difficulty=button.dataset.aiDifficulty;
-  if(!['easy','normal','hard'].includes(difficulty))return;
-  $('ai-level').value=difficulty;
-  syncMatchLobby();markLobbyChanged();rememberMatchLobby();
+ syncMatchLobby();
+}else{
+ const loaded=loadSoloBattle(sessionStorage);
+ const exit=$('exit-battle');
+ if(exit)exit.addEventListener('click',event=>{
+  if(app.state?.status==='playing'&&
+   !window.confirm('返回對戰設定將結束這場對局。確定要離開嗎？')){
+   event.preventDefault();return;
+  }
+  resetAi();clearSoloBattle(sessionStorage);
  });
+ if(loaded){
+  app.launch=loaded;app.packs=loaded.packs;
+  app.aiDifficulty=loaded.config.difficulty;
+  app.recordDeckId=loaded.config.recordDeckId;
+  const banner=$('battle-matchup');
+  if(banner)banner.textContent=loaded.decks[0].label+' vs '+loaded.decks[1].label+
+   ' · '+({easy:'簡單',normal:'普通',hard:'困難'}[loaded.config.difficulty]||'普通');
+  if(!restoreBattleProgress())startGame();
+  else{render();driveAi();}
+ }else render();
 }
-for(const id of ['my-title','ai-title','ai-level','first-player']){
- $(id).addEventListener('change',()=>{
-  syncMatchLobby();markLobbyChanged();rememberMatchLobby();
- });
-}
-$('start-game').addEventListener('click',()=>{
- rememberMatchLobby();
- startGame();
-});
-syncMatchLobby();
-render();
