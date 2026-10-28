@@ -9,6 +9,7 @@ import {validateUniversalDeck} from './universal-v2/pack.mjs';
 import {V2_ABILITY_TEMPLATE_IDS} from './universal-v2/ability-templates.mjs';
 import {listRegisteredV2Titles,registeredV2TitlePack} from './universal-v2/title-packs/registry.mjs';
 import {V2_EDITOR_TRANSFER_KEY} from './v2-editor-compat.mjs';
+import {generateMatchSeed} from './v2-match-random-seed.mjs';
 import {recordDeckResult} from './deck-records.mjs';
 import {collectSavedV2LobbyDecks,validatedLobbyChoice,V2_MATCH_SETUP_STORAGE_KEY} from './universal-v2/lobby-saved-decks.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
@@ -715,9 +716,8 @@ function startGame(){
   const foe=decks[foeTitle]||designatedReady.get(foeTitle);
   if(!mine||!foe)throw Error('請選擇有已驗證 50 張牌組的作品。');
   app.packs=[mine.pack,foe.pack];
-  const seed=Number($('match-seed').value);
-  if(!Number.isSafeInteger(seed)||seed<1||seed>999999999)
-   throw Error('牌序種子請輸入 1～999999999。');
+  // A new match gets a fresh random order. Preserve the seed only in the debug replay.
+  const seed=generateMatchSeed();
   const first=$('first-player').value==='ai'?1:0;
   app.recordDeckId=$('my-title').value==='editor-v2-mine'?editorRecordId:null;
   app.recordNoted=false;
@@ -726,7 +726,7 @@ function startGame(){
   app.error='';app.selectedUid=null;app.undo=null;app.allActions=false;app.aiFallbacks=0;app.aiCompletedSteps=0;app.lastAiProgress='新對局';
   app.aiDifficulty=$('ai-level').value;
   app.history=['新對局：'+(mine.label||fmtTitle(myTitle))+' vs '+(foe.label||fmtTitle(foeTitle))+
-   '｜先手 '+(first===0?'你':'電腦')+'｜種子 '+seed];
+   '｜先手 '+(first===0?'你':'電腦')+'｜雙方牌組已隨機洗牌'];
   app.replay=makeUniversalPreviewReplay(app.packs,{
    decks:[mine.counts,foe.counts],seed,first});
   render();driveAi();
@@ -814,7 +814,7 @@ for(const button of document.querySelectorAll('[data-ai-difficulty]')){
   syncMatchLobby();markLobbyChanged();rememberMatchLobby();
  });
 }
-for(const id of ['my-title','ai-title','ai-level','first-player','match-seed']){
+for(const id of ['my-title','ai-title','ai-level','first-player']){
  $(id).addEventListener('change',()=>{
   syncMatchLobby();markLobbyChanged();rememberMatchLobby();
  });
@@ -823,6 +823,5 @@ $('start-game').addEventListener('click',()=>{
  rememberMatchLobby();
  startGame();
 });
-$('match-seed').value='20261015';
 syncMatchLobby();
 render();
