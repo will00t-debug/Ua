@@ -235,6 +235,9 @@ body{margin:0;background:#f2f3f5;color:#272b31;font:14px/1.5 system-ui,-apple-sy
 .v2-shell .choice-card-art{flex:1;min-width:0;display:block;aspect-ratio:63/88;overflow:hidden;border-radius:6px;background:#0b0e13}
 .v2-shell .choice-card-art img{width:100%;height:100%;object-fit:contain;display:block;background:#0b0e13}
 .v2-shell .choice-card-name{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:#f7f4ee;font-size:12px;font-weight:750;line-height:1.35}
+.v2-shell .choice-card-location{
+ display:block;color:#8fc8ff;font-size:11px;line-height:1.4;font-weight:750;
+}
 .v2-shell .choice-card-caption{display:block;color:#d9d0c4;font-size:10px;line-height:1.35}
 @media(max-width:620px){.v2-shell .action-list.choice-gallery{grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}.v2-shell .choice-card-name{font-size:11px}}
 @media(max-width:700px){

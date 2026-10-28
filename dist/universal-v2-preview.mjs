@@ -26,7 +26,7 @@ import {SAO_CARDS} from './sao-cards.mjs';
 import {MST_V2_OFFICIAL_CATALOGUE} from './universal-v2/sources/mst-inventory.mjs';
 import {V2_PHASE_LABELS,V2_TITLE_LABELS,V2_PENDING_LABELS,
  uiActor,isExactLegal,uiCardLabel,uiActionLabel,visibleActionsForCard,
- pendingChoiceCards,pendingChoiceCaption,attackBattleTags,raidClickPlan,moveClickPlan,
+ pendingChoiceCards,pendingChoiceCaption,publicPendingTargetCard,attackBattleTags,raidClickPlan,moveClickPlan,
  FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs';
 import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalReplay,
  publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
@@ -310,9 +310,13 @@ function triggerBoard(view){
  }
  return board;
 }
-function pendingChoiceControl(action,option,gallery){
+function pendingChoiceControl(action,option,gallery,view){
  const label=uiActionLabel(action,{pack:app.packs,state:app.state});
- const cards=pendingChoiceCards(option);
+ // Private options already carry their controller-authorized artwork. If
+ // absent, use only the exact card UID from publicly visible field slots.
+ const authorized=pendingChoiceCards(option).map(card=>({...card,side:0}));
+ const target=authorized.length?null:publicPendingTargetCard(view,action);
+ const cards=target?[{...target,name:cardDef(target.side,target.cardId)?.name||target.cardId}]:authorized;
  if(!cards.length){
   const quiet=action.uid===null||action.mode==='skip'||action.mode==='done';
   return btn(label,()=>applyAction(action),
@@ -320,13 +324,17 @@ function pendingChoiceControl(action,option,gallery){
  }
  const names=cards.map(card=>card.name);
  const caption=pendingChoiceCaption(label,names);
+ const location=target?(target.side===0?'我方':'敵方')+' · '+
+  (target.line==='front'?'前線':'能源線')+' '+(target.index+1)+
+  (Number.isInteger(target.bp)?' · BP '+target.bp:''):'';
  const spoken=names.every(name=>label.includes(name))?label:label+'｜'+names.join('、');
  const button=el('button',{type:'button',class:'choice-card recommended',
-  'aria-label':spoken,onClick:()=>applyAction(action)});
+  'aria-label':spoken+(location?'｜'+location:''),onClick:()=>applyAction(action)});
  const arts=el('span',{class:'choice-card-arts'});
  for(const card of cards)
-  arts.append(el('span',{class:'choice-card-art'},choicePicture(card.cardId,card.name)));
+  arts.append(el('span',{class:'choice-card-art'},choicePicture(card.cardId,card.name,card.side)));
  button.append(arts,el('span',{class:'choice-card-name',text:names.join(' ＋ ')}));
+ if(location)button.append(el('span',{class:'choice-card-location',text:location}));
  if(caption)button.append(el('span',{class:'choice-card-caption',text:caption}));
  return button;
 }
@@ -361,7 +369,8 @@ function pendingDialog(legal,view){
   .map(option=>[JSON.stringify(option.action),option]));
  const rows=legal.map(action=>({action,
   option:byAction.get(JSON.stringify(action))||null}));
- const gallery=rows.some(row=>pendingChoiceCards(row.option).length>0);
+ const gallery=rows.some(row=>pendingChoiceCards(row.option).length>0||
+  publicPendingTargetCard(view,row.action)!==null);
  const title=V2_PENDING_LABELS[s.pending.kind]||s.pending.kind;
  const overlay=el('div',{class:'overlay'});
  const dialog=el('div',{class:'dialog panel pending'+(gallery?' pending-cards':''),
@@ -386,7 +395,7 @@ function pendingDialog(legal,view){
  const list=el('div',{class:'action-list'+((gallery||blockGallery)?' choice-gallery':'')});
  for(const row of rows){
   const blocker=blocking?blockControl(row.action,view):null;
-  list.append(blocker||pendingChoiceControl(row.action,row.option,gallery||blockGallery));
+  list.append(blocker||pendingChoiceControl(row.action,row.option,gallery||blockGallery,view));
  }
  dialog.append(list);
  overlay.append(dialog);
