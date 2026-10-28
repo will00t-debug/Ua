@@ -62,6 +62,27 @@ const OKABE_WALL='このカードは自分の場に〈岡部 倫太郎〉があ�
 const IBN_GATE='【登場時】自分の手札のイベントカードかフィールドカードを1枚場外に置いてもよい。そうした場合、山札の上から2枚見て、1枚手札に加え、残りを場外に置く。【退場時】以下から1つ選ぶ。・自分の場の〈桐生 萌郁〉を1枚まで選び、アクティブにする。・カードを1枚引く。';
 const IMPACT_MOVE='【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）【登場時】自分の場の他のカードを1枚退場させてもよい。そうした場合、相手のフロントLのキャラを1枚まで選び、エナジーLに移動させる。このターン中に自分がイベントカードを使用している場合、選んだキャラに次の自分のターン開始時まで、「このキャラは移動できない。」を与える。';
 const TRIGGER_RETIRE='【レイド】〈牧瀬 紅莉栖〉アクティブにし、フロントLに移動できる【登場時】自分の場外の必要エナジーが3以下の青のイベントカードの【トリガー】の種類数×1000以下のBPの相手のフロントLのキャラを1枚まで選び、退場させる。自分の場外に必要エナジーが3以下の青のイベントカードの【トリガー】が5種類以上ある場合、このキャラはこのターン中、【インパクト（1）】を得る。';
+const FARIS='【レイド】〈フェイリス・ニャンニャン〉アクティブにし、フロントLに移動できる【登場時】カードを1枚まで引く。自分の場のキャラを1枚まで選び、このターン中、BP+1000。【アタック時】このターン中に自分がイベントカードを使用していて、自分の場にフィールドがある場合、このキャラの【登場時】を発動する。';
+const KURISU_PROTECT='【レイド】〈牧瀬 紅莉栖〉アクティブにし、フロントLに移動できる【登場時】自分の場の他のキャラを1枚まで選び、次の自分のターン開始時まで、「このキャラは相手の効果で選ばれない。」を与える。【アタック時】以下から1つ選ぶ。・このキャラはこのターン中、【インパクト（1）】を得る。・自分のフロントLに空きがある場合、カードを2枚引き、自分の手札を1枚場外に置く。';
+const MAYURI_SHIFT='【レイド】〈椎名 まゆり〉アクティブにし、フロントLに移動できる【アタック時】自分の場のキャラを1枚まで選び、このターン中、BP+1000。自分のフロントLに空きがあり、選んだキャラがエナジーLにある場合、そのキャラをフロントLに移動させる。【退場時】自分のエナジーLのキャラを1枚まで選び、このターン中、BP+2000し、フロントLに移動させる。';
+const SUZUHA_ACTIVE='このキャラはアクティブで登場させる。【登場時】自分の手札を1枚場外に置いてもよい。そうした場合、自分の場外から必要エナジーが3以下で【ファイナルトリガー】を持たないイベントカードを1枚まで手札に加える。【起動メイン】【ターン1】このターン中に自分の効果でアクティブからレストになったことがある自分の場の他のキャラを1枚選び、アクティブにする。';
+const OKABE_CHOOSE='【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）【登場時】自分の山札の上から1枚見て、山札の上か場外に置く。【起動メイン】【ターン1】自分のフロントLのアクティブの〈牧瀬 紅莉栖〉を1枚レストにする。そうした場合、以下から1つ選ぶ。・このキャラはこのターン中、【インパクト（1）】を得る。・BP1500以上の相手のフロントLのキャラを1枚まで選び、このターン中、BP-1000。';
+const MAYURI_DELAY='【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）【登場時】このキャラがキャラの効果で登場していない場合、このキャラは次の自分のターン開始時まで、「相手のアタックフェイズ終了時、このキャラを退場させる。」を得る。【アタック時】自分の山札の上から3枚見て、〈岡部 倫太郎〉か〈椎名 まゆり〉か〈橋田 至〉か〈まゆしぃのカイちゅ～止まっちゃってる……〉を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。【起動メイン】このキャラをアクティブにする。〈椎名 まゆり〉のこの効果は1ターンに1回のみ発動できる。';
+const KURISU_DUAL='【レイド】〈牧瀬 紅莉栖〉アクティブにし、フロントLに移動できる【起動メイン】【フロントLにある場合】このターン中、次に手札から使用する必要エナジーが3以下で【ファイナルトリガー】を持たないイベントカードの消費APを-1する。〈牧瀬 紅莉栖〉のこの効果は1ターンに1回のみ発動できる。【起動メイン】【フロントLにある場合】 【ターン1】このキャラがレストの場合のみ発動できる。自分の場の他のキャラを1枚選び、このターン中、BP+2000。';
+const DMAIL_FIELD='自分の場のアクティブのフィールドを1枚レストにする。そうした場合、カードを1枚引き、自分の手札を1枚場外に置く。自分の手札から必要エナジーが4以下で消費APが1の【レイド】を持たない緑のキャラカードを1枚まで自分の場にアクティブで登場させる。このカードの【カラートリガー】を発動する場合、効果に記載されている「必要エナジーが2以下で消費APが1の緑のキャラカード」を「緑のフィールドカード」に代えてもよい。';
+const MAYURI_SLAP='以下から2つまで選ぶ。自分の場外に必要エナジーが3以下の他の青のイベントカードの【トリガー】が3種類以上ある場合、自分のAPカードを1枚アクティブにする。・自分の場のキャラを1枚選び、アクティブにする。・自分の場のキャラを1枚選び、このターン中、BP+2000。・相手のフロントLのキャラを1枚選び、レストにする。〈まゆしぃのビンタ〉のこの効果は1ターンに1回のみ選べる。';
+const RUKA_GRANT='【起動メイン】【フロントLにある場合】 【ターン1】消費APが1で【レイド】を持たない自分の場の他のキャラを1枚選び、このターン中、以下から1つを与える。このターン中に〈漆原 るか〉が既に選んだ効果は選べない。・このキャラはBP4000以上のキャラにブロックされない。・BP+1000と「このターン中に自分がイベントカードを使用している場合、このキャラは【インパクト（1）】を得る。」';
+const KURISU_ATTACK={op:'chooseOne',optional:false,options:[
+ {id:'impact',label:'這個回合獲得衝擊1',turn:'any',then:[{op:'grantSelfImpactThisTurn',amount:1}]},
+ {id:'draw',label:'前線有空位就抽2棄1',turn:'any',then:[{op:'drawDiscardIfFrontOpen',count:2}]}
+]};
+const SLAP={op:'chooseUpToDistinctOrdered',max:2,options:[
+ {id:'active',label:'自己角色活動',then:[{op:'activeOwnOne',optional:false}]},
+ {id:'buff',label:'自己角色這個回合BP+2000',then:[{op:'buffOwnField',
+  filter:{field:'type',value:'character'},bp:2000,optional:false,excludeSelf:false}]},
+ {id:'rest',label:'對手前線休息',then:[{op:'restOppFrontOne',optional:false}]}
+]};
+const MAYURI_NAMES=['岡部 倫太郎','椎名 まゆり','橋田 至','まゆしぃのカイちゅ～止まっちゃってる……'];
 const IBN_RETIRE={op:'chooseOne',optional:false,options:[
  {id:'active',label:'使桐生萌郁活動',turn:'any',then:[
   {op:'activeOwnNamed',name:'桐生 萌郁',max:1,optional:true}]},
@@ -129,6 +150,16 @@ export function stgEngineKind(effectJa){
  if(e===IBN_GATE)return 'ibnGate';
  if(e===IMPACT_MOVE)return 'impactMove';
  if(e===TRIGGER_RETIRE)return 'triggerKindRetire';
+ if(e===FARIS)return 'farisReplay';
+ if(e===KURISU_PROTECT)return 'kurisuProtect';
+ if(e===MAYURI_SHIFT)return 'mayuriShift';
+ if(e===SUZUHA_ACTIVE)return 'suzuhaActive';
+ if(e===OKABE_CHOOSE)return 'okabeChoose';
+ if(e===MAYURI_DELAY)return 'mayuriDelay';
+ if(e===KURISU_DUAL)return 'kurisuDual';
+ if(e===DMAIL_FIELD)return 'dmailField';
+ if(e===MAYURI_SLAP)return 'mayuriSlap';
+ if(e===RUKA_GRANT)return 'rukaGrant';
  return null;
 }
 
@@ -146,14 +177,15 @@ export function stgPackCard(card){
  if(card.trigger==null){
   if(card.triggerTextJa!=='-')throw Error(card.id+' missing trigger text');
  }else if(card.trigger==='color'){
-  const green=kind==='colorOtherBuff'&&card.triggerTextJa===COLOR_TRIGGER&&card.color==='green';
+  const green=(kind==='colorOtherBuff'||kind==='dmailField')&&card.triggerTextJa===COLOR_TRIGGER&&card.color==='green';
   const bounce=kind==='raidedTriggerDraw'&&card.triggerTextJa===COLOR_BOUNCE&&card.color==='blue';
   if(!green&&!bounce)throw Error(card.id+' color trigger is not a registered printed profile');
  }else if(card.trigger==='special'){
   if(!['kurisuRetire','okabeWall','impactMove'].includes(kind)||card.triggerTextJa!==SPECIAL)
    throw Error(card.id+' special trigger is not the printed front retirement');
  }else if(card.trigger==='raid'){
-  if(kind!=='triggerKindRetire'||card.triggerTextJa!==RAID_TRIGGER)
+  if(!['triggerKindRetire','farisReplay','kurisuProtect','mayuriShift','kurisuDual'].includes(kind)||
+   card.triggerTextJa!==RAID_TRIGGER)
    throw Error(card.id+' raid trigger is not the standard printed text');
  }else if(STANDARD[card.trigger]!==card.triggerTextJa)
   throw Error(card.id+' trigger is not the standard printed text');
@@ -246,6 +278,20 @@ export function stgPackCard(card){
    {op:'retireOppFrontByOutsideTriggers',optional:true,color:'blue',maxEnergy:3,per:1000},
    {op:'grantSelfImpactIfOutsideTriggers',color:'blue',maxEnergy:3,min:5,amount:1}
   ]:
+  kind==='farisReplay'?[
+   {op:'mayDrawOne'},
+   {op:'buffOwnField',filter:{field:'type',value:'character'},bp:1000,optional:true,excludeSelf:false}
+  ]:
+  kind==='kurisuProtect'?[{op:'grantOtherUntargetable',optional:true}]:
+  kind==='suzuhaActive'?[{op:'discardGate',optional:true,then:[
+   {op:'recoverOutsideEventNoFinal',maxEnergy:3,optional:true}]}]:
+  kind==='okabeChoose'?[{op:'peekTopOne'}]:
+  kind==='mayuriDelay'?[{op:'gainRetireUnlessCharacterEntry'}]:
+  kind==='dmailField'?[
+   {op:'restActiveFieldThenDrawDiscard'},
+   {op:'deployOwnHandActiveNoRaid',type:'character',color:'green',maxEnergy:4,ap:1,optional:true}
+  ]:
+  kind==='mayuriSlap'?[SLAP,{op:'readyApIfOutsideTriggerKinds',color:'blue',maxEnergy:3,min:3,excludeSource:true}]:
   null;
  return {
   id:card.id,name:card.nameJa,color:card.color,type:card.type,
@@ -258,8 +304,16 @@ export function stgPackCard(card){
    kind==='raidedTriggerDraw'?{onRaided:[{op:'drawIfOutsideEventTriggers',
     color:'blue',maxEnergy:3,min:3,count:1}]}:
    kind==='attackMayDraw'?{onAttack:[{op:'mayDrawDiscardIfOwnEvent'}]}:
+   kind==='farisReplay'?{onPlay,onAttack:[{op:'replayOnPlayIf',when:'eventAndOwnField'}]}:
+   kind==='kurisuProtect'?{onPlay,onAttack:[KURISU_ATTACK]}:
+   kind==='mayuriShift'?{onAttack:[{op:'buffOwnField',filter:{field:'type',value:'character'},
+    bp:1000,optional:true,excludeSelf:false,moveIfEnergy:true}],
+    onRetire:[{op:'buffEnergyMoveFront',bp:2000,optional:true}]}:
+   kind==='mayuriDelay'?{onPlay,onAttack:[{op:'searchTopOneBottomDiscard',count:3,logic:'any',
+    filters:MAYURI_NAMES.map(value=>({field:'name',value}))}]}:
    onPlay?{onPlay}:{},
-  ...(kind==='impactNull'||kind==='labHandRest'||kind==='impactMove'?{impactNull:true}:{}),
+  ...(kind==='impactNull'||kind==='labHandRest'||kind==='impactMove'||
+   kind==='okabeChoose'||kind==='mayuriDelay'?{impactNull:true}:{}),
   ...(kind==='doubleBlock'?{readyOnBlockCount:1}:{}),
   ...(kind==='bpImmuneTurn'?{bpDownImmune:true,ownTurnBp:500}:{}),
   ...(kind==='emptyDrawDiscard'?{emptyOwnFieldHandEnergyDiscount:2}:{}),
@@ -283,7 +337,24 @@ export function stgPackCard(card){
   ...(kind==='raidedTriggerDraw'?{emptyOwnFieldHandEnergyDiscount:2,
    triggerEffect:{op:'bounceOppFrontUnderBp',bp:3500}}:{}),
   ...(kind==='okabeWall'?{playRequiresOwnName:'岡部 倫太郎'}:{}),
-  ...(kind==='triggerKindRetire'?{raidName:'牧瀬 紅莉栖'}:{}),
+  ...(kind==='triggerKindRetire'||kind==='kurisuProtect'||kind==='kurisuDual'?{raidName:'牧瀬 紅莉栖'}:{}),
+  ...(kind==='farisReplay'?{raidName:'フェイリス・ニャンニャン'}:{}),
+  ...(kind==='mayuriShift'?{raidName:'椎名 まゆり'}:{}),
+  ...(kind==='suzuhaActive'?{enterAlwaysActive:true,mainAbility:{
+   op:'readyOtherRestedOnce',oncePerTurn:true}}:{}),
+  ...(kind==='okabeChoose'?{mainAbility:{
+   op:'restNamedFrontThenChoose',oncePerTurn:true,name:'牧瀬 紅莉栖',
+   impact:1,downBp:1000,minBp:1500}}:{}),
+  ...(kind==='mayuriDelay'?{mainAbility:{
+   op:'activeSelfOnceByKey',onceKey:'椎名 まゆり|STG-1-018'}}:{}),
+  ...(kind==='kurisuDual'?{mainAbility:{
+   op:'kurisuFrontDual',discountOnceKey:'牧瀬 紅莉栖|STG-1-028-discount',buffBp:2000,
+   filter:{cardType:'event',printedRequiredEnergyAtMost:3,triggerNot:'final'}}}:{}),
+  ...(kind==='dmailField'?{colorTriggerMayField:true,triggerEffect:{
+   op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1}}:{}),
+  ...(kind==='mayuriSlap'?{handUseOncePerName:true}:{}),
+  ...(kind==='rukaGrant'?{mainAbility:{
+   op:'rukaFrontGrant',oncePerTurn:true,frontOnly:true,nameLock:'漆原 るか'}}:{}),
   ...(kind==='winDrawMoved'?{attackWinDraw:{count:1,sides:'either',
    condition:{kind:'selfMovedThisTurn',turn:'any'}}}:{}),
   ...(kind==='attackEndFront'?{phaseEffects:[{phase:'attack',edge:'end',turn:'own',
@@ -301,8 +372,8 @@ export const STEINS_GATE_ENGINE_IDS=Object.freeze(
 
 export function createStgV2Pack(){
  const cards=STEINS_GATE_CARDS.filter(c=>c.engineKind).map(stgPackCard);
- if(cards.length!==64)throw Error('Steins;Gate registered count drifted');
+ if(cards.length!==74)throw Error('Steins;Gate registered count drifted');
  return createUniversalPack({
-  id:'steins-gate',version:'stg-ua57-batches-31-40-20261028',cards
+  id:'steins-gate',version:'stg-ua57-batches-41-50-20261028',cards
  });
 }

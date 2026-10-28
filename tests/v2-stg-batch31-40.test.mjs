@@ -11,9 +11,7 @@ import {V2_PENDING_LABELS,uiActionLabel} from '../dist/universal-v2/preview-acti
 import {REZ_BASE_IDS,rez,rezDeck} from './helpers/rez-v2-match.mjs';
 import {deckWith,fresh,put,readyAp,stg,stgPacks,take,toPhase} from './helpers/stg-v2-match.mjs';
 
-const STILL=['STG-1-003','STG-1-010','STG-1-011','STG-1-017','STG-1-018','STG-1-027',
- 'STG-1-028','STG-1-033','STG-1-038','STG-1-039','STG-1-046','STG-1-050','STG-1-060',
- 'STG-1-066','STG-1-070','STG-1-077'];
+const STILL=['STG-1-011','STG-1-017','STG-1-027','STG-1-033','STG-1-038','STG-1-046'];
 const KINDS={
  'STG-1-016':'inspectCharacterEntry','STG-1-059':'labHandRest','STG-1-026':'triggerSearch',
  'STG-1-004':'triggerDrawBranch','STG-1-025':'raidedTriggerDraw','STG-1-040':'kurisuBlockDraw',
@@ -125,17 +123,17 @@ function finishInspect(packs,s,actor=0){
  return s;
 }
 
-test('batches 31-40 register ten whole prints and leave sixteen catalogue cards',()=>{
+test('batches 31-40 stay registered while six catalogue cards remain',()=>{
  assert.ok(!V2_TITLE_IDS.includes('steins-gate'));
  assert.equal(STEINS_GATE_CARDS.length,80);
- assert.equal(Object.keys(stg.cards).length,64);
- assert.equal(stg.version,'stg-ua57-batches-31-40-20261028');
+ assert.equal(Object.keys(stg.cards).length,74);
+ assert.equal(stg.version,'stg-ua57-batches-41-50-20261028');
  assert.deepEqual(STEINS_GATE_CARDS.filter(c=>!c.engineKind).map(c=>c.id).sort(),[...STILL].sort());
  for(const [id,kind] of Object.entries(KINDS)){
   assert.equal(STEINS_GATE_BY_ID[id].engineKind,kind);
   assert.equal(stg.cards[id].name,STEINS_GATE_BY_ID[id].nameJa);
  }
- assert.equal(stg.cards['STG-1-003'],undefined);
+ assert.equal(stg.cards['STG-1-011'],undefined);
  assert.equal(stg.cards['STG-1-004'].bp,3000);
  assert.equal(stg.cards['STG-1-025'].triggerEffect.op,'bounceOppFrontUnderBp');
  assert.equal(stg.cards['STG-1-025'].emptyOwnFieldHandEnergyDiscount,2);
@@ -150,10 +148,10 @@ test('batches 31-40 register ten whole prints and leave sixteen catalogue cards'
  assert.equal(Object.values(practice.counts).reduce((n,c)=>n+c,0),50);
  assert.ok(Object.keys(practice.counts).every(id=>practice.pack.cards[id].color==='blue'));
  const editor=editorV2Status('steins-gate',practice.counts);
- assert.equal(editor.registered,64);
- const blocked=v2DeckReport('steins-gate',{...practice.counts,'STG-1-003':1,'STG-1-001':3});
+ assert.equal(editor.registered,74);
+ const blocked=v2DeckReport('steins-gate',{...practice.counts,'STG-1-011':1,'STG-1-001':3});
  assert.equal(blocked.ok,false);
- assert.ok(blocked.issues.some(issue=>issue.includes('STG-1-003')));
+ assert.ok(blocked.issues.some(issue=>issue.includes('STG-1-011')));
  const base={id:'X',name:'X',color:'blue',type:'character',energy:1,ap:1,bp:1000,gen:1,implementation:'dsl'};
  const reject=(effects,pattern)=>assert.throws(()=>createUniversalPack({id:'bad',cards:[{...base,effects}]}),pattern);
  reject({onPlay:[{op:'searchTopOneBottomDiscard',count:3,logic:'any',discard:false,
