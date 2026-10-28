@@ -725,33 +725,31 @@ function render(){
  if(app.error)target.append(el('div',{class:'panel v2-error',role:'alert',text:app.error}));
  const revealed=triggerBoard(v);if(revealed)target.append(revealed);
  const arena=el('div',{class:'arena'});
+ const next=legal.find(a=>a.type==='next');
+ const middle=el('section',{class:'v2-middle-controls','aria-label':'目前回合與階段操作'});
  const phasesEl=el('div',{class:'phaseBar','aria-label':'回合階段'});
  for(const [n,name] of [['start','開始'],['move','移動'],['main','主要'],['attack','攻擊']])
   phasesEl.append(el('span',{class:s.phase===n?'current':'',text:name}));
- arena.append(phasesEl);
+ middle.append(el('div',{class:'centerLine',text:'TURN '+s.turn+' · '+(phases[s.phase]||s.phase)}),phasesEl);
+ if(next&&uiActor(s)===0&&!app.busy)
+  middle.append(el('div',{class:'v2-middle-next'},
+   btn(s.phase==='attack'?'結束回合 →':'進入下一階段 →',()=>applyAction(next),'btn primary')));
  if(s.status==='finished'){
   noteAiRecord(s);
   arena.append(el('div',{class:'resultBanner'},el('h2',{text:s.winner===0?'你獲勝了！':'電腦獲勝'})));
  }
- arena.append(legacyPlayer(v,1,legal),
-  el('div',{class:'centerLine',text:'TURN '+s.turn+' · '+(phases[s.phase]||s.phase)}),
-  legacyPlayer(v,0,legal));
+ arena.append(legacyPlayer(v,1,legal),middle,legacyPlayer(v,0,legal));
  const handArea=el('section',{class:'handArea'},
   el('header',{class:'handTitle'},
    el('span',{text:'你的手牌 · '+v.players[0].hand.length+' 張'}),
    el('span',{text:'REST 仍可產生能源'})),
   legacyCommands(legal),legacyHand(v,legal));
  arena.append(handArea);
- const next=legal.find(a=>a.type==='next');
  const phase=el('div',{class:'phaseAction'},el('p',{text:s.pending?'請完成效果選擇。':
   app.busy?'AI 正在思考與操作…':s.status==='finished'?'對局結束':
   uiActor(s)===1?'電腦回合已暫停，可按上方「AI 沒反應？重新繼續」。':
   '點手牌再點亮起的場上位置，即可用 V2 合法動作出牌。'}));
  if(app.error)phase.append(el('p',{class:'v2-error',role:'alert',text:app.error}));
- const controls=el('div',{class:'v2-legal-buttons'});
- if(next&&uiActor(s)===0&&!app.busy)
-  controls.append(btn(uiActionLabel(next,{pack:app.packs,state:s})+' →',()=>applyAction(next),'btn primary'));
- phase.append(controls);
  arena.append(phase);
  target.append(arena);
  const log=el('details',{class:'v2-log panel'},el('summary',{text:'對局紀錄（'+app.history.length+' 步）'}),
