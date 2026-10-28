@@ -24,7 +24,8 @@ import {SOLO_LEVELING_CARDS} from './solo-leveling.mjs';
 import {SAO_CARDS} from './sao-cards.mjs';
 import {MST_V2_OFFICIAL_CATALOGUE} from './universal-v2/sources/mst-inventory.mjs';
 import {V2_PHASE_LABELS,V2_TITLE_LABELS,V2_PENDING_LABELS,
- uiActor,isExactLegal,uiCardLabel,uiActionLabel,visibleActionsForCard} from './universal-v2/preview-actions.mjs';
+ uiActor,isExactLegal,uiCardLabel,uiActionLabel,visibleActionsForCard,
+ pendingChoiceCards,pendingChoiceCaption} from './universal-v2/preview-actions.mjs';
 import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalReplay,
  publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
 
@@ -233,29 +234,60 @@ function choices(legal){
   ...app.history.slice(0,28).map(x=>el('li',{text:x}))));
  side.append(log);return side;
 }
+function choicePicture(cardId,name){
+ const picture=el('img',{src:imgUrl(0,cardId),alt:name||cardId,
+  loading:'eager',decoding:'async'});
+ picture.onerror=()=>{
+  if(app.packs?.[0]?.id==='gurren-lagann'&&ttgArtErrorFallback(picture))return;
+  if(!picture.src.endsWith('/assets/mark.svg'))picture.src='assets/mark.svg';
+ };
+ return picture;
+}
+function pendingChoiceControl(action,option,gallery){
+ const label=uiActionLabel(action,{pack:app.packs,state:app.state});
+ const cards=pendingChoiceCards(option);
+ if(!cards.length){
+  const quiet=action.uid===null||action.mode==='skip'||action.mode==='done';
+  return btn(label,()=>applyAction(action),
+   (quiet?'quiet':'recommended')+(gallery?' choice-text':''));
+ }
+ const names=cards.map(card=>card.name);
+ const caption=pendingChoiceCaption(label,names);
+ const spoken=names.every(name=>label.includes(name))?label:label+'｜'+names.join('、');
+ const button=el('button',{type:'button',class:'choice-card recommended',
+  'aria-label':spoken,onClick:()=>applyAction(action)});
+ const arts=el('span',{class:'choice-card-arts'});
+ for(const card of cards)
+  arts.append(el('span',{class:'choice-card-art'},choicePicture(card.cardId,card.name)));
+ button.append(arts,el('span',{class:'choice-card-name',text:names.join(' ＋ ')}));
+ if(caption)button.append(el('span',{class:'choice-card-caption',text:caption}));
+ return button;
+}
 function pendingDialog(legal){
  const s=app.state;
  if(!s?.pending||uiActor(s)!==0||app.busy)return null;
  const privateChoices=universalPrivateChoices(app.packs,s,0);
- const cardNameByUid=new Map((privateChoices?.options||[])
-  .filter(x=>x.action.uid!==null&&x.card).map(x=>[x.action.uid,x.card.name]));
+ const byAction=new Map((privateChoices?.options||[])
+  .filter(option=>option?.action)
+  .map(option=>[JSON.stringify(option.action),option]));
+ const rows=legal.map(action=>({action,
+  option:byAction.get(JSON.stringify(action))||null}));
+ const gallery=rows.some(row=>pendingChoiceCards(row.option).length>0);
  const title=V2_PENDING_LABELS[s.pending.kind]||s.pending.kind;
  const overlay=el('div',{class:'overlay'});
- const dialog=el('div',{class:'dialog panel pending',role:'dialog',
-  'aria-modal':'true','aria-label':title});
+ const dialog=el('div',{class:'dialog panel pending'+(gallery?' pending-cards':''),
+  role:'dialog','aria-modal':'true','aria-label':title});
  dialog.append(el('div',{class:'headline'},el('h2',{text:title}),
   el('span',{class:'tag',text:'玩家操作'})),
   el('p',{class:'note',text:'請完成這個選擇後，對戰才會繼續。選牌只會顯示給目前的控制者。'}));
- const list=el('div',{class:'action-list'});
- for(const a of legal){
-  const named=cardNameByUid.get(a.uid);
-  const label=uiActionLabel(a,{pack:app.packs,state:s})+
-   (named?'｜'+named:'');
-  list.append(btn(label,()=>applyAction(a),
-   a.uid===null?'quiet':'recommended'));
- }
+ const list=el('div',{class:'action-list'+(gallery?' choice-gallery':'')});
+ for(const row of rows)list.append(pendingChoiceControl(row.action,row.option,gallery));
  dialog.append(list);
- overlay.append(dialog);return overlay;
+ overlay.append(dialog);
+ // Mount on the shell, above the sticky header. Inside #match-view the
+ // header's stacking context covers the top of a tall card gallery.
+ mountPendingOverlay(overlay);
+ return null;
 }
 function finishMessage(){
  const s=app.state;
@@ -463,8 +495,17 @@ function renderOpeningMulligan(target,s){
  }else panel.append(el('p',{class:'v2-mulligan-hint',role:'status',text:'等待電腦完成調度；你的起手牌會維持隱私。'}));
  target.append(panel);
 }
+function clearPendingOverlay(){
+ document.querySelector('.v2-shell>.v2-pending-overlay')?.remove();
+}
+function mountPendingOverlay(overlay){
+ clearPendingOverlay();
+ overlay.classList.add('v2-pending-overlay');
+ (document.querySelector('.v2-shell')||document.body).append(overlay);
+}
 function render(){
  const target=$('match-view');if(!target)return;
+ clearPendingOverlay();
  target.replaceChildren();
  if(!app.state){
   target.append(el('section',{class:'panel v2-empty'},

@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {isExactLegal,uiActor,uiCardLabel,uiActionLabel,
- uiActionGroup,visibleActionsForCard,V2_TITLE_LABELS} from '../dist/universal-v2/preview-actions.mjs';
+ uiActionGroup,visibleActionsForCard,V2_TITLE_LABELS,
+ pendingChoiceCards,pendingChoiceCaption} from '../dist/universal-v2/preview-actions.mjs';
 import {verifiedBleachPurplePilotDeck,verifiedTtgRedPilotDeck} from '../dist/universal-v2/verified-real-decks.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  universalPublicView,universalPrivateChoices,assertUniversalMatch} from '../dist/universal-v2/engine.mjs';
@@ -90,4 +91,39 @@ test('mobile board shares one prevalidated legal set per render and freezes sele
  assert.match(script,/publicPreviewActionLabel\(app.packs,previous,app.state,choice,1\)/);
  assert.match(script,/window.confirm\('除錯重播檔包含/);
  assert.match(script,/app.undo.replay/);
+});
+
+test('hand and deck prompts show private card art and leave the legal action unchanged',()=>{
+ const script=source('../dist/universal-v2-preview.mjs');
+ const css=source('../dist/universal-v2-legacy.css');
+ const battle=source('../dist/universal-v2-battle.css');
+ const body=script.split('function pendingChoiceControl(')[1]?.split('function pendingDialog(')[0];
+ assert.ok(body);
+ assert.match(body,/pendingChoiceCards\(option\)/);
+ assert.match(body,/choicePicture\(card\.cardId,card\.name\)/);
+ assert.match(body,/onClick:\(\)=>applyAction\(action\)/);
+ assert.doesNotMatch(body,/action\.card|action\.image|action\.src/);
+ assert.match(script,/class:'choice-card recommended'/);
+ assert.match(script,/choice-gallery/);
+ assert.match(script,/mountPendingOverlay\(overlay\)/);
+ assert.match(script,/v2-pending-overlay/);
+ assert.match(css,/\.action-list\.choice-gallery/);
+ assert.match(css,/button\.choice-card/);
+ assert.match(battle,/dialog\.pending/);
+ assert.deepEqual(pendingChoiceCards(null),[]);
+ assert.deepEqual(pendingChoiceCards({action:{type:'chooseDiscardGate',uid:null}}),[]);
+ assert.deepEqual(pendingChoiceCards({
+  card:{cardId:'BLC-1-001',name:'更木 劍八',color:'green',image:'https://evil.example/a.png'}
+ }),[{cardId:'BLC-1-001',name:'更木 劍八',color:'green'}]);
+ assert.deepEqual(pendingChoiceCards({
+  cards:[{cardId:'A',name:'甲'},{cardId:'B',name:'乙',color:'purple'}],
+  card:{cardId:'ignored',name:'不要用這張'}
+ }),[{cardId:'A',name:'甲',color:''},{cardId:'B',name:'乙',color:'purple'}]);
+ assert.equal(pendingChoiceCaption('棄 更木 劍八 支付成本',['更木 劍八']),'棄 支付成本');
+ assert.equal(pendingChoiceCaption('將 京樂 春水 加入手牌',['京樂 春水']),'將 加入手牌');
+ assert.equal(pendingChoiceCaption('將 甲 放到牌組上面',['甲']),'將 放到牌組上面');
+ assert.equal(pendingChoiceCaption('將 甲 放到場外',['甲']),'將 放到場外');
+ assert.equal(pendingChoiceCaption('不支付成本',[]),'');
+ assert.equal(pendingChoiceCaption('保留在牌庫頂',['更木 劍八']),'保留在牌庫頂');
+ assert.equal(pendingChoiceCaption('棄 指定卡片 支付成本',['更木 劍八']),'棄 指定卡片 支付成本');
 });
