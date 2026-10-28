@@ -50,6 +50,8 @@ function notify(message){
  clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('visible'),4200);
 }
 function persist(){
+ // Editing a cloud-owned deck must not overwrite the separate browser draft.
+ if(state.cloudOrigin?.title===state.title)return;
  const key=LEGACY_DECK_KEYS[state.title][0];
  write(key,state.counts[state.title]);
  write(namesKey,state.names);
@@ -127,7 +129,9 @@ function renderGallery(){
 }
 function renderLibrary(){
  const sections=buildDeckLibrary({
-  titles:TITLES,savedData,draftData:state.counts,names:state.names,
+  titles:TITLES,savedData,
+  draftData:Object.fromEntries(TITLES.map(t=>[t.id,read(LEGACY_DECK_KEYS[t.id][0])||{}])),
+  names:{...state.names,...(read(namesKey)||{})},
   cloudDecks,cloudUser,tab:state.galleryTab,sharedIds:readSharedIds(localStorage),
   builtins:BUILTIN_BLEACH_V2_DECKS,summarize:summarizeDeck,formatUpdated:formatDeckUpdated
  });
@@ -185,6 +189,8 @@ function openLibraryDeck(key){
   let title;try{title=decodeURIComponent(parts.join(':'));}catch{return;}
   if(!TITLES.some(t=>t.id===title))return;
   state.title=title;state.ready=true;state.cloudOrigin=null;
+  try{state.counts[title]=normalizeEditorCounts(title,read(LEGACY_DECK_KEYS[title][0])||{});}catch{}
+  state.names[title]=String((read(namesKey)||{})[title]||state.names[title]||defaults[title]).slice(0,40);
   state.detail={source:'draft',id:'draft'};
  }else if(source==='builtin'){
   let id;try{id=decodeURIComponent(parts.join(':'));}catch{return;}
