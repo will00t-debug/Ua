@@ -27,7 +27,7 @@ import {SAO_CARDS} from './sao-cards.mjs';
 import {MST_V2_OFFICIAL_CATALOGUE} from './universal-v2/sources/mst-inventory.mjs';
 import {V2_PHASE_LABELS,V2_TITLE_LABELS,V2_PENDING_LABELS,
  uiActor,isExactLegal,uiCardLabel,uiActionLabel,visibleActionsForCard,
- pendingChoiceCards,pendingChoiceCaption,publicPendingTargetCard,attackBattleTags,raidClickPlan,moveClickPlan,
+ pendingChoiceCards,visiblePendingChoiceCards,pendingChoiceCaption,publicPendingTargetCard,attackBattleTags,raidClickPlan,moveClickPlan,
  FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs';
 import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalReplay,
  publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
@@ -337,8 +337,12 @@ function pendingChoiceControl(action,option,gallery,view){
  // Private options already carry their controller-authorized artwork. If
  // absent, use only the exact card UID from publicly visible field slots.
  const authorized=pendingChoiceCards(option).map(card=>({...card,side:0}));
- const target=authorized.length?null:publicPendingTargetCard(view,action);
- const cards=target?[{...target,name:cardDef(target.side,target.cardId)?.name||target.cardId}]:authorized;
+ const visible=authorized.length?[]:visiblePendingChoiceCards(view,action).map(card=>({
+  ...card,name:cardDef(card.side,card.cardId)?.name||card.cardId
+ }));
+ const target=authorized.length||visible.length?null:publicPendingTargetCard(view,action);
+ const cards=authorized.length?authorized:visible.length?visible:target?
+  [{...target,name:cardDef(target.side,target.cardId)?.name||target.cardId}]:[];
  if(!cards.length){
   const quiet=action.uid===null||action.mode==='skip'||action.mode==='done';
   return btn(label,()=>applyAction(action),
@@ -392,6 +396,7 @@ function pendingDialog(legal,view){
  const rows=legal.map(action=>({action,
   option:byAction.get(JSON.stringify(action))||null}));
  const gallery=rows.some(row=>pendingChoiceCards(row.option).length>0||
+  visiblePendingChoiceCards(view,row.action).length>0||
   publicPendingTargetCard(view,row.action)!==null);
  const title=V2_PENDING_LABELS[s.pending.kind]||s.pending.kind;
  const overlay=el('div',{class:'overlay'});
