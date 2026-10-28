@@ -35,6 +35,11 @@ function stub(namespace,name){
 }
 function migrate(ctx){
  ctx.storage.sql.exec(SCHEMA);
+ // Existing Durable Object databases predate customizable deck covers.
+ // Add this nullable column in place, preserving accounts, rooms and decks.
+ const columns=ctx.storage.sql.exec('PRAGMA table_info(decks)').toArray();
+ if(!columns.some(column=>column.name==='cover_id'))
+  ctx.storage.sql.exec('ALTER TABLE decks ADD COLUMN cover_id TEXT');
  return createRepositories(adapt(ctx.storage));
 }
 

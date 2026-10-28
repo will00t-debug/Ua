@@ -2,7 +2,8 @@
 // No import from engine.mjs, match-runtime.mjs, solo-match.mjs or ttg-core-match.mjs.
 import {TITLES} from './title-registry.mjs';
 import {PRESETS} from './cards.mjs';
-import {renderVisualDeckBuilder} from './visual-deck-builder.mjs?v=20261028navymock1';
+import {renderVisualDeckBuilder} from './visual-deck-builder.mjs?v=20261028cover1';
+import {validDeckCoverId} from './deck-cover-selection.mjs';
 import {buildDeckLibrary} from './deck-library.mjs';
 import {summarizeDeck,formatDeckUpdated,renderDeckGallery,renderDeckDetail,readSharedIds,writeSharedFlag} from './deck-gallery.mjs';
 import {BUILTIN_BLEACH_V2_DECKS,builtinBleachDeck} from './v2-bleach-builtins.mjs';
@@ -14,8 +15,9 @@ const $=s=>document.querySelector(s);
 const escapeHtml=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function read(key){try{return JSON.parse(localStorage.getItem(key)||'null');}catch{return null;}}
 function write(key,value){localStorage.setItem(key,JSON.stringify(value));}
-const metaKey='bleach-arena-deck-meta-v1',namesKey='ua-v2-editor-draft-names-v1';
+const metaKey='bleach-arena-deck-meta-v1',namesKey='ua-v2-editor-draft-names-v1',coversKey='ua-v2-editor-draft-covers-v1';
 const names=read(namesKey)||{};
+const draftCovers=read(coversKey)||{};
 const draftData={};
 for(const t of TITLES){
  const raw=read(LEGACY_DECK_KEYS[t.id][0])||(t.id==='bleach'?PRESETS[0]?.counts:{});
@@ -41,7 +43,7 @@ const label=id=>TITLES.find(t=>t.id===id)?.label||id;
 const defaults=Object.fromEntries(TITLES.map(t=>[t.id,t.id==='bleach'?(bleachMeta.name||'自訂 BLEACH 牌組'):t.id==='rezero'?'Re:Zero 自訂牌組':t.label+'自訂牌組']));
 const state={title:'bleach',ready:false,screen:'library',listOrigin:'library',galleryTab:'mine',detail:null,tab:'pick',search:'',type:'all',color:'all',
  energy:'all',energies:[],generate:'all',sort:'energy-asc',recordView:'all',zoom:false,names:Object.fromEntries(TITLES.map(t=>[t.id,String(names[t.id]||defaults[t.id]).slice(0,40)])),
- counts:draftData,selectedSaved:{},shareFlag:false,inspection:null,exportText:null,cloudOrigin:null};
+ counts:draftData,coverIds:Object.fromEntries(TITLES.map(t=>[t.id,typeof draftCovers[t.id]==='string'?draftCovers[t.id]:null])),coverPicker:false,selectedSaved:{},shareFlag:false,inspection:null,exportText:null,cloudOrigin:null};
 let toastTimer=null;
 let cloudDecks=[],cloudUser=null;
 function notify(message){
@@ -55,6 +57,7 @@ function persist(){
  const key=LEGACY_DECK_KEYS[state.title][0];
  write(key,state.counts[state.title]);
  write(namesKey,state.names);
+ write(coversKey,state.coverIds);
  if(state.title==='bleach')write(metaKey,{...bleachMeta,name:state.names.bleach});
 }
 function status(){return editorV2Status(state.title,state.counts[state.title]);}
@@ -66,6 +69,7 @@ function useDesignatedBleachPreset(id,screen){
  state.type=state.color=state.energy='all';
  state.counts.bleach={...preset.counts};state.names.bleach=preset.displayName;
  state.selectedSaved.bleach=null;state.cloudOrigin=null;state.shareFlag=false;
+ state.coverIds.bleach=null;state.coverPicker=false;
  state.detail={source:'builtin',id:preset.id};
  state.screen=screen||'detail';
  persist();
@@ -98,7 +102,7 @@ function detailModel(){
  const shared=detail?.source==='cloud'
   ?readSharedIds(localStorage).has(state.cloudOrigin?.remoteId||'')
   :state.shareFlag===true;
- return {source:detail?.source||'draft',id:detail?.id||'draft',name:state.names[title],counts:state.counts[title],updatedAt:null,shared,shareEnabled:true,shareNote:detail?.source==='cloud'?'公開後會出現在帳號的分享列表。':'公開狀態會在儲存牌組後出現在分享列表。',summary:summarizeDeck(cards,state.counts[title])};
+ return {source:detail?.source||'draft',id:detail?.id||'draft',name:state.names[title],counts:state.counts[title],updatedAt:null,shared,shareEnabled:true,shareNote:detail?.source==='cloud'?'公開後會出現在帳號的分享列表。':'公開狀態會在儲存牌組後出現在分享列表。',coverId:state.coverIds[title],summary:summarizeDeck(cards,state.counts[title],state.coverIds[title])};
 }
 function activeList(){
  if(state.screen==='detail'){
@@ -175,6 +179,7 @@ function openLibraryDeck(key){
   state.names[row.title]=String(row.name||'未命名牌組').slice(0,40);
   state.cloudOrigin={remoteId:row.id,title:row.title,localId:row.localId||null};
   state.selectedSaved[row.title]=null;state.shareFlag=readSharedIds(localStorage).has(row.id);
+  state.coverIds[row.title]=validDeckCoverId(catalogueCards(row.title),state.counts[row.title],row.coverId);state.coverPicker=false;
   state.detail={source:'cloud',id:row.id};
  }else if(source==='saved'){
   let title,id;try{title=decodeURIComponent(parts[0]);id=decodeURIComponent(parts.slice(1).join(':'));}catch{return;}
@@ -192,6 +197,7 @@ function openLibraryDeck(key){
   try{state.counts[title]=normalizeEditorCounts(title,read(LEGACY_DECK_KEYS[title][0])||{});}catch{}
   state.names[title]=String((read(namesKey)||{})[title]||state.names[title]||defaults[title]).slice(0,40);
   state.detail={source:'draft',id:'draft'};
+  state.coverIds[title]=validDeckCoverId(catalogueCards(title),state.counts[title],(read(coversKey)||{})[title]);state.coverPicker=false;
  }else if(source==='builtin'){
   let id;try{id=decodeURIComponent(parts.join(':'));}catch{return;}
   if(!builtinBleachDeck(id)){notify('找不到指定牌組。');return;}
@@ -276,6 +282,7 @@ function render(){
   titles:TITLES,titleId:state.title,tab:state.tab,search:state.search,type:state.type,color:state.color,energy:state.energy,
   energies:state.energies,generate:state.generate,sort:state.sort,counts:state.counts[state.title],name:state.names[state.title],
   nameId:'v2DeckName',savedId:'v2SavedSelect',focusCard,record,recordView:state.recordView,
+  coverId:state.coverIds[state.title],coverPicker:state.coverPicker,
   allowDelete:Boolean(state.selectedSaved[state.title]||state.cloudOrigin)
  };
  const editor=state.ready&&state.screen==='editor'?renderVisualDeckBuilder({
@@ -315,7 +322,7 @@ async function mirrorCloudDeck(title,entry){
  const method=origin?'PUT':'POST';
  try{
   const response=await fetch(url,{method,credentials:'same-origin',headers:{'content-type':'application/json'},
-   body:JSON.stringify({name:entry.name,title,counts:entry.counts,localId})});
+   body:JSON.stringify({name:entry.name,title,counts:entry.counts,localId,coverId:entry.coverId||null})});
   if(response.ok){
    notify(origin?'已更新原本的帳號牌組':'已儲存，並同步到登入帳號');
    if(cloudUser)refreshCloudDecks();
@@ -356,6 +363,8 @@ function openEditor(){
   state.names[state.title]=item.name;
   state.selectedSaved[state.title]=item.id;
   state.shareFlag=item.shared===true;
+  state.coverIds[state.title]=validDeckCoverId(catalogueCards(),state.counts[state.title],item.coverId);
+  state.coverPicker=false;
   persist();
  }
  const total=Object.values(state.counts[state.title]||{}).reduce((sum,value)=>sum+(Number(value)||0),0);
@@ -436,7 +445,7 @@ function bind(){
    if(state.screen==='chooseTitle'){
     const existing=Object.values(state.counts[data.title]||{}).some(n=>Number(n)>0);
     if(existing&&typeof confirm==='function'&&!confirm('這個作品已有編輯中的草稿。建立新牌組會取代草稿，但不會刪除已儲存牌組。確定繼續？'))return;
-    state.counts[data.title]={};state.names[data.title]=defaults[data.title];
+    state.counts[data.title]={};state.names[data.title]=defaults[data.title];state.coverIds[data.title]=null;state.coverPicker=false;
     state.selectedSaved[data.title]=null;state.cloudOrigin=null;state.shareFlag=false;
     state.listOrigin='library';state.title=data.title;state.ready=true;state.screen='editor';state.tab='pick';
     state.galleryTab='mine';state.detail={source:'draft',id:'draft'};state.search='';
@@ -448,6 +457,21 @@ function bind(){
    state.type=state.color=state.energy='all';state.energies=[];state.generate='all';render();return;
   }
   if(data.builderReselect!==undefined){state.screen=state.listOrigin==='library'?'library':'gallery';state.detail=null;state.search='';state.inspection=null;state.zoom=false;state.exportText=null;render();return;}
+  if(data.builderCoverOpen!==undefined){
+   state.coverPicker=true;render();
+   document.querySelector('.arena-cover-dialog-head button')?.focus();return;
+  }
+  if(data.builderCoverClose!==undefined){state.coverPicker=false;render();return;}
+  if(data.builderCoverSelect!==undefined){
+   const id=validDeckCoverId(catalogueCards(),state.counts[state.title],data.builderCoverSelect);
+   if(!id){notify('只能從目前牌組已加入的卡片選擇封面。');return;}
+   state.coverIds[state.title]=id;state.coverPicker=false;persist();render();
+   notify('封面已更換，記得儲存牌組。');return;
+  }
+  if(data.builderCoverReset!==undefined){
+   state.coverIds[state.title]=null;state.coverPicker=false;persist();render();
+   notify('已改用自動封面，記得儲存牌組。');return;
+  }
   if(data.builderSearch!==undefined){$('#search')?.focus();return;}
   if(data.builderTab){state.tab=data.builderTab;render();if(state.tab==='overview')document.querySelector('.arena-deck')?.scrollIntoView({block:'start'});return;}
   if(data.builderType){state.type=data.builderType;render();return;}
@@ -477,6 +501,7 @@ function bind(){
    const n=state.counts[state.title][c.id]||0;
    if(val>0&&Object.values(state.counts[state.title]).reduce((a,b)=>a+b,0)>=50){notify('一副牌最多 50 張');return;}
    state.counts[state.title][c.id]=Math.max(0,Math.min(c.maxCopies||4,n+val));
+   state.coverIds[state.title]=validDeckCoverId(catalogueCards(),state.counts[state.title],state.coverIds[state.title]);
    persist();render();return;
   }
   if(data.action==='dismiss'){if(state.exportText!==null){state.exportText=null;render();return;}if(state.zoom){state.zoom=false;render();return;}state.inspection=null;render();return;}
@@ -487,12 +512,14 @@ function bind(){
   if(data.action==='pickTitle'){state.ready=false;state.screen='chooseTitle';state.listOrigin='library';state.detail=null;state.search='';render();return;}
   if(data.action==='editDeck'){openEditor();return;}
   if(data.action==='toggleShare'){toggleShare();return;}
-  if(data.action==='newDeck'){state.cloudOrigin=null;state.shareFlag=false;state.counts[state.title]={};state.names[state.title]=defaults[state.title];state.selectedSaved[state.title]=null;state.detail={source:'draft',id:'draft'};state.screen='editor';state.tab='pick';persist();render();notify('已建立空白草稿');return;}
+  if(data.action==='newDeck'){state.cloudOrigin=null;state.shareFlag=false;state.counts[state.title]={};state.names[state.title]=defaults[state.title];state.selectedSaved[state.title]=null;
+  state.coverIds[state.title]=null;state.coverPicker=false;state.detail={source:'draft',id:'draft'};state.screen='editor';state.tab='pick';persist();render();notify('已建立空白草稿');return;}
   if(data.action==='saveDeck'){
    const title=state.title,records=savedData[title],counts=normalizeEditorCounts(title,state.counts[title]);
    const selected=state.selectedSaved[title]||((state.cloudOrigin?.title===title)?'v2-account-'+state.cloudOrigin.remoteId:null),name=state.names[title].trim()||defaults[title];
    const old=records.find(d=>d.id===selected);
-   const entry={id:old?.id||(selected&&/^[A-Za-z0-9:_-]{1,80}$/.test(selected)?selected:null)||'v2-'+Date.now()+'-'+Math.random().toString(36).slice(2),name,counts,updatedAt:new Date().toISOString(),shared:state.shareFlag===true,coverId:old?.coverId||null};
+   const coverId=validDeckCoverId(catalogueCards(title),counts,state.coverIds[title]);
+   const entry={id:old?.id||(selected&&/^[A-Za-z0-9:_-]{1,80}$/.test(selected)?selected:null)||'v2-'+Date.now()+'-'+Math.random().toString(36).slice(2),name,counts,updatedAt:new Date().toISOString(),shared:state.shareFlag===true,coverId};
    if(old)records[records.indexOf(old)]=entry;else records.push(entry);
    state.selectedSaved[title]=entry.id;
    try{persistSaved(title);if(entry.id)writeSharedFlag(localStorage,entry.id,entry.shared);persist();notify('已儲存牌組草稿');mirrorCloudDeck(title,entry);render();}
@@ -556,11 +583,12 @@ function bind(){
   if(!item)return;
   releaseCloudOrigin(item.id);
   state.counts[state.title]={...item.counts};state.names[state.title]=item.name;state.selectedSaved[state.title]=item.id;state.shareFlag=item.shared===true;
+  state.coverIds[state.title]=validDeckCoverId(catalogueCards(),state.counts[state.title],item.coverId);state.coverPicker=false;
   state.detail={source:'saved',id:item.id};state.screen='editor';
   persist();render();notify('已載入 '+item.name);
  };
 }
-document.addEventListener('keydown',e=>{if(e.key==='Escape'&&(state.inspection||state.exportText!==null)){state.inspection=null;state.exportText=null;render();}});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&(state.coverPicker||state.inspection||state.exportText!==null)){state.coverPicker=false;state.inspection=null;state.exportText=null;render();}});
 // Direct links from the V2 lobby explicitly load the requested built-in list.
 const requestedDeck=new URLSearchParams(typeof window!=='undefined'?window.location?.search||'':'').get('bleachPreset');
 if(requestedDeck)useDesignatedBleachPreset(requestedDeck);
@@ -583,6 +611,8 @@ function importAccountDeckHandoff(){
   state.title=title;state.ready=true;state.tab='overview';state.search='';
   state.type=state.color=state.energy='all';
   state.counts[title]=counts;
+  state.coverIds[title]=validDeckCoverId(catalogueCards(title),counts,payload.coverId);
+  state.coverPicker=false;
   state.names[title]=typeof payload.name==='string'?payload.name.trim().slice(0,40)||defaults[title]:defaults[title];
   const localId=typeof payload.localId==='string'&&/^[A-Za-z0-9:_-]{1,80}$/.test(payload.localId)?payload.localId:null;
   const scopedLocalId='v2-account-'+payload.remoteId;

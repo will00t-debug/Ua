@@ -27,7 +27,7 @@ export function buildDeckLibrary({titles=[],savedData={},draftData={},names={},
   &&/^d[a-f0-9]{16}$/.test(deck.id)&&catalog.has(deck.title)):[];
  const cloudItems=cloud.filter(deck=>tab!=='shared'||sharedIds.has(deck.id))
   .sort(updatedSort).map(deck=>item('cloud:'+deck.id,deck.title,deck.name,deck.counts,
-   deck.updatedAt,null,deck.playable===true?'V2 可對戰':'尚未符合 V2')).filter(Boolean);
+   deck.updatedAt,deck.coverId||null,deck.playable===true?'V2 可對戰':'尚未符合 V2')).filter(Boolean);
  if(cloudUser)sections.push({title:tab==='shared'?'帳號分享列表':'帳號牌組',
   empty:tab==='shared'?'還沒有公開的帳號牌組。':'帳號裡還沒有儲存的牌組。',items:cloudItems});
  const cloudLocalKeys=new Set(cloud.map(deck=>deck.localId).filter(id=>typeof id==='string'&&id));
