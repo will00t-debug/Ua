@@ -1444,7 +1444,43 @@ const PRINTED_PINS=Object.freeze({
     "trigger": "color",
     "traits": ["GGO"],
     "effectJa": "このキャラのBPが4000以上の場合、このキャラは【インパクト（1）】（アタックしてバトルに勝利した時、相手プレイヤーに1ダメージ）を得る。"
-  }
+  },
+  "SAO-1-108":{"kind":"enterAlwaysActiveRestBuff","nameJa":"リズベット武具店",
+   "color":"blue","energy":2,"ap":1,"bp":0,"gen":1,"type":"field","trigger":"get","traits":[],
+   "effectJa":"このフィールドはアクティブで場に登場させる。\n【起動メイン】【レストにする】自分の場のキャラを1枚選び、このターン中、BP+1000。"},
+  "SAO-2-070":{"kind":"oncePayBlockAtLeast","nameJa":"リーファ",
+   "color":"green","energy":3,"ap":1,"bp":3500,"gen":1,"type":"character","trigger":"draw","traits":["ALO"],
+   "effectJa":"【起動メイン】【手札を1枚場外に置く】 【ターン1】このキャラはこのターン中、「このキャラはBP4000以上のキャラにブロックされない。」を得る。"},
+  "SAO-2-033":{"kind":"ownTraitImpact","nameJa":"アスナ",
+   "color":"purple","energy":4,"ap":1,"bp":4000,"gen":1,"type":"character","trigger":"draw","traits":["SAOサバイバー"],
+   "effectJa":"【自分のターン中】このターン中に自分が［特徴：歌］を使用している場合、このキャラは【インパクト（1）】（アタックしてバトルに勝利した時、相手プレイヤーに1ダメージ）を得る。"},
+  "SAO-2-038":{"kind":"songUseDraw","nameJa":"シリカ",
+   "color":"purple","energy":3,"ap":1,"bp":3000,"gen":3,"type":"character","trigger":null,"traits":["SAOサバイバー"],
+   "effectJa":"【登場時】このターン中に自分が［特徴：歌］を使用している場合、カードを1枚引く。"},
+  "SAO-2-039":{"kind":"ownTraitBp","nameJa":"リズベット",
+   "color":"purple","energy":1,"ap":1,"bp":2000,"gen":1,"type":"character","trigger":"draw","traits":["SAOサバイバー"],
+   "effectJa":"【自分のターン中】このターン中に自分が［特徴：歌］を使用している場合、このキャラはこのターン中、BP+1000。"},
+  "SAO-1-036":{"kind":"lineShiftBp","nameJa":"アスナ",
+   "color":"blue","energy":2,"ap":1,"bp":3000,"gen":1,"type":"character","trigger":null,"traits":["アインクラッド"],
+   "effectJa":"【ターン1】自分の移動フェイズ以外でこのキャラが移動した時、このキャラはこのターン中、BP+1000。"},
+  "SAO-1-101":{"kind":"lineShiftBpImpact","nameJa":"アスナ",
+   "color":"blue","energy":4,"ap":1,"bp":4000,"gen":1,"type":"character","trigger":"active","traits":["アインクラッド"],
+   "effectJa":"【ターン1】自分の移動フェイズ以外でこのキャラが移動した時、このキャラはこのターン中、BP+1000と【インパクト（1）】（アタックしてバトルに勝利した時、相手プレイヤーに1ダメージ）を得る。"},
+  "SAO-2-014":{"kind":"lineShiftAttackDraw","nameJa":"アスナ",
+   "color":"blue","energy":3,"ap":1,"bp":3000,"gen":3,"type":"character","trigger":"draw","traits":["アインクラッド"],
+   "effectJa":"【自分のターン中】【ターン1】自分の移動フェイズ以外でこのキャラが移動した時、このキャラはこのターン中、「【アタック時】カードを1枚引く。」を得る。"},
+  "SAO-1-059":{"kind":"onPlayBlockAtMost","nameJa":"リーファ",
+   "color":"blue","energy":2,"ap":1,"bp":3000,"gen":1,"type":"character","trigger":"color","traits":["ALO"],
+   "effectJa":"【登場時】自分の場のキャラを1枚まで選び、このターン中、「このキャラはBP3000以下のキャラにブロックされない。」を与える。"},
+  "SAO-2-009":{"kind":"lifeDrawInstead","nameJa":"アスナ（創世神ステイシア）",
+   "color":"yellow","energy":2,"ap":1,"bp":3000,"gen":1,"type":"character","trigger":null,"traits":["女神"],
+   "effectJa":"【登場時】『カードを1枚引き、自分の手札を1枚場外に置く』。自分のライフが4以下の場合、『カードを1枚引く』に代えてもよい。"},
+  "SAO-2-025":{"kind":"drawDiscardIfLizbeth","nameJa":"クリスタライト・インゴット",
+   "color":"blue","energy":3,"ap":1,"bp":0,"gen":0,"type":"event","trigger":"draw","traits":[],
+   "effectJa":"カードを2枚引く。自分の場に〈リズベット〉がある場合、さらにカードを1枚引き、自分の手札を1枚場外に置く。"},
+  "SAO-2-071":{"kind":"frontPrintedGgoEnergy","nameJa":"キリト",
+   "color":"green","energy":2,"ap":1,"bp":3000,"gen":1,"type":"character","trigger":null,"traits":["GGO"],
+   "effectJa":"【フロントLにある場合】自分の手札にある元々の必要エナジーが6以上の全ての［特徴：GGO］の必要エナジーを【緑×1】減らす。"}
 });
 export const SAO_V2_PILOT_IDS=Object.freeze(Object.keys(PRINTED_PINS).sort());
 function sourceCards(){
@@ -1841,6 +1877,52 @@ export function verifiedSaoV2Cards(){
    card.conditionalImpactBpAtLeast=4000;
    card.triggerEffect={op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1};
   }
+  if(pin.kind==='enterAlwaysActiveRestBuff'){
+   card.enterAlwaysActive=true;
+   card.effects={};
+   card.mainAbility={op:'restSelfBuffOther',bp:1000};
+  }
+  if(pin.kind==='oncePayBlockAtLeast'){
+   card.effects={};
+   card.mainAbility={op:'oncePayProgram',oncePerTurn:true,frontOnly:false,raidOnly:false,
+    payAp:0,requiresOwnName:null,then:[{op:'discardGate',optional:false,
+     then:[{op:'grantSelfBlockAtLeast',bp:4000}]}]};
+  }
+  if(pin.kind==='ownTraitImpact'){
+   card.effects={};
+   card.passiveBonuses=[{condition:{kind:'ownTraitUsedThisTurn',turn:'own',trait:'歌'},impact:1}];
+  }
+  if(pin.kind==='songUseDraw')
+   card.effects={onPlay:[{op:'drawIfOwnTraitUsed',trait:'歌',count:1}]};
+  if(pin.kind==='ownTraitBp'){
+   card.effects={};
+   card.passiveBonuses=[{condition:{kind:'ownTraitUsedThisTurn',turn:'own',trait:'歌'},bp:1000}];
+  }
+  if(pin.kind==='lineShiftBp'){
+   card.effects={};
+   card.lineShiftOutsideMove={oncePerTurn:true,turn:'any',grant:'bp',bp:1000,impact:null,attackDraw:false};
+  }
+  if(pin.kind==='lineShiftBpImpact'){
+   card.effects={};
+   card.lineShiftOutsideMove={oncePerTurn:true,turn:'any',grant:'bpImpact',bp:1000,impact:1,attackDraw:false};
+  }
+  if(pin.kind==='lineShiftAttackDraw'){
+   card.effects={};
+   card.lineShiftOutsideMove={oncePerTurn:true,turn:'own',grant:'attackDraw',bp:null,impact:null,attackDraw:true};
+  }
+  if(pin.kind==='onPlayBlockAtMost'){
+   card.effects={onPlay:[{op:'grantOwnBlockAtMost',bp:3000,optional:true}]};
+   card.triggerEffect={op:'bounceOppFrontUnderBp',bp:3500};
+  }
+  if(pin.kind==='lifeDrawInstead')
+   card.effects={onPlay:[{op:'drawDiscard',count:1,discardCount:1,instead:{op:'draw',count:1,
+    when:{kind:'ownLifeAtMost',turn:'any',max:4}}}]};
+  if(pin.kind==='drawDiscardIfLizbeth')
+   card.effects={onPlay:[{op:'drawDiscardIfOwnName',count:2,extraDraw:1,name:'リズベット'}]};
+  if(pin.kind==='frontPrintedGgoEnergy'){
+   card.effects={};
+   card.frontPrintedEnergyAura={line:'front',minPrintedEnergy:6,trait:'GGO',color:'green',amount:1};
+  }
   return card;
  });
 }
@@ -1923,6 +2005,10 @@ export function verifiedSaoV2Entries(){
      ...(pin.kind==='nameAliasOnly'||pin.kind==='nameAliasStep'?['tests/v2-zero-engine-round14.test.mjs']:[]),
      ...(pin.kind==='opponentFieldHandEnergy'||pin.kind==='conditionalSelfBpImpact'?
       ['tests/v2-c2-hand-energy-register.test.mjs']:[]),
+     ...(['enterAlwaysActiveRestBuff','oncePayBlockAtLeast','ownTraitImpact','songUseDraw',
+      'ownTraitBp','lineShiftBp','lineShiftBpImpact','lineShiftAttackDraw','onPlayBlockAtMost',
+      'lifeDrawInstead','drawDiscardIfLizbeth','frontPrintedGgoEnergy'].includes(pin.kind)?
+      ['tests/v2-sao-eight-shared-batches.test.mjs']:[]),
      'tests/universal-v2-sao-mst-cross-title.test.mjs'
     ]),
     ...(def.implementation==='vanilla'?{verifiedNoExtraEffects:true}:{})
