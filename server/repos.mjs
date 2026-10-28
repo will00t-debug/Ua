@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS decks (
   title TEXT NOT NULL,
   counts_json TEXT NOT NULL,
   local_id TEXT,
+  cover_id TEXT,
   updated_at TEXT NOT NULL
 );
 CREATE UNIQUE INDEX IF NOT EXISTS decks_user_local
@@ -78,7 +79,7 @@ function deckFromRow(row){
  return {
   id:row.id,name:row.name,title:row.title,
   counts:JSON.parse(row.counts_json),
-  localId:row.local_id||null,updatedAt:row.updated_at
+  localId:row.local_id||null,coverId:row.cover_id||null,updatedAt:row.updated_at
  };
 }
 function roomFromRow(row){
@@ -144,12 +145,12 @@ export function createRepositories(sql){
    return Number(sql.get('SELECT COUNT(*) AS n FROM decks WHERE user_id=?',userId)?.n||0);
   },
   insertDeck(userId,deck){
-   sql.run(`INSERT INTO decks (id,user_id,name,title,counts_json,local_id,updated_at)
-    VALUES (?,?,?,?,?,?,?)`,deck.id,userId,deck.name,deck.title,JSON.stringify(deck.counts),deck.localId,deck.updatedAt);
+   sql.run(`INSERT INTO decks (id,user_id,name,title,counts_json,local_id,cover_id,updated_at)
+    VALUES (?,?,?,?,?,?,?,?)`,deck.id,userId,deck.name,deck.title,JSON.stringify(deck.counts),deck.localId,deck.coverId||null,deck.updatedAt);
   },
   updateDeck(userId,deck){
-   sql.run(`UPDATE decks SET name=?,title=?,counts_json=?,local_id=?,updated_at=? WHERE user_id=? AND id=?`,
-    deck.name,deck.title,JSON.stringify(deck.counts),deck.localId,deck.updatedAt,userId,deck.id);
+   sql.run(`UPDATE decks SET name=?,title=?,counts_json=?,local_id=?,cover_id=?,updated_at=? WHERE user_id=? AND id=?`,
+    deck.name,deck.title,JSON.stringify(deck.counts),deck.localId,deck.coverId||null,deck.updatedAt,userId,deck.id);
   },
   deleteDeck(userId,deckId){
    sql.run('DELETE FROM decks WHERE user_id=? AND id=?',userId,deckId);
