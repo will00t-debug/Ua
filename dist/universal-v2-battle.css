@@ -68,6 +68,11 @@ body.v2-battle-page .attack-showcase{display:grid;grid-template-columns:112px mi
 body.v2-battle-page .attack-showcase figcaption{display:grid;gap:6px;color:#f7f4ee}
 body.v2-battle-page .attack-showcase figcaption b{font-size:16px}
 body.v2-battle-page .attack-tags{color:#f0d2cc;font-size:13px;font-weight:750}
+body.v2-battle-page .v2-shell>.v2-field-overlay{background:#070b12d6}
+body.v2-battle-page .field-sheet{background:#1c1b18;color:#f4f0e8;border:1px solid #5c554c}
+body.v2-battle-page .field-sheet h2{color:#f7f4ee}
+body.v2-battle-page .field-sheet .note,.v2-battle-page .field-effect{color:#f4f0e8}
+body.v2-battle-page .field-sheet button.quiet{background:#3a3b3d;color:#f4f6f8;border-color:#5c5854}
 body.v2-battle-page .trigger-log{margin:10px 0 0;padding:0;list-style:none;color:#f7f4ee;font-size:13px}
 body.v2-battle-page .trigger-log li{padding:5px 0;border-top:1px solid #3a342c}
 @media(max-width:620px){body.v2-battle-page .trigger-tile{flex-basis:96px}}

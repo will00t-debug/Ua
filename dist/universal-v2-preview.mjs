@@ -19,13 +19,15 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
 import {chooseUniversalAiAction} from './universal-v2/ai.mjs';
 import {chooseProgressSafeAiAction,AI_ACTIONS_PER_FRAME} from './universal-v2/ai-driver-safety.mjs';
 import {ttgArtSource,ttgArtErrorFallback} from './ttg-art.mjs';
+import {TTG_BY_ID} from './ttg-builder.mjs';
 import {CARDS} from './cards.mjs?v=9.1.0';
 import {SOLO_LEVELING_CARDS} from './solo-leveling.mjs';
 import {SAO_CARDS} from './sao-cards.mjs';
 import {MST_V2_OFFICIAL_CATALOGUE} from './universal-v2/sources/mst-inventory.mjs';
 import {V2_PHASE_LABELS,V2_TITLE_LABELS,V2_PENDING_LABELS,
  uiActor,isExactLegal,uiCardLabel,uiActionLabel,visibleActionsForCard,
- pendingChoiceCards,pendingChoiceCaption,attackBattleTags,raidClickPlan} from './universal-v2/preview-actions.mjs';
+ pendingChoiceCards,pendingChoiceCaption,attackBattleTags,raidClickPlan,
+ FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs';
 import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalReplay,
  publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
 
@@ -42,6 +44,22 @@ const allArt=Object.freeze({
  rezero:new Map(REZERO_ALL_CARDS.map(c=>[c.id,c.image||null]))
 });
 const v2Entries=listRegisteredV2Titles();
+function printedCatalogueMap(cards){
+ const map=new Map();
+ for(const card of cards){
+  const id=card?.identity||card?.id;
+  if(id&&!map.has(id))map.set(id,card);
+ }
+ return map;
+}
+const PRINTED_CATALOGUE={
+ bleach:printedCatalogueMap(CARDS),
+ 'solo-leveling':printedCatalogueMap(SOLO_LEVELING_CARDS),
+ 'sword-art-online':printedCatalogueMap(SAO_CARDS),
+ 'mushoku-tensei':printedCatalogueMap(MST_V2_OFFICIAL_CATALOGUE),
+ rezero:printedCatalogueMap(REZERO_ALL_CARDS),
+ 'gurren-lagann':printedCatalogueMap(Object.values(TTG_BY_ID))
+};
 const el=(tag,props={},...contents)=>{
  const n=document.createElement(tag);
  for(const [key,value] of Object.entries(props)){
@@ -67,7 +85,7 @@ const IS_BATTLE_PAGE=document.body?.dataset?.v2Screen==='battle';
 if(!IS_BATTLE_PAGE)$('v2-coverage').textContent=
  V2_ABILITY_TEMPLATE_IDS.length+' 種能力模板 · 已移植 '+
  v2Entries.reduce((sum,item)=>sum+item.totalV2Cards,0)+' 張真卡 Pilot';
-let editorRecordId=null;
+let editorRecordId=null,fieldHold=0;
 const app={state:null,packs:null,launch:null,selectedUid:null,recordDeckId:null,recordNoted:false,
  selectedSide:null,history:[],busy:false,aiTimer:null,error:'',
  undo:null,replay:null,targetChoices:null,raidBaseUid:null,aiDifficulty:'normal',sequence:0,allActions:false, maxAuto:4500,autoMoves:0,aiPhaseKey:null,aiPhaseCount:0,aiFallbacks:0,aiCompletedSteps:0,lastAiProgress:'未啟動'};
@@ -417,7 +435,25 @@ function legacySlot(view,side,line,index,legal){
   face.append(el('span',{class:'slotBp'},el('b',{text:line==='front'?String(c.bp):'◆ '+String(c.produces??0)})));
   btnSlot.append(face);
  }else btnSlot.append(el('span',{class:'slotIndex',text:'0'+(index+1)}));
+ let held=false;
+ if(c){
+  let originX=0,originY=0;
+  const stopHold=()=>{clearTimeout(fieldHold);fieldHold=0;};
+  btnSlot.addEventListener('pointerdown',event=>{
+   if(event.button>0)return;
+   held=false;originX=event.clientX;originY=event.clientY;
+   stopHold();
+   fieldHold=setTimeout(()=>{held=true;showFieldSheet(side,line,c,d);},FIELD_HOLD_MS);
+  });
+  btnSlot.addEventListener('pointerup',stopHold);
+  btnSlot.addEventListener('pointercancel',stopHold);
+  btnSlot.addEventListener('pointermove',event=>{
+   if(Math.hypot(event.clientX-originX,event.clientY-originY)>16)stopHold();
+  });
+  btnSlot.addEventListener('contextmenu',event=>event.preventDefault());
+ }
  btnSlot.addEventListener('click',()=>{
+  if(held){held=false;return;}
   if(!yours)return;
   if(plan.type==='choose-base'){
    app.raidBaseUid=plan.baseUid;app.targetChoices=null;render();return;
@@ -601,6 +637,43 @@ function renderOpeningMulligan(target,s){
  }else panel.append(el('p',{class:'v2-mulligan-hint',role:'status',text:'等待電腦完成調度；你的起手牌會維持隱私。'}));
  target.append(panel);
 }
+function printedCatalogue(side,cardId){
+ return PRINTED_CATALOGUE[app.packs?.[side]?.id]?.get(cardId)||null;
+}
+function closeFieldSheet(){
+ document.querySelector('.v2-shell>.v2-field-overlay')?.remove();
+}
+function showFieldSheet(side,line,card,printed){
+ closeFieldSheet();
+ const catalogue=printedCatalogue(side,card.cardId);
+ const name=printed?.name||catalogue?.name||card.cardId;
+ const stats=[];
+ if(printed){
+  stats.push('能源 '+printed.energy,'AP '+printed.ap);
+  if(printed.type==='character')stats.push('BP '+(line==='front'?card.bp:printed.bp));
+  if(line==='energy')stats.push('產生 '+(card.produces??printed.gen??0));
+  if(printed.traits?.length)stats.push(printed.traits.join('、'));
+  if(printed.trigger)stats.push('觸發 '+(TRIGGER_WORD[printed.trigger]||printed.trigger));
+ }
+ if(card.raidDepth||card.raidLayers?.length)stats.push('突襲 '+(card.raidDepth||card.raidLayers.length)+' 層');
+ const overlay=el('div',{class:'overlay v2-field-overlay'});
+ const dialog=el('div',{class:'dialog panel field-sheet',role:'dialog','aria-modal':'true',
+  'aria-label':name+' 的效果'});
+ const art=el('img',{class:'art',src:imgUrl(side,card.cardId),alt:name});
+ art.onerror=()=>{
+  if(app.packs?.[side]?.id==='gurren-lagann'&&ttgArtErrorFallback(art))return;
+  if(!art.src.endsWith('/assets/mark.svg'))art.src='assets/mark.svg';
+ };
+ dialog.append(el('div',{class:'field-sheet-card'},art,
+  el('div',{},el('h2',{text:name}),el('p',{class:'note',text:stats.join(' · ')}))),
+  el('p',{class:'field-effect',text:fieldEffectCopy(catalogue)}),
+  btn('關閉',closeFieldSheet,'quiet'));
+ overlay.addEventListener('click',event=>{if(event.target===overlay)closeFieldSheet();});
+ overlay.addEventListener('keydown',event=>{if(event.key==='Escape')closeFieldSheet();});
+ overlay.append(dialog);
+ (document.querySelector('.v2-shell')||document.body).append(overlay);
+ dialog.querySelector('button')?.focus();
+}
 function clearPendingOverlay(){
  document.querySelector('.v2-shell>.v2-pending-overlay')?.remove();
 }
@@ -611,6 +684,7 @@ function mountPendingOverlay(overlay){
 }
 function render(){
  const target=$('match-view');if(!target)return;
+ clearTimeout(fieldHold);fieldHold=0;
  clearPendingOverlay();
  target.replaceChildren();
  if(!app.state){
