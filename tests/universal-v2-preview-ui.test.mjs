@@ -100,7 +100,7 @@ test('hand and deck prompts show private card art and leave the legal action unc
  const body=script.split('function pendingChoiceControl(')[1]?.split('function pendingDialog(')[0];
  assert.ok(body);
  assert.match(body,/pendingChoiceCards\(option\)/);
- assert.match(body,/choicePicture\(card\.cardId,card\.name\)/);
+ assert.match(body,/choicePicture\(card\.cardId,card\.name,card\.side\)/);
  assert.match(body,/onClick:\(\)=>applyAction\(action\)/);
  assert.doesNotMatch(body,/action\.card|action\.image|action\.src/);
  assert.match(script,/class:'choice-card recommended'/);
