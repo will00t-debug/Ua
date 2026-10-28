@@ -254,6 +254,13 @@ function rulesScreen(){
  return `<section class="arena-rules"><h2>規則／FAQ</h2><p>這是非官方的 UNION ARENA 練習站。效果文字只用卡牌資料裡已收錄的原文，練習勝敗不是官方成績。</p><p><a href="https://www.unionarena-tcg.com/jp/" target="_blank" rel="noopener noreferrer">前往官方網站</a></p></section>`;
 }
 function render(){
+ // The desktop editor scrolls its card pool independently of the window.
+ // Replacing #app on every +/- click otherwise resets this inner scrollbar.
+ const oldPool=$('.arena-editor .vdb-pool-grid');
+ const oldDeck=$('.arena-deck-board');
+ const oldPoolTop=oldPool?.scrollTop??null,oldPoolLeft=oldPool?.scrollLeft??0;
+ const oldDeckTop=oldDeck?.scrollTop??null;
+ const previousPageY=window.scrollY,previousPageX=window.scrollX;
  const t=TITLES.find(item=>item.id===state.title)||TITLES[0],info=status();
  const countAll=t.cards.length;
  const browsing=state.ready&&(state.screen==='gallery'||state.screen==='detail');
@@ -286,6 +293,16 @@ function render(){
   `<div class="v2e-modal-backdrop"><section class="v2e-modal" role="dialog" aria-modal="true" aria-label="複製牌組"><button class="v2e-x" data-action="dismiss">關閉 ×</button><h2>牌組清單</h2><textarea id="v2Export" rows="17" readonly>${escapeHtml(state.exportText)}</textarea><button class="v2e-primary" data-action="copyDeck">複製至剪貼簿</button></section></div>`:'';
  $('#app').innerHTML=`<div class="v2e-shell arena-shell"><header class="ua-site-header" aria-label="UNION ARENA 主要導覽"><a class="ua-header-brand" href="/online.html" aria-label="UNION ARENA V2 首頁"><span class="ua-header-overline">TRADING CARD GAME</span><span class="ua-header-logo"><strong>UNION ARENA</strong><em>V2</em></span></a><nav class="ua-header-nav" aria-label="主要功能"><a href="/online.html">首頁</a><a href="/universal-v2-preview.html">對戰</a><a href="/index.html" ${state.screen==='records'||state.screen==='rules'?'':'aria-current="page"'}>牌組</a><a href="/index.html#cards">卡牌一覽</a><button type="button" data-arena-screen="records" ${state.screen==='records'?'aria-current="page"':''}>排行榜</button><button type="button" data-arena-screen="rules" ${state.screen==='rules'?'aria-current="page"':''}>規則／FAQ</button></nav><div class="ua-header-account"><a href="/online.html" aria-label="返回帳號與線上對戰大廳">大廳</a></div></header><main class="v2e-main"><div class="v2e-heading"><div><span class="vdb-eyebrow">OFFICIAL V2 ENGINE ONLY</span><h1>${pageTitle}</h1></div></div>${accountBanner}${infoBanner}${designatedPanel}${stage}${libraryNavigation}${editor}</main><footer class="v2e-footer">所有對戰均使用 Universal V2。可保留以前的牌組草稿，但舊版引擎、Beta 引擎和舊版 auto 標籤不再使用。</footer>${modal||''}</div>`;
  bind();
+ // Restore both the independently scrolling card list and the document.
+ // Only restore when the same editor panel exists before AND after render.
+ const newPool=$('.arena-editor .vdb-pool-grid');
+ const newDeck=$('.arena-deck-board');
+ if(oldPoolTop!==null&&newPool){
+  newPool.scrollTop=oldPoolTop;newPool.scrollLeft=oldPoolLeft;
+ }
+ if(oldDeckTop!==null&&newDeck)newDeck.scrollTop=oldDeckTop;
+ if((oldPoolTop!==null&&newPool)||(oldDeckTop!==null&&newDeck))
+  window.scrollTo(previousPageX,previousPageY);
 }
 async function mirrorCloudDeck(title,entry){
  if(typeof fetch!=='function')return;
