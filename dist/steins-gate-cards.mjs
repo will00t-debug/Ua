@@ -98,7 +98,7 @@ export const STEINS_GATE_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-003",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-003",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "suzuhaActive",
   "faq": []
  },
  {
@@ -328,7 +328,7 @@ export const STEINS_GATE_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-010",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-010",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "okabeChoose",
   "faq": []
  },
  {
@@ -589,7 +589,7 @@ export const STEINS_GATE_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-018",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-018",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "mayuriDelay",
   "faq": [
    {
     "no": "Q2380",
@@ -906,7 +906,7 @@ export const STEINS_GATE_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-028",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-028",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "kurisuDual",
   "faq": [
    {
     "no": "Q2381",
@@ -1260,7 +1260,7 @@ export const STEINS_GATE_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-039",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-039",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "mayuriSlap",
   "faq": [
    {
     "no": "Q2383",
@@ -1627,7 +1627,7 @@ export const STEINS_GATE_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-050",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-050",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "rukaGrant",
   "faq": []
  },
  {
@@ -1950,7 +1950,7 @@ export const STEINS_GATE_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-060",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-060",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "mayuriShift",
   "faq": []
  },
  {
@@ -2136,7 +2136,7 @@ export const STEINS_GATE_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-066",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-066",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "farisReplay",
   "faq": []
  },
  {
@@ -2260,7 +2260,7 @@ export const STEINS_GATE_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-070",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-070",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "kurisuProtect",
   "faq": [
    {
     "no": "Q2389",
@@ -2484,7 +2484,7 @@ export const STEINS_GATE_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-077",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-077",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "dmailField",
   "faq": [
    {
     "no": "Q2390",
