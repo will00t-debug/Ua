@@ -548,13 +548,15 @@ function applyAction(a){
   assertUniversalMatch(app.packs,app.state);
   app.replay=appendUniversalReplay(app.replay,a,0);
   pushHistory(publicPreviewActionLabel(app.packs,previous,app.state,a,0));
+  saveBattleProgress();
   app.selectedUid=null;app.targetChoices=null;app.error='';app.allActions=false;render();driveAi();
  }catch(e){alertText(e?.message||String(e));}
 }
 function undoMove(){
  if(!app.undo||app.busy)return;
  app.state=app.undo.state;app.history=app.undo.history;app.replay=app.undo.replay;
- app.undo=null;app.error='';app.selectedUid=null;render();
+ app.undo=null;app.error='';app.selectedUid=null;
+ saveBattleProgress();render();
  if(uiActor(app.state)===1)driveAi();
 }
 // Fully synchronous, one-click rescue. No browser timers or AI chooser.
@@ -576,6 +578,7 @@ function manualAiStep(){
   pushHistory(publicPreviewActionLabel(app.packs,previous,app.state,move,1));
   app.aiCompletedSteps++;
   app.lastAiProgress='手動 '+move.type+' · T'+app.state.turn+'/'+app.state.phase;
+  saveBattleProgress();
   app.error='';
   render();
  }catch(e){
@@ -618,6 +621,7 @@ function driveAi(){
     app.lastAiProgress=choice.type+' · T'+app.state.turn+'/'+app.state.phase;
     if(app.autoMoves%20===0)assertUniversalMatch(app.packs,app.state);
    }
+   saveBattleProgress();
    if(app.state.status==='playing'&&uiActor(app.state)===1){
     // Render between chunks so a user can see progress and tap retry even
     // when a mobile browser throttles timers.
