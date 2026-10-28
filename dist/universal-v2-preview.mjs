@@ -599,6 +599,17 @@ function legacyHand(view,legal){
   hand.append(card);
  }
  if(!cards.length)hand.append(el('span',{class:'small',text:'目前沒有手牌'}));
+ // Desktop mouse wheels navigate overflowed hands horizontally; trackpad
+ // horizontal gestures and normal wheel scrolling outside the hand are intact.
+ if(IS_BATTLE_PAGE)hand.addEventListener('wheel',event=>{
+  if(!window.matchMedia('(min-width:761px)').matches||
+   hand.scrollWidth<=hand.clientWidth||
+   Math.abs(event.deltaY)<=Math.abs(event.deltaX))return;
+  const previous=hand.scrollLeft;
+  hand.scrollLeft=Math.max(0,Math.min(hand.scrollWidth-hand.clientWidth,
+   previous+event.deltaY));
+  if(hand.scrollLeft!==previous)event.preventDefault();
+ },{passive:false});
  return hand;
 }
 // Hide the large generic "legal actions" panel. Only surface contextual
