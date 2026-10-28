@@ -12,12 +12,12 @@ const build=()=>renderVisualDeckBuilder({
  ]})),titleId:'bleach',ready:false
 });
 
-test('all six supported works display their actual Wikimedia series wordmark, not a card thumbnail',()=>{
- assert.equal(Object.keys(TITLE_LOGOS).length,6);
+test('every registered work displays its actual Wikimedia series wordmark, not a card thumbnail',()=>{
+ assert.equal(Object.keys(TITLE_LOGOS).length,TITLES.length);
  assert.deepEqual(new Set(Object.keys(TITLE_LOGOS)),new Set(TITLES.map(t=>t.id)));
  const markup=build();
- assert.equal((markup.match(/class="vdb-title-tile/g)||[]).length,6);
- assert.equal((markup.match(/class="vdb-title-logo"/g)||[]).length,6);
+ assert.equal((markup.match(/class="vdb-title-tile/g)||[]).length,TITLES.length);
+ assert.equal((markup.match(/class="vdb-title-logo"/g)||[]).length,TITLES.length);
  assert.doesNotMatch(markup,/src="assets\/cards\/example-card\.png"/);
  for(const title of TITLES){
   const logo=titleLogo(title.id);
@@ -32,8 +32,8 @@ test('all six supported works display their actual Wikimedia series wordmark, no
 
 test('logo errors show text fallback and attribution is accessible',()=>{
  const html=build();
- assert.equal((html.match(/this\.nextElementSibling\.hidden=false/g)||[]).length,6);
- assert.equal((html.match(/class="vdb-title-logo-fallback" hidden/g)||[]).length,6);
+ assert.equal((html.match(/this\.nextElementSibling\.hidden=false/g)||[]).length,TITLES.length);
+ assert.equal((html.match(/class="vdb-title-logo-fallback" hidden/g)||[]).length,TITLES.length);
  assert.match(html,/referrerpolicy="no-referrer"/);
  assert.match(html,/loading="lazy" decoding="async"/);
  assert.match(html,/<summary>作品 Logo 來源與授權<\/summary>/);

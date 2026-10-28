@@ -8,7 +8,7 @@ export function matchesPrintedRequiredEnergyAtMost(definition,max){
 export const DISCOUNT_KIND='nextEligibleHandPlayApDiscount';
 export function validatePrintedPlayFilter(f){
  if(!f||typeof f!=='object'||Array.isArray(f)||!Object.keys(f).length||
-  Object.keys(f).some(k=>!['cardType','printedBp','printedGenAtLeast','printedRequiredEnergyAtMost','trait','namesAny','name','noRaid','anyOfTraitOrName'].includes(k))||
+  Object.keys(f).some(k=>!['cardType','printedBp','printedGenAtLeast','printedRequiredEnergyAtMost','trait','namesAny','name','noRaid','anyOfTraitOrName','triggerNot'].includes(k))||
   (f.anyOfTraitOrName!==undefined&&f.anyOfTraitOrName!==true)||
   (f.anyOfTraitOrName===true&&(typeof f.trait!=='string'||typeof f.name!=='string'))||
   (f.cardType!==undefined&&!['character','field','event'].includes(f.cardType))||
@@ -18,7 +18,8 @@ export function validatePrintedPlayFilter(f){
   (f.namesAny!==undefined&&(!Array.isArray(f.namesAny)||f.namesAny.length<2||f.namesAny.length>5||f.namesAny.some(n=>typeof n!=='string'||!n.trim()||n.length>80)||new Set(f.namesAny).size!==f.namesAny.length))||
   (f.trait!==undefined&&(typeof f.trait!=='string'||!f.trait.trim()||f.trait.length>80))||
   (f.name!==undefined&&(typeof f.name!=='string'||!f.name.trim()||f.name.length>80))||
-  (f.noRaid!==undefined&&f.noRaid!==true))
+  (f.noRaid!==undefined&&f.noRaid!==true)||
+  (f.triggerNot!==undefined&&f.triggerNot!=='final'))
   throw Error('Invalid printed hand-play discount filter');
  return true;
 }
@@ -31,7 +32,8 @@ export function matchesPrintedPlayFilter(d,f){
   (f.anyOfTraitOrName===true?cardHasTrait(d,f.trait)||cardHasName(d,f.name):
    (f.name===undefined||cardHasName(d,f.name))&&
    (f.trait===undefined||cardHasTrait(d,f.trait)))&&
-  (f.noRaid!==true||(d.trigger!=='raid'&&!d.raidName));
+  (f.noRaid!==true||(d.trigger!=='raid'&&!d.raidName))&&
+  (f.triggerNot===undefined||d.trigger!==f.triggerNot);
 }
 export function validateHandDiscount(s,e){
  validatePrintedPlayFilter(e.filter);

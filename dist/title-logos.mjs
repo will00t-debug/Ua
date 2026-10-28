@@ -45,6 +45,13 @@ export const TITLE_LOGOS=Object.freeze({
   source:'https://commons.wikimedia.org/wiki/File:Re_Zero_kara_Hajimeru_Isekai_Seikatsu_logo.svg',
   credit:'Re:Zero rights holders',
   license:'PD text logo'
+ }),
+ 'steins-gate':Object.freeze({
+  image:'https://upload.wikimedia.org/wikipedia/commons/b/b2/Steins%3BGate.svg',
+  label:'命運石之門',
+  source:'https://commons.wikimedia.org/wiki/File:Steins;Gate.svg',
+  credit:'志倉千代丸',
+  license:'PD text logo'
  })
 });
 export const titleLogo=id=>Object.hasOwn(TITLE_LOGOS,id)?TITLE_LOGOS[id]:null;
