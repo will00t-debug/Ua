@@ -649,6 +649,17 @@ export function publicLifeTriggerText(pack,before,after,action){
  }
  return '觸發 '+name+' · '+detail;
 }
+export const FIELD_HOLD_MS=1000;
+// Printed catalogue text only. This never reads the rules program or a hidden card.
+export function fieldEffectCopy(card){
+ if(!card||typeof card!=='object')return '這張卡沒有可顯示的效果。';
+ const text=value=>typeof value==='string'?value.trim():'';
+ const effect=text(card.effect);
+ const trigger=text(card.triggerText)||text(card.triggerEffect);
+ const skip=new Set(['','-','無 Trigger。','無觸發。']);
+ const parts=[effect,!skip.has(trigger)?('觸發效果：'+trigger):''].filter(part=>part&&!skip.has(part));
+ return parts.join('\n')||'這張卡沒有印刷效果。';
+}
 export function attackBattleTags(battle){
  if(!battle||typeof battle!=='object')return [];
  const tags=[];
