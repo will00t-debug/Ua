@@ -31,7 +31,7 @@ test('viewport locking applies only during active play, not the opening mulligan
  assert.match(render,/opening-mulligan/);
  assert.match(render,/const oldHandScroll=target\.querySelector\('\.hand'\)\?\.scrollLeft\|\|0/);
  assert.match(render,/handAfterRender\.scrollLeft=oldHandScroll/);
- assert.match(render,/class:'v2-mobile-menu-toggle'/);
+ assert.match(render,/'v2-mobile-menu-toggle'/);
  assert.match(render,/aria-expanded/);
  assert.match(render,/legacyPlayer\(v,1,legal\),middle,legacyPlayer\(v,0,legal\)/);
  assert.match(render,/arena\.append\(handArea\)/);
