@@ -315,7 +315,7 @@ export function dispatchAccount(repos,message,now){
    const record={
     id:existing?.id||('d'+randomBytes(8).toString('hex')),
     name,title,counts:storedCounts,localId,
-    coverId:input.coverId===undefined?parseDeckCoverId(existing?.coverId,storedCounts):parseDeckCoverId(input.coverId,storedCounts),
+    coverId:input.coverId===undefined?(storedCounts[existing?.coverId]>0?existing.coverId:null):parseDeckCoverId(input.coverId,storedCounts),
     updatedAt:new Date(now).toISOString()
    };
    if(existing)repos.updateDeck(user.id,record);
@@ -340,7 +340,7 @@ export function dispatchAccount(repos,message,now){
    // Preserve remote identity and local source ID. Only the authenticated
    // owner can change their saved deck; a different user always receives 404.
    const record={...old,name,title,counts:storedCounts,
-    coverId:input.coverId===undefined?parseDeckCoverId(old.coverId,storedCounts):parseDeckCoverId(input.coverId,storedCounts),
+    coverId:input.coverId===undefined?(storedCounts[old.coverId]>0?old.coverId:null):parseDeckCoverId(input.coverId,storedCounts),
     updatedAt:new Date(now).toISOString()};
    repos.updateDeck(user.id,record);
    return {deck:publicDeck(record)};
