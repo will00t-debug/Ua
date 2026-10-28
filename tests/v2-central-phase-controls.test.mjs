@@ -28,7 +28,7 @@ test('both classic mobile and dedicated blue battle layouts center controls',()=
  const battle=read('dist/universal-v2-battle.css');
  assert.match(classic,/#match-view \.v2-middle-controls\{[\s\S]*?justify-items:center/);
  assert.match(classic,/#match-view \.v2-middle-controls \.phaseBar\{[\s\S]*?justify-content:center/);
- assert.match(classic,/#match-view \.v2-middle-next button\{[\s\S]*?min-height:44px/);
+ assert.match(classic,/#match-view \.v2-middle-next button\{[\s\S]*?min-height:36px/);
  assert.match(classic,/@media\(max-width:620px\)\{\s*\.v2-shell #match-view \.v2-middle-controls/);
  assert.match(battle,/body\.v2-battle-page \.v2-shell #match-view \.v2-middle-controls\{/);
  assert.match(battle,/#match-view \.v2-middle-controls \.phaseBar \.current\{/);
