@@ -249,7 +249,7 @@ function render(){
  const t=TITLES.find(item=>item.id===state.title)||TITLES[0],info=status();
  const countAll=t.cards.length;
  const browsing=state.ready&&(state.screen==='gallery'||state.screen==='detail');
- const pageTitle=!state.ready?'牌組構築':state.screen==='detail'?'牌組詳情':state.screen==='gallery'?'我的牌組':state.screen==='records'?'我的戰績':state.screen==='rules'?'規則／FAQ':'編輯牌組';
+ const pageTitle=state.screen==='library'?'我的牌組':state.screen==='chooseTitle'?'建立新牌組':state.screen==='detail'?'牌組詳情':state.screen==='gallery'?'我的牌組':state.screen==='records'?'我的戰績':state.screen==='rules'?'規則／FAQ':'編輯牌組';
  // Designated decks are opened from the visual list. renderBuiltinBleachPanel stays
  // in the catalogue module and is not mounted above the editor.
  const designatedPanel='';
@@ -268,14 +268,14 @@ function render(){
   savedOptions:[...(state.title==='bleach'?BUILTIN_BLEACH_V2_DECKS.map(d=>({value:'builtin:'+d.id,label:'指定牌組｜'+d.displayName+'（50 張）'})):[]),...savedData[state.title].map((d,i)=>({value:String(i),label:d.name}))],
   saveAction:'saveDeck',newAction:'newDeck',issues:info.issues,
   v2SupportedIds:info.supported,v2Ready:info.ready,reselectLabel:'‹ 返回牌組列表'
- }):(!state.ready?renderVisualDeckBuilder({
+ }):(state.screen==='chooseTitle'?renderVisualDeckBuilder({
   ...editorOptions,ready:false,savedOptions:[],saveAction:'saveDeck',newAction:'newDeck',issues:[],v2SupportedIds:null,v2Ready:false
  }):'');
  const recordAside=state.screen==='detail'?`<aside class="arena-manage-side">${manageTools()}${renderDeckRecord({record:readDeckRecord(localStorage,activeDeckRecordId()),view:state.recordView})}</aside>`:'';
- const stage=browsing?(state.screen==='detail'?`<div class="arena-manage"><aside class="arena-manage-list">${renderGallery()}</aside><div class="arena-manage-main">${renderDetail()}</div>${recordAside}</div>`:renderGallery()):state.screen==='records'?recordsScreen():state.screen==='rules'?rulesScreen():'';
+ const stage=state.screen==='library'?renderLibrary():browsing?(state.screen==='detail'&&state.listOrigin==='library'?`<div class="deck-library-detail">${renderDetail()}<details class="deck-library-advanced"><summary>進階牌組操作與戰績</summary>${manageTools()}${renderDeckRecord({record:readDeckRecord(localStorage,activeDeckRecordId()),view:state.recordView})}</details></div>`:state.screen==='detail'?`<div class="arena-manage"><aside class="arena-manage-list">${renderGallery()}</aside><div class="arena-manage-main">${renderDetail()}</div>${recordAside}</div>`:renderGallery()):state.screen==='records'?recordsScreen():state.screen==='rules'?rulesScreen():'';
  const modal=(state.zoom&&state.inspection)?showDetail(state.inspection):state.exportText!==null?
   `<div class="v2e-modal-backdrop"><section class="v2e-modal" role="dialog" aria-modal="true" aria-label="複製牌組"><button class="v2e-x" data-action="dismiss">關閉 ×</button><h2>牌組清單</h2><textarea id="v2Export" rows="17" readonly>${escapeHtml(state.exportText)}</textarea><button class="v2e-primary" data-action="copyDeck">複製至剪貼簿</button></section></div>`:'';
- $('#app').innerHTML=`<div class="v2e-shell arena-shell"><header class="arena-top"><a class="arena-brand" href="/online.html"><strong>UNION ARENA</strong><small>V2</small></a><nav class="arena-nav" aria-label="主要功能"><a href="/online.html">首頁</a><a href="/universal-v2-preview.html">對戰</a><a href="/index.html">牌組</a><a href="/index.html#cards">卡牌一覽</a><button type="button" data-arena-screen="records">排行榜</button><button type="button" data-arena-screen="rules">規則／FAQ</button></nav></header><main class="v2e-main"><div class="v2e-heading"><div><span class="vdb-eyebrow">OFFICIAL V2 ENGINE ONLY</span><h1>${pageTitle}</h1></div><a class="v2e-primary" href="/universal-v2-preview.html">前往 V2 對戰</a></div>${accountBanner}${infoBanner}${designatedPanel}${stage}${editor}</main><footer class="v2e-footer">所有對戰均使用 Universal V2。可保留以前的牌組草稿，但舊版引擎、Beta 引擎和舊版 auto 標籤不再使用。</footer>${modal||''}</div>`;
+ $('#app').innerHTML=`<div class="v2e-shell arena-shell"><header class="arena-top"><a class="arena-brand" href="/online.html"><strong>UNION ARENA</strong><small>V2</small></a><nav class="arena-nav" aria-label="主要功能"><a href="/online.html">首頁</a><a href="/universal-v2-preview.html">對戰</a><a href="/index.html" aria-current="page">牌組</a><a href="/index.html#cards">卡牌一覽</a><button type="button" data-arena-screen="records">排行榜</button><button type="button" data-arena-screen="rules">規則／FAQ</button></nav></header><main class="v2e-main"><div class="v2e-heading"><div><span class="vdb-eyebrow">OFFICIAL V2 ENGINE ONLY</span><h1>${pageTitle}</h1></div><a class="v2e-primary" href="/universal-v2-preview.html">前往 V2 對戰</a></div>${accountBanner}${infoBanner}${designatedPanel}${stage}${editor}</main><footer class="v2e-footer">所有對戰均使用 Universal V2。可保留以前的牌組草稿，但舊版引擎、Beta 引擎和舊版 auto 標籤不再使用。</footer>${modal||''}</div>`;
  bind();
 }
 async function mirrorCloudDeck(title,entry){
