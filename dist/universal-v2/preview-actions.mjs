@@ -668,6 +668,18 @@ export function attackBattleTags(battle){
  if(Number.isInteger(battle.impact))tags.push(battle.impact>0?'衝擊'+battle.impact:'無衝擊');
  return tags;
 }
+// Movement in the normal move phase is two clicks: choose a character in
+// its current row, then click a reducer-approved destination in the other row.
+// Neither click invents actions; full-row replacement must match replaceUid.
+export function moveClickPlan({selectedUid,slotUid,line,slot,legal}){
+ const options=(Array.isArray(legal)?legal:[]).filter(a=>a?.type==='move'||a?.type==='step');
+ const destinations=options.filter(a=>a.uid===selectedUid&&a.slot===slot&&
+  (a.type==='move'?'front':'energy')===line&&
+  (slotUid?a.replaceUid===slotUid:a.replaceUid===undefined));
+ if(destinations.length)return {type:'destination',actions:destinations};
+ if(slotUid&&options.some(a=>a.uid===slotUid))return {type:'choose-mover',uid:slotUid};
+ return {type:'select'};
+}
 // Raid on the table is two clicks: the base, then the slot the raider enters.
 // The first click never submits an action. Play and move stay on their own slots.
 export function raidClickPlan({selectedUid,raidBaseUid,slotUid,line,slot,legal}){
