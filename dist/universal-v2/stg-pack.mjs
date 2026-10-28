@@ -50,6 +50,23 @@ const DIFFERENT_FIELD='【登場時】自分の場のフィールドを1枚退�
 const FRONT_ENERGY='【起動メイン】【ターン1】このターン中に自分がイベントカードを使用している場合のみ発動できる。このキャラは次の自分のターン開始時まで、「このキャラはフロントLでもエナジーを発生させる。」を得る。';
 const GRANT_STEP='【ステップ】（自分の移動フェイズにフロントLからエナジーLへ移動できる）【自分のターン中】自分の場の他のキャラ全ては、【ステップ】を得る。';
 const SPECIAL='【スペシャル】相手のフロントLのキャラを1枚選び、退場させる。';
+const COLOR_BOUNCE='【カラー】BP3500以下の相手のフロントLのキャラを1枚選び、手札に戻す。';
+const RAID_TRIGGER='【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。';
+const INSPECT_ENTRY='【登場時】自分の山札の上から『2枚』見て、望む枚数を望む順で山札の上に置き、残りを場外に置く。このキャラがキャラの効果で登場していた場合、『3枚』に代わる。';
+const LAB_REST='【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）【登場時】自分の手札から必要エナジーが2以下で消費APが1の緑の〔〈阿万音 鈴羽〉か〈岡部 倫太郎〉か〈椎名 まゆり〉か〈橋田 至〉か〈牧瀬 紅莉栖〉〕を1枚まで自分の場にレストで登場させる。';
+const TRIGGER_SEARCH='【登場時】自分の山札の上から『3枚』見て、必要エナジーが3以下で【ファイナルトリガー】を持たないイベントカードを1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。自分の場外に必要エナジーが3以下の青のイベントカードの【トリガー】が3種類以上ある場合、『5枚』に代わる。';
+const TRIGGER_BRANCH='【自分のターン中】このターン中に自分がイベントカードを使用している場合、このキャラはBP+1000。【登場時】自分の場外にある、必要エナジーが3以下の青のイベントカードの【トリガー】が3種類以下の場合、カードを1枚引き、自分の手札を1枚場外に置く。4種類以上の場合、カードを1枚引く。';
+const RAIDED_DRAW='自分の場にカードが1枚もない場合、手札にあるこのカードの必要エナジーを【青×2】減らす。このキャラがレイドされた時、自分の場外に必要エナジーが3以下の青のイベントカードの【トリガー】が3種類以上ある場合、カードを1枚引く。（レイドしたキャラの【登場時】とこの効果は望む順で処理する）';
+const KURISU_BLOCK='自分の場の〈牧瀬 紅莉栖〉を1枚選び、このターン中、BP+1500と「このキャラはBP4000以上のキャラにブロックされない。」を与える。自分の場外に必要エナジーが3以下の他の青のイベントカードの【トリガー】が3種類以上ある場合、カードを1枚引く。';
+const OKABE_WALL='このカードは自分の場に〈岡部 倫太郎〉がある場合のみ使用できる。BP5000以下の相手のフロントLのキャラを1枚選び、退場させる。自分の場外に青の〈椎名 まゆり〉が7枚以上ある場合、自分の場か場外の〈岡部 倫太郎〉を1枚までリムーブエリアに置く。';
+const IBN_GATE='【登場時】自分の手札のイベントカードかフィールドカードを1枚場外に置いてもよい。そうした場合、山札の上から2枚見て、1枚手札に加え、残りを場外に置く。【退場時】以下から1つ選ぶ。・自分の場の〈桐生 萌郁〉を1枚まで選び、アクティブにする。・カードを1枚引く。';
+const IMPACT_MOVE='【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）【登場時】自分の場の他のカードを1枚退場させてもよい。そうした場合、相手のフロントLのキャラを1枚まで選び、エナジーLに移動させる。このターン中に自分がイベントカードを使用している場合、選んだキャラに次の自分のターン開始時まで、「このキャラは移動できない。」を与える。';
+const TRIGGER_RETIRE='【レイド】〈牧瀬 紅莉栖〉アクティブにし、フロントLに移動できる【登場時】自分の場外の必要エナジーが3以下の青のイベントカードの【トリガー】の種類数×1000以下のBPの相手のフロントLのキャラを1枚まで選び、退場させる。自分の場外に必要エナジーが3以下の青のイベントカードの【トリガー】が5種類以上ある場合、このキャラはこのターン中、【インパクト（1）】を得る。';
+const IBN_RETIRE={op:'chooseOne',optional:false,options:[
+ {id:'active',label:'使桐生萌郁活動',turn:'any',then:[
+  {op:'activeOwnNamed',name:'桐生 萌郁',max:1,optional:true}]},
+ {id:'draw',label:'抽1張',turn:'any',then:[{op:'draw',count:1}]}
+]};
 const DRAW_OR_NAMES={op:'chooseOne',optional:false,options:[
  {id:'draw',label:'抽1張並放1張手牌到場外',turn:'any',then:[{op:'drawDiscard',count:1}]},
  {id:'names',label:'鈴羽或橋田這個回合BP+2000',turn:'any',then:[
@@ -102,6 +119,16 @@ export function stgEngineKind(effectJa){
  if(e===DIFFERENT_FIELD)return 'differentField';
  if(e===FRONT_ENERGY)return 'eventFrontEnergy';
  if(e===GRANT_STEP)return 'grantStep';
+ if(e===INSPECT_ENTRY)return 'inspectCharacterEntry';
+ if(e===LAB_REST)return 'labHandRest';
+ if(e===TRIGGER_SEARCH)return 'triggerSearch';
+ if(e===TRIGGER_BRANCH)return 'triggerDrawBranch';
+ if(e===RAIDED_DRAW)return 'raidedTriggerDraw';
+ if(e===KURISU_BLOCK)return 'kurisuBlockDraw';
+ if(e===OKABE_WALL)return 'okabeWall';
+ if(e===IBN_GATE)return 'ibnGate';
+ if(e===IMPACT_MOVE)return 'impactMove';
+ if(e===TRIGGER_RETIRE)return 'triggerKindRetire';
  return null;
 }
 
@@ -119,11 +146,15 @@ export function stgPackCard(card){
  if(card.trigger==null){
   if(card.triggerTextJa!=='-')throw Error(card.id+' missing trigger text');
  }else if(card.trigger==='color'){
-  if(kind!=='colorOtherBuff'||card.triggerTextJa!==COLOR_TRIGGER||card.color!=='green')
-   throw Error(card.id+' color trigger is not the printed green hand character');
+  const green=kind==='colorOtherBuff'&&card.triggerTextJa===COLOR_TRIGGER&&card.color==='green';
+  const bounce=kind==='raidedTriggerDraw'&&card.triggerTextJa===COLOR_BOUNCE&&card.color==='blue';
+  if(!green&&!bounce)throw Error(card.id+' color trigger is not a registered printed profile');
  }else if(card.trigger==='special'){
-  if(kind!=='kurisuRetire'||card.triggerTextJa!==SPECIAL)
+  if(!['kurisuRetire','okabeWall','impactMove'].includes(kind)||card.triggerTextJa!==SPECIAL)
    throw Error(card.id+' special trigger is not the printed front retirement');
+ }else if(card.trigger==='raid'){
+  if(kind!=='triggerKindRetire'||card.triggerTextJa!==RAID_TRIGGER)
+   throw Error(card.id+' raid trigger is not the standard printed text');
  }else if(STANDARD[card.trigger]!==card.triggerTextJa)
   throw Error(card.id+' trigger is not the standard printed text');
  const pip={blue:'青',green:'緑'}[card.color];
@@ -188,6 +219,33 @@ export function stgPackCard(card){
   kind==='dmailSearch'?[{op:'searchTopOneBottomDiscard',count:4,logic:'any',filters:[
    {field:'type',value:'field'},{field:'name',value:'Dメール'}]}]:
   kind==='differentField'?[{op:'retireOwnFieldThenDifferent',color:'green'}]:
+  kind==='inspectCharacterEntry'?[{op:'inspectTopAnyOutside',count:2,rest:'top',
+   whenEnteredByCharacter:{count:3}}]:
+  kind==='labHandRest'?[{op:'deployOwnHandRest',type:'character',color:'green',
+   energy:2,ap:1,max:1,names:LAB}]:
+  kind==='triggerSearch'?[{op:'searchTopOneBottomDiscard',count:3,logic:'all',filters:[
+   {field:'type',value:'event'},
+   {field:'printedRequiredEnergyAtMost',value:3},
+   {field:'triggerNot',value:'final'}
+  ],whenTriggers:{color:'blue',maxEnergy:3,min:3,count:5}}]:
+  kind==='triggerDrawBranch'?[{op:'outsideTriggerDrawBranch',color:'blue',maxEnergy:3,atMost:3}]:
+  kind==='kurisuBlockDraw'?[
+   {op:'grantOwnNameBlockAtLeast',name:'牧瀬 紅莉栖',bp:4000,optional:false,alsoBp:1500},
+   {op:'drawIfOutsideEventTriggers',color:'blue',maxEnergy:3,min:3,count:1,excludeSource:true}
+  ]:
+  kind==='okabeWall'?[
+   {op:'retireOppFrontAtMostBp',bp:5000},
+   {op:'mayRemoveNamedZones',name:'岡部 倫太郎',
+    minOutside:{name:'椎名 まゆり',color:'blue',min:7}}
+  ]:
+  kind==='ibnGate'?[{op:'discardGate',optional:true,payment:{zone:'hand',field:'typeAny',
+   values:['event','field']},then:[{op:'searchTopAddOneMillRest',count:2}]}]:
+  kind==='impactMove'?[{op:'retireOwnOtherCardThen',optional:true,
+   then:[{op:'moveOppFrontIfEvent',optional:true}]}]:
+  kind==='triggerKindRetire'?[
+   {op:'retireOppFrontByOutsideTriggers',optional:true,color:'blue',maxEnergy:3,per:1000},
+   {op:'grantSelfImpactIfOutsideTriggers',color:'blue',maxEnergy:3,min:5,amount:1}
+  ]:
   null;
  return {
   id:card.id,name:card.nameJa,color:card.color,type:card.type,
@@ -196,9 +254,12 @@ export function stgPackCard(card){
   implementation:kind==='plain'?'vanilla':'dsl',
   effects:kind==='retireDrawOkabe'?{onRetire:[{op:'drawIfOwnName',name:'岡部 倫太郎',count:1}]}:
    kind==='fieldDrawRetire'?{onPlay,onRetire:[{op:'draw',count:1}]}:
+   kind==='ibnGate'?{onPlay,onRetire:[IBN_RETIRE]}:
+   kind==='raidedTriggerDraw'?{onRaided:[{op:'drawIfOutsideEventTriggers',
+    color:'blue',maxEnergy:3,min:3,count:1}]}:
    kind==='attackMayDraw'?{onAttack:[{op:'mayDrawDiscardIfOwnEvent'}]}:
    onPlay?{onPlay}:{},
-  ...(kind==='impactNull'?{impactNull:true}:{}),
+  ...(kind==='impactNull'||kind==='labHandRest'||kind==='impactMove'?{impactNull:true}:{}),
   ...(kind==='doubleBlock'?{readyOnBlockCount:1}:{}),
   ...(kind==='bpImmuneTurn'?{bpDownImmune:true,ownTurnBp:500}:{}),
   ...(kind==='emptyDrawDiscard'?{emptyOwnFieldHandEnergyDiscount:2}:{}),
@@ -207,6 +268,8 @@ export function stgPackCard(card){
    op:'restSelfGainEnergyRetireEndMain',lines:'field',oncePerTurn:true,extraEnergy:1}}:{}),
   ...(kind==='eventTurnBp1500'?{passiveBonuses:[{
    condition:{kind:'ownEventUsedThisTurn',turn:'own'},bp:1500}]}:{}),
+  ...(kind==='triggerDrawBranch'?{passiveBonuses:[{
+   condition:{kind:'ownEventUsedThisTurn',turn:'own'},bp:1000}]}:{}),
   ...(kind==='restBuff'?{mainAbility:{op:'restSelfBuffOther',bp:1000}}:{}),
   ...(kind==='colorOtherBuff'?{triggerEffect:{
    op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1}}:{}),
@@ -215,7 +278,12 @@ export function stgPackCard(card){
    then:[{op:'buffSelfUntilNextOwnStart',bp:1000}]}}:{}),
   ...(kind==='openFrontBuff'?{emptyOwnFieldHandEnergyDiscount:2,phaseEffects:[{
    phase:'attack',edge:'start',turn:'own',then:[{op:'buffSelfIfFrontOpen',bp:1000}]}]}:{}),
-  ...(kind==='kurisuRetire'?{triggerEffect:{op:'retireOppFront'}}:{}),
+  ...(kind==='kurisuRetire'||kind==='okabeWall'||kind==='impactMove'?
+   {triggerEffect:{op:'retireOppFront'}}:{}),
+  ...(kind==='raidedTriggerDraw'?{emptyOwnFieldHandEnergyDiscount:2,
+   triggerEffect:{op:'bounceOppFrontUnderBp',bp:3500}}:{}),
+  ...(kind==='okabeWall'?{playRequiresOwnName:'岡部 倫太郎'}:{}),
+  ...(kind==='triggerKindRetire'?{raidName:'牧瀬 紅莉栖'}:{}),
   ...(kind==='winDrawMoved'?{attackWinDraw:{count:1,sides:'either',
    condition:{kind:'selfMovedThisTurn',turn:'any'}}}:{}),
   ...(kind==='attackEndFront'?{phaseEffects:[{phase:'attack',edge:'end',turn:'own',
@@ -233,8 +301,8 @@ export const STEINS_GATE_ENGINE_IDS=Object.freeze(
 
 export function createStgV2Pack(){
  const cards=STEINS_GATE_CARDS.filter(c=>c.engineKind).map(stgPackCard);
- if(cards.length!==54)throw Error('Steins;Gate registered count drifted');
+ if(cards.length!==64)throw Error('Steins;Gate registered count drifted');
  return createUniversalPack({
-  id:'steins-gate',version:'stg-ua57-batches-21-30-20261028',cards
+  id:'steins-gate',version:'stg-ua57-batches-31-40-20261028',cards
  });
 }

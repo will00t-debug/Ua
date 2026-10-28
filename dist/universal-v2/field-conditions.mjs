@@ -457,6 +457,31 @@ export function countOwnOutsideDistinctPrintedNames(s,owner,printed,{color,types
  return names.size;
 }
 
+// Printed trigger icons among own OUTSIDE events of one color whose printed
+// energy is at most the given number. Two copies of the same icon are one
+// kind. A card with no trigger icon adds nothing. Raid under, hand, deck,
+// and the opponent are not this zone. excludeUid drops the resolving card
+// when the print says 他の.
+export function countOwnOutsideEventTriggerKinds(s,owner,printed,{color,maxEnergy,excludeUid=null}={}){
+ if(![0,1].includes(owner)||typeof printed!=='function'||
+  !['green','yellow','blue','purple','red'].includes(color)||
+  !Number.isInteger(maxEnergy)||maxEnergy<0||maxEnergy>30||
+  (excludeUid!==null&&typeof excludeUid!=='string')||
+  !Array.isArray(s?.players?.[owner]?.outside))
+  throw Error('Invalid outside event trigger-kind count');
+ const kinds=new Set();
+ for(const physical of s.players[owner].outside){
+  if(!physical||typeof physical.uid!=='string'||
+   !physical.uid.startsWith(owner+'-'))throw Error('Invalid outside physical owner');
+  if(excludeUid!==null&&physical.uid===excludeUid)continue;
+  const d=printed(physical);
+  if(!d||!cardCountsAsEvent(d)||d.color!==color||
+   !Number.isInteger(d.energy)||d.energy>maxEnergy)continue;
+  if(typeof d.trigger==='string'&&d.trigger)kinds.add(d.trigger);
+ }
+ return kinds.size;
+}
+
 
 // R53: physical own-OUTSIDE groups. This is a pure reusable piece for cards
 // printing "every N cards in OWN outside", not a global cached power source.

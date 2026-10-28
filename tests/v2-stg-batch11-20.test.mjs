@@ -64,10 +64,10 @@ function labMatch(cards,seed){
 
 test('batches 11-20 register ten prints and leave the census unchanged',()=>{
  assert.ok(!V2_TITLE_IDS.includes('steins-gate'));
- assert.equal(STEINS_GATE_CARDS.filter(c=>c.engineKind).length,54);
- assert.equal(STEINS_GATE_CARDS.filter(c=>!c.engineKind).length,26);
- assert.equal(Object.keys(stg.cards).length,54);
- assert.equal(stg.version,'stg-ua57-batches-21-30-20261028');
+ assert.equal(STEINS_GATE_CARDS.filter(c=>c.engineKind).length,64);
+ assert.equal(STEINS_GATE_CARDS.filter(c=>!c.engineKind).length,16);
+ assert.equal(Object.keys(stg.cards).length,64);
+ assert.equal(stg.version,'stg-ua57-batches-31-40-20261028');
  for(const id of IDS)assert.equal(stg.cards[id].name,STEINS_GATE_BY_ID[id].nameJa);
  assert.equal(stg.cards['STG-1-003'],undefined);
  assert.equal(STEINS_GATE_BY_ID['STG-1-011'].engineKind,null);

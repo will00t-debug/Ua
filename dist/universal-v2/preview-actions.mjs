@@ -80,6 +80,10 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-outside-printed-rest':'選擇是否以休息狀態登場',
  'effect-grant-printed-block':'選擇是否賦予防禦下限',
  'effect-move-opp-front':'選擇是否將對手前線移至能源線',
+ 'effect-move-opp-if-event':'可將對手前線角色移至能源線',
+ 'effect-retire-own-other':'可退場1張其他己方卡片',
+ 'effect-retire-trigger-ceiling':'可退場觸發種類上限內的對手前線角色',
+ 'effect-remove-named-zones':'可將指定角色移入移除區',
  'effect-unblocked-rest':'選擇是否使對手前線休息',
  'effect-energy-swap':'選擇要交換位置的己方前線',
  'effect-grant-named-impact':'選擇是否賦予衝擊',
@@ -408,6 +412,8 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseOutsidePrintedRest':return action.uid===null?'不登場':'使 '+name()+' 以休息狀態登場';
   case 'chooseGrantPrintedBlock':return action.uid===null?'不賦予防禦下限':'使 '+name()+' 不會被 BP4000 以上的角色阻擋';
   case 'chooseMoveOppFront':return action.uid===null?'不移動':'將 '+name()+' 移至能源線';
+  case 'chooseRetireOwnOther':return action.uid===null?'不使卡片退場':'使 '+name()+' 退場';
+  case 'chooseRemoveNamedZone':return action.uid===null?'不移入移除區':'將 '+name()+' 移入移除區';
   case 'chooseUnblockedRest':return action.uid===null?'不使角色休息':'使 '+name()+' 休息';
   case 'chooseRemoveOppField':return '將 '+name()+' 放入移除區';
   case 'chooseEnergySwap':return '與 '+name()+' 交換位置';

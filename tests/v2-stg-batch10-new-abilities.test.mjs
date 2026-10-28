@@ -18,8 +18,8 @@ function order(s,uids){
 
 test('batch 10 adds other-character retirement draw and a five-name window',()=>{
  assert.ok(!V2_TITLE_IDS.includes('steins-gate'));
- assert.equal(STEINS_GATE_CARDS.filter(c=>c.engineKind).length,54);
- assert.equal(STEINS_GATE_CARDS.filter(c=>!c.engineKind).length,26);
+ assert.equal(STEINS_GATE_CARDS.filter(c=>c.engineKind).length,64);
+ assert.equal(STEINS_GATE_CARDS.filter(c=>!c.engineKind).length,16);
  assert.equal(STEINS_GATE_BY_ID['STG-1-013'].effectJa,
   '【登場時】自分の場の他のキャラを1枚退場させてもよい。そうした場合、カードを2枚引く。');
  assert.deepEqual(stg.cards['STG-1-013'].effects.onPlay,[{
@@ -38,7 +38,7 @@ test('batch 10 adds other-character retirement draw and a five-name window',()=>
  assert.ok(blocked.issues.some(issue=>issue.includes('STG-1-003')));
  const editor=editorV2Status('steins-gate',practice.counts);
  assert.equal(editor.ready,true,editor.issues.join('；'));
- assert.equal(editor.registered,54);
+ assert.equal(editor.registered,64);
 });
 
 test('six name filters stay rejected and a self-including draw follow-up stays the old profile',()=>{
