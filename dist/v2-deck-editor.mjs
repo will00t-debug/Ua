@@ -3,6 +3,7 @@
 import {TITLES} from './title-registry.mjs';
 import {PRESETS} from './cards.mjs';
 import {renderVisualDeckBuilder} from './visual-deck-builder.mjs';
+import {buildDeckLibrary} from './deck-library.mjs';
 import {summarizeDeck,formatDeckUpdated,renderDeckGallery,renderDeckDetail,readSharedIds,writeSharedFlag} from './deck-gallery.mjs';
 import {BUILTIN_BLEACH_V2_DECKS,builtinBleachDeck} from './v2-bleach-builtins.mjs';
 import {LEGACY_DECK_KEYS,V2_EDITOR_TRANSFER_KEY,normalizeEditorCounts,editorV2Status}
@@ -38,10 +39,11 @@ for(const t of TITLES){
 const bleachMeta=read(metaKey)||{};
 const label=id=>TITLES.find(t=>t.id===id)?.label||id;
 const defaults=Object.fromEntries(TITLES.map(t=>[t.id,t.id==='bleach'?(bleachMeta.name||'自訂 BLEACH 牌組'):t.id==='rezero'?'Re:Zero 自訂牌組':t.label+'自訂牌組']));
-const state={title:'bleach',ready:false,screen:'gallery',galleryTab:'mine',detail:null,tab:'pick',search:'',type:'all',color:'all',
+const state={title:'bleach',ready:false,screen:'library',listOrigin:'library',galleryTab:'mine',detail:null,tab:'pick',search:'',type:'all',color:'all',
  energy:'all',energies:[],generate:'all',sort:'energy-asc',recordView:'all',zoom:false,names:Object.fromEntries(TITLES.map(t=>[t.id,String(names[t.id]||defaults[t.id]).slice(0,40)])),
  counts:draftData,selectedSaved:{},shareFlag:false,inspection:null,exportText:null,cloudOrigin:null};
 let toastTimer=null;
+let cloudDecks=[],cloudUser=null;
 function notify(message){
  const el=$('#toast');if(!el)return;
  el.textContent=String(message);el.classList.add('visible');
@@ -123,6 +125,74 @@ function gallerySections(){
 function renderGallery(){
  return renderDeckGallery({tab:state.galleryTab,sections:gallerySections()});
 }
+function renderLibrary(){
+ const sections=buildDeckLibrary({
+  titles:TITLES,savedData,draftData:state.counts,names:state.names,
+  cloudDecks,cloudUser,tab:state.galleryTab,sharedIds:readSharedIds(localStorage),
+  builtins:BUILTIN_BLEACH_V2_DECKS,summarize:summarizeDeck,formatUpdated:formatDeckUpdated
+ });
+ return renderDeckGallery({tab:state.galleryTab,sections,mode:'library'});
+}
+// The cloud API is session-scoped. Never fall back to another user's cached decks.
+async function refreshCloudDecks(){
+ try{
+  const options={credentials:'same-origin',redirect:'error'};
+  const userResponse=await fetch('/api/me',options);
+  if(!userResponse.ok)throw Error('Not signed in');
+  const who=await userResponse.json();
+  const decksResponse=await fetch('/api/decks',options);
+  if(!decksResponse.ok)throw Error('Deck sync unavailable');
+  const data=await decksResponse.json();
+  if(!who?.username||!Array.isArray(data?.decks))throw Error('Invalid account data');
+  cloudUser=who.username;
+  cloudDecks=data.decks.filter(deck=>deck&&typeof deck.id==='string'&&/^d[a-f0-9]{16}$/.test(deck.id)
+   &&TITLES.some(t=>t.id===deck.title));
+ }catch{cloudDecks=[];cloudUser=null;}
+ if(state.screen==='library')render();
+}
+function savedDetailItem(){
+ if(state.detail?.source!=='saved')return null;
+ const list=savedData[state.title]||[];
+ return Number.isInteger(state.detail.index)?list[state.detail.index]||null:
+  list.find(row=>row.id===state.detail.id)||null;
+}
+function openLibraryDeck(key){
+ const parts=String(key||'').split(':');
+ const source=parts.shift();
+ state.listOrigin='library';
+ state.inspection=null;state.exportText=null;state.zoom=false;
+ if(source==='cloud'){
+  const row=cloudDecks.find(deck=>deck.id===parts[0]);
+  if(!row){notify('找不到這副帳號牌組，請重新整理。');return;}
+  state.title=row.title;state.ready=true;
+  try{state.counts[row.title]=normalizeEditorCounts(row.title,row.counts);}
+  catch{notify('牌組資料無法讀取。');return;}
+  state.names[row.title]=String(row.name||'未命名牌組').slice(0,40);
+  state.cloudOrigin={remoteId:row.id,title:row.title,localId:row.localId||null};
+  state.selectedSaved[row.title]=null;state.shareFlag=readSharedIds(localStorage).has(row.id);
+  state.detail={source:'cloud',id:row.id};
+ }else if(source==='saved'){
+  let title,id;try{title=decodeURIComponent(parts[0]);id=decodeURIComponent(parts.slice(1).join(':'));}catch{return;}
+  if(!TITLES.some(t=>t.id===title))return;
+  const list=savedData[title]||[];
+  const index=id.startsWith('@')?Number(id.slice(1)):list.findIndex(row=>row.id===id);
+  const row=list[index];
+  if(!row){notify('找不到這副本機牌組。');return;}
+  state.title=title;state.ready=true;state.cloudOrigin=null;
+  state.detail={source:'saved',id:row.id,index};
+ }else if(source==='draft'){
+  let title;try{title=decodeURIComponent(parts.join(':'));}catch{return;}
+  if(!TITLES.some(t=>t.id===title))return;
+  state.title=title;state.ready=true;state.cloudOrigin=null;
+  state.detail={source:'draft',id:'draft'};
+ }else if(source==='builtin'){
+  let id;try{id=decodeURIComponent(parts.join(':'));}catch{return;}
+  if(!useDesignatedBleachPreset(id,'detail')){notify('找不到指定牌組。');return;}
+ }else return;
+ state.screen='detail';
+ render();
+}
+
 function renderDetail(){
  const deck=detailModel();
  if(!deck)return '<div class="dkg-empty">找不到這副牌組。</div>';
