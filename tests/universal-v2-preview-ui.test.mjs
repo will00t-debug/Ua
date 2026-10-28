@@ -109,7 +109,8 @@ test('hand and deck prompts show private card art and leave the legal action unc
  assert.match(script,/v2-pending-overlay/);
  assert.match(script,/function triggerBoard\(/);
  assert.match(script,/這張觸發已經公開，對手也能看到/);
- assert.match(script,/對手正在確認觸發/);
+ assert.match(script,/if\(app\.state\?\.pending\)return null/);
+ assert.match(script,/if\(revealed\)mountTriggerOverlay\(revealed\)/);
  assert.match(css,/\.action-list\.choice-gallery/);
  assert.match(css,/button\.choice-card/);
  assert.match(battle,/dialog\.pending/);

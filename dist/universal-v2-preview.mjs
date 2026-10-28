@@ -93,7 +93,7 @@ if(!IS_BATTLE_PAGE)$('v2-coverage').textContent=
 let editorRecordId=null,fieldHold=0;
 const app={state:null,packs:null,launch:null,selectedUid:null,recordDeckId:null,recordNoted:false,
  selectedSide:null,history:[],busy:false,aiTimer:null,error:'',
- undo:null,replay:null,targetChoices:null,raidBaseUid:null,aiDifficulty:'normal',sequence:0,allActions:false, maxAuto:4500,autoMoves:0,aiPhaseKey:null,aiPhaseCount:0,aiFallbacks:0,aiCompletedSteps:0,lastAiProgress:'未啟動'};
+ undo:null,replay:null,targetChoices:null,raidBaseUid:null,dismissedTriggerKeys:new Set(),aiDifficulty:'normal',sequence:0,allActions:false, maxAuto:4500,autoMoves:0,aiPhaseKey:null,aiPhaseCount:0,aiFallbacks:0,aiCompletedSteps:0,lastAiProgress:'未啟動'};
 const phases=V2_PHASE_LABELS;
 const CLIENT_RELEASE='AI 修復 R2 · 2026-10-24';
 const btn=(label,fn,cls='')=>el('button',{type:'button',class:cls,text:label,onClick:fn});
@@ -298,12 +298,17 @@ function triggerCards(view){
  return [...checking,...rest];
 }
 function triggerBoard(view){
- const cards=triggerCards(view);
+ // Public life reveals are one-time notifications, not a persistent table header.
+ // Pending resolutions keep their existing mandatory legal-choice dialog.
+ if(app.state?.pending)return null;
+ const cards=triggerCards(view).filter(card=>!app.dismissedTriggerKeys.has(card.owner+':'+card.uid));
  if(!cards.length)return null;
- const foe=uiActor(app.state)!==0&&view.pending?.kind==='life-trigger';
- const board=el('section',{class:'trigger-board','aria-label':'公開觸發'});
- board.append(el('h2',{text:foe?'對手正在確認觸發':'公開觸發'}),
-  el('p',{class:'note',text:foe?'這張牌已經翻開，雙方都看得到。':'翻開的生命與發動過的觸發會留在這裡，對手也看得到。'}));
+ const overlay=el('div',{class:'overlay v2-trigger-overlay',
+  role:'presentation','aria-label':'觸發公開提示'});
+ const board=el('section',{class:'trigger-board',role:'dialog','aria-modal':'true',
+  'aria-label':'公開觸發，點一下關閉',tabindex:'0'});
+ board.append(el('h2',{text:'公開觸發'}),
+  el('p',{class:'note',text:'翻開的生命卡已公開。點一下畫面即可關閉。'}));
  const row=el('div',{class:'trigger-row'});
  for(const card of cards)row.append(triggerTile(card));
  board.append(row);
@@ -313,8 +318,20 @@ function triggerBoard(view){
   for(const text of lines)list.append(el('li',{text}));
   board.append(list);
  }
- return board;
+ overlay.append(board);
+ const dismiss=()=>{
+  for(const card of cards)app.dismissedTriggerKeys.add(card.owner+':'+card.uid);
+  clearTriggerOverlay();
+ };
+ overlay.addEventListener('click',dismiss);
+ overlay.addEventListener('keydown',event=>{
+  if(event.key==='Escape'||event.key==='Enter'||event.key===' '){
+   event.preventDefault();dismiss();
+  }
+ });
+ return overlay;
 }
+
 function pendingChoiceControl(action,option,gallery,view){
  const label=uiActionLabel(action,{pack:app.packs,state:app.state});
  // Private options already carry their controller-authorized artwork. If
@@ -724,6 +741,14 @@ function showFieldSheet(side,line,card,printed){
 function clearPendingOverlay(){
  document.querySelector('.v2-shell>.v2-pending-overlay')?.remove();
 }
+function clearTriggerOverlay(){
+ document.querySelector('.v2-shell>.v2-trigger-overlay')?.remove();
+}
+function mountTriggerOverlay(overlay){
+ clearTriggerOverlay();
+ (document.querySelector('.v2-shell')||document.body).append(overlay);
+ overlay.querySelector('.trigger-board')?.focus({preventScroll:true});
+}
 function mountPendingOverlay(overlay){
  clearPendingOverlay();
  overlay.classList.add('v2-pending-overlay');
@@ -735,6 +760,7 @@ function render(){
  const preserveScroll=target.childElementCount>0;
  clearTimeout(fieldHold);fieldHold=0;
  clearPendingOverlay();
+ clearTriggerOverlay();
  target.replaceChildren();
  if(!app.state){
   target.append(el('section',{class:'panel v2-empty'},
@@ -772,7 +798,7 @@ function render(){
     '。若沒有反應，按上方「手動推進 AI 一步」；按一下就會使用 V2 合法動作推進一次。'})));
  }
  if(app.error)target.append(el('div',{class:'panel v2-error',role:'alert',text:app.error}));
- const revealed=triggerBoard(v);if(revealed)target.append(revealed);
+ const revealed=triggerBoard(v);
  const arena=el('div',{class:'arena'});
  const next=legal.find(a=>a.type==='next');
  const middle=el('section',{class:'v2-middle-controls','aria-label':'目前回合與階段操作'});
@@ -805,6 +831,7 @@ function render(){
   el('ol',{class:'history'},...app.history.slice(0,70).map(x=>el('li',{text:x}))));
  target.append(log);
  const prompt=pendingDialog(legal,v);if(prompt)target.append(prompt);
+ if(revealed)mountTriggerOverlay(revealed);
  // Replacing the entire match subtree must not jump the desktop viewport.
  if(IS_BATTLE_PAGE&&preserveScroll)window.scrollTo(window.scrollX,oldScroll);
 }
@@ -827,6 +854,7 @@ function undoMove(){
  if(!app.undo||app.busy)return;
  app.state=app.undo.state;app.history=app.undo.history;app.replay=app.undo.replay;
  app.undo=null;app.error='';app.selectedUid=null;
+ app.dismissedTriggerKeys.clear();
  saveBattleProgress();render();
  if(uiActor(app.state)===1)driveAi();
 }
@@ -1104,6 +1132,7 @@ function startGame(){
   app.state=newUniversalMatch(app.packs,{decks:[mine.counts,foe.counts],seed,first,openingMulligan:true});
   assertUniversalMatch(app.packs,app.state);
   app.error='';app.selectedUid=null;app.targetChoices=null;app.undo=null;
+  app.dismissedTriggerKeys.clear();
   app.allActions=false;app.aiFallbacks=0;app.aiCompletedSteps=0;app.lastAiProgress='新對局';
   app.aiDifficulty=app.launch.config.difficulty;
   app.history=['新對局：'+(mine.label||fmtTitle(mine.pack.id))+' vs '+
