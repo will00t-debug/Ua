@@ -200,6 +200,15 @@ function lockedOut(repos,ip,key,now){
  const row=repos.failure(ip+'\n'+key,now);
  return !!row&&row.count>=LOGIN_LIMIT;
 }
+function parseDeckCoverId(value,counts){
+ if(value==null)return null;
+ if(typeof value!=='string'||!value||value.length>128||
+  !Object.prototype.hasOwnProperty.call(counts,value)||
+  !Number.isInteger(counts[value])||counts[value]<1)
+  throw new ApiError(400,'封面必須選擇這副牌組中已有的卡片。');
+ return value;
+}
+
 function publicDeck(deck){
  let playable=false,issues=[];
  try{
@@ -211,7 +220,7 @@ function publicDeck(deck){
  }
  return {
   id:deck.id,name:deck.name,title:deck.title,titleLabel:TITLE_LABELS[deck.title]||deck.title,
-  counts:deck.counts,localId:deck.localId||null,updatedAt:deck.updatedAt,playable,issues
+  counts:deck.counts,localId:deck.localId||null,coverId:deck.coverId||null,updatedAt:deck.updatedAt,playable,issues
  };
 }
 function ownedDeck(repos,userId,deckId){
@@ -305,7 +314,9 @@ export function dispatchAccount(repos,message,now){
    if(!existing&&repos.countDecks(user.id)>=30)throw new ApiError(400,'最多保存 30 副牌組。');
    const record={
     id:existing?.id||('d'+randomBytes(8).toString('hex')),
-    name,title,counts:storedCounts,localId,updatedAt:new Date(now).toISOString()
+    name,title,counts:storedCounts,localId,
+    coverId:input.coverId===undefined?parseDeckCoverId(existing?.coverId,storedCounts):parseDeckCoverId(input.coverId,storedCounts),
+    updatedAt:new Date(now).toISOString()
    };
    if(existing)repos.updateDeck(user.id,record);
    else repos.insertDeck(user.id,record);
@@ -328,7 +339,9 @@ export function dispatchAccount(repos,message,now){
     throw new ApiError(400,'牌組張數必須是 1–4。');
    // Preserve remote identity and local source ID. Only the authenticated
    // owner can change their saved deck; a different user always receives 404.
-   const record={...old,name,title,counts:storedCounts,updatedAt:new Date(now).toISOString()};
+   const record={...old,name,title,counts:storedCounts,
+    coverId:input.coverId===undefined?parseDeckCoverId(old.coverId,storedCounts):parseDeckCoverId(input.coverId,storedCounts),
+    updatedAt:new Date(now).toISOString()};
    repos.updateDeck(user.id,record);
    return {deck:publicDeck(record)};
   }
