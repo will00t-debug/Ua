@@ -400,12 +400,27 @@ function bind(){
   if(!el||el.disabled)return;
   const data=el.dataset;
   if(data.designatedPreset){if(useDesignatedBleachPreset(data.designatedPreset)){render();notify('已載入 '+state.names.bleach+'；可以先查看，再決定要不要編輯。');}return;}
-  if(data.galleryTab){state.galleryTab=data.galleryTab==='shared'?'shared':'mine';state.screen='gallery';state.detail=null;render();return;}
-  if(data.deckOpen){openDeck(data.deckOpen);return;}
-  if(data.deckBack!==undefined){state.screen='gallery';state.inspection=null;state.exportText=null;render();return;}
+  if(data.galleryTab){state.galleryTab=data.galleryTab==='shared'?'shared':'mine';state.screen=state.screen==='library'?'library':'gallery';state.detail=null;render();return;}
+  if(data.deckOpen){if(state.screen==='library')openLibraryDeck(data.deckOpen);else openDeck(data.deckOpen);return;}
+  if(data.deckBack!==undefined){state.screen=state.listOrigin==='library'?'library':'gallery';state.inspection=null;state.exportText=null;state.detail=null;render();return;}
   if(data.arenaScreen==='records'||data.arenaScreen==='rules'){state.ready=true;state.screen=data.arenaScreen;state.inspection=null;state.zoom=false;render();return;}
-  if(data.title){state.cloudOrigin=null;state.title=data.title;state.ready=true;state.screen='gallery';state.galleryTab='mine';state.detail=null;state.tab='pick';state.search='';state.type=state.color=state.energy='all';state.energies=[];state.generate='all';render();return;}
-  if(data.builderReselect!==undefined){state.screen='gallery';state.detail=null;state.search='';state.inspection=null;state.zoom=false;state.exportText=null;render();return;}
+  if(data.title){
+   if(!TITLES.some(title=>title.id===data.title))return;
+   if(state.screen==='chooseTitle'){
+    const existing=Object.values(state.counts[data.title]||{}).some(n=>Number(n)>0);
+    if(existing&&typeof confirm==='function'&&!confirm('這個作品已有編輯中的草稿。建立新牌組會取代草稿，但不會刪除已儲存牌組。確定繼續？'))return;
+    state.counts[data.title]={};state.names[data.title]=defaults[data.title];
+    state.selectedSaved[data.title]=null;state.cloudOrigin=null;state.shareFlag=false;
+    state.listOrigin='library';state.title=data.title;state.ready=true;state.screen='editor';state.tab='pick';
+    state.galleryTab='mine';state.detail={source:'draft',id:'draft'};state.search='';
+    state.type=state.color=state.energy='all';state.energies=[];state.generate='all';
+    persist();render();return;
+   }
+   state.cloudOrigin=null;state.title=data.title;state.ready=true;state.screen='gallery';
+   state.listOrigin='gallery';state.galleryTab='mine';state.detail=null;state.tab='pick';state.search='';
+   state.type=state.color=state.energy='all';state.energies=[];state.generate='all';render();return;
+  }
+  if(data.builderReselect!==undefined){state.screen=state.listOrigin==='library'?'library':'gallery';state.detail=null;state.search='';state.inspection=null;state.zoom=false;state.exportText=null;render();return;}
   if(data.builderTab){state.tab=data.builderTab;render();return;}
   if(data.builderType){state.type=data.builderType;render();return;}
   if(data.builderColor){state.color=data.builderColor;render();return;}
@@ -440,7 +455,7 @@ function bind(){
   if(data.action==='zoomCard'){if(state.inspection)state.zoom=true;render();return;}
   if(data.action==='duplicateDeck'){duplicateCurrentDeck();return;}
   if(data.action==='deleteDeck'){deleteCurrentDeck();return;}
-  if(data.action==='pickTitle'){state.ready=false;state.screen='gallery';state.detail=null;state.search='';render();return;}
+  if(data.action==='pickTitle'){state.ready=false;state.screen='chooseTitle';state.listOrigin='library';state.detail=null;state.search='';render();return;}
   if(data.action==='editDeck'){openEditor();return;}
   if(data.action==='toggleShare'){toggleShare();return;}
   if(data.action==='newDeck'){state.cloudOrigin=null;state.shareFlag=false;state.counts[state.title]={};state.names[state.title]=defaults[state.title];state.selectedSaved[state.title]=null;state.detail={source:'draft',id:'draft'};state.screen='editor';state.tab='pick';persist();render();notify('已建立空白草稿');return;}
@@ -547,6 +562,7 @@ function importAccountDeckHandoff(){
   state.shareFlag=readSharedIds(localStorage).has(payload.remoteId);
   state.screen=viewing?'detail':'editor';
   state.detail=viewing?{source:'cloud',id:payload.remoteId}:null;
+  state.listOrigin='library';
   return true;
  }catch{return false;}
 }
@@ -557,3 +573,4 @@ if(!requestedDeck&&!importAccountDeckHandoff()){
  else if(hash==='rules'){state.ready=true;state.screen='rules';}
 }
 render();
+refreshCloudDecks();
