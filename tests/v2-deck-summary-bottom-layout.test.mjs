@@ -35,7 +35,7 @@ test('desktop and mobile both keep the summary beneath the builder',()=>{
  assert.match(css,/\.arena-editor-grid\{display:flex;flex-direction:column\}/);
  assert.doesNotMatch(css,/\.arena-info\{order:0\}/);
  assert.match(index,/arena-ui\.css\?v=20261028infobottom1/);
- assert.match(index,/v2-deck-editor\.mjs\?v=20261028navymock1/);
+ assert.match(index,/v2-deck-editor\.mjs\?v=20261028cover1/);
  const js=read('dist/v2-deck-editor.mjs');
- assert.match(js,/visual-deck-builder\.mjs\?v=20261028navymock1/);
+ assert.match(js,/visual-deck-builder\.mjs\?v=20261028cover1/);
 });
