@@ -85,7 +85,7 @@ test('mobile board shares one prevalidated legal set per render and freezes sele
  assert.match(script,/legacyPlayer\(v,1,legal\)/);
  assert.match(script,/legacyPlayer\(v,0,legal\)/);
  assert.match(script,/legacyCommands\(legal\)/);
- assert.match(script,/pendingDialog\(legal\)/);
+ assert.match(script,/pendingDialog\(legal,v\)/);
  assert.match(script,/app.aiDifficulty=\$\('ai-level'\).value/);
  assert.match(script,/difficulty:app.aiDifficulty/);
  assert.match(script,/publicPreviewActionLabel\(app.packs,previous,app.state,choice,1\)/);
@@ -107,6 +107,9 @@ test('hand and deck prompts show private card art and leave the legal action unc
  assert.match(script,/choice-gallery/);
  assert.match(script,/mountPendingOverlay\(overlay\)/);
  assert.match(script,/v2-pending-overlay/);
+ assert.match(script,/function triggerBoard\(/);
+ assert.match(script,/這張觸發已經公開，對手也能看到/);
+ assert.match(script,/對手正在確認觸發/);
  assert.match(css,/\.action-list\.choice-gallery/);
  assert.match(css,/button\.choice-card/);
  assert.match(battle,/dialog\.pending/);

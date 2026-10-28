@@ -3,7 +3,7 @@
 // Full replay includes PRIVATE actions and must not be shown to an opponent.
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  assertUniversalMatch} from './engine.mjs';
-import {uiActionLabel} from './preview-actions.mjs';
+import {uiActionLabel,publicLifeTriggerText} from './preview-actions.mjs';
 
 export const UNIVERSAL_PREVIEW_REPLAY_VERSION=1;
 const privateActions=new Set([
@@ -22,6 +22,8 @@ const ownedCard=(s,p,uid)=>{
 };
 export function publicPreviewActionLabel(packs,before,after,action,player){
  const actor=player===0?'你':'電腦';
+ const trigger=publicLifeTriggerText(packs,before,after,action);
+ if(trigger)return actor+'：'+trigger;
  if(player===0)return actor+'：'+uiActionLabel(action,{pack:packs,state:before});
  if(privateActions.has(action.type))return actor+'：完成私密／可選效果（'+action.type+'）';
  // A card in AI hand / deck before the step might be hidden. It can only

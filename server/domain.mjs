@@ -5,7 +5,7 @@ import {createHash,randomBytes,randomInt,scryptSync,timingSafeEqual} from 'node:
 import {editorV2Status,normalizeEditorCounts,registeredPackForEditor} from '../dist/v2-editor-compat.mjs';
 import {assertUniversalMatch,dispatchUniversalAction,legalUniversalActions,
  newUniversalMatch,universalActor,universalPublicView} from '../dist/universal-v2/engine.mjs';
-import {uiActionLabel} from '../dist/universal-v2/preview-actions.mjs';
+import {uiActionLabel,publicLifeTriggerText} from '../dist/universal-v2/preview-actions.mjs';
 import {createRepositories,roomTtl} from './repos.mjs';
 
 const TITLES=['bleach','gurren-lagann','sword-art-online','solo-leveling','mushoku-tensei','rezero'];
@@ -83,8 +83,10 @@ function copyCounts(input){
  if(Object.values(counts).reduce((sum,n)=>sum+n,0)>50)throw new ApiError(400,'一副牌最多 50 張。');
  return counts;
 }
-function publicActionText(username,action,hadPending){
+function publicActionText(username,action,hadPending,packs,before,after){
  if(action.type==='openingMulligan')return username+'：'+(action.mode==='redraw'?'整手重抽 7 張':'保留起手 7 張');
+ const trigger=packs&&before?publicLifeTriggerText(packs,before,after,action):'';
+ if(trigger)return username+'：'+trigger;
  if(hadPending)return username+'：完成一項選擇';
  const table={
   next:'前進到下一個階段',extraDraw:'支付 AP 額外抽牌',play:'從手牌登場',
@@ -437,7 +439,7 @@ export function dispatchRoom(repos,message,now){
    room.match=next;
    room.revision+=1;room.updatedAt=now;
    const actorName=room.seats[seat].username;
-   room.log.push({text:publicActionText(actorName,action,hadPending)});
+   room.log.push({text:publicActionText(actorName,action,hadPending,live.packs,live.match,next)});
    if(room.log.length>80)room.log.splice(0,room.log.length-80);
    if(next.status==='finished'){room.status='finished';room.winner=next.winner;}
    commitRoom(repos,room);

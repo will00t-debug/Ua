@@ -598,3 +598,54 @@ export function pendingChoiceCaption(label,names){
  // so top/bottom or hand/outside modes stay distinguishable.
  return text&&text!==clean?text:clean;
 }
+function publicZoneCard(state,uid){
+ if(!uid||!state?.players)return null;
+ for(const pl of state.players){
+  for(const pile of [pl.front,pl.energy,pl.outside,pl.lifeRevealed]){
+   const physical=(pile||[]).find(c=>c?.uid===uid);
+   if(physical)return physical;
+  }
+ }
+ return null;
+}
+function publicZoneName(pack,state,uid){
+ const physical=publicZoneCard(state,uid);
+ if(!physical)return '';
+ const owner=Number(String(uid).split('-')[0]);
+ const source=Array.isArray(pack)?pack[owner]:pack;
+ return source?.cards?.[physical.cardId]?.name||physical.cardId;
+}
+// Spectator-safe sentence for a life or hand trigger decision.
+// The trigger card is named only from revealed life or outside.
+// A COLOR play is named only after that card is on a public zone.
+export function publicLifeTriggerText(pack,before,after,action){
+ const q=before?.pending;
+ if(!q||q.kind!=='life-trigger'||action?.type!=='chooseTrigger')return '';
+ if(q.player!==0&&q.player!==1)return '';
+ const pl=before.players?.[q.player];
+ const physical=[...(pl?.lifeRevealed||[]),...(pl?.outside||[])].find(c=>c?.uid===q.uid);
+ if(!physical?.cardId)return '';
+ const source=Array.isArray(pack)?pack[q.player]:pack;
+ const printed=source?.cards?.[physical.cardId];
+ const name=printed?.name||physical.cardId;
+ const mode=action.mode;
+ let detail='使用觸發';
+ if(mode==='skip')detail='不使用此觸發';
+ else if(mode==='get')detail='加入手牌';
+ else if(mode==='draw')detail='抽 1 張';
+ else if(mode==='final')detail='FINAL 恢復生命';
+ else if(mode==='active')detail='使 '+(publicZoneName(pack,before,action.uid)||'角色')+' ACTIVE';
+ else if(mode==='special')detail='使 '+(publicZoneName(pack,before,action.uid)||'角色')+' 退場';
+ else if(mode==='colorRetire')detail='COLOR：使 '+(publicZoneName(pack,before,action.uid)||'角色')+' 退場';
+ else if(mode==='colorRestSkip')detail='COLOR：使 '+(publicZoneName(pack,before,action.uid)||'角色')+' REST';
+ else if(mode==='colorBounce')detail='COLOR：將 '+(publicZoneName(pack,before,action.uid)||'角色')+' 返回手牌';
+ else if(mode==='colorOutside')detail='COLOR：從場外登場 '+(publicZoneName(pack,before,action.uid)||'角色');
+ else if(mode==='color'||mode==='colorField'){
+  const played=publicZoneName(pack,after,action.uid)||publicZoneName(pack,before,action.uid);
+  detail=played?'COLOR 登場 '+played:(mode==='colorField'?'COLOR 登場場域':'COLOR 登場');
+ }else if(mode==='raid'){
+  const base=publicZoneName(pack,before,action.baseUid);
+  detail=base?'RAID 至 '+base:'使用 RAID 觸發';
+ }
+ return '觸發 '+name+' · '+detail;
+}

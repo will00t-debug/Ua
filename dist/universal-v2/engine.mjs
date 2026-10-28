@@ -17133,12 +17133,38 @@ function layerView(cardOnBase,owner,viewer){
   under:(cardOnBase.under||[]).map(x=>layerView(x,owner,viewer))
  };
 }
+// Face-up trigger checks are public to both players. Hidden life, hand and
+// deck order are never copied here. A card counts only while it is in the
+// revealed-life pile, or it is the outside card currently being triggered.
+function openTriggerCards(pack,s){
+ const cards=[],seen=new Set();
+ const push=(owner,physical,checking)=>{
+  if(!physical||seen.has(physical.uid))return;
+  seen.add(physical.uid);
+  const printed=card(pack,physical);
+  cards.push({owner,uid:physical.uid,cardId:physical.cardId,name:printed.name,
+   color:printed.color||'',trigger:printed.trigger||null,checking:checking===true});
+ };
+ s.players.forEach((pl,owner)=>{
+  for(const physical of pl.lifeRevealed||[])
+   push(owner,physical,s.pending?.kind==='life-trigger'&&s.pending.player===owner&&
+    s.pending.uid===physical.uid);
+ });
+ if(s.pending?.kind==='life-trigger'){
+  const owner=s.pending.player,pl=s.players[owner];
+  const physical=(pl.lifeRevealed||[]).find(c=>c.uid===s.pending.uid)||
+   (pl.outside||[]).find(c=>c.uid===s.pending.uid);
+  push(owner,physical,true);
+ }
+ return cards;
+}
 export function universalPublicView(pack,s,viewer=0){
  assertUniversalMatch(pack,s);
  if(!playerIndex(viewer))throw Error('Invalid viewer');
  return {title:s.title,playerTitles:[...s.packIds],status:s.status,winner:s.winner,phase:s.phase,turn:s.turn,
   active:s.active,actor:actor(s),
   pending:s.pending?{kind:s.pending.kind,player:s.pending.player}:null,
+  openTriggers:openTriggerCards(pack,s),
   publicReveals:s.publicReveals.map(x=>({...x})),
   players:s.players.map((pl,p)=>({
    title:s.packIds[p],lifeCount:pl.life.length,deckCount:pl.deck.length,handCount:pl.hand.length,

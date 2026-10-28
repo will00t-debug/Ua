@@ -234,14 +234,63 @@ function choices(legal){
   ...app.history.slice(0,28).map(x=>el('li',{text:x}))));
  side.append(log);return side;
 }
-function choicePicture(cardId,name){
- const picture=el('img',{src:imgUrl(0,cardId),alt:name||cardId,
+function choicePicture(cardId,name,side=0){
+ const picture=el('img',{src:imgUrl(side,cardId),alt:name||cardId,
   loading:'eager',decoding:'async'});
  picture.onerror=()=>{
-  if(app.packs?.[0]?.id==='gurren-lagann'&&ttgArtErrorFallback(picture))return;
+  if(app.packs?.[side]?.id==='gurren-lagann'&&ttgArtErrorFallback(picture))return;
   if(!picture.src.endsWith('/assets/mark.svg'))picture.src='assets/mark.svg';
  };
  return picture;
+}
+const TRIGGER_WORD={draw:'DRAW',get:'GET',active:'ACTIVE',special:'SPECIAL',color:'COLOR',raid:'RAID',final:'FINAL'};
+function triggerTile(card){
+ const who=card.owner===0?'你':'電腦';
+ const word=TRIGGER_WORD[card.trigger]||(card.trigger?String(card.trigger):'無觸發');
+ const tile=el('figure',{class:'trigger-tile'+(card.checking?' checking':'')});
+ const art=el('span',{class:'choice-card-art'},choicePicture(card.cardId,card.name,card.owner));
+ tile.append(art,el('figcaption',{},el('b',{text:card.name||card.cardId}),
+  el('span',{text:who+' · '+word})));
+ return tile;
+}
+function triggerCards(view){
+ const open=Array.isArray(view?.openTriggers)?view.openTriggers:[];
+ const reveals=(view?.publicReveals||[]).filter(item=>item&&item.cardId&&item.kind==null);
+ const seen=new Set();
+ const cards=[];
+ for(const card of open){
+  if(!card?.uid||seen.has(card.uid))continue;
+  seen.add(card.uid);
+  cards.push(card);
+ }
+ for(const reveal of reveals){
+  if(!reveal.uid||seen.has(reveal.uid))continue;
+  seen.add(reveal.uid);
+  const printed=cardDef(reveal.owner,reveal.cardId);
+  cards.push({owner:reveal.owner,uid:reveal.uid,cardId:reveal.cardId,
+   name:printed?.name||reveal.cardId,trigger:reveal.trigger||null,checking:false});
+ }
+ const checking=cards.filter(card=>card.checking);
+ const rest=cards.filter(card=>!card.checking).slice(-6);
+ return [...checking,...rest];
+}
+function triggerBoard(view){
+ const cards=triggerCards(view);
+ if(!cards.length)return null;
+ const foe=uiActor(app.state)!==0&&view.pending?.kind==='life-trigger';
+ const board=el('section',{class:'trigger-board','aria-label':'公開觸發'});
+ board.append(el('h2',{text:foe?'對手正在確認觸發':'公開觸發'}),
+  el('p',{class:'note',text:foe?'這張牌已經翻開，雙方都看得到。':'翻開的生命與發動過的觸發會留在這裡，對手也看得到。'}));
+ const row=el('div',{class:'trigger-row'});
+ for(const card of cards)row.append(triggerTile(card));
+ board.append(row);
+ const lines=app.history.filter(line=>typeof line==='string'&&line.includes('：觸發 ')).slice(0,4);
+ if(lines.length){
+  const list=el('ul',{class:'trigger-log'});
+  for(const text of lines)list.append(el('li',{text}));
+  board.append(list);
+ }
+ return board;
 }
 function pendingChoiceControl(action,option,gallery){
  const label=uiActionLabel(action,{pack:app.packs,state:app.state});
@@ -263,7 +312,7 @@ function pendingChoiceControl(action,option,gallery){
  if(caption)button.append(el('span',{class:'choice-card-caption',text:caption}));
  return button;
 }
-function pendingDialog(legal){
+function pendingDialog(legal,view){
  const s=app.state;
  if(!s?.pending||uiActor(s)!==0||app.busy)return null;
  const privateChoices=universalPrivateChoices(app.packs,s,0);
@@ -277,9 +326,18 @@ function pendingDialog(legal){
  const overlay=el('div',{class:'overlay'});
  const dialog=el('div',{class:'dialog panel pending'+(gallery?' pending-cards':''),
   role:'dialog','aria-modal':'true','aria-label':title});
+ const triggerChoice=s.pending.kind==='life-trigger';
+ const shown=triggerChoice?triggerCards(view).filter(card=>card.checking):[];
  dialog.append(el('div',{class:'headline'},el('h2',{text:title}),
   el('span',{class:'tag',text:'玩家操作'})),
-  el('p',{class:'note',text:'請完成這個選擇後，對戰才會繼續。選牌只會顯示給目前的控制者。'}));
+  el('p',{class:'note',text:triggerChoice?
+   '這張觸發已經公開，對手也能看到。請選擇是否使用。':
+   '請完成這個選擇後，對戰才會繼續。選牌只會顯示給目前的控制者。'}));
+ if(shown.length){
+  const row=el('div',{class:'trigger-row'});
+  for(const card of shown)row.append(triggerTile(card));
+  dialog.append(row);
+ }
  const list=el('div',{class:'action-list'+(gallery?' choice-gallery':'')});
  for(const row of rows)list.append(pendingChoiceControl(row.action,row.option,gallery));
  dialog.append(list);
@@ -543,6 +601,7 @@ function render(){
     '。若沒有反應，按上方「手動推進 AI 一步」；按一下就會使用 V2 合法動作推進一次。'})));
  }
  if(app.error)target.append(el('div',{class:'panel v2-error',role:'alert',text:app.error}));
+ const revealed=triggerBoard(v);if(revealed)target.append(revealed);
  const arena=el('div',{class:'arena'});
  const phasesEl=el('div',{class:'phaseBar','aria-label':'回合階段'});
  for(const [n,name] of [['start','開始'],['move','移動'],['main','主要'],['attack','攻擊']])
@@ -576,7 +635,7 @@ function render(){
  const log=el('details',{class:'v2-log panel'},el('summary',{text:'對局紀錄（'+app.history.length+' 步）'}),
   el('ol',{class:'history'},...app.history.slice(0,70).map(x=>el('li',{text:x}))));
  target.append(log);
- const prompt=pendingDialog(legal);if(prompt)target.append(prompt);
+ const prompt=pendingDialog(legal,v);if(prompt)target.append(prompt);
 }
 function applyAction(a){
  if(!app.state||app.busy||uiActor(app.state)!==0)return;

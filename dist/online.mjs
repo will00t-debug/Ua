@@ -322,11 +322,19 @@ function matchView(){
  if(view.phase==='setup'){
   actions.append(el('p',{class:'muted',text:'開局可選擇保留 7 張，或整手重抽 7 張一次。先手先選，後手再選，完成後才設定生命卡。'}));
  }
+ const triggers=el('div',{class:'trigger-public'});
+ for(const card of view.openTriggers||[]){
+  const word=card.trigger?String(card.trigger).toUpperCase():'無觸發';
+  const who=card.owner===seat?'你':'對手';
+  triggers.append(el('div',{class:'slot'+(card.color?' '+card.color:''),},
+   el('strong',{text:card.name||card.cardId}),
+   el('small',{text:who+' · '+word+(card.checking?' · 確認中':'')})));
+ }
  if(room.status==='finished')actions.append(el('p',{text:(room.winner?.username||'對局')+' 獲勝。'}));
  else if(room.yourTurn){
   if(!room.choices.length)actions.append(el('p',{class:'muted',text:'正在等待可以執行的操作。'}));
   for(const choice of room.choices)actions.append(el('button',{type:'button',text:choice.label,disabled:app.busy,onClick:()=>sendAction(choice.index)}));
- }else actions.append(el('p',{class:'muted',text:'等待對手操作。'}));
+ }else actions.append(el('p',{class:'muted',text:view.pending?.kind==='life-trigger'?'對手正在確認已公開的觸發。':'等待對手操作。'}));
  const log=el('div',{class:'log'});
  for(const line of room.log||[])log.append(el('div',{text:line.text}));
  return shell(
@@ -334,10 +342,12 @@ function matchView(){
   side((room.opponent?.username||'對手')+'（對手）',opp,room.opponent?.titleLabel||'',{setup:view.phase==='setup'}),
   side((room.you?.username||'你')+'（你）',you,room.you?.titleLabel||'',{openHand:true,setup:view.phase==='setup'}),
   el('div',{class:'grid split'},
-   el('section',{class:'panel'},el('h2',{text:room.yourTurn?'輪到你':'對局操作'}),actions,
+   el('section',{class:'panel'},el('h2',{text:room.yourTurn?'輪到你':'對局操作'}),
+    (view.openTriggers||[]).length?el('div',{},el('h3',{text:'公開觸發'}),el('p',{class:'muted',text:'翻開的觸發雙方都看得到。'}),triggers):null,
+    actions,
     el('div',{class:'row'},el('button',{type:'button',text:'認輸',disabled:app.busy||room.status!=='playing',onClick:resign}),
      room.status==='finished'?el('button',{type:'button',text:'返回大廳',onClick:leaveFinished}):null)),
-   el('section',{class:'panel'},el('h2',{text:'公開紀錄'}),el('p',{class:'muted',text:'這裡不寫出手牌或牌庫裡的卡名。'}),log)));
+   el('section',{class:'panel'},el('h2',{text:'公開紀錄'}),el('p',{class:'muted',text:'這裡不寫出手牌或牌庫裡的卡名。觸發會公開給對手。'}),log)));
 }
 function render(){
  const root=document.querySelector('#app');
