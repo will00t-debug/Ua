@@ -2,8 +2,9 @@
 // This entrypoint is intentionally NOT linked from the production index.html.
 // All game transitions pass through legalUniversalActions/dispatchUniversalAction.
 import {createAllV2PreviewRealDecks} from './universal-v2/preview-real-decks.mjs';
-import {officialV2Pack,rezeroSet1PracticeDeck,v2DeckReport} from './universal-v2/official-entry.mjs';
+import {officialV2Pack,rezeroSet1PracticeDeck,steinsGatePracticeDeck,v2DeckReport} from './universal-v2/official-entry.mjs';
 import {REZERO_ALL_CARDS} from './rezero-builder.mjs';
+import {STEINS_GATE_CARDS} from './steins-gate-cards.mjs';
 import {summarizeDesignatedDecks,designatedPlayableCounts} from './universal-v2/bleach-designated-decks.mjs';
 import {validateUniversalDeck} from './universal-v2/pack.mjs';
 import {V2_ABILITY_TEMPLATE_IDS} from './universal-v2/ability-templates.mjs';
@@ -32,16 +33,20 @@ import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalRepla
  publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
 
 const rezeroPractice=rezeroSet1PracticeDeck();
+const stgPractice=steinsGatePracticeDeck();
 const decks={...createAllV2PreviewRealDecks(),
  'rezero-set1':{pack:rezeroPractice.pack,counts:rezeroPractice.counts,
-  label:'Re:Zero 第一彈｜黃色練習組'}};
+  label:'Re:Zero 第一彈｜黃色練習組'},
+ 'steins-gate-blue':{pack:stgPractice.pack,counts:stgPractice.counts,
+  label:'命運石之門｜藍色練習組'}};
 const designatedReady=new Map();
 const allArt=Object.freeze({
  bleach:new Map(CARDS.map(c=>[c.identity,c.image||null])),
  'solo-leveling':new Map(SOLO_LEVELING_CARDS.map(c=>[c.id,c.image||null])),
  'sword-art-online':new Map(SAO_CARDS.map(c=>[c.id,c.image||null])),
  'mushoku-tensei':new Map(MST_V2_OFFICIAL_CATALOGUE.map(c=>[c.id,c.image||null])),
- rezero:new Map(REZERO_ALL_CARDS.map(c=>[c.id,c.image||null]))
+ rezero:new Map(REZERO_ALL_CARDS.map(c=>[c.id,c.image||null])),
+ 'steins-gate':new Map(STEINS_GATE_CARDS.map(c=>[c.id,c.image||null]))
 });
 const v2Entries=listRegisteredV2Titles();
 function printedCatalogueMap(cards){
@@ -993,6 +998,7 @@ function importClassicLobbyDecks(){
 if(!IS_BATTLE_PAGE)importClassicLobbyDecks();
 function selectBuiltOpponent(title){
  if(decks['rezero-set1']&&title==='rezero')$('ai-title').value='rezero-set1';
+ if(decks['steins-gate-blue']&&title==='steins-gate')$('ai-title').value='steins-gate-blue';
  if(decks['gurren-lagann-red']&&title==='gurren-lagann')$('ai-title').value='gurren-lagann-red';
 }
 function importBuiltTitleDeck(){
@@ -1026,7 +1032,7 @@ function importV2EditorDeck(){
   sessionStorage.removeItem(V2_EDITOR_TRANSFER_KEY);}catch{return;}
  if(!raw||typeof raw!=='object')return;
  const reject=message=>{$('restart-notice').textContent='組卡頁的牌組無法進入 V2：'+message;};
- const pack=raw.title==='rezero'?officialV2Pack('rezero'):(typeof raw.title==='string'?registeredV2TitlePack(raw.title):null);
+ const pack=raw.title==='rezero'||raw.title==='steins-gate'?officialV2Pack(raw.title):(typeof raw.title==='string'?registeredV2TitlePack(raw.title):null);
  if(!pack){reject('該作品尚未開放正式 V2 卡包');return;}
  const counts=raw.counts;
  if(!counts||typeof counts!=='object'||Array.isArray(counts)){reject('牌組格式錯誤');return;}

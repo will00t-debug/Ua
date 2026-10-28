@@ -81,11 +81,20 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
  // Successful EVENT usage is already recorded as an atomic physical HAND ->
  // OUTSIDE rule move. Reuse this ledger; never infer usage from event count,
  // deck inspections, cancelled plays, opponent actions or transient zones.
+ // 「自分のターン中」 with no other board fact. The turn check above
+ // already rejected the opponent's turn when turn is own.
+ if(condition.kind==='controllerTurn')return true;
  if(condition.kind==='ownEventUsedThisTurn')
   return (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&
    e.owner===owner&&e.controller===owner&&e.from==='hand'&&
    e.to==='outside'&&e.reason==='rule'&&
    (d=>d?.type==='event'||d?.alsoEvent===true)(printed({uid:e.uid,cardId:e.cardId})));
+ // 「このターン中に移動している」. A hand-to-field play is an entry, not a move.
+ // Front and energy swaps from a rule move or an effect both count.
+ if(condition.kind==='selfMovedThisTurn')
+  return (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.owner===owner&&
+   e.uid===sourceUid&&((e.from==='front'&&e.to==='energy')||
+    (e.from==='energy'&&e.to==='front')));
  if(condition.kind==='ownEffectHandOutsideOrRecovery'){
   // Same-turn factual records, never inferred from deck/hand counts or
   // the printed contents of any card. Own turn check is enforced above.
@@ -556,6 +565,31 @@ export function countOwnOutsideDistinctPrintedNames(s,owner,printed,{color,types
   if(d.color===color&&types.includes(d.type))names.add(d.name);
  }
  return names.size;
+}
+
+// Printed trigger icons among own OUTSIDE events of one color whose printed
+// energy is at most the given number. Two copies of the same icon are one
+// kind. A card with no trigger icon adds nothing. Raid under, hand, deck,
+// and the opponent are not this zone. excludeUid drops the resolving card
+// when the print says 他の.
+export function countOwnOutsideEventTriggerKinds(s,owner,printed,{color,maxEnergy,excludeUid=null}={}){
+ if(![0,1].includes(owner)||typeof printed!=='function'||
+  !['green','yellow','blue','purple','red'].includes(color)||
+  !Number.isInteger(maxEnergy)||maxEnergy<0||maxEnergy>30||
+  (excludeUid!==null&&typeof excludeUid!=='string')||
+  !Array.isArray(s?.players?.[owner]?.outside))
+  throw Error('Invalid outside event trigger-kind count');
+ const kinds=new Set();
+ for(const physical of s.players[owner].outside){
+  if(!physical||typeof physical.uid!=='string'||
+   !physical.uid.startsWith(owner+'-'))throw Error('Invalid outside physical owner');
+  if(excludeUid!==null&&physical.uid===excludeUid)continue;
+  const d=printed(physical);
+  if(!d||!cardCountsAsEvent(d)||d.color!==color||
+   !Number.isInteger(d.energy)||d.energy>maxEnergy)continue;
+  if(typeof d.trigger==='string'&&d.trigger)kinds.add(d.trigger);
+ }
+ return kinds.size;
 }
 
 

@@ -12,6 +12,7 @@ import {SOLO_MATCH_SUPPORTED,SOLO_TRAINING_PRESET,SOLO_SHADOW_TRAINING_PRESET,so
 import {MST_CARDS,emptyMstDeck,normalizeMstCounts,mstCount,mstDeckIssues,readMstSaved} from './mst-builder.mjs';
 import {REZERO_VOL2_CARDS,REZERO_VOL2_BY_ID,REZERO_VOL2_SET} from './rezero-vol2.mjs';
 import {emptyRezDeck,normalizeRezCounts,rezCount,rezDeckIssues,readRezSaved,REZERO_ALL_CARDS,REZERO_ALL_BY_ID} from './rezero-builder.mjs';
+import {emptyStgDeck,normalizeStgCounts,stgCount,stgDeckIssues,readStgSaved,STEINS_GATE_CARDS,STEINS_GATE_BY_ID} from './steins-gate-builder.mjs';
 import {TTG_PENDING_CARDS} from './ttg-pending.mjs';
 import {TTG_CARDS,TTG_BY_ID,emptyTtgDeck,normalizeTtgCounts,ttgCount,ttgDeckIssues,readTtgSaved} from './ttg-builder.mjs';
 import {TTG_ART_CREDIT,TTG_RUGIA_CARD_SEARCH,ttgArtErrorFallback} from './ttg-art.mjs';
@@ -38,6 +39,7 @@ const SOLO_GAME_KEY='ua-slg-training-v1';
 const SOLO_DRAFT_KEY='ua-slg-draft-v1',SOLO_SAVED_KEY='ua-slg-saved-v1';
 const MST_DRAFT_KEY='ua-mst-draft-v1',MST_SAVED_KEY='ua-mst-saved-v1';
 const REZ_DRAFT_KEY='ua-rez-draft-v1',REZ_SAVED_KEY='ua-rez-saved-v1';
+const STG_DRAFT_KEY='ua-stg-draft-v1',STG_SAVED_KEY='ua-stg-saved-v1';
 let saoDeck=safeRead(SAO_DRAFT_KEY)||{},saoSaved=Array.isArray(safeRead(SAO_SAVED_KEY))?safeRead(SAO_SAVED_KEY):[],saoName='刀劍神域自訂牌組';
 let ttgDeck=loadTtgDraft(),ttgSaved=readTtgSaved(safeRead(TTG_SAVED_KEY)),ttgName='天元突破自訂牌組';
 function loadTtgDraft(){try{return normalizeTtgCounts(safeRead(TTG_DRAFT_KEY));}catch{return emptyTtgDeck();}}
@@ -56,6 +58,9 @@ function persistMst(){save(MST_DRAFT_KEY,mstDeck);}
 let rezDeck=loadRezDraft(),rezSaved=readRezSaved(safeRead(REZ_SAVED_KEY)),rezName='Re:Zero Vol.2 自訂牌組';
 function loadRezDraft(){try{return normalizeRezCounts(safeRead(REZ_DRAFT_KEY));}catch{return emptyRezDeck();}}
 function persistRez(){save(REZ_DRAFT_KEY,rezDeck);}
+let stgDeck=loadStgDraft(),stgSaved=readStgSaved(safeRead(STG_SAVED_KEY)),stgName='命運石之門自訂牌組';
+function loadStgDraft(){try{return normalizeStgCounts(safeRead(STG_DRAFT_KEY));}catch{return emptyStgDeck();}}
+function persistStg(){save(STG_DRAFT_KEY,stgDeck);}
 const deckMeta=safeRead(DECK_META_KEY)||{};
 let deckName=typeof deckMeta.name==='string'?deckMeta.name.slice(0,40):(PRESETS.find(p=>sameCounts(p.counts,deck))?.name||'自訂 BLEACH 牌組');
 let selectedDeckId=savedDecks.some(d=>d.id===deckMeta.savedId)?deckMeta.savedId:null;
@@ -144,7 +149,8 @@ function visualDeckLibrary(){
   'sword-art-online':{counts:saoDeck,name:saoName,nameId:'saoDeckName',savedId:'saoSavedSelect',savedOptions:saoSaved.map((d,i)=>({value:String(i),label:d.name})),saveAction:'saoSave',newAction:'saoNew',issues:saoDeckIssues(saoDeck)},
   'solo-leveling':{counts:soloDeck,name:soloName,nameId:'soloDeckName',savedId:'soloSavedSelect',savedOptions:soloSaved.map((d,i)=>({value:String(i),label:d.name})),saveAction:'soloSave',newAction:'soloNew',issues:soloDeckIssues(soloDeck)},
   'mushoku-tensei':{counts:mstDeck,name:mstName,nameId:'mstDeckName',savedId:'mstSavedSelect',savedOptions:mstSaved.map((d,i)=>({value:String(i),label:d.name})),saveAction:'mstSave',newAction:'mstNew',issues:mstDeckIssues(mstDeck)},
-   rezero:{counts:rezDeck,name:rezName,nameId:'rezDeckName',savedId:'rezSavedSelect',savedOptions:rezSaved.map((d,i)=>({value:String(i),label:d.name})),saveAction:'rezSave',newAction:'rezNew',issues:rezDeckIssues(rezDeck)}
+   rezero:{counts:rezDeck,name:rezName,nameId:'rezDeckName',savedId:'rezSavedSelect',savedOptions:rezSaved.map((d,i)=>({value:String(i),label:d.name})),saveAction:'rezSave',newAction:'rezNew',issues:rezDeckIssues(rezDeck)},
+   'steins-gate':{counts:stgDeck,name:stgName,nameId:'stgDeckName',savedId:'stgSavedSelect',savedOptions:stgSaved.map((d,i)=>({value:String(i),label:d.name})),saveAction:'stgSave',newAction:'stgNew',issues:stgDeckIssues(stgDeck)}
  };
  const data=optionsByTitle[ui.title]||optionsByTitle.bleach;
  const report=v2DeckReport(ui.title,data.counts);
@@ -170,6 +176,7 @@ function library(){
  if(ui.title==='solo-leveling')return soloLibrary();
  if(ui.title==='mushoku-tensei')return mstLibrary();
  if(ui.title==='rezero')return rezLibrary();
+ if(ui.title==='steins-gate')return stgLibrary();
  const edit=ui.view==='builder',cards=filteredCards(),errs=validateDeck(deck),n=total(),saved=savedDecks.find(d=>d.id===selectedDeckId),dirty=!saved||!sameCounts(saved.counts,deck)||saved.name!==deckName.trim();
  return `<div class="titlePicker" role="group" aria-label="選擇作品">${TITLES.map(t=>`<button type="button" data-title="${t.id}" aria-pressed="${ui.title===t.id}" class="btn ${ui.title===t.id?'primary':'outline'}">${esc(t.label)} · ${t.cards.length} 種</button>`).join('')}</div><header class="pageHeading"><div><h1>${edit?'編輯牌組':'BLEACH 卡片圖鑑'}</h1><p>第一～三彈／卡冊／書卡／高級預組 · ${CARDS.length} 種卡片 · 點擊查看效果</p></div>${edit?`<button class="btn primary" data-action="useDeck" ${errs.length?'disabled':''}>使用此牌組 ↗</button>`:'<button class="btn" data-view="builder">前往牌組構築</button>'}</header>${edit?`<div class="deckEditor"><label>牌組名稱<input id="deckName" maxlength="40" value="${esc(deckName)}" placeholder="例如：一護 Raid 練習" aria-label="牌組名稱"></label><label>載入牌組<select id="deckSourceSelect" aria-label="載入牌組">${deckOptions()}</select></label><div class="deckEditorActions"><button class="btn primary" data-action="saveDeck" ${errs.length?'disabled':''}>${saved?'儲存修改':'儲存牌組'}</button><button class="btn" data-action="copySavedDeck" ${errs.length?'disabled':''}>另存新牌組</button><button class="btn outline" data-action="newDeck">新建空白牌組</button></div><span class="deckSaveStatus">${dirty?'編輯中的草稿':'✓ 已儲存'} · 已儲存 ${savedDecks.length} 副</span></div>`:''}<div class="toolbar"><input id="search" type="search" placeholder="搜尋角色、卡號或效果標籤…" value="${esc(ui.search)}" aria-label="搜尋卡片"><div class="filter">${[['all','全部'],['character','角色'],['event','事件'],['field','場域']].map(([v,n])=>`<button data-filter="${v}" class="${ui.filter===v?'active':''}" aria-pressed="${ui.filter===v}">${n}</button>`).join('')}</div></div><div class="poolFilters"><label>彈數／來源<select id="setFilter"><option value="all">全部卡池</option>${SETS.map(x=>`<option value="${x.id}" ${ui.set===x.id?'selected':''}>${x.name} · ${CARDS.filter(c=>c.sets.includes(x.id)).length} 種</option>`).join('')}</select></label><label>顏色<select id="colorFilter"><option value="all">全部顏色</option>${Object.entries(COLOR_NAMES).filter(([id])=>CARDS.some(c=>c.color===id)).map(([id,name])=>`<option value="${id}" ${ui.color===id?'selected':''}>${name}</option>`).join('')}</select></label><label>自動判定<select id="supportFilter"><option value="all">全部卡片</option><option value="auto" ${ui.support==='auto'?'selected':''}>可自動結算</option><option value="pending" ${ui.support==='pending'?'selected':''}>待補判定</option></select></label><span>顯示 ${cards.length} / ${CARDS.length} 種</span></div><div class="${edit?'libraryLayout':''}"><div class="cardGrid">${cards.length?cards.map(c=>`<article class="catalogCard"><button class="catalogArt" data-inspect="${c.id}" aria-label="查看${c.name} ${c.id}"><img src="${catalogVariant(c).onlineImage||catalogVariant(c).image}" onerror="this.onerror=null;this.src='${catalogVariant(c).image}'" alt="${c.name} ${catalogVariant(c).number}" loading="lazy"></button><div class="catalogInfo"><strong>${c.name}</strong><div class="sub">${TYPE_NAMES[c.type]} · ${c.identity}<br><span class="colorLabel ${c.color}">${COLOR_NAMES[c.color]}</span> · ${c.rarity||'—'} · ${c.tag}</div><span class="autoStatus ${c.auto?'ready':'pending'}">${c.auto?'可自動結算':'待補自動判定'}</span><div class="catalogMeta"><span class="e colorLabel ${c.color}">◆ ${c.energy} 能源</span><span>${c.bp?`${c.bp} BP`:`${c.ap} AP`}</span></div>${edit?`<p class="catalogEffect">${esc(c.effect)}</p><div class="countPicker"><button data-count="${c.id}" data-delta="-1" ${!deck[c.id]?'disabled':''} aria-label="移除一張${c.name} ${c.id}">−</button><b>${deck[c.id]||0}</b><button data-count="${c.id}" data-delta="1" ${(deck[c.id]||0)>=4?'disabled':''} aria-label="增加一張${c.name} ${c.id}">+</button></div>`:`<button class="subtleButton" data-inspect="${c.id}">${c.trigger?TRIGGER_NAMES[c.trigger]+' Trigger':'查看卡片效果'} →</button>`}</div></article>`).join(''):'<p class="emptyResult">沒有符合條件的卡片。</p>'}</div>${edit?`<aside class="panel deckSummary"><h3>牌組概覽 <span class="pill" style="float:right">${deckColors(deck).map(x=>COLOR_NAMES[x]).join('／')||'未選顏色'}</span></h3><div><div class="deckTotal">${n} <small>/ 50</small></div><div class="progressTrack"><i style="width:${Math.min(n/50*100,100)}%"></i></div></div><div class="curve" aria-label="能源曲線">${Array.from({length:6},(_,e)=>{const qty=CARDS.filter(c=>c.energy===e).reduce((a,c)=>a+(deck[c.id]||0),0);return `<div><span>${qty}</span><i style="height:${Math.max(qty*2,2)}px"></i>${e}</div>`;}).join('')}</div><div class="validation ${errs.length?'invalid':'valid'}">${errs.length?errs.map(esc).join('<br>'):'✓ 牌組張數合法，可以儲存。'}</div>${supportNote(deck)}<div class="summaryList">${Object.entries(TYPE_NAMES).map(([t,name])=>`<div><span>${name}</span><b>${CARDS.filter(c=>c.type===t).reduce((a,c)=>a+(deck[c.id]||0),0)}</b></div>`).join('')}</div><details class="deckContents" ${ui.contentsOpen?'open':''}><summary>牌組內容 · ${Object.values(deck).filter(Boolean).length} 種</summary><div>${CARDS.filter(c=>deck[c.id]).map(c=>`<div class="deckContentRow"><button class="deckContentCard" data-inspect="${c.id}"><img src="${c.onlineImage||c.image}" onerror="this.onerror=null;this.src='${c.image}'" alt="${c.name}"><span>${c.name}<small>${c.id} · ◆ ${c.energy}</small></span></button><b>×${deck[c.id]}</b><button class="btn small" data-count="${c.id}" data-delta="-1" aria-label="移除一張${c.name} ${c.id}">−</button></div>`).join('')||'<p class="note">尚未加入卡片。</p>'}</div></details><div><button class="btn" data-action="deckCode">匯入／複製牌組</button><button class="btn outline" data-action="resetDeck">還原預設牌組</button></div><p class="note">同卡號最多 4 張；牌組必須正好 50 張。草稿會自動保存；按「儲存牌組」可保留多副構築。已儲存牌組留在此瀏覽器，可複製清單備份。第一～三彈、卡冊、書卡與高級預組可構築。同 BLC 卡號的再錄與異圖合計最多 4 張。</p></aside>`:''}</div>`;
 }
@@ -343,6 +350,20 @@ function rezLibrary(){
  <div class="deckEditor"><label>牌組名稱<input id="rezDeckName" maxlength="40" value="${esc(rezName)}"></label><label>已儲存牌組<select id="rezSavedSelect"><option value="">選擇草稿</option>${rezSaved.map((d,i)=>`<option value="${i}">${esc(d.name)}</option>`).join('')}</select></label><div class="deckEditorActions"><button class="btn primary" data-action="rezSave">儲存 Re:Zero 草稿</button><button class="btn outline" data-action="rezNew">新建空白草稿</button></div><span class="deckSaveStatus">已儲存 ${rezSaved.length} 副草稿</span></div>
  <div class="toolbar"><input id="search" type="search" placeholder="搜尋卡號、名稱、效果或 FAQ…" value="${esc(ui.search)}"><div class="filter">${[['all','全部'],['character','角色'],['event','事件'],['field','場域']].map(([v,n])=>`<button data-filter="${v}" class="${ui.filter===v?'active':''}">${n}</button>`).join('')}</div><div class="filter">${[['all','全色'],['yellow','黃'],['blue','藍'],['purple','紫'],['green','綠']].map(([v,n])=>`<button data-rez-color="${v}" class="${(ui.color||'all')===v?'active':''}">${n}</button>`).join('')}</div></div>
  <div class="libraryLayout"><div class="cardGrid">${entries.map(c=>`<article class="catalogCard"><button class="catalogArt" data-inspect="${c.id}" aria-label="查看官方卡片 ${esc(c.number)}"><img src="${esc(c.image)}" alt="${esc(c.nameJa)} 官方卡圖" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='assets/mark.svg'"></button><div class="catalogInfo"><strong>${esc(c.name)}</strong><div class="sub">${esc(c.nameJa)} · ${esc(c.number)} · ${TYPE_NAMES[c.type]} · ${COLOR_NAMES[c.color]} · ${esc(c.rarity)} · 特徵 ${esc(c.traits.join('、')||'—')} · ${c.trigger?TRIGGER_NAMES[c.trigger]+' Trigger':'無 Trigger'}${(c.aliases||[]).length?` · 異圖 ${c.aliases.length}`:''}</div><span class="autoStatus pending">尚未完成自動判定</span><div class="catalogMeta"><span>◆ ${c.energy} 能源</span><span>AP ${c.ap}</span><span>BP ${printedBp(c)}</span><span>產能 ${printedGen(c)}</span></div><p class="catalogEffect">${esc(c.effect)}</p>${c.note?`<p class="note">${esc(c.note)}</p>`:''}${(c.faq||[]).length?`<p class="note">官方 FAQ ${esc(c.faq.join('、'))}</p>`:''}<details><summary>官方日文原文</summary><p class="catalogEffect">${esc(c.effectJa)}</p>${c.triggerTextJa?`<p class="catalogEffect">觸發 ${esc(c.triggerTextJa)}</p>`:''}</details><a class="subtleButton" href="${esc(c.source)}" target="_blank" rel="noopener noreferrer">官方卡頁 ↗</a><div class="countPicker"><button data-rez-count="${c.id}" data-delta="-1" ${!rezDeck[c.id]?'disabled':''}>−</button><b>${rezDeck[c.id]||0}</b><button data-rez-count="${c.id}" data-delta="1" ${(rezDeck[c.id]||0)>=4?'disabled':''}>+</button></div></div></article>`).join('')}</div><aside class="panel deckSummary"><h3>Re:Zero Vol.2 牌組</h3><div class="deckTotal">${count} <small>/ 50</small></div><div class="progressTrack"><i style="width:${Math.min(100,count*2)}%"></i></div><div class="validation invalid">${issues.map(esc).join('<br>')}</div><p class="note">可以儲存未滿 50 張的草稿。效果自動判定完成前，不能用這副牌開始對戰。</p><details class="deckContents"><summary>已選卡片</summary>${REZERO_ALL_CARDS.filter(c=>rezDeck[c.id]).map(c=>`<div class="deckContentRow">${esc(c.name)} · ×${rezDeck[c.id]}</div>`).join('')||'<p class="note">尚未選擇卡片</p>'}</details></aside></div>`;
+}
+function stgLibrary(){
+ const q=ui.search.toLowerCase();
+ const entries=STEINS_GATE_CARDS.filter(c=>(ui.filter==='all'||c.type===ui.filter)&&(!ui.color||ui.color==='all'||c.color===ui.color)&&[c.name,c.nameJa,c.number,c.effect,c.effectJa,c.ruby].some(t=>String(t||'').toLowerCase().includes(q)));
+ const issues=stgDeckIssues(stgDeck),count=stgCount(stgDeck);
+ const registered=STEINS_GATE_CARDS.filter(c=>c.engineKind).length;
+ const printedBp=c=>c.bp==null?'—':String(c.bp)+(c.bpMark||'');
+ const printedGen=c=>String(c.gen)+(c.genMark||'');
+ return `<header class="pageHeading"><div><h1>命運石之門 · UA57BT</h1><p>80 種一般卡。目前 ${registered} 種已接到共用引擎。AP 卡不計入主牌組。</p></div><button class="btn" data-view="lobby">返回大廳</button></header>
+ <div class="titlePicker" role="group" aria-label="選擇作品">${TITLES.map(t=>`<button type="button" data-title="${t.id}" aria-pressed="${ui.title===t.id}" class="btn ${ui.title===t.id?'primary':'outline'}">${esc(t.label)} · ${t.cards.length} 種</button>`).join('')}</div>
+ <div class="supportNote"><b>命運石之門尚未完成官方 FAQ 驗收</b><span>已登錄的卡片可以組進 50 張 V2 牌組。尚未登錄的卡片會擋住對戰，效果不會被略過。登錄數量不是正式認證。</span></div>
+ <div class="deckEditor"><label>牌組名稱<input id="stgDeckName" maxlength="40" value="${esc(stgName)}"></label><label>已儲存牌組<select id="stgSavedSelect"><option value="">選擇草稿</option>${stgSaved.map((d,i)=>`<option value="${i}">${esc(d.name)}</option>`).join('')}</select></label><div class="deckEditorActions"><button class="btn primary" data-action="stgSave">儲存命運石之門草稿</button><button class="btn outline" data-action="stgNew">新建空白草稿</button></div><span class="deckSaveStatus">已儲存 ${stgSaved.length} 副草稿</span></div>
+ <div class="toolbar"><input id="search" type="search" placeholder="搜尋卡號、名稱或效果…" value="${esc(ui.search)}"><div class="filter">${[['all','全部'],['character','角色'],['event','事件'],['field','場域']].map(([v,n])=>`<button data-filter="${v}" class="${ui.filter===v?'active':''}">${n}</button>`).join('')}</div><div class="filter">${[['all','全色'],['blue','藍'],['green','綠']].map(([v,n])=>`<button data-stg-color="${v}" class="${(ui.color||'all')===v?'active':''}">${n}</button>`).join('')}</div></div>
+ <div class="libraryLayout"><div class="cardGrid">${entries.map(c=>`<article class="catalogCard"><button class="catalogArt" data-inspect="${c.id}" aria-label="查看官方卡片 ${esc(c.number)}"><img src="${esc(c.image)}" alt="${esc(c.nameJa)} 官方卡圖" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='assets/mark.svg'"></button><div class="catalogInfo"><strong>${esc(c.name)}</strong><div class="sub">${esc(c.nameJa)} · ${esc(c.number)} · ${TYPE_NAMES[c.type]} · ${COLOR_NAMES[c.color]} · ${esc(c.rarity)} · ${c.trigger?TRIGGER_NAMES[c.trigger]+' Trigger':'無 Trigger'}</div><span class="autoStatus ${c.engineKind?'ready':'pending'}">${c.engineKind?'已登錄共用引擎，尚未完成官方 FAQ 驗收':'尚未登錄，不能進入 V2 對戰'}</span><div class="catalogMeta"><span>◆ ${c.energy} 能源</span><span>AP ${c.ap}</span><span>BP ${printedBp(c)}</span><span>產能 ${printedGen(c)}</span></div><p class="catalogEffect">${esc(c.effect)}</p><details><summary>官方日文原文</summary><p class="catalogEffect">${esc(c.effectJa)}</p></details><a class="subtleButton" href="${esc(c.source)}" target="_blank" rel="noopener noreferrer">官方卡頁 ↗</a><div class="countPicker"><button data-stg-count="${c.id}" data-delta="-1" ${!stgDeck[c.id]?'disabled':''}>−</button><b>${stgDeck[c.id]||0}</b><button data-stg-count="${c.id}" data-delta="1" ${(stgDeck[c.id]||0)>=4?'disabled':''}>+</button></div></div></article>`).join('')}</div><aside class="panel deckSummary"><h3>命運石之門牌組</h3><div class="deckTotal">${count} <small>/ 50</small></div><div class="progressTrack"><i style="width:${Math.min(100,count*2)}%"></i></div><div class="validation ${issues.length?'invalid':'valid'}">${issues.map(esc).join('<br>')}</div><p class="note">可以儲存未滿 50 張的草稿。含有尚未登錄卡片時不能開始對戰。</p><details class="deckContents"><summary>已選卡片</summary>${STEINS_GATE_CARDS.filter(c=>stgDeck[c.id]).map(c=>`<div class="deckContentRow">${esc(c.name)} · ×${stgDeck[c.id]}</div>`).join('')||'<p class="note">尚未選擇卡片</p>'}</details></aside></div>`;
 }
 function saoLibrary(){
  const entries=SAO_CARDS.filter(c=>(ui.saoSet==='all'||c.sets.includes(ui.saoSet))&&(ui.filter==='all'||c.type===ui.filter)&&[c.name,c.nameJa,c.number,c.effect,c.effectJa,...(c.traits||[])].some(t=>String(t||'').toLowerCase().includes(ui.search.toLowerCase())));
@@ -547,7 +568,7 @@ function bind(){
     if(el.dataset.builderCount){
      const c=TITLES.find(t=>t.id===ui.title)?.cards.find(c=>c.id===el.dataset.builderCount);
      if(!c||['ap','action-point','action_point'].includes(c.type)||(ui.title==='mushoku-tensei'&&!c.verified))return;
-     const counts=ui.title==='bleach'?deck:ui.title==='gurren-lagann'?ttgDeck:ui.title==='sword-art-online'?saoDeck:ui.title==='solo-leveling'?soloDeck:ui.title==='rezero'?rezDeck:mstDeck;
+     const counts=ui.title==='bleach'?deck:ui.title==='gurren-lagann'?ttgDeck:ui.title==='sword-art-online'?saoDeck:ui.title==='solo-leveling'?soloDeck:ui.title==='rezero'?rezDeck:ui.title==='steins-gate'?stgDeck:mstDeck;
      const delta=Number(el.dataset.delta);
      if(![-1,1].includes(delta))return;
      if(delta>0&&Object.values(counts).reduce((n,x)=>n+(Number(x)||0),0)>=50){toast('牌組最多 50 張，請先移除其他卡片。');return;}
@@ -557,6 +578,7 @@ function bind(){
      else if(ui.title==='sword-art-online')save(SAO_DRAFT_KEY,saoDeck);
      else if(ui.title==='solo-leveling')persistSolo();
      else if(ui.title==='rezero')persistRez();
+     else if(ui.title==='steins-gate')persistStg();
      else persistMst();
      render();return;
     }
@@ -583,6 +605,8 @@ function bind(){
   if(el.dataset.mstCount){const id=el.dataset.mstCount;const c=MST_CARDS.find(c=>c.id===id);if(!c||!c.verified)return;mstDeck[id]=Math.max(0,Math.min(4,(mstDeck[id]||0)+Number(el.dataset.delta)));persistMst();render();return;}
   if(el.dataset.saoCount){const id=el.dataset.saoCount;if(!SAO_BY_ID[id])return;saoDeck[id]=Math.max(0,Math.min(4,(saoDeck[id]||0)+Number(el.dataset.delta)));save(SAO_DRAFT_KEY,saoDeck);render();return;}
   if(el.dataset.rezCount){const id=el.dataset.rezCount;if(!REZERO_ALL_BY_ID[id])return;rezDeck[id]=Math.max(0,Math.min(4,(rezDeck[id]||0)+Number(el.dataset.delta)));persistRez();render();return;}
+  if(el.dataset.stgCount){const id=el.dataset.stgCount;if(!STEINS_GATE_BY_ID[id])return;stgDeck[id]=Math.max(0,Math.min(4,(stgDeck[id]||0)+Number(el.dataset.delta)));persistStg();render();return;}
+  if(el.dataset.stgColor){ui.color=el.dataset.stgColor;render();return;}
   if(el.dataset.rezColor){ui.color=el.dataset.rezColor;render();return;}
   if(el.dataset.ttgCount){const id=el.dataset.ttgCount;ttgDeck[id]=Math.max(0,Math.min(4,(ttgDeck[id]||0)+Number(el.dataset.delta)));persistTtg();render();return;}
   if(el.dataset.mode){ui.mode=el.dataset.mode;render();return;}
@@ -610,6 +634,8 @@ function bind(){
    case 'mstSave':{const name=mstName.trim()||'無職轉生自訂牌組';mstSaved=[...mstSaved,{id:'mst-'+Date.now()+'-'+Math.random().toString(36).slice(2),name,counts:normalizeMstCounts(mstDeck)}];save(MST_SAVED_KEY,mstSaved);render();toast('已儲存無職轉生牌組草稿。');break;}
    case 'rezNew':rezDeck=emptyRezDeck();rezName='Re:Zero Vol.2 自訂牌組';persistRez();render();break;
    case 'rezSave':{const name=rezName.trim()||'Re:Zero Vol.2 自訂牌組';rezSaved=[...rezSaved,{id:'rez-'+Date.now()+'-'+Math.random().toString(36).slice(2),name,counts:normalizeRezCounts(rezDeck)}];save(REZ_SAVED_KEY,rezSaved);render();toast('已儲存 Re:Zero Vol.2 牌組草稿。');break;}
+   case 'stgNew':stgDeck=emptyStgDeck();stgName='命運石之門自訂牌組';persistStg();render();break;
+   case 'stgSave':{const name=stgName.trim()||'命運石之門自訂牌組';stgSaved=[...stgSaved,{id:'stg-'+Date.now()+'-'+Math.random().toString(36).slice(2),name,counts:normalizeStgCounts(stgDeck)}];save(STG_SAVED_KEY,stgSaved);render();toast('已儲存命運石之門牌組草稿。');break;}
    case 'saoNew':saoDeck={};saoName='刀劍神域自訂牌組';save(SAO_DRAFT_KEY,saoDeck);render();break;
    case 'saoSave':{const name=saoName.trim()||'刀劍神域自訂牌組';saoSaved=[...saoSaved,{id:'sao-'+Date.now(),name,counts:{...saoDeck}}];save(SAO_SAVED_KEY,saoSaved);render();toast('已儲存刀劍神域草稿。');break;}
    case 'ttgBetaStartGreen':ttgBetaStart(TTG_GREEN_BETA_PRESET);break;
@@ -629,8 +655,8 @@ function bind(){
    case 'deckCode':ui.modal={type:'deckCode'};render();break;
     case 'enterV2Battle':{
      const title=ui.title;
-     const counts=title==='bleach'?deck:title==='gurren-lagann'?ttgDeck:title==='sword-art-online'?saoDeck:title==='solo-leveling'?soloDeck:title==='rezero'?rezDeck:mstDeck;
-     const name=title==='bleach'?deckName:title==='gurren-lagann'?ttgName:title==='sword-art-online'?saoName:title==='solo-leveling'?soloName:title==='rezero'?rezName:mstName;
+     const counts=title==='bleach'?deck:title==='gurren-lagann'?ttgDeck:title==='sword-art-online'?saoDeck:title==='solo-leveling'?soloDeck:title==='rezero'?rezDeck:title==='steins-gate'?stgDeck:mstDeck;
+     const name=title==='bleach'?deckName:title==='gurren-lagann'?ttgName:title==='sword-art-online'?saoName:title==='solo-leveling'?soloName:title==='rezero'?rezName:title==='steins-gate'?stgName:mstName;
      const report=v2DeckReport(title,counts);
      if(!report.ok){toast(report.issues[0]||'這副牌組還不能進入 V2。');break;}
      const slim=Object.fromEntries(Object.entries(counts).filter(([,n])=>Number(n)>0));
@@ -641,8 +667,8 @@ function bind(){
     }
     case 'visualExport':{
      const t=TITLES.find(t=>t.id===ui.title)||TITLES[0];
-     const counts=ui.title==='bleach'?deck:ui.title==='gurren-lagann'?ttgDeck:ui.title==='sword-art-online'?saoDeck:ui.title==='solo-leveling'?soloDeck:ui.title==='rezero'?rezDeck:mstDeck;
-     const name=ui.title==='bleach'?deckName:ui.title==='gurren-lagann'?ttgName:ui.title==='sword-art-online'?saoName:ui.title==='solo-leveling'?soloName:ui.title==='rezero'?rezName:mstName;
+     const counts=ui.title==='bleach'?deck:ui.title==='gurren-lagann'?ttgDeck:ui.title==='sword-art-online'?saoDeck:ui.title==='solo-leveling'?soloDeck:ui.title==='rezero'?rezDeck:ui.title==='steins-gate'?stgDeck:mstDeck;
+     const name=ui.title==='bleach'?deckName:ui.title==='gurren-lagann'?ttgName:ui.title==='sword-art-online'?saoName:ui.title==='solo-leveling'?soloName:ui.title==='rezero'?rezName:ui.title==='steins-gate'?stgName:mstName;
      const list=t.cards.filter(c=>counts[c.id]>0).map(c=>String(counts[c.id])+'x'+(c.number||c.id));
      ui.modal={type:'visualExport',text:'# '+name+'\n'+list.join('\n')};render();break;
     }
@@ -684,6 +710,8 @@ function bind(){
  const mstSavedInput=$('#mstSavedSelect');if(mstSavedInput)mstSavedInput.onchange=()=>{if(mstSavedInput.value==='')return;const chosen=mstSaved[Number(mstSavedInput.value)];if(!chosen)return;mstName=chosen.name;mstDeck=normalizeMstCounts(chosen.counts);persistMst();render();};
  const rezNameInput=$('#rezDeckName');if(rezNameInput)rezNameInput.oninput=()=>{rezName=rezNameInput.value.slice(0,40);};
  const rezSavedInput=$('#rezSavedSelect');if(rezSavedInput)rezSavedInput.onchange=()=>{if(rezSavedInput.value==='')return;const chosen=rezSaved[Number(rezSavedInput.value)];if(!chosen)return;rezName=chosen.name;rezDeck=normalizeRezCounts(chosen.counts);persistRez();render();};
+ const stgNameInput=$('#stgDeckName');if(stgNameInput)stgNameInput.oninput=()=>{stgName=stgNameInput.value.slice(0,40);};
+ const stgSavedInput=$('#stgSavedSelect');if(stgSavedInput)stgSavedInput.onchange=()=>{if(stgSavedInput.value==='')return;const chosen=stgSaved[Number(stgSavedInput.value)];if(!chosen)return;stgName=chosen.name;stgDeck=normalizeStgCounts(chosen.counts);persistStg();render();};
  const saoNameInput=$('#saoDeckName');if(saoNameInput)saoNameInput.oninput=()=>{saoName=saoNameInput.value.slice(0,40);};
  const saoSavedInput=$('#saoSavedSelect');if(saoSavedInput)saoSavedInput.onchange=()=>{if(saoSavedInput.value==='')return;const chosen=saoSaved[Number(saoSavedInput.value)];if(!chosen)return;saoName=chosen.name;saoDeck={...chosen.counts};save(SAO_DRAFT_KEY,saoDeck);render();};
  const ttgNameInput=$('#ttgDeckName');if(ttgNameInput)ttgNameInput.oninput=()=>{ttgName=ttgNameInput.value.slice(0,40);};

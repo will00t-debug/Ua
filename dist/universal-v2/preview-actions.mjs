@@ -8,7 +8,8 @@ export const V2_TITLE_LABELS=Object.freeze({
  'solo-leveling':'我獨自升級',
  'sword-art-online':'刀劍神域',
  'mushoku-tensei':'無職轉生',
- rezero:'Re:Zero'
+ rezero:'Re:Zero',
+ 'steins-gate':'命運石之門'
 });
 export const V2_PENDING_LABELS=Object.freeze({
  block:'選擇是否阻擋', 'life-trigger':'生命觸發',
@@ -69,6 +70,12 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-hidden-life-hand':'將1張生命加入手牌',
  'effect-rest-reenter':'以 Rest 重新登場',
  'effect-hand-two-outside':'將2張手牌送至場外',
+ 'effect-shift-slot':'選擇移到前線的空位',
+ 'effect-energy-shift':'選擇能源線角色並移到前線',
+ 'effect-recover-event':'從場外回收沒有最終觸發的事件',
+ 'effect-ordered-subset':'依印刷順序選擇最多 2 個效果',
+ 'effect-rest-own-field':'休息 1 張活動場域',
+ 'effect-hand-active-noraid':'從手牌讓沒有突襲的角色活動登場',
  'effect-pay-ap-deploy':'可支付 1 AP，從場外 REST 登場',
  'effect-optional-pay-ap':'可支付 1 AP，然後結算後續效果',
  'effect-deck-named-play':'公開的卡片可加入手牌、休息登場或突襲',
@@ -122,6 +129,10 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-outside-printed-rest':'選擇是否以休息狀態登場',
  'effect-grant-printed-block':'選擇是否賦予防禦下限',
  'effect-move-opp-front':'選擇是否將對手前線移至能源線',
+ 'effect-move-opp-if-event':'可將對手前線角色移至能源線',
+ 'effect-retire-own-other':'可退場1張其他己方卡片',
+ 'effect-retire-trigger-ceiling':'可退場觸發種類上限內的對手前線角色',
+ 'effect-remove-named-zones':'可將指定角色移入移除區',
  'effect-unblocked-rest':'選擇是否使對手前線休息',
  'effect-energy-swap':'選擇要交換位置的己方前線',
  'effect-grant-named-impact':'選擇是否賦予衝擊',
@@ -191,7 +202,13 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-rest-tuck':'是否 REST 角色，放置剛送至場外的手牌',
  'effect-tuck-moved':'可將該場外卡裏向放在自身下方',
  'opening-mulligan':'開局手牌調度（每人最多一次）',
- 'retirement-order':'同時退場效果的結算順序'
+ 'retirement-order':'同時退場效果的結算順序',
+ 'effect-field-leave-remove':'上限或離場時可改放移除區',
+ 'effect-suzuha-attack-end':'攻擊結束可將手牌放到場外',
+ 'effect-mayuri-fork':'選擇對手前線角色',
+ 'effect-printed-rest-raid':'從場外休息登場或突襲',
+ 'effect-zone-rest-raid':'從場外或移除區休息登場或突襲',
+ 'effect-removed-okabe-raid':'從移除區使岡部倫太郎突襲'
 });
 export function isExactLegal(action,legal){
  return Array.isArray(legal)&&legal.some(candidate=>
@@ -301,6 +318,10 @@ export function uiActionLabel(action,{pack,state}={}){
      [...p.front,...p.energy].some(c=>c?.uid===action.uid&&
       pack.cards[c.cardId]?.mainAbility?.then?.[0]?.op==='buffEitherField'))
      ?'起動主要：選擇最多 1 張場上角色，本回合 BP+1000':
+    action.mode==='frontOnce'&&pack?.cards&&state?.players?.some(p=>
+     [...p.front,...p.energy].some(c=>c?.uid===action.uid&&
+      pack.cards[c.cardId]?.mainAbility?.then?.[0]?.op==='grantSelfFrontEnergyUntilNextOwnStart'))
+     ?'起動主要：直到下次我方回合開始，前線也能產生能源':
     action.mode==='restLeaveReveal'?'起動主要：休息並退場，公開 1 張手牌放到牌底':
     action.mode==='handBlock'?'起動主要：將 1 張手牌放到場外，本回合不被 BP4000 以上的角色阻擋':
     action.mode==='energySwap'?'起動主要：與 1 張己方前線角色交換位置':
@@ -311,6 +332,14 @@ export function uiActionLabel(action,{pack,state}={}){
     action.mode==='fieldOutsideEvent'?'起動主要：REST 場域，將手牌 1 張送場外後可使用場外事件':
     action.mode==='fieldTuck'?'起動主要：REST 場域，將牌庫頂 1 張裏向放在此卡下':
     action.mode==='fieldRelease'?'起動主要：REST 場域，將手牌 1 張送場外後可放出裏向卡':
+    action.mode==='discount'?'起動主要：下一張符合條件的手牌事件，消費 AP-1':
+    action.mode==='restedBuff'?'起動主要：選擇其他己方角色，本回合 BP+2000':
+    action.mode==='rukaGrant'?action.grant==='block'
+     ?'起動主要：本回合不被 BP4000 以上的角色阻擋'
+     :'起動主要：本回合 BP+1000，使用過事件則獲得衝擊 1':
+    action.mode==='readyRested'?'起動主要：將曾被自己效果休息的角色轉為活動':
+    action.mode==='restNamedChoose'?'起動主要：休息前線的牧瀬紅莉栖，然後二選一':
+    action.mode==='nameActive'?'起動主要：將這張椎名まゆり轉為活動':
     action.mode==='buff'?'主要能力：BP 加成':'主要能力：ACTIVE ＋ BP 加成';
   case 'chooseBlock':return action.uid===null?'不阻擋':'使用 '+name()+' 阻擋';
   case 'chooseTrigger':
@@ -321,6 +350,8 @@ export function uiActionLabel(action,{pack,state}={}){
    if(action.mode==='raid')return '使用 RAID 觸發 · 前線 '+(action.slot+1);
    if(action.mode==='colorRestSkip')return 'COLOR：使 '+name()+' REST，下次不能 ACTIVE';
    if(action.mode==='colorOutside')return '從場外登場 '+name()+suffix();
+   if(action.mode==='colorMayField')return 'COLOR：改以綠場域在能源線登場 '+name()+suffix();
+   if(action.mode==='colorField')return 'COLOR：以場域代替角色，在能源線登場 '+name()+suffix();
    if(action.mode==='color')return 'COLOR 登場 '+name()+suffix();
    if(action.mode==='active')return '使 '+name()+' ACTIVE';
    if(action.mode==='special')return '使 '+name()+' 退場';
@@ -439,6 +470,11 @@ export function uiActionLabel(action,{pack,state}={}){
    (action.mode==='raid'?'從手牌 Raid ':'從手牌 REST 登場 ')+name()+suffix();
    case 'chooseOutsideNameRest':return action.uid===null?'不從場外登場':'REST 登場 '+name()+suffix();
   case 'chooseTopFiltered':return action.uid===null?'不加入手牌，將其餘卡排列至底部':'加入手牌：'+name();
+  case 'chooseGrantNamed':return action.uid===null?'不給予這項能力':'給予 '+name()+' 這個回合的能力';
+  case 'choosePrintedApImpact':return action.uid===null?'不給予衝擊':'給予 '+name()+' 衝擊 1';
+  case 'chooseSelfFront':return action.slot===null?'不移動到前線':'移動到前線 '+(action.slot+1);
+  case 'chooseDifferentField':return action.uid===null?'不從場外登場':'以休息狀態登場 '+name()+suffix();
+  case 'chooseOwnFieldRetire':return action.uid===null?'不退場場域':'退場場域 '+name();
   case 'chooseTopTraitEvent':return action.uid===null?'不加入手牌，將其餘卡排列至底部':'公開 '+name()+' 並加入手牌';
   case 'chooseTopOrder':return '依序放回：'+name();
   case 'chooseRestFrontEnergy':return 'REST '+name()+'，本回合產能＋1';
@@ -464,6 +500,12 @@ export function uiActionLabel(action,{pack,state}={}){
    '使 '+name()+' 以活動狀態登場';
   case 'chooseBounceIncludeSelf':return action.uid===null?'不放回手牌':
    '將 '+name()+' 放回手牌';
+  case 'choosePrintedRestRaid':return action.uid===null?'不登場':
+   (action.mode==='raid'?'以突襲登場：':'以休息狀態登場：')+name();
+  case 'chooseRemovedOkabeRaid':return '從移除區突襲：'+name();
+  case 'chooseMayuriFork':return action.uid===null?'不指定對手角色':'指定 '+name();
+  case 'chooseSuzuhaAttackEnd':return action.uid===null?'不將手牌放到場外':'將 '+name()+' 放到場外';
+  case 'chooseFieldLeaveRemove':return action.mode==='remove'?'改放移除區':'留在場外';
   case 'chooseOutsideRestOrRaid':return action.uid===null?'不登場':
    (action.mode==='raid'?'以突襲登場：':'以休息狀態登場：')+name();
   case 'chooseGrantBounceInstead':return action.uid===null?'不指定菜月昴':
@@ -497,6 +539,8 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseOutsidePrintedRest':return action.uid===null?'不登場':'使 '+name()+' 以休息狀態登場';
   case 'chooseGrantPrintedBlock':return action.uid===null?'不賦予防禦下限':'使 '+name()+' 不會被 BP4000 以上的角色阻擋';
   case 'chooseMoveOppFront':return action.uid===null?'不移動':'將 '+name()+' 移至能源線';
+  case 'chooseRetireOwnOther':return action.uid===null?'不使卡片退場':'使 '+name()+' 退場';
+  case 'chooseRemoveNamedZone':return action.uid===null?'不移入移除區':'將 '+name()+' 移入移除區';
   case 'chooseUnblockedRest':return action.uid===null?'不使角色休息':'使 '+name()+' 休息';
   case 'chooseRemoveOppField':return '將 '+name()+' 放入移除區';
   case 'chooseEnergySwap':return '與 '+name()+' 交換位置';
@@ -556,6 +600,16 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseReplayEntry':return action.uid===null?'不重新發動登場效果':'重新發動 '+name()+' 的登場效果';
   case 'chooseAttackEndRaid':return action.uid===null?'不在攻擊結束時突襲':'從手牌突襲 '+name();
   case 'chooseRetireCapture':return action.uid===null?'不將退場角色放在場域下':'把退場角色裏向放在此場域下';
+  case 'chooseMayDraw':return action.mode==='draw'?'抽 1 張':'不抽牌';
+  case 'chooseShiftSlot':return '移到前線 '+(action.slot+1);
+  case 'chooseEnergyShift':return action.uid===null?'不移動能源線角色':
+   '將 '+name()+' 移到前線 '+(action.slot+1);
+  case 'chooseRecoverEvent':return action.uid===null?'不加入手牌':'將 '+name()+' 加入手牌';
+  case 'chooseOrderedSubset':return action.mode==='confirm'?'依印刷順序結算所選效果':
+   '選擇效果';
+  case 'chooseRestOwnField':return '休息 '+name()+'，然後抽 1 張並將 1 張手牌放到場外';
+  case 'chooseHandActiveNoRaid':return action.uid===null?'不讓角色登場':
+   '讓 '+name()+' 以活動狀態登場'+suffix();
   default:return '執行 '+action.type;
  }
 }
