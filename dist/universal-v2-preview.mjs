@@ -554,14 +554,15 @@ function legacyCommands(legal){
  const global=legal.filter(a=>!a.uid&&a.type!=='next'&&a.type!=='extraDraw');
  const actions=app.targetChoices||(app.selectedUid?[...passive,...selected]:[...passive,...global]);
  const list=[...new Map(actions.map(a=>[JSON.stringify(a),a])).values()]
-  .filter(a=>app.targetChoices||!['play','raid','move'].includes(a.type))
+  .filter(a=>(a.type!=='raid'||app.targetChoices)&&
+   (app.targetChoices||!['play','move'].includes(a.type)))
   .slice(0,100);
  const raidReady=legal.some(a=>a.type==='raid'&&a.uid===app.selectedUid);
  if(!list.length&&!raidReady&&!app.targetChoices)return null;
  const bar=el('div',{class:'v2-compact-actions','aria-label':'情境操作'});
  if(raidReady){
   bar.append(el('span',{class:'v2-compact-hint',text:app.raidBaseUid?
-   '已選突襲底板，請選擇登場位置。':'突襲：先點場上的底板，再選擇登場位置。'}));
+   '已選突襲底板，請選擇登場位置。':'突襲：先點底板，再點要登場的格子。'}));
   if(app.raidBaseUid)
    bar.append(btn('重選底板',()=>{app.raidBaseUid=null;render();},'btn small quiet'));
  }
