@@ -187,7 +187,8 @@ function openLibraryDeck(key){
   state.detail={source:'draft',id:'draft'};
  }else if(source==='builtin'){
   let id;try{id=decodeURIComponent(parts.join(':'));}catch{return;}
-  if(!useDesignatedBleachPreset(id,'detail')){notify('找不到指定牌組。');return;}
+  if(!builtinBleachDeck(id)){notify('找不到指定牌組。');return;}
+  state.title='bleach';state.ready=true;state.cloudOrigin=null;state.detail={source:'builtin',id};
  }else return;
  state.screen='detail';
  render();
@@ -325,6 +326,7 @@ function openEditor(){
  if(detail?.source==='saved'){
   const item=savedDetailItem();
   if(!item){notify('找不到這副牌組');return;}
+  if(!item.id){item.id='v2-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8);persistSaved(state.title);}
   releaseCloudOrigin(item.id);
   state.counts[state.title]={...item.counts};
   state.names[state.title]=item.name;
