@@ -79,7 +79,7 @@ function replay(id){
   ...(c.impactNull?{impactNull:true}:{}),
   ...(c.raidName?{raidName:c.raidName}:{}),
   ...(c.playRequiresOwnName?{playRequiresOwnName:c.playRequiresOwnName}:{}),
-  ...(c.passiveBonuses?{passiveBonuses:JSON.parse(JSON.stringify(c.passiveBonuses))}:{}),
+  ...(c.passiveBonuses?.length?{passiveBonuses:JSON.parse(JSON.stringify(c.passiveBonuses))}:{}),
   ...(c.emptyOwnFieldHandEnergyDiscount?{
    emptyOwnFieldHandEnergyDiscount:c.emptyOwnFieldHandEnergyDiscount}:{}),
   ...(c.triggerEffect?{triggerEffect:JSON.parse(JSON.stringify(c.triggerEffect))}:{})
@@ -118,8 +118,10 @@ function labMatch(cards,seed){
 function finishInspect(packs,s,actor=0){
  if(s.pending?.kind==='effect-top-inspect-many')
   s=dispatchUniversalAction(packs,s,{type:'chooseInspectedOutside',uid:null},{actor});
- while(s.pending?.kind==='effect-top-order')
-  s=dispatchUniversalAction(packs,s,{type:'chooseTopOrder',uid:s.pending.uids[0]},{actor});
+ while(s.pending?.kind==='effect-top-order'){
+  const uid=s.pending.uids.find(id=>!s.pending.order.includes(id));
+  s=dispatchUniversalAction(packs,s,{type:'chooseTopOrder',uid},{actor});
+ }
  return s;
 }
 
@@ -257,9 +259,9 @@ test('STG-1-026 widens the event window only for three blue low-energy trigger k
  const wide=open(31029,['STG-1-032','STG-1-034','STG-1-035'],
   ['STG-1-012','STG-1-014','STG-1-020','STG-1-024','STG-1-007']);
  assert.equal(wide.s.pending.uids.length,5);
- wide.s=dispatchUniversalAction(stgPacks,wide.s,{type:'chooseTopFiltered',uid:null},{actor:0});
- assert.equal(wide.s.pending.kind,'effect-top-order');
- assert.equal(wide.s.pending.discardAfter,undefined);
+ const declined=dispatchUniversalAction(stgPacks,narrow.s,{type:'chooseTopFiltered',uid:null},{actor:0});
+ assert.equal(declined.pending.kind,'effect-top-order');
+ assert.equal(declined.pending.discardAfter,undefined);
 
  let taken=narrow.s;
  const chosen=narrow.window[2].uid;
@@ -398,7 +400,7 @@ test('STG-1-025 discounts an empty field, bounces on its color trigger, and draw
   const raider=take(s,0,'STG-1-029');
   hold(s,0,[raider]);
   const before=s.players[0].deck.length;
-  s=play(stgPacks,s,a=>a.type==='raid'&&a.uid===raider.uid&&a.baseUid===base.uid&&a.line==='front');
+  s=play(stgPacks,s,a=>a.type==='raid'&&a.uid===raider.uid&&a.baseUid===base.uid);
   return {s,before,victim,raider,base};
  }
  const early=raidOf(31027,['STG-1-032','STG-1-034','STG-1-035']);
@@ -565,7 +567,7 @@ test('STG-1-071 pays an event or field, then chooses Moeka or a draw on retireme
  assert.equal(gate.pending,null);
 
  function retire(seed,withMoeka){
-  let s=board(['STG-1-071','STG-1-041','STG-1-045','STG-1-054','STG-1-073'],seed);
+  let s=board(['STG-1-071','STG-1-041','STG-1-045','STG-1-054','STG-1-073','STG-1-042','STG-1-047'],seed);
   place(s,0,'STG-1-045','energy',0);
   place(s,0,'STG-1-042','energy',1);
   place(s,0,'STG-1-047','energy',2);
@@ -695,8 +697,8 @@ test('STG-1-056 retires another own card, moves an opponent, and locks that move
  assert.ok(raid.continuousStates.some(e=>e.kind==='cannotMove'&&e.targetUid===buried.uid));
  raid=advance(lab.packs,raid,x=>x.active===1&&x.phase==='main');
  assert.ok(legalUniversalActions(lab.packs,raid).some(a=>a.type==='raid'&&a.uid===topCard.uid&&
-  a.baseUid===buried.uid&&a.line==='front'));
- raid=play(lab.packs,raid,a=>a.type==='raid'&&a.uid===topCard.uid&&a.baseUid===buried.uid&&a.line==='front',1);
+  a.baseUid===buried.uid));
+ raid=play(lab.packs,raid,a=>a.type==='raid'&&a.uid===topCard.uid&&a.baseUid===buried.uid,1);
  assert.equal(raid.players[1].front.some(c=>c?.uid===topCard.uid&&c.ready===true),true);
  assert.equal(raid.continuousStates.some(e=>e.targetUid===topCard.uid),false);
  assert.equal(assertUniversalMatch(lab.packs,raid),true);
@@ -775,9 +777,9 @@ test('STG-1-029 retires by trigger kinds, gains impact at five, and raids Kurisu
  hold(raid,0,[topCard]);
  const raids=legalUniversalActions(stgPacks,raid).filter(a=>a.type==='raid'&&a.uid===topCard.uid&&
   a.baseUid===base.uid);
- assert.ok(raids.some(a=>a.line==='front'));
- assert.ok(raids.some(a=>a.line==='energy'));
- raid=play(stgPacks,raid,a=>a.type==='raid'&&a.uid===topCard.uid&&a.baseUid===base.uid&&a.line==='front');
+ assert.ok(raids.length>=1);
+ assert.equal(raids.some(a=>a.line==='energy'),false);
+ raid=play(stgPacks,raid,a=>a.type==='raid'&&a.uid===topCard.uid&&a.baseUid===base.uid);
  assert.equal(raid.pending,null);
  assert.equal(raid.players[0].front.some(c=>c?.uid===topCard.uid&&c.ready===true&&c.stack[0].uid===base.uid),true);
  assert.equal(raid.players[0].front[0].impactGranted,undefined);

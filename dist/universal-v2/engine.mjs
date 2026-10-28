@@ -10433,7 +10433,8 @@ export function assertUniversalMatch(pack,s){
    !q.choices.length||q.choices.includes(q.sourceUid)))
    throw Error('Invalid impact-null grant pending');
   const discardUp=printed?.effects?.onPlay?.some(e=>e.op==='discardUpToThenDraw'&&e.max===q.max);
-  const topAdd=printed?.effects?.onPlay?.some(e=>e.op==='searchTopAddOneMillRest');
+  const topAdd=printed?.effects?.onPlay?.some(e=>e.op==='searchTopAddOneMillRest'||
+   (e.op==='discardGate'&&e.then?.some(x=>x.op==='searchTopAddOneMillRest')));
   const distinct=printed?.effects?.onPlay?.some(e=>e.op==='buffDistinctTraitNames'&&
    e.trait===q.trait&&e.per===q.per);
   const energyMode=printed?.mainAbility?.op==='chooseEnergyModeUntilNextOwnStart'&&
