@@ -46,6 +46,6 @@ test('no giant legal actions panel; contextual non-placement actions remain play
  assert.match(css,/\.v2-compact-actions\{/);
  assert.match(css,/\.handCard img\{pointer-events:none/);
  assert.match(css,/\.handCard\{touch-action:pan-y\}/);
- assert.match(css,/max-width:176px/);
+ assert.match(css,/#match-view \\.v2-middle-next\\{[\\s\\S]*?width:auto;max-width:none/);
  assert.match(css,/min-height:36px/);
 });
