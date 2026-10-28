@@ -497,7 +497,8 @@ function legacySlot(view,side,line,index,legal){
  }
  btnSlot.addEventListener('click',()=>{
   if(held){held=false;return;}
-  if(!yours)return;
+  // Display public opponent card art on tap; no game action is dispatched.
+  if(!yours){if(c)showFieldSheet(side,line,c,d);return;}
   if(moving){
    if(plan.type==='choose-mover'){
     app.selectedUid=app.selectedUid===plan.uid?null:plan.uid;
@@ -762,7 +763,11 @@ function mountPendingOverlay(overlay){
 function render(){
  const target=$('match-view');if(!target)return;
  const oldScroll=window.scrollY;
+ const oldHandScroll=target.querySelector('.hand')?.scrollLeft||0;
  const preserveScroll=target.childElementCount>0;
+ // Only the live table is height-locked; mulligan and empty screens scroll normally.
+ if(IS_BATTLE_PAGE)document.body.classList.toggle('v2-playing',
+  !!app.state&&!(app.state.phase==='setup'&&app.state.pending?.kind==='opening-mulligan'));
  clearTimeout(fieldHold);fieldHold=0;
  clearPendingOverlay();
  clearTriggerOverlay();
@@ -780,9 +785,17 @@ function render(){
   return;
  }
  const v=universalPublicView(app.packs,s,0),legal=legalUniversalActions(app.packs,s);
+ const mobileMenu=btn('☰ 對局選單',()=>{
+  const header=mobileMenu.closest('.matchHeader');
+  const open=header?.classList.toggle('tools-open')===true;
+  mobileMenu.setAttribute('aria-expanded',String(open));
+ },'v2-mobile-menu-toggle');
+ mobileMenu.setAttribute('aria-expanded','false');
+ mobileMenu.setAttribute('aria-label','開啟或關閉對局工具');
  const title=el('header',{class:'matchHeader'},
   el('h1',{},'UNION ARENA V2 ',el('span',{class:'textMuted',text:' / 舊版對戰介面'}),
    el('small',{class:'v2-client-version',text:' · '+CLIENT_RELEASE})),
+  mobileMenu,
   el('div',{class:'matchControls'},
    btn('重開對局',()=>startGame(),'btn small'),
    btn('復原一步',()=>undoMove(),'btn small'),
@@ -837,6 +850,9 @@ function render(){
  target.append(log);
  const prompt=pendingDialog(legal,v);if(prompt)target.append(prompt);
  if(revealed)mountTriggerOverlay(revealed);
+ // Preserve hand position while the V2 board is re-rendered on each selection.
+ const handAfterRender=target.querySelector('.hand');
+ if(handAfterRender)handAfterRender.scrollLeft=oldHandScroll;
  // Replacing the entire match subtree must not jump the desktop viewport.
  if(IS_BATTLE_PAGE&&preserveScroll)window.scrollTo(window.scrollX,oldScroll);
 }
