@@ -575,7 +575,7 @@ function legacyCommands(legal){
  const actions=app.targetChoices||(app.selectedUid?[...passive,...selected]:[...passive,...global]);
  const list=[...new Map(actions.map(a=>[JSON.stringify(a),a])).values()]
   .filter(a=>(a.type!=='raid'||app.targetChoices)&&
-   (app.targetChoices||!['play','move'].includes(a.type)))
+   (app.targetChoices||!['play','move','step'].includes(a.type)))
   .slice(0,100);
  const raidReady=legal.some(a=>a.type==='raid'&&a.uid===app.selectedUid);
  if(!list.length&&!raidReady&&!app.targetChoices)return null;
