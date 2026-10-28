@@ -89,7 +89,7 @@ function detailModel(){
   return {source:'builtin',id:preset.id,name:preset.displayName,counts:preset.counts,updatedAt:null,shared:false,shareEnabled:false,shareNote:'指定牌組要先儲存成自己的牌組，才能設成公開。',summary};
  }
  if(detail?.source==='saved'){
-  const item=savedData[title].find(row=>row.id===detail.id);
+  const item=savedDetailItem();
   if(!item)return null;
   return {source:'saved',id:item.id,name:item.name,counts:item.counts,updatedAt:item.updatedAt,shared:item.shared===true,shareEnabled:true,shareNote:'',coverId:item.coverId,summary:summarizeDeck(cards,item.counts,item.coverId)};
  }
@@ -292,6 +292,7 @@ async function mirrorCloudDeck(title,entry){
    body:JSON.stringify({name:entry.name,title,counts:entry.counts,localId})});
   if(response.ok){
    notify(origin?'已更新原本的帳號牌組':'已儲存，並同步到登入帳號');
+   refreshCloudDecks();
   }else if(response.status===401||response.status===404){
    notify('已儲存在瀏覽器；帳號沒有登入或已切換，無法更新雲端牌組。');
   }else{
@@ -309,7 +310,7 @@ function openDeck(key){
  }else if(source==='saved'){
   const item=id.startsWith('@')?savedData[state.title][Number(id.slice(1))]:savedData[state.title].find(row=>row.id===id);
   if(!item){notify('找不到這副牌組');return;}
-  state.detail={source:'saved',id:item.id};
+  state.detail={source:'saved',id:item.id,index:savedData[state.title].indexOf(item)};
  }else state.detail={source:state.cloudOrigin?.title===state.title?'cloud':'draft',id:'draft'};
  state.screen='detail';state.inspection=null;state.exportText=null;render();
 }
@@ -321,7 +322,7 @@ function openEditor(){
   return;
  }
  if(detail?.source==='saved'){
-  const item=savedData[state.title].find(row=>row.id===detail.id);
+  const item=savedDetailItem();
   if(!item){notify('找不到這副牌組');return;}
   releaseCloudOrigin(item.id);
   state.counts[state.title]={...item.counts};
@@ -374,20 +375,22 @@ async function deleteCurrentDeck(){
  const title=state.title;
  const cloud=state.cloudOrigin?.title===title?state.cloudOrigin:null;
  const savedId=state.screen==='detail'&&state.detail?.source==='saved'?state.detail.id:state.selectedSaved[title];
- if(!cloud&&!savedId){notify('還沒有可刪除的已儲存牌組。');return;}
+ const savedIndex=state.screen==='detail'&&state.detail?.source==='saved'?state.detail.index:null;
+ if(!cloud&&!savedId&&!Number.isInteger(savedIndex)){notify('還沒有可刪除的已儲存牌組。');return;}
  if(cloud){
   try{
    const response=await fetch('/api/decks/'+encodeURIComponent(cloud.remoteId),{method:'DELETE',credentials:'same-origin'});
    if(!response.ok&&response.status!==404){notify('帳號沒有刪除這副牌組。');return;}
   }catch{notify('目前連不到帳號，沒有刪除。');return;}
   state.cloudOrigin=null;
+  cloudDecks=cloudDecks.filter(row=>row.id!==cloud.remoteId);
  }
- if(savedId){
-  savedData[title]=savedData[title].filter(row=>row.id!==savedId);
+ if(savedId||Number.isInteger(savedIndex)){
+  savedData[title]=savedData[title].filter((row,index)=>Number.isInteger(savedIndex)?index!==savedIndex:row.id!==savedId);
   try{persistSaved(title);}catch(error){notify('無法刪除：'+error.message);return;}
   if(state.selectedSaved[title]===savedId)state.selectedSaved[title]=null;
  }
- state.screen='gallery';state.detail=null;state.inspection=null;state.zoom=false;
+ state.screen=state.listOrigin==='library'?'library':'gallery';state.detail=null;state.inspection=null;state.zoom=false;
  notify('已刪除牌組。');
  render();
 }
@@ -416,7 +419,7 @@ function bind(){
   }
   if(data.builderClear!==undefined){state.search='';state.type=state.color=state.energy='all';state.energies=[];state.generate='all';state.sort='energy-asc';render();return;}
   if(data.coverId){
-   const item=savedData[state.title].find(row=>row.id===state.detail?.id);
+   const item=savedDetailItem();
    if(!item)return;
    item.coverId=data.coverId;item.updatedAt=new Date().toISOString();
    try{persistSaved(state.title);}catch(error){notify('無法更新封面：'+error.message);return;}
@@ -478,7 +481,7 @@ function bind(){
    if(!check.ready){notify(check.issues[0]||'牌組尚未符合 V2');return;}
    try{
     sessionStorage.setItem(V2_EDITOR_TRANSFER_KEY,JSON.stringify({title:list.title,name:list.name,counts:check.counts,deckRecordId:activeDeckRecordId()}));
-    persist();window.location.assign('/');
+    persist();window.location.assign('/universal-v2-preview.html');
    }catch(e){notify('無法轉交牌組：'+e.message);}
    return;
   }
@@ -492,7 +495,7 @@ function bind(){
  if(name)name.oninput=()=>{state.names[state.title]=name.value.slice(0,40);persist();};
  const rename=$('#deckRename');
  if(rename)rename.onchange=()=>{
-  const item=savedData[state.title].find(row=>row.id===state.detail?.id);
+  const item=savedDetailItem();
   if(!item)return;
   item.name=rename.value.trim().slice(0,40)||item.name;
   item.updatedAt=new Date().toISOString();
