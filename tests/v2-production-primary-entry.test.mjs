@@ -9,7 +9,9 @@ test('production root resolves to account entry and preserves V2 battle', () => 
   assert.ok(routes.rewrites.some(route => route.source === '/' && route.destination === '/online.html'));
   const entry = read('dist/universal-v2-preview.html');
   assert.match(entry, /<script type="module" src="universal-v2-preview\.mjs(?:\?v=[^"]+)?"/);
-  assert.match(entry, /UNION ARENA V2 正式對戰/);
+  assert.match(entry, /<title>V2 對戰設定｜UNION ARENA<\/title>/);
+  assert.match(entry, /id="start-game"/);
+  assert.match(entry, /class="ua-site-header"/);
   assert.doesNotMatch(entry, /EXPERIMENTAL · V2 PREVIEW/);
 });
 
