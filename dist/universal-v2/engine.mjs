@@ -17158,12 +17158,27 @@ function openTriggerCards(pack,s){
  }
  return cards;
 }
+// The attacking character is already on a public line. Damage and Impact are
+// the numbers the defender needs before choosing to block. Hidden hand, deck
+// and life identities are not copied.
+function publicAttackView(pack,s){
+ if(s.pending?.kind!=='block')return null;
+ const attacker=liveAttacker(s,s.pending.attackerUid);
+ if(!attacker)return null;
+ const printed=card(pack,attacker);
+ const owner=Number(String(attacker.uid).split('-')[0]);
+ return {owner,uid:attacker.uid,cardId:attacker.cardId,name:printed.name,
+  color:printed.color||'',bp:bp(pack,s,attacker),
+  damage:universalAttackDamage(pack,s,attacker),
+  impact:universalImpact(pack,s,attacker)};
+}
 export function universalPublicView(pack,s,viewer=0){
  assertUniversalMatch(pack,s);
  if(!playerIndex(viewer))throw Error('Invalid viewer');
  return {title:s.title,playerTitles:[...s.packIds],status:s.status,winner:s.winner,phase:s.phase,turn:s.turn,
   active:s.active,actor:actor(s),
   pending:s.pending?{kind:s.pending.kind,player:s.pending.player}:null,
+  battle:publicAttackView(pack,s),
   openTriggers:openTriggerCards(pack,s),
   publicReveals:s.publicReveals.map(x=>({...x})),
   players:s.players.map((pl,p)=>({
