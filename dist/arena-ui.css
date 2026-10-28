@@ -54,7 +54,9 @@ body.arena-site{background:#07090f;color:#e8edf5}
 .arena-recent p{margin:6px 0}
 
 .arena-editor.vdb{max-width:none;color:#e8edf5;margin:0}
-.arena-editor-grid{display:grid;grid-template-columns:minmax(300px,380px) minmax(0,1fr) minmax(260px,320px);gap:12px;align-items:start}
+.arena-editor-grid{display:grid;grid-template-columns:minmax(300px,380px) minmax(0,1fr);gap:12px;align-items:start}
+/* The complete deck summary now follows the editor rather than occupying a sidebar. */
+.arena-editor>.arena-info{box-sizing:border-box;width:100%;margin-top:16px}
 .arena-editor .vdb-finder,.arena-deck,.arena-info,.arena-manage-list,.arena-manage-main,.arena-manage-side{background:#10141c;border:1px solid #242b3a;border-radius:16px;padding:12px;min-width:0}
 .arena-editor .vdb-pool-grid{display:flex;flex-direction:column;max-height:68vh;overflow:auto}
 .arena-editor .arena-card-row{display:grid;grid-template-columns:72px minmax(0,1fr) auto;gap:8px;align-items:center;background:#0c1018;border-color:#2a3344}
@@ -107,9 +109,8 @@ body.arena-site{background:#07090f;color:#e8edf5}
 @media(max-width:1100px){
  .arena-editor-grid,.arena-manage,.arena-entries{grid-template-columns:1fr}
  .arena-editor-grid{display:flex;flex-direction:column}
- .arena-info{order:0}
- .arena-pool{order:1}
- .arena-deck{order:2}
+ .arena-editor-grid>.arena-pool{order:0;width:100%;box-sizing:border-box}
+ .arena-editor-grid>.arena-deck{order:1;width:100%;box-sizing:border-box}
  .arena-deck-fold>summary{display:flex;align-items:center;justify-content:space-between;min-height:44px;margin-bottom:8px;color:#fff;font-weight:800;cursor:pointer}
  .arena-editor .vdb-pool-grid{max-height:none}
  .arena-top{flex-wrap:wrap;height:auto;padding:8px 12px}
