@@ -135,6 +135,7 @@ function renderLibrary(){
 }
 // The cloud API is session-scoped. Never fall back to another user's cached decks.
 async function refreshCloudDecks(){
+ if(typeof window==='undefined'||!window.location?.origin)return;
  try{
   const options={credentials:'same-origin',redirect:'error'};
   const userResponse=await fetch('/api/me',options);
@@ -294,7 +295,7 @@ async function mirrorCloudDeck(title,entry){
    body:JSON.stringify({name:entry.name,title,counts:entry.counts,localId})});
   if(response.ok){
    notify(origin?'已更新原本的帳號牌組':'已儲存，並同步到登入帳號');
-   refreshCloudDecks();
+   if(cloudUser)refreshCloudDecks();
   }else if(response.status===401||response.status===404){
    notify('已儲存在瀏覽器；帳號沒有登入或已切換，無法更新雲端牌組。');
   }else{
@@ -458,7 +459,7 @@ function bind(){
   if(data.action==='zoomCard'){if(state.inspection)state.zoom=true;render();return;}
   if(data.action==='duplicateDeck'){duplicateCurrentDeck();return;}
   if(data.action==='deleteDeck'){deleteCurrentDeck();return;}
-  if(data.action==='backLibrary'){state.screen='library';state.listOrigin='library';state.detail=null;state.inspection=null;state.zoom=false;state.exportText=null;render();return;}
+  if(data.action==='backLibrary'){state.screen='library';state.listOrigin='library';state.detail=null;state.inspection=null;state.zoom=false;state.exportText=null;render();refreshCloudDecks();return;}
   if(data.action==='pickTitle'){state.ready=false;state.screen='chooseTitle';state.listOrigin='library';state.detail=null;state.search='';render();return;}
   if(data.action==='editDeck'){openEditor();return;}
   if(data.action==='toggleShare'){toggleShare();return;}
@@ -577,4 +578,4 @@ if(!requestedDeck&&!importAccountDeckHandoff()){
  else if(hash==='rules'){state.ready=true;state.screen='rules';}
 }
 render();
-refreshCloudDecks();
+if(state.screen==='library')refreshCloudDecks();
