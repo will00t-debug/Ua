@@ -82,8 +82,8 @@ test('C2 registers seven whole prints and leaves no exact reuse unported',()=>{
  assert.equal(x.report.readyFromKeywords,0);
  assert.equal(x.report.engineBlocked,0);
  assert.equal(x.report.partial,0);
- assert.equal(x.report.reviewPending,46);
- assert.equal(x.report.bleachSaoUnported,46);
+ assert.equal(x.report.reviewPending,36);
+ assert.equal(x.report.bleachSaoUnported,36);
  for(const id of C2_REGISTERED){
   const title=id.startsWith('BLC-')?'bleach':'sword-art-online';
   assert.equal(EXPECTED_V2_IDS[title].includes(id),true);

@@ -276,8 +276,14 @@ test('blocked next-wave cards are source-locked, NOT wrongly registered with par
  // SAO-1-031 graduated only after R37 exact full-print test and separate manifest pin.
  assert.deepEqual(pack.cards['SAO-1-031'].effects.onPlay,[{op:'searchTopUpToTwoBottom',count:5,max:2,rest:'bottom',
   filters:[{field:'name',value:'キリト'},{field:'name',value:'アリス'},{field:'name',value:'ユージオ'}],logic:'any'}]);
+ // SAO-2-062 graduated after its draw, discard, and named AP recovery were tested together.
+ const longing=SAO_OFFICIAL_CARDS.find(c=>c.id==='SAO-2-062');
+ assert.match(longing.effectJa,/2枚引き.*2枚場外/);
+ assert.deepEqual(pack.cards['SAO-2-062'].effects.onPlay,[
+  {op:'drawDiscard',count:2,discardCount:2},
+  {op:'recoverAp',count:1,whenName:'ユナ'}
+ ]);
  const pending=[
-  ['SAO-2-062',/2枚引き.*2枚場外/,pack],
   ['SAO-2-018',/【退場時】.*上から5枚見る/,pack],
   ['SAO-1-081',/自分のターン開始時.*退場/,pack],
   ['MST-1-028',/山札の上から2枚.*残りを場外/,mst],

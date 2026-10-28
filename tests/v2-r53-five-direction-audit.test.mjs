@@ -36,6 +36,7 @@ test('R53 five-direction census checks all 700 source identities, not keyword RE
  assert.ok(saos.find(x=>x.id==='SAO-2-063'&&x.registered&&x.status==='REGISTERED'));
  assert.ok(saos.find(x=>x.id==='SAO-1-083'&&x.registered&&x.status==='REGISTERED'));
  assert.ok(saos.find(x=>x.id==='SAO-2-009'&&x.registered&&x.status==='REGISTERED'));
+ assert.ok(saos.find(x=>x.id==='SAO-2-062'&&x.registered&&x.status==='REGISTERED'));
  assert.equal(saos.length,12);
  assert.ok(unreviewed.every(x=>x.status==='REVIEW PENDING'));
 });
