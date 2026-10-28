@@ -8,7 +8,7 @@ test('standalone V2 deck landing uses dark login-matched theme loaded last',()=>
  const html=read('dist/index.html');
  const css=read('dist/arena-deck-landing.css');
  assert.match(html,/<body class="arena-site">/);
- assert.match(html,/href="arena-deck-landing\.css\?v=20261028a"/);
+ assert.match(html,/href="arena-deck-landing\.css\?v=20261028logos1"/);
  assert.ok(html.indexOf('arena-deck-landing.css')>html.indexOf('arena-ui.css'),
   'Dark landing CSS must override older light builder styles');
  assert.match(css,/body\.arena-site \.v2e-shell\{/);

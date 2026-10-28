@@ -65,3 +65,51 @@ body.arena-site .vdb-title-tile:disabled{opacity:.44;cursor:not-allowed}
 @media(max-width:680px){body.arena-site .v2e-shell>.arena-top{position:relative;min-height:0;padding:13px 12px}body.arena-site .arena-top .arena-brand{min-width:0}body.arena-site .arena-top .arena-brand strong{font-size:19px}body.arena-site .v2e-shell .v2e-main{padding:16px 12px 28px}body.arena-site .v2e-shell .v2e-heading{flex-wrap:wrap;align-items:stretch;min-height:0;padding:17px}body.arena-site .v2e-heading .v2e-primary{width:100%}body.arena-site .vdb.arena-editor>.vdb-intro{padding:18px 12px;margin-bottom:13px}body.arena-site .vdb.arena-editor>.vdb-intro h1{font-size:25px}body.arena-site .vdb.arena-editor>.vdb-intro p{font-size:12px}body.arena-site .vdb-title-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}body.arena-site .vdb-title-tile{min-height:0;border-radius:12px}body.arena-site .vdb-title-grid .vdb-tile-art{height:136px;min-height:136px}body.arena-site .vdb-title-grid .vdb-tile-art img{height:159px;max-width:82%}body.arena-site .vdb-title-tile:before{top:7px;left:8px;padding:3px 6px;font-size:10px}body.arena-site .vdb-title-tile:after{top:8px;right:8px;padding:4px 6px;font-size:9px;content:"選擇 ↗"}body.arena-site .vdb-title-grid .vdb-tile-info{min-height:75px;padding:10px}body.arena-site .vdb-title-grid .vdb-tile-info strong{font-size:13px}body.arena-site .vdb-title-grid .vdb-tile-info small{font-size:11px}}
 @media(max-width:390px){body.arena-site .vdb-title-grid .vdb-tile-art{height:121px;min-height:121px}body.arena-site .vdb-title-grid .vdb-tile-art img{height:145px}body.arena-site .vdb-title-tile:after{content:"↗";font-size:12px}}
 @media(prefers-reduced-motion:reduce){body.arena-site .vdb-title-tile,body.arena-site .vdb-title-grid .vdb-tile-art img{transition:none}}
+
+/* Title picker: recognizable series wordmarks, no representative card image. */
+body.arena-site .vdb-title-grid .vdb-tile-art .vdb-title-logo-plate{
+ position:relative;z-index:2;display:flex;align-items:center;justify-content:center;
+ width:min(86%,330px);height:68%;min-height:85px;margin:auto;padding:16px 14px;
+ background:linear-gradient(145deg,#ffffffed,#e3ecf7ed);
+ border:1px solid #fff9;border-radius:13px;
+ box-shadow:0 15px 38px #0008,inset 0 1px 0 #fff;
+ transform:rotate(-2deg);
+}
+body.arena-site .vdb-title-grid .vdb-tile-art img.vdb-title-logo{
+ display:block;width:100%;height:auto;max-height:100%;max-width:100%;
+ object-fit:contain;filter:drop-shadow(0 2px 2px #17243622);
+ transform:none;transition:none;
+}
+body.arena-site .vdb-title-grid .vdb-title-tile:hover .vdb-tile-art img.vdb-title-logo{
+ transform:none;
+}
+body.arena-site .vdb-title-grid .vdb-tile-art img.vdb-title-logo[hidden],
+body.arena-site .vdb-title-grid .vdb-tile-art .vdb-title-logo-fallback[hidden]{display:none!important}
+body.arena-site .vdb-title-logo-fallback{
+ display:block;max-width:100%;color:#152239;font-weight:950;
+ font-size:clamp(14px,2vw,21px);letter-spacing:.01em;text-align:center;
+ line-height:1.35;overflow-wrap:anywhere;
+}
+body.arena-site .vdb-logo-credits{
+ max-width:1070px;margin:12px auto 0;padding:10px 15px;
+ border:1px solid #304259;border-radius:11px;
+ background:#0d1828b7;color:#a9bed6;font-size:11px;line-height:1.7;
+}
+body.arena-site .vdb-logo-credits summary{
+ min-height:30px;display:list-item;cursor:pointer;color:#93b9db;
+ font-weight:750;list-style-position:inside;
+}
+body.arena-site .vdb-logo-credits ul{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:7px 22px;margin:9px 0;padding-left:18px;
+}
+body.arena-site .vdb-logo-credits li{overflow-wrap:anywhere}
+body.arena-site .vdb-logo-credits a{color:#88c7ff;text-decoration:underline;text-underline-offset:3px}
+body.arena-site .vdb-logo-credits a:focus-visible{outline:2px solid #6bb5ff;outline-offset:2px}
+@media(max-width:680px){
+ body.arena-site .vdb-title-grid .vdb-tile-art .vdb-title-logo-plate{
+  min-height:0;width:89%;height:71%;padding:9px 7px;border-radius:9px;
+ }
+ body.arena-site .vdb-title-logo-fallback{font-size:13px}
+ body.arena-site .vdb-logo-credits ul{grid-template-columns:1fr}
+}
