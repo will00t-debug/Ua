@@ -34,7 +34,8 @@ test('battle UI is classic BLEACH Arena, but every action uses V2 legal reducer'
  assert.match(js,/dispatchUniversalAction\(app\.packs,app\.state,a,\{actor:0\}\)/);
  assert.match(js,/isExactLegal\(a,legal\)/);
  assert.match(js,/universalPublicView\(app\.packs,s,0\)/);
- assert.match(js,/app\.targetChoices=moves/);
+ assert.match(js,/app\.targetChoices=acts/);
+ assert.match(js,/raidClickPlan\(/);
  assert.doesNotMatch(js,/from '\.\/engine\.mjs'/);
 });
 
