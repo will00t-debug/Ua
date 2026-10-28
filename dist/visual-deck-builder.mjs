@@ -1,5 +1,6 @@
 import {renderDeckRecord} from './deck-records.mjs';
 import {titleLogo} from './title-logos.mjs';
+import {coverChoices,displayCoverCard,validDeckCoverId} from './deck-cover-selection.mjs';
 
 function vdbEsc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function vdbImage(c){return c?.onlineImage||c?.image||'assets/mark.svg';}
@@ -97,7 +98,7 @@ function energyChips(energies,energy){
  return button('all','全部',allOn)+ENERGY_KEYS.map(id=>button(id,id,!allOn&&on(id))).join('');
 }
 
-function renderVisualDeckBuilder({titles,titleId,ready,tab,search,type,color,energy,energies,generate='all',sort='energy-asc',counts,name,nameId,savedId,savedOptions,saveAction,newAction,issues,allowSave=true,v2SupportedIds=null,v2Ready=false,reselectLabel='‹ 返回牌組列表',focusCard=null,record=null,recordView='all',allowDelete=false}={}) {
+function renderVisualDeckBuilder({titles,titleId,ready,tab,search,type,color,energy,energies,generate='all',sort='energy-asc',counts,name,nameId,savedId,savedOptions,saveAction,newAction,issues,allowSave=true,v2SupportedIds=null,v2Ready=false,reselectLabel='‹ 返回牌組列表',focusCard=null,record=null,recordView='all',allowDelete=false,coverId=null,coverPicker=false}={}) {
  const list=Array.isArray(titles)?titles:[];
  const title=list.find(item=>item.id===titleId)||list[0]||{id:'',label:'',cards:[]};
  const titleName=TITLE_NAMES[title.id]||title.label||'';
@@ -135,20 +136,23 @@ function renderVisualDeckBuilder({titles,titleId,ready,tab,search,type,color,ene
  <div class="vdb-pool-grid">${model.results.length?model.results.map(cardLine).join(''):'<div class="vdb-empty">找不到符合條件的卡片。清空篩選後可以重新查看全部卡牌。</div>'}</div>
  </section>`;
  const deck=`<section class="arena-deck" aria-label="牌組內容"><details class="arena-deck-fold" open><summary>目前牌組 ${model.total} / 50</summary><div class="arena-deck-body"><div class="arena-deck-head"><div><small>${vdbEsc(titleName)}</small><h2 id="deckHeading">${vdbEsc(name||'未命名牌組')}</h2><p>${vdbEsc(chosenColors)} · ${model.total} / 50 張</p></div><div class="arena-deck-actions"><button type="button" data-action="visualExport">複製牌組</button>${battleButton}${allowDelete?'<button type="button" data-action="deleteDeck">刪除牌組</button>':''}<button type="button" data-action="${vdbEsc(newAction)}">新建空白</button></div></div><nav class="vdb-tabs" aria-label="組卡步驟"><button type="button" data-builder-tab="pick" class="${tab==='pick'?'active':''}">① 選擇卡片</button><button type="button" data-builder-tab="overview" class="${tab==='overview'?'active':''}">牌組總覽 <span>${model.total}</span></button></nav><div class="arena-name-row"><label>牌組名稱<input id="${vdbEsc(nameId)}" maxlength="40" value="${vdbEsc(name||'')}" placeholder="替自己的牌組取個名字"></label><label>已儲存的牌組<select id="${vdbEsc(savedId)}"><option value="">${titleId==='bleach'?'編輯中的牌組':'選擇儲存的牌組'}</option>${(savedOptions||[]).map(option=>`<option value="${vdbEsc(option.value)}">${vdbEsc(option.label)}</option>`).join('')}</select></label></div>${issuesBlock}<div class="vdb-review arena-deck-board">${deckCards}</div><div class="arena-triggers" aria-label="觸發統計">${triggers}<p>AP 卡不計入 50 張主牌組。</p></div></div></details></section>`;
- const heroCover=(focusCard&&!isApCard(focusCard)?focusCard:null)||model.chosen[0]||model.eligible[0]||null;
+ const heroCover=displayCoverCard(title.cards,counts,coverId);
+ const selectedCoverId=validDeckCoverId(title.cards,counts,coverId);
  const heroGallery=model.chosen.map(card=>`<button type="button" class="arena-hero-thumb" data-inspect="${vdbEsc(card.id)}" aria-label="查看 ${vdbEsc(card.name||card.id)}，牌組中 ${model.amount(card)} 張">${img(card)}<b>×${model.amount(card)}</b></button>`).join('');
  const hero=`<section id="arena-editor-start" class="arena-builder-hero" aria-label="正在編輯的牌組">
  <div class="arena-hero-overview">
-  <button type="button" class="arena-hero-cover" ${heroCover?'data-inspect="'+vdbEsc(heroCover.id)+'"':''} aria-label="查看封面卡圖">${heroCover?img(heroCover):'<img src="assets/mark.svg" alt="尚未選擇卡圖">'}</button>
-  <div class="arena-hero-description"><h2>${vdbEsc(name||'新建卡組')}</h2><p>${vdbEsc(titleName)}</p><small>點選卡圖可查看效果；牌組名稱可在下方編輯。</small></div>
+  <button type="button" class="arena-hero-cover" data-builder-cover-open="1" aria-label="更換牌組封面">${heroCover?img(heroCover):'<span class="arena-cover-empty">＋<small>選擇封面</small></span>'}<span class="arena-cover-edit">更換封面</span></button>
+  <div class="arena-hero-description"><h2>${vdbEsc(name||'新建卡組')}</h2><p>${vdbEsc(titleName)}</p><small>封面可自由更換，從已加入的卡片中選擇；牌組名稱可在下方編輯。</small></div>
   <div class="arena-hero-actions"><button type="button" class="arena-preview-toggle" data-builder-tab="${tab==='overview'?'pick':'overview'}" role="switch" aria-checked="${tab==='overview'}"><span>預覽模式</span><span class="arena-switch-track" aria-hidden="true"><i></i></span></button>
   <button type="button" data-action="${vdbEsc(saveAction)}" class="arena-hero-save" ${allowSave?'':'disabled'}>儲存卡組</button></div>
  </div>
  <div class="arena-count-tabs" aria-label="牌組種類分布">${model.groups.map(group=>`<button type="button" data-builder-type="${vdbEsc(group.id)}" class="${type===group.id?'active':''}" aria-pressed="${type===group.id}">${group.label}卡 <b>${group.total}</b></button>`).join('')}</div>
  <div class="arena-hero-gallery" aria-label="已加入的卡片">${heroGallery||'<p>尚未加入卡片。從下方列表點 ＋ 就能開始組牌。</p>'}</div>
  </section>`;
+ const coverOptions=coverChoices(title.cards,counts);
+ const coverDialog=coverPicker?`<div class="arena-cover-backdrop"><section class="arena-cover-dialog" role="dialog" aria-modal="true" aria-label="選擇牌組封面"><div class="arena-cover-dialog-head"><h2>選擇牌組封面</h2><button type="button" data-builder-cover-close="1" aria-label="關閉選擇封面">×</button></div><p>從目前牌組已有的卡片挑選封面，不會改動卡片張數。</p><div class="arena-cover-options">${coverOptions.length?coverOptions.map(card=>`<button type="button" class="arena-cover-option${selectedCoverId===card.id?' is-chosen':''}" data-builder-cover-select="${vdbEsc(card.id)}" aria-pressed="${selectedCoverId===card.id}" aria-label="選擇 ${vdbEsc(card.nameZh||card.name||card.id)} 作為封面">${img(card)}<span>${vdbEsc(card.nameZh||card.name||card.id)}</span>${selectedCoverId===card.id?'<b>✓ 目前封面</b>':''}</button>`).join(''):'<p class="arena-cover-no-cards">牌組目前沒有卡片。先在下方列表點「＋」加入卡片，再選擇封面。</p>'}</div><div class="arena-cover-dialog-actions"><button type="button" data-builder-cover-reset="1" ${coverOptions.length?'':'disabled'}>使用自動封面</button><button type="button" data-builder-cover-close="1">完成</button></div></section></div>`:'';
  const info=`<aside class="arena-info" aria-label="牌組資訊"><h2>牌組資訊</h2><p class="arena-total"><strong>${model.total} / 50</strong></p><ul class="arena-type-counts">${model.groups.map(group=>`<li><span>${group.label}</span><b>${group.total}</b></li>`).join('')}</ul><h3>能量曲線</h3><div class="arena-curve" aria-label="必要能量分布">${bars(model.energyCurve)}</div><h3>產能分布</h3><div class="arena-curve arena-curve-gen" aria-label="產能分布">${bars(model.generateCurve)}</div>${renderDeckRecord({record,view:recordView})}<div class="arena-detail"><h3>卡片詳細資訊</h3>${focus}</div></aside>`;
- return `<div class="vdb arena-editor">${hero}<div class="arena-editor-grid">${pool}${deck}</div><p class="vdb-footnote">產能是卡牌放到能源區時產生的能源，必要能量是登場所需能量，兩者不是 AP。加減卡即時寫進這副牌，同卡號上限沿用各卡自己的張數限制。</p>${info}</div>`;
+ return `<div class="vdb arena-editor">${hero}${coverDialog}<div class="arena-editor-grid">${pool}${deck}</div><p class="vdb-footnote">產能是卡牌放到能源區時產生的能源，必要能量是登場所需能量，兩者不是 AP。加減卡即時寫進這副牌，同卡號上限沿用各卡自己的張數限制。</p>${info}</div>`;
 }
 
 export {makeVisualDeckModel,renderVisualDeckBuilder};
