@@ -567,3 +567,34 @@ export function uiActionGroup(action){
  if(['play','raid','event','move','step','attack','activate','handActivate','card','reorderUnder'].includes(action.type))return 'card';
  return 'pending';
 }
+// Display data for a controller-only pending choice. Copies printed identity
+// fields only; the legal action object is never decorated or rewritten.
+export function pendingChoiceCards(option){
+ if(!option||typeof option!=='object')return [];
+ const listed=Array.isArray(option.cards)?option.cards:[];
+ const source=listed.length?listed:(option.card?[option.card]:[]);
+ const cards=[];
+ for(const card of source){
+  if(!card||typeof card.cardId!=='string'||!card.cardId)continue;
+  cards.push({
+   cardId:card.cardId,
+   name:typeof card.name==='string'&&card.name?card.name:card.cardId,
+   color:typeof card.color==='string'?card.color:''
+  });
+ }
+ return cards;
+}
+export function pendingChoiceCaption(label,names){
+ const clean=String(label||'').replace(/\s+/g,' ').trim();
+ if(!clean||!Array.isArray(names)||!names.length)return '';
+ let text=clean;
+ for(const name of names){
+  if(typeof name!=='string'||!name)continue;
+  text=text.split(name).join(' ');
+ }
+ text=text.replace(/[|｜]+/g,' ').replace(/\s+/g,' ')
+  .replace(/^[\s·:：,，、\-]+|[\s·:：,，、\-]+$/g,'').trim();
+ // Keep the full instruction when it does not repeat the printed name,
+ // so top/bottom or hand/outside modes stay distinguishable.
+ return text&&text!==clean?text:clean;
+}
