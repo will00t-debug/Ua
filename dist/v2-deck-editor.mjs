@@ -251,7 +251,7 @@ function render(){
  const t=TITLES.find(item=>item.id===state.title)||TITLES[0],info=status();
  const countAll=t.cards.length;
  const browsing=state.ready&&(state.screen==='gallery'||state.screen==='detail');
- const pageTitle=state.screen==='library'?'我的牌組':state.screen==='chooseTitle'?'建立新牌組':state.screen==='detail'?'牌組詳情':state.screen==='gallery'?'我的牌組':state.screen==='records'?'我的戰績':state.screen==='rules'?'規則／FAQ':'編輯牌組';
+ const pageTitle=state.screen==='library'?'牌組管理':state.screen==='chooseTitle'?'建立新牌組':state.screen==='detail'?'牌組詳情':state.screen==='gallery'?'我的牌組':state.screen==='records'?'我的戰績':state.screen==='rules'?'規則／FAQ':'編輯牌組';
  // Designated decks are opened from the visual list. renderBuiltinBleachPanel stays
  // in the catalogue module and is not mounted above the editor.
  const designatedPanel='';
