@@ -5,6 +5,30 @@ import {createUniversalPack} from './pack.mjs';
 import {parseNamedFieldRetireBonus} from './ability-templates.mjs';
 
 const PRINTED_PINS=Object.freeze({
+ "MST-1-005":{kind:"emptyFieldImpactOwnEffectBp",
+  nameJa:"エリス",color:"blue",energy:2,ap:1,bp:2500,gen:1,
+  type:"character",traits:[],trigger:null,
+  effectJa:"自分の場にカードが1枚もない場合、手札にあるこのカードの必要エナジーを 〖青×2〗 減らす。\n 〖インパクト無効〗 （このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）\n 〖自分のターン中〗 このターン中に自分の効果でキャラカードを〔登場させるかレイドさせている〕場合、このキャラはBP+500。"},
+ "MST-1-014":{kind:"emptyFieldSameLineEventTop",
+  nameJa:"シルフィエット",color:"blue",energy:2,ap:1,bp:1500,gen:1,
+  type:"character",traits:[],trigger:"draw",
+  effectJa:"自分の場にカードが1枚もない場合、手札にあるこのカードの必要エナジーを 〖青×2〗 減らす。\n 〖自分のターン中〗 このターン中に自分がイベントカードを使用していて、同じラインに〈ルーデウス〉がある場合、このキャラはBP+1500。\n 〖登場時〗 自分の山札の上から2枚見て、1枚まで場外に置き、残りを望む順で山札の上に置く。"},
+ "MST-1-021":{kind:"namedHandRestOrRaidThenNamesActive",
+  nameJa:"ルイジェルド",color:"blue",energy:4,ap:2,bp:4000,gen:1,
+  type:"character",traits:[],trigger:"draw",
+  effectJa:"〖登場時〗 自分の手札から必要エナジーが3以下で消費APが1の青の〔〈ルーデウス〉か〈エリス〉か〈ルイジェルド〉〕を1枚まで自分の場にレストで登場させるかレイドさせる。\n 〖起動メイン〗 〖ターン1〗 自分の場に〈ルーデウス〉と〈エリス〉がある場合のみ発動できる。このキャラをアクティブにする。"},
+ "MST-1-035":{kind:"optionalDrawPerOwnNames",
+  nameJa:"お前は戦士だ",color:"blue",energy:4,ap:1,bp:0,gen:0,
+  type:"event",traits:[],trigger:"draw",
+  effectJa:"以下から3つまで選ぶ。\n・自分の場に〈ルーデウス〉がある場合、カードを1枚引く。\n・自分の場に〈エリス〉がある場合、カードを1枚引く。\n・自分の場に〈ルイジェルド〉がある場合、カードを1枚引く。"},
+ "MST-1-036":{kind:"namedPlayOutsideEventPairRetire",
+  nameJa:"豪雷積層雲",color:"blue",energy:5,ap:1,bp:0,gen:0,
+  type:"event",traits:[],trigger:"special",
+  effectJa:"このカードは自分の場に〈ロキシー〉がある場合のみ使用できる。\n自分の場外にあるイベントカード2枚につき、全ての場所でこのカードの必要エナジーを 〖青×1〗 減らす。\nBP5000以下の相手のフロントLのキャラを1枚選び、退場させる。"},
+ "MST-1-058":{kind:"impactNullAllTraitEnergyBuff",
+  nameJa:"ザノバ＆ジュリエット",color:"green",energy:5,ap:1,bp:4000,gen:0,
+  type:"character",traits:["ラノア魔法大学"],trigger:"active",
+  effectJa:"〖インパクト無効〗 （このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）\n 〖起動メイン〗 〖ターン1〗 自分の発生エナジーが7以上あり、自分の場のキャラが全て［特徴：ラノア魔法大学］の場合のみ発動できる。このキャラは次の自分のターン開始時まで、BP+500。"},
  "MST-1-009":{kind:"onOwnEffectEntryChooseTimedSelf",
   nameJa:"エリス",color:"blue",energy:3,ap:1,bp:3500,gen:1,
   type:"character",traits:[],trigger:"raid",
@@ -856,6 +880,43 @@ export function verifiedMstV2Cards(){
   if(pin.kind==='onPlayBuffOwnOther1000')
    card.templateEffects={onPlay:[{template:'buffOwnField',
     filter:{field:'type',value:'character'},bp:1000,optional:true,excludeSelf:true}]};
+  if(pin.kind==='emptyFieldImpactOwnEffectBp'){
+   card.emptyOwnFieldHandEnergyDiscount=2;
+   card.impactNull=true;
+   card.passiveBonuses=[{condition:{kind:'ownEffectCharacterEntryOrRaidThisTurn',turn:'own'},bp:500}];
+  }
+  if(pin.kind==='emptyFieldSameLineEventTop'){
+   card.emptyOwnFieldHandEnergyDiscount=2;
+   card.passiveBonuses=[{condition:{logic:'all',turn:'own',checks:[
+    {kind:'ownEventUsedThisTurn',turn:'own'},
+    {kind:'sameLineName',turn:'own',name:'ルーデウス'}
+   ]},bp:1500}];
+   card.effects={onPlay:[{op:'inspectTopAnyOutside',count:2,rest:'top',maxOutside:1}]};
+  }
+  if(pin.kind==='namedHandRestOrRaidThenNamesActive'){
+   card.effects={onPlay:[{op:'deployOwnHandRestOrRaid',type:'character',color:'blue',
+    maxEnergy:3,ap:1,max:1,optional:true,
+    names:['ルーデウス','エリス','ルイジェルド']}]};
+   card.mainAbility={op:'onceActiveIfAllNames',oncePerTurn:true,
+    names:['ルーデウス','エリス']};
+  }
+  if(pin.kind==='optionalDrawPerOwnNames')
+   card.effects={onPlay:[
+    {op:'optionalDrawIfOwnName',name:'ルーデウス'},
+    {op:'optionalDrawIfOwnName',name:'エリス'},
+    {op:'optionalDrawIfOwnName',name:'ルイジェルド'}
+   ]};
+  if(pin.kind==='namedPlayOutsideEventPairRetire'){
+   card.playRequiresOwnName='ロキシー';
+   card.outsideEventPairEnergyDiscount={per:2,amount:1};
+   card.effects={onPlay:[{op:'retireOppFrontUnderBp',bp:5000}]};
+   card.triggerEffect={op:'retireOppFront'};
+  }
+  if(pin.kind==='impactNullAllTraitEnergyBuff'){
+   card.impactNull=true;
+   card.mainAbility={op:'onceBuffUntilNextIfEnergyAllTrait',oncePerTurn:true,
+    minEnergy:7,trait:'ラノア魔法大学',bp:500};
+  }
   return card;
  });
 }

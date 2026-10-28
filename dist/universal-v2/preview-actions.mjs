@@ -244,7 +244,11 @@ export function uiActionLabel(action,{pack,state}={}){
    '狙擊攻擊：'+name()+' → '+uiCardLabel(pack,state,action.targetUid):
    '宣告攻擊：'+name();
   case 'activateRemoved':return '起動移除區主要：本回合產生能源變為 2 倍';
-  case 'activate':return action.mode==='front'?
+  case 'activate':return action.mode==='namesActive'?
+    '起動主要：場上同時有指定名稱時，將此角色轉為 ACTIVE':
+    action.mode==='traitBuff'?
+    '起動主要：發生能源與特徵齊備時，下次己方回合開始前 BP＋500':
+    action.mode==='front'?
     '起動主要：前線也能產生能源':
     action.mode==='ready20'?'起動主要：將 1 張己方角色轉為 ACTIVE':
     action.mode==='line'?'起動主要：棄 1 張手牌，本回合可從能源線攻擊':
@@ -394,6 +398,7 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseFacedownOutside':return '將蓋牌放到場外：'+name();
   case 'reorderUnder':return '調整蓋牌順序';
   case 'chooseMayDraw':return action.mode==='draw'?'抽1張':'不抽牌';
+  case 'chooseNameDraw':return action.mode==='draw'?'名稱成立時抽 1 張':'不選這個名稱';
   case 'chooseRemovedOutside':return action.mode==='all'?'將符合名稱的除外卡全部送至場外':
    action.mode==='done'?'完成送至場外':'將 '+name()+' 送至場外';
   case 'chooseHandFrontActive':return '以 Active 登場於前線 '+(action.slot+1);
