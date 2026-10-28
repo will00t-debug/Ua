@@ -100,7 +100,7 @@ function imgTag(card,alt){
  return `<img src="${esc(deckCardImage(card))}" alt="${esc(alt||card?.nameZh||card?.name||card?.nameJa||'牌組封面')}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='assets/mark.svg'">`;
 }
 
-export function renderDeckGallery({tab='mine',sections=[]}={}){
+export function renderDeckGallery({tab='mine',sections=[],mode='title'}={}){
  const tabs=[['mine','我的牌組'],['shared','分享列表']].map(([id,label])=>`<button type="button" data-gallery-tab="${id}" class="${tab===id?'active':''}" aria-selected="${tab===id}" role="tab">${label}</button>`).join('');
  const body=sections.map(section=>{
   const cards=(section.items||[]).map(item=>`<button type="button" class="dkg-card" data-deck-open="${esc(item.key)}" aria-label="查看牌組 ${esc(item.name)}"><span class="dkg-card-art">${imgTag(item.cover,item.name)}</span><span class="dkg-card-copy"><strong>${esc(item.name)}</strong><small>${esc(item.time)}</small>${item.meta?`<small>${esc(item.meta)}</small>`:''}</span></button>`).join('');
@@ -108,8 +108,10 @@ export function renderDeckGallery({tab='mine',sections=[]}={}){
   const heading=section.title?`<h2>${esc(section.title)}</h2>`:'';
   return `<section class="dkg-section">${heading}<div class="dkg-cards">${cards}${empty}</div></section>`;
  }).join('');
- const create=tab==='mine'?`<button type="button" class="dkg-create" data-action="newDeck">＋ 建立新牌組</button>`:'';
- return `<div class="dkg"><div class="dkg-toolbar"><button type="button" class="dkg-back" data-action="pickTitle">‹ 更換作品</button></div><div class="dkg-tabs" role="tablist" aria-label="牌組列表">${tabs}</div>${create}${body}</div>`;
+ const isLibrary=mode==='library';
+ const create=tab==='mine'?`<button type="button" class="dkg-create" data-action="${isLibrary?'pickTitle':'newDeck'}">＋ 建立新牌組</button>`:'';
+ const toolbar=isLibrary?'<div class="dkg-library-lead"><span>MY DECKS / UNION ARENA V2</span><h2>我的牌組</h2><p>選一副牌組查看卡牌配置，再進入編輯器調整並保存。</p></div>':'<div class="dkg-toolbar"><button type="button" class="dkg-back" data-action="pickTitle">‹ 更換作品</button></div>';
+ return `<div class="dkg${isLibrary?' dkg-library':''}">${toolbar}<div class="dkg-tabs" role="tablist" aria-label="牌組列表">${tabs}</div>${create}${body}</div>`;
 }
 
 export function renderDeckDetail({name,updatedLabel,shared=false,shareEnabled=true,shareNote='',cover,total=0,groups=[],triggers={},battleReady=false}={}){
