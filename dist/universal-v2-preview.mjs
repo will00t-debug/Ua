@@ -11,6 +11,8 @@ import {listRegisteredV2Titles,registeredV2TitlePack} from './universal-v2/title
 import {V2_EDITOR_TRANSFER_KEY} from './v2-editor-compat.mjs';
 import {generateMatchSeed} from './v2-match-random-seed.mjs';
 import {recordDeckResult} from './deck-records.mjs';
+import {prepareSoloBattle,saveSoloBattle,loadSoloBattle,clearSoloBattle,
+ SOLO_BATTLE_URL,SOLO_BATTLE_PROGRESS_KEY} from './universal-v2/solo-battle-session.mjs';
 import {collectSavedV2LobbyDecks,validatedLobbyChoice,V2_MATCH_SETUP_STORAGE_KEY} from './universal-v2/lobby-saved-decks.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  universalPublicView,universalPrivateChoices,assertUniversalMatch} from './universal-v2/engine.mjs';
@@ -60,11 +62,12 @@ const el=(tag,props={},...contents)=>{
  return n;
 };
 const $=id=>document.getElementById(id);
-$('v2-coverage').textContent=
+const IS_BATTLE_PAGE=document.body?.dataset?.v2Screen==='battle';
+if(!IS_BATTLE_PAGE)$('v2-coverage').textContent=
  V2_ABILITY_TEMPLATE_IDS.length+' 種能力模板 · 已移植 '+
  v2Entries.reduce((sum,item)=>sum+item.totalV2Cards,0)+' 張真卡 Pilot';
 let editorRecordId=null;
-const app={state:null,packs:null,selectedUid:null,recordDeckId:null,recordNoted:false,
+const app={state:null,packs:null,launch:null,selectedUid:null,recordDeckId:null,recordNoted:false,
  selectedSide:null,history:[],busy:false,aiTimer:null,error:'',
  undo:null,replay:null,targetChoices:null,aiDifficulty:'normal',sequence:0,allActions:false, maxAuto:4500,autoMoves:0,aiPhaseKey:null,aiPhaseCount:0,aiFallbacks:0,aiCompletedSteps:0,lastAiProgress:'未啟動'};
 const phases=V2_PHASE_LABELS;
@@ -81,7 +84,9 @@ function imgUrl(side,id){
  return typeof source==='string'&&source.trim()?source:'assets/mark.svg';
 }
 function alertText(message){
- app.error=message;render();
+ app.error=message;
+ if(!IS_BATTLE_PAGE&&$('restart-notice'))$('restart-notice').textContent=message;
+ render();
 }
 function pushHistory(text){
  app.history.unshift(text); // Retain the full human-readable trace for bug reports.
@@ -423,7 +428,10 @@ function render(){
  const target=$('match-view');if(!target)return;
  target.replaceChildren();
  if(!app.state){
-  target.append(el('div',{class:'panel v2-empty',text:'在上方選擇你的牌組、電腦牌組及 AI 難度，再按「開始 V2 對戰」。所有卡牌結算交給 UNION ARENA V2 規則引擎。'}));
+  target.append(el('section',{class:'panel v2-empty'},
+   el('h2',{text:'尚未開始對戰'}),
+   el('p',{text:'請先在對戰設定頁選擇雙方牌組與 AI 難度，再開始 V2 對戰。'}),
+   el('a',{href:'/universal-v2-preview.html',text:'返回對戰設定'})));
   return;
  }
  const s=app.state;
