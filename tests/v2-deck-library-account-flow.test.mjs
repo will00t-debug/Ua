@@ -48,6 +48,7 @@ test('signed-in user can open a cloud deck in library, inspect cards, edit and P
   assert.equal(JSON.parse(write[0].init.body).counts[first],BLEACH_GREEN_V2_COUNTS[first]-1);
   assert.equal(JSON.parse(write[0].init.body).name,'雲端白劍');
   click({action:'backLibrary'});
+  await new Promise(resolve=>setImmediate(resolve)); // drain account list refresh before restoring globals
   assert.match(app.innerHTML,/我的牌組/);
   assert.match(app.innerHTML,/雲端白劍/);
  }finally{
