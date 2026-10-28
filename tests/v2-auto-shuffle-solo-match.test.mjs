@@ -22,7 +22,8 @@ test('the V2 setup no longer exposes a fixed or manually entered deck-order code
  assert.match(js,/makeUniversalPreviewReplay\(app\.packs,\{/);
  assert.match(js,/decks:\[mine\.counts,foe\.counts\],seed,first/);
  assert.doesNotMatch(js,/\+seed\]/);
- assert.match(js,/雙方牌組已隨機洗牌/);
+ assert.match(js,/起手牌調度階段/);
+ assert.match(js,/openingMulligan:true/);
 });
 
 test('crypto seeds are in range, differ across samples, and reject biased UInt32 tail',()=>{
