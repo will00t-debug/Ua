@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {isExactLegal,uiActor,uiCardLabel,uiActionLabel,
  uiActionGroup,visibleActionsForCard,V2_TITLE_LABELS,
- pendingChoiceCards,pendingChoiceCaption} from '../dist/universal-v2/preview-actions.mjs';
+ pendingChoiceCards,visiblePendingChoiceCards,pendingChoiceCaption} from '../dist/universal-v2/preview-actions.mjs';
 import {verifiedBleachPurplePilotDeck,verifiedTtgRedPilotDeck} from '../dist/universal-v2/verified-real-decks.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  universalPublicView,universalPrivateChoices,assertUniversalMatch} from '../dist/universal-v2/engine.mjs';
@@ -91,6 +91,31 @@ test('mobile board shares one prevalidated legal set per render and freezes sele
  assert.match(script,/publicPreviewActionLabel\(app.packs,previous,app.state,choice,1\)/);
  assert.match(script,/window.confirm\('除錯重播檔包含/);
  assert.match(script,/app.undo.replay/);
+});
+
+
+test('discard and other legal selections display only viewer-visible hand/outside artwork',()=>{
+ const s=fresh(),view=universalPublicView(packs,s,0);
+ const own=view.players[0].hand[0];
+ const second=view.players[0].hand[1];
+ const hiddenOpponentHand=s.players[1].hand[0];
+ assert.deepEqual(visiblePendingChoiceCards(view,{type:'chooseDiscard',uid:own.uid}),
+  [{cardId:own.cardId,side:0}]);
+ assert.deepEqual(visiblePendingChoiceCards(view,{type:'chooseDiscard',uids:[own.uid,second.uid]}),
+  [{cardId:own.cardId,side:0},{cardId:second.cardId,side:0}]);
+ assert.deepEqual(visiblePendingChoiceCards(view,{type:'chooseDiscard',uid:hiddenOpponentHand.uid}),[],
+  'never resolve an opponent hidden hand UID');
+ assert.deepEqual(visiblePendingChoiceCards(view,{type:'chooseDiscard',uid:null}),[]);
+ const visibleOutside={players:[{hand:view.players[0].hand,outside:[]},
+  {hand:null,outside:[{uid:'1-public',cardId:'PUBLIC-001'}]}]};
+ assert.deepEqual(visiblePendingChoiceCards(visibleOutside,{type:'chooseOutsideRecovery',uid:'1-public'}),
+  [{cardId:'PUBLIC-001',side:1}]);
+ assert.deepEqual(visiblePendingChoiceCards({players:[{hand:[],outside:[]},
+  {hand:[{uid:'1-secret',cardId:'SECRET-001'}],outside:[]}]},
+  {type:'chooseDiscard',uid:'1-secret'}),[]);
+ const script=source('../dist/universal-v2-preview.mjs');
+ assert.match(script,/visiblePendingChoiceCards\(view,action\)/);
+ assert.match(script,/visiblePendingChoiceCards\(view,row.action\)/);
 });
 
 test('hand and deck prompts show private card art and leave the legal action unchanged',()=>{
