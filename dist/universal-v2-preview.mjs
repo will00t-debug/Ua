@@ -389,10 +389,49 @@ function legacyCommands(legal){
  else bar.append(btn('取消選擇',()=>{app.targetChoices=null;render();},'btn small'));
  return bar;
 }
+// Keep an in-progress AI match alive when a mobile browser reloads the battle page.
+// This private, same-tab snapshot is never shared with the opponent or Worker.
+function saveBattleProgress(){
+ if(!IS_BATTLE_PAGE||!app.launch||!app.state||!app.replay)return;
+ try{
+  const data={version:1,launchId:app.launch.config.id,state:app.state,replay:app.replay,
+   history:app.history.slice(0,2500),recordNoted:app.recordNoted,
+   aiCompletedSteps:app.aiCompletedSteps,lastAiProgress:app.lastAiProgress};
+  sessionStorage.setItem(SOLO_BATTLE_PROGRESS_KEY,JSON.stringify(data));
+ }catch{/* Private browsing/quota limits must not interrupt V2 legal gameplay. */}
+}
+function restoreBattleProgress(){
+ if(!IS_BATTLE_PAGE||!app.launch)return false;
+ try{
+  const json=sessionStorage.getItem(SOLO_BATTLE_PROGRESS_KEY);
+  if(!json||json.length>2200000)return false;
+  const data=JSON.parse(json),cfg=app.launch.config;
+  if(data.version!==1||data.launchId!==cfg.id||!data.state||!data.replay||
+   !Array.isArray(data.history)||data.history.length>2500||
+   data.replay.format!=='ua-universal-v2-preview'||
+   data.replay.seed<1||data.replay.first!==cfg.first||
+   data.replay.openingMulligan!==true||
+   !Array.isArray(data.replay.initialCounts)||
+   data.replay.initialCounts.length!==2||
+   data.replay.initialCounts.some((counts,i)=>
+    JSON.stringify(Object.entries(counts).sort())!==
+    JSON.stringify(Object.entries(cfg.decks[i].counts).sort())))
+   return false;
+  assertUniversalMatch(app.packs,data.state);
+  app.state=data.state;app.replay=data.replay;
+  app.history=data.history.filter(x=>typeof x==='string').slice(0,2500);
+  app.recordNoted=data.recordNoted===true;
+  app.aiCompletedSteps=Number.isInteger(data.aiCompletedSteps)?data.aiCompletedSteps:0;
+  app.lastAiProgress=typeof data.lastAiProgress==='string'?data.lastAiProgress.slice(0,100):'已恢復對局';
+  app.error='';app.undo=null;app.selectedUid=null;
+  return true;
+ }catch{return false;}
+}
 function noteAiRecord(state){
  if(app.recordNoted||!app.recordDeckId)return;
  if(state.winner!==0&&state.winner!==1)return;
  app.recordNoted=true;
+ saveBattleProgress();
  try{recordDeckResult(localStorage,{deckId:app.recordDeckId,channel:'ai',win:state.winner===0,opponent:'電腦',at:new Date().toISOString()});}
  catch{/* A private browser can finish the match without storing a record. */}
 }
