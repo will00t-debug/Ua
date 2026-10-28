@@ -272,6 +272,14 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='effect-outside-rest-or-raid')
   return legal.find(a=>a.mode==='enter'&&!a.replaceUid)||
    legal.find(a=>a.mode==='raid'&&!a.replaceUid)||legal[0];
+ if(s.pending?.kind==='effect-printed-rest-raid'||s.pending?.kind==='effect-zone-rest-raid')
+  return legal.find(a=>a.uid===null)||legal.find(a=>a.mode==='enter'&&!a.replaceUid)||legal[0];
+ if(s.pending?.kind==='effect-removed-okabe-raid')
+  return legal.find(a=>a.mode==='raid'&&!a.replaceUid)||legal[0];
+ if(s.pending?.kind==='effect-mayuri-fork'||s.pending?.kind==='effect-suzuha-attack-end')
+  return legal.find(a=>a.uid===null)||legal[0];
+ if(s.pending?.kind==='effect-field-leave-remove')
+  return legal.find(a=>a.mode==='decline')||legal[0];
  if(s.pending?.kind==='effect-grant-bounce-instead')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-hand-reenter-under')return legal.find(a=>a.uid!==null&&!a.replaceUid)||legal[0];
  if(s.pending?.kind==='effect-return-printed')return legal.find(a=>a.uid!==null)||legal[0];

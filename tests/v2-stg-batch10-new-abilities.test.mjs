@@ -18,8 +18,8 @@ function order(s,uids){
 
 test('batch 10 adds other-character retirement draw and a five-name window',()=>{
  assert.ok(!V2_TITLE_IDS.includes('steins-gate'));
- assert.equal(STEINS_GATE_CARDS.filter(c=>c.engineKind).length,74);
- assert.equal(STEINS_GATE_CARDS.filter(c=>!c.engineKind).length,6);
+ assert.equal(STEINS_GATE_CARDS.filter(c=>c.engineKind).length,80);
+ assert.equal(STEINS_GATE_CARDS.filter(c=>!c.engineKind).length,0);
  assert.equal(STEINS_GATE_BY_ID['STG-1-013'].effectJa,
   '【登場時】自分の場の他のキャラを1枚退場させてもよい。そうした場合、カードを2枚引く。');
  assert.deepEqual(stg.cards['STG-1-013'].effects.onPlay,[{
@@ -29,16 +29,13 @@ test('batch 10 adds other-character retirement draw and a five-name window',()=>
   '【登場時】自分の山札の上から3枚見て、〈阿万音 鈴羽〉か〈岡部 倫太郎〉か〈椎名 まゆり〉か〈橋田 至〉か〈牧瀬 紅莉栖〉を1枚まで公開し手札に加える。残りを望む順で山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。');
  assert.deepEqual(stg.cards['STG-1-068'].effects.onPlay[0].filters.map(f=>f.value),LAB);
  assert.equal(stg.cards['STG-1-003'].mainAbility.op,'readyOtherRestedOnce');
- assert.equal(stg.cards['STG-1-011'],undefined);
- assert.equal(STEINS_GATE_BY_ID['STG-1-011'].engineKind,null);
+ assert.equal(stg.cards['STG-1-011'].raidName,'岡部 倫太郎');
+ assert.equal(STEINS_GATE_BY_ID['STG-1-011'].engineKind,'okabeOverflow');
  const practice=steinsGatePracticeDeck();
  assert.equal(v2DeckReport('steins-gate',practice.counts).ok,true);
- const blocked=v2DeckReport('steins-gate',{...practice.counts,'STG-1-011':1,'STG-1-001':3});
- assert.equal(blocked.ok,false);
- assert.ok(blocked.issues.some(issue=>issue.includes('STG-1-011')));
  const editor=editorV2Status('steins-gate',practice.counts);
  assert.equal(editor.ready,true,editor.issues.join('；'));
- assert.equal(editor.registered,74);
+ assert.equal(editor.registered,80);
 });
 
 test('six name filters stay rejected and a self-including draw follow-up stays the old profile',()=>{

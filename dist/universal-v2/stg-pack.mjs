@@ -72,6 +72,12 @@ const KURISU_DUAL='【レイド】〈牧瀬 紅莉栖〉アクティブにし、
 const DMAIL_FIELD='自分の場のアクティブのフィールドを1枚レストにする。そうした場合、カードを1枚引き、自分の手札を1枚場外に置く。自分の手札から必要エナジーが4以下で消費APが1の【レイド】を持たない緑のキャラカードを1枚まで自分の場にアクティブで登場させる。このカードの【カラートリガー】を発動する場合、効果に記載されている「必要エナジーが2以下で消費APが1の緑のキャラカード」を「緑のフィールドカード」に代えてもよい。';
 const MAYURI_SLAP='以下から2つまで選ぶ。自分の場外に必要エナジーが3以下の他の青のイベントカードの【トリガー】が3種類以上ある場合、自分のAPカードを1枚アクティブにする。・自分の場のキャラを1枚選び、アクティブにする。・自分の場のキャラを1枚選び、このターン中、BP+2000。・相手のフロントLのキャラを1枚選び、レストにする。〈まゆしぃのビンタ〉のこの効果は1ターンに1回のみ選べる。';
 const RUKA_GRANT='【起動メイン】【フロントLにある場合】 【ターン1】消費APが1で【レイド】を持たない自分の場の他のキャラを1枚選び、このターン中、以下から1つを与える。このターン中に〈漆原 るか〉が既に選んだ効果は選べない。・このキャラはBP4000以上のキャラにブロックされない。・BP+1000と「このターン中に自分がイベントカードを使用している場合、このキャラは【インパクト（1）】を得る。」';
+const OKABE_OVERFLOW='このカードは手札やラインの上限超過の処理でリムーブエリアの代わりに場外に置かれる。自分の場外に青の〈椎名 まゆり〉が7枚以上あり、このキャラが場を離れる場合、代わりにこのカードをリムーブエリアに置いてもよい。【レイド】〈岡部 倫太郎〉アクティブにし、フロントLに移動できる【登場時】自分の場外から必要エナジーが『2以下』で消費APが1の青の〈椎名 まゆり〉を1枚まで自分の場にレストで登場させるかレイドさせる。このキャラがリムーブエリアから登場していた場合、『4以下』に代わる。';
+const MAYURI_FORK='【レイド】〈椎名 まゆり〉アクティブにし、フロントLに移動できる【登場時】カードを1枚引く。相手のフロントLのキャラを1枚まで選び、次の自分のターン開始時まで、『「このキャラはアタックできない。」を与える。このキャラは次の自分のターン開始時まで、「相手のアタックフェイズ終了時、このキャラを退場させる。」を得る』。このキャラがキャラの効果で登場していた場合、『「このキャラはアタックもブロックもできない。」を与える』に代わる。【アタック時】自分の場のキャラを1枚まで選び、このターン中、BP+2000。';
+const KURISU_REMOVE='【登場時】自分の手札を1枚場外に置いてもよい。そうした場合、自分の場外から必要エナジーが3以下の〈岡部 倫太郎〉を1枚まで手札に加える。【起動メイン】【レストにする】 【手札を1枚場外に置く】 【ターン1】自分のリムーブエリアから必要エナジーを満たす〈岡部 倫太郎〉を1枚レイドさせ、そのキャラにこのターン中、BP+1000と【インパクト（1）】を与える。このキャラはこのターン中、「このキャラにはレイドできない。」と「メインフェイズ終了時、このキャラを退場させる。」を得る。';
+const SKULD='自分の山札の上から1枚見て、山札の上か場外に置く。その後、自分の場外から必要エナジーが『3以下』で消費APが1の青のキャラカードを1枚まで自分の場にレストで登場させるかレイドさせる。自分の場のキャラを1枚まで選び、アクティブにする。自分の場外に必要エナジーが3以下の青のイベントカードの【トリガー】が5種類以上ある場合、『4以下』に代わる。';
+const KAICHU='自分の場外かリムーブエリアから必要エナジーを満たし消費APが1の〈岡部 倫太郎〉を1枚自分の場にレストで登場させるかレイドさせる。この効果でリムーブエリアからレイドさせている場合、その〈岡部 倫太郎〉にこのターン中、【インパクト（1）】（アタックしてバトルに勝利した時、相手に1ダメージ）を与える。';
+const SUZUHA_END='【ターン1】このキャラのアタック終了時、自分のフロントLに空きがある場合、自分の手札を1枚場外に置いてもよい。そうした場合、このキャラをアクティブにし、自分の場のキャラを1枚まで選び、このターン中、BP+1000。【エナジーLにある場合】自分のキャラのアタック終了時、自分のフロントLに空きがある場合、このキャラをフロントLに移動させてもよい。【登場時】カードを1枚引く。このキャラをアクティブにする。';
 const KURISU_ATTACK={op:'chooseOne',optional:false,options:[
  {id:'impact',label:'這個回合獲得衝擊1',turn:'any',then:[{op:'grantSelfImpactThisTurn',amount:1}]},
  {id:'draw',label:'前線有空位就抽2棄1',turn:'any',then:[{op:'drawDiscardIfFrontOpen',count:2}]}
@@ -160,6 +166,12 @@ export function stgEngineKind(effectJa){
  if(e===DMAIL_FIELD)return 'dmailField';
  if(e===MAYURI_SLAP)return 'mayuriSlap';
  if(e===RUKA_GRANT)return 'rukaGrant';
+ if(e===OKABE_OVERFLOW)return 'okabeOverflow';
+ if(e===MAYURI_FORK)return 'mayuriRaidFork';
+ if(e===KURISU_REMOVE)return 'kurisuRemoveRaid';
+ if(e===SKULD)return 'skuldPeek';
+ if(e===KAICHU)return 'okabeZoneRaid';
+ if(e===SUZUHA_END)return 'suzuhaAttackEnd';
  return null;
 }
 
@@ -178,13 +190,13 @@ export function stgPackCard(card){
   if(card.triggerTextJa!=='-')throw Error(card.id+' missing trigger text');
  }else if(card.trigger==='color'){
   const green=(kind==='colorOtherBuff'||kind==='dmailField')&&card.triggerTextJa===COLOR_TRIGGER&&card.color==='green';
-  const bounce=kind==='raidedTriggerDraw'&&card.triggerTextJa===COLOR_BOUNCE&&card.color==='blue';
+  const bounce=(kind==='raidedTriggerDraw'||kind==='okabeZoneRaid')&&card.triggerTextJa===COLOR_BOUNCE&&card.color==='blue';
   if(!green&&!bounce)throw Error(card.id+' color trigger is not a registered printed profile');
  }else if(card.trigger==='special'){
-  if(!['kurisuRetire','okabeWall','impactMove'].includes(kind)||card.triggerTextJa!==SPECIAL)
+  if(!['kurisuRetire','okabeWall','impactMove','skuldPeek'].includes(kind)||card.triggerTextJa!==SPECIAL)
    throw Error(card.id+' special trigger is not the printed front retirement');
  }else if(card.trigger==='raid'){
-  if(!['triggerKindRetire','farisReplay','kurisuProtect','mayuriShift','kurisuDual'].includes(kind)||
+  if(!['triggerKindRetire','farisReplay','kurisuProtect','mayuriShift','kurisuDual','okabeOverflow','mayuriRaidFork'].includes(kind)||
    card.triggerTextJa!==RAID_TRIGGER)
    throw Error(card.id+' raid trigger is not the standard printed text');
  }else if(STANDARD[card.trigger]!==card.triggerTextJa)
@@ -292,6 +304,13 @@ export function stgPackCard(card){
    {op:'deployOwnHandActiveNoRaid',type:'character',color:'green',maxEnergy:4,ap:1,optional:true}
   ]:
   kind==='mayuriSlap'?[SLAP,{op:'readyApIfOutsideTriggerKinds',color:'blue',maxEnergy:3,min:3,excludeSource:true}]:
+  kind==='okabeOverflow'?[{op:'okabeMayuriRestOrRaid'}]:
+  kind==='mayuriRaidFork'?[{op:'draw',count:1},{op:'mayuriEntryFork'}]:
+  kind==='kurisuRemoveRaid'?[{op:'discardGate',optional:true,then:[
+   {op:'recoverOutsideNamedEnergy',name:'岡部 倫太郎',maxEnergy:3,optional:true}]}]:
+  kind==='skuldPeek'?[{op:'peekTopOne'},{op:'skuldFollow'}]:
+  kind==='okabeZoneRaid'?[{op:'okabeZoneEntry'}]:
+  kind==='suzuhaAttackEnd'?[{op:'draw',count:1},{op:'activeSelf'}]:
   null;
  return {
   id:card.id,name:card.nameJa,color:card.color,type:card.type,
@@ -311,6 +330,8 @@ export function stgPackCard(card){
     onRetire:[{op:'buffEnergyMoveFront',bp:2000,optional:true}]}:
    kind==='mayuriDelay'?{onPlay,onAttack:[{op:'searchTopOneBottomDiscard',count:3,logic:'any',
     filters:MAYURI_NAMES.map(value=>({field:'name',value}))}]}:
+   kind==='mayuriRaidFork'?{onPlay,onAttack:[{op:'buffOwnField',
+    filter:{field:'type',value:'character'},bp:2000,optional:true,excludeSelf:false}]}:
    onPlay?{onPlay}:{},
   ...(kind==='impactNull'||kind==='labHandRest'||kind==='impactMove'||
    kind==='okabeChoose'||kind==='mayuriDelay'?{impactNull:true}:{}),
@@ -336,10 +357,17 @@ export function stgPackCard(card){
    {triggerEffect:{op:'retireOppFront'}}:{}),
   ...(kind==='raidedTriggerDraw'?{emptyOwnFieldHandEnergyDiscount:2,
    triggerEffect:{op:'bounceOppFrontUnderBp',bp:3500}}:{}),
+  ...(kind==='okabeZoneRaid'?{triggerEffect:{op:'bounceOppFrontUnderBp',bp:3500}}:{}),
+  ...(kind==='skuldPeek'?{triggerEffect:{op:'retireOppFront'}}:{}),
+  ...(kind==='kurisuRemoveRaid'?{mainAbility:{
+   op:'restDiscardRaidRemovedOkabe',oncePerTurn:true,lines:'field'}}:{}),
+  ...(kind==='suzuhaAttackEnd'?{ownAttackEndOpen:{bp:1000},energyAttackEndMove:true}:{}),
   ...(kind==='okabeWall'?{playRequiresOwnName:'岡部 倫太郎'}:{}),
   ...(kind==='triggerKindRetire'||kind==='kurisuProtect'||kind==='kurisuDual'?{raidName:'牧瀬 紅莉栖'}:{}),
   ...(kind==='farisReplay'?{raidName:'フェイリス・ニャンニャン'}:{}),
-  ...(kind==='mayuriShift'?{raidName:'椎名 まゆり'}:{}),
+  ...(kind==='mayuriShift'||kind==='mayuriRaidFork'?{raidName:'椎名 まゆり'}:{}),
+  ...(kind==='okabeOverflow'?{raidName:'岡部 倫太郎',overflowToOutside:true,
+   fieldLeaveMayRemove:{name:'椎名 まゆり',color:'blue',min:7}}:{}),
   ...(kind==='suzuhaActive'?{enterAlwaysActive:true,mainAbility:{
    op:'readyOtherRestedOnce',oncePerTurn:true}}:{}),
   ...(kind==='okabeChoose'?{mainAbility:{
@@ -372,8 +400,8 @@ export const STEINS_GATE_ENGINE_IDS=Object.freeze(
 
 export function createStgV2Pack(){
  const cards=STEINS_GATE_CARDS.filter(c=>c.engineKind).map(stgPackCard);
- if(cards.length!==74)throw Error('Steins;Gate registered count drifted');
+ if(cards.length!==80)throw Error('Steins;Gate registered count drifted');
  return createUniversalPack({
-  id:'steins-gate',version:'stg-ua57-batches-41-50-20261028',cards
+  id:'steins-gate',version:'stg-ua57-full-20261028',cards
  });
 }

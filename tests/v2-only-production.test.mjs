@@ -59,10 +59,11 @@ test('Tengen Toppa 81 and Re:Zero set 1 can start production V2; regular Vol.2 c
  const stg=steinsGatePracticeDeck();
  const stgReady=editorV2Status('steins-gate',stg.counts);
  assert.equal(stgReady.ready,true,stgReady.issues.join('；'));
- assert.equal(stgReady.registered,74);
- const stgBlocked=editorV2Status('steins-gate',{'STG-1-011':4});
- assert.equal(stgBlocked.ready,false);
- assert.ok(stgBlocked.issues.some(x=>x.includes('STG-1-011')));
+ assert.equal(stgReady.registered,80);
+ const stgShort=editorV2Status('steins-gate',{'STG-1-011':4});
+ assert.equal(stgShort.ready,false);
+ assert.ok(stgShort.issues.some(x=>x.includes('4/50')));
+ assert.ok(stgShort.issues.every(x=>!x.includes('尚未完整移植')));
 });
 test('V2 match reads precise custom deck handoff and revalidates before play',()=>{
  const source=read('../dist/universal-v2-preview.mjs');
