@@ -28,7 +28,9 @@ function take(s,p,id){
 }
 function place(s,p,id,line,slot,ready=true){
  assert.equal(s.players[p][line][slot],null);
- const c=take(s,p,id);c.ready=ready;s.players[p][line][slot]=c;
+ const c=take(s,p,id);c.ready=ready;
+ c.fieldEntryStamp=s.nextFieldEntryStamp++;
+ s.players[p][line][slot]=c;
  return c;
 }
 function hold(s,p,id){
@@ -73,11 +75,11 @@ function count(player){
  return n;
 }
 
-test('MST-1-005/014/021/035/036/058 pin the official print on shared profiles',()=>{
+test('MST-1-005/014/021/028/030/035/036/040/048/058 pin the official print on shared profiles',()=>{
  assert.deepEqual(validateUniversalDeck(mst,deck),[]);
  assert.equal(Object.keys(mst.cards).length,EXPECTED_V2_COUNTS['mushoku-tensei']);
- assert.equal(EXPECTED_V2_COUNTS['mushoku-tensei'],66);
- for(const id of ['MST-1-005','MST-1-014','MST-1-021','MST-1-035','MST-1-036','MST-1-058'])
+ assert.equal(EXPECTED_V2_COUNTS['mushoku-tensei'],70);
+ for(const id of ['MST-1-005','MST-1-014','MST-1-021','MST-1-028','MST-1-030','MST-1-035','MST-1-036','MST-1-040','MST-1-048','MST-1-058'])
   assert.equal(mst.cards[id].name,MST_V2_OFFICIAL_BY_ID[id].nameJa);
  assert.equal(mst.cards['MST-1-005'].impactNull,true);
  assert.equal(mst.cards['MST-1-005'].emptyOwnFieldHandEnergyDiscount,2);
@@ -364,4 +366,279 @@ test('MST-1-058 buffs until the next own turn only when energy is 7 and every ch
  assert.equal(universalBp(packs,s,s.players[0].front[0]),4000);
  assert.equal(count(s.players[0]),50);
  assert.equal(assertUniversalMatch(packs,s),true);
+});
+
+const batchDeck={
+ 'MST-1-002':4,'MST-1-010':4,'MST-1-019':4,'MST-1-022':4,
+ 'MST-1-023':2,'MST-1-027':2,'MST-1-028':2,'MST-1-030':2,
+ 'MST-1-031':2,'MST-1-035':2,'MST-1-040':4,'MST-1-045':2,
+ 'MST-1-048':2,'MST-1-060':2,'MST-1-064':2,'MST-1-066':2,
+ 'MST-1-074':2,'MST-1-075':4,'MST-1-080':2
+};
+function batch(){
+ const packs=[mst,mst];
+ return {packs,s:newUniversalMatch(packs,{decks:[batchDeck,batchDeck],seed:28040,first:0})};
+}
+function clearPending(packs,s){
+ for(let n=0;n<16&&s.pending;n++){
+  const legal=legalUniversalActions(packs,s);
+  const step=legal.find(a=>a.uid===null||a.mode==='skip'||a.mode==='keep')||legal[0];
+  assert.ok(step,s.pending.kind);
+  s=dispatchUniversalAction(packs,s,step);
+ }
+ assert.equal(s.pending,null);
+ return s;
+}
+function reveals(s,kind){return s.publicReveals.filter(e=>e.kind===kind);}
+
+test('MST-1-028 looks at two cards privately and publishes only the card added to hand',()=>{
+ assert.deepEqual(validateUniversalDeck(mst,batchDeck),[]);
+ const {packs,s:opened}=batch();
+ place(opened,0,'MST-1-019','energy',0);
+ const roxy=hold(opened,0,'MST-1-028');
+ top(opened,0,['MST-1-040','MST-1-080','MST-1-022','MST-1-031']);
+ let s=toMain(packs,opened);
+ s=dispatchUniversalAction(packs,s,{type:'play',uid:roxy.uid,line:'front',slot:0});
+ assert.equal(s.pending?.kind,'effect-top-filter-choice');
+ assert.equal(s.pending.rest,'outside');
+ const window=s.players[0].deck.slice(0,2).map(c=>c.cardId);
+ assert.deepEqual(window,['MST-1-040','MST-1-080']);
+ const choices=s.pending.choices.map(uid=>s.players[0].deck.find(c=>c.uid===uid).cardId);
+ assert.deepEqual(choices,['MST-1-040']);
+ assert.equal(reveals(s,'revealed-window').length,0);
+ const taken=s.players[0].deck[0];
+ s=dispatchUniversalAction(packs,s,{type:'chooseTopFiltered',uid:taken.uid});
+ assert.ok(s.players[0].hand.some(c=>c.uid===taken.uid));
+ assert.ok(s.players[0].outside.some(c=>c.cardId==='MST-1-080'));
+ assert.equal(reveals(s,'searched-to-hand').some(e=>e.uid===taken.uid),true);
+ assert.equal(reveals(s,'revealed-window').length,0);
+ assert.equal(s.pending?.kind,'effect-discard');
+ const discarded=s.players[0].hand.find(c=>c.uid!==taken.uid);
+ s=dispatchUniversalAction(packs,s,{type:'chooseDiscard',uid:discarded.uid});
+ assert.ok(s.players[0].outside.some(c=>c.uid===discarded.uid));
+ assert.equal(s.pending,null);
+ assert.equal(count(s.players[0]),50);
+ assert.equal(assertUniversalMatch(packs,s),true);
+
+ const skipped=batch();
+ place(skipped.s,0,'MST-1-019','energy',0);
+ const again=hold(skipped.s,0,'MST-1-028');
+ top(skipped.s,0,['MST-1-040','MST-1-022']);
+ let quiet=toMain(skipped.packs,skipped.s);
+ quiet=dispatchUniversalAction(skipped.packs,quiet,{type:'play',uid:again.uid,line:'front',slot:0});
+ const before=reveals(quiet,'searched-to-hand').length;
+ quiet=dispatchUniversalAction(skipped.packs,quiet,{type:'chooseTopFiltered',uid:null});
+ assert.equal(quiet.pending,null);
+ assert.equal(quiet.players[0].outside.filter(c=>c.cardId==='MST-1-040'||c.cardId==='MST-1-022').length,2);
+ assert.equal(reveals(quiet,'searched-to-hand').length,before);
+ assert.equal(reveals(quiet,'revealed-window').length,0);
+ assert.equal(count(quiet.players[0]),50);
+ assert.equal(assertUniversalMatch(skipped.packs,quiet),true);
+
+ const miss=batch();
+ place(miss.s,0,'MST-1-019','energy',0);
+ const third=hold(miss.s,0,'MST-1-028');
+ top(miss.s,0,['MST-1-002','MST-1-010']);
+ let none=toMain(miss.packs,miss.s);
+ const handBefore=none.players[0].hand.length;
+ none=dispatchUniversalAction(miss.packs,none,{type:'play',uid:third.uid,line:'front',slot:0});
+ assert.equal(none.pending,null);
+ assert.equal(none.players[0].hand.length,handBefore-1);
+ assert.ok(none.players[0].outside.some(c=>c.cardId==='MST-1-002'));
+ assert.ok(none.players[0].outside.some(c=>c.cardId==='MST-1-010'));
+ assert.equal(count(none.players[0]),50);
+ assert.equal(assertUniversalMatch(miss.packs,none),true);
+});
+
+test('MST-1-030 rests only after an own event and chooses a BP gain or a draw-discard',()=>{
+ const {packs,s:opened}=batch();
+ place(opened,0,'MST-1-010','energy',0);
+ place(opened,0,'MST-1-019','energy',1);
+ const self=place(opened,0,'MST-1-030','front',0);
+ const other=place(opened,0,'MST-1-022','front',1);
+ const event=hold(opened,0,'MST-1-035');
+ let s=toMain(packs,opened);
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.uid===self.uid&&a.type==='activate'),false);
+ s=dispatchUniversalAction(packs,s,{type:'event',uid:event.uid});
+ s=clearPending(packs,s);
+ const buff={type:'activate',uid:self.uid,mode:'eventRestBuff'};
+ const draw={type:'activate',uid:self.uid,mode:'eventRestDraw'};
+ assert.ok(legalUniversalActions(packs,s).some(a=>JSON.stringify(a)===JSON.stringify(buff)));
+ assert.ok(legalUniversalActions(packs,s).some(a=>JSON.stringify(a)===JSON.stringify(draw)));
+ s=dispatchUniversalAction(packs,s,buff);
+ const rested=s.players[0].front.find(c=>c?.uid===self.uid);
+ assert.equal(rested.ready,false);
+ assert.equal(s.pending?.kind,'effect-buff-own');
+ assert.ok(s.pending.choices.includes(self.uid));
+ assert.ok(s.pending.choices.includes(other.uid));
+ const forged=structuredClone(s);
+ assert.throws(()=>dispatchUniversalAction(packs,forged,{type:'chooseOwnBuff',uid:'0-forged'}));
+ s=dispatchUniversalAction(packs,s,{type:'chooseOwnBuff',uid:self.uid});
+ const buffed=s.players[0].front.find(c=>c?.uid===self.uid);
+ assert.equal(universalBp(packs,s,buffed),4000);
+ assert.equal(buffed.buffs[0].untilTurn,s.turn);
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.uid===self.uid&&a.type==='activate'),false);
+ const copy=place(s,0,'MST-1-030','front',2);
+ assert.ok(legalUniversalActions(packs,s).some(a=>a.uid===copy.uid&&a.mode==='eventRestDraw'));
+ const hand=s.players[0].hand.length;
+ s=dispatchUniversalAction(packs,s,{type:'activate',uid:copy.uid,mode:'eventRestDraw'});
+ assert.equal(s.players[0].front.find(c=>c?.uid===copy.uid).ready,false);
+ assert.equal(s.players[0].hand.length,hand+1);
+ assert.equal(s.pending?.kind,'effect-discard');
+ const dumped=s.players[0].hand[0];
+ s=dispatchUniversalAction(packs,s,{type:'chooseDiscard',uid:dumped.uid});
+ assert.equal(s.pending,null);
+ assert.equal(count(s.players[0]),50);
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
+
+test('MST-1-040 requires Roxy, an affordable named hand character, a draw, and an optional Rudeus line move',()=>{
+ const {packs,s:opened}=batch();
+ place(opened,0,'MST-1-010','energy',0);
+ let s=toMain(packs,opened);
+ const gate=hold(s,0,'MST-1-040');
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='event'&&a.uid===gate.uid),false);
+ const roxy=place(s,0,'MST-1-027','front',1);
+ const standing=place(s,0,'MST-1-022','front',2);
+ hold(s,0,'MST-1-022');
+ hold(s,0,'MST-1-023');
+ hold(s,0,'MST-1-031');
+ hold(s,0,'MST-1-002');
+ s=dispatchUniversalAction(packs,s,{type:'event',uid:gate.uid});
+ assert.equal(s.pending?.kind,'effect-hand-rest-or-raid');
+ const ids=s.pending.choices.map(uid=>s.players[0].hand.find(c=>c.uid===uid).cardId);
+ assert.ok(ids.includes('MST-1-022'));
+ assert.ok(ids.includes('MST-1-023'));
+ assert.equal(ids.includes('MST-1-031'),false);
+ assert.equal(ids.includes('MST-1-002'),false);
+ const deck=s.players[0].deck.length;
+ s=dispatchUniversalAction(packs,s,{type:'chooseHandRestOrRaid',uid:null});
+ assert.equal(s.players[0].deck.length,deck-1);
+ assert.equal(s.pending?.kind,'effect-line-move');
+ assert.ok(s.pending.choices.includes(standing.uid));
+ assert.equal(s.pending.choices.includes(roxy.uid),false);
+ s=dispatchUniversalAction(packs,s,{type:'chooseLineMove',uid:null});
+ assert.equal(s.pending,null);
+ assert.equal(s.players[0].front[2].uid,standing.uid);
+ assert.equal(count(s.players[0]),50);
+ assert.equal(assertUniversalMatch(packs,s),true);
+
+ const full=batch();
+ place(full.s,0,'MST-1-010','energy',0);
+ place(full.s,0,'MST-1-045','energy',1);
+ place(full.s,0,'MST-1-060','energy',2);
+ place(full.s,0,'MST-1-064','energy',3);
+ const roxy2=place(full.s,0,'MST-1-027','front',0);
+ const mover=place(full.s,0,'MST-1-023','front',1);
+ const spell=hold(full.s,0,'MST-1-040');
+ const costly=hold(full.s,0,'MST-1-031');
+ let moved=toMain(full.packs,full.s);
+ const owner=moved.players[0];
+ const kept=new Set([spell.uid,costly.uid]);
+ owner.deck.push(...owner.hand.filter(c=>!kept.has(c.uid)));
+ owner.hand=owner.hand.filter(c=>kept.has(c.uid));
+ moved=dispatchUniversalAction(full.packs,moved,{type:'event',uid:spell.uid});
+ assert.equal(moved.pending?.kind,'effect-line-move');
+ moved=dispatchUniversalAction(full.packs,moved,{type:'chooseLineMove',uid:mover.uid});
+ assert.equal(moved.pending?.kind,'effect-line-slot');
+ const occupant=moved.players[0].energy[0];
+ const slot=legalUniversalActions(full.packs,moved).find(a=>a.type==='chooseLineSlot'&&a.replaceUid===occupant.uid);
+ assert.ok(slot);
+ moved=dispatchUniversalAction(full.packs,moved,slot);
+ assert.equal(moved.players[0].energy[0].uid,mover.uid);
+ assert.ok(moved.players[0].removed.some(c=>c.uid===occupant.uid));
+ assert.equal(moved.players[0].front.some(c=>c?.uid===roxy2.uid),true);
+ assert.equal(count(moved.players[0]),50);
+ assert.equal(assertUniversalMatch(full.packs,moved),true);
+});
+
+test('MST-1-040 COLOR returns only an opposing front character at BP 3500 or less',()=>{
+ const {packs,s:opened}=batch();
+ const low=place(opened,0,'MST-1-022','front',0,true);
+ const high=place(opened,0,'MST-1-031','front',1,true);
+ const p=opened.players[1];
+ p.deck.push(...p.life.splice(0));
+ const color=take(opened,1,'MST-1-040'),plain=take(opened,1,'MST-1-019');
+ p.life.push(color,plain);
+ opened.phase='attack';
+ let s=dispatchUniversalAction(packs,opened,{type:'attack',uid:low.uid},{actor:0});
+ s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:null},{actor:1});
+ assert.equal(s.pending?.kind,'life-trigger');
+ assert.equal(s.pending.uid,color.uid);
+ const legal=legalUniversalActions(packs,s);
+ assert.ok(legal.some(a=>a.type==='chooseTrigger'&&a.mode==='colorBounce'&&a.uid===low.uid));
+ assert.ok(!legal.some(a=>a.uid===high.uid));
+ s=dispatchUniversalAction(packs,s,{type:'chooseTrigger',mode:'colorBounce',uid:low.uid},{actor:1});
+ assert.ok(s.players[0].hand.some(c=>c.uid===low.uid));
+ assert.equal(s.players[0].front[1].uid,high.uid);
+ assert.equal(count(s.players[0]),50);
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
+
+test('MST-1-048 activates after retiring a field, and the Paulo attack discard is once per name',()=>{
+ const {packs,s:opened}=batch();
+ place(opened,0,'MST-1-060','energy',0);
+ place(opened,0,'MST-1-064','energy',1);
+ place(opened,0,'MST-1-066','energy',2);
+ const field=place(opened,0,'MST-1-075','energy',3);
+ const paulo=hold(opened,0,'MST-1-048');
+ let s=toMain(packs,opened);
+ s=dispatchUniversalAction(packs,s,{type:'play',uid:paulo.uid,line:'front',slot:0});
+ assert.equal(s.pending?.kind,'effect-retire-own-field');
+ const declined=structuredClone(s);
+ let skipped=dispatchUniversalAction(packs,declined,{type:'chooseOwnFieldRetire',uid:null});
+ assert.equal(skipped.players[0].front[0].ready,false);
+ assert.equal(skipped.players[0].energy[3].uid,field.uid);
+ assert.equal(assertUniversalMatch(packs,skipped),true);
+ s=dispatchUniversalAction(packs,s,{type:'chooseOwnFieldRetire',uid:field.uid});
+ s=clearPending(packs,s);
+ assert.equal(s.players[0].front[0].ready,true);
+ assert.ok(s.players[0].outside.some(c=>c.uid===field.uid));
+ assert.equal(count(s.players[0]),50);
+ assert.equal(assertUniversalMatch(packs,s),true);
+
+ const early=batch();
+ const first=place(early.s,0,'MST-1-048','front',0,true);
+ hold(early.s,0,'MST-1-002');
+ for(let i=0;i<5;i++)early.s.players[0].outside.push(take(early.s,0,i<4?'MST-1-075':'MST-1-074'));
+ let quiet=advance(early.packs,early.s,x=>x.active===0&&x.phase==='attack'&&!x.pending);
+ quiet=dispatchUniversalAction(early.packs,quiet,{type:'attack',uid:first.uid});
+ assert.notEqual(quiet.pending?.kind,'effect-attack-discard-active');
+ assert.equal(quiet.mainReadyOnceByName[0].includes('パウロ|outsideFieldActive'),false);
+ assert.equal(assertUniversalMatch(early.packs,quiet),true);
+
+ const empty=batch();
+ const lone=place(empty.s,0,'MST-1-048','front',0,true);
+ empty.s.players[0].deck.push(...empty.s.players[0].hand.splice(0));
+ for(let i=0;i<6;i++)empty.s.players[0].outside.push(take(empty.s,0,i<4?'MST-1-075':'MST-1-074'));
+ let bare=advance(empty.packs,empty.s,x=>x.active===0&&x.phase==='attack'&&!x.pending);
+ bare=dispatchUniversalAction(empty.packs,bare,{type:'attack',uid:lone.uid});
+ assert.notEqual(bare.pending?.kind,'effect-attack-discard-active');
+ assert.equal(bare.mainReadyOnceByName[0].includes('パウロ|outsideFieldActive'),false);
+ assert.equal(assertUniversalMatch(empty.packs,bare),true);
+
+ const paid=batch();
+ const attacker=place(paid.s,0,'MST-1-048','front',0,true);
+ const second=place(paid.s,0,'MST-1-048','front',1,true);
+ const handCard=hold(paid.s,0,'MST-1-002');
+ for(let i=0;i<6;i++)paid.s.players[0].outside.push(take(paid.s,0,i<4?'MST-1-075':'MST-1-074'));
+ let live=advance(paid.packs,paid.s,x=>x.active===0&&x.phase==='attack'&&!x.pending);
+ live=dispatchUniversalAction(paid.packs,live,{type:'attack',uid:attacker.uid});
+ assert.equal(live.pending?.kind,'effect-attack-discard-active');
+ assert.ok(legalUniversalActions(paid.packs,live).some(a=>a.type==='chooseAttackDiscardActive'&&a.uid===handCard.uid));
+ assert.ok(legalUniversalActions(paid.packs,live).some(a=>a.type==='chooseAttackDiscardActive'&&a.uid===null));
+ assert.match(uiActionLabel({type:'chooseAttackDiscardActive',uid:null},{pack:mst,state:live}),/不棄牌/);
+ const ai=chooseUniversalAiAction(paid.packs,live,{difficulty:'normal'});
+ assert.equal(ai.type,'chooseAttackDiscardActive');
+ assert.notEqual(ai.uid,null);
+ live=dispatchUniversalAction(paid.packs,live,{type:'chooseAttackDiscardActive',uid:null});
+ assert.equal(live.players[0].front.find(c=>c?.uid===attacker.uid).ready,false);
+ assert.equal(live.mainReadyOnceByName[0].includes('パウロ|outsideFieldActive'),true);
+ live=clearPending(paid.packs,live);
+ live=advance(paid.packs,live,x=>x.active===0&&x.phase==='attack'&&!x.pending);
+ live=dispatchUniversalAction(paid.packs,live,{type:'attack',uid:second.uid});
+ assert.notEqual(live.pending?.kind,'effect-attack-discard-active');
+ assert.equal(live.players[0].front.find(c=>c?.uid===second.uid)?.ready,false);
+ assert.equal(count(live.players[0]),50);
+ assert.equal(assertUniversalMatch(paid.packs,live),true);
 });

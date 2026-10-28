@@ -280,7 +280,6 @@ test('blocked next-wave cards are source-locked, NOT wrongly registered with par
   ['SAO-2-062',/2枚引き.*2枚場外/,pack],
   ['SAO-2-018',/【退場時】.*上から5枚見る/,pack],
   ['SAO-1-081',/自分のターン開始時.*退場/,pack],
-  ['MST-1-028',/山札の上から2枚.*残りを場外/,mst],
   ['MST-1-068',/〖レイド〗.*〈シルフィエット〉/,mst]
  ];
  for(const [id,text,targetPack] of pending){

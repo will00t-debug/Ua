@@ -29,6 +29,22 @@ const PRINTED_PINS=Object.freeze({
   nameJa:"ザノバ＆ジュリエット",color:"green",energy:5,ap:1,bp:4000,gen:0,
   type:"character",traits:["ラノア魔法大学"],trigger:"active",
   effectJa:"〖インパクト無効〗 （このキャラとバトルをしたキャラはこのバトル中、インパクトを失う）\n 〖起動メイン〗 〖ターン1〗 自分の発生エナジーが7以上あり、自分の場のキャラが全て［特徴：ラノア魔法大学］の場合のみ発動できる。このキャラは次の自分のターン開始時まで、BP+500。"},
+ "MST-1-028":{kind:"lookTopTwoNameOrLowEventOutside",
+  nameJa:"ロキシー",color:"blue",energy:1,ap:1,bp:1500,gen:1,
+  type:"character",traits:[],trigger:"active",
+  effectJa:"〖登場時〗 自分の山札の上から2枚見て、〈ルーデウス〉か〈ロキシー〉か必要エナジーが2以下のイベントカードを1枚まで公開し手札に加える。残りを場外に置く。手札に加えた場合、自分の手札を1枚場外に置く。"},
+ "MST-1-030":{kind:"restChooseIfEventUsed",
+  nameJa:"ロキシー",color:"blue",energy:3,ap:1,bp:3000,gen:2,
+  type:"character",traits:[],trigger:null,
+  effectJa:"〖起動メイン〗 〖レストにする〗 このターン中に自分がイベントカードを使用している場合のみ発動できる。以下から1つ選ぶ。\n・自分の場のキャラを1枚選び、このターン中、BP+1000。\n・カードを1枚引き、自分の手札を1枚場外に置く。"},
+ "MST-1-040":{kind:"roxyHandRestOrRaidDrawMove",
+  nameJa:"私がついていますから",color:"blue",energy:2,ap:1,bp:0,gen:0,
+  type:"event",traits:[],trigger:"color",
+  effectJa:"このカードは自分の場に〈ロキシー〉がある場合のみ使用できる。\n自分の手札から必要エナジーを満たし消費APが1の青の〔〈ルーデウス〉か〈ロキシー〉〕を1枚まで自分の場にレストで登場させるかレイドさせる。カードを1枚引く。自分の場の〈ルーデウス〉を1枚まで選び、別のラインに移動させる。"},
+ "MST-1-048":{kind:"optionalFieldRetireActiveOutsideDiscard",
+  nameJa:"パウロ",color:"green",energy:5,ap:1,bp:4000,gen:1,
+  type:"character",traits:[],trigger:"active",
+  effectJa:"〖登場時〗 自分の場のフィールドを1枚退場させてもよい。そうした場合、このキャラをアクティブにする。\n 〖アタック時〗 自分の場外にフィールドカードが6枚以上ある場合、自分の手札を1枚場外に置いてもよい。そうした場合、このキャラをアクティブにする。〈パウロ〉のこの効果は1ターンに1回のみ発動できる。"},
  "MST-1-009":{kind:"onOwnEffectEntryChooseTimedSelf",
   nameJa:"エリス",color:"blue",energy:3,ap:1,bp:3500,gen:1,
   type:"character",traits:[],trigger:"raid",
@@ -917,6 +933,34 @@ export function verifiedMstV2Cards(){
    card.mainAbility={op:'onceBuffUntilNextIfEnergyAllTrait',oncePerTurn:true,
     minEnergy:7,trait:'ラノア魔法大学',bp:500};
   }
+  if(pin.kind==='lookTopTwoNameOrLowEventOutside')
+   card.effects={onPlay:[{op:'searchTopOneBottomDiscard',count:2,rest:'outside',
+    privateLook:true,groups:[
+     {logic:'all',filters:[{field:'name',value:'ルーデウス'}]},
+     {logic:'all',filters:[{field:'name',value:'ロキシー'}]},
+     {logic:'all',filters:[{field:'type',value:'event'},
+      {field:'printedRequiredEnergyAtMost',value:2}]}
+    ]}]};
+  if(pin.kind==='restChooseIfEventUsed'){
+   card.effects={};
+   card.mainAbility={op:'restChooseIfEventUsed',bp:1000};
+  }
+  if(pin.kind==='roxyHandRestOrRaidDrawMove'){
+   card.playRequiresOwnName='ロキシー';
+   card.triggerEffect={op:'bounceOppFrontUnderBp',bp:3500};
+   card.effects={onPlay:[
+    {op:'deployOwnHandRestOrRaid',type:'character',color:'blue',maxEnergy:30,ap:1,
+     max:1,optional:true,names:['ルーデウス','ロキシー'],requireAffordableEnergy:true},
+    {op:'draw',count:1},
+    {op:'moveOtherAcrossOrRemove',optional:true,name:'ルーデウス'}
+   ]};
+  }
+  if(pin.kind==='optionalFieldRetireActiveOutsideDiscard')
+   card.effects={
+    onPlay:[{op:'optionalRetireThenProgram',optional:true,cardType:'field',
+     after:[{op:'activeSelf'}]}],
+    onAttack:[{op:'mayDiscardActiveIfOutsideFields',min:6,once:'name'}]
+   };
   return card;
  });
 }
@@ -986,6 +1030,9 @@ export function verifiedMstV2Entries(){
       ...(['retiredFieldReady','retiredFieldEnergyAndCostBuff'].includes(pin.kind)?
        ['tests/v2-mst-042-046-retirement-official.test.mjs']:[]),
      ...(pin.kind==='onPlayDrawDiscardLimited'?['tests/v2-mst-051-limited-draw-discard.test.mjs']:[]),
+     ...(['lookTopTwoNameOrLowEventOutside','restChooseIfEventUsed',
+      'roxyHandRestOrRaidDrawMove','optionalFieldRetireActiveOutsideDiscard'].includes(pin.kind)?
+      ['tests/v2-mst-shared-full-print.test.mjs']:[]),
      ...(['restSelfEnergyRetireEndMain','ownTurnRoxyFieldBp'].includes(pin.kind)?['tests/v2-mst-016-024-shared.test.mjs']:[])
     ]),
     ...(def.implementation==='vanilla'?{verifiedNoExtraEffects:true}:{})

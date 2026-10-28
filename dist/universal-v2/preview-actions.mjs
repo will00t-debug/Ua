@@ -90,6 +90,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-hand-top':'將 1 張手牌放到牌組上面',
  'effect-rest-front-ap':'可休息 1 張前線活動角色，之後恢復 AP',
  'effect-discard-active':'可將 1 張手牌放到場外，使這張場域活動',
+ 'effect-attack-discard-active':'可將 1 張手牌放到場外，使這張角色活動',
  'effect-once-choice':'是否發動本回合一次能力',
  'effect-choice-mode':'選擇一項效果',
  'effect-named-impact':'可選 1 個指定名稱角色，本回合 BP 上升並獲得 Impact',
@@ -486,6 +487,8 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseRestFrontAp':return action.uid===null?'不休息前線':'休息 '+name()+'，之後可恢復 1 張 AP';
   case 'chooseDiscardActive':return action.uid===null?'不棄牌，場域維持休息':
    '將 '+name()+' 放到場外，並使這張場域活動';
+  case 'chooseAttackDiscardActive':return action.uid===null?'不棄牌，角色維持休息':
+   '將 '+name()+' 放到場外，並使這張角色活動';
   case 'chooseTopHandOutside':return action.step==='outside'?'將 '+name()+' 送至場外':'將 '+name()+' 加入手牌';
   case 'chooseEnergyTraitFront':return action.uid===null?'不移動其餘能源線角色':'將 '+name()+' 移至前線 '+(action.slot+1);
   case 'chooseRemoveHandCap':return action.mode==='done'?'結束除外並退場':'將 '+name()+' 除外';
