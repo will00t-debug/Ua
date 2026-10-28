@@ -12,7 +12,7 @@ import {V2_PENDING_LABELS,uiActionLabel} from '../dist/universal-v2/preview-acti
 import {REZ_BASE_IDS,rez,rezDeck} from './helpers/rez-v2-match.mjs';
 import {deckWith,fresh,put,readyAp,stg,stgPacks,take,toPhase} from './helpers/stg-v2-match.mjs';
 
-const STILL=['STG-1-011','STG-1-017','STG-1-027','STG-1-033','STG-1-038','STG-1-046'];
+const STILL=[];
 const KINDS={
  'STG-1-066':'farisReplay','STG-1-070':'kurisuProtect','STG-1-060':'mayuriShift',
  'STG-1-003':'suzuhaActive','STG-1-010':'okabeChoose','STG-1-018':'mayuriDelay',
@@ -126,14 +126,14 @@ function pull(s,p,id){
 test('batches 41-50 register ten prints and leave six catalogue cards',()=>{
  assert.ok(!V2_TITLE_IDS.includes('steins-gate'));
  assert.equal(STEINS_GATE_CARDS.length,80);
- assert.equal(Object.keys(stg.cards).length,74);
- assert.equal(stg.version,'stg-ua57-batches-41-50-20261028');
+ assert.equal(Object.keys(stg.cards).length,80);
+ assert.equal(stg.version,'stg-ua57-full-20261028');
  assert.deepEqual(STEINS_GATE_CARDS.filter(c=>!c.engineKind).map(c=>c.id).sort(),[...STILL].sort());
  for(const [id,kind] of Object.entries(KINDS)){
   assert.equal(STEINS_GATE_BY_ID[id].engineKind,kind);
   assert.equal(stg.cards[id].name,STEINS_GATE_BY_ID[id].nameJa);
  }
- assert.equal(stg.cards['STG-1-011'],undefined);
+ assert.equal(stg.cards['STG-1-011'].overflowToOutside,true);
  assert.equal(stg.cards['STG-1-066'].raidName,'フェイリス・ニャンニャン');
  assert.equal(stg.cards['STG-1-070'].raidName,'牧瀬 紅莉栖');
  assert.equal(stg.cards['STG-1-060'].raidName,'椎名 まゆり');
@@ -157,10 +157,8 @@ test('batches 41-50 register ten prints and leave six catalogue cards',()=>{
  const practice=steinsGatePracticeDeck();
  assert.equal(v2DeckReport('steins-gate',practice.counts).ok,true);
  const editor=editorV2Status('steins-gate',practice.counts);
- assert.equal(editor.registered,74);
- const blocked=v2DeckReport('steins-gate',{...practice.counts,'STG-1-011':1,'STG-1-001':3});
- assert.equal(blocked.ok,false);
- assert.ok(blocked.issues.some(issue=>issue.includes('STG-1-011')));
+ assert.equal(editor.registered,80);
+ assert.equal(v2DeckReport('steins-gate',practice.counts).ok,true);
 });
 
 test('STG-1-066 replays onPlay only after an event when a field card is present',()=>{

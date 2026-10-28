@@ -64,13 +64,13 @@ function labMatch(cards,seed){
 
 test('batches 11-20 register ten prints and leave the census unchanged',()=>{
  assert.ok(!V2_TITLE_IDS.includes('steins-gate'));
- assert.equal(STEINS_GATE_CARDS.filter(c=>c.engineKind).length,74);
- assert.equal(STEINS_GATE_CARDS.filter(c=>!c.engineKind).length,6);
- assert.equal(Object.keys(stg.cards).length,74);
- assert.equal(stg.version,'stg-ua57-batches-41-50-20261028');
+ assert.equal(STEINS_GATE_CARDS.filter(c=>c.engineKind).length,80);
+ assert.equal(STEINS_GATE_CARDS.filter(c=>!c.engineKind).length,0);
+ assert.equal(Object.keys(stg.cards).length,80);
+ assert.equal(stg.version,'stg-ua57-full-20261028');
  for(const id of IDS)assert.equal(stg.cards[id].name,STEINS_GATE_BY_ID[id].nameJa);
- assert.equal(stg.cards['STG-1-011'],undefined);
- assert.equal(STEINS_GATE_BY_ID['STG-1-011'].engineKind,null);
+ assert.equal(stg.cards['STG-1-011'].raidName,'岡部 倫太郎');
+ assert.equal(STEINS_GATE_BY_ID['STG-1-011'].engineKind,'okabeOverflow');
  const base={id:'X',name:'X',color:'green',type:'character',energy:1,ap:1,bp:1000,gen:1,implementation:'dsl'};
  assert.throws(()=>createUniversalPack({id:'discard-flag',cards:[{...base,effects:{onPlay:[{
   op:'searchTopOneBottomDiscard',count:3,filter:{field:'type',value:'character'},discard:true

@@ -147,7 +147,13 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-move-order':'選擇同時取得的移動觸發處理順序',
  'effect-rest-tuck':'是否 REST 角色，放置剛送至場外的手牌',
  'effect-tuck-moved':'可將該場外卡裏向放在自身下方',
- 'retirement-order':'同時退場效果的結算順序'
+ 'retirement-order':'同時退場效果的結算順序',
+ 'effect-field-leave-remove':'上限或離場時可改放移除區',
+ 'effect-suzuha-attack-end':'攻擊結束可將手牌放到場外',
+ 'effect-mayuri-fork':'選擇對手前線角色',
+ 'effect-printed-rest-raid':'從場外休息登場或突襲',
+ 'effect-zone-rest-raid':'從場外或移除區休息登場或突襲',
+ 'effect-removed-okabe-raid':'從移除區使岡部倫太郎突襲'
 });
 export function isExactLegal(action,legal){
  return Array.isArray(legal)&&legal.some(candidate=>
@@ -402,6 +408,12 @@ export function uiActionLabel(action,{pack,state}={}){
    '使 '+name()+' 以活動狀態登場';
   case 'chooseBounceIncludeSelf':return action.uid===null?'不放回手牌':
    '將 '+name()+' 放回手牌';
+  case 'choosePrintedRestRaid':return action.uid===null?'不登場':
+   (action.mode==='raid'?'以突襲登場：':'以休息狀態登場：')+name();
+  case 'chooseRemovedOkabeRaid':return '從移除區突襲：'+name();
+  case 'chooseMayuriFork':return action.uid===null?'不指定對手角色':'指定 '+name();
+  case 'chooseSuzuhaAttackEnd':return action.uid===null?'不將手牌放到場外':'將 '+name()+' 放到場外';
+  case 'chooseFieldLeaveRemove':return action.mode==='remove'?'改放移除區':'留在場外';
   case 'chooseOutsideRestOrRaid':return action.uid===null?'不登場':
    (action.mode==='raid'?'以突襲登場：':'以休息狀態登場：')+name();
   case 'chooseGrantBounceInstead':return action.uid===null?'不指定菜月昴':

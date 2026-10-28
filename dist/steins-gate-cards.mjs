@@ -359,7 +359,7 @@ export const STEINS_GATE_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-011",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-011",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "okabeOverflow",
   "faq": [
    {
     "no": "Q2378",
@@ -558,7 +558,7 @@ export const STEINS_GATE_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-017",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-017",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "mayuriRaidFork",
   "faq": []
  },
  {
@@ -875,7 +875,7 @@ export const STEINS_GATE_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-027",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-027",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "kurisuRemoveRaid",
   "faq": []
  },
  {
@@ -1074,7 +1074,7 @@ export const STEINS_GATE_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-033",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-033",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "skuldPeek",
   "faq": []
  },
  {
@@ -1229,7 +1229,7 @@ export const STEINS_GATE_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-038",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-038",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "okabeZoneRaid",
   "faq": []
  },
  {
@@ -1496,7 +1496,7 @@ export const STEINS_GATE_CARDS=
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-046",
   "sourceTc": "https://www.unionarena-tcg.com/tc/cardlist/detail_iframe.php?card_no=UA57BT%2FSTG-1-046",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "suzuhaAttackEnd",
   "faq": [
    {
     "no": "Q2386",

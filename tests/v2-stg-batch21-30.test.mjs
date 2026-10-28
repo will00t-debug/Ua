@@ -111,13 +111,13 @@ function labGo(packs,s,pred,actor=0){
 
 test('batches 21-30 register ten whole prints outside the census',()=>{
  assert.ok(!V2_TITLE_IDS.includes('steins-gate'));
- assert.equal(STEINS_GATE_CARDS.filter(c=>c.engineKind).length,74);
- assert.equal(STEINS_GATE_CARDS.filter(c=>!c.engineKind).length,6);
- assert.equal(Object.keys(stg.cards).length,74);
- assert.equal(stg.version,'stg-ua57-batches-41-50-20261028');
- assert.equal(STEINS_GATE_BY_ID['STG-1-011'].engineKind,null);
+ assert.equal(STEINS_GATE_CARDS.filter(c=>c.engineKind).length,80);
+ assert.equal(STEINS_GATE_CARDS.filter(c=>!c.engineKind).length,0);
+ assert.equal(Object.keys(stg.cards).length,80);
+ assert.equal(stg.version,'stg-ua57-full-20261028');
+ assert.equal(STEINS_GATE_BY_ID['STG-1-011'].engineKind,'okabeOverflow');
  assert.equal(STEINS_GATE_BY_ID['STG-1-016'].engineKind,'inspectCharacterEntry');
- assert.equal(stg.cards['STG-1-011'],undefined);
+ assert.equal(stg.cards['STG-1-011'].raidName,'岡部 倫太郎');
  assert.equal(stg.cards['STG-1-016'].effects.onPlay[0].op,'inspectTopAnyOutside');
  const kinds={
   'STG-1-076':'kurisuRetire','STG-1-080':'anyReadyAp','STG-1-051':'winDrawMoved',
@@ -151,7 +151,7 @@ test('batches 21-30 register ten whole prints outside the census',()=>{
  assert.equal(v2DeckReport('steins-gate',practice.counts).ok,true);
  const editor=editorV2Status('steins-gate',practice.counts);
  assert.equal(editor.ready,true,editor.issues.join('；'));
- assert.equal(editor.registered,74);
+ assert.equal(editor.registered,80);
  const blocked=v2DeckReport('steins-gate',{'STG-1-011':4});
  assert.equal(blocked.ok,false);
  const base={id:'X',name:'X',color:'green',type:'character',energy:1,ap:1,bp:1000,gen:1,

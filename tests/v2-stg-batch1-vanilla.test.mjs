@@ -12,7 +12,7 @@ const PLAIN=['STG-1-001','STG-1-002','STG-1-007','STG-1-057','STG-1-064'];
 test('batch 1 keeps Steins;Gate outside the census and pins five vanilla prints',()=>{
  assert.ok(!V2_TITLE_IDS.includes('steins-gate'));
  assert.equal(STEINS_GATE_CARDS.length,80);
- assert.equal(Object.keys(stg.cards).length,74);
+ assert.equal(Object.keys(stg.cards).length,80);
  assert.deepEqual(validateUniversalDeck(stg,stgBaseDeck),[]);
  const practice=steinsGatePracticeDeck();
  assert.equal(Object.values(practice.counts).reduce((n,x)=>n+x,0),50);
@@ -27,7 +27,7 @@ test('batch 1 keeps Steins;Gate outside the census and pins five vanilla prints'
   assert.equal(card.bp,printed.bp);
   assert.equal(card.gen,printed.gen);
  }
- assert.equal(stg.cards['STG-1-011'],undefined);
+ assert.equal(stg.cards['STG-1-011'].raidName,'岡部 倫太郎');
 });
 
 test('vanilla Steins;Gate characters spend AP and leave no pending effect',()=>{
