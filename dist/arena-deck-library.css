@@ -94,3 +94,8 @@ body.arena-site .dkg-account .dkg-empty{background:#121f31;color:#aec2d9;border-
 @media(prefers-reduced-motion:reduce){
  body.arena-site .v2e-shell .dkg-library .dkg-card{transition:none}
 }
+
+body.arena-site .v2e-shell .deck-library-editor-nav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 0 15px;padding:6px 0;color:#9fb3c9;font-size:12px}
+body.arena-site .v2e-shell .deck-library-editor-nav button{border:1px solid #4d7199;background:#13263d;color:#9cccff;border-radius:9px;padding:10px 17px;min-height:42px;font-weight:750;font-size:13px}
+body.arena-site .v2e-shell .deck-library-editor-nav button:hover{background:#1b3d64;color:#fff}
+@media(max-width:680px){body.arena-site .v2e-shell .deck-library-editor-nav{flex-wrap:wrap}}
