@@ -9365,6 +9365,7 @@ export function newUniversalMatch(pack,{decks,seed=1,first=0,openingMulligan=fal
   raidedThisTurn:[false,false],triggerActivated:[false,false],fieldEntryNames:[[],[]],mainAbilityUsedUids:[],mainReadyOnceByName:[[],[]],
   onceEffectUses:[[],[]],energyDoubles:[0,0],allFrontEnergy:[null,null],raidCount:[0,0],
   attackCap:[null,null],handRaidCuts:[[],[]],handNameUses:[[],[]],
+  effectApPaidColors:[[],[]],handZeroApUses:[],
   turnEffectZoneMoves:[{handToOutside:false,outsideToHand:false},
    {handToOutside:false,outsideToHand:false}],ownEffectRests:[[],[]],
   turnRetireEvents:[],zoneMoveEvents:[],nextZoneMoveOrder:1,
