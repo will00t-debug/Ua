@@ -14,7 +14,7 @@ test('V2 setup mirrors login theme while preserving all real interactive control
  assert.match(css,/\.deck-quick-pick\[aria-pressed="true"\]/);
  assert.match(css,/\.difficulty-choice\[aria-pressed="true"\]/);
  for(const id of ['match-view','my-title','ai-title','ai-level','first-player',
-  'match-seed','start-game','restart-notice','v2-coverage','designated-decks',
+  'start-game','restart-notice','v2-coverage','designated-decks',
   'my-deck-description','ai-deck-description']){
   assert.match(html,new RegExp('id="'+id+'"'),'Missing V2 control: '+id);
  }
@@ -25,6 +25,8 @@ test('V2 setup mirrors login theme while preserving all real interactive control
  for(const value of ['easy','normal','hard'])
   assert.ok(html.includes('data-ai-difficulty="'+value+'"'));
  assert.ok(html.includes('開始 V2 對戰'));
+ assert.match(html,/每場新對局都會自動重新洗牌/);
+ assert.doesNotMatch(html,/id="match-seed"|牌序種子/);
  assert.ok(html.includes('href="/index.html"'));
  assert.ok(html.includes('href="/online.html"'));
 });
