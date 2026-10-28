@@ -87,9 +87,6 @@ body.v2-battle-page .battle-subbar .battle-matchup{flex:1;text-align:right}
 body.v2-battle-page .v2-shell #match-view .v2-middle-controls{
  background:linear-gradient(100deg,#14263c,#193551);border-color:#315579;
 }
-body.v2-battle-page .v2-shell #match-view .v2-middle-controls .centerLine{
- background:transparent;border:0;color:#aed5f5;
-}
 body.v2-battle-page .v2-shell #match-view .v2-middle-controls .phaseBar{
  background:transparent;border:0;color:#91abc7;
 }
@@ -97,6 +94,12 @@ body.v2-battle-page .v2-shell #match-view .v2-middle-controls .phaseBar .current
  background:#113e78;border-color:#3c9af4;color:#d8f0ff;
 }
 
+body.v2-battle-page .v2-shell #match-view .v2-middle-next{
+ border-left-color:#4a6988;
+}
 body.v2-battle-page .v2-shell #match-view .v2-middle-next button{
- background:#196fc9;border-color:#79c1ff;color:#fff;
+ background:transparent;border-color:#469cfc;color:#b5ddff;
+}
+body.v2-battle-page .v2-shell #match-view .v2-middle-next button:hover{
+ background:#174170;border-color:#8bc9ff;color:#fff;
 }

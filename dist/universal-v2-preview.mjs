@@ -743,10 +743,10 @@ function render(){
  const phasesEl=el('div',{class:'phaseBar','aria-label':'回合階段'});
  for(const [n,name] of [['start','開始'],['move','移動'],['main','主要'],['attack','攻擊']])
   phasesEl.append(el('span',{class:s.phase===n?'current':'',text:name}));
- middle.append(el('div',{class:'centerLine',text:'TURN '+s.turn+' · '+(phases[s.phase]||s.phase)}),phasesEl);
+ middle.append(phasesEl);
  if(next&&uiActor(s)===0&&!app.busy)
   middle.append(el('div',{class:'v2-middle-next'},
-   btn(s.phase==='attack'?'結束回合 →':'進入下一階段 →',()=>applyAction(next),'btn primary')));
+   btn(s.phase==='attack'?'結束回合 →':'下一階段 →',()=>applyAction(next),'btn primary')));
  if(s.status==='finished'){
   noteAiRecord(s);
   arena.append(el('div',{class:'resultBanner'},el('h2',{text:s.winner===0?'你獲勝了！':'電腦獲勝'})));
