@@ -81,3 +81,22 @@ body.v2-battle-page .trigger-log li{padding:5px 0;border-top:1px solid #3a342c}
 body.v2-battle-page .battle-subbar{position:relative;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 14px;padding:4px 2px 11px;border-bottom:1px solid #32425a}
 body.v2-battle-page .battle-subbar .battle-matchup{flex:1;text-align:right}
 @media(max-width:600px){body.v2-battle-page .battle-subbar{margin-bottom:10px}body.v2-battle-page .battle-subbar .battle-matchup{font-size:10px}}
+
+
+/* Dedicated battle route keeps the shared center controls in its blue palette. */
+body.v2-battle-page .v2-shell #match-view .v2-middle-controls{
+ background:linear-gradient(100deg,#14263c,#193551);border-color:#315579;
+}
+body.v2-battle-page .v2-shell #match-view .v2-middle-controls .centerLine{
+ background:transparent;border:0;color:#aed5f5;
+}
+body.v2-battle-page .v2-shell #match-view .v2-middle-controls .phaseBar{
+ background:transparent;border:0;color:#91abc7;
+}
+body.v2-battle-page .v2-shell #match-view .v2-middle-controls .phaseBar .current{
+ background:#113e78;border-color:#3c9af4;color:#d8f0ff;
+}
+
+body.v2-battle-page .v2-shell #match-view .v2-middle-next button{
+ background:#196fc9;border-color:#79c1ff;color:#fff;
+}

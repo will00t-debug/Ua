@@ -301,3 +301,39 @@ body{margin:0;background:#f2f3f5;color:#272b31;font:14px/1.5 system-ui,-apple-sy
 .v2-shell .v2-setup-v3>.note{color:#8795a0;font-size:10px}
 @media(max-width:900px){.v2-shell .matchup-picker{grid-template-columns:minmax(0,1fr) 48px minmax(0,1fr);gap:8px}.v2-shell .matchup-side{padding:15px}.v2-shell .matchup-vs span{width:45px;height:45px;border-width:3px}.v2-shell .featured-decks{gap:5px}}
 @media(max-width:680px){.v2-shell .v2-setup-v3{padding:20px 13px;gap:16px;border-radius:12px}.v2-shell .setup-intro{align-items:flex-start}.v2-shell .setup-intro h2{font-size:25px}.v2-shell .matchup-picker{grid-template-columns:1fr;gap:6px}.v2-shell .matchup-vs span{width:39px;height:39px}.v2-shell .matchup-side{padding:15px}.v2-shell .difficulty-picker{padding:14px}.v2-shell .difficulty-options{gap:7px}.v2-shell .difficulty-choice{min-height:70px;padding:12px 9px}.v2-shell .difficulty-choice[aria-pressed="true"]:after{right:8px;top:5px}.v2-shell .setup-bottom{gap:15px}.v2-shell .setup-actions #start-game{width:100%}}
+
+
+/* Centered V2 phase controls: between the opponent and player boards. */
+.v2-shell #match-view .v2-middle-controls{
+ display:grid;justify-items:center;gap:8px;padding:12px 10px;
+ background:linear-gradient(100deg,#173a30,#214d3e);
+ border-block:2px solid #739180;text-align:center;
+}
+.v2-shell #match-view .v2-middle-controls .centerLine{
+ width:100%;margin:0;padding:0;background:transparent;border:0;
+ font-size:11px;font-weight:800;letter-spacing:.12em;color:#f2e2b8;
+}
+.v2-shell #match-view .v2-middle-controls .phaseBar{
+ display:flex;justify-content:center;align-items:center;flex-wrap:nowrap;
+ width:100%;max-width:420px;gap:5px;margin:0;padding:0;
+ background:transparent;border:0;
+}
+.v2-shell #match-view .v2-middle-controls .phaseBar span{
+ flex:0 1 auto;min-width:0;padding:7px clamp(7px,2vw,16px);
+ white-space:nowrap;
+}
+.v2-shell #match-view .v2-middle-next{
+ display:flex;justify-content:center;width:100%;max-width:290px;
+}
+.v2-shell #match-view .v2-middle-next button{
+ width:100%;min-height:44px;padding:9px 14px;
+ border-radius:9px;white-space:normal;font-size:13px;font-weight:800;
+ background:#d9ba77;border:1px solid #f2dba6;color:#1b332a;
+}
+.v2-shell #match-view .v2-middle-next button:focus-visible{outline:3px solid #ffe3a0;outline-offset:3px}
+@media(max-width:620px){
+ .v2-shell #match-view .v2-middle-controls{gap:7px;padding:9px 6px}
+ .v2-shell #match-view .v2-middle-controls .phaseBar{gap:3px}
+ .v2-shell #match-view .v2-middle-controls .phaseBar span{padding:6px 8px;font-size:11px}
+ .v2-shell #match-view .v2-middle-next button{min-height:46px}
+}
