@@ -2,7 +2,7 @@
 // No import from engine.mjs, match-runtime.mjs, solo-match.mjs or ttg-core-match.mjs.
 import {TITLES} from './title-registry.mjs';
 import {PRESETS} from './cards.mjs';
-import {renderVisualDeckBuilder} from './visual-deck-builder.mjs?v=20261028infobottom1';
+import {renderVisualDeckBuilder} from './visual-deck-builder.mjs?v=20261028navymock1';
 import {buildDeckLibrary} from './deck-library.mjs';
 import {summarizeDeck,formatDeckUpdated,renderDeckGallery,renderDeckDetail,readSharedIds,writeSharedFlag} from './deck-gallery.mjs';
 import {BUILTIN_BLEACH_V2_DECKS,builtinBleachDeck} from './v2-bleach-builtins.mjs';
@@ -448,7 +448,8 @@ function bind(){
    state.type=state.color=state.energy='all';state.energies=[];state.generate='all';render();return;
   }
   if(data.builderReselect!==undefined){state.screen=state.listOrigin==='library'?'library':'gallery';state.detail=null;state.search='';state.inspection=null;state.zoom=false;state.exportText=null;render();return;}
-  if(data.builderTab){state.tab=data.builderTab;render();return;}
+  if(data.builderSearch!==undefined){$('#search')?.focus();return;}
+  if(data.builderTab){state.tab=data.builderTab;render();if(state.tab==='overview')document.querySelector('.arena-deck')?.scrollIntoView({block:'start'});return;}
   if(data.builderType){state.type=data.builderType;render();return;}
   if(data.builderColor){state.color=data.builderColor;render();return;}
   if(data.builderGenerate){state.generate=data.builderGenerate;render();return;}
