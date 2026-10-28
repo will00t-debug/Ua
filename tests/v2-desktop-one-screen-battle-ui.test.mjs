@@ -46,11 +46,11 @@ test('desktop layout leaves short windows and setup/mulligan scrollable',()=>{
  const css=read('dist/universal-v2-desktop.css');
  assert.doesNotMatch(css,/\.v2-setup-v3|\.v2-mulligan|\.v2-empty/);
  assert.match(css,/min-height:460px/);
- assert.match(css,/@media \\(min-width:761px\\) and \\(min-height:460px\\) and \\(max-height:679px\\)/);
- assert.match(css,/@media \\(min-width:761px\\) and \\(min-height:460px\\) and \\(max-height:519px\\)/);
- assert.match(css,/grid-template-rows:minmax\\(0,1fr\\) 30px minmax\\(0,1fr\\) minmax\\(88px,17dvh\\)/);
- assert.match(css,/--desktop-card-width:min\\(6\\.7dvh,6vw,58px\\)/);
- assert.match(css,/--desktop-card-width:min\\(8dvh,6vw,70px\\)/);
+ assert.ok(css.includes('@media (min-width:761px) and (min-height:460px) and (max-height:679px)'));
+ assert.ok(css.includes('@media (min-width:761px) and (min-height:460px) and (max-height:519px)'));
+ assert.ok(css.includes('grid-template-rows:minmax(0,1fr) 30px minmax(0,1fr) minmax(88px,17dvh)'));
+ assert.ok(css.includes('--desktop-card-width:min(6.7dvh,6vw,58px)'));
+ assert.ok(css.includes('--desktop-card-width:min(8dvh,6vw,70px)'));
  assert.match(css,/\.v2-battle-page\.v2-playing/);
  assert.match(css,/\.v2-log/);
 });
