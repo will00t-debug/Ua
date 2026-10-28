@@ -89,3 +89,9 @@ body.v2-arena-theme .v2-shell>.ua-site-header{margin-bottom:20px}
  .ua-header-logo{gap:5px}
 }
 @media(prefers-reduced-motion:reduce){.ua-header-nav{scroll-behavior:auto}}
+
+/* Let the account app header span the same full viewport as the editor header.
+ * The lobby itself retains its independent centered max-width. */
+body.arena-site #app.wrap{max-width:none;width:100%;margin:0;padding:0}
+body.arena-site .arena-app>.ua-site-header{z-index:30}
+body.arena-site .v2e-shell>.ua-site-header{z-index:30}
