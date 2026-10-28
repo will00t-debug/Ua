@@ -17,13 +17,14 @@ test('V2 standalone preview is never injected into existing production index and
  assert.ok(!existing.includes('universal-v2-preview'));
  assert.ok(page.includes('<meta name="robots" content="noindex,nofollow,noarchive">'));
  for(const asset of ['universal-v2-legacy.css','universal-v2-preview.mjs'])assert.ok(page.includes(asset));
- for(const id of ['my-title','ai-title','ai-level','first-player','match-seed','match-view','start-game'])
+ for(const id of ['my-title','ai-title','ai-level','first-player','match-view','start-game'])
   assert.ok(page.includes('id="'+id+'"'));
  assert.match(css,/@media\(max-width:620px\)/);
  assert.match(script,/dispatchUniversalAction\(app.packs,app.state,a,\{actor:0\}\)/);
  assert.match(script,/uiActor\(app.state\)===1/);
  assert.match(script,/universalPrivateChoices\(app.packs,s,0\)/);
  assert.ok(!page.includes('apiKey'));
+ assert.doesNotMatch(page,/id="match-seed"|牌序種子/);
 });
 test('UI presenter only allows actions copied from real per-turn legal options',()=>{
  const s=fresh(),legal=legalUniversalActions(packs,s);
