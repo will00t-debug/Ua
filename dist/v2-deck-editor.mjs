@@ -102,7 +102,7 @@ function detailModel(){
  const shared=detail?.source==='cloud'
   ?readSharedIds(localStorage).has(state.cloudOrigin?.remoteId||'')
   :state.shareFlag===true;
- return {source:detail?.source||'draft',id:detail?.id||'draft',name:state.names[title],counts:state.counts[title],updatedAt:null,shared,shareEnabled:true,shareNote:detail?.source==='cloud'?'公開後會出現在帳號的分享列表。':'公開狀態會在儲存牌組後出現在分享列表。',summary:summarizeDeck(cards,state.counts[title])};
+ return {source:detail?.source||'draft',id:detail?.id||'draft',name:state.names[title],counts:state.counts[title],updatedAt:null,shared,shareEnabled:true,shareNote:detail?.source==='cloud'?'公開後會出現在帳號的分享列表。':'公開狀態會在儲存牌組後出現在分享列表。',coverId:state.coverIds[title],summary:summarizeDeck(cards,state.counts[title],state.coverIds[title])};
 }
 function activeList(){
  if(state.screen==='detail'){
@@ -611,6 +611,8 @@ function importAccountDeckHandoff(){
   state.title=title;state.ready=true;state.tab='overview';state.search='';
   state.type=state.color=state.energy='all';
   state.counts[title]=counts;
+  state.coverIds[title]=validDeckCoverId(catalogueCards(title),counts,payload.coverId);
+  state.coverPicker=false;
   state.names[title]=typeof payload.name==='string'?payload.name.trim().slice(0,40)||defaults[title]:defaults[title];
   const localId=typeof payload.localId==='string'&&/^[A-Za-z0-9:_-]{1,80}$/.test(payload.localId)?payload.localId:null;
   const scopedLocalId='v2-account-'+payload.remoteId;
