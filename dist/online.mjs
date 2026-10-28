@@ -206,7 +206,7 @@ function openAccountDeck(deck,intent){
  try{
   sessionStorage.setItem('ua-account-visual-editor-v1',JSON.stringify({
    title:deck.title,name:deck.name,counts:deck.counts,
-   remoteId:deck.id,localId:deck.localId||null,intent
+   remoteId:deck.id,localId:deck.localId||null,coverId:deck.coverId||null,intent
   }));
   window.location.assign('/index.html');
  }catch(error){
