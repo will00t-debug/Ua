@@ -1480,7 +1480,37 @@ const PRINTED_PINS=Object.freeze({
    "effectJa":"カードを2枚引く。自分の場に〈リズベット〉がある場合、さらにカードを1枚引き、自分の手札を1枚場外に置く。"},
   "SAO-2-071":{"kind":"frontPrintedGgoEnergy","nameJa":"キリト",
    "color":"green","energy":2,"ap":1,"bp":3000,"gen":1,"type":"character","trigger":null,"traits":["GGO"],
-   "effectJa":"【フロントLにある場合】自分の手札にある元々の必要エナジーが6以上の全ての［特徴：GGO］の必要エナジーを【緑×1】減らす。"}
+   "effectJa":"【フロントLにある場合】自分の手札にある元々の必要エナジーが6以上の全ての［特徴：GGO］の必要エナジーを【緑×1】減らす。"},
+  "SAO-1-096":{"kind":"fieldDiscardEnergy","nameJa":"バギー",
+   "color":"green","energy":3,"ap":1,"bp":0,"gen":2,"type":"field","trigger":"get","traits":[],
+   "effectJa":"【起動メイン】【手札を1枚場外に置く】 【ターン1】このターン中、このフィールドの発生エナジー+【緑】【緑】。"},
+  "SAO-1-024":{"kind":"oncePaySniperMaxBp","nameJa":"シノン（太陽神ソルス）",
+   "color":"yellow","energy":2,"ap":1,"bp":3000,"gen":1,"type":"character","trigger":null,"traits":["女神"],
+   "effectJa":"【起動メイン】【手札を1枚場外に置く】 【ターン1】このキャラはこのターン中、【狙い撃ち】（相手のフロントLのキャラを指定してアタックでき、指定した場合、相手はブロックできない）と「このキャラはBP2500以上のキャラを【狙い撃ち】で指定できない。」を得る。"},
+  "SAO-1-002":{"kind":"enterActiveFrontNamesDoubleAttack","nameJa":"キリト",
+   "color":"yellow","energy":4,"ap":2,"bp":3500,"gen":1,"type":"character","trigger":"get","traits":[],
+   "effectJa":"このキャラはアクティブで場に登場させる。\n自分のフロントLに〈アリス〉と〈ユージオ〉がある場合、このキャラは【2回アタック】（このキャラがこのターン初めてアタックした時、アクティブにする）を得る。"},
+  "SAO-1-064":{"kind":"handTraitScaledRetire","nameJa":"空中戦",
+   "color":"blue","energy":3,"ap":1,"bp":0,"gen":0,"type":"event","trigger":"special","traits":[],
+   "effectJa":"『BP1000』以下の相手のフロントLのキャラを1枚選び、退場させる。自分の手札の枚数と、自分の場の［特徴：ALO］の枚数を合計し、1枚につき、『BP+500』される。"},
+  "SAO-1-099":{"kind":"frontBuffImpactIfName","nameJa":"フォトンソード",
+   "color":"green","energy":2,"ap":1,"bp":0,"gen":0,"type":"event","trigger":"active","traits":[],
+   "effectJa":"自分のフロントLのキャラを1枚選び、このターン中、BP+2000。自分の場に〈キリト〉がある場合、さらにこのターン中、【インパクト（+1）】（インパクトの与えるダメージが+1され、インパクトを持たない場合、【インパクト（1）】を得る）を与える。"},
+  "SAO-2-012":{"kind":"traitBuffImpactPlusDraw","nameJa":"武装完全支配術",
+   "color":"yellow","energy":3,"ap":1,"bp":0,"gen":0,"type":"event","trigger":"draw","traits":[],
+   "effectJa":"自分の場の［特徴：整合騎士］全ては、このターン中、BP+1000。自分のフロントLの［特徴：整合騎士］を1枚選び、このターン中、【インパクト（+1）】（インパクトの与えるダメージが+1され、インパクトを持たない場合、【インパクト（1）】を得る）を与える。自分の場に［特徴：整合騎士］が4枚以上ある場合、カードを1枚引く。"},
+  "SAO-2-062":{"kind":"drawDiscardApIfName","nameJa":"longing",
+   "color":"purple","energy":3,"ap":1,"bp":0,"gen":0,"type":"event","trigger":"draw","traits":["歌"],
+   "effectJa":"カードを2枚引き、自分の手札を2枚場外に置く。自分の場に〈ユナ〉がある場合、自分のAPカードを1枚まで選び、アクティブにする。"},
+  "SAO-1-080":{"kind":"attackDrawDiscardIfNames","nameJa":"ユウキ",
+   "color":"green","energy":4,"ap":1,"bp":4000,"gen":1,"type":"character","trigger":"active","traits":["ALO"],
+   "effectJa":"【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、【インパクト】を失う）\n【アタック時】自分の場に〈アスナ〉か〈シウネー〉か〈スリーピング・ナイツ〉がある場合、カードを1枚引き、自分の手札を1枚場外に置く。"},
+  "SAO-1-086":{"kind":"topTraitExcludeName","nameJa":"キリト",
+   "color":"green","energy":3,"ap":1,"bp":3000,"gen":3,"type":"character","trigger":"active","traits":["GGO"],
+   "effectJa":"【登場時】自分の山札の上から4枚見る。その中から〈キリト〉以外の［特徴：GGO］を1枚まで公開し手札に加える。残りを望む順で自分の山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。"},
+  "SAO-1-029":{"kind":"fieldRestRetireDrawNamedBp","nameJa":"ギガスシダー",
+   "color":"yellow","energy":2,"ap":1,"bp":0,"gen":1,"type":"field","trigger":"get","traits":[],
+   "effectJa":"【起動メイン】【レストにする】 【このカードを退場させる】カードを2枚引く。この効果は自分の場にBP4000以上の〈ユージオ〉がある場合のみ発動できる。"}
 });
 export const SAO_V2_PILOT_IDS=Object.freeze(Object.keys(PRINTED_PINS).sort());
 function sourceCards(){
@@ -1923,6 +1953,50 @@ export function verifiedSaoV2Cards(){
    card.effects={};
    card.frontPrintedEnergyAura={line:'front',minPrintedEnergy:6,trait:'GGO',color:'green',amount:1};
   }
+  if(pin.kind==='fieldDiscardEnergy'){
+   card.effects={};
+   card.mainAbility={op:'discardHandGainEnergy',oncePerTurn:true,discardCount:1,extraEnergy:2};
+  }
+  if(pin.kind==='oncePaySniperMaxBp'){
+   card.effects={};
+   card.mainAbility={op:'oncePayProgram',oncePerTurn:true,frontOnly:false,raidOnly:false,
+    payAp:0,requiresOwnName:null,then:[{op:'discardGate',optional:false,
+     then:[{op:'grantSelfSniperThisTurn',maxBp:2500}]}]};
+  }
+  if(pin.kind==='enterActiveFrontNamesDoubleAttack'){
+   card.enterAlwaysActive=true;
+   card.doubleAttackIfFrontNames=['アリス','ユージオ'];
+   card.effects={};
+  }
+  if(pin.kind==='handTraitScaledRetire'){
+   card.effects={onPlay:[{op:'retireOppFrontHandTraitScale',base:1000,step:500,trait:'ALO'}]};
+   card.triggerEffect={op:'retireOppFront'};
+  }
+  if(pin.kind==='frontBuffImpactIfName')
+   card.effects={onPlay:[{op:'buffOwnFrontImpactIfName',bp:2000,name:'キリト',impactPlus:1}]};
+  if(pin.kind==='traitBuffImpactPlusDraw')
+   card.effects={onPlay:[
+    {op:'buffOwnTraitAllTurn',trait:'整合騎士',bp:1000},
+    {op:'grantFrontTraitImpactPlus',trait:'整合騎士',amount:1},
+    {op:'drawIfOwnTraitCount',trait:'整合騎士',zone:'field',excludeSelf:false,min:4,count:1,cards:true}
+   ]};
+  if(pin.kind==='drawDiscardApIfName')
+   card.effects={onPlay:[
+    {op:'drawDiscard',count:2,discardCount:2},
+    {op:'recoverAp',count:1,whenName:'ユナ'}
+   ]};
+  if(pin.kind==='attackDrawDiscardIfNames'){
+   card.impactNull=true;
+   card.effects={onAttack:[{op:'drawDiscardIfOwnNames',
+    names:['アスナ','シウネー','スリーピング・ナイツ'],count:1,discardCount:1}]};
+  }
+  if(pin.kind==='topTraitExcludeName')
+   card.effects={onPlay:[{op:'searchTopOneBottomDiscard',count:4,
+    filter:{field:'trait',value:'GGO'},excludeName:'キリト'}]};
+  if(pin.kind==='fieldRestRetireDrawNamedBp'){
+   card.effects={};
+   card.mainAbility={op:'fieldRestRetireDrawIfNamedBp',name:'ユージオ',minBp:4000,draw:2};
+  }
   return card;
  });
 }
@@ -2009,6 +2083,11 @@ export function verifiedSaoV2Entries(){
       'ownTraitBp','lineShiftBp','lineShiftBpImpact','lineShiftAttackDraw','onPlayBlockAtMost',
       'lifeDrawInstead','drawDiscardIfLizbeth','frontPrintedGgoEnergy'].includes(pin.kind)?
       ['tests/v2-sao-eight-shared-batches.test.mjs']:[]),
+     ...(['fieldDiscardEnergy','oncePaySniperMaxBp','enterActiveFrontNamesDoubleAttack',
+      'handTraitScaledRetire','frontBuffImpactIfName','traitBuffImpactPlusDraw',
+      'drawDiscardApIfName','attackDrawDiscardIfNames','topTraitExcludeName',
+      'fieldRestRetireDrawNamedBp'].includes(pin.kind)?
+      ['tests/v2-sao-ten-batches.test.mjs']:[]),
      'tests/universal-v2-sao-mst-cross-title.test.mjs'
     ]),
     ...(def.implementation==='vanilla'?{verifiedNoExtraEffects:true}:{})

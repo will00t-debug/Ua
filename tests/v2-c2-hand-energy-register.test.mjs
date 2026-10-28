@@ -75,9 +75,9 @@ test('C2 registers seven whole prints and leaves no exact reuse unported',()=>{
  const x=c2BlcSaoRegister();
  assert.deepEqual([...C2_REGISTERED].sort(),[
   'BLC-1-007','BLC-1-044','BLC-1-073','SAO-1-015','SAO-1-050','SAO-1-090','SAO-1-092']);
- assert.equal(x.report.registered,634);
+ assert.equal(x.report.registered,644);
  assert.equal(x.report.bleach,276);
- assert.equal(x.report.sao,137);
+ assert.equal(x.report.sao,147);
  assert.equal(x.report.registeredThisRound,7);
  assert.equal(x.report.readyFromKeywords,0);
  assert.equal(x.report.engineBlocked,0);

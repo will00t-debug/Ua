@@ -84,7 +84,7 @@ function play(s,uid,line='front',slot=0,use=packs){
 }
 
 test('C27 class A registers three SLG prints on existing deck and discount DSL',()=>{
- assert.equal(EXPECTED_V2_TOTAL,634);
+ assert.equal(EXPECTED_V2_TOTAL,644);
  assert.equal(EXPECTED_V2_COUNTS['solo-leveling'],80);
  assert.equal(EXPECTED_V2_COUNTS['gurren-lagann'],81);
  for(const id of ['SLG-1-017','SLG-1-054','SLG-1-063']){
@@ -321,7 +321,7 @@ test('SAO-2-066 sends at most one green ALO from the top two outside',()=>{
  assert.equal(card.triggerEffect,null);
  assert.deepEqual(card.effects.onPlay,[{op:'inspectTopTraitOutside',count:2,
   trait:'ALO',color:'green',rest:'top'}]);
- assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],137);
+ assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],147);
  assert.equal(EXPECTED_V2_IDS['sword-art-online'].includes('SAO-2-066'),true);
 
  const counts=deckOf(sao,['SAO-2-066','SAO-1-082','SAO-1-051','SAO-1-092']);
