@@ -26,7 +26,7 @@ import {SAO_CARDS} from './sao-cards.mjs';
 import {MST_V2_OFFICIAL_CATALOGUE} from './universal-v2/sources/mst-inventory.mjs';
 import {V2_PHASE_LABELS,V2_TITLE_LABELS,V2_PENDING_LABELS,
  uiActor,isExactLegal,uiCardLabel,uiActionLabel,visibleActionsForCard,
- pendingChoiceCards,pendingChoiceCaption,attackBattleTags,raidClickPlan,
+ pendingChoiceCards,pendingChoiceCaption,attackBattleTags,raidClickPlan,moveClickPlan,
  FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs';
 import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalReplay,
  publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
@@ -409,17 +409,24 @@ function legacySlot(view,side,line,index,legal){
  const v=view.players[side],c=v[line][index];
  const yours=side===0&&uiActor(app.state)===0&&!app.busy;
  const selected=!!c&&c.uid===app.selectedUid;
- const plan=yours?raidClickPlan({selectedUid:app.selectedUid,raidBaseUid:app.raidBaseUid,
-  slotUid:c?.uid||null,line,slot:index,legal}):{type:'select'};
+ const moving=yours&&app.state.phase==='move';
+ const plan=!yours?{type:'select'}:moving?
+  moveClickPlan({selectedUid:app.selectedUid,slotUid:c?.uid||null,line,slot:index,legal}):
+  raidClickPlan({selectedUid:app.selectedUid,raidBaseUid:app.raidBaseUid,
+   slotUid:c?.uid||null,line,slot:index,legal});
  const chosenBase=!!c&&c.uid===app.raidBaseUid;
  const raidBase=plan.type==='choose-base'||(chosenBase&&plan.type!=='raid');
  const raidDest=plan.type==='raid';
- const place=plan.type==='place';
+ const moveSource=plan.type==='choose-mover';
+ const moveDest=plan.type==='destination';
+ const place=plan.type==='place'||moveDest;
  const d=c?cardDef(side,c.cardId):null;
- const placement=raidDest?'突襲登場':raidBase?(chosenBase?'已選底板':'突襲底板'):place?'放置／移動':'';
+ const placement=moveDest?'移動至此':moveSource?'點選移動角色':
+  raidDest?'突襲登場':raidBase?(chosenBase?'已選底板':'突襲底板'):place?'放置':'';
  const btnSlot=el('button',{type:'button',class:'slot'+(c?' occupied':'')+
   (c&&!c.ready?' rested':'')+(selected?' selected':'')+
-  (raidBase?' raid-base':'')+(raidDest||place?' destination':''),
+  (raidBase?' raid-base':'')+(moveSource?' move-source':'')+
+  (raidDest||place?' destination':''),
   'aria-label':(side===0?'你的':'對手的')+(line==='front'?'前線':'能源線')+
    (index+1)+(d?' '+d.name:' 空位')+(placement?'，'+placement:''),
   'data-placement':placement});
@@ -455,6 +462,19 @@ function legacySlot(view,side,line,index,legal){
  btnSlot.addEventListener('click',()=>{
   if(held){held=false;return;}
   if(!yours)return;
+  if(moving){
+   if(plan.type==='choose-mover'){
+    app.selectedUid=app.selectedUid===plan.uid?null:plan.uid;
+    app.selectedSide=0;app.raidBaseUid=null;
+    app.targetChoices=null;app.allActions=false;render();return;
+   }
+   if(plan.type==='destination'){
+    const moves=plan.actions||[];
+    if(moves.length===1){applyAction(moves[0]);return;}
+    if(moves.length>1){app.targetChoices=moves;render();}
+   }
+   return;
+  }
   if(plan.type==='choose-base'){
    app.raidBaseUid=plan.baseUid;app.targetChoices=null;render();return;
   }
@@ -555,7 +575,7 @@ function legacyCommands(legal){
  const actions=app.targetChoices||(app.selectedUid?[...passive,...selected]:[...passive,...global]);
  const list=[...new Map(actions.map(a=>[JSON.stringify(a),a])).values()]
   .filter(a=>(a.type!=='raid'||app.targetChoices)&&
-   (app.targetChoices||!['play','move'].includes(a.type)))
+   (app.targetChoices||!['play','move','step'].includes(a.type)))
   .slice(0,100);
  const raidReady=legal.some(a=>a.type==='raid'&&a.uid===app.selectedUid);
  if(!list.length&&!raidReady&&!app.targetChoices)return null;
@@ -697,6 +717,8 @@ function mountPendingOverlay(overlay){
 }
 function render(){
  const target=$('match-view');if(!target)return;
+ const oldScroll=window.scrollY;
+ const preserveScroll=target.childElementCount>0;
  clearTimeout(fieldHold);fieldHold=0;
  clearPendingOverlay();
  target.replaceChildren();
@@ -769,6 +791,8 @@ function render(){
   el('ol',{class:'history'},...app.history.slice(0,70).map(x=>el('li',{text:x}))));
  target.append(log);
  const prompt=pendingDialog(legal,v);if(prompt)target.append(prompt);
+ // Replacing the entire match subtree must not jump the desktop viewport.
+ if(IS_BATTLE_PAGE&&preserveScroll)window.scrollTo(window.scrollX,oldScroll);
 }
 function applyAction(a){
  if(!app.state||app.busy||uiActor(app.state)!==0)return;
