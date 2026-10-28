@@ -27,11 +27,13 @@ test('deck editor battle navigation points to the same V2 settings page',()=>{
 test('V2 destination exposes opponent deck, real AI difficulty and start match controls',()=>{
  const html=read('dist/universal-v2-preview.html');
  const js=read('dist/universal-v2-preview.mjs');
- for(const id of ['my-title','ai-title','ai-level','start-game','match-view'])
+ for(const id of ['my-title','ai-title','ai-level','start-game'])
   assert.ok(html.includes('id="'+id+'"'),'missing real V2 control '+id);
  for(const d of ['easy','normal','hard'])
   assert.ok(html.includes('data-ai-difficulty="'+d+'"'));
  assert.ok(js.includes("$('start-game').addEventListener('click'"));
+ assert.match(read('dist/universal-v2-battle.html'),/id="match-view"/);
+ assert.doesNotMatch(html,/id="match-view"/);
  assert.ok(js.includes("app.aiDifficulty=$('ai-level').value"));
  assert.ok(js.includes('newUniversalMatch(app.packs,'));
  assert.ok(js.includes('legalUniversalActions(app.packs,s)'));

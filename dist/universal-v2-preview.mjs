@@ -11,6 +11,8 @@ import {listRegisteredV2Titles,registeredV2TitlePack} from './universal-v2/title
 import {V2_EDITOR_TRANSFER_KEY} from './v2-editor-compat.mjs';
 import {generateMatchSeed} from './v2-match-random-seed.mjs';
 import {recordDeckResult} from './deck-records.mjs';
+import {prepareSoloBattle,saveSoloBattle,loadSoloBattle,clearSoloBattle,
+ SOLO_BATTLE_URL,SOLO_BATTLE_PROGRESS_KEY} from './universal-v2/solo-battle-session.mjs';
 import {collectSavedV2LobbyDecks,validatedLobbyChoice,V2_MATCH_SETUP_STORAGE_KEY} from './universal-v2/lobby-saved-decks.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  universalPublicView,universalPrivateChoices,assertUniversalMatch} from './universal-v2/engine.mjs';
@@ -60,11 +62,12 @@ const el=(tag,props={},...contents)=>{
  return n;
 };
 const $=id=>document.getElementById(id);
-$('v2-coverage').textContent=
+const IS_BATTLE_PAGE=document.body?.dataset?.v2Screen==='battle';
+if(!IS_BATTLE_PAGE)$('v2-coverage').textContent=
  V2_ABILITY_TEMPLATE_IDS.length+' 種能力模板 · 已移植 '+
  v2Entries.reduce((sum,item)=>sum+item.totalV2Cards,0)+' 張真卡 Pilot';
 let editorRecordId=null;
-const app={state:null,packs:null,selectedUid:null,recordDeckId:null,recordNoted:false,
+const app={state:null,packs:null,launch:null,selectedUid:null,recordDeckId:null,recordNoted:false,
  selectedSide:null,history:[],busy:false,aiTimer:null,error:'',
  undo:null,replay:null,targetChoices:null,aiDifficulty:'normal',sequence:0,allActions:false, maxAuto:4500,autoMoves:0,aiPhaseKey:null,aiPhaseCount:0,aiFallbacks:0,aiCompletedSteps:0,lastAiProgress:'未啟動'};
 const phases=V2_PHASE_LABELS;
@@ -81,7 +84,9 @@ function imgUrl(side,id){
  return typeof source==='string'&&source.trim()?source:'assets/mark.svg';
 }
 function alertText(message){
- app.error=message;render();
+ app.error=message;
+ if(!IS_BATTLE_PAGE&&$('restart-notice'))$('restart-notice').textContent=message;
+ render();
 }
 function pushHistory(text){
  app.history.unshift(text); // Retain the full human-readable trace for bug reports.
@@ -384,10 +389,49 @@ function legacyCommands(legal){
  else bar.append(btn('取消選擇',()=>{app.targetChoices=null;render();},'btn small'));
  return bar;
 }
+// Keep an in-progress AI match alive when a mobile browser reloads the battle page.
+// This private, same-tab snapshot is never shared with the opponent or Worker.
+function saveBattleProgress(){
+ if(!IS_BATTLE_PAGE||!app.launch||!app.state||!app.replay)return;
+ try{
+  const data={version:1,launchId:app.launch.config.id,state:app.state,replay:app.replay,
+   history:app.history.slice(0,2500),recordNoted:app.recordNoted,
+   aiCompletedSteps:app.aiCompletedSteps,lastAiProgress:app.lastAiProgress};
+  sessionStorage.setItem(SOLO_BATTLE_PROGRESS_KEY,JSON.stringify(data));
+ }catch{/* Private browsing/quota limits must not interrupt V2 legal gameplay. */}
+}
+function restoreBattleProgress(){
+ if(!IS_BATTLE_PAGE||!app.launch)return false;
+ try{
+  const json=sessionStorage.getItem(SOLO_BATTLE_PROGRESS_KEY);
+  if(!json||json.length>2200000)return false;
+  const data=JSON.parse(json),cfg=app.launch.config;
+  if(data.version!==1||data.launchId!==cfg.id||!data.state||!data.replay||
+   !Array.isArray(data.history)||data.history.length>2500||
+   data.replay.format!=='ua-universal-v2-preview'||
+   data.replay.seed<1||data.replay.first!==cfg.first||
+   data.replay.openingMulligan!==true||
+   !Array.isArray(data.replay.initialCounts)||
+   data.replay.initialCounts.length!==2||
+   data.replay.initialCounts.some((counts,i)=>
+    JSON.stringify(Object.entries(counts).sort())!==
+    JSON.stringify(Object.entries(cfg.decks[i].counts).sort())))
+   return false;
+  assertUniversalMatch(app.packs,data.state);
+  app.state=data.state;app.replay=data.replay;
+  app.history=data.history.filter(x=>typeof x==='string').slice(0,2500);
+  app.recordNoted=data.recordNoted===true;
+  app.aiCompletedSteps=Number.isInteger(data.aiCompletedSteps)?data.aiCompletedSteps:0;
+  app.lastAiProgress=typeof data.lastAiProgress==='string'?data.lastAiProgress.slice(0,100):'已恢復對局';
+  app.error='';app.undo=null;app.selectedUid=null;
+  return true;
+ }catch{return false;}
+}
 function noteAiRecord(state){
  if(app.recordNoted||!app.recordDeckId)return;
  if(state.winner!==0&&state.winner!==1)return;
  app.recordNoted=true;
+ saveBattleProgress();
  try{recordDeckResult(localStorage,{deckId:app.recordDeckId,channel:'ai',win:state.winner===0,opponent:'電腦',at:new Date().toISOString()});}
  catch{/* A private browser can finish the match without storing a record. */}
 }
@@ -423,7 +467,10 @@ function render(){
  const target=$('match-view');if(!target)return;
  target.replaceChildren();
  if(!app.state){
-  target.append(el('div',{class:'panel v2-empty',text:'在上方選擇你的牌組、電腦牌組及 AI 難度，再按「開始 V2 對戰」。所有卡牌結算交給 UNION ARENA V2 規則引擎。'}));
+  target.append(el('section',{class:'panel v2-empty'},
+   el('h2',{text:'尚未開始對戰'}),
+   el('p',{text:'請先在對戰設定頁選擇雙方牌組與 AI 難度，再開始 V2 對戰。'}),
+   el('a',{href:'/universal-v2-preview.html',text:'返回對戰設定'})));
   return;
  }
  const s=app.state;
@@ -501,13 +548,15 @@ function applyAction(a){
   assertUniversalMatch(app.packs,app.state);
   app.replay=appendUniversalReplay(app.replay,a,0);
   pushHistory(publicPreviewActionLabel(app.packs,previous,app.state,a,0));
+  saveBattleProgress();
   app.selectedUid=null;app.targetChoices=null;app.error='';app.allActions=false;render();driveAi();
  }catch(e){alertText(e?.message||String(e));}
 }
 function undoMove(){
  if(!app.undo||app.busy)return;
  app.state=app.undo.state;app.history=app.undo.history;app.replay=app.undo.replay;
- app.undo=null;app.error='';app.selectedUid=null;render();
+ app.undo=null;app.error='';app.selectedUid=null;
+ saveBattleProgress();render();
  if(uiActor(app.state)===1)driveAi();
 }
 // Fully synchronous, one-click rescue. No browser timers or AI chooser.
@@ -529,6 +578,7 @@ function manualAiStep(){
   pushHistory(publicPreviewActionLabel(app.packs,previous,app.state,move,1));
   app.aiCompletedSteps++;
   app.lastAiProgress='手動 '+move.type+' · T'+app.state.turn+'/'+app.state.phase;
+  saveBattleProgress();
   app.error='';
   render();
  }catch(e){
@@ -571,6 +621,7 @@ function driveAi(){
     app.lastAiProgress=choice.type+' · T'+app.state.turn+'/'+app.state.phase;
     if(app.autoMoves%20===0)assertUniversalMatch(app.packs,app.state);
    }
+   saveBattleProgress();
    if(app.state.status==='playing'&&uiActor(app.state)===1){
     // Render between chunks so a user can see progress and tap retry even
     // when a mobile browser throttles timers.
@@ -643,7 +694,7 @@ function renderDesignatedDecks(){
   }
  }
 }
-renderDesignatedDecks();
+if(!IS_BATTLE_PAGE)renderDesignatedDecks();
 // Import only source-registered, complete BLEACH lists; never pretend unsupported
 // classic cards gained official V2 profiles.
 function importClassicLobbyDecks(){
@@ -673,7 +724,7 @@ function importClassicLobbyDecks(){
  if(raw.first==='0'||raw.first==='1')$('first-player').value=raw.first==='1'?'ai':'human';
  if(notices.length)$('restart-notice').textContent=notices.join(' ');
 }
-importClassicLobbyDecks();
+if(!IS_BATTLE_PAGE)importClassicLobbyDecks();
 function selectBuiltOpponent(title){
  if(decks['rezero-set1']&&title==='rezero')$('ai-title').value='rezero-set1';
  if(decks['gurren-lagann-red']&&title==='gurren-lagann')$('ai-title').value='gurren-lagann-red';
@@ -700,7 +751,7 @@ function importBuiltTitleDeck(){
  selectBuiltOpponent(raw.title);
  if(['easy','normal','hard'].includes(raw.aiDifficulty))$('ai-level').value=raw.aiDifficulty;
 }
-importBuiltTitleDeck();
+if(!IS_BATTLE_PAGE)importBuiltTitleDeck();
 // V2-only editor handoff: validate title, complete-card registry and printed deck rules.
 // Never use legacy auto flags or a legacy battle reducer.
 function importV2EditorDeck(){
@@ -724,7 +775,7 @@ function importV2EditorDeck(){
  selectBuiltOpponent(raw.title);
  $('restart-notice').textContent='已載入 V2 組卡頁的 50 張牌組：'+name+'。可以直接開始與 AI 對戰。';
 }
-importV2EditorDeck();
+if(!IS_BATTLE_PAGE)importV2EditorDeck();
 
 // Saved decks remain browser-local, and are revalidated against the CURRENT
 // V2 rule pack. Unsupported decks are shown as unavailable, never auto-enabled.
@@ -740,28 +791,55 @@ function importSavedLobbyDecks(){
   }
  }
 }
-importSavedLobbyDecks();
-function startGame(){
- resetAi();
+if(!IS_BATTLE_PAGE)importSavedLobbyDecks();
+// On the setup route, validate the selected 50-card lists and navigate to
+// an independent URL. The live card table is never inserted below this form.
+function launchBattle(){
+ if(IS_BATTLE_PAGE)return;
  try{
   const myTitle=$('my-title').value,foeTitle=$('ai-title').value;
   const mine=decks[myTitle]||designatedReady.get(myTitle);
   const foe=decks[foeTitle]||designatedReady.get(foeTitle);
   if(!mine||!foe)throw Error('請選擇有已驗證 50 張牌組的作品。');
-  app.packs=[mine.pack,foe.pack];
-  // A new match gets a fresh random order. Preserve the seed only in the debug replay.
-  const seed=generateMatchSeed();
   const first=$('first-player').value==='ai'?1:0;
-  app.recordDeckId=$('my-title').value==='editor-v2-mine'?editorRecordId:null;
+  app.aiDifficulty=$('ai-level').value;
+  // Catch invalid packs before navigation. The real match draws a fresh seed
+  // on the dedicated battle route rather than inheriting a fixed deck order.
+  newUniversalMatch([mine.pack,foe.pack],{
+   decks:[mine.counts,foe.counts],seed:generateMatchSeed(),first,openingMulligan:true
+  });
+  const recordDeckId=myTitle==='editor-v2-mine'?editorRecordId:null;
+  const config=prepareSoloBattle({
+   mine,foe,first,difficulty:app.aiDifficulty,recordDeckId,
+   nonce:generateMatchSeed()
+  });
+  saveSoloBattle(sessionStorage,config);
+  window.location.assign(SOLO_BATTLE_URL);
+ }catch(error){alertText(error?.message||String(error));}
+}
+// Battle route only: preserve the V2 legal reducer, AI, mulligan and replay.
+// The same control is used for a deliberate "重開對局" on the new page.
+function startGame(){
+ resetAi();
+ try{
+  if(!IS_BATTLE_PAGE||!app.launch)throw Error('請先選擇牌組，再開始 V2 對戰。');
+  const [mine,foe]=app.launch.decks;
+  const first=app.launch.config.first;
+  app.packs=app.launch.packs;
+  const seed=generateMatchSeed();
+  app.recordDeckId=app.launch.config.recordDeckId;
   app.recordNoted=false;
   app.state=newUniversalMatch(app.packs,{decks:[mine.counts,foe.counts],seed,first,openingMulligan:true});
   assertUniversalMatch(app.packs,app.state);
-  app.error='';app.selectedUid=null;app.undo=null;app.allActions=false;app.aiFallbacks=0;app.aiCompletedSteps=0;app.lastAiProgress='新對局';
-  app.aiDifficulty=$('ai-level').value;
-  app.history=['新對局：'+(mine.label||fmtTitle(myTitle))+' vs '+(foe.label||fmtTitle(foeTitle))+
-   '｜先手 '+(first===0?'你':'電腦')+'｜起手牌調度階段'];
+  app.error='';app.selectedUid=null;app.targetChoices=null;app.undo=null;
+  app.allActions=false;app.aiFallbacks=0;app.aiCompletedSteps=0;app.lastAiProgress='新對局';
+  app.aiDifficulty=app.launch.config.difficulty;
+  app.history=['新對局：'+(mine.label||fmtTitle(mine.pack.id))+' vs '+
+   (foe.label||fmtTitle(foe.pack.id))+'｜先手 '+(first===0?'你':'電腦')+
+   '｜起手牌調度階段'];
   app.replay=makeUniversalPreviewReplay(app.packs,{
    decks:[mine.counts,foe.counts],seed,first,openingMulligan:true});
+  saveBattleProgress();
   render();driveAi();
  }catch(e){alertText(e?.message||String(e));}
 }
@@ -830,31 +908,52 @@ function restoreMatchLobby(){
  if(['easy','normal','hard'].includes(saved.difficulty))$('ai-level').value=saved.difficulty;
  if(['human','ai'].includes(saved.first))$('first-player').value=saved.first;
 }
-restoreMatchLobby();
-for(const button of document.querySelectorAll('[data-deck-side]')){
- button.addEventListener('click',()=>{
-  const select=$(button.dataset.deckSide),key=button.dataset.deckKey;
-  if(button.disabled||![...select.options].some(o=>o.value===key&&!o.disabled))return;
-  select.value=key;
-  syncMatchLobby();markLobbyChanged();rememberMatchLobby();
+if(!IS_BATTLE_PAGE){
+ restoreMatchLobby();
+ for(const button of document.querySelectorAll('[data-deck-side]')){
+  button.addEventListener('click',()=>{
+   const select=$(button.dataset.deckSide),key=button.dataset.deckKey;
+   if(button.disabled||![...select.options].some(o=>o.value===key&&!o.disabled))return;
+   select.value=key;
+   syncMatchLobby();markLobbyChanged();rememberMatchLobby();
+  });
+ }
+ for(const button of document.querySelectorAll('[data-ai-difficulty]')){
+  button.addEventListener('click',()=>{
+   const difficulty=button.dataset.aiDifficulty;
+   if(!['easy','normal','hard'].includes(difficulty))return;
+   $('ai-level').value=difficulty;
+   syncMatchLobby();markLobbyChanged();rememberMatchLobby();
+  });
+ }
+ for(const id of ['my-title','ai-title','ai-level','first-player']){
+  $(id).addEventListener('change',()=>{
+   syncMatchLobby();markLobbyChanged();rememberMatchLobby();
+  });
+ }
+ $('start-game').addEventListener('click',()=>{
+  rememberMatchLobby();
+  launchBattle();
  });
-}
-for(const button of document.querySelectorAll('[data-ai-difficulty]')){
- button.addEventListener('click',()=>{
-  const difficulty=button.dataset.aiDifficulty;
-  if(!['easy','normal','hard'].includes(difficulty))return;
-  $('ai-level').value=difficulty;
-  syncMatchLobby();markLobbyChanged();rememberMatchLobby();
+ syncMatchLobby();
+}else{
+ const loaded=loadSoloBattle(sessionStorage);
+ const exit=$('exit-battle');
+ if(exit)exit.addEventListener('click',event=>{
+  if(app.state?.status==='playing'&&
+   !window.confirm('返回對戰設定將結束這場對局。確定要離開嗎？')){
+   event.preventDefault();return;
+  }
+  resetAi();clearSoloBattle(sessionStorage);
  });
+ if(loaded){
+  app.launch=loaded;app.packs=loaded.packs;
+  app.aiDifficulty=loaded.config.difficulty;
+  app.recordDeckId=loaded.config.recordDeckId;
+  const banner=$('battle-matchup');
+  if(banner)banner.textContent=loaded.decks[0].label+' vs '+loaded.decks[1].label+
+   ' · '+({easy:'簡單',normal:'普通',hard:'困難'}[loaded.config.difficulty]||'普通');
+  if(!restoreBattleProgress())startGame();
+  else{render();driveAi();}
+ }else render();
 }
-for(const id of ['my-title','ai-title','ai-level','first-player']){
- $(id).addEventListener('change',()=>{
-  syncMatchLobby();markLobbyChanged();rememberMatchLobby();
- });
-}
-$('start-game').addEventListener('click',()=>{
- rememberMatchLobby();
- startGame();
-});
-syncMatchLobby();
-render();

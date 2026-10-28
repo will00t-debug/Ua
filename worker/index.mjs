@@ -191,6 +191,8 @@ export default {
     '/':'/online.html',
     '/universal-v2-preview':'/universal-v2-preview.html',
     '/universal-v2-preview.html':'/universal-v2-preview.html',
+    '/universal-v2-battle':'/universal-v2-battle.html',
+    '/universal-v2-battle.html':'/universal-v2-battle.html',
     '/index':'/index.html',
     '/index.html':'/index.html',
     '/online':'/online.html',
