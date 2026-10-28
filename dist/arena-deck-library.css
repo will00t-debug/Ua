@@ -1,0 +1,96 @@
+/* Mobile-first deck library: compact card-image list like the approved reference,
+   with the same dark/blue esports visual system as UNION ARENA login.
+   This sheet loads after the older light visual-deck-builder rules. */
+body.arena-site .v2e-shell .dkg-library{width:min(100%,860px);margin:0 auto 42px;display:grid;gap:15px;color:#eff5ff}
+body.arena-site .v2e-shell .dkg-library-lead{padding:6px 3px 8px}
+body.arena-site .v2e-shell .dkg-library-lead span{display:block;color:#6fb8ff;font-size:11px;font-weight:850;letter-spacing:.23em}
+body.arena-site .v2e-shell .dkg-library-lead h2{font-size:clamp(22px,3vw,29px);margin:7px 0;color:#f7fbff}
+body.arena-site .v2e-shell .dkg-library-lead p{color:#adbed3;font-size:12px;line-height:1.7}
+body.arena-site .v2e-shell .dkg-library .dkg-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));padding:5px;border-radius:13px;background:#101827;border:1px solid #374a61;gap:6px}
+body.arena-site .v2e-shell .dkg-library .dkg-tabs button{min-height:47px;border:0;border-radius:10px;background:transparent;color:#b4c8de;font-weight:750;font-size:14px}
+body.arena-site .v2e-shell .dkg-library .dkg-tabs button.active{background:linear-gradient(110deg,#104f98,#12315c);color:#fff;box-shadow:0 0 0 1px #318fff,inset 0 1px #8fc7ff45}
+body.arena-site .v2e-shell .dkg-library .dkg-create{display:flex;align-items:center;justify-content:center;width:100%;gap:11px;min-height:73px;padding:16px;background:#0e192b9c;border:2px dashed #5480aa;border-radius:14px;color:#91c8ff;font-size:17px;font-weight:850;box-shadow:none}
+body.arena-site .v2e-shell .dkg-library .dkg-create:hover{background:#153256;border-color:#49a0ff}
+body.arena-site .v2e-shell .dkg-library .dkg-section{display:grid;gap:10px;margin:6px 0}
+body.arena-site .v2e-shell .dkg-library .dkg-section>h2{display:flex;align-items:center;gap:10px;margin:0 0 3px;padding:0 0 9px;border-bottom:1px solid #324257;font-size:18px;color:#f5f8ff}
+body.arena-site .v2e-shell .dkg-library .dkg-section>h2:before{content:"";width:4px;height:20px;background:#359bff;border-radius:6px}
+body.arena-site .v2e-shell .dkg-library .dkg-cards{display:grid;grid-template-columns:minmax(0,1fr);gap:11px}
+body.arena-site .v2e-shell .dkg-library .dkg-card{position:relative;display:grid;grid-template-columns:90px minmax(0,1fr) 20px;align-items:center;gap:14px;min-width:0;width:100%;min-height:139px;text-align:left;padding:12px 13px;background:linear-gradient(110deg,#192739,#111b2a);border:1px solid #40546c;border-radius:14px;color:#f2f7ff;box-shadow:0 9px 25px #0006;transition:background .16s,border-color .16s,transform .16s}
+body.arena-site .v2e-shell .dkg-library .dkg-card:after{content:"›";display:grid;place-items:center;color:#75bfff;font-size:31px;font-weight:500}
+body.arena-site .v2e-shell .dkg-library .dkg-card:hover{background:#21344e;border-color:#4fa7ff;transform:translateY(-2px)}
+body.arena-site .v2e-shell .dkg-library .dkg-card:focus-visible{outline:3px solid #7dc6ff;outline-offset:3px}
+body.arena-site .v2e-shell .dkg-library .dkg-card-art{display:grid;place-items:center;width:90px;height:119px;flex:none;background:#0a121d;border:1px solid #4e6481;border-radius:8px;overflow:hidden}
+body.arena-site .v2e-shell .dkg-library .dkg-card-art img{display:block;width:100%;height:100%;object-fit:contain}
+body.arena-site .v2e-shell .dkg-library .dkg-card-copy{display:flex;flex-direction:column;min-width:0;gap:6px;align-items:flex-start}
+body.arena-site .v2e-shell .dkg-library .dkg-card-copy strong{font-size:clamp(16px,2.8vw,21px);font-weight:850;line-height:1.35;color:#fff;overflow-wrap:anywhere}
+body.arena-site .v2e-shell .dkg-library .dkg-card-copy small{display:block;font-size:12px;line-height:1.4;color:#b4c5d9}
+body.arena-site .v2e-shell .dkg-library .dkg-card-copy small:last-child{color:#91c8f3}
+body.arena-site .v2e-shell .dkg-library .dkg-empty{background:#0d1828;border:1px dashed #486281;color:#b0c3dc;border-radius:14px;line-height:1.7;padding:27px 13px}
+body.arena-site .v2e-shell .deck-library-detail{width:min(100%,1040px);margin:0 auto 36px;min-width:0}
+body.arena-site .v2e-shell .deck-library-detail .dkg-detail{display:grid;gap:15px;color:#eef6ff;min-width:0}
+body.arena-site .v2e-shell .deck-library-detail .dkg-back{color:#93c9ff;min-height:45px;font-weight:750;font-size:13px}
+body.arena-site .v2e-shell .deck-library-detail .dkg-hero{display:grid;grid-template-columns:110px minmax(0,1fr);gap:16px;padding:16px;background:linear-gradient(118deg,#1b2b42,#101923);border:1px solid #3e5775;border-radius:16px;color:#f6faff;box-shadow:0 8px 30px #0005}
+body.arena-site .v2e-shell .deck-library-detail .dkg-hero-art{width:110px;height:150px;background:#0c1726;border:1px solid #526783;border-radius:8px}
+body.arena-site .v2e-shell .deck-library-detail .dkg-hero-copy h1{color:#fff;font-size:clamp(19px,3vw,27px);font-weight:850;margin:0 0 5px}
+body.arena-site .v2e-shell .deck-library-detail .dkg-hero-copy p{color:#b5c9dd;font-size:12px;margin:0 0 5px}
+body.arena-site .v2e-shell .deck-library-detail .dkg-total{color:#8ac7ff;font-size:14px;font-weight:850}
+body.arena-site .v2e-shell .deck-library-detail .dkg-public{color:#b3c8da;font-size:12px;flex-wrap:wrap}
+body.arena-site .v2e-shell .deck-library-detail .dkg-public b{color:#eef7ff}
+body.arena-site .v2e-shell .deck-library-detail .dkg-hero-copy small{display:block;color:#91a9c0;font-size:11px;line-height:1.5;margin-top:8px}
+body.arena-site .v2e-shell .deck-library-detail .dkg-edit{width:100%;min-height:54px;border:1px solid #269cff;border-radius:11px;background:linear-gradient(110deg,#0769d9,#118bf6);color:white;font-weight:850;font-size:16px;box-shadow:0 6px 24px #026fef49}
+body.arena-site .v2e-shell .deck-library-detail .dkg-edit:hover{background:#2d97ff}
+body.arena-site .v2e-shell .deck-library-detail .dkg-actions{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+body.arena-site .v2e-shell .deck-library-detail .dkg-actions button{min-height:46px;padding:8px 12px;background:#18263a;border:1px solid #436080;border-radius:10px;color:#e4f3ff;font-weight:700;font-size:12px}
+body.arena-site .v2e-shell .deck-library-detail .dkg-actions button:disabled{opacity:.4}
+body.arena-site .v2e-shell .deck-library-detail .dkg-group{padding:16px;border:1px solid #3a4d66;border-radius:14px;background:#121d2d}
+body.arena-site .v2e-shell .deck-library-detail .dkg-group h2{font-size:18px;color:#f8fbff;border-bottom:1px solid #344660;padding-bottom:10px;margin:0 0 12px}
+body.arena-site .v2e-shell .deck-library-detail .dkg-group h2 span{font-size:12px;color:#aac5e2;font-weight:600}
+body.arena-site .v2e-shell .deck-library-detail .dkg-board{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:10px}
+body.arena-site .v2e-shell .deck-library-detail .dkg-mini{position:relative;min-width:0;background:#0f1825;padding:4px;border:1px solid #344762;border-radius:8px}
+body.arena-site .v2e-shell .deck-library-detail .dkg-mini:hover{border-color:#55a8ff}
+body.arena-site .v2e-shell .deck-library-detail .dkg-mini img{width:100%;aspect-ratio:.7;object-fit:contain;background:#09101a;border-radius:5px}
+body.arena-site .v2e-shell .deck-library-detail .dkg-count{background:#156bcd;color:white;right:5px;bottom:6px;border-radius:5px;padding:2px 6px}
+body.arena-site .v2e-shell .deck-library-detail .dkg-triggers{padding:16px;border:1px solid #3a4d66;background:#121e2f;border-radius:13px;color:#eef4ff}
+body.arena-site .v2e-shell .deck-library-detail .dkg-triggers h2{font-size:17px;color:#eef4ff}
+body.arena-site .v2e-shell .deck-library-detail .dkg-trigger{color:#d8e7f9;background:#203047}
+body.arena-site .v2e-shell .deck-library-detail .dkg-empty{background:#131d2c;border:1px dashed #465771;color:#b6c7d8}
+body.arena-site .v2e-shell .deck-library-advanced{margin-top:16px;border:1px solid #34475f;background:#101a2a;border-radius:12px;padding:14px;color:#d6e6f5}
+body.arena-site .v2e-shell .deck-library-advanced>summary{cursor:pointer;font-size:13px;font-weight:750;color:#a8cafa;min-height:30px}
+body.arena-site .v2e-shell .deck-library-advanced .arena-tools{margin-top:14px;color:#eaf4fd}
+body.arena-site .v2e-shell .deck-library-advanced .arena-tools h2{font-size:15px;color:#eaf4fd}
+body.arena-site .v2e-shell .deck-library-advanced input{min-height:42px;background:#0f1a2c;color:#eff8ff;border:1px solid #48617e;border-radius:8px;padding:8px}
+body.arena-site .v2e-shell :is(.dkg-card,.dkg-create,.dkg-edit,.dkg-mini,.dkg-tabs button,.dkg-back):focus-visible{outline:3px solid #74bdff;outline-offset:3px}
+body.arena-site .dkg-account .dkg-tabs{background:#111a28;border:1px solid #34465d;border-radius:12px}
+body.arena-site .dkg-account .dkg-tabs button{color:#b8c7d9;background:transparent;font-size:13px}
+body.arena-site .dkg-account .dkg-tabs button.active{background:#164478;color:white}
+body.arena-site .dkg-account .dkg-card{background:#172438;color:#eaf4ff;border:1px solid #40536e;border-radius:12px;min-height:126px;box-shadow:none}
+body.arena-site .dkg-account .dkg-card-art{width:83px;height:112px;background:#0c1421;border:1px solid #405675;border-radius:7px}
+body.arena-site .dkg-account .dkg-card-copy strong{color:#f7faff;font-size:17px}
+body.arena-site .dkg-account .dkg-card-copy small{color:#b7cbe0;font-size:12px}
+body.arena-site .dkg-account .dkg-empty{background:#121f31;color:#aec2d9;border-color:#49617e}
+@media(max-width:680px){
+ body.arena-site .v2e-shell .dkg-library{gap:11px}
+ body.arena-site .v2e-shell .dkg-library-lead{padding:0 2px 4px}
+ body.arena-site .v2e-shell .dkg-library .dkg-card{grid-template-columns:78px minmax(0,1fr) 16px;gap:11px;min-height:117px;padding:9px;border-radius:12px}
+ body.arena-site .v2e-shell .dkg-library .dkg-card-art{width:78px;height:104px}
+ body.arena-site .v2e-shell .dkg-library .dkg-card-copy strong{font-size:16px}
+ body.arena-site .v2e-shell .dkg-library .dkg-card-copy small{font-size:11px}
+ body.arena-site .v2e-shell .dkg-library .dkg-card:after{font-size:25px}
+ body.arena-site .v2e-shell .dkg-library .dkg-create{min-height:64px;font-size:15px}
+ body.arena-site .v2e-shell .deck-library-detail .dkg-hero{grid-template-columns:83px minmax(0,1fr);gap:11px;padding:11px}
+ body.arena-site .v2e-shell .deck-library-detail .dkg-hero-art{width:83px;height:115px}
+ body.arena-site .v2e-shell .deck-library-detail .dkg-public{gap:5px;font-size:11px}
+ body.arena-site .v2e-shell .deck-library-detail .dkg-board{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+ body.arena-site .v2e-shell .deck-library-detail .dkg-group{padding:10px}
+ body.arena-site .v2e-shell .deck-library-detail .dkg-actions button{font-size:11px}
+ body.arena-site .dkg-account .dkg-card{padding:8px;gap:9px}
+ body.arena-site .dkg-account .dkg-card-art{width:68px;height:93px}
+}
+@media(max-width:370px){
+ body.arena-site .v2e-shell .dkg-library .dkg-card{grid-template-columns:69px minmax(0,1fr) 13px;gap:8px}
+ body.arena-site .v2e-shell .dkg-library .dkg-card-art{width:69px;height:95px}
+ body.arena-site .v2e-shell .deck-library-detail .dkg-board{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(prefers-reduced-motion:reduce){
+ body.arena-site .v2e-shell .dkg-library .dkg-card{transition:none}
+}
