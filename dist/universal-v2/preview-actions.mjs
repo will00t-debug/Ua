@@ -584,6 +584,22 @@ export function pendingChoiceCards(option){
  }
  return cards;
 }
+// Resolve a pending target only against face-up PUBLIC field slots. This
+// works for both controllers (self/opponent) but never exposes hidden hand,
+// deck, life, or face-down under-card identities. A UID must match exactly.
+export function publicPendingTargetCard(view,action){
+ const uid=action?.uid;
+ if(typeof uid!=='string'||!uid||!Array.isArray(view?.players))return null;
+ for(const [side,player] of view.players.entries()){
+  if(side!==0&&side!==1)continue;
+  for(const line of ['front','energy']){
+   const slot=(player?.[line]||[]).find(card=>card?.uid===uid&&
+    typeof card.cardId==='string'&&card.cardId);
+   if(slot)return {side,line,cardId:slot.cardId,bp:line==='front'?slot.bp:null};
+  }
+ }
+ return null;
+}
 export function pendingChoiceCaption(label,names){
  const clean=String(label||'').replace(/\s+/g,' ').trim();
  if(!clean||!Array.isArray(names)||!names.length)return '';
