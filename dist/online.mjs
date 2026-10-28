@@ -12,7 +12,7 @@ const DRAFTS=[
  ['sword-art-online','ua-sao-draft-v1'],['solo-leveling','ua-slg-draft-v1'],
  ['mushoku-tensei','ua-mst-draft-v1'],['rezero','ua-rez-draft-v1']
 ];
-const PHASES=[['start','開始'],['move','移動'],['main','主要'],['attack','攻擊']];
+const PHASES=[['setup','起手調度'],['start','開始'],['move','移動'],['main','主要'],['attack','攻擊']];
 const ROOM=/^[A-HJ-NP-Z2-9]{8}$/;
 const app={offline:false,user:null,decks:[],room:null,error:'',notice:'',busy:false,mode:'login',deckTab:'mine',pollToken:0,timer:0,showPassword:false,remember:true,recordedCode:'',draftUser:'',draftPass:''};
 function captureAuthDraft(form){
@@ -314,6 +314,9 @@ function matchView(){
  const phase=el('div',{class:'phases'});
  for(const [id,label] of PHASES)phase.append(el('span',{class:view.phase===id?'current':'',text:label}));
  const actions=el('div',{class:'actions'});
+ if(view.phase==='setup'){
+  actions.append(el('p',{class:'muted',text:'開局可選擇保留 7 張，或整手重抽 7 張一次。先手先選，後手再選，完成後才設定生命卡。'}));
+ }
  if(room.status==='finished')actions.append(el('p',{text:(room.winner?.username||'對局')+' 獲勝。'}));
  else if(room.yourTurn){
   if(!room.choices.length)actions.append(el('p',{class:'muted',text:'正在等待可以執行的操作。'}));
