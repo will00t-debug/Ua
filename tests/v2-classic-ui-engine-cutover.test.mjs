@@ -19,7 +19,7 @@ test('official root uses V2 while the editor never boots any legacy battle engin
  assert.equal(editor.includes("from './engine.mjs'"),false);
  assert.equal(editor.includes("from './match-runtime.mjs'"),false);
  assert.doesNotMatch(root,/src="universal-v2-preview.mjs/);
- assert.match(read('../dist/universal-v2-preview.html'),/src="universal-v2-preview.mjs"/);
+ assert.match(read('../dist/universal-v2-preview.html'),/src="universal-v2-preview\.mjs(?:\?v=[^"]+)?"/);
 });
 
 test('battle UI is classic BLEACH Arena, but every action uses V2 legal reducer',()=>{
