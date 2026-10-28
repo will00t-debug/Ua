@@ -1,4 +1,5 @@
 import {renderDeckRecord} from './deck-records.mjs';
+import {titleLogo} from './title-logos.mjs';
 
 function vdbEsc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function vdbImage(c){return c?.onlineImage||c?.image||'assets/mark.svg';}
@@ -101,8 +102,15 @@ function renderVisualDeckBuilder({titles,titleId,ready,tab,search,type,color,ene
  const titleName=TITLE_NAMES[title.id]||title.label||'';
  const model=makeVisualDeckModel({cards:title.cards,counts,search,type,color,energy,energies,generate,sort,titleName});
  const img=(card,cls='')=>`<img class="${cls}" src="${vdbEsc(vdbImage(card))}" alt="${vdbEsc(card?.nameZh||card?.name||card?.number||'卡片')}" loading="lazy" decoding="async" onerror="this.onerror=null;this.src='assets/mark.svg'">`;
- const titleGrid=`<div class="vdb-title-grid">${list.map(item=>{const pick=item.cards.find(card=>card.image||card.onlineImage)||item.cards[0];return `<button type="button" class="vdb-title-tile${ready&&item.id===titleId?' is-selected':''}" data-title="${vdbEsc(item.id)}" aria-pressed="${ready&&item.id===titleId}"><span class="vdb-tile-art">${img(pick)}</span><span class="vdb-tile-info"><strong>${vdbEsc(TITLE_NAMES[item.id]||item.label)}</strong><small>${item.cards.length} 種已收錄卡牌</small></span></button>`;}).join('')}</div>`;
- if(!ready)return `<div class="vdb arena-editor"><header class="vdb-intro"><span class="vdb-eyebrow">DECK BUILDER · 01 / 03</span><h1>先選擇卡牌作品</h1><p>選好作品，再從低必要能量開始加入卡片。各作品的牌組分開保存。</p></header>${titleGrid}<p class="vdb-footnote">卡圖與效果文字來自已收錄的官方卡牌資料。未移植的卡牌可以編進牌表，但不能進入 V2 對戰。</p></div>`;
+ const titleGrid=`<div class="vdb-title-grid">${list.map(item=>{const pick=item.cards.find(card=>card.image||card.onlineImage)||item.cards[0];const logo=titleLogo(item.id);const art=logo?`<span class="vdb-title-logo-plate"><img class="vdb-title-logo" src="${vdbEsc(logo.image)}" alt="${vdbEsc(logo.label)} Logo" loading="lazy" decoding="async" referrerpolicy="no-referrer" onerror="this.onerror=null;this.hidden=true;this.nextElementSibling.hidden=false"><span class="vdb-title-logo-fallback" hidden>${vdbEsc(logo.label)}</span></span>`:img(pick);return `<button type="button" class="vdb-title-tile${ready&&item.id===titleId?' is-selected':''}" data-title="${vdbEsc(item.id)}" aria-pressed="${ready&&item.id===titleId}"><span class="vdb-tile-art">${art}</span><span class="vdb-tile-info"><strong>${vdbEsc(TITLE_NAMES[item.id]||item.label)}</strong><small>${item.cards.length} 種已收錄卡牌</small></span></button>`;}).join('')}</div>`;
+ const logoCredits=list.filter(item=>titleLogo(item.id)).map(item=>{
+  const logo=titleLogo(item.id);
+  const license=logo.licenseUrl?` · <a href="${vdbEsc(logo.licenseUrl)}" target="_blank" rel="noopener noreferrer">${vdbEsc(logo.license)}</a>`:" · "+vdbEsc(logo.license);
+  return `<li><a href="${vdbEsc(logo.source)}" target="_blank" rel="noopener noreferrer">${vdbEsc(logo.label)}</a> · ${vdbEsc(logo.credit)}${license}</li>`;
+ }).join('');
+ const logoSource=logoCredits?`<details class="vdb-logo-credits"><summary>作品 Logo 來源與授權</summary><ul>${logoCredits}</ul><p>作品商標權利屬原權利人；本站非官方網站。</p></details>`:"";
+
+ if(!ready)return `<div class="vdb arena-editor"><header class="vdb-intro"><span class="vdb-eyebrow">DECK BUILDER · 01 / 03</span><h1>先選擇卡牌作品</h1><p>選好作品，再從低必要能量開始加入卡片。各作品的牌組分開保存。</p></header>${titleGrid}<p class="vdb-footnote">卡圖與效果文字來自已收錄的官方卡牌資料。未移植的卡牌可以編進牌表，但不能進入 V2 對戰。</p>${logoSource}</div>`;
  const cardLine=card=>{
   const n=model.amount(card),limit=card.maxCopies??4;
   const produced=finite(card.gen);
