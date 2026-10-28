@@ -391,6 +391,34 @@ function noteAiRecord(state){
  try{recordDeckResult(localStorage,{deckId:app.recordDeckId,channel:'ai',win:state.winner===0,opponent:'電腦',at:new Date().toISOString()});}
  catch{/* A private browser can finish the match without storing a record. */}
 }
+function renderOpeningMulligan(target,s){
+ const v=universalPublicView(app.packs,s,0),mine=v.players[0];
+ const mineTurn=s.pending?.player===0;
+ const panel=el('section',{class:'v2-mulligan panel','aria-label':'起手牌調度'},
+  el('div',{class:'v2-mulligan-kicker',text:'OPENING HAND · 7 CARDS'}),
+  el('h2',{text:mineTurn?'決定你的起手牌':'電腦正在決定是否調度'}),
+  el('p',{class:'v2-mulligan-explain',text:
+   '每位玩家可選擇保留，或將起手 7 張完整重抽一次。重抽時先把舊手牌放旁邊，抽新的 7 張後才把舊牌洗回牌庫。先手先決定，後手再決定，最後才放置生命卡。'}));
+ const cards=el('div',{class:'v2-mulligan-hand'});
+ for(const c of mine.hand){
+  const d=cardDef(0,c.cardId)||{};
+  const image=el('img',{src:imgUrl(0,c.cardId),alt:d.name||c.cardId,loading:'eager'});
+  image.onerror=()=>{if(!image.src.endsWith('/assets/mark.svg'))image.src='assets/mark.svg';};
+  cards.append(el('div',{class:'v2-mulligan-card'},image,
+   el('span',{text:d.name||c.cardId})));
+ }
+ panel.append(cards);
+ if(mineTurn){
+  const legal=legalUniversalActions(app.packs,s);
+  const decisions=el('div',{class:'v2-mulligan-decisions'});
+  for(const action of legal){
+   decisions.append(btn(uiActionLabel(action),()=>applyAction(action),
+    action.mode==='keep'?'recommended':'quiet'));
+  }
+  panel.append(decisions,el('p',{class:'v2-mulligan-hint',text:'每人只有這一次調度機會，確認後不可再次重抽。'}));
+ }else panel.append(el('p',{class:'v2-mulligan-hint',role:'status',text:'等待電腦完成調度；你的起手牌會維持隱私。'}));
+ target.append(panel);
+}
 function render(){
  const target=$('match-view');if(!target)return;
  target.replaceChildren();
@@ -398,7 +426,12 @@ function render(){
   target.append(el('div',{class:'panel v2-empty',text:'在上方選擇你的牌組、電腦牌組及 AI 難度，再按「開始 V2 對戰」。所有卡牌結算交給 UNION ARENA V2 規則引擎。'}));
   return;
  }
- const s=app.state,v=universalPublicView(app.packs,s,0),legal=legalUniversalActions(app.packs,s);
+ const s=app.state;
+ if(s.phase==='setup'&&s.pending?.kind==='opening-mulligan'){
+  renderOpeningMulligan(target,s);
+  return;
+ }
+ const v=universalPublicView(app.packs,s,0),legal=legalUniversalActions(app.packs,s);
  const title=el('header',{class:'matchHeader'},
   el('h1',{},'UNION ARENA V2 ',el('span',{class:'textMuted',text:' / 舊版對戰介面'}),
    el('small',{class:'v2-client-version',text:' · '+CLIENT_RELEASE})),
@@ -721,14 +754,14 @@ function startGame(){
   const first=$('first-player').value==='ai'?1:0;
   app.recordDeckId=$('my-title').value==='editor-v2-mine'?editorRecordId:null;
   app.recordNoted=false;
-  app.state=newUniversalMatch(app.packs,{decks:[mine.counts,foe.counts],seed,first});
+  app.state=newUniversalMatch(app.packs,{decks:[mine.counts,foe.counts],seed,first,openingMulligan:true});
   assertUniversalMatch(app.packs,app.state);
   app.error='';app.selectedUid=null;app.undo=null;app.allActions=false;app.aiFallbacks=0;app.aiCompletedSteps=0;app.lastAiProgress='新對局';
   app.aiDifficulty=$('ai-level').value;
   app.history=['新對局：'+(mine.label||fmtTitle(myTitle))+' vs '+(foe.label||fmtTitle(foeTitle))+
-   '｜先手 '+(first===0?'你':'電腦')+'｜雙方牌組已隨機洗牌'];
+   '｜先手 '+(first===0?'你':'電腦')+'｜起手牌調度階段'];
   app.replay=makeUniversalPreviewReplay(app.packs,{
-   decks:[mine.counts,foe.counts],seed,first});
+   decks:[mine.counts,foe.counts],seed,first,openingMulligan:true});
   render();driveAi();
  }catch(e){alertText(e?.message||String(e));}
 }
