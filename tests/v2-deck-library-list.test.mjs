@@ -85,7 +85,7 @@ test('production deck builder starts at owned library and can navigate to editor
  assert.match(js,/window\.location\.assign\('\/universal-v2-preview\.html'\)/);
  assert.match(js,/fetch\('\/api\/decks',options\)/);
  assert.match(html,/arena-deck-library\.css\?v=20261028library1/);
- assert.match(html,/v2-deck-editor\.mjs\?v=20261028header1/);
+ assert.match(html,/v2-deck-editor\.mjs\?v=20261028logos1/);
  assert.match(read('dist/online.html'),/arena-deck-library\.css\?v=20261028library1/);
  assert.match(css,/\.dkg-library \.dkg-card/);
  assert.match(css,/\.deck-library-detail \.dkg-board/);
