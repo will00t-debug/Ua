@@ -792,27 +792,54 @@ function importSavedLobbyDecks(){
  }
 }
 importSavedLobbyDecks();
-function startGame(){
- resetAi();
+// On the setup route, validate the selected 50-card lists and navigate to
+// an independent URL. The live card table is never inserted below this form.
+function launchBattle(){
+ if(IS_BATTLE_PAGE)return;
  try{
   const myTitle=$('my-title').value,foeTitle=$('ai-title').value;
   const mine=decks[myTitle]||designatedReady.get(myTitle);
   const foe=decks[foeTitle]||designatedReady.get(foeTitle);
   if(!mine||!foe)throw Error('請選擇有已驗證 50 張牌組的作品。');
-  app.packs=[mine.pack,foe.pack];
-  // A new match gets a fresh random order. Preserve the seed only in the debug replay.
-  const seed=generateMatchSeed();
   const first=$('first-player').value==='ai'?1:0;
-  app.recordDeckId=$('my-title').value==='editor-v2-mine'?editorRecordId:null;
+  app.aiDifficulty=$('ai-level').value;
+  // Catch invalid packs before navigation. The real match draws a fresh seed
+  // on the dedicated battle route rather than inheriting a fixed deck order.
+  newUniversalMatch([mine.pack,foe.pack],{
+   decks:[mine.counts,foe.counts],seed:generateMatchSeed(),first,openingMulligan:true
+  });
+  const recordDeckId=myTitle==='editor-v2-mine'?editorRecordId:null;
+  const config=prepareSoloBattle({
+   mine,foe,first,difficulty:app.aiDifficulty,recordDeckId,
+   nonce:generateMatchSeed()
+  });
+  saveSoloBattle(sessionStorage,config);
+  window.location.assign(SOLO_BATTLE_URL);
+ }catch(error){alertText(error?.message||String(error));}
+}
+// Battle route only: preserve the V2 legal reducer, AI, mulligan and replay.
+// The same control is used for a deliberate "重開對局" on the new page.
+function startGame(){
+ resetAi();
+ try{
+  if(!IS_BATTLE_PAGE||!app.launch)throw Error('請先選擇牌組，再開始 V2 對戰。');
+  const [mine,foe]=app.launch.decks;
+  const first=app.launch.config.first;
+  app.packs=app.launch.packs;
+  const seed=generateMatchSeed();
+  app.recordDeckId=app.launch.config.recordDeckId;
   app.recordNoted=false;
   app.state=newUniversalMatch(app.packs,{decks:[mine.counts,foe.counts],seed,first,openingMulligan:true});
   assertUniversalMatch(app.packs,app.state);
-  app.error='';app.selectedUid=null;app.undo=null;app.allActions=false;app.aiFallbacks=0;app.aiCompletedSteps=0;app.lastAiProgress='新對局';
-  app.aiDifficulty=$('ai-level').value;
-  app.history=['新對局：'+(mine.label||fmtTitle(myTitle))+' vs '+(foe.label||fmtTitle(foeTitle))+
-   '｜先手 '+(first===0?'你':'電腦')+'｜起手牌調度階段'];
+  app.error='';app.selectedUid=null;app.targetChoices=null;app.undo=null;
+  app.allActions=false;app.aiFallbacks=0;app.aiCompletedSteps=0;app.lastAiProgress='新對局';
+  app.aiDifficulty=app.launch.config.difficulty;
+  app.history=['新對局：'+(mine.label||fmtTitle(mine.pack.id))+' vs '+
+   (foe.label||fmtTitle(foe.pack.id))+'｜先手 '+(first===0?'你':'電腦')+
+   '｜起手牌調度階段'];
   app.replay=makeUniversalPreviewReplay(app.packs,{
    decks:[mine.counts,foe.counts],seed,first,openingMulligan:true});
+  saveBattleProgress();
   render();driveAi();
  }catch(e){alertText(e?.message||String(e));}
 }
