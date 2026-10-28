@@ -200,3 +200,86 @@ body.arena-site .arena-editor>.arena-info{margin-top:14px}
  body.arena-site .arena-editor .vdb-card-tags span:nth-child(n+3){display:none}
  body.arena-site .arena-editor .vdb-quantity button{min-width:32px;width:32px;height:32px}
 }
+
+/* In-deck cover picker — navy variant, touch-friendly on mobile. */
+body.arena-site .arena-editor .arena-hero-cover{
+ position:relative;cursor:pointer;display:flex;align-items:center;justify-content:center;
+}
+body.arena-site .arena-editor .arena-cover-empty{
+ display:flex;flex-direction:column;justify-content:center;align-items:center;
+ width:100%;aspect-ratio:63/88;border:1px dashed #4778af;border-radius:8px;
+ background:#101e34;color:#73baff;font-size:26px;
+}
+body.arena-site .arena-editor .arena-cover-empty small{font-size:11px;color:#b0c7df}
+body.arena-site .arena-editor .arena-cover-edit{
+ position:absolute;left:3px;right:3px;bottom:3px;text-align:center;
+ padding:3px;border-radius:5px;background:#071b37ec;color:#eaf6ff;
+ font-size:11px;font-weight:800;border:1px solid #3a9cff;
+}
+body.arena-site .arena-editor .arena-hero-cover:hover .arena-cover-edit{
+ background:#0e5ba7;
+}
+body.arena-site .arena-editor .arena-cover-backdrop{
+ position:fixed;inset:0;z-index:100;display:flex;align-items:center;
+ justify-content:center;padding:16px;box-sizing:border-box;
+ background:#010815cf;backdrop-filter:blur(7px);
+}
+body.arena-site .arena-editor .arena-cover-dialog{
+ width:min(690px,100%);max-height:min(85dvh,760px);
+ display:flex;flex-direction:column;gap:12px;
+ box-sizing:border-box;overflow:hidden;
+ padding:16px;border:1px solid #4576a8;border-radius:18px;
+ background:#0b172b;box-shadow:0 22px 70px #000c;color:#f3f9ff;
+}
+body.arena-site .arena-editor .arena-cover-dialog-head{
+ display:flex;align-items:center;justify-content:space-between;gap:10px;
+}
+body.arena-site .arena-editor .arena-cover-dialog-head h2{
+ margin:0;font-size:19px;color:#f3f9ff;
+}
+body.arena-site .arena-editor .arena-cover-dialog-head button{
+ width:40px;height:40px;flex:0 0 40px;border:1px solid #365679;
+ border-radius:10px;background:#192943;color:#fff;font-size:22px;
+}
+body.arena-site .arena-editor .arena-cover-dialog>p{
+ margin:0;color:#a4bad3;font-size:12px;line-height:1.5;
+}
+body.arena-site .arena-editor .arena-cover-options{
+ display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));
+ gap:10px;min-height:0;overflow-y:auto;padding:4px 2px;
+}
+body.arena-site .arena-editor .arena-cover-option{
+ display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;
+ background:#122039;border:2px solid transparent;border-radius:10px;
+ padding:6px;color:#e7f3ff;
+}
+body.arena-site .arena-editor .arena-cover-option.is-chosen{
+ border-color:#2f9cff;background:#0b3469;
+}
+body.arena-site .arena-editor .arena-cover-option img{
+ width:100%;aspect-ratio:63/88;object-fit:contain;border-radius:5px;
+}
+body.arena-site .arena-editor .arena-cover-option>span{
+ width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+ font-size:11px;text-align:center;
+}
+body.arena-site .arena-editor .arena-cover-option>b{font-size:10px;color:#87c9ff}
+body.arena-site .arena-editor .arena-cover-no-cards{
+ grid-column:1/-1;padding:16px 8px;text-align:center;color:#bad0e9;
+}
+body.arena-site .arena-editor .arena-cover-dialog-actions{
+ display:flex;justify-content:space-between;gap:8px;
+}
+body.arena-site .arena-editor .arena-cover-dialog-actions button{
+ border:1px solid #42617f;border-radius:9px;background:#172840;
+ color:#dbeafa;padding:8px 12px;font-size:12px;
+}
+body.arena-site .arena-editor .arena-cover-dialog-actions button:last-child{
+ background:#0e57aa;border-color:#379bff;color:#fff;
+}
+body.arena-site .arena-editor .arena-cover-dialog-actions button:disabled{opacity:.35}
+@media(max-width:560px){
+ body.arena-site .arena-editor .arena-cover-dialog{padding:12px;max-height:86dvh}
+ body.arena-site .arena-editor .arena-cover-options{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+ body.arena-site .arena-editor .arena-cover-dialog-head h2{font-size:17px}
+}
