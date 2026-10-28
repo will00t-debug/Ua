@@ -26,11 +26,12 @@ function matchesEnergy(card,energy,energies){
 }
 function matchesGenerate(card,generate){
  if(generate==null||generate==='all')return true;
+ if(String(generate)==='3+')return finite(card?.gen)!=null&&finite(card.gen)>=3;
  return String(finite(card?.gen))===String(generate);
 }
 const SORTS=[['energy-asc','必要能量低 → 高'],['energy-desc','必要能量高 → 低'],['gen-asc','產能低 → 高'],['gen-desc','產能高 → 低']];
 const ENERGY_KEYS=['0','1','2','3','4','5','6','7','8','8+'];
-const GENERATE_KEYS=['0','1','2','3','4','5'];
+const GENERATE_KEYS=['0','1','2','3','3+'];
 const TYPE_LABELS={character:'角色',field:'場地',event:'事件'};
 const COLOR_NAMES={red:'紅',blue:'藍',yellow:'黃',green:'綠',purple:'紫'};
 const COLOR_ORDER=['red','blue','yellow','green','purple'];
@@ -70,7 +71,7 @@ function makeVisualDeckModel({cards,counts,search='',type='all',color='all',ener
  const triggerCounts={};
  for(const card of chosen)if(card.trigger)triggerCounts[card.trigger]=(triggerCounts[card.trigger]||0)+amount(card);
  const curve=keys=>Object.fromEntries(keys.map(key=>[key,0]));
- const energyCurve=curve(ENERGY_KEYS),generateCurve=curve([...GENERATE_KEYS,'6+']);
+ const energyCurve=curve(ENERGY_KEYS),generateCurve=curve(['0','1','2','3','4','5','6+']);
  for(const card of chosen){
   const copies=amount(card);
   const energyKey=requiredEnergyKey(card);
@@ -114,7 +115,7 @@ function renderVisualDeckBuilder({titles,titleId,ready,tab,search,type,color,ene
  const cardLine=card=>{
   const n=model.amount(card),limit=card.maxCopies??4;
   const produced=finite(card.gen);
-  return `<article class="vdb-pool-card arena-card-row" data-card-id="${vdbEsc(card.id)}"><button type="button" class="vdb-card-photo" data-inspect="${vdbEsc(card.id)}" aria-label="檢視 ${vdbEsc(card.name||card.id)}">${img(card)}</button><div class="vdb-card-text"><strong>${vdbEsc(card.nameZh||card.name||card.nameJa||card.id)}</strong><small>${vdbEsc(card.number||card.id)}</small><div class="vdb-card-tags"><span>${vdbEsc(TYPE_LABELS[card.type]||card.type||'卡牌')}</span><span>產能 ${produced==null?'—':produced}</span><span>必要能量 ${vdbEsc(card.energy??'—')}</span><span>${vdbEsc(COLOR_NAMES[card.color]||card.color||'')}</span></div>${v2SupportedIds?`<small class="${v2SupportedIds.has(card.id)?'vdb-supported':'vdb-card-warn'}">${v2SupportedIds.has(card.id)?'✓ V2 已登錄':'V2 尚未移植，僅可收藏組卡'}</small>`:''}</div><div class="vdb-quantity"><button type="button" data-builder-count="${vdbEsc(card.id)}" data-delta="-1" aria-label="減少 ${vdbEsc(card.name||card.id)}" ${n?'':'disabled'}>−</button><b>${n}</b><button type="button" data-builder-count="${vdbEsc(card.id)}" data-delta="1" aria-label="增加 ${vdbEsc(card.name||card.id)}" ${n>=limit||model.total>=50?'disabled':''}>＋</button></div></article>`;
+  return `<article class="vdb-pool-card arena-card-row" data-card-id="${vdbEsc(card.id)}"><button type="button" class="vdb-card-photo" data-inspect="${vdbEsc(card.id)}" aria-label="檢視 ${vdbEsc(card.name||card.id)}">${img(card)}</button><div class="vdb-card-text"><strong>${vdbEsc(card.nameZh||card.name||card.nameJa||card.id)}</strong><small>${vdbEsc(card.number||card.id)}</small><div class="vdb-card-tags"><span>${vdbEsc(TYPE_LABELS[card.type]||card.type||'卡牌')}</span><span>產能 ${produced==null?'—':produced}</span><span>必要能量 ${vdbEsc(card.energy??'—')}</span><span>${vdbEsc(COLOR_NAMES[card.color]||card.color||'')}</span></div>${v2SupportedIds?`<small class="${v2SupportedIds.has(card.id)?'vdb-supported':'vdb-card-warn'}">${v2SupportedIds.has(card.id)?'✓ V2 已登錄':'V2 尚未移植，僅可收藏組卡'}</small>`:''}</div><div class="vdb-quantity"><button type="button" data-builder-count="${vdbEsc(card.id)}" data-delta="1" aria-label="增加 ${vdbEsc(card.name||card.id)}" ${n>=limit||model.total>=50?'disabled':''}>＋</button><b>${n}</b><button type="button" data-builder-count="${vdbEsc(card.id)}" data-delta="-1" aria-label="減少 ${vdbEsc(card.name||card.id)}" ${n?'':'disabled'}>−</button></div></article>`;
  };
  const chosenColors=[...new Set(model.chosen.map(card=>card.color))].map(item=>COLOR_NAMES[item]||item).join('／')||'尚未選色';
  const battleButton=v2SupportedIds!=null?`<button type="button" data-action="v2Play" ${v2Ready?'':'disabled'} class="arena-battle">測試對戰</button>`:`<button type="button" data-action="enterV2Battle" ${v2Ready?'':'disabled'} class="vdb-save arena-battle">進入 V2 對戰</button>`;
