@@ -5,7 +5,7 @@ import {BLEACH_GREEN_V2_COUNTS} from '../dist/universal-v2/preview-real-decks.mj
 test('signed-in user can open a cloud deck in library, inspect cards, edit and PUT the original deck',async()=>{
  const app={innerHTML:'',onclick:null};
  const toast={textContent:'',classList:{add(){},remove(){}}};
- const local=new Map(),session=new Map();
+ const local=new Map([['bleach-arena-deck-v1',JSON.stringify({'034':4})]]),session=new Map();
  const original={fetch:globalThis.fetch,setTimeout:globalThis.setTimeout};
  const deckId='d0123456789abcdef',first=Object.keys(BLEACH_GREEN_V2_COUNTS)[0];
  const record={id:deckId,name:'雲端白劍',title:'bleach',counts:BLEACH_GREEN_V2_COUNTS,
@@ -47,6 +47,7 @@ test('signed-in user can open a cloud deck in library, inspect cards, edit and P
   assert.equal(write.length,1,'must update the existing cloud record rather than create a new one');
   assert.equal(JSON.parse(write[0].init.body).counts[first],BLEACH_GREEN_V2_COUNTS[first]-1);
   assert.equal(JSON.parse(write[0].init.body).name,'雲端白劍');
+  assert.equal(JSON.parse(local.get('bleach-arena-deck-v1'))['034'],4,'cloud edits must preserve the existing separate local draft');
   click({action:'backLibrary'});
   await new Promise(resolve=>setImmediate(resolve)); // drain account list refresh before restoring globals
   assert.match(app.innerHTML,/我的牌組/);
