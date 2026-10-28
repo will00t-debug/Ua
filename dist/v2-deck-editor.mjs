@@ -2,7 +2,8 @@
 // No import from engine.mjs, match-runtime.mjs, solo-match.mjs or ttg-core-match.mjs.
 import {TITLES} from './title-registry.mjs';
 import {PRESETS} from './cards.mjs';
-import {renderVisualDeckBuilder} from './visual-deck-builder.mjs?v=20261028navymock1';
+import {renderVisualDeckBuilder} from './visual-deck-builder.mjs?v=20261028cover1';
+import {validDeckCoverId} from './deck-cover-selection.mjs';
 import {buildDeckLibrary} from './deck-library.mjs';
 import {summarizeDeck,formatDeckUpdated,renderDeckGallery,renderDeckDetail,readSharedIds,writeSharedFlag} from './deck-gallery.mjs';
 import {BUILTIN_BLEACH_V2_DECKS,builtinBleachDeck} from './v2-bleach-builtins.mjs';
@@ -14,8 +15,9 @@ const $=s=>document.querySelector(s);
 const escapeHtml=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function read(key){try{return JSON.parse(localStorage.getItem(key)||'null');}catch{return null;}}
 function write(key,value){localStorage.setItem(key,JSON.stringify(value));}
-const metaKey='bleach-arena-deck-meta-v1',namesKey='ua-v2-editor-draft-names-v1';
+const metaKey='bleach-arena-deck-meta-v1',namesKey='ua-v2-editor-draft-names-v1',coversKey='ua-v2-editor-draft-covers-v1';
 const names=read(namesKey)||{};
+const draftCovers=read(coversKey)||{};
 const draftData={};
 for(const t of TITLES){
  const raw=read(LEGACY_DECK_KEYS[t.id][0])||(t.id==='bleach'?PRESETS[0]?.counts:{});
@@ -41,7 +43,7 @@ const label=id=>TITLES.find(t=>t.id===id)?.label||id;
 const defaults=Object.fromEntries(TITLES.map(t=>[t.id,t.id==='bleach'?(bleachMeta.name||'自訂 BLEACH 牌組'):t.id==='rezero'?'Re:Zero 自訂牌組':t.label+'自訂牌組']));
 const state={title:'bleach',ready:false,screen:'library',listOrigin:'library',galleryTab:'mine',detail:null,tab:'pick',search:'',type:'all',color:'all',
  energy:'all',energies:[],generate:'all',sort:'energy-asc',recordView:'all',zoom:false,names:Object.fromEntries(TITLES.map(t=>[t.id,String(names[t.id]||defaults[t.id]).slice(0,40)])),
- counts:draftData,selectedSaved:{},shareFlag:false,inspection:null,exportText:null,cloudOrigin:null};
+ counts:draftData,coverIds:Object.fromEntries(TITLES.map(t=>[t.id,typeof draftCovers[t.id]==='string'?draftCovers[t.id]:null])),coverPicker:false,selectedSaved:{},shareFlag:false,inspection:null,exportText:null,cloudOrigin:null};
 let toastTimer=null;
 let cloudDecks=[],cloudUser=null;
 function notify(message){
@@ -55,6 +57,7 @@ function persist(){
  const key=LEGACY_DECK_KEYS[state.title][0];
  write(key,state.counts[state.title]);
  write(namesKey,state.names);
+ write(coversKey,state.coverIds);
  if(state.title==='bleach')write(metaKey,{...bleachMeta,name:state.names.bleach});
 }
 function status(){return editorV2Status(state.title,state.counts[state.title]);}
@@ -66,6 +69,7 @@ function useDesignatedBleachPreset(id,screen){
  state.type=state.color=state.energy='all';
  state.counts.bleach={...preset.counts};state.names.bleach=preset.displayName;
  state.selectedSaved.bleach=null;state.cloudOrigin=null;state.shareFlag=false;
+ state.coverIds.bleach=null;state.coverPicker=false;
  state.detail={source:'builtin',id:preset.id};
  state.screen=screen||'detail';
  persist();
@@ -175,6 +179,7 @@ function openLibraryDeck(key){
   state.names[row.title]=String(row.name||'未命名牌組').slice(0,40);
   state.cloudOrigin={remoteId:row.id,title:row.title,localId:row.localId||null};
   state.selectedSaved[row.title]=null;state.shareFlag=readSharedIds(localStorage).has(row.id);
+  state.coverIds[row.title]=validDeckCoverId(catalogueCards(row.title),state.counts[row.title],row.coverId);state.coverPicker=false;
   state.detail={source:'cloud',id:row.id};
  }else if(source==='saved'){
   let title,id;try{title=decodeURIComponent(parts[0]);id=decodeURIComponent(parts.slice(1).join(':'));}catch{return;}
@@ -276,6 +281,7 @@ function render(){
   titles:TITLES,titleId:state.title,tab:state.tab,search:state.search,type:state.type,color:state.color,energy:state.energy,
   energies:state.energies,generate:state.generate,sort:state.sort,counts:state.counts[state.title],name:state.names[state.title],
   nameId:'v2DeckName',savedId:'v2SavedSelect',focusCard,record,recordView:state.recordView,
+  coverId:state.coverIds[state.title],coverPicker:state.coverPicker,
   allowDelete:Boolean(state.selectedSaved[state.title]||state.cloudOrigin)
  };
  const editor=state.ready&&state.screen==='editor'?renderVisualDeckBuilder({
@@ -315,7 +321,7 @@ async function mirrorCloudDeck(title,entry){
  const method=origin?'PUT':'POST';
  try{
   const response=await fetch(url,{method,credentials:'same-origin',headers:{'content-type':'application/json'},
-   body:JSON.stringify({name:entry.name,title,counts:entry.counts,localId})});
+   body:JSON.stringify({name:entry.name,title,counts:entry.counts,localId,coverId:entry.coverId||null})});
   if(response.ok){
    notify(origin?'已更新原本的帳號牌組':'已儲存，並同步到登入帳號');
    if(cloudUser)refreshCloudDecks();
@@ -356,6 +362,8 @@ function openEditor(){
   state.names[state.title]=item.name;
   state.selectedSaved[state.title]=item.id;
   state.shareFlag=item.shared===true;
+  state.coverIds[state.title]=validDeckCoverId(catalogueCards(),state.counts[state.title],item.coverId);
+  state.coverPicker=false;
   persist();
  }
  const total=Object.values(state.counts[state.title]||{}).reduce((sum,value)=>sum+(Number(value)||0),0);
@@ -487,12 +495,14 @@ function bind(){
   if(data.action==='pickTitle'){state.ready=false;state.screen='chooseTitle';state.listOrigin='library';state.detail=null;state.search='';render();return;}
   if(data.action==='editDeck'){openEditor();return;}
   if(data.action==='toggleShare'){toggleShare();return;}
-  if(data.action==='newDeck'){state.cloudOrigin=null;state.shareFlag=false;state.counts[state.title]={};state.names[state.title]=defaults[state.title];state.selectedSaved[state.title]=null;state.detail={source:'draft',id:'draft'};state.screen='editor';state.tab='pick';persist();render();notify('已建立空白草稿');return;}
+  if(data.action==='newDeck'){state.cloudOrigin=null;state.shareFlag=false;state.counts[state.title]={};state.names[state.title]=defaults[state.title];state.selectedSaved[state.title]=null;
+  state.coverIds[state.title]=null;state.coverPicker=false;state.detail={source:'draft',id:'draft'};state.screen='editor';state.tab='pick';persist();render();notify('已建立空白草稿');return;}
   if(data.action==='saveDeck'){
    const title=state.title,records=savedData[title],counts=normalizeEditorCounts(title,state.counts[title]);
    const selected=state.selectedSaved[title]||((state.cloudOrigin?.title===title)?'v2-account-'+state.cloudOrigin.remoteId:null),name=state.names[title].trim()||defaults[title];
    const old=records.find(d=>d.id===selected);
-   const entry={id:old?.id||(selected&&/^[A-Za-z0-9:_-]{1,80}$/.test(selected)?selected:null)||'v2-'+Date.now()+'-'+Math.random().toString(36).slice(2),name,counts,updatedAt:new Date().toISOString(),shared:state.shareFlag===true,coverId:old?.coverId||null};
+   const coverId=validDeckCoverId(catalogueCards(title),counts,state.coverIds[title]);
+   const entry={id:old?.id||(selected&&/^[A-Za-z0-9:_-]{1,80}$/.test(selected)?selected:null)||'v2-'+Date.now()+'-'+Math.random().toString(36).slice(2),name,counts,updatedAt:new Date().toISOString(),shared:state.shareFlag===true,coverId};
    if(old)records[records.indexOf(old)]=entry;else records.push(entry);
    state.selectedSaved[title]=entry.id;
    try{persistSaved(title);if(entry.id)writeSharedFlag(localStorage,entry.id,entry.shared);persist();notify('已儲存牌組草稿');mirrorCloudDeck(title,entry);render();}
