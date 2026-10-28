@@ -16,13 +16,14 @@ test('the V2 setup no longer exposes a fixed or manually entered deck-order code
  assert.match(page,/id="first-player"/);
  assert.match(page,/id="ai-level"/);
  assert.match(page,/id="start-game"/);
- assert.match(page,/universal-v2-preview\.mjs\?v=20261028shuffle1/);
+ assert.match(page,/universal-v2-preview\.mjs\?v=20261028mulligan1/);
  assert.match(js,/const seed=generateMatchSeed\(\)/);
- assert.match(js,/newUniversalMatch\(app\.packs,\{decks:\[mine\.counts,foe\.counts\],seed,first\}\)/);
+ assert.match(js,/newUniversalMatch\(app\.packs,\{decks:\[mine\.counts,foe\.counts\],seed,first,openingMulligan:true\}\)/);
  assert.match(js,/makeUniversalPreviewReplay\(app\.packs,\{/);
  assert.match(js,/decks:\[mine\.counts,foe\.counts\],seed,first/);
  assert.doesNotMatch(js,/\+seed\]/);
- assert.match(js,/雙方牌組已隨機洗牌/);
+ assert.match(js,/起手牌調度階段/);
+ assert.match(js,/openingMulligan:true/);
 });
 
 test('crypto seeds are in range, differ across samples, and reject biased UInt32 tail',()=>{

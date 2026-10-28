@@ -8,7 +8,7 @@ test('V2 setup mirrors login theme while preserving all real interactive control
  const html=read('dist/universal-v2-preview.html');
  const css=read('dist/universal-v2-arena-setup.css');
  assert.match(html,/<body class="v2-arena-theme">/);
- assert.match(html,/href="universal-v2-arena-setup\.css\?v=20261028shuffle1"/);
+ assert.match(html,/href="universal-v2-arena-setup\.css\?v=20261028mulligan1"/);
  assert.match(css,/background:#080b11/);
  assert.match(css,/\.setup-actions #start-game/);
  assert.match(css,/\.deck-quick-pick\[aria-pressed="true"\]/);

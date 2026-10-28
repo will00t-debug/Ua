@@ -37,6 +37,16 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(!UNIVERSAL_AI_LEVELS.includes(difficulty))throw Error('Unknown universal AI difficulty');
  const legal=legalUniversalActions(pack,s);
  if(!legal.length)return null;
+ if(s.pending?.kind==='opening-mulligan'){
+  const side=s.pending.player,print=packsOf(pack)[side].cards;
+  const starters=s.players[side].hand.filter(c=>{
+   const d=print[c.cardId];
+   return d?.type==='character'&&d.energy===0;
+  }).length;
+  // The AI can inspect its own seven cards, never the human's hidden hand.
+  const redraw=starters<(difficulty==='hard'?2:1);
+  return legal.find(a=>a.mode===(redraw?'redraw':'keep'))||legal[0];
+ }
  if(s.pending?.kind==='effect-move-order'||s.pending?.kind==='phase-order')return legal[0];
  if(s.pending?.kind==='effect-rest-tuck')return
   legal.find(x=>x.mode===(difficulty==='easy'?'skip':'rest'))||legal[0];

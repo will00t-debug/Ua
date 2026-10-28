@@ -175,6 +175,12 @@ describe('account server',{concurrency:1,timeout:180000},()=>{
   const hostView=await api('/api/rooms/'+created.data.code,{token:host.data.token});
   const guestView=joined;
   assert.equal(hostView.data.yourTurn,true);
+  assert.equal(hostView.data.view.phase,'setup');
+  assert.equal(hostView.data.view.pending.kind,'opening-mulligan');
+  assert.equal(hostView.data.view.players[0].lifeCount,0);
+  assert.equal(hostView.data.view.players[1].lifeCount,0);
+  assert.match(hostView.data.choices[0].label,/保留這 7 張手牌/);
+  assert.match(hostView.data.choices[1].label,/整手重抽 7 張/);
   assert.equal(hostView.data.view.players[0].hand.length,7);
   assert.equal(hostView.data.view.players[1].hand,null);
   assert.equal(guestView.data.view.players[1].hand.length,7);
@@ -197,6 +203,17 @@ describe('account server',{concurrency:1,timeout:180000},()=>{
   assert.doesNotMatch(JSON.stringify(acted.data),/"uid":"1-/);
   const guestAfter=await api('/api/rooms/'+created.data.code,{token:guest.data.token});
   assert.doesNotMatch(JSON.stringify(guestAfter.data),/"uid":"0-/);
+  assert.equal(guestAfter.data.yourTurn,true,'after first player decides, second player chooses mulligan');
+  assert.equal(guestAfter.data.view.phase,'setup');
+  assert.equal(guestAfter.data.view.players[0].lifeCount,0);
+  assert.equal(guestAfter.data.view.players[1].lifeCount,0);
+  assert.equal((await api('/api/rooms/'+created.data.code+'/actions',{method:'POST',token:host.data.token,body:{index:99}})).status,409);
+  const finishedSetup=await api('/api/rooms/'+created.data.code+'/actions',{
+   method:'POST',token:guest.data.token,body:{index:0}});
+  assert.equal(finishedSetup.status,200);
+  assert.equal(finishedSetup.data.view.phase,'start');
+  assert.equal(finishedSetup.data.view.players[0].lifeCount,7);
+  assert.equal(finishedSetup.data.view.players[1].lifeCount,7);
   assert.equal((await api('/api/rooms/'+created.data.code+'/actions',{method:'POST',token:host.data.token,body:{index:99}})).status,400);
   const resigned=await api('/api/rooms/'+created.data.code+'/resign',{method:'POST',token:host.data.token});
   assert.equal(resigned.status,200);

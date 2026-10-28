@@ -84,6 +84,7 @@ function copyCounts(input){
  return counts;
 }
 function publicActionText(username,action,hadPending){
+ if(action.type==='openingMulligan')return username+'：'+(action.mode==='redraw'?'整手重抽 7 張':'保留起手 7 張');
  if(hadPending)return username+'：完成一項選擇';
  const table={
   next:'前進到下一個階段',extraDraw:'支付 AP 額外抽牌',play:'從手牌登場',
@@ -400,7 +401,7 @@ export function dispatchRoom(repos,message,now){
    }];
    const packs=seats.map(seat=>titlePack(seat.title));
    let match;
-   try{match=newUniversalMatch(packs,{decks:[host.battleCounts,message.battleCounts],seed,first});}
+   try{match=newUniversalMatch(packs,{decks:[host.battleCounts,message.battleCounts],seed,first,openingMulligan:true});}
    catch{throw new ApiError(400,'這副牌組還不能進入 V2 對戰。');}
    assertUniversalMatch(packs,match);
    room.seats=seats;
