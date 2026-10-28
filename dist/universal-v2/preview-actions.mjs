@@ -593,9 +593,11 @@ export function publicPendingTargetCard(view,action){
  for(const [side,player] of view.players.entries()){
   if(side!==0&&side!==1)continue;
   for(const line of ['front','energy']){
-   const slot=(player?.[line]||[]).find(card=>card?.uid===uid&&
+   const slots=Array.isArray(player?.[line])?player[line]:[];
+   const index=slots.findIndex(card=>card?.uid===uid&&
     typeof card.cardId==='string'&&card.cardId);
-   if(slot)return {side,line,cardId:slot.cardId,bp:line==='front'?slot.bp:null};
+   if(index>=0)return {side,line,index,cardId:slots[index].cardId,
+    bp:line==='front'?slots[index].bp:null};
   }
  }
  return null;
