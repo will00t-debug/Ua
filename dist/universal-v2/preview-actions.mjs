@@ -638,6 +638,28 @@ export function pendingChoiceCards(option){
  }
  return cards;
 }
+// Fallback artwork for legal pending actions that identify the viewer's own
+// hand or a PUBLIC outside card. Only data already present in the sanitized
+// viewer=0 public view is used; opponent hands, decks, life and hidden layers
+// are never inspected. Legal actions are passed through unchanged.
+export function visiblePendingChoiceCards(view,action){
+ const players=view?.players;
+ if(!Array.isArray(players)||!action||typeof action!=='object')return [];
+ const ids=Array.isArray(action.uids)&&action.uids.length?action.uids:[action.uid];
+ const candidates=[
+  ...((Array.isArray(players[0]?.hand)?players[0].hand:[])
+   .map(card=>({card,side:0}))),
+  ...players.slice(0,2).flatMap((player,side)=>
+   (Array.isArray(player?.outside)?player.outside:[])
+    .map(card=>({card,side})))
+ ];
+ return ids.flatMap(uid=>{
+  if(typeof uid!=='string'||!uid)return [];
+  const hit=candidates.find(({card})=>card?.uid===uid&&
+   typeof card.cardId==='string'&&card.cardId);
+  return hit?[{cardId:hit.card.cardId,side:hit.side}]:[];
+ });
+}
 // Resolve a pending target only against face-up PUBLIC field slots. This
 // works for both controllers (self/opponent) but never exposes hidden hand,
 // deck, life, or face-down under-card identities. A UID must match exactly.

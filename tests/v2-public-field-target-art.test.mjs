@@ -46,7 +46,9 @@ test('pending choice renderer prefers authorized private choices, else uses publ
  const dialog=js.split('function pendingDialog(')[1]?.split('function finishMessage(')[0];
  assert.ok(choice&&dialog);
  assert.match(choice,/pendingChoiceCards\(option\)\.map\(card=>\(\{\.\.\.card,side:0\}\)\)/);
- assert.match(choice,/authorized\.length\?null:publicPendingTargetCard\(view,action\)/);
+ assert.match(choice,/const visible=authorized\.length\?\[\]:visiblePendingChoiceCards\(view,action\)/);
+ assert.match(choice,/authorized\.length\|\|visible\.length\?null:publicPendingTargetCard\(view,action\)/);
+ assert.match(dialog,/visiblePendingChoiceCards\(view,row\.action\)\.length>0/);
  assert.match(choice,/choicePicture\(card\.cardId,card\.name,card\.side\)/);
  assert.match(choice,/target\.side===0\?'我方':'敵方'/);
  assert.match(choice,/class:'choice-card-location'/);
