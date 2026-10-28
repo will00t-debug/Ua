@@ -21,7 +21,7 @@ test('desktop live battle fits opponent, player, phase bar and hand in the viewp
  assert.match(css,/\.matchHeader\.tools-open \.matchControls\{display:flex\}/);
  assert.match(css,/\.v2-middle-next button/);
  assert.match(css,/\.v2-compact-actions/);
- assert.match(css,/\.v2-pending-overlay/);
+ assert.doesNotMatch(css,/\.v2-pending-overlay/);
  assert.match(css,/\.arena>\.resultBanner/);
 });
 
