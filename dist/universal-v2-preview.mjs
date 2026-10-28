@@ -510,10 +510,31 @@ function legacyHand(view,legal){
   const card=el('button',{type:'button',class:'handCard '+(selected?'selected ':'')+
    (playable?'playable':'unplayable'),'aria-label':d.name||c.cardId});
   const picture=el('img',{src:imgUrl(0,c.cardId),alt:d.name||c.cardId,loading:'lazy'});
-  picture.onerror=()=>{if(!picture.src.endsWith('/assets/mark.svg'))picture.src='assets/mark.svg';};
+  picture.onerror=()=>{
+   if(app.packs?.[0]?.id==='gurren-lagann'&&ttgArtErrorFallback(picture))return;
+   if(!picture.src.endsWith('/assets/mark.svg'))picture.src='assets/mark.svg';
+  };
   card.append(picture,el('span',{class:'handCost',text:'◆ '+(d.energy??'?')}),
    el('span',{class:'handName',text:d.name||c.cardId}));
+  // A hold opens the existing printed-art/effect sheet without selecting or playing.
+  // Movement cancels the hold so players can still scroll the board normally.
+  let held=false,originX=0,originY=0;
+  const stopHold=()=>{clearTimeout(fieldHold);fieldHold=0;};
+  card.addEventListener('pointerdown',event=>{
+   if(event.button>0)return;
+   held=false;originX=event.clientX;originY=event.clientY;
+   stopHold();
+   fieldHold=setTimeout(()=>{held=true;showFieldSheet(0,'hand',c,d);},FIELD_HOLD_MS);
+  });
+  card.addEventListener('pointerup',stopHold);
+  card.addEventListener('pointercancel',stopHold);
+  card.addEventListener('pointerleave',stopHold);
+  card.addEventListener('pointermove',event=>{
+   if(Math.hypot(event.clientX-originX,event.clientY-originY)>16)stopHold();
+  });
+  card.addEventListener('contextmenu',event=>event.preventDefault());
   card.addEventListener('click',()=>{
+   if(held){held=false;return;}
    if(app.busy||uiActor(app.state)!==0)return;
    app.selectedUid=c.uid;app.selectedSide=0;app.raidBaseUid=null;
    app.targetChoices=null;app.allActions=false;render();
@@ -523,44 +544,34 @@ function legacyHand(view,legal){
  if(!cards.length)hand.append(el('span',{class:'small',text:'目前沒有手牌'}));
  return hand;
 }
+// Hide the large generic "legal actions" panel. Only surface contextual
+// buttons that cannot be performed by tapping a card and its destination.
 function legacyCommands(legal){
- const s=app.state,actor=uiActor(s),bar=el('div',{class:'selectionBar'});
- if(actor!==0||app.busy){
-  bar.append(el('p',{class:'selectionHint',text:'對手正在操作與結算…'}));return bar;
- }
- if(s.pending){
-  bar.append(el('p',{class:'selectionHint',text:'請在選擇視窗中完成效果結算。'}));return bar;
- }
+ const s=app.state;
+ if(uiActor(s)!==0||app.busy||s.pending)return null;
  const selected=app.selectedUid?visibleActionsForCard(legal,app.selectedUid):[];
  const passive=legal.filter(a=>a.type==='extraDraw');
- const all=app.targetChoices|| (app.allActions?legal.filter(a=>a.type!=='next'):
-  selected.length?[...passive,...selected]:passive);
- const list=[...new Map(all.map(a=>[JSON.stringify(a),a])).values()]
-  .filter(a=>a.type!=='raid'||app.targetChoices);
- if(app.selectedUid){
-  const owner=app.selectedSide??0,d=app.packs[owner].cards[
-   (s.players[owner].hand.find(x=>x.uid===app.selectedUid)||
-    [...s.players[owner].front,...s.players[owner].energy].find(x=>x?.uid===app.selectedUid))?.cardId];
-  if(d)bar.append(el('b',{},d.name,' · ',d.energy+' 能源 / '+(d.bp||0)+' BP'));
- }
+ const global=legal.filter(a=>!a.uid&&a.type!=='next'&&a.type!=='extraDraw');
+ const actions=app.targetChoices||(app.selectedUid?[...passive,...selected]:[...passive,...global]);
+ const list=[...new Map(actions.map(a=>[JSON.stringify(a),a])).values()]
+  .filter(a=>app.targetChoices||!['play','raid','move'].includes(a.type))
+  .slice(0,100);
  const raidReady=legal.some(a=>a.type==='raid'&&a.uid===app.selectedUid);
- if(raidReady&&!app.raidBaseUid)
-  bar.append(el('p',{class:'selectionHint',text:'突襲：先點底板，再點要登場的格子。'}));
- else if(raidReady&&app.raidBaseUid)
-  bar.append(el('p',{class:'selectionHint',text:'已選底板。請點要登場的格子。'}),
-   btn('重選底板',()=>{app.raidBaseUid=null;render();},'btn small'));
- if(app.targetChoices)bar.append(el('b',{text:'此位置有多種合法方式，請確認：'}));
- const row=el('div',{class:'v2-legal-buttons'});
- for(const a of list.slice(0,100)){
-  const b=btn(uiActionLabel(a,{pack:app.packs,state:s}),
-   ()=>{app.targetChoices=null;applyAction(a);},a.type==='raid'?'primary':'');
-  b.className+=' btn small';row.append(b);
+ if(!list.length&&!raidReady&&!app.targetChoices)return null;
+ const bar=el('div',{class:'v2-compact-actions','aria-label':'情境操作'});
+ if(raidReady){
+  bar.append(el('span',{class:'v2-compact-hint',text:app.raidBaseUid?
+   '已選突襲底板，請選擇登場位置。':'突襲：先點場上的底板，再選擇登場位置。'}));
+  if(app.raidBaseUid)
+   bar.append(btn('重選底板',()=>{app.raidBaseUid=null;render();},'btn small quiet'));
  }
- bar.append(row);
- if(!list.length)bar.append(el('p',{class:'selectionHint',text:'點選手牌或自己的場上卡片，可選擇合法動作。'}));
- if(!app.targetChoices)bar.append(btn(app.allActions?'收合全部動作':'查看全部合法動作',
-  ()=>{app.allActions=!app.allActions;render();},'btn small'));
- else bar.append(btn('取消選擇',()=>{app.targetChoices=null;render();},'btn small'));
+ if(app.targetChoices)bar.append(el('span',{class:'v2-compact-hint',text:'選擇這個位置的操作：'}));
+ for(const a of list){
+  bar.append(btn(uiActionLabel(a,{pack:app.packs,state:s}),
+   ()=>{app.targetChoices=null;applyAction(a);},a.type==='raid'?'btn small primary':'btn small quiet'));
+ }
+ if(app.targetChoices)
+  bar.append(btn('取消選擇',()=>{app.targetChoices=null;render();},'btn small quiet'));
  return bar;
 }
 // Keep an in-progress AI match alive when a mobile browser reloads the battle page.
@@ -648,12 +659,13 @@ function showFieldSheet(side,line,card,printed){
  const catalogue=printedCatalogue(side,card.cardId);
  const name=printed?.name||catalogue?.name||card.cardId;
  const stats=[];
- if(printed){
-  stats.push('能源 '+printed.energy,'AP '+printed.ap);
-  if(printed.type==='character')stats.push('BP '+(line==='front'?card.bp:printed.bp));
-  if(line==='energy')stats.push('產生 '+(card.produces??printed.gen??0));
-  if(printed.traits?.length)stats.push(printed.traits.join('、'));
-  if(printed.trigger)stats.push('觸發 '+(TRIGGER_WORD[printed.trigger]||printed.trigger));
+ const metadata=printed||catalogue;
+ if(metadata){
+  stats.push('能源 '+metadata.energy,'AP '+metadata.ap);
+  if(metadata.type==='character')stats.push('BP '+(line==='front'?card.bp:metadata.bp));
+  if(line==='energy')stats.push('產生 '+(card.produces??metadata.gen??0));
+  if(metadata.traits?.length)stats.push(metadata.traits.join('、'));
+  if(metadata.trigger)stats.push('觸發 '+(TRIGGER_WORD[metadata.trigger]||metadata.trigger));
  }
  if(card.raidDepth||card.raidLayers?.length)stats.push('突襲 '+(card.raidDepth||card.raidLayers.length)+' 層');
  const overlay=el('div',{class:'overlay v2-field-overlay'});
@@ -743,7 +755,7 @@ function render(){
   el('header',{class:'handTitle'},
    el('span',{text:'你的手牌 · '+v.players[0].hand.length+' 張'}),
    el('span',{text:'REST 仍可產生能源'})),
-  legacyCommands(legal),legacyHand(v,legal));
+  legacyHand(v,legal),legacyCommands(legal));
  arena.append(handArea);
  const phase=el('div',{class:'phaseAction'},el('p',{text:s.pending?'請完成效果選擇。':
   app.busy?'AI 正在思考與操作…':s.status==='finished'?'對局結束':
