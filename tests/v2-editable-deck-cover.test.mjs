@@ -74,8 +74,8 @@ test('production editor wires cover selection, draft persistence, saving and clo
  assert.match(js,/coverId\}\;/);
  assert.match(js,/localId,coverId:entry\.coverId\|\|null/);
  assert.match(online,/coverId:deck\.coverId\|\|null/);
- assert.match(page,/arena-deck-mockup\.css\?v=20261028cardzoom1/);
- assert.match(page,/v2-deck-editor\.mjs\?v=20261028cardzoom1/);
+ assert.match(page,/arena-deck-mockup\.css\?v=20261028cardoverlay1/);
+ assert.match(page,/v2-deck-editor\.mjs\?v=20261028cardoverlay1/);
 });
 
 test('registered account deck cover persists in SQLite and rejects foreign/absent card IDs',async()=>{
