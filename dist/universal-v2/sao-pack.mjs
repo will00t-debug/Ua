@@ -1451,7 +1451,7 @@ const PRINTED_PINS=Object.freeze({
   "SAO-2-070":{"kind":"oncePayBlockAtLeast","nameJa":"リーファ",
    "color":"green","energy":3,"ap":1,"bp":3500,"gen":1,"type":"character","trigger":"draw","traits":["ALO"],
    "effectJa":"【起動メイン】【手札を1枚場外に置く】 【ターン1】このキャラはこのターン中、「このキャラはBP4000以上のキャラにブロックされない。」を得る。"},
-  "SAO-2-033":{"kind":"ownTraitImpact","nameJa":"アスナ",
+  "SAO-2-033":{"kind":"songUsedImpact","nameJa":"アスナ",
    "color":"purple","energy":4,"ap":1,"bp":4000,"gen":1,"type":"character","trigger":"draw","traits":["SAOサバイバー"],
    "effectJa":"【自分のターン中】このターン中に自分が［特徴：歌］を使用している場合、このキャラは【インパクト（1）】（アタックしてバトルに勝利した時、相手プレイヤーに1ダメージ）を得る。"},
   "SAO-2-038":{"kind":"songUseDraw","nameJa":"シリカ",
@@ -1888,7 +1888,7 @@ export function verifiedSaoV2Cards(){
     payAp:0,requiresOwnName:null,then:[{op:'discardGate',optional:false,
      then:[{op:'grantSelfBlockAtLeast',bp:4000}]}]};
   }
-  if(pin.kind==='ownTraitImpact'){
+  if(pin.kind==='songUsedImpact'){
    card.effects={};
    card.passiveBonuses=[{condition:{kind:'ownTraitUsedThisTurn',turn:'own',trait:'歌'},impact:1}];
   }
@@ -2005,7 +2005,7 @@ export function verifiedSaoV2Entries(){
      ...(pin.kind==='nameAliasOnly'||pin.kind==='nameAliasStep'?['tests/v2-zero-engine-round14.test.mjs']:[]),
      ...(pin.kind==='opponentFieldHandEnergy'||pin.kind==='conditionalSelfBpImpact'?
       ['tests/v2-c2-hand-energy-register.test.mjs']:[]),
-     ...(['enterAlwaysActiveRestBuff','oncePayBlockAtLeast','ownTraitImpact','songUseDraw',
+     ...(['enterAlwaysActiveRestBuff','oncePayBlockAtLeast','songUsedImpact','songUseDraw',
       'ownTraitBp','lineShiftBp','lineShiftBpImpact','lineShiftAttackDraw','onPlayBlockAtMost',
       'lifeDrawInstead','drawDiscardIfLizbeth','frontPrintedGgoEnergy'].includes(pin.kind)?
       ['tests/v2-sao-eight-shared-batches.test.mjs']:[]),
