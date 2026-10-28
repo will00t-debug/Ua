@@ -1,0 +1,46 @@
+/* Dedicated V2 card table, separate route from the setup/lobby page. */
+body.v2-battle-page{background:#070c16;color:#edf6ff;min-height:100dvh}
+body.v2-battle-page .arena-scene{opacity:.22;pointer-events:none}
+body.v2-battle-page .v2-shell{max-width:1600px;min-height:100dvh;padding:0 clamp(10px,2.5vw,30px) 24px}
+body.v2-battle-page .battle-topbar{position:relative;z-index:4;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;min-height:72px;padding:12px 4px 15px;margin-bottom:16px;border-bottom:1px solid #30405a}
+body.v2-battle-page .battle-brand{display:flex;flex-direction:column;align-items:center;line-height:1.15}
+body.v2-battle-page .battle-brand strong{color:#f9fbff;font-weight:950;font-size:clamp(15px,2vw,21px);letter-spacing:.07em}
+body.v2-battle-page .battle-brand small{margin-top:6px;color:#66afff;font-size:9px;font-weight:850;letter-spacing:.18em}
+body.v2-battle-page .battle-back{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:44px;padding:9px 13px;border:1px solid #496686;border-radius:11px;background:#132239;color:#b8d9fb;text-decoration:none;font-size:13px;font-weight:750}
+body.v2-battle-page .battle-back:hover{color:#fff;border-color:#6bb5ff;background:#203550}
+body.v2-battle-page .battle-back:focus-visible{outline:3px solid #6bbaff;outline-offset:3px}
+body.v2-battle-page .battle-matchup{color:#9baec5;font-size:11px;font-weight:650;min-width:0;overflow-wrap:anywhere;text-align:right}
+body.v2-battle-page .battle-stage{position:relative;z-index:2;min-height:58vh}
+body.v2-battle-page .battle-stage .matchHeader{padding:12px 14px;background:#111c30;border:1px solid #304f71;border-radius:13px}
+body.v2-battle-page .battle-stage .matchHeader h1{color:#eef6ff}
+body.v2-battle-page .battle-stage .matchControls{gap:8px}
+body.v2-battle-page .battle-stage .matchControls button{border:1px solid #3e648c;border-radius:9px;background:#172a41;color:#c9e6ff;min-height:40px;padding:7px 12px}
+body.v2-battle-page .battle-stage .matchControls button:hover{border-color:#5fb2ff;background:#284461}
+body.v2-battle-page .battle-stage .arena{background:#101a2b;border:1px solid #395573;border-radius:15px;box-shadow:0 15px 55px #0009;overflow:hidden}
+body.v2-battle-page .battle-stage .phaseBar{background:#0d1829;color:#91abc7;border-bottom:1px solid #35516c}
+body.v2-battle-page .battle-stage .phaseBar .current{background:#113e78;border-color:#3c9af4;color:#d8f0ff}
+body.v2-battle-page .battle-stage .playerArea{background:transparent}
+body.v2-battle-page .battle-stage .playerArea.opponent{background:#112137}
+body.v2-battle-page .battle-stage .centerLine{background:linear-gradient(100deg,#182942,#193353);border-color:#315579;color:#aed5f5}
+body.v2-battle-page .battle-stage .handArea{border-top:1px solid #324b68;background:#101c2d}
+body.v2-battle-page .battle-stage .phaseAction{background:#101e30;border-color:#33526e}
+body.v2-battle-page .battle-stage .phaseAction p{color:#b4c6da}
+body.v2-battle-page .battle-stage .v2-log{background:#101e30;border-color:#304b68}
+body.v2-battle-page .battle-stage .v2-empty{display:grid;gap:14px;justify-items:center;align-content:center;min-height:48vh;padding:28px;text-align:center;color:#c7d7ea;background:#101d2e;border:1px solid #355270;border-radius:16px}
+body.v2-battle-page .battle-stage .v2-empty h2{font-size:clamp(20px,3vw,29px);color:#f8fbff}
+body.v2-battle-page .battle-stage .v2-empty a{display:inline-flex;align-items:center;justify-content:center;padding:12px 18px;min-height:48px;border-radius:11px;background:#116edc;border:1px solid #4faaff;color:white;text-decoration:none;font-size:14px;font-weight:850}
+body.v2-battle-page .battle-foot{position:relative;z-index:2;color:#6983a2;font-size:10px;letter-spacing:.09em;text-align:center;padding:18px 10px 0}
+@media(max-width:760px){
+ body.v2-battle-page .v2-shell{padding-inline:8px}
+ body.v2-battle-page .battle-topbar{display:grid;grid-template-columns:1fr auto;gap:8px;min-height:62px;margin:0 2px 12px}
+ body.v2-battle-page .battle-brand{align-items:flex-end}
+ body.v2-battle-page .battle-brand strong{font-size:15px}
+ body.v2-battle-page .battle-matchup{grid-column:1/-1;text-align:left;font-size:11px;padding:0 2px 5px}
+ body.v2-battle-page .battle-stage .matchHeader{padding:9px}
+ body.v2-battle-page .battle-stage .matchControls button{font-size:11px;min-height:40px}
+ body.v2-battle-page .battle-stage .arena{border-radius:11px}
+ body.v2-battle-page .battle-stage .playerArea{padding:10px 7px}
+}
+@media(prefers-reduced-motion:reduce){
+ body.v2-battle-page *,body.v2-battle-page *:before,body.v2-battle-page *:after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}
+}
