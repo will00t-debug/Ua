@@ -36,7 +36,7 @@ test('no giant legal actions panel; contextual non-placement actions remain play
  assert.match(commands,/if\(!list\.length&&!raidReady&&!app\.targetChoices\)return null/);
  assert.match(commands,/class:'v2-compact-actions'/);
  assert.match(commands,/app\.targetChoices/);
- assert.match(commands,/!\['play','raid','move'\]\.includes\(a\.type\)/);
+ assert.match(commands,/!\['play','move'\]\.includes\(a\.type\)/);
  assert.match(commands,/uiActionLabel\(a,\{pack:app\.packs,state:s\}\)/);
  assert.match(commands,/applyAction\(a\)/);
  const render=script.split('function render(){')[1]?.split('function applyAction(a)')[0];
