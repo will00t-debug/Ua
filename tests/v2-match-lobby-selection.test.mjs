@@ -9,7 +9,7 @@ import {editorV2Status} from '../dist/v2-editor-compat.mjs';
 const read=x=>readFileSync(new URL(x,import.meta.url),'utf8');
 test('V2 lobby displays a human deck, AI deck, actual difficulty control and same classic match UI',()=>{
  const html=read('../dist/universal-v2-preview.html');
- for(const id of ['my-title','ai-title','ai-level','first-player','match-seed','start-game','designated-decks','my-deck-description','ai-deck-description'])
+ for(const id of ['my-title','ai-title','ai-level','first-player','start-game','designated-decks','my-deck-description','ai-deck-description'])
   assert.match(html,new RegExp('id="'+id+'"'),'Missing old public control '+id);
  for(const key of ['reject-blue','white-sword','renruki']){
   const match=html.match(new RegExp('data-deck-key="'+key+'"','g'))||[];
@@ -20,6 +20,8 @@ test('V2 lobby displays a human deck, AI deck, actual difficulty control and sam
  assert.ok(html.includes('選擇自己的牌組'));
  assert.ok(html.includes('選擇電腦牌組'));
  assert.ok(html.includes('開始 V2 對戰'));
+ assert.match(html,/每場新對局都會自動重新洗牌/);
+ assert.doesNotMatch(html,/id="match-seed"|牌序種子/);
  assert.ok(html.includes('牌組'));
  assert.match(read('../vercel.json'),/online\.html/);
  const js=read('../dist/universal-v2-preview.mjs');
