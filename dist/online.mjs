@@ -284,8 +284,8 @@ function cardBox(card){
 function zone(title,cards){
  return el('div',{},el('div',{class:'muted',text:title}),el('div',{class:'zone'},...(cards||[]).map(cardBox)));
 }
-function side(name,player,packLabel,{openHand=false}={}){
- const stats=[player.lifeCount+' 生命',player.deckCount+' 牌庫',player.handCount+' 手牌',player.apReady+'/'+player.apTotal+' AP',player.energyTotal+' 能源'].join(' · ');
+function side(name,player,packLabel,{openHand=false,setup=false}={}){
+ const stats=[setup?'生命：尚未設置':player.lifeCount+' 生命',player.deckCount+' 牌庫',player.handCount+' 手牌',player.apReady+'/'+player.apTotal+' AP',player.energyTotal+' 能源'].join(' · ');
  const block=el('section',{class:'panel side'},
   el('header',{},el('h2',{text:name}),el('span',{class:'muted',text:packLabel})),
   el('p',{class:'muted',text:stats}),
@@ -326,8 +326,8 @@ function matchView(){
  for(const line of room.log||[])log.append(el('div',{text:line.text}));
  return shell(
   el('div',{class:'row'},el('h1',{text:'房間 '+room.code}),phase,el('span',{class:'tag',text:room.youAreFirst?'你是先手':'對方是先手'})),
-  side((room.opponent?.username||'對手')+'（對手）',opp,room.opponent?.titleLabel||''),
-  side((room.you?.username||'你')+'（你）',you,room.you?.titleLabel||'',{openHand:true}),
+  side((room.opponent?.username||'對手')+'（對手）',opp,room.opponent?.titleLabel||'',{setup:view.phase==='setup'}),
+  side((room.you?.username||'你')+'（你）',you,room.you?.titleLabel||'',{openHand:true,setup:view.phase==='setup'}),
   el('div',{class:'grid split'},
    el('section',{class:'panel'},el('h2',{text:room.yourTurn?'輪到你':'對局操作'}),actions,
     el('div',{class:'row'},el('button',{type:'button',text:'認輸',disabled:app.busy||room.status!=='playing',onClick:resign}),
