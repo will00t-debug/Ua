@@ -18,6 +18,9 @@ export function openDatabase(file){
  db.exec('PRAGMA busy_timeout=5000');
  db.exec('PRAGMA foreign_keys=ON');
  db.exec(SCHEMA);
+ // Non-destructive upgrade for existing local account SQLite stores.
+ if(!db.prepare('PRAGMA table_info(decks)').all().some(c=>c.name==='cover_id'))
+  db.exec('ALTER TABLE decks ADD COLUMN cover_id TEXT');
  return {
   exec(query){db.exec(query);},
   run(query,...params){db.prepare(query).run(...params);},
