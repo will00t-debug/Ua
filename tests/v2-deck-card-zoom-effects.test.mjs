@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 
 const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
 
-test('tap a card photo or name to open the large image and printed rules',async()=>{
+test('large card shows translated rules inside the printed box and toggles back to original',async()=>{
  const saved={
   document:globalThis.document,window:globalThis.window,
   localStorage:globalThis.localStorage,sessionStorage:globalThis.sessionStorage,
@@ -14,7 +14,7 @@ test('tap a card photo or name to open the large image and printed rules',async(
  const app={innerHTML:'',onclick:null};
  const toast={textContent:'',classList:{add(){},remove(){}}};
  const events=new Map();
- let pool={scrollTop:0,scrollLeft:0};
+ const pool={scrollTop:0,scrollLeft:0};
  globalThis.document={
   querySelector:sel=>sel==='#app'?app:sel==='#toast'?toast:
    sel==='.arena-editor .vdb-pool-grid'?pool:null,
@@ -26,36 +26,44 @@ test('tap a card photo or name to open the large image and printed rules',async(
  globalThis.setTimeout=()=>0;
  globalThis.fetch=async()=>({ok:false,status:401});
  try{
-  await import('../dist/v2-deck-editor.mjs?deck-card-modal-20261028');
-  const match=app.innerHTML.match(/class="vdb-card-photo" data-inspect="([^"]+)"/);
-  assert.ok(match,'editor renders photo inspection buttons');
-  const id=match[1];
+  await import('../dist/v2-deck-editor.mjs?deck-card-overlay-20261028');
+  const {TITLES}=await import('../dist/title-registry.mjs');
+  const card=TITLES.find(t=>t.id==='bleach').cards.find(c=>typeof c.effect==='string'&&c.effect.trim()&&c.effect.trim()!==(c.effectJa||'').trim());
+  assert.ok(card,'catalogue has a card with a translated rule');
   assert.match(app.innerHTML,/class="vdb-card-name" data-inspect=/);
   assert.match(app.innerHTML,/class="arena-hero-cover" data-builder-cover-open="1"/);
-  assert.doesNotMatch(app.innerHTML,/aria-label="卡片效果"/);
-  pool.scrollTop=245;
-  const click=dataset=>app.onclick({target:{closest:()=>({dataset,disabled:false})}});
-  click({inspect:id});
-  assert.match(app.innerHTML,/aria-label="卡片效果"/);
-  assert.match(app.innerHTML,/class="arena-card-detail-art"><img src=/);
-  assert.match(app.innerHTML,/class="arena-card-detail-effect" aria-label="卡片效果"/);
-  assert.match(app.innerHTML,/官方日文原文|無額外印刷能力|<h3>卡片效果<\/h3>/);
-  assert.equal(pool.scrollTop,245,'opening enlarged art must not move the card-list scrollbar');
-  click({action:'dismiss'});
   assert.doesNotMatch(app.innerHTML,/class="arena-card-detail-modal"/);
-  assert.match(app.innerHTML,/class="vdb-card-photo" data-inspect=/);
-  click({inspect:id});
+  pool.scrollTop=245;
+  const click=(data,modal=false)=>app.onclick({target:{closest:selector=>
+   selector==='button'?(data?{dataset:data,disabled:false}:null):
+   selector==='.arena-card-detail-backdrop'&&modal?{}:null
+  }});
+  click({inspect:card.id});
+  assert.match(app.innerHTML,/class="arena-card-detail-flip" data-action="toggleCardOriginal"/);
+  assert.match(app.innerHTML,/class="arena-card-effect-overlay/);
+  assert.match(app.innerHTML,/點卡圖顯示日文原文/);
+  assert.doesNotMatch(app.innerHTML,/arena-card-detail-close|關閉 ×/);
+  assert.doesNotMatch(app.innerHTML,/class="arena-card-detail-info"/);
+  assert.equal(pool.scrollTop,245,'inspecting must retain editor scroll position');
+  click({action:'toggleCardOriginal'},true);
+  assert.match(app.innerHTML,/class="arena-card-detail-flip show-original"/);
+  assert.match(app.innerHTML,/點卡圖顯示中文效果/);
+  click({action:'toggleCardOriginal'},true);
+  assert.match(app.innerHTML,/class="arena-card-detail-flip" data-action=/);
+  assert.doesNotMatch(app.innerHTML,/class="arena-card-detail-flip show-original"/);
+  // Clicking the caption, modal padding or backdrop all count as outside the card.
+  click(null,true);
+  assert.doesNotMatch(app.innerHTML,/class="arena-card-detail-modal"/);
+  click({inspect:card.id});
   events.get('keydown')?.({key:'Escape'});
   assert.doesNotMatch(app.innerHTML,/class="arena-card-detail-modal"/);
-  click({inspect:id});
-  app.onclick({target:{closest:()=>null,classList:{contains:n=>n==='arena-card-detail-backdrop'}}});
-  assert.doesNotMatch(app.innerHTML,/class="arena-card-detail-modal"/);
+  assert.match(app.innerHTML,/class="vdb-card-photo" data-inspect=/);
  }finally{
   for(const [name,value] of Object.entries(saved))globalThis[name]=value;
  }
 });
 
-test('zoom is read-only, separate from cover changes and +/- quantity buttons',()=>{
+test('overlay is isolated from quantity, deck cover and official card art',()=>{
  const ui=read('dist/visual-deck-builder.mjs');
  const editor=read('dist/v2-deck-editor.mjs');
  const css=read('dist/arena-deck-mockup.css');
@@ -64,16 +72,19 @@ test('zoom is read-only, separate from cover changes and +/- quantity buttons',(
  assert.match(ui,/class="vdb-card-photo" data-inspect=/);
  assert.match(ui,/class="arena-hero-thumb" data-inspect=/);
  assert.match(ui,/data-builder-count="\$\{vdbEsc\(card.id\)\}" data-delta="1"/);
- assert.match(editor,/if\(data\.inspect\)\{[\s\S]*?state\.zoom=true;render\(\);/);
+ assert.match(editor,/if\(data\.inspect\)\{[\s\S]*?state\.zoom=true;state\.showOriginal=false;render\(\);/);
  assert.match(editor,/if\(data\.builderCoverOpen!==undefined\)/);
  assert.match(editor,/function showDetail\(id\)/);
- assert.match(editor,/aria-modal="true" aria-labelledby="arena-card-detail-title"/);
- assert.match(editor,/\$\{escapeHtml\(effect\|\|effectJa\|\|'無額外印刷能力'\)\}/);
+ assert.match(editor,/aria-modal="true" aria-label="\$\{escapeHtml\(name\)\} 放大卡圖"/);
+ assert.match(editor,/const translation=effect&&effect!==effectJa\?effect:''/);
+ assert.match(editor,/if\(el\?\.dataset\?\.action==='toggleCardOriginal'/);
  assert.match(css,/\.arena-card-detail-modal\{/);
- assert.match(css,/\.arena-card-detail-art img\{/);
- assert.match(css,/\.arena-card-detail-effect p\{/);
+ assert.match(css,/\.arena-card-detail-flip img\{/);
+ assert.match(css,/\.arena-card-effect-overlay\{/);
+ assert.match(css,/\.show-original \.arena-card-effect-overlay\{display:none\}/);
+ assert.match(css,/top:58\.8%;bottom:10\.6%/);
  assert.match(css,/@media\(max-width:680px\)/);
  const page=read('dist/index.html');
- assert.match(page,/arena-deck-mockup\.css\?v=20261028cardzoom1/);
- assert.match(page,/v2-deck-editor\.mjs\?v=20261028cardzoom1/);
+ assert.match(page,/arena-deck-mockup\.css\?v=20261028cardoverlay1/);
+ assert.match(page,/v2-deck-editor\.mjs\?v=20261028cardoverlay1/);
 });
