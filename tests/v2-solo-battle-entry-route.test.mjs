@@ -19,7 +19,8 @@ test('account battle lobby solo link opens actual V2 setup instead of the accoun
 test('deck editor battle navigation points to the same V2 settings page',()=>{
  const editor=read('dist/v2-deck-editor.mjs');
  assert.ok(editor.includes('href="'+SOLO+'">對戰</a>'));
- assert.ok(editor.includes('href="'+SOLO+'">前往 V2 對戰</a>'));
+ assert.doesNotMatch(editor,/class="v2e-primary" href="\/universal-v2-preview\.html">前往 V2 對戰/);
+ assert.ok(editor.includes('data-action="v2Play"')||editor.includes("data.action==='v2Play'"));
  assert.doesNotMatch(editor,/href="\/">(?:對戰|前往 V2 對戰)<\/a>/);
 });
 
