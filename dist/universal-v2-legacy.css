@@ -359,3 +359,21 @@ body{margin:0;background:#f2f3f5;color:#272b31;font:14px/1.5 system-ui,-apple-sy
 }
 .v2-shell #match-view .handCard{touch-action:pan-y}
 .v2-shell #match-view .handCard img{pointer-events:none;-webkit-user-drag:none}
+
+
+/* Normal move phase: eligible source cards and reducer-approved targets. */
+.v2-shell #match-view .slot.move-source{
+ border:2px solid #74cbb8;background:#7cd3be24;
+}
+.v2-shell #match-view .slot.move-source .slotFace{
+ box-shadow:0 0 0 2px #7cd3be5c;
+}
+.v2-shell #match-view .slot.move-source:focus-visible,
+.v2-shell #match-view .slot.destination:focus-visible{
+ outline:3px solid #f7d37a;outline-offset:2px;
+}
+.v2-shell #match-view .slot.move-source:after{
+ content:attr(data-placement);position:absolute;left:0;bottom:-16px;
+ padding:1px 3px;border-radius:3px;background:#d3f4e8;color:#174739;
+ font-size:9px;white-space:nowrap;z-index:4;
+}
