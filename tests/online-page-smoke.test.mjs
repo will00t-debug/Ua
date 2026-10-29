@@ -69,6 +69,17 @@ test('Cloudflare /online.html login boot produces actual inputs, registration sw
  assert.match(texts(appRoot),/牌組構築/);
  assert.match(texts(appRoot),/單人對戰/);
  assert.match(texts(appRoot),/線上對戰/);
+ vm.runInContext("app.error='你已經有 3 個未結束的房間。';render();",context);
+ let alertParent='';
+ function findAlert(node,parentId=''){
+  if(!(node instanceof FakeNode))return;
+  const id=node.attributes?.id||parentId;
+  if(node.attributes?.id==='room-alert')alertParent=parentId;
+  for(const child of node.children)findAlert(child,node.attributes?.id==='online-match'?'online-match':id);
+ }
+ findAlert(appRoot);
+ assert.equal(alertParent,'online-match');
+ assert.match(texts(appRoot),/你已經有 3 個未結束的房間。/);
 });
 
 test('entering an online room shows a card-sized table, the opening hand, and the mulligan choices',()=>{
