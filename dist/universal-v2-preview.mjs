@@ -76,7 +76,9 @@ const PRINTED_CATALOGUE={
  'sword-art-online':printedCatalogueMap(SAO_CARDS),
  'mushoku-tensei':printedCatalogueMap(MST_V2_OFFICIAL_CATALOGUE),
  rezero:printedCatalogueMap(REZERO_ALL_CARDS),
- 'gurren-lagann':printedCatalogueMap(Object.values(TTG_BY_ID))
+ 'gurren-lagann':printedCatalogueMap(Object.values(TTG_BY_ID)),
+ 'steins-gate':printedCatalogueMap(STEINS_GATE_CARDS),
+ madoka:printedCatalogueMap([...MADOKA_CARDS,...EXEDRA_CARDS])
 };
 const el=(tag,props={},...contents)=>{
  const n=document.createElement(tag);

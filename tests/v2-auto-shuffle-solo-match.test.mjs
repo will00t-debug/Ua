@@ -16,7 +16,7 @@ test('the V2 setup no longer exposes a fixed or manually entered deck-order code
  assert.match(page,/id="first-player"/);
  assert.match(page,/id="ai-level"/);
  assert.match(page,/id="start-game"/);
- assert.match(page,/universal-v2-preview\.mjs\?v=20261029mstart1/);
+ assert.match(page,/universal-v2-preview\.mjs\?v=20261029cardeffect1/);
  assert.match(js,/const seed=generateMatchSeed\(\)/);
  assert.match(js,/newUniversalMatch\(app\.packs,\{decks:\[mine\.counts,foe\.counts\],seed,first,openingMulligan:true\}\)/);
  assert.match(js,/makeUniversalPreviewReplay\(app\.packs,\{/);
