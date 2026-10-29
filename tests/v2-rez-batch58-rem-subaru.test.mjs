@@ -77,7 +77,7 @@ test('REZ-2-018 rests a zero-energy blue Subaru and retires that entry at main e
  assert.equal(assertUniversalMatch(rezPacks,s),true);
 });
 
-test('REZ-2-018 shares the Rem lock and a lost battle still retires Subaru',()=>{
+test('REZ-2-018 shares the Rem lock and a lost battle readies Subaru in place',()=>{
  let s=newUniversalMatch(rezPacks,{decks:[deck,deck],seed:3020,first:0});
  let guard=0;
  while(!(s.active===0&&s.players[0].ownTurns===3&&s.phase==='main')){
@@ -134,9 +134,13 @@ test('REZ-2-018 shares the Rem lock and a lost battle still retires Subaru',()=>
  lost=dispatchUniversalAction(rezPacks,lost,{type:'attack',uid:subaru.uid});
  lost=dispatchUniversalAction(rezPacks,lost,{type:'chooseBlock',uid:wall.uid});
  assert.equal(lost.pending,null);
- assert.equal(lost.players[0].front.some(c=>c?.uid===subaru.uid),false);
- assert.ok(lost.players[0].outside.some(c=>c.uid===subaru.uid));
+ const stayed=lost.players[0].front.find(c=>c?.uid===subaru.uid);
+ assert.ok(stayed);
+ assert.equal(stayed.ready,true);
+ assert.equal(stayed.loseBattleReady.used,true);
+ assert.equal(lost.players[0].outside.some(c=>c.uid===subaru.uid),false);
  assert.equal(lost.players[1].front[0].uid,wall.uid);
+ assert.equal(lost.players[1].front[0].ready,false);
  assert.equal(lost.players[1].life.length,life);
  assert.equal(assertUniversalMatch(rezPacks,lost),true);
  assert.throws(()=>createUniversalPack({id:'bad-018',cards:[{

@@ -70,7 +70,9 @@ test('three green names, an alias, a missed block, and a lost battle do not draw
   blocker(state,'REZ-2-014',3000);
  });
  const beat=dispatchUniversalAction(rezPacks,lost.s,{type:'chooseBlock',uid:lost.s.players[1].front[0].uid},{actor:1});
- assert.ok(beat.players[0].outside.some(c=>c.uid===lost.garfiel.uid));
+ assert.equal(beat.players[0].front.some(c=>c?.uid===lost.garfiel.uid),true);
+ assert.equal(beat.players[0].front.find(c=>c?.uid===lost.garfiel.uid).ready,false);
+ assert.equal(beat.players[0].outside.some(c=>c.uid===lost.garfiel.uid),false);
  assert.equal(beat.players[0].hand.length,lost.hand);
  assert.equal(assertUniversalMatch(rezPacks,missed),true);
  assert.equal(assertUniversalMatch(rezPacks,declined),true);

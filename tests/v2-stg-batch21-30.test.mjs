@@ -356,7 +356,10 @@ test('STG-1-051 draws for a battle win only after moving between lines this turn
  later=go(later,find(stgPacks,later,a=>a.type==='attack'&&a.uid===raider.uid),1);
  later=go(later,{type:'chooseBlock',uid:veteran.uid},0);
  assert.equal(later.players[0].deck.length,laterDeck);
- assert.ok(later.players[1].outside.some(c=>c.uid===raider.uid));
+ assert.equal(later.players[1].front.some(c=>c?.uid===raider.uid),true);
+ assert.equal(later.players[1].front.find(c=>c.uid===raider.uid).ready,false);
+ assert.equal(later.players[0].front.some(c=>c?.uid===veteran.uid),true);
+ assert.equal(later.players[0].front.find(c=>c.uid===veteran.uid).ready,false);
  assert.equal(assertUniversalMatch(stgPacks,later),true);
 });
 

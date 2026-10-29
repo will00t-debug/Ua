@@ -56,7 +56,9 @@ const lab=createUniversalPack({id:'c18-lab',cards:[
  unit('RESTED',{implementation:'vanilla',bp:1000}),
  unit('WALL',{bp:5000,selectionHandDiscardTax:wallTax}),
  unit('ENERGY',{implementation:'vanilla',bp:1000}),
- unit('FILL',{implementation:'vanilla'}),
+ unit('FILL',{type:'event',bp:0,gen:0,trigger:null,effects:{onPlay:[
+  {op:'retireOwnCharacterOne',optional:true,after:[{op:'draw',count:1}]}
+ ]}}),
  unit('A',{implementation:'vanilla'}),
  unit('B',{implementation:'vanilla'}),
  unit('C',{implementation:'vanilla'}),
@@ -88,13 +90,40 @@ function loseBattle(s,attacker,blocker,blockerActor){
  assert.equal(s.pending.kind,'block');
  return dispatchUniversalAction(lab,s,{type:'chooseBlock',uid:blocker},{actor:blockerActor});
 }
+function ownMain(seed){
+ let s=newUniversalMatch(lab,{decks:[labDeck,labDeck],seed,first:0});
+ let guard=0;
+ while(!(s.active===0&&s.players[0].ownTurns===3&&s.phase==='main'&&!s.pending)){
+  if(s.status!=='playing')throw Error(s.endReason||'finished');
+  if(s.pending?.kind==='end-hand-limit'){
+   const hand=s.players[s.pending.player].hand;
+   const victim=hand.find(c=>c.cardId!=='FILL')||hand[0];
+   s=dispatchUniversalAction(lab,s,{type:'chooseHandLimit',uid:victim.uid},
+    {actor:s.pending.player});
+  }else if(s.pending){
+   const action=legalUniversalActions(lab,s)[0];
+   s=dispatchUniversalAction(lab,s,action,{actor:s.pending.player});
+  }else s=dispatchUniversalAction(lab,s,{type:'next'});
+  if(++guard>80)throw Error('Did not reach the third main');
+ }
+ return s;
+}
+function retireOwn(s,uid){
+ const spell=take(s,0,'FILL');
+ s.players[0].hand.push(spell);
+ const play=legalUniversalActions(lab,s).find(a=>a.type==='event'&&a.uid===spell.uid);
+ assert.ok(play);
+ s=dispatchUniversalAction(lab,s,play);
+ assert.equal(s.pending.kind,'effect-retire-own-character');
+ return dispatchUniversalAction(lab,s,{type:'chooseOwnCharacterRetire',uid});
+}
 function at(s,p,uid){
  return [...s.players[p].front,...s.players[p].energy].find(c=>c?.uid===uid)||null;
 }
 
 test('a shared printed name rests one opposing front once, and a different name does not share it',()=>{
- let s=fresh(1801);
- const big=put(s,1,'BIG','front',0);
+ let s=ownMain(1801);
+ const big=put(s,1,'BIG','front',0,{ready:false});
  const small=put(s,1,'SMALL','front',1);
  const next=put(s,1,'BIG','front',2);
  const last=put(s,1,'BIG','front',3);
@@ -103,7 +132,7 @@ test('a shared printed name rests one opposing front once, and a different name 
  const first=put(s,0,'GATE','front',0);
  const second=put(s,0,'GATE','front',1);
  const other=put(s,0,'OTHER','front',2);
- s=loseBattle(s,first.uid,big.uid,1);
+ s=retireOwn(s,first.uid);
  assert.equal(s.pending.kind,'effect-rest-bp');
  assert.equal(s.pending.player,0);
  assert.equal(s.pending.optional,true);
@@ -123,13 +152,13 @@ test('a shared printed name rests one opposing front once, and a different name 
  assert.equal(at(s,1,small.uid).ready,false);
  assert.deepEqual(s.onceEffectUses[0],['name:Shared']);
  assert.equal(s.pending,null);
- s=loseBattle(s,second.uid,next.uid,1);
+ s=retireOwn(s,second.uid);
  assert.notEqual(s.pending?.kind,'effect-rest-bp');
  assert.deepEqual(s.onceEffectUses[0],['name:Shared']);
  while(s.pending)s=dispatchUniversalAction(lab,s,legalUniversalActions(lab,s)[0],
   {actor:s.pending.player});
- assert.equal(s.phase,'attack');
- s=loseBattle(s,other.uid,last.uid,1);
+ assert.equal(s.phase,'main');
+ s=retireOwn(s,other.uid);
  assert.equal(s.pending.kind,'effect-rest-bp');
  assert.deepEqual(s.onceEffectUses[0],['name:Shared','name:Other']);
  s=dispatchUniversalAction(lab,s,{type:'chooseRestBp',uid:null});
@@ -137,15 +166,15 @@ test('a shared printed name rests one opposing front once, and a different name 
 });
 
 test('declining the REST still spends the shared name, and the opponent turn does not',()=>{
- let s=fresh(1802);
+ let s=ownMain(1802);
  const big=put(s,1,'BIG','front',0);
  const next=put(s,1,'BIG','front',1);
  const first=put(s,0,'GATE','front',0);
  const second=put(s,0,'GATE','front',1);
- s=loseBattle(s,first.uid,big.uid,1);
+ s=retireOwn(s,first.uid);
  s=dispatchUniversalAction(lab,s,{type:'chooseRestBp',uid:null});
  assert.deepEqual(s.onceEffectUses[0],['name:Shared']);
- s=loseBattle(s,second.uid,next.uid,1);
+ s=retireOwn(s,second.uid);
  assert.notEqual(s.pending?.kind,'effect-rest-bp');
 
  let opp=fresh(1803);
@@ -158,20 +187,20 @@ test('declining the REST still spends the shared name, and the opponent turn doe
 });
 
 test('a card-scoped gate does not block another copy, silence spends nothing, and no legal front opens nothing',()=>{
- let s=fresh(1804);
+ let s=ownMain(1804);
  const big=put(s,1,'BIG','front',0);
  const next=put(s,1,'BIG','front',1);
  const first=put(s,0,'CARD','front',0);
  const second=put(s,0,'CARD','front',1);
- s=loseBattle(s,first.uid,big.uid,1);
+ s=retireOwn(s,first.uid);
  assert.equal(s.pending.kind,'effect-rest-bp');
  s=dispatchUniversalAction(lab,s,{type:'chooseRestBp',uid:null});
  assert.deepEqual(s.onceEffectUses[0],[`uid:${first.uid}`]);
- s=loseBattle(s,second.uid,next.uid,1);
+ s=retireOwn(s,second.uid);
  assert.equal(s.pending.kind,'effect-rest-bp');
  assert.equal(s.pending.player,0);
 
- let muted=fresh(1805);
+ let muted=ownMain(1805);
  const blocker=put(muted,1,'BIG','front',0);
  const laterBlock=put(muted,1,'BIG','front',1);
  const quiet=put(muted,0,'GATE','front',0);
@@ -179,22 +208,22 @@ test('a card-scoped gate does not block another copy, silence spends nothing, an
  grantContinuousState(muted,{kind:'originalEffectsDisabled',controller:1,
   sourceUid:blocker.uid,targetUid:quiet.uid,
   until:{player:0,phase:'attack',edge:'end'}});
- muted=loseBattle(muted,quiet.uid,blocker.uid,1);
+ muted=retireOwn(muted,quiet.uid);
  assert.notEqual(muted.pending?.kind,'effect-rest-bp');
  assert.deepEqual(muted.onceEffectUses[0],[]);
  while(muted.pending)muted=dispatchUniversalAction(lab,muted,
   legalUniversalActions(lab,muted)[0],{actor:muted.pending.player});
- muted=loseBattle(muted,later.uid,laterBlock.uid,1);
+ muted=retireOwn(muted,later.uid);
  assert.equal(muted.pending.kind,'effect-rest-bp');
 
- let empty=fresh(1806);
+ let empty=ownMain(1806);
  const wall=put(empty,1,'WALL','front',0,{stamp:1});
  const lonely=put(empty,0,'GATE','front',0);
  empty.players[0].deck.push(...empty.players[0].hand.splice(0));
- empty=loseBattle(empty,lonely.uid,wall.uid,1);
+ empty=retireOwn(empty,lonely.uid);
  assert.equal(empty.pending,null);
  assert.deepEqual(empty.onceEffectUses[0],['name:Shared']);
- assert.equal(at(empty,1,wall.uid).ready,false);
+ assert.equal(at(empty,1,wall.uid).ready,true);
  assert.equal(assertUniversalMatch(lab,empty),true);
 });
 
@@ -211,7 +240,7 @@ function realDeck(pack,required,color){
  assert.deepEqual(validateUniversalDeck(pack,counts),[]);
  return counts;
 }
-const home=realDeck(bleach,['BLC-2-039'],'blue');
+const home=realDeck(bleach,['BLC-2-039','BLC-2-045','BLC-2-022'],'blue');
 const foreign=realDeck(mst,['MST-1-018','MST-1-012','MST-1-001'],'blue');
 function realTake(s,p,id){
  for(const zone of ['hand','deck','life','outside']){
@@ -240,16 +269,44 @@ test('BLC-2-039 matches the printed retire sentence and the shared name gate',()
  const profile=BLEACH_V2_ADDON_PROFILES.find(c=>c.id==='BLC-2-039');
  assert.equal(checkedBleachAddonDefinition(profile).name,'シャルロッテ・クールホーン');
  let s=newUniversalMatch(packs,{decks:[home,foreign],seed:2039,first:0});
+ let guard=0;
+ while(!(s.active===0&&s.players[0].ownTurns===2&&s.phase==='main'&&!s.pending)){
+  if(s.status!=='playing')throw Error(s.endReason||'finished');
+  if(s.pending?.kind==='end-hand-limit'){
+   const hand=s.players[s.pending.player].hand;
+   s=dispatchUniversalAction(packs,s,{type:'chooseHandLimit',uid:hand[hand.length-1].uid},
+    {actor:s.pending.player});
+  }else if(s.pending){
+   const action=legalUniversalActions(packs,s)[0];
+   s=dispatchUniversalAction(packs,s,action,{actor:s.pending.player});
+  }else s=dispatchUniversalAction(packs,s,{type:'next'});
+  if(++guard>80)throw Error('Did not reach the second main');
+ }
  const first=realPut(s,0,'BLC-2-039','front',0);
  const second=realPut(s,0,'BLC-2-039','front',1);
+ for(let slot=0;slot<4;slot++)realPut(s,0,'BLC-2-022','energy',slot);
  const big=realPut(s,1,'MST-1-018','front',0);
- const next=realPut(s,1,'MST-1-018','front',1);
  const energy=realPut(s,1,'MST-1-001','energy',0);
- for(let n=0;n<8&&s.phase!=='attack';n++)
-  s=dispatchUniversalAction(packs,s,{type:'next'});
- assert.equal(s.active,0);
- s=dispatchUniversalAction(packs,s,{type:'attack',uid:first.uid});
- s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:big.uid},{actor:1});
+ function retirePrinted(state,uid){
+  const spell=realTake(state,0,'BLC-2-045');
+  state.players[0].hand.push(spell);
+  const play=legalUniversalActions(packs,state).find(a=>a.type==='event'&&a.uid===spell.uid);
+  assert.ok(play);
+  state=dispatchUniversalAction(packs,state,play);
+  assert.equal(state.pending.kind,'effect-retire-own-trait');
+  return dispatchUniversalAction(packs,state,{type:'chooseOwnTraitRetire',uid});
+ }
+ function clearPending(state){
+  let steps=0;
+  while(state.pending){
+   const actions=legalUniversalActions(packs,state);
+   const decline=actions.find(a=>a.uid===null||a.mode==='skip')||actions[0];
+   state=dispatchUniversalAction(packs,state,decline,{actor:state.pending.player});
+   if(++steps>15)throw Error('pending '+state.pending?.kind);
+  }
+  return state;
+ }
+ s=retirePrinted(s,first.uid);
  assert.equal(s.pending.kind,'effect-rest-bp');
  assert.equal(s.pending.player,0);
  assert.ok(s.pending.choices.includes(big.uid));
@@ -258,8 +315,20 @@ test('BLC-2-039 matches the printed retire sentence and the shared name gate',()
   /not currently legal/);
  s=dispatchUniversalAction(packs,s,{type:'chooseRestBp',uid:null});
  assert.deepEqual(s.onceEffectUses[0],['name:シャルロッテ・クールホーン']);
- s=dispatchUniversalAction(packs,s,{type:'attack',uid:second.uid});
- s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:next.uid},{actor:1});
+ s=clearPending(s);
+ s=retirePrinted(s,second.uid);
+ assert.notEqual(s.pending?.kind,'effect-rest-bp');
+ s=clearPending(s);
+ const striker=realPut(s,0,'BLC-2-039','front',0);
+ for(let n=0;n<4&&s.phase!=='attack';n++)
+  s=dispatchUniversalAction(packs,s,{type:'next'});
+ const life=s.players[1].life.length;
+ s=dispatchUniversalAction(packs,s,{type:'attack',uid:striker.uid});
+ s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:big.uid},{actor:1});
+ assert.equal(s.players[0].front.some(c=>c?.uid===striker.uid),true);
+ assert.equal(s.players[0].front.find(c=>c?.uid===striker.uid).ready,false);
+ assert.equal(s.players[1].front.find(c=>c?.uid===big.uid).ready,false);
+ assert.equal(s.players[1].life.length,life);
  assert.notEqual(s.pending?.kind,'effect-rest-bp');
  assert.equal(assertUniversalMatch(packs,s),true);
 });

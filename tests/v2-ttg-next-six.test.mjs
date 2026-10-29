@@ -345,7 +345,8 @@ test('TTG-048 grants BP, impact null and double block only on the first own atta
  battle=go(packs,battle,{type:'attack',uid:attacker.uid});
  battle=go(packs,battle,{type:'chooseBlock',uid:blocker.uid});
  assert.equal(live(battle,0,blocker.uid).ready,true);
- assert.ok(battle.players[1].outside.some(c=>c.uid===attacker.uid));
+ assert.equal(live(battle,1,attacker.uid).ready,false);
+ assert.equal(battle.players[1].outside.some(c=>c.uid===attacker.uid),false);
  assert.equal(battle.players[0].life.length,lives);
  assert.equal(battle.pending,null);
 

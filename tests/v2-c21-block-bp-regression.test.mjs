@@ -4,10 +4,10 @@ import {createUniversalPack} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,dispatchUniversalAction,assertUniversalMatch}
  from '../dist/universal-v2/engine.mjs';
 
-// C18 normal block, rechecked 2026-10-24. Strictly greater blocker BP retires
-// the attacker on the attacker's turn and runs onRetire. Equality and a higher
-// attacker retire only the blocker. No life is lost in any of the three.
-// Sniper battles stay on resolveSniperBattle and are covered by the R55 tests.
+// Official Q34 (2023-03-17). Strictly greater blocker BP wins the battle, and
+// neither character leaves. Equality and a higher attacker retire only the
+// blocker. No life is lost in any of the three. Sniper battles stay on
+// resolveSniperBattle and are covered by the R55 tests.
 
 const fillers=Array.from({length:10},(_,i)=>'F'+i);
 const deck={LOW:4,MID:4,HIGH:4,...Object.fromEntries(fillers.map((id,i)=>[id,i===9?2:4]))};
@@ -42,12 +42,13 @@ function attack(seed,attackerId,blockerId){
 
 test('a lower, equal, and higher attacker follow the normal block result',()=>{
  const low=attack(1801,'LOW','MID');
- assert.equal(low.s.players[0].front.some(c=>c?.uid===low.attacker.uid),false);
- assert.equal(low.s.players[0].outside.some(c=>c?.uid===low.attacker.uid),true);
+ assert.equal(low.s.players[0].front.some(c=>c?.uid===low.attacker.uid),true);
+ assert.equal(low.s.players[0].front.find(c=>c?.uid===low.attacker.uid).ready,false);
+ assert.equal(low.s.players[0].outside.some(c=>c?.uid===low.attacker.uid),false);
  assert.equal(low.s.players[1].front.some(c=>c?.uid===low.blocker.uid),true);
  assert.equal(low.s.players[1].front[0].ready,false);
- assert.equal(low.s.players[0].deck.length,low.deck0-1);
- assert.equal(low.s.turnRetireEvents.some(e=>e.uid===low.attacker.uid),true);
+ assert.equal(low.s.players[0].deck.length,low.deck0);
+ assert.equal(low.s.turnRetireEvents.some(e=>e.uid===low.attacker.uid),false);
  assert.equal(low.s.players[0].life.length,low.life0);
  assert.equal(low.s.players[1].life.length,low.life1);
  assert.equal(assertUniversalMatch(pack,low.s),true);

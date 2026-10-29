@@ -480,19 +480,33 @@ test('BLC-2-041 gains 1000 only after another own character retires this own tur
  assert.equal(cardHasTrait(card,'破面'),true);
  assert.deepEqual(card.passiveBonuses[0].condition,{kind:'retireCountThisTurn',turn:'own',
   controller:'own',cardType:'character',min:1,excludeSelf:true});
- const low=plainId(blue,1500,['BLC-2-041']);
- const wall=plainId(blue,4000,['BLC-2-041']);
- const {packs,s}=main(blue,29041);
- const self=put(s,0,'BLC-2-041','energy',0);
+ const deck=realDeck(['BLC-2-041','BLC-2-045','BLC-2-022'],'blue');
+ const low=plainId(deck,1500,['BLC-2-041']);
+ function blueEnergy(packs,s){
+  const gens=[];
+  for(let i=0;i<4;i++)gens.push(put(s,0,'BLC-2-022','energy',i,true));
+  for(const g of gens)
+   s=dispatchUniversalAction(packs,s,{type:'activate',uid:g.uid,mode:'selfRestEnergyRetire'});
+  return s;
+ }
+ function retireTrait(packs,s,uid){
+  const event=take(s,0,'BLC-2-045');
+  s.players[0].hand.push(event);
+  s=dispatchUniversalAction(packs,s,{type:'event',uid:event.uid});
+  assert.equal(s.pending.kind,'effect-retire-own-trait');
+  s=dispatchUniversalAction(packs,s,{type:'chooseOwnTraitRetire',uid});
+  if(s.pending?.kind==='effect-outside-active-pair')
+   s=dispatchUniversalAction(packs,s,{type:'chooseOutsideActivePair',uid:null});
+  return s;
+ }
+ const {packs,s}=main(deck,29041);
+ const self=put(s,0,'BLC-2-041','front',0);
  assert.equal(universalBp(packs,s,self),2000);
- const mine=put(s,0,low,'front',0);
- const theirWall=put(s,1,wall,'front',0);
- let battle=s;
- for(let n=0;n<6&&battle.phase!=='attack';n++)
-  battle=dispatchUniversalAction(packs,battle,{type:'next'});
- battle=dispatchUniversalAction(packs,battle,{type:'attack',uid:mine.uid});
- battle=dispatchUniversalAction(packs,battle,{type:'chooseBlock',uid:theirWall.uid},{actor:1});
+ const mine=put(s,0,'BLC-2-041','front',1);
+ let battle=blueEnergy(packs,s);
+ battle=retireTrait(packs,battle,mine.uid);
  assert.equal(battle.players[0].front.some(c=>c?.uid===mine.uid),false);
+ assert.equal(battle.players[0].outside.some(c=>c.uid===mine.uid),true);
  assert.equal(battle.active,0);
  const stayed=live(battle,0,self.uid);
  assert.equal(universalBp(packs,battle,stayed),3000);
@@ -501,9 +515,9 @@ test('BLC-2-041 gains 1000 only after another own character retires this own tur
   later=dispatchUniversalAction(packs,later,{type:'next'});
  assert.equal(later.active,1);
  assert.equal(universalBp(packs,later,live(later,0,self.uid)),2000);
- const foe=main(blue,29042);
+ const foe=main(deck,29042);
  const watcher=put(foe.s,0,'BLC-2-041','energy',0);
- const big=put(foe.s,0,wall,'front',0);
+ const big=put(foe.s,0,'BLC-2-041','front',0);
  const small=put(foe.s,1,low,'front',0);
  let oppLoss=foe.s;
  for(let n=0;n<6&&oppLoss.phase!=='attack';n++)
@@ -512,21 +526,17 @@ test('BLC-2-041 gains 1000 only after another own character retires this own tur
  oppLoss=dispatchUniversalAction(packs,oppLoss,{type:'chooseBlock',uid:small.uid},{actor:1});
  assert.equal(oppLoss.players[1].front.some(c=>c?.uid===small.uid),false);
  assert.equal(universalBp(packs,oppLoss,live(oppLoss,0,watcher.uid)),2000);
- const again=main(blue,29043);
+ const again=main(deck,29043);
  const ken=put(again.s,0,'BLC-2-041','front',0);
- const blocker=put(again.s,1,wall,'front',0);
- let lost=again.s;
- for(let n=0;n<6&&lost.phase!=='attack';n++)
-  lost=dispatchUniversalAction(packs,lost,{type:'next'});
- lost=dispatchUniversalAction(packs,lost,{type:'attack',uid:ken.uid});
- lost=dispatchUniversalAction(packs,lost,{type:'chooseBlock',uid:blocker.uid},{actor:1});
+ let lost=blueEnergy(again.packs,again.s);
+ lost=retireTrait(again.packs,lost,ken.uid);
  assert.equal(lost.players[0].front.some(c=>c?.uid===ken.uid),false);
  const returned=lost.players[0].outside.find(c=>c.uid===ken.uid);
  assert.ok(returned);
  const index=lost.players[0].outside.findIndex(c=>c.uid===ken.uid);
  lost.players[0].outside.splice(index,1);
  returned.ready=true;returned.fieldEntryStamp=lost.nextFieldEntryStamp++;
- lost.players[0].energy[1]=returned;
+ lost.players[0].front[0]=returned;
  assert.equal(universalBp(packs,lost,returned),2000);
  assert.equal(assertUniversalMatch(packs,lost),true);
 });
@@ -3750,7 +3760,7 @@ test('BLC-4-003 discounts an empty field, steps, and cuts BP only on its own ret
  assert.equal(card.triggerEffect,null);
  assert.equal(card.effects.onRetire[0].ownTurnOnly,true);
  assert.equal(card.effects.onRetire[0].minBp,1500);
- const deck=realDeck(['BLC-4-003','BLC-1-023','BLC-1-018','BLC-1-012','BLC-1-002'],'yellow');
+ const deck=realDeck(['BLC-4-003','BLC-1-023','BLC-1-018','BLC-1-012','BLC-1-002','BLC-4-016'],'yellow');
  const cost=main(deck,29903);
  assert.equal(effectiveHandRequiredEnergy(cost.packs,cost.s,0,card),0);
  put(cost.s,0,'BLC-1-002','front',0);
@@ -3772,11 +3782,10 @@ test('BLC-4-003 discounts an empty field, steps, and cuts BP only on its own ret
  low.buffs=[{bp:-500,untilTurn:own.s.turn}];
  assert.equal(universalBp(own.packs,own.s,low),1000);
  let battle=own.s;
- for(let n=0;n<6&&battle.phase!=='attack';n++)
-  battle=dispatchUniversalAction(own.packs,battle,{type:'next'});
- live(battle,0,self.uid).ready=true;
- battle=dispatchUniversalAction(own.packs,battle,{type:'attack',uid:self.uid});
- battle=dispatchUniversalAction(own.packs,battle,{type:'chooseBlock',uid:wall.uid},{actor:1});
+ const lille=put(battle,0,'BLC-4-016','front',3,true);
+ lille.entryTurn=battle.turn;
+ battle=dispatchUniversalAction(own.packs,battle,{type:'activate',uid:lille.uid,mode:'entrySacrifice'});
+ battle=dispatchUniversalAction(own.packs,battle,{type:'chooseEntrySacrifice',uid:self.uid});
  assert.equal(battle.players[0].front.some(c=>c?.uid===self.uid),false);
  assert.equal(battle.pending.kind,'effect-target');
  const targets=legalUniversalActions(own.packs,battle).filter(a=>a.type==='chooseTarget').map(a=>a.uid);
@@ -4942,8 +4951,10 @@ test('BLC-1-025 replaces its block BP before the battle comparison',()=>{
  live(held,1,silenced.uid).ready=true;
  held=dispatchUniversalAction(quiet.packs,held,{type:'attack',uid:loud.uid});
  held=dispatchUniversalAction(quiet.packs,held,{type:'chooseBlock',uid:silenced.uid},{actor:1});
- assert.equal(held.players[0].outside.some(c=>c.uid===loud.uid),true);
+ assert.equal(held.players[0].front.some(c=>c?.uid===loud.uid),true);
+ assert.equal(live(held,0,loud.uid).ready,false);
  const stood=live(held,1,silenced.uid);
+ assert.equal(stood.ready,false);
  assert.equal(universalBp(quiet.packs,held,stood),3500);
  assert.equal((stood.buffs||[]).some(b=>b.bp),false);
  const doubled=main(deck,30536);
@@ -4960,7 +4971,8 @@ test('BLC-1-025 replaces its block BP before the battle comparison',()=>{
  const shifted=live(once,1,twice.uid);
  assert.equal(universalBp(doubled.packs,once,shifted),2500);
  assert.deepEqual(shifted.buffs.map(b=>b.bp),[-1000]);
- assert.equal(once.players[0].outside.some(c=>c.uid===firstHit.uid),true);
+ assert.equal(once.players[0].front.some(c=>c?.uid===firstHit.uid),true);
+ assert.equal(live(once,0,firstHit.uid).ready,false);
  shifted.ready=true;
  live(once,0,secondHit.uid).ready=true;
  once=dispatchUniversalAction(doubled.packs,once,{type:'attack',uid:secondHit.uid});
@@ -4987,7 +4999,8 @@ test('BLC-1-025 replaces its block BP before the battle comparison',()=>{
  assert.equal(topped.players[0].front[0].stack[0].faceDown,undefined);
  const raidWall=put(topped,1,'BLC-1-025','front',0,true);
  let favored=fight(raided.packs,topped,rider.uid,raidWall.uid);
- assert.equal(favored.players[0].outside.some(c=>c.uid===rider.uid),true);
+ assert.equal(favored.players[0].front.some(c=>c?.uid===rider.uid),true);
+ assert.equal(live(favored,0,rider.uid).ready,false);
  const boosted=live(favored,1,raidWall.uid);
  assert.equal(universalBp(raided.packs,favored,boosted),4500);
  assert.deepEqual(boosted.buffs.map(b=>b.bp),[1000]);
@@ -6742,7 +6755,7 @@ test('BLC-4-018 chooses on its own turn to ready or protect a Bambies card, then
  assert.equal(card.gen,1);
  assert.deepEqual(card.traits,['星十字騎士團','邦比小隊']);
  assert.equal(card.effects.onRetire[0].ownTurnOnly,true);
- const deck=realDeck(['BLC-4-018','BLC-2-006','BLC-1-018','BLC-1-016','BLC-1-001','BLC-4-010'],'yellow');
+ const deck=realDeck(['BLC-4-018','BLC-2-006','BLC-1-018','BLC-1-016','BLC-1-001','BLC-4-010','BLC-4-016'],'yellow');
  function seat(seed){
   const opened=main(deck,seed);
   const lilotto=put(opened.s,0,'BLC-4-018','front',0);
@@ -6759,10 +6772,15 @@ test('BLC-4-018 chooses on its own turn to ready or protect a Bambies card, then
  function ownLoss(seat){
   const {packs}=seat.opened;
   let s=seat.opened.s;
-  for(let n=0;n<6&&s.phase!=='attack';n++)
-   s=dispatchUniversalAction(packs,s,{type:'next'});
-  s=dispatchUniversalAction(packs,s,{type:'attack',uid:seat.lilotto.uid});
-  s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:seat.wall.uid},{actor:1});
+  const lille=put(s,0,'BLC-4-016','front',3,true);
+  lille.entryTurn=s.turn;
+  s=dispatchUniversalAction(packs,s,{type:'activate',uid:lille.uid,mode:'entrySacrifice'});
+  s=dispatchUniversalAction(packs,s,{type:'chooseEntrySacrifice',uid:seat.lilotto.uid});
+  return s;
+ }
+ function finishSacrifice(s){
+  if(s.pending?.options?.some(o=>o.id==='draw'))
+   s=dispatchUniversalAction(packs,s,{type:'chooseEffectMode',mode:'draw'});
   return s;
  }
  const first=seat(29018);
@@ -6784,7 +6802,8 @@ test('BLC-4-018 chooses on its own turn to ready or protect a Bambies card, then
  assert.equal(readyChoices.some(a=>a.uid===first.squad.uid),true);
  assert.equal(readyChoices.some(a=>a.uid===first.other.uid),false);
  aiOk(packs,readied);
- const stood=dispatchUniversalAction(packs,readied,{type:'chooseNameOrTraitReady',uid:first.named.uid});
+ let stood=dispatchUniversalAction(packs,readied,{type:'chooseNameOrTraitReady',uid:first.named.uid});
+ stood=finishSacrifice(stood);
  assert.equal(stood.pending,null);
  assert.equal(live(stood,0,first.named.uid).ready,true);
  assert.equal(live(stood,0,first.squad.uid).ready,false);
@@ -6794,6 +6813,7 @@ test('BLC-4-018 chooses on its own turn to ready or protect a Bambies card, then
  assert.equal(guarded.pending.kind,'effect-name-or-trait-protect');
  aiOk(packs,guarded);
  guarded=dispatchUniversalAction(packs,guarded,{type:'chooseNameOrTraitProtect',uid:second.squad.uid});
+ guarded=finishSacrifice(guarded);
  assert.equal(guarded.pending,null);
  assert.equal(effectChoiceProtected(guarded,1,second.squad.uid,'character'),true);
  assert.equal(effectChoiceProtected(guarded,1,second.squad.uid,'event'),true);
@@ -6819,6 +6839,7 @@ test('BLC-4-018 chooses on its own turn to ready or protect a Bambies card, then
  let skipped=ownLoss(third);
  skipped=dispatchUniversalAction(packs,skipped,{type:'chooseEffectMode',mode:'protect'});
  skipped=dispatchUniversalAction(packs,skipped,{type:'chooseNameOrTraitProtect',uid:null});
+ skipped=finishSacrifice(skipped);
  assert.equal(skipped.pending,null);
  assert.equal(skipped.continuousStates.some(e=>e.kind==='cannotBeChosenByOppEffect'),false);
  assert.equal(universalBp(packs,skipped,live(skipped,1,third.tall.uid)),1000);
@@ -6828,8 +6849,9 @@ test('BLC-4-018 chooses on its own turn to ready or protect a Bambies card, then
   sourceUid:quiet.wall.uid,targetUid:quiet.lilotto.uid,sourceLinked:false,
   until:{player:0,phase:'start',edge:'start'}});
  const silenced=ownLoss(quiet);
- assert.equal(silenced.pending,null);
  assert.equal(silenced.players[0].outside.some(c=>c.uid===quiet.lilotto.uid),true);
+ assert.equal(silenced.pending.kind,'effect-choice-mode');
+ assert.deepEqual(legalUniversalActions(packs,silenced).map(a=>a.mode).sort(),['cut','draw']);
  const foe=seat(29022);
  let theirs=foe.opened.s;
  for(let n=0;n<16&&theirs.active===0;n++)
@@ -7334,11 +7356,15 @@ test('BLC-1-092 generates energy on the front and removes a battle loser without
   blocked=dispatchUniversalAction(other.packs,blocked,{type:'next'});
  blocked=dispatchUniversalAction(other.packs,blocked,{type:'attack',uid:attacker.uid});
  blocked=dispatchUniversalAction(other.packs,blocked,{type:'chooseBlock',uid:blocker.uid},{actor:1});
- assert.equal(blocked.players[0].outside.some(c=>c.uid===attacker.uid),true);
+ assert.equal(blocked.players[0].front.some(c=>c?.uid===attacker.uid),true);
+ assert.equal(blocked.players[0].front.find(c=>c?.uid===attacker.uid).ready,false);
+ assert.equal(blocked.players[1].front.some(c=>c?.uid===blocker.uid),true);
+ assert.equal(blocked.players[1].front.find(c=>c?.uid===blocker.uid).ready,false);
+ assert.equal(blocked.players[0].outside.some(c=>c.uid===attacker.uid),false);
  assert.equal(blocked.players[0].removed.some(c=>c.uid===attacker.uid),false);
- assert.equal(blocked.players[0].deck.length,beforeDeck-1);
- assert.equal(blocked.players[0].hand.length,beforeHand+1);
- assert.equal(blocked.turnRetireEvents.some(e=>e.uid===attacker.uid),true);
+ assert.equal(blocked.players[0].deck.length,beforeDeck);
+ assert.equal(blocked.players[0].hand.length,beforeHand);
+ assert.equal(blocked.turnRetireEvents.some(e=>e.uid===attacker.uid),false);
  const silenced=main(deck,29097);
  const muted=put(silenced.s,0,'BLC-1-092','front',0,true);
  const victim=put(silenced.s,1,'BLC-2-040','front',0,true);
@@ -8266,7 +8292,9 @@ test('BLC-1-011 discards one hand card for Damage 2 and a battle-win draw',()=>{
   beaten=dispatchUniversalAction(lost.packs,beaten,{type:'next'});
  beaten=dispatchUniversalAction(lost.packs,beaten,{type:'attack',uid:loser.uid});
  beaten=dispatchUniversalAction(lost.packs,beaten,{type:'chooseBlock',uid:tower.uid},{actor:1});
- assert.equal(beaten.players[0].outside.some(c=>c.uid===loser.uid),true);
+ assert.equal(beaten.players[0].front.some(c=>c?.uid===loser.uid),true);
+ assert.equal(live(beaten,0,loser.uid).ready,false);
+ assert.equal(live(beaten,1,tower.uid).ready,false);
  assert.equal(beaten.players[0].hand.length,beforeLoss);
  assert.equal(assertUniversalMatch(empty.packs,paid),true);
  assert.equal(assertUniversalMatch(direct.packs,struck),true);
@@ -11539,12 +11567,15 @@ test('BLC-4-012 raises other required energy in raid and may draw on another ret
  const wall=put(woken,1,'BLC-2-005','front',0,true);
  const secondWall=put(woken,1,'BLC-4-007','front',1,true);
  let battle=woken;
- for(let n=0;n<4&&battle.phase!=='attack';n++)
+ for(let n=0;n<16&&!(battle.active===1&&battle.phase==='attack');n++){
+  assert.equal(battle.pending,null,battle.pending&&battle.pending.kind);
   battle=dispatchUniversalAction(board.packs,battle,{type:'next'});
+ }
+ assert.equal(battle.active,1);
  assert.equal(battle.phase,'attack');
- battle=dispatchUniversalAction(board.packs,battle,{type:'attack',uid:small.uid});
+ battle=dispatchUniversalAction(board.packs,battle,{type:'attack',uid:wall.uid});
  assert.equal(battle.pending.kind,'block');
- battle=dispatchUniversalAction(board.packs,battle,{type:'chooseBlock',uid:wall.uid});
+ battle=dispatchUniversalAction(board.packs,battle,{type:'chooseBlock',uid:small.uid});
  assert.equal(battle.players[0].outside.some(c=>c.uid===small.uid),true);
  assert.equal(battle.pending.kind,'effect-may-draw');
  assert.equal(V2_PENDING_LABELS[battle.pending.kind],'可抽1張牌');
@@ -11563,8 +11594,8 @@ test('BLC-4-012 raises other required energy in raid and may draw on another ret
  assert.equal(drawn.mainReadyOnceByName[0].includes(key),true);
  const other=put(drawn,0,'BLC-1-012','front',3,true);
  let again=drawn;
- again=dispatchUniversalAction(board.packs,again,{type:'attack',uid:other.uid});
- again=dispatchUniversalAction(board.packs,again,{type:'chooseBlock',uid:secondWall.uid});
+ again=dispatchUniversalAction(board.packs,again,{type:'attack',uid:secondWall.uid});
+ again=dispatchUniversalAction(board.packs,again,{type:'chooseBlock',uid:other.uid});
  assert.equal(again.players[0].outside.some(c=>c.uid===other.uid),true);
  assert.equal(again.pending,null);
  const blocked=main(deck,29896);
@@ -11788,23 +11819,28 @@ test('BLC-4-005 chooses one retirement mode, hides the life card, and loses only
    {op:'retireLifeHandOrReturn',optional:true,life:3,hand:2}]}};
  assert.throws(()=>createUniversalPack({id:'bad-gerard',cards:[bare]}),
   /invalid retirement life or hand return/);
- const required=['BLC-4-005','BLC-1-093'];
+ const required=['BLC-4-005','BLC-1-093','BLC-1-002'];
  const rest=Object.values(bleach.cards).filter(c=>c.color==='yellow'&&c.maxCopies===4&&
   !required.includes(c.id)&&!['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
- const built=[...required,...rest.slice(0,11)];
+ const built=[...required,...rest.slice(0,13-required.length)];
  assert.equal(built.length,13);
  const deck=Object.fromEntries(built.map((id,i)=>[id,i===12?2:4]));
  assert.deepEqual(validateUniversalDeck(bleach,deck),[]);
  const retire=(seed,prep)=>{
   const board=main(deck,seed);
   const gerard=put(board.s,0,'BLC-4-005','front',0,true);
-  const wall=put(board.s,1,'BLC-1-093','front',0,true);
+  const wall=put(board.s,1,'BLC-1-002','front',0,true);
   if(prep)prep(board.s,gerard);
   let s=board.s;
-  for(let n=0;n<4&&s.phase!=='attack';n++)
+  for(let n=0;n<16&&!(s.active===1&&s.phase==='attack');n++){
+   assert.equal(s.pending,null,s.pending&&s.pending.kind);
    s=dispatchUniversalAction(board.packs,s,{type:'next'});
-  s=dispatchUniversalAction(board.packs,s,{type:'attack',uid:gerard.uid});
-  s=dispatchUniversalAction(board.packs,s,{type:'chooseBlock',uid:wall.uid});
+  }
+  assert.equal(s.active,1);
+  assert.equal(s.phase,'attack');
+  s.players[1].front.find(c=>c?.uid===wall.uid).buffs=[{bp:2000,untilTurn:s.turn}];
+  s=dispatchUniversalAction(board.packs,s,{type:'attack',uid:wall.uid});
+  s=dispatchUniversalAction(board.packs,s,{type:'chooseBlock',uid:gerard.uid});
   return {packs:board.packs,s,gerard};
  };
  const opened=retire(29910);
@@ -11941,23 +11977,25 @@ test('BLC-4-015 returns from outside to the deck bottom and retires another fron
  }
  const fieldLoss=main(deck,29920);
  const lost=put(fieldLoss.s,0,'BLC-4-015','front',0,true);
- const wall=put(fieldLoss.s,1,'BLC-1-093','front',0,true);
- let battle=toAttack(fieldLoss.packs,fieldLoss.s);
- battle=dispatchUniversalAction(fieldLoss.packs,battle,{type:'attack',uid:lost.uid});
- battle=dispatchUniversalAction(fieldLoss.packs,battle,{type:'chooseBlock',uid:wall.uid});
+ const wall=put(fieldLoss.s,1,'BLC-1-002','front',0,true);
+ let battle=toAttack(fieldLoss.packs,fieldLoss.s,1);
+ battle.players[1].front.find(c=>c?.uid===wall.uid).buffs=[{bp:2000,untilTurn:battle.turn}];
+ battle=dispatchUniversalAction(fieldLoss.packs,battle,{type:'attack',uid:wall.uid});
+ battle=dispatchUniversalAction(fieldLoss.packs,battle,{type:'chooseBlock',uid:lost.uid});
  assert.equal(battle.players[0].outside.some(c=>c.uid===lost.uid),false);
  assert.equal(battle.players[0].deck.at(-1).uid,lost.uid);
  assert.equal(battle.zoneMoveEvents.some(e=>e.uid===lost.uid&&e.from==='front'&&e.to==='outside'&&e.reason==='retirement'),true);
  assert.equal(battle.zoneMoveEvents.some(e=>e.uid===lost.uid&&e.from==='outside'&&e.to==='deck'&&e.reason==='own-effect'&&e.sourceUid===lost.uid),true);
  const silenced=main(deck,29921);
  const quiet=put(silenced.s,0,'BLC-4-015','front',0,true);
- const quietWall=put(silenced.s,1,'BLC-1-093','front',0,true);
+ const quietWall=put(silenced.s,1,'BLC-1-002','front',0,true);
  grantContinuousState(silenced.s,{kind:'originalEffectsDisabled',controller:0,
   sourceUid:quiet.uid,targetUid:quiet.uid,sourceLinked:false,
   until:{player:0,phase:'start',edge:'start'}});
- let quietBattle=toAttack(silenced.packs,silenced.s);
- quietBattle=dispatchUniversalAction(silenced.packs,quietBattle,{type:'attack',uid:quiet.uid});
- quietBattle=dispatchUniversalAction(silenced.packs,quietBattle,{type:'chooseBlock',uid:quietWall.uid});
+ let quietBattle=toAttack(silenced.packs,silenced.s,1);
+ quietBattle.players[1].front.find(c=>c?.uid===quietWall.uid).buffs=[{bp:2000,untilTurn:quietBattle.turn}];
+ quietBattle=dispatchUniversalAction(silenced.packs,quietBattle,{type:'attack',uid:quietWall.uid});
+ quietBattle=dispatchUniversalAction(silenced.packs,quietBattle,{type:'chooseBlock',uid:quiet.uid});
  assert.equal(quietBattle.players[0].outside.some(c=>c.uid===quiet.uid),true);
  assert.equal(quietBattle.players[0].deck.at(-1)?.uid===quiet.uid,false);
  const discarded=main(deck,29922);
@@ -11976,13 +12014,13 @@ test('BLC-4-015 returns from outside to the deck bottom and retires another fron
  assert.equal(paidPlay.zoneMoveEvents.some(e=>e.uid===fromHand.uid&&e.from==='outside'&&e.to==='deck'&&e.sourceUid===fromHand.uid),true);
  const milled=main(deck,29923);
  const rukia=put(milled.s,0,'BLC-1-051','front',0,true);
- const millWall=put(milled.s,1,'BLC-1-093','front',0,true);
+ const millWall=put(milled.s,1,'BLC-1-002','front',0,true);
  const milledYhwach=take(milled.s,0,'BLC-4-015');
  const stayed=take(milled.s,0,'BLC-1-002');
  milled.s.players[0].deck.unshift(milledYhwach,stayed);
- let millBattle=toAttack(milled.packs,milled.s);
- millBattle=dispatchUniversalAction(milled.packs,millBattle,{type:'attack',uid:rukia.uid});
- millBattle=dispatchUniversalAction(milled.packs,millBattle,{type:'chooseBlock',uid:millWall.uid});
+ let millBattle=toAttack(milled.packs,milled.s,1);
+ millBattle=dispatchUniversalAction(milled.packs,millBattle,{type:'attack',uid:millWall.uid});
+ millBattle=dispatchUniversalAction(milled.packs,millBattle,{type:'chooseBlock',uid:rukia.uid});
  assert.equal(millBattle.players[0].deck.at(-1).uid,milledYhwach.uid);
  assert.equal(millBattle.players[0].outside.some(c=>c.uid===milledYhwach.uid),false);
  assert.equal(millBattle.players[0].outside.some(c=>c.uid===stayed.uid),true);
@@ -12025,10 +12063,12 @@ test('BLC-4-015 returns from outside to the deck bottom and retires another fron
  stacked=dispatchUniversalAction(raided.packs,stacked,{type:'chooseEffectMode',mode:'retire'});
  assert.equal(stacked.pending,null);
  assert.equal(stacked.players[0].front[0].stack[0].uid,base.uid);
- const raidWall=put(stacked,1,'BLC-1-093','front',0,true);
- let raidBattle=toAttack(raided.packs,stacked);
- raidBattle=dispatchUniversalAction(raided.packs,raidBattle,{type:'attack',uid:stacked.players[0].front[0].uid});
- raidBattle=dispatchUniversalAction(raided.packs,raidBattle,{type:'chooseBlock',uid:raidWall.uid});
+ const hitter=put(stacked,1,'BLC-1-002','front',0,true);
+ const riderUid=stacked.players[0].front[0].uid;
+ let raidBattle=toAttack(raided.packs,stacked,1);
+ raidBattle.players[1].front.find(c=>c?.uid===hitter.uid).buffs=[{bp:2000,untilTurn:raidBattle.turn}];
+ raidBattle=dispatchUniversalAction(raided.packs,raidBattle,{type:'attack',uid:hitter.uid});
+ raidBattle=dispatchUniversalAction(raided.packs,raidBattle,{type:'chooseBlock',uid:riderUid});
  assert.equal(raidBattle.players[0].outside.some(c=>c.cardId==='BLC-1-024'),true);
  assert.equal(raidBattle.players[0].outside.some(c=>c.uid===base.uid),false);
  assert.equal(raidBattle.players[0].deck.at(-1).uid,base.uid);
@@ -12445,7 +12485,7 @@ test('BLC-4-056 draws, may remove Squad Zero, and REST-plays after retirement',(
   const {packs,s}=main(deck,seed);
   park(s,0);
   const self=put(s,0,'BLC-4-056','front',0,true);
-  const foe=put(s,1,'BLC-1-093','front',0,true);
+  const foe=put(s,1,'BLC-1-051','front',0,true);
   let cur=s;
   while(cur.phase!=='attack'){
    const step=legalUniversalActions(packs,cur).find(a=>a.type==='next');
@@ -12454,15 +12494,25 @@ test('BLC-4-056 draws, may remove Squad Zero, and REST-plays after retirement',(
   return {packs,s:cur,self,foe};
  }
  function lose(board){
-  let cur=dispatchUniversalAction(board.packs,board.s,{type:'attack',uid:board.self.uid});
+  let cur=board.s;
+  for(let n=0;n<16&&!(cur.active===1&&cur.phase==='attack');n++){
+   assert.equal(cur.pending,null,cur.pending&&cur.pending.kind);
+   const step=legalUniversalActions(board.packs,cur).find(a=>a.type==='next');
+   assert.ok(step);
+   cur=dispatchUniversalAction(board.packs,cur,step);
+  }
+  assert.equal(cur.active,1);
+  assert.equal(cur.phase,'attack');
+  cur.players[1].front.find(c=>c?.uid===board.foe.uid).buffs.push({bp:2500,untilTurn:cur.turn});
+  cur=dispatchUniversalAction(board.packs,cur,{type:'attack',uid:board.foe.uid});
   assert.equal(cur.pending.kind,'block');
-  cur=dispatchUniversalAction(board.packs,cur,{type:'chooseBlock',uid:board.foe.uid},{actor:1});
+  cur=dispatchUniversalAction(board.packs,cur,{type:'chooseBlock',uid:board.self.uid});
   return cur;
  }
  const narrow=retireBoard(29953);
  const ichigo=hold(narrow.s,0,'BLC-1-039'),costly=hold(narrow.s,0,'BLC-1-040');
  const palace=hold(narrow.s,0,'BLC-1-061'),rukia=hold(narrow.s,0,'BLC-1-051');
- ichigo.buffs.push({requiredEnergy:2,untilTurn:narrow.s.turn});
+ ichigo.buffs.push({requiredEnergy:2,untilTurn:narrow.s.turn+1});
  const lost=lose(narrow);
  assert.equal(lost.pending.kind,'effect-hand-rest-cap');
  assert.equal(lost.pending.cap,1);
@@ -12516,7 +12566,7 @@ test('BLC-4-056 draws, may remove Squad Zero, and REST-plays after retirement',(
  hold(silenced.s,0,'BLC-1-039');
  grantContinuousState(silenced.s,{kind:'originalEffectsDisabled',controller:1,
   sourceUid:silenced.self.uid,targetUid:silenced.self.uid,sourceLinked:false,
-  until:{player:0,phase:'attack',edge:'end'}});
+  until:{player:1,phase:'attack',edge:'end'}});
  const quietLoss=lose(silenced);
  assert.equal(quietLoss.pending,null);
  assert.ok(quietLoss.players[0].outside.some(c=>c.uid===silenced.self.uid));
@@ -12943,9 +12993,10 @@ test('BLC-4-053 sets ACTIVE after an attacking win and gains Damage 2',()=>{
  let loss=advance(lost.packs,lost.s,s=>s.active===0&&s.phase==='attack');
  loss=dispatchUniversalAction(lost.packs,loss,{type:'attack',uid:loser.uid});
  loss=dispatchUniversalAction(lost.packs,loss,{type:'chooseBlock',uid:wall.uid},{actor:1});
- assert.ok(loss.players[0].outside.some(c=>c.uid===loser.uid));
+ assert.equal(loss.players[0].front.some(c=>c?.uid===loser.uid),true);
+ assert.equal(live(loss,0,loser.uid).ready,false);
  assert.equal(once(loss),false);
- assert.ok(live(loss,1,wall.uid));
+ assert.equal(live(loss,1,wall.uid).ready,false);
  loss=dispatchUniversalAction(lost.packs,loss,{type:'attack',uid:survivor.uid});
  loss=dispatchUniversalAction(lost.packs,loss,{type:'chooseBlock',uid:equal.uid},{actor:1});
  assert.equal(live(loss,0,survivor.uid).ready,true);
@@ -13040,12 +13091,19 @@ test('BLC-4-033 actives another traitless character and may REST its raid base',
   assert.equal(s.active,0);
   return s;
  }
- function loseTo(s,attackerUid){
-  const wall=put(s,1,'BLC-4-041','front',0,true);
-  s=toAttack(s);
+ function loseTo(s,blockerUid){
   const packs=deckPacks(s);
-  s=dispatchUniversalAction(packs,s,{type:'attack',uid:attackerUid});
-  s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:wall.uid},{actor:1});
+  for(let n=0;n<16&&!(s.active===1&&s.phase==='attack');n++){
+   assert.equal(s.pending,null,s.pending&&s.pending.kind);
+   const step=legalUniversalActions(packs,s).find(a=>a.type==='next');
+   assert.ok(step);
+   s=dispatchUniversalAction(packs,s,step);
+  }
+  assert.equal(s.active,1);
+  assert.equal(s.phase,'attack');
+  const wall=put(s,1,'BLC-4-041','front',0,true);
+  s=dispatchUniversalAction(packs,s,{type:'attack',uid:wall.uid});
+  s=dispatchUniversalAction(packs,s,{type:'chooseBlock',uid:blockerUid});
   return s;
  }
  function traitBoard(s){
@@ -13213,7 +13271,7 @@ test('BLC-4-033 actives another traitless character and may REST its raid base',
  const muted=raidOnto(29985);
  grantContinuousState(muted.s,{kind:'originalEffectsDisabled',controller:1,
   sourceUid:muted.rider.uid,targetUid:muted.rider.uid,sourceLinked:false,
-  until:{player:0,phase:'attack',edge:'end'}});
+  until:{player:1,phase:'attack',edge:'end'}});
  put(muted.s,0,'BLC-2-015','energy',0,true);
  const mutedAfter=loseTo(muted.s,muted.rider.uid);
  assert.equal(mutedAfter.pending,null);
@@ -13222,7 +13280,7 @@ test('BLC-4-033 actives another traitless character and may REST its raid base',
  const silentGuide=put(named.s,0,'BLC-2-015','energy',0,false);
  grantContinuousState(named.s,{kind:'originalEffectsDisabled',controller:1,
   sourceUid:silentGuide.uid,targetUid:silentGuide.uid,sourceLinked:false,
-  until:{player:0,phase:'attack',edge:'end'}});
+  until:{player:1,phase:'attack',edge:'end'}});
  const namedAfter=loseTo(named.s,named.rider.uid);
  assert.equal(namedAfter.pending.kind,'effect-raid-base-rest');
  const hidden=raidOnto(29987);
