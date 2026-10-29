@@ -6046,24 +6046,23 @@ function resolveChoice(s,a,pack){
    if(impact&&!replacement)queueImpactAfterRetirement(pack,s,q.player,impact);
    consumeFirstAttackKit(s,attacker);
   }else{
-   // Only strict defender BP > attacker BP earns the defender's victory.
-   // The attacker is the character that loses, so it retires now. No life
-   // damage is dealt. onRetire, if any, runs before the attack continues.
+   // Official Q34 (2023-03-17): blocker BP strictly greater means the blocker
+   // wins. Neither character leaves, and this blocked attack deals no life
+   // damage. A printed 「攻撃してバトルに敗北した時、アクティブにする」 grant
+   // readies the attacker in place; it is not a retirement.
    grantBattleWinToOtherOwn(pack,s,q.player,blocker,'blocker');
-   const attackerSlot=s.players[s.active].front.findIndex(c=>c?.uid===attacker.uid);
-   if(attackerSlot<0)throw Error('Attacker left before the lost battle');
+   if(!s.players[s.active].front.some(c=>c?.uid===attacker.uid))
+    throw Error('Attacker left before the lost battle');
    const lossReady=attacker.loseBattleReady;
    const reactivate=!!lossReady&&lossReady.turn===s.turn&&
     lossReady.stamp===attacker.fieldEntryStamp&&!lossReady.used&&
     !originalEffectsDisabled(s,attacker);
-   if(reactivate)lossReady.used=true;
-   applyBattleLoss(pack,s,s.active,'front',attackerSlot,blocker);
+   if(reactivate){
+    lossReady.used=true;
+    attemptFieldActive(s,s.active,attacker);
+   }
    queueAttackWinDraw(pack,s,q.player,blocker,'defender');
    consumeFirstAttackKit(s,attacker);
-   if(reactivate&&!s.pending){
-    const still=s.players[s.active].front.find(c=>c?.uid===attacker.uid);
-    if(still)attemptFieldActive(s,s.active,still);
-   }
   }
   if(!s.pending)continueEffectQueue(pack,s);
   return;

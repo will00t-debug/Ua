@@ -302,12 +302,15 @@ test('BLC-2-067 replaces an opponent or battle leave only on a high Raid base',(
  assert.equal(short.s.players[0].outside.some(c=>c.uid===short.topUid),true);
  assert.equal(short.s.players[0].outside.some(c=>c.uid===short.baseUid),true);
  let battle=opened(2477,'BLC-3-008');
+ battle.s=phase(battle.s,'attack');
+ battle.s=play(battle.s,a=>a.type==='next');
+ battle.s=phase(battle.s,'attack');
+ assert.equal(battle.s.active,1);
  const wall=place(battle.s,1,'BLC-1-083','front',0);
  wall.buffs=[{bp:4000,untilTurn:battle.s.turn}];
  const lives=battle.s.players[1].life.length;
- battle.s=phase(battle.s,'attack');
- battle.s=play(battle.s,a=>a.type==='attack'&&a.uid===battle.topUid);
- battle.s=play(battle.s,a=>a.type==='chooseBlock'&&a.uid===wall.uid);
+ battle.s=play(battle.s,a=>a.type==='attack'&&a.uid===wall.uid);
+ battle.s=play(battle.s,a=>a.type==='chooseBlock'&&a.uid===battle.topUid);
  assert.equal(battle.s.pending.kind,'effect-raid-leave');
  assert.equal(battle.s.pending.by,'battle');
  assert.equal(battle.s.pending.postImpact,false);

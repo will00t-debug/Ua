@@ -53,7 +53,8 @@ test('REZ-2-019 grants two blocks and impact null only at BP 5000, until the nex
  s=dispatchUniversalAction(rezPacks,s,{type:'attack',uid:first.uid},{actor:1});
  s=dispatchUniversalAction(rezPacks,s,{type:'chooseBlock',uid:crusch.uid},{actor:0});
  assert.equal(s.players[0].front[0].ready,true);
- assert.ok(s.players[1].outside.some(c=>c.uid===first.uid));
+ assert.equal(s.players[1].front.some(c=>c?.uid===first.uid),true);
+ assert.equal(s.players[1].front.find(c=>c.uid===first.uid).ready,false);
  s=dispatchUniversalAction(rezPacks,s,{type:'attack',uid:second.uid},{actor:1});
  s=dispatchUniversalAction(rezPacks,s,{type:'chooseBlock',uid:crusch.uid},{actor:0});
  assert.equal(s.players[0].front[0].ready,false);

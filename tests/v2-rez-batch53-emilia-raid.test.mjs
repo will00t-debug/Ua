@@ -68,8 +68,12 @@ test('REZ-2-058 raids Emilia, attacks twice, and rests printed BP 2500',()=>{
  const wall=lost.players[1].front[0];
  wall.buffs=[{bp:4000,untilTurn:lost.turn}];
  const beaten=dispatchUniversalAction(rezPacks,lost,{type:'chooseBlock',uid:wall.uid},{actor:1});
- assert.equal(beaten.players[0].front[0],null);
- assert.equal(beaten.pending,null);
+ assert.equal(beaten.players[0].front[0].uid,attacker.uid);
+ assert.equal(beaten.players[0].front[0].ready,true);
+ assert.equal(beaten.players[1].front[0].uid,wall.uid);
+ assert.equal(beaten.players[1].front[0].ready,false);
+ assert.equal(beaten.players[1].life.length,lost.players[1].life.length);
+ assert.equal(beaten.pending.kind,'effect-attack-end-rest');
  s=dispatchUniversalAction(rezPacks,s,{type:'chooseBlock',uid:null},{actor:1});
  assert.equal(s.pending.kind,'life-trigger');
  assert.equal(s.pending.trigger,'special');

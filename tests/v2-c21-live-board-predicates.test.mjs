@@ -91,7 +91,8 @@ test('BLC-1-003 adds 1000 per opposing front REST character, including a new blo
   lost.s=dispatchUniversalAction(lost.packs,lost.s,{type:'next'});
  lost.s=dispatchUniversalAction(lost.packs,lost.s,{type:'attack',uid:attacker.uid});
  lost.s=dispatchUniversalAction(lost.packs,lost.s,{type:'chooseBlock',uid:wall.uid},{actor:1});
- assert.equal(lost.s.players[0].front.some(c=>c?.uid===attacker.uid),false);
+ assert.equal(lost.s.players[0].front.some(c=>c?.uid===attacker.uid),true);
+ assert.equal(lost.s.players[0].front.find(c=>c?.uid===attacker.uid).ready,false);
  assert.equal(lost.s.players[1].front.some(c=>c?.uid===wall.uid),true);
  assert.equal(lost.s.players[1].front.find(c=>c?.uid===wall.uid).ready,false);
  assert.equal(assertUniversalMatch(lost.packs,lost.s),true);
