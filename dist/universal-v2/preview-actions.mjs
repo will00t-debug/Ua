@@ -762,6 +762,21 @@ export function attackBattleTags(battle){
  if(Number.isInteger(battle.impact))tags.push(battle.impact>0?'衝擊'+battle.impact:'無衝擊');
  return tags;
 }
+// Inline controls are derived only from the defender's legal actions and
+// public FRONT cards. Readiness alone is insufficient (block restrictions,
+// compulsory blockers and effects that allow a rested character to block).
+export function inlineBlockDecision(view,legal,viewer=0){
+ if(view?.status!=='playing'||view.pending?.kind!=='block'||
+  view.pending.player!==viewer||view.actor!==viewer||!view.battle||
+  view.battle.owner===viewer)return null;
+ const battle=view.battle;
+ if(!view.players?.[battle.owner]?.front?.some(c=>c?.uid===battle.uid))return null;
+ const front=view.players?.[viewer]?.front||[];
+ const actions=(Array.isArray(legal)?legal:[]).filter(a=>a?.type==='chooseBlock');
+ const blockers=actions.filter(a=>typeof a.uid==='string'&&front.some(c=>c?.uid===a.uid));
+ const skipAction=actions.find(a=>a.uid===null)||null;
+ return blockers.length||skipAction?{battle,blockers,skipAction}:null;
+}
 // Movement in the normal move phase is two clicks: choose a character in
 // its current row, then click a reducer-approved destination in the other row.
 // Neither click invents actions; full-row replacement must match replaceUid.

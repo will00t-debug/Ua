@@ -27,7 +27,7 @@ import {SAO_CARDS} from './sao-cards.mjs';
 import {MST_V2_OFFICIAL_CATALOGUE} from './universal-v2/sources/mst-inventory.mjs';
 import {V2_PHASE_LABELS,V2_TITLE_LABELS,V2_PENDING_LABELS,
  uiActor,isExactLegal,uiCardLabel,uiActionLabel,visibleActionsForCard,
- pendingChoiceCards,visiblePendingChoiceCards,pendingChoiceCaption,publicPendingTargetCard,attackBattleTags,raidClickPlan,moveClickPlan,
+ pendingChoiceCards,visiblePendingChoiceCards,pendingChoiceCaption,publicPendingTargetCard,attackBattleTags,inlineBlockDecision,raidClickPlan,moveClickPlan,
  FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs';
 import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalReplay,
  publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
@@ -388,9 +388,22 @@ function blockControl(action,view){
   el('span',{class:'choice-card-caption',text:'BP '+card.bp+' · 阻擋'}));
  return button;
 }
+function blockBoardPrompt(decision){
+ const {battle,blockers,skipAction}=decision;
+ const prompt=el('div',{class:'v2-block-prompt',role:'group','aria-label':'場上阻擋選擇'});
+ prompt.append(el('div',{class:'v2-block-summary',role:'status'},
+  el('strong',{text:(battle.name||battle.cardId)+' 正在攻擊'}),
+  el('span',{text:attackBattleTags(battle).join(' · ')+
+   (blockers.length?' · 點卡圖阻擋':' · 無可阻擋角色')})));
+ if(skipAction)prompt.append(btn('不阻擋',()=>applyAction(skipAction),'btn v2-block-skip'));
+ return prompt;
+}
 function pendingDialog(legal,view){
  const s=app.state;
  if(!s?.pending||uiActor(s)!==0||app.busy)return null;
+ // Blocking happens on the visible table; all other pending effects retain
+ // their existing mandatory choice dialogs.
+ if(inlineBlockDecision(view,legal))return null;
  const privateChoices=universalPrivateChoices(app.packs,s,0);
  const byAction=new Map((privateChoices?.options||[])
   .filter(option=>option?.action)
@@ -446,6 +459,10 @@ function finishMessage(){
 function legacySlot(view,side,line,index,legal){
  const v=view.players[side],c=v[line][index];
  const yours=side===0&&uiActor(app.state)===0&&!app.busy;
+ const blocking=!app.busy?inlineBlockDecision(view,legal):null;
+ const blockAction=yours&&line==='front'&&c?
+  blocking?.blockers.find(a=>a.uid===c.uid):null;
+ const attacking=!!c&&line==='front'&&view.battle?.owner===side&&view.battle.uid===c.uid;
  const selected=!!c&&c.uid===app.selectedUid;
  const moving=yours&&app.state.phase==='move';
  const plan=!yours?{type:'select'}:moving?
@@ -463,10 +480,12 @@ function legacySlot(view,side,line,index,legal){
   raidDest?'突襲登場':raidBase?(chosenBase?'已選底板':'突襲底板'):place?'放置':'';
  const btnSlot=el('button',{type:'button',class:'slot'+(c?' occupied':'')+
   (c&&!c.ready?' rested':'')+(selected?' selected':'')+
+  (attacking?' v2-attacking':'')+(blockAction?' v2-can-block':'')+
   (raidBase?' raid-base':'')+(moveSource?' move-source':'')+
   (raidDest||place?' destination':''),
   'aria-label':(side===0?'你的':'對手的')+(line==='front'?'前線':'能源線')+
-   (index+1)+(d?' '+d.name:' 空位')+(placement?'，'+placement:''),
+   (index+1)+(d?' '+d.name:' 空位')+(placement?'，'+placement:'')+
+   (attacking?'，攻擊中':'')+(blockAction?'，阻擋，BP '+c.bp:''),
   'data-placement':placement});
  if(c){
   btnSlot.dataset.v2CardUid=c.uid;
@@ -480,6 +499,7 @@ function legacySlot(view,side,line,index,legal){
    face.append(el('span',{class:'slotStack',text:'RAID '+(c.raidDepth||c.raidLayers.length)}));
   face.append(el('span',{class:'slotBp'},el('b',{text:line==='front'?String(c.bp):'◆ '+String(c.produces??0)})));
   btnSlot.append(face);
+  if(blockAction)btnSlot.append(el('span',{class:'v2-block-option',text:'阻擋','aria-hidden':'true'}));
  }else btnSlot.append(el('span',{class:'slotIndex',text:'0'+(index+1)}));
  let held=false;
  if(c){
@@ -502,6 +522,11 @@ function legacySlot(view,side,line,index,legal){
   if(held){held=false;return;}
   // Display public opponent card art on tap; no game action is dispatched.
   if(!yours){if(c)showFieldSheet(side,line,c,d);return;}
+  if(blocking){
+   if(blockAction){applyAction(blockAction);return;}
+   if(c)showFieldSheet(side,line,c,d);
+   return;
+  }
   if(moving){
    if(plan.type==='choose-mover'){
     app.selectedUid=app.selectedUid===plan.uid?null:plan.uid;
@@ -800,6 +825,7 @@ function render(){
   return;
  }
  const v=universalPublicView(app.packs,s,0),legal=legalUniversalActions(app.packs,s);
+ const block=app.busy?null:inlineBlockDecision(v,legal);
  const mobileMenu=btn('☰ 對局選單',()=>{
   const header=mobileMenu.closest('.matchHeader');
   const open=header?.classList.toggle('tools-open')===true;
@@ -839,6 +865,11 @@ function render(){
  for(const [n,name] of [['start','開始'],['move','移動'],['main','主要'],['attack','攻擊']])
   phasesEl.append(el('span',{class:s.phase===n?'current':'',text:name}));
  middle.append(phasesEl);
+ if(block){
+  arena.classList.add('v2-blocking');
+  middle.classList.add('v2-block-controls');
+  middle.replaceChildren(blockBoardPrompt(block));
+ }
  if(next&&uiActor(s)===0&&!app.busy)
   middle.append(el('div',{class:'v2-middle-next'},
    btn(s.phase==='attack'?'結束回合 →':'下一階段 →',()=>applyAction(next),'btn primary')));
@@ -853,7 +884,8 @@ function render(){
    el('span',{text:'REST 仍可產生能源'})),
   legacyHand(v,legal),legacyCommands(legal));
  arena.append(handArea);
- const phase=el('div',{class:'phaseAction'},el('p',{text:s.pending?'請完成效果選擇。':
+ const phase=el('div',{class:'phaseAction'},el('p',{text:block?
+  (block.skipAction?'點卡圖上的「阻擋」，或選擇「不阻擋」。':'請點卡圖上的「阻擋」。'):s.pending?'請完成效果選擇。':
   app.busy?'AI 正在思考與操作…':s.status==='finished'?'對局結束':
   uiActor(s)===1?'電腦回合已暫停，可按上方「AI 沒反應？重新繼續」。':
   '點手牌再點亮起的場上位置，即可用 V2 合法動作出牌。'}));
