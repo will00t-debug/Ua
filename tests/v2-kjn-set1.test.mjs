@@ -101,6 +101,11 @@ test('UA52BT registers all 80 playable identities outside the five-title census'
  }
  assert.equal(colors.yellow,39);
  assert.equal(colors.purple,41);
+ const plusGen=KJN_CARDS.filter(c=>c.genMark==='+');
+ assert.deepEqual(plusGen.map(c=>c.id),['KJN-1-018','KJN-1-021','KJN-1-042','KJN-1-051','KJN-1-060','KJN-1-063','KJN-1-070','KJN-1-073']);
+ for(const card of plusGen)assert.equal(card.gen,1);
+ assert.equal(pack.cards['KJN-1-021'].gen,1);
+ assert.equal(pack.cards['KJN-1-021'].activeExtraEnergy,1);
  assert.equal(KJN_CARDS.filter(c=>c.traitComponents).length,23);
  assert.equal(KJN_CARDS.filter(c=>c.nameAliases).length,8);
  assert.equal(pack.cards['KJN-1-001'].name,'アイリス・ミドガル');
@@ -292,13 +297,13 @@ test('five distinct Seven Shadows raise Beta, and ten outside cards generate ene
  assertUniversalMatch(packs,s);
 
  const nu=put(s,0,'KJN-1-051','energy',3);
- assert.equal(universalCardEnergy(packs,s,0,nu),0);
- spill(s,0,9);
- assert.equal(universalCardEnergy(packs,s,0,nu),0);
- spill(s,0,1);
  assert.equal(universalCardEnergy(packs,s,0,nu),1);
- spill(s,0,10);
+ spill(s,0,9);
+ assert.equal(universalCardEnergy(packs,s,0,nu),1);
+ spill(s,0,1);
  assert.equal(universalCardEnergy(packs,s,0,nu),2);
+ spill(s,0,10);
+ assert.equal(universalCardEnergy(packs,s,0,nu),3);
  const alpha=put(s,0,'KJN-1-053','front',2);
  assert.equal(universalCardEnergy(packs,s,0,alpha),0);
  const sid=put(s,0,'KJN-1-047','front',3);
@@ -470,19 +475,36 @@ test('the Seven Shadows event can rest-deploy or add the card to hand',()=>{
  assertUniversalMatch(packs,named);
 });
 
+test('a color pip before plus stays, and the plus is only the live bonus',()=>{
+ const counts=countsFor(['KJN-1-021','KJN-1-018','KJN-1-073','KJN-1-047']);
+ let s=toPhase(fresh(counts,21),'main');
+ const active=put(s,0,'KJN-1-021','energy',0,true);
+ assert.equal(universalCardEnergy(packs,s,0,active),2);
+ active.ready=false;
+ assert.equal(universalCardEnergy(packs,s,0,active),1);
+ const before=put(s,0,'KJN-1-018','energy',1,true);
+ assert.equal(universalCardEnergy(packs,s,0,before),1);
+ put(s,0,'KJN-1-047','front',0);
+ const withSid=put(s,0,'KJN-1-073','energy',2,true);
+ assert.equal(universalCardEnergy(packs,s,0,withSid),2);
+ silence(s,withSid,0);
+ assert.equal(universalCardEnergy(packs,s,0,withSid),1);
+ assertUniversalMatch(packs,s);
+});
+
 test('a this-turn energy buff on Gamma is counted by the live energy total',()=>{
  const counts=countsFor(['KJN-1-063','KJN-1-012']);
  let s=toPhase(fresh(counts,63),'main');
  const gamma=put(s,0,'KJN-1-063','energy',0,true);
  spill(s,0,10);
  const payment=toHand(s,0,'KJN-1-012');
- assert.equal(universalCardEnergy(packs,s,0,gamma),0);
+ assert.equal(universalCardEnergy(packs,s,0,gamma),1);
  s=use(s,{type:'activate',uid:gamma.uid,mode:'kjn:0'});
  s=choose(s,a=>a.uid===payment.uid);
  assert.equal(s.pending.step,'millMaybe');
  s=choose(s,a=>a.mode==='skip');
  const live=s.players[0].energy.find(c=>c?.uid===gamma.uid);
- assert.equal(universalCardEnergy(packs,s,0,live),1);
+ assert.equal(universalCardEnergy(packs,s,0,live),2);
  assert.equal((live.buffs||[]).some(b=>b.energy===1&&b.untilTurn===s.turn),true);
  assertUniversalMatch(packs,s);
 });

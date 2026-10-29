@@ -2,8 +2,9 @@
 // unionarena-tcg.com. Traditional Chinese names come from the TC card pages.
 // The engine matches Japanese effect text, so the pack uses nameJa.
 // One identity per card number. Parallel art and AP cards are not deck cards.
-// BP+ and generated-energy + are design marks: the integer is the base, and a
-// + generation number is 0. A printed シャドウガーデン／七陰 stays one trait
+// BP+ is a design mark: the integer is the printed base. A generated-energy +
+// sits after the colored pips; those pips are gen, and the + is extra energy
+// only while the printed effect is live. A printed シャドウガーデン／七陰 stays one trait
 // token and also declares the audited components. engineKind is set only when
 // the whole Japanese print is a tested V2 program. Registration is not an
 // official FAQ certification.
@@ -873,7 +874,7 @@ export const KJN_CARDS=
   "ap": 1,
   "bp": 1000,
   "bpMark": "",
-  "gen": 0,
+  "gen": 1,
   "genMark": "+",
   "type": "character",
   "traits": [],
@@ -1002,7 +1003,7 @@ export const KJN_CARDS=
   "ap": 1,
   "bp": 2500,
   "bpMark": "",
-  "gen": 0,
+  "gen": 1,
   "genMark": "+",
   "type": "character",
   "traits": [],
@@ -1954,7 +1955,7 @@ export const KJN_CARDS=
   "ap": 1,
   "bp": 1000,
   "bpMark": "",
-  "gen": 0,
+  "gen": 1,
   "genMark": "+",
   "type": "character",
   "traits": [
@@ -2391,7 +2392,7 @@ export const KJN_CARDS=
   "ap": 1,
   "bp": 3000,
   "bpMark": "",
-  "gen": 0,
+  "gen": 1,
   "genMark": "+",
   "type": "character",
   "traits": [
@@ -2835,7 +2836,7 @@ export const KJN_CARDS=
   "ap": 1,
   "bp": 2500,
   "bpMark": "",
-  "gen": 0,
+  "gen": 1,
   "genMark": "+",
   "type": "character",
   "traits": [
@@ -2982,7 +2983,7 @@ export const KJN_CARDS=
   "ap": 1,
   "bp": 1000,
   "bpMark": "",
-  "gen": 0,
+  "gen": 1,
   "genMark": "+",
   "type": "character",
   "traits": [
@@ -3332,7 +3333,7 @@ export const KJN_CARDS=
   "ap": 1,
   "bp": 2000,
   "bpMark": "",
-  "gen": 0,
+  "gen": 1,
   "genMark": "+",
   "type": "character",
   "traits": [
@@ -3479,7 +3480,7 @@ export const KJN_CARDS=
   "ap": 1,
   "bp": 2000,
   "bpMark": "",
-  "gen": 0,
+  "gen": 1,
   "genMark": "+",
   "type": "character",
   "traits": [

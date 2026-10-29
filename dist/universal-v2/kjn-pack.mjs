@@ -141,8 +141,6 @@ export function kjnPackCard(card){
  const shared=kindProgram(kind,card);
  const extra=shared||BY_ID[card.id];
  if(!extra)throw Error(card.id+' has no Eminence in Shadow program');
- if((kind==='restEnergy'||kind==='activeEnergy')&&card.gen!==0)
-  throw Error(card.id+' plus generation is a design mark, not a printed number');
  const implementation=extra.implementation||(Object.keys(extra.effects||{}).length||
   extra.mainAbility||extra.passiveBonuses||extra.impactNull||extra.enterAlwaysActive||
   extra.activeExtraEnergy||extra.printedImpact||extra.printedAttackDamage||extra.raidName||
