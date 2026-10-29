@@ -4519,7 +4519,8 @@ export function validateUniversalDeck(pack,counts){
  const triggerLimits={final:0,color:0,special:0};
  for(const [id,num] of Object.entries(counts)){
   if(!own(pack.cards,id)){errors.push('Unregistered/unsupported card: '+id);continue;}
-  if(!integer(num)||num>4){errors.push(id+' exceeds 0–4 copies');continue;}
+  const limit=Math.max(4,pack.cards[id].maxCopies);
+  if(!integer(num)||num>limit){errors.push(id+' exceeds 0–'+limit+' copies');continue;}
   total+=num;
   if(num>pack.cards[id].maxCopies){errors.push(id+' exceeds 0–'+pack.cards[id].maxCopies+' copies');continue;}
   if(num){const c=pack.cards[id];colors.add(c.color);if(Object.prototype.hasOwnProperty.call(triggerLimits,c.trigger))triggerLimits[c.trigger]+=num;}

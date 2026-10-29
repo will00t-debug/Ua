@@ -29,15 +29,16 @@ export function normalizeEditorCounts(title,input){
  const keys=new Map();
  for(const c of catalog.cards){
   for(const x of [c.id,c.identity,c.number,...(c.aliases||[])]){
-   if(typeof x==='string'&&!keys.has(x))keys.set(x,c.id);
+   if(typeof x==='string'&&!keys.has(x))keys.set(x,c);
   }
  }
  const counts={};
  for(const [raw,v] of Object.entries(input)){
-  const id=keys.get(raw);
-  if(!id||!Number.isInteger(v)||v<0||v>4)throw Error('無效卡號或張數：'+raw);
+  const card=keys.get(raw),limit=card?.maxCopies??4;
+  if(!card||!Number.isInteger(v)||v<0||v>limit)throw Error('無效卡號或張數：'+raw);
+  const id=card.id;
   counts[id]=(counts[id]||0)+v;
-  if(counts[id]>4)throw Error('同卡號超過 4 張：'+id);
+  if(counts[id]>limit)throw Error('同卡號超過 '+limit+' 張：'+id);
  }
  return counts;
 }
@@ -65,7 +66,7 @@ export function editorV2Status(title,counts,pack=registeredPackForEditor(title))
  const errors=[];
  if(total!==50)errors.push('目前 '+total+'/50 張。V2 正式對戰需要完整 50 張牌組。');
  for(const [id,n] of selected){
-  if(!byId.has(id)||!Number.isInteger(n)||n>4||n<0)errors.push('卡號或張數不合法：'+id);
+  if(!byId.has(id)||!Number.isInteger(n)||n>(byId.get(id)?.maxCopies??4)||n<0)errors.push('卡號或張數不合法：'+id);
  }
  const missing=selected.filter(([id])=>!supported.has(id)).map(([id])=>id);
  if(missing.length)errors.push('有 '+missing.length+' 種卡尚未完整移植 V2：'+missing.slice(0,6).join('、')+(missing.length>6?'…':''));
