@@ -918,8 +918,8 @@ export function moveClickPlan({selectedUid,slotUid,line,slot,legal}){
  if(slotUid&&options.some(a=>a.uid===slotUid))return {type:'choose-mover',uid:slotUid};
  return {type:'select'};
 }
-// Raid on the table is two clicks: the base, then the slot the raider enters.
-// The first click never submits an action. Play and move stay on their own slots.
+// Kept for callers that still describe the older base-then-slot raid gesture.
+// The battle table uses entryClickPlan: choose the character, then the mode, then the cell.
 export function raidClickPlan({selectedUid,raidBaseUid,slotUid,line,slot,legal}){
  const actions=Array.isArray(legal)?legal:[];
  const raids=actions.filter(a=>a?.type==='raid'&&a.uid===selectedUid);
@@ -934,4 +934,67 @@ export function raidClickPlan({selectedUid,raidBaseUid,slotUid,line,slot,legal})
   ['play','move','step'].includes(a.type));
  if(plays.length)return {type:'place',actions:plays};
  return {type:'select'};
+}
+// Character entry from hand, outside, or removed. The action must already be
+// in the legal list; this only decides which click submits it.
+const NORMAL_BOARD_ENTRY=new Set([
+ 'play','chooseOutsideExactRest','chooseOutsideColorApRest','chooseOutsideTraitApRest',
+ 'chooseOutsideActivePair','chooseOutsideNameRest','chooseOutsideRest',
+ 'chooseOutsidePrintedRest','chooseOutsidePrintedActive','chooseOutsidePrinted',
+ 'chooseHandNamedRest','chooseHandRest','chooseHandRestCap','chooseHandGirlRest',
+ 'chooseRemovedEnter','chooseNamedZoneDeploy'
+]);
+const MODE_BOARD_ENTRY=new Set([
+ 'choosePrintedRestRaid','chooseOutsideRestOrRaid','chooseHandRestOrRaid',
+ 'chooseNamedOutside','chooseOutsideTraitlessRest','chooseRemovedRestPair',
+ 'chooseOutsideOrRest'
+]);
+export function boardEntryMode(action){
+ if(!action||typeof action.uid!=='string'||!action.uid)return null;
+ if(!Number.isInteger(action.slot)||action.slot<0||action.slot>3)return null;
+ if(action.type==='raid'){
+  if(action.line!=null&&action.line!=='front'&&action.line!=='energy')return null;
+  return 'raid';
+ }
+ if(action.line!=='front'&&action.line!=='energy')return null;
+ if(action.type==='play'||NORMAL_BOARD_ENTRY.has(action.type))return 'normal';
+ if(action.type==='chooseRemovedOkabeRaid')return 'raid';
+ if(action.type==='chooseTrigger'&&(action.mode==='color'||action.mode==='colorOutside'))
+  return 'normal';
+ if(!MODE_BOARD_ENTRY.has(action.type))return null;
+ if(action.mode==='raid')return 'raid';
+ if(action.mode==='enter'||action.mode==='place'||action.mode==='rest')return 'normal';
+ return null;
+}
+export function boardEntrySelection(legal,uid){
+ const mine=(Array.isArray(legal)?legal:[]).filter(action=>
+  boardEntryMode(action)&&action.uid===uid);
+ const normal=mine.filter(action=>boardEntryMode(action)==='normal');
+ const raid=mine.filter(action=>boardEntryMode(action)==='raid');
+ return {normal,raid,needsMode:normal.length>0&&raid.length>0};
+}
+function entryDestination(action,line,slot,slotUid){
+ const dest=action.line==='energy'?'energy':'front';
+ if(dest!==line||action.slot!==slot)return false;
+ if(typeof action.replaceUid==='string')return action.replaceUid===slotUid;
+ if(boardEntryMode(action)==='raid'&&action.baseUid&&slotUid&&action.baseUid===slotUid)
+  return true;
+ if(slotUid&&action.baseUid&&action.baseUid!==slotUid)return false;
+ return !slotUid;
+}
+// Select the character first. When both rest entry and raid are legal, the
+// mode click comes next. The board cell is the action: one match submits,
+// several matches (two energy bases into one cell) stay as listed choices.
+export function entryClickPlan({selectedUid,entryMode,line,slot,slotUid,legal}){
+ const selection=boardEntrySelection(legal,selectedUid);
+ if(!selection.normal.length&&!selection.raid.length)return {type:'idle'};
+ let mode=null;
+ if(entryMode==='raid'&&selection.raid.length)mode='raid';
+ else if(entryMode==='normal'&&selection.normal.length)mode='normal';
+ else if(selection.needsMode)return {type:'entry-mode'};
+ else mode=selection.raid.length?'raid':'normal';
+ const hits=(mode==='raid'?selection.raid:selection.normal)
+  .filter(action=>entryDestination(action,line,slot,slotUid));
+ if(!hits.length)return {type:'entry-wait',mode};
+ return {type:'entry',mode,actions:hits};
 }

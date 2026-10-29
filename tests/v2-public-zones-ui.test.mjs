@@ -45,7 +45,7 @@ test('both energy-side piles open a read-only gallery with card inspection on mo
  const piles=ui.split('function legacyLine(view,side,line,legal){')[1]?.split('function legacyLife(')[0];
  const popup=ui.split('function showZoneSheet(side,zone){')[1]?.split('function clearPendingOverlay(')[0];
  assert.ok(piles&&popup);
- assert.match(piles,/\[\['outside','場外'\],\['removed','除外'\]\]/);
+ assert.match(piles,/\[\['outside','場外'\],\['removed','移除區'\]\]/);
  assert.match(piles,/class:'pile v2-zone-pile'/);
  assert.match(piles,/onClick:\(\)=>showZoneSheet\(side,zone\)/);
  assert.match(popup,/universalPublicView\(app\.packs,app\.state,0\)/);
@@ -53,7 +53,7 @@ test('both energy-side piles open a read-only gallery with card inspection on mo
  assert.match(popup,/cards\.length\?gallery:/);
  assert.match(popup,/event\.key==='Escape'/);
  assert.doesNotMatch(popup,/applyAction\(|dispatchUniversalAction\(/);
- assert.match(html,/universal-v2-zone\.css\?v=20261029zoneprod1/);
+ assert.match(html,/universal-v2-zone\.css\?v=20261030entry1/);
  assert.match(css,/\.v2-zone-gallery/);
  assert.match(css,/@media\(max-width:600px\)/);
 });

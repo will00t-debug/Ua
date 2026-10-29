@@ -89,11 +89,11 @@ test('the block dialog and raid board describe the two clicks',()=>{
  assert.match(preview,/先看直傷和衝擊，再選擇阻擋或不阻擋/);
  assert.match(preview,/function blockControl\(/);
  assert.match(preview,/btn\('不阻擋'/);
- assert.match(preview,/raidClickPlan\(/);
- assert.match(preview,/plan\.type==='choose-base'/);
- assert.match(preview,/app\.raidBaseUid=plan\.baseUid/);
- assert.match(preview,/突襲：先點底板，再點要登場的格子/);
- assert.match(preview,/a\.type!=='raid'\|\|app\.targetChoices/);
+ assert.match(preview,/entryClickPlan\(/);
+ assert.match(preview,/plan\.type==='entry'/);
+ assert.match(preview,/選擇突襲進場或普通進場/);
+ assert.match(preview,/請直接點要登場的格子/);
+ assert.match(preview,/boardEntryMode\(a\)/);
  assert.match(legacy,/\.slot\.raid-base/);
  assert.match(online,/view\.battle/);
  assert.match(online,/直傷2/);
