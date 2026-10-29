@@ -10,7 +10,7 @@ import {
 // The real 50-card purple V2 pilot deck, swapping one vanilla four-of for Ichigo.
 const pack=registeredV2TitlePack('bleach'),packs=[pack,pack];
 const deck={...BLEACH_PURPLE_V2_PILOT_COUNTS,'BLC-4-082':4};
-delete deck['BLC-1-039'];
+delete deck['BLC-1-036'];
 
 function take(s,id){
  for(const zone of ['hand','deck','life','outside']){
@@ -24,8 +24,9 @@ function setup(seed){
  const source=take(s,'BLC-4-082');
  s.players[0].hand.push(source);
  for(let i=0;i<3;i++){
-  const maker=take(s,'BLC-1-034');
+  const maker=take(s,'BLC-1-039');
   maker.ready=true;
+  maker.fieldEntryStamp=s.nextFieldEntryStamp++;
   s.players[0].energy[i]=maker;
  }
  for(let i=0;i<3&&s.phase!=='main';i++)s=dispatchUniversalAction(packs,s,{type:'next'});
