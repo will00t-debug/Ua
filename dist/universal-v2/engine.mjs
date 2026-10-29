@@ -791,6 +791,8 @@ function matchesFilter(pack,s,physical,filter){
  if(filter.field==='printedRequiredEnergyAtLeast')
   return Number.isInteger(printed.energy)&&printed.energy>=filter.value;
  if(filter.field==='printedApAtLeast')return printed.ap>=filter.value;
+ if(filter.field==='ap')return printed.ap===filter.value;
+ if(filter.field==='ap')return printed.ap===filter.value;
  if(filter.field==='colorAndType'){
   const [color,type]=String(filter.value).split(':');
   return printed.color===color&&printed.type===type;
@@ -2205,7 +2207,8 @@ function continueEffectQueue(pack,s){
       s.pending=choices.length?{kind:'effect-top-filter-choice',player:owner,
        sourceUid:job.sourceUid,uids,choices,...predicate,...raid,...excluded,
        ...(job.noHandDiscard===true?{noHandDiscard:true}:{}),
-       ...(job.discard===false?{discard:false}:{})}:
+       ...(job.discard===false?{discard:false}:{}),
+       ...(job.readyApIfRaidTrait?{readyApIfRaidTrait:job.readyApIfRaidTrait}:{})}:
        {kind:'effect-top-order',player:owner,sourceUid:job.sourceUid,
         uids,order:[],rest:'bottom'};
      }
@@ -2324,9 +2327,10 @@ function continueEffectQueue(pack,s){
     if(uids.length){
      const choices=searchChoices(pack,s,inspected,job);
      const skip=job.skipSelfIfAdded===true?{skipSelfIfAdded:true}:{};
+     const distinct=job.distinctNames===true?{distinctNames:true}:{};
      s.pending=choices.length?{kind:'effect-top-filter-many-choice',player:owner,
       sourceUid:job.sourceUid,uids,choices,selected:[],
-      filters:job.filters.map(f=>({...f})),logic:job.logic,max:job.max,...skip}:
+      filters:job.filters.map(f=>({...f})),logic:job.logic,max:job.max,...skip,...distinct}:
       {kind:'effect-top-order',player:owner,sourceUid:job.sourceUid,
        uids,order:[],rest:'bottom',...(job.skipSelfIfAdded===true?{skipSelfIfAdded:true,added:false}:{})};
     }
@@ -6556,11 +6560,15 @@ function resolveChoice(s,a,pack){
   const remaining=q.uids.filter(uid=>uid!==a.uid);
   const discardAfter=a.uid!==null&&q.discard!==false&&q.noHandDiscard!==true;
   const chosenPrint=chosen&&card(pack,chosen);
-  const readyAp=!!(a.uid!==null&&q.readyApName&&chosenPrint&&(
+  const namedAp=!!(q.readyApName&&chosenPrint&&(
    cardHasName(chosenPrint,q.readyApName,false)||chosenPrint.type===q.readyApType));
+  const raidAp=!!(q.readyApIfRaidTrait&&chosenPrint&&
+   (chosenPrint.raidName||chosenPrint.trigger==='raid')&&
+   cardHasTrait(chosenPrint,q.readyApIfRaidTrait));
+  const readyAp=!!(a.uid!==null&&(namedAp||raidAp));
   const orderExtra={
    ...(discardAfter?{discardAfter:true}:{}),
-   ...(readyAp?{recoverApAfter:true,recoverApMandatory:true}:{})
+   ...(readyAp?{recoverApAfter:true,...(namedAp?{recoverApMandatory:true}:{})}:{})
   };
   if(remaining.length)s.pending={kind:'effect-top-order',player:q.player,
    sourceUid:q.sourceUid,uids:remaining,order:[],rest:'bottom',...orderExtra};
@@ -6568,7 +6576,7 @@ function resolveChoice(s,a,pack){
    sourceUid:q.sourceUid};
   else if(readyAp&&p.apCards.some(c=>c.inPlay&&!c.ready))
    s.pending={kind:'effect-recover-ap',player:q.player,sourceUid:q.sourceUid,
-    remaining:1,optional:false};
+    remaining:1,...(namedAp?{optional:false}:{})};
   else{s.pending=null;continueEffectQueue(pack,s);}
   return;
  }
@@ -6612,6 +6620,9 @@ function resolveChoice(s,a,pack){
    const picked=window.find(c=>c.uid===a.uid);
    if(!picked||q.selected.includes(a.uid)||!q.choices.includes(a.uid)||
     !matchesSearch(pack,s,picked,q))throw Error('Invalid inspected physical UID');
+   if(q.distinctNames===true&&q.selected.some(uid=>
+    card(pack,p.hand.find(c=>c.uid===uid)).name===card(pack,picked).name))
+    throw Error('Distinct printed names cannot repeat');
    const index=p.deck.findIndex(c=>c.uid===a.uid);
    if(index<0||index>=rest.length)throw Error('TOP-N UID outside inspected window');
    moveOwnedLinear(pack,s,{owner:q.player,from:'deck',to:'hand',index,
@@ -11066,12 +11077,21 @@ function legalPending(pack,s){
   {type:'chooseTopTraitEvent',uid:null},
   ...q.choices.map(uid=>({type:'chooseTopTraitEvent',uid}))
  ];
- if(q.kind==='effect-top-filter-many-choice')return [
-  {type:'chooseTopFilteredMany',uid:null},
-  ...q.choices.filter(uid=>!q.selected.includes(uid)&&
-   p.deck.slice(0,q.uids.length-q.selected.length).some(c=>c.uid===uid))
-   .map(uid=>({type:'chooseTopFilteredMany',uid}))
- ];
+ if(q.kind==='effect-top-filter-many-choice'){
+  const used=q.distinctNames===true?new Set(q.selected.map(uid=>{
+   const held=p.hand.find(c=>c.uid===uid);
+   return held?card(pack,held).name:null;
+  })):null;
+  const window=p.deck.slice(0,q.uids.length-q.selected.length);
+  return [
+   {type:'chooseTopFilteredMany',uid:null},
+   ...q.choices.filter(uid=>{
+    if(q.selected.includes(uid))return false;
+    const physical=window.find(c=>c.uid===uid);
+    return !!physical&&!(used&&used.has(card(pack,physical).name));
+   }).map(uid=>({type:'chooseTopFilteredMany',uid}))
+  ];
+ }
  if(q.kind==='effect-top-inspect-many')return [
   {type:'chooseInspectedOutside',uid:null},
   ...q.uids.filter(uid=>!q.selected.includes(uid))
@@ -16997,15 +17017,21 @@ export function assertUniversalMatch(pack,s){
    const kept=(printed?.effects?.onPlay||[]).find(e=>e.op==='searchTopOneBottomDiscard'&&
     e.discard===false&&!e.groups&&!e.filters);
    const ready=(printed?.effects?.onPlay||[]).find(e=>e.op==='searchTopAnyReadyAp');
-   const keepOk=!!kept&&q.readyApName===undefined&&q.filter?.field===kept.filter?.field&&
+   const keepOk=!!kept&&q.readyApName===undefined&&q.readyApIfRaidTrait===undefined&&
+    q.filter?.field===kept.filter?.field&&
     q.filter?.value===kept.filter?.value&&Object.keys(q).length===7&&
     Object.keys(q).every(k=>['kind','player','sourceUid','uids','choices','filter','discard'].includes(k));
+   const raidKeep=!!kept&&kept.readyApIfRaidTrait==='魔法少女'&&q.readyApIfRaidTrait==='魔法少女'&&
+    q.readyApName===undefined&&q.filter?.field==='type'&&q.filter?.value==='character'&&
+    Object.keys(q).length===8&&
+    Object.keys(q).every(k=>['kind','player','sourceUid','uids','choices','filter','discard',
+     'readyApIfRaidTrait'].includes(k));
    const readyOk=!!ready&&q.readyApName===ready.name&&q.readyApType===ready.type&&
     q.filter?.field==='any'&&q.filter?.value===true&&same(q.choices,q.uids)&&
     Object.keys(q).length===9&&
     Object.keys(q).every(k=>['kind','player','sourceUid','uids','choices','filter','discard',
      'readyApName','readyApType'].includes(k));
-   if(!(keepOk||readyOk)||!q.sourceUid.startsWith(q.player+'-')||
+   if(!(keepOk||readyOk||raidKeep)||!q.sourceUid.startsWith(q.player+'-')||
     !Array.isArray(q.uids)||q.uids.length<1||q.uids.length>7||
     new Set(q.uids).size!==q.uids.length||!same(window.map(c=>c.uid),q.uids)||
     !Array.isArray(q.choices)||!same(q.choices,expected))
@@ -17093,10 +17119,13 @@ export function assertUniversalMatch(pack,s){
   const printed=[...fromPlay,...fromPay].some(e=>e.op==='searchTopUpToTwoBottom'&&e.max===q.max&&
    e.rest==='bottom'&&e.count>=q.uids?.length&&
    same(e.filters,q.filters)&&e.logic===q.logic&&
-   (e.skipSelfIfAdded===true)===(q.skipSelfIfAdded===true));
+   (e.skipSelfIfAdded===true)===(q.skipSelfIfAdded===true)&&
+   (e.distinctNames===true)===(q.distinctNames===true));
   const choiceKeys=['kind','player','sourceUid','uids','choices','selected','filters','logic','max'];
   if(q.skipSelfIfAdded===true)choiceKeys.push('skipSelfIfAdded');
-  if(!printed||![1,2].includes(q.max)||!Array.isArray(q.uids)||q.uids.length<1||q.uids.length>5||
+  if(q.distinctNames===true)choiceKeys.push('distinctNames');
+  const maxOk=q.distinctNames===true?q.max===3:[1,2].includes(q.max);
+  if(!printed||!maxOk||!Array.isArray(q.uids)||q.uids.length<1||q.uids.length>5||
    new Set(q.uids).size!==q.uids.length||!Array.isArray(q.choices)||
    !Array.isArray(q.selected)||q.selected.length>=q.max||
    new Set(q.selected).size!==q.selected.length||
@@ -17951,7 +17980,20 @@ export function assertUniversalMatch(pack,s){
   const anyOk=!!anyEffect&&tookAny&&card(pack,source).type==='event'&&
    q.rest==='bottom'&&!q.discardAfter&&Array.isArray(q.uids)&&!!q.uids.length&&
    Array.isArray(q.order);
-  if(!(traitOk||anyOk))
+  const raidEffect=((source&&card(pack,source).effects?.onPlay)||[]).find(e=>
+   e.op==='searchTopOneBottomDiscard'&&e.discard===false&&e.count===5&&
+   e.filter?.field==='type'&&e.filter?.value==='character'&&e.readyApIfRaidTrait==='魔法少女');
+  const tookRaid=!!raidEffect&&s.zoneMoveEvents.some(e=>{
+   if(e.turn!==s.turn||e.owner!==q.player||e.sourceUid!==q.sourceUid||
+    e.from!=='deck'||e.to!=='hand'||e.reason!=='own-effect')return false;
+   const taken=card(pack,{uid:e.uid,cardId:e.cardId});
+   return (!!taken.raidName||taken.trigger==='raid')&&
+    cardHasTrait(taken,raidEffect.readyApIfRaidTrait);
+  });
+  const raidOk=!!raidEffect&&tookRaid&&card(pack,source).type==='event'&&
+   q.rest==='bottom'&&!q.discardAfter&&q.recoverApMandatory!==true&&
+   Array.isArray(q.uids)&&!!q.uids.length&&Array.isArray(q.order);
+  if(!(traitOk||anyOk||raidOk))
    throw Error('Invalid trait-search AP recovery arrangement');
  }
  if(s.pending?.kind==='effect-self-to-front'){

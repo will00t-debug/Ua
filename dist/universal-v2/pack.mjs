@@ -368,11 +368,22 @@ function verifyProgram(program,path){
     Object.keys(f).length===2&&['name','trait','color','type'].includes(f.field)&&
     typeof f.value==='string'&&!!f.value.trim()&&f.value.length<=80&&
     (f.field!=='type'||V2_CARD_TYPES.includes(f.value));
-   if(!Array.isArray(e.filters)||e.filters.length!==2||!e.filters.every(valid)||
-    new Set(e.filters.map(f=>f.field)).size!==2||
-    !['all','any'].includes(e.logic)||typeof e.optional!=='boolean'||
-    Object.keys(e).length!==4||
-    Object.keys(e).some(k=>!['op','filters','logic','optional'].includes(k)))
+   const energyCap=f=>f&&typeof f==='object'&&!Array.isArray(f)&&Object.keys(f).length===2&&
+    f.field==='printedRequiredEnergyAtMost'&&integer(f.value)&&f.value<=30;
+   const apExact=f=>f&&typeof f==='object'&&!Array.isArray(f)&&Object.keys(f).length===2&&
+    f.field==='ap'&&integer(f.value,1)&&f.value<=3;
+   const pair=Array.isArray(e.filters)&&e.filters.length===2&&e.filters.every(valid)&&
+    new Set(e.filters.map(f=>f.field)).size===2&&
+    ['all','any'].includes(e.logic)&&typeof e.optional==='boolean'&&
+    Object.keys(e).length===4&&
+    Object.keys(e).every(k=>['op','filters','logic','optional'].includes(k));
+   const capped=Array.isArray(e.filters)&&e.filters.length===3&&e.logic==='all'&&
+    e.optional===true&&e.filters.filter(valid).length===1&&
+    e.filters.some(energyCap)&&e.filters.some(apExact)&&
+    new Set(e.filters.map(f=>f?.field)).size===3&&
+    Object.keys(e).length===4&&
+    Object.keys(e).every(k=>['op','filters','logic','optional'].includes(k));
+   if(!pair&&!capped)
     throw Error(path+'['+i+'] invalid compound outside recovery');
   }
   if(['searchDeckOne','searchDeckMany'].includes(e.op)||
@@ -621,6 +632,11 @@ function verifyProgram(program,path){
    const discardOff=e.discard===false&&e.rest===undefined&&e.excludeRaid===undefined&&
     e.noHandDiscard===undefined&&e.groups===undefined&&e.whenTriggers===undefined&&
     e.filters===undefined&&e.logic===undefined;
+   // 公開したカードが【レイド】を持つ［特徴］. Only the character window.
+   // The life-trigger icon and the printed Raid keyword are both 【レイド】.
+   const raidAp=e.readyApIfRaidTrait==='魔法少女'&&e.count===5&&discardOff&&
+    e.filter?.field==='type'&&e.filter?.value==='character'&&
+    e.excludeName===undefined;
    // 〈名前〉以外の［特徴］. Only a single trait window. The excluded name
    // still counts through a printed alias. Compound windows do not use it.
    const namedExclusion=typeof e.excludeName==='string'&&!!e.excludeName.trim()&&
@@ -633,7 +649,7 @@ function verifyProgram(program,path){
     (e.noHandDiscard===undefined||noHandDiscard)&&(e.discard===undefined||discardOff)&&
     (e.excludeName===undefined||namedExclusion)&&
     e.whenTriggers===undefined&&
-    Object.keys(e).every(k=>['op','count','filter',...(e.excludeRaid===true?['excludeRaid']:[]),...restKey,...(e.noHandDiscard===true?['noHandDiscard']:[]),...(discardOff?['discard']:[]),...(e.excludeName!==undefined?['excludeName']:[])].includes(k));
+    Object.keys(e).every(k=>['op','count','filter',...(e.excludeRaid===true?['excludeRaid']:[]),...restKey,...(e.noHandDiscard===true?['noHandDiscard']:[]),...(discardOff?['discard']:[]),...(e.excludeName!==undefined?['excludeName']:[]),...(raidAp?['readyApIfRaidTrait']:[])].includes(k));
    const trig=e.whenTriggers;
    const trigOk=trig===undefined||(trig&&typeof trig==='object'&&!Array.isArray(trig)&&
     e.rest===undefined&&e.groups===undefined&&e.discard===undefined&&e.excludeRaid===undefined&&
@@ -732,13 +748,17 @@ function verifyProgram(program,path){
       f.field==='printedApAtLeast'?integer(f.value,1)&&f.value<=3:
      typeof f.value==='string'&&!!f.value.trim()&&f.value.length<=80&&
       (f.field!=='type'||V2_CARD_TYPES.includes(f.value)));
-   if(!integer(e.count,1)||e.count>5||![1,2].includes(e.max)||e.rest!=='bottom'||
+   const distinct=e.distinctNames===true&&e.max===3&&e.count===5&&e.logic==='all'&&
+    e.skipSelfIfAdded===undefined&&e.rest==='bottom'&&
+    Array.isArray(e.filters)&&e.filters.length===1&&e.filters[0]?.field==='trait';
+   if(!integer(e.count,1)||e.count>5||!(distinct||[1,2].includes(e.max))||e.rest!=='bottom'||
     !Array.isArray(e.filters)||e.filters.length<1||e.filters.length>3||
     !e.filters.every(valid)||new Set(e.filters.map(f=>f.field+':'+f.value)).size!==e.filters.length||
     !['any','all'].includes(e.logic)||
     (e.skipSelfIfAdded!==undefined&&e.skipSelfIfAdded!==true)||
-    Object.keys(e).length!==6+Number(e.skipSelfIfAdded===true)||
-    Object.keys(e).some(k=>!['op','count','max','rest','filters','logic','skipSelfIfAdded'].includes(k)))
+    (e.distinctNames!==undefined&&!distinct)||
+    Object.keys(e).length!==6+Number(e.skipSelfIfAdded===true)+Number(distinct)||
+    Object.keys(e).some(k=>!['op','count','max','rest','filters','logic','skipSelfIfAdded','distinctNames'].includes(k)))
     throw Error(path+'['+i+'] invalid TOP-N two-card hand search');
   }
   if(e.op==='lookTopHandOutsideBottom'&&(

@@ -4322,7 +4322,7 @@ export const MADOKA_CARDS=
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA31BT_MMM-1-098.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-098",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "raidGirlSearch",
   "faq": []
  },
  {
@@ -4756,7 +4756,7 @@ export const MADOKA_CARDS=
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA31ST_MMM-1-108.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31ST%2FMMM-1-108",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "handOutsideGirl",
   "faq": []
  },
  {
@@ -4798,7 +4798,7 @@ export const MADOKA_CARDS=
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA31ST_MMM-1-109.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31ST%2FMMM-1-109",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "distinctGirlLook",
   "faq": []
  },
  {

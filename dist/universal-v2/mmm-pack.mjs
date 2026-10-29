@@ -62,7 +62,8 @@ export function mmmPackCard(card){
   throw Error(card.id+' outside-event discount is not a yellow character of energy 5 or more');
  if(['homuraRetire','madokaRetire','traitRetire','recoverAp2','searchTwoQuintet',
   'restDraw3','lifeDraw2','sayakaLifeRetire','kyokoApRetire','mamiRestSkip',
-  'drawActiveAp','frontImpactDraw','frontDoubleCut'].includes(kind)&&
+  'drawActiveAp','frontImpactDraw','frontDoubleCut','raidGirlSearch',
+  'distinctGirlLook'].includes(kind)&&
   card.type!=='event')
   throw Error(card.id+' this print is an event');
  if(kind==='fieldReturn'&&card.type!=='character')
@@ -73,7 +74,7 @@ export function mmmPackCard(card){
   'homuraRaidLock'].includes(kind)&&
   card.type!=='character')
   throw Error(card.id+' this print is a character');
- if(['fieldDiscardDraw','fieldTraitBuff'].includes(kind)&&card.type!=='field')
+ if(['fieldDiscardDraw','fieldTraitBuff','handOutsideGirl'].includes(kind)&&card.type!=='field')
   throw Error(card.id+' this print is a field');
  const onPlay=kind==='entryOtherImpact'?[{op:'noteEntryTurn'}]:
   kind==='removedDraw'?[{op:'ifEnteredFromRemoved',then:[{op:'oncePerTurnGate',scope:'name',
@@ -135,6 +136,15 @@ export function mmmPackCard(card){
   kind==='mamiRestSkip'?[{op:'restOppFrontOne',optional:false,skipWhen:{
    kind:'ownNameAndOutsideEvents',turn:'any',name:'巴 マミ',min:2}}]:
   kind==='drawActiveAp'?[{op:'drawDiscard',count:2,activeApIfDiscardedEvent:true}]:
+  kind==='raidGirlSearch'?[{op:'searchTopOneBottomDiscard',count:5,discard:false,
+   filter:{field:'type',value:'character'},readyApIfRaidTrait:GIRL}]:
+  kind==='handOutsideGirl'?[{op:'discardGate',optional:true,then:[{op:'recoverOutsideOne',
+   optional:true,logic:'all',filters:[
+    {field:'trait',value:GIRL},
+    {field:'printedRequiredEnergyAtMost',value:3},
+    {field:'ap',value:1}]}]}]:
+  kind==='distinctGirlLook'?[{op:'searchTopUpToTwoBottom',count:5,max:3,rest:'bottom',
+   logic:'all',filters:[{field:'trait',value:GIRL}],distinctNames:true}]:
   null;
  const parts=card.traits.length===1?card.traits[0].split(/[／/]/).map(x=>x.trim()).filter(Boolean):[];
  return {
@@ -200,7 +210,7 @@ export const MADOKA_ENGINE_IDS=Object.freeze(
 
 export function createMadokaV2Pack(){
  const cards=MADOKA_CARDS.filter(c=>c.engineKind).map(mmmPackCard);
- if(cards.length!==89)throw Error('Madoka registered count drifted');
+ if(cards.length!==92)throw Error('Madoka registered count drifted');
  return createUniversalPack({
   id:'madoka',version:'mmm-ua31-set1-20261029',cards
  });

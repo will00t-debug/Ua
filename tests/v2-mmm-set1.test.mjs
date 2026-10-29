@@ -80,8 +80,8 @@ test('Madoka catalogue stays outside the five-title census',()=>{
  assert.equal(MADOKA_CARDS.length,113);
  assert.equal(new Set(MADOKA_CARDS.map(c=>c.id)).size,113);
  assert.equal(MADOKA_CARDS.some(c=>c.id.includes('AP')||c.rarity==='AP'),false);
- assert.equal(MADOKA_CARDS.filter(c=>c.engineKind).length,89);
- assert.equal(Object.keys(pack.cards).length,89);
+ assert.equal(MADOKA_CARDS.filter(c=>c.engineKind).length,92);
+ assert.equal(Object.keys(pack.cards).length,92);
  assert.equal(pack.version,'mmm-ua31-set1-20261029');
  assert.equal(V2_TITLE_IDS.includes('madoka'),false);
  for(const card of MADOKA_CARDS){
@@ -96,7 +96,7 @@ test('Madoka catalogue stays outside the five-title census',()=>{
  assert.ok(Object.keys(practice.counts).every(id=>pack.cards[id].color==='red'));
  const editor=editorV2Status('madoka',practice.counts);
  assert.equal(editor.ready,true);
- assert.equal(editor.registered,89);
+ assert.equal(editor.registered,92);
  const blocked=v2DeckReport('madoka',{'MMM-1-001':4,'MMM-1-006':46});
  assert.equal(blocked.ok,false);
  assert.match(blocked.issues.join('\n'),/尚未支援/);
@@ -1030,4 +1030,145 @@ test('MMM-1-075 raids Homura, deploys a red girl, and locks attacks beside Madok
  brought=use(brought,{type:'chooseAttackBan',uid:null});
  assert.equal(brought.pending,null);
  assert.equal(assertUniversalMatch(packs,brought),true);
+});
+
+function stackTop(s,ids){
+ const piled=ids.map(id=>take(s,0,id));
+ for(const card of [...piled].reverse())s.players[0].deck.unshift(card);
+ return piled;
+}
+function orderBottom(s){
+ while(s.pending?.kind==='effect-top-order'){
+  const action=legalUniversalActions(packs,s).find(a=>a.type==='chooseTopOrder');
+  s=use(s,action);
+ }
+ return s;
+}
+function fuelRed(s){
+ put(s,0,'MMM-1-085','energy',0);
+ put(s,0,'MMM-1-085','energy',1);
+}
+
+test('MMM-1-098 actives an AP only after revealing a Raid magical girl',()=>{
+ const counts=countsFor(['MMM-1-098','MMM-1-085','MMM-1-075','MMM-1-072','MMM-1-037','MMM-1-029','MMM-1-061']);
+ let plain=toPhase(fresh(counts,31098),'main');
+ fuelRed(plain);
+ const window=stackTop(plain,['MMM-1-075','MMM-1-072','MMM-1-037','MMM-1-029','MMM-1-061']);
+ const event=handPlay(plain,'MMM-1-098');
+ readyAp(plain);
+ plain.players[0].apCards[0].ready=false;
+ plain=play(plain,event.uid,'event');
+ assert.equal(plain.pending.kind,'effect-top-filter-choice');
+ assert.equal(plain.pending.choices.includes(window[0].uid),true);
+ assert.equal(plain.pending.choices.includes(window[1].uid),true);
+ assert.equal(plain.pending.choices.includes(window[2].uid),true);
+ assert.equal(plain.pending.choices.includes(window[3].uid),false);
+ assert.equal(plain.pending.choices.includes(window[4].uid),false);
+ plain=use(plain,{type:'chooseTopFiltered',uid:window[1].uid});
+ plain=orderBottom(plain);
+ assert.equal(plain.pending,null);
+ assert.equal(plain.players[0].apCards[0].ready,false);
+ assert.ok(plain.players[0].hand.some(c=>c.uid===window[1].uid));
+
+ let raid=toPhase(fresh(counts,31099),'main');
+ fuelRed(raid);
+ const looked=stackTop(raid,['MMM-1-075','MMM-1-072','MMM-1-037','MMM-1-029','MMM-1-061']);
+ const again=handPlay(raid,'MMM-1-098');
+ readyAp(raid);
+ raid.players[0].apCards[0].ready=false;
+ raid=play(raid,again.uid,'event');
+ raid=use(raid,{type:'chooseTopFiltered',uid:looked[0].uid});
+ raid=orderBottom(raid);
+ assert.equal(raid.pending.kind,'effect-recover-ap');
+ assert.ok(legalUniversalActions(packs,raid).some(a=>a.type==='chooseApRecovery'&&a.uid===null));
+ raid=use(raid,{type:'chooseApRecovery',uid:raid.players[0].apCards[0].uid});
+ assert.equal(raid.players[0].apCards[0].ready,true);
+ assert.equal(raid.pending,null);
+ assert.equal(assertUniversalMatch(packs,raid),true);
+});
+
+test('MMM-1-108 recovers one low-energy magical girl only after a hand card leaves',()=>{
+ const counts=countsFor(['MMM-1-108','MMM-1-085','MMM-1-079','MMM-1-075','MMM-1-037']);
+ let empty=toPhase(fresh(counts,31108),'main');
+ fuelRed(empty);
+ empty.players[0].outside.push(...empty.players[0].hand);
+ empty.players[0].hand=[];
+ const stuck=take(empty,0,'MMM-1-079');
+ empty.players[0].outside.push(stuck);
+ const field=handPlay(empty,'MMM-1-108');
+ readyAp(empty);
+ empty=playLine(empty,field.uid,'energy');
+ assert.equal(empty.pending,null);
+ assert.ok(empty.players[0].outside.some(c=>c.uid===stuck.uid));
+
+ let paid=toPhase(fresh(counts,31109),'main');
+ fuelRed(paid);
+ paid.players[0].outside.push(...paid.players[0].hand);
+ paid.players[0].hand=[];
+ const girl=take(paid,0,'MMM-1-079');
+ const high=take(paid,0,'MMM-1-075');
+ const other=take(paid,0,'MMM-1-037');
+ paid.players[0].hand.push(girl);
+ paid.players[0].outside.push(high,other);
+ const area=handPlay(paid,'MMM-1-108');
+ readyAp(paid);
+ paid=playLine(paid,area.uid,'energy');
+ assert.equal(paid.pending.kind,'effect-discard-gate');
+ assert.equal(paid.pending.optional,true);
+ paid=use(paid,{type:'chooseDiscardGate',uid:null});
+ assert.equal(paid.pending,null);
+ assert.ok(paid.players[0].hand.some(c=>c.uid===girl.uid));
+
+ let back=toPhase(fresh(counts,31110),'main');
+ fuelRed(back);
+ back.players[0].outside.push(...back.players[0].hand);
+ back.players[0].hand=[];
+ const returning=take(back,0,'MMM-1-079');
+ const capped=take(back,0,'MMM-1-075');
+ const kyubey=take(back,0,'MMM-1-037');
+ back.players[0].hand.push(returning);
+ back.players[0].outside.push(capped,kyubey);
+ const source=handPlay(back,'MMM-1-108');
+ readyAp(back);
+ back=playLine(back,source.uid,'energy');
+ back=use(back,{type:'chooseDiscardGate',uid:returning.uid});
+ assert.equal(back.pending.kind,'effect-recover-outside');
+ assert.equal(back.pending.optional,true);
+ assert.ok(back.pending.choices.includes(returning.uid));
+ assert.equal(back.pending.choices.includes(capped.uid),false);
+ assert.equal(back.pending.choices.includes(kyubey.uid),false);
+ assert.ok(legalUniversalActions(packs,back).some(a=>a.uid===null));
+ back=use(back,{type:'chooseOutsideRecovery',uid:returning.uid});
+ assert.ok(back.players[0].hand.some(c=>c.uid===returning.uid));
+ assert.ok(back.players[0].outside.some(c=>c.uid===capped.uid));
+ assert.equal(back.pending,null);
+ assert.equal(assertUniversalMatch(packs,back),true);
+});
+
+test('MMM-1-109 adds up to three differently named magical girls',()=>{
+ const counts=countsFor(['MMM-1-109','MMM-1-085','MMM-1-072','MMM-1-076','MMM-1-079','MMM-1-029']);
+ let s=toPhase(fresh(counts,31109),'main');
+ fuelRed(s);
+ s.players[0].outside.push(...s.players[0].hand);
+ s.players[0].hand=[];
+ const looked=stackTop(s,['MMM-1-072','MMM-1-072','MMM-1-076','MMM-1-079','MMM-1-029']);
+ const event=handPlay(s,'MMM-1-109');
+ readyAp(s);
+ s=play(s,event.uid,'event');
+ assert.equal(s.pending.kind,'effect-top-filter-many-choice');
+ assert.equal(s.pending.max,3);
+ assert.equal(s.pending.distinctNames,true);
+ const names=uid=>legalUniversalActions(packs,s).filter(a=>a.type==='chooseTopFilteredMany'&&a.uid===uid);
+ assert.equal(names(looked[0].uid).length,1);
+ assert.equal(names(looked[4].uid).length,0);
+ s=use(s,{type:'chooseTopFilteredMany',uid:looked[0].uid});
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.uid===looked[1].uid),false);
+ assert.ok(legalUniversalActions(packs,s).some(a=>a.uid===looked[2].uid));
+ s=use(s,{type:'chooseTopFilteredMany',uid:looked[2].uid});
+ s=use(s,{type:'chooseTopFilteredMany',uid:looked[3].uid});
+ s=orderBottom(s);
+ assert.equal(s.pending,null);
+ assert.equal(s.players[0].hand.filter(c=>['MMM-1-072','MMM-1-076','MMM-1-079'].includes(c.cardId)).length,3);
+ assert.equal(s.players[0].hand.some(c=>c.uid===looked[1].uid),false);
+ assert.equal(assertUniversalMatch(packs,s),true);
 });
