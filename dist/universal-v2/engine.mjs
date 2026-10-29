@@ -6708,10 +6708,11 @@ function resolveChoice(s,a,pack){
     throw Error('Inspected deck window was changed');
    const byUid=new Map(window.map(c=>[c.uid,c]));
    const ordered=q.order.map(uid=>byUid.get(uid));
-   // Draw from under the inspected window, then put the ordered cards back.
-   if(q.thenDraw)draw(pack,s,q.player,1,{reason:'own-effect',sourceUid:q.sourceUid});
+   // Finish placing the inspected cards before the contingent draw. When
+   // returned to TOP, that card must be drawn next (UA01DC/BLC-4-082).
    if(q.rest==='top')p.deck.unshift(...ordered);
    else p.deck.push(...ordered);
+   if(q.thenDraw)draw(pack,s,q.player,1,{reason:'own-effect',sourceUid:q.sourceUid});
    if(q.skipSelfIfAdded&&q.added)grantSkipNextActive(s,q.player,q.sourceUid);
    if(q.discardAfter){
     if(!p.hand.length)throw Error('Mandatory contingent discard has no hand card');

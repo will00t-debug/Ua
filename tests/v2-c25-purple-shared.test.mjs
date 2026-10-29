@@ -380,7 +380,7 @@ test('BLC-1-053 draws three and discards two, then its main discards for BP',()=
  assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='activate'&&a.uid===rukia.uid),false);
 });
 
-test('BLC-4-082 draws from under the window only after a high-energy card goes outside',()=>{
+test('BLC-4-082 draws the returned top card only after a high-energy card goes outside',()=>{
  let s=phase(fresh(2582),'main');
  fuel(s,0,3);
  readyAp(s,0,1);
@@ -394,10 +394,11 @@ test('BLC-4-082 draws from under the window only after a high-energy card goes o
  assert.equal(s.pending.kind,'effect-top-order');
  assert.equal(s.players[0].outside.some(c=>c.uid===high.uid),true);
  s=play(s,a=>a.type==='chooseTopOrder'&&a.uid===low.uid);
- assert.equal(s.players[0].deck[0].uid,low.uid);
- assert.equal(s.players[0].hand.some(c=>c.uid===marker.uid),true);
+ assert.equal(s.players[0].deck[0].uid,marker.uid);
+ assert.equal(s.players[0].hand.some(c=>c.uid===low.uid),true);
+ assert.equal(s.players[0].hand.some(c=>c.uid===marker.uid),false);
  assert.equal(s.players[0].hand.length,hand);
- assert.equal(s.players[0].hand.some(c=>c.uid===high.uid||c.uid===low.uid),false);
+ assert.equal(s.players[0].hand.some(c=>c.uid===high.uid),false);
  let quiet=phase(fresh(2583),'main');
  fuel(quiet,0,3);
  readyAp(quiet,0,1);
