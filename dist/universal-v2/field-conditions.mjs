@@ -195,6 +195,27 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   return (s.zoneMoveEvents||[]).some(e=>e.owner===owner&&e.controller===owner&&
    e.from==='deck'&&(e.to==='front'||e.to==='energy')&&e.reason==='own-effect'&&
    printed({uid:e.uid,cardId:e.cardId})?.type==='character');
+ // 「自分の効果でキャラカードを登場させるかレイド」. A paid play or a paid
+ // Raid is a rule move. An effect entry or effect Raid records own-effect
+ // onto front or energy. The buried Raid base is not the entering character.
+ if(condition.kind==='ownEffectCharacterEntryOrRaidThisTurn')
+  return (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.owner===owner&&
+   e.controller===owner&&e.reason==='own-effect'&&
+   (e.to==='front'||e.to==='energy')&&
+   printed({uid:e.uid,cardId:e.cardId})?.type==='character');
+ // 「同じライン」is the paired front and energy slot, not another column
+ // and not a card buried under a Raid.
+ if(condition.kind==='sameLineName'){
+  const pl=s.players[owner];
+  for(const line of ['front','energy']){
+   const slot=pl[line].findIndex(c=>c?.uid===sourceUid);
+   if(slot<0)continue;
+   const mate=pl[line==='front'?'energy':'front'][slot];
+   return !!mate&&cardHasName(printed(mate),condition.name,
+    originalEffectsDisabled(s,mate));
+  }
+  return false;
+ }
  // 「このキャラはBP+…」while the physical card is a visible own field card.
  // Hand, outside, and a buried Raid layer do not receive the bonus.
  if(condition.kind==='selfOnField'){

@@ -86,12 +86,12 @@ const PRIORITY=Object.freeze({
  'MST-1-007':{status:'READY',owner:'Cursor',
   source:'https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA54BT%2FMST-1-007',
   missing:'C21 registered the whole print: choose draw-and-discard, or, only after own-effect entry, the named blue hand REST/Raid. Q2145 consumes that second choice once per printed name. The draw choice stays repeatable'},
- 'MST-1-021':{status:'ENGINE BLOCKED',owner:'GPT',
+ 'MST-1-021':{status:'READY',owner:'Cursor',
   source:'https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA54BT%2FMST-1-021',
-  missing:'onPlay named hand REST/Raid is now a shared op, but MAIN once per turn still needs ACTIVE self only while both ルーデウス and エリス are on the own field'},
- 'MST-1-033':{status:'ENGINE BLOCKED',owner:'GPT',
+  missing:'Registered the whole print: on play, up to one blue hand character of energy 3 or less and AP 1 named ルーデウス, エリス or ルイジェルド, REST or Raid. Once per turn, ACTIVE this character only while both ルーデウス and エリス are on the own field. DRAW life stays generic. Registration is not full official FAQ certification.'},
+ 'MST-1-033':{status:'READY',owner:'Cursor',
   source:'https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA54BT%2FMST-1-033',
-  missing:'onPlay TOP3 named take then conditional hand discard, plus MAIN that RESTS and retires this field as the cost before a blue energy<=3 AP1 hand character REST/Raid'}
+  missing:'Registered the whole print: on play look at 3, add up to one named card, order the rest on the bottom, and discard 1 only when a card was added. Main rests and retires this field, then one blue energy<=3 AP1 hand character must REST or Raid. Registration is not full official FAQ certification.'}
 });
 const OTHER=Object.freeze({
  'BLC-4-044':{status:'REVIEW PENDING',owner:'Cursor',

@@ -91,7 +91,6 @@ test('hand REST or Raid schema rejects a condition the print does not state',()=
   {...namedDeploy,color:'orange'},
   {...namedDeploy,maxEnergy:31},
   {...namedDeploy,ap:0},
-  {...namedDeploy,optional:false},
   {...namedDeploy,names:[]},
   {...namedDeploy,names:['エリス','エリス']},
   {...namedDeploy,extra:true},
@@ -103,6 +102,9 @@ test('hand REST or Raid schema rejects a condition the print does not state',()=
  }
  assert.equal(createUniversalPack({id:'ok',cards:[card('ANY',{name:'源',effects:{onPlay:[
   {...namedDeploy,names:null}]}})]}).cards.ANY.effects.onPlay[0].names,null);
+ // UA54BT/MST-1-033 prints the hand play as mandatory after a successful retire.
+ assert.equal(createUniversalPack({id:'must',cards:[card('MUST',{name:'源',effects:{onPlay:[
+  {...namedDeploy,optional:false}]}})]}).cards.MUST.effects.onPlay[0].optional,false);
 });
 
 test('optional AP payment draws, then accepts only the printed hand set',()=>{
