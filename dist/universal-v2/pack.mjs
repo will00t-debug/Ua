@@ -798,7 +798,21 @@ function verifyProgram(program,path){
   if(e.op==='deployOwnHandSpecial'){
     // A null maxEnergy means NO printed energy cap.
     // A null color means the print does not name a color.
-    if(!['character','field'].includes(e.type)||
+    // names plus raiseWhenOnlyNames is the printed replacement: the energy
+    // ceiling rises only while every own field character is one of those names.
+    const pair=Array.isArray(e.names);
+    const namesOk=pair&&e.names.length===2&&new Set(e.names).size===2&&
+     e.names.every(n=>typeof n==='string'&&!!n.trim()&&n.length<=80);
+    const raised=pair&&e.type==='character'&&
+     ['blue','yellow','green','purple','red'].includes(e.color)&&
+     e.ap===1&&e.trait===null&&integer(e.maxEnergy)&&e.maxEnergy<=30&&
+     integer(e.raiseWhenOnlyNames,1)&&e.raiseWhenOnlyNames>e.maxEnergy&&
+     e.raiseWhenOnlyNames<=30&&e.ready===false&&e.max===1&&e.protectionScope===null&&
+     e.name===undefined&&namesOk&&Object.keys(e).length===11&&
+     Object.keys(e).every(k=>['op','type','color','ap','trait','maxEnergy','ready','max',
+      'protectionScope','names','raiseWhenOnlyNames'].includes(k));
+    const classic=!pair&&e.raiseWhenOnlyNames===undefined&&(
+     !['character','field'].includes(e.type)||
      !(e.color===null||['blue','yellow','green','purple','red'].includes(e.color))||
      !integer(e.ap,1)||e.ap>3||!integer(e.max,1)||e.max>4||
      !(e.trait===null||typeof e.trait==='string'&&!!e.trait.trim()&&e.trait.length<=80)||
@@ -808,7 +822,8 @@ function verifyProgram(program,path){
      (e.protectionScope!==null&&(e.type!=='character'||e.max!==1))||
      (e.name!==undefined&&(typeof e.name!=='string'||!e.name.trim()||e.name.length>80))||
      Object.keys(e).length!==(e.name===undefined?9:10)||
-     Object.keys(e).some(k=>!['op','type','color','ap','trait','maxEnergy','ready','max','protectionScope','name'].includes(k)))
+     Object.keys(e).some(k=>!['op','type','color','ap','trait','maxEnergy','ready','max','protectionScope','name'].includes(k)));
+    if(pair?!raised:classic||e.raiseWhenOnlyNames!==undefined)
      throw Error(path+'['+i+'] invalid special hand entry');
    }
   if(e.op==='deployOwnHandNamedRest'&&(
@@ -1799,11 +1814,19 @@ function verifyProgram(program,path){
     Object.keys(e).length!==4||
     Object.keys(e).some(k=>!['op','optional','until','trait'].includes(k))
    ))throw Error(path+'['+i+'] invalid shared targeting AP tax grant');
-   if(e.op==='forbidAttackOppFrontOne'&&(
-   e.optional!==true||e.ownTurnOnly!==true||e.until!=='nextOwnTurnStart'||
-   Object.keys(e).length!==4||Object.keys(e).some(k=>
-    !['op','optional','ownTurnOnly','until'].includes(k))
-  ))throw Error(path+'['+i+'] invalid temporary attack prohibition');
+   if(e.op==='forbidAttackOppFrontOne'){
+   const classic=e.optional===true&&e.ownTurnOnly===true&&e.until==='nextOwnTurnStart'&&
+    e.when===undefined&&Object.keys(e).length===4&&
+    Object.keys(e).every(k=>['op','optional','ownTurnOnly','until'].includes(k));
+   const named=!classic&&e.optional===true&&e.ownTurnOnly===undefined&&
+    e.until==='nextOwnTurnStart'&&e.when?.kind==='ownNameExists'&&
+    e.when.turn==='any'&&e.when.zone==='field'&&e.when.excludeSelf===false&&
+    typeof e.when.name==='string'&&!!e.when.name.trim()&&e.when.name.length<=80&&
+    Object.keys(e).length===4&&
+    Object.keys(e).every(k=>['op','optional','until','when'].includes(k));
+   if(!classic&&!named)throw Error(path+'['+i+'] invalid temporary attack prohibition');
+   if(named)assertLiveCondition(e.when,path+'['+i+'].when');
+  }
   if(e.op==='restOppFrontByOutsideEvents'&&(
    e.min!==4||e.skipMin!==8||e.optional!==true||Object.keys(e).length!==4||
    Object.keys(e).some(k=>!['op','min','skipMin','optional'].includes(k))))

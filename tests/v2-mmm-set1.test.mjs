@@ -80,8 +80,8 @@ test('Madoka catalogue stays outside the five-title census',()=>{
  assert.equal(MADOKA_CARDS.length,113);
  assert.equal(new Set(MADOKA_CARDS.map(c=>c.id)).size,113);
  assert.equal(MADOKA_CARDS.some(c=>c.id.includes('AP')||c.rarity==='AP'),false);
- assert.equal(MADOKA_CARDS.filter(c=>c.engineKind).length,87);
- assert.equal(Object.keys(pack.cards).length,87);
+ assert.equal(MADOKA_CARDS.filter(c=>c.engineKind).length,89);
+ assert.equal(Object.keys(pack.cards).length,89);
  assert.equal(pack.version,'mmm-ua31-set1-20261029');
  assert.equal(V2_TITLE_IDS.includes('madoka'),false);
  for(const card of MADOKA_CARDS){
@@ -96,7 +96,7 @@ test('Madoka catalogue stays outside the five-title census',()=>{
  assert.ok(Object.keys(practice.counts).every(id=>pack.cards[id].color==='red'));
  const editor=editorV2Status('madoka',practice.counts);
  assert.equal(editor.ready,true);
- assert.equal(editor.registered,87);
+ assert.equal(editor.registered,89);
  const blocked=v2DeckReport('madoka',{'MMM-1-001':4,'MMM-1-006':46});
  assert.equal(blocked.ok,false);
  assert.match(blocked.issues.join('\n'),/尚未支援/);
@@ -889,4 +889,145 @@ test('removed-area entry draws once per name, looks, or actives another',()=>{
  active=dispatchUniversalAction(group,active,{type:'chooseActiveOwnOther',uid:rested.uid});
  assert.equal(active.players[0].front.find(c=>c.uid===rested.uid).ready,true);
  assert.equal(assertUniversalMatch(group,active),true);
+});
+
+function fuelFields(s){
+ put(s,0,'MMM-1-061','energy',0);
+ put(s,0,'MMM-1-061','energy',1);
+}
+function handIds(s){
+ return new Set(s.pending.choices.map(uid=>{
+  const card=s.players[0].hand.find(c=>c.uid===uid);
+  return card.cardId;
+ }));
+}
+
+test('MMM-1-042 raises the hand energy cap only for Homura and Madoka',()=>{
+ const counts=countsFor(['MMM-1-042','MMM-1-061','MMM-1-037','MMM-1-039','MMM-1-040',
+  'MMM-1-046','MMM-1-051','MMM-1-049','MMM-1-006']);
+ let low=toPhase(fresh(counts,31042),'main');
+ fuelFields(low);
+ put(low,0,'MMM-1-037','front',1);
+ low.players[0].outside.push(...low.players[0].hand);
+ low.players[0].hand=[];
+ for(const id of ['MMM-1-039','MMM-1-040','MMM-1-046','MMM-1-051','MMM-1-049','MMM-1-006'])
+  handPlay(low,id);
+ const actor=handPlay(low,'MMM-1-042');
+ readyAp(low);
+ low=play(low,actor.uid,'play');
+ assert.equal(low.pending.kind,'effect-hand-rest');
+ assert.equal(low.pending.maxEnergy,1);
+ assert.deepEqual([...handIds(low)].sort(),['MMM-1-039','MMM-1-040']);
+ assert.ok(legalUniversalActions(packs,low).some(a=>a.type==='chooseHandRest'&&a.uid===null));
+ const cheap=low.players[0].hand.find(c=>c.cardId==='MMM-1-039');
+ low=use(low,legalUniversalActions(packs,low).find(a=>a.type==='chooseHandRest'&&
+  a.uid===cheap.uid&&a.line==='front'));
+ const entered=low.players[0].front.find(c=>c.uid===cheap.uid);
+ assert.equal(entered.ready,false);
+ assert.equal(low.pending,null);
+
+ let raised=toPhase(fresh(counts,31043),'main');
+ fuelFields(raised);
+ put(raised,0,'MMM-1-039','front',1);
+ raised.players[0].outside.push(...raised.players[0].hand);
+ raised.players[0].hand=[];
+ for(const id of ['MMM-1-046','MMM-1-051','MMM-1-049','MMM-1-006'])handPlay(raised,id);
+ const wide=handPlay(raised,'MMM-1-042');
+ readyAp(raised);
+ raised=play(raised,wide.uid,'play');
+ assert.equal(raised.pending.maxEnergy,2);
+ assert.deepEqual([...handIds(raised)].sort(),['MMM-1-046']);
+ const second=raised.players[0].hand.find(c=>c.cardId==='MMM-1-046');
+ raised=use(raised,legalUniversalActions(packs,raised).find(a=>a.type==='chooseHandRest'&&
+  a.uid===second.uid&&a.line==='energy'));
+ assert.equal(raised.players[0].energy.find(c=>c?.uid===second.uid).ready,false);
+ assert.equal(raised.pending,null);
+ assert.equal(assertUniversalMatch(packs,raised),true);
+});
+
+test('MMM-1-075 raids Homura, deploys a red girl, and locks attacks beside Madoka',()=>{
+ const counts=countsFor(['MMM-1-075','MMM-1-085','MMM-1-072','MMM-1-076','MMM-1-079','MMM-1-073','MMM-1-006']);
+ assert.equal(pack.cards['MMM-1-075'].raidName,'暁美 ほむら');
+ let quiet=toPhase(fresh(counts,31075),'main');
+ put(quiet,0,'MMM-1-085','energy',0);
+ put(quiet,0,'MMM-1-085','energy',1);
+ const host=put(quiet,0,'MMM-1-072','front',0);
+ const wrong=put(quiet,0,'MMM-1-085','front',1);
+ handPlay(quiet,'MMM-1-079');
+ handPlay(quiet,'MMM-1-073');
+ const raider=handPlay(quiet,'MMM-1-075');
+ readyAp(quiet);
+ assert.ok(legalUniversalActions(packs,quiet).some(a=>a.type==='raid'&&a.uid===raider.uid&&a.baseUid===host.uid));
+ assert.equal(legalUniversalActions(packs,quiet).some(a=>a.type==='raid'&&a.uid===raider.uid&&a.baseUid===wrong.uid),false);
+ quiet=use(quiet,legalUniversalActions(packs,quiet).find(a=>a.type==='raid'&&a.uid===raider.uid&&a.baseUid===host.uid));
+ assert.equal(quiet.pending.kind,'effect-hand-rest');
+ assert.deepEqual([...handIds(quiet)],['MMM-1-079']);
+ quiet=use(quiet,{type:'chooseHandRest',uid:null});
+ assert.equal(quiet.pending,null);
+
+ let locked=toPhase(fresh(counts,31076),'main');
+ put(locked,0,'MMM-1-085','energy',0);
+ put(locked,0,'MMM-1-085','energy',1);
+ put(locked,0,'MMM-1-076','front',1);
+ const foe=put(locked,1,'MMM-1-006','front',0,true);
+ const spare=put(locked,1,'MMM-1-072','front',1,true);
+ foe.fieldEntryStamp=locked.nextFieldEntryStamp++;
+ spare.fieldEntryStamp=locked.nextFieldEntryStamp++;
+ handPlay(locked,'MMM-1-079');
+ const played=handPlay(locked,'MMM-1-075');
+ readyAp(locked);
+ locked=play(locked,played.uid,'play');
+ assert.equal(locked.pending.kind,'effect-hand-rest');
+ locked=use(locked,{type:'chooseHandRest',uid:null});
+ assert.equal(locked.pending.kind,'effect-attack-ban');
+ assert.equal(locked.pending.optional,true);
+ assert.ok(legalUniversalActions(packs,locked).some(a=>a.type==='chooseAttackBan'&&a.uid===null));
+ locked=use(locked,{type:'chooseAttackBan',uid:foe.uid});
+ assert.equal(locked.pending,null);
+ while(locked.players[0].hand.length>7)locked.players[0].outside.push(locked.players[0].hand.pop());
+ while(locked.players[1].hand.length>7)locked.players[1].outside.push(locked.players[1].hand.pop());
+ let guard=0;
+ while(!(locked.active===1&&locked.phase==='attack')){
+  if(locked.pending)throw Error('Pending '+locked.pending.kind);
+  locked=dispatchUniversalAction(packs,locked,{type:'next'});
+  if(++guard>12)throw Error('Did not reach the opponent attack');
+ }
+ const banned=locked.players[1].front.find(c=>c?.uid===foe.uid);
+ const open=locked.players[1].front.find(c=>c?.uid===spare.uid);
+ assert.equal(legalUniversalActions(packs,locked).some(a=>a.type==='attack'&&a.uid===banned.uid),false);
+ assert.ok(legalUniversalActions(packs,locked).some(a=>a.type==='attack'&&a.uid===open.uid));
+ guard=0;
+ while(!(locked.active===0&&locked.phase==='start')){
+  if(locked.pending)throw Error('Pending '+locked.pending.kind);
+  locked=dispatchUniversalAction(packs,locked,{type:'next'});
+  if(++guard>8)throw Error('Did not reach the next own start');
+ }
+ guard=0;
+ while(!(locked.active===1&&locked.phase==='attack')){
+  if(locked.pending)throw Error('Pending '+locked.pending.kind);
+  locked=dispatchUniversalAction(packs,locked,{type:'next'});
+  if(++guard>12)throw Error('Did not reach the later attack');
+ }
+ assert.ok(legalUniversalActions(packs,locked).some(a=>a.type==='attack'&&
+  a.uid===locked.players[1].front.find(c=>c?.cardId==='MMM-1-006').uid));
+
+ let brought=toPhase(fresh(counts,31077),'main');
+ put(brought,0,'MMM-1-085','energy',0);
+ put(brought,0,'MMM-1-085','energy',1);
+ const victim=put(brought,1,'MMM-1-006','front',0,true);
+ victim.fieldEntryStamp=brought.nextFieldEntryStamp++;
+ const madoka=handPlay(brought,'MMM-1-076');
+ const source=handPlay(brought,'MMM-1-075');
+ readyAp(brought);
+ brought=play(brought,source.uid,'play');
+ assert.equal(brought.pending.kind,'effect-hand-rest');
+ assert.deepEqual([...handIds(brought)],['MMM-1-076']);
+ brought=use(brought,legalUniversalActions(packs,brought).find(a=>a.type==='chooseHandRest'&&
+  a.uid===madoka.uid&&a.line==='front'));
+ assert.equal(brought.players[0].front.find(c=>c.uid===madoka.uid).ready,false);
+ assert.equal(brought.pending.kind,'effect-attack-ban');
+ assert.ok(brought.pending.choices.some(c=>c.uid===victim.uid));
+ brought=use(brought,{type:'chooseAttackBan',uid:null});
+ assert.equal(brought.pending,null);
+ assert.equal(assertUniversalMatch(packs,brought),true);
 });

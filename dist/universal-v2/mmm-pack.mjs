@@ -44,7 +44,7 @@ export function mmmPackCard(card){
    card.triggerTextJa!==SPECIAL)
    throw Error(card.id+' special trigger is not the printed front retirement');
  }else if(card.trigger==='raid'){
-  if(kind!=='distinctRetire'||card.triggerTextJa!==RAID)
+  if(!['distinctRetire','homuraRaidLock'].includes(kind)||card.triggerTextJa!==RAID)
    throw Error(card.id+' raid trigger is not the standard printed text');
  }else if(STANDARD[card.trigger]!==card.triggerTextJa)
   throw Error(card.id+' trigger is not the standard printed text');
@@ -69,7 +69,8 @@ export function mmmPackCard(card){
   throw Error(card.id+' mandatory hand return is the printed character');
  if(['step','impactNull','doubleBlock','bounce','peek','buffOther','buffAny','aliasBuff',
   'enterRetireDraw','deployRedGirl','recoverPurpleGirl','entryOtherImpact','bpActive',
-  'lifeActive','removedDraw','removedLook','removedActive'].includes(kind)&&
+  'lifeActive','removedDraw','removedLook','removedActive','namedEnergyCap',
+  'homuraRaidLock'].includes(kind)&&
   card.type!=='character')
   throw Error(card.id+' this print is a character');
  if(['fieldDiscardDraw','fieldTraitBuff'].includes(kind)&&card.type!=='field')
@@ -106,6 +107,13 @@ export function mmmPackCard(card){
    {field:'color',value:'purple'},{field:'trait',value:GIRL}]}]:
   kind==='deployRedGirl'?[{op:'deployOwnHandSpecial',type:'character',color:'red',ap:1,
    trait:GIRL,maxEnergy:2,ready:false,max:1,protectionScope:null}]:
+  kind==='namedEnergyCap'?[{op:'deployOwnHandSpecial',type:'character',color:'purple',ap:1,
+   trait:null,maxEnergy:1,ready:false,max:1,protectionScope:null,
+   names:['暁美 ほむら','鹿目 まどか'],raiseWhenOnlyNames:2}]:
+  kind==='homuraRaidLock'?[{op:'deployOwnHandSpecial',type:'character',color:'red',ap:1,
+   trait:GIRL,maxEnergy:2,ready:false,max:1,protectionScope:null},
+   {op:'forbidAttackOppFrontOne',optional:true,until:'nextOwnTurnStart',
+    when:{kind:'ownNameExists',turn:'any',zone:'field',excludeSelf:false,name:'鹿目 まどか'}}]:
   kind==='enterRetireDraw'?[{op:'draw',count:2}]:
   kind==='liveDraw'?[{op:'ifLiveThen',when:{kind:'ownOutsideEventCountAtLeast',turn:'any',min:2},
    then:[{op:'draw',count:1}]}]:
@@ -171,6 +179,7 @@ export function mmmPackCard(card){
    {triggerEffect:{op:'retireOppFront'}}:{}),
   ...(kind==='frontDoubleCut'?{playApCutOnChosenName:{name:'暁美 ほむら',amount:1}}:{}),
   ...(kind==='distinctRetire'?{raidName:'鹿目 まどか'}:{}),
+  ...(kind==='homuraRaidLock'?{raidName:'暁美 ほむら'}:{}),
   ...(kind==='entryOtherImpact'?{mainAbility:{
    op:'entryTurnOtherImpact',oncePerTurn:true,amount:1}}:{}),
   ...(kind==='bpActive'?{mainAbility:{
@@ -191,7 +200,7 @@ export const MADOKA_ENGINE_IDS=Object.freeze(
 
 export function createMadokaV2Pack(){
  const cards=MADOKA_CARDS.filter(c=>c.engineKind).map(mmmPackCard);
- if(cards.length!==87)throw Error('Madoka registered count drifted');
+ if(cards.length!==89)throw Error('Madoka registered count drifted');
  return createUniversalPack({
   id:'madoka',version:'mmm-ua31-set1-20261029',cards
  });

@@ -1824,7 +1824,7 @@ export const MADOKA_CARDS=
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA31BT_MMM-1-042.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-042",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "namedEnergyCap",
   "faq": []
  },
  {
@@ -3270,7 +3270,7 @@ export const MADOKA_CARDS=
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA31BT_MMM-1-075.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-075",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "homuraRaidLock",
   "faq": []
  },
  {

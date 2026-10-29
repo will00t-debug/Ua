@@ -215,6 +215,21 @@ function enteredFromRemoved(s,owner,uid){
  const latest=events.length?events[events.length-1]:null;
  return latest?.from==='removed';
 }
+// 「自分の場にあるキャラが全て〈名前〉のみ」fails only when some own field
+// character has another name. Fields are not characters. An empty character
+// set has no outsider, so the printed energy replacement applies.
+function ownCharactersOnlyNames(pack,s,owner,names){
+ const pl=s.players[owner];
+ for(const zone of [pl.front,pl.energy])for(const c of zone){
+  if(!c||card(pack,c).type!=='character')continue;
+  if(!names.some(n=>cardHasName(card(pack,c),n,originalEffectsDisabled(s,c))))return false;
+ }
+ return true;
+}
+function specialHandEnergyCap(pack,s,owner,job){
+ if(!Array.isArray(job.names)||!Number.isInteger(job.raiseWhenOnlyNames))return job.maxEnergy;
+ return ownCharactersOnlyNames(pack,s,owner,job.names)?job.raiseWhenOnlyNames:job.maxEnergy;
+}
 function namedColorOutsideCount(pack,s,owner,name,color){
  return s.players[owner].outside.filter(c=>{
   const d=card(pack,c);
@@ -2240,21 +2255,23 @@ function continueEffectQueue(pack,s){
     const special=job.op==='deployOwnHandSpecial';
     const gate=special||!job.when||matchesV2LiveCondition(s,owner,job.sourceUid,job.when,
      c=>card(pack,c),()=>calcEnergy(pack,s,owner),c=>bp(pack,s,c));
+    const cap=special?specialHandEnergyCap(pack,s,owner,job):null;
     const choices=!gate?[]:pl.hand.filter(c=>{
      const d=card(pack,c);
      return d.type===job.type&&(job.color===null||d.color===job.color)&&d.ap===job.ap&&
       (job.name===undefined||cardHasName(d,job.name))&&
       (job.names===undefined||job.names.some(n=>cardHasName(d,n,originalEffectsDisabled(s,c))))&&
-      (special?(job.maxEnergy===null||d.energy<=job.maxEnergy)&&
+      (special?(cap===null||d.energy<=cap)&&
        (job.trait===null||cardHasTrait(d,job.trait)):
        d.energy<=job.energy&&(job.traitless!==true||(d.traits||[]).length===0));
     }).map(c=>c.uid);
     if(choices.length)s.pending={kind:'effect-hand-rest',player:owner,
      sourceUid:job.sourceUid,sourceName:job.sourceName,choices,
      type:job.type,color:job.color,ap:job.ap,max:job.max,
-     ...(special?{special:true,trait:job.trait,maxEnergy:job.maxEnergy,
+     ...(special?{special:true,trait:job.trait,maxEnergy:cap,
       ready:job.ready,protectionScope:job.protectionScope,
-      ...(job.name!==undefined?{name:job.name}:{})}:{energy:job.energy,...(job.traitless===true?{traitless:true}:{}),...(job.names?{names:[...job.names]}:{})})};
+      ...(job.name!==undefined?{name:job.name}:{}),
+      ...(job.names?{names:[...job.names],raiseWhenOnlyNames:job.raiseWhenOnlyNames}:{})}:{energy:job.energy,...(job.traitless===true?{traitless:true}:{}),...(job.names?{names:[...job.names]}:{})})};
    }else if(job.op==='deployOwnHandNamedRest'){
     const choices=pl.hand.filter(c=>{
      const d=card(pack,c);
@@ -3004,7 +3021,10 @@ function continueEffectQueue(pack,s){
    if(choices.length)s.pending={kind:'effect-grant-front-energy',player:owner,
     sourceUid:job.sourceUid,trait:job.trait,choices,optional:true};
   }else if(job.op==='forbidAttackOppFrontOne'){
-   if(s.active===owner){
+   const turnOk=job.ownTurnOnly!==true||s.active===owner;
+   const gate=!job.when||matchesV2LiveCondition(s,owner,job.sourceUid,job.when,
+    c=>card(pack,c),()=>calcEnergy(pack,s,owner),c=>bp(pack,s,c));
+   if(turnOk&&gate){
     const choices=s.players[1-owner].front.filter(Boolean).map(c=>({
      uid:c.uid,stamp:c.fieldEntryStamp}));
     if(choices.length)s.pending={kind:'effect-attack-ban',player:owner,
@@ -17383,30 +17403,43 @@ export function assertUniversalMatch(pack,s){
   const physical=[...pl.hand,...pl.outside,...pl.deck,...pl.life,...pl.lifeRevealed,
    ...(pl.removed||[]),...field(pl)].find(c=>c.uid===q.sourceUid);
   const printed=physical&&card(pack,physical);
-  const findOp=x=>{
-   if(!x||typeof x!=='object')return false;
-   if(Array.isArray(x))return x.some(findOp);
-   return (x.op==='deployOwnHandSpecial'&&x.type===q.type&&x.color===q.color&&
-    x.ap===q.ap&&x.trait===q.trait&&x.maxEnergy===q.maxEnergy&&
-    x.ready===q.ready&&x.protectionScope===q.protectionScope&&
+  const findPrinted=x=>{
+   if(!x||typeof x!=='object')return null;
+   if(Array.isArray(x)){for(const part of x){const hit=findPrinted(part);if(hit)return hit;}return null;}
+   const shape=x.op==='deployOwnHandSpecial'&&x.type===q.type&&x.color===q.color&&
+    x.ap===q.ap&&x.trait===q.trait&&x.ready===q.ready&&x.protectionScope===q.protectionScope&&
     (q.name===undefined?x.name===undefined:x.name===q.name)&&
-    Number.isInteger(q.max)&&q.max>=1&&q.max<=x.max)||
-    Object.values(x).some(findOp);
+    Number.isInteger(q.max)&&q.max>=1&&q.max<=x.max;
+   const pair=Array.isArray(q.names);
+   if(shape&&pair&&Array.isArray(x.names)&&x.names.length===q.names.length&&
+    x.names.every((n,i)=>n===q.names[i])&&x.raiseWhenOnlyNames===q.raiseWhenOnlyNames)
+    return x;
+   if(shape&&!pair&&x.names===undefined&&x.raiseWhenOnlyNames===undefined&&
+    x.maxEnergy===q.maxEnergy)return x;
+   for(const part of Object.values(x)){const hit=findPrinted(part);if(hit)return hit;}
+   return null;
   };
+  const step=printed&&findPrinted(printed.effects);
+  const live=step?specialHandEnergyCap(pack,s,q.player,step):null;
   const expected=pl.hand.filter(c=>{
    const d=card(pack,c);
    return d.type===q.type&&(q.color===null||d.color===q.color)&&d.ap===q.ap&&
     (q.name===undefined||cardHasName(d,q.name))&&
+    (q.names===undefined||q.names.some(n=>cardHasName(d,n,originalEffectsDisabled(s,c))))&&
     (q.maxEnergy===null||d.energy<=q.maxEnergy)&&
     (q.trait===null||cardHasTrait(d,q.trait));
   }).map(c=>c.uid);
   const named=q.name!==undefined;
-  if(!printed||q.sourceName!==printed.name||!findOp(printed.effects)||
+  const pair=Array.isArray(q.names);
+  if(!printed||!step||q.maxEnergy!==live||q.sourceName!==printed.name||
    !Array.isArray(q.choices)||!same(q.choices,expected)||
-   Object.keys(q).length!==(named?15:14)||Object.keys(q).some(k=>![
+   (pair&&named)||
+   Object.keys(q).length!==(pair?16:named?15:14)||Object.keys(q).some(k=>![
     'kind','player','sourceUid','sourceName','choices','type','color','ap',
-    'max','special','trait','maxEnergy','ready','protectionScope','name'].includes(k))||
-   (named!==Object.hasOwn(q,'name')))
+    'max','special','trait','maxEnergy','ready','protectionScope','name',
+    'names','raiseWhenOnlyNames'].includes(k))||
+   (named!==Object.hasOwn(q,'name'))||
+   (pair!==(Object.hasOwn(q,'names')&&Object.hasOwn(q,'raiseWhenOnlyNames'))))
    throw Error('Invalid special hand entry pending provenance');
  }
  // R42: saved cross-zone free-entry selection must be earned by an actual
