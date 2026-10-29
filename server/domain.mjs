@@ -8,11 +8,11 @@ import {assertUniversalMatch,dispatchUniversalAction,legalUniversalActions,
 import {uiActionLabel,publicLifeTriggerText} from '../dist/universal-v2/preview-actions.mjs';
 import {createRepositories,roomTtl} from './repos.mjs';
 
-const TITLES=['bleach','gurren-lagann','sword-art-online','solo-leveling','mushoku-tensei','rezero','steins-gate','madoka'];
+const TITLES=['bleach','gurren-lagann','sword-art-online','solo-leveling','mushoku-tensei','rezero','steins-gate','madoka','inuyasha'];
 const TITLE_LABELS={
  bleach:'BLEACH','gurren-lagann':'天元突破','sword-art-online':'刀劍神域',
  'solo-leveling':'我獨自升級','mushoku-tensei':'無職轉生',rezero:'Re:Zero',
- 'steins-gate':'命運石之門',madoka:'魔法少女小圓'
+ 'steins-gate':'命運石之門',madoka:'魔法少女小圓',inuyasha:'犬夜叉'
 };
 const SESSION_MS=14*24*60*60*1000;
 const LOGIN_WINDOW_MS=15*60*1000;

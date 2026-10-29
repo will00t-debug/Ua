@@ -59,6 +59,13 @@ export const TITLE_LOGOS=Object.freeze({
   source:'https://commons.wikimedia.org/wiki/File:Mah%C5%8D_Sh%C5%8Djo_Madoka_Magika_(Logo).svg',
   credit:'Magica Quartet／Aniplex・Madoka Partners・MBS',
   license:'PD text logo'
+ }),
+ inuyasha:Object.freeze({
+  image:'https://upload.wikimedia.org/wikipedia/commons/8/8f/InuYashaLogoBlueRay.svg',
+  label:'犬夜叉',
+  source:'https://commons.wikimedia.org/wiki/File:InuYashaLogoBlueRay.svg',
+  credit:'高橋留美子／小学館・読売テレビ・サンライズ',
+  license:'PD text logo'
  })
 });
 export const titleLogo=id=>Object.hasOwn(TITLE_LOGOS,id)?TITLE_LOGOS[id]:null;
