@@ -5,7 +5,7 @@ import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {handPlayApPlan} from '../dist/universal-v2/ap-discounts.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  assertUniversalMatch,universalBp,universalAttackDamage,universalImpact,
- effectiveHandRequiredEnergy}
+ effectiveHandRequiredEnergy,universalPrivateChoices}
  from '../dist/universal-v2/engine.mjs';
 import {EXPECTED_V2_COUNTS,EXPECTED_V2_TOTAL} from './fixtures/v2-integrated-id-manifest.mjs';
 import {summarizeDesignatedDecks,designatedPlayableCounts}
@@ -13,6 +13,7 @@ import {summarizeDesignatedDecks,designatedPlayableCounts}
 import {createAllV2PreviewRealDecks} from '../dist/universal-v2/preview-real-decks.mjs';
 import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
 import {grantContinuousState} from '../dist/universal-v2/continuous-states.mjs';
+import {inspectedPendingChoiceCards} from '../dist/universal-v2/preview-actions.mjs';
 
 const pack=createBleachV2Pack(),packs=[pack,pack];
 const purple=summarizeDesignatedDecks(id=>!!pack.cards[id]).find(r=>r.key==='renruki');
@@ -330,7 +331,14 @@ test('BLC-4-048 sends only a purple Renji or Rukia from the top two',()=>{
  s=play(s,a=>a.type==='play'&&a.uid===played.uid&&a.line==='front'&&a.slot===0);
  assert.equal(s.pending.kind,'effect-top-trait-outside');
  assert.deepEqual(s.pending.choices,[renji.uid]);
- assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='chooseTopTraitOutside'&&a.uid===ichigo.uid),false);
+ // BLC-4-048: even non-purple/nonmatching cards MUST remain visible.
+ const legal=legalUniversalActions(packs,s);
+ const own=universalPrivateChoices(packs,s,0);
+ const displayed=inspectedPendingChoiceCards(own,legal);
+ assert.deepEqual(displayed.map(c=>c.uid),[ichigo.uid,renji.uid]);
+ assert.deepEqual(displayed.map(c=>!!c.action),[false,true]);
+ assert.equal(universalPrivateChoices(packs,s,1),null);
+ assert.equal(legal.some(a=>a.type==='chooseTopTraitOutside'&&a.uid===ichigo.uid),false);
  s=play(s,a=>a.type==='chooseTopTraitOutside'&&a.uid===renji.uid);
  assert.equal(s.players[0].outside.some(c=>c.uid===renji.uid),true);
  s=play(s,a=>a.type==='chooseTopOrder'&&a.uid===ichigo.uid);
