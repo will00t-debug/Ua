@@ -166,8 +166,10 @@ export function onlinePrivateGallery(privateChoices,legal,packs,match){
  const indices=new Map(legal.map((action,index)=>[JSON.stringify(action),index]));
  const actionType=INSPECT_ACTION[kind];
  for(const option of privateChoices.options||[]){
-  if(option?.card)add(option.card);
-  for(const card of option?.cards||[])add(card);
+  if(option?.card)add({...option.card,uid:option.card.uid||option.action?.uid});
+  const listed=Array.isArray(option?.cards)?option.cards:[];
+  for(const card of listed)add({...card,
+   uid:card.uid||(listed.length===1?option.action?.uid:null)});
  }
  // For every displayed card, attach only exact, legal, current-revision action
  // indices. The private gallery never makes an ineligible card actionable.
@@ -181,7 +183,8 @@ export function onlinePrivateGallery(privateChoices,legal,packs,match){
    }else{
     const option=(privateChoices.options||[]).find(opt=>opt?.action&&
      indices.get(JSON.stringify(opt.action))===index&&
-     [opt.card,...(opt.cards||[])].some(c=>c?.uid===card.uid));
+     [opt.card,...(Array.isArray(opt.cards)?opt.cards:[])].some(c=>
+      c?.uid===card.uid||(!c?.uid&&opt.action?.uid===card.uid)));
     if(!option)continue;
    }
    available.push({index,label:labelFor(packs,match,action)});
