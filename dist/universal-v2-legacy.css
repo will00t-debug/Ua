@@ -239,6 +239,10 @@ body{margin:0;background:#f2f3f5;color:#272b31;font:14px/1.5 system-ui,-apple-sy
  display:block;color:#8fc8ff;font-size:11px;line-height:1.4;font-weight:750;
 }
 .v2-shell .choice-card-caption{display:block;color:#d9d0c4;font-size:10px;line-height:1.35}
+.v2-shell .action-list button.choice-card.v2-ineligible{background:#191d23;border-color:#64676c;cursor:not-allowed;opacity:1}
+.v2-shell .action-list button.choice-card.v2-ineligible .choice-card-art{filter:grayscale(.7) brightness(.65)}
+.v2-shell .action-list button.choice-card.v2-ineligible .choice-card-name{color:#c4c7ca}
+.v2-shell .action-list button.choice-card.v2-ineligible .choice-card-caption{color:#aeb3ba;font-weight:700}
 @media(max-width:620px){.v2-shell .action-list.choice-gallery{grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}.v2-shell .choice-card-name{font-size:11px}}
 @media(max-width:700px){
  .v2-shell #match-view .arena{border-width:4px;border-radius:0 0 12px 12px}
