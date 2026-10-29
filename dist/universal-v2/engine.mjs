@@ -576,6 +576,26 @@ function attackEndSwapAvailable(pack,s,c){
  return !!c&&((!!card(pack,c).attackEndSwap&&!originalEffectsDisabled(s,c))||
   hasEarnedAttackEndSwap(s,c));
 }
+// 「自分の効果以外でフロントに移動できない」(BLC-4-060) may still be moved
+// by your effect, including an attack-end position swap. An absolute ban
+// 「フロントに移動できない」(Q761, BLC-4-075) cannot.
+function ownEffectMayMoveToFront(pack,c){
+ const d=card(pack,c);
+ if(d.type!=='character')return false;
+ if(!d.frontForbidden)return true;
+ return d.mainAbility?.op==='restTwoActiveFrontMoveSelf'||d.ownEffectMoveOnly===true;
+}
+function attackEndSwapEnergyChoices(pack,pl){
+ return pl.energy.filter(c=>c&&ownEffectMayMoveToFront(pack,c))
+  .map(c=>({uid:c.uid,stamp:c.fieldEntryStamp}));
+}
+function markOwnEffectFrontSwap(pack,arriving,leaving){
+ delete leaving.ownEffectFront;
+ if(!card(pack,arriving).frontForbidden){delete arriving.ownEffectFront;return;}
+ if(!ownEffectMayMoveToFront(pack,arriving))
+  throw Error('This character cannot move to the front line');
+ arriving.ownEffectFront=true;
+}
 // 〔エナジーLにある場合〕〔ターン1〕. The source is on the energy line and
 // swaps with one own front character that has not attacked this turn.
 // Q2314 (2026-09-04): after the battle, and after a life trigger check.
@@ -4026,8 +4046,7 @@ function continueEffectQueue(pack,s){
      countOwnOutsideDistinctPrintedNames(s,owner,c=>card(pack,c),rule)>=
       rule.minDistinctNames;
     if(permitted){
-     const choices=pl.energy.filter(c=>c&&card(pack,c).type==='character')
-      .map(c=>({uid:c.uid,stamp:c.fieldEntryStamp}));
+     const choices=attackEndSwapEnergyChoices(pack,pl);
      if(choices.length)s.pending={kind:'attack-end-swap',player:owner,
       sourceUid:src.uid,sourceStamp:src.fieldEntryStamp,choices};
     }
@@ -7072,6 +7091,7 @@ function resolveChoice(s,a,pack){
     !dest||dest.line!=='energy'||!q.choices.some(c=>c.uid===a.uid&&
      c.stamp===dest.c.fieldEntryStamp))
     throw Error('Invalid physical attack-end swap');
+   markOwnEffectFrontSwap(pack,dest.c,src.c);
    p.front[src.slot]=dest.c;p.energy[dest.slot]=src.c;
    recordCompletedMove(pack,s,{physical:src.c,owner:q.player,
     from:'front',to:'energy',reason:'own-effect',sourceUid:src.c.uid});
@@ -7087,6 +7107,7 @@ function resolveChoice(s,a,pack){
     !dest||dest.line!=='front'||card(pack,dest.c).energyForbidden||
     !q.choices.some(c=>c.uid===a.uid&&c.stamp===dest.c.fieldEntryStamp))
     throw Error('Invalid energy-line attack-end swap');
+   delete dest.c.ownEffectFront;
    p.energy[src.slot]=dest.c;p.front[dest.slot]=src.c;
    recordCompletedMove(pack,s,{physical:src.c,owner:q.player,
     from:'energy',to:'front',reason:'own-effect',sourceUid:src.c.uid});
@@ -18973,8 +18994,7 @@ export function assertUniversalMatch(pack,s){
  }
  if(s.pending?.kind==='attack-end-swap'){
   const q=s.pending,pl=s.players[q.player],src=pl.front.find(c=>c?.uid===q.sourceUid);
-  const d=src&&card(pack,src),choices=pl.energy.filter(c=>c&&
-   card(pack,c).type==='character').map(c=>({uid:c.uid,stamp:c.fieldEntryStamp}));
+  const d=src&&card(pack,src),choices=attackEndSwapEnergyChoices(pack,pl);
   if(q.player!==s.active||s.phase!=='attack'||!attackEndSwapAvailable(pack,s,src)||
    !src||src.fieldEntryStamp!==q.sourceStamp||
    !(s.attacksByUid[q.sourceUid]>=1)||!Number.isInteger(q.sourceStamp)||
