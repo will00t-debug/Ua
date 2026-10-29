@@ -2,7 +2,7 @@
 body.v2-battle-page.v2-playing #match-view .pile.v2-zone-pile{
  display:grid;place-content:center;justify-items:center;gap:0;width:100%;
  min-width:0;min-height:0;padding:2px 3px;line-height:1.15;
- font:inherit;text-align:center;cursor:pointer;
+ font-family:inherit;font-size:9px;font-weight:650;text-align:center;cursor:pointer;
  border:1px solid #5f8caf;background:#173349;color:#dbedff;
  transition:background-color .13s ease,border-color .13s ease
 }
@@ -67,6 +67,7 @@ body.v2-battle-page.v2-playing #match-view .pile.v2-zone-pile b{color:#fff0bc}
  .v2-shell .v2-zone-gallery{
   grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;padding:10px
  }
+ body.v2-battle-page.v2-playing #match-view .pile.v2-zone-pile{font-size:8px}
  .v2-shell .v2-zone-card{padding:5px;gap:3px}
  .v2-shell .v2-zone-card-name{font-size:10px}
  .v2-shell .v2-zone-card small{font-size:9px}
