@@ -181,6 +181,17 @@ body.arena-site #app.wrap:has(.online-match)>.arena-app{
 .online-match .slot.blue{border-color:#9ec0e4;background:#152433}
 .online-match .slot.red{border-color:#e3b0b0;background:#2a181c}
 .online-match .slot.yellow{border-color:#e3d3a2;background:#292416}
+.online-match button.slot{
+ font:inherit;color:inherit;cursor:pointer;text-align:left;align-items:stretch;
+ min-height:0;width:min(100%,calc(var(--card-h) * 63 / 88));background:#162232
+}
+.online-match button.slot.empty{background:transparent;align-items:center}
+.online-match button.slot:has(img.art){padding:0;background:#0e1622}
+.online-match .slot.selected{outline:2px solid #ffd56a;outline-offset:2px}
+.online-match .slot.destination{box-shadow:0 0 0 2px #2f8f55}
+.online-match .slot.playable,.online-match .slot.move-source{box-shadow:0 0 0 2px #7eb6ff}
+.online-match .slot.can-block,.online-match .slot.raid-base{box-shadow:0 0 0 2px #e3b15a}
+.online-dock .play-hint{margin:0;color:#d5e2f2;font-size:13px;line-height:1.5}
 .online-dock{
  min-width:0;min-height:0;overflow:auto;padding:10px 12px 16px;background:#0c121b;
  display:flex;flex-direction:column;gap:10px
