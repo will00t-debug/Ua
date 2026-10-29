@@ -164,6 +164,21 @@ test('inspected nonmatching cards are visible but disabled',()=>{
  const legal=[{type:'chooseTopFiltered',uid:null},{type:'chooseTopFiltered',uid:'top-b'}];
  assert.deepEqual(inspectedPendingChoiceCards(window,legal).map(c=>!!c.action),[false,true]);
  assert.deepEqual(inspectedPendingChoiceCards({...window,kind:'other'},legal),[]);
+ const searched=inspectedPendingChoiceCards({kind:'effect-search-deck',inspected:[
+  {uid:'deck-a',cardId:'Q00',name:'能源'},
+  {uid:'deck-b',cardId:'Q02',name:'Scout'}]},
+  [{type:'chooseDeckSearch',uid:'deck-b'}]);
+ assert.deepEqual(searched.map(c=>[c.uid,!!c.action,c.keepLegal]),[
+  ['deck-a',false,false],['deck-b',true,false]]);
+ const deployed=inspectedPendingChoiceCards({kind:'effect-top-deploy',inspected:[
+  {uid:'top-a',cardId:'SAO-1-001',name:'甲'},
+  {uid:'top-b',cardId:'SAO-1-054',name:'乙'}]},[
+  {type:'chooseTopDeploy',uid:'top-b',line:'front',slot:0},
+  {type:'chooseTopDeploy',uid:'top-b',line:'front',slot:1}]);
+ assert.equal(deployed[0].action,null);
+ assert.equal(deployed[0].keepLegal,false);
+ assert.equal(deployed[1].action,null);
+ assert.equal(deployed[1].keepLegal,true);
  const script=source('../dist/universal-v2-preview.mjs');
  assert.match(script,/inspectedPendingChoiceCards\(privateChoices,legal\)/);
  assert.match(script,/for\(const card of inspected\)list\.append\(inspectedChoiceControl\(card\)\)/);

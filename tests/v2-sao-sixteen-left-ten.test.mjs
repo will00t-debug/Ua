@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 import {registeredV2TitlePack} from '../dist/universal-v2/title-packs/registry.mjs';
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
- universalBp,universalImpact,assertUniversalMatch} from '../dist/universal-v2/engine.mjs';
+ universalBp,universalImpact,assertUniversalMatch,universalPrivateChoices,universalPublicView} from '../dist/universal-v2/engine.mjs';
 import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
-import {V2_PENDING_LABELS} from '../dist/universal-v2/preview-actions.mjs';
+import {V2_PENDING_LABELS,inspectedPendingChoiceCards} from '../dist/universal-v2/preview-actions.mjs';
 import {grantContinuousState} from '../dist/universal-v2/continuous-states.mjs';
 import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL}
  from './fixtures/v2-integrated-id-manifest.mjs';
@@ -403,6 +403,17 @@ test('SAO-1-049 cannot enter the front and deploys one affordable AP1 ALO from t
  assertUniversalMatch(packs,played);
  aiOk(packs,played);
  assert.deepEqual(played.pending.choices,[window[3].uid]);
+ const privateLook=universalPrivateChoices(packs,played,0);
+ assert.deepEqual(privateLook.inspected.map(c=>c.uid),window.map(c=>c.uid));
+ assert.equal(universalPrivateChoices(packs,played,1),null);
+ const shown=inspectedPendingChoiceCards(privateLook,legalUniversalActions(packs,played));
+ assert.deepEqual(shown.map(c=>c.uid),window.map(c=>c.uid));
+ assert.ok(shown.filter(c=>c.uid!==window[3].uid).every(c=>c.action===null&&c.keepLegal===false));
+ const hit=shown.find(c=>c.uid===window[3].uid);
+ assert.equal(hit.keepLegal,true);
+ assert.equal(hit.action,null);
+ const foe=JSON.stringify(universalPublicView(packs,played,1));
+ assert.ok(window.slice(0,3).every(c=>!foe.includes(c.uid)));
  const skipped=orderBottom(packs,use(packs,structuredClone(played),a=>a.type==='chooseTopDeploy'&&a.uid===null));
  assert.equal(skipped.pending,null);
  assert.equal(skipped.players[0].front.some(c=>c?.cardId==='SAO-1-054'),false);

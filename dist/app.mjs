@@ -69,7 +69,7 @@ function persistMadoka(){save(MMM_DRAFT_KEY,mmmDeck);}
 const deckMeta=safeRead(DECK_META_KEY)||{};
 let deckName=typeof deckMeta.name==='string'?deckMeta.name.slice(0,40):(PRESETS.find(p=>sameCounts(p.counts,deck))?.name||'自訂 BLEACH 牌組');
 let selectedDeckId=savedDecks.some(d=>d.id===deckMeta.savedId)?deckMeta.savedId:null;
-const ui={ttgSelected:null,ttgKind:'all',ttgVisible:90,ttg012:{discardUids:[],mode:'readyAP',apUid:null,targetUid:null},ttg012Search:{takeUid:null,orderUids:[]},soloSelected:null,saoSet:'all',title:'bleach',view:'lobby',mode:'solo',aiDifficulty:['easy','normal','hard'].includes(safeRead(AI_KEY))?safeRead(AI_KEY):'normal',first:'0',preset:[0,1].includes(deckMeta.preset)?deckMeta.preset:0,opponentSource:'preset:1',filter:'all',search:'',selected:null,line:'energy',deployment:'normal',sideTab:'card',raidFlow:null,modal:null,choiceIds:[],handoff:false,lastController:null,privatePeekOpen:false};
+const ui={ttgSelected:null,ttgKind:'all',ttgVisible:90,ttg012:{discardUids:[],mode:'readyAP',apUid:null,targetUid:null},ttg012Search:{takeUid:null,orderUids:[]},soloSelected:null,soloLook:{picks:[],take:null,order:[]},saoSet:'all',title:'bleach',view:'lobby',mode:'solo',aiDifficulty:['easy','normal','hard'].includes(safeRead(AI_KEY))?safeRead(AI_KEY):'normal',first:'0',preset:[0,1].includes(deckMeta.preset)?deckMeta.preset:0,opponentSource:'preset:1',filter:'all',search:'',selected:null,line:'energy',deployment:'normal',sideTab:'card',raidFlow:null,modal:null,choiceIds:[],handoff:false,lastController:null,privatePeekOpen:false};
 ui.builderReady=false;ui.builderTab='pick';ui.builderType='all';ui.builderColor='all';ui.builderEnergy='all';ui.builderGenerate='all';ui.builderSort='energy-asc';ui.recordView='all';
 if(deckMeta.opponentSource==='current'||/^preset:[01]$/.test(deckMeta.opponentSource||'')||savedDecks.some(d=>'saved:'+d.id===deckMeta.opponentSource))ui.opponentSource=deckMeta.opponentSource;
 let botTimer=null,toastTimer=null;
@@ -267,20 +267,45 @@ function arena(){
 }
 function logList(){return `<div class="logList">${[...game.log].reverse().map(x=>`<div class="logItem ${x.kind}"><small>${x.turn?'T'+x.turn:'準備'}</small>${esc(x.message)}</div>`).join('')}</div>`;}
 function detail(c){const triggerText={draw:'可抽 1 張牌。',get:'可將翻開的卡加入手牌。',active:'可讓一個己方角色 ACTIVE，本回合 BP +3000。',special:'可退場一個敵方前線角色，無 BP 上限。',final:'生命歸零時，可從牌堆頂補 1 張生命。',raid:'可加入手牌，或在滿足能源時免費 Raid。'};return `<img class="detailImage" src="${catalogVariant(c).onlineImage||catalogVariant(c).image}" onerror="this.onerror=null;this.src='${catalogVariant(c).image}'" alt="${c.name}"><h3>${c.name}</h3><div class="detailNum">${catalogVariant(c).number} · ${TYPE_NAMES[c.type]} · ${COLOR_NAMES[c.color]}</div><span class="pill purple">${c.tag}</span><div class="statGrid"><div><span>能源需求</span><b>${c.energy}</b></div><div><span>AP</span><b>${c.ap}</b></div><div><span>BP</span><b>${c.bp||'—'}</b></div></div><div class="detailEffect">${esc(c.effect)}</div><span class="autoStatus ${c.auto?'ready':'pending'}">${c.auto?'可自動結算':'待補自動判定：可加入牌組，尚不能用於自動對戰'}</span>${c.uncertainty?`<p class="note">${esc(c.uncertainty)}</p>`:''}<div class="detailTrigger">${c.trigger?`<b>${TRIGGER_NAMES[c.trigger]} Trigger</b><br>${esc(c.triggerEffect||triggerText[c.trigger])}`:'沒有生命 Trigger'}</div><p class="note"><a href="${catalogVariant(c).source}" target="_blank" rel="noopener">查看官方卡片與裁定 ↗</a></p>`;}
+const PRIVATE_LOOK_KINDS=['peekMill','peekOrder','peekNoMill','lookTake','lookOrder','lookPickOutside'];
+function lookWindowCards(q){
+ const kind=q.effect?.kind;
+ if(kind!=='lookTake'&&kind!=='peekMill')return null;
+ const ids=q.effect.cards||[];
+ return ids.map(uid=>{
+  const physical=kind==='lookTake'
+   ?(game.inspecting||[]).find(x=>x.p===q.player&&x.card?.uid===uid)?.card
+   :game.players[q.player].deck.find(c=>c.uid===uid);
+  if(!physical)return null;
+  const printed=cardOf(physical);
+  return {uid,cardId:physical.cardId,name:printed.name,
+   choice:q.choices.find(c=>c.id===uid)||null};
+ }).filter(Boolean);
+}
+function pendingChoiceButton(c){
+ const art=c.cardId&&BY_ID[c.cardId]?`<img src="${BY_ID[c.cardId].onlineImage||BY_ID[c.cardId].image}" onerror="this.onerror=null;this.src='${BY_ID[c.cardId].image}'" alt="${BY_ID[c.cardId].name}">`:'';
+ return `<button class="choiceCard ${ui.choiceIds.includes(c.id)?'selected':''}" data-choice="${esc(c.id)}" ${botTurn()?'disabled':''} aria-pressed="${ui.choiceIds.includes(c.id)}">${art}<span>${esc(c.label)}</span>${c.cardId||c.where?`<small>${c.cardId||''}${c.where?' · '+(c.where==='front'?'前線':'能源線'):''}</small>`:''}</button>`;
+}
+function lockedLookCard(card){
+ const printed=BY_ID[card.cardId];
+ const art=printed?`<img src="${printed.onlineImage||printed.image}" onerror="this.onerror=null;this.src='${printed.image}'" alt="${esc(printed.name)}">`:'';
+ return `<button type="button" class="choiceCard ineligible" disabled aria-disabled="true" aria-label="${esc(card.name)}，不符合條件，無法選擇">${art}<span>${esc(card.name)}</span><small>不符合條件 · 無法選擇</small></button>`;
+}
 function pendingModal(){
  const q=game.pending;const allowed=q.allowedCounts?q.allowedCounts.includes(ui.choiceIds.length):ui.choiceIds.length>=q.min&&ui.choiceIds.length<=q.max;
  const peek=q.effect?.kind==='peekChoice'&&q.effect.cards?.length===1?game.players[q.effect.rule?.deckOwner==='opponent'?1-q.player:q.player].deck.find(c=>c.uid===q.effect.cards[0]):null;
  const revealed=peek?cardOf(peek):null;
- const privatelyInspected=['peekMill','peekOrder','peekNoMill'].includes(q.effect?.kind);
- const peekIds=privatelyInspected?(q.effect.kind==='peekOrder'?q.effect.uids:q.effect.cards):[];
+ const privatelyInspected=PRIVATE_LOOK_KINDS.includes(q.effect?.kind);
+ const peekIds=['peekMill','peekOrder','peekNoMill'].includes(q.effect?.kind)?(q.effect.kind==='peekOrder'?q.effect.uids:q.effect.cards):[];
  const lookedAt=peekIds.map(uid=>game.players[q.player].deck.find(c=>c.uid===uid)).filter(Boolean).map(cardOf);
+ const windowCards=lookWindowCards(q);
  const art=c=>`<div class="peekPreview" aria-label="操作者私下查看牌庫頂卡片"><img src="${c.onlineImage||c.image}" onerror="this.onerror=null;this.src='${c.image}'" alt="${esc(c.name)}卡圖"><div><b>${esc(c.name)}</b><small>${esc(c.identity)} · ◆ ${c.energy} · ${c.bp||0} BP</small><p>${esc(c.effect)}</p></div></div>`;
- const peekPreview=[...(revealed?[revealed]:[]),...lookedAt].map(art).join('');
+ const peekPreview=windowCards?'':[...(revealed?[revealed]:[]),...lookedAt].map(art).join('');
  const publicTrigger=q.effect?.kind==='triggerChoice'?publicTriggerEntries().findLast(x=>x.uid===q.effect.uid&&x.player===q.player):null;
  const triggerPreview=publicTrigger?`<section class="currentPublicTrigger" aria-label="目前翻開的公開生命卡"><h3>生命 Trigger 公開翻牌</h3>${publicTriggerCard(publicTrigger)}</section>`:'';
 
- const privateNote=privatelyInspected?'<p class="note">此為私人查看，不向對手展示牌庫頂。只有實際送到場外的卡片才會成為公開資訊。</p>':'';
- return `<div class="modalBackdrop" role="presentation"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="pendingTitle"><span class="eyebrow">${game.players[q.player].name} · EFFECT RESOLUTION</span><h2 id="pendingTitle" style="margin-top:8px">${q.title}</h2><p>${botTurn()?'練習對手正在選擇…':q.max>1?`選擇 ${q.allowedCounts?.includes(0)?'0 或 ':''}${q.max} 張卡片，再確認結算。`:q.min===0?'可選擇一個目標，或不選擇任何目標。':'選擇一個操作，再確認結算。'}</p>${privateNote}${peekPreview}${triggerPreview}<div class="choiceGrid">${q.choices.map(c=>`<button class="choiceCard ${ui.choiceIds.includes(c.id)?'selected':''}" data-choice="${esc(c.id)}" ${botTurn()?'disabled':''} aria-pressed="${ui.choiceIds.includes(c.id)}">${c.cardId?`<img src="${BY_ID[c.cardId].onlineImage||BY_ID[c.cardId].image}" onerror="this.onerror=null;this.src='${BY_ID[c.cardId].image}'" alt="${BY_ID[c.cardId].name}">`:''}<span>${esc(c.label)}</span>${c.cardId||c.where?`<small>${c.cardId||''}${c.where?' · '+(c.where==='front'?'前線':'能源線'):''}</small>`:''}</button>`).join('')}</div><div class="modalActions"><span>已選 ${ui.choiceIds.length}${q.max>1?' / '+q.max:''}</span>${q.min===0?`<button class="btn" data-action="skipChoice" ${botTurn()?'disabled':''}>${q.max>1?'不除外':'不選擇'}</button>`:''}<button class="btn primary" data-action="confirmChoice" ${!allowed||botTurn()?'disabled':''}>確認結算 →</button></div></section></div>`;
+ const privateNote=['peekMill','peekOrder','peekNoMill','lookTake'].includes(q.effect?.kind)?'<p class="note">此為私人查看，不向對手展示牌庫頂。不符合條件的卡會以卡圖顯示，但不能選擇。只有實際送到場外的卡片才會成為公開資訊。</p>':'';
+ return `<div class="modalBackdrop" role="presentation"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="pendingTitle"><span class="eyebrow">${game.players[q.player].name} · EFFECT RESOLUTION</span><h2 id="pendingTitle" style="margin-top:8px">${q.title}</h2><p>${botTurn()?'練習對手正在選擇…':q.max>1?`選擇 ${q.allowedCounts?.includes(0)?'0 或 ':''}${q.max} 張卡片，再確認結算。`:q.min===0?'可選擇一個目標，或不選擇任何目標。':'選擇一個操作，再確認結算。'}</p>${privateNote}${peekPreview}${triggerPreview}<div class="choiceGrid">${(windowCards?windowCards.map(card=>card.choice?pendingChoiceButton(card.choice):lockedLookCard(card)):q.choices.map(pendingChoiceButton)).join('')}</div><div class="modalActions"><span>已選 ${ui.choiceIds.length}${q.max>1?' / '+q.max:''}</span>${q.min===0?`<button class="btn" data-action="skipChoice" ${botTurn()?'disabled':''}>${q.max>1?'不除外':'不選擇'}</button>`:''}<button class="btn primary" data-action="confirmChoice" ${!allowed||botTurn()?'disabled':''}>確認結算 →</button></div></section></div>`;
 }
 function privatePeekCurtain(){
  const name=esc(game.players[game.pending.player].name);
@@ -291,7 +316,7 @@ function modalContent(){
  if(game?.pending&&ui.view==='arena'&&!ui.handoff&&!ui.modal){
   // Never render the AI's private effect choices to the human while it is thinking.
   if(botTurn())return '';
-  if(game.mode==='hotseat'&&['peekMill','peekOrder','peekNoMill'].includes(game.pending.effect?.kind)&&!ui.privatePeekOpen)return privatePeekCurtain();
+  if(game.mode==='hotseat'&&PRIVATE_LOOK_KINDS.includes(game.pending.effect?.kind)&&!ui.privatePeekOpen)return privatePeekCurtain();
   return pendingModal();
  }
  const m=ui.modal;if(!m)return '';
@@ -391,12 +416,51 @@ function saoLibrary(){
  const total=Object.values(saoDeck).reduce((n,x)=>n+x,0),issues=saoDeckIssues(saoDeck);
  return `<div class="titlePicker" role="group" aria-label="選擇作品">${TITLES.map(t=>`<button type="button" data-title="${t.id}" aria-pressed="${ui.title===t.id}" class="btn ${ui.title===t.id?'primary':'outline'}">${esc(t.label)} · ${t.cards.length} 種</button>`).join('')}</div><header class="pageHeading"><div><h1>刀劍神域 · 牌組編輯</h1><p>UA15ST／UA15BT／EX08BT／已確認官方特典 · ${SAO_CARDS.length} 種不重複一般卡號</p></div></header><div class="supportNote"><b>刀劍神域尚未開放對戰</b><span>目前只收錄已核對的卡片；未驗證的卡片不會虛構，也不會混進 BLEACH 或天元突破的牌組。</span></div><div class="deckEditor"><label>牌組名稱<input id="saoDeckName" maxlength="40" value="${esc(saoName)}"></label><label>已儲存牌組<select id="saoSavedSelect"><option value="">選擇草稿</option>${saoSaved.map((d,i)=>`<option value="${i}">${esc(d.name)}</option>`).join('')}</select></label><div class="deckEditorActions"><button class="btn primary" data-action="saoSave">儲存刀劍神域草稿</button><button class="btn outline" data-action="saoNew">新建空白草稿</button></div></div><div class="toolbar"><input id="search" type="search" placeholder="搜尋刀劍神域卡號、名稱、效果…" value="${esc(ui.search)}"><select id="saoSetFilter" aria-label="依產品篩選"><option value="all">全部已收錄卡片</option>${[["UA15ST","起始牌組 UA15ST"],["UA15BT","補充包 UA15BT"],["EX08BT","Vol.2 EX08BT"],["UAPR","UAPR 特典"]].map(([key,label])=>`<option value="${key}" ${ui.saoSet===key?"selected":""}>${label}</option>`).join("")}</select></div><div class="libraryLayout"><div class="cardGrid">${entries.map(c=>`<article class="catalogCard"><button class="catalogArt" data-inspect="${c.id}" aria-label="查看 ${esc(c.number)}"><img src="${esc(c.image||'assets/mark.svg')}" onerror="this.onerror=null;this.src='assets/mark.svg'" alt="${esc(c.nameJa)} 官方卡圖" loading="lazy"></button><div class="catalogInfo"><strong>${esc(c.name)}</strong><div class="sub">${esc(c.nameJa)} · ${esc(c.number)} · ${TYPE_NAMES[c.type]} · ${COLOR_NAMES[c.color]} · ${c.rarity} · 特徵 ${esc(c.traits?.join('、')||'—')} · ${c.trigger?TRIGGER_NAMES[c.trigger]+' Trigger':'無 Trigger'}${c.sets.length>1?` · 再錄於${c.sets.join("、")}`:""}</div><span class="autoStatus pending">${c.engineImplemented?"基礎效果已有測試（對戰仍未開放）":"尚未完成自動判定"}</span><div class="catalogMeta"><span>◆ ${c.energy} 能源</span><span>${c.ap} AP</span><span>${c.bpPrinted||c.bp} BP</span><span>產能 ${c.gen}</span></div><p class="catalogEffect">${esc(c.effect)}</p>${c.effectJa&&c.effectJa!==c.effect?`<details><summary>官方日文原文</summary><p class="catalogEffect">${esc(c.effectJa)}</p></details>`:""}<div class="countPicker"><button data-sao-count="${c.id}" data-delta="-1" ${!saoDeck[c.id]?'disabled':''}>−</button><b>${saoDeck[c.id]||0}</b><button data-sao-count="${c.id}" data-delta="1" ${saoDeck[c.id]>=4?'disabled':''}>+</button></div></div></article>`).join('')}</div><aside class="panel deckSummary"><h3>刀劍神域牌組</h3><div class="deckTotal">${total} <small>/ 50</small></div><div class="progressTrack"><i style="width:${Math.min(100,total*2)}%"></i></div><div class="validation invalid">${issues.map(esc).join('<br>')}</div><p class="note">此牌組目前只能儲存草稿，完整卡表與效果自動判定完成後才會開放對戰。</p></aside></div>`;
 }
+function soloLookSelection(q){
+ const look=ui.soloLook||{picks:[],take:null,order:[]};
+ const eligible=new Set(q.eligible||[]);
+ const search=q.kind==='slgSearch';
+ const max=q.maxPicks||1;
+ const top=q.topUids||[];
+ const picks=(Array.isArray(look.picks)?look.picks:[]).filter(uid=>eligible.has(uid)&&top.includes(uid)).slice(0,max);
+ const take=!search&&eligible.has(look.take)&&top.includes(look.take)?look.take:null;
+ const selected=search?picks:(take?[take]:[]);
+ const remain=top.filter(uid=>!selected.includes(uid));
+ const saved=Array.isArray(look.order)?look.order:[];
+ const order=saved.length===remain.length&&remain.every(uid=>saved.includes(uid))?saved.slice():remain.slice();
+ return {search,picks,take,selected,remain,order,eligible,max};
+}
+function soloLookPanel(state){
+ const q=state.pending;
+ if(!q||q.p!==0||!['slgSearch','soldierTop','peekTop'].includes(q.kind))return '';
+ const deck=state.players[q.p].deck;
+ const top=(q.topUids||[]).map(uid=>deck.find(c=>c.uid===uid));
+ if(!top.length||top.some(c=>!c))return '';
+ const pick=soloLookSelection(q);
+ const nameOf=c=>{const printed=soloById[c.cardId];return printed?.name||printed?.nameJa||c.cardId;};
+ const cards=top.map(c=>{
+  const name=nameOf(c),ok=pick.eligible.has(c.uid),on=pick.selected.includes(c.uid);
+  const art=soloArtImg(soloById[c.cardId]);
+  if(!ok)return `<button type="button" class="btn small soloLookCard ineligible" disabled aria-disabled="true" aria-label="${esc(name)}，不符合條件，無法選擇">${art}<span>${esc(name)}</span><small>不符合條件 · 無法選擇</small></button>`;
+  return `<button type="button" class="btn small soloLookCard ${on?'primary':'outline'}" data-solo-look-take="${esc(c.uid)}" aria-pressed="${on}" aria-label="${esc(name)}，符合條件，可選擇">${art}<span>${on?'✓ ':''}${esc(name)}</span><small>${on?'已選擇':'符合條件 · 可選擇'}</small></button>`;
+ }).join('');
+ const rows=pick.order.map((uid,i)=>{
+  const card=deck.find(c=>c.uid===uid),name=card?nameOf(card):uid;
+  return `<div class="soloLookOrder"><b>${i+1}.</b><span>${esc(name)}</span><button type="button" class="btn small outline" data-solo-look-up="${esc(uid)}" ${i===0?'disabled':''} aria-label="把${esc(name)}往前">↑</button><button type="button" class="btn small outline" data-solo-look-down="${esc(uid)}" ${i===pick.order.length-1?'disabled':''} aria-label="把${esc(name)}往後">↓</button></div>`;
+ }).join('');
+ const note=pick.search
+  ?`查看牌庫頂 ${top.length} 張。符合條件的最多選 ${pick.max} 張加入手牌。不符合條件的會顯示卡圖，但不能選擇。其餘依序放到牌庫底。`
+  :`查看牌庫頂 ${top.length} 張。符合條件的可以送出場外。不符合條件的會顯示卡圖，但不能選擇。其餘依序放回牌庫頂。`;
+ const clear=pick.search?'':`<button type="button" class="btn small ${pick.take==null?'primary':'outline'}" data-solo-look-clear>不送場外</button>`;
+ return `<section class="panel soloLookPanel"><h3>查看牌庫頂</h3><p class="note">${note}</p><div class="soloLookRow">${cards}</div>${clear}<h4>${pick.search?'依序放到牌庫底':'依序放回牌庫頂'}</h4>${rows}<button type="button" class="btn primary" data-action="soloLookSubmit">確認這個選擇</button></section>`;
+}
 function soloAct(action){
  try{
   soloGame=dispatchMatchAction('solo-leveling',soloGame,action);
   assertSoloTrainingMatch(soloGame);
   save(SOLO_GAME_KEY,soloGame);
   ui.soloSelected=null;
+  ui.soloLook={picks:[],take:null,order:[]};
   render();
  }catch(e){toast('我獨自升級：'+e.message);}
 }
@@ -465,6 +529,7 @@ function soloArena(){
   if(a.uid==null)return '不發動／不選擇／不阻擋';
   return label([...p.hand,...opp.hand,...p.front,...p.energy,...opp.front,...opp.energy].find(c=>c?.uid===a.uid));
  };
+ const lookPanel=state.pending&&!bot?soloLookPanel(state):'';
  const choices=state.pending?'<div class="panel"><b>請選擇：'+esc({
   soloOptionalLife:'生命 Trigger：可以發動或不發動（官方Q99）',
   discard:'棄一張手牌',entryImpact:'選擇獲得IMPACT的DFN角色',entryProtect:'選擇受AP保護的DFN',colorTrigger:'COLOR Trigger：選擇合法卡片及登場位置',specialTrigger:'SPECIAL Trigger：選擇敵方角色退場',entryDrawMode:'觀月繪里：選擇抽牌模式',entryRecover:'觀月繪里：選擇符合條件的場外角色',entryBounce:'選擇需返回手牌的己方其他角色',sungRecovery:'觀月繪里：選擇場外水篠旬回收',
@@ -481,7 +546,7 @@ function soloArena(){
   kibaDiscard:'奇巴：抽牌後棄一張',belDiscard:'貝爾：可棄手牌後ACTIVE',
   dailyDiscard:'每日任務：支付棄牌成本',dailyUnder:'每日任務：選己方裏向卡送場外',
   dailyRecover:'每日任務：選0能源水篠旬回收'
- }[state.pending.kind]||'效果結算')+'</b><div class="toolbar">'+(bot?'對手正在選擇…':actions.map(a=>actionButton(a,chooseText(a))).join(''))+'</div></div>':'';
+ }[state.pending.kind]||'效果結算')+'</b>'+(lookPanel?lookPanel:'<div class="toolbar">'+(bot?'對手正在選擇…':actions.map(a=>actionButton(a,chooseText(a))).join(''))+'</div>')+'</div>':'';
  const selected=ui.soloSelected;
  const selectable=actions.filter(a=>a.uid===selected);
  const normalActions=state.pending?[]:actions.filter(a=>['next','extraDraw','move','attack','attackTarget','ability','abilityOutside'].includes(a.type));
@@ -549,10 +614,40 @@ function ttgArena(){
   const saved=ui.ttg012Search.orderUids;
   const order=saved.length===remain.length&&remain.every(uid=>saved.includes(uid))?saved:remain;
   const name=uid=>{const c=ttgCardByUid(s,uid);return c?`${TTG_BY_ID[c.cardId]?.nameZh||c.cardId}（${c.cardId.slice(-3)}）`:uid;};
-  const options=[null,...rule.candidates].map(uid=>`<button class='btn small ${picked===uid?'primary':'outline'}' data-ttg-012-take='${uid===null?'':esc(uid)}'>${uid===null?'不拿牌':'拿 '+esc(name(uid))}</button>`).join('');
+  const lookArt=uid=>{const c=ttgCardByUid(s,uid);return c?ttgArtImg(TTG_BY_ID[c.cardId]):'';};
+  const options=[null,...rule.revealed].map(uid=>{
+   if(uid===null)return `<button class='btn small ${picked==null?'primary':'outline'}' data-ttg-012-take=''>不拿牌</button>`;
+   const ok=(rule.candidates||[]).includes(uid);
+   const title=ok?(picked===uid?'已選擇 ':'拿 ')+name(uid):name(uid)+'，不符合條件，無法選擇';
+   return `<button type='button' class='btn small ttgLookCard ${ok&&picked===uid?'primary':ok?'outline':'ineligible'}' ${ok?`data-ttg-012-take='${esc(uid)}'`:'disabled aria-disabled="true"'} aria-label='${esc(title)}'>${lookArt(uid)}<span>${esc(ok?(picked===uid?'✓ ':'')+name(uid):name(uid))}</span><small>${ok?'符合條件 · 可選擇':'不符合條件 · 無法選擇'}</small></button>`;
+  }).join('');
   const rows=order.map((uid,i)=>`<div style='display:flex;gap:5px;align-items:center;padding:4px 0'><b>${i+1}.</b><span style='flex:1'>${esc(name(uid))}</span><button class='btn small outline' data-ttg-012-up='${esc(uid)}' ${i===0?'disabled':''} aria-label='把${esc(name(uid))}向前移'>↑</button><button class='btn small outline' data-ttg-012-down='${esc(uid)}' ${i===order.length-1?'disabled':''} aria-label='把${esc(name(uid))}向後移'>↓</button></div>`).join('');
-  return `<section class='panel'><h3>西蒙 012 · 查看牌庫頂與牌庫底排序</h3><p class='note'>查看牌庫頂 ${rule.revealed.length} 張，可拿最多一張合法的妮亞或需求能源8以上角色。其餘卡依畫面由上到下放到牌庫底，使用箭頭調整順序。</p><div style='display:flex;gap:6px;flex-wrap:wrap'>${options}</div><h4>依序放到牌庫底</h4>${rows}<button class='btn primary' data-action='ttg012SearchSubmit'>確認拿牌與牌庫底順序</button></section>`;
+  return `<section class='panel'><h3>西蒙 012 · 查看牌庫頂與牌庫底排序</h3><p class='note'>查看牌庫頂 ${rule.revealed.length} 張。符合條件的妮亞或需求能源8以上角色可以選擇，不符合條件的只顯示卡圖。其餘卡依畫面由上到下放到牌庫底，使用箭頭調整順序。</p><div class='ttgLookRow' style='display:flex;gap:8px;flex-wrap:wrap'>${options}</div><h4>依序放到牌庫底</h4>${rows}<button class='btn primary' data-action='ttg012SearchSubmit'>確認拿牌與牌庫底順序</button></section>`;
  })():'';
+ const ttgInspectedLook=!bot?(()=>{
+  const kind=s.pending?.kind;
+  if(!kind||kind==='green012Search')return {html:'',hide:new Set()};
+  let revealed=Array.isArray(s.pending.revealed)&&s.pending.revealed.every(uid=>typeof uid==='string')?s.pending.revealed:null;
+  let pool=available.filter(a=>a?.takeUid!=null);
+  if(!revealed&&kind==='ttgGreenEntry'){
+   const searches=available.filter(a=>a.type==='resolveGreenEntry'&&['search','niaSearch','arkChoice'].includes(a.mode)&&Array.isArray(a.bottomOrderUids));
+   revealed=searches.find(a=>a.takeUid==null)?.bottomOrderUids||null;
+   pool=searches;
+  }
+  if(!revealed?.length)return {html:'',hide:new Set()};
+  const hide=new Set();
+  const tiles=revealed.map(uid=>{
+   const matches=pool.filter(a=>a.takeUid===uid);
+   const physical=ttgCardByUid(s,uid);
+   const printed=physical?TTG_BY_ID[physical.cardId]:null;
+   const name=printed?.nameZh||printed?.nameJa||physical?.cardId||uid;
+   const art=printed?ttgArtImg(printed):'';
+   if(!matches.length)return `<button type="button" class="btn small ttgLookCard ineligible" disabled aria-disabled="true" aria-label="${esc(name)}，不符合條件，無法選擇">${art}<span>${esc(name)}</span><small>不符合條件 · 無法選擇</small></button>`;
+   if(matches.length===1){hide.add(JSON.stringify(matches[0]));return `<button type="button" class="btn small ttgLookCard outline" data-ttg-act="${encodeURIComponent(JSON.stringify(matches[0]))}" aria-label="${esc(name)}，符合條件，可選擇">${art}<span>${esc(name)}</span><small>符合條件 · 可選擇</small></button>`;}
+   return `<div class="ttgLookCard eligible" aria-label="${esc(name)}，符合條件"><span>${art}</span><span>${esc(name)}</span><small>符合條件 · 用下方選項</small></div>`;
+  }).join('');
+  return {html:`<div class="ttgLookRow"><p class="note">查看的卡片都會以卡圖顯示。不符合條件的不能選擇。</p>${tiles}</div>`,hide};
+ })():{html:'',hide:new Set()};
  const cards=s.players[0].hand;
  const hand=`<div class='grid' style='display:flex;flex-wrap:wrap;gap:7px'>${cards.map(c=>`<button class='btn small ttgHandCard ${ui.ttgSelected===c.uid?'primary':'outline'}' data-ttg-select='${esc(c.uid)}'>${shown(c)}</button>`).join('')}</div>`;
  return `${betaArenaHeader({title:'天元突破',turn:s.turn,phase:phase+(pending?' · '+pending:''),actor,aiDifficulty:ui.aiDifficulty,status:s.status,lifePlayer:s.players[0].life.length,lifeOpponent:s.players[1].life.length,energyPlayer:(s.players[0].energyProduced?.red||0)+(s.players[0].energyProduced?.green||0),energyOpponent:(s.players[1].energyProduced?.red||0)+(s.players[1].energyProduced?.green||0),apPlayer:s.players[0].apCards.filter(x=>x.ready).length,apOpponent:s.players[1].apCards.filter(x=>x.ready).length})}
@@ -564,7 +659,7 @@ function ttgArena(){
  ${s.status==='playing'?`<section class='panel'><h3>${bot?'AI 正在依合法動作處理…':'選擇合法動作'} · ${available.length} 項</h3>${bot?'<p class=note>輪到 AI，等待自動結算；不顯示電腦的私人手牌及效果選擇。</p>':`
  ${(s.pending||s.pendingTtgLife||s.pendingTtgTrigger)?`<p><button class='btn outline' data-action='ttgResolveAssist'>AI 幫我選擇這次效果</button> <small>會依合法動作結算，可自行選上面的選項。</small></p>`:''}
  <div style='display:flex;flex-wrap:wrap;gap:5px'><button class='btn small ${ui.ttgKind==='all'?'primary':'outline'}' data-ttg-kind='all'>全部</button>${types.map(o=>`<button class='btn small ${ui.ttgKind===o.type?'primary':'outline'}' data-ttg-kind='${esc(o.type)}'>${esc(o.type)} (${o.count})</button>`).join('')}</div>
- <div style='display:flex;flex-wrap:wrap;gap:7px;margin-top:12px'>${custom012Search}${custom012}${picked.actions.filter(a=>!['green012Discard','green012Search'].includes(a.type)).map(actionButton).join('')}</div>
+ <div style='display:flex;flex-wrap:wrap;gap:7px;margin-top:12px'>${custom012Search}${custom012}${ttgInspectedLook.html}${picked.actions.filter(a=>!['green012Discard','green012Search'].includes(a.type)&&!ttgInspectedLook.hide.has(JSON.stringify(a))).map(actionButton).join('')}</div>
  ${picked.total>picked.actions.length?`<button class='btn' data-action='ttgMore'>顯示更多動作（${picked.actions.length}/${picked.total}）</button>`:''}
  ${ui.ttgSelected?`<button class='btn outline' data-ttg-select=''>清除手牌篩選</button>`:''}`}</section>`:''}
  <section class='panel'><h3>近期對局紀錄</h3><div class='logList'>${(s.log||[]).slice(-18).reverse().map(x=>`<p>${esc(typeof x==='string'?x:JSON.stringify(x))}</p>`).join('')||'<p class=note>尚無紀錄。</p>'}</div></section>`;
@@ -622,6 +717,22 @@ function bind(){
   if(el.dataset.ttgSelect!==undefined){ui.ttgSelected=ui.ttgSelected===el.dataset.ttgSelect?null:(el.dataset.ttgSelect||null);ui.ttgVisible=90;render();return;}
   if(el.dataset.ttgKind){ui.ttgKind=el.dataset.ttgKind;ui.ttgVisible=90;render();return;}
   if(el.dataset.soloCard){ui.soloSelected=ui.soloSelected===el.dataset.soloCard?null:el.dataset.soloCard;render();return;}
+  if(el.dataset.soloLookTake!==undefined&&ui.view==='soloArena'&&soloGame?.pending?.p===0){
+   const q=soloGame.pending;ui.soloLook??={picks:[],take:null,order:[]};
+   const uid=el.dataset.soloLookTake;
+   if(q.kind==='slgSearch'){
+    const cur=ui.soloLook.picks||[];
+    ui.soloLook.picks=cur.includes(uid)?cur.filter(x=>x!==uid):(cur.length>=(q.maxPicks||1)?cur:[...cur,uid]);
+   }else if(q.kind==='soldierTop'||q.kind==='peekTop')ui.soloLook.take=ui.soloLook.take===uid?null:uid;
+   ui.soloLook.order=[];render();return;
+  }
+  if(el.dataset.soloLookClear!==undefined&&ui.view==='soloArena'&&soloGame?.pending?.p===0){ui.soloLook={picks:[],take:null,order:[]};render();return;}
+  if((el.dataset.soloLookUp!==undefined||el.dataset.soloLookDown!==undefined)&&ui.view==='soloArena'&&soloGame?.pending?.p===0){
+   const q=soloGame.pending,pick=soloLookSelection(q),order=pick.order.slice();
+   const up=el.dataset.soloLookUp!==undefined,uid=up?el.dataset.soloLookUp:el.dataset.soloLookDown,i=order.indexOf(uid),j=i+(up?-1:1);
+   if(i>=0&&j>=0&&j<order.length){[order[i],order[j]]=[order[j],order[i]];ui.soloLook??={picks:[],take:null,order:[]};ui.soloLook.order=order;}
+   render();return;
+  }
   if(el.dataset.soloAct){if(ui.view==='soloArena'&&(soloGame?.pending?.p??soloGame?.active)===0)soloAct(JSON.parse(decodeURIComponent(el.dataset.soloAct)));return;}
   if(el.dataset.soloCount){const id=el.dataset.soloCount;const c=soloById[id];if(!c)return;soloDeck[id]=Math.max(0,Math.min(c.maxCopies||4,(soloDeck[id]||0)+Number(el.dataset.delta)));persistSolo();render();return;}
   if(el.dataset.mstCount){const id=el.dataset.mstCount;const c=MST_CARDS.find(c=>c.id===id);if(!c||!c.verified)return;mstDeck[id]=Math.max(0,Math.min(4,(mstDeck[id]||0)+Number(el.dataset.delta)));persistMst();render();return;}
@@ -648,9 +759,10 @@ function bind(){
   }
   if(el.dataset.raidAction){const a=ui.modal.actions[Number(el.dataset.raidAction)];act(a);return;}
   switch(el.dataset.action){
-   case 'soloTrainingStartShadow':try{soloGame=startMatchForTitle('solo-leveling',{decks:[SOLO_SHADOW_TRAINING_PRESET,SOLO_SHADOW_TRAINING_PRESET],mode:'solo',seed:Date.now()});save(SOLO_GAME_KEY,soloGame);ui.view='soloArena';ui.soloSelected=null;render();}catch(e){toast(e.message);}break;
-   case 'soloTrainingStartCustom':try{const issues=soloTrainingDeckIssues(soloDeck);if(issues.length){toast(issues[0]);break;}soloGame=startMatchForTitle('solo-leveling',{decks:[soloDeck,soloDeck],mode:'solo',seed:Date.now()});save(SOLO_GAME_KEY,soloGame);ui.view='soloArena';ui.soloSelected=null;render();}catch(e){toast(e.message);}break;
-   case 'soloTrainingStart':try{soloGame=startMatchForTitle('solo-leveling',{decks:[SOLO_TRAINING_PRESET,SOLO_TRAINING_PRESET],mode:'solo',seed:Date.now()});save(SOLO_GAME_KEY,soloGame);ui.view='soloArena';ui.soloSelected=null;render();}catch(e){toast(e.message);}break;
+   case 'soloTrainingStartShadow':try{soloGame=startMatchForTitle('solo-leveling',{decks:[SOLO_SHADOW_TRAINING_PRESET,SOLO_SHADOW_TRAINING_PRESET],mode:'solo',seed:Date.now()});save(SOLO_GAME_KEY,soloGame);ui.view='soloArena';ui.soloSelected=null;ui.soloLook={picks:[],take:null,order:[]};render();}catch(e){toast(e.message);}break;
+   case 'soloTrainingStartCustom':try{const issues=soloTrainingDeckIssues(soloDeck);if(issues.length){toast(issues[0]);break;}soloGame=startMatchForTitle('solo-leveling',{decks:[soloDeck,soloDeck],mode:'solo',seed:Date.now()});save(SOLO_GAME_KEY,soloGame);ui.view='soloArena';ui.soloSelected=null;ui.soloLook={picks:[],take:null,order:[]};render();}catch(e){toast(e.message);}break;
+   case 'soloTrainingStart':try{soloGame=startMatchForTitle('solo-leveling',{decks:[SOLO_TRAINING_PRESET,SOLO_TRAINING_PRESET],mode:'solo',seed:Date.now()});save(SOLO_GAME_KEY,soloGame);ui.view='soloArena';ui.soloSelected=null;ui.soloLook={picks:[],take:null,order:[]};render();}catch(e){toast(e.message);}break;
+   case 'soloLookSubmit':if(ui.view==='soloArena'&&soloGame?.pending?.p===0&&['slgSearch','soldierTop','peekTop'].includes(soloGame.pending.kind)){const q=soloGame.pending,pick=soloLookSelection(q);soloAct(pick.search?{type:'choose',picks:pick.picks,order:pick.order}:{type:'choose',outsideUid:pick.take,order:pick.order});}break;
    case 'soloPreset':soloDeck=soloNormalize(SOLO_DRAFT_PRESET);soloName='影之軍團示範牌組（尚不可對戰）';persistSolo();render();break;
    case 'soloNew':soloDeck=soloNormalize({});soloName='我獨自升級自訂牌組';persistSolo();render();break;
    case 'soloSave':soloSaved=[...soloSaved,{name:soloName.trim()||'我獨自升級自訂牌組',counts:soloNormalize(soloDeck)}];save(SOLO_SAVED_KEY,soloSaved);render();toast('已儲存我獨自升級牌組草稿。');break;
