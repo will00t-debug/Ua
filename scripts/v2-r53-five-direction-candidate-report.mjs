@@ -54,10 +54,8 @@ export function r53FiveDirectionLiveAudit(){
   id,registered:registered.some(c=>c.id===id),
   status:registered.some(c=>c.id===id)?'REGISTERED':'REVIEW PENDING'
  }));
- if(sao.filter(x=>x.registered).length!==3||
-  !sao.find(x=>x.id==='SAO-2-063')?.registered||
-  !sao.find(x=>x.id==='SAO-1-071')?.registered||
-  !sao.find(x=>x.id==='SAO-1-083')?.registered)
+ const saoRegistered=new Set(['SAO-2-063','SAO-1-071','SAO-1-083','SAO-2-009','SAO-2-062','SAO-2-002','SAO-2-049','SAO-2-001','SAO-2-020','SAO-2-032','SAO-2-031','SAO-2-036']);
+ if(sao.some(x=>x.registered!==saoRegistered.has(x.id)))
   throw Error('R53 SAO named source audit drift');
  const candidates=past.candidates.filter(c=>ids.has(c.id));
  const unreviewed=candidates.filter(c=>!focused.some(f=>f.id===c.id));

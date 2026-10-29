@@ -76,7 +76,7 @@ test('batches 11-20 register ten prints and leave the census unchanged',()=>{
   op:'searchTopOneBottomDiscard',count:3,filter:{field:'type',value:'character'},discard:true
  }]}}]}),/invalid top-N filtered bottom\/discard profile/);
  assert.throws(()=>createUniversalPack({id:'compound-keep',cards:[{...base,effects:{onPlay:[{
-  op:'searchTopOneBottomDiscard',count:3,logic:'any',discard:false,
+  op:'searchTopOneBottomDiscard',count:3,logic:'all',discard:false,
   filters:['a','b'].map(value=>({field:'name',value}))
  }]}}]}),/invalid top-N filtered bottom\/discard profile/);
  assert.throws(()=>createUniversalPack({id:'opp-event',cards:[{...base,effects:{},passiveBonuses:[{

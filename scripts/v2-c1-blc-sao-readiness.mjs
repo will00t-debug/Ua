@@ -9,10 +9,8 @@ import {capabilityIndex} from './v2-r35-unported-atom-audit.mjs';
 const FOCUS=['bleach','sword-art-online'];
 const PORTED=['BLC-1-058','BLC-1-088','BLC-1-101','BLC-4-073'];
 // Official iframe pages fetched 2026-10-24. None of these pages contained an FAQ.
-export const C1_OFFICIAL_REVIEWS=Object.freeze({
- 'SAO-2-039':{status:'ENGINE BLOCKED',set:'EX08BT',
-  missing:'this turn BP+1000 after this player has used a 歌 card; event-use is a different ledger'}
-});
+// SAO-2-039 left this list when the shared trait-used-this-turn ledger landed.
+export const C1_OFFICIAL_REVIEWS=Object.freeze({});
 export function c1BlcSaoReadiness(){
  const inv=v2AllTitleInventory(),index=capabilityIndex(inv);
  const focus=inv.series.filter(s=>FOCUS.includes(s.title));

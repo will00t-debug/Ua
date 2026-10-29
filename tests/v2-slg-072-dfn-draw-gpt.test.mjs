@@ -97,7 +97,7 @@ test('typed trait-count draw rejects malformed traits, zones, optionality, thres
   assert.throws(()=>mk({...good,...changed}),/invalid|incompatible/);
  }
  assert.throws(()=>createUniversalPack({id:'wrong-timing',cards:[{...basic,
-  templateEffects:{onAttack:[good]}}]}),/only a character onPlay/);
+  templateEffects:{onAttack:[good]}}]}),/character or event onPlay/);
  assert.throws(()=>createUniversalPack({id:'wrong-raw',cards:[{...basic,
   effects:{onPlay:[{op:'drawIfOwnTraitCount',trait:'DFN',zone:'field',
     excludeSelf:false,min:3,count:1,countOpponent:true}]}}]}),/invalid/);

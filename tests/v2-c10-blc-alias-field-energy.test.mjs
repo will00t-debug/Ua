@@ -79,7 +79,7 @@ test('C10 registers only the whole-print alias and field energy retirement',()=>
  assert.deepEqual(x.registered,[ID]);
  assert.equal(x.report.bleach,276);
  assert.equal(x.report.mst,80);
- assert.equal(x.report.registered,642);
+ assert.equal(x.report.registered,700);
  assert.equal(x.report.bleachUnported,0);
  assert.equal(x.report.readyFromKeywords,0);
  assert.equal(EXPECTED_V2_IDS.bleach.includes(ID),true);

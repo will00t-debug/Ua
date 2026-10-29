@@ -17,8 +17,14 @@ test('R48 scans all 700 source cards and precisely partitions every dynamically 
   c.missing.length>0));
  assert.ok(!reviewed.some(c=>c.id==='BLC-4-042'),'full source now ported');
  assert.ok(!reviewed.some(c=>c.id==='BLC-4-069'),'registered full card is no longer unported');
- for(const id of ['SAO-1-018'])
-  assert.ok(reviewed.some(c=>c.id===id),'independent official source review '+id);
+ if(expected.has('SAO-1-018'))
+  assert.ok(reviewed.some(c=>c.id==='SAO-1-018'),'independent SAO source review');
+ else{
+  assert.ok(inv.series.find(c=>c.title==='sword-art-online')
+   .pilotIds.includes('SAO-1-018'),'official SAO-018 remains registered');
+  assert.ok(!reviewed.some(c=>c.id==='SAO-1-018'),
+   'registered true card cannot remain in unported review partition');
+ }
  assert.ok(!reviewed.some(c=>c.id==='MST-1-009'));
  assert.ok(inv.series.find(c=>c.title==='mushoku-tensei').pilotIds.includes('MST-1-009'));
  assert.ok(!reviewed.some(c=>c.id==='SLG-1-021'));

@@ -118,7 +118,7 @@ test('the last six Solo Leveling prints are registered on the shared engine',()=
  assert.equal(slg.cards['SLG-1-075'].enterAlwaysActive,false);
  assert.equal(Object.keys(slg.cards).length,80);
  assert.equal(EXPECTED_V2_IDS['solo-leveling'].length,80);
- assert.equal(EXPECTED_V2_TOTAL,642);
+ assert.equal(EXPECTED_V2_TOTAL,700);
  assert.match(V2_PENDING_LABELS['effect-energy-trait-swap'],/交換/);
  assert.match(V2_PENDING_LABELS['effect-release-facedown'],/裏向/);
  assert.match(uiActionLabel({type:'activate',mode:'fieldMill'}),/牌庫頂/);

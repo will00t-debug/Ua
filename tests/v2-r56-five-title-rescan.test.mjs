@@ -21,10 +21,12 @@ test('R56 700-card live all-title rescan partitions dynamic remaining 700 minus 
  assert.ok(r.reviewed.some(x=>x.id==='SLG-1-021'&&x.status==='REGISTERED'));
  assert.ok(r.reviewed.some(x=>x.id==='TTG-1-020'&&x.status==='REGISTERED'));
  assert.ok(r.reviewed.some(x=>x.id==='MST-1-009'&&x.status==='REGISTERED'));
+ assert.ok(r.reviewed.some(x=>x.id==='SAO-1-097'&&x.status==='REGISTERED'));
+ assert.ok(!complement.has('SAO-1-097'));
  for(const group of Object.values(r.cursorReuse))
   assert.ok(group.every(c=>complement.has(c.id)&&
    ['bleach','sword-art-online'].includes(c.title)));
- for(const c of r.cursor){
+ for(const c of r.cursor.filter(x=>x.status!=='REGISTERED')){
   assert.equal(c.owner,'Cursor');
   assert.ok(complement.has(c.id));
   assert.notEqual(c.status,'REGISTERED');

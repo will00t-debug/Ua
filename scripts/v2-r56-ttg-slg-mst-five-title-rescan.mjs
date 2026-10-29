@@ -30,8 +30,8 @@ const PRIORITY=Object.freeze([
   reason:'MAIN rests and retires this card, then adds one outside ガンメン card to hand. Scenario tests exist. Full FAQ certification still pending'},
  {id:'TTG-1-081',owner:'GPT',status:'REGISTERED',faq:null,
   reason:'shared retireOppFrontUnderBp with Simon or Kamina field or raid-base bonus; Q1119; scenario tests exist; full FAQ certification still pending'},
- {id:'SAO-1-097',owner:'Cursor',status:'REVIEW PENDING',faq:null,
-  reason:'re-audit optional source effect and physical UID; GPT does not migrate'},
+ {id:'SAO-1-097',owner:'Cursor',status:'REGISTERED',faq:null,
+  reason:'Shared grantOwnFieldAttackKit gives a battle-win draw, and sniper only when the chosen character is Sinon. Scenario tests exist. Full FAQ certification still pending'},
  {id:'SLG-1-022',owner:'GPT',status:'REGISTERED',faq:'Q2029',
   reason:'shared energy discount, life raid, dual-line ACTIVE, sniper and Q2029 energy-line swap; not a full FAQ certification'}
 ]);
@@ -60,7 +60,7 @@ export function r56TtgSlgMstRescan(){
  const cursor=reviewed.filter(x=>x.owner==='Cursor');
  const cursorReuse=Object.fromEntries(Object.entries(hits).map(([kind,rows])=>
   [kind,rows.filter(x=>['bleach','sword-art-online'].includes(x.title))]));
- if(cursor.some(x=>x.status==='REGISTERED'||!expected.has(x.id)))
+ if(cursor.some(x=>(x.status==='REGISTERED')===expected.has(x.id)))
   throw Error('Do not preempt Cursor-owned unported title cards');
  return {
   report:{
