@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {isExactLegal,uiActor,uiCardLabel,uiActionLabel,
  uiActionGroup,visibleActionsForCard,V2_TITLE_LABELS,
- pendingChoiceCards,visiblePendingChoiceCards,pendingChoiceCaption} from '../dist/universal-v2/preview-actions.mjs';
+ pendingChoiceCards,inspectedPendingChoiceCards,visiblePendingChoiceCards,pendingChoiceCaption} from '../dist/universal-v2/preview-actions.mjs';
 import {verifiedBleachPurplePilotDeck,verifiedTtgRedPilotDeck} from '../dist/universal-v2/verified-real-decks.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  universalPublicView,universalPrivateChoices,assertUniversalMatch} from '../dist/universal-v2/engine.mjs';
@@ -155,4 +155,18 @@ test('hand and deck prompts show private card art and leave the legal action unc
  assert.equal(pendingChoiceCaption('不支付成本',[]),'');
  assert.equal(pendingChoiceCaption('保留在牌庫頂',['更木 劍八']),'保留在牌庫頂');
  assert.equal(pendingChoiceCaption('棄 指定卡片 支付成本',['更木 劍八']),'棄 指定卡片 支付成本');
+});
+
+test('inspected nonmatching cards are visible but disabled',()=>{
+ const window={kind:'effect-top-filter-choice',inspected:[
+  {uid:'top-a',cardId:'BLC-1-001',name:'甲'},
+  {uid:'top-b',cardId:'BLC-1-002',name:'乙'}]};
+ const legal=[{type:'chooseTopFiltered',uid:null},{type:'chooseTopFiltered',uid:'top-b'}];
+ assert.deepEqual(inspectedPendingChoiceCards(window,legal).map(c=>!!c.action),[false,true]);
+ assert.deepEqual(inspectedPendingChoiceCards({...window,kind:'other'},legal),[]);
+ const script=source('../dist/universal-v2-preview.mjs');
+ assert.match(script,/inspectedPendingChoiceCards\(privateChoices,legal\)/);
+ assert.match(script,/for\(const card of inspected\)list\.append\(inspectedChoiceControl\(card\)\)/);
+ assert.match(script,/disabled:!enabled/);
+ assert.match(source('../dist/universal-v2-legacy.css'),/choice-card\.v2-ineligible/);
 });
