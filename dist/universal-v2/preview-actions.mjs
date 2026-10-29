@@ -264,9 +264,9 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'openingMulligan':return action.mode==='redraw'?'整手重抽 7 張（僅一次）':'保留這 7 張手牌';
   case 'next':return '前進下一階段／結束回合';
   case 'extraDraw':return '支付 1 AP 額外抽牌';
-  case 'play':return '普通登場：'+name()+suffix();
+  case 'play':return (action.from==='removed'?'從移除區登場：':'普通登場：')+name()+suffix();
   case 'raid':return '突襲登場：'+name()+' · 前線 '+(action.slot+1);
-  case 'event':return '使用事件：'+name();
+  case 'event':return (action.from==='removed'?'從移除區使用事件：':'使用事件：')+name();
   case 'move':return '移至前線 '+(action.slot+1);
   case 'step':return 'STEP 移至能源線 '+(action.slot+1);
   case 'attack':return action.targetUid?
@@ -356,6 +356,11 @@ export function uiActionLabel(action,{pack,state}={}){
     action.mode==='readyRested'?'起動主要：將曾被自己效果休息的角色轉為活動':
     action.mode==='restNamedChoose'?'起動主要：休息前線的牧瀬紅莉栖，然後二選一':
     action.mode==='nameActive'?'起動主要：將這張椎名まゆり轉為活動':
+    action.mode==='restPeek'?'起動主要：休息此角色，查看牌庫頂 1 張':
+    action.mode==='lifeReenter'?'起動主要：將 1 張生命加入手牌，並獲得再登場或突襲':
+    action.mode==='outsideActive'?'起動主要：棄 1 張手牌，使其他角色活動':
+    action.mode==='frontDiscardBuff'?'起動主要：棄 1 張手牌，指定名稱與特徵 BP+1000':
+    action.mode==='discardEventEnergy'?'起動主要：棄 1 張事件，本回合指定角色必要能源 -1':
     action.mode==='buff'?'主要能力：BP 加成':'主要能力：ACTIVE ＋ BP 加成';
   case 'chooseBlock':return action.uid===null?'不阻擋':'使用 '+name()+' 阻擋';
   case 'chooseTrigger':
@@ -642,6 +647,22 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseRestOwnField':return '休息 '+name()+'，然後抽 1 張並將 1 張手牌放到場外';
   case 'chooseHandActiveNoRaid':return action.uid===null?'不讓角色登場':
    '讓 '+name()+' 以活動狀態登場'+suffix();
+  case 'chooseRemoveOutsideUpTo':return action.mode==='done'?'結束選擇場外角色':
+   '將 '+name()+' 移入移除區';
+  case 'chooseRemovedRestPair':return action.mode==='done'?'結束選擇移除區角色':
+   action.mode==='place'?'讓 '+name()+' 以休息狀態登場'+suffix():'選擇 '+name();
+  case 'chooseTopCharacterOutside':return action.uid===null?'不把角色放到場外':'將 '+name()+' 放到場外';
+  case 'choosePeekTop':return action.mode==='outside'?'將牌庫頂放到場外':'把牌庫頂留在上面';
+  case 'chooseRemoveFrontSelf':return '將 '+name()+' 與這張卡放入移除區';
+  case 'chooseBounceNamedCut':return action.uid===null?'不把手牌角色返回手牌':'將 '+name()+' 返回手牌';
+  case 'chooseFrontBpCut':return action.uid===null?'不降低敵方 BP':'使 '+name()+' 的 BP 降低';
+  case 'chooseRevealTop':return action.mode==='bottom'?'將公開的牌放到牌庫底':'把公開的牌留在上面';
+  case 'chooseLifeReenter':return '將 1 張生命加入手牌';
+  case 'chooseSayakaReenter':return action.mode==='raid'?'以效果突襲'+suffix():'以休息狀態再登場'+suffix();
+  case 'chooseTuckNamed':return action.uid===null?'不把角色放到牌庫底':'將 '+name()+' 放到牌庫底';
+  case 'chooseHandGirlRest':return action.uid===null?'不從手牌休息登場':'讓 '+name()+' 以休息狀態登場'+suffix();
+  case 'chooseMamiActive':return '使 '+name()+' 活動';
+  case 'chooseDiscardNamedEnergy':return '棄掉事件 '+name();
   default:return '執行 '+action.type;
  }
 }

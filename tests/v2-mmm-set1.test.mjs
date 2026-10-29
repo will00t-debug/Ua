@@ -80,8 +80,8 @@ test('Madoka catalogue stays outside the five-title census',()=>{
  assert.equal(MADOKA_CARDS.length,113);
  assert.equal(new Set(MADOKA_CARDS.map(c=>c.id)).size,113);
  assert.equal(MADOKA_CARDS.some(c=>c.id.includes('AP')||c.rarity==='AP'),false);
- assert.equal(MADOKA_CARDS.filter(c=>c.engineKind).length,101);
- assert.equal(Object.keys(pack.cards).length,101);
+ assert.equal(MADOKA_CARDS.filter(c=>c.engineKind).length,113);
+ assert.equal(Object.keys(pack.cards).length,113);
  assert.equal(pack.version,'mmm-ua31-set1-20261029');
  assert.equal(V2_TITLE_IDS.includes('madoka'),false);
  for(const card of MADOKA_CARDS){
@@ -96,10 +96,10 @@ test('Madoka catalogue stays outside the five-title census',()=>{
  assert.ok(Object.keys(practice.counts).every(id=>pack.cards[id].color==='red'));
  const editor=editorV2Status('madoka',practice.counts);
  assert.equal(editor.ready,true);
- assert.equal(editor.registered,101);
+ assert.equal(editor.registered,113);
  const blocked=v2DeckReport('madoka',{'MMM-1-001':4,'MMM-1-006':46});
  assert.equal(blocked.ok,false);
- assert.match(blocked.issues.join('\n'),/尚未支援/);
+ assert.match(blocked.issues.join('\n'),/exceeds/);
 });
 
 test('MMM-1-011 steps, and 029 rests an active front then draws 3',()=>{
@@ -1394,8 +1394,8 @@ function packCounts(local,required){
 }
 
 test('MMM-1-005 pays one removed Ultimate Madoka for BP and impact',()=>{
- // MMM-1-001's own sentences stay unregistered. This fixture only supplies
- // the printed name and stats so the attack payment can see that card.
+ // The payment test uses a vanilla stand-in so MMM-1-001's own sentences
+ // stay out of this attack. The registered card is covered separately.
  const ultimate={id:'MMM-1-001',name:'アルティメットまどか',color:'yellow',type:'character',
   energy:5,ap:2,bp:5000,gen:1,trigger:'get',traits:[],implementation:'vanilla',effects:{}};
  const named=createUniversalPack({id:'madoka',version:pack.version,cards:[ultimate]});

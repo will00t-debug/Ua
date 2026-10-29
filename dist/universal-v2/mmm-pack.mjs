@@ -35,7 +35,8 @@ export function mmmPackCard(card){
  if(card.trigger==null){
   if(card.triggerTextJa!=='-')throw Error(card.id+' missing trigger text');
  }else if(card.trigger==='color'){
-  const rest=kind==='discountImpact'&&card.triggerTextJa===COLOR_REST&&card.color==='yellow';
+  const rest=['discountImpact','madokaLook'].includes(kind)&&
+   card.triggerTextJa===COLOR_REST&&card.color==='yellow';
   const retire=['distinctEnergy','lifeActive'].includes(kind)&&
    card.triggerTextJa===COLOR_RETIRE&&card.color==='red';
   const outside=['devilHomura','mamiFrontBuff'].includes(kind)&&
@@ -43,11 +44,13 @@ export function mmmPackCard(card){
   if(!rest&&!retire&&!outside)throw Error(card.id+' color trigger is not a registered printed profile');
  }else if(card.trigger==='special'){
   if(!['homuraRetire','madokaRetire','traitRetire','sayakaLifeRetire','kyokoApRetire',
-   'frontDoubleCut','tiroFinale'].includes(kind)||
+   'frontDoubleCut','tiroFinale','lawOfCycles'].includes(kind)||
    card.triggerTextJa!==SPECIAL)
    throw Error(card.id+' special trigger is not the printed front retirement');
  }else if(card.trigger==='raid'){
-  if(!['distinctRetire','homuraRaidLock','mamiRaidBounce','homuraRaidReturn','mamiRaidLook'].includes(kind)||card.triggerTextJa!==RAID)
+  if(!['distinctRetire','homuraRaidLock','mamiRaidBounce','homuraRaidReturn','mamiRaidLook',
+   'ultimateRaid','devilFront','nagisaRaid','kyokoLifeAttack','sayakaReenter','madokaKinds'].includes(kind)||
+   card.triggerTextJa!==RAID)
    throw Error(card.id+' raid trigger is not the standard printed text');
  }else if(STANDARD[card.trigger]!==card.triggerTextJa)
   throw Error(card.id+' trigger is not the standard printed text');
@@ -66,7 +69,7 @@ export function mmmPackCard(card){
  if(['homuraRetire','madokaRetire','traitRetire','recoverAp2','searchTwoQuintet',
   'restDraw3','lifeDraw2','sayakaLifeRetire','kyokoApRetire','mamiRestSkip',
   'drawActiveAp','frontImpactDraw','frontDoubleCut','raidGirlSearch',
-  'distinctGirlLook','tiroFinale','kyokoSacrifice'].includes(kind)&&
+  'distinctGirlLook','tiroFinale','kyokoSacrifice','lawOfCycles'].includes(kind)&&
   card.type!=='event')
   throw Error(card.id+' this print is an event');
  if(kind==='fieldReturn'&&card.type!=='character')
@@ -75,10 +78,12 @@ export function mmmPackCard(card){
   'enterRetireDraw','deployRedGirl','recoverPurpleGirl','entryOtherImpact','bpActive',
   'lifeActive','removedDraw','removedLook','removedActive',  'namedEnergyCap',
   'homuraRaidLock','mamiRaidBounce','homuraRaidReturn','mamiRaidLook',
-  'homuraRemovedImpact','devilHomura','mamiFrontBuff','mermaidWitch'].includes(kind)&&
+  'homuraRemovedImpact','devilHomura','mamiFrontBuff','mermaidWitch',
+  'ultimateActive','ultimateRaid','madokaLook','devilFront','nagisaRaid',
+  'kyokoLifeAttack','sayakaReenter','homuraTuck','madokaKinds','mamiRaidActive'].includes(kind)&&
   card.type!=='character')
   throw Error(card.id+' this print is a character');
- if(['fieldDiscardDraw','fieldTraitBuff','handOutsideGirl'].includes(kind)&&card.type!=='field')
+ if(['fieldDiscardDraw','fieldTraitBuff','handOutsideGirl','mamiHouse'].includes(kind)&&card.type!=='field')
   throw Error(card.id+' this print is a field');
  const onPlay=kind==='entryOtherImpact'?[{op:'noteEntryTurn'}]:
   kind==='removedDraw'?[{op:'ifEnteredFromRemoved',then:[{op:'oncePerTurnGate',scope:'name',
@@ -160,6 +165,15 @@ export function mmmPackCard(card){
    kind:'ownNameExists',turn:'any',zone:'energy',excludeSelf:false,name:'鹿目 まどか'}}]:
   kind==='tiroFinale'?[{op:'restSkipOrMayRetire',bp:5000,mayRetireIfName:'巴 マミ'}]:
   kind==='kyokoSacrifice'?[{op:'retireNamedThenDraw',name:'佐倉 杏子',draw:2}]:
+  kind==='ultimateActive'||kind==='ultimateRaid'?[{op:'removeOutsideUpTo',count:2,cardType:'character'},
+   ...(kind==='ultimateRaid'?[{op:'noteNextRemovedApCut',amount:1}]:[])]:
+  kind==='madokaLook'?[{op:'inspectTopCharacterOutside',count:4}]:
+  kind==='lawOfCycles'?[{op:'removeFrontWithSelf',bp:5000}]:
+  kind==='devilFront'?[{op:'bounceNamedFrontCut',name:'鹿目 まどか',bp:3000,raised:4000,
+   names:['暁美 ほむら','鹿目 まどか']}]:
+  kind==='homuraTuck'?[{op:'tuckNamedDrawDeploy',name:'鹿目 まどか',color:'red',
+   trait:GIRL,maxEnergy:4,ap:1}]:
+  kind==='mamiRaidActive'?[{op:'noteNextHandEventApCut',maxEnergy:3,amount:1}]:
   null;
  const parts=card.traits.length===1?card.traits[0].split(/[／/]/).map(x=>x.trim()).filter(Boolean):[];
  return {
@@ -175,6 +189,12 @@ export function mmmPackCard(card){
    kind==='fieldReturn'?{onRetire:[{op:'returnRetiredToHand',optional:false}]}:
    kind==='madokaRecover'?{onRetire:[{op:'recoverOutsideNamedEnergy',name:'鹿目 まどか',
     maxEnergy:2,optional:true}]}:
+   kind==='ultimateActive'?{onPlay,onRetire:[{op:'retireSelfRemovedRestPair',color:'yellow',
+    ap:1,maxEnergy:3,trait:GIRL,excludeName:'鹿目 まどか',max:2}]}:
+   kind==='ultimateRaid'?{onPlay,onRetire:[{op:'retireSelfToRemoved'}]}:
+   kind==='nagisaRaid'?{onAttack:[{op:'revealTopNameOrTrait',name:'百江 なぎさ',trait:QUINTET}]}:
+   kind==='kyokoLifeAttack'?{onAttack:[{op:'buffOwnField',
+    filter:{field:'type',value:'character'},bp:1000,optional:true,excludeSelf:false}]}:
    onPlay?{onPlay}:{},
   ...(kind==='impactNull'||kind==='removedActive'?{impactNull:true}:{}),
   ...(kind==='removedDraw'?{ownTurnBp:1000}:{}),
@@ -222,6 +242,21 @@ export function mmmPackCard(card){
   ...(kind==='mamiRaidBounce'?{raidName:'巴 マミ'}:{}),
   ...(kind==='homuraRaidReturn'?{raidName:'暁美 ほむら'}:{}),
   ...(kind==='mamiRaidLook'?{raidName:'巴 マミ'}:{}),
+  ...(kind==='ultimateRaid'?{raidName:'鹿目 まどか',frontRemovedUse:{
+   trait:GIRL,excludeName:'鹿目 まどか',excludeRaid:true,orName:'円環の理'}}:{}),
+  ...(kind==='devilFront'?{raidName:'暁美 ほむら',nameAliases:['暁美 ほむら'],
+   frontNameRemoveShield:'悪魔ほむら'}:{}),
+  ...(kind==='nagisaRaid'?{raidName:'百江 なぎさ',mainAbility:{
+   op:'frontDiscardNameTraitBuff',frontOnly:true,oncePerTurn:true,
+   name:'百江 なぎさ',trait:QUINTET,bp:1000}}:{}),
+  ...(kind==='kyokoLifeAttack'?{raidName:'佐倉 杏子',lifeToHandDoubleAttack:true}:{}),
+  ...(kind==='sayakaReenter'?{raidName:'美樹 さやか',printedImpact:1,impactNull:true,
+   mainAbility:{op:'lifeHandReenterGrant',oncePerTurn:true}}:{}),
+  ...(kind==='madokaKinds'?{raidName:'鹿目 まどか',girlNameUnblockedDraw:2,passiveBonuses:[{
+   condition:{kind:'ownDistinctTraitNames',turn:'own',min:4,zone:'field',excludeSelf:true,trait:GIRL},
+   bp:1000,impact:1}]}:{}),
+  ...(kind==='mamiRaidActive'?{raidName:'巴 マミ',mainAbility:{
+   op:'outsideEventDiscardActive',oncePerTurn:true,min:6}}:{}),
   ...(kind==='entryOtherImpact'?{mainAbility:{
    op:'entryTurnOtherImpact',oncePerTurn:true,amount:1}}:{}),
   ...(kind==='bpActive'?{mainAbility:{
@@ -234,6 +269,14 @@ export function mmmPackCard(card){
    condition:{kind:'ownLifeAtMost',turn:'own',max:4},bp:500}],
    mainAbility:{op:'lifeToHandThenActive',oncePerTurn:true},
    triggerEffect:{op:'retireOppFrontUnderBp',bp:2500}}:{}),
+  ...(kind==='ultimateActive'?{enterAlwaysActive:true,phaseEffects:[{
+   phase:'attack',edge:'end',turn:'own',then:[{op:'retireSourceOnPhaseEnd'}]}]}:{}),
+  ...(kind==='madokaLook'?{triggerEffect:{op:'restOppFrontSkipNextActive'},
+   mainAbility:{op:'restPeekTop'}}:{}),
+  ...(kind==='mamiHouse'?{mainAbility:{op:'discardEventNamedEnergy',oncePerTurn:true,
+   name:'巴 マミ',color:'yellow',amount:1}}:{}),
+  ...(kind==='lawOfCycles'?{playRequiresAnyNames:['鹿目 まどか','アルティメットまどか'],
+   triggerEffect:{op:'retireOppFront'}}:{}),
  };
 }
 
@@ -242,7 +285,7 @@ export const MADOKA_ENGINE_IDS=Object.freeze(
 
 export function createMadokaV2Pack(){
  const cards=MADOKA_CARDS.filter(c=>c.engineKind).map(mmmPackCard);
- if(cards.length!==101)throw Error('Madoka registered count drifted');
+ if(cards.length!==113)throw Error('Madoka registered count drifted');
  return createUniversalPack({
   id:'madoka',version:'mmm-ua31-set1-20261029',cards
  });

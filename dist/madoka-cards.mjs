@@ -50,7 +50,7 @@ export const MADOKA_CARDS=
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA31BT_MMM-1-001.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-001",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "ultimateActive",
   "faq": []
  },
  {
@@ -92,7 +92,7 @@ export const MADOKA_CARDS=
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA31BT_MMM-1-002.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-002",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "ultimateRaid",
   "faq": []
  },
  {
@@ -352,7 +352,7 @@ export const MADOKA_CARDS=
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA31BT_MMM-1-008.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-008",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "madokaLook",
   "faq": []
  },
  {
@@ -1186,7 +1186,7 @@ export const MADOKA_CARDS=
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA31BT_MMM-1-027.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-027",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "mamiHouse",
   "faq": []
  },
  {
@@ -1228,7 +1228,7 @@ export const MADOKA_CARDS=
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA31BT_MMM-1-028.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-028",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "lawOfCycles",
   "faq": []
  },
  {
@@ -1564,7 +1564,7 @@ export const MADOKA_CARDS=
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA31BT_MMM-1-036.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-036",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "devilFront",
   "faq": []
  },
  {
@@ -1912,7 +1912,7 @@ export const MADOKA_CARDS=
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA31BT_MMM-1-044.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-044",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "nagisaRaid",
   "faq": []
  },
  {
@@ -3646,7 +3646,7 @@ export const MADOKA_CARDS=
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA31BT_MMM-1-083.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-083",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "kyokoLifeAttack",
   "faq": []
  },
  {
@@ -3970,7 +3970,7 @@ export const MADOKA_CARDS=
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA31BT_MMM-1-090.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-090",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "sayakaReenter",
   "faq": []
  },
  {
@@ -4494,7 +4494,7 @@ export const MADOKA_CARDS=
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA31ST_MMM-1-102.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31ST%2FMMM-1-102",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "homuraTuck",
   "faq": []
  },
  {
@@ -4582,7 +4582,7 @@ export const MADOKA_CARDS=
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA31ST_MMM-1-104.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31ST%2FMMM-1-104",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "madokaKinds",
   "faq": []
  },
  {
@@ -4842,7 +4842,7 @@ export const MADOKA_CARDS=
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA31ST_MMM-1-110.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31ST%2FMMM-1-110",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "mamiRaidActive",
   "faq": []
  },
  {
