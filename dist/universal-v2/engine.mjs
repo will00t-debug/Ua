@@ -18577,7 +18577,20 @@ export function universalPrivateChoices(pack,s,viewer){
  const zone=['effect-top-inspect','effect-search-deck','effect-top-take-one','effect-top-inspect-many','effect-search-deck-multi','effect-top-filter-choice','effect-top-filter-many-choice','effect-top-add-one','effect-deck-named-play','effect-top-trait-outside','effect-top-trait-event','deck','effect-top-order','effect-top-hand-outside','effect-top-hand-one'].includes(q.kind)?'deck':
   ['outside','effect-recover-outside','effect-deploy-outside','effect-outside-name-rest','effect-outside-printed','effect-outside-or-rest','effect-outside-printed-active','effect-play-outside-event','effect-outside-except','effect-outside-named-raid','effect-outside-names','effect-recover-under','effect-outside-hand-or-rest','effect-outside-rest-or-raid','effect-outside-printed-rest','effect-outside-referenced','effect-outside-traitless-rest','effect-outside-rest','effect-outside-deck-top','effect-raid-base-rest','effect-raid-source-rest','effect-outside-color-ap-rest','effect-outside-color-trait-active','effect-outside-active-pair','effect-outside-trait-ap-rest','effect-outside-exact-rest','effect-recover-event','effect-different-field','effect-printed-rest-raid'].includes(q.kind)?'outside':
   ['effect-grant-bounce-instead','effect-grant-block-at-least','effect-active-own-named','field','effect-grant-printed-block','effect-bounce-include-self','hand','effect-bounce-own','effect-active-energy-named','effect-active-traitless','effect-active-other-trait'].includes(q.kind)?'field':'hand';
- return {kind:q.kind,player:viewer,options:legalPending(pack,s).map(action=>{
+
+ // Controller-only: the full physical TOP-N window is display data, NOT
+ // extra legal actions. Never send this to the opposing viewer.
+ const filteredTop=['effect-top-filter-choice','effect-top-filter-many-choice',
+  'effect-top-trait-event','effect-top-trait-outside'].includes(q.kind);
+ const windowUids=!filteredTop?[]:q.kind==='effect-top-filter-many-choice'?
+  q.uids.filter(uid=>!q.selected.includes(uid)):q.uids;
+ const windowCards=filteredTop?s.players[viewer].deck.slice(0,windowUids.length):[];
+ const inspected=filteredTop&&windowCards.length===windowUids.length&&
+  windowCards.every((c,i)=>c.uid===windowUids[i])?
+  windowCards.map(c=>({uid:c.uid,cardId:c.cardId,name:card(pack,c).name,
+   color:card(pack,c).color})):[];
+ return {kind:q.kind,player:viewer,...(filteredTop?{inspected}:{}),
+  options:legalPending(pack,s).map(action=>{
   const physical=action.uid===null?null:
    (zone==='field'?field(s.players[viewer]):s.players[viewer][zone])
     .find(c=>c.uid===action.uid);

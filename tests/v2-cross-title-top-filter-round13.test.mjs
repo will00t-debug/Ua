@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {EXPECTED_V2_IDS} from './fixtures/v2-integrated-id-manifest.mjs';
+import {inspectedPendingChoiceCards} from '../dist/universal-v2/preview-actions.mjs';
 import {SAO_OFFICIAL_CARDS} from '../dist/sao-official-import.mjs';
 import {MST_V2_OFFICIAL_BY_ID} from '../dist/universal-v2/sources/mst-inventory.mjs';
 import {registeredV2TitlePack} from '../dist/universal-v2/title-packs/registry.mjs';
@@ -162,5 +163,25 @@ test('SAO-1-009 is illegal after its yellow energy leaves the energy line',()=>{
  s.players[0].energy[2]=null;
  s.players[0].outside.push(removed);
  assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='play'&&a.uid===source.uid),false);
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
+
+// UI regression: the complete private window is visible, even for cards
+// filtered out of the selectable list. The reducer remains authoritative.
+test('filtered TOP-N displays nonmatching cards without enabling selection',()=>{
+ let {packs,s,play,window}=open('sao','SAO-1-009',
+  ['SAO-1-057','SAO-1-019','SAO-1-073'],['SAO-1-019','SAO-1-019','SAO-1-019']);
+ s=dispatchUniversalAction(packs,s,play);
+ const legal=legalUniversalActions(packs,s);
+ const own=universalPrivateChoices(packs,s,0);
+ assert.equal(own.kind,'effect-top-filter-choice');
+ assert.equal(universalPrivateChoices(packs,s,1),null);
+ assert.deepEqual(own.inspected.map(c=>c.uid),window.map(c=>c.uid));
+ const shown=inspectedPendingChoiceCards(own,legal);
+ assert.deepEqual(shown.map(c=>c.cardId),window.map(c=>c.cardId));
+ assert.deepEqual(shown.map(c=>!!c.action),[false,true,false]);
+ assert.deepEqual(inspectedPendingChoiceCards(null,legal),[]);
+ assert.throws(()=>dispatchUniversalAction(packs,s,{type:'chooseTopFiltered',uid:window[0].uid}),
+  /not currently legal/);
  assert.equal(assertUniversalMatch(packs,s),true);
 });

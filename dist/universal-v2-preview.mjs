@@ -27,7 +27,7 @@ import {SAO_CARDS} from './sao-cards.mjs';
 import {MST_V2_OFFICIAL_CATALOGUE} from './universal-v2/sources/mst-inventory.mjs';
 import {V2_PHASE_LABELS,V2_TITLE_LABELS,V2_PENDING_LABELS,
  uiActor,isExactLegal,uiCardLabel,uiActionLabel,visibleActionsForCard,
- pendingChoiceCards,visiblePendingChoiceCards,pendingChoiceCaption,publicPendingTargetCard,attackBattleTags,attackKeywordBadges,inlineBlockDecision,raidClickPlan,moveClickPlan,
+ pendingChoiceCards,inspectedPendingChoiceCards,visiblePendingChoiceCards,pendingChoiceCaption,publicPendingTargetCard,attackBattleTags,attackKeywordBadges,inlineBlockDecision,raidClickPlan,moveClickPlan,
  FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs';
 import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalReplay,
  publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
@@ -366,6 +366,20 @@ function pendingChoiceControl(action,option,gallery,view){
  if(caption)button.append(el('span',{class:'choice-card-caption',text:caption}));
  return button;
 }
+function inspectedChoiceControl(card){
+ const enabled=!!card.action;
+ const button=el('button',{type:'button',disabled:!enabled,
+  class:'choice-card '+(enabled?'recommended':'v2-ineligible'),
+  'aria-label':card.name+(enabled?'，符合條件，可選擇':'，不符合條件，無法選擇'),
+  ...(enabled?{onClick:()=>applyAction(card.action)}:{})});
+ button.append(
+  el('span',{class:'choice-card-arts'},
+   el('span',{class:'choice-card-art'},choicePicture(card.cardId,card.name,0))),
+  el('span',{class:'choice-card-name',text:card.name}),
+  el('span',{class:'choice-card-caption',text:enabled?'符合條件 · 點選此牌':'不符合條件 · 無法選擇'})
+ );
+ return button;
+}
 function attackShowcase(battle){
  const figure=el('figure',{class:'attack-showcase'});
  const art=el('span',{class:'choice-card-art'},choicePicture(battle.cardId,battle.name,battle.owner));
@@ -411,9 +425,11 @@ function pendingDialog(legal,view){
  const byAction=new Map((privateChoices?.options||[])
   .filter(option=>option?.action)
   .map(option=>[JSON.stringify(option.action),option]));
- const rows=legal.map(action=>({action,
+ const inspected=inspectedPendingChoiceCards(privateChoices,legal);
+ const inspectedUids=new Set(inspected.map(card=>card.uid));
+ const rows=legal.filter(action=>!inspectedUids.has(action.uid)).map(action=>({action,
   option:byAction.get(JSON.stringify(action))||null}));
- const gallery=rows.some(row=>pendingChoiceCards(row.option).length>0||
+ const gallery=inspected.length>0||rows.some(row=>pendingChoiceCards(row.option).length>0||
   visiblePendingChoiceCards(view,row.action).length>0||
   publicPendingTargetCard(view,row.action)!==null);
  const title=V2_PENDING_LABELS[s.pending.kind]||s.pending.kind;
@@ -438,6 +454,7 @@ function pendingDialog(legal,view){
   dialog.append(row);
  }
  const list=el('div',{class:'action-list'+((gallery||blockGallery)?' choice-gallery':'')});
+ for(const card of inspected)list.append(inspectedChoiceControl(card));
  for(const row of rows){
   const blocker=blocking?blockControl(row.action,view):null;
   list.append(blocker||pendingChoiceControl(row.action,row.option,gallery||blockGallery,view));
