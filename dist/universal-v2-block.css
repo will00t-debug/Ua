@@ -25,7 +25,7 @@
  line-height:1.25;letter-spacing:0;white-space:nowrap;
  text-shadow:0 1px 0 #fff9;box-shadow:inset 0 1px 0 #fff9,0 1px 4px #0009;
 }
-.v2-shell #match-view .arena .slot.v2-attacking .v2-attack-keywords-card{
+.v2-shell #match-view .arena .slot.v2-has-attack-keywords .v2-attack-keywords-card{
  position:absolute;z-index:8;top:3px;right:-4px;pointer-events:none;
  display:flex;flex-direction:column;align-items:flex-end;gap:3px;
 }
@@ -40,12 +40,12 @@
  color:#cad7e7;font-size:11px;
 }
 @media (min-width:761px){
- .v2-shell #match-view .arena .slot.v2-attacking .v2-attack-keyword{
+ .v2-shell #match-view .arena .slot.v2-has-attack-keywords .v2-attack-keyword{
   font-size:10px;padding:2px 3px;
  }
 }
 @media (max-width:760px){
- .v2-shell #match-view .arena .slot.v2-attacking .v2-attack-keyword{
+ .v2-shell #match-view .arena .slot.v2-has-attack-keywords .v2-attack-keyword{
   font-size:10px;padding:2px 3px;
  }
  .v2-shell #match-view .v2-block-battle-meta{gap:3px}

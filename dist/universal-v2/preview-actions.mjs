@@ -1,4 +1,5 @@
 // Presentation-only adapters for the isolated V2 preview.
+import {universalAttackDamage,universalImpact} from './engine.mjs';
 // NEVER generate or accept an action outside legalUniversalActions().
 export const V2_PHASE_LABELS=Object.freeze({
  start:'開始／額外抽牌',move:'移動階段',main:'主要階段',attack:'攻擊階段'
@@ -795,6 +796,17 @@ export function attackKeywordBadges(battle){
  if(Number.isInteger(battle.impact)&&battle.impact>0)
   badges.push({type:'impact',text:'衝擊'+battle.impact});
  return badges;
+}
+// Use canonical V2 live values for each occupied FRONT slot, even outside
+// a pending block and when the physical card is REST.
+export function frontAttackKeywordBadges(packs,state,side,index){
+ if(![0,1].includes(side)||!Number.isInteger(index)||index<0||index>3)return [];
+ const front=state?.players?.[side]?.front?.[index];
+ if(!front)return [];
+ return attackKeywordBadges({
+  damage:universalAttackDamage(packs,state,front),
+  impact:universalImpact(packs,state,front)
+ });
 }
 // Inline controls are derived only from the defender's legal actions and
 // public FRONT cards. Readiness alone is insufficient (block restrictions,
