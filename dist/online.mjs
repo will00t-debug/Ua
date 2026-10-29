@@ -141,7 +141,7 @@ function authView(){
 }
 let coverCatalogue=null;
 function loadCovers(){
- if(loadCovers.started)return;
+ if(loadCovers.started||coverCatalogue)return;
  loadCovers.started=true;
  // Loaded only after login. The account script itself stays a classic script so
  // the login screen can boot even when the card catalogue is unavailable.
@@ -280,14 +280,39 @@ function homeView(){
     el('button',{type:'submit',text:'加入房間',disabled:app.busy||!playable}))),
   el('section',{class:'panel'},el('h2',{text:'最近對戰'}),recentBattleList())));
 }
+let artById=null;
+function artIndex(){
+ if(artById||!coverCatalogue)return artById;
+ const index=new Map();
+ for(const title of coverCatalogue.titles||[]){
+  for(const card of title.cards||[]){
+   const src=card?.onlineImage||card?.image;
+   if(typeof src!=='string'||!src)continue;
+   const keys=[card.id,card.number,...(Array.isArray(card.aliases)?card.aliases:[])];
+   for(const key of keys)if(typeof key==='string'&&key&&!index.has(key))index.set(key,src);
+  }
+ }
+ artById=index;
+ return artById;
+}
+function cardSrc(card){
+ const index=artIndex();
+ return index&&card?.cardId?index.get(card.cardId)||'':'';
+}
 function cardBox(card){
  if(!card)return el('div',{class:'slot empty','aria-label':'空位'},el('span',{text:'空'}));
  if(card.faceDown&&!card.cardId)return el('div',{class:'slot facedown',text:'蓋牌'});
  const bits=[card.cardId,card.bp!=null?'BP '+card.bp:'',card.ready===true?'ACTIVE':card.ready===false?'REST':''].filter(Boolean);
  const label=[card.name||card.cardId||'卡片',...bits].join(' · ');
- const box=el('div',{class:'slot occupied'+(card.color?' '+card.color:'')+(card.ready===false?' rest':''),title:label,'aria-label':label},
-  el('strong',{text:card.name||card.cardId||'卡片'}),el('small',{text:bits.join(' · ')}));
- if(card.raidDepth)box.append(el('small',{text:'Raid '+card.raidDepth}));
+ const box=el('div',{class:'slot occupied'+(card.color?' '+card.color:'')+(card.ready===false?' rest':''),title:label,'aria-label':label});
+ const src=cardSrc(card);
+ if(src){
+  const img=el('img',{class:'art',src,alt:card.name||card.cardId||'卡片',decoding:'async',referrerpolicy:'no-referrer'});
+  img.addEventListener('error',()=>{img.remove();box.classList.add('art-missing');});
+  box.append(img);
+ }
+ box.append(el('strong',{text:card.name||card.cardId||'卡片'}),el('small',{text:bits.join(' · ')}));
+ if(card.raidDepth)box.append(el('small',{class:'art-meta',text:'Raid '+card.raidDepth}));
  return box;
 }
 function zone(title,cards){
@@ -331,6 +356,7 @@ function ownHand(player){
  return el('div',{class:'online-hand'},el('div',{class:'line-label',text:'你的手牌'}),hand);
 }
 function matchView(){
+ loadCovers();
  const room=app.room,view=room.view,seat=room.seat;
  if(room.status==='waiting'||!view){
   return shell(el('section',{class:'panel'},
@@ -353,9 +379,9 @@ function matchView(){
  for(const card of view.openTriggers||[]){
   const word=card.trigger?String(card.trigger).toUpperCase():'無觸發';
   const who=card.owner===seat?'你':'對手';
-  triggers.append(el('div',{class:'slot'+(card.color?' '+card.color:''),},
-   el('strong',{text:card.name||card.cardId}),
-   el('small',{text:who+' · '+word+(card.checking?' · 確認中':'')})));
+  const shown=cardBox(card);
+  shown.append(el('small',{class:'art-meta',text:who+' · '+word+(card.checking?' · 確認中':'')}));
+  triggers.append(shown);
  }
  if(view.battle){
   const who=view.battle.owner===seat?'你的':'對手的';
