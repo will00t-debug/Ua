@@ -148,6 +148,43 @@ describe('account server',{concurrency:1,timeout:180000},()=>{
   assert.equal((await api('/api/rooms',{method:'POST',token:host.data.token,body:{deckId:'missing',first:'me'}})).status,404);
  });
 
+
+ test('account saves Steins Gate deck locally and in cloud despite COLOR trigger warning',async()=>{
+  const owner=await api('/api/register',{method:'POST',body:{username:'stg_owner',password}});
+  assert.equal(owner.status,201,JSON.stringify(owner.data));
+  const counts=Object.fromEntries(Array.from({length:10},(_,i)=>['STG-1-'+String(i+1).padStart(3,'0'),4]));
+  counts['STG-1-025']=4;
+  counts['STG-1-038']=4;
+  counts['STG-1-013']=2;
+  // 40 regular cards + 8 COLOR + 2 regular cards = 50.
+  const saved=await api('/api/decks',{method:'POST',token:owner.data.token,
+   body:{title:'steins-gate',name:'命運石之門自訂牌組',counts,localId:'stg-test'}});
+  assert.equal(saved.status,200,JSON.stringify(saved.data));
+  assert.equal(saved.data.deck.title,'steins-gate');
+  assert.equal(saved.data.deck.playable,false,'invalid COLOR count blocks PLAY, not CLOUD SAVE');
+  assert.ok(saved.data.deck.issues.some(x=>x.includes('COLOR Trigger limit exceeded')));
+  const recorded=await api('/api/decks',{token:owner.data.token});
+  assert.equal(recorded.status,200);
+  assert.ok(recorded.data.decks.some(x=>x.id===saved.data.deck.id));
+  // Updating after reducing COLOR from 8 to 4 should preserve the cloud ID.
+  const adjusted={...counts,'STG-1-038':0,'STG-1-014':4};
+  const updated=await api('/api/decks/'+saved.data.deck.id,
+   {method:'PUT',token:owner.data.token,
+    body:{title:'steins-gate',name:'修正後的命運石之門',counts:adjusted}});
+  assert.equal(updated.status,200,JSON.stringify(updated.data));
+  assert.equal(updated.data.deck.id,saved.data.deck.id);
+  assert.equal(updated.data.deck.counts['STG-1-038'],undefined);
+  assert.equal(updated.data.deck.counts['STG-1-014'],4);
+  const other=await api('/api/register',{method:'POST',
+   body:{username:'mmm_owner',password}});
+  assert.equal(other.status,201);
+  const madoka=await api('/api/decks',{method:'POST',token:other.data.token,
+   body:{title:'madoka',name:'魔法少女小圓牌組',counts:{'MMM-1-001':1}}});
+  assert.equal(madoka.status,200,JSON.stringify(madoka.data));
+  assert.equal(madoka.data.deck.playable,false);
+  assert.equal(madoka.data.deck.title,'madoka');
+ });
+
  test('online match hides the opponent hand, deck order and life cards',async()=>{
   const host=await api('/api/login',{method:'POST',body:{username:'host_red',password}});
   const guest=await api('/api/login',{method:'POST',body:{username:'guest_red',password}});
