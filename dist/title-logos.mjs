@@ -66,6 +66,13 @@ export const TITLE_LOGOS=Object.freeze({
   source:'https://commons.wikimedia.org/wiki/File:InuYashaLogoBlueRay.svg',
   credit:'高橋留美子／小学館・読売テレビ・サンライズ',
   license:'PD text logo'
+ }),
+ kjn:Object.freeze({
+  image:'https://upload.wikimedia.org/wikipedia/commons/c/c4/The_Eminence_in_Shadow_Text_Logo_%28Chinese%29.svg',
+  label:'我想成為影之強者！',
+  source:'https://commons.wikimedia.org/wiki/File:The_Eminence_in_Shadow_Text_Logo_(Chinese).svg',
+  credit:'逢沢大介・KADOKAWA／シャドウガーデン',
+  license:'PD text logo'
  })
 });
 export const titleLogo=id=>Object.hasOwn(TITLE_LOGOS,id)?TITLE_LOGOS[id]:null;

@@ -11,6 +11,7 @@ import {rezV2RawCards} from './rez-pack.mjs';
 import {createStgV2Pack} from './stg-pack.mjs';
 import {createMadokaV2Pack} from './mmm-pack.mjs';
 import {createIysV2Pack} from './iys-pack.mjs';
+import {createKjnV2Pack} from './kjn-pack.mjs';
 
 const CENSUS=['bleach','gurren-lagann','sword-art-online','solo-leveling','mushoku-tensei'];
 let rezeroBattlePack=null;
@@ -53,6 +54,7 @@ export function officialV2Pack(title){
  if(title==='steins-gate')return createSteinsGateBattlePack();
  if(title==='madoka')return createMadokaBattlePack();
  if(title==='inuyasha')return createInuyashaBattlePack();
+ if(title==='kjn')return createKjnBattlePack();
  if(!CENSUS.includes(title))throw Error('作品尚未提供正式 V2 牌組：'+String(title));
  return requireRegisteredV2TitlePack(title);
 }
@@ -131,6 +133,20 @@ export function inuyashaPracticeDeck(){
  const counts=practiceDeck(pack,{color:'purple'});
  const other=Object.keys(counts).filter(id=>pack.cards[id].color!=='purple');
  if(other.length)throw Error('Inuyasha purple practice deck included another color');
+ return {pack,counts};
+}
+
+let kjnBattlePack=null;
+export function createKjnBattlePack(){
+ if(!kjnBattlePack)kjnBattlePack=createKjnV2Pack();
+ return kjnBattlePack;
+}
+
+export function kjnPracticeDeck(){
+ const pack=createKjnBattlePack();
+ const counts=practiceDeck(pack,{color:'purple'});
+ const other=Object.keys(counts).filter(id=>pack.cards[id].color!=='purple');
+ if(other.length)throw Error('Eminence in Shadow purple practice deck included another color');
  return {pack,counts};
 }
 

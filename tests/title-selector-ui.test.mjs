@@ -11,7 +11,7 @@ import {MST_CARDS} from '../dist/mst-builder.mjs';
 import {REZERO_VOL2_CARDS} from '../dist/rezero-vol2.mjs';
 const app=readFileSync(new URL('../dist/app.mjs',import.meta.url),'utf8');
 test('registered titles and verified card inventory are available in deck builders',()=>{
- assert.deepEqual(TITLES.map(t=>t.id),['bleach','gurren-lagann','sword-art-online','solo-leveling','mushoku-tensei','rezero','steins-gate','madoka','inuyasha']);
+ assert.deepEqual(TITLES.map(t=>t.id),['bleach','gurren-lagann','sword-art-online','solo-leveling','mushoku-tensei','rezero','steins-gate','madoka','inuyasha','kjn']);
  assert.equal(CARDS.length,276);
  assert.equal(TTG_CARDS.length,81);
  assert.equal(TTG_PENDING_CARDS.length,0);
@@ -19,7 +19,7 @@ test('registered titles and verified card inventory are available in deck builde
  assert.equal(SOLO_LEVELING_CARDS.length,80);
  assert.equal(MST_CARDS.length,80);
  assert.equal(REZERO_VOL2_CARDS.length,73);
- assert.deepEqual(TITLES.map(t=>t.playable),[true,false,false,false,false,false,false,false,false]);
+ assert.deepEqual(TITLES.map(t=>t.playable),[true,false,false,false,false,false,false,false,false,false]);
 });
 test('four new editors and source-link inspection exist while BLEACH Raid is preserved',()=>{
  assert.match(app,/data-title=/);

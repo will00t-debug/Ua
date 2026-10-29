@@ -112,6 +112,10 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   return (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.owner===owner&&
    e.from==='outside'&&(e.to==='front'||e.to==='energy')&&
    printed({uid:e.uid,cardId:e.cardId})?.type==='character');
+ if(condition.kind==='ownRemovedUseThisTurn')
+  return (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.owner===owner&&
+   e.controller===owner&&e.from==='removed'&&
+   ['front','energy','outside'].includes(e.to)&&e.reason==='rule');
  if(condition.kind==='ownNamedAttackedThisTurn')
   return (s.attackedNames||[]).some(e=>e.owner===owner&&
    (e.name===condition.name||(e.aliases||[]).includes(condition.name)));
