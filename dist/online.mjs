@@ -266,18 +266,19 @@ function homeView(){
      el('label',{},'作品',el('select',{name:'title'},...TITLES.map(([id,label])=>el('option',{value:id,text:label})))),
      el('label',{},'牌表（每行「4 BLC-1-034」）',el('textarea',{name:'list',required:''})),
      el('button',{class:'primary',type:'submit',text:'保存到帳號',disabled:app.busy})))),
-  el('section',{class:'panel',id:'online-match'},
+   el('section',{class:'panel',id:'online-match'},
    el('h2',{text:'線上房間 · 建立或加入'}),
    el('p',{class:'muted',text:'雙方各用自己的帳號和一副 50 張、已完整支援 V2 的牌組。伺服器發牌，並只把你看得到的場面傳回來。'}),
+   app.error?el('div',{id:'room-alert',class:'banner error',role:'alert',text:app.error}):null,
    el('form',{class:'grid',onSubmit:createRoom},
     el('label',{},'使用牌組',deckSelect()),
     el('label',{},'先手',el('select',{name:'first'},
      el('option',{value:'me',text:'我先手'}),el('option',{value:'opponent',text:'對方先手'}),el('option',{value:'random',text:'隨機'}))),
-    el('button',{class:'primary',type:'submit',text:'建立房間',disabled:app.busy||!playable})),
+    el('button',{class:'primary',type:'submit',text:app.busy?'建立中…':'建立房間',disabled:app.busy||!playable})),
    el('form',{class:'grid',onSubmit:joinRoom},
     el('label',{},'房間代碼',el('input',{name:'code',maxlength:'8',autocapitalize:'characters',required:''})),
     el('label',{},'使用牌組',deckSelect()),
-    el('button',{type:'submit',text:'加入房間',disabled:app.busy||!playable}))),
+    el('button',{type:'submit',text:app.busy?'加入中…':'加入房間',disabled:app.busy||!playable}))),
   el('section',{class:'panel'},el('h2',{text:'最近對戰'}),recentBattleList())));
 }
 let artById=null;
@@ -502,6 +503,10 @@ async function removeDeck(deck){
  catch(error){app.error=error.message;}
  app.busy=false;render();
 }
+function showRoomAlert(){
+ const alert=document.getElementById?.('room-alert');
+ alert?.scrollIntoView?.({block:'nearest',inline:'nearest'});
+}
 async function createRoom(event){
  event.preventDefault();
  const data=new FormData(event.currentTarget);
@@ -512,12 +517,13 @@ async function createRoom(event){
   startPoll();
  }catch(error){app.error=error.message;}
  app.busy=false;render();
+ if(app.error)showRoomAlert();
 }
 async function joinRoom(event){
  event.preventDefault();
  const data=new FormData(event.currentTarget);
  const code=String(data.get('code')||'').trim().toUpperCase();
- if(!ROOM.test(code)){app.error='房間代碼是 8 個英數。';render();return;}
+ if(!ROOM.test(code)){app.error='房間代碼是 8 個英數。';render();showRoomAlert();return;}
  app.busy=true;app.error='';render();
  try{
   app.room=await api('/api/rooms/'+code+'/join',{method:'POST',body:{deckId:data.get('deckId')}});
@@ -525,6 +531,7 @@ async function joinRoom(event){
   startPoll();
  }catch(error){app.error=error.message;}
  app.busy=false;render();
+ if(app.error)showRoomAlert();
 }
 async function copyCode(code){
  try{await navigator.clipboard.writeText(code);app.notice='已複製房間代碼。';}
