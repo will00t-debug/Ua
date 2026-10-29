@@ -59,3 +59,131 @@ button:disabled{opacity:.55;cursor:not-allowed}
 .deck .row{justify-content:flex-end}
 .deck .row button.primary{white-space:nowrap}
 @media(max-width:680px){.builder-entry{align-items:stretch}.builder-entry-button{width:100%;text-align:center}.deck{align-items:flex-start;flex-direction:column}.deck .row{width:100%;justify-content:flex-start}}
+
+/* Online match table. Empty lines stay card-sized on the playmat so the hand
+   and the opening choice remain on screen when a room starts. */
+body.arena-site:has(.online-match){background:#07090f;overflow:hidden}
+body.arena-site #app.wrap:has(.online-match){
+ max-width:none;width:100%;height:100dvh;margin:0;padding:0;
+ display:flex;flex-direction:column;overflow:hidden
+}
+body.arena-site #app.wrap:has(.online-match)>.arena-app{
+ flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden
+}
+.online-match{
+ --card-h:min(11dvh,112px);
+ flex:1;min-height:0;display:grid;
+ grid-template-columns:minmax(0,1fr) minmax(250px,320px);
+ grid-template-rows:auto minmax(0,1fr);
+ background:#07090f;color:#e8edf5
+}
+.online-match-bar{
+ grid-column:1/-1;display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap;
+ min-height:44px;padding:6px 14px;background:#0f1722;border-bottom:1px solid #2b3b4e
+}
+.online-match-bar h1{font-size:16px;letter-spacing:.02em}
+.online-match .phases span{background:#172233;color:#b7c6d8;border:1px solid transparent}
+.online-match .phases .current{background:#3a1520;color:#ffc3cb;border-color:#6d3140}
+.online-match .tag{background:#172233;color:#d5e3f4;border-color:#31445c}
+.online-match .tag.turn{color:#d7ffe8;border-color:#1f6b45;background:#10261c}
+.online-table{
+ min-width:0;min-height:0;display:grid;
+ grid-template-rows:minmax(0,1fr) minmax(0,1fr) auto;
+ background:radial-gradient(ellipse at 50% 46%,#1c3046,#121c2a 68%,#0d141e);
+ border-right:1px solid #243044
+}
+.online-side{
+ min-width:0;min-height:0;display:grid;
+ grid-template-rows:auto auto minmax(0,1fr) minmax(0,1fr);
+ gap:4px;padding:6px 14px 2px;background:transparent;border:0;margin:0
+}
+.online-side.you{border-top:1px solid #6385b333}
+.online-side header{display:flex;align-items:center;justify-content:space-between;gap:8px 12px;min-width:0}
+.online-side .who{display:flex;align-items:baseline;gap:8px;min-width:0}
+.online-side h2{margin:0;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.online-pills{display:flex;flex-wrap:wrap;gap:4px 6px}
+.online-pills span{
+ font-size:11px;line-height:1.4;color:#d5e2f2;
+ background:#101a28cc;border:1px solid #31445c;border-radius:99px;padding:1px 8px
+}
+.hidden-hand{display:flex;align-items:center;gap:3px;min-width:0;margin-left:auto}
+.hidden-hand i{
+ display:block;flex:0 0 auto;width:11px;height:15px;border-radius:2px;
+ border:1px solid #70839c;background:repeating-linear-gradient(135deg,#293a50 0 2px,#203044 2px 4px)
+}
+.hidden-hand span{
+ min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+ font-size:11px;color:#93a4b8
+}
+.online-line,.online-hand{
+ min-width:0;min-height:0;display:grid;grid-template-columns:52px minmax(0,1fr);
+ gap:8px;align-items:center
+}
+.online-line.energy{--card-h:min(9.5dvh,96px)}
+.online-hand{
+ --card-h:min(16dvh,132px);
+ padding:6px 14px 8px;border-top:1px solid #6385b333;
+ background:linear-gradient(180deg,#10223522,#0c1624e6)
+}
+.line-label{font-size:12px;color:#a5b7ce;line-height:1.3}
+.online-match .zone{
+ display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+ justify-items:center;align-items:center;gap:clamp(6px,1.1vw,18px);
+ height:100%;min-height:0;min-width:0
+}
+.online-match .hand{
+ display:flex;align-items:center;justify-content:safe center;gap:8px;
+ height:var(--card-h);min-height:0;overflow-x:auto;overflow-y:hidden;padding:2px 4px 4px
+}
+.online-match .slot{
+ width:min(100%,calc(var(--card-h) * 63 / 88));height:auto;aspect-ratio:63/88;
+ min-width:0;min-height:0;max-height:100%;padding:5px 4px;
+ border:1px solid #4d6584;border-radius:5px;background:#162232;color:#e7eef8;
+ display:flex;flex-direction:column;justify-content:space-between;gap:2px;
+ overflow:hidden;box-shadow:0 3px 8px #0006
+}
+.online-match .hand .slot{flex:0 0 auto;height:auto;min-width:0}
+.online-match .slot strong{
+ font-size:11px;line-height:1.25;font-weight:750;
+ display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden
+}
+.online-match .slot small{color:#b7c6d8;font-size:10px;line-height:1.25}
+.online-match .slot.empty{
+ justify-content:center;align-items:center;background:transparent;color:#8ea3bb;
+ border:1px dashed #6f88a666;box-shadow:none;font-size:12px
+}
+.online-match .slot.rest{background:#101820;border-style:solid}
+.online-match .slot.facedown{
+ justify-content:center;align-items:center;color:#d5e2f2;border-style:solid;
+ background:repeating-linear-gradient(135deg,#24344a 0 3px,#1a2738 3px 7px)
+}
+.online-match .slot.purple{border-color:#b9a4d6;background:#241c30}
+.online-match .slot.green{border-color:#8fceb4;background:#14241c}
+.online-match .slot.blue{border-color:#9ec0e4;background:#152433}
+.online-match .slot.red{border-color:#e3b0b0;background:#2a181c}
+.online-match .slot.yellow{border-color:#e3d3a2;background:#292416}
+.online-dock{
+ min-width:0;min-height:0;overflow:auto;padding:10px 12px 16px;background:#0c121b;
+ display:flex;flex-direction:column;gap:10px
+}
+.online-dock .panel{margin:0}
+.online-dock h2{font-size:15px}
+.online-dock .setup-note{
+ margin:0;padding:10px 12px;border-radius:8px;background:#2a1720;border:1px solid #6a3140;
+ color:#ffd7de;font-size:13px;line-height:1.5
+}
+.online-dock .actions{max-height:none}
+.online-dock .actions button,.online-dock .row button{
+ justify-content:center;font-weight:700;background:#172233;color:#e8eef8;border-color:#3c516c
+}
+.online-dock button:hover:not(:disabled){border-color:#7eb6ff;background:#1c3048}
+.online-dock .log{max-height:220px}
+@media(max-width:820px){
+ body.arena-site:has(.online-match){overflow:auto}
+ body.arena-site #app.wrap:has(.online-match){height:auto;min-height:100dvh;overflow:visible}
+ body.arena-site #app.wrap:has(.online-match)>.arena-app{min-height:100dvh;overflow:visible}
+ .online-match{grid-template-columns:1fr;grid-template-rows:auto auto auto;flex:none}
+ .online-table{min-height:70dvh;border-right:0}
+ .online-dock{border-top:1px solid #243044}
+ .hidden-hand span{max-width:18ch}
+}

@@ -281,30 +281,54 @@ function homeView(){
   el('section',{class:'panel'},el('h2',{text:'最近對戰'}),recentBattleList())));
 }
 function cardBox(card){
- if(!card)return el('div',{class:'slot empty',text:'空'});
+ if(!card)return el('div',{class:'slot empty','aria-label':'空位'},el('span',{text:'空'}));
  if(card.faceDown&&!card.cardId)return el('div',{class:'slot facedown',text:'蓋牌'});
  const bits=[card.cardId,card.bp!=null?'BP '+card.bp:'',card.ready===true?'ACTIVE':card.ready===false?'REST':''].filter(Boolean);
- const box=el('div',{class:'slot'+(card.color?' '+card.color:'')+(card.ready===false?' rest':'')},
+ const label=[card.name||card.cardId||'卡片',...bits].join(' · ');
+ const box=el('div',{class:'slot occupied'+(card.color?' '+card.color:'')+(card.ready===false?' rest':''),title:label,'aria-label':label},
   el('strong',{text:card.name||card.cardId||'卡片'}),el('small',{text:bits.join(' · ')}));
  if(card.raidDepth)box.append(el('small',{text:'Raid '+card.raidDepth}));
  return box;
 }
 function zone(title,cards){
- return el('div',{},el('div',{class:'muted',text:title}),el('div',{class:'zone'},...(cards||[]).map(cardBox)));
+ const kind=title==='能源線'?'energy':'front';
+ return el('div',{class:'online-line '+kind},
+  el('div',{class:'line-label',text:title}),
+  el('div',{class:'zone','data-zone':kind},...(cards||[]).map(cardBox)));
+}
+function statPills(player,setup){
+ const pills=el('div',{class:'online-pills'},
+  el('span',{text:setup?'生命尚未設置':(player.lifeCount??0)+' 生命'}),
+  el('span',{text:(player.deckCount??0)+' 牌庫'}),
+  el('span',{text:(player.handCount??0)+' 手牌'}),
+  el('span',{text:(player.apReady??0)+'/'+(player.apTotal??0)+' AP'}),
+  el('span',{text:(player.energyTotal??0)+' 能源'}));
+ if(Array.isArray(player.outside)&&player.outside.length)pills.append(el('span',{text:player.outside.length+' 場外'}));
+ if(Array.isArray(player.removed)&&player.removed.length)pills.append(el('span',{text:player.removed.length+' 移除'}));
+ return pills;
 }
 function side(name,player,packLabel,{openHand=false,setup=false}={}){
- const stats=[setup?'生命：尚未設置':player.lifeCount+' 生命',player.deckCount+' 牌庫',player.handCount+' 手牌',player.apReady+'/'+player.apTotal+' AP',player.energyTotal+' 能源'].join(' · ');
- const block=el('section',{class:'panel side'},
-  el('header',{},el('h2',{text:name}),el('span',{class:'muted',text:packLabel})),
-  el('p',{class:'muted',text:stats}),
-  zone('前線',player.front),zone('能源線',player.energy));
- if(openHand){
-  const hand=el('div',{class:'hand'});
-  for(const card of player.hand||[])hand.append(cardBox(card));
-  if(!(player.hand||[]).length)hand.append(el('div',{class:'slot empty',text:'沒有手牌'}));
-  block.append(el('div',{class:'muted',text:'你的手牌'}),hand);
- }else block.append(el('p',{class:'muted',text:'對手手牌是隱藏的，這裡只顯示張數。'}));
+ const who=el('div',{class:'who'},el('h2',{text:name}),packLabel?el('span',{class:'muted',text:packLabel}):null);
+ const head=el('header',{},who);
+ if(!openHand){
+  const backs=el('div',{class:'hidden-hand','aria-label':'對手手牌是隱藏的，這裡只顯示張數。'});
+  const count=Math.min(10,Number(player.handCount)||0);
+  for(let i=0;i<count;i++)backs.append(el('i',{'aria-hidden':'true'}));
+  backs.append(el('span',{text:'對手手牌是隱藏的，這裡只顯示張數。'}));
+  head.append(backs);
+ }
+ const block=el('section',{class:'online-side'+(openHand?' you':' opponent')},head,statPills(player,setup));
+ const front=zone('前線',player.front),energy=zone('能源線',player.energy);
+ // Opponent sits across the table: energy is the far row, front faces the center.
+ if(openHand)block.append(front,energy);
+ else block.append(energy,front);
  return block;
+}
+function ownHand(player){
+ const hand=el('div',{class:'hand'});
+ for(const card of player.hand||[])hand.append(cardBox(card));
+ if(!(player.hand||[]).length)hand.append(el('div',{class:'slot empty',text:'沒有手牌'}));
+ return el('div',{class:'online-hand'},el('div',{class:'line-label',text:'你的手牌'}),hand);
 }
 function matchView(){
  const room=app.room,view=room.view,seat=room.seat;
@@ -323,7 +347,7 @@ function matchView(){
  for(const [id,label] of PHASES)phase.append(el('span',{class:view.phase===id?'current':'',text:label}));
  const actions=el('div',{class:'actions'});
  if(view.phase==='setup'){
-  actions.append(el('p',{class:'muted',text:'開局可選擇保留 7 張，或整手重抽 7 張一次。先手先選，後手再選，完成後才設定生命卡。'}));
+  actions.append(el('p',{class:'setup-note',text:'開局可選擇保留 7 張，或整手重抽 7 張一次。先手先選，後手再選，完成後才設定生命卡。'}));
  }
  const triggers=el('div',{class:'trigger-public'});
  for(const card of view.openTriggers||[]){
@@ -348,17 +372,23 @@ function matchView(){
  }else actions.append(el('p',{class:'muted',text:view.pending?.kind==='life-trigger'?'對手正在確認已公開的觸發。':'等待對手操作。'}));
  const log=el('div',{class:'log'});
  for(const line of room.log||[])log.append(el('div',{text:line.text}));
- return shell(
-  el('div',{class:'row'},el('h1',{text:'房間 '+room.code}),phase,el('span',{class:'tag',text:room.youAreFirst?'你是先手':'對方是先手'})),
-  side((room.opponent?.username||'對手')+'（對手）',opp,room.opponent?.titleLabel||'',{setup:view.phase==='setup'}),
-  side((room.you?.username||'你')+'（你）',you,room.you?.titleLabel||'',{openHand:true,setup:view.phase==='setup'}),
-  el('div',{class:'grid split'},
+ return shell(el('div',{class:'online-match'},
+  el('header',{class:'online-match-bar'},
+   el('h1',{text:'房間 '+room.code}),
+   phase,
+   el('span',{class:'tag',text:room.youAreFirst?'你是先手':room.youAreFirst===false?'對方是先手':'先後手順序確認中'}),
+   el('span',{class:'tag turn',text:room.status==='finished'?'對局結束':room.yourTurn?'輪到你':'等待對手'})),
+  el('div',{class:'online-table'},
+   side((room.opponent?.username||'對手')+'（對手）',opp,room.opponent?.titleLabel||'',{setup:view.phase==='setup'}),
+   side((room.you?.username||'你')+'（你）',you,room.you?.titleLabel||'',{openHand:true,setup:view.phase==='setup'}),
+   ownHand(you)),
+  el('aside',{class:'online-dock'},
    el('section',{class:'panel'},el('h2',{text:room.yourTurn?'輪到你':'對局操作'}),
     (view.openTriggers||[]).length?el('div',{},el('h3',{text:'公開觸發'}),el('p',{class:'muted',text:'翻開的觸發雙方都看得到。'}),triggers):null,
     actions,
     el('div',{class:'row'},el('button',{type:'button',text:'認輸',disabled:app.busy||room.status!=='playing',onClick:resign}),
      room.status==='finished'?el('button',{type:'button',text:'返回大廳',onClick:leaveFinished}):null)),
-   el('section',{class:'panel'},el('h2',{text:'公開紀錄'}),el('p',{class:'muted',text:'這裡不寫出手牌或牌庫裡的卡名。觸發會公開給對手。'}),log)));
+   el('section',{class:'panel'},el('h2',{text:'公開紀錄'}),el('p',{class:'muted',text:'這裡不寫出手牌或牌庫裡的卡名。觸發會公開給對手。'}),log))));
 }
 function render(){
  const root=document.querySelector('#app');
