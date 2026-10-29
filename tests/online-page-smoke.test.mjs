@@ -74,6 +74,7 @@ test('Cloudflare /online.html login boot produces actual inputs, registration sw
 test('entering an online room shows a card-sized table, the opening hand, and the mulligan choices',()=>{
  const css=readFileSync(new URL('../dist/online.css',import.meta.url),'utf8');
  assert.match(css,/\.online-match \.slot\{[^}]*aspect-ratio:63\/88/);
+ assert.match(css,/\.online-match \.slot img\.art\{[^}]*object-fit:contain/);
  assert.match(css,/\.online-match \.slot\.empty\{[^}]*background:transparent/);
  assert.match(css,/grid-template-columns:minmax\(0,1fr\) minmax\(250px,320px\)/);
  const appRoot=new FakeNode('div');
@@ -104,7 +105,11 @@ test('entering an online room shows a card-sized table, the opening hand, and th
    {lifeCount:0,deckCount:43,handCount:7,hand:null,front:empty(),energy:[{uid:'e1',cardId:'BLC-1-010',name:'能量角色',color:'green',ready:true,bp:4000},null,null,null],apReady:0,apTotal:0,energyTotal:0,outside:[],removed:[]}
   ]}
  };
- vm.runInContext("app.offline=false;app.user={username:'32928748'};app.room=roomFixture;render();",context);
+ context.artFixture={titles:[{id:'bleach',cards:[
+  {id:'BLC-1-001',image:'https://example.test/ichigo.png',aliases:['UA08ST/BLC-1-001']},
+  {id:'BLC-1-010',image:'https://example.test/energy.png'}
+ ]}]};
+ vm.runInContext("coverCatalogue=artFixture;artById=null;app.offline=false;app.user={username:'32928748'};app.room=roomFixture;render();",context);
  const rendered=texts(appRoot);
  assert.match(rendered,/房間 G7MC92Y3/);
  assert.match(rendered,/你的手牌/);
@@ -116,12 +121,15 @@ test('entering an online room shows a card-sized table, the opening hand, and th
  assert.match(rendered,/生命尚未設置/);
  assert.match(rendered,/能量角色/);
  const classes=[];
+ const images=[];
  function visit(node){
   if(!(node instanceof FakeNode))return;
   if(node.className)classes.push(node.className);
+  if(node.tag==='img')images.push(node.attributes.src);
   for(const child of node.children)visit(child);
  }
  visit(appRoot);
+ assert.deepEqual(images.sort(),['https://example.test/energy.png','https://example.test/ichigo.png']);
  assert.ok(classes.includes('online-match'));
  assert.ok(classes.includes('online-table'));
  assert.ok(classes.includes('online-hand'));
