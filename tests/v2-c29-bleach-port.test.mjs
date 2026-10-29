@@ -5515,7 +5515,7 @@ test('BLC-4-021 retires BP 5000 or less only while Bazz-B is present, and buffs 
  assert.equal(bleach.cards['BLC-4-001'].nameAliases.includes('バズビー'),true);
  const evt={id:'BAD',name:'指',color:'yellow',type:'event',energy:0,ap:1,bp:0,gen:0,traits:[],trigger:'special',implementation:'dsl',playRequiresOwnName:'バズビー',triggerEffect:{op:'retireOppFront'},effects:{onPlay:[{op:'draw',count:1}]}};
  assert.throws(()=>createUniversalPack({id:'bad-burn-energy',cards:[{...evt,effects:{onPlay:[{op:'buffOwnNameIfPrintedEnergy',name:'バズビー',minEnergy:0,bp:1000}]}}]}),/invalid printed-energy name buff/);
- assert.throws(()=>createUniversalPack({id:'bad-burn-opt',cards:[{...evt,effects:{onPlay:[{op:'retireOppFrontUnderBp',bp:5000,optional:true}]}}]}),/unsupported printed BP retirement profile/);
+ assert.throws(()=>createUniversalPack({id:'bad-burn-opt',cards:[{...evt,effects:{onPlay:[{op:'retireOppFrontUnderBp',bp:5000,optional:'yes'}]}}]}),/unsupported printed BP retirement profile/);
  const deck=realDeck(['BLC-4-021','BLC-2-003','BLC-4-006','BLC-4-001','BLC-1-001','BLC-1-012','BLC-1-018','BLC-4-009','BLC-1-007','BLC-1-006'],'yellow');
  const playable=(packs,s,uid)=>legalUniversalActions(packs,s).some(a=>a.type==='event'&&a.uid===uid);
  function hold(s){
@@ -6159,7 +6159,7 @@ test('BLC-1-081 cannot enter or move to energy, and raises its retirement cap at
  const stepPackCards=id=>({id,name:'歩'+id,color:'green',type:'character',energy:0,ap:1,bp:1000,gen:1,traits:[],trigger:null});
  const fillers=Array.from({length:11},(_,i)=>stepPackCards('F'+i));
  const lab=createUniversalPack({id:'lab-ken-step',cards:[
-  {...stepPackCards('STEP'),implementation:'vanilla',step:true},
+  {...stepPackCards('STEP'),implementation:'dsl',step:true,effects:{}},
   {...stepPackCards('LOCKED'),implementation:'dsl',energyForbidden:true,step:true,effects:{}},
   ...fillers.map(c=>({...c,implementation:'vanilla'}))
  ]});

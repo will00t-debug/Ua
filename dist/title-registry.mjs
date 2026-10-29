@@ -6,6 +6,7 @@ import {MST_CARDS} from './mst-builder.mjs';
 import {REZERO_VOL2_CARDS} from './rezero-vol2.mjs';
 import {REZERO_CARDS} from './rezero-cards.mjs';
 import {STEINS_GATE_CARDS} from './steins-gate-cards.mjs';
+import {MADOKA_CARDS} from './madoka-cards.mjs';
 // Isolated catalogue/deck editing; unfinished series are not match-playable.
 export const TITLES=[
  {id:'bleach',label:'BLEACH 千年血戰篇',cards:CARDS,presets:PRESETS,playable:true},
@@ -14,7 +15,8 @@ export const TITLES=[
  {id:'solo-leveling',label:'我獨自升級',cards:SOLO_LEVELING_CARDS,presets:[],playable:false},
  {id:'mushoku-tensei',label:'無職轉生',cards:MST_CARDS,presets:[],playable:false},
  {id:'rezero',label:'Re:從零開始的異世界生活',cards:[...REZERO_CARDS,...REZERO_VOL2_CARDS],presets:[],playable:false},
- {id:'steins-gate',label:'命運石之門',cards:STEINS_GATE_CARDS,presets:[],playable:false}
+ {id:'steins-gate',label:'命運石之門',cards:STEINS_GATE_CARDS,presets:[],playable:false},
+ {id:'madoka',label:'魔法少女小圓',cards:MADOKA_CARDS,presets:[],playable:false}
 ];
 export function titleOfCard(card){return TITLES.some(t=>t.id===card?.title)?card.title:'bleach';}
 export function getTitle(id){return TITLES.find(t=>t.id===id)||null;}

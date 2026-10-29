@@ -276,7 +276,7 @@ export function rezeroPackCard(card){
   id:card.id,name:card.nameJa,color:card.color,type:card.type,
   energy:card.energy,ap:card.ap,bp:card.bp,gen:card.gen,trigger:card.trigger,
   traits:card.traits,
-  implementation:kind==='plain'||kind==='step'?'vanilla':'dsl',
+  implementation:kind==='plain'?'vanilla':'dsl',
   effects:kind==='activeFrontDownDraw'?{
    onPlay:[{op:'enemyBpDown',bp:1000,optional:true,minBp:1500,maxTargets:2,zone:'front'}],
    onAttack:[{op:'drawIfOppFrontBelowPrinted',count:1}]}:

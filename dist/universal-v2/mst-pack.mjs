@@ -703,8 +703,8 @@ export function verifiedMstV2Cards(){
   const card={id,name:pin.nameJa,color:pin.color,type:pin.type,
    energy:pin.energy,ap:pin.ap,bp:pin.bp,gen:pin.gen,
    traits:[...pin.traits],trigger:pin.trigger,
-   implementation:['vanilla','step'].includes(pin.kind)?'vanilla':'dsl'};
-  if(card.implementation==='vanilla')card.effects={};
+   implementation:pin.kind==='vanilla'?'vanilla':'dsl'};
+  if(card.implementation==='vanilla'||pin.kind==='step')card.effects={};
   if(pin.kind==='onOwnEffectEntryChooseTimedSelf'){
    card.raidName='エリス';card.printedImpact=1;card.ownTurnBp=500;
    card.effects={onPlay:[{op:'chooseOne',entry:'ownEffect',optional:false,

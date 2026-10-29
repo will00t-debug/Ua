@@ -22,7 +22,7 @@ base[3]={...base[3],type:'event',energy:2,bp:0,gen:0,implementation:'dsl',
 base[4]={...base[4],trigger:'draw'};
 base[5]={...base[5],trigger:'get'};
 base[6]={...base[6],trigger:'final'};
-base[7]={...base[7],step:true};
+base[7]={...base[7],step:true,implementation:'dsl',effects:{}};
 base[9]={...base[9],implementation:'dsl',effects:{onAttack:[{op:'buffSelf',bp:1000}]}};
 const pack=createUniversalPack({id:'test-future-work',cards:base});
 const deck=Object.fromEntries(base.slice(0,12).map(c=>[c.id,4]));deck.P12=2;

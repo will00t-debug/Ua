@@ -134,7 +134,7 @@ test('all one hundred thirteen whole prints enter the V2 pack',()=>{
  assert.deepEqual(pack.cards['REZ-1-107'].mainAbility,{
   op:'handOutsideBlockAtLeast',oncePerTurn:true,bp:4000});
  assert.equal(pack.cards['REZ-1-008'].step,true);
- assert.equal(pack.cards['REZ-1-008'].implementation,'vanilla');
+ assert.equal(pack.cards['REZ-1-008'].implementation,'dsl');
  assert.equal(pack.cards['REZ-1-013'].impactNull,true);
  assert.deepEqual(pack.cards['REZ-1-023'].effects.onPlay,[{op:'drawDiscard',count:1}]);
  assert.deepEqual(pack.cards['REZ-1-024'].effects.onPlay,[{op:'bounceOwnOtherUnderEnergy',energy:1}]);
@@ -5122,7 +5122,7 @@ test('Beatrice raids onto Beatrice, moves one front to energy, and locks movemen
   rezeroPackCard(REZERO_BY_ID['REZ-1-077']),
   rezeroPackCard(REZERO_BY_ID['REZ-1-072']),
   {id:'LAB-STEP',name:'Step',color:'purple',type:'character',energy:0,ap:1,bp:2000,gen:0,
-   traits:[],trigger:null,step:true,implementation:'vanilla',effects:{}},
+   traits:[],trigger:null,step:true,implementation:'dsl',effects:{}},
   {id:'LAB-DEPLOY-BEA',name:'Deploy Beatrice',color:'purple',type:'event',energy:0,ap:1,bp:0,gen:0,
    trigger:null,implementation:'dsl',effects:{onPlay:[{op:'deployOwnHandRestOrRaid',type:'character',
     color:'purple',maxEnergy:4,ap:1,max:1,optional:true,names:['ベアトリス']}]}},

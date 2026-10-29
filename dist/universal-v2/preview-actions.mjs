@@ -10,7 +10,8 @@ export const V2_TITLE_LABELS=Object.freeze({
  'sword-art-online':'刀劍神域',
  'mushoku-tensei':'無職轉生',
  rezero:'Re:Zero',
- 'steins-gate':'命運石之門'
+ 'steins-gate':'命運石之門',
+ madoka:'魔法少女小圓'
 });
 export const V2_PENDING_LABELS=Object.freeze({
  block:'選擇是否阻擋', 'life-trigger':'生命觸發',

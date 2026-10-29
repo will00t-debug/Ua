@@ -803,6 +803,8 @@ function filteredChoices(pack,s,cards,filter){
 function matchesSearch(pack,s,physical,query){
  // Printed レイドを持たない. Absent excludeRaid still accepts a Raid character.
  if(query.excludeRaid===true&&card(pack,physical).raidName)return false;
+ // 〈名前〉以外. An alias of that name is still that name.
+ if(query.excludeName&&cardHasName(card(pack,physical),query.excludeName))return false;
  // Groups are AND inside and OR across. Absent groups keeps flat filters.
  if(Array.isArray(query.groups))
   return query.groups.some(g=>matchesSearch(pack,s,physical,{filters:g.filters,logic:g.logic}));
@@ -2156,6 +2158,7 @@ function continueEffectQueue(pack,s){
       job.filters?{filters:job.filters.map(f=>({...f})),logic:job.logic}:
       {filter:{...job.filter}};
      const raid=job.excludeRaid===true?{excludeRaid:true}:{};
+     const excluded=typeof job.excludeName==='string'?{excludeName:job.excludeName}:{};
      if(job.rest==='outside'){
       // 公開する covers every inspected card, not only the one added to hand.
       // privateLook is 見て: the window stays private, and only a card added
@@ -2167,13 +2170,13 @@ function continueEffectQueue(pack,s){
        if(s.publicReveals.length>12)s.publicReveals.splice(0,s.publicReveals.length-12);
       }
       if(choices.length)s.pending={kind:'effect-top-filter-choice',player:owner,
-       sourceUid:job.sourceUid,uids,choices,...predicate,rest:'outside',...raid};
+       sourceUid:job.sourceUid,uids,choices,...predicate,rest:'outside',...raid,...excluded};
       else for(let n=0;n<uids.length;n++)moveOwnedLinear(pack,s,{owner,from:'deck',
        to:'outside',index:0,reason:'own-effect',sourceUid:job.sourceUid});
      }else{
       // With no valid match, ALL inspected cards must still be ordered below.
       s.pending=choices.length?{kind:'effect-top-filter-choice',player:owner,
-       sourceUid:job.sourceUid,uids,choices,...predicate,...raid,
+       sourceUid:job.sourceUid,uids,choices,...predicate,...raid,...excluded,
        ...(job.noHandDiscard===true?{noHandDiscard:true}:{}),
        ...(job.discard===false?{discard:false}:{})}:
        {kind:'effect-top-order',player:owner,sourceUid:job.sourceUid,
@@ -2634,7 +2637,8 @@ function continueEffectQueue(pack,s){
    // Any own life card, not only the top. Identities stay hidden until the
    // chosen card enters hand. No life card means the optional take cannot start.
    if(pl.life.length)s.pending={kind:'effect-life-to-hand',player:owner,
-    sourceUid:job.sourceUid,choices:pl.life.map(c=>c.uid),optional:true};
+    sourceUid:job.sourceUid,choices:pl.life.map(c=>c.uid),optional:true,
+    drawCount:job.then[0].count};
   }else if(job.op==='grantOtherImpactThisTurn'){
    const matches=c=>{
     const d=card(pack,c);
@@ -4209,10 +4213,12 @@ function continueEffectQueue(pack,s){
    if(choices.length)s.pending={kind:'effect-rest-own',player:owner,
     sourceUid:job.sourceUid,choices,optional:true};
   }else if(job.op==='restNamedActiveFrontThenDraw'){
+   const named=typeof job.name==='string';
    const choices=pl.front.filter(c=>c&&c.ready&&card(pack,c).type==='character'&&
-    cardHasName(card(pack,c),job.name,originalEffectsDisabled(s,c))).map(c=>c.uid);
+    (!named||cardHasName(card(pack,c),job.name,originalEffectsDisabled(s,c)))).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-rest-own',player:owner,
-    sourceUid:job.sourceUid,choices,optional:false,name:job.name,thenDraw:job.draw};
+    sourceUid:job.sourceUid,choices,optional:false,
+    ...(named?{name:job.name}:{}),thenDraw:job.draw};
   }else if(job.op==='revealHandBottom'){
    const choices=pl.hand.map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-reveal-bottom',player:owner,
@@ -6722,7 +6728,7 @@ function resolveChoice(s,a,pack){
    moveOwnedLinear(pack,s,{owner:q.player,from:'life',to:'hand',index,
     reason:'own-effect',sourceUid:q.sourceUid});
    // Q750: the contingent draw finishes before a life-zero loss is declared.
-   draw(pack,s,q.player,1,{reason:'own-effect',sourceUid:q.sourceUid});
+   draw(pack,s,q.player,q.drawCount??1,{reason:'own-effect',sourceUid:q.sourceUid});
   }
   s.pending=null;continueEffectQueue(pack,s);return;
  }
@@ -12297,9 +12303,22 @@ function retireOppFrontLimit(pack,s,owner,job){
   }).length;
   return count*scale.per;
  }
+ if(job.traitNamePerBp){
+  // カード名の種類 counts original printed names. An alias is not a second
+  // kind. This card is excluded. Two copies of one name stay one kind.
+  const scale=job.traitNamePerBp;
+  const names=new Set();
+  for(const c of field(s.players[owner])){
+   if(scale.excludeSelf&&c.uid===job.sourceUid)continue;
+   const d=card(pack,c);
+   if(!cardHasTrait(d,scale.trait))continue;
+   if(typeof d.name==='string'&&d.name.trim())names.add(d.name);
+  }
+  return names.size*scale.per;
+ }
  if(job.traitPerBp){
   const count=field(s.players[owner]).filter(c=>cardHasTrait(card(pack,c),job.traitPerBp.trait)).length;
-  return count*job.traitPerBp.per;
+  return (job.traitPerBp.base||0)+count*job.traitPerBp.per;
  }
  if(job.raidOrName){
   // Q552/Q555 (2023-09-25): raid state is 【レイド】 plus a face-up undercard.
@@ -12324,7 +12343,10 @@ function retireOppFrontLimit(pack,s,owner,job){
   const base=c.stack?.[0];
   return !!base&&names.some(n=>matchesName(base,n,true));
  });
- return hasField||hasOutside||hasRaidBase?job.bonusBp:job.bp;
+ // The raised cap needs the printed name and, when present, life at or under
+ // the printed number. Either miss stays on the base cap.
+ const lifeOk=!Number.isInteger(job.bonusLifeAtMost)||pl.life.length<=job.bonusLifeAtMost;
+ return (hasField||hasOutside||hasRaidBase)&&lifeOk?job.bonusBp:job.bp;
 }
 function enemyDownAvailable(pack,s,owner,step,sourceUid){
  const foe=s.players[1-owner];

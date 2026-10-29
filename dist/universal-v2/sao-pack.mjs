@@ -1469,8 +1469,8 @@ export function verifiedSaoV2Cards(){
   const card={id,name:pin.nameJa,color:pin.color,type:pin.type,
    energy:pin.energy,ap:pin.ap,bp:pin.bp,gen:pin.gen,
    traits:[...pin.traits],trigger:pin.trigger,
-   implementation:pin.kind==='vanilla'||pin.kind==='step'?'vanilla':'dsl'};
-  if(card.implementation==='vanilla')card.effects={};
+   implementation:pin.kind==='vanilla'?'vanilla':'dsl'};
+  if(card.implementation==='vanilla'||pin.kind==='step')card.effects={};
   if(pin.kind==='step')card.step=true;
   if(pin.kind==='raidOtherOwnWinDamageMainSelectionTax'){
    card.raidName='キリト';
