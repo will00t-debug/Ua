@@ -143,9 +143,15 @@ export function attemptFieldActive(s,owner,c){
  const blocked=!!skip||restrictions.some(e=>e.kind==='cannotActive');
  c.ready=!blocked;pruneContinuousStates(s);return !blocked;
 }
-export function refreshFieldActive(s,owner){
+export function refreshFieldActive(s,owner,phase){
  pruneContinuousStates(s);
  for(const c of field(s.players[owner])){
+  if(phase==='end'&&c.mmm2SkipEndActive===s.turn){
+   const skip=s.continuousStates.find(e=>e.kind==='skipNextActive'&&!e.consumed&&
+    e.targetOwner===owner&&e.targetUid===c.uid&&e.targetStamp===c.fieldEntryStamp);
+   if(skip){skip.consumed=true;pruneContinuousStates(s);}
+   continue;
+  }
   // Q2205: start and end refresh still spend 「次の1回アクティブにならない」.
   // The printed own-effect lock keeps the character REST.
   if(c.ownEffectActiveOnly){

@@ -246,7 +246,8 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-mayuri-fork':'選擇對手前線角色',
  'effect-printed-rest-raid':'從場外休息登場或突襲',
  'effect-zone-rest-raid':'從場外或移除區休息登場或突襲',
- 'effect-removed-okabe-raid':'從移除區使岡部倫太郎突襲'
+ 'effect-removed-okabe-raid':'從移除區使岡部倫太郎突襲',
+ mmm2:'魔法少女小圓第二彈選擇'
 });
 export function isExactLegal(action,legal){
  return Array.isArray(legal)&&legal.some(candidate=>
@@ -283,6 +284,8 @@ export function uiCardLabel(pack,state,uid){
  return printed?.name||physical.cardId;
 }
 export function uiActionLabel(action,{pack,state}={}){
+ if(action?.type==='mmm2'||(action?.type==='activate'&&typeof action?.mode==='string'&&action.mode.startsWith('mmm2:')))
+  return action.mode==='skip'?'跳過':action.mode==='do'?'發動':'魔法少女小圓第二彈選擇';
  const name=()=>pack&&state?uiCardLabel(pack,state,action.uid):'指定卡片';
  const destination=()=>action.line==='energy'?'能源線':'前線';
  const suffix=()=>action.slot===undefined?'':' · '+destination()+' '+(action.slot+1);

@@ -26,6 +26,31 @@ export function cardHasTrait(definition,trait){
 export function cardCountsAsEvent(definition){
  return definition?.type==='event'||definition?.alsoEvent===true;
 }
+// EX16BT Q2345: while 〈巴 マミ〉 MMM-2-007 is on the field and not silenced,
+// an own effect that reads the outside event count treats it as one higher.
+// Copies do not stack. No FAQ says otherwise.
+export function mamiOutsideEventBonus(s,owner,printed){
+ const zones=[s.players[owner]?.front,s.players[owner]?.energy];
+ for(const zone of zones)for(const c of zone||[]){
+  if(!c)continue;
+  if(printed(c)?.id==='MMM-2-007'&&!originalEffectsDisabled(s,c))return 1;
+ }
+ return 0;
+}
+// Distinct printed names of a trait that entered the field this turn.
+// Aliases do not create a second kind. The card currently entering is
+// already on the zone-move ledger when its onPlay runs.
+export function distinctTraitEntryNames(s,owner,trait,printed){
+ const names=new Set();
+ for(const e of s.zoneMoveEvents||[]){
+  if(e.turn!==s.turn||e.owner!==owner||e.controller!==owner)continue;
+  if(!['front','energy'].includes(e.to)||['front','energy'].includes(e.from))continue;
+  const d=printed({uid:e.uid,cardId:e.cardId});
+  if(!d||d.type!=='character'||!cardHasTrait(d,trait))continue;
+  if(typeof d.name==='string'&&d.name.trim())names.add(d.name);
+ }
+ return names;
+}
 export const V2_TRAIT_ZONES=Object.freeze(['field','front','energy']);
 export const V2_TRAIT_SUBJECTS=Object.freeze(['character','card']);
 export function ownFieldTraitKinds(s,owner,sourceUid,profile,printed){
@@ -180,12 +205,14 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
  if(condition.kind==='outsideCount')
   return s.players[owner].outside.length>=condition.min;
  if(condition.kind==='ownOutsideEventCountAtLeast')
-  return s.players[owner].outside.filter(c=>cardCountsAsEvent(printed(c))).length>=condition.min;
+  return s.players[owner].outside.filter(c=>cardCountsAsEvent(printed(c))).length+
+   mamiOutsideEventBonus(s,owner,printed)>=condition.min;
  // 〈エミリア〉があり、場外にイベントが N 枚以上. Both are required.
  // The named card is an own field character. Outside events include a
  // character that is also treated as an event. Hand and deck do not count.
  if(condition.kind==='ownNameAndOutsideEvents'){
-  const events=s.players[owner].outside.filter(c=>cardCountsAsEvent(printed(c))).length;
+  const events=s.players[owner].outside.filter(c=>cardCountsAsEvent(printed(c))).length+
+   mamiOutsideEventBonus(s,owner,printed);
   if(events<condition.min)return false;
   const areas=[s.players[owner].front,s.players[owner].energy];
   for(const area of areas)for(const c of area){
@@ -386,6 +413,8 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
   return condition.kind==='ownDistinctTraitNames'?names.size>=condition.min:
    found>=condition.min;
  }
+ if(condition.kind==='ownDistinctTraitEntriesThisTurn')
+  return distinctTraitEntryNames(s,owner,condition.trait,printed).size>=condition.min;
  if(condition.kind==='ownNameOrDistinctPrintedColorNames'){
   // 〈名前〉 is the usual name check, including an audited alias. The
   // distinct-kind half counts original printed names only. Q2416/Q2417:

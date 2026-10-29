@@ -16,7 +16,7 @@ test('six-title production editor cannot load old battle engine or old app scrip
  assert.match(read('../vercel.json'),/online\.html/);
  assert.equal(TITLES.length,8);
  assert.equal(TITLES.find(t=>t.id==='steins-gate').cards.length,80);
- assert.equal(TITLES.find(t=>t.id==='madoka').cards.length,113);
+ assert.equal(TITLES.find(t=>t.id==='madoka').cards.length,186);
  assert.equal(TITLES.find(t=>t.id==='madoka').playable,false);
 });
 test('old browser keys remain the backing stores, not deleted or migrated destructively',()=>{

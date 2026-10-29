@@ -1,6 +1,8 @@
-import {MADOKA_BY_ID,MADOKA_CARDS} from './madoka-cards.mjs';
+import {MADOKA_BY_ID as SET1_BY_ID,MADOKA_CARDS as SET1_CARDS} from './madoka-cards.mjs';
+import {EXEDRA_BY_ID,EXEDRA_CARDS} from './madoka-exedra-cards.mjs';
 import {v2UnsupportedIds} from './universal-v2/official-entry.mjs';
-export {MADOKA_CARDS,MADOKA_BY_ID};
+export const MADOKA_CARDS=Object.freeze([...SET1_CARDS,...EXEDRA_CARDS]);
+export const MADOKA_BY_ID=Object.freeze({...SET1_BY_ID,...EXEDRA_BY_ID});
 
 export const emptyMadokaDeck=()=>Object.fromEntries(MADOKA_CARDS.map(c=>[c.id,0]));
 
@@ -8,7 +10,7 @@ export function normalizeMadokaCounts(data){
  if(!data||typeof data!=='object'||Array.isArray(data))throw new Error('牌組格式錯誤');
  const result=emptyMadokaDeck();
  for(const [raw,n] of Object.entries(data)){
-  const id=raw.replace(/^UA31(BT|ST)\//,'');
+  const id=raw.replace(/^(?:UA31(?:BT|ST)|EX16BT)\//,'');
   if(!MADOKA_BY_ID[id]||!Number.isInteger(n)||n<0||n>4)throw new Error('卡號不存在或數量超過每種 4 張：'+raw);
   result[id]+=n;
   if(result[id]>4)throw new Error('同卡號與異圖合計不可超過 4 張：'+raw);
