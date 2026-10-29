@@ -31,6 +31,8 @@ import {V2_PHASE_LABELS,V2_TITLE_LABELS,V2_PENDING_LABELS,
  FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs';
 import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalReplay,
  publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
+import {DESKTOP_BATTLE_QUERY,isDesktopBattlefield,mountDesktopBattlefield}
+ from './universal-v2/desktop-battle-ui.mjs';
 
 const rezeroPractice=rezeroSet1PracticeDeck();
 const stgPractice=steinsGatePracticeDeck();
@@ -467,6 +469,7 @@ function legacySlot(view,side,line,index,legal){
    (index+1)+(d?' '+d.name:' 空位')+(placement?'，'+placement:''),
   'data-placement':placement});
  if(c){
+  btnSlot.dataset.v2CardUid=c.uid;
   const art=el('img',{class:'art',src:imgUrl(side,c.cardId),alt:d?.name||c.cardId,loading:'lazy'});
   art.onerror=()=>{
    if(app.packs?.[side]?.id==='gurren-lagann'&&ttgArtErrorFallback(art))return;
@@ -566,6 +569,7 @@ function legacyHand(view,legal){
   const playable=legal.some(a=>a.uid===c.uid&&['play','raid','event'].includes(a.type));
   const card=el('button',{type:'button',class:'handCard '+(selected?'selected ':'')+
    (playable?'playable':'unplayable'),'aria-label':d.name||c.cardId});
+  card.dataset.v2CardUid=c.uid;
   const picture=el('img',{src:imgUrl(0,c.cardId),alt:d.name||c.cardId,loading:'lazy'});
   picture.onerror=()=>{
    if(app.packs?.[0]?.id==='gurren-lagann'&&ttgArtErrorFallback(picture))return;
@@ -859,6 +863,15 @@ function render(){
  const log=el('details',{class:'v2-log panel'},el('summary',{text:'對局紀錄（'+app.history.length+' 步）'}),
   el('ol',{class:'history'},...app.history.slice(0,70).map(x=>el('li',{text:x}))));
  target.append(log);
+ if(IS_BATTLE_PAGE&&isDesktopBattlefield())mountDesktopBattlefield({
+  arena,header:title,log,view:v,selectedUid:app.selectedUid,el,
+  cardDefinition:cardDef,imageSource:imgUrl,printedCard:printedCatalogue,
+  effectCopy:fieldEffectCopy,openCard:showFieldSheet,
+  imageFallback:(image,side)=>{
+   if(app.packs?.[side]?.id==='gurren-lagann'&&ttgArtErrorFallback(image))return;
+   if(!image.src.endsWith('/assets/mark.svg'))image.src='assets/mark.svg';
+  }
+ });
  const prompt=pendingDialog(legal,v);if(prompt)target.append(prompt);
  if(revealed)mountTriggerOverlay(revealed);
  // Preserve hand position while the V2 board is re-rendered on each selection.
@@ -1271,6 +1284,7 @@ if(!IS_BATTLE_PAGE){
  syncMatchLobby();
 }else{
  const loaded=loadSoloBattle(sessionStorage);
+ window.matchMedia(DESKTOP_BATTLE_QUERY).addEventListener('change',()=>render());
  const exit=$('exit-battle');
  if(exit)exit.addEventListener('click',event=>{
   if(app.state?.status==='playing'&&
