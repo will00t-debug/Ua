@@ -30,6 +30,12 @@ function setup(seed){
  }
  for(let i=0;i<3&&s.phase!=='main';i++)s=dispatchUniversalAction(packs,s,{type:'next'});
  assert.equal(s.phase,'main');
+ // The first player's opening turn has restricted AP. Open one legal AP slot
+ // explicitly, as in the existing printed-card V2 integration tests.
+ for(let i=0;i<3;i++){
+  s.players[0].apCards[i].inPlay=i<1;
+  s.players[0].apCards[i].ready=i<1;
+ }
  // Force a known low-energy card followed by a >=3-energy card on top.
  const low=take(s,'BLC-1-040'),high=take(s,'BLC-4-082');
  assert.ok(pack.cards[low.cardId].energy<3);
