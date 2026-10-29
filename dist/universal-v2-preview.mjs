@@ -436,7 +436,7 @@ function pendingDialog(legal,view){
  const byAction=new Map((privateChoices?.options||[])
   .filter(option=>option?.action)
   .map(option=>[JSON.stringify(option.action),option]));
- const inspected=inspectedPendingChoiceCards(privateChoices,legal);
+ const inspected=inspectedPendingChoiceCards(privateChoices,legal).filter(card=>!card.keepLegal);
  const inspectedUids=new Set(inspected.map(card=>card.uid));
  const rows=legal.filter(action=>!inspectedUids.has(action.uid)).map(action=>({action,
   option:byAction.get(JSON.stringify(action))||null}));

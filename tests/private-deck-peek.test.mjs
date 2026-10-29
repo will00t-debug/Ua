@@ -78,4 +78,12 @@ test('private inspection is curtained for hotseat opponents and AI choices never
  assert.match(ui,/\['peekMill','peekOrder','peekNoMill'\]/);
  assert.match(ui,/const lookedAt=peekIds\.map\(/);
  assert.match(ui,/只有實際送到場外的卡片才會成為公開資訊/);
+ assert.match(ui,/choiceCard ineligible/);
+ assert.match(ui,/不符合條件 · 無法選擇/);
+ assert.match(ui,/function lookWindowCards\(/);
+ assert.match(ui,/soloLookCard ineligible/);
+ assert.match(ui,/ttgLookCard ineligible/);
+ assert.match(ui,/data-action="soloLookSubmit"/);
+ const css=readFileSync(new URL('../dist/styles.css',import.meta.url),'utf8');
+ assert.match(css,/button\.choiceCard\.ineligible:disabled,button\.ttgLookCard\.ineligible:disabled,button\.soloLookCard\.ineligible:disabled\{opacity:1/);
 });

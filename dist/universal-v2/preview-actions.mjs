@@ -721,28 +721,37 @@ export function pendingChoiceCards(option){
  }
  return cards;
 }
-// The controller sees every inspected card in deck order; only real
-// legal selections get a clickable action, other cards stay disabled.
+// The controller sees every inspected card in deck order. A card with exactly
+// one non-positional legal action is clickable. Cards that need a destination
+// keep their existing buttons. Cards with no legal action stay disabled.
 export function inspectedPendingChoiceCards(privateChoices,legal){
  const type={
   'effect-top-filter-choice':'chooseTopFiltered',
   'effect-top-filter-many-choice':'chooseTopFilteredMany',
   'effect-top-trait-event':'chooseTopTraitEvent',
   'effect-top-trait-outside':'chooseTopTraitOutside',
+  'effect-search-deck':'chooseDeckSearch',
+  'effect-search-deck-multi':'chooseDeckSearchMulti',
+  'effect-wyrm-look':'chooseWyrmLook',
+  'effect-top-character-outside':'chooseTopCharacterOutside',
+  'effect-top-deploy':'chooseTopDeploy',
+  'effect-top-deploy-rest':'chooseTopDeployRest',
   iys:'iys'
  }[privateChoices?.kind];
  if(!type||!Array.isArray(privateChoices?.inspected)||!Array.isArray(legal))return [];
- const selectable=new Map(legal.filter(a=>a?.type===type&&
-  typeof a.uid==='string'&&(type!=='iys'||a.mode==='take'||a.mode==='next')).map(a=>[a.uid,a]));
  const seen=new Set();
  return privateChoices.inspected.flatMap(card=>{
   if(!card||typeof card.uid!=='string'||!card.uid||
    typeof card.cardId!=='string'||!card.cardId||seen.has(card.uid))return [];
   seen.add(card.uid);
+  const matches=legal.filter(a=>a?.type===type&&a.uid===card.uid&&
+   (type!=='iys'||a.mode==='take'||a.mode==='next'));
+  const positional=matches.some(a=>a.line!=null||Number.isInteger(a.slot));
   return [{uid:card.uid,cardId:card.cardId,
    name:typeof card.name==='string'&&card.name?card.name:card.cardId,
    color:typeof card.color==='string'?card.color:'',
-   action:selectable.get(card.uid)||null}];
+   action:matches.length===1&&!positional?matches[0]:null,
+   keepLegal:matches.length>1||(matches.length===1&&positional)}];
  });
 }
 // Fallback artwork for legal pending actions that identify the viewer's own

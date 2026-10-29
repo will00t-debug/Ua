@@ -98,6 +98,13 @@ test('mandatory private deck search selects only own printed-trait physical card
  assert.ok(privateView.options.every(x=>x.card?.cardId==='Q02'));
  assert.ok(privateView.options.every(x=>x.card?.name==='Scout Alpha'));
  assert.deepEqual(privateView.options.map(x=>x.action),choices);
+ assert.deepEqual(privateView.inspected.map(c=>c.uid),q.players[0].deck.map(c=>c.uid),
+  'the searching player sees the whole deck, including cards that fail the filter');
+ const miss=privateView.inspected.find(c=>!choices.some(a=>a.uid===c.uid));
+ assert.ok(miss,'fixture deck contains a card the search cannot take');
+ assert.throws(()=>dispatchUniversalAction(packs,q,{type:'chooseDeckSearch',uid:miss.uid},{actor:0}),
+  /not currently legal/);
+ assert.ok(!text.includes(miss.uid),'a nonmatching deck card stays out of the opponent view');
  assert.throws(()=>universalPrivateChoices(packs,q,2),/Invalid private choice viewer/);
  assert.equal(attackerSideView.players[0].hand,null);
  assert.ok(!text.includes(choices[0].uid),

@@ -22444,18 +22444,29 @@ export function universalPrivateChoices(pack,s,viewer){
   ['effect-removed-self-grant'].includes(q.kind)?'removed':
   ['effect-buff-name-or-trait','effect-grant-bounce-instead','effect-grant-block-at-least','effect-active-own-named','field','effect-grant-printed-block','effect-bounce-include-self','hand','effect-bounce-own','effect-active-energy-named','effect-active-traitless','effect-active-other-trait','effect-protect-gen','effect-grant-double','effect-attack-end-named','effect-return-then','effect-active-trait-buff','effect-return-trait'].includes(q.kind)?'field':'hand';
 
- // Controller-only: the full physical TOP-N window is display data, NOT
- // extra legal actions. Never send this to the opposing viewer.
- const filteredTop=['effect-top-filter-choice','effect-top-filter-many-choice',
-  'effect-top-trait-event','effect-top-trait-outside'].includes(q.kind);
- const windowUids=!filteredTop?[]:q.kind==='effect-top-filter-many-choice'?
-  q.uids.filter(uid=>!q.selected.includes(uid)):q.uids;
- const windowCards=filteredTop?s.players[viewer].deck.slice(0,windowUids.length):[];
- const inspected=filteredTop&&windowCards.length===windowUids.length&&
-  windowCards.every((c,i)=>c.uid===windowUids[i])?
-  windowCards.map(c=>({uid:c.uid,cardId:c.cardId,name:card(pack,c).name,
-   color:card(pack,c).color})):[];
- return {kind:q.kind,player:viewer,...(filteredTop?{inspected}:{}),
+ // Controller-only: every card this player is looking through is display
+ // data, including cards that fail the printed filter. It is NOT extra legal
+ // actions. Never send this to the opposing viewer.
+ const deck=s.players[viewer].deck;
+ const printedWindow=cards=>cards.map(c=>{
+  const printed=card(pack,c);
+  return {uid:c.uid,cardId:c.cardId,name:printed.name,color:printed.color||''};
+ });
+ const topWindow=uids=>{
+  if(!Array.isArray(uids)||!uids.length)return null;
+  const window=deck.slice(0,uids.length);
+  if(window.length!==uids.length||window.some((c,i)=>c?.uid!==uids[i]))return null;
+  return printedWindow(window);
+ };
+ const lookUids=q.kind==='effect-top-filter-many-choice'&&Array.isArray(q.uids)?
+  q.uids.filter(uid=>!(q.selected||[]).includes(uid)):q.uids;
+ const fullDeck=['effect-search-deck','effect-search-deck-multi'].includes(q.kind);
+ const filteredLook=['effect-top-filter-choice','effect-top-filter-many-choice',
+  'effect-top-trait-event','effect-top-trait-outside','effect-wyrm-look',
+  'effect-top-character-outside','effect-top-deploy'].includes(q.kind)||
+  (q.kind==='effect-top-deploy-rest'&&q.step==='pick');
+ const inspected=fullDeck?printedWindow(deck):filteredLook?topWindow(lookUids):null;
+ return {kind:q.kind,player:viewer,...(inspected?{inspected}:{}),
   options:legalPending(pack,s).map(action=>{
   const physical=action.uid===null?null:
    (zone==='field'?field(s.players[viewer]):s.players[viewer][zone])
