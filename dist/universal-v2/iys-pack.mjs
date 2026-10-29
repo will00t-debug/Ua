@@ -129,8 +129,6 @@ export function iysPackCard(card){
  const shared=kindProgram(kind);
  const extra=shared||BY_ID[card.id];
  if(!extra)throw Error(card.id+' has no Inuyasha program');
- if((kind==='restEnergy'||kind==='activeEnergy')&&card.gen!==0)
-  throw Error(card.id+' plus generation is a design mark, not a printed number');
  const implementation=extra.implementation||(Object.keys(extra.effects||{}).length||
   extra.mainAbility||extra.passiveBonuses||extra.impactNull||extra.step||
   extra.enterAlwaysActive||extra.activeExtraEnergy||extra.nameAliases||

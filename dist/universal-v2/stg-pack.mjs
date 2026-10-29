@@ -222,8 +222,6 @@ export function stgPackCard(card){
   throw Error(card.id+' this print is a character');
  if(kind==='restKurisuDraw'&&card.type!=='event')
   throw Error(card.id+' named rest draw is an event');
- if((kind==='activeEnergy'||kind==='restEnergyRetire')&&card.gen!==0)
-  throw Error(card.id+' plus generation is a design mark, not a printed number');
  const onPlay=kind==='drawDiscard'||kind==='emptyDrawDiscard'?[{op:'drawDiscard',count:1}]:
   kind==='draw2'?[{op:'draw',count:2}]:
   kind==='recoverAp2'?[{op:'recoverAp',count:2}]:

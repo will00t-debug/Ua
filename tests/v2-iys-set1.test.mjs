@@ -7,8 +7,10 @@ import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {V2_TITLE_IDS} from '../dist/universal-v2/title-packs/contract.mjs';
 import {inuyashaPracticeDeck} from '../dist/universal-v2/official-entry.mjs';
 import {editorV2Status} from '../dist/v2-editor-compat.mjs';
+import {inspectedPendingChoiceCards} from '../dist/universal-v2/preview-actions.mjs';
 import {assertUniversalMatch, dispatchUniversalAction, legalUniversalActions,
- newUniversalMatch, universalAttackDamage, universalBp, universalPublicView}
+ newUniversalMatch, universalAttackDamage, universalBp, universalCardEnergy,
+ universalPrivateChoices, universalPublicView}
  from '../dist/universal-v2/engine.mjs';
 
 const pack=createIysV2Pack();
@@ -487,4 +489,84 @@ test('Q2142 retires BP 2500 without 珊瑚, and one removed event raises the cap
  boosted=choose(boosted,a=>a.uid===target.uid);
  assert.equal(boosted.players[1].outside.some(c=>c.uid===target.uid),true);
  assertUniversalMatch(packs,boosted);
+});
+
+test('printed pip stays, and the plus is one more energy only while the effect is live',()=>{
+ for(const id of ['IYS-1-011','IYS-1-013','IYS-1-017','IYS-1-055','IYS-1-064'])
+  assert.equal(pack.cards[id].gen,1,id);
+ const counts=countsFor(['IYS-1-013','IYS-1-004','IYS-1-017','IYS-1-011','IYS-1-064']);
+ let s=toPhase(fresh(counts,1013),'main');
+ readyAp(s);
+ const rin=put(s,0,'IYS-1-013','energy',0);
+ assert.equal(universalCardEnergy(packs,s,0,rin),1);
+ const sess=put(s,0,'IYS-1-004','energy',1);
+ assert.equal(universalCardEnergy(packs,s,0,rin),1,'energy line is not the front');
+ s.players[0].energy[1]=null;
+ s.players[0].front[0]=sess;
+ assert.equal(universalCardEnergy(packs,s,0,rin),2);
+ rin.ready=false;
+ assert.equal(universalCardEnergy(packs,s,0,rin),2,'the extra purple does not require Rin to be active');
+ const kagura=put(s,0,'IYS-1-017','energy',1,true);
+ const kagome=put(s,0,'IYS-1-064','energy',2,true);
+ assert.equal(universalCardEnergy(packs,s,0,kagura),2);
+ assert.equal(universalCardEnergy(packs,s,0,kagome),2);
+ kagura.ready=false;
+ kagome.ready=false;
+ assert.equal(universalCardEnergy(packs,s,0,kagura),1);
+ assert.equal(universalCardEnergy(packs,s,0,kagome),1);
+ const small=put(s,0,'IYS-1-011','energy',3,true);
+ assert.equal(universalCardEnergy(packs,s,0,small),1);
+ s=use(s,{type:'activate',uid:small.uid,mode:'selfRestEnergyRetire'});
+ assert.equal(s.players[0].energy[3].ready,false);
+ assert.equal(universalCardEnergy(packs,s,0,s.players[0].energy[3]),2);
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
+
+test('fake-0 Sesshomaru shows both looked cards and can send only a traitless purple outside',()=>{
+ const counts=countsFor(['IYS-1-005','IYS-1-004','IYS-1-047','IYS-1-056','IYS-1-080']);
+ let s=toPhase(fresh(counts,1005),'main');
+ readyAp(s);
+ const miss=take(s,0,'IYS-1-047');
+ const hit=take(s,0,'IYS-1-004');
+ s.players[0].deck.unshift(hit);
+ s.players[0].deck.unshift(miss);
+ const body=take(s,0,'IYS-1-005');
+ s.players[0].hand.push(body);
+ s=play(s,body.uid);
+ assert.equal(s.pending.id,'IYS-1-005');
+ assert.equal(s.pending.step,'lookPick');
+ const seen=universalPrivateChoices(packs,s,0);
+ assert.deepEqual(seen.inspected.map(c=>c.cardId),['IYS-1-047','IYS-1-004']);
+ assert.equal(universalPrivateChoices(packs,s,1),null);
+ const shown=inspectedPendingChoiceCards(seen,legalUniversalActions(packs,s));
+ assert.deepEqual(shown.map(c=>c.cardId),['IYS-1-047','IYS-1-004']);
+ assert.equal(shown[0].action,null);
+ assert.equal(shown[1].action.mode,'take');
+ assert.equal(shown[1].action.uid,hit.uid);
+ const hidden=JSON.stringify(universalPublicView(packs,s,1));
+ assert.equal(hidden.includes(miss.uid),false);
+ assert.equal(hidden.includes(hit.uid),false);
+ s=choose(s,a=>a.mode==='take'&&a.uid===hit.uid);
+ assert.equal(s.players[0].outside.some(c=>c.uid===hit.uid),true);
+ assert.equal(s.players[0].deck[0].uid,miss.uid);
+ assert.equal(s.pending,null);
+ assert.equal(assertUniversalMatch(packs,s),true);
+
+ let coral=toPhase(fresh(counts,1056),'main');
+ readyAp(coral);
+ const event=take(coral,0,'IYS-1-080');
+ const other=take(coral,0,'IYS-1-004');
+ coral.players[0].deck.unshift(other);
+ coral.players[0].deck.unshift(event);
+ const searcher=take(coral,0,'IYS-1-056');
+ coral.players[0].hand.push(searcher);
+ coral=play(coral,searcher.uid);
+ const window=universalPrivateChoices(packs,coral,0);
+ assert.equal(window.inspected.length,2);
+ assert.deepEqual(window.inspected.map(c=>c.uid),[event.uid,other.uid]);
+ const picks=inspectedPendingChoiceCards(window,legalUniversalActions(packs,coral));
+ assert.equal(picks[0].action?.uid,event.uid);
+ assert.equal(picks[1].action,null);
+ assert.equal(universalPrivateChoices(packs,coral,1),null);
+ assert.equal(assertUniversalMatch(packs,coral),true);
 });

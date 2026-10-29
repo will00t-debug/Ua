@@ -130,10 +130,6 @@ export function exedraPackCard(card){
  const shared=kindProgram(kind);
  const extra=shared||BY_ID[card.id];
  if(!extra)throw Error(card.id+' has no EX16 program');
- if(kind==='restEnergyRetire'&&card.gen!==0)
-  throw Error(card.id+' plus generation is a design mark, not a printed number');
- if(kind==='activeEnergy'&&card.gen!==0)
-  throw Error(card.id+' plus generation is a design mark, not a printed number');
  const implementation=extra.implementation||(Object.keys(extra.effects||{}).length||
   extra.mainAbility||extra.phaseEffects||extra.impactNull||extra.step||
   extra.passiveBonuses||extra.enterAlwaysActive||extra.activeExtraEnergy||

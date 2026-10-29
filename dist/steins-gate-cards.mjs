@@ -2,8 +2,9 @@
 // unionarena-tcg.com Japanese and Traditional Chinese card pages.
 // One identity per card number. Parallel art is not a second card.
 // The 12 AP cards are not in this catalogue. engineKind is set only when
-// the whole Japanese print is a tested V2 program. BP+ and generated-energy
-// + are design marks, not extra printed numbers: the integer is the base.
+// the whole Japanese print is a tested V2 program. BP+ is a design mark.
+// A generated-energy + sits after the colored pips: those pips are the base
+// gen, and the + is extra energy only while the printed effect is live.
 export const STEINS_GATE_FETCHED='2026-10-27';
 export const STEINS_GATE_SET='UA57BT';
 export const STEINS_GATE_CARDS=
@@ -389,7 +390,7 @@ export const STEINS_GATE_CARDS=
   "ap": 1,
   "bp": 1000,
   "bpMark": "",
-  "gen": 0,
+  "gen": 1,
   "genMark": "+",
   "type": "character",
   "traits": [],
@@ -737,7 +738,7 @@ export const STEINS_GATE_CARDS=
   "ap": 1,
   "bp": 2500,
   "bpMark": "",
-  "gen": 0,
+  "gen": 1,
   "genMark": "+",
   "type": "character",
   "traits": [],
@@ -1675,7 +1676,7 @@ export const STEINS_GATE_CARDS=
   "ap": 1,
   "bp": 2500,
   "bpMark": "",
-  "gen": 0,
+  "gen": 1,
   "genMark": "+",
   "type": "character",
   "traits": [],
@@ -1967,7 +1968,7 @@ export const STEINS_GATE_CARDS=
   "ap": 1,
   "bp": 1000,
   "bpMark": "",
-  "gen": 0,
+  "gen": 1,
   "genMark": "+",
   "type": "character",
   "traits": [],

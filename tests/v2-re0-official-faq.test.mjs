@@ -268,7 +268,7 @@ test('Q1573 the monster event is not played from hand as a character',()=>{
  let paid=blue(9113);
  fuel(paid,0,['REZ-1-043','REZ-1-043','REZ-1-043','REZ-1-043']);
  paid=reach(paid,'main');
- assert.equal(universalEnergyByColor(packs,paid,0).blue,4);
+ assert.equal(universalEnergyByColor(packs,paid,0).blue,8);
  const spell=pull(paid,0,'REZ-1-065');
  paid.players[0].hand.push(spell);
  const tall=put(paid,1,'REZ-1-014','front',0);
@@ -311,7 +311,7 @@ test('Q1574 a raided Crusch may treat the revealed monster as BP 5000',()=>{
  s.players[0].front[0]=base;
  s=ownMain(s,2);
  s.players[0].energy[0].buffs=[{energy:1,untilTurn:s.turn}];
- assert.equal(universalEnergyByColor(packs,s,0).blue,4);
+ assert.equal(universalEnergyByColor(packs,s,0).blue,7);
  const tree=put(s,0,'REZ-1-060','energy',3);
  const exact=put(s,1,'REZ-1-027','front',0);
  const over=put(s,1,'REZ-1-014','front',1);
@@ -472,7 +472,7 @@ test('Q1575 an opponent remove-area effect returns the granted character to hand
  place(granted,0,'REZ-1-086','energy',0);
  const subaru=place(granted,0,'REZ-1-068','front',0);
  granted=walkTo(granted,x=>x.active===0&&x.phase==='main');
- assert.equal(universalEnergyByColor(fp,granted,0).purple,1);
+ assert.equal(universalEnergyByColor(fp,granted,0).purple,2);
  const beatrice=pullHere(granted,0,'REZ-1-074');
  granted.players[0].hand.push(beatrice);
  granted=dispatchUniversalAction(fp,granted,legalUniversalActions(fp,granted).find(a=>
@@ -502,7 +502,7 @@ test('Q1575 an opponent remove-area effect returns the granted character to hand
  for(let slot=0;slot<3;slot++)place(ruled,1,'REZ-1-086','energy',slot);
  const base=place(ruled,1,'REZ-1-072','front',0);
  let shifted=walkTo(ruled,x=>x.active===1&&x.phase==='main');
- assert.equal(universalEnergyByColor(fp,shifted,1).purple,3);
+ assert.equal(universalEnergyByColor(fp,shifted,1).purple,6);
  const top=pullHere(shifted,1,'REZ-1-077');
  shifted.players[1].hand.push(top);
  const raid=legalUniversalActions(fp,shifted).find(a=>a.type==='raid'&&a.uid===top.uid&&a.baseUid===base.uid);
@@ -528,7 +528,7 @@ test('Q1576 a full energy line removes one card before the front character moves
  const base=pull(s,0,'REZ-1-072');
  s.players[0].front[0]=base;
  s=ownMain(s,2);
- assert.equal(universalEnergyByColor(packs,s,0).purple,3);
+ assert.equal(universalEnergyByColor(packs,s,0).purple,6);
  const victim=put(s,1,'REZ-1-014','front',0);
  const occupants=['REZ-1-007','REZ-1-016','REZ-1-081','REZ-1-068'].map((id,i)=>
   put(s,1,id,'energy',i));
@@ -565,9 +565,9 @@ test('Q1577 raiding a character that cannot move leaves the new top free to move
  assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='move'&&a.uid===base.uid),false);
  assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='move'&&a.uid!==base.uid),true);
  s=untilPhase(s,1,'main');
- // Three active REZ-1-086 each add one purple. REZ-1-072 on the energy
- // line also prints one purple orb, so the line generates four.
- assert.equal(universalEnergyByColor(packs,s,1).purple,4);
+ // Three active REZ-1-086 are one printed pip plus one while active.
+ // REZ-1-072 on the energy line also prints one purple orb, so the line generates seven.
+ assert.equal(universalEnergyByColor(packs,s,1).purple,7);
  const top=pull(s,1,'REZ-1-077');
  s.players[1].hand.push(top);
  assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='raid'&&a.uid===top.uid&&
@@ -586,7 +586,7 @@ test('Q1578 Emilia keeps the next-hand discount after a different card is played
  let s=purple(9119);
  fuel(s,0,['REZ-1-086','REZ-1-086']);
  s=ownMain(s,2);
- assert.equal(universalEnergyByColor(packs,s,0).purple,2);
+ assert.equal(universalEnergyByColor(packs,s,0).purple,4);
  let holder;
  [s,holder]=playFront(s,'REZ-1-085');
  at(s,0,holder.uid).ready=true;
@@ -662,7 +662,7 @@ test('Q1580 raiding onto a rested Emilia activates the new top',()=>{
  s=ownMain(s,2);
  s.players[0].energy[0].buffs=[{energy:1,untilTurn:s.turn}];
  s.players[0].energy[1].buffs=[{energy:1,untilTurn:s.turn}];
- assert.equal(universalEnergyByColor(packs,s,0).purple,6);
+ assert.equal(universalEnergyByColor(packs,s,0).purple,10);
  put(s,1,'REZ-1-014','front',0);
  const top=pull(s,0,'REZ-1-090');
  s.players[0].hand.push(top);
@@ -684,7 +684,7 @@ test('Q1581 the owner sees one facedown under Subaru and the opponent sees only 
  fuel(s,0,['REZ-1-016','REZ-1-016','REZ-1-016']);
  put(s,0,'REZ-1-081','front',0);
  s=reach(s,'main');
- assert.equal(universalEnergyByColor(packs,s,0).yellow,3);
+ assert.equal(universalEnergyByColor(packs,s,0).yellow,6);
  let subaru;
  [s,subaru]=playFront(s,'REZ-1-101');
  fuel(s,1,['REZ-1-007','REZ-1-007','REZ-1-007','REZ-1-007']);

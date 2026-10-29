@@ -5,8 +5,9 @@
 // One identity per card number. Parallel art is not a second card. The same
 // number in the booster and the starter is one identity when the text matches.
 // AP cards stay out of this catalogue. engineKind is set only when the whole
-// Japanese print is a tested V2 program. BP+ and generated-energy + are design
-// marks: the integer is the base, and a + generation number is 0.
+// Japanese print is a tested V2 program. BP+ is a design mark. A generated-energy
+// + sits after the colored pips: those pips are the base gen, and the + is extra
+// energy only while the printed effect is live.
 export const MADOKA_FETCHED='2026-10-29';
 export const MADOKA_SETS=Object.freeze(['UA31BT','UA31ST']);
 export const MADOKA_CARDS=
@@ -997,7 +998,7 @@ export const MADOKA_CARDS=
   "ap": 1,
   "bp": 1000,
   "bpMark": "",
-  "gen": 0,
+  "gen": 1,
   "genMark": "+",
   "type": "character",
   "traits": [
@@ -1129,7 +1130,7 @@ export const MADOKA_CARDS=
   "ap": 1,
   "bp": 2500,
   "bpMark": "",
-  "gen": 0,
+  "gen": 1,
   "genMark": "+",
   "type": "character",
   "traits": [
@@ -1985,7 +1986,7 @@ export const MADOKA_CARDS=
   "ap": 1,
   "bp": 2500,
   "bpMark": "",
-  "gen": 0,
+  "gen": 1,
   "genMark": "+",
   "type": "character",
   "traits": [
@@ -2469,7 +2470,7 @@ export const MADOKA_CARDS=
   "ap": 1,
   "bp": 1000,
   "bpMark": "",
-  "gen": 0,
+  "gen": 1,
   "genMark": "+",
   "type": "character",
   "traits": [
@@ -3039,7 +3040,7 @@ export const MADOKA_CARDS=
   "ap": 1,
   "bp": 1000,
   "bpMark": "",
-  "gen": 0,
+  "gen": 1,
   "genMark": "+",
   "type": "character",
   "traits": [],
@@ -3351,7 +3352,7 @@ export const MADOKA_CARDS=
   "ap": 1,
   "bp": 2500,
   "bpMark": "",
-  "gen": 0,
+  "gen": 1,
   "genMark": "+",
   "type": "character",
   "traits": [
@@ -3543,7 +3544,7 @@ export const MADOKA_CARDS=
   "ap": 1,
   "bp": 2500,
   "bpMark": "",
-  "gen": 0,
+  "gen": 1,
   "genMark": "+",
   "type": "character",
   "traits": [

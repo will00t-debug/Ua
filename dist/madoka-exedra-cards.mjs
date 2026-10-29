@@ -1,8 +1,9 @@
 // Official EX16BT Magia Exedra booster, fetched 2026-10-29 from
 // unionarena-tcg.com Japanese card pages. Effect text stays the official
 // Japanese print. Do not invent a translation. One identity per card number.
-// Parallel art and AP cards are not identities. BP+ and generated-energy +
-// are design marks: the integer is the base, and a + generation number is 0.
+// Parallel art and AP cards are not identities. BP+ is a design mark. A
+// generated-energy + sits after the colored pips: those pips are the base gen,
+// and the + is extra energy only while the printed effect is live.
 // engineKind names the tested program for the whole Japanese print.
 export const EXEDRA_FETCHED='2026-10-29';
 export const EXEDRA_SET='EX16BT';
@@ -948,7 +949,7 @@ export const EXEDRA_CARDS=
    "ap": 1,
    "bp": 1000,
    "bpMark": "",
-   "gen": 0,
+   "gen": 1,
    "genMark": "+",
    "type": "character",
    "traits": [
@@ -1555,7 +1556,7 @@ export const EXEDRA_CARDS=
    "ap": 1,
    "bp": 3000,
    "bpMark": "",
-   "gen": 0,
+   "gen": 1,
    "genMark": "+",
    "type": "character",
    "traits": [
@@ -2160,7 +2161,7 @@ export const EXEDRA_CARDS=
    "ap": 1,
    "bp": 3000,
    "bpMark": "",
-   "gen": 0,
+   "gen": 1,
    "genMark": "+",
    "type": "character",
    "traits": [
@@ -2468,7 +2469,7 @@ export const EXEDRA_CARDS=
    "ap": 1,
    "bp": 2500,
    "bpMark": "",
-   "gen": 0,
+   "gen": 1,
    "genMark": "+",
    "type": "character",
    "traits": [
