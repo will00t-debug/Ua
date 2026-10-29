@@ -19267,7 +19267,9 @@ export function universalPublicView(pack,s,viewer=0){
     restrictions:fieldRestrictions(s,p,c),raidLayers:(c.stack||[]).map(layer=>layerView(layer,p,viewer)),
     underLayers:(c.under||[]).map(layer=>layerView(layer,p,viewer))}:null),
    apReady:pl.apCards.filter(c=>c.ready).length,apTotal:pl.apCards.filter(c=>c.inPlay).length,energyTotal:calcEnergy(pack,s,p),energyByColor:{...universalEnergyByColor(pack,s,p)},
-   outside:pl.outside.map(c=>({uid:c.uid,cardId:c.cardId}))
+   // Both public zones expose printed identities; private hand/deck/life stay redacted.
+   outside:pl.outside.map(c=>({uid:c.uid,cardId:c.cardId})),
+   removed:pl.removed.map(c=>({uid:c.uid,cardId:c.cardId}))
   }))
  };
 }

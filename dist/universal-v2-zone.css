@@ -1,0 +1,74 @@
+/* Read-only public zones on both players' battlefields. */
+body.v2-battle-page.v2-playing #match-view .pile.v2-zone-pile{
+ display:grid;place-content:center;justify-items:center;gap:0;width:100%;
+ min-width:0;min-height:0;padding:2px 3px;line-height:1.15;
+ font-family:inherit;font-size:9px;font-weight:650;text-align:center;cursor:pointer;
+ border:1px solid #5f8caf;background:#173349;color:#dbedff;
+ transition:background-color .13s ease,border-color .13s ease
+}
+body.v2-battle-page.v2-playing #match-view .pile.v2-zone-pile:hover{background:#295072;border-color:#9dd3ff}
+body.v2-battle-page.v2-playing #match-view .pile.v2-zone-pile:focus-visible{outline:2px solid #ffd47d;outline-offset:2px}
+body.v2-battle-page.v2-playing #match-view .pile.v2-zone-pile b{color:#fff0bc}
+.v2-shell>.v2-zone-overlay{
+ z-index:480;padding:clamp(10px,3vw,28px);background:#070d18dc;
+ backdrop-filter:blur(6px)
+}
+.v2-shell>.v2-field-overlay{z-index:510}
+.v2-shell .v2-zone-dialog{
+ box-sizing:border-box;width:min(860px,100%);max-height:min(90dvh,920px);
+ min-height:160px;display:flex;flex-direction:column;overflow:hidden;
+ padding:0;border:1px solid #506984;border-radius:12px;
+ background:#151e2a;color:#eaf1f9;box-shadow:0 22px 70px #000b
+}
+.v2-shell .v2-zone-header{
+ display:flex;align-items:center;justify-content:space-between;gap:12px;
+ flex:0 0 auto;padding:16px 20px;border-bottom:1px solid #32445b;
+ background:#19283b
+}
+.v2-shell .v2-zone-header h2{font-size:19px;color:#fff;line-height:1.3}
+.v2-shell .v2-zone-subtitle{font-size:12px;color:#a8bdd2;margin:4px 0 0}
+.v2-shell .v2-zone-close{
+ flex:0 0 auto;padding:7px 16px;border-radius:7px;border:1px solid #7592af;
+ background:#294059;color:#eef5ff;min-height:38px;font-size:13px
+}
+.v2-shell .v2-zone-gallery{
+ display:grid;grid-template-columns:repeat(auto-fill,minmax(118px,1fr));
+ gap:12px;overflow-y:auto;overscroll-behavior:contain;min-height:0;
+ padding:18px 20px 24px;align-content:start
+}
+.v2-shell .v2-zone-card{
+ display:flex;flex-direction:column;gap:5px;align-items:stretch;min-width:0;
+ padding:8px;border:1px solid #43576f;border-radius:8px;
+ background:#1b2b40;color:#e9f3ff;cursor:pointer;text-align:left
+}
+.v2-shell .v2-zone-card:hover,.v2-shell .v2-zone-card:focus-visible{
+ outline:2px solid #f4c66f;outline-offset:1px;background:#29415b
+}
+.v2-shell .v2-zone-card img{
+ display:block;width:100%;aspect-ratio:63/88;object-fit:contain;
+ border-radius:5px;background:#09131f
+}
+.v2-shell .v2-zone-card-name{
+ font-size:12px;font-weight:650;line-height:1.3;overflow-wrap:anywhere
+}
+.v2-shell .v2-zone-card small{
+ font-size:10px;color:#afc6df;overflow-wrap:anywhere
+}
+.v2-shell .v2-zone-empty{
+ align-self:center;margin:auto;padding:24px;text-align:center;
+ font-size:14px;color:#bfd0e2
+}
+@media(max-width:600px){
+ .v2-shell>.v2-zone-overlay{padding:8px}
+ .v2-shell .v2-zone-dialog{max-height:94dvh}
+ .v2-shell .v2-zone-header{padding:12px;gap:7px}
+ .v2-shell .v2-zone-header h2{font-size:16px}
+ .v2-shell .v2-zone-subtitle{font-size:11px}
+ .v2-shell .v2-zone-gallery{
+  grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;padding:10px
+ }
+ body.v2-battle-page.v2-playing #match-view .pile.v2-zone-pile{font-size:8px}
+ .v2-shell .v2-zone-card{padding:5px;gap:3px}
+ .v2-shell .v2-zone-card-name{font-size:10px}
+ .v2-shell .v2-zone-card small{font-size:9px}
+}
