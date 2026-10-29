@@ -565,7 +565,9 @@ test('Q1577 raiding a character that cannot move leaves the new top free to move
  assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='move'&&a.uid===base.uid),false);
  assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='move'&&a.uid!==base.uid),true);
  s=untilPhase(s,1,'main');
- assert.equal(universalEnergyByColor(packs,s,1).purple,3);
+ // Three active REZ-1-086 each add one purple. REZ-1-072 on the energy
+ // line also prints one purple orb, so the line generates four.
+ assert.equal(universalEnergyByColor(packs,s,1).purple,4);
  const top=pull(s,1,'REZ-1-077');
  s.players[1].hand.push(top);
  assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='raid'&&a.uid===top.uid&&
