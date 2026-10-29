@@ -65,7 +65,9 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   return legal.find(a=>a.type==='chooseDiscard')||legal[0];
  if(['effect-top-deploy','effect-top-take-ready','effect-outside-color-rest',
   'effect-ingot-double','effect-grant-double','effect-attack-end-named',
-  'effect-return-then','effect-active-trait-buff','effect-return-trait'].includes(s.pending?.kind))
+  'effect-return-then','effect-active-trait-buff','effect-return-trait',
+  'effect-rest-gen','effect-retire-field-gen','effect-raid-life','effect-wyrm-look',
+  'effect-bottom-retire','effect-outside-bottom','effect-grant-survivor-damage'].includes(s.pending?.kind))
   return legal[0];
  if(s.pending?.kind==='effect-remove-hand-scale')
   return difficulty==='easy'?legal.find(a=>a.mode==='done')||legal[0]:

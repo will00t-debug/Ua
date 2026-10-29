@@ -123,7 +123,7 @@ test('047 048 049 and 051 are registered on the shared engine',()=>{
  assert.equal(slg.cards['SLG-1-049'].passiveBonuses[0].bp,500);
  assert.deepEqual(slg.cards['SLG-1-051'].effects.onPlay[0].options.map(o=>o.id),['recover','raid']);
  assert.equal(EXPECTED_V2_IDS['solo-leveling'].length,80);
- assert.equal(EXPECTED_V2_TOTAL,674);
+ assert.equal(EXPECTED_V2_TOTAL,680);
  assert.match(V2_PENDING_LABELS['effect-tuck-hand-under'],/裏向/);
  assert.match(V2_PENDING_LABELS['effect-chain-raid-hand'],/Raid/);
  assert.match(V2_PENDING_LABELS['effect-outside-named-raid'],/Raid/);
