@@ -99,6 +99,22 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
    (c.stack||[]).some(v=>v.faceDown===true||facedown(v)));
   return facedown(physical);
  }
+ // Direct facedown cards under this physical card. A Raid stack layer and
+ // a nested under-card do not satisfy 「このキャラの下」.
+ if(condition.kind==='selfFacedownUnder'){
+  const areas=[s.players[owner].front,s.players[owner].energy];
+  const physical=areas.flat().find(c=>c?.uid===sourceUid);
+  return !!(physical&&(physical.under||[]).some(v=>v.faceDown===true));
+ }
+ // Any own character that entered front or energy from outside this turn.
+ // The reason is not limited to an own effect.
+ if(condition.kind==='ownCharacterFromOutsideThisTurn')
+  return (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.owner===owner&&
+   e.from==='outside'&&(e.to==='front'||e.to==='energy')&&
+   printed({uid:e.uid,cardId:e.cardId})?.type==='character');
+ if(condition.kind==='ownNamedAttackedThisTurn')
+  return (s.attackedNames||[]).some(e=>e.owner===owner&&
+   (e.name===condition.name||(e.aliases||[]).includes(condition.name)));
  // Printed 「このターン中」 with no 自分のターン icon. The ledger is effect
  // AP only; paying AP to play a card does not qualify.
  if(condition.kind==='ownEffectApPaidColor')

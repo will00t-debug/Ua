@@ -37,7 +37,7 @@ const TYPE_LABELS={character:'角色',field:'場地',event:'事件'};
 const COLOR_NAMES={red:'紅',blue:'藍',yellow:'黃',green:'綠',purple:'紫'};
 const COLOR_ORDER=['red','blue','yellow','green','purple'];
 const TRIGGER_NAMES={active:'激活',get:'獲得',draw:'抽牌',raid:'突襲',color:'COLOR',special:'SPECIAL',final:'FINAL',none:'無'};
-const TITLE_NAMES={rezero:'Re:從零開始的異世界生活','steins-gate':'命運石之門',madoka:'魔法少女小圓',bleach:'BLEACH 千年血戰篇','gurren-lagann':'天元突破 紅蓮螺巖','sword-art-online':'刀劍神域','solo-leveling':'我獨自升級','mushoku-tensei':'無職轉生'};
+const TITLE_NAMES={rezero:'Re:從零開始的異世界生活','steins-gate':'命運石之門',madoka:'魔法少女小圓',inuyasha:'犬夜叉',bleach:'BLEACH 千年血戰篇','gurren-lagann':'天元突破 紅蓮螺巖','sword-art-online':'刀劍神域','solo-leveling':'我獨自升級','mushoku-tensei':'無職轉生'};
 
 function makeVisualDeckModel({cards,counts,search='',type='all',color='all',energy='all',energies,generate='all',sort='energy-asc',titleName=''}={}) {
  const source=Array.isArray(cards)?cards:[];
