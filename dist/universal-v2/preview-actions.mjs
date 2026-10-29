@@ -169,6 +169,8 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-rest-own-front-draw':'選擇 1 張自己的活動前線角色並使其休息',
  'effect-raid-source-rest':'選擇是否將突襲來源以休息狀態登場',
  'effect-rest-or-retire':'選擇 1 張 BP 5000 以下的對手前線',
+ 'effect-rest-skip-may-retire':'選擇 1 張 BP 5000 以下的對手前線，休息並跳過下次活動，或在巴麻美在場時改為退場',
+ 'effect-retire-named-draw':'退場 1 張自己場上的佐倉杏子',
  'effect-retire-own-trait':'可退場 1 個己方指定特徵角色',
  'effect-retire-missing-trait':'使 1 個不具有指定特徵的己方角色退場',
  'effect-outside-color-trait-active':'可從場外將 1 張指定顏色與特徵的角色以 ACTIVE 登場',
@@ -578,6 +580,8 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseActiveOther':return action.uid===null?'不使其他角色活動':'使 '+name()+' 活動';
   case 'chooseRestOwnFrontDraw':return '休息 '+name()+'，然後抽 1 張';
   case 'chooseRestOrRetire':return state?.pending?.mode==='retire'?'使 '+name()+' 退場':'使 '+name()+' 休息';
+  case 'chooseRestSkipMayRetire':return action.mode==='retire'?'改為使 '+name()+' 退場':'使 '+name()+' 休息，下一次不活動';
+  case 'chooseNamedRetireDraw':return '使 '+name()+' 退場';
   case 'chooseRetireBp':case 'chooseTargetMany':return action.uid===null?'完成目標選擇':'選擇第 '+(state?.pending?.selected?.length+1||1)+' 個角色';
   case 'chooseFrontEnergyGrant':return action.uid===null?
    '不指定暫時 FRONT 產能對象':'讓 '+name()+' 本回合在前線也能產生能源';

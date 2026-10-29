@@ -1396,7 +1396,7 @@ export const MADOKA_CARDS=
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA31BT_MMM-1-032.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-032",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "tiroFinale",
   "faq": []
  },
  {
@@ -3094,7 +3094,7 @@ export const MADOKA_CARDS=
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA31BT_MMM-1-071.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-071",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "mermaidWitch",
   "faq": []
  },
  {
@@ -4406,7 +4406,7 @@ export const MADOKA_CARDS=
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA31BT_MMM-1-100.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-100",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "kyokoSacrifice",
   "faq": []
  },
  {

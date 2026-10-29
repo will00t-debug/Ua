@@ -475,6 +475,10 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='effect-rest-own-front-draw')return legal[0];
  if(s.pending?.kind==='effect-raid-source-rest')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-rest-or-retire')return legal[0];
+ if(s.pending?.kind==='effect-rest-skip-may-retire')
+  return legal.find(a=>a.mode==='retire')||legal[0];
+ if(s.pending?.kind==='effect-retire-named-draw')
+  return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-retire-bp'){
   // A printed "up to one" retirement presents SKIP first; normal/hard AI
   // should choose an eligible enemy unless there is none.

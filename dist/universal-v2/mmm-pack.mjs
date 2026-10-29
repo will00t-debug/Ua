@@ -43,7 +43,7 @@ export function mmmPackCard(card){
   if(!rest&&!retire&&!outside)throw Error(card.id+' color trigger is not a registered printed profile');
  }else if(card.trigger==='special'){
   if(!['homuraRetire','madokaRetire','traitRetire','sayakaLifeRetire','kyokoApRetire',
-   'frontDoubleCut'].includes(kind)||
+   'frontDoubleCut','tiroFinale'].includes(kind)||
    card.triggerTextJa!==SPECIAL)
    throw Error(card.id+' special trigger is not the printed front retirement');
  }else if(card.trigger==='raid'){
@@ -66,7 +66,7 @@ export function mmmPackCard(card){
  if(['homuraRetire','madokaRetire','traitRetire','recoverAp2','searchTwoQuintet',
   'restDraw3','lifeDraw2','sayakaLifeRetire','kyokoApRetire','mamiRestSkip',
   'drawActiveAp','frontImpactDraw','frontDoubleCut','raidGirlSearch',
-  'distinctGirlLook'].includes(kind)&&
+  'distinctGirlLook','tiroFinale','kyokoSacrifice'].includes(kind)&&
   card.type!=='event')
   throw Error(card.id+' this print is an event');
  if(kind==='fieldReturn'&&card.type!=='character')
@@ -75,7 +75,7 @@ export function mmmPackCard(card){
   'enterRetireDraw','deployRedGirl','recoverPurpleGirl','entryOtherImpact','bpActive',
   'lifeActive','removedDraw','removedLook','removedActive',  'namedEnergyCap',
   'homuraRaidLock','mamiRaidBounce','homuraRaidReturn','mamiRaidLook',
-  'homuraRemovedImpact','devilHomura','mamiFrontBuff'].includes(kind)&&
+  'homuraRemovedImpact','devilHomura','mamiFrontBuff','mermaidWitch'].includes(kind)&&
   card.type!=='character')
   throw Error(card.id+' this print is a character');
  if(['fieldDiscardDraw','fieldTraitBuff','handOutsideGirl'].includes(kind)&&card.type!=='field')
@@ -158,6 +158,8 @@ export function mmmPackCard(card){
    name:'アルティメットまどか',bp:1000,impact:1}]:
   kind==='devilHomura'?[{op:'enemyBpDown',bp:1000,optional:true,when:{
    kind:'ownNameExists',turn:'any',zone:'energy',excludeSelf:false,name:'鹿目 まどか'}}]:
+  kind==='tiroFinale'?[{op:'restSkipOrMayRetire',bp:5000,mayRetireIfName:'巴 マミ'}]:
+  kind==='kyokoSacrifice'?[{op:'retireNamedThenDraw',name:'佐倉 杏子',draw:2}]:
   null;
  const parts=card.traits.length===1?card.traits[0].split(/[／/]/).map(x=>x.trim()).filter(Boolean):[];
  return {
@@ -203,13 +205,16 @@ export function mmmPackCard(card){
   ...(kind==='mamiFrontBuff'?{mainAbility:{
    op:'frontActiveOnceNameOrTrait',frontOnly:true,oncePerTurn:true,requiresActive:true,
    name:'百江 なぎさ',trait:QUINTET,bp:1000}}:{}),
+  ...(kind==='mermaidWitch'?{nameAliases:['美樹 さやか'],raidName:'美樹 さやか',
+   printedAttackDamage:2,playLifeAtMost:4,
+   blockBpRestriction:{relation:'atMost',bp:2000,condition:null}}:{}),
   ...(OPP_COLORS[kind]?{opponentFieldColorsHandEnergyDiscount:{colors:OPP_COLORS[kind],amount:1}}:{}),
   ...(kind==='discountImpact'?{outsideEventHandEnergyDiscount:{min:4,amount:5},printedImpact:1,
    triggerEffect:{op:'restOppFrontSkipNextActive'}}:{}),
   ...(kind==='enterRetireDraw'?{enterAlwaysActive:true,phaseEffects:[{
    phase:'start',edge:'start',turn:'own',then:[{op:'retireSelfAtOwnStart'}]}]}:{}),
   ...(['homuraRetire','madokaRetire','traitRetire','sayakaLifeRetire','kyokoApRetire',
-   'frontDoubleCut'].includes(kind)?
+   'frontDoubleCut','tiroFinale'].includes(kind)?
    {triggerEffect:{op:'retireOppFront'}}:{}),
   ...(kind==='frontDoubleCut'?{playApCutOnChosenName:{name:'暁美 ほむら',amount:1}}:{}),
   ...(kind==='distinctRetire'?{raidName:'鹿目 まどか'}:{}),
@@ -237,7 +242,7 @@ export const MADOKA_ENGINE_IDS=Object.freeze(
 
 export function createMadokaV2Pack(){
  const cards=MADOKA_CARDS.filter(c=>c.engineKind).map(mmmPackCard);
- if(cards.length!==98)throw Error('Madoka registered count drifted');
+ if(cards.length!==101)throw Error('Madoka registered count drifted');
  return createUniversalPack({
   id:'madoka',version:'mmm-ua31-set1-20261029',cards
  });
