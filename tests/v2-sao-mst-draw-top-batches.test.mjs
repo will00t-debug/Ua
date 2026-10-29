@@ -288,7 +288,6 @@ test('blocked next-wave cards are source-locked, NOT wrongly registered with par
  assert.deepEqual(pack.cards['SAO-1-081'].phaseEffects,[{phase:'start',edge:'start',turn:'own',
   then:[{op:'retireSelfAtOwnStart'}]}]);
  const pending=[
-  ['SAO-2-018',/【退場時】.*上から5枚見る/,pack],
   ['MST-1-028',/山札の上から2枚.*残りを場外/,mst],
   ['MST-1-068',/〖レイド〗.*〈シルフィエット〉/,mst]
  ];

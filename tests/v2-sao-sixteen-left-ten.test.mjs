@@ -15,7 +15,6 @@ import {EXPECTED_V2_COUNTS,EXPECTED_V2_IDS,EXPECTED_V2_TOTAL}
 
 const TEN=['SAO-1-025','SAO-1-041','SAO-1-049','SAO-1-060','SAO-1-062',
  'SAO-1-091','SAO-2-001','SAO-2-020','SAO-2-032','SAO-2-061'];
-const LEFT=['SAO-1-022','SAO-1-033','SAO-2-011','SAO-2-018','SAO-2-031','SAO-2-036'];
 const sao=registeredV2TitlePack('sword-art-online');
 
 function deck(required,copies={}){
@@ -187,16 +186,12 @@ function liveSniper(s,unit){
 }
 
 test('ten of the remaining sixteen SAO prints join the shared pilot',()=>{
- assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],177);
- assert.equal(EXPECTED_V2_TOTAL,674);
- assert.equal(Object.keys(sao.cards).length,177);
+ assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],183);
+ assert.equal(EXPECTED_V2_TOTAL,680);
+ assert.equal(Object.keys(sao.cards).length,183);
  for(const id of TEN){
   assert.equal(EXPECTED_V2_IDS['sword-art-online'].includes(id),true);
   assert.equal(sao.cards[id].implementation,'dsl');
- }
- for(const id of LEFT){
-  assert.equal(EXPECTED_V2_IDS['sword-art-online'].includes(id),false);
-  assert.equal(sao.cards[id],undefined);
  }
  const sun=sao.cards['SAO-1-025'];
  assert.equal(sun.raidName,'シノン（太陽神ソルス）');

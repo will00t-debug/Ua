@@ -102,8 +102,7 @@ test('SAO official 202 printings deduplicate to 183 IDs; IDs outside the manifes
  assert.equal(registry.cards['SAO-2-044'].mainAbility.op,'oncePayProgram');
  assert.equal(registry.cards['SAO-2-044'].mainAbility.then[0].count,2);
  assert.equal(registry.cards['SAO-2-044'].mainAbility.then[0].then[0].op,'grantSelfBlockAtLeast');
- assert.equal(registry.cards['SAO-2-018'],undefined,
-  'unreviewed SAO-2-018 must stay unregistered');
+ assert.equal(registry.cards['SAO-2-018'].effects.onRetire[0].op,'lookTopNameOrLowEnergy');
 });
 test('MST all 80 official Japanese records are available separately from old placeholder master',()=>{
  assert.equal(LEGACY_MST.length,80);

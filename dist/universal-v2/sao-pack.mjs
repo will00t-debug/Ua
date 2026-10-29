@@ -1916,6 +1916,84 @@ const PRINTED_PINS=Object.freeze({
     "trigger": "raid",
     "traits": ["アインクラッド"],
     "effectJa": "【レイド】〈キリト〉アクティブにし、フロントLに移動できる\n【フロントLにある場合】このキャラのアタック終了時、自分のエナジーLの〈アスナ〉とこのキャラを入れ替えてもよい。\n【起動メイン】【ターン1】自分のフロントLのキャラと自分のエナジーLのキャラを1枚ずつ選び、それらの位置を入れ替える。"
+  },
+  "SAO-1-022": {
+    "kind": "restGenEnergySwapLock",
+    "nameJa": "アスナ（創世神ステイシア）",
+    "color": "yellow",
+    "energy": 4,
+    "ap": 1,
+    "bp": 4000,
+    "gen": 1,
+    "type": "character",
+    "trigger": "raid",
+    "traits": ["女神"],
+    "effectJa": "【レイド】〈アスナ（創世神ステイシア）〉アクティブにし、フロントLに移動できる\n【登場時】相手のフロントLのキャラと、発生エナジーが1以下の相手のエナジーLのキャラをそれぞれ1枚まで選び、それらをレストにする。合計2枚選んだ場合、『それらの位置を入れ替えてもよい』。自分のライフが4以下の場合、『それらの位置を入れ替えてもよい。それらに次の自分のターン開始時まで、「このキャラは移動できない。」を与える。』に代わる。"
+  },
+  "SAO-1-033": {
+    "kind": "chooseRestGenOrRetireField",
+    "nameJa": "無制限地形操作",
+    "color": "yellow",
+    "energy": 4,
+    "ap": 1,
+    "bp": 0,
+    "gen": 0,
+    "type": "event",
+    "trigger": "active",
+    "traits": [],
+    "effectJa": "以下から1つ選ぶ。\n・相手のフロントLのキャラと、発生エナジーが1以下の相手のエナジーLのキャラをそれぞれ1枚まで選び、それらをレストにする。合計2枚選んだ場合、それらの位置を入れ替えてもよい。\n・相手の場の発生エナジーが1以下のフィールドを1枚まで選び、退場させる。"
+  },
+  "SAO-2-011": {
+    "kind": "goddessImpactRaidLife",
+    "nameJa": "リーファ（地神テラリア）",
+    "color": "yellow",
+    "energy": 4,
+    "ap": 1,
+    "bp": 4000,
+    "gen": 1,
+    "type": "character",
+    "trigger": "raid",
+    "traits": ["女神"],
+    "effectJa": "【レイド】〈リーファ（地神テラリア）〉アクティブにし、フロントLに移動できる\n【登場時】自分のライフが4以下で自分のフロントLのキャラが全て［特徴：女神］の場合、このキャラはこのターン中、【インパクト（1）】を得て、このキャラのレイド元のカードを1枚まで自分のライフエリアに表向きで置く。"
+  },
+  "SAO-2-018": {
+    "kind": "retireLookIngotOrLowEnergy",
+    "nameJa": "ゼーファン・ザ・ホワイトウィルム",
+    "color": "blue",
+    "energy": 4,
+    "ap": 1,
+    "bp": 4000,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "traits": ["アインクラッド"],
+    "effectJa": "【退場時】自分の山札の上から5枚見る。その中から〈クリスタライト・インゴット〉か必要エナジーが3以下の〔〈キリト〉か〈リズベット〉〕を1枚まで公開し手札に加える。残りを望む順で自分の山札の下に置く。キャラカードを手札に加えた場合、自分の手札を1枚場外に置く。"
+  },
+  "SAO-2-031": {
+    "kind": "songDiscountOutsideDamage",
+    "nameJa": "ユナ",
+    "color": "purple",
+    "energy": 4,
+    "ap": 1,
+    "bp": 4000,
+    "gen": 1,
+    "type": "character",
+    "trigger": "raid",
+    "traits": [],
+    "effectJa": "【レイド】〈ユナ〉アクティブにし、フロントLに移動できる\n【登場時】このターン中、次に手札から使用する［特徴：歌］の消費APを-1する。\n【起動メイン】【ターン1】自分の場外にあるカードを4枚望む順で自分の山札の下に置く。そうした場合、自分の場の［特徴：SAOサバイバー］を1枚まで選び、このターン中、【ダメージ（2）】（このキャラがアタックで直接ダメージを与える時、代わりに2ダメージ）を与える。"
+  },
+  "SAO-2-036": {
+    "kind": "songPayBottomRetire",
+    "nameJa": "キリト",
+    "color": "purple",
+    "energy": 4,
+    "ap": 1,
+    "bp": 4000,
+    "gen": 1,
+    "type": "character",
+    "trigger": "color",
+    "traits": ["SAOサバイバー"],
+    "effectJa": "【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、【インパクト】を失う）\n【登場時】このターン中に自分が［特徴：歌］を使用している場合、APを1支払ってもよい。そうした場合、『BP2000以下』の相手のフロントLのキャラを1枚まで選び、退場させる。自分の場外にあるカードを5枚望む順で自分の山札の下に置いてもよい。そうしたなら、『BP5000以下』に代わる。"
   }
 });
 export const SAO_V2_PILOT_IDS=Object.freeze(Object.keys(PRINTED_PINS).sort());
@@ -2602,6 +2680,39 @@ export function verifiedSaoV2Cards(){
    card.effects={};
    card.mainAbility={op:'onceMandatorySwapLines',oncePerTurn:true};
   }
+  if(pin.kind==='restGenEnergySwapLock'){
+   card.raidName='アスナ（創世神ステイシア）';
+   card.effects={onPlay:[{op:'restGenEnergySwap',maxGen:1,lockLifeAtMost:4}]};
+  }
+  if(pin.kind==='chooseRestGenOrRetireField'){
+   card.effects={onPlay:[{op:'chooseOne',optional:false,options:[
+    {id:'rest',label:'休息前線與低發生能源',turn:'any',then:[
+     {op:'restGenEnergySwap',maxGen:1}]},
+    {id:'field',label:'退場低發生能源場地',turn:'any',then:[
+     {op:'retireOppFieldGenAtMost',maxGen:1}]}
+   ]}]};
+  }
+  if(pin.kind==='goddessImpactRaidLife'){
+   card.raidName='リーファ（地神テラリア）';
+   card.effects={onPlay:[{op:'frontTraitImpactRaidToLife',trait:'女神',lifeAtMost:4}]};
+  }
+  if(pin.kind==='retireLookIngotOrLowEnergy'){
+   card.effects={onRetire:[{op:'lookTopNameOrLowEnergy',count:5,
+    name:'クリスタライト・インゴット',names:['キリト','リズベット'],maxEnergy:3}]};
+  }
+  if(pin.kind==='songDiscountOutsideDamage'){
+   card.raidName='ユナ';
+   card.effects={onPlay:[{op:'nextEligibleHandPlayApDiscount',filter:{trait:'歌'}}]};
+   card.mainAbility={op:'onceOutsideBottomDamage',oncePerTurn:true,count:4,
+    trait:'SAOサバイバー',damage:2};
+  }
+  if(pin.kind==='songPayBottomRetire'){
+   card.impactNull=true;
+   card.triggerEffect={op:'deployOutsideCharacter',color:'purple',maxEnergy:2,ap:1,frontOnly:true};
+   card.effects={onPlay:[{op:'optionalPayApThen',ap:1,optional:true,
+    when:{kind:'ownTraitUsedThisTurn',turn:'any',trait:'歌'},
+    then:[{op:'bottomThenRetireFront',count:5,bp:2000,raisedBp:5000}]}]};
+  }
   if(pin.kind==='aliasRaidNameLadder'){
    card.nameAliases=['アリス'];
    card.raidName='アリス';
@@ -2613,7 +2724,7 @@ export function verifiedSaoV2Cards(){
  });
 }
 export function saoV2Pack(){
- return createUniversalPack({id:'sword-art-online',version:'v2-d-sao-pilot-10',
+ return createUniversalPack({id:'sword-art-online',version:'v2-d-sao-pilot-11',
   cards:verifiedSaoV2Cards()});
 }
 
@@ -2715,6 +2826,9 @@ export function verifiedSaoV2Entries(){
       'topFiveReadySongOrYuna','outsideKnightSearchArts','battleWinLookBuffSniper',
       'frontAttackEndAsunaSwap'].includes(pin.kind)?
       ['tests/v2-sao-sixteen-left-ten.test.mjs']:[]),
+     ...(['restGenEnergySwapLock','chooseRestGenOrRetireField','goddessImpactRaidLife',
+      'retireLookIngotOrLowEnergy','songDiscountOutsideDamage','songPayBottomRetire'].includes(pin.kind)?
+      ['tests/v2-sao-last-six-faq.test.mjs']:[]),
      'tests/universal-v2-sao-mst-cross-title.test.mjs'
     ]),
     ...(def.implementation==='vanilla'?{verifiedNoExtraEffects:true}:{})
