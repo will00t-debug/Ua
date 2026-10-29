@@ -762,6 +762,17 @@ export function attackBattleTags(battle){
  if(Number.isInteger(battle.impact))tags.push(battle.impact>0?'衝擊'+battle.impact:'無衝擊');
  return tags;
 }
+// Bright yellow markers reflect the CURRENT public attack, not a printed
+// keyword inferred from a card's appearance. Ordinary attacks stay uncluttered.
+export function attackKeywordBadges(battle){
+ if(!battle||typeof battle!=='object')return [];
+ const badges=[];
+ if(Number.isInteger(battle.damage)&&battle.damage>1)
+  badges.push({type:'damage',text:'直傷'+battle.damage});
+ if(Number.isInteger(battle.impact)&&battle.impact>0)
+  badges.push({type:'impact',text:'衝擊'+battle.impact});
+ return badges;
+}
 // Inline controls are derived only from the defender's legal actions and
 // public FRONT cards. Readiness alone is insufficient (block restrictions,
 // compulsory blockers and effects that allow a rested character to block).

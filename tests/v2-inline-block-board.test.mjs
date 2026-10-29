@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {createUniversalPack} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,dispatchUniversalAction,legalUniversalActions,
  universalPublicView,assertUniversalMatch} from '../dist/universal-v2/engine.mjs';
-import {inlineBlockDecision} from '../dist/universal-v2/preview-actions.mjs';
+import {inlineBlockDecision,attackKeywordBadges} from '../dist/universal-v2/preview-actions.mjs';
 
 const unit=(id,bp=3000,extra={})=>({id,name:id,type:'character',color:'yellow',
  energy:0,ap:1,bp,gen:1,implementation:'vanilla',...extra});
@@ -85,4 +85,30 @@ test('inline controls do not appear for the attacker or unrelated pending effect
  assert.equal(inlineBlockDecision({...view,battle:null},legal),null);
  assert.equal(inlineBlockDecision({...view,battle:{...view.battle,uid:'foreign'}},legal),null);
  assert.equal(inlineBlockDecision(view,[]),null);
+});
+
+test('gold keyword badges reflect public combat damage and impact, but omit ordinary attacks',()=>{
+ const {s}=open();
+ const battle=universalPublicView(packs,s,0).battle;
+ assert.deepEqual(attackKeywordBadges(battle),[
+  {type:'damage',text:'直傷2'},{type:'impact',text:'衝擊1'}
+ ]);
+ assert.deepEqual(attackKeywordBadges({damage:1,impact:0}),[]);
+ assert.deepEqual(attackKeywordBadges({damage:3,impact:2}),[
+  {type:'damage',text:'直傷3'},{type:'impact',text:'衝擊2'}
+ ]);
+ assert.deepEqual(attackKeywordBadges({damage:2,impact:0}),[{type:'damage',text:'直傷2'}]);
+ assert.deepEqual(attackKeywordBadges(null),[]);
+});
+
+test('gold labels are appended outside REST-rotating face and displayed in the center row',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
+ const script=read('dist/universal-v2-preview.mjs');
+ const css=read('dist/universal-v2-block.css');
+ assert.ok(script.includes("btnSlot.append(face);\n  // Attach to the slot itself"));
+ assert.ok(script.includes("class:'v2-attack-keywords v2-attack-keywords-card'"));
+ assert.ok(script.includes("class:'v2-block-battle-meta'"));
+ assert.ok(css.includes('.slot.v2-attacking .v2-attack-keywords-card{'));
+ assert.ok(css.includes('background:linear-gradient(180deg,#fff79b'));
 });

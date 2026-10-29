@@ -27,7 +27,7 @@ import {SAO_CARDS} from './sao-cards.mjs';
 import {MST_V2_OFFICIAL_CATALOGUE} from './universal-v2/sources/mst-inventory.mjs';
 import {V2_PHASE_LABELS,V2_TITLE_LABELS,V2_PENDING_LABELS,
  uiActor,isExactLegal,uiCardLabel,uiActionLabel,visibleActionsForCard,
- pendingChoiceCards,visiblePendingChoiceCards,pendingChoiceCaption,publicPendingTargetCard,attackBattleTags,inlineBlockDecision,raidClickPlan,moveClickPlan,
+ pendingChoiceCards,visiblePendingChoiceCards,pendingChoiceCaption,publicPendingTargetCard,attackBattleTags,attackKeywordBadges,inlineBlockDecision,raidClickPlan,moveClickPlan,
  FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs';
 import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalReplay,
  publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
@@ -391,10 +391,13 @@ function blockControl(action,view){
 function blockBoardPrompt(decision){
  const {battle,blockers,skipAction}=decision;
  const prompt=el('div',{class:'v2-block-prompt',role:'group','aria-label':'場上阻擋選擇'});
+ const keywords=attackKeywordBadges(battle);
+ const meta=el('span',{class:'v2-block-battle-meta'},
+  el('b',{text:'BP '+(Number.isInteger(battle.bp)?battle.bp:'—')}),
+  ...keywords.map(({type,text})=>el('em',{class:'v2-attack-keyword v2-keyword-'+type,text})),
+  el('span',{class:'v2-block-hint',text:blockers.length?'點卡圖阻擋':'無可阻擋角色'}));
  prompt.append(el('div',{class:'v2-block-summary',role:'status'},
-  el('strong',{text:(battle.name||battle.cardId)+' 正在攻擊'}),
-  el('span',{text:attackBattleTags(battle).join(' · ')+
-   (blockers.length?' · 點卡圖阻擋':' · 無可阻擋角色')})));
+  el('strong',{text:(battle.name||battle.cardId)+' 正在攻擊'}),meta));
  if(skipAction)prompt.append(btn('不阻擋',()=>applyAction(skipAction),'btn v2-block-skip'));
  return prompt;
 }
@@ -463,6 +466,7 @@ function legacySlot(view,side,line,index,legal){
  const blockAction=yours&&line==='front'&&c?
   blocking?.blockers.find(a=>a.uid===c.uid):null;
  const attacking=!!c&&line==='front'&&view.battle?.owner===side&&view.battle.uid===c.uid;
+ const attackBadges=attacking?attackKeywordBadges(view.battle):[];
  const selected=!!c&&c.uid===app.selectedUid;
  const moving=yours&&app.state.phase==='move';
  const plan=!yours?{type:'select'}:moving?
@@ -485,7 +489,8 @@ function legacySlot(view,side,line,index,legal){
   (raidDest||place?' destination':''),
   'aria-label':(side===0?'你的':'對手的')+(line==='front'?'前線':'能源線')+
    (index+1)+(d?' '+d.name:' 空位')+(placement?'，'+placement:'')+
-   (attacking?'，攻擊中':'')+(blockAction?'，阻擋，BP '+c.bp:''),
+   (attacking?'，攻擊中'+(attackBadges.length?'，'+attackBadges.map(b=>b.text).join('，'):''):'')+
+   (blockAction?'，阻擋，BP '+c.bp:''),
   'data-placement':placement});
  if(c){
   btnSlot.dataset.v2CardUid=c.uid;
@@ -499,6 +504,11 @@ function legacySlot(view,side,line,index,legal){
    face.append(el('span',{class:'slotStack',text:'RAID '+(c.raidDepth||c.raidLayers.length)}));
   face.append(el('span',{class:'slotBp'},el('b',{text:line==='front'?String(c.bp):'◆ '+String(c.produces??0)})));
   btnSlot.append(face);
+  // Attach to the slot itself: REST rotates the face, not the keyword chips.
+  if(attackBadges.length)btnSlot.append(el('span',
+   {class:'v2-attack-keywords v2-attack-keywords-card','aria-hidden':'true'},
+   ...attackBadges.map(({type,text})=>el('em',
+    {class:'v2-attack-keyword v2-keyword-'+type,text}))));
   if(blockAction)btnSlot.append(el('span',{class:'v2-block-option',text:'阻擋','aria-hidden':'true'}));
  }else btnSlot.append(el('span',{class:'slotIndex',text:'0'+(index+1)}));
  let held=false;
