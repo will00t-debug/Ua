@@ -220,7 +220,7 @@ export const MADOKA_CARDS=
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA31BT_MMM-1-005.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-005",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "homuraRemovedImpact",
   "faq": []
  },
  {
@@ -1522,7 +1522,7 @@ export const MADOKA_CARDS=
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA31BT_MMM-1-035.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-035",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "devilHomura",
   "faq": []
  },
  {
@@ -2396,7 +2396,7 @@ export const MADOKA_CARDS=
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA31BT_MMM-1-055.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-055",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "mamiFrontBuff",
   "faq": []
  },
  {

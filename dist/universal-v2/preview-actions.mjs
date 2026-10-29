@@ -143,6 +143,8 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-remove-named-zones':'可將指定角色移入移除區',
  'effect-unblocked-rest':'選擇是否使對手前線休息',
  'effect-energy-swap':'選擇要交換位置的己方前線',
+ 'effect-removed-self-grant':'可將移除區的指定卡放到場外，這張角色本回合 BP+1000 並獲得衝擊 1',
+ 'effect-buff-name-or-trait':'選擇百江凪沙或其他五重奏，本回合 BP+1000',
  'effect-grant-named-impact':'選擇是否賦予衝擊',
  'effect-hand-bp-may':'這次參照手牌角色 BP 時，是否視為 +1000',
  'effect-hand-outside-active':'可將 1 張手牌放到場外，使這張角色活動',
@@ -566,6 +568,8 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseUnblockedRest':return action.uid===null?'不使角色休息':'使 '+name()+' 休息';
   case 'chooseRemoveOppField':return '將 '+name()+' 放入移除區';
   case 'chooseEnergySwap':return '與 '+name()+' 交換位置';
+  case 'chooseRemovedSelfGrant':return action.uid===null?'不把移除區的卡放到場外':'將 '+name()+' 放到場外，並獲得 BP+1000 與衝擊 1';
+  case 'chooseNameOrTraitBuff':return '本回合使 '+name()+' BP+1000';
   case 'chooseGrantNamedImpact':return action.uid===null?'不賦予衝擊':'使 '+name()+' 獲得衝擊 1';
   case 'chooseHandBpMay':return action.mode==='accept'?'視為 BP+1000':'維持原本 BP';
   case 'handActivate':return '支付 1 AP，公開這張手牌';

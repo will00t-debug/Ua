@@ -80,8 +80,8 @@ test('Madoka catalogue stays outside the five-title census',()=>{
  assert.equal(MADOKA_CARDS.length,113);
  assert.equal(new Set(MADOKA_CARDS.map(c=>c.id)).size,113);
  assert.equal(MADOKA_CARDS.some(c=>c.id.includes('AP')||c.rarity==='AP'),false);
- assert.equal(MADOKA_CARDS.filter(c=>c.engineKind).length,95);
- assert.equal(Object.keys(pack.cards).length,95);
+ assert.equal(MADOKA_CARDS.filter(c=>c.engineKind).length,98);
+ assert.equal(Object.keys(pack.cards).length,98);
  assert.equal(pack.version,'mmm-ua31-set1-20261029');
  assert.equal(V2_TITLE_IDS.includes('madoka'),false);
  for(const card of MADOKA_CARDS){
@@ -96,7 +96,7 @@ test('Madoka catalogue stays outside the five-title census',()=>{
  assert.ok(Object.keys(practice.counts).every(id=>pack.cards[id].color==='red'));
  const editor=editorV2Status('madoka',practice.counts);
  assert.equal(editor.ready,true);
- assert.equal(editor.registered,95);
+ assert.equal(editor.registered,98);
  const blocked=v2DeckReport('madoka',{'MMM-1-001':4,'MMM-1-006':46});
  assert.equal(blocked.ok,false);
  assert.match(blocked.issues.join('\n'),/尚未支援/);
@@ -1376,4 +1376,216 @@ test('MMM-1-056 deploys one purple character from the top and gains impact from 
  assert.equal(declined.players[0].front.find(c=>c?.uid===third.uid).impactGranted.amount,1);
  assert.equal(declined.players[0].front.concat(declined.players[0].energy).some(c=>c?.cardId==='MMM-1-039'),false);
  assert.equal(assertUniversalMatch(packs,declined),true);
+});
+
+function stamp(s,card){
+ card.fieldEntryStamp=s.nextFieldEntryStamp++;
+ return card;
+}
+function packCounts(local,required){
+ const fillers=Object.values(local.cards).filter(c=>!required.includes(c.id)&&
+  !['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
+ const ids=[...required];
+ for(const id of fillers){if(ids.length>=13)break;if(!ids.includes(id))ids.push(id);}
+ assert.equal(ids.length,13,ids.join(','));
+ const counts=Object.fromEntries(ids.map((id,i)=>[id,i===12?2:4]));
+ assert.deepEqual(validateUniversalDeck(local,counts),[]);
+ return counts;
+}
+
+test('MMM-1-005 pays one removed Ultimate Madoka for BP and impact',()=>{
+ // MMM-1-001's own sentences stay unregistered. This fixture only supplies
+ // the printed name and stats so the attack payment can see that card.
+ const ultimate={id:'MMM-1-001',name:'アルティメットまどか',color:'yellow',type:'character',
+  energy:5,ap:2,bp:5000,gen:1,trigger:'get',traits:[],implementation:'vanilla',effects:{}};
+ const named=createUniversalPack({id:'madoka',version:pack.version,cards:[ultimate]});
+ const local={kind:pack.kind,id:pack.id,version:pack.version,restrictColors:false,
+  cards:Object.freeze({...pack.cards,'MMM-1-001':named.cards['MMM-1-001']})};
+ const localPacks=[local,local];
+ const counts=packCounts(local,['MMM-1-005','MMM-1-006']);
+ const playMatch=seed=>{
+  let s=newUniversalMatch(localPacks,{decks:[counts,counts],seed,first:0});
+  let guard=0;
+  while(s.phase!=='attack'){
+   if(s.pending)throw Error('Pending '+s.pending.kind);
+   s=dispatchUniversalAction(localPacks,s,{type:'next'});
+   if(++guard>8)throw Error('Did not reach attack');
+  }
+  return s;
+ };
+ const act=(s,action)=>dispatchUniversalAction(localPacks,s,action);
+ let paid=playMatch(31005);
+ const homura=stamp(paid,put(paid,0,'MMM-1-005','front',0,true));
+ const removed=take(paid,0,'MMM-1-001');
+ paid.players[0].removed.push(removed);
+ const wall=stamp(paid,put(paid,1,'MMM-1-006','front',0,true));
+ const life=paid.players[1].life.length;
+ paid=act(paid,{type:'attack',uid:homura.uid});
+ assert.equal(paid.pending.kind,'effect-removed-self-grant');
+ assert.equal(paid.pending.optional,true);
+ assert.deepEqual(paid.pending.choices,[removed.uid]);
+ paid=act(paid,{type:'chooseRemovedSelfGrant',uid:removed.uid});
+ const paidHomura=paid.players[0].front.find(c=>c.uid===homura.uid);
+ assert.ok(paid.players[0].outside.some(c=>c.uid===removed.uid));
+ assert.equal(paid.players[0].removed.some(c=>c.uid===removed.uid),false);
+ assert.equal(universalBp(localPacks,paid,paidHomura),5000);
+ assert.equal(paidHomura.impactGranted.amount,1);
+ assert.equal(paid.pending.kind,'block');
+ paid=act(paid,{type:'chooseBlock',uid:wall.uid});
+ assert.equal(paid.players[1].front[0],null);
+ assert.equal(paid.players[1].life.length,life-1);
+ if(paid.pending?.kind==='life-trigger')paid=act(paid,{type:'chooseTrigger',mode:'skip'});
+ assert.equal(assertUniversalMatch(localPacks,paid),true);
+
+ let declined=playMatch(31006);
+ const quiet=stamp(declined,put(declined,0,'MMM-1-005','front',0,true));
+ const passed=take(declined,0,'MMM-1-001');
+ declined.players[0].removed.push(passed);
+ declined=act(declined,{type:'attack',uid:quiet.uid});
+ declined=act(declined,{type:'chooseRemovedSelfGrant',uid:null});
+ const quietNow=declined.players[0].front.find(c=>c.uid===quiet.uid);
+ assert.equal(declined.players[0].removed.some(c=>c.uid===passed.uid),true);
+ assert.equal(universalBp(localPacks,declined,quietNow),4000);
+ assert.equal(quietNow.impactGranted,undefined);
+ assert.equal(declined.pending.kind,'block');
+
+ let empty=playMatch(31007);
+ const bare=stamp(empty,put(empty,0,'MMM-1-005','front',0,true));
+ const other=take(empty,0,'MMM-1-006');
+ empty.players[0].removed.push(other);
+ empty=act(empty,{type:'attack',uid:bare.uid});
+ assert.equal(empty.pending.kind,'block');
+ assert.equal(universalBp(localPacks,empty,empty.players[0].front.find(c=>c.uid===bare.uid)),4000);
+ assert.equal(assertUniversalMatch(localPacks,empty),true);
+});
+
+function twoColorCounts(colors,needed){
+ const fillers=Object.values(pack.cards).filter(c=>!colors.includes(c.id)&&!needed.includes(c.id)&&
+  !['special','color','final'].includes(c.trigger)).map(c=>c.id).sort();
+ const ids=[...needed];
+ for(const id of fillers){if(ids.length>=12)break;if(!ids.includes(id))ids.push(id);}
+ assert.equal(ids.length,12);
+ const counts=Object.fromEntries(ids.map((id,i)=>[id,i===11?2:4]));
+ for(const id of colors)counts[id]=2;
+ assert.deepEqual(validateUniversalDeck(pack,counts),[]);
+ return counts;
+}
+
+test('MMM-1-035 swaps with front Madoka and cuts a front character from energy',()=>{
+ const counts=twoColorCounts(['MMM-1-035','MMM-1-055'],['MMM-1-038','MMM-1-006','MMM-1-037','MMM-1-062','MMM-1-061']);
+ assert.deepEqual(pack.cards['MMM-1-035'].nameAliases,['暁美 ほむら']);
+ assert.equal(pack.cards['MMM-1-035'].triggerEffect.op,'deployOutsideCharacter');
+ let swapped=toPhase(fresh(counts,31035),'main');
+ const devil=stamp(swapped,put(swapped,0,'MMM-1-035','energy',0,true));
+ const other=stamp(swapped,put(swapped,0,'MMM-1-037','front',0,true));
+ const madoka=stamp(swapped,put(swapped,0,'MMM-1-006','front',1,true));
+ assert.deepEqual(activates(swapped,devil.uid,'energySwap').map(a=>a.uid),[devil.uid]);
+ swapped=use(swapped,{type:'activate',uid:devil.uid,mode:'energySwap'});
+ assert.equal(swapped.pending.kind,'effect-energy-swap');
+ assert.equal(swapped.pending.name,'鹿目 まどか');
+ assert.deepEqual(swapped.pending.choices,[madoka.uid]);
+ swapped=use(swapped,{type:'chooseEnergySwap',uid:madoka.uid});
+ assert.equal(swapped.players[0].front[1].uid,devil.uid);
+ assert.equal(swapped.players[0].energy[0].uid,madoka.uid);
+ assert.equal(swapped.players[0].front[0].uid,other.uid);
+ assert.equal(activates(swapped,devil.uid,'energySwap').length,0);
+ assert.equal(assertUniversalMatch(packs,swapped),true);
+
+ let cut=toPhase(fresh(counts,31036),'attack');
+ const attacker=stamp(cut,put(cut,0,'MMM-1-035','front',0,true));
+ stamp(cut,put(cut,0,'MMM-1-006','energy',0,true));
+ const foe=stamp(cut,put(cut,1,'MMM-1-037','front',0,true));
+ const before=universalBp(packs,cut,foe);
+ cut=use(cut,{type:'attack',uid:attacker.uid});
+ assert.equal(cut.pending.kind,'effect-target');
+ assert.equal(cut.pending.optional,true);
+ assert.equal(cut.pending.bp,1000);
+ assert.deepEqual(cut.pending.choices,[foe.uid]);
+ cut=use(cut,{type:'chooseTarget',uid:foe.uid});
+ assert.equal(universalBp(packs,cut,cut.players[1].front.find(c=>c.uid===foe.uid)),before-1000);
+ assert.equal(cut.pending.kind,'block');
+
+ let quiet=toPhase(fresh(counts,31038),'attack');
+ const lone=stamp(quiet,put(quiet,0,'MMM-1-035','front',0,true));
+ stamp(quiet,put(quiet,1,'MMM-1-037','front',0,true));
+ quiet=use(quiet,{type:'attack',uid:lone.uid});
+ assert.equal(quiet.pending.kind,'block');
+
+ let colored=toPhase(fresh(counts,31039),'attack');
+ const striker=stamp(colored,put(colored,0,'MMM-1-006','front',0,true));
+ const revealed=take(colored,1,'MMM-1-035');
+ colored.players[1].life.unshift(revealed);
+ const deploy=take(colored,1,'MMM-1-055');
+ const alias=take(colored,1,'MMM-1-038');
+ const heavy=take(colored,1,'MMM-1-037');
+ const yellow=take(colored,1,'MMM-1-006');
+ colored.players[1].outside.push(deploy,alias,heavy,yellow);
+ colored=use(colored,{type:'attack',uid:striker.uid});
+ assert.equal(colored.pending.kind,'block');
+ colored=use(colored,{type:'chooseBlock',uid:null});
+ assert.equal(colored.pending.kind,'life-trigger');
+ assert.equal(colored.pending.trigger,'color');
+ const outs=legalUniversalActions(packs,colored).filter(a=>a.mode==='colorOutside');
+ assert.ok(outs.some(a=>a.uid===deploy.uid));
+ assert.ok(outs.some(a=>a.uid===alias.uid));
+ assert.equal(outs.some(a=>a.uid===heavy.uid||a.uid===yellow.uid),false);
+ colored=use(colored,outs.find(a=>a.uid===deploy.uid&&a.slot===0));
+ assert.equal(colored.players[1].front[0].uid,deploy.uid);
+ assert.equal(colored.players[1].front[0].ready,true);
+ assert.equal(colored.players[1].outside.some(c=>c.uid===deploy.uid),false);
+ if(colored.pending?.kind==='life-trigger')colored=use(colored,{type:'chooseTrigger',mode:'skip'});
+ assert.equal(assertUniversalMatch(packs,colored),true);
+
+ let named=toPhase(fresh(counts,31040),'main');
+ fuelFields(named);
+ const flame=stamp(named,put(named,0,'MMM-1-035','front',0,true));
+ const event=take(named,0,'MMM-1-062');
+ named.players[0].hand.push(event);
+ readyAp(named);
+ const deck=named.players[0].deck.length;
+ named=play(named,event.uid,'event');
+ assert.equal(named.pending.kind,'effect-front-grant');
+ named=use(named,{type:'chooseFrontGrant',uid:named.players[0].front[0].uid});
+ assert.equal(named.players[0].deck.length,deck-1);
+ assert.equal(assertUniversalMatch(packs,named),true);
+});
+
+test('MMM-1-055 buffs Nagisa or another quintet only while active on the front',()=>{
+ const counts=countsFor(['MMM-1-055','MMM-1-038','MMM-1-049','MMM-1-006']);
+ assert.equal(pack.cards['MMM-1-055'].mainAbility.requiresActive,true);
+ assert.equal(pack.cards['MMM-1-055'].triggerEffect.frontOnly,true);
+ let buffed=toPhase(fresh(counts,31055),'main');
+ const mami=stamp(buffed,put(buffed,0,'MMM-1-055','front',0,true));
+ const bebe=stamp(buffed,put(buffed,0,'MMM-1-038','energy',0,true));
+ const quintet=stamp(buffed,put(buffed,0,'MMM-1-049','front',1,true));
+ const girl=stamp(buffed,put(buffed,0,'MMM-1-006','front',2,true));
+ const beforeBebe=universalBp(packs,buffed,bebe);
+ const beforeGirl=universalBp(packs,buffed,girl);
+ assert.equal(activates(buffed,mami.uid,'frontNameOrTrait').length,1);
+ buffed=use(buffed,{type:'activate',uid:mami.uid,mode:'frontNameOrTrait'});
+ assert.equal(buffed.pending.kind,'effect-buff-name-or-trait');
+ assert.ok(buffed.pending.choices.includes(bebe.uid));
+ assert.ok(buffed.pending.choices.includes(quintet.uid));
+ assert.equal(buffed.pending.choices.includes(mami.uid),false);
+ assert.equal(buffed.pending.choices.includes(girl.uid),false);
+ buffed=use(buffed,{type:'chooseNameOrTraitBuff',uid:bebe.uid});
+ const buffedBebe=buffed.players[0].energy.find(c=>c?.uid===bebe.uid);
+ const buffedGirl=buffed.players[0].front.find(c=>c?.uid===girl.uid);
+ assert.equal(universalBp(packs,buffed,buffedBebe),beforeBebe+1000);
+ assert.equal(universalBp(packs,buffed,buffedGirl),beforeGirl);
+ assert.equal(activates(buffed,mami.uid,'frontNameOrTrait').length,0);
+ assert.equal(assertUniversalMatch(packs,buffed),true);
+
+ let rested=toPhase(fresh(counts,31059),'main');
+ const asleep=stamp(rested,put(rested,0,'MMM-1-055','front',0,false));
+ stamp(rested,put(rested,0,'MMM-1-049','front',1,true));
+ assert.equal(activates(rested,asleep.uid,'frontNameOrTrait').length,0);
+ let sidelined=toPhase(fresh(counts,31060),'main');
+ const energy=stamp(sidelined,put(sidelined,0,'MMM-1-055','energy',0,true));
+ stamp(sidelined,put(sidelined,0,'MMM-1-038','front',0,true));
+ assert.equal(activates(sidelined,energy.uid,'frontNameOrTrait').length,0);
+ let alone=toPhase(fresh(counts,31061),'main');
+ const solo=stamp(alone,put(alone,0,'MMM-1-055','front',0,true));
+ assert.equal(activates(alone,solo.uid,'frontNameOrTrait').length,0);
+ assert.equal(assertUniversalMatch(packs,alone),true);
 });

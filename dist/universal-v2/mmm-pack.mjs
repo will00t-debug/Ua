@@ -18,6 +18,7 @@ const SPECIAL='【スペシャル】相手のフロントLのキャラを1枚選
 const RAID='【レイド】このカードを手札に加えるか、必要エナジーを満たしている場合、レイドさせる。';
 const COLOR_REST='【カラー】相手のフロントLのキャラを1枚選び、レストにする。それは次の1回アクティブにならない。';
 const COLOR_RETIRE='【カラー】BP2500以下の相手のフロントLのキャラを1枚選び、退場させる。';
+const COLOR_DEPLOY='【カラー】自分の場外から必要エナジーが2以下で消費APが1の紫のキャラカードを1枚自分のフロントLにアクティブで登場させる。';
 const PIP={yellow:'黄',purple:'紫',red:'赤'};
 const OPP_COLORS={
  oppColorsYellow:['purple','red'],
@@ -37,7 +38,9 @@ export function mmmPackCard(card){
   const rest=kind==='discountImpact'&&card.triggerTextJa===COLOR_REST&&card.color==='yellow';
   const retire=['distinctEnergy','lifeActive'].includes(kind)&&
    card.triggerTextJa===COLOR_RETIRE&&card.color==='red';
-  if(!rest&&!retire)throw Error(card.id+' color trigger is not a registered printed profile');
+  const outside=['devilHomura','mamiFrontBuff'].includes(kind)&&
+   card.triggerTextJa===COLOR_DEPLOY&&card.color==='purple';
+  if(!rest&&!retire&&!outside)throw Error(card.id+' color trigger is not a registered printed profile');
  }else if(card.trigger==='special'){
   if(!['homuraRetire','madokaRetire','traitRetire','sayakaLifeRetire','kyokoApRetire',
    'frontDoubleCut'].includes(kind)||
@@ -71,7 +74,8 @@ export function mmmPackCard(card){
  if(['step','impactNull','doubleBlock','bounce','peek','buffOther','buffAny','aliasBuff',
   'enterRetireDraw','deployRedGirl','recoverPurpleGirl','entryOtherImpact','bpActive',
   'lifeActive','removedDraw','removedLook','removedActive',  'namedEnergyCap',
-  'homuraRaidLock','mamiRaidBounce','homuraRaidReturn','mamiRaidLook'].includes(kind)&&
+  'homuraRaidLock','mamiRaidBounce','homuraRaidReturn','mamiRaidLook',
+  'homuraRemovedImpact','devilHomura','mamiFrontBuff'].includes(kind)&&
   card.type!=='character')
   throw Error(card.id+' this print is a character');
  if(['fieldDiscardDraw','fieldTraitBuff','handOutsideGirl'].includes(kind)&&card.type!=='field')
@@ -150,6 +154,10 @@ export function mmmPackCard(card){
   kind==='homuraRaidReturn'?[{op:'drawDiscard',count:2,discardCount:1}]:
   kind==='mamiRaidLook'?[{op:'lookTopDeployRest',count:4,color:'purple',maxEnergy:2,
    ap:1,rest:'bottom',impactTrait:QUINTET,impactOthers:4,impact:1}]:
+  kind==='homuraRemovedImpact'?[{op:'optionalRemovedNameSelfGrant',optional:true,
+   name:'アルティメットまどか',bp:1000,impact:1}]:
+  kind==='devilHomura'?[{op:'enemyBpDown',bp:1000,optional:true,when:{
+   kind:'ownNameExists',turn:'any',zone:'energy',excludeSelf:false,name:'鹿目 まどか'}}]:
   null;
  const parts=card.traits.length===1?card.traits[0].split(/[／/]/).map(x=>x.trim()).filter(Boolean):[];
  return {
@@ -158,7 +166,9 @@ export function mmmPackCard(card){
   traits:card.traits,
   ...(parts.length>1?{traitComponents:parts}:{}),
   implementation:kind==='plain'?'vanilla':'dsl',
-  effects:kind==='homuraRaidReturn'?{onPlay,onRetire:[{op:'returnOwnRaidBase',optional:true,
+  effects:kind==='homuraRemovedImpact'?{onAttack:onPlay}:
+   kind==='devilHomura'?{onAttack:onPlay}:
+   kind==='homuraRaidReturn'?{onPlay,onRetire:[{op:'returnOwnRaidBase',optional:true,
    when:{kind:'ownNameExists',turn:'any',zone:'field',excludeSelf:false,name:'鹿目 まどか'}}]}:
    kind==='fieldReturn'?{onRetire:[{op:'returnRetiredToHand',optional:false}]}:
    kind==='madokaRecover'?{onRetire:[{op:'recoverOutsideNamedEnergy',name:'鹿目 まどか',
@@ -186,6 +196,13 @@ export function mmmPackCard(card){
    condition:{kind:'ownDistinctTraitNames',turn:'any',min:3,zone:'field',excludeSelf:true,trait:GIRL},
    extraEnergy:1}],triggerEffect:{op:'retireOppFrontUnderBp',bp:2500}}:{}),
   ...(kind==='aliasBuff'?{nameAliases:['百江 なぎさ']}:{}),
+  ...(kind==='devilHomura'?{nameAliases:['暁美 ほむら'],mainAbility:{
+   op:'energySwapOwnFront',line:'energy',oncePerTurn:true,name:'鹿目 まどか'}}:{}),
+  ...(['devilHomura','mamiFrontBuff'].includes(kind)?{triggerEffect:{
+   op:'deployOutsideCharacter',color:'purple',maxEnergy:2,ap:1,frontOnly:true}}:{}),
+  ...(kind==='mamiFrontBuff'?{mainAbility:{
+   op:'frontActiveOnceNameOrTrait',frontOnly:true,oncePerTurn:true,requiresActive:true,
+   name:'百江 なぎさ',trait:QUINTET,bp:1000}}:{}),
   ...(OPP_COLORS[kind]?{opponentFieldColorsHandEnergyDiscount:{colors:OPP_COLORS[kind],amount:1}}:{}),
   ...(kind==='discountImpact'?{outsideEventHandEnergyDiscount:{min:4,amount:5},printedImpact:1,
    triggerEffect:{op:'restOppFrontSkipNextActive'}}:{}),
@@ -220,7 +237,7 @@ export const MADOKA_ENGINE_IDS=Object.freeze(
 
 export function createMadokaV2Pack(){
  const cards=MADOKA_CARDS.filter(c=>c.engineKind).map(mmmPackCard);
- if(cards.length!==95)throw Error('Madoka registered count drifted');
+ if(cards.length!==98)throw Error('Madoka registered count drifted');
  return createUniversalPack({
   id:'madoka',version:'mmm-ua31-set1-20261029',cards
  });
