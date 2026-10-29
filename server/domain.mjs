@@ -103,6 +103,36 @@ function labelFor(packs,match,action){
  }catch{/* The button still works with a generic label. */}
  return '執行操作';
 }
+function visibleChoiceUids(view){
+ const ids=new Set();
+ const take=card=>{if(card&&typeof card.uid==='string')ids.add(card.uid);};
+ for(const player of view?.players||[]){
+  for(const key of ['hand','front','energy','outside','removed','faceUpLife','publicLife']){
+   for(const card of player?.[key]||[])take(card);
+  }
+ }
+ for(const card of view?.openTriggers||[])take(card);
+ for(const card of view?.publicReveals||[])take(card);
+ if(typeof view?.battle?.uid==='string')ids.add(view.battle.uid);
+ return ids;
+}
+// Structural fields the table needs to click a card, the same way the solo
+// battle does. Only UIDs already present in this player's public view are
+// copied, so a hidden hand, deck or life card is never introduced here.
+function publicActionChoice(action,index,packs,match,view){
+ const choice={index,label:labelFor(packs,match,action)};
+ if(typeof action?.type==='string'&&action.type.length<=40)choice.type=action.type;
+ const ids=visibleChoiceUids(view);
+ for(const key of ['uid','baseUid','replaceUid','targetUid']){
+  if(action?.[key]===null&&key==='uid')choice.uid=null;
+  else if(typeof action?.[key]==='string'&&ids.has(action[key]))choice[key]=action[key];
+ }
+ if(action?.line==='front'||action?.line==='energy')choice.line=action.line;
+ if(Number.isInteger(action?.slot)&&action.slot>=0&&action.slot<=3)choice.slot=action.slot;
+ if(typeof action?.mode==='string'&&/^[A-Za-z0-9_-]{1,40}$/.test(action.mode))choice.mode=action.mode;
+ if(action?.from==='hand'||action?.from==='removed'||action?.from==='outside')choice.from=action.from;
+ return choice;
+}
 function paintCard(pack,card){
  if(!card)return null;
  const next={...card};
@@ -176,9 +206,8 @@ function present(room,userId){
  const actor=universalActor(room.match);
  payload.yourTurn=room.status==='playing'&&room.match.status==='playing'&&actor===seat;
  if(payload.yourTurn){
-  payload.choices=legalUniversalActions(room.packs,room.match).map((action,index)=>({
-   index,label:labelFor(room.packs,room.match,action)
-  }));
+  payload.choices=legalUniversalActions(room.packs,room.match).map((action,index)=>
+   publicActionChoice(action,index,room.packs,room.match,view));
  }
  if(room.status==='finished'&&(room.winner===0||room.winner===1))
   payload.winner={seat:room.winner,username:room.seats[room.winner]?.username||''};

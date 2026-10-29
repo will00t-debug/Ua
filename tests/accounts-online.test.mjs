@@ -217,6 +217,9 @@ describe('account server',{concurrency:1,timeout:180000},()=>{
   assert.equal(hostView.data.view.players[0].lifeCount,0);
   assert.equal(hostView.data.view.players[1].lifeCount,0);
   assert.match(hostView.data.choices[0].label,/保留這 7 張手牌/);
+  assert.equal(hostView.data.choices[0].type,'openingMulligan');
+  assert.equal(hostView.data.choices[0].mode,'keep');
+  assert.equal(hostView.data.choices[1].mode,'redraw');
   assert.match(hostView.data.choices[1].label,/整手重抽 7 張/);
   assert.equal(hostView.data.view.players[0].hand.length,7);
   assert.equal(hostView.data.view.players[1].hand,null);

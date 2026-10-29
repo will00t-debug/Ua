@@ -93,6 +93,9 @@ test('entering an online room shows a card-sized table, the opening hand, and th
  assert.match(css,/\.online-match \.slot\{[^}]*aspect-ratio:63\/88/);
  assert.match(css,/\.online-match \.slot img\.art\{[^}]*object-fit:contain/);
  assert.match(css,/\.online-match \.slot\.empty\{[^}]*background:transparent/);
+ assert.match(css,/\.online-match button\.slot\{[^}]*min-height:0/);
+ assert.match(css,/\.online-match \.slot\.selected\{[^}]*outline:2px solid #ffd56a/);
+ assert.match(css,/\.online-match \.slot\.destination\{[^}]*#2f8f55/);
  assert.match(css,/grid-template-columns:minmax\(0,1fr\) minmax\(250px,320px\)/);
  const appRoot=new FakeNode('div');
  const document={
@@ -134,6 +137,7 @@ test('entering an online room shows a card-sized table, the opening hand, and th
  assert.match(rendered,/測試卡7/);
  assert.match(rendered,/保留這 7 張手牌/);
  assert.match(rendered,/整手重抽 7 張/);
+ assert.match(rendered,/開局可選擇保留 7 張/);
  assert.match(rendered,/對手手牌是隱藏的，這裡只顯示張數。/);
  assert.match(rendered,/生命尚未設置/);
  assert.match(rendered,/能量角色/);
@@ -153,4 +157,22 @@ test('entering an online room shows a card-sized table, the opening hand, and th
  assert.ok(classes.includes('online-dock'));
  assert.equal(classes.filter(name=>name==='slot empty').length,15,'own lines are empty and the opponent has one occupied energy card');
  assert.ok(classes.some(name=>name.includes('slot occupied')&&name.includes('green')));
+ vm.runInContext(`roomFixture.view.phase='attack';roomFixture.choices=[
+  {index:0,type:'next',label:'前進下一階段'},
+  {index:1,type:'attack',uid:'h0',label:'宣告攻擊：測試卡1'},
+  {index:2,type:'attack',uid:'e9',label:'宣告攻擊：能源角色'}
+ ];app.pick=null;render();`,context);
+ const attackText=texts(appRoot);
+ assert.match(attackText,/結束回合/);
+ assert.match(attackText,/點自己可攻擊的角色/);
+ assert.doesNotMatch(attackText,/宣告攻擊：測試卡1/);
+ assert.doesNotMatch(attackText,/宣告攻擊：能源角色/);
+ vm.runInContext("app.pick={uid:'h0',baseUid:null,options:null};render();",context);
+ const picked=texts(appRoot);
+ assert.match(picked,/宣告攻擊：測試卡1/);
+ assert.doesNotMatch(picked,/宣告攻擊：能源角色/);
+ classes.length=0;
+ visit(appRoot);
+ assert.equal(classes.filter(name=>name==='slot empty').length,15,'selecting an attacker does not turn empty slots into destinations');
+ assert.ok(classes.some(name=>name.includes('selected')));
 });

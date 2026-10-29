@@ -17,7 +17,7 @@ const DRAFTS=[
 ];
 const PHASES=[['setup','起手調度'],['start','開始'],['move','移動'],['main','主要'],['attack','攻擊']];
 const ROOM=/^[A-HJ-NP-Z2-9]{8}$/;
-const app={offline:false,user:null,decks:[],openRooms:[],room:null,error:'',notice:'',busy:false,mode:'login',deckTab:'mine',pollToken:0,timer:0,showPassword:false,remember:true,recordedCode:'',draftUser:'',draftPass:''};
+const app={offline:false,user:null,decks:[],openRooms:[],room:null,pick:null,error:'',notice:'',busy:false,mode:'login',deckTab:'mine',pollToken:0,timer:0,showPassword:false,remember:true,recordedCode:'',draftUser:'',draftPass:''};
 function captureAuthDraft(form){
  if(!form)return;
  const data=new FormData(form);
@@ -76,6 +76,7 @@ function startPoll(){
 function applyRoom(next){
  const finished=next?.status==='finished'&&app.room?.status!=='finished'&&app.recordedCode!==next.code;
  const same=app.room&&next.revision===app.room.revision&&next.status===app.room.status&&!app.busy;
+ if(app.room&&next?.revision!==app.room.revision)app.pick=null;
  app.room=next;app.busy=false;
  if(finished)noteOnlineResult(next);
  if(!same)render();
@@ -319,12 +320,17 @@ function cardSrc(card){
  const index=artIndex();
  return index&&card?.cardId?index.get(card.cardId)||'':'';
 }
-function cardBox(card){
- if(!card)return el('div',{class:'slot empty','aria-label':'空位'},el('span',{text:'空'}));
- if(card.faceDown&&!card.cardId)return el('div',{class:'slot facedown',text:'蓋牌'});
+function cardBox(card,opts={}){
+ const click=opts.click||null;
+ const extra=opts.className?' '+opts.className:'';
+ if(!card){
+  const emptyLabel=opts.label||'空位';
+  return el(click?'button':'div',{class:'slot empty'+extra,type:click?'button':null,'aria-label':emptyLabel,onClick:click},el('span',{text:'空'}));
+ }
+ if(card.faceDown&&!card.cardId)return el(click?'button':'div',{class:'slot facedown'+extra,type:click?'button':null,text:'蓋牌',onClick:click});
  const bits=[card.cardId,card.bp!=null?'BP '+card.bp:'',card.ready===true?'ACTIVE':card.ready===false?'REST':''].filter(Boolean);
- const label=[card.name||card.cardId||'卡片',...bits].join(' · ');
- const box=el('div',{class:'slot occupied'+(card.color?' '+card.color:'')+(card.ready===false?' rest':''),title:label,'aria-label':label});
+ const label=opts.label||[card.name||card.cardId||'卡片',...bits].join(' · ');
+ const box=el(click?'button':'div',{class:'slot occupied'+(card.color?' '+card.color:'')+(card.ready===false?' rest':'')+extra,type:click?'button':null,title:label,'aria-label':label,onClick:click});
  const src=cardSrc(card);
  if(src){
   const img=el('img',{class:'art',src,alt:card.name||card.cardId||'卡片',decoding:'async',referrerpolicy:'no-referrer'});
@@ -335,11 +341,125 @@ function cardBox(card){
  if(card.raidDepth)box.append(el('small',{class:'art-meta',text:'Raid '+card.raidDepth}));
  return box;
 }
-function zone(title,cards){
+// Same two-click plans as the solo battle. Copied here so the online page
+// does not load the rules engine; the server remains the only place that
+// accepts an action, and only by the index it already listed.
+function visibleActionsForCard(legal,uid){
+ return (legal||[]).filter(action=>action.uid===uid||action.baseUid===uid);
+}
+function moveClickPlan({selectedUid,slotUid,line,slot,legal}){
+ const options=(Array.isArray(legal)?legal:[]).filter(action=>action?.type==='move'||action?.type==='step');
+ const destinations=options.filter(action=>action.uid===selectedUid&&action.slot===slot&&
+  (action.type==='move'?'front':'energy')===line&&
+  (slotUid?action.replaceUid===slotUid:action.replaceUid===undefined));
+ if(destinations.length)return {type:'destination',actions:destinations};
+ if(slotUid&&options.some(action=>action.uid===slotUid))return {type:'choose-mover',uid:slotUid};
+ return {type:'select'};
+}
+function raidClickPlan({selectedUid,raidBaseUid,slotUid,line,slot,legal}){
+ const actions=Array.isArray(legal)?legal:[];
+ const raids=actions.filter(action=>action?.type==='raid'&&action.uid===selectedUid);
+ const isBase=!!slotUid&&raids.some(action=>action.baseUid===slotUid);
+ if(isBase&&raidBaseUid!==slotUid)return {type:'choose-base',baseUid:slotUid};
+ const dest=raidBaseUid?raids.filter(action=>action.baseUid===raidBaseUid&&action.slot===slot&&
+  (action.line==='energy'?'energy':'front')===line):[];
+ if(dest.length)return {type:'raid',actions:dest};
+ const plays=actions.filter(action=>action?.uid===selectedUid&&action.line===line&&action.slot===slot&&
+  ['play','move','step'].includes(action.type));
+ if(plays.length)return {type:'place',actions:plays};
+ return {type:'select'};
+}
+function legalChoices(){return app.room?.choices||[];}
+function tableReady(){
+ const room=app.room;
+ return !!room?.yourTurn&&!app.busy&&room.view?.phase!=='setup'&&room.status==='playing'&&
+  legalChoices().some(action=>typeof action.type==='string');
+}
+function inlineBlock(room,legal){
+ const view=room?.view;
+ if(!view||view.pending?.kind!=='block'||view.pending.player!==room.seat||view.actor!==room.seat||!view.battle)return null;
+ if(view.battle.owner===room.seat)return null;
+ const front=view.players?.[room.seat]?.front||[];
+ const actions=(legal||[]).filter(action=>action.type==='chooseBlock');
+ const blockers=actions.filter(action=>typeof action.uid==='string'&&front.some(card=>card?.uid===action.uid));
+ const skip=actions.find(action=>action.uid===null)||null;
+ return blockers.length||skip?{blockers,skip}:null;
+}
+function fieldPlan(engineSeat,line,index,card){
+ const room=app.room;
+ if(!tableReady()||engineSeat!==room.seat)return {type:'select'};
+ const legal=legalChoices();
+ const pick=app.pick||{};
+ if(room.view?.phase==='move')
+  return moveClickPlan({selectedUid:pick.uid||null,slotUid:card?.uid||null,line,slot:index,legal});
+ return raidClickPlan({selectedUid:pick.uid||null,raidBaseUid:pick.baseUid||null,slotUid:card?.uid||null,line,slot:index,legal});
+}
+function clickField(engineSeat,line,index,card){
+ if(!tableReady())return;
+ const room=app.room,legal=legalChoices(),mine=engineSeat===room.seat,pick=app.pick||{};
+ if(!mine&&room.view?.phase==='attack'&&card&&pick.uid){
+  const aimed=legal.filter(action=>action.type==='attack'&&action.uid===pick.uid&&action.targetUid===card.uid);
+  if(aimed.length===1){sendAction(aimed[0].index);return;}
+  return;
+ }
+ if(!mine)return;
+ const blocking=inlineBlock(room,legal);
+ if(blocking&&line==='front'&&card){
+  const block=blocking.blockers.find(action=>action.uid===card.uid);
+  if(block){sendAction(block.index);return;}
+ }
+ if(room.view?.phase==='attack'&&card){
+  const attacks=legal.filter(action=>action.type==='attack'&&action.uid===card.uid);
+  const plain=attacks.filter(action=>!action.targetUid);
+  if(plain.length===1&&attacks.length===plain.length){sendAction(plain[0].index);return;}
+  if(attacks.length){app.pick={uid:card.uid,baseUid:null,options:null};render();return;}
+ }
+ const plan=fieldPlan(engineSeat,line,index,card);
+ if(room.view?.phase==='move'&&plan.type==='choose-mover'){
+  app.pick={uid:pick.uid===plan.uid?null:plan.uid,baseUid:null,options:null};render();return;
+ }
+ if(plan.type==='destination'||plan.type==='place'||plan.type==='raid'){
+  const acts=plan.actions||[];
+  if(acts.length===1){sendAction(acts[0].index);return;}
+  if(acts.length>1){app.pick={uid:pick.uid||null,baseUid:pick.baseUid||null,options:acts};render();return;}
+ }
+ if(plan.type==='choose-base'){app.pick={uid:pick.uid||null,baseUid:plan.baseUid,options:null};render();return;}
+ if(card){app.pick={uid:pick.uid===card.uid?null:card.uid,baseUid:null,options:null};render();}
+}
+function clickHand(card){
+ if(!tableReady()||!card?.uid)return;
+ const acts=legalChoices().filter(action=>action.uid===card.uid);
+ const placed=acts.some(action=>['play','raid','move','step'].includes(action.type));
+ const plain=acts.filter(action=>action.type==='attack'&&!action.targetUid);
+ if(!placed&&plain.length===1&&acts.length===1){sendAction(plain[0].index);return;}
+ app.pick={uid:app.pick?.uid===card.uid?null:card.uid,baseUid:null,options:null};
+ render();
+}
+function zone(title,cards,engineSeat){
  const kind=title==='能源線'?'energy':'front';
+ const ready=tableReady();
+ const slots=(cards||[]).map((card,index)=>{
+  const mine=engineSeat===app.room?.seat;
+  const plan=mine?fieldPlan(engineSeat,kind,index,card):{type:'select'};
+  const blocking=mine?inlineBlock(app.room,legalChoices()):null;
+  const canBlock=!!(blocking&&kind==='front'&&card&&blocking.blockers.some(action=>action.uid===card.uid));
+  const selected=!!(card&&card.uid===app.pick?.uid);
+  const chosenBase=!!(card&&card.uid===app.pick?.baseUid);
+  const classes=[
+   plan.type==='destination'||plan.type==='place'||plan.type==='raid'?'destination':'',
+   plan.type==='choose-mover'?'move-source':'',
+   plan.type==='choose-base'||chosenBase?'raid-base':'',
+   selected?'selected':'',
+   canBlock?'can-block':''
+  ].filter(Boolean).join(' ');
+  const clickable=ready&&(mine||(!!card&&app.room?.view?.phase==='attack'&&app.pick?.uid));
+  const place=plan.type==='destination'?'移動至此':plan.type==='place'?'放置':plan.type==='raid'?'突襲登場':plan.type==='choose-base'?'突襲底板':canBlock?'阻擋':'';
+  const spoken=[card?.name||card?.cardId||'空位',place].filter(Boolean).join('，');
+  return cardBox(card,{className:classes,click:clickable?()=>clickField(engineSeat,kind,index,card):null,label:spoken});
+ });
  return el('div',{class:'online-line '+kind},
   el('div',{class:'line-label',text:title}),
-  el('div',{class:'zone','data-zone':kind},...(cards||[]).map(cardBox)));
+  el('div',{class:'zone','data-zone':kind},...slots));
 }
 function statPills(player,setup){
  const pills=el('div',{class:'online-pills'},
@@ -352,7 +472,7 @@ function statPills(player,setup){
  if(Array.isArray(player.removed)&&player.removed.length)pills.append(el('span',{text:player.removed.length+' 移除'}));
  return pills;
 }
-function side(name,player,packLabel,{openHand=false,setup=false}={}){
+function side(name,player,packLabel,{openHand=false,setup=false,engineSeat=0}={}){
  const who=el('div',{class:'who'},el('h2',{text:name}),packLabel?el('span',{class:'muted',text:packLabel}):null);
  const head=el('header',{},who);
  if(!openHand){
@@ -363,7 +483,7 @@ function side(name,player,packLabel,{openHand=false,setup=false}={}){
   head.append(backs);
  }
  const block=el('section',{class:'online-side'+(openHand?' you':' opponent')},head,statPills(player,setup));
- const front=zone('前線',player.front),energy=zone('能源線',player.energy);
+ const front=zone('前線',player.front,engineSeat),energy=zone('能源線',player.energy,engineSeat);
  // Opponent sits across the table: energy is the far row, front faces the center.
  if(openHand)block.append(front,energy);
  else block.append(energy,front);
@@ -371,9 +491,41 @@ function side(name,player,packLabel,{openHand=false,setup=false}={}){
 }
 function ownHand(player){
  const hand=el('div',{class:'hand'});
- for(const card of player.hand||[])hand.append(cardBox(card));
+ const ready=tableReady();
+ const legal=legalChoices();
+ for(const card of player.hand||[]){
+  const playable=ready&&legal.some(action=>action.uid===card.uid&&['play','raid','event','attack','activate','handActivate'].includes(action.type));
+  const selected=card.uid&&card.uid===app.pick?.uid;
+  hand.append(cardBox(card,{
+   className:(playable?'playable ':'')+(selected?'selected':''),
+   click:ready?()=>clickHand(card):null
+  }));
+ }
  if(!(player.hand||[]).length)hand.append(el('div',{class:'slot empty',text:'沒有手牌'}));
  return el('div',{class:'online-hand'},el('div',{class:'line-label',text:'你的手牌'}),hand);
+}
+function playHint(room){
+ if(!room?.yourTurn)return room?.view?.pending?.kind==='life-trigger'?'對手正在確認已公開的觸發。':'等待對手操作。';
+ if(room.view?.phase==='setup')return '';
+ if(room.view?.pending?.kind==='block'&&room.view.pending.player===room.seat)return '點自己可以阻擋的角色，或選擇不阻擋。';
+ if(room.view?.pending&&room.view.pending.player===room.seat)return '請完成這個選擇。';
+ if(app.pick?.options?.length)return '選擇這個位置的操作。';
+ if(room.view?.phase==='move')return app.pick?.uid?'再點另一條線上亮起的位置。':'先點要移動的角色，再點另一條線的位置。';
+ if(room.view?.phase==='attack')return app.pick?.uid?'點這個角色的攻擊，或點對方前線指定目標。':'點自己可攻擊的角色。';
+ return app.pick?.uid?'再點亮起的前線或能源線。':'點手牌，再點亮起的位置出牌。';
+}
+function dockChoices(room){
+ const legal=room?.choices||[];
+ if(!room?.yourTurn)return [];
+ if(room.view?.phase==='setup'||!legal.some(action=>action.type))return legal;
+ if(app.pick?.options?.length)return app.pick.options;
+ const block=inlineBlock(room,legal);
+ if(block)return block.skip?[block.skip]:[];
+ if(room.view?.pending&&room.view.pending.player===room.seat)
+  return legal.filter(action=>action.type&&!['next','play','move','step','attack','raid'].includes(action.type));
+ if(app.pick?.uid)
+  return visibleActionsForCard(legal,app.pick.uid).filter(action=>!['play','move','step','raid','next'].includes(action.type));
+ return legal.filter(action=>action.type&&!action.uid&&!['next','play','move','step','attack','raid'].includes(action.type));
 }
 function matchView(){
  loadCovers();
@@ -392,9 +544,11 @@ function matchView(){
  const phase=el('div',{class:'phases'});
  for(const [id,label] of PHASES)phase.append(el('span',{class:view.phase===id?'current':'',text:label}));
  const actions=el('div',{class:'actions'});
- if(view.phase==='setup'){
-  actions.append(el('p',{class:'setup-note',text:'開局可選擇保留 7 張，或整手重抽 7 張一次。先手先選，後手再選，完成後才設定生命卡。'}));
- }
+ const hint=playHint(room);
+ if(view.phase==='setup')actions.append(el('p',{class:'setup-note',text:'開局可選擇保留 7 張，或整手重抽 7 張一次。先手先選，後手再選，完成後才設定生命卡。'}));
+ else if(hint)actions.append(el('p',{class:'play-hint',text:hint}));
+ const next=room.yourTurn?(room.choices||[]).find(action=>action.type==='next'):null;
+ if(next)actions.append(el('button',{type:'button',class:'primary',text:view.phase==='attack'?'結束回合 →':'下一階段 →',disabled:app.busy,onClick:()=>sendAction(next.index)}));
  const triggers=el('div',{class:'trigger-public'});
  for(const card of view.openTriggers||[]){
   const word=card.trigger?String(card.trigger).toUpperCase():'無觸發';
@@ -413,9 +567,10 @@ function matchView(){
  }
  if(room.status==='finished')actions.append(el('p',{text:(room.winner?.username||'對局')+' 獲勝。'}));
  else if(room.yourTurn){
-  if(!room.choices.length)actions.append(el('p',{class:'muted',text:'正在等待可以執行的操作。'}));
-  for(const choice of room.choices)actions.append(el('button',{type:'button',text:choice.label,disabled:app.busy,onClick:()=>sendAction(choice.index)}));
- }else actions.append(el('p',{class:'muted',text:view.pending?.kind==='life-trigger'?'對手正在確認已公開的觸發。':'等待對手操作。'}));
+  const listed=dockChoices(room).filter(choice=>choice!==next);
+  if(!listed.length&&!next)actions.append(el('p',{class:'muted',text:'正在等待可以執行的操作。'}));
+  for(const choice of listed)actions.append(el('button',{type:'button',text:choice.label,disabled:app.busy,onClick:()=>sendAction(choice.index)}));
+ }
  const log=el('div',{class:'log'});
  for(const line of room.log||[])log.append(el('div',{text:line.text}));
  return shell(el('div',{class:'online-match'},
@@ -425,8 +580,8 @@ function matchView(){
    el('span',{class:'tag',text:room.youAreFirst?'你是先手':room.youAreFirst===false?'對方是先手':'先後手順序確認中'}),
    el('span',{class:'tag turn',text:room.status==='finished'?'對局結束':room.yourTurn?'輪到你':'等待對手'})),
   el('div',{class:'online-table'},
-   side((room.opponent?.username||'對手')+'（對手）',opp,room.opponent?.titleLabel||'',{setup:view.phase==='setup'}),
-   side((room.you?.username||'你')+'（你）',you,room.you?.titleLabel||'',{openHand:true,setup:view.phase==='setup'}),
+   side((room.opponent?.username||'對手')+'（對手）',opp,room.opponent?.titleLabel||'',{setup:view.phase==='setup',engineSeat:1-seat}),
+   side((room.you?.username||'你')+'（你）',you,room.you?.titleLabel||'',{openHand:true,setup:view.phase==='setup',engineSeat:seat}),
    ownHand(you)),
   el('aside',{class:'online-dock'},
    el('section',{class:'panel'},el('h2',{text:room.yourTurn?'輪到你':'對局操作'}),
