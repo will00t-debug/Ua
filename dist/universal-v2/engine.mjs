@@ -14644,7 +14644,8 @@ function eventMandatoryTargetsAvailable(pack,s,owner,d,reservedAp=d.ap,reservedH
   if(job.op==='kjn'&&job.id==='KJN-1-037'){
    const rose=field(s.players[owner]).some(c=>cardHasName(card(pack,c),'ローズ・オリアナ',originalEffectsDisabled(s,c)));
    const cap=rose?5000:2000;
-   return enemy.front.some(c=>c&&bp(pack,s,c)<=cap);
+   return enemy.front.some(c=>c&&bp(pack,s,c)<=cap&&
+    cardEffectTargetPayable(pack,s,owner,c.uid,reservedAp,null,'event',reservedHandUid));
   }
   if(job.op==='kjn'&&job.id==='KJN-1-077')
    return s.players[owner].outside.some(c=>card(pack,c).ap===1&&cardHasTrait(card(pack,c),'七陰'));
@@ -14953,6 +14954,15 @@ function selectionHandTax(pack,s,selector,uid,sourceType){
 }
 function effectSelectionHandTax(pack,s,a){
  const q=s.pending;
+ // Q2122: 「相手は効果でこのキャラを選ぶ際」. A kjn choice that names the
+ // opponent's taxed character pays the same extra hand card as other effects.
+ if(q?.kind==='kjn'&&a?.type==='kjn'&&typeof a.uid==='string'){
+  const target=field(s.players[1-q.player]).find(c=>c?.uid===a.uid);
+  if(target?.kjnSelectTax?.turn===s.turn)
+   return s.players[q.player].hand.length?
+    {cost:1,payable:true,blocked:false}:{cost:0,payable:false,blocked:true};
+  return {cost:0,payable:true,blocked:false};
+ }
  if(!q||typeof a?.uid!=='string'||
   !TARGETING_CARD_EFFECT_CHOICES.has(a.type)&&
   !(q.kind==='life-trigger'&&a.type==='chooseTrigger'&&
@@ -16157,9 +16167,10 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
    const q=s.pending,target=field(s.players[1-p]).find(c=>c.uid===action.uid);
    const lifeChoice=q.kind==='life-trigger'&&action.type==='chooseTrigger'&&
     TARGETING_LIFE_MODES.has(action.mode);
+   const kjnChoice=q.kind==='kjn'&&action.type==='kjn';
    const sourceUid=lifeChoice?q.uid:q.sourceUid;
    if(!target||!Number.isInteger(target.fieldEntryStamp)||target.fieldEntryStamp<1||
-    !sourceUid||!(TARGETING_CARD_EFFECT_CHOICES.has(action.type)||lifeChoice))
+    !sourceUid||!(TARGETING_CARD_EFFECT_CHOICES.has(action.type)||lifeChoice||kjnChoice))
     throw Error('Invalid selection payment source');
    const sourceType=effectChoiceProvenance(pack,s);
    s.pending={kind:'effect-selection-hand-payment',player:p,
@@ -19154,10 +19165,11 @@ export function assertUniversalMatch(pack,s){
   const plan=selectionHandTax(pack,inner,q.player,q.targetUid,q.sourceType);
   const lifeChoice=orig?.kind==='life-trigger'&&q.targetAction?.type==='chooseTrigger'&&
    TARGETING_LIFE_MODES.has(q.targetAction?.mode);
+  const kjnChoice=orig?.kind==='kjn'&&q.targetAction?.type==='kjn';
   if(!orig||typeof orig!=='object'||orig.player!==q.player||
    (lifeChoice?orig.uid:orig.sourceUid)!==q.sourceUid||(q.player!==s.active&&!lifeChoice)||
    q.targetAction?.uid!==q.targetUid||
-   !(TARGETING_CARD_EFFECT_CHOICES.has(q.targetAction?.type)||lifeChoice)||
+   !(TARGETING_CARD_EFFECT_CHOICES.has(q.targetAction?.type)||lifeChoice||kjnChoice)||
    orig.kind==='effect-target-many'||
    q.sourceType!==(lifeChoice?'trigger':sourceTypeFromUid(pack,s,q.sourceUid))||
    !target||target.fieldEntryStamp!==q.targetStamp||
