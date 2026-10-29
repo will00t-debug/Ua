@@ -3135,6 +3135,8 @@ function continueEffectQueue(pack,s){
     return (includeSelf||c.uid!==job.sourceUid)&&
      printed.type==='character'&&
      !(printed.energyForbidden&&pl.front.includes(c))&&
+     // Q761: a front-banned character on the energy line cannot be moved up.
+     !(printed.frontForbidden&&pl.energy.includes(c))&&
      !(traitless&&printed.traits.length!==0)&&
      !(job.excludeName&&cardHasName(printed,job.excludeName,originalEffectsDisabled(s,c)));
    }).map(c=>c.uid):[];
@@ -4764,6 +4766,9 @@ function performRaid(pack,s,p,cardOnTop,baseUid,line,slot,replaceUid,{entryReady
  cardOnTop.raidBaseUid=effectiveBase.uid;
  cardOnTop.fieldEntryStamp=s.nextFieldEntryStamp++;
  pl[line][slot]=cardOnTop;
+ // Q757: raiding an energy-line base onto the front is this character
+ // moving outside the move phase. The buried base is not the character.
+ if(base.line!==line)noteLineShiftOutsideMove(pack,s,cardOnTop,p,base.line,line);
  // Both physical movements are real and complete. A Raid base remains
  // nested under the new top; do not count its UID twice or expose hidden layers.
  recordCompletedMove(pack,s,{physical:base.c,owner:p,from:base.line,
@@ -9356,6 +9361,8 @@ function resolveChoice(s,a,pack){
   const line=from.line==='front'?'energy':'front';
   if(line==='energy'&&card(pack,from.c).energyForbidden)
    throw Error('This character cannot move to the energy line');
+  if(line==='front'&&from.line==='energy'&&card(pack,from.c).frontForbidden)
+   throw Error('This character cannot move to the front line');
   s.pending={kind:'effect-line-slot',player:q.player,sourceUid:q.sourceUid,
    moverUid:a.uid,line};
   return;
