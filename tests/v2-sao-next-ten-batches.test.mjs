@@ -125,9 +125,9 @@ function lineMove(packs,s,uid){
 }
 
 test('ten SAO prints join the shared pilot without counting as FAQ acceptance',()=>{
- assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],157);
- assert.equal(EXPECTED_V2_TOTAL,654);
- assert.equal(Object.keys(sao.cards).length,157);
+ assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],167);
+ assert.equal(EXPECTED_V2_TOTAL,664);
+ assert.equal(Object.keys(sao.cards).length,167);
  for(const id of TEN){
   assert.equal(EXPECTED_V2_IDS['sword-art-online'].includes(id),true);
   assert.equal(sao.cards[id].implementation,'dsl');

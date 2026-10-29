@@ -87,8 +87,8 @@ function keepHand(s,p,cards){
 }
 
 test('C26 registers nine whole prints and reads the bonus name from the sentence',()=>{
- assert.equal(EXPECTED_V2_TOTAL,654);
- assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],157);
+ assert.equal(EXPECTED_V2_TOTAL,664);
+ assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],167);
  assert.equal(EXPECTED_V2_COUNTS['mushoku-tensei'],60);
  assert.equal(parseNamedFieldRetireBonus(
   'BP3000以下の相手のフロントLのキャラを1枚選び、退場させる。自分の場か自分のキャラのレイド元に〈シモン〉か〈カミナ〉がある場合、BP5000以下に代わる。'),

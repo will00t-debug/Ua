@@ -1640,6 +1640,152 @@ const PRINTED_PINS=Object.freeze({
     "trigger": "raid",
     "traits": ["整合騎士"],
     "effectJa": "このカードは〈アリス〉としても扱う。\n【レイド】〈アリス〉アクティブにし、フロントLに移動できる\n【登場時】『BP2000以下』の相手のフロントLのキャラを1枚まで選び、退場させる。自分のフロントLに〈キリト〉か〈ユージオ〉のいずれかがある場合、『BP3000以下』に代わる。自分のフロントLに〈キリト〉と〈ユージオ〉が両方ある場合、『BP4000以下』に代わる。"
+  },
+  "SAO-2-054": {
+    "kind": "raidChooseDrawOrAsuna",
+    "nameJa": "ミト",
+    "color": "purple",
+    "energy": 4,
+    "ap": 1,
+    "bp": 4000,
+    "gen": 1,
+    "type": "character",
+    "trigger": "raid",
+    "traits": [
+      "プログレッシブ"
+    ],
+    "effectJa": "【レイド】〈ミト〉アクティブにし、フロントLに移動できる\nこのキャラはBP2000以下のキャラにブロックされない。\n【登場時】以下から1つ選ぶ。\n・カードを1枚引く。\n・自分の手札から必要エナジーが2以下で消費APが1の紫の〈アスナ〉を1枚まで自分の場にレストで登場させる。\n【起動メイン】【フロントLにある場合】 【ターン1】BP1500以上の相手のフロントLのキャラを1枚選び、このターン中、BP-1000。"
+  },
+  "SAO-2-073": {
+    "kind": "raidDrawTraitRestFrontChoose",
+    "nameJa": "シノン",
+    "color": "green",
+    "energy": 6,
+    "ap": 1,
+    "bp": 4000,
+    "gen": 1,
+    "type": "character",
+    "trigger": "raid",
+    "traits": [
+      "GGO"
+    ],
+    "effectJa": "【レイド】〈シノン〉アクティブにし、フロントLに移動できる\n【登場時】カードを1枚引き、自分の手札から必要エナジーが3以下で消費APが1の緑の［特徴：GGO］を1枚まで自分の場にレストで登場させる。\n【起動メイン】【フロントLにある場合】 【ターン1】以下から1つ選ぶ。\n・自分の場の他のキャラを1枚選び、このターン中、【インパクト（1）】を与える。\n・自分の場の他のキャラを1枚選び、このターン中、BP+1000。"
+  },
+  "SAO-1-104": {
+    "kind": "maySwapOtherThenDoubleIfName",
+    "nameJa": "キリト",
+    "color": "blue",
+    "energy": 4,
+    "ap": 1,
+    "bp": 4000,
+    "gen": 1,
+    "type": "character",
+    "trigger": "raid",
+    "traits": [
+      "アインクラッド"
+    ],
+    "effectJa": "【レイド】〈キリト〉アクティブにし、フロントLに移動できる\n【登場時】自分のフロントLの他のキャラと自分のエナジーLの他のキャラを1枚ずつ選び、それらの位置を入れ替えてもよい。自分の場に〈アスナ〉がある場合、このキャラはこのターン中、【2回アタック】（このキャラがこのターン初めてアタックした時、アクティブにする）を得る。"
+  },
+  "SAO-1-109": {
+    "kind": "eventReadyThenMoveOrSwap",
+    "nameJa": "スイッチ",
+    "color": "blue",
+    "energy": 2,
+    "ap": 1,
+    "bp": 0,
+    "gen": 0,
+    "type": "event",
+    "trigger": "draw",
+    "traits": [],
+    "effectJa": "自分のAPカードを1枚まで選び、アクティブにする。以下から1つ選ぶ。\n・自分の場のキャラを1枚まで選び、別のラインに移動させる。\n・自分のフロントLのキャラと自分のエナジーLのキャラを1枚ずつ選び、それらの位置を入れ替えてもよい。"
+  },
+  "SAO-2-042": {
+    "kind": "attackActiveProgressiveIfOppBelow",
+    "nameJa": "アスナ",
+    "color": "purple",
+    "energy": 4,
+    "ap": 1,
+    "bp": 4000,
+    "gen": 1,
+    "type": "character",
+    "trigger": "raid",
+    "traits": [
+      "プログレッシブ"
+    ],
+    "effectJa": "【レイド】〈アスナ〉アクティブにし、フロントLに移動できる\n【登場時】このキャラはこのターン中、BP+1000と【インパクト（1）】を得る。\n【アタック時】相手のフロントLに元々のBPよりBPが低いキャラがある場合、〈アスナ〉以外の自分の場の［特徴：プログレッシブ］を1枚まで選び、アクティブにする。"
+  },
+  "SAO-1-097": {
+    "kind": "eventFieldAttackKitSniperIfName",
+    "nameJa": "ウルティマラティオ・へカートII",
+    "color": "green",
+    "energy": 4,
+    "ap": 1,
+    "bp": 0,
+    "gen": 0,
+    "type": "event",
+    "trigger": "special",
+    "traits": [],
+    "effectJa": "自分の場のキャラを1枚選び、このターン中、BP+2500と「このキャラがアタックしてバトルに勝利した時、カードを1枚引く。」を与える。選んだキャラが〈シノン〉の場合、さらにこのターン中、【狙い撃ち】（相手のフロントLのキャラを指定してアタックでき、指定した場合、相手はブロックできない）を与える。"
+  },
+  "SAO-2-010": {
+    "kind": "nameOnceLifeThenGoddess",
+    "nameJa": "シノン（太陽神ソルス）",
+    "color": "yellow",
+    "energy": 1,
+    "ap": 1,
+    "bp": 2000,
+    "gen": 1,
+    "type": "character",
+    "trigger": "draw",
+    "traits": [
+      "女神"
+    ],
+    "effectJa": "【起動メイン】【フロントLにある場合】自分のライフエリアにあるカードを1枚手札に加える。そうした場合、自分の場の他の［特徴：女神］を1枚まで選び、このターン中、BP+2000と【インパクト（1）】（アタックしてバトルに勝利した時、相手プレイヤーに1ダメージ）を与える。〈シノン（太陽神ソルス）〉のこの効果は1ターンに1回のみ発動できる。"
+  },
+  "SAO-1-028": {
+    "kind": "optionalLifeUntilStartProtect",
+    "nameJa": "リーファ（地神テラリア）",
+    "color": "yellow",
+    "energy": 4,
+    "ap": 1,
+    "bp": 4000,
+    "gen": 1,
+    "type": "character",
+    "trigger": "active",
+    "traits": [
+      "女神"
+    ],
+    "effectJa": "【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、【インパクト】を失う）\n【登場時】自分のライフエリアにあるカードを1枚手札に加えてもよい。そうした場合、このキャラは次の自分のターン開始時まで、BP+2000と「相手の〔キャラ・フィールド・イベントカード・トリガー〕の効果で選ばれない。」を得る。"
+  },
+  "SAO-2-022": {
+    "kind": "armNextAloKiritoDraw",
+    "nameJa": "ユイ",
+    "color": "blue",
+    "energy": 2,
+    "ap": 1,
+    "bp": 1500,
+    "gen": 1,
+    "type": "character",
+    "trigger": "draw",
+    "traits": [
+      "ALO"
+    ],
+    "effectJa": "【登場時】カードを1枚引く。このターン中、次に特徴に「ALO」を持つ〈キリト〉が登場した時、カードを1枚まで引く。〈ユイ〉のこの効果は1ターンに1回のみ発動する。"
+  },
+  "SAO-1-018": {
+    "kind": "aliasRaidRetireFrontImpactNull",
+    "nameJa": "ユージオ・シンセシス・サーティツー",
+    "color": "yellow",
+    "energy": 4,
+    "ap": 1,
+    "bp": 4000,
+    "gen": 1,
+    "type": "character",
+    "trigger": "raid",
+    "traits": [
+      "整合騎士"
+    ],
+    "effectJa": "このカードは〈ユージオ〉としても扱う。\n【レイド】〈ユージオ〉アクティブにし、フロントLに移動できる\n【インパクト（1）】（アタックしてバトルに勝利した時、相手プレイヤーに1ダメージ）\n【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、【インパクト】を失う）\n【退場時】自分のフロントLの〈キリト〉と〈アリス〉をそれぞれ1枚まで選び、このターン中、BP+1000と【インパクト無効】を与える。"
   }
 });
 export const SAO_V2_PILOT_IDS=Object.freeze(Object.keys(PRINTED_PINS).sort());
@@ -2184,6 +2330,81 @@ export function verifiedSaoV2Cards(){
    card.anyLineShiftOutsideMove={oncePerTurn:true,turn:'own',then:'mayDrawDiscard'};
    card.effects={};
   }
+  if(pin.kind==='raidChooseDrawOrAsuna'){
+   card.raidName='ミト';
+   card.blockBpRestriction={relation:'atMost',bp:2000,condition:null};
+   card.effects={onPlay:[{op:'chooseOne',optional:false,options:[
+    {id:'draw',label:'抽1張',turn:'any',then:[{op:'draw',count:1}]},
+    {id:'asuna',label:'手牌紫亞絲娜REST',turn:'any',then:[{op:'deployOwnHandRest',
+     type:'character',color:'purple',energy:2,ap:1,max:1,names:['アスナ']}]}
+   ]}]};
+   card.mainAbility={op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,then:[
+    {op:'enemyBpDown',bp:1000,optional:false,minBp:1500,zone:'front'}]};
+  }
+  if(pin.kind==='raidDrawTraitRestFrontChoose'){
+   card.raidName='シノン';
+   card.effects={onPlay:[
+    {op:'draw',count:1},
+    {op:'deployOwnHandRest',type:'character',color:'green',energy:3,ap:1,max:1,trait:'GGO'}]};
+   card.mainAbility={op:'onceFrontChoose',oncePerTurn:true,frontOnly:true,then:[{
+    op:'chooseOne',optional:false,options:[
+     {id:'impact',label:'其他角色衝擊1',turn:'any',then:[
+      {op:'grantOtherImpactThisTurn',anyOther:true,amount:1,optional:false}]},
+     {id:'bp',label:'其他角色BP+1000',turn:'any',then:[
+      {op:'buffOwnField',filter:{field:'type',value:'character'},bp:1000,
+       optional:false,excludeSelf:true}]}
+    ]}]};
+  }
+  if(pin.kind==='maySwapOtherThenDoubleIfName'){
+   card.raidName='キリト';
+   card.effects={onPlay:[
+    {op:'maySwapOwnFrontEnergy',optional:true,excludeSelf:true},
+    {op:'grantSelfDoubleAttackThisTurn',whenName:'アスナ'}]};
+  }
+  if(pin.kind==='eventReadyThenMoveOrSwap'){
+   card.effects={onPlay:[
+    {op:'recoverAp',count:1},
+    {op:'chooseOne',optional:false,options:[
+     {id:'move',label:'移動到另一條線',turn:'any',then:[{op:'mayShiftOwnCharacter'}]},
+     {id:'swap',label:'交換前線與能源',turn:'any',then:[
+      {op:'maySwapOwnFrontEnergy',optional:true,excludeSelf:false}]}
+    ]}]};
+  }
+  if(pin.kind==='attackActiveProgressiveIfOppBelow'){
+   card.raidName='アスナ';
+   card.effects={
+    onPlay:[{op:'buffSelf',bp:1000},{op:'grantSelfImpactThisTurn',amount:1}],
+    onAttack:[{op:'activeOwnTraitExceptName',optional:true,trait:'プログレッシブ',
+     excludeName:'アスナ'}]};
+  }
+  if(pin.kind==='eventFieldAttackKitSniperIfName'){
+   card.triggerEffect={op:'retireOppFront'};
+   card.effects={onPlay:[{op:'grantOwnFieldAttackKit',bp:2500,optional:false,
+    sniperName:'シノン'}]};
+  }
+  if(pin.kind==='nameOnceLifeThenGoddess'){
+   card.mainAbility={op:'nameOnceLifeThenTrait',scope:'name',frontOnly:true,
+    trait:'女神',bp:2000,impact:1};
+   card.effects={};
+  }
+  if(pin.kind==='optionalLifeUntilStartProtect'){
+   card.impactNull=true;
+   card.effects={onPlay:[{op:'optionalLifeToHandUntilStart',bp:2000,untargetable:true}]};
+  }
+  if(pin.kind==='armNextAloKiritoDraw'){
+   card.effects={onPlay:[
+    {op:'draw',count:1},
+    {op:'armNextNamedTraitEntry',name:'キリト',trait:'ALO',onceName:'ユイ'}]};
+  }
+  if(pin.kind==='aliasRaidRetireFrontImpactNull'){
+   card.nameAliases=['ユージオ'];
+   card.raidName='ユージオ';
+   card.printedImpact=1;
+   card.impactNull=true;
+   card.effects={onRetire:[{op:'buffNamedFrontsThisTurn',targets:[
+    {name:'キリト',bp:1000,impactNull:true},
+    {name:'アリス',bp:1000,impactNull:true}]}] };
+  }
   if(pin.kind==='aliasRaidNameLadder'){
    card.nameAliases=['アリス'];
    card.raidName='アリス';
@@ -2287,6 +2508,11 @@ export function verifiedSaoV2Entries(){
       'damageTwoOutsideAsunaFrontDown','grantBelowPrintedBlock','anyLineShiftMayDraw',
       'aliasRaidNameLadder'].includes(pin.kind)?
       ['tests/v2-sao-next-ten-batches.test.mjs']:[]),
+     ...(['raidChooseDrawOrAsuna','raidDrawTraitRestFrontChoose','maySwapOtherThenDoubleIfName',
+      'eventReadyThenMoveOrSwap','attackActiveProgressiveIfOppBelow','eventFieldAttackKitSniperIfName',
+      'nameOnceLifeThenGoddess','optionalLifeUntilStartProtect','armNextAloKiritoDraw',
+      'aliasRaidRetireFrontImpactNull'].includes(pin.kind)?
+      ['tests/v2-sao-follow-ten-batches.test.mjs']:[]),
      'tests/universal-v2-sao-mst-cross-title.test.mjs'
     ]),
     ...(def.implementation==='vanilla'?{verifiedNoExtraEffects:true}:{})

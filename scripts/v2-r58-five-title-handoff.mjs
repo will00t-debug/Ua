@@ -96,8 +96,8 @@ const PRIORITY=Object.freeze({
 const OTHER=Object.freeze({
  'BLC-4-044':{status:'REVIEW PENDING',owner:'Cursor',
   missing:'verify full print against existing attack-win shared DSL and official FAQ'},
- 'SAO-1-097':{status:'REVIEW PENDING',owner:'Cursor',
-  missing:'source-qualified optional mode/timing and physical UID review required'}
+ 'SAO-1-097':{status:'REGISTERED',owner:'Cursor',
+  missing:'Whole print uses shared grantOwnFieldAttackKit. Full FAQ certification still pending'}
 });
 export const R58_OFFICIAL_REVIEW=Object.freeze({...SIX,...PRIORITY,...OTHER});
 const statuses=['READY','PARTIAL','ENGINE BLOCKED','RULE BLOCKED','REVIEW PENDING'];
