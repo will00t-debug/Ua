@@ -129,9 +129,9 @@ function quietLife(s,p){
 }
 
 test('ten more SAO prints join the shared pilot without counting as FAQ acceptance',()=>{
- assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],167);
- assert.equal(EXPECTED_V2_TOTAL,664);
- assert.equal(Object.keys(sao.cards).length,167);
+ assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],177);
+ assert.equal(EXPECTED_V2_TOTAL,674);
+ assert.equal(Object.keys(sao.cards).length,177);
  for(const id of TEN){
   assert.equal(EXPECTED_V2_IDS['sword-art-online'].includes(id),true);
   assert.equal(sao.cards[id].implementation,'dsl');

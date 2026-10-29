@@ -1786,6 +1786,136 @@ const PRINTED_PINS=Object.freeze({
       "整合騎士"
     ],
     "effectJa": "このカードは〈ユージオ〉としても扱う。\n【レイド】〈ユージオ〉アクティブにし、フロントLに移動できる\n【インパクト（1）】（アタックしてバトルに勝利した時、相手プレイヤーに1ダメージ）\n【インパクト無効】（このキャラとバトルをしたキャラはこのバトル中、【インパクト】を失う）\n【退場時】自分のフロントLの〈キリト〉と〈アリス〉をそれぞれ1枚まで選び、このターン中、BP+1000と【インパクト無効】を与える。"
+  },
+  "SAO-1-025": {
+    "kind": "lifeTierSniper",
+    "nameJa": "シノン（太陽神ソルス）",
+    "color": "yellow",
+    "energy": 4,
+    "ap": 1,
+    "bp": 3500,
+    "gen": 1,
+    "type": "character",
+    "trigger": "raid",
+    "traits": ["女神"],
+    "effectJa": "【レイド】〈シノン（太陽神ソルス）〉アクティブにし、フロントLに移動できる\n【自分のターン中】自分のライフの数により、このキャラは以下の効果を全て得る。\n・4以下：【登場時】このキャラはこのターン中、【狙い撃ち】（相手のフロントLのキャラを指定してアタックでき、指定した場合、相手はブロックできない）を得る。\n・3以下：このキャラはBP+500。\n・2以下：【インパクト（1）】"
+  },
+  "SAO-2-032": {
+    "kind": "songOutsideBuffRest",
+    "nameJa": "ユナ",
+    "color": "purple",
+    "energy": 3,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 1,
+    "type": "character",
+    "trigger": "raid",
+    "traits": [],
+    "effectJa": "【レイド】〈ユナ〉アクティブにし、フロントLに移動できる\n【登場時】自分の場外から［特徴：歌］を1枚まで手札に加える。自分の場の他のキャラを1枚まで選び、このターン中、BP+1000。\n【起動メイン】【レストにする】このターン中に自分が［特徴：歌］を使用している場合のみ発動できる。自分の場の〈ユナ〉と［特徴：SAOサバイバー］全ては、このターン中、BP+1000。"
+  },
+  "SAO-1-060": {
+    "kind": "handFiveBlockBounceAlo",
+    "nameJa": "リーファ",
+    "color": "blue",
+    "energy": 3,
+    "ap": 1,
+    "bp": 3500,
+    "gen": 1,
+    "type": "character",
+    "trigger": "raid",
+    "traits": ["ALO"],
+    "effectJa": "【レイド】〈リーファ〉アクティブにし、フロントLに移動できる\n自分の手札が5枚以上の場合、このキャラはBP4000以上のキャラにブロックされない。\n【起動メイン】【フロントLにある場合】 【ターン1】自分の場の他のキャラを1枚手札に戻してもよい。そうした場合、自分の場の特徴に「ALO」を持つキャラを1枚まで選び、アクティブにし、このターン中、BP+1000。"
+  },
+  "SAO-1-062": {
+    "kind": "fieldEnterRestAloBuffEither",
+    "nameJa": "世界樹",
+    "color": "blue",
+    "energy": 3,
+    "ap": 1,
+    "bp": 0,
+    "gen": 3,
+    "type": "field",
+    "trigger": "get",
+    "traits": ["ALO"],
+    "effectJa": "このフィールドはアクティブで場に登場させる。\n【起動メイン】【レストにする】自分の場の特徴に「ALO」を持つキャラを1枚手札に戻す。そうした場合、自分か相手の場のキャラを1枚まで選び、このターン中、BP+1000。"
+  },
+  "SAO-1-049": {
+    "kind": "frontBanTopAloActive",
+    "nameJa": "アスナ",
+    "color": "blue",
+    "energy": 3,
+    "ap": 2,
+    "bp": 2000,
+    "gen": 1,
+    "type": "character",
+    "trigger": "active",
+    "traits": ["ALO"],
+    "effectJa": "このカードはフロントLに登場できず、フロントLに移動できない。\n【登場時】自分の山札の上から4枚見る。その中から必要エナジーを満たし消費APが1の特徴に「ALO」を持つキャラカードを1枚まで自分のフロントLにアクティブで登場させる。残りを望む順で自分の山札の下に置く。"
+  },
+  "SAO-2-020": {
+    "kind": "chooseDrawOrIngotDouble",
+    "nameJa": "リズベット",
+    "color": "blue",
+    "energy": 2,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 1,
+    "type": "character",
+    "trigger": "draw",
+    "traits": ["アインクラッド"],
+    "effectJa": "【登場時】以下から1つ選ぶ。\n・カードを1枚引き、自分の手札を1枚場外に置く。\n・「自分の場外にある〈クリスタライト・インゴット〉を1枚リムーブエリアに置き、自分の手札を1枚場外に置く。」をしてもよい。そうした場合、自分の場の特徴に「アインクラッド」を持つ〈キリト〉を1枚まで選び、このターン中、【2回アタック】（このキャラがこのターン初めてアタックした時、アクティブにする）を与える。"
+  },
+  "SAO-2-061": {
+    "kind": "topFiveReadySongOrYuna",
+    "nameJa": "Ubiquitous dB",
+    "color": "purple",
+    "energy": 2,
+    "ap": 1,
+    "bp": 0,
+    "gen": 0,
+    "type": "event",
+    "trigger": "active",
+    "traits": ["歌"],
+    "effectJa": "自分の山札の上から5枚見る。その中からカードを1枚公開し手札に加える。残りを望む順で自分の山札の下に置く。公開したカードが〈Ubiquitous dB〉以外の［特徴：歌］か〈ユナ〉の場合、自分のAPカードを1枚まで選び、アクティブにする。"
+  },
+  "SAO-2-001": {
+    "kind": "outsideKnightSearchArts",
+    "nameJa": "アドミニストレータ",
+    "color": "yellow",
+    "energy": 4,
+    "ap": 2,
+    "bp": 4000,
+    "gen": 1,
+    "type": "character",
+    "trigger": "draw",
+    "traits": [],
+    "effectJa": "【登場時】自分の場外から必要エナジーが1以下の黄の［特徴：整合騎士］を1枚まで自分の場にレストで登場させる。自分の山札の上から7枚見る。その中から〈武装完全支配術〉か〈記憶解放術〉を1枚まで公開し手札に加える。残りを望む順で自分の山札の下に置く。"
+  },
+  "SAO-1-091": {
+    "kind": "battleWinLookBuffSniper",
+    "nameJa": "シノン",
+    "color": "green",
+    "energy": 6,
+    "ap": 1,
+    "bp": 4000,
+    "gen": 1,
+    "type": "character",
+    "trigger": "raid",
+    "traits": ["GGO"],
+    "effectJa": "【レイド】〈シノン〉アクティブにし、フロントLに移動できる\nこのキャラがアタックしてバトルに勝利した時、自分の山札の上から2枚見る。その中から望む枚数を望む順で自分の山札の上に置き、残りを望む順で下に置く。自分の場の他のキャラを1枚まで選び、このターン中、BP+1000。\n【登場時】このキャラはこのターン中、【狙い撃ち】（相手のフロントLのキャラを指定してアタックでき、指定した場合、相手はブロックできない）を得る。"
+  },
+  "SAO-1-041": {
+    "kind": "frontAttackEndAsunaSwap",
+    "nameJa": "キリト",
+    "color": "blue",
+    "energy": 5,
+    "ap": 1,
+    "bp": 4000,
+    "gen": 1,
+    "type": "character",
+    "trigger": "raid",
+    "traits": ["アインクラッド"],
+    "effectJa": "【レイド】〈キリト〉アクティブにし、フロントLに移動できる\n【フロントLにある場合】このキャラのアタック終了時、自分のエナジーLの〈アスナ〉とこのキャラを入れ替えてもよい。\n【起動メイン】【ターン1】自分のフロントLのキャラと自分のエナジーLのキャラを1枚ずつ選び、それらの位置を入れ替える。"
   }
 });
 export const SAO_V2_PILOT_IDS=Object.freeze(Object.keys(PRINTED_PINS).sort());
@@ -2405,6 +2535,73 @@ export function verifiedSaoV2Cards(){
     {name:'キリト',bp:1000,impactNull:true},
     {name:'アリス',bp:1000,impactNull:true}]}] };
   }
+  if(pin.kind==='lifeTierSniper'){
+   card.raidName='シノン（太陽神ソルス）';
+   card.effects={onPlay:[{op:'ifLiveThen',when:{kind:'ownLifeAtMost',turn:'own',max:4},
+    then:[{op:'grantSelfSniperThisTurn'}]}]};
+   card.passiveBonuses=[
+    {condition:{kind:'ownLifeAtMost',turn:'own',max:3},bp:500},
+    {condition:{kind:'ownLifeAtMost',turn:'own',max:2},impact:1}];
+  }
+  if(pin.kind==='songOutsideBuffRest'){
+   card.raidName='ユナ';
+   card.effects={onPlay:[
+    {op:'recoverOutsideOne',optional:true,filter:{field:'trait',value:'歌'}},
+    {op:'buffOwnField',filter:{field:'type',value:'character'},bp:1000,
+     optional:true,excludeSelf:true}]};
+   card.mainAbility={op:'restIfTraitUsedBuffUnion',trait:'歌',bp:1000,
+    names:['ユナ'],alsoTrait:'SAOサバイバー'};
+  }
+  if(pin.kind==='handFiveBlockBounceAlo'){
+   card.raidName='リーファ';
+   card.blockBpRestriction={relation:'atLeast',bp:4000,
+    condition:{kind:'ownHandCountAtLeast',turn:'any',min:5}};
+   card.effects={};
+   card.mainAbility={op:'frontOnceMayReturnActiveTrait',oncePerTurn:true,
+    frontOnly:true,trait:'ALO',bp:1000};
+  }
+  if(pin.kind==='fieldEnterRestAloBuffEither'){
+   card.enterAlwaysActive=true;
+   card.effects={};
+   card.mainAbility={op:'restReturnTraitBuffEither',trait:'ALO',bp:1000};
+  }
+  if(pin.kind==='frontBanTopAloActive'){
+   card.frontForbidden=true;
+   card.effects={onPlay:[{op:'lookTopDeployAffordable',count:4,trait:'ALO',
+    ap:1,line:'front',ready:true}]};
+  }
+  if(pin.kind==='chooseDrawOrIngotDouble'){
+   card.effects={onPlay:[{op:'chooseOne',optional:false,options:[
+    {id:'draw',label:'抽1棄1',turn:'any',then:[
+     {op:'drawDiscard',count:1,discardCount:1}]},
+    {id:'ingot',label:'除外鑄錠後2回攻擊',turn:'any',then:[
+     {op:'mayRemoveOutsideDiscardGrantDouble',name:'クリスタライト・インゴット',
+      targetName:'キリト',targetTrait:'アインクラッド'}]}
+   ]}]};
+  }
+  if(pin.kind==='topFiveReadySongOrYuna'){
+   card.effects={onPlay:[{op:'lookTopTakeOneReadyIf',count:5,trait:'歌',
+    excludeName:'Ubiquitous dB',orName:'ユナ'}]};
+  }
+  if(pin.kind==='outsideKnightSearchArts'){
+   card.effects={onPlay:[
+    {op:'deployOutsideColorTraitRest',color:'yellow',trait:'整合騎士',
+     maxEnergy:1,ready:false,optional:true},
+    {op:'searchTopOneBottomDiscard',count:7,discard:false,logic:'any',filters:[
+     {field:'name',value:'武装完全支配術'},
+     {field:'name',value:'記憶解放術'}]}]};
+  }
+  if(pin.kind==='battleWinLookBuffSniper'){
+   card.raidName='シノン';
+   card.attackWinLookBuff={count:2,bp:1000};
+   card.effects={onPlay:[{op:'grantSelfSniperThisTurn'}]};
+  }
+  if(pin.kind==='frontAttackEndAsunaSwap'){
+   card.raidName='キリト';
+   card.frontAttackEndNamedSwap='アスナ';
+   card.effects={};
+   card.mainAbility={op:'onceMandatorySwapLines',oncePerTurn:true};
+  }
   if(pin.kind==='aliasRaidNameLadder'){
    card.nameAliases=['アリス'];
    card.raidName='アリス';
@@ -2416,7 +2613,7 @@ export function verifiedSaoV2Cards(){
  });
 }
 export function saoV2Pack(){
- return createUniversalPack({id:'sword-art-online',version:'v2-d-sao-pilot-9',
+ return createUniversalPack({id:'sword-art-online',version:'v2-d-sao-pilot-10',
   cards:verifiedSaoV2Cards()});
 }
 
@@ -2513,6 +2710,11 @@ export function verifiedSaoV2Entries(){
       'nameOnceLifeThenGoddess','optionalLifeUntilStartProtect','armNextAloKiritoDraw',
       'aliasRaidRetireFrontImpactNull'].includes(pin.kind)?
       ['tests/v2-sao-follow-ten-batches.test.mjs']:[]),
+     ...(['lifeTierSniper','songOutsideBuffRest','handFiveBlockBounceAlo',
+      'fieldEnterRestAloBuffEither','frontBanTopAloActive','chooseDrawOrIngotDouble',
+      'topFiveReadySongOrYuna','outsideKnightSearchArts','battleWinLookBuffSniper',
+      'frontAttackEndAsunaSwap'].includes(pin.kind)?
+      ['tests/v2-sao-sixteen-left-ten.test.mjs']:[]),
      'tests/universal-v2-sao-mst-cross-title.test.mjs'
     ]),
     ...(def.implementation==='vanilla'?{verifiedNoExtraEffects:true}:{})

@@ -63,6 +63,10 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='effect-name-hand-remove')return legal[0];
  if(s.pending?.kind==='effect-discard')
   return legal.find(a=>a.type==='chooseDiscard')||legal[0];
+ if(['effect-top-deploy','effect-top-take-ready','effect-outside-color-rest',
+  'effect-ingot-double','effect-grant-double','effect-attack-end-named',
+  'effect-return-then','effect-active-trait-buff','effect-return-trait'].includes(s.pending?.kind))
+  return legal[0];
  if(s.pending?.kind==='effect-remove-hand-scale')
   return difficulty==='easy'?legal.find(a=>a.mode==='done')||legal[0]:
    legal.find(a=>a.mode==='pick')||legal.find(a=>a.mode==='done')||legal[0];
