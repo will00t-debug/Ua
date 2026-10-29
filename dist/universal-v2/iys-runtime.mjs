@@ -274,15 +274,21 @@ function offerOppBottom(s,owner,sourceUid,id){
  const foe=1-owner;
  const events=plOf(s,foe).outside.filter(c=>cardCountsAsEvent(def(A.pack,c)));
  if(!events.length)return;
- if(events.length===1){layBottom(s,foe,[events[0].uid]);return;}
+ if(events.length===1){layBottom(s,foe,[events[0].uid],sourceUid);return;}
  hold(s,{player:foe,sourceUid,id,step:'oppBottom',data:{need:2,left:events.map(c=>c.uid),built:[]}},
   events.map(c=>({type:'iys',mode:'next',uid:c.uid})));
 }
-function layBottom(s,owner,uids){lay(plOf(s,owner),uids,'bottom');}
+function layBottom(s,owner,uids,sourceUid){
+ // Q2137: these cards start in outside. A deck reorder cannot see them.
+ for(const uid of uids){
+  if(!plOf(s,owner).outside.some(c=>c.uid===uid))continue;
+  moveUid(A.pack,s,owner,'outside',uid,'deck',sourceUid);
+ }
+}
 function continueBottom(s,q,a){
  const left=q.data.left.filter(uid=>uid!==a.uid);
  const built=[...q.data.built,a.uid];
- if(built.length>=q.data.need||!left.length){layBottom(s,q.player,built);return;}
+ if(built.length>=q.data.need||!left.length){layBottom(s,q.player,built,q.sourceUid);return;}
  hold(s,{player:q.player,sourceUid:q.sourceUid,id:q.id,step:'oppBottom',data:{...q.data,left,built}},
   left.map(uid=>({type:'iys',mode:'next',uid})));
 }

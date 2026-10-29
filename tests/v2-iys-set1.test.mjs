@@ -263,3 +263,228 @@ test('Q2143 playing 飛来骨 does not draw, and an effect discard does when 珊
  assert.equal(drawn.players[0].deck.length,before-2);
  assertUniversalMatch(packs,drawn);
 });
+
+function payPurple(s){
+ put(s,0,'IYS-1-001','energy',0);
+ put(s,0,'IYS-1-010','energy',1);
+}
+function payRed(s){
+ put(s,0,'IYS-1-041','energy',0);
+ put(s,0,'IYS-1-045','energy',1);
+ put(s,0,'IYS-1-062','energy',2);
+}
+function assertFacedownPrivate(s,owner,hostUid,buriedId){
+ const mine=universalPublicView(packs,s,owner);
+ const theirs=universalPublicView(packs,s,1-owner);
+ const host=view=>[...view.players[owner].front,...view.players[owner].energy].find(c=>c?.uid===hostUid);
+ const shown=host(mine).underLayers.find(layer=>layer.cardId===buriedId);
+ assert.equal(shown.faceDown,true);
+ assert.equal(host(theirs).underLayers.every(layer=>layer.faceDown===true&&layer.cardId===undefined),true);
+}
+
+test('Q2130 and Q2132 the activate tuck is the once-per-turn lock, and its facedown stays private',()=>{
+ const counts=countsFor(['IYS-1-022','IYS-1-028','IYS-1-029','IYS-1-001','IYS-1-010']);
+ let s=toPhase(fresh(counts,2130),'main');
+ readyAp(s);
+ payPurple(s);
+ const naraku=put(s,0,'IYS-1-028','front',0);
+ const shard=take(s,0,'IYS-1-029');
+ s.players[0].outside.push(shard);
+ const kanna=take(s,0,'IYS-1-022');
+ s.players[0].hand.push(kanna);
+ s=play(s,kanna.uid);
+ assert.equal(s.pending.step,'handPlace');
+ s=choose(s,a=>a.mode==='outside');
+ assert.equal(s.mainReadyOnceByName[0].includes('神無'),false);
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='activate'&&a.uid===kanna.uid),true);
+ s=use(s,{type:'activate',uid:kanna.uid,mode:'iys:0'});
+ s=choose(s,a=>a.uid===shard.uid);
+ const host=s.players[0].front.find(c=>c?.uid===naraku.uid);
+ assert.equal(host.under.some(c=>c.uid===shard.uid&&c.faceDown===true),true);
+ assertFacedownPrivate(s,0,naraku.uid,'IYS-1-029');
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='activate'&&a.uid===kanna.uid),false);
+ assertUniversalMatch(packs,s);
+});
+
+test('Q2131 two 神無 share one activate tuck in the same turn',()=>{
+ const counts=countsFor(['IYS-1-022','IYS-1-028','IYS-1-029']);
+ let s=toPhase(fresh(counts,2131),'main');
+ const first=put(s,0,'IYS-1-022','front',0);
+ const second=put(s,0,'IYS-1-022','front',1);
+ put(s,0,'IYS-1-028','front',2);
+ const shard=take(s,0,'IYS-1-029');
+ s.players[0].outside.push(shard);
+ s=use(s,{type:'activate',uid:first.uid,mode:'iys:0'});
+ s=choose(s,a=>a.uid===shard.uid);
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='activate'&&a.uid===second.uid),false);
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='activate'&&a.uid===first.uid),false);
+ assertUniversalMatch(packs,s);
+});
+
+test('Q2133 Q2136 and Q2140 keep a facedown under private to the controller',()=>{
+ const counts=countsFor(['IYS-1-026','IYS-1-032','IYS-1-028','IYS-1-029','IYS-1-044','IYS-1-079']);
+ let hidden=toPhase(fresh(counts,2133),'main');
+ const kagura=put(hidden,0,'IYS-1-026','front',0);
+ const under=take(hidden,0,'IYS-1-029');
+ under.faceDown=true;
+ kagura.under.push(under);
+ assertFacedownPrivate(hidden,0,kagura.uid,'IYS-1-029');
+ assertUniversalMatch(packs,hidden);
+
+ let mirror=toPhase(fresh(counts,2136),'main');
+ const glass=put(mirror,0,'IYS-1-032','energy',0,true);
+ const host=put(mirror,0,'IYS-1-028','front',0);
+ const piece=take(mirror,0,'IYS-1-029');
+ mirror.players[0].outside.push(piece);
+ mirror=use(mirror,{type:'activate',uid:glass.uid,mode:'iys:0'});
+ mirror=choose(mirror,a=>a.uid===piece.uid);
+ assert.equal(mirror.players[0].energy.find(c=>c?.uid===glass.uid).ready,false);
+ assertFacedownPrivate(mirror,0,host.uid,'IYS-1-029');
+ assertUniversalMatch(packs,mirror);
+
+ let sword=toPhase(fresh(counts,2140),'main');
+ const inu=put(sword,0,'IYS-1-044','front',0,true);
+ const fang=take(sword,0,'IYS-1-079');
+ sword.players[0].outside.push(fang);
+ sword=use(sword,{type:'activate',uid:inu.uid,mode:'iys:1'});
+ assertFacedownPrivate(sword,0,inu.uid,'IYS-1-079');
+ assertUniversalMatch(packs,sword);
+});
+
+test('Q2135 tucking the revealed top under 奈落 stays private to the controller',()=>{
+ const counts=countsFor(['IYS-1-030','IYS-1-028','IYS-1-029']);
+ let s=toPhase(fresh(counts,2135),'main');
+ readyAp(s);
+ const naraku=put(s,0,'IYS-1-028','front',0);
+ const top=take(s,0,'IYS-1-029');
+ s.players[0].deck.unshift(top);
+ const hitomi=take(s,0,'IYS-1-030');
+ s.players[0].hand.push(hitomi);
+ s=play(s,hitomi.uid);
+ assert.equal(s.pending.step,'topOrUnder');
+ s=choose(s,a=>a.mode==='host'&&a.uid===naraku.uid);
+ assertFacedownPrivate(s,0,naraku.uid,'IYS-1-029');
+ assertUniversalMatch(packs,s);
+});
+
+test('Q2137 最猛勝 can be used when the opponent has zero or one outside event',()=>{
+ const counts=countsFor(['IYS-1-033','IYS-1-028','IYS-1-001','IYS-1-010','IYS-1-038']);
+ let empty=toPhase(fresh(counts,2137),'main');
+ readyAp(empty);
+ payPurple(empty);
+ put(empty,0,'IYS-1-028','front',0);
+ const first=take(empty,0,'IYS-1-033');
+ empty.players[0].hand.push(first);
+ const before=empty.players[0].deck.length;
+ empty=play(empty,first.uid,'event');
+ assert.equal(empty.pending,null);
+ assert.equal(empty.players[0].deck.length,before-2);
+ assertUniversalMatch(packs,empty);
+
+ let one=toPhase(fresh(counts,21370),'main');
+ readyAp(one);
+ payPurple(one);
+ put(one,0,'IYS-1-028','front',0);
+ const event=take(one,1,'IYS-1-038');
+ one.players[1].outside.push(event);
+ const played=take(one,0,'IYS-1-033');
+ one.players[0].hand.push(played);
+ const deck=one.players[0].deck.length;
+ one=play(one,played.uid,'event');
+ assert.equal(one.pending,null);
+ assert.equal(one.players[0].deck.length,deck-2);
+ assert.equal(one.players[1].outside.some(c=>c.uid===event.uid),false);
+ assert.equal(one.players[1].deck.at(-1).uid,event.uid);
+ assertUniversalMatch(packs,one);
+});
+
+test('Q2139 tucking 融合 under 奈落 stays private to the controller',()=>{
+ const counts=countsFor(['IYS-1-039','IYS-1-028','IYS-1-029','IYS-1-001','IYS-1-010']);
+ let s=toPhase(fresh(counts,2139),'main');
+ readyAp(s);
+ payPurple(s);
+ const naraku=put(s,0,'IYS-1-028','front',0);
+ const other=put(s,0,'IYS-1-029','front',1);
+ const event=take(s,0,'IYS-1-039');
+ s.players[0].hand.push(event);
+ s=play(s,event.uid,'event');
+ assert.equal(s.pending.step,'retireOwn');
+ s=choose(s,a=>a.uid===other.uid);
+ assert.equal(s.pending.step,'tuckEvent');
+ s=choose(s,a=>a.mode==='host'&&a.uid===naraku.uid);
+ assertFacedownPrivate(s,0,naraku.uid,'IYS-1-039');
+ assertUniversalMatch(packs,s);
+});
+
+test('Q2141 the unblocked draw waits for the block choice and precedes life damage',()=>{
+ const counts=countsFor(['IYS-1-046','IYS-1-047']);
+ let blocked=toPhase(fresh(counts,2141),'attack');
+ const attacker=put(blocked,0,'IYS-1-046','front',0,true);
+ const wall=put(blocked,1,'IYS-1-047','front',0,true);
+ blocked=use(blocked,{type:'attack',uid:attacker.uid});
+ assert.equal(blocked.pending.kind,'block');
+ const deckAtChoice=blocked.players[0].deck.length;
+ const lifeAtChoice=blocked.players[1].life.length;
+ blocked=choose(blocked,a=>a.type==='chooseBlock'&&a.uid===wall.uid);
+ assert.equal(blocked.players[0].deck.length,deckAtChoice);
+ assert.equal(blocked.players[1].life.length,lifeAtChoice);
+ assert.equal(blocked.players[1].outside.some(c=>c.uid===wall.uid),true);
+ assertUniversalMatch(packs,blocked);
+
+ let open=toPhase(fresh(counts,21411),'attack');
+ const swinger=put(open,0,'IYS-1-046','front',0,true);
+ const top=take(open,1,'IYS-1-047');
+ open.players[1].life.unshift(top);
+ open=use(open,{type:'attack',uid:swinger.uid});
+ assert.equal(open.pending.kind,'block');
+ const before=open.players[0].deck.length;
+ assert.equal(open.players[1].life[0].uid,top.uid);
+ open=choose(open,a=>a.type==='chooseBlock'&&a.uid===null);
+ assert.equal(open.players[0].deck.length,before-1);
+ assert.equal(open.players[1].outside.some(c=>c.uid===top.uid),true);
+ const draw=open.zoneMoveEvents.find(e=>e.from==='deck'&&e.to==='hand'&&e.sourceUid===swinger.uid);
+ const life=open.zoneMoveEvents.find(e=>e.uid===top.uid&&e.from==='life'&&e.to==='outside');
+ assert.ok(draw&&life&&draw.order<life.order);
+ assertUniversalMatch(packs,open);
+});
+
+test('Q2142 retires BP 2500 without 珊瑚, and one removed event raises the cap by 500',()=>{
+ const counts=countsFor(['IYS-1-071','IYS-1-047','IYS-1-045','IYS-1-041','IYS-1-062','IYS-1-044','IYS-1-056','IYS-1-038']);
+ let plain=toPhase(fresh(counts,2142),'main');
+ readyAp(plain);
+ payRed(plain);
+ const small=put(plain,1,'IYS-1-047','front',0);
+ const mid=put(plain,1,'IYS-1-045','front',1);
+ const miroku=take(plain,0,'IYS-1-071');
+ plain.players[0].hand.push(miroku);
+ plain=play(plain,miroku.uid);
+ assert.equal(plain.pending.step,'removeEvents');
+ plain=choose(plain,a=>a.mode==='done');
+ assert.equal(plain.pending.step,'retireCap');
+ assert.equal(legalUniversalActions(packs,plain).some(a=>a.uid===small.uid),true);
+ assert.equal(legalUniversalActions(packs,plain).some(a=>a.uid===mid.uid),false);
+ plain=choose(plain,a=>a.uid===small.uid);
+ assert.equal(plain.players[1].outside.some(c=>c.uid===small.uid),true);
+ assert.equal(plain.players[1].front.some(c=>c?.uid===mid.uid),true);
+ assertUniversalMatch(packs,plain);
+
+ let boosted=toPhase(fresh(counts,21420),'main');
+ readyAp(boosted);
+ payRed(boosted);
+ put(boosted,0,'IYS-1-056','front',0);
+ const event=take(boosted,0,'IYS-1-038');
+ boosted.players[0].outside.push(event);
+ const target=put(boosted,1,'IYS-1-045','front',0);
+ const high=put(boosted,1,'IYS-1-044','front',1);
+ const actor=take(boosted,0,'IYS-1-071');
+ boosted.players[0].hand.push(actor);
+ boosted=play(boosted,actor.uid);
+ boosted=choose(boosted,a=>a.mode==='remove'&&a.uid===event.uid);
+ assert.equal(boosted.players[0].removed.some(c=>c.uid===event.uid),true);
+ boosted=choose(boosted,a=>a.mode==='done');
+ assert.equal(legalUniversalActions(packs,boosted).some(a=>a.uid===target.uid),true);
+ assert.equal(legalUniversalActions(packs,boosted).some(a=>a.uid===high.uid),false);
+ boosted=choose(boosted,a=>a.uid===target.uid);
+ assert.equal(boosted.players[1].outside.some(c=>c.uid===target.uid),true);
+ assertUniversalMatch(packs,boosted);
+});
