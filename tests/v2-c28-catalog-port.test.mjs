@@ -73,8 +73,8 @@ test('SAO-1-021 may add one own life card to hand and draws only after that take
  assert.equal(card.gen,2);
  assert.deepEqual(card.effects.onPlay,[{op:'optionalOwnLifeToHandThenDraw',then:[{op:'draw',count:1}]}]);
  assert.deepEqual(card.triggerEffect,{op:'restOppFrontSkipNextActive'});
- assert.equal(EXPECTED_V2_TOTAL,622);
- assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],125);
+ assert.equal(EXPECTED_V2_TOTAL,632);
+ assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],135);
  assert.equal(EXPECTED_V2_IDS['sword-art-online'].includes('SAO-1-021'),true);
 
  const counts=deckOf(['SAO-1-021','SAO-1-001','SAO-1-004']);

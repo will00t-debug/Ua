@@ -1444,6 +1444,136 @@ const PRINTED_PINS=Object.freeze({
     "trigger": "color",
     "traits": ["GGO"],
     "effectJa": "このキャラのBPが4000以上の場合、このキャラは【インパクト（1）】（アタックしてバトルに勝利した時、相手プレイヤーに1ダメージ）を得る。"
+  },
+  "SAO-2-002": {
+    "kind": "frontNamesDrawInstead",
+    "nameJa": "キリト",
+    "color": "yellow",
+    "energy": 4,
+    "ap": 1,
+    "bp": 4000,
+    "gen": 1,
+    "type": "character",
+    "trigger": "raid",
+    "traits": [],
+    "effectJa": "【レイド】〈キリト〉アクティブにし、フロントLに移動できる\nこのキャラはBP2000以下のキャラにブロックされない。\n【登場時】『カードを2枚引き、自分の手札を1枚場外に置く』。自分のフロントLに〈アリス〉と〈ユージオ〉がどちらもある場合、『カードを2枚引く』に代えてもよい。"
+  },
+  "SAO-1-037": {
+    "kind": "raidNameImpactLineShift",
+    "nameJa": "アスナ",
+    "color": "blue",
+    "energy": 4,
+    "ap": 1,
+    "bp": 4000,
+    "gen": 1,
+    "type": "character",
+    "trigger": "raid",
+    "traits": ["アインクラッド"],
+    "effectJa": "【レイド】〈アスナ〉アクティブにし、フロントLに移動できる\n自分の場に〈キリト〉がある場合、このキャラは【インパクト（1）】を得る。\n【自分のターン中】【ターン1】自分の移動フェイズ以外でこのキャラが移動した時、このキャラはこのターン中、「【アタック時】カードを1枚引く。」を得る。"
+  },
+  "SAO-1-081": {
+    "kind": "enterActiveStartRetire",
+    "nameJa": "ユウキ",
+    "color": "green",
+    "energy": 4,
+    "ap": 2,
+    "bp": 4000,
+    "gen": 1,
+    "type": "character",
+    "trigger": "color",
+    "traits": ["ALO"],
+    "effectJa": "このキャラはアクティブで場に登場させる。\n自分のターン開始時、このキャラを退場させる。\nこのキャラはBP2000以下のキャラにブロックされない。\n【登場時】カードを2枚引き、自分の手札を1枚場外に置く。\n【退場時】相手のフロントLのキャラを1枚まで選び、レストにする。"
+  },
+  "SAO-2-044": {
+    "kind": "topTraitDiscardTwoBlock",
+    "nameJa": "アルゴ",
+    "color": "purple",
+    "energy": 3,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 3,
+    "type": "character",
+    "trigger": "color",
+    "traits": ["プログレッシブ"],
+    "effectJa": "【登場時】自分の山札の上から3枚見る。その中から［特徴：プログレッシブ］を1枚まで公開し手札に加える。残りを望む順で自分の山札の下に置く。手札に加えた場合、自分の手札を1枚場外に置く。\n【起動メイン】【手札を2枚場外に置く】 【ターン1】このキャラはこのターン中、「このキャラはBP4000以上のキャラにブロックされない。」を得る。"
+  },
+  "SAO-1-053": {
+    "kind": "handRestEnergyByHand",
+    "nameJa": "キリト",
+    "color": "blue",
+    "energy": 4,
+    "ap": 1,
+    "bp": 4000,
+    "gen": 1,
+    "type": "character",
+    "trigger": null,
+    "traits": ["ALO"],
+    "effectJa": "【登場時】自分の手札から『必要エナジーが1以下』で消費APが1の特徴に「ALO」を持つ青のキャラカードを1枚まで自分のフロントLにレストで登場させる。自分の手札が5枚以上の場合、『必要エナジーが3以下』に代わる。"
+  },
+  "SAO-2-024": {
+    "kind": "otherHandEnergyPayBounce",
+    "nameJa": "リーファ",
+    "color": "blue",
+    "energy": 4,
+    "ap": 1,
+    "bp": 4000,
+    "gen": 1,
+    "type": "character",
+    "trigger": "color",
+    "traits": ["ALO"],
+    "effectJa": "自分の他の手札が4枚以上の場合、手札にあるこのカードの必要エナジーを【青×1】減らす。\n【登場時】APを1支払ってもよい。そうした場合、BP4000以下の相手のフロントLのキャラを1枚まで選び、手札に戻す。"
+  },
+  "SAO-2-049": {
+    "kind": "damageTwoOutsideAsunaFrontDown",
+    "nameJa": "キリト",
+    "color": "purple",
+    "energy": 4,
+    "ap": 2,
+    "bp": 4000,
+    "gen": 1,
+    "type": "character",
+    "trigger": "get",
+    "traits": ["プログレッシブ"],
+    "effectJa": "【ダメージ（2）】（このキャラがアタックで直接ダメージを与える時、代わりに2ダメージ）\n【登場時】自分の場外から必要エナジーが2以下で消費APが1の紫の〈アスナ〉を1枚まで自分の場にレストで登場させる。\n【起動メイン】【フロントLにある場合】 【ターン1】BP1500以上の相手のフロントLのキャラを1枚選び、このターン中、BP-1000。"
+  },
+  "SAO-2-053": {
+    "kind": "grantBelowPrintedBlock",
+    "nameJa": "ミト",
+    "color": "purple",
+    "energy": 3,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 3,
+    "type": "character",
+    "trigger": "active",
+    "traits": ["プログレッシブ"],
+    "effectJa": "【登場時】相手の場のキャラを1枚まで選び、このターン中、「このキャラのBPが元々のBPより低い場合、このキャラはブロックできない。」を与える。"
+  },
+  "SAO-1-048": {
+    "kind": "anyLineShiftMayDraw",
+    "nameJa": "リズベット",
+    "color": "blue",
+    "energy": 3,
+    "ap": 1,
+    "bp": 3000,
+    "gen": 3,
+    "type": "character",
+    "trigger": "active",
+    "traits": ["アインクラッド"],
+    "effectJa": "【自分のターン中】【ターン1】自分の移動フェイズ以外で自分の場のキャラが移動した時、カードを1枚引いてもよい。そうした場合、自分の手札を1枚場外に置く。"
+  },
+  "SAO-1-013": {
+    "kind": "aliasRaidNameLadder",
+    "nameJa": "アリス・シンセシス・サーティ",
+    "color": "yellow",
+    "energy": 5,
+    "ap": 1,
+    "bp": 4000,
+    "gen": 1,
+    "type": "character",
+    "trigger": "raid",
+    "traits": ["整合騎士"],
+    "effectJa": "このカードは〈アリス〉としても扱う。\n【レイド】〈アリス〉アクティブにし、フロントLに移動できる\n【登場時】『BP2000以下』の相手のフロントLのキャラを1枚まで選び、退場させる。自分のフロントLに〈キリト〉か〈ユージオ〉のいずれかがある場合、『BP3000以下』に代わる。自分のフロントLに〈キリト〉と〈ユージオ〉が両方ある場合、『BP4000以下』に代わる。"
   }
 });
 export const SAO_V2_PILOT_IDS=Object.freeze(Object.keys(PRINTED_PINS).sort());
@@ -1841,11 +1971,75 @@ export function verifiedSaoV2Cards(){
    card.conditionalImpactBpAtLeast=4000;
    card.triggerEffect={op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1};
   }
+  if(pin.kind==='frontNamesDrawInstead'){
+   card.raidName='キリト';
+   card.blockBpRestriction={relation:'atMost',bp:2000,condition:null};
+   card.effects={onPlay:[{op:'drawDiscard',count:2,discardCount:1,instead:{
+    op:'draw',count:2,when:{kind:'ownFieldHasAllNames',turn:'any',zone:'front',
+     excludeSelf:false,names:['アリス','ユージオ']}}}]};
+  }
+  if(pin.kind==='raidNameImpactLineShift'){
+   card.raidName='アスナ';
+   card.passiveBonuses=[{condition:{kind:'ownNameExists',turn:'any',zone:'field',
+    excludeSelf:false,name:'キリト'},impact:1}];
+   card.lineShiftOutsideMove={oncePerTurn:true,turn:'own',self:true,grant:'attackDraw'};
+   card.effects={};
+  }
+  if(pin.kind==='enterActiveStartRetire'){
+   card.enterAlwaysActive=true;
+   card.phaseEffects=[{phase:'start',edge:'start',turn:'own',
+    then:[{op:'retireSelfAtOwnStart'}]}];
+   card.blockBpRestriction={relation:'atMost',bp:2000,condition:null};
+   card.effects={
+    onPlay:[{op:'drawDiscard',count:2,discardCount:1}],
+    onRetire:[{op:'restOppFrontOne',optional:true}]};
+   card.triggerEffect={op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1};
+  }
+  if(pin.kind==='topTraitDiscardTwoBlock'){
+   card.templateEffects={onPlay:[{template:'searchTopOneBottomDiscard',count:3,
+    filter:{field:'trait',value:'プログレッシブ'}}]};
+   card.mainAbility={op:'oncePayProgram',oncePerTurn:true,frontOnly:false,
+    raidOnly:false,payAp:0,requiresOwnName:null,then:[{op:'discardGate',
+     optional:false,count:2,then:[{op:'grantSelfBlockAtLeast',bp:4000}]}]};
+   card.triggerEffect={op:'deployHandCharacter',color:'purple',maxEnergy:2,ap:1};
+  }
+  if(pin.kind==='handRestEnergyByHand'){
+   card.effects={onPlay:[{op:'deployOwnHandRest',type:'character',color:'blue',
+    energy:1,ap:1,max:1,trait:'ALO',line:'front',energyIfHand:{min:5,energy:3}}]};
+  }
+  if(pin.kind==='otherHandEnergyPayBounce'){
+   card.otherHandEnergyDiscount={min:4,amount:1};
+   card.effects={onPlay:[{op:'optionalPayApThen',ap:1,optional:true,then:[
+    {op:'bounceOppFrontOneUnderBp',bp:4000,optional:true}]}]};
+   card.triggerEffect={op:'deployHandCharacter',color:'blue',maxEnergy:2,ap:1};
+  }
+  if(pin.kind==='damageTwoOutsideAsunaFrontDown'){
+   card.printedAttackDamage=2;
+   card.effects={onPlay:[{op:'deployNamedFromZones',name:'アスナ',zones:['outside'],
+    line:'any',ready:false,optional:true,color:'purple',ap:1,maxEnergy:2}]};
+   card.mainAbility={op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,then:[
+    {op:'enemyBpDown',bp:1000,optional:false,minBp:1500,zone:'front'}]};
+  }
+  if(pin.kind==='grantBelowPrintedBlock'){
+   card.effects={onPlay:[{op:'grantOppBelowPrintedBlock',optional:true,
+    zone:'field',until:'endOfTurn'}]};
+  }
+  if(pin.kind==='anyLineShiftMayDraw'){
+   card.anyLineShiftOutsideMove={oncePerTurn:true,turn:'own',then:'mayDrawDiscard'};
+   card.effects={};
+  }
+  if(pin.kind==='aliasRaidNameLadder'){
+   card.nameAliases=['アリス'];
+   card.raidName='アリス';
+   card.effects={onPlay:[{op:'retireOppFrontOneUnderBp',bp:2000,optional:true,
+    nameLadder:{zone:'front',names:['キリト','ユージオ'],
+     steps:[{present:1,bp:3000},{present:2,bp:4000}]}}]};
+  }
   return card;
  });
 }
 export function saoV2Pack(){
- return createUniversalPack({id:'sword-art-online',version:'v2-d-sao-pilot-8',
+ return createUniversalPack({id:'sword-art-online',version:'v2-d-sao-pilot-9',
   cards:verifiedSaoV2Cards()});
 }
 
@@ -1923,6 +2117,11 @@ export function verifiedSaoV2Entries(){
      ...(pin.kind==='nameAliasOnly'||pin.kind==='nameAliasStep'?['tests/v2-zero-engine-round14.test.mjs']:[]),
      ...(pin.kind==='opponentFieldHandEnergy'||pin.kind==='conditionalSelfBpImpact'?
       ['tests/v2-c2-hand-energy-register.test.mjs']:[]),
+     ...( ['frontNamesDrawInstead','raidNameImpactLineShift','enterActiveStartRetire',
+      'topTraitDiscardTwoBlock','handRestEnergyByHand','otherHandEnergyPayBounce',
+      'damageTwoOutsideAsunaFrontDown','grantBelowPrintedBlock','anyLineShiftMayDraw',
+      'aliasRaidNameLadder'].includes(pin.kind)?
+      ['tests/v2-sao-next-ten-batches.test.mjs']:[]),
      'tests/universal-v2-sao-mst-cross-title.test.mjs'
     ]),
     ...(def.implementation==='vanilla'?{verifiedNoExtraEffects:true}:{})

@@ -12,7 +12,9 @@ export const V2_TITLE_LABELS=Object.freeze({
  'steins-gate':'命運石之門'
 });
 export const V2_PENDING_LABELS=Object.freeze({
- block:'選擇是否阻擋', 'life-trigger':'生命觸發',
+ block:'選擇是否阻擋',
+ 'effect-grant-below-printed':'選擇對方角色，本回合 BP 低於原本時不能阻擋',
+ 'life-trigger':'生命觸發',
  'life-batch-order':'選擇 LIFE／登場效果結算順序',
  'leave-replacement':'角色離場保護','private-top-choice':'查看牌庫頂','private-top-place':'選擇牌頂或牌底',
  'effect-recover-ap':'恢復 AP','effect-hand-top':'將 1 張手牌放到牌庫頂',
