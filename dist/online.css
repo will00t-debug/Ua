@@ -27,6 +27,10 @@ button:disabled{opacity:.55;cursor:not-allowed}
 .tag{font-size:12px;border-radius:99px;padding:2px 8px;background:#f6f7f9;border:1px solid var(--line)}
 .tag.ready{background:#f3faf5;color:#21643a;border-color:#cfe8d6}
 .code{font:700 28px/1.2 ui-monospace,monospace;letter-spacing:3px}
+.open-rooms{display:grid;gap:8px;margin:10px 0}
+.open-rooms h3{font-size:15px;margin:0}
+.open-rooms .room-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.open-rooms .room-code{font:700 16px/1.2 ui-monospace,monospace;letter-spacing:1px}
 .board{display:grid;gap:10px}
 .zone{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
 .hand{display:flex;gap:8px;overflow:auto;padding-bottom:4px}

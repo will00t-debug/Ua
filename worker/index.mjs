@@ -5,7 +5,7 @@
 import {DurableObject} from 'cloudflare:workers';
 import {ApiError,dispatchAccount,dispatchRoom} from '../server/domain.mjs';
 import {SCHEMA,createRepositories,roomTtl} from '../server/repos.mjs';
-import {durableAct,durableCancel,durableCreate,durableJoin,durableResign,durableView} from './orchestrate.mjs';
+import {durableAct,durableCancel,durableCreate,durableJoin,durableList,durableResign,durableView} from './orchestrate.mjs';
 
 function adapt(storage){
  const sql=storage.sql;
@@ -167,9 +167,10 @@ export default {
     if(deckUpdate)return send(200,await callAccount({op:'updateDeck',token,deckId:deckUpdate[1],input:await readBody(request)}));
     const deckDelete=method==='DELETE'&&/^\/api\/decks\/(d[a-f0-9]{16})$/.exec(path);
     if(deckDelete)return send(200,await callAccount({op:'deleteDeck',token,deckId:deckDelete[1]}));
+    if(method==='GET'&&path==='/api/rooms')return send(200,await durableList(callAccount,{token}));
     if(method==='POST'&&path==='/api/rooms'){
      const body=await readBody(request);
-     const result=await durableCreate(callAccount,callRoom,{token,first:body.first,deckId:body.deckId});
+     const result=await durableCreate(callAccount,callRoom,{token,first:body.first,deckId:body.deckId,replaceOldest:body.replaceOldest===true});
      return send(201,result);
     }
     const room=path.match(/^\/api\/rooms\/([A-HJ-NP-Z2-9]{8})(?:\/(join|actions|resign|cancel))?$/);
