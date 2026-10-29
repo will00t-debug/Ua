@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {createUniversalPack} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,dispatchUniversalAction,legalUniversalActions,
  universalPublicView,assertUniversalMatch} from '../dist/universal-v2/engine.mjs';
-import {inlineBlockDecision,attackKeywordBadges} from '../dist/universal-v2/preview-actions.mjs';
+import {inlineBlockDecision,attackKeywordBadges,frontAttackKeywordBadges} from '../dist/universal-v2/preview-actions.mjs';
 
 const unit=(id,bp=3000,extra={})=>({id,name:id,type:'character',color:'yellow',
  energy:0,ap:1,bp,gen:1,implementation:'vanilla',...extra});
@@ -21,7 +21,7 @@ function take(s,p,id){
  }
  throw Error('Missing '+id);
 }
-function open({mandatory=false,noReady=false}={}){
+function open({mandatory=false,noReady=false,withoutAttack=false}={}){
  let s=newUniversalMatch(packs,{decks:[deck,deck],first:1,seed:291029});
  const put=(p,line,index,id,ready=true)=>{
   const card=take(s,p,id);card.ready=ready;card.fieldEntryStamp=s.nextFieldEntryStamp++;
@@ -33,7 +33,7 @@ function open({mandatory=false,noReady=false}={}){
  const rested=put(0,'front',2,'rested',false);
  const energy=put(0,'energy',0,'energy');
  s.phase='attack';
- s=dispatchUniversalAction(packs,s,{type:'attack',uid:attacker.uid},{actor:1});
+ if(!withoutAttack)s=dispatchUniversalAction(packs,s,{type:'attack',uid:attacker.uid},{actor:1});
  assert.equal(assertUniversalMatch(packs,s),true);
  return {s,attacker,small,high,rested,energy};
 }
@@ -106,9 +106,40 @@ test('gold labels are appended outside REST-rotating face and displayed in the c
  const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
  const script=read('dist/universal-v2-preview.mjs');
  const css=read('dist/universal-v2-block.css');
- assert.ok(script.includes("btnSlot.append(face);\n  // Attach to the slot itself"));
+ assert.ok(script.includes("btnSlot.append(face);\n  // Visible FRONT keywords persist"));
  assert.ok(script.includes("class:'v2-attack-keywords v2-attack-keywords-card'"));
  assert.ok(script.includes("class:'v2-block-battle-meta'"));
- assert.ok(css.includes('.slot.v2-attacking .v2-attack-keywords-card{'));
+ assert.ok(css.includes('.slot.v2-has-attack-keywords .v2-attack-keywords-card{'));
  assert.ok(css.includes('background:linear-gradient(180deg,#fff79b'));
+});
+
+test('frontline gold keywords are visible before attack declaration, including REST cards',()=>{
+ const {s,attacker}=open({withoutAttack:true});
+ const view=universalPublicView(packs,s,0);
+ assert.equal(view.battle,null,'no pending block means the prior UI displayed no keywords');
+ assert.equal(view.players[1].front[0].ready,true);
+ assert.deepEqual(frontAttackKeywordBadges(packs,s,1,0),[
+  {type:'damage',text:'直傷2'},{type:'impact',text:'衝擊1'}
+ ]);
+ s.players[1].front[0].ready=false;
+ assert.equal(assertUniversalMatch(packs,s),true);
+ assert.deepEqual(frontAttackKeywordBadges(packs,s,1,0),[
+  {type:'damage',text:'直傷2'},{type:'impact',text:'衝擊1'}
+ ],'REST must not hide publicly visible attack abilities');
+ assert.deepEqual(frontAttackKeywordBadges(packs,s,0,0),[]);
+ assert.deepEqual(frontAttackKeywordBadges(packs,s,1,3),[]);
+ assert.deepEqual(frontAttackKeywordBadges(packs,s,1,7),[]);
+ assert.equal(attacker.cardId,'attacker');
+});
+
+test('persistent field badges use canonical V2 combat values, not card-art text',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
+ const script=read('dist/universal-v2-preview.mjs');
+ const actions=read('dist/universal-v2/preview-actions.mjs');
+ assert.match(script,/frontAttackKeywordBadges\(app\.packs,app\.state,side,index\)/);
+ assert.match(script,/v2-has-attack-keywords/);
+ assert.match(actions,/universalAttackDamage\(packs,state,front\)/);
+ assert.match(actions,/universalImpact\(packs,state,front\)/);
+ assert.doesNotMatch(script,/const attackBadges=attacking\?/);
 });
