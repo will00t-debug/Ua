@@ -76,8 +76,8 @@ function copyCounts(input){
  if(entries.length>800)throw new ApiError(400,'牌組內容過長。');
  const counts={};
  for(const [raw,n] of entries){
-  if(typeof raw!=='string'||raw.length>80||!Number.isInteger(n)||n<0||n>4)
-   throw new ApiError(400,'牌組張數必須是 0–4。');
+  if(typeof raw!=='string'||raw.length>80||!Number.isInteger(n)||n<0)
+   throw new ApiError(400,'牌組張數必須是非負整數。');
   if(n>0)counts[raw]=n;
  }
  if(Object.values(counts).reduce((sum,n)=>sum+n,0)>50)throw new ApiError(400,'一副牌最多 50 張。');
@@ -308,8 +308,6 @@ export function dispatchAccount(repos,message,now){
     const text=error instanceof Error&&error.message?error.message.slice(0,180):'';
     throw new ApiError(400,text||'牌組內容無法讀取。');
    }
-   if(Object.values(storedCounts).some(n=>!Number.isInteger(n)||n<1||n>4))
-    throw new ApiError(400,'牌組張數必須是 1–4。');
    const existing=localId?repos.findDeckByLocal(user.id,localId):null;
    if(!existing&&repos.countDecks(user.id)>=30)throw new ApiError(400,'最多保存 30 副牌組。');
    const record={
@@ -335,8 +333,6 @@ export function dispatchAccount(repos,message,now){
     const text=error instanceof Error&&error.message?error.message.slice(0,180):'';
     throw new ApiError(400,text||'牌組內容無法讀取。');
    }
-   if(Object.values(storedCounts).some(n=>!Number.isInteger(n)||n<1||n>4))
-    throw new ApiError(400,'牌組張數必須是 1–4。');
    // Preserve remote identity and local source ID. Only the authenticated
    // owner can change their saved deck; a different user always receives 404.
    const record={...old,name,title,counts:storedCounts,
