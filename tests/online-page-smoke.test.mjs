@@ -175,4 +175,34 @@ test('entering an online room shows a card-sized table, the opening hand, and th
  visit(appRoot);
  assert.equal(classes.filter(name=>name==='slot empty').length,15,'selecting an attacker does not turn empty slots into destinations');
  assert.ok(classes.some(name=>name.includes('selected')));
+ // The real online room renders every authorized private inspection card, but
+ // only the actual legal choice indices may be clicked.
+ vm.runInContext(`roomFixture.view.phase='main';roomFixture.choices=[
+  {index:0,type:'chooseDeckSearch',label:'選第一張'},
+  {index:1,type:'chooseDeckSearch',label:'選第二個位置'},
+  {index:2,type:'next',label:'下一階段'}
+ ];roomFixture.inspection={kind:'effect-search-deck',cards:[
+  {uid:'mine-0',cardId:'BLC-1-001',name:'符合條件的角色',actions:[
+   {index:0,label:'以第一種方式選擇'},{index:1,label:'以第二種方式選擇'}]},
+  {uid:'mine-1',cardId:'BLC-1-010',name:'不符合條件的角色',actions:[]}
+ ]};app.pick=null;app.inspectPick=null;render();`,context);
+ const found=[];
+ function walk(node){
+  if(!(node instanceof FakeNode))return;
+  if(node.className?.includes('online-inspection-card'))found.push(node);
+  for(const child of node.children)walk(child);
+ }
+ walk(appRoot);
+ assert.equal(found.length,2);
+ assert.equal(found[0].disabled,false);
+ assert.equal(found[1].disabled,true,'nonmatching card must not dispatch anything');
+ assert.equal(found[1].handlers.click,undefined);
+ assert.match(texts(appRoot),/不符合條件 · 無法選擇/);
+ assert.ok(!texts(appRoot).includes('以第一種方式選擇'),'multiple choices are initially collapsed');
+ vm.runInContext("app.inspectPick='mine-0';render();",context);
+ assert.match(texts(appRoot),/以第一種方式選擇/);
+ assert.match(texts(appRoot),/以第二種方式選擇/);
+ // No actor privileges -> neither inspected card may be present at all.
+ vm.runInContext("roomFixture.yourTurn=false;app.inspectPick=null;render();",context);
+ assert.doesNotMatch(texts(appRoot),/符合條件的角色|不符合條件的角色/);
 });
