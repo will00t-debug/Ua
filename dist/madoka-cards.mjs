@@ -836,7 +836,7 @@ export const MADOKA_CARDS=
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA31BT_MMM-1-019.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-019",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "mamiRaidBounce",
   "faq": []
  },
  {
@@ -1780,7 +1780,7 @@ export const MADOKA_CARDS=
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA31BT_MMM-1-041.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-041",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "homuraRaidReturn",
   "faq": []
  },
  {
@@ -2440,7 +2440,7 @@ export const MADOKA_CARDS=
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA31BT_MMM-1-056.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA31BT%2FMMM-1-056",
   "auto": false,
-  "engineKind": null,
+  "engineKind": "mamiRaidLook",
   "faq": []
  },
  {

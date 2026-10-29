@@ -49,6 +49,8 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-max-bp-impact':'選擇己方角色，加上場上最高 BP 並獲得 IMPACT',
  'effect-outside-or-rest':'從場外加入手牌，或在能源足夠時 REST 登場',
  'effect-replay-base':'將突襲底板重新登場',
+ 'effect-return-raid-base':'可將突襲底卡加入手牌',
+ 'effect-top-deploy-rest':'查看牌頂，可將 1 張以休息登場，其餘放回牌庫底',
  'effect-named-energy':'選擇要增加產能的角色',
  'effect-active-one-ap':'選擇 1 張 AP 轉為 ACTIVE',
  'effect-mode-discard':'支付手牌以起動主要能力',
@@ -460,6 +462,11 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseActiveCharacter':return '使 '+name()+' ACTIVE';
   case 'chooseOutsideOrRest':return action.mode==='skip'?'不回收':
    action.mode==='hand'?'將 '+name()+' 加入手牌':'REST 登場 '+name()+suffix();
+  case 'chooseReturnRaidBase':return action.uid===null?'不將突襲底卡加入手牌':'將突襲底卡加入手牌';
+  case 'chooseTopDeployRest':
+   if(action.uid===null)return '不從查看的牌登場';
+   if(action.line)return '將 '+name()+' 以休息狀態登場';
+   return '將 '+name()+' 放到牌庫底';
   case 'chooseReplayBase':return action.mode==='skip'?'不將底板重新登場':
    (action.mode==='active'?'ACTIVE 登場底板':'REST 登場底板')+suffix();
   case 'chooseNamedEnergy':return '讓 '+name()+' 本回合產能增加';

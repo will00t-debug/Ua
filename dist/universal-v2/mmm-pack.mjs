@@ -44,7 +44,7 @@ export function mmmPackCard(card){
    card.triggerTextJa!==SPECIAL)
    throw Error(card.id+' special trigger is not the printed front retirement');
  }else if(card.trigger==='raid'){
-  if(!['distinctRetire','homuraRaidLock'].includes(kind)||card.triggerTextJa!==RAID)
+  if(!['distinctRetire','homuraRaidLock','mamiRaidBounce','homuraRaidReturn','mamiRaidLook'].includes(kind)||card.triggerTextJa!==RAID)
    throw Error(card.id+' raid trigger is not the standard printed text');
  }else if(STANDARD[card.trigger]!==card.triggerTextJa)
   throw Error(card.id+' trigger is not the standard printed text');
@@ -70,8 +70,8 @@ export function mmmPackCard(card){
   throw Error(card.id+' mandatory hand return is the printed character');
  if(['step','impactNull','doubleBlock','bounce','peek','buffOther','buffAny','aliasBuff',
   'enterRetireDraw','deployRedGirl','recoverPurpleGirl','entryOtherImpact','bpActive',
-  'lifeActive','removedDraw','removedLook','removedActive','namedEnergyCap',
-  'homuraRaidLock'].includes(kind)&&
+  'lifeActive','removedDraw','removedLook','removedActive',  'namedEnergyCap',
+  'homuraRaidLock','mamiRaidBounce','homuraRaidReturn','mamiRaidLook'].includes(kind)&&
   card.type!=='character')
   throw Error(card.id+' this print is a character');
  if(['fieldDiscardDraw','fieldTraitBuff','handOutsideGirl'].includes(kind)&&card.type!=='field')
@@ -145,6 +145,11 @@ export function mmmPackCard(card){
     {field:'ap',value:1}]}]}]:
   kind==='distinctGirlLook'?[{op:'searchTopUpToTwoBottom',count:5,max:3,rest:'bottom',
    logic:'all',filters:[{field:'trait',value:GIRL}],distinctNames:true}]:
+  kind==='mamiRaidBounce'?[{op:'drawDiscard',count:1},
+   {op:'bounceOppFrontOneUnderBp',optional:true,perOutsideEvents:1000}]:
+  kind==='homuraRaidReturn'?[{op:'drawDiscard',count:2,discardCount:1}]:
+  kind==='mamiRaidLook'?[{op:'lookTopDeployRest',count:4,color:'purple',maxEnergy:2,
+   ap:1,rest:'bottom',impactTrait:QUINTET,impactOthers:4,impact:1}]:
   null;
  const parts=card.traits.length===1?card.traits[0].split(/[／/]/).map(x=>x.trim()).filter(Boolean):[];
  return {
@@ -153,7 +158,9 @@ export function mmmPackCard(card){
   traits:card.traits,
   ...(parts.length>1?{traitComponents:parts}:{}),
   implementation:kind==='plain'?'vanilla':'dsl',
-  effects:kind==='fieldReturn'?{onRetire:[{op:'returnRetiredToHand',optional:false}]}:
+  effects:kind==='homuraRaidReturn'?{onPlay,onRetire:[{op:'returnOwnRaidBase',optional:true,
+   when:{kind:'ownNameExists',turn:'any',zone:'field',excludeSelf:false,name:'鹿目 まどか'}}]}:
+   kind==='fieldReturn'?{onRetire:[{op:'returnRetiredToHand',optional:false}]}:
    kind==='madokaRecover'?{onRetire:[{op:'recoverOutsideNamedEnergy',name:'鹿目 まどか',
     maxEnergy:2,optional:true}]}:
    onPlay?{onPlay}:{},
@@ -190,6 +197,9 @@ export function mmmPackCard(card){
   ...(kind==='frontDoubleCut'?{playApCutOnChosenName:{name:'暁美 ほむら',amount:1}}:{}),
   ...(kind==='distinctRetire'?{raidName:'鹿目 まどか'}:{}),
   ...(kind==='homuraRaidLock'?{raidName:'暁美 ほむら'}:{}),
+  ...(kind==='mamiRaidBounce'?{raidName:'巴 マミ'}:{}),
+  ...(kind==='homuraRaidReturn'?{raidName:'暁美 ほむら'}:{}),
+  ...(kind==='mamiRaidLook'?{raidName:'巴 マミ'}:{}),
   ...(kind==='entryOtherImpact'?{mainAbility:{
    op:'entryTurnOtherImpact',oncePerTurn:true,amount:1}}:{}),
   ...(kind==='bpActive'?{mainAbility:{
@@ -210,7 +220,7 @@ export const MADOKA_ENGINE_IDS=Object.freeze(
 
 export function createMadokaV2Pack(){
  const cards=MADOKA_CARDS.filter(c=>c.engineKind).map(mmmPackCard);
- if(cards.length!==92)throw Error('Madoka registered count drifted');
+ if(cards.length!==95)throw Error('Madoka registered count drifted');
  return createUniversalPack({
   id:'madoka',version:'mmm-ua31-set1-20261029',cards
  });

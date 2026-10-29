@@ -80,8 +80,8 @@ test('Madoka catalogue stays outside the five-title census',()=>{
  assert.equal(MADOKA_CARDS.length,113);
  assert.equal(new Set(MADOKA_CARDS.map(c=>c.id)).size,113);
  assert.equal(MADOKA_CARDS.some(c=>c.id.includes('AP')||c.rarity==='AP'),false);
- assert.equal(MADOKA_CARDS.filter(c=>c.engineKind).length,92);
- assert.equal(Object.keys(pack.cards).length,92);
+ assert.equal(MADOKA_CARDS.filter(c=>c.engineKind).length,95);
+ assert.equal(Object.keys(pack.cards).length,95);
  assert.equal(pack.version,'mmm-ua31-set1-20261029');
  assert.equal(V2_TITLE_IDS.includes('madoka'),false);
  for(const card of MADOKA_CARDS){
@@ -96,7 +96,7 @@ test('Madoka catalogue stays outside the five-title census',()=>{
  assert.ok(Object.keys(practice.counts).every(id=>pack.cards[id].color==='red'));
  const editor=editorV2Status('madoka',practice.counts);
  assert.equal(editor.ready,true);
- assert.equal(editor.registered,92);
+ assert.equal(editor.registered,95);
  const blocked=v2DeckReport('madoka',{'MMM-1-001':4,'MMM-1-006':46});
  assert.equal(blocked.ok,false);
  assert.match(blocked.issues.join('\n'),/尚未支援/);
@@ -1171,4 +1171,209 @@ test('MMM-1-109 adds up to three differently named magical girls',()=>{
  assert.equal(s.players[0].hand.filter(c=>['MMM-1-072','MMM-1-076','MMM-1-079'].includes(c.cardId)).length,3);
  assert.equal(s.players[0].hand.some(c=>c.uid===looked[1].uid),false);
  assert.equal(assertUniversalMatch(packs,s),true);
+});
+
+test('MMM-1-019 returns an opposing front at 1000 BP per outside event',()=>{
+ const counts=countsFor(['MMM-1-019','MMM-1-011','MMM-1-030','MMM-1-006','MMM-1-078']);
+ assert.equal(pack.cards['MMM-1-019'].raidName,'巴 マミ');
+ let quiet=toPhase(fresh(counts,31019),'main');
+ put(quiet,0,'MMM-1-011','energy',0);
+ put(quiet,0,'MMM-1-011','energy',1);
+ quiet.players[0].deck.push(...quiet.players[0].hand);
+ quiet.players[0].hand=[];
+ const spare=handPlay(quiet,'MMM-1-006');
+ const dry=handPlay(quiet,'MMM-1-019');
+ readyAp(quiet);
+ const deck=quiet.players[0].deck.length;
+ quiet=play(quiet,dry.uid,'play');
+ assert.equal(quiet.pending.kind,'effect-discard');
+ assert.equal(legalUniversalActions(packs,quiet).some(a=>a.uid===null),false);
+ quiet=use(quiet,{type:'chooseDiscard',uid:spare.uid});
+ assert.equal(quiet.pending,null);
+ assert.equal(quiet.players[0].deck.length,deck-1);
+ assert.ok(quiet.players[0].outside.some(c=>c.uid===spare.uid));
+
+ let scaled=toPhase(fresh(counts,31020),'main');
+ put(scaled,0,'MMM-1-011','energy',0);
+ put(scaled,0,'MMM-1-011','energy',1);
+ const first=take(scaled,0,'MMM-1-030');
+ const second=take(scaled,0,'MMM-1-030');
+ scaled.players[0].outside.push(first,second);
+ scaled.players[0].deck.push(...scaled.players[0].hand);
+ scaled.players[0].hand=[];
+ const payment=handPlay(scaled,'MMM-1-006');
+ const small=put(scaled,1,'MMM-1-006','front',0);
+ const big=put(scaled,1,'MMM-1-078','front',1);
+ const mami=handPlay(scaled,'MMM-1-019');
+ readyAp(scaled);
+ scaled=play(scaled,mami.uid,'play');
+ scaled=use(scaled,{type:'chooseDiscard',uid:payment.uid});
+ assert.equal(scaled.pending.kind,'effect-bounce-bp');
+ assert.equal(scaled.pending.limit,2000);
+ assert.equal(scaled.pending.optional,true);
+ assert.deepEqual(scaled.pending.choices,[small.uid]);
+ assert.equal(scaled.pending.choices.includes(big.uid),false);
+ scaled=use(scaled,{type:'chooseBounceBp',uid:small.uid});
+ assert.ok(scaled.players[1].hand.some(c=>c.uid===small.uid));
+ assert.equal(scaled.players[1].front[0],null);
+ assert.equal(scaled.pending,null);
+ assert.equal(assertUniversalMatch(packs,scaled),true);
+});
+
+function discardOne(s){
+ const pay=s.players[0].hand[0];
+ if(!pay)throw Error('Draw left no hand card');
+ return use(s,{type:'chooseDiscard',uid:pay.uid});
+}
+function retireByBlocking(s,uid){
+ while(s.players[0].hand.length>7)s.players[0].deck.push(s.players[0].hand.pop());
+ while(s.players[1].hand.length>7)s.players[1].deck.push(s.players[1].hand.pop());
+ const wall=put(s,1,'MMM-1-078','front',0,true);
+ wall.fieldEntryStamp=s.nextFieldEntryStamp++;
+ let guard=0;
+ while(!(s.active===1&&s.phase==='attack')){
+  if(s.pending)throw Error('Pending '+s.pending.kind);
+  s=use(s,{type:'next'});
+  if(++guard>16)throw Error('Did not reach the opponent attack');
+ }
+ const blocker=s.players[0].front.find(c=>c?.uid===uid);
+ assert.equal(universalBp(packs,s,wall),universalBp(packs,s,blocker));
+ s=use(s,{type:'attack',uid:wall.uid});
+ assert.equal(s.pending.kind,'block');
+ return use(s,{type:'chooseBlock',uid});
+}
+
+test('MMM-1-041 returns its raid base to hand only beside Madoka',()=>{
+ const counts=countsFor(['MMM-1-041','MMM-1-061','MMM-1-039','MMM-1-006','MMM-1-078']);
+ assert.equal(pack.cards['MMM-1-041'].raidName,'暁美 ほむら');
+ assert.equal(pack.cards['MMM-1-041'].effects.onPlay[0].op,'drawDiscard');
+ assert.equal(pack.cards['MMM-1-041'].effects.onRetire[0].op,'returnOwnRaidBase');
+
+ let brought=toPhase(fresh(counts,31041),'main');
+ fuelFields(brought);
+ const host=put(brought,0,'MMM-1-039','front',0);
+ put(brought,0,'MMM-1-006','front',1);
+ const raider=handPlay(brought,'MMM-1-041');
+ readyAp(brought);
+ assert.ok(legalUniversalActions(packs,brought).some(a=>a.type==='raid'&&a.uid===raider.uid&&a.baseUid===host.uid));
+ assert.equal(legalUniversalActions(packs,brought).some(a=>a.type==='raid'&&a.uid===raider.uid&&
+  a.baseUid===brought.players[0].front[1].uid),false);
+ brought=use(brought,legalUniversalActions(packs,brought).find(a=>a.type==='raid'&&
+  a.uid===raider.uid&&a.baseUid===host.uid));
+ assert.equal(brought.pending.kind,'effect-discard');
+ brought=discardOne(brought);
+ assert.equal(brought.pending,null);
+ assert.equal(brought.players[0].front.find(c=>c?.uid===raider.uid).ready,true);
+ brought=retireByBlocking(brought,raider.uid);
+ assert.equal(brought.pending.kind,'effect-return-raid-base');
+ assert.equal(brought.pending.optional,true);
+ assert.equal(brought.pending.baseUid,host.uid);
+ assert.ok(legalUniversalActions(packs,brought).some(a=>a.type==='chooseReturnRaidBase'&&a.uid===null));
+ brought=use(brought,{type:'chooseReturnRaidBase',uid:host.uid});
+ assert.ok(brought.players[0].hand.some(c=>c.uid===host.uid));
+ assert.equal(brought.players[0].outside.some(c=>c.uid===host.uid),false);
+ assert.ok(brought.players[0].outside.some(c=>c.uid===raider.uid));
+ assert.equal(brought.pending,null);
+ assert.equal(assertUniversalMatch(packs,brought),true);
+
+ let quiet=toPhase(fresh(counts,31044),'main');
+ fuelFields(quiet);
+ const bare=put(quiet,0,'MMM-1-039','front',0);
+ const alone=handPlay(quiet,'MMM-1-041');
+ readyAp(quiet);
+ quiet=use(quiet,legalUniversalActions(packs,quiet).find(a=>a.type==='raid'&&
+  a.uid===alone.uid&&a.baseUid===bare.uid));
+ quiet=discardOne(quiet);
+ quiet=retireByBlocking(quiet,alone.uid);
+ assert.equal(quiet.pending,null);
+ assert.ok(quiet.players[0].outside.some(c=>c.uid===bare.uid));
+ assert.equal(quiet.players[0].hand.some(c=>c.uid===bare.uid),false);
+
+ let played=toPhase(fresh(counts,31045),'main');
+ fuelFields(played);
+ put(played,0,'MMM-1-006','front',1);
+ const entered=handPlay(played,'MMM-1-041');
+ readyAp(played);
+ played=play(played,entered.uid,'play');
+ played=discardOne(played);
+ played=retireByBlocking(played,entered.uid);
+ assert.equal(played.pending,null);
+ assert.ok(played.players[0].outside.some(c=>c.uid===entered.uid));
+ assert.equal(assertUniversalMatch(packs,played),true);
+});
+
+function orderDeploy(s){
+ while(s.pending?.kind==='effect-top-deploy-rest'&&s.pending.step==='order'){
+  s=use(s,legalUniversalActions(packs,s).find(a=>a.type==='chooseTopDeployRest'));
+ }
+ return s;
+}
+
+test('MMM-1-056 deploys one purple character from the top and gains impact from other quintet',()=>{
+ const counts=countsFor(['MMM-1-056','MMM-1-061','MMM-1-053','MMM-1-039','MMM-1-049',
+  'MMM-1-006','MMM-1-030','MMM-1-050','MMM-1-045','MMM-1-113','MMM-1-054']);
+ assert.equal(pack.cards['MMM-1-056'].raidName,'巴 マミ');
+ let looked=toPhase(fresh(counts,31056),'main');
+ fuelFields(looked);
+ const host=put(looked,0,'MMM-1-053','front',0);
+ const wrong=put(looked,0,'MMM-1-045','front',1);
+ const window=stackTop(looked,['MMM-1-039','MMM-1-049','MMM-1-006','MMM-1-030']);
+ const mami=handPlay(looked,'MMM-1-056');
+ readyAp(looked);
+ assert.ok(legalUniversalActions(packs,looked).some(a=>a.type==='raid'&&a.uid===mami.uid&&a.baseUid===host.uid));
+ assert.equal(legalUniversalActions(packs,looked).some(a=>a.type==='raid'&&a.uid===mami.uid&&a.baseUid===wrong.uid),false);
+ looked=use(looked,legalUniversalActions(packs,looked).find(a=>a.type==='raid'&&
+  a.uid===mami.uid&&a.baseUid===host.uid));
+ assert.equal(looked.pending.kind,'effect-top-deploy-rest');
+ assert.equal(looked.pending.step,'pick');
+ assert.deepEqual(looked.pending.choices,[window[0].uid]);
+ const girl=looked.players[0].deck.find(c=>c.uid===window[0].uid);
+ looked=use(looked,legalUniversalActions(packs,looked).find(a=>a.type==='chooseTopDeployRest'&&
+  a.uid===girl.uid&&a.line==='energy'));
+ assert.equal(looked.players[0].energy.find(c=>c?.uid===girl.uid).ready,false);
+ looked=orderDeploy(looked);
+ assert.equal(looked.pending,null);
+ assert.equal(looked.players[0].front.find(c=>c?.uid===mami.uid).impactGranted,undefined);
+ assert.equal(looked.players[0].deck.slice(-3).map(c=>c.uid).includes(window[1].uid),true);
+ assert.equal(assertUniversalMatch(packs,looked),true);
+
+ let grown=toPhase(fresh(counts,31057),'main');
+ fuelFields(grown);
+ const base=put(grown,0,'MMM-1-053','front',0);
+ put(grown,0,'MMM-1-045','front',1);
+ put(grown,0,'MMM-1-113','front',2);
+ put(grown,0,'MMM-1-054','front',3);
+ const added=stackTop(grown,['MMM-1-050','MMM-1-049','MMM-1-006','MMM-1-030']);
+ const again=handPlay(grown,'MMM-1-056');
+ readyAp(grown);
+ grown=use(grown,legalUniversalActions(packs,grown).find(a=>a.type==='raid'&&
+  a.uid===again.uid&&a.baseUid===base.uid));
+ assert.deepEqual(grown.pending.choices,[added[0].uid]);
+ grown=use(grown,legalUniversalActions(packs,grown).find(a=>a.type==='chooseTopDeployRest'&&
+  a.uid===added[0].uid&&a.line==='energy'));
+ grown=orderDeploy(grown);
+ const quintet=grown.players[0].energy.find(c=>c?.uid===added[0].uid);
+ assert.equal(quintet.ready,false);
+ const granted=grown.players[0].front.find(c=>c?.uid===again.uid).impactGranted;
+ assert.equal(granted.amount,1);
+ assert.equal(granted.turn,grown.turn);
+ assert.equal(granted.stamp,grown.players[0].front.find(c=>c?.uid===again.uid).fieldEntryStamp);
+
+ let declined=toPhase(fresh(counts,31058),'main');
+ fuelFields(declined);
+ const seat=put(declined,0,'MMM-1-053','front',0);
+ put(declined,0,'MMM-1-045','front',1);
+ put(declined,0,'MMM-1-113','front',2);
+ put(declined,0,'MMM-1-054','front',3);
+ put(declined,0,'MMM-1-050','energy',2);
+ stackTop(declined,['MMM-1-039','MMM-1-049','MMM-1-006','MMM-1-030']);
+ const third=handPlay(declined,'MMM-1-056');
+ readyAp(declined);
+ declined=use(declined,legalUniversalActions(packs,declined).find(a=>a.type==='raid'&&
+  a.uid===third.uid&&a.baseUid===seat.uid));
+ declined=use(declined,{type:'chooseTopDeployRest',uid:null});
+ declined=orderDeploy(declined);
+ assert.equal(declined.players[0].front.find(c=>c?.uid===third.uid).impactGranted.amount,1);
+ assert.equal(declined.players[0].front.concat(declined.players[0].energy).some(c=>c?.cardId==='MMM-1-039'),false);
+ assert.equal(assertUniversalMatch(packs,declined),true);
 });
