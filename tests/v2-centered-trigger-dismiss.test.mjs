@@ -39,5 +39,5 @@ test('trigger notice is mounted outside the match table without disturbing game 
  assert.doesNotMatch(pending,/dismissedTriggerKeys/);
  const html=read('dist/universal-v2-battle.html');
  assert.match(html,/universal-v2-battle\.css\?v=20261028triggercenter1/);
- assert.match(html,/universal-v2-preview\.mjs\?v=20261029desktop1/);
+ assert.match(html,/universal-v2-preview\.mjs\?v=20261029pc1/);
 });
