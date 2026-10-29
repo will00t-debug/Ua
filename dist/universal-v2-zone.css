@@ -1,14 +1,14 @@
 /* Read-only public zones on both players' battlefields. */
-.v2-shell #match-view .pile.v2-zone-pile{
+body.v2-battle-page.v2-playing #match-view .pile.v2-zone-pile{
  display:grid;place-content:center;justify-items:center;gap:0;width:100%;
  min-width:0;min-height:0;padding:2px 3px;line-height:1.15;
  font:inherit;text-align:center;cursor:pointer;
  border:1px solid #5f8caf;background:#173349;color:#dbedff;
  transition:background-color .13s ease,border-color .13s ease
 }
-.v2-shell #match-view .pile.v2-zone-pile:hover{background:#295072;border-color:#9dd3ff}
-.v2-shell #match-view .pile.v2-zone-pile:focus-visible{outline:2px solid #ffd47d;outline-offset:2px}
-.v2-shell #match-view .pile.v2-zone-pile b{color:#fff0bc}
+body.v2-battle-page.v2-playing #match-view .pile.v2-zone-pile:hover{background:#295072;border-color:#9dd3ff}
+body.v2-battle-page.v2-playing #match-view .pile.v2-zone-pile:focus-visible{outline:2px solid #ffd47d;outline-offset:2px}
+body.v2-battle-page.v2-playing #match-view .pile.v2-zone-pile b{color:#fff0bc}
 .v2-shell>.v2-zone-overlay{
  z-index:480;padding:clamp(10px,3vw,28px);background:#070d18dc;
  backdrop-filter:blur(6px)
