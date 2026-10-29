@@ -143,6 +143,7 @@ export async function createHandler({dataFile,staticRoot=null}){
     if(deckUpdate)return send(res,200,await service.updateDeck(token,deckUpdate[1],await readBody(req)));
     const deckDelete=method==='DELETE'&&/^\/api\/decks\/(d[a-f0-9]{16})$/.exec(path);
     if(deckDelete)return send(res,200,await service.deleteDeck(token,deckDelete[1]));
+    if(method==='GET'&&path==='/api/rooms')return send(res,200,await service.listRooms(token));
     if(method==='POST'&&path==='/api/rooms')return send(res,201,await service.createRoom(token,await readBody(req)));
     const room=path.match(/^\/api\/rooms\/([A-HJ-NP-Z2-9]{8})(?:\/(join|actions|resign|cancel))?$/);
     if(room){

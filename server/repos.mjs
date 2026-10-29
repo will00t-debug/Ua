@@ -113,6 +113,9 @@ export function createRepositories(sql){
   const row=sql.get('SELECT COUNT(*) AS n FROM '+table+' WHERE status!=\'finished\' AND (host_id=? OR guest_id=?)',userId,userId);
   return Number(row?.n||0);
  }
+ function listOpen(table,userId){
+  return sql.all('SELECT code, host_id AS hostId, guest_id AS guestId, status, created_at AS createdAt, updated_at AS updatedAt FROM '+table+" WHERE status!='finished' AND (host_id=? OR guest_id=?) ORDER BY updated_at ASC, created_at ASC",userId,userId);
+ }
  return {
   findUserByKey(key){
    return userFromRow(sql.get('SELECT * FROM users WHERE username_key=?',key));
@@ -170,6 +173,7 @@ export function createRepositories(sql){
   clearFailure(id){sql.run('DELETE FROM login_failures WHERE id=?',id);},
   pruneRooms(now){return pruneTable('rooms',now);},
   countOpenRooms(userId){return countOpen('rooms',userId);},
+  listOpenRooms(userId){return listOpen('rooms',userId);},
   roomExists(code){return !!sql.get('SELECT code FROM rooms WHERE code=?',code);},
   loadRoom(code){return roomFromRow(sql.get('SELECT * FROM rooms WHERE code=?',code));},
   saveRoom(room){
@@ -190,6 +194,7 @@ export function createRepositories(sql){
   deleteRoom(code){sql.run('DELETE FROM rooms WHERE code=?',code);},
   pruneDirectory(now){return pruneTable('room_directory',now);},
   countOpenDirectory(userId){return countOpen('room_directory',userId);},
+  listOpenDirectory(userId){return listOpen('room_directory',userId);},
   directoryExists(code){return !!sql.get('SELECT code FROM room_directory WHERE code=?',code);},
   insertDirectory(row){
    sql.run(`INSERT INTO room_directory (code,host_id,guest_id,status,created_at,updated_at) VALUES (?,?,?,?,?,?)`,

@@ -103,6 +103,36 @@ function labelFor(packs,match,action){
  }catch{/* The button still works with a generic label. */}
  return '執行操作';
 }
+function visibleChoiceUids(view){
+ const ids=new Set();
+ const take=card=>{if(card&&typeof card.uid==='string')ids.add(card.uid);};
+ for(const player of view?.players||[]){
+  for(const key of ['hand','front','energy','outside','removed','faceUpLife','publicLife']){
+   for(const card of player?.[key]||[])take(card);
+  }
+ }
+ for(const card of view?.openTriggers||[])take(card);
+ for(const card of view?.publicReveals||[])take(card);
+ if(typeof view?.battle?.uid==='string')ids.add(view.battle.uid);
+ return ids;
+}
+// Structural fields the table needs to click a card, the same way the solo
+// battle does. Only UIDs already present in this player's public view are
+// copied, so a hidden hand, deck or life card is never introduced here.
+function publicActionChoice(action,index,packs,match,view){
+ const choice={index,label:labelFor(packs,match,action)};
+ if(typeof action?.type==='string'&&action.type.length<=40)choice.type=action.type;
+ const ids=visibleChoiceUids(view);
+ for(const key of ['uid','baseUid','replaceUid','targetUid']){
+  if(action?.[key]===null&&key==='uid')choice.uid=null;
+  else if(typeof action?.[key]==='string'&&ids.has(action[key]))choice[key]=action[key];
+ }
+ if(action?.line==='front'||action?.line==='energy')choice.line=action.line;
+ if(Number.isInteger(action?.slot)&&action.slot>=0&&action.slot<=3)choice.slot=action.slot;
+ if(typeof action?.mode==='string'&&/^[A-Za-z0-9_-]{1,40}$/.test(action.mode))choice.mode=action.mode;
+ if(action?.from==='hand'||action?.from==='removed'||action?.from==='outside')choice.from=action.from;
+ return choice;
+}
 function paintCard(pack,card){
  if(!card)return null;
  const next={...card};
@@ -176,9 +206,8 @@ function present(room,userId){
  const actor=universalActor(room.match);
  payload.yourTurn=room.status==='playing'&&room.match.status==='playing'&&actor===seat;
  if(payload.yourTurn){
-  payload.choices=legalUniversalActions(room.packs,room.match).map((action,index)=>({
-   index,label:labelFor(room.packs,room.match,action)
-  }));
+  payload.choices=legalUniversalActions(room.packs,room.match).map((action,index)=>
+   publicActionChoice(action,index,room.packs,room.match,view));
  }
  if(room.status==='finished'&&(room.winner===0||room.winner===1))
   payload.winner={seat:room.winner,username:room.seats[room.winner]?.username||''};
@@ -245,6 +274,43 @@ function commitRoom(repos,room){
  repos.saveRoom(room);
 }
 function publicUser(user){return {id:user.id,username:user.username};}
+function roomSummary(row,userId){
+ return {
+  code:row.code,status:row.status,role:row.hostId===userId?'host':'guest',
+  createdAt:row.createdAt,updatedAt:row.updatedAt
+ };
+}
+// Waiting and opening rooms have no opponent yet. Creating a new room closes
+// those hosted by the same player. A live match is left only when the player
+// explicitly asks to replace the oldest one.
+export function roomsToDrop(rooms,replaceOldest){
+ const abandoned=rooms.filter(room=>room.role==='host'&&(room.status==='opening'||room.status==='waiting'));
+ const dropped=abandoned.map(room=>({code:room.code,status:room.status,how:'abandoned'}));
+ let remaining=rooms.filter(room=>!abandoned.some(item=>item.code===room.code));
+ if(replaceOldest===true){
+  while(remaining.length>=3){
+   const playing=remaining.filter(room=>room.status==='playing').sort((a,b)=>(a.updatedAt-b.updatedAt)||(a.createdAt-b.createdAt));
+   if(!playing.length)break;
+   const target=playing[0];
+   dropped.push({code:target.code,status:target.status,how:'left'});
+   remaining=remaining.filter(room=>room.code!==target.code);
+  }
+ }
+ return dropped;
+}
+function settleDrop(repos,userId,drop,now){
+ const op=drop.how==='abandoned'?'cancel':'resign';
+ try{
+  dispatchRoom(repos,{op,code:drop.code,userId},now);
+  return true;
+ }catch(error){
+  if(!(error instanceof ApiError))throw error;
+  if(error.status===404)return true;
+  if(drop.how==='left'&&error.status===409)return true;
+  if(drop.how==='abandoned'&&(error.status===403||error.status===409))return false;
+  throw error;
+ }
+}
 
 export function dispatchAccount(repos,message,now){
  switch(message?.op){
@@ -353,6 +419,11 @@ export function dispatchAccount(repos,message,now){
    const deck=ownedDeck(repos,user.id,message.deckId);
    const battle=battleReady(deck);
    return {user:publicUser(user),deck:{id:deck.id,name:deck.name,title:deck.title},battleCounts:battle.counts};
+  }
+  case 'listOpen':{
+   const user=requireUser(repos,message.token,now);
+   repos.pruneDirectory(now);
+   return {rooms:repos.listOpenDirectory(user.id).map(row=>roomSummary(row,user.id))};
   }
   case 'reserve':{
    repos.pruneDirectory(now);
@@ -505,9 +576,21 @@ export function createService({sql,now=()=>Date.now()}){
     const first=input?.first;
     if(!['me','opponent','random'].includes(first))throw new ApiError(400,'請選擇先手。');
     const prepared=dispatchAccount(repos,{op:'prepareSeat',token,deckId:input?.deckId},now());
+    const open=repos.listOpenRooms(prepared.user.id).map(row=>roomSummary(row,prepared.user.id));
+    const released=[];
+    for(const drop of roomsToDrop(open,input?.replaceOldest===true)){
+     if(settleDrop(repos,prepared.user.id,drop,now()))released.push({code:drop.code,how:drop.how});
+    }
     if(repos.countOpenRooms(prepared.user.id)>=3)throw new ApiError(429,'你已經有 3 個未結束的房間。');
     const code=freshCode(value=>repos.roomExists(value));
-    return dispatchRoom(repos,{op:'create',code,first,...prepared},now()).public;
+    return {...dispatchRoom(repos,{op:'create',code,first,...prepared},now()).public,released};
+   });
+  },
+  listRooms(token){
+   return enqueue(()=>{
+    const user=dispatchAccount(repos,{op:'session',token},now());
+    repos.pruneRooms(now());
+    return {rooms:repos.listOpenRooms(user.id).map(row=>roomSummary(row,user.id))};
    });
   },
   joinRoom(token,code,input){

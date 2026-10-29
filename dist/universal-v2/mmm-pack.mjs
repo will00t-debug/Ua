@@ -65,8 +65,6 @@ export function mmmPackCard(card){
   throw Error(card.id+' rest energy color drifted');
  if(kind==='distinctEnergy'&&!card.effectJa.includes('【'+pip+'】'))
   throw Error(card.id+' distinct-name energy color drifted');
- if((kind==='activeEnergy'||kind==='restEnergyRetire')&&card.gen!==0)
-  throw Error(card.id+' plus generation is a design mark, not a printed number');
  if(kind==='discountImpact'&&(card.type!=='character'||card.energy<5||card.color!=='yellow'))
   throw Error(card.id+' outside-event discount is not a yellow character of energy 5 or more');
  if(['homuraRetire','madokaRetire','traitRetire','recoverAp2','searchTwoQuintet',

@@ -207,14 +207,14 @@ test('MMM-1-077 adds red energy only at three other magical-girl names',()=>{
  const self=put(few,0,'MMM-1-077','energy',0);
  put(few,0,'MMM-1-009','energy',1);
  put(few,0,'MMM-1-014','front',0);
- assert.equal(universalCardEnergy(packs,few,0,self),0);
+ assert.equal(universalCardEnergy(packs,few,0,self),1);
  let full=fresh(counts,31078);
  const source=put(full,0,'MMM-1-077','energy',0);
  put(full,0,'MMM-1-009','energy',1);
  put(full,0,'MMM-1-014','energy',2);
  put(full,0,'MMM-1-112','front',0);
- assert.equal(universalCardEnergy(packs,full,0,source),1);
- assert.equal(universalEnergyByColor(packs,full,0).red,1);
+ assert.equal(universalCardEnergy(packs,full,0,source),2);
+ assert.equal(universalEnergyByColor(packs,full,0).red,2);
  assert.equal(assertUniversalMatch(packs,full),true);
 });
 

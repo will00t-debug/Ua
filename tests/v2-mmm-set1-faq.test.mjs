@@ -249,8 +249,8 @@ test('Q1260 Q1262 and Q1265 count aliases, other copies, and a private life',()=
  const twin=put(copies,0,'MMM-1-077','energy',1);
  put(copies,0,'MMM-1-009','front',0);
  put(copies,0,'MMM-1-014','front',1);
- assert.equal(universalCardEnergy(packs,copies,0,source),1);
- assert.equal(universalCardEnergy(packs,copies,0,twin),1);
+ assert.equal(universalCardEnergy(packs,copies,0,source),2);
+ assert.equal(universalCardEnergy(packs,copies,0,twin),2);
 
  let life=toPhase(fresh(counts,41265),'main');
  const sayaka=put(life,0,'MMM-1-089','front',0,false);

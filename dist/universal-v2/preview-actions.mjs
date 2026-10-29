@@ -729,11 +729,12 @@ export function inspectedPendingChoiceCards(privateChoices,legal){
   'effect-top-filter-choice':'chooseTopFiltered',
   'effect-top-filter-many-choice':'chooseTopFilteredMany',
   'effect-top-trait-event':'chooseTopTraitEvent',
-  'effect-top-trait-outside':'chooseTopTraitOutside'
+  'effect-top-trait-outside':'chooseTopTraitOutside',
+  iys:'iys'
  }[privateChoices?.kind];
  if(!type||!Array.isArray(privateChoices?.inspected)||!Array.isArray(legal))return [];
  const selectable=new Map(legal.filter(a=>a?.type===type&&
-  typeof a.uid==='string').map(a=>[a.uid,a]));
+  typeof a.uid==='string'&&(type!=='iys'||a.mode==='take'||a.mode==='next')).map(a=>[a.uid,a]));
  const seen=new Set();
  return privateChoices.inspected.flatMap(card=>{
   if(!card||typeof card.uid!=='string'||!card.uid||

@@ -323,7 +323,7 @@ test('SAO-1-081 enters ready, ignores BP 2000 blockers, and retires at the next 
 test('SAO-2-044 searches a Progressive card and pays two hand cards to ignore BP 4000 blockers',()=>{
  const ids=['SAO-2-044','SAO-2-048','SAO-2-040','SAO-1-001','SAO-1-037','SAO-1-050'];
  const {packs,s}=fresh(ids,2044);
- energize(s,0,['SAO-2-048']);
+ energize(s,0,['SAO-2-048','SAO-2-048']);
  const progressive=take(s,0,'SAO-2-040');
  const plainA=take(s,0,'SAO-1-001');
  const plainB=take(s,0,'SAO-1-001');
@@ -474,7 +474,7 @@ test('SAO-2-049 deals two damage, deploys a purple Asuna, and lowers one front B
  const ids=['SAO-2-049','SAO-2-048','SAO-2-026','SAO-2-041','SAO-1-037','SAO-1-038','SAO-1-008','SAO-1-001'];
  const {packs,s}=fresh(ids,2049,1,0,'main');
  assert.equal(s.players[0].apCards.filter(c=>c.ready).length,2);
- energize(s,0,['SAO-2-048','SAO-2-026']);
+ energize(s,0,['SAO-2-048','SAO-2-048']);
  const legalAsuna=take(s,0,'SAO-2-041');
  const wrongAsuna=take(s,0,'SAO-1-037');
  s.players[0].outside.push(legalAsuna,wrongAsuna);
@@ -527,7 +527,7 @@ test('SAO-2-053 stops a character from blocking only while its BP is below print
  const ids=['SAO-2-053','SAO-2-052','SAO-2-048','SAO-1-038','SAO-1-003','SAO-2-026','SAO-1-001'];
  function setup(seed){
   const {packs,s}=fresh(ids,seed);
-  energize(s,0,['SAO-2-048']);
+  energize(s,0,['SAO-2-048','SAO-2-048']);
   const mito=take(s,0,'SAO-2-053');
   s.players[0].hand.push(mito);
   const cutter=place(s,0,take(s,0,'SAO-2-052'),'front',0,true);
@@ -587,7 +587,7 @@ test('SAO-1-013 retires by distinct front names, and an Alice alias is not Kirit
  const ids=['SAO-1-013','SAO-1-003','SAO-1-001','SAO-1-005','SAO-1-011','SAO-2-007','SAO-2-044','SAO-1-037'];
  function ladder(seed,frontIds,limit,yesId,noId,noLine='front'){
   const {packs,s}=fresh(ids,seed);
-  energize(s,0,['SAO-1-003','SAO-1-003']);
+  energize(s,0,['SAO-1-003','SAO-1-003','SAO-1-003']);
   frontIds.forEach((id,i)=>place(s,0,take(s,0,id),'front',i,true));
   const yes=place(s,1,take(s,1,yesId),'front',0,true);
   const no=place(s,1,take(s,1,noId),noLine,noLine==='front'?1:0,true);

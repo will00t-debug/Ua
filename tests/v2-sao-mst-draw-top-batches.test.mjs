@@ -318,7 +318,7 @@ test('four official SAO ACTIVE generators contribute +1 energy only while ACTIVE
   assert.equal(printed.color,color);
   assert.equal(printed.trigger,null);
   assert.equal(printed.energy,2);assert.equal(printed.ap,1);
-  assert.equal(printed.gen,2);assert.equal(def.activeExtraEnergy,1);
+  assert.equal(printed.gen,1);assert.equal(def.activeExtraEnergy,1);
   assert.deepEqual(def.effects,{},'pure continuous energy has no fake onPlay');
   const counts={...SAO_V2_REAL_DECK_COUNTS};
   counts['SAO-1-035']--;counts[id]=1;
@@ -327,13 +327,13 @@ test('four official SAO ACTIVE generators contribute +1 energy only while ACTIVE
   const generator=physical(s,0,id);
   generator.ready=true;s.players[0].energy[0]=generator;
   const ready=universalEnergyByColor([pack,pack],s,0);
-  assert.equal(ready[color],3,id+' active produces 2+1');
+  assert.equal(ready[color],2,id+' active produces 1+1');
   assert.equal((universalEnergyByColor([pack,pack],s,1)[color]||0),0,
    'enemy cannot borrow active card energy');
   assert.equal(assertUniversalMatch([pack,pack],s),true);
   generator.ready=false;
   const rested=universalEnergyByColor([pack,pack],s,0);
-  assert.equal(rested[color],2,id+' resting loses bonus only');
+  assert.equal(rested[color],1,id+' resting keeps the printed pip');
   assert.equal(assertUniversalMatch([pack,pack],s),true);
   generator.ready=true;
   s.players[0].energy[0]=null;s.players[0].front[0]=generator;

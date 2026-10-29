@@ -69,12 +69,33 @@ test('Cloudflare /online.html login boot produces actual inputs, registration sw
  assert.match(texts(appRoot),/牌組構築/);
  assert.match(texts(appRoot),/單人對戰/);
  assert.match(texts(appRoot),/線上對戰/);
+ vm.runInContext("app.openRooms=[{code:'G7MC92Y3',status:'playing',role:'host'},{code:'HUJAU4DC',status:'waiting',role:'host'},{code:'ABCD2345',status:'playing',role:'guest'},{code:'WXYZ6789',status:'playing',role:'host'}];app.error='你已經有 3 個未結束的房間。';render();",context);
+ assert.match(texts(appRoot),/還沒結束的房間/);
+ assert.match(texts(appRoot),/G7MC92Y3/);
+ assert.match(texts(appRoot),/對戰中/);
+ assert.match(texts(appRoot),/等待加入/);
+ assert.match(texts(appRoot),/你是訪客/);
+ assert.match(texts(appRoot),/關閉最舊的對戰並建立/);
+ assert.match(texts(appRoot),/你已經有 3 個未結束的房間。/);
+ let alertParent='';
+ function findAlert(node,parentId=''){
+  if(!(node instanceof FakeNode))return;
+  const id=node.attributes?.id||parentId;
+  if(node.attributes?.id==='room-alert')alertParent=parentId;
+  for(const child of node.children)findAlert(child,node.attributes?.id==='online-match'?'online-match':id);
+ }
+ findAlert(appRoot);
+ assert.equal(alertParent,'online-match');
 });
 
 test('entering an online room shows a card-sized table, the opening hand, and the mulligan choices',()=>{
  const css=readFileSync(new URL('../dist/online.css',import.meta.url),'utf8');
  assert.match(css,/\.online-match \.slot\{[^}]*aspect-ratio:63\/88/);
+ assert.match(css,/\.online-match \.slot img\.art\{[^}]*object-fit:contain/);
  assert.match(css,/\.online-match \.slot\.empty\{[^}]*background:transparent/);
+ assert.match(css,/\.online-match button\.slot\{[^}]*min-height:0/);
+ assert.match(css,/\.online-match \.slot\.selected\{[^}]*outline:2px solid #ffd56a/);
+ assert.match(css,/\.online-match \.slot\.destination\{[^}]*#2f8f55/);
  assert.match(css,/grid-template-columns:minmax\(0,1fr\) minmax\(250px,320px\)/);
  const appRoot=new FakeNode('div');
  const document={
@@ -104,7 +125,11 @@ test('entering an online room shows a card-sized table, the opening hand, and th
    {lifeCount:0,deckCount:43,handCount:7,hand:null,front:empty(),energy:[{uid:'e1',cardId:'BLC-1-010',name:'能量角色',color:'green',ready:true,bp:4000},null,null,null],apReady:0,apTotal:0,energyTotal:0,outside:[],removed:[]}
   ]}
  };
- vm.runInContext("app.offline=false;app.user={username:'32928748'};app.room=roomFixture;render();",context);
+ context.artFixture={titles:[{id:'bleach',cards:[
+  {id:'BLC-1-001',image:'https://example.test/ichigo.png',aliases:['UA08ST/BLC-1-001']},
+  {id:'BLC-1-010',image:'https://example.test/energy.png'}
+ ]}]};
+ vm.runInContext("coverCatalogue=artFixture;artById=null;app.offline=false;app.user={username:'32928748'};app.room=roomFixture;render();",context);
  const rendered=texts(appRoot);
  assert.match(rendered,/房間 G7MC92Y3/);
  assert.match(rendered,/你的手牌/);
@@ -112,20 +137,42 @@ test('entering an online room shows a card-sized table, the opening hand, and th
  assert.match(rendered,/測試卡7/);
  assert.match(rendered,/保留這 7 張手牌/);
  assert.match(rendered,/整手重抽 7 張/);
+ assert.match(rendered,/開局可選擇保留 7 張/);
  assert.match(rendered,/對手手牌是隱藏的，這裡只顯示張數。/);
  assert.match(rendered,/生命尚未設置/);
  assert.match(rendered,/能量角色/);
  const classes=[];
+ const images=[];
  function visit(node){
   if(!(node instanceof FakeNode))return;
   if(node.className)classes.push(node.className);
+  if(node.tag==='img')images.push(node.attributes.src);
   for(const child of node.children)visit(child);
  }
  visit(appRoot);
+ assert.deepEqual(images.sort(),['https://example.test/energy.png','https://example.test/ichigo.png']);
  assert.ok(classes.includes('online-match'));
  assert.ok(classes.includes('online-table'));
  assert.ok(classes.includes('online-hand'));
  assert.ok(classes.includes('online-dock'));
  assert.equal(classes.filter(name=>name==='slot empty').length,15,'own lines are empty and the opponent has one occupied energy card');
  assert.ok(classes.some(name=>name.includes('slot occupied')&&name.includes('green')));
+ vm.runInContext(`roomFixture.view.phase='attack';roomFixture.choices=[
+  {index:0,type:'next',label:'前進下一階段'},
+  {index:1,type:'attack',uid:'h0',label:'宣告攻擊：測試卡1'},
+  {index:2,type:'attack',uid:'e9',label:'宣告攻擊：能源角色'}
+ ];app.pick=null;render();`,context);
+ const attackText=texts(appRoot);
+ assert.match(attackText,/結束回合/);
+ assert.match(attackText,/點自己可攻擊的角色/);
+ assert.doesNotMatch(attackText,/宣告攻擊：測試卡1/);
+ assert.doesNotMatch(attackText,/宣告攻擊：能源角色/);
+ vm.runInContext("app.pick={uid:'h0',baseUid:null,options:null};render();",context);
+ const picked=texts(appRoot);
+ assert.match(picked,/宣告攻擊：測試卡1/);
+ assert.doesNotMatch(picked,/宣告攻擊：能源角色/);
+ classes.length=0;
+ visit(appRoot);
+ assert.equal(classes.filter(name=>name==='slot empty').length,15,'selecting an attacker does not turn empty slots into destinations');
+ assert.ok(classes.some(name=>name.includes('selected')));
 });

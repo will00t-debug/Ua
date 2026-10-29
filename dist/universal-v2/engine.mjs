@@ -22548,7 +22548,18 @@ export function universalPrivateChoices(pack,s,viewer){
   const piles=[...field(s.players[viewer]),...s.players[viewer].hand,...s.players[viewer].deck,
    ...s.players[viewer].outside,...(s.players[viewer].removed||[]),
    ...field(s.players[1-viewer]),...s.players[1-viewer].outside];
+  // 見る shows every card in the window. Only a printed match is a legal take.
+  const windowUids=q.step==='lookPick'?q.data?.uids:q.step==='lookOrder'?q.data?.left:null;
+  const deck=s.players[viewer].deck;
+  const inspected=Array.isArray(windowUids)&&windowUids.length&&
+   windowUids.every(uid=>deck.some(c=>c?.uid===uid))?
+   windowUids.map(uid=>{
+    const c=deck.find(x=>x.uid===uid);
+    const printed=card(pack,c);
+    return {uid:c.uid,cardId:c.cardId,name:printed.name,color:printed.color||''};
+   }):[];
   return {kind:q.kind,player:viewer,step:q.step,id:q.id,
+   ...(inspected.length?{inspected}:{}),
    options:(q.actions||[]).map(action=>{
     const c=action.uid?piles.find(x=>x?.uid===action.uid):null;
     const printed=c&&card(pack,c);

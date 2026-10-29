@@ -6,8 +6,9 @@
 // Generated energy follows the printed orbs. The 2026-10-25 iframe left
 // 発生エナジー as a dash on most blue and purple cards; those gens were read
 // from the card image on 2026-10-29. One color orb and no plus circle is that
-// many resting pips. A plus circle beside a single color orb is the printed
-// plus ability, so REZ-1-006, 016, 037, 043, 082, 086 and 110 stay at gen 0.
+// many resting pips. A plus circle beside a single color orb is one extra pip
+// while that effect is live, so REZ-1-006, 016, 037, 043, 082, 086 and 110
+// keep gen 1 for the orb and add the extra in the effect.
 export const REZERO_CARDS=[
  {
   "id": "REZ-1-001",
@@ -242,7 +243,7 @@ export const REZERO_CARDS=[
   "energy": 0,
   "ap": 1,
   "bp": 1000,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [],
   "rarity": "C",
@@ -653,7 +654,7 @@ export const REZERO_CARDS=[
   "energy": 2,
   "ap": 1,
   "bp": 2500,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [],
   "rarity": "U",
@@ -1523,7 +1524,7 @@ export const REZERO_CARDS=[
   "energy": 0,
   "ap": 1,
   "bp": 1000,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [],
   "rarity": "C",
@@ -1757,7 +1758,7 @@ export const REZERO_CARDS=[
   "energy": 2,
   "ap": 1,
   "bp": 2500,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [],
   "rarity": "U",
@@ -3304,7 +3305,7 @@ export const REZERO_CARDS=[
   "energy": 0,
   "ap": 1,
   "bp": 1000,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [
    "王選候補者"
@@ -3468,7 +3469,7 @@ export const REZERO_CARDS=[
   "energy": 2,
   "ap": 1,
   "bp": 2500,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [
    "王選候補者"
@@ -4426,7 +4427,7 @@ export const REZERO_CARDS=[
   "energy": 2,
   "ap": 1,
   "bp": 3000,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [],
   "rarity": "R",
