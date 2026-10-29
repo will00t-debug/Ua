@@ -69,6 +69,23 @@ test('Cloudflare /online.html login boot produces actual inputs, registration sw
  assert.match(texts(appRoot),/牌組構築/);
  assert.match(texts(appRoot),/單人對戰/);
  assert.match(texts(appRoot),/線上對戰/);
+ vm.runInContext("app.openRooms=[{code:'G7MC92Y3',status:'playing',role:'host'},{code:'HUJAU4DC',status:'waiting',role:'host'},{code:'ABCD2345',status:'playing',role:'guest'},{code:'WXYZ6789',status:'playing',role:'host'}];app.error='你已經有 3 個未結束的房間。';render();",context);
+ assert.match(texts(appRoot),/還沒結束的房間/);
+ assert.match(texts(appRoot),/G7MC92Y3/);
+ assert.match(texts(appRoot),/對戰中/);
+ assert.match(texts(appRoot),/等待加入/);
+ assert.match(texts(appRoot),/你是訪客/);
+ assert.match(texts(appRoot),/關閉最舊的對戰並建立/);
+ assert.match(texts(appRoot),/你已經有 3 個未結束的房間。/);
+ let alertParent='';
+ function findAlert(node,parentId=''){
+  if(!(node instanceof FakeNode))return;
+  const id=node.attributes?.id||parentId;
+  if(node.attributes?.id==='room-alert')alertParent=parentId;
+  for(const child of node.children)findAlert(child,node.attributes?.id==='online-match'?'online-match':id);
+ }
+ findAlert(appRoot);
+ assert.equal(alertParent,'online-match');
 });
 
 test('entering an online room shows a card-sized table, the opening hand, and the mulligan choices',()=>{

@@ -245,6 +245,43 @@ function commitRoom(repos,room){
  repos.saveRoom(room);
 }
 function publicUser(user){return {id:user.id,username:user.username};}
+function roomSummary(row,userId){
+ return {
+  code:row.code,status:row.status,role:row.hostId===userId?'host':'guest',
+  createdAt:row.createdAt,updatedAt:row.updatedAt
+ };
+}
+// Waiting and opening rooms have no opponent yet. Creating a new room closes
+// those hosted by the same player. A live match is left only when the player
+// explicitly asks to replace the oldest one.
+export function roomsToDrop(rooms,replaceOldest){
+ const abandoned=rooms.filter(room=>room.role==='host'&&(room.status==='opening'||room.status==='waiting'));
+ const dropped=abandoned.map(room=>({code:room.code,status:room.status,how:'abandoned'}));
+ let remaining=rooms.filter(room=>!abandoned.some(item=>item.code===room.code));
+ if(replaceOldest===true){
+  while(remaining.length>=3){
+   const playing=remaining.filter(room=>room.status==='playing').sort((a,b)=>(a.updatedAt-b.updatedAt)||(a.createdAt-b.createdAt));
+   if(!playing.length)break;
+   const target=playing[0];
+   dropped.push({code:target.code,status:target.status,how:'left'});
+   remaining=remaining.filter(room=>room.code!==target.code);
+  }
+ }
+ return dropped;
+}
+function settleDrop(repos,userId,drop,now){
+ const op=drop.how==='abandoned'?'cancel':'resign';
+ try{
+  dispatchRoom(repos,{op,code:drop.code,userId},now);
+  return true;
+ }catch(error){
+  if(!(error instanceof ApiError))throw error;
+  if(error.status===404)return true;
+  if(drop.how==='left'&&error.status===409)return true;
+  if(drop.how==='abandoned'&&(error.status===403||error.status===409))return false;
+  throw error;
+ }
+}
 
 export function dispatchAccount(repos,message,now){
  switch(message?.op){
@@ -353,6 +390,11 @@ export function dispatchAccount(repos,message,now){
    const deck=ownedDeck(repos,user.id,message.deckId);
    const battle=battleReady(deck);
    return {user:publicUser(user),deck:{id:deck.id,name:deck.name,title:deck.title},battleCounts:battle.counts};
+  }
+  case 'listOpen':{
+   const user=requireUser(repos,message.token,now);
+   repos.pruneDirectory(now);
+   return {rooms:repos.listOpenDirectory(user.id).map(row=>roomSummary(row,user.id))};
   }
   case 'reserve':{
    repos.pruneDirectory(now);
@@ -505,9 +547,21 @@ export function createService({sql,now=()=>Date.now()}){
     const first=input?.first;
     if(!['me','opponent','random'].includes(first))throw new ApiError(400,'請選擇先手。');
     const prepared=dispatchAccount(repos,{op:'prepareSeat',token,deckId:input?.deckId},now());
+    const open=repos.listOpenRooms(prepared.user.id).map(row=>roomSummary(row,prepared.user.id));
+    const released=[];
+    for(const drop of roomsToDrop(open,input?.replaceOldest===true)){
+     if(settleDrop(repos,prepared.user.id,drop,now()))released.push({code:drop.code,how:drop.how});
+    }
     if(repos.countOpenRooms(prepared.user.id)>=3)throw new ApiError(429,'你已經有 3 個未結束的房間。');
     const code=freshCode(value=>repos.roomExists(value));
-    return dispatchRoom(repos,{op:'create',code,first,...prepared},now()).public;
+    return {...dispatchRoom(repos,{op:'create',code,first,...prepared},now()).public,released};
+   });
+  },
+  listRooms(token){
+   return enqueue(()=>{
+    const user=dispatchAccount(repos,{op:'session',token},now());
+    repos.pruneRooms(now());
+    return {rooms:repos.listOpenRooms(user.id).map(row=>roomSummary(row,user.id))};
    });
   },
   joinRoom(token,code,input){

@@ -17,7 +17,7 @@ const DRAFTS=[
 ];
 const PHASES=[['setup','起手調度'],['start','開始'],['move','移動'],['main','主要'],['attack','攻擊']];
 const ROOM=/^[A-HJ-NP-Z2-9]{8}$/;
-const app={offline:false,user:null,decks:[],room:null,error:'',notice:'',busy:false,mode:'login',deckTab:'mine',pollToken:0,timer:0,showPassword:false,remember:true,recordedCode:'',draftUser:'',draftPass:''};
+const app={offline:false,user:null,decks:[],openRooms:[],room:null,error:'',notice:'',busy:false,mode:'login',deckTab:'mine',pollToken:0,timer:0,showPassword:false,remember:true,recordedCode:'',draftUser:'',draftPass:''};
 function captureAuthDraft(form){
  if(!form)return;
  const data=new FormData(form);
@@ -242,8 +242,26 @@ function recentBattleList(){
  }
  return box;
 }
+function openRoomList(){
+ const rooms=Array.isArray(app.openRooms)?app.openRooms:[];
+ if(!rooms.length)return null;
+ return el('div',{class:'open-rooms'},
+  el('h3',{text:'還沒結束的房間'}),
+  el('p',{class:'muted',text:'等待加入的房間會在建立新房間時自動關閉。正在對戰的房間可以進入，或離開後再建立。'}),
+  ...rooms.map(room=>el('div',{class:'room-row'},
+   el('span',{class:'room-code',text:room.code}),
+   el('span',{text:(room.status==='playing'?'對戰中':'等待加入')+(room.role==='guest'?' · 你是訪客':'')}),
+   el('button',{type:'button',text:'進入',disabled:app.busy,onClick:()=>enterListed(room.code)}),
+   room.status==='playing'
+    ?el('button',{type:'button',text:'離開',disabled:app.busy,onClick:()=>leaveListed(room)})
+    :room.role==='host'
+     ?el('button',{type:'button',text:'取消',disabled:app.busy,onClick:()=>leaveListed(room)})
+     :null)));
+}
 function homeView(){
  const playable=app.decks.some(deck=>deck.playable);
+ const live=(app.openRooms||[]).filter(room=>room.status==='playing').length;
+ const createLabel=app.busy?'建立中…':live>=3?'關閉最舊的對戰並建立':'建立房間';
  return shell(el('main',{class:'arena-lobby'},
   el('header',{class:'arena-battle-heading'},
    el('span',{class:'arena-battle-eyebrow',text:'UNION ARENA · V2 MATCH LOBBY'}),
@@ -269,15 +287,17 @@ function homeView(){
   el('section',{class:'panel',id:'online-match'},
    el('h2',{text:'線上房間 · 建立或加入'}),
    el('p',{class:'muted',text:'雙方各用自己的帳號和一副 50 張、已完整支援 V2 的牌組。伺服器發牌，並只把你看得到的場面傳回來。'}),
+   openRoomList(),
+   app.error?el('div',{id:'room-alert',class:'banner error',role:'alert',text:app.error}):null,
    el('form',{class:'grid',onSubmit:createRoom},
     el('label',{},'使用牌組',deckSelect()),
     el('label',{},'先手',el('select',{name:'first'},
      el('option',{value:'me',text:'我先手'}),el('option',{value:'opponent',text:'對方先手'}),el('option',{value:'random',text:'隨機'}))),
-    el('button',{class:'primary',type:'submit',text:'建立房間',disabled:app.busy||!playable})),
+    el('button',{class:'primary',type:'submit',text:createLabel,disabled:app.busy||!playable})),
    el('form',{class:'grid',onSubmit:joinRoom},
     el('label',{},'房間代碼',el('input',{name:'code',maxlength:'8',autocapitalize:'characters',required:''})),
     el('label',{},'使用牌組',deckSelect()),
-    el('button',{type:'submit',text:'加入房間',disabled:app.busy||!playable}))),
+    el('button',{type:'submit',text:app.busy?'加入中…':'加入房間',disabled:app.busy||!playable}))),
   el('section',{class:'panel'},el('h2',{text:'最近對戰'}),recentBattleList())));
 }
 let artById=null;
@@ -435,6 +455,7 @@ async function submitAuth(event){
   app.user={username:result.username};
   app.draftUser='';app.draftPass='';
   app.decks=(await api('/api/decks')).decks;
+  await refreshOpenRooms();
   app.notice='已登入 '+result.username+'。';
  }catch(error){app.error=error.message;}
  app.busy=false;render();
@@ -442,10 +463,14 @@ async function submitAuth(event){
 async function logout(){
  app.busy=true;
  try{await api('/api/logout',{method:'POST'});}catch{/* The local screen still returns to the login form. */}
- stopPoll();app.user=null;app.decks=[];app.room=null;app.mode='login';app.notice='';app.busy=false;
+ stopPoll();app.user=null;app.decks=[];app.openRooms=[];app.room=null;app.mode='login';app.notice='';app.busy=false;
  history.replaceState(null,'','online.html');render();
 }
 async function refreshDecks(){app.decks=(await api('/api/decks')).decks;}
+async function refreshOpenRooms(){
+ try{app.openRooms=(await api('/api/rooms')).rooms||[];}
+ catch{app.openRooms=Array.isArray(app.openRooms)?app.openRooms:[];}
+}
 async function importLocal(){
  app.busy=true;app.error='';app.notice='';render();
  let count=0;
@@ -502,22 +527,59 @@ async function removeDeck(deck){
  catch(error){app.error=error.message;}
  app.busy=false;render();
 }
+function showRoomAlert(){
+ const alert=document.getElementById?.('room-alert');
+ alert?.scrollIntoView?.({block:'nearest',inline:'nearest'});
+}
+function enterCreated(result){
+ const released=Array.isArray(result?.released)?result.released:[];
+ if(released.some(item=>item.how==='left'))app.notice='已離開最舊的對戰，並建立新房間 '+result.code+'。';
+ else if(released.length)app.notice='已關閉還沒人加入的舊房間，並建立新房間 '+result.code+'。';
+ app.room=result;
+ history.replaceState(null,'','online.html#'+result.code);
+ startPoll();
+}
+async function postRoom(deckId,first,replaceOldest){
+ return api('/api/rooms',{method:'POST',body:{deckId,first,replaceOldest}});
+}
 async function createRoom(event){
  event.preventDefault();
+ if(app.busy)return;
  const data=new FormData(event.currentTarget);
+ const deckId=data.get('deckId');
+ const first=data.get('first');
+ const live=(app.openRooms||[]).filter(room=>room.status==='playing');
+ let replaceOldest=false;
+ if(live.length>=3){
+  replaceOldest=confirm('你有 '+live.length+' 場還沒結束的對戰。建立新房間會先離開最久沒有更新的一場，並視為認輸。要繼續嗎？');
+  if(!replaceOldest){
+   app.error='還沒建立新房間。可以先進入列出的對戰，或離開其中一場。';
+   render();showRoomAlert();return;
+  }
+ }
  app.busy=true;app.error='';app.notice='';render();
  try{
-  app.room=await api('/api/rooms',{method:'POST',body:{deckId:data.get('deckId'),first:data.get('first')}});
-  history.replaceState(null,'','online.html#'+app.room.code);
-  startPoll();
- }catch(error){app.error=error.message;}
+  enterCreated(await postRoom(deckId,first,replaceOldest));
+ }catch(error){
+  if(error.status===429&&!replaceOldest){
+   await refreshOpenRooms();
+   const leave=confirm('你已經有 3 個未結束的房間。要離開最久沒有更新的一場（視為認輸），然後建立新房間嗎？');
+   if(leave){
+    try{enterCreated(await postRoom(deckId,first,true));}
+    catch(again){app.error=again.message;}
+   }else app.error='還沒建立新房間。列出的房間可以進入，或離開其中一場。';
+  }else app.error=error.message;
+ }
+ await refreshOpenRooms();
  app.busy=false;render();
+ if(app.error)showRoomAlert();
 }
 async function joinRoom(event){
  event.preventDefault();
+ if(app.busy)return;
  const data=new FormData(event.currentTarget);
  const code=String(data.get('code')||'').trim().toUpperCase();
- if(!ROOM.test(code)){app.error='房間代碼是 8 個英數。';render();return;}
+ if(!ROOM.test(code)){app.error='房間代碼是 8 個英數。';render();showRoomAlert();return;}
  app.busy=true;app.error='';render();
  try{
   app.room=await api('/api/rooms/'+code+'/join',{method:'POST',body:{deckId:data.get('deckId')}});
@@ -525,6 +587,30 @@ async function joinRoom(event){
   startPoll();
  }catch(error){app.error=error.message;}
  app.busy=false;render();
+ if(app.error)showRoomAlert();
+}
+async function enterListed(code){
+ if(app.busy)return;
+ app.busy=true;app.error='';render();
+ try{
+  app.room=await api('/api/rooms/'+code);
+  history.replaceState(null,'','online.html#'+code);
+  startPoll();
+ }catch(error){app.error=error.message;}
+ app.busy=false;render();
+ if(app.error)showRoomAlert();
+}
+async function leaveListed(room){
+ if(app.busy)return;
+ if(room.status==='playing'&&!confirm('離開房間 '+room.code+'？這會被視為認輸。'))return;
+ app.busy=true;app.error='';render();
+ try{
+  await api('/api/rooms/'+room.code+'/'+(room.status==='playing'?'resign':'cancel'),{method:'POST'});
+  app.notice=room.status==='playing'?'已離開對戰 '+room.code+'。':'已取消房間 '+room.code+'。';
+  await refreshOpenRooms();
+ }catch(error){app.error=error.message;}
+ app.busy=false;render();
+ if(app.error)showRoomAlert();
 }
 async function copyCode(code){
  try{await navigator.clipboard.writeText(code);app.notice='已複製房間代碼。';}
@@ -534,7 +620,7 @@ async function copyCode(code){
 async function cancelRoom(){
  if(!app.room)return;
  app.busy=true;
- try{await api('/api/rooms/'+app.room.code+'/cancel',{method:'POST'});app.room=null;app.notice='已取消房間。';stopPoll();history.replaceState(null,'','online.html');}
+ try{await api('/api/rooms/'+app.room.code+'/cancel',{method:'POST'});app.room=null;app.notice='已取消房間。';stopPoll();history.replaceState(null,'','online.html');await refreshOpenRooms();}
  catch(error){app.error=error.message;}
  app.busy=false;render();
 }
@@ -550,13 +636,17 @@ async function resign(){
  try{applyRoom(await api('/api/rooms/'+app.room.code+'/resign',{method:'POST'}));}
  catch(error){app.error=error.message;app.busy=false;render();}
 }
-function leaveFinished(){stopPoll();app.room=null;app.notice='已離開對局。';history.replaceState(null,'','online.html');render();}
+function leaveFinished(){
+ stopPoll();app.room=null;app.notice='已離開對局。';history.replaceState(null,'','online.html');render();
+ refreshOpenRooms().then(()=>{if(!app.room)render();});
+}
 async function boot(){
  try{await api('/api/health');}
  catch{app.offline=true;render();return;}
  try{
   app.user=await api('/api/me');
   app.decks=(await api('/api/decks')).decks;
+  await refreshOpenRooms();
   const code=location.hash.slice(1);
   if(ROOM.test(code)){
    try{app.room=await api('/api/rooms/'+code);startPoll();}catch{/* An old code just opens the lobby. */}
