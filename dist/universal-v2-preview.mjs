@@ -884,7 +884,8 @@ function render(){
    el('span',{text:'REST 仍可產生能源'})),
   legacyHand(v,legal),legacyCommands(legal));
  arena.append(handArea);
- const phase=el('div',{class:'phaseAction'},el('p',{text:block?'點卡圖上的「阻擋」，或選擇「不阻擋」。':s.pending?'請完成效果選擇。':
+ const phase=el('div',{class:'phaseAction'},el('p',{text:block?
+  (block.skipAction?'點卡圖上的「阻擋」，或選擇「不阻擋」。':'請點卡圖上的「阻擋」。'):s.pending?'請完成效果選擇。':
   app.busy?'AI 正在思考與操作…':s.status==='finished'?'對局結束':
   uiActor(s)===1?'電腦回合已暫停，可按上方「AI 沒反應？重新繼續」。':
   '點手牌再點亮起的場上位置，即可用 V2 合法動作出牌。'}));
