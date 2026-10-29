@@ -18581,7 +18581,7 @@ export function universalPrivateChoices(pack,s,viewer){
  // Controller-only: the full physical TOP-N window is display data, NOT
  // extra legal actions. Never send this to the opposing viewer.
  const filteredTop=['effect-top-filter-choice','effect-top-filter-many-choice',
-  'effect-top-trait-event'].includes(q.kind);
+  'effect-top-trait-event','effect-top-trait-outside'].includes(q.kind);
  const windowUids=!filteredTop?[]:q.kind==='effect-top-filter-many-choice'?
   q.uids.filter(uid=>!q.selected.includes(uid)):q.uids;
  const windowCards=filteredTop?s.players[viewer].deck.slice(0,windowUids.length):[];
