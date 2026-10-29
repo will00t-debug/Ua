@@ -644,7 +644,8 @@ export function inspectedPendingChoiceCards(privateChoices,legal){
  const type={
   'effect-top-filter-choice':'chooseTopFiltered',
   'effect-top-filter-many-choice':'chooseTopFilteredMany',
-  'effect-top-trait-event':'chooseTopTraitEvent'
+  'effect-top-trait-event':'chooseTopTraitEvent',
+  'effect-top-trait-outside':'chooseTopTraitOutside'
  }[privateChoices?.kind];
  if(!type||!Array.isArray(privateChoices?.inspected)||!Array.isArray(legal))return [];
  const selectable=new Map(legal.filter(a=>a?.type===type&&
