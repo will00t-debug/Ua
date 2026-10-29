@@ -494,8 +494,9 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   return leave;
  }
  if(s.pending?.kind==='block')return chooseBlock(pack,s,legal,difficulty);
- if(s.pending?.kind==='granted-attack-draw')return legal.find(x=>x.mode==='draw')||legal[0];
- if(s.pending?.kind==='effect-grant-attack')return legal[0];
+ if(s.pending?.kind==='granted-attack-draw'||s.pending?.kind==='granted-retire-draw')
+  return legal.find(x=>x.mode==='draw')||legal[0];
+ if(s.pending?.kind==='effect-grant-attack'||s.pending?.kind==='effect-grant-retire')return legal[0];
  if(s.pending?.kind==='effect-target-many')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-line-slot')return legal[0];
  if(s.pending?.kind==='effect-mark-opp-start')
