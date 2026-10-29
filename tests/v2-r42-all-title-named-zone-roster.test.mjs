@@ -11,8 +11,8 @@ test('R42 full 700 IDs and 368 currently unported searched, with no partial card
  assert.equal(s.officallyReviewedRemaining,undefined);
  // Historical reviews persist, but a newly source-pinned registered card
  // must no longer count as currently unported or currently PARTIAL.
- assert.equal(s.officiallyReviewedRemaining,1);
- assert.equal(s.partial,1);assert.equal(s.ruleBlocked,0);
+ assert.equal(s.officiallyReviewedRemaining,0);
+ assert.equal(s.partial,0);assert.equal(s.ruleBlocked,0);
  const remaining=[...report.candidates.map(c=>c.id),...report.remainingNoKeywords];
  assert.equal(remaining.length,inv.totals.blocked);
  assert.equal(new Set(remaining).size,inv.totals.blocked);

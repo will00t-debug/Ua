@@ -89,6 +89,12 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
    e.owner===owner&&e.controller===owner&&e.from==='hand'&&
    e.to==='outside'&&e.reason==='rule'&&
    (d=>d?.type==='event'||d?.alsoEvent===true)(printed({uid:e.uid,cardId:e.cardId})));
+ // 「使用している」 is a successful play from hand, not a payment discard.
+ // Characters enter the field and events leave to outside. Both are rule moves.
+ if(condition.kind==='ownTraitUsedThisTurn')
+  return (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&
+   e.owner===owner&&e.controller===owner&&e.from==='hand'&&e.reason==='rule'&&
+   cardHasTrait(printed({uid:e.uid,cardId:e.cardId}),condition.trait));
  // 「このターン中に移動している」. A hand-to-field play is an entry, not a move.
  // Front and energy swaps from a rule move or an effect both count.
  if(condition.kind==='selfMovedThisTurn')

@@ -101,7 +101,8 @@ export function r35CardCertificationInventory(){
   // Fail closed if the catalogue model changes.
   if(records.size!==group.total)throw Error('Source catalogue mismatch '+group.title);
  }
- const counts={};
+ const counts={[R35_STATUS.unported]:0,[R35_STATUS.registered]:0,
+  [R35_STATUS.partial]:0,[R35_STATUS.certified]:0};
  for(const e of entries)counts[e.status]=(counts[e.status]||0)+1;
  if(entries.length!==baseline.totals.total ||
   entries.filter(x=>x.registered).length!==baseline.totals.pilotImplemented ||
