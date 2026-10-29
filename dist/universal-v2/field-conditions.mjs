@@ -353,6 +353,14 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
    e.controller===owner&&e.from==='hand'&&e.to==='outside'&&
    ['rule','payment','own-effect'].includes(e.reason));
  }
+ if(condition.kind==='ownLifeToHandThisTurn'){
+  // ライフエリアにあるカードを手札に加えている. A direct life-to-hand effect
+  // counts. A GET trigger passes through lifeRevealed first and still counts.
+  // An opponent moving that card does not.
+  return (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.owner===owner&&
+   e.controller===owner&&e.to==='hand'&&
+   (e.from==='life'||(e.from==='lifeRevealed'&&e.reason==='life-trigger')));
+ }
  if(condition.kind==='ownCardTraitCount'||condition.kind==='ownDistinctTraitNames'){
   // 枚 counts every own field card with the printed trait, including a
   // field. It is not the character-only ownTraitCount predicate.

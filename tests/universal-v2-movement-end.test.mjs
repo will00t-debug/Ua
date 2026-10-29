@@ -8,7 +8,7 @@ import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
 const cards=Array.from({length:13},(_,i)=>({
  id:'R'+String(i).padStart(2,'0'),name:'Character '+i,color:'green',
  type:'character',energy:0,ap:1,bp:1000+250*i,gen:1,
- implementation:'vanilla',...(i===0?{step:true}:{})
+ implementation:i===0?'dsl':'vanilla',...(i===0?{step:true,effects:{}}:{})
 }));
 const pack=createUniversalPack({id:'shared-end-phase-test',cards});
 const deck=Object.fromEntries(cards.map((c,i)=>[c.id,i===12?2:4]));

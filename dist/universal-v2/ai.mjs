@@ -475,6 +475,10 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='effect-rest-own-front-draw')return legal[0];
  if(s.pending?.kind==='effect-raid-source-rest')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-rest-or-retire')return legal[0];
+ if(s.pending?.kind==='effect-rest-skip-may-retire')
+  return legal.find(a=>a.mode==='retire')||legal[0];
+ if(s.pending?.kind==='effect-retire-named-draw')
+  return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-retire-bp'){
   // A printed "up to one" retirement presents SKIP first; normal/hard AI
   // should choose an eligible enemy unless there is none.
@@ -524,7 +528,8 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   return choices[0]?.a||legal[0];
  }
  if(['effect-protect-gen','effect-raid-base-choice','effect-named-ap-outside',
-  'effect-line-move','effect-grant-named'].includes(s.pending?.kind))
+  'effect-line-move','effect-grant-named','effect-return-raid-base',
+  'effect-removed-self-grant','effect-buff-name-or-trait'].includes(s.pending?.kind))
   return legal.find(a=>a.uid!==null)||legal[0];
  if(['effect-raid-witness-order','effect-raid-attach','effect-raid-witness-move','effect-look-take','effect-discard-mode','effect-facedown-scale','effect-spend-facedown','effect-absorb-front','effect-simon-low','effect-replay-entry','effect-attack-end-raid','effect-retire-capture'].includes(s.pending?.kind))
   return legal.find(a=>a.uid===null||a.when==='skip'||a.mode==='skip'||a.uids?.length===0)||legal[0];

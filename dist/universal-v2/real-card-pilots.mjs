@@ -75,7 +75,7 @@ const printed=Object.freeze({
   {id:'TTG-1-066',energy:2,ap:1,bp:2500,gen:1,color:'red',trigger:null,type:'character',
    implementation:'dsl',activeExtraEnergy:1,effects:{},matchText:'ACTIVE 時額外產能+1'},
   {id:'TTG-1-064',energy:0,ap:1,bp:2000,gen:1,color:'red',trigger:'draw',type:'character',implementation:'vanilla',effects:{},matchText:'無額外印刷角色效果'},
-  {id:'TTG-1-065',energy:1,ap:1,bp:2500,gen:1,color:'red',trigger:null,type:'character',implementation:'vanilla',effects:{},step:true,matchText:'STEP'},
+  {id:'TTG-1-065',energy:1,ap:1,bp:2500,gen:1,color:'red',trigger:null,type:'character',implementation:'dsl',effects:{},step:true,matchText:'STEP'},
   {id:'TTG-1-072',energy:3,ap:1,bp:3500,gen:1,color:'red',trigger:'raid',type:'character',
    implementation:'dsl',raidName:'カミナ',ownTurnBp:500,
    templateEffects:{onPlay:[{template:'draw',count:1},{template:'restEnemyUnderBp',bp:3000,optional:true}]},

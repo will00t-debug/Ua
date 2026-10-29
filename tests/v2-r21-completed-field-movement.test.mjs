@@ -6,7 +6,8 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
 
 const ids=Array.from({length:13},(_,i)=>'R'+String(i).padStart(2,'0'));
 const cards=ids.map(id=>({id,name:id,type:'character',color:'green',
- energy:0,ap:1,bp:1500,gen:1,step:id==='R00',implementation:'vanilla'}));
+ energy:0,ap:1,bp:1500,gen:1,step:id==='R00',
+ implementation:id==='R00'?'dsl':'vanilla',...(id==='R00'?{effects:{}}:{})}));
 const pack=createUniversalPack({id:'r21-field-movement-ledger',cards}),packs=[pack,pack];
 const deck=Object.fromEntries(ids.map((id,i)=>[id,i===12?2:4]));
 assert.deepEqual(validateUniversalDeck(pack,deck),[]);

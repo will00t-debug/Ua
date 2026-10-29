@@ -1524,7 +1524,7 @@ export function checkedBleachAddonDefinition(p){
    c.traits==='護廷十三隊／涅骸部隊'?{traitComponents:['護廷十三隊','涅骸部隊']}:
    c.traits==='護廷十三隊／殭屍'?{traitComponents:['護廷十三隊','殭屍']}:
    c.traits==='星十字騎士團／殭屍'?{traitComponents:['星十字騎士團','殭屍']}:{}),
-  implementation:p.kind==='plain'||p.kind==='plainAlt'||p.kind==='step'?'vanilla':'dsl',
+  implementation:p.kind==='plain'||p.kind==='plainAlt'?'vanilla':'dsl',
   ...(p.kind==='step'||p.kind==='stepAttackTraitBuff'||isStepOr||isStepName||isEmptyStep?{step:true}:{}),
   ...(isStepOr?{mainAbility:{op:'onceBuffSelfWhen',oncePerTurn:true,bp:1000,when:{logic:'any',checks:[
    {kind:'oppFrontLiveBpBelowPrinted',turn:'any'},

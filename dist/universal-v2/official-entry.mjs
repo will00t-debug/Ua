@@ -9,6 +9,7 @@ import {REZERO_CARDS} from '../rezero-cards.mjs';
 import {createRezeroV2Pack,rezeroPackCard} from './rezero-pack.mjs';
 import {rezV2RawCards} from './rez-pack.mjs';
 import {createStgV2Pack} from './stg-pack.mjs';
+import {createMadokaV2Pack} from './mmm-pack.mjs';
 
 const CENSUS=['bleach','gurren-lagann','sword-art-online','solo-leveling','mushoku-tensei'];
 let rezeroBattlePack=null;
@@ -34,9 +35,16 @@ export function createSteinsGateBattlePack(){
  return stgBattlePack;
 }
 
+let madokaBattlePack=null;
+export function createMadokaBattlePack(){
+ if(!madokaBattlePack)madokaBattlePack=createMadokaV2Pack();
+ return madokaBattlePack;
+}
+
 export function officialV2Pack(title){
  if(title==='rezero')return createRezeroBattlePack();
  if(title==='steins-gate')return createSteinsGateBattlePack();
+ if(title==='madoka')return createMadokaBattlePack();
  if(!CENSUS.includes(title))throw Error('作品尚未提供正式 V2 牌組：'+String(title));
  return requireRegisteredV2TitlePack(title);
 }
@@ -99,6 +107,14 @@ export function steinsGatePracticeDeck(){
  const counts=practiceDeck(pack,{color:'blue'});
  const green=Object.keys(counts).filter(id=>pack.cards[id].color!=='blue');
  if(green.length)throw Error('Steins;Gate blue practice deck included another color');
+ return {pack,counts};
+}
+
+export function madokaPracticeDeck(){
+ const pack=createMadokaBattlePack();
+ const counts=practiceDeck(pack,{color:'red'});
+ const other=Object.keys(counts).filter(id=>pack.cards[id].color!=='red');
+ if(other.length)throw Error('Madoka red practice deck included another color');
  return {pack,counts};
 }
 

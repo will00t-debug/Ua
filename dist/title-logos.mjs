@@ -52,6 +52,13 @@ export const TITLE_LOGOS=Object.freeze({
   source:'https://commons.wikimedia.org/wiki/File:Steins;Gate.svg',
   credit:'志倉千代丸',
   license:'PD text logo'
+ }),
+ madoka:Object.freeze({
+  image:'https://upload.wikimedia.org/wikipedia/commons/8/84/Mah%C5%8D_Sh%C5%8Djo_Madoka_Magika_%28Logo%29.svg',
+  label:'魔法少女小圓',
+  source:'https://commons.wikimedia.org/wiki/File:Mah%C5%8D_Sh%C5%8Djo_Madoka_Magika_(Logo).svg',
+  credit:'Magica Quartet／Aniplex・Madoka Partners・MBS',
+  license:'PD text logo'
  })
 });
 export const titleLogo=id=>Object.hasOwn(TITLE_LOGOS,id)?TITLE_LOGOS[id]:null;
