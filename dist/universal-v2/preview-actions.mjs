@@ -638,6 +638,28 @@ export function pendingChoiceCards(option){
  }
  return cards;
 }
+// The controller sees every inspected card in deck order; only real
+// legal selections get a clickable action, other cards stay disabled.
+export function inspectedPendingChoiceCards(privateChoices,legal){
+ const type={
+  'effect-top-filter-choice':'chooseTopFiltered',
+  'effect-top-filter-many-choice':'chooseTopFilteredMany',
+  'effect-top-trait-event':'chooseTopTraitEvent'
+ }[privateChoices?.kind];
+ if(!type||!Array.isArray(privateChoices?.inspected)||!Array.isArray(legal))return [];
+ const selectable=new Map(legal.filter(a=>a?.type===type&&
+  typeof a.uid==='string').map(a=>[a.uid,a]));
+ const seen=new Set();
+ return privateChoices.inspected.flatMap(card=>{
+  if(!card||typeof card.uid!=='string'||!card.uid||
+   typeof card.cardId!=='string'||!card.cardId||seen.has(card.uid))return [];
+  seen.add(card.uid);
+  return [{uid:card.uid,cardId:card.cardId,
+   name:typeof card.name==='string'&&card.name?card.name:card.cardId,
+   color:typeof card.color==='string'?card.color:'',
+   action:selectable.get(card.uid)||null}];
+ });
+}
 // Fallback artwork for legal pending actions that identify the viewer's own
 // hand or a PUBLIC outside card. Only data already present in the sanitized
 // viewer=0 public view is used; opponent hands, decks, life and hidden layers
