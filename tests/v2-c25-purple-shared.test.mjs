@@ -147,7 +147,20 @@ test('BLC-1-047 pays effect AP for Damage 2, and four outside cards are required
  const foe=place(short,1,'BLC-4-050','front',0);
  const three=[0,1,2].map(()=>outside(short,0,'BLC-4-048'));
  const payer=hold(short,0,'BLC-1-047');
- short=play(short,a=>a.type==='play'&&a.uid===payer.uid&&a.line==='front'&&a.slot===0);
+ const base=place(short,0,'BLC-4-049','front',1);
+ let normal=phase(fresh(2560),'main');
+ fuel(normal);
+ readyAp(normal,0,2);
+ place(normal,1,'BLC-4-050','front',0);
+ for(let i=0;i<3;i++)outside(normal,0,'BLC-4-048');
+ const plain=hold(normal,0,'BLC-1-047');
+ const kept=normal.players[0].removed.length;
+ normal=play(normal,a=>a.type==='play'&&a.uid===plain.uid&&a.line==='front'&&a.slot===0);
+ assert.equal(normal.pending,null);
+ assert.equal(normal.players[0].removed.length,kept);
+ assert.equal(legalUniversalActions(packs,normal).some(a=>a.type==='activate'&&a.uid===plain.uid),true);
+ short=play(short,a=>a.type==='raid'&&a.uid===payer.uid&&a.baseUid===base.uid);
+ assert.equal(find(short,0,payer.uid).ready,true);
  assert.equal(short.pending.kind,'effect-remove-outside');
  assert.equal(short.pending.short,true);
  aiOk(short);
@@ -160,8 +173,9 @@ test('BLC-1-047 pays effect AP for Damage 2, and four outside cards are required
  readyAp(full,0,1);
  const victim=place(full,1,'BLC-4-050','front',0);
  const four=[0,1,2,3].map(()=>outside(full,0,'BLC-4-048'));
+ const renjiBase=place(full,0,'BLC-4-049','front',1);
  const source=hold(full,0,'BLC-1-047');
- full=play(full,a=>a.type==='play'&&a.uid===source.uid&&a.line==='front'&&a.slot===0);
+ full=play(full,a=>a.type==='raid'&&a.uid===source.uid&&a.baseUid===renjiBase.uid);
  for(const card of four)
   full=play(full,a=>a.type==='chooseRemoveOutside'&&a.mode==='pick'&&a.uid===card.uid);
  assert.equal(full.pending.kind,'effect-target');
@@ -356,28 +370,163 @@ test('BLC-4-048 sends only a purple Renji or Rukia from the top two',()=>{
  assert.equal(declined.players[0].outside.some(c=>c.uid===left.uid||c.uid===right.uid),false);
 });
 
-test('BLC-1-053 draws three and discards two, then its main discards for BP',()=>{
+test('BLC-1-053 raid box stays closed on a normal play and opens after a real Raid',()=>{
  let s=phase(fresh(2553),'main');
  fuel(s);
- readyAp(s,0,1);
+ readyAp(s,0,2);
  const rukia=hold(s,0,'BLC-1-053');
  const before=s.players[0].hand.length;
+ const deck=s.players[0].deck.length;
  s=play(s,a=>a.type==='play'&&a.uid===rukia.uid&&a.line==='front'&&a.slot===0);
- assert.equal(s.pending.kind,'effect-discard');
- assert.equal(s.pending.remaining,2);
- assert.equal(s.players[0].hand.length,before-1+3);
- const dumped=[s.players[0].hand[0],s.players[0].hand[1]];
- s=play(s,a=>a.type==='chooseDiscard'&&a.uid===dumped[0].uid);
- s=play(s,a=>a.type==='chooseDiscard'&&a.uid===dumped[1].uid);
  assert.equal(s.pending,null);
- const ally=place(s,0,'BLC-4-049','front',1);
- const payment=s.players[0].hand[0];
- s=play(s,a=>a.type==='activate'&&a.uid===rukia.uid&&a.mode==='oncePay');
- s=play(s,a=>a.type==='chooseDiscardGate'&&a.uid===payment.uid);
- assert.equal(s.pending.kind,'effect-buff-own');
- s=play(s,a=>a.type==='chooseOwnBuff'&&a.uid===ally.uid);
- assert.equal(universalBp(packs,s,find(s,0,ally.uid)),2500);
+ assert.equal(s.players[0].hand.length,before-1);
+ assert.equal(s.players[0].deck.length,deck);
+ assert.equal(find(s,0,rukia.uid).ready,false);
  assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='activate'&&a.uid===rukia.uid),false);
+ let raid=phase(fresh(2561),'main');
+ fuel(raid);
+ readyAp(raid,0,1);
+ const base=place(raid,0,'BLC-4-054','front',1);
+ const top=hold(raid,0,'BLC-1-053');
+ const hand=raid.players[0].hand.length;
+ raid=play(raid,a=>a.type==='raid'&&a.uid===top.uid&&a.baseUid===base.uid);
+ assert.equal(find(raid,0,top.uid).ready,true);
+ assert.equal(raid.pending.kind,'effect-discard');
+ assert.equal(raid.pending.remaining,2);
+ assert.equal(raid.players[0].hand.length,hand-1+3);
+ const dumped=[raid.players[0].hand[0],raid.players[0].hand[1]];
+ raid=play(raid,a=>a.type==='chooseDiscard'&&a.uid===dumped[0].uid);
+ raid=play(raid,a=>a.type==='chooseDiscard'&&a.uid===dumped[1].uid);
+ const ally=place(raid,0,'BLC-4-049','front',2);
+ const payment=raid.players[0].hand[0];
+ raid=play(raid,a=>a.type==='activate'&&a.uid===top.uid&&a.mode==='oncePay');
+ raid=play(raid,a=>a.type==='chooseDiscardGate'&&a.uid===payment.uid);
+ assert.equal(raid.pending.kind,'effect-buff-own');
+ raid=play(raid,a=>a.type==='chooseOwnBuff'&&a.uid===ally.uid);
+ assert.equal(universalBp(packs,raid,find(raid,0,ally.uid)),2500);
+ assert.equal(legalUniversalActions(packs,raid).some(a=>a.type==='activate'&&a.uid===top.uid),false);
+});
+
+test('BLC-4-054 REST skips the Raid box and its Raid branch enters ACTIVE',()=>{
+ assert.equal(pack.cards['BLC-1-053'].raidBoxOnPlay,true);
+ assert.equal(pack.cards['BLC-1-053'].mainAbility.raidOnly,true);
+ assert.equal(pack.cards['BLC-1-047'].raidBoxOnPlay,true);
+ assert.equal(pack.cards['BLC-1-047'].mainAbility.raidOnly,false);
+ assert.equal(pack.cards['BLC-4-050'].raidBoxOnPlay,undefined);
+ assert.equal(pack.cards['BLC-4-050'].mainAbility.raidOnly,true);
+ assert.equal(pack.cards['BLC-4-048'].raidBoxOnPlay,undefined);
+ assert.equal(pack.cards['BLC-4-054'].raidBoxOnPlay,undefined);
+ // Targets and Raid bases are placed before the pay, because the pending
+ // choice list is a snapshot of the hand at that moment.
+ function paid(seed,ap,targetId,prepare){
+  let s=phase(fresh(seed),'main');
+  fuel(s);
+  readyAp(s,0,ap);
+  const renji=place(s,0,'BLC-4-048','front',0);
+  if(prepare)prepare(s);
+  const source=hold(s,0,'BLC-4-054');
+  const target=hold(s,0,targetId);
+  s=play(s,a=>a.type==='play'&&a.uid===source.uid&&a.line==='front'&&a.slot===2);
+  assert.equal(s.pending.kind,'effect-optional-pay-ap');
+  const beforeDraw=s.players[0].deck.length;
+  s=play(s,a=>a.type==='chooseOptionalPayAp'&&a.mode==='pay');
+  assert.equal(s.players[0].deck.length,beforeDraw-1);
+  assert.equal(s.pending.kind,'effect-hand-rest-or-raid');
+  assert.equal(s.pending.choices.includes(target.uid),true);
+  return {s,renji,source,target,beforeDraw};
+ }
+ let restBox=paid(2590,2,'BLC-1-053');
+ const restHand=restBox.s.players[0].hand.length;
+ restBox.s=play(restBox.s,a=>a.type==='chooseHandRestOrRaid'&&a.mode==='enter'&&
+  a.uid===restBox.target.uid&&a.line==='front');
+ const rested=find(restBox.s,0,restBox.target.uid);
+ assert.equal(rested.ready,false);
+ assert.equal((rested.stack||[]).length,0);
+ assert.equal(restBox.s.pending,null);
+ assert.equal(restBox.s.players[0].deck.length,restBox.beforeDraw-1);
+ assert.equal(restBox.s.players[0].hand.length,restHand-1);
+ assert.equal(legalUniversalActions(packs,restBox.s).some(a=>a.type==='activate'&&
+  a.uid===restBox.target.uid),false);
+ let rukia;
+ let raidBox=paid(2591,2,'BLC-1-053',s=>{rukia=place(s,0,'BLC-4-054','front',1);});
+ const raidHand=raidBox.s.players[0].hand.length;
+ raidBox.s=play(raidBox.s,a=>a.type==='chooseHandRestOrRaid'&&a.mode==='raid'&&
+  a.uid===raidBox.target.uid&&a.baseUid===rukia.uid&&a.line==='front');
+ const lived=find(raidBox.s,0,raidBox.target.uid);
+ assert.equal(lived.ready,true);
+ assert.equal(lived.stack[0].uid,rukia.uid);
+ assert.equal(raidBox.s.pending.kind,'effect-discard');
+ assert.equal(raidBox.s.pending.remaining,2);
+ assert.equal(raidBox.s.players[0].hand.length,raidHand-1+3);
+ const dumped=[raidBox.s.players[0].hand[0],raidBox.s.players[0].hand[1]];
+ raidBox.s=play(raidBox.s,a=>a.type==='chooseDiscard'&&a.uid===dumped[0].uid);
+ raidBox.s=play(raidBox.s,a=>a.type==='chooseDiscard'&&a.uid===dumped[1].uid);
+ const payment=raidBox.s.players[0].hand[0];
+ raidBox.s=play(raidBox.s,a=>a.type==='activate'&&a.uid===raidBox.target.uid&&a.mode==='oncePay');
+ raidBox.s=play(raidBox.s,a=>a.type==='chooseDiscardGate'&&a.uid===payment.uid);
+ raidBox.s=play(raidBox.s,a=>a.type==='chooseOwnBuff'&&a.uid===raidBox.source.uid);
+ assert.equal(universalBp(packs,raidBox.s,find(raidBox.s,0,raidBox.source.uid)),2500);
+ let shown;
+ let plain=paid(2592,2,'BLC-4-048',s=>{
+  shown=crown(s,0,['BLC-4-049','BLC-4-049'])[1];
+ });
+ plain.s=play(plain.s,a=>a.type==='chooseHandRestOrRaid'&&a.mode==='enter'&&
+  a.uid===plain.target.uid&&a.line==='front');
+ assert.equal(find(plain.s,0,plain.target.uid).ready,false);
+ assert.equal(plain.s.pending.kind,'effect-top-trait-outside');
+ assert.equal(plain.s.pending.choices.includes(shown.uid),true);
+ let restRenji=paid(2593,2,'BLC-4-050');
+ restRenji.s=play(restRenji.s,a=>a.type==='chooseHandRestOrRaid'&&a.mode==='enter'&&
+  a.uid===restRenji.target.uid&&a.line==='front');
+ const quietRenji=find(restRenji.s,0,restRenji.target.uid);
+ assert.equal(quietRenji.ready,false);
+ assert.equal((quietRenji.stack||[]).length,0);
+ assert.equal(restRenji.s.pending,null);
+ assert.equal(legalUniversalActions(packs,restRenji.s).some(a=>a.type==='activate'&&
+  a.uid===restRenji.target.uid),false);
+ let raidRenji=paid(2594,2,'BLC-4-050');
+ raidRenji.s=play(raidRenji.s,a=>a.type==='chooseHandRestOrRaid'&&a.mode==='raid'&&
+  a.uid===raidRenji.target.uid&&a.baseUid===raidRenji.renji.uid&&a.line==='front');
+ const activeRenji=find(raidRenji.s,0,raidRenji.target.uid);
+ assert.equal(activeRenji.ready,true);
+ assert.equal(activeRenji.stack[0].uid,raidRenji.renji.uid);
+ assert.equal(raidRenji.s.pending,null);
+ raidRenji.s=play(raidRenji.s,a=>a.type==='activate'&&a.uid===raidRenji.target.uid&&a.mode==='oncePay');
+ raidRenji.s=play(raidRenji.s,a=>a.type==='chooseEffectMode'&&a.mode==='impact');
+ assert.equal(universalImpact(packs,raidRenji.s,find(raidRenji.s,0,raidRenji.target.uid)),1);
+ let victim,parked;
+ let restRemove=paid(2595,3,'BLC-1-047',s=>{
+  victim=place(s,1,'BLC-4-050','front',0);
+  parked=[0,1,2,3].map(()=>outside(s,0,'BLC-4-049'));
+ });
+ restRemove.s=play(restRemove.s,a=>a.type==='chooseHandRestOrRaid'&&a.mode==='enter'&&
+  a.uid===restRemove.target.uid&&a.line==='front');
+ assert.equal(find(restRemove.s,0,restRemove.target.uid).ready,false);
+ assert.equal((find(restRemove.s,0,restRemove.target.uid).stack||[]).length,0);
+ assert.equal(restRemove.s.pending,null);
+ assert.equal(universalBp(packs,restRemove.s,find(restRemove.s,1,victim.uid)),4000);
+ for(const card of parked)assert.equal(restRemove.s.players[0].outside.some(c=>c.uid===card.uid),true);
+ restRemove.s=play(restRemove.s,a=>a.type==='activate'&&a.uid===restRemove.target.uid&&a.mode==='oncePay');
+ assert.equal(universalAttackDamage(packs,restRemove.s,find(restRemove.s,0,restRemove.target.uid)),2);
+ let foe,four;
+ let raidRemove=paid(2596,3,'BLC-1-047',s=>{
+  foe=place(s,1,'BLC-4-050','front',0);
+  four=[0,1,2,3].map(()=>outside(s,0,'BLC-4-049'));
+ });
+ raidRemove.s=play(raidRemove.s,a=>a.type==='chooseHandRestOrRaid'&&a.mode==='raid'&&
+  a.uid===raidRemove.target.uid&&a.baseUid===raidRemove.renji.uid&&a.line==='front');
+ const arrived=find(raidRemove.s,0,raidRemove.target.uid);
+ assert.equal(arrived.ready,true);
+ assert.equal(arrived.stack[0].uid,raidRemove.renji.uid);
+ assert.equal(raidRemove.s.pending.kind,'effect-remove-outside');
+ assert.equal(raidRemove.s.pending.short,false);
+ for(const card of four)
+  raidRemove.s=play(raidRemove.s,a=>a.type==='chooseRemoveOutside'&&a.mode==='pick'&&a.uid===card.uid);
+ assert.equal(raidRemove.s.pending.kind,'effect-target');
+ raidRemove.s=play(raidRemove.s,a=>a.type==='chooseTarget'&&a.uid===foe.uid);
+ assert.equal(universalBp(packs,raidRemove.s,find(raidRemove.s,1,foe.uid)),1000);
+ assert.equal(legalUniversalActions(packs,raidRemove.s).some(a=>a.type==='activate'&&
+  a.uid===raidRemove.target.uid&&a.mode==='oncePay'),true);
 });
 
 test('BLC-4-082 draws the returned top card only after a high-energy card goes outside',()=>{
