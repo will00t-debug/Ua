@@ -2,7 +2,7 @@ import {EXPANSION_CARDS} from './expansion-cards.mjs?v=6';
 import {CARD_RULES} from './card-rules.mjs?v=6';
 import {EXTRA_RULES} from './extra-rules.mjs?v=9.1.0';
 import {V9_RULES} from './v9-rules.mjs?v=9.1.0';
-import {ADVANCED_CARDS} from './advanced-cards.mjs?v=9.1.0';
+import {ADVANCED_CARDS} from './advanced-cards.mjs?v=20261029art1';
 
 const STARTER = [
   {id:'034',name:'石田雨龍',key:'uryu',energy:0,ap:1,bp:1500,gen:1,type:'character',tag:'濾牌',effect:'登場：抽 1 張，再棄 1 張。',trigger:'draw'},

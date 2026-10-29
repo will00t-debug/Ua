@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {existsSync,readFileSync} from 'node:fs';
+import {readFileSync} from 'node:fs';
 import {CARDS,BY_ID,PRESETS,validateDeck,pendingCards,resolveCardId} from '../dist/cards.mjs';
 import {normalizeCounts,formatDeck,parseDeck,sameCounts,readSavedDecks} from '../dist/decks.mjs';
 import {newGame,dispatch,legalActions,energy,bp,assertState} from '../dist/engine.mjs';
@@ -8,7 +8,7 @@ import {newGame,dispatch,legalActions,energy,bp,assertState} from '../dist/engin
 test('all requested base pools and four magazine reprints are complete and have local images',()=>{
  for(const [set,n] of [['b1',100],['b2',73],['b3',81],['nc',11],['book',4],['st',18]])assert.equal(CARDS.filter(c=>c.sets.includes(set)).length,n,set);
  assert.equal(CARDS.length,276);assert.equal(new Set(CARDS.map(c=>c.identity)).size,CARDS.length);
- for(const c of CARDS){assert.ok(c.name&&c.effect&&c.source);assert.ok(Number.isInteger(c.energy)&&Number.isInteger(c.bp)&&Number.isInteger(c.ap));assert.ok(existsSync(new URL('../dist/'+c.image,import.meta.url)),c.image);for(const v of c.variants||[])assert.ok(readFileSync(new URL('../dist/'+v.image,import.meta.url)).subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])),v.image);}
+ for(const c of CARDS){assert.ok(c.name&&c.effect&&c.source);assert.ok(Number.isInteger(c.energy)&&Number.isInteger(c.bp)&&Number.isInteger(c.ap));assert.ok(readFileSync(new URL('../dist/'+c.image,import.meta.url)).subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])),c.image);for(const v of c.variants||[])assert.ok(readFileSync(new URL('../dist/'+v.image,import.meta.url)).subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10])),v.image);}
 });
 test('full series identities, reprints and verified parallel aliases share the four-card limit',()=>{
  assert.equal(resolveCardId('UA08BT/BLC-1-034'),'034');assert.equal(resolveCardId('UA08ST/BLC-1-034'),'034');
