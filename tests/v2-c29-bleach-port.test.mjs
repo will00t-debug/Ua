@@ -395,9 +395,9 @@ function plainId(deck,bp,not){
 }
 
 test('C29 registers one-hundred-fourteen whole BLEACH prints and keeps the independent census',()=>{
- assert.equal(EXPECTED_V2_TOTAL,644);
+ assert.equal(EXPECTED_V2_TOTAL,654);
  assert.equal(EXPECTED_V2_COUNTS.bleach,276);
- assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],147);
+ assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],157);
  for(const id of ADDED)assert.equal(EXPECTED_V2_IDS.bleach.includes(id),true);
  assert.equal(Object.keys(bleach.cards).length,276);
 });

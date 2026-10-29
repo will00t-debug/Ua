@@ -45,7 +45,7 @@ function sit(card,ready=true){card.ready=ready;return card;}
 test('three designated lists stay exact and are not offered as playable 50-card presets',()=>{
  assert.equal(Object.keys(pack.cards).length,EXPECTED_V2_COUNTS.bleach);
  assert.equal(EXPECTED_V2_COUNTS.bleach,276);
- assert.equal(EXPECTED_V2_TOTAL,644);
+ assert.equal(EXPECTED_V2_TOTAL,654);
  const registered=id=>!!pack.cards[id];
  const report=summarizeDesignatedDecks(registered);
  assert.equal(report.length,3);
