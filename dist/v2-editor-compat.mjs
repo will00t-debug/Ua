@@ -75,7 +75,16 @@ export function editorV2Status(title,counts,pack=registeredPackForEditor(title))
  let v2Counts={};
  if(!errors.length){
   v2Counts=toV2Counts(title,counts);
-  errors.push(...validateUniversalDeck(pack,v2Counts));
+  for(const issue of validateUniversalDeck(pack,v2Counts)){
+   if(issue==='COLOR Trigger limit exceeded'){
+    const flagged=Object.entries(v2Counts).filter(([id,n])=>
+     n>0&&pack.cards[id]?.trigger==='color');
+    const count=flagged.reduce((sum,[,n])=>sum+n,0);
+    const detail=flagged.map(([id,n])=>id+' ×'+n).join('、');
+    errors.push('COLOR Trigger limit exceeded：目前 '+count+
+     ' 張，上限 4 張，請減少 '+(count-4)+' 張'+(detail?'（'+detail+'）':''));
+   }else errors.push(issue);
+  }
  }
  return {supported,issues:errors,ready:errors.length===0,total,registered:supported.size,pack,counts:v2Counts};
 }

@@ -335,7 +335,14 @@ async function mirrorCloudDeck(title,entry){
   }else if(response.status===401||response.status===404){
    notify('已儲存在瀏覽器；帳號沒有登入或已切換，無法更新雲端牌組。');
   }else{
-   notify('已儲存在瀏覽器；雲端同步失敗，請返回帳號頁確認。');
+   // Show the actual sanitized server-side validation error instead of
+   // masking every 400 / 409 / 500 response behind a generic sync toast.
+   let reason='';
+   try{
+    const detail=await response.json();
+    if(typeof detail?.error==='string')reason=detail.error.slice(0,180);
+   }catch{/* Non-JSON gateway errors still get the generic fallback. */}
+   notify('已儲存在瀏覽器；雲端同步失敗'+(reason?'：'+reason:'，請返回帳號頁確認。'));
   }
  }catch{notify('已儲存在瀏覽器；目前無法連線同步帳號。');}
 }
