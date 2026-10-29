@@ -85,6 +85,9 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-hand-rest':'從己方手牌免費 REST 登場',
  'effect-hand-rest-cap':'從手牌將符合條件的卡以 Rest 登場',
  'effect-hand-rest-or-raid':'從己方手牌 REST 登場或合法 Raid',
+ 'effect-protect-gen':'選擇己方角色，直到下次自己的回合開始不能被對手效果選擇',
+ 'effect-raid-base-choice':'レイド元をレスト登場或加入手牌',
+ 'effect-named-ap-outside':'從場外 REST 登場或合法 Raid',
  'effect-active-own-named':'可將最多 1 個己方指定名稱角色轉為 ACTIVE',
  'effect-active-energy-named':'可將最多 1 張己方能量線指定名稱卡轉為 ACTIVE',
  'effect-bounce-own':'選擇返回手牌的己方角色',
@@ -98,6 +101,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-hand-top':'將 1 張手牌放到牌組上面',
  'effect-rest-front-ap':'可休息 1 張前線活動角色，之後恢復 AP',
  'effect-discard-active':'可將 1 張手牌放到場外，使這張場域活動',
+ 'effect-attack-discard-active':'可將 1 張手牌放到場外，使這張角色活動',
  'effect-once-choice':'是否發動本回合一次能力',
  'effect-choice-mode':'選擇一項效果',
  'effect-named-impact':'可選 1 個指定名稱角色，本回合 BP 上升並獲得 Impact',
@@ -175,7 +179,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'main-two-buff':'主要能力選擇 BP 對象',
  'main-discard-buff':'支付一張手牌，讓自身 BP 增加',
  'main-active-named':'選擇指定卡名的己方角色並轉為 ACTIVE',
- 'effect-grant-attack':'授予己方角色攻擊時能力','granted-attack-draw':'攻擊時是否抽一張',
+ 'effect-grant-attack':'授予己方角色攻擊時能力','effect-grant-retire':'授予己方角色退場時能力','granted-attack-draw':'攻擊時是否抽一張','granted-retire-draw':'退場時是否抽一張',
  'effect-grant-opp-block':'對手選擇一名角色，本回合不被高 BP 阻擋',
  'effect-deploy-outside':'從場外選擇角色登場',
  'effect-energy-skip-swap':'能源線與下次不 ACTIVE 的前線角色交換',
@@ -262,7 +266,11 @@ export function uiActionLabel(action,{pack,state}={}){
    '狙擊攻擊：'+name()+' → '+uiCardLabel(pack,state,action.targetUid):
    '宣告攻擊：'+name();
   case 'activateRemoved':return '起動移除區主要：本回合產生能源變為 2 倍';
-  case 'activate':return action.mode==='front'?
+  case 'activate':return action.mode==='namesActive'?
+    '起動主要：場上同時有指定名稱時，將此角色轉為 ACTIVE':
+    action.mode==='traitBuff'?
+    '起動主要：發生能源與特徵齊備時，下次己方回合開始前 BP＋500':
+    action.mode==='front'?
     '起動主要：前線也能產生能源':
     action.mode==='ready20'?'起動主要：將 1 張己方角色轉為 ACTIVE':
     action.mode==='line'?'起動主要：棄 1 張手牌，本回合可從能源線攻擊':
@@ -426,6 +434,7 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseFacedownOutside':return '將蓋牌放到場外：'+name();
   case 'reorderUnder':return '調整蓋牌順序';
   case 'chooseMayDraw':return action.mode==='draw'?'抽1張':'不抽牌';
+  case 'chooseNameDraw':return action.mode==='draw'?'名稱成立時抽 1 張':'不選這個名稱';
   case 'chooseRemovedOutside':return action.mode==='all'?'將符合名稱的除外卡全部送至場外':
    action.mode==='done'?'完成送至場外':'將 '+name()+' 送至場外';
   case 'chooseHandFrontActive':return '以 Active 登場於前線 '+(action.slot+1);
@@ -524,6 +533,8 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseRestFrontAp':return action.uid===null?'不休息前線':'休息 '+name()+'，之後可恢復 1 張 AP';
   case 'chooseDiscardActive':return action.uid===null?'不棄牌，場域維持休息':
    '將 '+name()+' 放到場外，並使這張場域活動';
+  case 'chooseAttackDiscardActive':return action.uid===null?'不棄牌，角色維持休息':
+   '將 '+name()+' 放到場外，並使這張角色活動';
   case 'chooseTopHandOutside':return action.step==='outside'?'將 '+name()+' 送至場外':'將 '+name()+' 加入手牌';
   case 'chooseEnergyTraitFront':return action.uid===null?'不移動其餘能源線角色':'將 '+name()+' 移至前線 '+(action.slot+1);
   case 'chooseRemoveHandCap':return action.mode==='done'?'結束除外並退場':'將 '+name()+' 除外';
@@ -561,6 +572,8 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseAttackBan':return action.uid===null?'不指定攻擊禁止對象':
    '令 '+name()+' 至下個己方回合開始前不能攻擊';
   case 'chooseGrantAttack':return '授予 '+name()+' 本回合攻擊時抽牌';
+  case 'chooseGrantRetire':return action.uid===null?'不授予退場時抽牌':'授予 '+name()+' 本回合退場時抽牌';
+  case 'chooseGrantedRetireDraw':return action.mode==='draw'?'退場時抽 1 張':'不抽牌';
   case 'chooseOppBlock':return action.uid===null?'不賦予阻擋限制':'讓 '+name()+' 本回合不被 BP 以上角色阻擋';
   case 'chooseDeployOutside':return action.uid===null?'不從場外登場':'從場外登場 '+name()+suffix();
   case 'chooseEnergySkipSwap':return action.uid===null?'不交換位置':'與 '+name()+' 交換前線與能源線';

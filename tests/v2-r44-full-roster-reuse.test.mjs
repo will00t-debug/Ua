@@ -14,7 +14,7 @@ test('R44 all unported identities searched across each of five official titles, 
  assert.deepEqual(new Set(ids),new Set(inv.series.flatMap(s=>s.unportedIds)));
  assert.ok(!r.flagged.some(c=>c.id==='SAO-2-069'));
  assert.ok(r.flagged.every(c=>c.status!=='READY'));
- assert.equal(r.summary.statuses['RULE BLOCKED'],1);
+ assert.equal(r.summary.statuses['RULE BLOCKED']||0,0);
  console.log('R44_SOURCE_ROSTER '+JSON.stringify(r.summary));
 });
 test('R44 official complete source and blocked candidate provenance retained',()=>{

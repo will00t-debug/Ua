@@ -180,7 +180,7 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='effect-top-trait-outside')
   return difficulty==='easy'?legal.find(a=>a.uid===null)||legal[0]:
    legal.find(a=>a.uid!==null)||legal[0];
- if(s.pending?.kind==='effect-may-draw')
+ if(s.pending?.kind==='effect-may-draw'||s.pending?.kind==='effect-name-draw')
   return difficulty==='easy'?legal.find(a=>a.mode==='skip')||legal[0]:
    legal.find(a=>a.mode==='draw')||legal[0];
  if(s.pending?.kind==='effect-optional-tuck-under')
@@ -381,6 +381,7 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='effect-add-named')return legal.find(a=>a.uid)||legal[0];
  if(s.pending?.kind==='effect-rest-front-ap')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-discard-active')return legal.find(a=>a.uid!==null)||legal[0];
+ if(s.pending?.kind==='effect-attack-discard-active')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-hand-top'){
   const catalog=packsOf(pack)[s.pending.player].cards;
   const hand=s.players[s.pending.player].hand;
@@ -501,8 +502,9 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   return leave;
  }
  if(s.pending?.kind==='block')return chooseBlock(pack,s,legal,difficulty);
- if(s.pending?.kind==='granted-attack-draw')return legal.find(x=>x.mode==='draw')||legal[0];
- if(s.pending?.kind==='effect-grant-attack')return legal[0];
+ if(s.pending?.kind==='granted-attack-draw'||s.pending?.kind==='granted-retire-draw')
+  return legal.find(x=>x.mode==='draw')||legal[0];
+ if(s.pending?.kind==='effect-grant-attack'||s.pending?.kind==='effect-grant-retire')return legal[0];
  if(s.pending?.kind==='effect-target-many')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-line-slot')return legal[0];
  if(s.pending?.kind==='effect-mark-opp-start')
@@ -521,6 +523,9 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
   // candidate targets, never AI text parsing.
   return choices[0]?.a||legal[0];
  }
+ if(['effect-protect-gen','effect-raid-base-choice','effect-named-ap-outside',
+  'effect-line-move','effect-grant-named'].includes(s.pending?.kind))
+  return legal.find(a=>a.uid!==null)||legal[0];
  if(['effect-raid-witness-order','effect-raid-attach','effect-raid-witness-move','effect-look-take','effect-discard-mode','effect-facedown-scale','effect-spend-facedown','effect-absorb-front','effect-simon-low','effect-replay-entry','effect-attack-end-raid','effect-retire-capture'].includes(s.pending?.kind))
   return legal.find(a=>a.uid===null||a.when==='skip'||a.mode==='skip'||a.uids?.length===0)||legal[0];
  const next=option(legal,'next')||legal[0];
