@@ -15,6 +15,47 @@
  background:#0b5048f2;color:#effffb;font-size:12px;font-weight:800;
  line-height:1.2;white-space:nowrap;pointer-events:none;
 }
+
+/* Gold printed-keyword-style chips remain upright when a card turns REST. */
+.v2-shell #match-view .v2-attack-keyword{
+ display:inline-flex;align-items:center;justify-content:center;flex:none;
+ border:1px solid #c08c0b;border-radius:3px;padding:2px 5px;
+ background:linear-gradient(180deg,#fff79b 0%,#ffdf50 55%,#ffc82e 100%);
+ color:#2b2107;font-size:11px;font-style:normal;font-weight:900;
+ line-height:1.25;letter-spacing:0;white-space:nowrap;
+ text-shadow:0 1px 0 #fff9;box-shadow:inset 0 1px 0 #fff9,0 1px 4px #0009;
+}
+.v2-shell #match-view .arena .slot.v2-attacking .v2-attack-keywords-card{
+ position:absolute;z-index:8;top:3px;right:-4px;pointer-events:none;
+ display:flex;flex-direction:column;align-items:flex-end;gap:3px;
+}
+.v2-shell #match-view .v2-block-battle-meta{
+ display:flex;align-items:center;gap:5px;min-width:0;white-space:nowrap;
+}
+.v2-shell #match-view .v2-block-battle-meta>b{
+ color:#f1f4fc;font-size:11px;flex:none;font-weight:750;
+}
+.v2-shell #match-view .v2-block-battle-meta .v2-block-hint{
+ overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;
+ color:#cad7e7;font-size:11px;
+}
+@media (min-width:761px){
+ .v2-shell #match-view .arena .slot.v2-attacking .v2-attack-keyword{
+  font-size:10px;padding:2px 3px;
+ }
+}
+@media (max-width:760px){
+ .v2-shell #match-view .arena .slot.v2-attacking .v2-attack-keyword{
+  font-size:10px;padding:2px 3px;
+ }
+ .v2-shell #match-view .v2-block-battle-meta{gap:3px}
+ .v2-shell #match-view .v2-block-battle-meta>b{font-size:10px}
+ .v2-shell #match-view .v2-block-battle-meta .v2-attack-keyword{
+  font-size:11px;padding:2px 4px;
+ }
+ .v2-shell #match-view .v2-block-battle-meta .v2-block-hint{font-size:10px}
+}
+
 .v2-shell #match-view .v2-block-controls{min-width:0;gap:0;padding:5px 10px}
 .v2-shell #match-view .v2-block-controls:before,
 .v2-shell #match-view .v2-block-controls:after{display:none}
