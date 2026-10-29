@@ -167,7 +167,7 @@ function moved(s,uid){
  return s.continuousStates.some(e=>e.kind==='cannotMove'&&!e.consumed&&e.targetUid===uid);
 }
 function yellowPair(s,p){
- return [0,1].map(i=>place(s,p,take(s,p,'SAO-1-003'),'energy',i,false));
+ return [0,1].map(i=>place(s,p,take(s,p,'SAO-1-003'),'energy',i,true));
 }
 
 test('the last six SAO prints join the shared pilot',()=>{
@@ -295,14 +295,14 @@ test('SAO-1-022 does not lock above 4 life, with one target, or a higher generat
  const rested=place(s,1,take(s,1,'SAO-1-003'),'energy',2,false);
  const field=place(s,1,take(s,1,'SAO-1-029'),'energy',3,true);
  assert.equal(universalCardEnergy(packs,s,1,yuna),1);
- assert.equal(universalCardEnergy(packs,s,1,active),3);
- assert.equal(universalCardEnergy(packs,s,1,rested),2);
+ assert.equal(universalCardEnergy(packs,s,1,active),2);
+ assert.equal(universalCardEnergy(packs,s,1,rested),1);
  assert.equal(universalCardEnergy(packs,s,1,field),1);
  const asuna=hold(s,0,'SAO-1-022');
  let played=playFront(packs,s,asuna.uid);
  assert.deepEqual(played.pending.choices,[front.uid]);
  played=use(packs,played,a=>a.type==='chooseRestGen'&&a.uid===front.uid);
- assert.deepEqual(played.pending.choices,[yuna.uid]);
+ assert.deepEqual(played.pending.choices,[yuna.uid,rested.uid]);
  conserved(played);
 });
 

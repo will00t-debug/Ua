@@ -141,7 +141,7 @@ test('all one hundred thirteen whole prints enter the V2 pack',()=>{
  assert.deepEqual(pack.cards['REZ-1-056'].effects.onPlay,[{op:'draw',count:1}]);
  assert.deepEqual(pack.cards['REZ-1-029'].effects.onPlay,[{op:'recoverAp',count:2}]);
  assert.equal(pack.cards['REZ-1-016'].activeExtraEnergy,1);
- assert.equal(pack.cards['REZ-1-016'].gen,0);
+ assert.equal(pack.cards['REZ-1-016'].gen,1);
  assert.deepEqual(pack.cards['REZ-1-003'].opponentFieldColorsHandEnergyDiscount,
   {amount:1,colors:['blue','purple']});
  assert.equal(pack.cards['REZ-1-028'].step,true);
@@ -499,9 +499,9 @@ test('step, draw-discard, bounce, active energy, hand discount and two AP recove
  rem.ready=true;ram.ready=false;
  s.players[0].energy[0]=rem;
  s.players[0].energy[1]=ram;
- assert.equal(universalEnergyByColor(packs,s,0).yellow,2);
+ assert.equal(universalEnergyByColor(packs,s,0).yellow,3);
  rem.ready=false;
- assert.equal(universalEnergyByColor(packs,s,0).yellow,1);
+ assert.equal(universalEnergyByColor(packs,s,0).yellow,2);
 
  s=fresh(4007);
  const blue=pull(s,1,'REZ-1-043');
@@ -579,12 +579,12 @@ test('empty-field Step, rest energy, Felt, events and front Subaru resolve',()=>
   s.players[0].energy[0]=battery;
   s=reach(s,'main');
   const color=pack.cards[id].color;
-  assert.equal(universalEnergyByColor(packs,s,0)[color]||0,0);
+  assert.equal(universalEnergyByColor(packs,s,0)[color]||0,1);
   const act=legalUniversalActions(packs,s).find(a=>a.type==='activate'&&a.uid===battery.uid&&a.mode==='selfRestEnergyRetire');
   assert.ok(act,id);
   s=dispatchUniversalAction(packs,s,act);
   assert.equal(s.players[0].energy[0].ready,false);
-  assert.equal(universalEnergyByColor(packs,s,0)[color],1);
+  assert.equal(universalEnergyByColor(packs,s,0)[color],2);
   s.players[0].energy[0].ready=true;
   assert.equal(legalUniversalActions(packs,s).some(a=>a.uid===battery.uid&&a.type==='activate'),false);
   s=dispatchUniversalAction(packs,s,{type:'next'});
@@ -646,13 +646,13 @@ test('empty-field Step, rest energy, Felt, events and front Subaru resolve',()=>
  const rem=pull(s,0,'REZ-1-110');
  rem.ready=false;
  s.players[0].energy[0]=rem;
- assert.equal(universalEnergyByColor(packs,s,0).blue||0,0);
+ assert.equal(universalEnergyByColor(packs,s,0).blue||0,1);
  const subaru=pull(s,0,'REZ-1-068');
  s.players[0].front[0]=subaru;
- assert.equal(universalEnergyByColor(packs,s,0).blue,1);
+ assert.equal(universalEnergyByColor(packs,s,0).blue,2);
  s.players[0].front[0]=null;
  s.players[0].energy[1]=subaru;
- assert.equal(universalEnergyByColor(packs,s,0).blue||0,0);
+ assert.equal(universalEnergyByColor(packs,s,0).blue||0,1);
 });
 
 const thirdCounts={
@@ -1809,7 +1809,7 @@ test('Oni Power and Rem privilege retire BP 3000, or 5000 while Rem is on the fi
  let blue=ghost(5104);
  fuel(blue,['REZ-1-043','REZ-1-043','REZ-1-043','REZ-1-043']);
  blue=reach(blue,'main');
- assert.equal(universalEnergyByColor(packs,blue,0).blue,4);
+ assert.equal(universalEnergyByColor(packs,blue,0).blue,8);
  const blueMid=pull(blue,1,'REZ-1-017');
  const blueLow=pull(blue,1,'REZ-1-012');
  placeFront(blue,1,[blueLow,blueMid]);
@@ -1882,7 +1882,7 @@ test('Emilia hold retires BP 5000 only while Emilia is on the field',()=>{
  let s=hold(5106);
  fuel(s,['REZ-1-086','REZ-1-086','REZ-1-086','REZ-1-086']);
  s=reach(s,'main');
- assert.equal(universalEnergyByColor(packs,s,0).purple,4);
+ assert.equal(universalEnergyByColor(packs,s,0).purple,8);
  const low=pull(s,1,'REZ-1-072');
  const mid=pull(s,1,'REZ-1-075');
  const cap=pull(s,1,'REZ-1-075');
@@ -1978,7 +1978,7 @@ test('Garfiel enters active, may reduce one front character, and readies once fr
  let s=garfiel(5201);
  fuel(s,['REZ-1-086','REZ-1-086','REZ-1-086','REZ-1-086']);
  s=ownMain(s,2);
- assert.equal(universalEnergyByColor(packs,s,0).purple,4);
+ assert.equal(universalEnergyByColor(packs,s,0).purple,8);
  const victim=pull(s,1,'REZ-1-075');
  const parked=pull(s,1,'REZ-1-072');
  s.players[1].front[0]=victim;
@@ -2213,7 +2213,7 @@ test('Beatrice places one hand card on the deck top and gains BP only from the f
  let s=beatrice(5401);
  fuel(s,['REZ-1-086','REZ-1-086','REZ-1-086','REZ-1-086']);
  s=reach(s,'main');
- assert.equal(universalEnergyByColor(packs,s,0).purple,4);
+ assert.equal(universalEnergyByColor(packs,s,0).purple,8);
  const marker=pull(s,0,'REZ-1-072');
  s.players[0].hand.push(marker);
  let actor;
@@ -2325,7 +2325,7 @@ test('the sanctuary trial draws two, discards one, then may rest a front charact
  let s=trial(5501);
  fuel(s,['REZ-1-086','REZ-1-086','REZ-1-086','REZ-1-086']);
  s=reach(s,'main');
- assert.equal(universalEnergyByColor(packs,s,0).purple,4);
+ assert.equal(universalEnergyByColor(packs,s,0).purple,8);
  const ready=pull(s,0,'REZ-1-072');
  ready.ready=true;
  const rested=pull(s,0,'REZ-1-068');
@@ -2448,7 +2448,7 @@ test('Forbidden Library may discard to enter active, then rests to draw and top 
  let s=library(5602);
  fuel(s,['REZ-1-086','REZ-1-086','REZ-1-086','REZ-1-086']);
  s=reach(s,'main');
- assert.equal(universalEnergyByColor(packs,s,0).purple,4);
+ assert.equal(universalEnergyByColor(packs,s,0).purple,8);
  const payment=pull(s,0,'REZ-1-072');
  const placed=pull(s,0,'REZ-1-068');
  s.players[0].hand.push(payment,placed);
@@ -2922,7 +2922,7 @@ test('Emilia discounts the next hand Emilia by one purple only after her own eff
   op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,requireOwnEffectRest:true,
   then:[{op:'discountNextNamedHandEnergy',name:'レム',color:'purple',amount:1}]}}]}),/unsupported main action/);
  let quiet=emiliaEnergy(6101);
- fuel(quiet,['REZ-1-086','REZ-1-086']);
+ fuel(quiet,['REZ-1-086']);
  quiet=ownMain(quiet,2);
  let holder;
  [quiet,holder]=playFront(quiet,'REZ-1-085');
@@ -3054,7 +3054,7 @@ test('a revealed monster event counts as BP 4000 and retires only a front charac
  let short=monster(6203);
  fuel(short,['REZ-1-043','REZ-1-043','REZ-1-043','REZ-1-043']);
  short=reach(short,'main');
- assert.equal(universalEnergyByColor(packs,short,0).blue,4);
+ assert.equal(universalEnergyByColor(packs,short,0).blue,8);
  const low=pull(short,1,'REZ-1-017');
  short.players[1].front[0]=low;
  const waiting=pull(short,0,'REZ-1-065');
@@ -3236,7 +3236,7 @@ test('Hundred-Man Slash requires Crusch, retires BP 5000 or less, and may add 10
  live.players[1].front[0]=exact;
  live.players[1].front[1]=over;
  live.players[1].energy[0]=lined;
- assert.equal(universalEnergyByColor(packs,live,0).blue,4);
+ assert.equal(universalEnergyByColor(packs,live,0).blue,8);
  let paid;
  [paid]=castEvent(live,'REZ-1-066');
  assert.equal(paid.pending.kind,'effect-retire-at-most');
@@ -3461,7 +3461,7 @@ test('Ricardo pays one AP from hand, and rests into play only when the reference
  assert.equal(V2_PENDING_LABELS['effect-active-other'],'選擇最多 1 張其他己方角色並使其活動');
 
  let short=rick(6601);
- fuel(short,['REZ-1-043','REZ-1-043']);
+ fuel(short,['REZ-1-043']);
  short=ownMain(short,1);
  const shortCard=pull(short,0,'REZ-1-047');
  short.players[0].hand.push(shortCard);
@@ -3614,13 +3614,11 @@ test('Echidna raids onto Echidna, draws on entry, then rests one active front ch
  assert.equal(V2_PENDING_LABELS['effect-rest-own-front-draw'],'選擇 1 張自己的活動前線角色並使其休息');
 
  let live=witch(6701);
- // Two active REZ-1-086 supply the plus purple. Rested REZ-1-091 prints
- // one purple orb, leaving the line one short of REZ-1-093's energy 4.
- [0,1].forEach(i=>{
-  const gen=pull(live,0,'REZ-1-086');
-  gen.ready=true;
-  live.players[0].energy[i]=gen;
- });
+ // One active REZ-1-086 is the printed pip plus the active bonus.
+ // Rested REZ-1-091 prints one purple orb, leaving the line one short of energy 4.
+ const activeGen=pull(live,0,'REZ-1-086');
+ activeGen.ready=true;
+ live.players[0].energy[0]=activeGen;
  const base=pull(live,0,'REZ-1-091');
  live.players[0].energy[3]=base;
  const decoy=pull(live,0,'REZ-1-093');
@@ -3691,7 +3689,7 @@ test('Echidna raids onto Echidna, draws on entry, then rests one active front ch
  const attacker=pull(revealed,0,'REZ-1-007');
  attacker.ready=true;
  revealed.players[0].front[0]=attacker;
- [0,1,2,3].forEach(i=>{
+ [0,1].forEach(i=>{
   const gen=pull(revealed,1,'REZ-1-086');
   gen.ready=true;
   revealed.players[1].energy[i]=gen;
@@ -3789,7 +3787,7 @@ test('Subaru raids onto Subaru, draws, then may REST the raid base after retirem
  live.players[0].front[0].ready=false;
  live.players[0].front[1].ready=false;
  live.players[0].front[2].ready=false;
- assert.equal(universalEnergyByColor(packs,live,0).blue,4);
+ assert.equal(universalEnergyByColor(packs,live,0).blue,8);
  const waiting=pull(live,0,'REZ-1-040');
  live.players[0].hand.push(waiting);
  assert.equal(legalUniversalActions(packs,live).some(a=>a.type==='raid'&&a.baseUid===decoy.uid),false);
@@ -4139,7 +4137,7 @@ test('Beatrice raids onto Beatrice, gains impact from Subaru, and draws only aft
  live.players[0].front[3]=subaru;
  live=ownMain(live,2);
  for(const card of live.players[0].front)if(card)card.ready=false;
- assert.equal(universalEnergyByColor(packs,live,0).purple,4);
+ assert.equal(universalEnergyByColor(packs,live,0).purple,8);
  const waiting=pull(live,0,'REZ-1-078');
  live.players[0].hand.push(waiting);
  assert.equal(legalUniversalActions(packs,live).some(a=>a.type==='raid'&&a.baseUid===stranger.uid),false);
@@ -4264,7 +4262,7 @@ test('Rem raids onto Rem and retires one front scaled by blue zero-cost Subaru',
  quiet.players[1].front[0]=low;
  quiet=ownMain(quiet,2);
  quiet.players[0].energy[0].buffs=[{energy:1,untilTurn:quiet.turn}];
- assert.equal(universalEnergyByColor(packs,quiet,0).blue,5);
+ assert.equal(universalEnergyByColor(packs,quiet,0).blue,9);
  const quietTop=pull(quiet,0,'REZ-1-051');
  quiet.players[0].hand.push(quietTop);
  assert.equal(legalUniversalActions(packs,quiet).some(a=>a.type==='raid'&&a.uid===quietTop.uid&&a.baseUid===purple.uid),false);
@@ -4299,7 +4297,7 @@ test('Rem raids onto Rem and retires one front scaled by blue zero-cost Subaru',
  liveOver.buffs=[{bp:1000,untilTurn:live.turn}];
  assert.equal(universalBp(pack,live,liveExact),2000);
  assert.equal(universalBp(pack,live,liveOver),2500);
- assert.equal(universalEnergyByColor(packs,live,0).blue,5);
+ assert.equal(universalEnergyByColor(packs,live,0).blue,9);
  const waiting=pull(live,0,'REZ-1-051');
  live.players[0].hand.push(waiting);
  const raid=legalUniversalActions(packs,live).find(a=>a.type==='raid'&&a.uid===waiting.uid&&a.baseUid===base.uid);
@@ -4643,7 +4641,7 @@ test('Emilia raids onto Emilia, may drop one front by 3500, and retires only whi
  live=ownMain(live,2);
  live.players[0].energy[0].buffs=[{energy:1,untilTurn:live.turn}];
  live.players[0].energy[1].buffs=[{energy:1,untilTurn:live.turn}];
- assert.equal(universalEnergyByColor(packs,live,0).purple,6);
+ assert.equal(universalEnergyByColor(packs,live,0).purple,10);
  const waiting=pull(live,0,'REZ-1-090');
  live.players[0].hand.push(waiting);
  assert.equal(legalUniversalActions(packs,live).some(a=>a.type==='raid'&&a.uid===waiting.uid&&a.baseUid===stranger.uid),false);
@@ -4763,7 +4761,7 @@ test('Rem raids onto Rem, rests one cheap yellow Ram or Rem, and grants impact t
  const decoy=pull(live,0,'REZ-1-019');
  live.players[0].front[2]=decoy;
  live=ownMain(live,2);
- assert.equal(universalEnergyByColor(packs,live,0).yellow,4);
+ assert.equal(universalEnergyByColor(packs,live,0).yellow,5);
  const waiting=pull(live,0,'REZ-1-019');
  const ram=pull(live,0,'REZ-1-008');
  const other=pull(live,0,'REZ-1-014');
@@ -4889,7 +4887,7 @@ test('Rem raids onto Rem, rests a blue zero-cost Subaru, and grants a 4000 block
  live.players[0].front[1]=stranger;
  live=ownMain(live,2);
  live.players[0].energy[0].buffs=[{energy:1,untilTurn:live.turn}];
- assert.equal(universalEnergyByColor(packs,live,0).blue,5);
+ assert.equal(universalEnergyByColor(packs,live,0).blue,9);
  const waiting=pull(live,0,'REZ-1-053');
  const cheap=pull(live,0,'REZ-1-037');
  const costly=pull(live,0,'REZ-1-040');
@@ -5052,7 +5050,7 @@ test('Beatrice raids onto Beatrice, moves one front to energy, and locks movemen
  const decoy=pull(live,0,'REZ-1-077');
  live.players[0].front[1]=decoy;
  live=ownMain(live,2);
- assert.equal(universalEnergyByColor(packs,live,0).purple,3);
+ assert.equal(universalEnergyByColor(packs,live,0).purple,6);
  const subaru=pull(live,0,'REZ-1-068');
  subaru.ready=true;
  live.players[0].energy[3]=subaru;
@@ -5223,7 +5221,7 @@ test('Emilia raids onto Emilia, blocks low BP, rests an unblocked front, and swa
  live.players[0].front[2]=stranger;
  live=ownMain(live,2);
  live.players[0].energy[0].buffs=[{energy:1,untilTurn:live.turn}];
- assert.equal(universalEnergyByColor(packs,live,0).purple,5);
+ assert.equal(universalEnergyByColor(packs,live,0).purple,9);
  const waiting=pull(live,0,'REZ-1-089');
  live.players[0].hand.push(waiting);
  const partner=stamp(live,pull(live,0,'REZ-1-068'));
@@ -5557,7 +5555,12 @@ test('the Beatrice call reveals an affordable Subaru or Beatrice and may rest or
  missing.players[0].outside.splice(sourceAt,1);
  assert.throws(()=>legalUniversalActions(packs,missing),/Invalid revealed deck play pending/);
  const broke=structuredClone(costly.s);
- for(const card of broke.players[0].energy)if(card)card.ready=false;
+ for(let i=0;i<broke.players[0].energy.length;i++){
+  const card=broke.players[0].energy[i];
+  if(!card)continue;
+  broke.players[0].energy[i]=null;
+  broke.players[0].outside.push(card);
+ }
  assert.equal(universalEnergyByColor(packs,broke,0).purple||0,0);
  assert.throws(()=>legalUniversalActions(packs,broke),/Invalid revealed deck play pending/);
  assert.equal(assertUniversalMatch(packs,taken),true);
@@ -5700,7 +5703,7 @@ test('raid Subaru peeks, draws, and offers the Beatrice reveal once per attack',
   let s=wave(seed);
   purpleFuel(s,4);
   s=ownMain(s,2);
-  assert.equal(universalEnergyByColor(packs,s,0).purple,4);
+  assert.equal(universalEnergyByColor(packs,s,0).purple,8);
   onlyTop(s,0,['REZ-1-007','REZ-1-008']);
   let subaru;
   [s,subaru]=playFront(s,'REZ-1-071');
@@ -6607,7 +6610,7 @@ test('Ram substitutes for Rem and lowers every qualifying front line',()=>{
  let down=five(8701);
  fuel(down,['REZ-1-016','REZ-1-016','REZ-1-016','REZ-1-016']);
  down=reach(down,'main');
- assert.equal(universalEnergyByColor(packs,down,0).yellow,4);
+ assert.equal(universalEnergyByColor(packs,down,0).yellow,8);
  const small=put(down,1,'REZ-1-037','front',0);
  const mid=put(down,1,'REZ-1-012','front',1);
  const tall=put(down,1,'REZ-1-016','front',2);
@@ -6778,7 +6781,7 @@ test('traitless Rem gains this-turn impact and a sniper that cannot name BP 4000
  lineEnergy(live,0,['REZ-1-016','REZ-1-016','REZ-1-016','REZ-1-101']);
  const base=put(live,0,'REZ-1-012','front',0);
  live=ownMain(live,2);
- assert.equal(universalEnergyByColor(packs,live,0).yellow,5);
+ assert.equal(universalEnergyByColor(packs,live,0).yellow,8);
  assert.equal(live.players[0].apCards.filter(c=>c.ready).length,2);
  let top;
  [live,top]=raidFront(live,'REZ-1-020',base.uid,0);
@@ -6827,7 +6830,7 @@ test('traitless Rem gains this-turn impact and a sniper that cannot name BP 4000
  assert.equal(universalImpact(packs,marked,at(marked,0,traited.uid)),0);
 
  let bare=five(8713);
- fuel(bare,['REZ-1-016','REZ-1-016','REZ-1-016','REZ-1-016']);
+ fuel(bare,['REZ-1-016','REZ-1-016']);
  bare=reach(bare,'main');
  assert.equal(universalEnergyByColor(packs,bare,0).yellow,4);
  const costly=pull(bare,0,'REZ-1-020');
@@ -6883,7 +6886,7 @@ test('Rem chooses an active zero-energy Subaru or a bounce then a rested Subaru'
  const purple=pull(active,0,'REZ-1-068');
  active.players[0].outside.push(zero,purple);
  active=ownMain(active,2);
- assert.equal(universalEnergyByColor(packs,active,0).blue,4);
+ assert.equal(universalEnergyByColor(packs,active,0).blue,8);
  assert.equal(active.players[0].apCards.filter(c=>c.ready).length,2);
  let rem;
  [active,rem]=playFront(active,'REZ-1-052');
@@ -6965,7 +6968,7 @@ test('Rem chooses an active zero-energy Subaru or a bounce then a rested Subaru'
  assert.equal(self.players[0].front.some(c=>c?.uid===mirror.uid),false);
 
  let gated=five(8725);
- fuel(gated,['REZ-1-043','REZ-1-043','REZ-1-043','REZ-1-043']);
+ fuel(gated,['REZ-1-043','REZ-1-043']);
  const cheap=pull(gated,0,'REZ-1-037');
  const expensive=pull(gated,0,'REZ-1-040');
  gated.players[0].outside.push(cheap,expensive);
@@ -7001,7 +7004,7 @@ test('Beatrice makes one Subaru return to hand instead of an opponent retirement
  const subaru=put(live,0,'REZ-1-068','front',0);
  put(live,0,'REZ-1-007','front',1);
  live=reach(live,'main');
- assert.equal(universalEnergyByColor(packs,live,0).purple,1);
+ assert.equal(universalEnergyByColor(packs,live,0).purple,2);
  let beatrice;
  [live,beatrice]=playFront(live,'REZ-1-074');
  assert.equal(live.pending.kind,'effect-grant-bounce-instead');
@@ -7112,7 +7115,7 @@ test('Subaru reenters rested with the paid hand card facedown underneath',()=>{
  lineEnergy(live,1,ramFuel);
  const emilia=put(live,0,'REZ-1-081','front',0);
  live=reach(live,'main');
- assert.equal(universalEnergyByColor(packs,live,0).yellow,3);
+ assert.equal(universalEnergyByColor(packs,live,0).yellow,6);
  let subaru;
  [live,subaru]=playFront(live,'REZ-1-101');
  assert.equal(live.pending,null);
@@ -7307,7 +7310,7 @@ test('UA40BT/REZ-1-055 generates its printed blue orb while rested on the energy
  assert.equal(pack.cards['REZ-1-070'].gen,2);
  assert.equal(pack.cards['REZ-1-060'].gen,1);
  assert.equal(pack.cards['REZ-1-094'].gen,2);
- assert.equal(pack.cards['REZ-1-043'].gen,0);
+ assert.equal(pack.cards['REZ-1-043'].gen,1);
  let s=blade(9055);
  const crusch=pull(s,0,'REZ-1-055');
  crusch.ready=false;

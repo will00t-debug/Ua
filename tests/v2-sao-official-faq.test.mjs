@@ -82,7 +82,7 @@ function hold(s,p,id){
  return card;
 }
 function yellow(s,p){
- return [0,1].map(i=>place(s,p,take(s,p,'SAO-1-003'),'energy',i,false));
+ return [0,1].map(i=>place(s,p,take(s,p,'SAO-1-003'),'energy',i,true));
 }
 function setLife(s,p,n){
  while(s.players[p].life.length>n)s.players[p].outside.push(s.players[p].life.pop());
@@ -256,7 +256,7 @@ test('Q761: switch and an opponent swap cannot bring the front-banned Asuna to t
 
 test('Q764 and Q765: equal BP is an attacking win, and a snipe still battles',()=>{
  const {packs,s}=fresh(['SAO-1-091','SAO-1-073','SAO-1-041'],764);
- for(let i=0;i<3;i++)place(s,0,take(s,0,'SAO-1-073'),'energy',i,false);
+ for(let i=0;i<3;i++)place(s,0,take(s,0,'SAO-1-073'),'energy',i,true);
  const sinon=hold(s,0,'SAO-1-091');
  let played=use(packs,s,a=>a.type==='play'&&a.uid===sinon.uid&&a.line==='front');
  const shooter=played.players[0].front.find(c=>c?.uid===sinon.uid);

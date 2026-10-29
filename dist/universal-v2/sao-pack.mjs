@@ -965,7 +965,7 @@ const PRINTED_PINS=Object.freeze({
     "energy": 2,
     "ap": 1,
     "bp": 2500,
-    "gen": 2,
+    "gen": 1,
     "type": "character",
     "trigger": null,
     "traits": [],
@@ -978,7 +978,7 @@ const PRINTED_PINS=Object.freeze({
     "energy": 2,
     "ap": 1,
     "bp": 2500,
-    "gen": 2,
+    "gen": 1,
     "type": "character",
     "trigger": null,
     "traits": [
@@ -993,7 +993,7 @@ const PRINTED_PINS=Object.freeze({
     "energy": 2,
     "ap": 1,
     "bp": 2500,
-    "gen": 2,
+    "gen": 1,
     "type": "character",
     "trigger": null,
     "traits": [
@@ -1008,7 +1008,7 @@ const PRINTED_PINS=Object.freeze({
     "energy": 2,
     "ap": 1,
     "bp": 2500,
-    "gen": 2,
+    "gen": 1,
     "type": "character",
     "trigger": null,
     "traits": [
