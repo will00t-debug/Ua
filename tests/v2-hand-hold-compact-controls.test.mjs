@@ -21,7 +21,8 @@ test('holding a hand card one second opens printed artwork and effect without sh
  assert.match(hand,/Math\.hypot\(event\.clientX-originX,event\.clientY-originY\)>16/);
  assert.match(hand,/contextmenu/);
  assert.match(hand,/if\(held\)\{held=false;return;\}/);
- assert.match(hand,/app\.selectedUid=c\.uid/);
+ assert.match(hand,/selectDeployedCharacter\(c\.uid\);render\(\)/);
+ assert.match(script,/function selectDeployedCharacter\(uid\)\{[\s\S]*?app\.selectedUid=uid/);
  assert.match(script,/fieldEffectCopy\(catalogue\)/);
  assert.match(script,/const art=el\('img',\{class:'art',src:imgUrl\(side,card\.cardId\)/);
  const sheet=script.split('function showFieldSheet(')[1]?.split('function clearPendingOverlay()')[0];
@@ -32,11 +33,12 @@ test('holding a hand card one second opens printed artwork and effect without sh
 test('no giant legal actions panel; contextual non-placement actions remain playable',()=>{
  assert.ok(commands);
  assert.doesNotMatch(commands,/class:'selectionBar'|查看全部合法動作|收合全部動作/);
- assert.match(commands,/if\(uiActor\(s\)!==0\|\|app\.busy\|\|s\.pending\)return null/);
- assert.match(commands,/if\(!list\.length&&!raidReady&&!app\.targetChoices\)return null/);
+ assert.match(commands,/if\(uiActor\(s\)!==0\|\|app\.busy\)return null/);
+ assert.match(commands,/if\(s\.pending&&!board\)return null/);
+ assert.match(commands,/if\(!list\.length&&!board&&!app\.targetChoices&&!pendingRest\.length\)return null/);
  assert.match(commands,/class:'v2-compact-actions'/);
  assert.match(commands,/app\.targetChoices/);
- assert.match(commands,/!\['play','move','step'\]\.includes\(a\.type\)/);
+ assert.match(commands,/!boardEntryMode\(a\)&&!\['move','step'\]\.includes\(a\.type\)/);
  assert.match(commands,/uiActionLabel\(a,\{pack:app\.packs,state:s\}\)/);
  assert.match(commands,/applyAction\(a\)/);
  const render=script.split('function render(){')[1]?.split('function applyAction(a)')[0];
