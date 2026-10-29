@@ -31,7 +31,7 @@ import {SAO_CARDS} from './sao-cards.mjs';
 import {MST_V2_OFFICIAL_CATALOGUE} from './universal-v2/sources/mst-inventory.mjs';
 import {V2_PHASE_LABELS,V2_TITLE_LABELS,V2_PENDING_LABELS,
  uiActor,isExactLegal,uiCardLabel,uiActionLabel,visibleActionsForCard,
- pendingChoiceCards,inspectedPendingChoiceCards,visiblePendingChoiceCards,pendingChoiceCaption,publicPendingTargetCard,attackBattleTags,attackKeywordBadges,frontAttackKeywordBadges,inlineBlockDecision,raidClickPlan,moveClickPlan,
+ pendingChoiceCards,inspectedPendingChoiceCards,visiblePendingChoiceCards,pendingChoiceCaption,publicPendingTargetCard,attackBattleTags,attackKeywordBadges,frontAttackKeywordBadges,inlineBlockDecision,boardEntryMode,boardEntrySelection,entryClickPlan,moveClickPlan,
  FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs';
 import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalReplay,
  publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
@@ -111,7 +111,7 @@ if(!IS_BATTLE_PAGE)$('v2-coverage').textContent=
 let editorRecordId=null,fieldHold=0;
 const app={state:null,packs:null,launch:null,selectedUid:null,recordDeckId:null,recordNoted:false,
  selectedSide:null,history:[],busy:false,aiTimer:null,error:'',
- undo:null,replay:null,targetChoices:null,raidBaseUid:null,dismissedTriggerKeys:new Set(),aiDifficulty:'normal',sequence:0,allActions:false, maxAuto:4500,autoMoves:0,aiPhaseKey:null,aiPhaseCount:0,aiFallbacks:0,aiCompletedSteps:0,lastAiProgress:'未啟動'};
+ undo:null,replay:null,targetChoices:null,raidBaseUid:null,entryMode:null,dismissedTriggerKeys:new Set(),aiDifficulty:'normal',sequence:0,allActions:false, maxAuto:4500,autoMoves:0,aiPhaseKey:null,aiPhaseCount:0,aiFallbacks:0,aiCompletedSteps:0,lastAiProgress:'未啟動'};
 const phases=V2_PHASE_LABELS;
 const CLIENT_RELEASE='AI 修復 R2 · 2026-10-24';
 const btn=(label,fn,cls='')=>el('button',{type:'button',class:cls,text:label,onClick:fn});
@@ -154,8 +154,7 @@ function cardFace(physical,side,{showStats=true,interactive=false,ready=null,sel
  if(interactive){
   box.tabIndex=0;box.role='button';
   box.setAttribute('aria-label','選取卡片 '+printed);
-  const click=()=>{app.selectedUid=physical.uid;app.selectedSide=side;
-   app.allActions=false;render();};
+  const click=()=>{selectDeployedCharacter(physical.uid);app.selectedSide=side;render();};
   box.addEventListener('click',click);
   box.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();click();}});
  }
@@ -434,6 +433,9 @@ function blockBoardPrompt(decision){
 function pendingDialog(legal,view){
  const s=app.state;
  if(!s?.pending||uiActor(s)!==0||app.busy)return null;
+ // Deploying a character is three clicks on the table: the card, the mode
+ // when both exist, then the cell. A modal of every slot would hide that.
+ if(legal.some(action=>boardEntryMode(action)))return null;
  // Blocking happens on the visible table; all other pending effects retain
  // their existing mandatory choice dialogs.
  if(inlineBlockDecision(view,legal))return null;
@@ -502,25 +504,22 @@ function legacySlot(view,side,line,index,legal){
  const attackBadges=c&&line==='front'?frontAttackKeywordBadges(app.packs,app.state,side,index):[];
  const selected=!!c&&c.uid===app.selectedUid;
  const moving=yours&&app.state.phase==='move';
- const plan=!yours?{type:'select'}:moving?
+ const plan=!yours||blocking?{type:'select'}:moving&&!legal.some(action=>boardEntryMode(action))?
   moveClickPlan({selectedUid:app.selectedUid,slotUid:c?.uid||null,line,slot:index,legal}):
-  raidClickPlan({selectedUid:app.selectedUid,raidBaseUid:app.raidBaseUid,
-   slotUid:c?.uid||null,line,slot:index,legal});
- const chosenBase=!!c&&c.uid===app.raidBaseUid;
- const raidBase=plan.type==='choose-base'||(chosenBase&&plan.type!=='raid');
- const raidDest=plan.type==='raid';
+  entryClickPlan({selectedUid:app.selectedUid,entryMode:app.entryMode,
+   line,slot:index,slotUid:c?.uid||null,legal});
  const moveSource=plan.type==='choose-mover';
  const moveDest=plan.type==='destination';
- const place=plan.type==='place'||moveDest;
+ const entryDest=plan.type==='entry';
+ const place=moveDest||entryDest;
  const d=c?cardDef(side,c.cardId):null;
  const placement=moveDest?'移動至此':moveSource?'點選移動角色':
-  raidDest?'突襲登場':raidBase?(chosenBase?'已選底板':'突襲底板'):place?'放置':'';
+  entryDest?(plan.mode==='raid'?'突襲進場':'普通進場'):'';
  const btnSlot=el('button',{type:'button',class:'slot'+(c?' occupied':'')+
   (c&&!c.ready?' rested':'')+(selected?' selected':'')+
   (attacking?' v2-attacking':'')+(attackBadges.length?' v2-has-attack-keywords':'')+
   (blockAction?' v2-can-block':'')+
-  (raidBase?' raid-base':'')+(moveSource?' move-source':'')+
-  (raidDest||place?' destination':''),
+  (moveSource?' move-source':'')+(place?' destination':''),
   'aria-label':(side===0?'你的':'對手的')+(line==='front'?'前線':'能源線')+
    (index+1)+(d?' '+d.name:' 空位')+(placement?'，'+placement:'')+
    (attacking?'，攻擊中':'')+
@@ -572,28 +571,19 @@ function legacySlot(view,side,line,index,legal){
    if(c)showFieldSheet(side,line,c,d);
    return;
   }
-  if(moving){
-   if(plan.type==='choose-mover'){
-    app.selectedUid=app.selectedUid===plan.uid?null:plan.uid;
-    app.selectedSide=0;app.raidBaseUid=null;
-    app.targetChoices=null;app.allActions=false;render();return;
-   }
-   if(plan.type==='destination'){
-    const moves=plan.actions||[];
-    if(moves.length===1){applyAction(moves[0]);return;}
-    if(moves.length>1){app.targetChoices=moves;render();}
-   }
+  if(plan.type==='choose-mover'){
+   app.selectedUid=app.selectedUid===plan.uid?null:plan.uid;
+   app.selectedSide=0;app.entryMode=null;app.raidBaseUid=null;
+   app.targetChoices=null;app.allActions=false;render();return;
+  }
+  if(plan.type==='destination'||plan.type==='entry'){
+   const acts=plan.actions||[];
+   if(acts.length===1){applyAction(acts[0]);return;}
+   if(acts.length>1){app.targetChoices=acts;render();}
    return;
   }
-  if(plan.type==='choose-base'){
-   app.raidBaseUid=plan.baseUid;app.targetChoices=null;render();return;
-  }
-  const acts=plan.actions||[];
-  if(acts.length===1){applyAction(acts[0]);return;}
-  if(acts.length>1){app.targetChoices=acts;render();return;}
-  if(c&&c.uid===app.raidBaseUid)return;
-  if(c){app.selectedUid=c.uid;app.selectedSide=side;app.raidBaseUid=null;
-   app.targetChoices=null;app.allActions=false;render();}
+  if(plan.type==='entry-mode'||plan.type==='entry-wait')return;
+  if(c){selectDeployedCharacter(c.uid);app.selectedSide=side;render();}
  });
  return btnSlot;
 }
@@ -602,16 +592,24 @@ function legacyLine(view,side,line,legal){
  const slots=el('div',{class:'slots'});
  for(let i=0;i<4;i++)slots.append(legacySlot(view,side,line,i,legal));
  const piles=el('div',{class:'piles'});
+ const yours=side===0&&uiActor(app.state)===0&&!app.busy;
  if(line==='front'){
   piles.append(el('div',{class:'pile'},'DECK',el('b',{text:p.deckCount})),
    el('div',{class:'pile'},'HAND',el('b',{text:p.handCount})));
  }else{
-  // Public pile buttons are inspectors only; they never dispatch game actions.
-  for(const [zone,label] of [['outside','場外'],['removed','除外']])
-   piles.append(el('button',{type:'button',class:'pile v2-zone-pile',
-    'data-v2-zone':zone,'aria-label':(side===0?'我方':'對手')+label+'：'+p[zone].length+' 張，查看清單',
+  // Public pile buttons are inspectors. Own playable cards can also be selected.
+  for(const [zone,label] of [['outside','場外'],['removed','移除區']]){
+   const cards=p[zone]||[];
+   const canBring=yours&&cards.some(card=>legal.some(action=>
+    boardEntryMode(action)&&action.uid===card.uid));
+   const chosen=side===0&&cards.some(card=>card.uid===app.selectedUid);
+   piles.append(el('button',{type:'button',class:'pile v2-zone-pile'+
+    (canBring?' v2-zone-playable':'')+(chosen?' selected':''),
+    'data-v2-zone':zone,'aria-label':(side===0?'我方':'對手')+label+'：'+cards.length+
+     ' 張，查看清單'+(canBring?'，可選擇登場':''),
     onClick:()=>showZoneSheet(side,zone)},
-    el('span',{text:label}),el('b',{text:p[zone].length})));
+    el('span',{text:label}),el('b',{text:cards.length})));
+  }
  }
  return el('div',{class:'lineGroup'},label,slots,piles);
 }
@@ -644,7 +642,7 @@ function legacyHand(view,legal){
  const hand=el('div',{class:'hand',style:'--hand-wide:'+Math.max(1,Math.min(cards.length,9))});
  for(const c of cards){
   const d=cardDef(0,c.cardId)||{},selected=app.selectedUid===c.uid;
-  const playable=legal.some(a=>a.uid===c.uid&&['play','raid','event'].includes(a.type));
+  const playable=legal.some(a=>a.uid===c.uid&&(!!boardEntryMode(a)||a.type==='event'));
   const card=el('button',{type:'button',class:'handCard '+(selected?'selected ':'')+
    (playable?'playable':'unplayable'),'aria-label':d.name||c.cardId});
   card.dataset.v2CardUid=c.uid;
@@ -675,8 +673,7 @@ function legacyHand(view,legal){
   card.addEventListener('click',()=>{
    if(held){held=false;return;}
    if(app.busy||uiActor(app.state)!==0)return;
-   app.selectedUid=c.uid;app.selectedSide=0;app.raidBaseUid=null;
-   app.targetChoices=null;app.allActions=false;render();
+   selectDeployedCharacter(c.uid);render();
   });
   hand.append(card);
  }
@@ -696,34 +693,96 @@ function legacyHand(view,legal){
 }
 // Hide the large generic "legal actions" panel. Only surface contextual
 // buttons that cannot be performed by tapping a card and its destination.
+function selectDeployedCharacter(uid){
+ app.selectedUid=uid;app.selectedSide=0;app.entryMode=null;app.raidBaseUid=null;
+ app.targetChoices=null;app.allActions=false;
+}
+function ownListedCard(uid){
+ const player=app.state?.players?.[0];
+ if(!player||typeof uid!=='string')return null;
+ for(const zone of ['hand','outside','removed']){
+  const hit=(player[zone]||[]).find(card=>card?.uid===uid);
+  if(hit)return hit;
+ }
+ return null;
+}
+function selectedCardName(){
+ const card=ownListedCard(app.selectedUid);
+ return card?cardDef(0,card.cardId)?.name||card.cardId:'';
+}
+function entryChoiceText(action){
+ const text=uiActionLabel(action,{pack:app.packs,state:app.state});
+ const base=action.baseUid?uiCardLabel(app.packs,app.state,action.baseUid):'';
+ return text+(base&&base!=='指定卡片'&&!text.includes(base)?' · 底板 '+base:'')+
+  (action.replaceUid?'（替換原位置）':'');
+}
 function legacyCommands(legal){
  const s=app.state;
- if(uiActor(s)!==0||app.busy||s.pending)return null;
+ if(uiActor(s)!==0||app.busy)return null;
+ const board=legal.some(action=>boardEntryMode(action));
+ if(s.pending&&!board)return null;
  const selected=app.selectedUid?visibleActionsForCard(legal,app.selectedUid):[];
- const passive=legal.filter(a=>a.type==='extraDraw');
- const global=legal.filter(a=>!a.uid&&a.type!=='next'&&a.type!=='extraDraw');
- const actions=app.targetChoices||(app.selectedUid?[...passive,...selected]:[...passive,...global]);
- const list=[...new Map(actions.map(a=>[JSON.stringify(a),a])).values()]
-  .filter(a=>(a.type!=='raid'||app.targetChoices)&&
-   (app.targetChoices||!['play','move','step'].includes(a.type)))
+ const passive=s.pending?[]:legal.filter(a=>a.type==='extraDraw');
+ const global=s.pending?[]:legal.filter(a=>!a.uid&&a.type!=='next'&&a.type!=='extraDraw');
+ const pendingRest=s.pending?legal.filter(action=>!boardEntryMode(action)):[];
+ const pool=app.targetChoices||(app.selectedUid?[...passive,...selected]:[...passive,...global]);
+ const list=[...new Map(pool.map(a=>[JSON.stringify(a),a])).values()]
+  .filter(a=>app.targetChoices||(!boardEntryMode(a)&&!['move','step'].includes(a.type)))
   .slice(0,100);
- const raidReady=legal.some(a=>a.type==='raid'&&a.uid===app.selectedUid);
- if(!list.length&&!raidReady&&!app.targetChoices)return null;
- const bar=el('div',{class:'v2-compact-actions','aria-label':'情境操作'});
- if(raidReady){
-  bar.append(el('span',{class:'v2-compact-hint',text:app.raidBaseUid?
-   '已選突襲底板，請選擇登場位置。':'突襲：先點底板，再點要登場的格子。'}));
-  if(app.raidBaseUid)
-   bar.append(btn('重選底板',()=>{app.raidBaseUid=null;render();},'btn small quiet'));
+ const selection=app.selectedUid?boardEntrySelection(legal,app.selectedUid):
+  {normal:[],raid:[],needsMode:false};
+ const chosen=selection.needsMode&&(app.entryMode==='normal'||app.entryMode==='raid')?
+  app.entryMode:selection.needsMode?null:selection.raid.length?'raid':
+  selection.normal.length?'normal':null;
+ if(!list.length&&!board&&!app.targetChoices&&!pendingRest.length)return null;
+ const bar=el('div',{class:'v2-compact-actions','aria-label':'登場與情境操作'});
+ if(s.pending?.kind==='life-trigger'){
+  const shown=triggerCards(universalPublicView(app.packs,s,0)).filter(card=>card.checking);
+  if(shown.length){
+   const row=el('div',{class:'trigger-row'});
+   for(const card of shown)row.append(triggerTile(card));
+   bar.append(row);
+  }
  }
- if(app.targetChoices)bar.append(el('span',{class:'v2-compact-hint',text:'選擇這個位置的操作：'}));
- for(const a of list){
-  bar.append(btn(uiActionLabel(a,{pack:app.packs,state:s}),
-   ()=>{app.targetChoices=null;applyAction(a);},a.type==='raid'?'btn small primary':'btn small quiet'));
- }
- if(app.targetChoices)
+ const name=selectedCardName();
+ if(app.targetChoices){
+  bar.append(el('span',{class:'v2-compact-hint',text:'這個格子有多種登場方式，請選一個。'}));
+  for(const a of list)bar.append(btn(entryChoiceText(a),()=>{
+   app.targetChoices=null;applyAction(a);
+  },'btn small primary'));
   bar.append(btn('取消選擇',()=>{app.targetChoices=null;render();},'btn small quiet'));
- return bar;
+  return bar;
+ }
+ if(board&&!app.selectedUid)
+  bar.append(el('span',{class:'v2-compact-hint',text:
+   (s.pending?(V2_PENDING_LABELS[s.pending.kind]||'效果')+'。':'')+
+   '先選擇要登場的角色。手牌直接點；場外或移除區請打開該區再點角色。'}));
+ else if(selection.needsMode&&!chosen){
+  bar.append(el('span',{class:'v2-compact-hint',text:(name?name+'：':'')+
+   '選擇突襲進場或普通進場。'}));
+  bar.append(btn('普通進場',()=>{app.entryMode='normal';app.targetChoices=null;render();},'btn small'));
+  bar.append(btn('突襲進場',()=>{app.entryMode='raid';app.targetChoices=null;render();},'btn small primary'));
+ }else if(chosen){
+  bar.append(el('span',{class:'v2-compact-hint',text:(name?name+'：':'')+
+   (chosen==='raid'?'突襲進場':'普通進場')+'。請直接點要登場的格子。'}));
+  if(selection.needsMode)bar.append(btn(chosen==='raid'?'改為普通進場':'改為突襲進場',()=>{
+   app.entryMode=chosen==='raid'?'normal':'raid';app.targetChoices=null;render();
+  },'btn small quiet'));
+ }
+ const shown=new Set();
+ for(const a of list){
+  shown.add(a);
+  bar.append(btn(uiActionLabel(a,{pack:app.packs,state:s}),
+   ()=>{app.targetChoices=null;applyAction(a);},'btn small quiet'));
+ }
+ for(const a of pendingRest){
+  if(shown.has(a))continue;
+  shown.add(a);
+  const quiet=a.uid==null||a.mode==='skip'||a.mode==='decline'||a.mode==='hand';
+  bar.append(btn(uiActionLabel(a,{pack:app.packs,state:s}),()=>applyAction(a),
+   quiet?'btn small quiet':'btn small'));
+ }
+ return bar.childElementCount?bar:null;
 }
 // Keep an in-progress AI match alive when a mobile browser reloads the battle page.
 // This private, same-tab snapshot is never shared with the opponent or Worker.
@@ -759,7 +818,7 @@ function restoreBattleProgress(){
   app.recordNoted=data.recordNoted===true;
   app.aiCompletedSteps=Number.isInteger(data.aiCompletedSteps)?data.aiCompletedSteps:0;
   app.lastAiProgress=typeof data.lastAiProgress==='string'?data.lastAiProgress.slice(0,100):'已恢復對局';
-  app.error='';app.undo=null;app.selectedUid=null;
+  app.error='';app.undo=null;app.selectedUid=null;app.entryMode=null;
   return true;
  }catch{return false;}
 }
@@ -853,8 +912,11 @@ function showZoneSheet(side,zone){
  closeZoneSheet();
  const view=universalPublicView(app.packs,app.state,0);
  const cards=view.players[side]?.[zone]||[];
- const label=zone==='outside'?'場外':'除外區';
+ const label=zone==='outside'?'場外':'移除區';
  const owner=side===0?'我方':'對手';
+ const yours=side===0&&uiActor(app.state)===0&&!app.busy;
+ const playable=new Set((yours?legalUniversalActions(app.packs,app.state):[])
+  .filter(action=>boardEntryMode(action)).map(action=>action.uid));
  const overlay=el('div',{class:'overlay v2-zone-overlay'});
  overlay._v2Opener=document.activeElement;
  const dialog=el('section',{class:'v2-zone-dialog',role:'dialog',
@@ -862,7 +924,9 @@ function showZoneSheet(side,zone){
  const close=btn('關閉',closeZoneSheet,'v2-zone-close');
  dialog.append(el('header',{class:'v2-zone-header'},
   el('div',{},el('h2',{text:owner+'｜'+label}),
-   el('p',{class:'v2-zone-subtitle',text:'公開區域 · '+cards.length+' 張 · 點卡圖可查看效果'})),
+   el('p',{class:'v2-zone-subtitle',text:playable.size?
+    '公開區域 · '+cards.length+' 張 · 點角色開始登場。查看效果不會出牌。':
+    '公開區域 · '+cards.length+' 張 · 點卡圖可查看效果'})),
   close));
  const gallery=el('div',{class:'v2-zone-gallery'});
  for(const physical of [...cards].reverse()){
@@ -874,11 +938,22 @@ function showZoneSheet(side,zone){
    if(app.packs?.[side]?.id==='gurren-lagann'&&ttgArtErrorFallback(art))return;
    if(!art.src.endsWith('/assets/mark.svg'))art.src='assets/mark.svg';
   };
-  gallery.append(el('button',{type:'button',class:'v2-zone-card',
-   'aria-label':'查看 '+name+' '+physical.cardId+' 的完整卡圖與效果',
-   onClick:()=>showFieldSheet(side,zone,physical,def)},
-   art,el('span',{class:'v2-zone-card-name',text:name}),
-   el('small',{text:physical.cardId})));
+  const canPlay=playable.has(physical.uid);
+  const figure=el('div',{class:'v2-zone-card'+(canPlay?' v2-zone-playable':'')});
+  figure.append(el('button',{type:'button',class:'v2-zone-open',
+   'aria-label':(canPlay?'選擇登場：':'查看 ')+name+' '+physical.cardId,
+   onClick:()=>{
+    if(!canPlay){showFieldSheet(side,zone,physical,def);return;}
+    selectDeployedCharacter(physical.uid);
+    closeZoneSheet();
+    render();
+   }},art,el('span',{class:'v2-zone-card-name',text:name}),
+   el('small',{text:physical.cardId}),
+   canPlay?el('em',{class:'v2-zone-badge',text:'可登場'}):null));
+  if(canPlay)figure.append(el('button',{type:'button',class:'v2-zone-look',text:'查看效果',
+   'aria-label':'查看 '+name+' 的效果',
+   onClick:()=>showFieldSheet(side,zone,physical,def)}));
+  gallery.append(figure);
  }
  dialog.append(cards.length?gallery:
   el('p',{class:'v2-zone-empty',role:'status',text:'目前'+label+'沒有卡牌'}));
@@ -991,8 +1066,12 @@ function render(){
    el('span',{text:'REST 仍可產生能源'})),
   legacyHand(v,legal),legacyCommands(legal));
  arena.append(handArea);
+ const deploying=legal.some(action=>boardEntryMode(action));
  const phase=el('div',{class:'phaseAction'},el('p',{text:block?
-  (block.skipAction?'點卡圖上的「阻擋」，或選擇「不阻擋」。':'請點卡圖上的「阻擋」。'):s.pending?'請完成效果選擇。':
+  (block.skipAction?'點卡圖上的「阻擋」，或選擇「不阻擋」。':'請點卡圖上的「阻擋」。'):
+  deploying&&uiActor(s)===0&&!app.busy?
+   '先選角色。能選擇時再決定突襲進場或普通進場，最後直接點要登場的格子。':
+  s.pending?'請完成效果選擇。':
   app.busy?'AI 正在思考與操作…':s.status==='finished'?'對局結束':
   uiActor(s)===1?'電腦回合已暫停，可按上方「AI 沒反應？重新繼續」。':
   '點手牌再點亮起的場上位置，即可用 V2 合法動作出牌。'}));
@@ -1031,13 +1110,13 @@ function applyAction(a){
   app.replay=appendUniversalReplay(app.replay,a,0);
   pushHistory(publicPreviewActionLabel(app.packs,previous,app.state,a,0));
   saveBattleProgress();
-  app.selectedUid=null;app.raidBaseUid=null;app.targetChoices=null;app.error='';app.allActions=false;render();driveAi();
+  app.selectedUid=null;app.raidBaseUid=null;app.entryMode=null;app.targetChoices=null;app.error='';app.allActions=false;render();driveAi();
  }catch(e){alertText(e?.message||String(e));}
 }
 function undoMove(){
  if(!app.undo||app.busy)return;
  app.state=app.undo.state;app.history=app.undo.history;app.replay=app.undo.replay;
- app.undo=null;app.error='';app.selectedUid=null;
+ app.undo=null;app.error='';app.selectedUid=null;app.entryMode=null;
  app.dismissedTriggerKeys.clear();
  saveBattleProgress();render();
  if(uiActor(app.state)===1)driveAi();
@@ -1318,7 +1397,7 @@ function startGame(){
   app.recordNoted=false;
   app.state=newUniversalMatch(app.packs,{decks:[mine.counts,foe.counts],seed,first,openingMulligan:true});
   assertUniversalMatch(app.packs,app.state);
-  app.error='';app.selectedUid=null;app.targetChoices=null;app.undo=null;
+  app.error='';app.selectedUid=null;app.entryMode=null;app.targetChoices=null;app.undo=null;
   app.dismissedTriggerKeys.clear();
   app.allActions=false;app.aiFallbacks=0;app.aiCompletedSteps=0;app.lastAiProgress='新對局';
   app.aiDifficulty=app.launch.config.difficulty;

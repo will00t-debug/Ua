@@ -17,7 +17,7 @@ const DRAFTS=[
 ];
 const PHASES=[['setup','起手調度'],['start','開始'],['move','移動'],['main','主要'],['attack','攻擊']];
 const ROOM=/^[A-HJ-NP-Z2-9]{8}$/;
-const app={offline:false,user:null,decks:[],openRooms:[],room:null,pick:null,error:'',notice:'',busy:false,mode:'login',deckTab:'mine',pollToken:0,timer:0,showPassword:false,remember:true,recordedCode:'',draftUser:'',draftPass:''};
+const app={offline:false,user:null,decks:[],openRooms:[],room:null,pick:null,zone:null,error:'',notice:'',busy:false,mode:'login',deckTab:'mine',pollToken:0,timer:0,showPassword:false,remember:true,recordedCode:'',draftUser:'',draftPass:''};
 function captureAuthDraft(form){
  if(!form)return;
  const data=new FormData(form);
@@ -341,9 +341,9 @@ function cardBox(card,opts={}){
  if(card.raidDepth)box.append(el('small',{class:'art-meta',text:'Raid '+card.raidDepth}));
  return box;
 }
-// Same two-click plans as the solo battle. Copied here so the online page
-// does not load the rules engine; the server remains the only place that
-// accepts an action, and only by the index it already listed.
+// Same entry plan as the solo battle. Copied here so the online page does
+// not load the rules engine; the server remains the only place that accepts
+// an action, and only by the index it already listed.
 function visibleActionsForCard(legal,uid){
  return (legal||[]).filter(action=>action.uid===uid||action.baseUid===uid);
 }
@@ -356,18 +356,63 @@ function moveClickPlan({selectedUid,slotUid,line,slot,legal}){
  if(slotUid&&options.some(action=>action.uid===slotUid))return {type:'choose-mover',uid:slotUid};
  return {type:'select'};
 }
-function raidClickPlan({selectedUid,raidBaseUid,slotUid,line,slot,legal}){
- const actions=Array.isArray(legal)?legal:[];
- const raids=actions.filter(action=>action?.type==='raid'&&action.uid===selectedUid);
- const isBase=!!slotUid&&raids.some(action=>action.baseUid===slotUid);
- if(isBase&&raidBaseUid!==slotUid)return {type:'choose-base',baseUid:slotUid};
- const dest=raidBaseUid?raids.filter(action=>action.baseUid===raidBaseUid&&action.slot===slot&&
-  (action.line==='energy'?'energy':'front')===line):[];
- if(dest.length)return {type:'raid',actions:dest};
- const plays=actions.filter(action=>action?.uid===selectedUid&&action.line===line&&action.slot===slot&&
-  ['play','move','step'].includes(action.type));
- if(plays.length)return {type:'place',actions:plays};
- return {type:'select'};
+const NORMAL_BOARD_ENTRY=new Set([
+ 'play','chooseOutsideExactRest','chooseOutsideColorApRest','chooseOutsideTraitApRest',
+ 'chooseOutsideActivePair','chooseOutsideNameRest','chooseOutsideRest',
+ 'chooseOutsidePrintedRest','chooseOutsidePrintedActive','chooseOutsidePrinted',
+ 'chooseHandNamedRest','chooseHandRest','chooseHandRestCap','chooseHandGirlRest',
+ 'chooseRemovedEnter','chooseNamedZoneDeploy'
+]);
+const MODE_BOARD_ENTRY=new Set([
+ 'choosePrintedRestRaid','chooseOutsideRestOrRaid','chooseHandRestOrRaid',
+ 'chooseNamedOutside','chooseOutsideTraitlessRest','chooseRemovedRestPair',
+ 'chooseOutsideOrRest'
+]);
+function boardEntryMode(action){
+ if(!action||typeof action.uid!=='string'||!action.uid)return null;
+ if(!Number.isInteger(action.slot)||action.slot<0||action.slot>3)return null;
+ if(action.type==='raid'){
+  if(action.line!=null&&action.line!=='front'&&action.line!=='energy')return null;
+  return 'raid';
+ }
+ if(action.line!=='front'&&action.line!=='energy')return null;
+ if(action.type==='play'||NORMAL_BOARD_ENTRY.has(action.type))return 'normal';
+ if(action.type==='chooseRemovedOkabeRaid')return 'raid';
+ if(action.type==='chooseTrigger'&&(action.mode==='color'||action.mode==='colorOutside'))
+  return 'normal';
+ if(!MODE_BOARD_ENTRY.has(action.type))return null;
+ if(action.mode==='raid')return 'raid';
+ if(action.mode==='enter'||action.mode==='place'||action.mode==='rest')return 'normal';
+ return null;
+}
+function boardEntrySelection(legal,uid){
+ const mine=(Array.isArray(legal)?legal:[]).filter(action=>
+  boardEntryMode(action)&&action.uid===uid);
+ const normal=mine.filter(action=>boardEntryMode(action)==='normal');
+ const raid=mine.filter(action=>boardEntryMode(action)==='raid');
+ return {normal,raid,needsMode:normal.length>0&&raid.length>0};
+}
+function entryDestination(action,line,slot,slotUid){
+ const dest=action.line==='energy'?'energy':'front';
+ if(dest!==line||action.slot!==slot)return false;
+ if(typeof action.replaceUid==='string')return action.replaceUid===slotUid;
+ if(boardEntryMode(action)==='raid'&&action.baseUid&&slotUid&&action.baseUid===slotUid)
+  return true;
+ if(slotUid&&action.baseUid&&action.baseUid!==slotUid)return false;
+ return !slotUid;
+}
+function entryClickPlan({selectedUid,entryMode,line,slot,slotUid,legal}){
+ const selection=boardEntrySelection(legal,selectedUid);
+ if(!selection.normal.length&&!selection.raid.length)return {type:'idle'};
+ let mode=null;
+ if(entryMode==='raid'&&selection.raid.length)mode='raid';
+ else if(entryMode==='normal'&&selection.normal.length)mode='normal';
+ else if(selection.needsMode)return {type:'entry-mode'};
+ else mode=selection.raid.length?'raid':'normal';
+ const hits=(mode==='raid'?selection.raid:selection.normal)
+  .filter(action=>entryDestination(action,line,slot,slotUid));
+ if(!hits.length)return {type:'entry-wait',mode};
+ return {type:'entry',mode,actions:hits};
 }
 function legalChoices(){return app.room?.choices||[];}
 function tableReady(){
@@ -390,9 +435,15 @@ function fieldPlan(engineSeat,line,index,card){
  if(!tableReady()||engineSeat!==room.seat)return {type:'select'};
  const legal=legalChoices();
  const pick=app.pick||{};
+ const deploying=legal.some(action=>boardEntryMode(action));
+ if(room.view?.phase==='move'&&!deploying)
+  return moveClickPlan({selectedUid:pick.uid||null,slotUid:card?.uid||null,line,slot:index,legal});
+ const entry=entryClickPlan({selectedUid:pick.uid||null,entryMode:pick.entryMode||null,
+  line,slot:index,slotUid:card?.uid||null,legal});
+ if(entry.type!=='idle')return entry;
  if(room.view?.phase==='move')
   return moveClickPlan({selectedUid:pick.uid||null,slotUid:card?.uid||null,line,slot:index,legal});
- return raidClickPlan({selectedUid:pick.uid||null,raidBaseUid:pick.baseUid||null,slotUid:card?.uid||null,line,slot:index,legal});
+ return {type:'select'};
 }
 function clickField(engineSeat,line,index,card){
  if(!tableReady())return;
@@ -408,31 +459,39 @@ function clickField(engineSeat,line,index,card){
   const block=blocking.blockers.find(action=>action.uid===card.uid);
   if(block){sendAction(block.index);return;}
  }
- if(room.view?.phase==='attack'&&card){
+ if(room.view?.phase==='attack'&&card&&!legal.some(action=>boardEntryMode(action))){
   const attacks=legal.filter(action=>action.type==='attack'&&action.uid===card.uid);
   const plain=attacks.filter(action=>!action.targetUid);
   if(plain.length===1&&attacks.length===plain.length){sendAction(plain[0].index);return;}
-  if(attacks.length){app.pick={uid:card.uid,baseUid:null,options:null};render();return;}
+  if(attacks.length){app.pick={uid:card.uid,entryMode:null,options:null};app.zone=null;render();return;}
  }
  const plan=fieldPlan(engineSeat,line,index,card);
- if(room.view?.phase==='move'&&plan.type==='choose-mover'){
-  app.pick={uid:pick.uid===plan.uid?null:plan.uid,baseUid:null,options:null};render();return;
+ if(plan.type==='choose-mover'){
+  app.pick={uid:pick.uid===plan.uid?null:plan.uid,entryMode:null,options:null};render();return;
  }
- if(plan.type==='destination'||plan.type==='place'||plan.type==='raid'){
+ if(plan.type==='destination'||plan.type==='entry'){
   const acts=plan.actions||[];
   if(acts.length===1){sendAction(acts[0].index);return;}
-  if(acts.length>1){app.pick={uid:pick.uid||null,baseUid:pick.baseUid||null,options:acts};render();return;}
+  if(acts.length>1){app.pick={uid:pick.uid||null,entryMode:pick.entryMode||null,options:acts};render();return;}
  }
- if(plan.type==='choose-base'){app.pick={uid:pick.uid||null,baseUid:plan.baseUid,options:null};render();return;}
- if(card){app.pick={uid:pick.uid===card.uid?null:card.uid,baseUid:null,options:null};render();}
+ if(plan.type==='entry-mode'||plan.type==='entry-wait')return;
+ if(card){app.pick={uid:pick.uid===card.uid?null:card.uid,entryMode:null,options:null};app.zone=null;render();}
 }
 function clickHand(card){
  if(!tableReady()||!card?.uid)return;
  const acts=legalChoices().filter(action=>action.uid===card.uid);
- const placed=acts.some(action=>['play','raid','move','step'].includes(action.type));
+ const placed=acts.some(action=>boardEntryMode(action)||['move','step'].includes(action.type));
  const plain=acts.filter(action=>action.type==='attack'&&!action.targetUid);
  if(!placed&&plain.length===1&&acts.length===1){sendAction(plain[0].index);return;}
- app.pick={uid:app.pick?.uid===card.uid?null:card.uid,baseUid:null,options:null};
+ app.pick={uid:app.pick?.uid===card.uid?null:card.uid,entryMode:null,options:null};
+ app.zone=null;
+ render();
+}
+function clickZoneCard(card){
+ if(!tableReady()||!card?.uid)return;
+ if(!legalChoices().some(action=>boardEntryMode(action)&&action.uid===card.uid))return;
+ app.pick={uid:card.uid,entryMode:null,options:null};
+ app.zone=null;
  render();
 }
 function zone(title,cards,engineSeat){
@@ -444,16 +503,15 @@ function zone(title,cards,engineSeat){
   const blocking=mine?inlineBlock(app.room,legalChoices()):null;
   const canBlock=!!(blocking&&kind==='front'&&card&&blocking.blockers.some(action=>action.uid===card.uid));
   const selected=!!(card&&card.uid===app.pick?.uid);
-  const chosenBase=!!(card&&card.uid===app.pick?.baseUid);
   const classes=[
-   plan.type==='destination'||plan.type==='place'||plan.type==='raid'?'destination':'',
+   plan.type==='destination'||plan.type==='entry'?'destination':'',
    plan.type==='choose-mover'?'move-source':'',
-   plan.type==='choose-base'||chosenBase?'raid-base':'',
    selected?'selected':'',
    canBlock?'can-block':''
   ].filter(Boolean).join(' ');
   const clickable=ready&&(mine||(!!card&&app.room?.view?.phase==='attack'&&app.pick?.uid));
-  const place=plan.type==='destination'?'移動至此':plan.type==='place'?'放置':plan.type==='raid'?'突襲登場':plan.type==='choose-base'?'突襲底板':canBlock?'阻擋':'';
+  const place=plan.type==='destination'?'移動至此':plan.type==='entry'?
+   (plan.mode==='raid'?'突襲進場':'普通進場'):canBlock?'阻擋':'';
   const spoken=[card?.name||card?.cardId||'空位',place].filter(Boolean).join('，');
   return cardBox(card,{className:classes,click:clickable?()=>clickField(engineSeat,kind,index,card):null,label:spoken});
  });
@@ -469,7 +527,7 @@ function statPills(player,setup){
   el('span',{text:(player.apReady??0)+'/'+(player.apTotal??0)+' AP'}),
   el('span',{text:(player.energyTotal??0)+' 能源'}));
  if(Array.isArray(player.outside)&&player.outside.length)pills.append(el('span',{text:player.outside.length+' 場外'}));
- if(Array.isArray(player.removed)&&player.removed.length)pills.append(el('span',{text:player.removed.length+' 移除'}));
+ if(Array.isArray(player.removed)&&player.removed.length)pills.append(el('span',{text:player.removed.length+' 移除區'}));
  return pills;
 }
 function side(name,player,packLabel,{openHand=false,setup=false,engineSeat=0}={}){
@@ -485,16 +543,45 @@ function side(name,player,packLabel,{openHand=false,setup=false,engineSeat=0}={}
  const block=el('section',{class:'online-side'+(openHand?' you':' opponent')},head,statPills(player,setup));
  const front=zone('前線',player.front,engineSeat),energy=zone('能源線',player.energy,engineSeat);
  // Opponent sits across the table: energy is the far row, front faces the center.
- if(openHand)block.append(front,energy);
+ if(openHand)block.append(front,energy,zoneTray(player));
  else block.append(energy,front);
  return block;
+}
+function zoneTray(player){
+ const ready=tableReady();
+ const legal=legalChoices();
+ const row=el('div',{class:'online-zones'});
+ for(const [zone,label] of [['outside','場外'],['removed','移除區']]){
+  const cards=player[zone]||[];
+  const playable=ready&&cards.some(card=>legal.some(action=>boardEntryMode(action)&&action.uid===card.uid));
+  const chosen=cards.some(card=>card?.uid&&card.uid===app.pick?.uid);
+  row.append(el('button',{type:'button',class:'zone-pile'+(playable?' playable':'')+
+   (app.zone===zone?' open':'')+(chosen?' selected':''),
+   text:label+' '+cards.length,'aria-label':label+' '+cards.length+' 張'+(playable?'，可選擇登場':''),
+   onClick:()=>{app.zone=app.zone===zone?null:zone;render();}}));
+ }
+ const open=app.zone==='outside'||app.zone==='removed'?player[app.zone]||[]:null;
+ const gallery=open?el('div',{class:'online-zone-gallery','aria-label':app.zone==='removed'?'移除區':'場外'}):null;
+ if(gallery){
+  if(!open.length)gallery.append(el('p',{class:'muted',text:'目前沒有卡片'}));
+  for(const card of [...open].reverse()){
+   const canPlay=ready&&legal.some(action=>boardEntryMode(action)&&action.uid===card.uid);
+   gallery.append(cardBox(card,{
+    className:(canPlay?'playable ':'')+(card.uid===app.pick?.uid?'selected':''),
+    click:canPlay?()=>clickZoneCard(card):null,
+    label:(canPlay?'選擇登場：':'')+(card.name||card.cardId||'卡片')
+   }));
+  }
+ }
+ return el('div',{class:'online-zone-tray'},row,gallery);
 }
 function ownHand(player){
  const hand=el('div',{class:'hand'});
  const ready=tableReady();
  const legal=legalChoices();
  for(const card of player.hand||[]){
-  const playable=ready&&legal.some(action=>action.uid===card.uid&&['play','raid','event','attack','activate','handActivate'].includes(action.type));
+  const playable=ready&&legal.some(action=>action.uid===card.uid&&
+   (!!boardEntryMode(action)||['event','attack','activate','handActivate'].includes(action.type)));
   const selected=card.uid&&card.uid===app.pick?.uid;
   hand.append(cardBox(card,{
    className:(playable?'playable ':'')+(selected?'selected':''),
@@ -508,11 +595,33 @@ function playHint(room){
  if(!room?.yourTurn)return room?.view?.pending?.kind==='life-trigger'?'對手正在確認已公開的觸發。':'等待對手操作。';
  if(room.view?.phase==='setup')return '';
  if(room.view?.pending?.kind==='block'&&room.view.pending.player===room.seat)return '點自己可以阻擋的角色，或選擇不阻擋。';
+ const legal=room.choices||[];
+ const board=legal.some(action=>boardEntryMode(action));
+ const pick=app.pick||{};
+ const selection=pick.uid?boardEntrySelection(legal,pick.uid):{normal:[],raid:[],needsMode:false};
+ if(app.pick?.options?.length)return '這個格子有多種登場方式，請選一個。';
+ if(board){
+  if(!pick.uid)return '先選擇要登場的角色。手牌直接點；場外或移除區請先打開該區。';
+  if(selection.needsMode&&pick.entryMode!=='normal'&&pick.entryMode!=='raid')
+   return '再選擇突襲進場或普通進場。';
+  const mode=pick.entryMode==='raid'||(!selection.needsMode&&selection.raid.length)?'raid':'normal';
+  return (mode==='raid'?'突襲進場':'普通進場')+'。請直接點要登場的格子。';
+ }
  if(room.view?.pending&&room.view.pending.player===room.seat)return '請完成這個選擇。';
- if(app.pick?.options?.length)return '選擇這個位置的操作。';
  if(room.view?.phase==='move')return app.pick?.uid?'再點另一條線上亮起的位置。':'先點要移動的角色，再點另一條線的位置。';
  if(room.view?.phase==='attack')return app.pick?.uid?'點這個角色的攻擊，或點對方前線指定目標。':'點自己可攻擊的角色。';
- return app.pick?.uid?'再點亮起的前線或能源線。':'點手牌，再點亮起的位置出牌。';
+ return '點手牌，再點亮起的位置出牌。';
+}
+function entryModeButtons(room){
+ const legal=room?.choices||[];
+ const pick=app.pick||{};
+ const selection=pick.uid?boardEntrySelection(legal,pick.uid):{needsMode:false};
+ if(!room?.yourTurn||!selection.needsMode||pick.options?.length)return [];
+ if(pick.entryMode!=='normal'&&pick.entryMode!=='raid')return [
+  {label:'普通進場',mode:'normal'},{label:'突襲進場',mode:'raid'}
+ ];
+ return [{label:pick.entryMode==='raid'?'改為普通進場':'改為突襲進場',
+  mode:pick.entryMode==='raid'?'normal':'raid'}];
 }
 function dockChoices(room){
  const legal=room?.choices||[];
@@ -521,10 +630,18 @@ function dockChoices(room){
  if(app.pick?.options?.length)return app.pick.options;
  const block=inlineBlock(room,legal);
  if(block)return block.skip?[block.skip]:[];
+ if(legal.some(action=>boardEntryMode(action))){
+  const rest=legal.filter(action=>action.type&&action.type!=='next'&&!boardEntryMode(action)&&
+   !['move','step'].includes(action.type));
+  if(room.view?.pending&&room.view.pending.player===room.seat)return rest;
+  if(app.pick?.uid)return rest.filter(action=>!action.uid||action.uid===app.pick.uid||
+   action.baseUid===app.pick.uid);
+  return rest.filter(action=>!action.uid);
+ }
  if(room.view?.pending&&room.view.pending.player===room.seat)
   return legal.filter(action=>action.type&&!['next','play','move','step','attack','raid'].includes(action.type));
  if(app.pick?.uid)
-  return visibleActionsForCard(legal,app.pick.uid).filter(action=>!['play','move','step','raid','next'].includes(action.type));
+  return visibleActionsForCard(legal,app.pick.uid).filter(action=>!boardEntryMode(action)&&!['move','step','next'].includes(action.type));
  return legal.filter(action=>action.type&&!action.uid&&!['next','play','move','step','attack','raid'].includes(action.type));
 }
 function matchView(){
@@ -547,6 +664,11 @@ function matchView(){
  const hint=playHint(room);
  if(view.phase==='setup')actions.append(el('p',{class:'setup-note',text:'開局可選擇保留 7 張，或整手重抽 7 張一次。先手先選，後手再選，完成後才設定生命卡。'}));
  else if(hint)actions.append(el('p',{class:'play-hint',text:hint}));
+ for(const choice of entryModeButtons(room))
+  actions.append(el('button',{type:'button',class:choice.mode==='raid'?'primary':'',
+   text:choice.label,disabled:app.busy,onClick:()=>{
+    app.pick={uid:app.pick.uid,entryMode:choice.mode,options:null};render();
+   }}));
  const next=room.yourTurn?(room.choices||[]).find(action=>action.type==='next'):null;
  if(next)actions.append(el('button',{type:'button',class:'primary',text:view.phase==='attack'?'結束回合 →':'下一階段 →',disabled:app.busy,onClick:()=>sendAction(next.index)}));
  const triggers=el('div',{class:'trigger-public'});

@@ -9,6 +9,12 @@ body.v2-battle-page.v2-playing #match-view .pile.v2-zone-pile{
 body.v2-battle-page.v2-playing #match-view .pile.v2-zone-pile:hover{background:#295072;border-color:#9dd3ff}
 body.v2-battle-page.v2-playing #match-view .pile.v2-zone-pile:focus-visible{outline:2px solid #ffd47d;outline-offset:2px}
 body.v2-battle-page.v2-playing #match-view .pile.v2-zone-pile b{color:#fff0bc}
+body.v2-battle-page.v2-playing #match-view .pile.v2-zone-pile.v2-zone-playable{
+ border-color:#f0c56a;box-shadow:inset 0 0 0 1px #f0c56a
+}
+body.v2-battle-page.v2-playing #match-view .pile.v2-zone-pile.selected{
+ background:#6a4b16;border-color:#ffd98a
+}
 .v2-shell>.v2-zone-overlay{
  z-index:480;padding:clamp(10px,3vw,28px);background:#070d18dc;
  backdrop-filter:blur(6px)
@@ -44,6 +50,16 @@ body.v2-battle-page.v2-playing #match-view .pile.v2-zone-pile b{color:#fff0bc}
 .v2-shell .v2-zone-card:hover,.v2-shell .v2-zone-card:focus-visible{
  outline:2px solid #f4c66f;outline-offset:1px;background:#29415b
 }
+.v2-shell .v2-zone-card.v2-zone-playable{border-color:#e2b35a}
+.v2-shell .v2-zone-open{
+ display:flex;flex-direction:column;gap:5px;align-items:stretch;min-width:0;
+ padding:0;border:0;background:transparent;color:inherit;text-align:left;cursor:pointer
+}
+.v2-shell .v2-zone-look{
+ margin-top:2px;padding:4px 6px;border-radius:6px;border:1px solid #7592af;
+ background:#24364c;color:#e7f2ff;font-size:11px;cursor:pointer
+}
+.v2-shell .v2-zone-badge{font-size:10px;font-style:normal;color:#ffd98a}
 .v2-shell .v2-zone-card img{
  display:block;width:100%;aspect-ratio:63/88;object-fit:contain;
  border-radius:5px;background:#09131f

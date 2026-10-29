@@ -68,8 +68,9 @@ test('classic UI offers mover highlighting and never fabricates its own move',()
  assert.match(slot,/const moveDest=plan\.type==='destination'/);
  assert.match(slot,/if\(plan\.type==='choose-mover'\)/);
  assert.match(slot,/app\.selectedUid=app\.selectedUid===plan\.uid\?null:plan\.uid/);
- assert.match(slot,/if\(plan\.type==='destination'\)/);
- assert.match(slot,/if\(moves\.length===1\)\{applyAction\(moves\[0\]\);return;\}/);
+ assert.match(slot,/if\(plan\.type==='destination'\|\|plan\.type==='entry'\)/);
+ assert.match(slot,/if\(acts\.length===1\)\{applyAction\(acts\[0\]\);return;\}/);
+ assert.match(slot,/const entryDest=plan\.type==='entry'/);
  assert.doesNotMatch(slot,/dispatchUniversalAction\(/);
  const css=read('dist/universal-v2-legacy.css');
  assert.match(css,/#match-view \.slot\.move-source\{/);

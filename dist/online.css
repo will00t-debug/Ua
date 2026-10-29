@@ -192,6 +192,15 @@ body.arena-site #app.wrap:has(.online-match)>.arena-app{
 .online-match .slot.playable,.online-match .slot.move-source{box-shadow:0 0 0 2px #7eb6ff}
 .online-match .slot.can-block,.online-match .slot.raid-base{box-shadow:0 0 0 2px #e3b15a}
 .online-dock .play-hint{margin:0;color:#d5e2f2;font-size:13px;line-height:1.5}
+.online-zones{display:flex;gap:6px;margin-top:6px}
+.online-zones .zone-pile{
+ flex:1;min-height:36px;border:1px solid #5f8caf;border-radius:8px;
+ background:#173349;color:#dbedff;font-size:12px;cursor:pointer
+}
+.online-zones .zone-pile.playable{border-color:#f0c56a;color:#ffe7ad}
+.online-zones .zone-pile.selected,.online-zones .zone-pile.open{background:#6a4b16;border-color:#ffd98a}
+.online-zone-gallery{display:flex;gap:6px;overflow-x:auto;padding-top:6px}
+.online-zone-gallery .slot{flex:0 0 72px}
 .online-dock{
  min-width:0;min-height:0;overflow:auto;padding:10px 12px 16px;background:#0c121b;
  display:flex;flex-direction:column;gap:10px

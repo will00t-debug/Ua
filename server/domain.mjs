@@ -153,6 +153,7 @@ function decorateView(packs,view){
    front:player.front.map(card=>paintCard(pack,card)),
    energy:player.energy.map(card=>paintCard(pack,card)),
    outside:player.outside.map(card=>paintCard(pack,card)),
+   removed:(player.removed||[]).map(card=>paintCard(pack,card)),
    hand:Array.isArray(player.hand)?player.hand.map(card=>paintCard(pack,card)):null
   };
  });
