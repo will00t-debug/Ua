@@ -180,7 +180,7 @@ test('a printed alias is a legal name, and a wrong-name Raid base is not selecta
  const deck=s.players[0].deck.length;
  s=dispatchUniversalAction(packs,s,raidAction);
  assert.equal(s.players[0].front[raidAction.slot].uid,raid.uid);
- assert.equal(s.players[0].front[raidAction.slot].ready,false);
+ assert.equal(s.players[0].front[raidAction.slot].ready,true);
  assert.equal(s.players[0].front[raidAction.slot].stack[0].uid,base.uid);
  assert.equal(s.players[0].deck.length,deck-1);
  assert.equal(s.pending,null);
@@ -300,7 +300,7 @@ test('MST-1-006 is the whole printed card and opens MST-1-004 only after an own-
  assert.equal(assertUniversalMatch(mstPacks,s),true);
 });
 
-test('MST-1-009 raided by MST-1-006 enters rested and opens its own-effect choice',()=>{
+test('MST-1-009 raided by MST-1-006 becomes active and opens its own-effect choice',()=>{
  let s=mstMain();
  const actor=mstTake(s,'MST-1-006'),raid=mstTake(s,'MST-1-009');
  s.players[0].hand.push(actor,raid);
@@ -315,7 +315,7 @@ test('MST-1-009 raided by MST-1-006 enters rested and opens its own-effect choic
  s=dispatchUniversalAction(mstPacks,s,raidAction);
  const top=s.players[0].front[raidAction.slot];
  assert.equal(top.uid,raid.uid);
- assert.equal(top.ready,false);
+ assert.equal(top.ready,true);
  assert.equal(top.stack[0].uid,base.uid);
  assert.equal(s.pending.kind,'effect-choice-mode');
  s=dispatchUniversalAction(mstPacks,s,{type:'chooseEffectMode',mode:'bp'});

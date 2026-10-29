@@ -4265,7 +4265,12 @@ function printedOwnerType(pack,s,owner,uid){
 }
 function programJobs(pack,s,physical,timing,owner,raidUid,entryCause,entrySourceType){
  // Q2220: printed leave triggers are lost before true retirement.
- return (originalEffectsDisabled(s,physical)?[]:card(pack,physical).effects[timing]||[])
+ // Q51: text inside the printed Raid frame does not resolve on a normal entry.
+ // A Raid top already has its base in stack before this program is built.
+ const printed=card(pack,physical);
+ if(originalEffectsDisabled(s,physical))return [];
+ if(timing==='onPlay'&&printed.raidBoxOnPlay===true&&!(physical.stack||[]).length)return [];
+ return (printed.effects[timing]||[])
   .map(e=>{
    const job={...e,owner,sourceUid:physical.uid,
     sourceName:card(pack,physical).name,...(raidUid?{raidUid}:{}),
@@ -7015,8 +7020,8 @@ function resolveChoice(s,a,pack){
      !['front','energy'].includes(a.line))
      throw Error('Invalid base for deck-effect Raid');
     p.deck.shift();
-    // Effect raids enter rested, matching the existing hand and outside
-    // effect raids. No card-specific FAQ was found that makes レイドさせる active.
+    // Deck-effect raids stay rested. The hand 「レイドさせる」 branch is separate:
+    // it resolves the printed 【レイド】 line 「アクティブにする」.
     s.pending=null;
     performRaid(pack,s,q.player,top,a.baseUid,a.line,a.slot,a.replaceUid,
      {entryReady:false,entryCause:'deckEffectRaid',entryFrom:'deck',effectSourceUid:q.sourceUid});
@@ -7061,8 +7066,10 @@ function resolveChoice(s,a,pack){
     p.hand.splice(i,1);
     if(q.max>1)s.effectQueue.unshift(handRestOrRaidContinuation(q));
     s.pending=null;
+    // 「レストで登場させるかレイドさせる」: only the first branch enters REST.
+    // The Raid branch resolves the printed 【レイド】 line 「アクティブにする」.
     performRaid(pack,s,q.player,physical,a.baseUid,a.line,a.slot,a.replaceUid,
-     {entryReady:false,entryCause:'handEffectRaid',entryFrom:'hand',effectSourceUid:q.sourceUid});
+     {entryReady:true,entryCause:'handEffectRaid',entryFrom:'hand',effectSourceUid:q.sourceUid});
     return;
    }
    if(a.mode!=='enter'||!['front','energy'].includes(a.line)||

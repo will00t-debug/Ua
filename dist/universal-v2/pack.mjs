@@ -4100,6 +4100,10 @@ card.frontGeneratesEnergy||ownOutsideRecovery||colorTriggerFieldSubstitution||ca
  if(card.bpDownImmune!==undefined&&(
   card.type!=='character'||card.bpDownImmune!==true))
   throw Error(card.id+' invalid printed BP-reduction immunity');
+ if(card.raidBoxOnPlay!==undefined&&(card.raidBoxOnPlay!==true||
+  card.type!=='character'||!card.raidName||implemented!=='dsl'||
+  !Array.isArray(card.effects?.onPlay)||!card.effects.onPlay.length))
+  throw Error(card.id+' raid-box on play needs the printed Raid frame');
  const raidHandApDiscount=card.raidHandApDiscount??null;
  if(raidHandApDiscount!==null&&(
   card.type!=='character'||!card.raidName||implemented!=='dsl'||
@@ -4431,6 +4435,7 @@ card.frontGeneratesEnergy||ownOutsideRecovery||colorTriggerFieldSubstitution||ca
   bpDownImmune:card.bpDownImmune===true,
   raidHandLeaveReplace:raidHandLeaveReplace?Object.freeze({...raidHandLeaveReplace}):null,
   raidHandApDiscount:raidHandApDiscount?Object.freeze({...raidHandApDiscount}):null,
+  ...(card.raidBoxOnPlay===true?{raidBoxOnPlay:true}:{}),
   playRequiresOwnName,
   playRequiresNameOrRaidBase,
   playRequiresAllNames,
