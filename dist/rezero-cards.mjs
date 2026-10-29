@@ -3,6 +3,11 @@
 // One identity per card number. Parallel art is not a second card.
 // AP cards stay out of the deck catalogue. engineKind is set only when
 // the whole Japanese print is an existing tested V2 program.
+// Generated energy follows the printed orbs. The 2026-10-25 iframe left
+// 発生エナジー as a dash on most blue and purple cards; those gens were read
+// from the card image on 2026-10-29. One color orb and no plus circle is that
+// many resting pips. A plus circle beside a single color orb is the printed
+// plus ability, so REZ-1-006, 016, 037, 043, 082, 086 and 110 stay at gen 0.
 export const REZERO_CARDS=[
  {
   "id": "REZ-1-001",
@@ -1401,7 +1406,7 @@ export const REZERO_CARDS=[
   "energy": 4,
   "ap": 1,
   "bp": 4000,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [],
   "rarity": "R",
@@ -1440,7 +1445,7 @@ export const REZERO_CARDS=[
   "energy": 1,
   "ap": 1,
   "bp": 2000,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [],
   "rarity": "C",
@@ -1479,7 +1484,7 @@ export const REZERO_CARDS=[
   "energy": 0,
   "ap": 1,
   "bp": 2000,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [],
   "rarity": "C",
@@ -1557,7 +1562,7 @@ export const REZERO_CARDS=[
   "energy": 0,
   "ap": 1,
   "bp": 1500,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [],
   "rarity": "C",
@@ -1596,7 +1601,7 @@ export const REZERO_CARDS=[
   "energy": 0,
   "ap": 1,
   "bp": 1500,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [],
   "rarity": "U",
@@ -1635,7 +1640,7 @@ export const REZERO_CARDS=[
   "energy": 4,
   "ap": 1,
   "bp": 4000,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [],
   "rarity": "R",
@@ -1674,7 +1679,7 @@ export const REZERO_CARDS=[
   "energy": 3,
   "ap": 1,
   "bp": 3000,
-  "gen": 0,
+  "gen": 2,
   "type": "character",
   "traits": [],
   "rarity": "C",
@@ -1713,7 +1718,7 @@ export const REZERO_CARDS=[
   "energy": 0,
   "ap": 1,
   "bp": 500,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [],
   "rarity": "C",
@@ -1791,7 +1796,7 @@ export const REZERO_CARDS=[
   "energy": 4,
   "ap": 1,
   "bp": 4000,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [],
   "rarity": "R",
@@ -1830,7 +1835,7 @@ export const REZERO_CARDS=[
   "energy": 0,
   "ap": 1,
   "bp": 1500,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [],
   "rarity": "U",
@@ -1869,7 +1874,7 @@ export const REZERO_CARDS=[
   "energy": 2,
   "ap": 1,
   "bp": 3000,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [],
   "rarity": "R",
@@ -1908,7 +1913,7 @@ export const REZERO_CARDS=[
   "energy": 3,
   "ap": 1,
   "bp": 3000,
-  "gen": 0,
+  "gen": 2,
   "type": "character",
   "traits": [],
   "rarity": "U",
@@ -1947,7 +1952,7 @@ export const REZERO_CARDS=[
   "energy": 0,
   "ap": 1,
   "bp": 1500,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [],
   "rarity": "C",
@@ -1986,7 +1991,7 @@ export const REZERO_CARDS=[
   "energy": 1,
   "ap": 1,
   "bp": 1500,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [],
   "rarity": "U",
@@ -2025,7 +2030,7 @@ export const REZERO_CARDS=[
   "energy": 3,
   "ap": 1,
   "bp": 3000,
-  "gen": 0,
+  "gen": 2,
   "type": "character",
   "traits": [],
   "rarity": "R",
@@ -2064,7 +2069,7 @@ export const REZERO_CARDS=[
   "energy": 5,
   "ap": 1,
   "bp": 4000,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [],
   "rarity": "R",
@@ -2103,7 +2108,7 @@ export const REZERO_CARDS=[
   "energy": 4,
   "ap": 2,
   "bp": 4000,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [],
   "rarity": "SR",
@@ -2142,7 +2147,7 @@ export const REZERO_CARDS=[
   "energy": 5,
   "ap": 1,
   "bp": 4000,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [],
   "rarity": "SR",
@@ -2181,7 +2186,7 @@ export const REZERO_CARDS=[
   "energy": 1,
   "ap": 1,
   "bp": 1500,
-  "gen": 0,
+  "gen": 2,
   "type": "character",
   "traits": [
    "王選候補者"
@@ -2222,7 +2227,7 @@ export const REZERO_CARDS=[
   "energy": 0,
   "ap": 1,
   "bp": 2000,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [
    "王選候補者"
@@ -2263,7 +2268,7 @@ export const REZERO_CARDS=[
   "energy": 2,
   "ap": 1,
   "bp": 2000,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [
    "王選候補者"
@@ -2304,7 +2309,7 @@ export const REZERO_CARDS=[
   "energy": 3,
   "ap": 1,
   "bp": 3000,
-  "gen": 0,
+  "gen": 2,
   "type": "character",
   "traits": [
    "王選候補者"
@@ -2345,7 +2350,7 @@ export const REZERO_CARDS=[
   "energy": 4,
   "ap": 1,
   "bp": 4000,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [
    "王選候補者"
@@ -2386,7 +2391,7 @@ export const REZERO_CARDS=[
   "energy": 3,
   "ap": 1,
   "bp": 3000,
-  "gen": 0,
+  "gen": 2,
   "type": "character",
   "traits": [
    "王選候補者"
@@ -2433,7 +2438,7 @@ export const REZERO_CARDS=[
   "energy": 3,
   "ap": 1,
   "bp": 0,
-  "gen": 0,
+  "gen": 1,
   "type": "field",
   "traits": [],
   "rarity": "U",
@@ -2706,7 +2711,7 @@ export const REZERO_CARDS=[
   "energy": 4,
   "ap": 2,
   "bp": 4000,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [],
   "rarity": "R",
@@ -2745,7 +2750,7 @@ export const REZERO_CARDS=[
   "energy": 0,
   "ap": 1,
   "bp": 2000,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [],
   "rarity": "C",
@@ -2784,7 +2789,7 @@ export const REZERO_CARDS=[
   "energy": 1,
   "ap": 1,
   "bp": 2000,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [],
   "rarity": "U",
@@ -2823,7 +2828,7 @@ export const REZERO_CARDS=[
   "energy": 3,
   "ap": 1,
   "bp": 3000,
-  "gen": 0,
+  "gen": 2,
   "type": "character",
   "traits": [],
   "rarity": "R",
@@ -2862,7 +2867,7 @@ export const REZERO_CARDS=[
   "energy": 4,
   "ap": 1,
   "bp": 4000,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [],
   "rarity": "R",
@@ -2901,7 +2906,7 @@ export const REZERO_CARDS=[
   "energy": 0,
   "ap": 1,
   "bp": 1500,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [],
   "rarity": "C",
@@ -2940,7 +2945,7 @@ export const REZERO_CARDS=[
   "energy": 0,
   "ap": 1,
   "bp": 1500,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [],
   "rarity": "C",
@@ -2979,7 +2984,7 @@ export const REZERO_CARDS=[
   "energy": 1,
   "ap": 1,
   "bp": 2000,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [],
   "rarity": "U",
@@ -3018,7 +3023,7 @@ export const REZERO_CARDS=[
   "energy": 4,
   "ap": 1,
   "bp": 4000,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [],
   "rarity": "U",
@@ -3057,7 +3062,7 @@ export const REZERO_CARDS=[
   "energy": 2,
   "ap": 1,
   "bp": 3000,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [],
   "rarity": "R",
@@ -3096,7 +3101,7 @@ export const REZERO_CARDS=[
   "energy": 3,
   "ap": 1,
   "bp": 3500,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [],
   "rarity": "SR",
@@ -3135,7 +3140,7 @@ export const REZERO_CARDS=[
   "energy": 4,
   "ap": 1,
   "bp": 4000,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [],
   "rarity": "SR",
@@ -3174,7 +3179,7 @@ export const REZERO_CARDS=[
   "energy": 3,
   "ap": 1,
   "bp": 3000,
-  "gen": 0,
+  "gen": 2,
   "type": "character",
   "traits": [],
   "rarity": "C",
@@ -3219,7 +3224,7 @@ export const REZERO_CARDS=[
   "energy": 1,
   "ap": 1,
   "bp": 1500,
-  "gen": 0,
+  "gen": 2,
   "type": "character",
   "traits": [],
   "rarity": "U",
@@ -3258,7 +3263,7 @@ export const REZERO_CARDS=[
   "energy": 0,
   "ap": 1,
   "bp": 2000,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [
    "王選候補者"
@@ -3340,7 +3345,7 @@ export const REZERO_CARDS=[
   "energy": 0,
   "ap": 1,
   "bp": 1000,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [
    "王選候補者"
@@ -3381,7 +3386,7 @@ export const REZERO_CARDS=[
   "energy": 1,
   "ap": 1,
   "bp": 2500,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [
    "王選候補者"
@@ -3422,7 +3427,7 @@ export const REZERO_CARDS=[
   "energy": 2,
   "ap": 1,
   "bp": 3000,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [
    "王選候補者"
@@ -3504,7 +3509,7 @@ export const REZERO_CARDS=[
   "energy": 4,
   "ap": 1,
   "bp": 3000,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [
    "王選候補者"
@@ -3545,7 +3550,7 @@ export const REZERO_CARDS=[
   "energy": 3,
   "ap": 1,
   "bp": 3000,
-  "gen": 0,
+  "gen": 2,
   "type": "character",
   "traits": [
    "王選候補者"
@@ -3586,7 +3591,7 @@ export const REZERO_CARDS=[
   "energy": 5,
   "ap": 1,
   "bp": 4000,
-  "gen": 0,
+  "gen": 2,
   "type": "character",
   "traits": [
    "王選候補者"
@@ -3627,7 +3632,7 @@ export const REZERO_CARDS=[
   "energy": 6,
   "ap": 1,
   "bp": 4000,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [
    "王選候補者"
@@ -3668,7 +3673,7 @@ export const REZERO_CARDS=[
   "energy": 0,
   "ap": 1,
   "bp": 1500,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [
    "魔女"
@@ -3709,7 +3714,7 @@ export const REZERO_CARDS=[
   "energy": 1,
   "ap": 1,
   "bp": 2000,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [
    "魔女"
@@ -3750,7 +3755,7 @@ export const REZERO_CARDS=[
   "energy": 4,
   "ap": 1,
   "bp": 4000,
-  "gen": 0,
+  "gen": 1,
   "type": "character",
   "traits": [
    "魔女"
@@ -3791,7 +3796,7 @@ export const REZERO_CARDS=[
   "energy": 3,
   "ap": 1,
   "bp": 0,
-  "gen": 0,
+  "gen": 2,
   "type": "field",
   "traits": [],
   "rarity": "U",

@@ -3614,7 +3614,9 @@ test('Echidna raids onto Echidna, draws on entry, then rests one active front ch
  assert.equal(V2_PENDING_LABELS['effect-rest-own-front-draw'],'選擇 1 張自己的活動前線角色並使其休息');
 
  let live=witch(6701);
- [0,1,2].forEach(i=>{
+ // Two active REZ-1-086 supply the plus purple. Rested REZ-1-091 prints
+ // one purple orb, leaving the line one short of REZ-1-093's energy 4.
+ [0,1].forEach(i=>{
   const gen=pull(live,0,'REZ-1-086');
   gen.ready=true;
   live.players[0].energy[i]=gen;
@@ -7295,4 +7297,32 @@ test('Subaru reenters rested with the paid hand card facedown underneath',()=>{
  assert.equal(assertUniversalMatch(packs,covered),true);
  assert.equal(assertUniversalMatch(packs,crowded),true);
  assert.equal(assertUniversalMatch(packs,only),true);
+});
+
+test('UA40BT/REZ-1-055 generates its printed blue orb while rested on the energy line',()=>{
+ // The official iframe leaves 発生エナジー as a dash. The card image prints one
+ // BLUE ENERGY orb and no plus circle, the same shape as a gen-1 vanilla.
+ assert.equal(pack.cards['REZ-1-055'].gen,1);
+ assert.equal(pack.cards['REZ-1-045'].gen,1);
+ assert.equal(pack.cards['REZ-1-070'].gen,2);
+ assert.equal(pack.cards['REZ-1-060'].gen,1);
+ assert.equal(pack.cards['REZ-1-094'].gen,2);
+ assert.equal(pack.cards['REZ-1-043'].gen,0);
+ let s=blade(9055);
+ const crusch=pull(s,0,'REZ-1-055');
+ crusch.ready=false;
+ s.players[0].energy[0]=crusch;
+ s=reach(s,'main');
+ assert.equal(universalEnergyByColor(packs,s,0).blue,1);
+ const shown=universalPublicView(packs,s,0).players[0].energy.find(c=>c?.uid===crusch.uid);
+ assert.equal(shown.produces,1);
+ assert.equal(shown.baseProduces,1);
+ const ferris=pull(s,0,'REZ-1-043');
+ s.players[0].hand.push(ferris);
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='play'&&a.uid===ferris.uid),false);
+ const mimi=pull(s,0,'REZ-1-045');
+ mimi.ready=false;
+ s.players[0].energy[1]=mimi;
+ assert.equal(universalEnergyByColor(packs,s,0).blue,2);
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='play'&&a.uid===ferris.uid),true);
 });
