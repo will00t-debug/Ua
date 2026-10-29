@@ -585,10 +585,18 @@ function legacyLine(view,side,line,legal){
  const p=view.players[side],label=el('span',{class:'lineLabel '+line,text:line==='front'?'前線 FRONT':'能源 ENERGY'});
  const slots=el('div',{class:'slots'});
  for(let i=0;i<4;i++)slots.append(legacySlot(view,side,line,i,legal));
- const piles=el('div',{class:'piles'},el('div',{class:'pile'},line==='front'?'DECK':'場外',
-  el('b',{text:line==='front'?p.deckCount:p.outside.length})),
-  el('div',{class:'pile'},line==='front'?'HAND':'ENERGY',
-   el('b',{text:line==='front'?p.handCount:p.energyTotal})));
+ const piles=el('div',{class:'piles'});
+ if(line==='front'){
+  piles.append(el('div',{class:'pile'},'DECK',el('b',{text:p.deckCount})),
+   el('div',{class:'pile'},'HAND',el('b',{text:p.handCount})));
+ }else{
+  // Public pile buttons are inspectors only; they never dispatch game actions.
+  for(const [zone,label] of [['outside','場外'],['removed','除外']])
+   piles.append(el('button',{type:'button',class:'pile v2-zone-pile',
+    'data-v2-zone':zone,'aria-label':(side===0?'我方':'對手')+label+'：'+p[zone].length+' 張，查看清單',
+    onClick:()=>showZoneSheet(side,zone)},
+    el('span',{text:label}),el('b',{text:p[zone].length})));
+ }
  return el('div',{class:'lineGroup'},label,slots,piles);
 }
 function legacyLife(count){
@@ -779,7 +787,10 @@ function printedCatalogue(side,cardId){
  return PRINTED_CATALOGUE[app.packs?.[side]?.id]?.get(cardId)||null;
 }
 function closeFieldSheet(){
- document.querySelector('.v2-shell>.v2-field-overlay')?.remove();
+ const overlay=document.querySelector('.v2-shell>.v2-field-overlay');
+ const opener=overlay?._v2Opener;
+ overlay?.remove();
+ if(opener?.isConnected)opener.focus({preventScroll:true});
 }
 function showFieldSheet(side,line,card,printed){
  closeFieldSheet();
@@ -796,6 +807,7 @@ function showFieldSheet(side,line,card,printed){
  }
  if(card.raidDepth||card.raidLayers?.length)stats.push('突襲 '+(card.raidDepth||card.raidLayers.length)+' 層');
  const overlay=el('div',{class:'overlay v2-field-overlay'});
+ overlay._v2Opener=document.activeElement;
  const dialog=el('div',{class:'dialog panel field-sheet',role:'dialog','aria-modal':'true',
   'aria-label':name+' 的效果'});
  const art=el('img',{class:'art',src:imgUrl(side,card.cardId),alt:name});
@@ -812,6 +824,55 @@ function showFieldSheet(side,line,card,printed){
  overlay.append(dialog);
  (document.querySelector('.v2-shell')||document.body).append(overlay);
  dialog.querySelector('button')?.focus();
+}
+
+function closeZoneSheet(){
+ const overlay=document.querySelector('.v2-shell>.v2-zone-overlay');
+ const opener=overlay?._v2Opener;
+ overlay?.remove();
+ if(opener?.isConnected)opener.focus({preventScroll:true});
+}
+function showZoneSheet(side,zone){
+ if(!app.state||!app.packs||!['outside','removed'].includes(zone))return;
+ closeZoneSheet();
+ const view=universalPublicView(app.packs,app.state,0);
+ const cards=view.players[side]?.[zone]||[];
+ const label=zone==='outside'?'場外':'除外區';
+ const owner=side===0?'我方':'對手';
+ const overlay=el('div',{class:'overlay v2-zone-overlay'});
+ overlay._v2Opener=document.activeElement;
+ const dialog=el('section',{class:'v2-zone-dialog',role:'dialog',
+  'aria-modal':'true','aria-label':owner+label,'tabindex':'-1'});
+ const close=btn('關閉',closeZoneSheet,'v2-zone-close');
+ dialog.append(el('header',{class:'v2-zone-header'},
+  el('div',{},el('h2',{text:owner+'｜'+label}),
+   el('p',{class:'v2-zone-subtitle',text:'公開區域 · '+cards.length+' 張 · 點卡圖可查看效果'})),
+  close));
+ const gallery=el('div',{class:'v2-zone-gallery'});
+ for(const physical of [...cards].reverse()){
+  const def=cardDef(side,physical.cardId);
+  const printed=printedCatalogue(side,physical.cardId);
+  const name=def?.name||printed?.name||physical.cardId;
+  const art=el('img',{src:imgUrl(side,physical.cardId),alt:name,loading:'lazy'});
+  art.onerror=()=>{
+   if(app.packs?.[side]?.id==='gurren-lagann'&&ttgArtErrorFallback(art))return;
+   if(!art.src.endsWith('/assets/mark.svg'))art.src='assets/mark.svg';
+  };
+  gallery.append(el('button',{type:'button',class:'v2-zone-card',
+   'aria-label':'查看 '+name+' '+physical.cardId+' 的完整卡圖與效果',
+   onClick:()=>showFieldSheet(side,zone,physical,def)},
+   art,el('span',{class:'v2-zone-card-name',text:name}),
+   el('small',{text:physical.cardId})));
+ }
+ dialog.append(cards.length?gallery:
+  el('p',{class:'v2-zone-empty',role:'status',text:'目前'+label+'沒有卡牌'}));
+ overlay.addEventListener('click',event=>{if(event.target===overlay)closeZoneSheet();});
+ overlay.addEventListener('keydown',event=>{if(event.key==='Escape'){
+  event.preventDefault();closeZoneSheet();
+ }});
+ overlay.append(dialog);
+ (document.querySelector('.v2-shell')||document.body).append(overlay);
+ close.focus({preventScroll:true});
 }
 function clearPendingOverlay(){
  document.querySelector('.v2-shell>.v2-pending-overlay')?.remove();
@@ -838,6 +899,7 @@ function render(){
  if(IS_BATTLE_PAGE)document.body.classList.toggle('v2-playing',
   !!app.state&&!(app.state.phase==='setup'&&app.state.pending?.kind==='opening-mulligan'));
  clearTimeout(fieldHold);fieldHold=0;
+ closeZoneSheet();
  clearPendingOverlay();
  clearTriggerOverlay();
  target.replaceChildren();
