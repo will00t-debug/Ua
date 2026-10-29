@@ -1,10 +1,13 @@
 // Puella Magi Madoka Magica UA31BT and UA31ST. The catalogue holds every
 // playable identity. This pack registers only prints whose entire Japanese
 // text is a tested program. Partial prints stay in the catalogue. Five-title
-// census counts are not changed here. EX16BT is a different product.
+// census counts are not changed here. EX16BT shares this pack so the two
+// products can be mixed. Set-2 sentences stay in mmm-exedra-pack.mjs.
 import {createUniversalPack} from './pack.mjs';
 import {MADOKA_CARDS} from '../madoka-cards.mjs';
+import {EXEDRA_CARDS} from '../madoka-exedra-cards.mjs';
 import {mmmEngineKind} from './mmm-effect-kinds.mjs';
+import {exedraPackCard} from './mmm-exedra-pack.mjs';
 
 const GIRL='魔法少女';
 const QUINTET='ピュエラ・マギ・ホーリー・クインテット';
@@ -284,9 +287,11 @@ export const MADOKA_ENGINE_IDS=Object.freeze(
  MADOKA_CARDS.filter(c=>c.engineKind).map(c=>c.id));
 
 export function createMadokaV2Pack(){
- const cards=MADOKA_CARDS.filter(c=>c.engineKind).map(mmmPackCard);
- if(cards.length!==113)throw Error('Madoka registered count drifted');
+ const set1=MADOKA_CARDS.filter(c=>c.engineKind).map(mmmPackCard);
+ const set2=EXEDRA_CARDS.filter(c=>c.engineKind).map(exedraPackCard);
+ if(set1.length!==113)throw Error('Madoka set 1 registered count drifted');
+ if(set2.length!==73)throw Error('Madoka set 2 registered count drifted');
  return createUniversalPack({
-  id:'madoka',version:'mmm-ua31-set1-20261029',cards
+  id:'madoka',version:'mmm-ua31-ex16-20261029',cards:[...set1,...set2]
  });
 }

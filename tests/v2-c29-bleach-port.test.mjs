@@ -7767,7 +7767,8 @@ test('BLC-1-028 looks at three cards without discarding, then replays that look 
  assert.equal(card.type,'field');
  assert.deepEqual(card.effects.onPlay,[{op:'searchTopOneBottomDiscard',count:3,noHandDiscard:true,filter:{field:'trait',value:'星十字騎士團'}}]);
  assert.deepEqual(card.mainAbility,{op:'fieldRestSacrificeReplay'});
- const bare={id:'BAD',name:'BAD',color:'yellow',type:'field',energy:3,ap:1,bp:0,gen:1,traits:[],trigger:'get',implementation:'dsl',effects:{onPlay:[{op:'searchTopOneBottomDiscard',count:4,noHandDiscard:true,filter:{field:'trait',value:'星十字騎士團'}}]},mainAbility:{op:'fieldRestSacrificeReplay'}};
+ // Count 4 is the printed EX16BT/MMM-2-069 window. Count 6 stays illegal.
+ const bare={id:'BAD',name:'BAD',color:'yellow',type:'field',energy:3,ap:1,bp:0,gen:1,traits:[],trigger:'get',implementation:'dsl',effects:{onPlay:[{op:'searchTopOneBottomDiscard',count:6,noHandDiscard:true,filter:{field:'trait',value:'星十字騎士團'}}]},mainAbility:{op:'fieldRestSacrificeReplay'}};
  assert.throws(()=>createUniversalPack({id:'bad-castle',cards:[bare]}),/invalid top-N filtered bottom\/discard profile/);
  const deck=realDeck(['BLC-1-028','BLC-1-002','BLC-4-001','BLC-2-005','BLC-1-016','BLC-1-018','BLC-1-006','BLC-1-026'],'yellow');
  const lone=main(deck,29028);

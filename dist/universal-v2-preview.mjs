@@ -6,6 +6,7 @@ import {officialV2Pack,rezeroSet1PracticeDeck,steinsGatePracticeDeck,madokaPract
 import {REZERO_ALL_CARDS} from './rezero-builder.mjs';
 import {STEINS_GATE_CARDS} from './steins-gate-cards.mjs';
 import {MADOKA_CARDS} from './madoka-cards.mjs';
+import {EXEDRA_CARDS} from './madoka-exedra-cards.mjs';
 import {summarizeDesignatedDecks,designatedPlayableCounts} from './universal-v2/bleach-designated-decks.mjs';
 import {validateUniversalDeck} from './universal-v2/pack.mjs';
 import {V2_ABILITY_TEMPLATE_IDS} from './universal-v2/ability-templates.mjs';
@@ -53,7 +54,7 @@ const allArt=Object.freeze({
  'mushoku-tensei':new Map(MST_V2_OFFICIAL_CATALOGUE.map(c=>[c.id,c.image||null])),
  rezero:new Map(REZERO_ALL_CARDS.map(c=>[c.id,c.image||null])),
  'steins-gate':new Map(STEINS_GATE_CARDS.map(c=>[c.id,c.image||null])),
- madoka:new Map(MADOKA_CARDS.map(c=>[c.id,c.image||null]))
+ madoka:new Map([...MADOKA_CARDS,...EXEDRA_CARDS].map(c=>[c.id,c.image||null]))
 });
 const v2Entries=listRegisteredV2Titles();
 function printedCatalogueMap(cards){

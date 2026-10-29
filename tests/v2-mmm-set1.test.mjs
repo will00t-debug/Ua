@@ -81,8 +81,8 @@ test('Madoka catalogue stays outside the five-title census',()=>{
  assert.equal(new Set(MADOKA_CARDS.map(c=>c.id)).size,113);
  assert.equal(MADOKA_CARDS.some(c=>c.id.includes('AP')||c.rarity==='AP'),false);
  assert.equal(MADOKA_CARDS.filter(c=>c.engineKind).length,113);
- assert.equal(Object.keys(pack.cards).length,113);
- assert.equal(pack.version,'mmm-ua31-set1-20261029');
+ assert.equal(Object.keys(pack.cards).length,186);
+ assert.equal(pack.version,'mmm-ua31-ex16-20261029');
  assert.equal(V2_TITLE_IDS.includes('madoka'),false);
  for(const card of MADOKA_CARDS){
   assert.equal(card.effect,card.effectJa);
@@ -96,7 +96,7 @@ test('Madoka catalogue stays outside the five-title census',()=>{
  assert.ok(Object.keys(practice.counts).every(id=>pack.cards[id].color==='red'));
  const editor=editorV2Status('madoka',practice.counts);
  assert.equal(editor.ready,true);
- assert.equal(editor.registered,113);
+ assert.equal(editor.registered,186);
  const blocked=v2DeckReport('madoka',{'MMM-1-001':4,'MMM-1-006':46});
  assert.equal(blocked.ok,false);
  assert.match(blocked.issues.join('\n'),/exceeds/);
