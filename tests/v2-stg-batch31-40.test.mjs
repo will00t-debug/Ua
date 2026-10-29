@@ -152,7 +152,7 @@ test('batches 31-40 stay registered while six catalogue cards remain',()=>{
  assert.equal(v2DeckReport('steins-gate',practice.counts).ok,true);
  const base={id:'X',name:'X',color:'blue',type:'character',energy:1,ap:1,bp:1000,gen:1,implementation:'dsl'};
  const reject=(effects,pattern)=>assert.throws(()=>createUniversalPack({id:'bad',cards:[{...base,effects}]}),pattern);
- reject({onPlay:[{op:'searchTopOneBottomDiscard',count:3,logic:'any',discard:false,
+ reject({onPlay:[{op:'searchTopOneBottomDiscard',count:3,logic:'all',discard:false,
   filters:['a','b'].map(value=>({field:'name',value}))}]},/invalid top-N filtered bottom\/discard profile/);
  reject({onPlay:[{op:'searchTopOneBottomDiscard',count:2,logic:'all',filters:[
   {field:'type',value:'event'},{field:'triggerNot',value:'draw'}]}]},/invalid top-N filtered bottom\/discard profile/);
