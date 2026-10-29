@@ -1,3 +1,4 @@
+import {mstOfficialCardArt} from '../../mst-art.mjs';
 import {UA54BT_OFFICIAL_PRINT} from './mst-official-print.mjs';
 // UA54BT catalogue: 80 numbered effect cards + 12 non-deck AP cards.
 // Unverified fields remain null; these placeholders are not playable nor fabricated.
@@ -94,7 +95,7 @@ export const UA54BT_VERIFIED=Array.from({length:80},(_,i)=>{
  const n=i+1,entry=pending(n),official=UA54BT_OFFICIAL_PRINT[entry.id];
  if(!official||!Number.isInteger(official.ap)||!Number.isInteger(official.energy)||!Number.isInteger(official.bp)||!Number.isInteger(official.gen))throw new Error('缺少官方卡片印刷資料：'+entry.id);
  const prior=VERIFIED[n]||PARTIAL[n]||{};
- return {...entry,...prior,...official,verified:true,auto:false,verifiedBy:'bandai-jp-official-cardlist',sourceEvidence:'https://github.com/will00t-debug/Ua/actions/runs/38450040170',reason:'日本官方印刷欄位與日文效果已核對；中文細節、卡圖授權及實際對戰自動判定仍待驗證。'};
+ return {...entry,...prior,...official,image:mstOfficialCardArt(entry.id),verified:true,auto:false,verifiedBy:'bandai-jp-official-cardlist',sourceEvidence:'https://github.com/will00t-debug/Ua/actions/runs/38450040170',reason:'日本官方印刷欄位與日文效果已核對；中文細節、卡圖授權及實際對戰自動判定仍待驗證。'};
 });
 
 export const UA54BT_DATA_STATUS={expectedRegularCards:80,parallelArtExcluded:true,apArtExcluded:true,engineReady:0,officialPrintAudited:80};
