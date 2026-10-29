@@ -543,6 +543,8 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseRevealedEnergyHand':return action.mode==='hand'?'將公開的卡加入手牌':'將公開的卡放回牌堆頂';
   case 'chooseMandatoryHandRemove':return '將 '+name()+' 除外';
   case 'chooseRequiredEnergy':return '本回合所需能量 +2：'+name();
+  case 'chooseFrontGrant':return '本回合賦予 '+name()+' BP 與印刷的追加能力';
+  case 'chooseRemovedEnter':return action.uid===null?'不從移除區登場':'讓 '+name()+' 從移除區休息登場';
   case 'chooseOwnBuff':case 'chooseMainBuff':case 'chooseTraitBuff':case 'chooseRestBp':
   case 'chooseRetireAtMost':return '使 '+name()+' 退場';
   case 'chooseRetireAtLeast':case 'chooseRetireScaled':return action.uid===null?'不使角色退場':'使 '+name()+' 退場';

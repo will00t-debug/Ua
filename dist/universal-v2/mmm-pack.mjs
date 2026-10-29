@@ -35,10 +35,12 @@ export function mmmPackCard(card){
   if(card.triggerTextJa!=='-')throw Error(card.id+' missing trigger text');
  }else if(card.trigger==='color'){
   const rest=kind==='discountImpact'&&card.triggerTextJa===COLOR_REST&&card.color==='yellow';
-  const retire=kind==='distinctEnergy'&&card.triggerTextJa===COLOR_RETIRE&&card.color==='red';
+  const retire=['distinctEnergy','lifeActive'].includes(kind)&&
+   card.triggerTextJa===COLOR_RETIRE&&card.color==='red';
   if(!rest&&!retire)throw Error(card.id+' color trigger is not a registered printed profile');
  }else if(card.trigger==='special'){
-  if(!['homuraRetire','madokaRetire','traitRetire','sayakaLifeRetire','kyokoApRetire'].includes(kind)||
+  if(!['homuraRetire','madokaRetire','traitRetire','sayakaLifeRetire','kyokoApRetire',
+   'frontDoubleCut'].includes(kind)||
    card.triggerTextJa!==SPECIAL)
    throw Error(card.id+' special trigger is not the printed front retirement');
  }else if(card.trigger==='raid'){
@@ -59,15 +61,28 @@ export function mmmPackCard(card){
  if(kind==='discountImpact'&&(card.type!=='character'||card.energy<5||card.color!=='yellow'))
   throw Error(card.id+' outside-event discount is not a yellow character of energy 5 or more');
  if(['homuraRetire','madokaRetire','traitRetire','recoverAp2','searchTwoQuintet',
-  'restDraw3','lifeDraw2','sayakaLifeRetire','kyokoApRetire'].includes(kind)&&
+  'restDraw3','lifeDraw2','sayakaLifeRetire','kyokoApRetire','mamiRestSkip',
+  'drawActiveAp','frontImpactDraw','frontDoubleCut'].includes(kind)&&
   card.type!=='event')
   throw Error(card.id+' this print is an event');
  if(kind==='fieldReturn'&&card.type!=='character')
   throw Error(card.id+' mandatory hand return is the printed character');
  if(['step','impactNull','doubleBlock','bounce','peek','buffOther','buffAny','aliasBuff',
-  'enterRetireDraw','deployRedGirl','recoverPurpleGirl'].includes(kind)&&card.type!=='character')
+  'enterRetireDraw','deployRedGirl','recoverPurpleGirl','entryOtherImpact','bpActive',
+  'lifeActive','removedDraw','removedLook','removedActive'].includes(kind)&&
+  card.type!=='character')
   throw Error(card.id+' this print is a character');
- const onPlay=kind==='drawDiscard'?[{op:'drawDiscard',count:1}]:
+ if(['fieldDiscardDraw','fieldTraitBuff'].includes(kind)&&card.type!=='field')
+  throw Error(card.id+' this print is a field');
+ const onPlay=kind==='entryOtherImpact'?[{op:'noteEntryTurn'}]:
+  kind==='removedDraw'?[{op:'ifEnteredFromRemoved',then:[{op:'oncePerTurnGate',scope:'name',
+   optional:false,then:[{op:'draw',count:1}]}]}]:
+  kind==='removedLook'?[{op:'ifEnteredFromRemoved',then:[{op:'inspectTopArrange',count:2,
+   toOutside:true,rest:'top'}]}]:
+  kind==='removedActive'?[{op:'ifEnteredFromRemoved',then:[{op:'activeOwnOther',optional:true}]}]:
+  kind==='frontImpactDraw'?[{op:'frontGrantKit',bp:2000,impactPlus:1,drawIfName:'暁美 ほむら'}]:
+  kind==='frontDoubleCut'?[{op:'frontGrantKit',bp:1000,attackTwice:true}]:
+  kind==='drawDiscard'?[{op:'drawDiscard',count:1}]:
   kind==='recoverAp2'?[{op:'recoverAp',count:2}]:
   kind==='bounce'?[{op:'bounceOwnOtherUnderEnergy',energy:1}]:
   kind==='peek'?[{op:'peekTopOne'}]:
@@ -109,6 +124,9 @@ export function mmmPackCard(card){
   kind==='sayakaLifeRetire'?[{op:'retireOppFrontUnderBp',bp:3000,bonusName:'美樹 さやか',
    bonusBp:5000,bonusLifeAtMost:5,mandatory:true}]:
   kind==='kyokoApRetire'?[{op:'retireOppFrontUnderBp',bp:5000,optional:true}]:
+  kind==='mamiRestSkip'?[{op:'restOppFrontOne',optional:false,skipWhen:{
+   kind:'ownNameAndOutsideEvents',turn:'any',name:'巴 マミ',min:2}}]:
+  kind==='drawActiveAp'?[{op:'drawDiscard',count:2,activeApIfDiscardedEvent:true}]:
   null;
  const parts=card.traits.length===1?card.traits[0].split(/[／/]/).map(x=>x.trim()).filter(Boolean):[];
  return {
@@ -121,7 +139,8 @@ export function mmmPackCard(card){
    kind==='madokaRecover'?{onRetire:[{op:'recoverOutsideNamedEnergy',name:'鹿目 まどか',
     maxEnergy:2,optional:true}]}:
    onPlay?{onPlay}:{},
-  ...(kind==='impactNull'?{impactNull:true}:{}),
+  ...(kind==='impactNull'||kind==='removedActive'?{impactNull:true}:{}),
+  ...(kind==='removedDraw'?{ownTurnBp:1000}:{}),
   ...(kind==='doubleBlock'?{readyOnBlockCount:1}:{}),
   ...(kind==='step'||kind==='lifeBpStep'?{step:true}:{}),
   ...(kind==='lifeBpStep'?{passiveBonuses:[{
@@ -147,9 +166,23 @@ export function mmmPackCard(card){
    triggerEffect:{op:'restOppFrontSkipNextActive'}}:{}),
   ...(kind==='enterRetireDraw'?{enterAlwaysActive:true,phaseEffects:[{
    phase:'start',edge:'start',turn:'own',then:[{op:'retireSelfAtOwnStart'}]}]}:{}),
-  ...(['homuraRetire','madokaRetire','traitRetire','sayakaLifeRetire','kyokoApRetire'].includes(kind)?
+  ...(['homuraRetire','madokaRetire','traitRetire','sayakaLifeRetire','kyokoApRetire',
+   'frontDoubleCut'].includes(kind)?
    {triggerEffect:{op:'retireOppFront'}}:{}),
-  ...(kind==='distinctRetire'?{raidName:'鹿目 まどか'}:{})
+  ...(kind==='frontDoubleCut'?{playApCutOnChosenName:{name:'暁美 ほむら',amount:1}}:{}),
+  ...(kind==='distinctRetire'?{raidName:'鹿目 まどか'}:{}),
+  ...(kind==='entryOtherImpact'?{mainAbility:{
+   op:'entryTurnOtherImpact',oncePerTurn:true,amount:1}}:{}),
+  ...(kind==='bpActive'?{mainAbility:{
+   op:'cardOnceActiveIfBp',scope:'card',minBp:5000}}:{}),
+  ...(kind==='fieldDiscardDraw'?{mainAbility:{op:'fieldRestDiscardDraw'}}:{}),
+  ...(kind==='fieldTraitBuff'?{enterAlwaysActive:true,mainAbility:{
+   op:'fieldRestBuffTrait',trait:GIRL,bp:500}}:{}),
+  ...(kind==='mamiRestSkip'||kind==='drawActiveAp'?{handUseOncePerName:true}:{}),
+  ...(kind==='lifeActive'?{passiveBonuses:[{
+   condition:{kind:'ownLifeAtMost',turn:'own',max:4},bp:500}],
+   mainAbility:{op:'lifeToHandThenActive',oncePerTurn:true},
+   triggerEffect:{op:'retireOppFrontUnderBp',bp:2500}}:{}),
  };
 }
 
@@ -158,7 +191,7 @@ export const MADOKA_ENGINE_IDS=Object.freeze(
 
 export function createMadokaV2Pack(){
  const cards=MADOKA_CARDS.filter(c=>c.engineKind).map(mmmPackCard);
- if(cards.length!==75)throw Error('Madoka registered count drifted');
+ if(cards.length!==87)throw Error('Madoka registered count drifted');
  return createUniversalPack({
   id:'madoka',version:'mmm-ua31-set1-20261029',cards
  });

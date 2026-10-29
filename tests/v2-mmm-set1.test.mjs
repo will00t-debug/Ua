@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {MADOKA_CARDS} from '../dist/madoka-cards.mjs';
 import {createMadokaV2Pack, mmmEngineKind} from '../dist/universal-v2/mmm-pack.mjs';
-import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
+import {createUniversalPack, validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {V2_TITLE_IDS} from '../dist/universal-v2/title-packs/contract.mjs';
 import {madokaPracticeDeck, v2DeckReport} from '../dist/universal-v2/official-entry.mjs';
 import {editorV2Status} from '../dist/v2-editor-compat.mjs';
@@ -60,6 +60,14 @@ function play(s,uid,kind){
  if(!action)throw Error('No '+kind+' for '+uid);
  return dispatchUniversalAction(packs,s,action);
 }
+function playLine(s,uid,line){
+ const action=legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===uid&&a.line===line);
+ if(!action)throw Error('No play '+line+' for '+uid);
+ return dispatchUniversalAction(packs,s,action);
+}
+function activates(s,uid,mode){
+ return legalUniversalActions(packs,s).filter(a=>a.type==='activate'&&a.uid===uid&&a.mode===mode);
+}
 function use(s,action){
  return dispatchUniversalAction(packs,s,action);
 }
@@ -72,8 +80,8 @@ test('Madoka catalogue stays outside the five-title census',()=>{
  assert.equal(MADOKA_CARDS.length,113);
  assert.equal(new Set(MADOKA_CARDS.map(c=>c.id)).size,113);
  assert.equal(MADOKA_CARDS.some(c=>c.id.includes('AP')||c.rarity==='AP'),false);
- assert.equal(MADOKA_CARDS.filter(c=>c.engineKind).length,75);
- assert.equal(Object.keys(pack.cards).length,75);
+ assert.equal(MADOKA_CARDS.filter(c=>c.engineKind).length,87);
+ assert.equal(Object.keys(pack.cards).length,87);
  assert.equal(pack.version,'mmm-ua31-set1-20261029');
  assert.equal(V2_TITLE_IDS.includes('madoka'),false);
  for(const card of MADOKA_CARDS){
@@ -88,7 +96,7 @@ test('Madoka catalogue stays outside the five-title census',()=>{
  assert.ok(Object.keys(practice.counts).every(id=>pack.cards[id].color==='red'));
  const editor=editorV2Status('madoka',practice.counts);
  assert.equal(editor.ready,true);
- assert.equal(editor.registered,75);
+ assert.equal(editor.registered,87);
  const blocked=v2DeckReport('madoka',{'MMM-1-001':4,'MMM-1-006':46});
  assert.equal(blocked.ok,false);
  assert.match(blocked.issues.join('\n'),/尚未支援/);
@@ -401,4 +409,484 @@ test('MMM-1-112 returns one Madoka of energy 2 or less from outside when she ret
  assert.ok(s.players[1].outside.some(c=>c.uid===high.uid));
  assert.ok(s.players[1].outside.some(c=>c.uid===wall.uid));
  assert.equal(assertUniversalMatch(packs,s),true);
+});
+
+test('MMM-1-049 grants impact 1 to another character only on its entry turn',()=>{
+ const counts=countsFor(['MMM-1-049','MMM-1-061','MMM-1-006']);
+ let alone=toPhase(fresh(counts,31049),'main');
+ put(alone,0,'MMM-1-061','energy',0);
+ put(alone,0,'MMM-1-061','energy',1);
+ const solo=take(alone,0,'MMM-1-049');
+ alone.players[0].hand.push(solo);
+ readyAp(alone);
+ alone=play(alone,solo.uid,'play');
+ assert.equal(alone.pending,null);
+ assert.equal(activates(alone,solo.uid,'entryOtherImpact').length,0);
+ const ally=take(alone,0,'MMM-1-006');
+ alone.players[0].hand.push(ally);
+ alone=play(alone,ally.uid,'play');
+ assert.equal(activates(alone,solo.uid,'entryOtherImpact').length,1);
+ alone=use(alone,{type:'activate',uid:solo.uid,mode:'entryOtherImpact'});
+ assert.equal(alone.pending.kind,'effect-entry-other-impact');
+ assert.equal(alone.pending.optional,false);
+ assert.equal(legalUniversalActions(packs,alone).some(a=>a.uid===null),false);
+ assert.ok(alone.pending.choices.includes(ally.uid));
+ assert.equal(alone.pending.choices.includes(solo.uid),false);
+ alone=use(alone,{type:'chooseEntryImpact',uid:ally.uid});
+ const granted=alone.players[0].front.find(c=>c?.uid===ally.uid);
+ assert.equal(granted.impactGranted.amount,1);
+ assert.equal(granted.impactGranted.turn,alone.turn);
+ assert.equal(granted.impactGranted.stamp,granted.fieldEntryStamp);
+ assert.equal(activates(alone,solo.uid,'entryOtherImpact').length,0);
+ alone.players[0].front.find(c=>c?.uid===solo.uid).entryTurn=alone.turn-1;
+ alone.mainAbilityUsedUids=[];
+ assert.equal(activates(alone,solo.uid,'entryOtherImpact').length,0);
+ assert.equal(assertUniversalMatch(packs,alone),true);
+});
+
+test('MMM-1-052 actives itself once when live BP is at least 5000',()=>{
+ const counts=countsFor(['MMM-1-052','MMM-1-037','MMM-1-006']);
+ let s=toPhase(fresh(counts,31052),'main');
+ const kyoko=put(s,0,'MMM-1-052','front',0,false);
+ assert.equal(universalBp(packs,s,kyoko),4000);
+ assert.equal(activates(s,kyoko.uid,'bpActive').length,0);
+ kyoko.buffs=[{bp:1000,untilTurn:s.turn}];
+ assert.equal(universalBp(packs,s,kyoko),5000);
+ assert.equal(activates(s,kyoko.uid,'bpActive').length,1);
+ s=use(s,{type:'activate',uid:kyoko.uid,mode:'bpActive'});
+ assert.equal(s.players[0].front[0].ready,true);
+ assert.equal(activates(s,kyoko.uid,'bpActive').length,0);
+ const live=put(s,0,'MMM-1-052','energy',0,true);
+ live.buffs=[{bp:1000,untilTurn:s.turn}];
+ assert.equal(activates(s,live.uid,'bpActive').length,1);
+ s=use(s,{type:'activate',uid:live.uid,mode:'bpActive'});
+ assert.equal(s.players[0].energy[0].ready,true);
+ assert.equal(activates(s,live.uid,'bpActive').length,0);
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
+
+test('MMM-1-061 rests, discards one, draws one, and can pay again',()=>{
+ const counts=countsFor(['MMM-1-061','MMM-1-037','MMM-1-006']);
+ let s=toPhase(fresh(counts,31061),'main');
+ const field=put(s,0,'MMM-1-061','energy',0,true);
+ field.fieldEntryStamp=1;
+ const payment=s.players[0].hand[0];
+ const deck=s.players[0].deck.length;
+ assert.equal(activates(s,field.uid,'fieldDiscardDraw').length,1);
+ s.players[0].outside.push(...s.players[0].hand.splice(0));
+ assert.equal(activates(s,field.uid,'fieldDiscardDraw').length,0);
+ s.players[0].hand.push(s.players[0].outside.pop());
+ s=use(s,{type:'activate',uid:field.uid,mode:'fieldDiscardDraw'});
+ assert.equal(s.players[0].energy[0].ready,false);
+ assert.equal(s.pending.kind,'effect-discard-gate');
+ assert.equal(s.pending.optional,false);
+ const paid=s.players[0].hand[0];
+ s=use(s,{type:'chooseDiscardGate',uid:paid.uid});
+ assert.ok(s.players[0].outside.some(c=>c.uid===paid.uid));
+ assert.equal(s.players[0].deck.length,deck-1);
+ assert.equal(s.pending,null);
+ assert.equal(activates(s,field.uid,'fieldDiscardDraw').length,0);
+ s.players[0].energy[0].ready=true;
+ assert.equal(activates(s,field.uid,'fieldDiscardDraw').length,1);
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
+
+test('MMM-1-091 enters active and rests to give a magical girl BP+500',()=>{
+ const counts=countsFor(['MMM-1-091','MMM-1-085','MMM-1-037']);
+ let empty=toPhase(fresh(counts,31091),'main');
+ const quiet=put(empty,0,'MMM-1-091','energy',0,true);
+ put(empty,0,'MMM-1-037','front',0);
+ assert.equal(quiet.ready,true);
+ assert.equal(activates(empty,quiet.uid,'fieldTraitBuff').length,0);
+
+ let s=toPhase(fresh(counts,31092),'main');
+ put(s,0,'MMM-1-085','energy',0);
+ put(s,0,'MMM-1-085','energy',1);
+ const bystander=put(s,0,'MMM-1-037','front',1);
+ const town=take(s,0,'MMM-1-091');
+ s.players[0].hand.push(town);
+ readyAp(s);
+ s=playLine(s,town.uid,'energy');
+ const placed=s.players[0].energy.find(c=>c?.uid===town.uid);
+ const girl=s.players[0].energy[0];
+ const before=universalBp(packs,s,girl);
+ assert.equal(placed.ready,true);
+ assert.equal(activates(s,town.uid,'fieldTraitBuff').length,1);
+ s=use(s,{type:'activate',uid:town.uid,mode:'fieldTraitBuff'});
+ assert.equal(s.players[0].energy.find(c=>c?.uid===town.uid).ready,false);
+ assert.equal(s.pending.kind,'effect-buff-own');
+ assert.equal(s.pending.optional,false);
+ assert.ok(s.pending.choices.includes(girl.uid));
+ assert.equal(s.pending.choices.includes(bystander.uid),false);
+ s=use(s,{type:'chooseOwnBuff',uid:girl.uid});
+ assert.equal(universalBp(packs,s,s.players[0].energy[0]),before+500);
+ assert.equal(s.pending,null);
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
+
+test('MMM-1-089 gains 500 BP at 4 life on its turn, then actives after taking life',()=>{
+ const counts=countsFor(['MMM-1-089','MMM-1-085']);
+ assert.deepEqual(pack.cards['MMM-1-089'].triggerEffect,{op:'retireOppFrontUnderBp',bp:2500});
+ let s=toPhase(fresh(counts,31089),'main');
+ const sayaka=put(s,0,'MMM-1-089','front',0,false);
+ assert.equal(s.players[0].life.length,7);
+ assert.equal(universalBp(packs,s,sayaka),3500);
+ setLife(s,0,5);
+ assert.equal(universalBp(packs,s,sayaka),3500);
+ setLife(s,0,4);
+ assert.equal(universalBp(packs,s,sayaka),4000);
+ s.active=1;
+ assert.equal(universalBp(packs,s,sayaka),3500);
+ s.active=0;
+ assert.equal(universalBp(packs,s,sayaka),4000);
+ const deck=s.players[0].deck.length;
+ const life=s.players[0].life[0];
+ assert.equal(activates(s,sayaka.uid,'lifeActive').length,1);
+ s=use(s,{type:'activate',uid:sayaka.uid,mode:'lifeActive'});
+ assert.equal(s.pending.kind,'effect-life-active-self');
+ assert.equal(s.pending.optional,false);
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.uid===null),false);
+ s=use(s,{type:'chooseLifeActive',uid:life.uid});
+ assert.equal(s.players[0].front[0].ready,true);
+ assert.ok(s.players[0].hand.some(c=>c.uid===life.uid));
+ assert.equal(s.players[0].life.length,3);
+ assert.equal(s.players[0].deck.length,deck);
+ assert.equal(activates(s,sayaka.uid,'lifeActive').length,0);
+ assert.equal(s.status,'playing');
+ setLife(s,0,0);
+ assert.equal(activates(s,sayaka.uid,'lifeActive').length,0);
+ let last=toPhase(fresh(counts,31090),'main');
+ const closer=put(last,0,'MMM-1-089','front',0,false);
+ setLife(last,0,1);
+ const finalLife=last.players[0].life[0];
+ last=use(last,{type:'activate',uid:closer.uid,mode:'lifeActive'});
+ last=use(last,{type:'chooseLifeActive',uid:finalLife.uid});
+ assert.equal(last.players[0].front[0].ready,true);
+ assert.equal(last.players[0].life.length,0);
+ assert.equal(last.status,'finished');
+ assert.equal(last.endReason,'life-zero');
+});
+
+test('MMM-1-033 rests one opposing front, and skips the next active only with Mami and two outside events',()=>{
+ const counts=countsFor(['MMM-1-033','MMM-1-011','MMM-1-018','MMM-1-030','MMM-1-006']);
+ let plain=toPhase(fresh(counts,31033),'main');
+ put(plain,0,'MMM-1-011','energy',0);
+ put(plain,0,'MMM-1-011','energy',1);
+ const victim=put(plain,1,'MMM-1-006','front',0,true);
+ const event=take(plain,0,'MMM-1-033');
+ plain.players[0].hand.push(event);
+ readyAp(plain);
+ assert.equal(legalUniversalActions(packs,plain).some(a=>a.type==='event'&&a.uid===event.uid),true);
+ const blocked=toPhase(fresh(counts,31034),'main');
+ put(blocked,0,'MMM-1-011','energy',0);
+ put(blocked,0,'MMM-1-011','energy',1);
+ const lonely=take(blocked,0,'MMM-1-033');
+ blocked.players[0].hand.push(lonely);
+ readyAp(blocked);
+ assert.equal(legalUniversalActions(packs,blocked).some(a=>a.type==='event'&&a.uid===lonely.uid),false);
+ plain=play(plain,event.uid,'event');
+ assert.equal(plain.pending.kind,'effect-rest-bp');
+ assert.equal(plain.pending.skipNextActive,false);
+ plain=use(plain,{type:'chooseRestBp',uid:victim.uid});
+ assert.equal(plain.players[1].front[0].ready,false);
+ assert.equal(plain.continuousStates.some(e=>e.kind==='skipNextActive'),false);
+ const again=take(plain,0,'MMM-1-033');
+ plain.players[0].hand.push(again);
+ assert.equal(legalUniversalActions(packs,plain).some(a=>a.type==='event'&&a.uid===again.uid),false);
+
+ let upgraded=toPhase(fresh(counts,31035),'main');
+ put(upgraded,0,'MMM-1-011','energy',0);
+ put(upgraded,0,'MMM-1-011','energy',1);
+ put(upgraded,0,'MMM-1-018','front',0);
+ put(upgraded,0,'MMM-1-030','outside',0);
+ const marked=put(upgraded,1,'MMM-1-006','front',0,true);
+ const scary=take(upgraded,0,'MMM-1-033');
+ upgraded.players[0].hand.push(scary);
+ readyAp(upgraded);
+ upgraded=play(upgraded,scary.uid,'event');
+ assert.equal(upgraded.pending.skipNextActive,true);
+ upgraded=use(upgraded,{type:'chooseRestBp',uid:marked.uid});
+ assert.equal(upgraded.players[1].front[0].ready,false);
+ assert.equal(upgraded.continuousStates.some(e=>e.kind==='skipNextActive'&&e.targetUid===marked.uid),true);
+ assert.equal(assertUniversalMatch(packs,upgraded),true);
+});
+
+test('MMM-1-034 draws 2, and actives one AP only after an event is discarded',()=>{
+ const counts=countsFor(['MMM-1-034','MMM-1-011','MMM-1-030','MMM-1-006']);
+ let s=toPhase(fresh(counts,31036),'main');
+ put(s,0,'MMM-1-011','energy',0);
+ put(s,0,'MMM-1-011','energy',1);
+ const eventCard=take(s,0,'MMM-1-030');
+ const girl=take(s,0,'MMM-1-006');
+ s.players[0].hand.push(eventCard,girl);
+ const event=take(s,0,'MMM-1-034');
+ s.players[0].hand.push(event);
+ readyAp(s);
+ const deck=s.players[0].deck.length;
+ s=play(s,event.uid,'event');
+ assert.equal(s.pending.kind,'effect-discard');
+ assert.equal(s.players[0].deck.length,deck-2);
+ s.players[0].apCards[0].ready=false;
+ s=use(s,{type:'chooseDiscard',uid:girl.uid});
+ assert.equal(s.pending,null);
+ assert.ok(s.players[0].outside.some(c=>c.uid===girl.uid));
+ const second=take(s,0,'MMM-1-034');
+ s.players[0].hand.push(second);
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='event'&&a.uid===second.uid),false);
+
+ let ap=toPhase(fresh(counts,31037),'main');
+ put(ap,0,'MMM-1-011','energy',0);
+ put(ap,0,'MMM-1-011','energy',1);
+ const discarded=take(ap,0,'MMM-1-030');
+ ap.players[0].hand.push(discarded);
+ const spell=take(ap,0,'MMM-1-034');
+ ap.players[0].hand.push(spell);
+ readyAp(ap);
+ ap=play(ap,spell.uid,'event');
+ ap.players[0].apCards[0].ready=false;
+ ap=use(ap,{type:'chooseDiscard',uid:discarded.uid});
+ assert.equal(ap.pending.kind,'effect-recover-ap');
+ assert.equal(ap.pending.optional,true);
+ assert.ok(legalUniversalActions(packs,ap).some(a=>a.uid===null));
+ ap=use(ap,{type:'chooseApRecovery',uid:ap.players[0].apCards[0].uid});
+ assert.equal(ap.players[0].apCards[0].ready,true);
+ assert.equal(ap.pending,null);
+ assert.equal(assertUniversalMatch(packs,ap),true);
+});
+
+function readyCount(s,p=0){
+ return s.players[p].apCards.filter(c=>c.inPlay&&c.ready).length;
+}
+function fuelPurple(s){
+ put(s,0,'MMM-1-037','energy',0);
+ put(s,0,'MMM-1-037','energy',1);
+}
+function handPlay(s,id){
+ const card=take(s,0,id);
+ s.players[0].hand.push(card);
+ return card;
+}
+
+test('MMM-1-062 grants front BP and impact, then draws only with Homura',()=>{
+ const counts=countsFor(['MMM-1-037','MMM-1-062','MMM-1-006','MMM-1-039']);
+ let alone=toPhase(fresh(counts,31062),'main');
+ fuelPurple(alone);
+ const madoka=handPlay(alone,'MMM-1-006');
+ readyAp(alone);
+ alone=play(alone,madoka.uid,'play');
+ const girl=alone.players[0].front.find(c=>c.uid===madoka.uid);
+ const dry=handPlay(alone,'MMM-1-062');
+ const deck=alone.players[0].deck.length;
+ alone=play(alone,dry.uid,'event');
+ assert.equal(alone.pending.kind,'effect-front-grant');
+ assert.equal(alone.pending.optional,false);
+ assert.equal(legalUniversalActions(packs,alone).some(a=>a.uid===null),false);
+ assert.deepEqual(alone.pending.choices,[girl.uid]);
+ alone=use(alone,{type:'chooseFrontGrant',uid:girl.uid});
+ const boosted=alone.players[0].front.find(c=>c.uid===girl.uid);
+ assert.equal(universalBp(packs,alone,boosted),3500);
+ assert.deepEqual(boosted.impactPlus,{turn:alone.turn,stamp:boosted.fieldEntryStamp,amount:1});
+ assert.equal(alone.players[0].deck.length,deck);
+ assert.equal(alone.pending,null);
+
+ let both=toPhase(fresh(counts,31063),'main');
+ fuelPurple(both);
+ const homura=handPlay(both,'MMM-1-039');
+ const other=handPlay(both,'MMM-1-006');
+ readyAp(both);
+ both=play(both,homura.uid,'play');
+ both=play(both,other.uid,'play');
+ const spell=handPlay(both,'MMM-1-062');
+ const before=both.players[0].deck.length;
+ both=play(both,spell.uid,'event');
+ const chosen=both.players[0].front.find(c=>c.uid===other.uid);
+ both=use(both,{type:'chooseFrontGrant',uid:chosen.uid});
+ assert.equal(both.players[0].deck.length,before-1);
+ const flame=both.players[0].front.find(c=>c.uid===homura.uid);
+ const marked=both.players[0].front.find(c=>c.uid===other.uid);
+ assert.equal(marked.impactPlus.amount,1);
+ assert.equal(flame.impactPlus,undefined);
+ assert.equal(universalBp(packs,both,marked),3500);
+ assert.equal(assertUniversalMatch(packs,both),true);
+
+ let empty=toPhase(fresh(counts,31064),'main');
+ fuelPurple(empty);
+ const blocked=handPlay(empty,'MMM-1-062');
+ readyAp(empty);
+ assert.equal(legalUniversalActions(packs,empty).some(a=>a.type==='event'&&a.uid===blocked.uid),false);
+});
+
+test('MMM-1-067 cuts AP only for the chosen Homura and grants a second attack',()=>{
+ const counts=countsFor(['MMM-1-037','MMM-1-067','MMM-1-006','MMM-1-039']);
+ let cheap=toPhase(fresh(counts,31067),'main');
+ fuelPurple(cheap);
+ const homura=handPlay(cheap,'MMM-1-039');
+ const madoka=handPlay(cheap,'MMM-1-006');
+ readyAp(cheap);
+ cheap=play(cheap,homura.uid,'play');
+ cheap=play(cheap,madoka.uid,'play');
+ const flame=cheap.players[0].front.find(c=>c.uid===homura.uid);
+ const event=handPlay(cheap,'MMM-1-067');
+ readyAp(cheap,0,1);
+ const offers=legalUniversalActions(packs,cheap).filter(a=>a.type==='event'&&a.uid===event.uid);
+ assert.deepEqual(offers.map(a=>a.targetUid),[flame.uid]);
+ assert.equal(offers.some(a=>a.targetUid===undefined),false);
+ cheap=use(cheap,offers[0]);
+ assert.equal(readyCount(cheap),0);
+ const granted=cheap.players[0].front.find(c=>c.uid===flame.uid);
+ assert.equal(universalBp(packs,cheap,granted),3000);
+ assert.equal(granted.readyOnAttackGranted.sourceUid,event.uid);
+ assert.equal(granted.paidTargetUid,undefined);
+ granted.ready=true;
+ cheap=toPhase(cheap,'attack');
+ const attacker=cheap.players[0].front.find(c=>c.uid===flame.uid);
+ cheap=use(cheap,legalUniversalActions(packs,cheap).find(a=>
+  a.type==='attack'&&a.uid===attacker.uid&&a.targetUid===undefined));
+ assert.equal(cheap.players[0].front.find(c=>c.uid===flame.uid).ready,true);
+ assert.equal(cheap.attacksByUid[flame.uid],1);
+
+ let full=toPhase(fresh(counts,31068),'main');
+ fuelPurple(full);
+ const named=handPlay(full,'MMM-1-039');
+ const plain=handPlay(full,'MMM-1-006');
+ readyAp(full,0,3);
+ full=play(full,named.uid,'play');
+ full=play(full,plain.uid,'play');
+ const spell=handPlay(full,'MMM-1-067');
+ readyAp(full,0,2);
+ const both=legalUniversalActions(packs,full).filter(a=>a.type==='event'&&a.uid===spell.uid);
+ assert.deepEqual(both.map(a=>a.targetUid).sort(),[named.uid,plain.uid].sort());
+ full=use(full,both.find(a=>a.targetUid===plain.uid));
+ assert.equal(readyCount(full),0);
+ const unmarked=full.players[0].front.find(c=>c.uid===named.uid);
+ const marked=full.players[0].front.find(c=>c.uid===plain.uid);
+ assert.equal(universalBp(packs,full,marked),2500);
+ assert.equal(unmarked.readyOnAttackGranted,undefined);
+ assert.equal(marked.readyOnAttackGranted.turn,full.turn);
+ assert.equal(assertUniversalMatch(packs,full),true);
+});
+
+function fuelYellow(s){
+ put(s,0,'MMM-1-011','energy',0);
+ put(s,0,'MMM-1-011','energy',1);
+}
+
+test('MMM-1-022, 024 and 111 do not fire removed-entry text from hand',()=>{
+ const counts=countsFor(['MMM-1-011','MMM-1-022','MMM-1-024','MMM-1-111','MMM-1-006']);
+ let nagisa=toPhase(fresh(counts,31022),'main');
+ fuelYellow(nagisa);
+ const girl=handPlay(nagisa,'MMM-1-022');
+ readyAp(nagisa);
+ const deck=nagisa.players[0].deck.length;
+ nagisa=play(nagisa,girl.uid,'play');
+ const entered=nagisa.players[0].front.find(c=>c.uid===girl.uid);
+ assert.equal(nagisa.pending,null);
+ assert.equal(nagisa.players[0].deck.length,deck);
+ assert.equal(universalBp(packs,nagisa,entered),4000);
+ nagisa=toPhase(nagisa,'start');
+ assert.equal(nagisa.active,1);
+ assert.equal(universalBp(packs,nagisa,nagisa.players[0].front.find(c=>c.uid===girl.uid)),3000);
+
+ let look=toPhase(fresh(counts,31024),'main');
+ fuelYellow(look);
+ const sayaka=handPlay(look,'MMM-1-024');
+ readyAp(look);
+ look=play(look,sayaka.uid,'play');
+ assert.equal(look.pending,null);
+
+ let impact=toPhase(fresh(counts,31111),'main');
+ fuelYellow(impact);
+ const big=handPlay(impact,'MMM-1-111');
+ readyAp(impact);
+ impact=play(impact,big.uid,'play');
+ assert.equal(impact.pending,null);
+ assert.equal(pack.cards['MMM-1-111'].impactNull,true);
+ assert.equal(assertUniversalMatch(packs,impact),true);
+});
+
+test('removed-area entry draws once per name, looks, or actives another',()=>{
+ const unit=(id,extra)=>({id,name:id,color:'yellow',type:'character',energy:0,ap:1,bp:2000,
+  gen:1,traits:[],trigger:null,implementation:'vanilla',effects:{},...extra});
+ const cards=[
+  unit('NAG',{name:'百江 なぎさ',implementation:'dsl',ownTurnBp:1000,effects:{onPlay:[{
+   op:'ifEnteredFromRemoved',then:[{op:'oncePerTurnGate',scope:'name',optional:false,
+    then:[{op:'draw',count:1}]}]}]}}),
+  unit('LOOK',{implementation:'dsl',effects:{onPlay:[{op:'ifEnteredFromRemoved',then:[
+   {op:'inspectTopArrange',count:2,toOutside:true,rest:'top'}]}]}}),
+  unit('ACT',{implementation:'dsl',impactNull:true,effects:{onPlay:[{op:'ifEnteredFromRemoved',
+   then:[{op:'activeOwnOther',optional:true}]}]}}),
+  unit('ENT',{type:'event',bp:0,gen:0,implementation:'dsl',effects:{onPlay:[
+   {op:'restEnterRemovedOne',optional:true}]}}),
+  ...['A','B','C','D','E','F','G','H','I'].map(id=>unit(id))
+ ];
+ const lab=createUniversalPack({id:'madoka-removed-lab',version:'lab',cards});
+ const group=[lab,lab];
+ const ids=cards.map(c=>c.id);
+ const counts=Object.fromEntries(ids.map((id,i)=>[id,i===12?2:4]));
+ assert.deepEqual(validateUniversalDeck(lab,counts),[]);
+ function boot(seed){
+  let state=newUniversalMatch(group,{decks:[counts,counts],seed,first:0});
+  for(let n=0;n<8&&state.phase!=='main';n++)
+   state=dispatchUniversalAction(group,state,{type:'next'});
+  return state;
+ }
+ function lift(state,id){
+  for(const zone of ['hand','deck','life','outside','removed']){
+   const pile=state.players[0][zone],index=pile.findIndex(c=>c.cardId===id);
+   if(index>=0)return pile.splice(index,1)[0];
+  }
+  throw Error('Missing '+id);
+ }
+ function enterRemoved(state,uid){
+  const card=state.players[0].removed.find(c=>c.uid===uid);
+  if(!card)throw Error('Removed character missing');
+  const event=lift(state,'ENT');
+  state.players[0].hand.push(event);
+  readyAp(state);
+  const deck=state.players[0].deck.length;
+  state=dispatchUniversalAction(group,state,legalUniversalActions(group,state)
+   .find(a=>a.type==='event'&&a.uid===event.uid));
+  assert.equal(state.pending.kind,'effect-removed-enter');
+  const choice=legalUniversalActions(group,state).find(a=>a.type==='chooseRemovedEnter'&&
+   a.uid===card.uid&&a.line==='front');
+  state=dispatchUniversalAction(group,state,choice);
+  return {state,drew:deck-state.players[0].deck.length};
+ }
+ let draw=boot(32022);
+ const first=lift(draw,'NAG'),second=lift(draw,'NAG');
+ draw.players[0].removed.push(first,second);
+ const opened=enterRemoved(draw,first.uid);
+ draw=opened.state;
+ assert.equal(draw.pending,null);
+ assert.equal(opened.drew,1);
+ const again=enterRemoved(draw,second.uid);
+ draw=again.state;
+ assert.equal(draw.pending,null);
+ assert.equal(again.drew,0);
+ assert.equal(assertUniversalMatch(group,draw),true);
+
+ let seen=boot(32024);
+ const watcher=lift(seen,'LOOK');
+ seen.players[0].removed.push(watcher);
+ seen=enterRemoved(seen,watcher.uid).state;
+ assert.equal(seen.pending.kind,'effect-top-inspect');
+ assert.equal(seen.pending.uids.length,2);
+
+ let active=boot(32025);
+ const other=lift(active,'A');
+ active.players[0].hand.push(other);
+ readyAp(active);
+ active=dispatchUniversalAction(group,active,legalUniversalActions(group,active)
+  .find(a=>a.type==='play'&&a.uid===other.uid&&a.line==='front'));
+ const rested=active.players[0].front.find(c=>c.uid===other.uid);
+ assert.equal(rested.ready,false);
+ const actor=lift(active,'ACT');
+ active.players[0].removed.push(actor);
+ active=enterRemoved(active,actor.uid).state;
+ assert.equal(active.pending.kind,'effect-active-own-other');
+ assert.equal(active.pending.optional,true);
+ assert.ok(legalUniversalActions(group,active).some(a=>a.uid===null));
+ active=dispatchUniversalAction(group,active,{type:'chooseActiveOwnOther',uid:rested.uid});
+ assert.equal(active.players[0].front.find(c=>c.uid===rested.uid).ready,true);
+ assert.equal(assertUniversalMatch(group,active),true);
 });
