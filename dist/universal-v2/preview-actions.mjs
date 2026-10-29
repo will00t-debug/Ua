@@ -167,7 +167,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'main-two-buff':'主要能力選擇 BP 對象',
  'main-discard-buff':'支付一張手牌，讓自身 BP 增加',
  'main-active-named':'選擇指定卡名的己方角色並轉為 ACTIVE',
- 'effect-grant-attack':'授予己方角色攻擊時能力','granted-attack-draw':'攻擊時是否抽一張',
+ 'effect-grant-attack':'授予己方角色攻擊時能力','effect-grant-retire':'授予己方角色退場時能力','granted-attack-draw':'攻擊時是否抽一張','granted-retire-draw':'退場時是否抽一張',
  'effect-grant-opp-block':'對手選擇一名角色，本回合不被高 BP 阻擋',
  'effect-deploy-outside':'從場外選擇角色登場',
  'effect-energy-skip-swap':'能源線與下次不 ACTIVE 的前線角色交換',
@@ -527,6 +527,8 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseAttackBan':return action.uid===null?'不指定攻擊禁止對象':
    '令 '+name()+' 至下個己方回合開始前不能攻擊';
   case 'chooseGrantAttack':return '授予 '+name()+' 本回合攻擊時抽牌';
+  case 'chooseGrantRetire':return action.uid===null?'不授予退場時抽牌':'授予 '+name()+' 本回合退場時抽牌';
+  case 'chooseGrantedRetireDraw':return action.mode==='draw'?'退場時抽 1 張':'不抽牌';
   case 'chooseOppBlock':return action.uid===null?'不賦予阻擋限制':'讓 '+name()+' 本回合不被 BP 以上角色阻擋';
   case 'chooseDeployOutside':return action.uid===null?'不從場外登場':'從場外登場 '+name()+suffix();
   case 'chooseEnergySkipSwap':return action.uid===null?'不交換位置':'與 '+name()+' 交換前線與能源線';
