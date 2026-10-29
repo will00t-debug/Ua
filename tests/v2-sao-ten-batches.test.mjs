@@ -122,9 +122,9 @@ function orderBottoms(s){
 }
 
 test('ten shared batches register ten whole SAO prints',()=>{
- assert.equal(EXPECTED_V2_TOTAL,644);
- assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],147);
- assert.equal(Object.keys(sao.cards).length,147);
+ assert.equal(EXPECTED_V2_TOTAL,654);
+ assert.equal(EXPECTED_V2_COUNTS['sword-art-online'],157);
+ assert.equal(Object.keys(sao.cards).length,157);
  for(const id of ADDED){
   const source=SAO_OFFICIAL_CARDS.find(c=>c.id===id);
   const card=sao.cards[id];

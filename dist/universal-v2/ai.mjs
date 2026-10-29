@@ -183,6 +183,18 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='effect-may-draw')
   return difficulty==='easy'?legal.find(a=>a.mode==='skip')||legal[0]:
    legal.find(a=>a.mode==='draw')||legal[0];
+ if(s.pending?.kind==='effect-draw-instead')
+  return difficulty==='easy'?legal.find(a=>a.mode==='discard')||legal[0]:
+   legal.find(a=>a.mode==='draw')||legal[0];
+ if(s.pending?.kind==='effect-may-draw-discard')
+  return difficulty==='easy'?legal.find(a=>a.mode==='skip')||legal[0]:
+   legal.find(a=>a.mode==='draw')||legal[0];
+ if(s.pending?.kind==='effect-optional-pay-ap')
+  return difficulty==='easy'?legal.find(a=>a.mode==='skip')||legal[0]:
+   legal.find(a=>a.mode==='pay')||legal[0];
+ if(s.pending?.kind==='effect-bounce-bp'||s.pending?.kind==='effect-grant-below-printed')
+  return difficulty==='easy'?legal.find(a=>a.uid===null)||legal[0]:
+   legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-optional-tuck-under')
   return difficulty==='easy'?legal.find(a=>a.mode==='skip')||legal[0]:
    legal.find(a=>a.mode==='tuck')||legal[0];
