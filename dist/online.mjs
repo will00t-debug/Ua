@@ -404,16 +404,22 @@ function entryDestination(action,line,slot,slotUid){
  if(slotUid&&action.baseUid&&action.baseUid!==slotUid)return false;
  return !slotUid;
 }
-function entryClickPlan({selectedUid,entryMode,line,slot,slotUid,legal}){
+function entryClickPlan({selectedUid,entryMode,raidBaseUid=null,line,slot,slotUid,legal}){
  const selection=boardEntrySelection(legal,selectedUid);
  if(!selection.normal.length&&!selection.raid.length)return {type:'idle'};
+ // Tapping an eligible ENERGY base chooses the Raid source. Final placement
+ // may be that same ENERGY slot or a legal FRONT slot.
+ const tappedBase=line==='energy'&&slotUid&&entryMode!=='normal'&&
+  selection.raid.some(action=>action.baseUid===slotUid);
+ if(tappedBase&&raidBaseUid!==slotUid)return {type:'raid-base',baseUid:slotUid};
  let mode=null;
- if(entryMode==='raid'&&selection.raid.length)mode='raid';
+ if((entryMode==='raid'||raidBaseUid)&&selection.raid.length)mode='raid';
  else if(entryMode==='normal'&&selection.normal.length)mode='normal';
  else if(selection.needsMode)return {type:'entry-mode'};
  else mode=selection.raid.length?'raid':'normal';
  const hits=(mode==='raid'?selection.raid:selection.normal)
-  .filter(action=>entryDestination(action,line,slot,slotUid));
+  .filter(action=>(mode!=='raid'||!raidBaseUid||action.baseUid===raidBaseUid)&&
+   entryDestination(action,line,slot,slotUid));
  if(!hits.length)return {type:'entry-wait',mode};
  return {type:'entry',mode,actions:hits};
 }
@@ -442,7 +448,7 @@ function fieldPlan(engineSeat,line,index,card){
  if(room.view?.phase==='move'&&!deploying)
   return moveClickPlan({selectedUid:pick.uid||null,slotUid:card?.uid||null,line,slot:index,legal});
  const entry=entryClickPlan({selectedUid:pick.uid||null,entryMode:pick.entryMode||null,
-  line,slot:index,slotUid:card?.uid||null,legal});
+  raidBaseUid:pick.raidBaseUid||null,line,slot:index,slotUid:card?.uid||null,legal});
  if(entry.type!=='idle')return entry;
  if(room.view?.phase==='move')
   return moveClickPlan({selectedUid:pick.uid||null,slotUid:card?.uid||null,line,slot:index,legal});
@@ -469,13 +475,18 @@ function clickField(engineSeat,line,index,card){
   if(attacks.length){app.pick={uid:card.uid,entryMode:null,options:null};app.zone=null;render();return;}
  }
  const plan=fieldPlan(engineSeat,line,index,card);
+ if(plan.type==='raid-base'){
+  app.pick={uid:pick.uid,entryMode:'raid',raidBaseUid:plan.baseUid,options:null};
+  render();return;
+ }
  if(plan.type==='choose-mover'){
   app.pick={uid:pick.uid===plan.uid?null:plan.uid,entryMode:null,options:null};render();return;
  }
  if(plan.type==='destination'||plan.type==='entry'){
   const acts=plan.actions||[];
   if(acts.length===1){sendAction(acts[0].index);return;}
-  if(acts.length>1){app.pick={uid:pick.uid||null,entryMode:pick.entryMode||null,options:acts};render();return;}
+  if(acts.length>1){app.pick={uid:pick.uid||null,entryMode:pick.entryMode||null,
+   raidBaseUid:pick.raidBaseUid||null,options:acts};render();return;}
  }
  if(plan.type==='entry-mode'||plan.type==='entry-wait')return;
  if(card){app.pick={uid:pick.uid===card.uid?null:card.uid,entryMode:null,options:null};app.zone=null;render();}
@@ -509,12 +520,14 @@ function zone(title,cards,engineSeat){
   const classes=[
    plan.type==='destination'||plan.type==='entry'?'destination':'',
    plan.type==='choose-mover'?'move-source':'',
+   plan.type==='raid-base'||card?.uid===app.pick?.raidBaseUid?'raid-base':'',
    selected?'selected':'',
    canBlock?'can-block':''
   ].filter(Boolean).join(' ');
   const clickable=ready&&(mine||(!!card&&app.room?.view?.phase==='attack'&&app.pick?.uid));
   const place=plan.type==='destination'?'移動至此':plan.type==='entry'?
-   (plan.mode==='raid'?'突襲進場':'普通進場'):canBlock?'阻擋':'';
+   (plan.mode==='raid'?(kind==='energy'?'突襲留後線':'突襲進場'):'普通進場'):
+   plan.type==='raid-base'?'選為突襲底座':canBlock?'阻擋':'';
   const spoken=[card?.name||card?.cardId||'空位',place].filter(Boolean).join('，');
   return cardBox(card,{className:classes,click:clickable?()=>clickField(engineSeat,kind,index,card):null,label:spoken});
  });
@@ -608,7 +621,10 @@ function playHint(room){
   if(selection.needsMode&&pick.entryMode!=='normal'&&pick.entryMode!=='raid')
    return '再選擇突襲進場或普通進場。';
   const mode=pick.entryMode==='raid'||(!selection.needsMode&&selection.raid.length)?'raid':'normal';
-  return (mode==='raid'?'突襲進場':'普通進場')+'。請直接點要登場的格子。';
+  return mode==='raid'?(pick.raidBaseUid?
+   '已選突襲底座。請點後線底座留在後線，或點前線亮起的位置登場。':
+   '先點合法的前線／後線底座，再點要登場的前線位置；後線底座可再點一次原位突襲。'):
+   '普通進場。請直接點要登場的格子。';
  }
  if(room.view?.pending&&room.view.pending.player===room.seat)return '請完成這個選擇。';
  if(room.view?.phase==='move')return app.pick?.uid?'再點另一條線上亮起的位置。':'先點要移動的角色，再點另一條線的位置。';
@@ -732,7 +748,8 @@ function matchView(){
  for(const choice of entryModeButtons(room))
   actions.append(el('button',{type:'button',class:choice.mode==='raid'?'primary':'',
    text:choice.label,disabled:app.busy,onClick:()=>{
-    app.pick={uid:app.pick.uid,entryMode:choice.mode,options:null};render();
+    app.pick={uid:app.pick.uid,entryMode:choice.mode,
+     raidBaseUid:choice.mode==='raid'?app.pick.raidBaseUid:null,options:null};render();
    }}));
  const next=room.yourTurn?(room.choices||[]).find(action=>action.type==='next'):null;
  if(next)actions.append(el('button',{type:'button',class:'primary',text:view.phase==='attack'?'結束回合 →':'下一階段 →',disabled:app.busy,onClick:()=>sendAction(next.index)}));
