@@ -1020,6 +1020,9 @@ export function entryClickPlan({selectedUid,entryMode,raidBaseUid=null,line,slot
     entryDestination(action,line,slot,slotUid));
    return hits.length?{type:'entry',mode:'raid',actions:hits}:{type:'entry-wait',mode:'raid'};
   }
+  // An explicitly entered Raid gesture cannot silently become ordinary play
+  // by clicking another occupied cell before choosing its legitimate base.
+  if(entryMode==='raid')return {type:'entry-wait',mode:'raid'};
   const hits=selection.normal.filter(action=>entryDestination(action,line,slot,slotUid));
   return hits.length?{type:'entry',mode:'normal',actions:hits}:{type:'entry-wait',mode:'normal'};
  }
