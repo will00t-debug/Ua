@@ -777,7 +777,7 @@ export function visiblePendingChoiceCards(view,action){
  ];
  return ids.flatMap(uid=>{
   if(typeof uid!=='string'||!uid)return [];
-  const hit=candidates.find(({card})=>card?.uid===uid&&
+  const hit=candidates.find(({card})=>card?.uid===uid&&!card.faceDown&&
    typeof card.cardId==='string'&&card.cardId);
   return hit?[{cardId:hit.card.cardId,side:hit.side}]:[];
  });
