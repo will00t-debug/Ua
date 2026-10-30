@@ -673,10 +673,10 @@ function onlineInspectionGallery(room){
    (enabled?'eligible':'ineligible')+(picking?' selected':''),
    disabled:!enabled,'aria-disabled':String(!enabled),
    'aria-label':(card.name||card.cardId)+(enabled?'，符合條件，可選擇':'，不符合條件，無法選擇'),
-   onClick:()=>{if(!enabled||app.busy)return;
+   ...(enabled?{onClick:()=>{if(app.busy)return;
     if(card.actions.length===1){sendAction(card.actions[0].index);return;}
     app.inspectPick=picking?null:card.uid;render();
-   }},
+   }}:{})},
    el('span',{class:'online-inspection-art'},img),
    el('strong',{text:card.name||card.cardId}),
    el('small',{text:enabled?(card.actions.length>1?'選擇方式／位置':'符合條件 · 點選此牌'):
