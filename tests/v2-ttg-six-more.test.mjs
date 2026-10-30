@@ -110,8 +110,8 @@ test('six more TTG cards keep official prints and a legal 50-card deck',()=>{
  assert.equal(viral.printedMains[1].once,'name');
  const nia=ttg.cards['TTG-1-017'];
  assert.deepEqual(nia.triggerEffect,{op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1});
- assert.equal(nia.effects.onPlay[1].op,'gainSelfEnergyIfAtLeast');
- assert.equal(nia.effects.onPlay[1].amount,2);
+ assert.equal(nia.effects.onPlay.length,1);
+ assert.deepEqual(nia.printedMains,[{id:'plus2',op:'gainSelfEnergyIfAtLeast',min:8,amount:2}]);
  const shout=ttg.cards['TTG-1-040'];
  assert.equal(shout.handUseOncePerName,true);
  assert.equal(shout.removeUnlessUsed,true);
@@ -213,7 +213,7 @@ test('TTG-003 grants front energy at 6, the whole front at 8, and one ACTIVE at 
  assertUniversalMatch(ttg,high);
 });
 
-test('TTG-017 looks at four cards or the outside, then gains energy only at 8',()=>{
+test('TTG-017 looks at four cards or the outside, then activates +2 energy at 8',()=>{
  let s=fresh(8017);
  for(let i=0;i<2;i++)place(s,0,'TTG-1-019','energy',i);
  const nia=hold(s,0,'TTG-1-017');
@@ -245,7 +245,8 @@ test('TTG-017 looks at four cards or the outside, then gains energy only at 8',(
  assert.ok(top.players[0].hand.some(c=>c.uid===simon.uid));
  assert.ok(top.players[0].outside.some(c=>c.uid===discard.uid));
  assert.deepEqual(top.players[0].deck.slice(-3).map(c=>c.uid),order);
- assert.equal(live(top,0,nia.uid).buffs.some(b=>b.energy),false);
+ assert.equal((live(top,0,nia.uid).buffs||[]).some(b=>b.energy),false);
+ assert.equal(legalUniversalActions(ttg,top).some(a=>a.type==='activate'&&a.uid===nia.uid&&a.mode==='plus2'),false);
  let skipped=go(opened,{type:'chooseEffectMode',mode:'top'});
  skipped=go(skipped,{type:'chooseTopFiltered',uid:null});
  assert.equal(skipped.pending.kind,'effect-top-order');
@@ -275,8 +276,14 @@ test('TTG-017 looks at four cards or the outside, then gains energy only at 8',(
  assert.equal(fueled.pending.kind,'effect-choice-mode');
  fueled=go(fueled,{type:'chooseEffectMode',mode:'outside'});
  const landed=live(fueled,0,replacement.uid);
- assert.equal(landed.buffs.some(b=>b.energy===2&&b.untilTurn===fueled.turn),true);
+ assert.equal((landed.buffs||[]).some(b=>b.energy===2),false);
+ assert.equal(universalCardEnergy(ttg,fueled,0,landed),2);
+ const plus=act(fueled,a=>a.type==='activate'&&a.uid===landed.uid&&a.mode==='plus2');
+ assert.match(uiActionLabel(plus,{pack:ttg,state:fueled}),/起動主要.*產能/);
+ fueled=go(fueled,plus);
+ assert.equal(live(fueled,0,landed.uid).buffs.some(b=>b.energy===2&&b.untilTurn===fueled.turn),true);
  assert.equal(universalCardEnergy(ttg,fueled,0,landed),4);
+ assert.equal(legalUniversalActions(ttg,fueled).some(a=>a.type==='activate'&&a.uid===landed.uid&&a.mode==='plus2'),false);
  assert.ok(fueled.players[0].removed.some(c=>c.uid===line[0].uid));
  assert.equal(fueled.players[0].energy.filter(Boolean).length,4);
 
@@ -287,7 +294,10 @@ test('TTG-017 looks at four cards or the outside, then gains energy only at 8',(
  front=go(front,act(front,a=>a.type==='play'&&a.uid===ahead.uid&&a.line==='front'));
  front=go(front,{type:'chooseEffectMode',mode:'outside'});
  const still=live(front,0,ahead.uid);
- assert.equal(still.buffs.some(b=>b.energy===2),true);
+ assert.equal((still.buffs||[]).some(b=>b.energy===2),false);
+ assert.equal(universalCardEnergy(ttg,front,0,still),0);
+ front=go(front,act(front,a=>a.type==='activate'&&a.uid===still.uid&&a.mode==='plus2'));
+ assert.equal(live(front,0,still.uid).buffs.some(b=>b.energy===2),true);
  assert.equal(universalCardEnergy(ttg,front,0,still),0);
 
  let life=fresh(8020);
