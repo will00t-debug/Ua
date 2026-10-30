@@ -4495,7 +4495,8 @@ test('Rem raids onto Rem, gains 500 BP on her turn, and draws on attack only whe
  assert.deepEqual(validateUniversalDeck(pack,remTurnCounts),[]);
  const printed=pack.cards['REZ-1-015'];
  assert.equal(printed.raidName,'レム');
- assert.equal(printed.ownTurnBp,500);
+ assert.equal(printed.raidOwnTurnBp,500);
+ assert.equal(printed.ownTurnBp,0);
  assert.equal(printed.trigger,'get');
  assert.deepEqual(printed.effects,{
   onPlay:[{op:'drawDiscard',count:1}],
@@ -4863,7 +4864,8 @@ test('Rem raids onto Rem, rests a blue zero-cost Subaru, and grants a 4000 block
  const printed=pack.cards['REZ-1-053'];
  assert.equal(printed.raidName,'レム');
  assert.equal(printed.energy,5);
- assert.equal(printed.printedImpact,1);
+ assert.equal(printed.raidImpact,1);
+ assert.equal(printed.printedImpact,0);
  assert.deepEqual(printed.effects.onPlay,[{op:'deployOutsidePrintedRest',name:'ナツキ・スバル',
   color:'blue',energy:0,optional:true}]);
  assert.deepEqual(printed.effects.onAttack,[{op:'grantPrintedBlockAtLeast',name:'ナツキ・スバル',
@@ -5194,7 +5196,8 @@ test('Emilia raids onto Emilia, blocks low BP, rests an unblocked front, and swa
  assert.equal(printed.raidName,'エミリア');
  assert.equal(printed.energy,5);
  assert.equal(printed.bp,4000);
- assert.equal(printed.impactNull,true);
+ assert.equal(printed.raidImpactNull,true);
+ assert.equal(printed.impactNull,false);
  assert.equal(printed.unblockedRestFront,true);
  assert.deepEqual(printed.blockBpRestriction,{relation:'atMost',bp:2000,condition:null});
  assert.deepEqual(printed.mainAbility,{op:'energySwapOwnFront',line:'energy',oncePerTurn:true});
@@ -5247,6 +5250,7 @@ test('Emilia raids onto Emilia, blocks low BP, rests an unblocked front, and swa
 
  let impact=structuredClone(live);
  const hitter=stamp(impact,pull(impact,1,'REZ-1-053'));
+ hitter.stack=[stamp(impact,pull(impact,1,'REZ-1-081'))];
  impact.players[1].front[3]=hitter;
  const shield=pull(impact,0,'REZ-1-016');
  while(impact.players[0].life.length>5)impact.players[0].deck.push(impact.players[0].life.pop());
@@ -5836,6 +5840,7 @@ test('Puck counts as an event card, nullifies impact, and playing him is not usi
  battle.players[0].front[0]=puck;
  battle.players[0].front[1]=beatrice;
  const rem=stamp(battle,pull(battle,1,'REZ-1-053'));
+ rem.stack=[stamp(battle,pull(battle,1,'REZ-1-081'))];
  battle.players[1].front[0]=rem;
  quietOwn(battle);
  battle=untilPhase(packs,battle,1,'attack');

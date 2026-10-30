@@ -698,6 +698,7 @@ test('BLC-1-087 adds one Impact to at most one own Gotei character, including it
  put(s,0,'BLC-1-091','energy',1);
  const other=put(s,0,'BLC-4-062','energy',2);
  const ken=put(s,0,'BLC-2-067','front',0);
+ ken.stack=[take(s,0,'BLC-1-080')];
  const plain=put(s,0,'BLC-1-070','front',1);
  const foe=put(s,1,'BLC-1-080','front',0);
  const self=take(s,0,'BLC-1-087');
@@ -1611,7 +1612,8 @@ test('BLC-1-004 raids onto Es Nott, has Impact 1, and may rest one front charact
  assert.equal(printed.gen,1);
  const card=bleach.cards['BLC-1-004'];
  assert.equal(card.raidName,'エス・ノト');
- assert.equal(card.printedImpact,1);
+ assert.equal(card.raidImpact,1);
+ assert.equal(card.printedImpact,0);
  assert.equal(card.trigger,'raid');
  assert.equal(card.triggerEffect,null);
  assert.equal(card.gen,1);
@@ -1621,6 +1623,7 @@ test('BLC-1-004 raids onto Es Nott, has Impact 1, and may rest one front charact
  const es=realDeck(['BLC-1-004','BLC-1-002','BLC-1-005','BLC-1-006','BLC-1-007','BLC-1-017','BLC-1-015','BLC-1-012','BLC-1-019','BLC-1-023','BLC-2-007','BLC-1-027','BLC-4-014'],'yellow');
  const {packs,s}=main(es,29004);
  const asleep=put(s,0,'BLC-1-004','front',0,false);
+ asleep.stack=[take(s,0,'BLC-1-002')];
  const parked=put(s,0,'BLC-1-004','energy',1,true);
  assert.equal(universalImpact(packs,s,asleep),1);
  assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='activate'&&a.uid===parked.uid),false);
@@ -7268,6 +7271,7 @@ test('BLC-2-051 nulls Impact and gains Damage 2 or Impact 1 from the removed are
  assert.equal(universalImpact(muted.packs,muted.s,silent),0);
  const nulled=main(deck,29057);
  const es=put(nulled.s,0,'BLC-1-004','front',0,true);
+ es.stack=[take(nulled.s,0,'BLC-1-041')];
  const body=put(nulled.s,1,'BLC-2-051','front',0,true);
  assert.equal(universalBp(nulled.packs,nulled.s,es),4000);
  assert.equal(universalBp(nulled.packs,nulled.s,body),4000);
@@ -8559,7 +8563,8 @@ test('BLC-1-020 draws at attack end only after an opposing trigger activates',()
  const card=bleach.cards['BLC-1-020'];
  assert.equal(card.name,'ユーグラム・ハッシュヴァルト');
  assert.equal(card.gen,1);
- assert.equal(card.printedImpact,1);
+ assert.equal(card.raidImpact,1);
+ assert.equal(card.printedImpact,0);
  assert.equal(card.raidName,'ユーグラム・ハッシュヴァルト');
  assert.equal(card.trigger,'raid');
  assert.equal(card.triggerEffect,null);
@@ -8622,7 +8627,7 @@ test('BLC-1-020 draws at attack end only after an opposing trigger activates',()
  }
  const fewer=playCase(29141,7);
  assert.equal(live(fewer.played,0,fewer.held.uid).ready,false);
- assert.equal(universalImpact(fewer.board.packs,fewer.played,live(fewer.played,0,fewer.held.uid)),1);
+ assert.equal(universalImpact(fewer.board.packs,fewer.played,live(fewer.played,0,fewer.held.uid)),0);
  assert.equal(fewer.played.pending.kind,'effect-discard');
  assert.equal(fewer.played.pending.player,1);
  const fewerChoices=legalUniversalActions(fewer.board.packs,fewer.played);
@@ -9363,7 +9368,8 @@ test('BLC-1-093 moves Squad characters forward and buffs the others',()=>{
  assert.equal(printed.gen,1);
  const card=bleach.cards['BLC-1-093'];
  assert.equal(card.raidName,'山本 元柳斎 重國');
- assert.equal(card.printedImpact,1);
+ assert.equal(card.raidImpact,1);
+ assert.equal(card.printedImpact,0);
  assert.equal(card.trigger,'raid');
  assert.equal(card.triggerEffect,null);
  assert.deepEqual(card.effects.onPlay,[{op:'moveEnergyTraitToFront',trait:'護廷十三隊'}]);
@@ -13521,7 +13527,8 @@ test('BLC-2-065 strips its raid top, ignores opponent REST and bounce, and still
  assert.equal(card.name,'狛村 左陣');
  assert.equal(card.gen,1);
  assert.equal(card.raidName,'狛村 左陣');
- assert.equal(card.impactNull,true);
+ assert.equal(card.raidImpactNull,true);
+ assert.equal(card.impactNull,false);
  assert.equal(card.opponentRestImmune,true);
  assert.equal(card.opponentBounceImmune,true);
  assert.equal(card.triggerEffect,null);

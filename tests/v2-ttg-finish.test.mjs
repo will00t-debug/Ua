@@ -115,6 +115,13 @@ test('the last eleven TTG cards keep official prints and a legal 50-card deck',(
  assert.equal(JSON.stringify(TTG_BY_ID['TTG-1-074'].traits),'["大グレン団／ガンメン"]');
  assert.deepEqual(ttg.cards['TTG-1-032'].raidFromRaid,['超銀河グレンラガン']);
  assert.equal(ttg.cards['TTG-1-032'].chainRaidOnly,true);
+ assert.equal(ttg.cards['TTG-1-032'].raidOwnTurnImpact,4);
+ assert.equal(ttg.cards['TTG-1-032'].raidExtraDamage,6);
+ assert.equal(ttg.cards['TTG-1-032'].raidOppEffectUntargetable,true);
+ assert.equal(ttg.cards['TTG-1-032'].ownTurnImpact,0);
+ assert.equal(ttg.cards['TTG-1-031'].raidAttackDamage,2);
+ assert.equal(ttg.cards['TTG-1-031'].raidBp,1000);
+ assert.equal(ttg.cards['TTG-1-027'].raidBp,1000);
  assert.equal(ttg.cards['TTG-1-074'].raidRequiresNames[0],'ニア');
 });
 
@@ -160,6 +167,7 @@ test('chain raid tucks the previous top and enforces the 032 raid restrictions',
  assert.equal(raids().some(a=>a.baseUid===galaxy.uid),false);
  delete live(closed,0,galaxy.uid).raidedTurn;
  assert.ok(raids().some(a=>a.baseUid===galaxy.uid));
+ assert.equal(legalUniversalActions(ttg,closed).some(a=>a.type==='play'&&a.uid===tt.uid),false);
  place(closed,0,'TTG-1-032','front',2);
  assert.equal(raids().some(a=>a.baseUid===galaxy.uid),false);
  assertUniversalMatch(ttg,closed);
@@ -337,15 +345,27 @@ test('TTG-031 grants protection and energy gates once per printed name',()=>{
  const deck=s.players[1].deck.length;
  s=go(s,act(s,a=>a.type==='play'&&a.uid===first.uid&&a.line==='front'));
  const entered=live(s,1,first.uid);
- assert.equal(universalBp(ttg,s,entered),10000);
- assert.equal(universalAttackDamage(ttg,s,entered),2);
+ assert.equal(universalBp(ttg,s,entered),9000);
+ assert.equal(universalAttackDamage(ttg,s,entered),1);
  assert.equal(s.players[1].deck.length,deck);
  assert.equal(apReady(s,1),1);
  assert.ok(s.onceEffectUses[1].includes('超銀河グレンラガン|galaxy'));
  s=go(s,act(s,a=>a.type==='play'&&a.uid===second.uid&&a.line==='front'));
- assert.equal(universalBp(ttg,s,live(s,1,second.uid)),5000);
+ assert.equal(universalBp(ttg,s,live(s,1,second.uid)),4000);
+ assert.equal(universalAttackDamage(ttg,s,live(s,1,second.uid)),1);
  assert.equal(s.players[1].deck.length,deck);
  assertUniversalMatch(ttg,s);
+
+ let raided=fresh(90311);
+ raided=endTurn(raided);
+ fuel(raided,1,3,8);
+ const simon=place(raided,1,'TTG-1-009','front',0);
+ const rider=hold(raided,1,'TTG-1-031');
+ raided=toPhase(raided,'main');
+ raided=go(raided,act(raided,a=>a.type==='raid'&&a.uid===rider.uid&&a.baseUid===simon.uid));
+ assert.equal(universalBp(ttg,raided,live(raided,1,rider.uid)),10000);
+ assert.equal(universalAttackDamage(ttg,raided,live(raided,1,rider.uid)),2);
+ assertUniversalMatch(ttg,raided);
 
  let rich=fresh(9032);
  rich=endTurn(rich);
@@ -364,7 +384,9 @@ test('TTG-031 grants protection and energy gates once per printed name',()=>{
 test('TTG-032 impact, damage, absorb, chain raid, and opponent targeting follow the print',()=>{
  let s=fresh(9033);
  fuel(s,0,4,40);
- const body=place(s,0,'TTG-1-032','front',0);
+ const body=nest(take(s,0,'TTG-1-032'),take(s,0,'TTG-1-009'));
+ body.fieldEntryStamp=s.nextFieldEntryStamp++;
+ s.players[0].front[0]=body;
  const other=place(s,0,'TTG-1-053','front',1);
  s=toPhase(s,'main');
  assert.equal(universalImpact(ttg,s,body),4);
@@ -384,19 +406,25 @@ test('TTG-032 impact, damage, absorb, chain raid, and opponent targeting follow 
  fuel(absorb,1,4,40);
  const tt=hold(absorb,1,'TTG-1-032');
  const ally=place(absorb,1,'TTG-1-053','front',0);
+ const galaxy=nest(take(absorb,1,'TTG-1-031'),take(absorb,1,'TTG-1-009'));
+ galaxy.fieldEntryStamp=absorb.nextFieldEntryStamp++;
+ absorb.players[1].front[2]=galaxy;
  absorb=toPhase(absorb,'main');
- absorb=go(absorb,act(absorb,a=>a.type==='play'&&a.uid===tt.uid&&a.line==='front'));
+ assert.equal(legalUniversalActions(ttg,absorb).some(a=>a.type==='play'&&a.uid===tt.uid),false);
+ absorb=go(absorb,act(absorb,a=>a.type==='raid'&&a.uid===tt.uid&&a.baseUid===galaxy.uid));
  assert.equal(absorb.pending.kind,'effect-absorb-front');
  absorb=go(absorb,act(absorb,a=>a.type==='chooseAbsorbFront'&&a.uids.includes(ally.uid)));
  assert.equal(live(absorb,1,tt.uid).under.some(c=>c.uid===ally.uid&&c.faceDown),true);
  live(absorb,1,tt.uid).ready=true;
  assert.equal(absorb.players[1].front.some(c=>c?.uid===ally.uid),false);
- const buried=take(absorb,1,'TTG-1-009');
+ const buried=take(absorb,1,'TTG-1-029');
  buried.faceDown=true;
  live(absorb,1,tt.uid).under.push(buried);
  absorb=toPhase(absorb,'attack');
  const foe=place(absorb,0,'TTG-1-053','front',0);
- const hidden=place(absorb,0,'TTG-1-032','front',1);
+ const hidden=nest(take(absorb,0,'TTG-1-032'),take(absorb,0,'TTG-1-009'));
+ hidden.fieldEntryStamp=absorb.nextFieldEntryStamp++;
+ absorb.players[0].front[1]=hidden;
  absorb=go(absorb,act(absorb,a=>a.type==='attack'&&a.uid===tt.uid));
  assert.equal(absorb.pending.kind,'effect-spend-facedown');
  const targets=legalUniversalActions(ttg,absorb).filter(a=>a.uids?.length===2);
@@ -625,7 +653,7 @@ test('TTG-074 raids only with Nia, chains from Lagann, and ladders draws with th
  stacked.fieldEntryStamp=closed.nextFieldEntryStamp++;
  closed.players[1].front[3]=stacked;
  assert.ok(legalUniversalActions(ttg,closed).some(a=>a.type==='raid'&&a.uid===card.uid&&a.baseUid===stacked.uid));
- assert.equal(universalImpact(ttg,closed,card),1);
+ assert.equal(universalImpact(ttg,closed,card),0);
  assertUniversalMatch(ttg,closed);
 
  let ladder=fresh(9075);
@@ -636,6 +664,8 @@ test('TTG-074 raids only with Nia, chains from Lagann, and ladders draws with th
  const before=ladder.players[0].deck.length;
  ladder=go(ladder,act(ladder,a=>a.type==='play'&&a.uid===body.uid&&a.line==='front'));
  const entered=live(ladder,0,body.uid);
+ assert.equal(entered.ready,false);
+ assert.equal(universalImpact(ttg,ladder,entered),0);
  assert.equal(ladder.players[0].deck.length,before-1);
  assert.ok(entered.buffs.some(b=>b.bp===1000));
  assert.ok(entered.buffs.some(b=>b.bp===3000));

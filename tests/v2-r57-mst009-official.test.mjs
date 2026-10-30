@@ -16,7 +16,7 @@ const provider={id:'provider',name:'provider',type:'event',color:'blue',energy:0
  zones:['outside'],line:'front',ready:true,optional:true}]}};
 const mstRaw={id:'MST-1-009',name:'エリス',color:'blue',type:'character',
  energy:3,ap:1,bp:3500,gen:1,traits:[],trigger:'raid',implementation:'dsl',
- raidName:'エリス',printedImpact:1,ownTurnBp:500,effects:m.effects};
+ raidName:'エリス',raidImpact:1,raidOwnTurnBp:500,effects:m.effects};
 const cards=[mstRaw,basic('eris-base','エリス'),basic('blocker','阻擋者',2500),provider,
  ...Array.from({length:9},(_,i)=>basic('filler'+i))];
 const pack=createUniversalPack({id:'r57-mst009-physical',cards}),both=[pack,pack];
@@ -59,15 +59,16 @@ test('R57 MST-1-009 Japanese official full print and Q2147 no omitted RAID/LIFE 
  for(const print of ['〖レイド〗','〖インパクト（1）〗','BP+500','次の自分のターン開始時まで',
   'アタック終了時','自分の効果で登場'])assert.ok(o.effectJa.includes(print));
  assert.equal(m.raidName,'エリス');
- assert.equal(m.printedImpact,1);assert.equal(m.ownTurnBp,500);
+ assert.equal(m.raidImpact,1);assert.equal(m.raidOwnTurnBp,500);
+ assert.equal(m.printedImpact,0);assert.equal(m.ownTurnBp,0);
  assert.equal(m.effects.onPlay[0].entry,'ownEffect');
  assert.deepEqual(m.effects.onPlay[0].options.map(o=>o.id),['bp','swap']);
 });
 test('R57 genuine free own-effect entry picks mandatory BP mode; survives opponent turn, not next own start',()=>{
  let {s,target}=scene();s=step(s,{type:'chooseEffectMode',mode:'bp'});
  const physical=s.players[0].front.find(c=>c?.uid===target.uid);
- assert.equal(universalBp(both,s,physical),5000);
- assert.equal(universalImpact(both,s,physical),1);
+ assert.equal(universalBp(both,s,physical),4500);
+ assert.equal(universalImpact(both,s,physical),0);
  assert.equal(physical.attackEndSwapGranted,undefined);
  assert.equal(assertUniversalMatch(both,structuredClone(s)),true);
  // One whole turn ends; the opponent's turn does NOT expire the effect.
@@ -75,7 +76,7 @@ test('R57 genuine free own-effect entry picks mandatory BP mode; survives oppone
  assert.equal(s.active,1);assert.equal(universalBp(both,s,physical),4500);
  for(let i=0;i<4;i++)s=step(s,{type:'next'}); // opponent phases through end
  assert.equal(s.active,0);
- assert.equal(universalBp(both,s,s.players[0].front.find(c=>c?.uid===target.uid)),4000);
+ assert.equal(universalBp(both,s,s.players[0].front.find(c=>c?.uid===target.uid)),3500);
  assert.ok(!(s.players[0].front.find(c=>c?.uid===target.uid).buffs||[])
   .some(b=>b.untilOwnTurnStart!==undefined));
  assert.equal(assertUniversalMatch(both,structuredClone(s)),true);
@@ -90,10 +91,11 @@ test('R57 genuine own-effect swap mode waits until normal blocking battle finish
  s=step(s,{type:'attack',uid:target.uid});
  assert.equal(s.pending?.kind,'block');
  s=step(s,{type:'chooseBlock',uid:defender.uid});
- // The real combat and its retirement/IMPACT must finish before Q2147 swap.
+ // The real combat and its retirement must finish before Q2147 swap.
+ // Own-effect entry is not Raid, so the Raid-box IMPACT does not deal life.
  assert.equal(s.players[1].front[0],null);
  assert.equal(s.pending?.kind,'attack-end-swap');
- assert.equal(s.players[1].life.length,6);
+ assert.equal(s.players[1].life.length,7);
  const choices=legalUniversalActions(both,s);
  assert.ok(choices.some(a=>a.type==='chooseAttackEndSwap'&&a.uid===null));
  assert.ok(choices.some(a=>a.type==='chooseAttackEndSwap'&&a.uid===other.uid));
@@ -138,8 +140,8 @@ test('R57 normal paid play is not own-effect; no bonus or swap is earned',()=>{
  assert.equal(s.pending,null);
  const current=s.players[0].front.find(c=>c?.uid===target.uid);
  assert.equal(current.attackEndSwapGranted,undefined);
- assert.equal(universalBp(both,s,current),4000);
- assert.equal(universalImpact(both,s,current),1);
+ assert.equal(universalBp(both,s,current),3500);
+ assert.equal(universalImpact(both,s,current),0);
 });
 test('R57 genuine official 50-card MST paid RAID preserves exact physical base and ignores own-effect-only branch',()=>{
  const real=mstV2Pack(),realPack=[real,real];

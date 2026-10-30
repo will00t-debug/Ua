@@ -117,10 +117,10 @@ test('047 048 049 and 051 are registered on the shared engine',()=>{
  assert.equal(slg.cards['SLG-1-048'].phaseEffects[0].then[0].facedown,3);
  assert.equal(slg.cards['SLG-1-048'].phaseEffects[0].then[0].energy,6);
  assert.equal(slg.cards['SLG-1-048'].effects.onPlay[1].entry,'ownEffect');
- assert.equal(slg.cards['SLG-1-049'].printedImpact,1);
+ assert.equal(slg.cards['SLG-1-049'].raidImpact,1);
+ assert.equal(slg.cards['SLG-1-049'].printedImpact,0);
  assert.equal(slg.cards['SLG-1-049'].bp,4000);
- assert.equal(slg.cards['SLG-1-049'].passiveBonuses[0].condition.kind,'selfOnField');
- assert.equal(slg.cards['SLG-1-049'].passiveBonuses[0].bp,500);
+ assert.equal(slg.cards['SLG-1-049'].raidBp,500);
  assert.deepEqual(slg.cards['SLG-1-051'].effects.onPlay[0].options.map(o=>o.id),['recover','raid']);
  assert.equal(EXPECTED_V2_IDS['solo-leveling'].length,80);
  assert.equal(EXPECTED_V2_TOTAL,700);

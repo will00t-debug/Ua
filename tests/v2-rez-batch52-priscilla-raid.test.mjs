@@ -10,9 +10,14 @@ const deck=rezDeck([
  'REZ-2-056','REZ-2-014','REZ-2-033','REZ-2-035','REZ-2-046','REZ-2-050','REZ-2-040'
 ],'REZ-2-055');
 
-function sit(s,p,id,line,slot){
+ function sit(s,p,id,line,slot){
  const c=take(s,p,id);c.ready=true;c.fieldEntryStamp=s.nextFieldEntryStamp++;
  s.players[p][line][slot]=c;return c;
+}
+function raidSit(s,p,id,baseId,line,slot){
+ const top=sit(s,p,id,line,slot);
+ top.stack=[take(s,p,baseId)];
+ return top;
 }
 function live(s,uid){
  return [...s.players[0].front,...s.players[0].energy].find(c=>c?.uid===uid);
@@ -22,7 +27,8 @@ test('REZ-2-065 raids Priscilla, gains own-turn BP, and draws on attack',()=>{
  assert.match(REZERO_VOL2_BY_ID['REZ-2-065'].effectJa,/\[レイド\]〈プリシラ・バーリエル〉/);
  assert.match(REZERO_VOL2_BY_ID['REZ-2-065'].effectJa,/\[自分のターン中\]このキャラはBP\+1000/);
  assert.equal(rez.cards['REZ-2-065'].raidName,'プリシラ・バーリエル');
- assert.equal(rez.cards['REZ-2-065'].ownTurnBp,1000);
+ assert.equal(rez.cards['REZ-2-065'].raidOwnTurnBp,1000);
+ assert.equal(rez.cards['REZ-2-065'].ownTurnBp,0);
  assert.equal(rez.cards['REZ-2-065'].printedImpact,0);
  let s=fresh(deck,2065);
  const base=sit(s,0,'REZ-2-063','front',0);
@@ -54,7 +60,7 @@ test('REZ-2-065 raids Priscilla, gains own-turn BP, and draws on attack',()=>{
 test('Q2425 stacks Damage 2 at three above-printed characters and Impact 1 at five',()=>{
  assert.match(REZERO_VOL2_BY_ID['REZ-2-065'].note,/Q2425/);
  let few=fresh(deck,3065);
- const pris=sit(few,0,'REZ-2-065','front',0);
+ const pris=raidSit(few,0,'REZ-2-065','REZ-2-063','front',0);
  const a=sit(few,0,'REZ-2-056','front',1);
  const b=sit(few,0,'REZ-2-043','front',2);
  few=toPhase(rezPacks,few,'main');
@@ -67,7 +73,7 @@ test('Q2425 stacks Damage 2 at three above-printed characters and Impact 1 at fi
  assert.equal(universalImpact(rez,few,granted),0);
  assert.equal(legalUniversalActions(rezPacks,few).some(x=>x.type==='activate'&&x.uid===pris.uid),false);
  let many=fresh(deck,4065);
- const self=sit(many,0,'REZ-2-065','energy',0);
+ const self=raidSit(many,0,'REZ-2-065','REZ-2-063','energy',0);
  const ids=['REZ-2-056','REZ-2-043','REZ-2-055','REZ-2-041'];
  const extras=ids.map((id,i)=>sit(many,0,id,'front',i));
  many=toPhase(rezPacks,many,'main');
@@ -78,7 +84,7 @@ test('Q2425 stacks Damage 2 at three above-printed characters and Impact 1 at fi
  assert.equal(universalAttackDamage(rez,many,both),2);
  assert.equal(universalImpact(rez,many,both),1);
  let lone=fresh(deck,5065);
- const only=sit(lone,0,'REZ-2-065','front',0);
+ const only=raidSit(lone,0,'REZ-2-065','REZ-2-063','front',0);
  lone=toPhase(rezPacks,lone,'main');
  lone=dispatchUniversalAction(rezPacks,lone,legalUniversalActions(rezPacks,lone)
   .find(x=>x.type==='activate'&&x.uid===only.uid),{actor:0});

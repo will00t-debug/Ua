@@ -371,6 +371,7 @@ test('Q1257 spends the skip when an ACTIVE life trigger targets the rested front
  put(s,0,'MMM-1-025','energy',1);
  const marked=put(s,1,'MMM-1-112','front',0,true);
  const witch=put(s,0,'MMM-1-071','front',0,true);
+ witch.stack=[take(s,0,'MMM-1-025')];
  const event=take(s,0,'MMM-1-032');
  s.players[0].hand.push(event);
  readyAp(s);

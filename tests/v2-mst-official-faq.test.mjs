@@ -208,9 +208,8 @@ test('Q2147 attack-end swap waits until the battle or the life trigger is finish
  s=act(s,'attack',{uid:eris.uid});
  s=act(s,'chooseBlock',{uid:blocker.uid});
  assert.equal(s.players[1].front[0],null);
- assert.equal(s.pending.kind,'life-trigger');
- assert.equal(s.players[1].life.length,life-1);
- s=clearLife(s);
+ // Own-effect entry is not Raid, so Raid-box IMPACT does not open a life check.
+ assert.equal(s.players[1].life.length,life);
  assert.equal(s.pending.kind,'attack-end-swap');
  s=act(s,'chooseAttackEndSwap',{uid:swapWith.uid});
  assert.equal(s.players[0].energy.find(c=>c?.uid===eris.uid)?.uid,eris.uid);

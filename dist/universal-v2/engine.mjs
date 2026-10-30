@@ -348,7 +348,10 @@ function choiceBlocked(pack,s,selector,uid,sourceType){
  const owner=Number(uid[0]);
  if(owner===selector)return false;
  const c=[...s.players[owner].front,...s.players[owner].energy].find(x=>x?.uid===uid);
- return !!c&&!originalEffectsDisabled(s,c)&&card(pack,c).oppEffectUntargetable===true;
+ if(!c||originalEffectsDisabled(s,c))return false;
+ const printed=card(pack,c);
+ return printed.oppEffectUntargetable===true||
+  (printed.raidOppEffectUntargetable===true&&faceUpRaid(pack,c));
 }
 let finishBound=false;
 function ensureFinish(){
@@ -361,6 +364,10 @@ function hasFacedownUnder(c){
  const inspect=x=>(x.under||[]).some(v=>v.faceDown===true||inspect(v))||
   (x.stack||[]).some(v=>v.faceDown===true||inspect(v));
  return !!c&&inspect(c);
+}
+// Q51 / Q552: Raid-box text needs a face-up card under a Raid-keyword top.
+function faceUpRaid(pack,c){
+ return !!c&&!!card(pack,c).raidName&&(c.stack||[]).some(x=>x.faceDown!==true);
 }
 function directFacedowns(c){
  return (c?.under||[]).filter(x=>x.faceDown===true);
@@ -501,7 +508,9 @@ const bpVisit=new Set();
 function bp(pack,s,c){
  const printed=card(pack,c),suppressed=originalEffectsDisabled(s,c);
  const owner=Number(String(c.uid).split('-')[0]);
- const turnBp=suppressed?0:s.active===owner?(printed.ownTurnBp||0):(printed.opponentTurnBp||0);
+ const turnBp=suppressed?0:s.active===owner?
+  (printed.ownTurnBp||0)+(faceUpRaid(pack,c)?printed.raidOwnTurnBp||0:0):
+  (printed.opponentTurnBp||0);
  const madokaPair=()=>{
   if(suppressed||printed?.id!=='MMM-2-045')return 0;
   const n=(s.players[1-owner]?.front||[]).filter(x=>x&&card(pack,x).type==='character').length;
@@ -519,12 +528,13 @@ function bp(pack,s,c){
  // A current-BP condition may look back at this card. Stop there instead of
  // walking the same passive again. Printed BP, turn BP, and this-turn buffs
  // stay visible. Q749 still sees an effect bonus on the card being measured.
- if(bpVisit.has(c.uid))return (printed?.bp||0)+turnBp+facedown+buffs+madokaPair()+
+ const raidBoxBp=suppressed||!faceUpRaid(pack,c)?0:(printed.raidBp||0);
+ if(bpVisit.has(c.uid))return (printed?.bp||0)+turnBp+raidBoxBp+facedown+buffs+madokaPair()+
   (originalEffectsDisabled(s,c)?0:(printed.bpPerOwnRaid||0)*(s.raidCount?.[owner]||0));
  bpVisit.add(c.uid);
  try{
   const raidBonus=suppressed?0:(printed.bpPerOwnRaid||0)*(s.raidCount?.[owner]||0);
-  return (printed?.bp||0)+turnBp+facedown+buffs+raidBonus+madokaPair()+
+  return (printed?.bp||0)+turnBp+raidBoxBp+facedown+buffs+raidBonus+madokaPair()+
    (suppressed?0:printed.passiveBonuses.reduce((n,p)=>{
     const delta=p.bpEach?p.bpEach*(p.condition.kind==='oppRestCharacterCount'?
     countOppRestCharacters(s,owner,p.condition,x=>card(pack,x)):
@@ -562,10 +572,12 @@ export function universalAttackDamage(pack,s,c){
    ()=>calcEnergy(pack,s,owner),x=>bp(pack,s,x))?p.attackDamage:0),0);
  const revealDamage=!originalEffectsDisabled(s,c)&&d.id==='MMM-2-056'&&
   s.players[owner]?.deckRevealEnergy5===s.turn?2:1;
- const base=Math.max(d.printedAttackDamage||1,earned,revealDamage,
+ const raidDmg=faceUpRaid(pack,c)?(d.raidAttackDamage||0):0;
+ const raidExtra=faceUpRaid(pack,c)&&s.active===owner?(d.raidExtraDamage||0):0;
+ const base=Math.max(d.printedAttackDamage||1,raidDmg,earned,revealDamage,
   gained&&gained.turn===s.turn&&
    gained.stamp===c.fieldEntryStamp?2:1,passiveKeyword);
- return base+plus+d.passiveBonuses.reduce((n,p)=>n+(p.extraDamage&&
+ return base+plus+raidExtra+d.passiveBonuses.reduce((n,p)=>n+(p.extraDamage&&
   matchesV2LiveCondition(s,owner,c.uid,p.condition,x=>card(pack,x),
    ()=>calcEnergy(pack,s,owner),x=>bp(pack,s,x))?p.extraDamage:0),0);
 }
@@ -789,18 +801,21 @@ function impactOnBattleWin(pack,s,c){
   kit.stamp===c.fieldEntryStamp&&s.attacksByUid[c.uid]===1?1:0;
  if(originalEffectsDisabled(s,c))return Math.max(earnedAll,kitImpact);
  const impactOwner=Number(String(c.uid).split('-')[0]);
- if(d.ownTurnImpact&&s.active===impactOwner)
-  return Math.max(Math.max(d.ownTurnImpact,earnedAll)+plus,kitImpact);
+ const raidOwnTurn=d.raidOwnTurnImpact&&s.active===impactOwner&&faceUpRaid(pack,c);
+ if((d.ownTurnImpact||raidOwnTurn)&&s.active===impactOwner)
+  return Math.max(Math.max(d.ownTurnImpact||d.raidOwnTurnImpact,earnedAll)+plus,kitImpact);
  const under=hasFacedownUnder(c)?(d.conditionalUnderFaceDown?.impact||0):0;
  const owner=impactOwner;
+ const raidBox=!originalEffectsDisabled(s,c)&&faceUpRaid(pack,c)?d.raidImpact||0:0;
  const passive=d.passiveBonuses.reduce((n,p)=>n+(p.impact&&
   matchesV2LiveCondition(s,owner,c.uid,p.condition,x=>card(pack,x),
    ()=>calcEnergy(pack,s,owner),x=>bp(pack,s,x))?p.impact:0),0);
  const conditional=d.conditionalImpactBpAtLeast!==null&&
   bp(pack,s,c)>=d.conditionalImpactBpAtLeast;
- const base=d.printedImpact||(conditional?1:0)||under||passive;
+ const printedOrRaid=d.printedImpact||raidBox;
+ const base=printedOrRaid||(conditional?1:0)||under||passive;
  const result=plusFlag?base+earnedAll:
-  d.printedImpact?Math.max(d.printedImpact,earnedAll):
+  printedOrRaid?Math.max(printedOrRaid,earnedAll):
   conditional?Math.max(1,earnedAll):
   under?Math.max(under,earnedAll):Math.max(earnedAll,passive);
  return Math.max(result,kitImpact)+plus;
@@ -815,11 +830,13 @@ function impactNullActive(pack,s,c){
  if(now&&now.turn===s.turn&&now.stamp===c.fieldEntryStamp)return true;
  if(originalEffectsDisabled(s,c))return false;
  if(d.impactNull)return true;
+ if(d.raidImpactNull&&faceUpRaid(pack,c))return true;
  return d.passiveBonuses.some(p=>p.impactNull===true&&
   matchesV2LiveCondition(s,owner,c.uid,p.condition,x=>card(pack,x),
    ()=>calcEnergy(pack,s,owner),x=>bp(pack,s,x)));
 }
 export function universalImpact(pack,s,c){return impactOnBattleWin(pack,s,c);}
+export function universalImpactNull(pack,s,c){return impactNullActive(pack,s,c);}
 function protectedLeave(pack,s,c){
  const profile=underLeaveProfile(card(pack,c));
  return !originalEffectsDisabled(s,c)&&!!profile&&hasFacedownUnder(c)&&bp(pack,s,c)>=profile.leaveReplacementMinBp;
@@ -5379,8 +5396,11 @@ function validRaidBase(pack,s,owner,base,top){
  if(base.stack?.length){
   const bottom=base.stack[0];
   // The buried layer is not the visible card. Q50 keeps its alias inactive.
-  return accepts(top.raidFromRaid)&&names.includes(card(pack,bottom).name)&&
-   !card(pack,bottom).raidName;
+  // Q2398: a printed extra Raid host under グレン / ラガン is still a legal
+  // chain destination for a card that could raid that host directly.
+  const namedBottom=names.includes(card(pack,bottom).name)&&!card(pack,bottom).raidName;
+  return accepts(top.raidFromRaid)&&(namedBottom||
+   extraRaidHostAccepts(pack,s,owner,bottom,top));
  }
  return accepts(names)&&!b.raidName;
 }
@@ -15943,7 +15963,7 @@ export function legalUniversalActions(pack,s){
      eventMandatoryTargetsAvailable(pack,s,p,d,payment.cost,c.uid))
      out.push({type:'event',uid:c.uid});
    }
-   else if(!lifeUseBanned(d,pl)&&!entryBanned(pack,s,p,d))for(const line of ['energy','front']){
+   else if(!lifeUseBanned(d,pl)&&!entryBanned(pack,s,p,d)&&!d.chainRaidOnly)for(const line of ['energy','front']){
     if(line==='energy'&&d.energyLineForbidden)continue;
     if(line==='front'&&(d.type!=='character'||d.frontForbidden))continue;
     if(line==='energy'&&d.energyForbidden)continue;
@@ -15984,7 +16004,7 @@ export function legalUniversalActions(pack,s){
       name:d.playRequiresNameOrRaidBase},x=>card(pack,x),()=>0,x=>bp(pack,s,x)))continue;
     if(!eventMandatoryTargetsAvailable(pack,s,p,d,payment.cost,c.uid))continue;
     out.push({type:'event',uid:c.uid,from:'removed'});
-   }else if(d.type==='character'&&!lifeUseBanned(d,pl)&&!entryBanned(pack,s,p,d)){
+   }else if(d.type==='character'&&!lifeUseBanned(d,pl)&&!entryBanned(pack,s,p,d)&&!d.chainRaidOnly){
     for(const line of ['energy','front']){
      if(line==='energy'&&(d.energyForbidden||d.energyLineForbidden))continue;
      if(line==='front'&&d.frontForbidden)continue;
@@ -16056,9 +16076,6 @@ export function zoneRequiredEnergy(pack,s,p,d,zone){
 function requiredEnergyBonus(s,physical){
  return (physical?.buffs||[]).reduce((n,b)=>n+(b.requiredEnergy===2&&
   b.untilTurn===s.turn&&Object.keys(b).length===2?2:0),0);
-}
-function faceUpRaid(pack,c){
- return !!c&&!!card(pack,c).raidName&&(c.stack||[]).some(x=>x.faceDown!==true);
 }
 function raidFrontRequiredEnergyAura(pack,s,physical){
  if(!physical?.uid)return 0;

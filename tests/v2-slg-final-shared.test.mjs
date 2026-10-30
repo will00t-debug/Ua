@@ -104,7 +104,8 @@ test('the last six Solo Leveling prints are registered on the shared engine',()=
  }
  assert.equal(slg.cards['SLG-1-022'].fieldTraitEnergyDiscount.trait,'影の軍団');
  assert.equal(slg.cards['SLG-1-022'].energyAttackSwap.trait,'影の軍団');
- assert.equal(slg.cards['SLG-1-022'].printedImpact,1);
+ assert.equal(slg.cards['SLG-1-022'].raidImpact,1);
+ assert.equal(slg.cards['SLG-1-022'].printedImpact,0);
  assert.equal(slg.cards['SLG-1-022'].traits.length,0);
  assert.equal(slg.cards['SLG-1-034'].enterAlwaysActive,true);
  assert.equal(slg.cards['SLG-1-034'].mainAbility.eventName,'命の神水');

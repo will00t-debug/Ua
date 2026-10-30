@@ -706,7 +706,7 @@ export function verifiedMstV2Cards(){
    implementation:pin.kind==='vanilla'?'vanilla':'dsl'};
   if(card.implementation==='vanilla'||pin.kind==='step')card.effects={};
   if(pin.kind==='onOwnEffectEntryChooseTimedSelf'){
-   card.raidName='エリス';card.printedImpact=1;card.ownTurnBp=500;
+   card.raidName='エリス';card.raidImpact=1;card.raidOwnTurnBp=500;
    card.effects={onPlay:[{op:'chooseOne',entry:'ownEffect',optional:false,
     options:[
      {id:'bp',label:'BP +1000 until next own turn start',turn:'any',
@@ -726,7 +726,7 @@ export function verifiedMstV2Cards(){
   }
   if(pin.kind==='ownTurnEventImpactDiscount'){
    card.raidName='ロキシー';
-   card.impactNull=true;
+   card.raidImpactNull=true;
    card.passiveBonuses=[{condition:{kind:'ownEventUsedThisTurn',turn:'own'},impact:1}];
    card.effects={onPlay:[{op:'nextEligibleHandPlayApDiscount',
     filter:{cardType:'event',printedRequiredEnergyAtMost:3}}]};

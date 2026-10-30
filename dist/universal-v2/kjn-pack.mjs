@@ -28,7 +28,7 @@ const BY_ID={
   effects:{onPlay:[job('KJN-1-011','onPlay')]},mainAbility:main('KJN-1-011')},
  'KJN-1-013':{effects:{onPlay:[job('KJN-1-013','onPlay')]}},
  'KJN-1-014':{effects:{onPlay:[job('KJN-1-014','onPlay')]}},
- 'KJN-1-015':{raidName:CLAIRE,impactNull:true,passiveBonuses:[{
+ 'KJN-1-015':{raidName:CLAIRE,raidImpactNull:true,passiveBonuses:[{
   condition:{kind:'selfFacedownUnder',turn:'own'},bp:1000,impact:1}],
   effects:{onPlay:[job('KJN-1-015','onPlay')]}},
  'KJN-1-016':{raidName:CLAIRE,facedownDoubleAttack:true,passiveBonuses:[{
@@ -55,7 +55,7 @@ const BY_ID={
   effects:{onPlay:[job('KJN-1-047','onPlay')]}},
  'KJN-1-048':{raidName:SID,frontGeneratesEnergy:true,
   effects:{onPlay:[job('KJN-1-048','onPlay')],onRetire:[job('KJN-1-048','onRetire')]}},
- 'KJN-1-049':{raidName:SID,printedImpact:1,effects:{onPlay:[
+ 'KJN-1-049':{raidName:SID,raidImpact:1,effects:{onPlay:[
   {op:'nextEligibleHandPlayApDiscount',filter:{noRaid:true}},
   job('KJN-1-049','onPlay')]}},
  'KJN-1-055':{effects:{onPlay:[job('KJN-1-055','onPlay')]}},
@@ -71,7 +71,7 @@ const BY_ID={
  'KJN-1-068':{mainAbility:main('KJN-1-068'),effects:{}},
  'KJN-1-069':{effects:{onPlay:[job('KJN-1-069','onPlay')]}},
  'KJN-1-070':{mainAbility:main('KJN-1-070'),effects:{}},
- 'KJN-1-074':{raidName:'ベータ',impactNull:true,effects:{onPlay:[job('KJN-1-074','onPlay')]},
+ 'KJN-1-074':{raidName:'ベータ',raidImpactNull:true,effects:{onPlay:[job('KJN-1-074','onPlay')]},
   mainAbility:main('KJN-1-074')},
  'KJN-1-075':{enterAlwaysActive:true,mainAbility:main('KJN-1-075'),effects:{}},
  'KJN-1-077':{effects:{onPlay:[job('KJN-1-077','onPlay')]}},

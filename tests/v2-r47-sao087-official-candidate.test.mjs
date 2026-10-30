@@ -14,7 +14,7 @@ import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
 const source=SAO_OFFICIAL_CARDS.find(c=>c.id==='SAO-1-087');
 const candidate={id:'SAO-1-087',name:source.nameJa,type:'character',color:'green',
  energy:7,ap:1,bp:5000,gen:1,trigger:'raid',traits:['GGO'],
- implementation:'dsl',effects:{},raidName:'キリト',printedImpact:1,
+ implementation:'dsl',effects:{},raidName:'キリト',raidImpact:1,
  otherOwnBattleWonDamageTwo:true,
  selectionHandDiscardTax:{...SAO_Q978_SELF_EVENT_TAX,
   sourceTypes:[...SAO_Q978_SELF_EVENT_TAX.sourceTypes]},
@@ -44,7 +44,7 @@ test('SAO-1-087 formal registry exactly matches independently built all-printed-
  const d=registeredV2TitlePack('sword-art-online').cards['SAO-1-087'];
  assert.ok(d,'official printed source must be formally registered');
  for(const field of ['name','color','type','energy','ap','bp','gen','traits','trigger',
-  'raidName','printedImpact','printedAttackDamage','otherOwnBattleWonDamageTwo',
+  'raidName','raidImpact','printedImpact','printedAttackDamage','otherOwnBattleWonDamageTwo',
   'selectionHandDiscardTax','mainAbility','effects'])
   assert.deepEqual(d[field],sao.cards['SAO-1-087'][field],field+' drift');
 });
@@ -56,14 +56,17 @@ test('Candidate identity exactly official Q763/Q978 full print matching registry
   '他のキャラがバトルに勝利','【ダメージ（2）】','イベントカードの効果',
   '【ターン1】','BP+1000'])
   assert.ok(source.effectJa.includes(part),part);
- assert.equal(sao.cards['SAO-1-087'].printedImpact,1);
+ assert.equal(sao.cards['SAO-1-087'].raidImpact,1);
+ assert.equal(sao.cards['SAO-1-087'].printedImpact,0);
  assert.equal(sao.cards['SAO-1-087'].printedAttackDamage,1);
  assert.equal(sao.cards['SAO-1-087'].otherOwnBattleWonDamageTwo,true);
  assert.deepEqual(sao.cards['SAO-1-087'].selectionHandDiscardTax.sourceTypes,['event']);
 });
 test('Actual other-own attacker battle win on equal BP gives candidate DAMAGE2, not extra Impact',()=>{
  const packs=[sao,sao];let s=newUniversalMatch(packs,{decks:[deck,deck],first:0,seed:470871});
- const watcher=put(s,0,'SAO-1-087','front',1),attacker=put(s,0,'SAO-1-068','front',0);
+ const watcher=put(s,0,'SAO-1-087','front',1);
+ watcher.stack=[pull(s,0,'SAO-1-001')];
+ const attacker=put(s,0,'SAO-1-068','front',0);
  const blocker=put(s,1,'SAO-1-068','front',0);
  s.active=0;s.phase='attack';
  s=run(packs,s,{type:'attack',uid:attacker.uid});
