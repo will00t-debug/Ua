@@ -36,7 +36,7 @@ test('online private top/deck gallery can collapse for a read-only board view an
  assert.match(gallery,/if\(app\.inspectionPaused\)/);
  assert.match(gallery,/返回選牌/);
  assert.match(gallery,/查看場面與手牌/);
- assert.match(gallery,/app\.inspectionPaused=true;app\.inspectPick=null;render\(\)/);
+ assert.match(gallery,/app\.inspectionPaused=true;render\(\)/);
  assert.match(gallery,/app\.inspectionPaused=false;render\(\)/);
  assert.match(gallery,/document\.querySelector\('\.online-table'\)\?\.scrollIntoView/);
  assert.doesNotMatch(gallery,/sendAction\(.*(?:inspect|Paused)/);
