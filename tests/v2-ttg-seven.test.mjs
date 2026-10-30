@@ -95,7 +95,8 @@ test('seven TTG cards keep official prints and a legal 50-card deck',()=>{
  assert.equal(lord.mainAbility.extraEnergy,3);
  const king=ttg.cards['TTG-1-030'];
  assert.equal(king.raidName,'キタン');
- assert.equal(king.impactNull,true);
+ assert.equal(king.raidImpactNull,true);
+ assert.equal(king.impactNull,false);
  assert.deepEqual(king.traits,['大グレン団','ガンメン']);
  assert.equal(king.effects.onRetire[0].op,'replayRaidBase');
  const impact=ttg.cards['TTG-1-039'];

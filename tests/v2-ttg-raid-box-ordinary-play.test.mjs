@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import {createTtgV2Pack} from '../dist/universal-v2/ttg-pack.mjs';
 import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
- assertUniversalMatch,universalBp,universalImpact,universalImpactNull}
+ assertUniversalMatch,universalBp,universalImpact,universalImpactNull,
+ universalAttackDamage}
  from '../dist/universal-v2/engine.mjs';
 
 // Official Q51 / Q552: Raid-box text needs a face-up card under a Raid top.
@@ -11,8 +12,9 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
 const ttg=createTtgV2Pack();
 const deck={
  'TTG-1-074':2,'TTG-1-072':4,'TTG-1-071':2,'TTG-1-073':2,'TTG-1-027':2,
+ 'TTG-1-030':2,'TTG-1-031':2,
  'TTG-1-058':4,'TTG-1-042':4,'TTG-1-051':4,'TTG-1-005':2,
- 'TTG-1-063':4,'TTG-1-053':4,'TTG-1-064':4,'TTG-1-065':4,'TTG-1-049':4,
+ 'TTG-1-063':4,'TTG-1-053':4,'TTG-1-064':2,'TTG-1-065':2,'TTG-1-049':4,
  'TTG-1-070':4
 };
 assert.equal(Object.values(deck).reduce((n,c)=>n+c,0),50);
@@ -169,11 +171,41 @@ test('TTG-073 ordinary play does not offer the facedown Raid-box retire',()=>{
  assertUniversalMatch(ttg,s);
 });
 
-test('TTG-027 without a Raid base does not turn on Raid-box IMPACT',()=>{
+test('TTG-027 without a Raid base does not turn on Raid-box IMPACT or BP',()=>{
  let s=newUniversalMatch(ttg,{decks:[deck,deck],first:0,seed:2701});
  const card=stage(s,0,'TTG-1-027','front',0,false);
  s=toMain(s);
  assert.equal((card.stack||[]).length,0);
  assert.equal(universalImpact(ttg,s,card),0);
+ assert.equal(universalBp(ttg,s,card),4000);
+ assertUniversalMatch(ttg,s);
+});
+
+test('TTG-030 without a Raid base does not use Raid-box IMPACT null',()=>{
+ let s=newUniversalMatch(ttg,{decks:[deck,deck],first:0,seed:3001});
+ const card=stage(s,0,'TTG-1-030','front',0,false);
+ s=toMain(s);
+ assert.equal((card.stack||[]).length,0);
+ assert.equal(universalImpactNull(ttg,s,card),false);
+ assertUniversalMatch(ttg,s);
+});
+
+test('TTG-030 with a face-up Kitan under it uses Raid-box IMPACT null',()=>{
+ let s=newUniversalMatch(ttg,{decks:[deck,deck],first:0,seed:3002});
+ const kitan=take(s,0,'TTG-1-005');
+ const card=stage(s,0,'TTG-1-030','front',0,true);
+ card.stack=[kitan];
+ s=toMain(s);
+ assert.equal(universalImpactNull(ttg,s,card),true);
+ assertUniversalMatch(ttg,s);
+});
+
+test('TTG-031 ordinary play does not use Raid-box BP or DAMAGE 2',()=>{
+ let s=newUniversalMatch(ttg,{decks:[deck,deck],first:0,seed:3101});
+ const card=stage(s,0,'TTG-1-031','front',0,false);
+ s=toMain(s);
+ assert.equal((card.stack||[]).length,0);
+ assert.equal(universalBp(ttg,s,card),4000);
+ assert.equal(universalAttackDamage(ttg,s,card),1);
  assertUniversalMatch(ttg,s);
 });
