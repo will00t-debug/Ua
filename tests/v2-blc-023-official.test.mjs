@@ -30,8 +30,8 @@ test('BLC023 independently pinned complete Japanese stats, printed text and lega
  const c=packs[0].cards['BLC-1-023'];
  assert.deepEqual([c.name,c.color,c.energy,c.ap,c.bp,c.gen,c.trigger,c.raidName],['ユーハバッハ','yellow',4,2,4000,1,'get',null]);
  assert.deepEqual(c.effects.onPlay,[{op:'chooseOne',optional:false,options:[
- {id:'strip',label:'Strip opponent RAID top',turn:'any',then:[{op:'stripOppRaidTop',optional:true}]},
- {id:'retire',label:'Retire BP 2000 or lower',turn:'any',then:[{op:'retireOppFrontOneUnderBp',bp:2000,optional:true}]}]}]);
+ {id:'strip',label:'將敵方前線突襲角色最上層送至場外',turn:'any',then:[{op:'stripOppRaidTop',optional:true}]},
+ {id:'retire',label:'使敵方前線BP 2000以下角色退場',turn:'any',then:[{op:'retireOppFrontOneUnderBp',bp:2000,optional:true}]}]}]);
  assert.equal(CARDS.find(c=>c.identity==='BLC-1-023').number,'UA08BT/BLC-1-023');
  const profile=BLEACH_V2_ADDON_PROFILES.find(c=>c.id==='BLC-1-023');
  for(const patch of [{ap:1},{energy:3},{trigger:'draw'},{effect:profile.effect+'?'}])assert.throws(()=>checkedBleachAddonDefinition({...profile,...patch}),/printed card changed/);
