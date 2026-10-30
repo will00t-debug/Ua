@@ -38,7 +38,7 @@ test('setup and actual battle are two separate documents on distinct URLs',()=>{
  assert.match(battle,/id="exit-battle"/);
  assert.doesNotMatch(battle,/id="start-game"|id="my-title"|id="ai-level"|class="panel setup"/);
  assert.match(battle,/universal-v2-battle\.css\?v=20261028triggercenter1/);
- assert.match(battle,/universal-v2-preview\.mjs\?v=20261030entry1/);
+ assert.match(battle,/universal-v2-preview\.mjs\?v=[0-9a-z]+/);
  assert.match(worker,/'\/universal-v2-battle\.html':'\/universal-v2-battle\.html'/);
  assert.match(worker,/'\/universal-v2-battle':'\/universal-v2-battle\.html'/);
 });

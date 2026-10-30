@@ -766,6 +766,65 @@ function onlineInspectionGallery(room){
  gallery.append(grid);
  return gallery;
 }
+// Unlike TOP-N inspection, outside/removed effect-entry decisions can have
+// both a destination and a "take to hand" choice. Show those exact legal
+// choices next to the known card art, not as anonymous text buttons.
+function effectEntryGallery(room){
+ if(!room?.yourTurn||!room.view?.pending||room.inspection?.cards?.length||app.pick?.uid||app.busy)return null;
+ if(room.view.pending.player!==room.seat)return null;
+ const legal=room.choices||[];
+ const entries=legal.filter(action=>boardEntryMode(action));
+ if(!entries.length)return null;
+ const choices=dockChoices(room).filter(action=>typeof action.uid==='string'&&action.uid);
+ const candidateUids=[...new Set([...entries,...choices].map(action=>action.uid)
+  .filter(uid=>typeof uid==='string'&&uid))];
+ const own=room.view.players?.[room.seat];
+ const publicPiles=(room.view.players||[]).flatMap((player,seat)=>
+  ['outside','removed'].flatMap(zone=>(player?.[zone]||[])
+   .map(card=>({card,seat}))));
+ const mine=(own?.hand||[]).map(card=>({card,seat:room.seat}));
+ const visible=[...mine,...publicPiles];
+ const section=el('section',{class:'online-private-inspection',role:'region',
+  'aria-label':'效果：選擇角色卡圖'},
+  el('h2',{text:'效果：選擇角色'}),
+  el('p',{class:'online-inspection-hint',text:
+   '點卡圖選擇要登場的角色，再選合法模式及格子；若要加入手牌，按該角色下方的對應選項。'}));
+ const grid=el('div',{class:'online-inspection-grid'});
+ const handled=new Set();
+ for(const uid of candidateUids){
+  const match=visible.find(({card})=>card?.uid===uid&&card.cardId&&!card.faceDown);
+  const card=match?.card||null;
+  const canEnter=entries.some(action=>action.uid===uid);
+  const options=choices.filter(action=>action.uid===uid&&
+   !boardEntryMode(action)&&Number.isInteger(action.index));
+  if(!canEnter&&!options.length)continue;
+  const name=card?.name||card?.cardId||'可選擇角色';
+  const img=card?el('img',{src:cardSrc(card)||'assets/mark.svg',
+   alt:name,loading:'lazy',decoding:'async'}):null;
+  if(img)img.addEventListener('error',()=>{
+   if(!img.src.endsWith('/assets/mark.svg'))img.src='assets/mark.svg';
+  });
+  const tile=el(canEnter?'button':'div',{class:'online-inspection-card eligible',
+   ...(canEnter?{type:'button','aria-label':'選擇 '+name+' 登場',
+    onClick:()=>{app.pick={uid,entryMode:null,options:null};app.zone=null;render();}}:{})},
+   img?el('span',{class:'online-inspection-art'},img):null,
+   el('strong',{text:name}),
+   el('small',{text:canEnter?'選擇登場 · 再點位置':'選擇下方效果'}));
+  grid.append(tile);
+  if(options.length){
+   const actions=el('div',{class:'online-inspection-options','aria-label':name+' 的合法操作'});
+   for(const action of options){
+    handled.add(action.index);
+    actions.append(el('button',{type:'button',disabled:app.busy,
+     text:action.label,onClick:()=>sendAction(action.index)}));
+   }
+   grid.append(actions);
+  }
+ }
+ if(!grid.childElementCount)return null;
+ section.append(grid);
+ return {node:section,handled};
+}
 function matchView(){
  loadCovers();
  const room=app.room,view=room.view,seat=room.seat;
@@ -792,6 +851,11 @@ function matchView(){
     app.pick={uid:app.pick.uid,entryMode:choice.mode,
      raidBaseUid:choice.mode==='raid'?app.pick.raidBaseUid:null,options:null};render();
    }}));
+ if(room.yourTurn&&room.view?.pending&&app.pick?.uid&&
+  (room.choices||[]).some(action=>boardEntryMode(action)))
+  actions.append(el('button',{type:'button',text:'重新選擇角色',onClick:()=>{
+   app.pick=null;render();
+  }}));
  const next=room.yourTurn?(room.choices||[]).find(action=>action.type==='next'):null;
  if(next)actions.append(el('button',{type:'button',class:'primary',text:view.phase==='attack'?'結束回合 →':'下一階段 →',disabled:app.busy,onClick:()=>sendAction(next.index)}));
  const triggers=el('div',{class:'trigger-public'});
@@ -814,11 +878,14 @@ function matchView(){
  else if(room.yourTurn){
   const shownInGallery=new Set((room.inspection?.cards||[]).flatMap(card=>
    (card.actions||[]).map(action=>action.index)));
+  const effectTarget=effectEntryGallery(room);
+  for(const index of effectTarget?.handled||[])shownInGallery.add(index);
   const listed=(app.inspectionPaused?[]:dockChoices(room)).filter(choice=>choice!==next&&!shownInGallery.has(choice.index));
   if(!listed.length&&!next)actions.append(el('p',{class:'muted',text:app.inspectionPaused?'正在查看場面與手牌，按「返回選牌」繼續。':'正在等待可以執行的操作。'}));
   for(const choice of listed)actions.append(el('button',{type:'button',text:choice.label,disabled:app.busy,onClick:()=>sendAction(choice.index)}));
  }
  const inspection=onlineInspectionGallery(room);
+ const effectTarget=effectEntryGallery(room);
  const log=el('div',{class:'log'});
  for(const line of room.log||[])log.append(el('div',{text:line.text}));
  return shell(el('div',{class:'online-match'},
@@ -837,6 +904,7 @@ function matchView(){
     actions,
     el('div',{class:'row'},el('button',{type:'button',text:'認輸',disabled:app.busy||room.status!=='playing',onClick:resign}),
      room.status==='finished'?el('button',{type:'button',text:'返回大廳',onClick:leaveFinished}):null)),
+   effectTarget?.node,
    inspection,
    el('section',{class:'panel'},el('h2',{text:'公開紀錄'}),el('p',{class:'muted',text:'這裡不寫出手牌或牌庫裡的卡名。觸發會公開給對手。'}),log))));
 }
