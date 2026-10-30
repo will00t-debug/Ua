@@ -115,6 +115,16 @@ test('STG-1-015 public top search publishes only the revealed hand card, not the
  assert.equal(collectPublicCardResults(stgPacks,beforePick,s,pick)[0].name.length>0,true);
 });
 
+test('preview replay loads public results from dist so the static host can serve the module',()=>{
+ const replay=readFileSync(new URL('../dist/universal-v2/preview-replay.mjs',import.meta.url),'utf8');
+ assert.match(replay,/from '\.\/public-card-results\.mjs'/);
+ assert.doesNotMatch(replay,/server\/public-card-results/);
+ const shared=readFileSync(new URL('../dist/universal-v2/public-card-results.mjs',import.meta.url),'utf8');
+ assert.match(shared,/export function publicCardResults/);
+ const bridge=readFileSync(new URL('../server/public-card-results.mjs',import.meta.url),'utf8');
+ assert.match(bridge,/dist\/universal-v2\/public-card-results\.mjs/);
+});
+
 test('direct public-zone arrivals and two identical physical copies are each visible',()=>{
  const before=state(),after=structuredClone(before);
  after.players[0].outside=[

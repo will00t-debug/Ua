@@ -18,7 +18,7 @@ import {generateMatchSeed} from './v2-match-random-seed.mjs';
 import {recordDeckResult} from './deck-records.mjs';
 import {prepareSoloBattle,saveSoloBattle,loadSoloBattle,clearSoloBattle,
  SOLO_BATTLE_URL,SOLO_BATTLE_PROGRESS_KEY} from './universal-v2/solo-battle-session.mjs';
-import {collectSavedV2LobbyDecks,validatedLobbyChoice,V2_MATCH_SETUP_STORAGE_KEY} from './universal-v2/lobby-saved-decks.mjs';
+import {collectSavedV2LobbyDecks,accountLobbyRows,orderedAccountLobbyRows,shadowedLocalLobbyKeys,lobbyChoiceText,validatedLobbyChoice,V2_MATCH_SETUP_STORAGE_KEY} from './universal-v2/lobby-saved-decks.mjs?v=20261030accountdeck1';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  universalPublicView,universalPrivateChoices,assertUniversalMatch} from './universal-v2/engine.mjs';
 import {chooseUniversalAiAction} from './universal-v2/ai.mjs';
@@ -1457,17 +1457,85 @@ if(!IS_BATTLE_PAGE)importV2EditorDeck();
 
 // Saved decks remain browser-local, and are revalidated against the CURRENT
 // V2 rule pack. Unsupported decks are shown as unavailable, never auto-enabled.
+let savedLobbyRows=[];
+function rememberLobbyDeck(row){
+ if(!row?.ready)return;
+ decks[row.key]={pack:row.pack,counts:row.counts,label:row.name};
+ if(typeof row.recordDeckId==='string')decks[row.key].recordDeckId=row.recordDeckId;
+}
+function appendLobbyRow(row){
+ rememberLobbyDeck(row);
+ for(const side of ['my-title','ai-title']){
+  $(side).append(el('option',{
+   value:row.key,disabled:row.ready?null:true,
+   title:row.ready?null:row.issues?.[0]||null,
+   text:lobbyChoiceText(row,side)
+  }));
+ }
+}
 function importSavedLobbyDecks(){
- for(const row of collectSavedV2LobbyDecks(localStorage)){
-  if(row.ready)decks[row.key]={pack:row.pack,counts:row.counts,label:row.name};
+ savedLobbyRows=collectSavedV2LobbyDecks(localStorage);
+ for(const row of savedLobbyRows)appendLobbyRow(row);
+}
+function dropShadowedLocalDecks(accountRows){
+ const keys=new Set(shadowedLocalLobbyKeys(savedLobbyRows,accountRows));
+ if(!keys.size)return;
+ const accountByLocal=new Map(accountRows.filter(row=>row.localId).map(row=>[row.localId,row]));
+ const localByKey=new Map(savedLobbyRows.map(row=>[row.key,row]));
+ for(const key of keys){
+  const account=accountByLocal.get(localByKey.get(key)?.localId);
+  delete decks[key];
   for(const side of ['my-title','ai-title']){
-   const title=side==='my-title'?'我的收藏｜':'收藏牌組｜';
-   $(side).append(el('option',{
-    value:row.key,disabled:row.ready?null:true,
-    text:title+row.name+(row.ready?'':'（V2 尚未完整支援）')
-   }));
+   const select=$(side);
+   const selected=select.value===key;
+   for(const option of [...select.options]) if(option.value===key)option.remove();
+   if(selected&&account)select.value=account.key;
   }
  }
+}
+function prependAccountLobbyRows(rows){
+ for(const side of ['my-title','ai-title']){
+  const select=$(side);
+  const anchor=select.firstChild;
+  for(const row of rows){
+   select.insertBefore(el('option',{
+    value:row.key,disabled:row.ready?null:true,
+    title:row.ready?null:row.issues?.[0]||null,
+    text:lobbyChoiceText(row,side)
+   }),anchor);
+  }
+ }
+ for(const row of rows)rememberLobbyDeck(row);
+}
+// Signed-in account decks are not in this browser's localStorage. Load them
+// into both setup selects. A logged-out response leaves the built-in list.
+async function importAccountLobbyDecks(){
+ const note=$('restart-notice');
+ const prior=note?.textContent||'';
+ const mineAtStart=$('my-title').value,foeAtStart=$('ai-title').value;
+ if(note&&!prior)note.textContent='正在讀取帳號牌組…';
+ let rows=[],status=0;
+ try{
+  const response=await fetch('/api/decks',{credentials:'same-origin',redirect:'error',headers:{accept:'application/json'}});
+  status=response.status;
+  if(response.ok){
+   const payload=await response.json();
+   rows=orderedAccountLobbyRows(accountLobbyRows(payload?.decks));
+  }
+ }catch{status=0;rows=[];}
+ if(status===200){
+  dropShadowedLocalDecks(rows);
+  prependAccountLobbyRows(rows);
+  // A choice made while the account list was loading stays. Otherwise apply
+  // a previously saved account deck now that its option exists.
+  if($('my-title').value===mineAtStart&&$('ai-title').value===foeAtStart) restoreMatchLobby();
+  syncMatchLobby();
+ }
+ if(!note||prior)return;
+ const ready=rows.filter(row=>row.ready).length;
+ if(status===200&&ready)note.textContent='帳號牌組已放在選單最上方，可以直接開始對戰。';
+ else if(status===200&&rows.length)note.textContent='帳號裡的牌組已列出，但還不能對戰。請看選項後面的原因。';
+ else note.textContent='';
 }
 if(!IS_BATTLE_PAGE)importSavedLobbyDecks();
 // On the setup route, validate the selected 50-card lists and navigate to
@@ -1486,7 +1554,8 @@ function launchBattle(){
   newUniversalMatch([mine.pack,foe.pack],{
    decks:[mine.counts,foe.counts],seed:generateMatchSeed(),first,openingMulligan:true
   });
-  const recordDeckId=myTitle==='editor-v2-mine'?editorRecordId:null;
+  const recordDeckId=myTitle==='editor-v2-mine'?editorRecordId
+   :(typeof mine.recordDeckId==='string'?mine.recordDeckId:null);
   const config=prepareSoloBattle({
    mine,foe,first,difficulty:app.aiDifficulty,recordDeckId,
    nonce:generateMatchSeed()
@@ -1616,6 +1685,7 @@ if(!IS_BATTLE_PAGE){
   launchBattle();
  });
  syncMatchLobby();
+ importAccountLobbyDecks();
 }else{
  const loaded=loadSoloBattle(sessionStorage);
  window.matchMedia(DESKTOP_BATTLE_QUERY).addEventListener('change',()=>render());
