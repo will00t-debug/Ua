@@ -770,7 +770,7 @@ function legacyCommands(legal){
  const name=selectedCardName();
  if(app.targetChoices){
   const choices=app.targetChoices;
-  const multiBase=choices.length>1&&choices.every(a=>boardEntryMode(a)==='raid')&&
+  const multiBase=choices.length>1&&choices.every(a=>boardEntryMode(a)==='raid'&&a.type!=='raid')&&
    new Set(choices.map(a=>a.baseUid)).size>1;
   bar.append(el('span',{class:'v2-compact-hint',text:multiBase?
    '此位置有多個合法突襲底座，請選一張底座。':'這個格子有多種登場方式，請選一個。'}));

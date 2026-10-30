@@ -496,7 +496,7 @@ function clickField(engineSeat,line,index,card){
   if(acts.length>1){
    const own=room.view?.players?.[room.seat];
    const bases=[...(own?.front||[]),...(own?.energy||[])];
-   const options=acts.every(action=>boardEntryMode(action)==='raid')?
+   const options=acts.every(action=>boardEntryMode(action)==='raid'&&action.type!=='raid')?
     acts.map(action=>{
      const base=bases.find(c=>c?.uid===action.baseUid);
      return {...action,label:'突襲底座：'+(base?.name||base?.cardId||action.baseUid||'指定底座')};
@@ -634,7 +634,7 @@ function playHint(room){
  const selection=pick.uid?boardEntrySelection(legal,pick.uid):{normal:[],raid:[],needsMode:false};
  if(app.pick?.options?.length){
   const choices=app.pick.options;
-  return choices.length>1&&choices.every(a=>boardEntryMode(a)==='raid')&&
+  return choices.length>1&&choices.every(a=>boardEntryMode(a)==='raid'&&a.type!=='raid')&&
    new Set(choices.map(a=>a.baseUid)).size>1?
    '這個位置有多個合法突襲底座，請選一張底座。':
    '這個格子有多種登場方式，請選一個。';
