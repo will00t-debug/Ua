@@ -769,15 +769,35 @@ export function visiblePendingChoiceCards(view,action){
  const candidates=[
   ...((Array.isArray(players[0]?.hand)?players[0].hand:[])
    .map(card=>({card,side:0}))),
+  // Outside and removed are public; the opponent's hand/deck/life remain hidden.
   ...players.slice(0,2).flatMap((player,side)=>
-   (Array.isArray(player?.outside)?player.outside:[])
-    .map(card=>({card,side})))
+   ['outside','removed'].flatMap(zone=>
+    (Array.isArray(player?.[zone])?player[zone]:[])
+     .map(card=>({card,side}))))
  ];
  return ids.flatMap(uid=>{
   if(typeof uid!=='string'||!uid)return [];
   const hit=candidates.find(({card})=>card?.uid===uid&&
    typeof card.cardId==='string'&&card.cardId);
   return hit?[{cardId:hit.card.cardId,side:hit.side}]:[];
+ });
+}
+// Card-art candidates for effects with both a placement choice and another
+// outcome (e.g. outside -> hand OR REST enter). This is controller-only data.
+// Never look through the opponent's hand, deck, life or face-down layers.
+// Actual choices are still validated by the reducer's unchanged legal list.
+export function pendingEntryChoiceCards(privateChoices,view,legal){
+ const uids=[...new Set((Array.isArray(legal)?legal:[])
+  .filter(action=>boardEntryMode(action))
+  .map(action=>action.uid))];
+ return uids.map(uid=>{
+  const option=(privateChoices?.options||[]).find(item=>item?.action?.uid===uid);
+  const authorized=pendingChoiceCards(option)[0]||
+   (privateChoices?.inspected||[]).find(card=>card?.uid===uid&&card.cardId);
+  const visible=visiblePendingChoiceCards(view,{uid})[0];
+  const card=authorized?{...authorized,side:0}:visible||null;
+  return {uid,cardId:card?.cardId||null,side:card?.side??0,
+   name:card?.name||card?.cardId||'可登場角色'};
  });
 }
 // Resolve a pending target only against face-up PUBLIC field slots. This
