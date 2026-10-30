@@ -7,8 +7,8 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,assertUn
 import {boardEntrySelection,entryClickPlan} from '../dist/universal-v2/preview-actions.mjs';
 
 const ids=[
- 'REZ-1-048','REZ-1-049','REZ-1-050','REZ-1-051','REZ-1-052','REZ-1-053',
- 'REZ-1-041','REZ-1-047','REZ-1-054','REZ-1-057','REZ-1-059','REZ-1-110','REZ-1-055'
+ 'REZ-1-048','REZ-1-049','REZ-1-060','REZ-1-051','REZ-1-052','REZ-1-053',
+ 'REZ-1-041','REZ-1-047','REZ-1-054','REZ-1-056','REZ-1-059','REZ-1-110','REZ-1-055'
 ];
 const counts=rezDeck(ids,'REZ-1-055');
 const rez=createRezeroBattlePack(),rezPacks=[rez,rez];
