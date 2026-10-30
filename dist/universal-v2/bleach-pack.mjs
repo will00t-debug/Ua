@@ -1686,7 +1686,7 @@ export function checkedBleachAddonDefinition(p){
   ...(p.kind==='millRemoveScale'?{raidName:'黒崎 一護'}:{}),
   ...(p.kind==='payDamageRemoveFour'?{raidName:'阿散井 恋次',mainAbility:{op:'oncePayProgram',oncePerTurn:true,frontOnly:false,raidOnly:false,payAp:1,requiresOwnName:null,then:[{op:'grantSelfAttackDamageThisTurn',amount:2}]}}:{}),
   ...(p.kind==='purpleApBpChoice'?{passiveBonuses:[{condition:{kind:'ownEffectApPaidColor',turn:'any',color:'purple'},bp:2000}],mainAbility:{op:'oncePayProgram',oncePerTurn:true,frontOnly:true,raidOnly:false,payAp:1,requiresOwnName:rukiaName,then:[{op:'chooseOne',optional:false,options:[{id:'draw',label:'抽1張',turn:'any',then:[{op:'draw',count:1}]},{id:'active',label:'改為Active並減BP',turn:'any',then:[{op:'activeSelf'},{op:'enemyBpDown',bp:1000,optional:true}]}]}]}}:{}),
-  ...(p.kind==='raidApDiscountChoice'?{raidName:'阿散井 恋次',raidHandApDiscount:{amount:1,requiresEffectApColor:'purple',voidIfOtherZeroApHandName:true},mainAbility:{op:'oncePayProgram',oncePerTurn:true,frontOnly:true,raidOnly:true,payAp:0,requiresOwnName:null,then:[{op:'chooseOne',optional:false,options:[{id:'impact',label:'Impact 1',turn:'any',then:[{op:'grantSelfImpactThisTurn',amount:1}]},{id:'down',label:'敵方前線BP-1000',turn:'any',then:[{op:'enemyBpDown',bp:1000,optional:false}]}]}]}}:{}),
+  ...(p.kind==='raidApDiscountChoice'?{raidName:'阿散井 恋次',raidHandApDiscount:{amount:1,requiresEffectApColor:'purple',voidIfOtherZeroApHandName:true},mainAbility:{op:'oncePayProgram',oncePerTurn:true,frontOnly:true,raidOnly:true,payAp:0,requiresOwnName:null,then:[{op:'chooseOne',optional:false,options:[{id:'impact',label:'此角色本回合獲得Impact 1',turn:'any',then:[{op:'grantSelfImpactThisTurn',amount:1}]},{id:'down',label:'敵方前線BP-1000',turn:'any',then:[{op:'enemyBpDown',bp:1000,optional:false}]}]}]}}:{}),
   ...(p.kind==='raidDrawDiscardBuff'?{raidName:'朽木 ルキア',mainAbility:{op:'oncePayProgram',oncePerTurn:true,frontOnly:false,raidOnly:false,payAp:0,requiresOwnName:null,then:[{op:'discardGate',optional:false,then:[{op:'buffOwnField',filter:{field:'type',value:'character'},bp:500,optional:true,excludeSelf:false}]}]}}:{}),
   ...(p.kind==='renjiPayDeploy'?{triggerEffect:{op:'deployOutsideCharacter',color:'purple',maxEnergy:2,ap:1,frontOnly:true}}:{}),
   ...(p.kind==='emptyRaidPeek'?{emptyOwnFieldHandEnergyDiscount:2}:{}),
@@ -1756,13 +1756,13 @@ export function checkedBleachAddonDefinition(p){
    isKyoraku?{onPlay:[{op:'nextEligibleHandPlayApDiscount',
      filter:{trait:'花天狂骨'}}]}:
     isMayuri?{onPlay:[{op:'chooseOne',optional:false,options:[
-     {id:'top',label:'TOP2 / remainder OUTSIDE',turn:'any',
+     {id:'top',label:'查看牌頂2張，任意張放回牌頂，其餘送場外',turn:'any',
       then:[{op:'inspectTopAnyOutside',count:2,rest:'top'}]},
-     {id:'recover',label:'Discard two hand then recover outside',turn:'any',
+     {id:'recover',label:'可將2張手牌送場外，再從場外回收涅繭利或涅音夢',turn:'any',
       then:[{op:'discardGate',count:2,optional:true,then:[
        {op:'recoverOutsideOne',optional:true,filter:{field:'printedNameAny',
         values:['涅 マユリ','涅 ネム']}}]}]},
-     {id:'field',label:'Retire other character then free ACTIVE FIELD',turn:'any',
+     {id:'field',label:'可使其他角色退場，再從手牌讓涅骸部隊以Active登場於能源線',turn:'any',
       then:[{op:'retireOwnCharacterOne',optional:true,excludeSelf:true,after:[
        {op:'deployNamedFromZones',name:'涅骸部隊',zones:['hand'],line:'energy',
         ready:true,optional:true,cardType:'field',color:'blue',ap:1,maxEnergy:30}]}]}
@@ -1829,9 +1829,9 @@ export function checkedBleachAddonDefinition(p){
    isNoRaidTop?{onPlay:[{op:'searchTopOneBottomDiscard',count:5,excludeRaid:true,
     filter:{field:'traitlessCharacter',value:true}}]}:
    isStripDual?{onPlay:[{op:'chooseOne',optional:false,options:[
-    {id:'strip',label:'Strip opponent RAID top',turn:'any',
+    {id:'strip',label:'將敵方前線突襲角色最上層送至場外',turn:'any',
      then:[{op:'stripOppRaidTop',optional:true}]},
-    {id:'retire',label:`Retire BP ${stripRetireBp} or lower`,turn:'any',
+    {id:'retire',label:`使敵方前線BP ${stripRetireBp}以下角色退場`,turn:'any',
      then:[{op:'retireOppFrontOneUnderBp',bp:stripRetireBp,optional:true}]}
    ]}]}:
    isTraitlessMove?{onPlay:[{op:'moveOtherAcrossOrRemove',optional:true,traitless:true}]}:

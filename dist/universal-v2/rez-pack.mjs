@@ -139,15 +139,15 @@ const PROFILES={
   {op:'inspectTopArrange',count:2,toOutside:true,rest:'top',
    whenDistinct:{color:'green',min:4,count:4}}]}},
  'REZ-2-003':{implementation:'dsl',effects:{onPlay:[{op:'chooseOne',optional:false,options:[
-  {id:'drawDiscard',label:'draw and put one hand card outside',turn:'any',
+  {id:'drawDiscard',label:'抽1張，並將1張手牌放到場外',turn:'any',
    then:[{op:'drawDiscard',count:1}]},
-  {id:'subaru',label:'yellow Subaru from outside',turn:'any',then:[
+  {id:'subaru',label:'從場外將最多1張黃色菜月昴加入手牌',turn:'any',then:[
    {op:'recoverOutsideNameColor',name:'ナツキ・スバル',color:'yellow',optional:true}]}]}]}},
  'REZ-2-006':{implementation:'dsl',effects:{
   onPlay:[{op:'enemyBpDown',bp:1000,optional:true,minBp:1500,zone:'front'}],
   onAttack:[{op:'chooseOneIfBelowPrinted',options:[
-   {id:'draw',label:'draw one',turn:'any',then:[{op:'draw',count:1}]},
-   {id:'buff',label:'bp plus 1000',turn:'any',then:[{op:'buffSelf',bp:1000}]}]}]}},
+   {id:'draw',label:'抽1張',turn:'any',then:[{op:'draw',count:1}]},
+   {id:'buff',label:'此角色本回合BP+1000',turn:'any',then:[{op:'buffSelf',bp:1000}]}]}]}},
  'REZ-2-008':{implementation:'dsl',effects:{onPlay:[
   {op:'drawDiscardOrDrawIfBelowPrinted',count:1}]}},
  'REZ-2-013':{implementation:'dsl',effects:{},impactNull:true,mainAbility:{
@@ -166,8 +166,8 @@ const PROFILES={
  'REZ-2-044':{implementation:'dsl',effects:{},mainAbility:{
   op:'onceChooseProgram',oncePerTurn:true,when:{...ANASTASIA_OR_FOUR_GREEN},
   then:[{op:'chooseOne',optional:false,options:[
-   {id:'attackDraw',label:'draw on attack',turn:'any',then:[{op:'grantSelfAttackDrawThisTurn'}]},
-   {id:'buff',label:'bp plus 500',turn:'any',then:[{op:'buffSelf',bp:500}]}]}]}},
+   {id:'attackDraw',label:'攻擊時抽1張',turn:'any',then:[{op:'grantSelfAttackDrawThisTurn'}]},
+   {id:'buff',label:'本回合BP+500',turn:'any',then:[{op:'buffSelf',bp:500}]}]}]}},
  'REZ-2-068':{implementation:'dsl',effects:{onPlay:[
   {op:'grantNamedReadyOnAttack',name:'エミリア'}]}},
  'REZ-2-070':{implementation:'dsl',effects:{onPlay:[
@@ -197,9 +197,9 @@ const PROFILES={
    {field:'printedBp',value:2500}]}]}},
  'REZ-2-069':{implementation:'dsl',triggerEffect:{op:'retireOppFront'},effects:{onPlay:[
   {op:'chooseOne',optional:false,options:[
-   {id:'oneAp2',label:'one AP2',turn:'any',then:[
+   {id:'oneAp2',label:'場外最多1張原本BP2500、AP2的綠色角色以REST登場',turn:'any',then:[
     {op:'deployOutsidePrinted',color:'green',printedBp:2500,ap:2,max:1,ready:false}]},
-   {id:'twoAp1',label:'two AP1',turn:'any',then:[
+   {id:'twoAp1',label:'場外最多2張原本BP2500、AP1的綠色角色以REST登場',turn:'any',then:[
     {op:'deployOutsidePrinted',color:'green',printedBp:2500,ap:1,max:2,ready:false}]}]}]}},
  'REZ-2-072':{implementation:'dsl',playRequiresOwnName:'プリシラ・バーリエル',
  triggerEffect:{op:'retireOppFront'},effects:{onPlay:[
@@ -230,9 +230,9 @@ const PROFILES={
   {op:'activeSelfIf',line:'energy',when:{kind:'ownNameExists',turn:'any',zone:'field',
    excludeSelf:false,name:'クルシュ・カルステン'}}]},
  mainAbility:{op:'restSelfChoose',then:[{op:'chooseOne',optional:false,options:[
-  {id:'buff',label:'bp plus 1000',turn:'any',then:[
+  {id:'buff',label:'其他1張角色本回合BP+1000',turn:'any',then:[
    {op:'buffAnyCharacter',bp:1000,optional:false,excludeSelf:true}]},
-  {id:'bottom',label:'reveal to bottom',turn:'any',then:[
+  {id:'bottom',label:'公開1張手牌並放到牌庫底',turn:'any',then:[
    {op:'revealHandBottom',thenBuffBp:2000,thenBuffOptional:true,
     excludeSelf:true,drawIfPrintedBp:4000}]}]}]}},
  'REZ-2-020':{implementation:'dsl',frontForbidden:true,effects:{onRaided:[
@@ -249,9 +249,9 @@ const PROFILES={
   mainAbility:{op:'onceAbovePrintedKeywords',oncePerTurn:true,
    damageAt:3,damage:2,impactAt:5,impact:1}},
  'REZ-2-054':{implementation:'dsl',effects:{onPlay:[{op:'chooseOne',optional:false,options:[
-  {id:'kinds',label:'top green kinds',turn:'any',then:[
+  {id:'kinds',label:'依綠色角色種類查看牌頂',turn:'any',then:[
    {op:'searchTopDistinctBottomDiscard',color:'green',maxEnergy:5}]},
-  {id:'buff',label:'two others bp 500',turn:'any',then:[
+  {id:'buff',label:'其他最多2張角色本回合BP+500',turn:'any',then:[
    {op:'buffOwnOthersFixed',bp:500,count:2}]}]}]}},
  'REZ-2-058':{implementation:'dsl',raidName:'エミリア',attackEndRestPrintedBp:2500,
   effects:{
@@ -262,15 +262,15 @@ const PROFILES={
   }},
  'REZ-2-062':{implementation:'dsl',raidName:'フェルト',effects:{onPlay:[
   {op:'chooseOne',optional:false,options:[
-   {id:'draw',label:'draw one',turn:'any',then:[{op:'draw',count:1}]},
-   {id:'active',label:'active one other',turn:'any',then:[
+   {id:'draw',label:'抽1張',turn:'any',then:[{op:'draw',count:1}]},
+   {id:'active',label:'使其他最多1張角色轉為ACTIVE',turn:'any',then:[
     {op:'activeOwnOther',optional:true}]}]}]},
   mainAbility:{op:'onceFrontChoose',oncePerTurn:true,frontOnly:true,then:[
    {op:'chooseOne',optional:false,options:[
-    {id:'keywords',label:'bp and block ceiling',turn:'any',then:[
+    {id:'keywords',label:'直到下回合開始，BP+1000且不被BP4000以上阻擋',turn:'any',then:[
      {op:'buffSelfUntilNextOwnStart',bp:1000},
      {op:'grantSelfBlockAtLeastUntilNextOwnStart',bp:4000}]},
-    {id:'energy',label:'other generates on front',turn:'any',then:[
+    {id:'energy',label:'其他1張角色本回合在前線也產生能源',turn:'any',then:[
      {op:'grantOtherFieldFrontEnergyThisTurn',optional:false}]}]}]}},
  'REZ-2-047':{implementation:'dsl',printedImpact:1,effects:{},
   mainAbility:{op:'frontDrawOrHandTrigger',frontOnly:true,drawOnce:'card',
@@ -281,16 +281,16 @@ const PROFILES={
  'REZ-2-025':{implementation:'dsl',effects:{onPlay:[
   {op:'grantSubaruHandTaxThisTurn'},
   {op:'chooseOne',optional:false,options:[
-   {id:'draw',label:'draw if Subaru',turn:'any',then:[
+   {id:'draw',label:'場上有菜月昴就抽1張',turn:'any',then:[
     {op:'drawIfOwnName',name:'ナツキ・スバル',count:1}]},
-   {id:'ap',label:'ready one AP at attack',turn:'any',then:[
+   {id:'ap',label:'攻擊階段開始時啟動1張AP卡',turn:'any',then:[
     {op:'scheduleAttackStartAp',count:1}]}]}]}},
  'REZ-2-018':{implementation:'dsl',effects:{onPlay:[
   {op:'chooseOne',optional:false,nameLock:'レム',options:[
-   {id:'enter',label:'rest a zero-energy blue Subaru',turn:'any',then:[
+   {id:'enter',label:'場外需求能源0的藍色菜月昴以REST登場',turn:'any',then:[
     {op:'deployOutsideNamedRestRetireEnd',name:'ナツキ・スバル',color:'blue',
      maxEnergy:0,optional:true}]},
-   {id:'lose',label:'lose-battle ready',turn:'any',then:[
+   {id:'lose',label:'場上需求能源0的藍色菜月昴戰鬥落敗時轉為ACTIVE',turn:'any',then:[
     {op:'grantNamedLoseBattleReady',name:'ナツキ・スバル',color:'blue',
      maxEnergy:0,optional:true}]}]}]}}
 ,
@@ -299,9 +299,9 @@ const PROFILES={
   {op:'banAttackMoveOtherLine',optional:true}]},
  mainAbility:{op:'entryTurnRestFrontChoose',oncePerTurn:true,then:[
   {op:'chooseOne',optional:false,options:[
-   {id:'down',label:'enemy bp down',turn:'any',then:[
+   {id:'down',label:'對手前線BP2000以上，本回合BP-1500',turn:'any',then:[
     {op:'enemyBpDown',bp:1500,optional:true,minBp:2000,zone:'front'}]},
-   {id:'up',label:'other bp up',turn:'any',then:[
+   {id:'up',label:'其他最多1張角色本回合BP+2000',turn:'any',then:[
     {op:'buffOwnField',filter:{field:'type',value:'character'},bp:2000,
      optional:true,excludeSelf:true}]}]}]}}
 ,

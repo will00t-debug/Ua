@@ -287,6 +287,15 @@ export function uiCardLabel(pack,state,uid){
  const printed=sourcePack.cards[physical.cardId];
  return printed?.name||physical.cardId;
 }
+// `recommended` is the raid-red outline. An on-play or activate branch is
+// not a raid, even when the card itself has a raid keyword. Only a choice
+// whose mode is raid keeps that frame.
+export function pendingTextChoiceClass(action){
+ const quiet=action?.uid===null||action?.mode==='skip'||action?.mode==='done';
+ if(quiet)return 'quiet';
+ if(action?.type==='chooseEffectMode'&&action.mode!=='raid')return '';
+ return 'recommended';
+}
 export function uiActionLabel(action,{pack,state}={}){
  if(action?.type==='mmm2'||(action?.type==='activate'&&typeof action?.mode==='string'&&action.mode.startsWith('mmm2:')))
   return action.mode==='skip'?'跳過':action.mode==='do'?'發動':'魔法少女小圓第二彈選擇';

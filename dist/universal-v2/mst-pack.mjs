@@ -709,9 +709,9 @@ export function verifiedMstV2Cards(){
    card.raidName='エリス';card.raidImpact=1;card.raidOwnTurnBp=500;
    card.effects={onPlay:[{op:'chooseOne',entry:'ownEffect',optional:false,
     options:[
-     {id:'bp',label:'BP +1000 until next own turn start',turn:'any',
+     {id:'bp',label:'直到下回合開始，BP+1000',turn:'any',
       then:[{op:'buffSelfUntilNextOwnStart',bp:1000}]},
-     {id:'swap',label:'May swap own ENERGY character at attack end this turn',turn:'any',
+     {id:'swap',label:'本回合攻擊結束時可與能源線角色交換位置',turn:'any',
       then:[{op:'grantSelfAttackEndSwapThisTurn'}]}
     ]}]};
   }
@@ -755,10 +755,10 @@ export function verifiedMstV2Cards(){
     card.effects={
      onPlay:[{op:'retireOwnCharacterOne',optional:true,after:[{op:'draw',count:2}]}],
      onRetire:[{op:'chooseOne',optional:false,options:[
-      {id:'deploy',label:'Discard then REST Roxy',turn:'any',
+      {id:'deploy',label:'可棄1張手牌，再讓場外需求能源1以下的綠色洛琪希以REST登場',turn:'any',
        then:[{op:'discardGate',optional:true,then:[{op:'deployOutsideRest',
         name:'ロキシー',color:'green',energy:1,ap:1,optional:true}]}]},
-      {id:'recover',label:'Recover Manatite Hydra',turn:'any',
+      {id:'recover',label:'從場外將〈迷宮の守護者 マナタイトヒュドラ〉加入手牌',turn:'any',
        then:[{op:'recoverOutsideOne',
         filter:{field:'name',value:'迷宮の守護者 マナタイトヒュドラ'},optional:true}]}
      ]}]
@@ -801,9 +801,9 @@ export function verifiedMstV2Cards(){
    card.effects={onPlay:[{op:'activeSelfIf',entry:'ownEffect'}]};
   if(pin.kind==='onPlayChooseDrawOrOwnEffectNamedHand')
    card.effects={onPlay:[{op:'chooseOne',optional:false,options:[
-    {id:'draw',label:'Draw one and put one own hand card outside',turn:'any',
+    {id:'draw',label:'抽1張，並將1張手牌放到場外',turn:'any',
      then:[{op:'drawDiscard',count:1}]},
-    {id:'deploy',label:'Own-effect entry: named blue hand REST or Raid',turn:'any',
+    {id:'deploy',label:'自己的效果登場時，手牌藍色角色休息登場或突襲',turn:'any',
      entry:'ownEffect',then:[{op:'oncePerTurnGate',scope:'name',optional:false,then:[
       {op:'deployOwnHandRestOrRaid',type:'character',color:'blue',maxEnergy:3,
        ap:1,max:1,optional:true,names:['ルーデウス','エリス','ルイジェルド']}]}]}
@@ -862,9 +862,9 @@ export function verifiedMstV2Cards(){
   if(pin.kind==='onPlayDrawDiscard')card.templateEffects={onPlay:[{template:'drawDiscardOne'}]};
   if(pin.kind==='onPlayChooseTemporaryFrontEnergy')
    card.effects={onPlay:[{op:'chooseOne',optional:false,options:[
-    {id:'draw',label:'Draw one, put one own hand card outside',turn:'any',
+    {id:'draw',label:'抽1張，並將1張手牌放到場外',turn:'any',
      then:[{op:'drawDiscard',count:1}]},
-    {id:'energy',label:'One other own Ranoa FRONT produces energy this turn',turn:'any',
+    {id:'energy',label:'其他1張前線拉諾亞角色本回合在前線也產生能源',turn:'any',
      then:[{op:'grantFrontEnergyOwnOtherFrontTrait',trait:'ラノア魔法大学',
       optional:true,until:'thisTurn'}]}
    ]}]};
@@ -982,9 +982,9 @@ export function verifiedMstV2Cards(){
     bp:1000,optional:true,excludeSelf:false}]};
    card.mainAbility={op:'onceFrontChoose',oncePerTurn:true,frontOnly:true,then:[{
     op:'chooseOne',optional:false,options:[
-     {id:'replay',label:'Replay this character on play',turn:'own',
+     {id:'replay',label:'再次發動此角色的登場時效果',turn:'own',
       then:[{op:'replayOnPlay'}]},
-     {id:'strip',label:'Sniper a raided Eris and strip this top',turn:'own',
+     {id:'strip',label:'給突襲狀態的艾莉絲狙擊，並將此角色最上層送至場外',turn:'own',
       then:[{op:'sniperRaidedStripSelf',name:'エリス'}]}
     ]}]};
   }
@@ -992,11 +992,11 @@ export function verifiedMstV2Cards(){
    card.frontForbidden=true;
    card.ownEffectMoveOnly=true;
    card.effects={onAttack:[{op:'chooseOne',optional:false,options:[
-    {id:'buff',label:'Up to one other character BP +1000',turn:'own',then:[
+    {id:'buff',label:'其他最多1張角色本回合BP+1000',turn:'own',then:[
      {op:'buffOwnField',filter:{field:'type',value:'character'},bp:1000,
       optional:true,excludeSelf:true}]},
-    {id:'draw',label:'Draw one card',turn:'own',then:[{op:'draw',count:1}]},
-    {id:'impact',label:'Impact if Goraisekijun was used',turn:'own',then:[
+    {id:'draw',label:'抽1張',turn:'own',then:[{op:'draw',count:1}]},
+    {id:'impact',label:'本回合使用過豪雷積層雲時獲得衝擊1',turn:'own',then:[
      {op:'grantSelfImpactIfNamedEvent',name:'豪雷積層雲',amount:1}]}
    ]}]};
   }
@@ -1028,9 +1028,9 @@ export function verifiedMstV2Cards(){
   }
   if(pin.kind==='erisSniperOrOutsideRudeus'){
    card.effects={onPlay:[{op:'chooseOne',optional:false,emptyOk:true,options:[
-    {id:'sniper',label:'Grant Eris BP and sniper',turn:'any',then:[
+    {id:'sniper',label:'給艾莉絲本回合BP+500與狙擊',turn:'any',then:[
      {op:'grantNamedBuffSniper',name:'エリス',bp:500}]},
-    {id:'deploy',label:'Rest or raid a blue AP1 Rudeus from outside',turn:'any',then:[
+    {id:'deploy',label:'場上有艾莉絲時，場外藍色AP1魯德烏斯休息登場或突襲',turn:'any',then:[
      {op:'deployOutsideNameApRestOrRaid',name:'ルーデウス',color:'blue',ap:1,
       requiresName:'エリス',optional:true}]}
    ]}]};
@@ -1051,10 +1051,10 @@ export function verifiedMstV2Cards(){
    card.raidName='シルフィエット';
    card.passiveBonuses=[{condition:{kind:'ownEnergyAtLeast',turn:'any',min:7},impact:1}];
    card.effects={onPlay:[{op:'chooseOne',optional:false,options:[
-    {id:'search',label:'Look at five for one Ranoa',turn:'any',then:[
+    {id:'search',label:'查看牌頂5張，公開最多1張拉諾亞特徵加入手牌',turn:'any',then:[
      {op:'searchTopOneBottomDiscard',count:5,noHandDiscard:true,
       filter:{field:'trait',value:'ラノア魔法大学'}}]},
-    {id:'move',label:'Move up to one opposing front to energy',turn:'any',then:[
+    {id:'move',label:'將最多1張對手前線移到能源線',turn:'any',then:[
      {op:'moveOppFrontToEnergy',optional:true}]}
    ]}]};
   }

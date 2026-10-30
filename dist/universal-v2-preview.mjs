@@ -31,8 +31,8 @@ import {SAO_CARDS} from './sao-cards.mjs';
 import {MST_V2_OFFICIAL_CATALOGUE} from './universal-v2/sources/mst-inventory.mjs';
 import {V2_PHASE_LABELS,V2_TITLE_LABELS,V2_PENDING_LABELS,
  uiActor,isExactLegal,uiCardLabel,uiActionLabel,visibleActionsForCard,
- pendingChoiceCards,inspectedPendingChoiceCards,visiblePendingChoiceCards,pendingEntryChoiceCards,publicLifeOrderChoiceCard,pendingChoiceCaption,publicPendingTargetCard,controllerDeckWindowCards,controllerChoiceArt,attackBattleTags,attackKeywordBadges,frontAttackKeywordBadges,inlineBlockDecision,boardEntryMode,boardEntrySelection,entryClickPlan,moveClickPlan,
- FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs?v=20261030choiceart1';
+ pendingChoiceCards,inspectedPendingChoiceCards,visiblePendingChoiceCards,pendingEntryChoiceCards,publicLifeOrderChoiceCard,pendingChoiceCaption,publicPendingTargetCard,controllerDeckWindowCards,controllerChoiceArt,pendingTextChoiceClass,attackBattleTags,attackKeywordBadges,frontAttackKeywordBadges,inlineBlockDecision,boardEntryMode,boardEntrySelection,entryClickPlan,moveClickPlan,
+ FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs?v=20261030effectlabel1';
 import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalReplay,
  collectPublicCardResults,publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
 import {DESKTOP_BATTLE_QUERY,isDesktopBattlefield,mountDesktopBattlefield}
@@ -399,9 +399,9 @@ function pendingChoiceControl(action,option,gallery,view){
   lifeOrder?[{...lifeOrder,name:cardDef(lifeOrder.side,lifeOrder.cardId)?.name||lifeOrder.cardId}]:
   local;
  if(!cards.length){
-  const quiet=action.uid===null||action.mode==='skip'||action.mode==='done';
+  const tone=pendingTextChoiceClass(action);
   return btn(label,()=>applyAction(action),
-   (quiet?'quiet':'recommended')+(gallery?' choice-text':''));
+   [tone,gallery?'choice-text':''].filter(Boolean).join(' '));
  }
  const names=cards.map(card=>card.name);
  const caption=pendingChoiceCaption(label,names);

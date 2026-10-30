@@ -4716,9 +4716,9 @@ function continueEffectQueue(pack,s){
      if(pl.hand.length)s.pending={kind:'effect-discard',player:owner,sourceUid:job.sourceUid};
     }else s.pending={kind:'effect-choice-mode',player:owner,sourceUid:job.sourceUid,
      sourceName:job.sourceName,optional:false,options:[
-      {id:'discard',label:'draw and put one hand card outside',turn:'any',
+      {id:'discard',label:'抽1張，並將1張手牌放到場外',turn:'any',
        then:[{op:'drawDiscard',count:1}]},
-      {id:'draw',label:'draw one',turn:'any',then:[{op:'draw',count:1}]}]};
+      {id:'draw',label:'只抽1張',turn:'any',then:[{op:'draw',count:1}]}]};
    }else if(below)s.pending={kind:'effect-choice-mode',player:owner,
     sourceUid:job.sourceUid,sourceName:job.sourceName,optional:false,
     options:job.options};
@@ -17702,9 +17702,9 @@ if(ability.op==='characterDualMain'){
     s.mainAbilityUsedUids.push(selected.uid);
     s.pending={kind:'effect-choice-mode',player:p,sourceUid:selected.uid,
      sourceName:d.name,optional:false,options:[
-      {id:'impact',label:'this character gains impact 1',turn:'any',
+      {id:'impact',label:'此角色本回合獲得衝擊'+(ability.impact||1),turn:'any',
        then:[{op:'grantSelfImpactThisTurn',amount:1}]},
-      {id:'weaken',label:'opponent front BP-1000',turn:'any',
+      {id:'weaken',label:'對手前線BP'+(ability.minBp||0)+'以上，本回合BP-'+(ability.downBp||0),turn:'any',
        then:[{op:'enemyBpDown',bp:ability.downBp,minBp:ability.minBp,optional:true}]}
      ]};
     break;

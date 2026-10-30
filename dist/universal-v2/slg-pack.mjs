@@ -938,7 +938,7 @@ const authored=[
   "effects":{"onPlay":[{"op":"chooseOne","optional":false,"options":[
     {"id":"recover","label":"從場外回收能源2以下角色","turn":"any","then":[
      {"op":"recoverOutsideCharacterUnderEnergy","energy":2,"optional":true}]},
-    {"id":"raid","label":"支付1AP並由場外Raid","turn":"any","then":[
+    {"id":"raid","label":"支付1AP並從場外突襲","turn":"any","then":[
      {"op":"payApDiscardOutsideRaid","ap":1,"color":"green","energy":4,"name":"水篠 旬"}]}
   ]}]}
 },
