@@ -54,3 +54,12 @@ test('solo LIFE order renders a card-art gallery and never appends null as a DOM
  assert.doesNotMatch(src,/canPeek\?el\('div',\{class:'v2-inspection-peek-tools'/);
  assert.match(src,/class:'choice-card recommended'/);
 });
+
+test('online LIFE chooser uses published life reveals and unchanged legal action indices',()=>{
+ const src=readFileSync(new URL('../dist/online.mjs',import.meta.url),'utf8');
+ assert.match(src,/function onlineLifeOrderGallery\(room\)/);
+ assert.match(src,/room\.view\?\.publicReveals\|\|\[\]/);
+ assert.match(src,/item\.uid===action\.uid/);
+ assert.match(src,/onClick:\(\)=>sendAction\(action\.index\)/);
+ assert.match(src,/lifeOrder\?\.node/);
+});
