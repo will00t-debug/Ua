@@ -156,8 +156,11 @@ test('TTG-011 energy 8 raises BP on either turn, and the main chooses one energy
 
 test('TTG 5-cost Gurren Lagann Raid clears a buried Simon temporary energy mode',()=>{
  const packs=ttg;
+ const raidDeck={...deck,'TTG-1-029':4};
+ delete raidDeck['TTG-1-005'];
+ assert.deepEqual(validateUniversalDeck(packs,raidDeck),[]);
  for(const [line,mode] of [['energy','plus'],['front','front']]){
-  let s=newUniversalMatch(packs,{decks:[deck,deck],first:0,
+  let s=newUniversalMatch(packs,{decks:[raidDeck,raidDeck],first:0,
    seed:line==='front'?11291:11292});
   const base=place(s,0,'TTG-1-011',line,0);
   for(let slot=line==='energy'?1:0;slot<4;slot++)
