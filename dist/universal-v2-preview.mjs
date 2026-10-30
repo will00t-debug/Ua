@@ -518,20 +518,24 @@ function legacySlot(view,side,line,index,legal){
  const moving=yours&&app.state.phase==='move';
  const plan=!yours||blocking?{type:'select'}:moving&&!legal.some(action=>boardEntryMode(action))?
   moveClickPlan({selectedUid:app.selectedUid,slotUid:c?.uid||null,line,slot:index,legal}):
-  entryClickPlan({selectedUid:app.selectedUid,entryMode:app.entryMode,
+  entryClickPlan({selectedUid:app.selectedUid,entryMode:app.entryMode,raidBaseUid:app.raidBaseUid,
    line,slot:index,slotUid:c?.uid||null,legal});
+ const raidBase=!!c&&c.uid===app.raidBaseUid;
+ const pickRaidBase=plan.type==='raid-base';
  const moveSource=plan.type==='choose-mover';
  const moveDest=plan.type==='destination';
  const entryDest=plan.type==='entry';
  const place=moveDest||entryDest;
  const d=c?cardDef(side,c.cardId):null;
  const placement=moveDest?'移動至此':moveSource?'點選移動角色':
-  entryDest?(plan.mode==='raid'?'突襲進場':'普通進場'):'';
+  entryDest?(plan.mode==='raid'?(line==='energy'?'突襲留後線':'突襲進場'):'普通進場'):
+  pickRaidBase?'選為突襲底座':raidBase?'已選突襲底座':'';
  const btnSlot=el('button',{type:'button',class:'slot'+(c?' occupied':'')+
   (c&&!c.ready?' rested':'')+(selected?' selected':'')+
   (attacking?' v2-attacking':'')+(attackBadges.length?' v2-has-attack-keywords':'')+
   (blockAction?' v2-can-block':'')+
-  (moveSource?' move-source':'')+(place?' destination':''),
+  (moveSource?' move-source':'')+(pickRaidBase||raidBase?' raid-base':'')+
+  (place?' destination':''),
   'aria-label':(side===0?'你的':'對手的')+(line==='front'?'前線':'能源線')+
    (index+1)+(d?' '+d.name:' 空位')+(placement?'，'+placement:'')+
    (attacking?'，攻擊中':'')+
@@ -583,6 +587,9 @@ function legacySlot(view,side,line,index,legal){
    if(blockAction){applyAction(blockAction);return;}
    if(c)showFieldSheet(side,line,c,d);
    return;
+  }
+  if(plan.type==='raid-base'){
+   app.raidBaseUid=plan.baseUid;app.entryMode='raid';app.targetChoices=null;render();return;
   }
   if(plan.type==='choose-mover'){
    app.selectedUid=app.selectedUid===plan.uid?null:plan.uid;
