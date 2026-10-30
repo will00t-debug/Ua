@@ -110,7 +110,7 @@ if(!IS_BATTLE_PAGE)$('v2-coverage').textContent=
  v2Entries.reduce((sum,item)=>sum+item.totalV2Cards,0)+' 張真卡 Pilot';
 let editorRecordId=null,fieldHold=0;
 const app={state:null,packs:null,launch:null,selectedUid:null,recordDeckId:null,recordNoted:false,
- selectedSide:null,history:[],publicMoves:[],busy:false,aiTimer:null,error:'',
+ selectedSide:null,history:[],publicMoves:[],dismissedPublicMoveIds:new Set(),busy:false,aiTimer:null,error:'',
  undo:null,replay:null,targetChoices:null,raidBaseUid:null,entryMode:null,inspectionPaused:false,dismissedTriggerKeys:new Set(),aiDifficulty:'normal',sequence:0,allActions:false, maxAuto:4500,autoMoves:0,aiPhaseKey:null,aiPhaseCount:0,aiFallbacks:0,aiCompletedSteps:0,lastAiProgress:'未啟動'};
 const phases=V2_PHASE_LABELS;
 const CLIENT_RELEASE='AI 修復 R2 · 2026-10-24';
@@ -133,37 +133,55 @@ function alertText(message){
 function pushHistory(text){
  app.history.unshift(text); // Retain the full human-readable trace for bug reports.
 }
+let publicMoveSerial=0;
 function notePublicMove(packs,before,after,action,player){
  const cards=collectPublicCardResults(packs,before,after,action);
  if(!cards.length)return;
  const actor=player===0?'你':'電腦';
- app.publicMoves.unshift({actor,cards});
+ app.publicMoves.unshift({id:++publicMoveSerial,actor,cards});
  if(app.publicMoves.length>16)app.publicMoves.length=16;
 }
-function publicMoveGallery(){
+function publicMoveTile(card){
+ const side=card.owner===0?0:1;
+ const name=card.name||card.cardId;
+ const art=el('img',{src:imgUrl(side,card.cardId),alt:name,loading:'lazy',decoding:'async'});
+ art.onerror=()=>{
+  if(app.packs?.[side]?.id==='gurren-lagann'&&ttgArtErrorFallback(art))return;
+  if(!art.src.endsWith('/assets/mark.svg'))art.src='assets/mark.svg';
+ };
+ const tile=el('figure',{class:'trigger-tile'});
+ tile.append(el('span',{class:'choice-card-art'},art),
+  el('figcaption',{},el('b',{text:name}),
+   el('span',{text:(side===0?'你':'電腦')+' · '+(card.label||'公開')})));
+ return tile;
+}
+// A public search or a card sent outside/removed is a one-time window,
+// the same shape as a revealed life trigger. One tap closes it.
+function publicMoveOverlay(){
+ if(app.state?.pending)return null;
  const latest=app.publicMoves[0];
- if(!latest?.cards?.length)return null;
- const panel=el('section',{class:'panel v2-public-move-panel',role:'status',
-  'aria-label':'最近公開的檢索與場外／移除區結果'},
-  el('h2',{text:'最近公開的卡片'}),
-  el('p',{class:'v2-zone-subtitle',text:
-   latest.actor+' · 含公開檢索加入手牌，或從牌庫／手牌送至場外／移除區的結果。對手也看得到這些卡。'}));
- const grid=el('div',{class:'v2-public-move-gallery'});
- for(const card of latest.cards.slice(0,12)){
-  const side=card.owner===0?0:1;
-  const art=el('img',{src:imgUrl(side,card.cardId),alt:card.name,loading:'lazy',decoding:'async'});
-  art.onerror=()=>{
-   if(app.packs?.[side]?.id==='gurren-lagann'&&ttgArtErrorFallback(art))return;
-   if(!art.src.endsWith('/assets/mark.svg'))art.src='assets/mark.svg';
-  };
-  grid.append(el('figure',{class:'v2-public-move-card'},
-   el('span',{class:'v2-zone-open'},art),
-   el('figcaption',{},
-    el('strong',{text:card.name}),
-    el('small',{text:(card.owner===0?'你':'電腦')+' · '+card.label}))));
- }
- panel.append(grid);
- return panel;
+ if(!latest?.cards?.length||app.dismissedPublicMoveIds.has(latest.id))return null;
+ const overlay=el('div',{class:'overlay v2-trigger-overlay v2-public-move-overlay',
+  role:'presentation','aria-label':'公開卡片提示'});
+ const board=el('section',{class:'trigger-board',role:'dialog','aria-modal':'true',
+  'aria-label':'公開的卡片，點一下關閉',tabindex:'0'});
+ board.append(el('h2',{text:'公開的卡片'}),
+  el('p',{class:'note',text:latest.actor+'公開了這些卡。點一下畫面即可關閉。'}));
+ const row=el('div',{class:'trigger-row'});
+ for(const card of latest.cards.slice(0,12))row.append(publicMoveTile(card));
+ board.append(row);
+ overlay.append(board);
+ const dismiss=()=>{
+  app.dismissedPublicMoveIds.add(latest.id);
+  clearPublicMoveOverlay();
+ };
+ overlay.addEventListener('click',dismiss);
+ overlay.addEventListener('keydown',event=>{
+  if(event.key==='Escape'||event.key==='Enter'||event.key===' '){
+   event.preventDefault();dismiss();
+  }
+ });
+ return overlay;
 }
 function cardFace(physical,side,{showStats=true,interactive=false,ready=null,selected=false}={}){
  const data=cardDef(side,physical.cardId),color=data?.color||'';
@@ -1074,10 +1092,19 @@ function clearPendingOverlay(){
  document.querySelector('.v2-shell>.v2-pending-overlay')?.remove();
 }
 function clearTriggerOverlay(){
- document.querySelector('.v2-shell>.v2-trigger-overlay')?.remove();
+ document.querySelectorAll('.v2-shell>.v2-trigger-overlay:not(.v2-public-move-overlay)')
+  .forEach(node=>node.remove());
+}
+function clearPublicMoveOverlay(){
+ document.querySelector('.v2-shell>.v2-public-move-overlay')?.remove();
 }
 function mountTriggerOverlay(overlay){
  clearTriggerOverlay();
+ (document.querySelector('.v2-shell')||document.body).append(overlay);
+ overlay.querySelector('.trigger-board')?.focus({preventScroll:true});
+}
+function mountPublicMoveOverlay(overlay){
+ clearPublicMoveOverlay();
  (document.querySelector('.v2-shell')||document.body).append(overlay);
  overlay.querySelector('.trigger-board')?.focus({preventScroll:true});
 }
@@ -1098,6 +1125,7 @@ function render(){
  closeZoneSheet();
  clearPendingOverlay();
  clearTriggerOverlay();
+ clearPublicMoveOverlay();
  target.replaceChildren();
  if(!app.state){
   target.append(el('section',{class:'panel v2-empty'},
@@ -1183,8 +1211,6 @@ function render(){
  if(app.error)phase.append(el('p',{class:'v2-error',role:'alert',text:app.error}));
  arena.append(phase);
  target.append(arena);
- const publicGallery=publicMoveGallery();
- if(publicGallery)target.append(publicGallery);
  const log=el('details',{class:'v2-log panel'},el('summary',{text:'對局紀錄（'+app.history.length+' 步）'}),
   el('ol',{class:'history'},...app.history.slice(0,70).map(x=>el('li',{text:x}))));
  target.append(log);
@@ -1199,6 +1225,8 @@ function render(){
  });
  const prompt=pendingDialog(legal,v);if(prompt)target.append(prompt);
  if(revealed)mountTriggerOverlay(revealed);
+ const publicWindow=publicMoveOverlay();
+ if(publicWindow)mountPublicMoveOverlay(publicWindow);
  // Preserve hand position while the V2 board is re-rendered on each selection.
  const handAfterRender=target.querySelector('.hand');
  if(handAfterRender)handAfterRender.scrollLeft=oldHandScroll;
@@ -1580,6 +1608,7 @@ function startGame(){
   assertUniversalMatch(app.packs,app.state);
   app.error='';app.selectedUid=null;app.entryMode=null;app.targetChoices=null;app.inspectionPaused=false;app.undo=null;
   app.publicMoves=[];
+  app.dismissedPublicMoveIds.clear();
   app.dismissedTriggerKeys.clear();
   app.allActions=false;app.aiFallbacks=0;app.aiCompletedSteps=0;app.lastAiProgress='新對局';
   app.aiDifficulty=app.launch.config.difficulty;

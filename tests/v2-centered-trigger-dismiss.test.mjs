@@ -41,3 +41,25 @@ test('trigger notice is mounted outside the match table without disturbing game 
  assert.match(html,/universal-v2-battle\.css\?v=20261028triggercenter1/);
  assert.match(html,/universal-v2-preview\.mjs\?v=[0-9a-z]+/);
 });
+
+test('public search and zone results use the same centered window and close on one tap',()=>{
+ const script=read('dist/universal-v2-preview.mjs');
+ const block=script.split('function publicMoveOverlay(){')[1]?.split('function cardFace(')[0];
+ const render=script.split('function render(){')[1]?.split('function applyAction(')[0];
+ assert.ok(block&&render);
+ assert.match(block,/if\(app\.state\?\.pending\)return null/);
+ assert.match(block,/app\.dismissedPublicMoveIds\.has\(latest\.id\)/);
+ assert.match(block,/class:'overlay v2-trigger-overlay v2-public-move-overlay'/);
+ assert.match(block,/role:'dialog','aria-modal':'true'/);
+ assert.match(block,/點一下畫面即可關閉/);
+ assert.match(block,/overlay\.addEventListener\('click',dismiss\)/);
+ assert.match(block,/app\.dismissedPublicMoveIds\.add\(latest\.id\)/);
+ assert.match(block,/clearPublicMoveOverlay\(\)/);
+ assert.doesNotMatch(block,/v2-public-move-panel/);
+ assert.match(render,/clearPublicMoveOverlay\(\)/);
+ assert.match(render,/const publicWindow=publicMoveOverlay\(\);/);
+ assert.match(render,/if\(publicWindow\)mountPublicMoveOverlay\(publicWindow\)/);
+ assert.doesNotMatch(render,/target\.append\(publicWindow\)|v2-public-move-panel/);
+ assert.match(script,/app\.dismissedPublicMoveIds\.clear\(\)/);
+ assert.doesNotMatch(read('dist/universal-v2-zone.css'),/v2-public-move-panel/);
+});
