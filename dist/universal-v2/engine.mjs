@@ -15935,19 +15935,17 @@ export function legalUniversalActions(pack,s){
     for(const line of ['energy','front'])for(let slot=0;slot<4;slot++){
      const base=pl[line][slot];
      if(!validRaidBase(pack,s,p,base,d))continue;
-     if(line==='energy'&&(d.energyLineForbidden||card(pack,base).energyLineForbidden))continue;
-     // A raider or base that cannot enter the front line can still be raided
-     // in place on energy. Moving it to the front line stays illegal.
-     if(d.frontForbidden&&card(pack,base).frontForbidden)continue;
-     if(d.frontForbidden||card(pack,base).frontForbidden){
-      if(line==='energy')out.push({type:'raid',uid:c.uid,baseUid:base.uid,line:'energy',slot});
-      continue;
+     // Preserve the historical FRONT-first ordering used by existing Raid
+     // defaults and AI/tests; the ENERGY stay-put choice is offered *after*
+     // the original FRONT destinations. Both remain independently legal.
+     if(!d.frontForbidden&&!card(pack,base).frontForbidden){
+      const dests=line==='front'?[{slot}]:legalDestinations(pl,'front');
+      for(const choice of dests)
+       out.push({type:'raid',uid:c.uid,baseUid:base.uid,...choice});
      }
-     // A front-line base is already in its destination and cannot be
-     // teleported to another occupied slot as a side effect of Raid.
-     const dests=line==='front'?[{slot}]:legalDestinations(pl,'front');
-     for(const choice of dests)
-      out.push({type:'raid',uid:c.uid,baseUid:base.uid,...choice});
+     // Q400: A Raid on an ENERGY base may stay in the same ENERGY slot.
+     if(line==='energy'&&!d.energyLineForbidden&&!card(pack,base).energyLineForbidden)
+      out.push({type:'raid',uid:c.uid,baseUid:base.uid,line:'energy',slot});
     }
    }
   }

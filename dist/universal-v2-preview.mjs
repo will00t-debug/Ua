@@ -518,20 +518,24 @@ function legacySlot(view,side,line,index,legal){
  const moving=yours&&app.state.phase==='move';
  const plan=!yours||blocking?{type:'select'}:moving&&!legal.some(action=>boardEntryMode(action))?
   moveClickPlan({selectedUid:app.selectedUid,slotUid:c?.uid||null,line,slot:index,legal}):
-  entryClickPlan({selectedUid:app.selectedUid,entryMode:app.entryMode,
+  entryClickPlan({selectedUid:app.selectedUid,entryMode:app.entryMode,raidBaseUid:app.raidBaseUid,
    line,slot:index,slotUid:c?.uid||null,legal});
+ const raidBase=!!c&&c.uid===app.raidBaseUid;
+ const pickRaidBase=plan.type==='raid-base';
  const moveSource=plan.type==='choose-mover';
  const moveDest=plan.type==='destination';
  const entryDest=plan.type==='entry';
  const place=moveDest||entryDest;
  const d=c?cardDef(side,c.cardId):null;
  const placement=moveDest?'移動至此':moveSource?'點選移動角色':
-  entryDest?(plan.mode==='raid'?'突襲進場':'普通進場'):'';
+  entryDest?(plan.mode==='raid'?(line==='energy'?'突襲留後線':'突襲進場'):'普通進場'):
+  pickRaidBase?'選為突襲底座':raidBase?'已選突襲底座':'';
  const btnSlot=el('button',{type:'button',class:'slot'+(c?' occupied':'')+
   (c&&!c.ready?' rested':'')+(selected?' selected':'')+
   (attacking?' v2-attacking':'')+(attackBadges.length?' v2-has-attack-keywords':'')+
   (blockAction?' v2-can-block':'')+
-  (moveSource?' move-source':'')+(place?' destination':''),
+  (moveSource?' move-source':'')+(pickRaidBase||raidBase?' raid-base':'')+
+  (place?' destination':''),
   'aria-label':(side===0?'你的':'對手的')+(line==='front'?'前線':'能源線')+
    (index+1)+(d?' '+d.name:' 空位')+(placement?'，'+placement:'')+
    (attacking?'，攻擊中':'')+
@@ -583,6 +587,9 @@ function legacySlot(view,side,line,index,legal){
    if(blockAction){applyAction(blockAction);return;}
    if(c)showFieldSheet(side,line,c,d);
    return;
+  }
+  if(plan.type==='raid-base'){
+   app.raidBaseUid=plan.baseUid;app.entryMode='raid';app.targetChoices=null;render();return;
   }
   if(plan.type==='choose-mover'){
    app.selectedUid=app.selectedUid===plan.uid?null:plan.uid;
@@ -775,13 +782,16 @@ function legacyCommands(legal){
  else if(selection.needsMode&&!chosen){
   bar.append(el('span',{class:'v2-compact-hint',text:(name?name+'：':'')+
    '選擇突襲進場或普通進場。'}));
-  bar.append(btn('普通進場',()=>{app.entryMode='normal';app.targetChoices=null;render();},'btn small'));
+  bar.append(btn('普通進場',()=>{app.entryMode='normal';app.raidBaseUid=null;app.targetChoices=null;render();},'btn small'));
   bar.append(btn('突襲進場',()=>{app.entryMode='raid';app.targetChoices=null;render();},'btn small primary'));
  }else if(chosen){
   bar.append(el('span',{class:'v2-compact-hint',text:(name?name+'：':'')+
-   (chosen==='raid'?'突襲進場':'普通進場')+'。請直接點要登場的格子。'}));
+   (chosen==='raid'?(app.raidBaseUid?
+    '突襲已選底座。再點後線原位完成突襲，或點前線亮起格子登場。':
+    '先點合法底座（前線或後線）；後線底座可突襲後留在原位或選前線。'):
+    '普通進場。請直接點要登場的格子。')}));
   if(selection.needsMode)bar.append(btn(chosen==='raid'?'改為普通進場':'改為突襲進場',()=>{
-   app.entryMode=chosen==='raid'?'normal':'raid';app.targetChoices=null;render();
+   app.entryMode=chosen==='raid'?'normal':'raid';app.raidBaseUid=null;app.targetChoices=null;render();
   },'btn small quiet'));
  }
  const shown=new Set();
@@ -833,7 +843,7 @@ function restoreBattleProgress(){
   app.recordNoted=data.recordNoted===true;
   app.aiCompletedSteps=Number.isInteger(data.aiCompletedSteps)?data.aiCompletedSteps:0;
   app.lastAiProgress=typeof data.lastAiProgress==='string'?data.lastAiProgress.slice(0,100):'已恢復對局';
-  app.error='';app.undo=null;app.selectedUid=null;app.entryMode=null;
+  app.error='';app.undo=null;app.selectedUid=null;app.entryMode=null;app.raidBaseUid=null;
   return true;
  }catch{return false;}
 }

@@ -774,7 +774,8 @@ test('STG-1-029 retires by trigger kinds, gains impact at five, and raids Kurisu
  const raids=legalUniversalActions(stgPacks,raid).filter(a=>a.type==='raid'&&a.uid===topCard.uid&&
   a.baseUid===base.uid);
  assert.ok(raids.length>=1);
- assert.equal(raids.some(a=>a.line==='energy'),false);
+ assert.equal(raids.some(a=>a.line==='energy'),true,'Q400 also permits a Raid to remain on the energy line');
+ assert.equal(raids[0].line,undefined,'front entry remains the first/default legal Raid action');
  raid=play(stgPacks,raid,a=>a.type==='raid'&&a.uid===topCard.uid&&a.baseUid===base.uid);
  assert.equal(raid.pending,null);
  assert.equal(raid.players[0].front.some(c=>c?.uid===topCard.uid&&c.ready===true&&c.stack[0].uid===base.uid),true);
