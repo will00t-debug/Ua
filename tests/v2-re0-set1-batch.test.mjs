@@ -6919,6 +6919,7 @@ test('Rem chooses an active zero-energy Subaru or a bounce then a rested Subaru'
  let raid=five(8723);
  fuel(raid,['REZ-1-043','REZ-1-043','REZ-1-043','REZ-1-043']);
  const base=put(raid,0,'REZ-1-037','front',0);
+ base.ready=false; // Official FAQ Q47: a rested Raid base must become ACTIVE.
  const other=put(raid,0,'REZ-1-007','front',1);
  const big=pull(raid,0,'REZ-1-040');
  raid.players[0].outside.push(big);
@@ -6944,7 +6945,8 @@ test('Rem chooses an active zero-energy Subaru or a bounce then a rested Subaru'
   a.mode==='raid'&&a.uid===big.uid&&a.baseUid===base.uid);
  raid=dispatchUniversalAction(packs,raid,raidAction);
  assert.equal(raid.pending,null);
- assert.equal(at(raid,0,big.uid).ready,false);
+ // REZ-1-052's REST clause applies to normal deployment, not effect Raid.
+ assert.equal(at(raid,0,big.uid).ready,true);
  assert.equal(at(raid,0,big.uid).stack[0].uid,base.uid);
  assert.equal(raid.players[0].deck.length,deck-1);
 

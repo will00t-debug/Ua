@@ -11362,8 +11362,11 @@ function resolveChoice(s,a,pack){
     throw Error('Invalid base for outside Subaru Raid');
    p.outside.splice(i,1);
    s.pending=null;
+   // UA official FAQ Q44/Q47: a Raid card's printed ACTIVE occurs before its
+   // onPlay ability, even when another card's effect performs the Raid.
+   // REZ-1-052 specifies REST only for ordinary deployment, not this Raid.
    performRaid(pack,s,q.player,physical,a.baseUid,a.line,a.slot,a.replaceUid,
-    {entryReady:false,entryCause:'outsideEffectRaid',entryFrom:'outside',effectSourceUid:q.sourceUid});
+    {entryReady:true,entryCause:'outsideEffectRaid',entryFrom:'outside',effectSourceUid:q.sourceUid});
    continueEffectQueue(pack,s);return;
   }
   if(a.mode!=='enter'||!['front','energy'].includes(a.line)||
