@@ -6,6 +6,7 @@ import {editorV2Status,normalizeEditorCounts,registeredPackForEditor} from '../d
 import {assertUniversalMatch,dispatchUniversalAction,legalUniversalActions,
  newUniversalMatch,universalActor,universalPublicView,universalPrivateChoices} from '../dist/universal-v2/engine.mjs';
 import {uiActionLabel,publicLifeTriggerText} from '../dist/universal-v2/preview-actions.mjs';
+import {publicCardResults} from './public-card-results.mjs';
 import {createRepositories,roomTtl} from './repos.mjs';
 
 const TITLES=['bleach','gurren-lagann','sword-art-online','solo-leveling','mushoku-tensei','rezero','steins-gate','madoka','inuyasha','kjn'];
@@ -610,7 +611,12 @@ export function dispatchRoom(repos,message,now){
    room.match=next;
    room.revision+=1;room.updatedAt=now;
    const actorName=room.seats[seat].username;
-   room.log.push({text:publicActionText(actorName,action,hadPending,live.packs,live.match,next)});
+   const publicCards=publicCardResults(live.match,next,action).map(result=>{
+    const printed=live.packs[result.owner]?.cards?.[result.cardId];
+    return {...result,name:printed?.name||result.cardId};
+   });
+   room.log.push({text:publicActionText(actorName,action,hadPending,live.packs,live.match,next),
+    ...(publicCards.length?{cards:publicCards}:{})});
    if(room.log.length>80)room.log.splice(0,room.log.length-80);
    if(next.status==='finished'){room.status='finished';room.winner=next.winner;}
    commitRoom(repos,room);
