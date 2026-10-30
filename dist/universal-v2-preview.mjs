@@ -31,7 +31,7 @@ import {SAO_CARDS} from './sao-cards.mjs';
 import {MST_V2_OFFICIAL_CATALOGUE} from './universal-v2/sources/mst-inventory.mjs';
 import {V2_PHASE_LABELS,V2_TITLE_LABELS,V2_PENDING_LABELS,
  uiActor,isExactLegal,uiCardLabel,uiActionLabel,visibleActionsForCard,
- pendingChoiceCards,inspectedPendingChoiceCards,visiblePendingChoiceCards,pendingEntryChoiceCards,pendingChoiceCaption,publicPendingTargetCard,attackBattleTags,attackKeywordBadges,frontAttackKeywordBadges,inlineBlockDecision,boardEntryMode,boardEntrySelection,entryClickPlan,moveClickPlan,
+ pendingChoiceCards,inspectedPendingChoiceCards,visiblePendingChoiceCards,pendingEntryChoiceCards,publicLifeOrderChoiceCard,pendingChoiceCaption,publicPendingTargetCard,attackBattleTags,attackKeywordBadges,frontAttackKeywordBadges,inlineBlockDecision,boardEntryMode,boardEntrySelection,entryClickPlan,moveClickPlan,
  FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs';
 import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalReplay,
  publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
@@ -358,8 +358,11 @@ function pendingChoiceControl(action,option,gallery,view){
   ...card,name:cardDef(card.side,card.cardId)?.name||card.cardId
  }));
  const target=authorized.length||visible.length?null:publicPendingTargetCard(view,action);
+ const lifeOrder=authorized.length||visible.length||target?null:
+  publicLifeOrderChoiceCard(view,app.state?.pending,action);
  const cards=authorized.length?authorized:visible.length?visible:target?
-  [{...target,name:cardDef(target.side,target.cardId)?.name||target.cardId}]:[];
+  [{...target,name:cardDef(target.side,target.cardId)?.name||target.cardId}]:
+  lifeOrder?[{...lifeOrder,name:cardDef(lifeOrder.side,lifeOrder.cardId)?.name||lifeOrder.cardId}]:[];
  if(!cards.length){
   const quiet=action.uid===null||action.mode==='skip'||action.mode==='done';
   return btn(label,()=>applyAction(action),
@@ -465,7 +468,8 @@ function pendingDialog(legal,view){
   option:byAction.get(JSON.stringify(action))||null}));
  const gallery=entryCards.length>0||inspected.length>0||rows.some(row=>pendingChoiceCards(row.option).length>0||
   visiblePendingChoiceCards(view,row.action).length>0||
-  publicPendingTargetCard(view,row.action)!==null);
+  publicPendingTargetCard(view,row.action)!==null||
+  publicLifeOrderChoiceCard(view,s.pending,row.action)!==null);
  const title=V2_PENDING_LABELS[s.pending.kind]||s.pending.kind;
  const triggerChoice=s.pending.kind==='life-trigger';
  const blocking=s.pending.kind==='block'&&view.battle;
@@ -484,12 +488,13 @@ function pendingDialog(legal,view){
  const shown=triggerChoice?triggerCards(view).filter(card=>card.checking):[];
  if(blockGallery)dialog.classList.add('pending-cards');
  dialog.append(el('div',{class:'headline'},el('h2',{text:title}),
-  el('span',{class:'tag',text:'玩家操作'})),
-  canPeek?el('div',{class:'v2-inspection-peek-tools'},
+  el('span',{class:'tag',text:'玩家操作'})));
+ // Native Element.append(null) renders the literal word "null" in some browsers.
+ if(canPeek)dialog.append(el('div',{class:'v2-inspection-peek-tools'},
    btn('查看場面與手牌',()=>{app.inspectionPaused=true;render();},
     'btn v2-inspection-peek-btn'),
-   el('span',{text:'可暫時查看場面與手牌，不會取消這次選牌。'})):null,
-  el('p',{class:'note',text:triggerChoice?
+   el('span',{text:'可暫時查看場面與手牌，不會取消這次選牌。'})));
+ dialog.append(el('p',{class:'note',text:triggerChoice?
    '這張觸發已經公開，對手也能看到。請選擇是否使用。':
    blocking?'對手的角色正在攻擊。先看直傷和衝擊，再選擇阻擋或不阻擋。':
    placement.length?'先點卡圖選擇要登場的角色；若要加入手牌，直接點該卡的加入手牌選項。選好登場角色後，再選合法模式及格子。':
