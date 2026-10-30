@@ -260,7 +260,7 @@ const PROFILES={
     {op:'grantSelfUnchosenThisTurn'}],
    onAttack:[{op:'oncePerTurnGate',scope:'card',optional:false,then:[{op:'buffSelf',bp:1000}]}]
   }},
- 'REZ-2-062':{implementation:'dsl',raidName:'フェルト',effects:{onPlay:[
+ 'REZ-2-062':{implementation:'dsl',raidName:'フェルト',effects:{onRaid:[
   {op:'chooseOne',optional:false,options:[
    {id:'draw',label:'draw one',turn:'any',then:[{op:'draw',count:1}]},
    {id:'active',label:'active one other',turn:'any',then:[
