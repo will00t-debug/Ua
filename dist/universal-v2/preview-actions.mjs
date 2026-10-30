@@ -249,6 +249,8 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-printed-rest-raid':'從場外休息登場或突襲',
  'effect-zone-rest-raid':'從場外或移除區休息登場或突襲',
  'effect-removed-okabe-raid':'從移除區使岡部倫太郎突襲',
+ 'effect-look-take':'查看牌庫，選擇加入手牌或放回牌底',
+ 'effect-discard-mode':'選擇要放到場外的手牌',
  mmm2:'魔法少女小圓第二彈選擇'
 });
 export function isExactLegal(action,legal){
@@ -710,6 +712,86 @@ export function uiActionGroup(action){
 }
 // Display data for a controller-only pending choice. Copies printed identity
 // fields only; the legal action object is never decorated or rewritten.
+function printedChoice(pack,owner,physical){
+ const source=Array.isArray(pack)?pack[owner]:pack;
+ const printed=source?.cards?.[physical.cardId];
+ return {uid:physical.uid,cardId:physical.cardId,
+  name:printed?.name||physical.cardId,color:printed?.color||'',side:owner};
+}
+function walkOwned(card,accept){
+ if(!card)return null;
+ if(accept(card))return card;
+ for(const layer of [...(card.stack||[]),...(card.under||[])]){
+  const hit=walkOwned(layer,accept);
+  if(hit)return hit;
+ }
+ return null;
+}
+// The acting player already looked at this exact deck prefix. Show every
+// card in that window, including ones that cannot be chosen. Never walk the
+// rest of the deck or the opponent's hidden zones.
+export function controllerDeckWindowCards(state,packs,legal){
+ const q=state?.pending;
+ if(!q||q.player!==0||!Array.isArray(q.uids)||!q.uids.length)return [];
+ const deck=state.players?.[0]?.deck;
+ if(!Array.isArray(deck))return [];
+ const window=deck.slice(0,q.uids.length);
+ if(window.length!==q.uids.length||window.some((card,index)=>card?.uid!==q.uids[index]))
+  return [];
+ const order=q.phase==='order';
+ return window.map(physical=>{
+  const printed=printedChoice(packs,0,physical);
+  const matches=(Array.isArray(legal)?legal:[]).filter(action=>action?.uid===physical.uid);
+  const positional=matches.some(action=>action.line!=null||Number.isInteger(action.slot));
+  const single=matches.length===1&&!positional;
+  return {...printed,action:single?matches[0]:null,
+   keepLegal:matches.length>1||positional,
+   caption:single?(order?'下一個放到牌庫底':'點選此牌'):'目前不能選'};
+ });
+}
+// Artwork for one legal choice. Own deck, life and facedown layers are used
+// only when this action already names that physical UID. Opponent hand, deck
+// and unrevealed life are never opened.
+export function controllerChoiceArt(pack,state,action){
+ if(!state?.players||!action||typeof action!=='object'||state.pending?.player!==0)return [];
+ const ids=[];
+ const push=value=>{if(typeof value==='string'&&value&&!ids.includes(value))ids.push(value);};
+ push(action.uid);
+ if(action.uid==null){push(action.retireUid);push(action.targetUid);}
+ if(Array.isArray(action.uids))for(const uid of action.uids)push(uid);
+ return ids.flatMap(uid=>{
+  const found=findControllerCard(pack,state,uid);
+  return found?[found]:[];
+ });
+}
+function findControllerCard(pack,state,uid){
+ const owner=Number(String(uid).split('-')[0]);
+ if(owner!==0&&owner!==1)return null;
+ const pl=state.players[owner];
+ if(!pl)return null;
+ const own=owner===0;
+ const piles=[];
+ const add=(cards,deep)=>{if(Array.isArray(cards))piles.push({cards,deep});};
+ if(own){
+  add(pl.hand,false);add(pl.front,true);add(pl.energy,true);
+  add(pl.outside,false);add(pl.removed,false);add(pl.life,false);
+  add(pl.lifeRevealed,false);add(pl.deck,false);
+ }else{
+  add((pl.front||[]).filter(card=>card&&card.faceDown!==true),false);
+  add((pl.energy||[]).filter(card=>card&&card.faceDown!==true),false);
+  add(pl.outside,false);add(pl.removed,false);add(pl.lifeRevealed,false);
+ }
+ for(const pile of piles){
+  for(const card of pile.cards){
+   if(!card)continue;
+   const hit=pile.deep?walkOwned(card,entry=>entry?.uid===uid&&entry.cardId&&
+    (own||entry.faceDown!==true)?entry:null):
+    (card.uid===uid&&card.cardId&&(own||card.faceDown!==true)?card:null);
+   if(hit)return printedChoice(pack,owner,hit);
+  }
+ }
+ return null;
+}
 export function pendingChoiceCards(option){
  if(!option||typeof option!=='object')return [];
  const listed=Array.isArray(option.cards)?option.cards:[];

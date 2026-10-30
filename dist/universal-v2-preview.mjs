@@ -31,8 +31,8 @@ import {SAO_CARDS} from './sao-cards.mjs';
 import {MST_V2_OFFICIAL_CATALOGUE} from './universal-v2/sources/mst-inventory.mjs';
 import {V2_PHASE_LABELS,V2_TITLE_LABELS,V2_PENDING_LABELS,
  uiActor,isExactLegal,uiCardLabel,uiActionLabel,visibleActionsForCard,
- pendingChoiceCards,inspectedPendingChoiceCards,visiblePendingChoiceCards,pendingEntryChoiceCards,publicLifeOrderChoiceCard,pendingChoiceCaption,publicPendingTargetCard,attackBattleTags,attackKeywordBadges,frontAttackKeywordBadges,inlineBlockDecision,boardEntryMode,boardEntrySelection,entryClickPlan,moveClickPlan,
- FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs?v=20261030lifeart1';
+ pendingChoiceCards,inspectedPendingChoiceCards,visiblePendingChoiceCards,pendingEntryChoiceCards,publicLifeOrderChoiceCard,pendingChoiceCaption,publicPendingTargetCard,controllerDeckWindowCards,controllerChoiceArt,attackBattleTags,attackKeywordBadges,frontAttackKeywordBadges,inlineBlockDecision,boardEntryMode,boardEntrySelection,entryClickPlan,moveClickPlan,
+ FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs?v=20261030choiceart1';
 import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalReplay,
  collectPublicCardResults,publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
 import {DESKTOP_BATTLE_QUERY,isDesktopBattlefield,mountDesktopBattlefield}
@@ -392,9 +392,12 @@ function pendingChoiceControl(action,option,gallery,view){
  const target=authorized.length||visible.length?null:publicPendingTargetCard(view,action);
  const lifeOrder=authorized.length||visible.length||target?null:
   publicLifeOrderChoiceCard(view,app.state?.pending,action);
+ const local=authorized.length||visible.length||target||lifeOrder?[]:
+  controllerChoiceArt(app.packs,app.state,action);
  const cards=authorized.length?authorized:visible.length?visible:target?
   [{...target,name:cardDef(target.side,target.cardId)?.name||target.cardId}]:
-  lifeOrder?[{...lifeOrder,name:cardDef(lifeOrder.side,lifeOrder.cardId)?.name||lifeOrder.cardId}]:[];
+  lifeOrder?[{...lifeOrder,name:cardDef(lifeOrder.side,lifeOrder.cardId)?.name||lifeOrder.cardId}]:
+  local;
  if(!cards.length){
   const quiet=action.uid===null||action.mode==='skip'||action.mode==='done';
   return btn(label,()=>applyAction(action),
@@ -439,7 +442,8 @@ function inspectedChoiceControl(card){
   el('span',{class:'choice-card-arts'},
    el('span',{class:'choice-card-art'},choicePicture(card.cardId,card.name,0))),
   el('span',{class:'choice-card-name',text:card.name}),
-  el('span',{class:'choice-card-caption',text:enabled?'符合條件 · 點選此牌':'不符合條件 · 無法選擇'})
+  el('span',{class:'choice-card-caption',text:card.caption||
+   (enabled?'符合條件 · 點選此牌':'不符合條件 · 無法選擇')})
  );
  return button;
 }
@@ -495,14 +499,19 @@ function pendingDialog(legal,view){
   .map(option=>[JSON.stringify(option.action),option]));
  const entryCards=placement.length?pendingEntryChoiceCards(privateChoices,view,placement):[];
  const inspected=inspectedPendingChoiceCards(privateChoices,legal).filter(card=>!card.keepLegal);
- const inspectedUids=new Set(inspected.map(card=>card.uid));
- const rows=legal.filter(action=>!boardEntryMode(action)&&!inspectedUids.has(action.uid)).map(action=>({action,
+ const windowCards=inspected.length?[]:controllerDeckWindowCards(s,app.packs,legal)
+  .filter(card=>!card.keepLegal);
+ const pictured=[...inspected,...windowCards];
+ const picturedUids=new Set(pictured.map(card=>card.uid));
+ const rows=legal.filter(action=>!boardEntryMode(action)&&!picturedUids.has(action.uid)).map(action=>({action,
   option:byAction.get(JSON.stringify(action))||null}));
- const gallery=entryCards.length>0||inspected.length>0||rows.some(row=>pendingChoiceCards(row.option).length>0||
+ const gallery=entryCards.length>0||pictured.length>0||rows.some(row=>pendingChoiceCards(row.option).length>0||
   visiblePendingChoiceCards(view,row.action).length>0||
   publicPendingTargetCard(view,row.action)!==null||
-  publicLifeOrderChoiceCard(view,s.pending,row.action)!==null);
- const title=V2_PENDING_LABELS[s.pending.kind]||s.pending.kind;
+  publicLifeOrderChoiceCard(view,s.pending,row.action)!==null||
+  controllerChoiceArt(app.packs,s,row.action).length>0);
+ const title=s.pending.kind==='effect-look-take'&&s.pending.phase==='order'?
+  '依序放回牌庫底':(V2_PENDING_LABELS[s.pending.kind]||s.pending.kind);
  const triggerChoice=s.pending.kind==='life-trigger';
  const blocking=s.pending.kind==='block'&&view.battle;
  // A view-only pause: no action, state transition, or hidden-card disclosure.
@@ -539,7 +548,7 @@ function pendingDialog(legal,view){
  }
  const list=el('div',{class:'action-list'+((gallery||blockGallery)?' choice-gallery':'')});
  for(const card of entryCards)list.append(pendingEntrySelectControl(card));
- for(const card of inspected)list.append(inspectedChoiceControl(card));
+ for(const card of pictured)list.append(inspectedChoiceControl(card));
  for(const row of rows){
   const blocker=blocking?blockControl(row.action,view):null;
   list.append(blocker||pendingChoiceControl(row.action,row.option,gallery||blockGallery,view));
