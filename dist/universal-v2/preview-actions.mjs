@@ -374,7 +374,7 @@ export function uiActionLabel(action,{pack,state}={}){
     action.mode==='restLeaveReveal'?'起動主要：休息並退場，公開 1 張手牌放到牌底':
     action.mode==='handBlock'?'起動主要：將 1 張手牌放到場外，本回合不被 BP4000 以上的角色阻擋':
     action.mode==='energySwap'?'起動主要：與 1 張己方前線角色交換位置':
-    action.mode==='ready'?'卡米那主要能力：將自己轉為 ACTIVE（同名每回合限一次）':
+    action.mode==='ready'?'主要能力：將自己轉為 ACTIVE（適用的同名限次規則照常計算）':
     action.mode==='restTuckDamage'?
     '起動主要：REST 自身，將牌庫頂裏向放在指定角色下並使直接傷害變為 2':
     action.mode==='fieldMill'?'起動主要：REST 場域，將牌庫頂 1 張送場外':
@@ -394,7 +394,7 @@ export function uiActionLabel(action,{pack,state}={}){
     action.mode==='outsideActive'?'起動主要：棄 1 張手牌，使其他角色活動':
     action.mode==='frontDiscardBuff'?'起動主要：棄 1 張手牌，指定名稱與特徵 BP+1000':
     action.mode==='discardEventEnergy'?'起動主要：棄 1 張事件，本回合指定角色必要能源 -1':
-    action.mode==='buff'?'卡米那主要能力：指定大紅蓮團角色 BP＋1000':'卡米那主要能力：先 ACTIVE 自己，再指定大紅蓮團角色 BP＋1000';
+    action.mode==='buff'?'主要能力：指定符合條件的角色 BP＋1000':'主要能力：先 ACTIVE 自己，再指定符合條件的角色 BP＋1000';
   case 'chooseBlock':return action.uid===null?'不阻擋':'使用 '+name()+' 阻擋';
   case 'chooseTrigger':
    if(action.mode==='skip')return '不使用此觸發';
