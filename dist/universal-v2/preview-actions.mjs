@@ -998,16 +998,24 @@ function entryDestination(action,line,slot,slotUid){
 // Select the character first. When both rest entry and raid are legal, the
 // mode click comes next. The board cell is the action: one match submits,
 // several matches (two energy bases into one cell) stay as listed choices.
-export function entryClickPlan({selectedUid,entryMode,line,slot,slotUid,legal}){
+export function entryClickPlan({selectedUid,entryMode,raidBaseUid=null,line,slot,slotUid,legal}){
  const selection=boardEntrySelection(legal,selectedUid);
  if(!selection.normal.length&&!selection.raid.length)return {type:'idle'};
+ // A Raid from an ENERGY base usually enters a *different*, empty FRONT slot.
+ // Tapping that base must select its UID, not silently compare its energy cell
+ // to the final front destination. This also bypasses the mode chooser only
+ // when the tapped character is a legally available Raid base.
+ const tappedBase=line==='energy'&&slotUid&&entryMode!=='normal'&&
+  selection.raid.some(action=>action.baseUid===slotUid);
+ if(tappedBase&&raidBaseUid!==slotUid)return {type:'raid-base',baseUid:slotUid};
  let mode=null;
- if(entryMode==='raid'&&selection.raid.length)mode='raid';
+ if((entryMode==='raid'||raidBaseUid)&&selection.raid.length)mode='raid';
  else if(entryMode==='normal'&&selection.normal.length)mode='normal';
  else if(selection.needsMode)return {type:'entry-mode'};
  else mode=selection.raid.length?'raid':'normal';
  const hits=(mode==='raid'?selection.raid:selection.normal)
-  .filter(action=>entryDestination(action,line,slot,slotUid));
+  .filter(action=>(mode!=='raid'||!raidBaseUid||action.baseUid===raidBaseUid)&&
+   entryDestination(action,line,slot,slotUid));
  if(!hits.length)return {type:'entry-wait',mode};
  return {type:'entry',mode,actions:hits};
 }
