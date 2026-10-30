@@ -384,12 +384,13 @@ function pendingChoiceControl(action,option,gallery,view){
 // For a mixed effect, picking a card is not playing it. Only an exact
 // reducer-approved placement submitted on the table can resolve its entry.
 function pendingEntrySelectControl(card){
+ const name=(card.cardId?cardDef(card.side,card.cardId)?.name:null)||card.name;
  const button=el('button',{type:'button',class:'choice-card recommended',
-  'aria-label':'選擇 '+card.name+' 登場（尚未執行）',
+  'aria-label':'選擇 '+name+' 登場（尚未執行）',
   onClick:()=>{selectDeployedCharacter(card.uid);render();}});
  if(card.cardId)button.append(el('span',{class:'choice-card-arts'},
-  el('span',{class:'choice-card-art'},choicePicture(card.cardId,card.name,card.side))));
- button.append(el('span',{class:'choice-card-name',text:card.name}),
+  el('span',{class:'choice-card-art'},choicePicture(card.cardId,name,card.side))));
+ button.append(el('span',{class:'choice-card-name',text:name}),
   el('span',{class:'choice-card-caption',text:'選擇此角色登場 · 再選方式與格子'}));
  return button;
 }
