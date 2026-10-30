@@ -79,3 +79,12 @@ test('online log uses real authoritative results and renders card images for the
  assert.match(online,/cardSrc\(\{cardId:card\.cardId\}\)/);
  assert.match(online,/card\.owner===room\.seat\?'你':'對手'/);
 });
+
+test('durable room storage retains only public card fields across reloads',()=>{
+ const repo=readFileSync(new URL('../server/repos.mjs',import.meta.url),'utf8');
+ assert.match(repo,/Array\.isArray\(entry\.cards\)/);
+ assert.match(repo,/\['hand','reveal','outside','removed'\]\.includes\(card\.kind\)/);
+ assert.match(repo,/owner:card\.owner,cardId:card\.cardId,kind:card\.kind/);
+ assert.match(repo,/\.\.\.\(cards\.length\?\{cards\}:\{\}\)/);
+ assert.doesNotMatch(repo,/JSON\.stringify\(room\.log\.map\(entry=>\(\{text:/);
+});
