@@ -8,13 +8,15 @@ const SAVED=[
  ['bleach','bleach-arena-saved-decks-v1'],['gurren-lagann','ua-ttg-saved-v1'],
  ['sword-art-online','ua-sao-saved-v1'],['solo-leveling','ua-slg-saved-v1'],
  ['mushoku-tensei','ua-mst-saved-v1'],['rezero','ua-rez-saved-v1'],
- ['steins-gate','ua-stg-saved-v1'],['madoka','ua-mmm-saved-v1']
+ ['steins-gate','ua-stg-saved-v1'],['madoka','ua-mmm-saved-v1'],
+ ['inuyasha','ua-iys-saved-v1'],['kjn','ua-kjn-saved-v1']
 ];
 const DRAFTS=[
  ['bleach','bleach-arena-deck-v1'],['gurren-lagann','ua-ttg-draft-v1'],
  ['sword-art-online','ua-sao-draft-v1'],['solo-leveling','ua-slg-draft-v1'],
  ['mushoku-tensei','ua-mst-draft-v1'],['rezero','ua-rez-draft-v1'],
- ['steins-gate','ua-stg-draft-v1'],['madoka','ua-mmm-draft-v1']
+ ['steins-gate','ua-stg-draft-v1'],['madoka','ua-mmm-draft-v1'],
+ ['inuyasha','ua-iys-draft-v1'],['kjn','ua-kjn-draft-v1']
 ];
 const PHASES=[['setup','起手調度'],['start','開始'],['move','移動'],['main','主要'],['attack','攻擊']];
 const ROOM=/^[A-HJ-NP-Z2-9]{8}$/;
