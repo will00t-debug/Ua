@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {rez,rezDeck,rezPacks,fresh,take,toPhase} from './helpers/rez-v2-match.mjs';
-import {legalUniversalActions,dispatchUniversalAction,assertUniversalMatch} from '../dist/universal-v2/engine.mjs';
+import {rezDeck,toPhase} from './helpers/rez-v2-match.mjs';
+import {createRezeroBattlePack} from '../dist/universal-v2/official-entry.mjs';
+import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,assertUniversalMatch} from '../dist/universal-v2/engine.mjs';
 import {boardEntrySelection,entryClickPlan} from '../dist/universal-v2/preview-actions.mjs';
 
 const ids=[
@@ -10,6 +11,15 @@ const ids=[
  'REZ-1-041','REZ-1-047','REZ-1-054','REZ-1-057','REZ-1-059','REZ-1-110','REZ-1-055'
 ];
 const counts=rezDeck(ids,'REZ-1-055');
+const rez=createRezeroBattlePack(),rezPacks=[rez,rez];
+const fresh=(decks,seed)=>newUniversalMatch(rezPacks,{decks:[decks,decks],seed,first:0});
+function take(s,p,id){
+ for(const zone of ['hand','deck','life','outside']){
+  const pile=s.players[p][zone],i=pile.findIndex(c=>c.cardId===id);
+  if(i>=0)return pile.splice(i,1)[0];
+ }
+ throw Error('Missing '+id);
+}
 function setupRem(id){
  let s=fresh(counts,id==='REZ-1-051'?5101:5301);
  const base=take(s,0,'REZ-1-048');
