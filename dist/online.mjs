@@ -669,7 +669,7 @@ function onlineInspectionGallery(room){
   el('div',{class:'online-inspection-heading'},
    el('h2',{text:title}),
    el('button',{type:'button',class:'online-inspection-peek',text:'查看場面與手牌',
-    onClick:()=>{app.inspectionPaused=true;app.inspectPick=null;render();
+    onClick:()=>{app.inspectionPaused=true;render();
      if(window.matchMedia('(max-width:820px)').matches)
       document.querySelector('.online-table')?.scrollIntoView({block:'start',behavior:'smooth'});}})),
   el('p',{class:'online-inspection-hint',text:
@@ -757,7 +757,7 @@ function matchView(){
   const shownInGallery=new Set((room.inspection?.cards||[]).flatMap(card=>
    (card.actions||[]).map(action=>action.index)));
   const listed=(app.inspectionPaused?[]:dockChoices(room)).filter(choice=>choice!==next&&!shownInGallery.has(choice.index));
-  if(!listed.length&&!next)actions.append(el('p',{class:'muted',text:'正在等待可以執行的操作。'}));
+  if(!listed.length&&!next)actions.append(el('p',{class:'muted',text:app.inspectionPaused?'正在查看場面與手牌，按「返回選牌」繼續。':'正在等待可以執行的操作。'}));
   for(const choice of listed)actions.append(el('button',{type:'button',text:choice.label,disabled:app.busy,onClick:()=>sendAction(choice.index)}));
  }
  const inspection=onlineInspectionGallery(room);
