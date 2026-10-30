@@ -296,7 +296,9 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'next':return '前進下一階段／結束回合';
   case 'extraDraw':return '支付 1 AP 額外抽牌';
   case 'play':return (action.from==='removed'?'從移除區登場：':'普通登場：')+name()+suffix();
-  case 'raid':return '突襲登場：'+name()+' · 前線 '+(action.slot+1);
+  case 'raid':return '突襲登場：'+name()+' · 底板 '+
+   (action.baseUid?uiCardLabel(pack,state,action.baseUid):'指定角色')+
+   ' → '+(action.line==='energy'?'能源線':'前線')+' '+(action.slot+1);
   case 'event':return (action.from==='removed'?'從移除區使用事件：':'使用事件：')+name();
   case 'move':return '移至前線 '+(action.slot+1);
   case 'step':return 'STEP 移至能源線 '+(action.slot+1);
@@ -372,7 +374,7 @@ export function uiActionLabel(action,{pack,state}={}){
     action.mode==='restLeaveReveal'?'起動主要：休息並退場，公開 1 張手牌放到牌底':
     action.mode==='handBlock'?'起動主要：將 1 張手牌放到場外，本回合不被 BP4000 以上的角色阻擋':
     action.mode==='energySwap'?'起動主要：與 1 張己方前線角色交換位置':
-    action.mode==='ready'?'主要能力：ACTIVE':
+    action.mode==='ready'?'卡米那主要能力：將自己轉為 ACTIVE（同名每回合限一次）':
     action.mode==='restTuckDamage'?
     '起動主要：REST 自身，將牌庫頂裏向放在指定角色下並使直接傷害變為 2':
     action.mode==='fieldMill'?'起動主要：REST 場域，將牌庫頂 1 張送場外':
@@ -392,7 +394,7 @@ export function uiActionLabel(action,{pack,state}={}){
     action.mode==='outsideActive'?'起動主要：棄 1 張手牌，使其他角色活動':
     action.mode==='frontDiscardBuff'?'起動主要：棄 1 張手牌，指定名稱與特徵 BP+1000':
     action.mode==='discardEventEnergy'?'起動主要：棄 1 張事件，本回合指定角色必要能源 -1':
-    action.mode==='buff'?'主要能力：BP 加成':'主要能力：ACTIVE ＋ BP 加成';
+    action.mode==='buff'?'卡米那主要能力：指定大紅蓮團角色 BP＋1000':'卡米那主要能力：先 ACTIVE 自己，再指定大紅蓮團角色 BP＋1000';
   case 'chooseBlock':return action.uid===null?'不阻擋':'使用 '+name()+' 阻擋';
   case 'chooseTrigger':
    if(action.mode==='skip')return '不使用此觸發';
@@ -592,7 +594,8 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseRequiredEnergy':return '本回合所需能量 +2：'+name();
   case 'chooseFrontGrant':return '本回合賦予 '+name()+' BP 與印刷的追加能力';
   case 'chooseRemovedEnter':return action.uid===null?'不從移除區登場':'讓 '+name()+' 從移除區休息登場';
-  case 'chooseOwnBuff':case 'chooseMainBuff':case 'chooseTraitBuff':case 'chooseRestBp':
+  case 'chooseMainBuff':return '指定 '+name()+'，本回合 BP＋1000';
+  case 'chooseOwnBuff':case 'chooseTraitBuff':case 'chooseRestBp':
   case 'chooseRetireAtMost':return '使 '+name()+' 退場';
   case 'chooseRetireAtLeast':case 'chooseRetireScaled':return action.uid===null?'不使角色退場':'使 '+name()+' 退場';
   case 'chooseRestOutsideEvents':return action.uid===null?'不使角色休息':'使 '+name()+' 休息';
