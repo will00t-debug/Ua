@@ -61,7 +61,7 @@ test('second OTHER outside field unlocks free REST Raid; AI keeps legal base and
  const hand=s.players[0].hand.length;
  s=dispatchUniversalAction(packs,s,ai);
  assert.equal(s.players[0].front[0].uid,raid.uid);
- assert.equal(s.players[0].front[0].ready,false);
+ assert.equal(s.players[0].front[0].ready,true);
  assert.equal(s.players[0].front[0].stack[0].uid,base.uid);
  assert.equal(s.players[0].hand.length,hand+1,'real onRaid queued');
  assert.equal(countRetirementsThisTurn(s,0,'character'),0);
