@@ -13126,7 +13126,7 @@ test('BLC-4-033 actives another traitless character and may REST its raid base',
   const other=put(opened.s,0,'BLC-4-031','front',1,false);
   const rider=hold(opened.s,0,'BLC-4-033');
   const packs=opened.packs;
-  assert.equal(legalUniversalActions(packs,opened.s).some(a=>a.type==='raid'&&a.uid===rider.uid&&a.line==='energy'),false);
+  assert.equal(legalUniversalActions(packs,opened.s).some(a=>a.type==='raid'&&a.uid===rider.uid&&a.line==='energy'),true, 'Q400 now permits an energy-stay raid');
   const raid=legalUniversalActions(packs,opened.s).find(a=>a.type==='raid'&&
    a.uid===rider.uid&&a.baseUid===base.uid&&a.slot===0);
   assert.ok(raid);
