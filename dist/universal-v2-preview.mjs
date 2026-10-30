@@ -460,7 +460,7 @@ function pendingDialog(legal,view){
  const entryCards=placement.length?pendingEntryChoiceCards(privateChoices,view,placement):[];
  const inspected=inspectedPendingChoiceCards(privateChoices,legal).filter(card=>!card.keepLegal);
  const inspectedUids=new Set(inspected.map(card=>card.uid));
- const rows=legal.filter(action=>!inspectedUids.has(action.uid)).map(action=>({action,
+ const rows=legal.filter(action=>!boardEntryMode(action)&&!inspectedUids.has(action.uid)).map(action=>({action,
   option:byAction.get(JSON.stringify(action))||null}));
  const gallery=entryCards.length>0||inspected.length>0||rows.some(row=>pendingChoiceCards(row.option).length>0||
   visiblePendingChoiceCards(view,row.action).length>0||
