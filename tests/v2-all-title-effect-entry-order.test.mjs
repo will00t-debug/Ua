@@ -83,7 +83,7 @@ test('Raid-only and normal-only effects never invent the other entry mode',()=>{
  }
 });
 
-test('both solo and online UI recognize all three source zones and obey mode-before-base',()=>{
+test('both solo and online UI recognize sources and separate paid Raid from effect mode selection',()=>{
  const preview=read('dist/universal-v2/preview-actions.mjs');
  const online=read('dist/online.mjs');
  for(const source of [preview,online]){
@@ -93,10 +93,10 @@ test('both solo and online UI recognize all three source zones and obey mode-bef
    'chooseSayakaReenter','chooseRestReenter','chooseRemovedRestPair']){
    assert.ok(source.includes("'"+type+"'"),type);
   }
-  assert.match(source,/entryMode==='raid'\|\|\(!selection\.needsMode&&entryMode!=='normal'\)/);
-  assert.match(source,/const effectRaid=selection\.raid\.length>0/);
-  assert.match(source,/const tappedBase=!effectRaid/);
-  assert.match(source,/if\(selection\.needsMode\)return \{type:'entry-mode'\}/);
+  assert.match(source,/const paidRaid=selection\.raid\.some/);
+  assert.match(source,/if\(paidRaid\)\{/);
+  assert.match(source,/selection\.needsMode\?null/);
+  assert.match(source,/if\(!mode\)return \{type:'entry-mode'\}/);
  }
 });
 

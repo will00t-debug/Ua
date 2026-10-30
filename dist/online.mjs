@@ -397,7 +397,10 @@ function boardEntrySelection(legal,uid){
   boardEntryMode(action)&&action.uid===uid);
  const normal=mine.filter(action=>boardEntryMode(action)==='normal');
  const raid=mine.filter(action=>boardEntryMode(action)==='raid');
- return {normal,raid,needsMode:normal.length>0&&raid.length>0};
+ // Only effects explicitly presenting both entry modes require a mode button.
+ // Paid hand cards choose ordinary entry by cell, or Raid by tapping a base.
+ const paidRaid=raid.some(action=>action.type==='raid');
+ return {normal,raid,needsMode:normal.length>0&&raid.length>0&&!paidRaid};
 }
 function entryDestination(action,line,slot,slotUid){
  const dest=action.line==='energy'?'energy':'front';
@@ -411,25 +414,30 @@ function entryDestination(action,line,slot,slotUid){
 function entryClickPlan({selectedUid,entryMode,raidBaseUid=null,line,slot,slotUid,legal}){
  const selection=boardEntrySelection(legal,selectedUid);
  if(!selection.normal.length&&!selection.raid.length)return {type:'idle'};
- // Paid Raids select an ENERGY base first; effect Raids place directly by cell.
- // Paid hand Raids retain base -> destination. Effect-instigated Raids instead
- // let the player tap the final legal cell directly; their legal action already
- // contains the base UID, with a choice shown only if several bases match.
- const effectRaid=selection.raid.length>0&&selection.raid.every(action=>action.type!=='raid');
- const tappedBase=!effectRaid&&line==='energy'&&slotUid&&
-  (entryMode==='raid'||(!selection.needsMode&&entryMode!=='normal'))&&
-  selection.raid.some(action=>action.baseUid===slotUid);
- if(tappedBase&&raidBaseUid!==slotUid)return {type:'raid-base',baseUid:slotUid};
- let mode=null;
- if((entryMode==='raid'||raidBaseUid)&&selection.raid.length)mode='raid';
- else if(entryMode==='normal'&&selection.normal.length)mode='normal';
- else if(selection.needsMode)return {type:'entry-mode'};
- else mode=selection.raid.length?'raid':'normal';
+ const paidRaid=selection.raid.some(action=>action.type==='raid');
+ // Standard paid play: empty legal cell = ordinary entry. Tapping a legal
+ // Raid base enters the two-step base -> destination flow; no mode button.
+ if(paidRaid){
+  const baseCandidate=slotUid&&selection.raid.some(action=>action.baseUid===slotUid);
+  if(entryMode!=='normal'&&baseCandidate&&raidBaseUid!==slotUid)
+   return {type:'raid-base',baseUid:slotUid};
+  if(raidBaseUid){
+   const hits=selection.raid.filter(action=>action.baseUid===raidBaseUid&&
+    entryDestination(action,line,slot,slotUid));
+   return hits.length?{type:'entry',mode:'raid',actions:hits}:{type:'entry-wait',mode:'raid'};
+  }
+  const hits=selection.normal.filter(action=>entryDestination(action,line,slot,slotUid));
+  return hits.length?{type:'entry',mode:'normal',actions:hits}:{type:'entry-wait',mode:'normal'};
+ }
+ // Effect entry: first choose the card, then its legal mode (if two options
+ // are printed), and tap the destination. The action owns its Raid base UID.
+ const mode=entryMode==='raid'&&selection.raid.length?'raid':
+  entryMode==='normal'&&selection.normal.length?'normal':
+  selection.needsMode?null:selection.raid.length?'raid':'normal';
+ if(!mode)return {type:'entry-mode'};
  const hits=(mode==='raid'?selection.raid:selection.normal)
-  .filter(action=>(mode!=='raid'||effectRaid||!raidBaseUid||action.baseUid===raidBaseUid)&&
-   entryDestination(action,line,slot,slotUid));
- if(!hits.length)return {type:'entry-wait',mode};
- return {type:'entry',mode,actions:hits};
+  .filter(action=>entryDestination(action,line,slot,slotUid));
+ return hits.length?{type:'entry',mode,actions:hits}:{type:'entry-wait',mode};
 }
 function legalChoices(){return app.room?.choices||[];}
 function tableReady(){
@@ -643,6 +651,11 @@ function playHint(room){
   if(!pick.uid)return '先選擇要登場的角色。手牌直接點；場外或移除區請先打開該區。';
   if(selection.needsMode&&pick.entryMode!=='normal'&&pick.entryMode!=='raid')
    return '再選擇突襲進場或普通進場。';
+  if(selection.raid.some(a=>a.type==='raid'))return pick.raidBaseUid?
+   '一般突襲：已選好底座，請點合法登場位置（可點後線底座原位）。':
+   selection.normal.length?
+   '一般出牌：點合法格子普通登場；要突襲請先點底座，再點登場位置。':
+   '一般突襲：先點合法底座，再點登場位置。';
   const mode=pick.entryMode==='raid'||(!selection.needsMode&&selection.raid.length)?'raid':'normal';
   if(mode==='raid'&&selection.raid.length&&selection.raid.every(a=>a.type!=='raid'))
    return '效果突襲：直接點亮起的登場位置；同格有多個合法底座時再選底座。';

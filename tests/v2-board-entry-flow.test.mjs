@@ -19,23 +19,25 @@ const legal=[
  {type:'chooseRemovedOkabeRaid',mode:'raid',uid:'okabe',baseUid:'front-base',line:'front',slot:0}
 ];
 
-test('entry waits for the character, then the mode, then the cell',()=>{
+test('ordinary paid hand entry uses direct normal cell or base then Raid destination',()=>{
  assert.equal(entryClickPlan({selectedUid:null,entryMode:null,line:'front',slot:3,
   slotUid:null,legal}).type,'idle');
- assert.equal(boardEntrySelection(legal,'hand').needsMode,true);
- assert.equal(entryClickPlan({selectedUid:'hand',entryMode:null,line:'front',slot:3,
-  slotUid:null,legal}).type,'entry-mode');
- assert.deepEqual(entryClickPlan({selectedUid:'hand',entryMode:'normal',line:'front',slot:3,
+ assert.equal(boardEntrySelection(legal,'hand').needsMode,false,
+  'ordinary paid entry does NOT prompt for normal/Raid buttons');
+ assert.deepEqual(entryClickPlan({selectedUid:'hand',entryMode:null,line:'front',slot:3,
   slotUid:null,legal}),{type:'entry',mode:'normal',actions:[legal[0]]});
- assert.equal(entryClickPlan({selectedUid:'hand',entryMode:'normal',line:'front',slot:0,
-  slotUid:'front-base',legal}).type,'entry-wait');
- assert.deepEqual(entryClickPlan({selectedUid:'hand',entryMode:'raid',line:'front',slot:0,
-  slotUid:'front-base',legal}),{type:'entry',mode:'raid',actions:[legal[2]]});
- const shared=entryClickPlan({selectedUid:'hand',entryMode:'raid',line:'front',slot:1,
-  slotUid:null,legal});
- assert.equal(shared.type,'entry');
- assert.deepEqual(shared.actions.map(action=>action.baseUid),['energy-a','energy-b']);
- assert.deepEqual(entryClickPlan({selectedUid:'hand',entryMode:'raid',line:'energy',slot:2,
+ assert.deepEqual(entryClickPlan({selectedUid:'hand',entryMode:null,line:'front',slot:0,
+  slotUid:'front-base',legal}),{type:'raid-base',baseUid:'front-base'});
+ assert.deepEqual(entryClickPlan({selectedUid:'hand',entryMode:null,raidBaseUid:'front-base',
+  line:'front',slot:0,slotUid:'front-base',legal}),
+  {type:'entry',mode:'raid',actions:[legal[2]]});
+ assert.equal(entryClickPlan({selectedUid:'hand',entryMode:null,line:'front',slot:1,
+  slotUid:null,legal}).type,'entry-wait',
+  'tap the base first, do not Raid automatically by tapping an empty cell');
+ const afterBase=entryClickPlan({selectedUid:'hand',entryMode:'raid',raidBaseUid:'energy-a',
+  line:'front',slot:1,slotUid:null,legal});
+ assert.deepEqual(afterBase,{type:'entry',mode:'raid',actions:[legal[3]]});
+ assert.deepEqual(entryClickPlan({selectedUid:'hand',entryMode:null,line:'energy',slot:2,
   slotUid:'energy-a',legal}),{type:'raid-base',baseUid:'energy-a'});
  assert.deepEqual(entryClickPlan({selectedUid:'hand',entryMode:'raid',raidBaseUid:'energy-a',
   line:'energy',slot:2,slotUid:'energy-a',legal}),
@@ -104,7 +106,7 @@ test('solo and online both ask for the character, then the mode, then the cell',
  assert.match(read('dist/online.css'),/\.online-zones/);
 });
 
-test('online match offers raid or normal only after the hand character is selected',()=>{
+test('online match keeps paid hand choice-free but shows mode options for effect summon',()=>{
  const source=readFileSync(new URL('../dist/online.mjs',import.meta.url),'utf8');
  class FakeNode{
   constructor(tag='',text=''){this.tag=tag;this.textContent=text;this.children=[];this.attributes={};this.handlers={};this.className='';}
@@ -142,6 +144,8 @@ test('online match offers raid or normal only after the hand character is select
    {index:1,type:'raid',uid:'hand',baseUid:'base',slot:0,label:'突襲'},
    {index:2,type:'choosePrintedRestRaid',mode:'enter',uid:'out',line:'front',slot:1,label:'場外休息'},
    {index:3,type:'chooseRemovedEnter',uid:'gone',line:'energy',slot:0,label:'移除區登場'},
+   {index:5,type:'choosePrintedRestRaid',mode:'raid',uid:'out',baseUid:'base',
+    line:'front',slot:0,label:'場外效果突襲'},
    {index:4,type:'next',label:'下一階段'}
   ],
   log:[],
@@ -159,11 +163,16 @@ test('online match offers raid or normal only after the hand character is select
  assert.match(texts(appRoot),/先選擇要登場的角色/);
  assert.doesNotMatch(texts(appRoot),/普通進場/);
  vm.runInContext("app.pick={uid:'hand',entryMode:null,options:null};render();",context);
+ assert.match(texts(appRoot),/一般出牌：點合法格子普通登場/);
+ assert.doesNotMatch(texts(appRoot),/突襲進場/);
+ assert.doesNotMatch(texts(appRoot),/普通進場/);
+ assert.equal(classes(appRoot).some(name=>name.includes('destination')),true,
+  'paid normal entry cell remains directly clickable');
+ vm.runInContext("app.pick={uid:'out',entryMode:null,options:null};render();",context);
  assert.match(texts(appRoot),/普通進場/);
  assert.match(texts(appRoot),/突襲進場/);
- assert.equal(classes(appRoot).some(name=>name.includes('destination')),false);
- vm.runInContext("app.pick={uid:'hand',entryMode:'raid',options:null};render();",context);
- assert.match(texts(appRoot),/請直接點要登場的格子/);
+ vm.runInContext("app.pick={uid:'out',entryMode:'raid',options:null};render();",context);
+ assert.match(texts(appRoot),/效果突襲：直接點亮起的登場位置/);
  assert.equal(classes(appRoot).some(name=>name.includes('destination')),true);
  vm.runInContext("app.zone='removed';render();",context);
  assert.match(texts(appRoot),/移除角色/);
