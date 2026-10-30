@@ -800,6 +800,35 @@ export function pendingEntryChoiceCards(privateChoices,view,legal){
    name:card?.name||card?.cardId||'可登場角色'};
  });
 }
+// LIFE-order targets are already publicly revealed. A deferred on-play
+// entry may use only a controller-visible hand card or public field/outside
+// identity. Never inspect unrevealed LIFE, deck, or opponent hand.
+export function publicLifeOrderChoiceCard(view,pending,action){
+ if(pending?.kind!=='life-batch-order'||!view||!action||
+  (pending.player!==0&&pending.player!==1))return null;
+ const owner=pending.player;
+ const publicReveal=uid=>(Array.isArray(view.publicReveals)?view.publicReveals:[])
+  .find(item=>item?.uid===uid&&item.owner===owner&&
+   typeof item.cardId==='string'&&item.cardId)||null;
+ if(action.type==='chooseLifeOrder'){
+  if(!Array.isArray(pending.choices)||!pending.choices.includes(action.uid))return null;
+  const revealed=publicReveal(action.uid);
+  return revealed?{cardId:revealed.cardId,side:owner,uid:action.uid}:null;
+ }
+ if(action.type!=='chooseLifeEffect')return null;
+ const entry=(Array.isArray(pending.entries)?pending.entries:[])
+  .find(item=>item?.key===action.key);
+ const uid=entry?.sourceUid;
+ if(typeof uid!=='string'||!uid.startsWith(owner+'-'))return null;
+ const player=view.players?.[owner];
+ const shown=[...(player?.front||[]),...(player?.energy||[]),
+  ...(player?.outside||[]),...(player?.removed||[]),
+  ...(owner===0?(player?.hand||[]):[])];
+ const physical=shown.find(card=>card?.uid===uid&&!card.faceDown&&
+  typeof card.cardId==='string'&&card.cardId);
+ const cardId=physical?.cardId||publicReveal(uid)?.cardId;
+ return cardId?{cardId,side:owner,uid}:null;
+}
 // Resolve a pending target only against face-up PUBLIC field slots. This
 // works for both controllers (self/opponent) but never exposes hidden hand,
 // deck, life, or face-down under-card identities. A UID must match exactly.
