@@ -32,7 +32,7 @@ function newReveals(before,after){
   const count=previous.get(key)||0;
   if(count>0){previous.set(key,count-1);continue;}
   const info=EXPLICIT_REVEALS.get(event.kind);
-  if(info)next.push({owner:event.owner,cardId:event.cardId,
+  if(info)next.push({owner:event.owner,uid:event.uid,cardId:event.cardId,
    kind:info.destination,label:info.label});
  }
  return next;
@@ -47,7 +47,7 @@ export function publicCardResults(before,after,action){
  for(const move of after.zoneMoveEvents||[]){
   if(!move||!Number.isInteger(move.order)||move.order<=maxBefore||
    !PUBLIC_DESTINATIONS.has(move.to)||!validCard(move.owner,move.cardId))continue;
-  results.push({owner:move.owner,cardId:move.cardId,
+  results.push({owner:move.owner,uid:move.uid,cardId:move.cardId,
    kind:move.to,label:move.to==='outside'?'送至場外':'送至移除區'});
  }
  // A genuine full-deck search requires the selected matching card to be
@@ -61,15 +61,27 @@ export function publicCardResults(before,after,action){
   const source=before.players[q.player]?.deck?.find(c=>c.uid===action.uid);
   const found=after.players[q.player]?.hand?.some(c=>c.uid===action.uid);
   if(source&&found&&validCard(q.player,source.cardId))
-   results.push({owner:q.player,cardId:source.cardId,
+   results.push({owner:q.player,uid:action.uid,cardId:source.cardId,
     kind:'hand',label:'檢索公開加入手牌'});
  }
- // The same physical card may be published via explicit searched-to-hand
- // and the search branch in one action. Display that result only once.
+ // Public zone arrays are also authoritative: a title may move an eligible
+ // card straight into a public destination. Detect exact newly visible
+ // physical UIDs even when it has no standalone move ledger entry.
+ for(const owner of [0,1])for(const kind of PUBLIC_DESTINATIONS){
+  const seen=new Set((before.players?.[owner]?.[kind]||[]).map(card=>card?.uid));
+  for(const card of after.players?.[owner]?.[kind]||[]){
+   if(!card||seen.has(card.uid)||!validCard(owner,card.cardId)||
+    typeof card.uid!=='string')continue;
+   results.push({owner,uid:card.uid,cardId:card.cardId,kind,
+    label:kind==='outside'?'送至場外':'送至移除區'});
+  }
+ }
+ // De-duplicate the SAME physical result, not two copies of an identical
+ // printed card. Strip internal UIDs before sending the public log.
  const unique=new Set();
  return results.filter(card=>{
-  const key=[card.owner,card.cardId,card.kind,card.label].join('|');
+  const key=[card.owner,card.uid,card.kind].join('|');
   if(unique.has(key))return false;
   unique.add(key);return true;
- }).slice(0,50);
+ }).slice(0,50).map(({uid,...publicCard})=>publicCard);
 }
