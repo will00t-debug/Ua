@@ -92,3 +92,31 @@ test('other private choice types may use authorized option artwork without seria
  assert.equal(onlinePrivateGallery({kind:'effect-search-deck',inspected:looked('X'),options:[]},
   [action],[{},{}],{pending:null}),null);
 });
+
+test('arbitrary top-window inspect and reorder show the full controller-owned window',()=>{
+ const legal=[
+  {type:'chooseTopOrder',uid:'top-b'},
+  {type:'chooseTopOrder',uid:'top-a'},
+  {type:'chooseTopOrder',uid:null}
+ ];
+ const cards=[
+  {uid:'top-a',cardId:'BLC-4-009'},
+  {uid:'top-b',cardId:'BLC-4-067'}
+ ];
+ const match={pending:{kind:'effect-top-order',player:0,uids:cards.map(c=>c.uid),order:[]},
+  players:[{deck:cards},{deck:[{uid:'enemy',cardId:'HIDDEN'}]}]};
+ const shown=onlinePrivateGallery({kind:'effect-top-order',player:0,options:[]},
+  legal,[{cards:{
+   'BLC-4-009':{name:'九號'},'BLC-4-067':{name:'六十七號'}
+  }},{}],match);
+ assert.deepEqual(shown.cards.map(c=>c.name),['九號','六十七號']);
+ assert.deepEqual(shown.cards.map(c=>c.actions[0].index),[1,0]);
+ assert.equal(JSON.stringify(shown).includes('HIDDEN'),false);
+ const unrelated=onlinePrivateGallery({
+  kind:'effect-discard',player:0,options:[{
+   action:{type:'chooseDiscard',uid:'top-a'},
+   card:{cardId:'BLC-4-009'}
+  }]
+ },[{type:'chooseDiscard',uid:'top-a'}],[{},{}],{pending:{kind:'effect-discard'}});
+ assert.equal(unrelated,null,'normal discard must not open the private deck inspector');
+});
