@@ -4444,7 +4444,8 @@ function continueEffectQueue(pack,s){
   }else if(job.op==='outsideRecoverOrRestPlay'){
    const choices=pl.outside.filter(c=>{
     const d=card(pack,c);
-    return d.type==='character'&&d.color===job.color&&cardHasTrait(d,job.trait)&&
+    // The print targets a green Great Gurren CARD, including eligible fields.
+    return d.color===job.color&&cardHasTrait(d,job.trait)&&
      d.energy<=job.maxEnergy&&d.ap===job.ap;
    }).map(c=>c.uid);
    if(choices.length)s.pending={kind:'effect-outside-or-rest',player:owner,
@@ -6799,7 +6800,7 @@ function resolveChoice(s,a,pack){
   const index=p.outside.findIndex(c=>c.uid===a.uid);
   if(index<0||!q.choices.includes(a.uid))throw Error('Outside recovery card is not a printed choice');
   const physical=p.outside[index],d=card(pack,physical);
-  if(d.type!=='character'||d.color!==q.color||!cardHasTrait(d,q.trait)||
+  if(d.color!==q.color||!cardHasTrait(d,q.trait)||
    d.energy>q.maxEnergy||d.ap!==q.ap)
    throw Error('Outside recovery no longer matches the printed filter');
   if(a.mode==='hand'){
@@ -6808,8 +6809,10 @@ function resolveChoice(s,a,pack){
     reason:'own-effect',sourceUid:q.sourceUid});
    s.pending=null;continueEffectQueue(pack,s);return;
   }
-  if(a.mode!=='rest'||!q.restPlay||!['front','energy'].includes(a.line))
-   throw Error('REST play is only the energy-threshold alternative');
+  if(a.mode!=='rest'||!q.restPlay||
+   !(d.type==='character'&&['front','energy'].includes(a.line)||
+     d.type==='field'&&a.line==='energy'))
+   throw Error('REST entry must be a character or an energy-line field');
   commitDestination(pack,s,q.player,a.line,a.slot,a.replaceUid);
   p.outside.splice(index,1);
   physical.ready=false;physical.fieldEntryStamp=s.nextFieldEntryStamp++;
@@ -12667,11 +12670,14 @@ function legalPending(pack,s){
   .filter(uid=>field(p).some(c=>c.uid===uid&&maxBpImpactTarget(pack,s,c,q.contains,q.name)))
   .map(uid=>({type:'chooseMaxBpImpact',uid}));
  if(q.kind==='effect-outside-or-rest')return [
-  ...q.choices.filter(uid=>p.outside.some(c=>c.uid===uid)).flatMap(uid=>[
-   {type:'chooseOutsideOrRest',mode:'hand',uid},
-   ...(q.restPlay?['front','energy'].flatMap(line=>legalDestinations(p,line).map(dest=>
-    ({type:'chooseOutsideOrRest',mode:'rest',uid,line,...dest}))):[])
-  ]),
+  ...q.choices.filter(uid=>p.outside.some(c=>c.uid===uid)).flatMap(uid=>{
+   const d=card(pack,p.outside.find(c=>c.uid===uid));
+   const lines=d.type==='character'?['front','energy']:
+    d.type==='field'?['energy']:[];
+   return [{type:'chooseOutsideOrRest',mode:'hand',uid},
+    ...(q.restPlay?lines.flatMap(line=>legalDestinations(p,line).map(dest=>
+     ({type:'chooseOutsideOrRest',mode:'rest',uid,line,...dest}))):[])];
+  }),
   {type:'chooseOutsideOrRest',mode:'skip'}];
  if(q.kind==='effect-replay-base'){
   const seats=['front','energy'].flatMap(line=>legalDestinations(p,line).map(dest=>({line,...dest})));
@@ -18136,7 +18142,7 @@ export function assertUniversalMatch(pack,s){
    const profile=printed?.effects?.onPlay?.find(e=>e.op==='outsideRecoverOrRestPlay');
    const choices=pl.outside.filter(c=>{
     const d=card(pack,c);
-    return d.type==='character'&&d.color===q.color&&cardHasTrait(d,q.trait)&&
+    return d.color===q.color&&cardHasTrait(d,q.trait)&&
      d.energy<=q.maxEnergy&&d.ap===q.ap;
    }).map(c=>c.uid);
    if(!profile||profile.color!==q.color||profile.trait!==q.trait||
