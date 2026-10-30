@@ -3557,8 +3557,10 @@ function normalize(card,packId){
     !!m.name.trim()&&m.name.length<=80&&m.oncePerTurn===true&&m.frontOnly===true&&
     Object.keys(m).length===5&&
     ['op','id','name','oncePerTurn','frontOnly'].every(k=>k in m);
+   const plusEnergy=m?.op==='gainSelfEnergyIfAtLeast'&&m.min===8&&m.amount===2&&
+    Object.keys(m).length===4&&['op','id','min','amount'].every(k=>k in m);
    if((!discard&&!rest&&!buff&&!frontEnergy&&!activeEnergy&&!lineAttack&&
-    !frontEvent&&!frontMove)||
+    !frontEvent&&!frontMove&&!plusEnergy)||
     typeof m.id!=='string'||!m.id.trim()||m.id.length>20)
     throw Error(card.id+' invalid printed main mode');
   }

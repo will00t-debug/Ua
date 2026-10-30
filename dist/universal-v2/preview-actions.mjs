@@ -313,6 +313,7 @@ export function uiActionLabel(action,{pack,state}={}){
     action.mode==='front'?
     '起動主要：前線也能產生能源':
     action.mode==='ready20'?'起動主要：將 1 張己方角色轉為 ACTIVE':
+    action.mode==='plus2'?'起動主要：能源 8 以上時，本回合產能＋2':
     action.mode==='line'?'起動主要：棄 1 張手牌，本回合可從能源線攻擊':
     action.mode==='namedEnergyAp'?
     '起動主要：指定西蒙，本回合產能增加並 ACTIVE 1 張 AP':

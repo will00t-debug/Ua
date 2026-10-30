@@ -15282,6 +15282,8 @@ export function legalUniversalActions(pack,s){
      pl.hand.length>=mode.discard&&
      !s.mainReadyOnceByName[p].includes(d.name+'|'+mode.id))
      out.push({type:'activate',uid:c.uid,mode:mode.id});
+    if(mode.op==='gainSelfEnergyIfAtLeast'&&calcEnergy(pack,s,p)>=mode.min)
+     out.push({type:'activate',uid:c.uid,mode:mode.id});
    }
    if(ability?.op==='buffNamedEnergyActiveAp'&&!s.mainAbilityUsedUids.includes(c.uid)&&
     calcEnergy(pack,s,p)>=ability.minEnergy&&
@@ -16336,6 +16338,13 @@ export function dispatchUniversalAction(pack,source,action,{actor:requested}={})
      if(!selected.ready)throw Error('REST main needs a ready character');
      selected.ready=false;selected.buffs??=[];
      selected.buffs.push({energy:printed.energy,untilTurn:s.turn});
+     break;
+    }
+    if(printed.op==='gainSelfEnergyIfAtLeast'){
+     if(calcEnergy(pack,s,p)<printed.min)
+      throw Error('Generated-energy main needs enough energy');
+     selected.buffs??=[];
+     selected.buffs.push({energy:printed.amount,untilTurn:s.turn});
      break;
     }
     if(printed.op==='frontEnergyEscalation'){
