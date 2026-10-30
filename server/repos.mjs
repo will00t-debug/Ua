@@ -187,7 +187,19 @@ export function createRepositories(sql){
      seats_json=excluded.seats_json,host_id=excluded.host_id,guest_id=excluded.guest_id`,
    room.code,room.status,room.revision,room.createdAt,room.updatedAt,room.firstChoice,
    room.first==null?null:room.first,room.seed==null?null:room.seed,room.winner==null?null:room.winner,
-   JSON.stringify(room.log.map(entry=>({text:String(entry.text||'')})).slice(-80)),
+   JSON.stringify(room.log.map(entry=>{
+    const cards=(Array.isArray(entry.cards)?entry.cards:[])
+     .filter(card=>card&&[0,1].includes(card.owner)&&
+      typeof card.cardId==='string'&&card.cardId.length>0&&card.cardId.length<=80&&
+      ['hand','reveal','outside','removed'].includes(card.kind))
+     .slice(0,50).map(card=>({
+      owner:card.owner,cardId:card.cardId,kind:card.kind,
+      label:String(card.label||'').slice(0,60),
+      name:String(card.name||card.cardId).slice(0,120)
+     }));
+    return {text:String(entry.text||'').slice(0,500),
+     ...(cards.length?{cards}:{})};
+   }).slice(-80)),
    room.match?JSON.stringify(room.match):null,
    JSON.stringify(room.seats),room.seats[0].userId,guest);
   },

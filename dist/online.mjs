@@ -926,7 +926,51 @@ function matchView(){
  const inspection=onlineInspectionGallery(room);
  const effectTarget=effectEntryGallery(room);
  const log=el('div',{class:'log'});
- for(const line of room.log||[])log.append(el('div',{text:line.text}));
+ for(const line of room.log||[]){
+  const item=el('div',{class:'online-public-log-entry'},
+   el('span',{text:line.text}));
+  if(Array.isArray(line.cards)&&line.cards.length){
+   const cards=el('div',{class:'online-public-card-gallery',
+    'aria-label':'雙方可見的公開選牌與移動結果'});
+   for(const card of line.cards){
+    if(!card||typeof card.cardId!=='string'||![0,1].includes(card.owner))continue;
+    const artwork=el('img',{src:cardSrc({cardId:card.cardId})||'assets/mark.svg',
+     alt:card.name||card.cardId,loading:'lazy',decoding:'async'});
+    artwork.addEventListener('error',()=>{
+     if(!artwork.src.endsWith('/assets/mark.svg'))artwork.src='assets/mark.svg';
+    });
+    cards.append(el('figure',{class:'online-public-card-result'},
+     el('span',{class:'online-inspection-art'},artwork),
+     el('figcaption',{},
+      el('strong',{text:card.name||card.cardId}),
+      el('small',{text:(card.owner===room.seat?'你':'對手')+' · '+card.label}))));
+   }
+   if(cards.childElementCount)item.append(cards);
+  }
+  log.append(item);
+ }
+ // Keep the latest public result near the controls too. The full history is
+ // still available below; this makes the reveal visible to the opponent.
+ const lastPublic=(room.log||[]).slice(-12).reverse().find(line=>
+  Array.isArray(line.cards)&&line.cards.length);
+ const recent=lastPublic?el('section',{class:'panel online-public-card-recent',
+  role:'status','aria-label':'最近公開的卡片'},
+  el('h2',{text:'最近公開的卡片'}),
+  el('p',{class:'online-inspection-hint',text:lastPublic.text}),
+  el('div',{class:'online-public-card-gallery'},
+   ...lastPublic.cards.filter(card=>card?.cardId&&[0,1].includes(card.owner))
+    .slice(0,12).map(card=>{
+     const img=el('img',{src:cardSrc({cardId:card.cardId})||'assets/mark.svg',
+      alt:card.name||card.cardId,loading:'lazy',decoding:'async'});
+     img.addEventListener('error',()=>{
+      if(!img.src.endsWith('/assets/mark.svg'))img.src='assets/mark.svg';
+     });
+     return el('figure',{class:'online-public-card-result'},
+      el('span',{class:'online-inspection-art'},img),
+      el('figcaption',{},
+       el('strong',{text:card.name||card.cardId}),
+       el('small',{text:(card.owner===room.seat?'你':'對手')+' · '+card.label})));
+    }))) :null;
  return shell(el('div',{class:'online-match'},
   el('header',{class:'online-match-bar'},
    el('h1',{text:'房間 '+room.code}),
@@ -938,6 +982,7 @@ function matchView(){
    side((room.you?.username||'你')+'（你）',you,room.you?.titleLabel||'',{openHand:true,setup:view.phase==='setup',engineSeat:seat}),
    ownHand(you)),
   el('aside',{class:'online-dock'},
+   recent,
    el('section',{class:'panel'},el('h2',{text:room.yourTurn?'輪到你':'對局操作'}),
     (view.openTriggers||[]).length?el('div',{},el('h3',{text:'公開觸發'}),el('p',{class:'muted',text:'翻開的觸發雙方都看得到。'}),triggers):null,
     actions,

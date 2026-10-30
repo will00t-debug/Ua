@@ -278,3 +278,17 @@ body.arena-site #app.wrap:has(.online-match)>.arena-app{
  .online-inspection-return{left:12px;right:12px;max-width:none;justify-content:center}
  .online-inspection-return button{flex:1 1 100%}
 }
+
+/* Exact public card results, shared by both participants in the room log. */
+.online-public-log-entry{display:grid;gap:6px;padding:7px 0;border-bottom:1px solid #32455d}
+.online-public-card-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:8px}
+.online-public-card-result{min-width:0;margin:0;display:grid;gap:5px;padding:6px;
+ border:1px solid #8caaac;border-radius:9px;background:#172b3d;color:#e7f3ff}
+.online-public-card-result .online-inspection-art{display:block;width:100%;
+ aspect-ratio:63/88;overflow:hidden;border-radius:4px;background:#0d1926}
+.online-public-card-result img{width:100%;height:100%;display:block;object-fit:contain}
+.online-public-card-result figcaption{display:grid;gap:2px}
+.online-public-card-result strong{font-size:11px;line-height:1.3;overflow-wrap:anywhere}
+.online-public-card-result small{font-size:10px;line-height:1.4;color:#f3ce86}
+.online-dock .online-public-card-recent{border-color:#c59a50}
+.online-public-card-recent h2{color:#f6dfac}
