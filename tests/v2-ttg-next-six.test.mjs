@@ -154,6 +154,39 @@ test('TTG-011 energy 8 raises BP on either turn, and the main chooses one energy
  assert.equal(assertUniversalMatch(packs,mode),true);
 });
 
+test('TTG 5-cost Gurren Lagann Raid clears a buried Simon temporary energy mode',()=>{
+ const packs=ttg;
+ const raidDeck={...deck,'TTG-1-029':4};
+ delete raidDeck['TTG-1-005'];
+ assert.deepEqual(validateUniversalDeck(packs,raidDeck),[]);
+ for(const [line,mode] of [['energy','plus'],['front','front']]){
+  let s=newUniversalMatch(packs,{decks:[raidDeck,raidDeck],first:0,
+   seed:line==='front'?11291:11292});
+  const base=place(s,0,'TTG-1-011',line,0);
+  for(let slot=line==='energy'?1:0;slot<4;slot++)
+   place(s,0,'TTG-1-019','energy',slot);
+  const top=hold(s,0,'TTG-1-029');
+  s=toPhase(packs,s,'main');
+  s=go(packs,s,act(packs,s,a=>a.type==='activate'&&
+   a.mode==='energyMode'&&a.uid===base.uid));
+  assert.equal(s.pending.kind,'effect-energy-mode');
+  s=go(packs,s,{type:'chooseEnergyMode',mode});
+  assert.equal(assertUniversalMatch(packs,s),true);
+  assert.equal(!!live(s,0,base.uid)[mode==='plus'?'energyPlusUntil':'frontEnergyUntil'],true);
+  const raid=act(packs,s,a=>a.type==='raid'&&a.uid===top.uid&&a.baseUid===base.uid&&
+   a.slot===0&&a.line!=='energy');
+  s=go(packs,s,raid);
+  const arrived=s.players[0].front[0];
+  assert.equal(arrived.uid,top.uid,line+' must reach front 0');
+  assert.equal(arrived.ready,true,'Raids always enter ACTIVE');
+  assert.equal(arrived.stack[0].uid,base.uid);
+  assert.equal(arrived.stack[0].energyPlusUntil,undefined);
+  assert.equal(arrived.stack[0].frontEnergyUntil,undefined);
+  assert.equal(line==='energy'?s.players[0].energy[0]:null,null);
+  assert.equal(assertUniversalMatch(packs,s),true);
+ }
+});
+
 test('TTG-016 discards up to two then draws that many, and the energy-20 REST draw is once per name',()=>{
  const packs=ttg;
  let s=newUniversalMatch(packs,{decks:[deck,deck],first:0,seed:16016});

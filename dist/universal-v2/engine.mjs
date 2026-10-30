@@ -5421,6 +5421,14 @@ function performRaid(pack,s,p,cardOnTop,baseUid,line,slot,replaceUid,{entryReady
   effectiveBase.under??=[];
   effectiveBase.under.push(base.c);
  }
+ // A buried Raid base is no longer a field-visible character. Its
+ // temporary self-energy modes must stop applying when it becomes RAID-under;
+ // otherwise state validation rejects an otherwise legal Raid. Keep the
+ // physical base/stamp for onRaided triggers and possible later exposure.
+ for(const buried of new Set([base.c,effectiveBase])){
+  delete buried.energyPlusUntil;
+  delete buried.frontEnergyUntil;
+ }
  cardOnTop.stack=[effectiveBase];cardOnTop.ready=true;
  delete effectiveBase.raidBaseUid;
  cardOnTop.raidBaseUid=effectiveBase.uid;
