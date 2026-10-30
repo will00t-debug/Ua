@@ -20,7 +20,7 @@ const DRAFTS=[
 ];
 const PHASES=[['setup','起手調度'],['start','開始'],['move','移動'],['main','主要'],['attack','攻擊']];
 const ROOM=/^[A-HJ-NP-Z2-9]{8}$/;
-const app={offline:false,user:null,decks:[],openRooms:[],room:null,pick:null,zone:null,inspectPick:null,error:'',notice:'',busy:false,mode:'login',deckTab:'mine',pollToken:0,timer:0,showPassword:false,remember:true,recordedCode:'',draftUser:'',draftPass:''};
+const app={offline:false,user:null,decks:[],openRooms:[],room:null,pick:null,zone:null,inspectPick:null,inspectionPaused:false,error:'',notice:'',busy:false,mode:'login',deckTab:'mine',pollToken:0,timer:0,showPassword:false,remember:true,recordedCode:'',draftUser:'',draftPass:''};
 function captureAuthDraft(form){
  if(!form)return;
  const data=new FormData(form);
@@ -79,7 +79,7 @@ function startPoll(){
 function applyRoom(next){
  const finished=next?.status==='finished'&&app.room?.status!=='finished'&&app.recordedCode!==next.code;
  const same=app.room&&next.revision===app.room.revision&&next.status===app.room.status&&!app.busy;
- if(app.room&&next?.revision!==app.room.revision){app.pick=null;app.inspectPick=null;}
+ if(app.room&&next?.revision!==app.room.revision){app.pick=null;app.inspectPick=null;app.inspectionPaused=false;}
  app.room=next;app.busy=false;
  if(finished)noteOnlineResult(next);
  if(!same)render();
@@ -657,9 +657,21 @@ function onlineInspectionGallery(room){
  }));
  const title=inspection.kind?.includes('search')?'檢索：查看符合條件的卡':
   '查看牌頂／私人檢視';
+ if(app.inspectionPaused){
+  return el('div',{class:'online-inspection-return',role:'status'},
+   el('span',{text:'正在查看場面與手牌 · 選牌尚未完成'}),
+   el('button',{type:'button',class:'primary',text:'返回選牌',
+    onClick:()=>{app.inspectionPaused=false;render();
+     document.querySelector('.online-private-inspection')?.scrollIntoView({block:'nearest'});}}));
+ }
  const gallery=el('section',{class:'online-private-inspection',role:'region',
   'aria-label':title},
-  el('h2',{text:title}),
+  el('div',{class:'online-inspection-heading'},
+   el('h2',{text:title}),
+   el('button',{type:'button',class:'online-inspection-peek',text:'查看場面與手牌',
+    onClick:()=>{app.inspectionPaused=true;app.inspectPick=null;render();
+     if(window.matchMedia('(max-width:820px)').matches)
+      document.querySelector('.online-table')?.scrollIntoView({block:'start',behavior:'smooth'});}})),
   el('p',{class:'online-inspection-hint',text:
    '以下只有你能看到。符合條件的卡可選擇；不符合條件仍顯示卡圖，但不能選擇。'}));
  const grid=el('div',{class:'online-inspection-grid'});
@@ -744,7 +756,7 @@ function matchView(){
  else if(room.yourTurn){
   const shownInGallery=new Set((room.inspection?.cards||[]).flatMap(card=>
    (card.actions||[]).map(action=>action.index)));
-  const listed=dockChoices(room).filter(choice=>choice!==next&&!shownInGallery.has(choice.index));
+  const listed=(app.inspectionPaused?[]:dockChoices(room)).filter(choice=>choice!==next&&!shownInGallery.has(choice.index));
   if(!listed.length&&!next)actions.append(el('p',{class:'muted',text:'正在等待可以執行的操作。'}));
   for(const choice of listed)actions.append(el('button',{type:'button',text:choice.label,disabled:app.busy,onClick:()=>sendAction(choice.index)}));
  }
