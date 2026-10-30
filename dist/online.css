@@ -201,6 +201,38 @@ body.arena-site #app.wrap:has(.online-match)>.arena-app{
 .online-zones .zone-pile.selected,.online-zones .zone-pile.open{background:#6a4b16;border-color:#ffd98a}
 .online-zone-gallery{display:flex;gap:6px;overflow-x:auto;padding-top:6px}
 .online-zone-gallery .slot{flex:0 0 72px}
+/* Controller-only TOP-N and deck-search gallery, never part of the opponent view. */
+.online-private-inspection{
+ border:1px solid #516a82;border-radius:10px;background:#0f1d2b;padding:10px;
+ display:flex;flex-direction:column;gap:8px;min-width:0
+}
+.online-private-inspection h2{margin:0;font-size:15px;color:#f6dfac}
+.online-inspection-hint{margin:0;font-size:12px;line-height:1.5;color:#c3d4e6}
+.online-inspection-grid{
+ display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:8px;
+ max-height:min(52vh,520px);overflow:auto;align-content:start;padding:4px
+}
+.online-inspection-card{
+ min-width:0;display:flex;flex-direction:column;gap:4px;align-items:stretch;
+ padding:5px;border:1px solid #749dbe;border-radius:7px;background:#1a3148;
+ color:#e6f1ff;font:inherit;text-align:left;cursor:pointer
+}
+.online-inspection-card .online-inspection-art{display:block;width:100%;aspect-ratio:63/88;overflow:hidden;border-radius:4px;background:#101925}
+.online-inspection-card img{display:block;width:100%;height:100%;object-fit:contain}
+.online-inspection-card strong{font-size:11px;line-height:1.35;overflow-wrap:anywhere}
+.online-inspection-card small{font-size:10px;line-height:1.4;color:#f3ce86}
+.online-inspection-card.eligible{border-color:#efca6d}
+.online-inspection-card.selected,.online-inspection-card.eligible:focus-visible{outline:2px solid #ffd982;outline-offset:1px}
+.online-inspection-card.ineligible:disabled{
+ opacity:1;cursor:not-allowed;background:#1a2330;border-color:#455465;color:#b7c6d6
+}
+.online-inspection-card.ineligible img{filter:grayscale(.55);opacity:.82}
+.online-inspection-card.ineligible small{color:#b3c0d1}
+.online-inspection-options{
+ grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px;padding:8px;
+ border:1px solid #d7ac5d;border-radius:7px;background:#283548
+}
+.online-inspection-options button{flex:1 1 120px;min-height:36px}
 .online-dock{
  min-width:0;min-height:0;overflow:auto;padding:10px 12px 16px;background:#0c121b;
  display:flex;flex-direction:column;gap:10px

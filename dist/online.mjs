@@ -1,23 +1,26 @@
 const TITLES=[
  ['bleach','BLEACH'],['gurren-lagann','天元突破'],['sword-art-online','刀劍神域'],
  ['solo-leveling','我獨自升級'],['mushoku-tensei','無職轉生'],['rezero','Re:Zero'],
- ['steins-gate','命運石之門'],['madoka','魔法少女小圓']
+ ['steins-gate','命運石之門'],['madoka','魔法少女小圓'],
+ ['inuyasha','犬夜叉'],['kjn','我想成為影之強者！']
 ];
 const SAVED=[
  ['bleach','bleach-arena-saved-decks-v1'],['gurren-lagann','ua-ttg-saved-v1'],
  ['sword-art-online','ua-sao-saved-v1'],['solo-leveling','ua-slg-saved-v1'],
  ['mushoku-tensei','ua-mst-saved-v1'],['rezero','ua-rez-saved-v1'],
- ['steins-gate','ua-stg-saved-v1'],['madoka','ua-mmm-saved-v1']
+ ['steins-gate','ua-stg-saved-v1'],['madoka','ua-mmm-saved-v1'],
+ ['inuyasha','ua-iys-saved-v1'],['kjn','ua-kjn-saved-v1']
 ];
 const DRAFTS=[
  ['bleach','bleach-arena-deck-v1'],['gurren-lagann','ua-ttg-draft-v1'],
  ['sword-art-online','ua-sao-draft-v1'],['solo-leveling','ua-slg-draft-v1'],
  ['mushoku-tensei','ua-mst-draft-v1'],['rezero','ua-rez-draft-v1'],
- ['steins-gate','ua-stg-draft-v1'],['madoka','ua-mmm-draft-v1']
+ ['steins-gate','ua-stg-draft-v1'],['madoka','ua-mmm-draft-v1'],
+ ['inuyasha','ua-iys-draft-v1'],['kjn','ua-kjn-draft-v1']
 ];
 const PHASES=[['setup','起手調度'],['start','開始'],['move','移動'],['main','主要'],['attack','攻擊']];
 const ROOM=/^[A-HJ-NP-Z2-9]{8}$/;
-const app={offline:false,user:null,decks:[],openRooms:[],room:null,pick:null,zone:null,error:'',notice:'',busy:false,mode:'login',deckTab:'mine',pollToken:0,timer:0,showPassword:false,remember:true,recordedCode:'',draftUser:'',draftPass:''};
+const app={offline:false,user:null,decks:[],openRooms:[],room:null,pick:null,zone:null,inspectPick:null,error:'',notice:'',busy:false,mode:'login',deckTab:'mine',pollToken:0,timer:0,showPassword:false,remember:true,recordedCode:'',draftUser:'',draftPass:''};
 function captureAuthDraft(form){
  if(!form)return;
  const data=new FormData(form);
@@ -76,7 +79,7 @@ function startPoll(){
 function applyRoom(next){
  const finished=next?.status==='finished'&&app.room?.status!=='finished'&&app.recordedCode!==next.code;
  const same=app.room&&next.revision===app.room.revision&&next.status===app.room.status&&!app.busy;
- if(app.room&&next?.revision!==app.room.revision)app.pick=null;
+ if(app.room&&next?.revision!==app.room.revision){app.pick=null;app.inspectPick=null;}
  app.room=next;app.busy=false;
  if(finished)noteOnlineResult(next);
  if(!same)render();
@@ -644,6 +647,56 @@ function dockChoices(room){
   return visibleActionsForCard(legal,app.pick.uid).filter(action=>!boardEntryMode(action)&&!['move','step','next'].includes(action.type));
  return legal.filter(action=>action.type&&!action.uid&&!['next','play','move','step','attack','raid'].includes(action.type));
 }
+function onlineInspectionGallery(room){
+ const inspection=room?.yourTurn?room.inspection:null;
+ if(!inspection||!Array.isArray(inspection.cards)||!inspection.cards.length)return null;
+ const legalIndices=new Set((room.choices||[]).map(action=>action.index));
+ const shown=inspection.cards.map(card=>({
+  ...card,
+  actions:(card.actions||[]).filter(action=>Number.isInteger(action.index)&&legalIndices.has(action.index))
+ }));
+ const title=inspection.kind?.includes('search')?'檢索：查看符合條件的卡':
+  '查看牌頂／私人檢視';
+ const gallery=el('section',{class:'online-private-inspection',role:'region',
+  'aria-label':title},
+  el('h2',{text:title}),
+  el('p',{class:'online-inspection-hint',text:
+   '以下只有你能看到。符合條件的卡可選擇；不符合條件仍顯示卡圖，但不能選擇。'}));
+ const grid=el('div',{class:'online-inspection-grid'});
+ for(const card of shown){
+  const enabled=card.actions.length>0;
+  const picking=app.inspectPick===card.uid&&enabled;
+  const img=el('img',{src:cardSrc(card)||'assets/mark.svg',
+   alt:card.name||card.cardId,loading:'lazy',decoding:'async'});
+  img.addEventListener('error',()=>{
+   if(!img.src.endsWith('/assets/mark.svg'))img.src='assets/mark.svg';
+  });
+  const choice=el('button',{type:'button',class:'online-inspection-card '+
+   (enabled?'eligible':'ineligible')+(picking?' selected':''),
+   disabled:!enabled,'aria-disabled':String(!enabled),
+   'aria-label':(card.name||card.cardId)+(enabled?'，符合條件，可選擇':'，不符合條件，無法選擇'),
+   ...(enabled?{onClick:()=>{if(app.busy)return;
+    if(card.actions.length===1){sendAction(card.actions[0].index);return;}
+    app.inspectPick=picking?null:card.uid;render();
+   }}:{})},
+   el('span',{class:'online-inspection-art'},img),
+   el('strong',{text:card.name||card.cardId}),
+   el('small',{text:enabled?(card.actions.length>1?'選擇方式／位置':'符合條件 · 點選此牌'):
+    '不符合條件 · 無法選擇'}));
+  grid.append(choice);
+  if(picking){
+   const options=el('div',{class:'online-inspection-options',
+    'aria-label':(card.name||card.cardId)+'可用操作'});
+   for(const action of card.actions)options.append(el('button',{
+    type:'button',disabled:app.busy,text:action.label,
+    onClick:()=>sendAction(action.index)
+   }));
+   grid.append(options);
+  }
+ }
+ gallery.append(grid);
+ return gallery;
+}
 function matchView(){
  loadCovers();
  const room=app.room,view=room.view,seat=room.seat;
@@ -689,10 +742,13 @@ function matchView(){
  }
  if(room.status==='finished')actions.append(el('p',{text:(room.winner?.username||'對局')+' 獲勝。'}));
  else if(room.yourTurn){
-  const listed=dockChoices(room).filter(choice=>choice!==next);
+  const shownInGallery=new Set((room.inspection?.cards||[]).flatMap(card=>
+   (card.actions||[]).map(action=>action.index)));
+  const listed=dockChoices(room).filter(choice=>choice!==next&&!shownInGallery.has(choice.index));
   if(!listed.length&&!next)actions.append(el('p',{class:'muted',text:'正在等待可以執行的操作。'}));
   for(const choice of listed)actions.append(el('button',{type:'button',text:choice.label,disabled:app.busy,onClick:()=>sendAction(choice.index)}));
  }
+ const inspection=onlineInspectionGallery(room);
  const log=el('div',{class:'log'});
  for(const line of room.log||[])log.append(el('div',{text:line.text}));
  return shell(el('div',{class:'online-match'},
@@ -711,6 +767,7 @@ function matchView(){
     actions,
     el('div',{class:'row'},el('button',{type:'button',text:'認輸',disabled:app.busy||room.status!=='playing',onClick:resign}),
      room.status==='finished'?el('button',{type:'button',text:'返回大廳',onClick:leaveFinished}):null)),
+   inspection,
    el('section',{class:'panel'},el('h2',{text:'公開紀錄'}),el('p',{class:'muted',text:'這裡不寫出手牌或牌庫裡的卡名。觸發會公開給對手。'}),log))));
 }
 function render(){

@@ -4,15 +4,15 @@
 import {createHash,randomBytes,randomInt,scryptSync,timingSafeEqual} from 'node:crypto';
 import {editorV2Status,normalizeEditorCounts,registeredPackForEditor} from '../dist/v2-editor-compat.mjs';
 import {assertUniversalMatch,dispatchUniversalAction,legalUniversalActions,
- newUniversalMatch,universalActor,universalPublicView} from '../dist/universal-v2/engine.mjs';
+ newUniversalMatch,universalActor,universalPublicView,universalPrivateChoices} from '../dist/universal-v2/engine.mjs';
 import {uiActionLabel,publicLifeTriggerText} from '../dist/universal-v2/preview-actions.mjs';
 import {createRepositories,roomTtl} from './repos.mjs';
 
-const TITLES=['bleach','gurren-lagann','sword-art-online','solo-leveling','mushoku-tensei','rezero','steins-gate','madoka','inuyasha'];
+const TITLES=['bleach','gurren-lagann','sword-art-online','solo-leveling','mushoku-tensei','rezero','steins-gate','madoka','inuyasha','kjn'];
 const TITLE_LABELS={
  bleach:'BLEACH','gurren-lagann':'天元突破','sword-art-online':'刀劍神域',
  'solo-leveling':'我獨自升級','mushoku-tensei':'無職轉生',rezero:'Re:Zero',
- 'steins-gate':'命運石之門',madoka:'魔法少女小圓',inuyasha:'犬夜叉'
+ 'steins-gate':'命運石之門',madoka:'魔法少女小圓',inuyasha:'犬夜叉',kjn:'我想成為影之強者！'
 };
 const SESSION_MS=14*24*60*60*1000;
 const LOGIN_WINDOW_MS=15*60*1000;
@@ -133,6 +133,90 @@ function publicActionChoice(action,index,packs,match,view){
  if(action?.from==='hand'||action?.from==='removed'||action?.from==='outside')choice.from=action.from;
  return choice;
 }
+// Only the active controller receives the cards they were authorized to inspect.
+ // Never serialize privateChoices itself: it contains engine-only action details.
+const INSPECT_ACTION={
+ 'effect-top-filter-choice':'chooseTopFiltered',
+ 'effect-top-filter-many-choice':'chooseTopFilteredMany',
+ 'effect-top-trait-event':'chooseTopTraitEvent',
+ 'effect-top-trait-outside':'chooseTopTraitOutside',
+ 'effect-search-deck':'chooseDeckSearch',
+ 'effect-search-deck-multi':'chooseDeckSearchMulti',
+ 'effect-wyrm-look':'chooseWyrmLook',
+ 'effect-top-character-outside':'chooseTopCharacterOutside',
+ 'effect-top-deploy':'chooseTopDeploy',
+ 'effect-top-deploy-rest':'chooseTopDeployRest',
+ 'effect-top-inspect':'chooseInspectedOutside',
+ 'effect-top-inspect-many':'chooseInspectedOutside',
+ 'effect-top-order':'chooseTopOrder',
+ iys:'iys'
+};
+// A private inspection is display-only. Choice indices must come from the
+// already computed legalUniversalActions list; client-created actions are never trusted.
+export function onlinePrivateGallery(privateChoices,legal,packs,match){
+ if(!privateChoices||!Array.isArray(legal)||!match?.pending)return null;
+ const kind=privateChoices.kind;
+ if(!Array.isArray(privateChoices.inspected)&&
+  !/(top|search|look|peek|inspect)/i.test(kind))return null;
+ const cards=new Map();
+ const add=(value)=>{
+  if(!value||typeof value.uid!=='string'||typeof value.cardId!=='string'||!value.uid||!value.cardId)return;
+  if(!cards.has(value.uid))cards.set(value.uid,{uid:value.uid,cardId:value.cardId,
+   name:typeof value.name==='string'&&value.name?value.name:value.cardId,
+   color:typeof value.color==='string'?value.color:'',actions:[]});
+ };
+ if(Array.isArray(privateChoices.inspected)){
+  for(const card of privateChoices.inspected)add(card);
+ }
+ // Some arbitrary TOP-N inspect/reorder effects expose every selectable UID
+ // through the pending window, not through privateChoices.inspected. Resolve
+ // only the acting player's own inspected deck window; never the opponent's.
+ const topKinds=new Set(['effect-top-inspect','effect-top-inspect-many','effect-top-order']);
+ if(topKinds.has(kind)&&match.pending.kind===kind&&
+  match.pending.player===privateChoices.player&&
+  Array.isArray(match.pending.uids)){
+  const player=match.players?.[privateChoices.player];
+  const pack=packs?.[privateChoices.player];
+  const ordered=new Set(match.pending.order||[]);
+  for(const uid of match.pending.uids){
+   if(ordered.has(uid))continue;
+   const physical=player?.deck?.find(c=>c?.uid===uid);
+   if(!physical)continue;
+   const printed=pack?.cards?.[physical.cardId];
+   add({uid,cardId:physical.cardId,name:printed?.name||physical.cardId,color:printed?.color||''});
+  }
+ }
+ const indices=new Map(legal.map((action,index)=>[JSON.stringify(action),index]));
+ const actionType=INSPECT_ACTION[kind];
+ for(const option of privateChoices.options||[]){
+  if(option?.card)add({...option.card,uid:option.card.uid||option.action?.uid});
+  const listed=Array.isArray(option?.cards)?option.cards:[];
+  for(const card of listed)add({...card,
+   uid:card.uid||(listed.length===1?option.action?.uid:null)});
+ }
+ // For every displayed card, attach only exact, legal, current-revision action
+ // indices. The private gallery never makes an ineligible card actionable.
+ for(const card of cards.values()){
+  const available=[];
+  for(const [index,action] of legal.entries()){
+   if(action.uid!==card.uid)continue;
+   if(actionType){
+    if(action.type!==actionType)continue;
+    if(kind==='iys'&&action.mode!=='take'&&action.mode!=='next')continue;
+   }else{
+    const option=(privateChoices.options||[]).find(opt=>opt?.action&&
+     indices.get(JSON.stringify(opt.action))===index&&
+     [opt.card,...(Array.isArray(opt.cards)?opt.cards:[])].some(c=>
+      c?.uid===card.uid||(!c?.uid&&opt.action?.uid===card.uid)));
+    if(!option)continue;
+   }
+   available.push({index,label:labelFor(packs,match,action)});
+  }
+  card.actions=available;
+ }
+ if(!cards.size)return null;
+ return {kind,cards:[...cards.values()]};
+}
 function paintCard(pack,card){
  if(!card)return null;
  const next={...card};
@@ -197,7 +281,7 @@ function present(room,userId){
   you:{username:mine.username,deckId:mine.deckId,deckName:mine.deckName,title:mine.title,titleLabel:TITLE_LABELS[mine.title]||mine.title},
   opponent:other?{username:other.username,deckName:other.deckName,title:other.title,titleLabel:TITLE_LABELS[other.title]||other.title}:null,
   youAreFirst:room.first==null?null:room.first===seat,
-  yourTurn:false,choices:[],view:null,log:room.log.slice(-40),
+  yourTurn:false,choices:[],inspection:null,view:null,log:room.log.slice(-40),
   winner:null
  };
  if(room.status==='waiting'||!room.match||!room.packs)return payload;
@@ -207,8 +291,13 @@ function present(room,userId){
  const actor=universalActor(room.match);
  payload.yourTurn=room.status==='playing'&&room.match.status==='playing'&&actor===seat;
  if(payload.yourTurn){
-  payload.choices=legalUniversalActions(room.packs,room.match).map((action,index)=>
+  const legal=legalUniversalActions(room.packs,room.match);
+  payload.choices=legal.map((action,index)=>
    publicActionChoice(action,index,room.packs,room.match,view));
+  if(room.match.pending){
+   const privateChoices=universalPrivateChoices(room.packs,room.match,seat);
+   payload.inspection=onlinePrivateGallery(privateChoices,legal,room.packs,room.match);
+  }
  }
  if(room.status==='finished'&&(room.winner===0||room.winner===1))
   payload.winner={seat:room.winner,username:room.seats[room.winner]?.username||''};

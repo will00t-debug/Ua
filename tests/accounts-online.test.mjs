@@ -209,9 +209,11 @@ describe('account server',{concurrency:1,timeout:180000},()=>{
   assert.equal(joined.status,200,JSON.stringify(joined.data));
   assert.equal(joined.data.seat,1);
   assert.equal(joined.data.yourTurn,false);
+  assert.equal(joined.data.inspection,null,'the waiting opponent cannot inspect private cards');
   const hostView=await api('/api/rooms/'+created.data.code,{token:host.data.token});
   const guestView=joined;
   assert.equal(hostView.data.yourTurn,true);
+  assert.equal(hostView.data.inspection,null,'ordinary mulligan is not a private deck inspection');
   assert.equal(hostView.data.view.phase,'setup');
   assert.equal(hostView.data.view.pending.kind,'opening-mulligan');
   assert.equal(hostView.data.view.players[0].lifeCount,0);
