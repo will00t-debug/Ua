@@ -74,6 +74,18 @@ body.v2-battle-page.v2-playing #match-view .pile.v2-zone-pile.selected{
  align-self:center;margin:auto;padding:24px;text-align:center;
  font-size:14px;color:#bfd0e2
 }
+.v2-shell .v2-public-move-panel{border-color:#c59a50;margin-top:10px}
+.v2-shell .v2-public-move-panel h2{color:#f6dfac;font-size:15px;margin:0 0 4px}
+.v2-shell .v2-public-move-gallery{
+ display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:8px;margin-top:8px
+}
+.v2-shell .v2-public-move-card{margin:0;display:grid;gap:4px;min-width:0}
+.v2-shell .v2-public-move-card img{
+ display:block;width:100%;aspect-ratio:63/88;object-fit:contain;border-radius:5px;background:#09131f
+}
+.v2-shell .v2-public-move-card figcaption{display:grid;gap:2px}
+.v2-shell .v2-public-move-card strong{font-size:11px;line-height:1.3;overflow-wrap:anywhere}
+.v2-shell .v2-public-move-card small{font-size:10px;color:#f3ce86;line-height:1.35}
 @media(max-width:600px){
  .v2-shell>.v2-zone-overlay{padding:8px}
  .v2-shell .v2-zone-dialog{max-height:94dvh}

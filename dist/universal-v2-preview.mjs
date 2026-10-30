@@ -34,7 +34,7 @@ import {V2_PHASE_LABELS,V2_TITLE_LABELS,V2_PENDING_LABELS,
  pendingChoiceCards,inspectedPendingChoiceCards,visiblePendingChoiceCards,pendingEntryChoiceCards,publicLifeOrderChoiceCard,pendingChoiceCaption,publicPendingTargetCard,attackBattleTags,attackKeywordBadges,frontAttackKeywordBadges,inlineBlockDecision,boardEntryMode,boardEntrySelection,entryClickPlan,moveClickPlan,
  FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs?v=20261030lifeart1';
 import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalReplay,
- publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
+ collectPublicCardResults,publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
 import {DESKTOP_BATTLE_QUERY,isDesktopBattlefield,mountDesktopBattlefield}
  from './universal-v2/desktop-battle-ui.mjs';
 
@@ -110,7 +110,7 @@ if(!IS_BATTLE_PAGE)$('v2-coverage').textContent=
  v2Entries.reduce((sum,item)=>sum+item.totalV2Cards,0)+' 張真卡 Pilot';
 let editorRecordId=null,fieldHold=0;
 const app={state:null,packs:null,launch:null,selectedUid:null,recordDeckId:null,recordNoted:false,
- selectedSide:null,history:[],busy:false,aiTimer:null,error:'',
+ selectedSide:null,history:[],publicMoves:[],busy:false,aiTimer:null,error:'',
  undo:null,replay:null,targetChoices:null,raidBaseUid:null,entryMode:null,inspectionPaused:false,dismissedTriggerKeys:new Set(),aiDifficulty:'normal',sequence:0,allActions:false, maxAuto:4500,autoMoves:0,aiPhaseKey:null,aiPhaseCount:0,aiFallbacks:0,aiCompletedSteps:0,lastAiProgress:'未啟動'};
 const phases=V2_PHASE_LABELS;
 const CLIENT_RELEASE='AI 修復 R2 · 2026-10-24';
@@ -132,6 +132,38 @@ function alertText(message){
 }
 function pushHistory(text){
  app.history.unshift(text); // Retain the full human-readable trace for bug reports.
+}
+function notePublicMove(packs,before,after,action,player){
+ const cards=collectPublicCardResults(packs,before,after,action);
+ if(!cards.length)return;
+ const actor=player===0?'你':'電腦';
+ app.publicMoves.unshift({actor,cards});
+ if(app.publicMoves.length>16)app.publicMoves.length=16;
+}
+function publicMoveGallery(){
+ const latest=app.publicMoves[0];
+ if(!latest?.cards?.length)return null;
+ const panel=el('section',{class:'panel v2-public-move-panel',role:'status',
+  'aria-label':'最近公開的檢索與場外／移除區結果'},
+  el('h2',{text:'最近公開的卡片'}),
+  el('p',{class:'v2-zone-subtitle',text:
+   latest.actor+' · 含公開檢索加入手牌，或從牌庫／手牌送至場外／移除區的結果。對手也看得到這些卡。'}));
+ const grid=el('div',{class:'v2-public-move-gallery'});
+ for(const card of latest.cards.slice(0,12)){
+  const side=card.owner===0?0:1;
+  const art=el('img',{src:imgUrl(side,card.cardId),alt:card.name,loading:'lazy',decoding:'async'});
+  art.onerror=()=>{
+   if(app.packs?.[side]?.id==='gurren-lagann'&&ttgArtErrorFallback(art))return;
+   if(!art.src.endsWith('/assets/mark.svg'))art.src='assets/mark.svg';
+  };
+  grid.append(el('figure',{class:'v2-public-move-card'},
+   el('span',{class:'v2-zone-open'},art),
+   el('figcaption',{},
+    el('strong',{text:card.name}),
+    el('small',{text:(card.owner===0?'你':'電腦')+' · '+card.label}))));
+ }
+ panel.append(grid);
+ return panel;
 }
 function cardFace(physical,side,{showStats=true,interactive=false,ready=null,selected=false}={}){
  const data=cardDef(side,physical.cardId),color=data?.color||'';
@@ -1142,6 +1174,8 @@ function render(){
  if(app.error)phase.append(el('p',{class:'v2-error',role:'alert',text:app.error}));
  arena.append(phase);
  target.append(arena);
+ const publicGallery=publicMoveGallery();
+ if(publicGallery)target.append(publicGallery);
  const log=el('details',{class:'v2-log panel'},el('summary',{text:'對局紀錄（'+app.history.length+' 步）'}),
   el('ol',{class:'history'},...app.history.slice(0,70).map(x=>el('li',{text:x}))));
  target.append(log);
@@ -1167,11 +1201,13 @@ function applyAction(a){
  try{
   const legal=legalUniversalActions(app.packs,app.state);
   if(!isExactLegal(a,legal))throw Error('操作已非目前的合法動作，請重新選擇。');
-  app.undo={state:app.state,history:app.history.slice(),replay:app.replay};
+  app.undo={state:app.state,history:app.history.slice(),replay:app.replay,
+   publicMoves:app.publicMoves.slice()};
   const previous=app.state;
   app.state=dispatchUniversalAction(app.packs,app.state,a,{actor:0});
   assertUniversalMatch(app.packs,app.state);
   app.replay=appendUniversalReplay(app.replay,a,0);
+  notePublicMove(app.packs,previous,app.state,a,0);
   pushHistory(publicPreviewActionLabel(app.packs,previous,app.state,a,0));
   saveBattleProgress();
   app.selectedUid=null;app.raidBaseUid=null;app.entryMode=null;app.targetChoices=null;app.inspectionPaused=false;app.error='';app.allActions=false;render();driveAi();
@@ -1180,6 +1216,7 @@ function applyAction(a){
 function undoMove(){
  if(!app.undo||app.busy)return;
  app.state=app.undo.state;app.history=app.undo.history;app.replay=app.undo.replay;
+ app.publicMoves=app.undo.publicMoves||[];
  app.undo=null;app.error='';app.selectedUid=null;app.entryMode=null;app.inspectionPaused=false;
  app.dismissedTriggerKeys.clear();
  saveBattleProgress();render();
@@ -1201,6 +1238,7 @@ function manualAiStep(){
   app.state=dispatchUniversalAction(app.packs,app.state,move,{actor:1});
   assertUniversalMatch(app.packs,app.state);
   app.replay=appendUniversalReplay(app.replay,move,1);
+  notePublicMove(app.packs,previous,app.state,move,1);
   pushHistory(publicPreviewActionLabel(app.packs,previous,app.state,move,1));
   app.aiCompletedSteps++;
   app.lastAiProgress='手動 '+move.type+' · T'+app.state.turn+'/'+app.state.phase;
@@ -1237,6 +1275,7 @@ function driveAi(){
     // The chosen action is copied from this state's legal list, never made up.
     app.state=dispatchUniversalAction(app.packs,app.state,choice,{actor:1});
     app.replay=appendUniversalReplay(app.replay,choice,1);
+    notePublicMove(app.packs,previous,app.state,choice,1);
     pushHistory(publicPreviewActionLabel(app.packs,previous,app.state,choice,1));
     if(reason){
      app.aiFallbacks++;
@@ -1462,6 +1501,7 @@ function startGame(){
   app.state=newUniversalMatch(app.packs,{decks:[mine.counts,foe.counts],seed,first,openingMulligan:true});
   assertUniversalMatch(app.packs,app.state);
   app.error='';app.selectedUid=null;app.entryMode=null;app.targetChoices=null;app.inspectionPaused=false;app.undo=null;
+  app.publicMoves=[];
   app.dismissedTriggerKeys.clear();
   app.allActions=false;app.aiFallbacks=0;app.aiCompletedSteps=0;app.lastAiProgress='新對局';
   app.aiDifficulty=app.launch.config.difficulty;
