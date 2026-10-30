@@ -599,3 +599,55 @@ test('TTG-029 recovers a cheap green Great Gurren card, or REST-plays it at six 
  energyLine=go(energyLine,act(energyLine,a=>a.type==='chooseOutsideOrRest'&&a.mode==='skip'));
  assertUniversalMatch(ttg,energyLine);
 });
+
+
+test('TTG-029 official card wording includes 2-energy green Great Gurren FIELD 033, excludes 8-energy FIELD 034',()=>{
+ const withField={...deck,'TTG-1-019':3,'TTG-1-063':3,
+  'TTG-1-033':1,'TTG-1-034':1};
+ assert.deepEqual(validateUniversalDeck(ttg,withField),[]);
+ const scenario=(seed,high)=>{
+  let state=newUniversalMatch(ttg,{decks:[withField,withField],first:0,seed});
+  for(let slot=0;slot<(high?3:2);slot++)
+   place(state,0,'TTG-1-019','energy',slot);
+  if(!high)place(state,0,'TTG-1-002','energy',2);
+  const base=place(state,0,'TTG-1-010','front',0);
+  const field=take(state,0,'TTG-1-033');
+  const expensive=take(state,0,'TTG-1-034');
+  state.players[0].outside.push(field,expensive);
+  const raid=hold(state,0,'TTG-1-029');
+  state=toPhase(state,'main');
+  state=go(state,act(state,a=>a.type==='raid'&&a.uid===raid.uid&&a.baseUid===base.uid));
+  assert.equal(state.pending.kind,'effect-outside-or-rest');
+  assert.equal(state.pending.restPlay,high);
+  assert.ok(state.pending.choices.includes(field.uid));
+  assert.ok(!state.pending.choices.includes(expensive.uid));
+  assertUniversalMatch(ttg,state);
+  return {state,field,expensive};
+ };
+ let {state:low,field:cheap}=scenario(290133,false);
+ const available=legalUniversalActions(ttg,low);
+ assert.ok(available.some(a=>a.type==='chooseOutsideOrRest'&&a.mode==='hand'&&a.uid===cheap.uid));
+ assert.ok(!available.some(a=>a.type==='chooseOutsideOrRest'&&a.mode==='rest'&&a.uid===cheap.uid),
+  'under six energy, only hand recovery is legal');
+ low=go(low,act(low,a=>a.type==='chooseOutsideOrRest'&&a.uid===cheap.uid&&a.mode==='hand'));
+ assert.ok(low.players[0].hand.some(c=>c.uid===cheap.uid));
+ assert.ok(!low.players[0].outside.some(c=>c.uid===cheap.uid));
+ assertUniversalMatch(ttg,low);
+
+ let {state:high,field:deploy}=scenario(290134,true);
+ const actions=legalUniversalActions(ttg,high).filter(a=>a.uid===deploy.uid);
+ assert.ok(actions.some(a=>a.mode==='hand'));
+ assert.ok(actions.some(a=>a.mode==='rest'&&a.line==='energy'));
+ assert.ok(!actions.some(a=>a.mode==='rest'&&a.line==='front'),
+  'a FIELD may never be placed in the FRONT');
+ assert.throws(()=>dispatchUniversalAction(ttg,high,
+  {type:'chooseOutsideOrRest',mode:'rest',uid:deploy.uid,line:'front',slot:1}),
+  /Illegal|legal|action|REST/i);
+ high=go(high,act(high,a=>a.type==='chooseOutsideOrRest'&&a.uid===deploy.uid&&
+  a.mode==='rest'&&a.line==='energy'));
+ const entered=high.players[0].energy.find(c=>c?.uid===deploy.uid);
+ assert.ok(entered);
+ assert.equal(entered.ready,false);
+ assert.equal(high.players[0].outside.some(c=>c.uid===deploy.uid),false);
+ assertUniversalMatch(ttg,high);
+});
