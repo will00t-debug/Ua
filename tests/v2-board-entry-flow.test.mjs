@@ -36,7 +36,10 @@ test('entry waits for the character, then the mode, then the cell',()=>{
  assert.equal(shared.type,'entry');
  assert.deepEqual(shared.actions.map(action=>action.baseUid),['energy-a','energy-b']);
  assert.deepEqual(entryClickPlan({selectedUid:'hand',entryMode:'raid',line:'energy',slot:2,
-  slotUid:'energy-a',legal}).actions,[legal[5]]);
+  slotUid:'energy-a',legal}),{type:'raid-base',baseUid:'energy-a'});
+ assert.deepEqual(entryClickPlan({selectedUid:'hand',entryMode:'raid',raidBaseUid:'energy-a',
+  line:'energy',slot:2,slotUid:'energy-a',legal}),
+  {type:'entry',mode:'raid',actions:[legal[5]]});
  assert.deepEqual(entryClickPlan({selectedUid:'hand',entryMode:'normal',line:'energy',slot:0,
   slotUid:'energy-full',legal}).actions,[legal[1]]);
 });
