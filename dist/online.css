@@ -258,3 +258,23 @@ body.arena-site #app.wrap:has(.online-match)>.arena-app{
  .online-dock{border-top:1px solid #243044}
  .hidden-hand span{max-width:18ch}
 }
+
+
+/* Controller-only private inspection: temporarily review board and hand. */
+.online-inspection-heading{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.online-inspection-heading h2{flex:1 1 150px}
+.online-inspection-peek{min-height:40px;padding:8px 12px;border:1px solid #d3a85f;
+ border-radius:8px;background:#34412c;color:#ffe4a8;font-weight:750}
+.online-inspection-return{position:fixed;z-index:80;bottom:calc(14px + env(safe-area-inset-bottom));
+ right:14px;display:flex;align-items:center;flex-wrap:wrap;gap:10px;max-width:min(440px,calc(100vw - 28px));
+ padding:10px 12px;background:#173d32;color:#f5edcf;border:2px solid #e0bb70;
+ border-radius:12px;box-shadow:0 10px 36px #050b15b0}
+.online-inspection-return span{font-size:12px;font-weight:700;line-height:1.45}
+.online-inspection-return button{min-height:42px;background:#e4bd71;color:#1c2e25;
+ font-weight:800;border-color:#e4bd71}
+@media(max-width:820px){
+ .online-inspection-heading{flex-direction:column;align-items:stretch}
+ .online-inspection-peek{width:100%}
+ .online-inspection-return{left:12px;right:12px;max-width:none;justify-content:center}
+ .online-inspection-return button{flex:1 1 100%}
+}
