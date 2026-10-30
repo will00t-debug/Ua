@@ -769,6 +769,43 @@ function onlineInspectionGallery(room){
 // Unlike TOP-N inspection, outside/removed effect-entry decisions can have
 // both a destination and a "take to hand" choice. Show those exact legal
 // choices next to the known card art, not as anonymous text buttons.
+// Online LIFE-order cards are PUBLIC after damage reveals them. Match only
+// the current exact legal UID; never inspect hidden LIFE or guess from a label.
+function onlineLifeOrderGallery(room){
+ if(!room?.yourTurn||room.view?.pending?.kind!=='life-batch-order'||
+  room.view.pending.player!==room.seat)return null;
+ const available=(room.choices||[]).filter(action=>
+  action.type==='chooseLifeOrder'&&Number.isInteger(action.index));
+ const revealed=room.view?.publicReveals||[];
+ const cards=available.flatMap(action=>{
+  const open=revealed.find(item=>item?.owner===room.seat&&
+   item.uid===action.uid&&typeof item.cardId==='string'&&item.cardId);
+  return open?[{action,cardId:open.cardId}]:[];
+ });
+ if(!cards.length)return null;
+ const section=el('section',{class:'online-private-inspection',
+  role:'region','aria-label':'選擇公開 LIFE 的結算順序'},
+  el('h2',{text:'選擇 LIFE 結算順序'}),
+  el('p',{class:'online-inspection-hint',
+   text:'這些 LIFE 已經公開。點選卡圖，決定先結算哪張；其他效果將繼續依合法順序處理。'}));
+ const grid=el('div',{class:'online-inspection-grid'});
+ for(const {action,cardId} of cards){
+  const img=el('img',{src:cardSrc({cardId})||'assets/mark.svg',
+   alt:cardId,loading:'eager',decoding:'async'});
+  img.addEventListener('error',()=>{
+   if(!img.src.endsWith('/assets/mark.svg'))img.src='assets/mark.svg';
+  });
+  grid.append(el('button',{type:'button',
+   class:'online-inspection-card eligible',
+   disabled:app.busy,'aria-label':action.label,
+   onClick:()=>sendAction(action.index)},
+   el('span',{class:'online-inspection-art'},img),
+   el('strong',{text:cardId}),
+   el('small',{text:'先結算此公開 LIFE'})));
+ }
+ section.append(grid);
+ return {node:section,handled:new Set(cards.map(x=>x.action.index))};
+}
 function effectEntryGallery(room){
  if(!room?.yourTurn||!room.view?.pending||room.inspection?.cards?.length||app.pick?.uid||app.busy)return null;
  if(room.view.pending.player!==room.seat)return null;
@@ -842,6 +879,7 @@ function matchView(){
  const phase=el('div',{class:'phases'});
  for(const [id,label] of PHASES)phase.append(el('span',{class:view.phase===id?'current':'',text:label}));
  const actions=el('div',{class:'actions'});
+ const lifeOrder=onlineLifeOrderGallery(room);
  const hint=playHint(room);
  if(view.phase==='setup')actions.append(el('p',{class:'setup-note',text:'開局可選擇保留 7 張，或整手重抽 7 張一次。先手先選，後手再選，完成後才設定生命卡。'}));
  else if(hint)actions.append(el('p',{class:'play-hint',text:hint}));
@@ -880,8 +918,9 @@ function matchView(){
    (card.actions||[]).map(action=>action.index)));
   const effectTarget=effectEntryGallery(room);
   for(const index of effectTarget?.handled||[])shownInGallery.add(index);
+  for(const index of lifeOrder?.handled||[])shownInGallery.add(index);
   const listed=(app.inspectionPaused?[]:dockChoices(room)).filter(choice=>choice!==next&&!shownInGallery.has(choice.index));
-  if(!listed.length&&!next)actions.append(el('p',{class:'muted',text:app.inspectionPaused?'正在查看場面與手牌，按「返回選牌」繼續。':'正在等待可以執行的操作。'}));
+  if(!listed.length&&!next&&!lifeOrder)actions.append(el('p',{class:'muted',text:app.inspectionPaused?'正在查看場面與手牌，按「返回選牌」繼續。':'正在等待可以執行的操作。'}));
   for(const choice of listed)actions.append(el('button',{type:'button',text:choice.label,disabled:app.busy,onClick:()=>sendAction(choice.index)}));
  }
  const inspection=onlineInspectionGallery(room);
@@ -905,6 +944,7 @@ function matchView(){
     el('div',{class:'row'},el('button',{type:'button',text:'認輸',disabled:app.busy||room.status!=='playing',onClick:resign}),
      room.status==='finished'?el('button',{type:'button',text:'返回大廳',onClick:leaveFinished}):null)),
    effectTarget?.node,
+   lifeOrder?.node,
    inspection,
    el('section',{class:'panel'},el('h2',{text:'公開紀錄'}),el('p',{class:'muted',text:'這裡不寫出手牌或牌庫裡的卡名。觸發會公開給對手。'}),log))));
 }
