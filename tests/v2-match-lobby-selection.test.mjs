@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {collectSavedV2LobbyDecks,validatedLobbyChoice,V2_MATCH_SETUP_STORAGE_KEY}
+import {collectSavedV2LobbyDecks,validatedLobbyChoice,accountLobbyRows,orderedAccountLobbyRows,shadowedLocalLobbyKeys,lobbyChoiceText,V2_MATCH_SETUP_STORAGE_KEY}
  from '../dist/universal-v2/lobby-saved-decks.mjs';
+import {prepareSoloBattle} from '../dist/universal-v2/solo-battle-session.mjs';
 import {BLEACH_GREEN_V2_COUNTS} from '../dist/universal-v2/preview-real-decks.mjs';
 import {TITLES} from '../dist/title-registry.mjs';
 import {editorV2Status} from '../dist/v2-editor-compat.mjs';
@@ -30,6 +31,9 @@ test('V2 lobby displays a human deck, AI deck, actual difficulty control and sam
  assert.ok(js.includes('syncMatchLobby()'));
  assert.ok(js.includes('rememberMatchLobby()'));
  assert.ok(js.includes('collectSavedV2LobbyDecks(localStorage)'));
+ assert.match(js,/fetch\('\/api\/decks',\{credentials:'same-origin'/);
+ assert.match(js,/accountLobbyRows\(payload\?\.decks\)/);
+ assert.match(js,/if\(status===200\)/);
  assert.doesNotMatch(js,/from '\.\/engine\.mjs'/);
 });
 test('AI selection is three real V2 AI levels, not a decorative control',()=>{
@@ -80,4 +84,51 @@ test('the picture deck builder and three BLEACH originals stay available',()=>{
  const green=editorV2Status('bleach',BLEACH_GREEN_V2_COUNTS);
  assert.equal(green.ready,true,green.issues.join('；'));
  assert.ok(TITLES.some(t=>t.id==='bleach'));
+});
+test('signed-in account decks become V2 lobby choices without rewriting the saved list',()=>{
+ const readyId='d0123456789abcdef';
+ const draftId='d0123456789abcdee';
+ const brokenId='d0123456789abcdff';
+ const input=[
+  {id:readyId,name:' 我的綠色帳號牌組 ',title:'bleach',counts:{...BLEACH_GREEN_V2_COUNTS},localId:'demo',playable:false},
+  {id:draftId,name:'還沒組完',title:'bleach',counts:{'BLC-1-067':4},localId:'draft'},
+  {id:brokenId,name:'壞掉的牌表',title:'bleach',counts:{'NOT-A-CARD':4}},
+  {id:'not-an-account-id',name:'不該出現',title:'bleach',counts:{...BLEACH_GREEN_V2_COUNTS}},
+  {id:readyId,name:'重複',title:'bleach',counts:{...BLEACH_GREEN_V2_COUNTS}}
+ ];
+ const original=JSON.stringify(input);
+ const rows=accountLobbyRows(input);
+ assert.equal(JSON.stringify(input),original);
+ assert.deepEqual(rows.map(row=>row.name),['我的綠色帳號牌組','還沒組完','壞掉的牌表']);
+ const ready=rows[0];
+ assert.equal(ready.ready,true,ready.issues.join('；'));
+ assert.equal(ready.key,'v2-account-'+readyId);
+ assert.equal(ready.recordDeckId,readyId);
+ assert.equal(ready.localId,'demo');
+ assert.equal(ready.source,'account');
+ assert.equal(Object.values(ready.counts).reduce((n,c)=>n+c,0),50);
+ assert.equal(rows[1].ready,false);
+ assert.equal(rows[1].counts,null);
+ assert.equal(lobbyChoiceText(rows[1],'my-title'),'帳號牌組｜還沒組完（目前 4/50 張。V2 正式對戰需要完整 50 張牌組。）');
+ const long=lobbyChoiceText({source:'account',ready:false,name:'長原因',issues:['還沒完成的原因'.repeat(8)]},'my-title');
+ assert.match(long,/^帳號牌組｜長原因（.{36}…）$/u);
+ assert.match(rows[2].issues[0],/無效卡號/);
+ assert.equal(lobbyChoiceText(ready,'ai-title'),'帳號牌組｜我的綠色帳號牌組');
+ const ordered=orderedAccountLobbyRows([rows[1],rows[2],ready]);
+ assert.deepEqual(ordered.map(row=>row.ready),[true,false,false]);
+ const local=collectSavedV2LobbyDecks({
+  getItem:key=>key==='bleach-arena-saved-decks-v1'?JSON.stringify([
+   {id:'demo',name:'我的綠色自訂牌組',counts:{...BLEACH_GREEN_V2_COUNTS}},
+   {id:'other',name:'另一副本機牌',counts:{...BLEACH_GREEN_V2_COUNTS}}
+  ]):null
+ });
+ assert.deepEqual(shadowedLocalLobbyKeys(local,rows),['v2-saved-bleach-0']);
+ const chosen=validatedLobbyChoice({value:ready.key},{[ready.key]:{pack:ready.pack,counts:ready.counts,label:ready.name,recordDeckId:ready.recordDeckId}},new Map());
+ const battle=prepareSoloBattle({
+  mine:chosen,foe:{pack:ready.pack,counts:ready.counts,label:'練習組'},
+  first:0,difficulty:'normal',recordDeckId:chosen.recordDeckId,now:1_700_000_000_000,nonce:7
+ });
+ assert.equal(battle.recordDeckId,readyId);
+ assert.equal(battle.decks[0].name,'我的綠色帳號牌組');
+ assert.equal(Object.values(battle.decks[0].counts).reduce((n,c)=>n+c,0),50);
 });

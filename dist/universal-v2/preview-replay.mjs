@@ -4,7 +4,7 @@
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  assertUniversalMatch} from './engine.mjs';
 import {uiActionLabel,publicLifeTriggerText} from './preview-actions.mjs';
-import {publicCardResults} from '../../server/public-card-results.mjs';
+import {publicCardResults} from './public-card-results.mjs';
 
 export const UNIVERSAL_PREVIEW_REPLAY_VERSION=1;
 const privateActions=new Set([
