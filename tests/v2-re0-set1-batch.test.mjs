@@ -4223,7 +4223,7 @@ test('Beatrice raids onto Beatrice, gains impact from Subaru, and draws only aft
  assert.ok(played);
  own=dispatchUniversalAction(fp,own,played);
  assert.equal(own.pending.kind,'effect-active-own-named');
- assert.equal(at(own,0,top.uid).ready,false);
+ assert.equal(at(own,0,top.uid).ready,true);
  const drawn=own.players[0].deck.length;
  own=dispatchUniversalAction(fp,own,{type:'chooseActiveOwnNamed',uid:named.uid});
  assert.equal(at(own,0,named.uid).ready,true);
@@ -5527,7 +5527,7 @@ test('the Beatrice call reveals an affordable Subaru or Beatrice and may rest or
  assert.equal(raidAi.replaceUid,undefined);
  assert.equal(chooseUniversalAiAction(packs,raid,{difficulty:'easy'}).mode,'hand');
  raid=dispatchUniversalAction(packs,raid,raidAction);
- assert.equal(at(raid,0,raidTops[0].uid).ready,false);
+ assert.equal(at(raid,0,raidTops[0].uid).ready,true);
  assert.equal(at(raid,0,raidTops[0].uid).stack[0].uid,base.uid);
  assert.equal(raid.pending,null);
 

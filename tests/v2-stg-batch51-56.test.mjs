@@ -480,7 +480,7 @@ test('STG-1-038 raids Okabe from outside or removed and keeps its color trigger'
  s=act(s,a=>a.type==='choosePrintedRestRaid'&&a.mode==='raid'&&a.uid===raided.uid&&
   a.baseUid===base.uid&&a.line==='front');
  const top=s.players[0].front.find(c=>c?.uid===raided.uid);
- assert.equal(top.ready,false);
+ assert.equal(top.ready,true);
  assert.equal(universalImpact(stg,s,top),1);
  assert.equal(universalBp(stg,s,top),stg.cards['STG-1-011'].bp);
 

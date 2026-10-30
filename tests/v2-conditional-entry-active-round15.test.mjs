@@ -319,7 +319,7 @@ test('entry cause distinguishes paid play, Raid, outside, recovery, and life tri
  s=dispatchUniversalAction(lab,s,{type:'event',uid:s.players[0].hand.find(c=>c.cardId==='LAB-DEPLOY-RAID').uid});
  s=dispatchUniversalAction(lab,s,legalUniversalActions(lab,s).find(a=>a.mode==='raid'&&a.uid===raidUid&&a.baseUid===raidBase));
  assert.equal(queuedActive(s).entryCause,'outsideEffectRaid');
- assert.equal(s.players[0].front[0].ready,false);
+ assert.equal(s.players[0].front[0].ready,true);
  s=finishPeek(lab,s);
  assert.equal(s.players[0].front[0].ready,true);
  s=open(5,state=>{

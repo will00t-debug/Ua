@@ -272,7 +272,7 @@ test('MMM-1-083 attacks twice after a life card reaches hand, and MMM-1-090 keep
  assert.equal(s.pending.kind,'block');
  s=use(s,{type:'chooseBlock',uid:sayaka.uid});
  assert.equal(s.pending.kind,'effect-sayaka-reenter');
- s=use(s,{type:'chooseSayakaReenter',mode:'enter',line:'energy',slot:0});
+ s=use(s,{type:'chooseSayakaReenter',mode:'enter',uid:sayaka.uid,line:'energy',slot:0});
  assert.equal(s.players[0].energy[0].uid,sayaka.uid);
  assert.equal(s.players[0].energy[0].ready,false);
  assert.equal(assertUniversalMatch(packs,s),true);

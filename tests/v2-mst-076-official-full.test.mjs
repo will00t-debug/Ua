@@ -69,7 +69,7 @@ test('no other FIELD: source own retirement is excluded; only genuinely <=green1
  assert.ok(s.players[0].outside.some(x=>x.uid===source.uid));
  assert.equal(assertUniversalMatch(packs,s),true);
 });
-test('three OTHER outside FIELD cards unlock free true REST Raid onto actual Roxy base in FRONT',()=>{
+test('three OTHER outside FIELD cards unlock free ACTIVE Raid onto actual Roxy base in FRONT',()=>{
  let {s,base,raid}=scenario(3);
  assert.equal(s.pending.energyLimit,4);
  const actions=legalUniversalActions(packs,s);
@@ -82,12 +82,12 @@ test('three OTHER outside FIELD cards unlock free true REST Raid onto actual Rox
  s=dispatchUniversalAction(packs,s,candidate);
  assert.equal(s.players[0].front[0].uid,raid.uid);
  assert.equal(s.players[0].front[0].stack[0].uid,base.uid);
- assert.equal(s.players[0].front[0].ready,false,'printed REST applies even to Raid');
+ assert.equal(s.players[0].front[0].ready,true,'Raid ACTIVE takes precedence over ordinary REST entry');
  assert.equal(s.players[0].apCards.filter(c=>c.ready).length,ap,'effect Raid costs no AP');
  assert.equal(countRetirementsThisTurn(s,0,'character'),0);
  assert.equal(assertUniversalMatch(packs,s),true);
 });
-test('effect-initiated REST Raid may remain at legal ENERGY base without forcing FRONT',()=>{
+test('effect-initiated ACTIVE Raid may remain at legal ENERGY base without forcing FRONT',()=>{
  let {s,base,raid}=scenario(3,'energy');
  const candidate=legalUniversalActions(packs,s).find(a=>a.uid===raid.uid&&
   a.mode==='raid'&&a.baseUid===base.uid&&a.line==='energy'&&a.slot===2);
@@ -95,6 +95,6 @@ test('effect-initiated REST Raid may remain at legal ENERGY base without forcing
  s=dispatchUniversalAction(packs,s,candidate);
  assert.equal(s.players[0].energy[2].uid,raid.uid);
  assert.equal(s.players[0].energy[2].stack[0].uid,base.uid);
- assert.equal(s.players[0].energy[2].ready,false);
+ assert.equal(s.players[0].energy[2].ready,true);
  assert.equal(assertUniversalMatch(packs,s),true);
 });
