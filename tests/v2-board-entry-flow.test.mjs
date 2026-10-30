@@ -44,6 +44,36 @@ test('entry waits for the character, then the mode, then the cell',()=>{
   slotUid:'energy-full',legal}).actions,[legal[1]]);
 });
 
+test('effect-created Raid skips base tap, but ordinary paid Raid keeps its base step',()=>{
+ const effect=[
+  {type:'chooseOutsideRestOrRaid',uid:'effect-uid',mode:'enter',line:'front',slot:3},
+  {type:'chooseOutsideRestOrRaid',uid:'effect-uid',mode:'raid',baseUid:'energy-a',line:'front',slot:1},
+  {type:'chooseOutsideRestOrRaid',uid:'effect-uid',mode:'raid',baseUid:'energy-b',line:'front',slot:1},
+  {type:'chooseOutsideRestOrRaid',uid:'effect-uid',mode:'raid',baseUid:'energy-a',line:'energy',slot:2}
+ ];
+ const both=boardEntrySelection(effect,'effect-uid');
+ assert.equal(both.needsMode,true);
+ assert.equal(entryClickPlan({selectedUid:'effect-uid',entryMode:null,
+  line:'front',slot:1,slotUid:null,legal:effect}).type,'entry-mode');
+ const front=entryClickPlan({selectedUid:'effect-uid',entryMode:'raid',
+  line:'front',slot:1,slotUid:null,legal:effect});
+ assert.equal(front.type,'entry');
+ assert.deepEqual(front.actions.map(a=>a.baseUid),['energy-a','energy-b'],
+  'only after the destination click should multiple Raid bases require a choice');
+ assert.deepEqual(entryClickPlan({selectedUid:'effect-uid',entryMode:'raid',
+  line:'energy',slot:2,slotUid:'energy-a',legal:effect}),
+  {type:'entry',mode:'raid',actions:[effect[3]]},
+  'effect Raid on an energy base resolves at the chosen energy cell');
+ assert.deepEqual(entryClickPlan({selectedUid:'hand',entryMode:'raid',
+  line:'energy',slot:2,slotUid:'energy-a',legal}),
+  {type:'raid-base',baseUid:'energy-a'},
+  'a paid hand Raid still selects its ENERGY base first');
+ const preview=readFileSync(new URL('../dist/universal-v2-preview.mjs',import.meta.url),'utf8');
+ const online=readFileSync(new URL('../dist/online.mjs',import.meta.url),'utf8');
+ assert.match(preview,/效果突襲：直接點亮起的登場位置/);
+ assert.match(online,/效果突襲：直接點亮起的登場位置/);
+});
+
 test('outside and removed characters use the same cell click',()=>{
  assert.equal(boardEntryMode(legal[8]),'raid');
  assert.equal(boardEntryMode(legal[9]),null);

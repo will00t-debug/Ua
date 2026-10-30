@@ -1005,11 +1005,13 @@ function entryDestination(action,line,slot,slotUid){
 export function entryClickPlan({selectedUid,entryMode,raidBaseUid=null,line,slot,slotUid,legal}){
  const selection=boardEntrySelection(legal,selectedUid);
  if(!selection.normal.length&&!selection.raid.length)return {type:'idle'};
- // A Raid from an ENERGY base usually enters a *different*, empty FRONT slot.
- // Tapping that base must select its UID, not silently compare its energy cell
- // to the final front destination. This also bypasses the mode chooser only
- // when the tapped character is a legally available Raid base.
- const tappedBase=line==='energy'&&slotUid&&
+ // For a paid Raid, tapping a legal ENERGY base selects it before choosing
+ // the destination. Effect-created Raids skip this preliminary base tap.
+ // Paid hand Raids retain base -> destination. Effect-instigated Raids instead
+ // let the player tap the final legal cell directly; their legal action already
+ // contains the base UID, with a choice shown only if several bases match.
+ const effectRaid=selection.raid.length>0&&selection.raid.every(action=>action.type!=='raid');
+ const tappedBase=!effectRaid&&line==='energy'&&slotUid&&
   (entryMode==='raid'||(!selection.needsMode&&entryMode!=='normal'))&&
   selection.raid.some(action=>action.baseUid===slotUid);
  if(tappedBase&&raidBaseUid!==slotUid)return {type:'raid-base',baseUid:slotUid};
@@ -1019,7 +1021,7 @@ export function entryClickPlan({selectedUid,entryMode,raidBaseUid=null,line,slot
  else if(selection.needsMode)return {type:'entry-mode'};
  else mode=selection.raid.length?'raid':'normal';
  const hits=(mode==='raid'?selection.raid:selection.normal)
-  .filter(action=>(mode!=='raid'||!raidBaseUid||action.baseUid===raidBaseUid)&&
+  .filter(action=>(mode!=='raid'||effectRaid||!raidBaseUid||action.baseUid===raidBaseUid)&&
    entryDestination(action,line,slot,slotUid));
  if(!hits.length)return {type:'entry-wait',mode};
  return {type:'entry',mode,actions:hits};

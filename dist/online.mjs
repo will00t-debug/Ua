@@ -411,9 +411,12 @@ function entryDestination(action,line,slot,slotUid){
 function entryClickPlan({selectedUid,entryMode,raidBaseUid=null,line,slot,slotUid,legal}){
  const selection=boardEntrySelection(legal,selectedUid);
  if(!selection.normal.length&&!selection.raid.length)return {type:'idle'};
- // Tapping an eligible ENERGY base chooses the Raid source. Final placement
- // may be that same ENERGY slot or a legal FRONT slot.
- const tappedBase=line==='energy'&&slotUid&&
+ // Paid Raids select an ENERGY base first; effect Raids place directly by cell.
+ // Paid hand Raids retain base -> destination. Effect-instigated Raids instead
+ // let the player tap the final legal cell directly; their legal action already
+ // contains the base UID, with a choice shown only if several bases match.
+ const effectRaid=selection.raid.length>0&&selection.raid.every(action=>action.type!=='raid');
+ const tappedBase=!effectRaid&&line==='energy'&&slotUid&&
   (entryMode==='raid'||(!selection.needsMode&&entryMode!=='normal'))&&
   selection.raid.some(action=>action.baseUid===slotUid);
  if(tappedBase&&raidBaseUid!==slotUid)return {type:'raid-base',baseUid:slotUid};
@@ -423,7 +426,7 @@ function entryClickPlan({selectedUid,entryMode,raidBaseUid=null,line,slot,slotUi
  else if(selection.needsMode)return {type:'entry-mode'};
  else mode=selection.raid.length?'raid':'normal';
  const hits=(mode==='raid'?selection.raid:selection.normal)
-  .filter(action=>(mode!=='raid'||!raidBaseUid||action.baseUid===raidBaseUid)&&
+  .filter(action=>(mode!=='raid'||effectRaid||!raidBaseUid||action.baseUid===raidBaseUid)&&
    entryDestination(action,line,slot,slotUid));
  if(!hits.length)return {type:'entry-wait',mode};
  return {type:'entry',mode,actions:hits};
@@ -490,8 +493,17 @@ function clickField(engineSeat,line,index,card){
  if(plan.type==='destination'||plan.type==='entry'){
   const acts=plan.actions||[];
   if(acts.length===1){sendAction(acts[0].index);return;}
-  if(acts.length>1){app.pick={uid:pick.uid||null,entryMode:pick.entryMode||null,
-   raidBaseUid:pick.raidBaseUid||null,options:acts};render();return;}
+  if(acts.length>1){
+   const own=room.view?.players?.[room.seat];
+   const bases=[...(own?.front||[]),...(own?.energy||[])];
+   const options=acts.every(action=>boardEntryMode(action)==='raid')?
+    acts.map(action=>{
+     const base=bases.find(c=>c?.uid===action.baseUid);
+     return {...action,label:'突襲底座：'+(base?.name||base?.cardId||action.baseUid||'指定底座')};
+    }):acts;
+   app.pick={uid:pick.uid||null,entryMode:pick.entryMode||null,
+    raidBaseUid:pick.raidBaseUid||null,options};render();return;
+  }
  }
  if(plan.type==='entry-mode'||plan.type==='entry-wait')return;
  if(card){app.pick={uid:pick.uid===card.uid?null:card.uid,entryMode:null,options:null};app.zone=null;render();}
@@ -620,15 +632,23 @@ function playHint(room){
  const board=legal.some(action=>boardEntryMode(action));
  const pick=app.pick||{};
  const selection=pick.uid?boardEntrySelection(legal,pick.uid):{normal:[],raid:[],needsMode:false};
- if(app.pick?.options?.length)return '這個格子有多種登場方式，請選一個。';
+ if(app.pick?.options?.length){
+  const choices=app.pick.options;
+  return choices.length>1&&choices.every(a=>boardEntryMode(a)==='raid')&&
+   new Set(choices.map(a=>a.baseUid)).size>1?
+   '這個位置有多個合法突襲底座，請選一張底座。':
+   '這個格子有多種登場方式，請選一個。';
+ }
  if(board){
   if(!pick.uid)return '先選擇要登場的角色。手牌直接點；場外或移除區請先打開該區。';
   if(selection.needsMode&&pick.entryMode!=='normal'&&pick.entryMode!=='raid')
    return '再選擇突襲進場或普通進場。';
   const mode=pick.entryMode==='raid'||(!selection.needsMode&&selection.raid.length)?'raid':'normal';
+  if(mode==='raid'&&selection.raid.length&&selection.raid.every(a=>a.type!=='raid'))
+   return '效果突襲：直接點亮起的登場位置；同格有多個合法底座時再選底座。';
   return mode==='raid'?(pick.raidBaseUid?
    '已選突襲底座。請點後線底座留在後線，或點前線亮起的位置登場。':
-   '先點合法的前線／後線底座，再請直接點要登場的格子；後線底座可再點一次原位突襲。'):
+   '一般突襲：先點合法底座，再點要登場的格子。'):
    '普通進場。請直接點要登場的格子。';
  }
  if(room.view?.pending&&room.view.pending.player===room.seat)return '請完成這個選擇。';

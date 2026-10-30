@@ -37,15 +37,34 @@ test('hand, outside and removed: select physical target BEFORE choosing normal/R
   const normal=entryClickPlan({selectedUid:uid,entryMode:'normal',line:'front',slot:3,
    slotUid:null,legal:baseLegal});
   if(uid!=='hand-raid')assert.equal(normal.mode,'normal');
-  const raid=entryClickPlan({selectedUid:uid,entryMode:'raid',line:'energy',slot:0,
+  // Effect-granted Raid: directly tap the destination; no preliminary base tap.
+  const raid=entryClickPlan({selectedUid:uid,entryMode:'raid',line:'front',slot:2,
+   slotUid:null,legal:baseLegal});
+  assert.equal(raid.type,'entry',uid);
+  assert.equal(raid.mode,'raid',uid);
+  assert.ok(raid.actions.every(a=>a.uid===uid&&a.baseUid==='rear-base'),uid);
+  const energy=entryClickPlan({selectedUid:uid,entryMode:'raid',line:'energy',slot:0,
    slotUid:'rear-base',legal:baseLegal});
-  assert.deepEqual(raid,{type:'raid-base',baseUid:'rear-base'},uid);
-  assert.equal(entryClickPlan({selectedUid:uid,entryMode:'raid',raidBaseUid:'rear-base',
-   line:'front',slot:2,slotUid:null,legal:baseLegal}).mode,'raid',uid);
+  assert.notEqual(energy.type,'raid-base',uid);
+  if(uid==='hand-raid')assert.equal(energy.type,'entry',uid);
  }
  assert.equal(entryClickPlan({selectedUid:null,entryMode:'raid',line:'front',slot:2,
   slotUid:null,legal:baseLegal}).type,'idle');
  assert.equal(boardEntrySelection(baseLegal,'forged').needsMode,false);
+});
+
+test('effect Raid offers a base choice only when different legal bases share the chosen cell',()=>{
+ const multi=[...baseLegal,
+  {type:'chooseOutsideRestOrRaid',uid:'outside-raid',mode:'raid',
+   baseUid:'rear-second',line:'front',slot:2}];
+ const plan=entryClickPlan({selectedUid:'outside-raid',entryMode:'raid',
+  line:'front',slot:2,slotUid:null,legal:multi});
+ assert.equal(plan.type,'entry');
+ assert.deepEqual(plan.actions.map(a=>a.baseUid),['rear-base','rear-second']);
+ const selected=entryClickPlan({selectedUid:'outside-raid',entryMode:'raid',
+  raidBaseUid:'rear-base',line:'front',slot:2,slotUid:null,legal:multi});
+ assert.deepEqual(selected.actions.map(a=>a.baseUid),['rear-base','rear-second'],
+  'effect Raid does not silently lock onto an old base selection');
 });
 
 test('Raid-only and normal-only effects never invent the other entry mode',()=>{
@@ -75,6 +94,8 @@ test('both solo and online UI recognize all three source zones and obey mode-bef
    assert.ok(source.includes("'"+type+"'"),type);
   }
   assert.match(source,/entryMode==='raid'\|\|\(!selection\.needsMode&&entryMode!=='normal'\)/);
+  assert.match(source,/const effectRaid=selection\.raid\.length>0/);
+  assert.match(source,/const tappedBase=!effectRaid/);
   assert.match(source,/if\(selection\.needsMode\)return \{type:'entry-mode'\}/);
  }
 });
