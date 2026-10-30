@@ -146,6 +146,9 @@ const INSPECT_ACTION={
  'effect-top-character-outside':'chooseTopCharacterOutside',
  'effect-top-deploy':'chooseTopDeploy',
  'effect-top-deploy-rest':'chooseTopDeployRest',
+ 'effect-top-inspect':'chooseInspectedOutside',
+ 'effect-top-inspect-many':'chooseInspectedOutside',
+ 'effect-top-order':'chooseTopOrder',
  iys:'iys'
 };
 // A private inspection is display-only. Choice indices must come from the
@@ -153,6 +156,8 @@ const INSPECT_ACTION={
 export function onlinePrivateGallery(privateChoices,legal,packs,match){
  if(!privateChoices||!Array.isArray(legal)||!match?.pending)return null;
  const kind=privateChoices.kind;
+ if(!Array.isArray(privateChoices.inspected)&&
+  !/(top|search|look|peek|inspect)/i.test(kind))return null;
  const cards=new Map();
  const add=(value)=>{
   if(!value||typeof value.uid!=='string'||typeof value.cardId!=='string'||!value.uid||!value.cardId)return;
@@ -162,6 +167,24 @@ export function onlinePrivateGallery(privateChoices,legal,packs,match){
  };
  if(Array.isArray(privateChoices.inspected)){
   for(const card of privateChoices.inspected)add(card);
+ }
+ // Some arbitrary TOP-N inspect/reorder effects expose every selectable UID
+ // through the pending window, not through privateChoices.inspected. Resolve
+ // only the acting player's own inspected deck window; never the opponent's.
+ const topKinds=new Set(['effect-top-inspect','effect-top-inspect-many','effect-top-order']);
+ if(topKinds.has(kind)&&match.pending.kind===kind&&
+  match.pending.player===privateChoices.player&&
+  Array.isArray(match.pending.uids)){
+  const player=match.players?.[privateChoices.player];
+  const pack=packs?.[privateChoices.player];
+  const ordered=new Set(match.pending.order||[]);
+  for(const uid of match.pending.uids){
+   if(ordered.has(uid))continue;
+   const physical=player?.deck?.find(c=>c?.uid===uid);
+   if(!physical)continue;
+   const printed=pack?.cards?.[physical.cardId];
+   add({uid,cardId:physical.cardId,name:printed?.name||physical.cardId,color:printed?.color||''});
+  }
  }
  const indices=new Map(legal.map((action,index)=>[JSON.stringify(action),index]));
  const actionType=INSPECT_ACTION[kind];
