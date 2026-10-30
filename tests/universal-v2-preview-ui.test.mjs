@@ -181,7 +181,8 @@ test('inspected nonmatching cards are visible but disabled',()=>{
  assert.equal(deployed[1].keepLegal,true);
  const script=source('../dist/universal-v2-preview.mjs');
  assert.match(script,/inspectedPendingChoiceCards\(privateChoices,legal\)/);
- assert.match(script,/for\(const card of inspected\)list\.append\(inspectedChoiceControl\(card\)\)/);
+ assert.match(script,/const pictured=\[\.\.\.inspected,\.\.\.windowCards\]/);
+ assert.match(script,/for\(const card of pictured\)list\.append\(inspectedChoiceControl\(card\)\)/);
  assert.match(script,/disabled:!enabled/);
  assert.match(source('../dist/universal-v2-legacy.css'),/choice-card\.v2-ineligible/);
 });
