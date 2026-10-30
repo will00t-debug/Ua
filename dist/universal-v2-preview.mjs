@@ -111,7 +111,7 @@ if(!IS_BATTLE_PAGE)$('v2-coverage').textContent=
 let editorRecordId=null,fieldHold=0;
 const app={state:null,packs:null,launch:null,selectedUid:null,recordDeckId:null,recordNoted:false,
  selectedSide:null,history:[],busy:false,aiTimer:null,error:'',
- undo:null,replay:null,targetChoices:null,raidBaseUid:null,entryMode:null,dismissedTriggerKeys:new Set(),aiDifficulty:'normal',sequence:0,allActions:false, maxAuto:4500,autoMoves:0,aiPhaseKey:null,aiPhaseCount:0,aiFallbacks:0,aiCompletedSteps:0,lastAiProgress:'未啟動'};
+ undo:null,replay:null,targetChoices:null,raidBaseUid:null,entryMode:null,inspectionPaused:false,dismissedTriggerKeys:new Set(),aiDifficulty:'normal',sequence:0,allActions:false, maxAuto:4500,autoMoves:0,aiPhaseKey:null,aiPhaseCount:0,aiFallbacks:0,aiCompletedSteps:0,lastAiProgress:'未啟動'};
 const phases=V2_PHASE_LABELS;
 const CLIENT_RELEASE='AI 修復 R2 · 2026-10-24';
 const btn=(label,fn,cls='')=>el('button',{type:'button',class:cls,text:label,onClick:fn});
@@ -451,16 +451,28 @@ function pendingDialog(legal,view){
   visiblePendingChoiceCards(view,row.action).length>0||
   publicPendingTargetCard(view,row.action)!==null);
  const title=V2_PENDING_LABELS[s.pending.kind]||s.pending.kind;
+ const triggerChoice=s.pending.kind==='life-trigger';
+ const blocking=s.pending.kind==='block'&&view.battle;
+ // A view-only pause: no action, state transition, or hidden-card disclosure.
+ const canPeek=!triggerChoice&&!blocking&&(gallery||
+  /top|search|look|inspect|deck|outside|hand/i.test(s.pending.kind));
+ if(canPeek&&app.inspectionPaused){
+  return el('div',{class:'v2-inspection-return',role:'status'},
+   el('span',{text:'正在查看場面與手牌 · 效果選擇尚未完成'}),
+   btn('返回選牌',()=>{app.inspectionPaused=false;render();},'btn primary'));
+ }
  const overlay=el('div',{class:'overlay'});
  const dialog=el('div',{class:'dialog panel pending'+(gallery?' pending-cards':''),
   role:'dialog','aria-modal':'true','aria-label':title});
- const triggerChoice=s.pending.kind==='life-trigger';
- const blocking=s.pending.kind==='block'&&view.battle;
  const blockGallery=blocking&&rows.some(row=>row.action.type==='chooseBlock'&&row.action.uid);
  const shown=triggerChoice?triggerCards(view).filter(card=>card.checking):[];
  if(blockGallery)dialog.classList.add('pending-cards');
  dialog.append(el('div',{class:'headline'},el('h2',{text:title}),
   el('span',{class:'tag',text:'玩家操作'})),
+  canPeek?el('div',{class:'v2-inspection-peek-tools'},
+   btn('查看場面與手牌',()=>{app.inspectionPaused=true;render();},
+    'btn v2-inspection-peek-btn'),
+   el('span',{text:'可暫時查看場面與手牌，不會取消這次選牌。'})):null,
   el('p',{class:'note',text:triggerChoice?
    '這張觸發已經公開，對手也能看到。請選擇是否使用。':
    blocking?'對手的角色正在攻擊。先看直傷和衝擊，再選擇阻擋或不阻擋。':
@@ -1007,6 +1019,7 @@ function render(){
   return;
  }
  const v=universalPublicView(app.packs,s,0),legal=legalUniversalActions(app.packs,s);
+ const tableLegal=app.inspectionPaused?[]:legal;
  const block=app.busy?null:inlineBlockDecision(v,legal);
  const mobileMenu=btn('☰ 對局選單',()=>{
   const header=mobileMenu.closest('.matchHeader');
@@ -1059,12 +1072,12 @@ function render(){
   noteAiRecord(s);
   arena.append(el('div',{class:'resultBanner'},el('h2',{text:s.winner===0?'你獲勝了！':'電腦獲勝'})));
  }
- arena.append(legacyPlayer(v,1,legal),middle,legacyPlayer(v,0,legal));
+ arena.append(legacyPlayer(v,1,tableLegal),middle,legacyPlayer(v,0,tableLegal));
  const handArea=el('section',{class:'handArea'},
   el('header',{class:'handTitle'},
    el('span',{text:'你的手牌 · '+v.players[0].hand.length+' 張'}),
    el('span',{text:'REST 仍可產生能源'})),
-  legacyHand(v,legal),legacyCommands(legal));
+  legacyHand(v,tableLegal),app.inspectionPaused?null:legacyCommands(legal));
  arena.append(handArea);
  const deploying=legal.some(action=>boardEntryMode(action));
  const phase=el('div',{class:'phaseAction'},el('p',{text:block?
@@ -1110,13 +1123,13 @@ function applyAction(a){
   app.replay=appendUniversalReplay(app.replay,a,0);
   pushHistory(publicPreviewActionLabel(app.packs,previous,app.state,a,0));
   saveBattleProgress();
-  app.selectedUid=null;app.raidBaseUid=null;app.entryMode=null;app.targetChoices=null;app.error='';app.allActions=false;render();driveAi();
+  app.selectedUid=null;app.raidBaseUid=null;app.entryMode=null;app.targetChoices=null;app.inspectionPaused=false;app.error='';app.allActions=false;render();driveAi();
  }catch(e){alertText(e?.message||String(e));}
 }
 function undoMove(){
  if(!app.undo||app.busy)return;
  app.state=app.undo.state;app.history=app.undo.history;app.replay=app.undo.replay;
- app.undo=null;app.error='';app.selectedUid=null;app.entryMode=null;
+ app.undo=null;app.error='';app.selectedUid=null;app.entryMode=null;app.inspectionPaused=false;
  app.dismissedTriggerKeys.clear();
  saveBattleProgress();render();
  if(uiActor(app.state)===1)driveAi();
@@ -1397,7 +1410,7 @@ function startGame(){
   app.recordNoted=false;
   app.state=newUniversalMatch(app.packs,{decks:[mine.counts,foe.counts],seed,first,openingMulligan:true});
   assertUniversalMatch(app.packs,app.state);
-  app.error='';app.selectedUid=null;app.entryMode=null;app.targetChoices=null;app.undo=null;
+  app.error='';app.selectedUid=null;app.entryMode=null;app.targetChoices=null;app.inspectionPaused=false;app.undo=null;
   app.dismissedTriggerKeys.clear();
   app.allActions=false;app.aiFallbacks=0;app.aiCompletedSteps=0;app.lastAiProgress='新對局';
   app.aiDifficulty=app.launch.config.difficulty;
