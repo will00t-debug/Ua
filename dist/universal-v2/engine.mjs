@@ -5379,8 +5379,11 @@ function validRaidBase(pack,s,owner,base,top){
  if(base.stack?.length){
   const bottom=base.stack[0];
   // The buried layer is not the visible card. Q50 keeps its alias inactive.
-  return accepts(top.raidFromRaid)&&names.includes(card(pack,bottom).name)&&
-   !card(pack,bottom).raidName;
+  // Q2398: a printed extra Raid host under グレン / ラガン is still a legal
+  // chain destination for a card that could raid that host directly.
+  const namedBottom=names.includes(card(pack,bottom).name)&&!card(pack,bottom).raidName;
+  return accepts(top.raidFromRaid)&&(namedBottom||
+   extraRaidHostAccepts(pack,s,owner,bottom,top));
  }
  return accepts(names)&&!b.raidName;
 }

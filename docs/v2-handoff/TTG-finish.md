@@ -20,7 +20,7 @@ Catalog disagreements kept in the proof:
 
 - 027 facedown thresholds of 1 and 3, and the BP 5000 retire window, come from the legacy resolver. They were not re-read from the official FAQ page.
 - Scaled facedown counts walk the recursive pile. TTG-1-034 energy counts only direct facedowns, matching 底下每張.
-- 074's bottom is シモン only. Legacy ロシウ is not a base. 074 does not chain onto グレンラガン, because the chain names are exact ラガン and グレン.
+- 074's printed Raid name is シモン only. Q2398 (2026-10-09): a raided グレン whose buried base is TTG-1-070 ロシウ is a legal chain, because 070 independently hosts グレンラガン while no カミナ is on the field. 074 still does not chain onto グレンラガン; those chain names stay exact ラガン and グレン.
 - 056's attack-end raid follows the catalog: any red ラガン or グレンラガン. The legacy list TTG-1-073/074/076 is not the limit.
 - 061 lets the player pick either unused mode. The legacy resolver forced recover, then deploy.
 - COLOR and SPECIAL life sentences that are missing from the Chinese effect text use the shared handlers: 032 SPECIAL `retireOppFront`, 033 COLOR deploy green energy 2 or less and AP 1, 062 COLOR retire an opponent front of BP 2500 or less.
