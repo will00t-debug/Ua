@@ -353,7 +353,7 @@ export function rezeroPackCard(card){
     name:'ナツキ・スバル'}}]}:{}),
   ...(kind==='raidRemScaledRetire'?{raidName:'レム'}:{}),
   ...(kind==='raidEmiliaDiscountRest'?{raidName:'エミリア'}:{}),
-  ...(kind==='raidRemTurnBpDraw'?{raidName:'レム',ownTurnBp:500,mainAbility:{
+  ...(kind==='raidRemTurnBpDraw'?{raidName:'レム',raidOwnTurnBp:500,mainAbility:{
    op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,
    then:[{op:'enemyBpDown',bp:1000,minBp:1500,zone:'front'}]}}:{}),
   ...(kind==='raidEmiliaDownRestedRetire'?{raidName:'エミリア',mainAbility:{
@@ -361,14 +361,14 @@ export function rezeroPackCard(card){
   ...(kind==='raidRemHandImpact'?{raidName:'レム',mainAbility:{
    op:'frontOnceGrantImpactNamed',frontOnly:true,oncePerTurn:true,excludeSelf:true,
    names:['ラム','レム']}}:{}),
-  ...(kind==='raidRemImpactSubaruBlock'?{raidName:'レム',printedImpact:1}:{}),
+  ...(kind==='raidRemImpactSubaruBlock'?{raidName:'レム',raidImpact:1}:{}),
   ...(kind==='raidBeatriceMoveLock'?{raidName:'ベアトリス',passiveBonuses:[{
    bp:500,condition:{kind:'ownNameExists',turn:'own',zone:'field',excludeSelf:false,
     name:'ナツキ・スバル'}}]}:{}),
   ...(kind==='raidPeekBeatriceReveal'?{raidName:'ナツキ・スバル'}:{}),
   ...(kind==='deckCharacterEntryActive'?{passiveBonuses:[{
    bp:500,condition:{kind:'ownDeckCharacterEntryThisTurn',turn:'own'}}]}:{}),
-  ...(kind==='raidEmiliaBlockRestSwap'?{raidName:'エミリア',impactNull:true,
+  ...(kind==='raidEmiliaBlockRestSwap'?{raidName:'エミリア',raidImpactNull:true,
    unblockedRestFront:true,
    blockBpRestriction:{relation:'atMost',bp:2000,condition:null},
    mainAbility:{op:'energySwapOwnFront',line:'energy',oncePerTurn:true}}:{}),

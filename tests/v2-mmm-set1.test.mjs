@@ -1671,7 +1671,8 @@ test('MMM-1-071 cannot be used at 5 life, raids as Sayaka, deals 2, and is not b
  const printed=pack.cards['MMM-1-071'];
  assert.deepEqual([...printed.nameAliases],['美樹 さやか']);
  assert.equal(printed.raidName,'美樹 さやか');
- assert.equal(printed.printedAttackDamage,2);
+ assert.equal(printed.raidAttackDamage,2);
+ assert.equal(printed.printedAttackDamage,1);
  assert.equal(printed.playLifeAtMost,4);
  assert.equal(printed.blockBpRestriction.relation,'atMost');
  assert.equal(printed.blockBpRestriction.bp,2000);
@@ -1725,7 +1726,9 @@ test('MMM-1-071 cannot be used at 5 life, raids as Sayaka, deals 2, and is not b
  assert.equal(assertUniversalMatch(packs,named),true);
 
  let blocked=toPhase(fresh(counts,32073),'attack');
+ const sayakaBase=take(blocked,0,'MMM-1-086');
  const attacker=stamp(blocked,put(blocked,0,'MMM-1-071','front',0,true));
+ attacker.stack=[sayakaBase];
  const lowBlock=stamp(blocked,put(blocked,1,'MMM-1-107','front',0,true));
  const highBlock=stamp(blocked,put(blocked,1,'MMM-1-013','front',1,true));
  assert.equal(universalAttackDamage(packs,blocked,attacker),2);

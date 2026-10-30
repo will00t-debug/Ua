@@ -50,7 +50,7 @@ const BY_ID={
   mainAbility:main('MMM-2-028')},
  'MMM-2-031':{triggerEffect:{op:'deployHandCharacter',color:'green',maxEnergy:2,ap:1},
   effects:{onPlay:[job('MMM-2-031','onPlay')]}},
- 'MMM-2-032':{raidName:'七海 やちよ',impactNull:true,passiveBonuses:[{
+ 'MMM-2-032':{raidName:'七海 やちよ',raidImpactNull:true,passiveBonuses:[{
   condition:entries(VILLA,3),impact:1}],effects:{onPlay:[job('MMM-2-032','onPlay')]}},
  'MMM-2-033':{effects:{onPlay:[job('MMM-2-033','onPlay')]}},
  'MMM-2-034':{passiveBonuses:[{

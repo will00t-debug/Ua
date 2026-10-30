@@ -924,8 +924,7 @@ const authored=[
   "id":"SLG-1-049","name":"水篠 旬","color":"green","energy":6,
   "ap":1,"bp":4000,"gen":1,"trigger":"raid","type":"character",
   "textAnchor":"BP+500",
-  "implementation":"dsl","raidName":"水篠 旬","printedImpact":1,
-  "passiveBonuses":[{"condition":{"kind":"selfOnField","turn":"any"},"bp":500}],
+  "implementation":"dsl","raidName":"水篠 旬","raidImpact":1,"raidBp":500,
   "effects":{
    "onPlay":[{"op":"retireOppFrontOne","optional":true,"entry":"ownEffect"}],
    "onAttack":[{"op":"drawTuckHandUnder","count":1}]
@@ -947,7 +946,7 @@ const authored=[
   "id":"SLG-1-022","name":"水篠 旬","color":"purple","energy":12,
   "ap":1,"bp":5000,"gen":1,"trigger":"raid","type":"character",
   "textAnchor":"需求能源減少1",
-  "implementation":"dsl","raidName":"水篠 旬","printedImpact":1,
+  "implementation":"dsl","raidName":"水篠 旬","raidImpact":1,
   "fieldTraitEnergyDiscount":{"trait":"影の軍団","per":1},
   "energyAttackSwap":{"trait":"影の軍団"},
   "effects":{"onPlay":[

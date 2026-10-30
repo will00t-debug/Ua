@@ -227,7 +227,7 @@ export function mmmPackCard(card){
    op:'frontActiveOnceNameOrTrait',frontOnly:true,oncePerTurn:true,requiresActive:true,
    name:'百江 なぎさ',trait:QUINTET,bp:1000}}:{}),
   ...(kind==='mermaidWitch'?{nameAliases:['美樹 さやか'],raidName:'美樹 さやか',
-   printedAttackDamage:2,playLifeAtMost:4,
+   raidAttackDamage:2,playLifeAtMost:4,
    blockBpRestriction:{relation:'atMost',bp:2000,condition:null}}:{}),
   ...(OPP_COLORS[kind]?{opponentFieldColorsHandEnergyDiscount:{colors:OPP_COLORS[kind],amount:1}}:{}),
   ...(kind==='discountImpact'?{outsideEventHandEnergyDiscount:{min:4,amount:5},printedImpact:1,
@@ -251,7 +251,7 @@ export function mmmPackCard(card){
    op:'frontDiscardNameTraitBuff',frontOnly:true,oncePerTurn:true,
    name:'百江 なぎさ',trait:QUINTET,bp:1000}}:{}),
   ...(kind==='kyokoLifeAttack'?{raidName:'佐倉 杏子',lifeToHandDoubleAttack:true}:{}),
-  ...(kind==='sayakaReenter'?{raidName:'美樹 さやか',printedImpact:1,impactNull:true,
+  ...(kind==='sayakaReenter'?{raidName:'美樹 さやか',raidImpact:1,raidImpactNull:true,
    mainAbility:{op:'lifeHandReenterGrant',oncePerTurn:true}}:{}),
   ...(kind==='madokaKinds'?{raidName:'鹿目 まどか',girlNameUnblockedDraw:2,passiveBonuses:[{
    condition:{kind:'ownDistinctTraitNames',turn:'own',min:4,zone:'field',excludeSelf:true,trait:GIRL},

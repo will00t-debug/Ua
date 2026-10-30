@@ -1547,12 +1547,12 @@ export function checkedBleachAddonDefinition(p){
   ...(isBazzKit?{mainAbility:{op:'repeatDiscardBattleKit'}}:{}),
   ...(isIchigoFour?{raidName:'黒崎 一護',mainAbility:{op:'oncePayProgram',oncePerTurn:true,frontOnly:false,raidOnly:false,payAp:0,requiresOwnName:null,then:[{op:'removeOutsideThen',count:4,optional:false,cardType:'any',zone:'outside',controller:'own',then:[{op:'draw',count:1},{op:'grantSelfImpactThisTurn',amount:1}]}]}}:{}),
   ...(isBambiettaRest?{raidName:'バンビエッタ・バスターバイン'}:{}),
-  ...(isJugram?{raidName:'ユーグラム・ハッシュヴァルト',printedImpact:1,
+  ...(isJugram?{raidName:'ユーグラム・ハッシュヴァルト',raidImpact:1,
    phaseEffects:[{phase:'attack',edge:'end',turn:'own',then:[
     {op:'frontOppTriggerDrawDiscard',count:2,discardCount:1}]}]}:{}),
   ...(isByakuya?{raidName:'朽木 白哉',mainAbility:{op:'oncePayProgram',oncePerTurn:true,frontOnly:false,raidOnly:false,payAp:0,requiresOwnName:null,then:[{op:'removeOutsideThen',count:3,optional:false,cardType:'any',zone:'outside',controller:'own',then:[{op:'grantSelfImpactThisTurn',amount:1}]}]}}:{}),
   ...(isSoiFon?{mainAbility:{op:'oncePayProgram',oncePerTurn:true,frontOnly:true,raidOnly:false,payAp:1,requiresOwnName:null,then:[{op:'markOppFrontRetireNextStart',optional:true,maxBp:3500,thenRestMove:'energy'}]}}:{}),
-  ...(isYamamoto?{raidName:'山本 元柳斎 重國',printedImpact:1}:{}),
+  ...(isYamamoto?{raidName:'山本 元柳斎 重國',raidImpact:1}:{}),
   ...(isGiselleField?{mainAbility:{op:'oncePayProgram',oncePerTurn:true,frontOnly:true,raidOnly:false,payAp:0,requiresOwnName:null,then:[{op:'retireOwnMissingTraitThen',trait:'殭屍',then:[{op:'deployOutsideColorTraitActive',color:'yellow',trait:'殭屍'}]}]}}:{}),
   ...(isNemSquad?{mainAbility:{op:'oncePayProgram',oncePerTurn:true,frontOnly:false,raidOnly:false,payAp:0,requiresOwnName:null,then:[{op:'retireOwnTraitFollow',optional:false,trait:'涅骸部隊',follow:{kind:'searchTop',count:4,max:1,rest:'bottom',logic:'any',filters:[{field:'name',value:'涅 マユリ'},{field:'name',value:'涅 ネム'},{field:'trait',value:'涅骸部隊'}]}}]}}:{}),
   ...(isMayuriNem?{raidName:'涅 マユリ',mainAbility:{op:'oncePayProgram',oncePerTurn:true,frontOnly:true,raidOnly:false,payAp:0,requiresOwnName:null,requiresOwnCharacterRetired:true,then:[{op:'deployOutsideColorApNameOrTraitRest',color:'blue',ap:1,name:'涅 ネム',trait:'涅骸部隊',optional:false}]}}:{}),
@@ -1640,7 +1640,7 @@ export function checkedBleachAddonDefinition(p){
    then:[{op:'drawDiscard',count:1,discardCount:1}]}}:{}),
   ...(isPurpleOutside?{mainAbility:{op:'restRetireRecoverOutside',optional:false,
    filters:[{field:'color',value:'purple'},{field:'type',value:'character'}],logic:'all'}}:{}),
-  ...(isRaidFrontRest?{raidName:'エス・ノト',printedImpact:1,mainAbility:{
+  ...(isRaidFrontRest?{raidName:'エス・ノト',raidImpact:1,mainAbility:{
    op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,
    then:[{op:'restOppFrontUnderBp',bp:3000,optional:true}]}}:{}),
   ...(isFrontMill?{mainAbility:{op:'frontOnceProgram',frontOnly:true,oncePerTurn:true,
@@ -1680,7 +1680,7 @@ export function checkedBleachAddonDefinition(p){
   ...(isByakuyaRukia?{triggerEffect:{op:'bounceOppFrontUnderBp',bp:3500}}:{}),
   ...(isRukiaFront?{raidName:'朽木 ルキア'}:{}),
   ...(p.kind==='aizenEnergyFront'?{frontForbidden:true,mainAbility:{op:'restTwoActiveFrontMoveSelf',line:'energy'}}:{}),
-  ...(p.kind==='raidBaseLeaveDamage'?{raidName:'更木 剣八',bpDownImmune:true,printedImpact:1,
+  ...(p.kind==='raidBaseLeaveDamage'?{raidName:'更木 剣八',bpDownImmune:true,raidImpact:1,
    raidHandLeaveReplace:{minBaseEnergy:4}}:{}),
   ...(p.kind==='restLockFrontUpgrade'?{raidName:'日番谷 冬獅郎'}:{}),
   ...(p.kind==='millRemoveScale'?{raidName:'黒崎 一護'}:{}),
@@ -1726,7 +1726,7 @@ export function checkedBleachAddonDefinition(p){
   ...(isByakuyaWin?{raidName:'朽木 白哉',attackWinActiveOnce:'name',
    passiveBonuses:[{condition:{kind:'oppFrontBelowPrintedCount',turn:'own',min:3},attackDamage:2}]}:{}),
   ...(isYoruichiRaid?{raidName:'四楓院 夜一'}:{}),
-  ...(isKomamuraRaid?{raidName:'狛村 左陣',impactNull:true,opponentRestImmune:true,
+  ...(isKomamuraRaid?{raidName:'狛村 左陣',raidImpactNull:true,opponentRestImmune:true,
    opponentBounceImmune:true,phaseEffects:[{phase:'start',edge:'start',turn:'own',then:[
     {op:'stripSelfRaidTopAtOwnStart'}]}]}:{}),
   ...(isUkitakeFront?{frontForbidden:true,raidName:'浮竹 十四郎',printedExtraEnergy:1,

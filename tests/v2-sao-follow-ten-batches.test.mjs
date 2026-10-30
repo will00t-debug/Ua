@@ -155,8 +155,10 @@ test('ten more SAO prints join the shared pilot without counting as FAQ acceptan
  assert.equal(sao.cards['SAO-2-022'].effects.onPlay[1].op,'armNextNamedTraitEntry');
  assert.deepEqual(sao.cards['SAO-1-018'].nameAliases,['ユージオ']);
  assert.equal(sao.cards['SAO-1-018'].raidName,'ユージオ');
- assert.equal(sao.cards['SAO-1-018'].printedImpact,1);
- assert.equal(sao.cards['SAO-1-018'].impactNull,true);
+ assert.equal(sao.cards['SAO-1-018'].raidImpact,1);
+ assert.equal(sao.cards['SAO-1-018'].raidImpactNull,true);
+ assert.equal(sao.cards['SAO-1-018'].printedImpact,0);
+ assert.equal(sao.cards['SAO-1-018'].impactNull,false);
  assert.equal(sao.cards['SAO-1-018'].triggerEffect??null,null);
 });
 

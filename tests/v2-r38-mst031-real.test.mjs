@@ -25,7 +25,8 @@ function scene(){
 }
 test('R38 MST-031 strict full printed official Raid, Impact-null + own-turn EVENT Impact and hand EVENT AP discount',()=>{
  const d=pack.cards[id];
- assert.deepEqual([d.name,d.color,d.energy,d.ap,d.bp,d.gen,d.trigger,d.raidName,d.impactNull],['ロキシー','blue',4,1,4000,1,'raid','ロキシー',true]);
+ assert.deepEqual([d.name,d.color,d.energy,d.ap,d.bp,d.gen,d.trigger,d.raidName,d.raidImpactNull],['ロキシー','blue',4,1,4000,1,'raid','ロキシー',true]);
+ assert.equal(!!d.impactNull,false);
  assert.deepEqual(d.passiveBonuses,[{condition:{kind:'ownEventUsedThisTurn',turn:'own'},impact:1}]);
  assert.deepEqual(d.effects.onPlay,[{op:'nextEligibleHandPlayApDiscount',filter:{cardType:'event',printedRequiredEnergyAtMost:3}}]);
 });

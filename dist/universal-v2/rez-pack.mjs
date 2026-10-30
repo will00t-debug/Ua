@@ -244,7 +244,7 @@ const PROFILES={
   {when:{from:'hand',to:'outside',reasons:['own-effect'],sourceOnField:true,
    sourceName:'ラインハルト・ヴァン・アストレア',sourceColor:'green'},
    then:[{op:'activeOwnNamed',name:'ラインハルト・ヴァン・アストレア',max:1,optional:true}]}]},
- 'REZ-2-065':{implementation:'dsl',raidName:'プリシラ・バーリエル',ownTurnBp:1000,
+ 'REZ-2-065':{implementation:'dsl',raidName:'プリシラ・バーリエル',raidOwnTurnBp:1000,
   effects:{onAttack:[{op:'draw',count:1}]},
   mainAbility:{op:'onceAbovePrintedKeywords',oncePerTurn:true,
    damageAt:3,damage:2,impactAt:5,impact:1}},

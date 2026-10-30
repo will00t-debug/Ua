@@ -2024,7 +2024,7 @@ export function verifiedSaoV2Cards(){
   if(pin.kind==='step')card.step=true;
   if(pin.kind==='raidOtherOwnWinDamageMainSelectionTax'){
    card.raidName='キリト';
-   card.printedImpact=1;
+   card.raidImpact=1;
    card.otherOwnBattleWonDamageTwo=true;
    card.selectionHandDiscardTax={...SAO_Q978_SELF_EVENT_TAX,
     sourceTypes:[...SAO_Q978_SELF_EVENT_TAX.sourceTypes]};
@@ -2607,8 +2607,8 @@ export function verifiedSaoV2Cards(){
   if(pin.kind==='aliasRaidRetireFrontImpactNull'){
    card.nameAliases=['ユージオ'];
    card.raidName='ユージオ';
-   card.printedImpact=1;
-   card.impactNull=true;
+   card.raidImpact=1;
+   card.raidImpactNull=true;
    card.effects={onRetire:[{op:'buffNamedFrontsThisTurn',targets:[
     {name:'キリト',bp:1000,impactNull:true},
     {name:'アリス',bp:1000,impactNull:true}]}] };

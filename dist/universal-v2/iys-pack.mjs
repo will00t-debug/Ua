@@ -58,7 +58,7 @@ const BY_ID={
  'IYS-1-058':{passiveBonuses:[{
   condition:{kind:'ownNameExists',turn:'own',zone:'field',excludeSelf:false,name:'弥勒'},bp:1000}],
   effects:{onPlay:[job('IYS-1-058','onPlay')]}},
- 'IYS-1-059':{raidName:'珊瑚',printedImpact:1,effects:{onPlay:[job('IYS-1-059','onPlay')]}},
+ 'IYS-1-059':{raidName:'珊瑚',raidImpact:1,effects:{onPlay:[job('IYS-1-059','onPlay')]}},
  'IYS-1-061':{emptyOwnFieldHandEnergyDiscount:2,effects:{onPlay:[{op:'peekTopOne'}]},
   mainAbility:main('IYS-1-061')},
  'IYS-1-066':{raidName:'日暮 かごめ',effects:{onPlay:[{
