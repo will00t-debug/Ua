@@ -31,7 +31,7 @@ import {SAO_CARDS} from './sao-cards.mjs';
 import {MST_V2_OFFICIAL_CATALOGUE} from './universal-v2/sources/mst-inventory.mjs';
 import {V2_PHASE_LABELS,V2_TITLE_LABELS,V2_PENDING_LABELS,
  uiActor,isExactLegal,uiCardLabel,uiActionLabel,visibleActionsForCard,
- pendingChoiceCards,inspectedPendingChoiceCards,visiblePendingChoiceCards,pendingChoiceCaption,publicPendingTargetCard,attackBattleTags,attackKeywordBadges,frontAttackKeywordBadges,inlineBlockDecision,boardEntryMode,boardEntrySelection,entryClickPlan,moveClickPlan,
+ pendingChoiceCards,inspectedPendingChoiceCards,visiblePendingChoiceCards,pendingEntryChoiceCards,pendingChoiceCaption,publicPendingTargetCard,attackBattleTags,attackKeywordBadges,frontAttackKeywordBadges,inlineBlockDecision,boardEntryMode,boardEntrySelection,entryClickPlan,moveClickPlan,
  FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs';
 import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalReplay,
  publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
@@ -381,6 +381,18 @@ function pendingChoiceControl(action,option,gallery,view){
  if(caption)button.append(el('span',{class:'choice-card-caption',text:caption}));
  return button;
 }
+// For a mixed effect, picking a card is not playing it. Only an exact
+// reducer-approved placement submitted on the table can resolve its entry.
+function pendingEntrySelectControl(card){
+ const button=el('button',{type:'button',class:'choice-card recommended',
+  'aria-label':'選擇 '+card.name+' 登場（尚未執行）',
+  onClick:()=>{selectDeployedCharacter(card.uid);render();}});
+ if(card.cardId)button.append(el('span',{class:'choice-card-arts'},
+  el('span',{class:'choice-card-art'},choicePicture(card.cardId,card.name,card.side))));
+ button.append(el('span',{class:'choice-card-name',text:card.name}),
+  el('span',{class:'choice-card-caption',text:'選擇此角色登場 · 再選方式與格子'}));
+ return button;
+}
 function inspectedChoiceControl(card){
  const enabled=!!card.action;
  const button=el('button',{type:'button',disabled:!enabled,
@@ -433,9 +445,11 @@ function blockBoardPrompt(decision){
 function pendingDialog(legal,view){
  const s=app.state;
  if(!s?.pending||uiActor(s)!==0||app.busy)return null;
- // Deploying a character is three clicks on the table: the card, the mode
- // when both exist, then the cell. A modal of every slot would hide that.
- if(legal.some(action=>boardEntryMode(action)))return null;
+ // A mixed hand/outside/removed effect needs an illustrated target picker.
+ // Once the target has been selected, dismiss this overlay so the player can
+ // choose ordinary/Raid mode (if needed) and the actual legal board cell.
+ const placement=legal.filter(action=>boardEntryMode(action));
+ if(placement.length&&app.selectedUid)return null;
  // Blocking happens on the visible table; all other pending effects retain
  // their existing mandatory choice dialogs.
  if(inlineBlockDecision(view,legal))return null;
@@ -443,11 +457,12 @@ function pendingDialog(legal,view){
  const byAction=new Map((privateChoices?.options||[])
   .filter(option=>option?.action)
   .map(option=>[JSON.stringify(option.action),option]));
+ const entryCards=placement.length?pendingEntryChoiceCards(privateChoices,view,placement):[];
  const inspected=inspectedPendingChoiceCards(privateChoices,legal).filter(card=>!card.keepLegal);
  const inspectedUids=new Set(inspected.map(card=>card.uid));
  const rows=legal.filter(action=>!inspectedUids.has(action.uid)).map(action=>({action,
   option:byAction.get(JSON.stringify(action))||null}));
- const gallery=inspected.length>0||rows.some(row=>pendingChoiceCards(row.option).length>0||
+ const gallery=entryCards.length>0||inspected.length>0||rows.some(row=>pendingChoiceCards(row.option).length>0||
   visiblePendingChoiceCards(view,row.action).length>0||
   publicPendingTargetCard(view,row.action)!==null);
  const title=V2_PENDING_LABELS[s.pending.kind]||s.pending.kind;
@@ -476,6 +491,7 @@ function pendingDialog(legal,view){
   el('p',{class:'note',text:triggerChoice?
    '這張觸發已經公開，對手也能看到。請選擇是否使用。':
    blocking?'對手的角色正在攻擊。先看直傷和衝擊，再選擇阻擋或不阻擋。':
+   placement.length?'先點卡圖選擇要登場的角色；若要加入手牌，直接點該卡的加入手牌選項。選好登場角色後，再選合法模式及格子。':
    '請完成這個選擇後，對戰才會繼續。選牌只會顯示給目前的控制者。'}));
  if(blocking)dialog.append(attackShowcase(view.battle));
  if(shown.length){
@@ -484,6 +500,7 @@ function pendingDialog(legal,view){
   dialog.append(row);
  }
  const list=el('div',{class:'action-list'+((gallery||blockGallery)?' choice-gallery':'')});
+ for(const card of entryCards)list.append(pendingEntrySelectControl(card));
  for(const card of inspected)list.append(inspectedChoiceControl(card));
  for(const row of rows){
   const blocker=blocking?blockControl(row.action,view):null;
@@ -746,7 +763,8 @@ function legacyCommands(legal){
  const selected=app.selectedUid?visibleActionsForCard(legal,app.selectedUid):[];
  const passive=s.pending?[]:legal.filter(a=>a.type==='extraDraw');
  const global=s.pending?[]:legal.filter(a=>!a.uid&&a.type!=='next'&&a.type!=='extraDraw');
- const pendingRest=s.pending?legal.filter(action=>!boardEntryMode(action)):[];
+ // Mixed effect non-entry choices live in the illustrated target dialog.
+ const pendingRest=s.pending&&!board?legal.filter(action=>!boardEntryMode(action)):[];
  const pool=app.targetChoices||(app.selectedUid?[...passive,...selected]:[...passive,...global]);
  const list=[...new Map(pool.map(a=>[JSON.stringify(a),a])).values()]
   .filter(a=>app.targetChoices||(!boardEntryMode(a)&&!['move','step'].includes(a.type)))
@@ -806,6 +824,9 @@ function legacyCommands(legal){
    app.entryMode=chosen==='raid'?'normal':'raid';app.raidBaseUid=null;app.targetChoices=null;render();
   },'btn small quiet'));
  }
+ if(s.pending&&board&&app.selectedUid)bar.append(btn('重新選擇角色',()=>{
+  app.selectedUid=null;app.entryMode=null;app.raidBaseUid=null;app.targetChoices=null;render();
+ },'btn small quiet'));
  const shown=new Set();
  for(const a of list){
   shown.add(a);
