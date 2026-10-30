@@ -63,7 +63,7 @@ test('TTG-046 printed 4/1 Kamina has front-only own-Raid-conditioned main and re
  s=main(s);
  assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='activate'&&a.uid===kamina.uid),
   false,'without an own Raid Kamina must not become ACTIVE');
- const raid=legal(s,a=>a.type==='raid'&&a.uid===raider.uid&&a.baseUid===base.uid&&a.line==='front');
+ const raid=legal(s,a=>a.type==='raid'&&a.uid===raider.uid&&a.baseUid===base.uid&&a.slot===1);
  const selection=boardEntrySelection(legalUniversalActions(packs,s),raider.uid);
  assert.ok(selection.raid.length);
  assert.ok(selection.normal.length);
@@ -81,7 +81,7 @@ test('TTG-046 printed 4/1 Kamina has front-only own-Raid-conditioned main and re
  s=next(s,both);
  assert.equal(s.players[0].front[0].ready,true,'4/1 Kamina must stand when chosen');
  assert.equal(s.pending?.kind,'main-two-buff');
- const buffAction=legal(s,a=>a.type==='chooseMainBuff'&&a.uid===base.uid);
+ const buffAction=legal(s,a=>a.type==='chooseMainBuff'&&a.uid===raider.uid);
  assert.match(uiActionLabel(buffAction,{pack:packs,state:s}),/BP/);
  s=next(s,buffAction);
  assert.equal(s.players[0].front[1].buffs.some(x=>x.bp===1000),true);
@@ -111,6 +111,8 @@ test('red Gurren 072 and chained Gurren Lagann 073 must both allow legal Raid an
  stage(s,'TTG-1-051','front',1,true);
  const first=hold(s,'TTG-1-072');
  const second=hold(s,'TTG-1-073');
+ // A chained second Raid needs a second live AP; the first player starts with only one.
+ s.players[0].apCards.forEach((ap,i)=>{ap.inPlay=i<2;ap.ready=i<2;});
  s=main(s);
  s=clearPending(next(s,legal(s,a=>a.type==='raid'&&a.uid===first.uid&&a.baseUid===kamina.uid)));
  const gurren=s.players[0].front[0];
