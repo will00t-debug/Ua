@@ -368,13 +368,12 @@ const NORMAL_BOARD_ENTRY=new Set([
   'chooseOutsideUse','chooseOutsideReferenced','chooseRestReenter',
   'chooseDeployOutside','chooseOutsideExcept','chooseOutsideColorRest',
   'chooseOutsideColorTraitActive','chooseHandFreshName','chooseHandRestEntry',
-  'chooseRaidBaseRest','chooseHandFrontActive','chooseDeploySelfActive',
-  'chooseTopDeploy','chooseTopDeployRest'
+  'chooseRaidBaseRest','chooseHandFrontActive','chooseDeploySelfActive'
 ]);
 const MODE_BOARD_ENTRY=new Set([
  'choosePrintedRestRaid','chooseOutsideRestOrRaid','chooseHandRestOrRaid',
  'chooseNamedOutside','chooseOutsideTraitlessRest','chooseRemovedRestPair',
- 'chooseOutsideOrRest','chooseSayakaReenter','chooseDeckNamedPlay'
+ 'chooseOutsideOrRest','chooseSayakaReenter'
 ]);
 function boardEntryMode(action){
  if(!action||typeof action.uid!=='string'||!action.uid)return null;
