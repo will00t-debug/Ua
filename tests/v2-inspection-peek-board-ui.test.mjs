@@ -19,9 +19,11 @@ test('solo private pending card choices can temporarily show full board and hand
  assert.match(dialog,/app\.inspectionPaused=true;render\(\)/);
  assert.match(dialog,/app\.inspectionPaused=false;render\(\)/);
  assert.doesNotMatch(dialog,/dispatchUniversalAction\(/);
- assert.match(ui,/const tableLegal=app\.inspectionPaused\?\[\]:legal/);
- assert.match(ui,/legacyPlayer\(v,1,tableLegal\),middle,legacyPlayer\(v,0,tableLegal\)/);
- assert.match(ui,/legacyHand\(v,tableLegal\),app\.inspectionPaused\?null:legacyCommands\(legal\)/);
+ assert.match(ui,/arena\.append\(legacyPlayer\(v,1,legal\),middle,legacyPlayer\(v,0,legal\)\)/);
+ assert.match(ui,/legacyHand\(v,legal\),legacyCommands\(legal\)/);
+ assert.match(ui,/if\(app\.inspectionPaused\)return null; \/\/ review-only/);
+ assert.match(ui,/if\(app\.inspectionPaused\)\{if\(c\)showFieldSheet\(side,line,c,d\);return;\}/);
+ assert.match(ui,/if\(app\.inspectionPaused\)\{showFieldSheet\(0,'hand',c,d\);return;\}/);
  assert.match(ui,/app\.targetChoices=null;app\.inspectionPaused=false;app\.error=/);
  assert.match(css,/\.v2-inspection-peek-tools/);
  assert.match(css,/\.v2-inspection-return/);
