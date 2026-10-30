@@ -576,6 +576,7 @@ function legacySlot(view,side,line,index,legal){
  }
  btnSlot.addEventListener('click',()=>{
   if(held){held=false;return;}
+  if(app.inspectionPaused){if(c)showFieldSheet(side,line,c,d);return;}
   // Display public opponent card art on tap; no game action is dispatched.
   if(!yours){if(c)showFieldSheet(side,line,c,d);return;}
   if(blocking){
@@ -685,6 +686,7 @@ function legacyHand(view,legal){
   card.addEventListener('click',()=>{
    if(held){held=false;return;}
    if(app.busy||uiActor(app.state)!==0)return;
+   if(app.inspectionPaused){showFieldSheet(0,'hand',c,d);return;}
    selectDeployedCharacter(c.uid);render();
   });
   hand.append(card);
@@ -731,6 +733,7 @@ function entryChoiceText(action){
 function legacyCommands(legal){
  const s=app.state;
  if(uiActor(s)!==0||app.busy)return null;
+ if(app.inspectionPaused)return null; // review-only, choices remain pending
  const board=legal.some(action=>boardEntryMode(action));
  if(s.pending&&!board)return null;
  const selected=app.selectedUid?visibleActionsForCard(legal,app.selectedUid):[];
@@ -1019,7 +1022,6 @@ function render(){
   return;
  }
  const v=universalPublicView(app.packs,s,0),legal=legalUniversalActions(app.packs,s);
- const tableLegal=app.inspectionPaused?[]:legal;
  const block=app.busy?null:inlineBlockDecision(v,legal);
  const mobileMenu=btn('☰ 對局選單',()=>{
   const header=mobileMenu.closest('.matchHeader');
@@ -1072,12 +1074,12 @@ function render(){
   noteAiRecord(s);
   arena.append(el('div',{class:'resultBanner'},el('h2',{text:s.winner===0?'你獲勝了！':'電腦獲勝'})));
  }
- arena.append(legacyPlayer(v,1,tableLegal),middle,legacyPlayer(v,0,tableLegal));
+ arena.append(legacyPlayer(v,1,legal),middle,legacyPlayer(v,0,legal));
  const handArea=el('section',{class:'handArea'},
   el('header',{class:'handTitle'},
    el('span',{text:'你的手牌 · '+v.players[0].hand.length+' 張'}),
    el('span',{text:'REST 仍可產生能源'})),
-  legacyHand(v,tableLegal),app.inspectionPaused?null:legacyCommands(legal));
+  legacyHand(v,legal),legacyCommands(legal));
  arena.append(handArea);
  const deploying=legal.some(action=>boardEntryMode(action));
  const phase=el('div',{class:'phaseAction'},el('p',{text:block?
