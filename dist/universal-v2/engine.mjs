@@ -362,6 +362,10 @@ function hasFacedownUnder(c){
   (x.stack||[]).some(v=>v.faceDown===true||inspect(v));
  return !!c&&inspect(c);
 }
+// Q51 / Q552: Raid-box text needs a face-up card under a Raid-keyword top.
+function faceUpRaid(pack,c){
+ return !!c&&!!card(pack,c).raidName&&(c.stack||[]).some(x=>x.faceDown!==true);
+}
 function directFacedowns(c){
  return (c?.under||[]).filter(x=>x.faceDown===true);
 }
@@ -501,7 +505,9 @@ const bpVisit=new Set();
 function bp(pack,s,c){
  const printed=card(pack,c),suppressed=originalEffectsDisabled(s,c);
  const owner=Number(String(c.uid).split('-')[0]);
- const turnBp=suppressed?0:s.active===owner?(printed.ownTurnBp||0):(printed.opponentTurnBp||0);
+ const turnBp=suppressed?0:s.active===owner?
+  (printed.ownTurnBp||0)+(faceUpRaid(pack,c)?printed.raidOwnTurnBp||0:0):
+  (printed.opponentTurnBp||0);
  const madokaPair=()=>{
   if(suppressed||printed?.id!=='MMM-2-045')return 0;
   const n=(s.players[1-owner]?.front||[]).filter(x=>x&&card(pack,x).type==='character').length;
@@ -793,14 +799,16 @@ function impactOnBattleWin(pack,s,c){
   return Math.max(Math.max(d.ownTurnImpact,earnedAll)+plus,kitImpact);
  const under=hasFacedownUnder(c)?(d.conditionalUnderFaceDown?.impact||0):0;
  const owner=impactOwner;
+ const raidBox=!originalEffectsDisabled(s,c)&&faceUpRaid(pack,c)?d.raidImpact||0:0;
  const passive=d.passiveBonuses.reduce((n,p)=>n+(p.impact&&
   matchesV2LiveCondition(s,owner,c.uid,p.condition,x=>card(pack,x),
    ()=>calcEnergy(pack,s,owner),x=>bp(pack,s,x))?p.impact:0),0);
  const conditional=d.conditionalImpactBpAtLeast!==null&&
   bp(pack,s,c)>=d.conditionalImpactBpAtLeast;
- const base=d.printedImpact||(conditional?1:0)||under||passive;
+ const printedOrRaid=d.printedImpact||raidBox;
+ const base=printedOrRaid||(conditional?1:0)||under||passive;
  const result=plusFlag?base+earnedAll:
-  d.printedImpact?Math.max(d.printedImpact,earnedAll):
+  printedOrRaid?Math.max(printedOrRaid,earnedAll):
   conditional?Math.max(1,earnedAll):
   under?Math.max(under,earnedAll):Math.max(earnedAll,passive);
  return Math.max(result,kitImpact)+plus;
@@ -815,11 +823,13 @@ function impactNullActive(pack,s,c){
  if(now&&now.turn===s.turn&&now.stamp===c.fieldEntryStamp)return true;
  if(originalEffectsDisabled(s,c))return false;
  if(d.impactNull)return true;
+ if(d.raidImpactNull&&faceUpRaid(pack,c))return true;
  return d.passiveBonuses.some(p=>p.impactNull===true&&
   matchesV2LiveCondition(s,owner,c.uid,p.condition,x=>card(pack,x),
    ()=>calcEnergy(pack,s,owner),x=>bp(pack,s,x)));
 }
 export function universalImpact(pack,s,c){return impactOnBattleWin(pack,s,c);}
+export function universalImpactNull(pack,s,c){return impactNullActive(pack,s,c);}
 function protectedLeave(pack,s,c){
  const profile=underLeaveProfile(card(pack,c));
  return !originalEffectsDisabled(s,c)&&!!profile&&hasFacedownUnder(c)&&bp(pack,s,c)>=profile.leaveReplacementMinBp;
@@ -16059,9 +16069,6 @@ export function zoneRequiredEnergy(pack,s,p,d,zone){
 function requiredEnergyBonus(s,physical){
  return (physical?.buffs||[]).reduce((n,b)=>n+(b.requiredEnergy===2&&
   b.untilTurn===s.turn&&Object.keys(b).length===2?2:0),0);
-}
-function faceUpRaid(pack,c){
- return !!c&&!!card(pack,c).raidName&&(c.stack||[]).some(x=>x.faceDown!==true);
 }
 function raidFrontRequiredEnergyAura(pack,s,physical){
  if(!physical?.uid)return 0;

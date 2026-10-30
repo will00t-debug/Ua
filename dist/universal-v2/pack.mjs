@@ -2853,7 +2853,7 @@ function validatePassiveBonuses(card){
     throw Error(card.id+' invalid passive bonus');
   // 【インパクト（1）】 from a live condition is not added on top of a
   // printed impact keyword or a facedown-under impact. No FAQ stacks them.
-  if(p.impact===1&&(card.printedImpact||card.conditionalUnderFaceDown?.impact))
+  if(p.impact===1&&(card.printedImpact||card.raidImpact||card.conditionalUnderFaceDown?.impact))
    throw Error(card.id+' conditional impact does not stack with a printed impact profile');
   if(p.impactNull===true&&card.impactNull)
    throw Error(card.id+' passive impact null does not stack with printed impact null');
@@ -3926,6 +3926,10 @@ function normalize(card,packId){
  if(card.ownTurnBp!==undefined&&
   (card.type!=='character'||!integer(card.ownTurnBp,1)||card.ownTurnBp>5000))
   throw Error(card.id+' invalid own-turn BP modifier');
+ if(card.raidOwnTurnBp!==undefined&&
+  (card.type!=='character'||!card.raidName||card.ownTurnBp||
+   !integer(card.raidOwnTurnBp,1)||card.raidOwnTurnBp>5000))
+  throw Error(card.id+' invalid Raid-box own-turn BP');
  if(card.opponentTurnBp!==undefined&&(
   card.type!=='character'||!Number.isInteger(card.opponentTurnBp)||
   card.opponentTurnBp===0||card.opponentTurnBp%500!==0||
@@ -4103,7 +4107,7 @@ function normalize(card,packId){
  if(card.conditionalImpactBpAtLeast!==undefined&&(
   card.type!=='character'||card.implementation!=='dsl'||
   !integer(card.conditionalImpactBpAtLeast,1)||card.conditionalImpactBpAtLeast>50000||
-  card.printedImpact!==undefined||card.conditionalUnderFaceDown
+  card.printedImpact!==undefined||card.raidImpact!==undefined||card.conditionalUnderFaceDown
  ))throw Error(card.id+' invalid live-current-BP IMPACT threshold');
  const fieldTraitEnergyDiscount=card.fieldTraitEnergyDiscount??null;
  if(fieldTraitEnergyDiscount!==null&&(
@@ -4259,13 +4263,13 @@ function normalize(card,packId){
   throw Error(card.id+' invalid life total use limit');
  if(implemented==='vanilla'&&(Object.keys(effects).length||card.effectText||
   mainAbility||phaseEffects.length||moveTriggers.length||moveObserver||card.enterActiveIfOpponentRest||card.enterAlwaysActive||card.forceHigherBpBlock||card.attackLoseReadyTurn||card.facedownDoubleAttack||card.facedownMoveBanned||card.mayOutsideToDeckTop||card.outsideGroupEnergy||card.frontEnergyWhen||card.handEnergyWhileName||card.doubleAttackIfFrontNames||card.activeExtraEnergy||card.conditionalTraitEnergy||passiveBonuses||card.impactNull||card.alsoEvent||card.handBpMayWhileFront||
-  card.printedImpact||card.printedAttackDamage||card.readyOnAttackCount||card.readyOnBlockCount||
-card.frontGeneratesEnergy||ownOutsideRecovery||colorTriggerFieldSubstitution||card.frontForbidden||card.ownTurnBp||card.opponentTurnBp||nameAliases||selectionHandDiscardTax||card.otherOwnBattleWonDamageTwo||attackEndSwap||blockBpRestriction||attackWinRecover||card.conditionalImpactBpAtLeast||card.playRequiresAllNames||card.attackEndRestPrintedBp||card.facedownUnderStanding||outsideEventHandEnergyDiscount||emptyOwnFieldHandEnergyDiscount||opponentFieldColorsHandEnergyDiscount||card.mustBlock||card.bpDownImmune||card.printedHandEnergyDiscount||card.raidHandLeaveReplace||card.raidTrait||card.attackEnergyMin||card.blockEnergyMin||unblockedAttack||printedMains||card.playRequiresNameOrRaidBase||card.handUseOncePerName||card.playApCutOnChosenName||card.removeUnlessUsed||card.removedMain||card.bpPerOwnRaid||card.extraRaidHost||card.mutualPlayBan||playLifeAtMost!==null||card.handFieldEnergyAura||card.chainRaidOnly||card.chainRaidNoSameTurn||card.chainRaidUnique||card.oppEffectUntargetable||card.energyLineForbidden||card.attackDeckAtMost||card.attackRequiresName||card.ownTurnImpact||card.noOwnFieldTypeHandDiscount||card.facedownUnderEnergy||card.retireCapture||card.raidAttach||card.raidWitness||card.unblockedRestFront||card.substituteOppRetire||attackAid||fieldTraitEnergyDiscount||energyAttackSwap||frontRetireHandGrant||card.battleRemoveInstead||card.energyForbidden||card.raidHostAny||card.blockRaidBp||card.handApDiscountWhileName||card.energyLineAttackEndSwap||card.attackWinActiveOnce||card.opponentRestImmune||card.opponentBounceImmune||card.battleLoseToHand||card.grantStepToOtherOwn||card.step||card.ownEffectMoveOnly||card.ownEffectActiveOnly||card.attackLoseStay||card.outsideRaidReturn||outsideEventPairEnergyDiscount||card.frontRemovedUse||card.playRequiresAnyNames||card.frontNameRemoveShield||card.lifeToHandDoubleAttack||card.girlNameUnblockedDraw||card.lineShiftOutsideMove||card.frontPrintedEnergyAura||card.frontAttackEndNamedSwap||card.attackWinLookBuff||card.otherHandEnergyDiscount||card.anyLineShiftOutsideMove))
+  card.printedImpact||card.raidImpact||card.raidImpactNull||card.printedAttackDamage||card.readyOnAttackCount||card.readyOnBlockCount||
+card.frontGeneratesEnergy||ownOutsideRecovery||colorTriggerFieldSubstitution||card.frontForbidden||card.ownTurnBp||card.raidOwnTurnBp||card.opponentTurnBp||nameAliases||selectionHandDiscardTax||card.otherOwnBattleWonDamageTwo||attackEndSwap||blockBpRestriction||attackWinRecover||card.conditionalImpactBpAtLeast||card.playRequiresAllNames||card.attackEndRestPrintedBp||card.facedownUnderStanding||outsideEventHandEnergyDiscount||emptyOwnFieldHandEnergyDiscount||opponentFieldColorsHandEnergyDiscount||card.mustBlock||card.bpDownImmune||card.printedHandEnergyDiscount||card.raidHandLeaveReplace||card.raidTrait||card.attackEnergyMin||card.blockEnergyMin||unblockedAttack||printedMains||card.playRequiresNameOrRaidBase||card.handUseOncePerName||card.playApCutOnChosenName||card.removeUnlessUsed||card.removedMain||card.bpPerOwnRaid||card.extraRaidHost||card.mutualPlayBan||playLifeAtMost!==null||card.handFieldEnergyAura||card.chainRaidOnly||card.chainRaidNoSameTurn||card.chainRaidUnique||card.oppEffectUntargetable||card.energyLineForbidden||card.attackDeckAtMost||card.attackRequiresName||card.ownTurnImpact||card.noOwnFieldTypeHandDiscount||card.facedownUnderEnergy||card.retireCapture||card.raidAttach||card.raidWitness||card.unblockedRestFront||card.substituteOppRetire||attackAid||fieldTraitEnergyDiscount||energyAttackSwap||frontRetireHandGrant||card.battleRemoveInstead||card.energyForbidden||card.raidHostAny||card.blockRaidBp||card.handApDiscountWhileName||card.energyLineAttackEndSwap||card.attackWinActiveOnce||card.opponentRestImmune||card.opponentBounceImmune||card.battleLoseToHand||card.grantStepToOtherOwn||card.step||card.ownEffectMoveOnly||card.ownEffectActiveOnly||card.attackLoseStay||card.outsideRaidReturn||outsideEventPairEnergyDiscount||card.frontRemovedUse||card.playRequiresAnyNames||card.frontNameRemoveShield||card.lifeToHandDoubleAttack||card.girlNameUnblockedDraw||card.lineShiftOutsideMove||card.frontPrintedEnergyAura||card.frontAttackEndNamedSwap||card.attackWinLookBuff||card.otherHandEnergyDiscount||card.anyLineShiftOutsideMove))
   throw Error(card.id+' claims vanilla despite printed/declared effects');
  if(implemented==='dsl'&&!Object.keys(effects).length&&!phaseEffects.length&&!moveTriggers.length&&!mainAbility&&!moveObserver&&!card.enterActiveIfOpponentRest&&!card.enterAlwaysActive&&!card.forceHigherBpBlock&&!card.attackLoseReadyTurn&&!card.facedownDoubleAttack&&!card.facedownMoveBanned&&!card.mayOutsideToDeckTop&&!card.outsideGroupEnergy&&!card.frontEnergyWhen&&!card.handEnergyWhileName&&!card.doubleAttackIfFrontNames&&
   !card.activeExtraEnergy&&!card.conditionalTraitEnergy&&!passiveBonuses&&!card.impactNull&&!card.alsoEvent&&!card.handBpMayWhileFront&&
-  !card.printedImpact&&!card.printedAttackDamage&&!card.readyOnAttackCount&&!card.readyOnBlockCount&&
-!card.frontGeneratesEnergy&&!ownOutsideRecovery&&!colorTriggerFieldSubstitution&&!card.frontForbidden&&!card.ownTurnBp&&!card.opponentTurnBp&&!nameAliases&&!selectionHandDiscardTax&&!card.otherOwnBattleWonDamageTwo&&!attackEndSwap&&!blockBpRestriction&&!attackWinRecover&&!card.conditionalImpactBpAtLeast&&!attackWinDraw&&!emptyOwnFieldHandEnergyDiscount&&!outsideEventHandEnergyDiscount&&!card.facedownUnderStanding&&!card.attackEndRestPrintedBp&&!card.playRequiresAllNames&&!opponentFieldColorsHandEnergyDiscount&&!card.mustBlock&&!card.bpDownImmune&&!card.printedHandEnergyDiscount&&!card.raidHandLeaveReplace&&!card.raidTrait&&!card.attackEnergyMin&&!card.blockEnergyMin&&!unblockedAttack&&!printedMains&&!card.playRequiresNameOrRaidBase&&!card.handUseOncePerName&&!card.playApCutOnChosenName&&!card.removeUnlessUsed&&!card.removedMain&&!card.bpPerOwnRaid&&!card.extraRaidHost&&!card.mutualPlayBan&&playLifeAtMost===null&&!card.handFieldEnergyAura&&!card.chainRaidOnly&&!card.oppEffectUntargetable&&!card.energyLineForbidden&&!card.attackDeckAtMost&&!card.attackRequiresName&&!card.ownTurnImpact&&!card.noOwnFieldTypeHandDiscount&&!card.facedownUnderEnergy&&!card.retireCapture&&!card.raidAttach&&!card.raidWitness&&!card.unblockedRestFront&&!card.substituteOppRetire&&!attackAid&&!fieldTraitEnergyDiscount&&!energyAttackSwap&&!frontRetireHandGrant&&!card.battleRemoveInstead&&!card.energyForbidden&&!card.raidHostAny&&!card.blockRaidBp&&!card.handApDiscountWhileName&&!card.energyLineAttackEndSwap&&!card.attackWinActiveOnce&&!card.opponentRestImmune&&!card.opponentBounceImmune&&!card.battleLoseToHand&&!card.grantStepToOtherOwn&&!card.step&&!card.ownEffectMoveOnly&&!card.ownEffectActiveOnly&&!card.attackLoseStay&&!card.outsideRaidReturn&&!outsideEventPairEnergyDiscount&&!card.frontRemovedUse&&!card.playRequiresAnyNames&&!card.frontNameRemoveShield&&!card.lifeToHandDoubleAttack&&!card.girlNameUnblockedDraw&&!card.lineShiftOutsideMove&&!card.frontPrintedEnergyAura&&!card.frontAttackEndNamedSwap&&!card.attackWinLookBuff&&!card.otherHandEnergyDiscount&&!card.anyLineShiftOutsideMove)
+  !card.printedImpact&&!card.raidImpact&&!card.raidImpactNull&&!card.printedAttackDamage&&!card.readyOnAttackCount&&!card.readyOnBlockCount&&
+!card.frontGeneratesEnergy&&!ownOutsideRecovery&&!colorTriggerFieldSubstitution&&!card.frontForbidden&&!card.ownTurnBp&&!card.raidOwnTurnBp&&!card.opponentTurnBp&&!nameAliases&&!selectionHandDiscardTax&&!card.otherOwnBattleWonDamageTwo&&!attackEndSwap&&!blockBpRestriction&&!attackWinRecover&&!card.conditionalImpactBpAtLeast&&!attackWinDraw&&!emptyOwnFieldHandEnergyDiscount&&!outsideEventHandEnergyDiscount&&!card.facedownUnderStanding&&!card.attackEndRestPrintedBp&&!card.playRequiresAllNames&&!opponentFieldColorsHandEnergyDiscount&&!card.mustBlock&&!card.bpDownImmune&&!card.printedHandEnergyDiscount&&!card.raidHandLeaveReplace&&!card.raidTrait&&!card.attackEnergyMin&&!card.blockEnergyMin&&!unblockedAttack&&!printedMains&&!card.playRequiresNameOrRaidBase&&!card.handUseOncePerName&&!card.playApCutOnChosenName&&!card.removeUnlessUsed&&!card.removedMain&&!card.bpPerOwnRaid&&!card.extraRaidHost&&!card.mutualPlayBan&&playLifeAtMost===null&&!card.handFieldEnergyAura&&!card.chainRaidOnly&&!card.oppEffectUntargetable&&!card.energyLineForbidden&&!card.attackDeckAtMost&&!card.attackRequiresName&&!card.ownTurnImpact&&!card.noOwnFieldTypeHandDiscount&&!card.facedownUnderEnergy&&!card.retireCapture&&!card.raidAttach&&!card.raidWitness&&!card.unblockedRestFront&&!card.substituteOppRetire&&!attackAid&&!fieldTraitEnergyDiscount&&!energyAttackSwap&&!frontRetireHandGrant&&!card.battleRemoveInstead&&!card.energyForbidden&&!card.raidHostAny&&!card.blockRaidBp&&!card.handApDiscountWhileName&&!card.energyLineAttackEndSwap&&!card.attackWinActiveOnce&&!card.opponentRestImmune&&!card.opponentBounceImmune&&!card.battleLoseToHand&&!card.grantStepToOtherOwn&&!card.step&&!card.ownEffectMoveOnly&&!card.ownEffectActiveOnly&&!card.attackLoseStay&&!card.outsideRaidReturn&&!outsideEventPairEnergyDiscount&&!card.frontRemovedUse&&!card.playRequiresAnyNames&&!card.frontNameRemoveShield&&!card.lifeToHandDoubleAttack&&!card.girlNameUnblockedDraw&&!card.lineShiftOutsideMove&&!card.frontPrintedEnergyAura&&!card.frontAttackEndNamedSwap&&!card.attackWinLookBuff&&!card.otherHandEnergyDiscount&&!card.anyLineShiftOutsideMove)
   throw Error(card.id+' declares dsl without effects');
  for(const [name,program] of Object.entries(effects)){
   if(program.some(x=>x.op==='retireSourceOnPhaseEnd'||x.op==='retireSelfAtOwnStart'||x.op==='stripSelfRaidTopAtOwnStart'))throw Error(card.id+' invalid phase-only self retirement');
@@ -5088,8 +5092,18 @@ card.frontGeneratesEnergy||ownOutsideRecovery||colorTriggerFieldSubstitution||ca
  // Printed 【インパクト（1）】 and 【ダメージ（2）】 are unconditional keywords.
  // Stacking either with the facedown-under impact profile needs its own ruling.
  if(card.printedImpact!==undefined&&(
-  card.type!=='character'||card.printedImpact!==1||card.conditionalUnderFaceDown))
+  card.type!=='character'||card.printedImpact!==1||card.conditionalUnderFaceDown||
+  card.raidImpact!==undefined))
   throw Error(card.id+' invalid printed impact');
+ // Q51 / Q552: IMPACT printed inside the Raid box is live only in raid state.
+ if(card.raidImpact!==undefined&&(
+  card.type!=='character'||card.raidImpact!==1||!card.raidName||
+  card.conditionalUnderFaceDown))
+  throw Error(card.id+' invalid Raid-box impact');
+ if(card.raidImpactNull!==undefined&&(
+  card.type!=='character'||card.raidImpactNull!==true||!card.raidName||
+  card.impactNull===true))
+  throw Error(card.id+' invalid Raid-box impact null');
  const handRevealCharacterBp=card.handRevealCharacterBp??0;
  if(handRevealCharacterBp!==0&&(
   card.type!=='event'||implemented!=='dsl'||handRevealCharacterBp!==4000))
@@ -5318,6 +5332,7 @@ card.frontGeneratesEnergy||ownOutsideRecovery||colorTriggerFieldSubstitution||ca
    frontForbidden:card.frontForbidden===true,
    energyForbidden:card.energyForbidden===true,
   step:card.step===true,ownTurnBp:card.ownTurnBp||0,
+  raidOwnTurnBp:card.raidOwnTurnBp||0,
   grantStepToOtherOwn:card.grantStepToOtherOwn===true,
   ...(card.overflowToOutside===true?{overflowToOutside:true}:{}),
   ...(fieldLeaveMayRemove?{fieldLeaveMayRemove:Object.freeze({
@@ -5372,6 +5387,7 @@ card.frontGeneratesEnergy||ownOutsideRecovery||colorTriggerFieldSubstitution||ca
    Object.freeze({...selectionHandDiscardTax,
     sourceTypes:Object.freeze([...selectionHandDiscardTax.sourceTypes])}):null,
   impactNull:card.impactNull===true,
+  raidImpactNull:card.raidImpactNull===true,
   ...(card.alsoEvent===true?{alsoEvent:true}:{}),
   unblockedRestFront:card.unblockedRestFront===true,
   opponentRestImmune:card.opponentRestImmune===true,
@@ -5425,6 +5441,7 @@ card.frontGeneratesEnergy||ownOutsideRecovery||colorTriggerFieldSubstitution||ca
   raidWitness:raidWitness?Object.freeze({...raidWitness}):null,
   handApDiscountWhileName:handApDiscountWhileName?Object.freeze({...handApDiscountWhileName}):null,
   printedImpact:card.printedImpact===1?1:0,
+  raidImpact:card.raidImpact===1?1:0,
   handRevealCharacterBp:handRevealCharacterBp===4000?4000:0,
   ...(handBpMayWhileFront===1000?{handBpMayWhileFront:1000}:{}),
   ...(substituteOppRetire?{substituteOppRetire:Object.freeze({name:substituteOppRetire.name})}:{}),

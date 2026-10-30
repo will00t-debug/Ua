@@ -72,7 +72,7 @@ const additions=[
   effects:{onPlay:[{op:'grantImpactNullUntilNextOwnStart',optional:true}]},
   match:'給予 IMPACT 無效'},
  {id:'TTG-1-071',name:'キングキタンDX',energy:4,ap:1,bp:4000,gen:1,color:'red',
-  type:'character',trigger:'raid',raidName:'キタン',impactNull:true,
+  type:'character',trigger:'raid',raidName:'キタン',raidImpactNull:true,
   implementation:'dsl',
   effects:{onAttack:[{op:'buffOtherIfFirstAttack',bp:2000,optional:true}]},
   match:'第一次攻擊'},
@@ -257,7 +257,7 @@ const additions=[
   match:'ACTIVE'},
  {id:'TTG-1-027',name:'アークグレンラガン',energy:7,ap:1,bp:4000,gen:1,color:'green',
   type:'character',trigger:'raid',implementation:'dsl',raidName:'シモン',
-  raidBaseNames:['シモン','ヴィラル'],raidFromRaid:['グレンラガン'],printedImpact:1,
+  raidBaseNames:['シモン','ヴィラル'],raidFromRaid:['グレンラガン'],raidImpact:1,
   passiveBonuses:[{condition:{kind:'ownCardTraitCount',turn:'any',zone:'field',
    excludeSelf:false,trait:'ガンメン',min:1},bp:1000}],
   effects:{onPlay:[{op:'facedownEntryScale',retireAt:1,retireBp:5000,activeApAt:3}],
@@ -314,7 +314,7 @@ const additions=[
   match:'REST'},
  {id:'TTG-1-074',name:'グレンラガン',energy:4,ap:1,bp:4000,gen:1,color:'red',
   type:'character',trigger:'raid',implementation:'dsl',raidName:'シモン',
-  raidRequiresNames:['ニア'],raidFromRaid:['ラガン','グレン'],printedImpact:1,
+  raidRequiresNames:['ニア'],raidFromRaid:['ラガン','グレン'],raidImpact:1,
   effects:{onPlay:[{op:'lagannEntryLadder'}]},
   match:'IMPACT'}
 ];

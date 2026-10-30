@@ -625,7 +625,7 @@ test('TTG-074 raids only with Nia, chains from Lagann, and ladders draws with th
  stacked.fieldEntryStamp=closed.nextFieldEntryStamp++;
  closed.players[1].front[3]=stacked;
  assert.ok(legalUniversalActions(ttg,closed).some(a=>a.type==='raid'&&a.uid===card.uid&&a.baseUid===stacked.uid));
- assert.equal(universalImpact(ttg,closed,card),1);
+ assert.equal(universalImpact(ttg,closed,card),0);
  assertUniversalMatch(ttg,closed);
 
  let ladder=fresh(9075);
@@ -636,6 +636,8 @@ test('TTG-074 raids only with Nia, chains from Lagann, and ladders draws with th
  const before=ladder.players[0].deck.length;
  ladder=go(ladder,act(ladder,a=>a.type==='play'&&a.uid===body.uid&&a.line==='front'));
  const entered=live(ladder,0,body.uid);
+ assert.equal(entered.ready,false);
+ assert.equal(universalImpact(ttg,ladder,entered),0);
  assert.equal(ladder.players[0].deck.length,before-1);
  assert.ok(entered.buffs.some(b=>b.bp===1000));
  assert.ok(entered.buffs.some(b=>b.bp===3000));
