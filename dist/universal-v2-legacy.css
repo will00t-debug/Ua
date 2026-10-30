@@ -384,3 +384,24 @@ body{margin:0;background:#f2f3f5;color:#272b31;font:14px/1.5 system-ui,-apple-sy
  padding:1px 3px;border-radius:3px;background:#d3f4e8;color:#174739;
  font-size:9px;white-space:nowrap;z-index:4;
 }
+
+
+/* Pause a private search/TOP-N choice to inspect both fields and own hand. */
+.v2-shell .v2-inspection-peek-tools{display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+ margin:4px 0 12px;padding:9px 11px;border:1px solid #d8c18e;border-radius:8px;background:#fcf6e8}
+.v2-shell .v2-inspection-peek-tools .v2-inspection-peek-btn{min-height:42px;
+ background:#244e40;border-color:#244e40;color:#fff;font-weight:750}
+.v2-shell .v2-inspection-peek-tools span{font-size:12px;color:#566356;line-height:1.45}
+.v2-shell #match-view .v2-inspection-return{position:fixed;z-index:450;bottom:calc(14px + env(safe-area-inset-bottom));
+ left:50%;transform:translateX(-50%);width:min(530px,calc(100% - 24px));
+ display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
+ padding:10px 12px;border:2px solid #dbb773;border-radius:12px;
+ background:#17392f;color:#ffefd1;box-shadow:0 8px 35px #0b1c17a6}
+.v2-shell #match-view .v2-inspection-return span{font-size:12px;line-height:1.4;font-weight:650}
+.v2-shell #match-view .v2-inspection-return button{min-height:42px;flex:0 0 auto;font-weight:800;
+ background:#f7d588;border:1px solid #f7d588;color:#1c342b}
+@media(max-width:620px){
+ .v2-shell .v2-inspection-peek-tools{flex-direction:column;align-items:stretch}
+ .v2-shell #match-view .v2-inspection-return{flex-direction:column;align-items:stretch;text-align:center}
+ .v2-shell #match-view .v2-inspection-return button{width:100%}
+}
