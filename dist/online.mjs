@@ -770,7 +770,7 @@ function onlineInspectionGallery(room){
 // both a destination and a "take to hand" choice. Show those exact legal
 // choices next to the known card art, not as anonymous text buttons.
 function effectEntryGallery(room){
- if(!room?.yourTurn||!room.view?.pending||room.inspection||app.pick?.uid||app.busy)return null;
+ if(!room?.yourTurn||!room.view?.pending||room.inspection?.cards?.length||app.pick?.uid||app.busy)return null;
  if(room.view.pending.player!==room.seat)return null;
  const legal=room.choices||[];
  const entries=legal.filter(action=>boardEntryMode(action));
