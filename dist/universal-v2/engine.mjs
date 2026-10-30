@@ -5395,6 +5395,9 @@ function strippableRaidTop(pack,top){
 function performRaid(pack,s,p,cardOnTop,baseUid,line,slot,replaceUid,{entryReady=true,entryCause='paidRaid',entryFrom='hand',effectSourceUid=null}={}){
  const pl=s.players[p],base=location(s,p,baseUid),top=card(pack,cardOnTop);
  if(entryBanned(pack,s,p,top))throw Error('Printed mutual name ban');
+ // FAQ Q44/Q47: every actual Raid performs its printed ACTIVE before onPlay.
+ // Only a separate, later card effect may REST the new character.
+ if(entryReady!==true)throw Error('Raid must enter ACTIVE');
  const baseOriginalSilenced=base?originalEffectsDisabled(s,base.c):false;
  if(!base||!validRaidBase(pack,s,p,base.c,top))throw Error('Illegal Raid base');
  if(line!=='front'&&line!=='energy')throw Error('Illegal Raid destination');
@@ -5418,7 +5421,7 @@ function performRaid(pack,s,p,cardOnTop,baseUid,line,slot,replaceUid,{entryReady
   effectiveBase.under??=[];
   effectiveBase.under.push(base.c);
  }
- cardOnTop.stack=[effectiveBase];cardOnTop.ready=entryReady;
+ cardOnTop.stack=[effectiveBase];cardOnTop.ready=true;
  delete effectiveBase.raidBaseUid;
  cardOnTop.raidBaseUid=effectiveBase.uid;
  cardOnTop.fieldEntryStamp=s.nextFieldEntryStamp++;
@@ -5859,7 +5862,7 @@ function finishPrintedRestRaid(pack,s,q,a){
    s.effectQueue.unshift({op:'grantRaidedOkabe',owner:q.player,uid:physical.uid,
     bp:0,impact:1,sourceUid:q.sourceUid});
   performRaid(pack,s,q.player,physical,a.baseUid,a.line,a.slot,a.replaceUid,{
-   entryReady:q.entryReady===true,
+   entryReady:true,
    entryCause:zone==='removed'?'removedEffectRaid':'outsideEffectRaid',
    entryFrom:zone,effectSourceUid:q.sourceUid});
   return;
@@ -8048,7 +8051,7 @@ function resolveChoice(s,a,pack){
     p.outside.splice(i,1);
     s.pending=null;
     performRaid(pack,s,q.player,physical,a.baseUid,a.line,a.slot,a.replaceUid,
-     {entryReady:false,entryCause:'outsideEffectRaid',entryFrom:'outside',effectSourceUid:q.sourceUid});
+     {entryReady:true,entryCause:'outsideEffectRaid',entryFrom:'outside',effectSourceUid:q.sourceUid});
     continueEffectQueue(pack,s);return;
    }
    if(a.mode!=='enter'||!['front','energy'].includes(a.line)||
@@ -8299,11 +8302,11 @@ function resolveChoice(s,a,pack){
      !['front','energy'].includes(a.line))
      throw Error('Invalid base for deck-effect Raid');
     p.deck.shift();
-    // Effect raids enter rested, matching the existing hand and outside
-    // effect raids. No card-specific FAQ was found that makes レイドさせる active.
+    // FAQ Q44/Q47: a card instructed to Raid applies its printed ACTIVE.
+    // REST applies only to non-Raid deployment (FAQ Q103).
     s.pending=null;
     performRaid(pack,s,q.player,top,a.baseUid,a.line,a.slot,a.replaceUid,
-     {entryReady:false,entryCause:'deckEffectRaid',entryFrom:'deck',effectSourceUid:q.sourceUid});
+     {entryReady:true,entryCause:'deckEffectRaid',entryFrom:'deck',effectSourceUid:q.sourceUid});
     return;
    }
    if(a.mode!=='enter'||!['front','energy'].includes(a.line)||
@@ -8349,7 +8352,7 @@ function resolveChoice(s,a,pack){
     if(q.max>1)s.effectQueue.unshift(handRestOrRaidContinuation(q));
     s.pending=null;
     performRaid(pack,s,q.player,physical,a.baseUid,a.line,a.slot,a.replaceUid,
-     {entryReady:false,entryCause:'handEffectRaid',entryFrom:'hand',effectSourceUid:q.sourceUid});
+     {entryReady:true,entryCause:'handEffectRaid',entryFrom:'hand',effectSourceUid:q.sourceUid});
     return;
    }
    if(a.mode!=='enter'||!['front','energy'].includes(a.line)||
@@ -8845,7 +8848,7 @@ function resolveChoice(s,a,pack){
    p.outside.splice(index,1);
    s.pending=null;
    performRaid(pack,s,q.player,physical,a.baseUid,a.line,a.slot,a.replaceUid,
-    {entryReady:false,entryCause:'outsideEffectRaid',entryFrom:'outside',effectSourceUid:q.sourceUid});
+    {entryReady:true,entryCause:'outsideEffectRaid',entryFrom:'outside',effectSourceUid:q.sourceUid});
    return;
   }
   if(a.mode!=='enter'||!['front','energy'].includes(a.line))
@@ -9165,7 +9168,7 @@ function resolveChoice(s,a,pack){
    p.outside.splice(index,1);
    s.pending=null;
    performRaid(pack,s,q.player,physical,a.baseUid,a.line,a.slot,a.replaceUid,
-    {entryReady:false,entryCause:'outsideEffect',entryFrom:'outside',effectSourceUid:q.sourceUid});
+    {entryReady:true,entryCause:'outsideEffect',entryFrom:'outside',effectSourceUid:q.sourceUid});
    return;
   }
   if(a.mode!=='enter'||!['front','energy'].includes(a.line)||
@@ -12990,7 +12993,7 @@ function legalPending(pack,s){
   return ['front','energy'].filter(line=>
    !(line==='front'&&d.frontForbidden)&&!(line==='energy'&&d.energyForbidden))
    .flatMap(line=>legalDestinations(p,line).map(dest=>({
-    type:'chooseRestReenter',line,...dest})));
+    type:'chooseRestReenter',uid:q.sourceUid,line,...dest})));
  }
  if(q.kind==='effect-hand-two-outside')return p.hand.filter(c=>
   q.choices.includes(c.uid)&&!q.selected.includes(c.uid))
@@ -13377,13 +13380,13 @@ function legalPending(pack,s){
   const out=[];
   for(const line of ['front','energy'])
    for(const dest of legalDestinations(p,line))
-    out.push({type:'chooseSayakaReenter',mode:'enter',line,...dest});
+    out.push({type:'chooseSayakaReenter',mode:'enter',uid:q.sourceUid,line,...dest});
   if(d.raidName)for(const line of ['energy','front'])for(let slot=0;slot<4;slot++){
    const base=p[line][slot];
    if(!validRaidBase(pack,s,q.player,base,d))continue;
    const dests=line==='front'?[{slot}]:legalDestinations(p,'front');
    for(const choice of dests)
-    out.push({type:'chooseSayakaReenter',mode:'raid',baseUid:base.uid,line:'front',...choice});
+    out.push({type:'chooseSayakaReenter',mode:'raid',uid:q.sourceUid,baseUid:base.uid,line:'front',...choice});
   }
   return out;
  }

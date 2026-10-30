@@ -955,12 +955,17 @@ const NORMAL_BOARD_ENTRY=new Set([
  'chooseOutsideActivePair','chooseOutsideNameRest','chooseOutsideRest',
  'chooseOutsidePrintedRest','chooseOutsidePrintedActive','chooseOutsidePrinted',
  'chooseHandNamedRest','chooseHandRest','chooseHandRestCap','chooseHandGirlRest',
- 'chooseRemovedEnter','chooseNamedZoneDeploy'
+ 'chooseRemovedEnter','chooseNamedZoneDeploy',
+  'chooseOutsideUse','chooseOutsideReferenced','chooseRestReenter',
+  'chooseDeployOutside','chooseOutsideExcept','chooseOutsideColorRest',
+  'chooseOutsideColorTraitActive','chooseHandFreshName','chooseHandRestEntry',
+  'chooseRaidBaseRest','chooseHandFrontActive','chooseDeploySelfActive',
+  'chooseTopDeploy','chooseTopDeployRest'
 ]);
 const MODE_BOARD_ENTRY=new Set([
  'choosePrintedRestRaid','chooseOutsideRestOrRaid','chooseHandRestOrRaid',
  'chooseNamedOutside','chooseOutsideTraitlessRest','chooseRemovedRestPair',
- 'chooseOutsideOrRest'
+ 'chooseOutsideOrRest','chooseSayakaReenter','chooseDeckNamedPlay'
 ]);
 export function boardEntryMode(action){
  if(!action||typeof action.uid!=='string'||!action.uid)return null;
@@ -971,7 +976,7 @@ export function boardEntryMode(action){
  }
  if(action.line!=='front'&&action.line!=='energy')return null;
  if(action.type==='play'||NORMAL_BOARD_ENTRY.has(action.type))return 'normal';
- if(action.type==='chooseRemovedOkabeRaid')return 'raid';
+ if(action.type==='chooseRemovedOkabeRaid'||action.type==='chooseOutsideRaid')return 'raid';
  if(action.type==='chooseTrigger'&&(action.mode==='color'||action.mode==='colorOutside'))
   return 'normal';
  if(!MODE_BOARD_ENTRY.has(action.type))return null;
@@ -1005,7 +1010,8 @@ export function entryClickPlan({selectedUid,entryMode,raidBaseUid=null,line,slot
  // Tapping that base must select its UID, not silently compare its energy cell
  // to the final front destination. This also bypasses the mode chooser only
  // when the tapped character is a legally available Raid base.
- const tappedBase=line==='energy'&&slotUid&&entryMode!=='normal'&&
+ const tappedBase=line==='energy'&&slotUid&&
+  (entryMode==='raid'||(!selection.needsMode&&entryMode!=='normal'))&&
   selection.raid.some(action=>action.baseUid===slotUid);
  if(tappedBase&&raidBaseUid!==slotUid)return {type:'raid-base',baseUid:slotUid};
  let mode=null;
