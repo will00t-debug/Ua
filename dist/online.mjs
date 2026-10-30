@@ -520,7 +520,7 @@ function zone(title,cards,engineSeat){
   const classes=[
    plan.type==='destination'||plan.type==='entry'?'destination':'',
    plan.type==='choose-mover'?'move-source':'',
-   plan.type==='raid-base'||card?.uid===app.pick?.raidBaseUid?'raid-base':'',
+   plan.type==='raid-base'||(!!card&&!!app.pick?.raidBaseUid&&card.uid===app.pick.raidBaseUid)?'raid-base':'',
    selected?'selected':'',
    canBlock?'can-block':''
   ].filter(Boolean).join(' ');
@@ -623,7 +623,7 @@ function playHint(room){
   const mode=pick.entryMode==='raid'||(!selection.needsMode&&selection.raid.length)?'raid':'normal';
   return mode==='raid'?(pick.raidBaseUid?
    '已選突襲底座。請點後線底座留在後線，或點前線亮起的位置登場。':
-   '先點合法的前線／後線底座，再點要登場的前線位置；後線底座可再點一次原位突襲。'):
+   '先點合法的前線／後線底座，再請直接點要登場的格子；後線底座可再點一次原位突襲。'):
    '普通進場。請直接點要登場的格子。';
  }
  if(room.view?.pending&&room.view.pending.player===room.seat)return '請完成這個選擇。';
