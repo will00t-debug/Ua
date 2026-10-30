@@ -88,3 +88,18 @@ test('durable room storage retains only public card fields across reloads',()=>{
  assert.match(repo,/\.\.\.\(cards\.length\?\{cards\}:\{\}\)/);
  assert.doesNotMatch(repo,/JSON\.stringify\(room\.log\.map\(entry=>\(\{text:/);
 });
+
+test('direct public-zone arrivals and two identical physical copies are each visible',()=>{
+ const before=state(),after=structuredClone(before);
+ after.players[0].outside=[
+  physical('0-copy-a','CARD-X'),physical('0-copy-b','CARD-X')];
+ after.players[1].removed=[physical('1-removed','CARD-Y')];
+ assert.deepEqual(publicCardResults(before,after,{}),[
+  {owner:0,cardId:'CARD-X',kind:'outside',label:'送至場外'},
+  {owner:0,cardId:'CARD-X',kind:'outside',label:'送至場外'},
+  {owner:1,cardId:'CARD-Y',kind:'removed',label:'送至移除區'}
+ ]);
+ after.zoneMoveEvents.push(move(10,0,'0-copy-a','CARD-X','deck','outside'));
+ assert.equal(publicCardResults(before,after,{}).length,3,
+  'the same arrival via both ledger and visible destination is shown once');
+});
