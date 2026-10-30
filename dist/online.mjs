@@ -397,7 +397,10 @@ function boardEntrySelection(legal,uid){
   boardEntryMode(action)&&action.uid===uid);
  const normal=mine.filter(action=>boardEntryMode(action)==='normal');
  const raid=mine.filter(action=>boardEntryMode(action)==='raid');
- return {normal,raid,needsMode:normal.length>0&&raid.length>0};
+ // Only effects explicitly presenting both entry modes require a mode button.
+ // Paid hand cards choose ordinary entry by cell, or Raid by tapping a base.
+ const paidRaid=raid.some(action=>action.type==='raid');
+ return {normal,raid,needsMode:normal.length>0&&raid.length>0&&!paidRaid};
 }
 function entryDestination(action,line,slot,slotUid){
  const dest=action.line==='energy'?'energy':'front';
@@ -411,22 +414,33 @@ function entryDestination(action,line,slot,slotUid){
 function entryClickPlan({selectedUid,entryMode,raidBaseUid=null,line,slot,slotUid,legal}){
  const selection=boardEntrySelection(legal,selectedUid);
  if(!selection.normal.length&&!selection.raid.length)return {type:'idle'};
- // Tapping an eligible ENERGY base chooses the Raid source. Final placement
- // may be that same ENERGY slot or a legal FRONT slot.
- const tappedBase=line==='energy'&&slotUid&&
-  (entryMode==='raid'||(!selection.needsMode&&entryMode!=='normal'))&&
-  selection.raid.some(action=>action.baseUid===slotUid);
- if(tappedBase&&raidBaseUid!==slotUid)return {type:'raid-base',baseUid:slotUid};
- let mode=null;
- if((entryMode==='raid'||raidBaseUid)&&selection.raid.length)mode='raid';
- else if(entryMode==='normal'&&selection.normal.length)mode='normal';
- else if(selection.needsMode)return {type:'entry-mode'};
- else mode=selection.raid.length?'raid':'normal';
+ const paidRaid=selection.raid.some(action=>action.type==='raid');
+ // Standard paid play: empty legal cell = ordinary entry. Tapping a legal
+ // Raid base enters the two-step base -> destination flow; no mode button.
+ if(paidRaid){
+  const baseCandidate=slotUid&&selection.raid.some(action=>action.baseUid===slotUid);
+  if(entryMode!=='normal'&&baseCandidate&&raidBaseUid!==slotUid)
+   return {type:'raid-base',baseUid:slotUid};
+  if(raidBaseUid){
+   const hits=selection.raid.filter(action=>action.baseUid===raidBaseUid&&
+    entryDestination(action,line,slot,slotUid));
+   return hits.length?{type:'entry',mode:'raid',actions:hits}:{type:'entry-wait',mode:'raid'};
+  }
+  // An explicitly entered Raid gesture cannot silently become ordinary play
+  // by clicking another occupied cell before choosing its legitimate base.
+  if(entryMode==='raid')return {type:'entry-wait',mode:'raid'};
+  const hits=selection.normal.filter(action=>entryDestination(action,line,slot,slotUid));
+  return hits.length?{type:'entry',mode:'normal',actions:hits}:{type:'entry-wait',mode:'normal'};
+ }
+ // Effect entry: first choose the card, then its legal mode (if two options
+ // are printed), and tap the destination. The action owns its Raid base UID.
+ const mode=entryMode==='raid'&&selection.raid.length?'raid':
+  entryMode==='normal'&&selection.normal.length?'normal':
+  selection.needsMode?null:selection.raid.length?'raid':'normal';
+ if(!mode)return {type:'entry-mode'};
  const hits=(mode==='raid'?selection.raid:selection.normal)
-  .filter(action=>(mode!=='raid'||!raidBaseUid||action.baseUid===raidBaseUid)&&
-   entryDestination(action,line,slot,slotUid));
- if(!hits.length)return {type:'entry-wait',mode};
- return {type:'entry',mode,actions:hits};
+  .filter(action=>entryDestination(action,line,slot,slotUid));
+ return hits.length?{type:'entry',mode,actions:hits}:{type:'entry-wait',mode};
 }
 function legalChoices(){return app.room?.choices||[];}
 function tableReady(){
@@ -490,8 +504,17 @@ function clickField(engineSeat,line,index,card){
  if(plan.type==='destination'||plan.type==='entry'){
   const acts=plan.actions||[];
   if(acts.length===1){sendAction(acts[0].index);return;}
-  if(acts.length>1){app.pick={uid:pick.uid||null,entryMode:pick.entryMode||null,
-   raidBaseUid:pick.raidBaseUid||null,options:acts};render();return;}
+  if(acts.length>1){
+   const own=room.view?.players?.[room.seat];
+   const bases=[...(own?.front||[]),...(own?.energy||[])];
+   const options=acts.every(action=>boardEntryMode(action)==='raid'&&action.type!=='raid')?
+    acts.map(action=>{
+     const base=bases.find(c=>c?.uid===action.baseUid);
+     return {...action,label:'突襲底座：'+(base?.name||base?.cardId||action.baseUid||'指定底座')};
+    }):acts;
+   app.pick={uid:pick.uid||null,entryMode:pick.entryMode||null,
+    raidBaseUid:pick.raidBaseUid||null,options};render();return;
+  }
  }
  if(plan.type==='entry-mode'||plan.type==='entry-wait')return;
  if(card){app.pick={uid:pick.uid===card.uid?null:card.uid,entryMode:null,options:null};app.zone=null;render();}
@@ -620,15 +643,28 @@ function playHint(room){
  const board=legal.some(action=>boardEntryMode(action));
  const pick=app.pick||{};
  const selection=pick.uid?boardEntrySelection(legal,pick.uid):{normal:[],raid:[],needsMode:false};
- if(app.pick?.options?.length)return '這個格子有多種登場方式，請選一個。';
+ if(app.pick?.options?.length){
+  const choices=app.pick.options;
+  return choices.length>1&&choices.every(a=>boardEntryMode(a)==='raid'&&a.type!=='raid')&&
+   new Set(choices.map(a=>a.baseUid)).size>1?
+   '這個位置有多個合法突襲底座，請選一張底座。':
+   '這個格子有多種登場方式，請選一個。';
+ }
  if(board){
   if(!pick.uid)return '先選擇要登場的角色。手牌直接點；場外或移除區請先打開該區。';
   if(selection.needsMode&&pick.entryMode!=='normal'&&pick.entryMode!=='raid')
    return '再選擇突襲進場或普通進場。';
+  if(selection.raid.some(a=>a.type==='raid'))return pick.raidBaseUid?
+   '一般突襲：已選好底座，請點合法登場位置（可點後線底座原位）。':
+   selection.normal.length?
+   '一般出牌：點合法格子普通登場；要突襲請先點底座，再點登場位置。':
+   '一般突襲：先點合法底座，再點登場位置。';
   const mode=pick.entryMode==='raid'||(!selection.needsMode&&selection.raid.length)?'raid':'normal';
+  if(mode==='raid'&&selection.raid.length&&selection.raid.every(a=>a.type!=='raid'))
+   return '效果突襲：直接點亮起的登場位置；同格有多個合法底座時再選底座。';
   return mode==='raid'?(pick.raidBaseUid?
    '已選突襲底座。請點後線底座留在後線，或點前線亮起的位置登場。':
-   '先點合法的前線／後線底座，再請直接點要登場的格子；後線底座可再點一次原位突襲。'):
+   '一般突襲：先點合法底座，再點要登場的格子。'):
    '普通進場。請直接點要登場的格子。';
  }
  if(room.view?.pending&&room.view.pending.player===room.seat)return '請完成這個選擇。';

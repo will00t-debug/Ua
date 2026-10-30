@@ -67,9 +67,13 @@ test('TTG-046 printed 4/1 Kamina has front-only own-Raid-conditioned main and re
  const selection=boardEntrySelection(legalUniversalActions(packs,s),raider.uid);
  assert.ok(selection.raid.length);
  assert.ok(selection.normal.length);
- assert.equal(selection.needsMode,true);
+ assert.equal(selection.needsMode,false,'paid Raid never requires a normal/Raid mode button');
+ assert.deepEqual(entryClickPlan({selectedUid:raider.uid,entryMode:null,
+  line:'front',slot:raid.slot,slotUid:base.uid,legal:legalUniversalActions(packs,s)}),
+  {type:'raid-base',baseUid:base.uid});
  assert.deepEqual(entryClickPlan({selectedUid:raider.uid,entryMode:'raid',
-  line:'front',slot:raid.slot,slotUid:base.uid,legal:legalUniversalActions(packs,s)}).actions[0],raid);
+  raidBaseUid:base.uid,line:'front',slot:raid.slot,slotUid:base.uid,
+  legal:legalUniversalActions(packs,s)}).actions[0],raid);
  assert.match(uiActionLabel(raid,{pack:packs,state:s}),/底板/);
  s=clearPending(next(s,raid));
  assert.equal(s.players[0].front[1].ready,true,'a Raid character is ACTIVE even if its base was REST');

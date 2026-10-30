@@ -753,9 +753,12 @@ function legacyCommands(legal){
   .slice(0,100);
  const selection=app.selectedUid?boardEntrySelection(legal,app.selectedUid):
   {normal:[],raid:[],needsMode:false};
- const chosen=selection.needsMode&&(app.entryMode==='normal'||app.entryMode==='raid')?
+ const paidRaid=selection.raid.some(a=>a.type==='raid');
+ const chosen=paidRaid?(app.raidBaseUid?'raid':selection.normal.length?'normal':'raid'):
+  selection.needsMode&&(app.entryMode==='normal'||app.entryMode==='raid')?
   app.entryMode:selection.needsMode?null:selection.raid.length?'raid':
   selection.normal.length?'normal':null;
+ const effectRaid=selection.raid.length>0&&selection.raid.every(a=>a.type!=='raid');
  if(!list.length&&!board&&!app.targetChoices&&!pendingRest.length)return null;
  const bar=el('div',{class:'v2-compact-actions','aria-label':'登場與情境操作'});
  if(s.pending?.kind==='life-trigger'){
@@ -768,7 +771,11 @@ function legacyCommands(legal){
  }
  const name=selectedCardName();
  if(app.targetChoices){
-  bar.append(el('span',{class:'v2-compact-hint',text:'這個格子有多種登場方式，請選一個。'}));
+  const choices=app.targetChoices;
+  const multiBase=choices.length>1&&choices.every(a=>boardEntryMode(a)==='raid'&&a.type!=='raid')&&
+   new Set(choices.map(a=>a.baseUid)).size>1;
+  bar.append(el('span',{class:'v2-compact-hint',text:multiBase?
+   '此位置有多個合法突襲底座，請選一張底座。':'這個格子有多種登場方式，請選一個。'}));
   for(const a of list)bar.append(btn(entryChoiceText(a),()=>{
    app.targetChoices=null;applyAction(a);
   },'btn small primary'));
@@ -786,9 +793,14 @@ function legacyCommands(legal){
   bar.append(btn('突襲進場',()=>{app.entryMode='raid';app.targetChoices=null;render();},'btn small primary'));
  }else if(chosen){
   bar.append(el('span',{class:'v2-compact-hint',text:(name?name+'：':'')+
-   (chosen==='raid'?(app.raidBaseUid?
-    '突襲已選底座。再點後線原位完成突襲，或點前線亮起格子登場。':
-    '先點合法底座（前線或後線）；後線底座可突襲後留在原位或選前線。'):
+   (paidRaid?(app.raidBaseUid?
+    '一般突襲：已選好底座，請點合法登場位置（可點後線底座原位）。':
+    selection.normal.length?
+    '一般出牌：點合法格子普通登場；要突襲請先點底座，再點登場位置。':
+    '一般突襲：先點合法底座，再點登場位置。'):
+    chosen==='raid'?(effectRaid?
+    '效果突襲：直接點亮起的登場位置；同格有多個合法底座時再選底座。':
+    '先點合法底座，再點要登場的格子。'):
     '普通進場。請直接點要登場的格子。')}));
   if(selection.needsMode)bar.append(btn(chosen==='raid'?'改為普通進場':'改為突襲進場',()=>{
    app.entryMode=chosen==='raid'?'normal':'raid';app.raidBaseUid=null;app.targetChoices=null;render();

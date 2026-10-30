@@ -988,7 +988,10 @@ export function boardEntrySelection(legal,uid){
   boardEntryMode(action)&&action.uid===uid);
  const normal=mine.filter(action=>boardEntryMode(action)==='normal');
  const raid=mine.filter(action=>boardEntryMode(action)==='raid');
- return {normal,raid,needsMode:normal.length>0&&raid.length>0};
+ // Only effects explicitly presenting both entry modes require a mode button.
+ // Paid hand cards choose ordinary entry by cell, or Raid by tapping a base.
+ const paidRaid=raid.some(action=>action.type==='raid');
+ return {normal,raid,needsMode:normal.length>0&&raid.length>0&&!paidRaid};
 }
 function entryDestination(action,line,slot,slotUid){
  const dest=action.line==='energy'?'energy':'front';
@@ -1005,22 +1008,31 @@ function entryDestination(action,line,slot,slotUid){
 export function entryClickPlan({selectedUid,entryMode,raidBaseUid=null,line,slot,slotUid,legal}){
  const selection=boardEntrySelection(legal,selectedUid);
  if(!selection.normal.length&&!selection.raid.length)return {type:'idle'};
- // A Raid from an ENERGY base usually enters a *different*, empty FRONT slot.
- // Tapping that base must select its UID, not silently compare its energy cell
- // to the final front destination. This also bypasses the mode chooser only
- // when the tapped character is a legally available Raid base.
- const tappedBase=line==='energy'&&slotUid&&
-  (entryMode==='raid'||(!selection.needsMode&&entryMode!=='normal'))&&
-  selection.raid.some(action=>action.baseUid===slotUid);
- if(tappedBase&&raidBaseUid!==slotUid)return {type:'raid-base',baseUid:slotUid};
- let mode=null;
- if((entryMode==='raid'||raidBaseUid)&&selection.raid.length)mode='raid';
- else if(entryMode==='normal'&&selection.normal.length)mode='normal';
- else if(selection.needsMode)return {type:'entry-mode'};
- else mode=selection.raid.length?'raid':'normal';
+ const paidRaid=selection.raid.some(action=>action.type==='raid');
+ // Standard paid play: empty legal cell = ordinary entry. Tapping a legal
+ // Raid base enters the two-step base -> destination flow; no mode button.
+ if(paidRaid){
+  const baseCandidate=slotUid&&selection.raid.some(action=>action.baseUid===slotUid);
+  if(entryMode!=='normal'&&baseCandidate&&raidBaseUid!==slotUid)
+   return {type:'raid-base',baseUid:slotUid};
+  if(raidBaseUid){
+   const hits=selection.raid.filter(action=>action.baseUid===raidBaseUid&&
+    entryDestination(action,line,slot,slotUid));
+   return hits.length?{type:'entry',mode:'raid',actions:hits}:{type:'entry-wait',mode:'raid'};
+  }
+  // An explicitly entered Raid gesture cannot silently become ordinary play
+  // by clicking another occupied cell before choosing its legitimate base.
+  if(entryMode==='raid')return {type:'entry-wait',mode:'raid'};
+  const hits=selection.normal.filter(action=>entryDestination(action,line,slot,slotUid));
+  return hits.length?{type:'entry',mode:'normal',actions:hits}:{type:'entry-wait',mode:'normal'};
+ }
+ // Effect entry: first choose the card, then its legal mode (if two options
+ // are printed), and tap the destination. The action owns its Raid base UID.
+ const mode=entryMode==='raid'&&selection.raid.length?'raid':
+  entryMode==='normal'&&selection.normal.length?'normal':
+  selection.needsMode?null:selection.raid.length?'raid':'normal';
+ if(!mode)return {type:'entry-mode'};
  const hits=(mode==='raid'?selection.raid:selection.normal)
-  .filter(action=>(mode!=='raid'||!raidBaseUid||action.baseUid===raidBaseUid)&&
-   entryDestination(action,line,slot,slotUid));
- if(!hits.length)return {type:'entry-wait',mode};
- return {type:'entry',mode,actions:hits};
+  .filter(action=>entryDestination(action,line,slot,slotUid));
+ return hits.length?{type:'entry',mode,actions:hits}:{type:'entry-wait',mode};
 }
