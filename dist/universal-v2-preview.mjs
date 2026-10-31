@@ -22,7 +22,7 @@ import {collectSavedV2LobbyDecks,accountLobbyRows,orderedAccountLobbyRows,shadow
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  universalPublicView,universalPrivateChoices,assertUniversalMatch} from './universal-v2/engine.mjs';
 import {chooseUniversalAiAction} from './universal-v2/ai.mjs';
-import {chooseProgressSafeAiAction,AI_ACTIONS_PER_FRAME,aiPolicyFor} from './universal-v2/ai-driver-safety.mjs?v=20261030hardai1';
+import {chooseProgressSafeAiAction,AI_ACTIONS_PER_FRAME,aiPolicyFor} from './universal-v2/ai-driver-safety.mjs?v=20261031hardai2';
 import {ttgArtSource,ttgArtErrorFallback} from './ttg-art.mjs';
 import {TTG_BY_ID} from './ttg-builder.mjs';
 import {CARDS} from './cards.mjs?v=9.1.0';
