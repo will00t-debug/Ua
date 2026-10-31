@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 // New Hard (seat 0, hard-search-1) vs frozen Hard (seat 1, chooseLegacyHardAiAction).
 // Same universal V2 reducer, BLEACH pack and the three designated 50-card decks.
-// 3 pairings each way x first/second x seeds. Acceptance seeds are 88001-88020.
-// Tuning uses 77001+ and must not overlap the acceptance range. A later retune
-// uses 89001+. Interrupts stay in the denominator and are not wins.
+// 3 pairings each way x first/second x seeds. The first holdout 88001-88020
+// stays in audit/v2-hard-ai-matrix.json (186/360, below 60%). Do not retune
+// on it. The post-fix holdout is 91001-91020 in
+// audit/v2-hard-ai-matrix-91001.json. Smoke before that used 89001-89004.
+// Interrupts stay in the denominator and are not wins.
 //
 //   HARD_AI_SEED0=77001 HARD_AI_SEEDS=2 node scripts/v2-hard-ai-matrix.mjs
 import {Worker, isMainThread, parentPort, workerData} from 'node:worker_threads';

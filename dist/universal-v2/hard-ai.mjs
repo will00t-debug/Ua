@@ -174,13 +174,17 @@ function curveTarget(pack,state,player){
 function resourceScore(pack,state,player){
  const energy=safeNum(()=>universalEnergy(pack,state,player),0);
  const deficit=Math.max(0,curveTarget(pack,state,player)-energy);
- let score=-deficit*deficit*3.2;
+ let score=0;
  const colors=universalEnergyByColor(pack,state,player);
  const catalog=packsOf(pack)[player].cards;
  for(const c of state.players[player].hand){
   const d=catalog[c.cardId];
   if(d&&(d.energy||0)>(colors[d.color]||0))score-=2.4;
  }
+ // One missing energy while already short has to outweigh moving that
+ // generator forward and swinging once. 3.2 made a 1500 on 1 energy
+ // look like a profitable attack and the deck never reached its curve.
+ score-=deficit*deficit*8;
  score+=state.players[player].apCards.filter(a=>a.ready).length*4.2;
  const n=state.players[player].hand.length;
  score+=n<=1?0:n===2?1.5:n===3?2.5:n===4?3:3.2-(n-4)*1.2;
@@ -256,6 +260,30 @@ function combatDelta(pack,before,after,actor,action){
   else if(was.ready&&!now.ready)delta-=sign*readyPortion(pack,before,was);
  }
  return delta;
+}
+function hiddenDraws(before,after,actor,hidden){
+ const known=knownIds(before,actor);
+ const next=new Set(hidden||[]);
+ for(const c of after.players[actor].hand)if(!known.has(c.uid))next.add(c.uid);
+ return next;
+}
+function scorePublic(pack,before,after,actor,hidden,blindValue){
+ // A resolved play can mill or reveal. Those identities stay masked.
+ // The card that was already in hand and is now on the field still counts;
+ // otherwise a raid or an on-play mill scores as losing the hand card only.
+ const known=knownIds(before,actor);
+ const cover=hiddenDraws(before,after,actor,hidden);
+ let state=after,mystery=0,cloned=false;
+ for(let p=0;p<2;p++)for(const line of ['front','energy']){
+  after.players[p][line].forEach((c,i)=>{
+   if(!c||known.has(c.uid)||cover.has(c.uid))return;
+   if(!cloned){state=structuredClone(after);cloned=true;}
+   state.players[p][line][i]=null;
+   mystery++;
+  });
+ }
+ const blind=Number.isFinite(blindValue)?blindValue:unknownAverage(pack,before,actor);
+ return evaluate(pack,state,actor,cover,blind)+mystery*8;
 }
 function leakedScore(pack,before,after,actor,action){
  const done=terminal(after,actor);
@@ -483,7 +511,7 @@ function dispatchScore(pack,state,actor,action,budget,depth,chain,rootKnown,hidd
   return minimax(pack,follow,actor,budget,continuedDepth(state,follow,depth),chain+1,
    rootKnown,hidden,blindValue);
  }
- if(leak&&leak!=='draw')return leakedScore(pack,state,after,actor,action);
+ if(leak&&leak!=='draw')return scorePublic(pack,state,after,actor,hidden,blindValue);
  let hiddenNext=hidden,blind=blindValue;
  if(leak==='draw'){
   hiddenNext=new Set(hidden);
@@ -492,9 +520,12 @@ function dispatchScore(pack,state,actor,action,budget,depth,chain,rootKnown,hidd
   if(!Number.isFinite(blind))blind=unknownAverage(pack,state,actor);
  }
  if(futureLook(after,rootKnown,hiddenNext)){
-  let score=leakedScore(pack,state,after,actor,action);
-  score+=unknownAverage(pack,state,actor)*0.35;
-  return score;
+  if(!Number.isFinite(blind))blind=unknownAverage(pack,state,actor);
+  // The look stays hidden. The public result that opened it still counts:
+  // a body on the energy line, the energy it produces, and a paid cost.
+  // Scoring only the pre-look state made every on-play peek look like a
+  // discarded card, so generators never entered.
+  return evaluate(pack,after,actor,hiddenNext,blind)+blind*0.35;
  }
  const done=terminal(after,actor);
  if(done!==null)return done;
@@ -584,6 +615,8 @@ export function chooseStrengthenedHardAction(pack,state,options={}){
   const budget={nodes:limits.nodes,deadline:started+limits.ms,depth:limits.depth,
    exhausted:false,unsupported:0};
   const rootKnown=knownIds(state,actor);
+  const wide=!state.pending||['block','effect-block-floor','life-trigger',
+   'life-batch-order'].includes(state.pending.kind);
   const {primary,baseline}=partitionBeam(pack,state,actor,legal);
   const hold=reserveNodesFor(budget);
   let best=null,legacyScore=null;
@@ -599,7 +632,11 @@ export function chooseStrengthenedHardAction(pack,state,options={}){
    scored.add(JSON.stringify(action));
    if(!Number.isFinite(score))return true;
    if(legacy&&same(action,legacy))legacyScore=score;
-   if(!best||score>best.score)best={action,score};
+   // End of turn readies a rested attacker. A swing that changes nothing
+   // therefore ties with passing; keep the pass so a battle win is not
+   // handed over for free. Effect choices keep the first strict gain.
+   const idleWide=wide&&isBaselineAction(action)&&!!best&&score===best.score;
+   if(!best||score>best.score||idleWide)best={action,score};
    return score<50000;
   };
   for(const action of primary)if(!visit(action,true))break;
@@ -619,13 +656,14 @@ export function chooseStrengthenedHardAction(pack,state,options={}){
   // Effect choices use any measured gain: the frozen heuristic often
   // follows list order. Phase, block and life lines keep a margin, and a
   // line that was never compared does not replace that heuristic.
-  const wide=!state.pending||['block','effect-block-floor','life-trigger',
-   'life-batch-order'].includes(state.pending.kind);
   const margin=wide?ROOT_MARGIN:0;
   const uncompared=!!legacy&&legacyScore==null&&best.score<50000;
   if(uncompared)report.uncompared++;
+  const idleTie=wide&&!!legacy&&legacyScore!=null&&isBaselineAction(best.action)&&
+   !same(best.action,legacy)&&best.score===legacyScore;
   const chosen=best.score>=50000?best.action
    :uncompared?(wide?legacy:best.action)
+   :idleTie?best.action
    :legacy&&legacyScore!=null&&!same(best.action,legacy)&&
     best.score<legacyScore+margin?legacy:best.action;
   if(legacy&&same(chosen,legacy))report.kept++;

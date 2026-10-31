@@ -347,6 +347,37 @@ test('Damage 2 is blocked before life is critical, and the only defender is not 
  assert.equal(normal.action.type,'attack');
 });
 
+test('an on-play look still puts the affordable generator on energy',()=>{
+ // EX15BT/BLC-4-083 peeks on play and costs 0 while the field is empty.
+ // EX15BT/BLC-4-048 also peeks. UA08BT/BLC-1-047 is the raider in hand.
+ // Scoring the peek as a lost card used to pass the whole main phase.
+ let s=reach(boot(deck.renruki,3),'main');
+ const small=take(s,0,'BLC-4-048'),body=take(s,0,'BLC-4-083'),raider=take(s,0,'BLC-1-047');
+ hold(s,0,[small,body,raider]);
+ const hidden=structuredClone(s);swapHidden(hidden);
+ const {action,legacy}=choose(s);
+ assert.equal(legacy.type,'play');
+ assert.equal(legacy.line,'energy');
+ assert.equal(idOf(s,legacy.uid),'BLC-4-048');
+ assert.equal(action.type,'play');
+ assert.equal(action.line,'energy');
+ assert.equal(idOf(s,action.uid),'BLC-4-083');
+ assert.deepEqual(chooseStrengthenedHardAction(packs,hidden),action);
+});
+
+test('the only generator stays on energy while the curve is unmet',()=>{
+ // Moving EX15BT/BLC-4-048 forward at 1 energy just to bump another 1500
+ // leaves the turn unable to play anything. End of turn would ready it anyway.
+ let s=reach(boot(deck.renruki,9),'move');
+ const gen=place(s,0,'BLC-4-048','energy',0);
+ place(s,1,'BLC-4-048','front',0,true);
+ hold(s,0,[]);
+ const {action,legacy}=choose(s);
+ assert.equal(legacy.type,'next');
+ assert.equal(action.type,'next');
+ assert.notEqual(action.uid,gen.uid);
+});
+
 test('battle page hard difficulty is wired to the strengthened policy',()=>{
  assert.equal(aiPolicyFor('hard'),HARD_AI_POLICY);
  assert.equal(aiPolicyFor('normal'),'normal');
