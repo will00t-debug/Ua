@@ -15494,7 +15494,8 @@ export function legalUniversalActions(pack,s){
      out.push({type:'activate',uid:c.uid,mode:'handTrigger'});
    }
    if(ability?.op==='onceFrontChoose'&&pl.front.some(x=>x?.uid===c.uid)&&
-    !s.mainAbilityUsedUids.includes(c.uid)){
+    !s.mainAbilityUsedUids.includes(c.uid)&&
+    (ability.raidBox!==true||faceUpRaid(pack,c))){
     const choice=ability.then?.[0];
     const other=spec=>{
      if(spec?.op==='grantOtherImpactThisTurn'&&spec.optional!==true&&spec.anyOther===true)
@@ -16572,7 +16573,8 @@ if(ability.op==='frontDrawOrHandTrigger'){
    }
 if(ability.op==='onceFrontChoose'){
     if(action.mode!=='frontChoose'||s.mainAbilityUsedUids.includes(selected.uid)||
-     !pl.front.some(c=>c?.uid===selected.uid))
+     !pl.front.some(c=>c?.uid===selected.uid)||
+     (ability.raidBox===true&&!faceUpRaid(pack,selected)))
      throw Error('Front choice is not legal');
     s.mainAbilityUsedUids.push(selected.uid);
     s.effectQueue.unshift(...ability.then.map(x=>({...x,owner:p,
