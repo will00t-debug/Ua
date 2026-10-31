@@ -581,6 +581,7 @@ function limitsFor(state,options){
   state.pending?.kind==='effect-block-floor';
  return {
   nodes:options.nodes??(combat?64:48),
+  // Soft deadline only. One primary line can run past it; node count is the cap.
   ms:options.ms??(combat?64:48),
   depth:options.depth??3
  };
