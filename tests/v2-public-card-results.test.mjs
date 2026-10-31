@@ -2,6 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {publicCardResults} from '../server/public-card-results.mjs';
+import {dispatchUniversalAction,legalUniversalActions} from '../dist/universal-v2/engine.mjs';
+import {collectPublicCardResults,publicPreviewActionLabel} from '../dist/universal-v2/preview-replay.mjs';
+import {deckWith,fresh,playMain,put,readyAp,stgPacks,take,toPhase} from './helpers/stg-v2-match.mjs';
 
 const physical=(uid,cardId)=>({uid,cardId});
 function state(){
@@ -87,6 +90,39 @@ test('durable room storage retains only public card fields across reloads',()=>{
  assert.match(repo,/owner:card\.owner,cardId:card\.cardId,kind:card\.kind/);
  assert.match(repo,/\.\.\.\(cards\.length\?\{cards\}:\{\}\)/);
  assert.doesNotMatch(repo,/JSON\.stringify\(room\.log\.map\(entry=>\(\{text:/);
+});
+
+test('STG-1-015 public top search publishes only the revealed hand card, not the private window',()=>{
+ let s=toPhase(stgPacks,fresh(deckWith(['STG-1-015']),9015),'main');
+ put(s,0,'STG-1-001','energy',0);
+ const window=['STG-1-007','STG-1-014','STG-1-020','STG-1-042'].map(id=>take(s,0,id));
+ s.players[0].deck.unshift(...window);
+ const source=take(s,0,'STG-1-015');
+ s.players[0].hand.push(source);
+ readyAp(s);
+ const beforePlay=s;
+ const play=legalUniversalActions(stgPacks,s).find(a=>a.type==='play'&&a.uid===source.uid);
+ s=playMain(stgPacks,s,source.uid);
+ assert.equal(publicCardResults(beforePlay,s,play).length,0);
+ const beforePick=s;
+ const pick={type:'chooseTopFiltered',uid:window[0].uid};
+ s=dispatchUniversalAction(stgPacks,s,pick,{actor:0});
+ assert.deepEqual(publicCardResults(beforePick,s,pick),[
+  {owner:0,cardId:'STG-1-007',kind:'hand',label:'公開加入手牌'}
+ ]);
+ const label=publicPreviewActionLabel(stgPacks,beforePick,s,pick,0);
+ assert.match(label,/公開加入手牌.*STG-1-007/);
+ assert.equal(collectPublicCardResults(stgPacks,beforePick,s,pick)[0].name.length>0,true);
+});
+
+test('preview replay loads public results from dist so the static host can serve the module',()=>{
+ const replay=readFileSync(new URL('../dist/universal-v2/preview-replay.mjs',import.meta.url),'utf8');
+ assert.match(replay,/from '\.\/public-card-results\.mjs'/);
+ assert.doesNotMatch(replay,/server\/public-card-results/);
+ const shared=readFileSync(new URL('../dist/universal-v2/public-card-results.mjs',import.meta.url),'utf8');
+ assert.match(shared,/export function publicCardResults/);
+ const bridge=readFileSync(new URL('../server/public-card-results.mjs',import.meta.url),'utf8');
+ assert.match(bridge,/dist\/universal-v2\/public-card-results\.mjs/);
 });
 
 test('direct public-zone arrivals and two identical physical copies are each visible',()=>{

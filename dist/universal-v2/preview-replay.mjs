@@ -4,6 +4,7 @@
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  assertUniversalMatch} from './engine.mjs';
 import {uiActionLabel,publicLifeTriggerText} from './preview-actions.mjs';
+import {publicCardResults} from './public-card-results.mjs';
 
 export const UNIVERSAL_PREVIEW_REPLAY_VERSION=1;
 const privateActions=new Set([
@@ -20,8 +21,18 @@ const ownedCard=(s,p,uid)=>{
  // Never traverse private layered Raid bases or facedown undercards.
  return [...field,...pl.outside].some(c=>c?.uid===uid);
 };
+export function collectPublicCardResults(packs,before,after,action){
+ return publicCardResults(before,after,action).map(result=>{
+  const printed=packs?.[result.owner]?.cards?.[result.cardId];
+  return {...result,name:printed?.name||result.cardId};
+ });
+}
 export function publicPreviewActionLabel(packs,before,after,action,player){
  const actor=player===0?'你':'電腦';
+ const published=collectPublicCardResults(packs,before,after,action);
+ if(published.length){
+  return actor+'：'+published.map(card=>card.label+' '+card.name+'（'+card.cardId+'）').join(' · ');
+ }
  const trigger=publicLifeTriggerText(packs,before,after,action);
  if(trigger)return actor+'：'+trigger;
  if(player===0)return actor+'：'+uiActionLabel(action,{pack:packs,state:before});

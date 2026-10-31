@@ -53,7 +53,7 @@ test('both energy-side piles open a read-only gallery with card inspection on mo
  assert.match(popup,/cards\.length\?gallery:/);
  assert.match(popup,/event\.key==='Escape'/);
  assert.doesNotMatch(popup,/applyAction\(|dispatchUniversalAction\(/);
- assert.match(html,/universal-v2-zone\.css\?v=20261030entry1/);
+ assert.match(html,/universal-v2-zone\.css\?v=20261030publicwindow1/);
  assert.match(css,/\.v2-zone-gallery/);
  assert.match(css,/@media\(max-width:600px\)/);
 });

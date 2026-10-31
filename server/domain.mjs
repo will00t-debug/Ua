@@ -124,7 +124,7 @@ function publicActionChoice(action,index,packs,match,view){
  const choice={index,label:labelFor(packs,match,action)};
  if(typeof action?.type==='string'&&action.type.length<=40)choice.type=action.type;
  const ids=visibleChoiceUids(view);
- for(const key of ['uid','baseUid','replaceUid','targetUid']){
+ for(const key of ['uid','baseUid','replaceUid','targetUid','retireUid']){
   if(action?.[key]===null&&key==='uid')choice.uid=null;
   else if(typeof action?.[key]==='string'&&ids.has(action[key]))choice[key]=action[key];
  }
@@ -154,8 +154,37 @@ const INSPECT_ACTION={
 };
 // A private inspection is display-only. Choice indices must come from the
 // already computed legalUniversalActions list; client-created actions are never trusted.
+function deckWindowGallery(legal,packs,match){
+ const q=match?.pending;
+ if(!q||(q.player!==0&&q.player!==1)||!Array.isArray(q.uids)||!q.uids.length)return null;
+ const player=match.players?.[q.player];
+ const window=(player?.deck||[]).slice(0,q.uids.length);
+ if(window.length!==q.uids.length||window.some((card,index)=>card?.uid!==q.uids[index]))
+  return null;
+ const pack=packs?.[q.player];
+ const order=q.phase==='order';
+ const cards=window.map(card=>{
+  const printed=pack?.cards?.[card.cardId];
+  return {uid:card.uid,cardId:card.cardId,name:printed?.name||card.cardId,
+   color:printed?.color||'',actions:[],
+   caption:order?'下一個放到牌庫底':'點選此牌'};
+ });
+ for(const card of cards){
+  const available=[];
+  for(const [index,action] of legal.entries()){
+   if(action?.uid!==card.uid)continue;
+   available.push({index,label:labelFor(packs,match,action)});
+  }
+  card.actions=available;
+  if(!available.length)card.caption='目前不能選';
+  else if(available.length===1)card.caption=order?'下一個放到牌庫底':'點選此牌';
+  else card.caption='選擇方式／位置';
+ }
+ return {kind:q.kind,cards};
+}
 export function onlinePrivateGallery(privateChoices,legal,packs,match){
- if(!privateChoices||!Array.isArray(legal)||!match?.pending)return null;
+ if(!Array.isArray(legal)||!match?.pending)return null;
+ if(!privateChoices)return deckWindowGallery(legal,packs,match);
  const kind=privateChoices.kind;
  if(!Array.isArray(privateChoices.inspected)&&
   !/(top|search|look|peek|inspect)/i.test(kind))return null;

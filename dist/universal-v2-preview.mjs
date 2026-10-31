@@ -18,7 +18,7 @@ import {generateMatchSeed} from './v2-match-random-seed.mjs';
 import {recordDeckResult} from './deck-records.mjs';
 import {prepareSoloBattle,saveSoloBattle,loadSoloBattle,clearSoloBattle,
  SOLO_BATTLE_URL,SOLO_BATTLE_PROGRESS_KEY} from './universal-v2/solo-battle-session.mjs';
-import {collectSavedV2LobbyDecks,validatedLobbyChoice,V2_MATCH_SETUP_STORAGE_KEY} from './universal-v2/lobby-saved-decks.mjs';
+import {collectSavedV2LobbyDecks,accountLobbyRows,orderedAccountLobbyRows,shadowedLocalLobbyKeys,lobbyChoiceText,validatedLobbyChoice,V2_MATCH_SETUP_STORAGE_KEY} from './universal-v2/lobby-saved-decks.mjs?v=20261030accountdeck1';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  universalPublicView,universalPrivateChoices,assertUniversalMatch} from './universal-v2/engine.mjs';
 import {chooseUniversalAiAction} from './universal-v2/ai.mjs';
@@ -31,10 +31,10 @@ import {SAO_CARDS} from './sao-cards.mjs';
 import {MST_V2_OFFICIAL_CATALOGUE} from './universal-v2/sources/mst-inventory.mjs';
 import {V2_PHASE_LABELS,V2_TITLE_LABELS,V2_PENDING_LABELS,
  uiActor,isExactLegal,uiCardLabel,uiActionLabel,visibleActionsForCard,
- pendingChoiceCards,inspectedPendingChoiceCards,visiblePendingChoiceCards,pendingEntryChoiceCards,publicLifeOrderChoiceCard,pendingChoiceCaption,publicPendingTargetCard,attackBattleTags,attackKeywordBadges,frontAttackKeywordBadges,inlineBlockDecision,boardEntryMode,boardEntrySelection,entryClickPlan,moveClickPlan,
- FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs?v=20261030lifeart1';
+ pendingChoiceCards,inspectedPendingChoiceCards,visiblePendingChoiceCards,pendingEntryChoiceCards,publicLifeOrderChoiceCard,pendingChoiceCaption,publicPendingTargetCard,controllerDeckWindowCards,controllerChoiceArt,pendingTextChoiceClass,attackBattleTags,attackKeywordBadges,frontAttackKeywordBadges,inlineBlockDecision,boardEntryMode,boardEntrySelection,entryClickPlan,moveClickPlan,
+ FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs?v=20261030effectlabel1';
 import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalReplay,
- publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
+ collectPublicCardResults,publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
 import {DESKTOP_BATTLE_QUERY,isDesktopBattlefield,mountDesktopBattlefield}
  from './universal-v2/desktop-battle-ui.mjs';
 
@@ -110,7 +110,7 @@ if(!IS_BATTLE_PAGE)$('v2-coverage').textContent=
  v2Entries.reduce((sum,item)=>sum+item.totalV2Cards,0)+' 張真卡 Pilot';
 let editorRecordId=null,fieldHold=0;
 const app={state:null,packs:null,launch:null,selectedUid:null,recordDeckId:null,recordNoted:false,
- selectedSide:null,history:[],busy:false,aiTimer:null,error:'',
+ selectedSide:null,history:[],publicMoves:[],dismissedPublicMoveIds:new Set(),busy:false,aiTimer:null,error:'',
  undo:null,replay:null,targetChoices:null,raidBaseUid:null,entryMode:null,inspectionPaused:false,dismissedTriggerKeys:new Set(),aiDifficulty:'normal',sequence:0,allActions:false, maxAuto:4500,autoMoves:0,aiPhaseKey:null,aiPhaseCount:0,aiFallbacks:0,aiCompletedSteps:0,lastAiProgress:'未啟動'};
 const phases=V2_PHASE_LABELS;
 const CLIENT_RELEASE='AI 修復 R2 · 2026-10-24';
@@ -132,6 +132,56 @@ function alertText(message){
 }
 function pushHistory(text){
  app.history.unshift(text); // Retain the full human-readable trace for bug reports.
+}
+let publicMoveSerial=0;
+function notePublicMove(packs,before,after,action,player){
+ const cards=collectPublicCardResults(packs,before,after,action);
+ if(!cards.length)return;
+ const actor=player===0?'你':'電腦';
+ app.publicMoves.unshift({id:++publicMoveSerial,actor,cards});
+ if(app.publicMoves.length>16)app.publicMoves.length=16;
+}
+function publicMoveTile(card){
+ const side=card.owner===0?0:1;
+ const name=card.name||card.cardId;
+ const art=el('img',{src:imgUrl(side,card.cardId),alt:name,loading:'lazy',decoding:'async'});
+ art.onerror=()=>{
+  if(app.packs?.[side]?.id==='gurren-lagann'&&ttgArtErrorFallback(art))return;
+  if(!art.src.endsWith('/assets/mark.svg'))art.src='assets/mark.svg';
+ };
+ const tile=el('figure',{class:'trigger-tile'});
+ tile.append(el('span',{class:'choice-card-art'},art),
+  el('figcaption',{},el('b',{text:name}),
+   el('span',{text:(side===0?'你':'電腦')+' · '+(card.label||'公開')})));
+ return tile;
+}
+// A public search or a card sent outside/removed is a one-time window,
+// the same shape as a revealed life trigger. One tap closes it.
+function publicMoveOverlay(){
+ if(app.state?.pending)return null;
+ const latest=app.publicMoves[0];
+ if(!latest?.cards?.length||app.dismissedPublicMoveIds.has(latest.id))return null;
+ const overlay=el('div',{class:'overlay v2-trigger-overlay v2-public-move-overlay',
+  role:'presentation','aria-label':'公開卡片提示'});
+ const board=el('section',{class:'trigger-board',role:'dialog','aria-modal':'true',
+  'aria-label':'公開的卡片，點一下關閉',tabindex:'0'});
+ board.append(el('h2',{text:'公開的卡片'}),
+  el('p',{class:'note',text:latest.actor+'公開了這些卡。點一下畫面即可關閉。'}));
+ const row=el('div',{class:'trigger-row'});
+ for(const card of latest.cards.slice(0,12))row.append(publicMoveTile(card));
+ board.append(row);
+ overlay.append(board);
+ const dismiss=()=>{
+  app.dismissedPublicMoveIds.add(latest.id);
+  clearPublicMoveOverlay();
+ };
+ overlay.addEventListener('click',dismiss);
+ overlay.addEventListener('keydown',event=>{
+  if(event.key==='Escape'||event.key==='Enter'||event.key===' '){
+   event.preventDefault();dismiss();
+  }
+ });
+ return overlay;
 }
 function cardFace(physical,side,{showStats=true,interactive=false,ready=null,selected=false}={}){
  const data=cardDef(side,physical.cardId),color=data?.color||'';
@@ -360,13 +410,16 @@ function pendingChoiceControl(action,option,gallery,view){
  const target=authorized.length||visible.length?null:publicPendingTargetCard(view,action);
  const lifeOrder=authorized.length||visible.length||target?null:
   publicLifeOrderChoiceCard(view,app.state?.pending,action);
+ const local=authorized.length||visible.length||target||lifeOrder?[]:
+  controllerChoiceArt(app.packs,app.state,action);
  const cards=authorized.length?authorized:visible.length?visible:target?
   [{...target,name:cardDef(target.side,target.cardId)?.name||target.cardId}]:
-  lifeOrder?[{...lifeOrder,name:cardDef(lifeOrder.side,lifeOrder.cardId)?.name||lifeOrder.cardId}]:[];
+  lifeOrder?[{...lifeOrder,name:cardDef(lifeOrder.side,lifeOrder.cardId)?.name||lifeOrder.cardId}]:
+  local;
  if(!cards.length){
-  const quiet=action.uid===null||action.mode==='skip'||action.mode==='done';
+  const tone=pendingTextChoiceClass(action);
   return btn(label,()=>applyAction(action),
-   (quiet?'quiet':'recommended')+(gallery?' choice-text':''));
+   [tone,gallery?'choice-text':''].filter(Boolean).join(' '));
  }
  const names=cards.map(card=>card.name);
  const caption=pendingChoiceCaption(label,names);
@@ -407,7 +460,8 @@ function inspectedChoiceControl(card){
   el('span',{class:'choice-card-arts'},
    el('span',{class:'choice-card-art'},choicePicture(card.cardId,card.name,0))),
   el('span',{class:'choice-card-name',text:card.name}),
-  el('span',{class:'choice-card-caption',text:enabled?'符合條件 · 點選此牌':'不符合條件 · 無法選擇'})
+  el('span',{class:'choice-card-caption',text:card.caption||
+   (enabled?'符合條件 · 點選此牌':'不符合條件 · 無法選擇')})
  );
  return button;
 }
@@ -463,14 +517,19 @@ function pendingDialog(legal,view){
   .map(option=>[JSON.stringify(option.action),option]));
  const entryCards=placement.length?pendingEntryChoiceCards(privateChoices,view,placement):[];
  const inspected=inspectedPendingChoiceCards(privateChoices,legal).filter(card=>!card.keepLegal);
- const inspectedUids=new Set(inspected.map(card=>card.uid));
- const rows=legal.filter(action=>!boardEntryMode(action)&&!inspectedUids.has(action.uid)).map(action=>({action,
+ const windowCards=inspected.length?[]:controllerDeckWindowCards(s,app.packs,legal)
+  .filter(card=>!card.keepLegal);
+ const pictured=[...inspected,...windowCards];
+ const picturedUids=new Set(pictured.map(card=>card.uid));
+ const rows=legal.filter(action=>!boardEntryMode(action)&&!picturedUids.has(action.uid)).map(action=>({action,
   option:byAction.get(JSON.stringify(action))||null}));
- const gallery=entryCards.length>0||inspected.length>0||rows.some(row=>pendingChoiceCards(row.option).length>0||
+ const gallery=entryCards.length>0||pictured.length>0||rows.some(row=>pendingChoiceCards(row.option).length>0||
   visiblePendingChoiceCards(view,row.action).length>0||
   publicPendingTargetCard(view,row.action)!==null||
-  publicLifeOrderChoiceCard(view,s.pending,row.action)!==null);
- const title=V2_PENDING_LABELS[s.pending.kind]||s.pending.kind;
+  publicLifeOrderChoiceCard(view,s.pending,row.action)!==null||
+  controllerChoiceArt(app.packs,s,row.action).length>0);
+ const title=s.pending.kind==='effect-look-take'&&s.pending.phase==='order'?
+  '依序放回牌庫底':(V2_PENDING_LABELS[s.pending.kind]||s.pending.kind);
  const triggerChoice=s.pending.kind==='life-trigger';
  const blocking=s.pending.kind==='block'&&view.battle;
  // A view-only pause: no action, state transition, or hidden-card disclosure.
@@ -507,7 +566,7 @@ function pendingDialog(legal,view){
  }
  const list=el('div',{class:'action-list'+((gallery||blockGallery)?' choice-gallery':'')});
  for(const card of entryCards)list.append(pendingEntrySelectControl(card));
- for(const card of inspected)list.append(inspectedChoiceControl(card));
+ for(const card of pictured)list.append(inspectedChoiceControl(card));
  for(const row of rows){
   const blocker=blocking?blockControl(row.action,view):null;
   list.append(blocker||pendingChoiceControl(row.action,row.option,gallery||blockGallery,view));
@@ -1033,10 +1092,19 @@ function clearPendingOverlay(){
  document.querySelector('.v2-shell>.v2-pending-overlay')?.remove();
 }
 function clearTriggerOverlay(){
- document.querySelector('.v2-shell>.v2-trigger-overlay')?.remove();
+ document.querySelectorAll('.v2-shell>.v2-trigger-overlay:not(.v2-public-move-overlay)')
+  .forEach(node=>node.remove());
+}
+function clearPublicMoveOverlay(){
+ document.querySelector('.v2-shell>.v2-public-move-overlay')?.remove();
 }
 function mountTriggerOverlay(overlay){
  clearTriggerOverlay();
+ (document.querySelector('.v2-shell')||document.body).append(overlay);
+ overlay.querySelector('.trigger-board')?.focus({preventScroll:true});
+}
+function mountPublicMoveOverlay(overlay){
+ clearPublicMoveOverlay();
  (document.querySelector('.v2-shell')||document.body).append(overlay);
  overlay.querySelector('.trigger-board')?.focus({preventScroll:true});
 }
@@ -1057,6 +1125,7 @@ function render(){
  closeZoneSheet();
  clearPendingOverlay();
  clearTriggerOverlay();
+ clearPublicMoveOverlay();
  target.replaceChildren();
  if(!app.state){
   target.append(el('section',{class:'panel v2-empty'},
@@ -1156,6 +1225,8 @@ function render(){
  });
  const prompt=pendingDialog(legal,v);if(prompt)target.append(prompt);
  if(revealed)mountTriggerOverlay(revealed);
+ const publicWindow=publicMoveOverlay();
+ if(publicWindow)mountPublicMoveOverlay(publicWindow);
  // Preserve hand position while the V2 board is re-rendered on each selection.
  const handAfterRender=target.querySelector('.hand');
  if(handAfterRender)handAfterRender.scrollLeft=oldHandScroll;
@@ -1167,11 +1238,13 @@ function applyAction(a){
  try{
   const legal=legalUniversalActions(app.packs,app.state);
   if(!isExactLegal(a,legal))throw Error('操作已非目前的合法動作，請重新選擇。');
-  app.undo={state:app.state,history:app.history.slice(),replay:app.replay};
+  app.undo={state:app.state,history:app.history.slice(),replay:app.replay,
+   publicMoves:app.publicMoves.slice()};
   const previous=app.state;
   app.state=dispatchUniversalAction(app.packs,app.state,a,{actor:0});
   assertUniversalMatch(app.packs,app.state);
   app.replay=appendUniversalReplay(app.replay,a,0);
+  notePublicMove(app.packs,previous,app.state,a,0);
   pushHistory(publicPreviewActionLabel(app.packs,previous,app.state,a,0));
   saveBattleProgress();
   app.selectedUid=null;app.raidBaseUid=null;app.entryMode=null;app.targetChoices=null;app.inspectionPaused=false;app.error='';app.allActions=false;render();driveAi();
@@ -1180,6 +1253,7 @@ function applyAction(a){
 function undoMove(){
  if(!app.undo||app.busy)return;
  app.state=app.undo.state;app.history=app.undo.history;app.replay=app.undo.replay;
+ app.publicMoves=app.undo.publicMoves||[];
  app.undo=null;app.error='';app.selectedUid=null;app.entryMode=null;app.inspectionPaused=false;
  app.dismissedTriggerKeys.clear();
  saveBattleProgress();render();
@@ -1201,6 +1275,7 @@ function manualAiStep(){
   app.state=dispatchUniversalAction(app.packs,app.state,move,{actor:1});
   assertUniversalMatch(app.packs,app.state);
   app.replay=appendUniversalReplay(app.replay,move,1);
+  notePublicMove(app.packs,previous,app.state,move,1);
   pushHistory(publicPreviewActionLabel(app.packs,previous,app.state,move,1));
   app.aiCompletedSteps++;
   app.lastAiProgress='手動 '+move.type+' · T'+app.state.turn+'/'+app.state.phase;
@@ -1238,6 +1313,7 @@ function driveAi(){
     // The chosen action is copied from this state's legal list, never made up.
     app.state=dispatchUniversalAction(app.packs,app.state,choice,{actor:1});
     app.replay=appendUniversalReplay(app.replay,choice,1);
+    notePublicMove(app.packs,previous,app.state,choice,1);
     pushHistory(publicPreviewActionLabel(app.packs,previous,app.state,choice,1));
     if(reason){
      app.aiFallbacks++;
@@ -1410,17 +1486,85 @@ if(!IS_BATTLE_PAGE)importV2EditorDeck();
 
 // Saved decks remain browser-local, and are revalidated against the CURRENT
 // V2 rule pack. Unsupported decks are shown as unavailable, never auto-enabled.
+let savedLobbyRows=[];
+function rememberLobbyDeck(row){
+ if(!row?.ready)return;
+ decks[row.key]={pack:row.pack,counts:row.counts,label:row.name};
+ if(typeof row.recordDeckId==='string')decks[row.key].recordDeckId=row.recordDeckId;
+}
+function appendLobbyRow(row){
+ rememberLobbyDeck(row);
+ for(const side of ['my-title','ai-title']){
+  $(side).append(el('option',{
+   value:row.key,disabled:row.ready?null:true,
+   title:row.ready?null:row.issues?.[0]||null,
+   text:lobbyChoiceText(row,side)
+  }));
+ }
+}
 function importSavedLobbyDecks(){
- for(const row of collectSavedV2LobbyDecks(localStorage)){
-  if(row.ready)decks[row.key]={pack:row.pack,counts:row.counts,label:row.name};
+ savedLobbyRows=collectSavedV2LobbyDecks(localStorage);
+ for(const row of savedLobbyRows)appendLobbyRow(row);
+}
+function dropShadowedLocalDecks(accountRows){
+ const keys=new Set(shadowedLocalLobbyKeys(savedLobbyRows,accountRows));
+ if(!keys.size)return;
+ const accountByLocal=new Map(accountRows.filter(row=>row.localId).map(row=>[row.localId,row]));
+ const localByKey=new Map(savedLobbyRows.map(row=>[row.key,row]));
+ for(const key of keys){
+  const account=accountByLocal.get(localByKey.get(key)?.localId);
+  delete decks[key];
   for(const side of ['my-title','ai-title']){
-   const title=side==='my-title'?'我的收藏｜':'收藏牌組｜';
-   $(side).append(el('option',{
-    value:row.key,disabled:row.ready?null:true,
-    text:title+row.name+(row.ready?'':'（V2 尚未完整支援）')
-   }));
+   const select=$(side);
+   const selected=select.value===key;
+   for(const option of [...select.options]) if(option.value===key)option.remove();
+   if(selected&&account)select.value=account.key;
   }
  }
+}
+function prependAccountLobbyRows(rows){
+ for(const side of ['my-title','ai-title']){
+  const select=$(side);
+  const anchor=select.firstChild;
+  for(const row of rows){
+   select.insertBefore(el('option',{
+    value:row.key,disabled:row.ready?null:true,
+    title:row.ready?null:row.issues?.[0]||null,
+    text:lobbyChoiceText(row,side)
+   }),anchor);
+  }
+ }
+ for(const row of rows)rememberLobbyDeck(row);
+}
+// Signed-in account decks are not in this browser's localStorage. Load them
+// into both setup selects. A logged-out response leaves the built-in list.
+async function importAccountLobbyDecks(){
+ const note=$('restart-notice');
+ const prior=note?.textContent||'';
+ const mineAtStart=$('my-title').value,foeAtStart=$('ai-title').value;
+ if(note&&!prior)note.textContent='正在讀取帳號牌組…';
+ let rows=[],status=0;
+ try{
+  const response=await fetch('/api/decks',{credentials:'same-origin',redirect:'error',headers:{accept:'application/json'}});
+  status=response.status;
+  if(response.ok){
+   const payload=await response.json();
+   rows=orderedAccountLobbyRows(accountLobbyRows(payload?.decks));
+  }
+ }catch{status=0;rows=[];}
+ if(status===200){
+  dropShadowedLocalDecks(rows);
+  prependAccountLobbyRows(rows);
+  // A choice made while the account list was loading stays. Otherwise apply
+  // a previously saved account deck now that its option exists.
+  if($('my-title').value===mineAtStart&&$('ai-title').value===foeAtStart) restoreMatchLobby();
+  syncMatchLobby();
+ }
+ if(!note||prior)return;
+ const ready=rows.filter(row=>row.ready).length;
+ if(status===200&&ready)note.textContent='帳號牌組已放在選單最上方，可以直接開始對戰。';
+ else if(status===200&&rows.length)note.textContent='帳號裡的牌組已列出，但還不能對戰。請看選項後面的原因。';
+ else note.textContent='';
 }
 if(!IS_BATTLE_PAGE)importSavedLobbyDecks();
 // On the setup route, validate the selected 50-card lists and navigate to
@@ -1439,7 +1583,8 @@ function launchBattle(){
   newUniversalMatch([mine.pack,foe.pack],{
    decks:[mine.counts,foe.counts],seed:generateMatchSeed(),first,openingMulligan:true
   });
-  const recordDeckId=myTitle==='editor-v2-mine'?editorRecordId:null;
+  const recordDeckId=myTitle==='editor-v2-mine'?editorRecordId
+   :(typeof mine.recordDeckId==='string'?mine.recordDeckId:null);
   const config=prepareSoloBattle({
    mine,foe,first,difficulty:app.aiDifficulty,recordDeckId,
    nonce:generateMatchSeed()
@@ -1463,6 +1608,8 @@ function startGame(){
   app.state=newUniversalMatch(app.packs,{decks:[mine.counts,foe.counts],seed,first,openingMulligan:true});
   assertUniversalMatch(app.packs,app.state);
   app.error='';app.selectedUid=null;app.entryMode=null;app.targetChoices=null;app.inspectionPaused=false;app.undo=null;
+  app.publicMoves=[];
+  app.dismissedPublicMoveIds.clear();
   app.dismissedTriggerKeys.clear();
   app.allActions=false;app.aiFallbacks=0;app.aiCompletedSteps=0;app.lastAiProgress='新對局';
   app.aiDifficulty=app.launch.config.difficulty;
@@ -1568,6 +1715,7 @@ if(!IS_BATTLE_PAGE){
   launchBattle();
  });
  syncMatchLobby();
+ importAccountLobbyDecks();
 }else{
  const loaded=loadSoloBattle(sessionStorage);
  window.matchMedia(DESKTOP_BATTLE_QUERY).addEventListener('change',()=>render());
