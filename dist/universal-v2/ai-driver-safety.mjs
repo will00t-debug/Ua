@@ -3,21 +3,27 @@
 // native legalUniversalActions list. Keep decision recovery separate from UI.
 import {legalUniversalActions} from './engine.mjs';
 import {chooseUniversalAiAction} from './ai.mjs';
+import {chooseStrengthenedHardAction,HARD_AI_POLICY} from './hard-ai.mjs';
+
+export function aiPolicyFor(difficulty){
+ return difficulty==='hard'?HARD_AI_POLICY:difficulty||'normal';
+}
 
 export const AI_ACTIONS_PER_FRAME=3;
 export const AI_PHASE_ACTION_BUDGET=72;
 const exact=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
 
 export function chooseProgressSafeAiAction(pack,state,{
- difficulty='normal',actionsInPhase=0,choose=chooseUniversalAiAction
+ difficulty='normal',actionsInPhase=0,choose=null
 }={}){
+ const strategy=choose||(difficulty==='hard'?chooseStrengthenedHardAction:chooseUniversalAiAction);
  const legal=legalUniversalActions(pack,state);
  if(!legal.length)throw Error('V2 reducer returned no legal AI action');
  const next=!state.pending?legal.find(a=>a.type==='next'):null;
  const exhausted=actionsInPhase>=AI_PHASE_ACTION_BUDGET&&!!next;
  let choice=null,problem=null;
  if(!exhausted){
-  try{choice=choose(pack,state,{difficulty});}
+  try{choice=strategy(pack,state,{difficulty});}
   catch(e){problem='ai-exception';}
  }
  if(!exhausted&&choice&&legal.some(a=>exact(a,choice)))

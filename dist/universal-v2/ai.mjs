@@ -634,3 +634,8 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  }
  return energyPlays[0]||raids[0]||events[0]||next;
 }
+// Frozen Hard heuristic used as the search baseline and the comparison AI.
+// Battle-page hard does not call this; it calls chooseStrengthenedHardAction.
+export function chooseLegacyHardAiAction(pack,s,options={}){
+ return chooseUniversalAiAction(pack,s,{...options,difficulty:'hard'});
+}
