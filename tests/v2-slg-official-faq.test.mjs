@@ -30,6 +30,16 @@ function take(s,p,id){
  }
  throw Error('Missing card '+id);
 }
+// Q552: frame text is live only with a face-up card under the Raid top.
+function bury(s,p,card){
+ if(!card||(card.stack||[]).some(x=>x&&x.faceDown!==true))return card;
+ const deck=s.players[p].deck;
+ if(!deck.length)throw Error('No deck card to place under '+card.cardId);
+ const under=deck.pop();
+ under.faceDown=false;
+ card.stack=[under];
+ return card;
+}
 function put(s,p,id,line,slot,{ready=true}={}){
  const c=take(s,p,id);
  c.ready=ready;
@@ -145,7 +155,7 @@ test('Q2027: 020 can add the card its own play cost just placed outside',()=>{
  const paid=toHand(s,0,'SLG-1-032');
  const high=take(s,0,'SLG-1-028'),named=take(s,0,'SLG-1-015');
  s.players[0].outside.push(high,named);
- const hero=toHand(s,0,'SLG-1-020');
+ const hero=bury(s,0,toHand(s,0,'SLG-1-020'));
  s=play(s,hero.uid,'front',0);
  assert.equal(s.pending.kind,'effect-discard-gate');
  s=use(s,{type:'chooseDiscardGate',uid:paid.uid});
@@ -301,7 +311,7 @@ test('Q2055 and Q2056: 057 gains the skip on play, 058 spends that skip once, an
  assert.equal(live(s,shizuku).ready,true);
  assert.equal(live(s,shizuku).attackSkipGranted,undefined);
  assert.equal(skipping(s,shizuku),true);
- const raider=toHand(s,0,'SLG-1-058');
+ const raider=bury(s,0,toHand(s,0,'SLG-1-058'));
  s=play(s,raider.uid,'front',3);
  live(s,raider).ready=true;
  s=use(s,{type:'next'});
@@ -410,7 +420,7 @@ test('Q2060: 064 grants the skip only for a chosen mode, and the next refresh af
  put(s,0,'SLG-1-041','energy',0);
  put(s,0,'SLG-1-041','energy',1);
  put(s,1,'SLG-1-050','front',0);
- const mako=toHand(s,0,'SLG-1-064');
+ const mako=bury(s,0,toHand(s,0,'SLG-1-064'));
  s=play(s,mako.uid,'front',0);
  assert.equal(skipping(s,mako),false);
  live(s,mako).ready=true;

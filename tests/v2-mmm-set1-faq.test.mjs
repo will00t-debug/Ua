@@ -36,6 +36,17 @@ function put(s,p,id,line,slot,ready=true){
  s.players[p][line][slot]=card;
  return card;
 }
+// Q552: listed raid-box text is live only with a face-up card underneath.
+// Pop the deck bottom so a top-of-deck marker stays put.
+function bury(s,p,card){
+ if(!card||(card.stack||[]).some(x=>x&&x.faceDown!==true))return card;
+ const deck=s.players[p].deck;
+ if(!deck.length)throw Error('No deck card to place under '+card.cardId);
+ const under=deck.pop();
+ under.faceDown=false;
+ card.stack=[under];
+ return card;
+}
 function toPhase(s,phase){
  let guard=0;
  while(s.phase!==phase){
@@ -117,13 +128,14 @@ test('Q1256 and removed Law of Cycles do not retire the chosen character',()=>{
  put(removed,0,'MMM-1-025','energy',0);
  put(removed,0,'MMM-1-025','energy',1);
  put(removed,0,'MMM-1-025','energy',2);
- put(removed,0,'MMM-1-002','front',0);
+ const host=put(removed,0,'MMM-1-002','front',0);
  const again=put(removed,1,'MMM-1-112','front',0);
  const kept=take(removed,1,'MMM-1-006');
  removed.players[1].outside.push(kept);
  const fromRemoved=take(removed,0,'MMM-1-028');
  removed.players[0].removed.push(fromRemoved);
  readyAp(removed);
+ bury(removed,0,host);
  const bottom=removed.players[0].deck.length;
  removed=use(removed,legalUniversalActions(packs,removed).find(a=>a.type==='event'&&
   a.from==='removed'&&a.uid===fromRemoved.uid));
@@ -149,6 +161,7 @@ test('Q1259 raises Devil Homura to BP-4000, and her shield blocks effect removal
  s.players[0].hand.push(devil);
  readyAp(s);
  const before=universalBp(packs,s,foe);
+ bury(s,0,devil);
  s=play(s,devil.uid,'play');
  assert.equal(s.pending.kind,'effect-bounce-named-cut');
  s=use(s,{type:'chooseBounceNamedCut',uid:madoka.uid});
@@ -169,6 +182,7 @@ test('Q1259 raises Devil Homura to BP-4000, and her shield blocks effect removal
  const law=take(shield,0,'MMM-1-028');
  shield.players[0].hand.push(law);
  readyAp(shield);
+ bury(shield,1,protectedDevil);
  shield=play(shield,law.uid,'event');
  assert.equal(shield.pending.choices.includes(protectedDevil.uid),false);
  assert.deepEqual(shield.pending.choices,[open.uid]);
@@ -181,11 +195,12 @@ test('Q1254 Q1255 and Q1273 gate only Nagisa removed-entry draw',()=>{
  put(second,0,'MMM-1-025','energy',0);
  put(second,0,'MMM-1-025','energy',1);
  put(second,0,'MMM-1-003','energy',2);
- put(second,0,'MMM-1-002','front',0);
+ const host=put(second,0,'MMM-1-002','front',0);
  const first=take(second,0,'MMM-1-022');
  const later=take(second,0,'MMM-1-022');
  second.players[0].removed.push(first,later);
  readyAp(second);
+ bury(second,0,host);
  const deck=second.players[0].deck.length;
  second=use(second,legalUniversalActions(packs,second).find(a=>a.type==='play'&&
   a.from==='removed'&&a.uid===first.uid&&a.line==='front'));
@@ -200,12 +215,13 @@ test('Q1254 Q1255 and Q1273 gate only Nagisa removed-entry draw',()=>{
  let freshCopy=toPhase(fresh(counts,41273),'main');
  put(freshCopy,0,'MMM-1-025','energy',0);
  put(freshCopy,0,'MMM-1-025','energy',1);
- put(freshCopy,0,'MMM-1-002','front',0);
+ const opened=put(freshCopy,0,'MMM-1-002','front',0);
  const fromHand=take(freshCopy,0,'MMM-1-022');
  const fromRemoved=take(freshCopy,0,'MMM-1-022');
  freshCopy.players[0].hand.push(fromHand);
  freshCopy.players[0].removed.push(fromRemoved);
  readyAp(freshCopy);
+ bury(freshCopy,0,opened);
  const untouched=freshCopy.players[0].deck.length;
  freshCopy=play(freshCopy,fromHand.uid,'play');
  assert.equal(freshCopy.players[0].deck.length,untouched);
@@ -276,6 +292,7 @@ test('Q1261 counts a Madoka deployed by the same entry effect',()=>{
  const madoka=take(s,0,'MMM-1-076');
  s.players[0].hand.push(homura,madoka);
  readyAp(s);
+ bury(s,0,homura);
  s=play(s,homura.uid,'play');
  assert.equal(s.pending.kind,'effect-hand-rest');
  assert.ok(s.pending.choices.includes(madoka.uid));
@@ -303,6 +320,7 @@ test('Q1263 Q1264 and Q1268 count other copies once across colors',()=>{
  const played=take(s,0,'MMM-1-078');
  s.players[0].hand.push(played);
  readyAp(s);
+ bury(s,0,played);
  s=play(s,played.uid,'play');
  assert.equal(s.pending.kind,'effect-retire-bp');
  assert.equal(s.pending.limit,3000);
@@ -316,6 +334,7 @@ test('Q1263 Q1264 and Q1268 count other copies once across colors',()=>{
  put(board,0,'MMM-1-104','energy',1);
  put(board,0,'MMM-1-072','energy',2);
  put(board,0,'MMM-1-085','energy',3);
+ bury(board,0,source);
  assert.equal(universalBp(packs,board,source),4000);
  put(board,0,'MMM-1-105','front',0);
  assert.equal(universalBp(packs,board,source),5000);

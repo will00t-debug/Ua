@@ -26,6 +26,17 @@ function take(s,p,id){
  }
  throw Error('Missing '+id);
 }
+// Q552: box text is live only with a face-up card underneath. Pop the deck
+// bottom so a top-of-deck marker stays put.
+function bury(s,p,card){
+ if(!card||(card.stack||[]).some(x=>x&&x.faceDown!==true))return card;
+ const deck=s.players[p].deck;
+ if(!deck.length)throw Error('No deck card to place under '+card.cardId);
+ const under=deck.pop();
+ under.faceDown=false;
+ card.stack=[under];
+ return card;
+}
 function uids(s){
  const out=[],walk=c=>{out.push(c.uid);for(const x of c.stack||[])walk(x);for(const x of c.under||[])walk(x);};
  for(const p of s.players){
@@ -147,6 +158,7 @@ test('BLC-1-047 pays effect AP for Damage 2, and four outside cards are required
  const foe=place(short,1,'BLC-4-050','front',0);
  const three=[0,1,2].map(()=>outside(short,0,'BLC-4-048'));
  const payer=hold(short,0,'BLC-1-047');
+ bury(short,0,payer);
  short=play(short,a=>a.type==='play'&&a.uid===payer.uid&&a.line==='front'&&a.slot===0);
  assert.equal(short.pending.kind,'effect-remove-outside');
  assert.equal(short.pending.short,true);
@@ -161,6 +173,7 @@ test('BLC-1-047 pays effect AP for Damage 2, and four outside cards are required
  const victim=place(full,1,'BLC-4-050','front',0);
  const four=[0,1,2,3].map(()=>outside(full,0,'BLC-4-048'));
  const source=hold(full,0,'BLC-1-047');
+ bury(full,0,source);
  full=play(full,a=>a.type==='play'&&a.uid===source.uid&&a.line==='front'&&a.slot===0);
  for(const card of four)
   full=play(full,a=>a.type==='chooseRemoveOutside'&&a.mode==='pick'&&a.uid===card.uid);
@@ -281,6 +294,7 @@ test('BLC-1-041 mills before the scaled removal, including a one-card deck',()=>
  const foe=place(s,1,'BLC-4-050','front',0);
  const [first,second]=crown(s,0,['BLC-4-048','BLC-4-049']);
  const ichigo=hold(s,0,'BLC-1-041');
+ bury(s,0,ichigo);
  s=play(s,a=>a.type==='play'&&a.uid===ichigo.uid&&a.line==='front'&&a.slot===0);
  assert.equal(s.pending.kind,'effect-remove-outside');
  assert.equal(s.pending.any,true);
@@ -299,6 +313,7 @@ test('BLC-1-041 mills before the scaled removal, including a one-card deck',()=>
  const untouched=place(skipped,1,'BLC-4-050','front',0);
  const parked=outside(skipped,0,'BLC-4-048');
  const plain=hold(skipped,0,'BLC-1-041');
+ bury(skipped,0,plain);
  skipped=play(skipped,a=>a.type==='play'&&a.uid===plain.uid&&a.line==='front'&&a.slot===0);
  skipped=play(skipped,a=>a.type==='chooseRemoveOutside'&&a.mode==='skip');
  assert.equal(skipped.pending,null);
@@ -310,8 +325,9 @@ test('BLC-1-041 mills before the scaled removal, including a one-card deck',()=>
  readyAp(short,0,1);
  const kept=short.players[0].deck[0];
  place(short,1,'BLC-4-050','front',0);
- short.players[0].outside.push(...short.players[0].deck.splice(1));
  const hitter=hold(short,0,'BLC-1-041');
+ bury(short,0,hitter);
+ short.players[0].outside.push(...short.players[0].deck.splice(1));
  short=play(short,a=>a.type==='play'&&a.uid===hitter.uid&&a.line==='front'&&a.slot===0);
  assert.equal(short.players[0].deck.includes(kept),false);
  assert.equal(short.players[0].outside.some(c=>c.uid===kept.uid),true);
@@ -362,6 +378,7 @@ test('BLC-1-053 draws three and discards two, then its main discards for BP',()=
  readyAp(s,0,1);
  const rukia=hold(s,0,'BLC-1-053');
  const before=s.players[0].hand.length;
+ bury(s,0,rukia);
  s=play(s,a=>a.type==='play'&&a.uid===rukia.uid&&a.line==='front'&&a.slot===0);
  assert.equal(s.pending.kind,'effect-discard');
  assert.equal(s.pending.remaining,2);

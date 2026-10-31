@@ -23,6 +23,12 @@ function take(s,p,id){
  }
  throw Error('Missing source-pinned physical '+id);
 }
+function bury(s,p,card){
+ if(!card||(card.stack||[]).some(x=>x&&x.faceDown!==true))return card;
+ const deck=s.players[p].deck;
+ if(!deck.length)throw Error('No deck card to place under '+card.cardId);
+ const under=deck.pop(); under.faceDown=false; card.stack=[under]; return card;
+}
 function named(s){
  return s.players[0].outside.filter(c=>names.includes(pack.cards[c.cardId].name)).length;
 }
@@ -35,6 +41,7 @@ function tierScene(n){
   ...Array.from({length:4},()=>take(s,0,'SAO-2-068'))];
  s.players[0].outside.push(...outside.slice(0,n));
  s.players[0].deck.push(...outside.slice(n));
+ bury(s,0,actor);
  assert.equal(named(s),n);
  assert.equal(assertUniversalMatch(both,s),true);
  return {s,actor};

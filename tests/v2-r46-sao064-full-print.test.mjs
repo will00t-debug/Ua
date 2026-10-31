@@ -26,6 +26,12 @@ function put(s,p,id,line,slot){
  const c=pull(s,p,id);c.ready=true;c.fieldEntryStamp=s.nextFieldEntryStamp++;
  s.players[p][line][slot]=c;return c;
 }
+function bury(s,p,card){
+ if(!card||(card.stack||[]).some(x=>x&&x.faceDown!==true))return card;
+ const deck=s.players[p].deck;
+ if(!deck.length)throw Error('No deck card to place under '+card.cardId);
+ const under=deck.pop(); under.faceDown=false; card.stack=[under]; return card;
+}
 function setup({pay=true,double=false,energy=false}={}){
  const s=newUniversalMatch(pack,{decks:[deck,deck],first:0,seed:46064});
  const k=put(s,0,'SAO-2-064','front',0);
@@ -55,6 +61,7 @@ test('SAO-2-064 entire official printed stat/FRONT named nonstack aura/DRAW LIFE
 });
 test('Actual SAO-2-069 CHARACTER onPlay must physically pay to retire named Asuna',()=>{
  let {s,asuna,source}=setup();
+ bury(s,1,source);
  const a=legalUniversalActions(pack,s).find(x=>x.type==='play'&&x.uid===source.uid&&x.line==='front');
  assert.ok(a);s=use(s,a);
  assert.equal(s.pending?.kind,'effect-retire-bp');
@@ -82,6 +89,7 @@ test('Actual SAO-2-069 CHARACTER onPlay must physically pay to retire named Asun
 });
 test('No-hand SOURCE selection: Asuna unavailable, Kirito legal, zero-target optional',()=>{
  let {s,k,asuna,source}=setup({pay:false});
+ bury(s,1,source);
  const play=legalUniversalActions(pack,s).find(x=>x.type==='play'&&x.uid===source.uid);
  assert.ok(play);s=use(s,play);
  const choices=legalUniversalActions(pack,s);

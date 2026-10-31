@@ -20,6 +20,16 @@ function take(s,p,id){
  }
  throw Error('Missing owned printed '+id);
 }
+// Q552: frame text is live only with a face-up card under the Raid top.
+function bury(s,p,card){
+ if(!card||(card.stack||[]).some(x=>x&&x.faceDown!==true))return card;
+ const deck=s.players[p].deck;
+ if(!deck.length)throw Error('No deck card to place under '+card.cardId);
+ const under=deck.pop();
+ under.faceDown=false;
+ card.stack=[under];
+ return card;
+}
 function scene(n=10){
  let s=newUniversalMatch(both,{decks:[deck,deck],first:0,seed:562100+n});
  const actor=take(s,0,'SLG-1-021');actor.ready=true;
@@ -36,6 +46,7 @@ function scene(n=10){
  const defender=take(s,1,'SLG-1-021');
  defender.ready=true;defender.fieldEntryStamp=s.nextFieldEntryStamp++;
  s.players[1].front[0]=defender;
+ bury(s,0,actor);
  return {s,actor,defender};
 }
 test('R56 official SLG-1-021 all-print and Q2028 proof; dynamic BP and original-BP recovery',()=>{

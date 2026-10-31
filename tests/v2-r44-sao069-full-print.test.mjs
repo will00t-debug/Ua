@@ -15,6 +15,12 @@ const use=(s,a)=>dispatchUniversalAction(packs,s,a);
 function take(s,p,id){for(const z of ['hand','deck','life','outside']){
  const arr=s.players[p][z],i=arr.findIndex(c=>c.cardId===id);
  if(i>=0)return arr.splice(i,1)[0];}throw Error('No physical '+id);}
+function bury(s,p,card){
+ if(!card||(card.stack||[]).some(x=>x&&x.faceDown!==true))return card;
+ const deck=s.players[p].deck;
+ if(!deck.length)throw Error('No deck card to place under '+card.cardId);
+ const under=deck.pop(); under.faceDown=false; card.stack=[under]; return card;
+}
 function scene(){
  let s=newUniversalMatch(packs,{decks:[deck,deck],first:0,seed:44069});
  const base=take(s,0,'SAO-2-068'),top=take(s,0,'SAO-2-069'),as=take(s,0,'SAO-1-068');
@@ -136,6 +142,7 @@ test('R44 opponent attack-end retires printed Yuuki and opens own-hand REST entr
  let s=newUniversalMatch(packs,{decks:[deck,deck],first:1,seed:44070});
  const top=take(s,0,'SAO-2-069'),as=take(s,0,'SAO-1-068');
  top.ready=true;top.fieldEntryStamp=s.nextFieldEntryStamp++;s.players[0].front[0]=top;
+ bury(s,0,top);
  s.players[0].hand.push(as);
  for(let i=0;i<3;i++)s=use(s,{type:'next'});
  assert.equal(s.phase,'attack');assert.equal(s.active,1);

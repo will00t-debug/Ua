@@ -36,6 +36,15 @@ function take(s,p,id){
  }
  throw Error('Missing '+id);
 }
+function bury(s,p,card){
+ if(!card||(card.stack||[]).some(x=>x&&x.faceDown!==true))return card;
+ const deck=s.players[p].deck;
+ if(!deck.length)throw Error('No deck card to place under '+card.cardId);
+ const under=deck.pop();
+ under.faceDown=false;
+ card.stack=[under];
+ return card;
+}
 function put(s,p,id,line,slot,ready=true){
  const card=take(s,p,id);
  card.ready=ready;
@@ -161,6 +170,7 @@ test('Q2134 tuck stays visible to the controller and hidden from the opponent',(
  const naraku=put(s,0,'IYS-1-028','front',0);
  const shard=take(s,0,'IYS-1-034');
  s.players[0].outside.push(shard);
+ bury(s,0,naraku);
  s=use(s,{type:'activate',uid:naraku.uid,mode:'iys:0'});
  if(s.pending)s=choose(s,a=>a.uid===shard.uid);
  const host=s.players[0].front.find(c=>c?.uid===naraku.uid);
@@ -457,7 +467,7 @@ test('Q2142 retires BP 2500 without 珊瑚, and one removed event raises the cap
  payRed(plain);
  const small=put(plain,1,'IYS-1-047','front',0);
  const mid=put(plain,1,'IYS-1-045','front',1);
- const miroku=take(plain,0,'IYS-1-071');
+ const miroku=bury(plain,0,take(plain,0,'IYS-1-071'));
  plain.players[0].hand.push(miroku);
  plain=play(plain,miroku.uid);
  assert.equal(plain.pending.step,'removeEvents');
@@ -478,7 +488,7 @@ test('Q2142 retires BP 2500 without 珊瑚, and one removed event raises the cap
  boosted.players[0].outside.push(event);
  const target=put(boosted,1,'IYS-1-045','front',0);
  const high=put(boosted,1,'IYS-1-044','front',1);
- const actor=take(boosted,0,'IYS-1-071');
+ const actor=bury(boosted,0,take(boosted,0,'IYS-1-071'));
  boosted.players[0].hand.push(actor);
  boosted=play(boosted,actor.uid);
  boosted=choose(boosted,a=>a.mode==='remove'&&a.uid===event.uid);

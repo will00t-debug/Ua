@@ -119,6 +119,12 @@ function hold(s,p,id){
  s.players[p].hand.push(card);
  return card;
 }
+function bury(s,p,card){
+ if(!card||(card.stack||[]).some(x=>x&&x.faceDown!==true))return card;
+ const deck=s.players[p].deck;
+ if(!deck.length)throw Error('No deck card to place under '+card.cardId);
+ const under=deck.pop(); under.faceDown=false; card.stack=[under]; return card;
+}
 function putOutside(s,p,id){
  const card=take(s,p,id);
  s.players[p].outside.push(card);
@@ -223,7 +229,7 @@ test('SAO-1-025 grants sniper on play only at 4 life, and own-turn BP and impact
   const {packs,s}=fresh(ids,seed);
   energize(s,0,['SAO-1-003','SAO-1-003']);
   setLife(s,0,life);
-  const card=hold(s,0,'SAO-1-025');
+  const card=bury(s,0,hold(s,0,'SAO-1-025'));
   const played=playFront(packs,s,card.uid);
   assert.equal(played.pending,null);
   const body=played.players[0].front.find(c=>c?.uid===card.uid);
@@ -255,7 +261,7 @@ test('SAO-1-025 grants sniper on play only at 4 life, and own-turn BP and impact
  assert.equal(universalImpact(two.packs,two.played,two.body),1);
  const parked=fresh(ids,1029);
  setLife(parked.s,0,2);
- const sitting=place(parked.s,0,take(parked.s,0,'SAO-1-025'),'front',0,true);
+ const sitting=bury(parked.s,0,place(parked.s,0,take(parked.s,0,'SAO-1-025'),'front',0,true));
  assert.equal(sitting.sniperGranted,undefined);
  assert.equal(universalBp(parked.packs,parked.s,sitting),4000);
  conserved(two.played);
@@ -271,6 +277,7 @@ test('SAO-2-032 recovers a song, buffs another character, then rests only after 
  const song=putOutside(s,0,'SAO-2-060');
  const yuna=hold(s,0,'SAO-2-032');
  const longing=hold(s,0,'SAO-2-062');
+ bury(s,0,yuna);
  let played=playFront(packs,s,yuna.uid);
  assert.equal(played.pending.kind,'effect-recover-outside');
  assertUniversalMatch(packs,played);
@@ -309,7 +316,7 @@ test('SAO-1-060 blocks only below 4000 with five cards in hand, then may return 
  function board(seed,hand){
   const {packs,s}=fresh(ids,seed);
   energize(s,0,['SAO-1-046']);
-  const leafa=hold(s,0,'SAO-1-060');
+  const leafa=bury(s,0,hold(s,0,'SAO-1-060'));
   let played=playFront(packs,s,leafa.uid);
   const body=played.players[0].front.find(c=>c?.uid===leafa.uid);
   body.ready=true;
@@ -331,7 +338,7 @@ test('SAO-1-060 blocks only below 4000 with five cards in hand, then may return 
  assert.equal(many.blocks.some(a=>a.uid===many.high.uid),false);
  const {packs,s}=fresh(ids,1062);
  energize(s,0,['SAO-1-046']);
- const leafa=hold(s,0,'SAO-1-060');
+ const leafa=bury(s,0,hold(s,0,'SAO-1-060'));
  let alone=playFront(packs,s,leafa.uid);
  const genSlot=alone.players[0].energy.findIndex(Boolean);
  alone.players[0].outside.push(alone.players[0].energy[genSlot]);
@@ -579,7 +586,7 @@ test('SAO-1-091 looks at two cards only after an attacking battle win, then may 
   return {packs,s,sinon};
  }
  const parked=cast(1091);
- const sitting=place(parked.s,0,take(parked.s,0,'SAO-1-091'),'front',0,true);
+ const sitting=bury(parked.s,0,place(parked.s,0,take(parked.s,0,'SAO-1-091'),'front',0,true));
  const weak=place(parked.s,1,take(parked.s,1,'SAO-1-001'),'front',0,true);
  let quiet=reach(parked.packs,parked.s,x=>x.phase==='attack');
  quiet=use(parked.packs,quiet,a=>a.type==='attack'&&a.uid===sitting.uid);
@@ -588,12 +595,13 @@ test('SAO-1-091 looks at two cards only after an attacking battle win, then may 
  assert.equal(quiet.pending.kind,'effect-top-order');
  assert.equal(quiet.pending.split,true);
  const live=cast(1092);
+ const look=stackTop(live.s,0,['SAO-1-073','SAO-1-001']);
+ bury(live.s,0,live.sinon);
  let played=playFront(live.packs,live.s,live.sinon.uid);
  const shooter=played.players[0].front.find(c=>c?.uid===live.sinon.uid);
  assert.equal(liveSniper(played,shooter),true);
  shooter.ready=true;
  const victim=place(played,1,take(played,1,'SAO-1-001'),'front',0,true);
- const look=stackTop(played,0,['SAO-1-073','SAO-1-001']);
  played=reach(live.packs,played,x=>x.phase==='attack');
  const ally=played.players[0].energy.find(c=>c?.cardId==='SAO-1-073');
  let won=use(live.packs,played,a=>a.type==='attack'&&a.uid===shooter.uid&&a.targetUid===victim.uid);
@@ -612,6 +620,7 @@ test('SAO-1-091 looks at two cards only after an attacking battle win, then may 
  won=use(live.packs,won,a=>a.type==='chooseOwnBuff'&&a.uid===ally.uid);
  assert.equal(universalBp(live.packs,won,won.players[0].energy.find(c=>c?.uid===ally.uid)),3500);
  const direct=cast(1093);
+ bury(direct.s,0,direct.sinon);
  let open=playFront(direct.packs,direct.s,direct.sinon.uid);
  open.players[0].front.find(c=>c?.uid===direct.sinon.uid).ready=true;
  quietLife(open,1);
@@ -622,6 +631,7 @@ test('SAO-1-091 looks at two cards only after an attacking battle win, then may 
  assert.notEqual(open.pending?.kind,'effect-top-order');
  assert.notEqual(open.pending?.kind,'effect-buff-own');
  const loss=cast(1094);
+ bury(loss.s,0,loss.sinon);
  let beaten=playFront(loss.packs,loss.s,loss.sinon.uid);
  const loser=beaten.players[0].front.find(c=>c?.uid===loss.sinon.uid);
  loser.ready=true;
@@ -631,6 +641,7 @@ test('SAO-1-091 looks at two cards only after an attacking battle win, then may 
  assert.notEqual(beaten.pending?.kind,'effect-top-order');
  assert.equal(beaten.players[0].outside.some(c=>c.uid===loser.uid),true);
  const silenced=cast(1095);
+ bury(silenced.s,0,silenced.sinon);
  let muted=playFront(silenced.packs,silenced.s,silenced.sinon.uid);
  const body=muted.players[0].front.find(c=>c?.uid===silenced.sinon.uid);
  body.ready=true;
@@ -655,7 +666,7 @@ test('SAO-1-041 may swap with an energy Asuna at attack end, and must swap once 
  function cast(seed){
   const {packs,s}=fresh(ids,seed);
   energize(s,0,['SAO-1-046','SAO-1-035','SAO-1-035']);
-  const kirito=hold(s,0,'SAO-1-041');
+  const kirito=bury(s,0,hold(s,0,'SAO-1-041'));
   let played=playFront(packs,s,kirito.uid);
   const body=played.players[0].front.find(c=>c?.uid===kirito.uid);
   body.ready=true;
@@ -705,7 +716,7 @@ test('SAO-1-041 may swap with an energy Asuna at attack end, and must swap once 
  const declined=use(loss.packs,beaten,a=>a.type==='chooseAttackEndNamed'&&a.uid===null);
  assert.equal(declined.players[0].front.some(c=>c?.uid===loss.kirito.uid),true);
  const {packs,s}=fresh(ids,1044);
- const kirito=place(s,0,take(s,0,'SAO-1-041'),'front',0,true);
+ const kirito=bury(s,0,place(s,0,take(s,0,'SAO-1-041'),'front',0,true));
  assert.equal(legalUniversalActions(packs,s).some(a=>a.mode==='onceSwapLines'),false);
  const energy=place(s,0,take(s,0,'SAO-1-035'),'energy',0,true);
  assert.equal(legalUniversalActions(packs,s).some(a=>a.uid===kirito.uid&&a.mode==='onceSwapLines'),true);
@@ -721,7 +732,7 @@ test('SAO-1-041 may swap with an energy Asuna at attack end, and must swap once 
  assert.equal(asked.players[0].front.some(c=>c?.uid===energy.uid),true);
  assert.equal(legalUniversalActions(packs,asked).some(a=>a.mode==='onceSwapLines'),false);
  const banned=fresh(ids,1045);
- place(banned.s,0,take(banned.s,0,'SAO-1-041'),'front',0,true);
+ bury(banned.s,0,place(banned.s,0,take(banned.s,0,'SAO-1-041'),'front',0,true));
  place(banned.s,0,take(banned.s,0,'SAO-1-049'),'energy',0,true);
  assert.equal(legalUniversalActions(banned.packs,banned.s).some(a=>a.mode==='onceSwapLines'),false);
  conserved(swapped);

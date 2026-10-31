@@ -594,10 +594,9 @@ test('TTG-029 recovers a cheap green Great Gurren card, or REST-plays it at six 
  const stay=hold(energyLine,0,'TTG-1-029');
  energyLine=toPhase(energyLine,'main');
  energyLine=go(energyLine,act(energyLine,a=>a.type==='play'&&a.uid===stay.uid&&a.line==='energy'));
- assert.equal(energyLine.pending.kind,'effect-outside-or-rest');
+ assert.equal(energyLine.pending,null);
  assert.ok(energyLine.players[0].energy.some(c=>c?.uid===stay.uid));
- assert.equal(energyLine.pending.restPlay,true);
- energyLine=go(energyLine,act(energyLine,a=>a.type==='chooseOutsideOrRest'&&a.mode==='skip'));
+ assert.equal(live(energyLine,0,stay.uid).ready,false);
  assertUniversalMatch(ttg,energyLine);
 });
 

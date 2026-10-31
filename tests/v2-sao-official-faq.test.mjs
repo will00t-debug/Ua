@@ -81,6 +81,12 @@ function hold(s,p,id){
  s.players[p].hand.push(card);
  return card;
 }
+function bury(s,p,card){
+ if(!card||(card.stack||[]).some(x=>x&&x.faceDown!==true))return card;
+ const deck=s.players[p].deck;
+ if(!deck.length)throw Error('No deck card to place under '+card.cardId);
+ const under=deck.pop(); under.faceDown=false; card.stack=[under]; return card;
+}
 function yellow(s,p){
  return [0,1].map(i=>place(s,p,take(s,p,'SAO-1-003'),'energy',i,true));
 }
@@ -151,7 +157,7 @@ test('Q755 and Q768: an opponent swap moves Asuna outside her move phase',()=>{
   yellow(s,0);
   const asuna=place(s,1,take(s,1,id),'front',0,true);
   const yuna=place(s,1,take(s,1,'SAO-2-028'),'energy',0,true);
-  const caster=hold(s,0,'SAO-1-022');
+  const caster=bury(s,0,hold(s,0,'SAO-1-022'));
   let played=use(packs,s,a=>a.type==='play'&&a.uid===caster.uid&&a.line==='front');
   played=use(packs,played,a=>a.type==='chooseRestGen'&&a.uid===asuna.uid);
   played=use(packs,played,a=>a.type==='chooseRestGen'&&a.uid===yuna.uid);
@@ -202,6 +208,7 @@ test('Q758 and Q759: attack-end swap waits for the life trigger, and leaves with
   const kirito=place(s,0,take(s,0,'SAO-1-041'),'front',0,true);
   const asuna=place(s,0,take(s,0,'SAO-1-035'),'energy',0,true);
   lifeTop(s,1,lifeId);
+  bury(s,0,kirito);
   let going=reach(packs,s,x=>x.phase==='attack');
   going=use(packs,going,a=>a.type==='attack'&&a.uid===kirito.uid);
   going=dispatchUniversalAction(packs,going,{type:'chooseBlock',uid:null});
@@ -244,7 +251,7 @@ test('Q761: switch and an opponent swap cannot bring the front-banned Asuna to t
  yellow(swap.s,0);
  const front=place(swap.s,1,take(swap.s,1,'SAO-1-001'),'front',0,true);
  const energy=place(swap.s,1,take(swap.s,1,'SAO-1-049'),'energy',0,true);
- const caster=hold(swap.s,0,'SAO-1-022');
+ const caster=bury(swap.s,0,hold(swap.s,0,'SAO-1-022'));
  let rested=use(swap.packs,swap.s,a=>a.type==='play'&&a.uid===caster.uid&&a.line==='front');
  rested=use(swap.packs,rested,a=>a.type==='chooseRestGen'&&a.uid===front.uid);
  rested=use(swap.packs,rested,a=>a.type==='chooseRestGen'&&a.uid===energy.uid);
@@ -257,7 +264,7 @@ test('Q761: switch and an opponent swap cannot bring the front-banned Asuna to t
 test('Q764 and Q765: equal BP is an attacking win, and a snipe still battles',()=>{
  const {packs,s}=fresh(['SAO-1-091','SAO-1-073','SAO-1-041'],764);
  for(let i=0;i<3;i++)place(s,0,take(s,0,'SAO-1-073'),'energy',i,true);
- const sinon=hold(s,0,'SAO-1-091');
+ const sinon=bury(s,0,hold(s,0,'SAO-1-091'));
  let played=use(packs,s,a=>a.type==='play'&&a.uid===sinon.uid&&a.line==='front');
  const shooter=played.players[0].front.find(c=>c?.uid===sinon.uid);
  shooter.ready=true;

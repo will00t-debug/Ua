@@ -35,6 +35,16 @@ function take(s,p,id){
  }
  throw Error('Missing card '+id);
 }
+// Q552: frame text is live only with a face-up card under the Raid top.
+function bury(s,p,card){
+ if(!card||(card.stack||[]).some(x=>x&&x.faceDown!==true))return card;
+ const deck=s.players[p].deck;
+ if(!deck.length)throw Error('No deck card to place under '+card.cardId);
+ const under=deck.pop();
+ under.faceDown=false;
+ card.stack=[under];
+ return card;
+}
 function put(s,p,id,line,slot,{ready=true}={}){
  const c=take(s,p,id);
  c.ready=ready;
@@ -128,7 +138,7 @@ test('the last six Solo Leveling prints are registered on the shared engine',()=
  assert.match(uiActionLabel({type:'chooseReleaseFacedown',uid:null}),/不放出/);
 });
 
-test('022 discounts every zone except the field and outside, then actives both lines',()=>{
+test('022 discounts every zone except the field and outside',()=>{
  const counts=countsFor(['SLG-1-022','SLG-1-030','SLG-1-006','SLG-1-027','SLG-1-015']);
  let s=toPhase(counts,7022,'main');
  const shadows=[0,1,2,3].map(slot=>put(s,0,'SLG-1-030','front',slot,{ready:slot!==3}));
@@ -148,6 +158,25 @@ test('022 discounts every zone except the field and outside, then actives both l
   until:{player:0,phase:'attack',edge:'end'}});
  assert.equal(zoneRequiredEnergy(packs,s,0,printed,'hand'),7,'silence keeps the printed trait');
  const sung=handOf(s,0,'SLG-1-022');
+ s=play(s,sung.uid,'front',0);
+ assert.equal(s.pending,null);
+ assert.equal(live(s,sung).ready,false);
+ assert.equal(live(s,sung).sniperGranted,undefined);
+ assert.equal((live(s,sung).stack||[]).length,0);
+ assert.equal(live(s,shadows[3]).ready,false);
+ assert.equal(live(s,iron).ready,false);
+ assert.equal(assertUniversalMatch(packs,s),true);
+});
+
+test('022 onPlay actives both lines only with a face-up card underneath',()=>{
+ const counts=countsFor(['SLG-1-022','SLG-1-030','SLG-1-006','SLG-1-027','SLG-1-015']);
+ let s=toPhase(counts,70224,'main');
+ const shadows=[0,1,2,3].map(slot=>put(s,0,'SLG-1-030','front',slot,{ready:slot!==3}));
+ const iron=put(s,0,'SLG-1-027','energy',0,{ready:false});
+ put(s,0,'SLG-1-006','energy',1);
+ put(s,0,'SLG-1-006','energy',2);
+ put(s,0,'SLG-1-006','energy',3);
+ const sung=bury(s,0,handOf(s,0,'SLG-1-022'));
  s=play(s,sung.uid,'front',0);
  assert.equal(s.pending.kind,'effect-active-lines');
  assert.equal(s.pending.line,'front');
@@ -214,8 +243,8 @@ test('022 life raid uses the same discount, and Q2029 offers the swap after the 
  assert.ok(legalUniversalActions(packs,short).some(a=>a.type==='chooseTrigger'&&a.mode==='skip'));
 
  let swap=toPhase(counts,70222,'attack');
- const first=put(swap,0,'SLG-1-022','energy',0);
- const second=put(swap,0,'SLG-1-022','energy',1);
+ const first=bury(swap,0,put(swap,0,'SLG-1-022','energy',0));
+ const second=bury(swap,0,put(swap,0,'SLG-1-022','energy',1));
  const frontA=put(swap,0,'SLG-1-030','front',1);
  put(swap,0,'SLG-1-030','front',2);
  const striker=put(swap,0,'SLG-1-006','front',0);
@@ -238,7 +267,7 @@ test('022 life raid uses the same discount, and Q2029 offers the swap after the 
  assert.equal(swap.pending,null);
 
  let none=toPhase(counts,70223,'attack');
- const lonely=put(none,0,'SLG-1-022','energy',0);
+ const lonely=bury(none,0,put(none,0,'SLG-1-022','energy',0));
  const plain=put(none,0,'SLG-1-006','front',0);
  lifeTop(none,1,'SLG-1-006');
  none=use(none,{type:'attack',uid:plain.uid});
@@ -301,7 +330,7 @@ test('058 spends its attack use only after the player accepts, then applies ACTI
  let entered=toPhase(counts,7058,'main');
  put(entered,0,'SLG-1-041','energy',0);
  put(entered,0,'SLG-1-041','energy',1);
- const shizuku=handOf(entered,0,'SLG-1-058');
+ const shizuku=bury(entered,0,handOf(entered,0,'SLG-1-058'));
  entered=play(entered,shizuku.uid,'front',0);
  assert.equal(universalBp(packs,entered,live(entered,shizuku)),5000);
  assert.equal(entered.pending,null);
@@ -309,7 +338,7 @@ test('058 spends its attack use only after the player accepts, then applies ACTI
  let skipped=toPhase(counts,70580,'main');
  put(skipped,0,'SLG-1-041','energy',0);
  put(skipped,0,'SLG-1-041','energy',1);
- const once=handOf(skipped,0,'SLG-1-058');
+ const once=bury(skipped,0,handOf(skipped,0,'SLG-1-058'));
  skipped=play(skipped,once.uid,'front',0);
  const pl=skipped.players[0];
  pl.deck.push(...pl.hand);
@@ -324,7 +353,7 @@ test('058 spends its attack use only after the player accepts, then applies ACTI
  put(pair,0,'SLG-1-041','energy',0);
  put(pair,0,'SLG-1-041','energy',1);
  const ally=put(pair,0,'SLG-1-050','front',1,{ready:false});
- const attacker=handOf(pair,0,'SLG-1-058');
+ const attacker=bury(pair,0,handOf(pair,0,'SLG-1-058'));
  pair=play(pair,attacker.uid,'front',0);
  assert.ok(pair.players[0].hand.length>=1);
  live(pair,attacker).ready=true;
@@ -340,7 +369,7 @@ test('058 spends its attack use only after the player accepts, then applies ACTI
  put(pair,0,'SLG-1-041','energy',0);
  put(pair,0,'SLG-1-041','energy',1);
  const marked=put(pair,0,'SLG-1-050','front',1,{ready:false});
- const body=handOf(pair,0,'SLG-1-058');
+ const body=bury(pair,0,handOf(pair,0,'SLG-1-058'));
  pair=play(pair,body.uid,'front',0);
  live(pair,body).ready=true;
  pair=use(pair,{type:'next'});
@@ -362,7 +391,7 @@ test('058 spends its attack use only after the player accepts, then applies ACTI
  let self=toPhase(counts,70583,'main');
  put(self,0,'SLG-1-041','energy',0);
  put(self,0,'SLG-1-041','energy',1);
- const own=handOf(self,0,'SLG-1-058');
+ const own=bury(self,0,handOf(self,0,'SLG-1-058'));
  self=play(self,own.uid,'front',0);
  live(self,own).ready=true;
  self=use(self,{type:'next'});
@@ -389,7 +418,7 @@ test('064 debuffs only at five traits, and an attack mode is what grants the ski
  put(full,0,'SLG-1-069','front',1);
  put(full,1,'SLG-1-015','front',0);
  put(full,1,'SLG-1-050','front',1);
- const mako=handOf(full,0,'SLG-1-064');
+ const mako=bury(full,0,handOf(full,0,'SLG-1-064'));
  full=play(full,mako.uid,'front',2);
  assert.equal(universalBp(packs,full,full.players[1].front[0]),500);
  assert.equal(universalBp(packs,full,full.players[1].front[1]),500);
@@ -410,7 +439,7 @@ test('064 debuffs only at five traits, and an attack mode is what grants the ski
  put(retire,0,'SLG-1-069','front',1);
  put(retire,1,'SLG-1-015','front',0);
  const victim=put(retire,1,'SLG-1-050','front',1);
- const retiring=handOf(retire,0,'SLG-1-064');
+ const retiring=bury(retire,0,handOf(retire,0,'SLG-1-064'));
  retire=play(retire,retiring.uid,'front',2);
  live(retire,retiring).ready=true;
  retire=use(retire,{type:'next'});
@@ -430,7 +459,7 @@ test('064 debuffs only at five traits, and an attack mode is what grants the ski
  put(replay,0,'SLG-1-069','front',1);
  put(replay,1,'SLG-1-015','front',0);
  put(replay,1,'SLG-1-050','front',1);
- const again=handOf(replay,0,'SLG-1-064');
+ const again=bury(replay,0,handOf(replay,0,'SLG-1-064'));
  replay=play(replay,again.uid,'front',2);
  assert.equal(universalBp(packs,replay,replay.players[1].front[0]),1500);
  put(replay,0,'SLG-1-062','energy',3);

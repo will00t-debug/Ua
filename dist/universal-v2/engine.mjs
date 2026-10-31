@@ -22,6 +22,7 @@ import {refreshFieldActive,expireContinuousStates,pruneContinuousStates,
  effectChoiceProtected} from './continuous-states.mjs';
 import {bindFinishApi,finishJob,legalFinishPending,resolveFinishChoice,
  collectRaidWitnesses} from './ttg-finish-runtime.mjs';
+import {raidBoxListed} from './raid-box.mjs';
 export const UNIVERSAL_V2_VERSION='ua-v2.0';
 
 function hasPrintedTrait(definition){
@@ -46,6 +47,7 @@ function queueOwnAttackEnd(pack,s,attacker){
  const printed=card(pack,attacker);
  const owner=s.active,pl=s.players[owner];
  if(Number.isInteger(printed.attackEndRestPrintedBp)&&!originalEffectsDisabled(s,attacker)&&
+  raidBoxTextLive(pack,attacker,'attackEndRestPrintedBp')&&
   pl.front.some(c=>c?.uid===attacker.uid))
   s.effectQueue.push({op:'resolveAttackEndRestPrinted',owner,
    sourceUid:attacker.uid,sourceStamp:attacker.fieldEntryStamp,
@@ -81,7 +83,8 @@ function queueAttackWinDraw(pack,s,owner,unit,role='attacker'){
 }
 function queueAttackWinLook(pack,s,owner,unit,role='attacker'){
  const rule=card(pack,unit).attackWinLookBuff;
- if(!rule||role!=='attacker'||originalEffectsDisabled(s,unit))return;
+ if(!rule||role!=='attacker'||originalEffectsDisabled(s,unit)||
+  !raidBoxTextLive(pack,unit,'attackWinLookBuff'))return;
  if(s.phase!=='attack'||s.active!==owner||!(s.attacksByUid[unit.uid]>=1))return;
  if(!Number.isInteger(unit.fieldEntryStamp)||unit.fieldEntryStamp<1)return;
  s.effectQueue.splice(retirementJobsInserted,0,{
@@ -89,7 +92,8 @@ function queueAttackWinLook(pack,s,owner,unit,role='attacker'){
 }
 function queueFrontNamedAttackEnd(pack,s,attacker){
  const name=card(pack,attacker).frontAttackEndNamedSwap;
- if(typeof name!=='string'||originalEffectsDisabled(s,attacker))return;
+ if(typeof name!=='string'||originalEffectsDisabled(s,attacker)||
+  !raidBoxTextLive(pack,attacker,'frontAttackEndNamedSwap'))return;
  if(!Number.isInteger(attacker.fieldEntryStamp)||attacker.fieldEntryStamp<1)return;
  s.effectQueue.push({op:'resolveFrontNamedAttackEndSwap',owner:s.active,
   sourceUid:attacker.uid,sourceStamp:attacker.fieldEntryStamp,name});
@@ -369,6 +373,14 @@ function hasFacedownUnder(c){
 function faceUpRaid(pack,c){
  return !!c&&!!card(pack,c).raidName&&(c.stack||[]).some(x=>x.faceDown!==true);
 }
+// Q51: a listed Raid-frame feature is live only in face-up Raid state.
+function raidBoxTextLive(pack,c,feature){
+ return !c||!raidBoxListed(card(pack,c).id,feature)||faceUpRaid(pack,c);
+}
+function livePassives(pack,s,c){
+ if(!c||originalEffectsDisabled(s,c)||!raidBoxTextLive(pack,c,'passive'))return [];
+ return card(pack,c).passiveBonuses||[];
+}
 function directFacedowns(c){
  return (c?.under||[]).filter(x=>x.faceDown===true);
 }
@@ -446,7 +458,7 @@ export function universalCardEnergy(pack,s,p,c){
  const earnedPlus=untilLive(c.energyPlusUntil)?c.energyPlusUntil.amount:0;
  const earnedFront=!!untilLive(c.frontEnergyUntil);
  const allFront=!!s.allFrontEnergy?.[pIndex];
- if(!inEnergy&&!((d.frontGeneratesEnergy&&!suppressed)||frontEnergyWhenLive(pack,s,p,c)||hasFrontEnergyPermission(s,p,c)||earnedFront||allFront))return 0;
+ if(!inEnergy&&!(((d.frontGeneratesEnergy&&!suppressed)&&raidBoxTextLive(pack,c,'frontGeneratesEnergy'))||frontEnergyWhenLive(pack,s,p,c)||hasFrontEnergyPermission(s,p,c)||earnedFront||allFront))return 0;
  const activeBonus=!suppressed&&c.ready?(d.activeExtraEnergy||0):0;
  // A resolved extra-energy grant lasts until the printed turn boundary.
  // untilTurn covers this turn. untilOwnTurnStart covers the next own START,
@@ -455,7 +467,7 @@ export function universalCardEnergy(pack,s,p,c){
   (Number.isInteger(b.untilOwnTurnStart)&&
    s.players[p].ownTurns<b.untilOwnTurnStart))
   .reduce((n,b)=>n+(b.energy&&(!b.color||b.color===d.color)?b.energy:0),0);
- const passiveBonus=(suppressed?[]:d.passiveBonuses).reduce((n,p)=>n+(p.extraEnergy&&
+ const passiveBonus=livePassives(pack,s,c).reduce((n,p)=>n+(p.extraEnergy&&
   matchesV2LiveCondition(s,pIndex,c.uid,p.condition,x=>card(pack,x),()=>0)?
   p.extraEnergy:0),0);
  const distinctBonus=!suppressed&&profile&&(!profile.requiresActive||c.ready)&&
@@ -463,7 +475,7 @@ export function universalCardEnergy(pack,s,p,c){
   profile.extraEnergy:0;
  const underEnergy=!suppressed&&inEnergy&&d.facedownUnderEnergy
   ?(c.under||[]).filter(v=>v&&v.faceDown).length*d.facedownUnderEnergy:0;
- const printedExtra=!suppressed?(d.printedExtraEnergy||0):0;
+ const printedExtra=!suppressed&&raidBoxTextLive(pack,c,'printedExtraEnergy')?(d.printedExtraEnergy||0):0;
  // 「下に裏向きのカードがある場合」. Direct facedown layers only; a Raid stack
  // is a different printed position and does not satisfy this sentence.
  const facedownEnergy=!suppressed&&directFacedowns(c).length?(d.facedownUnderExtraEnergy||0):0;
@@ -477,7 +489,7 @@ export function universalEnergyByColor(pack,s,p){
  const counts=Object.create(null);
  const allFront=!!s.allFrontEnergy?.[p];
  const producers=[...s.players[p].energy,
-  ...s.players[p].front.filter(c=>c&&(allFront||(card(pack,c).frontGeneratesEnergy&&!originalEffectsDisabled(s,c))||
+  ...s.players[p].front.filter(c=>c&&(allFront||(card(pack,c).frontGeneratesEnergy&&!originalEffectsDisabled(s,c)&&raidBoxTextLive(pack,c,'frontGeneratesEnergy'))||
    frontEnergyWhenLive(pack,s,p,c)||
    hasFrontEnergyPermission(s,p,c)||
    (c.frontEnergyUntil&&c.frontEnergyUntil.stamp===c.fieldEntryStamp&&
@@ -517,8 +529,9 @@ function bp(pack,s,c){
   return Math.floor(n/2)*500;
  };
  const facedown=!suppressed&&hasFacedownUnder(c)?
-  ((printed.conditionalUnderFaceDown?.bp||0)+(printed.facedownUnderStanding?.bp||0)):0;
- const immune=!suppressed&&printed.bpDownImmune===true;
+  ((raidBoxTextLive(pack,c,'conditionalUnder')?(printed.conditionalUnderFaceDown?.bp||0):0)+
+   (printed.facedownUnderStanding?.bp||0)):0;
+ const immune=!suppressed&&printed.bpDownImmune===true&&raidBoxTextLive(pack,c,'bpDownImmune');
  const buffs=(c.buffs||[]).filter(b=>b.untilTurn===s.turn||
   Number.isInteger(b.untilOwnTurnStart)&&
   s.players[owner].ownTurns<b.untilOwnTurnStart).reduce((n,b)=>{
@@ -535,7 +548,7 @@ function bp(pack,s,c){
  try{
   const raidBonus=suppressed?0:(printed.bpPerOwnRaid||0)*(s.raidCount?.[owner]||0);
   return (printed?.bp||0)+turnBp+raidBoxBp+facedown+buffs+raidBonus+madokaPair()+
-   (suppressed?0:printed.passiveBonuses.reduce((n,p)=>{
+   livePassives(pack,s,c).reduce((n,p)=>{
     const delta=p.bpEach?p.bpEach*(p.condition.kind==='oppRestCharacterCount'?
     countOppRestCharacters(s,owner,p.condition,x=>card(pack,x)):
     p.condition.kind==='ownPrintedApAtLeast'?
@@ -544,7 +557,7 @@ function bp(pack,s,c){
     (p.bp&&matchesV2LiveCondition(s,owner,c.uid,p.condition,x=>card(pack,x),
      ()=>calcEnergy(pack,s,owner),x=>bp(pack,s,x))?p.bp:0);
     return immune&&delta<0?n:n+delta;
-   },0));
+   },0);
  }finally{bpVisit.delete(c.uid);}
 }
 export const universalBp=bp;
@@ -567,7 +580,7 @@ export function universalAttackDamage(pack,s,c){
  // temporary replacement keyword. It does not invent Impact or extra LIFE.
  const gained=c.otherOwnBattleWinDamage2;
  // 【ダメージ（2）】 replaces the 1 direct-attack damage. It is not Impact.
- const passiveKeyword=d.passiveBonuses.reduce((n,p)=>Math.max(n,
+ const passiveKeyword=livePassives(pack,s,c).reduce((n,p)=>Math.max(n,
   p.attackDamage&&matchesV2LiveCondition(s,owner,c.uid,p.condition,x=>card(pack,x),
    ()=>calcEnergy(pack,s,owner),x=>bp(pack,s,x))?p.attackDamage:0),0);
  const revealDamage=!originalEffectsDisabled(s,c)&&d.id==='MMM-2-056'&&
@@ -577,7 +590,7 @@ export function universalAttackDamage(pack,s,c){
  const base=Math.max(d.printedAttackDamage||1,raidDmg,earned,revealDamage,
   gained&&gained.turn===s.turn&&
    gained.stamp===c.fieldEntryStamp?2:1,passiveKeyword);
- return base+plus+raidExtra+d.passiveBonuses.reduce((n,p)=>n+(p.extraDamage&&
+ return base+plus+raidExtra+livePassives(pack,s,c).reduce((n,p)=>n+(p.extraDamage&&
   matchesV2LiveCondition(s,owner,c.uid,p.condition,x=>card(pack,x),
    ()=>calcEnergy(pack,s,owner),x=>bp(pack,s,x))?p.extraDamage:0),0);
 }
@@ -590,7 +603,8 @@ function hasEarnedAttackEndSwap(s,c){
  return !!g&&g.turn===s.turn&&g.stamp===c.fieldEntryStamp;
 }
 function attackEndSwapAvailable(pack,s,c){
- return !!c&&((!!card(pack,c).attackEndSwap&&!originalEffectsDisabled(s,c))||
+ return !!c&&((!!card(pack,c).attackEndSwap&&!originalEffectsDisabled(s,c)&&
+  raidBoxTextLive(pack,c,'attackEndSwap'))||
   hasEarnedAttackEndSwap(s,c));
 }
 // 「自分の効果以外でフロントに移動できない」(BLC-4-060) may still be moved
@@ -668,7 +682,8 @@ function grantBattleWinToOtherOwn(pack,s,owner,winner,role){
  // Keep legacy battles without printed observers exactly unchanged.
  // Physical stamp validation applies when an actual ability is listening.
  const watchers=field(s.players[owner]).filter(c=>c.uid!==winner?.uid&&
-  card(pack,c).otherOwnBattleWonDamageTwo&&!originalEffectsDisabled(s,c));
+  card(pack,c).otherOwnBattleWonDamageTwo&&!originalEffectsDisabled(s,c)&&
+  raidBoxTextLive(pack,c,'otherOwnBattleWonDamageTwo'));
  if(!watchers.length)return;
  if(!['attacker','blocker'].includes(role)||
   !winner||typeof winner.uid!=='string'||
@@ -689,7 +704,8 @@ function grantBattleWinToOtherOwn(pack,s,owner,winner,role){
 // removes the sentence before it resolves and does not spend the once.
 function applyAttackWinActiveOnce(pack,s,owner,attacker){
  const d=card(pack,attacker);
- if(d.attackWinActiveOnce!=='name'||originalEffectsDisabled(s,attacker))return;
+ if(d.attackWinActiveOnce!=='name'||originalEffectsDisabled(s,attacker)||
+  !raidBoxTextLive(pack,attacker,'attackWinActiveOnce'))return;
  const key=d.name+'|attackWinActive';
  if(s.mainReadyOnceByName[owner].includes(key))return;
  s.mainReadyOnceByName[owner].push(key);
@@ -698,7 +714,8 @@ function applyAttackWinActiveOnce(pack,s,owner,attacker){
 // Earned only at a real attacking CHARACTER-vs-CHARACTER victory, not LIFE.
 function queueAttackWinRecovery(pack,s,owner,attacker){
  const rule=card(pack,attacker).attackWinRecover;
- if(!rule||originalEffectsDisabled(s,attacker))return;
+ if(!rule||originalEffectsDisabled(s,attacker)||
+  !raidBoxTextLive(pack,attacker,'attackWinRecover'))return;
  if(s.active!==owner||s.phase!=='attack'||!(s.attacksByUid[attacker.uid]>=1)||
   !Number.isInteger(attacker.fieldEntryStamp)||attacker.fieldEntryStamp<1)
   throw Error('No genuine attacking victory recovery provenance');
@@ -718,7 +735,8 @@ export function handCharacterBpMayAmount(pack,s,player){
  const fromEvent=flag&&flag.turn===s.turn&&flag.amount===1000&&
   typeof flag.sourceUid==='string'&&Object.keys(flag).length===3?1000:0;
  const fronts=pl.front.filter(c=>c&&!originalEffectsDisabled(s,c)&&
-  card(pack,c).handBpMayWhileFront===1000).length;
+  card(pack,c).handBpMayWhileFront===1000&&
+  raidBoxTextLive(pack,c,'handBpMayWhileFront')).length;
  return fromEvent+fronts*1000;
 }
 function ownFieldNamedCharacter(pack,s,owner,name){
@@ -804,13 +822,14 @@ function impactOnBattleWin(pack,s,c){
  const raidOwnTurn=d.raidOwnTurnImpact&&s.active===impactOwner&&faceUpRaid(pack,c);
  if((d.ownTurnImpact||raidOwnTurn)&&s.active===impactOwner)
   return Math.max(Math.max(d.ownTurnImpact||d.raidOwnTurnImpact,earnedAll)+plus,kitImpact);
- const under=hasFacedownUnder(c)?(d.conditionalUnderFaceDown?.impact||0):0;
+ const under=hasFacedownUnder(c)&&raidBoxTextLive(pack,c,'conditionalUnder')?(d.conditionalUnderFaceDown?.impact||0):0;
  const owner=impactOwner;
  const raidBox=!originalEffectsDisabled(s,c)&&faceUpRaid(pack,c)?d.raidImpact||0:0;
- const passive=d.passiveBonuses.reduce((n,p)=>n+(p.impact&&
+ const passive=livePassives(pack,s,c).reduce((n,p)=>n+(p.impact&&
   matchesV2LiveCondition(s,owner,c.uid,p.condition,x=>card(pack,x),
    ()=>calcEnergy(pack,s,owner),x=>bp(pack,s,x))?p.impact:0),0);
  const conditional=d.conditionalImpactBpAtLeast!==null&&
+  raidBoxTextLive(pack,c,'conditionalImpact')&&
   bp(pack,s,c)>=d.conditionalImpactBpAtLeast;
  const printedOrRaid=d.printedImpact||raidBox;
  const base=printedOrRaid||(conditional?1:0)||under||passive;
@@ -831,14 +850,16 @@ function impactNullActive(pack,s,c){
  if(originalEffectsDisabled(s,c))return false;
  if(d.impactNull)return true;
  if(d.raidImpactNull&&faceUpRaid(pack,c))return true;
- return d.passiveBonuses.some(p=>p.impactNull===true&&
+ return livePassives(pack,s,c).some(p=>p.impactNull===true&&
   matchesV2LiveCondition(s,owner,c.uid,p.condition,x=>card(pack,x),
    ()=>calcEnergy(pack,s,owner),x=>bp(pack,s,x)));
 }
 export function universalImpact(pack,s,c){return impactOnBattleWin(pack,s,c);}
 export function universalImpactNull(pack,s,c){return impactNullActive(pack,s,c);}
 function protectedLeave(pack,s,c){
- const profile=underLeaveProfile(card(pack,c));
+ const printed=card(pack,c);
+ const profile=printed.conditionalUnderFaceDown&&raidBoxTextLive(pack,c,'conditionalUnder')?
+  printed.conditionalUnderFaceDown:printed.facedownUnderStanding||null;
  return !originalEffectsDisabled(s,c)&&!!profile&&hasFacedownUnder(c)&&bp(pack,s,c)>=profile.leaveReplacementMinBp;
 }
 // Facedown cards can survive several Raid generations. If more than one is
@@ -1116,6 +1137,7 @@ function noteLineShiftOutsideMove(pack,s,physical,owner,from,to){
  if(!['front','energy'].includes(from)||!['front','energy'].includes(to)||from===to)return;
  const profile=card(pack,physical).lineShiftOutsideMove;
  if(profile&&!originalEffectsDisabled(s,physical)&&
+  raidBoxTextLive(pack,physical,'lineShiftOutsideMove')&&
   !(profile.turn==='own'&&s.active!==owner)&&
   physical.lineShiftUsedTurn!==s.turn&&Number.isInteger(physical.fieldEntryStamp)){
   physical.lineShiftUsedTurn=s.turn;
@@ -1173,7 +1195,7 @@ function markOwnEffectZoneMove(s,owner,from,to){
 function queuePhaseBoundary(pack,s,phase,edge,turnPlayer){
  for(const owner of [turnPlayer,1-turnPlayer]){
   const entries=[],units=[...s.players[owner].front,...s.players[owner].energy].filter(Boolean);
-  for(const c of units)for(const [i,q] of (originalEffectsDisabled(s,c)?[]:card(pack,c).phaseEffects).entries()){
+  for(const c of units)for(const [i,q] of (originalEffectsDisabled(s,c)||!raidBoxTextLive(pack,c,'phase')?[]:card(pack,c).phaseEffects).entries()){
    if(q.phase!==phase||q.edge!==edge||(q.turn==='own')!==(owner===turnPlayer))continue;
    entries.push({key:c.uid+':'+i,sourceUid:c.uid,
     jobs:[...q.then.map(op=>({...op,owner,sourceUid:c.uid,
@@ -2277,7 +2299,8 @@ function continueEffectQueue(pack,s){
   }else if(job.op==='offerEnergyTraitSwap'){
    const done=Array.isArray(job.done)?job.done:[];
    const sources=pl.energy.filter(c=>c&&!done.includes(c.uid)&&
-    !originalEffectsDisabled(s,c)&&card(pack,c).energyAttackSwap);
+    !originalEffectsDisabled(s,c)&&card(pack,c).energyAttackSwap&&
+    raidBoxTextLive(pack,c,'energyAttackSwap'));
    if(sources.length){
     const source=sources[0],trait=card(pack,source).energyAttackSwap.trait;
     const choices=pl.front.filter(c=>c&&card(pack,c).type==='character'&&
@@ -4143,7 +4166,7 @@ function continueEffectQueue(pack,s){
   }else if(job.op==='resolveUnblockedRest'){
    const src=pl.front.find(c=>c?.uid===job.sourceUid);
    if(src&&src.fieldEntryStamp===job.sourceStamp&&!originalEffectsDisabled(s,src)&&
-    card(pack,src).unblockedRestFront===true){
+    card(pack,src).unblockedRestFront===true&&raidBoxTextLive(pack,src,'unblockedRestFront')){
     const choices=s.players[1-owner].front.filter(c=>c&&
      cardEffectTargetPayable(pack,s,owner,c.uid,0,job.sourceUid)).map(c=>c.uid);
     if(choices.length)s.pending={kind:'effect-unblocked-rest',player:owner,
@@ -5247,7 +5270,9 @@ function printedOwnerType(pack,s,owner,uid){
 }
 function programJobs(pack,s,physical,timing,owner,raidUid,entryCause,entrySourceType){
  // Q2220: printed leave triggers are lost before true retirement.
- return (originalEffectsDisabled(s,physical)?[]:card(pack,physical).effects[timing]||[])
+ // Q51: Raid-frame text is skipped until this physical card is a face-up Raid.
+ return (originalEffectsDisabled(s,physical)||!raidBoxTextLive(pack,physical,timing)?[]:
+  card(pack,physical).effects[timing]||[])
   .map(e=>{
    const job={...e,owner,sourceUid:physical.uid,
     sourceName:card(pack,physical).name,...(raidUid?{raidUid}:{}),
@@ -5309,6 +5334,7 @@ function unblockedBeforeDamage(pack,s,attacker){
  const jobs=[];
  const printedDraw=card(pack,attacker).girlNameUnblockedDraw;
  if(printedDraw===2&&!originalEffectsDisabled(s,attacker)&&
+  raidBoxTextLive(pack,attacker,'girlNameUnblockedDraw')&&
   matchesV2LiveCondition(s,s.active,attacker.uid,{kind:'ownDistinctTraitNames',turn:'own',
    min:printedDraw,zone:'field',excludeSelf:true,trait:'魔法少女'},
    c=>card(pack,c),()=>calcEnergy(pack,s,s.active),c=>bp(pack,s,c)))
@@ -5529,6 +5555,7 @@ function bounceToHand(pack,s,p,uid,sourceUid=uid,{reason='own-effect',controller
  const found=location(s,p,uid);if(!found)throw Error('Bounce source not on own field');
  const caused=by==='opponent'||by==='battle'||reason==='opponent-effect';
  if((reason==='opponent-effect'||by==='opponent')&&!originalEffectsDisabled(s,found.c)&&
+  raidBoxTextLive(pack,found.c,'opponentBounceImmune')&&
   card(pack,found.c).opponentBounceImmune===true)return false;
  if(!skipReplacement&&caused&&raidLeaveOffer(pack,s,p,found.c)){
   s.pending={kind:'effect-raid-leave',player:p,uid,line:found.line,slot:found.slot,
@@ -5581,6 +5608,7 @@ function effectRemoveShielded(pack,s,target){
  const owner=Number(String(target.uid).split('-')[0]);
  if(!playerIndex(owner))return false;
  return s.players[owner].front.some(c=>c&&!originalEffectsDisabled(s,c)&&
+  raidBoxTextLive(pack,c,'frontNameRemoveShield')&&
   typeof card(pack,c).frontNameRemoveShield==='string'&&
   cardHasName(card(pack,target),card(pack,c).frontNameRemoveShield,
    originalEffectsDisabled(s,target)));
@@ -5614,6 +5642,7 @@ function tuckFieldBottom(pack,s,p,line,slot,sourceUid){
 }
 function frontRemovedRules(pack,s,p){
  return s.players[p].front.filter(c=>c&&!originalEffectsDisabled(s,c)&&
+  raidBoxTextLive(pack,c,'frontRemovedUse')&&
   card(pack,c).frontRemovedUse).map(c=>card(pack,c).frontRemovedUse);
 }
 function removedUseMatches(pack,s,p,physical){
@@ -5819,6 +5848,7 @@ function queueRetirement(pack,s,p,c,line){
 function substituteOffers(pack,s,owner,retiring){
  return s.players[owner].front.filter(c=>c&&c.uid!==retiring.uid&&
   !originalEffectsDisabled(s,c)&&card(pack,c).type==='character'&&
+  raidBoxTextLive(pack,c,'substituteOppRetire')&&
   typeof card(pack,c).substituteOppRetire?.name==='string'&&
   cardHasName(card(pack,retiring),card(pack,c).substituteOppRetire.name,
    originalEffectsDisabled(s,retiring)));
@@ -6253,6 +6283,7 @@ function revealChainOrigin(pack,s,owner,source){
 }
 function resistOpponentRest(pack,s,target){
  return !!target&&!originalEffectsDisabled(s,target)&&
+  raidBoxTextLive(pack,target,'opponentRestImmune')&&
   card(pack,target).opponentRestImmune===true;
 }
 function ownStartRaidState(pack,top){
@@ -7252,7 +7283,8 @@ function resolveChoice(s,a,pack){
   };
   if(a.uid===null){
    const before=unblockedBeforeDamage(pack,s,attacker);
-   if(card(pack,attacker).unblockedRestFront===true&&!originalEffectsDisabled(s,attacker))
+   if(card(pack,attacker).unblockedRestFront===true&&!originalEffectsDisabled(s,attacker)&&
+    raidBoxTextLive(pack,attacker,'unblockedRestFront'))
     s.effectQueue.push({op:'resolveUnblockedRest',owner:s.active,
      sourceUid:attacker.uid,sourceStamp:attacker.fieldEntryStamp});
    if(before.length)s.effectQueue.push(...before);
@@ -12850,7 +12882,9 @@ function legalPending(pack,s){
  if(q.kind==='block'){
   const attacker=liveAttacker(s,q.attackerUid);
   if(!attacker)throw Error('Missing printed attacker for block legality');
-  const rule=originalEffectsDisabled(s,attacker)?null:card(pack,attacker).blockBpRestriction;
+  const rule=originalEffectsDisabled(s,attacker)||
+   !raidBoxTextLive(pack,attacker,'blockBpRestriction')?null:
+   card(pack,attacker).blockBpRestriction;
   const applies=!!rule&&(!rule.condition||
    matchesV2LiveCondition(s,s.active,attacker.uid,rule.condition,
     x=>card(pack,x)));
@@ -14975,7 +15009,8 @@ function sourceTypeFromUid(pack,s,uid){
 }
 function selectionHandTax(pack,s,selector,uid,sourceType){
  const evalType=type=>selectionHandDiscardTaxPlan(pack,s,selector,uid,type,{
-  isSuppressed:(state,src)=>originalEffectsDisabled(state,src)});
+  isSuppressed:(state,src)=>originalEffectsDisabled(state,src)||
+   !raidBoxTextLive(pack,src,'selectionHandDiscardTax')});
  let base;
  if(sourceType==='unknown'){
   const ev=evalType('event'),ch=evalType('character');
@@ -15230,7 +15265,7 @@ export function legalUniversalActions(pack,s){
   // regardless of source REST state; it does NOT require spending AP.
   for(const c of field(pl)){
    const d=card(pack,c),silenced=originalEffectsDisabled(s,c);
-   const ability=silenced?null:d.mainAbility;
+   const ability=silenced||!raidBoxTextLive(pack,c,'main')?null:d.mainAbility;
    if(ability?.op==='mmm2Main'){
     ensureMmm2();
     out.push(...legalMmm2Activations(pack,s,p,c));
@@ -15552,7 +15587,7 @@ export function legalUniversalActions(pack,s){
     out.push({type:'reorderUnder',uid:c.uid,index});
   }
   for(const c of pl.energy.filter(Boolean)){
-   const ability=originalEffectsDisabled(s,c)?null:card(pack,c).mainAbility;
+   const ability=originalEffectsDisabled(s,c)||!raidBoxTextLive(pack,c,'main')?null:card(pack,c).mainAbility;
    if(ability?.op==='restSelfGainEnergyRetireEndMain'&&
     (ability.energyOnly===true||ability.lines==='energy'||ability.lines==='field')&&
     c.ready&&!s.mainAbilityUsedUids.includes(c.uid))
@@ -15634,7 +15669,8 @@ export function legalUniversalActions(pack,s){
     out.push({type:'activate',uid:c.uid,mode:'nameActive'});
   }
   for(const c of pl.front.filter(Boolean)){
-   const d=card(pack,c),ability=originalEffectsDisabled(s,c)?null:d.mainAbility;
+   const d=card(pack,c);
+   const ability=originalEffectsDisabled(s,c)||!raidBoxTextLive(pack,c,'main')?null:d.mainAbility;
    if(!ability)continue;
    if(ability.op==='frontActiveOnceNameOrTrait'&&c.ready&&
     !s.mainAbilityUsedUids.includes(c.uid)&&
@@ -17994,11 +18030,13 @@ if(ability.op==='characterDualMain'){
     eventGrant.stamp===attacker.fieldEntryStamp&&declared===1&&
     !originalEffectsDisabled(s,attacker);
    const lifeDouble=card(pack,attacker).lifeToHandDoubleAttack===true&&declared===1&&
-    !originalEffectsDisabled(s,attacker)&&matchesV2LiveCondition(s,p,attacker.uid,
+    !originalEffectsDisabled(s,attacker)&&raidBoxTextLive(pack,attacker,'lifeToHandDoubleAttack')&&
+    matchesV2LiveCondition(s,p,attacker.uid,
      {kind:'ownLifeToHandThisTurn',turn:'own'},c=>card(pack,c));
    const mmm2Double=attacker.mmm2DoubleAttack===s.turn&&declared===1;
    const facedownTwice=printedAttacker.facedownDoubleAttack===true&&declared===1&&
-    !originalEffectsDisabled(s,attacker)&&directFacedowns(attacker).length>0;
+    !originalEffectsDisabled(s,attacker)&&raidBoxTextLive(pack,attacker,'facedownDoubleAttack')&&
+    directFacedowns(attacker).length>0;
    const bothNames=card(pack,attacker).doubleAttackIfFrontNames;
    const liveDouble=Array.isArray(bothNames)&&declared===1&&
     !originalEffectsDisabled(s,attacker)&&
@@ -18057,7 +18095,8 @@ if(ability.op==='characterDualMain'){
      sourceStamp:attacker.fieldEntryStamp,targetUid:action.targetUid,
      targetStamp:action.targetStamp}]:
      [{op:'openBlock',owner:p,sourceUid:attacker.uid}]),
-    ...(pl.energy.some(c=>c&&!originalEffectsDisabled(s,c)&&card(pack,c).energyAttackSwap)
+    ...(pl.energy.some(c=>c&&!originalEffectsDisabled(s,c)&&card(pack,c).energyAttackSwap&&
+     raidBoxTextLive(pack,c,'energyAttackSwap'))
      ?[{op:'offerEnergyTraitSwap',owner:p,done:[]}]:[]));
    continueEffectQueue(pack,s);
    break;
@@ -20784,7 +20823,8 @@ export function assertUniversalMatch(pack,s){
   const flag=pl.handCharacterBpMay;
   const live=handCharacterBpMayAmount(pack,s,q.player);
   const fronts=pl.front.filter(c=>c&&!originalEffectsDisabled(s,c)&&
-   card(pack,c).handBpMayWhileFront===1000).length;
+   card(pack,c).handBpMayWhileFront===1000&&
+   raidBoxTextLive(pack,c,'handBpMayWhileFront')).length;
   const flagValid=!!flag&&flag.turn===s.turn&&flag.amount===1000&&
    typeof flag.sourceUid==='string'&&Object.keys(flag).length===3;
   const sources=(flagValid?1:0)+fronts;
@@ -20813,7 +20853,8 @@ export function assertUniversalMatch(pack,s){
   const flag=pl.handCharacterBpMay;
   const live=shown?.type==='character'?handCharacterBpMayAmount(pack,s,q.player):0;
   const fronts=pl.front.filter(c=>c&&!originalEffectsDisabled(s,c)&&
-   card(pack,c).handBpMayWhileFront===1000).length;
+   card(pack,c).handBpMayWhileFront===1000&&
+   raidBoxTextLive(pack,c,'handBpMayWhileFront')).length;
   const flagValid=!!flag&&flag.turn===s.turn&&flag.amount===1000&&
    typeof flag.sourceUid==='string'&&Object.keys(flag).length===3;
   const sources=(flagValid?1:0)+fronts;
@@ -22734,7 +22775,7 @@ export function universalPublicView(pack,s,viewer=0){
     // or a this-turn all-front grant. Read the current physical UID; never
     // expose private hand/deck identities.
     ...(s.allFrontEnergy?.[p]||
-     (card(pack,c).frontGeneratesEnergy&&!originalEffectsDisabled(s,c))||
+     (card(pack,c).frontGeneratesEnergy&&!originalEffectsDisabled(s,c)&&raidBoxTextLive(pack,c,'frontGeneratesEnergy'))||
      frontEnergyWhenLive(pack,s,p,c)||
      hasFrontEnergyPermission(s,p,c)||
      (c.frontEnergyUntil&&c.frontEnergyUntil.stamp===c.fieldEntryStamp&&

@@ -23,6 +23,16 @@ function play(packs,s,pred,actor=0){
  if(!action)throw Error('Missing legal action');
  return dispatchUniversalAction(packs,s,action,{actor});
 }
+// Q552: frame text is live only with a face-up card under the Raid top.
+function bury(s,p,card){
+ if(!card||(card.stack||[]).some(x=>x&&x.faceDown!==true))return card;
+ const deck=s.players[p].deck;
+ if(!deck.length)throw Error('No deck card to place under '+card.cardId);
+ const under=deck.pop();
+ under.faceDown=false;
+ card.stack=[under];
+ return card;
+}
 function place(s,p,id,line,slot,ready=true){
  const card=put(s,p,id,line,slot,ready);
  card.fieldEntryStamp=s.nextFieldEntryStamp++;
@@ -712,6 +722,7 @@ test('STG-1-029 retires by trigger kinds, gains impact at five, and raids Kurisu
   const placed=targets.map((id,slot)=>place(s,1,id,'front',slot));
   const actor=take(s,0,'STG-1-029');
   hold(s,0,[actor]);
+  bury(s,0,actor);
   s=play(stgPacks,s,a=>a.type==='play'&&a.uid===actor.uid&&a.line==='front');
   return {s,actor,placed};
  }
@@ -755,6 +766,7 @@ test('STG-1-029 retires by trigger kinds, gains impact at five, and raids Kurisu
  five.players[1].front[1]=illegal;
  const actor=pull(five,0,'STG-1-029');
  hold(five,0,[actor]);
+ bury(five,0,actor);
  five=play(lab.packs,five,a=>a.type==='play'&&a.uid===actor.uid&&a.line==='front');
  assert.equal(five.pending.ceiling,5000);
  assert.ok(five.pending.choices.includes(legalTarget.uid));

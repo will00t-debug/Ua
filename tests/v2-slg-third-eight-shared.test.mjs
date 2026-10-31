@@ -34,6 +34,16 @@ function take(s,p,id){
  }
  throw Error('Missing card '+id);
 }
+// Q552: frame text is live only with a face-up card under the Raid top.
+function bury(s,p,card){
+ if(!card||(card.stack||[]).some(x=>x&&x.faceDown!==true))return card;
+ const deck=s.players[p].deck;
+ if(!deck.length)throw Error('No deck card to place under '+card.cardId);
+ const under=deck.pop();
+ under.faceDown=false;
+ card.stack=[under];
+ return card;
+}
 function put(s,p,id,line,slot,{ready=true}={}){
  const c=take(s,p,id);
  c.ready=ready;
@@ -545,7 +555,7 @@ test('020 draws, recovers a non-旬 printed BP 3000 card, and scales attack BP f
  put(declined,0,'SLG-1-002','energy',2);
  const outside=take(declined,0,'SLG-1-030');
  declined.players[0].outside.push(outside);
- const hero=toHand(declined,0,'SLG-1-020');
+ const hero=bury(declined,0,toHand(declined,0,'SLG-1-020'));
  declined=play(declined,hero.uid,'front',0);
  assert.equal(declined.pending.kind,'effect-discard-gate');
  declined=use(declined,{type:'chooseDiscardGate',uid:null});
@@ -560,7 +570,7 @@ test('020 draws, recovers a non-旬 printed BP 3000 card, and scales attack BP f
  const shun=take(s,0,'SLG-1-015');
  s.players[0].outside.push(soldier,shun);
  const tank=toHand(s,0,'SLG-1-032');
- const played=toHand(s,0,'SLG-1-020');
+ const played=bury(s,0,toHand(s,0,'SLG-1-020'));
  const handBefore=s.players[0].hand.length;
  s=play(s,played.uid,'front',0);
  assert.equal(s.players[0].hand.length,handBefore);
@@ -575,7 +585,7 @@ test('020 draws, recovers a non-旬 printed BP 3000 card, and scales attack BP f
  assert.ok(s.players[0].hand.some(c=>c.uid===soldier.uid));
 
  let battle=toPhase(counts,3020,'attack');
- const attacker=put(battle,0,'SLG-1-020','front',0);
+ const attacker=bury(battle,0,put(battle,0,'SLG-1-020','front',0));
  while(battle.players[0].outside.length<4)battle.players[0].outside.push(battle.players[0].deck.shift());
  battle=use(battle,{type:'attack',uid:attacker.uid});
  assert.equal(battle.pending.kind,'effect-discard');

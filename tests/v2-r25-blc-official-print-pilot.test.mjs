@@ -33,6 +33,15 @@ function pull(s,p,id){
   if(i>=0)return a.splice(i,1)[0];
  }throw Error('missing '+id);
 }
+function bury(s,p,card){
+ if(!card||(card.stack||[]).some(x=>x&&x.faceDown!==true))return card;
+ const deck=s.players[p].deck;
+ if(!deck.length)throw Error('No deck card to place under '+card.cardId);
+ const under=deck.pop();
+ under.faceDown=false;
+ card.stack=[under];
+ return card;
+}
 function prepared(withRaid){
  let s=newUniversalMatch(packs,{decks:[deck,deck],first:0,seed:25047});
  const raid=pull(s,0,'BLC-2-019'),base=pull(s,0,'BASE');
@@ -139,6 +148,7 @@ test('official Q1046: 047 effect-earned draw ignores its energy2 printed event c
  // Field source has no FRONT energy generation; this is NOT a free event use.
  raid.fieldEntryStamp=s.nextFieldEntryStamp++;raid.ready=false;
  s.players[0].front[0]=raid;s.players[0].hand.push(eventCard);
+ bury(s,0,raid);
  s.phase='main';
  assert.equal(s.players[0].energy.filter(Boolean).length,0);
  assert.equal(pack.cards['BLC-2-047'].energy,2);
@@ -239,6 +249,7 @@ test('R29 source-qualified 019s pay two distinct physical 047 UIDs in order, onc
  const other=pull(s,0,'BLC-2-019');
  other.ready=true;other.fieldEntryStamp=s.nextFieldEntryStamp++;
  s.players[0].front[1]=other;
+ bury(s,0,other);
  assert.equal(assertUniversalMatch(packs,s),true);
  const start=s.players[0].deck.length;
  for(const [who,moved,index] of [[raid,firstEvent,0],[other,secondEvent,1]]){
