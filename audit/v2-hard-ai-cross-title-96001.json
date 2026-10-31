@@ -1,0 +1,6146 @@
+{
+  "summary": {
+    "policy": "hard-search-2",
+    "baseline": "chooseLegacyHardAiAction",
+    "note": "Acceptance across registered titles. Not the BLEACH 94001 holdout and not a claim that three BLEACH decks represent every title. Opening mulligan and order windows still use the legacy policy.",
+    "gaps": [
+      "opening-mulligan",
+      "phase-order",
+      "retirement-order",
+      "effect-move-order",
+      "effect-top-order",
+      "effect-raid-witness-order",
+      "effect-raid-witness-move",
+      "life-batch-order"
+    ],
+    "coverage": {
+      "bleach": {
+        "cards": 50,
+        "ids": 34,
+        "covered": [
+          "block",
+          "bring",
+          "compound",
+          "pay",
+          "raid",
+          "recover",
+          "stand",
+          "swap"
+        ],
+        "missing": [],
+        "examples": {
+          "raid": "BLC-4-050",
+          "compound": "BLC-4-050",
+          "pay": "BLC-4-050",
+          "bring": "BLC-4-042",
+          "recover": "BLC-4-042",
+          "stand": "BLC-4-041",
+          "block": "BLC-4-041",
+          "swap": "BLC-4-032"
+        }
+      },
+      "gurren-lagann": {
+        "cards": 50,
+        "ids": 32,
+        "covered": [
+          "block",
+          "bring",
+          "compound",
+          "pay",
+          "raid",
+          "recover",
+          "stand"
+        ],
+        "missing": [
+          "swap"
+        ],
+        "examples": {
+          "raid": "TTG-1-029",
+          "recover": "TTG-1-029",
+          "compound": "TTG-1-017",
+          "bring": "TTG-1-017",
+          "pay": "TTG-1-050",
+          "stand": "TTG-1-050",
+          "block": "TTG-1-025"
+        }
+      },
+      "solo-leveling": {
+        "cards": 50,
+        "ids": 33,
+        "covered": [
+          "block",
+          "bring",
+          "compound",
+          "pay",
+          "raid",
+          "recover",
+          "stand",
+          "swap"
+        ],
+        "missing": [],
+        "examples": {
+          "raid": "SLG-1-020",
+          "recover": "SLG-1-020",
+          "pay": "SLG-1-020",
+          "compound": "SLG-1-039",
+          "bring": "SLG-1-039",
+          "stand": "SLG-1-022",
+          "swap": "SLG-1-022",
+          "block": "SLG-1-024"
+        }
+      },
+      "sword-art-online": {
+        "cards": 50,
+        "ids": 33,
+        "covered": [
+          "block",
+          "bring",
+          "compound",
+          "pay",
+          "raid",
+          "recover",
+          "stand",
+          "swap"
+        ],
+        "missing": [],
+        "examples": {
+          "raid": "SAO-2-054",
+          "compound": "SAO-2-054",
+          "bring": "SAO-2-054",
+          "block": "SAO-2-054",
+          "recover": "SAO-1-109",
+          "swap": "SAO-1-109",
+          "pay": "SAO-1-024",
+          "stand": "SAO-2-004"
+        }
+      },
+      "mushoku-tensei": {
+        "cards": 50,
+        "ids": 31,
+        "covered": [
+          "bring",
+          "compound",
+          "pay",
+          "raid",
+          "recover",
+          "stand",
+          "swap"
+        ],
+        "missing": [
+          "block"
+        ],
+        "examples": {
+          "raid": "MST-1-009",
+          "compound": "MST-1-009",
+          "swap": "MST-1-009",
+          "bring": "MST-1-074",
+          "recover": "MST-1-074",
+          "pay": "MST-1-074",
+          "stand": "MST-1-004"
+        }
+      }
+    },
+    "groups": {
+      "coverage-mirror": {
+        "games": 40,
+        "wins": 23,
+        "losses": 17,
+        "interrupts": 0,
+        "winRate": 0.575,
+        "wilson95": {
+          "low": 0.42194800436059987,
+          "high": 0.7149083147518411
+        }
+      },
+      "coverage-cross": {
+        "games": 20,
+        "wins": 12,
+        "losses": 8,
+        "interrupts": 0,
+        "winRate": 0.6,
+        "wilson95": {
+          "low": 0.3865779423152061,
+          "high": 0.7811960325858074
+        }
+      },
+      "preset-smoke": {
+        "games": 14,
+        "wins": 14,
+        "losses": 0,
+        "interrupts": 0,
+        "winRate": 1,
+        "wilson95": {
+          "low": 0.7846829880728186,
+          "high": 1
+        }
+      }
+    },
+    "byTitle": {
+      "bleach": {
+        "games": 8,
+        "wins": 2,
+        "losses": 6,
+        "interrupts": 0,
+        "winRate": 0.25,
+        "wilson95": {
+          "low": 0.07147768885802763,
+          "high": 0.5907301208974108
+        }
+      },
+      "gurren-lagann": {
+        "games": 8,
+        "wins": 7,
+        "losses": 1,
+        "interrupts": 0,
+        "winRate": 0.875,
+        "wilson95": {
+          "low": 0.5291051942301386,
+          "high": 0.9775830911367038
+        }
+      },
+      "solo-leveling": {
+        "games": 8,
+        "wins": 8,
+        "losses": 0,
+        "interrupts": 0,
+        "winRate": 1,
+        "wilson95": {
+          "low": 0.6755843804891231,
+          "high": 1
+        }
+      },
+      "sword-art-online": {
+        "games": 8,
+        "wins": 0,
+        "losses": 8,
+        "interrupts": 0,
+        "winRate": 0,
+        "wilson95": {
+          "low": 0,
+          "high": 0.3244156195108769
+        }
+      },
+      "mushoku-tensei": {
+        "games": 8,
+        "wins": 6,
+        "losses": 2,
+        "interrupts": 0,
+        "winRate": 0.75,
+        "wilson95": {
+          "low": 0.40926987910258916,
+          "high": 0.9285223111419724
+        }
+      }
+    },
+    "games": 74,
+    "wins": 49,
+    "losses": 25,
+    "interrupts": 0,
+    "decisions": {
+      "neu": {
+        "decisions": 5562,
+        "pass": 2728,
+        "budget": 211,
+        "legacyMiss": 0,
+        "noLegal": 0,
+        "exception": 0,
+        "invalid": 0,
+        "empty": 0,
+        "phaseBudget": 0,
+        "deferred": 119,
+        "forced": 2017
+      },
+      "old": {
+        "decisions": 5086,
+        "pass": 2713,
+        "budget": 0,
+        "legacyMiss": 0,
+        "noLegal": 0,
+        "exception": 0,
+        "invalid": 0,
+        "empty": 0,
+        "phaseBudget": 0,
+        "deferred": 0,
+        "forced": 0
+      }
+    },
+    "kinds": {
+      "end-hand-limit": 1052,
+      "private-top-choice": 63,
+      "effect-discard": 101,
+      "effect-bounce-own": 71,
+      "block": 741,
+      "life-trigger": 177,
+      "effect-choice-mode": 30,
+      "effect-top-filter-choice": 42,
+      "effect-top-order": 314,
+      "effect-outside-or-rest": 7,
+      "effect-discard-gate": 11,
+      "effect-recover-outside": 8,
+      "effect-grant-impact": 2,
+      "effect-top-inspect-many": 5,
+      "effect-retire-own-character": 4,
+      "effect-retire-own-field": 3,
+      "effect-buff-own": 9,
+      "main-rest-front-energy": 4,
+      "effect-recover-ap": 24,
+      "effect-retire-bp": 2,
+      "main-two-buff": 1,
+      "raid-effect-order": 4,
+      "effect-buff-trait": 4,
+      "effect-rest-bp": 10
+    },
+    "ai": {
+      "decisions": 5562,
+      "ms": 91154.28969599993,
+      "maxMs": 89.49760299999616,
+      "rootCandidates": 17546,
+      "rootCompared": 17134,
+      "budgetExhausted": 211,
+      "passed": 824,
+      "deferred": 119,
+      "legacyMiss": 0,
+      "exceptions": 0,
+      "unsupported": 0,
+      "meanMs": 16.38876118230851,
+      "p95Ms": 49.9,
+      "sampleCount": 5562
+    },
+    "interruptSamples": []
+  },
+  "results": [
+    {
+      "label": "coverage-mirror",
+      "preset": null,
+      "titles": [
+        "bleach",
+        "bleach"
+      ],
+      "first": 0,
+      "seed": 96001,
+      "steps": 244,
+      "turn": 41,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 2084,
+      "driver": {
+        "neu": {
+          "decisions": 131,
+          "pass": 83,
+          "budget": 4,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 52
+        },
+        "old": {
+          "decisions": 113,
+          "pass": 81,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "end-hand-limit": 41,
+        "private-top-choice": 2,
+        "effect-discard": 2,
+        "effect-bounce-own": 1,
+        "block": 7,
+        "life-trigger": 1
+      },
+      "ai": {
+        "decisions": 131,
+        "forced": 52,
+        "deferred": 0,
+        "overrides": 43,
+        "kept": 36,
+        "budgetExhausted": 4,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 32,
+        "ms": 1864.088949999998,
+        "maxMs": 63.95929100000012,
+        "nodes": 2094,
+        "byKind": {
+          "start": 41,
+          "end-hand-limit": 214,
+          "main": 42,
+          "private-top-choice": 2,
+          "move": 21,
+          "effect-discard": 17,
+          "attack": 17
+        },
+        "rootCandidates": 359,
+        "rootCompared": 354
+      }
+    },
+    {
+      "label": "coverage-mirror",
+      "preset": null,
+      "titles": [
+        "bleach",
+        "bleach"
+      ],
+      "first": 0,
+      "seed": 96002,
+      "steps": 172,
+      "turn": 26,
+      "finished": true,
+      "winner": 1,
+      "endReason": "life-zero",
+      "outcome": "loss",
+      "ms": 1078,
+      "driver": {
+        "neu": {
+          "decisions": 97,
+          "pass": 53,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 58
+        },
+        "old": {
+          "decisions": 75,
+          "pass": 51,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "end-hand-limit": 29,
+        "private-top-choice": 1,
+        "effect-bounce-own": 2,
+        "effect-discard": 1,
+        "block": 7,
+        "life-trigger": 2
+      },
+      "ai": {
+        "decisions": 97,
+        "forced": 58,
+        "deferred": 0,
+        "overrides": 36,
+        "kept": 3,
+        "budgetExhausted": 0,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 2,
+        "ms": 892.2255359999999,
+        "maxMs": 59.121336000000156,
+        "nodes": 1079,
+        "byKind": {
+          "start": 26,
+          "end-hand-limit": 228,
+          "life-trigger": 4
+        },
+        "rootCandidates": 258,
+        "rootCompared": 258
+      }
+    },
+    {
+      "label": "coverage-mirror",
+      "preset": null,
+      "titles": [
+        "bleach",
+        "bleach"
+      ],
+      "first": 0,
+      "seed": 96003,
+      "steps": 233,
+      "turn": 39,
+      "finished": true,
+      "winner": 1,
+      "endReason": "required-draw-empty",
+      "outcome": "loss",
+      "ms": 1836,
+      "driver": {
+        "neu": {
+          "decisions": 139,
+          "pass": 76,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 71
+        },
+        "old": {
+          "decisions": 94,
+          "pass": 76,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "end-hand-limit": 52,
+        "private-top-choice": 1
+      },
+      "ai": {
+        "decisions": 139,
+        "forced": 71,
+        "deferred": 0,
+        "overrides": 48,
+        "kept": 20,
+        "budgetExhausted": 0,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 5,
+        "ms": 1629.6301080000003,
+        "maxMs": 56.92806500000006,
+        "nodes": 2154,
+        "byKind": {
+          "start": 38,
+          "end-hand-limit": 322,
+          "main": 48,
+          "private-top-choice": 2,
+          "move": 8
+        },
+        "rootCandidates": 418,
+        "rootCompared": 418
+      }
+    },
+    {
+      "label": "coverage-mirror",
+      "preset": null,
+      "titles": [
+        "bleach",
+        "bleach"
+      ],
+      "first": 0,
+      "seed": 96004,
+      "steps": 332,
+      "turn": 45,
+      "finished": true,
+      "winner": 1,
+      "endReason": "required-draw-empty",
+      "outcome": "loss",
+      "ms": 2270,
+      "driver": {
+        "neu": {
+          "decisions": 159,
+          "pass": 88,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 76
+        },
+        "old": {
+          "decisions": 173,
+          "pass": 88,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "private-top-choice": 2,
+        "end-hand-limit": 54
+      },
+      "ai": {
+        "decisions": 159,
+        "forced": 76,
+        "deferred": 0,
+        "overrides": 49,
+        "kept": 34,
+        "budgetExhausted": 0,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 12,
+        "ms": 1953.1942489999988,
+        "maxMs": 56.25365499999998,
+        "nodes": 2503,
+        "byKind": {
+          "start": 42,
+          "end-hand-limit": 320,
+          "main": 63,
+          "private-top-choice": 2,
+          "move": 12
+        },
+        "rootCandidates": 439,
+        "rootCompared": 439
+      }
+    },
+    {
+      "label": "coverage-mirror",
+      "preset": null,
+      "titles": [
+        "bleach",
+        "bleach"
+      ],
+      "first": 1,
+      "seed": 96001,
+      "steps": 247,
+      "turn": 42,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 1932,
+      "driver": {
+        "neu": {
+          "decisions": 130,
+          "pass": 83,
+          "budget": 4,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 51
+        },
+        "old": {
+          "decisions": 117,
+          "pass": 85,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "end-hand-limit": 41,
+        "private-top-choice": 2,
+        "effect-discard": 2,
+        "effect-bounce-own": 1,
+        "block": 7,
+        "life-trigger": 1
+      },
+      "ai": {
+        "decisions": 130,
+        "forced": 51,
+        "deferred": 0,
+        "overrides": 42,
+        "kept": 37,
+        "budgetExhausted": 4,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 33,
+        "ms": 1700.6581969999988,
+        "maxMs": 52.24439500000062,
+        "nodes": 2094,
+        "byKind": {
+          "start": 41,
+          "end-hand-limit": 214,
+          "main": 42,
+          "private-top-choice": 2,
+          "move": 21,
+          "effect-discard": 17,
+          "attack": 17
+        },
+        "rootCandidates": 359,
+        "rootCompared": 354
+      }
+    },
+    {
+      "label": "coverage-mirror",
+      "preset": null,
+      "titles": [
+        "bleach",
+        "bleach"
+      ],
+      "first": 1,
+      "seed": 96002,
+      "steps": 175,
+      "turn": 27,
+      "finished": true,
+      "winner": 1,
+      "endReason": "life-zero",
+      "outcome": "loss",
+      "ms": 1067,
+      "driver": {
+        "neu": {
+          "decisions": 96,
+          "pass": 53,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 57
+        },
+        "old": {
+          "decisions": 79,
+          "pass": 55,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "end-hand-limit": 29,
+        "private-top-choice": 1,
+        "effect-bounce-own": 2,
+        "effect-discard": 1,
+        "block": 7,
+        "life-trigger": 2
+      },
+      "ai": {
+        "decisions": 96,
+        "forced": 57,
+        "deferred": 0,
+        "overrides": 35,
+        "kept": 4,
+        "budgetExhausted": 0,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 3,
+        "ms": 884.4918980000011,
+        "maxMs": 55.90484799999922,
+        "nodes": 1079,
+        "byKind": {
+          "start": 26,
+          "end-hand-limit": 228,
+          "life-trigger": 4
+        },
+        "rootCandidates": 258,
+        "rootCompared": 258
+      }
+    },
+    {
+      "label": "coverage-mirror",
+      "preset": null,
+      "titles": [
+        "bleach",
+        "bleach"
+      ],
+      "first": 1,
+      "seed": 96003,
+      "steps": 236,
+      "turn": 40,
+      "finished": true,
+      "winner": 1,
+      "endReason": "required-draw-empty",
+      "outcome": "loss",
+      "ms": 1838,
+      "driver": {
+        "neu": {
+          "decisions": 138,
+          "pass": 76,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 70
+        },
+        "old": {
+          "decisions": 98,
+          "pass": 80,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "end-hand-limit": 52,
+        "private-top-choice": 1
+      },
+      "ai": {
+        "decisions": 138,
+        "forced": 70,
+        "deferred": 0,
+        "overrides": 47,
+        "kept": 21,
+        "budgetExhausted": 0,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 6,
+        "ms": 1637.5884269999988,
+        "maxMs": 61.14280400000007,
+        "nodes": 2154,
+        "byKind": {
+          "start": 38,
+          "end-hand-limit": 322,
+          "main": 48,
+          "private-top-choice": 2,
+          "move": 8
+        },
+        "rootCandidates": 418,
+        "rootCompared": 418
+      }
+    },
+    {
+      "label": "coverage-mirror",
+      "preset": null,
+      "titles": [
+        "bleach",
+        "bleach"
+      ],
+      "first": 1,
+      "seed": 96004,
+      "steps": 325,
+      "turn": 44,
+      "finished": true,
+      "winner": 1,
+      "endReason": "required-draw-empty",
+      "outcome": "loss",
+      "ms": 2229,
+      "driver": {
+        "neu": {
+          "decisions": 154,
+          "pass": 84,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 73
+        },
+        "old": {
+          "decisions": 171,
+          "pass": 88,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "private-top-choice": 2,
+        "end-hand-limit": 53
+      },
+      "ai": {
+        "decisions": 154,
+        "forced": 73,
+        "deferred": 0,
+        "overrides": 49,
+        "kept": 32,
+        "budgetExhausted": 0,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 11,
+        "ms": 1916.286809000003,
+        "maxMs": 62.33884699999999,
+        "nodes": 2462,
+        "byKind": {
+          "start": 40,
+          "end-hand-limit": 319,
+          "main": 60,
+          "private-top-choice": 2,
+          "move": 12
+        },
+        "rootCandidates": 433,
+        "rootCompared": 433
+      }
+    },
+    {
+      "label": "coverage-mirror",
+      "preset": null,
+      "titles": [
+        "gurren-lagann",
+        "gurren-lagann"
+      ],
+      "first": 0,
+      "seed": 96001,
+      "steps": 75,
+      "turn": 11,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 709,
+      "driver": {
+        "neu": {
+          "decisions": 41,
+          "pass": 23,
+          "budget": 2,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 10
+        },
+        "old": {
+          "decisions": 34,
+          "pass": 20,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "private-top-choice": 1,
+        "end-hand-limit": 2,
+        "effect-choice-mode": 1,
+        "block": 7,
+        "life-trigger": 1
+      },
+      "ai": {
+        "decisions": 41,
+        "forced": 10,
+        "deferred": 0,
+        "overrides": 7,
+        "kept": 24,
+        "budgetExhausted": 2,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 13,
+        "ms": 617.8210929999996,
+        "maxMs": 45.4393029999992,
+        "nodes": 719,
+        "byKind": {
+          "start": 12,
+          "main": 36,
+          "private-top-choice": 2,
+          "move": 22,
+          "effect-choice-mode": 2,
+          "attack": 20
+        },
+        "rootCandidates": 97,
+        "rootCompared": 94
+      }
+    },
+    {
+      "label": "coverage-mirror",
+      "preset": null,
+      "titles": [
+        "gurren-lagann",
+        "gurren-lagann"
+      ],
+      "first": 0,
+      "seed": 96002,
+      "steps": 92,
+      "turn": 11,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 777,
+      "driver": {
+        "neu": {
+          "decisions": 50,
+          "pass": 23,
+          "budget": 4,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 1,
+          "forced": 12
+        },
+        "old": {
+          "decisions": 42,
+          "pass": 20,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "private-top-choice": 3,
+        "effect-bounce-own": 2,
+        "effect-top-filter-choice": 2,
+        "effect-top-order": 4,
+        "effect-discard": 2,
+        "block": 8,
+        "life-trigger": 1
+      },
+      "ai": {
+        "decisions": 50,
+        "forced": 12,
+        "deferred": 1,
+        "overrides": 10,
+        "kept": 27,
+        "budgetExhausted": 4,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 12,
+        "ms": 667.517880000004,
+        "maxMs": 42.292585999999574,
+        "nodes": 744,
+        "byKind": {
+          "start": 11,
+          "main": 30,
+          "private-top-choice": 6,
+          "move": 19,
+          "effect-top-filter-choice": 4,
+          "effect-discard": 6,
+          "attack": 21,
+          "effect-bounce-own": 3
+        },
+        "rootCandidates": 113,
+        "rootCompared": 100
+      }
+    },
+    {
+      "label": "coverage-mirror",
+      "preset": null,
+      "titles": [
+        "gurren-lagann",
+        "gurren-lagann"
+      ],
+      "first": 0,
+      "seed": 96003,
+      "steps": 155,
+      "turn": 14,
+      "finished": true,
+      "winner": 1,
+      "endReason": "life-zero",
+      "outcome": "loss",
+      "ms": 1752,
+      "driver": {
+        "neu": {
+          "decisions": 69,
+          "pass": 28,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 4,
+          "forced": 10
+        },
+        "old": {
+          "decisions": 86,
+          "pass": 27,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "private-top-choice": 4,
+        "effect-choice-mode": 2,
+        "effect-top-filter-choice": 2,
+        "effect-top-order": 22,
+        "effect-discard": 2,
+        "effect-bounce-own": 1,
+        "block": 19,
+        "life-trigger": 3,
+        "effect-outside-or-rest": 1
+      },
+      "ai": {
+        "decisions": 69,
+        "forced": 10,
+        "deferred": 4,
+        "overrides": 19,
+        "kept": 36,
+        "budgetExhausted": 0,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 20,
+        "ms": 1568.0373599999875,
+        "maxMs": 82.39463999999862,
+        "nodes": 1740,
+        "byKind": {
+          "start": 14,
+          "main": 57,
+          "private-top-choice": 4,
+          "move": 30,
+          "effect-bounce-own": 2,
+          "attack": 29,
+          "block": 38,
+          "life-trigger": 8
+        },
+        "rootCandidates": 182,
+        "rootCompared": 182
+      }
+    },
+    {
+      "label": "coverage-mirror",
+      "preset": null,
+      "titles": [
+        "gurren-lagann",
+        "gurren-lagann"
+      ],
+      "first": 0,
+      "seed": 96004,
+      "steps": 88,
+      "turn": 11,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 1085,
+      "driver": {
+        "neu": {
+          "decisions": 52,
+          "pass": 23,
+          "budget": 3,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 10
+        },
+        "old": {
+          "decisions": 36,
+          "pass": 20,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "private-top-choice": 3,
+        "effect-bounce-own": 3,
+        "end-hand-limit": 4,
+        "effect-choice-mode": 2,
+        "block": 10,
+        "life-trigger": 2
+      },
+      "ai": {
+        "decisions": 52,
+        "forced": 10,
+        "deferred": 0,
+        "overrides": 12,
+        "kept": 30,
+        "budgetExhausted": 3,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 13,
+        "ms": 963.8419890000077,
+        "maxMs": 47.61552800000027,
+        "nodes": 1149,
+        "byKind": {
+          "start": 12,
+          "main": 63,
+          "private-top-choice": 6,
+          "move": 27,
+          "effect-bounce-own": 7,
+          "effect-choice-mode": 4,
+          "attack": 29,
+          "block": 10
+        },
+        "rootCandidates": 164,
+        "rootCompared": 158
+      }
+    },
+    {
+      "label": "coverage-mirror",
+      "preset": null,
+      "titles": [
+        "gurren-lagann",
+        "gurren-lagann"
+      ],
+      "first": 1,
+      "seed": 96001,
+      "steps": 68,
+      "turn": 10,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 758,
+      "driver": {
+        "neu": {
+          "decisions": 37,
+          "pass": 19,
+          "budget": 2,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 8
+        },
+        "old": {
+          "decisions": 31,
+          "pass": 20,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "private-top-choice": 1,
+        "end-hand-limit": 2,
+        "effect-choice-mode": 1,
+        "block": 7,
+        "life-trigger": 1
+      },
+      "ai": {
+        "decisions": 37,
+        "forced": 8,
+        "deferred": 0,
+        "overrides": 7,
+        "kept": 22,
+        "budgetExhausted": 2,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 11,
+        "ms": 646.1767630000031,
+        "maxMs": 47.144373999999516,
+        "nodes": 704,
+        "byKind": {
+          "start": 10,
+          "main": 36,
+          "private-top-choice": 2,
+          "move": 20,
+          "effect-choice-mode": 2,
+          "attack": 20
+        },
+        "rootCandidates": 93,
+        "rootCompared": 90
+      }
+    },
+    {
+      "label": "coverage-mirror",
+      "preset": null,
+      "titles": [
+        "gurren-lagann",
+        "gurren-lagann"
+      ],
+      "first": 1,
+      "seed": 96002,
+      "steps": 81,
+      "turn": 10,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 747,
+      "driver": {
+        "neu": {
+          "decisions": 45,
+          "pass": 19,
+          "budget": 1,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 1,
+          "forced": 11
+        },
+        "old": {
+          "decisions": 36,
+          "pass": 20,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "effect-top-filter-choice": 1,
+        "effect-top-order": 2,
+        "effect-discard": 1,
+        "effect-bounce-own": 2,
+        "private-top-choice": 3,
+        "block": 7,
+        "life-trigger": 1
+      },
+      "ai": {
+        "decisions": 45,
+        "forced": 11,
+        "deferred": 1,
+        "overrides": 6,
+        "kept": 27,
+        "budgetExhausted": 1,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 9,
+        "ms": 610.972335000004,
+        "maxMs": 53.19266599999901,
+        "nodes": 684,
+        "byKind": {
+          "start": 10,
+          "main": 36,
+          "effect-top-filter-choice": 4,
+          "effect-discard": 7,
+          "move": 18,
+          "private-top-choice": 6,
+          "attack": 17,
+          "effect-bounce-own": 3
+        },
+        "rootCandidates": 102,
+        "rootCompared": 101
+      }
+    },
+    {
+      "label": "coverage-mirror",
+      "preset": null,
+      "titles": [
+        "gurren-lagann",
+        "gurren-lagann"
+      ],
+      "first": 1,
+      "seed": 96003,
+      "steps": 205,
+      "turn": 18,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 2634,
+      "driver": {
+        "neu": {
+          "decisions": 96,
+          "pass": 35,
+          "budget": 4,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 4,
+          "forced": 13
+        },
+        "old": {
+          "decisions": 109,
+          "pass": 36,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "private-top-choice": 4,
+        "effect-choice-mode": 2,
+        "effect-top-filter-choice": 2,
+        "effect-top-order": 22,
+        "effect-discard": 2,
+        "effect-bounce-own": 1,
+        "block": 30,
+        "life-trigger": 7,
+        "effect-outside-or-rest": 2
+      },
+      "ai": {
+        "decisions": 96,
+        "forced": 13,
+        "deferred": 4,
+        "overrides": 27,
+        "kept": 52,
+        "budgetExhausted": 4,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 23,
+        "ms": 2394.032072999995,
+        "maxMs": 65.95185300000048,
+        "nodes": 2651,
+        "byKind": {
+          "start": 18,
+          "main": 83,
+          "private-top-choice": 6,
+          "move": 75,
+          "effect-bounce-own": 2,
+          "attack": 55,
+          "block": 56,
+          "life-trigger": 9,
+          "effect-outside-or-rest": 5
+        },
+        "rootCandidates": 314,
+        "rootCompared": 309
+      }
+    },
+    {
+      "label": "coverage-mirror",
+      "preset": null,
+      "titles": [
+        "gurren-lagann",
+        "gurren-lagann"
+      ],
+      "first": 1,
+      "seed": 96004,
+      "steps": 75,
+      "turn": 10,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 1006,
+      "driver": {
+        "neu": {
+          "decisions": 41,
+          "pass": 19,
+          "budget": 3,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 7
+        },
+        "old": {
+          "decisions": 34,
+          "pass": 20,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "private-top-choice": 1,
+        "effect-bounce-own": 1,
+        "end-hand-limit": 3,
+        "effect-choice-mode": 2,
+        "block": 9,
+        "life-trigger": 2
+      },
+      "ai": {
+        "decisions": 41,
+        "forced": 7,
+        "deferred": 0,
+        "overrides": 11,
+        "kept": 23,
+        "budgetExhausted": 3,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 12,
+        "ms": 899.3849170000012,
+        "maxMs": 53.67989999999918,
+        "nodes": 1050,
+        "byKind": {
+          "start": 10,
+          "main": 65,
+          "private-top-choice": 2,
+          "move": 30,
+          "effect-bounce-own": 2,
+          "effect-choice-mode": 4,
+          "attack": 28,
+          "block": 5
+        },
+        "rootCandidates": 150,
+        "rootCompared": 146
+      }
+    },
+    {
+      "label": "coverage-mirror",
+      "preset": null,
+      "titles": [
+        "solo-leveling",
+        "solo-leveling"
+      ],
+      "first": 0,
+      "seed": 96001,
+      "steps": 82,
+      "turn": 9,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 1025,
+      "driver": {
+        "neu": {
+          "decisions": 52,
+          "pass": 19,
+          "budget": 3,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 3,
+          "forced": 12
+        },
+        "old": {
+          "decisions": 30,
+          "pass": 16,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "effect-bounce-own": 1,
+        "end-hand-limit": 5,
+        "effect-top-filter-choice": 2,
+        "effect-top-order": 5,
+        "effect-discard": 5,
+        "effect-discard-gate": 1,
+        "block": 7,
+        "life-trigger": 2
+      },
+      "ai": {
+        "decisions": 52,
+        "forced": 12,
+        "deferred": 3,
+        "overrides": 12,
+        "kept": 25,
+        "budgetExhausted": 3,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 9,
+        "ms": 923.904579,
+        "maxMs": 55.62344200000007,
+        "nodes": 1068,
+        "byKind": {
+          "start": 10,
+          "main": 49,
+          "move": 25,
+          "effect-bounce-own": 2,
+          "effect-top-filter-choice": 4,
+          "effect-discard": 22,
+          "effect-discard-gate": 6,
+          "attack": 20
+        },
+        "rootCandidates": 147,
+        "rootCompared": 138
+      }
+    },
+    {
+      "label": "coverage-mirror",
+      "preset": null,
+      "titles": [
+        "solo-leveling",
+        "solo-leveling"
+      ],
+      "first": 0,
+      "seed": 96002,
+      "steps": 83,
+      "turn": 9,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 1068,
+      "driver": {
+        "neu": {
+          "decisions": 45,
+          "pass": 19,
+          "budget": 3,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 3,
+          "forced": 8
+        },
+        "old": {
+          "decisions": 38,
+          "pass": 16,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "private-top-choice": 1,
+        "effect-discard": 1,
+        "block": 7,
+        "end-hand-limit": 3,
+        "effect-discard-gate": 1,
+        "effect-recover-outside": 1,
+        "effect-top-order": 4,
+        "life-trigger": 1
+      },
+      "ai": {
+        "decisions": 45,
+        "forced": 8,
+        "deferred": 3,
+        "overrides": 11,
+        "kept": 23,
+        "budgetExhausted": 3,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 12,
+        "ms": 943.5385769999921,
+        "maxMs": 58.0141650000005,
+        "nodes": 1092,
+        "byKind": {
+          "start": 10,
+          "main": 77,
+          "move": 30,
+          "effect-discard": 5,
+          "attack": 20,
+          "effect-discard-gate": 5,
+          "effect-recover-outside": 4
+        },
+        "rootCandidates": 157,
+        "rootCompared": 151
+      }
+    },
+    {
+      "label": "coverage-mirror",
+      "preset": null,
+      "titles": [
+        "solo-leveling",
+        "solo-leveling"
+      ],
+      "first": 0,
+      "seed": 96003,
+      "steps": 91,
+      "turn": 9,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 897,
+      "driver": {
+        "neu": {
+          "decisions": 42,
+          "pass": 19,
+          "budget": 2,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 4,
+          "forced": 8
+        },
+        "old": {
+          "decisions": 49,
+          "pass": 16,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "effect-bounce-own": 1,
+        "effect-top-filter-choice": 2,
+        "effect-top-order": 9,
+        "effect-discard": 2,
+        "block": 7,
+        "life-trigger": 6,
+        "effect-discard-gate": 2,
+        "effect-recover-outside": 2
+      },
+      "ai": {
+        "decisions": 42,
+        "forced": 8,
+        "deferred": 4,
+        "overrides": 8,
+        "kept": 22,
+        "budgetExhausted": 2,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 13,
+        "ms": 758.0162910000054,
+        "maxMs": 41.13173099999949,
+        "nodes": 940,
+        "byKind": {
+          "start": 10,
+          "main": 86,
+          "move": 17,
+          "attack": 20,
+          "effect-top-filter-choice": 2,
+          "effect-discard": 4
+        },
+        "rootCandidates": 142,
+        "rootCompared": 139
+      }
+    },
+    {
+      "label": "coverage-mirror",
+      "preset": null,
+      "titles": [
+        "solo-leveling",
+        "solo-leveling"
+      ],
+      "first": 0,
+      "seed": 96004,
+      "steps": 78,
+      "turn": 9,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 961,
+      "driver": {
+        "neu": {
+          "decisions": 41,
+          "pass": 19,
+          "budget": 1,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 2,
+          "forced": 7
+        },
+        "old": {
+          "decisions": 37,
+          "pass": 16,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "effect-top-filter-choice": 2,
+        "effect-top-order": 6,
+        "effect-discard": 2,
+        "effect-grant-impact": 1,
+        "effect-bounce-own": 1,
+        "block": 7,
+        "life-trigger": 3
+      },
+      "ai": {
+        "decisions": 41,
+        "forced": 7,
+        "deferred": 2,
+        "overrides": 12,
+        "kept": 20,
+        "budgetExhausted": 1,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 13,
+        "ms": 842.1588810000085,
+        "maxMs": 46.71572599999854,
+        "nodes": 949,
+        "byKind": {
+          "start": 10,
+          "main": 70,
+          "move": 15,
+          "effect-top-filter-choice": 2,
+          "effect-discard": 6,
+          "effect-grant-impact": 4,
+          "effect-bounce-own": 3,
+          "attack": 21
+        },
+        "rootCandidates": 132,
+        "rootCompared": 131
+      }
+    },
+    {
+      "label": "coverage-mirror",
+      "preset": null,
+      "titles": [
+        "solo-leveling",
+        "solo-leveling"
+      ],
+      "first": 1,
+      "seed": 96001,
+      "steps": 83,
+      "turn": 10,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 999,
+      "driver": {
+        "neu": {
+          "decisions": 49,
+          "pass": 19,
+          "budget": 3,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 3,
+          "forced": 10
+        },
+        "old": {
+          "decisions": 34,
+          "pass": 20,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "effect-top-filter-choice": 2,
+        "effect-top-order": 5,
+        "effect-discard": 4,
+        "effect-bounce-own": 1,
+        "end-hand-limit": 5,
+        "effect-discard-gate": 1,
+        "effect-recover-outside": 1,
+        "block": 7,
+        "life-trigger": 2
+      },
+      "ai": {
+        "decisions": 49,
+        "forced": 10,
+        "deferred": 3,
+        "overrides": 12,
+        "kept": 24,
+        "budgetExhausted": 3,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 11,
+        "ms": 886.1309300000139,
+        "maxMs": 56.46312500000022,
+        "nodes": 1059,
+        "byKind": {
+          "start": 10,
+          "main": 43,
+          "effect-top-filter-choice": 4,
+          "effect-discard": 21,
+          "move": 30,
+          "effect-bounce-own": 3,
+          "effect-discard-gate": 6,
+          "effect-recover-outside": 3,
+          "attack": 21
+        },
+        "rootCandidates": 162,
+        "rootCompared": 141
+      }
+    },
+    {
+      "label": "coverage-mirror",
+      "preset": null,
+      "titles": [
+        "solo-leveling",
+        "solo-leveling"
+      ],
+      "first": 1,
+      "seed": 96002,
+      "steps": 79,
+      "turn": 10,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 818,
+      "driver": {
+        "neu": {
+          "decisions": 35,
+          "pass": 19,
+          "budget": 4,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 6
+        },
+        "old": {
+          "decisions": 44,
+          "pass": 20,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "private-top-choice": 1,
+        "effect-discard": 1,
+        "block": 7,
+        "end-hand-limit": 3,
+        "life-trigger": 1
+      },
+      "ai": {
+        "decisions": 35,
+        "forced": 6,
+        "deferred": 0,
+        "overrides": 9,
+        "kept": 20,
+        "budgetExhausted": 4,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 13,
+        "ms": 694.4419049999997,
+        "maxMs": 41.21050800000012,
+        "nodes": 870,
+        "byKind": {
+          "start": 10,
+          "main": 50,
+          "move": 34,
+          "effect-discard": 6,
+          "attack": 21
+        },
+        "rootCandidates": 133,
+        "rootCompared": 121
+      }
+    },
+    {
+      "label": "coverage-mirror",
+      "preset": null,
+      "titles": [
+        "solo-leveling",
+        "solo-leveling"
+      ],
+      "first": 1,
+      "seed": 96003,
+      "steps": 90,
+      "turn": 8,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 938,
+      "driver": {
+        "neu": {
+          "decisions": 42,
+          "pass": 15,
+          "budget": 1,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 4,
+          "forced": 9
+        },
+        "old": {
+          "decisions": 48,
+          "pass": 16,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "effect-bounce-own": 1,
+        "effect-top-filter-choice": 2,
+        "effect-top-order": 9,
+        "effect-discard": 2,
+        "block": 7,
+        "life-trigger": 6,
+        "effect-discard-gate": 2,
+        "effect-recover-outside": 2
+      },
+      "ai": {
+        "decisions": 42,
+        "forced": 9,
+        "deferred": 4,
+        "overrides": 7,
+        "kept": 22,
+        "budgetExhausted": 1,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 8,
+        "ms": 797.7223179999964,
+        "maxMs": 49.410375999999815,
+        "nodes": 943,
+        "byKind": {
+          "start": 8,
+          "main": 89,
+          "move": 21,
+          "effect-top-filter-choice": 2,
+          "effect-discard": 4,
+          "attack": 22
+        },
+        "rootCandidates": 147,
+        "rootCompared": 146
+      }
+    },
+    {
+      "label": "coverage-mirror",
+      "preset": null,
+      "titles": [
+        "solo-leveling",
+        "solo-leveling"
+      ],
+      "first": 1,
+      "seed": 96004,
+      "steps": 91,
+      "turn": 10,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 1111,
+      "driver": {
+        "neu": {
+          "decisions": 50,
+          "pass": 19,
+          "budget": 2,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 4,
+          "forced": 10
+        },
+        "old": {
+          "decisions": 41,
+          "pass": 20,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "effect-top-filter-choice": 3,
+        "effect-top-order": 9,
+        "effect-discard": 3,
+        "effect-grant-impact": 1,
+        "effect-bounce-own": 2,
+        "block": 7,
+        "life-trigger": 3
+      },
+      "ai": {
+        "decisions": 50,
+        "forced": 10,
+        "deferred": 4,
+        "overrides": 12,
+        "kept": 24,
+        "budgetExhausted": 2,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 11,
+        "ms": 975.367254000008,
+        "maxMs": 50.58716000000095,
+        "nodes": 1145,
+        "byKind": {
+          "start": 10,
+          "main": 77,
+          "effect-top-filter-choice": 4,
+          "effect-discard": 13,
+          "move": 15,
+          "effect-grant-impact": 4,
+          "effect-bounce-own": 6,
+          "attack": 19
+        },
+        "rootCandidates": 151,
+        "rootCompared": 148
+      }
+    },
+    {
+      "label": "coverage-mirror",
+      "preset": null,
+      "titles": [
+        "sword-art-online",
+        "sword-art-online"
+      ],
+      "first": 0,
+      "seed": 96001,
+      "steps": 231,
+      "turn": 41,
+      "finished": true,
+      "winner": 1,
+      "endReason": "required-draw-empty",
+      "outcome": "loss",
+      "ms": 1204,
+      "driver": {
+        "neu": {
+          "decisions": 132,
+          "pass": 80,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 78
+        },
+        "old": {
+          "decisions": 99,
+          "pass": 80,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "end-hand-limit": 54
+      },
+      "ai": {
+        "decisions": 132,
+        "forced": 78,
+        "deferred": 0,
+        "overrides": 51,
+        "kept": 3,
+        "budgetExhausted": 0,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 2,
+        "ms": 1018.8725689999901,
+        "maxMs": 56.30418700000155,
+        "nodes": 1474,
+        "byKind": {
+          "start": 38,
+          "end-hand-limit": 331
+        },
+        "rootCandidates": 369,
+        "rootCompared": 369
+      }
+    },
+    {
+      "label": "coverage-mirror",
+      "preset": null,
+      "titles": [
+        "sword-art-online",
+        "sword-art-online"
+      ],
+      "first": 0,
+      "seed": 96002,
+      "steps": 231,
+      "turn": 41,
+      "finished": true,
+      "winner": 1,
+      "endReason": "required-draw-empty",
+      "outcome": "loss",
+      "ms": 1183,
+      "driver": {
+        "neu": {
+          "decisions": 132,
+          "pass": 80,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 77
+        },
+        "old": {
+          "decisions": 99,
+          "pass": 80,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "end-hand-limit": 54
+      },
+      "ai": {
+        "decisions": 132,
+        "forced": 77,
+        "deferred": 0,
+        "overrides": 49,
+        "kept": 6,
+        "budgetExhausted": 0,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 3,
+        "ms": 995.7221069999923,
+        "maxMs": 53.79747899999893,
+        "nodes": 1490,
+        "byKind": {
+          "start": 40,
+          "end-hand-limit": 331
+        },
+        "rootCandidates": 371,
+        "rootCompared": 371
+      }
+    },
+    {
+      "label": "coverage-mirror",
+      "preset": null,
+      "titles": [
+        "sword-art-online",
+        "sword-art-online"
+      ],
+      "first": 0,
+      "seed": 96003,
+      "steps": 231,
+      "turn": 41,
+      "finished": true,
+      "winner": 1,
+      "endReason": "required-draw-empty",
+      "outcome": "loss",
+      "ms": 1218,
+      "driver": {
+        "neu": {
+          "decisions": 132,
+          "pass": 80,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 77
+        },
+        "old": {
+          "decisions": 99,
+          "pass": 80,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "end-hand-limit": 54
+      },
+      "ai": {
+        "decisions": 132,
+        "forced": 77,
+        "deferred": 0,
+        "overrides": 49,
+        "kept": 6,
+        "budgetExhausted": 0,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 3,
+        "ms": 1033.965181999998,
+        "maxMs": 50.678273999999874,
+        "nodes": 1490,
+        "byKind": {
+          "start": 40,
+          "end-hand-limit": 331
+        },
+        "rootCandidates": 371,
+        "rootCompared": 371
+      }
+    },
+    {
+      "label": "coverage-mirror",
+      "preset": null,
+      "titles": [
+        "sword-art-online",
+        "sword-art-online"
+      ],
+      "first": 0,
+      "seed": 96004,
+      "steps": 231,
+      "turn": 41,
+      "finished": true,
+      "winner": 1,
+      "endReason": "required-draw-empty",
+      "outcome": "loss",
+      "ms": 1209,
+      "driver": {
+        "neu": {
+          "decisions": 132,
+          "pass": 80,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 78
+        },
+        "old": {
+          "decisions": 99,
+          "pass": 80,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "end-hand-limit": 54
+      },
+      "ai": {
+        "decisions": 132,
+        "forced": 78,
+        "deferred": 0,
+        "overrides": 49,
+        "kept": 5,
+        "budgetExhausted": 0,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 2,
+        "ms": 1025.4571929999802,
+        "maxMs": 58.6220220000032,
+        "nodes": 1474,
+        "byKind": {
+          "start": 38,
+          "end-hand-limit": 331
+        },
+        "rootCandidates": 369,
+        "rootCompared": 369
+      }
+    },
+    {
+      "label": "coverage-mirror",
+      "preset": null,
+      "titles": [
+        "sword-art-online",
+        "sword-art-online"
+      ],
+      "first": 1,
+      "seed": 96001,
+      "steps": 234,
+      "turn": 42,
+      "finished": true,
+      "winner": 1,
+      "endReason": "required-draw-empty",
+      "outcome": "loss",
+      "ms": 1144,
+      "driver": {
+        "neu": {
+          "decisions": 131,
+          "pass": 80,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 77
+        },
+        "old": {
+          "decisions": 103,
+          "pass": 84,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "end-hand-limit": 54
+      },
+      "ai": {
+        "decisions": 131,
+        "forced": 77,
+        "deferred": 0,
+        "overrides": 50,
+        "kept": 4,
+        "budgetExhausted": 0,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 3,
+        "ms": 954.6120350000128,
+        "maxMs": 59.02933199999825,
+        "nodes": 1420,
+        "byKind": {
+          "start": 38,
+          "end-hand-limit": 330
+        },
+        "rootCandidates": 368,
+        "rootCompared": 368
+      }
+    },
+    {
+      "label": "coverage-mirror",
+      "preset": null,
+      "titles": [
+        "sword-art-online",
+        "sword-art-online"
+      ],
+      "first": 1,
+      "seed": 96002,
+      "steps": 226,
+      "turn": 40,
+      "finished": true,
+      "winner": 1,
+      "endReason": "required-draw-empty",
+      "outcome": "loss",
+      "ms": 1218,
+      "driver": {
+        "neu": {
+          "decisions": 128,
+          "pass": 76,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 74
+        },
+        "old": {
+          "decisions": 98,
+          "pass": 80,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "end-hand-limit": 53
+      },
+      "ai": {
+        "decisions": 128,
+        "forced": 74,
+        "deferred": 0,
+        "overrides": 49,
+        "kept": 5,
+        "budgetExhausted": 0,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 2,
+        "ms": 1009.5033339999754,
+        "maxMs": 60.1566559999992,
+        "nodes": 1474,
+        "byKind": {
+          "start": 38,
+          "end-hand-limit": 331
+        },
+        "rootCandidates": 369,
+        "rootCompared": 369
+      }
+    },
+    {
+      "label": "coverage-mirror",
+      "preset": null,
+      "titles": [
+        "sword-art-online",
+        "sword-art-online"
+      ],
+      "first": 1,
+      "seed": 96003,
+      "steps": 226,
+      "turn": 40,
+      "finished": true,
+      "winner": 1,
+      "endReason": "required-draw-empty",
+      "outcome": "loss",
+      "ms": 1212,
+      "driver": {
+        "neu": {
+          "decisions": 128,
+          "pass": 76,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 74
+        },
+        "old": {
+          "decisions": 98,
+          "pass": 80,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "end-hand-limit": 53
+      },
+      "ai": {
+        "decisions": 128,
+        "forced": 74,
+        "deferred": 0,
+        "overrides": 49,
+        "kept": 5,
+        "budgetExhausted": 0,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 2,
+        "ms": 1031.5113049999927,
+        "maxMs": 56.64056300000084,
+        "nodes": 1474,
+        "byKind": {
+          "start": 38,
+          "end-hand-limit": 331
+        },
+        "rootCandidates": 369,
+        "rootCompared": 369
+      }
+    },
+    {
+      "label": "coverage-mirror",
+      "preset": null,
+      "titles": [
+        "sword-art-online",
+        "sword-art-online"
+      ],
+      "first": 1,
+      "seed": 96004,
+      "steps": 226,
+      "turn": 40,
+      "finished": true,
+      "winner": 1,
+      "endReason": "required-draw-empty",
+      "outcome": "loss",
+      "ms": 1206,
+      "driver": {
+        "neu": {
+          "decisions": 128,
+          "pass": 76,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 75
+        },
+        "old": {
+          "decisions": 98,
+          "pass": 80,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "end-hand-limit": 53
+      },
+      "ai": {
+        "decisions": 128,
+        "forced": 75,
+        "deferred": 0,
+        "overrides": 49,
+        "kept": 4,
+        "budgetExhausted": 0,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 1,
+        "ms": 999.6068320000231,
+        "maxMs": 55.41651400000046,
+        "nodes": 1458,
+        "byKind": {
+          "start": 36,
+          "end-hand-limit": 331
+        },
+        "rootCandidates": 367,
+        "rootCompared": 367
+      }
+    },
+    {
+      "label": "coverage-mirror",
+      "preset": null,
+      "titles": [
+        "mushoku-tensei",
+        "mushoku-tensei"
+      ],
+      "first": 0,
+      "seed": 96001,
+      "steps": 76,
+      "turn": 9,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 586,
+      "driver": {
+        "neu": {
+          "decisions": 39,
+          "pass": 19,
+          "budget": 1,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 4,
+          "forced": 10
+        },
+        "old": {
+          "decisions": 37,
+          "pass": 16,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "effect-top-filter-choice": 1,
+        "effect-top-order": 5,
+        "effect-bounce-own": 1,
+        "block": 7,
+        "end-hand-limit": 3,
+        "life-trigger": 1
+      },
+      "ai": {
+        "decisions": 39,
+        "forced": 10,
+        "deferred": 4,
+        "overrides": 8,
+        "kept": 17,
+        "budgetExhausted": 1,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 10,
+        "ms": 492.5620949999866,
+        "maxMs": 37.53127299999687,
+        "nodes": 577,
+        "byKind": {
+          "start": 10,
+          "main": 31,
+          "effect-top-filter-choice": 2,
+          "move": 8,
+          "effect-bounce-own": 2,
+          "attack": 16
+        },
+        "rootCandidates": 70,
+        "rootCompared": 69
+      }
+    },
+    {
+      "label": "coverage-mirror",
+      "preset": null,
+      "titles": [
+        "mushoku-tensei",
+        "mushoku-tensei"
+      ],
+      "first": 0,
+      "seed": 96002,
+      "steps": 110,
+      "turn": 11,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 1356,
+      "driver": {
+        "neu": {
+          "decisions": 49,
+          "pass": 23,
+          "budget": 3,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 1,
+          "forced": 10
+        },
+        "old": {
+          "decisions": 61,
+          "pass": 20,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "effect-top-inspect-many": 1,
+        "effect-top-order": 12,
+        "effect-bounce-own": 3,
+        "effect-choice-mode": 2,
+        "effect-discard": 3,
+        "block": 12
+      },
+      "ai": {
+        "decisions": 49,
+        "forced": 10,
+        "deferred": 1,
+        "overrides": 9,
+        "kept": 29,
+        "budgetExhausted": 3,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 15,
+        "ms": 1223.7309899999964,
+        "maxMs": 62.626585000001796,
+        "nodes": 1258,
+        "byKind": {
+          "start": 12,
+          "main": 82,
+          "effect-top-inspect-many": 3,
+          "move": 31,
+          "effect-discard": 6,
+          "attack": 35,
+          "block": 14
+        },
+        "rootCandidates": 195,
+        "rootCompared": 183
+      }
+    },
+    {
+      "label": "coverage-mirror",
+      "preset": null,
+      "titles": [
+        "mushoku-tensei",
+        "mushoku-tensei"
+      ],
+      "first": 0,
+      "seed": 96003,
+      "steps": 96,
+      "turn": 9,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 646,
+      "driver": {
+        "neu": {
+          "decisions": 45,
+          "pass": 19,
+          "budget": 1,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 8,
+          "forced": 12
+        },
+        "old": {
+          "decisions": 51,
+          "pass": 16,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "effect-top-order": 18,
+        "block": 7,
+        "life-trigger": 5,
+        "effect-bounce-own": 3,
+        "effect-discard": 1
+      },
+      "ai": {
+        "decisions": 45,
+        "forced": 12,
+        "deferred": 8,
+        "overrides": 6,
+        "kept": 19,
+        "budgetExhausted": 1,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 9,
+        "ms": 510.214740000014,
+        "maxMs": 41.06949199999872,
+        "nodes": 566,
+        "byKind": {
+          "start": 10,
+          "main": 29,
+          "move": 10,
+          "attack": 18,
+          "effect-bounce-own": 3,
+          "effect-discard": 6
+        },
+        "rootCandidates": 77,
+        "rootCompared": 76
+      }
+    },
+    {
+      "label": "coverage-mirror",
+      "preset": null,
+      "titles": [
+        "mushoku-tensei",
+        "mushoku-tensei"
+      ],
+      "first": 0,
+      "seed": 96004,
+      "steps": 246,
+      "turn": 20,
+      "finished": true,
+      "winner": 1,
+      "endReason": "life-zero",
+      "outcome": "loss",
+      "ms": 3369,
+      "driver": {
+        "neu": {
+          "decisions": 128,
+          "pass": 41,
+          "budget": 3,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 12,
+          "forced": 17
+        },
+        "old": {
+          "decisions": 118,
+          "pass": 39,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "effect-top-order": 27,
+        "block": 36,
+        "life-trigger": 6,
+        "effect-retire-own-character": 1,
+        "effect-discard": 3,
+        "effect-bounce-own": 6,
+        "effect-retire-own-field": 1,
+        "effect-top-inspect-many": 1,
+        "effect-choice-mode": 2
+      },
+      "ai": {
+        "decisions": 128,
+        "forced": 17,
+        "deferred": 12,
+        "overrides": 44,
+        "kept": 55,
+        "budgetExhausted": 3,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 28,
+        "ms": 3102.3121059999903,
+        "maxMs": 62.396397000000434,
+        "nodes": 3558,
+        "byKind": {
+          "start": 20,
+          "main": 189,
+          "move": 52,
+          "attack": 71,
+          "effect-retire-own-character": 7,
+          "effect-discard": 12,
+          "block": 59,
+          "life-trigger": 14,
+          "effect-retire-own-field": 2,
+          "effect-bounce-own": 6,
+          "effect-choice-mode": 2
+        },
+        "rootCandidates": 437,
+        "rootCompared": 434
+      }
+    },
+    {
+      "label": "coverage-mirror",
+      "preset": null,
+      "titles": [
+        "mushoku-tensei",
+        "mushoku-tensei"
+      ],
+      "first": 1,
+      "seed": 96001,
+      "steps": 87,
+      "turn": 10,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 796,
+      "driver": {
+        "neu": {
+          "decisions": 44,
+          "pass": 19,
+          "budget": 3,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 3,
+          "forced": 11
+        },
+        "old": {
+          "decisions": 43,
+          "pass": 20,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "effect-top-filter-choice": 1,
+        "effect-top-order": 4,
+        "effect-discard": 1,
+        "effect-bounce-own": 2,
+        "block": 7,
+        "effect-buff-own": 1,
+        "end-hand-limit": 3,
+        "life-trigger": 1
+      },
+      "ai": {
+        "decisions": 44,
+        "forced": 11,
+        "deferred": 3,
+        "overrides": 12,
+        "kept": 18,
+        "budgetExhausted": 3,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 9,
+        "ms": 678.0301109999964,
+        "maxMs": 43.90846600000077,
+        "nodes": 824,
+        "byKind": {
+          "start": 9,
+          "main": 39,
+          "effect-top-filter-choice": 3,
+          "effect-discard": 7,
+          "move": 13,
+          "effect-bounce-own": 6,
+          "attack": 20,
+          "effect-buff-own": 4
+        },
+        "rootCandidates": 109,
+        "rootCompared": 101
+      }
+    },
+    {
+      "label": "coverage-mirror",
+      "preset": null,
+      "titles": [
+        "mushoku-tensei",
+        "mushoku-tensei"
+      ],
+      "first": 1,
+      "seed": 96002,
+      "steps": 198,
+      "turn": 16,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 2638,
+      "driver": {
+        "neu": {
+          "decisions": 105,
+          "pass": 31,
+          "budget": 7,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 12,
+          "forced": 15
+        },
+        "old": {
+          "decisions": 93,
+          "pass": 32,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "effect-top-inspect-many": 1,
+        "effect-top-order": 21,
+        "effect-choice-mode": 2,
+        "effect-discard": 2,
+        "effect-bounce-own": 3,
+        "block": 34,
+        "effect-top-filter-choice": 1,
+        "life-trigger": 2
+      },
+      "ai": {
+        "decisions": 105,
+        "forced": 15,
+        "deferred": 12,
+        "overrides": 30,
+        "kept": 48,
+        "budgetExhausted": 7,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 21,
+        "ms": 2394.3203600000015,
+        "maxMs": 71.955285,
+        "nodes": 2700,
+        "byKind": {
+          "start": 15,
+          "main": 111,
+          "effect-top-inspect-many": 3,
+          "effect-discard": 7,
+          "move": 56,
+          "attack": 64,
+          "effect-top-filter-choice": 2,
+          "block": 58,
+          "life-trigger": 4
+        },
+        "rootCandidates": 336,
+        "rootCompared": 320
+      }
+    },
+    {
+      "label": "coverage-mirror",
+      "preset": null,
+      "titles": [
+        "mushoku-tensei",
+        "mushoku-tensei"
+      ],
+      "first": 1,
+      "seed": 96003,
+      "steps": 239,
+      "turn": 19,
+      "finished": true,
+      "winner": 1,
+      "endReason": "life-zero",
+      "outcome": "loss",
+      "ms": 3192,
+      "driver": {
+        "neu": {
+          "decisions": 112,
+          "pass": 37,
+          "budget": 4,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 8,
+          "forced": 14
+        },
+        "old": {
+          "decisions": 127,
+          "pass": 39,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "effect-choice-mode": 4,
+        "effect-discard": 4,
+        "effect-top-order": 24,
+        "block": 34,
+        "life-trigger": 7,
+        "effect-retire-own-character": 2,
+        "effect-bounce-own": 3,
+        "effect-buff-own": 1,
+        "effect-retire-own-field": 2
+      },
+      "ai": {
+        "decisions": 112,
+        "forced": 14,
+        "deferred": 8,
+        "overrides": 37,
+        "kept": 53,
+        "budgetExhausted": 4,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 26,
+        "ms": 2918.0068580000043,
+        "maxMs": 67.94804600000134,
+        "nodes": 3391,
+        "byKind": {
+          "start": 18,
+          "main": 158,
+          "effect-discard": 20,
+          "move": 88,
+          "attack": 78,
+          "block": 61,
+          "effect-choice-mode": 2,
+          "effect-buff-own": 8,
+          "life-trigger": 12,
+          "effect-bounce-own": 5
+        },
+        "rootCandidates": 457,
+        "rootCompared": 450
+      }
+    },
+    {
+      "label": "coverage-mirror",
+      "preset": null,
+      "titles": [
+        "mushoku-tensei",
+        "mushoku-tensei"
+      ],
+      "first": 1,
+      "seed": 96004,
+      "steps": 72,
+      "turn": 8,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 780,
+      "driver": {
+        "neu": {
+          "decisions": 39,
+          "pass": 15,
+          "budget": 2,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 4,
+          "forced": 9
+        },
+        "old": {
+          "decisions": 33,
+          "pass": 16,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "block": 8,
+        "effect-top-order": 5,
+        "effect-retire-own-character": 1,
+        "life-trigger": 2
+      },
+      "ai": {
+        "decisions": 39,
+        "forced": 9,
+        "deferred": 4,
+        "overrides": 7,
+        "kept": 19,
+        "budgetExhausted": 2,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 7,
+        "ms": 681.9618840000003,
+        "maxMs": 44.82828399999926,
+        "nodes": 835,
+        "byKind": {
+          "start": 8,
+          "main": 71,
+          "move": 12,
+          "attack": 25,
+          "effect-retire-own-character": 7
+        },
+        "rootCandidates": 126,
+        "rootCompared": 123
+      }
+    },
+    {
+      "label": "coverage-cross",
+      "preset": null,
+      "titles": [
+        "bleach",
+        "gurren-lagann"
+      ],
+      "first": 0,
+      "seed": 96001,
+      "steps": 160,
+      "turn": 22,
+      "finished": true,
+      "winner": 1,
+      "endReason": "life-zero",
+      "outcome": "loss",
+      "ms": 1069,
+      "driver": {
+        "neu": {
+          "decisions": 84,
+          "pass": 45,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 47
+        },
+        "old": {
+          "decisions": 76,
+          "pass": 43,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "end-hand-limit": 18,
+        "private-top-choice": 2,
+        "effect-choice-mode": 2,
+        "effect-top-filter-choice": 1,
+        "effect-top-order": 7,
+        "effect-discard": 1,
+        "effect-outside-or-rest": 1,
+        "block": 7,
+        "life-trigger": 2
+      },
+      "ai": {
+        "decisions": 84,
+        "forced": 47,
+        "deferred": 0,
+        "overrides": 24,
+        "kept": 13,
+        "budgetExhausted": 0,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 5,
+        "ms": 879.2058800000123,
+        "maxMs": 58.57005299999946,
+        "nodes": 957,
+        "byKind": {
+          "start": 22,
+          "end-hand-limit": 151,
+          "life-trigger": 7,
+          "main": 18,
+          "private-top-choice": 2,
+          "move": 2
+        },
+        "rootCandidates": 202,
+        "rootCompared": 202
+      }
+    },
+    {
+      "label": "coverage-cross",
+      "preset": null,
+      "titles": [
+        "bleach",
+        "gurren-lagann"
+      ],
+      "first": 0,
+      "seed": 96002,
+      "steps": 152,
+      "turn": 20,
+      "finished": true,
+      "winner": 1,
+      "endReason": "life-zero",
+      "outcome": "loss",
+      "ms": 944,
+      "driver": {
+        "neu": {
+          "decisions": 78,
+          "pass": 41,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 47
+        },
+        "old": {
+          "decisions": 74,
+          "pass": 39,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "effect-bounce-own": 1,
+        "end-hand-limit": 20,
+        "effect-top-filter-choice": 1,
+        "effect-top-order": 7,
+        "effect-discard": 1,
+        "main-rest-front-energy": 2,
+        "effect-outside-or-rest": 1,
+        "block": 7,
+        "life-trigger": 2
+      },
+      "ai": {
+        "decisions": 78,
+        "forced": 47,
+        "deferred": 0,
+        "overrides": 29,
+        "kept": 2,
+        "budgetExhausted": 0,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 1,
+        "ms": 748.9874309999905,
+        "maxMs": 64.92906199999925,
+        "nodes": 878,
+        "byKind": {
+          "start": 20,
+          "end-hand-limit": 182,
+          "life-trigger": 4
+        },
+        "rootCandidates": 206,
+        "rootCompared": 206
+      }
+    },
+    {
+      "label": "coverage-cross",
+      "preset": null,
+      "titles": [
+        "bleach",
+        "gurren-lagann"
+      ],
+      "first": 1,
+      "seed": 96001,
+      "steps": 163,
+      "turn": 23,
+      "finished": true,
+      "winner": 1,
+      "endReason": "life-zero",
+      "outcome": "loss",
+      "ms": 1098,
+      "driver": {
+        "neu": {
+          "decisions": 83,
+          "pass": 45,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 46
+        },
+        "old": {
+          "decisions": 80,
+          "pass": 47,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "end-hand-limit": 18,
+        "private-top-choice": 2,
+        "effect-choice-mode": 2,
+        "effect-top-filter-choice": 1,
+        "effect-top-order": 7,
+        "effect-discard": 1,
+        "effect-outside-or-rest": 1,
+        "block": 7,
+        "life-trigger": 2
+      },
+      "ai": {
+        "decisions": 83,
+        "forced": 46,
+        "deferred": 0,
+        "overrides": 23,
+        "kept": 14,
+        "budgetExhausted": 0,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 6,
+        "ms": 882.2321690000026,
+        "maxMs": 55.48237400000289,
+        "nodes": 957,
+        "byKind": {
+          "start": 22,
+          "end-hand-limit": 151,
+          "life-trigger": 7,
+          "main": 18,
+          "private-top-choice": 2,
+          "move": 2
+        },
+        "rootCandidates": 202,
+        "rootCompared": 202
+      }
+    },
+    {
+      "label": "coverage-cross",
+      "preset": null,
+      "titles": [
+        "bleach",
+        "gurren-lagann"
+      ],
+      "first": 1,
+      "seed": 96002,
+      "steps": 158,
+      "turn": 21,
+      "finished": true,
+      "winner": 1,
+      "endReason": "life-zero",
+      "outcome": "loss",
+      "ms": 1018,
+      "driver": {
+        "neu": {
+          "decisions": 79,
+          "pass": 41,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 47
+        },
+        "old": {
+          "decisions": 79,
+          "pass": 43,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "end-hand-limit": 21,
+        "effect-bounce-own": 1,
+        "effect-top-filter-choice": 1,
+        "effect-top-order": 7,
+        "effect-discard": 1,
+        "main-rest-front-energy": 2,
+        "effect-outside-or-rest": 1,
+        "block": 7,
+        "life-trigger": 2
+      },
+      "ai": {
+        "decisions": 79,
+        "forced": 47,
+        "deferred": 0,
+        "overrides": 30,
+        "kept": 2,
+        "budgetExhausted": 0,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 1,
+        "ms": 806.7836709999974,
+        "maxMs": 65.80530100000033,
+        "nodes": 887,
+        "byKind": {
+          "start": 20,
+          "end-hand-limit": 191,
+          "life-trigger": 4
+        },
+        "rootCandidates": 215,
+        "rootCompared": 215
+      }
+    },
+    {
+      "label": "coverage-cross",
+      "preset": null,
+      "titles": [
+        "gurren-lagann",
+        "solo-leveling"
+      ],
+      "first": 0,
+      "seed": 96001,
+      "steps": 75,
+      "turn": 11,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 728,
+      "driver": {
+        "neu": {
+          "decisions": 41,
+          "pass": 23,
+          "budget": 2,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 10
+        },
+        "old": {
+          "decisions": 34,
+          "pass": 20,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "private-top-choice": 1,
+        "end-hand-limit": 5,
+        "effect-choice-mode": 1,
+        "block": 7,
+        "life-trigger": 2
+      },
+      "ai": {
+        "decisions": 41,
+        "forced": 10,
+        "deferred": 0,
+        "overrides": 7,
+        "kept": 24,
+        "budgetExhausted": 2,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 13,
+        "ms": 625.277202000012,
+        "maxMs": 44.68378400000074,
+        "nodes": 719,
+        "byKind": {
+          "start": 12,
+          "main": 36,
+          "private-top-choice": 2,
+          "move": 22,
+          "effect-choice-mode": 2,
+          "attack": 20
+        },
+        "rootCandidates": 97,
+        "rootCompared": 94
+      }
+    },
+    {
+      "label": "coverage-cross",
+      "preset": null,
+      "titles": [
+        "gurren-lagann",
+        "solo-leveling"
+      ],
+      "first": 0,
+      "seed": 96002,
+      "steps": 94,
+      "turn": 11,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 672,
+      "driver": {
+        "neu": {
+          "decisions": 48,
+          "pass": 23,
+          "budget": 4,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 1,
+          "forced": 12
+        },
+        "old": {
+          "decisions": 46,
+          "pass": 20,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "private-top-choice": 4,
+        "effect-top-filter-choice": 1,
+        "effect-top-order": 2,
+        "effect-discard": 1,
+        "block": 7,
+        "end-hand-limit": 4,
+        "effect-bounce-own": 1,
+        "life-trigger": 1
+      },
+      "ai": {
+        "decisions": 48,
+        "forced": 12,
+        "deferred": 1,
+        "overrides": 9,
+        "kept": 26,
+        "budgetExhausted": 4,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 12,
+        "ms": 558.4397869999812,
+        "maxMs": 42.942706999998336,
+        "nodes": 627,
+        "byKind": {
+          "start": 11,
+          "main": 30,
+          "private-top-choice": 6,
+          "move": 17,
+          "effect-top-filter-choice": 4,
+          "effect-discard": 6,
+          "attack": 17,
+          "effect-bounce-own": 3
+        },
+        "rootCandidates": 101,
+        "rootCompared": 94
+      }
+    },
+    {
+      "label": "coverage-cross",
+      "preset": null,
+      "titles": [
+        "gurren-lagann",
+        "solo-leveling"
+      ],
+      "first": 1,
+      "seed": 96001,
+      "steps": 70,
+      "turn": 10,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 696,
+      "driver": {
+        "neu": {
+          "decisions": 37,
+          "pass": 19,
+          "budget": 2,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 8
+        },
+        "old": {
+          "decisions": 33,
+          "pass": 20,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "private-top-choice": 1,
+        "end-hand-limit": 4,
+        "effect-choice-mode": 1,
+        "block": 7,
+        "life-trigger": 2
+      },
+      "ai": {
+        "decisions": 37,
+        "forced": 8,
+        "deferred": 0,
+        "overrides": 7,
+        "kept": 22,
+        "budgetExhausted": 2,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 11,
+        "ms": 590.2936800000061,
+        "maxMs": 40.30216300000029,
+        "nodes": 704,
+        "byKind": {
+          "start": 10,
+          "main": 36,
+          "private-top-choice": 2,
+          "move": 20,
+          "effect-choice-mode": 2,
+          "attack": 20
+        },
+        "rootCandidates": 93,
+        "rootCompared": 90
+      }
+    },
+    {
+      "label": "coverage-cross",
+      "preset": null,
+      "titles": [
+        "gurren-lagann",
+        "solo-leveling"
+      ],
+      "first": 1,
+      "seed": 96002,
+      "steps": 88,
+      "turn": 10,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 710,
+      "driver": {
+        "neu": {
+          "decisions": 45,
+          "pass": 19,
+          "budget": 1,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 1,
+          "forced": 11
+        },
+        "old": {
+          "decisions": 43,
+          "pass": 20,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "private-top-choice": 4,
+        "effect-top-filter-choice": 1,
+        "effect-top-order": 2,
+        "effect-discard": 1,
+        "block": 7,
+        "effect-bounce-own": 1,
+        "end-hand-limit": 2,
+        "life-trigger": 1
+      },
+      "ai": {
+        "decisions": 45,
+        "forced": 11,
+        "deferred": 1,
+        "overrides": 6,
+        "kept": 27,
+        "budgetExhausted": 1,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 9,
+        "ms": 575.5761969999949,
+        "maxMs": 37.8253229999973,
+        "nodes": 684,
+        "byKind": {
+          "start": 10,
+          "main": 36,
+          "effect-top-filter-choice": 4,
+          "effect-discard": 7,
+          "move": 18,
+          "private-top-choice": 6,
+          "attack": 17,
+          "effect-bounce-own": 3
+        },
+        "rootCandidates": 102,
+        "rootCompared": 101
+      }
+    },
+    {
+      "label": "coverage-cross",
+      "preset": null,
+      "titles": [
+        "solo-leveling",
+        "sword-art-online"
+      ],
+      "first": 0,
+      "seed": 96001,
+      "steps": 78,
+      "turn": 9,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 1166,
+      "driver": {
+        "neu": {
+          "decisions": 52,
+          "pass": 19,
+          "budget": 3,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 3,
+          "forced": 12
+        },
+        "old": {
+          "decisions": 26,
+          "pass": 16,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "effect-bounce-own": 1,
+        "end-hand-limit": 3,
+        "effect-top-filter-choice": 2,
+        "effect-top-order": 5,
+        "effect-discard": 5,
+        "effect-discard-gate": 1,
+        "block": 7
+      },
+      "ai": {
+        "decisions": 52,
+        "forced": 12,
+        "deferred": 3,
+        "overrides": 12,
+        "kept": 25,
+        "budgetExhausted": 3,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 9,
+        "ms": 1062.5056120000154,
+        "maxMs": 58.83091200000126,
+        "nodes": 1068,
+        "byKind": {
+          "start": 10,
+          "main": 49,
+          "move": 25,
+          "effect-bounce-own": 2,
+          "effect-top-filter-choice": 4,
+          "effect-discard": 22,
+          "effect-discard-gate": 6,
+          "attack": 20
+        },
+        "rootCandidates": 147,
+        "rootCompared": 138
+      }
+    },
+    {
+      "label": "coverage-cross",
+      "preset": null,
+      "titles": [
+        "solo-leveling",
+        "sword-art-online"
+      ],
+      "first": 0,
+      "seed": 96002,
+      "steps": 71,
+      "turn": 9,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 1178,
+      "driver": {
+        "neu": {
+          "decisions": 45,
+          "pass": 19,
+          "budget": 4,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 3,
+          "forced": 8
+        },
+        "old": {
+          "decisions": 26,
+          "pass": 16,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "end-hand-limit": 3,
+        "effect-discard": 1,
+        "block": 7,
+        "effect-discard-gate": 1,
+        "effect-recover-outside": 1,
+        "effect-top-order": 4
+      },
+      "ai": {
+        "decisions": 45,
+        "forced": 8,
+        "deferred": 3,
+        "overrides": 11,
+        "kept": 23,
+        "budgetExhausted": 4,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 12,
+        "ms": 1086.922749999998,
+        "maxMs": 54.49124099999972,
+        "nodes": 1086,
+        "byKind": {
+          "start": 10,
+          "main": 76,
+          "move": 30,
+          "effect-discard": 5,
+          "attack": 20,
+          "effect-discard-gate": 5,
+          "effect-recover-outside": 4
+        },
+        "rootCandidates": 157,
+        "rootCompared": 150
+      }
+    },
+    {
+      "label": "coverage-cross",
+      "preset": null,
+      "titles": [
+        "solo-leveling",
+        "sword-art-online"
+      ],
+      "first": 1,
+      "seed": 96001,
+      "steps": 78,
+      "turn": 10,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 1058,
+      "driver": {
+        "neu": {
+          "decisions": 48,
+          "pass": 19,
+          "budget": 4,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 3,
+          "forced": 10
+        },
+        "old": {
+          "decisions": 30,
+          "pass": 20,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "effect-top-filter-choice": 2,
+        "effect-top-order": 5,
+        "effect-discard": 2,
+        "effect-bounce-own": 1,
+        "end-hand-limit": 3,
+        "effect-discard-gate": 1,
+        "effect-recover-outside": 1,
+        "block": 7
+      },
+      "ai": {
+        "decisions": 48,
+        "forced": 10,
+        "deferred": 3,
+        "overrides": 11,
+        "kept": 24,
+        "budgetExhausted": 4,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 11,
+        "ms": 964.8173890000107,
+        "maxMs": 56.08370999999897,
+        "nodes": 992,
+        "byKind": {
+          "start": 10,
+          "main": 39,
+          "effect-top-filter-choice": 4,
+          "effect-discard": 13,
+          "move": 34,
+          "effect-bounce-own": 3,
+          "effect-discard-gate": 6,
+          "effect-recover-outside": 3,
+          "attack": 21
+        },
+        "rootCandidates": 150,
+        "rootCompared": 133
+      }
+    },
+    {
+      "label": "coverage-cross",
+      "preset": null,
+      "titles": [
+        "solo-leveling",
+        "sword-art-online"
+      ],
+      "first": 1,
+      "seed": 96002,
+      "steps": 65,
+      "turn": 10,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 907,
+      "driver": {
+        "neu": {
+          "decisions": 35,
+          "pass": 19,
+          "budget": 4,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 6
+        },
+        "old": {
+          "decisions": 30,
+          "pass": 20,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "effect-discard": 1,
+        "end-hand-limit": 3,
+        "block": 7
+      },
+      "ai": {
+        "decisions": 35,
+        "forced": 6,
+        "deferred": 0,
+        "overrides": 9,
+        "kept": 20,
+        "budgetExhausted": 4,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 13,
+        "ms": 814.2436259999886,
+        "maxMs": 58.1432249999998,
+        "nodes": 870,
+        "byKind": {
+          "start": 10,
+          "main": 50,
+          "move": 34,
+          "effect-discard": 6,
+          "attack": 21
+        },
+        "rootCandidates": 133,
+        "rootCompared": 121
+      }
+    },
+    {
+      "label": "coverage-cross",
+      "preset": null,
+      "titles": [
+        "sword-art-online",
+        "mushoku-tensei"
+      ],
+      "first": 0,
+      "seed": 96001,
+      "steps": 277,
+      "turn": 39,
+      "finished": true,
+      "winner": 1,
+      "endReason": "required-draw-empty",
+      "outcome": "loss",
+      "ms": 1332,
+      "driver": {
+        "neu": {
+          "decisions": 129,
+          "pass": 76,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 76
+        },
+        "old": {
+          "decisions": 148,
+          "pass": 76,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "end-hand-limit": 52
+      },
+      "ai": {
+        "decisions": 129,
+        "forced": 76,
+        "deferred": 0,
+        "overrides": 52,
+        "kept": 1,
+        "budgetExhausted": 0,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 0,
+        "ms": 1067.4570749999402,
+        "maxMs": 57.74013299999933,
+        "nodes": 1512,
+        "byKind": {
+          "start": 36,
+          "end-hand-limit": 332
+        },
+        "rootCandidates": 368,
+        "rootCompared": 368
+      }
+    },
+    {
+      "label": "coverage-cross",
+      "preset": null,
+      "titles": [
+        "sword-art-online",
+        "mushoku-tensei"
+      ],
+      "first": 0,
+      "seed": 96002,
+      "steps": 112,
+      "turn": 12,
+      "finished": true,
+      "winner": 1,
+      "endReason": "life-zero",
+      "outcome": "loss",
+      "ms": 683,
+      "driver": {
+        "neu": {
+          "decisions": 49,
+          "pass": 24,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 31
+        },
+        "old": {
+          "decisions": 63,
+          "pass": 23,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "effect-bounce-own": 3,
+        "end-hand-limit": 11,
+        "effect-discard": 3,
+        "effect-choice-mode": 1,
+        "block": 7,
+        "effect-top-order": 10,
+        "life-trigger": 1
+      },
+      "ai": {
+        "decisions": 49,
+        "forced": 31,
+        "deferred": 0,
+        "overrides": 16,
+        "kept": 2,
+        "budgetExhausted": 0,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 0,
+        "ms": 513.7612320000007,
+        "maxMs": 64.91973099999814,
+        "nodes": 524,
+        "byKind": {
+          "start": 12,
+          "end-hand-limit": 106,
+          "life-trigger": 2
+        },
+        "rootCandidates": 120,
+        "rootCompared": 120
+      }
+    },
+    {
+      "label": "coverage-cross",
+      "preset": null,
+      "titles": [
+        "sword-art-online",
+        "mushoku-tensei"
+      ],
+      "first": 1,
+      "seed": 96001,
+      "steps": 271,
+      "turn": 38,
+      "finished": true,
+      "winner": 1,
+      "endReason": "required-draw-empty",
+      "outcome": "loss",
+      "ms": 1314,
+      "driver": {
+        "neu": {
+          "decisions": 125,
+          "pass": 72,
+          "budget": 1,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 72
+        },
+        "old": {
+          "decisions": 146,
+          "pass": 76,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "end-hand-limit": 51
+      },
+      "ai": {
+        "decisions": 125,
+        "forced": 72,
+        "deferred": 0,
+        "overrides": 52,
+        "kept": 1,
+        "budgetExhausted": 1,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 0,
+        "ms": 1040.7057829999721,
+        "maxMs": 65.4638010000017,
+        "nodes": 1505,
+        "byKind": {
+          "start": 36,
+          "end-hand-limit": 331
+        },
+        "rootCandidates": 368,
+        "rootCompared": 367
+      }
+    },
+    {
+      "label": "coverage-cross",
+      "preset": null,
+      "titles": [
+        "sword-art-online",
+        "mushoku-tensei"
+      ],
+      "first": 1,
+      "seed": 96002,
+      "steps": 98,
+      "turn": 11,
+      "finished": true,
+      "winner": 1,
+      "endReason": "life-zero",
+      "outcome": "loss",
+      "ms": 575,
+      "driver": {
+        "neu": {
+          "decisions": 43,
+          "pass": 20,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 27
+        },
+        "old": {
+          "decisions": 55,
+          "pass": 23,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "end-hand-limit": 10,
+        "effect-bounce-own": 3,
+        "effect-choice-mode": 1,
+        "effect-discard": 1,
+        "block": 7,
+        "effect-top-order": 5,
+        "life-trigger": 1
+      },
+      "ai": {
+        "decisions": 43,
+        "forced": 27,
+        "deferred": 0,
+        "overrides": 13,
+        "kept": 3,
+        "budgetExhausted": 0,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 0,
+        "ms": 438.1566849999799,
+        "maxMs": 67.33193699999902,
+        "nodes": 449,
+        "byKind": {
+          "start": 10,
+          "end-hand-limit": 96,
+          "life-trigger": 2
+        },
+        "rootCandidates": 108,
+        "rootCompared": 108
+      }
+    },
+    {
+      "label": "coverage-cross",
+      "preset": null,
+      "titles": [
+        "mushoku-tensei",
+        "bleach"
+      ],
+      "first": 0,
+      "seed": 96001,
+      "steps": 66,
+      "turn": 9,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 666,
+      "driver": {
+        "neu": {
+          "decisions": 39,
+          "pass": 19,
+          "budget": 1,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 4,
+          "forced": 10
+        },
+        "old": {
+          "decisions": 27,
+          "pass": 17,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "effect-top-filter-choice": 1,
+        "effect-top-order": 5,
+        "effect-bounce-own": 1,
+        "block": 7,
+        "end-hand-limit": 3,
+        "life-trigger": 1
+      },
+      "ai": {
+        "decisions": 39,
+        "forced": 10,
+        "deferred": 4,
+        "overrides": 8,
+        "kept": 17,
+        "budgetExhausted": 1,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 10,
+        "ms": 582.5967859999946,
+        "maxMs": 48.72795000000042,
+        "nodes": 577,
+        "byKind": {
+          "start": 10,
+          "main": 31,
+          "effect-top-filter-choice": 2,
+          "move": 8,
+          "effect-bounce-own": 2,
+          "attack": 16
+        },
+        "rootCandidates": 70,
+        "rootCompared": 69
+      }
+    },
+    {
+      "label": "coverage-cross",
+      "preset": null,
+      "titles": [
+        "mushoku-tensei",
+        "bleach"
+      ],
+      "first": 0,
+      "seed": 96002,
+      "steps": 64,
+      "turn": 9,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 794,
+      "driver": {
+        "neu": {
+          "decisions": 38,
+          "pass": 19,
+          "budget": 4,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 1,
+          "forced": 10
+        },
+        "old": {
+          "decisions": 26,
+          "pass": 16,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "effect-top-inspect-many": 1,
+        "effect-top-order": 2,
+        "effect-choice-mode": 1,
+        "effect-discard": 1,
+        "end-hand-limit": 3,
+        "block": 7
+      },
+      "ai": {
+        "decisions": 38,
+        "forced": 10,
+        "deferred": 1,
+        "overrides": 7,
+        "kept": 20,
+        "budgetExhausted": 4,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 11,
+        "ms": 714.093002000016,
+        "maxMs": 51.29852100000062,
+        "nodes": 727,
+        "byKind": {
+          "start": 9,
+          "main": 65,
+          "effect-top-inspect-many": 3,
+          "move": 25,
+          "effect-discard": 6,
+          "attack": 21
+        },
+        "rootCandidates": 142,
+        "rootCompared": 129
+      }
+    },
+    {
+      "label": "coverage-cross",
+      "preset": null,
+      "titles": [
+        "mushoku-tensei",
+        "bleach"
+      ],
+      "first": 1,
+      "seed": 96001,
+      "steps": 72,
+      "turn": 10,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 857,
+      "driver": {
+        "neu": {
+          "decisions": 41,
+          "pass": 19,
+          "budget": 4,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 3,
+          "forced": 8
+        },
+        "old": {
+          "decisions": 31,
+          "pass": 21,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "effect-top-filter-choice": 1,
+        "effect-top-order": 4,
+        "effect-discard": 1,
+        "effect-bounce-own": 1,
+        "block": 7,
+        "end-hand-limit": 3,
+        "effect-buff-own": 1,
+        "life-trigger": 1
+      },
+      "ai": {
+        "decisions": 41,
+        "forced": 8,
+        "deferred": 3,
+        "overrides": 11,
+        "kept": 19,
+        "budgetExhausted": 4,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 12,
+        "ms": 757.3900369999974,
+        "maxMs": 53.02398600000015,
+        "nodes": 768,
+        "byKind": {
+          "start": 9,
+          "main": 41,
+          "effect-top-filter-choice": 3,
+          "effect-discard": 7,
+          "move": 10,
+          "effect-bounce-own": 2,
+          "attack": 18,
+          "effect-buff-own": 4
+        },
+        "rootCandidates": 101,
+        "rootCompared": 94
+      }
+    },
+    {
+      "label": "coverage-cross",
+      "preset": null,
+      "titles": [
+        "mushoku-tensei",
+        "bleach"
+      ],
+      "first": 1,
+      "seed": 96002,
+      "steps": 76,
+      "turn": 8,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 723,
+      "driver": {
+        "neu": {
+          "decisions": 51,
+          "pass": 15,
+          "budget": 3,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 12,
+          "forced": 14
+        },
+        "old": {
+          "decisions": 25,
+          "pass": 16,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "effect-top-inspect-many": 1,
+        "effect-top-order": 16,
+        "effect-choice-mode": 1,
+        "effect-discard": 1,
+        "block": 7,
+        "end-hand-limit": 2,
+        "effect-top-filter-choice": 1
+      },
+      "ai": {
+        "decisions": 51,
+        "forced": 14,
+        "deferred": 12,
+        "overrides": 7,
+        "kept": 18,
+        "budgetExhausted": 3,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 6,
+        "ms": 616.9640740000104,
+        "maxMs": 55.52557700000034,
+        "nodes": 601,
+        "byKind": {
+          "start": 8,
+          "main": 64,
+          "effect-top-inspect-many": 3,
+          "effect-discard": 7,
+          "move": 16,
+          "attack": 20,
+          "effect-top-filter-choice": 2
+        },
+        "rootCandidates": 126,
+        "rootCompared": 120
+      }
+    },
+    {
+      "label": "preset-smoke",
+      "preset": "bleach-purple",
+      "titles": [
+        "bleach",
+        "bleach"
+      ],
+      "first": 0,
+      "seed": 96011,
+      "steps": 146,
+      "turn": 13,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 2618,
+      "driver": {
+        "neu": {
+          "decisions": 76,
+          "pass": 27,
+          "budget": 11,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 10
+        },
+        "old": {
+          "decisions": 70,
+          "pass": 26,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "private-top-choice": 5,
+        "block": 19,
+        "life-trigger": 9,
+        "effect-discard": 2,
+        "effect-recover-ap": 6,
+        "effect-retire-bp": 1
+      },
+      "ai": {
+        "decisions": 76,
+        "forced": 10,
+        "deferred": 0,
+        "overrides": 22,
+        "kept": 44,
+        "budgetExhausted": 11,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 17,
+        "ms": 2451.7427229999885,
+        "maxMs": 66.49880200000189,
+        "nodes": 2571,
+        "byKind": {
+          "start": 14,
+          "main": 149,
+          "move": 75,
+          "private-top-choice": 6,
+          "attack": 53,
+          "block": 31,
+          "effect-recover-ap": 11,
+          "life-trigger": 7
+        },
+        "rootCandidates": 362,
+        "rootCompared": 346
+      }
+    },
+    {
+      "label": "preset-smoke",
+      "preset": "bleach-purple",
+      "titles": [
+        "bleach",
+        "bleach"
+      ],
+      "first": 1,
+      "seed": 96011,
+      "steps": 205,
+      "turn": 20,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 3787,
+      "driver": {
+        "neu": {
+          "decisions": 101,
+          "pass": 39,
+          "budget": 6,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 8
+        },
+        "old": {
+          "decisions": 104,
+          "pass": 42,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "private-top-choice": 4,
+        "effect-discard": 8,
+        "effect-recover-ap": 3,
+        "effect-retire-bp": 1,
+        "block": 34,
+        "life-trigger": 9
+      },
+      "ai": {
+        "decisions": 101,
+        "forced": 8,
+        "deferred": 0,
+        "overrides": 34,
+        "kept": 59,
+        "budgetExhausted": 6,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 31,
+        "ms": 3564.405895000011,
+        "maxMs": 89.49760299999616,
+        "nodes": 3870,
+        "byKind": {
+          "start": 20,
+          "main": 180,
+          "private-top-choice": 6,
+          "move": 87,
+          "attack": 86,
+          "block": 71,
+          "life-trigger": 7,
+          "effect-recover-ap": 4,
+          "effect-discard": 19
+        },
+        "rootCandidates": 494,
+        "rootCompared": 480
+      }
+    },
+    {
+      "label": "preset-smoke",
+      "preset": "bleach-green",
+      "titles": [
+        "bleach",
+        "bleach"
+      ],
+      "first": 0,
+      "seed": 96011,
+      "steps": 154,
+      "turn": 15,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 2806,
+      "driver": {
+        "neu": {
+          "decisions": 79,
+          "pass": 31,
+          "budget": 12,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 9
+        },
+        "old": {
+          "decisions": 75,
+          "pass": 28,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "effect-bounce-own": 2,
+        "block": 26,
+        "life-trigger": 1,
+        "effect-recover-ap": 4
+      },
+      "ai": {
+        "decisions": 79,
+        "forced": 9,
+        "deferred": 0,
+        "overrides": 26,
+        "kept": 44,
+        "budgetExhausted": 12,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 23,
+        "ms": 2649.5859899999923,
+        "maxMs": 60.52070000000094,
+        "nodes": 2776,
+        "byKind": {
+          "start": 16,
+          "main": 190,
+          "move": 63,
+          "attack": 67,
+          "block": 43,
+          "life-trigger": 2,
+          "effect-recover-ap": 7
+        },
+        "rootCandidates": 403,
+        "rootCompared": 388
+      }
+    },
+    {
+      "label": "preset-smoke",
+      "preset": "bleach-green",
+      "titles": [
+        "bleach",
+        "bleach"
+      ],
+      "first": 1,
+      "seed": 96011,
+      "steps": 144,
+      "turn": 14,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 2353,
+      "driver": {
+        "neu": {
+          "decisions": 70,
+          "pass": 27,
+          "budget": 8,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 10
+        },
+        "old": {
+          "decisions": 74,
+          "pass": 28,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "block": 26,
+        "effect-bounce-own": 1,
+        "life-trigger": 1,
+        "effect-recover-ap": 3
+      },
+      "ai": {
+        "decisions": 70,
+        "forced": 10,
+        "deferred": 0,
+        "overrides": 22,
+        "kept": 38,
+        "budgetExhausted": 8,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 17,
+        "ms": 2187.14439899999,
+        "maxMs": 64.76214700000128,
+        "nodes": 2243,
+        "byKind": {
+          "start": 14,
+          "main": 150,
+          "move": 56,
+          "attack": 64,
+          "block": 35,
+          "life-trigger": 2,
+          "effect-recover-ap": 3
+        },
+        "rootCandidates": 339,
+        "rootCompared": 324
+      }
+    },
+    {
+      "label": "preset-smoke",
+      "preset": "gurren-lagann-red",
+      "titles": [
+        "gurren-lagann",
+        "gurren-lagann"
+      ],
+      "first": 0,
+      "seed": 96011,
+      "steps": 175,
+      "turn": 15,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 2909,
+      "driver": {
+        "neu": {
+          "decisions": 89,
+          "pass": 31,
+          "budget": 13,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 15
+        },
+        "old": {
+          "decisions": 86,
+          "pass": 28,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "effect-discard": 3,
+        "block": 26,
+        "life-trigger": 10,
+        "main-two-buff": 1,
+        "raid-effect-order": 3,
+        "effect-buff-trait": 3,
+        "effect-rest-bp": 1,
+        "effect-bounce-own": 1,
+        "effect-discard-gate": 1
+      },
+      "ai": {
+        "decisions": 89,
+        "forced": 15,
+        "deferred": 0,
+        "overrides": 27,
+        "kept": 47,
+        "budgetExhausted": 13,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 16,
+        "ms": 2690.253802000043,
+        "maxMs": 61.55241599999863,
+        "nodes": 2779,
+        "byKind": {
+          "start": 16,
+          "main": 136,
+          "effect-discard": 9,
+          "move": 67,
+          "attack": 71,
+          "block": 33,
+          "life-trigger": 10,
+          "raid-effect-order": 4,
+          "effect-buff-trait": 14,
+          "effect-rest-bp": 2,
+          "effect-bounce-own": 2,
+          "effect-discard-gate": 6
+        },
+        "rootCandidates": 408,
+        "rootCompared": 370
+      }
+    },
+    {
+      "label": "preset-smoke",
+      "preset": "gurren-lagann-red",
+      "titles": [
+        "gurren-lagann",
+        "gurren-lagann"
+      ],
+      "first": 1,
+      "seed": 96011,
+      "steps": 156,
+      "turn": 14,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 2464,
+      "driver": {
+        "neu": {
+          "decisions": 75,
+          "pass": 28,
+          "budget": 10,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 11
+        },
+        "old": {
+          "decisions": 81,
+          "pass": 28,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "effect-discard": 3,
+        "block": 25,
+        "life-trigger": 9,
+        "effect-rest-bp": 3,
+        "raid-effect-order": 1,
+        "effect-buff-trait": 1,
+        "effect-bounce-own": 1
+      },
+      "ai": {
+        "decisions": 75,
+        "forced": 11,
+        "deferred": 0,
+        "overrides": 20,
+        "kept": 44,
+        "budgetExhausted": 10,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 17,
+        "ms": 2260.606866000002,
+        "maxMs": 73.81876199999533,
+        "nodes": 2330,
+        "byKind": {
+          "start": 14,
+          "main": 127,
+          "effect-discard": 8,
+          "move": 36,
+          "attack": 66,
+          "block": 25,
+          "life-trigger": 7,
+          "raid-effect-order": 2,
+          "effect-rest-bp": 5,
+          "effect-buff-trait": 7,
+          "effect-bounce-own": 3
+        },
+        "rootCandidates": 317,
+        "rootCompared": 300
+      }
+    },
+    {
+      "label": "preset-smoke",
+      "preset": "solo-leveling",
+      "titles": [
+        "solo-leveling",
+        "solo-leveling"
+      ],
+      "first": 0,
+      "seed": 96011,
+      "steps": 83,
+      "turn": 9,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 1147,
+      "driver": {
+        "neu": {
+          "decisions": 45,
+          "pass": 19,
+          "budget": 4,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 9
+        },
+        "old": {
+          "decisions": 38,
+          "pass": 16,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "effect-discard": 2,
+        "effect-bounce-own": 2,
+        "block": 9,
+        "life-trigger": 1,
+        "effect-recover-ap": 4
+      },
+      "ai": {
+        "decisions": 45,
+        "forced": 9,
+        "deferred": 0,
+        "overrides": 10,
+        "kept": 26,
+        "budgetExhausted": 4,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 10,
+        "ms": 1030.4698299999654,
+        "maxMs": 55.060749999996915,
+        "nodes": 1184,
+        "byKind": {
+          "start": 10,
+          "main": 64,
+          "move": 22,
+          "effect-discard": 7,
+          "attack": 28,
+          "effect-bounce-own": 4,
+          "effect-recover-ap": 14
+        },
+        "rootCandidates": 154,
+        "rootCompared": 149
+      }
+    },
+    {
+      "label": "preset-smoke",
+      "preset": "solo-leveling",
+      "titles": [
+        "solo-leveling",
+        "solo-leveling"
+      ],
+      "first": 1,
+      "seed": 96011,
+      "steps": 97,
+      "turn": 10,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 1197,
+      "driver": {
+        "neu": {
+          "decisions": 46,
+          "pass": 19,
+          "budget": 5,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 9
+        },
+        "old": {
+          "decisions": 51,
+          "pass": 20,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "effect-discard": 2,
+        "block": 14,
+        "effect-bounce-own": 2,
+        "life-trigger": 2,
+        "effect-recover-ap": 2
+      },
+      "ai": {
+        "decisions": 46,
+        "forced": 9,
+        "deferred": 0,
+        "overrides": 10,
+        "kept": 27,
+        "budgetExhausted": 5,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 10,
+        "ms": 1073.3687630000277,
+        "maxMs": 52.38542700000107,
+        "nodes": 1245,
+        "byKind": {
+          "start": 10,
+          "main": 70,
+          "effect-discard": 8,
+          "move": 25,
+          "attack": 38,
+          "effect-bounce-own": 4,
+          "block": 10,
+          "life-trigger": 2
+        },
+        "rootCandidates": 173,
+        "rootCompared": 167
+      }
+    },
+    {
+      "label": "preset-smoke",
+      "preset": "sword-art-online",
+      "titles": [
+        "sword-art-online",
+        "sword-art-online"
+      ],
+      "first": 0,
+      "seed": 96011,
+      "steps": 162,
+      "turn": 15,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 2600,
+      "driver": {
+        "neu": {
+          "decisions": 78,
+          "pass": 33,
+          "budget": 5,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 11
+        },
+        "old": {
+          "decisions": 84,
+          "pass": 28,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "effect-discard": 1,
+        "effect-bounce-own": 2,
+        "block": 27,
+        "life-trigger": 9,
+        "effect-rest-bp": 1
+      },
+      "ai": {
+        "decisions": 78,
+        "forced": 11,
+        "deferred": 0,
+        "overrides": 26,
+        "kept": 41,
+        "budgetExhausted": 5,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 22,
+        "ms": 2439.697372000024,
+        "maxMs": 68.47523799999908,
+        "nodes": 2656,
+        "byKind": {
+          "start": 15,
+          "main": 151,
+          "effect-discard": 7,
+          "move": 84,
+          "attack": 71,
+          "block": 34,
+          "life-trigger": 15
+        },
+        "rootCandidates": 384,
+        "rootCompared": 377
+      }
+    },
+    {
+      "label": "preset-smoke",
+      "preset": "sword-art-online",
+      "titles": [
+        "sword-art-online",
+        "sword-art-online"
+      ],
+      "first": 1,
+      "seed": 96011,
+      "steps": 152,
+      "turn": 14,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 2489,
+      "driver": {
+        "neu": {
+          "decisions": 70,
+          "pass": 29,
+          "budget": 10,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 10
+        },
+        "old": {
+          "decisions": 82,
+          "pass": 28,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "effect-bounce-own": 2,
+        "block": 26,
+        "life-trigger": 9,
+        "effect-rest-bp": 1,
+        "effect-discard": 1
+      },
+      "ai": {
+        "decisions": 70,
+        "forced": 10,
+        "deferred": 0,
+        "overrides": 21,
+        "kept": 39,
+        "budgetExhausted": 10,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 19,
+        "ms": 2297.800109999989,
+        "maxMs": 71.5995830000029,
+        "nodes": 2413,
+        "byKind": {
+          "start": 14,
+          "main": 136,
+          "move": 61,
+          "block": 36,
+          "life-trigger": 13,
+          "attack": 64,
+          "effect-discard": 6
+        },
+        "rootCandidates": 346,
+        "rootCompared": 330
+      }
+    },
+    {
+      "label": "preset-smoke",
+      "preset": "mushoku-tensei",
+      "titles": [
+        "mushoku-tensei",
+        "mushoku-tensei"
+      ],
+      "first": 0,
+      "seed": 96011,
+      "steps": 79,
+      "turn": 9,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 1021,
+      "driver": {
+        "neu": {
+          "decisions": 38,
+          "pass": 19,
+          "budget": 3,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 8
+        },
+        "old": {
+          "decisions": 41,
+          "pass": 16,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "block": 10,
+        "life-trigger": 5
+      },
+      "ai": {
+        "decisions": 38,
+        "forced": 8,
+        "deferred": 0,
+        "overrides": 7,
+        "kept": 23,
+        "budgetExhausted": 3,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 11,
+        "ms": 917.6255519999904,
+        "maxMs": 59.919519000002765,
+        "nodes": 1009,
+        "byKind": {
+          "start": 10,
+          "main": 97,
+          "move": 26,
+          "attack": 32
+        },
+        "rootCandidates": 169,
+        "rootCompared": 165
+      }
+    },
+    {
+      "label": "preset-smoke",
+      "preset": "mushoku-tensei",
+      "titles": [
+        "mushoku-tensei",
+        "mushoku-tensei"
+      ],
+      "first": 1,
+      "seed": 96011,
+      "steps": 68,
+      "turn": 8,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 769,
+      "driver": {
+        "neu": {
+          "decisions": 31,
+          "pass": 15,
+          "budget": 4,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 7
+        },
+        "old": {
+          "decisions": 37,
+          "pass": 16,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "block": 7,
+        "life-trigger": 5
+      },
+      "ai": {
+        "decisions": 31,
+        "forced": 7,
+        "deferred": 0,
+        "overrides": 5,
+        "kept": 19,
+        "budgetExhausted": 4,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 8,
+        "ms": 669.9849619999804,
+        "maxMs": 53.976644000002125,
+        "nodes": 799,
+        "byKind": {
+          "start": 8,
+          "main": 81,
+          "move": 23,
+          "attack": 20
+        },
+        "rootCandidates": 137,
+        "rootCompared": 132
+      }
+    },
+    {
+      "label": "preset-smoke",
+      "preset": "mushoku-tensei-roxy-field",
+      "titles": [
+        "mushoku-tensei",
+        "mushoku-tensei"
+      ],
+      "first": 0,
+      "seed": 96011,
+      "steps": 159,
+      "turn": 13,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 2209,
+      "driver": {
+        "neu": {
+          "decisions": 76,
+          "pass": 27,
+          "budget": 7,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 2,
+          "forced": 13
+        },
+        "old": {
+          "decisions": 83,
+          "pass": 24,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "effect-discard": 4,
+        "private-top-choice": 3,
+        "effect-top-filter-choice": 3,
+        "effect-top-order": 7,
+        "effect-buff-own": 3,
+        "block": 23,
+        "life-trigger": 9,
+        "effect-recover-ap": 2,
+        "effect-rest-bp": 2
+      },
+      "ai": {
+        "decisions": 76,
+        "forced": 13,
+        "deferred": 2,
+        "overrides": 14,
+        "kept": 47,
+        "budgetExhausted": 7,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 15,
+        "ms": 2044.8264840000338,
+        "maxMs": 78.92870499999844,
+        "nodes": 2243,
+        "byKind": {
+          "start": 13,
+          "main": 89,
+          "effect-discard": 11,
+          "effect-top-filter-choice": 2,
+          "move": 46,
+          "effect-buff-own": 4,
+          "attack": 57,
+          "effect-recover-ap": 5,
+          "block": 30,
+          "life-trigger": 4,
+          "effect-rest-bp": 10
+        },
+        "rootCandidates": 280,
+        "rootCompared": 271
+      }
+    },
+    {
+      "label": "preset-smoke",
+      "preset": "mushoku-tensei-roxy-field",
+      "titles": [
+        "mushoku-tensei",
+        "mushoku-tensei"
+      ],
+      "first": 1,
+      "seed": 96011,
+      "steps": 140,
+      "turn": 12,
+      "finished": true,
+      "winner": 0,
+      "endReason": "life-zero",
+      "outcome": "win",
+      "ms": 1977,
+      "driver": {
+        "neu": {
+          "decisions": 63,
+          "pass": 23,
+          "budget": 6,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 1,
+          "forced": 8
+        },
+        "old": {
+          "decisions": 77,
+          "pass": 24,
+          "budget": 0,
+          "legacyMiss": 0,
+          "noLegal": 0,
+          "exception": 0,
+          "invalid": 0,
+          "empty": 0,
+          "phaseBudget": 0,
+          "deferred": 0,
+          "forced": 0
+        }
+      },
+      "kinds": {
+        "private-top-choice": 3,
+        "effect-discard": 6,
+        "effect-top-filter-choice": 3,
+        "effect-top-order": 6,
+        "effect-buff-own": 3,
+        "block": 17,
+        "life-trigger": 8,
+        "effect-rest-bp": 2
+      },
+      "ai": {
+        "decisions": 63,
+        "forced": 8,
+        "deferred": 1,
+        "overrides": 16,
+        "kept": 38,
+        "budgetExhausted": 6,
+        "exceptions": 0,
+        "unsupported": 0,
+        "legacyMiss": 0,
+        "uncompared": 0,
+        "passed": 16,
+        "ms": 1812.7478599999886,
+        "maxMs": 59.01832400000421,
+        "nodes": 2104,
+        "byKind": {
+          "start": 12,
+          "main": 120,
+          "effect-discard": 21,
+          "effect-top-filter-choice": 2,
+          "move": 43,
+          "effect-buff-own": 4,
+          "attack": 46,
+          "block": 18,
+          "life-trigger": 2,
+          "effect-rest-bp": 10
+        },
+        "rootCandidates": 284,
+        "rootCompared": 278
+      }
+    }
+  ]
+}

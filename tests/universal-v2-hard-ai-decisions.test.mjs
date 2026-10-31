@@ -80,13 +80,16 @@ function idOf(s,uid){
  }
  return null;
 }
+// Pin the clock so a loaded runner does not cut a different tail of the
+// same node tree. Live play still uses the soft deadline in hard-ai.mjs.
+const REPLAY={ms:10000,seed:11};
 function choose(s){
  resetHardAiReport();
  const before=structuredClone(s);
  const legacy=chooseLegacyHardAiAction(packs,s);
- const action=chooseStrengthenedHardAction(packs,s);
+ const action=chooseStrengthenedHardAction(packs,s,REPLAY);
  assert.deepEqual(s,before,'search must not mutate the live state');
- const again=chooseStrengthenedHardAction(packs,s);
+ const again=chooseStrengthenedHardAction(packs,s,REPLAY);
  assert.deepEqual(again,action,'same state is replayable');
  const legal=legalUniversalActions(packs,s);
  assert.ok(legal.some(a=>JSON.stringify(a)===JSON.stringify(action)),JSON.stringify(action));
@@ -133,7 +136,7 @@ test('search takes the raid base, then discards the event instead of that base',
  const picked=choose(s);
  assert.equal(idOf(s,picked.legacy.uid),'BLC-4-034');
  assert.equal(idOf(s,picked.action.uid),'BLC-2-016');
- assert.deepEqual(chooseStrengthenedHardAction(packs,hidden),picked.action);
+ assert.deepEqual(chooseStrengthenedHardAction(packs,hidden,REPLAY),picked.action);
  s=dispatchUniversalAction(packs,s,picked.action);
  while(s.pending?.kind==='effect-top-order')
   s=dispatchUniversalAction(packs,s,legalUniversalActions(packs,s)[0]);
@@ -155,7 +158,7 @@ test('optional discard is skipped when the only hand card is the raid threat',()
  const {action,legacy}=choose(s);
  assert.equal(legacy.uid,threat.uid);
  assert.deepEqual(action,{type:'chooseDiscardGate',uid:null});
- assert.deepEqual(chooseStrengthenedHardAction(packs,hidden),action);
+ assert.deepEqual(chooseStrengthenedHardAction(packs,hidden,REPLAY),action);
 });
 
 test('paying 1 AP for Damage 2 is taken when it is lethal, and a buff crosses the blocker',()=>{
@@ -285,7 +288,7 @@ test('sniper attack order is lethal and a losing sniper is refused',()=>{
  assert.equal(legacy.targetUid,undefined);
  assert.equal(action.uid,yoru.uid);
  assert.equal(action.targetUid,wall.uid);
- assert.deepEqual(chooseStrengthenedHardAction(packs,hidden),action);
+ assert.deepEqual(chooseStrengthenedHardAction(packs,hidden,REPLAY),action);
 
  let losing=reach(newUniversalMatch(packs,{decks:[lethalCounts,lethalCounts],seed:42,first:0}),'main');
  const sniper=place(losing,0,'BLC-4-030','front',0,true);
@@ -341,7 +344,7 @@ test('Damage 2 is blocked before life is critical, and the only defender is not 
  assert.equal(passed.legacy.type,'attack');
  assert.equal(passed.legacy.uid,defender.uid);
  assert.deepEqual(passed.action,{type:'next'});
- assert.deepEqual(chooseStrengthenedHardAction(packs,hidden),passed.action);
+ assert.deepEqual(chooseStrengthenedHardAction(packs,hidden,REPLAY),passed.action);
  const driven=chooseProgressSafeAiAction(packs,rest,{difficulty:'hard'});
  assert.deepEqual(driven.action,passed.action);
  assert.equal(driven.reason,null);
@@ -364,7 +367,7 @@ test('an on-play look still puts the affordable generator on energy',()=>{
  assert.equal(action.type,'play');
  assert.equal(action.line,'energy');
  assert.equal(idOf(s,action.uid),'BLC-4-083');
- assert.deepEqual(chooseStrengthenedHardAction(packs,hidden),action);
+ assert.deepEqual(chooseStrengthenedHardAction(packs,hidden,REPLAY),action);
 });
 
 test('the only generator stays on energy while the curve is unmet',()=>{
@@ -386,9 +389,9 @@ test('battle page hard difficulty is wired to the strengthened policy',()=>{
  const preview=readFileSync(new URL('../dist/universal-v2-preview.mjs',import.meta.url),'utf8');
  const battle=readFileSync(new URL('../dist/universal-v2-battle.html',import.meta.url),'utf8');
  const setup=readFileSync(new URL('../dist/universal-v2-preview.html',import.meta.url),'utf8');
- assert.match(preview,/ai-driver-safety\.mjs\?v=20261030hardai1/);
+ assert.match(preview,/ai-driver-safety\.mjs\?v=20261031hardai2/);
  assert.match(preview,/document\.body\.dataset\.aiPolicy=aiPolicyFor\(app\.aiDifficulty\)/);
- assert.match(battle,/universal-v2-preview\.mjs\?v=20261031hardai1/);
- assert.match(setup,/universal-v2-preview\.mjs\?v=20261031hardai1/);
+ assert.match(battle,/universal-v2-preview\.mjs\?v=20261031hardai2/);
+ assert.match(setup,/universal-v2-preview\.mjs\?v=20261031hardai2/);
  assert.match(battle,/universal-v2-battle\.css\?v=20261028triggercenter1/);
 });

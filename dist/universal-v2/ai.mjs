@@ -1,6 +1,6 @@
 // Cross-title Universal v2 AI baseline. Uses only the native legal-action
 // list; no work-specific card-ID shortcuts and no mutation of match state.
-import {legalUniversalActions,dispatchUniversalAction,universalBp,universalEnergy,universalEnergyByColor,universalCardEnergy,handRevealIdentity,handCharacterBpMayAmount} from './engine.mjs';
+import {legalUniversalActions,dispatchUniversalAction,universalBp,universalEnergy,universalEnergyByColor,universalCardEnergy,handRevealIdentity,handCharacterBpMayAmount,universalPublicView,universalPrivateChoices} from './engine.mjs';
 import {cardCountsAsEvent} from './field-conditions.mjs';
 export const UNIVERSAL_AI_LEVELS=Object.freeze(['easy','normal','hard']);
 const packsOf=pack=>Array.isArray(pack)?pack:[pack,pack];
@@ -32,6 +32,43 @@ function chooseBlock(pack,s,actions,difficulty){
  return healthy[0]?.a||
   (difficulty==='hard'&&s.players[s.pending.player].life.length<=1?
    actions.find(a=>a.uid!==null)||no:no);
+}
+function modalUnknownEnergy(pack,state,player){
+ const view=universalPublicView(pack,state,player);
+ const seen=new Set();
+ const add=c=>{if(c?.uid)seen.add(c.uid);};
+ const walk=layers=>{for(const layer of layers||[]){add(layer);walk(layer.stack);walk(layer.under);}};
+ for(const c of view.players[player]?.hand||[])add(c);
+ for(const pl of view.players){
+  for(const line of ['front','energy'])for(const c of pl[line]||[])if(c?.uid){
+   add(c);walk(c.raidLayers);walk(c.underLayers);
+  }
+  for(const c of [...(pl.outside||[]),...(pl.removed||[]),...(pl.faceUpLife||[]),...(pl.publicLife||[])])
+   add(c);
+ }
+ for(const r of view.publicReveals||[])add(r);
+ for(const t of view.openTriggers||[])add(t);
+ const counts={...(state.initialCounts?.[player]||{})};
+ const pl=state.players[player];
+ const consume=c=>{
+  if(!c?.uid||!seen.has(c.uid))return;
+  if(counts[c.cardId])counts[c.cardId]--;
+  for(const layer of [...(c.stack||[]),...(c.under||[])])consume(layer);
+ };
+ for(const zone of ['hand','front','energy','outside','removed','life','lifeRevealed'])
+  for(const c of pl[zone]||[])consume(c);
+ const catalog=packsOf(pack)[player].cards;
+ const tally=new Map();
+ for(const [id,n] of Object.entries(counts))if(n>0){
+  const energy=catalog[id]?.energy||0;
+  tally.set(energy,(tally.get(energy)||0)+n);
+ }
+ let best=0,bestN=-1;
+ for(const energy of [...tally.keys()].sort((a,b)=>a-b)){
+  const n=tally.get(energy);
+  if(n>bestN){bestN=n;best=energy;}
+ }
+ return best;
 }
 export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(!UNIVERSAL_AI_LEVELS.includes(difficulty))throw Error('Unknown universal AI difficulty');
@@ -77,8 +114,9 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
    legal.find(a=>a.mode==='pick')||legal.find(a=>a.mode==='done')||legal[0];
  if(s.pending?.kind==='effect-name-energy-reveal'){
   if(difficulty==='easy')return legal[0];
-  const top=s.players[s.pending.player].deck[0];
-  const energy=top?packsOf(pack)[s.pending.player].cards[top.cardId]?.energy:null;
+  // 指定する happens before 公開. Guess the most common required energy
+  // in the unknown remainder of this player's own list. Do not read deck[0].
+  const energy=modalUnknownEnergy(pack,s,s.pending.player);
   return legal.find(a=>a.value===energy)||legal[0];
  }
  if(s.pending?.kind==='effect-revealed-energy-hand')
@@ -149,10 +187,12 @@ export function chooseUniversalAiAction(pack,s,{difficulty='normal'}={}){
  if(s.pending?.kind==='effect-top-filter-choice')return legal.find(a=>a.uid!==null)||legal[0];
  if(s.pending?.kind==='effect-top-trait-event'){
   const catalog=packsOf(pack)[s.pending.player].cards;
-  const deck=s.players[s.pending.player].deck;
+  const inspected=new Map((universalPrivateChoices(pack,s,s.pending.player)?.inspected||[])
+   .map(c=>[c.uid,c]));
   const score=uid=>{
    if(uid===null)return 0;
-   const printed=catalog[deck.find(c=>c.uid===uid)?.cardId];
+   const printed=catalog[inspected.get(uid)?.cardId];
+   if(!printed)return 0;
    if(printed?.traits?.includes(s.pending.trait)||printed?.traitComponents?.includes(s.pending.trait))return 2;
    return cardCountsAsEvent(printed)?1:0;
   };

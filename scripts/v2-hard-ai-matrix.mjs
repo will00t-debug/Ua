@@ -1,11 +1,15 @@
 #!/usr/bin/env node
-// New Hard (seat 0, hard-search-1) vs frozen Hard (seat 1, chooseLegacyHardAiAction).
+// New Hard (seat 0) vs frozen Hard (seat 1, chooseLegacyHardAiAction).
 // Same universal V2 reducer, BLEACH pack and the three designated 50-card decks.
-// 3 pairings each way x first/second x seeds. The first holdout 88001-88020
-// stays in audit/v2-hard-ai-matrix.json (186/360, below 60%). Do not retune
-// on it. The post-fix holdout is 91001-91020 in
-// audit/v2-hard-ai-matrix-91001.json. Smoke before that used 89001-89004.
+// 3 pairings each way x first/second x seeds. Historical holdouts stay put:
+// 88001-88020 in audit/v2-hard-ai-matrix.json (186/360) and 91001-91020 in
+// audit/v2-hard-ai-matrix-91001.json (283/360, before hidden-information
+// isolation). Do not retune on either. The fair-policy holdout is
+// 94001-94020. That file's budgetExhausted counts every decision whose
+// tree hit the node or time cap, including lines that still scored every
+// root candidate. Later traces use budget only when the root queue is cut.
 // Interrupts stay in the denominator and are not wins.
+// Pass, budget, legacy-miss and illegal fallbacks are counted separately.
 //
 //   HARD_AI_SEED0=77001 HARD_AI_SEEDS=2 node scripts/v2-hard-ai-matrix.mjs
 import {Worker, isMainThread, parentPort, workerData} from 'node:worker_threads';
@@ -20,7 +24,7 @@ import {newUniversalMatch,dispatchUniversalAction,assertUniversalMatch}
  from '../dist/universal-v2/engine.mjs';
 import {chooseLegacyHardAiAction} from '../dist/universal-v2/ai.mjs';
 import {chooseProgressSafeAiAction} from '../dist/universal-v2/ai-driver-safety.mjs';
-import {resetHardAiReport,hardAiReport,HARD_AI_POLICY}
+import {resetHardAiReport,hardAiReport,lastHardAiTrace,HARD_AI_POLICY}
  from '../dist/universal-v2/hard-ai.mjs';
 
 const STEP_CAP=Number(process.env.HARD_AI_STEPS||8000);
@@ -36,11 +40,32 @@ function decks(){
  });
 }
 
+function emptyTally(){
+ return {decisions:0,pass:0,budget:0,legacyMiss:0,noLegal:0,exception:0,
+  invalid:0,empty:0,phaseBudget:0,deferred:0,forced:0};
+}
+function isPass(action){
+ return !!action&&(action.type==='next'||action.mode==='skip'||action.mode==='decline');
+}
+function tally(bucket,picked,trace,before,after){
+ bucket.decisions++;
+ if(picked.reason==='phase-budget')bucket.phaseBudget++;
+ else if(picked.reason==='ai-exception')bucket.exception++;
+ else if(picked.reason==='invalid-ai-choice')bucket.invalid++;
+ else if(picked.reason==='empty-ai-choice')bucket.empty++;
+ else if(isPass(picked.action))bucket.pass++;
+ if(trace?.reason==='budget')bucket.budget++;
+ if(trace?.reason==='deferred')bucket.deferred++;
+ if(trace?.reason==='forced')bucket.forced++;
+ if(trace?.reason==='no-legal')bucket.noLegal++;
+ if(trace?.reason==='exception')bucket.exception++;
+ if(after&&before&&after.legacyMiss>before.legacyMiss)bucket.legacyMiss++;
+}
 function play(job){
  resetHardAiReport();
  const pack=createBleachV2Pack();
  const packs=[pack,pack];
- const driver={};
+ const driver={neu:emptyTally(),old:emptyTally()};
  const started=performance.now();
  const entry={
   newDeck:job.newKey,oldDeck:job.oldKey,first:job.first,seed:job.seed,
@@ -56,12 +81,14 @@ function play(job){
    const actor=s.pending?.player??s.active;
    const key=s.turn+'|'+s.active+'|'+s.phase;
    if(phaseKey[actor]!==key){phaseKey[actor]=key;phaseCount[actor]=0;}
+   const before=actor===0?hardAiReport():null;
    const picked=actor===0
     ? chooseProgressSafeAiAction(packs,s,{difficulty:'hard',actionsInPhase:phaseCount[actor]})
     : chooseProgressSafeAiAction(packs,s,{
      difficulty:'hard',actionsInPhase:phaseCount[actor],choose:chooseLegacyHardAiAction
     });
-   if(picked.reason)driver[picked.reason]=(driver[picked.reason]||0)+1;
+   const trace=actor===0?lastHardAiTrace():null;
+   tally(actor===0?driver.neu:driver.old,picked,trace,before,actor===0?hardAiReport():null);
    if(!picked.action)throw Error('no legal action');
    s=dispatchUniversalAction(packs,s,picked.action,{actor});
    phaseCount[actor]++;
@@ -169,10 +196,27 @@ if(!isMainThread){
   };
  }
  const ai={maxMs:0};
- for(const row of results)addAi(ai,row.ai);
- const driver={};
- for(const row of results)for(const [k,v] of Object.entries(row.driver||{}))
-  driver[k]=(driver[k]||0)+v;
+ const samples=[];
+ for(const row of results){
+  addAi(ai,row.ai);
+  if(row.ai?.samples)samples.push(...row.ai.samples);
+  if(row.ai)delete row.ai.samples;
+ }
+ samples.sort((a,b)=>a-b);
+ const percentile=p=>samples.length?samples[Math.min(samples.length-1,Math.floor(p*(samples.length-1)))]:0;
+ const addTally=(into,row)=>{
+  for(const key of Object.keys(emptyTally()))into[key]=(into[key]||0)+(row?.[key]||0);
+ };
+ const decisions={neu:emptyTally(),old:emptyTally()};
+ for(const row of results){
+  addTally(decisions.neu,row.driver?.neu);
+  addTally(decisions.old,row.driver?.old);
+ }
+ const mirrors={};
+ for(const neu of roster){
+  const rows=results.filter(r=>r.newDeck===neu.key&&r.oldDeck===neu.key);
+  if(rows.length)mirrors[neu.name]=bucket(rows);
+ }
  const summary={
   policy:HARD_AI_POLICY,
   baseline:'chooseLegacyHardAiAction',
@@ -184,8 +228,10 @@ if(!isMainThread){
   whenFirst:bucket(results.filter(r=>r.first===0)),
   whenSecond:bucket(results.filter(r=>r.first===1)),
   pairings,
-  ai:{...ai,meanMs:ai.decisions?ai.ms/ai.decisions:0},
-  driver,
+  mirrors,
+  ai:{...ai,meanMs:ai.decisions?ai.ms/ai.decisions:0,
+   p95Ms:percentile(0.95),sampleCount:samples.length},
+  decisions,
   interruptSamples:interrupts.slice(0,12).map(r=>({
    decks:r.newDeck+'/'+r.oldDeck,first:r.first,seed:r.seed,
    steps:r.steps,endReason:r.endReason,error:r.error||null
@@ -204,10 +250,13 @@ if(!isMainThread){
   ' interrupts '+interrupts.length+'\n');
  for(const [name,row] of Object.entries(pairings))
   process.stdout.write(name+' '+row.wins+'/'+row.games+' ('+pct(row.winRate)+')\n');
+ process.stdout.write('mirrors '+Object.entries(mirrors).map(([n,r])=>
+  n+' '+r.wins+'/'+r.games).join(' | ')+'\n');
  process.stdout.write('decisions '+ai.decisions+' mean '+summary.ai.meanMs.toFixed(2)+
-  'ms max '+ai.maxMs.toFixed(1)+'ms budget '+ai.budgetExhausted+
+  'ms p95 '+summary.ai.p95Ms+'ms max '+ai.maxMs.toFixed(1)+'ms budget '+ai.budgetExhausted+
   ' unsupported '+ai.unsupported+' exceptions '+ai.exceptions+
   ' overrides '+ai.overrides+' kept '+ai.kept+' uncompared '+(ai.uncompared||0)+'\n');
- process.stdout.write('driver '+JSON.stringify(driver)+'\n');
+ process.stdout.write('new '+JSON.stringify(decisions.neu)+'\n');
+ process.stdout.write('old '+JSON.stringify(decisions.old)+'\n');
  process.stdout.write((summary.metTarget?'MET':'BELOW')+' target 60%  '+out+'\n');
 }
