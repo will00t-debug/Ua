@@ -25,6 +25,15 @@ function pull(s,id,p=0){
  }
  throw Error('Missing '+id);
 }
+function bury(s,p,card){
+ if(!card||(card.stack||[]).some(x=>x&&x.faceDown!==true))return card;
+ const deck=s.players[p].deck;
+ if(!deck.length)throw Error('No deck card to place under '+card.cardId);
+ const under=deck.pop();
+ under.faceDown=false;
+ card.stack=[under];
+ return card;
+}
 function place(s,id,p,line,slot){
  const c=pull(s,id,p);
  c.ready=true;
@@ -113,6 +122,7 @@ test('BLC-4-069 still swaps with an ordinary energy character and does not mark 
  const ally=place(s,'BLC-1-072',0,'energy',0);
  outsideNames(s);
  const blocker=place(s,'BLC-1-071',1,'front',0);
+ bury(s,0,attacker);
  s.phase='attack';
  assert.equal(assertUniversalMatch(pack,s),true);
  s=act(s,{type:'attack',uid:attacker.uid});

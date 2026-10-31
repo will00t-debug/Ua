@@ -23,6 +23,16 @@ function act(s,pred){
  if(!action)throw Error('Missing action '+(s.pending?.kind||s.phase));
  return go(s,action);
 }
+// Q552: frame text is live only with a face-up card under the Raid top.
+function bury(s,p,card){
+ if(!card||(card.stack||[]).some(x=>x&&x.faceDown!==true))return card;
+ const deck=s.players[p].deck;
+ if(!deck.length)throw Error('No deck card to place under '+card.cardId);
+ const under=deck.pop();
+ under.faceDown=false;
+ card.stack=[under];
+ return card;
+}
 function place(s,p,id,line,slot,ready=true){
  const card=take(s,p,id);
  card.ready=ready;
@@ -224,7 +234,7 @@ test('STG-1-011 rests a blue Mayuri and widens the window after a removed entry'
  place(s,0,'STG-1-001','energy',3);
  const narrow=outside(s,0,'STG-1-014');
  const wide=outside(s,0,'STG-1-011');
- const actor=take(s,0,'STG-1-011');
+ const actor=bury(s,0,take(s,0,'STG-1-011'));
  hold(s,0,[actor]);
  s=act(s,a=>a.type==='play'&&a.uid===actor.uid&&a.line==='front');
  assert.equal(s.pending.kind,'effect-printed-rest-raid');
@@ -243,7 +253,7 @@ test('STG-1-011 rests a blue Mayuri and widens the window after a removed entry'
  const base=s.players[0].energy[0];
  const raided=take(s,0,'STG-1-011');
  s.players[0].removed.push(raided);
- const mayuri=outside(s,0,'STG-1-017');
+ const mayuri=bury(s,0,outside(s,0,'STG-1-017'));
  const foe=place(s,1,'STG-1-001','front',0);
  const spare=take(s,0,'STG-1-012');
  const kurisuRaid=take(s,0,'STG-1-028');
@@ -297,6 +307,7 @@ test('STG-1-017 replaces the attack quote when a character effect played it',()=
  const actor=take(s,0,'STG-1-017');
  const ally=take(s,0,'STG-1-015');
  hold(s,0,[actor,ally]);
+ bury(s,0,actor);
  const deck=s.players[0].deck.length;
  s=act(s,a=>a.type==='play'&&a.uid===actor.uid&&a.line==='front');
  const played=s.players[0].front.find(c=>c?.uid===actor.uid);
@@ -318,6 +329,7 @@ test('STG-1-017 replaces the attack quote when a character effect played it',()=
  const buff=take(s,0,'STG-1-015');
  hold(s,0,[card]);
  s.players[0].deck.unshift(buff);
+ bury(s,0,card);
  s=act(s,a=>a.type==='play'&&a.uid===card.uid&&a.line==='front');
  const mayuri=s.players[0].front.find(c=>c?.uid===card.uid);
  s=go(s,{type:'chooseMayuriFork',uid:target.uid});

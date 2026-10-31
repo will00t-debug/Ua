@@ -17,6 +17,15 @@ function pull(s,id,p=0){for(const zone of ['hand','deck','life','outside']){
  const list=s.players[p][zone],i=list.findIndex(c=>c.cardId===id);
  if(i>=0)return list.splice(i,1)[0];
  }throw Error('Real 50 card missing '+p+'/'+id);}
+function bury(s,p,card){
+ if(!card||(card.stack||[]).some(x=>x&&x.faceDown!==true))return card;
+ const deck=s.players[p].deck;
+ if(!deck.length)throw Error('No deck card to place under '+card.cardId);
+ const under=deck.pop();
+ under.faceDown=false;
+ card.stack=[under];
+ return card;
+}
 function doIt(s,a){assert.ok(legalUniversalActions(pack,s).some(x=>JSON.stringify(x)===JSON.stringify(a)),
  'must use legal action '+JSON.stringify(a));return dispatchUniversalAction(pack,s,a);}
 function lateGame(){
@@ -43,6 +52,7 @@ function scenario(){
  place(s,'BLC-1-075',0,'energy',2);
  const source=pull(s,'BLC-4-069'),field=pull(s,'BLC-4-076'),off=pull(s,'BLC-1-097');
  s.players[0].hand.push(source,field,off);
+ bury(s,0,source);
  const play=legalUniversalActions(pack,s).find(a=>a.type==='play'&&a.uid===source.uid&&a.line==='front');
  assert.ok(play,'blueprints true energy 5 paid 069 play');
  s=doIt(s,play);

@@ -14,6 +14,15 @@ const mst=Object.fromEntries(other.map((id,i)=>[id,i===12?2:4]));
 assert.deepEqual(validateUniversalDeck(blc,cards),[]);
 assert.deepEqual(validateUniversalDeck(packs[1],mst),[]);
 function take(s,p,id){for(const z of ['hand','deck','life','outside']){const a=s.players[p][z],i=a.findIndex(c=>c.cardId===id);if(i>=0)return a.splice(i,1)[0];}throw Error('missing '+id);}
+function bury(s,p,card){
+ if(!card||(card.stack||[]).some(x=>x&&x.faceDown!==true))return card;
+ const deck=s.players[p].deck;
+ if(!deck.length)throw Error('No deck card to place under '+card.cardId);
+ const under=deck.pop();
+ under.faceDown=false;
+ card.stack=[under];
+ return card;
+}
 const act=(s,a)=>dispatchUniversalAction(packs,s,a);
 function scene(){
  let s=newUniversalMatch(packs,{decks:[cards,mst],first:0,seed:38070});
@@ -34,6 +43,8 @@ test('R38 BLEACH 070 official printed Raid, life, source and exact joint TOP4 pr
 });
 for(const pick of [false,true])test('R38 official BLEACH 070 TOP4 choose '+(pick?'one':'zero')+' / bottom / AP discount',()=>{
  let {s,source,window}=scene();
+ source=s.players[0].hand.find(c=>c.uid===source.uid);
+ bury(s,0,source);
  const play=legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===source.uid&&a.line==='front');
  assert.ok(play,'printed green necessity 6 paid with four green2 sources');
  s=act(s,play);

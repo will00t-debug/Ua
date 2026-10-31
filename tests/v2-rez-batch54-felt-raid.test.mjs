@@ -39,10 +39,13 @@ function shell(extra){
   bp:2500,gen:2,trigger:'raid',raidName:'フェルト',implementation:'dsl',...extra};
 }
 
-test('REZ-2-062 raids Felt, chooses on play, and keeps the block ceiling until her next turn',()=>{
+test('REZ-2-062 raids Felt, chooses the raid-box entry, and keeps the block ceiling until her next turn',()=>{
  assert.match(REZERO_VOL2_BY_ID['REZ-2-062'].effectJa,/\[レイド\]〈フェルト〉/);
  assert.match(REZERO_VOL2_BY_ID['REZ-2-062'].effectJa,/BP4000以上のキャラにブロックされない/);
  assert.equal(rez.cards['REZ-2-062'].raidName,'フェルト');
+ assert.equal(rez.cards['REZ-2-062'].effects.onPlay,undefined);
+ assert.equal(rez.cards['REZ-2-062'].effects.onRaid[0].op,'chooseOne');
+ assert.equal(rez.cards['REZ-2-062'].mainAbility.raidBox,true);
  let s=fresh(deck,2062);
  const base=sit(s,0,'REZ-2-060','front',0);
  const ally=sit(s,0,'REZ-2-056','front',1,false);
@@ -158,9 +161,24 @@ test('REZ-2-062 grants front energy to another character and hides that choice w
  line=toPhase(rezPacks,line,'main');
  const playEnergy=legalUniversalActions(rezPacks,line).find(a=>a.type==='play'&&a.uid===energyRider.uid&&a.line==='energy');
  line=dispatchUniversalAction(rezPacks,line,playEnergy,{actor:0});
+ assert.equal(line.pending,null);
  assert.equal(line.players[0].energy.find(c=>c?.cardId==='REZ-2-062').ready,false);
- line=dispatchUniversalAction(rezPacks,line,{type:'chooseEffectMode',mode:'draw'},{actor:0});
+ assert.equal(line.players[0].energy.find(c=>c?.cardId==='REZ-2-062').stack.length,0);
  assert.equal(legalUniversalActions(rezPacks,line).some(a=>a.type==='activate'&&a.mode==='frontChoose'),false);
+ let ordinary=fresh(deck,6062);
+ sit(ordinary,0,'REZ-2-049','energy',0);
+ sit(ordinary,0,'REZ-2-066','energy',1);
+ const frontRider=take(ordinary,0,'REZ-2-062');ordinary.players[0].hand.push(frontRider);
+ ordinary=toPhase(rezPacks,ordinary,'main');
+ const playFront=legalUniversalActions(rezPacks,ordinary).find(a=>a.type==='play'&&a.uid===frontRider.uid&&a.line==='front');
+ ordinary=dispatchUniversalAction(rezPacks,ordinary,playFront,{actor:0});
+ const played=ordinary.players[0].front.find(c=>c?.cardId==='REZ-2-062');
+ assert.equal(ordinary.pending,null);
+ assert.equal(played.ready,false);
+ assert.equal(played.stack.length,0);
+ assert.equal(legalUniversalActions(rezPacks,ordinary).some(a=>a.type==='activate'&&a.uid===played.uid),false);
+ assert.throws(()=>dispatchUniversalAction(rezPacks,ordinary,
+  {type:'activate',uid:played.uid,mode:'frontChoose'},{actor:0}),/not currently legal/);
  let alone=fresh(deck,5062);
  const only=sit(alone,0,'REZ-2-060','front',0);
  sit(alone,0,'REZ-2-066','energy',0);

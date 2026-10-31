@@ -12,10 +12,11 @@
 // Batch 53 adds 058: Raid Emilia, this-turn double attack and selection
 // immunity, once-per-turn attack BP+1000, and an attack-end rest of one
 // own front ACTIVE character with printed BP 2500 to set her ACTIVE.
-// Batch 54 adds 062: Raid Felt. On play, draw one or activate up to one
-// other character. Front once per turn: until next own start, BP+1000 and
-// characters of BP 4000 or more cannot block her; or grant one other
-// character front-line energy generation this turn.
+// Batch 54 adds 062: Raid Felt. Official EX17BT/REZ-2-062 prints the
+// draw-or-activate entry and the front activate below the Raid bar, inside
+// the Raid box. Q51/Q552 keep both off after an ordinary play. A real Raid
+// still asks the entry choice, and the front activate stays only while a
+// face-up Raid base is underneath.
 // Batch 60 adds 032: a facedown under-card gives BP+500, Impact null, and a
 // BP 500 leave replacement that sends one under-card outside. On play, if
 // Priscilla is on the field, one other character who is neither Priscilla
@@ -260,12 +261,12 @@ const PROFILES={
     {op:'grantSelfUnchosenThisTurn'}],
    onAttack:[{op:'oncePerTurnGate',scope:'card',optional:false,then:[{op:'buffSelf',bp:1000}]}]
   }},
- 'REZ-2-062':{implementation:'dsl',raidName:'フェルト',effects:{onPlay:[
+ 'REZ-2-062':{implementation:'dsl',raidName:'フェルト',effects:{onRaid:[
   {op:'chooseOne',optional:false,options:[
    {id:'draw',label:'抽1張',turn:'any',then:[{op:'draw',count:1}]},
    {id:'active',label:'使其他最多1張角色轉為ACTIVE',turn:'any',then:[
     {op:'activeOwnOther',optional:true}]}]}]},
-  mainAbility:{op:'onceFrontChoose',oncePerTurn:true,frontOnly:true,then:[
+  mainAbility:{op:'onceFrontChoose',oncePerTurn:true,frontOnly:true,raidBox:true,then:[
    {op:'chooseOne',optional:false,options:[
     {id:'keywords',label:'直到下回合開始，BP+1000且不被BP4000以上阻擋',turn:'any',then:[
      {op:'buffSelfUntilNextOwnStart',bp:1000},

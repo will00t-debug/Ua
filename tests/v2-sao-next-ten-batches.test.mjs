@@ -39,6 +39,12 @@ function place(s,p,card,line,slot,ready=false){
  s.players[p][line][slot]=card;
  return card;
 }
+function bury(s,p,card){
+ if(!card||(card.stack||[]).some(x=>x&&x.faceDown!==true))return card;
+ const deck=s.players[p].deck;
+ if(!deck.length)throw Error('No deck card to place under '+card.cardId);
+ const under=deck.pop(); under.faceDown=false; card.stack=[under]; return card;
+}
 function body(s,p,uid){
  for(const line of ['front','energy']){
   const c=s.players[p][line].find(x=>x?.uid===uid);
@@ -164,6 +170,7 @@ test('SAO-2-002 replaces draw-discard only when Alice and Eugeo are both on the 
   frontIds.forEach((id,i)=>place(s,0,take(s,0,id),'front',i,true));
   const actor=take(s,0,'SAO-2-002');
   s.players[0].hand.push(actor);
+  bury(s,0,actor);
   const hand=s.players[0].hand.length,deckBefore=s.players[0].deck.length;
   const played=playFront(packs,s,actor.uid);
   return {packs,played,actor,hand,deckBefore};
@@ -193,6 +200,7 @@ test('SAO-2-002 replaces draw-discard only when Alice and Eugeo are both on the 
  const attacker=place(s,0,take(s,0,'SAO-2-002'),'front',0,true);
  const low=place(s,1,take(s,1,'SAO-1-001'),'front',0,true);
  const high=place(s,1,take(s,1,'SAO-1-003'),'front',1,true);
+ bury(s,0,attacker);
  const battle=reach(packs,s,x=>x.active===0&&x.phase==='attack');
  const swinging=use(packs,battle,a=>a.type==='attack'&&a.uid===attacker.uid);
  assert.equal(swinging.pending.kind,'block');
@@ -212,6 +220,7 @@ test('SAO-1-037 gains Impact from Kirito and attack-draw only after a non-move l
  const kirito=place(opened.s,0,take(opened.s,0,'SAO-1-052'),'energy',1,true);
  const asuna=place(opened.s,0,take(opened.s,0,'SAO-1-037'),'energy',2,true);
  const liz=place(opened.s,0,take(opened.s,0,'SAO-1-048'),'front',0,true);
+ bury(opened.s,0,asuna);
  assert.equal(universalImpact(opened.packs,opened.s,asuna),1);
  opened.s.players[0].energy[1]=null;
  kirito.fieldEntryStamp=null;
@@ -254,6 +263,7 @@ test('SAO-1-037 gains Impact from Kirito and attack-draw only after a non-move l
  energize(empty.s,0,['SAO-1-102']);
  const mover=place(empty.s,0,take(empty.s,0,'SAO-1-037'),'front',0,true);
  const watcher=place(empty.s,0,take(empty.s,0,'SAO-1-048'),'front',1,true);
+ bury(empty.s,0,mover);
  empty.s.players[0].outside.push(...empty.s.players[0].deck.splice(0));
  const opener=take(empty.s,0,'SAO-1-103');
  empty.s.players[0].hand.push(opener);
@@ -593,6 +603,7 @@ test('SAO-1-013 retires by distinct front names, and an Alice alias is not Kirit
   const no=place(s,1,take(s,1,noId),noLine,noLine==='front'?1:0,true);
   const actor=take(s,0,'SAO-1-013');
   s.players[0].hand.push(actor);
+  bury(s,0,actor);
   const played=playFront(packs,s,actor.uid);
   assert.equal(played.pending.kind,'effect-retire-bp');
   assert.equal(played.pending.limit,limit);

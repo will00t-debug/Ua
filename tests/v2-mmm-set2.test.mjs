@@ -40,6 +40,17 @@ function put(s,p,id,line,slot,ready=true){
  s.players[p][line][slot]=card;
  return card;
 }
+// Q552: listed raid-box text is live only with a face-up card underneath.
+// Pop the deck bottom so a top-of-deck marker stays put.
+function bury(s,p,card){
+ if(!card||(card.stack||[]).some(x=>x&&x.faceDown!==true))return card;
+ const deck=s.players[p].deck;
+ if(!deck.length)throw Error('No deck card to place under '+card.cardId);
+ const under=deck.pop();
+ under.faceDown=false;
+ card.stack=[under];
+ return card;
+}
 function toPhase(s,phase){
  let guard=0;
  while(s.phase!==phase){
@@ -123,6 +134,7 @@ test('Q2344 can deploy the yellow girl just placed in the removed area',()=>{
  const madoka=take(s,0,'MMM-2-001');
  s.players[0].hand.push(girl,madoka);
  const handBefore=s.players[0].hand.length;
+ bury(s,0,madoka);
  s=playFront(s,madoka.uid);
  assert.equal(s.pending?.kind,'mmm2');
  assert.equal(s.pending.id,'MMM-2-001');

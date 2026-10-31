@@ -29,6 +29,17 @@ function pull(s,p,id){
  }
  throw Error('Missing '+id);
 }
+// Q552: box text is live only with a face-up card underneath. Pop the deck
+// bottom so a top-of-deck marker stays put.
+function bury(s,p,card){
+ if(!card||(card.stack||[]).some(x=>x&&x.faceDown!==true))return card;
+ const deck=s.players[p].deck;
+ if(!deck.length)throw Error('No deck card to place under '+card.cardId);
+ const under=deck.pop();
+ under.faceDown=false;
+ card.stack=[under];
+ return card;
+}
 function reach(s,phase){
  for(let i=0;i<4&&s.phase!==phase;i++){
   const next=legalUniversalActions(packs,s).find(a=>a.type==='next');
@@ -1122,8 +1133,9 @@ const pair=seed=>newUniversalMatch(packs,{decks:[pairCounts,pairCounts],first:0,
 function frontOnce(s,uid){
  return legalUniversalActions(packs,s).some(a=>a.type==='activate'&&a.mode==='frontOnce'&&a.uid===uid);
 }
-function playFront(s,id){
+function playFront(s,id,under=false){
  const card=pull(s,0,id);
+ if(under)bury(s,0,card);
  s.players[0].hand.push(card);
  const action=legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===card.uid&&a.line==='front');
  assert.ok(action,id+' front');
@@ -3855,7 +3867,7 @@ test('Subaru raids onto Subaru, draws, then may REST the raid base after retirem
  assert.ok(play);
  const deck=plain.players[0].deck.length;
  plain=dispatchUniversalAction(packs,plain,play);
- assert.equal(plain.players[0].deck.length,deck-1);
+ assert.equal(plain.players[0].deck.length,deck);
  assert.equal(at(plain,0,played.uid).ready,false);
  assert.equal(at(plain,0,played.uid).stack.length,0);
  at(plain,0,played.uid).ready=true;
@@ -5708,9 +5720,12 @@ test('raid Subaru peeks, draws, and offers the Beatrice reveal once per attack',
   purpleFuel(s,4);
   s=ownMain(s,2);
   assert.equal(universalEnergyByColor(packs,s,0).purple,8);
+  const subaru=bury(s,0,pull(s,0,'REZ-1-071'));
   onlyTop(s,0,['REZ-1-007','REZ-1-008']);
-  let subaru;
-  [s,subaru]=playFront(s,'REZ-1-071');
+  s.players[0].hand.push(subaru);
+  const play=legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===subaru.uid&&a.line==='front');
+  assert.ok(play,'REZ-1-071 front');
+  s=dispatchUniversalAction(packs,s,play);
   assert.equal(s.pending.kind,'effect-top-inspect');
   assert.ok(s.effectQueue.some(e=>e.op==='draw'&&e.count===1));
   assert.doesNotThrow(()=>legalUniversalActions(packs,s));
@@ -5892,17 +5907,20 @@ test('Puck counts as an event card, nullifies impact, and playing him is not usi
  const events=[];
  for(let i=0;i<4;i++)events.push(pull(impact,0,'REZ-1-029'));
  events.push(pull(impact,0,'REZ-1-109'));
+ const extra=pull(impact,0,'REZ-1-001');
+ const bystander=pull(impact,0,'REZ-1-007');
+ const another=pull(impact,0,'REZ-1-109');
+ bury(impact,0,watcher);
  impact.players[0].outside.push(...events);
  assert.equal(universalImpact(packs,impact,at(impact,0,watcher.uid)),0);
- const extra=pull(impact,0,'REZ-1-001');
  impact.players[0].outside.push(extra);
  assert.equal(universalImpact(packs,impact,at(impact,0,watcher.uid)),1);
  impact.players[0].deck.push(impact.players[0].outside.pop());
  assert.equal(universalImpact(packs,impact,at(impact,0,watcher.uid)),0);
- impact.players[0].outside.push(pull(impact,0,'REZ-1-007'));
+ impact.players[0].outside.push(bystander);
  assert.equal(universalImpact(packs,impact,at(impact,0,watcher.uid)),0);
  impact.players[0].deck.push(impact.players[0].outside.pop());
- impact.players[0].outside.push(pull(impact,0,'REZ-1-109'));
+ impact.players[0].outside.push(another);
  assert.equal(universalImpact(packs,impact,at(impact,0,watcher.uid)),1);
  assert.equal(assertUniversalMatch(packs,nulled),true);
  assert.equal(assertUniversalMatch(packs,plain),true);
@@ -6103,7 +6121,7 @@ test('Crusch takes one of the top two and adds hand BP only while on the front',
  look=reach(look,'main');
  const window=setTop(look,0,['REZ-1-068','REZ-1-007']);
  let crusch;
- [look,crusch]=playFront(look,'REZ-1-058');
+ [look,crusch]=playFront(look,'REZ-1-058',true);
  assert.equal(look.pending.kind,'effect-top-take-one');
  assert.deepEqual(look.pending.uids,[window[0].uid,window[1].uid]);
  assert.equal(legalUniversalActions(packs,look).some(a=>a.uid===null),false);
@@ -6123,21 +6141,27 @@ test('Crusch takes one of the top two and adds hand BP only while on the front',
  let single=six(8622);
  fuel(single,['REZ-1-043','REZ-1-043','REZ-1-043','REZ-1-043']);
  single=reach(single,'main');
+ const held=bury(single,0,pull(single,0,'REZ-1-058'));
  const only=onlyTop(single,0,['REZ-1-068']);
- [single]=playFront(single,'REZ-1-058');
+ single.players[0].hand.push(held);
+ single=dispatchUniversalAction(packs,single,legalUniversalActions(packs,single).find(a=>
+  a.type==='play'&&a.uid===held.uid&&a.line==='front'));
  assert.equal(single.pending,null);
  assert.equal(single.players[0].hand.some(c=>c.uid===only[0].uid),true);
  assert.equal(single.players[0].outside.some(c=>c.uid===only[0].uid),false);
  let barren=six(8623);
  fuel(barren,['REZ-1-043','REZ-1-043','REZ-1-043','REZ-1-043']);
  barren=reach(barren,'main');
+ const barrenHeld=bury(barren,0,pull(barren,0,'REZ-1-058'));
  barren.players[0].outside.push(...barren.players[0].deck.splice(0));
- [barren]=playFront(barren,'REZ-1-058');
+ barren.players[0].hand.push(barrenHeld);
+ barren=dispatchUniversalAction(packs,barren,legalUniversalActions(packs,barren).find(a=>
+  a.type==='play'&&a.uid===barrenHeld.uid&&a.line==='front'));
  assert.equal(barren.pending,null);
 
  let front=six(8624);
  front=reach(front,'main');
- const leader=stamp(front,pull(front,0,'REZ-1-058'));
+ const leader=bury(front,0,stamp(front,pull(front,0,'REZ-1-058')));
  front.players[0].front[0]=leader;
  const foe=stamp(front,pull(front,1,'REZ-1-007'));
  front.players[1].front[0]=foe;
@@ -6155,14 +6179,17 @@ test('Crusch takes one of the top two and adds hand BP only while on the front',
  assert.notEqual(boost.uid,null);
  let emptyFront=six(8625);
  emptyFront=reach(emptyFront,'main');
- const alone=stamp(emptyFront,pull(emptyFront,0,'REZ-1-058'));
+ const aloneCard=pull(emptyFront,0,'REZ-1-058');
+ const lineCard=pull(emptyFront,0,'REZ-1-058');
+ emptyFront.players[0].outside.push(lineCard);
+ const alone=bury(emptyFront,0,stamp(emptyFront,aloneCard));
  emptyFront.players[0].front[0]=alone;
  assert.equal(legalUniversalActions(packs,emptyFront).some(a=>a.mode==='frontOnce'&&a.uid===alone.uid),true);
  emptyFront=act(emptyFront,'activate',{uid:alone.uid,mode:'frontOnce'});
  emptyFront=dispatchUniversalAction(packs,emptyFront,{type:'chooseEitherBuff',uid:alone.uid});
  assert.equal(universalBp(packs,emptyFront,at(emptyFront,0,alone.uid)),5000);
  assert.equal(legalUniversalActions(packs,emptyFront).some(a=>a.mode==='frontOnce'&&a.uid===alone.uid),false);
- const line=stamp(emptyFront,pull(emptyFront,0,'REZ-1-058'));
+ const line=bury(emptyFront,0,stamp(emptyFront,emptyFront.players[0].outside.pop()));
  emptyFront.players[0].energy[0]=line;
  assert.equal(legalUniversalActions(packs,emptyFront).some(a=>a.mode==='frontOnce'&&a.uid===line.uid),false);
 
@@ -6183,11 +6210,12 @@ test('Crusch takes one of the top two and adds hand BP only while on the front',
 
  let energyLine=six(8627);
  energyLine=reach(energyLine,'main');
- const parked=stamp(energyLine,pull(energyLine,0,'REZ-1-058'));
+ const parkedCard=pull(energyLine,0,'REZ-1-058');
  const reader=stamp(energyLine,pull(energyLine,0,'REZ-1-045'));
+ const low=pull(energyLine,0,'REZ-1-076');
+ const parked=bury(energyLine,0,stamp(energyLine,parkedCard));
  energyLine.players[0].energy[0]=parked;
  energyLine.players[0].energy[1]=reader;
- const low=pull(energyLine,0,'REZ-1-076');
  energyLine.players[0].hand.push(low);
  assert.equal(handCharacterBpMayAmount(packs,energyLine,0),0);
  energyLine=act(energyLine,'activate',{uid:reader.uid,mode:'revealBottomBuff'});
@@ -6197,13 +6225,15 @@ test('Crusch takes one of the top two and adds hand BP only while on the front',
 
  let boosted=six(8628);
  boosted=reach(boosted,'main');
- const standing=stamp(boosted,pull(boosted,0,'REZ-1-058'));
- const other=stamp(boosted,pull(boosted,0,'REZ-1-058'));
+ const standingCard=pull(boosted,0,'REZ-1-058');
+ const otherCard=pull(boosted,0,'REZ-1-058');
  const gauge=stamp(boosted,pull(boosted,0,'REZ-1-045'));
+ const card=pull(boosted,0,'REZ-1-076');
+ const standing=bury(boosted,0,stamp(boosted,standingCard));
+ const other=bury(boosted,0,stamp(boosted,otherCard));
  boosted.players[0].front[0]=standing;
  boosted.players[0].energy[0]=gauge;
  boosted.players[0].outside.push(other);
- const card=pull(boosted,0,'REZ-1-076');
  boosted.players[0].hand.push(card);
  assert.equal(handCharacterBpMayAmount(packs,boosted,0),1000);
  let silenced=structuredClone(boosted);
@@ -6243,7 +6273,7 @@ test('Ferris reveals one hand card to the bottom, then takes a blue non-Ferris',
  const event=pull(skipped,0,'REZ-1-109');
  skipped.players[0].hand.push(event);
  let felix;
- [skipped,felix]=playFront(skipped,'REZ-1-044');
+ [skipped,felix]=playFront(skipped,'REZ-1-044',true);
  assert.equal(skipped.pending.kind,'effect-reveal-optional');
  assert.equal(V2_PENDING_LABELS[skipped.pending.kind],'可公開 1 張手牌並放到牌底');
  assert.equal(at(skipped,0,felix.uid).ready,false);
@@ -6265,7 +6295,7 @@ test('Ferris reveals one hand card to the bottom, then takes a blue non-Ferris',
  const otherFelix=pull(searched,0,'REZ-1-044');
  searched.players[0].hand.push(shown);
  searched.players[0].outside.push(theria,rem,yellow,otherFelix);
- [searched,felix]=playFront(searched,'REZ-1-044');
+ [searched,felix]=playFront(searched,'REZ-1-044',true);
  const ferris=searched.players[0].energy[3];
  searched.players[0].energy[3]=null;
  searched.players[0].outside.push(ferris);
@@ -6288,14 +6318,15 @@ test('Ferris reveals one hand card to the bottom, then takes a blue non-Ferris',
  let widened=six(8633);
  fuel(widened,['REZ-1-043','REZ-1-043','REZ-1-043','REZ-1-043']);
  widened=reach(widened,'main');
- const crusch=stamp(widened,pull(widened,0,'REZ-1-058'));
- widened.players[0].front[0]=crusch;
+ const cruschCard=pull(widened,0,'REZ-1-058');
  const beatrice=pull(widened,0,'REZ-1-076');
  const small=pull(widened,0,'REZ-1-036');
  const tall=pull(widened,0,'REZ-1-053');
+ const crusch=bury(widened,0,stamp(widened,cruschCard));
+ widened.players[0].front[0]=crusch;
  widened.players[0].hand.push(beatrice);
  widened.players[0].outside.push(small,tall);
- [widened]=playFront(widened,'REZ-1-044');
+ [widened]=playFront(widened,'REZ-1-044',true);
  widened=dispatchUniversalAction(packs,widened,{type:'chooseRevealOptional',uid:beatrice.uid});
  assert.equal(widened.pending.kind,'effect-referenced-bp');
  assert.equal(widened.pending.amount,1000);
@@ -6310,13 +6341,14 @@ test('Ferris reveals one hand card to the bottom, then takes a blue non-Ferris',
  let narrow=six(8634);
  fuel(narrow,['REZ-1-043','REZ-1-043','REZ-1-043','REZ-1-043']);
  narrow=reach(narrow,'main');
- narrow.players[0].front[0]=stamp(narrow,pull(narrow,0,'REZ-1-058'));
+ const narrowCrusch=pull(narrow,0,'REZ-1-058');
  const tiny=pull(narrow,0,'REZ-1-045');
  const floor=pull(narrow,0,'REZ-1-036');
  const highRem=pull(narrow,0,'REZ-1-053');
+ narrow.players[0].front[0]=bury(narrow,0,stamp(narrow,narrowCrusch));
  narrow.players[0].hand.push(tiny);
  narrow.players[0].outside.push(floor,highRem);
- [narrow]=playFront(narrow,'REZ-1-044');
+ [narrow]=playFront(narrow,'REZ-1-044',true);
  narrow=dispatchUniversalAction(packs,narrow,{type:'chooseRevealOptional',uid:tiny.uid});
  assert.equal(narrow.pending.kind,'effect-referenced-bp');
  assert.equal(narrow.pending.baseBp,1500);
@@ -6330,7 +6362,7 @@ test('Ferris reveals one hand card to the bottom, then takes a blue non-Ferris',
  fuel(bare,['REZ-1-043','REZ-1-043','REZ-1-043','REZ-1-043']);
  bare=reach(bare,'main');
  parkHand(bare);
- [bare]=playFront(bare,'REZ-1-044');
+ [bare]=playFront(bare,'REZ-1-044',true);
  assert.equal(bare.pending,null);
  assert.equal(bare.players[0].hand.length,0);
  assert.equal(assertUniversalMatch(packs,skipped),true);
@@ -6407,6 +6439,7 @@ test('Flugel rests, leaves, then reveals a hand card that can retire a front',()
  scaled.players[1].front[1]=high;
  const emilia=pull(scaled,0,'REZ-1-081');
  scaled.players[0].hand.push(emilia);
+ bury(scaled,0,standing);
  scaled=act(scaled,'activate',{uid:trunk.uid,mode:'restLeaveReveal'});
  scaled=dispatchUniversalAction(packs,scaled,{type:'chooseRevealRetire',uid:emilia.uid});
  assert.equal(scaled.pending.kind,'effect-referenced-bp');
@@ -6619,7 +6652,7 @@ test('Ram substitutes for Rem and lowers every qualifying front line',()=>{
  const small=put(down,1,'REZ-1-037','front',0);
  const mid=put(down,1,'REZ-1-012','front',1);
  const tall=put(down,1,'REZ-1-016','front',2);
- [down]=playFront(down,'REZ-1-011');
+ [down]=playFront(down,'REZ-1-011',true);
  assert.equal(down.pending.kind,'effect-choice-mode');
  assert.equal(legalUniversalActions(packs,down).some(a=>a.mode==='skip'),false);
  assert.equal(chooseUniversalAiAction(packs,down).mode,'allDown');
@@ -6651,6 +6684,7 @@ test('Ram substitutes for Rem and lowers every qualifying front line',()=>{
  let gate=five(8702);
  const gateRam=put(gate,0,'REZ-1-011','front',0);
  const gateRem=put(gate,0,'REZ-1-012','front',1);
+ bury(gate,0,gateRam);
  gate=reach(gate,'attack');
  armLife(gate,1,'REZ-1-031');
  gate=act(gate,'attack',{uid:gateRam.uid});
@@ -6667,6 +6701,8 @@ test('Ram substitutes for Rem and lowers every qualifying front line',()=>{
  const rem=put(swap,0,'REZ-1-012','front',0);
  const ramA=put(swap,0,'REZ-1-011','front',1);
  const ramB=put(swap,0,'REZ-1-011','front',2);
+ bury(swap,0,ramA);
+ bury(swap,0,ramB);
  swap=untilPhase(packs,swap,1,'main');
  assert.equal(universalEnergyByColor(packs,swap,1).yellow,4);
  [swap]=castActive(swap,'REZ-1-031');
@@ -6704,6 +6740,7 @@ test('Ram substitutes for Rem and lowers every qualifying front line',()=>{
  lineEnergy(energyRam,1,ramFuel);
  const energyRem=put(energyRam,0,'REZ-1-012','front',0);
  const parked=put(energyRam,0,'REZ-1-011','energy',0);
+ bury(energyRam,0,parked);
  energyRam=untilPhase(packs,energyRam,1,'main');
  [energyRam]=castActive(energyRam,'REZ-1-031');
  assert.equal(energyRam.pending.limit,3000);
@@ -6716,6 +6753,7 @@ test('Ram substitutes for Rem and lowers every qualifying front line',()=>{
  lineEnergy(quietRam,1,ramFuel);
  const quietRem=put(quietRam,0,'REZ-1-012','front',0);
  const quiet=put(quietRam,0,'REZ-1-011','front',1);
+ bury(quietRam,0,quiet);
  quietRam=untilPhase(packs,quietRam,1,'main');
  silence(quietRam,quiet.uid,1);
  [quietRam]=castActive(quietRam,'REZ-1-031');
@@ -6727,6 +6765,7 @@ test('Ram substitutes for Rem and lowers every qualifying front line',()=>{
  let battle=five(8706);
  const blocker=put(battle,0,'REZ-1-012','front',0);
  const watcher=put(battle,0,'REZ-1-011','front',1);
+ bury(battle,0,watcher);
  const attacker=put(battle,1,'REZ-1-040','front',0);
  battle=untilPhase(packs,battle,1,'attack');
  battle=act(battle,'attack',{uid:attacker.uid});
@@ -6741,6 +6780,7 @@ test('Ram substitutes for Rem and lowers every qualifying front line',()=>{
  let bounced=five(8707);
  const homeRam=put(bounced,0,'REZ-1-011','front',0);
  const homeRem=put(bounced,0,'REZ-1-012','front',1);
+ bury(bounced,0,homeRam);
  bounced=reach(bounced,'attack');
  armLife(bounced,1,'REZ-1-050');
  bounced=act(bounced,'attack',{uid:homeRam.uid});
@@ -6760,6 +6800,7 @@ test('Ram substitutes for Rem and lowers every qualifying front line',()=>{
  lineEnergy(other,1,ramFuel);
  const otherRam=put(other,0,'REZ-1-011','front',0);
  const otherCard=put(other,0,'REZ-1-007','front',1);
+ bury(other,0,otherRam);
  other=untilPhase(packs,other,1,'main');
  [other]=castActive(other,'REZ-1-031');
  assert.equal(other.pending.limit,3000);
@@ -6849,17 +6890,10 @@ test('traitless Rem gains this-turn impact and a sniper that cannot name BP 4000
  [open,played]=playFront(open,'REZ-1-020');
  assert.equal(open.pending,null);
  assert.equal(at(open,0,played.uid).ready,false);
- assert.equal(universalImpact(packs,open,at(open,0,played.uid)),1);
- open=act(open,'activate',{uid:played.uid,mode:'sniperRaidBase'});
  assert.equal(at(open,0,played.uid).stack.length,0);
- assert.equal(at(open,0,played.uid).sniperGranted.maxBp,4000);
- at(open,0,played.uid).ready=true;
- const low=put(open,1,'REZ-1-013','front',0);
- const high=put(open,1,'REZ-1-040','front',1);
- open=reach(open,'attack');
- const aimed=legalUniversalActions(packs,open).filter(a=>a.type==='attack'&&a.uid===played.uid);
- assert.equal(aimed.some(a=>a.targetUid===low.uid),true);
- assert.equal(aimed.some(a=>a.targetUid===high.uid),false);
+ assert.equal(universalImpact(packs,open,at(open,0,played.uid)),0);
+ assert.equal(legalUniversalActions(packs,open).some(a=>a.type==='activate'&&
+  a.mode==='sniperRaidBase'&&a.uid===played.uid),false);
 
  let hidden=five(8715);
  lineEnergy(hidden,0,['REZ-1-016','REZ-1-016','REZ-1-016','REZ-1-101']);

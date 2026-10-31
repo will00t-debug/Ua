@@ -29,6 +29,15 @@ function take(s,p,id){
  }
  throw Error('Missing '+id);
 }
+function bury(s,p,card){
+ if(!card||(card.stack||[]).some(x=>x&&x.faceDown!==true))return card;
+ const deck=s.players[p].deck;
+ if(!deck.length)throw Error('No deck card to place under '+card.cardId);
+ const under=deck.pop();
+ under.faceDown=false;
+ card.stack=[under];
+ return card;
+}
 function put(s,p,id,line,slot,ready=true){
  const card=take(s,p,id);
  card.ready=ready;
@@ -146,7 +155,7 @@ test('Q2116 the second attack of that Claire can be passed',()=>{
  readyAp(s);
  fuel(s);
  put(s,0,'KJN-1-047','front',0);
- const claire=toHand(s,0,'KJN-1-016');
+ const claire=bury(s,0,toHand(s,0,'KJN-1-016'));
  s=play(s,claire.uid);
  const live=s.players[0].front.find(c=>c?.uid===claire.uid);
  const down=take(s,0,'KJN-1-008');
@@ -196,6 +205,7 @@ test('Q2120 from removed still grants BP+1000 without Rose on the field',()=>{
  const miller=put(s,0,'KJN-1-009','front',0,true);
  const spell=take(s,0,'KJN-1-037');
  s.players[0].deck.unshift(spell);
+ bury(s,0,miller);
  s=use(s,{type:'activate',uid:miller.uid,mode:'kjn:0'});
  const removed=s.players[0].removed.find(c=>c.uid===spell.uid);
  assert.equal(removed.kjnRemovedPlay,s.turn);
@@ -271,7 +281,7 @@ test('Q2124 recovery uses printed required energy, so the same number cannot be 
  const fillers=[...Array.from({length:4},()=>take(s,0,'KJN-1-012')),
   ...Array.from({length:3},()=>take(s,0,'KJN-1-001'))];
  s.players[0].outside.push(...low,...fillers,high);
- const shadow=toHand(s,0,'KJN-1-049');
+ const shadow=bury(s,0,toHand(s,0,'KJN-1-049'));
  s=play(s,shadow.uid);
  assert.equal(s.pending.step,'recoverEnergy');
  assert.equal(legalUniversalActions(packs,s).some(a=>a.uid===low[0].uid),true);
@@ -297,6 +307,8 @@ test('Q2125 a raid card does not spend the next non-raid hand discount',()=>{
  const shadow=toHand(s,0,'KJN-1-049');
  const raid=toHand(s,0,'KJN-1-074');
  const plain=toHand(s,0,'KJN-1-065');
+ bury(s,0,shadow);
+ bury(s,0,raid);
  s=play(s,shadow.uid);
  assert.equal(s.pending,null);
  assert.equal(apReady(s),2);
@@ -314,8 +326,8 @@ test('Q2125 a raid card does not spend the next non-raid hand discount',()=>{
 test('Q2126 two raided Alphas share one main activation',()=>{
  const counts=countsFor(['KJN-1-056','KJN-1-012']);
  let s=toPhase(fresh(counts,2126),'main');
- const first=put(s,0,'KJN-1-056','front',0,true);
- const second=put(s,0,'KJN-1-056','front',1,true);
+ const first=bury(s,0,put(s,0,'KJN-1-056','front',0,true));
+ const second=bury(s,0,put(s,0,'KJN-1-056','front',1,true));
  s=use(s,{type:'activate',uid:first.uid,mode:'kjn:0'});
  assert.equal(s.pending,null);
  assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='activate'&&a.uid===second.uid),false);

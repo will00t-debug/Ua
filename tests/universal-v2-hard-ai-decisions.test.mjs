@@ -33,6 +33,15 @@ function take(s,p,id){
  }
  throw Error('Missing '+id);
 }
+function bury(s,p,card){
+ if(!card||(card.stack||[]).some(x=>x&&x.faceDown!==true))return card;
+ const deck=s.players[p].deck;
+ if(!deck.length)throw Error('No deck card to place under '+card.cardId);
+ const under=deck.pop();
+ under.faceDown=false;
+ card.stack=[under];
+ return card;
+}
 function place(s,p,id,line,slot,ready=true){
  const card=take(s,p,id);
  card.ready=ready;
@@ -185,6 +194,7 @@ test('paying 1 AP for Damage 2 is taken when it is lethal, and a buff crosses th
  const discard=take(buff,0,'BLC-4-058');buff.players[0].hand.push(discard);
  assert.deepEqual([universalBp(packs,buff,small),universalBp(packs,buff,mid),universalBp(packs,buff,wall)],
   [1500,2000,2500]);
+ bury(buff,0,source);
  buff=dispatchUniversalAction(packs,buff,legalUniversalActions(packs,buff).find(a=>
   a.type==='activate'&&a.uid===source.uid));
  assert.equal(buff.pending.kind,'effect-discard-gate');

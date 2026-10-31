@@ -115,6 +115,12 @@ function hold(s,p,id){
  s.players[p].hand.push(card);
  return card;
 }
+function bury(s,p,card){
+ if(!card||(card.stack||[]).some(x=>x&&x.faceDown!==true))return card;
+ const deck=s.players[p].deck;
+ if(!deck.length)throw Error('No deck card to place under '+card.cardId);
+ const under=deck.pop(); under.faceDown=false; card.stack=[under]; return card;
+}
 function purpleAsuna(c){
  const d=sao.cards[c.cardId];
  return d.type==='character'&&d.color==='purple'&&d.ap===1&&d.energy<=2&&
@@ -170,6 +176,7 @@ test('SAO-2-054 chooses a draw or a rested purple Asuna, then blocks only above 
  const mito=hold(s,0,'SAO-2-054');
  const low=place(s,1,take(s,1,'SAO-1-001'),'front',0,true);
  const high=place(s,1,take(s,1,'SAO-1-003'),'front',1,true);
+ bury(s,0,mito);
  const played=playFront(packs,s,mito.uid);
  assert.equal(played.pending.kind,'effect-choice-mode');
  aiOk(packs,played);
@@ -212,7 +219,7 @@ test('SAO-2-054 chooses a draw or a rested purple Asuna, then blocks only above 
 
 test('SAO-2-073 rests one green GGO and then buffs another character',()=>{
  const gate=fresh(['SAO-2-073','SAO-1-073'],20730);
- const solo=place(gate.s,0,take(gate.s,0,'SAO-2-073'),'front',0,true);
+ const solo=bury(gate.s,0,place(gate.s,0,take(gate.s,0,'SAO-2-073'),'front',0,true));
  assert.equal(legalUniversalActions(gate.packs,gate.s).some(a=>a.uid===solo.uid&&a.type==='activate'),false);
  place(gate.s,0,take(gate.s,0,'SAO-1-073'),'energy',0,true);
  assert.equal(legalUniversalActions(gate.packs,gate.s)
@@ -224,6 +231,7 @@ test('SAO-2-073 rests one green GGO and then buffs another character',()=>{
  const illegal=hold(s,0,'SAO-1-081');
  s.players[0].deck.unshift(take(s,0,'SAO-1-001'));
  const sinon=hold(s,0,'SAO-2-073');
+ bury(s,0,sinon);
  const deck=s.players[0].deck.length;
  const played=playFront(packs,s,sinon.uid);
  assert.equal(played.players[0].deck.length,deck-1);
@@ -261,7 +269,7 @@ test('SAO-1-104 may swap other characters and double-attacks only while Asuna is
   const front=place(s,0,take(s,0,'SAO-1-001'),'front',1,true);
   const energy=place(s,0,take(s,0,'SAO-1-051'),'energy',2,true);
   const asuna=withAsuna?place(s,0,take(s,0,'SAO-2-040'),'energy',3,false):null;
-  const kirito=hold(s,0,'SAO-1-104');
+  const kirito=bury(s,0,hold(s,0,'SAO-1-104'));
   const played=playFront(packs,s,kirito.uid);
   return {packs,played,front,energy,asuna,kirito};
  }
@@ -344,7 +352,7 @@ test('SAO-2-042 gains BP and impact, then actives a non-Asuna Progressive when t
   const named=place(s,0,take(s,0,'SAO-2-040'),'front',1,false);
   const kirito=place(s,0,take(s,0,'SAO-2-049'),'front',2,true);
   const foe=place(s,1,take(s,1,'SAO-1-001'),'front',0,true);
-  const asuna=hold(s,0,'SAO-2-042');
+  const asuna=bury(s,0,hold(s,0,'SAO-2-042'));
   return {packs,s,generators,named,kirito,foe,asuna};
  }
  const down=board(2042);
@@ -589,6 +597,7 @@ test('SAO-1-018 retires from battle and grants Kirito and Alice BP plus impact n
   const kirito=place(s,0,take(s,0,'SAO-1-001'),'front',1,true);
   const alice=withAlice?place(s,0,take(s,0,'SAO-1-013'),'front',2,true):null;
   const attacker=place(s,1,take(s,1,'SAO-2-049'),'front',0,true);
+  bury(s,0,eugeo);
   let going=reach(packs,s,x=>x.active===1&&x.phase==='attack');
   going=use(packs,going,a=>a.type==='attack'&&a.uid===attacker.uid);
   assert.equal(going.pending.kind,'block');
@@ -619,6 +628,7 @@ test('SAO-1-018 retires from battle and grants Kirito and Alice BP plus impact n
  const none=fresh(ids,2020);
  const eugeo=place(none.s,0,take(none.s,0,'SAO-1-018'),'front',0,true);
  const attacker=place(none.s,1,take(none.s,1,'SAO-2-049'),'front',0,true);
+ bury(none.s,0,eugeo);
  let quiet=reach(none.packs,none.s,x=>x.active===1&&x.phase==='attack');
  quiet=use(none.packs,quiet,a=>a.type==='attack'&&a.uid===attacker.uid);
  quiet=dispatchUniversalAction(none.packs,quiet,{type:'chooseBlock',uid:eugeo.uid});

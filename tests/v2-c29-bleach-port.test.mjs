@@ -344,6 +344,17 @@ function take(s,p,id){
  }
  throw Error('Missing '+id);
 }
+// Q552: box text is live only with a face-up card underneath. Pop the deck
+// bottom so a top-of-deck marker stays put. A later real raid overwrites stack.
+function bury(s,p,card){
+ if(!card||(card.stack||[]).some(x=>x&&x.faceDown!==true))return card;
+ const deck=s.players[p].deck;
+ if(!deck.length)throw Error('No deck card to place under '+card.cardId);
+ const under=deck.pop();
+ under.faceDown=false;
+ card.stack=[under];
+ return card;
+}
 function put(s,p,id,line,index,ready=true){
  assert.equal(s.players[p][line][index],null);
  const c=take(s,p,id);c.ready=ready;c.fieldEntryStamp=s.nextFieldEntryStamp++;
@@ -1659,10 +1670,7 @@ test('BLC-1-004 raids onto Es Nott, has Impact 1, and may rest one front charact
  assert.equal(legalUniversalActions(packs,rested).some(a=>a.type==='activate'&&a.uid===asleep.uid),false);
  const quiet=main(es,29005);
  const lone=put(quiet.s,0,'BLC-1-004','front',0,true);
- const used=dispatchUniversalAction(quiet.packs,quiet.s,legalUniversalActions(quiet.packs,quiet.s).find(a=>a.type==='activate'&&a.uid===lone.uid&&a.mode==='frontOnce'));
- assert.equal(used.pending,null);
- assert.equal(used.players[0].front[0].ready,true);
- assert.equal(legalUniversalActions(quiet.packs,used).some(a=>a.type==='activate'&&a.uid===lone.uid),false);
+ assert.equal(legalUniversalActions(quiet.packs,quiet.s).some(a=>a.type==='activate'&&a.uid===lone.uid),false);
  const raid=main(es,29006);
  put(raid.s,0,'BLC-1-007','energy',0);
  put(raid.s,0,'BLC-1-017','energy',1);
@@ -1682,7 +1690,7 @@ test('BLC-1-004 raids onto Es Nott, has Impact 1, and may rest one front charact
  assert.equal(stacked.players[0].energy[2],null);
  assert.equal(universalImpact(raid.packs,stacked,top),1);
  assert.equal(assertUniversalMatch(packs,rested),true);
- assert.equal(assertUniversalMatch(quiet.packs,used),true);
+ assert.equal(assertUniversalMatch(quiet.packs,quiet.s),true);
  assert.equal(assertUniversalMatch(raid.packs,stacked),true);
 });
 
@@ -8334,8 +8342,8 @@ test('BLC-1-104 removes four outside cards for a draw and Impact 1',()=>{
  }
  const empty=main(deck,29121);
  fuel(empty.s);
- const quiet=put(empty.s,0,'BLC-1-104','front',0,true);
- const lined=put(empty.s,0,'BLC-1-104','front',1,true);
+ const quiet=bury(empty.s,0,put(empty.s,0,'BLC-1-104','front',0,true));
+ const lined=bury(empty.s,0,put(empty.s,0,'BLC-1-104','front',1,true));
  const unused=dispatchUniversalAction(empty.packs,empty.s,{type:'activate',uid:quiet.uid,mode:'oncePay'});
  assert.equal(unused.pending,null);
  assert.equal(unused.mainAbilityUsedUids.includes(quiet.uid),true);
@@ -8345,12 +8353,12 @@ test('BLC-1-104 removes four outside cards for a draw and Impact 1',()=>{
  const energyBoard=main(deck,29126);
  for(const [i,id] of ['BLC-1-041','BLC-1-103','BLC-1-108'].entries())
   put(energyBoard.s,0,id,'energy',i);
- const energyCopy=put(energyBoard.s,0,'BLC-1-104','energy',3,true);
+ const energyCopy=bury(energyBoard.s,0,put(energyBoard.s,0,'BLC-1-104','energy',3,true));
  assert.equal(legalUniversalActions(energyBoard.packs,energyBoard.s).some(a=>a.type==='activate'&&a.uid===energyCopy.uid&&a.mode==='oncePay'),true);
  const short=main(deck,29122);
  fuel(short.s);
- const self=put(short.s,0,'BLC-1-104','front',0,true);
- const other=put(short.s,0,'BLC-1-104','front',1,true);
+ const self=bury(short.s,0,put(short.s,0,'BLC-1-104','front',0,true));
+ const other=bury(short.s,0,put(short.s,0,'BLC-1-104','front',1,true));
  const three=[];
  for(let n=0;n<3;n++)three.push(take(short.s,0,'BLC-1-035'));
  short.s.players[0].outside.push(...three);
@@ -8378,7 +8386,7 @@ test('BLC-1-104 removes four outside cards for a draw and Impact 1',()=>{
  assert.equal(legalUniversalActions(short.packs,cleared).some(a=>a.type==='activate'&&a.uid===other.uid&&a.mode==='oncePay'),true);
  const full=main(deck,29123);
  fuel(full.s);
- const ichigo=put(full.s,0,'BLC-1-104','front',0,true);
+ const ichigo=bury(full.s,0,put(full.s,0,'BLC-1-104','front',0,true));
  const four=[];
  for(let n=0;n<4;n++)four.push(take(full.s,0,'BLC-1-039'));
  full.s.players[0].outside.push(...four);
@@ -8467,7 +8475,7 @@ test('BLC-1-014 retires one opposing front REST character only on its own turn',
  const rested=put(board.s,1,'BLC-1-016','front',0,false);
  const awake=put(board.s,1,'BLC-1-018','front',1,true);
  const parked=put(board.s,1,'BLC-1-001','energy',0,false);
- const bambi=take(board.s,0,'BLC-1-014');
+ const bambi=bury(board.s,0,take(board.s,0,'BLC-1-014'));
  board.s.players[0].hand.push(bambi);
  assert.ok(universalEnergyByColor(board.packs,board.s,0).yellow>=4);
  const played=dispatchUniversalAction(board.packs,board.s,{type:'play',uid:bambi.uid,line:'front',slot:0});
@@ -8488,7 +8496,7 @@ test('BLC-1-014 retires one opposing front REST character only on its own turn',
  fuel(again.s);
  const victim=put(again.s,1,'BLC-1-016','front',0,false);
  put(again.s,1,'BLC-1-018','front',1,true);
- const rider=take(again.s,0,'BLC-1-014');
+ const rider=bury(again.s,0,take(again.s,0,'BLC-1-014'));
  again.s.players[0].hand.push(rider);
  let retiring=dispatchUniversalAction(again.packs,again.s,{type:'play',uid:rider.uid,line:'front',slot:0});
  retiring=dispatchUniversalAction(again.packs,retiring,{type:'chooseRetireBp',uid:victim.uid});
@@ -8600,6 +8608,7 @@ test('BLC-1-020 draws at attack end only after an opposing trigger activates',()
   board.s.players[0].hand.push(held);
   sizeHand(board.s,0,7,held.uid);
   sizeHand(board.s,1,oppHand);
+  bury(board.s,0,held);
   assert.ok(universalEnergyByColor(board.packs,board.s,0).yellow>=5);
   const played=dispatchUniversalAction(board.packs,board.s,{type:'play',uid:held.uid,line:'front',slot:0});
   return {board,held,played};
@@ -8627,7 +8636,7 @@ test('BLC-1-020 draws at attack end only after an opposing trigger activates',()
  }
  const fewer=playCase(29141,7);
  assert.equal(live(fewer.played,0,fewer.held.uid).ready,false);
- assert.equal(universalImpact(fewer.board.packs,fewer.played,live(fewer.played,0,fewer.held.uid)),0);
+ assert.equal(universalImpact(fewer.board.packs,fewer.played,live(fewer.played,0,fewer.held.uid)),1);
  assert.equal(fewer.played.pending.kind,'effect-discard');
  assert.equal(fewer.played.pending.player,1);
  const fewerChoices=legalUniversalActions(fewer.board.packs,fewer.played);
@@ -8699,7 +8708,7 @@ test('BLC-1-020 draws at attack end only after an opposing trigger activates',()
  assert.equal(skippedMatch.players[0].deck.length,skippedDeck);
  const doubled=playCase(29147,7);
  let doubledMatch=discardOne(doubled.board.packs,doubled.played,1);
- const second=put(doubledMatch,0,'BLC-1-020','front',2,true);
+ const second=bury(doubledMatch,0,put(doubledMatch,0,'BLC-1-020','front',2,true));
  setLifeTop(doubledMatch,1,'BLC-1-032');
  const doubledAttacker=put(doubledMatch,0,'BLC-1-016','front',1,true);
  doubledMatch=connect(doubled.board.packs,doubledMatch,doubledAttacker);
@@ -8739,7 +8748,7 @@ test('BLC-1-020 draws at attack end only after an opposing trigger activates',()
  assert.equal(retiredMatch.players[0].hand.length,retiredHand);
  assert.equal(retiredMatch.players[0].deck.length,retiredDeck);
  const lined=main(deck,29149);
- const linedCopy=put(lined.s,0,'BLC-1-020','energy',0,true);
+ const linedCopy=bury(lined.s,0,put(lined.s,0,'BLC-1-020','energy',0,true));
  const linedAttacker=put(lined.s,0,'BLC-1-016','front',0,true);
  setLifeTop(lined.s,1,'BLC-1-032');
  let linedMatch=connect(lined.packs,lined.s,linedAttacker);
@@ -8846,6 +8855,7 @@ test('BLC-1-050 removes outside cards for a front cut and Impact 1',()=>{
   return {board,held};
  }
  function enter(board,held){
+  bury(board.s,0,held);
   return dispatchUniversalAction(board.packs,board.s,{type:'play',uid:held.uid,line:'front',slot:0});
  }
  const cut=ready(29161);
@@ -8899,7 +8909,7 @@ test('BLC-1-050 removes outside cards for a front cut and Impact 1',()=>{
  grantContinuousState(maining,{kind:'originalEffectsDisabled',controller:1,sourceUid:paid.held.uid,
   targetUid:paid.held.uid,sourceLinked:false,until:{player:0,phase:'main',edge:'end'}});
  assert.equal(universalImpact(paid.board.packs,maining,live(maining,0,paid.held.uid)),1);
- const other=put(maining,0,'BLC-1-050','front',1,true);
+ const other=bury(maining,0,put(maining,0,'BLC-1-050','front',1,true));
  outs(maining,3,'BLC-1-039');
  const again=dispatchUniversalAction(paid.board.packs,maining,{type:'activate',uid:other.uid,mode:'oncePay'});
  assert.equal(again.pending.kind,'effect-remove-outside');
@@ -9755,7 +9765,7 @@ test('BLC-2-013 protects one field Ichigo after a blue Ichigo puts her outside',
  assert.equal(s.players[0].outside.some(c=>c.uid===opened.orihime.uid),true);
  const special=take(s,1,'BLC-2-046');
  s.players[1].life.unshift(special);
- put(s,1,'BLC-1-004','front',0,true);
+ bury(s,1,put(s,1,'BLC-1-004','front',0,true));
  put(s,1,'BLC-2-003','energy',0);
  put(s,1,'BLC-2-003','energy',1);
  const jail=hold(s,1,'BLC-1-030');
@@ -9985,7 +9995,7 @@ test('BLC-2-034 rests one front character and locks ACTIVE only while it stays o
  fuel(board.s);readyAp(board.s,2);
  put(board.s,0,'BLC-2-030','front',0,true);
  const foe=put(board.s,1,'BLC-2-016','front',0,true);
- const rukia=hold(board.s,0,'BLC-2-034');
+ const rukia=bury(board.s,0,hold(board.s,0,'BLC-2-034'));
  let s=dispatchUniversalAction(board.packs,board.s,{type:'play',uid:rukia.uid,line:'front',slot:1});
  assert.equal(s.pending.kind,'effect-rest-ap-lock');
  assert.equal(s.pending.choices.includes(foe.uid),true);
@@ -10032,7 +10042,7 @@ test('BLC-2-034 rests one front character and locks ACTIVE only while it stays o
  put(short.s,0,'BLC-2-030','energy',3,true);
  put(short.s,0,'BLC-2-016','front',0,true);
  const shortFoe=put(short.s,1,'BLC-2-016','front',0,true);
- const shortCard=hold(short.s,0,'BLC-2-034');
+ const shortCard=bury(short.s,0,hold(short.s,0,'BLC-2-034'));
  let plain=dispatchUniversalAction(short.packs,short.s,{type:'play',uid:shortCard.uid,line:'front',slot:1});
  assert.equal(plain.pending.kind,'effect-rest-ap-lock');
  plain=dispatchUniversalAction(short.packs,plain,{type:'chooseRestApLock',uid:shortFoe.uid});
@@ -10042,7 +10052,7 @@ test('BLC-2-034 rests one front character and locks ACTIVE only while it stays o
  fuel(declined.s);readyAp(declined.s,2);
  put(declined.s,0,'BLC-2-030','front',0,true);
  const declineFoe=put(declined.s,1,'BLC-2-016','front',0,true);
- const declineCard=hold(declined.s,0,'BLC-2-034');
+ const declineCard=bury(declined.s,0,hold(declined.s,0,'BLC-2-034'));
  let skip=dispatchUniversalAction(declined.packs,declined.s,{type:'play',uid:declineCard.uid,line:'front',slot:1});
  skip=dispatchUniversalAction(declined.packs,skip,{type:'chooseRestApLock',uid:null});
  assert.equal(skip.players[1].front.find(c=>c?.uid===declineFoe.uid).ready,true);
@@ -10304,7 +10314,7 @@ test('BLC-2-038 grants Impact to Nem or the squad and REST-plays one from outsid
  const dual=put(declined.s,0,'BLC-2-043','front',0);
  const named=put(declined.s,0,'BLC-4-040','front',1);
  const otherMayuri=put(declined.s,0,'BLC-2-036','front',2);
- const handCard=hold(declined.s,0,'BLC-2-038');
+ const handCard=bury(declined.s,0,hold(declined.s,0,'BLC-2-038'));
  assert.equal(universalEnergyByColor(declined.packs,declined.s,0).blue,4);
  let skip=dispatchUniversalAction(declined.packs,declined.s,{type:'play',uid:handCard.uid,line:'front',slot:3});
  assert.equal(skip.pending.kind,'effect-name-or-trait-impact');
@@ -10327,7 +10337,7 @@ test('BLC-2-038 grants Impact to Nem or the squad and REST-plays one from outsid
  put(granted.s,0,'BLC-2-044','energy',3);
  put(granted.s,0,'BLC-2-043','front',0);
  put(granted.s,0,'BLC-4-040','front',1);
- const actor=hold(granted.s,0,'BLC-2-038');
+ const actor=bury(granted.s,0,hold(granted.s,0,'BLC-2-038'));
  let buffed=dispatchUniversalAction(granted.packs,granted.s,{type:'play',uid:actor.uid,line:'front',slot:2});
  assert.equal(buffed.pending.choices.includes(actor.uid),false);
  aiOk(granted.packs,buffed);
@@ -10346,13 +10356,13 @@ test('BLC-2-038 grants Impact to Nem or the squad and REST-plays one from outsid
  fuel(quiet.s,3);
  put(quiet.s,0,'BLC-2-044','energy',3);
  put(quiet.s,0,'BLC-2-036','front',0);
- const bare=hold(quiet.s,0,'BLC-2-038');
+ const bare=bury(quiet.s,0,hold(quiet.s,0,'BLC-2-038'));
  const none=dispatchUniversalAction(quiet.packs,quiet.s,{type:'play',uid:bare.uid,line:'front',slot:1});
  assert.equal(none.pending,null);
  assert.equal(none.players[0].front[1].uid,bare.uid);
  assert.equal(none.players[0].front[1].ready,false);
  const gate=main(deck,29744);
- const mayuri=put(gate.s,0,'BLC-2-038','front',0);
+ const mayuri=bury(gate.s,0,put(gate.s,0,'BLC-2-038','front',0));
  const nem=put(gate.s,0,'BLC-2-035','front',1);
  const squad=put(gate.s,0,'BLC-2-041','front',2);
  const outsideNem=park(gate.s,'BLC-2-035');
@@ -10392,11 +10402,11 @@ test('BLC-2-038 grants Impact to Nem or the squad and REST-plays one from outsid
  assert.ok(entered);
  assert.equal(entered.ready,false);
  assert.equal(bleach.cards[entered.cardId].energy,3);
- const copy=put(opened,0,'BLC-2-038','front',3);
+ const copy=bury(opened,0,put(opened,0,'BLC-2-038','front',3));
  assert.equal(legalUniversalActions(gate.packs,opened).some(a=>a.type==='activate'&&a.uid===mayuri.uid),false);
  assert.ok(legalUniversalActions(gate.packs,opened).some(a=>a.type==='activate'&&a.uid===copy.uid&&a.mode==='oncePay'));
  const lined=main(deck,29745);
- const energyCopy=put(lined.s,0,'BLC-2-038','energy',0);
+ const energyCopy=bury(lined.s,0,put(lined.s,0,'BLC-2-038','energy',0));
  const lineNem=put(lined.s,0,'BLC-2-035','front',0);
  const lineSquad=put(lined.s,0,'BLC-2-041','front',1);
  park(lined.s,'BLC-2-035');
@@ -10404,7 +10414,7 @@ test('BLC-2-038 grants Impact to Nem or the squad and REST-plays one from outsid
  assert.equal(legalUniversalActions(lined.packs,linedState).some(a=>a.type==='activate'&&a.uid===energyCopy.uid),false);
  assert.throws(()=>dispatchUniversalAction(lined.packs,linedState,{type:'activate',uid:energyCopy.uid,mode:'oncePay'}),/Action not currently legal/);
  const silenced=main(deck,29746);
- const gated=put(silenced.s,0,'BLC-2-038','front',0);
+ const gated=bury(silenced.s,0,put(silenced.s,0,'BLC-2-038','front',0));
  const silentNem=put(silenced.s,0,'BLC-2-035','front',1);
  const silentSquad=put(silenced.s,0,'BLC-2-041','front',2);
  park(silenced.s,'BLC-2-041');
@@ -10414,7 +10424,7 @@ test('BLC-2-038 grants Impact to Nem or the squad and REST-plays one from outsid
  assert.equal(legalUniversalActions(silenced.packs,silent).some(a=>a.type==='activate'&&a.uid===gated.uid),false);
  assert.equal(silent.mainAbilityUsedUids.includes(gated.uid),false);
  const emptyOutside=main(deck,29747);
- const waiting=put(emptyOutside.s,0,'BLC-2-038','front',0);
+ const waiting=bury(emptyOutside.s,0,put(emptyOutside.s,0,'BLC-2-038','front',0));
  const emptyNem=put(emptyOutside.s,0,'BLC-2-035','front',1);
  const emptySquad=put(emptyOutside.s,0,'BLC-2-041','front',2);
  let hidden=retireSquad(emptyOutside.packs,emptyOutside.s,emptyNem.uid,emptySquad.uid);
@@ -10462,7 +10472,7 @@ test('BLC-2-057 removes any number of hand Zero Squad cards and raises the retir
  function play(board){
   fuel(board.s);
   clearTrait(board.s);
-  const actor=hold(board.s,0,'BLC-2-057');
+  const actor=bury(board.s,0,hold(board.s,0,'BLC-2-057'));
   assert.equal(universalEnergyByColor(board.packs,board.s,0).purple,4);
   const entered=dispatchUniversalAction(board.packs,board.s,{type:'play',uid:actor.uid,line:'front',slot:0});
   return {actor,entered};
@@ -10495,7 +10505,7 @@ test('BLC-2-057 removes any number of hand Zero Squad cards and raises the retir
  const squad=hold(one.s,0,'BLC-2-058');
  const otherSquad=hold(one.s,0,'BLC-2-059');
  const plain=hold(one.s,0,'BLC-1-035');
- const actor=hold(one.s,0,'BLC-2-057');
+ const actor=bury(one.s,0,hold(one.s,0,'BLC-2-057'));
  let scaled=dispatchUniversalAction(one.packs,one.s,{type:'play',uid:actor.uid,line:'front',slot:0});
  assert.equal(scaled.pending.kind,'effect-remove-hand-scale');
  assert.equal(V2_PENDING_LABELS[scaled.pending.kind],'可將任意張手牌中具有指定特徵的卡除外，再依張數提高敵方前線退場的 BP 上限');
@@ -10530,7 +10540,7 @@ test('BLC-2-057 removes any number of hand Zero Squad cards and raises the retir
  fuel(two.s);clearTrait(two.s);
  const first=hold(two.s,0,'BLC-2-058');
  const second=hold(two.s,0,'BLC-2-059');
- const closer=hold(two.s,0,'BLC-2-057');
+ const closer=bury(two.s,0,hold(two.s,0,'BLC-2-057'));
  let raised=dispatchUniversalAction(two.packs,two.s,{type:'play',uid:closer.uid,line:'front',slot:0});
  raised=dispatchUniversalAction(two.packs,raised,{type:'chooseRemoveHandScale',mode:'pick',uid:first.uid});
  raised=dispatchUniversalAction(two.packs,raised,{type:'chooseRemoveHandScale',mode:'pick',uid:second.uid});
@@ -11641,8 +11651,7 @@ test('BLC-4-012 raises other required energy in raid and may draw on another ret
   a.uid===sitting.uid&&a.line==='front'&&a.slot===0&&a.replaceUid===undefined);
  assert.ok(play);
  let plainEntry=dispatchUniversalAction(barePlay.packs,barePlay.s,play);
- assert.equal(plainEntry.pending.kind,'effect-hand-rest');
- plainEntry=dispatchUniversalAction(barePlay.packs,plainEntry,{type:'chooseHandRest',uid:null});
+ assert.equal(plainEntry.pending,null);
  const neighbor=put(plainEntry,0,'BLC-1-002','front',1,true);
  assert.equal((plainEntry.players[0].front.find(c=>c?.uid===sitting.uid).stack||[]).length,0);
  assert.equal(effectiveRequiredEnergy(barePlay.packs,plainEntry,neighbor),0);
@@ -12869,7 +12878,7 @@ test('BLC-4-053 sets ACTIVE after an attacking win and gains Damage 2',()=>{
  const asked=secondMain(29967);
  fuel(asked.s);
  const foe=put(asked.s,1,'BLC-1-043','front',0,true);
- const actor=hold(asked.s,0,'BLC-4-053');
+ const actor=bury(asked.s,0,hold(asked.s,0,'BLC-4-053'));
  const play=legalUniversalActions(asked.packs,asked.s).find(a=>a.type==='play'&&
   a.uid===actor.uid&&a.line==='front'&&a.slot===0);
  const opened=dispatchUniversalAction(asked.packs,asked.s,play);
@@ -12893,7 +12902,7 @@ test('BLC-4-053 sets ACTIVE after an attacking win and gains Damage 2',()=>{
  put(lined.s,0,'BLC-1-043','energy',2);
  assert.equal(universalEnergyByColor(lined.packs,lined.s,0).purple>=4,true);
  const marked=put(lined.s,1,'BLC-1-107','front',0,true);
- const energyCopy=hold(lined.s,0,'BLC-4-053');
+ const energyCopy=bury(lined.s,0,hold(lined.s,0,'BLC-4-053'));
  const energyPlay=legalUniversalActions(lined.packs,lined.s).find(a=>a.type==='play'&&
   a.uid===energyCopy.uid&&a.line==='energy'&&a.slot===3);
  assert.ok(energyPlay);
@@ -12904,8 +12913,8 @@ test('BLC-4-053 sets ACTIVE after an attacking win and gains Damage 2',()=>{
  assert.equal(live(energyCut,0,energyCopy.uid).ready,false);
  assert.equal(universalBp(lined.packs,energyCut,live(energyCut,1,marked.uid)),1000);
  const struck=secondMain(29969);
- const first=put(struck.s,0,'BLC-4-053','front',0,true);
- const second=put(struck.s,0,'BLC-4-053','front',1,true);
+ const first=bury(struck.s,0,put(struck.s,0,'BLC-4-053','front',0,true));
+ const second=bury(struck.s,0,put(struck.s,0,'BLC-4-053','front',1,true));
  const lowA=put(struck.s,1,'BLC-1-043','front',0,true);
  const lowB=put(struck.s,1,'BLC-1-107','front',1,true);
  const lowC=put(struck.s,1,'BLC-1-048','front',2,true);
@@ -12913,7 +12922,7 @@ test('BLC-4-053 sets ACTIVE after an attacking win and gains Damage 2',()=>{
  const ground=put(struck.s,1,'BLC-1-061','energy',1,true);
  for(const c of [lowA,lowB,lowC])c.buffs.push({bp:-1000,untilTurn:struck.s.turn});
  aside.buffs.push({bp:-500,untilTurn:struck.s.turn});
- assert.equal((first.stack||[]).length,0);
+ assert.equal((first.stack||[]).length,1);
  assert.equal(universalAttackDamage(struck.packs,struck.s,first),2);
  assert.equal(universalBp(struck.packs,struck.s,lowA),1000);
  assert.equal(universalBp(struck.packs,struck.s,aside),500);
@@ -12945,7 +12954,7 @@ test('BLC-4-053 sets ACTIVE after an attacking win and gains Damage 2',()=>{
  assert.equal(battle.players[1].life.length,lives-2);
  assert.ok(battle.players[1].outside.some(c=>c.uid===lowA.uid));
  const short=secondMain(29970);
- const partial=put(short.s,0,'BLC-4-053','front',0,true);
+ const partial=bury(short.s,0,put(short.s,0,'BLC-4-053','front',0,true));
  const one=put(short.s,1,'BLC-1-043','front',0,true);
  const two=put(short.s,1,'BLC-1-107','front',1,true);
  const full=put(short.s,1,'BLC-1-048','front',2,true);
@@ -12957,7 +12966,7 @@ test('BLC-4-053 sets ACTIVE after an attacking win and gains Damage 2',()=>{
  assert.equal(universalAttackDamage(short.packs,short.s,partial),1);
  assert.equal(universalBp(short.packs,short.s,full),2500);
  const later=secondMain(29971);
- const waiting=put(later.s,0,'BLC-4-053','front',0,true);
+ const waiting=bury(later.s,0,put(later.s,0,'BLC-4-053','front',0,true));
  const future=[
   put(later.s,1,'BLC-1-043','front',0,true),
   put(later.s,1,'BLC-1-107','front',1,true),
@@ -12970,8 +12979,8 @@ test('BLC-4-053 sets ACTIVE after an attacking win and gains Damage 2',()=>{
  assert.equal(universalBp(later.packs,theirTurn,live(theirTurn,1,future[0].uid)),1000);
  assert.equal(universalAttackDamage(later.packs,theirTurn,live(theirTurn,0,waiting.uid)),1);
  const hushed=secondMain(29972);
- const muted=put(hushed.s,0,'BLC-4-053','front',0,true);
- const other=put(hushed.s,0,'BLC-4-053','front',1,true);
+ const muted=bury(hushed.s,0,put(hushed.s,0,'BLC-4-053','front',0,true));
+ const other=bury(hushed.s,0,put(hushed.s,0,'BLC-4-053','front',1,true));
  const mutedFoe=put(hushed.s,1,'BLC-1-043','front',0,true);
  const otherFoe=put(hushed.s,1,'BLC-1-107','front',1,true);
  const thirdFoe=put(hushed.s,1,'BLC-1-048','front',2,true);
@@ -12992,8 +13001,8 @@ test('BLC-4-053 sets ACTIVE after an attacking win and gains Damage 2',()=>{
  assert.equal(live(quietBattle,0,other.uid).ready,true);
  assert.equal(once(quietBattle),true);
  const lost=secondMain(29973);
- const loser=put(lost.s,0,'BLC-4-053','front',0,true);
- const survivor=put(lost.s,0,'BLC-4-053','front',1,true);
+ const loser=bury(lost.s,0,put(lost.s,0,'BLC-4-053','front',0,true));
+ const survivor=bury(lost.s,0,put(lost.s,0,'BLC-4-053','front',1,true));
  const wall=put(lost.s,1,'BLC-1-041','front',0,true);
  const equal=put(lost.s,1,'BLC-1-041','front',1,true);
  wall.buffs.push({bp:1000,untilTurn:lost.s.turn});
@@ -13163,7 +13172,7 @@ test('BLC-4-033 actives another traitless character and may REST its raid base',
  const asked=main(deck,29976);
  const board=traitBoard(asked.s);
  assert.equal(universalEnergyByColor(asked.packs,asked.s,0).blue>=4,true);
- const actor=hold(asked.s,0,'BLC-4-033');
+ const actor=bury(asked.s,0,hold(asked.s,0,'BLC-4-033'));
  let askedPlay=dispatchUniversalAction(asked.packs,asked.s,{type:'play',uid:actor.uid,line:'front',slot:0});
  assert.equal(askedPlay.pending.kind,'effect-active-traitless');
  assert.equal(askedPlay.players[0].front[0].ready,false);
@@ -13192,7 +13201,7 @@ test('BLC-4-033 actives another traitless character and may REST its raid base',
  assert.equal(live(skipped,0,actor.uid).ready,false);
  const chosen=main(deck,29977);
  const chosenBoard=traitBoard(chosen.s);
- const chosenCard=hold(chosen.s,0,'BLC-4-033');
+ const chosenCard=bury(chosen.s,0,hold(chosen.s,0,'BLC-4-033'));
  let chosenPlay=dispatchUniversalAction(chosen.packs,chosen.s,{type:'play',uid:chosenCard.uid,line:'front',slot:0});
  chosenPlay=dispatchUniversalAction(chosen.packs,chosenPlay,{type:'chooseActiveTraitless',uid:chosenBoard.frontless.uid});
  assert.equal(chosenPlay.pending,null);
@@ -13200,14 +13209,14 @@ test('BLC-4-033 actives another traitless character and may REST its raid base',
  assert.equal(live(chosenPlay,0,chosenBoard.restEnergy.uid).ready,false);
  const stood=main(deck,29978);
  const stoodBoard=traitBoard(stood.s);
- const stoodCard=hold(stood.s,0,'BLC-4-033');
+ const stoodCard=bury(stood.s,0,hold(stood.s,0,'BLC-4-033'));
  let stoodPlay=dispatchUniversalAction(stood.packs,stood.s,{type:'play',uid:stoodCard.uid,line:'front',slot:0});
  stoodPlay=dispatchUniversalAction(stood.packs,stoodPlay,{type:'chooseActiveTraitless',uid:stoodBoard.activeEnergy.uid});
  assert.equal(live(stoodPlay,0,stoodBoard.activeEnergy.uid).ready,true);
  assert.equal(live(stoodPlay,0,stoodBoard.frontless.uid).ready,false);
  const hushed=main(deck,29979);
  const hushedBoard=traitBoard(hushed.s);
- const hushedCard=hold(hushed.s,0,'BLC-4-033');
+ const hushedCard=bury(hushed.s,0,hold(hushed.s,0,'BLC-4-033'));
  let hushedPlay=dispatchUniversalAction(hushed.packs,hushed.s,{type:'play',uid:hushedCard.uid,line:'front',slot:0});
  grantContinuousState(hushedPlay,{kind:'originalEffectsDisabled',controller:1,
   sourceUid:hushedCard.uid,targetUid:hushedCard.uid,sourceLinked:false,
@@ -13221,7 +13230,7 @@ test('BLC-4-033 actives another traitless character and may REST its raid base',
  const linedTraitless=put(lined.s,0,'BLC-4-031','energy',1,true);
  put(lined.s,0,'BLC-2-040','energy',2,true);
  const linedTraited=put(lined.s,0,'BLC-4-041','front',0,true);
- const linedCard=hold(lined.s,0,'BLC-4-033');
+ const linedCard=bury(lined.s,0,hold(lined.s,0,'BLC-4-033'));
  let linedPlay=dispatchUniversalAction(lined.packs,lined.s,{type:'play',uid:linedCard.uid,line:'energy',slot:3});
  assert.equal(linedPlay.pending.kind,'effect-active-traitless');
  assert.equal(linedPlay.players[0].energy[3].ready,false);
@@ -13399,6 +13408,7 @@ test('BLC-4-075 stays off the front, draws, and actives another Gotei character'
  const rider=hold(played.s,0,'BLC-4-075');
  assert.equal(legalUniversalActions(played.packs,played.s).some(a=>a.type==='play'&&a.uid===rider.uid&&a.line==='front'),false);
  const marker=setTop(played.s,0,['BLC-4-061'])[0];
+ bury(played.s,0,rider);
  const before=played.s.players[0].hand.length;
  let entered=dispatchUniversalAction(played.packs,played.s,{type:'play',uid:rider.uid,line:'energy',slot:3});
  assert.equal(entered.pending,null);
@@ -13415,7 +13425,7 @@ test('BLC-4-075 stays off the front, draws, and actives another Gotei character'
  fuel(asked.s,3);
  const squad=put(asked.s,0,'BLC-4-064','front',0,false);
  const other=put(asked.s,0,'BLC-4-061','front',1,false);
- const actor=hold(asked.s,0,'BLC-4-075');
+ const actor=bury(asked.s,0,hold(asked.s,0,'BLC-4-075'));
  let askedPlay=dispatchUniversalAction(asked.packs,asked.s,{type:'play',uid:actor.uid,line:'energy',slot:3});
  const act=legalUniversalActions(asked.packs,askedPlay).find(a=>a.type==='activate'&&a.uid===actor.uid);
  assert.ok(act);
@@ -13444,25 +13454,25 @@ test('BLC-4-075 stays off the front, draws, and actives another Gotei character'
  const chosen=main(deck,30012);
  fuel(chosen.s,3);
  const resting=put(chosen.s,0,'BLC-4-064','front',0,false);
- const chosenCard=hold(chosen.s,0,'BLC-4-075');
+ const chosenCard=bury(chosen.s,0,hold(chosen.s,0,'BLC-4-075'));
  let chosenPlay=dispatchUniversalAction(chosen.packs,chosen.s,{type:'play',uid:chosenCard.uid,line:'energy',slot:3});
  chosenPlay=dispatchUniversalAction(chosen.packs,chosenPlay,legalUniversalActions(chosen.packs,chosenPlay).find(a=>a.type==='activate'&&a.uid===chosenCard.uid));
  chosenPlay=dispatchUniversalAction(chosen.packs,chosenPlay,{type:'chooseActiveOtherTrait',uid:resting.uid});
  assert.equal(live(chosenPlay,0,resting.uid).ready,true);
  const quiet=main(deck,30013);
  for(let i=0;i<3;i++)put(quiet.s,0,'BLC-4-061','energy',i,true);
- const quietCard=hold(quiet.s,0,'BLC-4-075');
+ const quietCard=bury(quiet.s,0,hold(quiet.s,0,'BLC-4-075'));
  let quietPlay=dispatchUniversalAction(quiet.packs,quiet.s,{type:'play',uid:quietCard.uid,line:'energy',slot:3});
  assert.equal(legalUniversalActions(quiet.packs,quietPlay).some(a=>a.type==='activate'&&a.uid===quietCard.uid),false);
  const parked=main(deck,30014);
  fuel(parked.s,3);
- const parkedCard=put(parked.s,0,'BLC-4-075','energy',3,false);
+ const parkedCard=bury(parked.s,0,put(parked.s,0,'BLC-4-075','energy',3,false));
  put(parked.s,0,'BLC-4-064','front',0,false);
  assert.equal(legalUniversalActions(parked.packs,parked.s).some(a=>a.type==='activate'&&a.uid===parkedCard.uid),false);
  const hushed=main(deck,30015);
  fuel(hushed.s,3);
  put(hushed.s,0,'BLC-4-064','front',0,false);
- const hushedCard=hold(hushed.s,0,'BLC-4-075');
+ const hushedCard=bury(hushed.s,0,hold(hushed.s,0,'BLC-4-075'));
  let hushedPlay=dispatchUniversalAction(hushed.packs,hushed.s,{type:'play',uid:hushedCard.uid,line:'energy',slot:3});
  grantContinuousState(hushedPlay,{kind:'originalEffectsDisabled',controller:1,
   sourceUid:hushedCard.uid,targetUid:hushedCard.uid,sourceLinked:false,
@@ -13471,7 +13481,7 @@ test('BLC-4-075 stays off the front, draws, and actives another Gotei character'
  const later=main(deck,30016);
  fuel(later.s,3);
  put(later.s,0,'BLC-4-064','front',0,false);
- const laterCard=hold(later.s,0,'BLC-4-075');
+ const laterCard=bury(later.s,0,hold(later.s,0,'BLC-4-075'));
  let laterPlay=dispatchUniversalAction(later.packs,later.s,{type:'play',uid:laterCard.uid,line:'energy',slot:3});
  const openedTurn=laterPlay.turn;
  for(let n=0;n<40&&!(laterPlay.turn>openedTurn&&laterPlay.active===0&&laterPlay.phase==='main'&&!laterPlay.pending);n++){
@@ -13565,6 +13575,7 @@ test('BLC-2-065 strips its raid top, ignores opponent REST and bounce, and still
  put(played.s,0,'BLC-1-078','energy',1,true);
  const rider=hold(played.s,0,'BLC-2-065');
  const markers=setTop(played.s,0,['BLC-1-078','BLC-1-078']);
+ bury(played.s,0,rider);
  const before=played.s.players[0].hand.length;
  let entered=dispatchUniversalAction(played.packs,played.s,{type:'play',uid:rider.uid,line:'front',slot:0});
  assert.equal(entered.pending,null);
@@ -13618,6 +13629,9 @@ test('BLC-2-065 strips its raid top, ignores opponent REST and bounce, and still
  assert.equal(live(sealed,0,hushedCard.uid).stack[0].uid,hushedBase.uid);
  const frozen=main(deck,30024);
  const wall=put(frozen.s,0,'BLC-2-065','front',0,true);
+ const wallUnder=take(frozen.s,0,'BLC-2-065');
+ wallUnder.faceDown=false;
+ wall.stack=[wallUnder];
  const striker=put(frozen.s,0,'BLC-1-067','front',1,true);
  const life=take(frozen.s,1,'BLC-1-003');
  const buried=frozen.s.players[1].life[0];
@@ -13642,7 +13656,7 @@ test('BLC-2-065 strips its raid top, ignores opponent REST and bounce, and still
  assert.equal(universalPublicView(frozen.packs,revealed,1).players[0].front.find(c=>c.uid===wall.uid).restrictions
   .some(r=>r.kind==='skipNextActive'),false);
  const bounced=main(deck,30025);
- const victim=put(bounced.s,0,'BLC-2-065','front',0,true);
+ const victim=bury(bounced.s,0,put(bounced.s,0,'BLC-2-065','front',0,true));
  victim.buffs.push({bp:-1000,untilTurn:bounced.s.turn});
  const bounceLife=take(bounced.s,1,'BLC-4-041');
  const buriedBounce=bounced.s.players[1].life[0];
@@ -13660,7 +13674,7 @@ test('BLC-2-065 strips its raid top, ignores opponent REST and bounce, and still
  assert.ok(live(flip,0,victim.uid));
  assert.equal(flip.players[0].hand.some(c=>c.uid===victim.uid),false);
  const clash=main(deck,30026);
- const defender=put(clash.s,1,'BLC-2-065','front',0,true);
+ const defender=bury(clash.s,1,put(clash.s,1,'BLC-2-065','front',0,true));
  const attacker=put(clash.s,0,'BLC-1-004','front',0,true);
  const lives=clash.s.players[1].life.length;
  let battle=clash.s;

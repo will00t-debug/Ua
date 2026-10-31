@@ -71,7 +71,7 @@ function clearPending(s){
  return s;
 }
 
-test('TTG-074 ordinary play stays REST without Raid-box IMPACT, but still draws',()=>{
+test('TTG-074 ordinary play stays REST and skips the Raid-frame entry',()=>{
  let s=newUniversalMatch(ttg,{decks:[deck,deck],first:0,seed:7401});
  fuel(s,0);
  const card=hold(s,0,'TTG-1-074');
@@ -82,7 +82,8 @@ test('TTG-074 ordinary play stays REST without Raid-box IMPACT, but still draws'
  assert.equal(entered.ready,false);
  assert.equal((entered.stack||[]).length,0);
  assert.equal(universalImpact(ttg,s,entered),0);
- assert.equal(s.players[0].hand.length,before);
+ assert.equal(s.players[0].hand.length,before-1);
+ assert.equal(s.pending,null);
  assertUniversalMatch(ttg,s);
 });
 
@@ -101,18 +102,19 @@ test('TTG-074 Raid enters ACTIVE and turns on Raid-box IMPACT',()=>{
  assertUniversalMatch(ttg,s);
 });
 
-test('TTG-072 ordinary play does not get Raid-box own-turn BP, but still draws',()=>{
+test('TTG-072 ordinary play skips the Raid-frame entry and own-turn BP',()=>{
  let s=newUniversalMatch(ttg,{decks:[deck,deck],first:0,seed:7201});
  fuel(s,0);
  const card=hold(s,0,'TTG-1-072');
  s=toMain(s);
  const before=s.players[0].hand.length;
- s=clearPending(next(s,legal(s,a=>a.type==='play'&&a.uid===card.uid&&a.line==='front')));
+ s=next(s,legal(s,a=>a.type==='play'&&a.uid===card.uid&&a.line==='front'));
  const entered=live(s,0,card.uid);
  assert.equal(entered.ready,false);
  assert.equal((entered.stack||[]).length,0);
  assert.equal(universalBp(ttg,s,entered),3500);
- assert.equal(s.players[0].hand.length,before);
+ assert.equal(s.players[0].hand.length,before-1);
+ assert.equal(s.pending,null);
  assertUniversalMatch(ttg,s);
 });
 
@@ -130,7 +132,7 @@ test('TTG-072 Raid onto Kamina is ACTIVE and gains Raid-box own-turn BP+500',()=
  assertUniversalMatch(ttg,s);
 });
 
-test('TTG-071 ordinary play does not use Raid-box IMPACT null',()=>{
+test('TTG-071 ordinary play keeps IMPACT null because that text is outside the frame',()=>{
  let s=newUniversalMatch(ttg,{decks:[deck,deck],first:0,seed:7101});
  fuel(s,0);
  const card=hold(s,0,'TTG-1-071');
@@ -138,11 +140,12 @@ test('TTG-071 ordinary play does not use Raid-box IMPACT null',()=>{
  s=next(s,legal(s,a=>a.type==='play'&&a.uid===card.uid&&a.line==='front'));
  const entered=live(s,0,card.uid);
  assert.equal(entered.ready,false);
- assert.equal(universalImpactNull(ttg,s,entered),false);
+ assert.equal(universalImpactNull(ttg,s,entered),true);
+ assert.equal(ttg.cards['TTG-1-071'].effects.onAttack[0].op,'buffOtherIfFirstAttack');
  assertUniversalMatch(ttg,s);
 });
 
-test('TTG-071 Raid onto Kitan is ACTIVE and uses Raid-box IMPACT null',()=>{
+test('TTG-071 Raid onto Kitan is ACTIVE and still nullifies IMPACT',()=>{
  let s=newUniversalMatch(ttg,{decks:[deck,deck],first:0,seed:7102});
  fuel(s,0);
  const kitan=stage(s,0,'TTG-1-005','front',0,true);

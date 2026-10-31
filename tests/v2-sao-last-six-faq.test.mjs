@@ -116,6 +116,12 @@ function hold(s,p,id,zones){
  s.players[p].hand.push(card);
  return card;
 }
+function bury(s,p,card){
+ if(!card||(card.stack||[]).some(x=>x&&x.faceDown!==true))return card;
+ const deck=s.players[p].deck;
+ if(!deck.length)throw Error('No deck card to place under '+card.cardId);
+ const under=deck.pop(); under.faceDown=false; card.stack=[under]; return card;
+}
 function putOutside(s,p,id){
  const card=take(s,p,id);
  s.players[p].outside.push(card);
@@ -210,7 +216,7 @@ test('SAO-1-022 rests a front and a generated-energy-1 character, then locks bot
  const front=place(s,1,take(s,1,'SAO-1-003'),'front',0,true);
  const lows=[];
  for(let i=0;i<4;i++)lows.push(place(s,1,take(s,1,'SAO-2-028'),'energy',i,true));
- const asuna=hold(s,0,'SAO-1-022');
+ const asuna=bury(s,0,hold(s,0,'SAO-1-022'));
  let played=playFront(packs,s,asuna.uid);
  assert.equal(played.pending.kind,'effect-rest-gen');
  assert.equal(played.pending.step,'front');
@@ -269,7 +275,7 @@ test('SAO-1-022 does not lock above 4 life, with one target, or a higher generat
   yellowPair(s,0);
   setLife(s,0,life);
   const front=place(s,1,take(s,1,'SAO-1-003'),'front',0,true);
-  const asuna=hold(s,0,'SAO-1-022');
+  const asuna=bury(s,0,hold(s,0,'SAO-1-022'));
   const played=playFront(packs,s,asuna.uid);
   return {packs,played,front};
  }
@@ -298,7 +304,7 @@ test('SAO-1-022 does not lock above 4 life, with one target, or a higher generat
  assert.equal(universalCardEnergy(packs,s,1,active),2);
  assert.equal(universalCardEnergy(packs,s,1,rested),1);
  assert.equal(universalCardEnergy(packs,s,1,field),1);
- const asuna=hold(s,0,'SAO-1-022');
+ const asuna=bury(s,0,hold(s,0,'SAO-1-022'));
  let played=playFront(packs,s,asuna.uid);
  assert.deepEqual(played.pending.choices,[front.uid]);
  played=use(packs,played,a=>a.type==='chooseRestGen'&&a.uid===front.uid);
@@ -354,7 +360,7 @@ test('SAO-2-011 grants impact at 4 life when every front character is a goddess'
  let played=playFront(plain.packs,plain.s,plain.leafa.uid);
  const body=played.players[0].front.find(c=>c?.uid===plain.leafa.uid);
  assert.equal(played.pending,null);
- assert.equal(universalImpact(plain.packs,played,body),1);
+ assert.equal(universalImpact(plain.packs,played,body),0);
  const high=cast(2012,5);
  played=playFront(high.packs,high.s,high.leafa.uid);
  assert.equal(universalImpact(high.packs,played,played.players[0].front.find(c=>c?.uid===high.leafa.uid)),0);
@@ -502,6 +508,7 @@ test('Q1202: an ineligible hand play does not spend the song AP discount',()=>{
  const plain=hold(s,0,'SAO-2-028');
  const other=hold(s,0,'SAO-2-028',['deck','life','outside','removed']);
  const song=hold(s,0,'SAO-2-062');
+ bury(s,0,yuna);
  let played=playFront(packs,s,yuna.uid);
  assert.equal(played.pending,null);
  assert.equal(apReady(played,0),1);
@@ -519,6 +526,7 @@ test('Q1202: an ineligible hand play does not spend the song AP discount',()=>{
  const host=hold(second.s,0,'SAO-2-031');
  const firstSong=hold(second.s,0,'SAO-2-062');
  const nextSong=hold(second.s,0,'SAO-2-062',['deck','life','outside','removed']);
+ bury(second.s,0,host);
  let turn=playFront(second.packs,second.s,host.uid);
  assert.equal(apReady(turn,0),1);
  turn=playEvent(second.packs,turn,firstSong.uid);
@@ -538,7 +546,7 @@ test('Q1202: an ineligible hand play does not spend the song AP discount',()=>{
 test('SAO-2-031 puts exactly four outside cards on the bottom, then may grant damage 2',()=>{
  const ids=['SAO-2-031','SAO-2-035'];
  const {packs,s}=fresh(ids,2031);
- const yuna=place(s,0,take(s,0,'SAO-2-031'),'front',0,true);
+ const yuna=bury(s,0,place(s,0,take(s,0,'SAO-2-031'),'front',0,true));
  const survivor=place(s,0,take(s,0,'SAO-2-035'),'front',1,true);
  const outside=[];
  for(let i=0;i<3;i++)outside.push(s.players[0].deck.pop());

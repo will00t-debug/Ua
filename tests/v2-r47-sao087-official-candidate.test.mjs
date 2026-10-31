@@ -39,6 +39,12 @@ function put(s,p,id,line,slot,ready=true){
  const c=pull(s,p,id);c.ready=ready;c.fieldEntryStamp=s.nextFieldEntryStamp++;
  s.players[p][line][slot]=c;return c;
 }
+function bury(s,p,card){
+ if(!card||(card.stack||[]).some(x=>x&&x.faceDown!==true))return card;
+ const deck=s.players[p].deck;
+ if(!deck.length)throw Error('No deck card to place under '+card.cardId);
+ const under=deck.pop(); under.faceDown=false; card.stack=[under]; return card;
+}
 const run=(packs,s,a)=>dispatchUniversalAction(packs,s,a);
 test('SAO-1-087 formal registry exactly matches independently built all-printed-effects candidate',()=>{
  const d=registeredV2TitlePack('sword-art-online').cards['SAO-1-087'];
@@ -81,7 +87,7 @@ test('Actual other-own attacker battle win on equal BP gives candidate DAMAGE2, 
 });
 test('Real MAIN Turn1 from ENERGY without REST/AP, other own BP only, AI and expiry',()=>{
  const packs=[sao,sao];let s=newUniversalMatch(packs,{decks:[deck,deck],first:0,seed:470872});
- const source=put(s,0,'SAO-1-087','energy',0,false);
+ const source=bury(s,0,put(s,0,'SAO-1-087','energy',0,false));
  const other=put(s,0,'SAO-1-068','front',0);
  s.phase='main';s.active=0;
  const act={type:'activate',uid:source.uid,mode:'fieldOnceBuffOther'};
@@ -104,7 +110,7 @@ test('Real MAIN Turn1 from ENERGY without REST/AP, other own BP only, AI and exp
 });
 test('Real BLEACH EVENT Q978 forces physical own-hand payment before choosing Kirito',()=>{
  const packs=[sao,bleach];let s=newUniversalMatch(packs,{decks:[deck,bleachDeck],first:1,seed:470873});
- const watcher=put(s,0,'SAO-1-087','front',0);
+ const watcher=bury(s,0,put(s,0,'SAO-1-087','front',0));
  const event=pull(s,1,'BLC-1-030');
  const funding=pull(s,1,'BLC-1-001');
  s.players[1].outside.push(...s.players[1].hand.splice(0));

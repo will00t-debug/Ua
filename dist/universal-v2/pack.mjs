@@ -3728,10 +3728,11 @@ function normalize(card,packId){
   Object.keys(mainAbility).every(k=>['op','frontOnly','drawOnce','triggerOnce','handColor'].includes(k));
  const mainFrontChoose=mainAbility?.op==='onceFrontChoose'&&
   mainAbility.oncePerTurn===true&&mainAbility.frontOnly===true&&
+  (mainAbility.raidBox===undefined||mainAbility.raidBox===true)&&
   Array.isArray(mainAbility.then)&&mainAbility.then.length===1&&
   mainAbility.then[0]?.op==='chooseOne'&&mainAbility.then[0].optional===false&&
-  Object.keys(mainAbility).length===4&&
-  Object.keys(mainAbility).every(k=>['op','oncePerTurn','frontOnly','then'].includes(k));
+  Object.keys(mainAbility).length===4+Number(mainAbility.raidBox===true)&&
+  Object.keys(mainAbility).every(k=>['op','oncePerTurn','frontOnly','then','raidBox'].includes(k));
  if(mainFrontChoose)verifyProgram(mainAbility.then,card.id+'.mainAbility.then');
  const mainDualCharacter=mainAbility?.op==='characterDualMain'&&
   dualActive?.op==='energyOnceActiveIfKinds'&&dualActive.oncePerTurn===true&&
@@ -4789,8 +4790,8 @@ card.frontGeneratesEnergy||ownOutsideRecovery||colorTriggerFieldSubstitution||ca
   if(program.some(e=>['activeOwnOther','grantSelfBlockAtLeastUntilNextOwnStart','grantOtherFieldFrontEnergyThisTurn'].includes(e.op)))
    throw Error(card.id+' other ACTIVE, lasting block ceiling and field energy must be nested choices');
   if(program.some(e=>e.op==='chooseOne'&&e.options.some(o=>o.then.some(t=>t.op==='activeOwnOther')))&&
-   (card.type!=='character'||name!=='onPlay'))
-   throw Error(card.id+' other-character ACTIVE is a character onPlay choice');
+   (card.type!=='character'||!['onPlay','onRaid'].includes(name)))
+   throw Error(card.id+' other-character ACTIVE is a character onPlay or Raid-box choice');
   if(program.some(e=>e.op==='chooseOne'&&e.options.some(o=>o.then.some(t=>
    t.op==='grantSelfBlockAtLeastUntilNextOwnStart'||t.op==='grantOtherFieldFrontEnergyThisTurn'))))
    throw Error(card.id+' lasting front choice belongs on the front main');

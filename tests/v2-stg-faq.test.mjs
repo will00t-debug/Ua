@@ -23,6 +23,16 @@ function act(s,pred){
  if(!action)throw Error('Missing action '+(s.pending?.kind||s.phase));
  return go(s,action);
 }
+// Q552: frame text is live only with a face-up card under the Raid top.
+function bury(s,p,card){
+ if(!card||(card.stack||[]).some(x=>x&&x.faceDown!==true))return card;
+ const deck=s.players[p].deck;
+ if(!deck.length)throw Error('No deck card to place under '+card.cardId);
+ const under=deck.pop();
+ under.faceDown=false;
+ card.stack=[under];
+ return card;
+}
 function place(s,p,id,line,slot,ready=true){
  const card=take(s,p,id);
  card.ready=ready;
@@ -136,8 +146,8 @@ test('Q2380 two STG-1-018 copies share one activation',()=>{
 
 test('Q2381 and Q2382 the Kurisu discount is once per turn and survives a mismatch',()=>{
  let s=board(KURISU,23810);
- const first=place(s,0,'STG-1-028','front',0);
- const second=place(s,0,'STG-1-028','front',1);
+ const first=bury(s,0,place(s,0,'STG-1-028','front',0));
+ const second=bury(s,0,place(s,0,'STG-1-028','front',1));
  place(s,0,'STG-1-007','energy',0);
  place(s,0,'STG-1-007','energy',1);
  place(s,0,'STG-1-001','energy',2);
@@ -258,6 +268,7 @@ test('Q2389 a character granted untargetable is not a special-trigger choice',()
  const actor=take(s,0,'STG-1-070');
  hold(s,0,[actor]);
  lifeTop(s,1,'STG-1-033');
+ bury(s,0,actor);
  s=act(s,a=>a.type==='play'&&a.uid===actor.uid&&a.line==='front');
  assert.equal(s.pending.kind,'effect-entry-protect');
  s=go(s,{type:'chooseEntryProtect',uid:ally.uid});

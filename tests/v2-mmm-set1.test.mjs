@@ -39,6 +39,17 @@ function put(s,p,id,line,slot,ready=true){
  s.players[p][line][slot]=card;
  return card;
 }
+// Q552: listed raid-box text is live only with a face-up card underneath.
+// Pop the deck bottom so a top-of-deck marker stays put.
+function bury(s,p,card){
+ if(!card||(card.stack||[]).some(x=>x&&x.faceDown!==true))return card;
+ const deck=s.players[p].deck;
+ if(!deck.length)throw Error('No deck card to place under '+card.cardId);
+ const under=deck.pop();
+ under.faceDown=false;
+ card.stack=[under];
+ return card;
+}
 function toPhase(s,phase){
  let guard=0;
  while(s.phase!==phase){
@@ -227,6 +238,7 @@ test('MMM-1-078 optional retirement uses other magical-girl names',()=>{
  const solo=take(none,0,'MMM-1-078');
  none.players[0].hand.push(solo);
  readyAp(none);
+ bury(none,0,solo);
  none=play(none,solo.uid,'play');
  assert.equal(none.pending,null);
 
@@ -240,6 +252,7 @@ test('MMM-1-078 optional retirement uses other magical-girl names',()=>{
  const raider=take(named,0,'MMM-1-078');
  named.players[0].hand.push(raider);
  readyAp(named);
+ bury(named,0,raider);
  named=play(named,raider.uid,'play');
  assert.equal(named.pending.kind,'effect-retire-bp');
  assert.equal(named.pending.limit,2000);
@@ -976,6 +989,7 @@ test('MMM-1-075 raids Homura, deploys a red girl, and locks attacks beside Madok
  handPlay(locked,'MMM-1-079');
  const played=handPlay(locked,'MMM-1-075');
  readyAp(locked);
+ bury(locked,0,played);
  locked=play(locked,played.uid,'play');
  assert.equal(locked.pending.kind,'effect-hand-rest');
  locked=use(locked,{type:'chooseHandRest',uid:null});
@@ -1019,6 +1033,7 @@ test('MMM-1-075 raids Homura, deploys a red girl, and locks attacks beside Madok
  const madoka=handPlay(brought,'MMM-1-076');
  const source=handPlay(brought,'MMM-1-075');
  readyAp(brought);
+ bury(brought,0,source);
  brought=play(brought,source.uid,'play');
  assert.equal(brought.pending.kind,'effect-hand-rest');
  assert.deepEqual([...handIds(brought)],['MMM-1-076']);
@@ -1184,6 +1199,7 @@ test('MMM-1-019 returns an opposing front at 1000 BP per outside event',()=>{
  const spare=handPlay(quiet,'MMM-1-006');
  const dry=handPlay(quiet,'MMM-1-019');
  readyAp(quiet);
+ bury(quiet,0,dry);
  const deck=quiet.players[0].deck.length;
  quiet=play(quiet,dry.uid,'play');
  assert.equal(quiet.pending.kind,'effect-discard');
@@ -1206,6 +1222,7 @@ test('MMM-1-019 returns an opposing front at 1000 BP per outside event',()=>{
  const big=put(scaled,1,'MMM-1-078','front',1);
  const mami=handPlay(scaled,'MMM-1-019');
  readyAp(scaled);
+ bury(scaled,0,mami);
  scaled=play(scaled,mami.uid,'play');
  scaled=use(scaled,{type:'chooseDiscard',uid:payment.uid});
  assert.equal(scaled.pending.kind,'effect-bounce-bp');
@@ -1295,7 +1312,8 @@ test('MMM-1-041 returns its raid base to hand only beside Madoka',()=>{
  const entered=handPlay(played,'MMM-1-041');
  readyAp(played);
  played=play(played,entered.uid,'play');
- played=discardOne(played);
+ assert.equal(played.pending,null);
+ assert.equal(played.players[0].front.find(c=>c?.uid===entered.uid).stack.length,0);
  played=retireByBlocking(played,entered.uid);
  assert.equal(played.pending,null);
  assert.ok(played.players[0].outside.some(c=>c.uid===entered.uid));

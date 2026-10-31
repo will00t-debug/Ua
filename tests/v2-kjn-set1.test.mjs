@@ -36,6 +36,15 @@ function take(s,p,id){
  }
  throw Error('Missing '+id);
 }
+function bury(s,p,card){
+ if(!card||(card.stack||[]).some(x=>x&&x.faceDown!==true))return card;
+ const deck=s.players[p].deck;
+ if(!deck.length)throw Error('No deck card to place under '+card.cardId);
+ const under=deck.pop();
+ under.faceDown=false;
+ card.stack=[under];
+ return card;
+}
 function put(s,p,id,line,slot,ready=true){
  const card=take(s,p,id);
  card.ready=ready;
@@ -259,6 +268,7 @@ test('the next removed-area use loses 1 AP and a hand play leaves that cut',()=>
  const miller=put(s,0,'KJN-1-009','front',0,true);
  const milled=take(s,0,'KJN-1-024');
  s.players[0].deck.unshift(milled);
+ bury(s,0,miller);
  s=use(s,{type:'activate',uid:miller.uid,mode:'kjn:0'});
  const removed=s.players[0].removed.find(c=>c.uid===milled.uid);
  assert.equal(removed.kjnRemovedPlay,s.turn);
@@ -328,7 +338,7 @@ test('Claire makes the first attack mandatory to block when Sid is on the field'
  put(s,0,'KJN-1-001','energy',2);
  put(s,0,'KJN-1-001','energy',3);
  put(s,0,'KJN-1-047','front',0);
- const claire=toHand(s,0,'KJN-1-016');
+ const claire=bury(s,0,toHand(s,0,'KJN-1-016'));
  s=play(s,claire.uid);
  const live=s.players[0].front.find(c=>c?.uid===claire.uid);
  assert.equal(live.kjnFirstMustBlock.turn,s.turn);
@@ -412,7 +422,7 @@ test('Beta puts another card on the deck bottom only after the optional deploy',
  put(s,0,'KJN-1-052','energy',2);
  put(s,0,'KJN-1-052','energy',3);
  const recruit=toHand(s,0,'KJN-1-065');
- const beta=toHand(s,0,'KJN-1-074');
+ const beta=bury(s,0,toHand(s,0,'KJN-1-074'));
  s=play(s,beta.uid);
  assert.equal(s.pending.step,'betaDeploy');
  s=choose(s,a=>a.mode==='dest'&&a.uid===recruit.uid);
@@ -432,7 +442,7 @@ test('Beta puts another card on the deck bottom only after the optional deploy',
  put(skipped,0,'KJN-1-052','energy',2);
  put(skipped,0,'KJN-1-052','energy',3);
  toHand(skipped,0,'KJN-1-065');
- const other=toHand(skipped,0,'KJN-1-074');
+ const other=bury(skipped,0,toHand(skipped,0,'KJN-1-074'));
  const before=skipped.players[0].deck.length;
  skipped=play(skipped,other.uid);
  skipped=choose(skipped,a=>a.mode==='skip');

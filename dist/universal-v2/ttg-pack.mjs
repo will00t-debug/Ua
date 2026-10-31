@@ -72,7 +72,7 @@ const additions=[
   effects:{onPlay:[{op:'grantImpactNullUntilNextOwnStart',optional:true}]},
   match:'給予 IMPACT 無效'},
  {id:'TTG-1-071',name:'キングキタンDX',energy:4,ap:1,bp:4000,gen:1,color:'red',
-  type:'character',trigger:'raid',raidName:'キタン',raidImpactNull:true,
+  type:'character',trigger:'raid',raidName:'キタン',impactNull:true,
   implementation:'dsl',
   effects:{onAttack:[{op:'buffOtherIfFirstAttack',bp:2000,optional:true}]},
   match:'第一次攻擊'},

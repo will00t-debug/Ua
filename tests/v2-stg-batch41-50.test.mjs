@@ -30,6 +30,16 @@ function act(packs,s,pred){
  if(!action)throw Error('Missing action '+(s.pending?.kind||s.phase)+' active '+s.active);
  return go(packs,s,action);
 }
+// Q552: frame text is live only with a face-up card under the Raid top.
+function bury(s,p,card){
+ if(!card||(card.stack||[]).some(x=>x&&x.faceDown!==true))return card;
+ const deck=s.players[p].deck;
+ if(!deck.length)throw Error('No deck card to place under '+card.cardId);
+ const under=deck.pop();
+ under.faceDown=false;
+ card.stack=[under];
+ return card;
+}
 function place(s,p,id,line,slot,ready=true){
  const card=take(s,p,id);
  card.ready=ready;
@@ -170,19 +180,14 @@ test('STG-1-066 replays onPlay only after an event when a field card is present'
  hold(entered,0,[faris]);
  const deck=entered.players[0].deck.length;
  entered=act(stgPacks,entered,a=>a.type==='play'&&a.uid===faris.uid&&a.line==='front');
- assert.equal(entered.pending.kind,'effect-may-draw');
- const skipped=go(stgPacks,entered,{type:'chooseMayDraw',mode:'skip'});
- assert.equal(skipped.players[0].deck.length,deck);
- assert.equal(skipped.pending.kind,'effect-buff-own');
- assert.ok(legalUniversalActions(stgPacks,skipped).some(a=>a.uid===null));
- assert.ok(legalUniversalActions(stgPacks,skipped).some(a=>a.uid===faris.uid));
- entered=go(stgPacks,skipped,{type:'chooseOwnBuff',uid:null});
- assert.equal(entered.players[0].front.find(c=>c?.uid===faris.uid).ready,false);
  assert.equal(entered.pending,null);
+ assert.equal(entered.players[0].deck.length,deck);
+ assert.equal(entered.players[0].front.find(c=>c?.uid===faris.uid).ready,false);
+ assert.equal((entered.players[0].front.find(c=>c?.uid===faris.uid).stack||[]).length,0);
 
  function attack(seed,withField,withEvent){
   let s=board(['STG-1-066','STG-1-073','STG-1-032','STG-1-057'],seed);
-  const actor=place(s,0,'STG-1-066','front',0);
+  const actor=bury(s,0,place(s,0,'STG-1-066','front',0));
   place(s,0,'STG-1-057','front',1);
   if(withField)place(s,0,'STG-1-073','energy',0);
   if(withEvent){
@@ -233,7 +238,7 @@ test('STG-1-070 protects another character and offers the draw only with an open
  place(s,0,'STG-1-045','energy',0);
  place(s,0,'STG-1-054','energy',1);
  const ally=place(s,0,'STG-1-057','front',0);
- const kurisu=take(s,0,'STG-1-070');
+ const kurisu=bury(s,0,take(s,0,'STG-1-070'));
  hold(s,0,[kurisu]);
  s=act(stgPacks,s,a=>a.type==='play'&&a.uid===kurisu.uid&&a.line==='front');
  assert.equal(s.pending.kind,'effect-entry-protect');
@@ -267,7 +272,7 @@ test('STG-1-070 protects another character and offers the draw only with an open
 
  function strike(seed,fill){
   let state=board(['STG-1-070','STG-1-001','STG-1-012'],seed);
-  const actor=place(state,0,'STG-1-070','front',0);
+  const actor=bury(state,0,place(state,0,'STG-1-070','front',0));
   if(fill)for(let slot=1;slot<4;slot++)place(state,0,'STG-1-001','front',slot);
   state=toPhase(stgPacks,state,'attack');
   state=act(stgPacks,state,a=>a.type==='attack'&&a.uid===actor.uid);
@@ -295,7 +300,7 @@ test('STG-1-070 protects another character and offers the draw only with an open
 test('STG-1-060 moves into an empty front on attack and can replace when retiring into a full front',()=>{
  function swing(seed,frontIds){
   let s=board(['STG-1-060','STG-1-057','STG-1-012','STG-1-014','STG-1-020'],seed);
-  const actor=place(s,0,'STG-1-060','front',0);
+  const actor=bury(s,0,place(s,0,'STG-1-060','front',0));
   frontIds.forEach((id,i)=>place(s,0,id,'front',i+1));
   const mover=place(s,0,'STG-1-057','energy',0);
   s=toPhase(stgPacks,s,'attack');
@@ -332,7 +337,7 @@ test('STG-1-060 moves into an empty front on attack and can replace when retirin
  place(retire,0,'STG-1-020','front',2);
  place(retire,0,'STG-1-009','energy',0);
  place(retire,0,'STG-1-007','energy',1);
- const leaving=place(retire,0,'STG-1-060','energy',2);
+ const leaving=bury(retire,0,place(retire,0,'STG-1-060','energy',2));
  const mover=place(retire,0,'STG-1-057','energy',3);
  const moeka=take(retire,0,'STG-1-013');
  hold(retire,0,[moeka]);
@@ -523,9 +528,9 @@ test('STG-1-028 discounts the next matching event once per name and buffs while 
  place(s,0,'STG-1-009','energy',0);
  place(s,0,'STG-1-009','energy',1);
  const other=place(s,0,'STG-1-069','front',0);
- const second=place(s,0,'STG-1-028','front',1,false);
+ const second=bury(s,0,place(s,0,'STG-1-028','front',1,false));
  const sidelined=place(s,0,'STG-1-028','energy',2,false);
- const first=take(s,0,'STG-1-028');
+ const first=bury(s,0,take(s,0,'STG-1-028'));
  const mismatch=take(s,0,'STG-1-034');
  const match=take(s,0,'STG-1-032');
  hold(s,0,[first,mismatch,match]);

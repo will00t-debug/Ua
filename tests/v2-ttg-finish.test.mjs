@@ -17,6 +17,16 @@ const featured=['TTG-1-004','TTG-1-012','TTG-1-027','TTG-1-031','TTG-1-032','TTG
 const fillers=['TTG-1-009','TTG-1-002','TTG-1-029','TTG-1-076','TTG-1-058','TTG-1-044','TTG-1-053'];
 const deck=Object.fromEntries(featured.map(id=>[id,2]));
 for(const id of fillers)deck[id]=4;
+// Q552: frame text is live only with a face-up card under the Raid top.
+function bury(s,p,card){
+ if(!card||(card.stack||[]).some(x=>x&&x.faceDown!==true))return card;
+ const deck=s.players[p].deck;
+ if(!deck.length)throw Error('No deck card to place under '+card.cardId);
+ const under=deck.pop();
+ under.faceDown=false;
+ card.stack=[under];
+ return card;
+}
 function take(s,p,id){
  for(const zone of ['hand','deck','life','outside']){
   const z=s.players[p][zone],i=z.findIndex(c=>c.cardId===id);
@@ -342,17 +352,19 @@ test('TTG-031 grants protection and energy gates once per printed name',()=>{
  s.players[1].hand.push(first,second);
  s.players[1].apCards.forEach((c,i)=>{c.inPlay=true;c.ready=i===0;});
  s=toPhase(s,'main');
+ bury(s,1,s.players[1].hand.find(c=>c.uid===first.uid));
+ bury(s,1,s.players[1].hand.find(c=>c.uid===second.uid));
  const deck=s.players[1].deck.length;
  s=go(s,act(s,a=>a.type==='play'&&a.uid===first.uid&&a.line==='front'));
  const entered=live(s,1,first.uid);
- assert.equal(universalBp(ttg,s,entered),9000);
- assert.equal(universalAttackDamage(ttg,s,entered),1);
+ assert.equal(universalBp(ttg,s,entered),10000);
+ assert.equal(universalAttackDamage(ttg,s,entered),2);
  assert.equal(s.players[1].deck.length,deck);
  assert.equal(apReady(s,1),1);
  assert.ok(s.onceEffectUses[1].includes('超銀河グレンラガン|galaxy'));
  s=go(s,act(s,a=>a.type==='play'&&a.uid===second.uid&&a.line==='front'));
- assert.equal(universalBp(ttg,s,live(s,1,second.uid)),4000);
- assert.equal(universalAttackDamage(ttg,s,live(s,1,second.uid)),1);
+ assert.equal(universalBp(ttg,s,live(s,1,second.uid)),5000);
+ assert.equal(universalAttackDamage(ttg,s,live(s,1,second.uid)),2);
  assert.equal(s.players[1].deck.length,deck);
  assertUniversalMatch(ttg,s);
 
@@ -374,6 +386,7 @@ test('TTG-031 grants protection and energy gates once per printed name',()=>{
  rich.players[1].apCards.forEach(c=>{c.inPlay=true;c.ready=false;});
  rich.players[1].apCards[0].ready=true;
  rich=toPhase(rich,'main');
+ bury(rich,1,rich.players[1].hand.find(c=>c.uid===card.uid));
  const before=rich.players[1].deck.length;
  rich=go(rich,act(rich,a=>a.type==='play'&&a.uid===card.uid&&a.line==='front'));
  assert.equal(rich.players[1].deck.length,before-2);
@@ -661,11 +674,12 @@ test('TTG-074 raids only with Nia, chains from Lagann, and ladders draws with th
  const body=hold(ladder,0,'TTG-1-074');
  while(ladder.players[0].deck.length>6)ladder.players[0].outside.push(ladder.players[0].deck.pop());
  ladder=toPhase(ladder,'main');
+ bury(ladder,0,ladder.players[0].hand.find(c=>c.uid===body.uid));
  const before=ladder.players[0].deck.length;
  ladder=go(ladder,act(ladder,a=>a.type==='play'&&a.uid===body.uid&&a.line==='front'));
  const entered=live(ladder,0,body.uid);
  assert.equal(entered.ready,false);
- assert.equal(universalImpact(ttg,ladder,entered),0);
+ assert.equal(universalImpact(ttg,ladder,entered),1);
  assert.equal(ladder.players[0].deck.length,before-1);
  assert.ok(entered.buffs.some(b=>b.bp===1000));
  assert.ok(entered.buffs.some(b=>b.bp===3000));

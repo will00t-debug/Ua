@@ -46,6 +46,17 @@ function pull(s,p,id){
  }
  throw Error('Missing '+id);
 }
+// Q552: box text is live only with a face-up card underneath. Pop the deck
+// bottom so a top-of-deck marker stays put.
+function bury(s,p,card){
+ if(!card||(card.stack||[]).some(x=>x&&x.faceDown!==true))return card;
+ const deck=s.players[p].deck;
+ if(!deck.length)throw Error('No deck card to place under '+card.cardId);
+ const under=deck.pop();
+ under.faceDown=false;
+ card.stack=[under];
+ return card;
+}
 function at(s,p,uid){
  const pl=s.players[p];
  for(const zone of ['front','energy','hand','deck','life','outside','removed']){
@@ -202,12 +213,13 @@ test('Q1569 Emilia and the color trigger skip the next active exactly once',()=>
 test('Q1570 Crusch may treat a hand character BP 3000 as 4000',()=>{
  let s=blue(9110);
  s=reach(s,'main');
- const crusch=put(s,0,'REZ-1-058','front',0);
+ const crusch=bury(s,0,put(s,0,'REZ-1-058','front',0));
  const mimi=put(s,0,'REZ-1-045','energy',0);
  const shown=pull(s,0,'REZ-1-076');
  s.players[0].hand.push(shown);
  assert.equal(pack.cards['REZ-1-076'].bp,3000);
- assert.equal(crusch.stack.length,0);
+ assert.equal(crusch.stack.length,1);
+ assert.equal(crusch.stack[0].faceDown,false);
  s=act(s,'activate',{uid:mimi.uid,mode:'revealBottomBuff'});
  s=dispatchUniversalAction(packs,s,{type:'chooseRevealBottom',uid:shown.uid});
  assert.equal(s.pending.kind,'effect-hand-bp-may');
@@ -615,7 +627,7 @@ test('Q1578 Emilia keeps the next-hand discount after a different card is played
 
 test('Q1579 an unblocked Emilia rests before life damage',()=>{
  let quiet=raid(9120);
- const emilia=put(quiet,0,'REZ-1-089','front',0);
+ const emilia=bury(quiet,0,put(quiet,0,'REZ-1-089','front',0));
  const blocker=put(quiet,1,'REZ-1-014','front',0);
  setLifeTop(quiet,1,'REZ-1-014');
  quiet=reach(quiet,'attack');
@@ -634,7 +646,7 @@ test('Q1579 an unblocked Emilia rests before life damage',()=>{
  assert.equal(open.players[1].life.length,life-1);
 
  let triggered=raid(9121);
- const raider=put(triggered,0,'REZ-1-089','front',0);
+ const raider=bury(triggered,0,put(triggered,0,'REZ-1-089','front',0));
  put(triggered,1,'REZ-1-014','front',0);
  setLifeTop(triggered,1,'REZ-1-007');
  triggered=reach(triggered,'attack');

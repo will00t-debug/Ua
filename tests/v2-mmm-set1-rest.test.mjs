@@ -37,6 +37,17 @@ function put(s,p,id,line,slot,ready=true){
  s.players[p][line][slot]=card;
  return card;
 }
+// Q552: listed raid-box text is live only with a face-up card underneath.
+// Pop the deck bottom so a top-of-deck marker stays put.
+function bury(s,p,card){
+ if(!card||(card.stack||[]).some(x=>x&&x.faceDown!==true))return card;
+ const deck=s.players[p].deck;
+ if(!deck.length)throw Error('No deck card to place under '+card.cardId);
+ const under=deck.pop();
+ under.faceDown=false;
+ card.stack=[under];
+ return card;
+}
 function toPhase(s,phase){
  let guard=0;
  while(s.phase!==phase){
@@ -217,6 +228,7 @@ test('MMM-1-044 buffs Nagisa and quintet, then adds a matching attack reveal',()
  put(s,1,'MMM-1-038','front',0,true);
  const discarded=take(s,0,'MMM-1-038');
  s.players[0].hand.push(discarded);
+ bury(s,0,nagisa);
  const beforeNagisa=universalBp(packs,s,nagisa);
  const beforeQuintet=universalBp(packs,s,quintet);
  const beforeMadoka=universalBp(packs,s,madoka);
@@ -246,6 +258,8 @@ test('MMM-1-083 attacks twice after a life card reaches hand, and MMM-1-090 keep
  const life=s.players[0].life[0];
  const reveals=s.publicReveals.length;
  readyAp(s);
+ bury(s,0,sayaka);
+ bury(s,0,kyoko);
  s=use(s,{type:'activate',uid:sayaka.uid,mode:'lifeReenter'});
  s=use(s,{type:'chooseLifeReenter',uid:life.uid});
  assert.equal(s.pending,null);
@@ -310,6 +324,7 @@ test('MMM-1-104 draws after an unblocked attack at two names, and gains BP plus 
  assert.equal(universalImpact(packs,few,self),0);
  put(few,0,'MMM-1-072','energy',0);
  put(few,0,'MMM-1-085','energy',1);
+ bury(few,0,self);
  let battle=toPhase(few,'attack');
  const before=battle.players[0].deck.length;
  battle=use(battle,{type:'attack',uid:self.uid});
@@ -323,6 +338,7 @@ test('MMM-1-104 draws after an unblocked attack at two names, and gains BP plus 
  put(full,0,'MMM-1-085','energy',2);
  put(full,0,'MMM-1-105','front',0);
  put(full,0,'MMM-1-076','front',1);
+ bury(full,0,source);
  assert.equal(universalBp(packs,full,source),5000);
  assert.equal(universalImpact(packs,full,source),1);
  assert.equal(assertUniversalMatch(packs,full),true);
@@ -339,6 +355,7 @@ test('MMM-1-110 cuts only the next qualifying hand event, and Q1269 checks outsi
  const cheap=take(s,0,'MMM-1-034');
  s.players[0].hand.push(mami,girl,expensive,cheap);
  readyAp(s,0,3);
+ bury(s,0,mami);
  s=play(s,mami.uid,'play');
  assert.equal(s.players[0].nextHandEventApCut.amount,1);
  assert.equal(s.players[0].nextHandEventApCut.maxEnergy,3);
@@ -366,6 +383,7 @@ test('MMM-1-110 cuts only the next qualifying hand event, and Q1269 checks outsi
  const extra=take(gated,0,'MMM-1-034');
  gated.players[0].outside.push(early);
  gated.players[0].hand.push(sixth);
+ bury(gated,0,source);
  gated.players[0].deck.push(extra);
  assert.equal(legalUniversalActions(packs,gated).some(a=>a.mode==='outsideActive'),false);
  gated.players[0].deck.pop();

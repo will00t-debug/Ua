@@ -29,8 +29,11 @@ test('choose-one labels that reach the table are Traditional Chinese',()=>{
  assert.equal(engine.includes('draw and put one hand card outside'),false);
 });
 
-test('REZ-2-062 normal on-play choices stay Chinese and do not wear the raid frame',()=>{
- const options=createRezV2Pack().cards['REZ-2-062'].effects.onPlay[0].options;
+test('REZ-2-062 raid-box choices stay Chinese and do not wear the raid outline',()=>{
+ const felt=createRezV2Pack().cards['REZ-2-062'];
+ assert.equal(felt.effects.onPlay,undefined);
+ assert.equal(felt.mainAbility.raidBox,true);
+ const options=felt.effects.onRaid[0].options;
  const state={pending:{kind:'effect-choice-mode',options}};
  assert.equal(uiActionLabel({type:'chooseEffectMode',mode:'draw'},{state}),'選擇效果：抽1張');
  assert.equal(uiActionLabel({type:'chooseEffectMode',mode:'active'},{state}),
