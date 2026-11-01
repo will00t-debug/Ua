@@ -835,8 +835,8 @@ export function controllerDeckWindowCards(state,packs,legal){
  });
 }
 // Artwork for one legal choice. Own deck, life and facedown layers are used
-// only when this action already names that physical UID. Opponent hand, deck
-// and unrevealed life are never opened.
+// only when this action already names that physical UID. Opponent hand, life
+// and every card under a revealed deck top stay closed.
 function publicRevealChoice(pack,state,uid){
  if(typeof uid!=='string'||!uid)return null;
  const hit=(state.publicReveals||[]).find(entry=>entry?.uid===uid&&
@@ -862,13 +862,45 @@ export function controllerChoiceArt(pack,state,action){
  });
  if(fromZones.length||ids.length)return fromZones;
  // A deck-top choice names the card on the pending step. Own zones are visible
- // to the controller. An opponent card is shown only after it was published.
+ // to the controller. A published opponent card uses that public identity.
+ // Otherwise only deck[0] of this reveal step is readable.
  const pendingUid=state.pending?.data?.uid;
  if(typeof pendingUid!=='string')return [];
  const own=findControllerCard(pack,state,pendingUid);
  if(own)return [own];
  const revealed=publicRevealChoice(pack,state,pendingUid);
- return revealed?[revealed]:[];
+ if(revealed)return [revealed];
+ // 公開 already happened. If the public list was dropped, the controller may
+ // still see the one deck card this choice names. Never walk past deck[0].
+ const named=namedRevealDeckTop(pack,state,pendingUid);
+ return named?[named]:[];
+}
+// The pending step already names one revealed deck card. Read that top card
+// only. Opponent hand, life, and every card under the top stay closed.
+function namedRevealDeckTop(pack,state,uid){
+ const q=state?.pending;
+ if(!q||q.player!==0||typeof uid!=='string')return null;
+ let owner=null;
+ if(q.step==='oppTop')
+  owner=q.data?.owner===0||q.data?.owner===1?q.data.owner:Number(String(uid).split('-')[0]);
+ else if(q.step==='topPlace'||q.step==='revealTop')owner=0;
+ else return null;
+ if((owner!==0&&owner!==1)||(q.step!=='oppTop'&&owner!==0))return null;
+ const top=state.players?.[owner]?.deck?.[0];
+ if(!top||top.uid!==uid||typeof top.cardId!=='string'||!top.cardId)return null;
+ return printedChoice(pack,owner,top);
+}
+const REVEAL_FOCUS_STEPS=new Set(['oppTop','topPlace','revealTop']);
+// One card the current choice is about. Multi-card picks keep their own buttons.
+export function pendingFocusCard(pack,state){
+ const q=state?.pending;
+ if(!q||q.player!==0||!REVEAL_FOCUS_STEPS.has(q.step))return null;
+ const actions=Array.isArray(q.actions)?q.actions:[];
+ if(actions.some(action=>typeof action?.uid==='string'&&action.uid))return null;
+ const art=controllerChoiceArt(pack,state,{type:q.kind||'focus'});
+ if(art.length!==1||typeof art[0]?.cardId!=='string'||!art[0].cardId)return null;
+ const zone=q.step==='oppTop'||art[0].side===1?'對手牌組頂':'你的牌組頂';
+ return {...art[0],zone};
 }
 function findControllerCard(pack,state,uid){
  const owner=Number(String(uid).split('-')[0]);
