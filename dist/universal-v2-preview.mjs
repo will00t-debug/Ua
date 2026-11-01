@@ -551,6 +551,9 @@ function pendingDialog(legal,view){
  if(blockGallery)dialog.classList.add('pending-cards');
  dialog.append(el('div',{class:'headline'},el('h2',{text:title}),
   el('span',{class:'tag',text:'玩家操作'})));
+ // The pending overlay covers the board banner. A rejected choice has to
+ // appear inside the dialog or the click looks like it did nothing.
+ if(app.error)dialog.append(el('p',{class:'v2-error',role:'alert',text:app.error}));
  // Native Element.append(null) renders the literal word "null" in some browsers.
  if(canPeek)dialog.append(el('div',{class:'v2-inspection-peek-tools'},
    btn('查看場面與手牌',()=>{app.inspectionPaused=true;render();},
