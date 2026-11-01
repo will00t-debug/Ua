@@ -34,7 +34,7 @@ import {MST_V2_OFFICIAL_CATALOGUE} from './universal-v2/sources/mst-inventory.mj
 import {V2_PHASE_LABELS,V2_TITLE_LABELS,V2_PENDING_LABELS,
  uiActor,isExactLegal,uiCardLabel,uiActionLabel,visibleActionsForCard,
  pendingChoiceCards,inspectedPendingChoiceCards,visiblePendingChoiceCards,pendingEntryChoiceCards,publicLifeOrderChoiceCard,pendingChoiceCaption,publicPendingTargetCard,controllerDeckWindowCards,controllerChoiceArt,pendingTextChoiceClass,attackBattleTags,attackKeywordBadges,frontAttackKeywordBadges,inlineBlockDecision,boardEntryMode,boardEntrySelection,entryClickPlan,moveClickPlan,
- FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs?v=20261030effectlabel1';
+ FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs?v=20261101renjilabel1';
 import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalReplay,
  collectPublicCardResults,publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
 import {coachHeader,newCoachMatchId} from './universal-v2/coach-record.mjs';
@@ -1209,11 +1209,14 @@ function maybeFinishCoach(){
 function renderCoachReview(target){
  document.body.classList.add('v2-playing');
  const session=app.coachBattle.session;
- target.replaceChildren(el('header',{class:'matchHeader'},
+ target.replaceChildren(el('header',{class:'matchHeader coach-review-header'},
   el('h1',{text:'賽後教 AI'}),
-  el('div',{class:'matchControls'},
+  el('nav',{class:'coach-review-actions','aria-label':'賽後導覽'},
+   el('a',{href:'/online.html',class:'btn small',text:'回大廳',onClick:()=>{
+    resetAi();clearSoloBattle(sessionStorage);
+   }}),
    btn('重開對局',()=>startGame(),'btn small'),
-   el('a',{href:'/coach.html',text:'紀錄',title:'查看、匯出或刪除紀錄'}))));
+   el('a',{href:'/coach.html',class:'btn small',text:'紀錄',title:'查看、匯出或刪除紀錄'}))));
  mountCoachReview(target,{
   packs:app.packs,replay:app.replay,
   marks:session.marks.map(mark=>({...mark,header:session.header})),

@@ -5710,7 +5710,11 @@ function performRaid(pack,s,p,cardOnTop,baseUid,line,slot,replaceUid,{entryReady
  if(top.ownEffectActiveOnly)cardOnTop.ownEffectActiveOnly=true;
  s.raidCount[p]=(s.raidCount[p]||0)+1;
  cardOnTop.raidedTurn=s.turn;
- const baseJobs=s.active===p&&!baseOriginalSilenced?programJobs(pack,s,effectiveBase,'onRaided',p,cardOnTop.uid):[];
+ // "When raided" is earned on either player's turn, including RAID LIFE.
+ // UA56BT/TTG-1-045 explicitly restricts its entire base program to the
+ // owner's turn; that printed condition must not suppress other bases.
+ const baseTurnAllowed=s.active===p||card(pack,effectiveBase).id!=='TTG-1-045';
+ const baseJobs=baseTurnAllowed&&!baseOriginalSilenced?programJobs(pack,s,effectiveBase,'onRaided',p,cardOnTop.uid):[];
  const entrySourceType=entryCause==='paidRaid'||entryCause==='lifeRaid'?undefined:
   printedOwnerType(pack,s,p,effectSourceUid);
  const entryJobs=programJobs(pack,s,cardOnTop,'onPlay',p,undefined,entryCause,entrySourceType);
@@ -5730,8 +5734,16 @@ function performRaid(pack,s,p,cardOnTop,baseUid,line,slot,replaceUid,{entryReady
   s.pending={kind:'effect-raid-witness-order',player:p,witnesses,decided:[],
    baseUid:effectiveBase.uid,raidUid:cardOnTop.uid,baseJobs:baseWithBoundary,
    entryJobs,raidJobs:raidWithBoundary};
- }else if(entryCause==='lifeRaid'&&deferLifeEntry(s,p,cardOnTop.uid,
-   [...witnessJobs,...baseWithBoundary,...entryJobs,...raidWithBoundary])){
+ }else if(entryCause==='lifeRaid'&&s.lifeRevealBatch?.owner===p){
+  // A LIFE Raid earns the base and the new top's independent programs.
+  // Keep each physical source intact so Q38 ordering and provenance also
+  // work when DAMAGE 2 reveals another LIFE card at the same time.
+  const bySource=new Map();
+  for(const job of [...witnessJobs,...baseWithBoundary,...entryJobs,...raidWithBoundary]){
+   if(!bySource.has(job.sourceUid))bySource.set(job.sourceUid,[]);
+   bySource.get(job.sourceUid).push(job);
+  }
+  for(const [sourceUid,jobs] of bySource)deferLifeEntry(s,p,sourceUid,jobs);
   continueEffectQueue(pack,s);
  }else if(baseJobs.length&&entryJobs.length)
   s.pending={kind:'raid-effect-order',player:p,baseUid:effectiveBase.uid,
