@@ -126,6 +126,20 @@ const RAID_BOX_FEATURES=Object.freeze({
  'TTG-1-073':["onPlay","conditionalUnder"],
  'TTG-1-074':["onPlay"],
  'TTG-1-076':["onPlay"],
+ 'AOT-1-011':["attackEnd","onPlay"],
+ 'AOT-1-014':["onAttack"],
+ 'AOT-1-022':["onAttack","main"],
+ 'AOT-1-038':["onRetire"],
+ 'AOT-1-048':["onPlay","main"],
+ 'AOT-1-053':["onPlay","onRetire"],
+ 'AOT-1-057':["onPlay"],
+ 'AOT-1-061':["selectionApTax"],
+ 'AOT-1-089':["onPlay"],
+ 'AOT-1-092':["onAttack"],
+ 'AOT-1-093':["onAttack"],
+ 'AOT-1-094':["main","onAttack"],
+ 'AOT-1-107':["onPlay","main"],
+ 'AOT-1-110':["onPlay","onAttack"],
 });
 const sets=new Map(Object.entries(RAID_BOX_FEATURES).map(([id,list])=>[id,new Set(list)]));
 export function raidBoxListed(id,feature){

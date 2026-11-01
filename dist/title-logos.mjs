@@ -73,6 +73,13 @@ export const TITLE_LOGOS=Object.freeze({
   source:'https://commons.wikimedia.org/wiki/File:The_Eminence_in_Shadow_Text_Logo_(Chinese).svg',
   credit:'逢沢大介・KADOKAWA／シャドウガーデン',
   license:'PD text logo'
+ }),
+ aot:Object.freeze({
+  image:'https://upload.wikimedia.org/wikipedia/commons/7/7b/Attack_on_Titan_logo.svg',
+  label:'進擊的巨人',
+  source:'https://commons.wikimedia.org/wiki/File:Attack_on_Titan_logo.svg',
+  credit:'諫山創／講談社',
+  license:'PD text logo'
  })
 });
 export const titleLogo=id=>Object.hasOwn(TITLE_LOGOS,id)?TITLE_LOGOS[id]:null;
