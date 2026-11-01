@@ -1134,38 +1134,51 @@ function coachStatusText(){
  if(session?.lastError)return session.lastError;
  return '已上傳 '+(session?.uploaded||0)+' 筆。只記錄玩家對電腦時你看得到的資訊，AI 不會因此立刻變強。';
 }
+function coachStatusShort(){
+ const coach=app.coachBattle,session=coach?.session;
+ if(!coach?.consent())return '未上傳';
+ if(session?.signedIn===false)return '未登入';
+ if(session?.lastError)return '未送出';
+ return '已傳 '+(session?.uploaded||0);
+}
 function paintCoachStatus(){
  const node=document.querySelector('[data-coach-status]');
  const coach=app.coachBattle;
  if(!node||!coach)return;
- node.textContent=coachStatusText();
+ node.textContent=coachStatusShort();
+ node.title=coachStatusText();
  node.dataset.coachUploaded=String(coach.session?.uploaded||0);
  node.dataset.coachConsent=coach.consent()?'1':'0';
+}
+function coachTinyButton(label,title,fn){
+ const button=el('button',{type:'button',class:'btn small',text:label,title,onClick:fn});
+ button.setAttribute('aria-label',title);
+ return button;
 }
 function coachBar(){
  const coach=app.coachBattle;
  if(!IS_BATTLE_PAGE||!coach?.session)return null;
- const box=el('div',{class:'coach-bar'});
+ const box=el('div',{class:'coach-bar','aria-label':'教 AI'});
  const input=el('input',{type:'checkbox'});
  input.checked=coach.consent();
  input.addEventListener('change',()=>coach.setConsent(input.checked));
- const consent=el('label',{class:'coach-consent'},input,'同意提供對戰紀錄改善 AI');
- const status=el('p',{class:'coach-status',text:coachStatusText()});
+ const consent=el('label',{class:'coach-consent',title:'同意提供對戰紀錄改善 AI'},input,'紀錄');
+ const status=el('p',{class:'coach-status',text:coachStatusShort(),title:coachStatusText()});
  status.dataset.coachStatus='1';
  status.dataset.coachUploaded=String(coach.session.uploaded||0);
  status.dataset.coachConsent=coach.consent()?'1':'0';
  box.append(consent,status,coachLiveNote(coach.session.marks.length),
-  el('a',{href:'/coach.html',text:'查看、匯出或刪除紀錄'}));
+  el('a',{href:'/coach.html',text:'紀錄',title:'查看、匯出或刪除紀錄'}));
  if(coach.session.lastAi&&!coach.session.reviewing)
-  box.append(btn('標記 AI 這一步',()=>{
+  box.append(coachTinyButton('標記','標記 AI 這一步',()=>{
    coach.markLast(app.packs,app.replay).then(()=>render()).catch(error=>alertText(error?.message||String(error)));
-  },'btn small'));
+  }));
  if(!coach.session.finished)
-  box.append(btn('認輸並檢討',()=>{
+  box.append(coachTinyButton('認輸','認輸並檢討',()=>{
    if(!window.confirm('認輸後進入賽後檢討。這不會改寫規則引擎裡的對局。'))return;
    resetAi();
    coach.finish({completed:false,winner:1,endReason:'conceded',replay:app.replay}).then(()=>render());
-  },'btn small'));
+  }));
  return box;
 }
 function rememberHuman(action,state,replayIndex){
