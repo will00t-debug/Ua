@@ -709,6 +709,7 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseHandGirlRest':return action.uid===null?'不從手牌休息登場':'讓 '+name()+' 以休息狀態登場'+suffix();
   case 'chooseMamiActive':return '使 '+name()+' 活動';
   case 'chooseDiscardNamedEnergy':return '棄掉事件 '+name();
+  case 'chooseRestLock':return action.uid===null?'不鎖定這次休息':'休息鎖定 '+name();
   default:return '執行 '+action.type;
  }
 }

@@ -6,6 +6,7 @@ import {makeUniversalPreviewReplay,appendUniversalReplay} from '../dist/universa
 import {buildHumanStep,buildAiMark,buildAiDemonstration,coachHeader,coachObservation,
  hiddenLeak,pushSandbox,stateAtReplayIndex,newCoachMatchId} from '../dist/universal-v2/coach-record.mjs';
 import {createCoachUploader} from '../dist/universal-v2/coach-client.mjs';
+import {uiActionLabel} from '../dist/universal-v2/preview-actions.mjs';
 
 const deck=verifiedBleachPurplePilotDeck();
 const packs=[deck.pack,deck.pack];
@@ -16,6 +17,11 @@ function keep(state){
  assert.ok(action);
  return action;
 }
+
+test('rest lock choices use the same words as the battle table',()=>{
+ assert.equal(uiActionLabel({type:'chooseRestLock',uid:null}),'不鎖定這次休息');
+ assert.equal(uiActionLabel({type:'chooseRestLock',uid:'1-4'}),'休息鎖定 指定卡片');
+});
 
 test('a player step keeps only that seat visible and can be rebuilt',()=>{
  let state=newUniversalMatch(packs,{decks:[deck.counts,deck.counts],seed:7,first:0,openingMulligan:true});
