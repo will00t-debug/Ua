@@ -27,7 +27,7 @@ test('solo private pending card choices can temporarily show full board and hand
  assert.match(ui,/app\.targetChoices=null;app\.inspectionPaused=false;app\.error=/);
  assert.match(css,/\.v2-inspection-peek-tools/);
  assert.match(css,/\.v2-inspection-return/);
- assert.match(css,/env\(safe-area-inset-bottom\)/);
+ assert.match(css,/\.v2-inspection-return\{position:static/);
 });
 
 test('online private top/deck gallery can collapse for a read-only board view and return to card choices',()=>{
@@ -46,5 +46,5 @@ test('online private top/deck gallery can collapse for a read-only board view an
  assert.match(online,/const listed=\(app\.inspectionPaused\?\[\]:dockChoices\(room\)\)/);
  assert.match(css,/\.online-inspection-peek/);
  assert.match(css,/\.online-inspection-return/);
- assert.match(css,/env\(safe-area-inset-bottom\)/);
+ assert.match(css,/\.online-inspection-return\{position:static/);
 });

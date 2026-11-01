@@ -1343,7 +1343,9 @@ function render(){
    if(!image.src.endsWith('/assets/mark.svg'))image.src='assets/mark.svg';
   }
  });
- const prompt=pendingDialog(legal,v);if(prompt)target.append(prompt);
+ const prompt=pendingDialog(legal,v);
+ // Keep the review-only return control in the phase row, outside the hand.
+ if(prompt)(prompt.classList.contains('v2-inspection-return')?middle:target).append(prompt);
  if(revealed)mountTriggerOverlay(revealed);
  const publicWindow=publicMoveOverlay();
  if(publicWindow)mountPublicMoveOverlay(publicWindow);
