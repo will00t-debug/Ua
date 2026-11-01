@@ -87,6 +87,23 @@ function buildCoverageDeck(pack){
   return true;
  };
  const take=card=>add(card,2)||add(card,1);
+ // A 0-cost energy body has to be in the deck before triggerless 1-cost
+ // fillers, including when the only such bodies have a trigger. Two copies
+ // leave room under the trigger cap for the mechanism cards below.
+ const openerCut=card=>Math.max(0,(card.energy||0)-
+  (card.emptyOwnFieldHandEnergyDiscount||0)-(card.printedHandEnergyDiscount||0)-
+  (card.noOwnFieldTypeHandDiscount||0));
+ const openers=cards.filter(card=>card.type==='character'&&(card.gen||0)>0&&
+  Number.isInteger(card.ap)&&card.ap>=0&&card.ap<=1&&!card.energyForbidden&&
+  !card.energyLineForbidden&&!card.chainRaidOnly&&openerCut(card)===0)
+  .sort((a,b)=>(a.trigger?1:0)-(b.trigger?1:0)||String(a.id).localeCompare(String(b.id)));
+ let reserved=0;
+ for(const card of openers){
+  if(reserved>=4)break;
+  const want=card.trigger?Math.min(2,4-reserved):Math.min(4,4-reserved);
+  const before=counts[card.id]||0;
+  if(add(card,want)||add(card,1))reserved+=(counts[card.id]||0)-before;
+ }
  for(const tag of NEED){
   if(covered.has(tag))continue;
   const options=cards.filter(card=>tagsOf(card).includes(tag)).sort((a,b)=>{

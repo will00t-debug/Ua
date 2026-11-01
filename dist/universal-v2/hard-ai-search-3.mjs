@@ -24,7 +24,7 @@ const ROOT_MARGIN=7;
 const CHAIN_CAP=8;
 const emptyReport=()=>({decisions:0,forced:0,deferred:0,overrides:0,kept:0,
  budgetExhausted:0,exceptions:0,unsupported:0,legacyMiss:0,uncompared:0,
- passed:0,missedWin:0,fruitless:0,avoidableLoss:0,
+ passed:0,missedOneStep:0,missedSequence:0,fruitless:0,avoidableLoss:0,
  ms:0,maxMs:0,nodes:0,byKind:{}});
 let report=emptyReport();
 let lastTrace=null;
@@ -770,6 +770,28 @@ function resolvesForced(pack,state,visible){
  }
  return s;
 }
+// Multi-step only. A direct one-step win is counted separately and is not
+// treated as a missed sequence.
+function sequenceSetup(pack,state,actor,legal,visible){
+ const setups=[
+  ...legal.filter(a=>a.type==='raid'),
+  ...legal.filter(a=>a.type==='move').slice(0,2),
+  ...legal.filter(a=>a.type==='play'||a.type==='event'||a.type==='activate').slice(0,4)
+ ];
+ for(const setup of setups){
+  if(actionUsesHidden(setup,visible)||oneStepWin(pack,state,actor,setup,visible))continue;
+  let after;
+  try{after=dispatchUniversalAction(pack,state,setup,{actor:state.pending?.player??state.active});}
+  catch{continue;}
+  after=resolvesForced(pack,after,visible);
+  if(!after||after.status!=='playing'||after.pending||after.active!==actor)continue;
+  let follow;
+  try{follow=legalUniversalActions(pack,after);}catch{continue;}
+  if(follow.some(a=>(a.type==='attack'||a.type==='raid')&&
+   !actionUsesHidden(a,visible)&&oneStepWin(pack,after,actor,a,visible)))return setup;
+ }
+ return null;
+}
 // A setup is taken immediately only when the model already shows a terminal
 // win, either on that action or on one attack or raid after its forced payment.
 // The same model is used for every setup. A line that merely looks promising
@@ -997,16 +1019,19 @@ export function chooseStrengthenedHardAction(pack,state,options={}){
    (exact.type==='chooseOptionalPayAp'&&exact.mode==='pay')||
    ((exact.type==='chooseDiscardGate'||exact.type==='chooseDiscard')&&exact.uid));
   const fruitless=!!(paid&&skipRow&&chosenRow&&chosenRow.score<=skipRow.score+0.5);
-  const missed=!oneStepWin(pack,model,actor,exact,visible)&&legal.some(a=>
+  const missedOneStep=!oneStepWin(pack,model,actor,exact,visible)&&legal.some(a=>
    (a.type==='attack'||a.type==='raid'||a.type==='activate'||a.type==='event')&&
    oneStepWin(pack,model,actor,a,visible));
+  const sequence=sequenceSetup(pack,model,actor,legal,visible);
+  const missedSequence=!!sequence&&!same(sequence,exact);
   const avoidable=!!(chosenRow&&chosenRow.score<=-50000&&candidates.some(c=>c.score>-50000));
   if(fruitless)report.fruitless++;
-  if(missed)report.missedWin++;
+  if(missedOneStep)report.missedOneStep++;
+  if(missedSequence)report.missedSequence++;
   if(avoidable)report.avoidableLoss++;
   return finish(exact,{reason:rootCut?'budget':'search',
    score:best.score,legacyScore,override:legacy? !same(exact,legacy):true,
-   missedWin:missed,fruitless,avoidableLoss:avoidable,...traceBase});
+   missedOneStep,missedSequence,fruitless,avoidableLoss:avoidable,...traceBase});
  }catch{
   report.exceptions++;
   try{

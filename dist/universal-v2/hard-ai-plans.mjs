@@ -52,18 +52,44 @@ export function planStage(plan,energy,deck){
  return 'mid';
 }
 
-// Own opening hand only. Redraw when it cannot start the curve and holds
-// none of the deck's raid or finisher names.
+// Empty-board hand cost. Opponent-field, outside and front auras are zero
+// before the first play, so they are not part of this number.
+function openingPayable(definition,emptyField,othersInHand){
+ if(!definition)return null;
+ let cut=definition.printedHandEnergyDiscount||0;
+ if(emptyField)cut+=definition.emptyOwnFieldHandEnergyDiscount||0;
+ cut+=definition.noOwnFieldTypeHandDiscount||0;
+ const other=definition.otherHandEnergyDiscount;
+ if(other&&othersInHand>=(other.min||0))cut+=other.amount||0;
+ return Math.max(0,(definition.energy||0)-cut);
+}
+// A body that can enter the energy line on the first player's one AP.
+function openingEnergyBody(definition){
+ return !!definition&&definition.type==='character'&&
+  !definition.energyForbidden&&!definition.energyLineForbidden&&!definition.chainRaidOnly&&
+  (definition.gen||0)>0&&Number.isInteger(definition.ap)&&definition.ap>=0&&definition.ap<=1;
+}
+// Own opening hand only. Keep when one native energy-line play generates
+// the color that pays a later card in this hand, or when a second 0-cost
+// energy body is already there. A 1- or 2-cost character is not that
+// resource, and a finisher name is not a reason to keep. `counts` stays in
+// the signature so callers can pass the registered list; it is not read.
 export function openingKeeps(catalog,counts,hand){
- const plan=deckPlan(catalog,counts);
- let energy=0,kept=0;
- for(const card of hand||[]){
-  const d=catalog?.[card.cardId];
-  if(!d)continue;
-  if(d.type==='character'&&(d.energy||0)<=2)energy++;
-  if(plan.keep.has(squash(d.name)))kept++;
+ void counts;
+ const cards=(hand||[]).map(card=>catalog?.[card.cardId]).filter(Boolean);
+ const others=Math.max(0,cards.length-1);
+ for(let i=0;i<cards.length;i++){
+  const opener=cards[i];
+  if(!openingEnergyBody(opener))continue;
+  if(openingPayable(opener,true,others)!==0)continue;
+  for(let j=0;j<cards.length;j++){
+   if(j===i)continue;
+   const next=cards[j];
+   if(!next||next.type!=='character'||next.chainRaidOnly)continue;
+   const later=openingPayable(next,false,Math.max(0,cards.length-2));
+   if(openingEnergyBody(next)&&later===0)return true;
+   if(next.color&&next.color===opener.color&&later>=1&&later<=(opener.gen||0))return true;
+  }
  }
- // On-color events do not start the curve. A keep-name or two cheap
- // characters does.
- return energy>=2||kept>=1;
+ return false;
 }

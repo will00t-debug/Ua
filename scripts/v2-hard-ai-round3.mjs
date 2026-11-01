@@ -10,6 +10,13 @@
 //   HARD_AI_SEEDS=1 node scripts/v2-hard-ai-round3.mjs
 //   HARD_AI_OPPONENT=legacy HARD_AI_SEED0=97201 HARD_AI_SEEDS=4 node scripts/v2-hard-ai-round3.mjs
 //   HARD_AI_OPPONENT=normal HARD_AI_SEED0=97301 HARD_AI_SEEDS=2 node scripts/v2-hard-ai-round3.mjs
+//   HARD_AI_DELTA=cache HARD_AI_SEED0=97411 HARD_AI_SEEDS=2 HARD_AI_WORKERS=4 node scripts/v2-hard-ai-round3.mjs
+// One HARD_AI_DELTA value adds that single change to frozen hard-search-2.
+// mulligan also needs HARD_AI_OPENING=1. Dev seeds start at 97411.
+// missedOneStep counts a legal action that wins immediately. missedSequence
+// counts one later attack or raid after a single setup. It is not an
+// unbounded search of every combo, and a zero one-step count is not a
+// zero sequence count.
 import {Worker, isMainThread, parentPort, workerData} from 'node:worker_threads';
 import {writeFileSync,mkdirSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
@@ -24,9 +31,18 @@ import {chooseLegacyHardAiAction} from '../dist/universal-v2/ai.mjs';
 import {chooseProgressSafeAiAction} from '../dist/universal-v2/ai-driver-safety.mjs';
 import {chooseFrozenHardSearch2} from '../dist/universal-v2/hard-ai-search-2.mjs';
 import {chooseStrengthenedHardAction as chooseHardSearch3,resetHardAiReport,hardAiReport,
- lastHardAiTrace,HARD_AI_POLICY} from '../dist/universal-v2/hard-ai-search-3.mjs';
+ lastHardAiTrace,HARD_AI_POLICY as SEARCH3_POLICY} from '../dist/universal-v2/hard-ai-search-3.mjs';
+import {chooseHardDelta,resetHardAiReport as resetDeltaReport,hardAiReport as deltaReport,
+ lastHardAiTrace as deltaTrace,HARD_AI_POLICY as DELTA_POLICY} from '../dist/universal-v2/hard-ai-delta.mjs';
 
 const OPPONENT=process.env.HARD_AI_OPPONENT||'frozen';
+const DELTA=process.env.HARD_AI_DELTA||'';
+const OPENING=process.env.HARD_AI_OPENING==='1';
+const CLOCKFREE=process.env.HARD_AI_CLOCKFREE==='1';
+const FEATURE_NAMES=['cache','mulligan','planScore','attackBias','sample','winShortcut'];
+if(DELTA&&DELTA!=='none'&&DELTA!=='baseline'&&!FEATURE_NAMES.includes(DELTA))throw Error('Unknown HARD_AI_DELTA '+DELTA);
+const FEATURES=Object.fromEntries(FEATURE_NAMES.map(name=>[name,DELTA===name]));
+const HARD_AI_POLICY=DELTA?DELTA_POLICY+'+'+DELTA:SEARCH3_POLICY;
 
 const STEP_CAP=Number(process.env.HARD_AI_STEPS||8000);
 const WIN_REASONS=new Set(['life-zero','unblocked-attack','required-draw-empty']);
@@ -62,8 +78,14 @@ function tally(bucket,picked,trace,before,after){
  if(trace?.reason==='exception')bucket.exception++;
  if(after&&before&&after.legacyMiss>before.legacyMiss)bucket.legacyMiss++;
 }
+function timed(options){
+ return CLOCKFREE?{...options,ms:1e9}:options;
+}
+function resetActive(){if(DELTA)resetDeltaReport();else resetHardAiReport();}
+function reportActive(){return DELTA?deltaReport():hardAiReport();}
+function traceActive(){return DELTA?deltaTrace():lastHardAiTrace();}
 function play(job){
- resetHardAiReport();
+ resetActive();
  const pack=createBleachV2Pack();
  const packs=[pack,pack];
  const driver={neu:emptyTally(),old:emptyTally()};
@@ -74,7 +96,8 @@ function play(job){
  };
  try{
   let s=newUniversalMatch(packs,{
-   decks:[job.newCounts,job.oldCounts],seed:job.seed,first:job.first
+   decks:[job.newCounts,job.oldCounts],seed:job.seed,first:job.first,
+   openingMulligan:OPENING
   });
   assertUniversalMatch(packs,s);
   const phaseKey=[null,null],phaseCount=[0,0];
@@ -82,19 +105,23 @@ function play(job){
    const actor=s.pending?.player??s.active;
    const key=s.turn+'|'+s.active+'|'+s.phase;
    if(phaseKey[actor]!==key){phaseKey[actor]=key;phaseCount[actor]=0;}
-   const before=actor===0?hardAiReport():null;
+   const before=actor===0?reportActive():null;
    const picked=actor===0
     ? chooseProgressSafeAiAction(packs,s,{
-     difficulty:'hard',actionsInPhase:phaseCount[actor],choose:chooseHardSearch3
+     difficulty:'hard',actionsInPhase:phaseCount[actor],
+     choose:DELTA==='baseline'?(pack,state,opts)=>chooseFrozenHardSearch2(pack,state,timed(opts)):
+      DELTA?(pack,state,opts)=>chooseHardDelta(pack,state,{...timed(opts),features:FEATURES}):
+      (pack,state,opts)=>chooseHardSearch3(pack,state,timed(opts))
     })
     : OPPONENT==='normal'
     ? chooseProgressSafeAiAction(packs,s,{difficulty:'normal',actionsInPhase:phaseCount[actor]})
     : chooseProgressSafeAiAction(packs,s,{
      difficulty:'hard',actionsInPhase:phaseCount[actor],
-     choose:OPPONENT==='legacy'?chooseLegacyHardAiAction:chooseFrozenHardSearch2
+     choose:OPPONENT==='legacy'?chooseLegacyHardAiAction:
+      (pack,state,opts)=>chooseFrozenHardSearch2(pack,state,timed(opts))
     });
-   const trace=actor===0?lastHardAiTrace():null;
-   tally(actor===0?driver.neu:driver.old,picked,trace,before,actor===0?hardAiReport():null);
+   const trace=actor===0?traceActive():null;
+   tally(actor===0?driver.neu:driver.old,picked,trace,before,actor===0?reportActive():null);
    if(!picked.action)throw Error('no legal action');
    s=dispatchUniversalAction(packs,s,picked.action,{actor});
    phaseCount[actor]++;
@@ -115,10 +142,13 @@ function play(job){
  }
  entry.ms=Math.round(performance.now()-started);
  entry.driver=driver;
- entry.ai=hardAiReport();
+ entry.ai=reportActive();
  entry.deckOut=entry.endReason==='required-draw-empty';
+ entry.feature=DELTA||null;
+ entry.openingMulligan=OPENING;
  entry.mistakes={
-  missedWin:entry.ai?.missedWin||0,
+  missedOneStep:entry.ai?.missedOneStep||0,
+  missedSequence:entry.ai?.missedSequence||0,
   fruitless:entry.ai?.fruitless||0,
   avoidableLoss:entry.ai?.avoidableLoss||0,
   deckOut:entry.deckOut===true
@@ -148,11 +178,15 @@ if(!isMainThread){
 }else{
  const roster=decks();
  const byKey=Object.fromEntries(roster.map(d=>[d.key,d]));
- const seed0=Number(process.env.HARD_AI_SEED0||(OPPONENT==='legacy'?97201:OPPONENT==='normal'?97301:97001));
- const seedCount=Number(process.env.HARD_AI_SEEDS||(OPPONENT==='frozen'?20:OPPONENT==='legacy'?4:2));
+ const seed0=Number(process.env.HARD_AI_SEED0||(DELTA?97411:OPPONENT==='legacy'?97201:OPPONENT==='normal'?97301:97001));
+ const seedCount=Number(process.env.HARD_AI_SEEDS||(DELTA?2:OPPONENT==='frozen'?20:OPPONENT==='legacy'?4:2));
+ const burned=[[97001,97020],[97201,97204],[97301,97302],[98001,98020],[98201,98204],[98301,98302]];
+ if(DELTA&&burned.some(([a,b])=>seed0>=a&&seed0<=b))
+  throw Error('HARD_AI_DELTA must not retune on seeds '+seed0);
  const workers=Math.max(1,Number(process.env.HARD_AI_WORKERS||3));
  const pairFilter=process.env.HARD_AI_PAIRS||'';
- const outName=OPPONENT==='legacy'?'v2-hard-ai-round3-legacy.json':
+ const outName=DELTA?'v2-hard-ai-delta-'+DELTA+(OPENING?'-opening':'')+(CLOCKFREE?'-clockfree':'')+'-'+seed0+'.json':
+  OPPONENT==='legacy'?'v2-hard-ai-round3-legacy.json':
   OPPONENT==='normal'?'v2-hard-ai-round3-normal.json':'v2-hard-ai-round3.json';
  const out=process.env.HARD_AI_OUTPUT||
   resolve(dirname(fileURLToPath(import.meta.url)),'../audit/'+outName);
@@ -233,14 +267,18 @@ if(!isMainThread){
   if(rows.length)mirrors[neu.name]=bucket(rows);
  }
  const mistakes=results.reduce((m,r)=>{
-  m.missedWin+=r.mistakes?.missedWin||0;
+  m.missedOneStep+=r.mistakes?.missedOneStep||0;
+  m.missedSequence+=r.mistakes?.missedSequence||0;
   m.fruitless+=r.mistakes?.fruitless||0;
   m.avoidableLoss+=r.mistakes?.avoidableLoss||0;
   m.deckOut+=r.deckOut?1:0;
   return m;
- },{missedWin:0,fruitless:0,avoidableLoss:0,deckOut:0});
+ },{missedOneStep:0,missedSequence:0,fruitless:0,avoidableLoss:0,deckOut:0});
  const summary={
   policy:HARD_AI_POLICY,
+  feature:DELTA||null,
+  openingMulligan:OPENING,
+  clockFree:CLOCKFREE,
   baseline:OPPONENT==='legacy'?'chooseLegacyHardAiAction':OPPONENT==='normal'?'normal':'hard-search-2',
   opponent:OPPONENT,
   decks:roster.map(d=>({key:d.key,name:d.name})),
@@ -260,8 +298,8 @@ if(!isMainThread){
    decks:r.newDeck+'/'+r.oldDeck,first:r.first,seed:r.seed,
    steps:r.steps,endReason:r.endReason,error:r.error||null
   })),
-  target:OPPONENT==='frozen'?0.6:null,
-  metTarget:OPPONENT==='frozen'&&wins/results.length>=0.6&&interrupts.length===0
+  target:DELTA?null:OPPONENT==='frozen'?0.6:null,
+  metTarget:!DELTA&&OPPONENT==='frozen'&&wins/results.length>=0.6&&interrupts.length===0
  };
  mkdirSync(dirname(out),{recursive:true});
  writeFileSync(out,JSON.stringify({summary,results},null,2)+'\n');

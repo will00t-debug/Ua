@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {createBleachV2Pack} from '../dist/universal-v2/bleach-pack.mjs';
 import {summarizeDesignatedDecks,designatedPlayableCounts} from '../dist/universal-v2/bleach-designated-decks.mjs';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
@@ -7,7 +8,14 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
 import {chooseStrengthenedHardAction,resetHardAiReport,lastHardAiTrace,
  hardPositionKey,hardCachedScores} from '../dist/universal-v2/hard-ai-search-3.mjs';
 import {chooseFrozenHardSearch2} from '../dist/universal-v2/hard-ai-search-2.mjs';
+import {chooseHardDelta,hardPositionKey as deltaPositionKey,hardCachedScores as deltaCachedScores,
+ resetHardAiReport as resetDelta}
+ from '../dist/universal-v2/hard-ai-delta.mjs';
 import {deckPlan,openingKeeps,planStage} from '../dist/universal-v2/hard-ai-plans.mjs';
+import {buildCoverageDeck} from '../scripts/v2-hard-ai-cross-title.mjs';
+import {listRegisteredV2Titles,requireRegisteredV2TitlePack}
+ from '../dist/universal-v2/title-packs/registry.mjs';
+import {validateUniversalDeck} from '../dist/universal-v2/pack.mjs';
 
 const pack=createBleachV2Pack(),packs=[pack,pack];
 const decks=Object.fromEntries(summarizeDesignatedDecks(id=>!!pack.cards[id])
@@ -212,4 +220,147 @@ test('a winning raid takes the energy-4 base, and the last generator stays',()=>
  const kept=choose(stay);
  assert.equal(kept.action.type,'next');
  assert.equal(kept.frozen.type,'next');
+ assert.equal(typeof kept.trace.missedOneStep,'boolean');
+ assert.equal(typeof kept.trace.missedSequence,'boolean');
+ assert.equal(kept.trace.missedWin,undefined);
 });
+
+test('opening keep needs a legal energy body and a follow-up',()=>{
+ const events=['BLC-2-047','BLC-2-046','BLC-2-049','BLC-2-049','BLC-2-049'];
+ assert.equal(openingKeeps(pack.cards,decks['reject-blue'],[
+  {cardId:'BLC-4-026'},{cardId:'BLC-4-026'},...events.map(cardId=>({cardId}))
+ ]),false);
+ assert.equal(openingKeeps(pack.cards,decks['reject-blue'],[
+  {cardId:'BLC-4-022'},...events.map(cardId=>({cardId})),{cardId:'BLC-2-047'}
+ ]),false);
+ assert.equal(openingKeeps(pack.cards,decks['reject-blue'],[
+  {cardId:'BLC-2-016'},...events.map(cardId=>({cardId})),{cardId:'BLC-2-047'}
+ ]),false);
+ assert.equal(openingKeeps(pack.cards,decks['reject-blue'],[
+  {cardId:'BLC-2-016'},{cardId:'BLC-4-026'},...events.slice(0,5).map(cardId=>({cardId}))
+ ]),true);
+ const closed={
+  F:{id:'F',type:'character',name:'Finisher',color:'blue',energy:2,ap:1,bp:4000,gen:1},
+  L:{id:'L',type:'character',name:'Low',color:'blue',energy:1,ap:1,bp:2000,gen:1}
+ };
+ assert.equal(openingKeeps(closed,{F:4,L:4},[
+  {cardId:'F'},{cardId:'L'},{cardId:'F'},{cardId:'L'},{cardId:'F'},{cardId:'L'},{cardId:'F'}
+ ]),false);
+ const discount={
+  A:{id:'A',type:'character',name:'Opener',color:'blue',energy:2,ap:1,bp:1500,gen:2,
+   emptyOwnFieldHandEnergyDiscount:2},
+  B:{id:'B',type:'character',name:'Follow',color:'blue',energy:1,ap:1,bp:2000,gen:1}
+ };
+ const hand=[{cardId:'A'},{cardId:'B'},{cardId:'B'},{cardId:'B'},{cardId:'B'},{cardId:'B'},{cardId:'B'}];
+ assert.equal(openingKeeps(discount,{A:4,B:4},hand),true);
+ assert.equal(openingKeeps({...discount,A:{...discount.A,emptyOwnFieldHandEnergyDiscount:0}},{A:4,B:4},hand),false);
+ const split={
+  A:{id:'A',type:'character',name:'Blue',color:'blue',energy:2,ap:1,bp:1500,gen:1,
+   emptyOwnFieldHandEnergyDiscount:2},
+  B:{id:'B',type:'character',name:'Green',color:'green',energy:2,ap:1,bp:1500,gen:1,
+   emptyOwnFieldHandEnergyDiscount:2}
+ };
+ assert.equal(openingKeeps(split,{A:4,B:4},[
+  {cardId:'A'},{cardId:'B'},{cardId:'A'},{cardId:'B'},{cardId:'A'},{cardId:'B'},{cardId:'A'}
+ ]),false);
+});
+
+test('hard-search-2 plus no flags matches the frozen policy',()=>{
+ const states=[
+  reach(boot('reject-blue',4),'main'),
+  reach(boot('white-sword',5),'move'),
+  reach(boot('renruki',6),'main')
+ ];
+ for(const state of states){
+  const before=structuredClone(state);
+  resetDelta();
+  const neu=chooseHardDelta(packs,state,REPLAY);
+  const old=chooseFrozenHardSearch2(packs,state,REPLAY);
+  assert.deepEqual(state,before);
+  assert.deepEqual(neu,old);
+ }
+ let mulligan=newUniversalMatch(packs,{
+  decks:[decks['reject-blue'],decks['reject-blue']],seed:8,first:0,openingMulligan:true
+ });
+ const same=chooseHardDelta(packs,mulligan,REPLAY);
+ assert.deepEqual(same,chooseFrozenHardSearch2(packs,mulligan,REPLAY));
+ hold(mulligan,0,['BLC-2-016','BLC-4-026','BLC-2-047','BLC-2-046','BLC-2-049','BLC-2-049','BLC-2-049']
+  .map(id=>take(mulligan,0,id)));
+ const kept=chooseHardDelta(packs,mulligan,{...REPLAY,features:{mulligan:true}});
+ const redrawn=chooseFrozenHardSearch2(packs,mulligan,REPLAY);
+ assert.equal(kept.mode,'keep');
+ assert.equal(redrawn.mode,'redraw');
+ let pricey=newUniversalMatch(packs,{
+  decks:[decks['reject-blue'],decks['reject-blue']],seed:12,first:0,openingMulligan:true
+ });
+ hold(pricey,0,['BLC-4-026','BLC-4-026','BLC-2-047','BLC-2-046','BLC-2-049','BLC-2-049','BLC-2-049']
+  .map(id=>take(pricey,0,id)));
+ assert.equal(chooseHardDelta(packs,pricey,{...REPLAY,features:{mulligan:true}}).mode,'redraw');
+});
+
+test('the cache flag separates raid layers without changing the frozen key',()=>{
+ let plain=reach(boot('white-sword',3),'main');
+ place(plain,0,'BLC-2-067','front',0,true);
+ for(let i=0;i<4;i++)place(plain,0,'BLC-1-083','energy',i);
+ clearFront(plain.players[1]);
+ const held=structuredClone(plain);
+ held.players[0].removed.push(held.players[0].deck.pop());
+ const raided=structuredClone(plain);
+ const buried=raided.players[0].front.find(c=>c?.cardId==='BLC-2-067');
+ const under=raided.players[0].deck.pop();
+ under.faceDown=false;
+ buried.stack=[under];
+ const granted=structuredClone(plain);
+ granted.players[0].front.find(c=>c?.cardId==='BLC-2-067')
+  .attackDamageGranted={turn:granted.turn,stamp:1,amount:2};
+ assert.equal(deltaPositionKey(packs,held,0),deltaPositionKey(packs,raided,0));
+ assert.equal(deltaPositionKey(packs,plain,0),deltaPositionKey(packs,granted,0));
+ assert.notEqual(deltaPositionKey(packs,held,0,{cache:true}),deltaPositionKey(packs,raided,0,{cache:true}));
+ assert.notEqual(deltaPositionKey(packs,plain,0,{cache:true}),deltaPositionKey(packs,granted,0,{cache:true}));
+ const alone=row=>deltaCachedScores(packs,[row],0,{cache:true})[0].score;
+ assert.notEqual(alone(held),alone(raided));
+ const aliased=deltaCachedScores(packs,[held,raided],0);
+ assert.equal(aliased[0].key,aliased[1].key);
+ assert.equal(aliased[0].score,aliased[1].score);
+ assert.notEqual(aliased[1].score,alone(raided));
+ const split=deltaCachedScores(packs,[held,raided,granted],0,{cache:true});
+ const reverse=deltaCachedScores(packs,[granted,raided,held],0,{cache:true});
+ assert.notEqual(split[0].key,split[1].key);
+ assert.notEqual(split[0].score,split[1].score);
+ assert.deepEqual(reverse.map(row=>row.score),[split[2].score,split[1].score,split[0].score]);
+});
+
+test('the sword art online coverage deck can open, and the old failure stays on record',()=>{
+ const titles=listRegisteredV2Titles().map(row=>row.title);
+ assert.ok(titles.includes('sword-art-online'));
+ for(const title of titles){
+  const titlePack=requireRegisteredV2TitlePack(title);
+  const deck=buildCoverageDeck(titlePack);
+  assert.deepEqual(validateUniversalDeck(titlePack,deck.counts),[]);
+ }
+ const sao=requireRegisteredV2TitlePack('sword-art-online');
+ const deck=buildCoverageDeck(sao);
+ assert.ok((deck.counts['SAO-1-001']||0)>=2);
+ const packsSao=[sao,sao];
+ let state=newUniversalMatch(packsSao,{decks:[deck.counts,deck.counts],seed:3,first:0});
+ state=reachPhase(state,packsSao,'main');
+ const opener=take(state,0,'SAO-1-001');
+ hold(state,0,[opener]);
+ assert.equal(state.players[0].energy.every(card=>!card),true);
+ const legal=legalUniversalActions(packsSao,state);
+ assert.ok(legal.some(action=>action.type==='play'&&action.line==='energy'&&action.uid===opener.uid));
+ const historical=JSON.parse(readFileSync(new URL('../audit/v2-hard-ai-cross-title-96001.json',import.meta.url),'utf8'));
+ const mirrors=historical.results.filter(row=>row.label==='coverage-mirror'&&
+  row.titles?.[0]==='sword-art-online'&&row.titles?.[1]==='sword-art-online');
+ assert.equal(mirrors.length,8);
+ assert.ok(mirrors.every(row=>row.endReason==='required-draw-empty'));
+ const replay=JSON.parse(readFileSync(new URL('../audit/v2-hard-ai-sao-96001-replay.json',import.meta.url),'utf8'));
+ assert.equal(replay.summary.cause,'deck-and-policy');
+ assert.equal(replay.summary.frozen.deckOut,8);
+});
+
+function reachPhase(state,titlePacks,phase){
+ for(let n=0;state.phase!==phase&&state.status==='playing'&&n<8;n++)
+  state=dispatchUniversalAction(titlePacks,state,legalUniversalActions(titlePacks,state).find(a=>a.type==='next'));
+ return state;
+}
