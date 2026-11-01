@@ -21,6 +21,15 @@ body.v2-battle-page.v2-playing #match-view>.coach-bar button{
  background:#17304c;color:#e7f3ff;font-size:11px;line-height:18px
 }
 .coach-status,.coach-live-note,.coach-review-note{margin:0}
+body.v2-battle-page.v2-playing #match-view .matchHeader.coach-review-header{
+ flex:0 0 auto;min-height:42px;height:auto;flex-wrap:wrap;gap:6px 12px;padding:6px 12px
+}
+.coach-review-actions{display:flex;align-items:center;flex-wrap:wrap;gap:6px}
+.v2-shell .coach-review-actions :is(a,button){
+ display:inline-flex;align-items:center;justify-content:center;min-height:34px;padding:6px 10px;
+ border:1px solid #4d7eab;border-radius:7px;background:#17304c;color:#e7f3ff;
+ font-size:12px;line-height:1.2;text-decoration:none;white-space:nowrap
+}
 body.v2-battle-page.v2-playing #match-view>.coach-dock{
  flex:0 0 auto;max-height:40px;display:flex;align-items:center;gap:6px;
  margin:0;padding:2px 6px;overflow:hidden;background:#101f34;color:#d5e6f8;

@@ -5,7 +5,7 @@ import {createRezV2Pack} from '../dist/universal-v2/rez-pack.mjs';
 import {mstV2Pack} from '../dist/universal-v2/mst-pack.mjs';
 import {createBleachV2Pack} from '../dist/universal-v2/bleach-pack.mjs';
 import {createSlgV2Pack} from '../dist/universal-v2/slg-pack.mjs';
-import {uiActionLabel,pendingTextChoiceClass} from '../dist/universal-v2/preview-actions.mjs';
+import {uiActionLabel,pendingTextChoiceClass,V2_PENDING_LABELS} from '../dist/universal-v2/preview-actions.mjs';
 
 function asciiChoiceLabels(pack){
  const hits=[];
@@ -45,4 +45,16 @@ test('REZ-2-062 raid-box choices stay Chinese and do not wear the raid outline',
  assert.equal(pendingTextChoiceClass({type:'chooseDiscard',uid:'card'}),'recommended');
  const preview=readFileSync(new URL('../dist/universal-v2-preview.mjs',import.meta.url),'utf8');
  assert.match(preview,/pendingTextChoiceClass\(action\)/);
+});
+
+test('Renji optional draw/discard shows distinct Chinese choices and the actual discard count',()=>{
+ assert.equal(V2_PENDING_LABELS['effect-may-draw-discard'],'選擇是否抽牌並棄牌');
+ const state={pending:{kind:'effect-may-draw-discard',discardCount:1}};
+ assert.equal(uiActionLabel({type:'chooseMayDrawDiscard',mode:'draw'},{state}),
+  '抽 1 張，再將 1 張手牌送至場外');
+ assert.equal(uiActionLabel({type:'chooseMayDrawDiscard',mode:'skip'},{state}),
+  '不抽牌、不棄牌');
+ assert.equal(uiActionLabel({type:'chooseMayDrawDiscard',mode:'draw'},
+  {state:{pending:{...state.pending,discardCount:2}}}),
+  '抽 1 張，再將 2 張手牌送至場外');
 });

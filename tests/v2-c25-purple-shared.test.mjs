@@ -494,6 +494,91 @@ test('BLC-1-053 entry-first raid keeps BLC-4-083 choose-one behind the discard',
  assert.equal(raid.effectQueue.some(e=>e.op==='chooseOne'),false);
 });
 
+// UA01DC/BLC-4-083's printed "このキャラがレイドされた時" has no own-turn
+// restriction. UA08BT/BLC-1-053's RAID LIFE must earn both entry programs.
+for(const order of ['baseFirst','entryFirst'])for(const lastLife of [false,true])
+test('BLC-4-083 base effect resolves during opponent-turn LIFE Raid: '+order+', lastLife='+lastLife,()=>{
+ let s=phase(fresh(2587),'attack');
+ const attacker=place(s,0,'BLC-4-050','front',0);
+ const base=place(s,1,'BLC-4-083','energy',0,false);
+ for(let slot=1;slot<4;slot++)place(s,1,'BLC-1-039','energy',slot);
+ const raider=take(s,1,'BLC-1-053');
+ s.players[1].life.unshift(raider);
+ if(lastLife)s.players[1].deck.push(...s.players[1].life.splice(1));
+ readyAp(s,1,0);
+ s=play(s,a=>a.type==='attack'&&a.uid===attacker.uid);
+ s=play(s,a=>a.type==='chooseBlock'&&a.uid===null);
+ const before=s.players[1].deck.length;
+ s=play(s,a=>a.type==='chooseTrigger'&&a.mode==='raid'&&a.baseUid===base.uid&&a.line==='front'&&a.slot===1);
+ assert.equal(s.active,0);
+ assert.equal(s.status,'playing');
+ assert.equal(s.players[1].front[1].uid,raider.uid);
+ assert.equal(s.players[1].front[1].ready,true);
+ assert.equal(apLeft(s,1),0);
+ assert.equal(s.pending.kind,'raid-effect-order');
+ s=play(s,a=>a.type==='chooseRaidOrder'&&a.mode===order);
+ const discardEntry=()=>{
+  assert.equal(s.pending.kind,'effect-discard');
+  assert.equal(s.pending.remaining,2);
+  for(let i=0;i<2;i++)s=play(s,a=>a.type==='chooseDiscard'&&a.uid===s.players[1].hand[0].uid);
+ };
+ if(order==='entryFirst')discardEntry();
+ assert.equal(s.pending.kind,'effect-choice-mode');
+ assert.equal(s.pending.player,1);
+ s=play(s,a=>a.type==='chooseEffectMode'&&a.mode==='top');
+ assert.equal(s.pending.kind,'private-top-choice');
+ assert.equal(s.pending.sourceUid,base.uid);
+ const top=s.players[1].deck[0];
+ s=play(s,a=>a.type==='chooseTopCard'&&a.mode==='outside');
+ assert.equal(s.players[1].outside.some(c=>c.uid===top.uid),true);
+ if(order==='baseFirst')discardEntry();
+ assert.equal(s.players[1].deck.length,before-4);
+ assert.equal(s.pending,null);
+ assert.equal(s.status,lastLife?'finished':'playing');
+});
+
+for(const baseFirst of [true,false])
+test('BLC-4-083 DAMAGE 2 LIFE Raid preserves separately ordered base/top effects: baseFirst='+baseFirst,()=>{
+ let s=phase(fresh(2588),'main');
+ fuel(s);
+ readyAp(s,0,1);
+ const attacker=place(s,0,'BLC-1-047','front',0);
+ s=play(s,a=>a.type==='activate'&&a.uid===attacker.uid&&a.mode==='oncePay');
+ s=phase(s,'attack');
+ const base=place(s,1,'BLC-4-083','energy',0);
+ for(let slot=1;slot<4;slot++)place(s,1,'BLC-1-039','energy',slot);
+ const raider=take(s,1,'BLC-1-053'),other=take(s,1,'BLC-4-083');
+ s.players[1].deck.push(...s.players[1].life.splice(0));
+ s.players[1].life.push(raider,other);
+ readyAp(s,1,0);
+ s=play(s,a=>a.type==='attack'&&a.uid===attacker.uid);
+ s=play(s,a=>a.type==='chooseBlock'&&a.uid===null);
+ s=play(s,a=>a.type==='chooseLifeOrder'&&a.uid===raider.uid);
+ s=play(s,a=>a.type==='chooseTrigger'&&a.mode==='raid'&&a.baseUid===base.uid&&a.line==='front'&&a.slot===0);
+ assert.equal(s.pending.kind,'life-batch-order');
+ assert.equal(s.pending.entries.length,2);
+ const resolveBase=()=>{
+  const entry=s.pending.entries.find(e=>e.sourceUid===base.uid);
+  assert.ok(entry);
+  s=play(s,a=>a.type==='chooseLifeEffect'&&a.key===entry.key);
+  assert.equal(s.pending.kind,'effect-choice-mode');
+  s=play(s,a=>a.type==='chooseEffectMode'&&a.mode==='top');
+  s=play(s,a=>a.type==='chooseTopCard'&&a.mode==='top');
+ };
+ const resolveTop=()=>{
+  const entry=s.pending.entries.find(e=>e.sourceUid===raider.uid);
+  assert.ok(entry);
+  s=play(s,a=>a.type==='chooseLifeEffect'&&a.key===entry.key);
+  assert.equal(s.pending.kind,'effect-discard');
+  for(let i=0;i<2;i++)s=play(s,a=>a.type==='chooseDiscard'&&a.uid===s.players[1].hand[0].uid);
+ };
+ if(baseFirst){resolveBase();resolveTop();}else{resolveTop();resolveBase();}
+ assert.equal(s.lifeRevealBatch,null);
+ assert.equal(s.status,'finished');
+ assert.equal(s.players[1].front[0].stack[0].uid,base.uid);
+ assert.equal(s.players[1].outside.some(c=>c.uid===other.uid),true);
+});
+
 test('BLC-4-058 needs Renji and BP 5000, then draws only after purple effect AP',()=>{
  let closed=phase(fresh(2558),'main');
  fuel(closed);

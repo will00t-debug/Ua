@@ -28,6 +28,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-entry-rest-front':'將前線 ACTIVE 角色轉為 REST',
  'effect-retire-tuck-active':'可退場 1 張其他角色，裏向放在此角色下方並 ACTIVE','end-hand-limit':'手牌上限',
  'effect-discard':'選擇棄牌','effect-discard-cost':'支付棄牌成本',
+ 'effect-may-draw-discard':'選擇是否抽牌並棄牌',
  'effect-discard-gate':'是否支付棄牌成本',
  'effect-remove-outside':'可將己方場外卡移入移除區',
  'effect-remove-hand-scale':'可將任意張手牌中具有指定特徵的卡除外，再依張數提高敵方前線退場的 BP 上限',
@@ -488,6 +489,8 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseInspectedOutside':return action.uid===null?'完成選擇並排列剩餘牌':'將 '+name()+' 送場外';
   case 'chooseTopTraitOutside':return action.uid===null?'不送場外，排列剩餘牌':'將符合特徵的 '+name()+' 送場外';
   case 'chooseOptionalDraw':return action.mode==='draw'?'攻擊時抽 1 張':'不抽牌';
+  case 'chooseMayDrawDiscard':return action.mode==='draw'?
+   '抽 1 張，再將 '+(state?.pending?.discardCount||1)+' 張手牌送至場外':'不抽牌、不棄牌';
   case 'chooseOptionalTuck':return action.mode==='tuck'?'將牌庫頂 1 張蓋到此角色下方':'不蓋牌';
   case 'chooseFacedownOutside':return '將蓋牌放到場外：'+name();
   case 'reorderUnder':return '調整蓋牌順序';
