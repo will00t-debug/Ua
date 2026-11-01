@@ -894,6 +894,7 @@ function putDirectFacedownOutside(pack,s,owner,host,uid){
  const physical=detachFacedown(host,uid);
  if(!physical)throw Error('Facedown under-card left');
  physical.faceDown=false;physical.ready=false;physical.fieldEntryStamp=null;
+ clearTurnBattleGrants(physical);
  s.players[owner].outside.push(physical);
  recordCompletedMove(pack,s,{physical,owner,from:'raid-under',to:'outside',
   reason:'own-effect',sourceUid:host.uid});
@@ -1352,6 +1353,12 @@ function startTurn(pack,s){
    delete unit.reenterOrRaidUntil;
   delete unit.eventReadyOnAttack;delete unit.eventSniperGranted;
   delete unit.attackBanned;delete unit.attackDrawGranted;delete unit.belowPrintedBlock;delete unit.eventAttackDrawGranted;delete unit.unchosenGranted;delete unit.impactNullThisTurn;delete unit.attackWinDrawGranted;
+  const clearBuriedBattle=layer=>{
+   if(!layer)return;
+   clearTurnBattleGrants(layer);
+   for(const child of [...(layer.stack||[]),...(layer.under||[])])clearBuriedBattle(child);
+  };
+  clearBuriedBattle(unit);
   delete unit.lineShiftUsedTurn;
   delete unit.loseBattleReady;
   delete unit.energyMoveOnAttackGranted;delete unit.triggerUnchosenGranted;
@@ -1417,6 +1424,17 @@ function sourceMoveBoundary(pack,s,owner,sourceUid){
  return any?[{op:'sourceResolutionBoundary',owner,sourceUid,
   afterOrder:s.nextZoneMoveOrder-1}]:[];
 }
+// This-turn battle keywords are tied to the current field entry. A buried,
+// exposed, or departed physical must not carry them into a later entry:
+// startTurn drops the payment ledgers that prove them, and a leftover
+// object then fails the match check and locks the attack phase.
+function clearTurnBattleGrants(unit){
+ if(!unit||typeof unit!=='object')return;
+ delete unit.sniperGranted;
+ delete unit.mustBlockGranted;
+ delete unit.attackWinDrawGranted;
+ delete unit.blockAtLeastGranted;
+}
 // Queue printed effects so each pending cross-title target is chosen before
 // remaining steps resolve. Native card packs remain responsible for their own text.
 function clearFieldBody(c){
@@ -1432,6 +1450,7 @@ function clearFieldBody(c){
  delete next.energyAttackGranted;delete next.impactPlus;
  delete next.bounceInsteadGranted;delete next.mmm2Block;delete next.mmm2DoubleAttack;
  delete next.mmm2SkipEndActive;delete next.mmm2UnblockedDraw;delete next.faceUp;
+ clearTurnBattleGrants(next);
  return next;
 }
 function buryRaidLayers(pack,s,owner,top,sourceUid){
@@ -5475,6 +5494,7 @@ function performRaid(pack,s,p,cardOnTop,baseUid,line,slot,replaceUid,{entryReady
  for(const buried of new Set([base.c,effectiveBase])){
   delete buried.energyPlusUntil;
   delete buried.frontEnergyUntil;
+  clearTurnBattleGrants(buried);
  }
  cardOnTop.stack=[effectiveBase];cardOnTop.ready=true;
  delete effectiveBase.raidBaseUid;
@@ -5577,7 +5597,7 @@ function bounceToHand(pack,s,p,uid,sourceUid=uid,{reason='own-effect',controller
   delete next.loseBattleReady;delete next.attackBanned;delete next.blockBannedUntil;delete next.raidLockedTurn;delete next.attackDrawGranted;delete next.belowPrintedBlock;delete next.eventAttackDrawGranted;
   delete next.unchosenGranted;delete next.impactNullThisTurn;delete next.eventReadyOnAttack;delete next.eventSniperGranted;
   delete next.energyAttackGranted;delete next.impactPlus;
-  delete next.bounceInsteadGranted;return next;
+  delete next.bounceInsteadGranted;clearTurnBattleGrants(next);return next;
  };
  for(const layer of below(top)){
   const physical=reset(layer);pl.outside.push(physical);
@@ -5626,7 +5646,7 @@ function tuckFieldBottom(pack,s,p,line,slot,sourceUid){
  const buried=buriedMoves(top);
  const reset=c=>{
   const next={...c,stack:[],under:[],buffs:[],ready:false,faceDown:false,fieldEntryStamp:null};
-  delete next.ownEffectFront;return next;
+  delete next.ownEffectFront;clearTurnBattleGrants(next);return next;
  };
  const physical=reset(top);
  s.players[p].deck.push(physical);
@@ -5685,7 +5705,7 @@ function vacate(pack,s,p,line,slot,destination='outside'){
   delete next.loseBattleReady;delete next.attackBanned;delete next.blockBannedUntil;delete next.raidLockedTurn;delete next.attackDrawGranted;delete next.belowPrintedBlock;delete next.eventAttackDrawGranted;
   delete next.unchosenGranted;delete next.impactNullThisTurn;delete next.eventReadyOnAttack;delete next.eventSniperGranted;
   delete next.energyAttackGranted;delete next.impactPlus;
-  delete next.bounceInsteadGranted;return next;
+  delete next.bounceInsteadGranted;clearTurnBattleGrants(next);return next;
  };
  // Q60/Q61/Q62: subordinate cards go OUTSIDE even if the top is removed.
  // Only the visible field object qualifies for onRetire, never its layers.
@@ -5716,6 +5736,7 @@ function removeFrontPile(pack,s,p,slot,sourceUid){
   delete c.loseBattleReady;delete c.attackBanned;delete c.attackDrawGranted;delete c.belowPrintedBlock;delete c.eventAttackDrawGranted;
   delete c.unchosenGranted;delete c.impactNullThisTurn;delete c.eventReadyOnAttack;delete c.eventSniperGranted;
   delete c.energyAttackGranted;
+  clearTurnBattleGrants(c);
   for(const layer of c.stack||[])clear(layer);
   for(const layer of c.under||[])clear(layer);
  };
@@ -6261,6 +6282,7 @@ function payChainFacedowns(pack,s,owner,source,uids){
   if(!physical)throw Error('Chain Raid facedown could not be paid');
   physical.ready=false;physical.faceDown=false;physical.fieldEntryStamp=null;physical.buffs=[];
   delete physical.attackDamageGranted;delete physical.ownEffectFront;
+  clearTurnBattleGrants(physical);
   s.players[owner].outside.push(physical);
   recordCompletedMove(pack,s,{physical,owner,from:'raid-under',to:'outside',
    reason:'own-effect',sourceUid:source.uid});
@@ -6276,6 +6298,7 @@ function revealChainOrigin(pack,s,owner,source){
  s.players[owner][pos.line][pos.slot]=origin;
  source.ready=false;source.faceDown=false;source.fieldEntryStamp=null;source.buffs=[];
  delete source.attackDamageGranted;delete source.ownEffectFront;
+ clearTurnBattleGrants(source);
  s.players[owner].outside.push(source);
  recordCompletedMove(pack,s,{physical:source,owner,from:pos.line,to:'outside',
   reason:'own-effect',sourceUid:source.uid});
@@ -6301,11 +6324,13 @@ function stripOwnRaidTopInPlace(pack,s,owner,line,slot,sourceUid){
  if(!ownStartRaidState(pack,top))throw Error('RAID top no longer eligible');
  top.stack=[];base.ready=top.ready;base.buffs=[];
  delete base.attackDamageGranted;delete base.attackDamagePlus;delete base.ownEffectFront;
+ clearTurnBattleGrants(base);
  base.fieldEntryStamp=s.nextFieldEntryStamp++;
  s.players[owner][line][slot]=base;
  const departed={...top,ready:false,stack:[],under:[],buffs:[],faceDown:false,fieldEntryStamp:null};
  delete departed.attackDamageGranted;delete departed.attackDamagePlus;delete departed.ownEffectFront;
  delete departed.raidBaseUid;
+ clearTurnBattleGrants(departed);
  s.players[owner].outside.push(departed);
  recordCompletedMove(pack,s,{physical:top,owner,controller:owner,from:line,to:'outside',
   reason:'raid-strip',sourceUid});
@@ -6317,6 +6342,7 @@ function stripRaidTopInPlace(pack,s,owner,line,slot,sourceUid){
  if(!strippableRaidTop(pack,top))throw Error('RAID top no longer eligible');
  top.stack=[];base.ready=top.ready;base.buffs=[];
  delete base.attackDamageGranted;delete base.attackDamagePlus;delete base.ownEffectFront;delete base.impactPlus;
+ clearTurnBattleGrants(base);
  base.fieldEntryStamp=s.nextFieldEntryStamp++;
  s.players[owner][line][slot]=base;
  const departed={...top,ready:false,stack:[],under:[],buffs:[],faceDown:false,fieldEntryStamp:null};
@@ -6326,6 +6352,7 @@ function stripRaidTopInPlace(pack,s,owner,line,slot,sourceUid){
  delete departed.doubleBlockUntil;delete departed.impactNullUntil;delete departed.blockAtLeastUntil;
  delete departed.loseBattleReady;delete departed.attackBanned;delete departed.attackDrawGranted;delete departed.belowPrintedBlock;
  delete departed.unchosenGranted;delete departed.impactNullThisTurn;delete departed.eventReadyOnAttack;delete departed.eventSniperGranted;
+ clearTurnBattleGrants(departed);
  s.players[owner].outside.push(departed);
  recordCompletedMove(pack,s,{physical:top,owner,controller:owner,from:line,to:'outside',
   reason:'raid-strip',sourceUid});
@@ -7409,6 +7436,7 @@ function resolveChoice(s,a,pack){
     delete physical.doubleBlockUntil;delete physical.impactNullUntil;delete physical.blockAtLeastUntil;
     delete physical.loseBattleReady;delete physical.attackBanned;delete physical.attackDrawGranted;delete physical.belowPrintedBlock;delete physical.eventAttackDrawGranted;
     delete physical.unchosenGranted;delete physical.impactNullThisTurn;delete physical.eventReadyOnAttack;delete physical.eventSniperGranted;
+    clearTurnBattleGrants(physical);
     p.outside.push(physical);
     recordCompletedMove(pack,s,{...moved,physical,owner:q.player,from:'raid-under',
      to:'outside',reason:moved===entry?'protection':'rule',sourceUid:loc.c.uid});
@@ -10555,6 +10583,7 @@ function resolveChoice(s,a,pack){
   if(!physical)throw Error('Facedown card is no longer under an own field card');
   physical.ready=false;physical.faceDown=false;physical.fieldEntryStamp=null;physical.buffs=[];
   delete physical.attackDamageGranted;delete physical.ownEffectFront;
+  clearTurnBattleGrants(physical);
   p.outside.push(physical);
   recordCompletedMove(pack,s,{physical,owner:q.player,from:'raid-under',to:'outside',
    reason:'own-effect',sourceUid:q.sourceUid});
@@ -14913,6 +14942,7 @@ function clearLeavingFieldMemory(c){
  delete c.eventSniperGranted;delete c.energyAttackGranted;delete c.impactPlus;
  delete c.bounceInsteadGranted;delete c.sniperGranted;delete c.raidBaseUid;
  delete c.blockAtLeastGranted;delete c.readyOnAttackGranted;
+ clearTurnBattleGrants(c);
 }
 function putRaidBaseIntoLife(pack,s,owner,source,index){
  const pl=s.players[owner];
@@ -18772,12 +18802,20 @@ export function assertUniversalMatch(pack,s){
     (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.sourceUid===physical.uid&&
      e.from==='hand'&&e.to==='outside'&&e.reason==='payment'&&e.owner===owner);
    const targetPrinted=card(pack,physical);
-   const printedBlock=field(s.players[owner]).some(c=>layers(c).some(layer=>{
+   const grantPrinted=layer=>{
     const printed=card(pack,layer);
     return (printed.effects?.onAttack||[]).some(e=>e.op==='grantPrintedBlockAtLeast'&&
      e.bp===ceiling.bp&&targetPrinted.color===e.color&&targetPrinted.energy===e.energy&&
      cardHasName(targetPrinted,e.name,false));
-   }));
+   };
+   const printedBlock=field(s.players[owner]).some(c=>layers(c).some(grantPrinted));
+   // EX17BT/REZ-2-021 SPECIAL retires the attacker after REZ-1-053 has already
+   // granted 「BP4000以上のキャラにブロックされない」. Official text lasts the
+   // rest of this turn, so a departed granter still proves the ceiling when
+   // that same physical attacked. An on-field copy needs no attack count.
+   const departedBlock=['hand','deck','life','lifeRevealed','outside','removed','resolvingEvents']
+    .some(zone=>(s.players[owner][zone]||[]).some(c=>layers(c).some(layer=>
+     grantPrinted(layer)&&(s.attacksByUid[layer.uid]||0)>=1)));
    const handBlock=targetPrinted.mainAbility?.op==='handOutsideBlockAtLeast'&&
     targetPrinted.mainAbility.bp===ceiling.bp&&
     (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.sourceUid===physical.uid&&
@@ -18820,7 +18858,7 @@ export function assertUniversalMatch(pack,s){
    if(!ceiling||ceiling.turn!==s.turn||ceiling.stamp!==physical.fieldEntryStamp||
     !Number.isInteger(ceiling.bp)||Object.keys(ceiling).length!==3||
     Object.keys(ceiling).some(k=>!['turn','stamp','bp'].includes(k))||
-    !(named||self||printedBlock||handBlock||aided||oppGrant||eventNamed||ruka||iysBlock))
+    !(named||self||printedBlock||departedBlock||handBlock||aided||oppGrant||eventNamed||ruka||iysBlock))
     throw Error('Forged blocker ceiling');
   }
   const readyGrant=physical.readyOnAttackGranted;
