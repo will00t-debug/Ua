@@ -113,7 +113,8 @@ function arenaHeader(){
    el('a',{href:'/index.html',text:'牌組'}),
    el('a',{href:'/index.html#cards',text:'卡牌一覽'}),
    el('a',{href:'/index.html#records',text:'排行榜'}),
-   el('a',{href:'/index.html#rules',text:'規則／FAQ'})),
+   el('a',{href:'/index.html#rules',text:'規則／FAQ'}),
+   el('a',{href:'/coach.html',text:'教 AI'})),
   app.user?el('div',{class:'ua-header-account'},
    el('span',{class:'ua-header-username',title:app.user.username,text:app.user.username}),
    el('button',{class:'ua-header-logout',type:'button',text:'登出',onClick:logout})):null);

@@ -59,6 +59,58 @@ CREATE TABLE IF NOT EXISTS room_directory (
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
 );
+CREATE TABLE IF NOT EXISTS coach_identities (
+  user_id TEXT PRIMARY KEY,
+  anonymous_id TEXT NOT NULL UNIQUE,
+  created_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS coach_matches (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  anonymous_id TEXT NOT NULL,
+  engine TEXT NOT NULL,
+  engine_version TEXT NOT NULL,
+  pool_json TEXT NOT NULL,
+  ai_version TEXT NOT NULL,
+  deck_json TEXT NOT NULL,
+  header_json TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL,
+  completed INTEGER,
+  winner INTEGER,
+  end_reason TEXT
+);
+CREATE INDEX IF NOT EXISTS coach_matches_user ON coach_matches(user_id, created_at);
+CREATE TABLE IF NOT EXISTS coach_steps (
+  id TEXT PRIMARY KEY,
+  match_id TEXT NOT NULL,
+  user_id TEXT NOT NULL,
+  step INTEGER NOT NULL,
+  client_key TEXT NOT NULL,
+  payload_json TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  UNIQUE(user_id, client_key)
+);
+CREATE INDEX IF NOT EXISTS coach_steps_match ON coach_steps(user_id, match_id, step);
+CREATE TABLE IF NOT EXISTS coach_demos (
+  id TEXT PRIMARY KEY,
+  match_id TEXT NOT NULL,
+  user_id TEXT NOT NULL,
+  step INTEGER NOT NULL,
+  client_key TEXT NOT NULL,
+  payload_json TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  UNIQUE(user_id, client_key)
+);
+CREATE TABLE IF NOT EXISTS coach_debug_replays (
+  id TEXT PRIMARY KEY,
+  match_id TEXT NOT NULL,
+  user_id TEXT NOT NULL,
+  client_key TEXT NOT NULL,
+  payload_json TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  UNIQUE(user_id, client_key)
+);
 `;
 
 export function roomTtl(status){
@@ -216,6 +268,110 @@ export function createRepositories(sql){
    sql.run('UPDATE room_directory SET guest_id=COALESCE(?,guest_id), status=?, updated_at=? WHERE code=?',
     row.guestId||null,row.status,row.updatedAt,row.code);
   },
-  deleteDirectory(code){sql.run('DELETE FROM room_directory WHERE code=?',code);}
+  deleteDirectory(code){sql.run('DELETE FROM room_directory WHERE code=?',code);},
+  coachIdentity(userId){
+   const row=sql.get('SELECT anonymous_id AS anonymousId FROM coach_identities WHERE user_id=?',userId);
+   return row?.anonymousId||null;
+  },
+  insertCoachIdentity(userId,anonymousId,createdAt){
+   sql.run('INSERT INTO coach_identities (user_id,anonymous_id,created_at) VALUES (?,?,?)',userId,anonymousId,createdAt);
+  },
+  coachMatchCount(userId){
+   return Number(sql.get('SELECT COUNT(*) AS n FROM coach_matches WHERE user_id=?',userId)?.n||0);
+  },
+  coachMatch(userId,matchId){
+   return sql.get(`SELECT id,user_id AS userId,anonymous_id AS anonymousId,engine,engine_version AS engineVersion,
+    pool_json AS poolJson,ai_version AS aiVersion,deck_json AS deckJson,header_json AS headerJson,
+    created_at AS createdAt,updated_at AS updatedAt,completed,winner,end_reason AS endReason
+    FROM coach_matches WHERE user_id=? AND id=?`,userId,matchId);
+  },
+  insertCoachMatch(row){
+   sql.run(`INSERT INTO coach_matches (id,user_id,anonymous_id,engine,engine_version,pool_json,ai_version,deck_json,header_json,created_at,updated_at,completed,winner,end_reason)
+    VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+   row.id,row.userId,row.anonymousId,row.engine,row.engineVersion,row.poolJson,row.aiVersion,row.deckJson,row.headerJson,
+   row.createdAt,row.updatedAt,null,null,null);
+  },
+  touchCoachMatch(userId,matchId,updatedAt){
+   sql.run('UPDATE coach_matches SET updated_at=? WHERE user_id=? AND id=?',updatedAt,userId,matchId);
+  },
+  labelCoachMatch(userId,matchId,label,updatedAt){
+   sql.run('UPDATE coach_matches SET completed=?, winner=?, end_reason=?, updated_at=? WHERE user_id=? AND id=?',
+    label.completed?1:0,label.winner,label.endReason,updatedAt,userId,matchId);
+  },
+  listCoachMatches(userId){
+   return sql.all(`SELECT id,engine,ai_version AS aiVersion,deck_json AS deckJson,created_at AS createdAt,updated_at AS updatedAt,
+    completed,winner,end_reason AS endReason,
+    (SELECT COUNT(*) FROM coach_steps s WHERE s.user_id=coach_matches.user_id AND s.match_id=coach_matches.id) AS steps,
+    (SELECT COUNT(*) FROM coach_demos d WHERE d.user_id=coach_matches.user_id AND d.match_id=coach_matches.id) AS demos
+    FROM coach_matches WHERE user_id=? ORDER BY created_at DESC, id DESC`,userId);
+  },
+  coachStepCount(userId,matchId){
+   return Number(sql.get('SELECT COUNT(*) AS n FROM coach_steps WHERE user_id=? AND match_id=?',userId,matchId)?.n||0);
+  },
+  coachStepByKey(userId,clientKey){
+   return sql.get('SELECT id,match_id AS matchId,step,payload_json AS payloadJson FROM coach_steps WHERE user_id=? AND client_key=?',userId,clientKey);
+  },
+  insertCoachStep(row){
+   sql.run('INSERT INTO coach_steps (id,match_id,user_id,step,client_key,payload_json,created_at) VALUES (?,?,?,?,?,?,?)',
+    row.id,row.matchId,row.userId,row.step,row.clientKey,row.payloadJson,row.createdAt);
+  },
+  listCoachSteps(userId,matchId){
+   return sql.all('SELECT id,step,payload_json AS payloadJson,created_at AS createdAt FROM coach_steps WHERE user_id=? AND match_id=? ORDER BY step ASC',userId,matchId);
+  },
+  coachDemoByKey(userId,clientKey){
+   return sql.get('SELECT id,match_id AS matchId,step,payload_json AS payloadJson FROM coach_demos WHERE user_id=? AND client_key=?',userId,clientKey);
+  },
+  coachDemoCount(userId){
+   return Number(sql.get('SELECT COUNT(*) AS n FROM coach_demos WHERE user_id=?',userId)?.n||0);
+  },
+  insertCoachDemo(row){
+   sql.run('INSERT INTO coach_demos (id,match_id,user_id,step,client_key,payload_json,created_at) VALUES (?,?,?,?,?,?,?)',
+    row.id,row.matchId,row.userId,row.step,row.clientKey,row.payloadJson,row.createdAt);
+  },
+  updateCoachDemo(userId,clientKey,payloadJson){
+   sql.run('UPDATE coach_demos SET payload_json=? WHERE user_id=? AND client_key=?',payloadJson,userId,clientKey);
+  },
+  listCoachDemos(userId,matchId=null){
+   return matchId
+    ?sql.all('SELECT id,match_id AS matchId,step,payload_json AS payloadJson,created_at AS createdAt FROM coach_demos WHERE user_id=? AND match_id=? ORDER BY step ASC',userId,matchId)
+    :sql.all('SELECT id,match_id AS matchId,step,payload_json AS payloadJson,created_at AS createdAt FROM coach_demos WHERE user_id=? ORDER BY created_at DESC',userId);
+  },
+  coachDemo(userId,demoId){
+   return sql.get('SELECT id,match_id AS matchId,step,payload_json AS payloadJson,created_at AS createdAt FROM coach_demos WHERE user_id=? AND id=?',userId,demoId);
+  },
+  coachDebugByKey(userId,clientKey){
+   return sql.get('SELECT id,match_id AS matchId,payload_json AS payloadJson FROM coach_debug_replays WHERE user_id=? AND client_key=?',userId,clientKey);
+  },
+  coachDebugCount(userId){
+   return Number(sql.get('SELECT COUNT(*) AS n FROM coach_debug_replays WHERE user_id=?',userId)?.n||0);
+  },
+  insertCoachDebug(row){
+   sql.run('INSERT INTO coach_debug_replays (id,match_id,user_id,client_key,payload_json,created_at) VALUES (?,?,?,?,?,?)',
+    row.id,row.matchId,row.userId,row.clientKey,row.payloadJson,row.createdAt);
+  },
+  coachDebugForMatch(userId,matchId){
+   return sql.get('SELECT id,length(payload_json) AS bytes,created_at AS createdAt FROM coach_debug_replays WHERE user_id=? AND match_id=?',userId,matchId);
+  },
+  coachDebug(userId,replayId){
+   return sql.get('SELECT id,match_id AS matchId,payload_json AS payloadJson,created_at AS createdAt FROM coach_debug_replays WHERE user_id=? AND id=?',userId,replayId);
+  },
+  deleteCoachMatch(userId,matchId){
+   sql.run('DELETE FROM coach_steps WHERE user_id=? AND match_id=?',userId,matchId);
+   sql.run('DELETE FROM coach_demos WHERE user_id=? AND match_id=?',userId,matchId);
+   sql.run('DELETE FROM coach_debug_replays WHERE user_id=? AND match_id=?',userId,matchId);
+   sql.run('DELETE FROM coach_matches WHERE user_id=? AND id=?',userId,matchId);
+  },
+  deleteCoachDemo(userId,demoId){
+   sql.run('DELETE FROM coach_demos WHERE user_id=? AND id=?',userId,demoId);
+  },
+  deleteCoachDebug(userId,replayId){
+   sql.run('DELETE FROM coach_debug_replays WHERE user_id=? AND id=?',userId,replayId);
+  },
+  deleteCoachUser(userId){
+   sql.run('DELETE FROM coach_steps WHERE user_id=?',userId);
+   sql.run('DELETE FROM coach_demos WHERE user_id=?',userId);
+   sql.run('DELETE FROM coach_debug_replays WHERE user_id=?',userId);
+   sql.run('DELETE FROM coach_matches WHERE user_id=?',userId);
+  }
  };
 }

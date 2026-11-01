@@ -35,6 +35,9 @@ import {V2_PHASE_LABELS,V2_TITLE_LABELS,V2_PENDING_LABELS,
  FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs?v=20261030effectlabel1';
 import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalReplay,
  collectPublicCardResults,publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
+import {coachHeader,newCoachMatchId} from './universal-v2/coach-record.mjs';
+import {createCoachBattle} from './universal-v2/coach-battle.mjs';
+import {coachLiveNote,mountCoachReview} from './universal-v2/coach-review.mjs';
 import {DESKTOP_BATTLE_QUERY,isDesktopBattlefield,mountDesktopBattlefield}
  from './universal-v2/desktop-battle-ui.mjs';
 
@@ -914,7 +917,8 @@ function saveBattleProgress(){
  try{
   const data={version:1,launchId:app.launch.config.id,state:app.state,replay:app.replay,
    history:app.history.slice(0,2500),recordNoted:app.recordNoted,
-   aiCompletedSteps:app.aiCompletedSteps,lastAiProgress:app.lastAiProgress};
+   aiCompletedSteps:app.aiCompletedSteps,lastAiProgress:app.lastAiProgress,
+   coach:app.coachBattle?.snapshot?.()||null};
   sessionStorage.setItem(SOLO_BATTLE_PROGRESS_KEY,JSON.stringify(data));
  }catch{/* Private browsing/quota limits must not interrupt V2 legal gameplay. */}
 }
@@ -941,6 +945,7 @@ function restoreBattleProgress(){
   app.recordNoted=data.recordNoted===true;
   app.aiCompletedSteps=Number.isInteger(data.aiCompletedSteps)?data.aiCompletedSteps:0;
   app.lastAiProgress=typeof data.lastAiProgress==='string'?data.lastAiProgress.slice(0,100):'已恢復對局';
+  app.pendingCoach=data.coach&&typeof data.coach==='object'?data.coach:null;
   app.error='';app.undo=null;app.selectedUid=null;app.entryMode=null;app.raidBaseUid=null;
   return true;
  }catch{return false;}
@@ -979,6 +984,7 @@ function renderOpeningMulligan(target,s){
   }
   panel.append(decisions,el('p',{class:'v2-mulligan-hint',text:'每人只有這一次調度機會，確認後不可再次重抽。'}));
  }else panel.append(el('p',{class:'v2-mulligan-hint',role:'status',text:'等待電腦完成調度；你的起手牌會維持隱私。'}));
+ panel.append(coachBar());
  target.append(panel);
 }
 function printedCatalogue(side,cardId){
@@ -1113,8 +1119,95 @@ function mountPendingOverlay(overlay){
  overlay.classList.add('v2-pending-overlay');
  (document.querySelector('.v2-shell')||document.body).append(overlay);
 }
+function coachApi(){
+ if(!app.coachBattle)app.coachBattle=createCoachBattle({storage:localStorage,onChange:paintCoachStatus});
+ return app.coachBattle;
+}
+function coachHeaderNow(matchId){
+ return coachHeader({matchId,packs:app.packs,counts:app.launch.decks[0].counts,
+  aiVersion:aiPolicyFor(app.aiDifficulty),engineVersion:app.state?.version});
+}
+function coachStatusText(){
+ const coach=app.coachBattle,session=coach?.session;
+ if(!coach?.consent())return '未同意，不會上傳對戰紀錄。';
+ if(session?.signedIn===false)return '已同意，但尚未登入，不會上傳。';
+ if(session?.lastError)return session.lastError;
+ return '已上傳 '+(session?.uploaded||0)+' 筆。只記錄玩家對電腦時你看得到的資訊，AI 不會因此立刻變強。';
+}
+function paintCoachStatus(){
+ const node=document.querySelector('[data-coach-status]');
+ const coach=app.coachBattle;
+ if(!node||!coach)return;
+ node.textContent=coachStatusText();
+ node.dataset.coachUploaded=String(coach.session?.uploaded||0);
+ node.dataset.coachConsent=coach.consent()?'1':'0';
+}
+function coachBar(){
+ const coach=app.coachBattle;
+ if(!IS_BATTLE_PAGE||!coach?.session)return null;
+ const box=el('div',{class:'coach-bar'});
+ const input=el('input',{type:'checkbox'});
+ input.checked=coach.consent();
+ input.addEventListener('change',()=>coach.setConsent(input.checked));
+ const consent=el('label',{class:'coach-consent'},input,'同意提供對戰紀錄改善 AI');
+ const status=el('p',{class:'coach-status',text:coachStatusText()});
+ status.dataset.coachStatus='1';
+ status.dataset.coachUploaded=String(coach.session.uploaded||0);
+ status.dataset.coachConsent=coach.consent()?'1':'0';
+ box.append(consent,status,coachLiveNote(coach.session.marks.length),
+  el('a',{href:'/coach.html',text:'查看、匯出或刪除紀錄'}));
+ if(coach.session.lastAi&&!coach.session.reviewing)
+  box.append(btn('標記 AI 這一步',()=>{
+   coach.markLast(app.packs,app.replay).then(()=>render()).catch(error=>alertText(error?.message||String(error)));
+  },'btn small'));
+ if(!coach.session.finished)
+  box.append(btn('認輸並檢討',()=>{
+   if(!window.confirm('認輸後進入賽後檢討。這不會改寫規則引擎裡的對局。'))return;
+   resetAi();
+   coach.finish({completed:false,winner:1,endReason:'conceded',replay:app.replay}).then(()=>render());
+  },'btn small'));
+ return box;
+}
+function rememberHuman(action,state,replayIndex){
+ const coach=app.coachBattle;
+ if(!coach?.session)return;
+ void coach.noteHuman({packs:app.packs,state,action,replayIndex});
+}
+function rememberAi(action,replayIndex){
+ const coach=app.coachBattle;
+ if(!coach?.session)return;
+ coach.noteAi({replayIndex,action});
+}
+function maybeFinishCoach(){
+ const coach=app.coachBattle;
+ if(!coach?.session||coach.session.finished||app.state?.status!=='finished')return;
+ void coach.finish({completed:true,winner:app.state.winner,
+  endReason:app.state.endReason||'finished',replay:app.replay});
+}
+function renderCoachReview(target){
+ const session=app.coachBattle.session;
+ const host=el('div',{class:'coach-review-host'});
+ target.append(el('header',{class:'matchHeader'},
+  el('h1',{text:'賽後教 AI'}),
+  el('div',{class:'matchControls'},
+   btn('重開對局',()=>startGame(),'btn small'),
+   el('a',{href:'/coach.html',text:'查看、匯出或刪除紀錄'}))));
+ target.append(host);
+ mountCoachReview(host,{
+  packs:app.packs,replay:app.replay,
+  marks:session.marks.map(mark=>({...mark,header:session.header})),
+  onSave:body=>app.coachBattle.saveDemonstration(body)
+ });
+}
 function render(){
  const target=$('match-view');if(!target)return;
+ if(app.coachBattle?.session?.reviewing&&app.replay&&app.packs){
+  const oldScroll=window.scrollY;
+  target.replaceChildren();
+  renderCoachReview(target);
+  if(IS_BATTLE_PAGE)window.scrollTo(window.scrollX,oldScroll);
+  return;
+ }
  const oldScroll=window.scrollY;
  const oldHandScroll=target.querySelector('.hand')?.scrollLeft||0;
  const preserveScroll=target.childElementCount>0;
@@ -1163,7 +1256,7 @@ function render(){
     btn('手動推進 AI 一步',manualAiStep,'btn small'):null,
    s.status==='playing'&&uiActor(s)===1&&app.busy?
     btn('暫停 AI',()=>{resetAi();app.error='AI 已暫停，請按「手動推進 AI 一步」或重新繼續。';render();},'btn small'):null));
- target.append(title);
+ target.append(title,coachBar());
  if(s.status==='playing'&&uiActor(s)===1){
   target.append(el('div',{class:'panel v2-ai-status','aria-live':'polite'},
    el('b',{text:app.busy?'AI 自動操作中':'AI 目前暫停'}),
@@ -1241,13 +1334,16 @@ function applyAction(a){
   app.undo={state:app.state,history:app.history.slice(),replay:app.replay,
    publicMoves:app.publicMoves.slice()};
   const previous=app.state;
+  const replayIndex=app.replay.actions.length;
   app.state=dispatchUniversalAction(app.packs,app.state,a,{actor:0});
   assertUniversalMatch(app.packs,app.state);
+  rememberHuman(a,previous,replayIndex);
   app.replay=appendUniversalReplay(app.replay,a,0);
   notePublicMove(app.packs,previous,app.state,a,0);
   pushHistory(publicPreviewActionLabel(app.packs,previous,app.state,a,0));
   saveBattleProgress();
-  app.selectedUid=null;app.raidBaseUid=null;app.entryMode=null;app.targetChoices=null;app.inspectionPaused=false;app.error='';app.allActions=false;render();driveAi();
+  app.selectedUid=null;app.raidBaseUid=null;app.entryMode=null;app.targetChoices=null;app.inspectionPaused=false;app.error='';app.allActions=false;
+  maybeFinishCoach();render();driveAi();
  }catch(e){alertText(e?.message||String(e));}
 }
 function undoMove(){
@@ -1272,13 +1368,16 @@ function manualAiStep(){
    legal.find(a=>a.mode==='skip')||legal[0];
   if(!isExactLegal(move,legal))throw Error('手動推進未找到合法動作。');
   const previous=app.state;
+  const replayIndex=app.replay.actions.length;
   app.state=dispatchUniversalAction(app.packs,app.state,move,{actor:1});
   assertUniversalMatch(app.packs,app.state);
+  rememberAi(move,replayIndex);
   app.replay=appendUniversalReplay(app.replay,move,1);
   notePublicMove(app.packs,previous,app.state,move,1);
   pushHistory(publicPreviewActionLabel(app.packs,previous,app.state,move,1));
   app.aiCompletedSteps++;
   app.lastAiProgress='手動 '+move.type+' · T'+app.state.turn+'/'+app.state.phase;
+  maybeFinishCoach();
   saveBattleProgress();
   app.error='';
   render();
@@ -1310,8 +1409,10 @@ function driveAi(){
     const {action:choice,reason}=chooseProgressSafeAiAction(app.packs,app.state,
      {difficulty:app.aiDifficulty,actionsInPhase:app.aiPhaseCount});
     const previous=app.state;
+    const replayIndex=app.replay.actions.length;
     // The chosen action is copied from this state's legal list, never made up.
     app.state=dispatchUniversalAction(app.packs,app.state,choice,{actor:1});
+    rememberAi(choice,replayIndex);
     app.replay=appendUniversalReplay(app.replay,choice,1);
     notePublicMove(app.packs,previous,app.state,choice,1);
     pushHistory(publicPreviewActionLabel(app.packs,previous,app.state,choice,1));
@@ -1324,6 +1425,7 @@ function driveAi(){
     app.lastAiProgress=choice.type+' · T'+app.state.turn+'/'+app.state.phase;
     if(app.autoMoves%20===0)assertUniversalMatch(app.packs,app.state);
    }
+   maybeFinishCoach();
    saveBattleProgress();
    if(app.state.status==='playing'&&uiActor(app.state)===1){
     // Render between chunks so a user can see progress and tap retry even
@@ -1618,6 +1720,7 @@ function startGame(){
    '｜起手牌調度階段'];
   app.replay=makeUniversalPreviewReplay(app.packs,{
    decks:[mine.counts,foe.counts],seed,first,openingMulligan:true});
+  void coachApi().begin(coachHeaderNow(newCoachMatchId()));
   saveBattleProgress();
   render();driveAi();
  }catch(e){alertText(e?.message||String(e));}
@@ -1714,6 +1817,11 @@ if(!IS_BATTLE_PAGE){
   rememberMatchLobby();
   launchBattle();
  });
+ const coachConsent=$('coach-consent');
+ if(coachConsent){
+  coachConsent.checked=coachApi().consent();
+  coachConsent.addEventListener('change',()=>coachApi().setConsent(coachConsent.checked));
+ }
  syncMatchLobby();
  importAccountLobbyDecks();
 }else{
@@ -1735,6 +1843,10 @@ if(!IS_BATTLE_PAGE){
   if(banner)banner.textContent=loaded.decks[0].label+' vs '+loaded.decks[1].label+
    ' · '+({easy:'簡單',normal:'普通',hard:'困難'}[loaded.config.difficulty]||'普通');
   if(!restoreBattleProgress())startGame();
-  else{render();driveAi();}
+  else{
+   const saved=app.pendingCoach;
+   void coachApi().restore(saved,coachHeaderNow(saved?.matchId||newCoachMatchId()));
+   render();driveAi();
+  }
  }else render();
 }
