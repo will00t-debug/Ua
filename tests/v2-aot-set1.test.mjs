@@ -105,8 +105,8 @@ test('UA23BT and UA23ST register 113 playable identities outside the five-title 
  assert.equal(AOT_CARDS.length,113);
  assert.deepEqual(AOT_CARDS.map(c=>c.id),Array.from({length:113},(_,i)=>'AOT-1-'+String(i+1).padStart(3,'0')));
  assert.equal(AOT_CARDS.some(c=>c.rarity==='AP'||/_p\d/.test(c.number)),false);
- assert.equal(Object.keys(pack.cards).length,113);
- assert.equal(pack.version,'aot-ua23-set1-20261101');
+ assert.equal(Object.keys(pack.cards).length,186);
+ assert.equal(pack.version,'aot-ua23-ex10-20261101');
  assert.equal(pack.id,'aot');
  assert.equal(V2_TITLE_IDS.includes('aot'),false);
  const colors={blue:0,green:0,red:0};
@@ -149,7 +149,7 @@ test('UA23BT and UA23ST register 113 playable identities outside the five-title 
  assert.equal(Object.keys(practice.counts).every(id=>practice.pack.cards[id].color==='red'),true);
  const status=editorV2Status('aot',practice.counts);
  assert.equal(status.ready,true,status.issues.join('；'));
- assert.equal(status.registered,113);
+ assert.equal(status.registered,186);
 });
 
 test('outside events scale Mikasa energy and BP, and Ymir on the field raises Historia',()=>{

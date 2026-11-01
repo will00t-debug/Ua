@@ -6,6 +6,7 @@
 import {AOT_CARDS} from '../aot-cards.mjs';
 import {aotEngineKind} from './aot-kinds.mjs';
 import {aotImplements} from './aot-runtime.mjs';
+import {aot2PackCards} from './aot2-pack.mjs';
 import {createUniversalPack} from './pack.mjs';
 
 const job=(id,slot)=>({op:'aot',id,slot});
@@ -195,7 +196,7 @@ export function aotPackCard(card){
 }
 
 export function createAotV2Pack(){
- const cards=AOT_CARDS.map(aotPackCard);
- if(cards.length!==113)throw Error('Attack on Titan registered count drifted');
- return createUniversalPack({id:'aot',version:'aot-ua23-set1-20261101',cards});
+ const cards=[...AOT_CARDS.map(aotPackCard),...aot2PackCards()];
+ if(cards.length!==186)throw Error('Attack on Titan registered count drifted');
+ return createUniversalPack({id:'aot',version:'aot-ua23-ex10-20261101',cards});
 }

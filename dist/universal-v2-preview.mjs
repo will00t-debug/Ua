@@ -10,6 +10,7 @@ import {EXEDRA_CARDS} from './madoka-exedra-cards.mjs';
 import {INUYASHA_CARDS} from './inuyasha-cards.mjs';
 import {KJN_CARDS} from './kjn-cards.mjs';
 import {AOT_CARDS} from './aot-cards.mjs';
+import {AOT2_CARDS} from './aot-vol2-cards.mjs';
 import {summarizeDesignatedDecks,designatedPlayableCounts} from './universal-v2/bleach-designated-decks.mjs';
 import {validateUniversalDeck} from './universal-v2/pack.mjs';
 import {V2_ABILITY_TEMPLATE_IDS} from './universal-v2/ability-templates.mjs';
@@ -69,7 +70,7 @@ const allArt=Object.freeze({
  madoka:new Map([...MADOKA_CARDS,...EXEDRA_CARDS].map(c=>[c.id,c.image||null])),
  inuyasha:new Map(INUYASHA_CARDS.map(c=>[c.id,c.image||null])),
  kjn:new Map(KJN_CARDS.map(c=>[c.id,c.image||null])),
- aot:new Map(AOT_CARDS.map(c=>[c.id,c.image||null]))
+ aot:new Map([...AOT_CARDS,...AOT2_CARDS].map(c=>[c.id,c.image||null]))
 });
 const v2Entries=listRegisteredV2Titles();
 function printedCatalogueMap(cards){

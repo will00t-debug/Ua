@@ -6,7 +6,7 @@
 
 BP 後面的 `+` 是設計記號，程式裡的數字是基數。發生能源沒有印刷加號。必要能源的橫線記 0。顏色是紅 42、藍 36、綠 35。種類是角色 92、事件 17、場地 4。觸發是無 31、ACTIVE 23、GET 16、DRAW 15、RAID 12、SPECIAL 7、COLOR 6、FINAL 3。斜線特徵維持一枚印刷特徵，另外登錄已核對的 `traitComponents`，共 59 張。
 
-版本 `aot-ua23-set1-20261101`。五作品統計沒有把這個作品算進去，`V2_TITLE_IDS` 也不含 `aot`。`tests/v2-aot-set1.test.mjs` 覆蓋目錄與代表性結算。`tests/v2-aot-faq.test.mjs` 覆蓋下面這份系列 FAQ。這 18 則不是全遊戲、也不是每一張卡的官方 FAQ 認證。登錄本身不是 FAQ 認證。
+這份目錄仍只描述上面 113 張第一彈身份。對戰包現在一併收進 EX10BT 第二彈，版本是 `aot-ua23-ex10-20261101`，見 `docs/v2-handoff/V2-AOT-set2-catalog.md`。五作品統計沒有把這個作品算進去，`V2_TITLE_IDS` 也不含 `aot`。`tests/v2-aot-set1.test.mjs` 覆蓋目錄與代表性結算。`tests/v2-aot-faq.test.mjs` 覆蓋下面這份系列 FAQ。這 18 則不是全遊戲、也不是每一張卡的官方 FAQ 認證。登錄本身不是 FAQ 認證。
 
 已有的共用指令直接沿用，例如抽棄、檢索、衝擊無效、顏色觸發、突襲、BP 以下退場。對不上的句子走封閉指令 `aot`，由 `aot-runtime.mjs` 結算。這個檔案不匯入 `engine.mjs`。主要能力是 `aotMain`。
 

@@ -3,6 +3,7 @@
 // printed condition applies. Registration is not an official FAQ certification.
 import {cardHasName,cardHasTrait} from './field-conditions.mjs';
 import {originalEffectsDisabled} from './continuous-states.mjs';
+import {aot2StandingBp} from './aot2-continuous.mjs';
 
 const CORPS='104期兵';
 const PURE='無垢の巨人';
@@ -177,8 +178,11 @@ function payOrSkip(s,spec,next){
 function oppFront(s,owner,pred){
  return plOf(s,1-owner).front.filter(c=>c&&(!pred||pred(c)));
 }
+function rangeExtra(s,owner){
+ return (s.aotBpRange?.[owner]||0)+(A.pack?aot2StandingBp(A.pack,s,owner):0);
+}
 function takeRange(s,owner,printed){
- const extra=s.aotBpRange?.[owner]||0;
+ const extra=rangeExtra(s,owner);
  const cap=printed+extra;
  return {cap,commit(){if(s.aotBpRange)s.aotBpRange[owner]=0;}};
 }
@@ -574,7 +578,7 @@ function main036(pack,s,job){
  const c=requireSelf(s,job);if(!c)return;
  const actions=[];
  if(enteredThisTurn(s,job.owner,c)){
-  const cap=A.bp(pack,s,c)+(s.aotBpRange?.[job.owner]||0);
+  const cap=A.bp(pack,s,c)+rangeExtra(s,job.owner);
   for(const t of oppFront(s,job.owner,x=>A.bp(pack,s,x)<=cap))
    actions.push({type:'aot',mode:'retire',uid:t.uid});
  }
@@ -735,7 +739,7 @@ function legalMain(pack,s,owner,c){
  if(id==='AOT-1-022')return front&&!used(s,c.uid+'|AOT-1-022')&&outs(s,owner)>=4&&eventUsed(s,owner);
  if(id==='AOT-1-028')return c.ready&&plOf(s,owner).deck.length>0;
  if(id==='AOT-1-036'){
-  const retire=enteredThisTurn(s,owner,c)&&oppFront(s,owner,t=>A.bp(pack,s,t)<=A.bp(pack,s,c)+(s.aotBpRange?.[owner]||0)).length;
+  const retire=enteredThisTurn(s,owner,c)&&oppFront(s,owner,t=>A.bp(pack,s,t)<=A.bp(pack,s,c)+rangeExtra(s,owner)).length;
   return retire||plOf(s,owner).hand.length>0;
  }
  if(id==='AOT-1-046')return c.ready&&fieldCards(s,owner).some(x=>trait(pack,x,PURE));
@@ -1190,16 +1194,17 @@ function underCap(job,c,cap,pack,s){
  return !!c&&A.bp(pack,s,c)<=cap&&(!job.payable||job.payable(c));
 }
 export function aotMandatoryTargets(pack,s,owner,job){
+ arm(pack);
  if(job.id==='AOT-1-033'){
-  const cap=cap033(pack,s,owner)+(s.aotBpRange?.[owner]||0);
+  const cap=cap033(pack,s,owner)+rangeExtra(s,owner);
   return plOf(s,1-owner).front.some(c=>underCap(job,c,cap,pack,s));
  }
  if(job.id==='AOT-1-034'){
-  const cap=(fieldCards(s,owner).some(c=>exact(pack,c,LEVI,s))?5000:3000)+(s.aotBpRange?.[owner]||0);
+  const cap=(fieldCards(s,owner).some(c=>exact(pack,c,LEVI,s))?5000:3000)+rangeExtra(s,owner);
   return plOf(s,1-owner).front.some(c=>underCap(job,c,cap,pack,s));
  }
  if(job.id==='AOT-1-066'){
-  const cap=(fieldCards(s,owner).some(c=>contains(pack,c,ZIKE,s))?5000:3000)+(s.aotBpRange?.[owner]||0);
+  const cap=(fieldCards(s,owner).some(c=>contains(pack,c,ZIKE,s))?5000:3000)+rangeExtra(s,owner);
   return plOf(s,1-owner).front.some(c=>underCap(job,c,cap,pack,s));
  }
  if(job.id==='AOT-1-063')return plOf(s,owner).deck.length>0;
