@@ -4,6 +4,7 @@
 // and its SQLite storage is still there after the player's computer is off.
 import {DurableObject} from 'cloudflare:workers';
 import {ApiError,dispatchAccount,dispatchRoom} from '../server/domain.mjs';
+import {coachHttp} from '../server/coach.mjs';
 import {SCHEMA,createRepositories,roomTtl} from '../server/repos.mjs';
 import {durableAct,durableCancel,durableCreate,durableJoin,durableList,durableResign,durableView} from './orchestrate.mjs';
 
@@ -108,12 +109,12 @@ function sessionToken(request){
  }
  return '';
 }
-async function readBody(request){
+async function readBody(request,limit=262144){
  if(request.method==='GET'||request.method==='HEAD')return {};
  const announced=Number(request.headers.get('content-length')||0);
- if(Number.isFinite(announced)&&announced>262144)throw new ApiError(413,'送出的資料太大。');
+ if(Number.isFinite(announced)&&announced>limit)throw new ApiError(413,'送出的資料太大。');
  const raw=await request.text();
- if(new TextEncoder().encode(raw).length>262144)throw new ApiError(413,'送出的資料太大。');
+ if(new TextEncoder().encode(raw).length>limit)throw new ApiError(413,'送出的資料太大。');
  if(!raw)return {};
  if(!(request.headers.get('content-type')||'').includes('application/json'))
   throw new ApiError(415,'請用 JSON 送出資料。');
@@ -188,6 +189,11 @@ export default {
      if(action==='resign'&&method==='POST')return send(200,await durableResign(callAccount,callRoom,{token,code}));
      if(action==='cancel'&&method==='POST')return send(200,await durableCancel(callAccount,callRoom,{token,code}));
     }
+    const coach=coachHttp(method,path);
+    if(coach){
+     const body=method==='GET'||method==='DELETE'?{}:await readBody(request,coach.limit||262144);
+     return send(200,await callAccount({op:coach.op,token,matchId:coach.matchId,demoId:coach.demoId,replayId:coach.replayId,body}));
+    }
     return send(404,{error:'找不到這個功能。'});
    }
    // One host: / is the account-first entry (login for guests, lobby for signed-in users).
@@ -202,7 +208,9 @@ export default {
     '/index':'/index.html',
     '/index.html':'/index.html',
     '/online':'/online.html',
-    '/online.html':'/online.html'
+    '/online.html':'/online.html',
+    '/coach':'/coach.html',
+    '/coach.html':'/coach.html'
    };
    if((method==='GET'||method==='HEAD')&&pages[path]){
     const page=new URL(request.url);

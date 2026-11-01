@@ -2,6 +2,7 @@ import {createReadStream} from 'node:fs';
 import {stat} from 'node:fs/promises';
 import {extname,resolve,sep} from 'node:path';
 import {ApiError,createService} from './domain.mjs';
+import {coachHttp} from './coach.mjs';
 import {openDatabase} from './sqlite.mjs';
 
 const TYPES={
@@ -53,13 +54,13 @@ function sessionToken(req){
  }
  return '';
 }
-function readBody(req){
+function readBody(req,limit=262144){
  return new Promise((resolve,reject)=>{
   const chunks=[];
   let size=0;
   req.on('data',chunk=>{
    size+=chunk.length;
-   if(size>262144){
+   if(size>limit){
     reject(new ApiError(413,'送出的資料太大。'));
     req.destroy();
     return;
@@ -153,6 +154,11 @@ export async function createHandler({dataFile,staticRoot=null}){
      if(action==='actions'&&method==='POST')return send(res,200,await service.act(token,code,await readBody(req)));
      if(action==='resign'&&method==='POST')return send(res,200,await service.resign(token,code));
      if(action==='cancel'&&method==='POST')return send(res,200,await service.cancel(token,code));
+    }
+    const coach=coachHttp(method,path);
+    if(coach){
+     const body=method==='GET'||method==='DELETE'?{}:await readBody(req,coach.limit||262144);
+     return send(res,200,await service.coach(token,{op:coach.op,matchId:coach.matchId,demoId:coach.demoId,replayId:coach.replayId,body}));
     }
     return send(res,404,{error:'找不到這個功能。'});
    }

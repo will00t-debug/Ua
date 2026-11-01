@@ -8,6 +8,7 @@ import {assertUniversalMatch,dispatchUniversalAction,legalUniversalActions,
 import {uiActionLabel,publicLifeTriggerText} from '../dist/universal-v2/preview-actions.mjs';
 import {publicCardResults} from './public-card-results.mjs';
 import {createRepositories,roomTtl} from './repos.mjs';
+import {dispatchCoach} from './coach.mjs';
 
 const TITLES=['bleach','gurren-lagann','sword-art-online','solo-leveling','mushoku-tensei','rezero','steins-gate','madoka','inuyasha','kjn'];
 const TITLE_LABELS={
@@ -561,6 +562,21 @@ export function dispatchAccount(repos,message,now){
    repos.deleteDirectory(message.code);
    return {ok:true};
   }
+  case 'coachStep':
+  case 'coachLabel':
+  case 'coachDemo':
+  case 'coachDebug':
+  case 'coachList':
+  case 'coachMatch':
+  case 'coachExport':
+  case 'coachListDemos':
+  case 'coachDemoOne':
+  case 'coachDebugOne':
+  case 'coachDeleteMatch':
+  case 'coachDeleteDemo':
+  case 'coachDeleteDebug':
+  case 'coachDeleteAll':
+   return dispatchCoach(repos,requireUser(repos,message.token,now),message,now);
   default:throw new ApiError(404,'找不到這個功能。');
  }
 }
@@ -750,6 +766,9 @@ export function createService({sql,now=()=>Date.now()}){
     const session=dispatchAccount(repos,{op:'session',token},now());
     return dispatchRoom(repos,{op:'cancel',code,userId:session.id},now()).public;
    });
+  },
+  coach(token,message){
+   return enqueue(()=>dispatchAccount(repos,{...message,token},now()));
   }
  };
 }

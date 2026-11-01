@@ -1,0 +1,29 @@
+.coach-consent{display:flex;gap:.5rem;align-items:flex-start;margin:.6rem 0;font-weight:600;color:#1d2733}
+.coach-consent input{margin-top:.2rem}
+.v2-shell .coach-bar{display:flex;flex-wrap:wrap;gap:.6rem 1rem;align-items:center;margin:.4rem 0 .8rem;padding:.7rem .8rem;border:1px solid #d5dde6;border-radius:12px;background:#f7f9fb;color:#1d2733}
+.v2-shell .coach-bar .coach-status,
+.v2-shell .coach-bar .coach-live-note,
+.v2-shell .coach-bar label,
+.v2-shell .coach-bar a{color:#1d2733}
+.coach-status,.coach-live-note,.coach-review-note{margin:0}
+.v2-shell .coach-review,
+.v2-shell .coach-review h2,
+.v2-shell .coach-review h3,
+.v2-shell .coach-review h4,
+.v2-shell .coach-review p,
+.v2-shell .coach-review li,
+.v2-shell .coach-review label{color:#1d2733}
+.coach-review{display:grid;gap:.8rem;background:#fff;color:#1d2733}
+.coach-mark{display:grid;gap:.45rem;padding:.8rem;border:1px solid #d5dde6;border-radius:12px;background:#fff}
+.coach-hand-row,.coach-legal{display:flex;flex-wrap:wrap;gap:.45rem}
+.v2-shell .coach-review button{background:#f4f7fb;color:#1d2733;border:1px solid #8ea0b3;border-radius:8px;min-height:36px;padding:6px 10px}
+.v2-shell .coach-review button.btn.primary{background:#ae3f48;color:#fff;border-color:#ae3f48}
+.coach-chip{padding:.25rem .55rem;border-radius:999px;background:#e7eef6;border:1px solid #c5d0dc;color:#1d2733}
+.coach-page{max-width:960px;margin:0 auto;padding:1rem;color:#1d2733;background:#f4f6f8}
+.coach-page h1,.coach-page h2,.coach-page h3,.coach-page p,.coach-page button{color:#1d2733}
+.coach-page h1{margin:.2rem 0}
+.coach-list{display:grid;gap:.7rem}
+.coach-card,.coach-warning{padding:.8rem;border:1px solid #d5dde6;border-radius:12px;background:#fff}
+.coach-warning{border-color:#a15b2a}
+.coach-actions{display:flex;flex-wrap:wrap;gap:.4rem}
+.coach-page pre{white-space:pre-wrap;word-break:break-word;max-height:24rem;overflow:auto;color:#1d2733}
