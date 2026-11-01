@@ -13,6 +13,7 @@ import {createMadokaV2Pack} from './mmm-pack.mjs';
 import {createIysV2Pack} from './iys-pack.mjs';
 import {createKjnV2Pack} from './kjn-pack.mjs';
 import {createAotV2Pack} from './aot-pack.mjs';
+import {createKmrV2Pack,KMR_STARTER_IDS} from './kmr-pack.mjs';
 
 const CENSUS=['bleach','gurren-lagann','sword-art-online','solo-leveling','mushoku-tensei'];
 let rezeroBattlePack=null;
@@ -57,6 +58,7 @@ export function officialV2Pack(title){
  if(title==='inuyasha')return createInuyashaBattlePack();
  if(title==='kjn')return createKjnBattlePack();
  if(title==='aot')return createAotBattlePack();
+ if(title==='kmr')return createKmrBattlePack();
  if(!CENSUS.includes(title))throw Error('作品尚未提供正式 V2 牌組：'+String(title));
  return requireRegisteredV2TitlePack(title);
 }
@@ -163,6 +165,38 @@ export function aotPracticeDeck(){
  const counts=practiceDeck(pack,{color:'red'});
  const other=Object.keys(counts).filter(id=>pack.cards[id].color!=='red');
  if(other.length)throw Error('Attack on Titan red practice deck included another color');
+ return {pack,counts};
+}
+
+let kmrBattlePack=null;
+export function createKmrBattlePack(){
+ if(!kmrBattlePack)kmrBattlePack=createKmrV2Pack();
+ return kmrBattlePack;
+}
+
+export function kmrPracticeDeck(){
+ const pack=createKmrBattlePack();
+ const pool=KMR_STARTER_IDS.map(id=>{
+  const card=pack.cards[id];
+  if(!card||card.color!=='yellow')throw Error('Starter identity is not a yellow Kamen Rider card '+id);
+  return card;
+ });
+ const counts={},triggers={final:0,color:0,special:0};
+ let total=0;
+ const ordered=[...pool].sort((a,b)=>a.energy-b.energy||String(a.id).localeCompare(String(b.id)));
+ for(const card of ordered){
+  if(total>=50)break;
+  let copies=Math.min(card.maxCopies||4,50-total);
+  if(Object.prototype.hasOwnProperty.call(triggers,card.trigger))
+   copies=Math.min(copies,4-triggers[card.trigger]);
+  if(copies<=0)continue;
+  counts[card.id]=copies;
+  total+=copies;
+  if(Object.prototype.hasOwnProperty.call(triggers,card.trigger))triggers[card.trigger]+=copies;
+ }
+ if(total!==50)throw Error('Kamen Rider starter identities cannot fill a legal 50-card deck');
+ const problems=validateUniversalDeck(pack,counts);
+ if(problems.length)throw Error(problems.join('; '));
  return {pack,counts};
 }
 

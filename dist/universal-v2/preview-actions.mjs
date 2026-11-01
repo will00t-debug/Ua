@@ -14,14 +14,15 @@ export const V2_TITLE_LABELS=Object.freeze({
  madoka:'魔法少女小圓',
  inuyasha:'犬夜叉',
  kjn:'我想成為影之強者！',
- aot:'進擊的巨人'
+ aot:'進擊的巨人',
+ kmr:'假面騎士'
 });
 export const V2_PENDING_LABELS=Object.freeze({
  block:'選擇是否阻擋',
  'effect-grant-below-printed':'選擇對方角色，本回合 BP 低於原本時不能阻擋',
  'life-trigger':'生命觸發',
  'life-batch-order':'選擇 LIFE／登場效果結算順序',
- 'leave-replacement':'角色離場保護',iys:'犬夜叉效果選擇',kjn:'影之最強者效果選擇',aot:'進擊的巨人效果選擇',aot2:'進擊的巨人第二彈效果選擇','private-top-choice':'查看牌庫頂','private-top-place':'選擇牌頂或牌底',
+ 'leave-replacement':'角色離場保護',iys:'犬夜叉效果選擇',kjn:'影之最強者效果選擇',aot:'進擊的巨人效果選擇',aot2:'進擊的巨人第二彈效果選擇',kmr:'假面騎士效果選擇','private-top-choice':'查看牌庫頂','private-top-place':'選擇牌頂或牌底',
  'effect-recover-ap':'恢復 AP','effect-hand-top':'將 1 張手牌放到牌庫頂',
  'effect-grant-lose-ready':'給能源 0 的指定角色本回合落敗時 ACTIVE',
  'effect-trait-ban-move':'給有特徵的角色本回合不能攻擊，並移到另一條線',
