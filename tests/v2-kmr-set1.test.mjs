@@ -8,7 +8,9 @@ import {V2_TITLE_IDS} from '../dist/universal-v2/title-packs/contract.mjs';
 import {kmrPracticeDeck} from '../dist/universal-v2/official-entry.mjs';
 import {editorV2Status} from '../dist/v2-editor-compat.mjs';
 import {dispatchUniversalAction,legalUniversalActions,newUniversalMatch,
- zoneRequiredEnergy} from '../dist/universal-v2/engine.mjs';
+ universalPrivateChoices,universalPublicView,zoneRequiredEnergy} from '../dist/universal-v2/engine.mjs';
+import {publicPendingTargetCard} from '../dist/universal-v2/preview-actions.mjs';
+import {verifiedBleachPurplePilotDeck} from '../dist/universal-v2/verified-real-decks.mjs';
 
 const pack=createKmrV2Pack();
 const packs=[pack,pack];
@@ -148,6 +150,90 @@ test('same-energy main is offered only when three hand cards share a cost',()=>{
  s.players[0].hand.push(take(s,0,'KMR-1-006'),take(s,0,'KMR-1-017'),take(s,0,'KMR-1-023'));
  const after=legalUniversalActions(packs,s);
  assert.equal(after.some(a=>a.uid===actor.uid&&String(a.mode).startsWith('kmr:KMR-1-034')),true);
+});
+
+test('Gun Form raid retires printed energy 0, and Den-O kill art uses the opponent pack',()=>{
+ const bleach=verifiedBleachPurplePilotDeck();
+ const cross=[pack,bleach.pack];
+ const mine=countsFor(['KMR-1-075','KMR-1-093','KMR-1-096','KMR-1-068','KMR-1-069','KMR-1-072','KMR-1-073']);
+ const s=newUniversalMatch(cross,{decks:[mine,bleach.counts],seed:75,first:0});
+ for(const [slot,id] of ['KMR-1-068','KMR-1-069','KMR-1-072','KMR-1-073'].entries())
+  put(s,0,id,'energy',slot,true);
+ const host=put(s,0,'KMR-1-093','front',0,true);
+ const renji=put(s,1,'BLC-1-045','front',0,true);
+ const rukia=put(s,1,'BLC-1-052','front',1,true);
+ const gun=take(s,0,'KMR-1-075');
+ const kill=take(s,0,'KMR-1-096');
+ s.players[0].hand.push(gun,kill);
+ ready(s);
+ const raid=legalUniversalActions(cross,s).find(a=>a.type==='raid'&&a.uid===gun.uid&&a.baseUid===host.uid);
+ assert.ok(raid,'Gun Form should raid onto Ryutaros');
+ const entered=dispatchUniversalAction(cross,s,raid);
+ assert.equal(entered.pending?.kind,'kmr');
+ assert.equal(entered.pending?.id,'KMR-1-075');
+ assert.equal(entered.pending?.step,'retire');
+ const zero=entered.pending.actions.filter(a=>a.mode==='retire').map(a=>a.uid);
+ assert.deepEqual(zero,[renji.uid]);
+ assert.equal(zero.includes(rukia.uid),false);
+ const priv=universalPrivateChoices(cross,entered,0);
+ assert.equal(priv.options.find(o=>o.action.uid===renji.uid).card,null);
+ const view=universalPublicView(cross,entered,0);
+ assert.deepEqual(publicPendingTargetCard(view,{uid:renji.uid}),
+  {side:1,line:'front',index:0,cardId:'BLC-1-045',bp:2000});
+ const skipped=dispatchUniversalAction(cross,entered,{type:'kmr',mode:'skip'});
+ assert.equal(skipped.pending,null);
+ const play=legalUniversalActions(cross,skipped).find(a=>a.type==='event'&&a.uid===kill.uid);
+ assert.ok(play,'俺の必殺技 should be playable after the raid');
+ const choosing=dispatchUniversalAction(cross,skipped,play);
+ assert.equal(choosing.pending?.id,'KMR-1-096');
+ const victims=choosing.pending.actions.filter(a=>a.mode==='retire').map(a=>a.uid).sort();
+ assert.deepEqual(victims,[renji.uid,rukia.uid].sort());
+ const shown=universalPrivateChoices(cross,choosing,0);
+ assert.equal(shown.options.every(o=>o.card===null),true);
+ const board=universalPublicView(cross,choosing,0);
+ assert.equal(publicPendingTargetCard(board,{uid:renji.uid}).side,1);
+ assert.equal(publicPendingTargetCard(board,{uid:rukia.uid}).side,1);
+ assert.equal(publicPendingTargetCard(board,{uid:rukia.uid}).cardId,'BLC-1-052');
+});
+
+test('Ore, Sanjou looks at the top five and can ready one AP when life is 5 or more',()=>{
+ const counts=countsFor(['KMR-1-095','KMR-1-078','KMR-1-094','KMR-1-093','KMR-1-068']);
+ const s=fresh(counts);
+ put(s,0,'KMR-1-068','energy',0,true);
+ const event=take(s,0,'KMR-1-095');
+ s.players[0].hand.push(event);
+ const platform=take(s,0,'KMR-1-078');
+ const liner=take(s,0,'KMR-1-094');
+ const ryuta=take(s,0,'KMR-1-093');
+ const fillers=[];
+ for(const card of s.players[0].deck){
+  if(fillers.length>=2)break;
+  const printed=pack.cards[card.cardId];
+  if(!printed.name.includes('電王')&&printed.name!=='デンライナー')fillers.push(card);
+ }
+ for(const card of fillers)s.players[0].deck.splice(s.players[0].deck.indexOf(card),1);
+ s.players[0].deck.unshift(platform,liner,ryuta,...fillers);
+ ready(s);
+ assert.ok(s.players[1].life.length>=5);
+ const play=legalUniversalActions(packs,s).find(a=>a.type==='event'&&a.uid===event.uid);
+ assert.ok(play,'俺、参上！ should be a legal event');
+ const looked=dispatchUniversalAction(packs,s,play);
+ assert.equal(looked.pending?.kind,'kmr');
+ assert.equal(looked.pending?.step,'lookPick');
+ const takes=looked.pending.actions.filter(a=>a.mode==='take').map(a=>a.uid).sort();
+ assert.deepEqual(takes,[platform.uid,liner.uid].sort());
+ assert.equal(takes.includes(ryuta.uid),false);
+ let ordered=dispatchUniversalAction(packs,looked,{type:'kmr',mode:'take',uid:platform.uid});
+ while(ordered.pending?.step==='lookOrder')
+  ordered=dispatchUniversalAction(packs,ordered,ordered.pending.actions[0]);
+ assert.equal(ordered.players[0].hand.some(c=>c.uid===platform.uid),true);
+ assert.equal(ordered.pending?.kind,'effect-recover-ap');
+ assert.equal(ordered.pending?.remaining,1);
+ const rested=ordered.players[0].apCards.find(c=>c.inPlay&&!c.ready);
+ assert.ok(rested);
+ const readied=dispatchUniversalAction(packs,ordered,{type:'chooseApRecovery',uid:rested.uid});
+ assert.equal(readied.players[0].apCards.find(c=>c.uid===rested.uid).ready,true);
+ assert.equal(readied.pending,null);
 });
 
 test('a Kamen Rider choice does not fall through the AI play path',()=>{

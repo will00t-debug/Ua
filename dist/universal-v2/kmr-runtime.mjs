@@ -152,6 +152,17 @@ function offerRetire(pack,s,spec,limit,optional,next){
  ]);
  return true;
 }
+// 必要エナジー is the printed cost, not current BP. UA29BT/KMR-1-075 retires
+// one opponent front character whose printed energy is exactly 0.
+function offerEnergyRetire(pack,s,spec,energy,optional,next){
+ const targets=oppFront(s,spec.player,c=>def(pack,c).type==='character'&&def(pack,c).energy===energy);
+ if(!targets.length)return false;
+ hold(s,{...spec,step:'retire',data:{next:next||null,optional}},[
+  ...(optional?[{type:'kmr',mode:'skip'}]:[]),
+  ...targets.map(c=>({type:'kmr',mode:'retire',uid:c.uid}))
+ ]);
+ return true;
+}
 function offerOwn(s,spec,cards,optional,next,mode='own'){
  if(!cards.length)return false;
  hold(s,{...spec,step:mode,data:{next:next||null}},[
@@ -215,6 +226,12 @@ function continueAfter(pack,s,spec,next){
   offerRetire(pack,s,spec,limit,true,null);
   return;
  }
+ if(next==='readyAp'){
+  if(plOf(s,1-spec.player).life.length<5)return;
+  if(!plOf(s,spec.player).apCards.some(c=>c.inPlay&&!c.ready))return;
+  s.pending={kind:'effect-recover-ap',player:spec.player,sourceUid:spec.sourceUid,remaining:1};
+  return;
+ }
  if(next.startsWith('splitBottom:'))return;
 }
 function specOf(q){return {player:q.player,sourceUid:q.sourceUid,id:q.id};}
@@ -252,8 +269,11 @@ function reviveEnd(pack,s,job,name){
 }
 function onLookSimple(pack,s,job,count,pred,opts={}){
  const spec={player:job.owner,sourceUid:job.sourceUid,id:job.id};
- beginLook(s,spec,count,c=>pred(pack,c),{max:opts.max??1,min:0,discard:opts.discard!==false,
+ // pred already closes over the pack and takes the physical card. Passing the
+ // pack in as that card makes card() throw on the pack object.
+ const held=beginLook(s,spec,count,c=>pred(c),{max:opts.max??1,min:0,discard:opts.discard!==false,
   where:'bottom',after:opts.after||null});
+ if(!held)continueAfter(pack,s,spec,opts.after||null);
 }
 function nonYellowRaid(pack,c){const d=def(pack,c);return !!d.raidName&&d.color!=='yellow';}
 function frontRaidPool(pack,s,owner,names,got){
@@ -303,7 +323,7 @@ const HANDLERS={
   beginLook(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id},2,()=>true,
    {max:2,min:0,split:true,discard:false});
  },
- 'KMR-1-012|onPlay'(pack,s,job){onLookSimple(pack,s,job,7,nonYellowRaid,{discard:false});},
+ 'KMR-1-012|onPlay'(pack,s,job){onLookSimple(pack,s,job,7,c=>nonYellowRaid(pack,c),{discard:false});},
  'KMR-1-013|onPlay'(pack,s,job){
   const both=fieldCards(s,job.owner).some(c=>token(pack,c,'ゲイツ',s))&&
    fieldCards(s,job.owner).some(c=>token(pack,c,'ウォズ',s));
@@ -592,7 +612,7 @@ const HANDLERS={
  'KMR-1-074|onPlay'(pack,s,job){const c=selfOf(s,job.owner,job.sourceUid);if(c)grantImmune(s,c);},
  'KMR-1-074|onRetire'(pack,s,job){baseRest(pack,s,job);},
  'KMR-1-075|onPlay'(pack,s,job){
-  offerRetire(pack,s,{player:job.owner,sourceUid:job.sourceUid,id:job.id},0,true,null);
+  offerEnergyRetire(pack,s,{player:job.owner,sourceUid:job.sourceUid,id:job.id},0,true,null);
  },
  'KMR-1-075|onRetire'(pack,s,job){baseRest(pack,s,job);},
  'KMR-1-076|onPlay'(pack,s,job){
@@ -710,7 +730,7 @@ const HANDLERS={
  },
  'KMR-1-095|onPlay'(pack,s,job){
   onLookSimple(pack,s,job,5,c=>(token(pack,c,'電王',null)&&def(pack,c).type==='character')||
-   exact(pack,c,'デンライナー',null),{discard:false,after:plOf(s,1-job.owner).life.length>=5?'readyAp':'looked'});
+   exact(pack,c,'デンライナー',null),{discard:false,after:'readyAp'});
  },
  'KMR-1-096|onPlay'(pack,s,job){special096(pack,s,job);},
  'KMR-1-096|trigger'(pack,s,job){special096(pack,s,job);},

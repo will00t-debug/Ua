@@ -23322,7 +23322,10 @@ export function universalPrivateChoices(pack,s,viewer){
    ...(inspected.length?{inspected}:{}),
    options:(q.actions||[]).map(action=>{
     const c=action.uid?piles.find(x=>x?.uid===action.uid):null;
-    const printed=c&&card(pack,c);
+    // Opponent field cards are already on the public view. Attaching them here
+    // makes the choice overlay look the art up in the acting player's pack.
+    const owner=Number(String(c?.uid||'').split('-')[0]);
+    const printed=c&&owner===viewer?card(pack,c):null;
     return {action:{...action},card:printed?{cardId:c.cardId,name:printed.name,
      color:printed.color}:null};
    })};
