@@ -247,10 +247,13 @@ function jobsFor(){
  return {built,jobs};
 }
 
-if(!isMainThread){
+export {buildCoverageDeck};
+
+const isDirect=process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url);
+if(isDirect&&!isMainThread){
  const packs=workerData.packTitles.map(title=>requireRegisteredV2TitlePack(title));
  parentPort.postMessage(play({...workerData,packs}));
-}else{
+}else if(isDirect){
  const {built,jobs}=jobsFor();
  const coverage=Object.fromEntries(Object.entries(built).map(([title,row])=>[title,{
   cards:Object.values(row.deck.counts).reduce((n,v)=>n+v,0),
