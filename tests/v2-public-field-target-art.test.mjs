@@ -53,7 +53,7 @@ test('pending choice renderer prefers authorized private choices, else uses publ
  assert.match(choice,/target\.side===0\?'我方':'敵方'/);
  assert.match(choice,/class:'choice-card-location'/);
  assert.match(dialog,/publicPendingTargetCard\(view,row\.action\)!==null/);
- assert.match(dialog,/pendingChoiceControl\(row\.action,row\.option,gallery\|\|blockGallery,view\)/);
+ assert.match(dialog,/pendingChoiceControl\(row\.action,row\.option,gallery\|\|blockGallery,view,focusUid\)/);
  assert.match(choice,/onClick:\(\)=>applyAction\(action\)/);
  assert.doesNotMatch(choice,/dispatchUniversalAction/);
  const style=read('dist/universal-v2-legacy.css');

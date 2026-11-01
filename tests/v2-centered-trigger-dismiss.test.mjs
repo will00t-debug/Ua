@@ -34,7 +34,7 @@ test('trigger notice is mounted outside the match table without disturbing game 
  assert.doesNotMatch(render,/target\.append\(revealed\)/);
  assert.match(script,/app\.dismissedTriggerKeys\.clear\(\)/);
  assert.match(pending,/const triggerChoice=s\.pending\.kind==='life-trigger'/);
- assert.match(pending,/pendingChoiceControl\(row\.action,row\.option,gallery\|\|blockGallery,view\)/);
+ assert.match(pending,/pendingChoiceControl\(row\.action,row\.option,gallery\|\|blockGallery,view,focusUid\)/);
  assert.match(script,/onClick:\(\)=>applyAction\(action\)/);
  assert.doesNotMatch(pending,/dismissedTriggerKeys/);
  const html=read('dist/universal-v2-battle.html');
