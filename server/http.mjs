@@ -139,7 +139,10 @@ export async function createHandler({dataFile,staticRoot=null}){
     }
     if(method==='GET'&&path==='/api/me')return send(res,200,await service.me(token));
     if(method==='GET'&&path==='/api/decks')return send(res,200,await service.listDecks(token));
+    if(method==='GET'&&path==='/api/shared-decks')return send(res,200,await service.listSharedDecks(token));
     if(method==='POST'&&path==='/api/decks')return send(res,200,await service.saveDeck(token,await readBody(req)));
+    const deckShare=method==='PUT'&&/^\/api\/decks\/(d[a-f0-9]{16})\/share$/.exec(path);
+    if(deckShare)return send(res,200,await service.setDeckShare(token,deckShare[1],await readBody(req)));
     const deckUpdate=method==='PUT'&&/^\/api\/decks\/(d[a-f0-9]{16})$/.exec(path);
     if(deckUpdate)return send(res,200,await service.updateDeck(token,deckUpdate[1],await readBody(req)));
     const deckDelete=method==='DELETE'&&/^\/api\/decks\/(d[a-f0-9]{16})$/.exec(path);

@@ -46,8 +46,33 @@ test('shared tab shows only opted-in saved and cloud decks',()=>{
   savedData:{bleach:[{id:'public',name:'分享本機',counts:{a:3},shared:true},
    {id:'private',name:'私人本機',counts:{b:2},shared:false}]}});
  assert.deepEqual(sections.flatMap(x=>x.items.map(y=>y.name)),['分享雲端','分享本機']);
+ assert.equal(sections[0].title,'大家的公開牌組');
  assert.ok(!sections.some(x=>x.title==='編輯中的草稿'));
  assert.ok(!renderDeckGallery({tab:'shared',sections,mode:'library'}).includes('data-action="pickTitle"'));
+});
+
+test('shared tab lists other accounts public decks and keeps private decks out',()=>{
+ const sections=buildDeckLibrary({...kwargs,tab:'shared',cloudUser:'userA',
+  cloudDecks:[{id:'d01234567890abcde',title:'bleach',name:'自己的白哉',counts:{a:4},shared:true},
+   {id:'d222222222222222',title:'bleach',name:'自己的私人',counts:{a:1},shared:false}],
+  publicDecks:[
+   {id:'d01234567890abcde',title:'bleach',name:'自己的白哉',counts:{a:4},owner:'userA',playable:true,updatedAt:'2026-11-01T01:00:00Z'},
+   {id:'d3333333333333333',title:'bleach',name:'<img src=x onerror=alert(1)>',counts:{b:2},owner:'夜一',playable:false,updatedAt:'2026-11-01T02:00:00Z'},
+   {id:'not-a-deck',title:'bleach',name:'壞掉',counts:{a:1},owner:'夜一'}
+  ],
+  sharedIds:new Set(),
+  savedData:{bleach:[]}});
+ assert.deepEqual(sections[0].items.map(item=>item.name),['<img src=x onerror=alert(1)>','自己的白哉']);
+ assert.equal(sections[0].items[1].key,'public:d01234567890abcde');
+ assert.match(sections[0].items[0].meta,/夜一 公開/);
+ assert.deepEqual(sections[1].items.map(item=>item.name),['自己的白哉']);
+ const view=renderDeckGallery({tab:'shared',sections,mode:'library'});
+ assert.match(view,/大家的公開牌組/);
+ assert.match(view,/分享列表/);
+ assert.match(view,/其他人也看得到/);
+ assert.ok(view.includes('&lt;img'));
+ assert.ok(!view.includes('<img src=x onerror=alert(1)>'));
+ assert.match(view,/data-deck-open="public:d3333333333333333"/);
 });
 
 test('invalid cloud record IDs are excluded and names are safely escaped in library HTML',()=>{
@@ -85,7 +110,7 @@ test('production deck builder starts at owned library and can navigate to editor
  assert.match(js,/window\.location\.assign\('\/universal-v2-preview\.html'\)/);
  assert.match(js,/fetch\('\/api\/decks',options\)/);
  assert.match(html,/arena-deck-library\.css\?v=20261028library1/);
- assert.match(html,/v2-deck-editor\.mjs\?v=20261029mstart1/);
+ assert.match(html,/v2-deck-editor\.mjs\?v=20261101share1/);
  assert.match(read('dist/online.html'),/arena-deck-library\.css\?v=20261028library1/);
  assert.match(css,/\.dkg-library \.dkg-card/);
  assert.match(css,/\.deck-library-detail \.dkg-board/);

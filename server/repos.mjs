@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS decks (
   counts_json TEXT NOT NULL,
   local_id TEXT,
   cover_id TEXT,
+  shared INTEGER NOT NULL DEFAULT 0,
   updated_at TEXT NOT NULL
 );
 CREATE UNIQUE INDEX IF NOT EXISTS decks_user_local
@@ -113,6 +114,15 @@ CREATE TABLE IF NOT EXISTS coach_debug_replays (
 );
 `;
 
+// Existing account databases predate deck covers and the public-share flag.
+// Add those columns in place; never rebuild the table or drop rows.
+export function ensureDeckColumns(columnNames,exec){
+ const names=columnNames();
+ if(!names.includes('cover_id'))exec('ALTER TABLE decks ADD COLUMN cover_id TEXT');
+ if(!names.includes('shared'))exec('ALTER TABLE decks ADD COLUMN shared INTEGER NOT NULL DEFAULT 0');
+ exec('CREATE INDEX IF NOT EXISTS decks_shared_updated ON decks(shared, updated_at)');
+}
+
 export function roomTtl(status){
  if(status==='playing')return 6*60*60*1000;
  if(status==='finished')return 20*60*1000;
@@ -131,7 +141,8 @@ function deckFromRow(row){
  return {
   id:row.id,name:row.name,title:row.title,
   counts:JSON.parse(row.counts_json),
-  localId:row.local_id||null,coverId:row.cover_id||null,updatedAt:row.updated_at
+  localId:row.local_id||null,coverId:row.cover_id||null,updatedAt:row.updated_at,
+  shared:Number(row.shared)===1
  };
 }
 function roomFromRow(row){
@@ -200,12 +211,26 @@ export function createRepositories(sql){
    return Number(sql.get('SELECT COUNT(*) AS n FROM decks WHERE user_id=?',userId)?.n||0);
   },
   insertDeck(userId,deck){
-   sql.run(`INSERT INTO decks (id,user_id,name,title,counts_json,local_id,cover_id,updated_at)
-    VALUES (?,?,?,?,?,?,?,?)`,deck.id,userId,deck.name,deck.title,JSON.stringify(deck.counts),deck.localId,deck.coverId||null,deck.updatedAt);
+   sql.run(`INSERT INTO decks (id,user_id,name,title,counts_json,local_id,cover_id,shared,updated_at)
+    VALUES (?,?,?,?,?,?,?,?,?)`,deck.id,userId,deck.name,deck.title,JSON.stringify(deck.counts),deck.localId,deck.coverId||null,deck.shared===true?1:0,deck.updatedAt);
   },
   updateDeck(userId,deck){
    sql.run(`UPDATE decks SET name=?,title=?,counts_json=?,local_id=?,cover_id=?,updated_at=? WHERE user_id=? AND id=?`,
     deck.name,deck.title,JSON.stringify(deck.counts),deck.localId,deck.coverId||null,deck.updatedAt,userId,deck.id);
+  },
+  setDeckShared(userId,deckId,shared,updatedAt){
+   sql.run('UPDATE decks SET shared=?, updated_at=? WHERE user_id=? AND id=?',shared?1:0,updatedAt,userId,deckId);
+  },
+  listSharedDecks(limit=80){
+   return sql.all(`SELECT decks.*, users.username AS owner_name
+    FROM decks JOIN users ON users.id=decks.user_id
+    WHERE decks.shared=1
+    ORDER BY decks.updated_at DESC
+    LIMIT ?`,limit).map(row=>{
+    const deck=deckFromRow(row);
+    deck.owner=row.owner_name;
+    return deck;
+   });
   },
   deleteDeck(userId,deckId){
    sql.run('DELETE FROM decks WHERE user_id=? AND id=?',userId,deckId);

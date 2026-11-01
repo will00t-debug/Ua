@@ -6,7 +6,7 @@ const nonnegativeCount = counts => Object.values(counts||{}).reduce((n,value)=>{
 const updatedSort=(a,b)=>String(b.updatedAt||'').localeCompare(String(a.updatedAt||''));
 
 export function buildDeckLibrary({titles=[],savedData={},draftData={},names={},
- cloudDecks=[],cloudUser=null,tab='mine',sharedIds=new Set(),builtins=[],
+ cloudDecks=[],cloudUser=null,tab='mine',sharedIds=new Set(),publicDecks=[],builtins=[],
  summarize,formatUpdated}={}){
  const catalog=new Map(titles.map(title=>[title.id,title]));
  const summarizeFor=(title,counts,coverId)=>{
@@ -25,11 +25,24 @@ export function buildDeckLibrary({titles=[],savedData={},draftData={},names={},
  const sections=[];
  const cloud=Array.isArray(cloudDecks)?cloudDecks.filter(deck=>deck&&typeof deck.id==='string'
   &&/^d[a-f0-9]{16}$/.test(deck.id)&&catalog.has(deck.title)):[];
- const cloudItems=cloud.filter(deck=>tab!=='shared'||sharedIds.has(deck.id))
+ const cloudShared=deck=>deck.shared===true||sharedIds.has(deck.id);
+ const cloudItems=cloud.filter(deck=>tab!=='shared'||cloudShared(deck))
   .sort(updatedSort).map(deck=>item('cloud:'+deck.id,deck.title,deck.name,deck.counts,
    deck.updatedAt,deck.coverId||null,deck.playable===true?'V2 可對戰':'尚未符合 V2')).filter(Boolean);
+ if(tab==='shared'){
+  const published=(Array.isArray(publicDecks)?publicDecks:[]).filter(deck=>deck&&typeof deck.id==='string'
+   &&/^d[a-f0-9]{16}$/.test(deck.id)&&catalog.has(deck.title));
+  const publicItems=published.sort(updatedSort).map(deck=>{
+   const owner=String(deck.owner||'').replace(/[\u0000-\u001f]/g,'').trim().slice(0,40);
+   const extra=(owner?owner+' 公開':'玩家公開')+(deck.playable===true?' · V2 可對戰':'');
+   return item('public:'+deck.id,deck.title,deck.name,deck.counts,deck.updatedAt,deck.coverId||null,extra);
+  }).filter(Boolean);
+  sections.push({title:'大家的公開牌組',
+   empty:cloudUser?'還沒有玩家公開牌組。把帳號牌組設成公開後，其他登入的玩家會在這裡看到。':'登入後才能看到其他玩家公開的牌組。',
+   items:publicItems});
+ }
  if(cloudUser)sections.push({title:tab==='shared'?'帳號分享列表':'帳號牌組',
-  empty:tab==='shared'?'還沒有公開的帳號牌組。':'帳號裡還沒有儲存的牌組。',items:cloudItems});
+  empty:tab==='shared'?'帳號裡還沒有設成公開的牌組。公開後會出現在「大家的公開牌組」，其他登入玩家也看得到。':'帳號裡還沒有儲存的牌組。',items:cloudItems});
  const cloudLocalKeys=new Set(cloud.map(deck=>deck.localId).filter(id=>typeof id==='string'&&id));
  const locals=[];
  for(const t of titles){
@@ -45,7 +58,7 @@ export function buildDeckLibrary({titles=[],savedData={},draftData={},names={},
  }
  locals.sort(updatedSort);
  sections.push({title:tab==='shared'?'本機分享列表':'本機牌組',
-  empty:tab==='shared'?'還沒有分享的本機牌組。':'還沒有儲存牌組，按上方「建立新牌組」即可開始。',items:locals});
+  empty:tab==='shared'?'本機牌組只有這台裝置看得到。要讓其他玩家看到，請先存到帳號再設成公開。':'還沒有儲存牌組，按上方「建立新牌組」即可開始。',items:locals});
  if(tab==='mine'){
   const drafts=titles.flatMap(t=>{
    if(nonnegativeCount(draftData[t.id])===0)return [];
