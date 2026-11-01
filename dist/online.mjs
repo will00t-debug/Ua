@@ -23,7 +23,7 @@ const DRAFTS=[
 ];
 const PHASES=[['setup','起手調度'],['start','開始'],['move','移動'],['main','主要'],['attack','攻擊']];
 const ROOM=/^[A-HJ-NP-Z2-9]{8}$/;
-const app={offline:false,user:null,decks:[],openRooms:[],room:null,pick:null,zone:null,inspectPick:null,inspectionPaused:false,error:'',notice:'',busy:false,mode:'login',deckTab:'mine',pollToken:0,timer:0,showPassword:false,remember:true,recordedCode:'',draftUser:'',draftPass:''};
+const app={offline:false,user:null,decks:[],publicDecks:[],openRooms:[],room:null,pick:null,zone:null,inspectPick:null,inspectionPaused:false,error:'',notice:'',busy:false,mode:'login',deckTab:'mine',pollToken:0,timer:0,showPassword:false,remember:true,recordedCode:'',draftUser:'',draftPass:''};
 function captureAuthDraft(form){
  if(!form)return;
  const data=new FormData(form);
@@ -182,15 +182,36 @@ function deckCoverSrc(deck){
  const cover=coverCatalogue.summarize(cards,deck.counts).cover;
  return cover?.onlineImage||cover?.image||'assets/mark.svg';
 }
+function publicDeckCard(deck){
+ const art=el('img',{src:deckCoverSrc(deck),alt:deck.name||'公開牌組',loading:'lazy',decoding:'async'});
+ art.addEventListener('error',()=>{art.src='assets/mark.svg';});
+ const owner=String(deck.owner||'玩家');
+ return el('article',{class:'deck-visual'},
+  el('button',{type:'button',class:'dkg-card','aria-label':'查看公開牌組 '+(deck.name||''),
+   onClick:()=>window.location.assign('/index.html?sharedDeck='+encodeURIComponent(deck.id))},
+   el('span',{class:'dkg-card-art'},art),
+   el('span',{class:'dkg-card-copy'},
+    el('strong',{text:deck.name||'未命名牌組'}),
+    el('small',{text:deckWhen(deck.updatedAt,true)}),
+    el('small',{text:owner+' 公開 · '+(deck.titleLabel||deck.title)+' · '+total(deck)+' 張'}))));
+}
 function deckList(){
  loadCovers();
  const sharedIds=readShareSet();
- const rows=app.deckTab==='shared'?app.decks.filter(deck=>sharedIds.has(deck.id)):app.decks;
+ const ownShared=app.decks.filter(deck=>deck.shared===true||sharedIds.has(deck.id));
+ const rows=app.deckTab==='shared'?ownShared:app.decks;
  const box=el('div',{class:'dkg dkg-account'});
  box.append(el('div',{class:'dkg-tabs',role:'tablist','aria-label':'我的牌組與分享列表'},
   el('button',{type:'button',role:'tab',class:app.deckTab==='mine'?'active':'','aria-selected':String(app.deckTab==='mine'),text:'我的牌組',onClick:()=>{app.deckTab='mine';render();}}),
   el('button',{type:'button',role:'tab',class:app.deckTab==='shared'?'active':'','aria-selected':String(app.deckTab==='shared'),text:'分享列表',onClick:()=>{app.deckTab='shared';render();}})));
- if(!rows.length)box.append(el('div',{class:'dkg-empty',text:app.deckTab==='shared'?'快來分享一個牌組吧！':'這個帳號還沒有牌組。可以從本機組卡紀錄匯入，或貼上牌表。'}));
+ if(app.deckTab==='shared'){
+  const published=(Array.isArray(app.publicDecks)?app.publicDecks:[]).filter(deck=>deck&&typeof deck.id==='string'&&/^d[a-f0-9]{16}$/.test(deck.id));
+  box.append(el('h2',{text:'大家的公開牌組'}));
+  if(!published.length)box.append(el('div',{class:'dkg-empty',text:'還沒有玩家公開牌組。在牌組頁把帳號牌組設成公開後，其他登入的玩家會在這裡看到。'}));
+  for(const deck of published)box.append(publicDeckCard(deck));
+  box.append(el('h2',{text:'我公開的帳號牌組'}));
+ }
+ if(!rows.length)box.append(el('div',{class:'dkg-empty',text:app.deckTab==='shared'?'帳號裡還沒有設成公開的牌組。':'這個帳號還沒有牌組。可以從本機組卡紀錄匯入，或貼上牌表。'}));
  for(const deck of rows){
   const when=deckWhen(deck.updatedAt,app.deckTab==='shared');
   const art=el('img',{src:deckCoverSrc(deck),alt:deck.name||'牌組封面',loading:'lazy',decoding:'async'});
@@ -281,7 +302,7 @@ function homeView(){
    el('a',{class:'arena-entry arena-entry-deck',href:'/index.html'},el('span',{class:'arena-mode-icon',text:'▣'}),el('strong',{text:'牌組構築'}),el('span',{text:'圖片式牌組構築：搜尋卡牌、調整張數並保存牌組。'}),el('span',{class:'arena-mode-cta',text:'管理我的牌組 →'}))),
   el('section',{class:'panel'},
    el('h2',{text:'我的牌組'}),
-   el('p',{class:'muted',text:'每個帳號只看得到自己的雲端牌組。點選卡片會先打開唯讀詳情；圖片編輯才會改牌。'}),
+   el('p',{class:'muted',text:'帳號牌組預設只有自己看得到。設成公開後，其他登入玩家會在分享列表看到。點選自己的牌組會先打開詳情；圖片編輯才會改牌。'}),
    el('div',{class:'row'},
     el('a',{class:'primary linkish',href:'/index.html',text:'開啟組卡畫面'}),
     el('button',{type:'button',text:'匯入這台瀏覽器的牌組',disabled:app.busy,onClick:importLocal})),
@@ -1085,7 +1106,7 @@ async function submitAuth(event){
   const result=await api(app.mode==='register'?'/api/register':'/api/login',{method:'POST',body:{username:data.get('username'),password:data.get('password'),remember:data.get('remember')!=null}});
   app.user={username:result.username};
   app.draftUser='';app.draftPass='';
-  app.decks=(await api('/api/decks')).decks;
+  await refreshDecks();
   await refreshOpenRooms();
   app.notice='已登入 '+result.username+'。';
  }catch(error){app.error=error.message;}
@@ -1094,10 +1115,14 @@ async function submitAuth(event){
 async function logout(){
  app.busy=true;
  try{await api('/api/logout',{method:'POST'});}catch{/* The local screen still returns to the login form. */}
- stopPoll();app.user=null;app.decks=[];app.openRooms=[];app.room=null;app.mode='login';app.notice='';app.busy=false;
+ stopPoll();app.user=null;app.decks=[];app.publicDecks=[];app.openRooms=[];app.room=null;app.mode='login';app.notice='';app.busy=false;
  history.replaceState(null,'','online.html');render();
 }
-async function refreshDecks(){app.decks=(await api('/api/decks')).decks;}
+async function refreshDecks(){
+ app.decks=(await api('/api/decks')).decks;
+ try{app.publicDecks=(await api('/api/shared-decks')).decks||[];}
+ catch{app.publicDecks=[];}
+}
 async function refreshOpenRooms(){
  try{app.openRooms=(await api('/api/rooms')).rooms||[];}
  catch{app.openRooms=Array.isArray(app.openRooms)?app.openRooms:[];}
@@ -1276,7 +1301,7 @@ async function boot(){
  catch{app.offline=true;render();return;}
  try{
   app.user=await api('/api/me');
-  app.decks=(await api('/api/decks')).decks;
+  await refreshDecks();
   await refreshOpenRooms();
   const code=location.hash.slice(1);
   if(ROOM.test(code)){

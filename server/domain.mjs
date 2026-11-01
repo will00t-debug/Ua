@@ -371,8 +371,15 @@ function publicDeck(deck){
  }
  return {
   id:deck.id,name:deck.name,title:deck.title,titleLabel:TITLE_LABELS[deck.title]||deck.title,
-  counts:deck.counts,localId:deck.localId||null,coverId:deck.coverId||null,updatedAt:deck.updatedAt,playable,issues
+  counts:deck.counts,localId:deck.localId||null,coverId:deck.coverId||null,updatedAt:deck.updatedAt,
+  playable,issues,shared:deck.shared===true
  };
+}
+function publicSharedDeck(deck){
+ const view=publicDeck(deck);
+ delete view.localId;
+ const owner=String(deck.owner||'').replace(/[\u0000-\u001f]/g,'').trim().slice(0,40);
+ return {...view,shared:true,owner};
 }
 function ownedDeck(repos,userId,deckId){
  if(typeof deckId!=='string'||!deckId)throw new ApiError(400,'請選擇牌組。');
@@ -483,6 +490,18 @@ export function dispatchAccount(repos,message,now){
    const user=requireUser(repos,message.token,now);
    return {decks:repos.listDecks(user.id).map(publicDeck)};
   }
+  case 'listSharedDecks':{
+   requireUser(repos,message.token,now);
+   return {decks:repos.listSharedDecks(80).map(publicSharedDeck)};
+  }
+  case 'setDeckShare':{
+   const user=requireUser(repos,message.token,now);
+   if(message.shared!==true&&message.shared!==false)throw new ApiError(400,'請指定是否公開。');
+   const deck=ownedDeck(repos,user.id,message.deckId);
+   const updatedAt=new Date(now).toISOString();
+   repos.setDeckShared(user.id,deck.id,message.shared,updatedAt);
+   return {deck:publicDeck({...deck,shared:message.shared,updatedAt})};
+  }
   case 'saveDeck':{
    const user=requireUser(repos,message.token,now);
    const input=message.input||{};
@@ -502,6 +521,7 @@ export function dispatchAccount(repos,message,now){
     id:existing?.id||('d'+randomBytes(8).toString('hex')),
     name,title,counts:storedCounts,localId,
     coverId:input.coverId===undefined?(storedCounts[existing?.coverId]>0?existing.coverId:null):parseDeckCoverId(input.coverId,storedCounts),
+    shared:existing?.shared===true,
     updatedAt:new Date(now).toISOString()
    };
    if(existing)repos.updateDeck(user.id,record);
@@ -707,6 +727,8 @@ export function createService({sql,now=()=>Date.now()}){
   logout(token){return enqueue(()=>dispatchAccount(repos,{op:'logout',token},now()));},
   me(token){return enqueue(()=>dispatchAccount(repos,{op:'me',token},now()));},
   listDecks(token){return enqueue(()=>dispatchAccount(repos,{op:'listDecks',token},now()));},
+  listSharedDecks(token){return enqueue(()=>dispatchAccount(repos,{op:'listSharedDecks',token},now()));},
+  setDeckShare(token,deckId,input){return enqueue(()=>dispatchAccount(repos,{op:'setDeckShare',token,deckId,shared:input?.shared},now()));},
   saveDeck(token,input){return enqueue(()=>dispatchAccount(repos,{op:'saveDeck',token,input},now()));},
   updateDeck(token,deckId,input){return enqueue(()=>dispatchAccount(repos,{op:'updateDeck',token,deckId,input},now()));},
   deleteDeck(token,deckId){return enqueue(()=>dispatchAccount(repos,{op:'deleteDeck',token,deckId},now()));},

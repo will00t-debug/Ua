@@ -5,7 +5,7 @@
 import {DurableObject} from 'cloudflare:workers';
 import {ApiError,dispatchAccount,dispatchRoom} from '../server/domain.mjs';
 import {coachHttp} from '../server/coach.mjs';
-import {SCHEMA,createRepositories,roomTtl} from '../server/repos.mjs';
+import {SCHEMA,createRepositories,ensureDeckColumns,roomTtl} from '../server/repos.mjs';
 import {durableAct,durableCancel,durableCreate,durableJoin,durableList,durableResign,durableView} from './orchestrate.mjs';
 
 function adapt(storage){
@@ -36,11 +36,12 @@ function stub(namespace,name){
 }
 function migrate(ctx){
  ctx.storage.sql.exec(SCHEMA);
- // Existing Durable Object databases predate customizable deck covers.
- // Add this nullable column in place, preserving accounts, rooms and decks.
- const columns=ctx.storage.sql.exec('PRAGMA table_info(decks)').toArray();
- if(!columns.some(column=>column.name==='cover_id'))
-  ctx.storage.sql.exec('ALTER TABLE decks ADD COLUMN cover_id TEXT');
+ // Existing Durable Object databases keep their rows. New columns are added
+ // beside them: deck covers, then the public-share flag other accounts read.
+ ensureDeckColumns(
+  ()=>ctx.storage.sql.exec('PRAGMA table_info(decks)').toArray().map(column=>column.name),
+  sql=>ctx.storage.sql.exec(sql)
+ );
  return createRepositories(adapt(ctx.storage));
 }
 
@@ -162,8 +163,14 @@ export default {
     }
     if(method==='GET'&&path==='/api/me')return send(200,await callAccount({op:'me',token}));
     if(method==='GET'&&path==='/api/decks')return send(200,await callAccount({op:'listDecks',token}));
+    if(method==='GET'&&path==='/api/shared-decks')return send(200,await callAccount({op:'listSharedDecks',token}));
     if(method==='POST'&&path==='/api/decks')
      return send(200,await callAccount({op:'saveDeck',token,input:await readBody(request)}));
+    const deckShare=method==='PUT'&&/^\/api\/decks\/(d[a-f0-9]{16})\/share$/.exec(path);
+    if(deckShare){
+     const body=await readBody(request);
+     return send(200,await callAccount({op:'setDeckShare',token,deckId:deckShare[1],shared:body?.shared}));
+    }
     const deckUpdate=method==='PUT'&&/^\/api\/decks\/(d[a-f0-9]{16})$/.exec(path);
     if(deckUpdate)return send(200,await callAccount({op:'updateDeck',token,deckId:deckUpdate[1],input:await readBody(request)}));
     const deckDelete=method==='DELETE'&&/^\/api\/decks\/(d[a-f0-9]{16})$/.exec(path);

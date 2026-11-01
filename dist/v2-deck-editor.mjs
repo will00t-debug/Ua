@@ -43,9 +43,20 @@ const label=id=>TITLES.find(t=>t.id===id)?.label||id;
 const defaults=Object.fromEntries(TITLES.map(t=>[t.id,t.id==='bleach'?(bleachMeta.name||'自訂 BLEACH 牌組'):t.id==='rezero'?'Re:Zero 自訂牌組':t.label+'自訂牌組']));
 const state={title:'bleach',ready:false,screen:'library',listOrigin:'library',galleryTab:'mine',detail:null,tab:'pick',search:'',type:'all',color:'all',
  energy:'all',energies:[],generate:'all',sort:'energy-asc',recordView:'all',zoom:false,showOriginal:false,names:Object.fromEntries(TITLES.map(t=>[t.id,String(names[t.id]||defaults[t.id]).slice(0,40)])),
- counts:draftData,coverIds:Object.fromEntries(TITLES.map(t=>[t.id,typeof draftCovers[t.id]==='string'?draftCovers[t.id]:null])),coverPicker:false,selectedSaved:{},shareFlag:false,inspection:null,exportText:null,cloudOrigin:null};
+ counts:draftData,coverIds:Object.fromEntries(TITLES.map(t=>[t.id,typeof draftCovers[t.id]==='string'?draftCovers[t.id]:null])),coverPicker:false,selectedSaved:{},shareFlag:false,shareBusy:false,inspection:null,exportText:null,cloudOrigin:null};
 let toastTimer=null;
-let cloudDecks=[],cloudUser=null;
+let cloudDecks=[],publicDecks=[],cloudUser=null;
+let pendingPublicId=null;
+const SHARE_UPLOADED_KEY='ua-v2-deck-share-uploaded-v1';
+function readIdSet(key){
+ try{
+  const raw=JSON.parse(localStorage.getItem(key)||'[]');
+  return new Set(Array.isArray(raw)?raw.filter(id=>typeof id==='string'&&id):[]);
+ }catch{return new Set();}
+}
+function cloudShared(id){
+ return cloudDecks.some(deck=>deck.id===id&&deck.shared===true)||readSharedIds(localStorage).has(id);
+}
 function notify(message){
  const el=$('#toast');if(!el)return;
  el.textContent=String(message);el.classList.add('visible');
@@ -97,12 +108,18 @@ function detailModel(){
  if(detail?.source==='saved'){
   const item=savedDetailItem();
   if(!item)return null;
-  return {source:'saved',id:item.id,name:item.name,counts:item.counts,updatedAt:item.updatedAt,shared:item.shared===true,shareEnabled:true,shareNote:'',coverId:item.coverId,summary:summarizeDeck(cards,item.counts,item.coverId)};
+  return {source:'saved',id:item.id,name:item.name,counts:item.counts,updatedAt:item.updatedAt,shared:item.shared===true,shareEnabled:true,shareNote:'本機牌組只有這台裝置看得到。存到帳號後再公開，其他玩家才看得到。',coverId:item.coverId,summary:summarizeDeck(cards,item.counts,item.coverId)};
+ }
+ if(detail?.source==='public'){
+  const row=publicDecks.find(deck=>deck.id===detail.id);
+  if(!row)return null;
+  const owner=String(row.owner||'其他玩家');
+  return {source:'public',id:row.id,name:row.name,counts:row.counts,updatedAt:row.updatedAt,shared:true,shareEnabled:false,shareNote:owner+' 公開的牌組。可以查看與複製，不會改到對方的牌組。',coverId:row.coverId||null,editLabel:'複製到我的牌組',summary:summarizeDeck(cards,row.counts,row.coverId)};
  }
  const shared=detail?.source==='cloud'
-  ?readSharedIds(localStorage).has(state.cloudOrigin?.remoteId||'')
+  ?cloudShared(state.cloudOrigin?.remoteId||'')
   :state.shareFlag===true;
- return {source:detail?.source||'draft',id:detail?.id||'draft',name:state.names[title],counts:state.counts[title],updatedAt:null,shared,shareEnabled:true,shareNote:detail?.source==='cloud'?'公開後會出現在帳號的分享列表。':'公開狀態會在儲存牌組後出現在分享列表。',coverId:state.coverIds[title],summary:summarizeDeck(cards,state.counts[title],state.coverIds[title])};
+ return {source:detail?.source||'draft',id:detail?.id||'draft',name:state.names[title],counts:state.counts[title],updatedAt:null,shared,shareEnabled:true,shareNote:detail?.source==='cloud'?'公開後，其他登入的玩家會在分享列表看到這副牌組。':'公開狀態會在儲存到帳號後，讓其他登入的玩家看到。',coverId:state.coverIds[title],summary:summarizeDeck(cards,state.counts[title],state.coverIds[title])};
 }
 function activeList(){
  if(state.screen==='detail'){
@@ -136,16 +153,58 @@ function renderLibrary(){
   titles:TITLES,savedData,
   draftData:Object.fromEntries(TITLES.map(t=>[t.id,read(LEGACY_DECK_KEYS[t.id][0])||{}])),
   names:Object.fromEntries(TITLES.map(t=>[t.id,String((read(namesKey)||{})[t.id]||defaults[t.id]).slice(0,40)])),
-  cloudDecks,cloudUser,tab:state.galleryTab,sharedIds:readSharedIds(localStorage),
+  cloudDecks,cloudUser,tab:state.galleryTab,sharedIds:readSharedIds(localStorage),publicDecks,
   builtins:BUILTIN_BLEACH_V2_DECKS,summarize:summarizeDeck,formatUpdated:formatDeckUpdated
  });
  return renderDeckGallery({tab:state.galleryTab,sections,mode:'library'});
+}
+function acceptCloudDeck(deck){
+ return deck&&typeof deck.id==='string'&&/^d[a-f0-9]{16}$/.test(deck.id)&&TITLES.some(t=>t.id===deck.title);
+}
+async function refreshPublicDecks(){
+ const response=await fetch('/api/shared-decks',{credentials:'same-origin',redirect:'error',headers:{accept:'application/json'}});
+ if(!response.ok){publicDecks=[];return;}
+ const data=await response.json();
+ publicDecks=Array.isArray(data?.decks)?data.decks.filter(acceptCloudDeck):[];
+}
+function rememberShareUpload(id){
+ const ids=readIdSet(SHARE_UPLOADED_KEY);
+ ids.add(id);
+ localStorage.setItem(SHARE_UPLOADED_KEY,JSON.stringify([...ids]));
+}
+// A share flag that lived only in this browser is not visible to anyone else.
+// Push it to the account once, then leave later unshare decisions on the server.
+async function publishStoredShares(){
+ const local=readSharedIds(localStorage);
+ const uploaded=readIdSet(SHARE_UPLOADED_KEY);
+ for(const deck of cloudDecks){
+  if(deck.shared===true){writeSharedFlag(localStorage,deck.id,true);continue;}
+  if(!local.has(deck.id)||uploaded.has(deck.id))continue;
+  try{
+   const response=await fetch('/api/decks/'+encodeURIComponent(deck.id)+'/share',{
+    method:'PUT',credentials:'same-origin',headers:{'content-type':'application/json',accept:'application/json'},
+    body:JSON.stringify({shared:true})
+   });
+   if(!response.ok)continue;
+   deck.shared=true;
+   rememberShareUpload(deck.id);
+  }catch{/* The next visit retries until the account actually stores the flag. */}
+ }
+}
+function clearShareQuery(){
+ try{
+  if(!window.history?.replaceState||!window.location?.href)return;
+  const url=new URL(window.location.href);
+  if(!url.searchParams.has('sharedDeck'))return;
+  url.searchParams.delete('sharedDeck');
+  window.history.replaceState(null,'',url.pathname+url.search+url.hash);
+ }catch{/* The deck still opens; the query is only a one-time entry. */}
 }
 // The cloud API is session-scoped. Never fall back to another user's cached decks.
 async function refreshCloudDecks(){
  if(typeof window==='undefined'||!window.location?.origin)return;
  try{
-  const options={credentials:'same-origin',redirect:'error'};
+  const options={credentials:'same-origin',redirect:'error',headers:{accept:'application/json'}};
   const userResponse=await fetch('/api/me',options);
   if(!userResponse.ok)throw Error('Not signed in');
   const who=await userResponse.json();
@@ -154,10 +213,22 @@ async function refreshCloudDecks(){
   const data=await decksResponse.json();
   if(!who?.username||!Array.isArray(data?.decks))throw Error('Invalid account data');
   cloudUser=who.username;
-  cloudDecks=data.decks.filter(deck=>deck&&typeof deck.id==='string'&&/^d[a-f0-9]{16}$/.test(deck.id)
-   &&TITLES.some(t=>t.id===deck.title));
- }catch{cloudDecks=[];cloudUser=null;}
- if(state.screen==='library')render();
+  cloudDecks=data.decks.filter(acceptCloudDeck);
+ }catch{
+  cloudDecks=[];publicDecks=[];cloudUser=null;
+  if(state.screen==='library')render();
+  return;
+ }
+ try{await publishStoredShares();await refreshPublicDecks();}catch{publicDecks=[];}
+ if(state.cloudOrigin)state.shareFlag=cloudShared(state.cloudOrigin.remoteId);
+ if(pendingPublicId&&state.screen==='library'){
+  const id=pendingPublicId;
+  pendingPublicId=null;
+  clearShareQuery();
+  openLibraryDeck('public:'+id);
+  return;
+ }
+ if(state.screen==='library'||(state.screen==='detail'&&(state.detail?.source==='cloud'||state.detail?.source==='public')))render();
 }
 function savedDetailItem(){
  if(state.detail?.source!=='saved')return null;
@@ -178,9 +249,16 @@ function openLibraryDeck(key){
   catch{notify('牌組資料無法讀取。');return;}
   state.names[row.title]=String(row.name||'未命名牌組').slice(0,40);
   state.cloudOrigin={remoteId:row.id,title:row.title,localId:row.localId||null};
-  state.selectedSaved[row.title]=null;state.shareFlag=readSharedIds(localStorage).has(row.id);
+  state.selectedSaved[row.title]=null;state.shareFlag=cloudShared(row.id);
   state.coverIds[row.title]=validDeckCoverId(catalogueCards(row.title),state.counts[row.title],row.coverId);state.coverPicker=false;
   state.detail={source:'cloud',id:row.id};
+ }else if(source==='public'){
+  const id=parts[0];
+  if(cloudDecks.some(deck=>deck.id===id)){openLibraryDeck('cloud:'+id);return;}
+  const row=publicDecks.find(deck=>deck.id===id);
+  if(!row){notify('這副公開牌組已經取消分享，或尚未同步。');return;}
+  state.title=row.title;state.ready=true;state.cloudOrigin=null;
+  state.detail={source:'public',id:row.id};
  }else if(source==='saved'){
   let title,id;try{title=decodeURIComponent(parts[0]);id=decodeURIComponent(parts.slice(1).join(':'));}catch{return;}
   if(!TITLES.some(t=>t.id===title))return;
@@ -215,7 +293,7 @@ function renderDetail(){
  return renderDeckDetail({
   name:deck.name,updatedLabel:updated,shared:deck.shared,shareEnabled:deck.shareEnabled,shareNote:deck.shareNote,
   cover:deck.summary.cover,total:deck.summary.total,groups:deck.summary.groups,triggers:deck.summary.triggers,
-  battleReady:battle.ready
+  battleReady:battle.ready,editLabel:deck.editLabel||'編輯牌組'
  });
 }
 function showDetail(id){
@@ -253,6 +331,7 @@ function activeDeckRecordId(){
 function manageTools(){
  const deck=detailModel();
  if(!deck)return '';
+ if(deck.source==='public')return '<section class="arena-tools"><h2>牌組操作</h2><p>這是其他玩家公開的牌組。複製後才會變成你的牌組，不會改到對方的內容。</p></section>';
  const saved=deck.source==='saved';
  const covers=(deck.summary?.groups||[]).flatMap(group=>group.entries||[]).slice(0,16);
  const pictures=covers.map(row=>`<button type="button" data-cover-id="${escapeHtml(row.card.id)}" aria-label="用這張卡當封面"><img src="${escapeHtml(row.card.onlineImage||row.card.image||'assets/mark.svg')}" alt=""></button>`).join('');
@@ -330,6 +409,25 @@ async function mirrorCloudDeck(title,entry){
   const response=await fetch(url,{method,credentials:'same-origin',headers:{'content-type':'application/json'},
    body:JSON.stringify({name:entry.name,title,counts:entry.counts,localId,coverId:entry.coverId||null})});
   if(response.ok){
+   let remoteId=origin?.remoteId||null;
+   try{
+    const payload=await response.json();
+    if(!remoteId&&typeof payload?.deck?.id==='string')remoteId=payload.deck.id;
+   }catch{/* An update already knows its remote id. */}
+   if(entry.shared===true&&remoteId){
+    try{
+     const share=await fetch('/api/decks/'+encodeURIComponent(remoteId)+'/share',{
+      method:'PUT',credentials:'same-origin',headers:{'content-type':'application/json',accept:'application/json'},
+      body:JSON.stringify({shared:true})
+     });
+     if(share.ok){
+      writeSharedFlag(localStorage,remoteId,true);
+      rememberShareUpload(remoteId);
+      const row=cloudDecks.find(item=>item.id===remoteId);
+      if(row)row.shared=true;
+     }
+    }catch{/* The saved deck stays private until the next share attempt. */}
+   }
    notify(origin?'已更新原本的帳號牌組':'已儲存，並同步到登入帳號');
    if(cloudUser)refreshCloudDecks();
   }else if(response.status===401||response.status===404){
@@ -362,6 +460,32 @@ function openDeck(key){
 }
 function openEditor(){
  const detail=state.detail;
+ if(detail?.source==='public'){
+  const deck=detailModel();
+  if(!deck){notify('這副公開牌組已經取消分享。');return;}
+  let counts;
+  try{counts=normalizeEditorCounts(state.title,deck.counts);}
+  catch(error){notify('這副公開牌組無法複製：'+(error?.message||'內容無法讀取'));return;}
+  const entry={id:'v2-'+Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8),
+   name:String(deck.name||'公開牌組').slice(0,34)+' 複本',counts,updatedAt:new Date().toISOString(),shared:false,
+   coverId:validDeckCoverId(catalogueCards(),counts,deck.coverId)||null};
+  savedData[state.title].push(entry);
+  try{persistSaved(state.title);}catch(error){notify('無法複製：'+error.message);return;}
+  state.cloudOrigin=null;
+  state.counts[state.title]={...counts};
+  state.names[state.title]=entry.name;
+  state.selectedSaved[state.title]=entry.id;
+  state.shareFlag=false;
+  state.coverIds[state.title]=entry.coverId;
+  state.coverPicker=false;
+  state.detail={source:'saved',id:entry.id,index:savedData[state.title].length-1};
+  persist();
+  state.tab='overview';
+  state.screen='editor';
+  notify('已複製到你的本機牌組。儲存到帳號後，可以再公開成你自己的牌組。');
+  render();
+  return;
+ }
  if(detail?.source==='builtin'){
   if(!useDesignatedBleachPreset(detail.id,'editor'))return;
   render();
@@ -385,9 +509,9 @@ function openEditor(){
  state.screen='editor';
  render();
 }
-function toggleShare(){
+async function toggleShare(){
  const deck=detailModel();
- if(!deck?.shareEnabled)return;
+ if(!deck?.shareEnabled||state.shareBusy)return;
  if(deck.source==='saved'&&deck.id){
   const item=savedData[state.title].find(row=>row.id===deck.id);
   if(!item)return;
@@ -395,18 +519,39 @@ function toggleShare(){
   item.updatedAt=new Date().toISOString();
   state.shareFlag=item.shared;
   try{persistSaved(state.title);writeSharedFlag(localStorage,item.id,item.shared);}catch(error){notify('無法更新公開狀態：'+error.message);return;}
-  notify(item.shared?'已設為公開，分享列表看得到這副牌組。':'已改為未公開。');
+  notify(item.shared?'已在這台裝置標成公開。其他玩家看不到本機牌組；存到帳號後再公開才會出現在大家的列表。':'已改為未公開。');
   render();return;
  }
  if(deck.source==='cloud'&&state.cloudOrigin?.remoteId){
   const id=state.cloudOrigin.remoteId;
-  const next=!readSharedIds(localStorage).has(id);
-  writeSharedFlag(localStorage,id,next);
-  notify(next?'已設為公開，回到帳號頁的分享列表就能看到。':'已改為未公開。');
-  render();return;
+  const next=!cloudShared(id);
+  state.shareBusy=true;
+  try{
+   const response=await fetch('/api/decks/'+encodeURIComponent(id)+'/share',{
+    method:'PUT',credentials:'same-origin',headers:{'content-type':'application/json',accept:'application/json'},
+    body:JSON.stringify({shared:next})
+   });
+   if(!response.ok){
+    notify(response.status===401?'請先登入，其他玩家才看得到公開牌組。':'公開狀態沒有寫進帳號，其他玩家還看不到。');
+    return;
+   }
+   const row=cloudDecks.find(item=>item.id===id);
+   if(row)row.shared=next;
+   writeSharedFlag(localStorage,id,next);
+   rememberShareUpload(id);
+   if(next){
+    try{await refreshPublicDecks();}catch{publicDecks=[];}
+    if(row&&!publicDecks.some(item=>item.id===id))publicDecks=[{...row,owner:cloudUser||'',shared:true},...publicDecks];
+   }else publicDecks=publicDecks.filter(item=>item.id!==id);
+   notify(next?'已公開。其他登入的玩家在分享列表看得到這副牌組。':'已改為未公開，其他玩家不會再看到。');
+   render();
+  }catch{
+   notify('目前連不到帳號，其他玩家還看不到這副牌組。');
+  }finally{state.shareBusy=false;}
+  return;
  }
  state.shareFlag=!state.shareFlag;
- notify(state.shareFlag?'已標為公開，儲存牌組後會出現在分享列表。':'已改為未公開。');
+ notify(state.shareFlag?'已標為公開。儲存到帳號後，其他登入的玩家才看得到。':'已改為未公開。');
  render();
 }
 function duplicateCurrentDeck(){
@@ -619,7 +764,10 @@ function bind(){
 }
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&(state.coverPicker||state.inspection||state.exportText!==null)){state.coverPicker=false;state.zoom=false;state.showOriginal=false;state.inspection=null;state.exportText=null;render();}});
 // Direct links from the V2 lobby explicitly load the requested built-in list.
-const requestedDeck=new URLSearchParams(typeof window!=='undefined'?window.location?.search||'':'').get('bleachPreset');
+const requestedParams=new URLSearchParams(typeof window!=='undefined'?window.location?.search||'':'');
+const requestedDeck=requestedParams.get('bleachPreset');
+const requestedShare=requestedParams.get('sharedDeck');
+if(typeof requestedShare==='string'&&/^d[a-f0-9]{16}$/.test(requestedShare))pendingPublicId=requestedShare;
 if(requestedDeck)useDesignatedBleachPreset(requestedDeck);
 // A signed-in user's specific saved deck was selected in /online.html.
 // Consume it once, validate the whole catalogue, and show the old picture

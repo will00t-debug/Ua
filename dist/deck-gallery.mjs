@@ -110,18 +110,21 @@ export function renderDeckGallery({tab='mine',sections=[],mode='title'}={}){
  }).join('');
  const isLibrary=mode==='library';
  const create=tab==='mine'?`<button type="button" class="dkg-create" data-action="${isLibrary?'pickTitle':'newDeck'}">＋ 建立新牌組</button>`:'';
- const toolbar=isLibrary?'<div class="dkg-library-lead"><span>MY DECKS / UNION ARENA V2</span><h2>我的牌組</h2><p>選一副牌組查看卡牌配置，再進入編輯器調整並保存。</p></div>':'<div class="dkg-toolbar"><button type="button" class="dkg-back" data-action="pickTitle">‹ 更換作品</button></div>';
+ const libraryLead=tab==='shared'
+  ?'<div class="dkg-library-lead"><span>SHARED DECKS / UNION ARENA V2</span><h2>分享列表</h2><p>這裡是已登入玩家公開的帳號牌組。你設成公開之後，其他人也看得到。</p></div>'
+  :'<div class="dkg-library-lead"><span>MY DECKS / UNION ARENA V2</span><h2>我的牌組</h2><p>選一副牌組查看卡牌配置，再進入編輯器調整並保存。</p></div>';
+ const toolbar=isLibrary?libraryLead:'<div class="dkg-toolbar"><button type="button" class="dkg-back" data-action="pickTitle">‹ 更換作品</button></div>';
  return `<div class="dkg${isLibrary?' dkg-library':''}">${toolbar}<div class="dkg-tabs" role="tablist" aria-label="牌組列表">${tabs}</div>${create}${body}</div>`;
 }
 
-export function renderDeckDetail({name,updatedLabel,shared=false,shareEnabled=true,shareNote='',cover,total=0,groups=[],triggers={},battleReady=false}={}){
+export function renderDeckDetail({name,updatedLabel,shared=false,shareEnabled=true,shareNote='',cover,total=0,groups=[],triggers={},battleReady=false,editLabel='編輯牌組'}={}){
  const visible=(groups||[]).filter(group=>group.total>0);
  const board=visible.length?visible.map(group=>`<section class="dkg-group"><h2>${esc(group.label)} <span>${group.total} 張</span></h2><div class="dkg-board">${group.entries.map(row=>`<button type="button" class="dkg-mini" data-inspect="${esc(row.card.id)}" aria-label="查看 ${esc(row.card.nameZh||row.card.name||row.card.id)}，${row.count} 張">${imgTag(row.card,row.card.nameZh||row.card.name)}<b class="dkg-count">${row.count}</b></button>`).join('')}</div></section>`).join(''):'<div class="dkg-empty">這副牌組還沒有卡片。可以先進入編輯器加入。</div>';
  const stats=TRIGGER_STAT_ORDER.map(([key,label])=>`<span class="dkg-trigger ${esc(key)}">${esc(label)} <b>×${Number(triggers?.[key])||0}</b></span>`).join('');
  const share=shareEnabled
   ?`<button type="button" class="dkg-switch${shared?' on':''}" role="switch" aria-checked="${shared?'true':'false'}" data-action="toggleShare" aria-label="${shared?'公開':'未公開'}"><i></i></button>`
-  :`<button type="button" class="dkg-switch" role="switch" aria-checked="false" disabled aria-label="尚未能公開"><i></i></button>`;
- return `<article class="dkg dkg-detail"><button type="button" class="dkg-back" data-deck-back="1">‹ 返回列表</button><header class="dkg-hero"><div class="dkg-hero-art">${imgTag(cover,name)}</div><div class="dkg-hero-copy"><h1>${esc(name||'未命名牌組')}</h1><p>${esc(updatedLabel||'尚未記錄更新日期')}</p><p class="dkg-total">${total} 張</p><div class="dkg-public"><span>公開狀態</span><b>${shared?'公開':'未公開'}</b>${share}</div>${shareNote?`<small>${esc(shareNote)}</small>`:''}</div></header><button type="button" class="dkg-edit" data-action="editDeck">編輯牌組</button><div class="dkg-actions"><button type="button" data-action="visualExport">複製牌組清單</button><button type="button" data-action="v2Play" ${battleReady?'':'disabled'}>測試對戰</button></div>${board}<section class="dkg-triggers" aria-label="觸發統計"><h2>觸發</h2><div class="dkg-trigger-row">${stats}</div></section></article>`;
+  :`<button type="button" class="dkg-switch${shared?' on':''}" role="switch" aria-checked="${shared?'true':'false'}" disabled aria-label="${shared?'已公開':'尚未能公開'}"><i></i></button>`;
+ return `<article class="dkg dkg-detail"><button type="button" class="dkg-back" data-deck-back="1">‹ 返回列表</button><header class="dkg-hero"><div class="dkg-hero-art">${imgTag(cover,name)}</div><div class="dkg-hero-copy"><h1>${esc(name||'未命名牌組')}</h1><p>${esc(updatedLabel||'尚未記錄更新日期')}</p><p class="dkg-total">${total} 張</p><div class="dkg-public"><span>公開狀態</span><b>${shared?'公開':'未公開'}</b>${share}</div>${shareNote?`<small>${esc(shareNote)}</small>`:''}</div></header><button type="button" class="dkg-edit" data-action="editDeck">${esc(editLabel)}</button><div class="dkg-actions"><button type="button" data-action="visualExport">複製牌組清單</button><button type="button" data-action="v2Play" ${battleReady?'':'disabled'}>測試對戰</button></div>${board}<section class="dkg-triggers" aria-label="觸發統計"><h2>觸發</h2><div class="dkg-trigger-row">${stats}</div></section></article>`;
 }
 
 export const DECK_SHARE_KEY='ua-v2-deck-shared-ids-v1';

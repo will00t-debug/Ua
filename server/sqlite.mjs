@@ -3,7 +3,7 @@
 import {DatabaseSync} from 'node:sqlite';
 import {mkdirSync,readFileSync} from 'node:fs';
 import {dirname} from 'node:path';
-import {SCHEMA} from './repos.mjs';
+import {SCHEMA,ensureDeckColumns} from './repos.mjs';
 
 export function openDatabase(file){
  mkdirSync(dirname(file),{recursive:true});
@@ -18,9 +18,10 @@ export function openDatabase(file){
  db.exec('PRAGMA busy_timeout=5000');
  db.exec('PRAGMA foreign_keys=ON');
  db.exec(SCHEMA);
- // Non-destructive upgrade for existing local account SQLite stores.
- if(!db.prepare('PRAGMA table_info(decks)').all().some(c=>c.name==='cover_id'))
-  db.exec('ALTER TABLE decks ADD COLUMN cover_id TEXT');
+ ensureDeckColumns(
+  ()=>db.prepare('PRAGMA table_info(decks)').all().map(column=>column.name),
+  sql=>db.exec(sql)
+ );
  return {
   exec(query){db.exec(query);},
   run(query,...params){db.prepare(query).run(...params);},
