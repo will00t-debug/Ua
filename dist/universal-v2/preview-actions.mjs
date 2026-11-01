@@ -320,6 +320,8 @@ function closedTitleChoiceLabel(action,{pack,state}={}){
  const step=state?.pending?.step;
  if(mode==='skip')return '不發動';
  if(mode==='done')return '完成選擇';
+ if(step==='oppDeck'&&mode==='top')return '放到對手牌組上面';
+ if(step==='oppDeck'&&mode==='bottom')return '放到對手牌組下面';
  if(step==='oppTop'&&(mode==='top'||mode==='outside'))
   return mode==='outside'?'將這張公開的卡放到場外':'將這張公開的卡留在對手牌組上面';
  if(step==='gearTop'&&mode==='top')return '將這張場外卡放到牌組上面';
@@ -354,6 +356,9 @@ function closedTitleChoiceLabel(action,{pack,state}={}){
   place:'放置這張卡',stay:'留在原處',down:'降低 BP',energy:'產生能源',keep:'保留',
   out:'放到場外',tax:'增加指定費用',grant:'給予這個回合的能力',range:'提高可選的 BP 範圍',
   one:'選擇第一項',two:'選擇第二項',three:'選擇第三項',d1:'選擇第一項',d2:'選擇第二項',
+  triggerSafe:'這個回合不會被觸發效果指定',loseRemove:'戰鬥敗北時雙方移入移除區',
+  energyPick:'選擇這張角色',copy:'複製這張卡這個回合的效果',
+  toEnergy:'將這張角色移到能源線',removeTrio:'將這張角色移入移除區',
   d6:'選擇第三項',low:'選擇較低的效果',bare:'選擇生命較少時的效果',
   battle:'選擇戰鬥相關的效果',mark:'指定這張角色',kit:'選擇這個效果',
   discard2:'再將一張手牌放到場外',discardBuff:'將這張手牌放到場外並提高 BP',
