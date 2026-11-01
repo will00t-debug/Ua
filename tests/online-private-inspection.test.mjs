@@ -5,7 +5,7 @@ import {officialV2Pack} from '../dist/universal-v2/official-entry.mjs';
 
 const TITLES=[
  'bleach','gurren-lagann','sword-art-online','solo-leveling','mushoku-tensei',
- 'rezero','steins-gate','madoka','inuyasha','kjn'
+ 'rezero','steins-gate','madoka','inuyasha','kjn','aot'
 ];
 const typeByKind={
  'effect-top-filter-choice':'chooseTopFiltered',
@@ -25,7 +25,7 @@ const looked=cardId=>[
  {uid:'mine-1',cardId,name:'不符合條件卡',color:'purple'}
 ];
 
-test('all ten official title packs can render a private full-deck search with ineligible cards',()=>{
+test('every official title pack can render a private full-deck search with ineligible cards',()=>{
  for(const title of TITLES){
   const pack=officialV2Pack(title);
   assert.ok(pack&&Object.keys(pack.cards).length>0,title);
