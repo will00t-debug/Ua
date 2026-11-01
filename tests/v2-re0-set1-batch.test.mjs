@@ -6865,6 +6865,7 @@ test('traitless Rem gains this-turn impact and a sniper that cannot name BP 4000
  assert.equal(live.players[1].front.some(c=>c?.uid===wall.uid),true);
  live=untilPhase(packs,live,1,'main');
  assert.equal(universalImpact(packs,live,at(live,0,top.uid)),0);
+ assert.equal(at(live,0,top.uid).sniperGranted,undefined);
 
  let marked=five(8712);
  lineEnergy(marked,0,['REZ-1-016','REZ-1-016','REZ-1-016','REZ-1-101']);
