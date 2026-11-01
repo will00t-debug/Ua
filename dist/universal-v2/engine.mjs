@@ -1688,6 +1688,11 @@ function deckPrintedEnergy(pack,s,owner,definition){
 function notePublicDeckReveal(pack,s,owner,physical){
  const printed=card(pack,physical);
  if(deckPrintedEnergy(pack,s,owner,printed)>=5)s.players[owner].deckRevealEnergy5=s.turn;
+ // 公開 is public. A title that already published this card this turn is left as-is.
+ // 見る never reaches this function, so a private look stays off the public list.
+ const already=s.publicReveals.some(entry=>entry&&entry.uid===physical.uid&&
+  entry.cardId===physical.cardId&&entry.turn===s.turn);
+ if(!already)publishDeckTop(pack,s,owner,physical);
  if(printed.id!=='MMM-2-055'||s.active!==owner)return;
  if(s.mainReadyOnceByName[owner].includes('梓 みふゆ|revealed'))return;
  s.effectQueue.push({op:'mmm2',id:'MMM-2-055',slot:'revealed',owner,sourceUid:physical.uid});

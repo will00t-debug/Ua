@@ -35,7 +35,7 @@ import {MST_V2_OFFICIAL_CATALOGUE} from './universal-v2/sources/mst-inventory.mj
 import {V2_PHASE_LABELS,V2_TITLE_LABELS,V2_PENDING_LABELS,
  uiActor,isExactLegal,uiCardLabel,uiActionLabel,visibleActionsForCard,
  pendingChoiceCards,inspectedPendingChoiceCards,visiblePendingChoiceCards,pendingEntryChoiceCards,publicLifeOrderChoiceCard,pendingChoiceCaption,publicPendingTargetCard,controllerDeckWindowCards,controllerChoiceArt,pendingTextChoiceClass,attackBattleTags,attackKeywordBadges,frontAttackKeywordBadges,inlineBlockDecision,boardEntryMode,boardEntrySelection,entryClickPlan,moveClickPlan,
- FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs?v=20261101renjilabel1';
+ FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs?v=20261102kmrchoice1';
 import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalReplay,
  collectPublicCardResults,publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
 import {coachHeader,newCoachMatchId} from './universal-v2/coach-record.mjs';
@@ -95,6 +95,12 @@ const PRINTED_CATALOGUE={
  'sword-art-online':printedCatalogueMap(SAO_CARDS),
  'mushoku-tensei':printedCatalogueMap(MST_V2_OFFICIAL_CATALOGUE),
  rezero:printedCatalogueMap(REZERO_ALL_CARDS),
+ 'steins-gate':printedCatalogueMap(STEINS_GATE_CARDS),
+ madoka:printedCatalogueMap([...MADOKA_CARDS,...EXEDRA_CARDS]),
+ inuyasha:printedCatalogueMap(INUYASHA_CARDS),
+ kjn:printedCatalogueMap(KJN_CARDS),
+ aot:printedCatalogueMap([...AOT_CARDS,...AOT2_CARDS]),
+ kmr:printedCatalogueMap(KMR_CARDS),
  'gurren-lagann':printedCatalogueMap(Object.values(TTG_BY_ID))
 };
 const el=(tag,props={},...contents)=>{
@@ -134,9 +140,11 @@ const cardDef=(side,id)=>app.packs?.[side]?.cards[id]||null;
 function imgUrl(side,id){
  const title=app.packs?.[side]?.id;
  if(title==='gurren-lagann')return ttgArtSource(id);
- const source=allArt[title]?.get(id);
+ const printed=printedCatalogue(side,id);
+ const source=allArt[title]?.get(id)||printed?.image||printed?.printings?.[0]?.image;
  // The card image is presentation-only. Missing art never relaxes V2 rules
- // or links a legacy reducer into this preview.
+ // or links a legacy reducer into this preview. A newly registered title still
+ // shows its catalogue image when the art map has not been extended yet.
  return typeof source==='string'&&source.trim()?source:'assets/mark.svg';
 }
 function alertText(message){
@@ -347,7 +355,7 @@ function choicePicture(cardId,name,side=0){
  };
  return picture;
 }
-const TRIGGER_WORD={draw:'DRAW',get:'GET',active:'ACTIVE',special:'SPECIAL',color:'COLOR',raid:'RAID',final:'FINAL'};
+const TRIGGER_WORD={draw:'抽卡',get:'獲得',active:'活動',special:'特殊',color:'顏色',raid:'突襲',final:'最終'};
 function triggerTile(card){
  const who=card.owner===0?'你':'電腦';
  const word=TRIGGER_WORD[card.trigger]||(card.trigger?String(card.trigger):'無觸發');
@@ -1013,7 +1021,7 @@ function closeFieldSheet(){
 function showFieldSheet(side,line,card,printed){
  closeFieldSheet();
  const catalogue=printedCatalogue(side,card.cardId);
- const name=printed?.name||catalogue?.name||card.cardId;
+ const name=catalogue?.name||printed?.name||card.cardId;
  const stats=[];
  const metadata=printed||catalogue;
  if(metadata){

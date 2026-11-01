@@ -5,9 +5,9 @@ const TRIGGER_STAT_ORDER=Object.freeze([
  ['get','獲得'],
  ['draw','抽牌'],
  ['raid','突進'],
- ['color','COLOR'],
- ['special','SPECIAL'],
- ['final','FINAL']
+ ['color','顏色'],
+ ['special','特殊'],
+ ['final','最終']
 ]);
 
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
