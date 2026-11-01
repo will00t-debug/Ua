@@ -16603,6 +16603,10 @@ if(ability.op==='frontDrawOrHandTrigger'){
     if(s.mainReadyOnceByName[p].includes(triggerKey)||!choices.length)
      throw Error('Named hand trigger is not legal');
     s.mainReadyOnceByName[p].push(triggerKey);
+    // EX17BT/REZ-2-047 puts the green card outside and may then activate its
+    // trigger. EX17BT/REZ-2-073 stands a Reinhard only after that whole main
+    // finishes, including a skipped or resolved trigger.
+    s.effectQueue.unshift(...sourceMoveBoundary(pack,s,p,selected.uid));
     s.pending={kind:'effect-hand-trigger-card',player:p,sourceUid:selected.uid,
      color:ability.handColor,choices};
     break;
