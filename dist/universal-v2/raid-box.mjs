@@ -140,6 +140,21 @@ const RAID_BOX_FEATURES=Object.freeze({
  'AOT-1-094':["main","onAttack"],
  'AOT-1-107':["onPlay","main"],
  'AOT-1-110':["onPlay","onAttack"],
+ 'KMR-1-005':["onPlay","main"],
+ 'KMR-1-013':["onPlay"],
+ 'KMR-1-019':["main"],
+ 'KMR-1-022':["onPlay"],
+ 'KMR-1-039':["onPlay","main"],
+ 'KMR-1-041':["onPlay"],
+ 'KMR-1-044':["main"],
+ 'KMR-1-052':["onPlay"],
+ 'KMR-1-074':["onPlay","onRetire"],
+ 'KMR-1-075':["onPlay","onRetire"],
+ 'KMR-1-077':["onPlay","onRetire"],
+ 'KMR-1-079':["onPlay","onAttack","onRetire"],
+ 'KMR-1-080':["onPlay","onRetire"],
+ 'KMR-1-085':["onAttack","phase"],
+ 'KMR-1-107':["onPlay"]
 });
 const sets=new Map(Object.entries(RAID_BOX_FEATURES).map(([id,list])=>[id,new Set(list)]));
 export function raidBoxListed(id,feature){

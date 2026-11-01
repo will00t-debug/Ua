@@ -80,6 +80,13 @@ export const TITLE_LOGOS=Object.freeze({
   source:'https://commons.wikimedia.org/wiki/File:Attack_on_Titan_logo.svg',
   credit:'諫山創／講談社',
   license:'PD text logo'
+ }),
+ kmr:Object.freeze({
+  image:'https://upload.wikimedia.org/wikipedia/commons/6/6f/Kamen_Rider_logo.svg',
+  label:'假面騎士',
+  source:'https://commons.wikimedia.org/wiki/File:Kamen_Rider_logo.svg',
+  credit:'東映',
+  license:'PD text logo'
  })
 });
 export const titleLogo=id=>Object.hasOwn(TITLE_LOGOS,id)?TITLE_LOGOS[id]:null;

@@ -2,7 +2,7 @@
 // This entrypoint is intentionally NOT linked from the production index.html.
 // All game transitions pass through legalUniversalActions/dispatchUniversalAction.
 import {createAllV2PreviewRealDecks} from './universal-v2/preview-real-decks.mjs';
-import {officialV2Pack,rezeroSet1PracticeDeck,steinsGatePracticeDeck,madokaPracticeDeck,inuyashaPracticeDeck,kjnPracticeDeck,aotPracticeDeck,v2DeckReport} from './universal-v2/official-entry.mjs';
+import {officialV2Pack,rezeroSet1PracticeDeck,steinsGatePracticeDeck,madokaPracticeDeck,inuyashaPracticeDeck,kjnPracticeDeck,aotPracticeDeck,kmrPracticeDeck,v2DeckReport} from './universal-v2/official-entry.mjs';
 import {REZERO_ALL_CARDS} from './rezero-builder.mjs';
 import {STEINS_GATE_CARDS} from './steins-gate-cards.mjs';
 import {MADOKA_CARDS} from './madoka-cards.mjs';
@@ -11,6 +11,7 @@ import {INUYASHA_CARDS} from './inuyasha-cards.mjs';
 import {KJN_CARDS} from './kjn-cards.mjs';
 import {AOT_CARDS} from './aot-cards.mjs';
 import {AOT2_CARDS} from './aot-vol2-cards.mjs';
+import {KMR_CARDS} from './kmr-cards.mjs';
 import {summarizeDesignatedDecks,designatedPlayableCounts} from './universal-v2/bleach-designated-decks.mjs';
 import {validateUniversalDeck} from './universal-v2/pack.mjs';
 import {V2_ABILITY_TEMPLATE_IDS} from './universal-v2/ability-templates.mjs';
@@ -49,6 +50,7 @@ const madokaPractice=madokaPracticeDeck();
 const inuyashaPractice=inuyashaPracticeDeck();
 const kjnPractice=kjnPracticeDeck();
 const aotPractice=aotPracticeDeck();
+const kmrPractice=kmrPracticeDeck();
 const decks={...createAllV2PreviewRealDecks(),
  'rezero-set1':{pack:rezeroPractice.pack,counts:rezeroPractice.counts,
   label:'Re:Zero 第一彈｜黃色練習組'},
@@ -61,7 +63,9 @@ const decks={...createAllV2PreviewRealDecks(),
  'kjn-purple':{pack:kjnPractice.pack,counts:kjnPractice.counts,
   label:'我想成為影之強者！｜紫色練習組'},
  'aot-red':{pack:aotPractice.pack,counts:aotPractice.counts,
-  label:'進擊的巨人｜紅色練習組'}};
+  label:'進擊的巨人｜紅色練習組'},
+ 'kmr-yellow':{pack:kmrPractice.pack,counts:kmrPractice.counts,
+  label:'假面騎士｜黃色預組身份練習組'}};
 const designatedReady=new Map();
 const allArt=Object.freeze({
  bleach:new Map(CARDS.map(c=>[c.identity,c.image||null])),
@@ -73,7 +77,8 @@ const allArt=Object.freeze({
  madoka:new Map([...MADOKA_CARDS,...EXEDRA_CARDS].map(c=>[c.id,c.image||null])),
  inuyasha:new Map(INUYASHA_CARDS.map(c=>[c.id,c.image||null])),
  kjn:new Map(KJN_CARDS.map(c=>[c.id,c.image||null])),
- aot:new Map([...AOT_CARDS,...AOT2_CARDS].map(c=>[c.id,c.image||null]))
+ aot:new Map([...AOT_CARDS,...AOT2_CARDS].map(c=>[c.id,c.image||null])),
+ kmr:new Map(KMR_CARDS.map(c=>[c.id,c.printings?.[0]?.image||null]))
 });
 const v2Entries=listRegisteredV2Titles();
 function printedCatalogueMap(cards){
@@ -1566,6 +1571,7 @@ function selectBuiltOpponent(title){
  if(decks['inuyasha-purple']&&title==='inuyasha')$('ai-title').value='inuyasha-purple';
  if(decks['kjn-purple']&&title==='kjn')$('ai-title').value='kjn-purple';
  if(decks['aot-red']&&title==='aot')$('ai-title').value='aot-red';
+ if(decks['kmr-yellow']&&title==='kmr')$('ai-title').value='kmr-yellow';
  if(decks['gurren-lagann-red']&&title==='gurren-lagann')$('ai-title').value='gurren-lagann-red';
 }
 function importBuiltTitleDeck(){
@@ -1599,7 +1605,7 @@ function importV2EditorDeck(){
   sessionStorage.removeItem(V2_EDITOR_TRANSFER_KEY);}catch{return;}
  if(!raw||typeof raw!=='object')return;
  const reject=message=>{$('restart-notice').textContent='組卡頁的牌組無法進入 V2：'+message;};
- const pack=raw.title==='rezero'||raw.title==='steins-gate'||raw.title==='madoka'||raw.title==='inuyasha'||raw.title==='kjn'||raw.title==='aot'?officialV2Pack(raw.title):(typeof raw.title==='string'?registeredV2TitlePack(raw.title):null);
+ const pack=raw.title==='rezero'||raw.title==='steins-gate'||raw.title==='madoka'||raw.title==='inuyasha'||raw.title==='kjn'||raw.title==='aot'||raw.title==='kmr'?officialV2Pack(raw.title):(typeof raw.title==='string'?registeredV2TitlePack(raw.title):null);
  if(!pack){reject('該作品尚未開放正式 V2 卡包');return;}
  const counts=raw.counts;
  if(!counts||typeof counts!=='object'||Array.isArray(counts)){reject('牌組格式錯誤');return;}

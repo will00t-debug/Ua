@@ -5,7 +5,7 @@ import {officialV2Pack} from '../dist/universal-v2/official-entry.mjs';
 
 const TITLES=[
  'bleach','gurren-lagann','sword-art-online','solo-leveling','mushoku-tensei',
- 'rezero','steins-gate','madoka','inuyasha','kjn','aot'
+ 'rezero','steins-gate','madoka','inuyasha','kjn','aot','kmr'
 ];
 const typeByKind={
  'effect-top-filter-choice':'chooseTopFiltered',
