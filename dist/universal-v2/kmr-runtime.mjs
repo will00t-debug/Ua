@@ -1,6 +1,8 @@
 // UA29BT / UA29ST scripts. The engine passes zone helpers; this file does not import it.
 // Printed choices include zero when the sentence says まで. A name-once lock
 // is spent only when the effect actually happens.
+// Character entry goes through offerFieldEntry: one action per destination,
+// then the shared gesture (select the card, mode only if both are printed, tap the cell).
 // Registration is not an official FAQ certification.
 import {cardHasName,cardHasTrait} from './field-conditions.mjs';
 import {originalEffectsDisabled,grantContinuousState} from './continuous-states.mjs';
@@ -20,7 +22,8 @@ function selfOf(s,owner,uid){return A.location(s,owner,uid)?.c||null;}
 function arm(pack){A.pack=pack;}
 function hold(s,spec,actions){
  s.pending={kind:'kmr',player:spec.player,sourceUid:spec.sourceUid||null,id:spec.id,
-  step:spec.step,actions,data:spec.data||null};
+  step:spec.step,actions,data:spec.data||null,
+  ...(Array.isArray(spec.uids)?{uids:spec.uids.slice()}:{})};
 }
 function sig(a){
  return JSON.stringify([a?.type,a?.mode,a?.uid??null,a?.line??null,a?.slot??null,
@@ -253,6 +256,16 @@ function onLookSimple(pack,s,job,count,pred,opts={}){
   where:'bottom',after:opts.after||null});
 }
 function nonYellowRaid(pack,c){const d=def(pack,c);return !!d.raidName&&d.color!=='yellow';}
+function frontRaidPool(pack,s,owner,names,got){
+ const used=new Set(names||[]),seen=new Set();
+ return handWhere(s,owner,c=>{
+  const d=def(pack,c);
+  if(d.type!=='character'||d.bp>4000||d.raidOnlyEntry||!nonYellowRaid(pack,c))return false;
+  if(used.has(d.name)||(got||[]).includes(c.uid)||seen.has(d.name))return false;
+  seen.add(d.name);
+  return true;
+ });
+}
 
 const HANDLERS={
  'KMR-1-001|onPlay':on001,
@@ -270,15 +283,10 @@ const HANDLERS={
  'KMR-1-004|phase':phase004,
  'KMR-1-005|onPlay'(pack,s,job){
   const spec={player:job.owner,sourceUid:job.sourceUid,id:job.id};
-  const hand=handWhere(s,job.owner,c=>def(pack,c).type==='character'&&def(pack,c).bp<=4000&&
-   nonYellowRaid(pack,c));
-  const names=new Set();
-  const distinct=hand.filter(c=>{if(names.has(def(pack,c).name))return false;names.add(def(pack,c).name);return true;});
-  if(!distinct.length){offerOwn(s,spec,fieldCards(s,job.owner).filter(c=>!c.ready),true,null,'ready');return;}
-  hold(s,{...spec,step:'deployMany',data:{got:[],max:2,pool:'raidYellow',then:'readyOne'}},[
-   {type:'kmr',mode:'done'},
-   ...distinct.map(c=>({type:'kmr',mode:'deploy',uid:c.uid}))
-  ]);
+  const pool=frontRaidPool(pack,s,job.owner,[],[]);
+  if(!offerFieldEntry(s,spec,pool,{lines:['front'],from:'hand',optional:true,skipOnPlay:false,
+   then:'more005',names:[],got:[],max:2}))
+   offerOwn(s,spec,fieldCards(s,job.owner).filter(c=>!c.ready),true,null,'ready');
  },
  'KMR-1-005|main'(pack,s,job){
   const loc=A.location(s,job.owner,job.sourceUid);
@@ -333,23 +341,16 @@ const HANDLERS={
   if(intelCount(pack,s,job.owner)<3)return;
   const copies=handWhere(s,job.owner,c=>def(pack,c).id==='KMR-1-021');
   if(!copies.length)return;
-  const spec={player:job.owner,sourceUid:copies[0].uid,id:'KMR-1-021'};
-  hold(s,{...spec,step:'enterOptional',data:{uid:copies[0].uid,ready:false,from:'hand',skip:false,
-   lock:'仮面ライダーゼロツー（イズ）|021'}},[
-   {type:'kmr',mode:'skip'},{type:'kmr',mode:'enterAsk'}
-  ]);
+  offerFieldEntry(s,{player:job.owner,sourceUid:copies[0].uid,id:'KMR-1-021'},copies,{
+   from:'hand',optional:true,skipOnPlay:false,lock:'仮面ライダーゼロツー（イズ）|021'});
  },
  'KMR-1-022|onPlay'(pack,s,job){
   const spec={player:job.owner,sourceUid:job.sourceUid,id:job.id};
   const pred=c=>def(pack,c).type==='character'&&def(pack,c).color==='yellow'&&
    def(pack,c).energy<=1&&def(pack,c).ap===1;
-  const pool=[...handWhere(s,job.owner,pred).map(c=>({c,from:'hand'})),
-   ...plOf(s,job.owner).outside.filter(pred).map(c=>({c,from:'outside'}))];
-  if(!pool.length)return;
-  hold(s,{...spec,step:'deployOne',data:{ready:false}},[
-   {type:'kmr',mode:'skip'},
-   ...pool.map(x=>({type:'kmr',mode:'deploy',uid:x.c.uid,from:x.from}))
-  ]);
+  const pool=[...handWhere(s,job.owner,pred),...plOf(s,job.owner).outside.filter(pred)];
+  offerFieldEntry(s,spec,pool,{optional:true,skipOnPlay:false,drawIfHand:true,
+   fromOf:c=>plOf(s,job.owner).hand.some(h=>h.uid===c.uid)?'hand':'outside'});
  },
  'KMR-1-024|onPlay'(pack,s,job){
   const spec={player:job.owner,sourceUid:job.sourceUid,id:job.id};
@@ -401,10 +402,8 @@ const HANDLERS={
    const card=plOf(s,job.owner).outside.find(c=>c.uid===job.sourceUid);
    if(!card||A.energy(pack,s,job.owner)<3||apReady(s,job.owner)<1)return;
    if(!pay(s,job.owner,1,job.sourceUid))return;
-   const dest=A.destinations(plOf(s,job.owner),'energy')[0];
-   if(!dest)return;
-   A.enter(pack,s,{owner:job.owner,from:'outside',uid:card.uid,line:'energy',slot:dest.slot,
-    replaceUid:dest.replaceUid,ready:false,sourceUid:job.sourceUid,skipOnPlay:true});
+   offerFieldEntry(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id},[card],{
+    lines:['energy'],from:'outside',optional:false,skipOnPlay:true});
    return;
   }
   const self=selfOf(s,job.owner,job.sourceUid);
@@ -587,7 +586,8 @@ const HANDLERS={
   const deneb=handWhere(s,job.owner,c=>exact(pack,c,'デネブイマジン',null));
   if(!deneb.length)return;
   use(s,job.sourceUid+'|KMR-1-071');
-  askEnter(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id},deneb[0].uid,false,'hand',true);
+  offerFieldEntry(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id},deneb,{
+   from:'hand',optional:false,skipOnPlay:false});
  },
  'KMR-1-074|onPlay'(pack,s,job){const c=selfOf(s,job.owner,job.sourceUid);if(c)grantImmune(s,c);},
  'KMR-1-074|onRetire'(pack,s,job){baseRest(pack,s,job);},
@@ -606,16 +606,8 @@ const HANDLERS={
   const hand=handWhere(s,job.owner,c=>def(pack,c).type==='character'&&def(pack,c).energy<=3&&
    def(pack,c).ap===1&&token(pack,c,'電王',null)&&def(pack,c).raidName);
   if(!hand.length)return;
-  const spec={player:job.owner,sourceUid:job.sourceUid,id:job.id};
-  const actions=[{type:'kmr',mode:'skip'}];
-  for(const c of hand){
-   for(const line of ['front','energy'])for(let slot=0;slot<4;slot++){
-    const base=plOf(s,job.owner)[line][slot];
-    if(!base||!A.raidBase(pack,s,job.owner,base,def(pack,c)))continue;
-    actions.push({type:'kmr',mode:'raid',uid:c.uid,baseUid:base.uid,line:base&&A.location(s,job.owner,base.uid)?.line||line,slot});
-   }
-  }
-  if(actions.length>1)hold(s,{...spec,step:'raidHand',data:{bp:1000}},actions);
+  offerFieldEntry(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id},hand,{
+   lines:[],raid:true,from:'hand',bp:1000,optional:true,skipOnPlay:false});
  },
  'KMR-1-077|onPlay'(pack,s,job){const c=selfOf(s,job.owner,job.sourceUid);if(c)grantImpact(s,c);},
  'KMR-1-077|onRetire'(pack,s,job){baseRest(pack,s,job);},
@@ -741,7 +733,8 @@ const HANDLERS={
   const n=fieldCards(s,job.owner).filter(c=>c.uid!==job.sourceUid&&trait(pack,c,INTEL)).length;
   if(n<3)return;
   const hand=handWhere(s,job.owner,c=>token(pack,c,'ゼロツー',null)&&def(pack,c).type==='character');
-  if(hand.length)askEnter(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id},hand[0].uid,false,'hand',false);
+  offerFieldEntry(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id},hand,{
+   from:'hand',optional:true,skipOnPlay:false});
  },
  'KMR-1-107|onPlay'(pack,s,job){
   const c=selfOf(s,job.owner,job.sourceUid);
@@ -778,9 +771,14 @@ const HANDLERS={
  },
  'KMR-1-109|onPlay'(pack,s,job){
   const spec={player:job.owner,sourceUid:job.sourceUid,id:job.id};
-  beginLook(s,spec,4,c=>def(pack,c).type==='character'&&def(pack,c).color==='yellow'&&
-   def(pack,c).energy<=4&&def(pack,c).ap===1&&trait(pack,c,INTEL),
-   {max:1,min:0,discard:false,after:'deployOrRaid'});
+  const window=windowCards(s,job.owner,4);
+  if(!window.length)return;
+  const eligible=window.filter(c=>def(pack,c).type==='character'&&def(pack,c).color==='yellow'&&
+   def(pack,c).energy<=4&&def(pack,c).ap===1&&trait(pack,c,INTEL));
+  const uids=window.map(c=>c.uid);
+  if(!offerFieldEntry(s,spec,eligible,{raid:true,from:'deck',optional:true,skipOnPlay:false,
+   windowUids:uids}))
+   offerOrder(s,spec,uids,'bottom',null);
  },
  'KMR-1-110|onPlay'(pack,s,job){
   if(s.phase!=='main'||s.active!==job.owner)return;
@@ -881,7 +879,9 @@ function medalReturn(pack,s,job,name){
 function baseRest(pack,s,job){
  const base=job.baseUid&&plOf(s,job.owner).outside.find(c=>c.uid===job.baseUid);
  if(!base)return;
- askEnter(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id},base.uid,false,'outside',true);
+ // FAQ Q1168 / Q1169: the raid base played by this leave effect does trigger 登場時.
+ offerFieldEntry(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id},[base],{
+  from:'outside',optional:true,skipOnPlay:false});
 }
 function tuckOffer(pack,s,job,pred,next){
  const others=fieldCards(s,job.owner).filter(c=>c.uid!==job.sourceUid&&pred(c));
@@ -891,16 +891,114 @@ function tuckOffer(pack,s,job,pred,next){
   ...others.map(c=>({type:'kmr',mode:'tuck',uid:c.uid}))
  ]);
 }
-function askEnter(s,spec,uid,ready,from,skip){
- const pl=plOf(s,spec.player);
+function zoneFrom(s,owner,card,fromOf){
+ if(typeof fromOf==='function')return fromOf(card);
+ if(typeof fromOf==='string')return fromOf;
+ const pl=plOf(s,owner);
+ if(pl.hand.some(c=>c.uid===card.uid))return 'hand';
+ if(pl.outside.some(c=>c.uid===card.uid))return 'outside';
+ if(pl.deck.some(c=>c.uid===card.uid))return 'deck';
+ if((pl.removed||[]).some(c=>c.uid===card.uid))return 'removed';
+ return null;
+}
+function raidDestinations(pack,s,owner,card){
+ const d=def(pack,card);
+ if(!d.raidName||d.type!=='character'||d.frontForbidden)return [];
+ const pl=plOf(s,owner),out=[];
+ for(const line of ['front','energy'])for(let slot=0;slot<4;slot++){
+  const base=pl[line][slot];
+  if(!base||!A.raidBase(pack,s,owner,base,d)||def(pack,base).frontForbidden)continue;
+  const b=def(pack,base);
+  if(line==='front'){out.push({baseUid:base.uid,line:'front',slot,replaceUid:null});continue;}
+  if(!d.energyLineForbidden&&!b.energyLineForbidden)
+   out.push({baseUid:base.uid,line:'energy',slot,replaceUid:null});
+  for(const dest of A.destinations(pl,'front'))
+   out.push({baseUid:base.uid,line:'front',slot:dest.slot,replaceUid:dest.replaceUid??null});
+ }
+ return out;
+}
+// Character entry from an effect. Emit one legal action per destination.
+// UI: select this physical card, then 突襲進場 or 普通進場 only when the
+// print allows both, then tap the cell. Do not emit a slot-less deploy
+// button, and do not invent a mode the print does not allow.
+// Future effects that put a character on the field must go through here.
+function fieldEntryActions(pack,s,owner,cards,opts={}){
+ const lines=opts.lines??['front','energy'];
+ const raid=opts.raid===true;
+ const ready=opts.ready===true;
+ const skipOnPlay=opts.skipOnPlay===true;
  const actions=[];
- for(const line of ['front','energy'])
-  for(const choice of A.destinations(pl,line))
-   actions.push({type:'kmr',mode:'enter',uid,line,slot:choice.slot,replaceUid:choice.replaceUid??null,
-    ready,from,skip});
+ for(const card of cards){
+  const from=zoneFrom(s,owner,card,opts.fromOf??opts.from);
+  if(!from)continue;
+  const d=def(pack,card);
+  if(lines.length&&!d.raidOnlyEntry){
+   for(const line of lines){
+    if(line==='front'&&(d.type!=='character'||d.frontForbidden))continue;
+    if(line==='energy'&&(d.energyForbidden||d.energyLineForbidden))continue;
+    for(const dest of A.destinations(plOf(s,owner),line))
+     actions.push({type:'kmr',mode:'enter',uid:card.uid,line,slot:dest.slot,
+      replaceUid:dest.replaceUid??null,ready,from,skip:skipOnPlay});
+   }
+  }
+  if(!raid)continue;
+  for(const dest of raidDestinations(pack,s,owner,card))
+   actions.push({type:'kmr',mode:'raid',uid:card.uid,baseUid:dest.baseUid,line:dest.line,
+    slot:dest.slot,replaceUid:dest.replaceUid??null,from,ready:true,skip:skipOnPlay,
+    ...(opts.bp?{bp:opts.bp}:{})});
+ }
+ return actions;
+}
+function offerFieldEntry(s,spec,cards,opts={}){
+ const actions=fieldEntryActions(A.pack,s,spec.player,cards,opts);
  if(!actions.length)return false;
- hold(s,{...spec,step:'enter',data:{uid,ready,from,skip}},actions);
+ if(opts.optional!==false)actions.unshift({type:'kmr',mode:'skip'});
+ hold(s,{...spec,step:'enter',
+  ...(Array.isArray(opts.windowUids)?{uids:opts.windowUids}:{}),
+  data:{then:opts.then||null,names:opts.names||null,got:opts.got||null,max:opts.max??null,
+   lock:opts.lock||null,drawIfHand:opts.drawIfHand===true,windowUids:opts.windowUids||null,
+   bp:opts.bp||0}},actions);
  return true;
+}
+function queueEntryFollow(s,q,hit,playedName){
+ const data=q.data||{};
+ if(Array.isArray(data.windowUids)){
+  const rest=data.windowUids.filter(uid=>uid!==hit.uid);
+  if(rest.length)s.effectQueue.unshift({op:'kmr',id:q.id,slot:'orderWindow',owner:q.player,
+   sourceUid:q.sourceUid,uids:rest,where:'bottom'});
+ }
+ if(data.then==='more005')s.effectQueue.unshift({op:'kmr',id:q.id,slot:'entryFollow',owner:q.player,
+  sourceUid:q.sourceUid,then:'more005',names:[...(data.names||[]),playedName],
+  got:[...(data.got||[]),hit.uid],max:data.max??2});
+ if(data.drawIfHand&&hit.from==='hand')
+  s.effectQueue.unshift({op:'draw',owner:q.player,sourceUid:q.sourceUid,count:1});
+}
+function finishBoardEntry(pack,s,q,hit){
+ const data=q.data||{};
+ if(hit.mode==='skip'){
+  s.pending=null;
+  if(data.then==='more005')
+   offerOwn(s,specOf(q),fieldCards(s,q.player).filter(c=>!c.ready),true,null,'ready');
+  else if(Array.isArray(data.windowUids)&&data.windowUids.length)
+   offerOrder(s,specOf(q),data.windowUids,'bottom',null);
+  return;
+ }
+ const zone=plOf(s,q.player)[hit.from];
+ const physical=zone?.find(c=>c.uid===hit.uid);
+ if(!physical)throw Error('Kamen Rider entry card left');
+ const playedName=def(pack,physical).name;
+ queueEntryFollow(s,q,hit,playedName);
+ if(data.lock)nameLock(s,q.player,data.lock);
+ s.pending=null;
+ if(hit.mode==='raid'){
+  const index=zone.findIndex(c=>c.uid===hit.uid);
+  const card=zone.splice(index,1)[0];
+  if(hit.bp||data.bp)buff(s,card,hit.bp||data.bp);
+  A.raid(pack,s,q.player,card,hit.baseUid,hit.line,hit.slot,hit.replaceUid||undefined,{
+   entryReady:true,entryCause:hit.from+'EffectRaid',entryFrom:hit.from,effectSourceUid:q.sourceUid});
+  return;
+ }
+ doEnter(pack,s,q.player,hit,q.sourceUid);
 }
 function lifeBottom(pack,s,spec){
  const life=plOf(s,spec.player).life;
@@ -995,13 +1093,10 @@ function resolveStep(pack,s,q,a){
   }else if(next==='deployIntel'){
    const pool=plOf(s,q.player).outside.filter(c=>def(pack,c).color==='yellow'&&def(pack,c).energy<=1&&
     def(pack,c).ap===1&&trait(pack,c,INTEL));
-   if(pool[0])askEnter(s,spec,pool[0].uid,false,'outside',false);
+   offerFieldEntry(s,spec,pool,{from:'outside',optional:true,skipOnPlay:false});
   }else if(next==='enter111'){
-   const front=A.destinations(plOf(s,q.player),'front')[0];
-   const energy=front?null:A.destinations(plOf(s,q.player),'energy')[0];
-   const dest=front||energy;
-   if(dest)A.enter(pack,s,{owner:q.player,from:'outside',uid:q.sourceUid,line:front?'front':'energy',
-    slot:dest.slot,replaceUid:dest.replaceUid,ready:false,sourceUid:q.sourceUid});
+   const card=plOf(s,q.player).outside.find(c=>c.uid===q.sourceUid);
+   if(card)offerFieldEntry(s,spec,[card],{from:'outside',optional:false,skipOnPlay:false});
   }else continueAfter(pack,s,spec,next);
   return;
  }
@@ -1026,7 +1121,7 @@ function resolveStep(pack,s,q,a){
    const pool=handWhere(s,q.player,c=>token(pack,c,'オーズ',null)&&def(pack,c).type==='character'&&
     def(pack,c).energy<=3&&def(pack,c).ap===1);
    scheduleDraw(s,q.player,q.sourceUid,3);
-   if(pool[0])askEnter(s,spec,pool[0].uid,false,'hand',false);
+   offerFieldEntry(s,spec,pool,{from:'hand',optional:true,skipOnPlay:false});
   }else if(next==='rest'){
    scheduleDraw(s,q.player,q.sourceUid,3);
    const targets=plOf(s,1-q.player).front.filter(Boolean);
@@ -1088,7 +1183,7 @@ function resolveStep(pack,s,q,a){
   }else if(hit.key==='deploy'){
    const pool=handWhere(s,q.player,c=>def(pack,c).color==='blue'&&def(pack,c).energy<=1&&
     def(pack,c).ap===1&&trait(pack,c,DOCTOR));
-   if(pool[0])askEnter(s,spec,pool[0].uid,false,'hand',false);
+   offerFieldEntry(s,spec,pool,{from:'hand',optional:true,skipOnPlay:false});
   }
   return;
  }
@@ -1175,40 +1270,12 @@ function resolveStep(pack,s,q,a){
   const self=selfOf(s,q.player,q.sourceUid);
   const loc=self&&A.location(s,q.player,self.uid);
   if(loc)A.retire(pack,s,q.player,loc.line,loc.slot,{skipReplacement:true});
-  const card=plOf(s,q.player).outside.find(c=>exact(pack,c,q.data.name,null));
-  if(card)askEnter(s,spec,card.uid,false,'outside',false);
+  const cards=plOf(s,q.player).outside.filter(c=>exact(pack,c,q.data.name,null));
+  if(cards.length)offerFieldEntry(s,spec,cards,{from:'outside',optional:false,skipOnPlay:false});
   return;
  }
- if(q.step==='deployMany'){
-  if(hit.mode==='done'||q.data.got.length>=q.data.max){
-   s.pending=null;
-   const rested=fieldCards(s,q.player).filter(c=>!c.ready);
-   offerOwn(s,spec,rested,true,null,'ready');
-   return;
-  }
-  q.data.got.push(hit.uid);
-  askEnter(s,{...spec},hit.uid,false,hit.from||'hand',false);
-  q.data.pendingMore=true;
-  return;
- }
- if(q.step==='deployOne'){
-  s.pending=null;
-  if(hit.mode==='skip')return;
-  const fromHand=hit.from==='hand';
-  askEnter(s,spec,hit.uid,false,hit.from,false);
-  if(fromHand)q.data={...q.data,drawAfter:true};
-  return;
- }
- if(q.step==='enter'||q.step==='enterOptional'){
-  if(q.step==='enterOptional'&&hit.mode==='skip'){s.pending=null;return;}
-  if(q.step==='enterOptional'&&hit.mode==='enterAsk'){
-   if(q.data.lock)nameLock(s,q.player,q.data.lock);
-   askEnter(s,spec,q.data.uid,q.data.ready,q.data.from,q.data.skip);
-   return;
-  }
-  s.pending=null;
-  doEnter(pack,s,q.player,hit,q.sourceUid);
-  if(q.data?.drawAfter)A.draw(pack,s,q.player,1,q.sourceUid);
+ if(q.step==='enter'){
+  finishBoardEntry(pack,s,q,hit);
   return;
  }
  if(q.step==='removeAnkh'){
@@ -1255,10 +1322,8 @@ function resolveStep(pack,s,q,a){
   if(next==='deployEx'){
    const pool=[...handWhere(s,q.player,c=>token(pack,c,'エグゼイド',null)&&def(pack,c).energy<=3&&def(pack,c).type==='character'),
     ...plOf(s,q.player).outside.filter(c=>token(pack,c,'エグゼイド',null)&&def(pack,c).energy<=3&&def(pack,c).type==='character')];
-   if(pool[0]){
-    const from=plOf(s,q.player).hand.some(c=>c.uid===pool[0].uid)?'hand':'outside';
-    askEnter(s,spec,pool[0].uid,false,from,true);
-   }
+   offerFieldEntry(s,spec,pool,{optional:true,skipOnPlay:true,
+    fromOf:c=>plOf(s,q.player).hand.some(h=>h.uid===c.uid)?'hand':'outside'});
   }else if(next==='silence'){
    const foes=plOf(s,1-q.player).front.filter(Boolean);
    if(foes.length)hold(s,{...spec,step:'silence',data:{}},[
@@ -1403,6 +1468,21 @@ function resolveStep(pack,s,q,a){
 
 export function runKmrJob(pack,s,job){
  arm(pack);
+ if(job.slot==='orderWindow'){
+  const left=(job.uids||[]).filter(uid=>plOf(s,job.owner).deck.some(c=>c.uid===uid));
+  offerOrder(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id},left,job.where||'bottom',null);
+  return;
+ }
+ if(job.slot==='entryFollow'&&job.then==='more005'){
+  const spec={player:job.owner,sourceUid:job.sourceUid,id:job.id};
+  const rested=()=>fieldCards(s,job.owner).filter(c=>!c.ready);
+  if((job.got||[]).length>=(job.max??2)||
+   !offerFieldEntry(s,spec,frontRaidPool(pack,s,job.owner,job.names,job.got),{
+    lines:['front'],from:'hand',optional:true,skipOnPlay:false,then:'more005',
+    names:job.names||[],got:job.got||[],max:job.max??2}))
+   offerOwn(s,spec,rested(),true,null,'ready');
+  return;
+ }
  const fn=HANDLERS[job.id+'|'+job.slot];
  if(!fn)throw Error('Kamen Rider job is not implemented');
  fn(pack,s,job);
