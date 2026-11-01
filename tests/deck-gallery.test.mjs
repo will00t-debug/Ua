@@ -34,7 +34,7 @@ test('trigger block always lists the seven keywords, including zeroes, in the re
   name:'<script>',updatedLabel:'更新於 2026.10.13',shared:false,shareEnabled:true,
   cover:summary.cover,total:summary.total,groups:summary.groups,triggers:summary.triggers,battleReady:false
  });
- assert.match(html,/激活 <b>×1<\/b>[\s\S]*獲得 <b>×1<\/b>[\s\S]*抽牌 <b>×2<\/b>[\s\S]*突進 <b>×3<\/b>[\s\S]*COLOR <b>×4<\/b>[\s\S]*SPECIAL <b>×0<\/b>[\s\S]*FINAL <b>×1<\/b>/);
+ assert.match(html,/激活 <b>×1<\/b>[\s\S]*獲得 <b>×1<\/b>[\s\S]*抽牌 <b>×2<\/b>[\s\S]*突進 <b>×3<\/b>[\s\S]*顏色 <b>×4<\/b>[\s\S]*特殊 <b>×0<\/b>[\s\S]*最終 <b>×1<\/b>/);
  assert.match(html,/角色 <span>6 張/);
  assert.match(html,/事件 <span>5 張/);
  assert.match(html,/場地 <span>1 張/);

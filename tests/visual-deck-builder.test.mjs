@@ -31,7 +31,7 @@ test('visual overview shows actual cards, card counts, type sections and trigger
  assert.match(html,/場地<\s*span>2 張/);
  assert.match(html,/事件<\s*span>1 張/);
  assert.match(html,/vdb-count-badge">×4/);
- assert.match(html,/SPECIAL/);
+ assert.match(html,/特殊/);
  assert.doesNotMatch(html,/AP 卡"/);
 });
 test('filters use real card data, and all dynamic card labels are HTML escaped',()=>{

@@ -293,11 +293,75 @@ export function uiCardLabel(pack,state,uid){
 // `recommended` is the raid-red outline. An on-play or activate branch is
 // not a raid, even when the card itself has a raid keyword. Only a choice
 // whose mode is raid keeps that frame.
+const CLOSED_CHOICE_TYPES=new Set(['kmr','kmr2','iys','kjn','aot','aot2']);
 export function pendingTextChoiceClass(action){
- const quiet=action?.uid===null||action?.mode==='skip'||action?.mode==='done';
+ const closed=CLOSED_CHOICE_TYPES.has(action?.type);
+ const quiet=action?.mode==='skip'||action?.mode==='done'||(!closed&&action?.uid===null);
  if(quiet)return 'quiet';
  if(action?.type==='chooseEffectMode'&&action.mode!=='raid')return '';
  return 'recommended';
+}
+function closedChoiceName(pack,state,uid){
+ if(!pack||!state||uid==null)return '';
+ const label=uiCardLabel(pack,state,uid);
+ return label&&label!=='指定卡片'&&label!=='卡片'?label:'';
+}
+function withClosedCard(pack,state,action,text){
+ const name=closedChoiceName(pack,state,action?.uid);
+ if(!name)return text;
+ if(text.includes('這張卡')||text.includes('這張角色')||text.includes('這張手牌'))
+  return text.replaceAll('這張卡',name).replaceAll('這張角色',name).replaceAll('這張手牌',name);
+ return text+'：'+name;
+}
+// Closed title ops never fall through to an English "執行 op" button.
+// A newly registered title uses kmr2 / the same mode words and stays in Chinese.
+function closedTitleChoiceLabel(action,{pack,state}={}){
+ const mode=action?.mode;
+ const step=state?.pending?.step;
+ if(mode==='skip')return '不發動';
+ if(mode==='done')return '完成選擇';
+ if(step==='oppTop'&&(mode==='top'||mode==='outside'))
+  return mode==='outside'?'將這張公開的卡放到場外':'將這張公開的卡留在對手牌組上面';
+ if(step==='gearTop'&&mode==='top')return '將這張場外卡放到牌組上面';
+ if(step==='placeHand'&&mode==='top')return withClosedCard(pack,state,action,'將這張手牌放到牌組上面');
+ if(step==='placeHand'&&mode==='bottom')return withClosedCard(pack,state,action,'將這張手牌放到牌組底');
+ if((step==='topPlace'||step==='revealTop')&&(mode==='top'||mode==='bottom'||mode==='outside'||mode==='reveal')){
+  if(mode==='outside')return '放到場外';
+  if(mode==='bottom')return '放到牌組底';
+  if(mode==='reveal')return '公開牌組頂';
+  return '留在上面';
+ }
+ if(mode==='mode'){
+  const keyed={draw:'抽 1 張，再將 1 張手牌放到場外',buff:'這個回合 BP＋1000',
+   impact:'這個回合獲得衝擊 1',damage:'這個回合直接傷害變為 2',bp:'這個回合 BP＋1000',
+   under:'放到角色下方',deploy:'以休息狀態登場'}[action.key];
+  return keyed||'選擇這個效果';
+ }
+ const table={
+  take:'將這張卡加入手牌',next:'下一個放回這張卡',discard:'將這張手牌放到場外',
+  retire:'使這張角色退場',retireOwn:'使這張角色退場',outside:'放到場外',bottom:'放到牌組底',
+  top:'留在上面',deploy:'讓這張卡登場',reveal:'公開牌組頂',rest:'使這張角色休息',
+  raid:'以突襲登場',mill:'將牌組頂放到場外',remove:'將這張卡移入移除區',removed:'移入移除區',
+  enter:'讓這張卡登場',enterAsk:'讓這張角色登場',host:'選擇這張角色',back:'放回',
+  tuck:'將這張卡放到角色下方',tuckTop:'將牌組頂蓋到這張角色下方',life:'選擇這張生命',
+  ready:'使這張角色活動',own:'選擇這張角色',same:'選擇需求能源相同的這張手牌',
+  pay:'支付',payAll:'支付 1 AP，取得全部效果',payback:'放回',bounce:'將這張角色返回手牌',
+  pick:'選擇這張卡',card:'選擇這張卡',ap:'恢復這張 AP',under:'放到角色下方',
+  revive:'從場外以休息狀態回到場上',silence:'使這張角色失去原本的效果',
+  sub:'由這張角色代替退場',layer:'消耗這張裏向卡',dest:'選擇登場的位置',
+  active:'使這張角色活動',buff:'這個回合 BP 增加',draw:'抽牌',impact:'獲得衝擊',
+  damage:'改變直接傷害',double:'獲得再次攻擊',hand:'加入手牌',look:'查看牌組',
+  place:'放置這張卡',stay:'留在原處',down:'降低 BP',energy:'產生能源',keep:'保留',
+  out:'放到場外',tax:'增加指定費用',grant:'給予這個回合的能力',range:'提高可選的 BP 範圍',
+  one:'選擇第一項',two:'選擇第二項',three:'選擇第三項',d1:'選擇第一項',d2:'選擇第二項',
+  d6:'選擇第三項',low:'選擇較低的效果',bare:'選擇生命較少時的效果',
+  battle:'選擇戰鬥相關的效果',mark:'指定這張角色',kit:'選擇這個效果',
+  discard2:'再將一張手牌放到場外',discardBuff:'將這張手牌放到場外並提高 BP',
+  buffMode:'選擇 BP 效果'
+ };
+ const text=table[mode];
+ if(!text)return '選擇這個效果';
+ return withClosedCard(pack,state,action,text);
 }
 export function uiActionLabel(action,{pack,state}={}){
  if(action?.type==='mmm2'||(action?.type==='activate'&&typeof action?.mode==='string'&&action.mode.startsWith('mmm2:')))
@@ -320,7 +384,10 @@ export function uiActionLabel(action,{pack,state}={}){
    '狙擊攻擊：'+name()+' → '+uiCardLabel(pack,state,action.targetUid):
    '宣告攻擊：'+name();
   case 'activateRemoved':return '起動移除區主要：本回合產生能源變為 2 倍';
-  case 'activate':return action.mode==='namesActive'?
+  case 'activate':
+   if(typeof action.mode==='string'&&(action.mode.startsWith('kmr:')||action.mode.startsWith('kmr2:')))
+    return '起動主要：'+name();
+   return action.mode==='namesActive'?
     '起動主要：場上同時有指定名稱時，將此角色轉為 ACTIVE':
     action.mode==='traitBuff'?
     '起動主要：發生能源與特徵齊備時，下次己方回合開始前 BP＋500':
@@ -715,7 +782,9 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseMamiActive':return '使 '+name()+' 活動';
   case 'chooseDiscardNamedEnergy':return '棄掉事件 '+name();
   case 'chooseRestLock':return action.uid===null?'不鎖定這次休息':'休息鎖定 '+name();
-  default:return '執行 '+action.type;
+  case 'kmr':case 'kmr2':case 'iys':case 'kjn':case 'aot':case 'aot2':
+   return closedTitleChoiceLabel(action,{pack,state});
+  default:return '完成這個選擇';
  }
 }
 export function visibleActionsForCard(legal,uid){
@@ -768,6 +837,18 @@ export function controllerDeckWindowCards(state,packs,legal){
 // Artwork for one legal choice. Own deck, life and facedown layers are used
 // only when this action already names that physical UID. Opponent hand, deck
 // and unrevealed life are never opened.
+function publicRevealChoice(pack,state,uid){
+ if(typeof uid!=='string'||!uid)return null;
+ const hit=(state.publicReveals||[]).find(entry=>entry?.uid===uid&&
+  typeof entry.cardId==='string'&&entry.cardId);
+ if(!hit)return null;
+ const owner=hit.owner===0||hit.owner===1?hit.owner:Number(String(uid).split('-')[0]);
+ if(owner!==0&&owner!==1)return null;
+ const source=Array.isArray(pack)?pack[owner]:pack;
+ const printed=source?.cards?.[hit.cardId];
+ return {uid,cardId:hit.cardId,name:printed?.name||hit.cardId,
+  color:printed?.color||'',side:owner};
+}
 export function controllerChoiceArt(pack,state,action){
  if(!state?.players||!action||typeof action!=='object'||state.pending?.player!==0)return [];
  const ids=[];
@@ -775,10 +856,19 @@ export function controllerChoiceArt(pack,state,action){
  push(action.uid);
  if(action.uid==null){push(action.retireUid);push(action.targetUid);}
  if(Array.isArray(action.uids))for(const uid of action.uids)push(uid);
- return ids.flatMap(uid=>{
+ const fromZones=ids.flatMap(uid=>{
   const found=findControllerCard(pack,state,uid);
   return found?[found]:[];
  });
+ if(fromZones.length||ids.length)return fromZones;
+ // A deck-top choice names the card on the pending step. Own zones are visible
+ // to the controller. An opponent card is shown only after it was published.
+ const pendingUid=state.pending?.data?.uid;
+ if(typeof pendingUid!=='string')return [];
+ const own=findControllerCard(pack,state,pendingUid);
+ if(own)return [own];
+ const revealed=publicRevealChoice(pack,state,pendingUid);
+ return revealed?[revealed]:[];
 }
 function findControllerCard(pack,state,uid){
  const owner=Number(String(uid).split('-')[0]);
@@ -1016,9 +1106,13 @@ export function fieldEffectCopy(card){
  if(!card||typeof card!=='object')return '這張卡沒有可顯示的效果。';
  const text=value=>typeof value==='string'?value.trim():'';
  const effect=text(card.effect);
- const trigger=text(card.triggerText)||text(card.triggerEffect);
+ const japanese=text(card.effectJa);
+ const body=effect&&effect!=='-'?effect:(japanese&&japanese!=='-'?japanese:'');
+ const trigger=text(card.triggerText)||text(card.triggerTextJa)||text(card.triggerEffect);
  const skip=new Set(['','-','無 Trigger。','無觸發。']);
- const parts=[effect,!skip.has(trigger)?('觸發效果：'+trigger):''].filter(part=>part&&!skip.has(part));
+ const kana=(body.match(/[ぁ-んァ-ン]/g)||[]).length;
+ const official=japanese&&japanese!=='-'&&japanese!==body&&kana>=8?('官方原文：\n'+japanese):'';
+ const parts=[body,official,!skip.has(trigger)?('觸發效果：'+trigger):''].filter(part=>part&&!skip.has(part));
  return parts.join('\n')||'這張卡沒有印刷效果。';
 }
 export function attackBattleTags(battle){
