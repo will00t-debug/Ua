@@ -4,7 +4,7 @@ import {readFileSync} from 'node:fs';
 import {KMR_CARDS} from '../dist/kmr-cards.mjs';
 import {createKmrV2Pack} from '../dist/universal-v2/kmr-pack.mjs';
 import {dispatchUniversalAction,legalUniversalActions,newUniversalMatch} from '../dist/universal-v2/engine.mjs';
-import {controllerChoiceArt,fieldEffectCopy,pendingTextChoiceClass,uiActionLabel} from '../dist/universal-v2/preview-actions.mjs';
+import {controllerChoiceArt,fieldEffectCopy,pendingFocusCard,pendingTextChoiceClass,uiActionLabel} from '../dist/universal-v2/preview-actions.mjs';
 
 const pack=createKmrV2Pack();
 const packs=[pack,pack];
@@ -98,6 +98,16 @@ test('Muse publishes the opponent deck top and the choice shows that card in Chi
  }
  assert.equal(uiActionLabel({type:'kmr',mode:'top'},{pack:packs,state:played}),'將這張公開的卡留在對手牌組上面');
  assert.equal(uiActionLabel({type:'kmr',mode:'outside'},{pack:packs,state:played}),'將這張公開的卡放到場外');
+ const focus=pendingFocusCard(packs,played);
+ assert.equal(focus?.cardId,top.cardId);
+ assert.equal(focus?.side,1);
+ assert.equal(focus?.zone,'對手牌組頂');
+ assert.equal(focus?.uid,top.uid);
+ assert.notEqual(focus?.uid,hidden.uid);
+ const printedTop=KMR_CARDS.find(card=>card.id===top.cardId);
+ const effect=fieldEffectCopy(printedTop);
+ assert.equal(effect.includes('沒有可顯示的效果'),false);
+ assert.match(effect,/\S/);
  assert.equal(pendingTextChoiceClass({type:'kmr',mode:'top'}),'recommended');
  assert.equal(pendingTextChoiceClass({type:'kmr',mode:'skip'}),'quiet');
 });
@@ -142,8 +152,22 @@ test('a published opponent top is shown without opening the rest of that deck',(
  assert.equal(art[0].name,'公開的牌');
  assert.equal(JSON.stringify(art).includes('SECRET'),false);
  const hidden={...state,publicReveals:[]};
- assert.deepEqual(controllerChoiceArt(packsArt,hidden,{type:'kmr',mode:'outside'}),[]);
+ const fallen=controllerChoiceArt(packsArt,hidden,{type:'kmr',mode:'outside'});
+ assert.equal(fallen.length,1);
+ assert.equal(fallen[0].uid,'1-top');
+ assert.equal(fallen[0].cardId,'SECRET');
+ assert.equal(JSON.stringify(fallen).includes('1-next'),false);
+ assert.equal(JSON.stringify(fallen).includes('1-hand'),false);
+ assert.equal(JSON.stringify(fallen).includes('1-life'),false);
+ const fallenFocus=pendingFocusCard(packsArt,hidden);
+ assert.equal(fallenFocus?.uid,'1-top');
+ assert.equal(fallenFocus?.zone,'對手牌組頂');
+ assert.equal(JSON.stringify(fallenFocus).includes('1-next'),false);
  assert.deepEqual(controllerChoiceArt(packsArt,state,{uid:'1-top'}),[]);
+ const beneath={...hidden,players:hidden.players.map((player,index)=>index===1?
+  {...player,deck:[{uid:'1-other',cardId:'SECRET'},{uid:'1-top',cardId:'SECRET'}]}:player)};
+ assert.deepEqual(controllerChoiceArt(packsArt,beneath,{type:'kmr',mode:'top'}),[]);
+ assert.equal(pendingFocusCard(packsArt,{...hidden,pending:{...hidden.pending,player:1}}),null);
 });
 
 test('new closed-title choices stay in Chinese and Muse shows its printed effect',()=>{
@@ -165,6 +189,10 @@ test('new closed-title choices stay in Chinese and Muse shows its printed effect
  assert.doesNotMatch(preview,/draw:'DRAW'/);
  assert.match(preview,/catalogue\?\.name\|\|printed\?\.name/);
  assert.match(preview,/printed\?\.printings\?\.\[0\]\?\.image/);
+ assert.match(preview,/pendingFocusCard\(app\.packs,s\)/);
+ assert.match(preview,/class:'v2-reveal-focus'/);
+ assert.match(preview,/class:'v2-reveal-effect',text:effect/);
+ assert.match(preview,/revealFocusSheet\(focus\)/);
  const builder=readFileSync(new URL('../dist/visual-deck-builder.mjs',import.meta.url),'utf8');
  assert.match(builder,/color:'顏色',special:'特殊',final:'最終'/);
  assert.doesNotMatch(builder,/color:'COLOR'/);

@@ -23,7 +23,7 @@ import {prepareSoloBattle,saveSoloBattle,loadSoloBattle,clearSoloBattle,
  SOLO_BATTLE_URL,SOLO_BATTLE_PROGRESS_KEY} from './universal-v2/solo-battle-session.mjs';
 import {collectSavedV2LobbyDecks,accountLobbyRows,orderedAccountLobbyRows,shadowedLocalLobbyKeys,lobbyChoiceText,validatedLobbyChoice,V2_MATCH_SETUP_STORAGE_KEY} from './universal-v2/lobby-saved-decks.mjs?v=20261030accountdeck1';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
- universalPublicView,universalPrivateChoices,assertUniversalMatch} from './universal-v2/engine.mjs';
+ universalPublicView,universalPrivateChoices,assertUniversalMatch} from './universal-v2/engine.mjs?v=20261102kmrtop2';
 import {chooseUniversalAiAction} from './universal-v2/ai.mjs';
 import {chooseProgressSafeAiAction,AI_ACTIONS_PER_FRAME,aiPolicyFor} from './universal-v2/ai-driver-safety.mjs?v=20261031hardai2';
 import {ttgArtSource,ttgArtErrorFallback} from './ttg-art.mjs';
@@ -34,8 +34,8 @@ import {SAO_CARDS} from './sao-cards.mjs';
 import {MST_V2_OFFICIAL_CATALOGUE} from './universal-v2/sources/mst-inventory.mjs';
 import {V2_PHASE_LABELS,V2_TITLE_LABELS,V2_PENDING_LABELS,
  uiActor,isExactLegal,uiCardLabel,uiActionLabel,visibleActionsForCard,
- pendingChoiceCards,inspectedPendingChoiceCards,visiblePendingChoiceCards,pendingEntryChoiceCards,publicLifeOrderChoiceCard,pendingChoiceCaption,publicPendingTargetCard,controllerDeckWindowCards,controllerChoiceArt,pendingTextChoiceClass,attackBattleTags,attackKeywordBadges,frontAttackKeywordBadges,inlineBlockDecision,boardEntryMode,boardEntrySelection,entryClickPlan,moveClickPlan,
- FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs?v=20261102kmrchoice1';
+ pendingChoiceCards,inspectedPendingChoiceCards,visiblePendingChoiceCards,pendingEntryChoiceCards,publicLifeOrderChoiceCard,pendingChoiceCaption,publicPendingTargetCard,controllerDeckWindowCards,controllerChoiceArt,pendingFocusCard,pendingTextChoiceClass,attackBattleTags,attackKeywordBadges,frontAttackKeywordBadges,inlineBlockDecision,boardEntryMode,boardEntrySelection,entryClickPlan,moveClickPlan,
+ FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs?v=20261102kmrtop2';
 import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalReplay,
  collectPublicCardResults,publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
 import {coachHeader,newCoachMatchId} from './universal-v2/coach-record.mjs';
@@ -421,7 +421,7 @@ function triggerBoard(view){
  return overlay;
 }
 
-function pendingChoiceControl(action,option,gallery,view){
+function pendingChoiceControl(action,option,gallery,view,focusUid){
  const label=uiActionLabel(action,{pack:app.packs,state:app.state});
  // Private options already carry their controller-authorized artwork. If
  // absent, use only the exact card UID from publicly visible field slots.
@@ -438,7 +438,10 @@ function pendingChoiceControl(action,option,gallery,view){
   [{...target,name:cardDef(target.side,target.cardId)?.name||target.cardId}]:
   lifeOrder?[{...lifeOrder,name:cardDef(lifeOrder.side,lifeOrder.cardId)?.name||lifeOrder.cardId}]:
   local;
- if(!cards.length){
+ // The dialog already shows this one card, with its printed effect, above the
+ // buttons. Keep the two decisions as text so they stay readable.
+ const sameFocus=typeof focusUid==='string'&&focusUid&&cards.length===1&&cards[0].uid===focusUid;
+ if(!cards.length||sameFocus){
   const tone=pendingTextChoiceClass(action);
   return btn(label,()=>applyAction(action),
    [tone,gallery?'choice-text':''].filter(Boolean).join(' '));
@@ -522,6 +525,29 @@ function blockBoardPrompt(decision){
  if(skipAction)prompt.append(btn('不阻擋',()=>applyAction(skipAction),'btn v2-block-skip'));
  return prompt;
 }
+function revealStatLine(card){
+ if(!card||typeof card!=='object')return '';
+ const color={red:'紅',blue:'藍',green:'綠',yellow:'黃',purple:'紫'}[card.color];
+ const bits=[];
+ if(color)bits.push(color);
+ if(Number.isInteger(card.energy))bits.push('能源 '+card.energy);
+ if(Number.isInteger(card.ap))bits.push('AP '+card.ap);
+ if(card.type==='character'&&Number.isInteger(card.bp))bits.push('BP '+card.bp);
+ return bits.join(' · ');
+}
+function revealFocusSheet(card){
+ const catalogue=printedCatalogue(card.side,card.cardId);
+ const name=catalogue?.name||card.name||card.cardId;
+ const effect=fieldEffectCopy(catalogue);
+ const stats=revealStatLine(catalogue);
+ const figure=el('figure',{class:'v2-reveal-focus','aria-label':(card.zone||'公開的卡')+' '+name});
+ figure.append(el('span',{class:'choice-card-art'},choicePicture(card.cardId,name,card.side)));
+ const copy=el('div',{class:'v2-reveal-copy'});
+ copy.append(el('p',{class:'note',text:card.zone||'公開的卡'}),el('h3',{text:name}));
+ if(stats)copy.append(el('p',{class:'note',text:stats}));
+ figure.append(copy,el('p',{class:'v2-reveal-effect',text:effect}));
+ return figure;
+}
 function pendingDialog(legal,view){
  const s=app.state;
  if(!s?.pending||uiActor(s)!==0||app.busy)return null;
@@ -545,17 +571,20 @@ function pendingDialog(legal,view){
  const picturedUids=new Set(pictured.map(card=>card.uid));
  const rows=legal.filter(action=>!boardEntryMode(action)&&!picturedUids.has(action.uid)).map(action=>({action,
   option:byAction.get(JSON.stringify(action))||null}));
+ const focus=pendingFocusCard(app.packs,s);
+ const focusUid=typeof focus?.uid==='string'?focus.uid:'';
+ // The revealed deck card is drawn once, with its effect, above the buttons.
  const gallery=entryCards.length>0||pictured.length>0||rows.some(row=>pendingChoiceCards(row.option).length>0||
   visiblePendingChoiceCards(view,row.action).length>0||
   publicPendingTargetCard(view,row.action)!==null||
   publicLifeOrderChoiceCard(view,s.pending,row.action)!==null||
-  controllerChoiceArt(app.packs,s,row.action).length>0);
+  controllerChoiceArt(app.packs,s,row.action).some(card=>card.uid!==focusUid));
  const title=s.pending.kind==='effect-look-take'&&s.pending.phase==='order'?
   '依序放回牌庫底':(V2_PENDING_LABELS[s.pending.kind]||s.pending.kind);
  const triggerChoice=s.pending.kind==='life-trigger';
  const blocking=s.pending.kind==='block'&&view.battle;
  // A view-only pause: no action, state transition, or hidden-card disclosure.
- const canPeek=!triggerChoice&&!blocking&&(gallery||
+ const canPeek=!triggerChoice&&!blocking&&(gallery||!!focus||
   /top|search|look|inspect|deck|outside|hand/i.test(s.pending.kind));
  if(canPeek&&app.inspectionPaused){
   return el('div',{class:'v2-inspection-return',role:'status'},
@@ -583,6 +612,7 @@ function pendingDialog(legal,view){
    blocking?'對手的角色正在攻擊。先看直傷和衝擊，再選擇阻擋或不阻擋。':
    placement.length?'先點卡圖選擇要登場的角色；若要加入手牌，直接點該卡的加入手牌選項。選好登場角色後，再選合法模式及格子。':
    '請完成這個選擇後，對戰才會繼續。選牌只會顯示給目前的控制者。'}));
+ if(focus)dialog.append(revealFocusSheet(focus));
  if(blocking)dialog.append(attackShowcase(view.battle));
  if(shown.length){
   const row=el('div',{class:'trigger-row'});
@@ -594,7 +624,7 @@ function pendingDialog(legal,view){
  for(const card of pictured)list.append(inspectedChoiceControl(card));
  for(const row of rows){
   const blocker=blocking?blockControl(row.action,view):null;
-  list.append(blocker||pendingChoiceControl(row.action,row.option,gallery||blockGallery,view));
+  list.append(blocker||pendingChoiceControl(row.action,row.option,gallery||blockGallery,view,focusUid));
  }
  dialog.append(list);
  overlay.append(dialog);
