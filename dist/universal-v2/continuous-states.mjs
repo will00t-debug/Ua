@@ -179,6 +179,13 @@ export function effectChoiceProtected(s,selector,targetUid,sourceType){
  const triggerImmune=target.card.triggerUnchosenGranted;
  if(sourceType==='trigger'&&triggerImmune&&triggerImmune.turn===s.turn&&
   triggerImmune.stamp===target.card.fieldEntryStamp)return true;
+ const aotTrigger=target.card.aotTriggerUnchosen;
+ if(sourceType==='trigger'&&aotTrigger&&aotTrigger.turn===s.turn&&
+  aotTrigger.stamp===target.card.fieldEntryStamp)return true;
+ const aotShield=target.card.aotChoiceShield;
+ if(aotShield&&selector!==target.owner&&aotShield.turn===s.turn&&
+  aotShield.stamp===target.card.fieldEntryStamp&&aotShield.scope==='characterOrTrigger'&&
+  (sourceType==='character'||sourceType==='trigger'||sourceType==='unknown'))return true;
  // 「このターン中、相手の効果で選ばれない」. Combat never calls this helper.
  // The flag is cleared at the next turn start, which is shorter than the
  // continuous cannotBeChosenByOppEffect expiry of the controller's next start.
