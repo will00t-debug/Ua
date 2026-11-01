@@ -15,10 +15,12 @@ function cardName(packs,cardId){
 }
 
 export function coachLiveNote(count){
- const note=h('p','coach-live-note',count
+ const note=h('p','coach-live-note',count?'已標 '+count:'');
+ note.title=count
   ?'已標記 '+count+' 步。電腦手牌會在對局結束後的檢討畫面才顯示。'
-  :'可以標記電腦剛走的那一步，賽後再改。');
+  :'可以標記電腦剛走的那一步，賽後再改。';
  note.dataset.coachLive='1';
+ if(!count)note.hidden=true;
  return note;
 }
 

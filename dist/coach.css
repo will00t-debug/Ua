@@ -1,10 +1,25 @@
 .coach-consent{display:flex;gap:.5rem;align-items:flex-start;margin:.6rem 0;font-weight:600;color:#1d2733}
 .coach-consent input{margin-top:.2rem}
-.v2-shell .coach-bar{display:flex;flex-wrap:wrap;gap:.6rem 1rem;align-items:center;margin:.4rem 0 .8rem;padding:.7rem .8rem;border:1px solid #d5dde6;border-radius:12px;background:#f7f9fb;color:#1d2733}
+.v2-shell .coach-bar{display:flex;flex-wrap:nowrap;gap:6px;align-items:center;margin:0;padding:3px 8px;min-height:0;overflow:hidden;border:1px solid #d5dde6;border-radius:8px;background:#f7f9fb;color:#1d2733;font-size:12px;line-height:1.2}
+.v2-shell .coach-bar .coach-consent{margin:0;align-items:center;gap:.28rem;font-size:12px;font-weight:650;white-space:nowrap}
+.v2-shell .coach-bar .coach-consent input{margin:0;width:14px;height:14px}
+.v2-shell .coach-bar .coach-status,
+.v2-shell .coach-bar .coach-live-note{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .v2-shell .coach-bar .coach-status,
 .v2-shell .coach-bar .coach-live-note,
 .v2-shell .coach-bar label,
 .v2-shell .coach-bar a{color:#1d2733}
+.v2-shell .coach-bar a{flex:0 0 auto;white-space:nowrap}
+.v2-shell .coach-bar button{flex:0 0 auto;min-height:22px;height:22px;padding:0 7px;border:1px solid #8ea0b3;border-radius:6px;background:#f4f7fb;color:#1d2733;font-size:12px;line-height:20px}
+body.v2-battle-page.v2-playing #match-view>.coach-bar{
+ flex:0 0 26px;height:26px;min-height:26px;max-height:26px;margin:0;padding:0 6px;
+ border:0;border-bottom:1px solid #2c4a6c;border-radius:0;background:#101f34;color:#d5e6f8
+}
+body.v2-battle-page.v2-playing #match-view>.coach-bar :is(.coach-status,.coach-live-note,label,a){color:#d5e6f8}
+body.v2-battle-page.v2-playing #match-view>.coach-bar button{
+ min-height:20px;height:20px;padding:0 6px;border:1px solid #4d7eab;border-radius:5px;
+ background:#17304c;color:#e7f3ff;font-size:11px;line-height:18px
+}
 .coach-status,.coach-live-note,.coach-review-note{margin:0}
 .v2-shell .coach-review,
 .v2-shell .coach-review h2,
