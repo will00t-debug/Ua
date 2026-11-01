@@ -91,7 +91,8 @@ function beginLook(s,spec,count,match,opts){
  const window=windowCards(s,spec.player,count);
  if(!window.length)return false;
  const matches=window.filter(c=>match(c));
- const data={uids:window.map(c=>c.uid),taken:[],max:opts.max??1,min:opts.min||0,
+ // hits 是可以拿的 UID。uids 仍是看過的整段，不能選的也留在視窗裡。
+ const data={uids:window.map(c=>c.uid),hits:matches.map(c=>c.uid),taken:[],max:opts.max??1,min:opts.min||0,
   where:opts.where||'bottom',discard:opts.discard===true,after:opts.after||null,
   split:opts.split===true};
  const actions=[
@@ -1056,9 +1057,18 @@ function resolveStep(pack,s,q,a){
     return;
    }
    const window=data.uids.map(uid=>plOf(s,q.player).deck.find(c=>c.uid===uid)).filter(Boolean);
+   const hits=new Set(Array.isArray(data.hits)?data.hits:data.uids);
+   const selectable=window.filter(c=>!data.taken.includes(c.uid)&&hits.has(c.uid));
+   if(!selectable.length){
+    s.pending=null;
+    const next=finishLook(pack,s,spec,data);
+    if(next==='held')return;
+    continueAfter(pack,s,spec,next);
+    return;
+   }
    const actions=[
     {type:'kmr',mode:'done'},
-    ...window.filter(c=>!data.taken.includes(c.uid)).map(c=>({type:'kmr',mode:'take',uid:c.uid}))
+    ...selectable.map(c=>({type:'kmr',mode:'take',uid:c.uid}))
    ];
    hold(s,{...spec,step:'lookPick',data},actions);
    return;

@@ -23302,22 +23302,36 @@ export function universalPrivateChoices(pack,s,viewer){
     return {action:{...action},card:c?{cardId:c.cardId,name:card(pack,c).name,
      color:card(pack,c).color}:null};
    })};
- if((q?.kind==='iys'||q?.kind==='kjn'||q?.kind==='aot'||q?.kind==='aot2'||q?.kind==='kmr')&&q.player===viewer){
+ if((q?.kind==='iys'||q?.kind==='kjn'||q?.kind==='aot'||q?.kind==='aot2'||q?.kind==='kmr'||q?.kind==='mmm2')&&q.player===viewer){
   const unders=q.kind==='aot2'?field(s.players[viewer]).flatMap(c=>(c.under||[]).filter(x=>x&&x.faceDown)):[];
   const piles=[...field(s.players[viewer]),...s.players[viewer].hand,...s.players[viewer].deck,
    ...s.players[viewer].outside,...(s.players[viewer].removed||[]),...unders,
    ...field(s.players[1-viewer]),...s.players[1-viewer].outside];
-  // 見る shows every card in the window. Only a printed match is a legal take.
-  const windowUids=q.step==='lookPick'?q.data?.uids:q.step==='lookOrder'?q.data?.left:
-   q.step==='enter'&&Array.isArray(q.data?.windowUids)?q.data.windowUids:null;
+  // 檢索、看牌頂、噴牌：控制者看過的每一張都要列出來，不能選的也要。
+  // 新卡把完整視窗的實體 UID 放在 data.uids 或 data.window（由牌庫上到下）。
+  // 排序用 data.left，登場視窗用 data.windowUids。只把符合條件的目標放進
+  // actions 不夠，畫面不會自己補牌。名單只含仍在自己牌庫裡的卡。
+  // 新的封閉作品先加入 pending kind 白名單，再加進這個判斷。個別新卡不用再寫顯示。
+  const data=q.data&&typeof q.data==='object'?q.data:null;
+  const listed=q.step==='lookOrder'?data?.left
+   :q.step==='enter'&&Array.isArray(data?.windowUids)?data.windowUids
+   :Array.isArray(data?.uids)?data.uids
+   :Array.isArray(data?.window)?data.window
+   :Array.isArray(data?.windowUids)?data.windowUids:null;
   const deck=s.players[viewer].deck;
-  const inspected=Array.isArray(windowUids)&&windowUids.length&&
-   windowUids.every(uid=>deck.some(c=>c?.uid===uid))?
-   windowUids.map(uid=>{
-    const c=deck.find(x=>x.uid===uid);
-    const printed=card(pack,c);
-    return {uid:c.uid,cardId:c.cardId,name:printed.name,color:printed.color||''};
-   }):[];
+  const lookStep=/^(look|mill|reveal|peek|search|keep|take|distinct)/.test(String(q.step||''));
+  let windowCards=[];
+  if(Array.isArray(listed)&&listed.length&&Array.isArray(deck)){
+   const found=listed.map(uid=>deck.find(c=>c?.uid===uid)||null);
+   const intact=found.every(Boolean);
+   const prefix=intact&&deck.slice(0,listed.length).every((c,i)=>c?.uid===listed[i]);
+   if(intact&&(lookStep||prefix||q.step==='enter'))windowCards=found;
+   else if(lookStep)windowCards=found.filter(Boolean);
+  }
+  const inspected=windowCards.map(c=>{
+   const printed=card(pack,c);
+   return {uid:c.uid,cardId:c.cardId,name:printed.name,color:printed.color||''};
+  });
   return {kind:q.kind,player:viewer,step:q.step,id:q.id,
    ...(inspected.length?{inspected}:{}),
    options:(q.actions||[]).map(action=>{
