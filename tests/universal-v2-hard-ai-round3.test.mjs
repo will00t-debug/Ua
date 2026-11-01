@@ -7,7 +7,7 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
 import {chooseStrengthenedHardAction,resetHardAiReport,lastHardAiTrace,
  hardPositionKey,hardCachedScores} from '../dist/universal-v2/hard-ai-search-3.mjs';
 import {chooseFrozenHardSearch2} from '../dist/universal-v2/hard-ai-search-2.mjs';
-import {deckPlan,openingKeeps} from '../dist/universal-v2/hard-ai-plans.mjs';
+import {deckPlan,openingKeeps,planStage} from '../dist/universal-v2/hard-ai-plans.mjs';
 
 const pack=createBleachV2Pack(),packs=[pack,pack];
 const decks=Object.fromEntries(summarizeDesignatedDecks(id=>!!pack.cards[id])
@@ -121,6 +121,9 @@ test('the three designated decks have shared roles, not per-card scripts',()=>{
  assert.equal(plans['white-sword'].keep.has('更木剣八'),true);
  assert.equal(plans.renruki.keep.has('朽木ルキア'),true);
  assert.equal(plans['reject-blue'].fuel.has('浦原喜助'),true);
+ assert.equal(planStage(plans['reject-blue'],1,40),'early');
+ assert.equal(planStage(plans['reject-blue'],4,40),'mid');
+ assert.equal(planStage(plans['reject-blue'],1,10),'late');
  assert.equal(openingKeeps(pack.cards,decks['reject-blue'],[
   {cardId:'BLC-2-047'},{cardId:'BLC-2-047'},{cardId:'BLC-2-046'},
   {cardId:'BLC-2-046'},{cardId:'BLC-2-049'},{cardId:'BLC-2-049'},{cardId:'BLC-2-049'}
@@ -179,4 +182,34 @@ test('a ready attack is taken over more energy, and declined into a wall',()=>{
  assert.equal(declined.action.type,'play');
  assert.equal(declined.action.line,'energy');
  assert.notEqual(declined.action.type,'next');
+});
+
+test('a winning raid takes the energy-4 base, and the last generator stays',()=>{
+ // EX07BT/BLC-2-067 raids 更木 剣八. Damage 2 needs the energy-4 base.
+ let raid=reach(boot('white-sword',3),'main');
+ const raider=take(raid,0,'BLC-2-067');
+ hold(raid,0,[raider]);
+ const low=place(raid,0,'BLC-4-070','front',0);
+ const high=place(raid,0,'BLC-3-008','front',1);
+ for(let i=0;i<4;i++)place(raid,0,'BLC-1-083','energy',i);
+ setLife(raid.players[1],3);clearFront(raid.players[1]);
+ const won=choose(raid);
+ assert.equal(won.action.type,'raid');
+ assert.equal(won.action.baseUid,high.uid);
+ assert.notEqual(won.action.baseUid,low.uid);
+
+ // EX07BT/BLC-2-016 is the only energy. Moving it to the front empties the curve.
+ let stay=reach(boot('reject-blue',4),'move');
+ for(const player of stay.players){
+  clearFront(player);
+  for(let i=0;i<player.energy.length;i++)if(player.energy[i]){
+   player.deck.push(player.energy[i]);player.energy[i]=null;
+  }
+ }
+ place(stay,0,'BLC-2-016','energy',0,true);
+ hold(stay,0,[take(stay,0,'BLC-2-016'),take(stay,0,'BLC-4-034')]);
+ clearFront(stay.players[1]);
+ const kept=choose(stay);
+ assert.equal(kept.action.type,'next');
+ assert.equal(kept.frozen.type,'next');
 });

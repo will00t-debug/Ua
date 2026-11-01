@@ -44,11 +44,11 @@ export function deckPlan(catalog,counts){
  };
 }
 
-// early: still short of the curve. late: the deck is the clock.
-// mid: spend the turn on the raid or the attack.
-export function planStage(plan,energy,deck,ownTurns){
+// early: energy is still short of this deck's curve, on any turn.
+// late: the deck is the clock. mid: the curve is met, so raid or attack.
+export function planStage(plan,energy,deck){
  if((deck|0)<16)return 'late';
- if((ownTurns|0)<=1&&energy<(plan?.curve??3))return 'early';
+ if(energy<(plan?.curve??3))return 'early';
  return 'mid';
 }
 

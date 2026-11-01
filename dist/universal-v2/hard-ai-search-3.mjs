@@ -1,6 +1,7 @@
 // Candidate Hard policy (hard-search-3). Not the live battle policy.
-// The 97001-97020 matrix against frozen hard-search-2 was 112/360.
-// Live play stays on hard-ai.mjs until a later candidate clears that bar.
+// Fresh seeds 98001-98020: 119/360 against frozen hard-search-2
+// (Wilson 95% 28.4–38.1%). The earlier 97001 matrix was 112/360.
+// Live play stays on hard-ai.mjs until a later candidate clears 60%.
 // hard-search-2 is frozen in hard-ai-search-2.mjs.
 // The frozen heuristic remains chooseLegacyHardAiAction in ai.mjs.
 // Every action dispatched here is taken from legalUniversalActions.
@@ -20,7 +21,7 @@ const ORDER_KINDS=new Set(['phase-order','retirement-order','effect-move-order',
  'effect-top-order','effect-raid-witness-order','effect-raid-witness-move',
  'life-batch-order']);
 const ROOT_MARGIN=7;
-const CHAIN_CAP=18;
+const CHAIN_CAP=8;
 const emptyReport=()=>({decisions:0,forced:0,deferred:0,overrides:0,kept:0,
  budgetExhausted:0,exceptions:0,unsupported:0,legacyMiss:0,uncompared:0,
  passed:0,missedWin:0,fruitless:0,avoidableLoss:0,
@@ -170,19 +171,17 @@ function remainderIds(counts,player,visible){
   for(let i=0;i<(left[id]||0);i++)ids.push(id);
  return ids;
 }
-// listedOwn paints the actor's hidden slots from the registered list, sorted
-// by id. The opponent always stays triggerless filler. Neither path reads a
-// hidden hand, a deck order, or the opponent's unrevealed list.
-function worldFrom(pack,state,visible,actor,listedOwn){
+// ownIds, when it matches the actor's hidden slots, is one shared hypothetical
+// sample of the actor's own remainder. The opponent always stays triggerless
+// filler. Neither path reads a hidden hand, a deck order, or the opponent's
+// unrevealed list.
+function worldFrom(pack,state,visible,actor,ownIds){
  const copy=structuredClone(state);
  for(let p=0;p<2;p++){
   const pl=copy.players[p];
   const slots=hiddenSlots(pl,visible);
   let ids=null;
-  if(listedOwn&&p===actor){
-   const remain=remainderIds(state.initialCounts?.[p],state.players[p],visible);
-   if(remain.length===slots.length)ids=remain;
-  }
+  if(p===actor&&ownIds&&ownIds.length===slots.length)ids=ownIds;
   if(!ids)ids=fillerFor(packsOf(pack)[p].cards,visibleBodies(pl,visible),slots.length);
   if(!ids)return null;
   slots.forEach((c,i)=>{c.cardId=ids[i];delete c.chantName;});
@@ -194,7 +193,23 @@ function worldFrom(pack,state,visible,actor,listedOwn){
  return copy;
 }
 function hypothetical(pack,state,visible){
- return worldFrom(pack,state,visible,-1,false);
+ return worldFrom(pack,state,visible,-1,null);
+}
+function mixSeed(state,actor){
+ const mine=state.players[actor],opp=state.players[1-actor];
+ let x=((state.turn+1)*0x9E3779B1)^(actor+1)*0x85EBCA6B;
+ x^=(mine.life.length<<16)^(opp.life.length<<8)^mine.hand.length^opp.hand.length;
+ return x>>>0||1;
+}
+function shuffleIds(ids,seed){
+ const out=ids.slice();
+ let x=seed>>>0||1;
+ for(let i=out.length-1;i>0;i--){
+  x=(Math.imul(x,1664525)+1013904223)>>>0;
+  const j=x%(i+1);
+  const t=out[i];out[i]=out[j];out[j]=t;
+ }
+ return out;
 }
 function scrubSnapshot(value,visible,state){
  if(!value||typeof value!=='object')return;
@@ -288,8 +303,6 @@ function rough(d,ctx){
  if(d.raidName&&ctx.fieldNames.has(squash(d.raidName)))v+=8;
  else if(d.raidName)v+=7;
  if(ctx.raidNeeds.has(name)||(d.raidName&&ctx.raidNeeds.has(squash(d.raidName))))v+=7;
- if(ctx.plan?.keep.has(name))v+=3.5;
- if(ctx.plan?.fuel.has(name)&&(ctx.colors[d.color]||0)>=ctx.plan.curve)v-=2.5;
  return v;
 }
 function handCardValue(pack,state,player,card,visible,plan){
@@ -297,6 +310,13 @@ function handCardValue(pack,state,player,card,visible,plan){
  const d=printed(pack,player,card);
  const copies=state.players[player].hand.filter(c=>seen(c,visible)&&c.cardId===card.cardId).length;
  let v=rough(d,handContext(pack,state,player,visible,plan));
+ // Known cards only. The same bonus on the unknown average made every
+ // draw look like a finisher and the deck was spent on extra draws.
+ if(plan?.keep.has(squash(d.name)))v+=2;
+ if(plan?.fuel.has(squash(d.name))){
+  const have=safeNum(()=>universalEnergyByColor(pack,state,player)[d.color],0);
+  if(have>=plan.curve)v-=2;
+ }
  if(copies>=3)v*=0.6;
  else if(copies===2)v*=0.85;
  return v;
@@ -327,9 +347,6 @@ function resourceScore(pack,state,player,actor,visible,belief,plan){
   const target=plan?.curve||curveTarget(packsOf(pack)[player].cards,belief);
   const deficit=Math.max(0,target-energy);
   score-=deficit*deficit*8;
-  // Energy past the deck's own curve is hoarding. One extra is cheap; a
-  // second starts to lose to a ready attack.
-  if(plan&&energy>plan.curve)score-=(energy-plan.curve)*4;
  }else score-=Math.max(0,3-energy)**2*3;
  score+=state.players[player].apCards.filter(a=>a.ready).length*4.2;
  const n=state.players[player].hand.length;
@@ -479,8 +496,7 @@ function rank(pack,state,actor,action,visible,plan){
   const d=seen(card,visible)?printed(pack,actor,card):null;
   if(d&&plan?.fuel.has(squash(d.name))){
    const energy=safeNum(()=>universalEnergy(pack,state,actor),0);
-   const stage=planStage(plan,energy,state.players[actor].deck.length,state.players[actor].ownTurns);
-   if(stage!=='early')score-=30;
+   if(energy>=plan.curve)score-=30;
   }
   return score;
  }
@@ -593,13 +609,6 @@ function continuedDepth(before,after,depth){
  if(after.pending&&afterWho===beforeWho)return depth;
  if(before.phase!=='attack'&&after.phase==='attack'&&after.active===before.active&&!after.pending)
   return Math.max(depth-1,2);
- // Their attack is the counterattack. Chain growth still stops the line.
- if(afterWho!==beforeWho&&!after.pending&&after.phase==='attack')return depth;
- // One more ply after a main or move payment, so the attack is visible.
- if(depth<=1&&before.turn===after.turn&&before.active===after.active&&!after.pending&&
-  (before.phase==='main'||before.phase==='move')&&
-  (after.phase==='main'||after.phase==='move'||after.phase==='attack'))
-  return 1;
  return depth-1;
 }
 function actionUsesHidden(action,visible){
@@ -642,31 +651,6 @@ function dispatchScore(pack,state,actor,action,budget,depth,chain,view){
 function scoreNowOf(pack,state,actor,view){
  return evaluate(pack,state,actor,view.visible,view.blind,view.belief,view.plan);
 }
-// Fast-forward only forced steps to their attack, then score. Discretionary
-// opponent choices stay unseen. The result is cached so every candidate
-// that reaches the same position reuses it.
-function replyScore(pack,state,actor,budget,view){
- const key=evalCache?evalKey(pack,state,actor,view.visible)+'#reply':null;
- if(key&&evalCache.has(key))return evalCache.get(key);
- let s=state;
- for(let step=0;step<6&&budget.nodes>0;step++){
-  if(s.status!=='playing')break;
-  const who=s.pending?.player??s.active;
-  if(who===actor)break;
-  if(!s.pending&&s.phase==='attack')break;
-  let legal;
-  try{legal=legalUniversalActions(pack,s);}catch{break;}
-  const move=s.pending?(legal.length===1?legal[0]:null):legal.find(a=>a.type==='next');
-  if(!move||actionUsesHidden(move,view.visible))break;
-  try{s=dispatchUniversalAction(pack,s,move,{actor:who});}
-  catch{break;}
-  budget.nodes--;
-  if(futureLook(s,view.visible))break;
- }
- const score=scoreNowOf(pack,s,actor,view);
- if(key)evalCache.set(key,score);
- return score;
-}
 function minimax(pack,state,actor,budget,depth,chain,view){
  const done=terminal(state,actor);
  if(done!==null)return done;
@@ -683,7 +667,7 @@ function minimax(pack,state,actor,budget,depth,chain,view){
  const ourTurn=who===actor;
  const theirCombat=!ourTurn&&(state.pending?.kind==='block'||
   state.pending?.kind==='effect-block-floor'||(!state.pending&&state.phase==='attack'));
- if(!ourTurn&&!theirCombat)return replyScore(pack,state,actor,budget,view);
+ if(!ourTurn&&!theirCombat)return scoreNow();
  if(!ourTurn&&!state.pending&&depth<=0)return scoreNow();
  if(ourTurn&&!state.pending&&depth<=0)return scoreNow();
  let legal;
@@ -736,8 +720,15 @@ function attackNowBias(pack,state,actor,action,visible,plan){
  });
  if(!safe)return 0;
  const energy=safeNum(()=>universalEnergy(pack,state,actor),0);
- const stage=plan?planStage(plan,energy,state.players[actor].deck.length,state.players[actor].ownTurns):'mid';
- return stage==='early'?0:14;
+ const stage=plan?planStage(plan,energy,state.players[actor].deck.length):'mid';
+ if(stage==='early')return 0;
+ // A safe swing is not a reason to skip the finisher. Once the front is full
+ // and life is close, or the deck is short, stop adding energy and attack.
+ const life=state.players[1-actor].life.length;
+ const front=state.players[actor].front.filter(Boolean).length;
+ if(front>=4&&(life<=2||stage==='late'))return 28;
+ if(stage!=='late'&&life>2&&front<4)return 0;
+ return 14;
 }
 function blendScores(deep,shadow){
  if(!Number.isFinite(deep))return deep;
@@ -767,6 +758,59 @@ function oneStepWin(pack,state,actor,action,visible){
  try{
   return terminal(dispatchUniversalAction(pack,state,action,{actor:who}),actor)>=50000;
  }catch{return false;}
+}
+function resolvesForced(pack,state,visible){
+ let s=state;
+ for(let i=0;i<5&&s?.status==='playing'&&s.pending;i++){
+  let legal;
+  try{legal=legalUniversalActions(pack,s);}catch{return null;}
+  if(legal.length!==1||actionUsesHidden(legal[0],visible))return s;
+  try{s=dispatchUniversalAction(pack,s,legal[0],{actor:s.pending.player??s.active});}
+  catch{return null;}
+ }
+ return s;
+}
+// A setup is taken immediately only when the model already shows a terminal
+// win, either on that action or on one attack or raid after its forced payment.
+// The same model is used for every setup. A line that merely looks promising
+// stays in the search, so the chain is declined when it does not win.
+function confirmedSetup(pack,state,actor,legal,visible){
+ const setups=[
+  ...legal.filter(a=>a.type==='attack'),
+  ...legal.filter(a=>a.type==='raid'),
+  ...legal.filter(a=>a.type==='move').slice(0,2),
+  ...legal.filter(a=>a.type==='play'||a.type==='event'||a.type==='activate').slice(0,4)
+ ];
+ for(const setup of setups){
+  if(actionUsesHidden(setup,visible))continue;
+  if(oneStepWin(pack,state,actor,setup,visible))return setup;
+  if(setup.type==='attack')continue;
+  let after;
+  try{after=dispatchUniversalAction(pack,state,setup,{actor:state.pending?.player??state.active});}
+  catch{continue;}
+  after=resolvesForced(pack,after,visible);
+  if(!after||after.status!=='playing'||after.pending)continue;
+  if((after.active)!==actor)continue;
+  let follow;
+  try{follow=legalUniversalActions(pack,after);}catch{continue;}
+  const winning=follow.some(a=>(a.type==='attack'||a.type==='raid')&&
+   !actionUsesHidden(a,visible)&&oneStepWin(pack,after,actor,a,visible));
+  if(winning)return setup;
+ }
+ return null;
+}
+function curveMovePenalty(pack,state,actor,action,plan){
+ if(action?.type!=='move'||!plan)return 0;
+ const card=state.players[actor]?.energy?.find(c=>c?.uid===action.uid);
+ if(!card)return 0;
+ const energy=safeNum(()=>universalEnergy(pack,state,actor),0);
+ const gen=printed(pack,actor,card)?.gen||0;
+ if(energy-gen>0||energy>=plan.curve)return 0;
+ return 36;
+}
+function drawTax(state,actor,action){
+ if(action?.type!=='extraDraw')return 0;
+ return state.players[actor].deck.length<16?16:8;
 }
 function limitsFor(state,options){
  const combat=state.phase==='attack'||state.pending?.kind==='block'||
@@ -832,12 +876,23 @@ export function chooseStrengthenedHardAction(pack,state,options={}){
    oppTrigger:revealedTriggerRate(pack,state,1-actor),
    seed:Number.isInteger(options.seed)?options.seed:0
   };
-  // Both worlds are fixed before any candidate is scored.
+  // The decision tree uses triggerless filler, so a painted deck order cannot
+  // fire a fictional trigger. One shuffled sample of the actor's own
+  // remainder is the second world, shared by every candidate.
   const filler=hypothetical(pack,state,visible);
-  const model=worldFrom(pack,state,visible,actor,true)||filler;
+  const ownSample=shuffleIds(remainderIds(state.initialCounts?.[actor],state.players[actor],visible),
+   mixSeed(state,actor));
+  const sample=worldFrom(pack,state,visible,actor,ownSample);
+  const model=filler;
   if(!model){
    report.unsupported++;
    return finish(legacy||legal[0],{reason:'unobserved',seed:view.seed,nodesBudget:limits.nodes});
+  }
+  const confirmed=confirmedSetup(pack,model,actor,legal,visible);
+  if(confirmed){
+   const exact=legal.find(a=>same(a,confirmed))||confirmed;
+   return finish(exact,{reason:'confirmed-win',stage:planStage(plan,
+    safeNum(()=>universalEnergy(pack,state,actor),0),state.players[actor].deck.length)});
   }
   evalCache=new Map();
   const wide=!state.pending||['block','effect-block-floor','life-trigger',
@@ -854,19 +909,23 @@ export function chooseStrengthenedHardAction(pack,state,options={}){
    seen.add(key);
    queue.push(action);
   };
-  // A raid or attack that can win has to be searched before a pass spends
-  // the node budget. Pass, block and the legacy line stay in the queue.
-  for(const action of primary)if(action.type==='raid')push(action);
-  for(const action of primary)if(action.type==='attack'||action.type==='chooseBlock')push(action);
+  // Pass, block, attack and the legacy line each get a slice before a long
+  // branch spends the node budget. Confirmed wins already returned.
+  const frontPlay=primary.find(a=>a.type==='play'&&a.line==='front');
+  const energyPlay=primary.find(a=>a.type==='play'&&a.line==='energy');
   for(const action of baseline)push(action);
   if(legacy)push(legacy);
+  if(energyPlay)push(energyPlay);
+  if(frontPlay)push(frontPlay);
+  for(const action of primary)if(action.type==='attack'||action.type==='chooseBlock'||action.type==='raid')push(action);
   for(const action of primary)push(action);
   const protectedCount=queue.filter(action=>isBaselineAction(action)||
-   action.type==='attack'||action.type==='chooseBlock'||(legacy&&same(action,legacy))).length;
+   action.type==='attack'||action.type==='chooseBlock'||action.type==='raid'||
+   (energyPlay&&same(action,energyPlay))||(frontPlay&&same(action,frontPlay))||
+   (legacy&&same(action,legacy))).length;
   const visit=(action,index)=>{
    const left=queue.length-index;
-   const heavy=action.type==='raid'||action.type==='attack'||action.type==='chooseBlock';
-   const slice=Math.max(heavy?22:4,Math.ceil(budget.nodes/left));
+   const slice=Math.max(4,Math.ceil(budget.nodes/left));
    if(performance.now()>budget.deadline&&index>=protectedCount){budget.exhausted=true;return false;}
    if(budget.nodes<=0){budget.exhausted=true;return false;}
    const snapshot=budget.nodes;
@@ -875,9 +934,10 @@ export function chooseStrengthenedHardAction(pack,state,options={}){
    budget.byKind[kind]=(budget.byKind[kind]||0)+1;
    compared++;
    const deep=dispatchScore(pack,model,actor,action,budget,limits.depth,0,view);
-   const shadow=filler?shadowOnce(pack,filler,actor,action,view):null;
+   const shadow=sample?shadowOnce(pack,sample,actor,action,view):null;
    const score=blendScores(deep,shadow)+developBias(pack,model,action,visible)+
-    attackNowBias(pack,state,actor,action,visible,plan);
+    attackNowBias(pack,state,actor,action,visible,plan)-
+    curveMovePenalty(pack,state,actor,action,plan)-drawTax(state,actor,action);
    const used=Math.min(snapshot,slice)-Math.max(0,budget.nodes);
    budget.nodes=snapshot-used;
    if(!Number.isFinite(score))return true;
@@ -908,8 +968,7 @@ export function chooseStrengthenedHardAction(pack,state,options={}){
   const traceBase={seed:view.seed,nodesBudget:limits.nodes,
    nodesUsed:limits.nodes-budget.nodes,maxChain:budget.maxChain||0,candidates:ranked,
    rootCandidates:queue.length,rootCompared:compared,rootCut,stage:planStage(plan,
-    safeNum(()=>universalEnergy(pack,state,actor),0),state.players[actor].deck.length,
-    state.players[actor].ownTurns)};
+    safeNum(()=>universalEnergy(pack,state,actor),0),state.players[actor].deck.length)};
   if(!best){
    report.exceptions++;
    return finish(legacy||legal[0],{reason:'empty-search',budget:budget.exhausted,...traceBase});
