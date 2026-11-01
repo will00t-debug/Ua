@@ -1198,18 +1198,23 @@ function maybeFinishCoach(){
   endReason:app.state.endReason||'finished',replay:app.replay});
 }
 function renderCoachReview(target){
+ document.body.classList.add('v2-playing');
  const session=app.coachBattle.session;
- const host=el('div',{class:'coach-review-host'});
- target.append(el('header',{class:'matchHeader'},
+ target.replaceChildren(el('header',{class:'matchHeader'},
   el('h1',{text:'賽後教 AI'}),
   el('div',{class:'matchControls'},
    btn('重開對局',()=>startGame(),'btn small'),
-   el('a',{href:'/coach.html',text:'查看、匯出或刪除紀錄'}))));
- target.append(host);
- mountCoachReview(host,{
+   el('a',{href:'/coach.html',text:'紀錄',title:'查看、匯出或刪除紀錄'}))));
+ mountCoachReview(target,{
   packs:app.packs,replay:app.replay,
   marks:session.marks.map(mark=>({...mark,header:session.header})),
-  onSave:body=>app.coachBattle.saveDemonstration(body)
+  onSave:body=>app.coachBattle.saveDemonstration(body),
+  artFor:(side,cardId)=>imgUrl(side,cardId),
+  titleOf:side=>fmtTitle(app.packs?.[side]?.id),
+  onArtError(image,side){
+   if(app.packs?.[side]?.id==='gurren-lagann'&&ttgArtErrorFallback(image))return;
+   if(!image.src.endsWith('/assets/mark.svg'))image.src='assets/mark.svg';
+  }
  });
 }
 function render(){
