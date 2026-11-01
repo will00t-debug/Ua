@@ -1202,10 +1202,13 @@ const NORMAL_BOARD_ENTRY=new Set([
   'chooseOutsideColorTraitActive','chooseHandFreshName','chooseHandRestEntry',
   'chooseRaidBaseRest','chooseHandFrontActive','chooseDeploySelfActive'
 ]);
+// kmr character entry uses this set too: select the physical card, then
+// 突襲進場 or 普通進場 only when the print allows both, then tap the cell.
+// Do not list one execute button per destination.
 const MODE_BOARD_ENTRY=new Set([
  'choosePrintedRestRaid','chooseOutsideRestOrRaid','chooseHandRestOrRaid',
  'chooseNamedOutside','chooseOutsideTraitlessRest','chooseRemovedRestPair',
- 'chooseOutsideOrRest','chooseSayakaReenter'
+ 'chooseOutsideOrRest','chooseSayakaReenter','kmr'
 ]);
 export function boardEntryMode(action){
  if(!action||typeof action.uid!=='string'||!action.uid)return null;
@@ -1267,8 +1270,9 @@ export function entryClickPlan({selectedUid,entryMode,raidBaseUid=null,line,slot
   const hits=selection.normal.filter(action=>entryDestination(action,line,slot,slotUid));
   return hits.length?{type:'entry',mode:'normal',actions:hits}:{type:'entry-wait',mode:'normal'};
  }
- // Effect entry: first choose the card, then its legal mode (if two options
- // are printed), and tap the destination. The action owns its Raid base UID.
+ // Effect entry, including kmr: first choose the card, then its legal mode
+ // (if two options are printed), and tap the destination. The action owns
+ // its Raid base UID. Do not list one button per destination.
  const mode=entryMode==='raid'&&selection.raid.length?'raid':
   entryMode==='normal'&&selection.normal.length?'normal':
   selection.needsMode?null:selection.raid.length?'raid':'normal';

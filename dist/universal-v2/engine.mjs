@@ -1592,7 +1592,7 @@ function buryRaidLayers(pack,s,owner,top,sourceUid){
 }
 function effectEnter(pack,s,{owner,from,uid,line,slot,replaceUid,ready,sourceUid,skipOnPlay}){
  const pl=s.players[owner];
- if(!['hand','outside','removed'].includes(from))throw Error('Madoka vol.2 entry zone');
+ if(!['hand','outside','removed','deck'].includes(from))throw Error('Madoka vol.2 entry zone');
  const index=pl[from].findIndex(c=>c.uid===uid);
  if(index<0)throw Error('Madoka vol.2 entry card left');
  const definition=card(pack,pl[from][index]);
@@ -1608,7 +1608,8 @@ function effectEnter(pack,s,{owner,from,uid,line,slot,replaceUid,ready,sourceUid
  physical.fieldEntryStamp=s.nextFieldEntryStamp++;
  pl[line][slot]=physical;
  recordCompletedMove(pack,s,{physical,owner,from,to:line,reason:'own-effect',sourceUid});
- const cause=from==='hand'?'handEffect':from==='removed'?'removedEffect':'outsideEffect';
+ const cause=from==='hand'?'handEffect':from==='removed'?'removedEffect':
+  from==='deck'?'deckEffect':'outsideEffect';
  if(skipOnPlay!==true)applyEffects(pack,s,physical,'onPlay',owner,cause,sourceUid);
 }
 function fieldToDeckBottom(pack,s,owner,uid,sourceUid){
@@ -23307,7 +23308,8 @@ export function universalPrivateChoices(pack,s,viewer){
    ...s.players[viewer].outside,...(s.players[viewer].removed||[]),...unders,
    ...field(s.players[1-viewer]),...s.players[1-viewer].outside];
   // 見る shows every card in the window. Only a printed match is a legal take.
-  const windowUids=q.step==='lookPick'?q.data?.uids:q.step==='lookOrder'?q.data?.left:null;
+  const windowUids=q.step==='lookPick'?q.data?.uids:q.step==='lookOrder'?q.data?.left:
+   q.step==='enter'&&Array.isArray(q.data?.windowUids)?q.data.windowUids:null;
   const deck=s.players[viewer].deck;
   const inspected=Array.isArray(windowUids)&&windowUids.length&&
    windowUids.every(uid=>deck.some(c=>c?.uid===uid))?

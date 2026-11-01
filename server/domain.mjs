@@ -122,10 +122,23 @@ function visibleChoiceUids(view){
 // Structural fields the table needs to click a card, the same way the solo
 // battle does. Only UIDs already present in this player's public view are
 // copied, so a hidden hand, deck or life card is never introduced here.
-function publicActionChoice(action,index,packs,match,view){
+function authorizedChoiceUids(privateChoices){
+ const ids=new Set();
+ if(!privateChoices)return ids;
+ const take=value=>{if(typeof value==='string'&&value)ids.add(value);};
+ for(const card of privateChoices.inspected||[])take(card?.uid);
+ for(const option of privateChoices.options||[]){
+  take(option?.action?.uid);
+  take(option?.card?.uid);
+  for(const card of option?.cards||[])take(card?.uid);
+ }
+ return ids;
+}
+function publicActionChoice(action,index,packs,match,view,extraIds){
  const choice={index,label:labelFor(packs,match,action)};
  if(typeof action?.type==='string'&&action.type.length<=40)choice.type=action.type;
  const ids=visibleChoiceUids(view);
+ if(extraIds)for(const id of extraIds)ids.add(id);
  for(const key of ['uid','baseUid','replaceUid','targetUid','retireUid']){
   if(action?.[key]===null&&key==='uid')choice.uid=null;
   else if(typeof action?.[key]==='string'&&ids.has(action[key]))choice[key]=action[key];
@@ -133,7 +146,8 @@ function publicActionChoice(action,index,packs,match,view){
  if(action?.line==='front'||action?.line==='energy')choice.line=action.line;
  if(Number.isInteger(action?.slot)&&action.slot>=0&&action.slot<=3)choice.slot=action.slot;
  if(typeof action?.mode==='string'&&/^[A-Za-z0-9_-]{1,40}$/.test(action.mode))choice.mode=action.mode;
- if(action?.from==='hand'||action?.from==='removed'||action?.from==='outside')choice.from=action.from;
+ if(action?.from==='hand'||action?.from==='removed'||action?.from==='outside'||action?.from==='deck')
+  choice.from=action.from;
  return choice;
 }
 // Only the active controller receives the cards they were authorized to inspect.
@@ -188,6 +202,9 @@ export function onlinePrivateGallery(privateChoices,legal,packs,match){
  if(!Array.isArray(legal)||!match?.pending)return null;
  if(!privateChoices)return deckWindowGallery(legal,packs,match);
  const kind=privateChoices.kind;
+ // A kmr deck window sets inspected, including cards that cannot enter.
+ // Without that array, kind kmr stays closed so ordinary discards do not
+ // open the private inspector.
  if(!Array.isArray(privateChoices.inspected)&&
   !/(top|search|look|peek|inspect)/i.test(kind))return null;
  const cards=new Map();
@@ -324,12 +341,13 @@ function present(room,userId){
  payload.yourTurn=room.status==='playing'&&room.match.status==='playing'&&actor===seat;
  if(payload.yourTurn){
   const legal=legalUniversalActions(room.packs,room.match);
+  const privateChoices=room.match.pending?
+   universalPrivateChoices(room.packs,room.match,seat):null;
+  const extraIds=authorizedChoiceUids(privateChoices);
   payload.choices=legal.map((action,index)=>
-   publicActionChoice(action,index,room.packs,room.match,view));
-  if(room.match.pending){
-   const privateChoices=universalPrivateChoices(room.packs,room.match,seat);
+   publicActionChoice(action,index,room.packs,room.match,view,extraIds));
+  if(room.match.pending)
    payload.inspection=onlinePrivateGallery(privateChoices,legal,room.packs,room.match);
-  }
  }
  if(room.status==='finished'&&(room.winner===0||room.winner===1))
   payload.winner={seat:room.winner,username:room.seats[room.winner]?.username||''};
