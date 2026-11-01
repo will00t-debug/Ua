@@ -56,7 +56,7 @@ export function mountCoachReview(parent,{packs,replay,marks,onSave,artFor,titleO
  });
  let active=0;
  const picture=(side,cardId,name)=>{
-  const image=el('img',{src:artFor?artFor(side,cardId):'assets/mark.svg',alt:name||cardId,loading:'lazy'});
+  const image=el('img',{class:'art',src:artFor?artFor(side,cardId):'assets/mark.svg',alt:name||cardId,loading:'lazy'});
   image.addEventListener('error',()=>{
    if(onArtError)onArtError(image,side);
    else if(!image.src.endsWith('/assets/mark.svg'))image.src='assets/mark.svg';
