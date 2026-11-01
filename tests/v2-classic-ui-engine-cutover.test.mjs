@@ -26,7 +26,7 @@ test('battle UI is classic BLEACH Arena, but every action uses V2 legal reducer'
  const html=read('../dist/universal-v2-preview.html');
  const js=read('../dist/universal-v2-preview.mjs');
  const css=read('../dist/universal-v2-legacy.css');
- assert.match(html,/href="universal-v2-legacy\.css"/);
+ assert.match(html,/href="universal-v2-legacy\.css(?:\?[^\"]+)?"/);
  assert.doesNotMatch(html,/href="universal-v2-preview\.css"/);
  for(const token of ['class:\x27arena\x27','class:\x27playerArea','class:\x27lineGroup\x27','class:\x27slots\x27',
   'class:\x27handCard ','class:\x27phaseBar\x27','class:\x27handArea\x27'])assert.ok(js.includes(token),'Expected original UI hook '+token);

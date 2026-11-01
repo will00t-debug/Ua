@@ -1048,7 +1048,8 @@ function matchView(){
    el('h1',{text:'房間 '+room.code}),
    phase,
    el('span',{class:'tag',text:room.youAreFirst?'你是先手':room.youAreFirst===false?'對方是先手':'先後手順序確認中'}),
-   el('span',{class:'tag turn',text:room.status==='finished'?'對局結束':room.yourTurn?'輪到你':'等待對手'})),
+   el('span',{class:'tag turn',text:room.status==='finished'?'對局結束':room.yourTurn?'輪到你':'等待對手'}),
+   app.inspectionPaused?inspection:null),
   el('div',{class:'online-table'},
    side((room.opponent?.username||'對手')+'（對手）',opp,room.opponent?.titleLabel||'',{setup:view.phase==='setup',engineSeat:1-seat}),
    side((room.you?.username||'你')+'（你）',you,room.you?.titleLabel||'',{openHand:true,setup:view.phase==='setup',engineSeat:seat}),
@@ -1063,7 +1064,7 @@ function matchView(){
    effectTarget?.node,
    lifeOrder?.node,
    visibleChoices?.node,
-   inspection,
+   app.inspectionPaused?null:inspection,
    el('section',{class:'panel'},el('h2',{text:'公開紀錄'}),el('p',{class:'muted',text:'這裡不寫出手牌或牌庫裡的卡名。觸發會公開給對手。'}),log))));
 }
 function render(){
