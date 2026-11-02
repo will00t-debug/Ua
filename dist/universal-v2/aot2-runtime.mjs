@@ -256,14 +256,41 @@ function lifeThenRetire(pack,s,spec,printed){
  hold(s,{...spec,step:'life',data:{then:'retire',printed}},
   life.map(c=>act('life',{uid:c.uid,zone:'life'})));
 }
-function retireOffer(s,spec,cards,optional,data){
+function yellowZeke(pack,s,owner){
+ return fieldCards(s,owner).filter(c=>{
+  const d=def(pack,c);
+  return d.type==='character'&&d.color==='yellow'&&contains(pack,c,'ジーク',s);
+ });
+}
+function retiredOut(s,owner,uid){
+ return (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.owner===owner&&e.uid===uid&&
+  e.to==='outside'&&e.reason==='retirement');
+}
+const RETIRE_FOLLOW=new Set(['leave-replacement','effect-raid-leave','effect-field-leave-remove']);
+// onRetire is queued by the retirement itself. The printed follow-up waits
+// until that pause closes. A declined leave does not count as 退場.
+function retireThen(s,who,line,slot,follow,opts={}){
+ const tail=s.effectQueue.splice(0);
+ const paused=A.retire(A.pack,s,who,line,slot,opts.by?{by:opts.by}:undefined);
+ if(paused&&s.pending&&RETIRE_FOLLOW.has(s.pending.kind)){
+  if(opts.always){
+   s.pending.retirementAfter=[];
+   s.pending.retirementTail=[...follow,...(s.pending.retirementTail||[]),...tail];
+  }else{
+   s.pending.retirementAfter=[...(s.pending.retirementAfter||[]),...follow];
+   s.pending.retirementTail=[...(s.pending.retirementTail||[]),...tail];
+  }
+ }else if(paused)s.effectQueue.push(...tail);
+ else s.effectQueue.push(...follow,...tail);
+}
+function retireOffer(s,spec,cards,optional,data,zone='opp'){
  const src=spec.sourceUid?selfOf(s,spec.player,spec.sourceUid):null;
  const type=src?def(A.pack,src).type:'event';
  const legal=cards.filter(c=>!A.blocked||!A.blocked(A.pack,s,spec.player,c.uid,type));
  if(!legal.length)return false;
  hold(s,{...spec,step:'retire',data:data||null},[
   ...(optional?[act('done')]:[]),
-  ...legal.map(c=>act('retire',{uid:c.uid,zone:'opp'}))
+  ...legal.map(c=>act('retire',{uid:c.uid,zone}))
  ]);
  return true;
 }
@@ -385,9 +412,18 @@ export function runAot2Job(pack,s,job){
    act('done'),...matches.map(c=>act('take',{uid:c.uid,zone:'deck'}))]);
   return;
  }
+ if(id==='AOT-2-032'&&job.slot==='afterOwn'){
+  if(!retiredOut(s,owner,job.sacrificedUid))return;
+  const cards=oppFront(s,owner,t=>A.bp(pack,s,t)<=cap(pack,s,owner,5000));
+  if(!retireOffer(s,spec,cards,true,{then:'032b'}))rumbleFollow(pack,s,spec);
+  return;
+ }
+ if(id==='AOT-2-032'&&job.slot==='afterOpp'){
+  rumbleFollow(pack,s,spec);
+  return;
+ }
  if(id==='AOT-2-032'){
-  const cards=fieldCards(s,owner).filter(c=>def(pack,c).color==='yellow'&&contains(pack,c,'ジーク',s));
-  retireOffer(s,spec,cards,false,{then:'032'});
+  retireOffer(s,spec,yellowZeke(pack,s,owner),false,{then:'032'},'field');
   return;
  }
  if(id==='AOT-2-034'){
@@ -770,17 +806,26 @@ export function resolveAot2Pending(pack,s,a){
  }
  if(q.step==='retire'){
   s.pending=null;
-  if(hit.mode==='done'){go(pack,s);return;}
-  const loc=A.location(s,hit.zone==='field'?owner:1-owner,hit.uid);
-  const who=hit.zone==='field'?owner:1-owner;
-  if(!loc)throw Error('Retirement target left');
-  const retired=A.retire(pack,s,who,loc.line,loc.slot);
-  if(retired===true)return;
-  if(q.data?.then==='032'){
-   const cards=oppFront(s,owner,t=>A.bp(pack,s,t)<=cap(pack,s,owner,5000));
-   if(!retireOffer(s,spec,cards,true,{then:'032b'}))rumbleFollow(pack,s,spec);
+  if(hit.mode==='done'){
+   if(q.data?.then==='032b')rumbleFollow(pack,s,spec);
+   go(pack,s);return;
   }
-  if(q.data?.then==='032b')rumbleFollow(pack,s,spec);
+  const own=hit.zone==='field';
+  const who=own?owner:1-owner;
+  const loc=A.location(s,who,hit.uid);
+  if(!loc)throw Error('Retirement target left');
+  if(q.data?.then==='032'){
+   retireThen(s,who,loc.line,loc.slot,[{op:'aot2',id:'AOT-2-032',slot:'afterOwn',
+    owner,sourceUid:q.sourceUid,sacrificedUid:hit.uid}]);
+   go(pack,s);return;
+  }
+  if(q.data?.then==='032b'){
+   retireThen(s,who,loc.line,loc.slot,[{op:'aot2',id:'AOT-2-032',slot:'afterOpp',
+    owner,sourceUid:q.sourceUid}],{by:'opponent',always:true});
+   go(pack,s);return;
+  }
+  const paused=A.retire(pack,s,who,loc.line,loc.slot);
+  if(paused===true)return;
   if(q.data?.then==='053')pureEnter(pack,s,spec);
   go(pack,s);return;
  }
@@ -1083,7 +1128,7 @@ export function legalAot2Pending(pack,s){
 export function aot2MandatoryTargets(pack,s,owner,job){
  A.pack=pack;
  if(job.id==='AOT-2-032')
-  return fieldCards(s,owner).some(c=>def(pack,c).color==='yellow'&&contains(pack,c,'ジーク',s));
+  return yellowZeke(pack,s,owner).length>0;
  if(job.id==='AOT-2-037'){
   const mikasa=fieldCards(s,owner).some(c=>exact(pack,c,'ミカサ・アッカーマン',s));
   return oppFront(s,owner,t=>A.bp(pack,s,t)<=cap(pack,s,owner,mikasa?8000:5000)).length>0;

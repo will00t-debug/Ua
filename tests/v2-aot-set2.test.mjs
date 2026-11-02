@@ -12,6 +12,7 @@ import {assertUniversalMatch, dispatchUniversalAction, legalUniversalActions,
  newUniversalMatch, universalBp, universalCardEnergy, universalImpact,
  universalPrivateChoices, universalPublicView}
  from '../dist/universal-v2/engine.mjs';
+import {controllerDeckWindowCards, uiActionLabel} from '../dist/universal-v2/preview-actions.mjs';
 
 const pack=createAotV2Pack();
 const packs=[pack,pack];
@@ -711,4 +712,94 @@ test('life cards stay hidden while Eren and the Attack Titan choose one',()=>{
  assert.equal(titan.players[0].hand.some(c=>c.uid===hidden.uid),true);
  if(titan.pending?.step==='retire')titan=pick(titan,a=>a.mode==='done');
  assertUniversalMatch(packs,titan);
+});
+
+test('EX10BT/AOT-2-032 retires an own yellow Zeke, and skipping the kill still opens Ymir',()=>{
+ const counts=countsFor(['AOT-2-032','AOT-2-001','AOT-2-023','AOT-2-025','AOT-2-013','AOT-2-031']);
+ let s=toPhase(fresh(counts,2032),'main');
+ for(let i=0;i<4;i++)put(s,0,'AOT-2-001','energy',i,true);
+ readyAp(s,0,1);
+ const event=toHand(s,0,'AOT-2-032');
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.type==='event'&&a.uid===event.uid),false);
+ const beast=put(s,0,'AOT-2-025','front',0,true);
+ const plain=put(s,0,'AOT-2-023','front',1,true);
+ const yelena=s.players[0].energy[0];
+ const small=put(s,1,'AOT-2-023','front',0,true);
+ const huge=put(s,1,'AOT-2-013','front',1,true);
+ s=cast(s,event.uid);
+ assert.equal(s.pending.id,'AOT-2-032');
+ assert.equal(s.pending.step,'retire');
+ const sacrifice=legalUniversalActions(packs,s).filter(a=>a.mode==='retire').map(a=>a.uid);
+ assert.equal(sacrifice.includes(beast.uid),true);
+ assert.equal(sacrifice.includes(plain.uid),true);
+ assert.equal(sacrifice.includes(yelena.uid),false);
+ assert.equal(sacrifice.includes(small.uid),false);
+ assert.equal(legalUniversalActions(packs,s).some(a=>a.mode==='done'),false);
+ s=pick(s,a=>a.uid===beast.uid);
+ assert.equal(s.players[0].outside.some(c=>c.uid===beast.uid),true);
+ assert.equal(s.pending.step,'retire');
+ const kills=legalUniversalActions(packs,s).filter(a=>a.mode==='retire').map(a=>a.uid);
+ assert.deepEqual(kills,[small.uid]);
+ assert.equal(kills.includes(huge.uid),false);
+ s=pick(s,a=>a.mode==='done');
+ assert.equal(s.pending.step,'mode');
+ const modes=legalUniversalActions(packs,s);
+ assert.equal(modes.some(a=>a.mode==='deploy'),false);
+ const look=modes.find(a=>a.mode==='look');
+ assert.equal(uiActionLabel(look,{pack:packs,state:s}),'查看牌組頂 7 張，可公開 1 張始祖尤米爾');
+ const ymir=take(s,0,'AOT-2-031');
+ const index=s.players[0].deck.findIndex(c=>c.cardId!=='AOT-2-031');
+ const other=s.players[0].deck.splice(index,1)[0];
+ s.players[0].deck.unshift(other,ymir);
+ s=pick(s,a=>a.mode==='look');
+ const shown=controllerDeckWindowCards(s,packs,legalUniversalActions(packs,s));
+ assert.equal(shown.some(c=>c.uid===other.uid&&c.caption==='目前不能選'),true);
+ assert.equal(shown.some(c=>c.uid===ymir.uid&&c.action),true);
+ s=pick(s,a=>a.uid===ymir.uid);
+ let guard=0;
+ while(s.pending?.step==='lookOrder'){
+  s=pick(s,a=>true);
+  if(++guard>8)throw Error('bottom order did not finish');
+ }
+ assert.equal(s.players[0].hand.some(c=>c.uid===ymir.uid),true);
+ assert.equal(s.players[0].deck.some(c=>c.uid===other.uid),true);
+ assert.equal(s.players[0].hand.some(c=>c.uid===other.uid),false);
+ assert.equal(s.pending,null);
+ assertUniversalMatch(packs,s);
+});
+
+test('EX10BT/AOT-2-032 standing range can kill 6000, then a raidless Zeke rests',()=>{
+ const counts=countsFor(['AOT-2-032','AOT-2-001','AOT-2-023','AOT-2-025','AOT-2-013','AOT-2-031','AOT-2-069']);
+ let s=toPhase(fresh(counts,20321),'main');
+ for(let i=0;i<4;i++)put(s,0,'AOT-2-001','energy',i,true);
+ const beast=put(s,0,'AOT-2-025','front',0,true);
+ put(s,0,'AOT-2-069','front',1,true);
+ const huge=put(s,1,'AOT-2-013','front',0,true);
+ const ymir=take(s,0,'AOT-2-031');
+ s.players[0].outside.push(ymir);
+ const plain=take(s,0,'AOT-2-023');
+ s.players[0].outside.push(plain);
+ const raider=take(s,0,'AOT-2-025');
+ s.players[0].outside.push(raider);
+ readyAp(s,0,1);
+ const event=toHand(s,0,'AOT-2-032');
+ s=cast(s,event.uid);
+ s=pick(s,a=>a.uid===beast.uid);
+ const kills=legalUniversalActions(packs,s).filter(a=>a.mode==='retire').map(a=>a.uid);
+ assert.equal(kills.includes(huge.uid),true);
+ s=pick(s,a=>a.uid===huge.uid);
+ assert.equal(s.players[1].outside.some(c=>c.uid===huge.uid),true);
+ assert.equal(s.pending.step,'mode');
+ const deploy=legalUniversalActions(packs,s).find(a=>a.mode==='deploy');
+ assert.equal(uiActionLabel(deploy,{pack:packs,state:s}),'從場外使沒有突襲的黃色吉克・葉卡以休息狀態登場');
+ s=pick(s,a=>a.mode==='deploy');
+ const enters=legalUniversalActions(packs,s).filter(a=>a.mode==='enter');
+ assert.equal(enters.some(a=>a.uid===plain.uid),true);
+ assert.equal(enters.some(a=>a.uid===raider.uid),false);
+ assert.equal(enters.some(a=>a.uid===ymir.uid),false);
+ s=pick(s,a=>a.uid===plain.uid&&a.line==='front');
+ const entered=s.players[0].front.find(c=>c?.uid===plain.uid);
+ assert.equal(entered.ready,false);
+ assert.equal(s.players[0].outside.some(c=>c.uid===raider.uid),true);
+ assertUniversalMatch(packs,s);
 });
