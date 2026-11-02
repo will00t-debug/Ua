@@ -1,7 +1,7 @@
 // UA23BT / UA23ST scripts. The engine passes zone helpers; this file does not import it.
 // Printed 「まで」 includes zero. A name-once lock is spent only when the
 // printed condition applies. Registration is not an official FAQ certification.
-import {cardHasName,cardHasTrait} from './field-conditions.mjs';
+import {cardHasName,cardHasTrait,usedOwnEventThisTurn} from './field-conditions.mjs';
 import {originalEffectsDisabled} from './continuous-states.mjs';
 import {aot2StandingBp} from './aot2-continuous.mjs';
 
@@ -67,10 +67,7 @@ function trait(pack,c,name){return cardHasTrait(def(pack,c),name);}
 function fieldCards(s,owner){return A.field(plOf(s,owner));}
 function outs(s,owner){return plOf(s,owner).outside.filter(c=>def(A.pack,c).type==='event'||def(A.pack,c).alsoEvent===true).length;}
 function eventUsed(s,owner){
- return (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.owner===owner&&e.controller===owner&&
-  e.from==='hand'&&e.to==='outside'&&e.reason==='rule'&&
-  (def(A.pack,{uid:e.uid,cardId:e.cardId}).type==='event'||
-   def(A.pack,{uid:e.uid,cardId:e.cardId}).alsoEvent===true));
+ return usedOwnEventThisTurn(s,owner,c=>def(A.pack,c));
 }
 function traitUsed(s,owner,name){
  return (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&e.owner===owner&&e.controller===owner&&

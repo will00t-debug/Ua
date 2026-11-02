@@ -7,8 +7,11 @@
 // One identity per card number. Reprints that match merge into the booster
 // identity and keep both printings. Parallel art and AP cards are not deck
 // cards. BP+ is a design mark: the integer is the printed base. Generated
-// energy has no printed plus. A printed slash trait stays one trait and also
-// lists the audited components. engineKind is the classifier of effectJa.
+// energy is the pip count in the official 発生エナジー alt text. A trailing
+// + is a separate printed sentence and is not folded into gen. The icon
+// filename number is a sprite id, not the pip count. A printed slash trait
+// stays one trait and also lists the audited components. engineKind is the
+// classifier of effectJa.
 // Registration is not an official FAQ certification.
 export const AOT_FETCHED='2026-11-01';
 export const AOT_SETS=Object.freeze(['UA23BT','UA23ST']);
@@ -83,7 +86,7 @@ export const AOT_CARDS=
   "ap": 1,
   "bp": 2500,
   "bpMark": "",
-  "gen": 4,
+  "gen": 2,
   "genMark": "",
   "type": "character",
   "traits": [],
@@ -221,7 +224,7 @@ export const AOT_CARDS=
   "ap": 1,
   "bp": 1000,
   "bpMark": "",
-  "gen": 2,
+  "gen": 1,
   "genMark": "",
   "type": "character",
   "traits": [
@@ -266,7 +269,7 @@ export const AOT_CARDS=
   "ap": 1,
   "bp": 2500,
   "bpMark": "",
-  "gen": 3,
+  "gen": 2,
   "genMark": "",
   "type": "character",
   "traits": [
@@ -697,7 +700,7 @@ export const AOT_CARDS=
   "ap": 1,
   "bp": 1500,
   "bpMark": "",
-  "gen": 3,
+  "gen": 2,
   "genMark": "",
   "type": "character",
   "traits": [
@@ -746,7 +749,7 @@ export const AOT_CARDS=
   "ap": 1,
   "bp": 3000,
   "bpMark": "",
-  "gen": 3,
+  "gen": 2,
   "genMark": "",
   "type": "character",
   "traits": [
@@ -1145,7 +1148,7 @@ export const AOT_CARDS=
   "ap": 1,
   "bp": 3000,
   "bpMark": "+",
-  "gen": 2,
+  "gen": 1,
   "genMark": "",
   "type": "character",
   "traits": [
@@ -1243,7 +1246,7 @@ export const AOT_CARDS=
   "ap": 1,
   "bp": 2500,
   "bpMark": "",
-  "gen": 2,
+  "gen": 1,
   "genMark": "",
   "type": "character",
   "traits": [
@@ -1644,7 +1647,7 @@ export const AOT_CARDS=
   "ap": 1,
   "bp": 3000,
   "bpMark": "",
-  "gen": 3,
+  "gen": 2,
   "genMark": "",
   "type": "character",
   "traits": [],
@@ -1816,7 +1819,7 @@ export const AOT_CARDS=
   "ap": 1,
   "bp": 1500,
   "bpMark": "",
-  "gen": 3,
+  "gen": 2,
   "genMark": "",
   "type": "character",
   "traits": [
@@ -2286,7 +2289,7 @@ export const AOT_CARDS=
   "ap": 1,
   "bp": 3000,
   "bpMark": "",
-  "gen": 3,
+  "gen": 2,
   "genMark": "",
   "type": "character",
   "traits": [
@@ -2435,7 +2438,7 @@ export const AOT_CARDS=
   "ap": 1,
   "bp": 2500,
   "bpMark": "",
-  "gen": 2,
+  "gen": 1,
   "genMark": "",
   "type": "character",
   "traits": [
@@ -2535,7 +2538,7 @@ export const AOT_CARDS=
   "ap": 1,
   "bp": 1000,
   "bpMark": "",
-  "gen": 2,
+  "gen": 1,
   "genMark": "",
   "type": "character",
   "traits": [
@@ -2585,7 +2588,7 @@ export const AOT_CARDS=
   "ap": 1,
   "bp": 2500,
   "bpMark": "",
-  "gen": 3,
+  "gen": 2,
   "genMark": "",
   "type": "character",
   "traits": [
@@ -2798,7 +2801,7 @@ export const AOT_CARDS=
   "ap": 1,
   "bp": 3000,
   "bpMark": "+",
-  "gen": 3,
+  "gen": 2,
   "genMark": "",
   "type": "character",
   "traits": [
@@ -2848,7 +2851,7 @@ export const AOT_CARDS=
   "ap": 2,
   "bp": 4000,
   "bpMark": "",
-  "gen": 5,
+  "gen": 3,
   "genMark": "",
   "type": "character",
   "traits": [
@@ -2955,7 +2958,7 @@ export const AOT_CARDS=
   "ap": 1,
   "bp": 0,
   "bpMark": "",
-  "gen": 4,
+  "gen": 2,
   "genMark": "",
   "type": "field",
   "traits": [],
@@ -3228,7 +3231,7 @@ export const AOT_CARDS=
   "ap": 1,
   "bp": 1000,
   "bpMark": "",
-  "gen": 2,
+  "gen": 1,
   "genMark": "",
   "type": "character",
   "traits": [],
@@ -3271,7 +3274,7 @@ export const AOT_CARDS=
   "ap": 1,
   "bp": 2500,
   "bpMark": "",
-  "gen": 3,
+  "gen": 2,
   "genMark": "",
   "type": "character",
   "traits": [],
@@ -3322,7 +3325,7 @@ export const AOT_CARDS=
   "ap": 1,
   "bp": 1500,
   "bpMark": "",
-  "gen": 3,
+  "gen": 2,
   "genMark": "",
   "type": "character",
   "traits": [],
@@ -3500,7 +3503,7 @@ export const AOT_CARDS=
   "ap": 1,
   "bp": 3000,
   "bpMark": "",
-  "gen": 3,
+  "gen": 2,
   "genMark": "",
   "type": "character",
   "traits": [
@@ -3662,7 +3665,7 @@ export const AOT_CARDS=
   "ap": 1,
   "bp": 3000,
   "bpMark": "",
-  "gen": 3,
+  "gen": 2,
   "genMark": "",
   "type": "character",
   "traits": [
@@ -4195,7 +4198,7 @@ export const AOT_CARDS=
   "ap": 1,
   "bp": 2500,
   "bpMark": "",
-  "gen": 2,
+  "gen": 1,
   "genMark": "",
   "type": "character",
   "traits": [
@@ -4621,7 +4624,7 @@ export const AOT_CARDS=
   "ap": 1,
   "bp": 0,
   "bpMark": "",
-  "gen": 5,
+  "gen": 3,
   "genMark": "",
   "type": "field",
   "traits": [],
@@ -4941,7 +4944,7 @@ export const AOT_CARDS=
   "ap": 1,
   "bp": 3000,
   "bpMark": "",
-  "gen": 3,
+  "gen": 2,
   "genMark": "",
   "type": "character",
   "traits": [
@@ -5129,7 +5132,7 @@ export const AOT_CARDS=
   "ap": 1,
   "bp": 3000,
   "bpMark": "+",
-  "gen": 3,
+  "gen": 2,
   "genMark": "",
   "type": "character",
   "traits": [

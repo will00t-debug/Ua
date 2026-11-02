@@ -26,6 +26,23 @@ export function cardHasTrait(definition,trait){
 export function cardCountsAsEvent(definition){
  return definition?.type==='event'||definition?.alsoEvent===true;
 }
+// 「このターン中に自分がイベントカードを使用している」.
+// A successful use is a rule move out of the owner's hand. An event card
+// goes to outside. A character that is already an event in every zone is
+// used when it is played or raided from hand onto the field. Q2079
+// (2026-05-15, UA53BT/CSM-1-022 and CSM-1-024): a character that was not an
+// event when it was used does not become one afterwards. Payment discards
+// and effect entries are not uses. No direct REZ-1-001 FAQ was found.
+export function usedOwnEventThisTurn(s,owner,printed){
+ return (s.zoneMoveEvents||[]).some(e=>{
+  if(e.turn!==s.turn||e.owner!==owner||e.controller!==owner||
+   e.from!=='hand'||e.reason!=='rule')return false;
+  const d=printed({uid:e.uid,cardId:e.cardId});
+  if(!cardCountsAsEvent(d))return false;
+  if(e.to==='outside')return true;
+  return d.alsoEvent===true&&(e.to==='front'||e.to==='energy');
+ });
+}
 // EX16BT Q2345: while 〈巴 マミ〉 MMM-2-007 is on the field and not silenced,
 // an own effect that reads the outside event count treats it as one higher.
 // Copies do not stack. No FAQ says otherwise.
@@ -123,17 +140,14 @@ export function matchesV2LiveCondition(s,owner,sourceUid,condition,printed,energ
  // AP only; paying AP to play a card does not qualify.
  if(condition.kind==='ownEffectApPaidColor')
   return (s.effectApPaidColors?.[owner]||[]).includes(condition.color);
- // Successful EVENT usage is already recorded as an atomic physical HAND ->
- // OUTSIDE rule move. Reuse this ledger; never infer usage from event count,
- // deck inspections, cancelled plays, opponent actions or transient zones.
+ // Successful use is the hand rule-move recorded by usedOwnEventThisTurn.
+ // Never infer it from an event count, a card sitting on the field, a
+ // deck inspection, a cancelled play, or an opponent's action.
  // 「自分のターン中」 with no other board fact. The turn check above
  // already rejected the opponent's turn when turn is own.
  if(condition.kind==='controllerTurn')return true;
  if(condition.kind==='ownEventUsedThisTurn')
-  return (s.zoneMoveEvents||[]).some(e=>e.turn===s.turn&&
-   e.owner===owner&&e.controller===owner&&e.from==='hand'&&
-   e.to==='outside'&&e.reason==='rule'&&
-   (d=>d?.type==='event'||d?.alsoEvent===true)(printed({uid:e.uid,cardId:e.cardId})));
+  return usedOwnEventThisTurn(s,owner,printed);
  // 「使用している」 is a successful play from hand, not a payment discard.
  // Characters enter the field and events leave to outside. Both are rule moves.
  if(condition.kind==='ownTraitUsedThisTurn')

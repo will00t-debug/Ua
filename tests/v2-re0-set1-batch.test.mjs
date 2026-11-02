@@ -939,6 +939,27 @@ test('name union, event-used draw and own-effect entry draw resolve',()=>{
  assert.equal(used.pending,null);
  assert.equal(used.players[0].deck.length,afterEvent-2);
 
+ const puckCounts={...gateCounts,'REZ-1-007':gateCounts['REZ-1-007']-1,'REZ-1-001':1};
+ assert.equal(Object.values(puckCounts).reduce((n,c)=>n+c,0),50);
+ assert.deepEqual(validateUniversalDeck(pack,puckCounts),[]);
+ const puckPacks=[pack,pack];
+ let puck=newUniversalMatch(puckPacks,{decks:[puckCounts,puckCounts],first:0,seed:4308});
+ fuel(puck,['REZ-1-007','REZ-1-008','REZ-1-022']);
+ puck=reach(puck,'main');
+ for(let i=0;i<2;i++){puck.players[0].apCards[i].inPlay=true;puck.players[0].apCards[i].ready=true;}
+ [puck]=playHand(puck,'REZ-1-001');
+ const afterPuck=puck.players[0].deck.length;
+ [puck]=playHand(puck,'REZ-1-026');
+ assert.equal(puck.pending,null);
+ assert.equal(puck.players[0].deck.length,afterPuck-2);
+ let sitting=newUniversalMatch(puckPacks,{decks:[puckCounts,puckCounts],first:0,seed:4309});
+ fuel(sitting,['REZ-1-007','REZ-1-008','REZ-1-022']);
+ sitting.players[0].front[3]=pull(sitting,0,'REZ-1-001');
+ sitting=reach(sitting,'main');
+ const sittingDeck=sitting.players[0].deck.length;
+ [sitting]=playHand(sitting,'REZ-1-026');
+ assert.equal(sitting.players[0].deck.length,sittingDeck-1);
+
  s=gate(4305);
  fuel(s,['REZ-1-086','REZ-1-086','REZ-1-086','REZ-1-086']);
  s=reach(s,'main');
@@ -5847,7 +5868,7 @@ test('Beatrice gains 500 BP after an own deck entry and activates only from that
  assert.equal(assertUniversalMatch(packs,self),true);
 });
 
-test('Puck counts as an event card, nullifies impact, and playing him is not using an event',()=>{
+test('Puck counts as an event card, nullifies impact, and playing him uses an event',()=>{
  let battle=wave(8501);
  battle=reach(battle,'main');
  const puck=stamp(battle,pull(battle,0,'REZ-1-001'));
@@ -5878,7 +5899,7 @@ test('Puck counts as an event card, nullifies impact, and playing him is not usi
  const emilia=pull(used,0,'REZ-1-105');
  used.players[0].front[0]=emilia;
  [used]=playFront(used,'REZ-1-001');
- assert.equal(universalBp(packs,used,at(used,0,emilia.uid)),3000);
+ assert.equal(universalBp(packs,used,at(used,0,emilia.uid)),4000);
  const offered=onlyTop(used,0,['REZ-1-001','REZ-1-007','REZ-1-008','REZ-1-016','REZ-1-068']);
  [used]=castEvent(used,'REZ-1-109');
  assert.equal(used.pending.kind,'effect-top-trait-event');

@@ -4,7 +4,9 @@
 // page copies AOT-2-032; that card's Chinese is translated from effectJa.
 // The engine matches effectJa. Traits inside ［特徵：］ stay the printed
 // Japanese token. Parallel art and AP cards are not deck cards. BP+ is a
-// design mark. Generated energy uses the icon filename, not the alt length.
+// design mark. Generated energy is the pip count in the official 発生エナジー
+// alt text. A trailing + is a separate printed sentence and is not folded
+// into gen. The icon filename number is a sprite id, not the pip count.
 // engineKind classifies effectJa. Registration is not an official FAQ certification.
 export const AOT2_FETCHED='2026-11-01';
 export const AOT2_SETS=Object.freeze(['EX10BT']);
@@ -36,7 +38,7 @@ export const AOT2_CARDS=
   ap: 1,
   bp: 2500,
   bpMark: "",
-  gen: 2,
+  gen: 1,
   genMark: "",
   type: "character",
   traits: [],
@@ -122,7 +124,7 @@ export const AOT2_CARDS=
   ap: 1,
   bp: 2500,
   bpMark: "",
-  gen: 3,
+  gen: 2,
   genMark: "",
   type: "character",
   traits: [],
@@ -165,7 +167,7 @@ export const AOT2_CARDS=
   ap: 1,
   bp: 1500,
   bpMark: "",
-  gen: 3,
+  gen: 2,
   genMark: "",
   type: "character",
   traits: [],
@@ -423,7 +425,7 @@ export const AOT2_CARDS=
   ap: 1,
   bp: 1000,
   bpMark: "",
-  gen: 2,
+  gen: 1,
   genMark: "",
   type: "character",
   traits: [
@@ -513,7 +515,7 @@ export const AOT2_CARDS=
   ap: 1,
   bp: 2500,
   bpMark: "",
-  gen: 3,
+  gen: 2,
   genMark: "",
   type: "character",
   traits: [
@@ -738,7 +740,7 @@ export const AOT2_CARDS=
   ap: 1,
   bp: 3500,
   bpMark: "",
-  gen: 3,
+  gen: 2,
   genMark: "",
   type: "character",
   traits: [
@@ -922,7 +924,7 @@ export const AOT2_CARDS=
   ap: 1,
   bp: 3000,
   bpMark: "",
-  gen: 2,
+  gen: 1,
   genMark: "",
   type: "character",
   traits: [
@@ -1216,7 +1218,7 @@ export const AOT2_CARDS=
   ap: 1,
   bp: 2500,
   bpMark: "+",
-  gen: 3,
+  gen: 2,
   genMark: "",
   type: "character",
   traits: [
@@ -1412,7 +1414,7 @@ export const AOT2_CARDS=
   ap: 1,
   bp: 0,
   bpMark: "",
-  gen: 3,
+  gen: 2,
   genMark: "",
   type: "field",
   traits: [],
@@ -1799,7 +1801,7 @@ export const AOT2_CARDS=
   ap: 1,
   bp: 2000,
   bpMark: "",
-  gen: 2,
+  gen: 1,
   genMark: "",
   type: "character",
   traits: [],
@@ -1842,7 +1844,7 @@ export const AOT2_CARDS=
   ap: 1,
   bp: 3000,
   bpMark: "+",
-  gen: 3,
+  gen: 2,
   genMark: "",
   type: "character",
   traits: [],
@@ -2018,7 +2020,7 @@ export const AOT2_CARDS=
   ap: 1,
   bp: 2000,
   bpMark: "",
-  gen: 3,
+  gen: 2,
   genMark: "",
   type: "character",
   traits: [
@@ -2243,7 +2245,7 @@ export const AOT2_CARDS=
   ap: 1,
   bp: 2000,
   bpMark: "+",
-  gen: 3,
+  gen: 2,
   genMark: "",
   type: "character",
   traits: [
@@ -2288,7 +2290,7 @@ export const AOT2_CARDS=
   ap: 1,
   bp: 2000,
   bpMark: "",
-  gen: 3,
+  gen: 2,
   genMark: "",
   type: "character",
   traits: [
@@ -2333,7 +2335,7 @@ export const AOT2_CARDS=
   ap: 1,
   bp: 2000,
   bpMark: "",
-  gen: 3,
+  gen: 2,
   genMark: "",
   type: "character",
   traits: [
@@ -2818,7 +2820,7 @@ export const AOT2_CARDS=
   ap: 1,
   bp: 2000,
   bpMark: "",
-  gen: 3,
+  gen: 2,
   genMark: "",
   type: "character",
   traits: [],
@@ -2906,7 +2908,7 @@ export const AOT2_CARDS=
   ap: 1,
   bp: 3000,
   bpMark: "",
-  gen: 3,
+  gen: 2,
   genMark: "",
   type: "character",
   traits: [
@@ -3086,7 +3088,7 @@ export const AOT2_CARDS=
   ap: 1,
   bp: 3000,
   bpMark: "",
-  gen: 3,
+  gen: 2,
   genMark: "",
   type: "character",
   traits: [
