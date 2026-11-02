@@ -1,4 +1,6 @@
 .coach-consent{display:flex;gap:.5rem;align-items:flex-start;margin:.6rem 0;font-weight:600;color:#1d2733}
+.online-match-bar .coach-consent{margin:0;align-items:center;font-size:12px;font-weight:650}
+.online-match-bar .coach-status{font-weight:500}
 .coach-consent input{margin-top:.2rem}
 .v2-shell .coach-bar{display:flex;flex-wrap:nowrap;gap:6px;align-items:center;margin:0;padding:3px 8px;min-height:0;overflow:hidden;border:1px solid #d5dde6;border-radius:8px;background:#f7f9fb;color:#1d2733;font-size:12px;line-height:1.2}
 .v2-shell .coach-bar .coach-consent{margin:0;align-items:center;gap:.28rem;font-size:12px;font-weight:650;white-space:nowrap}

@@ -79,12 +79,90 @@ function startPoll(){
   }
  },1200);
 }
-function applyRoom(next){
- const finished=next?.status==='finished'&&app.room?.status!=='finished'&&app.recordedCode!==next.code;
- const same=app.room&&next.revision===app.room.revision&&next.status===app.room.status&&!app.busy;
+let decisionLog=null;
+let decisionLoading=null;
+const decisionStub={
+ consent(){try{return localStorage.getItem('ua-v2-coach-consent')==='1';}catch{return false;}},
+ get queued(){return decisionLog?.queued||0;},
+ get uploaded(){return decisionLog?.uploaded||0;},
+ get lastError(){return decisionLog?.lastError||'';},
+ setConsent(enabled){
+  try{
+   if(enabled)localStorage.setItem('ua-v2-coach-consent','1');
+   else localStorage.removeItem('ua-v2-coach-consent');
+  }catch{/* A private browser can still play without storing the choice. */}
+  decisionLog?.setConsent(enabled);
+ },
+ arm(room,choice){return decisionLog?decisionLog.arm(room,choice):false;},
+ cancel(){decisionLog?.cancel();},
+ settle(room){return decisionLog?decisionLog.settle(room):undefined;},
+ result(room,endReason,extra){return decisionLog?decisionLog.result(room,endReason,extra):undefined;},
+ prepare(room){return decisionLog?decisionLog.prepare(room):Promise.resolve();},
+ start(){decisionLog?.start();},
+ flush(){return decisionLog?decisionLog.flush():Promise.resolve();}
+};
+function loadDecisions(){
+ if(decisionLog)return Promise.resolve(decisionLog);
+ if(decisionLoading)return decisionLoading;
+ try{
+  decisionLoading=import('./universal-v2/coach-online.mjs').then(mod=>{
+   decisionLog=mod.createOnlineCollector({
+    storage:localStorage,
+    deckById(id){return app.decks.find(deck=>deck.id===id)||null;},
+    onChange(){
+     const node=document.querySelector('[data-coach-status]');
+     if(!node||!decisionLog)return;
+     node.textContent=decisionStatus();
+     node.dataset.coachConsent=decisionLog.consent()?'1':'0';
+     node.dataset.coachQueued=String(decisionLog.queued||0);
+    }
+   });
+   return decisionLog;
+  }).catch(()=>null);
+ }catch{decisionLoading=Promise.resolve(null);}
+ return decisionLoading;
+}
+function decisions(){
+ void loadDecisions();
+ return decisionLog||decisionStub;
+}
+function decisionStatus(){
+ const log=decisions();
+ if(!log.consent())return '未記錄';
+ if(log.lastError)return '未送出';
+ if(log.queued)return '排隊 '+log.queued;
+ return '已傳 '+log.uploaded;
+}
+function consentControl(){
+ const log=decisions();
+ const input=el('input',{type:'checkbox','aria-label':'提供對戰紀錄改善 AI'});
+ input.checked=log.consent();
+ input.addEventListener('change',()=>{
+  log.setConsent(input.checked);
+  const node=document.querySelector('[data-coach-status]');
+  if(node){node.textContent=decisionStatus();node.dataset.coachConsent=input.checked?'1':'0';}
+ });
+ return el('label',{class:'coach-consent',title:'提供對戰紀錄改善 AI。預設關閉。只記錄你自己的決策。'},
+  input,'提供對戰紀錄改善 AI',
+  el('span',{class:'coach-status','data-coach-status':'1',text:decisionStatus()}));
+}
+function applyRoom(next,{label=true}={}){
+ const previous=app.room;
+ const finished=next?.status==='finished'&&previous?.status!=='finished'&&app.recordedCode!==next.code;
+ const same=previous&&next.revision===previous.revision&&next.status===previous.status&&!app.busy;
  if(app.room&&next?.revision!==app.room.revision){app.pick=null;app.inspectPick=null;app.inspectionPaused=false;}
+ void decisions().settle(next);
  app.room=next;app.busy=false;
- if(finished)noteOnlineResult(next);
+ if(finished){
+  noteOnlineResult(next);
+  if(label){
+   const winner=next.winner?.seat;
+   if(winner===0||winner===1)
+    void decisions().result(next,'finished',{completed:true,winner});
+   else void decisions().result(next,'incomplete',{completed:false,winner:null});
+  }
+ }
+ if(next?.status==='playing')void decisions().prepare(next);
  if(!same)render();
 }
 function noteOnlineResult(room){
@@ -296,6 +374,11 @@ function homeView(){
    el('span',{class:'arena-battle-eyebrow',text:'UNION ARENA · V2 MATCH LOBBY'}),
    el('h1',{text:'對戰大廳'}),
    el('p',{class:'muted',text:'選擇對戰方式，使用你的 V2 牌組展開對決。'})),
+  el('section',{class:'panel'},
+   el('h2',{text:'提供對戰紀錄改善 AI'}),
+   consentControl(),
+   el('p',{class:'muted',text:'預設關閉，並記住你的選擇。開啟後，你正常打牌就會在背景累積自己的決策；關閉會立刻停止，並清掉還沒上傳的佇列。線上對戰只收集已同意的你，不取得對手的隱藏手牌、未知牌序或未公開生命。不收集姓名、密碼或聊天內容。這不會讓目前的 AI 立刻變強。'}),
+   el('a',{href:'/coach.html',text:'查看、匯出或刪除我的紀錄'})),
   el('div',{class:'arena-entries arena-battle-modes'},
    el('a',{class:'arena-entry arena-entry-solo',href:'/universal-v2-preview.html'},el('span',{class:'arena-mode-icon',text:'⚔'}),el('strong',{text:'電腦對戰'}),el('span',{text:'選擇雙方牌組與 AI 難度，開始 V2 單人對戰。'}),el('span',{class:'arena-mode-cta',text:'設定電腦對戰 →'})),
    el('a',{class:'arena-entry arena-entry-online',href:'#online-match'},el('span',{class:'arena-mode-icon',text:'◎'}),el('strong',{text:'線上對戰'}),el('span',{text:'建立房間或輸入代碼，與其他玩家對戰。'}),el('span',{class:'arena-mode-cta',text:'前往線上房間 ↓'})),
@@ -1088,6 +1171,7 @@ function matchView(){
    phase,
    el('span',{class:'tag',text:room.youAreFirst?'你是先手':room.youAreFirst===false?'對方是先手':'先後手順序確認中'}),
    el('span',{class:'tag turn',text:room.status==='finished'?'對局結束':room.yourTurn?'輪到你':'等待對手'}),
+   consentControl(),
    app.inspectionPaused?inspection:null),
   el('div',{class:'online-table'},
    side((room.opponent?.username||'對手')+'（對手）',opp,room.opponent?.titleLabel||'',{setup:view.phase==='setup',engineSeat:1-seat}),
@@ -1299,16 +1383,29 @@ async function cancelRoom(){
  app.busy=false;render();
 }
 async function sendAction(index){
- if(!app.room)return;
+ if(!app.room||app.busy)return;
+ await loadDecisions();
+ const choice=(app.room.choices||[]).find(item=>item.index===index);
+ if(!choice)return;
+ decisions().arm(app.room,choice);
  app.busy=true;app.error='';render();
  try{applyRoom(await api('/api/rooms/'+app.room.code+'/actions',{method:'POST',body:{index}}));}
- catch(error){app.error=error.message;app.busy=false;render();}
+ catch(error){
+  if(error.status)decisions().cancel();
+  app.error=error.message;app.busy=false;render();
+ }
 }
 async function resign(){
  if(!app.room||!confirm('確定認輸？'))return;
  app.busy=true;
- try{applyRoom(await api('/api/rooms/'+app.room.code+'/resign',{method:'POST'}));}
- catch(error){app.error=error.message;app.busy=false;render();}
+ const room=app.room;
+ try{
+  const next=await api('/api/rooms/'+room.code+'/resign',{method:'POST'});
+  applyRoom(next,{label:false});
+  const winner=next.winner?.seat;
+  if(winner===0||winner===1)
+   void decisions().result(room,'conceded',{completed:false,winner});
+ }catch(error){app.error=error.message;app.busy=false;render();}
 }
 function leaveFinished(){
  stopPoll();app.room=null;app.notice='已離開對局。';history.replaceState(null,'','online.html');render();
@@ -1327,5 +1424,13 @@ async function boot(){
   }
  }catch(error){if(error.status!==401)app.error=error.message;}
  render();
+ await loadDecisions();
+ if(app.room)await decisions().prepare(app.room);
+ decisions().start();
 }
+if(typeof window?.addEventListener==='function')window.addEventListener('pagehide',()=>{
+ const room=app.room;
+ if(!room||room.status!=='playing'||!decisions().consent())return;
+ void decisions().result(room,'interrupted',{completed:false,winner:null,holdMs:4000});
+});
 boot();

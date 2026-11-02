@@ -1190,13 +1190,16 @@ function coachStatusText(){
  if(!coach?.consent())return '未同意，不會上傳對戰紀錄。';
  if(session?.signedIn===false)return '已同意，但尚未登入，不會上傳。';
  if(session?.lastError)return session.lastError;
- return '已上傳 '+(session?.uploaded||0)+' 筆。只記錄玩家對電腦時你看得到的資訊，AI 不會因此立刻變強。';
+ const queued=coach.queued||0;
+ return '已上傳 '+(session?.uploaded||0)+' 筆，佇列 '+(queued)+' 筆。只記錄你看得到的決策，AI 操作不會混進示範。上傳不會讓目前的 AI 立刻變強。';
 }
 function coachStatusShort(){
  const coach=app.coachBattle,session=coach?.session;
  if(!coach?.consent())return '未上傳';
  if(session?.signedIn===false)return '未登入';
  if(session?.lastError)return '未送出';
+ const queued=coach.queued||0;
+ if(queued)return '排隊 '+queued;
  return '已傳 '+(session?.uploaded||0);
 }
 function paintCoachStatus(){
@@ -1219,8 +1222,12 @@ function coachBar(){
  const box=el('div',{class:'coach-bar','aria-label':'教 AI'});
  const input=el('input',{type:'checkbox'});
  input.checked=coach.consent();
- input.addEventListener('change',()=>coach.setConsent(input.checked));
- const consent=el('label',{class:'coach-consent',title:'同意提供對戰紀錄改善 AI'},input,'紀錄');
+ input.addEventListener('change',()=>{
+  coach.setConsent(input.checked);
+  paintCoachStatus();
+  saveBattleProgress();
+ });
+ const consent=el('label',{class:'coach-consent',title:'提供對戰紀錄改善 AI'},input,'紀錄');
  const status=el('p',{class:'coach-status',text:coachStatusShort(),title:coachStatusText()});
  status.dataset.coachStatus='1';
  status.dataset.coachUploaded=String(coach.session.uploaded||0);
@@ -1239,10 +1246,11 @@ function coachBar(){
   }));
  return box;
 }
-function rememberHuman(action,state,replayIndex){
+function rememberHuman(action,state,replayIndex,legal){
  const coach=app.coachBattle;
  if(!coach?.session)return;
- void coach.noteHuman({packs:app.packs,state,action,replayIndex});
+ coach.noteHuman({packs:app.packs,state,action,replayIndex,legal});
+ if(app.state?.turn!==state.turn)void coach.flush();
 }
 function rememberAi(action,replayIndex){
  const coach=app.coachBattle;
@@ -1432,7 +1440,7 @@ function applyAction(a){
   const replayIndex=app.replay.actions.length;
   app.state=dispatchUniversalAction(app.packs,app.state,a,{actor:0});
   assertUniversalMatch(app.packs,app.state);
-  rememberHuman(a,previous,replayIndex);
+  rememberHuman(a,previous,replayIndex,legal);
   app.replay=appendUniversalReplay(app.replay,a,0);
   notePublicMove(app.packs,previous,app.state,a,0);
   pushHistory(publicPreviewActionLabel(app.packs,previous,app.state,a,0));
@@ -1445,6 +1453,7 @@ function undoMove(){
  if(!app.undo||app.busy)return;
  app.state=app.undo.state;app.history=app.undo.history;app.replay=app.undo.replay;
  app.publicMoves=app.undo.publicMoves||[];
+ app.coachBattle?.retractLast?.();
  app.undo=null;app.error='';app.selectedUid=null;app.entryMode=null;app.inspectionPaused=false;
  app.dismissedTriggerKeys.clear();
  saveBattleProgress();render();
@@ -1930,7 +1939,14 @@ if(!IS_BATTLE_PAGE){
    !window.confirm('返回對戰設定將結束這場對局。確定要離開嗎？')){
    event.preventDefault();return;
   }
+  if(app.state?.status==='playing')
+   app.coachBattle?.finish?.({completed:false,winner:null,endReason:'abandoned',review:false});
   resetAi();clearSoloBattle(sessionStorage);
+ });
+ window.addEventListener('pagehide',()=>{
+  const coach=app.coachBattle;
+  if(!coach?.session||coach.session.finished||app.state?.status!=='playing')return;
+  coach.finish({completed:false,winner:null,endReason:'interrupted',holdMs:4000,review:false});
  });
  if(loaded){
   app.launch=loaded;app.packs=loaded.packs;

@@ -324,7 +324,7 @@ export function createRepositories(sql){
     label.completed?1:0,label.winner,label.endReason,updatedAt,userId,matchId);
   },
   listCoachMatches(userId){
-   return sql.all(`SELECT id,engine,ai_version AS aiVersion,deck_json AS deckJson,created_at AS createdAt,updated_at AS updatedAt,
+   return sql.all(`SELECT id,engine,ai_version AS aiVersion,deck_json AS deckJson,header_json AS headerJson,created_at AS createdAt,updated_at AS updatedAt,
     completed,winner,end_reason AS endReason,
     (SELECT COUNT(*) FROM coach_steps s WHERE s.user_id=coach_matches.user_id AND s.match_id=coach_matches.id) AS steps,
     (SELECT COUNT(*) FROM coach_demos d WHERE d.user_id=coach_matches.user_id AND d.match_id=coach_matches.id) AS demos
