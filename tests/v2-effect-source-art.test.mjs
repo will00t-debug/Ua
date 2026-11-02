@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {controllerChoiceArt,pendingEffectSourceCard} from '../dist/universal-v2/preview-actions.mjs';
+import {controllerChoiceArt,pendingEffectSourceCard,pendingTextChoiceClass,
+ uiActionLabel,V2_PENDING_LABELS} from '../dist/universal-v2/preview-actions.mjs';
 
 const pack={cards:{
  'AOT-1-087':{name:'ミカサ・アッカーマン',color:'red',type:'character'},
@@ -105,6 +106,24 @@ test('a character effect shows that character and keeps hidden cards closed',()=
   players:state.players
  };
  assert.equal(controllerChoiceArt(packs,phase,{type:'choosePhaseOrder',key:'1-hange:0'})[0].cardId,'AOT-1-069');
+});
+
+test('paying an active entry names the AP cost and the decline separately',()=>{
+ const pay=uiActionLabel({type:'choosePayDeploy',mode:'pay'},{state:{pending:{ap:1}}});
+ const skip=uiActionLabel({type:'choosePayDeploy',mode:'skip'},{state:{pending:{ap:1}}});
+ assert.equal(pay,'支付 1 AP，以活動狀態登場');
+ assert.equal(skip,'不支付，留在場外');
+ assert.notEqual(pay,skip);
+ assert.equal(pay.includes('完成這個選擇'),false);
+ assert.equal(skip.includes('完成這個選擇'),false);
+ assert.equal(V2_PENDING_LABELS['effect-pay-deploy-self'],'是否支付 AP，讓此角色以活動狀態登場');
+ assert.equal(pendingTextChoiceClass({type:'choosePayDeploy',mode:'pay'}),'recommended');
+ assert.equal(pendingTextChoiceClass({type:'choosePayDeploy',mode:'skip'}),'quiet');
+ const preview=readFileSync(new URL('../dist/universal-v2-preview.mjs',import.meta.url),'utf8');
+ assert.match(preview,/是否支付 '\+payAp\+' AP，讓此角色以活動狀態登場/);
+ assert.match(preview,/條件已經滿足。支付後再點亮起的格子/);
+ assert.match(preview,/點下面的角色，再點亮起的前線或能源格/);
+ assert.match(preview,/以活動狀態登場 · 再點格子/);
 });
 
 test('the battle dialog draws the effect source above the choice buttons',()=>{

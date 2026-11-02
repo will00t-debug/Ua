@@ -242,6 +242,8 @@ export const V2_PENDING_LABELS=Object.freeze({
  'raid-effect-order':'突襲能力結算順序',
  'effect-mark-opp-start':'可選 1 個敵方前線角色，下一個敵方回合開始時退場',
  'effect-move-order':'選擇同時取得的移動觸發處理順序',
+ 'effect-pay-deploy-self':'是否支付 AP，讓此角色以活動狀態登場',
+ 'effect-deploy-self-active':'選擇以活動狀態登場的位置',
  'effect-rest-tuck':'是否 REST 角色，放置剛送至場外的手牌',
  'effect-tuck-moved':'可將該場外卡裏向放在自身下方',
  'opening-mulligan':'開局手牌調度（每人最多一次）',
@@ -821,6 +823,13 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseMamiActive':return '使 '+name()+' 活動';
   case 'chooseDiscardNamedEnergy':return '棄掉事件 '+name();
   case 'chooseRestLock':return action.uid===null?'不鎖定這次休息':'休息鎖定 '+name();
+  case 'choosePayDeploy':{
+   if(action.mode!=='pay')return '不支付，留在場外';
+   const ap=state?.pending?.ap;
+   const cost=Number.isInteger(ap)&&ap>0?ap+' AP':'AP';
+   return '支付 '+cost+'，以活動狀態登場';
+  }
+  case 'chooseDeploySelfActive':return '以活動狀態放到'+destination()+' '+(action.slot+1);
   case 'kmr':case 'kmr2':case 'iys':case 'kjn':case 'aot':case 'aot2':
    return closedTitleChoiceLabel(action,{pack,state});
   default:return '完成這個選擇';
