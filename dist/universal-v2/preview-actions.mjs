@@ -256,7 +256,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-removed-okabe-raid':'從移除區使岡部倫太郎突襲',
  'effect-look-take':'查看牌庫，選擇加入手牌或放回牌底',
  'effect-discard-mode':'選擇要放到場外的手牌',
- mmm2:'魔法少女小圓第二彈選擇',
+ mmm2:'魔法少女小圓效果選擇',
  kmr2:'假面騎士第二彈效果選擇',
  'phase-order':'選擇同時發動的階段效果順序',
  'effect-grant-cause':'是否給予這次退場原因的角色阻擋下限',
@@ -371,7 +371,7 @@ export function uiCardLabel(pack,state,uid){
 // `recommended` is the raid-red outline. An on-play or activate branch is
 // not a raid, even when the card itself has a raid keyword. Only a choice
 // whose mode is raid keeps that frame.
-const CLOSED_CHOICE_TYPES=new Set(['kmr','kmr2','iys','kjn','aot','aot2']);
+const CLOSED_CHOICE_TYPES=new Set(['kmr','kmr2','iys','kjn','aot','aot2','mmm2']);
 export function pendingTextChoiceClass(action){
  const closed=CLOSED_CHOICE_TYPES.has(action?.type);
  const quiet=action?.mode==='skip'||action?.mode==='done'||(!closed&&action?.uid===null);
@@ -625,9 +625,146 @@ function unlabeledChoiceLabel(action,{pack,state}={}){
  if(declining)return pick[0];
  return card(pick[1])+place;
 }
+function mmm2PrintedId(pack,state,uid){
+ if(!pack||!state||typeof uid!=='string')return '';
+ const owner=Number(uid.split('-')[0]);
+ const player=state.players?.[owner];
+ const source=Array.isArray(pack)?pack[owner]:pack;
+ if(!player||!source?.cards)return '';
+ const zones=[player.front,player.energy,player.hand,player.outside,player.removed,
+  player.life,player.lifeRevealed];
+ for(const cards of zones){
+  if(!Array.isArray(cards))continue;
+  const physical=cards.find(card=>card?.uid===uid);
+  if(physical)return source.cards[physical.cardId]?.id||physical.cardId||'';
+ }
+ return '';
+}
+function mmm2Seat(action){
+ const line=action.line==='energy'?'能源線':'前線';
+ return line+' '+(action.slot+1)+(action.replaceUid?'（替換原位置）':'');
+}
+const MMM2_ACTIVATE={
+ 'MMM-2-007':{'mmm2:0':'休息自身。場外事件有 6 張以上時，再發動登場時'},
+ 'MMM-2-008':{'mmm2:0':'休息自身，抽 1 張，並將 1 張手牌放到場外'},
+ 'MMM-2-012':{
+  'mmm2:0':'將 1 張〈鹿目圓〉返回手牌',
+  'mmm2:1':'將場外的〈鹿目圓〉放到牌組底'
+ },
+ 'MMM-2-016':{
+  'mmm2:0':'使 1 張其他能源需求 4 以下的角色退場',
+  'mmm2:1':'公開牌組頂，留在上面或放到場外'
+ },
+ 'MMM-2-017':{'mmm2:0':'休息自身，使 1 張其他角色這個回合 BP＋1000'},
+ 'MMM-2-019':{'mmm2:0':'休息自身，抽 1 張，並將 1 張手牌放到場外'},
+ 'MMM-2-025':{'mmm2:0':'將 1 張前線的三日月莊小隊移到能源線'},
+ 'MMM-2-028':{'mmm2:0':'選擇最多 2 張角色，這個回合 BP＋1000'},
+ 'MMM-2-040':{'mmm2:0':'休息自身，使 1 張其他三日月莊小隊這個回合 BP＋1000'},
+ 'MMM-2-043':{'mmm2:0':'將 1 張其他角色放到牌組上面'},
+ 'MMM-2-044':{
+  'mmm2:0':'公開牌組頂，留在上面或放到場外',
+  'mmm2:1':'將這張角色轉為活動'
+ },
+ 'MMM-2-047':{'mmm2:0':'將 1 張手牌放到牌組上面'},
+ 'MMM-2-049':{'mmm2:0':'抽 1 張，並將 1 張手牌放到牌組上面'},
+ 'MMM-2-051':{'mmm2:0':'休息自身並支付 1 AP，公開牌組頂並加入手牌'},
+ 'MMM-2-057':{'mmm2:0':'休息並退場，從手牌或場外以休息狀態登場'},
+ 'MMM-2-070':{'mmm2:0':'休息自身，抽 1 張，並將這張角色正面朝上放入生命'},
+ 'MMM-2-071':{'mmm2:0':'將 1 張生命加入手牌'},
+ 'MMM-2-072':{'mmm2:0':'從兩項效果中選擇最多 2 項'}
+};
+const MMM2_FORK={
+ 'MMM-2-003':{
+  a:'抽 1 張（場上有最終形態鹿目圓，且這張是從手牌登場）',
+  b:'可將移除區的最終形態鹿目圓放到場外'
+ },
+ 'MMM-2-056':{
+  a:'將 1 張 AP 轉為活動，這張角色這個回合 BP＋1000',
+  b:'這個回合 BP＋1000，並獲得衝擊 1'
+ },
+ 'MMM-2-072':{
+  a:'這張角色這個回合 BP＋1000',
+  b:'選擇 1 張其他角色，這個回合 BP＋1000'
+ }
+};
+const MMM2_TARGET={
+ u001:'將這張手牌移入移除區',
+ u001out:'將這張場外角色移入移除區',
+ handOut:'將這張手牌放到場外',
+ u009:'這個回合使這張角色 BP＋2000',
+ u010:'將這張手牌移入移除區',
+ u011:'將這張手牌放到場外',
+ u011c:'使這張角色活動，這個回合 BP＋2500',
+ u012a:'將這張〈鹿目圓〉返回手牌',
+ u012b:'將這張場外卡放到牌組底',
+ u012look:'將這張卡加入手牌，其餘放到場外',
+ u014:'這個回合使這張角色 BP－1000',
+ u016a:'使這張角色退場',
+ buff:'這個回合使這張角色 BP＋1000',
+ u018:'選擇這張角色，接著以休息狀態登場',
+ u023:'將這張手牌放到場外',
+ buffMany:'這個回合使這張角色 BP＋1000',
+ u031:'將這張角色返回手牌',
+ swap:'與這張前線角色交換位置',
+ u041:'公開這張卡並加入手牌',
+ u043:'將這張角色放到牌組上面',
+ u045lock:'鎖定這張角色，直到下一個自己的回合',
+ u046:'公開這張卡並加入手牌',
+ u047:'將這張手牌放到牌組上面',
+ handTop:'將這張手牌放到牌組上面',
+ u051:'將這張手牌放到場外',
+ u055:'這個回合使這張角色 BP＋1000，並獲得衝擊 1',
+ u060:'將這張卡加入手牌',
+ u061:'使這張角色退場',
+ u063:'將這張手牌放到場外',
+ u067:'這張角色攻擊沒被阻擋時，可以抽 1 張',
+ u071:'將這張生命加入手牌',
+ u073:'這個回合使這張角色 BP＋2000',
+ restFoe:'使這張角色休息',
+ u003b:'將這張移除區的卡放到場外'
+};
+function mmm2ActivateLabel(action,{pack,state}={}){
+ const id=mmm2PrintedId(pack,state,action.uid);
+ const line=MMM2_ACTIVATE[id]?.[action.mode]||'起動這張角色的主要能力';
+ const name=pack&&state?uiCardLabel(pack,state,action.uid):'';
+ return '起動主要：'+line+(name&&name!=='指定卡片'&&name!=='卡片'?'：'+name:'');
+}
+function mmm2ChoiceLabel(action,{pack,state}={}){
+ const mode=action?.mode;
+ const step=state?.pending?.step;
+ const card=text=>withClosedCard(pack,state,action,text);
+ if(mode==='skip'){
+  if(step==='drawOpt')return '不抽牌';
+  if(step==='u069')return '不發動登場時';
+  return '不發動';
+ }
+ if(mode==='done')return '不選擇後續效果';
+ if(mode==='do'){
+  if(step==='drawOpt')return '抽 1 張';
+  if(step==='u069')return '再發動登場時效果';
+  return '發動這個效果';
+ }
+ if(mode==='a'||mode==='b'){
+  const id=state?.pending?.id;
+  return MMM2_FORK[id]?.[mode]||(mode==='a'?'選擇第一項':'選擇第二項');
+ }
+ if(mode==='top'||mode==='bottom'||mode==='outside'){
+  if(action.uid)return card(mode==='outside'?'將這張手牌放到場外':'將這張手牌放到牌組上面');
+  if(mode==='bottom')return '放到牌組底';
+  if(mode==='outside')return '放到場外';
+  return step==='placeOne'?'放到牌組上面':'留在牌組上面';
+ }
+ if(Number.isInteger(action.slot)){
+  const moving=step==='moveLine'||step==='u045';
+  return card((moving?'將這張角色移到':'以休息狀態放到')+mmm2Seat(action));
+ }
+ const text=MMM2_TARGET[step];
+ return text?card(text):card('選擇這張卡');
+}
 export function uiActionLabel(action,{pack,state}={}){
- if(action?.type==='mmm2'||(action?.type==='activate'&&typeof action?.mode==='string'&&action.mode.startsWith('mmm2:')))
-  return action.mode==='skip'?'跳過':action.mode==='do'?'發動':'魔法少女小圓第二彈選擇';
+ if(action?.type==='activate'&&typeof action?.mode==='string'&&action.mode.startsWith('mmm2:'))
+  return mmm2ActivateLabel(action,{pack,state});
+ if(action?.type==='mmm2')return mmm2ChoiceLabel(action,{pack,state});
  const name=()=>pack&&state?uiCardLabel(pack,state,action.uid):'指定卡片';
  const destination=()=>action.line==='energy'?'能源線':'前線';
  const suffix=()=>action.slot===undefined?'':' · '+destination()+' '+(action.slot+1);
@@ -1577,7 +1714,7 @@ const NORMAL_BOARD_ENTRY=new Set([
 const MODE_BOARD_ENTRY=new Set([
  'choosePrintedRestRaid','chooseOutsideRestOrRaid','chooseHandRestOrRaid',
  'chooseNamedOutside','chooseOutsideTraitlessRest','chooseRemovedRestPair',
- 'chooseOutsideOrRest','chooseSayakaReenter','kmr','kjn'
+ 'chooseOutsideOrRest','chooseSayakaReenter','kmr','kjn','mmm2'
 ]);
 export function boardEntryMode(action){
  if(!action||typeof action.uid!=='string'||!action.uid)return null;
