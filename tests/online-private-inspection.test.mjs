@@ -64,6 +64,19 @@ test('a card with two positions offers both exact server action indices, not a f
  assert.ok(shown.cards[0].actions.every(a=>typeof a.label==='string'&&a.label.length));
 });
 
+test('a closed-title look shows the whole window and leaves nonmatches unselectable',()=>{
+ const legal=[
+  {type:'kmr',mode:'done'},
+  {type:'kmr',mode:'take',uid:'mine-0'},
+  {type:'kmr',mode:'skip'}
+ ];
+ const shown=onlinePrivateGallery({kind:'kmr',inspected:looked('KMR-1-078'),options:[]},
+  legal,[{},{}],pending('kmr'));
+ assert.deepEqual(shown.cards.map(card=>card.uid),['mine-0','mine-1']);
+ assert.deepEqual(shown.cards[0].actions.map(action=>action.index),[1]);
+ assert.deepEqual(shown.cards[1].actions,[]);
+});
+
 test('IYS only offers the legal take/next action, not skip or unrelated effect actions',()=>{
  const legal=[
   {type:'iys',mode:'skip',uid:'mine-0'},

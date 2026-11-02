@@ -154,7 +154,7 @@ function loadCovers(){
  // Loaded only after login. The account script itself stays a classic script so
  // the login screen can boot even when the card catalogue is unavailable.
  try{
-  Promise.all([import('./title-registry.mjs'),import('./deck-gallery.mjs')]).then(([titles,gallery])=>{
+  Promise.all([import('./title-registry.mjs?v=20261102kmr2ship1'),import('./deck-gallery.mjs')]).then(([titles,gallery])=>{
    coverCatalogue={titles:titles.TITLES,summarize:gallery.summarizeDeck};
    if(app.user)render();
   }).catch(()=>{});
@@ -395,10 +395,13 @@ const NORMAL_BOARD_ENTRY=new Set([
   'chooseOutsideColorTraitActive','chooseHandFreshName','chooseHandRestEntry',
   'chooseRaidBaseRest','chooseHandFrontActive','chooseDeploySelfActive'
 ]);
+// kmr character entry uses this set too: select the physical card, then
+// 突襲進場 or 普通進場 only when the print allows both, then tap the cell.
+// Do not list one execute button per destination.
 const MODE_BOARD_ENTRY=new Set([
  'choosePrintedRestRaid','chooseOutsideRestOrRaid','chooseHandRestOrRaid',
  'chooseNamedOutside','chooseOutsideTraitlessRest','chooseRemovedRestPair',
- 'chooseOutsideOrRest','chooseSayakaReenter'
+ 'chooseOutsideOrRest','chooseSayakaReenter','kmr'
 ]);
 function boardEntryMode(action){
  if(!action||typeof action.uid!=='string'||!action.uid)return null;
@@ -457,8 +460,9 @@ function entryClickPlan({selectedUid,entryMode,raidBaseUid=null,line,slot,slotUi
   const hits=selection.normal.filter(action=>entryDestination(action,line,slot,slotUid));
   return hits.length?{type:'entry',mode:'normal',actions:hits}:{type:'entry-wait',mode:'normal'};
  }
- // Effect entry: first choose the card, then its legal mode (if two options
- // are printed), and tap the destination. The action owns its Raid base UID.
+ // Effect entry, including kmr: first choose the card, then its legal mode
+ // (if two options are printed), and tap the destination. The action owns
+ // its Raid base UID. Do not list one button per destination.
  const mode=entryMode==='raid'&&selection.raid.length?'raid':
   entryMode==='normal'&&selection.normal.length?'normal':
   selection.needsMode?null:selection.raid.length?'raid':'normal';
@@ -729,6 +733,10 @@ function dockChoices(room){
   return visibleActionsForCard(legal,app.pick.uid).filter(action=>!boardEntryMode(action)&&!['move','step','next'].includes(action.type));
  return legal.filter(action=>action.type&&!action.uid&&!['next','play','move','step','attack','raid'].includes(action.type));
 }
+function choiceIsBoardEntry(room,index){
+ const full=(room?.choices||[]).find(choice=>choice.index===index);
+ return !!(full&&boardEntryMode(full));
+}
 function onlineInspectionGallery(room){
  const inspection=room?.yourTurn?room.inspection:null;
  if(!inspection||!Array.isArray(inspection.cards)||!inspection.cards.length)return null;
@@ -765,28 +773,38 @@ function onlineInspectionGallery(room){
   img.addEventListener('error',()=>{
    if(!img.src.endsWith('/assets/mark.svg'))img.src='assets/mark.svg';
   });
+  const entry=enabled&&card.actions.some(action=>choiceIsBoardEntry(room,action.index));
   const choice=el('button',{type:'button',class:'online-inspection-card '+
    (enabled?'eligible':'ineligible')+(picking?' selected':''),
    disabled:!enabled,'aria-disabled':String(!enabled),
-   'aria-label':(card.name||card.cardId)+(enabled?'，符合條件，可選擇':'，不符合條件，無法選擇'),
+   'aria-label':(card.name||card.cardId)+(entry?'，選擇登場，再選方式與格子':
+    enabled?'，符合條件，可選擇':'，不符合條件，無法選擇'),
    ...(enabled?{onClick:()=>{if(app.busy)return;
+    if(card.actions.some(action=>choiceIsBoardEntry(room,action.index))){
+     app.pick={uid:card.uid,entryMode:null,raidBaseUid:null,options:null};
+     app.inspectPick=null;app.zone=null;render();
+     return;
+    }
     if(card.actions.length===1){sendAction(card.actions[0].index);return;}
     app.inspectPick=picking?null:card.uid;render();
    }}:{})},
    el('span',{class:'online-inspection-art'},img),
    el('strong',{text:card.name||card.cardId}),
-   el('small',{text:enabled?(card.actions.length>1?'選擇方式／位置':
+   el('small',{text:enabled?(entry?'選擇登場 · 再選方式與格子':card.actions.length>1?'選擇方式／位置':
     (card.caption||'符合條件 · 點選此牌')):
     (card.caption||'不符合條件 · 無法選擇')}));
   grid.append(choice);
   if(picking){
-   const options=el('div',{class:'online-inspection-options',
-    'aria-label':(card.name||card.cardId)+'可用操作'});
-   for(const action of card.actions)options.append(el('button',{
-    type:'button',disabled:app.busy,text:action.label,
-    onClick:()=>sendAction(action.index)
-   }));
-   grid.append(options);
+   const listed=card.actions.filter(action=>!choiceIsBoardEntry(room,action.index));
+   if(listed.length){
+    const options=el('div',{class:'online-inspection-options',
+     'aria-label':(card.name||card.cardId)+'可用操作'});
+    for(const action of listed)options.append(el('button',{
+     type:'button',disabled:app.busy,text:action.label,
+     onClick:()=>sendAction(action.index)
+    }));
+    grid.append(options);
+   }
   }
  }
  gallery.append(grid);

@@ -163,7 +163,12 @@ test('inspected nonmatching cards are visible but disabled',()=>{
   {uid:'top-b',cardId:'BLC-1-002',name:'乙'}]};
  const legal=[{type:'chooseTopFiltered',uid:null},{type:'chooseTopFiltered',uid:'top-b'}];
  assert.deepEqual(inspectedPendingChoiceCards(window,legal).map(c=>!!c.action),[false,true]);
- assert.deepEqual(inspectedPendingChoiceCards({...window,kind:'other'},legal),[]);
+ assert.deepEqual(inspectedPendingChoiceCards({...window,kind:'other'},legal).map(c=>!!c.action),[false,true]);
+ const future=inspectedPendingChoiceCards({kind:'future-title',inspected:[
+  {uid:'top-a',cardId:'NEW-1',name:'甲'},
+  {uid:'top-b',cardId:'NEW-2',name:'乙'}]},
+  [{type:'future-title',mode:'take',uid:'top-b'},{type:'future-title',mode:'done'}]);
+ assert.deepEqual(future.map(c=>[c.uid,!!c.action]),[['top-a',false],['top-b',true]]);
  const searched=inspectedPendingChoiceCards({kind:'effect-search-deck',inspected:[
   {uid:'deck-a',cardId:'Q00',name:'能源'},
   {uid:'deck-b',cardId:'Q02',name:'Scout'}]},

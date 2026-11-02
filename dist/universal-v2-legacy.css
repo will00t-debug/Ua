@@ -244,6 +244,19 @@ body{margin:0;background:#f2f3f5;color:#272b31;font:14px/1.5 system-ui,-apple-sy
 .v2-shell .action-list button.choice-card.v2-ineligible .choice-card-name{color:#c4c7ca}
 .v2-shell .action-list button.choice-card.v2-ineligible .choice-card-caption{color:#aeb3ba;font-weight:700}
 @media(max-width:620px){.v2-shell .action-list.choice-gallery{grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}.v2-shell .choice-card-name{font-size:11px}}
+.v2-shell .v2-reveal-focus{display:grid;grid-template-columns:104px minmax(0,1fr);gap:8px 12px;align-items:start;margin:0 0 12px;padding:10px;border:1px solid #c45b58;border-radius:12px;background:#241c1a}
+.v2-shell .v2-reveal-focus .choice-card-art{grid-row:1 / span 2;width:104px;height:auto;aspect-ratio:63/88;align-self:start}
+.v2-shell .v2-reveal-focus .choice-card-art img{width:100%;height:auto;aspect-ratio:63/88;object-fit:contain}
+.v2-shell .v2-reveal-copy{min-width:0}
+.v2-shell .v2-reveal-copy h3{margin:0;color:#f7f4ee;font-size:16px;line-height:1.35}
+.v2-shell .v2-reveal-copy .note{margin:2px 0 0;color:#f0d2cc}
+.v2-shell .v2-reveal-effect{grid-column:1 / -1;margin:0;max-height:28vh;overflow:auto;white-space:pre-wrap;line-height:1.5;font-size:13px;color:#f4f0e8}
+@media(max-width:620px){
+ .v2-shell .v2-reveal-focus{grid-template-columns:88px minmax(0,1fr);padding:8px}
+ .v2-shell .v2-reveal-focus .choice-card-art{width:88px;height:auto}
+ .v2-shell .v2-reveal-copy h3{font-size:15px}
+ .v2-shell .v2-reveal-effect{max-height:22vh;font-size:12.5px}
+}
 @media(max-width:700px){
  .v2-shell #match-view .arena{border-width:4px;border-radius:0 0 12px 12px}
  .v2-shell #match-view .playerArea{padding:10px 6px}

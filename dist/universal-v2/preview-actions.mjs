@@ -852,15 +852,22 @@ function walkOwned(card,accept){
  return null;
 }
 // The acting player already looked at this exact deck prefix. Show every
-// card in that window, including ones that cannot be chosen. Never walk the
-// rest of the deck or the opponent's hidden zones.
+// card in that window, including ones that cannot be chosen. Search, look at
+// the top, and mill use the same rule. Never walk the rest of the deck or
+// the opponent's hidden zones. A new closed title inherits this by storing
+// the full window on pending.uids, data.uids, or data.window.
 export function controllerDeckWindowCards(state,packs,legal){
  const q=state?.pending;
- if(!q||q.player!==0||!Array.isArray(q.uids)||!q.uids.length)return [];
+ const listed=Array.isArray(q?.uids)&&q.uids.length?q.uids
+  :q?.step==='lookOrder'&&Array.isArray(q?.data?.left)?q.data.left
+  :Array.isArray(q?.data?.uids)&&q.data.uids.length?q.data.uids
+  :Array.isArray(q?.data?.window)&&q.data.window.length?q.data.window
+  :Array.isArray(q?.data?.windowUids)?q.data.windowUids:null;
+ if(!q||q.player!==0||!Array.isArray(listed)||!listed.length)return [];
  const deck=state.players?.[0]?.deck;
  if(!Array.isArray(deck))return [];
- const window=deck.slice(0,q.uids.length);
- if(window.length!==q.uids.length||window.some((card,index)=>card?.uid!==q.uids[index]))
+ const window=deck.slice(0,listed.length);
+ if(window.length!==listed.length||window.some((card,index)=>card?.uid!==listed[index]))
   return [];
  const order=q.phase==='order';
  return window.map(physical=>{
@@ -874,8 +881,8 @@ export function controllerDeckWindowCards(state,packs,legal){
  });
 }
 // Artwork for one legal choice. Own deck, life and facedown layers are used
-// only when this action already names that physical UID. Opponent hand, deck
-// and unrevealed life are never opened.
+// only when this action already names that physical UID. Opponent hand, life
+// and every card under a revealed deck top stay closed.
 function publicRevealChoice(pack,state,uid){
  if(typeof uid!=='string'||!uid)return null;
  const hit=(state.publicReveals||[]).find(entry=>entry?.uid===uid&&
@@ -901,13 +908,45 @@ export function controllerChoiceArt(pack,state,action){
  });
  if(fromZones.length||ids.length)return fromZones;
  // A deck-top choice names the card on the pending step. Own zones are visible
- // to the controller. An opponent card is shown only after it was published.
+ // to the controller. A published opponent card uses that public identity.
+ // Otherwise only deck[0] of this reveal step is readable.
  const pendingUid=state.pending?.data?.uid;
  if(typeof pendingUid!=='string')return [];
  const own=findControllerCard(pack,state,pendingUid);
  if(own)return [own];
  const revealed=publicRevealChoice(pack,state,pendingUid);
- return revealed?[revealed]:[];
+ if(revealed)return [revealed];
+ // 公開 already happened. If the public list was dropped, the controller may
+ // still see the one deck card this choice names. Never walk past deck[0].
+ const named=namedRevealDeckTop(pack,state,pendingUid);
+ return named?[named]:[];
+}
+// The pending step already names one revealed deck card. Read that top card
+// only. Opponent hand, life, and every card under the top stay closed.
+function namedRevealDeckTop(pack,state,uid){
+ const q=state?.pending;
+ if(!q||q.player!==0||typeof uid!=='string')return null;
+ let owner=null;
+ if(q.step==='oppTop')
+  owner=q.data?.owner===0||q.data?.owner===1?q.data.owner:Number(String(uid).split('-')[0]);
+ else if(q.step==='topPlace'||q.step==='revealTop')owner=0;
+ else return null;
+ if((owner!==0&&owner!==1)||(q.step!=='oppTop'&&owner!==0))return null;
+ const top=state.players?.[owner]?.deck?.[0];
+ if(!top||top.uid!==uid||typeof top.cardId!=='string'||!top.cardId)return null;
+ return printedChoice(pack,owner,top);
+}
+const REVEAL_FOCUS_STEPS=new Set(['oppTop','topPlace','revealTop']);
+// One card the current choice is about. Multi-card picks keep their own buttons.
+export function pendingFocusCard(pack,state){
+ const q=state?.pending;
+ if(!q||q.player!==0||!REVEAL_FOCUS_STEPS.has(q.step))return null;
+ const actions=Array.isArray(q.actions)?q.actions:[];
+ if(actions.some(action=>typeof action?.uid==='string'&&action.uid))return null;
+ const art=controllerChoiceArt(pack,state,{type:q.kind||'focus'});
+ if(art.length!==1||typeof art[0]?.cardId!=='string'||!art[0].cardId)return null;
+ const zone=q.step==='oppTop'||art[0].side===1?'對手牌組頂':'你的牌組頂';
+ return {...art[0],zone};
 }
 function findControllerCard(pack,state,uid){
  const owner=Number(String(uid).split('-')[0]);
@@ -952,31 +991,39 @@ export function pendingChoiceCards(option){
  }
  return cards;
 }
-// The controller sees every inspected card in deck order. A card with exactly
-// one non-positional legal action is clickable. Cards that need a destination
-// keep their existing buttons. Cards with no legal action stay disabled.
+// The controller sees every inspected card in deck order. Search, look at the
+// top, and mill all use this list. A card with exactly one non-positional
+// legal action is clickable. Cards that need a destination keep their
+// existing buttons. Cards with no legal action stay on screen, disabled.
+// A new pending kind does not need a new entry here: if it carries inspected,
+// every card is shown. Closed titles match actions of their own kind.
+const INSPECTED_ACTION_TYPES={
+ 'effect-top-filter-choice':'chooseTopFiltered',
+ 'effect-top-filter-many-choice':'chooseTopFilteredMany',
+ 'effect-top-trait-event':'chooseTopTraitEvent',
+ 'effect-top-trait-outside':'chooseTopTraitOutside',
+ 'effect-search-deck':'chooseDeckSearch',
+ 'effect-search-deck-multi':'chooseDeckSearchMulti',
+ 'effect-wyrm-look':'chooseWyrmLook',
+ 'effect-top-character-outside':'chooseTopCharacterOutside',
+ 'effect-top-deploy':'chooseTopDeploy',
+ 'effect-top-deploy-rest':'chooseTopDeployRest',
+ iys:'iys',kmr:'kmr',kmr2:'kmr2',kjn:'kjn',aot:'aot',aot2:'aot2',mmm2:'mmm2'
+};
 export function inspectedPendingChoiceCards(privateChoices,legal){
- const type={
-  'effect-top-filter-choice':'chooseTopFiltered',
-  'effect-top-filter-many-choice':'chooseTopFilteredMany',
-  'effect-top-trait-event':'chooseTopTraitEvent',
-  'effect-top-trait-outside':'chooseTopTraitOutside',
-  'effect-search-deck':'chooseDeckSearch',
-  'effect-search-deck-multi':'chooseDeckSearchMulti',
-  'effect-wyrm-look':'chooseWyrmLook',
-  'effect-top-character-outside':'chooseTopCharacterOutside',
-  'effect-top-deploy':'chooseTopDeploy',
-  'effect-top-deploy-rest':'chooseTopDeployRest',
-  iys:'iys'
- }[privateChoices?.kind];
- if(!type||!Array.isArray(privateChoices?.inspected)||!Array.isArray(legal))return [];
+ const inspected=privateChoices?.inspected;
+ if(!Array.isArray(inspected)||!Array.isArray(legal))return [];
+ const kind=privateChoices?.kind;
+ const type=INSPECTED_ACTION_TYPES[kind]||(CLOSED_CHOICE_TYPES.has(kind)?kind:null);
  const seen=new Set();
- return privateChoices.inspected.flatMap(card=>{
+ return inspected.flatMap(card=>{
   if(!card||typeof card.uid!=='string'||!card.uid||
    typeof card.cardId!=='string'||!card.cardId||seen.has(card.uid))return [];
   seen.add(card.uid);
-  const matches=legal.filter(a=>a?.type===type&&a.uid===card.uid&&
-   (type!=='iys'||a.mode==='take'||a.mode==='next'));
+  const matches=legal.filter(a=>a?.uid===card.uid&&
+   (type?a.type===type:true)&&
+   a.mode!=='skip'&&a.mode!=='done'&&
+   (kind!=='iys'||a.mode==='take'||a.mode==='next'));
   const positional=matches.some(a=>a.line!=null||Number.isInteger(a.slot));
   return [{uid:card.uid,cardId:card.cardId,
    name:typeof card.name==='string'&&card.name?card.name:card.cardId,
@@ -1241,10 +1288,13 @@ const NORMAL_BOARD_ENTRY=new Set([
   'chooseOutsideColorTraitActive','chooseHandFreshName','chooseHandRestEntry',
   'chooseRaidBaseRest','chooseHandFrontActive','chooseDeploySelfActive'
 ]);
+// kmr character entry uses this set too: select the physical card, then
+// 突襲進場 or 普通進場 only when the print allows both, then tap the cell.
+// Do not list one execute button per destination.
 const MODE_BOARD_ENTRY=new Set([
  'choosePrintedRestRaid','chooseOutsideRestOrRaid','chooseHandRestOrRaid',
  'chooseNamedOutside','chooseOutsideTraitlessRest','chooseRemovedRestPair',
- 'chooseOutsideOrRest','chooseSayakaReenter'
+ 'chooseOutsideOrRest','chooseSayakaReenter','kmr'
 ]);
 export function boardEntryMode(action){
  if(!action||typeof action.uid!=='string'||!action.uid)return null;
@@ -1306,8 +1356,9 @@ export function entryClickPlan({selectedUid,entryMode,raidBaseUid=null,line,slot
   const hits=selection.normal.filter(action=>entryDestination(action,line,slot,slotUid));
   return hits.length?{type:'entry',mode:'normal',actions:hits}:{type:'entry-wait',mode:'normal'};
  }
- // Effect entry: first choose the card, then its legal mode (if two options
- // are printed), and tap the destination. The action owns its Raid base UID.
+ // Effect entry, including kmr: first choose the card, then its legal mode
+ // (if two options are printed), and tap the destination. The action owns
+ // its Raid base UID. Do not list one button per destination.
  const mode=entryMode==='raid'&&selection.raid.length?'raid':
   entryMode==='normal'&&selection.normal.length?'normal':
   selection.needsMode?null:selection.raid.length?'raid':'normal';
