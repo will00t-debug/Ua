@@ -94,22 +94,33 @@ function offerOrder(s,spec,uids,where,after){
 }
 function beginLook(s,spec,count,match,opts={}){
  const window=windowCards(s,spec.player,count);
- if(!window.length)return false;
+ const after=opts.after||null;
+ if(!window.length)return after;
  const matches=window.filter(c=>match(c));
  const takeMode=opts.takeMode||'take';
  const data={uids:window.map(c=>c.uid),taken:[],max:opts.max??1,min:opts.min||0,
   where:opts.where||'bottom',dest:opts.dest||'hand',reveal:opts.reveal!==false,
-  discard:opts.discard===true,after:opts.after||null,takeMode};
+  discard:opts.discard===true,after,takeMode};
  const actions=[
   ...(data.min===0?[{type:'kmr2',mode:'done'}]:[]),
   ...matches.map(c=>({type:'kmr2',mode:takeMode,uid:c.uid}))
  ];
- if(!matches.length&&data.min===0)return offerOrder(s,spec,data.uids,data.where,data.after);
- if(!actions.length)return false;
- return hold(s,{...spec,step:'lookPick',data},actions);
+ if(!matches.length&&data.min===0){
+  if(offerOrder(s,spec,data.uids,data.where,data.after))return 'held';
+  return data.after;
+ }
+ if(!actions.length)return after;
+ return hold(s,{...spec,step:'lookPick',data},actions)?'held':after;
 }
 function finishLook(pack,s,spec,data){
  const pl=plOf(s,spec.player);
+ if(data.after==='schoolDiscard'){
+  const punish=data.taken.some(uid=>{
+   const c=pl.deck.find(x=>x.uid===uid);
+   return c&&!String(def(pack,c).name||'').includes('フォーゼ');
+  });
+  data.after=punish?'discard1':null;
+ }
  for(const uid of data.taken){
   const index=pl.deck.findIndex(c=>c.uid===uid);
   if(index<0)throw Error('Kamen Rider vol.2 look lost a card');
@@ -172,15 +183,35 @@ function memoryEntry(c,s){
  const mark=c?.kmr2EnteredBy;
  return !!mark&&mark.turn===s.turn&&(mark.name===MEM||mark.id==='KMR-2-059');
 }
-function askEnter(s,spec,uid,ready,from,skip,next){
+function askEnter(s,spec,uid,ready,from,skip,next,lines){
  const pl=plOf(s,spec.player);
+ const allowed=Array.isArray(lines)&&lines.length?lines:['front','energy'];
  const actions=[];
- for(const line of ['front','energy'])
+ for(const line of allowed)
   for(const choice of A.destinations(pl,line))
    actions.push({type:'kmr2',mode:'enter',uid,line,slot:choice.slot,
     replaceUid:choice.replaceUid??null,ready,from,skip:skip===true});
  if(!actions.length)return false;
- return hold(s,{...spec,step:'enter',data:{uid,ready,from,skip:skip===true,next:next||null}},actions);
+ const carried=spec.data&&typeof spec.data==='object'?{...spec.data}:{};
+ return hold(s,{...spec,step:'enter',data:{...carried,uid,ready,from,skip:skip===true,next:next||null}},actions);
+}
+// Up to N matching cards. The player picks which card, including none when the
+// print says まで. The first card is not taken automatically.
+function offerEnter(s,spec,pool,opts={}){
+ const cards=(pool||[]).filter(Boolean);
+ if(!cards.length)return false;
+ const lines=opts.lines||null;
+ const allowed=Array.isArray(lines)&&lines.length?lines:['front','energy'];
+ if(!allowed.some(line=>A.destinations(plOf(s,spec.player),line).length))return false;
+ const optional=opts.optional!==false;
+ return hold(s,{...spec,step:'deployPick',data:{
+  left:cards.map(c=>c.uid),got:0,max:opts.max||1,ready:opts.ready===true,
+  from:opts.from||'hand',lines,skipOnPlay:opts.skipOnPlay===true,
+  next:opts.next||null,lock:opts.lock||null,stop:optional
+ }},[
+  ...(optional?[{type:'kmr2',mode:'done'}]:[]),
+  ...cards.map(c=>({type:'kmr2',mode:'deploy',uid:c.uid}))
+ ]);
 }
 function doEnter(pack,s,owner,a,sourceUid){
  A.enter(pack,s,{owner,from:a.from,uid:a.uid,line:a.line,slot:a.slot,
@@ -257,11 +288,20 @@ function follow(pack,s,spec,next){
   if(c)A.remove(pack,s,spec.player,c.uid,spec.sourceUid);
   return false;
  }
+ if(next==='deployRe'){
+  const pool=handWhere(s,spec.player,c=>def(pack,c).energy<=2&&def(pack,c).ap===1&&
+   def(pack,c).color==='green'&&trait(pack,c,RE));
+  return offerEnter(s,spec,pool,{ready:false,from:'hand',optional:true,max:2});
+ }
  return false;
 }
 
 function onLook(pack,s,job,count,pred,opts){
- beginLook(s,specOf(job),count,c=>pred(pack,c),opts||{});
+ // Named filters take (pack, card). Inline filters already close over pack
+ // and take the card. Passing the pack into those made the look throw.
+ const match=c=>pred.length>=2?pred(pack,c):pred(c);
+ const next=beginLook(s,specOf(job),count,match,opts||{});
+ if(next&&next!=='held')follow(pack,s,specOf(job),next);
 }
 function on001(pack,s,job){onLook(pack,s,job,2,gavFilter,{dest:'outside',where:'top',reveal:false,takeMode:'outside'});}
 function on004(pack,s,job){
@@ -275,9 +315,8 @@ function recoverGochizo(pack,s,job){
  offerList(s,spec,'hand',pool,true,null,'hand');
 }
 function deployGochizo(pack,s,job,ready){
- const spec=specOf(job);
- const pool=handWhere(s,job.owner,c=>exact(pack,c,GO,s));
- if(pool[0])askEnter(s,spec,pool[0].uid,ready,'hand',false,null);
+ offerEnter(s,specOf(job),handWhere(s,job.owner,c=>exact(pack,c,GO,s)),
+  {ready,from:'hand',optional:true,lines:['energy']});
 }
 function attackEndSwap(pack,s,job,partner){
  const self=selfOf(s,job.owner,job.sourceUid);
@@ -347,8 +386,8 @@ function on026(pack,s,job){
  }
  const pool=handWhere(s,job.owner,c=>def(pack,c).type==='character'&&def(pack,c).energy<=3&&
   def(pack,c).ap===1&&def(pack,c).color==='blue'&&token(pack,c,'オーズ',s));
- if(pool[0])askEnter(s,spec,pool[0].uid,false,'hand',false,'removeSelf');
- else moveUid(pack,s,job.owner,'outside',job.sourceUid,'removed',job.sourceUid);
+ if(!offerEnter(s,spec,pool,{ready:false,from:'hand',optional:true,next:'removeSelf'}))
+  moveUid(pack,s,job.owner,'outside',job.sourceUid,'removed',job.sourceUid);
 }
 function on034(pack,s,job){
  const self=selfOf(s,job.owner,job.sourceUid);
@@ -412,9 +451,7 @@ function on056(pack,s,job){
  if(nameLocked(s,job.owner,LUNA))return;
  const pool=handWhere(s,job.owner,c=>def(pack,c).type==='character'&&def(pack,c).bp<=1500&&
   def(pack,c).color==='green'&&token(pack,c,'Ｗ',s));
- if(!pool.length)return;
- nameLock(s,job.owner,LUNA);
- askEnter(s,specOf(job),pool[0].uid,false,'hand',false,null);
+ offerEnter(s,specOf(job),pool,{ready:false,from:'hand',optional:true,lock:LUNA});
 }
 function on057(pack,s,job){
  const self=selfOf(s,job.owner,job.sourceUid);
@@ -431,7 +468,7 @@ function on060(pack,s,job){
  A.draw(pack,s,job.owner,1,job.sourceUid);
  const pool=handWhere(s,job.owner,c=>def(pack,c).type==='character'&&def(pack,c).color==='green'&&
   def(pack,c).energy<=1&&def(pack,c).ap===1);
- if(pool[0])askEnter(s,specOf(job),pool[0].uid,false,'hand',true,null);
+ offerEnter(s,specOf(job),pool,{ready:false,from:'hand',optional:true,skipOnPlay:true});
 }
 function on061(pack,s,job){
  const names=fieldCards(s,job.owner).filter(c=>token(pack,c,'Ｗ',s)||exact(pack,c,MEM,null)).length;
@@ -457,7 +494,7 @@ function on069(pack,s,job){
  }
  A.draw(pack,s,job.owner,1,job.sourceUid);
  const pool=handWhere(s,job.owner,c=>def(pack,c).ap===1&&def(pack,c).color==='green'&&trait(pack,c,RE));
- if(pool[0])askEnter(s,specOf(job),pool[0].uid,true,'hand',false,'banEntered');
+ offerEnter(s,specOf(job),pool,{ready:true,from:'hand',optional:true,next:'banEntered'});
 }
 function on076(pack,s,job){
  onLook(pack,s,job,6,c=>def(pack,c).type==='character'&&def(pack,c).color==='green'&&token(pack,c,'ディケイド',null),
@@ -478,7 +515,7 @@ function on080(pack,s,job){
    if(exact(pack,c,PLATFORM,null))return true;
    return d.energy<=1&&d.color==='red'&&trait(pack,c,IMAGIN);
   });
-  if(pool[0])askEnter(s,specOf(job),pool[0].uid,false,'outside',false,null);
+  offerEnter(s,specOf(job),pool,{ready:false,from:'outside',optional:true});
   return;
  }
  onLook(pack,s,job,3,()=>true,{dest:'outside',where:'bottom',reveal:false,takeMode:'outside',max:1});
@@ -603,7 +640,7 @@ function main019(pack,s,job){
  const pool=handWhere(s,job.owner,c=>nonYellowRaid(pack,c));
  if(!pool.length)return;
  use(s,self.uid+'|019');
- askEnter(s,specOf(job),pool[0].uid,true,'hand',false,null);
+ offerEnter(s,specOf(job),pool,{ready:true,from:'hand',optional:false,lines:['front']});
 }
 function main022(pack,s,job){
  if(nameLocked(s,job.owner,PARADOX))return;
@@ -799,7 +836,7 @@ function attackEnd021(pack,s,job){
  if(!self)return;
  const pool=handWhere(s,job.owner,c=>exact(pack,c,HOPPER,null));
  if(!pool.length)return;
- if(!A.raidBase(pack,s,job.owner,self,def(pack,pool[0])))return;
+ if(!pool.some(c=>A.raidBase(pack,s,job.owner,self,def(pack,c))))return;
  hold(s,{...specOf(job),step:'raidSelf',data:{base:self.uid}},[
   {type:'kmr2',mode:'skip'},
   ...pool.map(c=>({type:'kmr2',mode:'raid',uid:c.uid}))
@@ -932,7 +969,7 @@ function resolveStep(pack,s,q,a){
   else if(next==='payGochizo'){
    if(pay(s,q.player,1,q.sourceUid)){
     const pool=zoneWhere(s,q.player,'outside',c=>exact(pack,c,GO,s));
-    if(pool[0])askEnter(s,spec,pool[0].uid,true,'outside',false,null);
+    offerEnter(s,spec,pool,{ready:true,from:'outside',optional:true,lines:['energy']});
    }
   }else if(next==='adventCut'){
    s.kmr2NextAdventAp??={};
@@ -951,12 +988,7 @@ function resolveStep(pack,s,q,a){
    const c=selfOf(s,q.player,q.sourceUid);
    if(c){A.active(s,q.player,c);c.attackDamageGranted={turn:s.turn,stamp:c.fieldEntryStamp,amount:2};}
   }else if(next==='shiftFront')A.shift(pack,s,q.player,q.sourceUid,'front','own-effect',q.sourceUid);
-  else if(next==='deployRe'){
-   const pool=handWhere(s,q.player,c=>def(pack,c).energy<=2&&def(pack,c).ap===1&&
-    def(pack,c).color==='green'&&trait(pack,c,RE));
-   const first=pool.slice(0,2);
-   if(first[0])askEnter(s,{...spec,data:{also:first[1]?.uid||null}},first[0].uid,false,'hand',false,first[1]?'secondEnter':null);
-  }  else follow(pack,s,spec,next);
+  else follow(pack,s,spec,next);
   return;
  }
  if(q.step==='rest'||q.step==='retireOwn'||q.step==='ready'||q.step==='own'||
@@ -986,14 +1018,14 @@ function resolveStep(pack,s,q,a){
   if(q.step==='energyPick'&&c){
    const energy=def(pack,c).energy;
    const pool=handWhere(s,q.player,x=>def(pack,x).energy===energy&&def(pack,x).ap===1&&trait(pack,x,SCHOOL));
-   if(pool[0])askEnter(s,spec,pool[0].uid,false,'hand',false,null);
-  }
+   offerEnter(s,spec,pool,{ready:false,from:'hand',optional:true});
+   }
   if(q.step==='tuck'&&c){
    A.tuck(pack,s,q.player,q.sourceUid,c.uid,q.sourceUid);
    for(const layer of [...(c.under||[])].filter(x=>x?.faceDown))A.tuck(pack,s,q.player,q.sourceUid,layer.uid,q.sourceUid);
    A.draw(pack,s,q.player,1,q.sourceUid);
    const doctor=handWhere(s,q.player,x=>def(pack,x).energy<=2&&def(pack,x).ap===1&&trait(pack,x,DOCTOR));
-   if(doctor[0])askEnter(s,spec,doctor[0].uid,false,'hand',false,null);
+   offerEnter(s,spec,doctor,{ready:false,from:'hand',optional:true});
   }
   if(q.step==='remove'&&c){
    const loc=A.location(s,q.player,c.uid);
@@ -1033,16 +1065,16 @@ function resolveStep(pack,s,q,a){
   }else if(next==='deployPlain'){
    const pool=handWhere(s,q.player,x=>def(pack,x).type==='character'&&def(pack,x).color==='yellow'&&
     def(pack,x).energy<=1&&(def(pack,x).traits||[]).length===0);
-   if(pool[0])askEnter(s,spec,pool[0].uid,false,'hand',false,null);
+   offerEnter(s,spec,pool,{ready:false,from:'hand',optional:true});
   }else if(next==='memoryDeploy'){
    const retiredName=c?def(pack,c).name:'';
+   A.draw(pack,s,q.player,1,q.sourceUid);
    const pool=handWhere(s,q.player,x=>def(pack,x).name!==retiredName&&def(pack,x).energy<=2&&
     def(pack,x).color==='green'&&token(pack,x,'Ｗ',s)&&def(pack,x).type==='character');
-   if(pool[0])askEnter(s,spec,pool[0].uid,true,'hand',false,null);
-   A.draw(pack,s,q.player,1,q.sourceUid);
+   offerEnter(s,spec,pool,{ready:true,from:'hand',optional:true});
   }else if(next==='ankhHand'){
    const pool=zoneWhere(s,q.player,'outside',x=>exact(pack,x,'アンク',s)&&energyPrinted(pack,x)===0);
-   if(pool[0])moveUid(pack,s,q.player,'outside',pool[0].uid,'hand',q.sourceUid);
+   offerList(s,spec,'hand',pool,true,null,'hand');
   }else if(next==='readyAp')follow(pack,s,spec,'readyAp');
   void owner;
   return;
@@ -1057,7 +1089,7 @@ function resolveStep(pack,s,q,a){
    const retired=plOf(s,foe).outside.find(c=>c.uid===hit.uid);
    const bp=retired?def(pack,retired).bp:null;
    const pool=bp==null?[]:zoneWhere(s,q.player,'outside',c=>def(pack,c).type==='character'&&def(pack,c).bp===bp);
-   if(pool[0])moveUid(pack,s,q.player,'outside',pool[0].uid,'hand',q.sourceUid);
+   offerList(s,spec,'hand',pool,true,null,'hand');
   }
   return;
  }
@@ -1116,6 +1148,46 @@ function resolveStep(pack,s,q,a){
   }
   if(q.data?.next==='secondEnter'&&q.data.also)askEnter(s,spec,q.data.also,false,'hand',false,null);
   if(q.data?.next==='removeSelf')moveUid(pack,s,q.player,'outside',q.sourceUid,'removed',q.sourceUid);
+  if(q.data?.next==='deployMore'){
+   const from=q.data.deployFrom||'hand';
+   const left=(q.data.deployLeft||[]).filter(uid=>plOf(s,q.player)[from].some(c=>c.uid===uid));
+   if(q.data.deployGot<q.data.deployMax&&left.length){
+    const stop=q.data.deployStop!==false;
+    hold(s,{...spec,step:'deployPick',data:{
+     left,got:q.data.deployGot,max:q.data.deployMax,ready:q.data.deployReady,
+     from,lines:q.data.deployLines||null,skipOnPlay:q.data.deploySkip===true,
+     next:q.data.deployNext||null,lock:null,stop
+    }},[...(stop?[{type:'kmr2',mode:'done'}]:[]),...left.map(uid=>({type:'kmr2',mode:'deploy',uid}))]);
+   }
+   else if(q.data.deployNext==='removeSelf')
+    moveUid(pack,s,q.player,'outside',q.sourceUid,'removed',q.sourceUid);
+  }
+  return;
+ }
+ if(q.step==='deployPick'){
+  if(hit.mode==='done'||hit.mode==='skip'){
+   s.pending=null;
+   if(q.data?.next==='removeSelf')
+    moveUid(pack,s,q.player,'outside',q.sourceUid,'removed',q.sourceUid);
+   return;
+  }
+  if(q.data?.lock)nameLock(s,q.player,q.data.lock);
+  const left=(q.data.left||[]).filter(uid=>uid!==hit.uid);
+  const got=(q.data.got||0)+1;
+  const chain=got<(q.data.max||1);
+  const carried=chain?{
+   deployLeft:left,deployGot:got,deployMax:q.data.max,deployReady:q.data.ready,
+   deployFrom:q.data.from,deployLines:q.data.lines,deploySkip:q.data.skipOnPlay,
+   deployNext:q.data.next,deployStop:q.data.stop!==false
+  }:{};
+  const next=chain?'deployMore':(q.data.next||null);
+  const placed=askEnter(s,{...spec,data:carried},hit.uid,q.data.ready===true,q.data.from||'hand',
+   q.data.skipOnPlay===true,next,q.data.lines);
+  if(!placed){
+   s.pending=null;
+   if(q.data?.next==='removeSelf')
+    moveUid(pack,s,q.player,'outside',q.sourceUid,'removed',q.sourceUid);
+  }
   return;
  }
  if(q.step==='mode'){

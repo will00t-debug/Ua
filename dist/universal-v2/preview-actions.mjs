@@ -315,6 +315,35 @@ function withClosedCard(pack,state,action,text){
 }
 // Closed title ops never fall through to an English "執行 op" button.
 // A newly registered title uses kmr2 / the same mode words and stays in Chinese.
+function kmr2ModeLine(id,key){
+ const lines={
+  'KMR-2-018':{
+   draw:'抽 1 張，再將 1 張手牌放到場外',
+   raid:'公開 1 張手牌的突襲角色，抽 2 張，再將 1 張手牌放到場外'
+  },
+  'KMR-2-022':{
+   tuck:'抽 1 張，將 1 張手牌蓋到這張角色或含有 EX-AID 的角色下方',
+   release:'將合計 3 張裏向卡放到場外，並給予衝擊 1'
+  },
+  'KMR-2-048':{
+   look:'查看 5 張，公開 1 張切換記憶體',
+   pay:'支付 1 AP，這個回合被防禦時可再活動'
+  },
+  'KMR-2-054':{
+   top:'查看 1 張牌組頂，放到牌組上面或下面',
+   draw:'抽最多 1 張'
+  },
+  'KMR-2-057':{
+   draw:'抽 1 張',
+   look:'查看 3 張，將 1 張加入手牌，其餘放回牌組上面'
+  },
+  'KMR-2-099':{
+   deploy:'抽 1 張並將 1 張手牌放到場外，再讓鏡怪獸休息登場',
+   replay:'發動 1 張鏡怪獸的登場時，並恢復 1 張 AP'
+  }
+ };
+ return lines[id]?.[key]||'';
+}
 function closedTitleChoiceLabel(action,{pack,state}={}){
  const mode=action?.mode;
  const step=state?.pending?.step;
@@ -339,6 +368,11 @@ function closedTitleChoiceLabel(action,{pack,state}={}){
    under:'放到角色下方',deploy:'以休息狀態登場'}[action.key];
   return keyed||'選擇這個效果';
  }
+ if((mode==='one'||mode==='two')&&action.key){
+  const line=kmr2ModeLine(state?.pending?.id,action.key);
+  if(line)return line;
+ }
+
  const table={
   take:'將這張卡加入手牌',next:'下一個放回這張卡',discard:'將這張手牌放到場外',
   retire:'使這張角色退場',retireOwn:'使這張角色退場',outside:'放到場外',bottom:'放到牌組底',

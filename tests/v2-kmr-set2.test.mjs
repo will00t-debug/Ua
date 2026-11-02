@@ -32,7 +32,9 @@ test('EX12BT registers 100 identities and the battle pack keeps both sets',()=>{
   assert.equal(pack.cards[card.id].name,card.nameJa,card.id);
   assert.match(card.image,/^https:\/\/www\.unionarena-tcg\.com\/jp\/images\/cardlist\/card\/EX12BT_KMR-2-\d\d\d\.png$/);
   assert.match(card.sourceTc,/unionarena-tcg\.com\/tc\/cardlist\/detail_iframe\.php/);
+  if((card.effectJa||'').trim())assert.notEqual((card.effect||'').trim(),'',card.id);
   assert.equal(card.effect.includes('沒有可顯示的效果'),false);
+  assert.equal(/\b(DRAW|GET|ACTIVE|RAID|SPECIAL|FINAL|COLOR)\b/.test(card.triggerText||''),false,card.id);
  }
  const shown=fieldEffectCopy(KMR2_CARDS.find(c=>c.id==='KMR-2-001'));
  assert.match(shown,/登場時/);
@@ -202,4 +204,128 @@ test('a vol.2 pending choice does not fall through the AI play path',()=>{
  const chosen=chooseUniversalAiAction(packs,s);
  assert.equal(chosen.type,'kmr2');
  assert.equal(chosen.mode,'outside');
+});
+
+function click(state,pred){
+ const action=state.pending?.actions?.find(pred);
+ assert.ok(action);
+ return dispatchUniversalAction(packs,state,action);
+}
+function setupAsk(ids,extra){
+ const s=fresh(fill(ids,extra));
+ const drawn=take(s,0,'KMR-2-010');
+ s.players[0].deck.push(...s.players[0].hand.splice(0));
+ s.players[0].deck.unshift(drawn);
+ return {s,drawn};
+}
+
+test('不准問我問題 lets the player choose the character, including none',()=>{
+ const {s,drawn}=setupAsk(['KMR-2-060','KMR-2-048','KMR-2-072','KMR-2-010']);
+ const event=take(s,0,'KMR-2-060');
+ const kiva=take(s,0,'KMR-2-072');
+ const luna=take(s,0,'KMR-2-048');
+ s.players[0].hand.push(event,kiva,luna);
+ ready(s);
+ const play=legalUniversalActions(packs,s).find(a=>a.type==='event'&&a.uid===event.uid);
+ assert.ok(play);
+ let state=dispatchUniversalAction(packs,s,play);
+ assert.equal(state.pending?.step,'deployPick');
+ assert.deepEqual(state.pending.actions.filter(a=>a.mode==='deploy').map(a=>a.uid).sort(),
+  [kiva.uid,luna.uid].sort());
+ assert.equal(state.pending.actions.some(a=>a.mode==='done'),true);
+ for(const action of state.pending.actions){
+  const label=uiActionLabel(action,{pack,state});
+  assert.equal(label.includes('執行'),false,label);
+  assert.equal(/kmr/i.test(label),false,label);
+ }
+ state=click(state,a=>a.mode==='done');
+ assert.equal(state.pending,null);
+ assert.equal(state.players[0].hand.some(c=>c.uid===kiva.uid),true);
+ assert.equal(state.players[0].hand.some(c=>c.uid===luna.uid),true);
+ assert.equal(state.players[0].hand.some(c=>c.uid===drawn.uid),true);
+});
+
+test('the character entered by 不准問我問題 does not use its on-play effect',()=>{
+ const {s}=setupAsk(['KMR-2-060','KMR-2-048','KMR-2-072','KMR-2-010']);
+ const event=take(s,0,'KMR-2-060');
+ const kiva=take(s,0,'KMR-2-072');
+ const luna=take(s,0,'KMR-2-048');
+ s.players[0].hand.push(event,kiva,luna);
+ ready(s);
+ const play=legalUniversalActions(packs,s).find(a=>a.type==='event'&&a.uid===event.uid);
+ let state=dispatchUniversalAction(packs,s,play);
+ state=click(state,a=>a.mode==='deploy'&&a.uid===luna.uid);
+ state=click(state,a=>a.mode==='enter'&&a.uid===luna.uid&&a.line==='front');
+ assert.equal(state.pending,null);
+ assert.equal(state.players[0].front.find(c=>c?.uid===luna.uid)?.ready,false);
+ assert.equal(state.players[0].hand.some(c=>c.uid===kiva.uid),true);
+});
+
+function diendBoard(){
+ const s=fresh(fill(['KMR-2-063','KMR-2-070','KMR-2-072','KMR-2-020','KMR-2-010'],{'KMR-2-045':2}));
+ put(s,0,'KMR-2-045','energy',0,true);
+ put(s,0,'KMR-2-045','energy',1,true);
+ const rider=take(s,0,'KMR-2-063');
+ const agito=take(s,0,'KMR-2-070');
+ const kiva=take(s,0,'KMR-2-072');
+ const top=take(s,0,'KMR-2-020');
+ const under=take(s,0,'KMR-2-010');
+ s.players[0].outside.push(...s.players[0].deck.splice(0),...s.players[0].hand.splice(0));
+ s.players[0].deck.push(top,under);
+ s.players[0].hand.push(rider,agito,kiva);
+ ready(s);
+ const play=legalUniversalActions(packs,s).find(a=>a.type==='play'&&a.uid===rider.uid&&a.line==='front');
+ assert.ok(play);
+ let state=dispatchUniversalAction(packs,s,play);
+ assert.equal(state.pending?.step,'lookOrder');
+ while(state.pending?.step==='lookOrder')state=click(state,a=>a.mode==='next');
+ assert.equal(state.pending?.step,'deployPick');
+ return {state,agito,kiva};
+}
+
+test('DIEND asks for each re-imagination character, including the second',()=>{
+ const {state:opened,agito,kiva}=diendBoard();
+ let state=opened;
+ assert.equal(state.pending.actions.some(a=>a.mode==='done'),true);
+ assert.deepEqual(state.pending.actions.filter(a=>a.mode==='deploy').map(a=>a.uid).sort(),
+  [agito.uid,kiva.uid].sort());
+ state=click(state,a=>a.mode==='deploy'&&a.uid===agito.uid);
+ state=click(state,a=>a.mode==='enter'&&a.uid===agito.uid&&a.line==='front');
+ assert.equal(state.pending?.step,'deployPick');
+ assert.equal(state.pending.actions.some(a=>a.uid===agito.uid),false);
+ assert.equal(state.pending.actions.some(a=>a.mode==='deploy'&&a.uid===kiva.uid),true);
+ assert.equal(state.pending.actions.some(a=>a.mode==='done'),true);
+ state=click(state,a=>a.mode==='deploy'&&a.uid===kiva.uid);
+ state=click(state,a=>a.mode==='enter'&&a.uid===kiva.uid&&a.line==='energy');
+ assert.equal(state.pending,null);
+ assert.equal(state.players[0].front.find(c=>c?.uid===agito.uid)?.ready,false);
+ assert.equal(state.players[0].energy.find(c=>c?.uid===kiva.uid)?.ready,false);
+});
+
+test('DIEND can leave both re-imagination characters in hand',()=>{
+ const {state:opened,agito,kiva}=diendBoard();
+ const state=click(opened,a=>a.mode==='done');
+ assert.equal(state.pending,null);
+ assert.equal(state.players[0].hand.some(c=>c.uid===agito.uid),true);
+ assert.equal(state.players[0].hand.some(c=>c.uid===kiva.uid),true);
+});
+
+test('a two-way vol.2 choice names the printed effect',()=>{
+ const pending=id=>({pending:{id,step:'mode'}});
+ const draw=uiActionLabel({type:'kmr2',mode:'one',key:'draw'},{pack,state:pending('KMR-2-018')});
+ const raid=uiActionLabel({type:'kmr2',mode:'two',key:'raid'},{pack,state:pending('KMR-2-018')});
+ assert.match(draw,/抽 1 張/);
+ assert.match(raid,/抽 2 張/);
+ assert.notEqual(draw,raid);
+ assert.equal(draw.includes('選擇第一項'),false);
+ assert.equal(/[A-Za-z]/.test(draw+raid),false,draw+' / '+raid);
+ assert.equal(/執行|kmr/i.test(draw+raid),false);
+ const tuck=uiActionLabel({type:'kmr2',mode:'one',key:'tuck'},{pack,state:pending('KMR-2-022')});
+ assert.match(tuck,/EX-AID/);
+ assert.equal(tuck.includes('選擇第一項'),false);
+ const top=uiActionLabel({type:'kmr2',mode:'one',key:'top'},{pack,state:pending('KMR-2-054')});
+ const alt=uiActionLabel({type:'kmr2',mode:'two',key:'draw'},{pack,state:pending('KMR-2-054')});
+ assert.match(top,/牌組/);
+ assert.match(alt,/抽最多 1 張/);
+ assert.equal(/[A-Za-z]/.test(top+alt),false);
 });
