@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
 import {AOT2_CARDS} from '../dist/aot-vol2-cards.mjs';
 import {createAotV2Pack} from '../dist/universal-v2/aot-pack.mjs';
 import {aot2EngineKind} from '../dist/universal-v2/aot2-kinds.mjs';
@@ -12,7 +13,8 @@ import {assertUniversalMatch, dispatchUniversalAction, legalUniversalActions,
  newUniversalMatch, universalBp, universalCardEnergy, universalImpact,
  universalPrivateChoices, universalPublicView}
  from '../dist/universal-v2/engine.mjs';
-import {controllerDeckWindowCards, uiActionLabel} from '../dist/universal-v2/preview-actions.mjs';
+import {boardEntryMode,boardEntrySelection,controllerDeckWindowCards,
+ entryClickPlan,uiActionLabel} from '../dist/universal-v2/preview-actions.mjs';
 
 const pack=createAotV2Pack();
 const packs=[pack,pack];
@@ -802,4 +804,67 @@ test('EX10BT/AOT-2-032 standing range can kill 6000, then a raidless Zeke rests'
  assert.equal(entered.ready,false);
  assert.equal(s.players[0].outside.some(c=>c.uid===raider.uid),true);
  assertUniversalMatch(packs,s);
+});
+
+test('EX10BT/AOT-2-032 Zeke rests on the cell the player taps',()=>{
+ const counts=countsFor(['AOT-2-032','AOT-2-001','AOT-2-023','AOT-2-025','AOT-2-013','AOT-2-031','AOT-2-069']);
+ let s=toPhase(fresh(counts,20322),'main');
+ for(let i=0;i<3;i++)put(s,0,'AOT-2-001','energy',i,true);
+ const beast=put(s,0,'AOT-2-025','front',0,true);
+ const kept=put(s,0,'AOT-2-069','front',1,true);
+ put(s,1,'AOT-2-023','front',0,true);
+ const ymir=take(s,0,'AOT-2-031');
+ s.players[0].outside.push(ymir);
+ const plain=take(s,0,'AOT-2-023');
+ s.players[0].outside.push(plain);
+ const raider=take(s,0,'AOT-2-025');
+ s.players[0].outside.push(raider);
+ readyAp(s,0,1);
+ const event=toHand(s,0,'AOT-2-032');
+ s=cast(s,event.uid);
+ s=pick(s,a=>a.uid===beast.uid);
+ s=pick(s,a=>a.mode==='done');
+ s=pick(s,a=>a.mode==='deploy');
+ const legal=legalUniversalActions(packs,s);
+ const mine=legal.filter(a=>a.mode==='enter'&&a.uid===plain.uid);
+ assert.equal(mine.length>1,true);
+ assert.equal(mine.every(a=>a.ready===false&&boardEntryMode(a)==='normal'),true);
+ assert.equal(legal.filter(a=>a.uid===raider.uid||a.uid===ymir.uid).some(a=>boardEntryMode(a)),false);
+ assert.equal(boardEntryMode(legal.find(a=>a.mode==='done')),null);
+ assert.equal(boardEntryMode({type:'aot2',mode:'look',uid:plain.uid,line:'front',slot:0}),null);
+ assert.equal(boardEntryMode({type:'aot2',mode:'retire',uid:plain.uid,line:'front',slot:0}),null);
+ const selected=boardEntrySelection(legal,plain.uid);
+ assert.equal(selected.needsMode,false);
+ assert.equal(selected.raid.length,0);
+ assert.equal(selected.normal.length,mine.length);
+ assert.equal(entryClickPlan({selectedUid:null,entryMode:null,line:'front',slot:3,
+  slotUid:null,legal}).type,'idle');
+ const front=entryClickPlan({selectedUid:plain.uid,entryMode:null,line:'front',slot:3,
+  slotUid:null,legal});
+ assert.equal(front.type,'entry');
+ assert.equal(front.mode,'normal');
+ assert.equal(front.actions.length,1);
+ assert.equal(front.actions[0].slot,3);
+ assert.equal(front.actions[0].line,'front');
+ const energy=entryClickPlan({selectedUid:plain.uid,entryMode:null,line:'energy',slot:3,
+  slotUid:null,legal});
+ assert.equal(energy.type,'entry');
+ assert.equal(energy.actions[0].line,'energy');
+ assert.equal(energy.actions[0].slot,3);
+ assert.equal(entryClickPlan({selectedUid:plain.uid,entryMode:null,line:'front',slot:1,
+  slotUid:kept.uid,legal}).type,'entry-wait');
+ s=use(s,front.actions[0]);
+ assert.equal(s.players[0].front[3]?.uid,plain.uid);
+ assert.equal(s.players[0].front[3].ready,false);
+ assert.equal(s.players[0].front[0],null);
+ assert.equal(s.players[0].front[1]?.uid,kept.uid);
+ assert.equal(s.players[0].energy[3],null);
+ assert.equal(s.players[0].outside.some(c=>c.uid===plain.uid),false);
+ assert.equal(s.players[0].outside.some(c=>c.uid===raider.uid),true);
+ assertUniversalMatch(packs,s);
+ for(const file of ['dist/universal-v2/preview-actions.mjs','dist/online.mjs']){
+  const block=readFileSync(new URL('../'+file,import.meta.url),'utf8')
+   .split('const MODE_BOARD_ENTRY')[1].split('function boardEntryMode')[0];
+  assert.match(block,/['"]aot2['"]/,file);
+ }
 });
