@@ -23,6 +23,25 @@ test('public trigger notifications are centered and can be dismissed with one ta
  assert.match(css,/width:min\(540px,100%\)/);
 });
 
+test('post-match review clears a pending choice that just ended the match',()=>{
+ const script=read('dist/universal-v2-preview.mjs');
+ const render=script.split('function render(){')[1]?.split('function applyAction(')[0];
+ assert.ok(render);
+ const branch=render.split('if(app.coachBattle?.session?.reviewing')[1]?.split('return;')[0];
+ assert.ok(branch);
+ assert.match(branch,/clearPendingOverlay\(\)/);
+ assert.match(branch,/clearTriggerOverlay\(\)/);
+ assert.match(branch,/clearPublicMoveOverlay\(\)/);
+ assert.match(branch,/closeZoneSheet\(\)/);
+ const beforeReturn=branch.indexOf('clearPendingOverlay()');
+ const reviewCall=branch.indexOf('renderCoachReview(target)');
+ assert.ok(beforeReturn>=0&&reviewCall>beforeReturn);
+ const header=script.split('function renderCoachReview(target){')[1]?.split('function render(){')[0];
+ assert.match(header,/你獲勝了！/);
+ assert.match(header,/電腦獲勝了/);
+ assert.match(header,/不代表全部日本官方 FAQ 已驗收/);
+});
+
 test('trigger notice is mounted outside the match table without disturbing game choices',()=>{
  const script=read('dist/universal-v2-preview.mjs');
  const render=script.split('function render(){')[1]?.split('function applyAction(')[0];
