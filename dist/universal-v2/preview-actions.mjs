@@ -451,6 +451,11 @@ function closedTitleChoiceLabel(action,{pack,state}={}){
   if(line)return line;
  }
 
+ if(state?.pending?.id==='AOT-2-032'&&step==='mode'){
+  if(mode==='done')return '不選擇後續效果';
+  if(mode==='look')return '查看牌組頂 7 張，可公開 1 張始祖尤米爾';
+  if(mode==='deploy')return '從場外使沒有突襲的黃色吉克・葉卡以休息狀態登場';
+ }
  const table={
   take:'將這張卡加入手牌',next:'下一個放回這張卡',discard:'將這張手牌放到場外',
   retire:'使這張角色退場',retireOwn:'使這張角色退場',outside:'放到場外',bottom:'放到牌組底',

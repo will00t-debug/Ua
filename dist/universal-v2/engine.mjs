@@ -1898,7 +1898,7 @@ function ensureAot2(){
   field,location,bp,
   move:(pack,s,spec)=>moveOwnedLinear(pack,s,spec),
   enter:effectEnter,destinations:legalDestinations,
-  retire:(pack,s,owner,line,slot)=>retire(pack,s,owner,line,slot),
+  retire:(pack,s,owner,line,slot,opts)=>retire(pack,s,owner,line,slot,opts||{}),
   record:(pack,s,spec)=>recordCompletedMove(pack,s,spec),
   active:attemptFieldActive,noteRest:noteOwnEffectRest,
   reveal:notePublicDeckReveal,title:titleOf,go:continueEffectQueue,
