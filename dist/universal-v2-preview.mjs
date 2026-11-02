@@ -26,7 +26,7 @@ import {collectSavedV2LobbyDecks,accountLobbyRows,orderedAccountLobbyRows,shadow
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
  universalPublicView,universalPrivateChoices,assertUniversalMatch} from './universal-v2/engine.mjs?v=20261102kmr2ship1';
 import {chooseUniversalAiAction} from './universal-v2/ai.mjs';
-import {chooseProgressSafeAiAction,AI_ACTIONS_PER_FRAME,aiPolicyFor} from './universal-v2/ai-driver-safety.mjs?v=20261031hardai2';
+import {chooseProgressSafeAiAction,AI_ACTIONS_PER_FRAME,aiPolicyFor} from './universal-v2/ai-driver-safety.mjs?v=20261102learn1';
 import {ttgArtSource,ttgArtErrorFallback} from './ttg-art.mjs';
 import {TTG_BY_ID} from './ttg-builder.mjs';
 import {CARDS} from './cards.mjs?v=9.1.0';
@@ -1177,6 +1177,18 @@ function mountPendingOverlay(overlay){
  overlay.classList.add('v2-pending-overlay');
  (document.querySelector('.v2-shell')||document.body).append(overlay);
 }
+const AI_LEVEL_LABEL={easy:'簡單',normal:'普通',hard:'困難',learned:'學習'};
+async function ensureLearnedPolicy(){
+ if(app.aiDifficulty!=='learned'){app.learnedPolicy=null;return true;}
+ try{
+  const response=await fetch('/api/coach/policy',{credentials:'same-origin',headers:{accept:'application/json'}});
+  const data=response.ok?await response.json():null;
+  app.learnedPolicy=data?.policy?.format==='ua-v2-learn-v1'?data.policy:null;
+ }catch{app.learnedPolicy=null;}
+ if(app.learnedPolicy)return true;
+ alertText('還沒有學習結果。請先到教 AI 頁按「用這些紀錄學習」。');
+ return false;
+}
 function coachApi(){
  if(!app.coachBattle)app.coachBattle=createCoachBattle({storage:localStorage,onChange:paintCoachStatus});
  return app.coachBattle;
@@ -1191,7 +1203,7 @@ function coachStatusText(){
  if(session?.signedIn===false)return '已同意，但尚未登入，不會上傳。';
  if(session?.lastError)return session.lastError;
  const queued=coach.queued||0;
- return '已上傳 '+(session?.uploaded||0)+' 筆，佇列 '+(queued)+' 筆。只記錄你看得到的決策，AI 操作不會混進示範。上傳不會讓目前的 AI 立刻變強。';
+ return '已上傳 '+(session?.uploaded||0)+' 筆，佇列 '+(queued)+' 筆。只記錄你看得到的決策，AI 操作不會混進示範。要讓電腦用這些紀錄，請到教 AI 頁學習，再選「學習」難度。';
 }
 function coachStatusShort(){
  const coach=app.coachBattle,session=coach?.session;
@@ -1510,8 +1522,9 @@ function driveAi(){
     if(++app.autoMoves>limit)throw Error('電腦操作已達安全上限，請下載重播檔供除錯。');
     const key=app.state.turn+'|'+app.state.active+'|'+app.state.phase;
     if(app.aiPhaseKey!==key){app.aiPhaseKey=key;app.aiPhaseCount=0;}
-    const {action:choice,reason}=chooseProgressSafeAiAction(app.packs,app.state,
-     {difficulty:app.aiDifficulty,actionsInPhase:app.aiPhaseCount});
+    const picked=chooseProgressSafeAiAction(app.packs,app.state,
+     {difficulty:app.aiDifficulty,actionsInPhase:app.aiPhaseCount,policy:app.learnedPolicy});
+    const {action:choice,reason}=picked;
     const previous=app.state;
     const replayIndex=app.replay.actions.length;
     // The chosen action is copied from this state's legal list, never made up.
@@ -1520,6 +1533,7 @@ function driveAi(){
     app.replay=appendUniversalReplay(app.replay,choice,1);
     notePublicMove(app.packs,previous,app.state,choice,1);
     pushHistory(publicPreviewActionLabel(app.packs,previous,app.state,choice,1));
+    if(picked.learned)pushHistory('電腦採用你的紀錄走法。');
     if(reason){
      app.aiFallbacks++;
      pushHistory('AI 使用 V2 合法備援操作（'+reason+'），避免對局停住。');
@@ -1629,7 +1643,7 @@ function importClassicLobbyDecks(){
   $(key).append(el('option',{value,text:'從舊版匯入｜'+(side==='mine'?'你的牌組':'對手牌組')}));
   $(key).value=value;
  }
- if(['easy','normal','hard'].includes(raw.aiDifficulty))$('ai-level').value=raw.aiDifficulty;
+ if(['easy','normal','hard','learned'].includes(raw.aiDifficulty))$('ai-level').value=raw.aiDifficulty;
  if(raw.first==='0'||raw.first==='1')$('first-player').value=raw.first==='1'?'ai':'human';
  if(notices.length)$('restart-notice').textContent=notices.join(' ');
 }
@@ -1664,7 +1678,7 @@ function importBuiltTitleDeck(){
  }
  $('my-title').value=value;
  selectBuiltOpponent(raw.title);
- if(['easy','normal','hard'].includes(raw.aiDifficulty))$('ai-level').value=raw.aiDifficulty;
+ if(['easy','normal','hard','learned'].includes(raw.aiDifficulty))$('ai-level').value=raw.aiDifficulty;
 }
 if(!IS_BATTLE_PAGE)importBuiltTitleDeck();
 // V2-only editor handoff: validate title, complete-card registry and printed deck rules.
@@ -1777,7 +1791,7 @@ async function importAccountLobbyDecks(){
 if(!IS_BATTLE_PAGE)importSavedLobbyDecks();
 // On the setup route, validate the selected 50-card lists and navigate to
 // an independent URL. The live card table is never inserted below this form.
-function launchBattle(){
+async function launchBattle(){
  if(IS_BATTLE_PAGE)return;
  try{
   const myTitle=$('my-title').value,foeTitle=$('ai-title').value;
@@ -1786,6 +1800,7 @@ function launchBattle(){
   if(!mine||!foe)throw Error('請選擇有已驗證 50 張牌組的作品。');
   const first=$('first-player').value==='ai'?1:0;
   app.aiDifficulty=$('ai-level').value;
+  if(!(await ensureLearnedPolicy()))return;
   // Catch invalid packs before navigation. The real match draws a fresh seed
   // on the dedicated battle route rather than inheriting a fixed deck order.
   newUniversalMatch([mine.pack,foe.pack],{
@@ -1803,12 +1818,14 @@ function launchBattle(){
 }
 // Battle route only: preserve the V2 legal reducer, AI, mulligan and replay.
 // The same control is used for a deliberate "重開對局" on the new page.
-function startGame(){
+async function startGame(){
  resetAi();
  try{
   if(!IS_BATTLE_PAGE||!app.launch)throw Error('請先選擇牌組，再開始 V2 對戰。');
   const [mine,foe]=app.launch.decks;
   const first=app.launch.config.first;
+  app.aiDifficulty=app.launch.config.difficulty;
+  if(!(await ensureLearnedPolicy()))return;
   app.packs=app.launch.packs;
   const seed=generateMatchSeed();
   app.recordDeckId=app.launch.config.recordDeckId;
@@ -1820,7 +1837,6 @@ function startGame(){
   app.dismissedPublicMoveIds.clear();
   app.dismissedTriggerKeys.clear();
   app.allActions=false;app.aiFallbacks=0;app.aiCompletedSteps=0;app.lastAiProgress='新對局';
-  app.aiDifficulty=app.launch.config.difficulty;
   app.history=['新對局：'+(mine.label||fmtTitle(mine.pack.id))+' vs '+
    (foe.label||fmtTitle(foe.pack.id))+'｜先手 '+(first===0?'你':'電腦')+
    '｜起手牌調度階段'];
@@ -1893,7 +1909,7 @@ function restoreMatchLobby(){
  const has=(select,value)=>[...select.options].some(x=>x.value===value&&!x.disabled);
  if(!imported&&has(mine,saved.mine))mine.value=saved.mine;
  if(has(opponent,saved.opponent))opponent.value=saved.opponent;
- if(['easy','normal','hard'].includes(saved.difficulty))$('ai-level').value=saved.difficulty;
+ if(['easy','normal','hard','learned'].includes(saved.difficulty))$('ai-level').value=saved.difficulty;
  if(['human','ai'].includes(saved.first))$('first-player').value=saved.first;
 }
 if(!IS_BATTLE_PAGE){
@@ -1909,7 +1925,7 @@ if(!IS_BATTLE_PAGE){
  for(const button of document.querySelectorAll('[data-ai-difficulty]')){
   button.addEventListener('click',()=>{
    const difficulty=button.dataset.aiDifficulty;
-   if(!['easy','normal','hard'].includes(difficulty))return;
+   if(!['easy','normal','hard','learned'].includes(difficulty))return;
    $('ai-level').value=difficulty;
    syncMatchLobby();markLobbyChanged();rememberMatchLobby();
   });
@@ -1954,12 +1970,15 @@ if(!IS_BATTLE_PAGE){
   app.recordDeckId=loaded.config.recordDeckId;
   const banner=$('battle-matchup');
   if(banner)banner.textContent=loaded.decks[0].label+' vs '+loaded.decks[1].label+
-   ' · '+({easy:'簡單',normal:'普通',hard:'困難'}[loaded.config.difficulty]||'普通');
-  if(!restoreBattleProgress())startGame();
+   ' · '+(AI_LEVEL_LABEL[loaded.config.difficulty]||'普通');
+  if(!restoreBattleProgress())void startGame();
   else{
    const saved=app.pendingCoach;
-   void coachApi().restore(saved,coachHeaderNow(saved?.matchId||newCoachMatchId()));
-   render();driveAi();
+   void (async()=>{
+    await ensureLearnedPolicy();
+    void coachApi().restore(saved,coachHeaderNow(saved?.matchId||newCoachMatchId()));
+    render();driveAi();
+   })();
   }
  }else render();
 }

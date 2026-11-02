@@ -11,7 +11,7 @@ export const SOLO_SETUP_URL='/universal-v2-preview.html';
 const MAX_AGE=24*60*60*1000;
 const isPlain=x=>x!==null&&typeof x==='object'&&!Array.isArray(x);
 const validFirst=x=>x===0||x===1;
-const validDifficulty=x=>['easy','normal','hard'].includes(x);
+const validDifficulty=x=>['easy','normal','hard','learned'].includes(x);
 
 export function prepareSoloBattle({mine,foe,first,difficulty,recordDeckId=null,now=Date.now(),nonce=0}){
  if(!validFirst(first)||!validDifficulty(difficulty)||!Number.isSafeInteger(now)||now<1)

@@ -627,6 +627,9 @@ export function dispatchAccount(repos,message,now){
   case 'coachDeleteDemo':
   case 'coachDeleteDebug':
   case 'coachDeleteAll':
+  case 'coachLearn':
+  case 'coachPolicy':
+  case 'coachDeletePolicy':
    canonicalizeCoach(message);
    return dispatchCoach(repos,requireUser(repos,message.token,now),message,now);
   default:throw new ApiError(404,'找不到這個功能。');

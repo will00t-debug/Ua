@@ -377,7 +377,7 @@ function homeView(){
   el('section',{class:'panel'},
    el('h2',{text:'提供對戰紀錄改善 AI'}),
    consentControl(),
-   el('p',{class:'muted',text:'預設關閉，並記住你的選擇。開啟後，你正常打牌就會在背景累積自己的決策；關閉會立刻停止，並清掉還沒上傳的佇列。線上對戰只收集已同意的你，不取得對手的隱藏手牌、未知牌序或未公開生命。不收集姓名、密碼或聊天內容。這不會讓目前的 AI 立刻變強。'}),
+   el('p',{class:'muted',text:'預設關閉，並記住你的選擇。開啟後，你正常打牌就會在背景累積自己的決策；關閉會立刻停止，並清掉還沒上傳的佇列。線上對戰只收集已同意的你，不取得對手的隱藏手牌、未知牌序或未公開生命。不收集姓名、密碼或聊天內容。單人對戰要先到教 AI 頁按「用這些紀錄學習」，再選「學習」難度。'}),
    el('a',{href:'/coach.html',text:'查看、匯出或刪除我的紀錄'})),
   el('div',{class:'arena-entries arena-battle-modes'},
    el('a',{class:'arena-entry arena-entry-solo',href:'/universal-v2-preview.html'},el('span',{class:'arena-mode-icon',text:'⚔'}),el('strong',{text:'電腦對戰'}),el('span',{text:'選擇雙方牌組與 AI 難度，開始 V2 單人對戰。'}),el('span',{class:'arena-mode-cta',text:'設定電腦對戰 →'})),

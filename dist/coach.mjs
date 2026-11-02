@@ -1,4 +1,5 @@
 // Logged-in review of solo training rows. Debug replays stay on their own buttons.
+import {learnReport} from './universal-v2/learn-policy.mjs';
 const root=document.querySelector('#coach-app');
 const h=(tag,props={},...children)=>{
  const node=document.createElement(tag);
@@ -13,10 +14,12 @@ const h=(tag,props={},...children)=>{
  return node;
 };
 async function api(path,options={}){
+ const body=options.body===undefined?undefined:JSON.stringify(options.body);
  const response=await fetch(path,{
+  method:options.method||'GET',
   credentials:'same-origin',
-  headers:{accept:'application/json',...(options.body?{'content-type':'application/json'}:{})},
-  ...options
+  headers:{accept:'application/json',...(body?{'content-type':'application/json'}:{})},
+  body
  });
  const data=await response.json().catch(()=>null);
  if(!response.ok)throw Error(data?.error||'無法完成這個操作。');
@@ -76,7 +79,7 @@ async function showMatch(matchId){
 }
 async function render(){
  root.replaceChildren(h('h1',{text:'教 AI 紀錄'}),
-  h('p',{text:'同意後，打牌時會在背景收集你自己的決策。這些資料只供日後學習。目前的 AI 不會因為上傳而變強，收集完成也不代表模型已經訓練。'}));
+  h('p',{text:'同意後，打牌時會在背景收集你自己的決策。按「用這些紀錄學習」會做出一個模型。之後在單人對戰把難度選成「學習」，有把握的步驟會照你的習慣走，其餘仍用困難 AI。猜中你的選擇還不是勝率。'}));
  let me=null;
  try{me=await api('/api/me');}
  catch{root.append(h('p',{text:'請先登入，才能查看、匯出或刪除自己的紀錄。'}),h('a',{href:'/online.html',text:'前往登入'}));return;}
@@ -97,14 +100,26 @@ async function render(){
   document.body.append(link);link.click();link.remove();
   setTimeout(()=>URL.revokeObjectURL(url),1000);
  });
+ const learn=h('button',{type:'button',text:'用這些紀錄學習'});
+ const report=h('p',{class:'note'});
+ learn.addEventListener('click',async()=>{
+  learn.disabled=true;
+  report.textContent='正在學習…';
+  try{
+   const result=await api('/api/coach/learn',{method:'POST',body:{}});
+   report.textContent=learnReport(result.policy);
+  }catch(error){
+   report.textContent=error.message;
+  }finally{learn.disabled=false;}
+ });
  const deleteAll=h('button',{type:'button',text:'刪除全部紀錄'});
  deleteAll.addEventListener('click',async()=>{
-  if(!window.confirm('刪除這個帳號的全部教 AI 紀錄？牌組與帳號不會被刪除。'))return;
+  if(!window.confirm('刪除這個帳號的全部教 AI 紀錄和學習結果？牌組與帳號不會被刪除。'))return;
   await api('/api/coach',{method:'DELETE'});
   await render();
  });
- actions.append(exportButton,jsonlButton,deleteAll);
- root.append(actions,h('div',{id:'coach-list',class:'coach-list'}));
+ actions.append(exportButton,jsonlButton,learn,deleteAll);
+ root.append(actions,report,h('div',{id:'coach-list',class:'coach-list'}));
  const list=root.querySelector('#coach-list');
  if(!listed.matches.length)list.append(h('p',{text:'還沒有紀錄。在電腦對戰裡打開同意開關後，每一步會自動記下來。'}));
  for(const match of listed.matches){

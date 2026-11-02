@@ -112,6 +112,11 @@ CREATE TABLE IF NOT EXISTS coach_debug_replays (
   created_at TEXT NOT NULL,
   UNIQUE(user_id, client_key)
 );
+CREATE TABLE IF NOT EXISTS coach_policies (
+  user_id TEXT PRIMARY KEY,
+  policy_json TEXT NOT NULL,
+  created_at TEXT NOT NULL
+);
 `;
 
 // Existing account databases predate deck covers and the public-share flag.
@@ -392,11 +397,25 @@ export function createRepositories(sql){
   deleteCoachDebug(userId,replayId){
    sql.run('DELETE FROM coach_debug_replays WHERE user_id=? AND id=?',userId,replayId);
   },
+  listCoachTrainingSteps(userId,limit){
+   return sql.all('SELECT payload_json AS payloadJson FROM coach_steps WHERE user_id=? ORDER BY created_at DESC, step DESC LIMIT ?',userId,limit).reverse();
+  },
+  coachPolicy(userId){
+   return sql.get('SELECT policy_json AS policyJson, created_at AS createdAt FROM coach_policies WHERE user_id=?',userId);
+  },
+  saveCoachPolicy(userId,policyJson,createdAt){
+   sql.run('DELETE FROM coach_policies WHERE user_id=?',userId);
+   sql.run('INSERT INTO coach_policies (user_id,policy_json,created_at) VALUES (?,?,?)',userId,policyJson,createdAt);
+  },
+  deleteCoachPolicy(userId){
+   sql.run('DELETE FROM coach_policies WHERE user_id=?',userId);
+  },
   deleteCoachUser(userId){
    sql.run('DELETE FROM coach_steps WHERE user_id=?',userId);
    sql.run('DELETE FROM coach_demos WHERE user_id=?',userId);
    sql.run('DELETE FROM coach_debug_replays WHERE user_id=?',userId);
    sql.run('DELETE FROM coach_matches WHERE user_id=?',userId);
+   sql.run('DELETE FROM coach_policies WHERE user_id=?',userId);
   }
  };
 }
