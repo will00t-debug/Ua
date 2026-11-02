@@ -13,7 +13,8 @@ import {summarizeDesignatedDecks,designatedPlayableCounts}
 import {createAllV2PreviewRealDecks} from '../dist/universal-v2/preview-real-decks.mjs';
 import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
 import {grantContinuousState} from '../dist/universal-v2/continuous-states.mjs';
-import {inspectedPendingChoiceCards} from '../dist/universal-v2/preview-actions.mjs';
+import {boardEntrySelection,entryClickPlan,inspectedPendingChoiceCards}
+ from '../dist/universal-v2/preview-actions.mjs';
 
 const pack=createBleachV2Pack(),packs=[pack,pack];
 const purple=summarizeDesignatedDecks(id=>!!pack.cards[id]).find(r=>r.key==='renruki');
@@ -284,6 +285,55 @@ test('Q2399: an effect putting Renji on the field does not void the Raid AP cut'
  unpaid=play(unpaid,a=>a.type==='play'&&a.uid===lonely.uid&&a.line==='front'&&a.slot===1);
  assert.equal(unpaid.pending,null);
  assert.equal(unpaid.players[0].deck.length,deck);
+});
+
+test('EX15BT/BLC-4-054 pays 1 AP, then chooses the hand target before its entry mode',()=>{
+ // Official EX15BT/BLC-4-054: with 恋次 on the field, pay 1 AP, draw 1, then
+ // optionally Rest-play or Raid an affordable AP 1 恋次 or ルキア from hand.
+ let s=phase(fresh(3054),'main');
+ fuel(s);
+ readyAp(s,0,3);
+ const base=place(s,0,'BLC-4-048','front',0);
+ const raider=hold(s,0,'BLC-4-050');
+ const plain=hold(s,0,'BLC-4-049');
+ const rukia=hold(s,0,'BLC-4-054');
+ s=play(s,a=>a.type==='play'&&a.uid===rukia.uid&&a.line==='front'&&a.slot===1);
+ assert.equal(s.pending.kind,'effect-optional-pay-ap');
+ s=play(s,a=>a.type==='chooseOptionalPayAp'&&a.mode==='pay');
+ assert.equal(s.pending.kind,'effect-hand-rest-or-raid');
+ assert.equal(s.pending.choices.includes(raider.uid),true);
+ assert.equal(s.pending.choices.includes(plain.uid),true);
+ const legal=legalUniversalActions(packs,s);
+ assert.equal(legal.some(a=>a.type==='chooseHandRestOrRaid'&&a.uid===plain.uid&&a.mode==='raid'),false);
+ assert.equal(boardEntrySelection(legal,plain.uid).needsMode,false);
+ const plainCell=entryClickPlan({selectedUid:plain.uid,entryMode:null,line:'front',
+  slot:2,slotUid:null,legal});
+ assert.equal(plainCell.type,'entry');
+ assert.equal(plainCell.mode,'normal');
+ const both=boardEntrySelection(legal,raider.uid);
+ assert.equal(both.needsMode,true);
+ assert.equal(entryClickPlan({selectedUid:raider.uid,entryMode:null,line:'front',
+  slot:0,slotUid:base.uid,legal}).type,'entry-mode');
+ assert.equal(entryClickPlan({selectedUid:raider.uid,entryMode:'normal',line:'front',
+  slot:2,slotUid:null,legal}).mode,'normal');
+ assert.equal(entryClickPlan({selectedUid:raider.uid,entryMode:'raid',line:'front',
+  slot:2,slotUid:null,legal}).type,'entry-wait');
+ assert.deepEqual(entryClickPlan({selectedUid:raider.uid,entryMode:'raid',line:'front',
+  slot:0,slotUid:base.uid,legal}),{type:'raid-base',baseUid:base.uid});
+ const landed=entryClickPlan({selectedUid:raider.uid,entryMode:'raid',raidBaseUid:base.uid,
+  line:'front',slot:0,slotUid:base.uid,legal});
+ assert.equal(landed.type,'entry');
+ assert.equal(landed.actions.length,1);
+ assert.equal(landed.actions[0].baseUid,base.uid);
+ const rested=play(s,a=>a.type==='chooseHandRestOrRaid'&&a.mode==='enter'&&
+  a.uid===plain.uid&&a.line==='front'&&a.slot===2);
+ assert.equal(rested.players[0].front[2].uid,plain.uid);
+ assert.equal(rested.players[0].front[2].ready,false);
+ const raided=play(s,a=>a.type==='chooseHandRestOrRaid'&&a.mode==='raid'&&
+  a.uid===raider.uid&&a.baseUid===base.uid&&a.line==='front'&&a.slot===0);
+ assert.equal(raided.players[0].front[0].uid,raider.uid);
+ assert.equal(raided.players[0].front[0].ready,true);
+ assert.equal(raided.players[0].front[0].stack[0].uid,base.uid);
 });
 
 test('BLC-1-041 mills before the scaled removal, including a one-card deck',()=>{

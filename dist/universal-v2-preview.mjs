@@ -36,7 +36,7 @@ import {MST_V2_OFFICIAL_CATALOGUE} from './universal-v2/sources/mst-inventory.mj
 import {V2_PHASE_LABELS,V2_TITLE_LABELS,V2_PENDING_LABELS,
  uiActor,isExactLegal,uiCardLabel,uiActionLabel,visibleActionsForCard,
  pendingChoiceCards,inspectedPendingChoiceCards,visiblePendingChoiceCards,pendingEntryChoiceCards,publicLifeOrderChoiceCard,pendingChoiceCaption,publicPendingTargetCard,controllerDeckWindowCards,controllerChoiceArt,pendingFocusCard,pendingEffectSourceCard,pendingTextChoiceClass,attackBattleTags,attackKeywordBadges,frontAttackKeywordBadges,inlineBlockDecision,boardEntryMode,boardEntrySelection,entryClickPlan,moveClickPlan,
- FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs?v=20261102paylabel1';
+ FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs?v=20261102rukiaflow1';
 import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalReplay,
  collectPublicCardResults,publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
 import {coachHeader,newCoachMatchId} from './universal-v2/coach-record.mjs';
@@ -465,11 +465,15 @@ function pendingChoiceControl(action,option,gallery,view,focusUid){
 }
 // For a mixed effect, picking a card is not playing it. Only an exact
 // reducer-approved placement submitted on the table can resolve its entry.
-function pendingEntrySelectControl(card){
+function pendingEntrySelectControl(card,legal){
  const catalogue=card.cardId?printedCatalogue(card.side??0,card.cardId):null;
  const name=catalogue?.name||(card.cardId?cardDef(card.side,card.cardId)?.name:null)||card.name;
  const activeEntry=app.state?.pending?.kind==='effect-deploy-self-active';
- const caption=activeEntry?'以活動狀態登場 · 再點格子':'選擇此角色登場 · 再選方式與格子';
+ const selection=boardEntrySelection(legal,card.uid);
+ const caption=activeEntry?'以活動狀態登場 · 再點格子':
+  selection.needsMode?'選擇此角色 · 再選登場方式':
+  selection.raid.length?'選擇此角色 · 再點底板與登場格子':
+  '選擇此角色 · 再點登場格子';
  const button=el('button',{type:'button',class:'choice-card recommended',
   'aria-label':name+'，'+caption,
   onClick:()=>{selectDeployedCharacter(card.uid);render();}});
@@ -626,7 +630,7 @@ function pendingDialog(legal,view){
    blocking?'對手的角色正在攻擊。先看直傷和衝擊，再選擇阻擋或不阻擋。':
    s.pending.kind==='effect-pay-deploy-self'?'條件已經滿足。支付後再點亮起的格子，這張角色會以活動狀態登場。':
    s.pending.kind==='effect-deploy-self-active'?'點下面的角色，再點亮起的前線或能源格。它會以活動狀態登場。':
-   placement.length?'先點卡圖選擇要登場的角色；若要加入手牌，直接點該卡的加入手牌選項。選好登場角色後，再選合法模式及格子。':
+   placement.length?'先點卡圖選擇效果對象。若印刷允許兩種登場，再選普通進場或突襲進場。普通進場直接點格子；突襲進場先點底板，再點登場格子。':
    '請完成這個選擇後，對戰才會繼續。選牌只會顯示給目前的控制者。'}));
  if(source&&source.uid!==focusUid)dialog.append(revealFocusSheet(source));
  if(focus)dialog.append(revealFocusSheet(focus));
@@ -637,7 +641,7 @@ function pendingDialog(legal,view){
   dialog.append(row);
  }
  const list=el('div',{class:'action-list'+((gallery||blockGallery)?' choice-gallery':'')});
- for(const card of entryCards)list.append(pendingEntrySelectControl(card));
+ for(const card of entryCards)list.append(pendingEntrySelectControl(card,legal));
  for(const card of pictured)list.append(inspectedChoiceControl(card));
  for(const row of rows){
   const blocker=blocking?blockControl(row.action,view):null;
@@ -917,7 +921,6 @@ function legacyCommands(legal){
   selection.needsMode&&(app.entryMode==='normal'||app.entryMode==='raid')?
   app.entryMode:selection.needsMode?null:selection.raid.length?'raid':
   selection.normal.length?'normal':null;
- const effectRaid=selection.raid.length>0&&selection.raid.every(a=>a.type!=='raid');
  if(!list.length&&!board&&!app.targetChoices&&!pendingRest.length)return null;
  const bar=el('div',{class:'v2-compact-actions','aria-label':'登場與情境操作'});
  if(s.pending?.kind==='life-trigger'){
@@ -949,9 +952,9 @@ function legacyCommands(legal){
    '先選擇要登場的角色。手牌直接點；場外或移除區請打開該區再點角色。'}));
  else if(selection.needsMode&&!chosen){
   bar.append(el('span',{class:'v2-compact-hint',text:(name?name+'：':'')+
-   '選擇突襲進場或普通進場。'}));
+   '再選擇登場方式。選擇突襲進場或普通進場。'}));
   bar.append(btn('普通進場',()=>{app.entryMode='normal';app.raidBaseUid=null;app.targetChoices=null;render();},'btn small'));
-  bar.append(btn('突襲進場',()=>{app.entryMode='raid';app.targetChoices=null;render();},'btn small primary'));
+  bar.append(btn('突襲進場',()=>{app.entryMode='raid';app.raidBaseUid=null;app.targetChoices=null;render();},'btn small primary'));
  }else if(chosen){
   const activeEntry=s.pending?.kind==='effect-deploy-self-active'&&chosen==='normal';
   bar.append(el('span',{class:'v2-compact-hint',text:activeEntry?(name?name+'：':'')+
@@ -961,9 +964,9 @@ function legacyCommands(legal){
     selection.normal.length?
     '一般出牌：點合法格子普通登場；要突襲請先點底座，再點登場位置。':
     '一般突襲：先點合法底座，再點登場位置。'):
-    chosen==='raid'?(effectRaid?
-    '效果突襲：直接點亮起的登場位置；同格有多個合法底座時再選底座。':
-    '先點合法底座，再點要登場的格子。'):
+    chosen==='raid'?(app.raidBaseUid?
+    '已選好底板，請點登場格子（可點底板原位）。':
+    '突襲登場：先點底板，再點登場格子。'):
     '普通進場。請直接點要登場的格子。')}));
   if(selection.needsMode)bar.append(btn(chosen==='raid'?'改為普通進場':'改為突襲進場',()=>{
    app.entryMode=chosen==='raid'?'normal':'raid';app.raidBaseUid=null;app.targetChoices=null;render();

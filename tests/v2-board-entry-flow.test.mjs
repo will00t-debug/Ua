@@ -46,7 +46,7 @@ test('ordinary paid hand entry uses direct normal cell or base then Raid destina
   slotUid:'energy-full',legal}).actions,[legal[1]]);
 });
 
-test('effect-created Raid skips base tap, but ordinary paid Raid keeps its base step',()=>{
+test('effect Raid selects the base before the destination, and paid Raid keeps that order',()=>{
  const effect=[
   {type:'chooseOutsideRestOrRaid',uid:'effect-uid',mode:'enter',line:'front',slot:3},
   {type:'chooseOutsideRestOrRaid',uid:'effect-uid',mode:'raid',baseUid:'energy-a',line:'front',slot:1},
@@ -57,23 +57,32 @@ test('effect-created Raid skips base tap, but ordinary paid Raid keeps its base 
  assert.equal(both.needsMode,true);
  assert.equal(entryClickPlan({selectedUid:'effect-uid',entryMode:null,
   line:'front',slot:1,slotUid:null,legal:effect}).type,'entry-mode');
- const front=entryClickPlan({selectedUid:'effect-uid',entryMode:'raid',
-  line:'front',slot:1,slotUid:null,legal:effect});
- assert.equal(front.type,'entry');
- assert.deepEqual(front.actions.map(a=>a.baseUid),['energy-a','energy-b'],
-  'only after the destination click should multiple Raid bases require a choice');
+ assert.equal(entryClickPlan({selectedUid:'effect-uid',entryMode:'raid',
+  line:'front',slot:1,slotUid:null,legal:effect}).type,'entry-wait',
+  'an empty cell is not a Raid until its base has been chosen');
  assert.deepEqual(entryClickPlan({selectedUid:'effect-uid',entryMode:'raid',
   line:'energy',slot:2,slotUid:'energy-a',legal:effect}),
+  {type:'raid-base',baseUid:'energy-a'});
+ assert.deepEqual(entryClickPlan({selectedUid:'effect-uid',entryMode:'raid',
+  raidBaseUid:'energy-a',line:'front',slot:1,slotUid:null,legal:effect}),
+  {type:'entry',mode:'raid',actions:[effect[1]]},
+  'after the base, the destination cell submits only that base');
+ assert.deepEqual(entryClickPlan({selectedUid:'effect-uid',entryMode:'raid',
+  raidBaseUid:'energy-a',line:'energy',slot:2,slotUid:'energy-a',legal:effect}),
   {type:'entry',mode:'raid',actions:[effect[3]]},
-  'effect Raid on an energy base resolves at the chosen energy cell');
+  'the second click on an energy base stays on that energy cell');
+ assert.equal(entryClickPlan({selectedUid:'effect-uid',entryMode:'normal',
+  line:'front',slot:3,slotUid:null,legal:effect}).type,'entry');
  assert.deepEqual(entryClickPlan({selectedUid:'hand',entryMode:'raid',
   line:'energy',slot:2,slotUid:'energy-a',legal}),
   {type:'raid-base',baseUid:'energy-a'},
   'a paid hand Raid still selects its ENERGY base first');
  const preview=readFileSync(new URL('../dist/universal-v2-preview.mjs',import.meta.url),'utf8');
  const online=readFileSync(new URL('../dist/online.mjs',import.meta.url),'utf8');
- assert.match(preview,/效果突襲：直接點亮起的登場位置/);
- assert.match(online,/效果突襲：直接點亮起的登場位置/);
+ assert.match(preview,/突襲登場：先點底板，再點登場格子/);
+ assert.match(online,/突襲登場：先點底板，再點登場格子/);
+ assert.doesNotMatch(preview,/效果突襲：直接點亮起的登場位置/);
+ assert.doesNotMatch(online,/效果突襲：直接點亮起的登場位置/);
 });
 
 test('outside and removed characters use the same cell click',()=>{
@@ -86,7 +95,9 @@ test('outside and removed characters use the same cell click',()=>{
  assert.deepEqual(entryClickPlan({selectedUid:'removed-card',entryMode:null,line:'front',
   slot:2,slotUid:null,legal}).actions,[legal[6],legal[10]]);
  assert.deepEqual(entryClickPlan({selectedUid:'okabe',entryMode:null,line:'front',slot:0,
-  slotUid:'front-base',legal}).actions,[legal[11]]);
+  slotUid:'front-base',legal}),{type:'raid-base',baseUid:'front-base'});
+ assert.deepEqual(entryClickPlan({selectedUid:'okabe',entryMode:'raid',raidBaseUid:'front-base',
+  line:'front',slot:0,slotUid:'front-base',legal}).actions,[legal[11]]);
 });
 
 test('solo and online both ask for the character, then the mode, then the cell',()=>{
@@ -171,8 +182,12 @@ test('online match keeps paid hand choice-free but shows mode options for effect
  vm.runInContext("app.pick={uid:'out',entryMode:null,options:null};render();",context);
  assert.match(texts(appRoot),/普通進場/);
  assert.match(texts(appRoot),/突襲進場/);
- vm.runInContext("app.pick={uid:'out',entryMode:'raid',options:null};render();",context);
- assert.match(texts(appRoot),/效果突襲：直接點亮起的登場位置/);
+ vm.runInContext("app.pick={uid:'out',entryMode:'raid',raidBaseUid:null,options:null};render();",context);
+ assert.match(texts(appRoot),/突襲登場：先點底板，再點登場格子/);
+ assert.equal(classes(appRoot).some(name=>name.includes('raid-base')),true);
+ assert.equal(classes(appRoot).some(name=>name.includes('destination')),false);
+ vm.runInContext("app.pick={uid:'out',entryMode:'raid',raidBaseUid:'base',options:null};render();",context);
+ assert.match(texts(appRoot),/已選好底板，請點登場格子/);
  assert.equal(classes(appRoot).some(name=>name.includes('destination')),true);
  vm.runInContext("app.zone='removed';render();",context);
  assert.match(texts(appRoot),/移除角色/);

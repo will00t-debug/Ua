@@ -118,7 +118,7 @@ export const V2_PENDING_LABELS=Object.freeze({
  'effect-place-hand':'將1張手牌放到牌頂或場外',
  'effect-hand-rest':'從己方手牌免費 REST 登場',
  'effect-hand-rest-cap':'從手牌將符合條件的卡以 Rest 登場',
- 'effect-hand-rest-or-raid':'從己方手牌 REST 登場或合法 Raid',
+ 'effect-hand-rest-or-raid':'從手牌休息登場或突襲',
  'effect-protect-gen':'選擇己方角色，直到下次自己的回合開始不能被對手效果選擇',
  'effect-raid-base-choice':'レイド元をレスト登場或加入手牌',
  'effect-named-ap-outside':'從場外 REST 登場或合法 Raid',
@@ -1561,7 +1561,9 @@ const NORMAL_BOARD_ENTRY=new Set([
   'chooseRaidBaseRest','chooseHandFrontActive','chooseDeploySelfActive'
 ]);
 // kmr and kjn character entry use this set too: select the physical card,
-// then 突襲進場 or 普通進場 only when the print allows both, then tap the cell.
+// then 突襲進場 or 普通進場 only when the print allows both.
+// Ordinary entry taps the destination cell. Raid taps the base, then the
+// destination cell, the same two clicks as a paid Raid.
 // Do not list one execute button per destination. A REST-only print such as
 // Epsilon or Beta stays normal entry and does not invent Raid.
 const MODE_BOARD_ENTRY=new Set([
@@ -1609,8 +1611,8 @@ function entryDestination(action,line,slot,slotUid){
  return !slotUid;
 }
 // Select the character first. When both rest entry and raid are legal, the
-// mode click comes next. The board cell is the action: one match submits,
-// several matches (two energy bases into one cell) stay as listed choices.
+// mode click comes next. Ordinary entry then taps the cell. Raid taps the
+// base, then the destination cell. One matching action submits.
 export function entryClickPlan({selectedUid,entryMode,raidBaseUid=null,line,slot,slotUid,legal}){
  const selection=boardEntrySelection(legal,selectedUid);
  if(!selection.normal.length&&!selection.raid.length)return {type:'idle'};
@@ -1632,13 +1634,24 @@ export function entryClickPlan({selectedUid,entryMode,raidBaseUid=null,line,slot
   const hits=selection.normal.filter(action=>entryDestination(action,line,slot,slotUid));
   return hits.length?{type:'entry',mode:'normal',actions:hits}:{type:'entry-wait',mode:'normal'};
  }
- // Effect entry, including kmr: first choose the card, then its legal mode
- // (if two options are printed), and tap the destination. The action owns
- // its Raid base UID. Do not list one button per destination.
+ // Effect entry, including kmr and EX15BT/BLC-4-054: choose the card, then
+ // 普通進場 or 突襲進場 only when both are printed. Ordinary entry taps the
+ // cell. Raid uses the same base, then destination, clicks as a paid Raid.
  const mode=entryMode==='raid'&&selection.raid.length?'raid':
   entryMode==='normal'&&selection.normal.length?'normal':
   selection.needsMode?null:selection.raid.length?'raid':'normal';
  if(!mode)return {type:'entry-mode'};
+ if(mode==='raid'&&selection.raid.some(action=>action.baseUid)){
+  const baseCandidate=slotUid&&selection.raid.some(action=>action.baseUid===slotUid);
+  if(baseCandidate&&raidBaseUid!==slotUid)
+   return {type:'raid-base',baseUid:slotUid};
+  if(raidBaseUid){
+   const hits=selection.raid.filter(action=>action.baseUid===raidBaseUid&&
+    entryDestination(action,line,slot,slotUid));
+   return hits.length?{type:'entry',mode:'raid',actions:hits}:{type:'entry-wait',mode:'raid'};
+  }
+  return {type:'entry-wait',mode:'raid'};
+ }
  const hits=(mode==='raid'?selection.raid:selection.normal)
   .filter(action=>entryDestination(action,line,slot,slotUid));
  return hits.length?{type:'entry',mode,actions:hits}:{type:'entry-wait',mode};

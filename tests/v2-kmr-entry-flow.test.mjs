@@ -124,8 +124,12 @@ test('kmr character entry is one card, then mode only when both are printed, the
  assert.equal(boardEntrySelection(both,uid).needsMode,true);
  assert.equal(entryClickPlan({selectedUid:uid,entryMode:null,line:'front',slot:1,
   slotUid:null,legal:both}).type,'entry-mode');
- const raid=entryClickPlan({selectedUid:uid,entryMode:'raid',line:'front',slot:0,
+ const picked=entryClickPlan({selectedUid:uid,entryMode:'raid',line:'front',slot:0,
   slotUid:'base',legal:both});
+ assert.equal(picked.type,'raid-base');
+ assert.equal(picked.baseUid,'base');
+ const raid=entryClickPlan({selectedUid:uid,entryMode:'raid',raidBaseUid:'base',
+  line:'front',slot:0,slotUid:'base',legal:both});
  assert.equal(raid.type,'entry');
  assert.equal(raid.mode,'raid');
  assert.equal(raid.actions.length,1);
@@ -136,7 +140,7 @@ test('kmr character entry is one card, then mode only when both are printed, the
   const block=read(file).split('const MODE_BOARD_ENTRY')[1].split('function boardEntryMode')[0];
   assert.match(block,/['"]kmr['"]/,file);
  }
- assert.match(read('dist/online.mjs'),/選擇登場 · 再選方式與格子/);
+ assert.match(read('dist/online.mjs'),/選擇此角色 · 再選登場方式/);
  const runtime=read('dist/universal-v2/kmr-runtime.mjs');
  const base=runtime.split('function baseRest')[1].split('function tuckOffer')[0];
  assert.match(base,/offerFieldEntry/);
