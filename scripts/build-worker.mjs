@@ -5,6 +5,7 @@ import {mkdir} from 'node:fs/promises';
 import {createRequire} from 'node:module';
 import {dirname,resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {buildOnlineClient} from './build-online-client.mjs';
 
 const require=createRequire(import.meta.url);
 let build;
@@ -15,6 +16,7 @@ catch{
 }
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const outfile=resolve(root,'worker/dist/index.mjs');
+const {version,script}=await buildOnlineClient();
 await mkdir(dirname(outfile),{recursive:true});
 await build({
  absWorkingDir:root,
@@ -29,6 +31,12 @@ await build({
  legalComments:'none',
  external:['cloudflare:workers','node:crypto'],
  plugins:[{
+  name:'online-release-metadata',
+  setup(builder){
+   builder.onResolve({filter:/^virtual:online-release$/},()=>({path:'online-release',namespace:'online-release'}));
+   builder.onLoad({filter:/.*/,namespace:'online-release'},()=>({contents:'export const ONLINE_UI_RELEASE='+JSON.stringify({version,script})+';',loader:'js'}));
+  }
+ },{
   name:'strip-import-query',
   setup(builder){
    builder.onResolve({filter:/\?/},args=>{

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {currentPage,ONLINE_UI_VERSION} from '../worker/static-pages.mjs';
+import {currentPage,ONLINE_UI_VERSION,legacyClientRedirect} from '../worker/static-pages.mjs';
 
 test('an old browser ETag cannot keep serving a previous online HTML release',async()=>{
  let seen;
@@ -21,7 +21,19 @@ test('an old browser ETag cannot keep serving a previous online HTML release',as
  assert.equal(response.headers.get('x-ua-ui-version'),ONLINE_UI_VERSION);
  assert.match(await response.text(),new RegExp(ONLINE_UI_VERSION));
  const html=readFileSync(new URL('../dist/online.html',import.meta.url),'utf8');
- assert.ok(html.includes('online.mjs?v='+ONLINE_UI_VERSION),'health, HTML and browser script identify the same release');
+ assert.ok(html.includes('src="online-bootstrap.mjs"'),'the original HTML loads a stable version-checking entry');
+});
+
+test('old online script requests lead to the current fingerprinted bundle without caching that redirect',()=>{
+ const release={version:'ABCDEFGH',script:'/online-client-ABCDEFGH.mjs'};
+ for(const method of ['GET','HEAD']){
+  const response=legacyClientRedirect('/online.mjs',method,release);
+  assert.equal(response.status,307);assert.equal(response.headers.get('location'),release.script);
+  assert.equal(response.headers.get('cache-control'),'no-store');
+ }
+ assert.equal(legacyClientRedirect('/online.mjs','POST',release),null);
+ assert.equal(legacyClientRedirect('/other.mjs','GET',release),null);
+ assert.equal(legacyClientRedirect('/online.mjs','GET',{script:'/online.mjs?v=source'}),null,'source preview must not redirect to itself');
 });
 
 test('HEAD page requests stay bodyless and asset failures retain their status',async()=>{
