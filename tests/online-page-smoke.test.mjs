@@ -3,38 +3,9 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 import * as sharedBattleUi from '../dist/universal-v2/online-battle-ui.mjs';
+import {FakeNode,texts} from './helpers/online-client-dom.mjs';
 
 const source=readFileSync(new URL('../dist/online.mjs',import.meta.url),'utf8');
-
-class FakeNode{
- constructor(tag='',text=''){this.tag=tag;this.textContent=text;this.children=[];this.attributes={};this.handlers={};this.className='';this.dataset={};}
- append(...nodes){this.children.push(...nodes);}
- replaceChildren(...nodes){this.children=[...nodes];}
- setAttribute(name,value){this.attributes[name]=value;}
- getAttribute(name){return this.attributes[name]??null;}
- addEventListener(name,callback){this.handlers[name]=callback;}
- get childElementCount(){return this.children.filter(n=>n instanceof FakeNode&&n.tag!=='#text').length;}
- get classList(){
-  const node=this;
-  return {
-   add(...names){node.className=[...new Set([...node.className.split(/\s+/).filter(Boolean),...names])].join(' ');},
-   toggle(name,force){const present=node.className.split(/\s+/).includes(name),active=force??!present;
-    node.className=node.className.split(/\s+/).filter(n=>n&&n!==name).concat(active?[name]:[]).join(' ');return active;}
-  };
- }
- querySelector(selector){return this.querySelectorAll(selector)[0]||null;}
- querySelectorAll(selector){
-  const result=[];
-  const matches=n=>selector.startsWith('.')?n.className.split(/\s+/).includes(selector.slice(1)):
-   selector.startsWith('[')?Object.hasOwn(n.attributes,selector.slice(1,-1)):n.tag===selector;
-  const visit=n=>{for(const child of n.children)if(child instanceof FakeNode){if(matches(child))result.push(child);visit(child);}};
-  visit(this);return result;
- }
-}
-function texts(node){
- if(!(node instanceof FakeNode))return String(node??'');
- return node.textContent+' '+node.children.map(texts).join(' ');
-}
 
 test('production account frontend compiles as JavaScript (catches missing comma that caused blank login)',()=>{
  assert.doesNotThrow(()=>new vm.Script(source,{filename:'dist/online.mjs'}));

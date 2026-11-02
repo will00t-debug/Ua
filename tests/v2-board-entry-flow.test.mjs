@@ -1,3 +1,5 @@
+import * as sharedBattleUi from '../dist/universal-v2/online-battle-ui.mjs';
+import {FakeNode,texts} from './helpers/online-client-dom.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -119,14 +121,6 @@ test('solo and online both ask for the character, then the mode, then the cell',
 
 test('online match keeps paid hand choice-free but shows mode options for effect summon',()=>{
  const source=readFileSync(new URL('../dist/online.mjs',import.meta.url),'utf8');
- class FakeNode{
-  constructor(tag='',text=''){this.tag=tag;this.textContent=text;this.children=[];this.attributes={};this.handlers={};this.className='';}
-  append(...nodes){this.children.push(...nodes);}
-  replaceChildren(...nodes){this.children=[...nodes];}
-  setAttribute(name,value){this.attributes[name]=value;}
-  addEventListener(name,callback){this.handlers[name]=callback;}
- }
- const texts=node=>node instanceof FakeNode?node.textContent+' '+node.children.map(texts).join(' '):String(node??'');
  const classes=node=>{
   if(!(node instanceof FakeNode))return [];
   return [node.className,...node.children.flatMap(classes)];
@@ -137,7 +131,7 @@ test('online match keeps paid hand choice-free but shows mode options for effect
   createTextNode:text=>new FakeNode('#text',String(text)),
   querySelector:selector=>selector==='#app'?appRoot:null
  };
- const context=vm.createContext({
+ const context=vm.createContext({sharedBattleUi,
   document,Node:FakeNode,fetch:async()=>{throw new Error('offline');},
   clearInterval(){},setInterval(){},location:{hash:''},history:{replaceState(){}},
   localStorage:{getItem(){return null;}},sessionStorage:{setItem(){}},
@@ -170,7 +164,7 @@ test('online match keeps paid hand choice-free but shows mode options for effect
     apReady:0,apTotal:0,energyTotal:0,outside:[],removed:[]}
   ]}
  };
- vm.runInContext("app.offline=false;app.user={username:'yuwei'};app.room=roomFixture;app.pick=null;render();",context);
+ vm.runInContext("battleUi=sharedBattleUi;app.offline=false;app.user={username:'yuwei'};app.room=roomFixture;app.pick=null;render();",context);
  assert.match(texts(appRoot),/先選擇要登場的角色/);
  assert.doesNotMatch(texts(appRoot),/普通進場/);
  vm.runInContext("app.pick={uid:'hand',entryMode:null,options:null};render();",context);
@@ -189,6 +183,7 @@ test('online match keeps paid hand choice-free but shows mode options for effect
  vm.runInContext("app.pick={uid:'out',entryMode:'raid',raidBaseUid:'base',options:null};render();",context);
  assert.match(texts(appRoot),/已選好底板，請點登場格子/);
  assert.equal(classes(appRoot).some(name=>name.includes('destination')),true);
- vm.runInContext("app.zone='removed';render();",context);
+ const pile=appRoot.querySelectorAll('button').find(node=>node.attributes['aria-label']==='我方移除區 1 張');
+ assert.ok(pile);pile.handlers.click();
  assert.match(texts(appRoot),/移除角色/);
 });

@@ -34,7 +34,12 @@ function loadBattleUi(retry=false){
    if(app.room?.view)render();
   });
   render();
- }).catch(()=>{battleUiLoading=false;battleUiError=true;render();});
+ }).catch(error=>{
+  if(document.body)battleUi?.setOnlineBattleMode?.(false);
+  battleUi=null;battleUiLoading=false;battleUiError=true;
+  console.error('線上對戰介面載入失敗',error);
+  render();
+ });
 }
 function captureAuthDraft(form){
  if(!form)return;
