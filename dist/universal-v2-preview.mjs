@@ -36,7 +36,8 @@ import {MST_V2_OFFICIAL_CATALOGUE} from './universal-v2/sources/mst-inventory.mj
 import {V2_PHASE_LABELS,V2_TITLE_LABELS,V2_PENDING_LABELS,
  uiActor,isExactLegal,uiCardLabel,uiActionLabel,visibleActionsForCard,
  pendingChoiceCards,inspectedPendingChoiceCards,visiblePendingChoiceCards,pendingEntryChoiceCards,publicLifeOrderChoiceCard,pendingChoiceCaption,publicPendingTargetCard,controllerDeckWindowCards,controllerChoiceArt,pendingFocusCard,pendingEffectSourceCard,pendingTextChoiceClass,attackBattleTags,attackKeywordBadges,frontAttackKeywordBadges,inlineBlockDecision,boardEntryMode,boardEntrySelection,entryClickPlan,moveClickPlan,
- FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs?v=20261102zio011';
+ FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs?v=20261102liferaid2';
+import {lifeRaidStage,withLifeRaidBoard} from './universal-v2/life-raid-flow.mjs';
 import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalReplay,
  collectPublicCardResults,publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
 import {coachHeader,newCoachMatchId} from './universal-v2/coach-record.mjs';
@@ -582,7 +583,12 @@ function pendingDialog(legal,view){
   if(text)card.caption=text;
  }
  const picturedUids=new Set(pictured.map(card=>card.uid));
- const rows=legal.filter(action=>!boardEntryMode(action)&&!picturedUids.has(action.uid)).map(action=>({action,
+ const raidStage=s.pending?.kind==='life-trigger'&&s.pending.trigger==='raid'
+  ?lifeRaidStage({raid:true,actions:legal,activated:app.lifeRaidActivated===true,
+   boarding:app.lifeRaidBoard===true}):null;
+ const rows=legal.filter(action=>!boardEntryMode(action)&&!picturedUids.has(action.uid)&&
+  !(raidStage&&action.type==='chooseTrigger'&&
+   (action.mode==='raid'||action.mode==='skip'||action.mode==='get'))).map(action=>({action,
   option:byAction.get(JSON.stringify(action))||null}));
  const focus=pendingFocusCard(app.packs,s);
  const source=pendingEffectSourceCard(app.packs,s);
@@ -625,7 +631,10 @@ function pendingDialog(legal,view){
    btn('查看場面與手牌',()=>{app.inspectionPaused=true;render();},
     'btn v2-inspection-peek-btn'),
    el('span',{text:'可暫時查看場面與手牌，不會取消這次選牌。'})));
- dialog.append(el('p',{class:'note',text:triggerChoice?
+ dialog.append(el('p',{class:'note',text:raidStage?.phase==='activate'?
+   '要發動這個突襲觸發嗎？':
+   raidStage?.phase==='mode'?'選擇突襲登場，或是加入手牌。':
+   triggerChoice?
    '這張觸發已經公開，對手也能看到。請選擇是否使用。':
    blocking?'對手的角色正在攻擊。先看直傷和衝擊，再選擇阻擋或不阻擋。':
    s.pending.kind==='effect-top-order'&&s.pending.split===true?
@@ -648,6 +657,19 @@ function pendingDialog(legal,view){
  for(const row of rows){
   const blocker=blocking?blockControl(row.action,view):null;
   list.append(blocker||pendingChoiceControl(row.action,row.option,gallery||blockGallery,view,focusUid));
+ }
+ if(raidStage?.phase==='activate'){
+  list.append(btn('發動',()=>{app.lifeRaidActivated=true;render();},'recommended'));
+  if(raidStage.skip)list.append(btn('不發動',()=>applyAction(raidStage.skip),'quiet'));
+ }else if(raidStage?.phase==='mode'){
+  if(raidStage.raids.length)list.append(btn('突襲',()=>{
+   app.lifeRaidActivated=true;app.lifeRaidBoard=true;app.selectedUid=s.pending.uid;
+   app.entryMode='raid';app.raidBaseUid=null;app.targetChoices=null;render();
+  },'recommended'));
+  if(raidStage.hand)list.append(btn('加入手牌',()=>applyAction(raidStage.hand),'recommended'));
+  if(raidStage.skip)list.append(btn('返回',()=>{
+   app.lifeRaidActivated=false;app.selectedUid=null;app.entryMode=null;app.raidBaseUid=null;render();
+  },'quiet'));
  }
  dialog.append(list);
  overlay.append(dialog);
@@ -766,6 +788,7 @@ function legacySlot(view,side,line,index,legal){
    return;
   }
   if(plan.type==='entry-mode'||plan.type==='entry-wait')return;
+  if(app.lifeRaidBoard)return;
   if(c){selectDeployedCharacter(c.uid);app.selectedSide=side;render();}
  });
  return btnSlot;
@@ -878,8 +901,27 @@ function legacyHand(view,legal){
 // Hide the large generic "legal actions" panel. Only surface contextual
 // buttons that cannot be performed by tapping a card and its destination.
 function selectDeployedCharacter(uid){
+ if(app.lifeRaidBoard)return;
  app.selectedUid=uid;app.selectedSide=0;app.entryMode=null;app.raidBaseUid=null;
  app.targetChoices=null;app.allActions=false;
+}
+function presentLifeRaid(legal){
+ const pending=app.state?.pending;
+ const raid=pending?.kind==='life-trigger'&&pending.trigger==='raid';
+ const key=raid?pending.uid:null;
+ if(app.lifeRaidKey!==key){
+  app.lifeRaidKey=key;app.lifeRaidActivated=false;app.lifeRaidBoard=false;app.raidBaseUid=null;
+  if(raid){app.selectedUid=null;app.entryMode=null;}
+ }
+ if(!raid)return legal;
+ const stage=lifeRaidStage({raid:true,actions:legal,activated:app.lifeRaidActivated===true,
+  boarding:app.lifeRaidBoard===true});
+ if(stage?.phase!=='board')return legal;
+ app.lifeRaidBoard=true;app.lifeRaidActivated=true;
+ app.selectedUid=key;app.entryMode='raid';
+ if(app.raidBaseUid&&!stage.raids.some(action=>action.baseUid===app.raidBaseUid))
+  app.raidBaseUid=null;
+ return withLifeRaidBoard(legal,key);
 }
 function ownListedCard(uid){
  const player=app.state?.players?.[0];
@@ -974,7 +1016,13 @@ function legacyCommands(legal){
    app.entryMode=chosen==='raid'?'normal':'raid';app.raidBaseUid=null;app.targetChoices=null;render();
   },'btn small quiet'));
  }
- if(s.pending&&board&&app.selectedUid)bar.append(btn('重新選擇角色',()=>{
+ if(s.pending?.kind==='life-trigger'&&app.lifeRaidBoard){
+  if(legal.some(action=>action.type==='chooseTrigger'&&(action.mode==='skip'||action.mode==='get')))
+   bar.append(btn('返回',()=>{
+    app.lifeRaidBoard=false;app.lifeRaidActivated=true;
+    app.selectedUid=null;app.entryMode=null;app.raidBaseUid=null;app.targetChoices=null;render();
+   },'btn small quiet'));
+ }else if(s.pending&&board&&app.selectedUid)bar.append(btn('重新選擇角色',()=>{
   app.selectedUid=null;app.entryMode=null;app.raidBaseUid=null;app.targetChoices=null;render();
  },'btn small quiet'));
  const shown=new Set();
@@ -1029,6 +1077,7 @@ function restoreBattleProgress(){
   app.lastAiProgress=typeof data.lastAiProgress==='string'?data.lastAiProgress.slice(0,100):'已恢復對局';
   app.pendingCoach=data.coach&&typeof data.coach==='object'?data.coach:null;
   app.error='';app.undo=null;app.selectedUid=null;app.entryMode=null;app.raidBaseUid=null;
+  app.lifeRaidKey=null;app.lifeRaidActivated=false;app.lifeRaidBoard=false;
   return true;
  }catch{return false;}
 }
@@ -1369,7 +1418,7 @@ function render(){
   renderOpeningMulligan(target,s);
   return;
  }
- const v=universalPublicView(app.packs,s,0),legal=legalUniversalActions(app.packs,s);
+ const v=universalPublicView(app.packs,s,0),legal=presentLifeRaid(legalUniversalActions(app.packs,s));
  const block=app.busy?null:inlineBlockDecision(v,legal);
  const mobileMenu=btn('☰ 對局選單',()=>{
   const header=mobileMenu.closest('.matchHeader');
@@ -1432,6 +1481,7 @@ function render(){
  const deploying=legal.some(action=>boardEntryMode(action));
  const phase=el('div',{class:'phaseAction'},el('p',{text:block?
   (block.skipAction?'點卡圖上的「阻擋」，或選擇「不阻擋」。':'請點卡圖上的「阻擋」。'):
+  app.lifeRaidBoard?(app.raidBaseUid?'已選好底板，請點登場格子。':'突襲登場：先點底板，再點登場格子。'):
   deploying&&uiActor(s)===0&&!app.busy?
    '先選角色。能選擇時再決定突襲進場或普通進場，最後直接點要登場的格子。':
   s.pending?'請完成效果選擇。':
@@ -1466,6 +1516,7 @@ function render(){
  if(IS_BATTLE_PAGE&&preserveScroll)window.scrollTo(window.scrollX,oldScroll);
 }
 function applyAction(a){
+ if(a?.lifeRaidSource)a=a.lifeRaidSource;
  if(!app.state||app.busy||uiActor(app.state)!==0)return;
  try{
   const legal=legalUniversalActions(app.packs,app.state);
@@ -1482,6 +1533,7 @@ function applyAction(a){
   pushHistory(publicPreviewActionLabel(app.packs,previous,app.state,a,0));
   saveBattleProgress();
   app.selectedUid=null;app.raidBaseUid=null;app.entryMode=null;app.targetChoices=null;app.inspectionPaused=false;app.error='';app.allActions=false;
+  app.lifeRaidKey=null;app.lifeRaidActivated=false;app.lifeRaidBoard=false;
   maybeFinishCoach();render();driveAi();
  }catch(e){alertText(e?.message||String(e));}
 }
@@ -1491,6 +1543,7 @@ function undoMove(){
  app.publicMoves=app.undo.publicMoves||[];
  app.coachBattle?.retractLast?.();
  app.undo=null;app.error='';app.selectedUid=null;app.entryMode=null;app.inspectionPaused=false;
+ app.lifeRaidKey=null;app.lifeRaidActivated=false;app.lifeRaidBoard=false;
  app.dismissedTriggerKeys.clear();
  saveBattleProgress();render();
  if(uiActor(app.state)===1)driveAi();
@@ -1857,6 +1910,7 @@ async function startGame(){
   app.state=newUniversalMatch(app.packs,{decks:[mine.counts,foe.counts],seed,first,openingMulligan:true});
   assertUniversalMatch(app.packs,app.state);
   app.error='';app.selectedUid=null;app.entryMode=null;app.targetChoices=null;app.inspectionPaused=false;app.undo=null;
+  app.lifeRaidKey=null;app.lifeRaidActivated=false;app.lifeRaidBoard=false;
   app.publicMoves=[];
   app.dismissedPublicMoveIds.clear();
   app.dismissedTriggerKeys.clear();

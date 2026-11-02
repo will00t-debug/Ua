@@ -1591,6 +1591,10 @@ export function boardEntryMode(action){
  if(action.type==='chooseRemovedOkabeRaid'||action.type==='chooseOutsideRaid')return 'raid';
  if(action.type==='chooseTrigger'&&(action.mode==='color'||action.mode==='colorOutside'))
   return 'normal';
+ // RAID life is staged in the dialog first. Once the player chooses 突襲,
+ // the revealed card's uid is stamped on and this becomes the shared
+ // base-then-cell gesture. An unstamped engine action stays a text choice.
+ if(action.type==='chooseTrigger'&&action.mode==='raid')return 'raid';
  if(!MODE_BOARD_ENTRY.has(action.type))return null;
  // Epsilon and Beta print REST entry only. mode dest is that cell.
  // Do not treat any other kjn mode as Raid.
