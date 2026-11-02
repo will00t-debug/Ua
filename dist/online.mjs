@@ -150,7 +150,8 @@ function applyRoom(next,{label=true}={}){
  const previous=app.room;
  const finished=next?.status==='finished'&&previous?.status!=='finished'&&app.recordedCode!==next.code;
  const same=previous&&next.revision===previous.revision&&next.status===previous.status&&!app.busy;
- if(app.room&&next?.revision!==app.room.revision){app.pick=null;app.inspectPick=null;app.inspectionPaused=false;}
+ if(app.room&&next?.revision!==app.room.revision){app.pick=null;app.inspectPick=null;app.inspectionPaused=false;
+  app.lifeRaidActivated=false;app.lifeRaidBoard=false;}
  void decisions().settle(next);
  app.room=next;app.busy=false;
  if(finished){
@@ -501,6 +502,9 @@ function boardEntryMode(action){
  if(action.type==='chooseRemovedOkabeRaid'||action.type==='chooseOutsideRaid')return 'raid';
  if(action.type==='chooseTrigger'&&(action.mode==='color'||action.mode==='colorOutside'))
   return 'normal';
+ // Same gate as the solo page. A RAID life action becomes a board gesture
+ // only after the player chooses 突襲 and the revealed card uid is stamped on.
+ if(action.type==='chooseTrigger'&&action.mode==='raid')return 'raid';
  if(!MODE_BOARD_ENTRY.has(action.type))return null;
  // Epsilon and Beta print REST entry only. mode dest is that cell.
  // Do not treat any other kjn mode as Raid.
@@ -571,7 +575,51 @@ function entryClickPlan({selectedUid,entryMode,raidBaseUid=null,line,slot,slotUi
   .filter(action=>entryDestination(action,line,slot,slotUid));
  return hits.length?{type:'entry',mode,actions:hits}:{type:'entry-wait',mode};
 }
-function legalChoices(){return app.room?.choices||[];}
+// Keep these two functions identical to dist/universal-v2/life-raid-flow.mjs.
+// This page stays import-free so the table test can run the file as a script.
+function lifeRaidStage({raid,actions,activated=false,boarding=false}={}){
+ if(raid!==true)return null;
+ const list=Array.isArray(actions)?actions:[];
+ const raids=list.filter(action=>action?.type==='chooseTrigger'&&action.mode==='raid'&&action.baseUid);
+ const skip=list.find(action=>action?.type==='chooseTrigger'&&action.mode==='skip')||null;
+ const hand=list.find(action=>action?.type==='chooseTrigger'&&action.mode==='get')||null;
+ if(!raids.length&&!hand&&!skip)return null;
+ if(boarding||(!skip&&!hand&&raids.length))return {phase:'board',raids,skip,hand};
+ if(activated||(!skip&&(raids.length||hand)))return {phase:'mode',raids,skip,hand};
+ return {phase:'activate',raids,skip,hand};
+}
+function withLifeRaidBoard(actions,uid){
+ const list=Array.isArray(actions)?actions:[];
+ if(typeof uid!=='string'||!uid)return list;
+ return list.map(action=>action?.type==='chooseTrigger'&&action.mode==='raid'
+  ?{...action,uid,lifeRaidSource:action}:action);
+}
+function checkingLifeCard(room){
+ return (room?.view?.openTriggers||[]).find(card=>card?.checking&&card.owner===room.seat)||null;
+}
+function lifeRaidMenu(room){
+ if(!room?.yourTurn||room.view?.pending?.kind!=='life-trigger'||room.view.pending.player!==room.seat)return null;
+ const card=checkingLifeCard(room);
+ return lifeRaidStage({raid:card?.trigger==='raid',actions:room.choices||[],
+  activated:app.lifeRaidActivated===true,boarding:app.lifeRaidBoard===true});
+}
+function prepareLifeRaid(room){
+ const menu=lifeRaidMenu(room);
+ const card=checkingLifeCard(room);
+ if(menu?.phase!=='board'||!card?.uid)return;
+ if(app.lifeRaidBoard&&app.pick?.uid===card.uid){
+  if(app.pick.entryMode!=='raid')app.pick={...app.pick,entryMode:'raid'};
+  return;
+ }
+ app.lifeRaidBoard=true;app.lifeRaidActivated=true;
+ app.pick={uid:card.uid,entryMode:'raid',raidBaseUid:null,options:null};
+}
+function legalChoices(){
+ const room=app.room,raw=room?.choices||[];
+ if(!app.lifeRaidBoard||room?.view?.pending?.kind!=='life-trigger')return raw;
+ const card=checkingLifeCard(room);
+ return card?.uid?withLifeRaidBoard(raw,card.uid):raw;
+}
 function tableReady(){
  const room=app.room;
  return !!room?.yourTurn&&!app.busy&&room.view?.phase!=='setup'&&room.status==='playing'&&
@@ -646,9 +694,11 @@ function clickField(engineSeat,line,index,card){
   }
  }
  if(plan.type==='entry-mode'||plan.type==='entry-wait')return;
+ if(app.lifeRaidBoard)return;
  if(card){app.pick={uid:pick.uid===card.uid?null:card.uid,entryMode:null,options:null};app.zone=null;render();}
 }
 function clickHand(card){
+ if(app.lifeRaidBoard)return;
  if(!tableReady()||!card?.uid)return;
  const acts=legalChoices().filter(action=>action.uid===card.uid);
  const placed=acts.some(action=>boardEntryMode(action)||['move','step'].includes(action.type));
@@ -768,10 +818,14 @@ function ownHand(player){
  return el('div',{class:'online-hand'},el('div',{class:'line-label',text:'你的手牌'}),hand);
 }
 function playHint(room){
+ prepareLifeRaid(room);
  if(!room?.yourTurn)return room?.view?.pending?.kind==='life-trigger'?'對手正在確認已公開的觸發。':'等待對手操作。';
  if(room.view?.phase==='setup')return '';
  if(room.view?.pending?.kind==='block'&&room.view.pending.player===room.seat)return '點自己可以阻擋的角色，或選擇不阻擋。';
- const legal=room.choices||[];
+ const menu=lifeRaidMenu(room);
+ if(menu?.phase==='activate')return '要發動這個突襲觸發嗎？';
+ if(menu?.phase==='mode')return '選擇突襲登場，或是加入手牌。';
+ const legal=legalChoices();
  const board=legal.some(action=>boardEntryMode(action));
  const pick=app.pick||{};
  const selection=pick.uid?boardEntrySelection(legal,pick.uid):{normal:[],raid:[],needsMode:false};
@@ -816,6 +870,10 @@ function entryModeButtons(room){
 function dockChoices(room){
  const legal=room?.choices||[];
  if(!room?.yourTurn)return [];
+ const menu=lifeRaidMenu(room);
+ if(menu?.phase==='board')return [];
+ if(menu)return legal.filter(action=>!(action.type==='chooseTrigger'&&
+  (action.mode==='raid'||action.mode==='skip'||action.mode==='get')));
  if(room.view?.phase==='setup'||!legal.some(action=>action.type))return legal;
  if(app.pick?.options?.length)return app.pick.options;
  const block=inlineBlock(room,legal);
@@ -1075,6 +1133,39 @@ function effectEntryGallery(room){
  section.append(grid);
  return {node:section,handled};
 }
+function appendLifeRaidButtons(actions,room){
+ const menu=lifeRaidMenu(room);
+ if(!menu)return;
+ if(menu.phase==='board'){
+  const raw=room.choices||[];
+  if(raw.some(action=>action.type==='chooseTrigger'&&(action.mode==='skip'||action.mode==='get')))
+   actions.append(el('button',{type:'button',text:'返回',disabled:app.busy,onClick:()=>{
+    app.lifeRaidBoard=false;app.lifeRaidActivated=true;app.pick=null;render();
+   }}));
+  return;
+ }
+ if(menu.phase==='activate'){
+  actions.append(el('button',{type:'button',class:'primary',text:'發動',disabled:app.busy,onClick:()=>{
+   app.lifeRaidActivated=true;render();
+  }}));
+  if(menu.skip)actions.append(el('button',{type:'button',text:'不發動',disabled:app.busy,
+   onClick:()=>sendAction(menu.skip.index)}));
+  return;
+ }
+ if(menu.raids.length)actions.append(el('button',{type:'button',class:'primary',text:'突襲',disabled:app.busy,
+  onClick:()=>{
+   const card=checkingLifeCard(room);
+   if(!card?.uid)return;
+   app.lifeRaidActivated=true;app.lifeRaidBoard=true;
+   app.pick={uid:card.uid,entryMode:'raid',raidBaseUid:null,options:null};
+   render();
+  }}));
+ if(menu.hand)actions.append(el('button',{type:'button',text:'加入手牌',disabled:app.busy,
+  onClick:()=>sendAction(menu.hand.index)}));
+ if(menu.skip)actions.append(el('button',{type:'button',text:'返回',disabled:app.busy,onClick:()=>{
+  app.lifeRaidActivated=false;render();
+ }}));
+}
 function matchView(){
  loadCovers();
  const room=app.room,view=room.view,seat=room.seat;
@@ -1128,6 +1219,7 @@ function matchView(){
  if(room.status==='finished')actions.append(el('p',{text:(room.winner?.username||'對局')+' 獲勝。'}));
  let visibleChoices=null;
  if(room.status!=='finished'&&room.yourTurn){
+  appendLifeRaidButtons(actions,room);
   const shownInGallery=new Set((room.inspection?.cards||[]).flatMap(card=>
    (card.actions||[]).map(action=>action.index)));
   const effectTarget=effectEntryGallery(room);
