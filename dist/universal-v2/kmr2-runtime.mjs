@@ -5,6 +5,7 @@
 import {cardHasName,cardHasTrait} from './field-conditions.mjs';
 import {originalEffectsDisabled,grantContinuousState} from './continuous-states.mjs';
 import {kmr2CopiedIds} from './kmr2-continuous.mjs';
+import {raidBoxListed} from './raid-box.mjs';
 
 const SCHOOL='天ノ川学園高校';
 const RE='リ・イマジネーション';
@@ -860,10 +861,14 @@ function ally008(pack,s,job){
  if(!plOf(s,job.owner).hand.length)return;
  offerDiscard(s,specOf(job),1,true,'shiftFront');
 }
+function faceUpRaidCard(c){
+ return (c?.stack||[]).some(layer=>layer&&layer.faceDown!==true);
+}
 function win019(pack,s,job){
  const unit=selfOf(s,job.owner,job.sourceUid);
  if(!unit||def(pack,unit).color==='yellow')return;
- if(!fieldCards(s,job.owner).some(c=>c&&def(pack,c).id==='KMR-2-019'&&live(s,c)))return;
+ if(!fieldCards(s,job.owner).some(c=>c&&def(pack,c).id==='KMR-2-019'&&live(s,c)&&
+  (!raidBoxListed('KMR-2-019','phase')||faceUpRaidCard(c))))return;
  hold(s,{...specOf(job),step:'mayDraw',data:{}},[
   {type:'kmr2',mode:'skip'},{type:'kmr2',mode:'draw',key:'draw'}
  ]);

@@ -19,7 +19,8 @@ const mst=registeredV2TitlePack('mushoku-tensei');
 const ttg=registeredV2TitlePack('gurren-lagann');
 const counts={
  'MST-1-005':1,'MST-1-006':1,'MST-1-007':2,'MST-1-008':2,'MST-1-009':2,
- 'MST-1-010':2,'MST-1-013':3,'MST-1-020':4,'MST-1-022':2,'MST-1-025':2,
+ 'MST-1-010':2,'MST-1-013':3,'MST-1-020':2,'MST-1-022':2,'MST-1-025':2,
+ 'MST-1-028':2,
  'MST-1-031':2,'MST-1-032':2,'MST-1-033':4,'MST-1-034':2,'MST-1-036':2,
  'MST-1-038':2,'MST-1-040':1,'MST-1-042':2,'MST-1-048':2,'MST-1-054':2,
  'MST-1-062':1,'MST-1-067':1,'MST-1-068':2,'MST-1-073':2,'MST-1-075':2
@@ -181,7 +182,7 @@ test('Q2146 the unblocked draw opens after the block decision and before life da
 test('Q2147 attack-end swap waits until the battle or the life trigger is finished',()=>{
  let s=main(fresh(2147),0,2);
  fuel(s,0,['MST-1-010','MST-1-068','MST-1-020']);
- const roxy=put(s,0,'MST-1-032','front',0);
+ const host=put(s,0,'MST-1-007','front',1);
  const field=put(s,0,'MST-1-033','energy',3);
  const event=hold(s,0,'MST-1-034');
  const eris=hold(s,0,'MST-1-009');
@@ -189,17 +190,13 @@ test('Q2147 attack-end swap waits until the battle or the life trigger is finish
  while(s.pending?.kind==='effect-recover-ap')s=decline(s);
  s=act(s,'activate',{uid:field.uid,mode:'fieldRestTrueRetireDeploy'});
  assert.equal(s.pending.kind,'effect-hand-rest-or-raid');
- s=act(s,'chooseHandRestOrRaid',{uid:eris.uid,mode:'enter',line:'front'});
+ s=act(s,'chooseHandRestOrRaid',{uid:eris.uid,mode:'raid',baseUid:host.uid,line:'front'});
  assert.equal(s.pending.kind,'effect-choice-mode');
  s=act(s,'chooseEffectMode',{mode:'swap'});
  const swapWith=put(s,0,'MST-1-022','energy',3);
  const entered=s.players[0].front.find(c=>c?.uid===eris.uid);
- assert.equal(entered.ready,false);
+ assert.equal(entered.ready,true);
  assert.ok(entered.attackEndSwapGranted);
- s=act(s,'activate',{uid:roxy.uid,mode:'active'});
- assert.equal(s.pending.kind,'effect-active-character');
- s=act(s,'chooseActiveCharacter',{uid:eris.uid});
- assert.equal(s.players[0].front.find(c=>c?.uid===eris.uid).ready,true);
  const blocker=put(s,1,'MST-1-013','front',0);
  s=attackPhase(s);
  const lifeCard=take(s,1,'MST-1-020');
@@ -208,27 +205,30 @@ test('Q2147 attack-end swap waits until the battle or the life trigger is finish
  s=act(s,'attack',{uid:eris.uid});
  s=act(s,'chooseBlock',{uid:blocker.uid});
  assert.equal(s.players[1].front[0],null);
- // Own-effect entry is not Raid, so Raid-box IMPACT does not open a life check.
- assert.equal(s.players[1].life.length,life);
+ // The frame's Impact resolves with the battle, then the swap opens.
+ while(s.pending&&s.pending.kind!=='attack-end-swap'){
+  s=clearLife(s);
+  if(s.pending?.kind==='attack-end-swap')break;
+  s=decline(s);
+ }
  assert.equal(s.pending.kind,'attack-end-swap');
+ assert.ok(s.players[1].life.length<life);
  s=act(s,'chooseAttackEndSwap',{uid:swapWith.uid});
  assert.equal(s.players[0].energy.find(c=>c?.uid===eris.uid)?.uid,eris.uid);
  assert.equal(assertUniversalMatch(packs,s),true);
 
  let direct=main(fresh(21471),0,2);
  fuel(direct,0,['MST-1-010','MST-1-068','MST-1-020']);
- const roxy2=put(direct,0,'MST-1-032','front',0);
+ const host2=put(direct,0,'MST-1-007','front',1);
  const field2=put(direct,0,'MST-1-033','energy',3);
  const event2=hold(direct,0,'MST-1-034');
  const eris2=hold(direct,0,'MST-1-009');
- put(direct,0,'MST-1-022','front',1);
+ put(direct,0,'MST-1-022','front',2);
  direct=act(direct,'event',{uid:event2.uid});
  while(direct.pending?.kind==='effect-recover-ap')direct=decline(direct);
  direct=act(direct,'activate',{uid:field2.uid,mode:'fieldRestTrueRetireDeploy'});
- direct=act(direct,'chooseHandRestOrRaid',{uid:eris2.uid,mode:'enter',line:'front'});
+ direct=act(direct,'chooseHandRestOrRaid',{uid:eris2.uid,mode:'raid',baseUid:host2.uid,line:'front'});
  direct=act(direct,'chooseEffectMode',{mode:'swap'});
- direct=act(direct,'activate',{uid:roxy2.uid,mode:'active'});
- direct=act(direct,'chooseActiveCharacter',{uid:eris2.uid});
  direct=attackPhase(direct);
  direct=act(direct,'attack',{uid:eris2.uid});
  direct=act(direct,'chooseBlock',{uid:null});
@@ -295,8 +295,9 @@ test('Q2148-Q2151 stripping a raided top leaves the base without entry or borrow
 test('Q2152 and Q2161 a non-matching hand play does not spend the next discount',()=>{
  let event=main(fresh(2152),0,2);
  fuel(event,0,['MST-1-010','MST-1-010','MST-1-068','MST-1-020']);
+ const host=put(event,0,'MST-1-028','front',0);
  const roxy=hold(event,0,'MST-1-031');
- event=act(event,'play',{uid:roxy.uid,line:'front'});
+ event=act(event,'raid',{uid:roxy.uid,baseUid:host.uid});
  const discount=event.continuousStates.find(e=>e.kind==='nextEligibleHandPlayApDiscount');
  assert.ok(discount);
  const plain=hold(event,0,'MST-1-022');
@@ -375,8 +376,9 @@ test('Q2153, Q2155 and Q2163 a full destination removes one card, then the move 
  const victim=put(opp,1,'MST-1-022','front',0);
  const energy=['MST-1-020','MST-1-013','MST-1-008','MST-1-025'].map((id,i)=>
   put(opp,1,id,'energy',i));
+ const host=put(opp,0,'MST-1-013','front',0);
  const fitz=hold(opp,0,'MST-1-068');
- opp=act(opp,'play',{uid:fitz.uid,line:'front'});
+ opp=act(opp,'raid',{uid:fitz.uid,baseUid:host.uid});
  assert.equal(opp.pending.kind,'effect-choice-mode');
  opp=act(opp,'chooseEffectMode',{mode:'move'});
  assert.equal(opp.pending.kind,'effect-move-opp-front');
@@ -469,8 +471,9 @@ test('Q2158 Q2159 and Q2228 silence removes printed text, keeps raid state and e
  s=main(s,0,2);
  outside(s,0,'MST-1-033');
  fuel(s,0,['MST-1-068','MST-1-042','MST-1-048','MST-1-075']);
+ const host=put(s,0,'MST-1-028','front',0);
  const roxy=hold(s,0,'MST-1-054');
- s=act(s,'play',{uid:roxy.uid,line:'front'});
+ s=act(s,'raid',{uid:roxy.uid,baseUid:host.uid});
  assert.equal(s.pending.kind,'effect-rest-bp');
  assert.ok(s.pending.choices.includes(cover.uid));
  s=act(s,'chooseRestBp',{uid:cover.uid});
@@ -514,8 +517,9 @@ test('Q2160 a double block earned from another card survives original-effect sil
  assert.ok(s.players[1].front.find(c=>c?.uid===kitan.uid).doubleBlockGranted);
  outside(s,0,'MST-1-033');
  fuel(s,0,['MST-1-068','MST-1-042','MST-1-048','MST-1-075']);
+ const host=put(s,0,'MST-1-028','front',0);
  const roxy=hold(s,0,'MST-1-054');
- const play=legalUniversalActions(both,s).find(a=>a.type==='play'&&a.uid===roxy.uid&&a.line==='front');
+ const play=legalUniversalActions(both,s).find(a=>a.type==='raid'&&a.uid===roxy.uid&&a.baseUid===host.uid);
  assert.ok(play);
  s=dispatchUniversalAction(both,s,play);
  assert.equal(s.pending.kind,'effect-rest-bp');
@@ -538,8 +542,9 @@ test('Q2162 a choose-and-retire cannot select the protected character; battle st
  fuel(s,0,['MST-1-068','MST-1-068','MST-1-042','MST-1-048']);
  const guarded=put(s,0,'MST-1-073','front',0);
  const open=put(s,0,'MST-1-022','front',1);
+ const host=put(s,0,'MST-1-013','front',2);
  const fitz=hold(s,0,'MST-1-067');
- s=act(s,'play',{uid:fitz.uid,line:'energy'});
+ s=act(s,'raid',{uid:fitz.uid,baseUid:host.uid});
  assert.equal(s.pending.kind,'effect-protect-gen');
  s=act(s,'chooseProtectGen',{uid:guarded.uid});
  const protection=s.continuousStates.find(e=>e.kind==='cannotBeChosenByOppEffect');
@@ -562,8 +567,9 @@ test('Q2162 a choose-and-retire cannot select the protected character; battle st
  fuel(battle,0,['MST-1-068','MST-1-068','MST-1-042','MST-1-048']);
  const shield=put(battle,0,'MST-1-073','front',0);
  put(battle,0,'MST-1-022','front',1);
+ const sylph=put(battle,0,'MST-1-013','front',2);
  const source=hold(battle,0,'MST-1-067');
- battle=act(battle,'play',{uid:source.uid,line:'front'});
+ battle=act(battle,'raid',{uid:source.uid,baseUid:sylph.uid});
  battle=act(battle,'chooseProtectGen',{uid:shield.uid});
  battle=attackPhase(battle,1);
  const attacker=put(battle,1,'MST-1-025','front',0);
@@ -633,8 +639,9 @@ test('Q2220 printed leave text is lost; a gained leave draw still resolves',()=>
  for(const id of ['MST-1-034','MST-1-034','MST-1-038','MST-1-038','MST-1-040','MST-1-036'])
   outside(printed,0,id);
  const sylph=put(printed,1,'MST-1-013','front',0);
+ const host=put(printed,0,'MST-1-028','front',0);
  const roxy=hold(printed,0,'MST-1-054');
- printed=act(printed,'play',{uid:roxy.uid,line:'front'});
+ printed=act(printed,'raid',{uid:roxy.uid,baseUid:host.uid});
  printed=act(printed,'chooseRestBp',{uid:sylph.uid});
  assert.equal(originalEffectsDisabled(printed,printed.players[1].front[0]),true);
  const storm=hold(printed,0,'MST-1-036');

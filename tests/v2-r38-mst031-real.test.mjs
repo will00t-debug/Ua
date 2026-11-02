@@ -6,18 +6,23 @@ import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,assertUn
 import {chooseUniversalAiAction} from '../dist/universal-v2/ai.mjs';
 import {handPlayApPlan} from '../dist/universal-v2/ap-discounts.mjs';
 const pack=registeredV2TitlePack('mushoku-tensei'),packs=[pack,pack],id='MST-1-031';
-const ids=['MST-1-031','MST-1-001','MST-1-002','MST-1-003','MST-1-004','MST-1-013','MST-1-015','MST-1-016','MST-1-017','MST-1-020','MST-1-023','MST-1-034','MST-1-027'];
-const deck=Object.fromEntries(ids.map((x,i)=>[x,i===12?2:4]));assert.deepEqual(validateUniversalDeck(pack,deck),[]);
+const ids=['MST-1-031','MST-1-028','MST-1-001','MST-1-002','MST-1-003','MST-1-004','MST-1-013','MST-1-015','MST-1-016','MST-1-017','MST-1-020','MST-1-023','MST-1-034','MST-1-027'];
+const deck=Object.fromEntries(ids.map(x=>[x,4]));
+deck['MST-1-027']=2;deck['MST-1-028']=2;deck['MST-1-023']=2;
+assert.deepEqual(validateUniversalDeck(pack,deck),[]);
 const take=(s,id)=>{for(const z of ['hand','deck','life','outside']){const a=s.players[0][z],i=a.findIndex(c=>c.cardId===id);if(i>=0)return a.splice(i,1)[0];}throw Error('Missing '+id);};
 const act=(s,a)=>dispatchUniversalAction(packs,s,a);
 function scene(){
  let s=newUniversalMatch(packs,{decks:[deck,deck],first:0,seed:38031});
  const source=take(s,id),event=take(s,'MST-1-034'),ordinary=take(s,'MST-1-003');
+ const base=take(s,'MST-1-028');
+ base.ready=true;base.fieldEntryStamp=s.nextFieldEntryStamp++;
+ s.players[0].front[0]=base;
  s.players[0].hand.push(source,event,ordinary);
  for(let i=0;i<4;i++){const p=take(s,'MST-1-001');p.ready=true;p.fieldEntryStamp=s.nextFieldEntryStamp++;s.players[0].energy[i]=p;}
  s=act(s,{type:'next'});s=act(s,{type:'next'});
- const use=legalUniversalActions(packs,s).find(a=>a.uid===source.uid&&a.type==='play'&&a.line==='front');
- assert.ok(use,'four printed blue 1 generators pay necessary 4');
+ const use=legalUniversalActions(packs,s).find(a=>a.uid===source.uid&&a.type==='raid'&&a.baseUid===base.uid);
+ assert.ok(use,'raid onto Roxy pays the printed energy');
  s=act(s,use);
  assert.equal(s.pending,null);
  const front=s.players[0].front.find(c=>c?.uid===source.uid);assert.ok(front);
