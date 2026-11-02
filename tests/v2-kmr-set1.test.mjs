@@ -9,7 +9,7 @@ import {kmrPracticeDeck} from '../dist/universal-v2/official-entry.mjs';
 import {editorV2Status} from '../dist/v2-editor-compat.mjs';
 import {dispatchUniversalAction,legalUniversalActions,newUniversalMatch,
  universalPrivateChoices,universalPublicView,zoneRequiredEnergy} from '../dist/universal-v2/engine.mjs';
-import {publicPendingTargetCard} from '../dist/universal-v2/preview-actions.mjs';
+import {inspectedPendingChoiceCards,publicPendingTargetCard} from '../dist/universal-v2/preview-actions.mjs';
 import {verifiedBleachPurplePilotDeck} from '../dist/universal-v2/verified-real-decks.mjs';
 
 const pack=createKmrV2Pack();
@@ -223,6 +223,18 @@ test('Ore, Sanjou looks at the top five and can ready one AP when life is 5 or m
  const takes=looked.pending.actions.filter(a=>a.mode==='take').map(a=>a.uid).sort();
  assert.deepEqual(takes,[platform.uid,liner.uid].sort());
  assert.equal(takes.includes(ryuta.uid),false);
+ const window=[platform,liner,ryuta,...fillers];
+ const seen=universalPrivateChoices(packs,looked,0);
+ assert.deepEqual(seen.inspected.map(c=>c.uid),window.map(c=>c.uid));
+ const shown=inspectedPendingChoiceCards(seen,legalUniversalActions(packs,looked));
+ assert.deepEqual(shown.map(c=>c.uid),window.map(c=>c.uid));
+ assert.equal(shown.find(c=>c.uid===platform.uid).action.mode,'take');
+ assert.equal(shown.find(c=>c.uid===liner.uid).action.mode,'take');
+ assert.equal(shown.find(c=>c.uid===ryuta.uid).action,null);
+ assert.equal(shown.find(c=>c.uid===fillers[0].uid).action,null);
+ assert.equal(universalPrivateChoices(packs,looked,1),null);
+ assert.throws(()=>dispatchUniversalAction(packs,looked,{type:'kmr',mode:'take',uid:ryuta.uid}),
+  /not currently legal/);
  let ordered=dispatchUniversalAction(packs,looked,{type:'kmr',mode:'take',uid:platform.uid});
  while(ordered.pending?.step==='lookOrder')
   ordered=dispatchUniversalAction(packs,ordered,ordered.pending.actions[0]);

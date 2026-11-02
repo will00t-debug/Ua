@@ -166,7 +166,7 @@ const INSPECT_ACTION={
  'effect-top-inspect':'chooseInspectedOutside',
  'effect-top-inspect-many':'chooseInspectedOutside',
  'effect-top-order':'chooseTopOrder',
- iys:'iys'
+ iys:'iys',kmr:'kmr',kmr2:'kmr2',kjn:'kjn',aot:'aot',aot2:'aot2',mmm2:'mmm2'
 };
 // A private inspection is display-only. Choice indices must come from the
 // already computed legalUniversalActions list; client-created actions are never trusted.
@@ -252,6 +252,7 @@ export function onlinePrivateGallery(privateChoices,legal,packs,match){
    if(actionType){
     if(action.type!==actionType)continue;
     if(kind==='iys'&&action.mode!=='take'&&action.mode!=='next')continue;
+    if(kind!=='iys'&&(action.mode==='skip'||action.mode==='done'))continue;
    }else{
     const option=(privateChoices.options||[]).find(opt=>opt?.action&&
      indices.get(JSON.stringify(opt.action))===index&&

@@ -813,15 +813,22 @@ function walkOwned(card,accept){
  return null;
 }
 // The acting player already looked at this exact deck prefix. Show every
-// card in that window, including ones that cannot be chosen. Never walk the
-// rest of the deck or the opponent's hidden zones.
+// card in that window, including ones that cannot be chosen. Search, look at
+// the top, and mill use the same rule. Never walk the rest of the deck or
+// the opponent's hidden zones. A new closed title inherits this by storing
+// the full window on pending.uids, data.uids, or data.window.
 export function controllerDeckWindowCards(state,packs,legal){
  const q=state?.pending;
- if(!q||q.player!==0||!Array.isArray(q.uids)||!q.uids.length)return [];
+ const listed=Array.isArray(q?.uids)&&q.uids.length?q.uids
+  :q?.step==='lookOrder'&&Array.isArray(q?.data?.left)?q.data.left
+  :Array.isArray(q?.data?.uids)&&q.data.uids.length?q.data.uids
+  :Array.isArray(q?.data?.window)&&q.data.window.length?q.data.window
+  :Array.isArray(q?.data?.windowUids)?q.data.windowUids:null;
+ if(!q||q.player!==0||!Array.isArray(listed)||!listed.length)return [];
  const deck=state.players?.[0]?.deck;
  if(!Array.isArray(deck))return [];
- const window=deck.slice(0,q.uids.length);
- if(window.length!==q.uids.length||window.some((card,index)=>card?.uid!==q.uids[index]))
+ const window=deck.slice(0,listed.length);
+ if(window.length!==listed.length||window.some((card,index)=>card?.uid!==listed[index]))
   return [];
  const order=q.phase==='order';
  return window.map(physical=>{
@@ -945,31 +952,39 @@ export function pendingChoiceCards(option){
  }
  return cards;
 }
-// The controller sees every inspected card in deck order. A card with exactly
-// one non-positional legal action is clickable. Cards that need a destination
-// keep their existing buttons. Cards with no legal action stay disabled.
+// The controller sees every inspected card in deck order. Search, look at the
+// top, and mill all use this list. A card with exactly one non-positional
+// legal action is clickable. Cards that need a destination keep their
+// existing buttons. Cards with no legal action stay on screen, disabled.
+// A new pending kind does not need a new entry here: if it carries inspected,
+// every card is shown. Closed titles match actions of their own kind.
+const INSPECTED_ACTION_TYPES={
+ 'effect-top-filter-choice':'chooseTopFiltered',
+ 'effect-top-filter-many-choice':'chooseTopFilteredMany',
+ 'effect-top-trait-event':'chooseTopTraitEvent',
+ 'effect-top-trait-outside':'chooseTopTraitOutside',
+ 'effect-search-deck':'chooseDeckSearch',
+ 'effect-search-deck-multi':'chooseDeckSearchMulti',
+ 'effect-wyrm-look':'chooseWyrmLook',
+ 'effect-top-character-outside':'chooseTopCharacterOutside',
+ 'effect-top-deploy':'chooseTopDeploy',
+ 'effect-top-deploy-rest':'chooseTopDeployRest',
+ iys:'iys',kmr:'kmr',kmr2:'kmr2',kjn:'kjn',aot:'aot',aot2:'aot2',mmm2:'mmm2'
+};
 export function inspectedPendingChoiceCards(privateChoices,legal){
- const type={
-  'effect-top-filter-choice':'chooseTopFiltered',
-  'effect-top-filter-many-choice':'chooseTopFilteredMany',
-  'effect-top-trait-event':'chooseTopTraitEvent',
-  'effect-top-trait-outside':'chooseTopTraitOutside',
-  'effect-search-deck':'chooseDeckSearch',
-  'effect-search-deck-multi':'chooseDeckSearchMulti',
-  'effect-wyrm-look':'chooseWyrmLook',
-  'effect-top-character-outside':'chooseTopCharacterOutside',
-  'effect-top-deploy':'chooseTopDeploy',
-  'effect-top-deploy-rest':'chooseTopDeployRest',
-  iys:'iys'
- }[privateChoices?.kind];
- if(!type||!Array.isArray(privateChoices?.inspected)||!Array.isArray(legal))return [];
+ const inspected=privateChoices?.inspected;
+ if(!Array.isArray(inspected)||!Array.isArray(legal))return [];
+ const kind=privateChoices?.kind;
+ const type=INSPECTED_ACTION_TYPES[kind]||(CLOSED_CHOICE_TYPES.has(kind)?kind:null);
  const seen=new Set();
- return privateChoices.inspected.flatMap(card=>{
+ return inspected.flatMap(card=>{
   if(!card||typeof card.uid!=='string'||!card.uid||
    typeof card.cardId!=='string'||!card.cardId||seen.has(card.uid))return [];
   seen.add(card.uid);
-  const matches=legal.filter(a=>a?.type===type&&a.uid===card.uid&&
-   (type!=='iys'||a.mode==='take'||a.mode==='next'));
+  const matches=legal.filter(a=>a?.uid===card.uid&&
+   (type?a.type===type:true)&&
+   a.mode!=='skip'&&a.mode!=='done'&&
+   (kind!=='iys'||a.mode==='take'||a.mode==='next'));
   const positional=matches.some(a=>a.line!=null||Number.isInteger(a.slot));
   return [{uid:card.uid,cardId:card.cardId,
    name:typeof card.name==='string'&&card.name?card.name:card.cardId,

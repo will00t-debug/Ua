@@ -3,8 +3,10 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {KMR_CARDS} from '../dist/kmr-cards.mjs';
 import {createKmrV2Pack} from '../dist/universal-v2/kmr-pack.mjs';
-import {dispatchUniversalAction,legalUniversalActions,newUniversalMatch} from '../dist/universal-v2/engine.mjs';
-import {controllerChoiceArt,fieldEffectCopy,pendingFocusCard,pendingTextChoiceClass,uiActionLabel} from '../dist/universal-v2/preview-actions.mjs';
+import {dispatchUniversalAction,legalUniversalActions,newUniversalMatch,
+ universalPrivateChoices} from '../dist/universal-v2/engine.mjs';
+import {controllerChoiceArt,controllerDeckWindowCards,fieldEffectCopy,inspectedPendingChoiceCards,
+ pendingFocusCard,pendingTextChoiceClass,uiActionLabel} from '../dist/universal-v2/preview-actions.mjs';
 
 const pack=createKmrV2Pack();
 const packs=[pack,pack];
@@ -196,4 +198,49 @@ test('new closed-title choices stay in Chinese and Muse shows its printed effect
  const builder=readFileSync(new URL('../dist/visual-deck-builder.mjs',import.meta.url),'utf8');
  assert.match(builder,/color:'顏色',special:'特殊',final:'最終'/);
  assert.doesNotMatch(builder,/color:'COLOR'/);
+});
+
+test('search, top look, and mill windows show cards that cannot be chosen',()=>{
+ const s=fresh(countsFor(['KMR-1-001','KMR-1-095']));
+ const top=s.players[0].deck.slice(0,5);
+ s.pending={kind:'kmr',player:0,sourceUid:top[0].uid,id:'KMR-1-095',step:'lookPick',
+  data:{uids:top.map(c=>c.uid),hits:[top[0].uid,top[1].uid],taken:[],max:1,min:0},
+  actions:[{type:'kmr',mode:'done'},
+   {type:'kmr',mode:'take',uid:top[0].uid},{type:'kmr',mode:'take',uid:top[1].uid}]};
+ const seen=universalPrivateChoices(packs,s,0);
+ assert.deepEqual(seen.inspected.map(c=>c.uid),top.map(c=>c.uid));
+ const shown=inspectedPendingChoiceCards(seen,legalUniversalActions(packs,s));
+ assert.deepEqual(shown.map(c=>!!c.action),[true,true,false,false,false]);
+ assert.equal(universalPrivateChoices(packs,s,1),null);
+ const deckView=controllerDeckWindowCards(s,packs,legalUniversalActions(packs,s));
+ assert.deepEqual(deckView.map(c=>c.uid),top.map(c=>c.uid));
+ assert.equal(deckView[2].action,null);
+ assert.equal(deckView[2].caption,'目前不能選');
+
+ s.pending={kind:'kjn',player:0,sourceUid:top[0].uid,id:'KJN-1-001',step:'lookPick',
+  data:{window:top.map(c=>c.uid)},
+  actions:[{type:'kjn',mode:'done'},{type:'kjn',mode:'take',uid:top[4].uid}]};
+ const kjn=universalPrivateChoices(packs,s,0);
+ assert.deepEqual(kjn.inspected.map(c=>c.uid),top.map(c=>c.uid));
+ const kjnShown=inspectedPendingChoiceCards(kjn,kjn.options.map(option=>option.action));
+ assert.equal(kjnShown.filter(card=>card.action).map(card=>card.uid).join(','),top[4].uid);
+
+ const milled=s.players[0].deck.slice(0,10);
+ s.pending={kind:'kmr',player:0,sourceUid:milled[0].uid,id:'KMR-1-001',step:'mill',
+  data:{uids:milled.map(c=>c.uid)},
+  actions:[{type:'kmr',mode:'skip'},{type:'kmr',mode:'mill'}]};
+ const mill=universalPrivateChoices(packs,s,0);
+ assert.equal(mill.inspected.length,10);
+ const millShown=inspectedPendingChoiceCards(mill,mill.options.map(option=>option.action));
+ assert.equal(millShown.length,10);
+ assert.equal(millShown.every(card=>card.action===null),true);
+
+ const futureShown=inspectedPendingChoiceCards({kind:'kmr2',inspected:top.slice(0,3).map(card=>({
+  uid:card.uid,cardId:card.cardId,name:card.cardId}))},
+  [{type:'kmr2',mode:'done'},{type:'kmr2',mode:'take',uid:top[0].uid}]);
+ assert.deepEqual(futureShown.map(card=>!!card.action),[true,false,false]);
+
+ s.pending={kind:'aot',player:0,sourceUid:top[0].uid,id:'AOT-1-077',step:'fork77',
+  data:{uids:['0-not-in-deck']},actions:[{type:'aot',mode:'range'}]};
+ assert.equal(universalPrivateChoices(packs,s,0).inspected,undefined);
 });
