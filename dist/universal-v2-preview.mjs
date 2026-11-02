@@ -670,8 +670,11 @@ function legacySlot(view,side,line,index,legal){
  const entryDest=plan.type==='entry';
  const place=moveDest||entryDest;
  const d=c?cardDef(side,c.cardId):null;
+ const replacing=entryDest&&(plan.actions||[]).length>0&&
+  plan.actions.every(action=>typeof action.replaceUid==='string');
  const placement=moveDest?'移動至此':moveSource?'點選移動角色':
-  entryDest?(plan.mode==='raid'?(line==='energy'?'突襲留後線':'突襲進場'):'普通進場'):
+  entryDest?(plan.mode==='raid'?(line==='energy'?'突襲留後線':'突襲進場'):
+   replacing?'替換並移入移除區':'普通進場'):
   pickRaidBase?'選為突襲底座':raidBase?'已選突襲底座':'';
  const btnSlot=el('button',{type:'button',class:'slot'+(c?' occupied':'')+
   (c&&!c.ready?' rested':'')+(selected?' selected':'')+
