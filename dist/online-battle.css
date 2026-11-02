@@ -1,0 +1,42 @@
+/* Only the account route needs this bridge. Table geometry is shared with AI. */
+body.v2-online-battle #app.wrap{max-width:none;width:100%;margin:0;padding:0;min-height:100dvh}
+body.v2-online-battle .online-battle-shell{margin:auto}
+body.v2-online-battle #match-view .arena button.slot{min-height:0;padding:0;text-align:initial}
+body.v2-online-battle #match-view .arena button.handCard{padding:0;min-height:0;position:relative}
+body.v2-online-battle #match-view .v2-compact-actions .actions{display:flex;gap:5px;align-items:center;flex-wrap:nowrap;min-width:0;overflow-x:auto}
+body.v2-online-battle #match-view .v2-compact-actions :is(.play-hint,.setup-note){display:none}
+body.v2-online-battle .online-effect-overlay{position:fixed;inset:0;z-index:450;display:grid;place-items:center;overflow:auto}
+body.v2-online-battle .online-effect-overlay .dialog{max-height:88dvh;overflow:auto;width:min(920px,96vw)}
+body.v2-online-battle .online-effect-overlay .actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+body.v2-online-battle .online-effect-overlay .actions>.online-private-inspection{flex:0 0 100%;max-height:none}
+body.v2-online-battle .online-card-overlay{position:fixed;inset:0;z-index:510;display:grid;place-items:center;background:#070d18dc;padding:12px}
+body.v2-online-battle .online-card-overlay .field-sheet{width:min(640px,96vw);max-height:92dvh;overflow:auto;background:#151e2a;color:#eaf1f9}
+body.v2-online-battle .online-card-overlay .field-sheet-card .art{width:100%;max-height:70dvh;object-fit:contain}
+body.v2-online-battle .online-card-overlay .field-effect{white-space:pre-wrap}
+body.v2-online-battle #match-view .online-public-card-gallery{display:flex;gap:8px;overflow-x:auto}
+body.v2-online-battle #match-view .online-public-card-result{flex:0 0 90px;margin:4px 0}
+body.v2-online-battle #match-view .online-public-card-result img{max-width:100%;height:auto}
+body.v2-online-battle .online-battle-notices:empty{display:none}
+body.v2-online-battle .online-battle-notices{position:absolute;top:45px;left:20%;right:20%;z-index:60;font-size:11px;pointer-events:none}
+body.v2-online-battle .online-overlay-close{display:block;margin:0 0 8px auto}
+body.v2-online-battle #match-view .online-public-notice{display:flex;align-items:center;gap:5px;width:100%;margin-top:8px;padding:4px;white-space:normal;text-align:left;font-size:10px}
+body.v2-online-battle #match-view .online-public-notice img{width:29px;height:40px;object-fit:contain}
+body.v2-online-battle #match-view .v2-middle-controls>.online-public-notice{flex:0 0 auto;width:auto;margin:0 0 0 4px;padding:2px 5px;min-height:28px}
+body.v2-online-battle #match-view .v2-middle-controls>.online-public-notice img{width:18px;height:25px}
+body.v2-online-battle #match-view .v2-middle-controls>.online-public-notice span{font-size:0}
+body.v2-online-battle #match-view .v2-middle-controls>.online-public-notice span:after{content:'公開';font-size:10px}
+body.v2-online-battle .online-public-dialog{width:min(900px,96vw);max-height:90dvh;overflow:auto}
+body.v2-online-battle .online-public-dialog .online-public-card-gallery{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+body.v2-online-battle .online-public-dialog .online-public-card-result{display:flex;flex-direction:column;width:150px;gap:5px;white-space:normal}
+body.v2-online-battle .online-public-dialog .art{width:100%;height:auto}
+@media(min-width:761px) and (min-height:460px){
+ body.v2-online-battle #match-view .matchHeader .v2-mobile-menu-toggle{display:inline-flex}
+ body.v2-online-battle #match-view .matchHeader .matchControls{display:none;position:absolute;right:12px;top:40px;z-index:70;max-height:65dvh;overflow:auto;flex-direction:column;background:#142135;padding:12px;border:1px solid #456382;border-radius:8px}
+ body.v2-online-battle #match-view .matchHeader.tools-open .matchControls{display:flex}
+ body.v2-online-battle #match-view .matchHeader{position:relative}
+}
+@media(max-width:760px) and (orientation:portrait){
+ body.v2-online-battle .online-effect-overlay .dialog{max-height:85dvh}
+ body.v2-online-battle .online-inspection-heading h2{flex:0 0 auto}
+ body.v2-online-battle #match-view .v2-compact-actions button{font-size:10px;min-height:27px;padding:3px 7px}
+}

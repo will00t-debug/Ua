@@ -4,7 +4,8 @@
 import {createHash,randomBytes,randomInt,scryptSync,timingSafeEqual} from 'node:crypto';
 import {editorV2Status,normalizeEditorCounts,registeredPackForEditor} from '../dist/v2-editor-compat.mjs';
 import {assertUniversalMatch,dispatchUniversalAction,legalUniversalActions,
- newUniversalMatch,universalActor,universalPublicView,universalPrivateChoices} from '../dist/universal-v2/engine.mjs';
+ newUniversalMatch,universalActor,universalPublicView,universalPrivateChoices,
+ universalAttackDamage,universalImpact,universalImpactNull} from '../dist/universal-v2/engine.mjs';
 import {uiActionLabel,publicLifeTriggerText} from '../dist/universal-v2/preview-actions.mjs';
 import {publicCardResults} from './public-card-results.mjs';
 import {createRepositories,roomTtl} from './repos.mjs';
@@ -278,13 +279,22 @@ function paintCard(pack,card){
  if(Array.isArray(card.underLayers))next.underLayers=card.underLayers.map(layer=>paintCard(pack,layer));
  return next;
 }
-function decorateView(packs,view){
+function decorateView(packs,view,match){
  const copy=structuredClone(view);
  copy.players=copy.players.map((player,index)=>{
   const pack=packs[index];
   return {
    ...player,
-   front:player.front.map(card=>paintCard(pack,card)),
+   front:player.front.map(card=>{
+    const painted=paintCard(pack,card);
+    const physical=card&&match?.players[index].front.find(c=>c?.uid===card.uid);
+    if(painted&&physical){
+     painted.damage=universalAttackDamage(packs,match,physical);
+     painted.impact=universalImpact(packs,match,physical);
+     painted.impactNull=universalImpactNull(packs,match,physical);
+    }
+    return painted;
+   }),
    energy:player.energy.map(card=>paintCard(pack,card)),
    outside:player.outside.map(card=>paintCard(pack,card)),
    removed:(player.removed||[]).map(card=>paintCard(pack,card)),
@@ -346,7 +356,7 @@ function present(room,userId){
   winner:null
  };
  if(room.status==='waiting'||!room.match||!room.packs)return payload;
- const view=decorateView(room.packs,universalPublicView(room.packs,room.match,seat));
+ const view=decorateView(room.packs,universalPublicView(room.packs,room.match,seat),room.match);
  if(room.status==='finished'){view.status='finished';view.winner=room.winner;}
  payload.view=view;
  const actor=universalActor(room.match);

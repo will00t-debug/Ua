@@ -24,6 +24,18 @@ const DRAFTS=[
 const PHASES=[['setup','起手調度'],['start','開始'],['move','移動'],['main','主要'],['attack','攻擊']];
 const ROOM=/^[A-HJ-NP-Z2-9]{8}$/;
 const app={offline:false,user:null,decks:[],publicDecks:[],openRooms:[],room:null,pick:null,zone:null,inspectPick:null,inspectionPaused:false,error:'',notice:'',busy:false,mode:'login',deckTab:'mine',pollToken:0,timer:0,showPassword:false,remember:true,recordedCode:'',draftUser:'',draftPass:''};
+let battleUi=null,battleUiLoading=false;
+function loadBattleUi(){
+ if(battleUi||battleUiLoading)return;
+ battleUiLoading=true;
+ import('./universal-v2/online-battle-ui.mjs?v=20261102sharedtable1').then(module=>{
+  battleUi=module;
+  window.matchMedia?.(module.DESKTOP_BATTLE_QUERY)?.addEventListener?.('change',()=>{
+   if(app.room?.view)render();
+  });
+  render();
+ }).catch(()=>{battleUiLoading=false;});
+}
 function captureAuthDraft(form){
  if(!form)return;
  const data=new FormData(form);
@@ -413,24 +425,33 @@ function homeView(){
     el('button',{type:'submit',text:app.busy?'加入中…':'加入房間',disabled:app.busy||!playable}))),
   el('section',{class:'panel'},el('h2',{text:'最近對戰'}),recentBattleList())));
 }
-let artById=null;
+let artById=null,definitionsById=null;
 function artIndex(){
  if(artById||!coverCatalogue)return artById;
  const index=new Map();
+ const definitions=new Map();
  for(const title of coverCatalogue.titles||[]){
   for(const card of title.cards||[]){
    const src=card?.onlineImage||card?.image;
    if(typeof src!=='string'||!src)continue;
-   const keys=[card.id,card.number,...(Array.isArray(card.aliases)?card.aliases:[])];
-   for(const key of keys)if(typeof key==='string'&&key&&!index.has(key))index.set(key,src);
+   const keys=[card.id,card.number,...(Array.isArray(card.aliases)?card.aliases:[])]
+    .filter(key=>typeof key==='string').flatMap(key=>[key,key.split('/').at(-1)]);
+   for(const key of keys)if(typeof key==='string'&&key&&!index.has(key)){
+    index.set(key,src);definitions.set(key,card);
+   }
   }
  }
  artById=index;
+ definitionsById=definitions;
  return artById;
 }
 function cardSrc(card){
  const index=artIndex();
  return index&&card?.cardId?index.get(card.cardId)||'':'';
+}
+function onlineCardDefinition(cardId){artIndex();return definitionsById?.get(cardId)||{};}
+function openOnlineCard(card){
+ battleUi?.showOnlineCard({el,card,definition:onlineCardDefinition(card.cardId),src:cardSrc(card)});
 }
 function cardBox(card,opts={}){
  const click=opts.click||null;
@@ -739,6 +760,11 @@ function zone(title,cards,engineSeat){
     replacing?'替換並移入移除區':'普通進場'):
    plan.type==='raid-base'?'選為突襲底座':canBlock?'阻擋':'';
   const spoken=[card?.name||card?.cardId||'空位',place].filter(Boolean).join('，');
+  if(battleUi)return battleUi.onlineBattleCard({el,card,src:cardSrc(card),classes,
+   label:spoken,index,line:kind,placement:place,
+   attacking:!!card&&kind==='front'&&app.room.view.battle?.uid===card.uid,
+   blocking:canBlock,click:clickable?()=>clickField(engineSeat,kind,index,card):null,
+   inspect:()=>openOnlineCard(card)});
   return cardBox(card,{className:classes,click:clickable?()=>clickField(engineSeat,kind,index,card):null,label:spoken});
  });
  return el('div',{class:'online-line '+kind},
@@ -809,6 +835,13 @@ function ownHand(player){
   const playable=ready&&legal.some(action=>action.uid===card.uid&&
    (!!boardEntryMode(action)||['event','attack','activate','handActivate'].includes(action.type)));
   const selected=card.uid&&card.uid===app.pick?.uid;
+  if(battleUi){
+   hand.append(battleUi.onlineBattleCard({el,card,src:cardSrc(card),hand:true,
+    definition:onlineCardDefinition(card.cardId),label:card.name||card.cardId,
+    classes:(playable?'playable ':'unplayable ')+(selected?'selected':''),
+    click:ready?()=>clickHand(card):null,inspect:()=>openOnlineCard(card)}));
+   continue;
+  }
   hand.append(cardBox(card,{
    className:(playable?'playable ':'')+(selected?'selected':''),
    click:ready?()=>clickHand(card):null
@@ -1168,6 +1201,7 @@ function appendLifeRaidButtons(actions,room){
 }
 function matchView(){
  loadCovers();
+ loadBattleUi();
  const room=app.room,view=room.view,seat=room.seat;
  if(room.status==='waiting'||!view){
   return shell(el('section',{class:'panel'},
@@ -1199,7 +1233,7 @@ function matchView(){
    app.pick=null;render();
   }}));
  const next=room.yourTurn?(room.choices||[]).find(action=>action.type==='next'):null;
- if(next)actions.append(el('button',{type:'button',class:'primary',text:view.phase==='attack'?'結束回合 →':'下一階段 →',disabled:app.busy,onClick:()=>sendAction(next.index)}));
+ if(next)actions.append(el('button',{type:'button',class:'primary','data-online-next':'true',text:view.phase==='attack'?'結束回合 →':'下一階段 →',disabled:app.busy,onClick:()=>sendAction(next.index)}));
  const triggers=el('div',{class:'trigger-public'});
  for(const card of view.openTriggers||[]){
   const word=card.trigger?String(card.trigger).toUpperCase():'無觸發';
@@ -1229,7 +1263,7 @@ function matchView(){
   visibleChoices=onlineVisibleChoiceGallery(room,listed);
   for(const index of visibleChoices?.handled||[])shownInGallery.add(index);
   const textChoices=listed.filter(choice=>!shownInGallery.has(choice.index));
-  if(!textChoices.length&&!next&&!lifeOrder&&!visibleChoices)actions.append(el('p',{class:'muted',text:app.inspectionPaused?'正在查看場面與手牌，按「返回選牌」繼續。':'正在等待可以執行的操作。'}));
+  if(!textChoices.length&&!next&&!lifeOrder&&!visibleChoices&&!effectTarget&&!room.inspection)actions.append(el('p',{class:'muted',text:app.inspectionPaused?'正在查看場面與手牌，按「返回選牌」繼續。':'正在等待可以執行的操作。'}));
   for(const choice of textChoices)actions.append(el('button',{type:'button',text:choice.label,disabled:app.busy,onClick:()=>sendAction(choice.index)}));
  }
  const inspection=onlineInspectionGallery(room);
@@ -1280,6 +1314,22 @@ function matchView(){
        el('strong',{text:card.name||card.cardId}),
        el('small',{text:(card.owner===room.seat?'你':'對手')+' · '+card.label})));
     }))) :null;
+ if(battleUi){
+  for(const node of [effectTarget?.node,lifeOrder?.node,visibleChoices?.node,app.inspectionPaused?null:inspection])
+   if(node)actions.append(node);
+  if(recent)log.prepend(recent);
+  if((view.openTriggers||[]).length)actions.prepend(triggers);
+  const placing=!!app.pick?.uid&&legalChoices().some(action=>boardEntryMode(action));
+  return battleUi.renderOnlineBattle({room,el,siteHeader:arenaHeader(),notices:notices(),
+   renderLine:zone,hand:ownHand(you),actions,choices:legalChoices(),log,consent:consentControl(),
+   selectedUid:app.pick?.uid,paused:app.inspectionPaused,placing,
+   publicCards:(view.openTriggers||[]).length?view.openTriggers:(lastPublic?.cards||[]).filter(card=>card?.cardId&&[0,1].includes(card.owner)),
+   blocking:inlineBlock(room,legalChoices()),onAction:sendAction,
+   onPause:()=>{app.inspectionPaused=true;render();},onResume:()=>{app.inspectionPaused=false;render();},
+   onResign:resign,onLeave:leaveFinished,onCopy:()=>copyCode(room.code),
+   definition:(_side,id)=>onlineCardDefinition(id),imageSource:(_side,id)=>cardSrc({cardId:id}),
+   openCard:(_side,_line,card)=>openOnlineCard(card),onSelectZone:clickZoneCard});
+ }
  return shell(el('div',{class:'online-match'},
   el('header',{class:'online-match-bar'},
    el('h1',{text:'房間 '+room.code}),
@@ -1307,12 +1357,18 @@ function matchView(){
 }
 function render(){
  const root=document.querySelector('#app');
+ const oldHandScroll=root.querySelector?.('.hand')?.scrollLeft||0;
+ if(battleUi&&document.body){
+  battleUi.closeOnlineCard();
+  battleUi.setOnlineBattleMode(!!app.room?.view&&app.room.status!=='waiting');
+ }
  const view=app.offline?shell(el('section',{class:'panel'},
   el('h1',{text:'帳號服務沒有啟動'}),
   el('p',{text:'這個頁面要和帳號服務放在同一個網址。本機請執行 npm start。公開使用時，把網站部署到 Cloudflare，帳號和每一場對戰會留在 Durable Objects，你的電腦不用一直開著。'}),
   el('p',{class:'muted',text:'只部署靜態檔案時，牌組仍留在這台瀏覽器，也不會有線上對戰。'}))):
   app.room?matchView():app.user?homeView():authView();
  root.replaceChildren(view);
+ const hand=root.querySelector?.('.hand');if(hand)hand.scrollLeft=oldHandScroll;
 }
 async function submitAuth(event){
  event.preventDefault();
@@ -1523,7 +1579,10 @@ async function resign(){
  }catch(error){app.error=error.message;app.busy=false;render();}
 }
 function leaveFinished(){
- stopPoll();app.room=null;app.notice='已離開對局。';history.replaceState(null,'','online.html');render();
+ const ongoing=app.room?.status==='playing';
+ stopPoll();app.room=null;app.pick=null;app.inspectionPaused=false;
+ app.notice=ongoing?'已返回大廳；對局仍保留，可從未結束房間重新進入。':'已離開對局。';
+ history.replaceState(null,'','online.html');render();
  refreshOpenRooms().then(()=>{if(!app.room)render();});
 }
 async function boot(){
