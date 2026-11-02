@@ -186,7 +186,7 @@ test('new closed-title choices stay in Chinese and Muse shows its printed effect
  assert.equal(text.includes('沒有可顯示的效果'),false);
  assert.equal(fieldEffectCopy({effect:'-',effectJa:'【登場時】公開。'}),'【登場時】公開。');
  const preview=readFileSync(new URL('../dist/universal-v2-preview.mjs',import.meta.url),'utf8');
- assert.match(preview,/kmr:printedCatalogueMap\(KMR_CARDS\)/);
+ assert.match(preview,/kmr:printedCatalogueMap\(\[\.\.\.KMR_CARDS,\.\.\.KMR2_CARDS\]\)/);
  assert.match(preview,/draw:'抽卡',get:'獲得',active:'活動',special:'特殊',color:'顏色',raid:'突襲',final:'最終'/);
  assert.doesNotMatch(preview,/draw:'DRAW'/);
  assert.match(preview,/catalogue\?\.name\|\|printed\?\.name/);

@@ -154,7 +154,7 @@ function loadCovers(){
  // Loaded only after login. The account script itself stays a classic script so
  // the login screen can boot even when the card catalogue is unavailable.
  try{
-  Promise.all([import('./title-registry.mjs'),import('./deck-gallery.mjs')]).then(([titles,gallery])=>{
+  Promise.all([import('./title-registry.mjs?v=20261102kmr2ship1'),import('./deck-gallery.mjs')]).then(([titles,gallery])=>{
    coverCatalogue={titles:titles.TITLES,summarize:gallery.summarizeDeck};
    if(app.user)render();
   }).catch(()=>{});

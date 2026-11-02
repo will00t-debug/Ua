@@ -24,7 +24,7 @@ test('six-title production editor cannot load old battle engine or old app scrip
  assert.equal(TITLES.find(t=>t.id==='kjn').playable,false);
  assert.equal(TITLES.find(t=>t.id==='aot').cards.length,186);
  assert.equal(TITLES.find(t=>t.id==='aot').playable,false);
- assert.equal(TITLES.find(t=>t.id==='kmr').cards.length,113);
+ assert.equal(TITLES.find(t=>t.id==='kmr').cards.length,213);
  assert.equal(TITLES.find(t=>t.id==='kmr').playable,false);
 });
 test('old browser keys remain the backing stores, not deleted or migrated destructively',()=>{

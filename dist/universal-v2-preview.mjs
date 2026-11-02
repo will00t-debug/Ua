@@ -12,6 +12,7 @@ import {KJN_CARDS} from './kjn-cards.mjs';
 import {AOT_CARDS} from './aot-cards.mjs';
 import {AOT2_CARDS} from './aot-vol2-cards.mjs';
 import {KMR_CARDS} from './kmr-cards.mjs';
+import {KMR2_CARDS} from './kmr-vol2-cards.mjs';
 import {summarizeDesignatedDecks,designatedPlayableCounts} from './universal-v2/bleach-designated-decks.mjs';
 import {validateUniversalDeck} from './universal-v2/pack.mjs';
 import {V2_ABILITY_TEMPLATE_IDS} from './universal-v2/ability-templates.mjs';
@@ -23,7 +24,7 @@ import {prepareSoloBattle,saveSoloBattle,loadSoloBattle,clearSoloBattle,
  SOLO_BATTLE_URL,SOLO_BATTLE_PROGRESS_KEY} from './universal-v2/solo-battle-session.mjs';
 import {collectSavedV2LobbyDecks,accountLobbyRows,orderedAccountLobbyRows,shadowedLocalLobbyKeys,lobbyChoiceText,validatedLobbyChoice,V2_MATCH_SETUP_STORAGE_KEY} from './universal-v2/lobby-saved-decks.mjs?v=20261030accountdeck1';
 import {newUniversalMatch,legalUniversalActions,dispatchUniversalAction,
- universalPublicView,universalPrivateChoices,assertUniversalMatch} from './universal-v2/engine.mjs?v=20261102lookwindow1';
+ universalPublicView,universalPrivateChoices,assertUniversalMatch} from './universal-v2/engine.mjs?v=20261102kmr2ship1';
 import {chooseUniversalAiAction} from './universal-v2/ai.mjs';
 import {chooseProgressSafeAiAction,AI_ACTIONS_PER_FRAME,aiPolicyFor} from './universal-v2/ai-driver-safety.mjs?v=20261031hardai2';
 import {ttgArtSource,ttgArtErrorFallback} from './ttg-art.mjs';
@@ -35,7 +36,7 @@ import {MST_V2_OFFICIAL_CATALOGUE} from './universal-v2/sources/mst-inventory.mj
 import {V2_PHASE_LABELS,V2_TITLE_LABELS,V2_PENDING_LABELS,
  uiActor,isExactLegal,uiCardLabel,uiActionLabel,visibleActionsForCard,
  pendingChoiceCards,inspectedPendingChoiceCards,visiblePendingChoiceCards,pendingEntryChoiceCards,publicLifeOrderChoiceCard,pendingChoiceCaption,publicPendingTargetCard,controllerDeckWindowCards,controllerChoiceArt,pendingFocusCard,pendingTextChoiceClass,attackBattleTags,attackKeywordBadges,frontAttackKeywordBadges,inlineBlockDecision,boardEntryMode,boardEntrySelection,entryClickPlan,moveClickPlan,
- FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs?v=20261102lookwindow1';
+ FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs?v=20261102kmr2ship1';
 import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalReplay,
  collectPublicCardResults,publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
 import {coachHeader,newCoachMatchId} from './universal-v2/coach-record.mjs';
@@ -78,7 +79,7 @@ const allArt=Object.freeze({
  inuyasha:new Map(INUYASHA_CARDS.map(c=>[c.id,c.image||null])),
  kjn:new Map(KJN_CARDS.map(c=>[c.id,c.image||null])),
  aot:new Map([...AOT_CARDS,...AOT2_CARDS].map(c=>[c.id,c.image||null])),
- kmr:new Map(KMR_CARDS.map(c=>[c.id,c.printings?.[0]?.image||null]))
+ kmr:new Map([...KMR_CARDS,...KMR2_CARDS].map(c=>[c.id,c.image||c.printings?.[0]?.image||null]))
 });
 const v2Entries=listRegisteredV2Titles();
 function printedCatalogueMap(cards){
@@ -100,7 +101,7 @@ const PRINTED_CATALOGUE={
  inuyasha:printedCatalogueMap(INUYASHA_CARDS),
  kjn:printedCatalogueMap(KJN_CARDS),
  aot:printedCatalogueMap([...AOT_CARDS,...AOT2_CARDS]),
- kmr:printedCatalogueMap(KMR_CARDS),
+ kmr:printedCatalogueMap([...KMR_CARDS,...KMR2_CARDS]),
  'gurren-lagann':printedCatalogueMap(Object.values(TTG_BY_ID))
 };
 const el=(tag,props={},...contents)=>{

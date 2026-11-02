@@ -1,5 +1,5 @@
 // Production-only V2 deck compatibility: never use legacy auto, rules or match reducers.
-import {TITLES} from './title-registry.mjs';
+import {TITLES} from './title-registry.mjs?v=20261102kmr2ship1';
 import {registeredV2TitlePack} from './universal-v2/title-packs/registry.mjs';
 import {validateUniversalDeck} from './universal-v2/pack.mjs';
 import {officialV2Pack} from './universal-v2/official-entry.mjs';

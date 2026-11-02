@@ -315,11 +315,42 @@ function withClosedCard(pack,state,action,text){
 }
 // Closed title ops never fall through to an English "執行 op" button.
 // A newly registered title uses kmr2 / the same mode words and stays in Chinese.
+function kmr2ModeLine(id,key){
+ const lines={
+  'KMR-2-018':{
+   draw:'抽 1 張，再將 1 張手牌放到場外',
+   raid:'公開 1 張手牌的突襲角色，抽 2 張，再將 1 張手牌放到場外'
+  },
+  'KMR-2-022':{
+   tuck:'抽 1 張，將 1 張手牌蓋到這張角色或含有 EX-AID 的角色下方',
+   release:'將合計 3 張裏向卡放到場外，並給予衝擊 1'
+  },
+  'KMR-2-048':{
+   look:'查看 5 張，公開 1 張切換記憶體',
+   pay:'支付 1 AP，這個回合被防禦時可再活動'
+  },
+  'KMR-2-054':{
+   top:'查看 1 張牌組頂，放到牌組上面或下面',
+   draw:'抽最多 1 張'
+  },
+  'KMR-2-057':{
+   draw:'抽 1 張',
+   look:'查看 3 張，將 1 張加入手牌，其餘放回牌組上面'
+  },
+  'KMR-2-099':{
+   deploy:'抽 1 張並將 1 張手牌放到場外，再讓鏡怪獸休息登場',
+   replay:'發動 1 張鏡怪獸的登場時，並恢復 1 張 AP'
+  }
+ };
+ return lines[id]?.[key]||'';
+}
 function closedTitleChoiceLabel(action,{pack,state}={}){
  const mode=action?.mode;
  const step=state?.pending?.step;
  if(mode==='skip')return '不發動';
  if(mode==='done')return '完成選擇';
+ if(step==='oppDeck'&&mode==='top')return '放到對手牌組上面';
+ if(step==='oppDeck'&&mode==='bottom')return '放到對手牌組下面';
  if(step==='oppTop'&&(mode==='top'||mode==='outside'))
   return mode==='outside'?'將這張公開的卡放到場外':'將這張公開的卡留在對手牌組上面';
  if(step==='gearTop'&&mode==='top')return '將這張場外卡放到牌組上面';
@@ -337,6 +368,11 @@ function closedTitleChoiceLabel(action,{pack,state}={}){
    under:'放到角色下方',deploy:'以休息狀態登場'}[action.key];
   return keyed||'選擇這個效果';
  }
+ if((mode==='one'||mode==='two')&&action.key){
+  const line=kmr2ModeLine(state?.pending?.id,action.key);
+  if(line)return line;
+ }
+
  const table={
   take:'將這張卡加入手牌',next:'下一個放回這張卡',discard:'將這張手牌放到場外',
   retire:'使這張角色退場',retireOwn:'使這張角色退場',outside:'放到場外',bottom:'放到牌組底',
@@ -354,6 +390,9 @@ function closedTitleChoiceLabel(action,{pack,state}={}){
   place:'放置這張卡',stay:'留在原處',down:'降低 BP',energy:'產生能源',keep:'保留',
   out:'放到場外',tax:'增加指定費用',grant:'給予這個回合的能力',range:'提高可選的 BP 範圍',
   one:'選擇第一項',two:'選擇第二項',three:'選擇第三項',d1:'選擇第一項',d2:'選擇第二項',
+  triggerSafe:'這個回合不會被觸發效果指定',loseRemove:'戰鬥敗北時雙方移入移除區',
+  energyPick:'選擇這張角色',copy:'複製這張卡這個回合的效果',
+  toEnergy:'將這張角色移到能源線',removeTrio:'將這張角色移入移除區',
   d6:'選擇第三項',low:'選擇較低的效果',bare:'選擇生命較少時的效果',
   battle:'選擇戰鬥相關的效果',mark:'指定這張角色',kit:'選擇這個效果',
   discard2:'再將一張手牌放到場外',discardBuff:'將這張手牌放到場外並提高 BP',
