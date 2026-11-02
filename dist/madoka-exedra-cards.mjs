@@ -7,6 +7,8 @@
 // those pips are the base gen, and the + is extra energy only while the
 // printed effect is live. engineKind names the tested program for the whole
 // Japanese print.
+// Asset revision 20261103: republish this module. The 2026-11-03 deploy
+// reported success, but workers.dev was still serving the previous asset set.
 export const EXEDRA_FETCHED='2026-10-29';
 export const EXEDRA_SET='EX16BT';
 export const EXEDRA_CARDS=
