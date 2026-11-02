@@ -10,12 +10,12 @@ import {publicCardResults} from './public-card-results.mjs';
 import {createRepositories,roomTtl} from './repos.mjs';
 import {dispatchCoach} from './coach.mjs';
 
-const TITLES=['bleach','gurren-lagann','sword-art-online','solo-leveling','mushoku-tensei','rezero','steins-gate','madoka','inuyasha','kjn','kmr'];
+const TITLES=['bleach','gurren-lagann','sword-art-online','solo-leveling','mushoku-tensei','rezero','steins-gate','madoka','inuyasha','kjn','aot','kmr'];
 const TITLE_LABELS={
  bleach:'BLEACH','gurren-lagann':'天元突破','sword-art-online':'刀劍神域',
  'solo-leveling':'我獨自升級','mushoku-tensei':'無職轉生',rezero:'Re:Zero',
  'steins-gate':'命運石之門',madoka:'魔法少女小圓',inuyasha:'犬夜叉',kjn:'我想成為影之強者！',
- kmr:'假面騎士'
+ aot:'進擊的巨人',kmr:'假面騎士'
 };
 const SESSION_MS=14*24*60*60*1000;
 const LOGIN_WINDOW_MS=15*60*1000;
