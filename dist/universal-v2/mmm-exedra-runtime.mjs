@@ -91,7 +91,7 @@ function offerDeploy(s,spec,cards,ready){
    if(line==='front'&&d.frontForbidden)continue;
    if(line==='energy'&&(d.energyForbidden||d.energyLineForbidden))continue;
    for(const dest of A.destinations(pl,line)){
-    const action={type:'mmm2',uid:c.uid,line,slot:dest.slot};
+    const action={type:'mmm2',uid:c.uid,line,slot:dest.slot,mode:'rest'};
     if(dest.replaceUid)action.replaceUid=dest.replaceUid;
     actions.push(action);
    }
@@ -619,7 +619,7 @@ const STEPS={
     const d=def(pack,c);
     if(line==='energy'&&(d.energyForbidden||d.energyLineForbidden))continue;
     for(const dest of A.destinations(pl,line)){
-     const action={type:'mmm2',uid:c.uid,line,slot:dest.slot,from};
+     const action={type:'mmm2',uid:c.uid,line,slot:dest.slot,from,mode:'rest'};
      if(dest.replaceUid)action.replaceUid=dest.replaceUid;
      actions.push(action);
     }
