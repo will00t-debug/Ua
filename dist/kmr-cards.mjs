@@ -491,7 +491,7 @@ export const KMR_CARDS=
   "trigger": null,
   "triggerText": "",
   "triggerTextJa": "",
-  "effect": "【登場時】自己的從牌組頂2張查看。そ的中從任意張數，依想要的順序自己的牌組頂，置き、其餘依想要的順序下，放置。",
+  "effect": "【登場時】查看自己牌庫上方 2 張牌。將其中任意張數依想要的順序放回牌庫頂，其餘依想要的順序放到牌庫底。",
   "effectJa": "【登場時】自分の山札の上から2枚見る。その中から望む枚数を望む順で自分の山札の上に置き、残りを望む順で下に置く。",
   "image": "https://www.unionarena-tcg.com/jp/images/cardlist/card/UA29BT_KMR-1-011.png",
   "source": "https://www.unionarena-tcg.com/jp/cardlist/detail_iframe.php?card_no=UA29BT%2FKMR-1-011",

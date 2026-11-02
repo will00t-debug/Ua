@@ -320,10 +320,6 @@ const HANDLERS={
  },
  'KMR-1-008|phase'(pack,s,job){reviveEnd(pack,s,job,'仮面ライダーゲイツリバイブ疾風');},
  'KMR-1-009|phase'(pack,s,job){reviveEnd(pack,s,job,'仮面ライダーゲイツリバイブ剛烈');},
- 'KMR-1-011|onPlay'(pack,s,job){
-  beginLook(s,{player:job.owner,sourceUid:job.sourceUid,id:job.id},2,()=>true,
-   {max:2,min:0,split:true,discard:false});
- },
  'KMR-1-012|onPlay'(pack,s,job){onLookSimple(pack,s,job,7,c=>nonYellowRaid(pack,c),{discard:false});},
  'KMR-1-013|onPlay'(pack,s,job){
   const both=fieldCards(s,job.owner).some(c=>token(pack,c,'ゲイツ',s))&&

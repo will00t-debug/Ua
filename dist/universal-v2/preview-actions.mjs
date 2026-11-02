@@ -878,7 +878,10 @@ export function uiActionLabel(action,{pack,state}={}){
   case 'chooseDifferentField':return action.uid===null?'不從場外登場':'以休息狀態登場 '+name()+suffix();
   case 'chooseOwnFieldRetire':return action.uid===null?'不退場場域':'退場場域 '+name();
   case 'chooseTopTraitEvent':return action.uid===null?'不加入手牌，將其餘卡排列至底部':'公開 '+name()+' 並加入手牌';
-  case 'chooseTopOrder':return '依序放回：'+name();
+  case 'chooseTopOrder':
+   if(action.place==='top')return '下一個放到牌庫頂：'+name();
+   if(action.place==='bottom')return '下一個放到牌庫底：'+name();
+   return '依序放回：'+name();
   case 'chooseRestFrontEnergy':return 'REST '+name()+'，本回合產能＋1';
   case 'chooseFacedownFront':return action.mode==='skip'?'不從能源線移到前線':
    '從能源線移到前線 '+(action.slot+1)+(action.replaceUid?'，並將原前線卡除外':'')+'，本回合 BP＋1000';

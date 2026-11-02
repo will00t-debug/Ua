@@ -36,7 +36,7 @@ import {MST_V2_OFFICIAL_CATALOGUE} from './universal-v2/sources/mst-inventory.mj
 import {V2_PHASE_LABELS,V2_TITLE_LABELS,V2_PENDING_LABELS,
  uiActor,isExactLegal,uiCardLabel,uiActionLabel,visibleActionsForCard,
  pendingChoiceCards,inspectedPendingChoiceCards,visiblePendingChoiceCards,pendingEntryChoiceCards,publicLifeOrderChoiceCard,pendingChoiceCaption,publicPendingTargetCard,controllerDeckWindowCards,controllerChoiceArt,pendingFocusCard,pendingEffectSourceCard,pendingTextChoiceClass,attackBattleTags,attackKeywordBadges,frontAttackKeywordBadges,inlineBlockDecision,boardEntryMode,boardEntrySelection,entryClickPlan,moveClickPlan,
- FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs?v=20261102rukiaflow1';
+ FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs?v=20261102zio011';
 import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalReplay,
  collectPublicCardResults,publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
 import {coachHeader,newCoachMatchId} from './universal-v2/coach-record.mjs';
@@ -628,6 +628,8 @@ function pendingDialog(legal,view){
  dialog.append(el('p',{class:'note',text:triggerChoice?
    '這張觸發已經公開，對手也能看到。請選擇是否使用。':
    blocking?'對手的角色正在攻擊。先看直傷和衝擊，再選擇阻擋或不阻擋。':
+   s.pending.kind==='effect-top-order'&&s.pending.split===true?
+   '每張查看過的牌各點一次：放到牌庫頂，或放到牌庫底。牌留在牌庫，不會加入手牌。':
    s.pending.kind==='effect-pay-deploy-self'?'條件已經滿足。支付後再點亮起的格子，這張角色會以活動狀態登場。':
    s.pending.kind==='effect-deploy-self-active'?'點下面的角色，再點亮起的前線或能源格。它會以活動狀態登場。':
    placement.length?'先點卡圖選擇效果對象。若印刷允許兩種登場，再選普通進場或突襲進場。普通進場直接點格子；突襲進場先點底板，再點登場格子。':
