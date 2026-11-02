@@ -102,6 +102,7 @@ function queueOwnAttackEnd(pack,s,attacker){
   s.effectQueue.push({op:'kmr',id:'KMR-1-107',slot:'attackEnd',owner,
    sourceUid:attacker.uid});
  if(kmr2Implements(printed.id,'attackEnd')&&!originalEffectsDisabled(s,attacker)&&
+  raidBoxTextLive(pack,attacker,'attackEnd')&&
   (pl.front.some(c=>c?.uid===attacker.uid)||pl.energy.some(c=>c?.uid===attacker.uid)))
   s.effectQueue.push({op:'kmr2',id:printed.id,slot:'attackEnd',owner,sourceUid:attacker.uid});
  for(const ally of pl.energy.filter(Boolean)){
@@ -454,8 +455,10 @@ function hasFacedownUnder(c){
  return !!c&&inspect(c);
 }
 // Q51 / Q552: Raid-box text needs a face-up card under a Raid-keyword top.
+// A printed Raid may name a card or a trait. Both are Raid tops.
 function faceUpRaid(pack,c){
- return !!c&&!!card(pack,c).raidName&&(c.stack||[]).some(x=>x.faceDown!==true);
+ const d=c&&card(pack,c);
+ return !!d&&!!(d.raidName||d.raidTrait)&&(c.stack||[]).some(x=>x.faceDown!==true);
 }
 // Q51: a listed Raid-frame feature is live only in face-up Raid state.
 function raidBoxTextLive(pack,c,feature){
@@ -5819,7 +5822,8 @@ function unblockedBeforeDamage(pack,s,attacker){
  const drawn=attacker.mmm2UnblockedDraw;
  if(drawn&&drawn.turn===s.turn&&drawn.stamp===attacker.fieldEntryStamp&&drawn.optional===true)
   jobs.push({op:'mmm2',id:'MMM-2-067',slot:'unblocked',owner:s.active,sourceUid:attacker.uid});
- if(kmr2Implements(card(pack,attacker).id,'unblocked')&&!originalEffectsDisabled(s,attacker))
+ if(kmr2Implements(card(pack,attacker).id,'unblocked')&&!originalEffectsDisabled(s,attacker)&&
+  raidBoxTextLive(pack,attacker,'unblocked'))
   jobs.push({op:'kmr2',id:card(pack,attacker).id,slot:'unblocked',owner:s.active,sourceUid:attacker.uid});
  if(attacker.kmr2UnblockedDraw?.turn===s.turn&&attacker.kmr2UnblockedDraw.stamp===attacker.fieldEntryStamp)
   jobs.push({op:'draw',owner:s.active,count:1,sourceUid:attacker.uid});
@@ -7996,7 +8000,8 @@ function resolveChoice(s,a,pack){
    blocker.buffs.push({bp:raidState?blockShift.raid:blockShift.plain,untilTurn:s.turn});
   }
   s.kmr2LastBattle={turn:s.turn,attackerUid:attacker.uid,blockerUid:blocker.uid,attackerWon:null};
-  if(kmr2Implements(card(pack,blocker).id,'blocked')&&!originalEffectsDisabled(s,blocker)){
+  if(kmr2Implements(card(pack,blocker).id,'blocked')&&!originalEffectsDisabled(s,blocker)&&
+   raidBoxTextLive(pack,blocker,'blocked')){
    s.effectQueue.unshift(
     {op:'kmr2',id:card(pack,blocker).id,slot:'blocked',owner:q.player,sourceUid:blocker.uid},
     {op:'kmr2ResumeBattle',owner:s.active,attackerUid:attacker.uid,blockerUid:blocker.uid,

@@ -2,8 +2,10 @@
 // card is actually raided. Q552 (2023-09-25): that state is a Raid top with a
 // face-up card underneath. The frame is rugiacreation's HK span.raidBorder.
 // Text above the frame, the Raid action itself, chain-raid permissions, and
-// LIFE triggers are omitted. TTG-1-071 has no frame, so its text stays live
-// on an ordinary play. This is not a full FAQ certification.
+// LIFE triggers are omitted. A card can print both: text outside the frame
+// stays live on an ordinary play, and only the enclosed timings are listed.
+// TTG-1-071 has no frame, so its text stays live on an ordinary play.
+// Rugia TW span.raidBorder is the split. This is not a full FAQ certification.
 const RAID_BOX_FEATURES=Object.freeze({
  'BLC-1-004':["main"],
  'BLC-1-014':["onPlay"],
@@ -116,6 +118,7 @@ const RAID_BOX_FEATURES=Object.freeze({
  'STG-1-060':["onAttack","onRetire"],
  'STG-1-066':["onPlay","onAttack"],
  'STG-1-070':["onPlay","onAttack"],
+ 'TTG-1-008':["onPlay"],
  'TTG-1-027':["onPlay","onAttack"],
  'TTG-1-028':["onPlay"],
  'TTG-1-029':["onPlay"],
@@ -140,6 +143,19 @@ const RAID_BOX_FEATURES=Object.freeze({
  'AOT-1-094':["main","onAttack"],
  'AOT-1-107':["onPlay","main"],
  'AOT-1-110':["onPlay","onAttack"],
+ 'AOT-2-013':["onPlay"],
+ 'AOT-2-017':["onPlay","main"],
+ 'AOT-2-019':["onPlay"],
+ 'AOT-2-022':["onPlay","main"],
+ 'AOT-2-025':["onPlay"],
+ 'AOT-2-042':["onPlay","onAttack"],
+ 'AOT-2-053':["onPlay"],
+ 'AOT-2-056':["onPlay","onRetire"],
+ 'AOT-2-058':["onPlay","onAttack"],
+ 'AOT-2-060':["onPlay","onAttack"],
+ 'AOT-2-067':["onPlay"],
+ 'AOT-2-069':["onPlay"],
+ 'AOT-2-072':["onPlay"],
  'KMR-1-005':["onPlay","main"],
  'KMR-1-013':["onPlay"],
  'KMR-1-019':["main"],
@@ -154,7 +170,27 @@ const RAID_BOX_FEATURES=Object.freeze({
  'KMR-1-079':["onPlay","onAttack","onRetire"],
  'KMR-1-080':["onPlay","onRetire"],
  'KMR-1-085':["onAttack","phase"],
- 'KMR-1-107':["onPlay"]
+ 'KMR-1-107':["onPlay"],
+ 'KMR-2-005':["onPlay","onAttack","attackEnd"],
+ 'KMR-2-012':["onPlay","onAttack","attackEnd"],
+ 'KMR-2-019':["onPlay","main","phase"],
+ 'KMR-2-030':["onAttack"],
+ 'KMR-2-034':["onPlay"],
+ 'KMR-2-039':["blocked","unblocked"],
+ 'KMR-2-049':["onPlay"],
+ 'KMR-2-055':["onPlay"],
+ 'KMR-2-068':["onPlay"],
+ 'KMR-2-069':["onPlay","onAttack"],
+ 'KMR-2-079':["onRetire","blocked"],
+ 'KMR-2-089':["onPlay","main"],
+ 'KMR-2-094':["onPlay","onRetire"],
+ 'MST-1-009':["onPlay"],
+ 'MST-1-025':["onPlay","main"],
+ 'MST-1-031':["onPlay","passive"],
+ 'MST-1-032':["onPlay"],
+ 'MST-1-054':["onPlay"],
+ 'MST-1-067':["onPlay","onRetire"],
+ 'MST-1-068':["onPlay","passive"]
 });
 const sets=new Map(Object.entries(RAID_BOX_FEATURES).map(([id,list])=>[id,new Set(list)]));
 export function raidBoxListed(id,feature){

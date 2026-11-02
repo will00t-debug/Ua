@@ -385,15 +385,18 @@ test('standing BP range raises the Thunder Spear ceiling and is not consumed',()
 });
 
 test('Pieck stays private under Falco, and the opponent receives no identity',()=>{
- const counts=countsFor(['AOT-2-001','AOT-2-004','AOT-2-005','AOT-2-017']);
+ const counts=countsFor(['AOT-2-001','AOT-2-004','AOT-2-005','AOT-2-015','AOT-2-017']);
  let s=toPhase(fresh(counts,2017),'main');
  put(s,0,'AOT-2-001','energy',0,true);
  put(s,0,'AOT-2-005','energy',1,true);
  put(s,0,'AOT-2-001','energy',2,true);
- const buried=put(s,0,'AOT-2-004','front',0,true);
+ const base=put(s,0,'AOT-2-015','front',0,true);
+ const buried=put(s,0,'AOT-2-004','front',1,true);
  readyAp(s,0,1);
  const falco=toHand(s,0,'AOT-2-017');
- s=play(s,falco.uid);
+ const raid=legalUniversalActions(packs,s).find(a=>a.type==='raid'&&a.uid===falco.uid&&a.baseUid===base.uid);
+ assert.ok(raid,'Falco raid-frame entry needs a face-up Falco');
+ s=use(s,raid);
  assert.equal(s.pending.step,'tuck');
  const shown=universalPrivateChoices(packs,s,0);
  assert.equal(shown.options.some(o=>o.card?.cardId==='AOT-2-004'),true);
@@ -415,15 +418,30 @@ test('Pieck stays private under Falco, and the opponent receives no identity',()
 });
 
 test('Reiner taxes an opposing event until his next turn starts',()=>{
- const counts=countsFor(['AOT-2-001','AOT-2-004','AOT-2-005','AOT-2-019','AOT-1-060','AOT-1-045','AOT-1-066']);
+ const counts=countsFor(['AOT-2-001','AOT-2-004','AOT-2-005','AOT-2-018','AOT-2-019','AOT-1-060','AOT-1-045','AOT-1-066']);
+ let bare=toPhase(fresh(counts,2018),'main');
+ put(bare,0,'AOT-2-001','energy',0,true);
+ put(bare,0,'AOT-2-004','energy',1,true);
+ put(bare,0,'AOT-2-001','energy',2,true);
+ put(bare,0,'AOT-2-005','front',0,true);
+ readyAp(bare,0,1);
+ const plain=toHand(bare,0,'AOT-2-019');
+ bare=play(bare,plain.uid);
+ const plainBody=bare.players[0].front.find(c=>c?.uid===plain.uid);
+ assert.equal(plainBody.aot2SelectTax,undefined);
+ assert.equal(universalBp(packs,bare,plainBody),4000);
+ assert.equal(universalImpact(packs,bare,plainBody),0);
  let poor=toPhase(fresh(counts,2019),'main');
  put(poor,0,'AOT-2-001','energy',0,true);
  put(poor,0,'AOT-2-004','energy',1,true);
  put(poor,0,'AOT-2-001','energy',2,true);
  const small=put(poor,0,'AOT-2-005','front',0,true);
+ const host=put(poor,0,'AOT-2-018','front',1,true);
  readyAp(poor,0,1);
  const reiner=toHand(poor,0,'AOT-2-019');
- poor=play(poor,reiner.uid);
+ const raid=legalUniversalActions(packs,poor).find(a=>a.type==='raid'&&a.uid===reiner.uid&&a.baseUid===host.uid);
+ assert.ok(raid);
+ poor=use(poor,raid);
  assert.equal(universalBp(packs,poor,poor.players[0].front.find(c=>c?.uid===reiner.uid)),5000);
  assert.equal(universalImpact(packs,poor,poor.players[0].front.find(c=>c?.uid===reiner.uid)),1);
  assert.equal(poor.players[0].front.find(c=>c?.uid===reiner.uid).aot2SelectTax.untilOwnTurnStart>poor.players[0].ownTurns,true);
@@ -443,9 +461,10 @@ test('Reiner taxes an opposing event until his next turn starts',()=>{
  put(paid,0,'AOT-2-004','energy',1,true);
  put(paid,0,'AOT-2-001','energy',2,true);
  put(paid,0,'AOT-2-005','front',0,true);
+ const paidHost=put(paid,0,'AOT-2-018','front',1,true);
  readyAp(paid,0,1);
  const taxed=toHand(paid,0,'AOT-2-019');
- paid=play(paid,taxed.uid);
+ paid=use(paid,legalUniversalActions(packs,paid).find(a=>a.type==='raid'&&a.uid===taxed.uid&&a.baseUid===paidHost.uid));
  paid=toSide(paid,1,'main');
  put(paid,1,'AOT-1-060','energy',0,true);
  put(paid,1,'AOT-1-060','energy',1,true);
@@ -463,9 +482,10 @@ test('Reiner taxes an opposing event until his next turn starts',()=>{
  put(expired,0,'AOT-2-004','energy',1,true);
  put(expired,0,'AOT-2-001','energy',2,true);
  put(expired,0,'AOT-2-005','front',1,true);
+ const expiredHost=put(expired,0,'AOT-2-018','front',0,true);
  readyAp(expired,0,1);
  const lasting=toHand(expired,0,'AOT-2-019');
- expired=play(expired,lasting.uid);
+ expired=use(expired,legalUniversalActions(packs,expired).find(a=>a.type==='raid'&&a.uid===lasting.uid&&a.baseUid===expiredHost.uid));
  expired=toSide(expired,0,'start');
  const body=expired.players[0].front.find(c=>c?.uid===lasting.uid);
  assert.equal(body.aot2SelectTax,undefined);
@@ -676,9 +696,13 @@ test('life cards stay hidden while Eren and the Attack Titan choose one',()=>{
  put(titan,0,'AOT-1-070','energy',1,true);
  put(titan,0,'AOT-2-062','energy',2,true);
  put(titan,0,'AOT-1-069','energy',3,true);
+ const host=put(titan,0,'AOT-2-071','front',0,true);
  readyAp(titan,0,1);
  const hidden=titan.players[0].life[0];
- titan=play(titan,toHand(titan,0,'AOT-2-072').uid);
+ const attack=toHand(titan,0,'AOT-2-072');
+ const raid=legalUniversalActions(packs,titan).find(a=>a.type==='raid'&&a.uid===attack.uid&&a.baseUid===host.uid);
+ assert.ok(raid,'Attack Titan raid-frame entry needs a face-up Eren');
+ titan=use(titan,raid);
  assert.equal(universalBp(packs,titan,titan.players[0].front.find(c=>c?.cardId==='AOT-2-072')),5000);
  titan=pick(titan,a=>a.mode==='life');
  assert.equal(universalPrivateChoices(packs,titan,0).options.every(o=>o.card===null),true);
