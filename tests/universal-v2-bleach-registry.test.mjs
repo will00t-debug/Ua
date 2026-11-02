@@ -124,11 +124,11 @@ test('fail-closed contract rejects source drift, fake vanilla, unknown code and 
  assert.deepEqual(registered.cards['BLC-4-013'].effects.onPlay,[{op:'inspectTopAnyOutside',count:2,rest:'top'}]);
 });
 
-test('BLC-4-014 normalizes original ACTIVE total 2 to REST 1, ACTIVE 2 with same physical UID',()=>{
+test('BLC-4-014 stores printed REST 1 and ACTIVE adds 1 on the same physical UID',()=>{
  const id='BLC-4-014',original=CARDS.find(x=>x.identity===id);
  const {sourceRecord,definition,evidence}=contribution.entries.find(x=>x.id===id);
- assert.equal(original.gen,2,'old imported active-total fingerprint');
- assert.equal(sourceRecord.legacyImportedGen,2);
+ assert.equal(original.gen,1,'printed REST base is one yellow');
+ assert.equal(sourceRecord.legacyImportedGen,1);
  assert.equal(sourceRecord.gen,1);
  assert.equal(definition.gen,1);
  assert.equal(definition.activeExtraEnergy,1);

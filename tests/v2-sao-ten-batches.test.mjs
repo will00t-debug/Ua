@@ -147,12 +147,12 @@ test('SAO-1-096 discards one hand card once and adds two green energy',()=>{
  const field=place(s,0,'SAO-1-096','energy',0);
  s=until(s,0,'main');
  const pay=hold(s,0,'SAO-1-074');
- assert.equal(universalEnergyByColor(packs,s,0).green,2);
+ assert.equal(universalEnergyByColor(packs,s,0).green,1);
  s=act(s,a=>a.type==='activate'&&a.uid===field.uid&&a.mode==='discardEnergy');
  assert.equal(s.pending.kind,'main-discard-buff');
  aiOk(s);
  s=act(s,a=>a.type==='chooseMainDiscard'&&a.uid===pay.uid);
- assert.equal(universalEnergyByColor(packs,s,0).green,4);
+ assert.equal(universalEnergyByColor(packs,s,0).green,3);
  assert.equal(spot(s,pay.uid).cardId,'SAO-1-074');
  assert.equal(s.players[0].outside.some(c=>c.uid===pay.uid),true);
  assert.equal(legalUniversalActions(packs,s).some(a=>a.mode==='discardEnergy'&&a.uid===field.uid),false);

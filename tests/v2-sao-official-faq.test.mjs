@@ -182,7 +182,9 @@ test('Q757: raiding Leafa-named Asuna from energy to the front grants attack dra
  const ids=['SAO-1-037','SAO-1-036','SAO-2-014'];
  const moving=fresh(ids,757);
  const base=place(moving.s,0,take(moving.s,0,'SAO-1-036'),'energy',0,false);
+ // EX08BT/SAO-2-014 prints 青青 (gen 2). Rested SAO-1-036 is 青 1. Two 014s pay Asuna's blue 4.
  place(moving.s,0,take(moving.s,0,'SAO-2-014'),'energy',1,false);
+ place(moving.s,0,take(moving.s,0,'SAO-2-014'),'energy',2,false);
  const asuna=hold(moving.s,0,'SAO-1-037');
  let raided=use(moving.packs,moving.s,a=>a.type==='raid'&&a.uid===asuna.uid&&
   a.baseUid===base.uid&&a.line!=='energy');
@@ -193,6 +195,7 @@ test('Q757: raiding Leafa-named Asuna from energy to the front grants attack dra
  const stay=fresh(['SAO-1-037','SAO-1-036','SAO-2-014','SAO-1-052'],758);
  place(stay.s,0,take(stay.s,0,'SAO-2-014'),'energy',0,false);
  place(stay.s,0,take(stay.s,0,'SAO-1-052'),'energy',1,false);
+ place(stay.s,0,take(stay.s,0,'SAO-2-014'),'energy',2,false);
  const home=place(stay.s,0,take(stay.s,0,'SAO-1-036'),'front',0,false);
  const quiet=hold(stay.s,0,'SAO-1-037');
  let parked=use(stay.packs,stay.s,a=>a.type==='raid'&&a.uid===quiet.uid&&

@@ -1548,7 +1548,7 @@ test('BLC-4-024 moves one other traitless character and generates two blue',()=>
  const printed=CARDS.find(c=>c.identity==='BLC-4-024');
  assert.equal(printed.effect,'登場時：最多選自己場上另1個沒有特徵的角色，移至另一條線；目的線已滿時，先選該線1張卡除外。');
  assert.deepEqual(printed.traits,[]);
- assert.equal(printed.gen,3);
+ assert.equal(printed.gen,2);
  const card=bleach.cards['BLC-4-024'];
  assert.equal(card.gen,2);
  assert.equal(card.trigger,'active');
@@ -1761,7 +1761,7 @@ test('BLC-4-063 gives another character BP+1000, or BP+2000 for four printed nam
  const printed=CARDS.find(c=>c.identity==='BLC-4-063');
  assert.equal(printed.effect,'登場時：最多選自己場上另1個角色，本回合BP+1000；若所選角色為《更木劍八》、《草鹿八千流》、《斑目一角》或《綾瀨川弓親》，改為BP+2000。');
  assert.deepEqual(printed.traits,['護廷十三隊']);
- assert.equal(printed.gen,3);
+ assert.equal(printed.gen,2);
  const card=bleach.cards['BLC-4-063'];
  assert.equal(card.gen,2);
  assert.equal(card.trigger,'draw');
@@ -3211,7 +3211,7 @@ test('BLC-4-037 reduces one front character at BP 1500 or higher, then replays t
  assert.equal(printed.effect,'登場時：最多選1個對方前線BP1500以上的角色，本回合BP−1000。啟動・主要〔支付1 AP／每回合1次〕：發動此角色的登場時效果。');
  assert.deepEqual(printed.traits,['破面']);
  assert.equal(printed.energy,3);
- assert.equal(printed.gen,3);
+ assert.equal(printed.gen,2);
  assert.equal(printed.trigger,'draw');
  const down={op:'enemyBpDown',bp:1000,optional:true,minBp:1500};
  const card=bleach.cards['BLC-4-037'];
@@ -3307,7 +3307,7 @@ test('BLC-4-071 draws and discards, steps, and shares one ACTIVE among every Soi
  assert.equal(printed.effect,'Step：移動階段可從前線移至能量線。登場時：抽1張牌，再將1張手牌送至場外。啟動・主要：將此角色改為Active；所有《碎蜂》的此效果合計每回合僅限1次。');
  assert.deepEqual(printed.traits,['護廷十三隊']);
  assert.equal(printed.energy,4);
- assert.equal(printed.gen,3);
+ assert.equal(printed.gen,2);
  assert.equal(printed.trigger,'draw');
  const card=bleach.cards['BLC-4-071'];
  assert.equal(card.step,true);
@@ -3452,7 +3452,7 @@ test('BLC-4-006 gains 1000 on its turn when Haschwalth is on the field and Yhwac
  assert.deepEqual(printed.traits,['星十字騎士團']);
  assert.equal(printed.energy,3);
  assert.equal(printed.bp,3000);
- assert.equal(printed.gen,3);
+ assert.equal(printed.gen,2);
  assert.equal(printed.trigger,null);
  const absent={kind:'ownNameAbsent',turn:'own',zone:'outside',excludeSelf:false,name:'ユーハバッハ'};
  const present={kind:'ownNameExists',turn:'own',zone:'field',excludeSelf:false,name:'ユーグラム・ハッシュヴァルト'};
@@ -3953,7 +3953,7 @@ test('BLC-4-051 chooses a draw only on its entry turn',()=>{
  const printed=CARDS.find(c=>c.identity==='BLC-4-051');
  assert.equal(printed.effect,'啟動・主要〔每回合1次〕：僅可在此角色登場的回合發動，選1項。①抽1張牌，再將1張手牌送至場外。②若對方前線有BP低於印刷BP的角色，抽1張牌。');
  assert.deepEqual(printed.traits,['護廷十三隊']);
- assert.equal(printed.gen,3);
+ assert.equal(printed.gen,2);
  const card=bleach.cards['BLC-4-051'];
  assert.equal(card.gen,2);
  assert.equal(card.energy,3);
@@ -6513,7 +6513,7 @@ test('BLC-4-077 may recover one sword, then REST-retires and actives plus buffs'
  assert.equal(printed.nameJa,'狂骨');
  assert.equal(printed.number,'EX15BT/BLC-4-077');
  assert.equal(printed.type,'field');
- assert.equal(printed.gen,3);
+ assert.equal(printed.gen,2);
  assert.equal(printed.trigger,'draw');
  assert.equal(printed.energy,3);
  assert.equal(printed.color,'green');
@@ -7021,7 +7021,7 @@ test('BLC-4-065 steps, gains BP from energy-line Kyoraku, and actives once after
  assert.equal(printed.number,'EX15BT/BLC-4-065');
  assert.equal(printed.nameJa,'伊勢 七緒');
  assert.equal(printed.effect,'Step：移動階段可從前線移至能量線。自己的回合中：若自己的能量線有《京樂春水》，此角色BP+1500。啟動・主要：僅在本回合已使用《神劍・八鏡劍》時可發動；將此角色改為Active。所有《伊勢七緒》的此效果合計每回合僅限1次。');
- assert.equal(printed.gen,3);
+ assert.equal(printed.gen,2);
  assert.equal(printed.trigger,'color');
  assert.deepEqual(printed.traits,['護廷十三隊']);
  const card=bleach.cards['BLC-4-065'];
@@ -7510,7 +7510,7 @@ test('BLC-4-016 sacrifices another character on its entry turn, then generates y
  assert.equal(printed.nameJa,'リジェ・バロ');
  assert.equal(printed.effect,'啟動・主要〔每回合1次〕：僅可在此角色登場的回合發動；使自己場上另1個角色退場，如此則此角色到自己下次回合開始前額外產生1個黃色能量，並選1項：①抽1張牌。②最多選1個對方前線BP1500以上的角色，本回合BP−1000。');
  assert.equal(printed.trigger,'active');
- assert.equal(printed.gen,4);
+ assert.equal(printed.gen,2);
  assert.deepEqual(printed.traits,['星十字騎士團']);
  const card=bleach.cards['BLC-4-016'];
  assert.equal(card.gen,2);
@@ -7520,7 +7520,7 @@ test('BLC-4-016 sacrifices another character on its entry turn, then generates y
  assert.deepEqual(card.mainAbility,{op:'entryTurnSacrificeChoice',oncePerTurn:true,energy:1,color:'yellow',minBp:1500,down:1000});
  const entry=bleachContribution.entries.find(x=>x.id==='BLC-4-016');
  assert.equal(entry.sourceRecord.gen,2);
- assert.equal(entry.sourceRecord.legacyImportedGen,4);
+ assert.equal(entry.sourceRecord.legacyImportedGen,2);
  assert.equal(entry.definition.gen,2);
  const bare={id:'BAD',name:'BAD',color:'yellow',type:'character',energy:3,ap:1,bp:2500,gen:2,traits:['星十字騎士團'],trigger:'active',implementation:'dsl',effects:{onPlay:[{op:'noteEntryTurn'}]},mainAbility:{op:'entryTurnSacrificeChoice',oncePerTurn:true,energy:2,color:'yellow',minBp:1500,down:1000}};
  assert.throws(()=>createUniversalPack({id:'bad-lille',cards:[bare]}),/unsupported main action ability/);
@@ -7645,7 +7645,7 @@ test('BLC-4-017 draws on entry, then rests and retires to grant one zombie a dou
  assert.equal(printed.nameJa,'ジゼル・ジュエル');
  assert.equal(printed.effect,'登場時：抽1張牌，再將1張手牌送至場外。啟動・主要〔將此角色改為Rest，並使此卡退場〕：選自己場上1個具有「殭屍」特徵的角色，本回合賦予「2次攻擊」（本回合首次攻擊時將該角色改為Active）。所有《吉賽爾・朱艾兒》的此效果合計每回合僅限1次。');
  assert.equal(printed.trigger,'active');
- assert.equal(printed.gen,3);
+ assert.equal(printed.gen,2);
  assert.deepEqual(printed.traits,['星十字騎士團','邦比小隊']);
  const card=bleach.cards['BLC-4-017'];
  assert.equal(card.gen,2);
@@ -7658,7 +7658,7 @@ test('BLC-4-017 draws on entry, then rests and retires to grant one zombie a dou
  assert.equal(cardHasTrait(bleach.cards['BLC-2-006'],'殭屍'),true);
  const entry=bleachContribution.entries.find(x=>x.id==='BLC-4-017');
  assert.equal(entry.sourceRecord.gen,2);
- assert.equal(entry.sourceRecord.legacyImportedGen,3);
+ assert.equal(entry.sourceRecord.legacyImportedGen,2);
  assert.equal(entry.definition.gen,2);
  const bare={id:'BAD',name:'BAD',color:'yellow',type:'character',energy:3,ap:1,bp:2500,gen:2,traits:['星十字騎士團'],trigger:'active',implementation:'dsl',effects:{onPlay:[{op:'drawDiscard',count:1,discardCount:1}]},mainAbility:{op:'nameOnceRestRetireDouble',scope:'name',trait:'護廷十三隊'}};
  assert.throws(()=>createUniversalPack({id:'bad-giselle',cards:[bare]}),/unsupported main action ability/);
@@ -8019,7 +8019,7 @@ test('BLC-4-032 gains BP from Ichigo or Urahara and may swap from the energy lin
  assert.equal(printed.nameJa,'四楓院 夜一');
  assert.equal(printed.effect,'自己的回合中：若自己場上有《黑崎一護》或《浦原喜助》，此角色BP+1000。〔能量線／每回合1次〕自己的角色攻擊結束時，選自己前線1個本回合尚未攻擊的角色，可將其與此角色交換位置；戰鬥後或傷害的Trigger檢查結束後處理此效果。');
  assert.equal(printed.trigger,'color');
- assert.equal(printed.gen,3);
+ assert.equal(printed.gen,2);
  assert.deepEqual(printed.traits,[]);
  const card=bleach.cards['BLC-4-032'];
  assert.equal(card.gen,2);
@@ -8032,7 +8032,7 @@ test('BLC-4-032 gains BP from Ichigo or Urahara and may swap from the energy lin
  const entry=bleachContribution.entries.find(x=>x.id==='BLC-4-032');
  assert.equal(entry.definition.gen,2);
  assert.equal(entry.sourceRecord.gen,2);
- assert.equal(entry.sourceRecord.legacyImportedGen,3);
+ assert.equal(entry.sourceRecord.legacyImportedGen,2);
  const bare={id:'BAD',name:'BAD',color:'blue',type:'character',energy:3,ap:1,bp:3000,gen:2,traits:[],trigger:'color',implementation:'dsl',effects:{},energyLineAttackEndSwap:false,triggerEffect:{op:'bounceOppFrontUnderBp',bp:3500}};
  assert.throws(()=>createUniversalPack({id:'bad-yoruichi',cards:[bare]}),/invalid energy-line attack-end swap/);
  const ids=['BLC-4-032','BLC-4-025','BLC-2-015','BLC-1-081','BLC-2-031','BLC-2-029','BLC-4-023'];
@@ -11121,7 +11121,7 @@ test('BLC-4-011 raises another character required energy by 2 on its entry turn'
  assert.equal(printed.nameJa,'ユーグラム・ハッシュヴァルト');
  assert.equal(printed.effect,'登場時：抽1張牌，再將1張手牌送至場外。啟動・主要〔每回合1次〕：僅可在此角色登場的回合發動；選自己場上另1個角色，本回合其所需能量增加2。');
  assert.deepEqual(printed.traits,['星十字騎士團']);
- assert.equal(printed.gen,3);
+ assert.equal(printed.gen,2);
  assert.equal(printed.trigger,'color');
  const card=bleach.cards['BLC-4-011'];
  assert.equal(card.name,printed.nameJa);
@@ -11138,7 +11138,7 @@ test('BLC-4-011 raises another character required energy by 2 on its entry turn'
   then:[{op:'grantOtherRequiredEnergyThisTurn',amount:2}]});
  const entry=bleachContribution.entries.find(x=>x.id==='BLC-4-011');
  assert.equal(entry.definition.gen,2);
- assert.equal(entry.sourceRecord.legacyImportedGen,3);
+ assert.equal(entry.sourceRecord.legacyImportedGen,2);
  assert.equal(entry.sourceRecord.gen,2);
  const bare={id:'X',name:'n',color:'yellow',type:'character',energy:3,ap:1,bp:2500,gen:2,
   traits:[],trigger:null,implementation:'dsl'};
@@ -12229,7 +12229,7 @@ test('BLC-4-055 removes another character and chooses a lasting discount or two 
  assert.equal(printed.number,'EX15BT/BLC-4-055');
  assert.equal(printed.nameJa,'兵主部 一兵衛');
  assert.equal(printed.effect,'登場時：可將自己場上另1個角色除外；如此則選1項。①本回合下一張從手牌使用、具有「零番隊」特徵的卡或《靈王宮》，消費AP−1。②最多選自己場上另2個具有「零番隊」特徵的角色，本回合BP+2000。先使用不符合條件的卡不會耗掉減費效果。');
- assert.equal(printed.gen,3);
+ assert.equal(printed.gen,2);
  assert.equal(printed.trigger,null);
  const card=bleach.cards['BLC-4-055'];
  assert.equal(card.gen,2);
@@ -12240,7 +12240,7 @@ test('BLC-4-055 removes another character and chooses a lasting discount or two 
  const entry=bleachContribution.entries.find(x=>x.id==='BLC-4-055');
  assert.equal(entry.definition.gen,2);
  assert.equal(entry.sourceRecord.gen,2);
- assert.equal(entry.sourceRecord.legacyImportedGen,3);
+ assert.equal(entry.sourceRecord.legacyImportedGen,2);
  assert.equal(V2_PENDING_LABELS['effect-remove-own-other'],'將自己場上另1個角色除外');
  assert.equal(V2_PENDING_LABELS['effect-buff-other-trait'],'選擇其他己方角色');
  const bare={id:'X',name:'n',color:'purple',type:'character',energy:3,ap:1,bp:3000,gen:2,
@@ -13373,7 +13373,7 @@ test('BLC-4-075 stays off the front, draws, and actives another Gotei character'
  assert.equal(printed.energy,3);
  assert.equal(printed.ap,1);
  assert.equal(printed.bp,500);
- assert.equal(printed.gen,4);
+ assert.equal(printed.gen,2);
  assert.equal(printed.trigger,'get');
  assert.deepEqual(printed.traits,['護廷十三隊','靈王的右臂']);
  assert.equal(printed.effect,'此卡不能在前線登場，也不能移至前線（包含突襲時的移動）。突襲《浮竹十四郎》：改為Active。以下僅在突襲狀態適用：此角色額外產生1個綠色能量。登場時：抽1張牌。啟動・主要〔每回合1次〕：僅可在此角色登場的回合發動；選自己場上另1個具有「護廷十三隊」特徵的角色改為Active。');
@@ -13389,7 +13389,7 @@ test('BLC-4-075 stays off the front, draws, and actives another Gotei character'
  assert.deepEqual(card.mainAbility.then,[{op:'activeOtherTrait',trait:'護廷十三隊'}]);
  const entryNote=bleachContribution.entries.find(x=>x.id==='BLC-4-075');
  assert.equal(entryNote.sourceRecord.gen,2);
- assert.equal(entryNote.sourceRecord.legacyImportedGen,4);
+ assert.equal(entryNote.sourceRecord.legacyImportedGen,2);
  assert.match(entryNote.evidence.reviewNote,/no raid-state icon/);
  assert.match(entryNote.evidence.reviewNote,/緑緑\+/);
  const bare={id:'BAD',name:'浮竹 十四郎',color:'green',type:'character',energy:0,ap:1,bp:1000,gen:1,traits:[],trigger:null,implementation:'dsl'};

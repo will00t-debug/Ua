@@ -18,11 +18,16 @@ test('68 preliminary full records and 12 partial records are explicitly distingu
   for(const field of ['nameJa','color','energy','ap','bp','gen','type','rarity','effect'])assert.notEqual(c[field],null,c.number+' '+field);
   assert.ok(Number.isInteger(c.ap),c.number);
  }
+ const printedGen={
+  'MST-1-010':2,'MST-1-011':1,'MST-1-013':1,'MST-1-015':1,'MST-1-019':2,
+  'MST-1-023':1,'MST-1-044':2,'MST-1-045':1,'MST-1-061':1,'MST-1-064':2,
+  'MST-1-078':0,'MST-1-079':0
+ };
  for(const c of incomplete){
   assert.equal(c.energy,null,c.number);
   assert.equal(c.ap,null,c.number);
   assert.equal(c.bp,null,c.number);
-  assert.equal(c.gen,null,c.number);
+  assert.equal(c.gen,printedGen[c.id],c.number);
  }
 });
 test('all 80 cards remain unplayable until complete effect-engine tests pass',()=>{
