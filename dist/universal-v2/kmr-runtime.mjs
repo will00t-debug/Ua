@@ -1255,8 +1255,15 @@ function resolveStep(pack,s,q,a){
    offerRetire(pack,s,spec,2000,true,null);
   }else if(c&&q.data?.next==='debuff')buff(s,c,-1000);
   else if(c&&q.data?.next==='replay'){
+   // UA29BT/KMR-1-079: the chosen character's on-play is activated by this card.
+   // このキャラ in that text is the activator. Q1897: a silenced chosen card has no on-play.
    const jobs=A.programs(pack,s,c,'onPlay',q.player,'ownEffect',q.sourceUid);
-   if(jobs?.length)s.effectQueue.unshift(...jobs);
+   const activator=selfOf(s,q.player,q.sourceUid);
+   if(jobs?.length&&activator){
+    const name=def(pack,activator).name;
+    for(const job of jobs){job.sourceUid=activator.uid;job.sourceName=name;}
+    s.effectQueue.unshift(...jobs);
+   }
   }else if(c&&q.data?.next==='tuckSelf')A.tuck(pack,s,q.player,c.uid,q.sourceUid,q.sourceUid);
   else if(c&&q.data?.next==='underDoctor'){
    if(plOf(s,q.player).deck.length){
