@@ -36,7 +36,7 @@ import {MST_V2_OFFICIAL_CATALOGUE} from './universal-v2/sources/mst-inventory.mj
 import {V2_PHASE_LABELS,V2_TITLE_LABELS,V2_PENDING_LABELS,
  uiActor,isExactLegal,uiCardLabel,uiActionLabel,visibleActionsForCard,
  pendingChoiceCards,inspectedPendingChoiceCards,visiblePendingChoiceCards,pendingEntryChoiceCards,publicLifeOrderChoiceCard,pendingChoiceCaption,publicPendingTargetCard,controllerDeckWindowCards,controllerChoiceArt,pendingFocusCard,pendingEffectSourceCard,pendingTextChoiceClass,attackBattleTags,attackKeywordBadges,frontAttackKeywordBadges,inlineBlockDecision,boardEntryMode,boardEntrySelection,entryClickPlan,moveClickPlan,
- FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs?v=20261102sourceart1';
+ FIELD_HOLD_MS,fieldEffectCopy} from './universal-v2/preview-actions.mjs?v=20261102paylabel1';
 import {publicPreviewActionLabel,makeUniversalPreviewReplay,appendUniversalReplay,
  collectPublicCardResults,publicPreviewTranscript} from './universal-v2/preview-replay.mjs';
 import {coachHeader,newCoachMatchId} from './universal-v2/coach-record.mjs';
@@ -466,14 +466,17 @@ function pendingChoiceControl(action,option,gallery,view,focusUid){
 // For a mixed effect, picking a card is not playing it. Only an exact
 // reducer-approved placement submitted on the table can resolve its entry.
 function pendingEntrySelectControl(card){
- const name=(card.cardId?cardDef(card.side,card.cardId)?.name:null)||card.name;
+ const catalogue=card.cardId?printedCatalogue(card.side??0,card.cardId):null;
+ const name=catalogue?.name||(card.cardId?cardDef(card.side,card.cardId)?.name:null)||card.name;
+ const activeEntry=app.state?.pending?.kind==='effect-deploy-self-active';
+ const caption=activeEntry?'以活動狀態登場 · 再點格子':'選擇此角色登場 · 再選方式與格子';
  const button=el('button',{type:'button',class:'choice-card recommended',
-  'aria-label':'選擇 '+name+' 登場（尚未執行）',
+  'aria-label':name+'，'+caption,
   onClick:()=>{selectDeployedCharacter(card.uid);render();}});
  if(card.cardId)button.append(el('span',{class:'choice-card-arts'},
   el('span',{class:'choice-card-art'},choicePicture(card.cardId,name,card.side))));
  button.append(el('span',{class:'choice-card-name',text:name}),
-  el('span',{class:'choice-card-caption',text:'選擇此角色登場 · 再選方式與格子'}));
+  el('span',{class:'choice-card-caption',text:caption}));
  return button;
 }
 function inspectedChoiceControl(card){
@@ -586,8 +589,12 @@ function pendingDialog(legal,view){
   publicPendingTargetCard(view,row.action)!==null||
   publicLifeOrderChoiceCard(view,s.pending,row.action)!==null||
   controllerChoiceArt(app.packs,s,row.action).some(card=>card.uid!==focusUid));
+ const payAp=s.pending.kind==='effect-pay-deploy-self'&&Number.isInteger(s.pending.ap)&&s.pending.ap>0?
+  s.pending.ap:null;
  const title=s.pending.kind==='effect-look-take'&&s.pending.phase==='order'?
-  '依序放回牌庫底':(V2_PENDING_LABELS[s.pending.kind]||s.pending.kind);
+  '依序放回牌庫底':payAp!==null?
+  '是否支付 '+payAp+' AP，讓此角色以活動狀態登場':
+  (V2_PENDING_LABELS[s.pending.kind]||s.pending.kind);
  const triggerChoice=s.pending.kind==='life-trigger';
  const blocking=s.pending.kind==='block'&&view.battle;
  // A view-only pause: no action, state transition, or hidden-card disclosure.
@@ -617,6 +624,8 @@ function pendingDialog(legal,view){
  dialog.append(el('p',{class:'note',text:triggerChoice?
    '這張觸發已經公開，對手也能看到。請選擇是否使用。':
    blocking?'對手的角色正在攻擊。先看直傷和衝擊，再選擇阻擋或不阻擋。':
+   s.pending.kind==='effect-pay-deploy-self'?'條件已經滿足。支付後再點亮起的格子，這張角色會以活動狀態登場。':
+   s.pending.kind==='effect-deploy-self-active'?'點下面的角色，再點亮起的前線或能源格。它會以活動狀態登場。':
    placement.length?'先點卡圖選擇要登場的角色；若要加入手牌，直接點該卡的加入手牌選項。選好登場角色後，再選合法模式及格子。':
    '請完成這個選擇後，對戰才會繼續。選牌只會顯示給目前的控制者。'}));
  if(source&&source.uid!==focusUid)dialog.append(revealFocusSheet(source));
@@ -877,7 +886,8 @@ function ownListedCard(uid){
 }
 function selectedCardName(){
  const card=ownListedCard(app.selectedUid);
- return card?cardDef(0,card.cardId)?.name||card.cardId:'';
+ if(!card)return '';
+ return printedCatalogue(0,card.cardId)?.name||cardDef(0,card.cardId)?.name||card.cardId;
 }
 function entryChoiceText(action){
  const text=uiActionLabel(action,{pack:app.packs,state:app.state});
@@ -933,6 +943,8 @@ function legacyCommands(legal){
  }
  if(board&&!app.selectedUid)
   bar.append(el('span',{class:'v2-compact-hint',text:
+   s.pending?.kind==='effect-deploy-self-active'?
+   '點對話裡的角色，再點亮起的格子。它會以活動狀態登場。':
    (s.pending?(V2_PENDING_LABELS[s.pending.kind]||'效果')+'。':'')+
    '先選擇要登場的角色。手牌直接點；場外或移除區請打開該區再點角色。'}));
  else if(selection.needsMode&&!chosen){
@@ -941,7 +953,9 @@ function legacyCommands(legal){
   bar.append(btn('普通進場',()=>{app.entryMode='normal';app.raidBaseUid=null;app.targetChoices=null;render();},'btn small'));
   bar.append(btn('突襲進場',()=>{app.entryMode='raid';app.targetChoices=null;render();},'btn small primary'));
  }else if(chosen){
-  bar.append(el('span',{class:'v2-compact-hint',text:(name?name+'：':'')+
+  const activeEntry=s.pending?.kind==='effect-deploy-self-active'&&chosen==='normal';
+  bar.append(el('span',{class:'v2-compact-hint',text:activeEntry?(name?name+'：':'')+
+   '以活動狀態登場。請直接點亮起的格子。':(name?name+'：':'')+
    (paidRaid?(app.raidBaseUid?
     '一般突襲：已選好底座，請點合法登場位置（可點後線底座原位）。':
     selection.normal.length?

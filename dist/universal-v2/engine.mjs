@@ -2948,7 +2948,7 @@ function continueEffectQueue(pack,s){
    if(live.length)s.pending={kind:'effect-ordered-subset',player:owner,
     sourceUid:job.sourceUid,sourceName:job.sourceName,max:job.max,
     order:job.options.map(o=>o.id),
-    options:live.map(o=>({id:o.id,then:o.then.map(e=>({...e}))})),
+    options:live.map(o=>({id:o.id,label:o.label,then:o.then.map(e=>({...e}))})),
     selected:[]};
   }else if(job.op==='readyApIfOutsideTriggerKinds'){
    const kinds=countOwnOutsideEventTriggerKinds(s,owner,c=>card(pack,c),{

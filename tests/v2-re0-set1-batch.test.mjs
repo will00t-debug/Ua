@@ -3593,7 +3593,9 @@ test('Ricardo pays one AP from hand, and rests into play only when the reference
  const seats=legalUniversalActions(packs,offered);
  assert.ok(seats.some(a=>a.line==='front'&&a.replaceUid===undefined));
  assert.ok(seats.some(a=>a.line==='energy'&&a.replaceUid));
- assert.equal(uiActionLabel(seats[0],{pack,state:offered}),'休息登場');
+ assert.equal(uiActionLabel(seats[0],{pack,state:offered}),
+  '以休息狀態登場 · '+(seats[0].line==='energy'?'能源線':'前線')+' '+(seats[0].slot+1));
+ assert.equal(new Set(seats.map(a=>uiActionLabel(a,{pack,state:offered}))).size,seats.length);
  assert.equal(chooseUniversalAiAction(packs,offered).type,'chooseHandRestEntry');
  const forgedEntry=structuredClone(offered);
  forgedEntry.pending.minBp=3000;
